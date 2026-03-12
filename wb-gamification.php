@@ -64,6 +64,9 @@ final class WB_Gamification {
 		// BuddyPress integration
 		require_once WB_GAM_PATH . 'src/BuddyPress/HooksIntegration.php';
 
+		// WordPress-native integration (standalone + always-on triggers)
+		require_once WB_GAM_PATH . 'src/Integrations/WordPress/HooksIntegration.php';
+
 		// Admin
 		require_once WB_GAM_PATH . 'src/Admin/SettingsPage.php';
 
@@ -79,6 +82,7 @@ final class WB_Gamification {
 
 		// Boot engines
 		add_action( 'plugins_loaded', [ WB_Gam_Registry::class, 'init' ], 5 );
+		add_action( 'plugins_loaded', [ WB_Gam_WordPress_Hooks::class, 'init' ], 8 );
 		add_action( 'plugins_loaded', [ WB_Gam_BuddyPress_Hooks::class, 'init' ], 10 );
 		add_action( 'plugins_loaded', [ WB_Gam_Abilities::class, 'register' ], 10 );
 

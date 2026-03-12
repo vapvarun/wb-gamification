@@ -61,6 +61,31 @@ GamiPress and myCred are the existing WordPress solutions — both have critical
 - **Extensible by design** — any plugin registers triggers via `wb_gamification_register_action()`
 - **Modern WordPress stack** — Blocks, Interactivity API, REST API, Abilities API
 - **Security-first** — prepared statements, strict nonce checks, no SQL injection surface
+- **Works with or without BuddyPress** — full gamification on standalone WordPress blogs; BuddyPress adds community-layer features on top
+
+---
+
+## Deployment Modes
+
+WB Gamification auto-detects what's active and loads the right hooks. **Zero configuration by site owner.**
+
+| Mode | Detection | Active Integrations |
+|---|---|---|
+| **Standalone** | No BuddyPress | WordPress-native triggers (posts, comments, users) |
+| **Community** | BuddyPress active | All standalone triggers + BuddyPress triggers |
+| **Full Reign** | BuddyPress + Reign Stack plugins | Community triggers + media, polls, reactions, forums, member blog |
+
+### Mode Behaviour
+
+```
+plugins_loaded priority 5  → Registry::init() — fires wb_gamification_register
+plugins_loaded priority 8  → WB_Gam_WordPress_Hooks::init() — always registers core WP triggers
+plugins_loaded priority 10 → WB_Gam_BuddyPress_Hooks::init() — only registers if BuddyPress is active
+```
+
+**Avoiding double-award:** `WB_Gam_WordPress_Hooks` splits into two groups:
+- `register_always()` — triggers BuddyPress has no equivalent for (user registration, first login, profile completion, post receives a comment)
+- `register_standalone()` — triggers only registered when BuddyPress is **not** active (publish post, leave comment) because BuddyPress hooks cover these when BP is present
 
 ---
 
@@ -140,7 +165,25 @@ Conducted March 2026 across: Circle, Mighty Networks, Bettermode, Discord, GamiP
 - Proper composite indexes from day one
 - Archiving option before pruning
 
-**BuddyPress triggers (default — all bundled, no add-on required):**
+**WordPress-native triggers — always active (Standalone + Community + Full):**
+
+| Action ID | Hook | Default Points | Notes |
+|---|---|---|---|
+| `wp_user_register` | `user_register` | 15 | Once — on account creation |
+| `wp_first_login` | `wp_login` | 10 | Once — very first login |
+| `wp_profile_complete` | `personal_options_update` | 10 | Once — requires bio to be meaningful |
+| `wp_post_receives_comment` | `comment_post` (post author) | 3 | Only approved comments count |
+
+**WordPress-native triggers — Standalone mode only (no BuddyPress):**
+
+| Action ID | Hook | Default Points | Notes |
+|---|---|---|---|
+| `wp_publish_post` | `publish_post` | 25 | Standard `post` type only |
+| `wp_first_post` | `publish_post` | 20 | Once — first-contribution bonus |
+| `wp_leave_comment` | `comment_post` (commenter) | 5 | Logged-in users only; approved only |
+| `wp_comment_approved` | `transition_comment_status` | 5 | Moderated comment gets approved |
+
+**BuddyPress triggers — Community + Full modes (BuddyPress required):**
 
 | Action | Hook | Default Points | Quality Weight |
 |---|---|---|---|
@@ -149,7 +192,7 @@ Conducted March 2026 across: Circle, Mighty Networks, Bettermode, Discord, GamiP
 | Accept friendship | `friends_friendship_accepted` | 8 | — |
 | Join a group | `groups_join_group` | 8 | — |
 | Create a group | `groups_group_create_complete` | 20 | — |
-| Complete profile | `xprofile_updated_profile` | 15 | Once only |
+| Complete BP profile | `xprofile_updated_profile` | 15 | Once only |
 | Upload media | `bp_media_add` | 5 | — |
 | Post in forum | `bbp_new_reply` | 8 | +5 if marked as answer |
 | Receive reaction | `bp_reactions_add` | 3 | — |
@@ -236,13 +279,14 @@ First Post, First Comment, First Friend, Profile Complete, Group Creator, Forum 
 
 On first activation, admin chooses a template. Pre-configures everything with sensible defaults. No blank admin.
 
-| Template | Point Weighting | Default Badges | Leaderboard Style |
-|---|---|---|---|
-| **Community Engagement** | Balanced — posting + reactions + kudos | Social badges | Weekly + all-time |
-| **Online Course** | Course completion heavy | Progress + credential badges | Cohort-based |
-| **Coaching Platform** | Check-ins + goal completions | Coach-awarded + milestone | Private (opt-in only) |
-| **Nonprofit** | Volunteer hours + donations | Impact awards (mission language) | Team/chapter only |
-| **Custom** | Manual configuration | Manual setup | Manual setup |
+| Template | Mode | Point Weighting | Default Badges | Leaderboard Style |
+|---|---|---|---|---|
+| **Blog / Publisher** | Standalone WP | Writing heavy — posts, comments received | Writer milestone badges | Top Authors monthly |
+| **Community Engagement** | Community/Full | Balanced — posting + reactions + kudos | Social badges | Weekly + all-time |
+| **Online Course** | Any | Course completion heavy | Progress + credential badges | Cohort-based |
+| **Coaching Platform** | Any | Check-ins + goal completions | Coach-awarded + milestone | Private (opt-in only) |
+| **Nonprofit** | Any | Volunteer hours + donations | Impact awards (mission language) | Team/chapter only |
+| **Custom** | Any | Manual configuration | Manual setup | Manual setup |
 
 ### 9. Admin Analytics Dashboard
 
@@ -601,6 +645,9 @@ wb-gamification/
 │   │   └── KudosController.php
 │   ├── Abilities/
 │   │   └── AbilitiesRegistrar.php
+│   ├── Integrations/
+│   │   └── WordPress/
+│   │       └── HooksIntegration.php # WP-native triggers: always + standalone groups
 │   ├── BuddyPress/
 │   │   ├── HooksIntegration.php   # All BP action hooks (on bp_loaded, not init)
 │   │   ├── ProfileIntegration.php # Auto-inject rank/badges into BP profile header
@@ -637,11 +684,12 @@ wb-gamification/
 - [ ] Log auto-pruner (WP-Cron, configurable retention)
 - [ ] Registry (extension API)
 - [ ] PointsEngine (rate limiting, quality weighting, async queue)
+- [ ] WordPress-native hooks (`WB_Gam_WordPress_Hooks`) — standalone + always groups
 - [ ] BuddyPress hooks — on `bp_loaded`, not `init` (fix myCred's bug by design)
 - [ ] BuddyPress profile auto-injection (rank in header — no shortcode)
 - [ ] LevelEngine + level-gated access
-- [ ] Setup wizard with 5 starter templates
-- [ ] Admin settings page (Points + Levels — inline editable)
+- [ ] Setup wizard with 5 starter templates (including "Blog / Publisher" for standalone WP)
+- [ ] Admin settings page (Points + Levels — inline editable, shows active mode)
 - [ ] REST API read endpoints
 - [ ] Abilities registration
 - [ ] Member opt-out preference (leaderboard + rank visibility)
@@ -693,3 +741,5 @@ wb-gamification/
 10. **Prepared statements in all AJAX handlers** — CVE-2024-13496 (GamiPress) happened here; never repeat
 11. **Setup wizard on first activation** — not a blank admin; reduces abandonment
 12. **No points decay** — research confirms this destroys loyalty with no engagement benefit
+13. **Mode auto-detection, never config** — WP-native hooks always load; BuddyPress hooks load only when BP is active; site owner never sets a "mode" toggle
+14. **Split always/standalone trigger groups** — prevents double-awarding when BuddyPress covers the same underlying WordPress hooks (e.g. `publish_post`)
