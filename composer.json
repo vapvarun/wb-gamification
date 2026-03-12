@@ -1,0 +1,21 @@
+{
+    "name": "wbcom-designs/wb-gamification",
+    "description": "Complete gamification plugin for BuddyPress and WordPress. Part of the Reign Stack.",
+    "type": "wordpress-plugin",
+    "license": "GPL-2.0-or-later",
+    "authors": [
+        {
+            "name": "Wbcom Designs",
+            "homepage": "https://wbcomdesigns.com"
+        }
+    ],
+    "require": {
+        "php": ">=8.1"
+    },
+    "autoload": {
+        "classmap": ["src/"]
+    },
+    "config": {
+        "optimize-autoloader": true
+    }
+}
