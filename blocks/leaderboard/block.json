@@ -1,0 +1,41 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "wb-gamification/leaderboard",
+	"version": "0.1.0",
+	"title": "Gamification Leaderboard",
+	"category": "widgets",
+	"description": "Display a points leaderboard with configurable period and limit.",
+	"keywords": ["leaderboard", "points", "gamification", "ranking"],
+	"supports": {
+		"html": false,
+		"align": ["wide", "full"]
+	},
+	"attributes": {
+		"period": {
+			"type": "string",
+			"default": "all",
+			"enum": ["all", "month", "week", "day"]
+		},
+		"limit": {
+			"type": "integer",
+			"default": 10,
+			"minimum": 1,
+			"maximum": 100
+		},
+		"scope_type": {
+			"type": "string",
+			"default": ""
+		},
+		"scope_id": {
+			"type": "integer",
+			"default": 0
+		},
+		"show_avatars": {
+			"type": "boolean",
+			"default": true
+		}
+	},
+	"render": "file:./render.php",
+	"textdomain": "wb-gamification"
+}

@@ -1,0 +1,46 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "wb-gamification/year-recap",
+  "title": "Year in Community Recap",
+  "description": "A shareable Spotify-Wrapped-style recap card showing a member's highlights for the year.",
+  "category": "wb-gamification",
+  "icon": "calendar-alt",
+  "keywords": ["recap", "year", "wrapped", "gamification", "summary"],
+  "textdomain": "wb-gamification",
+  "attributes": {
+    "user_id": {
+      "type": "integer",
+      "default": 0
+    },
+    "year": {
+      "type": "integer",
+      "default": 0
+    },
+    "show_share_button": {
+      "type": "boolean",
+      "default": true
+    },
+    "show_badges": {
+      "type": "boolean",
+      "default": true
+    },
+    "show_kudos": {
+      "type": "boolean",
+      "default": true
+    },
+    "accent_color": {
+      "type": "string",
+      "default": ""
+    }
+  },
+  "supports": {
+    "html": false,
+    "align": ["wide"],
+    "color": {
+      "background": true,
+      "text": false
+    }
+  },
+  "render": "file:./render.php"
+}

@@ -1,0 +1,104 @@
+/**
+ * WB Gamification — Admin Analytics Dashboard styles
+ *
+ * @since 0.1.0
+ */
+
+.wb-gam-analytics { max-width: 1200px; }
+
+/* Period bar */
+.wb-gam-analytics__period-bar {
+	display: flex;
+	gap: 0.5rem;
+	margin: 1rem 0 1.5rem;
+}
+
+/* KPI grid */
+.wb-gam-analytics__kpi-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+	gap: 1rem;
+	margin-block-end: 1.5rem;
+}
+
+.wb-gam-analytics__kpi-card {
+	background: #fff;
+	border: 1px solid #e5e7eb;
+	border-radius: 8px;
+	padding: 1.25rem 1rem;
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+}
+
+.wb-gam-analytics__kpi-icon { font-size: 1.5rem; line-height: 1; }
+
+.wb-gam-analytics__kpi-value {
+	font-size: 1.75rem;
+	font-weight: 800;
+	line-height: 1.1;
+	color: #1d2939;
+}
+
+.wb-gam-analytics__kpi-title {
+	font-size: 0.8125rem;
+	font-weight: 600;
+	color: #374151;
+}
+
+.wb-gam-analytics__kpi-sub {
+	font-size: 0.75rem;
+	color: #9ca3af;
+}
+
+/* Two-column panels */
+.wb-gam-analytics__two-col {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 1.5rem;
+	margin-block-end: 1.5rem;
+}
+
+@media (max-width: 900px) {
+	.wb-gam-analytics__two-col { grid-template-columns: 1fr; }
+}
+
+.wb-gam-analytics__panel {
+	background: #fff;
+	border: 1px solid #e5e7eb;
+	border-radius: 8px;
+	padding: 1.25rem;
+}
+
+.wb-gam-analytics__panel h2 {
+	margin: 0 0 1rem;
+	font-size: 1rem;
+	font-weight: 600;
+}
+
+/* Sparkline */
+.wb-gam-analytics__sparkline {
+	display: flex;
+	align-items: flex-end;
+	height: 80px;
+	gap: 2px;
+	padding: 0.5rem 0 0;
+}
+
+.wb-gam-analytics__spark-bar {
+	flex: 1;
+	min-width: 2px;
+	background: #6c63ff;
+	border-radius: 2px 2px 0 0;
+	opacity: 0.75;
+	transition: opacity 0.15s;
+}
+
+.wb-gam-analytics__spark-bar:hover { opacity: 1; }
+
+/* Avatars in tables */
+.wb-gam-analytics__panel td img {
+	vertical-align: middle;
+	border-radius: 50%;
+	margin-inline-end: 0.375rem;
+}

@@ -4,14 +4,15 @@
  *
  * Central registry for all actions, badge triggers, and challenge types.
  * Auto-discovers everything registered via the extension API.
- * Admin reads this registry to render settings — no manual sync needed.
  *
  * @package WB_Gamification
  */
 
+namespace WBGam\Engine;
+
 defined( 'ABSPATH' ) || exit;
 
-final class WB_Gam_Registry {
+final class Registry {
 
 	/** @var array<string, array> */
 	private static array $actions = [];
@@ -57,15 +58,20 @@ final class WB_Gam_Registry {
 	 *   @type string   $icon           Dashicon name or URL.
 	 *   @type bool     $repeatable     Whether the action can be performed multiple times.
 	 *   @type int      $cooldown       Seconds between earnings (0 = unlimited).
+	 *   @type int      $daily_cap      Max times per day (0 = unlimited).
+	 *   @type int      $weekly_cap     Max times per week (0 = unlimited).
 	 * }
 	 */
 	public static function register_action( array $args ): void {
 		$defaults = [
-			'description'    => '',
-			'category'       => 'general',
-			'icon'           => 'dashicons-star-filled',
-			'repeatable'     => true,
-			'cooldown'       => 0,
+			'description' => '',
+			'category'    => 'general',
+			'icon'        => 'dashicons-star-filled',
+			'repeatable'  => true,
+			'cooldown'    => 0,
+			'daily_cap'   => 0,
+			'weekly_cap'  => 0,
+			'async'       => false,
 		];
 
 		$action = wp_parse_args( $args, $defaults );
@@ -77,14 +83,33 @@ final class WB_Gam_Registry {
 
 		self::$actions[ $action['id'] ] = $action;
 
-		// Auto-hook to WordPress.
+		// Auto-hook to WordPress — routes through Engine::process() (Phase 0+).
 		add_action(
 			$action['hook'],
 			static function () use ( $action ) {
 				$params  = func_get_args();
 				$user_id = (int) call_user_func_array( $action['user_callback'], $params );
-				if ( $user_id > 0 ) {
-					WB_Gam_Points_Engine::process_action( $action['id'], $user_id );
+				if ( $user_id <= 0 ) {
+					return;
+				}
+
+				// Optionally extract metadata from hook args via metadata_callback.
+				$metadata = isset( $action['metadata_callback'] ) && is_callable( $action['metadata_callback'] )
+					? (array) call_user_func_array( $action['metadata_callback'], $params )
+					: [];
+
+				$event = new Event(
+					[
+						'action_id' => $action['id'],
+						'user_id'   => $user_id,
+						'metadata'  => $metadata,
+					]
+				);
+
+				if ( $action['async'] ?? false ) {
+					Engine::process_async( $event );
+				} else {
+					Engine::process( $event );
 				}
 			}
 		);
@@ -107,7 +132,7 @@ final class WB_Gam_Registry {
 				$params  = func_get_args();
 				$user_id = get_current_user_id();
 				if ( $user_id > 0 && call_user_func_array( $args['condition'], array_merge( $params, [ $user_id ] ) ) ) {
-					WB_Gam_Badge_Engine::award_badge( $user_id, $args['id'] );
+					BadgeEngine::award_badge( $user_id, $args['id'] );
 				}
 			}
 		);

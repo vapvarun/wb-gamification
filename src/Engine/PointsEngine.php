@@ -2,39 +2,35 @@
 /**
  * WB Gamification Points Engine
  *
+ * Data-access layer for the points ledger.
+ * The main award pipeline now lives in Engine::process() — this class
+ * provides the rate-limit checks and DB write methods that Engine calls.
+ *
+ * External callers should use Engine::process(Event) or the helper
+ * functions in functions.php. Direct calls to award() are legacy.
+ *
  * @package WB_Gamification
  */
 
+namespace WBGam\Engine;
+
 defined( 'ABSPATH' ) || exit;
 
-final class WB_Gam_Points_Engine {
+final class PointsEngine {
+
+	// ── Internal methods called by Engine ─────────────────────────────────────
 
 	/**
-	 * Process a registered action — checks enabled, cooldown, then awards.
+	 * Check cooldown, repeatable, daily, and weekly caps for a registered action.
+	 *
+	 * Called by Engine::process() before persisting anything.
+	 *
+	 * @param int    $user_id   User to check.
+	 * @param string $action_id Action to check.
+	 * @param array  $action    Action config from Registry.
+	 * @return bool             True if the award is allowed to proceed.
 	 */
-	public static function process_action( string $action_id, int $user_id ): bool {
-		$action = WB_Gam_Registry::get_action( $action_id );
-		if ( ! $action ) {
-			return false;
-		}
-
-		// Check if action is enabled by site owner.
-		if ( ! (bool) get_option( 'wb_gam_enabled_' . $action_id, true ) ) {
-			return false;
-		}
-
-		/**
-		 * Allow extensions to block point awarding.
-		 *
-		 * @param bool   $should    Whether to award points.
-		 * @param string $action_id Action ID.
-		 * @param int    $user_id   User ID.
-		 */
-		$should = apply_filters( 'wb_gamification_should_award', true, $action_id, $user_id );
-		if ( ! $should ) {
-			return false;
-		}
-
+	public static function passes_rate_limits( int $user_id, string $action_id, array $action ): bool {
 		// Cooldown check.
 		$cooldown = (int) ( $action['cooldown'] ?? 0 );
 		if ( $cooldown > 0 && self::is_on_cooldown( $user_id, $action_id, $cooldown ) ) {
@@ -46,66 +42,105 @@ final class WB_Gam_Points_Engine {
 			return false;
 		}
 
-		$points = (int) get_option( 'wb_gam_points_' . $action_id, $action['default_points'] );
+		// Daily cap check.
+		$daily_cap = (int) ( $action['daily_cap'] ?? 0 );
+		if ( $daily_cap > 0 && self::get_today_count( $user_id, $action_id ) >= $daily_cap ) {
+			return false;
+		}
 
-		/**
-		 * Filter points before awarding.
-		 *
-		 * @param int    $points    Points to award.
-		 * @param string $action_id Action ID.
-		 * @param int    $user_id   User ID.
-		 */
-		$points = (int) apply_filters( 'wb_gamification_points_for_action', $points, $action_id, $user_id );
+		// Weekly cap check.
+		$weekly_cap = (int) ( $action['weekly_cap'] ?? 0 );
+		if ( $weekly_cap > 0 && self::get_week_count( $user_id, $action_id ) >= $weekly_cap ) {
+			return false;
+		}
 
-		return self::award( $user_id, $action_id, $points );
+		return true;
 	}
 
 	/**
-	 * Award points directly.
+	 * Insert a row into the points ledger, linked to the event.
+	 *
+	 * Called by Engine::process() after all checks have passed.
+	 *
+	 * @param Event $event  The source event (provides event_id and context).
+	 * @param int   $points Points to record.
+	 * @return bool         True on success.
 	 */
-	public static function award( int $user_id, string $action_id, int $points, int $object_id = 0 ): bool {
+	public static function insert_point_row( Event $event, int $points ): bool {
 		global $wpdb;
-
-		if ( $points <= 0 || $user_id <= 0 ) {
-			return false;
-		}
 
 		$inserted = $wpdb->insert(
 			$wpdb->prefix . 'wb_gam_points',
 			[
-				'user_id'    => $user_id,
-				'action_id'  => $action_id,
+				'event_id'   => $event->event_id,
+				'user_id'    => $event->user_id,
+				'action_id'  => $event->action_id,
 				'points'     => $points,
-				'object_id'  => $object_id ?: null,
+				'object_id'  => $event->object_id ?: null,
 				'created_at' => current_time( 'mysql' ),
 			],
-			[ '%d', '%s', '%d', '%d', '%s' ]
+			[ '%s', '%d', '%s', '%d', '%d', '%s' ]
 		);
 
-		if ( ! $inserted ) {
+		return (bool) $inserted;
+	}
+
+	// ── Legacy / public API ────────────────────────────────────────────────────
+
+	/**
+	 * Process a registered action — legacy entry point.
+	 *
+	 * Creates an Event and routes through Engine::process() so all award
+	 * paths share the same pipeline.
+	 *
+	 * @param string $action_id Action ID.
+	 * @param int    $user_id   User to award.
+	 * @param int    $object_id Optional context object (post_id, comment_id, etc.).
+	 * @return bool             True if points were awarded.
+	 */
+	public static function process_action( string $action_id, int $user_id, int $object_id = 0 ): bool {
+		return Engine::process(
+			new Event(
+				[
+					'action_id' => $action_id,
+					'user_id'   => $user_id,
+					'object_id' => $object_id,
+				]
+			)
+		);
+	}
+
+	/**
+	 * Manually award points to a user.
+	 *
+	 * Bypasses cooldown/cap checks (it's a manual, admin-controlled award).
+	 * Carries the points value in metadata so Engine can read it when the
+	 * action_id is not in the Registry.
+	 *
+	 * @param int    $user_id   User to award.
+	 * @param string $action_id Action context (use 'manual' for admin awards).
+	 * @param int    $points    Points to award.
+	 * @param int    $object_id Optional context object.
+	 * @return bool
+	 */
+	public static function award( int $user_id, string $action_id, int $points, int $object_id = 0 ): bool {
+		if ( $points <= 0 || $user_id <= 0 ) {
 			return false;
 		}
 
-		// Bust user total cache.
-		wp_cache_delete( "wb_gam_total_{$user_id}", 'wb_gamification' );
-
-		/**
-		 * Fires after points are awarded.
-		 *
-		 * @param int    $user_id   User ID.
-		 * @param string $action_id Action ID.
-		 * @param int    $points    Points awarded.
-		 */
-		do_action( 'wb_gamification_points_awarded', $user_id, $action_id, $points );
-
-		// Check for level-up.
-		WB_Gam_Level_Engine::maybe_level_up( $user_id );
-
-		// Update streak.
-		WB_Gam_Streak_Engine::record_activity( $user_id );
-
-		return true;
+		return Engine::process(
+			new Event(
+				[
+					'action_id' => $action_id,
+					'user_id'   => $user_id,
+					'object_id' => $object_id,
+					'metadata'  => [ 'points' => $points, 'manual' => true ],
+				]
+			)
+		);
 	}
+
+	// ── Read methods ──────────────────────────────────────────────────────────
 
 	/**
 	 * Get total points for a user.
@@ -145,9 +180,8 @@ final class WB_Gam_Points_Engine {
 		);
 	}
 
-	/**
-	 * Check if a user is within the cooldown period for an action.
-	 */
+	// ── Private rate-limit helpers ────────────────────────────────────────────
+
 	private static function is_on_cooldown( int $user_id, string $action_id, int $cooldown_seconds ): bool {
 		global $wpdb;
 
@@ -166,5 +200,30 @@ final class WB_Gam_Points_Engine {
 		}
 
 		return ( time() - strtotime( $last ) ) < $cooldown_seconds;
+	}
+
+	private static function get_today_count( int $user_id, string $action_id ): int {
+		global $wpdb;
+		return (int) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM {$wpdb->prefix}wb_gam_points
+				WHERE user_id = %d AND action_id = %s AND DATE(created_at) = CURDATE()",
+				$user_id,
+				$action_id
+			)
+		);
+	}
+
+	private static function get_week_count( int $user_id, string $action_id ): int {
+		global $wpdb;
+		return (int) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM {$wpdb->prefix}wb_gam_points
+				WHERE user_id = %d AND action_id = %s
+				  AND YEARWEEK(created_at, 1) = YEARWEEK(CURDATE(), 1)",
+				$user_id,
+				$action_id
+			)
+		);
 	}
 }

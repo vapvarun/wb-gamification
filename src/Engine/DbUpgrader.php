@@ -1,0 +1,104 @@
+<?php
+/**
+ * WB Gamification DB Upgrader
+ *
+ * Runs `ALTER TABLE` migrations when the stored db_version is behind
+ * WB_GAM_VERSION. Safe to call on every request (version-gated + transient
+ * lock prevents repeated work).
+ *
+ * Add a new migration:
+ *   1. Bump WB_GAM_VERSION in the main plugin file.
+ *   2. Add a method `upgrade_to_X_Y_Z(): void` below.
+ *   3. Register it in `get_upgrades()`.
+ *
+ * @package WB_Gamification
+ * @since   0.1.0
+ */
+
+namespace WBGam\Engine;
+
+defined( 'ABSPATH' ) || exit;
+
+final class DbUpgrader {
+
+	private const OPT_KEY    = 'wb_gam_db_version';
+	private const LOCK_KEY   = 'wb_gam_db_upgrade_lock';
+	private const LOCK_TTL   = 60;
+
+	// ── Boot ────────────────────────────────────────────────────────────────────
+
+	public static function init(): void {
+		$current = get_option( self::OPT_KEY, '0.0.0' );
+
+		if ( version_compare( $current, WB_GAM_VERSION, '>=' ) ) {
+			return;
+		}
+
+		// Prevent concurrent upgrade runs (e.g. two simultaneous requests on activation).
+		if ( get_transient( self::LOCK_KEY ) ) {
+			return;
+		}
+		set_transient( self::LOCK_KEY, 1, self::LOCK_TTL );
+
+		self::run( $current );
+
+		update_option( self::OPT_KEY, WB_GAM_VERSION );
+		delete_transient( self::LOCK_KEY );
+	}
+
+	// ── Dispatcher ───────────────────────────────────────────────────────────────
+
+	private static function run( string $from ): void {
+		foreach ( self::get_upgrades() as $version => $method ) {
+			if ( version_compare( $from, $version, '<' ) ) {
+				self::$method();
+			}
+		}
+	}
+
+	/**
+	 * Map of "upgrade to this version" => method name.
+	 * Must be in ascending version order.
+	 *
+	 * @return array<string, string>
+	 */
+	private static function get_upgrades(): array {
+		return [
+			'0.1.0' => 'upgrade_to_0_1_0',
+		];
+	}
+
+	// ── Migrations ───────────────────────────────────────────────────────────────
+
+	/**
+	 * 0.1.0 → add `created_at` to wb_gam_challenge_log (missed in initial schema).
+	 */
+	private static function upgrade_to_0_1_0(): void {
+		global $wpdb;
+
+		$table  = $wpdb->prefix . 'wb_gam_challenge_log';
+		$column = 'created_at';
+
+		// Check if column already exists before altering.
+		$exists = $wpdb->get_var(
+			$wpdb->prepare(
+				'SELECT COUNT(*) FROM information_schema.COLUMNS
+				  WHERE TABLE_SCHEMA = %s
+				    AND TABLE_NAME   = %s
+				    AND COLUMN_NAME  = %s',
+				DB_NAME,
+				$table,
+				$column
+			)
+		);
+
+		if ( ! $exists ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.SchemaChange
+			$wpdb->query(
+				"ALTER TABLE `{$table}`
+				 ADD COLUMN `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+				 ADD KEY `created_at` (`created_at`)"
+			);
+		}
+	}
+}

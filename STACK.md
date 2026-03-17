@@ -21,8 +21,11 @@
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │  CLIENTS                                                     │
-│  Browser (WP) │ React Native App │ Headless Frontend        │
-│  External Apps │ AI Agents │ Fediverse (ActivityPub)        │
+│  Public blocks (Interactivity API, server-rendered)          │
+│  Admin UI (PHP templates + Settings API + Interactivity API) │
+│  Block editor (React — Gutenberg only)                       │
+│  React Native App │ Headless Frontend │ External Apps        │
+│  AI Agents │ Fediverse (ActivityPub)                         │
 └────────────────────────┬────────────────────────────────────┘
                          │
 ┌────────────────────────▼────────────────────────────────────┐
@@ -511,8 +514,8 @@ GET    /members/{id}/challenges         Active challenges + progress
 GET    /members/{id}/leaderboard-rank   Current rank (each period)
 
 Leaderboards:
-GET    /leaderboard                     ?period=day|week|month|all&limit=10&group_id=X
-GET    /leaderboard/team                Team/cohort aggregate
+GET    /leaderboard                     ?period=day|week|month|all&limit=10&scope_type=bp_group|challenge|custom&scope_id=X
+GET    /leaderboard/team                Scoped aggregate (scope_type=challenge|bp_group|custom)
 
 Community:
 GET    /badges                          All available badges (with locked state for user)
@@ -693,7 +696,113 @@ class WB_Gam_OpenBadges3 {
 
 ---
 
-## 5. Mobile Layer
+## 5. Frontend Architecture
+
+### Guiding Rule: Right Tool Per Context
+
+No single JS framework rules everything. The rendering context determines the tool.
+
+| Context | Tool | Why |
+|---|---|---|
+| Public block frontend (leaderboard, member-points, etc.) | **WordPress Interactivity API** | PHP server-renders full HTML. Store adds reactivity. Best LCP, SEO-safe, ~10KB. |
+| Block editor `edit.js` inspector panels | **React + TypeScript** | Unavoidable — Gutenberg IS React |
+| Admin settings pages (points, levels, toggles) | **PHP + Settings API** | WordPress-native, no JS needed |
+| Admin dynamic UI (rule builder live preview, analytics period switcher) | **Interactivity API** | Same paradigm as frontend — one JS approach site-wide |
+| Admin data tables (badge library, rule list) | **`WP_List_Table`** | WordPress-native, built for this |
+
+**React appears in exactly one place: the Gutenberg block `edit.js`. Nowhere else.**
+
+---
+
+### Public Blocks — WordPress Interactivity API
+
+PHP renders the full HTML on the server. The Interactivity API store adds reactive behavior (period switching, live updates, toast notifications) without a client-side bootstrap:
+
+```js
+// store.js — same file works for both public frontend and admin widgets
+import { store, getContext } from '@wordpress/interactivity';
+
+store( 'wb-gamification/leaderboard', {
+    state: { period: 'week', loading: false, entries: [] },
+    actions: {
+        async switchPeriod() {
+            const ctx = getContext();
+            state.loading = true;
+            const res = await fetch(
+                `/wp-json/wb-gamification/v1/leaderboard?period=${ctx.period}&scope_type=${ctx.scopeType}&scope_id=${ctx.scopeId}`
+            );
+            state.entries = await res.json();
+            state.loading = false;
+        },
+    },
+} );
+```
+
+```html
+<!-- PHP renders this. Interactivity API hydrates it. No React bootstrap. -->
+<div data-wp-interactive="wb-gamification/leaderboard"
+     data-wp-context='{"period":"week","scopeType":"global","scopeId":0}'>
+
+    <button data-wp-on--click="actions.switchPeriod"
+            data-wp-context='{"period":"day"}'>Today</button>
+
+    <button data-wp-on--click="actions.switchPeriod"
+            data-wp-context='{"period":"week"}'>This Week</button>
+
+    <div data-wp-class--is-loading="state.loading">
+        <!-- Server-rendered rows; replaced by Interactivity API on period switch -->
+    </div>
+</div>
+```
+
+---
+
+### Block Editor — React (Unavoidable)
+
+React is the Gutenberg editor. Keep it strictly contained to `edit.js`:
+
+```
+block.json     ← metadata, view/editor script separation
+edit.tsx       ← React component (block editor only — never ships to public frontend)
+save.tsx       ← null (dynamic block) or static HTML
+view.js        ← Interactivity API store (the public frontend render)
+```
+
+`"viewScript"` in `block.json` always points to the Interactivity API store, never React.
+
+---
+
+### Admin UI — PHP + Settings API + Interactivity API
+
+```php
+// Standard settings form — no JS required
+add_settings_section( 'wb_gam_points', 'Points Settings', null, 'wb-gamification' );
+add_settings_field( 'wb_gam_points_wp_publish_post', 'Publish Post', ... );
+
+// Badge library + rule list
+class WB_Gam_Rules_List_Table extends WP_List_Table { ... }
+
+// Dynamic admin behavior (rule condition live preview, analytics period switch)
+// → same Interactivity API store as the public leaderboard block
+// → no React in wp-admin, ever
+```
+
+---
+
+### Build Tooling
+
+| Tool | Scope |
+|---|---|
+| `@wordpress/scripts` | Compiles all JS/TS — handles dependency extraction, WP externals |
+| TypeScript 5.x | All JS: Interactivity API stores + block editor `edit.tsx` |
+| ESLint + `@wordpress/eslint-plugin` | WP-aware lint rules across all JS |
+| Prettier | Formatting |
+
+One build pipeline. Two output targets: `view.js` (Interactivity API, public + admin) and `index.js` (React, block editor only).
+
+---
+
+## 6. Mobile Layer  <!-- was §5 -->
 
 ### 2026: PWA (Progressive Web App)
 
@@ -916,7 +1025,7 @@ Unit tests:        PHPUnit 11 + Brain Monkey (WP function mocks)
 Integration tests: WordPress test suite + real DB
 E2E tests:         Playwright (via MCP tools)
 Static analysis:   PHPStan Level 8 + Rector for upgrades
-JS tests:          Jest + @testing-library/react (blocks)
+JS tests:          Jest (Interactivity API stores) + @testing-library/react (block editor edit.tsx only)
 CI/CD:             GitHub Actions
 ```
 
@@ -995,6 +1104,10 @@ jobs:
 | Real-time | SSE primary | WebSockets primary | SSE works on shared hosting; WS breaks at load balancers |
 | AI interface | Pluggable provider | Hardcoded OpenAI | Swap providers; local models for privacy |
 | Event log | Append-only insert | UPDATE rows | Audit trail, safe concurrency, GDPR erasure |
+| Public block frontend | Interactivity API | React | Server-rendered HTML + ~10KB store vs React's 130KB bootstrap; better LCP, SEO-safe |
+| Admin UI | PHP templates + Settings API + Interactivity API | React in wp-admin | React is overkill for forms and list tables; Interactivity API handles all dynamic admin behavior |
+| Block editor | React + TypeScript | — | Unavoidable — Gutenberg IS React; keep strictly in `edit.tsx`, never `view.js` |
+| Leaderboard scope | `scope_type` + `scope_id` params | `group_id` only | Zero-dependency core — BP group is one scope type, not the only one |
 | Mobile | React Native SDK | Flutter / native | Largest developer ecosystem; web-to-mobile code reuse |
 | Credentials standard | OpenBadges 3.0 | Custom badge system | W3C standard, portable, HR-system compatible |
 | Federation | ActivityPub | Custom federation | Open standard, WordPress ecosystem momentum |

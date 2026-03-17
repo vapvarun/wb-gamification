@@ -5,12 +5,16 @@
  * Registers all default BuddyPress actions as gamification triggers.
  * Fires on 'wb_gamification_register' — after the Registry is initialized.
  *
+ * Phase 0: will be replaced by integrations/buddypress.php manifest.
+ *
  * @package WB_Gamification
  */
 
+namespace WBGam\BuddyPress;
+
 defined( 'ABSPATH' ) || exit;
 
-final class WB_Gam_BuddyPress_Hooks {
+final class HooksIntegration {
 
 	public static function init(): void {
 		if ( ! function_exists( 'buddypress' ) ) {

@@ -9,12 +9,18 @@
  *   - standalone() : hooks only registered when BuddyPress is NOT active
  *                    (BuddyPress hooks cover the equivalent when BP is present)
  *
+ * Phase 0: will be replaced by integrations/wordpress.php manifest.
+ *
  * @package WB_Gamification
  */
 
+namespace WBGam\Integrations\WordPress;
+
+use WBGam\Engine\PointsEngine;
+
 defined( 'ABSPATH' ) || exit;
 
-final class WB_Gam_WordPress_Hooks {
+final class HooksIntegration {
 
 	public static function init(): void {
 		add_action( 'wb_gamification_register', [ self::class, 'register_always' ] );
@@ -50,7 +56,7 @@ final class WB_Gam_WordPress_Hooks {
 				'default_points' => 10,
 				'category'       => 'wordpress',
 				'icon'           => 'dashicons-lock',
-				'repeatable'     => false,  // Registry checks action count > 0 → one-time.
+				'repeatable'     => false,
 				'cooldown'       => 0,
 			],
 			[
@@ -59,7 +65,6 @@ final class WB_Gam_WordPress_Hooks {
 				'description'    => __( 'Awarded once when the user saves their WP profile with a bio.', 'wb-gamification' ),
 				'hook'           => 'personal_options_update',
 				'user_callback'  => function ( int $user_id ): int {
-					// Only award if the user has a bio — "complete" means something.
 					return get_user_meta( $user_id, 'description', true ) ? $user_id : 0;
 				},
 				'default_points' => 10,
@@ -74,7 +79,6 @@ final class WB_Gam_WordPress_Hooks {
 				'description'    => __( 'Post author earns points when an approved comment is left on their content.', 'wb-gamification' ),
 				'hook'           => 'comment_post',
 				'user_callback'  => function ( int $comment_id, int|string $approved ): int {
-					// Only award on approved comments — blocks spam from gaming this.
 					if ( 1 !== (int) $approved ) {
 						return 0;
 					}
@@ -100,11 +104,6 @@ final class WB_Gam_WordPress_Hooks {
 
 	/**
 	 * Triggers only registered when BuddyPress is NOT active.
-	 *
-	 * When BuddyPress IS active, the BuddyPress hooks integration registers
-	 * equivalent actions (member_blog_publish, bp_activity_comment, etc.)
-	 * that fire on the same underlying hooks. Registering both would
-	 * double-award points for the same real-world event.
 	 */
 	public static function register_standalone(): void {
 		$actions = [
@@ -115,12 +114,9 @@ final class WB_Gam_WordPress_Hooks {
 				'hook'           => 'publish_post',
 				'user_callback'  => function ( int $post_id ): int {
 					$post = get_post( $post_id );
-					// Only standard posts (not pages, attachments, etc.)
 					if ( ! $post || 'post' !== $post->post_type ) {
 						return 0;
 					}
-					// Skip if this is an auto-draft being published for the first time
-					// by a scheduled cron (post_date_gmt is in the past = scheduled post).
 					return (int) $post->post_author;
 				},
 				'default_points' => 25,
@@ -139,9 +135,8 @@ final class WB_Gam_WordPress_Hooks {
 					if ( ! $post || 'post' !== $post->post_type ) {
 						return 0;
 					}
-					$author_id    = (int) $post->post_author;
-					$post_count   = (int) count_user_posts( $author_id, 'post' );
-					// count_user_posts includes the current post (just published).
+					$author_id  = (int) $post->post_author;
+					$post_count = (int) count_user_posts( $author_id, 'post' );
 					return 1 === $post_count ? $author_id : 0;
 				},
 				'default_points' => 20,
@@ -161,7 +156,7 @@ final class WB_Gam_WordPress_Hooks {
 					}
 					$comment = get_comment( $comment_id );
 					if ( ! $comment || empty( $comment->user_id ) ) {
-						return 0; // Anonymous comment — no WP user to award.
+						return 0;
 					}
 					return (int) $comment->user_id;
 				},
@@ -175,7 +170,7 @@ final class WB_Gam_WordPress_Hooks {
 				'id'             => 'wp_comment_approved',
 				'label'          => __( 'Comment moves from pending to approved', 'wb-gamification' ),
 				'description'    => __( 'Awarded when a previously moderated comment gets approved.', 'wb-gamification' ),
-				'hook'           => 'comment_approved_1',  // transition_{old_status}_{new_status}
+				'hook'           => 'comment_approved_1',
 				'user_callback'  => function ( \WP_Comment $comment ): int {
 					return (int) $comment->user_id;
 				},
@@ -187,8 +182,7 @@ final class WB_Gam_WordPress_Hooks {
 			],
 		];
 
-		// The comment_approved_1 hook needs special wiring — use the real
-		// transition hook name and a wrapper.
+		// The comment_approved transition needs special wiring.
 		add_action(
 			'transition_comment_status',
 			function ( string $new_status, string $old_status, \WP_Comment $comment ): void {
@@ -198,14 +192,12 @@ final class WB_Gam_WordPress_Hooks {
 				if ( empty( $comment->user_id ) ) {
 					return;
 				}
-				// Fire via process_action so the Registry's cooldown/enabled checks apply.
-				WB_Gam_Points_Engine::process_action( 'wp_comment_approved', (int) $comment->user_id );
+				PointsEngine::process_action( 'wp_comment_approved', (int) $comment->user_id );
 			},
 			10,
 			3
 		);
 
-		// Register everything except wp_comment_approved (wired above directly).
 		foreach ( $actions as $action ) {
 			if ( 'wp_comment_approved' === $action['id'] ) {
 				continue;

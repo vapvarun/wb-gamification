@@ -1,0 +1,40 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "wb-gamification/top-members",
+	"version": "0.1.0",
+	"title": "Top Members",
+	"category": "widgets",
+	"description": "Highlight top-ranked members with avatars, points, level, and badge count.",
+	"keywords": ["gamification", "top members", "leaderboard", "community", "spotlight"],
+	"textdomain": "wb-gamification",
+	"attributes": {
+		"limit": {
+			"type": "integer",
+			"default": 3
+		},
+		"period": {
+			"type": "string",
+			"default": "all_time",
+			"enum": ["all_time", "this_week", "this_month"]
+		},
+		"show_badges": {
+			"type": "boolean",
+			"default": true
+		},
+		"show_level": {
+			"type": "boolean",
+			"default": true
+		},
+		"layout": {
+			"type": "string",
+			"default": "podium",
+			"enum": ["podium", "list"]
+		}
+	},
+	"supports": {
+		"html": false,
+		"align": ["wide", "full"]
+	},
+	"render": "file:./render.php"
+}

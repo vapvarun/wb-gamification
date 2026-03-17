@@ -1,0 +1,29 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "wb-gamification/member-points",
+	"version": "0.1.0",
+	"title": "Member Points",
+	"category": "widgets",
+	"description": "Display a member's current points total and level progress.",
+	"keywords": ["points", "level", "progress", "gamification"],
+	"supports": {
+		"html": false
+	},
+	"attributes": {
+		"user_id": {
+			"type": "integer",
+			"default": 0
+		},
+		"show_level": {
+			"type": "boolean",
+			"default": true
+		},
+		"show_progress_bar": {
+			"type": "boolean",
+			"default": true
+		}
+	},
+	"render": "file:./render.php",
+	"textdomain": "wb-gamification"
+}

@@ -5,9 +5,11 @@
  * @package WB_Gamification
  */
 
+namespace WBGam\Abilities;
+
 defined( 'ABSPATH' ) || exit;
 
-final class WB_Gam_Abilities {
+final class AbilitiesRegistrar {
 
 	public static function register(): void {
 		if ( ! function_exists( 'wp_register_ability' ) ) {

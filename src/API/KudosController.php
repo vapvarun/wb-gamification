@@ -1,0 +1,202 @@
+<?php
+/**
+ * REST API: Kudos Controller
+ *
+ * POST /wb-gamification/v1/kudos              Give kudos to a member
+ * GET  /wb-gamification/v1/kudos              Recent kudos feed
+ * GET  /wb-gamification/v1/kudos/me           Current user's kudos sent/received counts
+ *
+ * @package WB_Gamification
+ * @since   0.1.0
+ */
+
+namespace WBGam\API;
+
+use WBGam\Engine\KudosEngine;
+use WP_REST_Controller;
+use WP_REST_Response;
+use WP_REST_Request;
+use WP_REST_Server;
+use WP_Error;
+
+defined( 'ABSPATH' ) || exit;
+
+class KudosController extends WP_REST_Controller {
+
+	protected $namespace = 'wb-gamification/v1';
+	protected $rest_base = 'kudos';
+
+	public function register_routes(): void {
+		// GET /kudos — recent kudos feed (public)
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base,
+			[
+				[
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => [ $this, 'get_items' ],
+					'permission_callback' => '__return_true',
+					'args'                => [
+						'limit' => [
+							'type'              => 'integer',
+							'default'           => 20,
+							'minimum'           => 1,
+							'maximum'           => 50,
+							'sanitize_callback' => 'absint',
+						],
+					],
+				],
+				// POST /kudos — give kudos (must be logged in)
+				[
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => [ $this, 'create_item' ],
+					'permission_callback' => [ $this, 'create_item_permissions_check' ],
+					'args'                => [
+						'receiver_id' => [
+							'required'          => true,
+							'type'              => 'integer',
+							'minimum'           => 1,
+							'sanitize_callback' => 'absint',
+							'description'       => 'User ID of the member receiving kudos.',
+						],
+						'message'     => [
+							'type'              => 'string',
+							'default'           => '',
+							'sanitize_callback' => 'sanitize_text_field',
+							'description'       => 'Optional short message (max 255 chars).',
+						],
+					],
+				],
+				'schema' => [ $this, 'get_item_schema' ],
+			]
+		);
+
+		// GET /kudos/me — current user's kudos stats
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/me',
+			[
+				[
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => [ $this, 'get_my_stats' ],
+					'permission_callback' => [ $this, 'require_logged_in' ],
+				],
+			]
+		);
+	}
+
+	// ── Permission checks ──────────────────────────────────────────────────────
+
+	public function create_item_permissions_check( WP_REST_Request $request ): bool|WP_Error {
+		if ( ! is_user_logged_in() ) {
+			return new WP_Error(
+				'rest_forbidden',
+				__( 'You must be logged in to give kudos.', 'wb-gamification' ),
+				[ 'status' => 401 ]
+			);
+		}
+		return true;
+	}
+
+	public function require_logged_in( WP_REST_Request $request ): bool|WP_Error {
+		if ( ! is_user_logged_in() ) {
+			return new WP_Error(
+				'rest_forbidden',
+				__( 'You must be logged in.', 'wb-gamification' ),
+				[ 'status' => 401 ]
+			);
+		}
+		return true;
+	}
+
+	// ── Endpoint callbacks ─────────────────────────────────────────────────────
+
+	/**
+	 * GET /kudos — recent kudos feed.
+	 */
+	public function get_items( WP_REST_Request $request ): WP_REST_Response {
+		$limit = (int) $request->get_param( 'limit' );
+		$feed  = KudosEngine::get_recent( $limit );
+
+		return rest_ensure_response( $feed );
+	}
+
+	/**
+	 * POST /kudos — give kudos to another member.
+	 */
+	public function create_item( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+		$giver_id    = get_current_user_id();
+		$receiver_id = (int) $request->get_param( 'receiver_id' );
+		$message     = (string) $request->get_param( 'message' );
+
+		if ( ! get_userdata( $receiver_id ) ) {
+			return new WP_Error(
+				'rest_user_invalid',
+				__( 'Recipient not found.', 'wb-gamification' ),
+				[ 'status' => 404 ]
+			);
+		}
+
+		$result = KudosEngine::send( $giver_id, $receiver_id, $message );
+
+		if ( is_wp_error( $result ) ) {
+			return new WP_Error(
+				$result->get_error_code(),
+				$result->get_error_message(),
+				[ 'status' => 422 ]
+			);
+		}
+
+		$response = rest_ensure_response(
+			[
+				'success'     => true,
+				'receiver_id' => $receiver_id,
+				'daily_remaining' => max(
+					0,
+					(int) get_option( 'wb_gam_kudos_daily_limit', 5 ) - KudosEngine::get_daily_sent_count( $giver_id )
+				),
+			]
+		);
+		$response->set_status( 201 );
+
+		return $response;
+	}
+
+	/**
+	 * GET /kudos/me — current user's sent/received counts + daily budget.
+	 */
+	public function get_my_stats( WP_REST_Request $request ): WP_REST_Response {
+		$user_id     = get_current_user_id();
+		$daily_limit = (int) get_option( 'wb_gam_kudos_daily_limit', 5 );
+		$sent_today  = KudosEngine::get_daily_sent_count( $user_id );
+
+		return rest_ensure_response(
+			[
+				'user_id'          => $user_id,
+				'received_total'   => KudosEngine::get_received_count( $user_id ),
+				'daily_limit'      => $daily_limit,
+				'sent_today'       => $sent_today,
+				'daily_remaining'  => max( 0, $daily_limit - $sent_today ),
+			]
+		);
+	}
+
+	// ── Schema ─────────────────────────────────────────────────────────────────
+
+	public function get_item_schema(): array {
+		return [
+			'$schema'    => 'http://json-schema.org/draft-04/schema#',
+			'title'      => 'wb-gamification-kudos',
+			'type'       => 'object',
+			'properties' => [
+				'id'            => [ 'type' => 'integer' ],
+				'giver_id'      => [ 'type' => 'integer' ],
+				'giver_name'    => [ 'type' => 'string' ],
+				'receiver_id'   => [ 'type' => 'integer' ],
+				'receiver_name' => [ 'type' => 'string' ],
+				'message'       => [ 'type' => [ 'string', 'null' ] ],
+				'created_at'    => [ 'type' => 'string' ],
+			],
+		];
+	}
+}

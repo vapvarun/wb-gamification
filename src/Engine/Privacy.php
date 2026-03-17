@@ -1,0 +1,262 @@
+<?php
+/**
+ * WB Gamification — Privacy / GDPR
+ *
+ * Registers personal data exporter and eraser with the WordPress privacy
+ * framework (Tools > Export Personal Data / Erase Personal Data).
+ *
+ * Data erased:
+ *   - wb_gam_events         (all rows for user_id)
+ *   - wb_gam_points         (all rows for user_id)
+ *   - wb_gam_user_badges    (all rows for user_id)
+ *   - wb_gam_streaks        (row for user_id)
+ *   - wb_gam_challenge_log  (all rows for user_id)
+ *   - wb_gam_kudos          (giver_id and receiver_id rows)
+ *   - wb_gam_partners       (user_id_1 and user_id_2 rows)
+ *   - wb_gam_member_prefs   (row for user_id)
+ *   - User meta: wb_gam_pr_* keys
+ *
+ * Data exported:
+ *   - Points total + history
+ *   - Badges earned
+ *   - Streak stats
+ *   - Member preferences
+ *
+ * @package WB_Gamification
+ * @since   0.1.0
+ */
+
+namespace WBGam\Engine;
+
+defined( 'ABSPATH' ) || exit;
+
+final class Privacy {
+
+	public static function init(): void {
+		add_filter( 'wp_privacy_personal_data_exporters', [ __CLASS__, 'register_exporter' ] );
+		add_filter( 'wp_privacy_personal_data_erasers', [ __CLASS__, 'register_eraser' ] );
+	}
+
+	// ── Registration ────────────────────────────────────────────────────────
+
+	public static function register_exporter( array $exporters ): array {
+		$exporters['wb-gamification'] = [
+			'exporter_friendly_name' => __( 'WB Gamification', 'wb-gamification' ),
+			'callback'               => [ __CLASS__, 'export_user_data' ],
+		];
+		return $exporters;
+	}
+
+	public static function register_eraser( array $erasers ): array {
+		$erasers['wb-gamification'] = [
+			'eraser_friendly_name' => __( 'WB Gamification', 'wb-gamification' ),
+			'callback'             => [ __CLASS__, 'erase_user_data' ],
+		];
+		return $erasers;
+	}
+
+	// ── Exporter ────────────────────────────────────────────────────────────
+
+	/**
+	 * @param string $email_address
+	 * @param int    $page          1-based page (WordPress sends up to 500 items/page)
+	 */
+	public static function export_user_data( string $email_address, int $page = 1 ): array {
+		$user = get_user_by( 'email', $email_address );
+		if ( ! $user ) {
+			return [ 'data' => [], 'done' => true ];
+		}
+
+		$user_id = (int) $user->ID;
+		global $wpdb;
+
+		$data_groups = [];
+
+		// Points summary.
+		$total = PointsEngine::get_total( $user_id );
+		$data_groups[] = [
+			'group_id'    => 'wb-gam-points',
+			'group_label' => __( 'Gamification Points', 'wb-gamification' ),
+			'item_id'     => 'wb-gam-points-' . $user_id,
+			'data'        => [
+				[
+					'name'  => __( 'Total Points', 'wb-gamification' ),
+					'value' => (string) $total,
+				],
+			],
+		];
+
+		// Points history (all).
+		$history = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT action_id, points, created_at FROM {$wpdb->prefix}wb_gam_points WHERE user_id = %d ORDER BY created_at DESC",
+				$user_id
+			),
+			ARRAY_A
+		) ?: [];
+
+		foreach ( $history as $i => $row ) {
+			$data_groups[] = [
+				'group_id'    => 'wb-gam-points-history',
+				'group_label' => __( 'Points History', 'wb-gamification' ),
+				'item_id'     => 'wb-gam-ph-' . $i,
+				'data'        => [
+					[ 'name' => __( 'Action',  'wb-gamification' ), 'value' => $row['action_id'] ],
+					[ 'name' => __( 'Points',  'wb-gamification' ), 'value' => $row['points'] ],
+					[ 'name' => __( 'Date',    'wb-gamification' ), 'value' => $row['created_at'] ],
+				],
+			];
+		}
+
+		// Badges.
+		$badges = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT b.name, b.description, ub.earned_at
+				   FROM {$wpdb->prefix}wb_gam_user_badges ub
+				   JOIN {$wpdb->prefix}wb_gam_badge_defs b ON b.id = ub.badge_id
+				  WHERE ub.user_id = %d ORDER BY ub.earned_at DESC",
+				$user_id
+			),
+			ARRAY_A
+		) ?: [];
+
+		foreach ( $badges as $i => $row ) {
+			$data_groups[] = [
+				'group_id'    => 'wb-gam-badges',
+				'group_label' => __( 'Earned Badges', 'wb-gamification' ),
+				'item_id'     => 'wb-gam-badge-' . $i,
+				'data'        => [
+					[ 'name' => __( 'Badge',       'wb-gamification' ), 'value' => $row['name'] ],
+					[ 'name' => __( 'Description', 'wb-gamification' ), 'value' => $row['description'] ],
+					[ 'name' => __( 'Earned At',   'wb-gamification' ), 'value' => $row['earned_at'] ],
+				],
+			];
+		}
+
+		// Streak.
+		$streak = $wpdb->get_row(
+			$wpdb->prepare(
+				"SELECT current_streak, longest_streak, last_active FROM {$wpdb->prefix}wb_gam_streaks WHERE user_id = %d",
+				$user_id
+			),
+			ARRAY_A
+		);
+
+		if ( $streak ) {
+			$data_groups[] = [
+				'group_id'    => 'wb-gam-streak',
+				'group_label' => __( 'Activity Streak', 'wb-gamification' ),
+				'item_id'     => 'wb-gam-streak-' . $user_id,
+				'data'        => [
+					[ 'name' => __( 'Current Streak', 'wb-gamification' ), 'value' => $streak['current_streak'] ],
+					[ 'name' => __( 'Longest Streak', 'wb-gamification' ), 'value' => $streak['longest_streak'] ],
+					[ 'name' => __( 'Last Active',    'wb-gamification' ), 'value' => $streak['last_active'] ],
+				],
+			];
+		}
+
+		// Member preferences.
+		$prefs = $wpdb->get_row(
+			$wpdb->prepare(
+				"SELECT leaderboard_opt_out, show_rank, notification_mode FROM {$wpdb->prefix}wb_gam_member_prefs WHERE user_id = %d",
+				$user_id
+			),
+			ARRAY_A
+		);
+
+		if ( $prefs ) {
+			$data_groups[] = [
+				'group_id'    => 'wb-gam-prefs',
+				'group_label' => __( 'Gamification Preferences', 'wb-gamification' ),
+				'item_id'     => 'wb-gam-prefs-' . $user_id,
+				'data'        => [
+					[ 'name' => __( 'Leaderboard Opt-Out', 'wb-gamification' ), 'value' => $prefs['leaderboard_opt_out'] ? __( 'Yes', 'wb-gamification' ) : __( 'No', 'wb-gamification' ) ],
+					[ 'name' => __( 'Show Rank',           'wb-gamification' ), 'value' => $prefs['show_rank'] ? __( 'Yes', 'wb-gamification' ) : __( 'No', 'wb-gamification' ) ],
+					[ 'name' => __( 'Notification Mode',   'wb-gamification' ), 'value' => $prefs['notification_mode'] ],
+				],
+			];
+		}
+
+		return [ 'data' => $data_groups, 'done' => true ];
+	}
+
+	// ── Eraser ──────────────────────────────────────────────────────────────
+
+	/**
+	 * @param string $email_address
+	 * @param int    $page 1-based
+	 */
+	public static function erase_user_data( string $email_address, int $page = 1 ): array {
+		$user = get_user_by( 'email', $email_address );
+		if ( ! $user ) {
+			return [
+				'items_removed'  => false,
+				'items_retained' => false,
+				'messages'       => [],
+				'done'           => true,
+			];
+		}
+
+		$user_id = (int) $user->ID;
+		global $wpdb;
+
+		$removed = 0;
+
+		// Events log.
+		$removed += (int) $wpdb->delete( $wpdb->prefix . 'wb_gam_events', [ 'user_id' => $user_id ], [ '%d' ] );
+
+		// Points ledger.
+		$removed += (int) $wpdb->delete( $wpdb->prefix . 'wb_gam_points', [ 'user_id' => $user_id ], [ '%d' ] );
+
+		// Earned badges.
+		$removed += (int) $wpdb->delete( $wpdb->prefix . 'wb_gam_user_badges', [ 'user_id' => $user_id ], [ '%d' ] );
+
+		// Streak.
+		$removed += (int) $wpdb->delete( $wpdb->prefix . 'wb_gam_streaks', [ 'user_id' => $user_id ], [ '%d' ] );
+
+		// Challenge log.
+		$removed += (int) $wpdb->delete( $wpdb->prefix . 'wb_gam_challenge_log', [ 'user_id' => $user_id ], [ '%d' ] );
+
+		// Kudos — as giver.
+		$removed += (int) $wpdb->delete( $wpdb->prefix . 'wb_gam_kudos', [ 'giver_id' => $user_id ], [ '%d' ] );
+
+		// Kudos — as receiver.
+		$removed += (int) $wpdb->delete( $wpdb->prefix . 'wb_gam_kudos', [ 'receiver_id' => $user_id ], [ '%d' ] );
+
+		// Accountability partners.
+		$wpdb->delete( $wpdb->prefix . 'wb_gam_partners', [ 'user_id_1' => $user_id ], [ '%d' ] );
+		$wpdb->delete( $wpdb->prefix . 'wb_gam_partners', [ 'user_id_2' => $user_id ], [ '%d' ] );
+
+		// Member preferences.
+		$removed += (int) $wpdb->delete( $wpdb->prefix . 'wb_gam_member_prefs', [ 'user_id' => $user_id ], [ '%d' ] );
+
+		// User meta (personal-record keys).
+		$wpdb->delete(
+			$wpdb->usermeta,
+			[
+				'user_id'  => $user_id,
+				'meta_key' => 'wb_gam_pr_best_week',
+			],
+			[ '%d', '%s' ]
+		);
+
+		// Bust object cache.
+		wp_cache_delete( 'wb_gam_points_' . $user_id, 'wb_gamification' );
+
+		/**
+		 * Fires after a user's gamification data has been erased.
+		 *
+		 * @param int $user_id The user ID whose data was erased.
+		 */
+		do_action( 'wb_gamification_user_data_erased', $user_id );
+
+		return [
+			'items_removed'  => $removed > 0,
+			'items_retained' => false,
+			'messages'       => $removed > 0
+				? [ sprintf( __( 'Gamification data removed (%d rows).', 'wb-gamification' ), $removed ) ]
+				: [],
+			'done'           => true,
+		];
+	}
+}

@@ -10,10 +10,22 @@
         }
     ],
     "require": {
-        "php": ">=8.1"
+        "php": ">=8.1",
+        "woocommerce/action-scheduler": "^3.8"
+    },
+    "require-dev": {
+        "phpstan/phpstan": "^1.0",
+        "szepeviktor/phpstan-wordpress": "^1.0",
+        "phpunit/phpunit": "^11.0",
+        "brain/monkey": "^2.0"
     },
     "autoload": {
-        "classmap": ["src/"]
+        "psr-4": {
+            "WBGam\\": "src/"
+        },
+        "files": [
+            "src/Extensions/functions.php"
+        ]
     },
     "config": {
         "optimize-autoloader": true

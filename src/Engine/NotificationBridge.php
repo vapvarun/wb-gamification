@@ -1,0 +1,267 @@
+<?php
+/**
+ * Notification Bridge
+ *
+ * Collects gamification events that happened during this page request and
+ * outputs:
+ *   1. The Interactivity API–driven toast / overlay markup (once per page).
+ *   2. A small inline <script> that seeds window.wbGamNotifications with any
+ *      pending events stored in a transient for the current user.
+ *
+ * Events are written to the transient by hooking the gamification action hooks
+ * (badge awarded, level changed, etc.).  They are flushed once — reading the
+ * transient deletes it.
+ *
+ * @package WB_Gamification
+ * @since   0.1.0
+ */
+
+namespace WBGam\Engine;
+
+defined( 'ABSPATH' ) || exit;
+
+final class NotificationBridge {
+
+	private const TRANSIENT_PREFIX = 'wb_gam_notif_';
+	private const TRANSIENT_TTL    = 300; // 5 minutes
+
+	// ── Boot ────────────────────────────────────────────────────────────────────
+
+	public static function init(): void {
+		// Collect events from action hooks.
+		add_action( 'wb_gamification_points_awarded',    [ __CLASS__, 'on_points_awarded' ], 99, 3 );
+		add_action( 'wb_gamification_badge_awarded',     [ __CLASS__, 'on_badge_awarded' ],  99, 3 );
+		add_action( 'wb_gamification_level_changed',     [ __CLASS__, 'on_level_changed' ],  99, 3 );
+		add_action( 'wb_gamification_streak_milestone',  [ __CLASS__, 'on_streak_milestone' ], 99, 2 );
+		add_action( 'wb_gamification_challenge_completed', [ __CLASS__, 'on_challenge_completed' ], 99, 2 );
+		add_action( 'wb_gamification_kudos_given',       [ __CLASS__, 'on_kudos_given' ], 99, 4 );
+
+		// Output markup + seed script once, in the footer.
+		add_action( 'wp_footer', [ __CLASS__, 'render' ], 5 );
+	}
+
+	// ── Event collectors ────────────────────────────────────────────────────────
+
+	public static function on_points_awarded( int $user_id, Event $event, int $points ): void {
+		// Don't notify for internal synthetic actions (challenge bonus, streak bonus).
+		$silent = [ 'challenge_completed', 'streak_milestone' ];
+		if ( in_array( $event->action_id, $silent, true ) ) {
+			return;
+		}
+
+		self::push( $user_id, [
+			'type'   => 'points',
+			'points' => $points,
+			'detail' => self::action_label( $event->action_id ),
+		] );
+	}
+
+	public static function on_badge_awarded( int $user_id, array $badge, string $earned_at ): void {
+		self::push( $user_id, [
+			'type'    => 'badge',
+			'message' => sprintf(
+				/* translators: %s = badge name */
+				__( 'Badge earned: %s', 'wb-gamification' ),
+				$badge['name'] ?? ''
+			),
+			'detail'  => $badge['description'] ?? null,
+			'icon'    => '🏅',
+		] );
+	}
+
+	public static function on_level_changed( int $user_id, array $new_level, array $old_level ): void {
+		self::push( $user_id, [
+			'type'      => 'level_up',
+			'levelName' => $new_level['name'] ?? '',
+			'iconUrl'   => $new_level['icon_url'] ?? '',
+		] );
+	}
+
+	public static function on_streak_milestone( int $user_id, int $streak_days ): void {
+		self::push( $user_id, [
+			'type' => 'streak_milestone',
+			'days' => $streak_days,
+		] );
+	}
+
+	public static function on_challenge_completed( int $user_id, array $challenge ): void {
+		self::push( $user_id, [
+			'type'    => 'challenge',
+			'message' => sprintf(
+				/* translators: %s = challenge title */
+				__( 'Challenge complete: %s', 'wb-gamification' ),
+				$challenge['title'] ?? ''
+			),
+			'icon'    => '🎯',
+		] );
+	}
+
+	public static function on_kudos_given( int $giver_id, int $receiver_id, string $message, int $kudos_id ): void {
+		// Notify the receiver (only if they're the current user on this request).
+		self::push( $receiver_id, [
+			'type'    => 'kudos',
+			'message' => __( 'Someone gave you kudos!', 'wb-gamification' ),
+			'detail'  => $message ?: null,
+			'icon'    => '👏',
+		] );
+	}
+
+	// ── Output ──────────────────────────────────────────────────────────────────
+
+	/**
+	 * Render the Interactivity API markup and seed script in the footer.
+	 * Only outputs for logged-in users who have pending events.
+	 */
+	public static function render(): void {
+		$user_id = get_current_user_id();
+		if ( ! $user_id ) {
+			return;
+		}
+
+		$events = self::flush( $user_id );
+
+		// Always output the markup shell (JS needs the DOM nodes).
+		// Seed script only if there are events.
+		?>
+		<div
+			id="wb-gam-notifications"
+			data-wp-interactive="wb-gamification"
+			data-wp-init="callbacks.init"
+		>
+			<!-- Toast stack -->
+			<div
+				class="wb-gam-toasts"
+				role="region"
+				aria-label="<?php esc_attr_e( 'Notifications', 'wb-gamification' ); ?>"
+				aria-live="polite"
+				aria-relevant="additions"
+			>
+				<template data-wp-each="state.toasts" data-wp-each-key="context.toast.id">
+					<div
+						class="wb-gam-toast"
+						data-wp-bind--data-type="context.toast.type"
+						data-wp-context='{ "toastId": "" }'
+						data-wp-init--set-id="actions.dismissToast"
+					>
+						<span class="wb-gam-toast__icon" data-wp-text="context.toast.icon"></span>
+						<div class="wb-gam-toast__body">
+							<strong class="wb-gam-toast__message" data-wp-text="context.toast.message"></strong>
+							<span
+								class="wb-gam-toast__detail"
+								data-wp-text="context.toast.detail"
+								data-wp-bind--hidden="!context.toast.detail"
+							></span>
+						</div>
+						<button
+							class="wb-gam-toast__close"
+							aria-label="<?php esc_attr_e( 'Dismiss', 'wb-gamification' ); ?>"
+							data-wp-on--click="actions.dismissToast"
+						>&#x2715;</button>
+					</div>
+				</template>
+			</div>
+
+			<!-- Level-up overlay -->
+			<div
+				class="wb-gam-overlay wb-gam-overlay--level-up"
+				data-wp-bind--hidden="!state.levelUp.active"
+				role="dialog"
+				aria-modal="true"
+				aria-label="<?php esc_attr_e( 'Level up!', 'wb-gamification' ); ?>"
+			>
+				<div class="wb-gam-overlay__card">
+					<p class="wb-gam-overlay__eyebrow"><?php esc_html_e( 'Level up!', 'wb-gamification' ); ?></p>
+					<img
+						class="wb-gam-overlay__icon"
+						data-wp-bind--src="state.levelUp.iconUrl"
+						data-wp-bind--hidden="!state.levelUp.iconUrl"
+						alt=""
+					/>
+					<p class="wb-gam-overlay__title" data-wp-text="state.levelUp.levelName"></p>
+					<button
+						class="wb-gam-overlay__dismiss"
+						data-wp-on--click="actions.dismissLevelUp"
+					><?php esc_html_e( 'Awesome!', 'wb-gamification' ); ?></button>
+				</div>
+			</div>
+
+			<!-- Streak milestone overlay -->
+			<div
+				class="wb-gam-overlay wb-gam-overlay--streak"
+				data-wp-bind--hidden="!state.streakMilestone.active"
+				role="dialog"
+				aria-modal="true"
+				aria-label="<?php esc_attr_e( 'Streak milestone!', 'wb-gamification' ); ?>"
+			>
+				<div class="wb-gam-overlay__card">
+					<p class="wb-gam-overlay__eyebrow">&#x1F525; <?php esc_html_e( 'Streak milestone!', 'wb-gamification' ); ?></p>
+					<p class="wb-gam-overlay__streak-days">
+						<span data-wp-text="state.streakMilestone.days"></span>
+						<?php esc_html_e( 'days', 'wb-gamification' ); ?>
+					</p>
+					<p class="wb-gam-overlay__sub"><?php esc_html_e( 'Keep showing up — you\'re on fire!', 'wb-gamification' ); ?></p>
+					<button
+						class="wb-gam-overlay__dismiss"
+						data-wp-on--click="actions.dismissStreakMilestone"
+					><?php esc_html_e( 'Keep it up!', 'wb-gamification' ); ?></button>
+				</div>
+			</div>
+		</div>
+
+		<?php if ( ! empty( $events ) ) : ?>
+			<script id="wb-gam-notifications-data">
+				window.wbGamNotifications = <?php echo wp_json_encode( $events ); ?>;
+			</script>
+		<?php endif; ?>
+		<?php
+	}
+
+	// ── Transient helpers ────────────────────────────────────────────────────────
+
+	/**
+	 * Append a notification event to the user's pending queue.
+	 */
+	private static function push( int $user_id, array $event ): void {
+		if ( $user_id <= 0 ) {
+			return;
+		}
+
+		$key    = self::TRANSIENT_PREFIX . $user_id;
+		$events = get_transient( $key ) ?: [];
+		$events[] = $event;
+		set_transient( $key, $events, self::TRANSIENT_TTL );
+	}
+
+	/**
+	 * Read and delete all pending events for a user.
+	 *
+	 * @return array[]
+	 */
+	private static function flush( int $user_id ): array {
+		$key    = self::TRANSIENT_PREFIX . $user_id;
+		$events = get_transient( $key );
+		delete_transient( $key );
+		return is_array( $events ) ? $events : [];
+	}
+
+	// ── Helpers ──────────────────────────────────────────────────────────────────
+
+	/**
+	 * Human-readable label for common action_ids.
+	 */
+	private static function action_label( string $action_id ): ?string {
+		$labels = [
+			'register'            => __( 'for joining', 'wb-gamification' ),
+			'post_publish'        => __( 'for publishing', 'wb-gamification' ),
+			'comment_publish'     => __( 'for commenting', 'wb-gamification' ),
+			'bp_activity_post'    => __( 'for posting', 'wb-gamification' ),
+			'bp_activity_like'    => __( 'for liking', 'wb-gamification' ),
+			'bp_activity_comment' => __( 'for commenting', 'wb-gamification' ),
+			'bp_profile_updated'  => __( 'for updating profile', 'wb-gamification' ),
+			'give_kudos'          => __( 'for giving kudos', 'wb-gamification' ),
+			'receive_kudos'       => __( 'for receiving kudos', 'wb-gamification' ),
+		];
+
+		return $labels[ $action_id ] ?? null;
+	}
+}
