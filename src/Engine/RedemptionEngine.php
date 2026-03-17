@@ -1,0 +1,230 @@
+<?php
+/**
+ * Points Redemption Engine
+ *
+ * Allows members to spend earned points on defined reward items.
+ * Smile.io / loyalty program model — integrates with WooCommerce coupons
+ * when WooCommerce is active, falls back to custom reward items otherwise.
+ *
+ * Reward types:
+ *   discount_pct   — % off WooCommerce order (requires WooCommerce)
+ *   discount_fixed — Fixed amount off (requires WooCommerce)
+ *   custom         — Admin-defined reward, fulfillment handled via hook
+ *
+ * Flow:
+ *   1. Admin defines reward items in wp_gam_redemption_items via admin UI
+ *      or POST /redemptions/items (admin only).
+ *   2. Member redeems: POST /redemptions with { item_id }.
+ *   3. Engine validates member has sufficient points, deducts them,
+ *      creates a redemption record, fires action hook for fulfillment.
+ *   4. For WooCommerce rewards: creates a unique coupon and returns the code.
+ *
+ * @package WB_Gamification
+ * @since   0.1.0
+ */
+
+namespace WBGam\Engine;
+
+defined( 'ABSPATH' ) || exit;
+
+final class RedemptionEngine {
+
+	private const CACHE_GROUP = 'wb_gamification';
+
+	// ── Public API ───────────────────────────────────────────────────────────
+
+	/**
+	 * Get all active redemption items.
+	 *
+	 * @return array<int, array>
+	 */
+	public static function get_items(): array {
+		global $wpdb;
+
+		return $wpdb->get_results(
+			"SELECT id, title, description, points_cost, reward_type, reward_config, stock, is_active
+			   FROM {$wpdb->prefix}wb_gam_redemption_items
+			  WHERE is_active = 1
+			  ORDER BY points_cost ASC",
+			ARRAY_A
+		) ?: [];
+	}
+
+	/**
+	 * Get a single redemption item by ID.
+	 */
+	public static function get_item( int $item_id ): ?array {
+		global $wpdb;
+
+		$row = $wpdb->get_row(
+			$wpdb->prepare(
+				"SELECT id, title, description, points_cost, reward_type, reward_config, stock, is_active
+				   FROM {$wpdb->prefix}wb_gam_redemption_items WHERE id = %d",
+				$item_id
+			),
+			ARRAY_A
+		);
+
+		return $row ?: null;
+	}
+
+	/**
+	 * Redeem an item for a user.
+	 *
+	 * @param int $user_id  User redeeming.
+	 * @param int $item_id  Redemption item ID.
+	 * @return array{ success: bool, redemption_id: int|null, coupon_code: string|null, error: string|null }
+	 */
+	public static function redeem( int $user_id, int $item_id ): array {
+		global $wpdb;
+
+		$item = self::get_item( $item_id );
+
+		if ( ! $item || ! $item['is_active'] ) {
+			return [ 'success' => false, 'error' => __( 'Reward item not found or inactive.', 'wb-gamification' ), 'redemption_id' => null, 'coupon_code' => null ];
+		}
+
+		$cost = (int) $item['points_cost'];
+
+		// Check stock.
+		if ( $item['stock'] !== null && (int) $item['stock'] <= 0 ) {
+			return [ 'success' => false, 'error' => __( 'This reward is out of stock.', 'wb-gamification' ), 'redemption_id' => null, 'coupon_code' => null ];
+		}
+
+		// Check balance.
+		$balance = PointsEngine::get_total( $user_id );
+		if ( $balance < $cost ) {
+			return [
+				'success' => false,
+				'error'   => sprintf(
+					/* translators: 1: cost, 2: current balance */
+					__( 'Insufficient points. This reward costs %1$d pts; you have %2$d.', 'wb-gamification' ),
+					$cost,
+					$balance
+				),
+				'redemption_id' => null,
+				'coupon_code'   => null,
+			];
+		}
+
+		// Atomic stock decrement.
+		if ( $item['stock'] !== null ) {
+			$decremented = $wpdb->query(
+				$wpdb->prepare(
+					"UPDATE {$wpdb->prefix}wb_gam_redemption_items SET stock = stock - 1 WHERE id = %d AND stock > 0",
+					$item_id
+				)
+			);
+			if ( ! $decremented ) {
+				return [ 'success' => false, 'error' => __( 'This reward is out of stock.', 'wb-gamification' ), 'redemption_id' => null, 'coupon_code' => null ];
+			}
+		}
+
+		// Deduct points via Engine::process so the event log is immutable.
+		$event = new Event( [
+			'action_id' => 'points_redeemed',
+			'user_id'   => $user_id,
+			'metadata'  => [ 'item_id' => $item_id, 'points_cost' => -$cost ],
+		] );
+		// Directly debit via PointsEngine (negative award).
+		PointsEngine::debit( $user_id, $cost, 'redemption', $event->event_id );
+
+		// Create redemption record.
+		$wpdb->insert(
+			$wpdb->prefix . 'wb_gam_redemptions',
+			[
+				'user_id'     => $user_id,
+				'item_id'     => $item_id,
+				'points_cost' => $cost,
+				'status'      => 'pending',
+			],
+			[ '%d', '%d', '%d', '%s' ]
+		);
+		$redemption_id = (int) $wpdb->insert_id;
+
+		// Fulfillment.
+		$coupon_code = null;
+		$config      = json_decode( $item['reward_config'] ?? '{}', true ) ?: [];
+
+		if ( in_array( $item['reward_type'], [ 'discount_pct', 'discount_fixed' ], true ) ) {
+			$coupon_code = self::create_woo_coupon( $user_id, $item, $config, $redemption_id );
+			$wpdb->update(
+				$wpdb->prefix . 'wb_gam_redemptions',
+				[ 'status' => $coupon_code ? 'fulfilled' : 'failed', 'coupon_code' => $coupon_code ],
+				[ 'id' => $redemption_id ]
+			);
+		} else {
+			// Custom — fire hook for third-party fulfillment.
+			$wpdb->update( $wpdb->prefix . 'wb_gam_redemptions', [ 'status' => 'pending_fulfillment' ], [ 'id' => $redemption_id ] );
+		}
+
+		wp_cache_delete( 'wb_gam_points_' . $user_id, self::CACHE_GROUP );
+
+		/**
+		 * Fires after a redemption is created.
+		 *
+		 * @param int    $redemption_id Redemption record ID.
+		 * @param int    $user_id       User who redeemed.
+		 * @param array  $item          Reward item data.
+		 * @param string|null $coupon_code WooCommerce coupon code, or null.
+		 */
+		do_action( 'wb_gamification_points_redeemed', $redemption_id, $user_id, $item, $coupon_code );
+
+		return [
+			'success'       => true,
+			'redemption_id' => $redemption_id,
+			'coupon_code'   => $coupon_code,
+			'error'         => null,
+		];
+	}
+
+	// ── WooCommerce coupon creation ──────────────────────────────────────────
+
+	private static function create_woo_coupon( int $user_id, array $item, array $config, int $redemption_id ): ?string {
+		if ( ! function_exists( 'wc_create_coupon' ) && ! class_exists( '\WC_Coupon' ) ) {
+			return null;
+		}
+
+		$user       = get_userdata( $user_id );
+		$code       = strtoupper( 'WBG-' . substr( md5( $redemption_id . $user_id . time() ), 0, 8 ) );
+		$discount   = (float) ( $config['amount'] ?? 10 );
+		$type       = 'discount_pct' === $item['reward_type'] ? 'percent' : 'fixed_cart';
+
+		$coupon = new \WC_Coupon();
+		$coupon->set_code( $code );
+		$coupon->set_discount_type( $type );
+		$coupon->set_amount( $discount );
+		$coupon->set_usage_limit( 1 );
+		$coupon->set_usage_limit_per_user( 1 );
+		$coupon->set_email_restrictions( [ $user->user_email ] );
+		$coupon->set_individual_use( true );
+		$coupon->set_date_expires( strtotime( '+30 days' ) );
+		$coupon->set_description( sprintf( 'Redeemed via WB Gamification — %s', $item['title'] ) );
+		$coupon->save();
+
+		return $code;
+	}
+
+	// ── User redemption history ──────────────────────────────────────────────
+
+	/**
+	 * Get a user's redemption history.
+	 */
+	public static function get_user_redemptions( int $user_id, int $limit = 20 ): array {
+		global $wpdb;
+
+		return $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT r.id, r.points_cost, r.status, r.coupon_code, r.created_at,
+				        i.title, i.reward_type
+				   FROM {$wpdb->prefix}wb_gam_redemptions r
+				   JOIN {$wpdb->prefix}wb_gam_redemption_items i ON i.id = r.item_id
+				  WHERE r.user_id = %d
+				  ORDER BY r.created_at DESC
+				  LIMIT %d",
+				$user_id, $limit
+			),
+			ARRAY_A
+		) ?: [];
+	}
+}

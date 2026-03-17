@@ -53,6 +53,30 @@ class LeaderboardController extends WP_REST_Controller {
 			]
 		);
 
+		// GET /leaderboard/group/{group_id} — scoped to a BuddyPress group
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/group/(?P<group_id>[\d]+)',
+			[
+				[
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => [ $this, 'get_group_leaderboard' ],
+					'permission_callback' => '__return_true',
+					'args'                => array_merge(
+						$this->get_scope_args( true ),
+						[
+							'group_id' => [
+								'required'          => true,
+								'type'              => 'integer',
+								'minimum'           => 1,
+								'sanitize_callback' => 'absint',
+							],
+						]
+					),
+				],
+			]
+		);
+
 		// GET /leaderboard/me — current user's private rank
 		register_rest_route(
 			$this->namespace,
@@ -131,6 +155,36 @@ class LeaderboardController extends WP_REST_Controller {
 				'rank'           => $rank['rank'],
 				'points'         => $rank['points'],
 				'points_to_next' => $rank['points_to_next'],
+			]
+		);
+	}
+
+	/**
+	 * GET /leaderboard/group/{group_id} — BuddyPress group-scoped leaderboard.
+	 */
+	public function get_group_leaderboard( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+		$group_id = (int) $request['group_id'];
+		$period   = $this->validate_period( $request->get_param( 'period' ) );
+		$limit    = (int) $request->get_param( 'limit' );
+
+		// Resolve group name if BP is active.
+		$group_name = '';
+		if ( function_exists( 'groups_get_group' ) ) {
+			$group = groups_get_group( $group_id );
+			if ( empty( $group->id ) ) {
+				return new WP_Error( 'rest_not_found', __( 'Group not found.', 'wb-gamification' ), [ 'status' => 404 ] );
+			}
+			$group_name = $group->name;
+		}
+
+		$rows = LeaderboardEngine::get_leaderboard( $period, $limit, 'bp_group', $group_id );
+
+		return rest_ensure_response(
+			[
+				'group_id'   => $group_id,
+				'group_name' => $group_name,
+				'period'     => $period,
+				'rows'       => $rows,
 			]
 		);
 	}

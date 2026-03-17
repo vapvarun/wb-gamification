@@ -67,6 +67,14 @@ use WBGam\Admin\SettingsPage;
 use WBGam\Admin\SetupWizard;
 use WBGam\Admin\AnalyticsDashboard;
 use WBGam\Engine\Privacy;
+use WBGam\Engine\CommunityChallengeEngine;
+use WBGam\Engine\SiteFirstBadgeEngine;
+use WBGam\Engine\CohortEngine;
+use WBGam\Engine\StatusRetentionEngine;
+use WBGam\Engine\CosmeticEngine;
+use WBGam\Admin\BadgeAdminPage;
+use WBGam\API\CredentialController;
+use WBGam\API\RedemptionController;
 
 /**
  * Main plugin class — singleton loader.
@@ -113,6 +121,11 @@ final class WB_Gamification {
 		add_action( 'plugins_loaded', [ WeeklyEmailEngine::class, 'init' ],  10 );
 		add_action( 'plugins_loaded', [ NotificationBridge::class, 'init' ], 12 );
 		add_action( 'plugins_loaded', [ Privacy::class, 'init' ], 15 );
+		add_action( 'plugins_loaded', [ CommunityChallengeEngine::class, 'init' ], 10 );
+		add_action( 'plugins_loaded', [ SiteFirstBadgeEngine::class, 'init' ], 20 );
+		add_action( 'plugins_loaded', [ CohortEngine::class, 'init' ], 10 );
+		add_action( 'plugins_loaded', [ StatusRetentionEngine::class, 'init' ], 10 );
+		add_action( 'plugins_loaded', [ CosmeticEngine::class, 'init' ], 10 );
 
 		// BuddyPress integrations — must boot on bp_loaded, not plugins_loaded.
 		add_action( 'bp_loaded', [ ProfileIntegration::class, 'init' ] );
@@ -123,6 +136,7 @@ final class WB_Gamification {
 			add_action( 'plugins_loaded', [ SettingsPage::class, 'init' ], 10 );
 			add_action( 'plugins_loaded', [ SetupWizard::class, 'init' ], 10 );
 			add_action( 'plugins_loaded', [ AnalyticsDashboard::class, 'init' ], 10 );
+			add_action( 'plugins_loaded', [ BadgeAdminPage::class, 'init' ], 10 );
 		}
 	}
 
@@ -167,6 +181,8 @@ final class WB_Gamification {
 		( new WebhooksController() )->register_routes();
 		( new RulesController() )->register_routes();
 		( new RecapController() )->register_routes();
+		( new CredentialController() )->register_routes();
+		( new RedemptionController() )->register_routes();
 	}
 
 	public function register_blocks(): void {
@@ -195,6 +211,8 @@ register_activation_hook( __FILE__, function () {
 	LeaderboardNudge::activate();
 	TenureBadgeEngine::activate();
 	WeeklyEmailEngine::activate();
+	CohortEngine::activate();
+	StatusRetentionEngine::activate();
 } );
 
 register_deactivation_hook( __FILE__, function () {
@@ -202,6 +220,8 @@ register_deactivation_hook( __FILE__, function () {
 	LeaderboardNudge::deactivate();
 	TenureBadgeEngine::deactivate();
 	WeeklyEmailEngine::deactivate();
+	CohortEngine::deactivate();
+	StatusRetentionEngine::deactivate();
 	flush_rewrite_rules();
 } );
 

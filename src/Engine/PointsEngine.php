@@ -85,6 +85,41 @@ final class PointsEngine {
 		return (bool) $inserted;
 	}
 
+	/**
+	 * Debit points from a user's balance.
+	 *
+	 * Inserts a negative row in the ledger. The caller is responsible for
+	 * verifying the user has sufficient balance before calling this.
+	 *
+	 * @param int    $user_id   User to debit.
+	 * @param int    $amount    Positive integer; stored as negative in the ledger.
+	 * @param string $action_id Action context label (e.g. 'redemption').
+	 * @param string $event_id  Optional UUID reference to a source event.
+	 * @return bool             True if the row was inserted.
+	 */
+	public static function debit( int $user_id, int $amount, string $action_id, string $event_id = '' ): bool {
+		global $wpdb;
+
+		$inserted = $wpdb->insert(
+			$wpdb->prefix . 'wb_gam_points',
+			[
+				'event_id'   => $event_id ?: null,
+				'user_id'    => $user_id,
+				'action_id'  => $action_id,
+				'points'     => -abs( $amount ),
+				'object_id'  => null,
+				'created_at' => current_time( 'mysql' ),
+			],
+			[ '%s', '%d', '%s', '%d', '%d', '%s' ]
+		);
+
+		if ( $inserted ) {
+			wp_cache_delete( "wb_gam_total_{$user_id}", 'wb_gamification' );
+		}
+
+		return (bool) $inserted;
+	}
+
 	// ── Legacy / public API ────────────────────────────────────────────────────
 
 	/**

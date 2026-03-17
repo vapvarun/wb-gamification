@@ -27,6 +27,15 @@
             "src/Extensions/functions.php"
         ]
     },
+    "autoload-dev": {
+        "psr-4": {
+            "WBGam\\Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "test": "phpunit --configuration phpunit.xml.dist",
+        "test:unit": "phpunit --configuration phpunit.xml.dist --testsuite Unit"
+    },
     "config": {
         "optimize-autoloader": true
     }

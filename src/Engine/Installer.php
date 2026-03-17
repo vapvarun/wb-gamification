@@ -181,6 +181,100 @@ final class Installer {
 			PRIMARY KEY (id)
 		) $charset;" );
 
+		// Community challenges (global counter, Pokémon GO model).
+		dbDelta( "CREATE TABLE {$wpdb->prefix}wb_gam_community_challenges (
+			id            BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+			title         VARCHAR(255)    NOT NULL,
+			description   TEXT,
+			action_id     VARCHAR(100)    NOT NULL,
+			target        BIGINT UNSIGNED NOT NULL,
+			current_count BIGINT UNSIGNED DEFAULT 0,
+			bonus_points  INT             NOT NULL DEFAULT 0,
+			status        VARCHAR(20)     DEFAULT 'active',
+			starts_at     DATETIME        DEFAULT NULL,
+			ends_at       DATETIME        DEFAULT NULL,
+			completed_at  DATETIME        DEFAULT NULL,
+			PRIMARY KEY (id),
+			KEY status (status),
+			KEY action_id (action_id)
+		) $charset;" );
+
+		// Per-user contribution to community challenges.
+		dbDelta( "CREATE TABLE {$wpdb->prefix}wb_gam_community_challenge_contributions (
+			challenge_id       BIGINT UNSIGNED NOT NULL,
+			user_id            BIGINT UNSIGNED NOT NULL,
+			contribution_count BIGINT UNSIGNED DEFAULT 0,
+			PRIMARY KEY (challenge_id, user_id),
+			KEY user_id (user_id)
+		) $charset;" );
+
+		// Cohort league members (Duolingo model).
+		dbDelta( "CREATE TABLE {$wpdb->prefix}wb_gam_cohort_members (
+			user_id    BIGINT UNSIGNED  NOT NULL,
+			cohort_id  VARCHAR(50)      NOT NULL,
+			tier       TINYINT UNSIGNED DEFAULT 0,
+			tier_end   TINYINT UNSIGNED DEFAULT NULL,
+			outcome    VARCHAR(20)      DEFAULT NULL,
+			week       VARCHAR(10)      NOT NULL,
+			pts_start  INT UNSIGNED     DEFAULT 0,
+			PRIMARY KEY (user_id, week),
+			KEY cohort_id (cohort_id),
+			KEY week (week)
+		) $charset;" );
+
+		// Redemption reward items catalog.
+		dbDelta( "CREATE TABLE {$wpdb->prefix}wb_gam_redemption_items (
+			id            BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+			title         VARCHAR(255)    NOT NULL,
+			description   TEXT,
+			points_cost   INT UNSIGNED    NOT NULL,
+			reward_type   VARCHAR(50)     NOT NULL,
+			reward_config LONGTEXT,
+			stock         INT UNSIGNED    DEFAULT NULL,
+			is_active     TINYINT(1)      DEFAULT 1,
+			created_at    DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			PRIMARY KEY (id),
+			KEY is_active (is_active)
+		) $charset;" );
+
+		// Redemption transaction log.
+		dbDelta( "CREATE TABLE {$wpdb->prefix}wb_gam_redemptions (
+			id          BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+			user_id     BIGINT UNSIGNED NOT NULL,
+			item_id     BIGINT UNSIGNED NOT NULL,
+			points_cost INT UNSIGNED    NOT NULL,
+			status      VARCHAR(30)     DEFAULT 'pending',
+			coupon_code VARCHAR(100)    DEFAULT NULL,
+			created_at  DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			PRIMARY KEY (id),
+			KEY user_id (user_id),
+			KEY item_id (item_id),
+			KEY created_at (created_at)
+		) $charset;" );
+
+		// Cosmetics catalog.
+		dbDelta( "CREATE TABLE {$wpdb->prefix}wb_gam_cosmetics (
+			id          VARCHAR(100) NOT NULL,
+			name        VARCHAR(255) NOT NULL,
+			type        VARCHAR(50)  NOT NULL,
+			asset_url   VARCHAR(500),
+			css_class   VARCHAR(100),
+			award_type  VARCHAR(30)  DEFAULT 'admin',
+			cost        INT UNSIGNED DEFAULT 0,
+			is_active   TINYINT(1)   DEFAULT 1,
+			PRIMARY KEY (id)
+		) $charset;" );
+
+		// User-owned cosmetics.
+		dbDelta( "CREATE TABLE {$wpdb->prefix}wb_gam_user_cosmetics (
+			user_id      BIGINT UNSIGNED NOT NULL,
+			cosmetic_id  VARCHAR(100)    NOT NULL,
+			is_active    TINYINT(1)      DEFAULT 0,
+			awarded_at   DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			PRIMARY KEY (user_id, cosmetic_id),
+			KEY cosmetic_id (cosmetic_id)
+		) $charset;" );
+
 		// Seed default levels.
 		self::seed_default_levels();
 
