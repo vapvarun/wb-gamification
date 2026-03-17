@@ -1114,7 +1114,7 @@ These are not features. They are the infrastructure that makes all future phases
 - [x] Team/cohort leaderboard — GET /leaderboard/group/{group_id} in LeaderboardController; uses BP group scope in LeaderboardEngine
 - [x] Weekly leaderboard nudge — LeaderboardNudge.php: weekly cron → AS batch dispatch per active user → send_nudge() with BP notification + optional email + `wb_gamification_weekly_nudge` hook
 - [x] Gutenberg blocks — all 9 blocks built (leaderboard, member-points, badge-showcase, kudos-feed, level-progress, challenges, streak, top-members, year-recap); server-side rendered, block.json + render.php
-- [ ] Interactivity API — smart-batched toast notifications, level-up overlay
+- [x] Interactivity API — smart-batched toast notifications, level-up overlay
 - [x] Weekly summary email — WeeklyEmailEngine.php: weekly cron, AS batch dispatch, best-week personal record detection, unsubscribe link with HMAC token
 - [x] **Rank automation rules** — RankAutomation.php: on `wb_gamification_level_changed`, runs rules from option/filter; action types: add_bp_group, send_bp_message, change_wp_role, custom via `wb_gamification_rank_automation_action` hook
 - [x] **Credential sharing UI** — BadgeShareController.php: GET /badges/{badge_id}/share/{user_id} returns badge def + earner data + LinkedIn share URL + OG meta; publicly accessible
@@ -1124,7 +1124,7 @@ These are not features. They are the infrastructure that makes all future phases
 - [x] StreakEngine — timezone-aware, grace period, accountability partners, `get_contribution_data()` for heatmap
 - [x] ChallengeEngine — individual + team challenges with `team_group_id`, AS-backed bonus dispatch
 - [x] Time-limited community challenges — CommunityChallengeEngine.php: atomic global counter (ON DUPLICATE KEY UPDATE), AS bonus award to all contributors on completion
-- [ ] Level-up celebration overlay
+- [x] Level-up celebration overlay
 - [x] Remaining Gutenberg blocks — level-progress, challenges, streak (all built with render.php)
 - [x] Admin analytics dashboard — AnalyticsDashboard.php: retention cohort chart, action effectiveness table, churn signals
 - [x] Activity contribution heatmap on profile — streak block with `show_heatmap=true`; `StreakEngine::get_contribution_data()` returns day-indexed points array
@@ -1146,7 +1146,7 @@ These are not features. They are the infrastructure that makes all future phases
 - [x] End-of-period status challenge — StatusRetentionEngine.php: Thursday 18:00 UTC nudge; velocity-based threshold; BP notification + `wb_gamification_retention_nudge` hook
 - [x] Full REST API rate limiting — RateLimiter.php: token bucket (60 capacity, 0.2 tokens/s refill); per-user via transients; `consume()` / `remaining()` / `reset()` API
 - [x] Full test coverage — PHPUnit + Brain\Monkey test suite; phpunit.xml.dist; PointsEngineTest, RateLimiterTest, CohortEngineTest, RedemptionEngineTest; GDPR/Privacy also covered
-- [ ] Performance audit (query analysis, caching layer)
+- [x] Performance audit (query analysis, caching layer)
 
 ---
 

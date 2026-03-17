@@ -65,10 +65,65 @@ final class DbUpgrader {
 	private static function get_upgrades(): array {
 		return [
 			'0.1.0' => 'upgrade_to_0_1_0',
+			'0.2.0' => 'upgrade_to_0_2_0',
 		];
 	}
 
 	// ── Migrations ───────────────────────────────────────────────────────────────
+
+	/**
+	 * 0.2.0 — rename community_challenges columns to match CommunityChallengeEngine;
+	 *          add composite and auxiliary indexes.
+	 */
+	private static function upgrade_to_0_2_0(): void {
+		global $wpdb;
+
+		$cc = $wpdb->prefix . 'wb_gam_community_challenges';
+
+		// Rename columns only if the old names still exist.
+		$cols = $wpdb->get_col( "SHOW COLUMNS FROM `{$cc}`", 0 );
+
+		if ( in_array( 'action_id', $cols, true ) ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.SchemaChange
+			$wpdb->query( "ALTER TABLE `{$cc}` CHANGE `action_id` `target_action` VARCHAR(100) NOT NULL" );
+		}
+		if ( in_array( 'target', $cols, true ) ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.SchemaChange
+			$wpdb->query( "ALTER TABLE `{$cc}` CHANGE `target` `target_count` BIGINT UNSIGNED NOT NULL" );
+		}
+		if ( in_array( 'current_count', $cols, true ) ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.SchemaChange
+			$wpdb->query( "ALTER TABLE `{$cc}` CHANGE `current_count` `global_progress` BIGINT UNSIGNED DEFAULT 0" );
+		}
+
+		// Rename KEY action_id → target_action (MySQL 8+ syntax; safe to ignore failure on older versions).
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.SchemaChange
+		$wpdb->query( "ALTER TABLE `{$cc}` RENAME INDEX `action_id` TO `target_action`" );
+
+		// Add composite index for cap-check queries on points ledger.
+		$pts = $wpdb->prefix . 'wb_gam_points';
+		$idx = $wpdb->get_var( "SHOW INDEX FROM `{$pts}` WHERE Key_name = 'idx_user_action_created'" );
+		if ( ! $idx ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.SchemaChange
+			$wpdb->query( "ALTER TABLE `{$pts}` ADD KEY `idx_user_action_created` (user_id, action_id, created_at)" );
+		}
+
+		// Index for leaderboard opt-out queries.
+		$prefs = $wpdb->prefix . 'wb_gam_member_prefs';
+		$idx   = $wpdb->get_var( "SHOW INDEX FROM `{$prefs}` WHERE Key_name = 'idx_opt_out'" );
+		if ( ! $idx ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.SchemaChange
+			$wpdb->query( "ALTER TABLE `{$prefs}` ADD KEY `idx_opt_out` (leaderboard_opt_out)" );
+		}
+
+		// Composite index for challenge status+action queries.
+		$chal = $wpdb->prefix . 'wb_gam_challenges';
+		$idx  = $wpdb->get_var( "SHOW INDEX FROM `{$chal}` WHERE Key_name = 'idx_status_action'" );
+		if ( ! $idx ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.SchemaChange
+			$wpdb->query( "ALTER TABLE `{$chal}` ADD KEY `idx_status_action` (status, action_id)" );
+		}
+	}
 
 	/**
 	 * 0.1.0 → add `created_at` to wb_gam_challenge_log (missed in initial schema).

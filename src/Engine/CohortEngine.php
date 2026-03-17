@@ -79,28 +79,39 @@ final class CohortEngine {
 			return;
 		}
 
-		// Get current tiers for all users.
+		$ids_ints = array_map( 'intval', $user_ids );
+
+		// Prime the object cache for all users' tier meta in one round-trip.
+		update_meta_cache( 'user', $ids_ints );
+
+		// Get current tiers — all meta cache hits after the bulk prime above.
 		$tier_map = [];
-		foreach ( $user_ids as $uid ) {
-			$tier_map[ (int) $uid ] = self::get_user_tier( (int) $uid );
+		foreach ( $ids_ints as $uid ) {
+			$tier_map[ $uid ] = self::get_user_tier( $uid );
 		}
 
-		// Group users by tier then sort by weekly points.
-		$by_tier = array_fill( 0, count( self::TIERS ), [] );
+		// Batch-fetch weekly points for all users in one query.
+		$week_start   = gmdate( 'Y-m-d', strtotime( 'monday this week' ) ) . ' 00:00:00';
+		$placeholders = implode( ',', array_fill( 0, count( $ids_ints ), '%d' ) );
+		$pts_rows     = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT user_id, COALESCE(SUM(points), 0) AS pts
+				   FROM {$wpdb->prefix}wb_gam_points
+				  WHERE user_id IN ($placeholders) AND created_at >= %s
+				 GROUP BY user_id",
+				array_merge( $ids_ints, [ $week_start ] )
+			),
+			ARRAY_A
+		);
+		$week_pts = array_fill_keys( $ids_ints, 0 );
+		foreach ( $pts_rows as $row ) {
+			$week_pts[ (int) $row['user_id'] ] = (int) $row['pts'];
+		}
 
-		$week_start = gmdate( 'Y-m-d', strtotime( 'monday this week' ) ) . ' 00:00:00';
-		$week_pts   = [];
-		foreach ( $user_ids as $uid ) {
-			$uid = (int) $uid;
-			$pts = (int) $wpdb->get_var(
-				$wpdb->prepare(
-					"SELECT COALESCE(SUM(points),0) FROM {$wpdb->prefix}wb_gam_points WHERE user_id = %d AND created_at >= %s",
-					$uid, $week_start
-				)
-			);
-			$week_pts[ $uid ] = $pts;
-			$tier             = $tier_map[ $uid ];
-			$by_tier[ $tier ][] = $uid;
+		// Group users by tier.
+		$by_tier = array_fill( 0, count( self::TIERS ), [] );
+		foreach ( $ids_ints as $uid ) {
+			$by_tier[ $tier_map[ $uid ] ][] = $uid;
 		}
 
 		// Sort within each tier by weekly points desc.
@@ -164,17 +175,28 @@ final class CohortEngine {
 				continue;
 			}
 
-			// Compute week points for each member.
+			// Batch-fetch week points for all cohort members in one query.
+			$member_ids   = array_map( fn( $m ) => (int) $m['user_id'], $members );
+			$placeholders = implode( ',', array_fill( 0, count( $member_ids ), '%d' ) );
+			$pts_rows     = $wpdb->get_results(
+				$wpdb->prepare(
+					"SELECT user_id, COALESCE(SUM(points), 0) AS pts
+					   FROM {$wpdb->prefix}wb_gam_points
+					  WHERE user_id IN ($placeholders) AND created_at >= %s
+					 GROUP BY user_id",
+					array_merge( $member_ids, [ $week_start ] )
+				),
+				ARRAY_A
+			);
+			$pts_map = array_fill_keys( $member_ids, 0 );
+			foreach ( $pts_rows as $row ) {
+				$pts_map[ (int) $row['user_id'] ] = (int) $row['pts'];
+			}
+
 			$ranked = [];
 			foreach ( $members as $m ) {
-				$uid  = (int) $m['user_id'];
-				$pts  = (int) $wpdb->get_var(
-					$wpdb->prepare(
-						"SELECT COALESCE(SUM(points),0) FROM {$wpdb->prefix}wb_gam_points WHERE user_id = %d AND created_at >= %s",
-						$uid, $week_start
-					)
-				);
-				$ranked[] = [ 'user_id' => $uid, 'tier' => (int) $m['tier'], 'pts' => $pts ];
+				$uid      = (int) $m['user_id'];
+				$ranked[] = [ 'user_id' => $uid, 'tier' => (int) $m['tier'], 'pts' => $pts_map[ $uid ] ];
 			}
 
 			// Sort descending by pts.

@@ -60,8 +60,9 @@ final class StatusRetentionEngine {
 			return; // Need at least two levels for threshold logic.
 		}
 
-		$week_start = gmdate( 'Y-m-d', strtotime( 'monday this week' ) ) . ' 00:00:00';
-		$cutoff     = gmdate( 'Y-m-d H:i:s', strtotime( '-7 days' ) );
+		$week_start    = gmdate( 'Y-m-d', strtotime( 'monday this week' ) ) . ' 00:00:00';
+		$four_wk_start = gmdate( 'Y-m-d H:i:s', strtotime( '-4 weeks' ) );
+		$cutoff        = gmdate( 'Y-m-d H:i:s', strtotime( '-7 days' ) );
 
 		// Get all users who earned at least 1 point this week.
 		$active_users = $wpdb->get_col(
@@ -71,27 +72,44 @@ final class StatusRetentionEngine {
 			)
 		);
 
+		if ( empty( $active_users ) ) {
+			return;
+		}
+
+		// Prime the object cache for all nudge-meta and user-meta at once.
+		update_meta_cache( 'user', $active_users );
+
+		// Batch-fetch 4-week point sums for all active users (one query replaces N).
+		$ids_ints     = array_map( 'intval', $active_users );
+		$placeholders = implode( ',', array_fill( 0, count( $ids_ints ), '%d' ) );
+		$avg_rows     = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT user_id, COALESCE(SUM(points), 0) / 4 AS avg_pts
+				   FROM {$wpdb->prefix}wb_gam_points
+				  WHERE user_id IN ($placeholders) AND created_at >= %s
+				 GROUP BY user_id",
+				array_merge( $ids_ints, [ $four_wk_start ] )
+			),
+			ARRAY_A
+		);
+		$avg_map = array_fill_keys( $ids_ints, 0 );
+		foreach ( $avg_rows as $row ) {
+			$avg_map[ (int) $row['user_id'] ] = (int) $row['avg_pts'];
+		}
+
 		foreach ( $active_users as $user_id ) {
 			$user_id = (int) $user_id;
 
-			// Skip if nudged recently.
+			// Skip if nudged recently (meta loaded from primed cache above).
 			$last_nudge = get_user_meta( $user_id, self::NUDGE_META, true );
 			if ( $last_nudge && strtotime( $last_nudge ) >= strtotime( $cutoff ) ) {
 				continue;
 			}
 
-			// Get this week's points.
-			$week_pts = (int) $wpdb->get_var(
-				$wpdb->prepare(
-					"SELECT COALESCE(SUM(points),0) FROM {$wpdb->prefix}wb_gam_points WHERE user_id = %d AND created_at >= %s",
-					$user_id, $week_start
-				)
-			);
-
 			// Determine current level from all-time total.
-			$total  = PointsEngine::get_total( $user_id );
-			$level  = LevelEngine::get_level_for_user( $user_id );
-			$next   = LevelEngine::get_next_level( $user_id );
+			$total = PointsEngine::get_total( $user_id );
+			$level = LevelEngine::get_level_for_user( $user_id );
+			$next  = LevelEngine::get_next_level( $user_id );
 
 			if ( ! $level || ! $next ) {
 				continue; // Already at max or no levels defined.
@@ -103,16 +121,8 @@ final class StatusRetentionEngine {
 				continue; // Already at next level.
 			}
 
-			// Estimate weekly velocity (avg of last 4 weeks).
-			$avg_weekly = (int) $wpdb->get_var(
-				$wpdb->prepare(
-					"SELECT COALESCE(SUM(points),0) / 4 FROM {$wpdb->prefix}wb_gam_points
-					  WHERE user_id = %d AND created_at >= %s",
-					$user_id, gmdate( 'Y-m-d H:i:s', strtotime( '-4 weeks' ) )
-				)
-			);
-
 			// Only nudge if they're close (within one weekly velocity of the threshold).
+			$avg_weekly = $avg_map[ $user_id ] ?? 0;
 			if ( $pts_needed > max( $avg_weekly, 100 ) * 1.5 ) {
 				continue;
 			}

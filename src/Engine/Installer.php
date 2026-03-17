@@ -45,6 +45,7 @@ final class Installer {
 			PRIMARY KEY (id),
 			KEY idx_event (event_id),
 			KEY idx_user_created (user_id, created_at),
+			KEY idx_user_action_created (user_id, action_id, created_at),
 			KEY idx_action (action_id),
 			KEY idx_created (created_at)
 		) $charset;" );
@@ -109,7 +110,8 @@ final class Installer {
 			ends_at        DATETIME,
 			status         VARCHAR(20)     DEFAULT 'active',
 			PRIMARY KEY (id),
-			KEY status (status)
+			KEY status (status),
+			KEY idx_status_action (status, action_id)
 		) $charset;" );
 
 		// Challenge progress.
@@ -154,7 +156,8 @@ final class Installer {
 			leaderboard_opt_out   TINYINT(1)      DEFAULT 0,
 			show_rank             TINYINT(1)      DEFAULT 1,
 			notification_mode     VARCHAR(20)     DEFAULT 'smart',
-			PRIMARY KEY (user_id)
+			PRIMARY KEY (user_id),
+			KEY idx_opt_out (leaderboard_opt_out)
 		) $charset;" );
 
 		// Stored rule configuration (badge conditions, point multipliers, etc.).
@@ -183,20 +186,20 @@ final class Installer {
 
 		// Community challenges (global counter, Pokémon GO model).
 		dbDelta( "CREATE TABLE {$wpdb->prefix}wb_gam_community_challenges (
-			id            BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-			title         VARCHAR(255)    NOT NULL,
-			description   TEXT,
-			action_id     VARCHAR(100)    NOT NULL,
-			target        BIGINT UNSIGNED NOT NULL,
-			current_count BIGINT UNSIGNED DEFAULT 0,
-			bonus_points  INT             NOT NULL DEFAULT 0,
-			status        VARCHAR(20)     DEFAULT 'active',
-			starts_at     DATETIME        DEFAULT NULL,
-			ends_at       DATETIME        DEFAULT NULL,
-			completed_at  DATETIME        DEFAULT NULL,
+			id              BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+			title           VARCHAR(255)    NOT NULL,
+			description     TEXT,
+			target_action   VARCHAR(100)    NOT NULL,
+			target_count    BIGINT UNSIGNED NOT NULL,
+			global_progress BIGINT UNSIGNED DEFAULT 0,
+			bonus_points    INT             NOT NULL DEFAULT 0,
+			status          VARCHAR(20)     DEFAULT 'active',
+			starts_at       DATETIME        DEFAULT NULL,
+			ends_at         DATETIME        DEFAULT NULL,
+			completed_at    DATETIME        DEFAULT NULL,
 			PRIMARY KEY (id),
 			KEY status (status),
-			KEY action_id (action_id)
+			KEY target_action (target_action)
 		) $charset;" );
 
 		// Per-user contribution to community challenges.

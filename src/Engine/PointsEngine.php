@@ -239,25 +239,35 @@ final class PointsEngine {
 
 	private static function get_today_count( int $user_id, string $action_id ): int {
 		global $wpdb;
+		// Use range comparison so MySQL can use the idx_user_action_created index.
+		// wp_date() returns times in the site timezone, matching current_time('mysql').
+		$day_start = wp_date( 'Y-m-d 00:00:00' );
+		$day_end   = wp_date( 'Y-m-d 00:00:00', strtotime( '+1 day' ) );
 		return (int) $wpdb->get_var(
 			$wpdb->prepare(
 				"SELECT COUNT(*) FROM {$wpdb->prefix}wb_gam_points
-				WHERE user_id = %d AND action_id = %s AND DATE(created_at) = CURDATE()",
+				WHERE user_id = %d AND action_id = %s
+				  AND created_at >= %s AND created_at < %s",
 				$user_id,
-				$action_id
+				$action_id,
+				$day_start,
+				$day_end
 			)
 		);
 	}
 
 	private static function get_week_count( int $user_id, string $action_id ): int {
 		global $wpdb;
+		// ISO week start: Monday 00:00:00 in site timezone.
+		// Range comparison allows index seek on idx_user_action_created.
+		$week_start = wp_date( 'Y-m-d 00:00:00', strtotime( 'monday this week' ) );
 		return (int) $wpdb->get_var(
 			$wpdb->prepare(
 				"SELECT COUNT(*) FROM {$wpdb->prefix}wb_gam_points
-				WHERE user_id = %d AND action_id = %s
-				  AND YEARWEEK(created_at, 1) = YEARWEEK(CURDATE(), 1)",
+				WHERE user_id = %d AND action_id = %s AND created_at >= %s",
 				$user_id,
-				$action_id
+				$action_id,
+				$week_start
 			)
 		);
 	}
