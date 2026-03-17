@@ -91,7 +91,10 @@ class CredentialController extends WP_REST_Controller {
 			return new WP_Error( 'rest_user_invalid', __( 'Member not found.', 'wb-gamification' ), [ 'status' => 404 ] );
 		}
 
-		if ( ! BadgeEngine::has_badge( $user_id, $badge_id ) ) {
+		// Check earned status — use raw row to distinguish "never earned" from "expired".
+		$badge_row = BadgeEngine::get_badge_row( $user_id, $badge_id );
+
+		if ( ! $badge_row ) {
 			return new WP_Error(
 				'badge_not_earned',
 				__( 'This member has not earned this badge.', 'wb-gamification' ),
@@ -99,24 +102,29 @@ class CredentialController extends WP_REST_Controller {
 			);
 		}
 
-		// Get earned_at timestamp.
-		global $wpdb;
-		$earned_at = $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT earned_at FROM {$wpdb->prefix}wb_gam_user_badges WHERE user_id = %d AND badge_id = %s",
-				$user_id,
-				$badge_id
-			)
-		);
+		// Credential has expired → 410 Gone (triggers renewal re-engagement).
+		if ( $badge_row['expires_at'] && strtotime( $badge_row['expires_at'] ) <= time() ) {
+			return new WP_Error(
+				'credential_expired',
+				__( 'This credential has expired. Renew to restore verification.', 'wb-gamification' ),
+				[ 'status' => 410 ]
+			);
+		}
 
-		$site_url     = get_site_url();
-		$site_name    = get_bloginfo( 'name' );
-		$issuer_url   = rest_url( $this->namespace . '/issuer' );
-		$cred_url     = rest_url( $this->namespace . '/badges/' . $badge_id . '/credential/' . $user_id );
-		$badge_url    = rest_url( $this->namespace . '/badges/' . $badge_id );
-		$issued_on    = $earned_at
+		$earned_at  = $badge_row['earned_at'];
+		$expires_at = $badge_row['expires_at'];
+
+		$site_url    = get_site_url();
+		$site_name   = get_bloginfo( 'name' );
+		$issuer_url  = rest_url( $this->namespace . '/issuer' );
+		$cred_url    = rest_url( $this->namespace . '/badges/' . $badge_id . '/credential/' . $user_id );
+		$badge_url   = rest_url( $this->namespace . '/badges/' . $badge_id );
+		$issued_on   = $earned_at
 			? ( new \DateTime( $earned_at, new \DateTimeZone( 'UTC' ) ) )->format( 'c' )
 			: gmdate( 'c' );
+		$expires_on  = $expires_at
+			? ( new \DateTime( $expires_at, new \DateTimeZone( 'UTC' ) ) )->format( 'c' )
+			: null;
 
 		// Build OpenBadgeCredential 3.0 JSON-LD document.
 		$credential = [
@@ -134,8 +142,9 @@ class CredentialController extends WP_REST_Controller {
 				'url'  => $site_url,
 			],
 
-			'issuanceDate' => $issued_on,
-			'name'         => $badge['name'],
+			'issuanceDate'   => $issued_on,
+			'name'           => $badge['name'],
+			'expirationDate' => $expires_on,
 
 			'credentialSubject' => [
 				'id'   => $site_url . '/?author=' . $user_id,

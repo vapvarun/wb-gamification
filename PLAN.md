@@ -1138,7 +1138,7 @@ These are not features. They are the infrastructure that makes all future phases
 ### Phase 4 — Credentials + Rewards + Integrations
 - [x] OpenBadges 3.0 credential issuance — CredentialController.php: GET /badges/{badge_id}/credential/{user_id}; full JSON-LD OpenBadgeCredential; `Content-Type: application/ld+json`; `wb_gamification_credential_document` filter
 - [x] OpenBadges 3.0 metadata — full `@context`, `VerifiableCredential`, `OpenBadgeCredential`, `AchievementSubject`, `Achievement`, `Profile` issuer; publicly cacheable (max-age=3600)
-- [ ] HubSpot-style credential expiry (optional) — creates renewal re-engagement cycle
+- [x] HubSpot-style credential expiry — CredentialExpiryEngine.php: validity_days on badge_def, expires_at on user_badges, weekly cron notifies holders, CredentialController returns 410 Gone + expirationDate in JSON-LD, wb_gamification_credential_expired hook for renewal flows
 - [x] Points redemption store — RedemptionEngine.php + RedemptionController.php; reward types (discount_pct, discount_fixed, custom); atomic stock decrement; WC_Coupon creation; GET/POST /redemptions/items + POST /redemptions
 - [x] Cosmetic rewards — CosmeticEngine.php: avatar frames, profile decorations, themes; BP avatar filter hook; cosmetic redemption handler; `wb_gam_cosmetics` + `wb_gam_user_cosmetics` tables
 - [x] Official integration manifests — WooCommerce (purchase/review/wishlist), LearnDash, LifterLMS, The Events Calendar, MemberPress, GiveWP (donations), bbPress (topics/replies/resolved)

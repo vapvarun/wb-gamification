@@ -148,6 +148,7 @@ final class BadgeEngine {
 	 * Award a badge to a user.
 	 *
 	 * Idempotent — returns false if the user already holds the badge.
+	 * When the badge_def has `validity_days > 0`, sets `expires_at` automatically.
 	 *
 	 * @param int    $user_id  User to award.
 	 * @param string $badge_id Badge ID (matches wb_gam_badge_defs.id).
@@ -160,14 +161,22 @@ final class BadgeEngine {
 
 		global $wpdb;
 
+		// Compute expiry if the badge_def specifies a validity window.
+		$def          = self::get_badge_def( $badge_id );
+		$validity     = $def ? (int) ( $def['validity_days'] ?? 0 ) : 0;
+		$expires_at   = $validity > 0
+			? gmdate( 'Y-m-d H:i:s', strtotime( "+{$validity} days" ) )
+			: null;
+
 		$inserted = $wpdb->insert(
 			$wpdb->prefix . 'wb_gam_user_badges',
 			[
-				'user_id'   => $user_id,
-				'badge_id'  => $badge_id,
-				'earned_at' => current_time( 'mysql' ),
+				'user_id'    => $user_id,
+				'badge_id'   => $badge_id,
+				'earned_at'  => current_time( 'mysql' ),
+				'expires_at' => $expires_at,
 			],
-			[ '%d', '%s', '%s' ]
+			[ '%d', '%s', '%s', '%s' ]
 		);
 
 		if ( ! $inserted ) {
@@ -229,10 +238,14 @@ final class BadgeEngine {
 		}
 
 		global $wpdb;
+		// Exclude expired credentials so has_badge() returns false for expired ones.
 		$ids = $wpdb->get_col(
 			$wpdb->prepare(
-				"SELECT badge_id FROM {$wpdb->prefix}wb_gam_user_badges WHERE user_id = %d",
-				$user_id
+				"SELECT badge_id FROM {$wpdb->prefix}wb_gam_user_badges
+				  WHERE user_id = %d
+				    AND (expires_at IS NULL OR expires_at > %s)",
+				$user_id,
+				gmdate( 'Y-m-d H:i:s' )
 			)
 		);
 
@@ -246,7 +259,7 @@ final class BadgeEngine {
 	 * Get earned badges with full definition data for a user.
 	 *
 	 * @param int $user_id User to look up.
-	 * @return array<int, array{id: string, name: string, description: string, image_url: string|null, is_credential: bool, category: string, earned_at: string}>
+	 * @return array<int, array{id: string, name: string, description: string, image_url: string|null, is_credential: bool, category: string, earned_at: string, expires_at: string|null}>
 	 */
 	public static function get_user_badges( int $user_id ): array {
 		global $wpdb;
@@ -254,12 +267,14 @@ final class BadgeEngine {
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT b.id, b.name, b.description, b.image_url,
-				        b.is_credential, b.category, ub.earned_at
+				        b.is_credential, b.category, ub.earned_at, ub.expires_at
 				   FROM {$wpdb->prefix}wb_gam_user_badges ub
 				   JOIN {$wpdb->prefix}wb_gam_badge_defs b ON b.id = ub.badge_id
 				  WHERE ub.user_id = %d
+				    AND (ub.expires_at IS NULL OR ub.expires_at > %s)
 				  ORDER BY ub.earned_at DESC",
-				$user_id
+				$user_id,
+				gmdate( 'Y-m-d H:i:s' )
 			),
 			ARRAY_A
 		);
@@ -274,6 +289,7 @@ final class BadgeEngine {
 					'is_credential' => (bool) $row['is_credential'],
 					'category'      => $row['category'],
 					'earned_at'     => $row['earned_at'],
+					'expires_at'    => $row['expires_at'] ?: null,
 				];
 			},
 			$rows ?: []
@@ -281,17 +297,41 @@ final class BadgeEngine {
 	}
 
 	/**
+	 * Get the raw earned-badge row including expires_at, regardless of expiry status.
+	 * Used by CredentialController to distinguish "never earned" from "expired".
+	 *
+	 * @param int    $user_id  User to look up.
+	 * @param string $badge_id Badge identifier.
+	 * @return array{earned_at: string, expires_at: string|null}|null
+	 */
+	public static function get_badge_row( int $user_id, string $badge_id ): ?array {
+		global $wpdb;
+
+		$row = $wpdb->get_row(
+			$wpdb->prepare(
+				"SELECT earned_at, expires_at FROM {$wpdb->prefix}wb_gam_user_badges
+				  WHERE user_id = %d AND badge_id = %s",
+				$user_id,
+				$badge_id
+			),
+			ARRAY_A
+		);
+
+		return $row ?: null;
+	}
+
+	/**
 	 * Get a single badge definition.
 	 *
 	 * @param string $badge_id Badge identifier.
-	 * @return array{id: string, name: string, description: string, image_url: string|null, is_credential: bool, category: string}|null
+	 * @return array{id: string, name: string, description: string, image_url: string|null, is_credential: bool, validity_days: int|null, category: string}|null
 	 */
 	public static function get_badge_def( string $badge_id ): ?array {
 		global $wpdb;
 
 		$row = $wpdb->get_row(
 			$wpdb->prepare(
-				"SELECT id, name, description, image_url, is_credential, category
+				"SELECT id, name, description, image_url, is_credential, validity_days, category
 				   FROM {$wpdb->prefix}wb_gam_badge_defs
 				  WHERE id = %s",
 				$badge_id
@@ -309,6 +349,7 @@ final class BadgeEngine {
 			'description'   => $row['description'],
 			'image_url'     => $row['image_url'] ?: null,
 			'is_credential' => (bool) $row['is_credential'],
+			'validity_days' => isset( $row['validity_days'] ) ? (int) $row['validity_days'] : null,
 			'category'      => $row['category'],
 		];
 	}
@@ -336,33 +377,43 @@ final class BadgeEngine {
 			return [];
 		}
 
-		// Build earned-at map in one query.
-		$earned_at_map = [];
+		// Build earned-at + expires_at map in one query.
+		$now        = gmdate( 'Y-m-d H:i:s' );
+		$badge_data = [];
 		if ( $user_id > 0 ) {
 			$rows = $wpdb->get_results(
 				$wpdb->prepare(
-					"SELECT badge_id, earned_at FROM {$wpdb->prefix}wb_gam_user_badges WHERE user_id = %d",
+					"SELECT badge_id, earned_at, expires_at FROM {$wpdb->prefix}wb_gam_user_badges WHERE user_id = %d",
 					$user_id
 				),
 				ARRAY_A
 			);
 			foreach ( $rows as $row ) {
-				$earned_at_map[ $row['badge_id'] ] = $row['earned_at'];
+				$badge_data[ $row['badge_id'] ] = [
+					'earned_at'  => $row['earned_at'],
+					'expires_at' => $row['expires_at'],
+				];
 			}
 		}
 
 		return array_map(
-			static function ( array $def ) use ( $earned_at_map ): array {
-				$earned_at = $earned_at_map[ $def['id'] ] ?? null;
+			static function ( array $def ) use ( $badge_data, $now ): array {
+				$data       = $badge_data[ $def['id'] ] ?? null;
+				$earned_at  = $data['earned_at'] ?? null;
+				$expires_at = $data['expires_at'] ?? null;
+				$is_expired = $expires_at && strtotime( $expires_at ) <= strtotime( $now );
 				return [
 					'id'            => $def['id'],
 					'name'          => $def['name'],
 					'description'   => $def['description'],
 					'image_url'     => $def['image_url'] ?: null,
 					'is_credential' => (bool) $def['is_credential'],
+					'validity_days' => isset( $def['validity_days'] ) ? (int) $def['validity_days'] : null,
 					'category'      => $def['category'],
-					'earned'        => null !== $earned_at,
+					'earned'        => null !== $earned_at && ! $is_expired,
 					'earned_at'     => $earned_at,
+					'expires_at'    => $expires_at,
+					'is_expired'    => $is_expired,
 				];
 			},
 			$defs

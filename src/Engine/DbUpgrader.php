@@ -66,10 +66,35 @@ final class DbUpgrader {
 		return [
 			'0.1.0' => 'upgrade_to_0_1_0',
 			'0.2.0' => 'upgrade_to_0_2_0',
+			'0.3.0' => 'upgrade_to_0_3_0',
 		];
 	}
 
 	// ── Migrations ───────────────────────────────────────────────────────────────
+
+	/**
+	 * 0.3.0 — add credential expiry columns.
+	 *   wb_gam_badge_defs.validity_days  — days a credential remains valid (NULL = forever)
+	 *   wb_gam_user_badges.expires_at    — computed on award from validity_days
+	 */
+	private static function upgrade_to_0_3_0(): void {
+		global $wpdb;
+
+		$defs  = $wpdb->prefix . 'wb_gam_badge_defs';
+		$ubadg = $wpdb->prefix . 'wb_gam_user_badges';
+
+		$def_cols = $wpdb->get_col( "SHOW COLUMNS FROM `{$defs}`", 0 );
+		if ( ! in_array( 'validity_days', $def_cols, true ) ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.SchemaChange
+			$wpdb->query( "ALTER TABLE `{$defs}` ADD COLUMN `validity_days` INT UNSIGNED DEFAULT NULL AFTER `is_credential`" );
+		}
+
+		$badge_cols = $wpdb->get_col( "SHOW COLUMNS FROM `{$ubadg}`", 0 );
+		if ( ! in_array( 'expires_at', $badge_cols, true ) ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.SchemaChange
+			$wpdb->query( "ALTER TABLE `{$ubadg}` ADD COLUMN `expires_at` DATETIME DEFAULT NULL AFTER `earned_at`, ADD KEY `idx_expires_at` (`expires_at`)" );
+		}
+	}
 
 	/**
 	 * 0.2.0 — rename community_challenges columns to match CommunityChallengeEngine;

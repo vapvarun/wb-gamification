@@ -71,7 +71,8 @@ final class Registry {
 			'cooldown'    => 0,
 			'daily_cap'   => 0,
 			'weekly_cap'  => 0,
-			'async'       => false,
+			// null = derive from repeatable: true → async, false → sync.
+			'async'       => null,
 		];
 
 		$action = wp_parse_args( $args, $defaults );
@@ -106,7 +107,10 @@ final class Registry {
 					]
 				);
 
-				if ( $action['async'] ?? false ) {
+				// Repeatable actions run async by default — high-volume and must not
+				// block the request path. Non-repeatable once-only actions run sync
+				// so callers get immediate confirmation. $action['async'] overrides.
+				if ( $action['async'] ?? $action['repeatable'] ) {
 					Engine::process_async( $event );
 				} else {
 					Engine::process( $event );

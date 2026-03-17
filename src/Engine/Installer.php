@@ -52,24 +52,27 @@ final class Installer {
 
 		// Earned badges.
 		dbDelta( "CREATE TABLE {$wpdb->prefix}wb_gam_user_badges (
-			id        BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-			user_id   BIGINT UNSIGNED NOT NULL,
-			badge_id  VARCHAR(100)    NOT NULL,
-			earned_at DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			id         BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+			user_id    BIGINT UNSIGNED NOT NULL,
+			badge_id   VARCHAR(100)    NOT NULL,
+			earned_at  DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			expires_at DATETIME        DEFAULT NULL,
 			PRIMARY KEY (id),
-			UNIQUE KEY user_badge (user_id, badge_id)
+			UNIQUE KEY user_badge (user_id, badge_id),
+			KEY idx_expires_at (expires_at)
 		) $charset;" );
 
 		// Badge definitions.
 		// Award conditions live in wb_gam_rules (type='badge_condition', target_id=badge_id).
 		dbDelta( "CREATE TABLE {$wpdb->prefix}wb_gam_badge_defs (
-			id            VARCHAR(100) NOT NULL,
-			name          VARCHAR(255) NOT NULL,
+			id            VARCHAR(100)  NOT NULL,
+			name          VARCHAR(255)  NOT NULL,
 			description   TEXT,
 			image_url     VARCHAR(500),
-			is_credential TINYINT(1)   DEFAULT 0,
-			category      VARCHAR(50)  DEFAULT 'general',
-			created_at    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			is_credential TINYINT(1)    DEFAULT 0,
+			validity_days INT UNSIGNED  DEFAULT NULL,
+			category      VARCHAR(50)   DEFAULT 'general',
+			created_at    DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			PRIMARY KEY (id)
 		) $charset;" );
 

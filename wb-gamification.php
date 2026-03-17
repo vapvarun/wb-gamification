@@ -3,7 +3,7 @@
  * Plugin Name: WB Gamification
  * Plugin URI:  https://wbcomdesigns.com/
  * Description: Complete gamification plugin for BuddyPress and WordPress. Part of the Reign Stack. Points, badges, levels, leaderboards, challenges, and streaks — zero config, works out of the box.
- * Version:     0.2.0
+ * Version:     0.3.0
  * Author:      Wbcom Designs
  * Author URI:  https://wbcomdesigns.com/
  * License:     GPL-2.0+
@@ -18,7 +18,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'WB_GAM_VERSION', '0.2.0' );
+define( 'WB_GAM_VERSION', '0.3.0' );
 define( 'WB_GAM_FILE', __FILE__ );
 define( 'WB_GAM_PATH', plugin_dir_path( __FILE__ ) );
 define( 'WB_GAM_URL', plugin_dir_url( __FILE__ ) );
@@ -75,6 +75,7 @@ use WBGam\Engine\CosmeticEngine;
 use WBGam\Admin\BadgeAdminPage;
 use WBGam\API\CredentialController;
 use WBGam\API\RedemptionController;
+use WBGam\Engine\CredentialExpiryEngine;
 
 /**
  * Main plugin class — singleton loader.
@@ -126,6 +127,7 @@ final class WB_Gamification {
 		add_action( 'plugins_loaded', [ CohortEngine::class, 'init' ], 10 );
 		add_action( 'plugins_loaded', [ StatusRetentionEngine::class, 'init' ], 10 );
 		add_action( 'plugins_loaded', [ CosmeticEngine::class, 'init' ], 10 );
+		add_action( 'plugins_loaded', [ CredentialExpiryEngine::class, 'init' ], 10 );
 
 		// BuddyPress integrations — must boot on bp_loaded, not plugins_loaded.
 		add_action( 'bp_loaded', [ ProfileIntegration::class, 'init' ] );
@@ -213,6 +215,7 @@ register_activation_hook( __FILE__, function () {
 	WeeklyEmailEngine::activate();
 	CohortEngine::activate();
 	StatusRetentionEngine::activate();
+	CredentialExpiryEngine::activate();
 } );
 
 register_deactivation_hook( __FILE__, function () {
@@ -222,6 +225,7 @@ register_deactivation_hook( __FILE__, function () {
 	WeeklyEmailEngine::deactivate();
 	CohortEngine::deactivate();
 	StatusRetentionEngine::deactivate();
+	CredentialExpiryEngine::deactivate();
 	flush_rewrite_rules();
 } );
 
