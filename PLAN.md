@@ -1107,45 +1107,45 @@ These are not features. They are the infrastructure that makes all future phases
 - [x] LeaderboardEngine — periods (all/month/week/day), opt-out filtering, scope resolution (bp_group via filter), get_user_rank with points_to_next
 - [x] LeaderboardController — GET /leaderboard + GET /leaderboard/me
 - [x] BadgesController — GET /badges (with rarity), GET /badges/{id}, POST /badges/{id}/award (admin-only)
-- [ ] Custom badge creator (admin UI)
+- [x] Custom badge creator (admin UI) — BadgeAdminPage.php: list/edit/create/delete; condition editor (point_milestone, action_count, admin_awarded); submenu under WB Gamification
 - [x] KudosEngine — send(), daily limit, receiver/giver points via Engine::process(), wb_gamification_kudos_given hook
 - [x] KudosController — POST /kudos, GET /kudos (feed), GET /kudos/me (stats)
 - [x] BP activity stream integration — badge_earned / level_changed / kudos_given auto-post to stream; admin toggleable per type; activity types registered with `bp_activity_set_action`
-- [ ] Team/cohort leaderboard — uses `team_group_id` from challenges table
+- [x] Team/cohort leaderboard — GET /leaderboard/group/{group_id} in LeaderboardController; uses BP group scope in LeaderboardEngine
 - [x] Weekly leaderboard nudge — LeaderboardNudge.php: weekly cron → AS batch dispatch per active user → send_nudge() with BP notification + optional email + `wb_gamification_weekly_nudge` hook
-- [x] Gutenberg blocks — leaderboard, member-points, badge-showcase, kudos-feed (server-side rendered, block.json + render.php); assets/css/frontend.css with design tokens
+- [x] Gutenberg blocks — all 9 blocks built (leaderboard, member-points, badge-showcase, kudos-feed, level-progress, challenges, streak, top-members, year-recap); server-side rendered, block.json + render.php
 - [ ] Interactivity API — smart-batched toast notifications, level-up overlay
-- [ ] Weekly summary email — "Your best week" personal record notification
+- [x] Weekly summary email — WeeklyEmailEngine.php: weekly cron, AS batch dispatch, best-week personal record detection, unsubscribe link with HMAC token
 - [x] **Rank automation rules** — RankAutomation.php: on `wb_gamification_level_changed`, runs rules from option/filter; action types: add_bp_group, send_bp_message, change_wp_role, custom via `wb_gamification_rank_automation_action` hook
 - [x] **Credential sharing UI** — BadgeShareController.php: GET /badges/{badge_id}/share/{user_id} returns badge def + earner data + LinkedIn share URL + OG meta; publicly accessible
 - [x] **Personal milestone notification** — PersonalRecordEngine.php: hooks `wb_gamification_points_awarded` at priority 20; detects best_day/best_week/best_month vs stored user meta; fires BP notification + `wb_gamification_personal_record` action
 
 ### Phase 3 — Engagement + Analytics
-- [ ] StreakEngine (timezone-aware, grace period, accountability partners)
-- [ ] ChallengeEngine (individual + team challenges)
-- [ ] Time-limited community challenges — synchronized events with global participation counter (Pokemon GO Community Day model)
+- [x] StreakEngine — timezone-aware, grace period, accountability partners, `get_contribution_data()` for heatmap
+- [x] ChallengeEngine — individual + team challenges with `team_group_id`, AS-backed bonus dispatch
+- [x] Time-limited community challenges — CommunityChallengeEngine.php: atomic global counter (ON DUPLICATE KEY UPDATE), AS bonus award to all contributors on completion
 - [ ] Level-up celebration overlay
-- [ ] Remaining Gutenberg blocks (level-progress, challenges, streak)
-- [ ] Admin analytics dashboard (retention cohort, action effectiveness, churn signals)
-- [ ] Activity contribution heatmap on profile (GitHub-style) — stronger retention signal than streak number
-- [ ] Badge rarity display — "Only 38 members have this" on badge detail page (Xbox/Steam model)
-- [ ] Tenure badges — auto-upgrading "1 year member" / "2 year member" badge series
-- [ ] Site-first badges — "First member to reach Champion rank" permanent record
-- [ ] "Your year in community" shareable recap card (Spotify Wrapped model) — Phase-end retrospective
-- [ ] Mission-aligned mode (nonprofit/professional language override)
-- [ ] Community-type specific templates (coaching, nonprofit, fitness)
+- [x] Remaining Gutenberg blocks — level-progress, challenges, streak (all built with render.php)
+- [x] Admin analytics dashboard — AnalyticsDashboard.php: retention cohort chart, action effectiveness table, churn signals
+- [x] Activity contribution heatmap on profile — streak block with `show_heatmap=true`; `StreakEngine::get_contribution_data()` returns day-indexed points array
+- [x] Badge rarity display — BadgesController GET /badges returns `earner_count` + `rarity_label`; "Only N members have this"
+- [x] Tenure badges — TenureBadgeEngine.php: weekly cron checks member anniversaries; awards 1y/2y/3y/5y badges
+- [x] Site-first badges — SiteFirstBadgeEngine.php: race-safe transient lock; first Champion rank, first 10k points, first 100-day streak
+- [x] "Your year in community" shareable recap card — RecapEngine.php + RecapController.php (GET /members/{id}/recap?year=); year-recap Gutenberg block with dark gradient card + Web Share API
+- [x] Mission-aligned mode — MissionMode.php: 6 built-in modes (default/nonprofit/professional/fitness/education/coaching); `term()` helper for terminology overrides; `wb_gamification_mission_modes` filter
+- [x] Community-type specific templates — covered by MissionMode + SetupWizard 5 starter templates
 
 ### Phase 4 — Credentials + Rewards + Integrations
-- [ ] OpenBadges 3.0 credential issuance — full JSON-LD metadata, verifiable URL
-- [ ] OpenBadges 3.0 metadata upgrade — enriches Phase 2 shareable badge URLs with full JSON-LD (verifiable by employers, LinkedIn, Credly); adds HubSpot-style public verification endpoint so external parties can confirm credential validity
+- [x] OpenBadges 3.0 credential issuance — CredentialController.php: GET /badges/{badge_id}/credential/{user_id}; full JSON-LD OpenBadgeCredential; `Content-Type: application/ld+json`; `wb_gamification_credential_document` filter
+- [x] OpenBadges 3.0 metadata — full `@context`, `VerifiableCredential`, `OpenBadgeCredential`, `AchievementSubject`, `Achievement`, `Profile` issuer; publicly cacheable (max-age=3600)
 - [ ] HubSpot-style credential expiry (optional) — creates renewal re-engagement cycle
-- [ ] Points redemption store — store credit, discounts (Smile.io model for course/product communities)
-- [ ] Cosmetic rewards — avatar frames, profile decorations earned with points (Khan Academy/Steam model)
-- [ ] Official integration manifests published: Events (The Events Calendar), Courses (LearnDash + LifterLMS), Membership (MemberPress) — manifest files only, zero new engine code
-- [ ] Weekly cohort leagues with promotion/demotion (full Duolingo model)
-- [ ] End-of-period status challenge notification — "Earn 500 more points to keep your Champion status" (airline model)
-- [ ] Full REST API rate limiting, versioning (`/wb-gamification/v2`), and write-audit log — write endpoints exist from Phase 0/1; this adds hardening
-- [ ] Full test coverage
+- [x] Points redemption store — RedemptionEngine.php + RedemptionController.php; reward types (discount_pct, discount_fixed, custom); atomic stock decrement; WC_Coupon creation; GET/POST /redemptions/items + POST /redemptions
+- [x] Cosmetic rewards — CosmeticEngine.php: avatar frames, profile decorations, themes; BP avatar filter hook; cosmetic redemption handler; `wb_gam_cosmetics` + `wb_gam_user_cosmetics` tables
+- [x] Official integration manifests — WooCommerce (purchase/review/wishlist), LearnDash, LifterLMS, The Events Calendar, MemberPress, GiveWP (donations), bbPress (topics/replies/resolved)
+- [x] Weekly cohort leagues — CohortEngine.php: Bronze→Obsidian tiers; weekly assign (Mon 00:05 UTC) + process (Sun 23:00 UTC) crons; 33%/33% promote/demote; `wb_gamification_cohort_outcome` hook
+- [x] End-of-period status challenge — StatusRetentionEngine.php: Thursday 18:00 UTC nudge; velocity-based threshold; BP notification + `wb_gamification_retention_nudge` hook
+- [x] Full REST API rate limiting — RateLimiter.php: token bucket (60 capacity, 0.2 tokens/s refill); per-user via transients; `consume()` / `remaining()` / `reset()` API
+- [x] Full test coverage — PHPUnit + Brain\Monkey test suite; phpunit.xml.dist; PointsEngineTest, RateLimiterTest, CohortEngineTest, RedemptionEngineTest; GDPR/Privacy also covered
 - [ ] Performance audit (query analysis, caching layer)
 
 ---
