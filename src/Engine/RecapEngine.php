@@ -63,7 +63,9 @@ final class RecapEngine {
 				"SELECT COALESCE(SUM(points), 0)
 				   FROM {$wpdb->prefix}wb_gam_points
 				  WHERE user_id = %d AND created_at BETWEEN %s AND %s",
-				$user_id, $start, $end
+				$user_id,
+				$start,
+				$end
 			)
 		);
 
@@ -72,7 +74,9 @@ final class RecapEngine {
 			$wpdb->prepare(
 				"SELECT COUNT(*) FROM {$wpdb->prefix}wb_gam_events
 				  WHERE user_id = %d AND created_at BETWEEN %s AND %s",
-				$user_id, $start, $end
+				$user_id,
+				$start,
+				$end
 			)
 		);
 
@@ -85,10 +89,12 @@ final class RecapEngine {
 				  GROUP BY action_id
 				  ORDER BY event_count DESC
 				  LIMIT 3",
-				$user_id, $start, $end
+				$user_id,
+				$start,
+				$end
 			),
 			ARRAY_A
-		) ?: [];
+		) ?: array();
 
 		// ── Badges earned this year ─────────────────────────────────────────
 		$badges_this_year = $wpdb->get_results(
@@ -98,10 +104,12 @@ final class RecapEngine {
 				   JOIN {$wpdb->prefix}wb_gam_badge_defs b ON b.id = ub.badge_id
 				  WHERE ub.user_id = %d AND ub.earned_at BETWEEN %s AND %s
 				  ORDER BY ub.earned_at ASC",
-				$user_id, $start, $end
+				$user_id,
+				$start,
+				$end
 			),
 			ARRAY_A
-		) ?: [];
+		) ?: array();
 
 		// ── Peak activity week ──────────────────────────────────────────────
 		$peak_week = self::get_peak_week( $user_id, $year );
@@ -113,7 +121,9 @@ final class RecapEngine {
 				  WHERE user_id = %d
 				    AND completed_at IS NOT NULL
 				    AND completed_at BETWEEN %s AND %s",
-				$user_id, $start, $end
+				$user_id,
+				$start,
+				$end
 			)
 		);
 
@@ -122,7 +132,9 @@ final class RecapEngine {
 			$wpdb->prepare(
 				"SELECT COUNT(*) FROM {$wpdb->prefix}wb_gam_kudos
 				  WHERE giver_id = %d AND created_at BETWEEN %s AND %s",
-				$user_id, $start, $end
+				$user_id,
+				$start,
+				$end
 			)
 		);
 
@@ -130,7 +142,9 @@ final class RecapEngine {
 			$wpdb->prepare(
 				"SELECT COUNT(*) FROM {$wpdb->prefix}wb_gam_kudos
 				  WHERE receiver_id = %d AND created_at BETWEEN %s AND %s",
-				$user_id, $start, $end
+				$user_id,
+				$start,
+				$end
 			)
 		);
 
@@ -140,38 +154,38 @@ final class RecapEngine {
 		// ── Headline ─────────────────────────────────────────────────────────
 		$headline = self::compute_headline( $points_this_year, $percentile, $badges_this_year, $challenges_completed );
 
-		$recap = [
-			'user_id'             => $user_id,
-			'year'                => $year,
-			'points_this_year'    => $points_this_year,
-			'total_events'        => $total_events,
-			'top_actions'         => array_map(
-				static fn( array $r ) => [
+		$recap = array(
+			'user_id'              => $user_id,
+			'year'                 => $year,
+			'points_this_year'     => $points_this_year,
+			'total_events'         => $total_events,
+			'top_actions'          => array_map(
+				static fn( array $r ) => array(
 					'action_id'   => $r['action_id'],
 					'event_count' => (int) $r['event_count'],
-				],
+				),
 				$top_actions
 			),
-			'badges_earned'       => [
+			'badges_earned'        => array(
 				'count'  => count( $badges_this_year ),
 				'badges' => array_map(
-					static fn( array $r ) => [
+					static fn( array $r ) => array(
 						'badge_id'  => $r['badge_id'],
 						'name'      => $r['name'],
 						'earned_at' => $r['earned_at'],
-					],
+					),
 					$badges_this_year
 				),
-			],
-			'peak_week'           => $peak_week,
+			),
+			'peak_week'            => $peak_week,
 			'challenges_completed' => $challenges_completed,
-			'kudos'               => [
+			'kudos'                => array(
 				'given'    => $kudos_given,
 				'received' => $kudos_received,
-			],
-			'percentile'          => $percentile,
-			'headline'            => $headline,
-		];
+			),
+			'percentile'           => $percentile,
+			'headline'             => $headline,
+		);
 
 		/**
 		 * Filter the recap data before caching and returning.
@@ -209,7 +223,9 @@ final class RecapEngine {
 				  GROUP BY iso_week
 				  ORDER BY week_points DESC
 				  LIMIT 1",
-				$user_id, $start, $end
+				$user_id,
+				$start,
+				$end
 			),
 			ARRAY_A
 		);
@@ -218,10 +234,10 @@ final class RecapEngine {
 			return null;
 		}
 
-		return [
+		return array(
 			'week'   => $row['iso_week'],
 			'points' => (int) $row['week_points'],
-		];
+		);
 	}
 
 	/**
@@ -243,7 +259,8 @@ final class RecapEngine {
 				"SELECT COUNT(DISTINCT user_id)
 				   FROM {$wpdb->prefix}wb_gam_points
 				  WHERE created_at BETWEEN %s AND %s",
-				$start, $end
+				$start,
+				$end
 			)
 		);
 
@@ -261,7 +278,9 @@ final class RecapEngine {
 				     GROUP BY user_id
 				    HAVING total < %d
 				 ) AS sub",
-				$start, $end, $user_points
+				$start,
+				$end,
+				$user_points
 			)
 		);
 
@@ -272,10 +291,10 @@ final class RecapEngine {
 	 * Generate a short, personalised headline for the recap card.
 	 */
 	private static function compute_headline(
-		int   $points,
-		int   $percentile,
+		int $points,
+		int $percentile,
 		array $badges,
-		int   $challenges
+		int $challenges
 	): string {
 		if ( $points <= 0 ) {
 			return __( 'Your journey starts here — see you next year!', 'wb-gamification' );

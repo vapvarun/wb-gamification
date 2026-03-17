@@ -20,7 +20,8 @@ final class Installer {
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 
 		// Immutable event log — source of truth for all gamification state.
-		dbDelta( "CREATE TABLE {$wpdb->prefix}wb_gam_events (
+		dbDelta(
+			"CREATE TABLE {$wpdb->prefix}wb_gam_events (
 			id         VARCHAR(36)     NOT NULL,
 			user_id    BIGINT UNSIGNED NOT NULL,
 			action_id  VARCHAR(100)    NOT NULL,
@@ -31,10 +32,12 @@ final class Installer {
 			KEY idx_user_action (user_id, action_id),
 			KEY idx_user_created (user_id, created_at),
 			KEY idx_created (created_at)
-		) $charset;" );
+		) $charset;"
+		);
 
 		// Points ledger — derived from events; event_id nullable until Phase 0 Engine is built.
-		dbDelta( "CREATE TABLE {$wpdb->prefix}wb_gam_points (
+		dbDelta(
+			"CREATE TABLE {$wpdb->prefix}wb_gam_points (
 			id         BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
 			event_id   VARCHAR(36)     DEFAULT NULL,
 			user_id    BIGINT UNSIGNED NOT NULL,
@@ -48,10 +51,12 @@ final class Installer {
 			KEY idx_user_action_created (user_id, action_id, created_at),
 			KEY idx_action (action_id),
 			KEY idx_created (created_at)
-		) $charset;" );
+		) $charset;"
+		);
 
 		// Earned badges.
-		dbDelta( "CREATE TABLE {$wpdb->prefix}wb_gam_user_badges (
+		dbDelta(
+			"CREATE TABLE {$wpdb->prefix}wb_gam_user_badges (
 			id         BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
 			user_id    BIGINT UNSIGNED NOT NULL,
 			badge_id   VARCHAR(100)    NOT NULL,
@@ -60,11 +65,13 @@ final class Installer {
 			PRIMARY KEY (id),
 			UNIQUE KEY user_badge (user_id, badge_id),
 			KEY idx_expires_at (expires_at)
-		) $charset;" );
+		) $charset;"
+		);
 
 		// Badge definitions.
 		// Award conditions live in wb_gam_rules (type='badge_condition', target_id=badge_id).
-		dbDelta( "CREATE TABLE {$wpdb->prefix}wb_gam_badge_defs (
+		dbDelta(
+			"CREATE TABLE {$wpdb->prefix}wb_gam_badge_defs (
 			id            VARCHAR(100)  NOT NULL,
 			name          VARCHAR(255)  NOT NULL,
 			description   TEXT,
@@ -74,10 +81,12 @@ final class Installer {
 			category      VARCHAR(50)   DEFAULT 'general',
 			created_at    DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			PRIMARY KEY (id)
-		) $charset;" );
+		) $charset;"
+		);
 
 		// Level definitions.
-		dbDelta( "CREATE TABLE {$wpdb->prefix}wb_gam_levels (
+		dbDelta(
+			"CREATE TABLE {$wpdb->prefix}wb_gam_levels (
 			id         INT UNSIGNED    NOT NULL AUTO_INCREMENT,
 			name       VARCHAR(255)    NOT NULL,
 			min_points BIGINT UNSIGNED NOT NULL,
@@ -85,10 +94,12 @@ final class Installer {
 			sort_order INT             DEFAULT 0,
 			PRIMARY KEY (id),
 			KEY min_points (min_points)
-		) $charset;" );
+		) $charset;"
+		);
 
 		// Streaks.
-		dbDelta( "CREATE TABLE {$wpdb->prefix}wb_gam_streaks (
+		dbDelta(
+			"CREATE TABLE {$wpdb->prefix}wb_gam_streaks (
 			user_id        BIGINT UNSIGNED NOT NULL,
 			current_streak INT UNSIGNED    DEFAULT 0,
 			longest_streak INT UNSIGNED    DEFAULT 0,
@@ -97,10 +108,12 @@ final class Installer {
 			grace_used     TINYINT(1)      DEFAULT 0,
 			updated_at     DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 			PRIMARY KEY (user_id)
-		) $charset;" );
+		) $charset;"
+		);
 
 		// Challenges.
-		dbDelta( "CREATE TABLE {$wpdb->prefix}wb_gam_challenges (
+		dbDelta(
+			"CREATE TABLE {$wpdb->prefix}wb_gam_challenges (
 			id             BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
 			title          VARCHAR(255)    NOT NULL,
 			type           VARCHAR(20)     DEFAULT 'individual',
@@ -115,10 +128,12 @@ final class Installer {
 			PRIMARY KEY (id),
 			KEY status (status),
 			KEY idx_status_action (status, action_id)
-		) $charset;" );
+		) $charset;"
+		);
 
 		// Challenge progress.
-		dbDelta( "CREATE TABLE {$wpdb->prefix}wb_gam_challenge_log (
+		dbDelta(
+			"CREATE TABLE {$wpdb->prefix}wb_gam_challenge_log (
 			id           BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
 			user_id      BIGINT UNSIGNED NOT NULL,
 			challenge_id BIGINT UNSIGNED NOT NULL,
@@ -129,10 +144,12 @@ final class Installer {
 			UNIQUE KEY user_challenge (user_id, challenge_id),
 			KEY challenge_id (challenge_id),
 			KEY created_at (created_at)
-		) $charset;" );
+		) $charset;"
+		);
 
 		// Peer kudos.
-		dbDelta( "CREATE TABLE {$wpdb->prefix}wb_gam_kudos (
+		dbDelta(
+			"CREATE TABLE {$wpdb->prefix}wb_gam_kudos (
 			id          BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
 			giver_id    BIGINT UNSIGNED NOT NULL,
 			receiver_id BIGINT UNSIGNED NOT NULL,
@@ -141,30 +158,36 @@ final class Installer {
 			PRIMARY KEY (id),
 			KEY giver_date (giver_id, created_at),
 			KEY receiver_id (receiver_id)
-		) $charset;" );
+		) $charset;"
+		);
 
 		// Accountability partners.
-		dbDelta( "CREATE TABLE {$wpdb->prefix}wb_gam_partners (
+		dbDelta(
+			"CREATE TABLE {$wpdb->prefix}wb_gam_partners (
 			id         BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
 			user_id_1  BIGINT UNSIGNED NOT NULL,
 			user_id_2  BIGINT UNSIGNED NOT NULL,
 			created_at DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			PRIMARY KEY (id),
 			UNIQUE KEY partner_pair (user_id_1, user_id_2)
-		) $charset;" );
+		) $charset;"
+		);
 
 		// Member preferences.
-		dbDelta( "CREATE TABLE {$wpdb->prefix}wb_gam_member_prefs (
+		dbDelta(
+			"CREATE TABLE {$wpdb->prefix}wb_gam_member_prefs (
 			user_id               BIGINT UNSIGNED NOT NULL,
 			leaderboard_opt_out   TINYINT(1)      DEFAULT 0,
 			show_rank             TINYINT(1)      DEFAULT 1,
 			notification_mode     VARCHAR(20)     DEFAULT 'smart',
 			PRIMARY KEY (user_id),
 			KEY idx_opt_out (leaderboard_opt_out)
-		) $charset;" );
+		) $charset;"
+		);
 
 		// Stored rule configuration (badge conditions, point multipliers, etc.).
-		dbDelta( "CREATE TABLE {$wpdb->prefix}wb_gam_rules (
+		dbDelta(
+			"CREATE TABLE {$wpdb->prefix}wb_gam_rules (
 			id          BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
 			rule_type   VARCHAR(50)     NOT NULL,
 			target_id   VARCHAR(100)    DEFAULT NULL,
@@ -174,10 +197,12 @@ final class Installer {
 			PRIMARY KEY (id),
 			KEY rule_type (rule_type),
 			KEY target_id (target_id)
-		) $charset;" );
+		) $charset;"
+		);
 
 		// Outbound webhook registrations.
-		dbDelta( "CREATE TABLE {$wpdb->prefix}wb_gam_webhooks (
+		dbDelta(
+			"CREATE TABLE {$wpdb->prefix}wb_gam_webhooks (
 			id         BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
 			url        VARCHAR(500)    NOT NULL,
 			secret     VARCHAR(255)    NOT NULL,
@@ -185,10 +210,12 @@ final class Installer {
 			is_active  TINYINT(1)      DEFAULT 1,
 			created_at DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			PRIMARY KEY (id)
-		) $charset;" );
+		) $charset;"
+		);
 
 		// Community challenges (global counter, Pokémon GO model).
-		dbDelta( "CREATE TABLE {$wpdb->prefix}wb_gam_community_challenges (
+		dbDelta(
+			"CREATE TABLE {$wpdb->prefix}wb_gam_community_challenges (
 			id              BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
 			title           VARCHAR(255)    NOT NULL,
 			description     TEXT,
@@ -203,19 +230,23 @@ final class Installer {
 			PRIMARY KEY (id),
 			KEY status (status),
 			KEY target_action (target_action)
-		) $charset;" );
+		) $charset;"
+		);
 
 		// Per-user contribution to community challenges.
-		dbDelta( "CREATE TABLE {$wpdb->prefix}wb_gam_community_challenge_contributions (
+		dbDelta(
+			"CREATE TABLE {$wpdb->prefix}wb_gam_community_challenge_contributions (
 			challenge_id       BIGINT UNSIGNED NOT NULL,
 			user_id            BIGINT UNSIGNED NOT NULL,
 			contribution_count BIGINT UNSIGNED DEFAULT 0,
 			PRIMARY KEY (challenge_id, user_id),
 			KEY user_id (user_id)
-		) $charset;" );
+		) $charset;"
+		);
 
 		// Cohort league members (Duolingo model).
-		dbDelta( "CREATE TABLE {$wpdb->prefix}wb_gam_cohort_members (
+		dbDelta(
+			"CREATE TABLE {$wpdb->prefix}wb_gam_cohort_members (
 			user_id    BIGINT UNSIGNED  NOT NULL,
 			cohort_id  VARCHAR(50)      NOT NULL,
 			tier       TINYINT UNSIGNED DEFAULT 0,
@@ -226,10 +257,12 @@ final class Installer {
 			PRIMARY KEY (user_id, week),
 			KEY cohort_id (cohort_id),
 			KEY week (week)
-		) $charset;" );
+		) $charset;"
+		);
 
 		// Redemption reward items catalog.
-		dbDelta( "CREATE TABLE {$wpdb->prefix}wb_gam_redemption_items (
+		dbDelta(
+			"CREATE TABLE {$wpdb->prefix}wb_gam_redemption_items (
 			id            BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
 			title         VARCHAR(255)    NOT NULL,
 			description   TEXT,
@@ -241,10 +274,12 @@ final class Installer {
 			created_at    DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			PRIMARY KEY (id),
 			KEY is_active (is_active)
-		) $charset;" );
+		) $charset;"
+		);
 
 		// Redemption transaction log.
-		dbDelta( "CREATE TABLE {$wpdb->prefix}wb_gam_redemptions (
+		dbDelta(
+			"CREATE TABLE {$wpdb->prefix}wb_gam_redemptions (
 			id          BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
 			user_id     BIGINT UNSIGNED NOT NULL,
 			item_id     BIGINT UNSIGNED NOT NULL,
@@ -256,10 +291,12 @@ final class Installer {
 			KEY user_id (user_id),
 			KEY item_id (item_id),
 			KEY created_at (created_at)
-		) $charset;" );
+		) $charset;"
+		);
 
 		// Cosmetics catalog.
-		dbDelta( "CREATE TABLE {$wpdb->prefix}wb_gam_cosmetics (
+		dbDelta(
+			"CREATE TABLE {$wpdb->prefix}wb_gam_cosmetics (
 			id          VARCHAR(100) NOT NULL,
 			name        VARCHAR(255) NOT NULL,
 			type        VARCHAR(50)  NOT NULL,
@@ -269,17 +306,20 @@ final class Installer {
 			cost        INT UNSIGNED DEFAULT 0,
 			is_active   TINYINT(1)   DEFAULT 1,
 			PRIMARY KEY (id)
-		) $charset;" );
+		) $charset;"
+		);
 
 		// User-owned cosmetics.
-		dbDelta( "CREATE TABLE {$wpdb->prefix}wb_gam_user_cosmetics (
+		dbDelta(
+			"CREATE TABLE {$wpdb->prefix}wb_gam_user_cosmetics (
 			user_id      BIGINT UNSIGNED NOT NULL,
 			cosmetic_id  VARCHAR(100)    NOT NULL,
 			is_active    TINYINT(1)      DEFAULT 0,
 			awarded_at   DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			PRIMARY KEY (user_id, cosmetic_id),
 			KEY cosmetic_id (cosmetic_id)
-		) $charset;" );
+		) $charset;"
+		);
 
 		// Seed default levels.
 		self::seed_default_levels();
@@ -305,111 +345,198 @@ final class Installer {
 
 		// Badge definitions: id, name, description, category, is_credential.
 		// is_credential = 1 → admin-awarded badge suitable for external sharing.
-		$badges = [
+		$badges = array(
 			// ── Points milestones ──────────────────────────────────────────────
-			[ 'century_club',        'Century Club',         'Earned your first 100 points.',                               'points',     0 ],
-			[ 'five_hundred_strong', 'Five Hundred Strong',  'Reached 500 total points.',                                   'points',     0 ],
-			[ 'thousand_points',     'Thousand Points Club', 'Earned 1,000 total points.',                                  'points',     0 ],
-			[ 'five_thousand_points','Five Thousand Strong', 'Reached 5,000 total points.',                                 'points',     0 ],
-			[ 'ten_thousand_points', 'Ten Thousand Club',    'Earned 10,000 total points.',                                 'points',     0 ],
+			array( 'century_club', 'Century Club', 'Earned your first 100 points.', 'points', 0 ),
+			array( 'five_hundred_strong', 'Five Hundred Strong', 'Reached 500 total points.', 'points', 0 ),
+			array( 'thousand_points', 'Thousand Points Club', 'Earned 1,000 total points.', 'points', 0 ),
+			array( 'five_thousand_points', 'Five Thousand Strong', 'Reached 5,000 total points.', 'points', 0 ),
+			array( 'ten_thousand_points', 'Ten Thousand Club', 'Earned 10,000 total points.', 'points', 0 ),
 
 			// ── WordPress ──────────────────────────────────────────────────────
-			[ 'welcome',             'Welcome Aboard',       'Joined the community.',                                       'wordpress',  0 ],
-			[ 'first_post',          'First Post',           'Published your very first post.',                             'wordpress',  0 ],
-			[ 'prolific_writer',     'Prolific Writer',      'Published 10 posts.',                                         'wordpress',  0 ],
-			[ 'content_creator',     'Content Creator',      'Published 25 posts — a committed contributor.',               'wordpress',  0 ],
-			[ 'first_comment',       'First Comment',        'Left your first comment.',                                    'wordpress',  0 ],
-			[ 'engaged_reader',      'Engaged Reader',       'Left 10 comments — always adding to the conversation.',       'wordpress',  0 ],
+			array( 'welcome', 'Welcome Aboard', 'Joined the community.', 'wordpress', 0 ),
+			array( 'first_post', 'First Post', 'Published your very first post.', 'wordpress', 0 ),
+			array( 'prolific_writer', 'Prolific Writer', 'Published 10 posts.', 'wordpress', 0 ),
+			array( 'content_creator', 'Content Creator', 'Published 25 posts — a committed contributor.', 'wordpress', 0 ),
+			array( 'first_comment', 'First Comment', 'Left your first comment.', 'wordpress', 0 ),
+			array( 'engaged_reader', 'Engaged Reader', 'Left 10 comments — always adding to the conversation.', 'wordpress', 0 ),
 
 			// ── BuddyPress ────────────────────────────────────────────────────
-			[ 'first_update',        'First Update',         'Posted your first activity update.',                          'buddypress', 0 ],
-			[ 'active_member',       'Active Member',        'Posted 10 activity updates.',                                 'buddypress', 0 ],
-			[ 'community_voice',     'Community Voice',      'Posted 50 activity updates — your voice shapes this community.', 'buddypress', 0 ],
-			[ 'first_friend',        'First Connection',     'Made your first friend.',                                     'buddypress', 0 ],
-			[ 'social_connector',    'Social Connector',     'Made 10 connections — growing the community network.',        'buddypress', 0 ],
-			[ 'group_creator',       'Group Creator',        'Created your first group.',                                   'buddypress', 0 ],
-			[ 'team_player',         'Team Player',          'Joined 3 or more groups.',                                    'buddypress', 0 ],
-			[ 'profile_pro',         'Profile Pro',          'Completed your extended profile.',                            'buddypress', 0 ],
-			[ 'reaction_magnet',     'Reaction Magnet',      'Received 10 reactions on your activity.',                     'buddypress', 0 ],
-			[ 'comment_champion',    'Comment Champion',     'Commented on 20 activity updates.',                           'buddypress', 0 ],
-			[ 'poll_pioneer',        'Poll Pioneer',         'Created your first poll.',                                    'buddypress', 0 ],
-			[ 'blog_publisher',      'Blog Publisher',       'Published your first member blog post.',                      'buddypress', 0 ],
+			array( 'first_update', 'First Update', 'Posted your first activity update.', 'buddypress', 0 ),
+			array( 'active_member', 'Active Member', 'Posted 10 activity updates.', 'buddypress', 0 ),
+			array( 'community_voice', 'Community Voice', 'Posted 50 activity updates — your voice shapes this community.', 'buddypress', 0 ),
+			array( 'first_friend', 'First Connection', 'Made your first friend.', 'buddypress', 0 ),
+			array( 'social_connector', 'Social Connector', 'Made 10 connections — growing the community network.', 'buddypress', 0 ),
+			array( 'group_creator', 'Group Creator', 'Created your first group.', 'buddypress', 0 ),
+			array( 'team_player', 'Team Player', 'Joined 3 or more groups.', 'buddypress', 0 ),
+			array( 'profile_pro', 'Profile Pro', 'Completed your extended profile.', 'buddypress', 0 ),
+			array( 'reaction_magnet', 'Reaction Magnet', 'Received 10 reactions on your activity.', 'buddypress', 0 ),
+			array( 'comment_champion', 'Comment Champion', 'Commented on 20 activity updates.', 'buddypress', 0 ),
+			array( 'poll_pioneer', 'Poll Pioneer', 'Created your first poll.', 'buddypress', 0 ),
+			array( 'blog_publisher', 'Blog Publisher', 'Published your first member blog post.', 'buddypress', 0 ),
 
 			// ── Special / admin-awarded ────────────────────────────────────────
-			[ 'early_adopter',       'Early Adopter',        'One of the first members of this community.',                 'special',    0 ],
-			[ 'founding_member',     'Founding Member',      'A founding member — here from the very beginning.',           'special',    1 ],
-			[ 'top_contributor',     'Top Contributor',      'Recognized as a top community contributor.',                  'special',    1 ],
-			[ 'mentor',              'Mentor',               'Helped guide and support other community members.',           'special',    1 ],
-			[ 'kudos_champion',      'Kudos Champion',       'Recognized for spreading positivity across the community.',   'special',    0 ],
-			[ 'event_host',          'Event Host',           'Hosted a community event.',                                   'special',    0 ],
-			[ 'community_veteran',   'Community Veteran',    'A long-standing, valued member of this community.',           'special',    1 ],
-		];
+			array( 'early_adopter', 'Early Adopter', 'One of the first members of this community.', 'special', 0 ),
+			array( 'founding_member', 'Founding Member', 'A founding member — here from the very beginning.', 'special', 1 ),
+			array( 'top_contributor', 'Top Contributor', 'Recognized as a top community contributor.', 'special', 1 ),
+			array( 'mentor', 'Mentor', 'Helped guide and support other community members.', 'special', 1 ),
+			array( 'kudos_champion', 'Kudos Champion', 'Recognized for spreading positivity across the community.', 'special', 0 ),
+			array( 'event_host', 'Event Host', 'Hosted a community event.', 'special', 0 ),
+			array( 'community_veteran', 'Community Veteran', 'A long-standing, valued member of this community.', 'special', 1 ),
+		);
 
 		// Conditions for auto-awarded badges (id => condition_type config).
 		// Admin-awarded badges have no condition entry — awarded manually via API.
-		$conditions = [
+		$conditions = array(
 			// Points milestones.
-			'century_club'         => [ 'condition_type' => 'point_milestone', 'points' => 100 ],
-			'five_hundred_strong'  => [ 'condition_type' => 'point_milestone', 'points' => 500 ],
-			'thousand_points'      => [ 'condition_type' => 'point_milestone', 'points' => 1000 ],
-			'five_thousand_points' => [ 'condition_type' => 'point_milestone', 'points' => 5000 ],
-			'ten_thousand_points'  => [ 'condition_type' => 'point_milestone', 'points' => 10000 ],
+			'century_club'         => array(
+				'condition_type' => 'point_milestone',
+				'points'         => 100,
+			),
+			'five_hundred_strong'  => array(
+				'condition_type' => 'point_milestone',
+				'points'         => 500,
+			),
+			'thousand_points'      => array(
+				'condition_type' => 'point_milestone',
+				'points'         => 1000,
+			),
+			'five_thousand_points' => array(
+				'condition_type' => 'point_milestone',
+				'points'         => 5000,
+			),
+			'ten_thousand_points'  => array(
+				'condition_type' => 'point_milestone',
+				'points'         => 10000,
+			),
 
 			// WordPress actions.
-			'welcome'              => [ 'condition_type' => 'action_count', 'action_id' => 'wp_user_register', 'count' => 1 ],
-			'first_post'           => [ 'condition_type' => 'action_count', 'action_id' => 'wp_first_post',    'count' => 1 ],
-			'prolific_writer'      => [ 'condition_type' => 'action_count', 'action_id' => 'wp_publish_post',  'count' => 10 ],
-			'content_creator'      => [ 'condition_type' => 'action_count', 'action_id' => 'wp_publish_post',  'count' => 25 ],
-			'first_comment'        => [ 'condition_type' => 'action_count', 'action_id' => 'wp_leave_comment', 'count' => 1 ],
-			'engaged_reader'       => [ 'condition_type' => 'action_count', 'action_id' => 'wp_leave_comment', 'count' => 10 ],
+			'welcome'              => array(
+				'condition_type' => 'action_count',
+				'action_id'      => 'wp_user_register',
+				'count'          => 1,
+			),
+			'first_post'           => array(
+				'condition_type' => 'action_count',
+				'action_id'      => 'wp_first_post',
+				'count'          => 1,
+			),
+			'prolific_writer'      => array(
+				'condition_type' => 'action_count',
+				'action_id'      => 'wp_publish_post',
+				'count'          => 10,
+			),
+			'content_creator'      => array(
+				'condition_type' => 'action_count',
+				'action_id'      => 'wp_publish_post',
+				'count'          => 25,
+			),
+			'first_comment'        => array(
+				'condition_type' => 'action_count',
+				'action_id'      => 'wp_leave_comment',
+				'count'          => 1,
+			),
+			'engaged_reader'       => array(
+				'condition_type' => 'action_count',
+				'action_id'      => 'wp_leave_comment',
+				'count'          => 10,
+			),
 
 			// BuddyPress actions.
-			'first_update'         => [ 'condition_type' => 'action_count', 'action_id' => 'bp_activity_update',    'count' => 1 ],
-			'active_member'        => [ 'condition_type' => 'action_count', 'action_id' => 'bp_activity_update',    'count' => 10 ],
-			'community_voice'      => [ 'condition_type' => 'action_count', 'action_id' => 'bp_activity_update',    'count' => 50 ],
-			'first_friend'         => [ 'condition_type' => 'action_count', 'action_id' => 'bp_friends_accepted',   'count' => 1 ],
-			'social_connector'     => [ 'condition_type' => 'action_count', 'action_id' => 'bp_friends_accepted',   'count' => 10 ],
-			'group_creator'        => [ 'condition_type' => 'action_count', 'action_id' => 'bp_groups_create',      'count' => 1 ],
-			'team_player'          => [ 'condition_type' => 'action_count', 'action_id' => 'bp_groups_join',        'count' => 3 ],
-			'profile_pro'          => [ 'condition_type' => 'action_count', 'action_id' => 'bp_profile_complete',   'count' => 1 ],
-			'reaction_magnet'      => [ 'condition_type' => 'action_count', 'action_id' => 'bp_reactions_received', 'count' => 10 ],
-			'comment_champion'     => [ 'condition_type' => 'action_count', 'action_id' => 'bp_activity_comment',   'count' => 20 ],
-			'poll_pioneer'         => [ 'condition_type' => 'action_count', 'action_id' => 'bp_polls_created',      'count' => 1 ],
-			'blog_publisher'       => [ 'condition_type' => 'action_count', 'action_id' => 'bp_publish_post',       'count' => 1 ],
+			'first_update'         => array(
+				'condition_type' => 'action_count',
+				'action_id'      => 'bp_activity_update',
+				'count'          => 1,
+			),
+			'active_member'        => array(
+				'condition_type' => 'action_count',
+				'action_id'      => 'bp_activity_update',
+				'count'          => 10,
+			),
+			'community_voice'      => array(
+				'condition_type' => 'action_count',
+				'action_id'      => 'bp_activity_update',
+				'count'          => 50,
+			),
+			'first_friend'         => array(
+				'condition_type' => 'action_count',
+				'action_id'      => 'bp_friends_accepted',
+				'count'          => 1,
+			),
+			'social_connector'     => array(
+				'condition_type' => 'action_count',
+				'action_id'      => 'bp_friends_accepted',
+				'count'          => 10,
+			),
+			'group_creator'        => array(
+				'condition_type' => 'action_count',
+				'action_id'      => 'bp_groups_create',
+				'count'          => 1,
+			),
+			'team_player'          => array(
+				'condition_type' => 'action_count',
+				'action_id'      => 'bp_groups_join',
+				'count'          => 3,
+			),
+			'profile_pro'          => array(
+				'condition_type' => 'action_count',
+				'action_id'      => 'bp_profile_complete',
+				'count'          => 1,
+			),
+			'reaction_magnet'      => array(
+				'condition_type' => 'action_count',
+				'action_id'      => 'bp_reactions_received',
+				'count'          => 10,
+			),
+			'comment_champion'     => array(
+				'condition_type' => 'action_count',
+				'action_id'      => 'bp_activity_comment',
+				'count'          => 20,
+			),
+			'poll_pioneer'         => array(
+				'condition_type' => 'action_count',
+				'action_id'      => 'bp_polls_created',
+				'count'          => 1,
+			),
+			'blog_publisher'       => array(
+				'condition_type' => 'action_count',
+				'action_id'      => 'bp_publish_post',
+				'count'          => 1,
+			),
 
 			// Special / admin-awarded — no auto condition.
-			'early_adopter'        => [ 'condition_type' => 'admin_awarded' ],
-			'founding_member'      => [ 'condition_type' => 'admin_awarded' ],
-			'top_contributor'      => [ 'condition_type' => 'admin_awarded' ],
-			'mentor'               => [ 'condition_type' => 'admin_awarded' ],
-			'kudos_champion'       => [ 'condition_type' => 'admin_awarded' ],
-			'event_host'           => [ 'condition_type' => 'admin_awarded' ],
-			'community_veteran'    => [ 'condition_type' => 'admin_awarded' ],
-		];
+			'early_adopter'        => array( 'condition_type' => 'admin_awarded' ),
+			'founding_member'      => array( 'condition_type' => 'admin_awarded' ),
+			'top_contributor'      => array( 'condition_type' => 'admin_awarded' ),
+			'mentor'               => array( 'condition_type' => 'admin_awarded' ),
+			'kudos_champion'       => array( 'condition_type' => 'admin_awarded' ),
+			'event_host'           => array( 'condition_type' => 'admin_awarded' ),
+			'community_veteran'    => array( 'condition_type' => 'admin_awarded' ),
+		);
 
 		foreach ( $badges as [ $id, $name, $description, $category, $is_credential ] ) {
 			$wpdb->insert(
 				$defs_table,
-				[
+				array(
 					'id'            => $id,
 					'name'          => $name,
 					'description'   => $description,
 					'category'      => $category,
 					'is_credential' => $is_credential,
-				],
-				[ '%s', '%s', '%s', '%s', '%d' ]
+				),
+				array( '%s', '%s', '%s', '%s', '%d' )
 			);
 
 			if ( isset( $conditions[ $id ] ) ) {
 				$wpdb->insert(
 					$rules_table,
-					[
+					array(
 						'rule_type'   => 'badge_condition',
 						'target_id'   => $id,
 						'rule_config' => wp_json_encode( $conditions[ $id ] ),
 						'is_active'   => 1,
-					],
-					[ '%s', '%s', '%s', '%d' ]
+					),
+					array( '%s', '%s', '%s', '%d' )
 				);
 			}
 		}
@@ -423,13 +550,33 @@ final class Installer {
 			return;
 		}
 
-		$levels = [
-			[ 'name' => 'Newcomer',    'min_points' => 0,     'sort_order' => 1 ],
-			[ 'name' => 'Member',      'min_points' => 100,   'sort_order' => 2 ],
-			[ 'name' => 'Contributor', 'min_points' => 500,   'sort_order' => 3 ],
-			[ 'name' => 'Regular',     'min_points' => 1500,  'sort_order' => 4 ],
-			[ 'name' => 'Champion',    'min_points' => 5000,  'sort_order' => 5 ],
-		];
+		$levels = array(
+			array(
+				'name'       => 'Newcomer',
+				'min_points' => 0,
+				'sort_order' => 1,
+			),
+			array(
+				'name'       => 'Member',
+				'min_points' => 100,
+				'sort_order' => 2,
+			),
+			array(
+				'name'       => 'Contributor',
+				'min_points' => 500,
+				'sort_order' => 3,
+			),
+			array(
+				'name'       => 'Regular',
+				'min_points' => 1500,
+				'sort_order' => 4,
+			),
+			array(
+				'name'       => 'Champion',
+				'min_points' => 5000,
+				'sort_order' => 5,
+			),
+		);
 
 		foreach ( $levels as $level ) {
 			$wpdb->insert( $table, $level );

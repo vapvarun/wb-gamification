@@ -39,10 +39,10 @@ final class CosmeticEngine {
 
 	public static function init(): void {
 		// Inject active frame CSS class onto BuddyPress avatar wrapper.
-		add_filter( 'bp_get_the_member_avatar_class', [ __CLASS__, 'inject_avatar_frame_class' ], 10, 2 );
+		add_filter( 'bp_get_the_member_avatar_class', array( __CLASS__, 'inject_avatar_frame_class' ), 10, 2 );
 
 		// Award cosmetics when a custom-type redemption fires with cosmetic config.
-		add_action( 'wb_gamification_points_redeemed', [ __CLASS__, 'handle_redemption' ], 10, 4 );
+		add_action( 'wb_gamification_points_redeemed', array( __CLASS__, 'handle_redemption' ), 10, 4 );
 	}
 
 	// ── Public API ───────────────────────────────────────────────────────────
@@ -126,22 +126,27 @@ final class CosmeticEngine {
 
 		if ( $ids_of_same_type ) {
 			$placeholders = implode( ',', array_fill( 0, count( $ids_of_same_type ), '%s' ) );
-			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-			$wpdb->query( $wpdb->prepare(
-				"UPDATE {$wpdb->prefix}wb_gam_user_cosmetics
+			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $placeholders is implode(',', array_fill(..., '%s')), safe.
+			$wpdb->query(
+				$wpdb->prepare(
+					"UPDATE {$wpdb->prefix}wb_gam_user_cosmetics
 				    SET is_active = 0
 				  WHERE user_id = %d AND cosmetic_id IN ($placeholders)",
-				array_merge( [ $user_id ], $ids_of_same_type )
-			) );
+					array_merge( array( $user_id ), $ids_of_same_type )
+				)
+			);
 		}
 
 		// Activate the requested cosmetic.
 		$wpdb->update(
 			$wpdb->prefix . 'wb_gam_user_cosmetics',
-			[ 'is_active' => 1 ],
-			[ 'user_id' => $user_id, 'cosmetic_id' => $cosmetic_id ],
-			[ '%d' ],
-			[ '%d', '%s' ]
+			array( 'is_active' => 1 ),
+			array(
+				'user_id'     => $user_id,
+				'cosmetic_id' => $cosmetic_id,
+			),
+			array( '%d' ),
+			array( '%d', '%s' )
 		);
 
 		wp_cache_delete( "wb_gam_cosmetics_{$user_id}", self::CACHE_GROUP );
@@ -175,7 +180,7 @@ final class CosmeticEngine {
 				$user_id
 			),
 			ARRAY_A
-		) ?: [];
+		) ?: array();
 
 		foreach ( $rows as &$row ) {
 			$row['is_active'] = (bool) $row['is_active'];
@@ -250,7 +255,7 @@ final class CosmeticEngine {
 			return;
 		}
 
-		$config      = json_decode( $item['reward_config'] ?? '{}', true ) ?: [];
+		$config      = json_decode( $item['reward_config'] ?? '{}', true ) ?: array();
 		$cosmetic_id = $config['cosmetic_id'] ?? '';
 
 		if ( ! $cosmetic_id ) {

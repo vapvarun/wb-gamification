@@ -17,8 +17,8 @@ final class Event {
 
 	public readonly string $event_id;
 	public readonly string $action_id;
-	public readonly int    $user_id;
-	public readonly int    $object_id;
+	public readonly int $user_id;
+	public readonly int $object_id;
 
 	/** @var array<string, mixed> */
 	public readonly array $metadata;
@@ -40,7 +40,7 @@ final class Event {
 		$this->action_id  = (string) ( $args['action_id'] ?? '' );
 		$this->user_id    = (int) ( $args['user_id'] ?? 0 );
 		$this->object_id  = (int) ( $args['object_id'] ?? 0 );
-		$this->metadata   = (array) ( $args['metadata'] ?? [] );
+		$this->metadata   = (array) ( $args['metadata'] ?? array() );
 		$this->created_at = isset( $args['created_at'] )
 			? (string) $args['created_at']
 			: gmdate( 'Y-m-d\TH:i:s\Z' );

@@ -34,16 +34,16 @@ defined( 'ABSPATH' ) || exit;
 
 final class WeeklyEmailEngine {
 
-	private const CRON_HOOK    = 'wb_gam_weekly_email';
-	private const AS_HOOK      = 'wb_gam_weekly_email_user';
-	private const AS_GROUP     = 'wb_gamification_email';
-	private const OPT_ENABLED  = 'wb_gam_weekly_email_enabled';
+	private const CRON_HOOK   = 'wb_gam_weekly_email';
+	private const AS_HOOK     = 'wb_gam_weekly_email_user';
+	private const AS_GROUP    = 'wb_gamification_email';
+	private const OPT_ENABLED = 'wb_gam_weekly_email_enabled';
 
 	// ── Boot ────────────────────────────────────────────────────────────────────
 
 	public static function init(): void {
-		add_action( self::CRON_HOOK, [ __CLASS__, 'dispatch_batch' ] );
-		add_action( self::AS_HOOK,   [ __CLASS__, 'send_to_user' ] );
+		add_action( self::CRON_HOOK, array( __CLASS__, 'dispatch_batch' ) );
+		add_action( self::AS_HOOK, array( __CLASS__, 'send_to_user' ) );
 	}
 
 	public static function activate(): void {
@@ -87,7 +87,7 @@ final class WeeklyEmailEngine {
 			if ( function_exists( 'as_enqueue_async_action' ) ) {
 				as_enqueue_async_action(
 					self::AS_HOOK,
-					[ 'user_id' => (int) $user_id ],
+					array( 'user_id' => (int) $user_id ),
 					self::AS_GROUP
 				);
 			} else {
@@ -119,10 +119,10 @@ final class WeeklyEmailEngine {
 
 		$subject = self::render_subject( $data );
 		$body    = self::render_body( $user, $data );
-		$headers = [
+		$headers = array(
 			'Content-Type: text/html; charset=UTF-8',
 			'From: ' . self::from_header(),
-		];
+		);
 
 		wp_mail( $user->user_email, $subject, $body, $headers );
 
@@ -166,7 +166,7 @@ final class WeeklyEmailEngine {
 				$since
 			),
 			ARRAY_A
-		) ?: [];
+		) ?: array();
 
 		// Challenges completed this week.
 		$challenges_this_week = $wpdb->get_results(
@@ -179,7 +179,7 @@ final class WeeklyEmailEngine {
 				$since
 			),
 			ARRAY_A
-		) ?: [];
+		) ?: array();
 
 		// Streak.
 		$streak = StreakEngine::get_streak( $user_id );
@@ -191,7 +191,7 @@ final class WeeklyEmailEngine {
 				$user_id
 			)
 		);
-		$rank = null;
+		$rank    = null;
 		if ( ! $opt_out ) {
 			$rank = LeaderboardEngine::get_user_rank( $user_id );
 		}
@@ -200,9 +200,14 @@ final class WeeklyEmailEngine {
 		$total_points = PointsEngine::get_total( $user_id );
 
 		return compact(
-			'points_this_week', 'is_best', 'best_week',
-			'badges_this_week', 'challenges_this_week',
-			'streak', 'rank', 'total_points'
+			'points_this_week',
+			'is_best',
+			'best_week',
+			'badges_this_week',
+			'challenges_this_week',
+			'streak',
+			'rank',
+			'total_points'
 		);
 	}
 
@@ -232,11 +237,11 @@ final class WeeklyEmailEngine {
 		// Unsubscribe URL — sets notification_mode to 'none' via nonce-protected endpoint.
 		$unsub_url = esc_url(
 			add_query_arg(
-				[
+				array(
 					'wb_gam_unsub' => '1',
 					'uid'          => $user->ID,
 					'tok'          => wp_hash( 'unsub_' . $user->ID . $user->user_email ),
-				],
+				),
 				home_url()
 			)
 		);
@@ -372,7 +377,7 @@ hr { border:none; border-top:1px solid #f3f4f6; margin:1rem 0; }
 	<div class="footer">
 		<p>
 			<?php echo esc_html( $site_name ); ?> &bull;
-			<a href="<?php echo $unsub_url; ?>"><?php esc_html_e( 'Unsubscribe from weekly emails', 'wb-gamification' ); ?></a>
+			<a href="<?php echo esc_url( $unsub_url ); ?>"><?php esc_html_e( 'Unsubscribe from weekly emails', 'wb-gamification' ); ?></a>
 		</p>
 	</div>
 </div>

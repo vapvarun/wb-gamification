@@ -49,8 +49,8 @@ final class LeaderboardEngine {
 		$scope_ids    = self::resolve_scope( $scope_type, $scope_id );
 
 		// Build WHERE clause.
-		$where_parts  = [];
-		$where_values = [];
+		$where_parts  = array();
+		$where_values = array();
 
 		if ( $period_start ) {
 			$where_parts[]  = 'p.created_at >= %s';
@@ -59,7 +59,7 @@ final class LeaderboardEngine {
 
 		if ( ! empty( $opt_out_ids ) ) {
 			$placeholders = implode( ',', array_fill( 0, count( $opt_out_ids ), '%d' ) );
-			$where_parts  = array_merge( $where_parts, [] );
+			$where_parts  = array_merge( $where_parts, array() );
 			$where_values = array_merge( $where_values, $opt_out_ids );
 			// phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
 			$opt_out_clause = "AND p.user_id NOT IN ($placeholders)";
@@ -68,9 +68,9 @@ final class LeaderboardEngine {
 		}
 
 		if ( ! empty( $scope_ids ) ) {
-			$placeholders   = implode( ',', array_fill( 0, count( $scope_ids ), '%d' ) );
-			$scope_clause   = "AND p.user_id IN ($placeholders)";
-			$where_values   = array_merge( $where_values, $scope_ids );
+			$placeholders = implode( ',', array_fill( 0, count( $scope_ids ), '%d' ) );
+			$scope_clause = "AND p.user_id IN ($placeholders)";
+			$where_values = array_merge( $where_values, $scope_ids );
 		} else {
 			$scope_clause = '';
 		}
@@ -103,19 +103,19 @@ final class LeaderboardEngine {
 			: $wpdb->get_results( $query, ARRAY_A ); // phpcs:ignore
 
 		if ( ! $rows ) {
-			return [];
+			return array();
 		}
 
-		$result = [];
+		$result = array();
 		foreach ( $rows as $rank_zero => $row ) {
-			$user_id = (int) $row['user_id'];
-			$result[] = [
+			$user_id  = (int) $row['user_id'];
+			$result[] = array(
 				'rank'         => $rank_zero + 1,
 				'user_id'      => $user_id,
 				'display_name' => $row['display_name'],
-				'avatar_url'   => get_avatar_url( $user_id, [ 'size' => 48 ] ),
+				'avatar_url'   => get_avatar_url( $user_id, array( 'size' => 48 ) ),
 				'points'       => (int) $row['total_points'],
-			];
+			);
 		}
 
 		return $result;
@@ -144,8 +144,8 @@ final class LeaderboardEngine {
 		$period_start = self::get_period_start( $period );
 		$opt_out_ids  = self::get_opted_out_ids();
 		// Remove the current user from opt-outs so we can count them too.
-		$opt_out_ids  = array_filter( $opt_out_ids, fn( $id ) => $id !== $user_id );
-		$scope_ids    = self::resolve_scope( $scope_type, $scope_id );
+		$opt_out_ids = array_filter( $opt_out_ids, fn( $id ) => $id !== $user_id );
+		$scope_ids   = self::resolve_scope( $scope_type, $scope_id );
 
 		// Get user's own total for the period.
 		$user_total = (int) $wpdb->get_var(
@@ -169,11 +169,11 @@ final class LeaderboardEngine {
 		// Find the lowest total above ours to calculate gap.
 		$next_total = self::get_next_threshold( $user_total, $period_start, $opt_out_ids, $scope_ids );
 
-		return [
+		return array(
 			'rank'           => $above_rank + 1,
 			'points'         => $user_total,
 			'points_to_next' => $next_total !== null ? ( $next_total - $user_total ) : null,
-		];
+		);
 	}
 
 	// ── Private helpers ────────────────────────────────────────────────────────
@@ -205,7 +205,7 @@ final class LeaderboardEngine {
 	 */
 	private static function resolve_scope( string $scope_type, int $scope_id ): array {
 		if ( '' === $scope_type || $scope_id <= 0 ) {
-			return [];
+			return array();
 		}
 
 		/**
@@ -220,7 +220,7 @@ final class LeaderboardEngine {
 		 */
 		return (array) apply_filters(
 			'wb_gamification_leaderboard_scope_user_ids',
-			[],
+			array(),
 			$scope_type,
 			$scope_id
 		);
@@ -236,7 +236,7 @@ final class LeaderboardEngine {
 		$ids = $wpdb->get_col(
 			"SELECT user_id FROM {$wpdb->prefix}wb_gam_member_prefs WHERE leaderboard_opt_out = 1"
 		);
-		return array_map( 'intval', $ids ?: [] );
+		return array_map( 'intval', $ids ?: array() );
 	}
 
 	/**
@@ -250,7 +250,7 @@ final class LeaderboardEngine {
 	): int {
 		global $wpdb;
 
-		$values = [];
+		$values = array();
 		$where  = '';
 
 		if ( $period_start ) {
@@ -258,16 +258,16 @@ final class LeaderboardEngine {
 			$values[] = $period_start;
 		}
 		if ( ! empty( $opt_out_ids ) ) {
-			$ph      = implode( ',', array_fill( 0, count( $opt_out_ids ), '%d' ) );
+			$ph = implode( ',', array_fill( 0, count( $opt_out_ids ), '%d' ) );
 			// phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
-			$where  .= " AND p.user_id NOT IN ($ph)";
-			$values  = array_merge( $values, $opt_out_ids );
+			$where .= " AND p.user_id NOT IN ($ph)";
+			$values = array_merge( $values, $opt_out_ids );
 		}
 		if ( ! empty( $scope_ids ) ) {
-			$ph      = implode( ',', array_fill( 0, count( $scope_ids ), '%d' ) );
+			$ph = implode( ',', array_fill( 0, count( $scope_ids ), '%d' ) );
 			// phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
-			$where  .= " AND p.user_id IN ($ph)";
-			$values  = array_merge( $values, $scope_ids );
+			$where .= " AND p.user_id IN ($ph)";
+			$values = array_merge( $values, $scope_ids );
 		}
 		$values[] = $threshold;
 
@@ -296,7 +296,7 @@ final class LeaderboardEngine {
 	): ?int {
 		global $wpdb;
 
-		$values = [];
+		$values = array();
 		$where  = '';
 
 		if ( $period_start ) {
@@ -304,16 +304,16 @@ final class LeaderboardEngine {
 			$values[] = $period_start;
 		}
 		if ( ! empty( $opt_out_ids ) ) {
-			$ph      = implode( ',', array_fill( 0, count( $opt_out_ids ), '%d' ) );
+			$ph = implode( ',', array_fill( 0, count( $opt_out_ids ), '%d' ) );
 			// phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
-			$where  .= " AND p.user_id NOT IN ($ph)";
-			$values  = array_merge( $values, $opt_out_ids );
+			$where .= " AND p.user_id NOT IN ($ph)";
+			$values = array_merge( $values, $opt_out_ids );
 		}
 		if ( ! empty( $scope_ids ) ) {
-			$ph      = implode( ',', array_fill( 0, count( $scope_ids ), '%d' ) );
+			$ph = implode( ',', array_fill( 0, count( $scope_ids ), '%d' ) );
 			// phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
-			$where  .= " AND p.user_id IN ($ph)";
-			$values  = array_merge( $values, $scope_ids );
+			$where .= " AND p.user_id IN ($ph)";
+			$values = array_merge( $values, $scope_ids );
 		}
 		$values[] = $threshold;
 

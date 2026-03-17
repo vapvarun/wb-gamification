@@ -42,26 +42,26 @@ class BadgeShareController extends WP_REST_Controller {
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base . '/(?P<badge_id>[a-z0-9_-]+)/share/(?P<user_id>[\d]+)',
-			[
-				[
+			array(
+				array(
 					'methods'             => WP_REST_Server::READABLE,
-					'callback'            => [ $this, 'get_share_card' ],
+					'callback'            => array( $this, 'get_share_card' ),
 					'permission_callback' => '__return_true',
-					'args'                => [
-						'badge_id' => [
+					'args'                => array(
+						'badge_id' => array(
 							'required'          => true,
 							'type'              => 'string',
 							'sanitize_callback' => 'sanitize_key',
-						],
-						'user_id'  => [
+						),
+						'user_id'  => array(
 							'required'          => true,
 							'type'              => 'integer',
 							'minimum'           => 1,
 							'sanitize_callback' => 'absint',
-						],
-					],
-				],
-			]
+						),
+					),
+				),
+			)
 		);
 	}
 
@@ -81,7 +81,7 @@ class BadgeShareController extends WP_REST_Controller {
 			return new WP_Error(
 				'rest_user_invalid',
 				__( 'Member not found.', 'wb-gamification' ),
-				[ 'status' => 404 ]
+				array( 'status' => 404 )
 			);
 		}
 
@@ -90,7 +90,7 @@ class BadgeShareController extends WP_REST_Controller {
 			return new WP_Error(
 				'rest_badge_not_found',
 				__( 'Badge not found.', 'wb-gamification' ),
-				[ 'status' => 404 ]
+				array( 'status' => 404 )
 			);
 		}
 
@@ -109,7 +109,7 @@ class BadgeShareController extends WP_REST_Controller {
 			return new WP_Error(
 				'rest_badge_not_earned',
 				__( 'This member has not earned this badge.', 'wb-gamification' ),
-				[ 'status' => 404 ]
+				array( 'status' => 404 )
 			);
 		}
 
@@ -121,7 +121,7 @@ class BadgeShareController extends WP_REST_Controller {
 
 		// LinkedIn share URL — pre-filled with badge name and site.
 		$linkedin_url = add_query_arg(
-			[
+			array(
 				'mini'   => 'true',
 				'url'    => rawurlencode( rest_url( $this->namespace . '/badges/' . $badge_id . '/share/' . $user_id ) ),
 				'title'  => rawurlencode(
@@ -133,37 +133,37 @@ class BadgeShareController extends WP_REST_Controller {
 					)
 				),
 				'source' => rawurlencode( $site_url ),
-			],
+			),
 			'https://www.linkedin.com/shareArticle'
 		);
 
 		return rest_ensure_response(
-			[
-				'badge'      => [
+			array(
+				'badge'      => array(
 					'id'            => $def['id'],
 					'name'          => $def['name'],
 					'description'   => $def['description'],
 					'image_url'     => $def['image_url'],
 					'is_credential' => $def['is_credential'],
 					'category'      => $def['category'],
-				],
-				'earner'     => [
+				),
+				'earner'     => array(
 					'user_id'      => $user_id,
 					'display_name' => $user->display_name,
-					'avatar_url'   => get_avatar_url( $user_id, [ 'size' => 128 ] ),
+					'avatar_url'   => get_avatar_url( $user_id, array( 'size' => 128 ) ),
 					'profile_url'  => $profile_url,
-				],
+				),
 				'earned_at'  => $earned_at,
-				'site'       => [
+				'site'       => array(
 					'name' => $site_name,
 					'url'  => $site_url,
-				],
-				'share_urls' => [
-					'linkedin'   => $linkedin_url,
-					'self'       => rest_url( $this->namespace . '/badges/' . $badge_id . '/share/' . $user_id ),
-				],
+				),
+				'share_urls' => array(
+					'linkedin' => $linkedin_url,
+					'self'     => rest_url( $this->namespace . '/badges/' . $badge_id . '/share/' . $user_id ),
+				),
 				// Open Graph tags for server-side rendering.
-				'og'         => [
+				'og'         => array(
 					'title'       => sprintf(
 						/* translators: 1: member name, 2: badge name, 3: site name */
 						__( '%1$s earned the %2$s badge on %3$s', 'wb-gamification' ),
@@ -172,10 +172,10 @@ class BadgeShareController extends WP_REST_Controller {
 						$site_name
 					),
 					'description' => $def['description'] ?? '',
-					'image'       => $def['image_url'] ?? get_avatar_url( $user_id, [ 'size' => 512 ] ),
+					'image'       => $def['image_url'] ?? get_avatar_url( $user_id, array( 'size' => 512 ) ),
 					'url'         => rest_url( $this->namespace . '/badges/' . $badge_id . '/share/' . $user_id ),
-				],
-			]
+				),
+			)
 		);
 	}
 }

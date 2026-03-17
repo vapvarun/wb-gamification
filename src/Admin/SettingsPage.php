@@ -26,9 +26,9 @@ defined( 'ABSPATH' ) || exit;
 final class SettingsPage {
 
 	public static function init(): void {
-		add_action( 'admin_menu', [ __CLASS__, 'register_page' ] );
-		add_action( 'admin_init', [ __CLASS__, 'handle_save' ] );
-		add_action( 'admin_post_wb_gam_save_levels', [ __CLASS__, 'handle_save_levels' ] );
+		add_action( 'admin_menu', array( __CLASS__, 'register_page' ) );
+		add_action( 'admin_init', array( __CLASS__, 'handle_save' ) );
+		add_action( 'admin_post_wb_gam_save_levels', array( __CLASS__, 'handle_save_levels' ) );
 	}
 
 	public static function register_page(): void {
@@ -37,7 +37,7 @@ final class SettingsPage {
 			__( 'Gamification', 'wb-gamification' ),
 			'manage_options',
 			'wb-gamification',
-			[ __CLASS__, 'render' ],
+			array( __CLASS__, 'render' ),
 			'dashicons-awards',
 			56
 		);
@@ -63,11 +63,12 @@ final class SettingsPage {
 	}
 
 	private static function save_points_settings(): void {
+		// phpcs:disable WordPress.Security.NonceVerification.Missing -- Nonce verified by check_admin_referer() in handle_save().
 		$actions = Registry::get_actions();
 
 		foreach ( $actions as $action_id => $action ) {
 			$key    = 'wb_gam_points_' . sanitize_key( $action_id );
-			$points = isset( $_POST[ $key ] ) ? (int) $_POST[ $key ] : null;
+			$points = isset( $_POST[ $key ] ) ? (int) wp_unslash( $_POST[ $key ] ) : null;
 
 			if ( null !== $points && $points >= 0 ) {
 				update_option( 'wb_gam_points_' . $action_id, $points );
@@ -79,9 +80,10 @@ final class SettingsPage {
 
 		// Also save log retention.
 		if ( isset( $_POST['wb_gam_log_retention_months'] ) ) {
-			$months = max( 1, min( 24, (int) $_POST['wb_gam_log_retention_months'] ) );
+			$months = max( 1, min( 24, (int) wp_unslash( $_POST['wb_gam_log_retention_months'] ) ) );
 			update_option( 'wb_gam_log_retention_months', $months );
 		}
+		// phpcs:enable WordPress.Security.NonceVerification.Missing
 
 		add_settings_error( 'wb_gamification', 'saved', __( 'Settings saved.', 'wb-gamification' ), 'success' );
 	}
@@ -97,8 +99,9 @@ final class SettingsPage {
 		$table = $wpdb->prefix . 'wb_gam_levels';
 
 		// Process updates for existing levels.
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- each field is sanitized individually inside the loop.
 		if ( ! empty( $_POST['wb_gam_level'] ) && is_array( $_POST['wb_gam_level'] ) ) {
-			foreach ( $_POST['wb_gam_level'] as $id => $data ) {
+			foreach ( (array) wp_unslash( $_POST['wb_gam_level'] ) as $id => $data ) {
 				$id         = (int) $id;
 				$name       = sanitize_text_field( wp_unslash( $data['name'] ?? '' ) );
 				$min_points = max( 0, (int) ( $data['min_points'] ?? 0 ) );
@@ -109,10 +112,13 @@ final class SettingsPage {
 
 				$wpdb->update(
 					$table,
-					[ 'name' => $name, 'min_points' => $min_points ],
-					[ 'id'   => $id ],
-					[ '%s', '%d' ],
-					[ '%d' ]
+					array(
+						'name'       => $name,
+						'min_points' => $min_points,
+					),
+					array( 'id' => $id ),
+					array( '%s', '%d' ),
+					array( '%d' )
 				);
 			}
 		}
@@ -148,15 +154,15 @@ final class SettingsPage {
 
 			<nav class="nav-tab-wrapper" style="margin-top:16px;">
 				<?php
-				$tabs = [
+				$tabs = array(
 					'points' => __( 'Points', 'wb-gamification' ),
 					'levels' => __( 'Levels', 'wb-gamification' ),
-				];
+				);
 				foreach ( $tabs as $slug => $label ) :
 					$class = ( $tab === $slug ) ? 'nav-tab nav-tab-active' : 'nav-tab';
 					?>
 					<a href="<?php echo esc_url( admin_url( 'admin.php?page=wb-gamification&tab=' . $slug ) ); ?>"
-					   class="<?php echo esc_attr( $class ); ?>"><?php echo esc_html( $label ); ?></a>
+						class="<?php echo esc_attr( $class ); ?>"><?php echo esc_html( $label ); ?></a>
 				<?php endforeach; ?>
 			</nav>
 
@@ -166,7 +172,7 @@ final class SettingsPage {
 					'levels' => self::render_levels_tab(),
 					default  => self::render_points_tab(),
 				};
-				?>
+		?>
 			</div>
 
 		</div>
@@ -176,21 +182,21 @@ final class SettingsPage {
 	// ── Points tab ────────────────────────────────────────────────────────────
 
 	private static function render_points_tab(): void {
-		$actions  = Registry::get_actions();
-		$by_cat   = [];
+		$actions = Registry::get_actions();
+		$by_cat  = array();
 		foreach ( $actions as $action ) {
 			$by_cat[ $action['category'] ?? 'general' ][] = $action;
 		}
 		ksort( $by_cat );
 
-		$cat_labels = [
+		$cat_labels = array(
 			'wordpress'  => __( 'WordPress', 'wb-gamification' ),
 			'buddypress' => __( 'BuddyPress', 'wb-gamification' ),
 			'commerce'   => __( 'Commerce', 'wb-gamification' ),
 			'learning'   => __( 'Learning', 'wb-gamification' ),
 			'social'     => __( 'Social', 'wb-gamification' ),
 			'general'    => __( 'General', 'wb-gamification' ),
-		];
+		);
 		?>
 		<form method="post" action="<?php echo esc_url( admin_url( 'admin.php?page=wb-gamification&tab=points' ) ); ?>">
 			<?php wp_nonce_field( 'wb_gam_save_settings', 'wb_gam_settings_nonce' ); ?>
@@ -214,12 +220,13 @@ final class SettingsPage {
 						</tr>
 						</thead>
 						<tbody>
-						<?php foreach ( $cat_actions as $action ) :
-							$action_id   = $action['id'];
-							$pts         = (int) get_option( 'wb_gam_points_' . $action_id, $action['default_points'] );
-							$enabled     = (bool) get_option( 'wb_gam_enabled_' . $action_id, true );
-							$repeatable  = (bool) ( $action['repeatable'] ?? true );
-							$daily_cap   = (int) ( $action['daily_cap'] ?? 0 );
+						<?php
+						foreach ( $cat_actions as $action ) :
+							$action_id  = $action['id'];
+							$pts        = (int) get_option( 'wb_gam_points_' . $action_id, $action['default_points'] );
+							$enabled    = (bool) get_option( 'wb_gam_enabled_' . $action_id, true );
+							$repeatable = (bool) ( $action['repeatable'] ?? true );
+							$daily_cap  = (int) ( $action['daily_cap'] ?? 0 );
 							?>
 							<tr>
 								<td>

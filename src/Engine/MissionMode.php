@@ -28,68 +28,68 @@ defined( 'ABSPATH' ) || exit;
 
 final class MissionMode {
 
-	private const BUILT_IN_MODES = [
-		'default' => [
-			'points'  => 'Points',
-			'badges'  => 'Badges',
-			'level'   => 'Level',
-			'streak'  => 'Streak',
-			'kudos'   => 'Kudos',
-			'rank'    => 'Rank',
+	private const BUILT_IN_MODES = array(
+		'default'      => array(
+			'points'      => 'Points',
+			'badges'      => 'Badges',
+			'level'       => 'Level',
+			'streak'      => 'Streak',
+			'kudos'       => 'Kudos',
+			'rank'        => 'Rank',
 			'leaderboard' => 'Leaderboard',
 			'challenge'   => 'Challenge',
-		],
-		'nonprofit' => [
-			'points'  => 'Contributions',
-			'badges'  => 'Recognitions',
-			'level'   => 'Impact Stage',
-			'streak'  => 'Consistency',
-			'kudos'   => 'Appreciations',
-			'rank'    => 'Impact Rank',
+		),
+		'nonprofit'    => array(
+			'points'      => 'Contributions',
+			'badges'      => 'Recognitions',
+			'level'       => 'Impact Stage',
+			'streak'      => 'Consistency',
+			'kudos'       => 'Appreciations',
+			'rank'        => 'Impact Rank',
 			'leaderboard' => 'Impact Board',
 			'challenge'   => 'Mission',
-		],
-		'professional' => [
-			'points'  => 'Credits',
-			'badges'  => 'Credentials',
-			'level'   => 'Rank',
-			'streak'  => 'Commitment',
-			'kudos'   => 'Endorsements',
-			'rank'    => 'Professional Rank',
+		),
+		'professional' => array(
+			'points'      => 'Credits',
+			'badges'      => 'Credentials',
+			'level'       => 'Rank',
+			'streak'      => 'Commitment',
+			'kudos'       => 'Endorsements',
+			'rank'        => 'Professional Rank',
 			'leaderboard' => 'Rankings',
 			'challenge'   => 'Objective',
-		],
-		'fitness' => [
-			'points'  => 'Points',
-			'badges'  => 'Achievements',
-			'level'   => 'Fitness Level',
-			'streak'  => 'Streak',
-			'kudos'   => 'Shoutouts',
-			'rank'    => 'Fitness Rank',
+		),
+		'fitness'      => array(
+			'points'      => 'Points',
+			'badges'      => 'Achievements',
+			'level'       => 'Fitness Level',
+			'streak'      => 'Streak',
+			'kudos'       => 'Shoutouts',
+			'rank'        => 'Fitness Rank',
 			'leaderboard' => 'Leaderboard',
 			'challenge'   => 'Fitness Challenge',
-		],
-		'education' => [
-			'points'  => 'XP',
-			'badges'  => 'Achievements',
-			'level'   => 'Grade',
-			'streak'  => 'Study Streak',
-			'kudos'   => 'High Fives',
-			'rank'    => 'Class Rank',
+		),
+		'education'    => array(
+			'points'      => 'XP',
+			'badges'      => 'Achievements',
+			'level'       => 'Grade',
+			'streak'      => 'Study Streak',
+			'kudos'       => 'High Fives',
+			'rank'        => 'Class Rank',
 			'leaderboard' => 'Honour Roll',
 			'challenge'   => 'Assignment',
-		],
-		'coaching' => [
-			'points'  => 'Points',
-			'badges'  => 'Milestones',
-			'level'   => 'Coaching Level',
-			'streak'  => 'Commitment Streak',
-			'kudos'   => 'Kudos',
-			'rank'    => 'Coaching Rank',
+		),
+		'coaching'     => array(
+			'points'      => 'Points',
+			'badges'      => 'Milestones',
+			'level'       => 'Coaching Level',
+			'streak'      => 'Commitment Streak',
+			'kudos'       => 'Kudos',
+			'rank'        => 'Coaching Rank',
 			'leaderboard' => 'Progress Board',
 			'challenge'   => 'Goal',
-		],
-	];
+		),
+	);
 
 	/** @var array|null Cached resolved dictionary for current request. */
 	private static ?array $resolved = null;

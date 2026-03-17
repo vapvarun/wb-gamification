@@ -43,120 +43,131 @@ class MembersController extends WP_REST_Controller {
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base . '/(?P<id>[\d]+)',
-			[
-				[
+			array(
+				array(
 					'methods'             => WP_REST_Server::READABLE,
-					'callback'            => [ $this, 'get_item' ],
-					'permission_callback' => [ $this, 'get_item_permissions_check' ],
+					'callback'            => array( $this, 'get_item' ),
+					'permission_callback' => array( $this, 'get_item_permissions_check' ),
 					'args'                => $this->get_member_id_args(),
-				],
-				'schema' => [ $this, 'get_item_schema' ],
-			]
+				),
+				'schema' => array( $this, 'get_item_schema' ),
+			)
 		);
 
 		// GET /members/{id}/points
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base . '/(?P<id>[\d]+)/points',
-			[
-				[
+			array(
+				array(
 					'methods'             => WP_REST_Server::READABLE,
-					'callback'            => [ $this, 'get_points' ],
-					'permission_callback' => [ $this, 'get_item_permissions_check' ],
+					'callback'            => array( $this, 'get_points' ),
+					'permission_callback' => array( $this, 'get_item_permissions_check' ),
 					'args'                => array_merge(
 						$this->get_member_id_args(),
-						[
-							'page'     => [
+						array(
+							'page'     => array(
 								'type'              => 'integer',
 								'default'           => 1,
 								'minimum'           => 1,
 								'sanitize_callback' => 'absint',
-							],
-							'per_page' => [
+							),
+							'per_page' => array(
 								'type'              => 'integer',
 								'default'           => self::POINTS_PER_PAGE,
 								'minimum'           => 1,
 								'maximum'           => 100,
 								'sanitize_callback' => 'absint',
-							],
-						]
+							),
+						)
 					),
-				],
-			]
+				),
+			)
 		);
 
 		// GET /members/{id}/level
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base . '/(?P<id>[\d]+)/level',
-			[
-				[
+			array(
+				array(
 					'methods'             => WP_REST_Server::READABLE,
-					'callback'            => [ $this, 'get_level' ],
-					'permission_callback' => [ $this, 'get_item_permissions_check' ],
+					'callback'            => array( $this, 'get_level' ),
+					'permission_callback' => array( $this, 'get_item_permissions_check' ),
 					'args'                => $this->get_member_id_args(),
-				],
-			]
+				),
+			)
 		);
 
 		// GET /members/{id}/badges
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base . '/(?P<id>[\d]+)/badges',
-			[
-				[
+			array(
+				array(
 					'methods'             => WP_REST_Server::READABLE,
-					'callback'            => [ $this, 'get_badges' ],
-					'permission_callback' => [ $this, 'get_item_permissions_check' ],
+					'callback'            => array( $this, 'get_badges' ),
+					'permission_callback' => array( $this, 'get_item_permissions_check' ),
 					'args'                => $this->get_member_id_args(),
-				],
-			]
+				),
+			)
 		);
 
 		// GET /members/{id}/events
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base . '/(?P<id>[\d]+)/events',
-			[
-				[
+			array(
+				array(
 					'methods'             => WP_REST_Server::READABLE,
-					'callback'            => [ $this, 'get_events' ],
-					'permission_callback' => [ $this, 'get_item_permissions_check' ],
+					'callback'            => array( $this, 'get_events' ),
+					'permission_callback' => array( $this, 'get_item_permissions_check' ),
 					'args'                => array_merge(
 						$this->get_member_id_args(),
-						[
-							'page'     => [ 'type' => 'integer', 'default' => 1, 'minimum' => 1, 'sanitize_callback' => 'absint' ],
-							'per_page' => [ 'type' => 'integer', 'default' => 20, 'minimum' => 1, 'maximum' => 100, 'sanitize_callback' => 'absint' ],
-						]
+						array(
+							'page'     => array(
+								'type'              => 'integer',
+								'default'           => 1,
+								'minimum'           => 1,
+								'sanitize_callback' => 'absint',
+							),
+							'per_page' => array(
+								'type'              => 'integer',
+								'default'           => 20,
+								'minimum'           => 1,
+								'maximum'           => 100,
+								'sanitize_callback' => 'absint',
+							),
+						)
 					),
-				],
-			]
+				),
+			)
 		);
 
 		// GET /members/{id}/streak
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base . '/(?P<id>[\d]+)/streak',
-			[
-				[
+			array(
+				array(
 					'methods'             => WP_REST_Server::READABLE,
-					'callback'            => [ $this, 'get_streak' ],
-					'permission_callback' => [ $this, 'get_item_permissions_check' ],
+					'callback'            => array( $this, 'get_streak' ),
+					'permission_callback' => array( $this, 'get_item_permissions_check' ),
 					'args'                => array_merge(
 						$this->get_member_id_args(),
-						[
-							'heatmap_days' => [
+						array(
+							'heatmap_days' => array(
 								'type'              => 'integer',
 								'default'           => 0,
 								'minimum'           => 0,
 								'maximum'           => 365,
 								'sanitize_callback' => 'absint',
 								'description'       => 'Include N days of contribution data for heatmap. 0 = skip.',
-							],
-						]
+							),
+						)
 					),
-				],
-			]
+				),
+			)
 		);
 	}
 
@@ -166,7 +177,7 @@ class MembersController extends WP_REST_Controller {
 		$user_id = (int) $request['id'];
 
 		if ( ! get_userdata( $user_id ) ) {
-			return new WP_Error( 'rest_user_invalid', __( 'Member not found.', 'wb-gamification' ), [ 'status' => 404 ] );
+			return new WP_Error( 'rest_user_invalid', __( 'Member not found.', 'wb-gamification' ), array( 'status' => 404 ) );
 		}
 
 		// Self-read always allowed for authenticated users.
@@ -188,21 +199,21 @@ class MembersController extends WP_REST_Controller {
 		$user    = get_userdata( $user_id );
 
 		if ( ! $user ) {
-			return new WP_Error( 'rest_user_invalid', __( 'Member not found.', 'wb-gamification' ), [ 'status' => 404 ] );
+			return new WP_Error( 'rest_user_invalid', __( 'Member not found.', 'wb-gamification' ), array( 'status' => 404 ) );
 		}
 
-		$points  = PointsEngine::get_total( $user_id );
-		$level   = LevelEngine::get_level_for_user( $user_id );
-		$next    = LevelEngine::get_next_level( $user_id );
-		$prefs   = $this->get_member_prefs( $user_id );
+		$points = PointsEngine::get_total( $user_id );
+		$level  = LevelEngine::get_level_for_user( $user_id );
+		$next   = LevelEngine::get_next_level( $user_id );
+		$prefs  = $this->get_member_prefs( $user_id );
 
-		$data = [
-			'id'            => $user_id,
-			'display_name'  => $user->display_name,
-			'avatar_url'    => get_avatar_url( $user_id, [ 'size' => 96 ] ),
-			'points'        => $points,
-			'level'         => $level
-				? [
+		$data = array(
+			'id'           => $user_id,
+			'display_name' => $user->display_name,
+			'avatar_url'   => get_avatar_url( $user_id, array( 'size' => 96 ) ),
+			'points'       => $points,
+			'level'        => $level
+				? array(
 					'id'              => $level['id'],
 					'name'            => $level['name'],
 					'min_points'      => $level['min_points'],
@@ -210,15 +221,15 @@ class MembersController extends WP_REST_Controller {
 					'progress_pct'    => LevelEngine::get_progress_percent( $user_id ),
 					'next_threshold'  => $next ? $next['min_points'] : null,
 					'next_level_name' => $next ? $next['name'] : null,
-				]
+				)
 				: null,
-			'badges_count'  => $this->get_badge_count( $user_id ),
-			'preferences'   => [
-				'show_rank'            => (bool) $prefs['show_rank'],
-				'leaderboard_opt_out'  => (bool) $prefs['leaderboard_opt_out'],
-				'notification_mode'    => $prefs['notification_mode'],
-			],
-		];
+			'badges_count' => $this->get_badge_count( $user_id ),
+			'preferences'  => array(
+				'show_rank'           => (bool) $prefs['show_rank'],
+				'leaderboard_opt_out' => (bool) $prefs['leaderboard_opt_out'],
+				'notification_mode'   => $prefs['notification_mode'],
+			),
+		);
 
 		return rest_ensure_response( $data );
 	}
@@ -233,7 +244,7 @@ class MembersController extends WP_REST_Controller {
 		$offset   = ( $page - 1 ) * $per_page;
 
 		if ( ! get_userdata( $user_id ) ) {
-			return new WP_Error( 'rest_user_invalid', __( 'Member not found.', 'wb-gamification' ), [ 'status' => 404 ] );
+			return new WP_Error( 'rest_user_invalid', __( 'Member not found.', 'wb-gamification' ), array( 'status' => 404 ) );
 		}
 
 		global $wpdb;
@@ -263,23 +274,23 @@ class MembersController extends WP_REST_Controller {
 
 		$history = array_map(
 			static function ( array $row ): array {
-				return [
+				return array(
 					'id'         => (int) $row['id'],
 					'event_id'   => $row['event_id'],
 					'action_id'  => $row['action_id'],
 					'points'     => (int) $row['points'],
 					'object_id'  => $row['object_id'] ? (int) $row['object_id'] : null,
 					'created_at' => $row['created_at'],
-				];
+				);
 			},
 			$rows
 		);
 
 		$response = rest_ensure_response(
-			[
+			array(
 				'total'   => $total,
 				'history' => $history,
-			]
+			)
 		);
 
 		$response->header( 'X-WB-Gam-Total-Rows', $total_rows );
@@ -296,7 +307,7 @@ class MembersController extends WP_REST_Controller {
 		$user_id = (int) $request['id'];
 
 		if ( ! get_userdata( $user_id ) ) {
-			return new WP_Error( 'rest_user_invalid', __( 'Member not found.', 'wb-gamification' ), [ 'status' => 404 ] );
+			return new WP_Error( 'rest_user_invalid', __( 'Member not found.', 'wb-gamification' ), array( 'status' => 404 ) );
 		}
 
 		$points = PointsEngine::get_total( $user_id );
@@ -304,27 +315,27 @@ class MembersController extends WP_REST_Controller {
 		$next   = LevelEngine::get_next_level( $user_id );
 
 		return rest_ensure_response(
-			[
+			array(
 				'points'       => $points,
 				'current'      => $level
-					? [
+					? array(
 						'id'         => $level['id'],
 						'name'       => $level['name'],
 						'min_points' => $level['min_points'],
 						'icon_url'   => $level['icon_url'],
-					]
+					)
 					: null,
 				'next'         => $next
-					? [
+					? array(
 						'id'         => $next['id'],
 						'name'       => $next['name'],
 						'min_points' => $next['min_points'],
 						'icon_url'   => $next['icon_url'],
-					]
+					)
 					: null,
 				'progress_pct' => LevelEngine::get_progress_percent( $user_id ),
 				'all_levels'   => LevelEngine::get_all_levels_for_user( $user_id ),
-			]
+			)
 		);
 	}
 
@@ -335,7 +346,7 @@ class MembersController extends WP_REST_Controller {
 		$user_id = (int) $request['id'];
 
 		if ( ! get_userdata( $user_id ) ) {
-			return new WP_Error( 'rest_user_invalid', __( 'Member not found.', 'wb-gamification' ), [ 'status' => 404 ] );
+			return new WP_Error( 'rest_user_invalid', __( 'Member not found.', 'wb-gamification' ), array( 'status' => 404 ) );
 		}
 
 		global $wpdb;
@@ -355,7 +366,7 @@ class MembersController extends WP_REST_Controller {
 
 		$badges = array_map(
 			static function ( array $row ): array {
-				return [
+				return array(
 					'id'            => $row['id'],
 					'name'          => $row['name'],
 					'description'   => $row['description'],
@@ -363,9 +374,9 @@ class MembersController extends WP_REST_Controller {
 					'is_credential' => (bool) $row['is_credential'],
 					'category'      => $row['category'],
 					'earned_at'     => $row['earned_at'],
-				];
+				);
 			},
-			$rows ?: []
+			$rows ?: array()
 		);
 
 		return rest_ensure_response( $badges );
@@ -381,7 +392,7 @@ class MembersController extends WP_REST_Controller {
 		$offset   = ( $page - 1 ) * $per_page;
 
 		if ( ! get_userdata( $user_id ) ) {
-			return new WP_Error( 'rest_user_invalid', __( 'Member not found.', 'wb-gamification' ), [ 'status' => 404 ] );
+			return new WP_Error( 'rest_user_invalid', __( 'Member not found.', 'wb-gamification' ), array( 'status' => 404 ) );
 		}
 
 		global $wpdb;
@@ -409,15 +420,15 @@ class MembersController extends WP_REST_Controller {
 
 		$events = array_map(
 			static function ( array $row ): array {
-				return [
+				return array(
 					'id'         => $row['id'],
 					'action_id'  => $row['action_id'],
 					'object_id'  => $row['object_id'] ? (int) $row['object_id'] : null,
 					'metadata'   => $row['metadata'] ? json_decode( $row['metadata'], true ) : null,
 					'created_at' => $row['created_at'],
-				];
+				);
 			},
-			$rows ?: []
+			$rows ?: array()
 		);
 
 		$response = rest_ensure_response( $events );
@@ -435,23 +446,23 @@ class MembersController extends WP_REST_Controller {
 		$heatmap_days = (int) $request->get_param( 'heatmap_days' );
 
 		if ( ! get_userdata( $user_id ) ) {
-			return new WP_Error( 'rest_user_invalid', __( 'Member not found.', 'wb-gamification' ), [ 'status' => 404 ] );
+			return new WP_Error( 'rest_user_invalid', __( 'Member not found.', 'wb-gamification' ), array( 'status' => 404 ) );
 		}
 
-		$streak   = StreakEngine::get_streak( $user_id );
-		$heatmap  = $heatmap_days > 0
+		$streak  = StreakEngine::get_streak( $user_id );
+		$heatmap = $heatmap_days > 0
 			? StreakEngine::get_contribution_data( $user_id, $heatmap_days )
 			: null;
 
 		return rest_ensure_response(
-			[
+			array(
 				'current_streak' => $streak['current_streak'],
 				'longest_streak' => $streak['longest_streak'],
 				'last_active'    => $streak['last_active'],
 				'grace_used'     => $streak['grace_used'],
-				'milestones'     => [ 7, 14, 30, 60, 100, 180, 365 ],
+				'milestones'     => array( 7, 14, 30, 60, 100, 180, 365 ),
 				'heatmap'        => $heatmap,
-			]
+			)
 		);
 	}
 
@@ -473,11 +484,11 @@ class MembersController extends WP_REST_Controller {
 			ARRAY_A
 		);
 
-		return $row ?: [
+		return $row ?: array(
 			'leaderboard_opt_out' => 0,
 			'show_rank'           => 1,
 			'notification_mode'   => 'smart',
-		];
+		);
 	}
 
 	private function get_badge_count( int $user_id ): int {
@@ -491,29 +502,29 @@ class MembersController extends WP_REST_Controller {
 	}
 
 	private function get_member_id_args(): array {
-		return [
-			'id' => [
+		return array(
+			'id' => array(
 				'required'          => true,
 				'type'              => 'integer',
 				'minimum'           => 1,
 				'sanitize_callback' => 'absint',
 				'validate_callback' => 'rest_validate_request_arg',
-			],
-		];
+			),
+		);
 	}
 
 	public function get_item_schema(): array {
-		return [
+		return array(
 			'$schema'    => 'http://json-schema.org/draft-04/schema#',
 			'title'      => 'wb-gamification-member',
 			'type'       => 'object',
-			'properties' => [
-				'id'           => [ 'type' => 'integer' ],
-				'display_name' => [ 'type' => 'string' ],
-				'points'       => [ 'type' => 'integer' ],
-				'level'        => [ 'type' => [ 'object', 'null' ] ],
-				'badges_count' => [ 'type' => 'integer' ],
-			],
-		];
+			'properties' => array(
+				'id'           => array( 'type' => 'integer' ),
+				'display_name' => array( 'type' => 'string' ),
+				'points'       => array( 'type' => 'integer' ),
+				'level'        => array( 'type' => array( 'object', 'null' ) ),
+				'badges_count' => array( 'type' => 'integer' ),
+			),
+		);
 	}
 }

@@ -17,9 +17,9 @@ defined( 'ABSPATH' ) || exit;
 final class BadgeAdminPage {
 
 	public static function init(): void {
-		add_action( 'admin_menu', [ __CLASS__, 'add_submenu' ] );
-		add_action( 'admin_post_wb_gam_save_badge', [ __CLASS__, 'handle_save' ] );
-		add_action( 'admin_post_wb_gam_delete_badge', [ __CLASS__, 'handle_delete' ] );
+		add_action( 'admin_menu', array( __CLASS__, 'add_submenu' ) );
+		add_action( 'admin_post_wb_gam_save_badge', array( __CLASS__, 'handle_save' ) );
+		add_action( 'admin_post_wb_gam_delete_badge', array( __CLASS__, 'handle_delete' ) );
 	}
 
 	public static function add_submenu(): void {
@@ -29,22 +29,24 @@ final class BadgeAdminPage {
 			__( 'Badges', 'wb-gamification' ),
 			'manage_options',
 			'wb-gamification-badges',
-			[ __CLASS__, 'render_page' ]
+			array( __CLASS__, 'render_page' )
 		);
 	}
 
 	// ── Page render ─────────────────────────────────────────────────────────
 
 	public static function render_page(): void {
-		$action    = sanitize_key( $_GET['action'] ?? 'list' );
-		$badge_id  = sanitize_key( $_GET['badge'] ?? '' );
-		$notice    = sanitize_key( $_GET['notice'] ?? '' );
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended -- GET params used for routing/display only, no data modification.
+		$action   = sanitize_key( $_GET['action'] ?? 'list' );
+		$badge_id = sanitize_key( $_GET['badge'] ?? '' );
+		$notice   = sanitize_key( $_GET['notice'] ?? '' );
+		// phpcs:enable WordPress.Security.NonceVerification.Recommended
 
-		$notice_map = [
-			'saved'   => [ 'success', __( 'Badge saved.', 'wb-gamification' ) ],
-			'deleted' => [ 'success', __( 'Badge deleted.', 'wb-gamification' ) ],
-			'error'   => [ 'error',   __( 'Something went wrong. Please try again.', 'wb-gamification' ) ],
-		];
+		$notice_map = array(
+			'saved'   => array( 'success', __( 'Badge saved.', 'wb-gamification' ) ),
+			'deleted' => array( 'success', __( 'Badge deleted.', 'wb-gamification' ) ),
+			'error'   => array( 'error', __( 'Something went wrong. Please try again.', 'wb-gamification' ) ),
+		);
 
 		?>
 		<div class="wrap wb-gam-badge-admin">
@@ -84,7 +86,7 @@ final class BadgeAdminPage {
 			   FROM {$wpdb->prefix}wb_gam_badge_defs b
 			  ORDER BY b.category, b.name",
 			ARRAY_A
-		) ?: [];
+		) ?: array();
 
 		$categories = array_unique( array_column( $badges, 'category' ) );
 		sort( $categories );
@@ -103,15 +105,15 @@ final class BadgeAdminPage {
 			</thead>
 			<tbody>
 				<?php foreach ( $badges as $badge ) : ?>
-				<?php
-					$config    = json_decode( $badge['condition'] ?? '{}', true ) ?: [];
-					$cond_type = $config['condition_type'] ?? 'admin_awarded';
+					<?php
+					$config     = json_decode( $badge['condition'] ?? '{}', true ) ?: array();
+					$cond_type  = $config['condition_type'] ?? 'admin_awarded';
 					$cond_label = match ( $cond_type ) {
 						'point_milestone' => sprintf( __( '%s pts', 'wb-gamification' ), number_format_i18n( $config['points'] ?? 0 ) ),
-						'action_count'    => sprintf( __( '%s × %d', 'wb-gamification' ), $config['action_id'] ?? '', $config['count'] ?? 1 ),
+						'action_count'    => sprintf( __( '%1$s × %2$d', 'wb-gamification' ), $config['action_id'] ?? '', $config['count'] ?? 1 ),
 						default           => __( 'Admin awarded', 'wb-gamification' ),
 					};
-				?>
+	?>
 				<tr>
 					<td>
 						<strong><?php echo esc_html( $badge['name'] ); ?></strong>
@@ -127,8 +129,8 @@ final class BadgeAdminPage {
 						</a>
 						&nbsp;|&nbsp;
 						<a href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin-post.php?action=wb_gam_delete_badge&badge=' . $badge['id'] ), 'wb_gam_delete_badge_' . $badge['id'] ) ); ?>"
-						   onclick="return confirm('<?php esc_attr_e( 'Delete this badge and all earned records?', 'wb-gamification' ); ?>')"
-						   style="color:#a00">
+							onclick="return confirm('<?php esc_attr_e( 'Delete this badge and all earned records?', 'wb-gamification' ); ?>')"
+							style="color:#a00">
 							<?php esc_html_e( 'Delete', 'wb-gamification' ); ?>
 						</a>
 					</td>
@@ -147,8 +149,8 @@ final class BadgeAdminPage {
 	private static function render_form( string $badge_id ): void {
 		global $wpdb;
 
-		$badge     = [];
-		$condition = [ 'condition_type' => 'admin_awarded' ];
+		$badge     = array();
+		$condition = array( 'condition_type' => 'admin_awarded' );
 		$is_new    = empty( $badge_id );
 
 		if ( ! $is_new ) {
@@ -223,7 +225,7 @@ final class BadgeAdminPage {
 					<th><?php esc_html_e( 'Category', 'wb-gamification' ); ?></th>
 					<td>
 						<select name="badge_category">
-							<?php foreach ( [ 'general', 'points', 'wordpress', 'buddypress', 'special' ] as $cat ) : ?>
+							<?php foreach ( array( 'general', 'points', 'wordpress', 'buddypress', 'special' ) as $cat ) : ?>
 								<option value="<?php echo esc_attr( $cat ); ?>" <?php selected( $badge['category'] ?? 'general', $cat ); ?>>
 									<?php echo esc_html( ucfirst( $cat ) ); ?>
 								</option>
@@ -308,24 +310,24 @@ final class BadgeAdminPage {
 			exit;
 		}
 
-		$badge_data = [
-			'name'          => sanitize_text_field( $_POST['badge_name'] ?? '' ),
-			'description'   => sanitize_textarea_field( $_POST['badge_description'] ?? '' ),
-			'image_url'     => esc_url_raw( $_POST['badge_image_url'] ?? '' ),
+		$badge_data = array(
+			'name'          => sanitize_text_field( wp_unslash( $_POST['badge_name'] ?? '' ) ),
+			'description'   => sanitize_textarea_field( wp_unslash( $_POST['badge_description'] ?? '' ) ),
+			'image_url'     => esc_url_raw( wp_unslash( $_POST['badge_image_url'] ?? '' ) ),
 			'category'      => sanitize_key( $_POST['badge_category'] ?? 'general' ),
 			'is_credential' => ! empty( $_POST['badge_is_credential'] ) ? 1 : 0,
-		];
+		);
 
 		if ( $is_new ) {
 			$badge_data['id'] = $badge_id;
 			$wpdb->insert( $wpdb->prefix . 'wb_gam_badge_defs', $badge_data );
 		} else {
-			$wpdb->update( $wpdb->prefix . 'wb_gam_badge_defs', $badge_data, [ 'id' => $original_id ] );
+			$wpdb->update( $wpdb->prefix . 'wb_gam_badge_defs', $badge_data, array( 'id' => $original_id ) );
 		}
 
 		// Save / update condition rule.
 		$condition_type = sanitize_key( $_POST['condition_type'] ?? 'admin_awarded' );
-		$config         = [ 'condition_type' => $condition_type ];
+		$config         = array( 'condition_type' => $condition_type );
 
 		if ( 'point_milestone' === $condition_type ) {
 			$config['points'] = absint( $_POST['condition_points'] ?? 100 );
@@ -337,20 +339,23 @@ final class BadgeAdminPage {
 		// Delete existing condition rules for this badge, then re-insert.
 		$wpdb->delete(
 			$wpdb->prefix . 'wb_gam_rules',
-			[ 'rule_type' => 'badge_condition', 'target_id' => $badge_id ],
-			[ '%s', '%s' ]
+			array(
+				'rule_type' => 'badge_condition',
+				'target_id' => $badge_id,
+			),
+			array( '%s', '%s' )
 		);
 
 		if ( 'admin_awarded' !== $condition_type ) {
 			$wpdb->insert(
 				$wpdb->prefix . 'wb_gam_rules',
-				[
+				array(
 					'rule_type'   => 'badge_condition',
 					'target_id'   => $badge_id,
 					'rule_config' => wp_json_encode( $config ),
 					'is_active'   => 1,
-				],
-				[ '%s', '%s', '%s', '%d' ]
+				),
+				array( '%s', '%s', '%s', '%d' )
 			);
 		}
 
@@ -370,9 +375,16 @@ final class BadgeAdminPage {
 
 		global $wpdb;
 
-		$wpdb->delete( $wpdb->prefix . 'wb_gam_badge_defs', [ 'id' => $badge_id ], [ '%s' ] );
-		$wpdb->delete( $wpdb->prefix . 'wb_gam_user_badges', [ 'badge_id' => $badge_id ], [ '%s' ] );
-		$wpdb->delete( $wpdb->prefix . 'wb_gam_rules', [ 'rule_type' => 'badge_condition', 'target_id' => $badge_id ], [ '%s', '%s' ] );
+		$wpdb->delete( $wpdb->prefix . 'wb_gam_badge_defs', array( 'id' => $badge_id ), array( '%s' ) );
+		$wpdb->delete( $wpdb->prefix . 'wb_gam_user_badges', array( 'badge_id' => $badge_id ), array( '%s' ) );
+		$wpdb->delete(
+			$wpdb->prefix . 'wb_gam_rules',
+			array(
+				'rule_type' => 'badge_condition',
+				'target_id' => $badge_id,
+			),
+			array( '%s', '%s' )
+		);
 
 		wp_cache_delete( 'wb_gam_badge_rules', 'wb_gamification' );
 

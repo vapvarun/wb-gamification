@@ -65,7 +65,7 @@ final class RuleEngine {
 				continue;
 			}
 
-			if ( ! self::evaluate_condition( (array) ( $config['condition'] ?? [] ), $event ) ) {
+			if ( ! self::evaluate_condition( (array) ( $config['condition'] ?? array() ), $event ) ) {
 				continue;
 			}
 
@@ -97,7 +97,7 @@ final class RuleEngine {
 
 			case 'day_of_week':
 				// 'days' array uses PHP gmdate 'w' values: 0 = Sunday, 6 = Saturday.
-				$days = (array) ( $condition['days'] ?? [] );
+				$days = (array) ( $condition['days'] ?? array() );
 				return in_array( (int) gmdate( 'w' ), $days, true );
 
 			case 'action_id_match':

@@ -23,9 +23,9 @@ final class SetupWizard {
 		if ( get_option( 'wb_gam_wizard_complete' ) ) {
 			return;
 		}
-		add_action( 'admin_menu', [ __CLASS__, 'register_page' ] );
-		add_action( 'admin_init', [ __CLASS__, 'maybe_redirect' ] );
-		add_action( 'admin_init', [ __CLASS__, 'handle_submission' ] );
+		add_action( 'admin_menu', array( __CLASS__, 'register_page' ) );
+		add_action( 'admin_init', array( __CLASS__, 'maybe_redirect' ) );
+		add_action( 'admin_init', array( __CLASS__, 'handle_submission' ) );
 	}
 
 	/**
@@ -38,7 +38,7 @@ final class SetupWizard {
 			'',
 			'manage_options',
 			'wb-gamification-setup',
-			[ __CLASS__, 'render' ]
+			array( __CLASS__, 'render' )
 		);
 	}
 
@@ -96,23 +96,23 @@ final class SetupWizard {
 	 * @return array<string, array{label: string, description: string, leaderboard: string, points: array<string, int>}>
 	 */
 	private static function get_template_configs(): array {
-		return [
-			'blog'      => [
+		return array(
+			'blog'      => array(
 				'label'       => __( 'Blog / Publisher', 'wb-gamification' ),
 				'description' => __( 'Rewards writing and meaningful comments. For standalone WordPress blogs.', 'wb-gamification' ),
 				'leaderboard' => 'monthly',
-				'points'      => [
+				'points'      => array(
 					'wp_publish_post'          => 25,
 					'wp_first_post'            => 20,
 					'wp_leave_comment'         => 5,
 					'wp_post_receives_comment' => 3,
-				],
-			],
-			'community' => [
+				),
+			),
+			'community' => array(
 				'label'       => __( 'Community Engagement', 'wb-gamification' ),
 				'description' => __( 'Balanced — rewards posting, reactions, and social connection. Requires BuddyPress.', 'wb-gamification' ),
 				'leaderboard' => 'weekly',
-				'points'      => [
+				'points'      => array(
 					'bp_activity_update'    => 10,
 					'bp_activity_comment'   => 5,
 					'friends_accepted'      => 8,
@@ -120,40 +120,40 @@ final class SetupWizard {
 					'bp_reactions_received' => 3,
 					'bp_give_kudos'         => 2,
 					'bp_receive_kudos'      => 5,
-				],
-			],
-			'course'    => [
+				),
+			),
+			'course'    => array(
 				'label'       => __( 'Online Course', 'wb-gamification' ),
 				'description' => __( 'Course completion heavy — progress and credential badges.', 'wb-gamification' ),
 				'leaderboard' => 'cohort',
-				'points'      => [
+				'points'      => array(
 					'lesson_complete' => 20,
 					'course_complete' => 100,
 					'quiz_pass'       => 30,
 					'wp_first_post'   => 10,
-				],
-			],
-			'coaching'  => [
+				),
+			),
+			'coaching'  => array(
 				'label'       => __( 'Coaching Platform', 'wb-gamification' ),
 				'description' => __( 'Private leaderboard by default — progress vs personal baseline, not peer comparison.', 'wb-gamification' ),
 				'leaderboard' => 'private',
-				'points'      => [
+				'points'      => array(
 					'check_in'      => 15,
 					'goal_complete' => 50,
 					'wp_first_post' => 10,
-				],
-			],
-			'nonprofit' => [
+				),
+			),
+			'nonprofit' => array(
 				'label'       => __( 'Nonprofit / Mission', 'wb-gamification' ),
 				'description' => __( 'Mission-aligned language. Team leaderboards only — impact over individual competition.', 'wb-gamification' ),
 				'leaderboard' => 'team-only',
-				'points'      => [
+				'points'      => array(
 					'volunteer_hours'    => 30,
 					'bp_activity_update' => 5,
 					'groups_join'        => 10,
-				],
-			],
-		];
+				),
+			),
+		);
 	}
 
 	/**
@@ -193,7 +193,7 @@ final class SetupWizard {
 								</p>
 								<p style="margin:0 0 20px;font-size:12px;color:#787c82;">
 									<?php
-									$point_labels = [];
+									$point_labels = array();
 									foreach ( $config['points'] as $action => $pts ) {
 										/* translators: 1: point value, 2: action name */
 										$point_labels[] = sprintf( '%d pts &mdash; %s', (int) $pts, esc_html( $action ) );

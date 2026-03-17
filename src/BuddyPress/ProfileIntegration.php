@@ -20,7 +20,7 @@ final class ProfileIntegration {
 		if ( ! function_exists( 'buddypress' ) ) {
 			return;
 		}
-		add_action( 'bp_before_member_header_meta', [ __CLASS__, 'render_rank' ] );
+		add_action( 'bp_before_member_header_meta', array( __CLASS__, 'render_rank' ) );
 	}
 
 	/**
@@ -54,9 +54,12 @@ final class ProfileIntegration {
 		$current_level_min = self::get_current_level_min( $user_id );
 		$progress_pct      = 0;
 		if ( $next_level_points > $current_level_min ) {
-			$progress_pct = min( 100, (int) round(
-				( ( $points - $current_level_min ) / ( $next_level_points - $current_level_min ) ) * 100
-			) );
+			$progress_pct = min(
+				100,
+				(int) round(
+					( ( $points - $current_level_min ) / ( $next_level_points - $current_level_min ) ) * 100
+				)
+			);
 		}
 
 		?>
@@ -65,7 +68,7 @@ final class ProfileIntegration {
 			<span class="wb-gam-points-count">
 				<?php
 				/* translators: %s = formatted number of points */
-				printf( esc_html__( '%s pts', 'wb-gamification' ), number_format_i18n( $points ) );
+				printf( esc_html__( '%s pts', 'wb-gamification' ), esc_html( number_format_i18n( $points ) ) );
 				?>
 			</span>
 			<?php if ( $next_level_points > 0 ) : ?>

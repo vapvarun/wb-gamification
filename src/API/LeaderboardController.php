@@ -42,53 +42,53 @@ class LeaderboardController extends WP_REST_Controller {
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base,
-			[
-				[
+			array(
+				array(
 					'methods'             => WP_REST_Server::READABLE,
-					'callback'            => [ $this, 'get_leaderboard' ],
+					'callback'            => array( $this, 'get_leaderboard' ),
 					'permission_callback' => '__return_true',
 					'args'                => $this->get_scope_args( true ),
-				],
-				'schema' => [ $this, 'get_item_schema' ],
-			]
+				),
+				'schema' => array( $this, 'get_item_schema' ),
+			)
 		);
 
 		// GET /leaderboard/group/{group_id} — scoped to a BuddyPress group
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base . '/group/(?P<group_id>[\d]+)',
-			[
-				[
+			array(
+				array(
 					'methods'             => WP_REST_Server::READABLE,
-					'callback'            => [ $this, 'get_group_leaderboard' ],
+					'callback'            => array( $this, 'get_group_leaderboard' ),
 					'permission_callback' => '__return_true',
 					'args'                => array_merge(
 						$this->get_scope_args( true ),
-						[
-							'group_id' => [
+						array(
+							'group_id' => array(
 								'required'          => true,
 								'type'              => 'integer',
 								'minimum'           => 1,
 								'sanitize_callback' => 'absint',
-							],
-						]
+							),
+						)
 					),
-				],
-			]
+				),
+			)
 		);
 
 		// GET /leaderboard/me — current user's private rank
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base . '/me',
-			[
-				[
+			array(
+				array(
 					'methods'             => WP_REST_Server::READABLE,
-					'callback'            => [ $this, 'get_my_rank' ],
-					'permission_callback' => [ $this, 'require_logged_in' ],
+					'callback'            => array( $this, 'get_my_rank' ),
+					'permission_callback' => array( $this, 'require_logged_in' ),
 					'args'                => $this->get_scope_args( false ),
-				],
-			]
+				),
+			)
 		);
 	}
 
@@ -99,7 +99,7 @@ class LeaderboardController extends WP_REST_Controller {
 			return new WP_Error(
 				'rest_forbidden',
 				__( 'You must be logged in to view your rank.', 'wb-gamification' ),
-				[ 'status' => 401 ]
+				array( 'status' => 401 )
 			);
 		}
 		return true;
@@ -119,14 +119,14 @@ class LeaderboardController extends WP_REST_Controller {
 		$rows = LeaderboardEngine::get_leaderboard( $period, $limit, $scope_type, $scope_id );
 
 		return rest_ensure_response(
-			[
+			array(
 				'period' => $period,
-				'scope'  => [
+				'scope'  => array(
 					'type' => $scope_type,
 					'id'   => $scope_id,
-				],
+				),
 				'rows'   => $rows,
-			]
+			)
 		);
 	}
 
@@ -145,17 +145,17 @@ class LeaderboardController extends WP_REST_Controller {
 		$rank = LeaderboardEngine::get_user_rank( $user_id, $period, $scope_type, $scope_id );
 
 		return rest_ensure_response(
-			[
+			array(
 				'user_id'        => $user_id,
 				'period'         => $period,
-				'scope'          => [
+				'scope'          => array(
 					'type' => $scope_type,
 					'id'   => $scope_id,
-				],
+				),
 				'rank'           => $rank['rank'],
 				'points'         => $rank['points'],
 				'points_to_next' => $rank['points_to_next'],
-			]
+			)
 		);
 	}
 
@@ -172,7 +172,7 @@ class LeaderboardController extends WP_REST_Controller {
 		if ( function_exists( 'groups_get_group' ) ) {
 			$group = groups_get_group( $group_id );
 			if ( empty( $group->id ) ) {
-				return new WP_Error( 'rest_not_found', __( 'Group not found.', 'wb-gamification' ), [ 'status' => 404 ] );
+				return new WP_Error( 'rest_not_found', __( 'Group not found.', 'wb-gamification' ), array( 'status' => 404 ) );
 			}
 			$group_name = $group->name;
 		}
@@ -180,19 +180,19 @@ class LeaderboardController extends WP_REST_Controller {
 		$rows = LeaderboardEngine::get_leaderboard( $period, $limit, 'bp_group', $group_id );
 
 		return rest_ensure_response(
-			[
+			array(
 				'group_id'   => $group_id,
 				'group_name' => $group_name,
 				'period'     => $period,
 				'rows'       => $rows,
-			]
+			)
 		);
 	}
 
 	// ── Helpers ────────────────────────────────────────────────────────────────
 
 	private function validate_period( mixed $period ): string {
-		$allowed = [ 'all', 'month', 'week', 'day' ];
+		$allowed = array( 'all', 'month', 'week', 'day' );
 		return in_array( $period, $allowed, true ) ? $period : 'all';
 	}
 
@@ -202,67 +202,67 @@ class LeaderboardController extends WP_REST_Controller {
 	 * @param bool $include_limit Whether to include the `limit` param (leaderboard only).
 	 */
 	private function get_scope_args( bool $include_limit ): array {
-		$args = [
-			'period'     => [
+		$args = array(
+			'period'     => array(
 				'type'              => 'string',
 				'default'           => 'all',
-				'enum'              => [ 'all', 'month', 'week', 'day' ],
+				'enum'              => array( 'all', 'month', 'week', 'day' ),
 				'sanitize_callback' => 'sanitize_key',
-			],
-			'scope_type' => [
+			),
+			'scope_type' => array(
 				'type'              => 'string',
 				'default'           => '',
 				'sanitize_callback' => 'sanitize_key',
-			],
-			'scope_id'   => [
+			),
+			'scope_id'   => array(
 				'type'              => 'integer',
 				'default'           => 0,
 				'minimum'           => 0,
 				'sanitize_callback' => 'absint',
-			],
-		];
+			),
+		);
 
 		if ( $include_limit ) {
-			$args['limit'] = [
+			$args['limit'] = array(
 				'type'              => 'integer',
 				'default'           => 10,
 				'minimum'           => 1,
 				'maximum'           => 100,
 				'sanitize_callback' => 'absint',
-			];
+			);
 		}
 
 		return $args;
 	}
 
 	public function get_item_schema(): array {
-		return [
+		return array(
 			'$schema'    => 'http://json-schema.org/draft-04/schema#',
 			'title'      => 'wb-gamification-leaderboard',
 			'type'       => 'object',
-			'properties' => [
-				'period' => [ 'type' => 'string' ],
-				'scope'  => [
+			'properties' => array(
+				'period' => array( 'type' => 'string' ),
+				'scope'  => array(
 					'type'       => 'object',
-					'properties' => [
-						'type' => [ 'type' => 'string' ],
-						'id'   => [ 'type' => 'integer' ],
-					],
-				],
-				'rows'   => [
+					'properties' => array(
+						'type' => array( 'type' => 'string' ),
+						'id'   => array( 'type' => 'integer' ),
+					),
+				),
+				'rows'   => array(
 					'type'  => 'array',
-					'items' => [
+					'items' => array(
 						'type'       => 'object',
-						'properties' => [
-							'rank'         => [ 'type' => 'integer' ],
-							'user_id'      => [ 'type' => 'integer' ],
-							'display_name' => [ 'type' => 'string' ],
-							'avatar_url'   => [ 'type' => 'string' ],
-							'points'       => [ 'type' => 'integer' ],
-						],
-					],
-				],
-			],
-		];
+						'properties' => array(
+							'rank'         => array( 'type' => 'integer' ),
+							'user_id'      => array( 'type' => 'integer' ),
+							'display_name' => array( 'type' => 'string' ),
+							'avatar_url'   => array( 'type' => 'string' ),
+							'points'       => array( 'type' => 'integer' ),
+						),
+					),
+				),
+			),
+		);
 	}
 }

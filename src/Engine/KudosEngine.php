@@ -74,13 +74,13 @@ final class KudosEngine {
 
 		$inserted = $wpdb->insert(
 			$wpdb->prefix . 'wb_gam_kudos',
-			[
+			array(
 				'giver_id'    => $giver_id,
 				'receiver_id' => $receiver_id,
 				'message'     => mb_substr( $message, 0, 255 ),
 				'created_at'  => current_time( 'mysql' ),
-			],
-			[ '%d', '%d', '%s', '%s' ]
+			),
+			array( '%d', '%d', '%s', '%s' )
 		);
 
 		if ( ! $inserted ) {
@@ -99,16 +99,16 @@ final class KudosEngine {
 		if ( $receiver_points > 0 ) {
 			Engine::process(
 				new Event(
-					[
+					array(
 						'action_id' => 'receive_kudos',
 						'user_id'   => $receiver_id,
 						'object_id' => $kudos_id,
-						'metadata'  => [
+						'metadata'  => array(
 							'points'   => $receiver_points,
 							'giver_id' => $giver_id,
 							'message'  => $message,
-						],
-					]
+						),
+					)
 				)
 			);
 		}
@@ -116,15 +116,15 @@ final class KudosEngine {
 		if ( $giver_points > 0 ) {
 			Engine::process(
 				new Event(
-					[
+					array(
 						'action_id' => 'give_kudos',
 						'user_id'   => $giver_id,
 						'object_id' => $kudos_id,
-						'metadata'  => [
+						'metadata'  => array(
 							'points'      => $giver_points,
 							'receiver_id' => $receiver_id,
-						],
-					]
+						),
+					)
 				)
 			);
 		}
@@ -206,12 +206,12 @@ final class KudosEngine {
 		);
 
 		if ( ! $rows ) {
-			return [];
+			return array();
 		}
 
 		return array_map(
 			static function ( array $row ): array {
-				return [
+				return array(
 					'id'            => (int) $row['id'],
 					'giver_id'      => (int) $row['giver_id'],
 					'giver_name'    => $row['giver_name'],
@@ -219,7 +219,7 @@ final class KudosEngine {
 					'receiver_name' => $row['receiver_name'],
 					'message'       => $row['message'] ?: null,
 					'created_at'    => $row['created_at'],
-				];
+				);
 			},
 			$rows
 		);

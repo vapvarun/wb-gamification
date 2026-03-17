@@ -46,7 +46,7 @@ final class ChallengeEngine {
 	// ── Boot ────────────────────────────────────────────────────────────────────
 
 	public static function init(): void {
-		add_action( 'wb_gamification_points_awarded', [ __CLASS__, 'on_points_awarded' ], 15, 3 );
+		add_action( 'wb_gamification_points_awarded', array( __CLASS__, 'on_points_awarded' ), 15, 3 );
 	}
 
 	// ── Event hook ───────────────────────────────────────────────────────────────
@@ -97,7 +97,7 @@ final class ChallengeEngine {
 		);
 
 		if ( empty( $challenges ) ) {
-			return [];
+			return array();
 		}
 
 		$challenge_ids = array_column( $challenges, 'id' );
@@ -107,7 +107,7 @@ final class ChallengeEngine {
 			static function ( array $ch ) use ( $progress_map ): array {
 				$progress  = (int) ( $progress_map[ $ch['id'] ]['progress'] ?? 0 );
 				$completed = ! empty( $progress_map[ $ch['id'] ]['completed_at'] );
-				return [
+				return array(
 					'id'           => (int) $ch['id'],
 					'title'        => $ch['title'],
 					'type'         => $ch['type'],
@@ -122,7 +122,7 @@ final class ChallengeEngine {
 					'progress_pct' => $ch['target'] > 0
 						? min( 100, round( ( $progress / (int) $ch['target'] ) * 100, 1 ) )
 						: 0,
-				];
+				);
 			},
 			$challenges
 		);
@@ -201,10 +201,13 @@ final class ChallengeEngine {
 		// Mark complete.
 		$wpdb->update(
 			$wpdb->prefix . 'wb_gam_challenge_log',
-			[ 'completed_at' => current_time( 'mysql' ) ],
-			[ 'user_id' => $user_id, 'challenge_id' => $challenge['id'] ],
-			[ '%s' ],
-			[ '%d', '%d' ]
+			array( 'completed_at' => current_time( 'mysql' ) ),
+			array(
+				'user_id'      => $user_id,
+				'challenge_id' => $challenge['id'],
+			),
+			array( '%s' ),
+			array( '%d', '%d' )
 		);
 
 		// Award bonus points.
@@ -212,16 +215,16 @@ final class ChallengeEngine {
 		if ( $bonus > 0 ) {
 			Engine::process(
 				new Event(
-					[
+					array(
 						'action_id' => 'challenge_completed',
 						'user_id'   => $user_id,
 						'object_id' => (int) $challenge['id'],
-						'metadata'  => [
+						'metadata'  => array(
 							'points'       => $bonus,
 							'challenge_id' => (int) $challenge['id'],
 							'title'        => $challenge['title'],
-						],
-					]
+						),
+					)
 				)
 			);
 		}
@@ -265,7 +268,7 @@ final class ChallengeEngine {
 			ARRAY_A
 		);
 
-		$data = $rows ?: [];
+		$data = $rows ?: array();
 		wp_cache_set( $cache_key, $data, self::CACHE_GROUP, self::CACHE_TTL );
 
 		return $data;
@@ -292,12 +295,12 @@ final class ChallengeEngine {
 
 		$wpdb->replace(
 			$wpdb->prefix . 'wb_gam_challenge_log',
-			[
+			array(
 				'user_id'      => $user_id,
 				'challenge_id' => $challenge_id,
 				'progress'     => $progress,
-			],
-			[ '%d', '%d', '%d' ]
+			),
+			array( '%d', '%d', '%d' )
 		);
 	}
 
@@ -310,7 +313,7 @@ final class ChallengeEngine {
 	 */
 	private static function get_progress_map( int $user_id, array $challenge_ids ): array {
 		if ( empty( $challenge_ids ) ) {
-			return [];
+			return array();
 		}
 
 		global $wpdb;
@@ -323,17 +326,17 @@ final class ChallengeEngine {
 				"SELECT challenge_id, progress, completed_at
 				   FROM {$wpdb->prefix}wb_gam_challenge_log
 				  WHERE user_id = %d AND challenge_id IN ($placeholders)",
-				array_merge( [ $user_id ], $challenge_ids )
+				array_merge( array( $user_id ), $challenge_ids )
 			),
 			ARRAY_A
 		);
 
-		$map = [];
-		foreach ( $rows ?: [] as $row ) {
-			$map[ (int) $row['challenge_id'] ] = [
+		$map = array();
+		foreach ( $rows ?: array() as $row ) {
+			$map[ (int) $row['challenge_id'] ] = array(
 				'progress'     => (int) $row['progress'],
 				'completed_at' => $row['completed_at'],
-			];
+			);
 		}
 
 		return $map;

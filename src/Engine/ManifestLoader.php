@@ -122,10 +122,10 @@ final class ManifestLoader {
 	 *   version?: string,
 	 *   triggers?: array<int, array<string, mixed>>,
 	 * } $manifest
-	 * @param bool $bp_active Whether BuddyPress is active.
+	 * @param bool   $bp_active Whether BuddyPress is active.
 	 */
 	private static function register_manifest( array $manifest, bool $bp_active ): void {
-		foreach ( (array) ( $manifest['triggers'] ?? [] ) as $trigger ) {
+		foreach ( (array) ( $manifest['triggers'] ?? array() ) as $trigger ) {
 			if ( ! is_array( $trigger ) ) {
 				continue;
 			}

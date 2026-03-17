@@ -36,16 +36,16 @@ final class ActivityIntegration {
 		}
 
 		// Quality-weighted points.
-		add_filter( 'wb_gamification_points_for_action', [ __CLASS__, 'quality_weight_reactions' ], 10, 4 );
+		add_filter( 'wb_gamification_points_for_action', array( __CLASS__, 'quality_weight_reactions' ), 10, 4 );
 
 		// Register BP activity types once BP activity component is loaded.
-		add_action( 'bp_register_activity_actions', [ __CLASS__, 'register_activity_types' ] );
+		add_action( 'bp_register_activity_actions', array( __CLASS__, 'register_activity_types' ) );
 
 		// Activity stream posts.
-		add_action( 'wb_gamification_badge_awarded',       [ __CLASS__, 'post_badge_to_stream' ],     10, 3 );
-		add_action( 'wb_gamification_level_changed',       [ __CLASS__, 'post_level_up_to_stream' ],  10, 3 );
-		add_action( 'wb_gamification_kudos_given',         [ __CLASS__, 'post_kudos_to_stream' ],     10, 4 );
-		add_action( 'wb_gamification_challenge_completed', [ __CLASS__, 'post_challenge_to_stream' ], 10, 2 );
+		add_action( 'wb_gamification_badge_awarded', array( __CLASS__, 'post_badge_to_stream' ), 10, 3 );
+		add_action( 'wb_gamification_level_changed', array( __CLASS__, 'post_level_up_to_stream' ), 10, 3 );
+		add_action( 'wb_gamification_kudos_given', array( __CLASS__, 'post_kudos_to_stream' ), 10, 4 );
+		add_action( 'wb_gamification_challenge_completed', array( __CLASS__, 'post_challenge_to_stream' ), 10, 2 );
 	}
 
 	// ── Quality weighting ───────────────────────────────────────────────────────
@@ -85,7 +85,7 @@ final class ActivityIntegration {
 			__( 'Earned a badge', 'wb-gamification' ),
 			null,
 			__( 'Gamification', 'wb-gamification' ),
-			[ 'activity', 'member' ]
+			array( 'activity', 'member' )
 		);
 
 		bp_activity_set_action(
@@ -94,7 +94,7 @@ final class ActivityIntegration {
 			__( 'Reached a new level', 'wb-gamification' ),
 			null,
 			__( 'Gamification', 'wb-gamification' ),
-			[ 'activity', 'member' ]
+			array( 'activity', 'member' )
 		);
 
 		bp_activity_set_action(
@@ -103,7 +103,7 @@ final class ActivityIntegration {
 			__( 'Gave kudos', 'wb-gamification' ),
 			null,
 			__( 'Gamification', 'wb-gamification' ),
-			[ 'activity', 'member' ]
+			array( 'activity', 'member' )
 		);
 
 		bp_activity_set_action(
@@ -112,7 +112,7 @@ final class ActivityIntegration {
 			__( 'Completed a challenge', 'wb-gamification' ),
 			null,
 			__( 'Gamification', 'wb-gamification' ),
-			[ 'activity', 'member' ]
+			array( 'activity', 'member' )
 		);
 	}
 
@@ -134,7 +134,7 @@ final class ActivityIntegration {
 		$user_link  = self::user_link( $user_id );
 
 		bp_activity_add(
-			[
+			array(
 				'user_id'       => $user_id,
 				'component'     => self::COMPONENT,
 				'type'          => 'badge_earned',
@@ -147,7 +147,7 @@ final class ActivityIntegration {
 				'item_id'       => 0,
 				'hide_sitewide' => false,
 				'is_spam'       => false,
-			]
+			)
 		);
 	}
 
@@ -167,7 +167,7 @@ final class ActivityIntegration {
 		$user_link  = self::user_link( $user_id );
 
 		bp_activity_add(
-			[
+			array(
 				'user_id'       => $user_id,
 				'component'     => self::COMPONENT,
 				'type'          => 'level_changed',
@@ -180,7 +180,7 @@ final class ActivityIntegration {
 				'item_id'       => $new_level_id,
 				'hide_sitewide' => false,
 				'is_spam'       => false,
-			]
+			)
 		);
 	}
 
@@ -212,7 +212,7 @@ final class ActivityIntegration {
 		}
 
 		bp_activity_add(
-			[
+			array(
 				'user_id'       => $giver_id,
 				'component'     => self::COMPONENT,
 				'type'          => 'kudos_given',
@@ -220,7 +220,7 @@ final class ActivityIntegration {
 				'item_id'       => $kudos_id,
 				'hide_sitewide' => false,
 				'is_spam'       => false,
-			]
+			)
 		);
 	}
 
@@ -238,7 +238,7 @@ final class ActivityIntegration {
 		$user_link = self::user_link( $user_id );
 
 		bp_activity_add(
-			[
+			array(
 				'user_id'       => $user_id,
 				'component'     => self::COMPONENT,
 				'type'          => 'challenge_completed',
@@ -251,7 +251,7 @@ final class ActivityIntegration {
 				'item_id'       => (int) ( $challenge['id'] ?? 0 ),
 				'hide_sitewide' => false,
 				'is_spam'       => false,
-			]
+			)
 		);
 	}
 

@@ -21,12 +21,12 @@ final class HooksIntegration {
 			return;
 		}
 
-		add_action( 'wb_gamification_register', [ self::class, 'register_actions' ] );
+		add_action( 'wb_gamification_register', array( self::class, 'register_actions' ) );
 	}
 
 	public static function register_actions(): void {
-		$actions = [
-			[
+		$actions = array(
+			array(
 				'id'             => 'bp_activity_post',
 				'label'          => __( 'Post an activity update', 'wb-gamification' ),
 				'hook'           => 'bp_activity_posted_update',
@@ -36,8 +36,8 @@ final class HooksIntegration {
 				'icon'           => 'dashicons-edit',
 				'repeatable'     => true,
 				'cooldown'       => 60,
-			],
-			[
+			),
+			array(
 				'id'             => 'bp_activity_comment',
 				'label'          => __( 'Comment on an activity', 'wb-gamification' ),
 				'hook'           => 'bp_activity_comment_posted',
@@ -47,8 +47,8 @@ final class HooksIntegration {
 				'icon'           => 'dashicons-format-chat',
 				'repeatable'     => true,
 				'cooldown'       => 30,
-			],
-			[
+			),
+			array(
 				'id'             => 'bp_friendship_accepted',
 				'label'          => __( 'Accept a friendship', 'wb-gamification' ),
 				'hook'           => 'friends_friendship_accepted',
@@ -58,8 +58,8 @@ final class HooksIntegration {
 				'icon'           => 'dashicons-groups',
 				'repeatable'     => true,
 				'cooldown'       => 0,
-			],
-			[
+			),
+			array(
 				'id'             => 'bp_group_join',
 				'label'          => __( 'Join a group', 'wb-gamification' ),
 				'hook'           => 'groups_join_group',
@@ -69,8 +69,8 @@ final class HooksIntegration {
 				'icon'           => 'dashicons-admin-users',
 				'repeatable'     => true,
 				'cooldown'       => 0,
-			],
-			[
+			),
+			array(
 				'id'             => 'bp_group_create',
 				'label'          => __( 'Create a group', 'wb-gamification' ),
 				'hook'           => 'groups_group_create_complete',
@@ -80,8 +80,8 @@ final class HooksIntegration {
 				'icon'           => 'dashicons-plus-alt',
 				'repeatable'     => true,
 				'cooldown'       => 0,
-			],
-			[
+			),
+			array(
 				'id'             => 'bp_profile_update',
 				'label'          => __( 'Update extended profile', 'wb-gamification' ),
 				'hook'           => 'xprofile_updated_profile',
@@ -91,8 +91,8 @@ final class HooksIntegration {
 				'icon'           => 'dashicons-id',
 				'repeatable'     => false,
 				'cooldown'       => 0,
-			],
-			[
+			),
+			array(
 				'id'             => 'bp_media_upload',
 				'label'          => __( 'Upload media', 'wb-gamification' ),
 				'hook'           => 'bp_media_add',
@@ -102,8 +102,8 @@ final class HooksIntegration {
 				'icon'           => 'dashicons-format-image',
 				'repeatable'     => true,
 				'cooldown'       => 60,
-			],
-			[
+			),
+			array(
 				'id'             => 'bbp_forum_reply',
 				'label'          => __( 'Reply in a forum', 'wb-gamification' ),
 				'hook'           => 'bbp_new_reply',
@@ -113,8 +113,8 @@ final class HooksIntegration {
 				'icon'           => 'dashicons-format-aside',
 				'repeatable'     => true,
 				'cooldown'       => 30,
-			],
-			[
+			),
+			array(
 				'id'             => 'bp_reaction_received',
 				'label'          => __( 'Receive a reaction on content', 'wb-gamification' ),
 				'hook'           => 'bp_reactions_add',
@@ -124,8 +124,8 @@ final class HooksIntegration {
 				'icon'           => 'dashicons-heart',
 				'repeatable'     => true,
 				'cooldown'       => 0,
-			],
-			[
+			),
+			array(
 				'id'             => 'bp_poll_create',
 				'label'          => __( 'Create a poll', 'wb-gamification' ),
 				'hook'           => 'bp_polls_created',
@@ -135,8 +135,8 @@ final class HooksIntegration {
 				'icon'           => 'dashicons-chart-bar',
 				'repeatable'     => true,
 				'cooldown'       => 300,
-			],
-			[
+			),
+			array(
 				'id'             => 'member_blog_publish',
 				'label'          => __( 'Publish a member blog post', 'wb-gamification' ),
 				'hook'           => 'publish_post',
@@ -146,8 +146,8 @@ final class HooksIntegration {
 				'icon'           => 'dashicons-admin-post',
 				'repeatable'     => true,
 				'cooldown'       => 0,
-			],
-		];
+			),
+		);
 
 		foreach ( $actions as $action ) {
 			wb_gamification_register_action( $action );

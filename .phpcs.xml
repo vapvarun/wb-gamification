@@ -1,0 +1,45 @@
+<?xml version="1.0"?>
+<ruleset name="WB Gamification">
+    <description>WordPress Coding Standards for WB Gamification (PSR-4 Composer project)</description>
+
+    <arg name="basepath" value="."/>
+    <arg name="extensions" value="php"/>
+    <arg value="sp"/>
+
+    <file>src/</file>
+    <file>integrations/</file>
+    <file>wb-gamification.php</file>
+
+    <rule ref="WordPress-Extra"/>
+    <rule ref="WordPress-Docs"/>
+
+    <!-- PSR-4 Composer autoloading uses PascalCase filenames — WordPress file
+         naming convention (class-{name}.php) does not apply here. -->
+    <rule ref="WordPress.Files.FileName">
+        <exclude-pattern>src/*</exclude-pattern>
+        <exclude-pattern>integrations/*</exclude-pattern>
+    </rule>
+
+    <!-- Short array syntax is fine in PHP 8.1+. -->
+    <rule ref="Universal.Arrays.DisallowShortArraySyntax">
+        <exclude-pattern>*</exclude-pattern>
+    </rule>
+
+    <!-- Short ternary is fine in PHP 8.1+ (null-coalescing is preferred). -->
+    <rule ref="Universal.Operators.DisallowShortTernary">
+        <exclude-pattern>*</exclude-pattern>
+    </rule>
+
+    <!-- DbUpgrader uses raw DDL (ALTER TABLE, SHOW COLUMNS/INDEX) with $wpdb->prefix
+         table names. Table identifiers cannot be parameterised via $wpdb->prepare() —
+         only data values can. All table names are constructed from $wpdb->prefix only. -->
+    <rule ref="WordPress.DB.DirectDatabaseQuery.SchemaChange">
+        <exclude-pattern>src/Engine/DbUpgrader.php</exclude-pattern>
+    </rule>
+    <rule ref="WordPress.DB.PreparedSQL.InterpolatedNotPrepared">
+        <exclude-pattern>src/Engine/DbUpgrader.php</exclude-pattern>
+    </rule>
+    <rule ref="WordPress.DB.DirectDatabaseQuery.NoCaching">
+        <exclude-pattern>src/Engine/DbUpgrader.php</exclude-pattern>
+    </rule>
+</ruleset>

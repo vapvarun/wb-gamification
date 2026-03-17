@@ -24,16 +24,16 @@ defined( 'ABSPATH' ) || exit;
 
 final class CohortEngine {
 
-	public const TIERS = [ 'Bronze', 'Silver', 'Gold', 'Diamond', 'Obsidian' ];
-	public const COHORT_SIZE     = 30;
-	public const PROMOTE_PCT     = 0.33;
-	public const DEMOTE_PCT      = 0.33;
-	private const CRON_ASSIGN    = 'wb_gam_cohort_assign';
-	private const CRON_PROCESS   = 'wb_gam_cohort_process';
+	public const TIERS         = array( 'Bronze', 'Silver', 'Gold', 'Diamond', 'Obsidian' );
+	public const COHORT_SIZE   = 30;
+	public const PROMOTE_PCT   = 0.33;
+	public const DEMOTE_PCT    = 0.33;
+	private const CRON_ASSIGN  = 'wb_gam_cohort_assign';
+	private const CRON_PROCESS = 'wb_gam_cohort_process';
 
 	public static function init(): void {
-		add_action( self::CRON_ASSIGN,  [ __CLASS__, 'assign_cohorts' ] );
-		add_action( self::CRON_PROCESS, [ __CLASS__, 'process_promotions' ] );
+		add_action( self::CRON_ASSIGN, array( __CLASS__, 'assign_cohorts' ) );
+		add_action( self::CRON_PROCESS, array( __CLASS__, 'process_promotions' ) );
 	}
 
 	public static function activate(): void {
@@ -85,7 +85,7 @@ final class CohortEngine {
 		update_meta_cache( 'user', $ids_ints );
 
 		// Get current tiers — all meta cache hits after the bulk prime above.
-		$tier_map = [];
+		$tier_map = array();
 		foreach ( $ids_ints as $uid ) {
 			$tier_map[ $uid ] = self::get_user_tier( $uid );
 		}
@@ -95,21 +95,22 @@ final class CohortEngine {
 		$placeholders = implode( ',', array_fill( 0, count( $ids_ints ), '%d' ) );
 		$pts_rows     = $wpdb->get_results(
 			$wpdb->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $placeholders is implode(',', array_fill(..., '%d')), safe.
 				"SELECT user_id, COALESCE(SUM(points), 0) AS pts
 				   FROM {$wpdb->prefix}wb_gam_points
 				  WHERE user_id IN ($placeholders) AND created_at >= %s
 				 GROUP BY user_id",
-				array_merge( $ids_ints, [ $week_start ] )
+				array_merge( $ids_ints, array( $week_start ) )
 			),
 			ARRAY_A
 		);
-		$week_pts = array_fill_keys( $ids_ints, 0 );
+		$week_pts     = array_fill_keys( $ids_ints, 0 );
 		foreach ( $pts_rows as $row ) {
 			$week_pts[ (int) $row['user_id'] ] = (int) $row['pts'];
 		}
 
 		// Group users by tier.
-		$by_tier = array_fill( 0, count( self::TIERS ), [] );
+		$by_tier = array_fill( 0, count( self::TIERS ), array() );
 		foreach ( $ids_ints as $uid ) {
 			$by_tier[ $tier_map[ $uid ] ][] = $uid;
 		}
@@ -128,14 +129,14 @@ final class CohortEngine {
 				foreach ( $chunk as $uid ) {
 					$wpdb->replace(
 						$wpdb->prefix . 'wb_gam_cohort_members',
-						[
+						array(
 							'user_id'   => $uid,
 							'cohort_id' => $cohort_id,
 							'tier'      => $tier,
 							'week'      => $week,
 							'pts_start' => $week_pts[ $uid ],
-						],
-						[ '%d', '%s', '%d', '%s', '%d' ]
+						),
+						array( '%d', '%s', '%d', '%s', '%d' )
 					);
 				}
 			}
@@ -180,36 +181,41 @@ final class CohortEngine {
 			$placeholders = implode( ',', array_fill( 0, count( $member_ids ), '%d' ) );
 			$pts_rows     = $wpdb->get_results(
 				$wpdb->prepare(
+					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $placeholders is implode(',', array_fill(..., '%d')), safe.
 					"SELECT user_id, COALESCE(SUM(points), 0) AS pts
 					   FROM {$wpdb->prefix}wb_gam_points
 					  WHERE user_id IN ($placeholders) AND created_at >= %s
 					 GROUP BY user_id",
-					array_merge( $member_ids, [ $week_start ] )
+					array_merge( $member_ids, array( $week_start ) )
 				),
 				ARRAY_A
 			);
-			$pts_map = array_fill_keys( $member_ids, 0 );
+			$pts_map      = array_fill_keys( $member_ids, 0 );
 			foreach ( $pts_rows as $row ) {
 				$pts_map[ (int) $row['user_id'] ] = (int) $row['pts'];
 			}
 
-			$ranked = [];
+			$ranked = array();
 			foreach ( $members as $m ) {
 				$uid      = (int) $m['user_id'];
-				$ranked[] = [ 'user_id' => $uid, 'tier' => (int) $m['tier'], 'pts' => $pts_map[ $uid ] ];
+				$ranked[] = array(
+					'user_id' => $uid,
+					'tier'    => (int) $m['tier'],
+					'pts'     => $pts_map[ $uid ],
+				);
 			}
 
 			// Sort descending by pts.
 			usort( $ranked, fn( $a, $b ) => $b['pts'] <=> $a['pts'] );
 
-			$count       = count( $ranked );
-			$promote_n   = (int) floor( $count * self::PROMOTE_PCT );
-			$demote_n    = (int) floor( $count * self::DEMOTE_PCT );
+			$count     = count( $ranked );
+			$promote_n = (int) floor( $count * self::PROMOTE_PCT );
+			$demote_n  = (int) floor( $count * self::DEMOTE_PCT );
 
 			foreach ( $ranked as $i => $entry ) {
-				$uid        = $entry['user_id'];
-				$cur_tier   = $entry['tier'];
-				$max_tier   = count( self::TIERS ) - 1;
+				$uid      = $entry['user_id'];
+				$cur_tier = $entry['tier'];
+				$max_tier = count( self::TIERS ) - 1;
 
 				if ( $i < $promote_n && $cur_tier < $max_tier ) {
 					$new_tier = $cur_tier + 1;
@@ -224,8 +230,14 @@ final class CohortEngine {
 
 				$wpdb->update(
 					$wpdb->prefix . 'wb_gam_cohort_members',
-					[ 'tier_end' => $new_tier, 'outcome' => $outcome ],
-					[ 'cohort_id' => $cohort_id, 'user_id' => $uid ]
+					array(
+						'tier_end' => $new_tier,
+						'outcome'  => $outcome,
+					),
+					array(
+						'cohort_id' => $cohort_id,
+						'user_id'   => $uid,
+					)
 				);
 
 				// Update the user's tier for next week.
@@ -266,7 +278,8 @@ final class CohortEngine {
 			$wpdb->prepare(
 				"SELECT cohort_id, tier FROM {$wpdb->prefix}wb_gam_cohort_members
 				  WHERE user_id = %d AND week = %s",
-				$user_id, $week
+				$user_id,
+				$week
 			),
 			ARRAY_A
 		);
@@ -286,10 +299,11 @@ final class CohortEngine {
 				   JOIN {$wpdb->users} u ON u.ID = cm.user_id
 				  WHERE cm.cohort_id = %s
 				  ORDER BY week_pts DESC",
-				$week_start, $row['cohort_id']
+				$week_start,
+				$row['cohort_id']
 			),
 			ARRAY_A
-		) ?: [];
+		) ?: array();
 
 		$rank = 1;
 		foreach ( $members as &$m ) {
@@ -301,12 +315,12 @@ final class CohortEngine {
 		}
 		unset( $m );
 
-		return [
-			'cohort_id'   => $row['cohort_id'],
-			'tier'        => (int) $row['tier'],
-			'tier_name'   => self::TIERS[ (int) $row['tier'] ] ?? 'Bronze',
-			'week'        => $week,
-			'standings'   => array_values( $members ),
-		];
+		return array(
+			'cohort_id' => $row['cohort_id'],
+			'tier'      => (int) $row['tier'],
+			'tier_name' => self::TIERS[ (int) $row['tier'] ] ?? 'Bronze',
+			'week'      => $week,
+			'standings' => array_values( $members ),
+		);
 	}
 }

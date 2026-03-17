@@ -32,7 +32,7 @@ defined( 'ABSPATH' ) || exit;
 
 final class StreakEngine {
 
-	private const MILESTONES     = [ 7, 14, 30, 60, 100, 180, 365 ];
+	private const MILESTONES     = array( 7, 14, 30, 60, 100, 180, 365 );
 	private const OPT_GRACE_DAYS = 'wb_gam_streak_grace_days';
 	private const OPT_BONUS_PTS  = 'wb_gam_streak_milestone_bonus';
 	private const CACHE_GROUP    = 'wb_gamification';
@@ -51,8 +51,8 @@ final class StreakEngine {
 			return;
 		}
 
-		$data = self::get_row( $user_id );
-		$tz   = self::get_timezone( $user_id, $data['timezone'] );
+		$data  = self::get_row( $user_id );
+		$tz    = self::get_timezone( $user_id, $data['timezone'] );
 		$today = self::today( $tz );
 
 		// Already recorded activity today — nothing to do.
@@ -67,8 +67,8 @@ final class StreakEngine {
 
 		if ( null === $gap ) {
 			// First ever activity — start streak at 1.
-			$new_streak   = 1;
-			$grace_used   = 0;
+			$new_streak = 1;
+			$grace_used = 0;
 		} elseif ( 1 === $gap ) {
 			// Consecutive day — extend streak, reset grace availability.
 			$new_streak = $data['current_streak'] + 1;
@@ -136,10 +136,10 @@ final class StreakEngine {
 		);
 
 		if ( ! $rows ) {
-			return [];
+			return array();
 		}
 
-		$map = [];
+		$map = array();
 		foreach ( $rows as $row ) {
 			$map[ $row['activity_date'] ] = (int) $row['total'];
 		}
@@ -166,15 +166,15 @@ final class StreakEngine {
 		if ( $bonus > 0 ) {
 			Engine::process(
 				new Event(
-					[
+					array(
 						'action_id' => 'streak_milestone',
 						'user_id'   => $user_id,
 						'object_id' => $streak_days,
-						'metadata'  => [
+						'metadata'  => array(
 							'points'      => $bonus,
 							'streak_days' => $streak_days,
-						],
-					]
+						),
+					)
 				)
 			);
 		}
@@ -208,20 +208,20 @@ final class StreakEngine {
 		);
 
 		$data = $row
-			? [
+			? array(
 				'current_streak' => (int) $row['current_streak'],
 				'longest_streak' => (int) $row['longest_streak'],
 				'last_active'    => $row['last_active'] ?: null,
 				'timezone'       => $row['timezone'] ?: 'UTC',
 				'grace_used'     => (bool) $row['grace_used'],
-			]
-			: [
+			)
+			: array(
 				'current_streak' => 0,
 				'longest_streak' => 0,
 				'last_active'    => null,
 				'timezone'       => 'UTC',
 				'grace_used'     => false,
-			];
+			);
 
 		wp_cache_set( $cache_key, $data, self::CACHE_GROUP, self::CACHE_TTL );
 
@@ -240,7 +240,7 @@ final class StreakEngine {
 
 		$wpdb->replace(
 			$wpdb->prefix . 'wb_gam_streaks',
-			[
+			array(
 				'user_id'        => $user_id,
 				'current_streak' => $current_streak,
 				'longest_streak' => $longest_streak,
@@ -248,8 +248,8 @@ final class StreakEngine {
 				'timezone'       => $timezone,
 				'grace_used'     => $grace_used,
 				'updated_at'     => current_time( 'mysql' ),
-			],
-			[ '%d', '%d', '%d', '%s', '%s', '%d', '%s' ]
+			),
+			array( '%d', '%d', '%d', '%s', '%s', '%d', '%s' )
 		);
 	}
 

@@ -37,7 +37,7 @@ defined( 'ABSPATH' ) || exit;
 final class RateLimiter {
 
 	/** Maximum tokens in the bucket (burst capacity). */
-	private const CAPACITY   = 60;
+	private const CAPACITY = 60;
 
 	/** Tokens added per second. */
 	private const REFILL_RATE = 0.2; // 1 token per 5 seconds.
@@ -62,15 +62,15 @@ final class RateLimiter {
 
 		if ( false === $bucket ) {
 			// First request — full bucket.
-			$bucket = [
+			$bucket = array(
 				'tokens'      => (float) self::CAPACITY,
 				'last_refill' => $now,
-			];
+			);
 		} else {
 			// Refill tokens since last request.
-			$elapsed         = $now - (int) $bucket['last_refill'];
-			$refilled        = $elapsed * self::REFILL_RATE;
-			$bucket['tokens'] = min( self::CAPACITY, (float) $bucket['tokens'] + $refilled );
+			$elapsed               = $now - (int) $bucket['last_refill'];
+			$refilled              = $elapsed * self::REFILL_RATE;
+			$bucket['tokens']      = min( self::CAPACITY, (float) $bucket['tokens'] + $refilled );
 			$bucket['last_refill'] = $now;
 		}
 

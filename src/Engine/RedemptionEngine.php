@@ -47,7 +47,7 @@ final class RedemptionEngine {
 			  WHERE is_active = 1
 			  ORDER BY points_cost ASC",
 			ARRAY_A
-		) ?: [];
+		) ?: array();
 	}
 
 	/**
@@ -81,22 +81,32 @@ final class RedemptionEngine {
 		$item = self::get_item( $item_id );
 
 		if ( ! $item || ! $item['is_active'] ) {
-			return [ 'success' => false, 'error' => __( 'Reward item not found or inactive.', 'wb-gamification' ), 'redemption_id' => null, 'coupon_code' => null ];
+			return array(
+				'success'       => false,
+				'error'         => __( 'Reward item not found or inactive.', 'wb-gamification' ),
+				'redemption_id' => null,
+				'coupon_code'   => null,
+			);
 		}
 
 		$cost = (int) $item['points_cost'];
 
 		// Check stock.
 		if ( $item['stock'] !== null && (int) $item['stock'] <= 0 ) {
-			return [ 'success' => false, 'error' => __( 'This reward is out of stock.', 'wb-gamification' ), 'redemption_id' => null, 'coupon_code' => null ];
+			return array(
+				'success'       => false,
+				'error'         => __( 'This reward is out of stock.', 'wb-gamification' ),
+				'redemption_id' => null,
+				'coupon_code'   => null,
+			);
 		}
 
 		// Check balance.
 		$balance = PointsEngine::get_total( $user_id );
 		if ( $balance < $cost ) {
-			return [
-				'success' => false,
-				'error'   => sprintf(
+			return array(
+				'success'       => false,
+				'error'         => sprintf(
 					/* translators: 1: cost, 2: current balance */
 					__( 'Insufficient points. This reward costs %1$d pts; you have %2$d.', 'wb-gamification' ),
 					$cost,
@@ -104,7 +114,7 @@ final class RedemptionEngine {
 				),
 				'redemption_id' => null,
 				'coupon_code'   => null,
-			];
+			);
 		}
 
 		// Atomic stock decrement.
@@ -116,46 +126,59 @@ final class RedemptionEngine {
 				)
 			);
 			if ( ! $decremented ) {
-				return [ 'success' => false, 'error' => __( 'This reward is out of stock.', 'wb-gamification' ), 'redemption_id' => null, 'coupon_code' => null ];
+				return array(
+					'success'       => false,
+					'error'         => __( 'This reward is out of stock.', 'wb-gamification' ),
+					'redemption_id' => null,
+					'coupon_code'   => null,
+				);
 			}
 		}
 
 		// Deduct points via Engine::process so the event log is immutable.
-		$event = new Event( [
-			'action_id' => 'points_redeemed',
-			'user_id'   => $user_id,
-			'metadata'  => [ 'item_id' => $item_id, 'points_cost' => -$cost ],
-		] );
+		$event = new Event(
+			array(
+				'action_id' => 'points_redeemed',
+				'user_id'   => $user_id,
+				'metadata'  => array(
+					'item_id'     => $item_id,
+					'points_cost' => -$cost,
+				),
+			)
+		);
 		// Directly debit via PointsEngine (negative award).
 		PointsEngine::debit( $user_id, $cost, 'redemption', $event->event_id );
 
 		// Create redemption record.
 		$wpdb->insert(
 			$wpdb->prefix . 'wb_gam_redemptions',
-			[
+			array(
 				'user_id'     => $user_id,
 				'item_id'     => $item_id,
 				'points_cost' => $cost,
 				'status'      => 'pending',
-			],
-			[ '%d', '%d', '%d', '%s' ]
+			),
+			array( '%d', '%d', '%d', '%s' )
 		);
 		$redemption_id = (int) $wpdb->insert_id;
 
 		// Fulfillment.
 		$coupon_code = null;
-		$config      = json_decode( $item['reward_config'] ?? '{}', true ) ?: [];
+		$config      = json_decode( $item['reward_config'] ?? '{}', true ) ?: array();
 
-		if ( in_array( $item['reward_type'], [ 'discount_pct', 'discount_fixed' ], true ) ) {
+		if ( in_array( $item['reward_type'], array( 'discount_pct', 'discount_fixed' ), true ) ) {
 			$coupon_code = self::create_woo_coupon( $user_id, $item, $config, $redemption_id );
 			$wpdb->update(
 				$wpdb->prefix . 'wb_gam_redemptions',
-				[ 'status' => $coupon_code ? 'fulfilled' : 'failed', 'coupon_code' => $coupon_code ],
-				[ 'id' => $redemption_id ]
+				array(
+					'status'      => $coupon_code ? 'fulfilled' : 'failed',
+					'coupon_code' => $coupon_code,
+				),
+				array( 'id' => $redemption_id )
 			);
 		} else {
 			// Custom — fire hook for third-party fulfillment.
-			$wpdb->update( $wpdb->prefix . 'wb_gam_redemptions', [ 'status' => 'pending_fulfillment' ], [ 'id' => $redemption_id ] );
+			$wpdb->update( $wpdb->prefix . 'wb_gam_redemptions', array( 'status' => 'pending_fulfillment' ), array( 'id' => $redemption_id ) );
 		}
 
 		wp_cache_delete( 'wb_gam_points_' . $user_id, self::CACHE_GROUP );
@@ -170,12 +193,12 @@ final class RedemptionEngine {
 		 */
 		do_action( 'wb_gamification_points_redeemed', $redemption_id, $user_id, $item, $coupon_code );
 
-		return [
+		return array(
 			'success'       => true,
 			'redemption_id' => $redemption_id,
 			'coupon_code'   => $coupon_code,
 			'error'         => null,
-		];
+		);
 	}
 
 	// ── WooCommerce coupon creation ──────────────────────────────────────────
@@ -185,10 +208,10 @@ final class RedemptionEngine {
 			return null;
 		}
 
-		$user       = get_userdata( $user_id );
-		$code       = strtoupper( 'WBG-' . substr( md5( $redemption_id . $user_id . time() ), 0, 8 ) );
-		$discount   = (float) ( $config['amount'] ?? 10 );
-		$type       = 'discount_pct' === $item['reward_type'] ? 'percent' : 'fixed_cart';
+		$user     = get_userdata( $user_id );
+		$code     = strtoupper( 'WBG-' . substr( md5( $redemption_id . $user_id . time() ), 0, 8 ) );
+		$discount = (float) ( $config['amount'] ?? 10 );
+		$type     = 'discount_pct' === $item['reward_type'] ? 'percent' : 'fixed_cart';
 
 		$coupon = new \WC_Coupon();
 		$coupon->set_code( $code );
@@ -196,7 +219,7 @@ final class RedemptionEngine {
 		$coupon->set_amount( $discount );
 		$coupon->set_usage_limit( 1 );
 		$coupon->set_usage_limit_per_user( 1 );
-		$coupon->set_email_restrictions( [ $user->user_email ] );
+		$coupon->set_email_restrictions( array( $user->user_email ) );
 		$coupon->set_individual_use( true );
 		$coupon->set_date_expires( strtotime( '+30 days' ) );
 		$coupon->set_description( sprintf( 'Redeemed via WB Gamification — %s', $item['title'] ) );
@@ -222,9 +245,10 @@ final class RedemptionEngine {
 				  WHERE r.user_id = %d
 				  ORDER BY r.created_at DESC
 				  LIMIT %d",
-				$user_id, $limit
+				$user_id,
+				$limit
 			),
 			ARRAY_A
-		) ?: [];
+		) ?: array();
 	}
 }

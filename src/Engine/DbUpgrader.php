@@ -21,9 +21,9 @@ defined( 'ABSPATH' ) || exit;
 
 final class DbUpgrader {
 
-	private const OPT_KEY    = 'wb_gam_db_version';
-	private const LOCK_KEY   = 'wb_gam_db_upgrade_lock';
-	private const LOCK_TTL   = 60;
+	private const OPT_KEY  = 'wb_gam_db_version';
+	private const LOCK_KEY = 'wb_gam_db_upgrade_lock';
+	private const LOCK_TTL = 60;
 
 	// ── Boot ────────────────────────────────────────────────────────────────────
 
@@ -63,11 +63,11 @@ final class DbUpgrader {
 	 * @return array<string, string>
 	 */
 	private static function get_upgrades(): array {
-		return [
+		return array(
 			'0.1.0' => 'upgrade_to_0_1_0',
 			'0.2.0' => 'upgrade_to_0_2_0',
 			'0.3.0' => 'upgrade_to_0_3_0',
-		];
+		);
 	}
 
 	// ── Migrations ───────────────────────────────────────────────────────────────

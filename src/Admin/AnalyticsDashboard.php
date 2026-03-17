@@ -29,8 +29,8 @@ final class AnalyticsDashboard {
 	// ── Boot ────────────────────────────────────────────────────────────────────
 
 	public static function init(): void {
-		add_action( 'admin_menu', [ __CLASS__, 'register_menu' ] );
-		add_action( 'admin_enqueue_scripts', [ __CLASS__, 'enqueue' ] );
+		add_action( 'admin_menu', array( __CLASS__, 'register_menu' ) );
+		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue' ) );
 	}
 
 	public static function register_menu(): void {
@@ -40,7 +40,7 @@ final class AnalyticsDashboard {
 			__( 'Analytics', 'wb-gamification' ),
 			'manage_options',
 			'wb-gamification-analytics',
-			[ __CLASS__, 'render_page' ]
+			array( __CLASS__, 'render_page' )
 		);
 	}
 
@@ -51,7 +51,7 @@ final class AnalyticsDashboard {
 		wp_enqueue_style(
 			'wb-gam-admin-analytics',
 			WB_GAM_URL . 'assets/css/admin-analytics.css',
-			[],
+			array(),
 			WB_GAM_VERSION
 		);
 	}
@@ -59,7 +59,8 @@ final class AnalyticsDashboard {
 	// ── Page render ─────────────────────────────────────────────────────────────
 
 	public static function render_page(): void {
-		$period = isset( $_GET['period'] ) && in_array( $_GET['period'], [ '7', '30', '90' ], true )
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- GET param validated against allowlist, read-only analytics display.
+		$period = isset( $_GET['period'] ) && in_array( $_GET['period'], array( '7', '30', '90' ), true )
 			? (int) $_GET['period']
 			: 30;
 
@@ -70,7 +71,13 @@ final class AnalyticsDashboard {
 
 			<!-- Period selector -->
 			<div class="wb-gam-analytics__period-bar">
-				<?php foreach ( [ 7 => __( '7 days', 'wb-gamification' ), 30 => __( '30 days', 'wb-gamification' ), 90 => __( '90 days', 'wb-gamification' ) ] as $d => $label ) : ?>
+				<?php
+				foreach ( array(
+					7  => __( '7 days', 'wb-gamification' ),
+					30 => __( '30 days', 'wb-gamification' ),
+					90 => __( '90 days', 'wb-gamification' ),
+				) as $d => $label ) :
+					?>
 					<a
 						href="<?php echo esc_url( add_query_arg( 'period', $d ) ); ?>"
 						class="button<?php echo $d === $period ? ' button-primary' : ''; ?>"
@@ -197,10 +204,13 @@ final class AnalyticsDashboard {
 								</tr>
 							</thead>
 							<tbody>
-								<?php foreach ( $stats['top_earners'] as $row ) :
+								<?php
+								foreach ( $stats['top_earners'] as $row ) :
 									$user = get_userdata( (int) $row['user_id'] );
-									if ( ! $user ) continue;
-								?>
+									if ( ! $user ) {
+										continue;
+									}
+									?>
 									<tr>
 										<td>
 											<?php echo get_avatar( (int) $row['user_id'], 24 ); ?>
@@ -266,7 +276,7 @@ final class AnalyticsDashboard {
 		);
 
 		// Badge earner pct (unique users who earned any badge in period vs active members).
-		$badge_earners = (int) $wpdb->get_var(
+		$badge_earners    = (int) $wpdb->get_var(
 			$wpdb->prepare(
 				"SELECT COUNT(DISTINCT user_id) FROM {$wpdb->prefix}wb_gam_user_badges WHERE earned_at >= %s",
 				$since
@@ -285,7 +295,7 @@ final class AnalyticsDashboard {
 		);
 
 		// Challenge completion rate (completed / total started).
-		$challenges_started = (int) $wpdb->get_var(
+		$challenges_started       = (int) $wpdb->get_var(
 			$wpdb->prepare(
 				"SELECT COUNT(*) FROM {$wpdb->prefix}wb_gam_challenge_log WHERE created_at >= %s",
 				$since
@@ -296,7 +306,7 @@ final class AnalyticsDashboard {
 			: 0;
 
 		// Active streaks (current_streak > 0).
-		$active_streaks = (int) $wpdb->get_var(
+		$active_streaks    = (int) $wpdb->get_var(
 			"SELECT COUNT(*) FROM {$wpdb->prefix}wb_gam_streaks WHERE current_streak > 0"
 		);
 		$streak_health_pct = $total_members > 0
@@ -323,7 +333,7 @@ final class AnalyticsDashboard {
 				$since
 			),
 			ARRAY_A
-		) ?: [];
+		) ?: array();
 
 		// Top 10 earners in period.
 		$top_earners = $wpdb->get_results(
@@ -337,7 +347,7 @@ final class AnalyticsDashboard {
 				$since
 			),
 			ARRAY_A
-		) ?: [];
+		) ?: array();
 
 		// Daily points for sparkline.
 		$daily_rows = $wpdb->get_results(
@@ -350,19 +360,27 @@ final class AnalyticsDashboard {
 				$since
 			),
 			ARRAY_A
-		) ?: [];
+		) ?: array();
 
-		$daily_points = [];
+		$daily_points = array();
 		foreach ( $daily_rows as $row ) {
 			$daily_points[ $row['day'] ] = (int) $row['pts'];
 		}
 
 		$data = compact(
-			'points_total', 'active_members', 'total_members',
-			'badges_earned', 'badge_earner_pct',
-			'challenges_completed', 'challenge_completion_pct',
-			'active_streaks', 'streak_health_pct',
-			'kudos_given', 'top_actions', 'top_earners', 'daily_points'
+			'points_total',
+			'active_members',
+			'total_members',
+			'badges_earned',
+			'badge_earner_pct',
+			'challenges_completed',
+			'challenge_completion_pct',
+			'active_streaks',
+			'streak_health_pct',
+			'kudos_given',
+			'top_actions',
+			'top_earners',
+			'daily_points'
 		);
 
 		wp_cache_set( $cache_key, $data, self::CACHE_GROUP, self::CACHE_TTL );
@@ -392,10 +410,10 @@ final class AnalyticsDashboard {
 		// Fill gaps so every day in range has a value.
 		$end_ts   = current_time( 'timestamp' );
 		$start_ts = strtotime( "-{$period} days", $end_ts );
-		$filled   = [];
+		$filled   = array();
 		for ( $ts = $start_ts; $ts <= $end_ts; $ts += DAY_IN_SECONDS ) {
-			$day          = gmdate( 'Y-m-d', $ts );
-			$filled[$day] = $daily_points[ $day ] ?? 0;
+			$day            = gmdate( 'Y-m-d', $ts );
+			$filled[ $day ] = $daily_points[ $day ] ?? 0;
 		}
 
 		$max = max( $filled ) ?: 1;

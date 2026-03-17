@@ -27,15 +27,15 @@ defined( 'ABSPATH' ) || exit;
 
 final class LeaderboardNudge {
 
-	const CRON_HOOK         = 'wb_gam_weekly_nudge';
-	const AS_SINGLE_HOOK    = 'wb_gam_nudge_single_user';
-	const CRON_RECUR        = 'weekly';
+	const CRON_HOOK      = 'wb_gam_weekly_nudge';
+	const AS_SINGLE_HOOK = 'wb_gam_nudge_single_user';
+	const CRON_RECUR     = 'weekly';
 
 	// ── Lifecycle ───────────────────────────────────────────────────────────────
 
 	public static function init(): void {
-		add_action( self::CRON_HOOK, [ __CLASS__, 'dispatch_batch' ] );
-		add_action( self::AS_SINGLE_HOOK, [ __CLASS__, 'send_nudge' ] );
+		add_action( self::CRON_HOOK, array( __CLASS__, 'dispatch_batch' ) );
+		add_action( self::AS_SINGLE_HOOK, array( __CLASS__, 'send_nudge' ) );
 
 		if ( ! wp_next_scheduled( self::CRON_HOOK ) ) {
 			// Schedule for next Monday at 08:00 UTC.
@@ -91,7 +91,7 @@ final class LeaderboardNudge {
 			if ( function_exists( 'as_enqueue_async_action' ) ) {
 				as_enqueue_async_action(
 					self::AS_SINGLE_HOOK,
-					[ (int) $user_id ],
+					array( (int) $user_id ),
 					'wb-gamification-nudge'
 				);
 			} else {
@@ -138,7 +138,7 @@ final class LeaderboardNudge {
 		// BuddyPress notification.
 		if ( function_exists( 'bp_notifications_add_notification' ) ) {
 			bp_notifications_add_notification(
-				[
+				array(
 					'user_id'           => $user_id,
 					'item_id'           => $rank,
 					'secondary_item_id' => (int) $points_to_next,
@@ -146,7 +146,7 @@ final class LeaderboardNudge {
 					'component_action'  => 'weekly_rank_nudge',
 					'date_notified'     => bp_core_current_time(),
 					'is_new'            => 1,
-				]
+				)
 			);
 		}
 

@@ -41,26 +41,26 @@ class CredentialController extends WP_REST_Controller {
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base . '/(?P<badge_id>[a-z0-9_]+)/credential/(?P<user_id>[\d]+)',
-			[
-				[
+			array(
+				array(
 					'methods'             => WP_REST_Server::READABLE,
-					'callback'            => [ $this, 'get_credential' ],
+					'callback'            => array( $this, 'get_credential' ),
 					'permission_callback' => '__return_true',
-					'args'                => [
-						'badge_id' => [
+					'args'                => array(
+						'badge_id' => array(
 							'required'          => true,
 							'type'              => 'string',
 							'sanitize_callback' => 'sanitize_key',
-						],
-						'user_id' => [
+						),
+						'user_id'  => array(
 							'required'          => true,
 							'type'              => 'integer',
 							'minimum'           => 1,
 							'sanitize_callback' => 'absint',
-						],
-					],
-				],
-			]
+						),
+					),
+				),
+			)
 		);
 	}
 
@@ -73,7 +73,7 @@ class CredentialController extends WP_REST_Controller {
 		// Validate badge exists.
 		$badge = BadgeEngine::get_badge_def( $badge_id );
 		if ( ! $badge ) {
-			return new WP_Error( 'rest_not_found', __( 'Badge not found.', 'wb-gamification' ), [ 'status' => 404 ] );
+			return new WP_Error( 'rest_not_found', __( 'Badge not found.', 'wb-gamification' ), array( 'status' => 404 ) );
 		}
 
 		// Badge must be a credential.
@@ -81,14 +81,14 @@ class CredentialController extends WP_REST_Controller {
 			return new WP_Error(
 				'not_a_credential',
 				__( 'This badge is not a shareable credential.', 'wb-gamification' ),
-				[ 'status' => 403 ]
+				array( 'status' => 403 )
 			);
 		}
 
 		// Validate user exists and has earned this badge.
 		$user = get_userdata( $user_id );
 		if ( ! $user ) {
-			return new WP_Error( 'rest_user_invalid', __( 'Member not found.', 'wb-gamification' ), [ 'status' => 404 ] );
+			return new WP_Error( 'rest_user_invalid', __( 'Member not found.', 'wb-gamification' ), array( 'status' => 404 ) );
 		}
 
 		// Check earned status — use raw row to distinguish "never earned" from "expired".
@@ -98,7 +98,7 @@ class CredentialController extends WP_REST_Controller {
 			return new WP_Error(
 				'badge_not_earned',
 				__( 'This member has not earned this badge.', 'wb-gamification' ),
-				[ 'status' => 404 ]
+				array( 'status' => 404 )
 			);
 		}
 
@@ -107,66 +107,66 @@ class CredentialController extends WP_REST_Controller {
 			return new WP_Error(
 				'credential_expired',
 				__( 'This credential has expired. Renew to restore verification.', 'wb-gamification' ),
-				[ 'status' => 410 ]
+				array( 'status' => 410 )
 			);
 		}
 
 		$earned_at  = $badge_row['earned_at'];
 		$expires_at = $badge_row['expires_at'];
 
-		$site_url    = get_site_url();
-		$site_name   = get_bloginfo( 'name' );
-		$issuer_url  = rest_url( $this->namespace . '/issuer' );
-		$cred_url    = rest_url( $this->namespace . '/badges/' . $badge_id . '/credential/' . $user_id );
-		$badge_url   = rest_url( $this->namespace . '/badges/' . $badge_id );
-		$issued_on   = $earned_at
+		$site_url   = get_site_url();
+		$site_name  = get_bloginfo( 'name' );
+		$issuer_url = rest_url( $this->namespace . '/issuer' );
+		$cred_url   = rest_url( $this->namespace . '/badges/' . $badge_id . '/credential/' . $user_id );
+		$badge_url  = rest_url( $this->namespace . '/badges/' . $badge_id );
+		$issued_on  = $earned_at
 			? ( new \DateTime( $earned_at, new \DateTimeZone( 'UTC' ) ) )->format( 'c' )
 			: gmdate( 'c' );
-		$expires_on  = $expires_at
+		$expires_on = $expires_at
 			? ( new \DateTime( $expires_at, new \DateTimeZone( 'UTC' ) ) )->format( 'c' )
 			: null;
 
 		// Build OpenBadgeCredential 3.0 JSON-LD document.
-		$credential = [
-			'@context' => [
+		$credential = array(
+			'@context'          => array(
 				'https://www.w3.org/2018/credentials/v1',
 				'https://purl.imsglobal.org/spec/ob/v3p0/context-3.0.3.json',
-			],
-			'id'   => $cred_url,
-			'type' => [ 'VerifiableCredential', 'OpenBadgeCredential' ],
+			),
+			'id'                => $cred_url,
+			'type'              => array( 'VerifiableCredential', 'OpenBadgeCredential' ),
 
-			'issuer' => [
+			'issuer'            => array(
 				'id'   => $issuer_url,
 				'type' => 'Profile',
 				'name' => $site_name,
 				'url'  => $site_url,
-			],
+			),
 
-			'issuanceDate'   => $issued_on,
-			'name'           => $badge['name'],
-			'expirationDate' => $expires_on,
+			'issuanceDate'      => $issued_on,
+			'name'              => $badge['name'],
+			'expirationDate'    => $expires_on,
 
-			'credentialSubject' => [
-				'id'   => $site_url . '/?author=' . $user_id,
-				'type' => 'AchievementSubject',
-				'name' => $user->display_name,
+			'credentialSubject' => array(
+				'id'          => $site_url . '/?author=' . $user_id,
+				'type'        => 'AchievementSubject',
+				'name'        => $user->display_name,
 
-				'achievement' => [
+				'achievement' => array(
 					'id'          => $badge_url,
 					'type'        => 'Achievement',
 					'name'        => $badge['name'],
 					'description' => $badge['description'],
 					'image'       => $badge['image_url'] ?: null,
-					'criteria'    => [
+					'criteria'    => array(
 						'narrative' => $badge['description'],
-					],
-					'issuer' => [
+					),
+					'issuer'      => array(
 						'id'   => $issuer_url,
 						'type' => 'Profile',
 						'name' => $site_name,
-					],
-				],
-			],
+					),
+				),
+			),
 
 			/**
 			 * Filter the OpenBadgeCredential document before it is returned.
@@ -176,7 +176,7 @@ class CredentialController extends WP_REST_Controller {
 			 * @param string $badge_id   Badge identifier.
 			 * @param int    $user_id    Earner user ID.
 			 */
-		];
+		);
 
 		$credential = (array) apply_filters( 'wb_gamification_credential_document', $credential, $badge_id, $user_id );
 

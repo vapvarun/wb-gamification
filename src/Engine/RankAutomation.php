@@ -52,7 +52,7 @@ defined( 'ABSPATH' ) || exit;
 final class RankAutomation {
 
 	public static function init(): void {
-		add_action( 'wb_gamification_level_changed', [ __CLASS__, 'on_level_changed' ], 20, 3 );
+		add_action( 'wb_gamification_level_changed', array( __CLASS__, 'on_level_changed' ), 20, 3 );
 	}
 
 	// ── Hook handler ────────────────────────────────────────────────────────────
@@ -72,7 +72,7 @@ final class RankAutomation {
 				continue;
 			}
 
-			foreach ( (array) ( $rule['actions'] ?? [] ) as $action ) {
+			foreach ( (array) ( $rule['actions'] ?? array() ) as $action ) {
 				self::execute_action( $user_id, $action );
 			}
 		}
@@ -90,7 +90,7 @@ final class RankAutomation {
 	 * @return array[]
 	 */
 	private static function get_rules(): array {
-		$option_rules = [];
+		$option_rules = array();
 		$stored       = get_option( 'wb_gam_rank_automation_rules', '' );
 
 		if ( is_string( $stored ) && '' !== $stored ) {
@@ -182,12 +182,12 @@ final class RankAutomation {
 		}
 
 		messages_new_message(
-			[
+			array(
 				'sender_id'  => $sender_id > 0 ? $sender_id : 1,
-				'recipients' => [ $recipient_id ],
+				'recipients' => array( $recipient_id ),
 				'subject'    => $subject,
 				'content'    => $content,
-			]
+			)
 		);
 	}
 

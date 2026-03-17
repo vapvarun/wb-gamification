@@ -36,7 +36,7 @@ final class BadgeEngine {
 	 * Boot — hook into the points-awarded action to evaluate conditions.
 	 */
 	public static function init(): void {
-		add_action( 'wb_gamification_points_awarded', [ __CLASS__, 'evaluate_on_award' ], 10, 3 );
+		add_action( 'wb_gamification_points_awarded', array( __CLASS__, 'evaluate_on_award' ), 10, 3 );
 	}
 
 	// ── Award pipeline ─────────────────────────────────────────────────────────
@@ -93,10 +93,10 @@ final class BadgeEngine {
 	/**
 	 * Evaluate a single badge condition.
 	 *
-	 * @param array  $config  Decoded condition config.
-	 * @param int    $user_id User being evaluated.
-	 * @param Event  $event   Current event.
-	 * @param int    $total   User's current point total (pre-fetched to avoid N+1).
+	 * @param array $config  Decoded condition config.
+	 * @param int   $user_id User being evaluated.
+	 * @param Event $event   Current event.
+	 * @param int   $total   User's current point total (pre-fetched to avoid N+1).
 	 * @return bool           True if the condition is met.
 	 */
 	private static function evaluate_condition( array $config, int $user_id, Event $event, int $total ): bool {
@@ -162,21 +162,21 @@ final class BadgeEngine {
 		global $wpdb;
 
 		// Compute expiry if the badge_def specifies a validity window.
-		$def          = self::get_badge_def( $badge_id );
-		$validity     = $def ? (int) ( $def['validity_days'] ?? 0 ) : 0;
-		$expires_at   = $validity > 0
+		$def        = self::get_badge_def( $badge_id );
+		$validity   = $def ? (int) ( $def['validity_days'] ?? 0 ) : 0;
+		$expires_at = $validity > 0
 			? gmdate( 'Y-m-d H:i:s', strtotime( "+{$validity} days" ) )
 			: null;
 
 		$inserted = $wpdb->insert(
 			$wpdb->prefix . 'wb_gam_user_badges',
-			[
+			array(
 				'user_id'    => $user_id,
 				'badge_id'   => $badge_id,
 				'earned_at'  => current_time( 'mysql' ),
 				'expires_at' => $expires_at,
-			],
-			[ '%d', '%s', '%s', '%s' ]
+			),
+			array( '%d', '%s', '%s', '%s' )
 		);
 
 		if ( ! $inserted ) {
@@ -203,10 +203,10 @@ final class BadgeEngine {
 			$user_id,
 			null,
 			0,
-			[
+			array(
 				'badge_id'   => $badge_id,
 				'badge_name' => $def ? $def['name'] : $badge_id,
-			]
+			)
 		);
 
 		return true;
@@ -249,7 +249,7 @@ final class BadgeEngine {
 			)
 		);
 
-		$ids = array_values( $ids ?: [] );
+		$ids = array_values( $ids ?: array() );
 		wp_cache_set( $cache_key, $ids, self::CACHE_GROUP, self::CACHE_TTL );
 
 		return $ids;
@@ -281,7 +281,7 @@ final class BadgeEngine {
 
 		return array_map(
 			static function ( array $row ): array {
-				return [
+				return array(
 					'id'            => $row['id'],
 					'name'          => $row['name'],
 					'description'   => $row['description'],
@@ -290,9 +290,9 @@ final class BadgeEngine {
 					'category'      => $row['category'],
 					'earned_at'     => $row['earned_at'],
 					'expires_at'    => $row['expires_at'] ?: null,
-				];
+				);
 			},
-			$rows ?: []
+			$rows ?: array()
 		);
 	}
 
@@ -343,7 +343,7 @@ final class BadgeEngine {
 			return null;
 		}
 
-		return [
+		return array(
 			'id'            => $row['id'],
 			'name'          => $row['name'],
 			'description'   => $row['description'],
@@ -351,7 +351,7 @@ final class BadgeEngine {
 			'is_credential' => (bool) $row['is_credential'],
 			'validity_days' => isset( $row['validity_days'] ) ? (int) $row['validity_days'] : null,
 			'category'      => $row['category'],
-		];
+		);
 	}
 
 	/**
@@ -374,12 +374,12 @@ final class BadgeEngine {
 		);
 
 		if ( empty( $defs ) ) {
-			return [];
+			return array();
 		}
 
 		// Build earned-at + expires_at map in one query.
 		$now        = gmdate( 'Y-m-d H:i:s' );
-		$badge_data = [];
+		$badge_data = array();
 		if ( $user_id > 0 ) {
 			$rows = $wpdb->get_results(
 				$wpdb->prepare(
@@ -389,10 +389,10 @@ final class BadgeEngine {
 				ARRAY_A
 			);
 			foreach ( $rows as $row ) {
-				$badge_data[ $row['badge_id'] ] = [
+				$badge_data[ $row['badge_id'] ] = array(
 					'earned_at'  => $row['earned_at'],
 					'expires_at' => $row['expires_at'],
-				];
+				);
 			}
 		}
 
@@ -402,7 +402,7 @@ final class BadgeEngine {
 				$earned_at  = $data['earned_at'] ?? null;
 				$expires_at = $data['expires_at'] ?? null;
 				$is_expired = $expires_at && strtotime( $expires_at ) <= strtotime( $now );
-				return [
+				return array(
 					'id'            => $def['id'],
 					'name'          => $def['name'],
 					'description'   => $def['description'],
@@ -414,7 +414,7 @@ final class BadgeEngine {
 					'earned_at'     => $earned_at,
 					'expires_at'    => $expires_at,
 					'is_expired'    => $is_expired,
-				];
+				);
 			},
 			$defs
 		);

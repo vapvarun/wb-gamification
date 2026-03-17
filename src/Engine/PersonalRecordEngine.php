@@ -35,7 +35,7 @@ final class PersonalRecordEngine {
 
 	public static function init(): void {
 		// Priority 20 — runs after BadgeEngine (10) and after all side-effects settle.
-		add_action( 'wb_gamification_points_awarded', [ __CLASS__, 'check_personal_records' ], 20, 3 );
+		add_action( 'wb_gamification_points_awarded', array( __CLASS__, 'check_personal_records' ), 20, 3 );
 	}
 
 	// ── Hook handler ────────────────────────────────────────────────────────────
@@ -48,8 +48,8 @@ final class PersonalRecordEngine {
 	 * @param int   $points  Points awarded (not the total — just this award).
 	 */
 	public static function check_personal_records( int $user_id, Event $event, int $points ): void {
-		self::maybe_record( $user_id, 'day',   self::period_total( $user_id, 'day' ) );
-		self::maybe_record( $user_id, 'week',  self::period_total( $user_id, 'week' ) );
+		self::maybe_record( $user_id, 'day', self::period_total( $user_id, 'day' ) );
+		self::maybe_record( $user_id, 'week', self::period_total( $user_id, 'week' ) );
 		self::maybe_record( $user_id, 'month', self::period_total( $user_id, 'month' ) );
 	}
 
@@ -82,7 +82,7 @@ final class PersonalRecordEngine {
 		// BuddyPress notification.
 		if ( function_exists( 'bp_notifications_add_notification' ) ) {
 			bp_notifications_add_notification(
-				[
+				array(
 					'user_id'           => $user_id,
 					'item_id'           => $current,
 					'secondary_item_id' => $previous,
@@ -90,7 +90,7 @@ final class PersonalRecordEngine {
 					'component_action'  => 'personal_record_' . $period,
 					'date_notified'     => bp_core_current_time(),
 					'is_new'            => 1,
-				]
+				)
 			);
 		}
 
@@ -116,11 +116,11 @@ final class PersonalRecordEngine {
 	private static function period_total( int $user_id, string $period ): int {
 		global $wpdb;
 
-		$period_starts = [
+		$period_starts = array(
 			'day'   => gmdate( 'Y-m-d' ) . ' 00:00:00',
 			'week'  => gmdate( 'Y-m-d', strtotime( 'monday this week' ) ) . ' 00:00:00',
 			'month' => gmdate( 'Y-m-01' ) . ' 00:00:00',
-		];
+		);
 
 		$start = $period_starts[ $period ] ?? null;
 		if ( null === $start ) {
@@ -142,11 +142,11 @@ final class PersonalRecordEngine {
 	 * Build a congratulatory message string.
 	 */
 	private static function build_message( string $period, int $current, int $previous ): string {
-		$period_labels = [
+		$period_labels = array(
 			'day'   => __( 'today', 'wb-gamification' ),
 			'week'  => __( 'this week', 'wb-gamification' ),
 			'month' => __( 'this month', 'wb-gamification' ),
-		];
+		);
 
 		$label = $period_labels[ $period ] ?? $period;
 

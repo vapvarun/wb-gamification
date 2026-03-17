@@ -107,12 +107,15 @@ function wb_gam_award_points( int $user_id, int $points, string $action_id = 'ma
 
 	return Engine::process(
 		new Event(
-			[
+			array(
 				'action_id' => $action_id,
 				'user_id'   => $user_id,
 				'object_id' => $object_id,
-				'metadata'  => [ 'points' => $points, 'manual' => true ],
-			]
+				'metadata'  => array(
+					'points' => $points,
+					'manual' => true,
+				),
+			)
 		)
 	);
 }

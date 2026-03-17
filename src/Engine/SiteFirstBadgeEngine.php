@@ -26,32 +26,32 @@ defined( 'ABSPATH' ) || exit;
 final class SiteFirstBadgeEngine {
 
 	/** @var array<string, array> Badge definitions seeded on install. */
-	private const SITE_FIRST_BADGES = [
-		'first_champion' => [
+	private const SITE_FIRST_BADGES = array(
+		'first_champion'       => array(
 			'name'        => 'First Champion',
 			'description' => 'The first member of this community to reach Champion rank.',
 			'category'    => 'special',
 			'trigger'     => 'level_changed',
-		],
-		'first_10k_points' => [
+		),
+		'first_10k_points'     => array(
 			'name'        => 'First to 10,000',
 			'description' => 'The first member to earn 10,000 total points in this community.',
 			'category'    => 'special',
 			'trigger'     => 'points_awarded',
-		],
-		'first_100_day_streak' => [
+		),
+		'first_100_day_streak' => array(
 			'name'        => 'Century Streak Pioneer',
 			'description' => 'The first member to reach a 100-day activity streak.',
 			'category'    => 'special',
 			'trigger'     => 'streak_milestone',
-		],
-	];
+		),
+	);
 
 	public static function init(): void {
-		add_action( 'wb_gamification_level_changed',    [ __CLASS__, 'on_level_changed' ],    10, 3 );
-		add_action( 'wb_gamification_points_awarded',   [ __CLASS__, 'on_points_awarded' ],   30, 3 );
-		add_action( 'wb_gamification_streak_milestone', [ __CLASS__, 'on_streak_milestone' ], 10, 2 );
-		add_action( 'plugins_loaded', [ __CLASS__, 'ensure_badges_exist' ], 20 );
+		add_action( 'wb_gamification_level_changed', array( __CLASS__, 'on_level_changed' ), 10, 3 );
+		add_action( 'wb_gamification_points_awarded', array( __CLASS__, 'on_points_awarded' ), 30, 3 );
+		add_action( 'wb_gamification_streak_milestone', array( __CLASS__, 'on_streak_milestone' ), 10, 2 );
+		add_action( 'plugins_loaded', array( __CLASS__, 'ensure_badges_exist' ), 20 );
 	}
 
 	// ── Hooks ────────────────────────────────────────────────────────────────
@@ -130,14 +130,14 @@ final class SiteFirstBadgeEngine {
 			if ( ! $exists ) {
 				$wpdb->insert(
 					$wpdb->prefix . 'wb_gam_badge_defs',
-					[
+					array(
 						'id'            => $id,
 						'name'          => $def['name'],
 						'description'   => $def['description'],
 						'category'      => $def['category'],
 						'is_credential' => 1,
-					],
-					[ '%s', '%s', '%s', '%s', '%d' ]
+					),
+					array( '%s', '%s', '%s', '%s', '%d' )
 				);
 			}
 		}

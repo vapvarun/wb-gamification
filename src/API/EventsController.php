@@ -46,41 +46,41 @@ class EventsController extends WP_REST_Controller {
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base,
-			[
-				[
+			array(
+				array(
 					'methods'             => WP_REST_Server::CREATABLE,
-					'callback'            => [ $this, 'create_item' ],
-					'permission_callback' => [ $this, 'create_item_permissions_check' ],
-					'args'                => [
-						'action_id' => [
+					'callback'            => array( $this, 'create_item' ),
+					'permission_callback' => array( $this, 'create_item_permissions_check' ),
+					'args'                => array(
+						'action_id' => array(
 							'required'          => true,
 							'type'              => 'string',
 							'sanitize_callback' => 'sanitize_key',
 							'description'       => 'Registered gamification action ID.',
-						],
-						'user_id' => [
+						),
+						'user_id'   => array(
 							'type'              => 'integer',
 							'default'           => 0,
 							'minimum'           => 0,
 							'sanitize_callback' => 'absint',
 							'description'       => 'User to credit. 0 = current user.',
-						],
-						'object_id' => [
+						),
+						'object_id' => array(
 							'type'              => 'integer',
 							'default'           => 0,
 							'minimum'           => 0,
 							'sanitize_callback' => 'absint',
 							'description'       => 'Related object (post ID, comment ID, etc.).',
-						],
-						'metadata' => [
+						),
+						'metadata'  => array(
 							'type'              => 'object',
-							'default'           => [],
-							'sanitize_callback' => [ $this, 'sanitize_metadata' ],
+							'default'           => array(),
+							'sanitize_callback' => array( $this, 'sanitize_metadata' ),
 							'description'       => 'Arbitrary key/value context data.',
-						],
-					],
-				],
-			]
+						),
+					),
+				),
+			)
 		);
 	}
 
@@ -101,7 +101,7 @@ class EventsController extends WP_REST_Controller {
 			return new WP_Error(
 				'rest_no_user',
 				__( 'Could not determine target user.', 'wb-gamification' ),
-				[ 'status' => 400 ]
+				array( 'status' => 400 )
 			);
 		}
 
@@ -115,7 +115,7 @@ class EventsController extends WP_REST_Controller {
 					__( 'Unknown action: %s', 'wb-gamification' ),
 					$action_id
 				),
-				[ 'status' => 400 ]
+				array( 'status' => 400 )
 			);
 		}
 
@@ -124,23 +124,23 @@ class EventsController extends WP_REST_Controller {
 			return new WP_Error(
 				'rest_forbidden',
 				__( 'You may only fire events for yourself.', 'wb-gamification' ),
-				[ 'status' => 403 ]
+				array( 'status' => 403 )
 			);
 		}
 
 		$event = new Event(
-			[
+			array(
 				'action_id' => $action_id,
 				'user_id'   => $user_id,
 				'object_id' => $object_id ?: null,
 				'metadata'  => $metadata,
-			]
+			)
 		);
 
 		$result = Engine::process( $event );
 
 		return new WP_REST_Response(
-			[
+			array(
 				'processed' => true,
 				'event_id'  => $event->id,
 				'action_id' => $action_id,
@@ -148,7 +148,7 @@ class EventsController extends WP_REST_Controller {
 				'points'    => $result['points'] ?? 0,
 				'skipped'   => $result['skipped'] ?? false,
 				'reason'    => $result['reason'] ?? null,
-			],
+			),
 			201
 		);
 	}
@@ -160,7 +160,7 @@ class EventsController extends WP_REST_Controller {
 			return new WP_Error(
 				'rest_not_logged_in',
 				__( 'You must be logged in to fire gamification events.', 'wb-gamification' ),
-				[ 'status' => 401 ]
+				array( 'status' => 401 )
 			);
 		}
 		return true;
@@ -177,11 +177,11 @@ class EventsController extends WP_REST_Controller {
 	 */
 	public function sanitize_metadata( $meta ): array {
 		if ( ! is_array( $meta ) ) {
-			return [];
+			return array();
 		}
 
-		$blocked_keys = [ 'password', 'secret', 'token', 'key', 'auth', 'nonce', 'cookie' ];
-		$clean        = [];
+		$blocked_keys = array( 'password', 'secret', 'token', 'key', 'auth', 'nonce', 'cookie' );
+		$clean        = array();
 
 		foreach ( $meta as $k => $v ) {
 			$k = sanitize_key( (string) $k );

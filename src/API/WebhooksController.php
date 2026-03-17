@@ -39,60 +39,65 @@ class WebhooksController extends WP_REST_Controller {
 	protected $rest_base = 'webhooks';
 
 	/** @var string[] */
-	private const VALID_EVENTS = [
+	private const VALID_EVENTS = array(
 		'points_awarded',
 		'badge_earned',
 		'level_changed',
 		'streak_milestone',
 		'challenge_completed',
 		'kudos_given',
-	];
+	);
 
 	public function register_routes(): void {
 		// Collection.
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base,
-			[
-				[
+			array(
+				array(
 					'methods'             => WP_REST_Server::READABLE,
-					'callback'            => [ $this, 'get_items' ],
-					'permission_callback' => [ $this, 'admin_check' ],
-				],
-				[
+					'callback'            => array( $this, 'get_items' ),
+					'permission_callback' => array( $this, 'admin_check' ),
+				),
+				array(
 					'methods'             => WP_REST_Server::CREATABLE,
-					'callback'            => [ $this, 'create_item' ],
-					'permission_callback' => [ $this, 'admin_check' ],
+					'callback'            => array( $this, 'create_item' ),
+					'permission_callback' => array( $this, 'admin_check' ),
 					'args'                => $this->webhook_args(),
-				],
-				'schema' => [ $this, 'get_item_schema' ],
-			]
+				),
+				'schema' => array( $this, 'get_item_schema' ),
+			)
 		);
 
 		// Single item.
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base . '/(?P<id>[\d]+)',
-			[
-				[
+			array(
+				array(
 					'methods'             => WP_REST_Server::READABLE,
-					'callback'            => [ $this, 'get_item' ],
-					'permission_callback' => [ $this, 'admin_check' ],
-					'args'                => [ 'id' => [ 'type' => 'integer', 'minimum' => 1 ] ],
-				],
-				[
+					'callback'            => array( $this, 'get_item' ),
+					'permission_callback' => array( $this, 'admin_check' ),
+					'args'                => array(
+						'id' => array(
+							'type'    => 'integer',
+							'minimum' => 1,
+						),
+					),
+				),
+				array(
 					'methods'             => WP_REST_Server::EDITABLE,
-					'callback'            => [ $this, 'update_item' ],
-					'permission_callback' => [ $this, 'admin_check' ],
+					'callback'            => array( $this, 'update_item' ),
+					'permission_callback' => array( $this, 'admin_check' ),
 					'args'                => $this->webhook_args( required: false ),
-				],
-				[
+				),
+				array(
 					'methods'             => WP_REST_Server::DELETABLE,
-					'callback'            => [ $this, 'delete_item' ],
-					'permission_callback' => [ $this, 'admin_check' ],
-				],
-				'schema' => [ $this, 'get_item_schema' ],
-			]
+					'callback'            => array( $this, 'delete_item' ),
+					'permission_callback' => array( $this, 'admin_check' ),
+				),
+				'schema' => array( $this, 'get_item_schema' ),
+			)
 		);
 	}
 
@@ -103,16 +108,16 @@ class WebhooksController extends WP_REST_Controller {
 		$rows = $wpdb->get_results(
 			"SELECT id, url, events, is_active, created_at FROM {$wpdb->prefix}wb_gam_webhooks ORDER BY id ASC",
 			ARRAY_A
-		) ?: [];
+		) ?: array();
 
-		return rest_ensure_response( array_map( [ $this, 'prepare_item' ], $rows ) );
+		return rest_ensure_response( array_map( array( $this, 'prepare_item' ), $rows ) );
 	}
 
 	public function get_item( WP_REST_Request $request ): WP_REST_Response|WP_Error {
 		$row = $this->fetch_row( (int) $request['id'] );
 		return $row
 			? rest_ensure_response( $this->prepare_item( $row ) )
-			: new WP_Error( 'rest_not_found', __( 'Webhook not found.', 'wb-gamification' ), [ 'status' => 404 ] );
+			: new WP_Error( 'rest_not_found', __( 'Webhook not found.', 'wb-gamification' ), array( 'status' => 404 ) );
 	}
 
 	public function create_item( WP_REST_Request $request ): WP_REST_Response|WP_Error {
@@ -123,17 +128,17 @@ class WebhooksController extends WP_REST_Controller {
 
 		$inserted = $wpdb->insert(
 			$wpdb->prefix . 'wb_gam_webhooks',
-			[
+			array(
 				'url'       => esc_url_raw( $request['url'] ),
 				'secret'    => $secret,
 				'events'    => $events_json,
 				'is_active' => 1,
-			],
-			[ '%s', '%s', '%s', '%d' ]
+			),
+			array( '%s', '%s', '%s', '%d' )
 		);
 
 		if ( ! $inserted ) {
-			return new WP_Error( 'rest_insert_failed', __( 'Could not create webhook.', 'wb-gamification' ), [ 'status' => 500 ] );
+			return new WP_Error( 'rest_insert_failed', __( 'Could not create webhook.', 'wb-gamification' ), array( 'status' => 500 ) );
 		}
 
 		$row = $this->fetch_row( $wpdb->insert_id );
@@ -150,10 +155,10 @@ class WebhooksController extends WP_REST_Controller {
 		$id  = (int) $request['id'];
 		$row = $this->fetch_row( $id );
 		if ( ! $row ) {
-			return new WP_Error( 'rest_not_found', __( 'Webhook not found.', 'wb-gamification' ), [ 'status' => 404 ] );
+			return new WP_Error( 'rest_not_found', __( 'Webhook not found.', 'wb-gamification' ), array( 'status' => 404 ) );
 		}
 
-		$data = [];
+		$data = array();
 		if ( isset( $request['url'] ) ) {
 			$data['url'] = esc_url_raw( $request['url'] );
 		}
@@ -168,7 +173,7 @@ class WebhooksController extends WP_REST_Controller {
 			return rest_ensure_response( $this->prepare_item( $row ) );
 		}
 
-		$wpdb->update( $wpdb->prefix . 'wb_gam_webhooks', $data, [ 'id' => $id ] );
+		$wpdb->update( $wpdb->prefix . 'wb_gam_webhooks', $data, array( 'id' => $id ) );
 
 		return rest_ensure_response( $this->prepare_item( $this->fetch_row( $id ) ) );
 	}
@@ -179,12 +184,18 @@ class WebhooksController extends WP_REST_Controller {
 		$id  = (int) $request['id'];
 		$row = $this->fetch_row( $id );
 		if ( ! $row ) {
-			return new WP_Error( 'rest_not_found', __( 'Webhook not found.', 'wb-gamification' ), [ 'status' => 404 ] );
+			return new WP_Error( 'rest_not_found', __( 'Webhook not found.', 'wb-gamification' ), array( 'status' => 404 ) );
 		}
 
-		$wpdb->delete( $wpdb->prefix . 'wb_gam_webhooks', [ 'id' => $id ], [ '%d' ] );
+		$wpdb->delete( $wpdb->prefix . 'wb_gam_webhooks', array( 'id' => $id ), array( '%d' ) );
 
-		return new WP_REST_Response( [ 'deleted' => true, 'id' => $id ], 200 );
+		return new WP_REST_Response(
+			array(
+				'deleted' => true,
+				'id'      => $id,
+			),
+			200
+		);
 	}
 
 	// ── Helpers ─────────────────────────────────────────────────────────────────
@@ -202,18 +213,18 @@ class WebhooksController extends WP_REST_Controller {
 	}
 
 	private function prepare_item( array $row ): array {
-		return [
+		return array(
 			'id'         => (int) $row['id'],
 			'url'        => $row['url'],
-			'events'     => json_decode( $row['events'] ?? '[]', true ) ?: [],
+			'events'     => json_decode( $row['events'] ?? '[]', true ) ?: array(),
 			'is_active'  => (bool) $row['is_active'],
 			'created_at' => $row['created_at'],
-		];
+		);
 	}
 
 	private function webhook_args( bool $required = true ): array {
-		return [
-			'url' => [
+		return array(
+			'url'       => array(
 				'required'          => $required,
 				'type'              => 'string',
 				'format'            => 'uri',
@@ -222,42 +233,48 @@ class WebhooksController extends WP_REST_Controller {
 				'validate_callback' => static function ( $url ) {
 					return filter_var( $url, FILTER_VALIDATE_URL ) && str_starts_with( $url, 'https://' );
 				},
-			],
-			'events' => [
+			),
+			'events'    => array(
 				'required'    => $required,
 				'type'        => 'array',
-				'items'       => [
+				'items'       => array(
 					'type' => 'string',
 					'enum' => self::VALID_EVENTS,
-				],
+				),
 				'description' => 'Event types to subscribe to.',
-			],
-			'is_active' => [
+			),
+			'is_active' => array(
 				'type'    => 'boolean',
 				'default' => true,
-			],
-		];
+			),
+		);
 	}
 
 	public function admin_check(): bool|WP_Error {
 		if ( current_user_can( 'manage_options' ) ) {
 			return true;
 		}
-		return new WP_Error( 'rest_forbidden', __( 'Admin only.', 'wb-gamification' ), [ 'status' => 403 ] );
+		return new WP_Error( 'rest_forbidden', __( 'Admin only.', 'wb-gamification' ), array( 'status' => 403 ) );
 	}
 
 	public function get_item_schema(): array {
-		return [
+		return array(
 			'$schema'    => 'http://json-schema.org/draft-04/schema#',
 			'title'      => 'wb-gamification-webhook',
 			'type'       => 'object',
-			'properties' => [
-				'id'         => [ 'type' => 'integer' ],
-				'url'        => [ 'type' => 'string', 'format' => 'uri' ],
-				'events'     => [ 'type' => 'array', 'items' => [ 'type' => 'string' ] ],
-				'is_active'  => [ 'type' => 'boolean' ],
-				'created_at' => [ 'type' => 'string' ],
-			],
-		];
+			'properties' => array(
+				'id'         => array( 'type' => 'integer' ),
+				'url'        => array(
+					'type'   => 'string',
+					'format' => 'uri',
+				),
+				'events'     => array(
+					'type'  => 'array',
+					'items' => array( 'type' => 'string' ),
+				),
+				'is_active'  => array( 'type' => 'boolean' ),
+				'created_at' => array( 'type' => 'string' ),
+			),
+		);
 	}
 }

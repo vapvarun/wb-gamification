@@ -33,25 +33,25 @@ defined( 'ABSPATH' ) || exit;
 final class Privacy {
 
 	public static function init(): void {
-		add_filter( 'wp_privacy_personal_data_exporters', [ __CLASS__, 'register_exporter' ] );
-		add_filter( 'wp_privacy_personal_data_erasers', [ __CLASS__, 'register_eraser' ] );
+		add_filter( 'wp_privacy_personal_data_exporters', array( __CLASS__, 'register_exporter' ) );
+		add_filter( 'wp_privacy_personal_data_erasers', array( __CLASS__, 'register_eraser' ) );
 	}
 
 	// ── Registration ────────────────────────────────────────────────────────
 
 	public static function register_exporter( array $exporters ): array {
-		$exporters['wb-gamification'] = [
+		$exporters['wb-gamification'] = array(
 			'exporter_friendly_name' => __( 'WB Gamification', 'wb-gamification' ),
-			'callback'               => [ __CLASS__, 'export_user_data' ],
-		];
+			'callback'               => array( __CLASS__, 'export_user_data' ),
+		);
 		return $exporters;
 	}
 
 	public static function register_eraser( array $erasers ): array {
-		$erasers['wb-gamification'] = [
+		$erasers['wb-gamification'] = array(
 			'eraser_friendly_name' => __( 'WB Gamification', 'wb-gamification' ),
-			'callback'             => [ __CLASS__, 'erase_user_data' ],
-		];
+			'callback'             => array( __CLASS__, 'erase_user_data' ),
+		);
 		return $erasers;
 	}
 
@@ -64,27 +64,30 @@ final class Privacy {
 	public static function export_user_data( string $email_address, int $page = 1 ): array {
 		$user = get_user_by( 'email', $email_address );
 		if ( ! $user ) {
-			return [ 'data' => [], 'done' => true ];
+			return array(
+				'data' => array(),
+				'done' => true,
+			);
 		}
 
 		$user_id = (int) $user->ID;
 		global $wpdb;
 
-		$data_groups = [];
+		$data_groups = array();
 
 		// Points summary.
-		$total = PointsEngine::get_total( $user_id );
-		$data_groups[] = [
+		$total         = PointsEngine::get_total( $user_id );
+		$data_groups[] = array(
 			'group_id'    => 'wb-gam-points',
 			'group_label' => __( 'Gamification Points', 'wb-gamification' ),
 			'item_id'     => 'wb-gam-points-' . $user_id,
-			'data'        => [
-				[
+			'data'        => array(
+				array(
 					'name'  => __( 'Total Points', 'wb-gamification' ),
 					'value' => (string) $total,
-				],
-			],
-		];
+				),
+			),
+		);
 
 		// Points history (all).
 		$history = $wpdb->get_results(
@@ -93,19 +96,28 @@ final class Privacy {
 				$user_id
 			),
 			ARRAY_A
-		) ?: [];
+		) ?: array();
 
 		foreach ( $history as $i => $row ) {
-			$data_groups[] = [
+			$data_groups[] = array(
 				'group_id'    => 'wb-gam-points-history',
 				'group_label' => __( 'Points History', 'wb-gamification' ),
 				'item_id'     => 'wb-gam-ph-' . $i,
-				'data'        => [
-					[ 'name' => __( 'Action',  'wb-gamification' ), 'value' => $row['action_id'] ],
-					[ 'name' => __( 'Points',  'wb-gamification' ), 'value' => $row['points'] ],
-					[ 'name' => __( 'Date',    'wb-gamification' ), 'value' => $row['created_at'] ],
-				],
-			];
+				'data'        => array(
+					array(
+						'name'  => __( 'Action', 'wb-gamification' ),
+						'value' => $row['action_id'],
+					),
+					array(
+						'name'  => __( 'Points', 'wb-gamification' ),
+						'value' => $row['points'],
+					),
+					array(
+						'name'  => __( 'Date', 'wb-gamification' ),
+						'value' => $row['created_at'],
+					),
+				),
+			);
 		}
 
 		// Badges.
@@ -118,19 +130,28 @@ final class Privacy {
 				$user_id
 			),
 			ARRAY_A
-		) ?: [];
+		) ?: array();
 
 		foreach ( $badges as $i => $row ) {
-			$data_groups[] = [
+			$data_groups[] = array(
 				'group_id'    => 'wb-gam-badges',
 				'group_label' => __( 'Earned Badges', 'wb-gamification' ),
 				'item_id'     => 'wb-gam-badge-' . $i,
-				'data'        => [
-					[ 'name' => __( 'Badge',       'wb-gamification' ), 'value' => $row['name'] ],
-					[ 'name' => __( 'Description', 'wb-gamification' ), 'value' => $row['description'] ],
-					[ 'name' => __( 'Earned At',   'wb-gamification' ), 'value' => $row['earned_at'] ],
-				],
-			];
+				'data'        => array(
+					array(
+						'name'  => __( 'Badge', 'wb-gamification' ),
+						'value' => $row['name'],
+					),
+					array(
+						'name'  => __( 'Description', 'wb-gamification' ),
+						'value' => $row['description'],
+					),
+					array(
+						'name'  => __( 'Earned At', 'wb-gamification' ),
+						'value' => $row['earned_at'],
+					),
+				),
+			);
 		}
 
 		// Streak.
@@ -143,16 +164,25 @@ final class Privacy {
 		);
 
 		if ( $streak ) {
-			$data_groups[] = [
+			$data_groups[] = array(
 				'group_id'    => 'wb-gam-streak',
 				'group_label' => __( 'Activity Streak', 'wb-gamification' ),
 				'item_id'     => 'wb-gam-streak-' . $user_id,
-				'data'        => [
-					[ 'name' => __( 'Current Streak', 'wb-gamification' ), 'value' => $streak['current_streak'] ],
-					[ 'name' => __( 'Longest Streak', 'wb-gamification' ), 'value' => $streak['longest_streak'] ],
-					[ 'name' => __( 'Last Active',    'wb-gamification' ), 'value' => $streak['last_active'] ],
-				],
-			];
+				'data'        => array(
+					array(
+						'name'  => __( 'Current Streak', 'wb-gamification' ),
+						'value' => $streak['current_streak'],
+					),
+					array(
+						'name'  => __( 'Longest Streak', 'wb-gamification' ),
+						'value' => $streak['longest_streak'],
+					),
+					array(
+						'name'  => __( 'Last Active', 'wb-gamification' ),
+						'value' => $streak['last_active'],
+					),
+				),
+			);
 		}
 
 		// Member preferences.
@@ -165,19 +195,31 @@ final class Privacy {
 		);
 
 		if ( $prefs ) {
-			$data_groups[] = [
+			$data_groups[] = array(
 				'group_id'    => 'wb-gam-prefs',
 				'group_label' => __( 'Gamification Preferences', 'wb-gamification' ),
 				'item_id'     => 'wb-gam-prefs-' . $user_id,
-				'data'        => [
-					[ 'name' => __( 'Leaderboard Opt-Out', 'wb-gamification' ), 'value' => $prefs['leaderboard_opt_out'] ? __( 'Yes', 'wb-gamification' ) : __( 'No', 'wb-gamification' ) ],
-					[ 'name' => __( 'Show Rank',           'wb-gamification' ), 'value' => $prefs['show_rank'] ? __( 'Yes', 'wb-gamification' ) : __( 'No', 'wb-gamification' ) ],
-					[ 'name' => __( 'Notification Mode',   'wb-gamification' ), 'value' => $prefs['notification_mode'] ],
-				],
-			];
+				'data'        => array(
+					array(
+						'name'  => __( 'Leaderboard Opt-Out', 'wb-gamification' ),
+						'value' => $prefs['leaderboard_opt_out'] ? __( 'Yes', 'wb-gamification' ) : __( 'No', 'wb-gamification' ),
+					),
+					array(
+						'name'  => __( 'Show Rank', 'wb-gamification' ),
+						'value' => $prefs['show_rank'] ? __( 'Yes', 'wb-gamification' ) : __( 'No', 'wb-gamification' ),
+					),
+					array(
+						'name'  => __( 'Notification Mode', 'wb-gamification' ),
+						'value' => $prefs['notification_mode'],
+					),
+				),
+			);
 		}
 
-		return [ 'data' => $data_groups, 'done' => true ];
+		return array(
+			'data' => $data_groups,
+			'done' => true,
+		);
 	}
 
 	// ── Eraser ──────────────────────────────────────────────────────────────
@@ -189,12 +231,12 @@ final class Privacy {
 	public static function erase_user_data( string $email_address, int $page = 1 ): array {
 		$user = get_user_by( 'email', $email_address );
 		if ( ! $user ) {
-			return [
+			return array(
 				'items_removed'  => false,
 				'items_retained' => false,
-				'messages'       => [],
+				'messages'       => array(),
 				'done'           => true,
-			];
+			);
 		}
 
 		$user_id = (int) $user->ID;
@@ -203,41 +245,41 @@ final class Privacy {
 		$removed = 0;
 
 		// Events log.
-		$removed += (int) $wpdb->delete( $wpdb->prefix . 'wb_gam_events', [ 'user_id' => $user_id ], [ '%d' ] );
+		$removed += (int) $wpdb->delete( $wpdb->prefix . 'wb_gam_events', array( 'user_id' => $user_id ), array( '%d' ) );
 
 		// Points ledger.
-		$removed += (int) $wpdb->delete( $wpdb->prefix . 'wb_gam_points', [ 'user_id' => $user_id ], [ '%d' ] );
+		$removed += (int) $wpdb->delete( $wpdb->prefix . 'wb_gam_points', array( 'user_id' => $user_id ), array( '%d' ) );
 
 		// Earned badges.
-		$removed += (int) $wpdb->delete( $wpdb->prefix . 'wb_gam_user_badges', [ 'user_id' => $user_id ], [ '%d' ] );
+		$removed += (int) $wpdb->delete( $wpdb->prefix . 'wb_gam_user_badges', array( 'user_id' => $user_id ), array( '%d' ) );
 
 		// Streak.
-		$removed += (int) $wpdb->delete( $wpdb->prefix . 'wb_gam_streaks', [ 'user_id' => $user_id ], [ '%d' ] );
+		$removed += (int) $wpdb->delete( $wpdb->prefix . 'wb_gam_streaks', array( 'user_id' => $user_id ), array( '%d' ) );
 
 		// Challenge log.
-		$removed += (int) $wpdb->delete( $wpdb->prefix . 'wb_gam_challenge_log', [ 'user_id' => $user_id ], [ '%d' ] );
+		$removed += (int) $wpdb->delete( $wpdb->prefix . 'wb_gam_challenge_log', array( 'user_id' => $user_id ), array( '%d' ) );
 
 		// Kudos — as giver.
-		$removed += (int) $wpdb->delete( $wpdb->prefix . 'wb_gam_kudos', [ 'giver_id' => $user_id ], [ '%d' ] );
+		$removed += (int) $wpdb->delete( $wpdb->prefix . 'wb_gam_kudos', array( 'giver_id' => $user_id ), array( '%d' ) );
 
 		// Kudos — as receiver.
-		$removed += (int) $wpdb->delete( $wpdb->prefix . 'wb_gam_kudos', [ 'receiver_id' => $user_id ], [ '%d' ] );
+		$removed += (int) $wpdb->delete( $wpdb->prefix . 'wb_gam_kudos', array( 'receiver_id' => $user_id ), array( '%d' ) );
 
 		// Accountability partners.
-		$wpdb->delete( $wpdb->prefix . 'wb_gam_partners', [ 'user_id_1' => $user_id ], [ '%d' ] );
-		$wpdb->delete( $wpdb->prefix . 'wb_gam_partners', [ 'user_id_2' => $user_id ], [ '%d' ] );
+		$wpdb->delete( $wpdb->prefix . 'wb_gam_partners', array( 'user_id_1' => $user_id ), array( '%d' ) );
+		$wpdb->delete( $wpdb->prefix . 'wb_gam_partners', array( 'user_id_2' => $user_id ), array( '%d' ) );
 
 		// Member preferences.
-		$removed += (int) $wpdb->delete( $wpdb->prefix . 'wb_gam_member_prefs', [ 'user_id' => $user_id ], [ '%d' ] );
+		$removed += (int) $wpdb->delete( $wpdb->prefix . 'wb_gam_member_prefs', array( 'user_id' => $user_id ), array( '%d' ) );
 
 		// User meta (personal-record keys).
 		$wpdb->delete(
 			$wpdb->usermeta,
-			[
+			array(
 				'user_id'  => $user_id,
 				'meta_key' => 'wb_gam_pr_best_week',
-			],
-			[ '%d', '%s' ]
+			),
+			array( '%d', '%s' )
 		);
 
 		// Bust object cache.
@@ -250,13 +292,13 @@ final class Privacy {
 		 */
 		do_action( 'wb_gamification_user_data_erased', $user_id );
 
-		return [
+		return array(
 			'items_removed'  => $removed > 0,
 			'items_retained' => false,
 			'messages'       => $removed > 0
-				? [ sprintf( __( 'Gamification data removed (%d rows).', 'wb-gamification' ), $removed ) ]
-				: [],
+				? array( sprintf( __( 'Gamification data removed (%d rows).', 'wb-gamification' ), $removed ) )
+				: array(),
 			'done'           => true,
-		];
+		);
 	}
 }

@@ -38,29 +38,29 @@ class RecapController extends WP_REST_Controller {
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base . '/(?P<id>[\d]+)/recap',
-			[
-				[
+			array(
+				array(
 					'methods'             => WP_REST_Server::READABLE,
-					'callback'            => [ $this, 'get_recap' ],
-					'permission_callback' => [ $this, 'permissions_check' ],
-					'args'                => [
-						'id' => [
+					'callback'            => array( $this, 'get_recap' ),
+					'permission_callback' => array( $this, 'permissions_check' ),
+					'args'                => array(
+						'id'   => array(
 							'required'          => true,
 							'type'              => 'integer',
 							'minimum'           => 1,
 							'sanitize_callback' => 'absint',
-						],
-						'year' => [
+						),
+						'year' => array(
 							'type'              => 'integer',
 							'default'           => 0,
 							'minimum'           => 2020,
 							'maximum'           => 2099,
 							'sanitize_callback' => 'absint',
 							'description'       => 'Four-digit year. Defaults to previous calendar year.',
-						],
-					],
-				],
-			]
+						),
+					),
+				),
+			)
 		);
 	}
 
@@ -71,7 +71,7 @@ class RecapController extends WP_REST_Controller {
 		$year    = (int) $request->get_param( 'year' );
 
 		if ( ! get_userdata( $user_id ) ) {
-			return new WP_Error( 'rest_user_invalid', __( 'Member not found.', 'wb-gamification' ), [ 'status' => 404 ] );
+			return new WP_Error( 'rest_user_invalid', __( 'Member not found.', 'wb-gamification' ), array( 'status' => 404 ) );
 		}
 
 		// Default year = previous calendar year.
@@ -81,11 +81,11 @@ class RecapController extends WP_REST_Controller {
 
 		$recap = RecapEngine::get_recap( $user_id, $year );
 
-		$user        = get_userdata( $user_id );
-		$recap['meta'] = [
+		$user          = get_userdata( $user_id );
+		$recap['meta'] = array(
 			'display_name' => $user->display_name,
-			'avatar_url'   => get_avatar_url( $user_id, [ 'size' => 96 ] ),
-		];
+			'avatar_url'   => get_avatar_url( $user_id, array( 'size' => 96 ) ),
+		);
 
 		return rest_ensure_response( $recap );
 	}
@@ -96,14 +96,14 @@ class RecapController extends WP_REST_Controller {
 		$user_id = (int) $request['id'];
 
 		if ( ! get_userdata( $user_id ) ) {
-			return new WP_Error( 'rest_user_invalid', __( 'Member not found.', 'wb-gamification' ), [ 'status' => 404 ] );
+			return new WP_Error( 'rest_user_invalid', __( 'Member not found.', 'wb-gamification' ), array( 'status' => 404 ) );
 		}
 
 		if ( ! is_user_logged_in() ) {
 			return new WP_Error(
 				'rest_not_logged_in',
 				__( 'You must be logged in to view recap data.', 'wb-gamification' ),
-				[ 'status' => 401 ]
+				array( 'status' => 401 )
 			);
 		}
 
@@ -120,7 +120,7 @@ class RecapController extends WP_REST_Controller {
 		return new WP_Error(
 			'rest_forbidden',
 			__( 'You may only view your own recap.', 'wb-gamification' ),
-			[ 'status' => 403 ]
+			array( 'status' => 403 )
 		);
 	}
 }

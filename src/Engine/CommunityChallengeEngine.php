@@ -28,7 +28,7 @@ defined( 'ABSPATH' ) || exit;
 final class CommunityChallengeEngine {
 
 	public static function init(): void {
-		add_action( 'wb_gamification_points_awarded', [ __CLASS__, 'on_points_awarded' ], 20, 3 );
+		add_action( 'wb_gamification_points_awarded', array( __CLASS__, 'on_points_awarded' ), 20, 3 );
 	}
 
 	// ── Event hook ──────────────────────────────────────────────────────────
@@ -133,7 +133,11 @@ final class CommunityChallengeEngine {
 		foreach ( $contributors as $user_id ) {
 			as_enqueue_async_action(
 				'wb_gam_community_bonus_award',
-				[ 'user_id' => (int) $user_id, 'challenge_id' => $challenge_id, 'points' => $bonus_points ],
+				array(
+					'user_id'      => (int) $user_id,
+					'challenge_id' => $challenge_id,
+					'points'       => $bonus_points,
+				),
 				'wb-gamification'
 			);
 		}
@@ -171,7 +175,7 @@ final class CommunityChallengeEngine {
 				$now
 			),
 			ARRAY_A
-		) ?: [];
+		) ?: array();
 	}
 
 	/**

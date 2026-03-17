@@ -36,59 +36,59 @@ class PointsController extends WP_REST_Controller {
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base . '/award',
-			[
-				[
+			array(
+				array(
 					'methods'             => WP_REST_Server::CREATABLE,
-					'callback'            => [ $this, 'award' ],
-					'permission_callback' => [ $this, 'admin_permission_check' ],
-					'args'                => [
-						'user_id' => [
+					'callback'            => array( $this, 'award' ),
+					'permission_callback' => array( $this, 'admin_permission_check' ),
+					'args'                => array(
+						'user_id' => array(
 							'required'          => true,
 							'type'              => 'integer',
 							'minimum'           => 1,
 							'sanitize_callback' => 'absint',
-						],
-						'points' => [
+						),
+						'points'  => array(
 							'required'          => true,
 							'type'              => 'integer',
 							'minimum'           => 1,
 							'maximum'           => 100000,
 							'sanitize_callback' => 'absint',
-						],
-						'reason' => [
+						),
+						'reason'  => array(
 							'type'              => 'string',
 							'default'           => 'manual_award',
 							'sanitize_callback' => 'sanitize_text_field',
-						],
-						'note' => [
+						),
+						'note'    => array(
 							'type'              => 'string',
 							'default'           => '',
 							'sanitize_callback' => 'sanitize_textarea_field',
-						],
-					],
-				],
-			]
+						),
+					),
+				),
+			)
 		);
 
 		// DELETE /points/{id}
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base . '/(?P<id>[\d]+)',
-			[
-				[
+			array(
+				array(
 					'methods'             => WP_REST_Server::DELETABLE,
-					'callback'            => [ $this, 'revoke' ],
-					'permission_callback' => [ $this, 'admin_permission_check' ],
-					'args'                => [
-						'id' => [
+					'callback'            => array( $this, 'revoke' ),
+					'permission_callback' => array( $this, 'admin_permission_check' ),
+					'args'                => array(
+						'id' => array(
 							'required'          => true,
 							'type'              => 'integer',
 							'minimum'           => 1,
 							'sanitize_callback' => 'absint',
-						],
-					],
-				],
-			]
+						),
+					),
+				),
+			)
 		);
 	}
 
@@ -104,31 +104,31 @@ class PointsController extends WP_REST_Controller {
 		$note    = (string) $request['note'];
 
 		if ( ! get_userdata( $user_id ) ) {
-			return new WP_Error( 'rest_user_invalid', __( 'Member not found.', 'wb-gamification' ), [ 'status' => 404 ] );
+			return new WP_Error( 'rest_user_invalid', __( 'Member not found.', 'wb-gamification' ), array( 'status' => 404 ) );
 		}
 
 		$event = new Event(
-			[
+			array(
 				'action_id' => 'manual_award',
 				'user_id'   => $user_id,
-				'metadata'  => [
-					'points'      => $points,
-					'reason'      => $reason,
-					'note'        => $note,
-					'awarded_by'  => get_current_user_id(),
-				],
-			]
+				'metadata'  => array(
+					'points'     => $points,
+					'reason'     => $reason,
+					'note'       => $note,
+					'awarded_by' => get_current_user_id(),
+				),
+			)
 		);
 
 		Engine::process( $event );
 
 		return new WP_REST_Response(
-			[
+			array(
 				'awarded' => true,
 				'user_id' => $user_id,
 				'points'  => $points,
 				'reason'  => $reason,
-			],
+			),
 			201
 		);
 	}
@@ -153,17 +153,17 @@ class PointsController extends WP_REST_Controller {
 		);
 
 		if ( ! $row ) {
-			return new WP_Error( 'rest_not_found', __( 'Points row not found.', 'wb-gamification' ), [ 'status' => 404 ] );
+			return new WP_Error( 'rest_not_found', __( 'Points row not found.', 'wb-gamification' ), array( 'status' => 404 ) );
 		}
 
 		$deleted = $wpdb->delete(
 			$wpdb->prefix . 'wb_gam_points',
-			[ 'id' => $row_id ],
-			[ '%d' ]
+			array( 'id' => $row_id ),
+			array( '%d' )
 		);
 
 		if ( ! $deleted ) {
-			return new WP_Error( 'rest_delete_failed', __( 'Could not revoke points.', 'wb-gamification' ), [ 'status' => 500 ] );
+			return new WP_Error( 'rest_delete_failed', __( 'Could not revoke points.', 'wb-gamification' ), array( 'status' => 500 ) );
 		}
 
 		// Bust the cached total for the affected user.
@@ -179,12 +179,12 @@ class PointsController extends WP_REST_Controller {
 		do_action( 'wb_gamification_points_revoked', $row_id, $row, get_current_user_id() );
 
 		return new WP_REST_Response(
-			[
+			array(
 				'deleted' => true,
 				'id'      => $row_id,
 				'user_id' => (int) $row['user_id'],
 				'points'  => (int) $row['points'],
-			],
+			),
 			200
 		);
 	}
@@ -204,7 +204,7 @@ class PointsController extends WP_REST_Controller {
 		return new WP_Error(
 			'rest_forbidden',
 			__( 'You do not have permission to manage points.', 'wb-gamification' ),
-			[ 'status' => 403 ]
+			array( 'status' => 403 )
 		);
 	}
 }

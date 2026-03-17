@@ -37,69 +37,69 @@ class BadgesController extends WP_REST_Controller {
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base,
-			[
-				[
+			array(
+				array(
 					'methods'             => WP_REST_Server::READABLE,
-					'callback'            => [ $this, 'get_items' ],
+					'callback'            => array( $this, 'get_items' ),
 					'permission_callback' => '__return_true',
-					'args'                => [
-						'user_id' => [
+					'args'                => array(
+						'user_id'  => array(
 							'type'              => 'integer',
 							'default'           => 0,
 							'minimum'           => 0,
 							'sanitize_callback' => 'absint',
 							'description'       => 'Include earned status for this user. 0 = skip.',
-						],
-						'category' => [
+						),
+						'category' => array(
 							'type'              => 'string',
 							'default'           => '',
 							'sanitize_callback' => 'sanitize_key',
 							'description'       => 'Filter by badge category.',
-						],
-					],
-				],
-				'schema' => [ $this, 'get_item_schema' ],
-			]
+						),
+					),
+				),
+				'schema' => array( $this, 'get_item_schema' ),
+			)
 		);
 
 		// GET /badges/{id}
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base . '/(?P<id>[a-z0-9_-]+)',
-			[
-				[
+			array(
+				array(
 					'methods'             => WP_REST_Server::READABLE,
-					'callback'            => [ $this, 'get_item' ],
+					'callback'            => array( $this, 'get_item' ),
 					'permission_callback' => '__return_true',
 					'args'                => $this->get_badge_id_args(),
-				],
-				'schema' => [ $this, 'get_item_schema' ],
-			]
+				),
+				'schema' => array( $this, 'get_item_schema' ),
+			)
 		);
 
 		// POST /badges/{id}/award
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base . '/(?P<id>[a-z0-9_-]+)/award',
-			[
-				[
+			array(
+				array(
 					'methods'             => WP_REST_Server::CREATABLE,
-					'callback'            => [ $this, 'award_badge' ],
-					'permission_callback' => [ $this, 'award_permissions_check' ],
+					'callback'            => array( $this, 'award_badge' ),
+					'permission_callback' => array( $this, 'award_permissions_check' ),
 					'args'                => array_merge(
 						$this->get_badge_id_args(),
-						[
-							'user_id' => [
+						array(
+							'user_id' => array(
 								'required'          => true,
 								'type'              => 'integer',
 								'minimum'           => 1,
 								'sanitize_callback' => 'absint',
 								'description'       => 'User to award the badge to.',
-							],
-						]
+							),
+						)
 					),
-				],
-			]
+				),
+			)
 		);
 	}
 
@@ -110,7 +110,7 @@ class BadgesController extends WP_REST_Controller {
 			return new WP_Error(
 				'rest_forbidden',
 				__( 'Only administrators can award badges manually.', 'wb-gamification' ),
-				[ 'status' => 403 ]
+				array( 'status' => 403 )
 			);
 		}
 		return true;
@@ -160,7 +160,7 @@ class BadgesController extends WP_REST_Controller {
 			return new WP_Error(
 				'rest_badge_not_found',
 				__( 'Badge not found.', 'wb-gamification' ),
-				[ 'status' => 404 ]
+				array( 'status' => 404 )
 			);
 		}
 
@@ -170,7 +170,7 @@ class BadgesController extends WP_REST_Controller {
 
 		// Earned status for current user.
 		if ( is_user_logged_in() ) {
-			$def['earned']    = BadgeEngine::has_badge( get_current_user_id(), $badge_id );
+			$def['earned'] = BadgeEngine::has_badge( get_current_user_id(), $badge_id );
 		}
 
 		return rest_ensure_response( $def );
@@ -188,7 +188,7 @@ class BadgesController extends WP_REST_Controller {
 			return new WP_Error(
 				'rest_badge_not_found',
 				__( 'Badge not found.', 'wb-gamification' ),
-				[ 'status' => 404 ]
+				array( 'status' => 404 )
 			);
 		}
 
@@ -196,14 +196,14 @@ class BadgesController extends WP_REST_Controller {
 			return new WP_Error(
 				'rest_user_invalid',
 				__( 'User not found.', 'wb-gamification' ),
-				[ 'status' => 404 ]
+				array( 'status' => 404 )
 			);
 		}
 
 		$awarded = BadgeEngine::award_badge( $user_id, $badge_id );
 
 		return rest_ensure_response(
-			[
+			array(
 				'awarded'  => $awarded,
 				'badge_id' => $badge_id,
 				'user_id'  => $user_id,
@@ -212,7 +212,7 @@ class BadgesController extends WP_REST_Controller {
 					? sprintf( __( 'Badge "%s" awarded successfully.', 'wb-gamification' ), $def['name'] )
 					/* translators: %s: badge name */
 					: sprintf( __( 'User already holds badge "%s".', 'wb-gamification' ), $def['name'] ),
-			]
+			)
 		);
 	}
 
@@ -230,7 +230,7 @@ class BadgesController extends WP_REST_Controller {
 
 		$total_users = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->users}" );
 		if ( $total_users <= 0 ) {
-			return [];
+			return array();
 		}
 
 		$rows = $wpdb->get_results(
@@ -240,7 +240,7 @@ class BadgesController extends WP_REST_Controller {
 			ARRAY_A
 		);
 
-		$map = [];
+		$map = array();
 		foreach ( $rows as $row ) {
 			$map[ $row['badge_id'] ] = round( ( (int) $row['earner_count'] / $total_users ) * 100, 1 );
 		}
@@ -263,32 +263,32 @@ class BadgesController extends WP_REST_Controller {
 	}
 
 	private function get_badge_id_args(): array {
-		return [
-			'id' => [
+		return array(
+			'id' => array(
 				'required'          => true,
 				'type'              => 'string',
 				'sanitize_callback' => 'sanitize_key',
 				'validate_callback' => 'rest_validate_request_arg',
-			],
-		];
+			),
+		);
 	}
 
 	public function get_item_schema(): array {
-		return [
+		return array(
 			'$schema'    => 'http://json-schema.org/draft-04/schema#',
 			'title'      => 'wb-gamification-badge',
 			'type'       => 'object',
-			'properties' => [
-				'id'            => [ 'type' => 'string' ],
-				'name'          => [ 'type' => 'string' ],
-				'description'   => [ 'type' => 'string' ],
-				'image_url'     => [ 'type' => [ 'string', 'null' ] ],
-				'is_credential' => [ 'type' => 'boolean' ],
-				'category'      => [ 'type' => 'string' ],
-				'earned'        => [ 'type' => 'boolean' ],
-				'earned_at'     => [ 'type' => [ 'string', 'null' ] ],
-				'rarity_pct'    => [ 'type' => 'number' ],
-			],
-		];
+			'properties' => array(
+				'id'            => array( 'type' => 'string' ),
+				'name'          => array( 'type' => 'string' ),
+				'description'   => array( 'type' => 'string' ),
+				'image_url'     => array( 'type' => array( 'string', 'null' ) ),
+				'is_credential' => array( 'type' => 'boolean' ),
+				'category'      => array( 'type' => 'string' ),
+				'earned'        => array( 'type' => 'boolean' ),
+				'earned_at'     => array( 'type' => array( 'string', 'null' ) ),
+				'rarity_pct'    => array( 'type' => 'number' ),
+			),
+		);
 	}
 }

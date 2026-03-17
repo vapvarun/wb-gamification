@@ -26,7 +26,7 @@ final class WebhookDispatcher {
 	 * Called once during Engine::init().
 	 */
 	public static function init(): void {
-		add_action( self::AS_ACTION, [ self::class, 'deliver' ], 10, 4 );
+		add_action( self::AS_ACTION, array( self::class, 'deliver' ), 10, 4 );
 	}
 
 	/**
@@ -46,7 +46,7 @@ final class WebhookDispatcher {
 		int $user_id,
 		?Event $event = null,
 		int $points = 0,
-		array $extra_data = []
+		array $extra_data = array()
 	): void {
 		global $wpdb;
 
@@ -63,26 +63,26 @@ final class WebhookDispatcher {
 
 		$data = array_filter(
 			array_merge(
-				[
+				array(
 					'action_id' => $event ? $event->action_id : null,
-					'event_id'  => $event ? $event->event_id  : null,
+					'event_id'  => $event ? $event->event_id : null,
 					'object_id' => $event ? ( $event->object_id ?: null ) : null,
 					'metadata'  => $event ? ( $event->metadata ?: null ) : null,
 					'points'    => $points > 0 ? $points : null,
-				],
+				),
 				$extra_data
 			)
 		);
 
 		$payload = wp_json_encode(
-			[
+			array(
 				'event'      => $event_type,
 				'site_url'   => get_site_url(),
 				'timestamp'  => $event ? $event->created_at : gmdate( 'Y-m-d\TH:i:s\Z' ),
 				'user_id'    => $user_id,
 				'user_email' => $user ? $user->user_email : '',
 				'data'       => $data,
-			]
+			)
 		);
 
 		if ( false === $payload ) {
@@ -99,7 +99,7 @@ final class WebhookDispatcher {
 
 			as_enqueue_async_action(
 				self::AS_ACTION,
-				[ (int) $webhook['id'], $webhook['url'], $signature, $payload ],
+				array( (int) $webhook['id'], $webhook['url'], $signature, $payload ),
 				'wb-gamification'
 			);
 		}
@@ -123,19 +123,20 @@ final class WebhookDispatcher {
 	): void {
 		$response = wp_remote_post(
 			$url,
-			[
+			array(
 				'body'    => $payload,
-				'headers' => [
+				'headers' => array(
 					'Content-Type'       => 'application/json',
 					'X-WB-Gam-Signature' => 'sha256=' . $signature,
 					'X-WB-Gam-Site'      => get_site_url(),
-				],
+				),
 				'timeout' => 10,
-			]
+			)
 		);
 
 		if ( is_wp_error( $response ) ) {
 			// Throw so Action Scheduler marks the action as failed and retries.
+			// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- exception message, not HTML output.
 			throw new \RuntimeException(
 				sprintf(
 					'WB Gamification webhook delivery failed (ID %d): %s',

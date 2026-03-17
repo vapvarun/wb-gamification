@@ -15,13 +15,13 @@ defined( 'ABSPATH' ) || exit;
 final class Registry {
 
 	/** @var array<string, array> */
-	private static array $actions = [];
+	private static array $actions = array();
 
 	/** @var array<string, array> */
-	private static array $badge_triggers = [];
+	private static array $badge_triggers = array();
 
 	/** @var array<string, array> */
-	private static array $challenge_types = [];
+	private static array $challenge_types = array();
 
 	private static bool $initialized = false;
 
@@ -63,7 +63,7 @@ final class Registry {
 	 * }
 	 */
 	public static function register_action( array $args ): void {
-		$defaults = [
+		$defaults = array(
 			'description' => '',
 			'category'    => 'general',
 			'icon'        => 'dashicons-star-filled',
@@ -73,7 +73,7 @@ final class Registry {
 			'weekly_cap'  => 0,
 			// null = derive from repeatable: true → async, false → sync.
 			'async'       => null,
-		];
+		);
 
 		$action = wp_parse_args( $args, $defaults );
 
@@ -97,14 +97,14 @@ final class Registry {
 				// Optionally extract metadata from hook args via metadata_callback.
 				$metadata = isset( $action['metadata_callback'] ) && is_callable( $action['metadata_callback'] )
 					? (array) call_user_func_array( $action['metadata_callback'], $params )
-					: [];
+					: array();
 
 				$event = new Event(
-					[
+					array(
 						'action_id' => $action['id'],
 						'user_id'   => $user_id,
 						'metadata'  => $metadata,
-					]
+					)
 				);
 
 				// Repeatable actions run async by default — high-volume and must not
@@ -135,7 +135,7 @@ final class Registry {
 			static function () use ( $args ) {
 				$params  = func_get_args();
 				$user_id = get_current_user_id();
-				if ( $user_id > 0 && call_user_func_array( $args['condition'], array_merge( $params, [ $user_id ] ) ) ) {
+				if ( $user_id > 0 && call_user_func_array( $args['condition'], array_merge( $params, array( $user_id ) ) ) ) {
 					BadgeEngine::award_badge( $user_id, $args['id'] );
 				}
 			}
@@ -151,7 +151,7 @@ final class Registry {
 			return;
 		}
 
-		self::$challenge_types[ $args['id'] ] = wp_parse_args( $args, [ 'countable' => true ] );
+		self::$challenge_types[ $args['id'] ] = wp_parse_args( $args, array( 'countable' => true ) );
 	}
 
 	/** @return array<string, array> */

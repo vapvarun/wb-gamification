@@ -44,69 +44,74 @@ class RulesController extends WP_REST_Controller {
 	protected $rest_base = 'rules';
 
 	/** @var string[] */
-	private const VALID_RULE_TYPES = [ 'badge_condition', 'point_multiplier' ];
+	private const VALID_RULE_TYPES = array( 'badge_condition', 'point_multiplier' );
 
 	/** @var string[] */
-	private const VALID_CONDITION_TYPES = [ 'point_milestone', 'action_count', 'admin_awarded' ];
+	private const VALID_CONDITION_TYPES = array( 'point_milestone', 'action_count', 'admin_awarded' );
 
 	public function register_routes(): void {
 		// Collection.
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base,
-			[
-				[
+			array(
+				array(
 					'methods'             => WP_REST_Server::READABLE,
-					'callback'            => [ $this, 'get_items' ],
-					'permission_callback' => [ $this, 'admin_check' ],
-					'args'                => [
-						'rule_type' => [
+					'callback'            => array( $this, 'get_items' ),
+					'permission_callback' => array( $this, 'admin_check' ),
+					'args'                => array(
+						'rule_type' => array(
 							'type' => 'string',
 							'enum' => self::VALID_RULE_TYPES,
-						],
-						'target_id' => [
+						),
+						'target_id' => array(
 							'type'              => 'string',
 							'sanitize_callback' => 'sanitize_key',
-						],
-						'is_active' => [
+						),
+						'is_active' => array(
 							'type' => 'boolean',
-						],
-					],
-				],
-				[
+						),
+					),
+				),
+				array(
 					'methods'             => WP_REST_Server::CREATABLE,
-					'callback'            => [ $this, 'create_item' ],
-					'permission_callback' => [ $this, 'admin_check' ],
+					'callback'            => array( $this, 'create_item' ),
+					'permission_callback' => array( $this, 'admin_check' ),
 					'args'                => $this->rule_args( required: true ),
-				],
-				'schema' => [ $this, 'get_item_schema' ],
-			]
+				),
+				'schema' => array( $this, 'get_item_schema' ),
+			)
 		);
 
 		// Single item.
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base . '/(?P<id>[\d]+)',
-			[
-				[
+			array(
+				array(
 					'methods'             => WP_REST_Server::READABLE,
-					'callback'            => [ $this, 'get_item' ],
-					'permission_callback' => [ $this, 'admin_check' ],
-					'args'                => [ 'id' => [ 'type' => 'integer', 'minimum' => 1 ] ],
-				],
-				[
+					'callback'            => array( $this, 'get_item' ),
+					'permission_callback' => array( $this, 'admin_check' ),
+					'args'                => array(
+						'id' => array(
+							'type'    => 'integer',
+							'minimum' => 1,
+						),
+					),
+				),
+				array(
 					'methods'             => WP_REST_Server::EDITABLE,
-					'callback'            => [ $this, 'update_item' ],
-					'permission_callback' => [ $this, 'admin_check' ],
+					'callback'            => array( $this, 'update_item' ),
+					'permission_callback' => array( $this, 'admin_check' ),
 					'args'                => $this->rule_args( required: false ),
-				],
-				[
+				),
+				array(
 					'methods'             => WP_REST_Server::DELETABLE,
-					'callback'            => [ $this, 'delete_item' ],
-					'permission_callback' => [ $this, 'admin_check' ],
-				],
-				'schema' => [ $this, 'get_item_schema' ],
-			]
+					'callback'            => array( $this, 'delete_item' ),
+					'permission_callback' => array( $this, 'admin_check' ),
+				),
+				'schema' => array( $this, 'get_item_schema' ),
+			)
 		);
 	}
 
@@ -115,8 +120,8 @@ class RulesController extends WP_REST_Controller {
 	public function get_items( WP_REST_Request $request ): WP_REST_Response {
 		global $wpdb;
 
-		$where  = [ '1=1' ];
-		$params = [];
+		$where  = array( '1=1' );
+		$params = array();
 
 		if ( ! empty( $request['rule_type'] ) ) {
 			$where[]  = 'rule_type = %s';
@@ -135,21 +140,21 @@ class RulesController extends WP_REST_Controller {
 
 		$sql = "SELECT id, rule_type, target_id, rule_config, is_active, created_at
 		          FROM {$wpdb->prefix}wb_gam_rules
-		         WHERE " . implode( ' AND ', $where ) . "
-		         ORDER BY rule_type, id ASC";
+		         WHERE " . implode( ' AND ', $where ) . '
+		         ORDER BY rule_type, id ASC';
 
 		$rows = $params
 			? $wpdb->get_results( $wpdb->prepare( $sql, ...$params ), ARRAY_A )
 			: $wpdb->get_results( $sql, ARRAY_A );
 
-		return rest_ensure_response( array_map( [ $this, 'prepare_item' ], $rows ?: [] ) );
+		return rest_ensure_response( array_map( array( $this, 'prepare_item' ), $rows ?: array() ) );
 	}
 
 	public function get_item( WP_REST_Request $request ): WP_REST_Response|WP_Error {
 		$row = $this->fetch_row( (int) $request['id'] );
 		return $row
 			? rest_ensure_response( $this->prepare_item( $row ) )
-			: new WP_Error( 'rest_not_found', __( 'Rule not found.', 'wb-gamification' ), [ 'status' => 404 ] );
+			: new WP_Error( 'rest_not_found', __( 'Rule not found.', 'wb-gamification' ), array( 'status' => 404 ) );
 	}
 
 	public function create_item( WP_REST_Request $request ): WP_REST_Response|WP_Error {
@@ -167,17 +172,17 @@ class RulesController extends WP_REST_Controller {
 
 		$inserted = $wpdb->insert(
 			$wpdb->prefix . 'wb_gam_rules',
-			[
+			array(
 				'rule_type'   => $request['rule_type'],
 				'target_id'   => $request['target_id'] ?? null,
 				'rule_config' => wp_json_encode( $rule_config ),
 				'is_active'   => 1,
-			],
-			[ '%s', '%s', '%s', '%d' ]
+			),
+			array( '%s', '%s', '%s', '%d' )
 		);
 
 		if ( ! $inserted ) {
-			return new WP_Error( 'rest_insert_failed', __( 'Could not create rule.', 'wb-gamification' ), [ 'status' => 500 ] );
+			return new WP_Error( 'rest_insert_failed', __( 'Could not create rule.', 'wb-gamification' ), array( 'status' => 500 ) );
 		}
 
 		$this->flush_rules_cache();
@@ -191,10 +196,10 @@ class RulesController extends WP_REST_Controller {
 		$id  = (int) $request['id'];
 		$row = $this->fetch_row( $id );
 		if ( ! $row ) {
-			return new WP_Error( 'rest_not_found', __( 'Rule not found.', 'wb-gamification' ), [ 'status' => 404 ] );
+			return new WP_Error( 'rest_not_found', __( 'Rule not found.', 'wb-gamification' ), array( 'status' => 404 ) );
 		}
 
-		$data = [];
+		$data = array();
 
 		if ( isset( $request['rule_type'] ) ) {
 			$data['rule_type'] = $request['rule_type'];
@@ -224,7 +229,7 @@ class RulesController extends WP_REST_Controller {
 			return rest_ensure_response( $this->prepare_item( $row ) );
 		}
 
-		$wpdb->update( $wpdb->prefix . 'wb_gam_rules', $data, [ 'id' => $id ] );
+		$wpdb->update( $wpdb->prefix . 'wb_gam_rules', $data, array( 'id' => $id ) );
 		$this->flush_rules_cache();
 
 		return rest_ensure_response( $this->prepare_item( $this->fetch_row( $id ) ) );
@@ -236,13 +241,19 @@ class RulesController extends WP_REST_Controller {
 		$id  = (int) $request['id'];
 		$row = $this->fetch_row( $id );
 		if ( ! $row ) {
-			return new WP_Error( 'rest_not_found', __( 'Rule not found.', 'wb-gamification' ), [ 'status' => 404 ] );
+			return new WP_Error( 'rest_not_found', __( 'Rule not found.', 'wb-gamification' ), array( 'status' => 404 ) );
 		}
 
-		$wpdb->delete( $wpdb->prefix . 'wb_gam_rules', [ 'id' => $id ], [ '%d' ] );
+		$wpdb->delete( $wpdb->prefix . 'wb_gam_rules', array( 'id' => $id ), array( '%d' ) );
 		$this->flush_rules_cache();
 
-		return new WP_REST_Response( [ 'deleted' => true, 'id' => $id ], 200 );
+		return new WP_REST_Response(
+			array(
+				'deleted' => true,
+				'id'      => $id,
+			),
+			200
+		);
 	}
 
 	// ── Helpers ──────────────────────────────────────────────────────────────
@@ -261,14 +272,14 @@ class RulesController extends WP_REST_Controller {
 	}
 
 	private function prepare_item( array $row ): array {
-		return [
+		return array(
 			'id'          => (int) $row['id'],
 			'rule_type'   => $row['rule_type'],
 			'target_id'   => $row['target_id'],
-			'rule_config' => json_decode( $row['rule_config'] ?? '{}', true ) ?: [],
+			'rule_config' => json_decode( $row['rule_config'] ?? '{}', true ) ?: array(),
 			'is_active'   => (bool) $row['is_active'],
 			'created_at'  => $row['created_at'],
-		];
+		);
 	}
 
 	/**
@@ -285,7 +296,7 @@ class RulesController extends WP_REST_Controller {
 					__( 'Invalid condition_type: %s. Must be one of: point_milestone, action_count, admin_awarded.', 'wb-gamification' ),
 					esc_html( $type )
 				),
-				[ 'status' => 400 ]
+				array( 'status' => 400 )
 			);
 		}
 
@@ -293,7 +304,7 @@ class RulesController extends WP_REST_Controller {
 			return new WP_Error(
 				'missing_points',
 				__( 'point_milestone condition requires a "points" value.', 'wb-gamification' ),
-				[ 'status' => 400 ]
+				array( 'status' => 400 )
 			);
 		}
 
@@ -301,7 +312,7 @@ class RulesController extends WP_REST_Controller {
 			return new WP_Error(
 				'missing_action_count_fields',
 				__( 'action_count condition requires "action_id" and "count" values.', 'wb-gamification' ),
-				[ 'status' => 400 ]
+				array( 'status' => 400 )
 			);
 		}
 
@@ -316,50 +327,53 @@ class RulesController extends WP_REST_Controller {
 	}
 
 	private function rule_args( bool $required = true ): array {
-		return [
-			'rule_type' => [
+		return array(
+			'rule_type'   => array(
 				'required'          => $required,
 				'type'              => 'string',
 				'enum'              => self::VALID_RULE_TYPES,
 				'sanitize_callback' => 'sanitize_key',
-			],
-			'target_id' => [
+			),
+			'target_id'   => array(
 				'type'              => 'string',
 				'sanitize_callback' => 'sanitize_key',
 				'description'       => 'Badge ID (for badge_condition) or action ID (for point_multiplier).',
-			],
-			'rule_config' => [
+			),
+			'rule_config' => array(
 				'required'    => $required,
 				'type'        => 'object',
 				'description' => 'JSON condition/multiplier config. Structure depends on rule_type.',
-			],
-			'is_active' => [
+			),
+			'is_active'   => array(
 				'type'    => 'boolean',
 				'default' => true,
-			],
-		];
+			),
+		);
 	}
 
 	public function admin_check(): bool|WP_Error {
 		if ( current_user_can( 'manage_options' ) ) {
 			return true;
 		}
-		return new WP_Error( 'rest_forbidden', __( 'Admin only.', 'wb-gamification' ), [ 'status' => 403 ] );
+		return new WP_Error( 'rest_forbidden', __( 'Admin only.', 'wb-gamification' ), array( 'status' => 403 ) );
 	}
 
 	public function get_item_schema(): array {
-		return [
+		return array(
 			'$schema'    => 'http://json-schema.org/draft-04/schema#',
 			'title'      => 'wb-gamification-rule',
 			'type'       => 'object',
-			'properties' => [
-				'id'          => [ 'type' => 'integer' ],
-				'rule_type'   => [ 'type' => 'string', 'enum' => self::VALID_RULE_TYPES ],
-				'target_id'   => [ 'type' => [ 'string', 'null' ] ],
-				'rule_config' => [ 'type' => 'object' ],
-				'is_active'   => [ 'type' => 'boolean' ],
-				'created_at'  => [ 'type' => 'string' ],
-			],
-		];
+			'properties' => array(
+				'id'          => array( 'type' => 'integer' ),
+				'rule_type'   => array(
+					'type' => 'string',
+					'enum' => self::VALID_RULE_TYPES,
+				),
+				'target_id'   => array( 'type' => array( 'string', 'null' ) ),
+				'rule_config' => array( 'type' => 'object' ),
+				'is_active'   => array( 'type' => 'boolean' ),
+				'created_at'  => array( 'type' => 'string' ),
+			),
+		);
 	}
 }

@@ -29,81 +29,99 @@ final class NotificationBridge {
 
 	public static function init(): void {
 		// Collect events from action hooks.
-		add_action( 'wb_gamification_points_awarded',    [ __CLASS__, 'on_points_awarded' ], 99, 3 );
-		add_action( 'wb_gamification_badge_awarded',     [ __CLASS__, 'on_badge_awarded' ],  99, 3 );
-		add_action( 'wb_gamification_level_changed',     [ __CLASS__, 'on_level_changed' ],  99, 3 );
-		add_action( 'wb_gamification_streak_milestone',  [ __CLASS__, 'on_streak_milestone' ], 99, 2 );
-		add_action( 'wb_gamification_challenge_completed', [ __CLASS__, 'on_challenge_completed' ], 99, 2 );
-		add_action( 'wb_gamification_kudos_given',       [ __CLASS__, 'on_kudos_given' ], 99, 4 );
+		add_action( 'wb_gamification_points_awarded', array( __CLASS__, 'on_points_awarded' ), 99, 3 );
+		add_action( 'wb_gamification_badge_awarded', array( __CLASS__, 'on_badge_awarded' ), 99, 3 );
+		add_action( 'wb_gamification_level_changed', array( __CLASS__, 'on_level_changed' ), 99, 3 );
+		add_action( 'wb_gamification_streak_milestone', array( __CLASS__, 'on_streak_milestone' ), 99, 2 );
+		add_action( 'wb_gamification_challenge_completed', array( __CLASS__, 'on_challenge_completed' ), 99, 2 );
+		add_action( 'wb_gamification_kudos_given', array( __CLASS__, 'on_kudos_given' ), 99, 4 );
 
 		// Output markup + seed script once, in the footer.
-		add_action( 'wp_footer', [ __CLASS__, 'render' ], 5 );
+		add_action( 'wp_footer', array( __CLASS__, 'render' ), 5 );
 	}
 
 	// ── Event collectors ────────────────────────────────────────────────────────
 
 	public static function on_points_awarded( int $user_id, Event $event, int $points ): void {
 		// Don't notify for internal synthetic actions (challenge bonus, streak bonus).
-		$silent = [ 'challenge_completed', 'streak_milestone' ];
+		$silent = array( 'challenge_completed', 'streak_milestone' );
 		if ( in_array( $event->action_id, $silent, true ) ) {
 			return;
 		}
 
-		self::push( $user_id, [
-			'type'   => 'points',
-			'points' => $points,
-			'detail' => self::action_label( $event->action_id ),
-		] );
+		self::push(
+			$user_id,
+			array(
+				'type'   => 'points',
+				'points' => $points,
+				'detail' => self::action_label( $event->action_id ),
+			)
+		);
 	}
 
 	public static function on_badge_awarded( int $user_id, array $badge, string $earned_at ): void {
-		self::push( $user_id, [
-			'type'    => 'badge',
-			'message' => sprintf(
-				/* translators: %s = badge name */
-				__( 'Badge earned: %s', 'wb-gamification' ),
-				$badge['name'] ?? ''
-			),
-			'detail'  => $badge['description'] ?? null,
-			'icon'    => '🏅',
-		] );
+		self::push(
+			$user_id,
+			array(
+				'type'    => 'badge',
+				'message' => sprintf(
+					/* translators: %s = badge name */
+					__( 'Badge earned: %s', 'wb-gamification' ),
+					$badge['name'] ?? ''
+				),
+				'detail'  => $badge['description'] ?? null,
+				'icon'    => '🏅',
+			)
+		);
 	}
 
 	public static function on_level_changed( int $user_id, array $new_level, array $old_level ): void {
-		self::push( $user_id, [
-			'type'      => 'level_up',
-			'levelName' => $new_level['name'] ?? '',
-			'iconUrl'   => $new_level['icon_url'] ?? '',
-		] );
+		self::push(
+			$user_id,
+			array(
+				'type'      => 'level_up',
+				'levelName' => $new_level['name'] ?? '',
+				'iconUrl'   => $new_level['icon_url'] ?? '',
+			)
+		);
 	}
 
 	public static function on_streak_milestone( int $user_id, int $streak_days ): void {
-		self::push( $user_id, [
-			'type' => 'streak_milestone',
-			'days' => $streak_days,
-		] );
+		self::push(
+			$user_id,
+			array(
+				'type' => 'streak_milestone',
+				'days' => $streak_days,
+			)
+		);
 	}
 
 	public static function on_challenge_completed( int $user_id, array $challenge ): void {
-		self::push( $user_id, [
-			'type'    => 'challenge',
-			'message' => sprintf(
-				/* translators: %s = challenge title */
-				__( 'Challenge complete: %s', 'wb-gamification' ),
-				$challenge['title'] ?? ''
-			),
-			'icon'    => '🎯',
-		] );
+		self::push(
+			$user_id,
+			array(
+				'type'    => 'challenge',
+				'message' => sprintf(
+					/* translators: %s = challenge title */
+					__( 'Challenge complete: %s', 'wb-gamification' ),
+					$challenge['title'] ?? ''
+				),
+				'icon'    => '🎯',
+			)
+		);
 	}
 
 	public static function on_kudos_given( int $giver_id, int $receiver_id, string $message, int $kudos_id ): void {
 		// Notify the receiver (only if they're the current user on this request).
-		self::push( $receiver_id, [
-			'type'    => 'kudos',
-			'message' => __( 'Someone gave you kudos!', 'wb-gamification' ),
-			'detail'  => $message ?: null,
-			'icon'    => '👏',
-		] );
+		self::push(
+			$receiver_id,
+			array(
+				'type'    => 'kudos',
+				'message' => __( 'Someone gave you kudos!', 'wb-gamification' ),
+				'detail'  => $message ?: null,
+				'icon'    => '👏',
+			)
+		);
 	}
 
 	// ── Output ──────────────────────────────────────────────────────────────────
@@ -226,8 +244,8 @@ final class NotificationBridge {
 			return;
 		}
 
-		$key    = self::TRANSIENT_PREFIX . $user_id;
-		$events = get_transient( $key ) ?: [];
+		$key      = self::TRANSIENT_PREFIX . $user_id;
+		$events   = get_transient( $key ) ?: array();
 		$events[] = $event;
 		set_transient( $key, $events, self::TRANSIENT_TTL );
 	}
@@ -241,7 +259,7 @@ final class NotificationBridge {
 		$key    = self::TRANSIENT_PREFIX . $user_id;
 		$events = get_transient( $key );
 		delete_transient( $key );
-		return is_array( $events ) ? $events : [];
+		return is_array( $events ) ? $events : array();
 	}
 
 	// ── Helpers ──────────────────────────────────────────────────────────────────
@@ -250,7 +268,7 @@ final class NotificationBridge {
 	 * Human-readable label for common action_ids.
 	 */
 	private static function action_label( string $action_id ): ?string {
-		$labels = [
+		$labels = array(
 			'register'            => __( 'for joining', 'wb-gamification' ),
 			'post_publish'        => __( 'for publishing', 'wb-gamification' ),
 			'comment_publish'     => __( 'for commenting', 'wb-gamification' ),
@@ -260,7 +278,7 @@ final class NotificationBridge {
 			'bp_profile_updated'  => __( 'for updating profile', 'wb-gamification' ),
 			'give_kudos'          => __( 'for giving kudos', 'wb-gamification' ),
 			'receive_kudos'       => __( 'for receiving kudos', 'wb-gamification' ),
-		];
+		);
 
 		return $labels[ $action_id ] ?? null;
 	}

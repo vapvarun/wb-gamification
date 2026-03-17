@@ -23,10 +23,10 @@ defined( 'ABSPATH' ) || exit;
 final class HooksIntegration {
 
 	public static function init(): void {
-		add_action( 'wb_gamification_register', [ self::class, 'register_always' ] );
+		add_action( 'wb_gamification_register', array( self::class, 'register_always' ) );
 
 		if ( ! function_exists( 'buddypress' ) ) {
-			add_action( 'wb_gamification_register', [ self::class, 'register_standalone' ] );
+			add_action( 'wb_gamification_register', array( self::class, 'register_standalone' ) );
 		}
 	}
 
@@ -34,8 +34,8 @@ final class HooksIntegration {
 	 * Triggers available on ALL WordPress installs — BuddyPress has no equivalent.
 	 */
 	public static function register_always(): void {
-		$actions = [
-			[
+		$actions = array(
+			array(
 				'id'             => 'wp_user_register',
 				'label'          => __( 'Join the site', 'wb-gamification' ),
 				'description'    => __( 'Awarded once when a user registers.', 'wb-gamification' ),
@@ -46,8 +46,8 @@ final class HooksIntegration {
 				'icon'           => 'dashicons-admin-users',
 				'repeatable'     => false,
 				'cooldown'       => 0,
-			],
-			[
+			),
+			array(
 				'id'             => 'wp_first_login',
 				'label'          => __( 'First login', 'wb-gamification' ),
 				'description'    => __( 'Awarded once on the very first login.', 'wb-gamification' ),
@@ -58,8 +58,8 @@ final class HooksIntegration {
 				'icon'           => 'dashicons-lock',
 				'repeatable'     => false,
 				'cooldown'       => 0,
-			],
-			[
+			),
+			array(
 				'id'             => 'wp_profile_complete',
 				'label'          => __( 'Complete WordPress profile', 'wb-gamification' ),
 				'description'    => __( 'Awarded once when the user saves their WP profile with a bio.', 'wb-gamification' ),
@@ -72,8 +72,8 @@ final class HooksIntegration {
 				'icon'           => 'dashicons-id-alt',
 				'repeatable'     => false,
 				'cooldown'       => 0,
-			],
-			[
+			),
+			array(
 				'id'             => 'wp_post_receives_comment',
 				'label'          => __( 'Post receives a comment', 'wb-gamification' ),
 				'description'    => __( 'Post author earns points when an approved comment is left on their content.', 'wb-gamification' ),
@@ -94,8 +94,8 @@ final class HooksIntegration {
 				'icon'           => 'dashicons-admin-comments',
 				'repeatable'     => true,
 				'cooldown'       => 0,
-			],
-		];
+			),
+		);
 
 		foreach ( $actions as $action ) {
 			wb_gamification_register_action( $action );
@@ -106,8 +106,8 @@ final class HooksIntegration {
 	 * Triggers only registered when BuddyPress is NOT active.
 	 */
 	public static function register_standalone(): void {
-		$actions = [
-			[
+		$actions = array(
+			array(
 				'id'             => 'wp_publish_post',
 				'label'          => __( 'Publish a blog post', 'wb-gamification' ),
 				'description'    => __( 'Awarded when the author publishes a new post.', 'wb-gamification' ),
@@ -124,8 +124,8 @@ final class HooksIntegration {
 				'icon'           => 'dashicons-admin-post',
 				'repeatable'     => true,
 				'cooldown'       => 0,
-			],
-			[
+			),
+			array(
 				'id'             => 'wp_first_post',
 				'label'          => __( 'Publish first post ever', 'wb-gamification' ),
 				'description'    => __( 'Awarded once on the author\'s very first published post.', 'wb-gamification' ),
@@ -144,8 +144,8 @@ final class HooksIntegration {
 				'icon'           => 'dashicons-star-filled',
 				'repeatable'     => false,
 				'cooldown'       => 0,
-			],
-			[
+			),
+			array(
 				'id'             => 'wp_leave_comment',
 				'label'          => __( 'Leave a comment', 'wb-gamification' ),
 				'description'    => __( 'Commenter earns points when their approved comment is posted.', 'wb-gamification' ),
@@ -165,8 +165,8 @@ final class HooksIntegration {
 				'icon'           => 'dashicons-format-chat',
 				'repeatable'     => true,
 				'cooldown'       => 60,
-			],
-			[
+			),
+			array(
 				'id'             => 'wp_comment_approved',
 				'label'          => __( 'Comment moves from pending to approved', 'wb-gamification' ),
 				'description'    => __( 'Awarded when a previously moderated comment gets approved.', 'wb-gamification' ),
@@ -179,8 +179,8 @@ final class HooksIntegration {
 				'icon'           => 'dashicons-yes-alt',
 				'repeatable'     => true,
 				'cooldown'       => 0,
-			],
-		];
+			),
+		);
 
 		// The comment_approved transition needs special wiring.
 		add_action(

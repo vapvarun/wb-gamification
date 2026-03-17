@@ -17,7 +17,7 @@ final class DirectoryIntegration {
 		if ( ! function_exists( 'buddypress' ) ) {
 			return;
 		}
-		add_action( 'bp_directory_members_item', [ __CLASS__, 'render_rank_in_directory' ] );
+		add_action( 'bp_directory_members_item', array( __CLASS__, 'render_rank_in_directory' ) );
 	}
 
 	/**

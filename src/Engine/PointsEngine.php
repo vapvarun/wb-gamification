@@ -71,15 +71,15 @@ final class PointsEngine {
 
 		$inserted = $wpdb->insert(
 			$wpdb->prefix . 'wb_gam_points',
-			[
+			array(
 				'event_id'   => $event->event_id,
 				'user_id'    => $event->user_id,
 				'action_id'  => $event->action_id,
 				'points'     => $points,
 				'object_id'  => $event->object_id ?: null,
 				'created_at' => current_time( 'mysql' ),
-			],
-			[ '%s', '%d', '%s', '%d', '%d', '%s' ]
+			),
+			array( '%s', '%d', '%s', '%d', '%d', '%s' )
 		);
 
 		return (bool) $inserted;
@@ -102,15 +102,15 @@ final class PointsEngine {
 
 		$inserted = $wpdb->insert(
 			$wpdb->prefix . 'wb_gam_points',
-			[
+			array(
 				'event_id'   => $event_id ?: null,
 				'user_id'    => $user_id,
 				'action_id'  => $action_id,
 				'points'     => -abs( $amount ),
 				'object_id'  => null,
 				'created_at' => current_time( 'mysql' ),
-			],
-			[ '%s', '%d', '%s', '%d', '%d', '%s' ]
+			),
+			array( '%s', '%d', '%s', '%d', '%d', '%s' )
 		);
 
 		if ( $inserted ) {
@@ -136,11 +136,11 @@ final class PointsEngine {
 	public static function process_action( string $action_id, int $user_id, int $object_id = 0 ): bool {
 		return Engine::process(
 			new Event(
-				[
+				array(
 					'action_id' => $action_id,
 					'user_id'   => $user_id,
 					'object_id' => $object_id,
-				]
+				)
 			)
 		);
 	}
@@ -165,12 +165,15 @@ final class PointsEngine {
 
 		return Engine::process(
 			new Event(
-				[
+				array(
 					'action_id' => $action_id,
 					'user_id'   => $user_id,
 					'object_id' => $object_id,
-					'metadata'  => [ 'points' => $points, 'manual' => true ],
-				]
+					'metadata'  => array(
+						'points' => $points,
+						'manual' => true,
+					),
+				)
 			)
 		);
 	}

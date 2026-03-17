@@ -22,7 +22,7 @@ final class LogPruner {
 	 * Called on plugins_loaded.
 	 */
 	public static function init(): void {
-		add_action( self::CRON_HOOK, [ __CLASS__, 'prune' ] );
+		add_action( self::CRON_HOOK, array( __CLASS__, 'prune' ) );
 
 		if ( ! wp_next_scheduled( self::CRON_HOOK ) ) {
 			wp_schedule_event( time(), self::CRON_RECUR, self::CRON_HOOK );

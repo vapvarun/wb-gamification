@@ -93,12 +93,12 @@ final class LevelEngine {
 			return null;
 		}
 
-		return [
+		return array(
 			'id'         => (int) $row['id'],
 			'name'       => $row['name'],
 			'min_points' => (int) $row['min_points'],
 			'icon_url'   => $row['icon_url'] ?: null,
-		];
+		);
 	}
 
 	/**
@@ -128,12 +128,12 @@ final class LevelEngine {
 			return null;
 		}
 
-		return [
+		return array(
 			'id'         => (int) $row['id'],
 			'name'       => $row['name'],
 			'min_points' => (int) $row['min_points'],
 			'icon_url'   => $row['icon_url'] ?: null,
-		];
+		);
 	}
 
 	/**
@@ -151,19 +151,19 @@ final class LevelEngine {
 		);
 
 		if ( empty( $rows ) ) {
-			return [];
+			return array();
 		}
 
 		$current = self::get_level_for_user( $user_id );
 
 		return array_map(
 			static function ( array $row ) use ( $current ): array {
-				return [
+				return array(
 					'id'         => (int) $row['id'],
 					'name'       => $row['name'],
 					'min_points' => (int) $row['min_points'],
 					'is_current' => $current && ( (int) $row['id'] === $current['id'] ),
-				];
+				);
 			},
 			$rows
 		);
@@ -176,9 +176,9 @@ final class LevelEngine {
 	 * @return int  0–100 (100 = max level reached).
 	 */
 	public static function get_progress_percent( int $user_id ): int {
-		$points   = PointsEngine::get_total( $user_id );
-		$current  = self::get_level_for_points( $points );
-		$next     = self::get_next_level( $user_id );
+		$points  = PointsEngine::get_total( $user_id );
+		$current = self::get_level_for_points( $points );
+		$next    = self::get_next_level( $user_id );
 
 		if ( ! $current ) {
 			return 0;

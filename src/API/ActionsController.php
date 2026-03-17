@@ -25,24 +25,35 @@ class ActionsController extends WP_REST_Controller {
 	protected $rest_base = 'actions';
 
 	public function register_routes(): void {
-		register_rest_route( $this->namespace, '/' . $this->rest_base, [
-			[
-				'methods'             => WP_REST_Server::READABLE,
-				'callback'            => [ $this, 'get_items' ],
-				'permission_callback' => '__return_true',
-			],
-		] );
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base,
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_items' ),
+					'permission_callback' => '__return_true',
+				),
+			)
+		);
 
-		register_rest_route( $this->namespace, '/' . $this->rest_base . '/(?P<id>[a-z0-9_]+)', [
-			[
-				'methods'             => WP_REST_Server::READABLE,
-				'callback'            => [ $this, 'get_item' ],
-				'permission_callback' => '__return_true',
-				'args'                => [
-					'id' => [ 'required' => true, 'type' => 'string' ],
-				],
-			],
-		] );
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/(?P<id>[a-z0-9_]+)',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_item' ),
+					'permission_callback' => '__return_true',
+					'args'                => array(
+						'id' => array(
+							'required' => true,
+							'type'     => 'string',
+						),
+					),
+				),
+			)
+		);
 	}
 
 	public function get_items( $request ): WP_REST_Response {
@@ -58,14 +69,14 @@ class ActionsController extends WP_REST_Controller {
 		$action = Registry::get_action( $request['id'] );
 
 		if ( ! $action ) {
-			return new WP_Error( 'not_found', __( 'Action not found.', 'wb-gamification' ), [ 'status' => 404 ] );
+			return new WP_Error( 'not_found', __( 'Action not found.', 'wb-gamification' ), array( 'status' => 404 ) );
 		}
 
 		return rest_ensure_response( $this->prepare_action_for_response( $action ) );
 	}
 
 	private function prepare_action_for_response( array $action ): array {
-		return [
+		return array(
 			'id'             => $action['id'],
 			'label'          => $action['label'],
 			'description'    => $action['description'] ?? '',
@@ -78,6 +89,6 @@ class ActionsController extends WP_REST_Controller {
 			'weekly_cap'     => $action['weekly_cap'] ?? 0,
 			'points'         => (int) get_option( 'wb_gam_points_' . $action['id'], $action['default_points'] ),
 			'enabled'        => (bool) get_option( 'wb_gam_enabled_' . $action['id'], true ),
-		];
+		);
 	}
 }

@@ -28,7 +28,7 @@ final class CredentialExpiryEngine {
 	private const OPT_LAST  = 'wb_gam_credential_expiry_last_run';
 
 	public static function init(): void {
-		add_action( self::CRON_HOOK, [ __CLASS__, 'run' ] );
+		add_action( self::CRON_HOOK, array( __CLASS__, 'run' ) );
 	}
 
 	public static function activate(): void {
@@ -83,14 +83,14 @@ final class CredentialExpiryEngine {
 			// BP notification — "Your [Badge Name] credential has expired."
 			if ( function_exists( 'bp_notifications_add_notification' ) ) {
 				bp_notifications_add_notification(
-					[
+					array(
 						'user_id'          => $user_id,
 						'item_id'          => $user_id,
 						'component_name'   => 'wb_gamification',
 						'component_action' => 'credential_expired',
 						'date_notified'    => bp_core_current_time(),
 						'is_new'           => 1,
-					]
+					)
 				);
 			}
 

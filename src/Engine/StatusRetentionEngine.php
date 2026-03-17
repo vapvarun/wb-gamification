@@ -30,7 +30,7 @@ final class StatusRetentionEngine {
 	private const GAP_THRESHOLD = 0.85;
 
 	public static function init(): void {
-		add_action( self::CRON_HOOK, [ __CLASS__, 'run' ] );
+		add_action( self::CRON_HOOK, array( __CLASS__, 'run' ) );
 	}
 
 	public static function activate(): void {
@@ -84,15 +84,16 @@ final class StatusRetentionEngine {
 		$placeholders = implode( ',', array_fill( 0, count( $ids_ints ), '%d' ) );
 		$avg_rows     = $wpdb->get_results(
 			$wpdb->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $placeholders is implode(',', array_fill(..., '%d')), safe.
 				"SELECT user_id, COALESCE(SUM(points), 0) / 4 AS avg_pts
 				   FROM {$wpdb->prefix}wb_gam_points
 				  WHERE user_id IN ($placeholders) AND created_at >= %s
 				 GROUP BY user_id",
-				array_merge( $ids_ints, [ $four_wk_start ] )
+				array_merge( $ids_ints, array( $four_wk_start ) )
 			),
 			ARRAY_A
 		);
-		$avg_map = array_fill_keys( $ids_ints, 0 );
+		$avg_map      = array_fill_keys( $ids_ints, 0 );
 		foreach ( $avg_rows as $row ) {
 			$avg_map[ (int) $row['user_id'] ] = (int) $row['avg_pts'];
 		}
@@ -143,14 +144,16 @@ final class StatusRetentionEngine {
 
 		// BP notification (non-blocking).
 		if ( function_exists( 'bp_notifications_add_notification' ) ) {
-			bp_notifications_add_notification( [
-				'user_id'           => $user_id,
-				'item_id'           => $user_id,
-				'component_name'    => 'wb_gamification',
-				'component_action'  => 'retention_nudge',
-				'date_notified'     => bp_core_current_time(),
-				'is_new'            => 1,
-			] );
+			bp_notifications_add_notification(
+				array(
+					'user_id'          => $user_id,
+					'item_id'          => $user_id,
+					'component_name'   => 'wb_gamification',
+					'component_action' => 'retention_nudge',
+					'date_notified'    => bp_core_current_time(),
+					'is_new'           => 1,
+				)
+			);
 		}
 
 		update_user_meta( $user_id, self::NUDGE_META, current_time( 'mysql' ) );

@@ -38,7 +38,7 @@ final class Engine {
 		WebhookDispatcher::init();
 
 		// Action Scheduler handler for async event processing.
-		add_action( 'wb_gam_process_event_async', [ __CLASS__, 'handle_async' ] );
+		add_action( 'wb_gam_process_event_async', array( __CLASS__, 'handle_async' ) );
 	}
 
 	/**
@@ -81,16 +81,16 @@ final class Engine {
 
 		as_enqueue_async_action(
 			'wb_gam_process_event_async',
-			[
-				[
+			array(
+				array(
 					'action_id'  => $event->action_id,
 					'user_id'    => $event->user_id,
 					'object_id'  => $event->object_id,
 					'metadata'   => $event->metadata,
 					'event_id'   => $event->event_id,
 					'created_at' => $event->created_at,
-				],
-			],
+				),
+			),
 			'wb-gamification'
 		);
 
@@ -144,14 +144,14 @@ final class Engine {
 
 		if ( $enriched !== $event->metadata ) {
 			$event = new Event(
-				[
+				array(
 					'action_id'  => $event->action_id,
 					'user_id'    => $event->user_id,
 					'object_id'  => $event->object_id,
 					'metadata'   => $enriched,
 					'created_at' => $event->created_at,
 					'event_id'   => $event->event_id,
-				]
+				)
 			);
 		}
 
@@ -223,7 +223,7 @@ final class Engine {
 		// Side-effects.
 		LevelEngine::maybe_level_up( $event->user_id );
 		StreakEngine::record_activity( $event->user_id );
-		WebhookDispatcher::dispatch( 'points_awarded', $event->user_id, $event, $points, [] );
+		WebhookDispatcher::dispatch( 'points_awarded', $event->user_id, $event, $points, array() );
 
 		return true;
 	}
@@ -239,15 +239,15 @@ final class Engine {
 
 		$wpdb->insert(
 			$wpdb->prefix . 'wb_gam_events',
-			[
+			array(
 				'id'         => $event->event_id,
 				'user_id'    => $event->user_id,
 				'action_id'  => $event->action_id,
 				'object_id'  => $event->object_id ?: null,
 				'metadata'   => ! empty( $event->metadata ) ? wp_json_encode( $event->metadata ) : null,
 				'created_at' => gmdate( 'Y-m-d H:i:s' ),
-			],
-			[ '%s', '%d', '%s', '%d', '%s', '%s' ]
+			),
+			array( '%s', '%d', '%s', '%d', '%s', '%s' )
 		);
 	}
 }

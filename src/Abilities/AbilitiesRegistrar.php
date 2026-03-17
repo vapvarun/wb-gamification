@@ -16,10 +16,10 @@ final class AbilitiesRegistrar {
 			return;
 		}
 
-		wp_register_ability( 'wb_gam_earn_points',      [ 'label' => __( 'Earn gamification points', 'wb-gamification' ) ] );
-		wp_register_ability( 'wb_gam_view_leaderboard', [ 'label' => __( 'View the leaderboard', 'wb-gamification' ) ] );
-		wp_register_ability( 'wb_gam_redeem_rewards',   [ 'label' => __( 'Redeem points for rewards', 'wb-gamification' ) ] );
-		wp_register_ability( 'wb_gam_manage_settings',  [ 'label' => __( 'Manage gamification settings', 'wb-gamification' ) ] );
-		wp_register_ability( 'wb_gam_award_manual',     [ 'label' => __( 'Manually award points to members', 'wb-gamification' ) ] );
+		wp_register_ability( 'wb_gam_earn_points', array( 'label' => __( 'Earn gamification points', 'wb-gamification' ) ) );
+		wp_register_ability( 'wb_gam_view_leaderboard', array( 'label' => __( 'View the leaderboard', 'wb-gamification' ) ) );
+		wp_register_ability( 'wb_gam_redeem_rewards', array( 'label' => __( 'Redeem points for rewards', 'wb-gamification' ) ) );
+		wp_register_ability( 'wb_gam_manage_settings', array( 'label' => __( 'Manage gamification settings', 'wb-gamification' ) ) );
+		wp_register_ability( 'wb_gam_award_manual', array( 'label' => __( 'Manually award points to members', 'wb-gamification' ) ) );
 	}
 }

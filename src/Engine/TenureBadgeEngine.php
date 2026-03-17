@@ -34,20 +34,36 @@ defined( 'ABSPATH' ) || exit;
 final class TenureBadgeEngine {
 
 	/** @var array<string, array{years: int, name: string, description: string}> */
-	private const TIERS = [
-		'tenure_1yr'  => [ 'years' => 1,  'name' => '1-Year Member',  'description' => 'Has been part of this community for one year.' ],
-		'tenure_2yr'  => [ 'years' => 2,  'name' => '2-Year Member',  'description' => 'A two-year member — a valued, long-standing contributor.' ],
-		'tenure_5yr'  => [ 'years' => 5,  'name' => '5-Year Member',  'description' => 'Five years and counting — a true community pillar.' ],
-		'tenure_10yr' => [ 'years' => 10, 'name' => '10-Year Member', 'description' => 'A decade of community membership — legendary status.' ],
-	];
+	private const TIERS = array(
+		'tenure_1yr'  => array(
+			'years'       => 1,
+			'name'        => '1-Year Member',
+			'description' => 'Has been part of this community for one year.',
+		),
+		'tenure_2yr'  => array(
+			'years'       => 2,
+			'name'        => '2-Year Member',
+			'description' => 'A two-year member — a valued, long-standing contributor.',
+		),
+		'tenure_5yr'  => array(
+			'years'       => 5,
+			'name'        => '5-Year Member',
+			'description' => 'Five years and counting — a true community pillar.',
+		),
+		'tenure_10yr' => array(
+			'years'       => 10,
+			'name'        => '10-Year Member',
+			'description' => 'A decade of community membership — legendary status.',
+		),
+	);
 
 	private const CRON_HOOK = 'wb_gam_tenure_check';
 
 	// ── Boot ────────────────────────────────────────────────────────────────────
 
 	public static function init(): void {
-		add_action( self::CRON_HOOK, [ __CLASS__, 'run_daily_check' ] );
-		add_action( 'plugins_loaded', [ __CLASS__, 'ensure_badges_exist' ], 15 );
+		add_action( self::CRON_HOOK, array( __CLASS__, 'run_daily_check' ) );
+		add_action( 'plugins_loaded', array( __CLASS__, 'ensure_badges_exist' ), 15 );
 	}
 
 	public static function activate(): void {
@@ -77,6 +93,7 @@ final class TenureBadgeEngine {
 
 		foreach ( self::TIERS as $id => $tier ) {
 			// Skip if already exists.
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table is $wpdb->prefix . literal, not user input.
 			$exists = $wpdb->get_var(
 				$wpdb->prepare( "SELECT id FROM $table WHERE id = %s", $id )
 			);
@@ -87,13 +104,13 @@ final class TenureBadgeEngine {
 
 			$wpdb->insert(
 				$table,
-				[
+				array(
 					'id'          => $id,
 					'name'        => $tier['name'],
 					'description' => $tier['description'],
 					'category'    => 'special',
-				],
-				[ '%s', '%s', '%s', '%s' ]
+				),
+				array( '%s', '%s', '%s', '%s' )
 			);
 		}
 	}
@@ -129,7 +146,7 @@ final class TenureBadgeEngine {
 			}
 
 			$offset += $batch_size;
-		} while ( count( $users ) === $batch_size );
+		} while ( count( $users ) === $batch_size ); // phpcs:ignore Squiz.PHP.DisallowSizeFunctionsInLoops.Found -- $users is reassigned each iteration, count must be re-evaluated.
 	}
 
 	/**
@@ -166,7 +183,7 @@ final class TenureBadgeEngine {
 	private static function years_since( string $registered ): int {
 		try {
 			$reg  = new \DateTime( $registered, new \DateTimeZone( 'UTC' ) );
-			$now  = new \DateTime( 'now',        new \DateTimeZone( 'UTC' ) );
+			$now  = new \DateTime( 'now', new \DateTimeZone( 'UTC' ) );
 			$diff = $reg->diff( $now );
 			return (int) $diff->y;
 		} catch ( \Exception $e ) {

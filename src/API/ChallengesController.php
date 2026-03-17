@@ -30,51 +30,51 @@ class ChallengesController extends WP_REST_Controller {
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base,
-			[
-				[
+			array(
+				array(
 					'methods'             => WP_REST_Server::READABLE,
-					'callback'            => [ $this, 'get_items' ],
+					'callback'            => array( $this, 'get_items' ),
 					'permission_callback' => '__return_true',
-					'args'                => [
-						'user_id' => [
+					'args'                => array(
+						'user_id' => array(
 							'type'              => 'integer',
 							'default'           => 0,
 							'minimum'           => 0,
 							'sanitize_callback' => 'absint',
 							'description'       => 'Fetch progress for this user. 0 = current user.',
-						],
-					],
-				],
-				'schema' => [ $this, 'get_item_schema' ],
-			]
+						),
+					),
+				),
+				'schema' => array( $this, 'get_item_schema' ),
+			)
 		);
 
 		// GET /challenges/{id}
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base . '/(?P<id>[\d]+)',
-			[
-				[
+			array(
+				array(
 					'methods'             => WP_REST_Server::READABLE,
-					'callback'            => [ $this, 'get_item' ],
+					'callback'            => array( $this, 'get_item' ),
 					'permission_callback' => '__return_true',
-					'args'                => [
-						'id' => [
+					'args'                => array(
+						'id'      => array(
 							'required'          => true,
 							'type'              => 'integer',
 							'minimum'           => 1,
 							'sanitize_callback' => 'absint',
-						],
-						'user_id' => [
+						),
+						'user_id' => array(
 							'type'              => 'integer',
 							'default'           => 0,
 							'minimum'           => 0,
 							'sanitize_callback' => 'absint',
-						],
-					],
-				],
-				'schema' => [ $this, 'get_item_schema' ],
-			]
+						),
+					),
+				),
+				'schema' => array( $this, 'get_item_schema' ),
+			)
 		);
 	}
 
@@ -108,7 +108,7 @@ class ChallengesController extends WP_REST_Controller {
 		return new WP_Error(
 			'rest_challenge_not_found',
 			__( 'Challenge not found or not active.', 'wb-gamification' ),
-			[ 'status' => 404 ]
+			array( 'status' => 404 )
 		);
 	}
 
@@ -122,24 +122,27 @@ class ChallengesController extends WP_REST_Controller {
 	}
 
 	public function get_item_schema(): array {
-		return [
+		return array(
 			'$schema'    => 'http://json-schema.org/draft-04/schema#',
 			'title'      => 'wb-gamification-challenge',
 			'type'       => 'object',
-			'properties' => [
-				'id'           => [ 'type' => 'integer' ],
-				'title'        => [ 'type' => 'string' ],
-				'type'         => [ 'type' => 'string', 'enum' => [ 'individual', 'team' ] ],
-				'action_id'    => [ 'type' => 'string' ],
-				'target'       => [ 'type' => 'integer' ],
-				'bonus_points' => [ 'type' => 'integer' ],
-				'period'       => [ 'type' => 'string' ],
-				'starts_at'    => [ 'type' => [ 'string', 'null' ] ],
-				'ends_at'      => [ 'type' => [ 'string', 'null' ] ],
-				'progress'     => [ 'type' => 'integer' ],
-				'progress_pct' => [ 'type' => 'number' ],
-				'completed'    => [ 'type' => 'boolean' ],
-			],
-		];
+			'properties' => array(
+				'id'           => array( 'type' => 'integer' ),
+				'title'        => array( 'type' => 'string' ),
+				'type'         => array(
+					'type' => 'string',
+					'enum' => array( 'individual', 'team' ),
+				),
+				'action_id'    => array( 'type' => 'string' ),
+				'target'       => array( 'type' => 'integer' ),
+				'bonus_points' => array( 'type' => 'integer' ),
+				'period'       => array( 'type' => 'string' ),
+				'starts_at'    => array( 'type' => array( 'string', 'null' ) ),
+				'ends_at'      => array( 'type' => array( 'string', 'null' ) ),
+				'progress'     => array( 'type' => 'integer' ),
+				'progress_pct' => array( 'type' => 'number' ),
+				'completed'    => array( 'type' => 'boolean' ),
+			),
+		);
 	}
 }
