@@ -210,8 +210,6 @@ final class BadgeEngine {
 		// Bust earned-badges cache.
 		wp_cache_delete( "wb_gam_earned_badges_{$user_id}", self::CACHE_GROUP );
 
-		$def = self::get_badge_def( $badge_id );
-
 		/**
 		 * Fires when a member earns a badge.
 		 *

@@ -150,7 +150,7 @@ final class BadgeAdminPage {
 					</td>
 					<td><?php echo esc_html( $badge['category'] ); ?></td>
 					<td><?php echo esc_html( $cond_label ); ?></td>
-					<td><?php echo $badge['is_credential'] ? '✅' : '—'; ?></td>
+					<td><?php echo $badge['is_credential'] ? esc_html( '✅' ) : esc_html( '—' ); ?></td>
 					<td><?php echo esc_html( number_format_i18n( (int) $badge['earned_count'] ) ); ?></td>
 					<td>
 						<a href="<?php echo esc_url( admin_url( 'admin.php?page=wb-gamification-badges&action=edit&badge=' . $badge['id'] ) ); ?>">
@@ -283,8 +283,23 @@ final class BadgeAdminPage {
 					<th><label for="wb-gam-badge-closes-at"><?php esc_html_e( 'Closes at', 'wb-gamification' ); ?></label></th>
 					<td>
 						<input type="datetime-local" name="badge_closes_at" id="wb-gam-badge-closes-at"
-							value="<?php echo esc_attr( ! empty( $badge['closes_at'] ) ? str_replace( ' ', 'T', substr( $badge['closes_at'], 0, 16 ) ) : '' ); ?>">
-						<p class="description"><?php esc_html_e( 'Stop awarding this badge after this date. Leave blank for no cutoff.', 'wb-gamification' ); ?></p>
+							value="<?php
+							if ( ! empty( $badge['closes_at'] ) ) {
+								$dt = new \DateTime( $badge['closes_at'], new \DateTimeZone( 'UTC' ) );
+								$dt->setTimezone( wp_timezone() );
+								echo esc_attr( $dt->format( 'Y-m-d\TH:i' ) );
+							}
+							?>">
+						<p class="description">
+							<?php esc_html_e( 'Stop awarding this badge after this date. Leave blank for no cutoff.', 'wb-gamification' ); ?>
+							<?php
+							printf(
+								/* translators: %s: WordPress site timezone label */
+								esc_html__( '(Site timezone: %s)', 'wb-gamification' ),
+								esc_html( wp_timezone_string() )
+							);
+							?>
+						</p>
 					</td>
 				</tr>
 				<tr>
@@ -369,7 +384,12 @@ final class BadgeAdminPage {
 		}
 
 		$closes_at_raw = sanitize_text_field( wp_unslash( $_POST['badge_closes_at'] ?? '' ) );
-		$closes_at     = $closes_at_raw ? gmdate( 'Y-m-d H:i:s', strtotime( $closes_at_raw ) ) : null;
+		if ( $closes_at_raw ) {
+			$dt        = \DateTime::createFromFormat( 'Y-m-d\TH:i', $closes_at_raw, wp_timezone() );
+			$closes_at = $dt ? $dt->setTimezone( new \DateTimeZone( 'UTC' ) )->format( 'Y-m-d H:i:s' ) : null;
+		} else {
+			$closes_at = null;
+		}
 		$max_earners   = '' !== ( $_POST['badge_max_earners'] ?? '' ) ? absint( $_POST['badge_max_earners'] ) : null;
 
 		$badge_data = array(
