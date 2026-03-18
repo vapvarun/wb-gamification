@@ -33,8 +33,8 @@
         }
     },
     "scripts": {
-        "test": "phpunit --configuration phpunit.xml.dist",
-        "test:unit": "phpunit --configuration phpunit.xml.dist --testsuite Unit"
+        "test": "php -d auto_prepend_file=tests/prepend.php vendor/bin/phpunit --configuration phpunit.xml.dist",
+        "test:unit": "php -d auto_prepend_file=tests/prepend.php vendor/bin/phpunit --configuration phpunit.xml.dist --testsuite Unit"
     },
     "config": {
         "optimize-autoloader": true

@@ -230,6 +230,35 @@ final class PointsEngine {
 		);
 	}
 
+	/**
+	 * Get recent point transactions for a user, newest first.
+	 *
+	 * @param int $user_id User ID to look up.
+	 * @param int $limit   Maximum rows to return (1–100).
+	 * @return array<int, array{action_id: string, points: int, created_at: string}>
+	 */
+	public static function get_history( int $user_id, int $limit = 20 ): array {
+		global $wpdb;
+
+		$limit = max( 1, min( 100, $limit ) );
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching
+		$rows = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT action_id, points, created_at
+				   FROM {$wpdb->prefix}wb_gam_points
+				  WHERE user_id = %d
+				  ORDER BY created_at DESC
+				  LIMIT %d",
+				$user_id,
+				$limit
+			),
+			ARRAY_A
+		);
+
+		return $rows ?: array();
+	}
+
 	// ── Private rate-limit helpers ────────────────────────────────────────────
 
 	/**
