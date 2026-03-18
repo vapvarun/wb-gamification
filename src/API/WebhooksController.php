@@ -138,7 +138,7 @@ class WebhooksController extends WP_REST_Controller {
 	 * @param WP_REST_Request $request Full details about the request.
 	 * @return WP_REST_Response Response containing registered webhooks.
 	 */
-	public function get_items( WP_REST_Request $request ): WP_REST_Response {
+	public function get_items($request): WP_REST_Response {
 		global $wpdb;
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- Admin-only webhook list; small, infrequently changed.
 		$rows = $wpdb->get_results(
@@ -155,7 +155,7 @@ class WebhooksController extends WP_REST_Controller {
 	 * @param WP_REST_Request $request Full details about the request.
 	 * @return WP_REST_Response|WP_Error Response on success, WP_Error on failure.
 	 */
-	public function get_item( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+	public function get_item($request): WP_REST_Response|WP_Error {
 		$row = $this->fetch_row( (int) $request['id'] );
 		return $row
 			? rest_ensure_response( $this->prepare_item( $row ) )
@@ -168,7 +168,7 @@ class WebhooksController extends WP_REST_Controller {
 	 * @param WP_REST_Request $request Full details about the request.
 	 * @return WP_REST_Response|WP_Error Response on success, WP_Error on failure.
 	 */
-	public function create_item( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+	public function create_item($request): WP_REST_Response|WP_Error {
 		global $wpdb;
 
 		$events_json = wp_json_encode( $request['events'] );
@@ -203,7 +203,7 @@ class WebhooksController extends WP_REST_Controller {
 	 * @param WP_REST_Request $request Full details about the request.
 	 * @return WP_REST_Response|WP_Error Response on success, WP_Error on failure.
 	 */
-	public function update_item( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+	public function update_item($request): WP_REST_Response|WP_Error {
 		global $wpdb;
 
 		$id  = (int) $request['id'];
@@ -238,7 +238,7 @@ class WebhooksController extends WP_REST_Controller {
 	 * @param WP_REST_Request $request Full details about the request.
 	 * @return WP_REST_Response|WP_Error Response on success, WP_Error on failure.
 	 */
-	public function delete_item( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+	public function delete_item($request): WP_REST_Response|WP_Error {
 		global $wpdb;
 
 		$id  = (int) $request['id'];

@@ -136,7 +136,7 @@ class BadgesController extends WP_REST_Controller {
 	 * @param WP_REST_Request $request Full details about the request.
 	 * @return true|WP_Error True if the request has permission, WP_Error otherwise.
 	 */
-	public function award_permissions_check( WP_REST_Request $request ): bool|WP_Error {
+	public function award_permissions_check($request ): bool|WP_Error {
 		if ( ! current_user_can( 'manage_options' ) ) {
 			return new WP_Error(
 				'rest_forbidden',
@@ -155,7 +155,7 @@ class BadgesController extends WP_REST_Controller {
 	 * @param WP_REST_Request $request Full details about the request.
 	 * @return WP_REST_Response Response containing all badge definitions.
 	 */
-	public function get_items( WP_REST_Request $request ): WP_REST_Response {
+	public function get_items($request): WP_REST_Response {
 		$user_id  = (int) $request->get_param( 'user_id' );
 		$category = (string) $request->get_param( 'category' );
 
@@ -189,7 +189,7 @@ class BadgesController extends WP_REST_Controller {
 	 * @param WP_REST_Request $request Full details about the request.
 	 * @return WP_REST_Response|WP_Error Response on success, WP_Error on failure.
 	 */
-	public function get_item( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+	public function get_item($request): WP_REST_Response|WP_Error {
 		$badge_id = sanitize_key( $request['id'] );
 		$def      = BadgeEngine::get_badge_def( $badge_id );
 
@@ -219,7 +219,7 @@ class BadgesController extends WP_REST_Controller {
 	 * @param WP_REST_Request $request Full details about the request.
 	 * @return WP_REST_Response|WP_Error Response on success, WP_Error on failure.
 	 */
-	public function award_badge( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+	public function award_badge($request ): WP_REST_Response|WP_Error {
 		$badge_id = sanitize_key( $request['id'] );
 		$user_id  = (int) $request->get_param( 'user_id' );
 

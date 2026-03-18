@@ -110,7 +110,7 @@ class ChallengesController extends WP_REST_Controller {
 	 * @param WP_REST_Request $request Full details about the request.
 	 * @return WP_REST_Response Response containing active challenges.
 	 */
-	public function get_items( WP_REST_Request $request ): WP_REST_Response {
+	public function get_items($request): WP_REST_Response {
 		$user_id = $this->resolve_user_id( (int) $request->get_param( 'user_id' ) );
 		$items   = ChallengeEngine::get_active_challenges( $user_id );
 
@@ -123,7 +123,7 @@ class ChallengesController extends WP_REST_Controller {
 	 * @param WP_REST_Request $request Full details about the request.
 	 * @return WP_REST_Response|WP_Error Response on success, WP_Error on failure.
 	 */
-	public function get_item( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+	public function get_item($request): WP_REST_Response|WP_Error {
 		$challenge_id = (int) $request['id'];
 		$user_id      = $this->resolve_user_id( (int) $request->get_param( 'user_id' ) );
 
