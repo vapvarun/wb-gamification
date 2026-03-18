@@ -59,7 +59,42 @@ final class SettingsPage {
 
 		if ( 'points' === $tab ) {
 			self::save_points_settings();
+		} elseif ( 'automation' === $tab ) {
+			self::save_automation_settings();
 		}
+	}
+
+	private static function save_automation_settings(): void {
+		// phpcs:disable WordPress.Security.NonceVerification.Missing -- Nonce verified by check_admin_referer() in handle_save().
+		$existing_rules = array();
+		$stored         = get_option( 'wb_gam_rank_automation_rules', '' );
+		if ( is_string( $stored ) && '' !== $stored ) {
+			$decoded = json_decode( $stored, true );
+			if ( is_array( $decoded ) ) {
+				$existing_rules = $decoded;
+			}
+		}
+
+		$action = sanitize_key( $_POST['wb_gam_automation_action'] ?? 'add' );
+
+		if ( 'delete' === $action ) {
+			$index = (int) ( $_POST['wb_gam_rule_index'] ?? -1 );
+			if ( isset( $existing_rules[ $index ] ) ) {
+				array_splice( $existing_rules, $index, 1 );
+				update_option( 'wb_gam_rank_automation_rules', wp_json_encode( array_values( $existing_rules ) ) );
+			}
+			// phpcs:enable WordPress.Security.NonceVerification.Missing
+			return;
+		}
+
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- normalize_automation_rule sanitizes each field.
+		$raw  = (array) wp_unslash( $_POST['wb_gam_new_rule'] ?? array() );
+		$rule = self::normalize_automation_rule( $raw );
+		if ( $rule ) {
+			$existing_rules[] = $rule;
+			update_option( 'wb_gam_rank_automation_rules', wp_json_encode( array_values( $existing_rules ) ) );
+		}
+		// phpcs:enable WordPress.Security.NonceVerification.Missing
 	}
 
 	private static function save_points_settings(): void {
@@ -86,6 +121,58 @@ final class SettingsPage {
 		// phpcs:enable WordPress.Security.NonceVerification.Missing
 
 		add_settings_error( 'wb_gamification', 'saved', __( 'Settings saved.', 'wb-gamification' ), 'success' );
+	}
+
+	/**
+	 * Normalize and validate a single automation rule from POST data.
+	 *
+	 * @param array $raw Raw POST fields for this rule.
+	 * @return array|null Normalized rule array, or null if invalid.
+	 */
+	public static function normalize_automation_rule( array $raw ): ?array {
+		$level_id    = (int) ( $raw['trigger_level_id'] ?? 0 );
+		$action_type = sanitize_key( $raw['action_type'] ?? '' );
+
+		if ( $level_id <= 0 ) {
+			return null;
+		}
+
+		$allowed_types = array( 'add_bp_group', 'send_bp_message', 'change_wp_role' );
+		if ( ! in_array( $action_type, $allowed_types, true ) ) {
+			return null;
+		}
+
+		$action = array( 'type' => $action_type );
+
+		switch ( $action_type ) {
+			case 'add_bp_group':
+				$action['group_id'] = absint( $raw['group_id'] ?? 0 );
+				if ( ! $action['group_id'] ) {
+					return null;
+				}
+				break;
+
+			case 'change_wp_role':
+				$action['role'] = sanitize_key( $raw['role'] ?? '' );
+				if ( ! $action['role'] ) {
+					return null;
+				}
+				break;
+
+			case 'send_bp_message':
+				$action['sender_id'] = absint( $raw['sender_id'] ?? 1 ) ?: 1;
+				$action['subject']   = sanitize_text_field( wp_unslash( $raw['subject'] ?? '' ) );
+				$action['content']   = sanitize_textarea_field( wp_unslash( $raw['content'] ?? '' ) );
+				if ( ! $action['subject'] || ! $action['content'] ) {
+					return null;
+				}
+				break;
+		}
+
+		return array(
+			'trigger_level_id' => $level_id,
+			'actions'          => array( $action ),
+		);
 	}
 
 	public static function handle_save_levels(): void {
@@ -155,8 +242,9 @@ final class SettingsPage {
 			<nav class="nav-tab-wrapper" style="margin-top:16px;">
 				<?php
 				$tabs = array(
-					'points' => __( 'Points', 'wb-gamification' ),
-					'levels' => __( 'Levels', 'wb-gamification' ),
+					'points'     => __( 'Points', 'wb-gamification' ),
+					'levels'     => __( 'Levels', 'wb-gamification' ),
+					'automation' => __( 'Automation', 'wb-gamification' ),
 				);
 				foreach ( $tabs as $slug => $label ) :
 					$class = ( $tab === $slug ) ? 'nav-tab nav-tab-active' : 'nav-tab';
@@ -169,8 +257,9 @@ final class SettingsPage {
 			<div class="tab-content" style="background:#fff;border:1px solid #c3c4c7;border-top:none;padding:24px;">
 				<?php
 				match ( $tab ) {
-					'levels' => self::render_levels_tab(),
-					default  => self::render_points_tab(),
+					'levels'     => self::render_levels_tab(),
+					'automation' => self::render_automation_tab(),
+					default      => self::render_points_tab(),
 				};
 		?>
 			</div>
@@ -343,6 +432,153 @@ final class SettingsPage {
 			</table>
 
 			<?php submit_button( __( 'Save Levels', 'wb-gamification' ) ); ?>
+		</form>
+		<?php
+	}
+
+	// ── Automation tab ────────────────────────────────────────────────────────
+
+	private static function render_automation_tab(): void {
+		global $wpdb;
+
+		$rules  = array();
+		$stored = get_option( 'wb_gam_rank_automation_rules', '' );
+		if ( is_string( $stored ) && '' !== $stored ) {
+			$decoded = json_decode( $stored, true );
+			if ( is_array( $decoded ) ) {
+				$rules = $decoded;
+			}
+		}
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- settings page, infrequent, small table.
+		$levels = $wpdb->get_results(
+			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name is $wpdb->prefix . literal string.
+			'SELECT id, name FROM ' . $wpdb->prefix . 'wb_gam_levels ORDER BY min_points ASC',
+			ARRAY_A
+		);
+
+		$action_labels = array(
+			'add_bp_group'    => __( 'Add to BuddyPress group', 'wb-gamification' ),
+			'send_bp_message' => __( 'Send BuddyPress message', 'wb-gamification' ),
+			'change_wp_role'  => __( 'Add WordPress role', 'wb-gamification' ),
+		);
+
+		$form_url = admin_url( 'admin.php?page=wb-gamification&tab=automation' );
+		?>
+		<h2><?php esc_html_e( 'Rank Automation Rules', 'wb-gamification' ); ?></h2>
+		<p class="description">
+			<?php esc_html_e( 'Automatically trigger actions when a member reaches a level. One action per rule — add multiple rules for the same level to stack actions.', 'wb-gamification' ); ?>
+		</p>
+
+		<?php if ( $rules ) : ?>
+			<table class="widefat striped" style="margin-bottom:24px;">
+				<thead>
+					<tr>
+						<th><?php esc_html_e( 'When member reaches', 'wb-gamification' ); ?></th>
+						<th><?php esc_html_e( 'Action', 'wb-gamification' ); ?></th>
+						<th><?php esc_html_e( 'Parameters', 'wb-gamification' ); ?></th>
+						<th></th>
+					</tr>
+				</thead>
+				<tbody>
+				<?php foreach ( $rules as $i => $rule ) :
+					$trigger    = (int) ( $rule['trigger_level_id'] ?? 0 );
+					$level_name = '';
+					foreach ( (array) $levels as $lv ) {
+						if ( (int) $lv['id'] === $trigger ) {
+							$level_name = $lv['name'];
+							break;
+						}
+					}
+					foreach ( (array) ( $rule['actions'] ?? array() ) as $action ) :
+						$action_type  = $action['type'] ?? '';
+						$action_label = $action_labels[ $action_type ] ?? $action_type;
+						$params       = $action;
+						unset( $params['type'] );
+						?>
+						<tr>
+							<td><?php echo esc_html( $level_name ?: '#' . $trigger ); ?></td>
+							<td><?php echo esc_html( $action_label ); ?></td>
+							<td><code><?php echo esc_html( wp_json_encode( $params ) ); ?></code></td>
+							<td>
+								<form method="post" action="<?php echo esc_url( $form_url ); ?>" style="display:inline;">
+									<?php wp_nonce_field( 'wb_gam_save_settings', 'wb_gam_settings_nonce' ); ?>
+									<input type="hidden" name="wb_gam_automation_action" value="delete" />
+									<input type="hidden" name="wb_gam_rule_index" value="<?php echo esc_attr( $i ); ?>" />
+									<button type="submit" class="button button-small button-link-delete"
+										onclick="return confirm('<?php esc_attr_e( 'Delete this rule?', 'wb-gamification' ); ?>')">
+										<?php esc_html_e( 'Delete', 'wb-gamification' ); ?>
+									</button>
+								</form>
+							</td>
+						</tr>
+					<?php endforeach; ?>
+				<?php endforeach; ?>
+				</tbody>
+			</table>
+		<?php else : ?>
+			<p class="description" style="margin-bottom:24px;"><?php esc_html_e( 'No automation rules configured yet.', 'wb-gamification' ); ?></p>
+		<?php endif; ?>
+
+		<h3><?php esc_html_e( 'Add New Rule', 'wb-gamification' ); ?></h3>
+		<form method="post" action="<?php echo esc_url( $form_url ); ?>">
+			<?php wp_nonce_field( 'wb_gam_save_settings', 'wb_gam_settings_nonce' ); ?>
+			<input type="hidden" name="wb_gam_automation_action" value="add" />
+
+			<table class="form-table">
+				<tr>
+					<th scope="row"><label for="wb_gam_new_rule_level"><?php esc_html_e( 'When member reaches level', 'wb-gamification' ); ?></label></th>
+					<td>
+						<select name="wb_gam_new_rule[trigger_level_id]" id="wb_gam_new_rule_level" required>
+							<option value=""><?php esc_html_e( '— select level —', 'wb-gamification' ); ?></option>
+							<?php foreach ( (array) $levels as $lv ) : ?>
+								<option value="<?php echo esc_attr( $lv['id'] ); ?>"><?php echo esc_html( $lv['name'] ); ?></option>
+							<?php endforeach; ?>
+						</select>
+					</td>
+				</tr>
+				<tr>
+					<th scope="row"><label for="wb_gam_new_rule_action"><?php esc_html_e( 'Perform action', 'wb-gamification' ); ?></label></th>
+					<td>
+						<select name="wb_gam_new_rule[action_type]" id="wb_gam_new_rule_action">
+							<?php foreach ( $action_labels as $val => $label ) : ?>
+								<option value="<?php echo esc_attr( $val ); ?>"><?php echo esc_html( $label ); ?></option>
+							<?php endforeach; ?>
+						</select>
+					</td>
+				</tr>
+				<tr>
+					<th scope="row">
+						<?php esc_html_e( 'Group ID', 'wb-gamification' ); ?>
+						<span style="color:#999;font-size:0.85em;"><?php esc_html_e( '(for "Add to group")', 'wb-gamification' ); ?></span>
+					</th>
+					<td><input type="number" name="wb_gam_new_rule[group_id]" class="small-text" min="0" value="" placeholder="0" /></td>
+				</tr>
+				<tr>
+					<th scope="row">
+						<?php esc_html_e( 'Role slug', 'wb-gamification' ); ?>
+						<span style="color:#999;font-size:0.85em;"><?php esc_html_e( '(for "Add role")', 'wb-gamification' ); ?></span>
+					</th>
+					<td><input type="text" name="wb_gam_new_rule[role]" class="regular-text" value="" placeholder="contributor" /></td>
+				</tr>
+				<tr>
+					<th scope="row">
+						<?php esc_html_e( 'Message sender user ID', 'wb-gamification' ); ?>
+						<span style="color:#999;font-size:0.85em;"><?php esc_html_e( '(for "Send message")', 'wb-gamification' ); ?></span>
+					</th>
+					<td><input type="number" name="wb_gam_new_rule[sender_id]" class="small-text" min="1" value="1" /></td>
+				</tr>
+				<tr>
+					<th scope="row"><?php esc_html_e( 'Message subject', 'wb-gamification' ); ?></th>
+					<td><input type="text" name="wb_gam_new_rule[subject]" class="regular-text" value="" /></td>
+				</tr>
+				<tr>
+					<th scope="row"><?php esc_html_e( 'Message content', 'wb-gamification' ); ?></th>
+					<td><textarea name="wb_gam_new_rule[content]" rows="4" class="large-text"></textarea></td>
+				</tr>
+			</table>
+
+			<?php submit_button( __( 'Add Rule', 'wb-gamification' ) ); ?>
 		</form>
 		<?php
 	}
