@@ -16,25 +16,41 @@ namespace WBGam\Engine;
 
 defined( 'ABSPATH' ) || exit;
 
+/**
+ * Registers the badge share page rewrite rule and renders the shareable
+ * credential page with Open Graph meta and a LinkedIn deep-link button.
+ */
 final class BadgeSharePage {
 
+	/**
+	 * Hook into WordPress rewrite, query_vars, and template_redirect.
+	 */
 	public static function init(): void {
 		add_action( 'init', array( __CLASS__, 'add_rewrite_rules' ) );
 		add_filter( 'query_vars', array( __CLASS__, 'add_query_vars' ) );
 		add_action( 'template_redirect', array( __CLASS__, 'maybe_render' ) );
 	}
 
+	/**
+	 * Register rewrite rules and flush on plugin activation.
+	 */
 	public static function activate(): void {
 		self::add_rewrite_rules();
 		flush_rewrite_rules();
 	}
 
+	/**
+	 * Flush rewrite rules on plugin deactivation.
+	 */
 	public static function deactivate(): void {
 		flush_rewrite_rules();
 	}
 
 	// ── Rewrite ───────────────────────────────────────────────────────────────
 
+	/**
+	 * Register the gamification badge share rewrite rule.
+	 */
 	public static function add_rewrite_rules(): void {
 		add_rewrite_rule(
 			'^gamification/badge/([a-z0-9_-]+)/([0-9]+)/share/?$',
@@ -43,6 +59,12 @@ final class BadgeSharePage {
 		);
 	}
 
+	/**
+	 * Register custom query vars for the share page.
+	 *
+	 * @param string[] $vars Existing query vars.
+	 * @return string[]
+	 */
 	public static function add_query_vars( array $vars ): array {
 		$vars[] = 'wb_gam_badge_share';
 		$vars[] = 'wb_gam_share_badge_id';
@@ -52,6 +74,9 @@ final class BadgeSharePage {
 
 	// ── Template ──────────────────────────────────────────────────────────────
 
+	/**
+	 * Intercept template_redirect and render the share page if applicable.
+	 */
 	public static function maybe_render(): void {
 		if ( ! get_query_var( 'wb_gam_badge_share' ) ) {
 			return;
@@ -143,6 +168,15 @@ final class BadgeSharePage {
 		exit;
 	}
 
+	/**
+	 * Render the share page body HTML.
+	 *
+	 * @param array          $badge       Badge definition array.
+	 * @param \WP_User       $user        Earner user object.
+	 * @param string         $linkedin_url LinkedIn "Add Certification" URL, or empty.
+	 * @param string         $cred_url    REST endpoint URL for the verifiable credential.
+	 * @param \DateTime|null $issued_dt   Issue date/time (UTC), or null if unknown.
+	 */
 	private static function render_share_body( array $badge, \WP_User $user, string $linkedin_url, string $cred_url, ?\DateTime $issued_dt ): void {
 		$issued_label = $issued_dt
 			? esc_html( date_i18n( get_option( 'date_format' ), $issued_dt->getTimestamp() ) )
@@ -161,12 +195,14 @@ final class BadgeSharePage {
 
 			<p style="font-size:0.95em;color:#777;margin:0 0 24px;">
 				<?php
+				// phpcs:disable WordPress.Security.EscapeOutput.OutputNotEscaped -- all arguments are pre-escaped with esc_html/esc_html__.
 				printf(
 					/* translators: 1: display name, 2: date */
 					esc_html__( 'Earned by %1$s%2$s', 'wb-gamification' ),
 					'<strong>' . esc_html( $user->display_name ) . '</strong>',
 					$issued_label ? ( ' ' . esc_html__( 'on', 'wb-gamification' ) . ' ' . $issued_label ) : ''
 				);
+				// phpcs:enable WordPress.Security.EscapeOutput.OutputNotEscaped
 				?>
 			</p>
 

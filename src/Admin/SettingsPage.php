@@ -23,14 +23,24 @@ use WBGam\Engine\Registry;
 
 defined( 'ABSPATH' ) || exit;
 
+/**
+ * Renders and processes the WB Gamification settings page with
+ * Points, Levels, and Automation tabs.
+ */
 final class SettingsPage {
 
+	/**
+	 * Register admin_menu and form-handler hooks.
+	 */
 	public static function init(): void {
 		add_action( 'admin_menu', array( __CLASS__, 'register_page' ) );
 		add_action( 'admin_init', array( __CLASS__, 'handle_save' ) );
 		add_action( 'admin_post_wb_gam_save_levels', array( __CLASS__, 'handle_save_levels' ) );
 	}
 
+	/**
+	 * Register the top-level gamification admin menu page.
+	 */
 	public static function register_page(): void {
 		add_menu_page(
 			__( 'WB Gamification', 'wb-gamification' ),
@@ -45,6 +55,9 @@ final class SettingsPage {
 
 	// ── Form handlers ─────────────────────────────────────────────────────────
 
+	/**
+	 * Handle points/automation settings form submissions (admin_init).
+	 */
 	public static function handle_save(): void {
 		if ( ! isset( $_POST['wb_gam_settings_nonce'] ) ) {
 			return;
@@ -64,6 +77,10 @@ final class SettingsPage {
 		}
 	}
 
+	/**
+	 * Persist rank automation rules from the Automation tab form.
+	 * Nonce is verified by check_admin_referer() in handle_save().
+	 */
 	private static function save_automation_settings(): void {
 		// phpcs:disable WordPress.Security.NonceVerification.Missing -- Nonce verified by check_admin_referer() in handle_save().
 		$existing_rules = array();
@@ -87,16 +104,21 @@ final class SettingsPage {
 			return;
 		}
 
+		// phpcs:disable WordPress.Security.NonceVerification.Missing -- Nonce verified by check_admin_referer() in handle_save().
 		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- normalize_automation_rule sanitizes each field.
-		$raw  = (array) wp_unslash( $_POST['wb_gam_new_rule'] ?? array() );
+		$raw = (array) wp_unslash( $_POST['wb_gam_new_rule'] ?? array() );
+		// phpcs:enable WordPress.Security.NonceVerification.Missing
 		$rule = self::normalize_automation_rule( $raw );
 		if ( $rule ) {
 			$existing_rules[] = $rule;
 			update_option( 'wb_gam_rank_automation_rules', wp_json_encode( array_values( $existing_rules ) ) );
 		}
-		// phpcs:enable WordPress.Security.NonceVerification.Missing
 	}
 
+	/**
+	 * Persist per-action point values and enable/disable toggles from the Points tab.
+	 * Nonce is verified by check_admin_referer() in handle_save().
+	 */
 	private static function save_points_settings(): void {
 		// phpcs:disable WordPress.Security.NonceVerification.Missing -- Nonce verified by check_admin_referer() in handle_save().
 		$actions = Registry::get_actions();
@@ -175,6 +197,9 @@ final class SettingsPage {
 		);
 	}
 
+	/**
+	 * Handle the Levels tab form submission (admin-post.php action).
+	 */
 	public static function handle_save_levels(): void {
 		check_admin_referer( 'wb_gam_save_levels', 'wb_gam_levels_nonce' );
 
@@ -197,6 +222,7 @@ final class SettingsPage {
 					continue;
 				}
 
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- UPDATE statement; caching not applicable.
 				$wpdb->update(
 					$table,
 					array(
@@ -216,11 +242,15 @@ final class SettingsPage {
 
 	// ── Render ────────────────────────────────────────────────────────────────
 
+	/**
+	 * Render the settings page HTML.
+	 */
 	public static function render(): void {
 		if ( ! current_user_can( 'manage_options' ) ) {
 			wp_die( esc_html__( 'You do not have permission to access this page.', 'wb-gamification' ) );
 		}
 
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only tab/URL parameter, no form data processed here.
 		$tab = isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) : 'points';
 
 		settings_errors( 'wb_gamification' );
@@ -232,9 +262,11 @@ final class SettingsPage {
 				<?php self::render_mode_badge(); ?>
 			</div>
 
+			<?php // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- display-only flag set by our own redirect. ?>
 			<?php if ( isset( $_GET['saved'] ) ) : ?>
 				<div class="notice notice-success is-dismissible"><p><?php esc_html_e( 'Settings saved.', 'wb-gamification' ); ?></p></div>
 			<?php endif; ?>
+			<?php // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- display-only flag set by our own redirect. ?>
 			<?php if ( isset( $_GET['setup'] ) && 'complete' === $_GET['setup'] ) : ?>
 				<div class="notice notice-success is-dismissible"><p><?php esc_html_e( 'Setup complete! Review your point values below.', 'wb-gamification' ); ?></p></div>
 			<?php endif; ?>
@@ -270,6 +302,9 @@ final class SettingsPage {
 
 	// ── Points tab ────────────────────────────────────────────────────────────
 
+	/**
+	 * Render the Points settings tab.
+	 */
 	private static function render_points_tab(): void {
 		$actions = Registry::get_actions();
 		$by_cat  = array();
@@ -383,9 +418,14 @@ final class SettingsPage {
 
 	// ── Levels tab ────────────────────────────────────────────────────────────
 
+	/**
+	 * Render the Levels settings tab.
+	 */
 	private static function render_levels_tab(): void {
 		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- settings page, infrequent, small table.
 		$levels = $wpdb->get_results(
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name is $wpdb->prefix . literal string.
 			"SELECT id, name, min_points, sort_order FROM {$wpdb->prefix}wb_gam_levels ORDER BY min_points ASC",
 			ARRAY_A
 		);
@@ -438,6 +478,9 @@ final class SettingsPage {
 
 	// ── Automation tab ────────────────────────────────────────────────────────
 
+	/**
+	 * Render the Automation settings tab.
+	 */
 	private static function render_automation_tab(): void {
 		global $wpdb;
 
@@ -481,7 +524,8 @@ final class SettingsPage {
 					</tr>
 				</thead>
 				<tbody>
-				<?php foreach ( $rules as $i => $rule ) :
+				<?php
+				foreach ( $rules as $i => $rule ) :
 					$trigger    = (int) ( $rule['trigger_level_id'] ?? 0 );
 					$level_name = '';
 					foreach ( (array) $levels as $lv ) {
@@ -585,6 +629,9 @@ final class SettingsPage {
 
 	// ── Mode badge ────────────────────────────────────────────────────────────
 
+	/**
+	 * Render the standalone/community mode badge in the page header.
+	 */
 	private static function render_mode_badge(): void {
 		$bp_active = function_exists( 'buddypress' );
 
