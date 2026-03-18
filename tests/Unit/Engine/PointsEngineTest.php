@@ -95,8 +95,8 @@ class PointsEngineTest extends TestCase {
 		$wpdb = $this->mockWpdb();
 		$wpdb->prefix = 'wp_';
 
-		// Non-repeatable check — action never performed before.
-		$wpdb->expects( 'get_var' )->andReturn( 0 );
+		// No DB calls expected for repeatable action with no cooldown.
+		$wpdb->allows( 'get_var' )->andReturn( 0 );
 
 		$action = [ 'repeatable' => true, 'cooldown' => 0 ];
 		$result = PointsEngine::passes_rate_limits( 1, 'test_action', $action );
@@ -108,8 +108,8 @@ class PointsEngineTest extends TestCase {
 		global $wpdb;
 		$wpdb = $this->mockWpdb();
 		$wpdb->prefix = 'wp_';
-		$wpdb->expects( 'get_var' )->andReturn( 1 ); // Already done once.
-		Functions\expect( 'prepare' )->zeroOrMoreTimes()->andReturnArg( 0 );
+		$wpdb->expects( 'prepare' )->once()->andReturn( 'SELECT...' );
+		$wpdb->expects( 'get_var' )->once()->with( 'SELECT...' )->andReturn( 1 ); // Already done once.
 
 		$action = [ 'repeatable' => false, 'cooldown' => 0 ];
 		$result = PointsEngine::passes_rate_limits( 1, 'test_action', $action );

@@ -15,6 +15,9 @@ class BadgeSharePageTest extends TestCase {
     protected function setUp(): void {
         parent::setUp();
         Monkey\setUp();
+        Functions\when( 'add_query_arg' )->alias( function ( array $args, string $url ): string {
+            return $url . '?' . http_build_query( $args );
+        } );
     }
 
     protected function tearDown(): void {
@@ -33,8 +36,8 @@ class BadgeSharePageTest extends TestCase {
         );
 
         $this->assertStringContainsString( 'linkedin.com/profile/add', $url );
-        $this->assertStringContainsString( 'Community+Champion', urldecode( $url ) );
-        $this->assertStringContainsString( 'My+Site', urldecode( $url ) );
+        $this->assertStringContainsString( 'Community Champion', urldecode( $url ) );
+        $this->assertStringContainsString( 'My Site', urldecode( $url ) );
         $this->assertStringContainsString( '2024', $url );
         $this->assertStringContainsString( '6', $url );
     }

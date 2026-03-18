@@ -20,6 +20,13 @@ class ShortcodeHandlerTest extends TestCase {
 	protected function setUp(): void {
 		parent::setUp();
 		Monkey\setUp();
+		Functions\when( 'shortcode_atts' )->alias( function ( array $pairs, array $atts, string $shortcode = '' ): array {
+			$out = [];
+			foreach ( $pairs as $key => $default ) {
+				$out[ $key ] = array_key_exists( $key, $atts ) ? $atts[ $key ] : $default;
+			}
+			return $out;
+		} );
 	}
 
 	protected function tearDown(): void {

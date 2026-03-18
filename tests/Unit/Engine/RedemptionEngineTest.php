@@ -78,7 +78,7 @@ class RedemptionEngineTest extends TestCase {
 			'reward_config' => '{}',
 		];
 
-		$wpdb->expects( 'get_row' )->andReturn( (object) $item );
+		$wpdb->expects( 'get_row' )->andReturn( $item );
 		$wpdb->expects( 'prepare' )->andReturnArg( 0 );
 
 		Functions\expect( '__' )->andReturnArg( 0 );
@@ -103,12 +103,11 @@ class RedemptionEngineTest extends TestCase {
 			'reward_config' => '{}',
 		];
 
-		$wpdb->expects( 'get_row' )->andReturn( (object) $item );
+		$wpdb->expects( 'get_row' )->andReturn( $item );
 		$wpdb->expects( 'prepare' )->andReturnArg( 0 );
 
 		// Mock PointsEngine::get_total() to return 50 (not enough).
 		Functions\expect( '__' )->andReturnArg( 0 );
-		Functions\expect( 'sprintf' )->andReturnArg( 0 );
 		Functions\expect( 'wp_cache_get' )->andReturn( 50 );
 
 		$result = RedemptionEngine::redeem( 1, 1 );
