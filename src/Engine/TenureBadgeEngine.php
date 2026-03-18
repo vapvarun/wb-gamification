@@ -159,12 +159,14 @@ final class TenureBadgeEngine {
 				)
 			);
 
+			$fetched = count( $users );
+
 			foreach ( $users as $user_id ) {
 				self::check_user( (int) $user_id );
 			}
 
 			$offset += $batch_size;
-		} while ( count( $users ) === $batch_size ); // phpcs:ignore Squiz.PHP.DisallowSizeFunctionsInLoops.Found -- $users is reassigned each iteration, count must be re-evaluated.
+		} while ( $fetched === $batch_size );
 	}
 
 	/**
