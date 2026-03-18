@@ -81,4 +81,61 @@ $wrapper_attributes = get_block_wrapper_attributes( [ 'class' => 'wb-gam-leaderb
 			<?php endforeach; ?>
 		</ol>
 	<?php endif; ?>
+
+	<?php
+	// ── Personal rank nudge ───────────────────────────────────────────────────
+	// Show the current user's rank if they're not already visible in the list.
+	$current_uid = get_current_user_id();
+
+	if ( $current_uid > 0 && ! empty( $rows ) ) {
+		$visible_ids = array_column( $rows, 'user_id' );
+
+		if ( ! in_array( $current_uid, $visible_ids, true ) ) {
+			$my_rank = LeaderboardEngine::get_user_rank( $current_uid, $period, $scope_type, $scope_id );
+
+			if ( $my_rank['points'] > 0 ) {
+				?>
+				<div class="wb-gam-leaderboard__my-rank">
+					<span class="wb-gam-leaderboard__my-rank-label">
+						<?php esc_html_e( 'Your rank', 'wb-gamification' ); ?>
+					</span>
+					<span class="wb-gam-leaderboard__my-rank-position">
+						<?php
+						echo esc_html(
+							sprintf(
+								/* translators: %d = rank number */
+								__( '#%d', 'wb-gamification' ),
+								$my_rank['rank']
+							)
+						);
+						?>
+					</span>
+					<span class="wb-gam-leaderboard__my-rank-points">
+						<?php
+						printf(
+							/* translators: %s = formatted points total */
+							esc_html__( '%s pts', 'wb-gamification' ),
+							esc_html( number_format_i18n( $my_rank['points'] ) )
+						);
+						?>
+					</span>
+					<?php if ( null !== $my_rank['points_to_next'] ) : ?>
+						<span class="wb-gam-leaderboard__my-rank-gap">
+							<?php
+							echo esc_html(
+								sprintf(
+									/* translators: %s = points needed to move up one rank */
+									__( '%s pts from the next rank', 'wb-gamification' ),
+									number_format_i18n( $my_rank['points_to_next'] )
+								)
+							);
+							?>
+						</span>
+					<?php endif; ?>
+				</div>
+				<?php
+			}
+		}
+	}
+	?>
 </div>
