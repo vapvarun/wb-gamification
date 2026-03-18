@@ -141,6 +141,7 @@
 
 .wb-gam-member-points__progress-bar {
 	height: 100%;
+	width: var(--wb-gam-fill, 0%);
 	background: var(--wb-gam-primary);
 	border-radius: 999px;
 	transition: width 0.4s ease;
@@ -346,6 +347,7 @@
 
 .wb-gam-level-progress__bar {
 	height: 100%;
+	width: var(--wb-gam-fill, 0%);
 	background: linear-gradient(90deg, var(--wb-gam-primary), #a78bfa);
 	border-radius: 999px;
 	transition: width 0.5s ease;
@@ -462,6 +464,7 @@
 
 .wb-gam-challenges__bar {
 	height: 100%;
+	width: var(--wb-gam-fill, 0%);
 	background: var(--wb-gam-primary);
 	border-radius: 999px;
 	transition: width 0.4s ease;
@@ -1235,4 +1238,8 @@
 	text-align: center;
 	padding: 2rem;
 	margin: 0;
+}
+
+.wb-gam-progress-fill {
+	width: var(--wb-gam-fill, 0%);
 }

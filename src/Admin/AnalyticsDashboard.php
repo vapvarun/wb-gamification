@@ -473,7 +473,7 @@ final class AnalyticsDashboard {
 			$h         = (int) round( ( $pts / $max ) * 100 );
 			$bar_title = esc_attr( $day . ': ' . number_format_i18n( $pts ) . ' pts' );
 			$bar_width = esc_attr( number_format( $w, 4 ) );
-			echo '<div class="wb-gam-analytics__spark-bar" style="height:' . $h . '%;width:' . $bar_width . '%" title="' . $bar_title . '"></div>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- $h is int, $bar_width and $bar_title are esc_attr()-escaped.
+			echo '<div class="wb-gam-analytics__spark-bar" style="--bar-h:' . $h . '%;--bar-w:' . $bar_width . '%" title="' . $bar_title . '"></div>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- $h is int, $bar_width and $bar_title are esc_attr()-escaped.
 		}
 		echo '</div>';
 	}

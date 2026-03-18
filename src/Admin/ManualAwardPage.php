@@ -175,7 +175,7 @@ final class ManualAwardPage {
 						<?php $user = get_userdata( (int) $row['user_id'] ); ?>
 					<tr>
 						<td><?php echo esc_html( $user ? $user->display_name : '#' . $row['user_id'] ); ?></td>
-						<td style="color:<?php echo (int) $row['points'] >= 0 ? 'green' : 'red'; ?>">
+						<td class="<?php echo (int) $row['points'] >= 0 ? 'wb-gam-positive' : 'wb-gam-negative'; ?>">
 							<?php echo esc_html( number_format_i18n( (int) $row['points'] ) ); ?>
 						</td>
 						<td><?php echo esc_html( (string) ( $row['note'] ?? '' ) ); ?></td>

@@ -82,7 +82,7 @@ final class ProfileIntegration {
 			</span>
 			<?php if ( $next_level_points > 0 ) : ?>
 			<div class="wb-gam-progress-bar" title="<?php echo esc_attr( $progress_pct . '%' ); ?>">
-				<div class="wb-gam-progress-fill" style="width:<?php echo esc_attr( $progress_pct ); ?>%"></div>
+				<div class="wb-gam-progress-fill" style="--wb-gam-fill:<?php echo esc_attr( $progress_pct ); ?>%"></div>
 			</div>
 			<?php endif; ?>
 		</div>

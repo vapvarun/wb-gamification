@@ -1,0 +1,52 @@
+/**
+ * WB Gamification — Badge Share Page
+ *
+ * Public-facing shareable credential page styles.
+ *
+ * @since 0.5.0
+ */
+
+.wb-gam-share-page {
+	max-width: 600px;
+	margin: 40px auto;
+	padding: 0 16px;
+	font-family: sans-serif;
+	text-align: center;
+}
+
+.wb-gam-share-page__badge-img {
+	border-radius: 50%;
+	margin-bottom: 24px;
+}
+
+.wb-gam-share-page__title {
+	font-size: 1.8em;
+	margin: 0 0 8px;
+}
+
+.wb-gam-share-page__desc {
+	color: #555;
+	margin: 0 0 16px;
+}
+
+.wb-gam-share-page__earned-by {
+	font-size: 0.95em;
+	color: #777;
+	margin: 0 0 24px;
+}
+
+.wb-gam-share-page__linkedin-btn {
+	display: inline-block;
+	background: #0a66c2;
+	color: #fff;
+	padding: 12px 24px;
+	border-radius: 6px;
+	text-decoration: none;
+	font-weight: 600;
+	margin-bottom: 16px;
+}
+
+.wb-gam-share-page__credential-link {
+	font-size: 0.85em;
+	color: #666;
+}

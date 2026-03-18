@@ -175,13 +175,13 @@ final class SetupWizard {
 
 		$configs = self::get_template_configs();
 		?>
-		<div class="wrap" style="max-width:1100px;">
+		<div class="wrap wb-gam-wizard-wrap">
 
-			<div style="margin:40px 0 8px;">
-				<h1 style="font-size:28px;font-weight:700;margin:0 0 10px;">
+			<div class="wb-gam-wizard-header">
+				<h1>
 					<?php esc_html_e( 'Welcome to WB Gamification', 'wb-gamification' ); ?>
 				</h1>
-				<p style="font-size:15px;color:#50575e;margin:0;">
+				<p>
 					<?php esc_html_e( 'Choose a starter template to pre-configure your point values. You can change everything later from the settings screen.', 'wb-gamification' ); ?>
 				</p>
 			</div>
@@ -189,18 +189,18 @@ final class SetupWizard {
 			<form method="post">
 				<?php wp_nonce_field( 'wb_gam_setup_nonce' ); ?>
 
-				<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:20px;margin:30px 0;">
+				<div class="wb-gam-wizard-grid">
 
 					<?php foreach ( $configs as $key => $config ) : ?>
-						<div style="background:#fff;border:1px solid #dcdcde;border-radius:4px;padding:24px;display:flex;flex-direction:column;justify-content:space-between;">
+						<div class="wb-gam-wizard-card">
 							<div>
-								<h3 style="margin:0 0 10px;font-size:16px;font-weight:600;">
+								<h3 class="wb-gam-wizard-card__title">
 									<?php echo esc_html( $config['label'] ); ?>
 								</h3>
-								<p style="margin:0 0 20px;color:#50575e;font-size:13px;line-height:1.6;">
+								<p class="wb-gam-wizard-card__desc">
 									<?php echo esc_html( $config['description'] ); ?>
 								</p>
-								<p style="margin:0 0 20px;font-size:12px;color:#787c82;">
+								<p class="wb-gam-wizard-card__points">
 									<?php
 									$point_labels = array();
 									foreach ( $config['points'] as $action => $pts ) {
@@ -215,8 +215,7 @@ final class SetupWizard {
 								type="submit"
 								name="wb_gam_template"
 								value="<?php echo esc_attr( $key ); ?>"
-								class="button button-primary"
-								style="align-self:flex-start;"
+								class="button button-primary wb-gam-wizard-card__btn"
 							>
 								<?php esc_html_e( 'Use this template', 'wb-gamification' ); ?>
 							</button>
@@ -225,13 +224,12 @@ final class SetupWizard {
 
 				</div>
 
-				<p style="margin-top:10px;">
+				<p class="wb-gam-wizard-skip-row">
 					<button
 						type="submit"
 						name="wb_gam_template"
 						value="skip"
-						class="button button-link"
-						style="color:#787c82;text-decoration:underline;"
+						class="button button-link wb-gam-wizard-skip-btn"
 					>
 						<?php esc_html_e( 'Skip &amp; configure manually', 'wb-gamification' ); ?>
 					</button>

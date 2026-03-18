@@ -23,8 +23,8 @@
 
 .wb-gam-analytics__kpi-card {
 	background: #fff;
-	border: 1px solid #e5e7eb;
-	border-radius: 8px;
+	border: 1px solid var(--wb-gam-border);
+	border-radius: var(--wb-gam-radius);
 	padding: 1.25rem 1rem;
 	display: flex;
 	flex-direction: column;
@@ -48,7 +48,7 @@
 
 .wb-gam-analytics__kpi-sub {
 	font-size: 0.75rem;
-	color: #9ca3af;
+	color: var(--wb-gam-silver);
 }
 
 /* Two-column panels */
@@ -65,8 +65,8 @@
 
 .wb-gam-analytics__panel {
 	background: #fff;
-	border: 1px solid #e5e7eb;
-	border-radius: 8px;
+	border: 1px solid var(--wb-gam-border);
+	border-radius: var(--wb-gam-radius);
 	padding: 1.25rem;
 }
 
@@ -88,7 +88,9 @@
 .wb-gam-analytics__spark-bar {
 	flex: 1;
 	min-width: 2px;
-	background: #6c63ff;
+	height: var(--bar-h, 0%);
+	width: var(--bar-w, 100%);
+	background: var(--wb-gam-primary);
 	border-radius: 2px 2px 0 0;
 	opacity: 0.75;
 	transition: opacity 0.15s;

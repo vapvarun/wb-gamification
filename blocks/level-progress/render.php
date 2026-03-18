@@ -79,7 +79,7 @@ $wrapper_attrs = get_block_wrapper_attributes( [ 'class' => 'wb-gam-level-progre
 
 	<?php if ( $show_bar ) : ?>
 		<div class="wb-gam-level-progress__bar-wrap" role="progressbar" aria-valuenow="<?php echo esc_attr( $pct ); ?>" aria-valuemin="0" aria-valuemax="100">
-			<div class="wb-gam-level-progress__bar" style="width: <?php echo esc_attr( $pct ); ?>%"></div>
+			<div class="wb-gam-level-progress__bar" style="--wb-gam-fill: <?php echo esc_attr( $pct ); ?>%"></div>
 		</div>
 		<span class="wb-gam-level-progress__pct"><?php echo esc_html( number_format_i18n( $pct, 1 ) . '%' ); ?></span>
 	<?php endif; ?>

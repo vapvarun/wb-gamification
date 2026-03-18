@@ -73,7 +73,7 @@ $wrapper_attributes = get_block_wrapper_attributes( [ 'class' => 'wb-gam-member-
 		     aria-valuemin="0" aria-valuemax="100"
 		     aria-label="<?php esc_attr_e( 'Level progress', 'wb-gamification' ); ?>">
 			<div class="wb-gam-member-points__progress-bar"
-			     style="width: <?php echo esc_attr( $progress_pct ); ?>%"></div>
+			     style="--wb-gam-fill: <?php echo esc_attr( $progress_pct ); ?>%"></div>
 		</div>
 
 		<?php if ( $next_level ) : ?>

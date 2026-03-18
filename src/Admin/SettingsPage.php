@@ -336,14 +336,14 @@ final class SettingsPage {
 					<h3 class="wb-gam-admin-section-heading">
 						<?php echo esc_html( $cat_labels[ $cat ] ?? ucfirst( $cat ) ); ?>
 					</h3>
-					<table class="widefat striped" style="margin-bottom:20px;">
+					<table class="widefat striped wb-gam-settings-table">
 						<thead>
 						<tr>
-							<th style="width:28px;"><?php esc_html_e( 'On', 'wb-gamification' ); ?></th>
+							<th class="wb-gam-col-toggle"><?php esc_html_e( 'On', 'wb-gamification' ); ?></th>
 							<th><?php esc_html_e( 'Action', 'wb-gamification' ); ?></th>
-							<th style="width:90px;"><?php esc_html_e( 'Points', 'wb-gamification' ); ?></th>
-							<th style="width:80px;"><?php esc_html_e( 'Repeat', 'wb-gamification' ); ?></th>
-							<th style="width:80px;"><?php esc_html_e( 'Daily cap', 'wb-gamification' ); ?></th>
+							<th class="wb-gam-col-points"><?php esc_html_e( 'Points', 'wb-gamification' ); ?></th>
+							<th class="wb-gam-col-flag"><?php esc_html_e( 'Repeat', 'wb-gamification' ); ?></th>
+							<th class="wb-gam-col-flag"><?php esc_html_e( 'Daily cap', 'wb-gamification' ); ?></th>
 						</tr>
 						</thead>
 						<tbody>
@@ -366,9 +366,9 @@ final class SettingsPage {
 								<td>
 									<strong><?php echo esc_html( $action['label'] ?? $action_id ); ?></strong>
 									<?php if ( ! empty( $action['description'] ) ) : ?>
-										<br><span style="color:#646970;font-size:12px;"><?php echo esc_html( $action['description'] ); ?></span>
+										<br><span class="wb-gam-action-desc"><?php echo esc_html( $action['description'] ); ?></span>
 									<?php endif; ?>
-									<code style="font-size:11px;color:#999;"><?php echo esc_html( $action_id ); ?></code>
+									<code class="wb-gam-action-code"><?php echo esc_html( $action_id ); ?></code>
 								</td>
 								<td>
 									<input
@@ -377,13 +377,13 @@ final class SettingsPage {
 										value="<?php echo esc_attr( $pts ); ?>"
 										min="0"
 										max="9999"
-										style="width:70px;"
+										class="wb-gam-input-narrow"
 									>
 								</td>
-								<td style="color:#646970;font-size:12px;">
+								<td class="wb-gam-action-desc">
 									<?php echo $repeatable ? esc_html__( 'Yes', 'wb-gamification' ) : esc_html__( 'Once', 'wb-gamification' ); ?>
 								</td>
-								<td style="color:#646970;font-size:12px;">
+								<td class="wb-gam-action-desc">
 									<?php echo $daily_cap > 0 ? esc_html( $daily_cap ) : '&infin;'; ?>
 								</td>
 							</tr>
@@ -404,7 +404,7 @@ final class SettingsPage {
 								value="<?php echo esc_attr( (int) get_option( 'wb_gam_log_retention_months', 6 ) ); ?>"
 								min="1"
 								max="24"
-								style="width:70px;"
+								class="wb-gam-input-narrow"
 							>
 							<?php esc_html_e( 'months', 'wb-gamification' ); ?>
 							<p class="description">
@@ -526,11 +526,11 @@ final class SettingsPage {
 			<input type="hidden" name="action" value="wb_gam_save_levels">
 			<?php wp_nonce_field( 'wb_gam_save_levels', 'wb_gam_levels_nonce' ); ?>
 
-			<table class="widefat striped" style="max-width:600px;">
+			<table class="widefat striped wb-gam-levels-table">
 				<thead>
 				<tr>
 					<th><?php esc_html_e( 'Level Name', 'wb-gamification' ); ?></th>
-					<th style="width:160px;"><?php esc_html_e( 'Min Points Required', 'wb-gamification' ); ?></th>
+					<th class="wb-gam-col-pts-min"><?php esc_html_e( 'Min Points Required', 'wb-gamification' ); ?></th>
 				</tr>
 				</thead>
 				<tbody>
@@ -541,7 +541,7 @@ final class SettingsPage {
 								type="text"
 								name="wb_gam_level[<?php echo esc_attr( $level['id'] ); ?>][name]"
 								value="<?php echo esc_attr( $level['name'] ); ?>"
-								style="width:100%;"
+								class="wb-gam-input-full"
 							>
 						</td>
 						<td>
@@ -550,7 +550,7 @@ final class SettingsPage {
 								name="wb_gam_level[<?php echo esc_attr( $level['id'] ); ?>][min_points]"
 								value="<?php echo esc_attr( $level['min_points'] ); ?>"
 								min="0"
-								style="width:120px;"
+								class="wb-gam-input-medium"
 								<?php echo 0 === (int) $level['min_points'] ? 'readonly title="' . esc_attr__( 'Starting level is always 0', 'wb-gamification' ) . '"' : ''; ?>
 							>
 						</td>
@@ -602,7 +602,7 @@ final class SettingsPage {
 		</p>
 
 		<?php if ( $rules ) : ?>
-			<table class="widefat striped" style="margin-bottom:24px;">
+			<table class="widefat striped wb-gam-automation-table">
 				<thead>
 					<tr>
 						<th><?php esc_html_e( 'When member reaches', 'wb-gamification' ); ?></th>
@@ -633,7 +633,7 @@ final class SettingsPage {
 							<td><?php echo esc_html( $action_label ); ?></td>
 							<td><code><?php echo esc_html( wp_json_encode( $params ) ); ?></code></td>
 							<td>
-								<form method="post" action="<?php echo esc_url( $form_url ); ?>" style="display:inline;">
+								<form method="post" action="<?php echo esc_url( $form_url ); ?>" class="wb-gam-form-inline">
 									<?php wp_nonce_field( 'wb_gam_save_settings', 'wb_gam_settings_nonce' ); ?>
 									<input type="hidden" name="wb_gam_automation_action" value="delete" />
 									<input type="hidden" name="wb_gam_rule_index" value="<?php echo esc_attr( $i ); ?>" />
@@ -649,7 +649,7 @@ final class SettingsPage {
 				</tbody>
 			</table>
 		<?php else : ?>
-			<p class="description" style="margin-bottom:24px;"><?php esc_html_e( 'No automation rules configured yet.', 'wb-gamification' ); ?></p>
+			<p class="description wb-gam-mb-24"><?php esc_html_e( 'No automation rules configured yet.', 'wb-gamification' ); ?></p>
 		<?php endif; ?>
 
 		<h3><?php esc_html_e( 'Add New Rule', 'wb-gamification' ); ?></h3>
@@ -682,21 +682,21 @@ final class SettingsPage {
 				<tr>
 					<th scope="row">
 						<label for="wb-gam-new-rule-group-id"><?php esc_html_e( 'Group ID', 'wb-gamification' ); ?>
-						<span style="color:#999;font-size:0.85em;"><?php esc_html_e( '(for "Add to group")', 'wb-gamification' ); ?></span></label>
+						<span class="wb-gam-hint-text"><?php esc_html_e( '(for "Add to group")', 'wb-gamification' ); ?></span></label>
 					</th>
 					<td><input type="number" name="wb_gam_new_rule[group_id]" id="wb-gam-new-rule-group-id" class="small-text" min="0" value="" placeholder="0" /></td>
 				</tr>
 				<tr>
 					<th scope="row">
 						<label for="wb-gam-new-rule-role"><?php esc_html_e( 'Role slug', 'wb-gamification' ); ?>
-						<span style="color:#999;font-size:0.85em;"><?php esc_html_e( '(for "Add role")', 'wb-gamification' ); ?></span></label>
+						<span class="wb-gam-hint-text"><?php esc_html_e( '(for "Add role")', 'wb-gamification' ); ?></span></label>
 					</th>
 					<td><input type="text" name="wb_gam_new_rule[role]" id="wb-gam-new-rule-role" class="regular-text" value="" placeholder="contributor" /></td>
 				</tr>
 				<tr>
 					<th scope="row">
 						<label for="wb-gam-new-rule-sender-id"><?php esc_html_e( 'Message sender user ID', 'wb-gamification' ); ?>
-						<span style="color:#999;font-size:0.85em;"><?php esc_html_e( '(for "Send message")', 'wb-gamification' ); ?></span></label>
+						<span class="wb-gam-hint-text"><?php esc_html_e( '(for "Send message")', 'wb-gamification' ); ?></span></label>
 					</th>
 					<td><input type="number" name="wb_gam_new_rule[sender_id]" id="wb-gam-new-rule-sender-id" class="small-text" min="1" value="1" /></td>
 				</tr>

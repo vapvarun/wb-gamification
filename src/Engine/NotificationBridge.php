@@ -276,9 +276,7 @@ final class NotificationBridge {
 		</div>
 
 		<?php if ( ! empty( $events ) ) : ?>
-			<script id="wb-gam-notifications-data">
-				window.wbGamNotifications = <?php echo wp_json_encode( $events ); ?>;
-			</script>
+			<?php wp_print_inline_script_tag( 'window.wbGamNotifications = ' . wp_json_encode( $events ) . ';', array( 'id' => 'wb-gam-notifications-data' ) ); ?>
 		<?php endif; ?>
 		<?php
 	}

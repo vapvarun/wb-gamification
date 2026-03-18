@@ -99,7 +99,7 @@ $wrapper_attrs = get_block_wrapper_attributes( [ 'class' => 'wb-gam-challenges' 
 							aria-valuemin="0"
 							aria-valuemax="100"
 						>
-							<div class="wb-gam-challenges__bar" style="width: <?php echo esc_attr( min( 100, $ch['progress_pct'] ) ); ?>%"></div>
+							<div class="wb-gam-challenges__bar" style="--wb-gam-fill: <?php echo esc_attr( min( 100, $ch['progress_pct'] ) ); ?>%"></div>
 						</div>
 					<?php endif; ?>
 				</li>

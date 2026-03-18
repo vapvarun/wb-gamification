@@ -30,6 +30,26 @@ final class BadgeAdminPage {
 		add_action( 'admin_menu', array( __CLASS__, 'add_submenu' ) );
 		add_action( 'admin_post_wb_gam_save_badge', array( __CLASS__, 'handle_save' ) );
 		add_action( 'admin_post_wb_gam_delete_badge', array( __CLASS__, 'handle_delete' ) );
+		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_assets' ) );
+	}
+
+	/**
+	 * Enqueue scripts for the badges admin page.
+	 *
+	 * @param string $hook Current admin page hook suffix.
+	 * @return void
+	 */
+	public static function enqueue_assets( string $hook ): void {
+		if ( false === strpos( $hook, 'wb-gamification-badges' ) ) {
+			return;
+		}
+		wp_enqueue_script(
+			'wb-gam-admin-badge',
+			WB_GAM_URL . 'assets/js/admin-badge.js',
+			array(),
+			WB_GAM_VERSION,
+			true
+		);
 	}
 
 	/**
@@ -146,7 +166,7 @@ final class BadgeAdminPage {
 				<tr>
 					<td>
 						<strong><?php echo esc_html( $badge['name'] ); ?></strong>
-						<br><small style="color:#999"><?php echo esc_html( $badge['id'] ); ?></small>
+						<br><small class="wb-gam-badge-id-hint"><?php echo esc_html( $badge['id'] ); ?></small>
 					</td>
 					<td><?php echo esc_html( $badge['category'] ); ?></td>
 					<td><?php echo esc_html( $cond_label ); ?></td>
@@ -159,7 +179,7 @@ final class BadgeAdminPage {
 						&nbsp;|&nbsp;
 						<a href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin-post.php?action=wb_gam_delete_badge&badge=' . $badge['id'] ), 'wb_gam_delete_badge_' . $badge['id'] ) ); ?>"
 							onclick="return confirm('<?php esc_attr_e( 'Delete this badge and all earned records?', 'wb-gamification' ); ?>')"
-							style="color:#a00">
+							class="wb-gam-delete-link">
 							<?php esc_html_e( 'Delete', 'wb-gamification' ); ?>
 						</a>
 					</td>
@@ -221,9 +241,9 @@ final class BadgeAdminPage {
 
 		$back_url = admin_url( 'admin.php?page=wb-gamification-badges' );
 		?>
-		<a href="<?php echo esc_url( $back_url ); ?>" style="display:inline-block;margin-bottom:1rem;">← <?php esc_html_e( 'Back to badges', 'wb-gamification' ); ?></a>
+		<a href="<?php echo esc_url( $back_url ); ?>" class="wb-gam-back-link">← <?php esc_html_e( 'Back to badges', 'wb-gamification' ); ?></a>
 
-		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="max-width:700px">
+		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="wb-gam-badge-form">
 			<?php wp_nonce_field( 'wb_gam_save_badge', 'wb_gam_badge_nonce' ); ?>
 			<input type="hidden" name="action" value="wb_gam_save_badge">
 			<input type="hidden" name="original_id" value="<?php echo esc_attr( $badge_id ); ?>">
@@ -324,30 +344,22 @@ final class BadgeAdminPage {
 						</select>
 					</td>
 				</tr>
-				<tr id="wb-gam-field-points" style="<?php echo 'point_milestone' === $condition['condition_type'] ? '' : 'display:none'; ?>">
+				<tr id="wb-gam-field-points" <?php echo 'point_milestone' !== $condition['condition_type'] ? 'class="wb-gam-hidden"' : ''; ?>>
 					<th><label for="wb-gam-condition-points"><?php esc_html_e( 'Points Threshold', 'wb-gamification' ); ?></label></th>
 					<td><input type="number" name="condition_points" id="wb-gam-condition-points" min="1" value="<?php echo esc_attr( $condition['points'] ?? 100 ); ?>"></td>
 				</tr>
-				<tr id="wb-gam-field-action" style="<?php echo 'action_count' === $condition['condition_type'] ? '' : 'display:none'; ?>">
+				<tr id="wb-gam-field-action" <?php echo 'action_count' !== $condition['condition_type'] ? 'class="wb-gam-hidden"' : ''; ?>>
 					<th><label for="wb-gam-condition-action-id"><?php esc_html_e( 'Action ID', 'wb-gamification' ); ?></label></th>
 					<td>
 						<input type="text" name="condition_action_id" id="wb-gam-condition-action-id" class="regular-text" value="<?php echo esc_attr( $condition['action_id'] ?? '' ); ?>" placeholder="e.g. wp_publish_post">
 						<p class="description"><?php esc_html_e( 'Must match a registered action ID.', 'wb-gamification' ); ?></p>
 					</td>
 				</tr>
-				<tr id="wb-gam-field-count" style="<?php echo 'action_count' === $condition['condition_type'] ? '' : 'display:none'; ?>">
+				<tr id="wb-gam-field-count" <?php echo 'action_count' !== $condition['condition_type'] ? 'class="wb-gam-hidden"' : ''; ?>>
 					<th><label for="wb-gam-condition-count"><?php esc_html_e( 'Required Count', 'wb-gamification' ); ?></label></th>
 					<td><input type="number" name="condition_count" id="wb-gam-condition-count" min="1" value="<?php echo esc_attr( $condition['count'] ?? 1 ); ?>"></td>
 				</tr>
 			</table>
-
-			<script>
-			function wbGamToggleConditionFields(type) {
-				document.getElementById('wb-gam-field-points').style.display  = type === 'point_milestone' ? '' : 'none';
-				document.getElementById('wb-gam-field-action').style.display  = type === 'action_count' ? '' : 'none';
-				document.getElementById('wb-gam-field-count').style.display   = type === 'action_count' ? '' : 'none';
-			}
-			</script>
 
 			<p class="submit">
 				<button type="submit" class="button button-primary">

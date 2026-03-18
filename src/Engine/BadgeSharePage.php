@@ -162,6 +162,7 @@ final class BadgeSharePage {
 			}
 		);
 
+		wp_enqueue_style( 'wb-gam-share-page', WB_GAM_URL . 'assets/css/share-page.css', array(), WB_GAM_VERSION );
 		get_header();
 		self::render_share_body( $badge, $user, $linkedin_url, $cred_url, $issued_dt );
 		get_footer();
@@ -182,18 +183,18 @@ final class BadgeSharePage {
 			? esc_html( date_i18n( get_option( 'date_format' ), $issued_dt->getTimestamp() ) )
 			: '';
 		?>
-		<div class="wb-gam-share-page" style="max-width:600px;margin:40px auto;padding:0 16px;font-family:sans-serif;text-align:center;">
+		<div class="wb-gam-share-page">
 			<?php if ( $badge['image_url'] ) : ?>
 				<img src="<?php echo esc_url( $badge['image_url'] ); ?>"
 					alt="<?php echo esc_attr( $badge['name'] ); ?>"
 					width="160" height="160"
-					style="border-radius:50%;margin-bottom:24px;" />
+					class="wb-gam-share-page__badge-img" />
 			<?php endif; ?>
 
-			<h1 style="font-size:1.8em;margin:0 0 8px;"><?php echo esc_html( $badge['name'] ); ?></h1>
-			<p style="color:#555;margin:0 0 16px;"><?php echo esc_html( $badge['description'] ); ?></p>
+			<h1 class="wb-gam-share-page__title"><?php echo esc_html( $badge['name'] ); ?></h1>
+			<p class="wb-gam-share-page__desc"><?php echo esc_html( $badge['description'] ); ?></p>
 
-			<p style="font-size:0.95em;color:#777;margin:0 0 24px;">
+			<p class="wb-gam-share-page__earned-by">
 				<?php
 				// phpcs:disable WordPress.Security.EscapeOutput.OutputNotEscaped -- all arguments are pre-escaped with esc_html/esc_html__.
 				printf(
@@ -210,7 +211,7 @@ final class BadgeSharePage {
 				<a href="<?php echo esc_url( $linkedin_url ); ?>"
 					rel="noopener noreferrer"
 					target="_blank"
-					style="display:inline-block;background:#0A66C2;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:600;margin-bottom:16px;">
+					class="wb-gam-share-page__linkedin-btn">
 					<?php esc_html_e( 'Add to LinkedIn', 'wb-gamification' ); ?>
 				</a>
 				<br />
@@ -220,7 +221,7 @@ final class BadgeSharePage {
 				<a href="<?php echo esc_url( $cred_url ); ?>"
 					rel="noopener noreferrer"
 					target="_blank"
-					style="font-size:0.85em;color:#666;">
+					class="wb-gam-share-page__credential-link">
 					<?php esc_html_e( 'View verifiable credential (JSON-LD)', 'wb-gamification' ); ?>
 				</a>
 			<?php endif; ?>
