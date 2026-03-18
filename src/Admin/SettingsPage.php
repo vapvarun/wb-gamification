@@ -19,6 +19,7 @@
 
 namespace WBGam\Admin;
 
+use WBGam\Admin\AnalyticsDashboard;
 use WBGam\Engine\Registry;
 
 defined( 'ABSPATH' ) || exit;
@@ -251,14 +252,14 @@ final class SettingsPage {
 		}
 
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only tab/URL parameter, no form data processed here.
-		$tab = isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) : 'points';
+		$tab = isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) : 'dashboard';
 
 		settings_errors( 'wb_gamification' );
 		?>
 		<div class="wrap" id="wb-gam-settings">
 
-			<div style="display:flex;align-items:center;gap:12px;margin:20px 0 0;">
-				<h1 style="margin:0;"><?php esc_html_e( 'WB Gamification', 'wb-gamification' ); ?></h1>
+			<div class="wb-gam-admin-header">
+				<h1><?php esc_html_e( 'WB Gamification', 'wb-gamification' ); ?></h1>
 				<?php self::render_mode_badge(); ?>
 			</div>
 
@@ -274,6 +275,7 @@ final class SettingsPage {
 			<nav class="nav-tab-wrapper" style="margin-top:16px;">
 				<?php
 				$tabs = array(
+					'dashboard'  => __( 'Dashboard', 'wb-gamification' ),
 					'points'     => __( 'Points', 'wb-gamification' ),
 					'levels'     => __( 'Levels', 'wb-gamification' ),
 					'automation' => __( 'Automation', 'wb-gamification' ),
@@ -286,12 +288,13 @@ final class SettingsPage {
 				<?php endforeach; ?>
 			</nav>
 
-			<div class="tab-content" style="background:#fff;border:1px solid #c3c4c7;border-top:none;padding:24px;">
+			<div class="wb-gam-admin-tab-content">
 				<?php
 				match ( $tab ) {
 					'levels'     => self::render_levels_tab(),
 					'automation' => self::render_automation_tab(),
-					default      => self::render_points_tab(),
+					'points'     => self::render_points_tab(),
+					default      => self::render_dashboard_tab(),
 				};
 		?>
 			</div>
@@ -330,7 +333,7 @@ final class SettingsPage {
 			<?php else : ?>
 
 				<?php foreach ( $by_cat as $cat => $cat_actions ) : ?>
-					<h3 style="margin:20px 0 8px;text-transform:capitalize;">
+					<h3 class="wb-gam-admin-section-heading">
 						<?php echo esc_html( $cat_labels[ $cat ] ?? ucfirst( $cat ) ); ?>
 					</h3>
 					<table class="widefat striped" style="margin-bottom:20px;">
@@ -417,6 +420,90 @@ final class SettingsPage {
 		<?php
 	}
 
+	// ── Dashboard tab ───────────────────────────────────────────────────────────
+
+	/**
+	 * Render the Dashboard overview tab.
+	 *
+	 * Shows the last-30-day KPI cards from AnalyticsDashboard plus quick-action links.
+	 */
+	private static function render_dashboard_tab(): void {
+		$stats = AnalyticsDashboard::get_stats( 30 );
+		?>
+		<div class="wb-gam-admin-kpi-strip">
+			<?php
+			AnalyticsDashboard::kpi_card(
+				__( 'Points Awarded', 'wb-gamification' ),
+				number_format_i18n( $stats['points_total'] ),
+				__( 'Last 30 days', 'wb-gamification' ),
+				'⭐'
+			);
+			AnalyticsDashboard::kpi_card(
+				__( 'Active Members', 'wb-gamification' ),
+				number_format_i18n( $stats['active_members'] ),
+				sprintf(
+					/* translators: %d = total member count */
+					__( '%d total members', 'wb-gamification' ),
+					$stats['total_members']
+				),
+				'👥'
+			);
+			AnalyticsDashboard::kpi_card(
+				__( 'Badges Earned', 'wb-gamification' ),
+				number_format_i18n( $stats['badges_earned'] ),
+				sprintf(
+					/* translators: %s = badge earner percentage */
+					__( '%s%% of active members', 'wb-gamification' ),
+					$stats['badge_earner_pct']
+				),
+				'🏅'
+			);
+			AnalyticsDashboard::kpi_card(
+				__( 'Challenges Completed', 'wb-gamification' ),
+				number_format_i18n( $stats['challenges_completed'] ),
+				sprintf(
+					/* translators: %s = completion rate percentage */
+					__( '%s%% completion rate', 'wb-gamification' ),
+					$stats['challenge_completion_pct']
+				),
+				'🎯'
+			);
+			AnalyticsDashboard::kpi_card(
+				__( 'Active Streaks', 'wb-gamification' ),
+				number_format_i18n( $stats['active_streaks'] ),
+				sprintf(
+					/* translators: %s = streak health percentage */
+					__( '%s%% streak health', 'wb-gamification' ),
+					$stats['streak_health_pct']
+				),
+				'🔥'
+			);
+			AnalyticsDashboard::kpi_card(
+				__( 'Kudos Given', 'wb-gamification' ),
+				number_format_i18n( $stats['kudos_given'] ),
+				__( 'Last 30 days', 'wb-gamification' ),
+				'👏'
+			);
+			?>
+		</div>
+
+		<div class="wb-gam-admin-quick-links">
+			<a href="<?php echo esc_url( admin_url( 'admin.php?page=wb-gamification-analytics' ) ); ?>"
+			   class="button button-primary">
+				<?php esc_html_e( 'Full Analytics', 'wb-gamification' ); ?>
+			</a>
+			<a href="<?php echo esc_url( admin_url( 'admin.php?page=wb-gamification-manual-award' ) ); ?>"
+			   class="button">
+				<?php esc_html_e( 'Award Points', 'wb-gamification' ); ?>
+			</a>
+			<a href="<?php echo esc_url( admin_url( 'admin.php?page=wb-gamification&tab=points' ) ); ?>"
+			   class="button">
+				<?php esc_html_e( 'Configure Points', 'wb-gamification' ); ?>
+			</a>
+		</div>
+		<?php
+	}
+
 	// ── Levels tab ────────────────────────────────────────────────────────────
 
 	/**
@@ -431,7 +518,7 @@ final class SettingsPage {
 			ARRAY_A
 		);
 		?>
-		<p style="color:#646970;margin-top:0;">
+		<p class="wb-gam-admin-description">
 			<?php esc_html_e( 'Edit level names and minimum point thresholds. Members move up automatically when they cross a threshold.', 'wb-gamification' ); ?>
 		</p>
 
@@ -637,16 +724,15 @@ final class SettingsPage {
 		$bp_active = function_exists( 'buddypress' );
 
 		if ( $bp_active ) {
-			$mode  = __( 'Community Mode', 'wb-gamification' );
-			$color = '#00a32a';
+			$mode = __( 'Community Mode', 'wb-gamification' );
 		} else {
-			$mode  = __( 'Standalone Mode', 'wb-gamification' );
-			$color = '#0073aa';
+			$mode = __( 'Standalone Mode', 'wb-gamification' );
 		}
 
+		$modifier = $bp_active ? 'community' : 'standalone';
 		printf(
-			'<span style="background:%s;color:#fff;padding:3px 10px;border-radius:3px;font-size:12px;font-weight:600;">%s</span>',
-			esc_attr( $color ),
+			'<span class="wb-gam-mode-badge wb-gam-mode-badge--%s">%s</span>',
+			esc_attr( $modifier ),
 			esc_html( $mode )
 		);
 	}

@@ -72,7 +72,7 @@ final class AnalyticsDashboard {
 		wp_enqueue_style(
 			'wb-gam-admin-analytics',
 			WB_GAM_URL . 'assets/css/admin-analytics.css',
-			array(),
+			array( 'wb-gam-admin' ),
 			WB_GAM_VERSION
 		);
 	}
@@ -271,7 +271,7 @@ final class AnalyticsDashboard {
 	 * @param int $period Number of days to look back (7, 30, or 90).
 	 * @return array<string, mixed> Associative array of stat values.
 	 */
-	private static function get_stats( int $period ): array {
+	public static function get_stats( int $period ): array {
 		$cache_key = "wb_gam_analytics_{$period}";
 		$cached    = wp_cache_get( $cache_key, self::CACHE_GROUP );
 		if ( false !== $cached ) {
@@ -432,13 +432,13 @@ final class AnalyticsDashboard {
 	 * @param string $icon  Emoji or icon character for the card.
 	 * @return void
 	 */
-	private static function kpi_card( string $title, string $value, string $sub, string $icon ): void {
+	public static function kpi_card( string $title, string $value, string $sub, string $icon ): void {
 		?>
-		<div class="wb-gam-analytics__kpi-card">
-			<span class="wb-gam-analytics__kpi-icon"><?php echo esc_html( $icon ); ?></span>
-			<span class="wb-gam-analytics__kpi-value"><?php echo esc_html( $value ); ?></span>
-			<span class="wb-gam-analytics__kpi-title"><?php echo esc_html( $title ); ?></span>
-			<span class="wb-gam-analytics__kpi-sub"><?php echo esc_html( $sub ); ?></span>
+		<div class="wb-gam-analytics__kpi-card wb-gam-admin-kpi-card">
+			<span class="wb-gam-analytics__kpi-icon wb-gam-admin-kpi-icon"><?php echo esc_html( $icon ); ?></span>
+			<span class="wb-gam-analytics__kpi-value wb-gam-admin-kpi-value"><?php echo esc_html( $value ); ?></span>
+			<span class="wb-gam-analytics__kpi-title wb-gam-admin-kpi-title"><?php echo esc_html( $title ); ?></span>
+			<span class="wb-gam-analytics__kpi-sub wb-gam-admin-kpi-sub"><?php echo esc_html( $sub ); ?></span>
 		</div>
 		<?php
 	}
