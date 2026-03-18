@@ -1,0 +1,135 @@
+/**
+ * WB Gamification — Shared Admin Styles
+ *
+ * Design tokens mirror frontend.css so both surfaces share the same palette.
+ * Component classes replace inline styles in SettingsPage.php and other admin pages.
+ *
+ * @since 0.6.0
+ */
+
+/* ── Design tokens (same as frontend.css :root) ────────────────────────────── */
+:root {
+	--wb-gam-primary:        #6c63ff;
+	--wb-gam-primary-light:  #ede9fe;
+	--wb-gam-gold:           #f59e0b;
+	--wb-gam-silver:         #9ca3af;
+	--wb-gam-bronze:         #d97706;
+	--wb-gam-radius:         8px;
+	--wb-gam-border:         #e5e7eb;
+	--wb-gam-text-muted:     #6b7280;
+	--wb-gam-gap:            1rem;
+	--wb-gam-text:           #1d2939;
+	--wb-gam-locked:         #d1d5db;
+}
+
+/* ── Nav tabs ───────────────────────────────────────────────────────────────── */
+.wb-gam-admin-nav {
+	margin-top: 16px;
+}
+
+/* ── Page header ────────────────────────────────────────────────────────────── */
+.wb-gam-admin-header {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	margin: 20px 0 0;
+}
+
+.wb-gam-admin-header h1 {
+	margin: 0;
+}
+
+/* ── Mode badge ─────────────────────────────────────────────────────────────── */
+.wb-gam-mode-badge {
+	display: inline-block;
+	padding: 3px 10px;
+	border-radius: 3px;
+	font-size: 12px;
+	font-weight: 600;
+	color: #fff;
+	line-height: 1.5;
+}
+
+.wb-gam-mode-badge--community  { background: #00a32a; }
+.wb-gam-mode-badge--standalone { background: #0073aa; }
+
+/* ── Tab content panel ──────────────────────────────────────────────────────── */
+.wb-gam-admin-tab-content {
+	background: #fff;
+	border: 1px solid #c3c4c7;
+	border-top: none;
+	padding: 24px;
+}
+
+/* ── Section headings inside tabs ──────────────────────────────────────────── */
+.wb-gam-admin-section-heading {
+	margin: 20px 0 8px;
+	text-transform: capitalize;
+}
+
+/* ── Description text ───────────────────────────────────────────────────────── */
+.wb-gam-admin-description {
+	color: var(--wb-gam-text-muted);
+	margin-top: 0;
+}
+
+/* ── Dashboard tab KPI strip ────────────────────────────────────────────────── */
+.wb-gam-admin-kpi-strip {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+	gap: 1rem;
+	margin-block-end: 1.5rem;
+}
+
+.wb-gam-admin-kpi-card {
+	background: #fff;
+	border: 1px solid var(--wb-gam-border);
+	border-radius: var(--wb-gam-radius);
+	padding: 1.125rem 1rem;
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+	transition: box-shadow 0.15s;
+}
+
+.wb-gam-admin-kpi-card:hover {
+	box-shadow: 0 2px 8px rgba(108, 99, 255, 0.1);
+}
+
+.wb-gam-admin-kpi-icon {
+	font-size: 1.375rem;
+	line-height: 1;
+}
+
+.wb-gam-admin-kpi-value {
+	font-size: 1.625rem;
+	font-weight: 800;
+	line-height: 1.1;
+	color: #1d2939;
+}
+
+.wb-gam-admin-kpi-title {
+	font-size: 0.8125rem;
+	font-weight: 600;
+	color: #374151;
+}
+
+.wb-gam-admin-kpi-sub {
+	font-size: 0.75rem;
+	color: var(--wb-gam-silver);
+}
+
+/* ── Dashboard tab quick links ──────────────────────────────────────────────── */
+.wb-gam-admin-quick-links {
+	display: flex;
+	gap: 0.75rem;
+	flex-wrap: wrap;
+	margin-block-end: 1.5rem;
+}
+
+/* ── Responsive ─────────────────────────────────────────────────────────────── */
+@media (max-width: 782px) {
+	.wb-gam-admin-kpi-strip {
+		grid-template-columns: repeat(2, 1fr);
+	}
+}

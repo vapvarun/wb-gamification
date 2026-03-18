@@ -272,7 +272,7 @@ final class SettingsPage {
 				<div class="notice notice-success is-dismissible"><p><?php esc_html_e( 'Setup complete! Review your point values below.', 'wb-gamification' ); ?></p></div>
 			<?php endif; ?>
 
-			<nav class="nav-tab-wrapper" style="margin-top:16px;">
+			<nav class="nav-tab-wrapper wb-gam-admin-nav">
 				<?php
 				$tabs = array(
 					'dashboard'  => __( 'Dashboard', 'wb-gamification' ),

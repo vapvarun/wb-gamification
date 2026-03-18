@@ -17,6 +17,8 @@
 	--wb-gam-text:           inherit;
 	--wb-gam-radius:         8px;
 	--wb-gam-gap:            0.75rem;
+	--wb-gam-border:         #e5e7eb;
+	--wb-gam-text-muted:     #6b7280;
 }
 
 /* ── Leaderboard ────────────────────────────────────────────────────────────── */
@@ -1171,4 +1173,66 @@
 	.wb-gam-year-recap { padding: 1.25rem; }
 	.wb-gam-recap__stats { grid-template-columns: repeat(2, 1fr); }
 	.wb-gam-recap__stat-value { font-size: 1.375rem; }
+}
+
+/* ── Points History ─────────────────────────────────────────────────────────── */
+.wb-gam-points-history__list {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+}
+
+.wb-gam-points-history__item {
+	display: flex;
+	align-items: center;
+	gap: var(--wb-gam-gap);
+	padding: 0.625rem 0.25rem;
+	border-bottom: 1px solid #f3f4f6;
+}
+
+.wb-gam-points-history__item:last-child {
+	border-bottom: none;
+}
+
+.wb-gam-points-history__action {
+	flex: 1;
+	font-size: 0.9375rem;
+	font-weight: 500;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.wb-gam-points-history__points {
+	font-size: 0.9375rem;
+	font-weight: 700;
+	white-space: nowrap;
+	min-width: 4.5rem;
+	text-align: right;
+}
+
+.wb-gam-points-history__item--positive .wb-gam-points-history__points {
+	color: #10b981;
+}
+
+.wb-gam-points-history__item--negative .wb-gam-points-history__points {
+	color: #ef4444;
+}
+
+.wb-gam-points-history__date {
+	font-size: 0.8125rem;
+	color: var(--wb-gam-silver);
+	white-space: nowrap;
+	min-width: 5.5rem;
+	text-align: right;
+}
+
+.wb-gam-points-history__empty {
+	color: var(--wb-gam-silver);
+	font-size: 0.9375rem;
+	text-align: center;
+	padding: 2rem;
+	margin: 0;
 }
