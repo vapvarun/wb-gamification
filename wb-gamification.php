@@ -37,6 +37,7 @@ use WBGam\Engine\LogPruner;
 use WBGam\Engine\LeaderboardNudge;
 use WBGam\Engine\Installer;
 use WBGam\Engine\BadgeEngine;
+use WBGam\Engine\BadgeSharePage;
 use WBGam\Engine\ChallengeEngine;
 use WBGam\Engine\RankAutomation;
 use WBGam\Engine\PersonalRecordEngine;
@@ -128,6 +129,7 @@ final class WB_Gamification {
 		add_action( 'plugins_loaded', array( StatusRetentionEngine::class, 'init' ), 10 );
 		add_action( 'plugins_loaded', array( CosmeticEngine::class, 'init' ), 10 );
 		add_action( 'plugins_loaded', array( CredentialExpiryEngine::class, 'init' ), 10 );
+		add_action( 'plugins_loaded', array( BadgeSharePage::class, 'init' ), 10 );
 
 		// BuddyPress integrations — must boot on bp_loaded, not plugins_loaded.
 		add_action( 'bp_loaded', array( ProfileIntegration::class, 'init' ) );
@@ -223,6 +225,7 @@ register_activation_hook(
 		CohortEngine::activate();
 		StatusRetentionEngine::activate();
 		CredentialExpiryEngine::activate();
+		BadgeSharePage::activate();
 	}
 );
 
@@ -236,6 +239,7 @@ register_deactivation_hook(
 		CohortEngine::deactivate();
 		StatusRetentionEngine::deactivate();
 		CredentialExpiryEngine::deactivate();
+		BadgeSharePage::deactivate();
 		flush_rewrite_rules();
 	}
 );
