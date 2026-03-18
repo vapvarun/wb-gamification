@@ -14,14 +14,29 @@ namespace WBGam\Admin;
 
 defined( 'ABSPATH' ) || exit;
 
+/**
+ * Manages the Badge Library admin page for creating, editing, and deleting badges.
+ *
+ * @package WB_Gamification
+ */
 final class BadgeAdminPage {
 
+	/**
+	 * Register admin_menu and admin-post action hooks.
+	 *
+	 * @return void
+	 */
 	public static function init(): void {
 		add_action( 'admin_menu', array( __CLASS__, 'add_submenu' ) );
 		add_action( 'admin_post_wb_gam_save_badge', array( __CLASS__, 'handle_save' ) );
 		add_action( 'admin_post_wb_gam_delete_badge', array( __CLASS__, 'handle_delete' ) );
 	}
 
+	/**
+	 * Register the Badges submenu page under WB Gamification.
+	 *
+	 * @return void
+	 */
 	public static function add_submenu(): void {
 		add_submenu_page(
 			'wb-gamification',
@@ -35,6 +50,11 @@ final class BadgeAdminPage {
 
 	// ── Page render ─────────────────────────────────────────────────────────
 
+	/**
+	 * Render the badge library page (list, edit, or create view).
+	 *
+	 * @return void
+	 */
 	public static function render_page(): void {
 		// phpcs:disable WordPress.Security.NonceVerification.Recommended -- GET params used for routing/display only, no data modification.
 		$action   = sanitize_key( $_GET['action'] ?? 'list' );
@@ -76,9 +96,15 @@ final class BadgeAdminPage {
 
 	// ── List view ────────────────────────────────────────────────────────────
 
+	/**
+	 * Render the badge library table listing all defined badges.
+	 *
+	 * @return void
+	 */
 	private static function render_list(): void {
 		global $wpdb;
 
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- admin list view, infrequent, no caching needed.
 		$badges = $wpdb->get_results(
 			"SELECT b.id, b.name, b.description, b.category, b.is_credential,
 			        (SELECT COUNT(*) FROM {$wpdb->prefix}wb_gam_user_badges ub WHERE ub.badge_id = b.id) AS earned_count,
@@ -108,12 +134,15 @@ final class BadgeAdminPage {
 					<?php
 					$config     = json_decode( $badge['condition'] ?? '{}', true ) ?: array();
 					$cond_type  = $config['condition_type'] ?? 'admin_awarded';
-					$cond_label = match ( $cond_type ) {
-						'point_milestone' => sprintf( __( '%s pts', 'wb-gamification' ), number_format_i18n( $config['points'] ?? 0 ) ),
-						'action_count'    => sprintf( __( '%1$s × %2$d', 'wb-gamification' ), $config['action_id'] ?? '', $config['count'] ?? 1 ),
-						default           => __( 'Admin awarded', 'wb-gamification' ),
-					};
-	?>
+					$cond_label = 'admin_awarded' === $cond_type
+						? __( 'Admin awarded', 'wb-gamification' )
+						: ( 'point_milestone' === $cond_type
+							/* translators: %s: formatted point total */
+							? sprintf( __( '%s pts', 'wb-gamification' ), number_format_i18n( $config['points'] ?? 0 ) )
+							/* translators: 1: action ID slug, 2: required count */
+							: sprintf( __( '%1$s × %2$d', 'wb-gamification' ), $config['action_id'] ?? '', $config['count'] ?? 1 )
+						);
+					?>
 				<tr>
 					<td>
 						<strong><?php echo esc_html( $badge['name'] ); ?></strong>
@@ -146,6 +175,12 @@ final class BadgeAdminPage {
 
 	// ── Edit / Create form ──────────────────────────────────────────────────
 
+	/**
+	 * Render the badge create/edit form.
+	 *
+	 * @param string $badge_id Existing badge ID for edit mode, or empty string for create mode.
+	 * @return void
+	 */
 	private static function render_form( string $badge_id ): void {
 		global $wpdb;
 
@@ -154,6 +189,7 @@ final class BadgeAdminPage {
 		$is_new    = empty( $badge_id );
 
 		if ( ! $is_new ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- single badge edit form, no caching needed.
 			$badge = $wpdb->get_row(
 				$wpdb->prepare(
 					"SELECT * FROM {$wpdb->prefix}wb_gam_badge_defs WHERE id = %s",
@@ -167,6 +203,7 @@ final class BadgeAdminPage {
 				return;
 			}
 
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- single badge edit form, no caching needed.
 			$rule = $wpdb->get_row(
 				$wpdb->prepare(
 					"SELECT rule_config FROM {$wpdb->prefix}wb_gam_rules
@@ -292,6 +329,11 @@ final class BadgeAdminPage {
 
 	// ── Form handlers ────────────────────────────────────────────────────────
 
+	/**
+	 * Handle the badge create/update form submission via admin-post.php.
+	 *
+	 * @return void
+	 */
 	public static function handle_save(): void {
 		if ( ! current_user_can( 'manage_options' ) ) {
 			wp_die( esc_html__( 'Permission denied.', 'wb-gamification' ) );
@@ -365,6 +407,11 @@ final class BadgeAdminPage {
 		exit;
 	}
 
+	/**
+	 * Handle the badge delete action via admin-post.php.
+	 *
+	 * @return void
+	 */
 	public static function handle_delete(): void {
 		if ( ! current_user_can( 'manage_options' ) ) {
 			wp_die( esc_html__( 'Permission denied.', 'wb-gamification' ) );

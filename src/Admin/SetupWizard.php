@@ -14,6 +14,11 @@ namespace WBGam\Admin;
 
 defined( 'ABSPATH' ) || exit;
 
+/**
+ * Displays the one-time setup wizard shown after first plugin activation.
+ *
+ * @package WB_Gamification
+ */
 final class SetupWizard {
 
 	/**
@@ -50,6 +55,7 @@ final class SetupWizard {
 			return;
 		}
 		delete_transient( 'wb_gam_do_redirect' );
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- activate-multi is a WP core flag, not user input.
 		if ( ! is_network_admin() && ! isset( $_GET['activate-multi'] ) ) {
 			wp_safe_redirect( admin_url( 'admin.php?page=wb-gamification-setup' ) );
 			exit;
@@ -77,6 +83,9 @@ final class SetupWizard {
 
 	/**
 	 * Persist the chosen template's point values and leaderboard mode.
+	 *
+	 * @param string $template Template key (e.g. 'blog', 'community', 'course').
+	 * @return void
 	 */
 	private static function apply_template( string $template ): void {
 		$configs = self::get_template_configs();

@@ -21,6 +21,11 @@ namespace WBGam\Admin;
 
 defined( 'ABSPATH' ) || exit;
 
+/**
+ * Renders the Gamification Analytics admin dashboard page.
+ *
+ * @package WB_Gamification
+ */
 final class AnalyticsDashboard {
 
 	private const CACHE_GROUP = 'wb_gamification';
@@ -28,11 +33,21 @@ final class AnalyticsDashboard {
 
 	// ── Boot ────────────────────────────────────────────────────────────────────
 
+	/**
+	 * Register admin_menu and admin_enqueue_scripts hooks.
+	 *
+	 * @return void
+	 */
 	public static function init(): void {
 		add_action( 'admin_menu', array( __CLASS__, 'register_menu' ) );
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue' ) );
 	}
 
+	/**
+	 * Register the Analytics submenu page under WB Gamification.
+	 *
+	 * @return void
+	 */
 	public static function register_menu(): void {
 		add_submenu_page(
 			'wb-gamification',
@@ -44,6 +59,12 @@ final class AnalyticsDashboard {
 		);
 	}
 
+	/**
+	 * Enqueue analytics CSS on the analytics admin page only.
+	 *
+	 * @param string $hook Current admin page hook suffix.
+	 * @return void
+	 */
 	public static function enqueue( string $hook ): void {
 		if ( 'wb-gamification_page_wb-gamification-analytics' !== $hook ) {
 			return;
@@ -58,11 +79,17 @@ final class AnalyticsDashboard {
 
 	// ── Page render ─────────────────────────────────────────────────────────────
 
+	/**
+	 * Render the analytics dashboard page HTML.
+	 *
+	 * @return void
+	 */
 	public static function render_page(): void {
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- GET param validated against allowlist, read-only analytics display.
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended -- GET param validated against allowlist, read-only analytics display.
 		$period = isset( $_GET['period'] ) && in_array( $_GET['period'], array( '7', '30', '90' ), true )
 			? (int) $_GET['period']
 			: 30;
+		// phpcs:enable WordPress.Security.NonceVerification.Recommended
 
 		$stats = self::get_stats( $period );
 		?>
@@ -238,6 +265,12 @@ final class AnalyticsDashboard {
 
 	// ── Data queries ─────────────────────────────────────────────────────────────
 
+	/**
+	 * Fetch and cache all analytics stats for a given time period.
+	 *
+	 * @param int $period Number of days to look back (7, 30, or 90).
+	 * @return array<string, mixed> Associative array of stat values.
+	 */
 	private static function get_stats( int $period ): array {
 		$cache_key = "wb_gam_analytics_{$period}";
 		$cached    = wp_cache_get( $cache_key, self::CACHE_GROUP );
@@ -390,6 +423,15 @@ final class AnalyticsDashboard {
 
 	// ── Render helpers ───────────────────────────────────────────────────────────
 
+	/**
+	 * Render a single KPI card widget.
+	 *
+	 * @param string $title Card heading.
+	 * @param string $value Formatted primary metric value.
+	 * @param string $sub   Sub-label / contextual description.
+	 * @param string $icon  Emoji or icon character for the card.
+	 * @return void
+	 */
 	private static function kpi_card( string $title, string $value, string $sub, string $icon ): void {
 		?>
 		<div class="wb-gam-analytics__kpi-card">
@@ -401,6 +443,13 @@ final class AnalyticsDashboard {
 		<?php
 	}
 
+	/**
+	 * Render an inline SVG-style bar sparkline for daily points data.
+	 *
+	 * @param array<string, int> $daily_points Map of Y-m-d date strings to point totals.
+	 * @param int                $period       Number of days the sparkline covers.
+	 * @return void
+	 */
 	private static function render_sparkline( array $daily_points, int $period ): void {
 		if ( empty( $daily_points ) ) {
 			echo '<p class="description">' . esc_html__( 'No data yet.', 'wb-gamification' ) . '</p>';
@@ -408,7 +457,7 @@ final class AnalyticsDashboard {
 		}
 
 		// Fill gaps so every day in range has a value.
-		$end_ts   = current_time( 'timestamp' );
+		$end_ts   = time();
 		$start_ts = strtotime( "-{$period} days", $end_ts );
 		$filled   = array();
 		for ( $ts = $start_ts; $ts <= $end_ts; $ts += DAY_IN_SECONDS ) {
@@ -421,14 +470,10 @@ final class AnalyticsDashboard {
 
 		echo '<div class="wb-gam-analytics__sparkline" aria-hidden="true">';
 		foreach ( $filled as $day => $pts ) {
-			$h     = round( ( $pts / $max ) * 100 );
-			$title = esc_attr( $day . ': ' . number_format_i18n( $pts ) . ' pts' );
-			printf(
-				'<div class="wb-gam-analytics__spark-bar" style="height:%d%%;width:%s%%" title="%s"></div>',
-				$h,
-				esc_attr( number_format( $w, 4 ) ),
-				$title
-			);
+			$h         = (int) round( ( $pts / $max ) * 100 );
+			$bar_title = esc_attr( $day . ': ' . number_format_i18n( $pts ) . ' pts' );
+			$bar_width = esc_attr( number_format( $w, 4 ) );
+			echo '<div class="wb-gam-analytics__spark-bar" style="height:' . $h . '%;width:' . $bar_width . '%" title="' . $bar_title . '"></div>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- $h is int, $bar_width and $bar_title are esc_attr()-escaped.
 		}
 		echo '</div>';
 	}

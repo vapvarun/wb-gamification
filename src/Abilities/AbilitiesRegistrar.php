@@ -9,8 +9,18 @@ namespace WBGam\Abilities;
 
 defined( 'ABSPATH' ) || exit;
 
+/**
+ * Registers all WB Gamification WordPress Abilities.
+ *
+ * @package WB_Gamification
+ */
 final class AbilitiesRegistrar {
 
+	/**
+	 * Register all gamification abilities with the WordPress Abilities API.
+	 *
+	 * @return void
+	 */
 	public static function register(): void {
 		if ( ! function_exists( 'wp_register_ability' ) ) {
 			return;
