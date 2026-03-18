@@ -392,11 +392,12 @@ final class SettingsPage {
 				<h3><?php esc_html_e( 'Log Retention', 'wb-gamification' ); ?></h3>
 				<table class="form-table" role="presentation">
 					<tr>
-						<th scope="row"><?php esc_html_e( 'Keep points history for', 'wb-gamification' ); ?></th>
+						<th scope="row"><label for="wb-gam-log-retention-months"><?php esc_html_e( 'Keep points history for', 'wb-gamification' ); ?></label></th>
 						<td>
 							<input
 								type="number"
 								name="wb_gam_log_retention_months"
+								id="wb-gam-log-retention-months"
 								value="<?php echo esc_attr( (int) get_option( 'wb_gam_log_retention_months', 6 ) ); ?>"
 								min="1"
 								max="24"
@@ -593,32 +594,32 @@ final class SettingsPage {
 				</tr>
 				<tr>
 					<th scope="row">
-						<?php esc_html_e( 'Group ID', 'wb-gamification' ); ?>
-						<span style="color:#999;font-size:0.85em;"><?php esc_html_e( '(for "Add to group")', 'wb-gamification' ); ?></span>
+						<label for="wb-gam-new-rule-group-id"><?php esc_html_e( 'Group ID', 'wb-gamification' ); ?>
+						<span style="color:#999;font-size:0.85em;"><?php esc_html_e( '(for "Add to group")', 'wb-gamification' ); ?></span></label>
 					</th>
-					<td><input type="number" name="wb_gam_new_rule[group_id]" class="small-text" min="0" value="" placeholder="0" /></td>
+					<td><input type="number" name="wb_gam_new_rule[group_id]" id="wb-gam-new-rule-group-id" class="small-text" min="0" value="" placeholder="0" /></td>
 				</tr>
 				<tr>
 					<th scope="row">
-						<?php esc_html_e( 'Role slug', 'wb-gamification' ); ?>
-						<span style="color:#999;font-size:0.85em;"><?php esc_html_e( '(for "Add role")', 'wb-gamification' ); ?></span>
+						<label for="wb-gam-new-rule-role"><?php esc_html_e( 'Role slug', 'wb-gamification' ); ?>
+						<span style="color:#999;font-size:0.85em;"><?php esc_html_e( '(for "Add role")', 'wb-gamification' ); ?></span></label>
 					</th>
-					<td><input type="text" name="wb_gam_new_rule[role]" class="regular-text" value="" placeholder="contributor" /></td>
+					<td><input type="text" name="wb_gam_new_rule[role]" id="wb-gam-new-rule-role" class="regular-text" value="" placeholder="contributor" /></td>
 				</tr>
 				<tr>
 					<th scope="row">
-						<?php esc_html_e( 'Message sender user ID', 'wb-gamification' ); ?>
-						<span style="color:#999;font-size:0.85em;"><?php esc_html_e( '(for "Send message")', 'wb-gamification' ); ?></span>
+						<label for="wb-gam-new-rule-sender-id"><?php esc_html_e( 'Message sender user ID', 'wb-gamification' ); ?>
+						<span style="color:#999;font-size:0.85em;"><?php esc_html_e( '(for "Send message")', 'wb-gamification' ); ?></span></label>
 					</th>
-					<td><input type="number" name="wb_gam_new_rule[sender_id]" class="small-text" min="1" value="1" /></td>
+					<td><input type="number" name="wb_gam_new_rule[sender_id]" id="wb-gam-new-rule-sender-id" class="small-text" min="1" value="1" /></td>
 				</tr>
 				<tr>
-					<th scope="row"><?php esc_html_e( 'Message subject', 'wb-gamification' ); ?></th>
-					<td><input type="text" name="wb_gam_new_rule[subject]" class="regular-text" value="" /></td>
+					<th scope="row"><label for="wb-gam-new-rule-subject"><?php esc_html_e( 'Message subject', 'wb-gamification' ); ?></label></th>
+					<td><input type="text" name="wb_gam_new_rule[subject]" id="wb-gam-new-rule-subject" class="regular-text" value="" /></td>
 				</tr>
 				<tr>
-					<th scope="row"><?php esc_html_e( 'Message content', 'wb-gamification' ); ?></th>
-					<td><textarea name="wb_gam_new_rule[content]" rows="4" class="large-text"></textarea></td>
+					<th scope="row"><label for="wb-gam-new-rule-content"><?php esc_html_e( 'Message content', 'wb-gamification' ); ?></label></th>
+					<td><textarea name="wb_gam_new_rule[content]" id="wb-gam-new-rule-content" rows="4" class="large-text"></textarea></td>
 				</tr>
 			</table>
 

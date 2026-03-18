@@ -230,9 +230,9 @@ final class BadgeAdminPage {
 
 			<table class="form-table">
 				<tr>
-					<th><?php esc_html_e( 'Badge ID', 'wb-gamification' ); ?></th>
+					<th><label for="wb-gam-badge-id"><?php esc_html_e( 'Badge ID', 'wb-gamification' ); ?></label></th>
 					<td>
-						<input type="text" name="badge_id" class="regular-text"
+						<input type="text" name="badge_id" id="wb-gam-badge-id" class="regular-text"
 							value="<?php echo esc_attr( $badge['id'] ?? '' ); ?>"
 							placeholder="e.g. first_post"
 							<?php echo $is_new ? '' : 'readonly'; ?>>
@@ -244,24 +244,24 @@ final class BadgeAdminPage {
 					</td>
 				</tr>
 				<tr>
-					<th><?php esc_html_e( 'Name', 'wb-gamification' ); ?></th>
-					<td><input type="text" name="badge_name" class="regular-text" value="<?php echo esc_attr( $badge['name'] ?? '' ); ?>" required></td>
+					<th><label for="wb-gam-badge-name"><?php esc_html_e( 'Name', 'wb-gamification' ); ?></label></th>
+					<td><input type="text" name="badge_name" id="wb-gam-badge-name" class="regular-text" value="<?php echo esc_attr( $badge['name'] ?? '' ); ?>" required></td>
 				</tr>
 				<tr>
-					<th><?php esc_html_e( 'Description', 'wb-gamification' ); ?></th>
-					<td><textarea name="badge_description" rows="3" class="large-text"><?php echo esc_textarea( $badge['description'] ?? '' ); ?></textarea></td>
+					<th><label for="wb-gam-badge-description"><?php esc_html_e( 'Description', 'wb-gamification' ); ?></label></th>
+					<td><textarea name="badge_description" id="wb-gam-badge-description" rows="3" class="large-text"><?php echo esc_textarea( $badge['description'] ?? '' ); ?></textarea></td>
 				</tr>
 				<tr>
-					<th><?php esc_html_e( 'Image URL', 'wb-gamification' ); ?></th>
+					<th><label for="wb-gam-badge-image-url"><?php esc_html_e( 'Image URL', 'wb-gamification' ); ?></label></th>
 					<td>
-						<input type="url" name="badge_image_url" class="large-text" value="<?php echo esc_attr( $badge['image_url'] ?? '' ); ?>" placeholder="https://…">
+						<input type="url" name="badge_image_url" id="wb-gam-badge-image-url" class="large-text" value="<?php echo esc_attr( $badge['image_url'] ?? '' ); ?>" placeholder="https://…">
 						<p class="description"><?php esc_html_e( 'Leave blank to use the default badge icon.', 'wb-gamification' ); ?></p>
 					</td>
 				</tr>
 				<tr>
-					<th><?php esc_html_e( 'Category', 'wb-gamification' ); ?></th>
+					<th><label for="wb-gam-badge-category"><?php esc_html_e( 'Category', 'wb-gamification' ); ?></label></th>
 					<td>
-						<select name="badge_category">
+						<select name="badge_category" id="wb-gam-badge-category">
 							<?php foreach ( array( 'general', 'points', 'wordpress', 'buddypress', 'special' ) as $cat ) : ?>
 								<option value="<?php echo esc_attr( $cat ); ?>" <?php selected( $badge['category'] ?? 'general', $cat ); ?>>
 									<?php echo esc_html( ucfirst( $cat ) ); ?>
@@ -284,7 +284,7 @@ final class BadgeAdminPage {
 			<h2><?php esc_html_e( 'Auto-Award Condition', 'wb-gamification' ); ?></h2>
 			<table class="form-table">
 				<tr>
-					<th><?php esc_html_e( 'Condition Type', 'wb-gamification' ); ?></th>
+					<th><label for="wb-gam-condition-type"><?php esc_html_e( 'Condition Type', 'wb-gamification' ); ?></label></th>
 					<td>
 						<select name="condition_type" id="wb-gam-condition-type" onchange="wbGamToggleConditionFields(this.value)">
 							<option value="admin_awarded" <?php selected( $condition['condition_type'], 'admin_awarded' ); ?>><?php esc_html_e( 'Admin awarded only (manual)', 'wb-gamification' ); ?></option>
@@ -294,19 +294,19 @@ final class BadgeAdminPage {
 					</td>
 				</tr>
 				<tr id="wb-gam-field-points" style="<?php echo 'point_milestone' === $condition['condition_type'] ? '' : 'display:none'; ?>">
-					<th><?php esc_html_e( 'Points Threshold', 'wb-gamification' ); ?></th>
-					<td><input type="number" name="condition_points" min="1" value="<?php echo esc_attr( $condition['points'] ?? 100 ); ?>"></td>
+					<th><label for="wb-gam-condition-points"><?php esc_html_e( 'Points Threshold', 'wb-gamification' ); ?></label></th>
+					<td><input type="number" name="condition_points" id="wb-gam-condition-points" min="1" value="<?php echo esc_attr( $condition['points'] ?? 100 ); ?>"></td>
 				</tr>
 				<tr id="wb-gam-field-action" style="<?php echo 'action_count' === $condition['condition_type'] ? '' : 'display:none'; ?>">
-					<th><?php esc_html_e( 'Action ID', 'wb-gamification' ); ?></th>
+					<th><label for="wb-gam-condition-action-id"><?php esc_html_e( 'Action ID', 'wb-gamification' ); ?></label></th>
 					<td>
-						<input type="text" name="condition_action_id" class="regular-text" value="<?php echo esc_attr( $condition['action_id'] ?? '' ); ?>" placeholder="e.g. wp_publish_post">
+						<input type="text" name="condition_action_id" id="wb-gam-condition-action-id" class="regular-text" value="<?php echo esc_attr( $condition['action_id'] ?? '' ); ?>" placeholder="e.g. wp_publish_post">
 						<p class="description"><?php esc_html_e( 'Must match a registered action ID.', 'wb-gamification' ); ?></p>
 					</td>
 				</tr>
 				<tr id="wb-gam-field-count" style="<?php echo 'action_count' === $condition['condition_type'] ? '' : 'display:none'; ?>">
-					<th><?php esc_html_e( 'Required Count', 'wb-gamification' ); ?></th>
-					<td><input type="number" name="condition_count" min="1" value="<?php echo esc_attr( $condition['count'] ?? 1 ); ?>"></td>
+					<th><label for="wb-gam-condition-count"><?php esc_html_e( 'Required Count', 'wb-gamification' ); ?></label></th>
+					<td><input type="number" name="condition_count" id="wb-gam-condition-count" min="1" value="<?php echo esc_attr( $condition['count'] ?? 1 ); ?>"></td>
 				</tr>
 			</table>
 
