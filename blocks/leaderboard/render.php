@@ -93,7 +93,7 @@ $wrapper_attributes = get_block_wrapper_attributes( [ 'class' => 'wb-gam-leaderb
 		if ( ! in_array( $current_uid, $visible_ids, true ) ) {
 			$my_rank = LeaderboardEngine::get_user_rank( $current_uid, $period, $scope_type, $scope_id );
 
-			if ( $my_rank['points'] > 0 ) {
+			if ( ! empty( $my_rank ) && $my_rank['points'] > 0 ) {
 				?>
 				<div class="wb-gam-leaderboard__my-rank">
 					<span class="wb-gam-leaderboard__my-rank-label">
@@ -103,9 +103,9 @@ $wrapper_attributes = get_block_wrapper_attributes( [ 'class' => 'wb-gam-leaderb
 						<?php
 						echo esc_html(
 							sprintf(
-								/* translators: %d = rank number */
-								__( '#%d', 'wb-gamification' ),
-								$my_rank['rank']
+								/* translators: %s = rank number */
+								__( '#%s', 'wb-gamification' ),
+								number_format_i18n( $my_rank['rank'] )
 							)
 						);
 						?>
