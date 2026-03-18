@@ -22,15 +22,26 @@ namespace WBGam\Engine;
 
 defined( 'ABSPATH' ) || exit;
 
+/**
+ * Runs a weekly cron to notify members whose credentials have expired.
+ *
+ * @package WB_Gamification
+ */
 final class CredentialExpiryEngine {
 
 	private const CRON_HOOK = 'wb_gam_credential_expiry_check';
 	private const OPT_LAST  = 'wb_gam_credential_expiry_last_run';
 
+	/**
+	 * Register the credential expiry cron action callback.
+	 */
 	public static function init(): void {
 		add_action( self::CRON_HOOK, array( __CLASS__, 'run' ) );
 	}
 
+	/**
+	 * Schedule the weekly credential expiry check on plugin activation.
+	 */
 	public static function activate(): void {
 		if ( ! wp_next_scheduled( self::CRON_HOOK ) ) {
 			// Every Monday at 06:00 UTC — well after the cohort-assign cron (00:05).
@@ -39,6 +50,9 @@ final class CredentialExpiryEngine {
 		}
 	}
 
+	/**
+	 * Clear the credential expiry cron on plugin deactivation.
+	 */
 	public static function deactivate(): void {
 		wp_clear_scheduled_hook( self::CRON_HOOK );
 	}
@@ -80,7 +94,7 @@ final class CredentialExpiryEngine {
 			$user_id  = (int) $row['user_id'];
 			$badge_id = (string) $row['badge_id'];
 
-			// BP notification — "Your [Badge Name] credential has expired."
+			// Add a BP notification for the expired credential.
 			if ( function_exists( 'bp_notifications_add_notification' ) ) {
 				bp_notifications_add_notification(
 					array(

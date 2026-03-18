@@ -31,12 +31,20 @@ namespace WBGam\Engine;
 
 defined( 'ABSPATH' ) || exit;
 
+/**
+ * Avatar frames, profile decorations, and profile themes that members can earn or unlock.
+ *
+ * @package WB_Gamification
+ */
 final class CosmeticEngine {
 
 	private const CACHE_GROUP = 'wb_gamification';
 
 	// ── Boot ─────────────────────────────────────────────────────────────────
 
+	/**
+	 * Register BuddyPress and redemption hooks for cosmetic integration.
+	 */
 	public static function init(): void {
 		// Inject active frame CSS class onto BuddyPress avatar wrapper.
 		add_filter( 'bp_get_the_member_avatar_class', array( __CLASS__, 'inject_avatar_frame_class' ), 10, 2 );
@@ -126,7 +134,7 @@ final class CosmeticEngine {
 
 		if ( $ids_of_same_type ) {
 			$placeholders = implode( ',', array_fill( 0, count( $ids_of_same_type ), '%s' ) );
-			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $placeholders is implode(',', array_fill(..., '%s')), safe.
+			// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $placeholders is implode(',', array_fill(..., '%s')), safe.
 			$wpdb->query(
 				$wpdb->prepare(
 					"UPDATE {$wpdb->prefix}wb_gam_user_cosmetics
@@ -135,6 +143,7 @@ final class CosmeticEngine {
 					array_merge( array( $user_id ), $ids_of_same_type )
 				)
 			);
+			// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		}
 
 		// Activate the requested cosmetic.
@@ -267,6 +276,12 @@ final class CosmeticEngine {
 
 	// ── Private helpers ──────────────────────────────────────────────────────
 
+	/**
+	 * Fetch a single cosmetic definition row by ID.
+	 *
+	 * @param string $cosmetic_id Cosmetic identifier.
+	 * @return array|null Cosmetic row, or null if not found.
+	 */
 	private static function get_cosmetic( string $cosmetic_id ): ?array {
 		global $wpdb;
 

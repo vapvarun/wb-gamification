@@ -25,10 +25,23 @@ namespace WBGam\Engine;
 
 defined( 'ABSPATH' ) || exit;
 
+/**
+ * Single entry point for all gamification events through the full rule pipeline.
+ *
+ * @package WB_Gamification
+ */
 final class Engine {
 
+	/**
+	 * Guards against double-initialisation on the same request.
+	 *
+	 * @var bool
+	 */
 	private static bool $initialized = false;
 
+	/**
+	 * Boot the engine — registers async event processing callback.
+	 */
 	public static function init(): void {
 		if ( self::$initialized ) {
 			return;
@@ -233,6 +246,8 @@ final class Engine {
 	 *
 	 * The event log is the source of truth for all derived state.
 	 * Points, badges, and levels can all be replayed from this table.
+	 *
+	 * @param Event $event The event to persist.
 	 */
 	private static function persist_event( Event $event ): void {
 		global $wpdb;

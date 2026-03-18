@@ -14,8 +14,16 @@ use WBGam\Engine\PointsEngine;
 
 defined( 'ABSPATH' ) || exit;
 
+/**
+ * Injects gamification rank and progress bar into the BuddyPress profile header.
+ *
+ * @package WB_Gamification
+ */
 final class ProfileIntegration {
 
+	/**
+	 * Register hooks when BuddyPress is active.
+	 */
 	public static function init(): void {
 		if ( ! function_exists( 'buddypress' ) ) {
 			return;
@@ -46,8 +54,9 @@ final class ProfileIntegration {
 			return;
 		}
 
-		$level_name = get_user_meta( $user_id, 'wb_gam_level_name', true ) ?: __( 'Newcomer', 'wb-gamification' );
-		$points     = PointsEngine::get_total( $user_id );
+		$level_name_raw = get_user_meta( $user_id, 'wb_gam_level_name', true );
+		$level_name     = $level_name_raw ? $level_name_raw : __( 'Newcomer', 'wb-gamification' );
+		$points         = PointsEngine::get_total( $user_id );
 
 		// Get next level threshold for progress bar.
 		$next_level_points = self::get_next_level_points( $user_id );
@@ -80,6 +89,12 @@ final class ProfileIntegration {
 		<?php
 	}
 
+	/**
+	 * Get the minimum points required for the next level above the user's current total.
+	 *
+	 * @param int $user_id WordPress user ID.
+	 * @return int Minimum points for the next level, or 0 if none exists.
+	 */
 	private static function get_next_level_points( int $user_id ): int {
 		global $wpdb;
 		$current_points = PointsEngine::get_total( $user_id );
@@ -92,6 +107,12 @@ final class ProfileIntegration {
 		);
 	}
 
+	/**
+	 * Get the minimum points threshold of the user's current level.
+	 *
+	 * @param int $user_id WordPress user ID.
+	 * @return int Minimum points for the current level, or 0 if no level matched.
+	 */
 	private static function get_current_level_min( int $user_id ): int {
 		global $wpdb;
 		$current_points = PointsEngine::get_total( $user_id );

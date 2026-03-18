@@ -25,6 +25,11 @@ namespace WBGam\Engine;
 
 defined( 'ABSPATH' ) || exit;
 
+/**
+ * Sends weekly leaderboard rank nudges to active members via BuddyPress notification and optional email.
+ *
+ * @package WB_Gamification
+ */
 final class LeaderboardNudge {
 
 	const CRON_HOOK      = 'wb_gam_weekly_nudge';
@@ -33,6 +38,9 @@ final class LeaderboardNudge {
 
 	// ── Lifecycle ───────────────────────────────────────────────────────────────
 
+	/**
+	 * Register cron and Action Scheduler callbacks, and schedule the weekly cron if needed.
+	 */
 	public static function init(): void {
 		add_action( self::CRON_HOOK, array( __CLASS__, 'dispatch_batch' ) );
 		add_action( self::AS_SINGLE_HOOK, array( __CLASS__, 'send_nudge' ) );
@@ -44,12 +52,18 @@ final class LeaderboardNudge {
 		}
 	}
 
+	/**
+	 * Schedule the weekly nudge cron on plugin activation.
+	 */
 	public static function activate(): void {
 		if ( ! wp_next_scheduled( self::CRON_HOOK ) ) {
 			wp_schedule_event( strtotime( 'next monday 08:00 UTC' ), self::CRON_RECUR, self::CRON_HOOK );
 		}
 	}
 
+	/**
+	 * Clear the weekly nudge cron on plugin deactivation.
+	 */
 	public static function deactivate(): void {
 		$ts = wp_next_scheduled( self::CRON_HOOK );
 		if ( $ts ) {
@@ -107,7 +121,7 @@ final class LeaderboardNudge {
 	 * Send a weekly rank nudge to one user.
 	 * Action Scheduler callback — isolated so one failure doesn't block others.
 	 *
-	 * @param int $user_id
+	 * @param int $user_id User to nudge.
 	 */
 	public static function send_nudge( int $user_id ): void {
 		$rank_data = LeaderboardEngine::get_user_rank( $user_id, 'week' );
@@ -173,11 +187,17 @@ final class LeaderboardNudge {
 
 	/**
 	 * Build the nudge message string for a user.
+	 *
+	 * @param int      $user_id        User being nudged (reserved for future personalisation).
+	 * @param int      $rank           User's current weekly rank.
+	 * @param int      $points         Points earned this week.
+	 * @param int|null $points_to_next Points needed to overtake the next rank, or null if already #1.
+	 * @return string Human-readable nudge message.
 	 */
 	private static function build_message( int $user_id, int $rank, int $points, ?int $points_to_next ): string {
 		if ( 1 === $rank ) {
-			/* translators: %d: points this week */
 			return sprintf(
+				/* translators: %d: points earned this week */
 				__( "You're #1 on the leaderboard this week with %d points. Keep it up!", 'wb-gamification' ),
 				$points
 			);
@@ -203,6 +223,9 @@ final class LeaderboardNudge {
 
 	/**
 	 * Send an email nudge to a user (only when explicitly opted in by admin).
+	 *
+	 * @param int    $user_id User to email.
+	 * @param string $message Nudge message body.
 	 */
 	private static function send_email( int $user_id, string $message ): void {
 		$user = get_userdata( $user_id );

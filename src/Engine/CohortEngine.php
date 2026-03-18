@@ -22,6 +22,11 @@ namespace WBGam\Engine;
 
 defined( 'ABSPATH' ) || exit;
 
+/**
+ * Weekly promotion/demotion league cohort engine (Duolingo model).
+ *
+ * @package WB_Gamification
+ */
 final class CohortEngine {
 
 	public const TIERS         = array( 'Bronze', 'Silver', 'Gold', 'Diamond', 'Obsidian' );
@@ -31,11 +36,17 @@ final class CohortEngine {
 	private const CRON_ASSIGN  = 'wb_gam_cohort_assign';
 	private const CRON_PROCESS = 'wb_gam_cohort_process';
 
+	/**
+	 * Register cron action callbacks.
+	 */
 	public static function init(): void {
 		add_action( self::CRON_ASSIGN, array( __CLASS__, 'assign_cohorts' ) );
 		add_action( self::CRON_PROCESS, array( __CLASS__, 'process_promotions' ) );
 	}
 
+	/**
+	 * Schedule the weekly cohort cron events on plugin activation.
+	 */
 	public static function activate(): void {
 		if ( ! wp_next_scheduled( self::CRON_ASSIGN ) ) {
 			// Next Monday 00:05 UTC.
@@ -49,6 +60,9 @@ final class CohortEngine {
 		}
 	}
 
+	/**
+	 * Clear the weekly cohort cron events on plugin deactivation.
+	 */
 	public static function deactivate(): void {
 		wp_clear_scheduled_hook( self::CRON_ASSIGN );
 		wp_clear_scheduled_hook( self::CRON_PROCESS );
@@ -93,9 +107,9 @@ final class CohortEngine {
 		// Batch-fetch weekly points for all users in one query.
 		$week_start   = gmdate( 'Y-m-d', strtotime( 'monday this week' ) ) . ' 00:00:00';
 		$placeholders = implode( ',', array_fill( 0, count( $ids_ints ), '%d' ) );
-		$pts_rows     = $wpdb->get_results(
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $placeholders is implode(',', array_fill(..., '%d')), safe.
+		$pts_rows = $wpdb->get_results(
 			$wpdb->prepare(
-				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $placeholders is implode(',', array_fill(..., '%d')), safe.
 				"SELECT user_id, COALESCE(SUM(points), 0) AS pts
 				   FROM {$wpdb->prefix}wb_gam_points
 				  WHERE user_id IN ($placeholders) AND created_at >= %s
@@ -104,7 +118,8 @@ final class CohortEngine {
 			),
 			ARRAY_A
 		);
-		$week_pts     = array_fill_keys( $ids_ints, 0 );
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$week_pts = array_fill_keys( $ids_ints, 0 );
 		foreach ( $pts_rows as $row ) {
 			$week_pts[ (int) $row['user_id'] ] = (int) $row['pts'];
 		}
@@ -179,9 +194,9 @@ final class CohortEngine {
 			// Batch-fetch week points for all cohort members in one query.
 			$member_ids   = array_map( fn( $m ) => (int) $m['user_id'], $members );
 			$placeholders = implode( ',', array_fill( 0, count( $member_ids ), '%d' ) );
-			$pts_rows     = $wpdb->get_results(
+			// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $placeholders is implode(',', array_fill(..., '%d')), safe.
+			$pts_rows = $wpdb->get_results(
 				$wpdb->prepare(
-					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $placeholders is implode(',', array_fill(..., '%d')), safe.
 					"SELECT user_id, COALESCE(SUM(points), 0) AS pts
 					   FROM {$wpdb->prefix}wb_gam_points
 					  WHERE user_id IN ($placeholders) AND created_at >= %s
@@ -190,7 +205,8 @@ final class CohortEngine {
 				),
 				ARRAY_A
 			);
-			$pts_map      = array_fill_keys( $member_ids, 0 );
+			// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$pts_map = array_fill_keys( $member_ids, 0 );
 			foreach ( $pts_rows as $row ) {
 				$pts_map[ (int) $row['user_id'] ] = (int) $row['pts'];
 			}
@@ -261,6 +277,9 @@ final class CohortEngine {
 
 	/**
 	 * Get a user's current league tier (0 = Bronze, 4 = Obsidian).
+	 *
+	 * @param int $user_id User to look up.
+	 * @return int Tier index 0–4.
 	 */
 	public static function get_user_tier( int $user_id ): int {
 		$tier = get_user_meta( $user_id, 'wb_gam_league_tier', true );
@@ -269,6 +288,9 @@ final class CohortEngine {
 
 	/**
 	 * Get a user's current cohort and standings.
+	 *
+	 * @param int $user_id User to look up.
+	 * @return array{cohort_id: string, tier: int, tier_name: string, week: string, standings: array}|null
 	 */
 	public static function get_user_standing( int $user_id ): ?array {
 		global $wpdb;

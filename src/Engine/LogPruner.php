@@ -12,6 +12,11 @@ namespace WBGam\Engine;
 
 defined( 'ABSPATH' ) || exit;
 
+/**
+ * Auto-prunes wb_gam_points rows older than the configured retention period.
+ *
+ * @package WB_Gamification
+ */
 final class LogPruner {
 
 	const CRON_HOOK  = 'wb_gam_prune_logs';

@@ -27,10 +27,15 @@ namespace WBGam\Engine;
 
 defined( 'ABSPATH' ) || exit;
 
+/**
+ * Evaluates badge conditions and awards badges when conditions are met.
+ *
+ * @package WB_Gamification
+ */
 final class BadgeEngine {
 
 	private const CACHE_GROUP = 'wb_gamification';
-	private const CACHE_TTL   = 60; // seconds
+	private const CACHE_TTL   = 60; // Seconds.
 
 	/**
 	 * Boot — hook into the points-awarded action to evaluate conditions.

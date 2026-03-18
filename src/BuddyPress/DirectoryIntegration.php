@@ -11,8 +11,16 @@ namespace WBGam\BuddyPress;
 
 defined( 'ABSPATH' ) || exit;
 
+/**
+ * Renders member rank in the BuddyPress member directory listing.
+ *
+ * @package WB_Gamification
+ */
 final class DirectoryIntegration {
 
+	/**
+	 * Register hooks when BuddyPress is active.
+	 */
 	public static function init(): void {
 		if ( ! function_exists( 'buddypress' ) ) {
 			return;

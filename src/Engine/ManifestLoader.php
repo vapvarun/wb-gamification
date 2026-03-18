@@ -22,6 +22,11 @@ namespace WBGam\Engine;
 
 defined( 'ABSPATH' ) || exit;
 
+/**
+ * Auto-discovers and registers gamification manifest files from plugins at boot time.
+ *
+ * @package WB_Gamification
+ */
 final class ManifestLoader {
 
 	/**
@@ -114,15 +119,11 @@ final class ManifestLoader {
 	 * Register all triggers from a manifest array.
 	 *
 	 * Trigger flags:
-	 *   standalone_only: true  — skip when BuddyPress is active (BP covers the same event)
-	 *   requires_buddypress: true — skip when BuddyPress is NOT active
+	 *   standalone_only: true     — skip when BuddyPress is active (BP covers the same event).
+	 *   requires_buddypress: true — skip when BuddyPress is NOT active.
 	 *
-	 * @param array{
-	 *   plugin?: string,
-	 *   version?: string,
-	 *   triggers?: array<int, array<string, mixed>>,
-	 * } $manifest
-	 * @param bool   $bp_active Whether BuddyPress is active.
+	 * @param array $manifest  Manifest data with optional 'plugin', 'version', and 'triggers' keys.
+	 * @param bool  $bp_active Whether BuddyPress is active.
 	 */
 	private static function register_manifest( array $manifest, bool $bp_active ): void {
 		foreach ( (array) ( $manifest['triggers'] ?? array() ) as $trigger ) {

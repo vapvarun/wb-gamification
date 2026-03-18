@@ -26,10 +26,18 @@ use WBGam\Engine\Event;
 
 defined( 'ABSPATH' ) || exit;
 
+/**
+ * Handles BuddyPress activity stream integration for gamification events.
+ *
+ * @package WB_Gamification
+ */
 final class ActivityIntegration {
 
 	private const COMPONENT = 'wb_gamification';
 
+	/**
+	 * Register hooks when BuddyPress is active.
+	 */
 	public static function init(): void {
 		if ( ! function_exists( 'buddypress' ) ) {
 			return;
@@ -138,8 +146,8 @@ final class ActivityIntegration {
 				'user_id'       => $user_id,
 				'component'     => self::COMPONENT,
 				'type'          => 'badge_earned',
-				/* translators: 1: user display name link, 2: badge name */
 				'action'        => sprintf(
+					/* translators: 1: user display name link, 2: badge name */
 					__( '%1$s earned the <strong>%2$s</strong> badge', 'wb-gamification' ),
 					$user_link,
 					esc_html( $badge_name )
@@ -163,16 +171,17 @@ final class ActivityIntegration {
 			return;
 		}
 
-		$level_name = get_user_meta( $user_id, 'wb_gam_level_name', true ) ?: __( 'a new level', 'wb-gamification' );
-		$user_link  = self::user_link( $user_id );
+		$level_name_raw = get_user_meta( $user_id, 'wb_gam_level_name', true );
+		$level_name     = $level_name_raw ? $level_name_raw : __( 'a new level', 'wb-gamification' );
+		$user_link      = self::user_link( $user_id );
 
 		bp_activity_add(
 			array(
 				'user_id'       => $user_id,
 				'component'     => self::COMPONENT,
 				'type'          => 'level_changed',
-				/* translators: 1: user display name link, 2: level name */
 				'action'        => sprintf(
+					/* translators: 1: user display name link, 2: level name */
 					__( '%1$s reached the <strong>%2$s</strong> level', 'wb-gamification' ),
 					$user_link,
 					esc_html( $level_name )
@@ -200,8 +209,8 @@ final class ActivityIntegration {
 		$giver_link    = self::user_link( $giver_id );
 		$receiver_link = self::user_link( $receiver_id );
 
-		/* translators: 1: giver display name link, 2: receiver display name link */
 		$action = sprintf(
+			/* translators: 1: giver display name link, 2: receiver display name link */
 			__( '%1$s gave kudos to %2$s', 'wb-gamification' ),
 			$giver_link,
 			$receiver_link
@@ -242,8 +251,8 @@ final class ActivityIntegration {
 				'user_id'       => $user_id,
 				'component'     => self::COMPONENT,
 				'type'          => 'challenge_completed',
-				/* translators: 1: user display name link, 2: challenge title */
 				'action'        => sprintf(
+					/* translators: 1: user display name link, 2: challenge title */
 					__( '%1$s completed the <strong>%2$s</strong> challenge', 'wb-gamification' ),
 					$user_link,
 					esc_html( $challenge['title'] ?? '' )
@@ -260,7 +269,7 @@ final class ActivityIntegration {
 	/**
 	 * Check whether a given stream event type is enabled by admin option.
 	 *
-	 * @param string $type e.g. 'badge_earned', 'level_changed', 'kudos_given'
+	 * @param string $type Stream type, e.g. 'badge_earned', 'level_changed', 'kudos_given'.
 	 * @return bool
 	 */
 	private static function stream_enabled( string $type ): bool {
@@ -269,6 +278,9 @@ final class ActivityIntegration {
 
 	/**
 	 * Build an HTML link to a user's BP profile, or their display name if no BP.
+	 *
+	 * @param int $user_id WordPress user ID.
+	 * @return string HTML anchor or plain display name.
 	 */
 	private static function user_link( int $user_id ): string {
 		$user = get_userdata( $user_id );

@@ -19,6 +19,11 @@ namespace WBGam\Engine;
 
 defined( 'ABSPATH' ) || exit;
 
+/**
+ * Runs ALTER TABLE migrations when the stored db_version is behind WB_GAM_VERSION.
+ *
+ * @package WB_Gamification
+ */
 final class DbUpgrader {
 
 	private const OPT_KEY  = 'wb_gam_db_version';
@@ -27,6 +32,9 @@ final class DbUpgrader {
 
 	// ── Boot ────────────────────────────────────────────────────────────────────
 
+	/**
+	 * Run any pending migrations on plugins_loaded.
+	 */
 	public static function init(): void {
 		$current = get_option( self::OPT_KEY, '0.0.0' );
 
@@ -48,6 +56,11 @@ final class DbUpgrader {
 
 	// ── Dispatcher ───────────────────────────────────────────────────────────────
 
+	/**
+	 * Execute all migrations that are newer than the given version.
+	 *
+	 * @param string $from Current stored db_version (e.g. "0.1.0").
+	 */
 	private static function run( string $from ): void {
 		foreach ( self::get_upgrades() as $version => $method ) {
 			if ( version_compare( $from, $version, '<' ) ) {

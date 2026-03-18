@@ -14,8 +14,16 @@ namespace WBGam\BuddyPress;
 
 defined( 'ABSPATH' ) || exit;
 
+/**
+ * Registers BuddyPress-specific gamification action triggers with the engine.
+ *
+ * @package WB_Gamification
+ */
 final class HooksIntegration {
 
+	/**
+	 * Register hooks when BuddyPress is active.
+	 */
 	public static function init(): void {
 		if ( ! function_exists( 'buddypress' ) ) {
 			return;
@@ -24,6 +32,9 @@ final class HooksIntegration {
 		add_action( 'wb_gamification_register', array( self::class, 'register_actions' ) );
 	}
 
+	/**
+	 * Register all BuddyPress gamification action definitions with the engine registry.
+	 */
 	public static function register_actions(): void {
 		$actions = array(
 			array(

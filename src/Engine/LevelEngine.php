@@ -18,6 +18,11 @@ namespace WBGam\Engine;
 
 defined( 'ABSPATH' ) || exit;
 
+/**
+ * Derives and updates member level state from the points ledger.
+ *
+ * @package WB_Gamification
+ */
 final class LevelEngine {
 
 	/**

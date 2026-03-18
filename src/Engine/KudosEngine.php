@@ -23,6 +23,11 @@ defined( 'ABSPATH' ) || exit;
 
 use WP_Error;
 
+/**
+ * Peer-to-peer kudos recognition engine with daily send limits and point awards.
+ *
+ * @package WB_Gamification
+ */
 final class KudosEngine {
 
 	private const OPT_DAILY_LIMIT     = 'wb_gam_kudos_daily_limit';

@@ -25,14 +25,29 @@ namespace WBGam\Engine;
 
 defined( 'ABSPATH' ) || exit;
 
+/**
+ * Site-wide community challenges where all members work toward a shared target.
+ *
+ * @package WB_Gamification
+ */
 final class CommunityChallengeEngine {
 
+	/**
+	 * Register the points-awarded hook for community challenge processing.
+	 */
 	public static function init(): void {
 		add_action( 'wb_gamification_points_awarded', array( __CLASS__, 'on_points_awarded' ), 20, 3 );
 	}
 
 	// ── Event hook ──────────────────────────────────────────────────────────
 
+	/**
+	 * Called after every point award. Checks active community challenges for the action.
+	 *
+	 * @param int   $user_id User who earned points.
+	 * @param Event $event   The event.
+	 * @param int   $points  Points awarded (unused but required by hook signature).
+	 */
 	public static function on_points_awarded( int $user_id, Event $event, int $points ): void {
 		global $wpdb;
 
@@ -61,6 +76,13 @@ final class CommunityChallengeEngine {
 
 	// ── Contribution recording ───────────────────────────────────────────────
 
+	/**
+	 * Record one contribution from a user and increment the global counter.
+	 *
+	 * @param int   $challenge_id Community challenge identifier.
+	 * @param int   $user_id      User making the contribution.
+	 * @param Event $event        The triggering event (unused beyond the hook signature).
+	 */
 	private static function record_contribution( int $challenge_id, int $user_id, Event $event ): void {
 		global $wpdb;
 
@@ -104,6 +126,12 @@ final class CommunityChallengeEngine {
 
 	// ── Challenge completion ─────────────────────────────────────────────────
 
+	/**
+	 * Mark a community challenge as completed and award bonus points to all contributors.
+	 *
+	 * @param int $challenge_id  The challenge to complete.
+	 * @param int $bonus_points  Points to award to each contributor.
+	 */
 	private static function complete_challenge( int $challenge_id, int $bonus_points ): void {
 		global $wpdb;
 
@@ -180,6 +208,9 @@ final class CommunityChallengeEngine {
 
 	/**
 	 * Get a single community challenge.
+	 *
+	 * @param int $id Community challenge ID.
+	 * @return array|null Challenge row, or null if not found.
 	 */
 	public static function get( int $id ): ?array {
 		global $wpdb;
@@ -200,6 +231,10 @@ final class CommunityChallengeEngine {
 
 	/**
 	 * Get a user's contribution count to a community challenge.
+	 *
+	 * @param int $challenge_id Community challenge identifier.
+	 * @param int $user_id      User to query.
+	 * @return int Contribution count (0 if none).
 	 */
 	public static function get_user_contribution( int $challenge_id, int $user_id ): int {
 		global $wpdb;

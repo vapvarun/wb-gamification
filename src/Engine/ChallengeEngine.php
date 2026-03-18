@@ -38,6 +38,11 @@ namespace WBGam\Engine;
 
 defined( 'ABSPATH' ) || exit;
 
+/**
+ * Tracks progress toward time-bound or open-ended challenges.
+ *
+ * @package WB_Gamification
+ */
 final class ChallengeEngine {
 
 	private const CACHE_GROUP = 'wb_gamification';
@@ -45,6 +50,9 @@ final class ChallengeEngine {
 
 	// ── Boot ────────────────────────────────────────────────────────────────────
 
+	/**
+	 * Register the points-awarded hook for challenge processing.
+	 */
 	public static function init(): void {
 		add_action( 'wb_gamification_points_awarded', array( __CLASS__, 'on_points_awarded' ), 15, 3 );
 	}
@@ -130,6 +138,12 @@ final class ChallengeEngine {
 
 	// ── Individual challenge processing ─────────────────────────────────────────
 
+	/**
+	 * Increment and evaluate progress for an individual challenge.
+	 *
+	 * @param int   $user_id   User being processed.
+	 * @param array $challenge Challenge row from the database.
+	 */
 	private static function process_individual( int $user_id, array $challenge ): void {
 		global $wpdb;
 
@@ -151,6 +165,12 @@ final class ChallengeEngine {
 
 	// ── Team challenge processing ────────────────────────────────────────────────
 
+	/**
+	 * Increment this user's contribution and evaluate the team's combined progress.
+	 *
+	 * @param int   $user_id   User being processed.
+	 * @param array $challenge Challenge row from the database.
+	 */
 	private static function process_team( int $user_id, array $challenge ): void {
 		if ( ! function_exists( 'groups_is_user_member' ) ) {
 			return;
@@ -195,6 +215,12 @@ final class ChallengeEngine {
 
 	// ── Completion ───────────────────────────────────────────────────────────────
 
+	/**
+	 * Mark the challenge complete, award bonus points, and fire the completion hook.
+	 *
+	 * @param int   $user_id   User who completed the challenge.
+	 * @param array $challenge Challenge row from the database.
+	 */
 	private static function complete_challenge( int $user_id, array $challenge ): void {
 		global $wpdb;
 
@@ -243,6 +269,7 @@ final class ChallengeEngine {
 	/**
 	 * Get active challenges matching a specific action_id (cached).
 	 *
+	 * @param string $action_id The action identifier to match.
 	 * @return array[]
 	 */
 	private static function get_active_challenges_for_action( string $action_id ): array {
@@ -274,6 +301,13 @@ final class ChallengeEngine {
 		return $data;
 	}
 
+	/**
+	 * Fetch a single challenge-log row for a user.
+	 *
+	 * @param int $user_id      User to look up.
+	 * @param int $challenge_id Challenge identifier.
+	 * @return array{progress: int, completed_at: string|null}|null Null when no row exists.
+	 */
 	private static function get_log_row( int $user_id, int $challenge_id ): ?array {
 		global $wpdb;
 
@@ -290,6 +324,13 @@ final class ChallengeEngine {
 		return $row ?: null;
 	}
 
+	/**
+	 * Insert or update the challenge-log row for a user.
+	 *
+	 * @param int $user_id      User to update.
+	 * @param int $challenge_id Challenge identifier.
+	 * @param int $progress     New progress value to store.
+	 */
 	private static function upsert_log( int $user_id, int $challenge_id, int $progress ): void {
 		global $wpdb;
 
@@ -305,10 +346,10 @@ final class ChallengeEngine {
 	}
 
 	/**
-	 * Get a map of challenge_id → { progress, completed_at } for a user.
+	 * Get a map of challenge_id to progress and completed_at for a user.
 	 *
-	 * @param int   $user_id
-	 * @param int[] $challenge_ids
+	 * @param int   $user_id       User to look up.
+	 * @param int[] $challenge_ids Challenge IDs to query.
 	 * @return array<int, array{ progress: int, completed_at: string|null }>
 	 */
 	private static function get_progress_map( int $user_id, array $challenge_ids ): array {
@@ -320,9 +361,9 @@ final class ChallengeEngine {
 
 		$placeholders = implode( ',', array_fill( 0, count( $challenge_ids ), '%d' ) );
 
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $placeholders is implode(',', array_fill(..., '%d')), safe.
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
-				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 				"SELECT challenge_id, progress, completed_at
 				   FROM {$wpdb->prefix}wb_gam_challenge_log
 				  WHERE user_id = %d AND challenge_id IN ($placeholders)",
@@ -330,6 +371,7 @@ final class ChallengeEngine {
 			),
 			ARRAY_A
 		);
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
 		$map = array();
 		foreach ( $rows ?: array() as $row ) {

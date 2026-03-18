@@ -10,8 +10,16 @@ namespace WBGam\Engine;
 
 defined( 'ABSPATH' ) || exit;
 
+/**
+ * Creates all custom DB tables on plugin activation.
+ *
+ * @package WB_Gamification
+ */
 final class Installer {
 
+	/**
+	 * Create all required tables and seed default data.
+	 */
 	public static function install(): void {
 		global $wpdb;
 
@@ -339,6 +347,7 @@ final class Installer {
 		$defs_table  = $wpdb->prefix . 'wb_gam_badge_defs';
 		$rules_table = $wpdb->prefix . 'wb_gam_rules';
 
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery.NoCaching -- table name from $wpdb->prefix, no user data.
 		if ( (int) $wpdb->get_var( "SELECT COUNT(*) FROM $defs_table" ) > 0 ) {
 			return;
 		}
@@ -542,10 +551,15 @@ final class Installer {
 		}
 	}
 
+	/**
+	 * Seed the default level progression (Newcomer through Champion).
+	 * Runs only on fresh installs — skipped when the levels table already has rows.
+	 */
 	private static function seed_default_levels(): void {
 		global $wpdb;
 		$table = $wpdb->prefix . 'wb_gam_levels';
 
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery.NoCaching -- table name from $wpdb->prefix, no user data.
 		if ( (int) $wpdb->get_var( "SELECT COUNT(*) FROM $table" ) > 0 ) {
 			return;
 		}

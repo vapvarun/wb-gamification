@@ -26,6 +26,11 @@ namespace WBGam\Engine;
 
 defined( 'ABSPATH' ) || exit;
 
+/**
+ * Replaces gamification terminology with community-type appropriate language.
+ *
+ * @package WB_Gamification
+ */
 final class MissionMode {
 
 	private const BUILT_IN_MODES = array(
@@ -91,7 +96,11 @@ final class MissionMode {
 		),
 	);
 
-	/** @var array|null Cached resolved dictionary for current request. */
+	/**
+	 * Cached resolved dictionary for the current request.
+	 *
+	 * @var array|null
+	 */
 	private static ?array $resolved = null;
 
 	// ── Public API ───────────────────────────────────────────────────────────

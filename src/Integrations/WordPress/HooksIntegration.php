@@ -20,8 +20,16 @@ use WBGam\Engine\PointsEngine;
 
 defined( 'ABSPATH' ) || exit;
 
+/**
+ * Registers WordPress-native gamification action triggers with the engine.
+ *
+ * @package WB_Gamification
+ */
 final class HooksIntegration {
 
+	/**
+	 * Register hooks for WordPress-native gamification triggers.
+	 */
 	public static function init(): void {
 		add_action( 'wb_gamification_register', array( self::class, 'register_always' ) );
 

@@ -24,6 +24,11 @@ namespace WBGam\Engine;
 
 defined( 'ABSPATH' ) || exit;
 
+/**
+ * Generates leaderboard data from the points ledger with opt-out filtering and period scoping.
+ *
+ * @package WB_Gamification
+ */
 final class LeaderboardEngine {
 
 	/**
@@ -148,20 +153,21 @@ final class LeaderboardEngine {
 		$scope_ids   = self::resolve_scope( $scope_type, $scope_id );
 
 		// Get user's own total for the period.
-		$user_total = (int) $wpdb->get_var(
-			$period_start
-				? $wpdb->prepare(
-					"SELECT COALESCE(SUM(points),0) FROM {$wpdb->prefix}wb_gam_points
-					 WHERE user_id = %d AND created_at >= %s",
-					$user_id,
-					$period_start
-				)
-				: $wpdb->prepare(
-					"SELECT COALESCE(SUM(points),0) FROM {$wpdb->prefix}wb_gam_points
-					 WHERE user_id = %d",
-					$user_id
-				)
-		);
+		if ( $period_start ) {
+			$user_total_sql = $wpdb->prepare(
+				"SELECT COALESCE(SUM(points),0) FROM {$wpdb->prefix}wb_gam_points
+				 WHERE user_id = %d AND created_at >= %s",
+				$user_id,
+				$period_start
+			);
+		} else {
+			$user_total_sql = $wpdb->prepare(
+				"SELECT COALESCE(SUM(points),0) FROM {$wpdb->prefix}wb_gam_points
+				 WHERE user_id = %d",
+				$user_id
+			);
+		}
+		$user_total = (int) $wpdb->get_var( $user_total_sql ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 
 		// Count users with strictly more points (their count + 1 = our rank).
 		$above_rank = self::count_users_above( $user_total, $period_start, $opt_out_ids, $scope_ids );
@@ -172,7 +178,7 @@ final class LeaderboardEngine {
 		return array(
 			'rank'           => $above_rank + 1,
 			'points'         => $user_total,
-			'points_to_next' => $next_total !== null ? ( $next_total - $user_total ) : null,
+			'points_to_next' => null !== $next_total ? ( $next_total - $user_total ) : null,
 		);
 	}
 
@@ -181,6 +187,9 @@ final class LeaderboardEngine {
 	/**
 	 * Return the MySQL datetime string for the start of a period.
 	 * Returns null for 'all' (no time filter).
+	 *
+	 * @param string $period Period identifier: 'all' | 'month' | 'week' | 'day'.
+	 * @return string|null MySQL datetime string, or null for 'all'.
 	 */
 	private static function get_period_start( string $period ): ?string {
 		switch ( $period ) {
@@ -199,9 +208,9 @@ final class LeaderboardEngine {
 	/**
 	 * Resolve a scope type + ID to a list of user IDs.
 	 *
-	 * @param string $scope_type e.g. 'bp_group'
-	 * @param int    $scope_id   e.g. group ID
-	 * @return int[]             Empty array = no scope restriction.
+	 * @param string $scope_type Scope type identifier, e.g. 'bp_group'.
+	 * @param int    $scope_id   Scope object ID, e.g. group ID.
+	 * @return int[]             Empty array means no scope restriction.
 	 */
 	private static function resolve_scope( string $scope_type, int $scope_id ): array {
 		if ( '' === $scope_type || $scope_id <= 0 ) {
@@ -241,6 +250,12 @@ final class LeaderboardEngine {
 
 	/**
 	 * Count users with a points total strictly higher than $threshold.
+	 *
+	 * @param int         $threshold    Points total to compare against.
+	 * @param string|null $period_start MySQL datetime for period start, or null for all-time.
+	 * @param int[]       $opt_out_ids  User IDs excluded from the leaderboard.
+	 * @param int[]       $scope_ids    User IDs to restrict to (empty = all users).
+	 * @return int Number of users ranked above the threshold.
 	 */
 	private static function count_users_above(
 		int $threshold,
@@ -285,8 +300,14 @@ final class LeaderboardEngine {
 	}
 
 	/**
-	 * Find the lowest points total strictly above $threshold (= next rank's score).
+	 * Find the lowest points total strictly above $threshold (the next rank's score).
 	 * Returns null if $threshold is already at the top.
+	 *
+	 * @param int         $threshold    Points total to compare against.
+	 * @param string|null $period_start MySQL datetime for period start, or null for all-time.
+	 * @param int[]       $opt_out_ids  User IDs excluded from the leaderboard.
+	 * @param int[]       $scope_ids    User IDs to restrict to (empty = all users).
+	 * @return int|null The next threshold, or null if already at the top.
 	 */
 	private static function get_next_threshold(
 		int $threshold,
@@ -328,6 +349,6 @@ final class LeaderboardEngine {
 		// phpcs:enable
 
 		$result = $wpdb->get_var( $wpdb->prepare( $sql, $values ) ); // phpcs:ignore
-		return $result !== null ? (int) $result : null;
+		return null !== $result ? (int) $result : null;
 	}
 }
