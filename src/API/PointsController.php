@@ -26,13 +26,37 @@ use WP_Error;
 
 defined( 'ABSPATH' ) || exit;
 
+/**
+ * REST API controller for admin points management.
+ *
+ * Handles POST /wb-gamification/v1/points/award and DELETE /wb-gamification/v1/points/{id}.
+ *
+ * @package WB_Gamification
+ * @since   0.1.0
+ */
 class PointsController extends WP_REST_Controller {
 
+	/**
+	 * REST API namespace.
+	 *
+	 * @var string
+	 */
 	protected $namespace = 'wb-gamification/v1';
+
+	/**
+	 * REST API route base.
+	 *
+	 * @var string
+	 */
 	protected $rest_base = 'points';
 
+	/**
+	 * Register REST API routes.
+	 *
+	 * @return void
+	 */
 	public function register_routes(): void {
-		// POST /points/award
+		// POST /points/award.
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base . '/award',
@@ -70,7 +94,7 @@ class PointsController extends WP_REST_Controller {
 			)
 		);
 
-		// DELETE /points/{id}
+		// DELETE /points/{id}.
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base . '/(?P<id>[\d]+)',
@@ -95,7 +119,10 @@ class PointsController extends WP_REST_Controller {
 	// ── Callbacks ───────────────────────────────────────────────────────────────
 
 	/**
-	 * POST /points/award — manually award points to a member.
+	 * Manually award points to a member.
+	 *
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return WP_REST_Response|WP_Error Response on success, WP_Error on failure.
 	 */
 	public function award( WP_REST_Request $request ): WP_REST_Response|WP_Error {
 		$user_id = (int) $request['user_id'];
@@ -134,16 +161,20 @@ class PointsController extends WP_REST_Controller {
 	}
 
 	/**
-	 * DELETE /points/{id} — revoke a specific point row.
+	 * Revoke a specific point ledger row.
 	 *
-	 * This hard-deletes the ledger row. The event record is preserved
+	 * Hard-deletes the ledger row. The event record is preserved
 	 * (events are immutable) — only the points side-effect is removed.
+	 *
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return WP_REST_Response|WP_Error Response on success, WP_Error on failure.
 	 */
 	public function revoke( WP_REST_Request $request ): WP_REST_Response|WP_Error {
 		global $wpdb;
 
 		$row_id = (int) $request['id'];
 
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- Revoke operation; row fetched immediately before deletion, caching would be misleading.
 		$row = $wpdb->get_row(
 			$wpdb->prepare(
 				"SELECT id, user_id, points FROM {$wpdb->prefix}wb_gam_points WHERE id = %d",
@@ -189,8 +220,11 @@ class PointsController extends WP_REST_Controller {
 		);
 	}
 
-	// ── Permissions ─────────────────────────────────────────────────────────────
-
+	/**
+	 * Check if the current user has permission to manage points.
+	 *
+	 * @return true|WP_Error True if the request has permission, WP_Error otherwise.
+	 */
 	public function admin_permission_check(): bool|WP_Error {
 		if ( current_user_can( 'manage_options' ) ) {
 			return true;

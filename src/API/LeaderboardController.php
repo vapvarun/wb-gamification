@@ -32,13 +32,37 @@ use WP_Error;
 
 defined( 'ABSPATH' ) || exit;
 
+/**
+ * REST API controller for the gamification leaderboard.
+ *
+ * Handles GET /wb-gamification/v1/leaderboard and GET /wb-gamification/v1/leaderboard/me.
+ *
+ * @package WB_Gamification
+ * @since   0.1.0
+ */
 class LeaderboardController extends WP_REST_Controller {
 
+	/**
+	 * REST API namespace.
+	 *
+	 * @var string
+	 */
 	protected $namespace = 'wb-gamification/v1';
+
+	/**
+	 * REST API route base.
+	 *
+	 * @var string
+	 */
 	protected $rest_base = 'leaderboard';
 
+	/**
+	 * Register REST API routes.
+	 *
+	 * @return void
+	 */
 	public function register_routes(): void {
-		// GET /leaderboard
+		// GET /leaderboard.
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base,
@@ -53,7 +77,7 @@ class LeaderboardController extends WP_REST_Controller {
 			)
 		);
 
-		// GET /leaderboard/group/{group_id} — scoped to a BuddyPress group
+		// GET /leaderboard/group/{group_id} — scoped to a BuddyPress group.
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base . '/group/(?P<group_id>[\d]+)',
@@ -77,7 +101,7 @@ class LeaderboardController extends WP_REST_Controller {
 			)
 		);
 
-		// GET /leaderboard/me — current user's private rank
+		// GET /leaderboard/me — current user's private rank.
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base . '/me',
@@ -94,6 +118,12 @@ class LeaderboardController extends WP_REST_Controller {
 
 	// ── Permission checks ──────────────────────────────────────────────────────
 
+	/**
+	 * Check if the current user is logged in.
+	 *
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return true|WP_Error True if the request has permission, WP_Error otherwise.
+	 */
 	public function require_logged_in( WP_REST_Request $request ): bool|WP_Error {
 		if ( ! is_user_logged_in() ) {
 			return new WP_Error(
@@ -108,7 +138,10 @@ class LeaderboardController extends WP_REST_Controller {
 	// ── Endpoint callbacks ─────────────────────────────────────────────────────
 
 	/**
-	 * GET /leaderboard — top-N members.
+	 * Retrieve the top-N members for a given period and scope.
+	 *
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return WP_REST_Response Response containing leaderboard rows.
 	 */
 	public function get_leaderboard( WP_REST_Request $request ): WP_REST_Response {
 		$period     = $this->validate_period( $request->get_param( 'period' ) );
@@ -131,10 +164,10 @@ class LeaderboardController extends WP_REST_Controller {
 	}
 
 	/**
-	 * GET /leaderboard/me — current user's private rank.
+	 * Retrieve the current user's private rank (even when opted out of public display).
 	 *
-	 * Returns rank even if the user has opted out of public display — this is
-	 * private data for the member themselves.
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return WP_REST_Response Response containing the user's rank data.
 	 */
 	public function get_my_rank( WP_REST_Request $request ): WP_REST_Response {
 		$user_id    = get_current_user_id();
@@ -160,7 +193,10 @@ class LeaderboardController extends WP_REST_Controller {
 	}
 
 	/**
-	 * GET /leaderboard/group/{group_id} — BuddyPress group-scoped leaderboard.
+	 * Retrieve a BuddyPress group-scoped leaderboard.
+	 *
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return WP_REST_Response|WP_Error Response on success, WP_Error on failure.
 	 */
 	public function get_group_leaderboard( WP_REST_Request $request ): WP_REST_Response|WP_Error {
 		$group_id = (int) $request['group_id'];
@@ -191,6 +227,12 @@ class LeaderboardController extends WP_REST_Controller {
 
 	// ── Helpers ────────────────────────────────────────────────────────────────
 
+	/**
+	 * Validate and normalise the period query param.
+	 *
+	 * @param mixed $period Raw period value from the request.
+	 * @return string One of 'all', 'month', 'week', or 'day'.
+	 */
 	private function validate_period( mixed $period ): string {
 		$allowed = array( 'all', 'month', 'week', 'day' );
 		return in_array( $period, $allowed, true ) ? $period : 'all';
@@ -235,6 +277,11 @@ class LeaderboardController extends WP_REST_Controller {
 		return $args;
 	}
 
+	/**
+	 * Retrieve the JSON schema for a leaderboard response.
+	 *
+	 * @return array JSON schema definition.
+	 */
 	public function get_item_schema(): array {
 		return array(
 			'$schema'    => 'http://json-schema.org/draft-04/schema#',

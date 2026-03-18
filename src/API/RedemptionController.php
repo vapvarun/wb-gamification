@@ -27,13 +27,43 @@ use WP_Error;
 
 defined( 'ABSPATH' ) || exit;
 
+/**
+ * REST API controller for the points redemption store.
+ *
+ * Handles reward item catalog CRUD and the redemption flow at
+ * GET|POST /wb-gamification/v1/redemptions/items and POST /wb-gamification/v1/redemptions.
+ *
+ * @package WB_Gamification
+ * @since   0.1.0
+ */
 class RedemptionController extends WP_REST_Controller {
 
+	/**
+	 * REST API namespace.
+	 *
+	 * @var string
+	 */
 	protected $namespace = 'wb-gamification/v1';
+
+	/**
+	 * REST API route base.
+	 *
+	 * @var string
+	 */
 	protected $rest_base = 'redemptions';
 
+	/**
+	 * Allowed reward types for redemption items.
+	 *
+	 * @var string[]
+	 */
 	private const VALID_REWARD_TYPES = array( 'discount_pct', 'discount_fixed', 'custom' );
 
+	/**
+	 * Register REST API routes.
+	 *
+	 * @return void
+	 */
 	public function register_routes(): void {
 		// Reward items catalog.
 		register_rest_route(
@@ -120,6 +150,12 @@ class RedemptionController extends WP_REST_Controller {
 
 	// ── Callbacks ────────────────────────────────────────────────────────────
 
+	/**
+	 * Retrieve all available reward items along with the current user's balance.
+	 *
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return WP_REST_Response Response containing reward items and balance.
+	 */
 	public function get_items( WP_REST_Request $request ): WP_REST_Response {
 		$items   = RedemptionEngine::get_items();
 		$balance = is_user_logged_in() ? PointsEngine::get_total( get_current_user_id() ) : null;
@@ -132,6 +168,12 @@ class RedemptionController extends WP_REST_Controller {
 		);
 	}
 
+	/**
+	 * Retrieve a single reward item by ID.
+	 *
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return WP_REST_Response|WP_Error Response on success, WP_Error on failure.
+	 */
 	public function get_item( WP_REST_Request $request ): WP_REST_Response|WP_Error {
 		$item = RedemptionEngine::get_item( (int) $request['id'] );
 		return $item
@@ -139,6 +181,12 @@ class RedemptionController extends WP_REST_Controller {
 			: new WP_Error( 'rest_not_found', __( 'Reward item not found.', 'wb-gamification' ), array( 'status' => 404 ) );
 	}
 
+	/**
+	 * Create a new reward item (admin only).
+	 *
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return WP_REST_Response|WP_Error Response on success, WP_Error on failure.
+	 */
 	public function create_item( WP_REST_Request $request ): WP_REST_Response|WP_Error {
 		global $wpdb;
 
@@ -163,6 +211,12 @@ class RedemptionController extends WP_REST_Controller {
 		return new WP_REST_Response( $this->prepare_item_for_response( RedemptionEngine::get_item( $wpdb->insert_id ) ), 201 );
 	}
 
+	/**
+	 * Update an existing reward item (admin only).
+	 *
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return WP_REST_Response|WP_Error Response on success, WP_Error on failure.
+	 */
 	public function update_item( WP_REST_Request $request ): WP_REST_Response|WP_Error {
 		global $wpdb;
 
@@ -189,12 +243,18 @@ class RedemptionController extends WP_REST_Controller {
 			$data['is_active'] = (int) $request['is_active']; }
 
 		if ( $data ) {
-			$wpdb->update( $wpdb->prefix . 'wb_gam_redemption_items', $data, array( 'id' => $id ) );
+			$wpdb->update( $wpdb->prefix . 'wb_gam_redemption_items', $data, array( 'id' => $id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- Write operation; no cache needed.
 		}
 
 		return rest_ensure_response( $this->prepare_item_for_response( RedemptionEngine::get_item( $id ) ) );
 	}
 
+	/**
+	 * Delete a reward item (admin only).
+	 *
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return WP_REST_Response|WP_Error Response on success, WP_Error on failure.
+	 */
 	public function delete_item( WP_REST_Request $request ): WP_REST_Response|WP_Error {
 		global $wpdb;
 
@@ -203,7 +263,7 @@ class RedemptionController extends WP_REST_Controller {
 			return new WP_Error( 'rest_not_found', __( 'Reward item not found.', 'wb-gamification' ), array( 'status' => 404 ) );
 		}
 
-		$wpdb->delete( $wpdb->prefix . 'wb_gam_redemption_items', array( 'id' => $id ), array( '%d' ) );
+		$wpdb->delete( $wpdb->prefix . 'wb_gam_redemption_items', array( 'id' => $id ), array( '%d' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- Write operation; no cache needed.
 		return new WP_REST_Response(
 			array(
 				'deleted' => true,
@@ -213,6 +273,12 @@ class RedemptionController extends WP_REST_Controller {
 		);
 	}
 
+	/**
+	 * Redeem a reward item using the current user's points.
+	 *
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return WP_REST_Response|WP_Error Response on success, WP_Error on failure.
+	 */
 	public function redeem( WP_REST_Request $request ): WP_REST_Response|WP_Error {
 		$result = RedemptionEngine::redeem( get_current_user_id(), (int) $request['item_id'] );
 
@@ -223,12 +289,24 @@ class RedemptionController extends WP_REST_Controller {
 		return new WP_REST_Response( $result, 201 );
 	}
 
+	/**
+	 * Retrieve the current user's redemption history.
+	 *
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return WP_REST_Response Response containing the user's redemption history.
+	 */
 	public function get_my_history( WP_REST_Request $request ): WP_REST_Response {
 		return rest_ensure_response( RedemptionEngine::get_user_redemptions( get_current_user_id() ) );
 	}
 
 	// ── Helpers ──────────────────────────────────────────────────────────────
 
+	/**
+	 * Shape a raw reward item DB row into the REST response format.
+	 *
+	 * @param array $item Raw row from the redemption items table.
+	 * @return array Formatted item data for the REST response.
+	 */
 	private function prepare_item_for_response( array $item ): array {
 		return array(
 			'id'            => (int) $item['id'],
@@ -237,11 +315,17 @@ class RedemptionController extends WP_REST_Controller {
 			'points_cost'   => (int) $item['points_cost'],
 			'reward_type'   => $item['reward_type'],
 			'reward_config' => json_decode( $item['reward_config'] ?? '{}', true ) ?: array(),
-			'stock'         => $item['stock'] !== null ? (int) $item['stock'] : null,
+			'stock'         => null !== $item['stock'] ? (int) $item['stock'] : null,
 			'is_active'     => (bool) $item['is_active'],
 		);
 	}
 
+	/**
+	 * Return REST API argument definitions for reward item create/update requests.
+	 *
+	 * @param bool $required Whether the fields should be required.
+	 * @return array Argument definition array.
+	 */
 	private function item_args( bool $required ): array {
 		return array(
 			'title'         => array(
@@ -279,12 +363,22 @@ class RedemptionController extends WP_REST_Controller {
 		);
 	}
 
+	/**
+	 * Check if the current user is an administrator.
+	 *
+	 * @return true|WP_Error True if the request has permission, WP_Error otherwise.
+	 */
 	public function admin_check(): bool|WP_Error {
 		return current_user_can( 'manage_options' )
 			? true
 			: new WP_Error( 'rest_forbidden', __( 'Admin only.', 'wb-gamification' ), array( 'status' => 403 ) );
 	}
 
+	/**
+	 * Check if the current user is logged in.
+	 *
+	 * @return true|WP_Error True if the request has permission, WP_Error otherwise.
+	 */
 	public function require_logged_in(): bool|WP_Error {
 		return is_user_logged_in()
 			? true

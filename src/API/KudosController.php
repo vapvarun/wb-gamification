@@ -21,13 +21,38 @@ use WP_Error;
 
 defined( 'ABSPATH' ) || exit;
 
+/**
+ * REST API controller for member kudos (peer recognition).
+ *
+ * Handles POST /wb-gamification/v1/kudos, GET /wb-gamification/v1/kudos,
+ * and GET /wb-gamification/v1/kudos/me.
+ *
+ * @package WB_Gamification
+ * @since   0.1.0
+ */
 class KudosController extends WP_REST_Controller {
 
+	/**
+	 * REST API namespace.
+	 *
+	 * @var string
+	 */
 	protected $namespace = 'wb-gamification/v1';
+
+	/**
+	 * REST API route base.
+	 *
+	 * @var string
+	 */
 	protected $rest_base = 'kudos';
 
+	/**
+	 * Register REST API routes.
+	 *
+	 * @return void
+	 */
 	public function register_routes(): void {
-		// GET /kudos — recent kudos feed (public)
+		// GET /kudos — recent kudos feed (public).
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base,
@@ -46,7 +71,7 @@ class KudosController extends WP_REST_Controller {
 						),
 					),
 				),
-				// POST /kudos — give kudos (must be logged in)
+				// POST /kudos — give kudos (must be logged in).
 				array(
 					'methods'             => WP_REST_Server::CREATABLE,
 					'callback'            => array( $this, 'create_item' ),
@@ -71,7 +96,7 @@ class KudosController extends WP_REST_Controller {
 			)
 		);
 
-		// GET /kudos/me — current user's kudos stats
+		// GET /kudos/me — current user's kudos stats.
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base . '/me',
@@ -87,6 +112,12 @@ class KudosController extends WP_REST_Controller {
 
 	// ── Permission checks ──────────────────────────────────────────────────────
 
+	/**
+	 * Check if the current user can give kudos.
+	 *
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return true|WP_Error True if the request has permission, WP_Error otherwise.
+	 */
 	public function create_item_permissions_check( WP_REST_Request $request ): bool|WP_Error {
 		if ( ! is_user_logged_in() ) {
 			return new WP_Error(
@@ -98,6 +129,12 @@ class KudosController extends WP_REST_Controller {
 		return true;
 	}
 
+	/**
+	 * Check if the current user is logged in.
+	 *
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return true|WP_Error True if the request has permission, WP_Error otherwise.
+	 */
 	public function require_logged_in( WP_REST_Request $request ): bool|WP_Error {
 		if ( ! is_user_logged_in() ) {
 			return new WP_Error(
@@ -112,7 +149,10 @@ class KudosController extends WP_REST_Controller {
 	// ── Endpoint callbacks ─────────────────────────────────────────────────────
 
 	/**
-	 * GET /kudos — recent kudos feed.
+	 * Retrieve the recent kudos feed.
+	 *
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return WP_REST_Response Response containing recent kudos.
 	 */
 	public function get_items( WP_REST_Request $request ): WP_REST_Response {
 		$limit = (int) $request->get_param( 'limit' );
@@ -122,7 +162,10 @@ class KudosController extends WP_REST_Controller {
 	}
 
 	/**
-	 * POST /kudos — give kudos to another member.
+	 * Give kudos to another member.
+	 *
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return WP_REST_Response|WP_Error Response on success, WP_Error on failure.
 	 */
 	public function create_item( WP_REST_Request $request ): WP_REST_Response|WP_Error {
 		$giver_id    = get_current_user_id();
@@ -163,7 +206,10 @@ class KudosController extends WP_REST_Controller {
 	}
 
 	/**
-	 * GET /kudos/me — current user's sent/received counts + daily budget.
+	 * Retrieve the current user's kudos sent/received counts and daily budget.
+	 *
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return WP_REST_Response Response containing kudos stats.
 	 */
 	public function get_my_stats( WP_REST_Request $request ): WP_REST_Response {
 		$user_id     = get_current_user_id();
@@ -183,6 +229,11 @@ class KudosController extends WP_REST_Controller {
 
 	// ── Schema ─────────────────────────────────────────────────────────────────
 
+	/**
+	 * Retrieve the JSON schema for a kudos item.
+	 *
+	 * @return array JSON schema definition.
+	 */
 	public function get_item_schema(): array {
 		return array(
 			'$schema'    => 'http://json-schema.org/draft-04/schema#',

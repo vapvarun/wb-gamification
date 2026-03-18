@@ -29,11 +29,35 @@ use WP_Error;
 
 defined( 'ABSPATH' ) || exit;
 
+/**
+ * REST API controller for member year-in-community recap data.
+ *
+ * Handles GET /wb-gamification/v1/members/{id}/recap.
+ *
+ * @package WB_Gamification
+ * @since   0.1.0
+ */
 class RecapController extends WP_REST_Controller {
 
+	/**
+	 * REST API namespace.
+	 *
+	 * @var string
+	 */
 	protected $namespace = 'wb-gamification/v1';
+
+	/**
+	 * REST API route base.
+	 *
+	 * @var string
+	 */
 	protected $rest_base = 'members';
 
+	/**
+	 * Register REST API routes.
+	 *
+	 * @return void
+	 */
 	public function register_routes(): void {
 		register_rest_route(
 			$this->namespace,
@@ -66,6 +90,12 @@ class RecapController extends WP_REST_Controller {
 
 	// ── Callbacks ────────────────────────────────────────────────────────────
 
+	/**
+	 * Retrieve a member's year-in-community recap data.
+	 *
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return WP_REST_Response|WP_Error Response on success, WP_Error on failure.
+	 */
 	public function get_recap( WP_REST_Request $request ): WP_REST_Response|WP_Error {
 		$user_id = (int) $request['id'];
 		$year    = (int) $request->get_param( 'year' );
@@ -92,6 +122,12 @@ class RecapController extends WP_REST_Controller {
 
 	// ── Permissions ──────────────────────────────────────────────────────────
 
+	/**
+	 * Check if the current user can view the requested member's recap.
+	 *
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return true|WP_Error True if the request has permission, WP_Error otherwise.
+	 */
 	public function permissions_check( WP_REST_Request $request ): bool|WP_Error {
 		$user_id = (int) $request['id'];
 

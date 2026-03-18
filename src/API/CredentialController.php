@@ -31,13 +31,37 @@ use WP_Error;
 
 defined( 'ABSPATH' ) || exit;
 
+/**
+ * REST API controller for OpenBadges 3.0 verifiable credentials.
+ *
+ * Handles GET /wb-gamification/v1/badges/{badge_id}/credential/{user_id}.
+ *
+ * @package WB_Gamification
+ * @since   0.1.0
+ */
 class CredentialController extends WP_REST_Controller {
 
+	/**
+	 * REST API namespace.
+	 *
+	 * @var string
+	 */
 	protected $namespace = 'wb-gamification/v1';
+
+	/**
+	 * REST API route base.
+	 *
+	 * @var string
+	 */
 	protected $rest_base = 'badges';
 
+	/**
+	 * Register REST API routes.
+	 *
+	 * @return void
+	 */
 	public function register_routes(): void {
-		// GET /badges/{badge_id}/credential/{user_id}
+		// GET /badges/{badge_id}/credential/{user_id}.
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base . '/(?P<badge_id>[a-z0-9_]+)/credential/(?P<user_id>[\d]+)',
@@ -66,6 +90,12 @@ class CredentialController extends WP_REST_Controller {
 
 	// ── Callback ────────────────────────────────────────────────────────────
 
+	/**
+	 * Return an OpenBadgeCredential 3.0 JSON-LD document for a badge earner.
+	 *
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return WP_REST_Response|WP_Error Response on success, WP_Error on failure.
+	 */
 	public function get_credential( WP_REST_Request $request ): WP_REST_Response|WP_Error {
 		$badge_id = (string) $request['badge_id'];
 		$user_id  = (int) $request['user_id'];

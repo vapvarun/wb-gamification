@@ -36,13 +36,37 @@ use WP_Error;
 
 defined( 'ABSPATH' ) || exit;
 
+/**
+ * REST API controller for ingesting gamification events.
+ *
+ * Handles POST /wb-gamification/v1/events.
+ *
+ * @package WB_Gamification
+ * @since   0.1.0
+ */
 class EventsController extends WP_REST_Controller {
 
+	/**
+	 * REST API namespace.
+	 *
+	 * @var string
+	 */
 	protected $namespace = 'wb-gamification/v1';
+
+	/**
+	 * REST API route base.
+	 *
+	 * @var string
+	 */
 	protected $rest_base = 'events';
 
+	/**
+	 * Register REST API routes.
+	 *
+	 * @return void
+	 */
 	public function register_routes(): void {
-		// POST /events
+		// POST /events.
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base,
@@ -86,6 +110,12 @@ class EventsController extends WP_REST_Controller {
 
 	// ── Callback ────────────────────────────────────────────────────────────────
 
+	/**
+	 * Process an incoming gamification event.
+	 *
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return WP_REST_Response|WP_Error Response on success, WP_Error on failure.
+	 */
 	public function create_item( WP_REST_Request $request ): WP_REST_Response|WP_Error {
 		$action_id = (string) $request['action_id'];
 		$user_id   = (int) $request['user_id'];
@@ -120,7 +150,7 @@ class EventsController extends WP_REST_Controller {
 		}
 
 		// Non-admins can only fire events for themselves.
-		if ( ! current_user_can( 'manage_options' ) && $user_id !== get_current_user_id() ) {
+		if ( ! current_user_can( 'manage_options' ) && get_current_user_id() !== $user_id ) {
 			return new WP_Error(
 				'rest_forbidden',
 				__( 'You may only fire events for yourself.', 'wb-gamification' ),
@@ -155,6 +185,12 @@ class EventsController extends WP_REST_Controller {
 
 	// ── Permissions ─────────────────────────────────────────────────────────────
 
+	/**
+	 * Check if the current user can fire a gamification event.
+	 *
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return true|WP_Error True if the request has permission, WP_Error otherwise.
+	 */
 	public function create_item_permissions_check( WP_REST_Request $request ): bool|WP_Error {
 		if ( ! is_user_logged_in() ) {
 			return new WP_Error(
@@ -169,11 +205,13 @@ class EventsController extends WP_REST_Controller {
 	// ── Helpers ─────────────────────────────────────────────────────────────────
 
 	/**
-	 * Sanitize the metadata object — only allow scalar values, strip keys with
-	 * potentially sensitive names, and truncate strings.
+	 * Sanitize the metadata object.
 	 *
-	 * @param mixed $meta
-	 * @return array
+	 * Only allows scalar values, strips keys with potentially sensitive names,
+	 * and truncates strings to 500 characters.
+	 *
+	 * @param mixed $meta Raw metadata value from the request.
+	 * @return array Sanitized key/value metadata array.
 	 */
 	public function sanitize_metadata( $meta ): array {
 		if ( ! is_array( $meta ) ) {

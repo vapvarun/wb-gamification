@@ -27,13 +27,38 @@ use WP_Error;
 
 defined( 'ABSPATH' ) || exit;
 
+/**
+ * REST API controller for badge definitions and awards.
+ *
+ * Handles GET /wb-gamification/v1/badges, GET /wb-gamification/v1/badges/{id},
+ * and POST /wb-gamification/v1/badges/{id}/award.
+ *
+ * @package WB_Gamification
+ * @since   0.1.0
+ */
 class BadgesController extends WP_REST_Controller {
 
+	/**
+	 * REST API namespace.
+	 *
+	 * @var string
+	 */
 	protected $namespace = 'wb-gamification/v1';
+
+	/**
+	 * REST API route base.
+	 *
+	 * @var string
+	 */
 	protected $rest_base = 'badges';
 
+	/**
+	 * Register REST API routes.
+	 *
+	 * @return void
+	 */
 	public function register_routes(): void {
-		// GET /badges
+		// GET /badges.
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base,
@@ -62,7 +87,7 @@ class BadgesController extends WP_REST_Controller {
 			)
 		);
 
-		// GET /badges/{id}
+		// GET /badges/{id}.
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base . '/(?P<id>[a-z0-9_-]+)',
@@ -77,7 +102,7 @@ class BadgesController extends WP_REST_Controller {
 			)
 		);
 
-		// POST /badges/{id}/award
+		// POST /badges/{id}/award.
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base . '/(?P<id>[a-z0-9_-]+)/award',
@@ -105,6 +130,12 @@ class BadgesController extends WP_REST_Controller {
 
 	// ── Permission checks ──────────────────────────────────────────────────────
 
+	/**
+	 * Check if the current user can manually award a badge.
+	 *
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return true|WP_Error True if the request has permission, WP_Error otherwise.
+	 */
 	public function award_permissions_check( WP_REST_Request $request ): bool|WP_Error {
 		if ( ! current_user_can( 'manage_options' ) ) {
 			return new WP_Error(
@@ -119,7 +150,10 @@ class BadgesController extends WP_REST_Controller {
 	// ── Endpoint callbacks ─────────────────────────────────────────────────────
 
 	/**
-	 * GET /badges — All badge definitions with optional earned status + rarity.
+	 * Retrieve all badge definitions with optional earned status and rarity scores.
+	 *
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return WP_REST_Response Response containing all badge definitions.
 	 */
 	public function get_items( WP_REST_Request $request ): WP_REST_Response {
 		$user_id  = (int) $request->get_param( 'user_id' );
@@ -150,7 +184,10 @@ class BadgesController extends WP_REST_Controller {
 	}
 
 	/**
-	 * GET /badges/{id} — Single badge definition.
+	 * Retrieve a single badge definition by ID.
+	 *
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return WP_REST_Response|WP_Error Response on success, WP_Error on failure.
 	 */
 	public function get_item( WP_REST_Request $request ): WP_REST_Response|WP_Error {
 		$badge_id = sanitize_key( $request['id'] );
@@ -177,7 +214,10 @@ class BadgesController extends WP_REST_Controller {
 	}
 
 	/**
-	 * POST /badges/{id}/award — Admin-only manual award.
+	 * Manually award a badge to a user (admin only).
+	 *
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return WP_REST_Response|WP_Error Response on success, WP_Error on failure.
 	 */
 	public function award_badge( WP_REST_Request $request ): WP_REST_Response|WP_Error {
 		$badge_id = sanitize_key( $request['id'] );
@@ -228,11 +268,12 @@ class BadgesController extends WP_REST_Controller {
 	private function get_rarity_map(): array {
 		global $wpdb;
 
-		$total_users = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->users}" );
+		$total_users = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->users}" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- Real-time aggregation; result varies per request.
 		if ( $total_users <= 0 ) {
 			return array();
 		}
 
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- Aggregation query; not suitable for generic caching without badge-level cache keys.
 		$rows = $wpdb->get_results(
 			"SELECT badge_id, COUNT(DISTINCT user_id) AS earner_count
 			   FROM {$wpdb->prefix}wb_gam_user_badges
@@ -250,10 +291,14 @@ class BadgesController extends WP_REST_Controller {
 
 	/**
 	 * Count of distinct users who hold a specific badge.
+	 *
+	 * @param string $badge_id Badge identifier.
+	 * @return int Number of distinct users who earned the badge.
 	 */
 	private function get_earner_count( string $badge_id ): int {
 		global $wpdb;
 
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- Per-badge count shown on single-badge page; caching is handled by calling code if needed.
 		return (int) $wpdb->get_var(
 			$wpdb->prepare(
 				"SELECT COUNT(DISTINCT user_id) FROM {$wpdb->prefix}wb_gam_user_badges WHERE badge_id = %s",
@@ -262,6 +307,11 @@ class BadgesController extends WP_REST_Controller {
 		);
 	}
 
+	/**
+	 * Return the shared `id` argument definition for badge routes.
+	 *
+	 * @return array Argument definition array.
+	 */
 	private function get_badge_id_args(): array {
 		return array(
 			'id' => array(
@@ -273,6 +323,11 @@ class BadgesController extends WP_REST_Controller {
 		);
 	}
 
+	/**
+	 * Retrieve the JSON schema for a badge item.
+	 *
+	 * @return array JSON schema definition.
+	 */
 	public function get_item_schema(): array {
 		return array(
 			'$schema'    => 'http://json-schema.org/draft-04/schema#',

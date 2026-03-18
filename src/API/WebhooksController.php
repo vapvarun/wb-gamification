@@ -33,12 +33,36 @@ use WP_Error;
 
 defined( 'ABSPATH' ) || exit;
 
+/**
+ * REST API controller for outbound webhook management.
+ *
+ * Handles CRUD for webhook registrations at GET|POST /wb-gamification/v1/webhooks
+ * and GET|PUT|DELETE /wb-gamification/v1/webhooks/{id}.
+ *
+ * @package WB_Gamification
+ * @since   0.1.0
+ */
 class WebhooksController extends WP_REST_Controller {
 
+	/**
+	 * REST API namespace.
+	 *
+	 * @var string
+	 */
 	protected $namespace = 'wb-gamification/v1';
+
+	/**
+	 * REST API route base.
+	 *
+	 * @var string
+	 */
 	protected $rest_base = 'webhooks';
 
-	/** @var string[] */
+	/**
+	 * Allowed webhook event types.
+	 *
+	 * @var string[]
+	 */
 	private const VALID_EVENTS = array(
 		'points_awarded',
 		'badge_earned',
@@ -48,6 +72,11 @@ class WebhooksController extends WP_REST_Controller {
 		'kudos_given',
 	);
 
+	/**
+	 * Register REST API routes.
+	 *
+	 * @return void
+	 */
 	public function register_routes(): void {
 		// Collection.
 		register_rest_route(
@@ -103,8 +132,15 @@ class WebhooksController extends WP_REST_Controller {
 
 	// ── Callbacks ───────────────────────────────────────────────────────────────
 
+	/**
+	 * Retrieve all registered webhooks.
+	 *
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return WP_REST_Response Response containing registered webhooks.
+	 */
 	public function get_items( WP_REST_Request $request ): WP_REST_Response {
 		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- Admin-only webhook list; small, infrequently changed.
 		$rows = $wpdb->get_results(
 			"SELECT id, url, events, is_active, created_at FROM {$wpdb->prefix}wb_gam_webhooks ORDER BY id ASC",
 			ARRAY_A
@@ -113,6 +149,12 @@ class WebhooksController extends WP_REST_Controller {
 		return rest_ensure_response( array_map( array( $this, 'prepare_item' ), $rows ) );
 	}
 
+	/**
+	 * Retrieve a single webhook by ID.
+	 *
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return WP_REST_Response|WP_Error Response on success, WP_Error on failure.
+	 */
 	public function get_item( WP_REST_Request $request ): WP_REST_Response|WP_Error {
 		$row = $this->fetch_row( (int) $request['id'] );
 		return $row
@@ -120,6 +162,12 @@ class WebhooksController extends WP_REST_Controller {
 			: new WP_Error( 'rest_not_found', __( 'Webhook not found.', 'wb-gamification' ), array( 'status' => 404 ) );
 	}
 
+	/**
+	 * Register a new outbound webhook.
+	 *
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return WP_REST_Response|WP_Error Response on success, WP_Error on failure.
+	 */
 	public function create_item( WP_REST_Request $request ): WP_REST_Response|WP_Error {
 		global $wpdb;
 
@@ -149,6 +197,12 @@ class WebhooksController extends WP_REST_Controller {
 		return new WP_REST_Response( $data, 201 );
 	}
 
+	/**
+	 * Update an existing webhook registration.
+	 *
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return WP_REST_Response|WP_Error Response on success, WP_Error on failure.
+	 */
 	public function update_item( WP_REST_Request $request ): WP_REST_Response|WP_Error {
 		global $wpdb;
 
@@ -173,11 +227,17 @@ class WebhooksController extends WP_REST_Controller {
 			return rest_ensure_response( $this->prepare_item( $row ) );
 		}
 
-		$wpdb->update( $wpdb->prefix . 'wb_gam_webhooks', $data, array( 'id' => $id ) );
+		$wpdb->update( $wpdb->prefix . 'wb_gam_webhooks', $data, array( 'id' => $id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- Write operation; no cache needed.
 
 		return rest_ensure_response( $this->prepare_item( $this->fetch_row( $id ) ) );
 	}
 
+	/**
+	 * Delete a registered webhook.
+	 *
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return WP_REST_Response|WP_Error Response on success, WP_Error on failure.
+	 */
 	public function delete_item( WP_REST_Request $request ): WP_REST_Response|WP_Error {
 		global $wpdb;
 
@@ -187,7 +247,7 @@ class WebhooksController extends WP_REST_Controller {
 			return new WP_Error( 'rest_not_found', __( 'Webhook not found.', 'wb-gamification' ), array( 'status' => 404 ) );
 		}
 
-		$wpdb->delete( $wpdb->prefix . 'wb_gam_webhooks', array( 'id' => $id ), array( '%d' ) );
+		$wpdb->delete( $wpdb->prefix . 'wb_gam_webhooks', array( 'id' => $id ), array( '%d' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- Write operation; no cache needed.
 
 		return new WP_REST_Response(
 			array(
@@ -200,8 +260,15 @@ class WebhooksController extends WP_REST_Controller {
 
 	// ── Helpers ─────────────────────────────────────────────────────────────────
 
+	/**
+	 * Fetch a single webhook row from the database by ID.
+	 *
+	 * @param int $id Webhook row ID.
+	 * @return array|null Row as associative array, or null if not found.
+	 */
 	private function fetch_row( int $id ): ?array {
 		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- Admin-only lookup; fetched immediately before a write, caching would be misleading.
 		$row = $wpdb->get_row(
 			$wpdb->prepare(
 				"SELECT id, url, events, is_active, created_at FROM {$wpdb->prefix}wb_gam_webhooks WHERE id = %d",
@@ -212,6 +279,12 @@ class WebhooksController extends WP_REST_Controller {
 		return $row ?: null;
 	}
 
+	/**
+	 * Shape a raw webhook DB row into the REST response format.
+	 *
+	 * @param array $row Raw row from the webhooks table.
+	 * @return array Formatted webhook data for the REST response.
+	 */
 	private function prepare_item( array $row ): array {
 		return array(
 			'id'         => (int) $row['id'],
@@ -222,6 +295,12 @@ class WebhooksController extends WP_REST_Controller {
 		);
 	}
 
+	/**
+	 * Return REST API argument definitions for webhook create/update requests.
+	 *
+	 * @param bool $required Whether the fields should be required.
+	 * @return array Argument definition array.
+	 */
 	private function webhook_args( bool $required = true ): array {
 		return array(
 			'url'       => array(
@@ -250,6 +329,11 @@ class WebhooksController extends WP_REST_Controller {
 		);
 	}
 
+	/**
+	 * Check if the current user is an administrator.
+	 *
+	 * @return true|WP_Error True if the request has permission, WP_Error otherwise.
+	 */
 	public function admin_check(): bool|WP_Error {
 		if ( current_user_can( 'manage_options' ) ) {
 			return true;
@@ -257,6 +341,11 @@ class WebhooksController extends WP_REST_Controller {
 		return new WP_Error( 'rest_forbidden', __( 'Admin only.', 'wb-gamification' ), array( 'status' => 403 ) );
 	}
 
+	/**
+	 * Retrieve the JSON schema for a webhook item.
+	 *
+	 * @return array JSON schema definition.
+	 */
 	public function get_item_schema(): array {
 		return array(
 			'$schema'    => 'http://json-schema.org/draft-04/schema#',

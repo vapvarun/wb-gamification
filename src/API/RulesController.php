@@ -38,17 +38,50 @@ use WP_Error;
 
 defined( 'ABSPATH' ) || exit;
 
+/**
+ * REST API controller for gamification rules management.
+ *
+ * Handles CRUD for badge conditions and point multipliers at
+ * GET|POST /wb-gamification/v1/rules and GET|PUT|DELETE /wb-gamification/v1/rules/{id}.
+ *
+ * @package WB_Gamification
+ * @since   0.1.0
+ */
 class RulesController extends WP_REST_Controller {
 
+	/**
+	 * REST API namespace.
+	 *
+	 * @var string
+	 */
 	protected $namespace = 'wb-gamification/v1';
+
+	/**
+	 * REST API route base.
+	 *
+	 * @var string
+	 */
 	protected $rest_base = 'rules';
 
-	/** @var string[] */
+	/**
+	 * Allowed rule types.
+	 *
+	 * @var string[]
+	 */
 	private const VALID_RULE_TYPES = array( 'badge_condition', 'point_multiplier' );
 
-	/** @var string[] */
+	/**
+	 * Allowed condition types for badge_condition rules.
+	 *
+	 * @var string[]
+	 */
 	private const VALID_CONDITION_TYPES = array( 'point_milestone', 'action_count', 'admin_awarded' );
 
+	/**
+	 * Register REST API routes.
+	 *
+	 * @return void
+	 */
 	public function register_routes(): void {
 		// Collection.
 		register_rest_route(
@@ -117,6 +150,12 @@ class RulesController extends WP_REST_Controller {
 
 	// ── Callbacks ────────────────────────────────────────────────────────────
 
+	/**
+	 * Retrieve a list of gamification rules, optionally filtered by type or target.
+	 *
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return WP_REST_Response Response containing matching rules.
+	 */
 	public function get_items( WP_REST_Request $request ): WP_REST_Response {
 		global $wpdb;
 
@@ -143,13 +182,22 @@ class RulesController extends WP_REST_Controller {
 		         WHERE " . implode( ' AND ', $where ) . '
 		         ORDER BY rule_type, id ASC';
 
+		// Dynamic WHERE clause; table comes from $wpdb->prefix only; user values go through $wpdb->prepare().
+		// phpcs:disable WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$rows = $params
 			? $wpdb->get_results( $wpdb->prepare( $sql, ...$params ), ARRAY_A )
 			: $wpdb->get_results( $sql, ARRAY_A );
+		// phpcs:enable WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.NoCaching
 
 		return rest_ensure_response( array_map( array( $this, 'prepare_item' ), $rows ?: array() ) );
 	}
 
+	/**
+	 * Retrieve a single gamification rule by ID.
+	 *
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return WP_REST_Response|WP_Error Response on success, WP_Error on failure.
+	 */
 	public function get_item( WP_REST_Request $request ): WP_REST_Response|WP_Error {
 		$row = $this->fetch_row( (int) $request['id'] );
 		return $row
@@ -157,6 +205,12 @@ class RulesController extends WP_REST_Controller {
 			: new WP_Error( 'rest_not_found', __( 'Rule not found.', 'wb-gamification' ), array( 'status' => 404 ) );
 	}
 
+	/**
+	 * Create a new gamification rule (admin only).
+	 *
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return WP_REST_Response|WP_Error Response on success, WP_Error on failure.
+	 */
 	public function create_item( WP_REST_Request $request ): WP_REST_Response|WP_Error {
 		global $wpdb;
 
@@ -190,6 +244,12 @@ class RulesController extends WP_REST_Controller {
 		return new WP_REST_Response( $this->prepare_item( $this->fetch_row( $wpdb->insert_id ) ), 201 );
 	}
 
+	/**
+	 * Update an existing gamification rule (admin only).
+	 *
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return WP_REST_Response|WP_Error Response on success, WP_Error on failure.
+	 */
 	public function update_item( WP_REST_Request $request ): WP_REST_Response|WP_Error {
 		global $wpdb;
 
@@ -229,12 +289,18 @@ class RulesController extends WP_REST_Controller {
 			return rest_ensure_response( $this->prepare_item( $row ) );
 		}
 
-		$wpdb->update( $wpdb->prefix . 'wb_gam_rules', $data, array( 'id' => $id ) );
+		$wpdb->update( $wpdb->prefix . 'wb_gam_rules', $data, array( 'id' => $id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- Write operation; cache flushed via flush_rules_cache().
 		$this->flush_rules_cache();
 
 		return rest_ensure_response( $this->prepare_item( $this->fetch_row( $id ) ) );
 	}
 
+	/**
+	 * Delete a gamification rule (admin only).
+	 *
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return WP_REST_Response|WP_Error Response on success, WP_Error on failure.
+	 */
 	public function delete_item( WP_REST_Request $request ): WP_REST_Response|WP_Error {
 		global $wpdb;
 
@@ -244,7 +310,7 @@ class RulesController extends WP_REST_Controller {
 			return new WP_Error( 'rest_not_found', __( 'Rule not found.', 'wb-gamification' ), array( 'status' => 404 ) );
 		}
 
-		$wpdb->delete( $wpdb->prefix . 'wb_gam_rules', array( 'id' => $id ), array( '%d' ) );
+		$wpdb->delete( $wpdb->prefix . 'wb_gam_rules', array( 'id' => $id ), array( '%d' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- Write operation; cache flushed via flush_rules_cache().
 		$this->flush_rules_cache();
 
 		return new WP_REST_Response(
@@ -256,10 +322,15 @@ class RulesController extends WP_REST_Controller {
 		);
 	}
 
-	// ── Helpers ──────────────────────────────────────────────────────────────
-
+	/**
+	 * Fetch a single rule row from the database by ID.
+	 *
+	 * @param int $id Rule row ID.
+	 * @return array|null Row as associative array, or null if not found.
+	 */
 	private function fetch_row( int $id ): ?array {
 		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- Admin-only lookup; result used immediately, not suitable for a general cache.
 		$row = $wpdb->get_row(
 			$wpdb->prepare(
 				"SELECT id, rule_type, target_id, rule_config, is_active, created_at
@@ -271,6 +342,12 @@ class RulesController extends WP_REST_Controller {
 		return $row ?: null;
 	}
 
+	/**
+	 * Shape a raw rule DB row into the REST response format.
+	 *
+	 * @param array $row Raw row from the rules table.
+	 * @return array Formatted rule data for the REST response.
+	 */
 	private function prepare_item( array $row ): array {
 		return array(
 			'id'          => (int) $row['id'],
@@ -284,6 +361,9 @@ class RulesController extends WP_REST_Controller {
 
 	/**
 	 * Validate the rule_config object for badge_condition rules.
+	 *
+	 * @param array $config The rule_config array to validate.
+	 * @return true|WP_Error True on success, WP_Error if the config is invalid.
 	 */
 	private function validate_badge_condition_config( array $config ): bool|WP_Error {
 		$type = $config['condition_type'] ?? '';
@@ -326,6 +406,12 @@ class RulesController extends WP_REST_Controller {
 		wp_cache_delete( 'wb_gam_badge_rules', 'wb_gamification' );
 	}
 
+	/**
+	 * Return REST API argument definitions for rule create/update requests.
+	 *
+	 * @param bool $required Whether the fields should be required.
+	 * @return array Argument definition array.
+	 */
 	private function rule_args( bool $required = true ): array {
 		return array(
 			'rule_type'   => array(
@@ -351,6 +437,11 @@ class RulesController extends WP_REST_Controller {
 		);
 	}
 
+	/**
+	 * Check if the current user is an administrator.
+	 *
+	 * @return true|WP_Error True if the request has permission, WP_Error otherwise.
+	 */
 	public function admin_check(): bool|WP_Error {
 		if ( current_user_can( 'manage_options' ) ) {
 			return true;
@@ -358,6 +449,11 @@ class RulesController extends WP_REST_Controller {
 		return new WP_Error( 'rest_forbidden', __( 'Admin only.', 'wb-gamification' ), array( 'status' => 403 ) );
 	}
 
+	/**
+	 * Retrieve the JSON schema for a rule item.
+	 *
+	 * @return array JSON schema definition.
+	 */
 	public function get_item_schema(): array {
 		return array(
 			'$schema'    => 'http://json-schema.org/draft-04/schema#',

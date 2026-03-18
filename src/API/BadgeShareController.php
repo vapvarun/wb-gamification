@@ -32,13 +32,37 @@ use WP_Error;
 
 defined( 'ABSPATH' ) || exit;
 
+/**
+ * REST API controller for shareable badge award cards.
+ *
+ * Handles GET /wb-gamification/v1/badges/{badge_id}/share/{user_id}.
+ *
+ * @package WB_Gamification
+ * @since   0.1.0
+ */
 class BadgeShareController extends WP_REST_Controller {
 
+	/**
+	 * REST API namespace.
+	 *
+	 * @var string
+	 */
 	protected $namespace = 'wb-gamification/v1';
+
+	/**
+	 * REST API route base.
+	 *
+	 * @var string
+	 */
 	protected $rest_base = 'badges';
 
+	/**
+	 * Register REST API routes.
+	 *
+	 * @return void
+	 */
 	public function register_routes(): void {
-		// GET /badges/{badge_id}/share/{user_id}
+		// GET /badges/{badge_id}/share/{user_id}.
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base . '/(?P<badge_id>[a-z0-9_-]+)/share/(?P<user_id>[\d]+)',
@@ -68,9 +92,10 @@ class BadgeShareController extends WP_REST_Controller {
 	// ── Callbacks ──────────────────────────────────────────────────────────────
 
 	/**
-	 * GET /badges/{badge_id}/share/{user_id}
+	 * Return all data needed to render a shareable badge award card.
 	 *
-	 * Returns all data needed to render a shareable badge card.
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return WP_REST_Response|WP_Error Response on success, WP_Error on failure.
 	 */
 	public function get_share_card( WP_REST_Request $request ): WP_REST_Response|WP_Error {
 		$badge_id = sanitize_key( $request['badge_id'] );
@@ -96,6 +121,7 @@ class BadgeShareController extends WP_REST_Controller {
 
 		// Check the user actually earned this badge.
 		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- Public share card; earn date is point-in-time, not suited for generic cache.
 		$earned_at = $wpdb->get_var(
 			$wpdb->prepare(
 				"SELECT earned_at FROM {$wpdb->prefix}wb_gam_user_badges

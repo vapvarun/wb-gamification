@@ -30,6 +30,15 @@
         <exclude-pattern>*</exclude-pattern>
     </rule>
 
+    <!-- Register plugin-specific custom capabilities so WPCS does not flag them. -->
+    <rule ref="WordPress.WP.Capabilities">
+        <properties>
+            <property name="custom_capabilities" type="array">
+                <element value="wb_gam_award_manual"/>
+            </property>
+        </properties>
+    </rule>
+
     <!-- DbUpgrader uses raw DDL (ALTER TABLE, SHOW COLUMNS/INDEX) with $wpdb->prefix
          table names. Table identifiers cannot be parameterised via $wpdb->prepare() —
          only data values can. All table names are constructed from $wpdb->prefix only. -->

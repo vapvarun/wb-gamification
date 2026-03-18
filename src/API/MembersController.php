@@ -31,15 +31,45 @@ use WP_Error;
 
 defined( 'ABSPATH' ) || exit;
 
+/**
+ * REST API controller for member gamification profiles.
+ *
+ * Handles GET /wb-gamification/v1/members/{id} and sub-resources:
+ * points, level, badges, events, and streak.
+ *
+ * @package WB_Gamification
+ * @since   0.1.0
+ */
 class MembersController extends WP_REST_Controller {
 
+	/**
+	 * REST API namespace.
+	 *
+	 * @var string
+	 */
 	protected $namespace = 'wb-gamification/v1';
+
+	/**
+	 * REST API route base.
+	 *
+	 * @var string
+	 */
 	protected $rest_base = 'members';
 
+	/**
+	 * Default number of points history rows per page.
+	 *
+	 * @var int
+	 */
 	private const POINTS_PER_PAGE = 20;
 
+	/**
+	 * Register REST API routes.
+	 *
+	 * @return void
+	 */
 	public function register_routes(): void {
-		// GET /members/{id}
+		// GET /members/{id}.
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base . '/(?P<id>[\d]+)',
@@ -54,7 +84,7 @@ class MembersController extends WP_REST_Controller {
 			)
 		);
 
-		// GET /members/{id}/points
+		// GET /members/{id}/points.
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base . '/(?P<id>[\d]+)/points',
@@ -85,7 +115,7 @@ class MembersController extends WP_REST_Controller {
 			)
 		);
 
-		// GET /members/{id}/level
+		// GET /members/{id}/level.
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base . '/(?P<id>[\d]+)/level',
@@ -99,7 +129,7 @@ class MembersController extends WP_REST_Controller {
 			)
 		);
 
-		// GET /members/{id}/badges
+		// GET /members/{id}/badges.
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base . '/(?P<id>[\d]+)/badges',
@@ -113,7 +143,7 @@ class MembersController extends WP_REST_Controller {
 			)
 		);
 
-		// GET /members/{id}/events
+		// GET /members/{id}/events.
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base . '/(?P<id>[\d]+)/events',
@@ -144,7 +174,7 @@ class MembersController extends WP_REST_Controller {
 			)
 		);
 
-		// GET /members/{id}/streak
+		// GET /members/{id}/streak.
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base . '/(?P<id>[\d]+)/streak',
@@ -173,6 +203,12 @@ class MembersController extends WP_REST_Controller {
 
 	// ── Permission checks ──────────────────────────────────────────────────────
 
+	/**
+	 * Check if the current user can read the requested member's data.
+	 *
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return true|WP_Error True if the request has permission, WP_Error otherwise.
+	 */
 	public function get_item_permissions_check( $request ): bool|WP_Error {
 		$user_id = (int) $request['id'];
 
@@ -192,7 +228,10 @@ class MembersController extends WP_REST_Controller {
 	// ── Endpoint callbacks ────────────────────────────────────────────────────
 
 	/**
-	 * GET /members/{id} — Full gamification profile.
+	 * Retrieve a member's full gamification profile.
+	 *
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return WP_REST_Response|WP_Error Response on success, WP_Error on failure.
 	 */
 	public function get_item( $request ): WP_REST_Response|WP_Error {
 		$user_id = (int) $request['id'];
@@ -235,7 +274,10 @@ class MembersController extends WP_REST_Controller {
 	}
 
 	/**
-	 * GET /members/{id}/points — Points total + paginated history.
+	 * Retrieve a member's points total and paginated transaction history.
+	 *
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return WP_REST_Response|WP_Error Response on success, WP_Error on failure.
 	 */
 	public function get_points( $request ): WP_REST_Response|WP_Error {
 		$user_id  = (int) $request['id'];
@@ -251,6 +293,7 @@ class MembersController extends WP_REST_Controller {
 
 		$total = PointsEngine::get_total( $user_id );
 
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- Paginated history; user-specific data not suitable for generic cache.
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT id, event_id, action_id, points, object_id, created_at
@@ -265,6 +308,7 @@ class MembersController extends WP_REST_Controller {
 			ARRAY_A
 		);
 
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- Row count for pagination; user-specific, not cacheable generically.
 		$total_rows = (int) $wpdb->get_var(
 			$wpdb->prepare(
 				"SELECT COUNT(*) FROM {$wpdb->prefix}wb_gam_points WHERE user_id = %d",
@@ -301,7 +345,10 @@ class MembersController extends WP_REST_Controller {
 	}
 
 	/**
-	 * GET /members/{id}/level — Current level + progress to next.
+	 * Retrieve a member's current level and progress toward the next level.
+	 *
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return WP_REST_Response|WP_Error Response on success, WP_Error on failure.
 	 */
 	public function get_level( $request ): WP_REST_Response|WP_Error {
 		$user_id = (int) $request['id'];
@@ -340,7 +387,10 @@ class MembersController extends WP_REST_Controller {
 	}
 
 	/**
-	 * GET /members/{id}/badges — Phase 2 stub.
+	 * Retrieve all badges earned by a member.
+	 *
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return WP_REST_Response|WP_Error Response on success, WP_Error on failure.
 	 */
 	public function get_badges( $request ): WP_REST_Response|WP_Error {
 		$user_id = (int) $request['id'];
@@ -351,6 +401,7 @@ class MembersController extends WP_REST_Controller {
 
 		global $wpdb;
 
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- Per-user badge list; not suitable for a shared cache.
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT b.id, b.name, b.description, b.image_url, b.is_credential, b.category,
@@ -383,7 +434,10 @@ class MembersController extends WP_REST_Controller {
 	}
 
 	/**
-	 * GET /members/{id}/events — paginated event log for a member.
+	 * Retrieve a member's paginated gamification event log.
+	 *
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return WP_REST_Response|WP_Error Response on success, WP_Error on failure.
 	 */
 	public function get_events( $request ): WP_REST_Response|WP_Error {
 		$user_id  = (int) $request['id'];
@@ -397,6 +451,7 @@ class MembersController extends WP_REST_Controller {
 
 		global $wpdb;
 
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- Paginated event log; user-specific, not cacheable generically.
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT id, action_id, object_id, metadata, created_at
@@ -411,6 +466,7 @@ class MembersController extends WP_REST_Controller {
 			ARRAY_A
 		);
 
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- Row count for pagination; not cacheable generically.
 		$total_rows = (int) $wpdb->get_var(
 			$wpdb->prepare(
 				"SELECT COUNT(*) FROM {$wpdb->prefix}wb_gam_events WHERE user_id = %d",
@@ -439,7 +495,10 @@ class MembersController extends WP_REST_Controller {
 	}
 
 	/**
-	 * GET /members/{id}/streak — current streak + optional contribution heatmap data.
+	 * Retrieve a member's current streak and optional contribution heatmap data.
+	 *
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return WP_REST_Response|WP_Error Response on success, WP_Error on failure.
 	 */
 	public function get_streak( $request ): WP_REST_Response|WP_Error {
 		$user_id      = (int) $request['id'];
@@ -466,14 +525,16 @@ class MembersController extends WP_REST_Controller {
 		);
 	}
 
-	// ── Helpers ───────────────────────────────────────────────────────────────
-
 	/**
-	 * @return array{ leaderboard_opt_out: int, show_rank: int, notification_mode: string }
+	 * Retrieve a member's gamification preferences, with defaults for missing rows.
+	 *
+	 * @param int $user_id WordPress user ID.
+	 * @return array{ leaderboard_opt_out: int, show_rank: int, notification_mode: string } Preference row.
 	 */
 	private function get_member_prefs( int $user_id ): array {
 		global $wpdb;
 
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- User preferences; cached at caller level if needed.
 		$row = $wpdb->get_row(
 			$wpdb->prepare(
 				"SELECT leaderboard_opt_out, show_rank, notification_mode
@@ -491,8 +552,15 @@ class MembersController extends WP_REST_Controller {
 		);
 	}
 
+	/**
+	 * Return the count of badges earned by a member.
+	 *
+	 * @param int $user_id WordPress user ID.
+	 * @return int Number of badges earned.
+	 */
 	private function get_badge_count( int $user_id ): int {
 		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- Badge count; user-specific aggregation.
 		return (int) $wpdb->get_var(
 			$wpdb->prepare(
 				"SELECT COUNT(*) FROM {$wpdb->prefix}wb_gam_user_badges WHERE user_id = %d",
@@ -501,6 +569,11 @@ class MembersController extends WP_REST_Controller {
 		);
 	}
 
+	/**
+	 * Return the shared `id` argument definition for member routes.
+	 *
+	 * @return array Argument definition array.
+	 */
 	private function get_member_id_args(): array {
 		return array(
 			'id' => array(
@@ -513,6 +586,11 @@ class MembersController extends WP_REST_Controller {
 		);
 	}
 
+	/**
+	 * Retrieve the JSON schema for a member item.
+	 *
+	 * @return array JSON schema definition.
+	 */
 	public function get_item_schema(): array {
 		return array(
 			'$schema'    => 'http://json-schema.org/draft-04/schema#',

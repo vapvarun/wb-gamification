@@ -20,13 +20,37 @@ use WP_Error;
 
 defined( 'ABSPATH' ) || exit;
 
+/**
+ * REST API controller for active challenges and user progress.
+ *
+ * Handles GET /wb-gamification/v1/challenges and GET /wb-gamification/v1/challenges/{id}.
+ *
+ * @package WB_Gamification
+ * @since   0.1.0
+ */
 class ChallengesController extends WP_REST_Controller {
 
+	/**
+	 * REST API namespace.
+	 *
+	 * @var string
+	 */
 	protected $namespace = 'wb-gamification/v1';
+
+	/**
+	 * REST API route base.
+	 *
+	 * @var string
+	 */
 	protected $rest_base = 'challenges';
 
+	/**
+	 * Register REST API routes.
+	 *
+	 * @return void
+	 */
 	public function register_routes(): void {
-		// GET /challenges
+		// GET /challenges.
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base,
@@ -49,7 +73,7 @@ class ChallengesController extends WP_REST_Controller {
 			)
 		);
 
-		// GET /challenges/{id}
+		// GET /challenges/{id}.
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base . '/(?P<id>[\d]+)',
@@ -81,7 +105,10 @@ class ChallengesController extends WP_REST_Controller {
 	// ── Callbacks ──────────────────────────────────────────────────────────────
 
 	/**
-	 * GET /challenges — all active challenges with progress.
+	 * Retrieve all active challenges with current user progress.
+	 *
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return WP_REST_Response Response containing active challenges.
 	 */
 	public function get_items( WP_REST_Request $request ): WP_REST_Response {
 		$user_id = $this->resolve_user_id( (int) $request->get_param( 'user_id' ) );
@@ -91,7 +118,10 @@ class ChallengesController extends WP_REST_Controller {
 	}
 
 	/**
-	 * GET /challenges/{id} — single challenge.
+	 * Retrieve a single active challenge by ID.
+	 *
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return WP_REST_Response|WP_Error Response on success, WP_Error on failure.
 	 */
 	public function get_item( WP_REST_Request $request ): WP_REST_Response|WP_Error {
 		$challenge_id = (int) $request['id'];
@@ -114,6 +144,12 @@ class ChallengesController extends WP_REST_Controller {
 
 	// ── Helpers ────────────────────────────────────────────────────────────────
 
+	/**
+	 * Resolve the effective user ID from the request parameter.
+	 *
+	 * @param int $requested User ID from the request, 0 to use the current user.
+	 * @return int Resolved user ID.
+	 */
 	private function resolve_user_id( int $requested ): int {
 		if ( $requested > 0 ) {
 			return $requested;
@@ -121,6 +157,11 @@ class ChallengesController extends WP_REST_Controller {
 		return is_user_logged_in() ? get_current_user_id() : 0;
 	}
 
+	/**
+	 * Retrieve the JSON schema for a challenge item.
+	 *
+	 * @return array JSON schema definition.
+	 */
 	public function get_item_schema(): array {
 		return array(
 			'$schema'    => 'http://json-schema.org/draft-04/schema#',
