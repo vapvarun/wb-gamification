@@ -25,8 +25,13 @@ if ( 0 === $user_id ) {
 }
 
 if ( $user_id <= 0 ) {
-	// Not logged in and no specific user — render nothing.
-	return '';
+	$wrapper_attributes = get_block_wrapper_attributes( [ 'class' => 'wb-gam-member-points wb-gam-member-points--guest' ] );
+	printf(
+		'<div %s><p class="wb-gam-member-points__guest">%s</p></div>',
+		$wrapper_attributes, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		esc_html__( 'Log in to see your points.', 'wb-gamification' )
+	);
+	return;
 }
 
 $user = get_userdata( $user_id );

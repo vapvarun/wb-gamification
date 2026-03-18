@@ -31,6 +31,14 @@ $layout      = in_array( $attributes['layout'] ?? 'podium', [ 'podium', 'list' ]
 $rows = LeaderboardEngine::get_leaderboard( $period, $limit );
 
 if ( empty( $rows ) ) {
+	$wrapper_attrs = get_block_wrapper_attributes(
+		[ 'class' => 'wb-gam-top-members wb-gam-top-members--empty' ]
+	);
+	printf(
+		'<div %s><p class="wb-gam-top-members__empty">%s</p></div>',
+		$wrapper_attrs, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		esc_html__( 'Be the first to earn points and claim the top spot!', 'wb-gamification' )
+	);
 	return;
 }
 

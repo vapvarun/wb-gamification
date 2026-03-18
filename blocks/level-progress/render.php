@@ -19,6 +19,12 @@ if ( $user_id <= 0 ) {
 }
 
 if ( ! $user_id ) {
+	$wrapper_attrs = get_block_wrapper_attributes( [ 'class' => 'wb-gam-level-progress wb-gam-level-progress--guest' ] );
+	printf(
+		'<div %s><p class="wb-gam-level-progress__empty">%s</p></div>',
+		$wrapper_attrs, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		esc_html__( 'Log in to see your level progress.', 'wb-gamification' )
+	);
 	return;
 }
 
@@ -32,6 +38,12 @@ $next    = LevelEngine::get_next_level( $user_id );
 $pct     = LevelEngine::get_progress_percent( $user_id );
 
 if ( ! $level ) {
+	$wrapper_attrs = get_block_wrapper_attributes( [ 'class' => 'wb-gam-level-progress wb-gam-level-progress--empty' ] );
+	printf(
+		'<div %s><p class="wb-gam-level-progress__empty">%s</p></div>',
+		$wrapper_attrs, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		esc_html__( 'Keep earning points to unlock your first level!', 'wb-gamification' )
+	);
 	return;
 }
 

@@ -18,6 +18,12 @@ if ( $user_id <= 0 ) {
 }
 
 if ( ! $user_id ) {
+	$wrapper_attrs = get_block_wrapper_attributes( [ 'class' => 'wb-gam-streak wb-gam-streak--guest' ] );
+	printf(
+		'<div %s><p class="wb-gam-streak__empty">%s</p></div>',
+		$wrapper_attrs, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		esc_html__( 'Log in to see your streak.', 'wb-gamification' )
+	);
 	return;
 }
 
