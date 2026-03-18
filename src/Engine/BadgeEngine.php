@@ -168,6 +168,25 @@ final class BadgeEngine {
 
 		// Compute expiry if the badge_def specifies a validity window.
 		$def        = self::get_badge_def( $badge_id );
+
+		// Eligibility gate: closes_at — stop awarding after the cutoff date.
+		if ( $def && ! empty( $def['closes_at'] ) && gmdate( 'Y-m-d H:i:s' ) >= $def['closes_at'] ) {
+			return false;
+		}
+
+		// Eligibility gate: max_earners — stop awarding once N members hold it.
+		if ( $def && ! empty( $def['max_earners'] ) ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- live count needed; caching here would cause over-awarding.
+			$earner_count = (int) $wpdb->get_var(
+				$wpdb->prepare(
+					"SELECT COUNT(*) FROM {$wpdb->prefix}wb_gam_user_badges WHERE badge_id = %s",
+					$badge_id
+				)
+			);
+			if ( $earner_count >= (int) $def['max_earners'] ) {
+				return false;
+			}
+		}
 		$validity   = $def ? (int) ( $def['validity_days'] ?? 0 ) : 0;
 		$expires_at = $validity > 0
 			? gmdate( 'Y-m-d H:i:s', strtotime( "+{$validity} days" ) )
@@ -329,14 +348,14 @@ final class BadgeEngine {
 	 * Get a single badge definition.
 	 *
 	 * @param string $badge_id Badge identifier.
-	 * @return array{id: string, name: string, description: string, image_url: string|null, is_credential: bool, validity_days: int|null, category: string}|null
+	 * @return array{id: string, name: string, description: string, image_url: string|null, is_credential: bool, validity_days: int|null, closes_at: string|null, max_earners: int|null, category: string}|null
 	 */
 	public static function get_badge_def( string $badge_id ): ?array {
 		global $wpdb;
 
 		$row = $wpdb->get_row(
 			$wpdb->prepare(
-				"SELECT id, name, description, image_url, is_credential, validity_days, category
+				"SELECT id, name, description, image_url, is_credential, validity_days, closes_at, max_earners, category
 				   FROM {$wpdb->prefix}wb_gam_badge_defs
 				  WHERE id = %s",
 				$badge_id
@@ -355,6 +374,8 @@ final class BadgeEngine {
 			'image_url'     => $row['image_url'] ?: null,
 			'is_credential' => (bool) $row['is_credential'],
 			'validity_days' => isset( $row['validity_days'] ) ? (int) $row['validity_days'] : null,
+			'closes_at'     => $row['closes_at'] ?: null,
+			'max_earners'   => isset( $row['max_earners'] ) ? (int) $row['max_earners'] : null,
 			'category'      => $row['category'],
 		);
 	}

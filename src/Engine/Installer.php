@@ -86,6 +86,8 @@ final class Installer {
 			image_url     VARCHAR(500),
 			is_credential TINYINT(1)    DEFAULT 0,
 			validity_days INT UNSIGNED  DEFAULT NULL,
+			closes_at     DATETIME      DEFAULT NULL,
+			max_earners   INT UNSIGNED  DEFAULT NULL,
 			category      VARCHAR(50)   DEFAULT 'general',
 			created_at    DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			PRIMARY KEY (id)

@@ -140,6 +140,7 @@ final class WB_Gamification {
 		add_action( 'bp_loaded', array( BPActivity::class, 'init' ) );
 
 		if ( is_admin() ) {
+			add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_assets' ) );
 			add_action( 'plugins_loaded', array( SettingsPage::class, 'init' ), 10 );
 			add_action( 'plugins_loaded', array( SetupWizard::class, 'init' ), 10 );
 			add_action( 'plugins_loaded', array( AnalyticsDashboard::class, 'init' ), 10 );
@@ -211,6 +212,24 @@ final class WB_Gamification {
 	public function enqueue_assets(): void {
 		wp_enqueue_style( 'wb-gamification', WB_GAM_URL . 'assets/css/frontend.css', array(), WB_GAM_VERSION );
 		wp_enqueue_script_module( 'wb-gamification-interactivity', WB_GAM_URL . 'assets/interactivity/index.js', array(), WB_GAM_VERSION );
+	}
+
+	/**
+	 * Enqueue shared admin CSS on all WB Gamification admin pages.
+	 *
+	 * @param string $hook Current admin page hook suffix.
+	 * @return void
+	 */
+	public function enqueue_admin_assets( string $hook ): void {
+		if ( false === strpos( $hook, 'wb-gamification' ) ) {
+			return;
+		}
+		wp_enqueue_style(
+			'wb-gam-admin',
+			WB_GAM_URL . 'assets/css/admin.css',
+			array(),
+			WB_GAM_VERSION
+		);
 	}
 }
 

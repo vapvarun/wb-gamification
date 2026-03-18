@@ -279,6 +279,22 @@ final class BadgeAdminPage {
 						</label>
 					</td>
 				</tr>
+				<tr>
+					<th><label for="wb-gam-badge-closes-at"><?php esc_html_e( 'Closes at', 'wb-gamification' ); ?></label></th>
+					<td>
+						<input type="datetime-local" name="badge_closes_at" id="wb-gam-badge-closes-at"
+							value="<?php echo esc_attr( ! empty( $badge['closes_at'] ) ? str_replace( ' ', 'T', substr( $badge['closes_at'], 0, 16 ) ) : '' ); ?>">
+						<p class="description"><?php esc_html_e( 'Stop awarding this badge after this date. Leave blank for no cutoff.', 'wb-gamification' ); ?></p>
+					</td>
+				</tr>
+				<tr>
+					<th><label for="wb-gam-badge-max-earners"><?php esc_html_e( 'Max earners', 'wb-gamification' ); ?></label></th>
+					<td>
+						<input type="number" name="badge_max_earners" id="wb-gam-badge-max-earners"
+							min="1" value="<?php echo esc_attr( $badge['max_earners'] ?? '' ); ?>">
+						<p class="description"><?php esc_html_e( 'Stop awarding after this many members earn it. Leave blank for unlimited.', 'wb-gamification' ); ?></p>
+					</td>
+				</tr>
 			</table>
 
 			<h2><?php esc_html_e( 'Auto-Award Condition', 'wb-gamification' ); ?></h2>
@@ -352,12 +368,18 @@ final class BadgeAdminPage {
 			exit;
 		}
 
+		$closes_at_raw = sanitize_text_field( wp_unslash( $_POST['badge_closes_at'] ?? '' ) );
+		$closes_at     = $closes_at_raw ? gmdate( 'Y-m-d H:i:s', strtotime( $closes_at_raw ) ) : null;
+		$max_earners   = '' !== ( $_POST['badge_max_earners'] ?? '' ) ? absint( $_POST['badge_max_earners'] ) : null;
+
 		$badge_data = array(
 			'name'          => sanitize_text_field( wp_unslash( $_POST['badge_name'] ?? '' ) ),
 			'description'   => sanitize_textarea_field( wp_unslash( $_POST['badge_description'] ?? '' ) ),
 			'image_url'     => esc_url_raw( wp_unslash( $_POST['badge_image_url'] ?? '' ) ),
 			'category'      => sanitize_key( $_POST['badge_category'] ?? 'general' ),
 			'is_credential' => ! empty( $_POST['badge_is_credential'] ) ? 1 : 0,
+			'closes_at'     => $closes_at,
+			'max_earners'   => $max_earners,
 		);
 
 		if ( $is_new ) {

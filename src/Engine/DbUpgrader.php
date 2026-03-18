@@ -80,6 +80,7 @@ final class DbUpgrader {
 			'0.1.0' => 'upgrade_to_0_1_0',
 			'0.2.0' => 'upgrade_to_0_2_0',
 			'0.3.0' => 'upgrade_to_0_3_0',
+			'0.5.0' => 'upgrade_to_0_5_0',
 		);
 	}
 
@@ -160,6 +161,28 @@ final class DbUpgrader {
 		if ( ! $idx ) {
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.SchemaChange
 			$wpdb->query( "ALTER TABLE `{$chal}` ADD KEY `idx_status_action` (status, action_id)" );
+		}
+	}
+
+	/**
+	 * 0.5.0 — add badge eligibility limits.
+	 *   wb_gam_badge_defs.closes_at   — stop awarding after this datetime (NULL = no cutoff)
+	 *   wb_gam_badge_defs.max_earners — stop awarding after N members earn it (NULL = unlimited)
+	 */
+	private static function upgrade_to_0_5_0(): void {
+		global $wpdb;
+
+		$defs     = $wpdb->prefix . 'wb_gam_badge_defs';
+		$def_cols = $wpdb->get_col( "SHOW COLUMNS FROM `{$defs}`", 0 );
+
+		if ( ! in_array( 'closes_at', $def_cols, true ) ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.SchemaChange
+			$wpdb->query( "ALTER TABLE `{$defs}` ADD COLUMN `closes_at` DATETIME DEFAULT NULL AFTER `validity_days`" );
+		}
+
+		if ( ! in_array( 'max_earners', $def_cols, true ) ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.SchemaChange
+			$wpdb->query( "ALTER TABLE `{$defs}` ADD COLUMN `max_earners` INT UNSIGNED DEFAULT NULL AFTER `closes_at`" );
 		}
 	}
 
