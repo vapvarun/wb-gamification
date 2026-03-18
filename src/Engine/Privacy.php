@@ -30,8 +30,16 @@ namespace WBGam\Engine;
 
 defined( 'ABSPATH' ) || exit;
 
+/**
+ * Registers WordPress privacy data exporters and erasers for gamification data.
+ *
+ * @package WB_Gamification
+ */
 final class Privacy {
 
+	/**
+	 * Register GDPR exporter and eraser callbacks with WordPress.
+	 */
 	public static function init(): void {
 		add_filter( 'wp_privacy_personal_data_exporters', array( __CLASS__, 'register_exporter' ) );
 		add_filter( 'wp_privacy_personal_data_erasers', array( __CLASS__, 'register_eraser' ) );
@@ -39,6 +47,12 @@ final class Privacy {
 
 	// ── Registration ────────────────────────────────────────────────────────
 
+	/**
+	 * Add the gamification data exporter to the WordPress exporters list.
+	 *
+	 * @param array $exporters Registered exporters.
+	 * @return array Modified exporters array.
+	 */
 	public static function register_exporter( array $exporters ): array {
 		$exporters['wb-gamification'] = array(
 			'exporter_friendly_name' => __( 'WB Gamification', 'wb-gamification' ),
@@ -47,6 +61,12 @@ final class Privacy {
 		return $exporters;
 	}
 
+	/**
+	 * Add the gamification data eraser to the WordPress erasers list.
+	 *
+	 * @param array $erasers Registered erasers.
+	 * @return array Modified erasers array.
+	 */
 	public static function register_eraser( array $erasers ): array {
 		$erasers['wb-gamification'] = array(
 			'eraser_friendly_name' => __( 'WB Gamification', 'wb-gamification' ),
@@ -58,8 +78,11 @@ final class Privacy {
 	// ── Exporter ────────────────────────────────────────────────────────────
 
 	/**
-	 * @param string $email_address
-	 * @param int    $page          1-based page (WordPress sends up to 500 items/page)
+	 * Export all gamification data for the given email address.
+	 *
+	 * @param string $email_address User email address to export data for.
+	 * @param int    $page          1-based page (WordPress sends up to 500 items/page).
+	 * @return array Export data array with 'data' and 'done' keys.
 	 */
 	public static function export_user_data( string $email_address, int $page = 1 ): array {
 		$user = get_user_by( 'email', $email_address );
@@ -225,8 +248,11 @@ final class Privacy {
 	// ── Eraser ──────────────────────────────────────────────────────────────
 
 	/**
-	 * @param string $email_address
-	 * @param int    $page 1-based
+	 * Erase all gamification data for the given email address.
+	 *
+	 * @param string $email_address User email address to erase data for.
+	 * @param int    $page          1-based page number.
+	 * @return array Result array with 'items_removed', 'items_retained', 'messages', and 'done' keys.
 	 */
 	public static function erase_user_data( string $email_address, int $page = 1 ): array {
 		$user = get_user_by( 'email', $email_address );
@@ -273,11 +299,11 @@ final class Privacy {
 		$removed += (int) $wpdb->delete( $wpdb->prefix . 'wb_gam_member_prefs', array( 'user_id' => $user_id ), array( '%d' ) );
 
 		// User meta (personal-record keys).
-		$wpdb->delete(
+		$wpdb->delete( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- GDPR erasure must target a specific meta_key.
 			$wpdb->usermeta,
 			array(
 				'user_id'  => $user_id,
-				'meta_key' => 'wb_gam_pr_best_week',
+				'meta_key' => 'wb_gam_pr_best_week', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
 			),
 			array( '%d', '%s' )
 		);
@@ -296,7 +322,13 @@ final class Privacy {
 			'items_removed'  => $removed > 0,
 			'items_retained' => false,
 			'messages'       => $removed > 0
-				? array( sprintf( __( 'Gamification data removed (%d rows).', 'wb-gamification' ), $removed ) )
+				? array(
+					sprintf(
+						/* translators: %d = number of database rows removed */
+						__( 'Gamification data removed (%d rows).', 'wb-gamification' ),
+						$removed
+					),
+				)
 				: array(),
 			'done'           => true,
 		);

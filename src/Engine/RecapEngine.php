@@ -29,6 +29,11 @@ namespace WBGam\Engine;
 
 defined( 'ABSPATH' ) || exit;
 
+/**
+ * Computes a yearly activity recap (Spotify Wrapped model) for a given user and year.
+ *
+ * @package WB_Gamification
+ */
 final class RecapEngine {
 
 	private const CACHE_GROUP = 'wb_gamification';
@@ -37,9 +42,9 @@ final class RecapEngine {
 	/**
 	 * Get the full year recap for a user.
 	 *
-	 * @param int $user_id
-	 * @param int $year  Four-digit year (e.g. 2024). 0 = previous calendar year.
-	 * @return array
+	 * @param int $user_id User ID to generate recap for.
+	 * @param int $year    Four-digit year (e.g. 2024). 0 = previous calendar year.
+	 * @return array Recap data array.
 	 */
 	public static function get_recap( int $user_id, int $year = 0 ): array {
 		if ( $year <= 0 ) {
@@ -206,7 +211,9 @@ final class RecapEngine {
 	/**
 	 * Find the ISO week in which the user earned the most points.
 	 *
-	 * @return array{ week: string, points: int }|null
+	 * @param int $user_id User ID to query.
+	 * @param int $year    Four-digit year to search within.
+	 * @return array{ week: string, points: int }|null Peak week data or null if no activity.
 	 */
 	private static function get_peak_week( int $user_id, int $year ): ?array {
 		global $wpdb;
@@ -241,8 +248,14 @@ final class RecapEngine {
 	}
 
 	/**
-	 * Compute the user's points percentile among all members who earned points
-	 * in the given year. Returns a rounded integer 1–100 (100 = top earner).
+	 * Compute the user's points percentile among all members who earned points in the given year.
+	 *
+	 * Returns a rounded integer 1–100 (100 = top earner).
+	 *
+	 * @param int $user_id     User ID to compute percentile for.
+	 * @param int $year        Four-digit year to query.
+	 * @param int $user_points Total points the user earned that year.
+	 * @return int Percentile rank 0–100.
 	 */
 	private static function get_points_percentile( int $user_id, int $year, int $user_points ): int {
 		if ( $user_points <= 0 ) {
@@ -289,6 +302,12 @@ final class RecapEngine {
 
 	/**
 	 * Generate a short, personalised headline for the recap card.
+	 *
+	 * @param int   $points     Total points earned in the year.
+	 * @param int   $percentile Percentile rank 0–100 among all earners.
+	 * @param array $badges     Array of badge rows earned in the year.
+	 * @param int   $challenges Number of challenges completed in the year.
+	 * @return string Translated headline string.
 	 */
 	private static function compute_headline(
 		int $points,

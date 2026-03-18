@@ -23,6 +23,11 @@ namespace WBGam\Engine;
 
 defined( 'ABSPATH' ) || exit;
 
+/**
+ * Evaluates stored rules from wb_gam_rules against incoming events (e.g. points multipliers).
+ *
+ * @package WB_Gamification
+ */
 final class RuleEngine {
 
 	/**
@@ -101,7 +106,7 @@ final class RuleEngine {
 				return in_array( (int) gmdate( 'w' ), $days, true );
 
 			case 'action_id_match':
-				return $event->action_id === ( $condition['action_id'] ?? '' );
+				return ( $condition['action_id'] ?? '' ) === $event->action_id;
 
 			case 'metadata_gte':
 				$field = (string) ( $condition['field'] ?? '' );

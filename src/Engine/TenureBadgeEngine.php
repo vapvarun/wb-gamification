@@ -31,9 +31,18 @@ namespace WBGam\Engine;
 
 defined( 'ABSPATH' ) || exit;
 
+/**
+ * Auto-awards anniversary badges based on how long a member has been registered.
+ *
+ * @package WB_Gamification
+ */
 final class TenureBadgeEngine {
 
-	/** @var array<string, array{years: int, name: string, description: string}> */
+	/**
+	 * Tenure badge tier definitions keyed by badge ID.
+	 *
+	 * @var array<string, array{years: int, name: string, description: string}>
+	 */
 	private const TIERS = array(
 		'tenure_1yr'  => array(
 			'years'       => 1,
@@ -61,11 +70,17 @@ final class TenureBadgeEngine {
 
 	// ── Boot ────────────────────────────────────────────────────────────────────
 
+	/**
+	 * Register the daily cron hook and ensure badge definitions exist.
+	 */
 	public static function init(): void {
 		add_action( self::CRON_HOOK, array( __CLASS__, 'run_daily_check' ) );
 		add_action( 'plugins_loaded', array( __CLASS__, 'ensure_badges_exist' ), 15 );
 	}
 
+	/**
+	 * Schedule the daily tenure-check cron event on plugin activation.
+	 */
 	public static function activate(): void {
 		if ( ! wp_next_scheduled( self::CRON_HOOK ) ) {
 			// Schedule for 02:00 UTC today (or tomorrow if already past).
@@ -74,6 +89,9 @@ final class TenureBadgeEngine {
 		}
 	}
 
+	/**
+	 * Unschedule the daily tenure-check cron event on plugin deactivation.
+	 */
 	public static function deactivate(): void {
 		$ts = wp_next_scheduled( self::CRON_HOOK );
 		if ( $ts ) {
@@ -92,10 +110,10 @@ final class TenureBadgeEngine {
 		$table = $wpdb->prefix . 'wb_gam_badge_defs';
 
 		foreach ( self::TIERS as $id => $tier ) {
-			// Skip if already exists.
-			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table is $wpdb->prefix . literal, not user input.
+			// Skip if already exists. $table is $wpdb->prefix . literal string, not user input.
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 			$exists = $wpdb->get_var(
-				$wpdb->prepare( "SELECT id FROM $table WHERE id = %s", $id )
+				$wpdb->prepare( "SELECT id FROM $table WHERE id = %s", $id ) // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table is safe.
 			);
 
 			if ( $exists ) {
@@ -152,7 +170,7 @@ final class TenureBadgeEngine {
 	/**
 	 * Check and award all applicable tenure badges for a single user.
 	 *
-	 * @param int $user_id
+	 * @param int $user_id User ID to check.
 	 */
 	public static function check_user( int $user_id ): void {
 		$user = get_userdata( $user_id );
@@ -177,8 +195,8 @@ final class TenureBadgeEngine {
 	/**
 	 * How many full years ago was the given MySQL datetime?
 	 *
-	 * @param string $registered e.g. "2020-03-15 10:00:00"
-	 * @return int
+	 * @param string $registered MySQL datetime string e.g. "2020-03-15 10:00:00".
+	 * @return int Number of full years elapsed since the given date.
 	 */
 	private static function years_since( string $registered ): int {
 		try {

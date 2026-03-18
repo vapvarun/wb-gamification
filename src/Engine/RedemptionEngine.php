@@ -27,6 +27,11 @@ namespace WBGam\Engine;
 
 defined( 'ABSPATH' ) || exit;
 
+/**
+ * Allows members to spend earned points on defined reward items.
+ *
+ * @package WB_Gamification
+ */
 final class RedemptionEngine {
 
 	private const CACHE_GROUP = 'wb_gamification';
@@ -52,6 +57,9 @@ final class RedemptionEngine {
 
 	/**
 	 * Get a single redemption item by ID.
+	 *
+	 * @param int $item_id Redemption item ID.
+	 * @return array|null Item data array or null if not found.
 	 */
 	public static function get_item( int $item_id ): ?array {
 		global $wpdb;
@@ -92,7 +100,7 @@ final class RedemptionEngine {
 		$cost = (int) $item['points_cost'];
 
 		// Check stock.
-		if ( $item['stock'] !== null && (int) $item['stock'] <= 0 ) {
+		if ( null !== $item['stock'] && (int) $item['stock'] <= 0 ) {
 			return array(
 				'success'       => false,
 				'error'         => __( 'This reward is out of stock.', 'wb-gamification' ),
@@ -118,7 +126,7 @@ final class RedemptionEngine {
 		}
 
 		// Atomic stock decrement.
-		if ( $item['stock'] !== null ) {
+		if ( null !== $item['stock'] ) {
 			$decremented = $wpdb->query(
 				$wpdb->prepare(
 					"UPDATE {$wpdb->prefix}wb_gam_redemption_items SET stock = stock - 1 WHERE id = %d AND stock > 0",
@@ -203,6 +211,15 @@ final class RedemptionEngine {
 
 	// ── WooCommerce coupon creation ──────────────────────────────────────────
 
+	/**
+	 * Create a WooCommerce coupon code for a discount reward.
+	 *
+	 * @param int   $user_id       User redeeming the reward.
+	 * @param array $item          Redemption item data.
+	 * @param array $config        Decoded reward_config JSON.
+	 * @param int   $redemption_id Redemption record ID used to seed the coupon code.
+	 * @return string|null Generated coupon code or null on failure.
+	 */
 	private static function create_woo_coupon( int $user_id, array $item, array $config, int $redemption_id ): ?string {
 		if ( ! function_exists( 'wc_create_coupon' ) && ! class_exists( '\WC_Coupon' ) ) {
 			return null;
@@ -232,6 +249,10 @@ final class RedemptionEngine {
 
 	/**
 	 * Get a user's redemption history.
+	 *
+	 * @param int $user_id User ID to retrieve history for.
+	 * @param int $limit   Maximum number of records to return.
+	 * @return array Array of redemption history rows.
 	 */
 	public static function get_user_redemptions( int $user_id, int $limit = 20 ): array {
 		global $wpdb;

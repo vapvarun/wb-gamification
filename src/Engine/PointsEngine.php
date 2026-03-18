@@ -16,6 +16,11 @@ namespace WBGam\Engine;
 
 defined( 'ABSPATH' ) || exit;
 
+/**
+ * Data-access layer for the points ledger — rate-limit checks and DB write methods.
+ *
+ * @package WB_Gamification
+ */
 final class PointsEngine {
 
 	// ── Internal methods called by Engine ─────────────────────────────────────
@@ -182,6 +187,9 @@ final class PointsEngine {
 
 	/**
 	 * Get total points for a user.
+	 *
+	 * @param int $user_id User ID to look up.
+	 * @return int Total points balance.
 	 */
 	public static function get_total( int $user_id ): int {
 		$cache_key = "wb_gam_total_{$user_id}";
@@ -206,6 +214,10 @@ final class PointsEngine {
 
 	/**
 	 * Get how many times a user has performed a specific action.
+	 *
+	 * @param int    $user_id   User ID to check.
+	 * @param string $action_id Action ID to count.
+	 * @return int Number of times the action has been performed.
 	 */
 	public static function get_action_count( int $user_id, string $action_id ): int {
 		global $wpdb;
@@ -220,6 +232,14 @@ final class PointsEngine {
 
 	// ── Private rate-limit helpers ────────────────────────────────────────────
 
+	/**
+	 * Check whether a user is within the cooldown window for an action.
+	 *
+	 * @param int    $user_id          User to check.
+	 * @param string $action_id        Action to check.
+	 * @param int    $cooldown_seconds Cooldown duration in seconds.
+	 * @return bool True if the user is still within the cooldown period.
+	 */
 	private static function is_on_cooldown( int $user_id, string $action_id, int $cooldown_seconds ): bool {
 		global $wpdb;
 
@@ -240,6 +260,13 @@ final class PointsEngine {
 		return ( time() - strtotime( $last ) ) < $cooldown_seconds;
 	}
 
+	/**
+	 * Count how many times a user has performed an action today (site timezone).
+	 *
+	 * @param int    $user_id   User to check.
+	 * @param string $action_id Action to count.
+	 * @return int Number of times the action was performed today.
+	 */
 	private static function get_today_count( int $user_id, string $action_id ): int {
 		global $wpdb;
 		// Use range comparison so MySQL can use the idx_user_action_created index.
@@ -259,6 +286,13 @@ final class PointsEngine {
 		);
 	}
 
+	/**
+	 * Count how many times a user has performed an action this ISO week.
+	 *
+	 * @param int    $user_id   User to check.
+	 * @param string $action_id Action to count.
+	 * @return int Number of times the action was performed this week.
+	 */
 	private static function get_week_count( int $user_id, string $action_id ): int {
 		global $wpdb;
 		// ISO week start: Monday 00:00:00 in site timezone.

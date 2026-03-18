@@ -31,8 +31,16 @@ namespace WBGam\Engine;
 
 defined( 'ABSPATH' ) || exit;
 
+/**
+ * Detects when a member sets a new personal points record and fires a notification.
+ *
+ * @package WB_Gamification
+ */
 final class PersonalRecordEngine {
 
+	/**
+	 * Register the points-awarded hook for personal record detection.
+	 */
 	public static function init(): void {
 		// Priority 20 — runs after BadgeEngine (10) and after all side-effects settle.
 		add_action( 'wb_gamification_points_awarded', array( __CLASS__, 'check_personal_records' ), 20, 3 );
@@ -59,7 +67,7 @@ final class PersonalRecordEngine {
 	 * Compare period total against stored personal best. Update + notify if new best.
 	 *
 	 * @param int    $user_id User to check.
-	 * @param string $period  'day' | 'week' | 'month'
+	 * @param string $period  'day' | 'week' | 'month'.
 	 * @param int    $current Current period total.
 	 */
 	private static function maybe_record( int $user_id, string $period, int $current ): void {
@@ -112,6 +120,10 @@ final class PersonalRecordEngine {
 
 	/**
 	 * Sum points for a user within a period (day / week / month).
+	 *
+	 * @param int    $user_id User ID to sum points for.
+	 * @param string $period  'day' | 'week' | 'month'.
+	 * @return int Total points for the period.
 	 */
 	private static function period_total( int $user_id, string $period ): int {
 		global $wpdb;
@@ -140,6 +152,11 @@ final class PersonalRecordEngine {
 
 	/**
 	 * Build a congratulatory message string.
+	 *
+	 * @param string $period   Period label ('day' | 'week' | 'month').
+	 * @param int    $current  New personal best points value.
+	 * @param int    $previous Previous personal best (0 if first time).
+	 * @return string Translated congratulatory message.
 	 */
 	private static function build_message( string $period, int $current, int $previous ): string {
 		$period_labels = array(
@@ -151,16 +168,16 @@ final class PersonalRecordEngine {
 		$label = $period_labels[ $period ] ?? $period;
 
 		if ( 0 === $previous ) {
-			/* translators: 1: points, 2: period label e.g. "this week" */
 			return sprintf(
+				/* translators: 1: points, 2: period label e.g. "this week" */
 				__( 'Personal record! You earned %1$d points %2$s — your best ever!', 'wb-gamification' ),
 				$current,
 				$label
 			);
 		}
 
-		/* translators: 1: points, 2: period label, 3: previous personal best */
 		return sprintf(
+			/* translators: 1: points, 2: period label, 3: previous personal best */
 			__( 'New personal record! %1$d points %2$s — beating your previous best of %3$d!', 'wb-gamification' ),
 			$current,
 			$label,

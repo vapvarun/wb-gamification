@@ -21,6 +21,11 @@ namespace WBGam\Engine;
 
 defined( 'ABSPATH' ) || exit;
 
+/**
+ * Sends weekly nudges to members at risk of falling below their current level threshold.
+ *
+ * @package WB_Gamification
+ */
 final class StatusRetentionEngine {
 
 	private const CRON_HOOK  = 'wb_gam_status_retention_check';
@@ -29,10 +34,16 @@ final class StatusRetentionEngine {
 	/** Send nudge if user has earned < this fraction of level threshold this week. */
 	private const GAP_THRESHOLD = 0.85;
 
+	/**
+	 * Register the WP-Cron hook for the weekly retention check.
+	 */
 	public static function init(): void {
 		add_action( self::CRON_HOOK, array( __CLASS__, 'run' ) );
 	}
 
+	/**
+	 * Schedule the weekly retention cron event on plugin activation.
+	 */
 	public static function activate(): void {
 		if ( ! wp_next_scheduled( self::CRON_HOOK ) ) {
 			// Next Thursday at 18:00 UTC.
@@ -41,12 +52,18 @@ final class StatusRetentionEngine {
 		}
 	}
 
+	/**
+	 * Clear the weekly retention cron event on plugin deactivation.
+	 */
 	public static function deactivate(): void {
 		wp_clear_scheduled_hook( self::CRON_HOOK );
 	}
 
 	// ── Run ──────────────────────────────────────────────────────────────────
 
+	/**
+	 * Run the weekly status retention check for all recently active users.
+	 */
 	public static function run(): void {
 		global $wpdb;
 
@@ -82,9 +99,9 @@ final class StatusRetentionEngine {
 		// Batch-fetch 4-week point sums for all active users (one query replaces N).
 		$ids_ints     = array_map( 'intval', $active_users );
 		$placeholders = implode( ',', array_fill( 0, count( $ids_ints ), '%d' ) );
-		$avg_rows     = $wpdb->get_results(
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $placeholders is safe: implode of %d placeholders only.
+		$avg_rows = $wpdb->get_results(
 			$wpdb->prepare(
-				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $placeholders is implode(',', array_fill(..., '%d')), safe.
 				"SELECT user_id, COALESCE(SUM(points), 0) / 4 AS avg_pts
 				   FROM {$wpdb->prefix}wb_gam_points
 				  WHERE user_id IN ($placeholders) AND created_at >= %s
@@ -93,7 +110,8 @@ final class StatusRetentionEngine {
 			),
 			ARRAY_A
 		);
-		$avg_map      = array_fill_keys( $ids_ints, 0 );
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$avg_map = array_fill_keys( $ids_ints, 0 );
 		foreach ( $avg_rows as $row ) {
 			$avg_map[ (int) $row['user_id'] ] = (int) $row['avg_pts'];
 		}
@@ -134,6 +152,14 @@ final class StatusRetentionEngine {
 
 	// ── Nudge dispatch ───────────────────────────────────────────────────────
 
+	/**
+	 * Dispatch a retention nudge notification for a user approaching their level threshold.
+	 *
+	 * @param int   $user_id    User to nudge.
+	 * @param array $level      Current level data.
+	 * @param array $next       Next level data.
+	 * @param int   $pts_needed Points gap to the next level.
+	 */
 	private static function send_nudge( int $user_id, array $level, array $next, int $pts_needed ): void {
 		$message = sprintf(
 			/* translators: 1: points needed, 2: next level name */

@@ -32,6 +32,11 @@ namespace WBGam\Engine;
 
 defined( 'ABSPATH' ) || exit;
 
+/**
+ * Sends each active member a personalised weekly gamification summary email.
+ *
+ * @package WB_Gamification
+ */
 final class WeeklyEmailEngine {
 
 	private const CRON_HOOK   = 'wb_gam_weekly_email';
@@ -41,11 +46,17 @@ final class WeeklyEmailEngine {
 
 	// ── Boot ────────────────────────────────────────────────────────────────────
 
+	/**
+	 * Register WP-Cron and Action Scheduler hooks for the weekly email pipeline.
+	 */
 	public static function init(): void {
 		add_action( self::CRON_HOOK, array( __CLASS__, 'dispatch_batch' ) );
 		add_action( self::AS_HOOK, array( __CLASS__, 'send_to_user' ) );
 	}
 
+	/**
+	 * Schedule the weekly email cron event on plugin activation.
+	 */
 	public static function activate(): void {
 		if ( ! wp_next_scheduled( self::CRON_HOOK ) ) {
 			// Next Monday at 08:30 UTC.
@@ -54,6 +65,9 @@ final class WeeklyEmailEngine {
 		}
 	}
 
+	/**
+	 * Unschedule the weekly email cron event on plugin deactivation.
+	 */
 	public static function deactivate(): void {
 		$ts = wp_next_scheduled( self::CRON_HOOK );
 		if ( $ts ) {
@@ -102,7 +116,7 @@ final class WeeklyEmailEngine {
 	/**
 	 * Build and send the weekly summary email to a single user.
 	 *
-	 * @param int $user_id
+	 * @param int $user_id User ID to send the email to.
 	 */
 	public static function send_to_user( int $user_id ): void {
 		$user = get_userdata( $user_id );
@@ -137,6 +151,12 @@ final class WeeklyEmailEngine {
 
 	// ── Data gathering ───────────────────────────────────────────────────────────
 
+	/**
+	 * Gather all data points needed for the weekly summary email.
+	 *
+	 * @param int $user_id User ID to gather data for.
+	 * @return array Summary data array.
+	 */
 	private static function gather_data( int $user_id ): array {
 		global $wpdb;
 		$since = gmdate( 'Y-m-d H:i:s', strtotime( '-7 days' ) );
@@ -213,6 +233,12 @@ final class WeeklyEmailEngine {
 
 	// ── Rendering ────────────────────────────────────────────────────────────────
 
+	/**
+	 * Render the email subject line, adding an emoji for personal-best or streak weeks.
+	 *
+	 * @param array $data Summary data from gather_data().
+	 * @return string Email subject string.
+	 */
 	private static function render_subject( array $data ): string {
 		$template = get_option(
 			'wb_gam_weekly_email_subject',
@@ -229,6 +255,13 @@ final class WeeklyEmailEngine {
 		return $template;
 	}
 
+	/**
+	 * Render the HTML email body for a weekly summary.
+	 *
+	 * @param \WP_User $user WP_User object for the recipient.
+	 * @param array    $data Summary data from gather_data().
+	 * @return string HTML email body.
+	 */
 	private static function render_body( \WP_User $user, array $data ): string {
 		$site_name = get_bloginfo( 'name' );
 		$site_url  = home_url();
@@ -387,6 +420,11 @@ hr { border:none; border-top:1px solid #f3f4f6; margin:1rem 0; }
 		return ob_get_clean();
 	}
 
+	/**
+	 * Build the From header string for the weekly email.
+	 *
+	 * @return string Formatted "Name <email>" header value.
+	 */
 	private static function from_header(): string {
 		$name  = get_option( 'wb_gam_weekly_email_from_name', get_bloginfo( 'name' ) );
 		$email = get_option( 'admin_email' );

@@ -20,6 +20,11 @@ namespace WBGam\Engine;
 
 defined( 'ABSPATH' ) || exit;
 
+/**
+ * Bridges gamification events to front-end notifications via transients and Interactivity API.
+ *
+ * @package WB_Gamification
+ */
 final class NotificationBridge {
 
 	private const TRANSIENT_PREFIX = 'wb_gam_notif_';
@@ -27,6 +32,9 @@ final class NotificationBridge {
 
 	// ── Boot ────────────────────────────────────────────────────────────────────
 
+	/**
+	 * Register action hooks for event collection and footer rendering.
+	 */
 	public static function init(): void {
 		// Collect events from action hooks.
 		add_action( 'wb_gamification_points_awarded', array( __CLASS__, 'on_points_awarded' ), 99, 3 );
@@ -42,6 +50,13 @@ final class NotificationBridge {
 
 	// ── Event collectors ────────────────────────────────────────────────────────
 
+	/**
+	 * Queue a points notification for the user.
+	 *
+	 * @param int   $user_id User who earned points.
+	 * @param Event $event   Source event.
+	 * @param int   $points  Points awarded.
+	 */
 	public static function on_points_awarded( int $user_id, Event $event, int $points ): void {
 		// Don't notify for internal synthetic actions (challenge bonus, streak bonus).
 		$silent = array( 'challenge_completed', 'streak_milestone' );
@@ -59,6 +74,13 @@ final class NotificationBridge {
 		);
 	}
 
+	/**
+	 * Queue a badge notification for the user.
+	 *
+	 * @param int    $user_id   User who earned the badge.
+	 * @param array  $badge     Badge data array.
+	 * @param string $earned_at Timestamp when the badge was earned.
+	 */
 	public static function on_badge_awarded( int $user_id, array $badge, string $earned_at ): void {
 		self::push(
 			$user_id,
@@ -75,6 +97,13 @@ final class NotificationBridge {
 		);
 	}
 
+	/**
+	 * Queue a level-up notification for the user.
+	 *
+	 * @param int   $user_id   User who levelled up.
+	 * @param array $new_level New level data.
+	 * @param array $old_level Previous level data.
+	 */
 	public static function on_level_changed( int $user_id, array $new_level, array $old_level ): void {
 		self::push(
 			$user_id,
@@ -86,6 +115,12 @@ final class NotificationBridge {
 		);
 	}
 
+	/**
+	 * Queue a streak milestone notification for the user.
+	 *
+	 * @param int $user_id     User who hit the milestone.
+	 * @param int $streak_days Number of consecutive days.
+	 */
 	public static function on_streak_milestone( int $user_id, int $streak_days ): void {
 		self::push(
 			$user_id,
@@ -96,6 +131,12 @@ final class NotificationBridge {
 		);
 	}
 
+	/**
+	 * Queue a challenge-completed notification for the user.
+	 *
+	 * @param int   $user_id   User who completed the challenge.
+	 * @param array $challenge Challenge data array.
+	 */
 	public static function on_challenge_completed( int $user_id, array $challenge ): void {
 		self::push(
 			$user_id,
@@ -111,6 +152,14 @@ final class NotificationBridge {
 		);
 	}
 
+	/**
+	 * Queue a kudos notification for the receiver.
+	 *
+	 * @param int    $giver_id    User who gave kudos.
+	 * @param int    $receiver_id User who received kudos.
+	 * @param string $message     Kudos message text.
+	 * @param int    $kudos_id    Kudos record ID.
+	 */
 	public static function on_kudos_given( int $giver_id, int $receiver_id, string $message, int $kudos_id ): void {
 		// Notify the receiver (only if they're the current user on this request).
 		self::push(
@@ -238,6 +287,9 @@ final class NotificationBridge {
 
 	/**
 	 * Append a notification event to the user's pending queue.
+	 *
+	 * @param int   $user_id User to notify.
+	 * @param array $event   Notification event data.
 	 */
 	private static function push( int $user_id, array $event ): void {
 		if ( $user_id <= 0 ) {
@@ -253,6 +305,7 @@ final class NotificationBridge {
 	/**
 	 * Read and delete all pending events for a user.
 	 *
+	 * @param int $user_id User whose events to flush.
 	 * @return array[]
 	 */
 	private static function flush( int $user_id ): array {
@@ -266,6 +319,9 @@ final class NotificationBridge {
 
 	/**
 	 * Human-readable label for common action_ids.
+	 *
+	 * @param string $action_id The action ID to look up.
+	 * @return string|null Translated label or null if unknown.
 	 */
 	private static function action_label( string $action_id ): ?string {
 		$labels = array(

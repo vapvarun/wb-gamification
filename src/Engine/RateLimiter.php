@@ -34,6 +34,11 @@ namespace WBGam\Engine;
 
 defined( 'ABSPATH' ) || exit;
 
+/**
+ * Token-bucket rate limiter for REST API write endpoints, keyed per authenticated user.
+ *
+ * @package WB_Gamification
+ */
 final class RateLimiter {
 
 	/** Maximum tokens in the bucket (burst capacity). */

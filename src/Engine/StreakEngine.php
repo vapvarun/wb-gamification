@@ -30,6 +30,11 @@ namespace WBGam\Engine;
 
 defined( 'ABSPATH' ) || exit;
 
+/**
+ * Tracks daily activity streaks per member with timezone awareness and a configurable grace period.
+ *
+ * @package WB_Gamification
+ */
 final class StreakEngine {
 
 	private const MILESTONES     = array( 7, 14, 30, 60, 100, 180, 365 );
@@ -42,9 +47,10 @@ final class StreakEngine {
 
 	/**
 	 * Record activity for a user and update their streak.
+	 *
 	 * Called by Engine::process() after every successful point award.
 	 *
-	 * @param int $user_id
+	 * @param int $user_id User whose activity to record.
 	 */
 	public static function record_activity( int $user_id ): void {
 		if ( $user_id <= 0 ) {
@@ -101,7 +107,7 @@ final class StreakEngine {
 	/**
 	 * Get streak data for a user.
 	 *
-	 * @param int $user_id
+	 * @param int $user_id User ID to retrieve streak data for.
 	 * @return array{ current_streak: int, longest_streak: int, last_active: string|null, timezone: string, grace_used: bool }
 	 */
 	public static function get_streak( int $user_id ): array {
@@ -113,9 +119,9 @@ final class StreakEngine {
 	 *
 	 * Returns an array of date => points, sorted ascending, for the past $days days.
 	 *
-	 * @param int $user_id
+	 * @param int $user_id User ID to retrieve contribution data for.
 	 * @param int $days    Lookback window (default 365 = one year heatmap).
-	 * @return array<string, int>  [ '2025-01-01' => 42, '2025-01-03' => 18, ... ]
+	 * @return array<string, int>
 	 */
 	public static function get_contribution_data( int $user_id, int $days = 365 ): array {
 		global $wpdb;
@@ -149,6 +155,12 @@ final class StreakEngine {
 
 	// ── Milestone ───────────────────────────────────────────────────────────────
 
+	/**
+	 * Fire the streak milestone action and award any configured bonus points.
+	 *
+	 * @param int $user_id     User who hit the milestone.
+	 * @param int $streak_days Number of consecutive days in the streak.
+	 */
 	private static function fire_milestone( int $user_id, int $streak_days ): void {
 		/**
 		 * Fires when a member hits a streak milestone.
@@ -185,6 +197,7 @@ final class StreakEngine {
 	/**
 	 * Fetch the streak row for a user (object-cache backed).
 	 *
+	 * @param int $user_id User ID to fetch streak data for.
 	 * @return array{ current_streak: int, longest_streak: int, last_active: string|null, timezone: string, grace_used: bool }
 	 */
 	private static function get_row( int $user_id ): array {
@@ -228,6 +241,16 @@ final class StreakEngine {
 		return $data;
 	}
 
+	/**
+	 * Insert or replace the streak row for a user.
+	 *
+	 * @param int    $user_id        User ID.
+	 * @param int    $current_streak Current consecutive day streak.
+	 * @param int    $longest_streak All-time longest streak.
+	 * @param string $last_active    Date of last activity (Y-m-d).
+	 * @param string $timezone       Timezone string used for date calculations.
+	 * @param int    $grace_used     Whether grace period has been used (0 or 1).
+	 */
 	private static function upsert_row(
 		int $user_id,
 		int $current_streak,
@@ -257,7 +280,12 @@ final class StreakEngine {
 
 	/**
 	 * Return the member's timezone string.
+	 *
 	 * Priority: user meta > stored streak row > site timezone > UTC.
+	 *
+	 * @param int    $user_id   User ID to look up timezone for.
+	 * @param string $stored_tz Timezone string stored in the streak row.
+	 * @return string Valid timezone string.
 	 */
 	private static function get_timezone( int $user_id, string $stored_tz ): string {
 		$tz = (string) get_user_meta( $user_id, 'timezone_string', true );
@@ -282,6 +310,9 @@ final class StreakEngine {
 
 	/**
 	 * Get "today" as a Y-m-d string in the given timezone.
+	 *
+	 * @param string $tz Timezone string (e.g. 'America/New_York').
+	 * @return string Today's date in Y-m-d format.
 	 */
 	private static function today( string $tz ): string {
 		try {
@@ -293,8 +324,14 @@ final class StreakEngine {
 	}
 
 	/**
-	 * Calculate the difference in days between two Y-m-d date strings
-	 * in the given timezone. Returns positive integer.
+	 * Calculate the difference in days between two Y-m-d date strings in the given timezone.
+	 *
+	 * Returns a positive integer.
+	 *
+	 * @param string $from Start date in Y-m-d format.
+	 * @param string $to   End date in Y-m-d format.
+	 * @param string $tz   Timezone string for date calculations.
+	 * @return int Absolute day difference, or 999 on error.
 	 */
 	private static function date_diff_days( string $from, string $to, string $tz ): int {
 		try {

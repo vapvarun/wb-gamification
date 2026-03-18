@@ -17,6 +17,11 @@ namespace WBGam\Engine;
 
 defined( 'ABSPATH' ) || exit;
 
+/**
+ * Fires HMAC-signed outbound webhooks on gamification events via Action Scheduler.
+ *
+ * @package WB_Gamification
+ */
 final class WebhookDispatcher {
 
 	private const AS_ACTION = 'wb_gam_send_webhook';
@@ -114,6 +119,7 @@ final class WebhookDispatcher {
 	 * @param string $url         Destination URL.
 	 * @param string $signature   HMAC-SHA256 hex digest of the payload.
 	 * @param string $payload     JSON-encoded payload body.
+	 * @throws \RuntimeException When the HTTP request fails so Action Scheduler can retry.
 	 */
 	public static function deliver(
 		int $webhook_id,
@@ -136,12 +142,11 @@ final class WebhookDispatcher {
 
 		if ( is_wp_error( $response ) ) {
 			// Throw so Action Scheduler marks the action as failed and retries.
-			// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- exception message, not HTML output.
 			throw new \RuntimeException(
 				sprintf(
 					'WB Gamification webhook delivery failed (ID %d): %s',
-					$webhook_id,
-					$response->get_error_message()
+					$webhook_id, // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+					$response->get_error_message() // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
 				)
 			);
 		}

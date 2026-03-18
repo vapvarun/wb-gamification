@@ -12,17 +12,39 @@ namespace WBGam\Engine;
 
 defined( 'ABSPATH' ) || exit;
 
+/**
+ * Central registry for all gamification actions, badge triggers, and challenge types.
+ *
+ * @package WB_Gamification
+ */
 final class Registry {
 
-	/** @var array<string, array> */
+	/**
+	 * Registered gamification actions keyed by action ID.
+	 *
+	 * @var array<string, array>
+	 */
 	private static array $actions = array();
 
-	/** @var array<string, array> */
+	/**
+	 * Registered badge triggers keyed by trigger ID.
+	 *
+	 * @var array<string, array>
+	 */
 	private static array $badge_triggers = array();
 
-	/** @var array<string, array> */
+	/**
+	 * Registered challenge types keyed by type ID.
+	 *
+	 * @var array<string, array>
+	 */
 	private static array $challenge_types = array();
 
+	/**
+	 * Whether the registry has already been initialised.
+	 *
+	 * @var bool
+	 */
 	private static bool $initialized = false;
 
 	/**
@@ -48,13 +70,15 @@ final class Registry {
 	 * Register a gamification action.
 	 *
 	 * @param array $args {
+	 *   Action definition array.
+	 *
 	 *   @type string   $id             Unique action ID.
 	 *   @type string   $label          Human-readable label (shown in admin).
 	 *   @type string   $description    Optional description.
 	 *   @type string   $hook           WordPress action hook to listen to.
 	 *   @type callable $user_callback  Returns the user_id from hook arguments.
 	 *   @type int      $default_points Default points awarded. Admin can override.
-	 *   @type string   $category       Optional category (buddypress, commerce, etc.)
+	 *   @type string   $category       Optional category (buddypress, commerce, etc.).
 	 *   @type string   $icon           Dashicon name or URL.
 	 *   @type bool     $repeatable     Whether the action can be performed multiple times.
 	 *   @type int      $cooldown       Seconds between earnings (0 = unlimited).
@@ -121,6 +145,8 @@ final class Registry {
 
 	/**
 	 * Register a badge trigger.
+	 *
+	 * @param array $args Badge trigger definition (id, hook, condition).
 	 */
 	public static function register_badge_trigger( array $args ): void {
 		if ( empty( $args['id'] ) || empty( $args['hook'] ) || ! is_callable( $args['condition'] ) ) {
@@ -144,6 +170,8 @@ final class Registry {
 
 	/**
 	 * Register a challenge type.
+	 *
+	 * @param array $args Challenge type definition (id, action_id, countable).
 	 */
 	public static function register_challenge_type( array $args ): void {
 		if ( empty( $args['id'] ) || empty( $args['action_id'] ) ) {
@@ -154,21 +182,39 @@ final class Registry {
 		self::$challenge_types[ $args['id'] ] = wp_parse_args( $args, array( 'countable' => true ) );
 	}
 
-	/** @return array<string, array> */
+	/**
+	 * Get all registered actions.
+	 *
+	 * @return array<string, array>
+	 */
 	public static function get_actions(): array {
 		return self::$actions;
 	}
 
-	/** @return array<string, array> */
+	/**
+	 * Get all registered badge triggers.
+	 *
+	 * @return array<string, array>
+	 */
 	public static function get_badge_triggers(): array {
 		return self::$badge_triggers;
 	}
 
-	/** @return array<string, array> */
+	/**
+	 * Get all registered challenge types.
+	 *
+	 * @return array<string, array>
+	 */
 	public static function get_challenge_types(): array {
 		return self::$challenge_types;
 	}
 
+	/**
+	 * Get a single registered action by ID.
+	 *
+	 * @param string $id Action ID to look up.
+	 * @return array|null Action definition or null if not registered.
+	 */
 	public static function get_action( string $id ): ?array {
 		return self::$actions[ $id ] ?? null;
 	}

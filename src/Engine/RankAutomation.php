@@ -49,8 +49,16 @@ namespace WBGam\Engine;
 
 defined( 'ABSPATH' ) || exit;
 
+/**
+ * Executes configurable automation rules when a member levels up.
+ *
+ * @package WB_Gamification
+ */
 final class RankAutomation {
 
+	/**
+	 * Register the level-changed action hook.
+	 */
 	public static function init(): void {
 		add_action( 'wb_gamification_level_changed', array( __CLASS__, 'on_level_changed' ), 20, 3 );
 	}
@@ -155,6 +163,9 @@ final class RankAutomation {
 
 	/**
 	 * Add a member to a BuddyPress group.
+	 *
+	 * @param int $user_id  User to add to the group.
+	 * @param int $group_id BuddyPress group ID.
 	 */
 	private static function action_add_bp_group( int $user_id, int $group_id ): void {
 		if ( $group_id <= 0 || ! function_exists( 'groups_join_group' ) ) {
@@ -171,6 +182,11 @@ final class RankAutomation {
 
 	/**
 	 * Send a private BuddyPress message.
+	 *
+	 * @param int    $recipient_id User ID of the message recipient.
+	 * @param int    $sender_id    User ID of the message sender.
+	 * @param string $subject      Message subject line.
+	 * @param string $content      Message body content.
 	 */
 	private static function action_send_bp_message( int $recipient_id, int $sender_id, string $subject, string $content ): void {
 		if ( '' === $subject || '' === $content ) {
@@ -193,8 +209,12 @@ final class RankAutomation {
 
 	/**
 	 * Add a WordPress role to a user.
+	 *
 	 * Uses add_role (additive) rather than set_role (replacement) to avoid
 	 * accidentally revoking capabilities.
+	 *
+	 * @param int    $user_id User to modify.
+	 * @param string $role    WordPress role slug to add.
 	 */
 	private static function action_change_wp_role( int $user_id, string $role ): void {
 		if ( '' === $role ) {

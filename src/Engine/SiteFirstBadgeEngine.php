@@ -23,9 +23,18 @@ namespace WBGam\Engine;
 
 defined( 'ABSPATH' ) || exit;
 
+/**
+ * Awards one-time site-first badges to the first member who hits each milestone.
+ *
+ * @package WB_Gamification
+ */
 final class SiteFirstBadgeEngine {
 
-	/** @var array<string, array> Badge definitions seeded on install. */
+	/**
+	 * Badge definitions seeded on install.
+	 *
+	 * @var array<string, array>
+	 */
 	private const SITE_FIRST_BADGES = array(
 		'first_champion'       => array(
 			'name'        => 'First Champion',
@@ -47,6 +56,9 @@ final class SiteFirstBadgeEngine {
 		),
 	);
 
+	/**
+	 * Register hooks for level-changed, points-awarded, streak-milestone, and badge seeding.
+	 */
 	public static function init(): void {
 		add_action( 'wb_gamification_level_changed', array( __CLASS__, 'on_level_changed' ), 10, 3 );
 		add_action( 'wb_gamification_points_awarded', array( __CLASS__, 'on_points_awarded' ), 30, 3 );
@@ -56,12 +68,26 @@ final class SiteFirstBadgeEngine {
 
 	// ── Hooks ────────────────────────────────────────────────────────────────
 
+	/**
+	 * Check for first-champion badge on level change.
+	 *
+	 * @param int   $user_id   User who levelled up.
+	 * @param array $old_level Previous level data.
+	 * @param array $new_level New level data.
+	 */
 	public static function on_level_changed( int $user_id, array $old_level, array $new_level ): void {
 		if ( 'Champion' === ( $new_level['name'] ?? '' ) ) {
 			self::maybe_award( 'first_champion', $user_id );
 		}
 	}
 
+	/**
+	 * Check for first-10k-points badge on each point award.
+	 *
+	 * @param int   $user_id User who earned points.
+	 * @param Event $event   Source event.
+	 * @param int   $points  Points awarded.
+	 */
 	public static function on_points_awarded( int $user_id, Event $event, int $points ): void {
 		$total = PointsEngine::get_total( $user_id );
 		if ( $total >= 10000 ) {
@@ -69,6 +95,12 @@ final class SiteFirstBadgeEngine {
 		}
 	}
 
+	/**
+	 * Check for first-100-day-streak badge on streak milestone.
+	 *
+	 * @param int $user_id       User who hit the milestone.
+	 * @param int $streak_length Current streak length in days.
+	 */
 	public static function on_streak_milestone( int $user_id, int $streak_length ): void {
 		if ( $streak_length >= 100 ) {
 			self::maybe_award( 'first_100_day_streak', $user_id );
@@ -79,6 +111,9 @@ final class SiteFirstBadgeEngine {
 
 	/**
 	 * Award badge only if no one else has earned it yet.
+	 *
+	 * @param string $badge_id Badge ID to check and award.
+	 * @param int    $user_id  User to award the badge to if still unclaimed.
 	 */
 	private static function maybe_award( string $badge_id, int $user_id ): void {
 		global $wpdb;
@@ -119,6 +154,9 @@ final class SiteFirstBadgeEngine {
 
 	// ── Badge seeding ────────────────────────────────────────────────────────
 
+	/**
+	 * Seed site-first badge definitions into wb_gam_badge_defs if they do not yet exist.
+	 */
 	public static function ensure_badges_exist(): void {
 		global $wpdb;
 
