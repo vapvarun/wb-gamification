@@ -20,7 +20,7 @@ if ( $user_id <= 0 ) {
 }
 
 if ( $user_id <= 0 ) {
-	$wrapper_attrs = get_block_wrapper_attributes( [ 'class' => 'wb-gam-points-history wb-gam-points-history--guest' ] );
+	$wrapper_attrs = get_block_wrapper_attributes( array( 'class' => 'wb-gam-points-history wb-gam-points-history--guest' ) );
 	printf(
 		'<div %s><p class="wb-gam-points-history__empty">%s</p></div>',
 		$wrapper_attrs, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
@@ -34,7 +34,7 @@ $show_label = ! empty( $attributes['show_action_label'] );
 
 $rows = PointsEngine::get_history( $user_id, $limit );
 
-$wrapper_attrs = get_block_wrapper_attributes( [ 'class' => 'wb-gam-points-history' ] );
+$wrapper_attrs = get_block_wrapper_attributes( array( 'class' => 'wb-gam-points-history' ) );
 ?>
 <div <?php echo $wrapper_attrs; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>>
 
@@ -47,10 +47,11 @@ $wrapper_attrs = get_block_wrapper_attributes( [ 'class' => 'wb-gam-points-histo
 	<?php else : ?>
 
 		<ul class="wb-gam-points-history__list" role="list">
-			<?php foreach ( $rows as $row ) :
+			<?php
+			foreach ( $rows as $row ) :
 				$pts     = (int) $row['points'];
 				$pos_neg = $pts >= 0 ? 'positive' : 'negative';
-			?>
+				?>
 			<li class="wb-gam-points-history__item wb-gam-points-history__item--<?php echo esc_attr( $pos_neg ); ?>">
 
 				<?php if ( $show_label ) : ?>
@@ -64,16 +65,16 @@ $wrapper_attrs = get_block_wrapper_attributes( [ 'class' => 'wb-gam-points-histo
 
 				<span class="wb-gam-points-history__points">
 					<?php
-				printf(
+					printf(
 					/* translators: %s = formatted points with sign (e.g. "+10" or "-5") */
-					esc_html__( '%s pts', 'wb-gamification' ),
-					esc_html( ( $pts >= 0 ? '+' : '' ) . number_format_i18n( $pts ) )
-				);
+						esc_html__( '%s pts', 'wb-gamification' ),
+						esc_html( ( $pts >= 0 ? '+' : '' ) . number_format_i18n( $pts ) )
+					);
 					?>
 				</span>
 
 				<time class="wb-gam-points-history__date"
-				      datetime="<?php echo esc_attr( $row['created_at'] ); ?>">
+						datetime="<?php echo esc_attr( $row['created_at'] ); ?>">
 					<?php echo esc_html( date_i18n( get_option( 'date_format' ), strtotime( $row['created_at'] ) ) ); ?>
 				</time>
 
