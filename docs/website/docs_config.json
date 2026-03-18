@@ -1,0 +1,105 @@
+{
+  "plugin": "wb-gamification",
+  "short_id": "wbgam",
+  "parent_category_name": "WB Gamification",
+  "parent_category_id": {
+    "local": null,
+    "live": null
+  },
+  "categories": [
+    {
+      "name": "Getting Started",
+      "folder": "getting-started",
+      "slug": "getting-started-wbgam",
+      "order": 1,
+      "description": "Installation, activation, and initial setup",
+      "docs": [
+        {
+          "file": "install-setup.md",
+          "title": "Installation & Setup",
+          "slug": "install-setup-wbgam",
+          "order": 1
+        },
+        {
+          "file": "quick-start.md",
+          "title": "Quick Start Guide",
+          "slug": "quick-start-wbgam",
+          "order": 2
+        }
+      ]
+    },
+    {
+      "name": "Admin Settings",
+      "folder": "admin-settings",
+      "slug": "admin-settings-wbgam",
+      "order": 2,
+      "description": "Points, levels, badges, and automation configuration",
+      "docs": [
+        {
+          "file": "points-settings.md",
+          "title": "Points & Actions",
+          "slug": "points-settings-wbgam",
+          "order": 1
+        },
+        {
+          "file": "levels-settings.md",
+          "title": "Levels Configuration",
+          "slug": "levels-settings-wbgam",
+          "order": 2
+        },
+        {
+          "file": "badges.md",
+          "title": "Badge Management",
+          "slug": "badges-management-wbgam",
+          "order": 3
+        },
+        {
+          "file": "automation.md",
+          "title": "Rank Automation",
+          "slug": "rank-automation-wbgam",
+          "order": 4
+        }
+      ]
+    },
+    {
+      "name": "Blocks & Shortcodes",
+      "folder": "blocks-shortcodes",
+      "slug": "blocks-shortcodes-wbgam",
+      "order": 3,
+      "description": "Adding gamification elements to pages and posts",
+      "docs": [
+        {
+          "file": "using-blocks.md",
+          "title": "Blocks & Shortcodes Reference",
+          "slug": "blocks-reference-wbgam",
+          "order": 1
+        }
+      ]
+    },
+    {
+      "name": "Developer Guide",
+      "folder": "developer-guide",
+      "slug": "developer-guide-wbgam",
+      "order": 4,
+      "description": "Hooks, filters, and REST API reference",
+      "docs": [
+        {
+          "file": "hooks-filters.md",
+          "title": "Hooks & Filters",
+          "slug": "hooks-filters-wbgam",
+          "order": 1
+        },
+        {
+          "file": "rest-api.md",
+          "title": "REST API Reference",
+          "slug": "rest-api-wbgam",
+          "order": 2
+        }
+      ]
+    }
+  ],
+  "images": {
+    "folder": "images",
+    "files": []
+  }
+}

@@ -6,7 +6,13 @@
 	"title": "Challenges",
 	"category": "widgets",
 	"description": "Display active gamification challenges with current user's progress.",
-	"keywords": ["gamification", "challenges", "goals", "missions", "quests"],
+	"keywords": [
+		"gamification",
+		"challenges",
+		"goals",
+		"missions",
+		"quests"
+	],
 	"textdomain": "wb-gamification",
 	"attributes": {
 		"user_id": {
@@ -28,7 +34,11 @@
 	},
 	"supports": {
 		"html": false,
-		"align": ["wide", "full"]
+		"align": [
+			"wide",
+			"full"
+		]
 	},
-	"render": "file:./render.php"
+	"render": "file:./render.php",
+	"editorScript": "file:./edit.js"
 }

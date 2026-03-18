@@ -6,7 +6,12 @@
 	"title": "Kudos Feed",
 	"category": "widgets",
 	"description": "Display a live feed of recent peer kudos.",
-	"keywords": ["kudos", "recognition", "peers", "gamification"],
+	"keywords": [
+		"kudos",
+		"recognition",
+		"peers",
+		"gamification"
+	],
 	"supports": {
 		"html": false
 	},
@@ -23,5 +28,6 @@
 		}
 	},
 	"render": "file:./render.php",
-	"textdomain": "wb-gamification"
+	"textdomain": "wb-gamification",
+	"editorScript": "file:./edit.js"
 }

@@ -6,7 +6,13 @@
 	"title": "Points History",
 	"category": "widgets",
 	"description": "Show a member's recent point transactions with action labels and dates.",
-	"keywords": ["points", "history", "log", "transactions", "gamification"],
+	"keywords": [
+		"points",
+		"history",
+		"log",
+		"transactions",
+		"gamification"
+	],
 	"supports": {
 		"html": false
 	},
@@ -25,5 +31,6 @@
 		}
 	},
 	"render": "file:./render.php",
-	"textdomain": "wb-gamification"
+	"textdomain": "wb-gamification",
+	"editorScript": "file:./edit.js"
 }

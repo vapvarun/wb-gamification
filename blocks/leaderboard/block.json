@@ -6,16 +6,29 @@
 	"title": "Gamification Leaderboard",
 	"category": "widgets",
 	"description": "Display a points leaderboard with configurable period and limit.",
-	"keywords": ["leaderboard", "points", "gamification", "ranking"],
+	"keywords": [
+		"leaderboard",
+		"points",
+		"gamification",
+		"ranking"
+	],
 	"supports": {
 		"html": false,
-		"align": ["wide", "full"]
+		"align": [
+			"wide",
+			"full"
+		]
 	},
 	"attributes": {
 		"period": {
 			"type": "string",
 			"default": "all",
-			"enum": ["all", "month", "week", "day"]
+			"enum": [
+				"all",
+				"month",
+				"week",
+				"day"
+			]
 		},
 		"limit": {
 			"type": "integer",
@@ -37,5 +50,6 @@
 		}
 	},
 	"render": "file:./render.php",
-	"textdomain": "wb-gamification"
+	"textdomain": "wb-gamification",
+	"editorScript": "file:./edit.js"
 }

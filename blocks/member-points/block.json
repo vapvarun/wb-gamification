@@ -6,7 +6,12 @@
 	"title": "Member Points",
 	"category": "widgets",
 	"description": "Display a member's current points total and level progress.",
-	"keywords": ["points", "level", "progress", "gamification"],
+	"keywords": [
+		"points",
+		"level",
+		"progress",
+		"gamification"
+	],
 	"supports": {
 		"html": false
 	},
@@ -25,5 +30,6 @@
 		}
 	},
 	"render": "file:./render.php",
-	"textdomain": "wb-gamification"
+	"textdomain": "wb-gamification",
+	"editorScript": "file:./edit.js"
 }

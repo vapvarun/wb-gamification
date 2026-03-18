@@ -6,7 +6,13 @@
 	"title": "Streak",
 	"category": "widgets",
 	"description": "Show a member's current activity streak, longest streak, and optional contribution heatmap.",
-	"keywords": ["gamification", "streak", "heatmap", "activity", "consistency"],
+	"keywords": [
+		"gamification",
+		"streak",
+		"heatmap",
+		"activity",
+		"consistency"
+	],
 	"textdomain": "wb-gamification",
 	"attributes": {
 		"user_id": {
@@ -28,7 +34,11 @@
 	},
 	"supports": {
 		"html": false,
-		"align": ["wide", "full"]
+		"align": [
+			"wide",
+			"full"
+		]
 	},
-	"render": "file:./render.php"
+	"render": "file:./render.php",
+	"editorScript": "file:./edit.js"
 }

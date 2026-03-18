@@ -6,7 +6,11 @@
 	"title": "Badge Showcase",
 	"category": "widgets",
 	"description": "Display earned badges for a member. Optionally shows locked badges greyed out.",
-	"keywords": ["badges", "achievements", "gamification"],
+	"keywords": [
+		"badges",
+		"achievements",
+		"gamification"
+	],
 	"supports": {
 		"html": false
 	},
@@ -29,5 +33,6 @@
 		}
 	},
 	"render": "file:./render.php",
-	"textdomain": "wb-gamification"
+	"textdomain": "wb-gamification",
+	"editorScript": "file:./edit.js"
 }
