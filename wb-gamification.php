@@ -77,6 +77,7 @@ use WBGam\Admin\BadgeAdminPage;
 use WBGam\API\CredentialController;
 use WBGam\API\RedemptionController;
 use WBGam\Engine\CredentialExpiryEngine;
+use WBGam\Engine\ShortcodeHandler;
 
 /**
  * Main plugin class — singleton loader.
@@ -101,6 +102,7 @@ final class WB_Gamification {
 		add_action( 'init', array( $this, 'handle_unsubscribe' ) );
 		add_action( 'rest_api_init', array( $this, 'register_routes' ) );
 		add_action( 'init', array( $this, 'register_blocks' ) );
+		add_action( 'init', array( ShortcodeHandler::class, 'init' ) );
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_assets' ) );
 
 		// DB schema upgrades run first.
