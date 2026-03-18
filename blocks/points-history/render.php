@@ -64,13 +64,11 @@ $wrapper_attrs = get_block_wrapper_attributes( [ 'class' => 'wb-gam-points-histo
 
 				<span class="wb-gam-points-history__points">
 					<?php
-					echo esc_html(
-						sprintf(
-							/* translators: %s = formatted points with sign (e.g. "+10" or "-5") */
-							__( '%s pts', 'wb-gamification' ),
-							( $pts >= 0 ? '+' : '' ) . number_format_i18n( $pts )
-						)
-					);
+				printf(
+					/* translators: %s = formatted points with sign (e.g. "+10" or "-5") */
+					esc_html__( '%s pts', 'wb-gamification' ),
+					esc_html( ( $pts >= 0 ? '+' : '' ) . number_format_i18n( $pts ) )
+				);
 					?>
 				</span>
 

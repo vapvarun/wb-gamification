@@ -242,7 +242,7 @@ final class PointsEngine {
 
 		$limit = max( 1, min( 100, $limit ) );
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT action_id, points, created_at
