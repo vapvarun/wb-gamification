@@ -74,6 +74,7 @@ use WBGam\Engine\CohortEngine;
 use WBGam\Engine\StatusRetentionEngine;
 use WBGam\Engine\CosmeticEngine;
 use WBGam\Admin\BadgeAdminPage;
+use WBGam\Admin\ManualAwardPage;
 use WBGam\API\CredentialController;
 use WBGam\API\RedemptionController;
 use WBGam\Engine\CredentialExpiryEngine;
@@ -143,6 +144,7 @@ final class WB_Gamification {
 			add_action( 'plugins_loaded', array( SetupWizard::class, 'init' ), 10 );
 			add_action( 'plugins_loaded', array( AnalyticsDashboard::class, 'init' ), 10 );
 			add_action( 'plugins_loaded', array( BadgeAdminPage::class, 'init' ), 10 );
+			add_action( 'plugins_loaded', array( ManualAwardPage::class, 'init' ), 10 );
 		}
 	}
 
