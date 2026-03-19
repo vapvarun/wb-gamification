@@ -109,6 +109,8 @@ final class Registry {
 		self::$actions[ $action['id'] ] = $action;
 
 		// Auto-hook to WordPress — routes through Engine::process() (Phase 0+).
+		// $accepted_args=10 ensures hooks that pass multiple args (e.g. wp_login
+		// passes $user_login + $user) forward all of them to user_callback.
 		add_action(
 			$action['hook'],
 			static function () use ( $action ) {
@@ -139,7 +141,9 @@ final class Registry {
 				} else {
 					Engine::process( $event );
 				}
-			}
+			},
+			10,
+			10
 		);
 	}
 
