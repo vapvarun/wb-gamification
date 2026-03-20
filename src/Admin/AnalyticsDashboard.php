@@ -66,7 +66,7 @@ final class AnalyticsDashboard {
 	 * @return void
 	 */
 	public static function enqueue( string $hook ): void {
-		if ( 'wb-gamification_page_wb-gamification-analytics' !== $hook ) {
+		if ( false === strpos( $hook, 'wb-gamification-analytics' ) ) {
 			return;
 		}
 		wp_enqueue_style(
@@ -478,6 +478,7 @@ final class AnalyticsDashboard {
 			'ld_course_completed'      => 'Completed a course',
 			'ld_lesson_completed'      => 'Completed a lesson',
 			'ld_quiz_completed'        => 'Passed a quiz',
+			'manual_admin'             => 'Admin manual award',
 		);
 		return $map[ $action_id ] ?? $action_id;
 	}
