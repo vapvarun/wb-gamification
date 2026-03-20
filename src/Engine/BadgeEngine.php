@@ -217,7 +217,7 @@ final class BadgeEngine {
 		 * @param string     $badge_id Badge identifier.
 		 * @param array|null $def      Badge definition row, or null if not found.
 		 */
-		do_action( 'wb_gamification_badge_awarded', $user_id, $badge_id, $def );
+		do_action( 'wb_gamification_badge_awarded', $user_id, $def ?? [], $badge_id );
 
 		// Dispatch outbound webhook.
 		WebhookDispatcher::dispatch(

@@ -196,8 +196,12 @@ final class AnalyticsDashboard {
 							</thead>
 							<tbody>
 								<?php foreach ( $stats['top_actions'] as $row ) : ?>
+									<?php
+									$_action_def   = \WBGam\Engine\Registry::get_action( $row['action_id'] );
+									$_action_label = $_action_def['label'] ?? $row['action_id'];
+									?>
 									<tr>
-										<td><code><?php echo esc_html( $row['action_id'] ); ?></code></td>
+										<td><?php echo esc_html( $_action_label ); ?></td>
 										<td><?php echo esc_html( number_format_i18n( (int) $row['events'] ) ); ?></td>
 										<td><?php echo esc_html( number_format_i18n( (int) $row['pts'] ) ); ?></td>
 									</tr>

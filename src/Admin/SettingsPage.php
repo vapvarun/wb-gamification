@@ -492,7 +492,7 @@ final class SettingsPage {
 			   class="button button-primary">
 				<?php esc_html_e( 'Full Analytics', 'wb-gamification' ); ?>
 			</a>
-			<a href="<?php echo esc_url( admin_url( 'admin.php?page=wb-gamification-manual-award' ) ); ?>"
+			<a href="<?php echo esc_url( admin_url( 'admin.php?page=wb-gamification-award' ) ); ?>"
 			   class="button">
 				<?php esc_html_e( 'Award Points', 'wb-gamification' ); ?>
 			</a>

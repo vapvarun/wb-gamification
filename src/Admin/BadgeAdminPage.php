@@ -185,11 +185,18 @@ final class BadgeAdminPage {
 					</td>
 				</tr>
 				<?php endforeach; ?>
-				<?php if ( empty( $badges ) ) : ?>
-				<tr><td colspan="6"><?php esc_html_e( 'No badges defined yet.', 'wb-gamification' ); ?></td></tr>
-				<?php endif; ?>
 			</tbody>
 		</table>
+		<?php if ( empty( $badges ) ) : ?>
+		<div class="wb-gam-empty-state" style="text-align:center;padding:40px 20px;border:1px dashed #c3c4c7;margin-top:-1px;background:#fff;">
+			<span class="dashicons dashicons-awards" style="font-size:48px;color:#c3c4c7;display:block;margin-bottom:12px;"></span>
+			<h3 style="margin:0 0 8px;"><?php esc_html_e( 'No badges yet', 'wb-gamification' ); ?></h3>
+			<p style="color:#646970;margin:0 0 16px;"><?php esc_html_e( 'Badges reward members for milestones, actions, and achievements. Create your first badge to get started.', 'wb-gamification' ); ?></p>
+			<a href="<?php echo esc_url( admin_url( 'admin.php?page=wb-gamification-badges&action=new' ) ); ?>" class="button button-primary">
+				<?php esc_html_e( 'Create your first badge', 'wb-gamification' ); ?>
+			</a>
+		</div>
+		<?php endif; ?>
 		<?php
 	}
 
