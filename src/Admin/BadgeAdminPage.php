@@ -138,6 +138,7 @@ final class BadgeAdminPage {
 		sort( $categories );
 
 		?>
+		<?php if ( ! empty( $badges ) ) : ?>
 		<table class="wp-list-table widefat fixed striped">
 			<thead>
 				<tr>
@@ -187,7 +188,7 @@ final class BadgeAdminPage {
 				<?php endforeach; ?>
 			</tbody>
 		</table>
-		<?php if ( empty( $badges ) ) : ?>
+		<?php else : ?>
 		<div class="wb-gam-empty-state" style="text-align:center;padding:40px 20px;border:1px dashed #c3c4c7;margin-top:-1px;background:#fff;">
 			<span class="dashicons dashicons-awards" style="font-size:48px;color:#c3c4c7;display:block;margin-bottom:12px;"></span>
 			<h3 style="margin:0 0 8px;"><?php esc_html_e( 'No badges yet', 'wb-gamification' ); ?></h3>

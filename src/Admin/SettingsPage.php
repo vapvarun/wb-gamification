@@ -37,6 +37,7 @@ final class SettingsPage {
 		add_action( 'admin_menu', array( __CLASS__, 'register_page' ) );
 		add_action( 'admin_init', array( __CLASS__, 'handle_save' ) );
 		add_action( 'admin_post_wb_gam_save_levels', array( __CLASS__, 'handle_save_levels' ) );
+		add_action( 'admin_post_wb_gam_delete_level', array( __CLASS__, 'handle_delete_level' ) );
 	}
 
 	/**
@@ -200,6 +201,9 @@ final class SettingsPage {
 
 	/**
 	 * Handle the Levels tab form submission (admin-post.php action).
+	 * Supports two operations via the wb_gam_level_op field:
+	 *   - 'update' (default): save name/min_points for all existing levels
+	 *   - 'add': insert a new level row
 	 */
 	public static function handle_save_levels(): void {
 		check_admin_referer( 'wb_gam_save_levels', 'wb_gam_levels_nonce' );
@@ -211,7 +215,33 @@ final class SettingsPage {
 		global $wpdb;
 		$table = $wpdb->prefix . 'wb_gam_levels';
 
-		// Process updates for existing levels.
+		$op = isset( $_POST['wb_gam_level_op'] ) ? sanitize_key( wp_unslash( $_POST['wb_gam_level_op'] ) ) : 'update';
+
+		if ( 'add' === $op ) {
+			// phpcs:disable WordPress.Security.NonceVerification.Missing -- nonce verified above.
+			$new_name   = sanitize_text_field( wp_unslash( $_POST['wb_gam_new_level_name'] ?? '' ) );
+			$new_points = max( 1, (int) wp_unslash( $_POST['wb_gam_new_level_points'] ?? 0 ) );
+			// phpcs:enable WordPress.Security.NonceVerification.Missing
+
+			if ( $new_name ) {
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- INSERT; caching not applicable.
+				$max_sort = (int) $wpdb->get_var( "SELECT COALESCE(MAX(sort_order),0) FROM {$wpdb->prefix}wb_gam_levels" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				$wpdb->insert(
+					$table,
+					array(
+						'name'       => $new_name,
+						'min_points' => $new_points,
+						'sort_order' => $max_sort + 1,
+					),
+					array( '%s', '%d', '%d' )
+				);
+			}
+
+			wp_safe_redirect( admin_url( 'admin.php?page=wb-gamification&tab=levels&saved=1' ) );
+			exit;
+		}
+
+		// Default: process updates for existing levels.
 		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- each field is sanitized individually inside the loop.
 		if ( ! empty( $_POST['wb_gam_level'] ) && is_array( $_POST['wb_gam_level'] ) ) {
 			foreach ( (array) wp_unslash( $_POST['wb_gam_level'] ) as $id => $data ) {
@@ -235,6 +265,32 @@ final class SettingsPage {
 					array( '%d' )
 				);
 			}
+		}
+
+		wp_safe_redirect( admin_url( 'admin.php?page=wb-gamification&tab=levels&saved=1' ) );
+		exit;
+	}
+
+	/**
+	 * Handle level deletion via admin-post.php (GET link with nonce).
+	 */
+	public static function handle_delete_level(): void {
+		$level_id = isset( $_GET['level_id'] ) ? (int) wp_unslash( $_GET['level_id'] ) : 0;
+		check_admin_referer( 'wb_gam_delete_level_' . $level_id );
+
+		if ( ! current_user_can( 'manage_options' ) || $level_id <= 0 ) {
+			wp_die( esc_html__( 'Unauthorized.', 'wb-gamification' ) );
+		}
+
+		global $wpdb;
+		$table = $wpdb->prefix . 'wb_gam_levels';
+
+		// Protect the starting level (min_points = 0).
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- single-row check before delete.
+		$min_pts = (int) $wpdb->get_var( $wpdb->prepare( "SELECT min_points FROM {$table} WHERE id = %d", $level_id ) );
+		if ( $min_pts > 0 ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- DELETE; caching not applicable.
+			$wpdb->delete( $table, array( 'id' => $level_id ), array( '%d' ) );
 		}
 
 		wp_safe_redirect( admin_url( 'admin.php?page=wb-gamification&tab=levels&saved=1' ) );
@@ -368,7 +424,6 @@ final class SettingsPage {
 									<?php if ( ! empty( $action['description'] ) ) : ?>
 										<br><span class="wb-gam-action-desc"><?php echo esc_html( $action['description'] ); ?></span>
 									<?php endif; ?>
-									<code class="wb-gam-action-code"><?php echo esc_html( $action_id ); ?></code>
 								</td>
 								<td>
 									<input
@@ -531,6 +586,7 @@ final class SettingsPage {
 				<tr>
 					<th><?php esc_html_e( 'Level Name', 'wb-gamification' ); ?></th>
 					<th class="wb-gam-col-pts-min"><?php esc_html_e( 'Min Points Required', 'wb-gamification' ); ?></th>
+					<th style="width:80px"></th>
 				</tr>
 				</thead>
 				<tbody>
@@ -554,12 +610,44 @@ final class SettingsPage {
 								<?php echo 0 === (int) $level['min_points'] ? 'readonly title="' . esc_attr__( 'Starting level is always 0', 'wb-gamification' ) . '"' : ''; ?>
 							>
 						</td>
+						<td>
+							<?php if ( (int) $level['min_points'] > 0 ) : ?>
+								<a href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin-post.php?action=wb_gam_delete_level&level_id=' . $level['id'] ), 'wb_gam_delete_level_' . $level['id'] ) ); ?>"
+									class="button button-small button-link-delete"
+									onclick="return confirm('<?php esc_attr_e( 'Delete this level?', 'wb-gamification' ); ?>')">
+									<?php esc_html_e( 'Delete', 'wb-gamification' ); ?>
+								</a>
+							<?php else : ?>
+								<span class="description"><?php esc_html_e( 'Starting level', 'wb-gamification' ); ?></span>
+							<?php endif; ?>
+						</td>
 					</tr>
 				<?php endforeach; ?>
 				</tbody>
 			</table>
 
 			<?php submit_button( __( 'Save Levels', 'wb-gamification' ) ); ?>
+		</form>
+
+		<h3><?php esc_html_e( 'Add New Level', 'wb-gamification' ); ?></h3>
+		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+			<input type="hidden" name="action" value="wb_gam_save_levels">
+			<input type="hidden" name="wb_gam_level_op" value="add">
+			<?php wp_nonce_field( 'wb_gam_save_levels', 'wb_gam_levels_nonce' ); ?>
+
+			<table class="form-table" role="presentation">
+				<tr>
+					<th scope="row"><label for="wb-gam-new-level-name"><?php esc_html_e( 'Level Name', 'wb-gamification' ); ?></label></th>
+					<td><input type="text" id="wb-gam-new-level-name" name="wb_gam_new_level_name" value="" class="regular-text" placeholder="<?php esc_attr_e( 'e.g. Gold', 'wb-gamification' ); ?>" required></td>
+				</tr>
+				<tr>
+					<th scope="row"><label for="wb-gam-new-level-points"><?php esc_html_e( 'Min Points Required', 'wb-gamification' ); ?></label></th>
+					<td><input type="number" id="wb-gam-new-level-points" name="wb_gam_new_level_points" value="" min="1" class="wb-gam-input-medium" required>
+					<p class="description"><?php esc_html_e( 'Members reach this level when their cumulative points cross this threshold.', 'wb-gamification' ); ?></p></td>
+				</tr>
+			</table>
+
+			<?php submit_button( __( 'Add Level', 'wb-gamification' ), 'secondary' ); ?>
 		</form>
 		<?php
 	}
@@ -679,32 +767,32 @@ final class SettingsPage {
 						</select>
 					</td>
 				</tr>
-				<tr>
+				<tr class="wb-gam-auto-field-row" data-for="add_bp_group">
 					<th scope="row">
-						<label for="wb-gam-new-rule-group-id"><?php esc_html_e( 'Group ID', 'wb-gamification' ); ?>
-						<span class="wb-gam-hint-text"><?php esc_html_e( '(for "Add to group")', 'wb-gamification' ); ?></span></label>
+						<label for="wb-gam-new-rule-group-id"><?php esc_html_e( 'BuddyPress Group ID', 'wb-gamification' ); ?></label>
 					</th>
-					<td><input type="number" name="wb_gam_new_rule[group_id]" id="wb-gam-new-rule-group-id" class="small-text" min="0" value="" placeholder="0" /></td>
+					<td><input type="number" name="wb_gam_new_rule[group_id]" id="wb-gam-new-rule-group-id" class="small-text" min="0" value="" placeholder="0" />
+					<p class="description"><?php esc_html_e( 'The numeric ID of the BP group to add the member to.', 'wb-gamification' ); ?></p></td>
 				</tr>
-				<tr>
+				<tr class="wb-gam-auto-field-row" data-for="change_wp_role">
 					<th scope="row">
-						<label for="wb-gam-new-rule-role"><?php esc_html_e( 'Role slug', 'wb-gamification' ); ?>
-						<span class="wb-gam-hint-text"><?php esc_html_e( '(for "Add role")', 'wb-gamification' ); ?></span></label>
+						<label for="wb-gam-new-rule-role"><?php esc_html_e( 'Role slug', 'wb-gamification' ); ?></label>
 					</th>
-					<td><input type="text" name="wb_gam_new_rule[role]" id="wb-gam-new-rule-role" class="regular-text" value="" placeholder="contributor" /></td>
+					<td><input type="text" name="wb_gam_new_rule[role]" id="wb-gam-new-rule-role" class="regular-text" value="" placeholder="contributor" />
+					<p class="description"><?php esc_html_e( 'WordPress role slug to add, e.g. "contributor" or "editor".', 'wb-gamification' ); ?></p></td>
 				</tr>
-				<tr>
+				<tr class="wb-gam-auto-field-row" data-for="send_bp_message">
 					<th scope="row">
-						<label for="wb-gam-new-rule-sender-id"><?php esc_html_e( 'Message sender user ID', 'wb-gamification' ); ?>
-						<span class="wb-gam-hint-text"><?php esc_html_e( '(for "Send message")', 'wb-gamification' ); ?></span></label>
+						<label for="wb-gam-new-rule-sender-id"><?php esc_html_e( 'Message sender user ID', 'wb-gamification' ); ?></label>
 					</th>
-					<td><input type="number" name="wb_gam_new_rule[sender_id]" id="wb-gam-new-rule-sender-id" class="small-text" min="1" value="1" /></td>
+					<td><input type="number" name="wb_gam_new_rule[sender_id]" id="wb-gam-new-rule-sender-id" class="small-text" min="1" value="1" />
+					<p class="description"><?php esc_html_e( 'User ID of the sender (usually the site admin, ID 1).', 'wb-gamification' ); ?></p></td>
 				</tr>
-				<tr>
+				<tr class="wb-gam-auto-field-row" data-for="send_bp_message">
 					<th scope="row"><label for="wb-gam-new-rule-subject"><?php esc_html_e( 'Message subject', 'wb-gamification' ); ?></label></th>
 					<td><input type="text" name="wb_gam_new_rule[subject]" id="wb-gam-new-rule-subject" class="regular-text" value="" /></td>
 				</tr>
-				<tr>
+				<tr class="wb-gam-auto-field-row" data-for="send_bp_message">
 					<th scope="row"><label for="wb-gam-new-rule-content"><?php esc_html_e( 'Message content', 'wb-gamification' ); ?></label></th>
 					<td><textarea name="wb_gam_new_rule[content]" id="wb-gam-new-rule-content" rows="4" class="large-text"></textarea></td>
 				</tr>
@@ -712,6 +800,20 @@ final class SettingsPage {
 
 			<?php submit_button( __( 'Add Rule', 'wb-gamification' ) ); ?>
 		</form>
+		<script>
+		(function () {
+			var sel = document.getElementById( 'wb_gam_new_rule_action' );
+			if ( ! sel ) { return; }
+			function toggle() {
+				var val = sel.value;
+				document.querySelectorAll( '.wb-gam-auto-field-row' ).forEach( function ( row ) {
+					row.style.display = ( row.dataset.for === val ) ? '' : 'none';
+				} );
+			}
+			sel.addEventListener( 'change', toggle );
+			toggle();
+		}());
+		</script>
 		<?php
 	}
 
@@ -724,15 +826,18 @@ final class SettingsPage {
 		$bp_active = function_exists( 'buddypress' );
 
 		if ( $bp_active ) {
-			$mode = __( 'Community Mode', 'wb-gamification' );
+			$mode    = __( 'Community Mode', 'wb-gamification' );
+			$tooltip = __( 'BuddyPress is active — social points, badge notifications, and activity triggers are enabled.', 'wb-gamification' );
 		} else {
-			$mode = __( 'Standalone Mode', 'wb-gamification' );
+			$mode    = __( 'Standalone Mode', 'wb-gamification' );
+			$tooltip = __( 'Running without BuddyPress — points and badges work normally; social features require BuddyPress to be installed and active.', 'wb-gamification' );
 		}
 
 		$modifier = $bp_active ? 'community' : 'standalone';
 		printf(
-			'<span class="wb-gam-mode-badge wb-gam-mode-badge--%s">%s</span>',
+			'<span class="wb-gam-mode-badge wb-gam-mode-badge--%s" title="%s">%s</span>',
 			esc_attr( $modifier ),
+			esc_attr( $tooltip ),
 			esc_html( $mode )
 		);
 	}
