@@ -128,7 +128,7 @@ final class BadgeAdminPage {
 		$badges = $wpdb->get_results(
 			"SELECT b.id, b.name, b.description, b.category, b.is_credential,
 			        (SELECT COUNT(*) FROM {$wpdb->prefix}wb_gam_user_badges ub WHERE ub.badge_id = b.id) AS earned_count,
-			        (SELECT rule_config FROM {$wpdb->prefix}wb_gam_rules r WHERE r.rule_type = 'badge_condition' AND r.target_id = b.id AND r.is_active = 1 LIMIT 1) AS condition
+			        (SELECT rule_config FROM {$wpdb->prefix}wb_gam_rules r WHERE r.rule_type = 'badge_condition' AND r.target_id = b.id AND r.is_active = 1 LIMIT 1) AS `condition`
 			   FROM {$wpdb->prefix}wb_gam_badge_defs b
 			  ORDER BY b.category, b.name",
 			ARRAY_A
