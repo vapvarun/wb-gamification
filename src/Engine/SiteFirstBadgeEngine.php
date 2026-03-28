@@ -71,12 +71,23 @@ final class SiteFirstBadgeEngine {
 	/**
 	 * Check for first-champion badge on level change.
 	 *
-	 * @param int   $user_id   User who levelled up.
-	 * @param array $old_level Previous level data.
-	 * @param array $new_level New level data.
+	 * LevelEngine fires: do_action( 'wb_gamification_level_changed', $user_id, $old_level_id, $new_level_id )
+	 *
+	 * @param int $user_id      User who levelled up.
+	 * @param int $old_level_id Previous level ID.
+	 * @param int $new_level_id New level ID.
 	 */
-	public static function on_level_changed( int $user_id, array $old_level, array $new_level ): void {
-		if ( 'Champion' === ( $new_level['name'] ?? '' ) ) {
+	public static function on_level_changed( int $user_id, int $old_level_id, int $new_level_id ): void {
+		global $wpdb;
+
+		$level_name = $wpdb->get_var( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			$wpdb->prepare(
+				"SELECT name FROM {$wpdb->prefix}wb_gam_levels WHERE id = %d",
+				$new_level_id
+			)
+		);
+
+		if ( 'Champion' === $level_name ) {
 			self::maybe_award( 'first_champion', $user_id );
 		}
 	}
