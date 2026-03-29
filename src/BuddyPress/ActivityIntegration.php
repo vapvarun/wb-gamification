@@ -133,7 +133,8 @@ final class ActivityIntegration {
 	 * @param string     $badge_id Badge identifier.
 	 * @param array|null $def      Badge definition row.
 	 */
-	public static function post_badge_to_stream( int $user_id, string $badge_id, ?array $def ): void {
+	public static function post_badge_to_stream( int $user_id, $badge_id, $def = null ): void {
+		$badge_id = is_array( $badge_id ) ? ( $badge_id['slug'] ?? '' ) : (string) $badge_id;
 		if ( ! self::stream_enabled( 'badge_earned' ) || ! function_exists( 'bp_activity_add' ) ) {
 			return;
 		}
