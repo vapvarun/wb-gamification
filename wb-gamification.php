@@ -33,15 +33,11 @@ require_once WB_GAM_PATH . 'vendor/woocommerce/action-scheduler/action-scheduler
 use WBGam\Engine\Registry;
 use WBGam\Engine\Engine;
 use WBGam\Engine\ManifestLoader;
+use WBGam\Engine\FeatureFlags;
 use WBGam\Engine\LogPruner;
 use WBGam\Engine\LeaderboardNudge;
 use WBGam\Engine\Installer;
-use WBGam\Engine\BadgeEngine;
 use WBGam\Engine\BadgeSharePage;
-use WBGam\Engine\ChallengeEngine;
-use WBGam\Engine\RankAutomation;
-use WBGam\Engine\PersonalRecordEngine;
-use WBGam\Engine\NotificationBridge;
 use WBGam\Engine\DbUpgrader;
 use WBGam\Engine\TenureBadgeEngine;
 use WBGam\Engine\WeeklyEmailEngine;
@@ -57,7 +53,6 @@ use WBGam\API\EventsController;
 use WBGam\API\WebhooksController;
 use WBGam\API\RulesController;
 use WBGam\API\RecapController;
-use WBGam\Engine\KudosEngine;
 use WBGam\Abilities\AbilitiesRegistrar;
 use WBGam\BuddyPress\HooksIntegration as BPHooks;
 use WBGam\BuddyPress\ProfileIntegration;
@@ -67,12 +62,8 @@ use WBGam\Integrations\WordPress\HooksIntegration as WPHooks;
 use WBGam\Admin\SettingsPage;
 use WBGam\Admin\SetupWizard;
 use WBGam\Admin\AnalyticsDashboard;
-use WBGam\Engine\Privacy;
-use WBGam\Engine\CommunityChallengeEngine;
-use WBGam\Engine\SiteFirstBadgeEngine;
 use WBGam\Engine\CohortEngine;
 use WBGam\Engine\StatusRetentionEngine;
-use WBGam\Engine\CosmeticEngine;
 use WBGam\Admin\BadgeAdminPage;
 use WBGam\Admin\ManualAwardPage;
 use WBGam\API\CredentialController;
@@ -109,30 +100,16 @@ final class WB_Gamification {
 		// DB schema upgrades run first.
 		add_action( 'plugins_loaded', array( DbUpgrader::class, 'init' ), 1 );
 
-		// Boot sequence: ManifestLoader (5) → Registry (6) → Engine (8) → display (10).
+		// Boot sequence: ManifestLoader (5) → Registry (6) → Engine (8) → FeatureFlags (10).
 		add_action( 'plugins_loaded', array( ManifestLoader::class, 'scan' ), 5 );
 		add_action( 'plugins_loaded', array( Registry::class, 'init' ), 6 );
 		add_action( 'plugins_loaded', array( Engine::class, 'init' ), 8 );
 		add_action( 'plugins_loaded', array( WPHooks::class, 'init' ), 8 );
 		add_action( 'plugins_loaded', array( BPHooks::class, 'init' ), 10 );
-		add_action( 'plugins_loaded', array( BadgeEngine::class, 'init' ), 10 );
-		add_action( 'plugins_loaded', array( ChallengeEngine::class, 'init' ), 10 );
-		add_action( 'plugins_loaded', array( LogPruner::class, 'init' ), 10 );
-		add_action( 'plugins_loaded', array( LeaderboardNudge::class, 'init' ), 10 );
 		add_action( 'plugins_loaded', array( AbilitiesRegistrar::class, 'register' ), 10 );
-		add_action( 'plugins_loaded', array( RankAutomation::class, 'init' ), 10 );
-		add_action( 'plugins_loaded', array( PersonalRecordEngine::class, 'init' ), 10 );
-		add_action( 'plugins_loaded', array( TenureBadgeEngine::class, 'init' ), 10 );
-		add_action( 'plugins_loaded', array( WeeklyEmailEngine::class, 'init' ), 10 );
-		add_action( 'plugins_loaded', array( NotificationBridge::class, 'init' ), 12 );
-		add_action( 'plugins_loaded', array( Privacy::class, 'init' ), 15 );
-		add_action( 'plugins_loaded', array( CommunityChallengeEngine::class, 'init' ), 10 );
-		add_action( 'plugins_loaded', array( SiteFirstBadgeEngine::class, 'init' ), 20 );
-		add_action( 'plugins_loaded', array( CohortEngine::class, 'init' ), 10 );
-		add_action( 'plugins_loaded', array( StatusRetentionEngine::class, 'init' ), 10 );
-		add_action( 'plugins_loaded', array( CosmeticEngine::class, 'init' ), 10 );
-		add_action( 'plugins_loaded', array( CredentialExpiryEngine::class, 'init' ), 10 );
-		add_action( 'plugins_loaded', array( BadgeSharePage::class, 'init' ), 10 );
+
+		// All remaining engines boot via FeatureFlags (core = always, pro = flag-gated).
+		add_action( 'plugins_loaded', array( FeatureFlags::class, 'boot_engines' ), 10 );
 
 		// BuddyPress integrations — must boot on bp_loaded, not plugins_loaded.
 		add_action( 'bp_loaded', array( ProfileIntegration::class, 'init' ) );
@@ -276,6 +253,19 @@ add_action(
 		WB_Gamification::instance();
 	},
 	0
+);
+
+/**
+ * Fires after the free plugin is fully loaded. Pro plugin hooks here.
+ *
+ * @since 1.0.0
+ */
+add_action(
+	'plugins_loaded',
+	function () {
+		do_action( 'wb_gam_free_loaded' );
+	},
+	20
 );
 
 /**
