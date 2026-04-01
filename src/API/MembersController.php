@@ -206,22 +206,34 @@ class MembersController extends WP_REST_Controller {
 	/**
 	 * Check if the current user can read the requested member's data.
 	 *
+	 * Permission levels:
+	 *   - Self-read or admin: full profile (private fields included).
+	 *   - Other authenticated users: public data only (enforced in callback).
+	 *   - Unauthenticated: public data only (enforced in callback via opt-out check).
+	 *
 	 * @param WP_REST_Request $request Full details about the request.
 	 * @return true|WP_Error True if the request has permission, WP_Error otherwise.
 	 */
 	public function get_item_permissions_check( $request ): bool|WP_Error {
-		$user_id = (int) $request['id'];
+		$target_id = (int) $request['id'];
 
-		if ( ! get_userdata( $user_id ) ) {
+		if ( ! get_userdata( $target_id ) ) {
 			return new WP_Error( 'rest_user_invalid', __( 'Member not found.', 'wb-gamification' ), array( 'status' => 404 ) );
 		}
 
-		// Self-read always allowed for authenticated users.
-		if ( is_user_logged_in() ) {
+		$current = get_current_user_id();
+
+		if ( ! $current ) {
+			// Unauthenticated gets public-only data (enforced in callback).
 			return true;
 		}
 
-		// Unauthenticated: only expose public data (enforced in callbacks via opt-out check).
+		// Self-read or admin always OK for full data.
+		if ( $current === $target_id || current_user_can( 'manage_options' ) ) {
+			return true;
+		}
+
+		// Other authenticated users get public data only (enforced in callback).
 		return true;
 	}
 

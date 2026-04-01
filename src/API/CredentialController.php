@@ -88,6 +88,68 @@ class CredentialController extends WP_REST_Controller {
 		);
 	}
 
+	/**
+	 * Retrieve the JSON schema for an OpenBadgeCredential item.
+	 *
+	 * @return array JSON schema definition.
+	 */
+	public function get_item_schema(): array {
+		return array(
+			'$schema'    => 'http://json-schema.org/draft-04/schema#',
+			'title'      => 'wb-gamification-credential',
+			'type'       => 'object',
+			'properties' => array(
+				'@context'          => array(
+					'type'        => 'array',
+					'description' => 'JSON-LD context URIs.',
+				),
+				'id'                => array(
+					'type'        => 'string',
+					'description' => 'Credential URL.',
+				),
+				'type'              => array(
+					'type'        => 'array',
+					'description' => 'Credential types (VerifiableCredential, OpenBadgeCredential).',
+				),
+				'issuer'            => array(
+					'type'        => 'object',
+					'description' => 'Issuer profile.',
+					'properties'  => array(
+						'id'   => array( 'type' => 'string', 'description' => 'Issuer URL.' ),
+						'type' => array( 'type' => 'string', 'description' => 'Issuer type.' ),
+						'name' => array( 'type' => 'string', 'description' => 'Issuer name.' ),
+						'url'  => array( 'type' => 'string', 'description' => 'Issuer website URL.' ),
+					),
+				),
+				'issuanceDate'      => array(
+					'type'        => 'string',
+					'description' => 'ISO 8601 issuance date.',
+				),
+				'name'              => array(
+					'type'        => 'string',
+					'description' => 'Credential name (badge name).',
+				),
+				'expirationDate'    => array(
+					'type'        => array( 'string', 'null' ),
+					'description' => 'ISO 8601 expiration date, or null if no expiry.',
+				),
+				'credentialSubject' => array(
+					'type'        => 'object',
+					'description' => 'Achievement subject (the earner).',
+					'properties'  => array(
+						'id'          => array( 'type' => 'string', 'description' => 'Subject URI.' ),
+						'type'        => array( 'type' => 'string', 'description' => 'Subject type.' ),
+						'name'        => array( 'type' => 'string', 'description' => 'Earner display name.' ),
+						'achievement' => array(
+							'type'        => 'object',
+							'description' => 'Achievement definition.',
+						),
+					),
+				),
+			),
+		);
+	}
+
 	// ── Callback ────────────────────────────────────────────────────────────
 
 	/**

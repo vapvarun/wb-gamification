@@ -88,6 +88,57 @@ class RecapController extends WP_REST_Controller {
 		);
 	}
 
+	/**
+	 * Retrieve the JSON schema for a recap response item.
+	 *
+	 * @return array JSON schema definition.
+	 */
+	public function get_item_schema(): array {
+		return array(
+			'$schema'    => 'http://json-schema.org/draft-04/schema#',
+			'title'      => 'wb-gamification-recap',
+			'type'       => 'object',
+			'properties' => array(
+				'year'              => array(
+					'type'        => 'integer',
+					'description' => 'The recap year.',
+				),
+				'points_this_year'  => array(
+					'type'        => 'integer',
+					'description' => 'Total points earned in the recap year.',
+				),
+				'total_events'      => array(
+					'type'        => 'integer',
+					'description' => 'Total gamification events fired.',
+				),
+				'top_actions'       => array(
+					'type'        => 'array',
+					'description' => 'Top actions by frequency.',
+				),
+				'badges_earned'     => array(
+					'type'        => 'integer',
+					'description' => 'Number of badges earned in the year.',
+				),
+				'longest_streak'    => array(
+					'type'        => 'integer',
+					'description' => 'Longest streak during the year.',
+				),
+				'monthly_breakdown' => array(
+					'type'        => 'array',
+					'description' => 'Per-month points and event counts.',
+				),
+				'meta'              => array(
+					'type'        => 'object',
+					'description' => 'Member metadata (display name, avatar).',
+					'properties'  => array(
+						'display_name' => array( 'type' => 'string', 'description' => 'Member display name.' ),
+						'avatar_url'   => array( 'type' => 'string', 'description' => 'Member avatar URL.' ),
+					),
+				),
+			),
+		);
+	}
+
 	// ── Callbacks ────────────────────────────────────────────────────────────
 
 	/**

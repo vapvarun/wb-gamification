@@ -89,6 +89,73 @@ class BadgeShareController extends WP_REST_Controller {
 		);
 	}
 
+	/**
+	 * Retrieve the JSON schema for a badge share card item.
+	 *
+	 * @return array JSON schema definition.
+	 */
+	public function get_item_schema(): array {
+		return array(
+			'$schema'    => 'http://json-schema.org/draft-04/schema#',
+			'title'      => 'wb-gamification-badge-share',
+			'type'       => 'object',
+			'properties' => array(
+				'badge'      => array(
+					'type'        => 'object',
+					'description' => 'Badge definition.',
+					'properties'  => array(
+						'id'            => array( 'type' => 'string', 'description' => 'Badge identifier.' ),
+						'name'          => array( 'type' => 'string', 'description' => 'Badge display name.' ),
+						'description'   => array( 'type' => 'string', 'description' => 'Badge description.' ),
+						'image_url'     => array( 'type' => 'string', 'description' => 'Badge image URL.' ),
+						'is_credential' => array( 'type' => 'boolean', 'description' => 'Whether badge is a credential.' ),
+						'category'      => array( 'type' => 'string', 'description' => 'Badge category.' ),
+					),
+				),
+				'earner'     => array(
+					'type'        => 'object',
+					'description' => 'Member who earned the badge.',
+					'properties'  => array(
+						'user_id'      => array( 'type' => 'integer', 'description' => 'WordPress user ID.' ),
+						'display_name' => array( 'type' => 'string', 'description' => 'Display name.' ),
+						'avatar_url'   => array( 'type' => 'string', 'description' => 'Avatar URL.' ),
+						'profile_url'  => array( 'type' => 'string', 'description' => 'Profile page URL.' ),
+					),
+				),
+				'earned_at'  => array(
+					'type'        => 'string',
+					'description' => 'Date the badge was earned.',
+				),
+				'site'       => array(
+					'type'        => 'object',
+					'description' => 'Issuing site info.',
+					'properties'  => array(
+						'name' => array( 'type' => 'string', 'description' => 'Site name.' ),
+						'url'  => array( 'type' => 'string', 'description' => 'Site URL.' ),
+					),
+				),
+				'share_urls' => array(
+					'type'        => 'object',
+					'description' => 'Sharing URLs.',
+					'properties'  => array(
+						'linkedin' => array( 'type' => 'string', 'description' => 'LinkedIn share URL.' ),
+						'self'     => array( 'type' => 'string', 'description' => 'Self-referencing URL.' ),
+					),
+				),
+				'og'         => array(
+					'type'        => 'object',
+					'description' => 'Open Graph metadata.',
+					'properties'  => array(
+						'title'       => array( 'type' => 'string', 'description' => 'OG title.' ),
+						'description' => array( 'type' => 'string', 'description' => 'OG description.' ),
+						'image'       => array( 'type' => 'string', 'description' => 'OG image URL.' ),
+						'url'         => array( 'type' => 'string', 'description' => 'OG canonical URL.' ),
+					),
+				),
+			),
+		);
+	}
+
 	// ── Callbacks ──────────────────────────────────────────────────────────────
 
 	/**

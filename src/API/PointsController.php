@@ -116,6 +116,45 @@ class PointsController extends WP_REST_Controller {
 		);
 	}
 
+	/**
+	 * Retrieve the JSON schema for a points response item.
+	 *
+	 * @return array JSON schema definition.
+	 */
+	public function get_item_schema(): array {
+		return array(
+			'$schema'    => 'http://json-schema.org/draft-04/schema#',
+			'title'      => 'wb-gamification-points',
+			'type'       => 'object',
+			'properties' => array(
+				'awarded' => array(
+					'type'        => 'boolean',
+					'description' => 'Whether points were awarded (POST /award).',
+				),
+				'deleted' => array(
+					'type'        => 'boolean',
+					'description' => 'Whether the point row was deleted (DELETE /{id}).',
+				),
+				'id'      => array(
+					'type'        => 'integer',
+					'description' => 'Points ledger row ID.',
+				),
+				'user_id' => array(
+					'type'        => 'integer',
+					'description' => 'User ID affected.',
+				),
+				'points'  => array(
+					'type'        => 'integer',
+					'description' => 'Points value.',
+				),
+				'reason'  => array(
+					'type'        => 'string',
+					'description' => 'Reason for the award.',
+				),
+			),
+		);
+	}
+
 	// ── Callbacks ───────────────────────────────────────────────────────────────
 
 	/**

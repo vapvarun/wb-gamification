@@ -68,6 +68,8 @@ use WBGam\Admin\BadgeAdminPage;
 use WBGam\Admin\ManualAwardPage;
 use WBGam\API\CredentialController;
 use WBGam\API\RedemptionController;
+use WBGam\API\CapabilitiesController;
+use WBGam\API\ApiKeyAuth;
 use WBGam\Engine\CredentialExpiryEngine;
 use WBGam\Engine\LeaderboardEngine;
 use WBGam\Engine\ShortcodeHandler;
@@ -104,6 +106,7 @@ final class WB_Gamification {
 		// Boot sequence: ManifestLoader (5) → Registry (6) → AsyncEvaluator + Engine (8) → FeatureFlags (10).
 		add_action( 'plugins_loaded', array( ManifestLoader::class, 'scan' ), 5 );
 		add_action( 'plugins_loaded', array( Registry::class, 'init' ), 6 );
+		add_action( 'plugins_loaded', array( ApiKeyAuth::class, 'init' ), 8 );
 		add_action( 'plugins_loaded', array( AsyncEvaluator::class, 'init' ), 8 );
 		add_action( 'plugins_loaded', array( Engine::class, 'init' ), 8 );
 		add_action( 'plugins_loaded', array( WPHooks::class, 'init' ), 8 );
@@ -182,6 +185,7 @@ final class WB_Gamification {
 		( new RecapController() )->register_routes();
 		( new CredentialController() )->register_routes();
 		( new RedemptionController() )->register_routes();
+		( new CapabilitiesController() )->register_routes();
 	}
 
 	public function register_blocks(): void {

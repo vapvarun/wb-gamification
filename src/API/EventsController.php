@@ -108,6 +108,37 @@ class EventsController extends WP_REST_Controller {
 		);
 	}
 
+	/**
+	 * Retrieve the JSON schema for an event response item.
+	 *
+	 * @return array JSON schema definition.
+	 */
+	public function get_item_schema(): array {
+		return array(
+			'$schema'    => 'http://json-schema.org/draft-04/schema#',
+			'title'      => 'wb-gamification-event',
+			'type'       => 'object',
+			'properties' => array(
+				'processed' => array(
+					'type'        => 'boolean',
+					'description' => 'Whether the event was successfully processed.',
+				),
+				'event_id'  => array(
+					'type'        => 'string',
+					'description' => 'UUID of the created event.',
+				),
+				'action_id' => array(
+					'type'        => 'string',
+					'description' => 'The gamification action ID that was triggered.',
+				),
+				'user_id'   => array(
+					'type'        => 'integer',
+					'description' => 'User ID the event was credited to.',
+				),
+			),
+		);
+	}
+
 	// ── Callback ────────────────────────────────────────────────────────────────
 
 	/**

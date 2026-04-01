@@ -116,6 +116,75 @@ class ActionsController extends WP_REST_Controller {
 	 * @param array $action Raw action definition from the Registry.
 	 * @return array Formatted action data for the REST response.
 	 */
+	/**
+	 * Retrieve the JSON schema for an action item.
+	 *
+	 * @return array JSON schema definition.
+	 */
+	public function get_item_schema(): array {
+		return array(
+			'$schema'    => 'http://json-schema.org/draft-04/schema#',
+			'title'      => 'wb-gamification-action',
+			'type'       => 'object',
+			'properties' => array(
+				'id'             => array(
+					'type'        => 'string',
+					'description' => 'Unique action identifier.',
+				),
+				'label'          => array(
+					'type'        => 'string',
+					'description' => 'Human-readable display label.',
+				),
+				'description'    => array(
+					'type'        => 'string',
+					'description' => 'Action description.',
+				),
+				'category'       => array(
+					'type'        => 'string',
+					'description' => 'Action category.',
+				),
+				'icon'           => array(
+					'type'        => 'string',
+					'description' => 'Icon identifier or URL.',
+				),
+				'default_points' => array(
+					'type'        => 'integer',
+					'description' => 'Default points awarded for this action.',
+				),
+				'repeatable'     => array(
+					'type'        => 'boolean',
+					'description' => 'Whether the action can be triggered multiple times.',
+				),
+				'cooldown'       => array(
+					'type'        => 'integer',
+					'description' => 'Cooldown period in seconds between triggers.',
+				),
+				'daily_cap'      => array(
+					'type'        => 'integer',
+					'description' => 'Maximum times this action can fire per day.',
+				),
+				'weekly_cap'     => array(
+					'type'        => 'integer',
+					'description' => 'Maximum times this action can fire per week.',
+				),
+				'points'         => array(
+					'type'        => 'integer',
+					'description' => 'Current configured points (may differ from default).',
+				),
+				'enabled'        => array(
+					'type'        => 'boolean',
+					'description' => 'Whether the action is currently active.',
+				),
+			),
+		);
+	}
+
+	/**
+	 * Shape a raw action definition into the REST response format.
+	 *
+	 * @param array $action Raw action definition from the Registry.
+	 * @return array Formatted action data for the REST response.
+	 */
 	private function prepare_action_for_response( array $action ): array {
 		return array(
 			'id'             => $action['id'],
