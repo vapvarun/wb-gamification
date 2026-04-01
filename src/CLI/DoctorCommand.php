@@ -496,13 +496,16 @@ class DoctorCommand {
 			$this->pass( 'Not installed: ' . implode( ', ', $inactive ) );
 		}
 
-		// Check if WPMediaVerse has a gamification manifest.
+		// Check if WPMediaVerse has a gamification manifest (Pro feature).
 		if ( defined( 'MVS_VERSION' ) ) {
-			$mvs_manifest = WP_PLUGIN_DIR . '/wpmediaverse/wb-gamification.php';
-			if ( file_exists( $mvs_manifest ) ) {
-				$this->pass( 'WPMediaVerse manifest found' );
+			$mvs_pro_manifest  = WP_PLUGIN_DIR . '/wpmediaverse-pro/wb-gamification.php';
+			$mvs_free_manifest = WP_PLUGIN_DIR . '/wpmediaverse/wb-gamification.php';
+			if ( file_exists( $mvs_pro_manifest ) ) {
+				$this->pass( 'WPMediaVerse Pro gamification manifest found' );
+			} elseif ( file_exists( $mvs_free_manifest ) ) {
+				$this->pass( 'WPMediaVerse gamification manifest found' );
 			} else {
-				$this->warn( 'WPMediaVerse active but no wb-gamification.php manifest — media actions not registered' );
+				$this->warn( 'WPMediaVerse active but no gamification manifest — media actions not registered (Pro feature)' );
 			}
 		}
 

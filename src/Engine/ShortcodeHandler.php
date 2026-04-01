@@ -50,6 +50,7 @@ final class ShortcodeHandler {
 		add_shortcode( 'wb_gam_kudos_feed', array( __CLASS__, 'render_kudos_feed' ) );
 		add_shortcode( 'wb_gam_year_recap', array( __CLASS__, 'render_year_recap' ) );
 		add_shortcode( 'wb_gam_points_history', array( __CLASS__, 'render_points_history' ) );
+		add_shortcode( 'wb_gam_earning_guide', array( __CLASS__, 'render_earning_guide' ) );
 	}
 
 	// ── Shortcode renderers ───────────────────────────────────────────────────
@@ -354,5 +355,29 @@ final class ShortcodeHandler {
 				'innerContent' => array(),
 			)
 		);
+	}
+
+	/**
+	 * Render [wb_gam_earning_guide].
+	 *
+	 * @param array|string $atts Shortcode attributes.
+	 * @return string
+	 */
+	public static function render_earning_guide( $atts = array() ): string {
+		$atts = shortcode_atts(
+			array(
+				'columns'               => 3,
+				'show_category_headers' => 'true',
+			),
+			$atts,
+			'wb_gam_earning_guide'
+		);
+
+		$attrs = array(
+			'columns'               => max( 1, min( 4, (int) $atts['columns'] ) ),
+			'show_category_headers' => 'true' === $atts['show_category_headers'],
+		);
+
+		return self::render_block_shortcode( 'earning-guide', $attrs );
 	}
 }

@@ -36,6 +36,7 @@ final class SettingsPage {
 	public static function init(): void {
 		add_action( 'admin_menu', array( __CLASS__, 'register_page' ) );
 		add_action( 'admin_init', array( __CLASS__, 'handle_save' ) );
+		add_action( 'admin_init', array( __CLASS__, 'handle_dismiss_welcome' ) );
 		add_action( 'admin_post_wb_gam_save_levels', array( __CLASS__, 'handle_save_levels' ) );
 		add_action( 'admin_post_wb_gam_delete_level', array( __CLASS__, 'handle_delete_level' ) );
 	}
@@ -78,6 +79,24 @@ final class SettingsPage {
 			self::save_kudos_settings();
 		} elseif ( 'automation' === $tab ) {
 			self::save_automation_settings();
+		}
+	}
+
+	/**
+	 * Dismiss the first-run welcome card for the current admin.
+	 */
+	public static function handle_dismiss_welcome(): void {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- nonce checked below.
+		if ( empty( $_GET['dismiss_welcome'] ) || empty( $_GET['_wpnonce'] ) ) {
+			return;
+		}
+		if ( ! wp_verify_nonce( sanitize_key( $_GET['_wpnonce'] ), 'wb_gam_dismiss_welcome' ) ) {
+			return;
+		}
+		if ( current_user_can( 'manage_options' ) ) {
+			update_user_meta( get_current_user_id(), 'wb_gam_dismissed_welcome', 1 );
+			wp_safe_redirect( admin_url( 'admin.php?page=wb-gamification' ) );
+			exit;
 		}
 	}
 
@@ -634,6 +653,36 @@ final class SettingsPage {
 	 */
 	private static function render_dashboard_tab(): void {
 		$stats = AnalyticsDashboard::get_stats( 30 );
+
+		// Show first-run welcome card if no points awarded yet and admin hasn't dismissed it.
+		$dismissed = get_user_meta( get_current_user_id(), 'wb_gam_dismissed_welcome', true );
+		if ( ! $dismissed && 0 === (int) $stats['points_total'] && 0 === (int) $stats['active_members'] ) :
+			?>
+			<div class="wbgam-settings-card" style="margin-bottom:24px;border-left:4px solid var(--wbgam-primary, #2563eb);">
+				<div class="wbgam-card-header">
+					<h3 class="wbgam-card-title"><?php esc_html_e( 'Getting Started', 'wb-gamification' ); ?></h3>
+					<a href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin.php?page=wb-gamification&dismiss_welcome=1' ), 'wb_gam_dismiss_welcome' ) ); ?>" class="wbgam-btn wbgam-btn--sm wbgam-btn--secondary"><?php esc_html_e( 'Dismiss', 'wb-gamification' ); ?></a>
+				</div>
+				<div class="wbgam-card-body">
+					<p><?php esc_html_e( 'Your gamification system is active! Points, badges, and levels will appear here as members interact with your site. Here are some next steps:', 'wb-gamification' ); ?></p>
+					<p style="display:flex;gap:12px;flex-wrap:wrap;margin-top:12px;">
+						<a href="#points" class="wbgam-settings-nav-item" data-section="points" style="border:1px solid var(--wbgam-border, #e5e7eb);border-radius:6px;padding:8px 16px;text-decoration:none;">
+							<span class="dashicons dashicons-star-filled"></span>
+							<?php esc_html_e( 'Configure point values', 'wb-gamification' ); ?>
+						</a>
+						<a href="<?php echo esc_url( admin_url( 'admin.php?page=wb-gam-challenges' ) ); ?>" style="border:1px solid var(--wbgam-border, #e5e7eb);border-radius:6px;padding:8px 16px;text-decoration:none;display:flex;align-items:center;gap:8px;color:var(--wbgam-text, #1e1e1e);">
+							<span class="dashicons dashicons-flag"></span>
+							<?php esc_html_e( 'Create a challenge', 'wb-gamification' ); ?>
+						</a>
+						<a href="<?php echo esc_url( admin_url( 'admin.php?page=wb-gamification-badges' ) ); ?>" style="border:1px solid var(--wbgam-border, #e5e7eb);border-radius:6px;padding:8px 16px;text-decoration:none;display:flex;align-items:center;gap:8px;color:var(--wbgam-text, #1e1e1e);">
+							<span class="dashicons dashicons-awards"></span>
+							<?php esc_html_e( 'View badge library', 'wb-gamification' ); ?>
+						</a>
+					</p>
+				</div>
+			</div>
+			<?php
+		endif;
 		?>
 		<div class="wb-gam-admin-kpi-strip">
 			<?php

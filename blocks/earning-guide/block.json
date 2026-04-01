@@ -1,0 +1,38 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "wb-gamification/earning-guide",
+	"version": "1.0.0",
+	"title": "Earning Guide",
+	"category": "widgets",
+	"description": "Show members how to earn points — lists all enabled actions with their point values, grouped by category.",
+	"keywords": [
+		"points",
+		"earn",
+		"guide",
+		"gamification",
+		"actions",
+		"how to"
+	],
+	"supports": {
+		"html": false,
+		"align": [
+			"wide",
+			"full"
+		]
+	},
+	"attributes": {
+		"columns": {
+			"type": "integer",
+			"default": 3,
+			"minimum": 1,
+			"maximum": 4
+		},
+		"show_category_headers": {
+			"type": "boolean",
+			"default": true
+		}
+	},
+	"render": "file:./render.php",
+	"textdomain": "wb-gamification"
+}

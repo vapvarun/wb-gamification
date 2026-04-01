@@ -224,7 +224,7 @@ final class SetupWizard {
 
 				</div>
 
-				<p class="wb-gam-wizard-skip-row">
+				<div class="wb-gam-wizard-skip-row">
 					<button
 						type="submit"
 						name="wb_gam_template"
@@ -233,7 +233,10 @@ final class SetupWizard {
 					>
 						<?php esc_html_e( 'Skip &amp; configure manually', 'wb-gamification' ); ?>
 					</button>
-				</p>
+					<p class="description" style="margin-top:8px;">
+						<?php esc_html_e( 'Default point values are already set for all actions. You can fine-tune them from the Settings page anytime.', 'wb-gamification' ); ?>
+					</p>
+				</div>
 
 			</form>
 		</div>
