@@ -189,7 +189,14 @@ class ChallengesController extends WP_REST_Controller {
 					'methods'             => WP_REST_Server::CREATABLE,
 					'callback'            => array( $this, 'complete_challenge' ),
 					'permission_callback' => function () {
-						return is_user_logged_in();
+						if ( ! is_user_logged_in() ) {
+							return new \WP_Error(
+								'rest_not_logged_in',
+								__( 'You must be logged in to complete challenges.', 'wb-gamification' ),
+								array( 'status' => 401 )
+							);
+						}
+						return true;
 					},
 					'args'                => array(
 						'id' => array(

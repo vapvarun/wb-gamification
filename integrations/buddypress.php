@@ -73,8 +73,9 @@ return [
 			'label'               => 'Accept a friendship',
 			'description'         => 'Awarded to the member who accepts a friendship request.',
 			'hook'                => 'friends_friendship_accepted',
-			'user_callback'       => function ( int $initiator_id, int $friend_id, int $friendship_id, $friendship ): int {
+			'user_callback'       => function ( int $friendship_id, int $initiator_id, int $friend_id, $friendship ): int {
 				// Award the acceptor (friend_user_id), not the requester.
+				// BP fires: ($friendship->id, $initiator_user_id, $friend_user_id, $friendship_object)
 				return is_object( $friendship ) ? (int) ( $friendship->friend_user_id ?? $friend_id ) : $friend_id;
 			},
 			'default_points'      => 8,

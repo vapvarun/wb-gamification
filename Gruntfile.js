@@ -58,7 +58,7 @@ module.exports = function( grunt ) {
 							'!docs/**', '!plans/**',
 							'!phpunit.xml.dist', '!phpunit.xml',
 							'!phpstan.neon.dist', '!phpstan-baseline.neon',
-							'!phpcs.xml',
+							'!phpcs.xml', '!.phpcs.xml',
 							'!package.json', '!package-lock.json',
 							'!composer.json', '!composer.lock',
 							'!Gruntfile.js', '!CLAUDE.md', '!PLAN.md',

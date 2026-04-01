@@ -40,6 +40,7 @@ final class FeatureFlags {
 	private const CORE_ENGINES = [
 		'BadgeEngine',
 		'ChallengeEngine',
+		'KudosEngine',
 		'LogPruner',
 		'RankAutomation',
 		'PersonalRecordEngine',
