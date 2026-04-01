@@ -285,7 +285,6 @@ final class WB_Gamification {
 
 		// Toast notification poller for logged-in users.
 		if ( is_user_logged_in() ) {
-			wp_enqueue_style( 'wb-gamification' );
 			wp_enqueue_script(
 				'wb-gamification-toast',
 				WB_GAM_URL . 'assets/js/toast.js',
