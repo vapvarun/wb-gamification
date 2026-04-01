@@ -34,6 +34,7 @@ use WBGam\Engine\Registry;
 use WBGam\Engine\Engine;
 use WBGam\Engine\ManifestLoader;
 use WBGam\Engine\FeatureFlags;
+use WBGam\Engine\AsyncEvaluator;
 use WBGam\Engine\LogPruner;
 use WBGam\Engine\LeaderboardNudge;
 use WBGam\Engine\Installer;
@@ -99,15 +100,20 @@ final class WB_Gamification {
 		// DB schema upgrades run first.
 		add_action( 'plugins_loaded', array( DbUpgrader::class, 'init' ), 1 );
 
-		// Boot sequence: ManifestLoader (5) → Registry (6) → Engine (8) → FeatureFlags (10).
+		// Boot sequence: ManifestLoader (5) → Registry (6) → AsyncEvaluator + Engine (8) → FeatureFlags (10).
 		add_action( 'plugins_loaded', array( ManifestLoader::class, 'scan' ), 5 );
 		add_action( 'plugins_loaded', array( Registry::class, 'init' ), 6 );
+		add_action( 'plugins_loaded', array( AsyncEvaluator::class, 'init' ), 8 );
 		add_action( 'plugins_loaded', array( Engine::class, 'init' ), 8 );
 		add_action( 'plugins_loaded', array( WPHooks::class, 'init' ), 8 );
 		add_action( 'plugins_loaded', array( BPHooks::class, 'init' ), 10 );
 
 		// All remaining engines boot via FeatureFlags (core = always, pro = flag-gated).
 		add_action( 'plugins_loaded', array( FeatureFlags::class, 'boot_engines' ), 10 );
+
+		// Async award pipeline — collects events at priority 50 (after sync listeners
+		// BadgeEngine@10, ChallengeEngine@15; before NotificationBridge@99).
+		add_action( 'wb_gamification_points_awarded', array( AsyncEvaluator::class, 'enqueue' ), 50, 3 );
 
 		// BuddyPress integrations — must boot on bp_loaded, not plugins_loaded.
 		add_action( 'bp_loaded', array( ProfileIntegration::class, 'init' ) );

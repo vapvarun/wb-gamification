@@ -220,10 +220,29 @@ final class DbUpgrader {
 	}
 
 	/**
-	 * 1.0.0 → drop unused wb_gam_partners table (never referenced by any engine).
+	 * 1.0.0 → create wb_gam_leaderboard_cache table + drop unused wb_gam_partners.
 	 */
 	private static function upgrade_to_1_0_0(): void {
 		global $wpdb;
+
+		$charset     = $wpdb->get_charset_collate();
+		$cache_table = $wpdb->prefix . 'wb_gam_leaderboard_cache';
+
+		// Create the leaderboard snapshot cache table if it does not exist.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.SchemaChange
+		$wpdb->query(
+			"CREATE TABLE IF NOT EXISTS `{$cache_table}` (
+				id           BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+				user_id      BIGINT UNSIGNED NOT NULL,
+				period       VARCHAR(20)     NOT NULL DEFAULT 'all',
+				total_points BIGINT          NOT NULL DEFAULT 0,
+				rank         INT UNSIGNED    NOT NULL DEFAULT 0,
+				updated_at   DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+				PRIMARY KEY (id),
+				KEY idx_period_rank (period, rank),
+				KEY idx_user_period (user_id, period)
+			) {$charset};"
+		);
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.SchemaChange
 		$wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}wb_gam_partners" );

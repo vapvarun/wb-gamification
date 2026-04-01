@@ -39,11 +39,28 @@ defined( 'ABSPATH' ) || exit;
 final class PersonalRecordEngine {
 
 	/**
-	 * Register the points-awarded hook for personal record detection.
+	 * Register with AsyncEvaluator for batched async processing.
+	 *
+	 * Previously hooked synchronously on `wb_gamification_points_awarded` at
+	 * priority 20. Now deferred to reduce per-award DB queries from ~12-15 to ~5.
 	 */
 	public static function init(): void {
-		// Priority 20 — runs after BadgeEngine (10) and after all side-effects settle.
-		add_action( 'wb_gamification_points_awarded', array( __CLASS__, 'check_personal_records' ), 20, 3 );
+		AsyncEvaluator::register( array( __CLASS__, 'check_personal_records_async' ) );
+	}
+
+	/**
+	 * Async wrapper for check_personal_records.
+	 *
+	 * Accepts the plain array format from AsyncEvaluator (the Event object
+	 * is not serializable for Action Scheduler transport) and delegates to
+	 * the existing check logic.
+	 *
+	 * @param int   $user_id    User who just earned points.
+	 * @param array $event_data Decomposed event data array.
+	 * @param int   $points     Points awarded.
+	 */
+	public static function check_personal_records_async( int $user_id, array $event_data, int $points ): void {
+		self::check_personal_records( $user_id, $event_data, $points );
 	}
 
 	// ── Hook handler ────────────────────────────────────────────────────────────
@@ -51,11 +68,15 @@ final class PersonalRecordEngine {
 	/**
 	 * Check whether this award creates a new personal best.
 	 *
-	 * @param int   $user_id User who just earned points.
-	 * @param Event $event   The event that triggered the award.
-	 * @param int   $points  Points awarded (not the total — just this award).
+	 * Accepts either an Event object (legacy sync path) or a plain array
+	 * (async batch path via AsyncEvaluator). The event data is unused — only
+	 * the user_id matters for period-total lookups.
+	 *
+	 * @param int        $user_id    User who just earned points.
+	 * @param Event|array $event_data The event that triggered the award (Event or plain array).
+	 * @param int        $points     Points awarded (not the total — just this award).
 	 */
-	public static function check_personal_records( int $user_id, Event $event, int $points ): void {
+	public static function check_personal_records( int $user_id, Event|array $event_data, int $points ): void {
 		self::maybe_record( $user_id, 'day', self::period_total( $user_id, 'day' ) );
 		self::maybe_record( $user_id, 'week', self::period_total( $user_id, 'week' ) );
 		self::maybe_record( $user_id, 'month', self::period_total( $user_id, 'month' ) );

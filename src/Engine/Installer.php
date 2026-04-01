@@ -319,6 +319,21 @@ final class Installer {
 		) $charset;"
 		);
 
+		// Leaderboard snapshot cache — written by cron, read by LeaderboardEngine.
+		dbDelta(
+			"CREATE TABLE {$wpdb->prefix}wb_gam_leaderboard_cache (
+			id           BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+			user_id      BIGINT UNSIGNED NOT NULL,
+			period       VARCHAR(20)     NOT NULL DEFAULT 'all',
+			total_points BIGINT          NOT NULL DEFAULT 0,
+			rank         INT UNSIGNED    NOT NULL DEFAULT 0,
+			updated_at   DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			PRIMARY KEY (id),
+			KEY idx_period_rank (period, rank),
+			KEY idx_user_period (user_id, period)
+		) $charset;"
+		);
+
 		// Seed default levels.
 		self::seed_default_levels();
 

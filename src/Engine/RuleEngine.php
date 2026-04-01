@@ -47,17 +47,31 @@ final class RuleEngine {
 
 		global $wpdb;
 
-		$rules = $wpdb->get_results(
-			$wpdb->prepare(
-				"SELECT rule_config
+		// Object-cached to avoid hitting the DB on every single event.
+		// All active multiplier rules are loaded at once and filtered in-memory
+		// per action_id, since the full set is typically tiny (~5-20 rows).
+		$cache_key = 'wb_gam_multiplier_rules';
+		$all_rules = wp_cache_get( $cache_key, 'wb_gamification' );
+
+		if ( false === $all_rules ) {
+			$all_rules = $wpdb->get_results(
+				"SELECT target_id, rule_config
 				   FROM {$wpdb->prefix}wb_gam_rules
 				  WHERE rule_type = 'points_multiplier'
-				    AND ( target_id = %s OR target_id IS NULL OR target_id = '' )
 				    AND is_active = 1
 				  ORDER BY id ASC",
-				$event->action_id
-			),
-			ARRAY_A
+				ARRAY_A
+			) ?: array();
+
+			wp_cache_set( $cache_key, $all_rules, 'wb_gamification', 300 ); // 5 min TTL.
+		}
+
+		// Filter to rules that apply to this specific action (or globally).
+		$rules = array_filter(
+			$all_rules,
+			static function ( array $row ) use ( $event ): bool {
+				return empty( $row['target_id'] ) || $row['target_id'] === $event->action_id;
+			}
 		);
 
 		if ( empty( $rules ) ) {

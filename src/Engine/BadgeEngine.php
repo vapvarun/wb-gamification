@@ -60,12 +60,20 @@ final class BadgeEngine {
 		global $wpdb;
 
 		// Load all active badge conditions — typically ~30 rows.
-		$rules = $wpdb->get_results(
-			"SELECT target_id AS badge_id, rule_config
-			   FROM {$wpdb->prefix}wb_gam_rules
-			  WHERE rule_type = 'badge_condition' AND is_active = 1",
-			ARRAY_A
-		);
+		// Object-cached to avoid hitting the DB on every single point award.
+		$cache_key = 'wb_gam_badge_rules';
+		$rules     = wp_cache_get( $cache_key, self::CACHE_GROUP );
+
+		if ( false === $rules ) {
+			$rules = $wpdb->get_results(
+				"SELECT target_id AS badge_id, rule_config
+				   FROM {$wpdb->prefix}wb_gam_rules
+				  WHERE rule_type = 'badge_condition' AND is_active = 1",
+				ARRAY_A
+			) ?: array();
+
+			wp_cache_set( $cache_key, $rules, self::CACHE_GROUP, 300 ); // 5 min TTL.
+		}
 
 		if ( empty( $rules ) ) {
 			return;
