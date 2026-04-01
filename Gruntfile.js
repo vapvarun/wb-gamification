@@ -67,7 +67,6 @@ module.exports = function( grunt ) {
 							'!vendor/squizlabs/**', '!vendor/wp-coding-standards/**',
 							'!vendor/phpcompatibility/**', '!vendor/szepeviktor/**',
 							'!vendor/phpstan/**', '!vendor/brain/**',
-							'!integrations/contrib/**',
 						],
 						dest: 'dist/wb-gamification/',
 					},
