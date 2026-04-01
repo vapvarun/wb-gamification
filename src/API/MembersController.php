@@ -199,6 +199,19 @@ class MembersController extends WP_REST_Controller {
 				),
 			)
 		);
+
+		// GET /members/me/toasts — read and flush pending toast notifications.
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/me/toasts',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_toasts' ),
+					'permission_callback' => array( $this, 'get_toasts_permissions_check' ),
+				),
+			)
+		);
 	}
 
 	// ── Permission checks ──────────────────────────────────────────────────────
@@ -234,6 +247,23 @@ class MembersController extends WP_REST_Controller {
 		}
 
 		// Other authenticated users get public data only (enforced in callback).
+		return true;
+	}
+
+	/**
+	 * Check if the current user can read their own toasts.
+	 *
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return true|WP_Error True if the user is logged in, WP_Error otherwise.
+	 */
+	public function get_toasts_permissions_check( $request ): bool|WP_Error {
+		if ( ! is_user_logged_in() ) {
+			return new WP_Error(
+				'rest_not_logged_in',
+				__( 'You must be logged in to view toasts.', 'wb-gamification' ),
+				array( 'status' => 401 )
+			);
+		}
 		return true;
 	}
 
@@ -535,6 +565,81 @@ class MembersController extends WP_REST_Controller {
 				'heatmap'        => $heatmap,
 			)
 		);
+	}
+
+	/**
+	 * Retrieve and flush pending toast notifications for the current user.
+	 *
+	 * Reads the user's notification transient and deletes it, returning
+	 * the queued toast messages. Called by the frontend toast.js poller.
+	 *
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return WP_REST_Response Toast notifications array.
+	 */
+	public function get_toasts( $request ): WP_REST_Response {
+		$user_id = get_current_user_id();
+		$key     = 'wb_gam_notif_' . $user_id;
+		$toasts  = get_transient( $key );
+		delete_transient( $key );
+
+		$result = is_array( $toasts ) ? $toasts : array();
+
+		// Normalize toast data for frontend consumption.
+		$normalized = array_map(
+			static function ( array $toast ): array {
+				$type    = $toast['type'] ?? 'points';
+				$message = '';
+
+				switch ( $type ) {
+					case 'points':
+						$message = $toast['message'] ?? sprintf(
+							/* translators: %d: number of points */
+							__( '+%d points', 'wb-gamification' ),
+							$toast['points'] ?? 0
+						);
+						if ( ! empty( $toast['detail'] ) ) {
+							$message .= ' ' . $toast['detail'];
+						}
+						break;
+
+					case 'badge':
+					case 'challenge':
+					case 'kudos':
+						$message = $toast['message'] ?? '';
+						break;
+
+					case 'level_up':
+						$message = sprintf(
+							/* translators: %s: new level name */
+							__( 'Level up: %s', 'wb-gamification' ),
+							$toast['levelName'] ?? ''
+						);
+						break;
+
+					case 'streak_milestone':
+						$message = sprintf(
+							/* translators: %d: streak day count */
+							__( '%d-day streak!', 'wb-gamification' ),
+							$toast['days'] ?? 0
+						);
+						$type = 'streak';
+						break;
+
+					default:
+						$message = $toast['message'] ?? '';
+				}
+
+				return array(
+					'type'    => $type,
+					'message' => $message,
+					'icon'    => $toast['icon'] ?? null,
+					'detail'  => $toast['detail'] ?? null,
+				);
+			},
+			$result
+		);
+
+		return rest_ensure_response( $normalized );
 	}
 
 	/**

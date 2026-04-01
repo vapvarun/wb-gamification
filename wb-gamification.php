@@ -65,6 +65,7 @@ use WBGam\Admin\AnalyticsDashboard;
 use WBGam\Engine\CohortEngine;
 use WBGam\Engine\StatusRetentionEngine;
 use WBGam\Admin\BadgeAdminPage;
+use WBGam\Admin\ChallengeManagerPage;
 use WBGam\Admin\ManualAwardPage;
 use WBGam\Admin\ApiKeysPage;
 use WBGam\API\CredentialController;
@@ -138,6 +139,7 @@ final class WB_Gamification {
 			add_action( 'plugins_loaded', array( SetupWizard::class, 'init' ), 10 );
 			add_action( 'plugins_loaded', array( AnalyticsDashboard::class, 'init' ), 10 );
 			add_action( 'plugins_loaded', array( BadgeAdminPage::class, 'init' ), 10 );
+			add_action( 'plugins_loaded', array( ChallengeManagerPage::class, 'init' ), 10 );
 			add_action( 'plugins_loaded', array( ManualAwardPage::class, 'init' ), 10 );
 			add_action( 'plugins_loaded', array( ApiKeysPage::class, 'init' ), 10 );
 		}
@@ -218,6 +220,26 @@ final class WB_Gamification {
 			array(),
 			WB_GAM_VERSION
 		);
+
+		// Toast notification poller for logged-in users.
+		if ( is_user_logged_in() ) {
+			wp_enqueue_style( 'wb-gamification' );
+			wp_enqueue_script(
+				'wb-gamification-toast',
+				WB_GAM_URL . 'assets/js/toast.js',
+				array(),
+				WB_GAM_VERSION,
+				true
+			);
+			wp_localize_script(
+				'wb-gamification-toast',
+				'wbGamToast',
+				array(
+					'restUrl' => rest_url( 'wb-gamification/v1/' ),
+					'nonce'   => wp_create_nonce( 'wp_rest' ),
+				)
+			);
+		}
 	}
 
 	/**
