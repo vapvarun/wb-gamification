@@ -1512,3 +1512,21 @@
 		display: none;
 	}
 }
+
+/* ==========================================================================
+   23. Suppress Third-Party Admin Notices
+   Only on WB Gamification pages — keeps our admin clean.
+   Our own notices use .wb-gam-notice class and are not affected.
+   ========================================================================== */
+
+.toplevel_page_wb-gamification .notice:not(.wb-gam-notice),
+.gamification_page_wb-gamification-analytics .notice:not(.wb-gam-notice),
+.gamification_page_wb-gamification-badges .notice:not(.wb-gam-notice),
+.gamification_page_wb-gam-challenges .notice:not(.wb-gam-notice),
+.gamification_page_wb-gamification-award .notice:not(.wb-gam-notice),
+.gamification_page_wb-gam-api-keys .notice:not(.wb-gam-notice),
+.toplevel_page_wb-gamification .update-nag,
+.toplevel_page_wb-gamification div.error:not(.wb-gam-notice),
+.toplevel_page_wb-gamification div.updated:not(.wb-gam-notice) {
+	display: none !important;
+}

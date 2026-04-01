@@ -322,9 +322,6 @@ final class WB_Gamification {
 		remove_all_actions( 'all_admin_notices' );
 		// Re-add only our own notices.
 		add_action( 'admin_notices', array( $this, 'render_own_notices' ) );
-		// Hide all notices via CSS as a fallback (some notices register late).
-		echo '<style>.notice:not(.wb-gam-notice), .update-nag, div.error:not(.wb-gam-notice), div.updated:not(.wb-gam-notice) { display: none !important; }</style>';
-
 		wp_enqueue_style(
 			'wb-gam-admin',
 			WB_GAM_URL . 'assets/css/admin.css',
