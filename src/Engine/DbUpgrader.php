@@ -230,16 +230,17 @@ final class DbUpgrader {
 
 		// Create the leaderboard snapshot cache table if it does not exist.
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.SchemaChange
+		// Note: `rank` is a MySQL 8.0 reserved word — must be backtick-escaped.
 		$wpdb->query(
 			"CREATE TABLE IF NOT EXISTS `{$cache_table}` (
 				id           BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
 				user_id      BIGINT UNSIGNED NOT NULL,
 				period       VARCHAR(20)     NOT NULL DEFAULT 'all',
 				total_points BIGINT          NOT NULL DEFAULT 0,
-				rank         INT UNSIGNED    NOT NULL DEFAULT 0,
+				`rank`       INT UNSIGNED    NOT NULL DEFAULT 0,
 				updated_at   DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
 				PRIMARY KEY (id),
-				KEY idx_period_rank (period, rank),
+				KEY idx_period_rank (period, `rank`),
 				KEY idx_user_period (user_id, period)
 			) {$charset};"
 		);

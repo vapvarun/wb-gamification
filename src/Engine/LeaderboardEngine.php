@@ -315,7 +315,7 @@ final class LeaderboardEngine {
 
 			// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 			$wpdb->query(
-				"INSERT INTO {$cache_table} (user_id, period, total_points, rank, updated_at)
+				"INSERT INTO {$cache_table} (user_id, period, total_points, `rank`, updated_at)
 				 SELECT user_id, '{$period_key}' AS period, SUM(points) AS total_points,
 				        RANK() OVER (ORDER BY SUM(points) DESC) AS `rank`,
 				        NOW() AS updated_at
@@ -377,7 +377,7 @@ final class LeaderboardEngine {
 				   FROM {$cache_table} c
 				   JOIN {$wpdb->users} u ON u.ID = c.user_id
 				  WHERE c.period = %s {$opt_out_clause}
-				  ORDER BY c.rank ASC
+				  ORDER BY c.`rank` ASC
 				  LIMIT %d",
 				$query_values
 			),

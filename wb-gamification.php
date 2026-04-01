@@ -417,6 +417,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			WP_CLI::add_command( 'wb-gamification actions', WBGam\CLI\ActionsCommand::class );
 			WP_CLI::add_command( 'wb-gamification logs',    WBGam\CLI\LogsCommand::class );
 			WP_CLI::add_command( 'wb-gamification export',  WBGam\CLI\ExportCommand::class );
+			WP_CLI::add_command( 'wb-gamification doctor',  WBGam\CLI\DoctorCommand::class );
 		}
 	);
 }

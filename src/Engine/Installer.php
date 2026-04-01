@@ -322,16 +322,17 @@ final class Installer {
 		);
 
 		// Leaderboard snapshot cache — written by cron, read by LeaderboardEngine.
+		// Note: `rank` is a MySQL 8.0 reserved word — must be backtick-escaped.
 		dbDelta(
 			"CREATE TABLE {$wpdb->prefix}wb_gam_leaderboard_cache (
 			id           BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
 			user_id      BIGINT UNSIGNED NOT NULL,
 			period       VARCHAR(20)     NOT NULL DEFAULT 'all',
 			total_points BIGINT          NOT NULL DEFAULT 0,
-			rank         INT UNSIGNED    NOT NULL DEFAULT 0,
+			`rank`       INT UNSIGNED    NOT NULL DEFAULT 0,
 			updated_at   DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			PRIMARY KEY (id),
-			KEY idx_period_rank (period, rank),
+			KEY idx_period_rank (period, `rank`),
 			KEY idx_user_period (user_id, period)
 		) $charset;"
 		);
@@ -426,36 +427,34 @@ final class Installer {
 				'points'         => 10000,
 			),
 
-			// WordPress actions.
+			// WordPress actions — wp_user_register is always-on (not standalone_only).
 			'welcome'              => array(
 				'condition_type' => 'action_count',
 				'action_id'      => 'wp_user_register',
 				'count'          => 1,
 			),
+			// Post/comment badges use point milestones instead of action counts.
+			// This ensures they work on both standalone WP and BuddyPress installs,
+			// regardless of which action IDs are registered.
 			'first_post'           => array(
-				'condition_type' => 'action_count',
-				'action_id'      => 'wp_first_post',
-				'count'          => 1,
+				'condition_type' => 'point_milestone',
+				'points'         => 25,
 			),
 			'prolific_writer'      => array(
-				'condition_type' => 'action_count',
-				'action_id'      => 'wp_publish_post',
-				'count'          => 10,
+				'condition_type' => 'point_milestone',
+				'points'         => 250,
 			),
 			'content_creator'      => array(
-				'condition_type' => 'action_count',
-				'action_id'      => 'wp_publish_post',
-				'count'          => 25,
+				'condition_type' => 'point_milestone',
+				'points'         => 750,
 			),
 			'first_comment'        => array(
-				'condition_type' => 'action_count',
-				'action_id'      => 'wp_leave_comment',
-				'count'          => 1,
+				'condition_type' => 'point_milestone',
+				'points'         => 50,
 			),
 			'engaged_reader'       => array(
-				'condition_type' => 'action_count',
-				'action_id'      => 'wp_leave_comment',
-				'count'          => 10,
+				'condition_type' => 'point_milestone',
+				'points'         => 150,
 			),
 
 			// BuddyPress actions.
