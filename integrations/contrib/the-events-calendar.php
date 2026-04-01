@@ -7,7 +7,7 @@
  *
  * Actions covered:
  *   Event RSVP     — tribe_tickets_rsvp_attendee_created
- *   Ticket purchase — tribe_tickets_order_created (WooCommerce tickets)
+ *   Ticket purchase — event_tickets_after_save_ticket
  *   Event check-in  — event_tickets_checkin
  *
  * @package WB_Gamification
@@ -49,10 +49,9 @@ return [
 			'id'             => 'tec_ticket_purchased',
 			'label'          => 'Purchase an event ticket',
 			'description'    => 'Awarded when a member purchases a ticket to any event.',
-			'hook'           => 'event_tickets_checkin',
-			'user_callback'  => function ( int $attendee_id ): int {
-				$meta = get_post_meta( $attendee_id, '_tribe_tickets_attendee_user_id', true );
-				return $meta ? (int) $meta : 0;
+			'hook'           => 'event_tickets_after_save_ticket',
+			'user_callback'  => function ( int $post_id, $ticket, array $raw_data, string $class_name ): int {
+				return get_current_user_id();
 			},
 			'default_points' => 20,
 			'category'       => 'social',
