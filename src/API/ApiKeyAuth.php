@@ -55,6 +55,29 @@ final class ApiKeyAuth {
 				return $metadata;
 			}
 		);
+
+		// CORS headers for cross-origin API key authenticated requests.
+		add_action(
+			'rest_api_init',
+			function () {
+				// Only add custom CORS for our namespace when API key auth is active.
+				add_filter(
+					'rest_pre_serve_request',
+					function ( $value ) {
+						if ( ! empty( $GLOBALS['wb_gam_remote_site_id'] ) ) {
+							$origin = get_http_origin();
+							if ( $origin ) {
+								header( 'Access-Control-Allow-Origin: ' . esc_url_raw( $origin ) );
+								header( 'Access-Control-Allow-Credentials: true' );
+								header( 'Access-Control-Allow-Headers: X-WB-Gam-Key, Content-Type, Authorization, X-WP-Nonce' );
+								header( 'Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS' );
+							}
+						}
+						return $value;
+					}
+				);
+			}
+		);
 	}
 
 	/**

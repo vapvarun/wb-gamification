@@ -35,11 +35,13 @@ final class Installer {
 			action_id  VARCHAR(100)    NOT NULL,
 			object_id  BIGINT UNSIGNED DEFAULT NULL,
 			metadata   LONGTEXT,
+			site_id    VARCHAR(100)    NOT NULL DEFAULT '',
 			created_at DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			PRIMARY KEY (id),
 			KEY idx_user_action (user_id, action_id),
 			KEY idx_user_created (user_id, created_at),
-			KEY idx_created (created_at)
+			KEY idx_created (created_at),
+			KEY idx_site_id (site_id)
 		) $charset;"
 		);
 

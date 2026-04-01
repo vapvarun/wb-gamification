@@ -220,7 +220,7 @@ final class DbUpgrader {
 	}
 
 	/**
-	 * 1.0.0 → create wb_gam_leaderboard_cache table + drop unused wb_gam_partners.
+	 * 1.0.0 → create wb_gam_leaderboard_cache table, add site_id to events, drop unused wb_gam_partners.
 	 */
 	private static function upgrade_to_1_0_0(): void {
 		global $wpdb;
@@ -243,6 +243,14 @@ final class DbUpgrader {
 				KEY idx_user_period (user_id, period)
 			) {$charset};"
 		);
+
+		// Add site_id column to events table for cross-site attribution.
+		$events = $wpdb->prefix . 'wb_gam_events';
+		$cols   = $wpdb->get_col( "SHOW COLUMNS FROM `{$events}`", 0 );
+		if ( ! in_array( 'site_id', $cols, true ) ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.SchemaChange
+			$wpdb->query( "ALTER TABLE `{$events}` ADD COLUMN `site_id` VARCHAR(100) NOT NULL DEFAULT '' AFTER `metadata`, ADD KEY `idx_site_id` (`site_id`)" );
+		}
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.SchemaChange
 		$wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}wb_gam_partners" );

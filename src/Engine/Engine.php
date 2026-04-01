@@ -284,9 +284,10 @@ final class Engine {
 				'action_id'  => $event->action_id,
 				'object_id'  => $event->object_id ?: null,
 				'metadata'   => ! empty( $event->metadata ) ? wp_json_encode( $event->metadata ) : null,
+				'site_id'    => $event->metadata['_site_id'] ?? '',
 				'created_at' => gmdate( 'Y-m-d H:i:s' ),
 			),
-			array( '%s', '%d', '%s', '%d', '%s', '%s' )
+			array( '%s', '%d', '%s', '%d', '%s', '%s', '%s' )
 		);
 	}
 }

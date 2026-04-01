@@ -66,9 +66,11 @@ use WBGam\Engine\CohortEngine;
 use WBGam\Engine\StatusRetentionEngine;
 use WBGam\Admin\BadgeAdminPage;
 use WBGam\Admin\ManualAwardPage;
+use WBGam\Admin\ApiKeysPage;
 use WBGam\API\CredentialController;
 use WBGam\API\RedemptionController;
 use WBGam\API\CapabilitiesController;
+use WBGam\API\AbilitiesRegistration;
 use WBGam\API\ApiKeyAuth;
 use WBGam\Engine\CredentialExpiryEngine;
 use WBGam\Engine\LeaderboardEngine;
@@ -115,6 +117,9 @@ final class WB_Gamification {
 		// Leaderboard snapshot cron + object cache layer.
 		add_action( 'plugins_loaded', array( LeaderboardEngine::class, 'init' ), 10 );
 
+		// WP Abilities API registration + fallback REST endpoint for AI agent discovery.
+		add_action( 'plugins_loaded', array( AbilitiesRegistration::class, 'init' ), 10 );
+
 		// All remaining engines boot via FeatureFlags (core = always, pro = flag-gated).
 		add_action( 'plugins_loaded', array( FeatureFlags::class, 'boot_engines' ), 10 );
 
@@ -134,6 +139,7 @@ final class WB_Gamification {
 			add_action( 'plugins_loaded', array( AnalyticsDashboard::class, 'init' ), 10 );
 			add_action( 'plugins_loaded', array( BadgeAdminPage::class, 'init' ), 10 );
 			add_action( 'plugins_loaded', array( ManualAwardPage::class, 'init' ), 10 );
+			add_action( 'plugins_loaded', array( ApiKeysPage::class, 'init' ), 10 );
 		}
 	}
 
