@@ -1,47 +1,46 @@
 # Quick Start Guide
 
-From a fresh install to a working gamification setup in five steps.
+Get WB Gamification running in five minutes. This guide shows you the complete loop from activation to your first member earning points.
 
-## Step 1: Review point actions
+## Step 1: Activate and Run the Wizard (2 minutes)
 
-Go to **Gamification → Settings → Points**. Every trackable action is listed with its current point value and an enable/disable toggle.
+1. Activate the plugin from **Plugins > Installed Plugins**.
+2. The Setup Wizard opens automatically.
+3. Click the template that matches your site. For a BuddyPress community, choose **Community Engagement**. For a blog, choose **Blog / Publisher**.
+4. Click **Use This Template**.
 
-Common defaults:
+The wizard saves your point values and redirects you to the Gamification dashboard.
 
-| Action | Points |
-|---|---|
-| Publish a post | 10 |
-| Leave a comment | 5 |
-| Receive kudos | 3 |
-| Daily login | 1 |
-| Complete a profile | 20 |
+## Step 2: Check What Is Already Working (30 seconds)
 
-Disable any actions your site doesn't use — WooCommerce purchase actions on a blog-only site, for example. Enable anything turned off that's relevant.
+Go to **Gamification > Settings**. You will see every action that is currently active on your site — things like "Post an activity update," "Join a group," and "Complete a course." These are already wired up. No additional configuration is needed.
 
-## Step 2: Set your level thresholds
+## Step 3: Have a Member Do Something (1 minute)
 
-Go to **Settings → Levels**. The default ladder has 10 levels from Newcomer (0 pts) to Legend (10,000 pts).
+Log in as a regular member. Do one of the active actions — for example, post an activity update on a BuddyPress community page, or leave a comment on a blog post.
 
-Adjust the point thresholds to match your community's expected pace. A very active community may need higher thresholds to keep levelling meaningful.
+Within a few seconds, a toast notification appears in the bottom-right corner showing how many points were earned.
 
-## Step 3: Add a leaderboard to a page
+## Step 4: Check the Member's Points (30 seconds)
 
-1. Create or edit any page.
-2. Add the **Gamification Leaderboard** block from the block inserter.
-3. Publish.
+Points appear immediately in three places:
 
-The leaderboard shows all-time top members by default. To show this week's leaders, set **Period** to `week` in the block settings panel.
+- The **member-points block** on any page where you have placed it
+- The member's **BuddyPress profile** under the Gamification tab (if BuddyPress is active)
+- **Gamification > Members** in the admin, where you can view any member's full point history
 
-## Step 4: Check member profiles
+## Step 5: View the Analytics Dashboard (30 seconds)
 
-If BuddyPress is active, members' current rank, points, and earned badges automatically appear on their profile pages — no configuration needed.
+Go to **Gamification > Analytics**. You will see KPI cards showing total points awarded, active members, badges earned, and more. The dashboard refreshes every 10 minutes.
 
-Without BuddyPress, add the **Level Progress** or **Badge Showcase** block to any page. Set `user_id` to `0` to show the current logged-in member.
+## What Happens Automatically
 
-## Step 5: Award your first badge manually
+From here, the plugin handles everything on its own:
 
-Go to **Gamification → Manual Award**. Select a member, pick a badge, and click **Award**. The member receives a notification immediately.
+- Members earn points as they take actions
+- Badges award automatically when members meet the conditions
+- Levels advance when members cross point thresholds
+- Streaks build each day a member is active
+- The leaderboard updates on a rolling basis
 
----
-
-That's it. Points now accumulate as members take actions on your site, badges unlock automatically when criteria are met, and the leaderboard updates in real time. You don't need to configure anything further to have a working system — the defaults cover most WordPress and BuddyPress sites out of the box.
+You do not need to do anything to keep it running. Explore **Gamification > Badges**, **Levels**, and **Challenges** to customize the experience for your community.

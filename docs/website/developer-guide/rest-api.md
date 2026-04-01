@@ -1,288 +1,396 @@
 # REST API Reference
 
-All endpoints live under `/wp-json/wb-gamification/v1/`.
+Base URL: `/wp-json/wb-gamification/v1/`
 
-Authentication uses WordPress cookie auth for logged-in requests, or Application Passwords for external clients.
+## Authentication
+
+Two methods are supported:
+
+| Method | How | When to use |
+|--------|-----|-------------|
+| Cookie + nonce | Standard `X-WP-Nonce` header | Same-site JavaScript requests |
+| API key | `X-WB-Gam-Key` header or `?api_key=` query param | Remote sites, mobile apps, Zapier/Make |
+
+See [Cross-Site API](cross-site-api.md) for API key creation and remote site setup.
 
 ---
 
-## Members
+## Members Controller
 
-### Get member summary
+### `GET /members/{id}`
 
-```
-GET /members/{user_id}
-```
+Full gamification profile for one member.
 
-Returns a member's points total, current level, badge count, streak, and profile links.
+**Permission:** Public (unauthenticated returns public data). Self or admin returns full private data.
 
 **Response:**
 
 ```json
 {
-  "user_id": 42,
+  "id": 42,
   "display_name": "Jane Smith",
-  "avatar_url": "https://example.com/...",
+  "avatar_url": "https://...",
   "points": 1250,
-  "level": { "level": 5, "name": "Active", "min_points": 1000 },
-  "badge_count": 8,
-  "streak": 14
+  "level": {
+    "id": 3,
+    "name": "Contributor",
+    "min_points": 500,
+    "progress_pct": 75,
+    "next_threshold": 1500,
+    "next_level_name": "Regular"
+  },
+  "badges_count": 8,
+  "preferences": {
+    "show_rank": true,
+    "leaderboard_opt_out": false,
+    "notification_mode": "smart"
+  }
 }
 ```
 
----
+### `GET /members/{id}/points`
 
-## Points
+Paginated points history for a member.
 
-### Get member points
+**Query parameters:**
 
-```
-GET /members/{user_id}/points
-```
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `page` | int | 1 | Page number |
+| `per_page` | int | 20 | Rows per page (max 100) |
 
-**Query params:**
+**Response headers:** `X-WP-Total`, `X-WP-TotalPages`
 
-| Param | Default | Description |
-|---|---|---|
-| `period` | `all` | `all`, `month`, `week`, `day` |
-| `limit` | `20` | Max transactions |
-| `offset` | `0` | Pagination offset |
-
-**Response:**
+**Response body:**
 
 ```json
 {
   "total": 1250,
   "history": [
-    {
-      "id": 99,
-      "action_id": "publish_post",
-      "label": "Published a post",
-      "points": 10,
-      "created_at": "2026-03-18T12:00:00Z"
-    }
+    { "id": 99, "event_id": "uuid", "action_id": "publish_post", "points": 10, "object_id": 55, "created_at": "2026-03-18 12:00:00" }
   ]
 }
 ```
 
-### Award or deduct points
+### `GET /members/{id}/level`
 
-```
-POST /members/{user_id}/points
-```
+Current level and full level ladder with progress.
 
-Requires `wb_gam_award_manual` capability.
+### `GET /members/{id}/badges`
 
-**Body:** `{ "points": 50, "note": "Speaker bonus" }`
+All badges earned by the member, ordered by `earned_at` DESC.
 
----
+### `GET /members/{id}/events`
 
-## Badges
+Paginated raw event log. Parameters: `page`, `per_page` (max 100).
 
-### List all badges
+### `GET /members/{id}/streak`
 
-```
-GET /badges
-```
+Streak data with optional contribution heatmap.
 
-Returns the full badge library with criteria and enabled state.
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `heatmap_days` | int | 0 | Include N days of contribution data. 0 = skip |
 
-### Get member badges
+### `GET /members/me/toasts`
 
-```
-GET /members/{user_id}/badges
-```
-
-Returns badges the member has earned with award date.
-
-### Award a badge
-
-```
-POST /members/{user_id}/badges
-```
-
-Requires `wb_gam_award_manual`.
-
-**Body:** `{ "badge_id": 5 }`
-
-### Revoke a badge
-
-```
-DELETE /members/{user_id}/badges/{badge_id}
-```
-
-Requires `wb_gam_award_manual`.
+Read and flush pending toast notifications for the current user. Requires authentication.
 
 ---
 
-## Leaderboard
+## Points Controller
 
-### Get leaderboard
+### `POST /points/award`
 
+Manually award points to a member. Bypasses cooldown and cap checks.
+
+**Permission:** `manage_options` or `wb_gam_award_manual`
+
+**Body:**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `user_id` | int | Yes | Target user ID |
+| `points` | int | Yes | Points to award (1–100,000) |
+| `reason` | string | No | Action ID label. Default: `manual_award` |
+| `note` | string | No | Admin note stored in event metadata |
+
+**Response (201):**
+
+```json
+{ "awarded": true, "user_id": 42, "points": 100, "reason": "manual_award" }
 ```
-GET /leaderboard
-```
 
-**Query params:**
+### `DELETE /points/{id}`
 
-| Param | Default | Description |
-|---|---|---|
-| `period` | `all` | `all`, `month`, `week`, `day` |
-| `limit` | `10` | 1–100 |
-| `scope_type` | — | Scope type (e.g. `bp_group`) |
-| `scope_id` | `0` | Scope object ID |
+Revoke a specific points ledger row. The event record is preserved (events are immutable); only the points side-effect is removed.
+
+**Permission:** `manage_options`
 
 **Response:**
 
 ```json
-[
-  {
-    "rank": 1,
-    "user_id": 42,
-    "display_name": "Jane Smith",
-    "avatar_url": "https://example.com/...",
-    "points": 3200
-  }
-]
+{ "deleted": true, "id": 99, "user_id": 42, "points": 10 }
 ```
 
 ---
 
-## Actions
+## Badges Controller
 
-### List registered actions
+### `GET /badges`
 
+All badge definitions with optional earned status and rarity scores.
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `user_id` | int | current user | Include earned status for this user. 0 = skip |
+| `category` | string | — | Filter by category slug |
+
+**Permission:** Public
+
+### `GET /badges/{id}`
+
+Single badge definition with rarity percentage and earner count.
+
+**Permission:** Public
+
+### `PUT /badges/{id}`
+
+Update badge definition fields (`name`, `description`, `image_url`, `category`).
+
+**Permission:** `manage_options`
+
+### `DELETE /badges/{id}`
+
+Delete a badge definition. Cascades to `wb_gam_user_badges` and associated rules.
+
+**Permission:** `manage_options`
+
+### `POST /badges/{id}/award`
+
+Manually award a badge to a user.
+
+**Permission:** `manage_options`
+
+**Body:** `{ "user_id": 42 }`
+
+**Response:**
+
+```json
+{ "awarded": true, "badge_id": "top_contributor", "user_id": 42, "message": "Badge awarded successfully." }
 ```
-GET /actions
-```
-
-Returns the full action manifest with labels, point values, and enabled states.
 
 ---
 
-## Challenges
+## Leaderboard Controller
 
-### List challenges
+### `GET /leaderboard`
 
-```
-GET /challenges
+Top-N members for a given period.
+
+**Permission:** Public. Opt-out members excluded from results.
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `period` | string | `all` | `all`, `month`, `week`, `day` |
+| `limit` | int | 10 | 1–100 |
+| `scope_type` | string | — | Scope type (e.g. `bp_group`) |
+| `scope_id` | int | 0 | Scope object ID |
+
+**Response:**
+
+```json
+{
+  "period": "week",
+  "scope": { "type": "", "id": 0 },
+  "rows": [
+    { "rank": 1, "user_id": 42, "display_name": "Jane Smith", "avatar_url": "https://...", "points": 320 }
+  ]
+}
 ```
 
-### Get a single challenge
+### `GET /leaderboard/group/{group_id}`
 
-```
-GET /challenges/{id}
-```
+BuddyPress group-scoped leaderboard. Accepts same `period` and `limit` params.
+
+### `GET /leaderboard/me`
+
+Current user's private rank (visible even when opted out of public display).
+
+**Permission:** Must be logged in
 
 ---
 
-## Kudos
+## Kudos Controller
 
-### Send kudos
+### `GET /kudos`
 
+Recent kudos feed.
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `limit` | int | 20 | Max entries (1–50) |
+
+**Permission:** Public
+
+### `POST /kudos`
+
+Give kudos to another member.
+
+**Permission:** Must be logged in
+
+**Body:**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `receiver_id` | int | Yes | User ID of recipient |
+| `message` | string | No | Optional message (max 255 chars) |
+
+**Response (201):**
+
+```json
+{ "success": true, "receiver_id": 55, "daily_remaining": 4 }
 ```
-POST /kudos
-```
 
-Requires authentication.
+### `GET /kudos/me`
 
-**Body:** `{ "recipient_id": 42, "message": "Great post on async hooks!" }`
+Current user's kudos stats: `received_total`, `daily_limit`, `sent_today`, `daily_remaining`.
 
-### Get kudos received by a member
-
-```
-GET /members/{user_id}/kudos
-```
+**Permission:** Must be logged in
 
 ---
 
-## Credentials (OpenBadges 3.0)
+## Actions Controller
 
-### Get verifiable credential
+### `GET /actions`
 
-```
-GET /credentials/{badge_id}/{user_id}
-```
+All registered gamification actions with labels, categories, point values, and enabled state.
 
-Returns an OpenBadges 3.0 JSON-LD document. This endpoint is **public** — no authentication required — so credential URLs can be verified by third parties, including LinkedIn.
+**Permission:** `manage_options`
+
+---
+
+## Challenges Controller
+
+Endpoints follow the pattern `/challenges` and `/challenges/{id}`. Full documentation at `/wp-json/wb-gamification/v1/challenges` schema endpoint.
+
+---
+
+## Events Controller
+
+### `GET /events`
+
+Site-wide event log with filtering. Admin only.
+
+**Permission:** `manage_options`
+
+---
+
+## Webhooks Controller
+
+### `GET /webhooks`
+
+List registered webhook endpoints.
+
+**Permission:** `manage_options`
+
+### `POST /webhooks`
+
+Register a new webhook.
+
+**Body:** `{ "url": "https://...", "secret": "...", "events": ["points_awarded", "badge_awarded"] }`
+
+### `DELETE /webhooks/{id}`
+
+Delete a webhook registration.
+
+---
+
+## Rules Controller
+
+Manage stored rule configurations (badge conditions, point multipliers).
+
+**Permission:** `manage_options` for all write operations.
+
+---
+
+## Credential Controller (OpenBadges 3.0)
+
+### `GET /credentials/{badge_id}/{user_id}`
+
+Returns an OpenBadges 3.0 JSON-LD document. This endpoint is **public** — no authentication required — so credential URLs can be verified by LinkedIn and other services.
 
 Returns HTTP 410 Gone for expired credentials.
 
-**Response:**
-
 ```json
 {
-  "@context": [
-    "https://www.w3.org/2018/credentials/v1",
-    "https://purl.imsglobal.org/spec/ob/v3p0/context-3.0.3.json"
-  ],
+  "@context": ["https://www.w3.org/2018/credentials/v1", "https://purl.imsglobal.org/spec/ob/v3p0/context-3.0.3.json"],
   "type": ["VerifiableCredential", "OpenBadgeCredential"],
-  "issuer": {
-    "id": "https://example.com",
-    "name": "Example Community"
-  },
+  "issuer": { "id": "https://example.com", "name": "My Community" },
   "credentialSubject": {
     "id": "https://example.com/members/jane-smith/",
-    "achievement": {
-      "name": "Top Contributor",
-      "description": "Awarded to members who reach 5,000 points."
-    }
+    "achievement": { "name": "Top Contributor", "description": "..." }
   }
 }
 ```
 
 ---
 
-## Webhooks
+## Redemption Controller
 
-### Register a webhook
+Endpoints for the rewards store: list items, redeem points, view redemption history.
 
-```
-POST /webhooks
-```
+**Permission:** Authenticated members can redeem. `manage_options` for catalog management.
 
-Requires `manage_options`.
+---
 
-**Body:** `{ "event": "points.awarded", "url": "https://yourapp.com/hook", "secret": "optional-hmac-secret" }`
+## Recap Controller
 
-### List webhooks
+Year-in-review data for a member or site-wide.
 
-```
-GET /webhooks
-```
+---
 
-### Delete a webhook
+## Badge Share Controller
 
-```
-DELETE /webhooks/{id}
-```
+Public badge share page data (OG metadata for social sharing).
 
-### Supported webhook events
+---
 
-| Event | Fires When |
-|---|---|
-| `points.awarded` | Any point transaction recorded |
-| `badge.awarded` | A badge is awarded to a member |
-| `badge.revoked` | A badge is revoked |
-| `level.up` | A member reaches a new level |
-| `kudos.sent` | Kudos are sent |
-| `challenge.completed` | A member completes a challenge |
+## Levels Controller
 
-### Webhook payload format
+### `GET /levels`
+
+All configured levels with thresholds and icons.
+
+---
+
+## Capabilities Controller
+
+### `GET /capabilities`
+
+Discovery endpoint for mobile apps and remote sites. Returns authentication status, permissions map, feature flags, plugin version, and all endpoint URLs.
+
+**Permission:** Public
 
 ```json
 {
-  "event": "points.awarded",
-  "timestamp": "2026-03-18T12:00:00Z",
-  "data": {
-    "user_id": 42,
-    "points": 10,
-    "action_id": "publish_post"
+  "authenticated": true,
+  "user_id": 42,
+  "site_id": "",
+  "mode": "local",
+  "can": {
+    "read_leaderboard": true,
+    "award_points": false,
+    "give_kudos": true
+  },
+  "features": { "cohort_leagues": false },
+  "version": "1.0.0",
+  "endpoints": {
+    "members": "https://example.com/wp-json/wb-gamification/v1/members",
+    "leaderboard": "https://example.com/wp-json/wb-gamification/v1/leaderboard"
   }
 }
 ```
-
-If a `secret` was provided on registration, the request includes an `X-WB-Gam-Signature` header containing an HMAC-SHA256 digest of the payload.
 
 ---
 
@@ -293,15 +401,16 @@ All errors use the standard WordPress REST error format:
 ```json
 {
   "code": "rest_forbidden",
-  "message": "Sorry, you are not allowed to do that.",
+  "message": "You do not have permission to manage points.",
   "data": { "status": 403 }
 }
 ```
 
 | Status | Meaning |
-|---|---|
+|--------|---------|
 | 400 | Bad request — missing or invalid parameters |
 | 401 | Not authenticated |
 | 403 | Insufficient capability |
 | 404 | Resource not found |
 | 410 | Gone — credential has expired |
+| 422 | Unprocessable — business rule violation (e.g. kudos daily limit) |

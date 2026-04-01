@@ -12,89 +12,112 @@
       "folder": "getting-started",
       "slug": "getting-started-wbgam",
       "order": 1,
-      "description": "Installation, activation, and initial setup",
+      "description": "Installation, setup wizard, and first steps",
       "docs": [
-        {
-          "file": "install-setup.md",
-          "title": "Installation & Setup",
-          "slug": "install-setup-wbgam",
-          "order": 1
-        },
-        {
-          "file": "quick-start.md",
-          "title": "Quick Start Guide",
-          "slug": "quick-start-wbgam",
-          "order": 2
-        }
+        { "file": "installation.md", "title": "Installation & Activation", "slug": "installation-wbgam", "order": 1 },
+        { "file": "setup-wizard.md", "title": "Setup Wizard & Templates", "slug": "setup-wizard-wbgam", "order": 2 },
+        { "file": "quick-start.md", "title": "Quick Start Guide", "slug": "quick-start-wbgam", "order": 3 },
+        { "file": "free-vs-pro.md", "title": "Free vs Pro Comparison", "slug": "free-vs-pro-wbgam", "order": 4 },
+        { "file": "how-it-works.md", "title": "How Gamification Works", "slug": "how-it-works-wbgam", "order": 5 }
       ]
     },
     {
-      "name": "Admin Settings",
-      "folder": "admin-settings",
-      "slug": "admin-settings-wbgam",
+      "name": "Features",
+      "folder": "features",
+      "slug": "features-wbgam",
       "order": 2,
-      "description": "Points, levels, badges, and automation configuration",
+      "description": "Core gamification features — points, badges, levels, and more",
       "docs": [
-        {
-          "file": "points-settings.md",
-          "title": "Points & Actions",
-          "slug": "points-settings-wbgam",
-          "order": 1
-        },
-        {
-          "file": "levels-settings.md",
-          "title": "Levels Configuration",
-          "slug": "levels-settings-wbgam",
-          "order": 2
-        },
-        {
-          "file": "badges.md",
-          "title": "Badge Management",
-          "slug": "badges-management-wbgam",
-          "order": 3
-        },
-        {
-          "file": "automation.md",
-          "title": "Rank Automation",
-          "slug": "rank-automation-wbgam",
-          "order": 4
-        }
+        { "file": "points.md", "title": "Points System", "slug": "points-system-wbgam", "order": 1 },
+        { "file": "badges.md", "title": "Badges & Achievements", "slug": "badges-achievements-wbgam", "order": 2 },
+        { "file": "levels.md", "title": "Level Progression", "slug": "level-progression-wbgam", "order": 3 },
+        { "file": "leaderboard.md", "title": "Leaderboard & Rankings", "slug": "leaderboard-wbgam", "order": 4 },
+        { "file": "challenges.md", "title": "Challenges", "slug": "challenges-wbgam", "order": 5 },
+        { "file": "streaks.md", "title": "Streaks & Daily Activity", "slug": "streaks-wbgam", "order": 6 },
+        { "file": "kudos.md", "title": "Peer Kudos", "slug": "peer-kudos-wbgam", "order": 7 },
+        { "file": "notifications.md", "title": "Notifications & Toasts", "slug": "notifications-wbgam", "order": 8 },
+        { "file": "blocks-shortcodes.md", "title": "Blocks & Shortcodes", "slug": "blocks-shortcodes-wbgam", "order": 9 },
+        { "file": "analytics.md", "title": "Analytics Dashboard", "slug": "analytics-wbgam", "order": 10 },
+        { "file": "privacy.md", "title": "Privacy & GDPR", "slug": "privacy-gdpr-wbgam", "order": 11 }
       ]
     },
     {
-      "name": "Blocks & Shortcodes",
-      "folder": "blocks-shortcodes",
-      "slug": "blocks-shortcodes-wbgam",
+      "name": "Settings",
+      "folder": "settings",
+      "slug": "settings-wbgam",
       "order": 3,
-      "description": "Adding gamification elements to pages and posts",
+      "description": "Admin configuration for all gamification features",
       "docs": [
-        {
-          "file": "using-blocks.md",
-          "title": "Blocks & Shortcodes Reference",
-          "slug": "blocks-reference-wbgam",
-          "order": 1
-        }
+        { "file": "points-actions.md", "title": "Points & Actions Settings", "slug": "points-actions-settings-wbgam", "order": 1 },
+        { "file": "levels-config.md", "title": "Levels Configuration", "slug": "levels-config-wbgam", "order": 2 },
+        { "file": "badge-management.md", "title": "Badge Management", "slug": "badge-management-wbgam", "order": 3 },
+        { "file": "challenge-manager.md", "title": "Challenge Manager", "slug": "challenge-manager-wbgam", "order": 4 },
+        { "file": "kudos-settings.md", "title": "Kudos Settings", "slug": "kudos-settings-wbgam", "order": 5 },
+        { "file": "rank-automation.md", "title": "Rank Automation Rules", "slug": "rank-automation-wbgam", "order": 6 },
+        { "file": "manual-awards.md", "title": "Manual Point Awards", "slug": "manual-awards-wbgam", "order": 7 },
+        { "file": "api-keys.md", "title": "API Key Management", "slug": "api-keys-wbgam", "order": 8 }
+      ]
+    },
+    {
+      "name": "Pro Features",
+      "folder": "pro-features",
+      "slug": "pro-features-wbgam",
+      "order": 4,
+      "description": "Advanced features available with the Pro add-on",
+      "docs": [
+        { "file": "overview.md", "title": "Pro Features Overview", "slug": "pro-overview-wbgam", "order": 1 },
+        { "file": "cohort-leagues.md", "title": "Cohort Leagues", "slug": "cohort-leagues-wbgam", "order": 2 },
+        { "file": "community-challenges.md", "title": "Community Challenges", "slug": "community-challenges-wbgam", "order": 3 },
+        { "file": "redemption-store.md", "title": "Redemption Store", "slug": "redemption-store-wbgam", "order": 4 },
+        { "file": "badge-sharing.md", "title": "Badge Sharing & Credentials", "slug": "badge-sharing-wbgam", "order": 5 },
+        { "file": "webhooks.md", "title": "Outbound Webhooks", "slug": "webhooks-wbgam", "order": 6 },
+        { "file": "weekly-emails.md", "title": "Weekly Recap Emails", "slug": "weekly-emails-wbgam", "order": 7 },
+        { "file": "cosmetics.md", "title": "Profile Cosmetics & Frames", "slug": "cosmetics-wbgam", "order": 8 }
+      ]
+    },
+    {
+      "name": "Integrations",
+      "folder": "integrations",
+      "slug": "integrations-wbgam",
+      "order": 5,
+      "description": "Auto-detected plugin integrations and their actions",
+      "docs": [
+        { "file": "overview.md", "title": "Integrations Overview", "slug": "integrations-overview-wbgam", "order": 1 },
+        { "file": "buddypress.md", "title": "BuddyPress", "slug": "buddypress-integration-wbgam", "order": 2 },
+        { "file": "woocommerce.md", "title": "WooCommerce", "slug": "woocommerce-integration-wbgam", "order": 3 },
+        { "file": "learndash.md", "title": "LearnDash", "slug": "learndash-integration-wbgam", "order": 4 },
+        { "file": "bbpress.md", "title": "bbPress", "slug": "bbpress-integration-wbgam", "order": 5 },
+        { "file": "other-plugins.md", "title": "LifterLMS, MemberPress, GiveWP & More", "slug": "other-integrations-wbgam", "order": 6 },
+        { "file": "wpmediaverse.md", "title": "WPMediaVerse", "slug": "wpmediaverse-integration-wbgam", "order": 7 }
+      ]
+    },
+    {
+      "name": "BuddyPress",
+      "folder": "buddypress",
+      "slug": "buddypress-wbgam",
+      "order": 6,
+      "description": "BuddyPress-specific display and social features",
+      "docs": [
+        { "file": "profile-display.md", "title": "Profile Display", "slug": "bp-profile-display-wbgam", "order": 1 },
+        { "file": "activity-feed.md", "title": "Activity Feed Events", "slug": "bp-activity-feed-wbgam", "order": 2 },
+        { "file": "member-directory.md", "title": "Member Directory Badges", "slug": "bp-member-directory-wbgam", "order": 3 }
       ]
     },
     {
       "name": "Developer Guide",
       "folder": "developer-guide",
       "slug": "developer-guide-wbgam",
-      "order": 4,
-      "description": "Hooks, filters, and REST API reference",
+      "order": 7,
+      "description": "Technical reference for developers integrating with WB Gamification",
       "docs": [
-        {
-          "file": "hooks-filters.md",
-          "title": "Hooks & Filters",
-          "slug": "hooks-filters-wbgam",
-          "order": 1
-        },
-        {
-          "file": "rest-api.md",
-          "title": "REST API Reference",
-          "slug": "rest-api-wbgam",
-          "order": 2
-        }
+        { "file": "architecture.md", "title": "Architecture Overview", "slug": "architecture-wbgam", "order": 1 },
+        { "file": "hooks-filters.md", "title": "Hooks & Filters Reference", "slug": "hooks-filters-wbgam", "order": 2 },
+        { "file": "rest-api.md", "title": "REST API Reference", "slug": "rest-api-wbgam", "order": 3 },
+        { "file": "manifest-files.md", "title": "Writing Integration Manifests", "slug": "manifest-files-wbgam", "order": 4 },
+        { "file": "wp-cli.md", "title": "WP-CLI Commands", "slug": "wp-cli-wbgam", "order": 5 },
+        { "file": "helper-functions.md", "title": "PHP Helper Functions", "slug": "helper-functions-wbgam", "order": 6 },
+        { "file": "cross-site-api.md", "title": "Cross-Site API & Gamification Center", "slug": "cross-site-api-wbgam", "order": 7 },
+        { "file": "database-schema.md", "title": "Database Schema", "slug": "database-schema-wbgam", "order": 8 }
       ]
     }
   ],
