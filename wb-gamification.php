@@ -35,21 +35,24 @@ $wbgam_sdk_file = WB_GAM_PATH . 'vendor/easy-digital-downloads/edd-sl-sdk/edd-sl
 if ( file_exists( $wbgam_sdk_file ) ) {
 	require_once $wbgam_sdk_file;
 }
-add_action(
-	'edd_sl_sdk_registry',
-	function ( $registry ) {
-		$registry->register(
-			array(
-				'id'      => 'wb-gamification',
-				'url'     => 'https://wbcomdesigns.com',
-				'item_id' => 0, // Placeholder — set when EDD product created.
-				'version' => WB_GAM_VERSION,
-				'file'    => WB_GAM_FILE,
-				'license' => 'wbcomfree4b7c2d9e1a5f8c3b6d0e7a2f9c1b5e33',
-			)
-		);
-	}
-);
+$wbgam_edd_item_id = 0; // Placeholder — set when EDD product created on wbcomdesigns.com.
+if ( $wbgam_edd_item_id > 0 ) {
+	add_action(
+		'edd_sl_sdk_registry',
+		function ( $registry ) use ( $wbgam_edd_item_id ) {
+			$registry->register(
+				array(
+					'id'      => 'wb-gamification',
+					'url'     => 'https://wbcomdesigns.com',
+					'item_id' => $wbgam_edd_item_id,
+					'version' => WB_GAM_VERSION,
+					'file'    => WB_GAM_FILE,
+					'license' => 'wbcomfree4b7c2d9e1a5f8c3b6d0e7a2f9c1b5e33',
+				)
+			);
+		}
+	);
+}
 
 // Auto-activate preset key on first load (only when SDK is present and item_id is set).
 if ( file_exists( $wbgam_sdk_file ) ) {
