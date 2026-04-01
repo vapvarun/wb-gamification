@@ -188,14 +188,15 @@ final class ChallengeEngine {
 		global $wpdb;
 
 		// Increment this member's personal contribution.
-		$existing     = self::get_log_row( $user_id, (int) $challenge['id'] );
-		$new_progress = ( $existing ? (int) $existing['progress'] : 0 ) + 1;
-		self::upsert_log( $user_id, (int) $challenge['id'], $new_progress );
+		$existing = self::get_log_row( $user_id, (int) $challenge['id'] );
 
-		// Already marked complete for this user — skip.
+		// Already marked complete for this user — skip before upsert to preserve completed_at.
 		if ( $existing && null !== $existing['completed_at'] ) {
 			return;
 		}
+
+		$new_progress = ( $existing ? (int) $existing['progress'] : 0 ) + 1;
+		self::upsert_log( $user_id, (int) $challenge['id'], $new_progress );
 
 		// Sum all group members' progress.
 		$total_progress = (int) $wpdb->get_var(
@@ -334,14 +335,18 @@ final class ChallengeEngine {
 	private static function upsert_log( int $user_id, int $challenge_id, int $progress ): void {
 		global $wpdb;
 
-		$wpdb->replace(
-			$wpdb->prefix . 'wb_gam_challenge_log',
-			array(
-				'user_id'      => $user_id,
-				'challenge_id' => $challenge_id,
-				'progress'     => $progress,
-			),
-			array( '%d', '%d', '%d' )
+		// INSERT ... ON DUPLICATE KEY UPDATE preserves completed_at (unlike REPLACE which DELETE+INSERTs).
+		$wpdb->query(
+			$wpdb->prepare(
+				"INSERT INTO {$wpdb->prefix}wb_gam_challenge_log (user_id, challenge_id, progress, created_at)
+				 VALUES (%d, %d, %d, %s)
+				 ON DUPLICATE KEY UPDATE progress = %d",
+				$user_id,
+				$challenge_id,
+				$progress,
+				current_time( 'mysql', true ),
+				$progress
+			)
 		);
 	}
 

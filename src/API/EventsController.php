@@ -167,19 +167,16 @@ class EventsController extends WP_REST_Controller {
 			)
 		);
 
-		$result = Engine::process( $event );
+		$success = Engine::process( $event );
 
 		return new WP_REST_Response(
 			array(
-				'processed' => true,
-				'event_id'  => $event->id,
+				'processed' => $success,
+				'event_id'  => $event->event_id,
 				'action_id' => $action_id,
 				'user_id'   => $user_id,
-				'points'    => $result['points'] ?? 0,
-				'skipped'   => $result['skipped'] ?? false,
-				'reason'    => $result['reason'] ?? null,
 			),
-			201
+			$success ? 201 : 200
 		);
 	}
 

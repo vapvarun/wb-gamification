@@ -99,7 +99,7 @@ final class RedemptionEngine {
 
 		$cost = (int) $item['points_cost'];
 
-		// Check stock.
+		// Check stock (quick pre-check before transaction).
 		if ( null !== $item['stock'] && (int) $item['stock'] <= 0 ) {
 			return array(
 				'success'       => false,
@@ -109,9 +109,19 @@ final class RedemptionEngine {
 			);
 		}
 
-		// Check balance.
-		$balance = PointsEngine::get_total( $user_id );
+		// ── Atomic balance check + debit (prevents TOCTOU race condition) ────
+		$wpdb->query( 'START TRANSACTION' );
+
+		// Lock the user's point rows to prevent concurrent redemptions.
+		$balance = (int) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COALESCE(SUM(points), 0) FROM {$wpdb->prefix}wb_gam_points WHERE user_id = %d FOR UPDATE",
+				$user_id
+			)
+		);
+
 		if ( $balance < $cost ) {
+			$wpdb->query( 'ROLLBACK' );
 			return array(
 				'success'       => false,
 				'error'         => sprintf(
@@ -125,25 +135,7 @@ final class RedemptionEngine {
 			);
 		}
 
-		// Atomic stock decrement.
-		if ( null !== $item['stock'] ) {
-			$decremented = $wpdb->query(
-				$wpdb->prepare(
-					"UPDATE {$wpdb->prefix}wb_gam_redemption_items SET stock = stock - 1 WHERE id = %d AND stock > 0",
-					$item_id
-				)
-			);
-			if ( ! $decremented ) {
-				return array(
-					'success'       => false,
-					'error'         => __( 'This reward is out of stock.', 'wb-gamification' ),
-					'redemption_id' => null,
-					'coupon_code'   => null,
-				);
-			}
-		}
-
-		// Deduct points via Engine::process so the event log is immutable.
+		// Debit points FIRST (inside the transaction).
 		$event = new Event(
 			array(
 				'action_id' => 'points_redeemed',
@@ -154,8 +146,28 @@ final class RedemptionEngine {
 				),
 			)
 		);
-		// Directly debit via PointsEngine (negative award).
 		PointsEngine::debit( $user_id, $cost, 'redemption', $event->event_id );
+
+		// Atomic stock decrement (inside the transaction).
+		if ( null !== $item['stock'] ) {
+			$decremented = $wpdb->query(
+				$wpdb->prepare(
+					"UPDATE {$wpdb->prefix}wb_gam_redemption_items SET stock = stock - 1 WHERE id = %d AND stock > 0",
+					$item_id
+				)
+			);
+			if ( ! $decremented ) {
+				$wpdb->query( 'ROLLBACK' );
+				return array(
+					'success'       => false,
+					'error'         => __( 'This reward is out of stock.', 'wb-gamification' ),
+					'redemption_id' => null,
+					'coupon_code'   => null,
+				);
+			}
+		}
+
+		$wpdb->query( 'COMMIT' );
 
 		// Create redemption record.
 		$wpdb->insert(
@@ -189,7 +201,7 @@ final class RedemptionEngine {
 			$wpdb->update( $wpdb->prefix . 'wb_gam_redemptions', array( 'status' => 'pending_fulfillment' ), array( 'id' => $redemption_id ) );
 		}
 
-		wp_cache_delete( 'wb_gam_points_' . $user_id, self::CACHE_GROUP );
+		wp_cache_delete( "wb_gam_total_{$user_id}", self::CACHE_GROUP );
 
 		/**
 		 * Fires after a redemption is created.

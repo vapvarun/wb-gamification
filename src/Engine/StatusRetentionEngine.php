@@ -46,8 +46,8 @@ final class StatusRetentionEngine {
 	 */
 	public static function activate(): void {
 		if ( ! wp_next_scheduled( self::CRON_HOOK ) ) {
-			// Next Thursday at 18:00 UTC.
-			$next = strtotime( 'next thursday 18:00:00 UTC' );
+			// Next Wednesday at 18:00 UTC (spread away from Monday cron cluster).
+			$next = strtotime( 'next wednesday 18:00:00 UTC' );
 			wp_schedule_event( $next, 'weekly', self::CRON_HOOK );
 		}
 	}
@@ -65,6 +65,10 @@ final class StatusRetentionEngine {
 	 * Run the weekly status retention check for all recently active users.
 	 */
 	public static function run(): void {
+		if ( ! FeatureFlags::is_pro_active() || ! FeatureFlags::is_enabled( 'status_retention' ) ) {
+			return;
+		}
+
 		global $wpdb;
 
 		// Get all levels sorted ascending by min_points.

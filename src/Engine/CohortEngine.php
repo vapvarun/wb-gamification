@@ -76,6 +76,10 @@ final class CohortEngine {
 	 * so cohort competition is fair.
 	 */
 	public static function assign_cohorts(): void {
+		if ( ! FeatureFlags::is_pro_active() || ! FeatureFlags::is_enabled( 'cohort_leagues' ) ) {
+			return;
+		}
+
 		global $wpdb;
 
 		$week = gmdate( 'Y-W' );
@@ -164,6 +168,10 @@ final class CohortEngine {
 	 * Process end-of-week promotions and demotions.
 	 */
 	public static function process_promotions(): void {
+		if ( ! FeatureFlags::is_pro_active() || ! FeatureFlags::is_enabled( 'cohort_leagues' ) ) {
+			return;
+		}
+
 		global $wpdb;
 
 		$week       = gmdate( 'Y-W' );

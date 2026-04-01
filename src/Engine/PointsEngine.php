@@ -286,7 +286,9 @@ final class PointsEngine {
 			return false;
 		}
 
-		return ( time() - strtotime( $last ) ) < $cooldown_seconds;
+		// created_at is stored in site timezone via current_time('mysql'),
+		// so compare using current_time('timestamp') for consistency.
+		return ( current_time( 'timestamp' ) - strtotime( $last ) ) < $cooldown_seconds;
 	}
 
 	/**

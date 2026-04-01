@@ -44,8 +44,8 @@ final class CredentialExpiryEngine {
 	 */
 	public static function activate(): void {
 		if ( ! wp_next_scheduled( self::CRON_HOOK ) ) {
-			// Every Monday at 06:00 UTC — well after the cohort-assign cron (00:05).
-			$next = strtotime( 'next monday 06:00:00 UTC' );
+			// Every Friday at 06:00 UTC (spread away from Monday cron cluster).
+			$next = strtotime( 'next friday 06:00:00 UTC' );
 			wp_schedule_event( $next, 'weekly', self::CRON_HOOK );
 		}
 	}

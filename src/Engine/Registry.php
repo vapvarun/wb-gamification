@@ -177,8 +177,13 @@ final class Registry {
 		add_action(
 			$args['hook'],
 			static function () use ( $args ) {
-				$params  = func_get_args();
-				$user_id = get_current_user_id();
+				$params = func_get_args();
+
+				// Prefer user_callback (works in cron/CLI); fall back to get_current_user_id().
+				$user_id = isset( $args['user_callback'] ) && is_callable( $args['user_callback'] )
+					? (int) call_user_func_array( $args['user_callback'], $params )
+					: get_current_user_id();
+
 				if ( $user_id > 0 && call_user_func_array( $args['condition'], array_merge( $params, array( $user_id ) ) ) ) {
 					BadgeEngine::award_badge( $user_id, $args['id'] );
 				}
