@@ -171,18 +171,6 @@ final class Installer {
 		) $charset;"
 		);
 
-		// Accountability partners.
-		dbDelta(
-			"CREATE TABLE {$wpdb->prefix}wb_gam_partners (
-			id         BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-			user_id_1  BIGINT UNSIGNED NOT NULL,
-			user_id_2  BIGINT UNSIGNED NOT NULL,
-			created_at DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
-			PRIMARY KEY (id),
-			UNIQUE KEY partner_pair (user_id_1, user_id_2)
-		) $charset;"
-		);
-
 		// Member preferences.
 		dbDelta(
 			"CREATE TABLE {$wpdb->prefix}wb_gam_member_prefs (

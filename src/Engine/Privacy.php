@@ -12,7 +12,6 @@
  *   - wb_gam_streaks        (row for user_id)
  *   - wb_gam_challenge_log  (all rows for user_id)
  *   - wb_gam_kudos          (giver_id and receiver_id rows)
- *   - wb_gam_partners       (user_id_1 and user_id_2 rows)
  *   - wb_gam_member_prefs   (row for user_id)
  *   - User meta: wb_gam_pr_* keys
  *
@@ -290,10 +289,6 @@ final class Privacy {
 
 		// Kudos — as receiver.
 		$removed += (int) $wpdb->delete( $wpdb->prefix . 'wb_gam_kudos', array( 'receiver_id' => $user_id ), array( '%d' ) );
-
-		// Accountability partners.
-		$wpdb->delete( $wpdb->prefix . 'wb_gam_partners', array( 'user_id_1' => $user_id ), array( '%d' ) );
-		$wpdb->delete( $wpdb->prefix . 'wb_gam_partners', array( 'user_id_2' => $user_id ), array( '%d' ) );
 
 		// Member preferences.
 		$removed += (int) $wpdb->delete( $wpdb->prefix . 'wb_gam_member_prefs', array( 'user_id' => $user_id ), array( '%d' ) );

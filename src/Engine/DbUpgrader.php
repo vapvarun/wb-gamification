@@ -81,6 +81,7 @@ final class DbUpgrader {
 			'0.2.0' => 'upgrade_to_0_2_0',
 			'0.3.0' => 'upgrade_to_0_3_0',
 			'0.5.0' => 'upgrade_to_0_5_0',
+			'1.0.0' => 'upgrade_to_1_0_0',
 		);
 	}
 
@@ -216,5 +217,15 @@ final class DbUpgrader {
 				 ADD KEY `created_at` (`created_at`)"
 			);
 		}
+	}
+
+	/**
+	 * 1.0.0 → drop unused wb_gam_partners table (never referenced by any engine).
+	 */
+	private static function upgrade_to_1_0_0(): void {
+		global $wpdb;
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.SchemaChange
+		$wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}wb_gam_partners" );
 	}
 }

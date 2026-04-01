@@ -53,7 +53,6 @@ use WBGam\API\EventsController;
 use WBGam\API\WebhooksController;
 use WBGam\API\RulesController;
 use WBGam\API\RecapController;
-use WBGam\Abilities\AbilitiesRegistrar;
 use WBGam\BuddyPress\HooksIntegration as BPHooks;
 use WBGam\BuddyPress\ProfileIntegration;
 use WBGam\BuddyPress\DirectoryIntegration;
@@ -106,7 +105,6 @@ final class WB_Gamification {
 		add_action( 'plugins_loaded', array( Engine::class, 'init' ), 8 );
 		add_action( 'plugins_loaded', array( WPHooks::class, 'init' ), 8 );
 		add_action( 'plugins_loaded', array( BPHooks::class, 'init' ), 10 );
-		add_action( 'plugins_loaded', array( AbilitiesRegistrar::class, 'register' ), 10 );
 
 		// All remaining engines boot via FeatureFlags (core = always, pro = flag-gated).
 		add_action( 'plugins_loaded', array( FeatureFlags::class, 'boot_engines' ), 10 );
