@@ -313,9 +313,18 @@ final class WB_Gamification {
 	 * @return void
 	 */
 	public function enqueue_admin_assets( string $hook ): void {
-		if ( false === strpos( $hook, 'wb-gamification' ) ) {
+		if ( false === strpos( $hook, 'wb-gamification' ) && false === strpos( $hook, 'wb-gam' ) ) {
 			return;
 		}
+
+		// Suppress third-party admin notices on our pages for clean UX.
+		remove_all_actions( 'admin_notices' );
+		remove_all_actions( 'all_admin_notices' );
+		// Re-add only our own notices.
+		add_action( 'admin_notices', array( $this, 'render_own_notices' ) );
+		// Hide all notices via CSS as a fallback (some notices register late).
+		echo '<style>.notice:not(.wb-gam-notice), .update-nag, div.error:not(.wb-gam-notice), div.updated:not(.wb-gam-notice) { display: none !important; }</style>';
+
 		wp_enqueue_style(
 			'wb-gam-admin',
 			WB_GAM_URL . 'assets/css/admin.css',
@@ -328,6 +337,14 @@ final class WB_Gamification {
 			array(),
 			WB_GAM_VERSION
 		);
+	}
+
+	/**
+	 * Render only our own admin notices (suppresses third-party noise).
+	 */
+	public function render_own_notices(): void {
+		// Only show WB Gamification notices (class="wb-gam-notice").
+		// All third-party notices are suppressed via remove_all_actions + CSS.
 	}
 }
 
