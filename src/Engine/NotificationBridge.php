@@ -296,6 +296,21 @@ final class NotificationBridge {
 			return;
 		}
 
+		/**
+		 * Filter toast notification data before it is queued.
+		 *
+		 * Modify the message, icon, or type. Return an empty array to suppress
+		 * this notification entirely.
+		 *
+		 * @since 1.0.0
+		 * @param array $event   Notification data (type, message, detail, icon).
+		 * @param int   $user_id User who will see the toast.
+		 */
+		$event = (array) apply_filters( 'wb_gamification_toast_data', $event, $user_id );
+		if ( empty( $event ) ) {
+			return;
+		}
+
 		$key      = self::TRANSIENT_PREFIX . $user_id;
 		$events   = get_transient( $key ) ?: array();
 		$events[] = $event;

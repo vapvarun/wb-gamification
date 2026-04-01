@@ -296,9 +296,28 @@ final class ChallengeManagerPage {
 		if ( $id > 0 ) {
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- Admin form handler, single row update.
 			$wpdb->update( $table, $data, array( 'id' => $id ), $formats, array( '%d' ) );
+
+			/**
+			 * Fires after a challenge is updated by an admin.
+			 *
+			 * @since 1.0.0
+			 * @param int   $challenge_id Challenge ID.
+			 * @param array $data         Challenge data that was saved.
+			 */
+			do_action( 'wb_gamification_challenge_updated', $id, $data );
 		} else {
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- Admin form handler, single row insert.
 			$wpdb->insert( $table, $data, $formats );
+			$new_id = (int) $wpdb->insert_id;
+
+			/**
+			 * Fires after a new challenge is created by an admin.
+			 *
+			 * @since 1.0.0
+			 * @param int   $challenge_id New challenge ID.
+			 * @param array $data         Challenge data.
+			 */
+			do_action( 'wb_gamification_challenge_created', $new_id, $data );
 		}
 
 		wp_safe_redirect( admin_url( 'admin.php?page=wb-gam-challenges&notice=saved' ) );
@@ -323,6 +342,14 @@ final class ChallengeManagerPage {
 		if ( $id > 0 ) {
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- Admin form handler, single row delete.
 			$wpdb->delete( $wpdb->prefix . 'wb_gam_challenges', array( 'id' => $id ), array( '%d' ) );
+
+			/**
+			 * Fires after a challenge is deleted by an admin.
+			 *
+			 * @since 1.0.0
+			 * @param int $challenge_id The deleted challenge ID.
+			 */
+			do_action( 'wb_gamification_challenge_deleted', $id );
 		}
 
 		wp_safe_redirect( admin_url( 'admin.php?page=wb-gam-challenges&notice=deleted' ) );

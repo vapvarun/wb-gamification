@@ -195,6 +195,22 @@ final class BadgeEngine {
 				return false;
 			}
 		}
+		/**
+		 * Filter whether a specific badge should be awarded.
+		 *
+		 * Return false to prevent this badge from being awarded to this user.
+		 * Useful for adding custom eligibility rules beyond the built-in gates.
+		 *
+		 * @since 1.0.0
+		 * @param bool   $should_award Whether to proceed with the award.
+		 * @param int    $user_id      User ID.
+		 * @param string $badge_id     Badge definition ID.
+		 * @param array  $badge_def    Full badge definition array (name, category, etc.).
+		 */
+		if ( ! (bool) apply_filters( 'wb_gamification_should_award_badge', true, $user_id, $badge_id, $def ?? [] ) ) {
+			return false;
+		}
+
 		$validity   = $def ? (int) ( $def['validity_days'] ?? 0 ) : 0;
 		$expires_at = $validity > 0
 			? gmdate( 'Y-m-d H:i:s', strtotime( "+{$validity} days" ) )

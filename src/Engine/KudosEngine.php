@@ -75,6 +75,23 @@ final class KudosEngine {
 			);
 		}
 
+		/**
+		 * Filter whether kudos should be allowed.
+		 *
+		 * Return a WP_Error to reject the kudos with a custom message.
+		 * Return true to allow.
+		 *
+		 * @since 1.0.0
+		 * @param true|WP_Error $result      Default true (allow).
+		 * @param int           $giver_id    User sending kudos.
+		 * @param int           $receiver_id User receiving kudos.
+		 * @param string        $message     Optional kudos message.
+		 */
+		$gate = apply_filters( 'wb_gamification_before_kudos', true, $giver_id, $receiver_id, $message );
+		if ( is_wp_error( $gate ) ) {
+			return $gate;
+		}
+
 		global $wpdb;
 
 		$inserted = $wpdb->insert(

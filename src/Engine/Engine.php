@@ -235,6 +235,19 @@ final class Engine {
 			return false;
 		}
 
+		/**
+		 * Fires before points are written to the ledger.
+		 *
+		 * All checks have passed (enabled, rate limits, gate filter, multipliers).
+		 * This is the last chance to inspect the award before it becomes permanent.
+		 *
+		 * @since 1.0.0
+		 * @param int   $user_id User who will receive the points.
+		 * @param Event $event   Full event object.
+		 * @param int   $points  Final points (after multipliers).
+		 */
+		do_action( 'wb_gamification_before_points_awarded', $event->user_id, $event, $points );
+
 		// Write the derived ledger row.
 		if ( ! PointsEngine::insert_point_row( $event, $points ) ) {
 			return false;

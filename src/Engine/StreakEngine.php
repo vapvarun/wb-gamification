@@ -66,7 +66,18 @@ final class StreakEngine {
 			return;
 		}
 
-		$grace_days = (int) get_option( self::OPT_GRACE_DAYS, 1 );
+		/**
+		 * Filter the number of grace days before a streak breaks.
+		 *
+		 * @since 1.0.0
+		 * @param int $grace_days Default grace days (from option, default 1).
+		 * @param int $user_id    The user whose streak is being evaluated.
+		 */
+		$grace_days = (int) apply_filters(
+			'wb_gamification_streak_grace_days',
+			(int) get_option( self::OPT_GRACE_DAYS, 1 ),
+			$user_id
+		);
 		$gap        = $data['last_active']
 			? (int) self::date_diff_days( $data['last_active'], $today, $tz )
 			: null;
@@ -85,8 +96,21 @@ final class StreakEngine {
 			$grace_used = 1;
 		} else {
 			// Gap too large or grace exhausted — reset.
+			$old_streak = (int) $data['current_streak'];
 			$new_streak = 1;
 			$grace_used = 0;
+
+			if ( $old_streak > 1 ) {
+				/**
+				 * Fires when a member's streak is broken (reset to 1).
+				 *
+				 * @since 1.0.0
+				 * @param int $user_id    User whose streak broke.
+				 * @param int $old_streak The streak count before it was reset.
+				 * @param int $gap        Number of inactive days that caused the break.
+				 */
+				do_action( 'wb_gamification_streak_broken', $user_id, $old_streak, $gap );
+			}
 		}
 
 		$longest = max( $data['longest_streak'], $new_streak );

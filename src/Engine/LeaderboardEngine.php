@@ -420,7 +420,16 @@ final class LeaderboardEngine {
 			);
 		}
 
-		return $result;
+		/**
+		 * Filter leaderboard results before they are returned.
+		 *
+		 * Modify rankings, add custom fields, or filter out specific members.
+		 *
+		 * @since 1.0.0
+		 * @param array $result Hydrated leaderboard rows (rank, user_id, display_name, avatar_url, points).
+		 * @param array $rows   Raw DB rows before hydration.
+		 */
+		return (array) apply_filters( 'wb_gamification_leaderboard_results', $result, $rows );
 	}
 
 	/**
