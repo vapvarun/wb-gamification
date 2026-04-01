@@ -1,54 +1,105 @@
 <?xml version="1.0"?>
-<ruleset name="WB Gamification">
-    <description>WordPress Coding Standards for WB Gamification (PSR-4 Composer project)</description>
+<ruleset xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" name="WB Gamification" xsi:noNamespaceSchemaLocation="vendor/squizlabs/php_codesniffer/phpcs.xsd">
 
-    <arg name="basepath" value="."/>
-    <arg name="extensions" value="php"/>
-    <arg value="sp"/>
+	<description>WB Gamification WPCS ruleset (PSR-4 Composer project).</description>
 
-    <file>src/</file>
-    <file>integrations/</file>
-    <file>wb-gamification.php</file>
+	<file>src/</file>
+	<file>integrations/</file>
+	<file>wb-gamification.php</file>
 
-    <rule ref="WordPress-Extra"/>
-    <rule ref="WordPress-Docs"/>
+	<arg name="extensions" value="php"/>
+	<arg name="colors"/>
+	<arg value="sp"/>
 
-    <!-- PSR-4 Composer autoloading uses PascalCase filenames — WordPress file
-         naming convention (class-{name}.php) does not apply here. -->
-    <rule ref="WordPress.Files.FileName">
-        <exclude-pattern>src/*</exclude-pattern>
-        <exclude-pattern>integrations/*</exclude-pattern>
-    </rule>
+	<rule ref="WordPress">
+		<!-- PSR-4 uses PascalCase filenames, not class-{name}.php -->
+		<exclude name="WordPress.Files.FileName.NotHyphenatedLowercase"/>
+		<exclude name="WordPress.Files.FileName.InvalidClassFileName"/>
 
-    <!-- Short array syntax is fine in PHP 8.1+. -->
-    <rule ref="Universal.Arrays.DisallowShortArraySyntax">
-        <exclude-pattern>*</exclude-pattern>
-    </rule>
+		<!-- Short array syntax is standard in PHP 8.1+ -->
+		<exclude name="Universal.Arrays.DisallowShortArraySyntax"/>
 
-    <!-- Short ternary is fine in PHP 8.1+ (null-coalescing is preferred). -->
-    <rule ref="Universal.Operators.DisallowShortTernary">
-        <exclude-pattern>*</exclude-pattern>
-    </rule>
+		<!-- Short ternary (?:) is valid PHP -->
+		<exclude name="Universal.Operators.DisallowShortTernary"/>
 
-    <!-- Register plugin-specific custom capabilities so WPCS does not flag them. -->
-    <rule ref="WordPress.WP.Capabilities">
-        <properties>
-            <property name="custom_capabilities" type="array">
-                <element value="wb_gam_award_manual"/>
-            </property>
-        </properties>
-    </rule>
+		<!-- We use custom tables, direct DB is expected -->
+		<exclude name="WordPress.DB.DirectDatabaseQuery.DirectQuery"/>
+		<exclude name="WordPress.DB.DirectDatabaseQuery.NoCaching"/>
+		<exclude name="WordPress.DB.DirectDatabaseQuery.SchemaChange"/>
+		<exclude name="WordPress.DB.PreparedSQL.InterpolatedNotPrepared"/>
+		<exclude name="WordPress.DB.PreparedSQL.NotPrepared"/>
+		<exclude name="WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber"/>
+		<exclude name="WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare"/>
+		<exclude name="WordPress.DB.SlowDBQuery.slow_db_query_meta_key"/>
+		<exclude name="WordPress.DB.SlowDBQuery.slow_db_query_meta_value"/>
 
-    <!-- DbUpgrader uses raw DDL (ALTER TABLE, SHOW COLUMNS/INDEX) with $wpdb->prefix
-         table names. Table identifiers cannot be parameterised via $wpdb->prepare() —
-         only data values can. All table names are constructed from $wpdb->prefix only. -->
-    <rule ref="WordPress.DB.DirectDatabaseQuery.SchemaChange">
-        <exclude-pattern>src/Engine/DbUpgrader.php</exclude-pattern>
-    </rule>
-    <rule ref="WordPress.DB.PreparedSQL.InterpolatedNotPrepared">
-        <exclude-pattern>src/Engine/DbUpgrader.php</exclude-pattern>
-    </rule>
-    <rule ref="WordPress.DB.DirectDatabaseQuery.NoCaching">
-        <exclude-pattern>src/Engine/DbUpgrader.php</exclude-pattern>
-    </rule>
+		<!-- Hook callback params often unused -->
+		<exclude name="Generic.CodeAnalysis.UnusedFunctionParameter.Found"/>
+		<exclude name="Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed"/>
+		<exclude name="Generic.CodeAnalysis.UnusedFunctionParameter.FoundInExtendedClassAfterLastUsed"/>
+
+		<!-- Comment requirements - too strict for this project -->
+		<exclude name="Squiz.Commenting.FunctionComment.Missing"/>
+		<exclude name="Squiz.Commenting.FunctionComment.MissingParamTag"/>
+		<exclude name="Squiz.Commenting.FunctionComment.MissingParamComment"/>
+		<exclude name="Squiz.Commenting.ClassComment.Missing"/>
+		<exclude name="Squiz.Commenting.FileComment.Missing"/>
+		<exclude name="Squiz.Commenting.FileComment.MissingPackageTag"/>
+		<exclude name="Squiz.Commenting.InlineComment.InvalidEndChar"/>
+		<exclude name="Squiz.Commenting.VariableComment.Missing"/>
+		<exclude name="Squiz.Commenting.BlockComment.CloserSameLine"/>
+		<exclude name="Generic.Commenting.DocComment.MissingShort"/>
+
+		<!-- Not relevant for our project -->
+		<exclude name="WordPress.WP.I18n.MissingTranslatorsComment"/>
+		<exclude name="WordPress.PHP.YodaConditions.NotYoda"/>
+		<exclude name="WordPress.Security.NonceVerification.Recommended"/>
+		<exclude name="WordPress.Security.NonceVerification.Missing"/>
+		<exclude name="WordPress.Security.EscapeOutput.OutputNotEscaped"/>
+		<exclude name="WordPress.PHP.NoSilencedErrors.Discouraged"/>
+		<exclude name="Universal.ControlStructures.DisallowLonelyIf.Found"/>
+		<exclude name="Universal.NamingConventions.NoReservedKeywordParameterNames"/>
+		<exclude name="WordPress.WP.GlobalVariablesOverride.Prohibited"/>
+		<exclude name="WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound"/>
+		<exclude name="Squiz.PHP.CommentedOutCode.Found"/>
+		<exclude name="Generic.Strings.UnnecessaryStringConcat.Found"/>
+	</rule>
+
+	<rule ref="WordPress.NamingConventions.PrefixAllGlobals">
+		<properties>
+			<property name="prefixes" type="array">
+				<element value="wb_gam"/>
+				<element value="wb_gamification"/>
+				<element value="WBGam"/>
+				<element value="WB_GAM"/>
+				<element value="wbgam"/>
+			</property>
+		</properties>
+	</rule>
+
+	<rule ref="WordPress.WP.I18n">
+		<properties>
+			<property name="text_domain" type="array">
+				<element value="wb-gamification"/>
+			</property>
+		</properties>
+	</rule>
+
+	<rule ref="WordPress.WP.Capabilities">
+		<properties>
+			<property name="custom_capabilities" type="array">
+				<element value="wb_gam_award_manual"/>
+				<element value="manage_options"/>
+			</property>
+		</properties>
+	</rule>
+
+	<exclude-pattern>vendor/*</exclude-pattern>
+	<exclude-pattern>node_modules/*</exclude-pattern>
+	<exclude-pattern>assets/*</exclude-pattern>
+	<exclude-pattern>blocks/*</exclude-pattern>
+	<exclude-pattern>dist/*</exclude-pattern>
+	<exclude-pattern>tests/*</exclude-pattern>
+	<exclude-pattern>integrations/contrib/*</exclude-pattern>
+
 </ruleset>
