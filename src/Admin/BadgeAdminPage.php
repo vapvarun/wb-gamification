@@ -43,12 +43,21 @@ final class BadgeAdminPage {
 		if ( false === strpos( $hook, 'wb-gamification-badges' ) ) {
 			return;
 		}
+		wp_enqueue_media();
 		wp_enqueue_script(
 			'wb-gam-admin-badge',
 			WB_GAM_URL . 'assets/js/admin-badge.js',
-			array(),
+			array( 'jquery' ),
 			WB_GAM_VERSION,
 			true
+		);
+		wp_localize_script(
+			'wb-gam-admin-badge',
+			'wbGamBadgeAdmin',
+			array(
+				'chooseIcon' => __( 'Choose Badge Icon', 'wb-gamification' ),
+				'useIcon'    => __( 'Use as Icon', 'wb-gamification' ),
+			)
 		);
 	}
 

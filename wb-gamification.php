@@ -236,6 +236,12 @@ final class WB_Gamification {
 			array(),
 			WB_GAM_VERSION
 		);
+		wp_enqueue_style(
+			'wb-gamification-admin-premium',
+			WB_GAM_URL . 'assets/css/admin-premium.css',
+			array(),
+			WB_GAM_VERSION
+		);
 	}
 }
 
