@@ -1,0 +1,2833 @@
+# Copyright (C) 2026 Wbcom Designs
+# This file is distributed under the GPL-2.0+.
+msgid ""
+msgstr ""
+"Project-Id-Version: WB Gamification 1.0.0\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/wb-gamification\n"
+"POT-Creation-Date: 2026-04-01 03:42:16+00:00\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"PO-Revision-Date: 2026-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"X-Generator: grunt-wp-i18n 1.0.4\n"
+
+#: blocks/badge-showcase/render.php:66
+msgid "No badges earned yet."
+msgstr ""
+
+#: blocks/badge-showcase/render.php:104
+msgid "Not yet earned"
+msgstr ""
+
+#: blocks/badge-showcase/render.php:105
+msgid "Locked"
+msgstr ""
+
+#: blocks/challenges/render.php:38
+msgid "No active challenges at the moment."
+msgstr ""
+
+#: blocks/challenges/render.php:46
+msgid "Team"
+msgstr ""
+
+#: blocks/challenges/render.php:49
+msgid "Completed"
+msgstr ""
+
+#: blocks/challenges/render.php:59
+#. translators: 1 = current progress, 2 = target
+msgid "%1$d / %2$d"
+msgstr ""
+
+#: blocks/challenges/render.php:72
+#. translators: %d = bonus points
+msgid "+%d pts"
+msgstr ""
+
+#: blocks/challenges/render.php:85
+#. translators: %s = human readable time
+msgid "Ends %s"
+msgstr ""
+
+#: blocks/kudos-feed/render.php:27
+msgid "Kudos"
+msgstr ""
+
+#: blocks/kudos-feed/render.php:32
+msgid "No kudos given yet — be the first!"
+msgstr ""
+
+#: blocks/kudos-feed/render.php:72
+msgid "ago"
+msgstr ""
+
+#: blocks/leaderboard/render.php:25 blocks/leaderboard/render.php:31
+msgid "All Time"
+msgstr ""
+
+#: blocks/leaderboard/render.php:26
+msgid "This Month"
+msgstr ""
+
+#: blocks/leaderboard/render.php:27
+msgid "This Week"
+msgstr ""
+
+#: blocks/leaderboard/render.php:28
+msgid "Today"
+msgstr ""
+
+#: blocks/leaderboard/render.php:40
+#. translators: %s: period label e.g. "This Week"
+msgid "Leaderboard — %s"
+msgstr ""
+
+#: blocks/leaderboard/render.php:47
+msgid "No members on the leaderboard yet."
+msgstr ""
+
+#: blocks/leaderboard/render.php:53
+msgid "Rank"
+msgstr ""
+
+#: blocks/leaderboard/render.php:74 blocks/member-points/render.php:55
+#: src/Admin/AnalyticsDashboard.php:234 src/Admin/ManualAwardPage.php:119
+#: src/Admin/ManualAwardPage.php:168 src/Admin/SettingsPage.php:335
+#: src/Admin/SettingsPage.php:400 src/Engine/Privacy.php:134
+msgid "Points"
+msgstr ""
+
+#: blocks/leaderboard/render.php:77 blocks/leaderboard/render.php:117
+#: blocks/points-history/render.php:70 blocks/year-recap/render.php:135
+#: src/BuddyPress/ProfileIntegration.php:80
+#. translators: %s: formatted points number
+#. translators: %s = formatted points total
+#. translators: %s = formatted points with sign (e.g. "+10" or "-5")
+#. translators: %s = formatted points number
+#. translators: %s = formatted number of points
+msgid "%s pts"
+msgstr ""
+
+#: blocks/leaderboard/render.php:100
+msgid "Your rank"
+msgstr ""
+
+#: blocks/leaderboard/render.php:107
+#. translators: %s = rank number
+msgid "#%s"
+msgstr ""
+
+#: blocks/leaderboard/render.php:128
+#. translators: %s = points needed to move up one rank
+msgid "%s pts from the next rank"
+msgstr ""
+
+#: blocks/level-progress/render.php:26
+msgid "Log in to see your level progress."
+msgstr ""
+
+#: blocks/level-progress/render.php:45
+msgid "Keep earning points to unlock your first level!"
+msgstr ""
+
+#: blocks/level-progress/render.php:64
+msgid "Current Level"
+msgstr ""
+
+#: blocks/level-progress/render.php:71
+#. translators: %s = points total
+msgid "%s points"
+msgstr ""
+
+#: blocks/level-progress/render.php:94 blocks/member-points/render.php:85
+#. translators: 1 = points needed, 2 = level name
+#. translators: 1: points to next level, 2: next level name
+msgid "%1$s pts to %2$s"
+msgstr ""
+
+#: blocks/level-progress/render.php:103
+msgid "Max level reached!"
+msgstr ""
+
+#: blocks/member-points/render.php:32
+msgid "Log in to see your points."
+msgstr ""
+
+#: blocks/member-points/render.php:74
+msgid "Level progress"
+msgstr ""
+
+#: blocks/points-history/render.php:27
+msgid "Log in to see your points history."
+msgstr ""
+
+#: blocks/points-history/render.php:44
+msgid "No point activity yet — start participating to earn points!"
+msgstr ""
+
+#: blocks/streak/render.php:25
+msgid "Log in to see your streak."
+msgstr ""
+
+#: blocks/streak/render.php:61
+msgid "Day streak"
+msgstr ""
+
+#: blocks/streak/render.php:67
+msgid "Best streak"
+msgstr ""
+
+#: blocks/streak/render.php:78
+#. translators: 1 = days remaining, 2 = milestone target
+msgid "%1$d more day to reach the %2$d-day milestone!"
+msgid_plural "%1$d more days to reach the %2$d-day milestone!"
+msgstr[0] ""
+msgstr[1] ""
+
+#: blocks/streak/render.php:92
+msgid "Amazing — you've hit every milestone! Keep it up!"
+msgstr ""
+
+#: blocks/streak/render.php:97
+msgid "Contribution heatmap"
+msgstr ""
+
+#: blocks/streak/render.php:119
+#. translators: 1 = date, 2 = points
+msgid "%1$s: %2$s points"
+msgstr ""
+
+#: blocks/top-members/render.php:40
+msgid "Be the first to earn points and claim the top spot!"
+msgstr ""
+
+#: blocks/top-members/render.php:116 blocks/top-members/render.php:172
+msgid "pts"
+msgstr ""
+
+#: blocks/year-recap/render.php:64
+#. translators: %d = year
+msgid "Your %d in Community"
+msgstr ""
+
+#: blocks/year-recap/render.php:82
+msgid "Points Earned"
+msgstr ""
+
+#: blocks/year-recap/render.php:87 src/Admin/ApiKeysPage.php:109
+#: src/Admin/ChallengeManagerPage.php:204
+msgid "Actions"
+msgstr ""
+
+#: blocks/year-recap/render.php:92 src/Admin/ChallengeManagerPage.php:45
+#: src/Admin/ChallengeManagerPage.php:46
+msgid "Challenges"
+msgstr ""
+
+#: blocks/year-recap/render.php:97 src/Admin/BadgeAdminPage.php:73
+msgid "Badges"
+msgstr ""
+
+#: blocks/year-recap/render.php:107
+#. translators: %d = percentile (0-100)
+msgid "Top %d%%"
+msgstr ""
+
+#: blocks/year-recap/render.php:113
+msgid "Community Rank"
+msgstr ""
+
+#: blocks/year-recap/render.php:120
+msgid "Kudos Received"
+msgstr ""
+
+#: blocks/year-recap/render.php:129
+msgid "Peak Week"
+msgstr ""
+
+#: blocks/year-recap/render.php:146
+msgid "Most Active"
+msgstr ""
+
+#: blocks/year-recap/render.php:155
+#. translators: %d = event count
+msgid "%d time"
+msgid_plural "%d times"
+msgstr[0] ""
+msgstr[1] ""
+
+#: blocks/year-recap/render.php:173
+#. translators: %d = badge count
+msgid "%d Badge Earned"
+msgid_plural "%d Badges Earned"
+msgstr[0] ""
+msgstr[1] ""
+
+#: blocks/year-recap/render.php:199
+msgid "%s — %d in Community"
+msgstr ""
+
+#: blocks/year-recap/render.php:205
+msgid "Link copied!"
+msgstr ""
+
+#: blocks/year-recap/render.php:210
+msgid "Share Your Year"
+msgstr ""
+
+#: src/API/ActionsController.php:107
+msgid "Action not found."
+msgstr ""
+
+#: src/API/ApiKeyAuth.php:116
+msgid "Invalid or inactive API key."
+msgstr ""
+
+#: src/API/BadgeShareController.php:175 src/API/CredentialController.php:183
+#: src/API/MembersController.php:234 src/API/MembersController.php:283
+#: src/API/MembersController.php:331 src/API/MembersController.php:399
+#: src/API/MembersController.php:441 src/API/MembersController.php:491
+#: src/API/MembersController.php:550 src/API/PointsController.php:173
+#: src/API/RecapController.php:155 src/API/RecapController.php:186
+msgid "Member not found."
+msgstr ""
+
+#: src/API/BadgeShareController.php:184 src/API/BadgesController.php:199
+#: src/API/BadgesController.php:230 src/API/CredentialController.php:168
+msgid "Badge not found."
+msgstr ""
+
+#: src/API/BadgeShareController.php:204 src/API/CredentialController.php:192
+msgid "This member has not earned this badge."
+msgstr ""
+
+#: src/API/BadgeShareController.php:223
+#. translators: 1: badge name, 2: site name
+msgid "I earned the %1$s badge on %2$s"
+msgstr ""
+
+#: src/API/BadgeShareController.php:262
+#. translators: 1: member name, 2: badge name, 3: site name
+msgid "%1$s earned the %2$s badge on %3$s"
+msgstr ""
+
+#: src/API/BadgesController.php:143
+msgid "Only administrators can award badges manually."
+msgstr ""
+
+#: src/API/BadgesController.php:238
+msgid "User not found."
+msgstr ""
+
+#: src/API/BadgesController.php:252
+#. translators: %s: badge name
+msgid "Badge \"%s\" awarded successfully."
+msgstr ""
+
+#: src/API/BadgesController.php:254
+#. translators: %s: badge name
+msgid "User already holds badge \"%s\"."
+msgstr ""
+
+#: src/API/ChallengesController.php:140
+msgid "Challenge not found or not active."
+msgstr ""
+
+#: src/API/CredentialController.php:175
+msgid "This badge is not a shareable credential."
+msgstr ""
+
+#: src/API/CredentialController.php:201
+msgid "This credential has expired. Renew to restore verification."
+msgstr ""
+
+#: src/API/EventsController.php:164
+msgid "Could not determine target user."
+msgstr ""
+
+#: src/API/EventsController.php:176
+#. translators: %s = action_id
+msgid "Unknown action: %s"
+msgstr ""
+
+#: src/API/EventsController.php:187
+msgid "You may only fire events for yourself."
+msgstr ""
+
+#: src/API/EventsController.php:226
+msgid "You must be logged in to fire gamification events."
+msgstr ""
+
+#: src/API/KudosController.php:125
+msgid "You must be logged in to give kudos."
+msgstr ""
+
+#: src/API/KudosController.php:142
+msgid "You must be logged in."
+msgstr ""
+
+#: src/API/KudosController.php:178
+msgid "Recipient not found."
+msgstr ""
+
+#: src/API/LeaderboardController.php:131
+msgid "You must be logged in to view your rank."
+msgstr ""
+
+#: src/API/LeaderboardController.php:211
+msgid "Group not found."
+msgstr ""
+
+#: src/API/MembersController.php:263
+msgid "You must be logged in to view toasts."
+msgstr ""
+
+#: src/API/MembersController.php:597
+#. translators: %d: number of points
+msgid "+%d points"
+msgstr ""
+
+#: src/API/MembersController.php:614
+#. translators: %s: new level name
+msgid "Level up: %s"
+msgstr ""
+
+#: src/API/MembersController.php:622
+#. translators: %d: streak day count
+msgid "%d-day streak!"
+msgstr ""
+
+#: src/API/PointsController.php:226
+msgid "Points row not found."
+msgstr ""
+
+#: src/API/PointsController.php:236
+msgid "Could not revoke points."
+msgstr ""
+
+#: src/API/PointsController.php:279
+msgid "You do not have permission to manage points."
+msgstr ""
+
+#: src/API/RecapController.php:192
+msgid "You must be logged in to view recap data."
+msgstr ""
+
+#: src/API/RecapController.php:209
+msgid "You may only view your own recap."
+msgstr ""
+
+#: src/API/RedemptionController.php:181 src/API/RedemptionController.php:226
+#: src/API/RedemptionController.php:263
+msgid "Reward item not found."
+msgstr ""
+
+#: src/API/RedemptionController.php:208
+msgid "Could not create reward item."
+msgstr ""
+
+#: src/API/RedemptionController.php:374 src/API/RulesController.php:450
+#: src/API/WebhooksController.php:341
+msgid "Admin only."
+msgstr ""
+
+#: src/API/RedemptionController.php:385
+msgid "Login required."
+msgstr ""
+
+#: src/API/RulesController.php:205 src/API/RulesController.php:259
+#: src/API/RulesController.php:310
+msgid "Rule not found."
+msgstr ""
+
+#: src/API/RulesController.php:239
+msgid "Could not create rule."
+msgstr ""
+
+#: src/API/RulesController.php:376
+#. translators: %s = invalid condition_type value
+msgid ""
+"Invalid condition_type: %s. Must be one of: point_milestone, action_count, "
+"admin_awarded."
+msgstr ""
+
+#: src/API/RulesController.php:386
+msgid "point_milestone condition requires a \"points\" value."
+msgstr ""
+
+#: src/API/RulesController.php:394
+msgid "action_count condition requires \"action_id\" and \"count\" values."
+msgstr ""
+
+#: src/API/WebhooksController.php:162 src/API/WebhooksController.php:212
+#: src/API/WebhooksController.php:247
+msgid "Webhook not found."
+msgstr ""
+
+#: src/API/WebhooksController.php:189
+msgid "Could not create webhook."
+msgstr ""
+
+#: src/Admin/AnalyticsDashboard.php:54 src/Admin/AnalyticsDashboard.php:55
+msgid "Analytics"
+msgstr ""
+
+#: src/Admin/AnalyticsDashboard.php:97
+msgid "Gamification Analytics"
+msgstr ""
+
+#: src/Admin/AnalyticsDashboard.php:103
+msgid "7 days"
+msgstr ""
+
+#: src/Admin/AnalyticsDashboard.php:104
+msgid "30 days"
+msgstr ""
+
+#: src/Admin/AnalyticsDashboard.php:105
+msgid "90 days"
+msgstr ""
+
+#: src/Admin/AnalyticsDashboard.php:119 src/Admin/SettingsPage.php:491
+msgid "Points Awarded"
+msgstr ""
+
+#: src/Admin/AnalyticsDashboard.php:123 src/Admin/AnalyticsDashboard.php:173
+#. translators: %d = number of days
+msgid "Last %d days"
+msgstr ""
+
+#: src/Admin/AnalyticsDashboard.php:129 src/Admin/SettingsPage.php:497
+msgid "Active Members"
+msgstr ""
+
+#: src/Admin/AnalyticsDashboard.php:133 src/Admin/SettingsPage.php:501
+#. translators: %d = total member count
+msgid "%d total members"
+msgstr ""
+
+#: src/Admin/AnalyticsDashboard.php:139 src/Admin/SettingsPage.php:507
+msgid "Badges Earned"
+msgstr ""
+
+#: src/Admin/AnalyticsDashboard.php:143 src/Admin/SettingsPage.php:511
+#. translators: %s = % of members who have earned any badge
+#. translators: %s = badge earner percentage
+msgid "%s%% of active members"
+msgstr ""
+
+#: src/Admin/AnalyticsDashboard.php:149 src/Admin/SettingsPage.php:517
+msgid "Challenges Completed"
+msgstr ""
+
+#: src/Admin/AnalyticsDashboard.php:153 src/Admin/SettingsPage.php:521
+#. translators: %s = % completion rate
+#. translators: %s = completion rate percentage
+msgid "%s%% completion rate"
+msgstr ""
+
+#: src/Admin/AnalyticsDashboard.php:159 src/Admin/SettingsPage.php:527
+msgid "Active Streaks"
+msgstr ""
+
+#: src/Admin/AnalyticsDashboard.php:163 src/Admin/SettingsPage.php:531
+#. translators: %s = % of members with active streak
+#. translators: %s = streak health percentage
+msgid "%s%% streak health"
+msgstr ""
+
+#: src/Admin/AnalyticsDashboard.php:169 src/Admin/SettingsPage.php:537
+msgid "Kudos Given"
+msgstr ""
+
+#: src/Admin/AnalyticsDashboard.php:185
+msgid "Top Actions by Points"
+msgstr ""
+
+#: src/Admin/AnalyticsDashboard.php:187 src/Admin/AnalyticsDashboard.php:228
+#: src/Admin/AnalyticsDashboard.php:488
+msgid "No data yet."
+msgstr ""
+
+#: src/Admin/AnalyticsDashboard.php:192 src/Admin/BadgeAdminPage.php:315
+#: src/Admin/ChallengeManagerPage.php:130
+#: src/Admin/ChallengeManagerPage.php:199 src/Admin/SettingsPage.php:399
+#: src/Admin/SettingsPage.php:697 src/Engine/Privacy.php:130
+msgid "Action"
+msgstr ""
+
+#: src/Admin/AnalyticsDashboard.php:193
+msgid "Events"
+msgstr ""
+
+#: src/Admin/AnalyticsDashboard.php:194
+msgid "Total pts"
+msgstr ""
+
+#: src/Admin/AnalyticsDashboard.php:221
+#. translators: %d = number of days
+msgid "Top Earners — Last %d Days"
+msgstr ""
+
+#: src/Admin/AnalyticsDashboard.php:233
+msgid "Member"
+msgstr ""
+
+#: src/Admin/AnalyticsDashboard.php:262
+msgid "Daily Points Trend"
+msgstr ""
+
+#: src/Admin/ApiKeysPage.php:45 src/Admin/ApiKeysPage.php:46
+#: src/Admin/ApiKeysPage.php:66
+msgid "API Keys"
+msgstr ""
+
+#: src/Admin/ApiKeysPage.php:67
+msgid ""
+"Generate API keys for remote sites to connect to this gamification center. "
+"Keys authenticate via the X-WB-Gam-Key header."
+msgstr ""
+
+#: src/Admin/ApiKeysPage.php:71
+msgid "New API key generated. Copy it now — it will not be shown again:"
+msgstr ""
+
+#: src/Admin/ApiKeysPage.php:76
+msgid "Generate New Key"
+msgstr ""
+
+#: src/Admin/ApiKeysPage.php:82 src/Admin/ApiKeysPage.php:103
+msgid "Label"
+msgstr ""
+
+#: src/Admin/ApiKeysPage.php:86 src/Admin/ApiKeysPage.php:104
+msgid "Site ID"
+msgstr ""
+
+#: src/Admin/ApiKeysPage.php:89
+msgid "Unique identifier for the remote site. Used for per-site reporting."
+msgstr ""
+
+#: src/Admin/ApiKeysPage.php:93
+msgid "Generate Key"
+msgstr ""
+
+#: src/Admin/ApiKeysPage.php:96
+msgid "Active Keys"
+msgstr ""
+
+#: src/Admin/ApiKeysPage.php:98
+msgid "No API keys generated yet."
+msgstr ""
+
+#: src/Admin/ApiKeysPage.php:105
+msgid "Key (prefix)"
+msgstr ""
+
+#: src/Admin/ApiKeysPage.php:106
+msgid "Created"
+msgstr ""
+
+#: src/Admin/ApiKeysPage.php:107
+msgid "Last Used"
+msgstr ""
+
+#: src/Admin/ApiKeysPage.php:108 src/Admin/ChallengeManagerPage.php:202
+#: vendor/woocommerce/action-scheduler/classes/ActionScheduler_AdminView.php:301
+#: vendor/woocommerce/action-scheduler/classes/ActionScheduler_ListTable.php:97
+msgid "Status"
+msgstr ""
+
+#: src/Admin/ApiKeysPage.php:122
+msgid "Active"
+msgstr ""
+
+#: src/Admin/ApiKeysPage.php:124
+msgid "Revoked"
+msgstr ""
+
+#: src/Admin/ApiKeysPage.php:133
+msgid "Revoke"
+msgstr ""
+
+#: src/Admin/ApiKeysPage.php:140 src/Admin/ChallengeManagerPage.php:240
+#: src/Admin/SettingsPage.php:618 src/Admin/SettingsPage.php:730
+#: vendor/woocommerce/action-scheduler/classes/ActionScheduler_ListTable.php:92
+msgid "Delete"
+msgstr ""
+
+#: src/Admin/BadgeAdminPage.php:58
+msgid "Choose Badge Icon"
+msgstr ""
+
+#: src/Admin/BadgeAdminPage.php:59
+msgid "Use as Icon"
+msgstr ""
+
+#: src/Admin/BadgeAdminPage.php:72 src/Admin/BadgeAdminPage.php:153
+msgid "Badge Library"
+msgstr ""
+
+#: src/Admin/BadgeAdminPage.php:96
+msgid "Badge saved."
+msgstr ""
+
+#: src/Admin/BadgeAdminPage.php:97
+msgid "Badge deleted."
+msgstr ""
+
+#: src/Admin/BadgeAdminPage.php:98 src/Admin/ChallengeManagerPage.php:93
+msgid "Something went wrong. Please try again."
+msgstr ""
+
+#: src/Admin/BadgeAdminPage.php:154
+msgid ""
+"Create and manage badges to reward your community members for milestones "
+"and achievements."
+msgstr ""
+
+#: src/Admin/BadgeAdminPage.php:167 src/Admin/BadgeAdminPage.php:183
+msgid "Create New Badge"
+msgstr ""
+
+#: src/Admin/BadgeAdminPage.php:171
+msgid "Back to Badges"
+msgstr ""
+
+#: src/Admin/BadgeAdminPage.php:183
+msgid "Edit Badge"
+msgstr ""
+
+#: src/Admin/BadgeAdminPage.php:195 src/Admin/BadgeAdminPage.php:204
+msgid "Badge ID"
+msgstr ""
+
+#: src/Admin/BadgeAdminPage.php:199
+msgid "Lowercase letters, numbers, underscores only."
+msgstr ""
+
+#: src/Admin/BadgeAdminPage.php:207
+msgid "ID cannot be changed after creation."
+msgstr ""
+
+#: src/Admin/BadgeAdminPage.php:212
+msgid "Name"
+msgstr ""
+
+#: src/Admin/BadgeAdminPage.php:216 src/Engine/Privacy.php:168
+msgid "Description"
+msgstr ""
+
+#: src/Admin/BadgeAdminPage.php:220
+msgid "Icon"
+msgstr ""
+
+#: src/Admin/BadgeAdminPage.php:231
+msgid "Choose Icon"
+msgstr ""
+
+#: src/Admin/BadgeAdminPage.php:235 src/Admin/BadgeAdminPage.php:239
+msgid "Remove"
+msgstr ""
+
+#: src/Admin/BadgeAdminPage.php:245
+msgid "Category"
+msgstr ""
+
+#: src/Admin/BadgeAdminPage.php:257
+msgid "Is Credential"
+msgstr ""
+
+#: src/Admin/BadgeAdminPage.php:261
+msgid "Mark as shareable credential (LinkedIn, OpenBadges)"
+msgstr ""
+
+#: src/Admin/BadgeAdminPage.php:266
+msgid "Closes at"
+msgstr ""
+
+#: src/Admin/BadgeAdminPage.php:277
+msgid "Stop awarding this badge after this date. Leave blank for no cutoff."
+msgstr ""
+
+#: src/Admin/BadgeAdminPage.php:281
+#. translators: %s: WordPress site timezone label
+msgid "(Site timezone: %s)"
+msgstr ""
+
+#: src/Admin/BadgeAdminPage.php:289
+msgid "Max earners"
+msgstr ""
+
+#: src/Admin/BadgeAdminPage.php:293
+msgid "Stop awarding after this many members earn it. Leave blank for unlimited."
+msgstr ""
+
+#: src/Admin/BadgeAdminPage.php:298
+msgid "Auto-Award Condition"
+msgstr ""
+
+#: src/Admin/BadgeAdminPage.php:301
+msgid "When user..."
+msgstr ""
+
+#: src/Admin/BadgeAdminPage.php:304
+msgid "Admin awarded only (manual)"
+msgstr ""
+
+#: src/Admin/BadgeAdminPage.php:305
+msgid "Reaches a point milestone"
+msgstr ""
+
+#: src/Admin/BadgeAdminPage.php:306
+msgid "Performs an action N times"
+msgstr ""
+
+#: src/Admin/BadgeAdminPage.php:311
+msgid "Points Threshold"
+msgstr ""
+
+#: src/Admin/BadgeAdminPage.php:324 src/Admin/ChallengeManagerPage.php:139
+msgid "No actions registered"
+msgstr ""
+
+#: src/Admin/BadgeAdminPage.php:330 src/Admin/ChallengeManagerPage.php:145
+msgid "Target Count"
+msgstr ""
+
+#: src/Admin/BadgeAdminPage.php:337
+msgid "Create Badge"
+msgstr ""
+
+#: src/Admin/BadgeAdminPage.php:337 src/Admin/SettingsPage.php:472
+msgid "Save Changes"
+msgstr ""
+
+#: src/Admin/BadgeAdminPage.php:341
+msgid "Delete this badge and all earned records?"
+msgstr ""
+
+#: src/Admin/BadgeAdminPage.php:343
+msgid "Delete Badge"
+msgstr ""
+
+#: src/Admin/BadgeAdminPage.php:376
+#. translators: %s: number of members who earned this badge
+msgid "%s earned"
+msgstr ""
+
+#: src/Admin/BadgeAdminPage.php:382
+msgid "Auto-award"
+msgstr ""
+
+#: src/Admin/BadgeAdminPage.php:382
+msgid "Manual"
+msgstr ""
+
+#: src/Admin/BadgeAdminPage.php:390
+msgid "No badges yet"
+msgstr ""
+
+#: src/Admin/BadgeAdminPage.php:391
+msgid ""
+"Badges reward members for milestones, actions, and achievements. Create "
+"your first badge to get started."
+msgstr ""
+
+#: src/Admin/BadgeAdminPage.php:394
+msgid "Create your first badge"
+msgstr ""
+
+#: src/Admin/BadgeAdminPage.php:412 src/Admin/BadgeAdminPage.php:501
+#: src/Admin/ChallengeManagerPage.php:269
+#: src/Admin/ChallengeManagerPage.php:312
+msgid "Permission denied."
+msgstr ""
+
+#: src/Admin/ChallengeManagerPage.php:91
+msgid "Challenge saved."
+msgstr ""
+
+#: src/Admin/ChallengeManagerPage.php:92
+msgid "Challenge deleted."
+msgstr ""
+
+#: src/Admin/ChallengeManagerPage.php:98
+msgid "Challenge Manager"
+msgstr ""
+
+#: src/Admin/ChallengeManagerPage.php:99
+msgid ""
+"Create challenges to engage your community. Set an action, target, and "
+"bonus points."
+msgstr ""
+
+#: src/Admin/ChallengeManagerPage.php:111
+msgid "Edit Challenge"
+msgstr ""
+
+#: src/Admin/ChallengeManagerPage.php:111
+#: src/Admin/ChallengeManagerPage.php:176
+msgid "Create Challenge"
+msgstr ""
+
+#: src/Admin/ChallengeManagerPage.php:122
+#: src/Admin/ChallengeManagerPage.php:198
+msgid "Title"
+msgstr ""
+
+#: src/Admin/ChallengeManagerPage.php:126
+msgid "e.g. Post 10 photos this week"
+msgstr ""
+
+#: src/Admin/ChallengeManagerPage.php:152
+msgid "Bonus Points"
+msgstr ""
+
+#: src/Admin/ChallengeManagerPage.php:159
+msgid "Start Date"
+msgstr ""
+
+#: src/Admin/ChallengeManagerPage.php:166
+msgid "End Date"
+msgstr ""
+
+#: src/Admin/ChallengeManagerPage.php:176
+msgid "Update Challenge"
+msgstr ""
+
+#: src/Admin/ChallengeManagerPage.php:180
+#: vendor/woocommerce/action-scheduler/classes/ActionScheduler_ListTable.php:133
+msgid "Cancel"
+msgstr ""
+
+#: src/Admin/ChallengeManagerPage.php:192
+msgid "All Challenges"
+msgstr ""
+
+#: src/Admin/ChallengeManagerPage.php:200
+msgid "Target"
+msgstr ""
+
+#: src/Admin/ChallengeManagerPage.php:201
+msgid "Bonus"
+msgstr ""
+
+#: src/Admin/ChallengeManagerPage.php:203
+msgid "Dates"
+msgstr ""
+
+#: src/Admin/ChallengeManagerPage.php:235
+#: vendor/woocommerce/action-scheduler/classes/data-stores/ActionScheduler_wpPostStore_PostTypeRegistrar.php:39
+msgid "Edit"
+msgstr ""
+
+#: src/Admin/ChallengeManagerPage.php:238
+msgid "Delete this challenge?"
+msgstr ""
+
+#: src/Admin/ChallengeManagerPage.php:252
+msgid "No challenges yet"
+msgstr ""
+
+#: src/Admin/ChallengeManagerPage.php:253
+msgid "Create your first challenge above to engage your community."
+msgstr ""
+
+#: src/Admin/ManualAwardPage.php:51 src/Admin/ManualAwardPage.php:52
+#: src/Admin/ManualAwardPage.php:91 src/Admin/ManualAwardPage.php:159
+#: src/Admin/SettingsPage.php:552
+msgid "Award Points"
+msgstr ""
+
+#: src/Admin/ManualAwardPage.php:68 src/Admin/SettingsPage.php:307
+#: src/Admin/SetupWizard.php:173
+msgid "You do not have permission to access this page."
+msgstr ""
+
+#: src/Admin/ManualAwardPage.php:77
+msgid "Points awarded successfully."
+msgstr ""
+
+#: src/Admin/ManualAwardPage.php:81
+msgid "Award failed — check user and points value."
+msgstr ""
+
+#: src/Admin/ManualAwardPage.php:102 src/Admin/ManualAwardPage.php:167
+msgid "User"
+msgstr ""
+
+#: src/Admin/ManualAwardPage.php:110
+msgid "— Select a user —"
+msgstr ""
+
+#: src/Admin/ManualAwardPage.php:135
+#. translators: %d = max points per action
+msgid "Positive to award, negative to deduct. Max ±%d per action."
+msgstr ""
+
+#: src/Admin/ManualAwardPage.php:144
+msgid "Reason / Note"
+msgstr ""
+
+#: src/Admin/ManualAwardPage.php:152
+msgid "Optional reason for this award"
+msgstr ""
+
+#: src/Admin/ManualAwardPage.php:163
+msgid "Recent Manual Awards"
+msgstr ""
+
+#: src/Admin/ManualAwardPage.php:169
+msgid "Note"
+msgstr ""
+
+#: src/Admin/ManualAwardPage.php:170 src/Engine/Privacy.php:138
+msgid "Date"
+msgstr ""
+
+#: src/Admin/ManualAwardPage.php:204
+msgid "Insufficient permissions."
+msgstr ""
+
+#. Plugin Name of the plugin/theme
+msgid "WB Gamification"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:49 src/BuddyPress/ActivityIntegration.php:95
+#: src/BuddyPress/ActivityIntegration.php:104
+#: src/BuddyPress/ActivityIntegration.php:113
+#: src/BuddyPress/ActivityIntegration.php:122
+msgid "Gamification"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:147 src/Admin/SettingsPage.php:324
+msgid "Settings saved."
+msgstr ""
+
+#: src/Admin/SettingsPage.php:212 src/Admin/SettingsPage.php:282
+msgid "Unauthorized."
+msgstr ""
+
+#: src/Admin/SettingsPage.php:328
+msgid "Setup complete! Review your point values below."
+msgstr ""
+
+#: src/Admin/SettingsPage.php:334
+msgid "Dashboard"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:336
+msgid "Levels"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:337
+msgid "Automation"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:376
+msgid "WordPress"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:377
+msgid "BuddyPress"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:378
+msgid "Commerce"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:379
+msgid "Learning"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:380
+msgid "Social"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:381
+msgid "General"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:388
+msgid ""
+"No gamification actions are registered yet. Triggers load automatically "
+"once BuddyPress or other integrations are active."
+msgstr ""
+
+#: src/Admin/SettingsPage.php:398
+msgid "On"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:401
+msgid "Repeat"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:402
+msgid "Daily cap"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:439 src/Engine/Privacy.php:227
+#: src/Engine/Privacy.php:231
+msgid "Yes"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:439
+msgid "Once"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:450
+msgid "Log Retention"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:453
+msgid "Keep points history for"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:464
+msgid "months"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:466
+msgid ""
+"Older rows are pruned daily by WP-Cron. Events table is never pruned "
+"(source of truth)."
+msgstr ""
+
+#: src/Admin/SettingsPage.php:493 src/Admin/SettingsPage.php:539
+msgid "Last 30 days"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:548
+msgid "Full Analytics"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:556
+msgid "Configure Points"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:577
+msgid ""
+"Edit level names and minimum point thresholds. Members move up "
+"automatically when they cross a threshold."
+msgstr ""
+
+#: src/Admin/SettingsPage.php:587 src/Admin/SettingsPage.php:640
+msgid "Level Name"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:588 src/Admin/SettingsPage.php:644
+msgid "Min Points Required"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:610
+msgid "Starting level is always 0"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:617
+msgid "Delete this level?"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:621
+msgid "Starting level"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:629
+msgid "Save Levels"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:632
+msgid "Add New Level"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:641
+msgid "e.g. Gold"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:646
+msgid "Members reach this level when their cumulative points cross this threshold."
+msgstr ""
+
+#: src/Admin/SettingsPage.php:650
+msgid "Add Level"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:680
+msgid "Add to BuddyPress group"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:681
+msgid "Send BuddyPress message"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:682
+msgid "Add WordPress role"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:687
+msgid "Rank Automation Rules"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:689
+msgid ""
+"Automatically trigger actions when a member reaches a level. One action per "
+"rule — add multiple rules for the same level to stack actions."
+msgstr ""
+
+#: src/Admin/SettingsPage.php:696
+msgid "When member reaches"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:698
+msgid "Parameters"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:729
+msgid "Delete this rule?"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:740
+msgid "No automation rules configured yet."
+msgstr ""
+
+#: src/Admin/SettingsPage.php:743
+msgid "Add New Rule"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:750
+msgid "When member reaches level"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:753
+msgid "— select level —"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:761
+msgid "Perform action"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:772
+msgid "BuddyPress Group ID"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:775
+msgid "The numeric ID of the BP group to add the member to."
+msgstr ""
+
+#: src/Admin/SettingsPage.php:779
+msgid "Role slug"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:782
+msgid "WordPress role slug to add, e.g. \"contributor\" or \"editor\"."
+msgstr ""
+
+#: src/Admin/SettingsPage.php:786
+msgid "Message sender user ID"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:789
+msgid "User ID of the sender (usually the site admin, ID 1)."
+msgstr ""
+
+#: src/Admin/SettingsPage.php:792
+msgid "Message subject"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:796
+msgid "Message content"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:801
+msgid "Add Rule"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:829
+msgid "Community Mode"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:830
+msgid ""
+"BuddyPress is active — social points, badge notifications, and activity "
+"triggers are enabled."
+msgstr ""
+
+#: src/Admin/SettingsPage.php:832
+msgid "Standalone Mode"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:833
+msgid ""
+"Running without BuddyPress — points and badges work normally; social "
+"features require BuddyPress to be installed and active."
+msgstr ""
+
+#: src/Admin/SetupWizard.php:42
+msgid "Gamification Setup"
+msgstr ""
+
+#: src/Admin/SetupWizard.php:74
+msgid "Unauthorized"
+msgstr ""
+
+#: src/Admin/SetupWizard.php:110
+msgid "Blog / Publisher"
+msgstr ""
+
+#: src/Admin/SetupWizard.php:111
+msgid "Rewards writing and meaningful comments. For standalone WordPress blogs."
+msgstr ""
+
+#: src/Admin/SetupWizard.php:121
+msgid "Community Engagement"
+msgstr ""
+
+#: src/Admin/SetupWizard.php:122
+msgid ""
+"Balanced — rewards posting, reactions, and social connection. Requires "
+"BuddyPress."
+msgstr ""
+
+#: src/Admin/SetupWizard.php:135
+msgid "Online Course"
+msgstr ""
+
+#: src/Admin/SetupWizard.php:136
+msgid "Course completion heavy — progress and credential badges."
+msgstr ""
+
+#: src/Admin/SetupWizard.php:146
+msgid "Coaching Platform"
+msgstr ""
+
+#: src/Admin/SetupWizard.php:147
+msgid ""
+"Private leaderboard by default — progress vs personal baseline, not peer "
+"comparison."
+msgstr ""
+
+#: src/Admin/SetupWizard.php:156
+msgid "Nonprofit / Mission"
+msgstr ""
+
+#: src/Admin/SetupWizard.php:157
+msgid ""
+"Mission-aligned language. Team leaderboards only — impact over individual "
+"competition."
+msgstr ""
+
+#: src/Admin/SetupWizard.php:182
+msgid "Welcome to WB Gamification"
+msgstr ""
+
+#: src/Admin/SetupWizard.php:185
+msgid ""
+"Choose a starter template to pre-configure your point values. You can "
+"change everything later from the settings screen."
+msgstr ""
+
+#: src/Admin/SetupWizard.php:220
+#. translators: 1: point value, 2: action name
+msgid "Use this template"
+msgstr ""
+
+#: src/Admin/SetupWizard.php:234
+msgid "Skip &amp; configure manually"
+msgstr ""
+
+#: src/BuddyPress/ActivityIntegration.php:93
+msgid "Earned a badge"
+msgstr ""
+
+#: src/BuddyPress/ActivityIntegration.php:102
+msgid "Reached a new level"
+msgstr ""
+
+#: src/BuddyPress/ActivityIntegration.php:111
+msgid "Gave kudos"
+msgstr ""
+
+#: src/BuddyPress/ActivityIntegration.php:120
+msgid "Completed a challenge"
+msgstr ""
+
+#: src/BuddyPress/ActivityIntegration.php:152
+#. translators: 1: user display name link, 2: badge name
+msgid "%1$s earned the <strong>%2$s</strong> badge"
+msgstr ""
+
+#: src/BuddyPress/ActivityIntegration.php:176
+msgid "a new level"
+msgstr ""
+
+#: src/BuddyPress/ActivityIntegration.php:186
+#. translators: 1: user display name link, 2: level name
+msgid "%1$s reached the <strong>%2$s</strong> level"
+msgstr ""
+
+#: src/BuddyPress/ActivityIntegration.php:215
+#. translators: 1: giver display name link, 2: receiver display name link
+msgid "%1$s gave kudos to %2$s"
+msgstr ""
+
+#: src/BuddyPress/ActivityIntegration.php:257
+#. translators: 1: user display name link, 2: challenge title
+msgid "%1$s completed the <strong>%2$s</strong> challenge"
+msgstr ""
+
+#: src/BuddyPress/HooksIntegration.php:42
+msgid "Post an activity update"
+msgstr ""
+
+#: src/BuddyPress/HooksIntegration.php:53
+msgid "Comment on an activity"
+msgstr ""
+
+#: src/BuddyPress/HooksIntegration.php:64
+msgid "Accept a friendship"
+msgstr ""
+
+#: src/BuddyPress/HooksIntegration.php:75
+msgid "Join a group"
+msgstr ""
+
+#: src/BuddyPress/HooksIntegration.php:86
+msgid "Create a group"
+msgstr ""
+
+#: src/BuddyPress/HooksIntegration.php:97
+msgid "Update extended profile"
+msgstr ""
+
+#: src/BuddyPress/HooksIntegration.php:108
+msgid "Upload media"
+msgstr ""
+
+#: src/BuddyPress/HooksIntegration.php:119
+msgid "Reply in a forum"
+msgstr ""
+
+#: src/BuddyPress/HooksIntegration.php:130
+msgid "Receive a reaction on content"
+msgstr ""
+
+#: src/BuddyPress/HooksIntegration.php:141
+msgid "Create a poll"
+msgstr ""
+
+#: src/BuddyPress/HooksIntegration.php:152
+msgid "Publish a member blog post"
+msgstr ""
+
+#: src/BuddyPress/ProfileIntegration.php:58
+msgid "Newcomer"
+msgstr ""
+
+#: src/Engine/BadgeSharePage.php:128 src/Engine/BadgeSharePage.php:142
+#. translators: 1: badge name, 2: display name
+msgid "%1$s — earned by %2$s"
+msgstr ""
+
+#: src/Engine/BadgeSharePage.php:202
+#. translators: 1: display name, 2: date
+msgid "Earned by %1$s%2$s"
+msgstr ""
+
+#: src/Engine/BadgeSharePage.php:204
+msgid "on"
+msgstr ""
+
+#: src/Engine/BadgeSharePage.php:215
+msgid "Add to LinkedIn"
+msgstr ""
+
+#: src/Engine/BadgeSharePage.php:225
+msgid "View verifiable credential (JSON-LD)"
+msgstr ""
+
+#: src/Engine/KudosEngine.php:55
+msgid "You cannot give kudos to yourself."
+msgstr ""
+
+#: src/Engine/KudosEngine.php:62
+msgid "Invalid user."
+msgstr ""
+
+#: src/Engine/KudosEngine.php:72
+#. translators: %d: daily kudos limit
+msgid "You have reached your daily kudos limit (%d)."
+msgstr ""
+
+#: src/Engine/KudosEngine.php:94
+msgid "Could not record kudos. Please try again."
+msgstr ""
+
+#: src/Engine/LeaderboardEngine.php:70
+msgid "Every 5 Minutes"
+msgstr ""
+
+#: src/Engine/LeaderboardNudge.php:201
+#. translators: %d: points earned this week
+msgid "You're #1 on the leaderboard this week with %d points. Keep it up!"
+msgstr ""
+
+#: src/Engine/LeaderboardNudge.php:209
+#. translators: 1: rank, 2: points this week, 3: points needed for next rank
+msgid "You're #%1$d this week with %2$d points. Just %3$d more points to move up!"
+msgstr ""
+
+#: src/Engine/LeaderboardNudge.php:218
+#. translators: 1: rank, 2: points this week
+msgid "You're #%1$d this week with %2$d points."
+msgstr ""
+
+#: src/Engine/LeaderboardNudge.php:238
+#. translators: %s: site name
+msgid "Your weekly community ranking at %s"
+msgstr ""
+
+#: src/Engine/NotificationBridge.php:91
+#. translators: %s = badge name
+msgid "Badge earned: %s"
+msgstr ""
+
+#: src/Engine/NotificationBridge.php:147
+#. translators: %s = challenge title
+msgid "Challenge complete: %s"
+msgstr ""
+
+#: src/Engine/NotificationBridge.php:169
+msgid "Someone gave you kudos!"
+msgstr ""
+
+#: src/Engine/NotificationBridge.php:204
+msgid "Notifications"
+msgstr ""
+
+#: src/Engine/NotificationBridge.php:226
+msgid "Dismiss"
+msgstr ""
+
+#: src/Engine/NotificationBridge.php:239 src/Engine/NotificationBridge.php:242
+msgid "Level up!"
+msgstr ""
+
+#: src/Engine/NotificationBridge.php:253
+msgid "Awesome!"
+msgstr ""
+
+#: src/Engine/NotificationBridge.php:263 src/Engine/NotificationBridge.php:266
+msgid "Streak milestone!"
+msgstr ""
+
+#: src/Engine/NotificationBridge.php:269
+msgid "days"
+msgstr ""
+
+#: src/Engine/NotificationBridge.php:271
+msgid "Keep showing up — you're on fire!"
+msgstr ""
+
+#: src/Engine/NotificationBridge.php:275
+msgid "Keep it up!"
+msgstr ""
+
+#: src/Engine/NotificationBridge.php:328
+msgid "for joining"
+msgstr ""
+
+#: src/Engine/NotificationBridge.php:329
+msgid "for publishing"
+msgstr ""
+
+#: src/Engine/NotificationBridge.php:330 src/Engine/NotificationBridge.php:333
+msgid "for commenting"
+msgstr ""
+
+#: src/Engine/NotificationBridge.php:331
+msgid "for posting"
+msgstr ""
+
+#: src/Engine/NotificationBridge.php:332
+msgid "for liking"
+msgstr ""
+
+#: src/Engine/NotificationBridge.php:334
+msgid "for updating profile"
+msgstr ""
+
+#: src/Engine/NotificationBridge.php:335
+msgid "for giving kudos"
+msgstr ""
+
+#: src/Engine/NotificationBridge.php:336
+msgid "for receiving kudos"
+msgstr ""
+
+#: src/Engine/PersonalRecordEngine.php:193
+msgid "today"
+msgstr ""
+
+#: src/Engine/PersonalRecordEngine.php:194
+msgid "this week"
+msgstr ""
+
+#: src/Engine/PersonalRecordEngine.php:195
+msgid "this month"
+msgstr ""
+
+#: src/Engine/PersonalRecordEngine.php:203
+#. translators: 1: points, 2: period label e.g. "this week"
+msgid "Personal record! You earned %1$d points %2$s — your best ever!"
+msgstr ""
+
+#: src/Engine/PersonalRecordEngine.php:211
+#. translators: 1: points, 2: period label, 3: previous personal best
+msgid "New personal record! %1$d points %2$s — beating your previous best of %3$d!"
+msgstr ""
+
+#: src/Engine/Privacy.php:104
+msgid "Gamification Points"
+msgstr ""
+
+#: src/Engine/Privacy.php:108
+msgid "Total Points"
+msgstr ""
+
+#: src/Engine/Privacy.php:126
+msgid "Points History"
+msgstr ""
+
+#: src/Engine/Privacy.php:160
+msgid "Earned Badges"
+msgstr ""
+
+#: src/Engine/Privacy.php:164
+msgid "Badge"
+msgstr ""
+
+#: src/Engine/Privacy.php:172
+msgid "Earned At"
+msgstr ""
+
+#: src/Engine/Privacy.php:191
+msgid "Activity Streak"
+msgstr ""
+
+#: src/Engine/Privacy.php:195
+msgid "Current Streak"
+msgstr ""
+
+#: src/Engine/Privacy.php:199
+msgid "Longest Streak"
+msgstr ""
+
+#: src/Engine/Privacy.php:203
+msgid "Last Active"
+msgstr ""
+
+#: src/Engine/Privacy.php:222
+msgid "Gamification Preferences"
+msgstr ""
+
+#: src/Engine/Privacy.php:226
+msgid "Leaderboard Opt-Out"
+msgstr ""
+
+#: src/Engine/Privacy.php:227 src/Engine/Privacy.php:231
+msgid "No"
+msgstr ""
+
+#: src/Engine/Privacy.php:230
+msgid "Show Rank"
+msgstr ""
+
+#: src/Engine/Privacy.php:234
+msgid "Notification Mode"
+msgstr ""
+
+#: src/Engine/Privacy.php:323
+#. translators: %d = number of database rows removed
+msgid "Gamification data removed (%d rows)."
+msgstr ""
+
+#: src/Engine/RecapEngine.php:319
+msgid "Your journey starts here — see you next year!"
+msgstr ""
+
+#: src/Engine/RecapEngine.php:323
+msgid "Top 1% contributor. You defined this community this year."
+msgstr ""
+
+#: src/Engine/RecapEngine.php:329
+#. translators: %d = percentile rank
+msgid "Top %d%% contributor — an outstanding year."
+msgstr ""
+
+#: src/Engine/RecapEngine.php:337
+#. translators: %d = percentile rank
+msgid "You were in the top %d%% of contributors this year."
+msgstr ""
+
+#: src/Engine/RecapEngine.php:345
+#. translators: %d = badge count
+msgid "A badge collector — you earned %d badges this year."
+msgstr ""
+
+#: src/Engine/RecapEngine.php:353
+#. translators: %d = challenges
+msgid "Challenge champion — you completed %d challenges this year."
+msgstr ""
+
+#: src/Engine/RecapEngine.php:360
+#. translators: %d = points earned
+msgid "You earned %s points this year — keep the momentum going!"
+msgstr ""
+
+#: src/Engine/RedemptionEngine.php:94
+msgid "Reward item not found or inactive."
+msgstr ""
+
+#: src/Engine/RedemptionEngine.php:106 src/Engine/RedemptionEngine.php:163
+msgid "This reward is out of stock."
+msgstr ""
+
+#: src/Engine/RedemptionEngine.php:129
+#. translators: 1: cost, 2: current balance
+msgid "Insufficient points. This reward costs %1$d pts; you have %2$d."
+msgstr ""
+
+#: src/Engine/StatusRetentionEngine.php:170
+#. translators: 1: points needed, 2: next level name
+msgid "Earn %1$s more points this week to reach %2$s!"
+msgstr ""
+
+#: src/Engine/WeeklyEmailEngine.php:250
+#. translators: %s = site name
+msgid "Your week in %s"
+msgstr ""
+
+#: src/Engine/WeeklyEmailEngine.php:288
+#. translators: 1 = points earned, 2 = total points
+msgid "You earned <strong>%1$s points</strong> this week (total: %2$s pts)"
+msgstr ""
+
+#: src/Engine/WeeklyEmailEngine.php:294
+msgid "Personal best!"
+msgstr ""
+
+#: src/Engine/WeeklyEmailEngine.php:337
+#. translators: %s = member display name
+msgid "Hey %s, here's your weekly gamification summary:"
+msgstr ""
+
+#: src/Engine/WeeklyEmailEngine.php:346
+msgid "Points this week"
+msgstr ""
+
+#: src/Engine/WeeklyEmailEngine.php:352
+msgid "Activity streak"
+msgstr ""
+
+#: src/Engine/WeeklyEmailEngine.php:358
+#. translators: 1 = current streak, 2 = longest streak
+msgid "%1$d-day streak (best: %2$d days)"
+msgstr ""
+
+#: src/Engine/WeeklyEmailEngine.php:370
+msgid "Your leaderboard rank"
+msgstr ""
+
+#: src/Engine/WeeklyEmailEngine.php:376
+#. translators: %d = rank number
+msgid "#%d overall"
+msgstr ""
+
+#: src/Engine/WeeklyEmailEngine.php:388
+msgid "Badges earned this week"
+msgstr ""
+
+#: src/Engine/WeeklyEmailEngine.php:400
+msgid "Challenges completed"
+msgstr ""
+
+#: src/Engine/WeeklyEmailEngine.php:410
+msgid "Keep the momentum going →"
+msgstr ""
+
+#: src/Engine/WeeklyEmailEngine.php:417
+msgid "Unsubscribe from weekly emails"
+msgstr ""
+
+#: src/Integrations/WordPress/HooksIntegration.php:48
+msgid "Join the site"
+msgstr ""
+
+#: src/Integrations/WordPress/HooksIntegration.php:49
+msgid "Awarded once when a user registers."
+msgstr ""
+
+#: src/Integrations/WordPress/HooksIntegration.php:60
+msgid "First login"
+msgstr ""
+
+#: src/Integrations/WordPress/HooksIntegration.php:61
+msgid "Awarded once on the very first login."
+msgstr ""
+
+#: src/Integrations/WordPress/HooksIntegration.php:72
+msgid "Complete WordPress profile"
+msgstr ""
+
+#: src/Integrations/WordPress/HooksIntegration.php:73
+msgid "Awarded once when the user saves their WP profile with a bio."
+msgstr ""
+
+#: src/Integrations/WordPress/HooksIntegration.php:86
+msgid "Post receives a comment"
+msgstr ""
+
+#: src/Integrations/WordPress/HooksIntegration.php:87
+msgid "Post author earns points when an approved comment is left on their content."
+msgstr ""
+
+#: src/Integrations/WordPress/HooksIntegration.php:120
+msgid "Publish a blog post"
+msgstr ""
+
+#: src/Integrations/WordPress/HooksIntegration.php:121
+msgid "Awarded when the author publishes a new post."
+msgstr ""
+
+#: src/Integrations/WordPress/HooksIntegration.php:138
+msgid "Publish first post ever"
+msgstr ""
+
+#: src/Integrations/WordPress/HooksIntegration.php:139
+msgid "Awarded once on the author's very first published post."
+msgstr ""
+
+#: src/Integrations/WordPress/HooksIntegration.php:158
+msgid "Leave a comment"
+msgstr ""
+
+#: src/Integrations/WordPress/HooksIntegration.php:159
+msgid "Commenter earns points when their approved comment is posted."
+msgstr ""
+
+#: src/Integrations/WordPress/HooksIntegration.php:179
+msgid "Comment moves from pending to approved"
+msgstr ""
+
+#: src/Integrations/WordPress/HooksIntegration.php:180
+msgid "Awarded when a previously moderated comment gets approved."
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/ActionScheduler_ActionFactory.php:233
+msgid "Invalid action - must be a recurring action."
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/ActionScheduler_ActionFactory.php:326
+#. translators: %1$s is the name of the hook to be enqueued, %2$s is the
+#. exception message.
+msgid "Caught exception while enqueuing action \"%1$s\": %2$s"
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/ActionScheduler_AdminView.php:82
+#: vendor/woocommerce/action-scheduler/classes/ActionScheduler_AdminView.php:97
+#: vendor/woocommerce/action-scheduler/classes/ActionScheduler_AdminView.php:98
+#: vendor/woocommerce/action-scheduler/classes/ActionScheduler_ListTable.php:89
+#: vendor/woocommerce/action-scheduler/classes/data-stores/ActionScheduler_wpPostStore_PostTypeRegistrar.php:23
+#: vendor/woocommerce/action-scheduler/classes/data-stores/ActionScheduler_wpPostStore_PostTypeRegistrar.php:34
+msgid "Scheduled Actions"
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/ActionScheduler_AdminView.php:220
+#. translators: 1) is the number of affected actions, 2) is a link to an admin
+#. screen.
+msgid ""
+"<strong>Action Scheduler:</strong> %1$d <a href=\"%2$s\">past-due "
+"action</a> found; something may be wrong. <a "
+"href=\"https://actionscheduler.org/faq/#my-site-has-past-due-actions-what-"
+"can-i-do\" target=\"_blank\">Read documentation &raquo;</a>"
+msgid_plural ""
+"<strong>Action Scheduler:</strong> %1$d <a href=\"%2$s\">past-due "
+"actions</a> found; something may be wrong. <a "
+"href=\"https://actionscheduler.org/faq/#my-site-has-past-due-actions-what-"
+"can-i-do\" target=\"_blank\">Read documentation &raquo;</a>"
+msgstr[0] ""
+msgstr[1] ""
+
+#: vendor/woocommerce/action-scheduler/classes/ActionScheduler_AdminView.php:270
+msgid "About"
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/ActionScheduler_AdminView.php:273
+#. translators: %s is the Action Scheduler version.
+msgid "About Action Scheduler %s"
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/ActionScheduler_AdminView.php:275
+msgid ""
+"Action Scheduler is a scalable, traceable job queue for background "
+"processing large sets of actions. Action Scheduler works by triggering an "
+"action hook to run at some time in the future. Scheduled actions can also "
+"be scheduled to run on a recurring schedule."
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/ActionScheduler_AdminView.php:277
+msgid "Source"
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/ActionScheduler_AdminView.php:279
+msgid ""
+"Action Scheduler is currently being loaded from the following location. "
+"This can be useful when debugging, or if requested by the support team."
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/ActionScheduler_AdminView.php:282
+msgid "WP CLI"
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/ActionScheduler_AdminView.php:286
+#. translators: %1$s is WP CLI command (not translatable)
+msgid ""
+"WP CLI commands are available: execute %1$s for a list of available "
+"commands."
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/ActionScheduler_AdminView.php:296
+msgid "Columns"
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/ActionScheduler_AdminView.php:298
+msgid "Scheduled Action Columns"
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/ActionScheduler_AdminView.php:300
+#: vendor/woocommerce/action-scheduler/classes/ActionScheduler_ListTable.php:96
+msgid "Hook"
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/ActionScheduler_AdminView.php:300
+msgid "Name of the action hook that will be triggered."
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/ActionScheduler_AdminView.php:301
+msgid "Action statuses are Pending, Complete, Canceled, Failed"
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/ActionScheduler_AdminView.php:302
+#: vendor/woocommerce/action-scheduler/classes/ActionScheduler_ListTable.php:98
+msgid "Arguments"
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/ActionScheduler_AdminView.php:302
+msgid "Optional data array passed to the action hook."
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/ActionScheduler_AdminView.php:303
+#: vendor/woocommerce/action-scheduler/classes/ActionScheduler_ListTable.php:99
+msgid "Group"
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/ActionScheduler_AdminView.php:303
+msgid "Optional action group."
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/ActionScheduler_AdminView.php:304
+#: vendor/woocommerce/action-scheduler/classes/ActionScheduler_ListTable.php:100
+msgid "Recurrence"
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/ActionScheduler_AdminView.php:304
+msgid "The action's schedule frequency."
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/ActionScheduler_AdminView.php:305
+msgid "Scheduled"
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/ActionScheduler_AdminView.php:305
+msgid "The date/time the action is/was scheduled to run."
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/ActionScheduler_AdminView.php:306
+#: vendor/woocommerce/action-scheduler/classes/ActionScheduler_ListTable.php:102
+msgid "Log"
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/ActionScheduler_AdminView.php:306
+msgid "Activity log for the action."
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/ActionScheduler_DataController.php:145
+#. translators: %d: amount of time
+msgid "Stopped the insanity for %d second"
+msgid_plural "Stopped the insanity for %d seconds"
+msgstr[0] ""
+msgstr[1] ""
+
+#: vendor/woocommerce/action-scheduler/classes/ActionScheduler_DataController.php:149
+msgid "Attempting to reduce used memory..."
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/ActionScheduler_InvalidActionException.php:22
+#. translators: 1: action ID 2: schedule
+msgid "Action [%1$s] has an invalid schedule: %2$s"
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/ActionScheduler_InvalidActionException.php:40
+#. translators: 1: action ID 2: arguments
+msgid ""
+"Action [%1$s] has invalid arguments. It cannot be JSON decoded to an array. "
+"$args = %2$s"
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/ActionScheduler_ListTable.php:101
+msgid "Scheduled Date"
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/ActionScheduler_ListTable.php:122
+msgid "Claim ID"
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/ActionScheduler_ListTable.php:129
+msgid "Run"
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/ActionScheduler_ListTable.php:130
+msgid "Process the action now as if it were run as part of a queue"
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/ActionScheduler_ListTable.php:134
+msgid "Cancel the action now to avoid it being run in future"
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/ActionScheduler_ListTable.php:144
+#. translators: %s: amount of time
+msgid "%s year"
+msgid_plural "%s years"
+msgstr[0] ""
+msgstr[1] ""
+
+#: vendor/woocommerce/action-scheduler/classes/ActionScheduler_ListTable.php:149
+#. translators: %s: amount of time
+msgid "%s month"
+msgid_plural "%s months"
+msgstr[0] ""
+msgstr[1] ""
+
+#: vendor/woocommerce/action-scheduler/classes/ActionScheduler_ListTable.php:154
+#. translators: %s: amount of time
+msgid "%s week"
+msgid_plural "%s weeks"
+msgstr[0] ""
+msgstr[1] ""
+
+#: vendor/woocommerce/action-scheduler/classes/ActionScheduler_ListTable.php:159
+#. translators: %s: amount of time
+msgid "%s day"
+msgid_plural "%s days"
+msgstr[0] ""
+msgstr[1] ""
+
+#: vendor/woocommerce/action-scheduler/classes/ActionScheduler_ListTable.php:164
+#. translators: %s: amount of time
+msgid "%s hour"
+msgid_plural "%s hours"
+msgstr[0] ""
+msgstr[1] ""
+
+#: vendor/woocommerce/action-scheduler/classes/ActionScheduler_ListTable.php:169
+#. translators: %s: amount of time
+msgid "%s minute"
+msgid_plural "%s minutes"
+msgstr[0] ""
+msgstr[1] ""
+
+#: vendor/woocommerce/action-scheduler/classes/ActionScheduler_ListTable.php:174
+#. translators: %s: amount of time
+msgid "%s second"
+msgid_plural "%s seconds"
+msgstr[0] ""
+msgstr[1] ""
+
+#: vendor/woocommerce/action-scheduler/classes/ActionScheduler_ListTable.php:224
+msgid "Now!"
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/ActionScheduler_ListTable.php:261
+#. translators: %s: time interval
+msgid "Every %s"
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/ActionScheduler_ListTable.php:267
+msgid "Non-repeating"
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/ActionScheduler_ListTable.php:365
+msgid ""
+"It appears one or more database tables were missing. Attempting to "
+"re-create the missing table(s)."
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/ActionScheduler_ListTable.php:381
+#. translators: %s: amount of claims
+msgid ""
+"Maximum simultaneous queues already in progress (%s queue). No additional "
+"queues will begin processing until the current queues are complete."
+msgid_plural ""
+"Maximum simultaneous queues already in progress (%s queues). No additional "
+"queues will begin processing until the current queues are complete."
+msgstr[0] ""
+msgstr[1] ""
+
+#: vendor/woocommerce/action-scheduler/classes/ActionScheduler_ListTable.php:398
+#. translators: %s: process URL
+msgid ""
+"A new queue has begun processing. <a href=\"%s\">View actions in-progress "
+"&raquo;</a>"
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/ActionScheduler_ListTable.php:401
+#. translators: %d: seconds
+msgid "The next queue will begin processing in approximately %d seconds."
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/ActionScheduler_ListTable.php:423
+#. translators: %s: action HTML
+msgid "Successfully executed action: %s"
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/ActionScheduler_ListTable.php:427
+#. translators: %s: action HTML
+msgid "Successfully canceled action: %s"
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/ActionScheduler_ListTable.php:431
+#. translators: %s: action HTML
+msgid "Successfully processed change for action: %s"
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/ActionScheduler_ListTable.php:437
+#. translators: 1: action HTML 2: action ID 3: error message
+msgid "Could not process change for action: \"%1$s\" (ID: %2$d). Error: %3$s"
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/ActionScheduler_ListTable.php:473
+msgid "async"
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/ActionScheduler_ListTable.php:487
+#. translators: %s: date interval
+msgid " (%s ago)"
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/ActionScheduler_ListTable.php:490
+#. translators: %s: date interval
+msgid " (%s)"
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/ActionScheduler_ListTable.php:516
+#. translators: 1: action ID 2: exception message.
+msgid "Action Scheduler was unable to delete action %1$d. Reason: %2$s"
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/ActionScheduler_ListTable.php:666
+msgid "Search hook, args and claim ID"
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/ActionScheduler_QueueCleaner.php:70
+#. Translators: %s is the exception message.
+msgid "It was not possible to determine a valid cut-off time: %s."
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/ActionScheduler_QueueRunner.php:249
+msgid "Every minute"
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/ActionScheduler_WPCommentCleaner.php:121
+#. translators: %s: date interval
+msgid "This data will be deleted in %s."
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/ActionScheduler_WPCommentCleaner.php:126
+#. translators: 1: next cleanup message 2: github issue URL
+msgid ""
+"Action Scheduler has migrated data to custom tables; however, orphaned log "
+"entries exist in the WordPress Comments table. %1$s <a href=\"%2$s\">Learn "
+"more &raquo;</a>"
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/ActionScheduler_wcSystemStatus.php:110
+msgid "Action Scheduler"
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/ActionScheduler_wcSystemStatus.php:110
+msgid "This section shows details of Action Scheduler."
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/ActionScheduler_wcSystemStatus.php:113
+msgid "Version:"
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/ActionScheduler_wcSystemStatus.php:117
+msgid "Data store:"
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/ActionScheduler_wcSystemStatus.php:121
+msgid "Action Status"
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/ActionScheduler_wcSystemStatus.php:123
+msgid "Count"
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/ActionScheduler_wcSystemStatus.php:124
+msgid "Oldest Scheduled Date"
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/ActionScheduler_wcSystemStatus.php:125
+msgid "Newest Scheduled Date"
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/WP_CLI/Action/Cancel_Command.php:49
+msgid "Please specify hook of action to cancel."
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/WP_CLI/Action/Cancel_Command.php:59
+msgid "Unable to cancel scheduled action: check the logs."
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/WP_CLI/Action/Cancel_Command.php:76
+msgid "Please specify hook and/or group of actions to cancel."
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/WP_CLI/Action/Cancel_Command.php:89
+msgid "Request to cancel scheduled actions completed."
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/WP_CLI/Action/Cancel_Command.php:98
+msgid "Scheduled action cancelled."
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/WP_CLI/Action/Cancel_Command.php:113
+#. translators: %1$s: singular or plural %2$s: refers to the exception error
+#. message.
+msgid "There was an error cancelling the %1$s: %2$s"
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/WP_CLI/Action/Cancel_Command.php:114
+msgid "scheduled actions"
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/WP_CLI/Action/Cancel_Command.php:114
+msgid "scheduled action"
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/WP_CLI/Action/Create_Command.php:110
+msgid "Unable to create a scheduled action."
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/WP_CLI/Action/Create_Command.php:129
+#. translators: %1$s: type of action, %2$d: ID of the created action
+msgid "%1$s action (%2$d) scheduled."
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/WP_CLI/Action/Create_Command.php:147
+#: vendor/woocommerce/action-scheduler/classes/WP_CLI/Action/Generate_Command.php:115
+#. translators: %s refers to the exception error message.
+msgid "There was an error creating the scheduled action: %s"
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/WP_CLI/Action/Delete_Command.php:54
+#. translators: %d: number of actions to be deleted
+msgid "Deleting %d action"
+msgid_plural "Deleting %d actions"
+msgstr[0] ""
+msgstr[1] ""
+
+#: vendor/woocommerce/action-scheduler/classes/WP_CLI/Action/Delete_Command.php:74
+#. translators: %1$d: number of actions deleted
+msgid "Deleted %1$d action"
+msgid_plural "Deleted %1$d actions"
+msgstr[0] ""
+msgstr[1] ""
+
+#: vendor/woocommerce/action-scheduler/classes/WP_CLI/Action/Delete_Command.php:76
+#. translators: %2$d: number of actions deletions failed
+msgid "%2$d failure."
+msgid_plural "%2$d failures."
+msgstr[0] ""
+msgstr[1] ""
+
+#: vendor/woocommerce/action-scheduler/classes/WP_CLI/Action/Generate_Command.php:70
+#. translators: %d is number of actions to create
+msgid "Creating %d action"
+msgid_plural "Creating %d actions"
+msgstr[0] ""
+msgstr[1] ""
+
+#: vendor/woocommerce/action-scheduler/classes/WP_CLI/Action/Generate_Command.php:97
+#. translators: %1$d refers to the total number of tasks added, %2$s is the
+#. action type
+msgid "%1$d %2$s action scheduled."
+msgid_plural "%1$d %2$s actions scheduled."
+msgstr[0] ""
+msgstr[1] ""
+
+#: vendor/woocommerce/action-scheduler/classes/WP_CLI/Action/Get_Command.php:23
+#. translators: %d is action ID.
+msgid "Unable to retrieve action %d."
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/WP_CLI/Action/Run_Command.php:59
+#. translators: %d: number of actions
+msgid "Executing %d action"
+msgid_plural "Executing %d actions"
+msgstr[0] ""
+msgstr[1] ""
+
+#: vendor/woocommerce/action-scheduler/classes/WP_CLI/Action/Run_Command.php:88
+#. translators: %1$d: count of actions evaluated. %2$s: type of action
+#. evaluated.
+msgid "%1$d action %2$s."
+msgid_plural "%1$d actions %2$s."
+msgstr[0] ""
+msgstr[1] ""
+
+#: vendor/woocommerce/action-scheduler/classes/WP_CLI/Action/Run_Command.php:102
+#. translators: %d: number of executed actions
+msgid "Executed %d action."
+msgid_plural "Executed %d actions."
+msgstr[0] ""
+msgstr[1] ""
+
+#: vendor/woocommerce/action-scheduler/classes/WP_CLI/ActionScheduler_WPCLI_Clean_Command.php:88
+#. translators: %d refers to the total number of batches processed
+msgid "%d batch processed."
+msgid_plural "%d batches processed."
+msgstr[0] ""
+msgstr[1] ""
+
+#: vendor/woocommerce/action-scheduler/classes/WP_CLI/ActionScheduler_WPCLI_Clean_Command.php:103
+#. translators: %s refers to the exception error message
+msgid "There was an error deleting an action: %s"
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/WP_CLI/ActionScheduler_WPCLI_Clean_Command.php:118
+#. translators: %d refers to the total number of actions deleted
+msgid "%d action deleted."
+msgid_plural "%d actions deleted."
+msgstr[0] ""
+msgstr[1] ""
+
+#: vendor/woocommerce/action-scheduler/classes/WP_CLI/ActionScheduler_WPCLI_QueueRunner.php:45
+#: vendor/woocommerce/action-scheduler/classes/WP_CLI/ProgressBar.php:67
+#: vendor/woocommerce/action-scheduler/classes/abstracts/ActionScheduler_WPCLI_Command.php:34
+#. translators: %s php class name
+msgid "The %s class can only be run within WP CLI."
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/WP_CLI/ActionScheduler_WPCLI_QueueRunner.php:69
+msgid "There are too many concurrent batches, but the run is forced to continue."
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/WP_CLI/ActionScheduler_WPCLI_QueueRunner.php:71
+msgid "There are too many concurrent batches."
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/WP_CLI/ActionScheduler_WPCLI_QueueRunner.php:99
+#. translators: %d: amount of actions
+msgid "Running %d action"
+msgid_plural "Running %d actions"
+msgstr[0] ""
+msgstr[1] ""
+
+#: vendor/woocommerce/action-scheduler/classes/WP_CLI/ActionScheduler_WPCLI_QueueRunner.php:117
+msgid "The claim has been lost. Aborting current batch."
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/WP_CLI/ActionScheduler_WPCLI_QueueRunner.php:140
+#. translators: %s refers to the action ID
+msgid "Started processing action %s"
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/WP_CLI/ActionScheduler_WPCLI_QueueRunner.php:155
+#. translators: 1: action ID 2: hook name
+msgid "Completed processing action %1$s with hook: %2$s"
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/WP_CLI/ActionScheduler_WPCLI_QueueRunner.php:168
+#. translators: 1: action ID 2: exception message
+msgid "Error processing action %1$s: %2$s"
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/WP_CLI/ActionScheduler_WPCLI_Scheduler_command.php:30
+#. translators: %s refers to the schema name
+msgid "Registered schema for %s"
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/WP_CLI/ActionScheduler_WPCLI_Scheduler_command.php:150
+#. translators: %d refers to how many scheduled tasks were found to run
+msgid "Found %d scheduled task"
+msgid_plural "Found %d scheduled tasks"
+msgstr[0] ""
+msgstr[1] ""
+
+#: vendor/woocommerce/action-scheduler/classes/WP_CLI/ActionScheduler_WPCLI_Scheduler_command.php:165
+#. translators: %d refers to the total number of batches executed
+msgid "%d batch executed."
+msgid_plural "%d batches executed."
+msgstr[0] ""
+msgstr[1] ""
+
+#: vendor/woocommerce/action-scheduler/classes/WP_CLI/ActionScheduler_WPCLI_Scheduler_command.php:182
+#. translators: %s refers to the exception error message
+msgid "There was an error running the action scheduler: %s"
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/WP_CLI/ActionScheduler_WPCLI_Scheduler_command.php:197
+#. translators: %d refers to the total number of tasks completed
+msgid "%d scheduled task completed."
+msgid_plural "%d scheduled tasks completed."
+msgstr[0] ""
+msgstr[1] ""
+
+#: vendor/woocommerce/action-scheduler/classes/WP_CLI/System_Command.php:167
+msgid "Detailed information about registered sources is not currently available."
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/abstracts/ActionScheduler.php:274
+#. translators: %s function name.
+msgid "%s() was called before the Action Scheduler data store was initialized"
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/abstracts/ActionScheduler_Abstract_ListTable.php:541
+msgid "Filter"
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/abstracts/ActionScheduler_Abstract_ListTable.php:668
+#. translators: %s: search query
+msgid "Search results for \"%s\""
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/abstracts/ActionScheduler_Abstract_ListTable.php:786
+msgid "Search"
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/abstracts/ActionScheduler_Abstract_QueueRunner.php:170
+msgid ""
+"This action appears to be consistently failing. A new instance will not be "
+"scheduled."
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/abstracts/ActionScheduler_Logger.php:100
+msgid "action created"
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/abstracts/ActionScheduler_Logger.php:109
+#: vendor/woocommerce/action-scheduler/classes/data-stores/ActionScheduler_DBLogger.php:142
+msgid "action canceled"
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/abstracts/ActionScheduler_Logger.php:121
+#. translators: %s: context
+msgid "action started via %s"
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/abstracts/ActionScheduler_Logger.php:123
+msgid "action started"
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/abstracts/ActionScheduler_Logger.php:138
+#. translators: %s: context
+msgid "action complete via %s"
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/abstracts/ActionScheduler_Logger.php:140
+msgid "action complete"
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/abstracts/ActionScheduler_Logger.php:155
+#. translators: 1: context 2: exception message
+msgid "action failed via %1$s: %2$s"
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/abstracts/ActionScheduler_Logger.php:158
+#. translators: %s: exception message
+msgid "action failed: %s"
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/abstracts/ActionScheduler_Logger.php:171
+#. translators: %s: amount of time
+msgid ""
+"action marked as failed after %s seconds. Unknown error occurred. Check "
+"server, PHP and database error logs to diagnose cause."
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/abstracts/ActionScheduler_Logger.php:183
+#. translators: 1: error message 2: filename 3: line
+msgid "unexpected shutdown: PHP Fatal error %1$s in %2$s on line %3$s"
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/abstracts/ActionScheduler_Logger.php:193
+msgid "action reset"
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/abstracts/ActionScheduler_Logger.php:205
+#. translators: %s: context
+msgid "action ignored via %s"
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/abstracts/ActionScheduler_Logger.php:207
+msgid "action ignored"
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/abstracts/ActionScheduler_Logger.php:222
+#. translators: %s: exception message
+msgid "There was a failure fetching this action: %s"
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/abstracts/ActionScheduler_Logger.php:224
+msgid "There was a failure fetching this action"
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/abstracts/ActionScheduler_Logger.php:238
+#. translators: %s: exception message
+msgid "There was a failure scheduling the next instance of this action: %s"
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/abstracts/ActionScheduler_Store.php:377
+#. translators: %d is a number (maximum length of action arguments).
+msgid ""
+"ActionScheduler_Action::$args too long. To ensure the args column can be "
+"indexed, action args should not be more than %d characters when encoded as "
+"JSON."
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/abstracts/ActionScheduler_Store.php:455
+msgid "Complete"
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/abstracts/ActionScheduler_Store.php:456
+msgid "Pending"
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/abstracts/ActionScheduler_Store.php:457
+msgid "In-progress"
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/abstracts/ActionScheduler_Store.php:458
+msgid "Failed"
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/abstracts/ActionScheduler_Store.php:459
+msgid "Canceled"
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/actions/ActionScheduler_Action.php:80
+#. translators: 1: action hook.
+msgid ""
+"Scheduled action for %1$s will not be executed as no callbacks are "
+"registered."
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/data-stores/ActionScheduler_DBStore.php:130
+msgid "Database error."
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/data-stores/ActionScheduler_DBStore.php:138
+#: vendor/woocommerce/action-scheduler/classes/data-stores/ActionScheduler_wpPostStore.php:49
+#: vendor/woocommerce/action-scheduler/classes/migration/ActionScheduler_DBStoreMigrator.php:49
+#. translators: %s: error message
+#. translators: %s: action error message
+#. translators: %s is an error message.
+msgid "Error saving action: %s"
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/data-stores/ActionScheduler_DBStore.php:425
+msgid "Invalid value for select or count parameter. Cannot query actions."
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/data-stores/ActionScheduler_DBStore.php:490
+msgid ""
+"JSON partial matching not supported in your environment. Please check your "
+"MySQL/MariaDB version."
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/data-stores/ActionScheduler_DBStore.php:508
+#. translators: %s: provided value type
+msgid ""
+"The value type for the JSON partial matching is not supported. Must be "
+"either integer, boolean, double or string. %s type provided."
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/data-stores/ActionScheduler_DBStore.php:530
+msgid "Unknown partial args matching value."
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/data-stores/ActionScheduler_DBStore.php:699
+#: vendor/woocommerce/action-scheduler/classes/data-stores/ActionScheduler_wpPostStore.php:515
+#. translators: %s: action ID
+#. translators: %s is the action ID
+msgid ""
+"Unidentified action %s: we were unable to cancel this action. It may may "
+"have been deleted by another process."
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/data-stores/ActionScheduler_DBStore.php:801
+#: vendor/woocommerce/action-scheduler/classes/data-stores/ActionScheduler_wpPostStore.php:534
+#. translators: %s is the action ID
+msgid ""
+"Unidentified action %s: we were unable to delete this action. It may may "
+"have been deleted by another process."
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/data-stores/ActionScheduler_DBStore.php:838
+#: vendor/woocommerce/action-scheduler/classes/data-stores/ActionScheduler_wpPostStore.php:564
+#. translators: %s is the action ID
+msgid ""
+"Unidentified action %s: we were unable to determine the date of this "
+"action. It may may have been deleted by another process."
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/data-stores/ActionScheduler_DBStore.php:975
+#: vendor/woocommerce/action-scheduler/classes/data-stores/ActionScheduler_wpPostStore.php:717
+#. translators: %s: group name(s)
+#. translators: %s is the group name
+msgid "The group \"%s\" does not exist."
+msgid_plural "The groups \"%s\" do not exist."
+msgstr[0] ""
+msgstr[1] ""
+
+#: vendor/woocommerce/action-scheduler/classes/data-stores/ActionScheduler_DBStore.php:1022
+#. translators: %s database error.
+msgid "Unable to claim actions. Database error: %s."
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/data-stores/ActionScheduler_DBStore.php:1178
+#. translators: %d is an id.
+msgid "Unable to release actions from claim id %d."
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/data-stores/ActionScheduler_DBStore.php:1232
+#. translators: %s is the action ID
+msgid ""
+"Unidentified action %s: we were unable to mark this action as having "
+"failed. It may may have been deleted by another process."
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/data-stores/ActionScheduler_DBStore.php:1263
+#: vendor/woocommerce/action-scheduler/classes/data-stores/ActionScheduler_wpPostStore.php:984
+#. translators: 1: action ID. 2: status slug.
+msgid "Unable to update the status of action %1$d to %2$s."
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/data-stores/ActionScheduler_DBStore.php:1300
+#: vendor/woocommerce/action-scheduler/classes/data-stores/ActionScheduler_wpPostStore.php:1004
+#. translators: %s is the action ID
+msgid ""
+"Unidentified action %s: we were unable to mark this action as having "
+"completed. It may may have been deleted by another process."
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/data-stores/ActionScheduler_DBStore.php:1335
+#: vendor/woocommerce/action-scheduler/classes/data-stores/ActionScheduler_wpPostStore.php:921
+msgid "Invalid action ID. No status found."
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/data-stores/ActionScheduler_DBStore.php:1337
+msgid "Unknown status found for action."
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/data-stores/ActionScheduler_wpPostStore.php:101
+msgid "Unable to save action."
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/data-stores/ActionScheduler_wpPostStore.php:318
+msgid "Invalid schedule. Cannot save action."
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/data-stores/ActionScheduler_wpPostStore.php:696
+msgid "Unable to claim actions. Database error."
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/data-stores/ActionScheduler_wpPostStore.php:841
+#. translators: %s: claim ID
+msgid "Unable to unlock claim %s. Database error."
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/data-stores/ActionScheduler_wpPostStore.php:869
+#. translators: %s: action ID
+msgid "Unable to unlock claim on action %s. Database error."
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/data-stores/ActionScheduler_wpPostStore.php:895
+#. translators: %s: action ID
+msgid "Unable to mark failure on action %s. Database error."
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/data-stores/ActionScheduler_wpPostStore.php:1085
+#. translators: %s is the error message
+msgid "%s Support for strings longer than this will be removed in a future version."
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/data-stores/ActionScheduler_wpPostStore_PostStatusRegistrar.php:43
+#. translators: %s: count
+msgid "Failed <span class=\"count\">(%s)</span>"
+msgid_plural "Failed <span class=\"count\">(%s)</span>"
+msgstr[0] ""
+msgstr[1] ""
+
+#: vendor/woocommerce/action-scheduler/classes/data-stores/ActionScheduler_wpPostStore_PostStatusRegistrar.php:58
+#. translators: %s: count
+msgid "In-Progress <span class=\"count\">(%s)</span>"
+msgid_plural "In-Progress <span class=\"count\">(%s)</span>"
+msgstr[0] ""
+msgstr[1] ""
+
+#: vendor/woocommerce/action-scheduler/classes/data-stores/ActionScheduler_wpPostStore_PostTypeRegistrar.php:24
+msgid "Scheduled actions are hooks triggered on a certain date and time."
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/data-stores/ActionScheduler_wpPostStore_PostTypeRegistrar.php:35
+msgid "Scheduled Action"
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/data-stores/ActionScheduler_wpPostStore_PostTypeRegistrar.php:37
+msgid "Add"
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/data-stores/ActionScheduler_wpPostStore_PostTypeRegistrar.php:38
+msgid "Add New Scheduled Action"
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/data-stores/ActionScheduler_wpPostStore_PostTypeRegistrar.php:40
+msgid "Edit Scheduled Action"
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/data-stores/ActionScheduler_wpPostStore_PostTypeRegistrar.php:41
+msgid "New Scheduled Action"
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/data-stores/ActionScheduler_wpPostStore_PostTypeRegistrar.php:42
+#: vendor/woocommerce/action-scheduler/classes/data-stores/ActionScheduler_wpPostStore_PostTypeRegistrar.php:43
+msgid "View Action"
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/data-stores/ActionScheduler_wpPostStore_PostTypeRegistrar.php:44
+msgid "Search Scheduled Actions"
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/data-stores/ActionScheduler_wpPostStore_PostTypeRegistrar.php:45
+msgid "No actions found"
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/data-stores/ActionScheduler_wpPostStore_PostTypeRegistrar.php:46
+msgid "No actions found in trash"
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/data-stores/ActionScheduler_wpPostStore_TaxonomyRegistrar.php:22
+msgid "Action Group"
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/migration/ActionMigrator.php:109
+#. translators: %s is an action ID.
+msgid "Unable to remove source migrated action %s"
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/migration/Config.php:77
+msgid "Source store must be configured before running a migration"
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/migration/Config.php:100
+msgid "Source logger must be configured before running a migration"
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/migration/Config.php:123
+msgid "Destination store must be configured before running a migration"
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/migration/Config.php:146
+msgid "Destination logger must be configured before running a migration"
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/migration/Controller.php:183
+msgid ""
+"Action Scheduler migration in progress. The list of scheduled actions may "
+"be incomplete."
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/migration/Runner.php:114
+#. translators: %d: amount of actions
+msgid "Migrating %d action"
+msgid_plural "Migrating %d actions"
+msgstr[0] ""
+msgstr[1] ""
+
+#: vendor/woocommerce/action-scheduler/classes/migration/Runner.php:141
+#. translators: 1: source action ID 2: source store class 3: destination action
+#. ID 4: destination store class
+msgid "Migrated action with ID %1$d in %2$s to ID %3$d in %4$s"
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/functions.php:137
+#. translators: 1: provided value 2: provided type.
+msgid "An integer was expected but \"%1$s\" (%2$s) was received."
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/functions.php:292
+#. translators: %1$s is the name of the hook to be cancelled, %2$s is the
+#. exception message.
+msgid "Caught exception while cancelling action \"%1$s\": %2$s"
+msgstr ""
+
+#. Author URI of the plugin/theme
+msgid "https://wbcomdesigns.com/"
+msgstr ""
+
+#. Description of the plugin/theme
+msgid ""
+"Complete gamification plugin for BuddyPress and WordPress. Part of the "
+"Reign Stack. Points, badges, levels, leaderboards, challenges, and streaks "
+"— zero config, works out of the box."
+msgstr ""
+
+#. Author of the plugin/theme
+msgid "Wbcom Designs"
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/abstracts/ActionScheduler_Abstract_ListTable.php:703
+msgctxt "status labels"
+msgid "All"
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/abstracts/ActionScheduler_Abstract_ListTable.php:704
+msgctxt "status labels"
+msgid "Past-due"
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/data-stores/ActionScheduler_DBStore.php:1017
+msgctxt "database error"
+msgid "unknown"
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/data-stores/ActionScheduler_wpPostStore_PostStatusRegistrar.php:41
+msgctxt "post"
+msgid "Failed"
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/data-stores/ActionScheduler_wpPostStore_PostStatusRegistrar.php:56
+msgctxt "post"
+msgid "In-Progress"
+msgstr ""
+
+#: vendor/woocommerce/action-scheduler/classes/data-stores/ActionScheduler_wpPostStore_PostTypeRegistrar.php:36
+msgctxt "Admin menu name"
+msgid "Scheduled Actions"
+msgstr ""

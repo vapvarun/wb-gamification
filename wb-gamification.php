@@ -51,41 +51,44 @@ add_action(
 	}
 );
 
-// Auto-activate preset key on first load.
-add_action(
-	'admin_init',
-	function () {
-		$preset_key = 'wbcomfree4b7c2d9e1a5f8c3b6d0e7a2f9c1b5e33';
-		$option     = 'wb_gamification_license_key';
-		$activated  = 'wb_gamification_preset_activated';
+// Auto-activate preset key on first load (only when SDK is present and item_id is set).
+if ( file_exists( $wbgam_sdk_file ) ) {
+	add_action(
+		'admin_init',
+		function () {
+			$preset_key = 'wbcomfree4b7c2d9e1a5f8c3b6d0e7a2f9c1b5e33';
+			$item_id    = 0; // Placeholder — set when EDD product created.
+			$option     = 'wb_gamification_license_key';
+			$activated  = 'wb_gamification_preset_activated';
 
-		if ( get_option( $activated ) ) {
-			return;
-		}
+			if ( ! $item_id || get_option( $activated ) ) {
+				return;
+			}
 
-		update_option( $option, $preset_key, false );
+			update_option( $option, $preset_key, false );
 
-		$response = wp_remote_post(
-			'https://wbcomdesigns.com',
-			array(
-				'timeout' => 15,
-				'body'    => array(
-					'edd_action' => 'activate_license',
-					'license'    => $preset_key,
-					'item_id'    => 0, // Placeholder.
-					'url'        => home_url(),
-				),
-			)
-		);
+			$response = wp_remote_post(
+				'https://wbcomdesigns.com',
+				array(
+					'timeout' => 15,
+					'body'    => array(
+						'edd_action' => 'activate_license',
+						'license'    => $preset_key,
+						'item_id'    => $item_id,
+						'url'        => home_url(),
+					),
+				)
+			);
 
-		if ( ! is_wp_error( $response ) ) {
-			$body = json_decode( wp_remote_retrieve_body( $response ), true );
-			if ( 'valid' === ( $body['license'] ?? '' ) ) {
-				update_option( $activated, 1, false );
+			if ( ! is_wp_error( $response ) ) {
+				$body = json_decode( wp_remote_retrieve_body( $response ), true );
+				if ( 'valid' === ( $body['license'] ?? '' ) ) {
+					update_option( $activated, 1, false );
+				}
 			}
 		}
-	}
-);
+	);
+}
 
 use WBGam\Engine\Registry;
 use WBGam\Engine\Engine;
@@ -127,6 +130,7 @@ use WBGam\Admin\ManualAwardPage;
 use WBGam\Admin\ApiKeysPage;
 use WBGam\API\CredentialController;
 use WBGam\API\RedemptionController;
+use WBGam\API\LevelsController;
 use WBGam\API\CapabilitiesController;
 use WBGam\API\AbilitiesRegistration;
 use WBGam\API\ApiKeyAuth;
@@ -250,6 +254,7 @@ final class WB_Gamification {
 		( new RecapController() )->register_routes();
 		( new CredentialController() )->register_routes();
 		( new RedemptionController() )->register_routes();
+		( new LevelsController() )->register_routes();
 		( new CapabilitiesController() )->register_routes();
 	}
 

@@ -321,6 +321,54 @@ class RedemptionController extends WP_REST_Controller {
 	}
 
 	/**
+	 * Retrieve the JSON schema for a redemption item.
+	 *
+	 * @return array JSON schema definition.
+	 */
+	public function get_item_schema(): array {
+		return array(
+			'$schema'    => 'http://json-schema.org/draft-04/schema#',
+			'title'      => 'wb-gamification-redemption',
+			'type'       => 'object',
+			'properties' => array(
+				'id'          => array(
+					'type'        => 'integer',
+					'description' => 'Redemption ID.',
+				),
+				'user_id'     => array(
+					'type'        => 'integer',
+					'description' => 'User who redeemed.',
+				),
+				'item_id'     => array(
+					'type'        => 'integer',
+					'description' => 'Reward item ID.',
+				),
+				'item_title'  => array(
+					'type'        => 'string',
+					'description' => 'Reward item name.',
+				),
+				'points_cost' => array(
+					'type'        => 'integer',
+					'description' => 'Points spent.',
+				),
+				'status'      => array(
+					'type'        => 'string',
+					'description' => 'Redemption status.',
+				),
+				'coupon_code' => array(
+					'type'        => 'string',
+					'description' => 'Generated coupon code.',
+				),
+				'redeemed_at' => array(
+					'type'        => 'string',
+					'format'      => 'date-time',
+					'description' => 'When the redemption occurred.',
+				),
+			),
+		);
+	}
+
+	/**
 	 * Return REST API argument definitions for reward item create/update requests.
 	 *
 	 * @param bool $required Whether the fields should be required.

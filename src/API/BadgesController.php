@@ -2,9 +2,11 @@
 /**
  * REST API: Badges Controller
  *
- * GET  /wb-gamification/v1/badges           All badge definitions + rarity counts
- * GET  /wb-gamification/v1/badges/{id}      Single badge definition + rarity
- * POST /wb-gamification/v1/badges/{id}/award  Admin-only manual award
+ * GET    /wb-gamification/v1/badges              All badge definitions + rarity counts
+ * GET    /wb-gamification/v1/badges/{id}         Single badge definition + rarity
+ * PUT    /wb-gamification/v1/badges/{id}         Update badge definition (admin)
+ * DELETE /wb-gamification/v1/badges/{id}         Delete badge definition (admin)
+ * POST   /wb-gamification/v1/badges/{id}/award   Admin-only manual award
  *
  * All badge definitions are visible (locked-but-visible model) — unearned
  * badges appear greyed-out in the UI so members can see what to work toward.
@@ -87,7 +89,7 @@ class BadgesController extends WP_REST_Controller {
 			)
 		);
 
-		// GET /badges/{id}.
+		// GET /badges/{id} + PUT /badges/{id} + DELETE /badges/{id}.
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base . '/(?P<id>[a-z0-9_-]+)',
@@ -96,6 +98,38 @@ class BadgesController extends WP_REST_Controller {
 					'methods'             => WP_REST_Server::READABLE,
 					'callback'            => array( $this, 'get_item' ),
 					'permission_callback' => '__return_true',
+					'args'                => $this->get_badge_id_args(),
+				),
+				array(
+					'methods'             => WP_REST_Server::EDITABLE,
+					'callback'            => array( $this, 'update_item' ),
+					'permission_callback' => array( $this, 'admin_check' ),
+					'args'                => array_merge(
+						$this->get_badge_id_args(),
+						array(
+							'name'        => array(
+								'type'              => 'string',
+								'sanitize_callback' => 'sanitize_text_field',
+							),
+							'description' => array(
+								'type'              => 'string',
+								'sanitize_callback' => 'sanitize_textarea_field',
+							),
+							'image_url'   => array(
+								'type'              => 'string',
+								'sanitize_callback' => 'esc_url_raw',
+							),
+							'category'    => array(
+								'type'              => 'string',
+								'sanitize_callback' => 'sanitize_key',
+							),
+						)
+					),
+				),
+				array(
+					'methods'             => WP_REST_Server::DELETABLE,
+					'callback'            => array( $this, 'delete_item' ),
+					'permission_callback' => array( $this, 'admin_check' ),
 					'args'                => $this->get_badge_id_args(),
 				),
 				'schema' => array( $this, 'get_item_schema' ),
@@ -131,12 +165,23 @@ class BadgesController extends WP_REST_Controller {
 	// ── Permission checks ──────────────────────────────────────────────────────
 
 	/**
+	 * Check if the current user is an administrator.
+	 *
+	 * @return true|WP_Error True if the request has permission, WP_Error otherwise.
+	 */
+	public function admin_check(): bool|WP_Error {
+		return current_user_can( 'manage_options' )
+			? true
+			: new WP_Error( 'rest_forbidden', __( 'Admin only.', 'wb-gamification' ), array( 'status' => 403 ) );
+	}
+
+	/**
 	 * Check if the current user can manually award a badge.
 	 *
 	 * @param WP_REST_Request $request Full details about the request.
 	 * @return true|WP_Error True if the request has permission, WP_Error otherwise.
 	 */
-	public function award_permissions_check($request ): bool|WP_Error {
+	public function award_permissions_check( $request ): bool|WP_Error {
 		if ( ! current_user_can( 'manage_options' ) ) {
 			return new WP_Error(
 				'rest_forbidden',
@@ -214,12 +259,103 @@ class BadgesController extends WP_REST_Controller {
 	}
 
 	/**
+	 * Update a badge definition (admin only).
+	 *
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return WP_REST_Response|WP_Error Response on success, WP_Error on failure.
+	 */
+	public function update_item( $request ): WP_REST_Response|WP_Error {
+		global $wpdb;
+
+		$badge_id = sanitize_key( $request['id'] );
+		$def      = BadgeEngine::get_badge_def( $badge_id );
+
+		if ( null === $def ) {
+			return new WP_Error(
+				'rest_badge_not_found',
+				__( 'Badge not found.', 'wb-gamification' ),
+				array( 'status' => 404 )
+			);
+		}
+
+		$data = array();
+		if ( isset( $request['name'] ) ) {
+			$data['name'] = sanitize_text_field( $request['name'] );
+		}
+		if ( isset( $request['description'] ) ) {
+			$data['description'] = sanitize_textarea_field( $request['description'] );
+		}
+		if ( isset( $request['image_url'] ) ) {
+			$data['image_url'] = esc_url_raw( $request['image_url'] );
+		}
+		if ( isset( $request['category'] ) ) {
+			$data['category'] = sanitize_key( $request['category'] );
+		}
+
+		if ( $data ) {
+			$wpdb->update( $wpdb->prefix . 'wb_gam_badge_defs', $data, array( 'id' => $badge_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- REST write operation.
+		}
+
+		// Return refreshed badge definition.
+		$updated             = BadgeEngine::get_badge_def( $badge_id );
+		$rarity              = $this->get_rarity_map();
+		$updated['rarity_pct'] = $rarity[ $badge_id ] ?? 0.0;
+
+		return rest_ensure_response( $updated );
+	}
+
+	/**
+	 * Delete a badge definition and cascade-delete user badges (admin only).
+	 *
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return WP_REST_Response|WP_Error Response on success, WP_Error on failure.
+	 */
+	public function delete_item( $request ): WP_REST_Response|WP_Error {
+		global $wpdb;
+
+		$badge_id = sanitize_key( $request['id'] );
+		$def      = BadgeEngine::get_badge_def( $badge_id );
+
+		if ( null === $def ) {
+			return new WP_Error(
+				'rest_badge_not_found',
+				__( 'Badge not found.', 'wb-gamification' ),
+				array( 'status' => 404 )
+			);
+		}
+
+		// Cascade delete user badges first.
+		$wpdb->delete( $wpdb->prefix . 'wb_gam_user_badges', array( 'badge_id' => $badge_id ), array( '%s' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Cascade delete.
+
+		// Delete associated rules.
+		$wpdb->delete( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Cascade delete.
+			$wpdb->prefix . 'wb_gam_rules',
+			array(
+				'rule_type'  => 'badge_condition',
+				'target_id'  => $badge_id,
+			),
+			array( '%s', '%s' )
+		);
+
+		// Delete the definition.
+		$wpdb->delete( $wpdb->prefix . 'wb_gam_badge_defs', array( 'id' => $badge_id ), array( '%s' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- REST delete operation.
+
+		return new WP_REST_Response(
+			array(
+				'deleted'  => true,
+				'badge_id' => $badge_id,
+			),
+			200
+		);
+	}
+
+	/**
 	 * Manually award a badge to a user (admin only).
 	 *
 	 * @param WP_REST_Request $request Full details about the request.
 	 * @return WP_REST_Response|WP_Error Response on success, WP_Error on failure.
 	 */
-	public function award_badge($request ): WP_REST_Response|WP_Error {
+	public function award_badge( $request ): WP_REST_Response|WP_Error {
 		$badge_id = sanitize_key( $request['id'] );
 		$user_id  = (int) $request->get_param( 'user_id' );
 
