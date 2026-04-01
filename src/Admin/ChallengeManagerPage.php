@@ -124,6 +124,7 @@ final class ChallengeManagerPage {
 									<input type="text" name="title" id="wb-gam-challenge-title" class="regular-text wbgam-input"
 										value="<?php echo esc_attr( $edit_data['title'] ?? '' ); ?>"
 										required placeholder="<?php esc_attr_e( 'e.g. Post 10 photos this week', 'wb-gamification' ); ?>">
+									<p class="description"><?php esc_html_e( 'A short, descriptive name shown to members on the challenge card.', 'wb-gamification' ); ?></p>
 								</td>
 							</tr>
 							<tr>
@@ -139,6 +140,7 @@ final class ChallengeManagerPage {
 											<option value=""><?php esc_html_e( 'No actions registered', 'wb-gamification' ); ?></option>
 										<?php endif; ?>
 									</select>
+									<p class="description"><?php esc_html_e( 'The user action that counts toward completing this challenge (e.g. publish a post, upload media).', 'wb-gamification' ); ?></p>
 								</td>
 							</tr>
 							<tr>
@@ -146,6 +148,7 @@ final class ChallengeManagerPage {
 								<td>
 									<input type="number" name="target" id="wb-gam-challenge-target" class="small-text wbgam-input"
 										value="<?php echo esc_attr( $edit_data['target'] ?? '10' ); ?>" min="1">
+									<p class="description"><?php esc_html_e( 'How many times the member must perform the action to complete the challenge.', 'wb-gamification' ); ?></p>
 								</td>
 							</tr>
 							<tr>
@@ -153,6 +156,7 @@ final class ChallengeManagerPage {
 								<td>
 									<input type="number" name="bonus_points" id="wb-gam-challenge-bonus" class="small-text wbgam-input"
 										value="<?php echo esc_attr( $edit_data['bonus_points'] ?? '50' ); ?>" min="0">
+									<p class="description"><?php esc_html_e( 'Extra points awarded when the challenge is completed. Set to 0 for no bonus.', 'wb-gamification' ); ?></p>
 								</td>
 							</tr>
 							<tr>
@@ -160,6 +164,7 @@ final class ChallengeManagerPage {
 								<td>
 									<input type="datetime-local" name="starts_at" id="wb-gam-challenge-starts" class="wbgam-input"
 										value="<?php echo esc_attr( $edit_data['starts_at'] ?? gmdate( 'Y-m-d\TH:i' ) ); ?>">
+									<p class="description"><?php esc_html_e( 'When this challenge becomes available to members. Actions before this date will not count.', 'wb-gamification' ); ?></p>
 								</td>
 							</tr>
 							<tr>
@@ -167,6 +172,7 @@ final class ChallengeManagerPage {
 								<td>
 									<input type="datetime-local" name="ends_at" id="wb-gam-challenge-ends" class="wbgam-input"
 										value="<?php echo esc_attr( $edit_data['ends_at'] ?? gmdate( 'Y-m-d\TH:i', strtotime( '+7 days' ) ) ); ?>">
+									<p class="description"><?php esc_html_e( 'Deadline for the challenge. Members must reach the target before this date. Defaults to 7 days from now.', 'wb-gamification' ); ?></p>
 								</td>
 							</tr>
 						</table>

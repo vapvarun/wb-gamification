@@ -1745,6 +1745,17 @@
 	}
 }
 
+/* API key display */
+
+.wbgam-key-display {
+	font-size: 16px;
+	padding: 8px 12px;
+	background: #f0f0f0;
+	display: inline-block;
+	user-select: all;
+	border-radius: var(--wbgam-card-radius);
+}
+
 /* ==========================================================================
    24. Suppress Third-Party Admin Notices
    Only on WB Gamification pages -- keeps our admin clean.

@@ -68,122 +68,154 @@ final class ManualAwardPage {
 			wp_die( esc_html__( 'You do not have permission to access this page.', 'wb-gamification' ) );
 		}
 
-		$notice = '';
 		// phpcs:disable WordPress.Security.NonceVerification.Recommended -- display only; GET param indicates result of a prior POST.
+		$notice = '';
 		if ( ! empty( $_GET['wb_gam_award_done'] ) ) {
 			$result = sanitize_key( $_GET['wb_gam_award_done'] );
 			if ( 'ok' === $result ) {
-				$notice = '<div class="notice notice-success is-dismissible"><p>'
-					. esc_html__( 'Points awarded successfully.', 'wb-gamification' )
-					. '</p></div>';
+				$notice = 'saved';
 			} elseif ( 'fail' === $result ) {
-				$notice = '<div class="notice notice-error is-dismissible"><p>'
-					. esc_html__( 'Award failed — check user and points value.', 'wb-gamification' )
-					. '</p></div>';
+				$notice = 'error';
 			}
 		}
 		// phpcs:enable WordPress.Security.NonceVerification.Recommended
 
+		$notice_map = array(
+			'saved' => array( 'success', __( 'Points awarded successfully.', 'wb-gamification' ) ),
+			'error' => array( 'error', __( 'Award failed — check user and points value.', 'wb-gamification' ) ),
+		);
+
 		$recent = self::get_recent_manual_awards( 20 );
 
 		?>
-		<div class="wrap">
-			<h1><?php esc_html_e( 'Award Points', 'wb-gamification' ); ?></h1>
+		<div class="wrap wbgam-wrap">
+			<h1 class="wbgam-page-title"><?php esc_html_e( 'Award Points', 'wb-gamification' ); ?></h1>
+			<p class="wbgam-page-desc"><?php esc_html_e( 'Manually grant or deduct points from any user. All awards go through the standard engine so hooks, badges, and streaks fire normally.', 'wb-gamification' ); ?></p>
 
-			<?php echo $notice; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+			<?php if ( isset( $notice_map[ $notice ] ) ) : ?>
+				<div class="notice notice-<?php echo esc_attr( $notice_map[ $notice ][0] ); ?> is-dismissible wb-gam-notice">
+					<p><?php echo esc_html( $notice_map[ $notice ][1] ); ?></p>
+				</div>
+			<?php endif; ?>
 
-			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
-				<input type="hidden" name="action" value="wb_gam_manual_award" />
-				<?php wp_nonce_field( 'wb_gam_manual_award', 'wb_gam_nonce' ); ?>
+			<!-- Award Form Card -->
+			<div class="wbgam-card" style="margin-bottom:24px;">
+				<div class="wbgam-card-header">
+					<h3 class="wbgam-card-title"><?php esc_html_e( 'Award or Deduct Points', 'wb-gamification' ); ?></h3>
+				</div>
+				<div class="wbgam-card-body">
+					<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+						<input type="hidden" name="action" value="wb_gam_manual_award" />
+						<?php wp_nonce_field( 'wb_gam_manual_award', 'wb_gam_nonce' ); ?>
 
-				<table class="form-table" role="presentation">
-					<tr>
-						<th scope="row">
-							<label for="wb_gam_award_user"><?php esc_html_e( 'User', 'wb-gamification' ); ?></label>
-						</th>
-						<td>
-							<?php
-							wp_dropdown_users(
-								array(
-									'name'              => 'wb_gam_user_id',
-									'id'                => 'wb_gam_award_user',
-									'show_option_none'  => __( '— Select a user —', 'wb-gamification' ),
-									'option_none_value' => '0',
-								)
-							);
-							?>
-						</td>
-					</tr>
-					<tr>
-						<th scope="row">
-							<label for="wb_gam_award_points"><?php esc_html_e( 'Points', 'wb-gamification' ); ?></label>
-						</th>
-						<td>
-							<input
-								type="number"
-								id="wb_gam_award_points"
-								name="wb_gam_points"
-								value="0"
-								min="-<?php echo esc_attr( self::MAX_POINTS ); ?>"
-								max="<?php echo esc_attr( self::MAX_POINTS ); ?>"
-								required
-							/>
-							<p class="description">
-								<?php
-								printf(
-									/* translators: %d = max points per action */
-									esc_html__( 'Positive to award, negative to deduct. Max ±%d per action.', 'wb-gamification' ),
-									(int) self::MAX_POINTS // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- integer constant, no XSS risk.
-								);
-								?>
-							</p>
-						</td>
-					</tr>
-					<tr>
-						<th scope="row">
-							<label for="wb_gam_award_note"><?php esc_html_e( 'Reason / Note', 'wb-gamification' ); ?></label>
-						</th>
-						<td>
-							<input
-								type="text"
-								id="wb_gam_award_note"
-								name="wb_gam_note"
-								class="regular-text"
-								placeholder="<?php esc_attr_e( 'Optional reason for this award', 'wb-gamification' ); ?>"
-								maxlength="200"
-							/>
-						</td>
-					</tr>
-				</table>
+						<table class="form-table" role="presentation">
+							<tr>
+								<th scope="row">
+									<label for="wb_gam_award_user"><?php esc_html_e( 'User', 'wb-gamification' ); ?></label>
+								</th>
+								<td>
+									<?php
+									wp_dropdown_users(
+										array(
+											'name'              => 'wb_gam_user_id',
+											'id'                => 'wb_gam_award_user',
+											'show_option_none'  => __( '— Select a user —', 'wb-gamification' ),
+											'option_none_value' => '0',
+										)
+									);
+									?>
+									<p class="description"><?php esc_html_e( 'Select the member who will receive (or lose) points.', 'wb-gamification' ); ?></p>
+								</td>
+							</tr>
+							<tr>
+								<th scope="row">
+									<label for="wb_gam_award_points"><?php esc_html_e( 'Points', 'wb-gamification' ); ?></label>
+								</th>
+								<td>
+									<input
+										type="number"
+										id="wb_gam_award_points"
+										name="wb_gam_points"
+										class="small-text wbgam-input"
+										value="0"
+										min="-<?php echo esc_attr( self::MAX_POINTS ); ?>"
+										max="<?php echo esc_attr( self::MAX_POINTS ); ?>"
+										required
+									/>
+									<p class="description">
+										<?php
+										printf(
+											/* translators: %d = max points per action */
+											esc_html__( 'Positive to award, negative to deduct. Max ±%d per action.', 'wb-gamification' ),
+											(int) self::MAX_POINTS // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- integer constant, no XSS risk.
+										);
+										?>
+									</p>
+								</td>
+							</tr>
+							<tr>
+								<th scope="row">
+									<label for="wb_gam_award_note"><?php esc_html_e( 'Reason / Note', 'wb-gamification' ); ?></label>
+								</th>
+								<td>
+									<input
+										type="text"
+										id="wb_gam_award_note"
+										name="wb_gam_note"
+										class="regular-text wbgam-input"
+										placeholder="<?php esc_attr_e( 'e.g. Contest winner, Support bonus, Policy violation', 'wb-gamification' ); ?>"
+										maxlength="200"
+									/>
+									<p class="description"><?php esc_html_e( 'Optional. Visible in the award history below and stored as user meta.', 'wb-gamification' ); ?></p>
+								</td>
+							</tr>
+						</table>
 
-				<?php submit_button( __( 'Award Points', 'wb-gamification' ) ); ?>
-			</form>
+						<p><button type="submit" class="wbgam-btn"><?php esc_html_e( 'Award Points', 'wb-gamification' ); ?></button></p>
+					</form>
+				</div>
+			</div>
 
+			<!-- Recent Awards History -->
 			<?php if ( ! empty( $recent ) ) : ?>
-			<h2><?php esc_html_e( 'Recent Manual Awards', 'wb-gamification' ); ?></h2>
-			<table class="widefat striped">
-				<thead>
-					<tr>
-						<th><?php esc_html_e( 'User', 'wb-gamification' ); ?></th>
-						<th><?php esc_html_e( 'Points', 'wb-gamification' ); ?></th>
-						<th><?php esc_html_e( 'Note', 'wb-gamification' ); ?></th>
-						<th><?php esc_html_e( 'Date', 'wb-gamification' ); ?></th>
-					</tr>
-				</thead>
-				<tbody>
-					<?php foreach ( $recent as $row ) : ?>
-						<?php $user = get_userdata( (int) $row['user_id'] ); ?>
-					<tr>
-						<td><?php echo esc_html( $user ? $user->display_name : '#' . $row['user_id'] ); ?></td>
-						<td class="<?php echo (int) $row['points'] >= 0 ? 'wb-gam-positive' : 'wb-gam-negative'; ?>">
-							<?php echo esc_html( number_format_i18n( (int) $row['points'] ) ); ?>
-						</td>
-						<td><?php echo esc_html( (string) ( $row['note'] ?? '' ) ); ?></td>
-						<td><?php echo esc_html( date_i18n( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), strtotime( $row['created_at'] ) ) ); ?></td>
-					</tr>
-					<?php endforeach; ?>
-				</tbody>
-			</table>
+			<div class="wbgam-card">
+				<div class="wbgam-card-header">
+					<h3 class="wbgam-card-title"><?php esc_html_e( 'Recent Manual Awards', 'wb-gamification' ); ?></h3>
+				</div>
+				<div class="wbgam-card-body" style="padding:0;">
+					<table class="wbgam-table">
+						<thead>
+							<tr>
+								<th><?php esc_html_e( 'User', 'wb-gamification' ); ?></th>
+								<th><?php esc_html_e( 'Points', 'wb-gamification' ); ?></th>
+								<th><?php esc_html_e( 'Note', 'wb-gamification' ); ?></th>
+								<th><?php esc_html_e( 'Date', 'wb-gamification' ); ?></th>
+							</tr>
+						</thead>
+						<tbody>
+							<?php foreach ( $recent as $row ) : ?>
+								<?php $user = get_userdata( (int) $row['user_id'] ); ?>
+							<tr>
+								<td><?php echo esc_html( $user ? $user->display_name : '#' . $row['user_id'] ); ?></td>
+								<td>
+									<span class="wbgam-pill <?php echo (int) $row['points'] >= 0 ? 'wbgam-pill--active' : 'wbgam-pill--danger'; ?>">
+										<?php echo esc_html( ( (int) $row['points'] >= 0 ? '+' : '' ) . number_format_i18n( (int) $row['points'] ) ); ?>
+									</span>
+								</td>
+								<td><?php echo esc_html( (string) ( $row['note'] ?? '' ) ); ?></td>
+								<td><?php echo esc_html( date_i18n( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), strtotime( $row['created_at'] ) ) ); ?></td>
+							</tr>
+							<?php endforeach; ?>
+						</tbody>
+					</table>
+				</div>
+			</div>
+			<?php else : ?>
+			<div class="wbgam-empty">
+				<div class="wbgam-empty-icon"><span class="dashicons dashicons-star-filled" style="font-size:48px;width:48px;height:48px;color:var(--wbgam-text-muted);"></span></div>
+				<div class="wbgam-empty-title"><?php esc_html_e( 'No manual awards yet', 'wb-gamification' ); ?></div>
+				<p><?php esc_html_e( 'Use the form above to grant or deduct points from any member.', 'wb-gamification' ); ?></p>
+			</div>
 			<?php endif; ?>
 		</div>
 		<?php

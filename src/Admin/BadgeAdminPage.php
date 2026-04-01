@@ -210,11 +210,17 @@ final class BadgeAdminPage {
 								<?php endif; ?>
 								<tr>
 									<th><label for="wb-gam-badge-name"><?php esc_html_e( 'Name', 'wb-gamification' ); ?></label></th>
-									<td><input type="text" name="badge_name" id="wb-gam-badge-name" class="regular-text wbgam-input" value="<?php echo esc_attr( $badge['name'] ?? '' ); ?>" required></td>
+									<td>
+										<input type="text" name="badge_name" id="wb-gam-badge-name" class="regular-text wbgam-input" value="<?php echo esc_attr( $badge['name'] ?? '' ); ?>" required>
+										<p class="description"><?php esc_html_e( 'Display name shown to members when they earn this badge.', 'wb-gamification' ); ?></p>
+									</td>
 								</tr>
 								<tr>
 									<th><label for="wb-gam-badge-description"><?php esc_html_e( 'Description', 'wb-gamification' ); ?></label></th>
-									<td><textarea name="badge_description" id="wb-gam-badge-description" rows="3" class="large-text wbgam-input"><?php echo esc_textarea( $badge['description'] ?? '' ); ?></textarea></td>
+									<td>
+										<textarea name="badge_description" id="wb-gam-badge-description" rows="3" class="large-text wbgam-input"><?php echo esc_textarea( $badge['description'] ?? '' ); ?></textarea>
+										<p class="description"><?php esc_html_e( 'Explains what this badge is for. Shown on badge cards and share pages.', 'wb-gamification' ); ?></p>
+									</td>
 								</tr>
 								<tr>
 									<th><label><?php esc_html_e( 'Icon', 'wb-gamification' ); ?></label></th>
@@ -239,6 +245,7 @@ final class BadgeAdminPage {
 												<?php esc_html_e( 'Remove', 'wb-gamification' ); ?>
 											</button>
 										<?php endif; ?>
+										<p class="description"><?php esc_html_e( 'Upload an image from the Media Library. Recommended: 128x128px PNG with transparent background.', 'wb-gamification' ); ?></p>
 									</td>
 								</tr>
 								<tr>
@@ -251,6 +258,7 @@ final class BadgeAdminPage {
 												</option>
 											<?php endforeach; ?>
 										</select>
+										<p class="description"><?php esc_html_e( 'Group badges by category for organized display in the frontend badge showcase.', 'wb-gamification' ); ?></p>
 									</td>
 								</tr>
 								<tr>
@@ -260,6 +268,7 @@ final class BadgeAdminPage {
 											<input type="checkbox" name="badge_is_credential" value="1" <?php checked( ! empty( $badge['is_credential'] ) ); ?>>
 											<?php esc_html_e( 'Mark as shareable credential (LinkedIn, OpenBadges)', 'wb-gamification' ); ?>
 										</label>
+										<p class="description"><?php esc_html_e( 'Enable OpenBadges 3.0 verifiable credential issuance. Members can share a verified badge URL.', 'wb-gamification' ); ?></p>
 									</td>
 								</tr>
 								<tr>
@@ -305,11 +314,15 @@ final class BadgeAdminPage {
 											<option value="point_milestone" <?php selected( $condition['condition_type'], 'point_milestone' ); ?>><?php esc_html_e( 'Reaches a point milestone', 'wb-gamification' ); ?></option>
 											<option value="action_count" <?php selected( $condition['condition_type'], 'action_count' ); ?>><?php esc_html_e( 'Performs an action N times', 'wb-gamification' ); ?></option>
 										</select>
+										<p class="description"><?php esc_html_e( 'Choose how this badge is awarded. "Manual" means only admins can grant it. Other options award automatically when conditions are met.', 'wb-gamification' ); ?></p>
 									</td>
 								</tr>
 								<tr id="wb-gam-field-points" <?php echo 'point_milestone' !== $condition['condition_type'] ? 'class="wb-gam-hidden"' : ''; ?>>
 									<th><label for="wb-gam-condition-points"><?php esc_html_e( 'Points Threshold', 'wb-gamification' ); ?></label></th>
-									<td><input type="number" name="condition_points" id="wb-gam-condition-points" class="small-text wbgam-input" min="1" value="<?php echo esc_attr( $condition['points'] ?? 100 ); ?>"></td>
+									<td>
+										<input type="number" name="condition_points" id="wb-gam-condition-points" class="small-text wbgam-input" min="1" value="<?php echo esc_attr( $condition['points'] ?? 100 ); ?>">
+										<p class="description"><?php esc_html_e( 'The badge is awarded when the member\'s total points reach or exceed this value.', 'wb-gamification' ); ?></p>
+									</td>
 								</tr>
 								<tr id="wb-gam-field-action" <?php echo 'action_count' !== $condition['condition_type'] ? 'class="wb-gam-hidden"' : ''; ?>>
 									<th><label for="wb-gam-condition-action-id"><?php esc_html_e( 'Action', 'wb-gamification' ); ?></label></th>
@@ -324,11 +337,15 @@ final class BadgeAdminPage {
 												<option value=""><?php esc_html_e( 'No actions registered', 'wb-gamification' ); ?></option>
 											<?php endif; ?>
 										</select>
+										<p class="description"><?php esc_html_e( 'Which action the member must perform (e.g. publish post, complete course, upload media).', 'wb-gamification' ); ?></p>
 									</td>
 								</tr>
 								<tr id="wb-gam-field-count" <?php echo 'action_count' !== $condition['condition_type'] ? 'class="wb-gam-hidden"' : ''; ?>>
 									<th><label for="wb-gam-condition-count"><?php esc_html_e( 'Target Count', 'wb-gamification' ); ?></label></th>
-									<td><input type="number" name="condition_count" id="wb-gam-condition-count" class="small-text wbgam-input" min="1" value="<?php echo esc_attr( $condition['count'] ?? 1 ); ?>"></td>
+									<td>
+										<input type="number" name="condition_count" id="wb-gam-condition-count" class="small-text wbgam-input" min="1" value="<?php echo esc_attr( $condition['count'] ?? 1 ); ?>">
+										<p class="description"><?php esc_html_e( 'How many times the action must be performed to earn this badge.', 'wb-gamification' ); ?></p>
+									</td>
 								</tr>
 							</table>
 
