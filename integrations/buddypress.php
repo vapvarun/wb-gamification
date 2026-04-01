@@ -189,5 +189,19 @@ return [
 			'requires_buddypress' => true,
 		],
 
+		[
+			'id'                  => 'bp_media_upload',
+			'label'               => 'Upload media',
+			'description'         => 'Awarded when a member uploads media via BuddyPress.',
+			'hook'                => 'bp_media_add',
+			'user_callback'       => fn( int $media_id ) => get_current_user_id(),
+			'default_points'      => 5,
+			'category'            => 'buddypress',
+			'icon'                => 'dashicons-format-image',
+			'repeatable'          => true,
+			'cooldown'            => 60,
+			'requires_buddypress' => true,
+		],
+
 	],
 ];

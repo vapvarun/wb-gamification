@@ -74,6 +74,8 @@ final class SettingsPage {
 
 		if ( 'points' === $tab ) {
 			self::save_points_settings();
+		} elseif ( 'kudos' === $tab ) {
+			self::save_kudos_settings();
 		} elseif ( 'automation' === $tab ) {
 			self::save_automation_settings();
 		}
@@ -145,6 +147,26 @@ final class SettingsPage {
 		// phpcs:enable WordPress.Security.NonceVerification.Missing
 
 		add_settings_error( 'wb_gamification', 'saved', __( 'Settings saved.', 'wb-gamification' ), 'success' );
+	}
+
+	/**
+	 * Persist kudos engine settings.
+	 * Nonce is verified by check_admin_referer() in handle_save().
+	 */
+	private static function save_kudos_settings(): void {
+		// phpcs:disable WordPress.Security.NonceVerification.Missing -- Nonce verified by check_admin_referer() in handle_save().
+		if ( isset( $_POST['wb_gam_kudos_daily_limit'] ) ) {
+			update_option( 'wb_gam_kudos_daily_limit', max( 1, min( 999, (int) wp_unslash( $_POST['wb_gam_kudos_daily_limit'] ) ) ) );
+		}
+		if ( isset( $_POST['wb_gam_kudos_receiver_points'] ) ) {
+			update_option( 'wb_gam_kudos_receiver_points', max( 0, min( 9999, (int) wp_unslash( $_POST['wb_gam_kudos_receiver_points'] ) ) ) );
+		}
+		if ( isset( $_POST['wb_gam_kudos_giver_points'] ) ) {
+			update_option( 'wb_gam_kudos_giver_points', max( 0, min( 9999, (int) wp_unslash( $_POST['wb_gam_kudos_giver_points'] ) ) ) );
+		}
+		// phpcs:enable WordPress.Security.NonceVerification.Missing
+
+		add_settings_error( 'wb_gamification', 'saved', __( 'Kudos settings saved.', 'wb-gamification' ), 'success' );
 	}
 
 	/**
@@ -978,39 +1000,39 @@ final class SettingsPage {
 	 * Render the Kudos settings section (card layout).
 	 */
 	private static function render_kudos_section(): void {
-		$cooldown = (int) get_option( 'wb_gam_kudos_cooldown', 60 );
-		$max_day  = (int) get_option( 'wb_gam_kudos_max_per_day', 10 );
-		$points   = (int) get_option( 'wb_gam_kudos_points', 5 );
+		$daily_limit     = (int) get_option( 'wb_gam_kudos_daily_limit', 5 );
+		$receiver_points = (int) get_option( 'wb_gam_kudos_receiver_points', 5 );
+		$giver_points    = (int) get_option( 'wb_gam_kudos_giver_points', 2 );
 		?>
-		<form method="post" action="<?php echo esc_url( admin_url( 'admin.php?page=wb-gamification&tab=points' ) ); ?>">
+		<form method="post" action="<?php echo esc_url( admin_url( 'admin.php?page=wb-gamification&tab=kudos' ) ); ?>">
 			<?php wp_nonce_field( 'wb_gam_save_settings', 'wb_gam_settings_nonce' ); ?>
 
 			<div class="wbgam-settings-card">
 				<div class="wbgam-settings-card__head">
 					<p class="wbgam-settings-card__title"><?php esc_html_e( 'KUDOS', 'wb-gamification' ); ?></p>
-					<p class="wbgam-settings-card__desc"><?php esc_html_e( 'Configure peer-to-peer kudos settings.', 'wb-gamification' ); ?></p>
+					<p class="wbgam-settings-card__desc"><?php esc_html_e( 'Configure peer-to-peer kudos recognition settings.', 'wb-gamification' ); ?></p>
 				</div>
 				<div class="wbgam-settings-card__body">
 					<table class="form-table" role="presentation">
 						<tr>
-							<th scope="row"><label for="wb-gam-kudos-cooldown"><?php esc_html_e( 'Cooldown (seconds)', 'wb-gamification' ); ?></label></th>
+							<th scope="row"><label for="wb-gam-kudos-daily-limit"><?php esc_html_e( 'Max kudos per day', 'wb-gamification' ); ?></label></th>
 							<td>
-								<input type="number" name="wb_gam_kudos_cooldown" id="wb-gam-kudos-cooldown" value="<?php echo esc_attr( $cooldown ); ?>" min="0" max="86400" class="wb-gam-input-narrow">
-								<p class="description"><?php esc_html_e( 'Minimum seconds between kudos from the same sender to the same receiver.', 'wb-gamification' ); ?></p>
+								<input type="number" name="wb_gam_kudos_daily_limit" id="wb-gam-kudos-daily-limit" value="<?php echo esc_attr( $daily_limit ); ?>" min="1" max="999" class="wb-gam-input-narrow">
+								<p class="description"><?php esc_html_e( 'Maximum number of kudos a member can send per day. Prevents spam.', 'wb-gamification' ); ?></p>
 							</td>
 						</tr>
 						<tr>
-							<th scope="row"><label for="wb-gam-kudos-max-day"><?php esc_html_e( 'Max per day', 'wb-gamification' ); ?></label></th>
+							<th scope="row"><label for="wb-gam-kudos-receiver-points"><?php esc_html_e( 'Points per kudos received', 'wb-gamification' ); ?></label></th>
 							<td>
-								<input type="number" name="wb_gam_kudos_max_per_day" id="wb-gam-kudos-max-day" value="<?php echo esc_attr( $max_day ); ?>" min="1" max="999" class="wb-gam-input-narrow">
-								<p class="description"><?php esc_html_e( 'Maximum kudos a user can send per day.', 'wb-gamification' ); ?></p>
+								<input type="number" name="wb_gam_kudos_receiver_points" id="wb-gam-kudos-receiver-points" value="<?php echo esc_attr( $receiver_points ); ?>" min="0" max="9999" class="wb-gam-input-narrow">
+								<p class="description"><?php esc_html_e( 'Points awarded to the member who receives kudos.', 'wb-gamification' ); ?></p>
 							</td>
 						</tr>
 						<tr>
-							<th scope="row"><label for="wb-gam-kudos-points"><?php esc_html_e( 'Points per kudos received', 'wb-gamification' ); ?></label></th>
+							<th scope="row"><label for="wb-gam-kudos-giver-points"><?php esc_html_e( 'Points per kudos given', 'wb-gamification' ); ?></label></th>
 							<td>
-								<input type="number" name="wb_gam_kudos_points" id="wb-gam-kudos-points" value="<?php echo esc_attr( $points ); ?>" min="0" max="9999" class="wb-gam-input-narrow">
-								<p class="description"><?php esc_html_e( 'Points awarded to the receiver for each kudos received.', 'wb-gamification' ); ?></p>
+								<input type="number" name="wb_gam_kudos_giver_points" id="wb-gam-kudos-giver-points" value="<?php echo esc_attr( $giver_points ); ?>" min="0" max="9999" class="wb-gam-input-narrow">
+								<p class="description"><?php esc_html_e( 'Points awarded to the member who sends kudos. Encourages giving recognition.', 'wb-gamification' ); ?></p>
 							</td>
 						</tr>
 					</table>
