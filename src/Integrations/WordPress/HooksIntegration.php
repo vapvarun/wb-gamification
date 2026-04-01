@@ -9,7 +9,7 @@
  * any actions. All WordPress triggers are now handled by the manifest.
  *
  * @package WB_Gamification
- * @deprecated 1.0.1 Use integrations/wordpress.php manifest instead.
+ * @deprecated 1.0.0 Use integrations/wordpress.php manifest instead.
  */
 
 namespace WBGam\Integrations\WordPress;
@@ -20,13 +20,13 @@ defined( 'ABSPATH' ) || exit;
  * Legacy WordPress hooks — no longer registers actions (manifest handles them).
  *
  * @package WB_Gamification
- * @deprecated 1.0.1
+ * @deprecated 1.0.0
  */
 final class HooksIntegration {
 
 	/**
 	 * No-op. Manifest-based registration in integrations/wordpress.php
-	 * handles all WordPress action triggers since v1.0.1.
+	 * handles all WordPress action triggers since v1.0.0.
 	 */
 	public static function init(): void {
 		// Intentionally empty — actions are registered by integrations/wordpress.php manifest.

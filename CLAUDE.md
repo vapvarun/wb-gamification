@@ -9,7 +9,7 @@
 | Field | Value |
 |---|---|
 | **Name** | WB Gamification |
-| **Version** | 1.0.1 |
+| **Version** | 1.0.0 |
 | **Path** | `wp-content/plugins/wb-gamification/` |
 | **Namespace** | `WBGam\` (PSR-4, maps to `src/`) |
 | **PHP** | 8.1+ required |
@@ -66,7 +66,7 @@ bp_loaded   → ProfileIntegration, DirectoryIntegration, BPActivity
 ### Key Constants
 
 ```php
-WB_GAM_VERSION   // '1.0.1'
+WB_GAM_VERSION   // '1.0.0'
 WB_GAM_FILE      // absolute path to wb-gamification.php
 WB_GAM_PATH      // plugin dir path (trailing slash)
 WB_GAM_URL       // plugin dir URL (trailing slash)

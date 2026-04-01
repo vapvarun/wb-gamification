@@ -82,7 +82,6 @@ final class DbUpgrader {
 			'0.3.0' => 'upgrade_to_0_3_0',
 			'0.5.0' => 'upgrade_to_0_5_0',
 			'1.0.0' => 'upgrade_to_1_0_0',
-			'1.0.1' => 'upgrade_to_1_0_1',
 		);
 	}
 
@@ -257,44 +256,4 @@ final class DbUpgrader {
 		$wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}wb_gam_partners" );
 	}
 
-	/**
-	 * 1.0.1 — Feature flag defaults changed from true to false for fresh installs.
-	 *         Existing installs (upgrading from ≤1.0.0) need all flags set to true
-	 *         to preserve their prior behavior. Also migrate old kudos option names.
-	 */
-	private static function upgrade_to_1_0_1(): void {
-		// Preserve existing behavior: set all feature flags to true for upgrades.
-		if ( false === get_option( 'wb_gam_features' ) ) {
-			update_option(
-				'wb_gam_features',
-				array(
-					'cohort_leagues'       => true,
-					'weekly_emails'        => true,
-					'leaderboard_nudge'    => true,
-					'status_retention'     => true,
-					'cosmetics'            => true,
-					'community_challenges' => true,
-					'site_first_badges'    => true,
-					'tenure_badges'        => true,
-					'badge_share'          => true,
-				)
-			);
-		}
-
-		// Migrate old kudos option names to the names KudosEngine actually reads.
-		$old_max = get_option( 'wb_gam_kudos_max_per_day' );
-		if ( false !== $old_max ) {
-			update_option( 'wb_gam_kudos_daily_limit', (int) $old_max );
-			delete_option( 'wb_gam_kudos_max_per_day' );
-		}
-
-		$old_points = get_option( 'wb_gam_kudos_points' );
-		if ( false !== $old_points ) {
-			update_option( 'wb_gam_kudos_receiver_points', (int) $old_points );
-			delete_option( 'wb_gam_kudos_points' );
-		}
-
-		// Remove orphaned cooldown option (never read by any engine).
-		delete_option( 'wb_gam_kudos_cooldown' );
-	}
 }
