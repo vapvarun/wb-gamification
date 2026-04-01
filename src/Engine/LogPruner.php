@@ -75,12 +75,32 @@ final class LogPruner {
 		);
 
 		/**
-		 * Fires after the log is pruned.
+		 * Fires after the points log is pruned.
 		 *
 		 * @param int    $deleted Number of rows deleted.
 		 * @param string $cutoff  ISO datetime cutoff used.
 		 */
 		do_action( 'wb_gamification_log_pruned', $deleted, $cutoff );
+
+		// Prune events table.
+		$events_months = (int) get_option( 'wb_gam_events_retention_months', 12 );
+		if ( $events_months > 0 ) {
+			$events_cutoff  = gmdate( 'Y-m-d H:i:s', strtotime( "-{$events_months} months" ) );
+			$deleted_events = (int) $wpdb->query(
+				$wpdb->prepare(
+					"DELETE FROM {$wpdb->prefix}wb_gam_events WHERE created_at < %s LIMIT 5000",
+					$events_cutoff
+				)
+			);
+
+			/**
+			 * Fires after the events log is pruned.
+			 *
+			 * @param int    $deleted_events Number of event rows deleted.
+			 * @param string $events_cutoff  ISO datetime cutoff used.
+			 */
+			do_action( 'wb_gamification_events_pruned', $deleted_events, $events_cutoff );
+		}
 
 		return $deleted;
 	}

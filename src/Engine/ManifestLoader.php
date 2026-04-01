@@ -144,6 +144,12 @@ final class ManifestLoader {
 			// Remove manifest-only flags before passing to the Registry.
 			unset( $trigger['standalone_only'], $trigger['requires_buddypress'] );
 
+			// Inject the manifest's top-level plugin key so the Registry
+			// can report which plugin registered the action on collision.
+			if ( ! empty( $manifest['plugin'] ) && ! isset( $trigger['plugin'] ) ) {
+				$trigger['plugin'] = $manifest['plugin'];
+			}
+
 			wb_gamification_register_action( $trigger );
 		}
 	}

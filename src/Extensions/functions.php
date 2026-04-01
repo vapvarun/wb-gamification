@@ -139,3 +139,55 @@ function wb_gam_award_points( int $user_id, int $points, string $action_id = 'ma
 		)
 	);
 }
+
+/**
+ * Check if a user has earned a specific badge.
+ *
+ * @param int    $user_id  WordPress user ID.
+ * @param string $badge_id Badge identifier.
+ * @return bool True if the user currently holds the badge.
+ */
+function wb_gam_has_badge( int $user_id, string $badge_id ): bool {
+	return \WBGam\Engine\BadgeEngine::has_badge( $user_id, $badge_id );
+}
+
+/**
+ * Get all badges earned by a user.
+ *
+ * @param int $user_id WordPress user ID.
+ * @return array List of earned badge data.
+ */
+function wb_gam_get_user_badges( int $user_id ): array {
+	return \WBGam\Engine\BadgeEngine::get_user_badges( $user_id );
+}
+
+/**
+ * Get a user's current streak data.
+ *
+ * @param int $user_id WordPress user ID.
+ * @return array{current_streak: int, longest_streak: int, last_active: string}
+ */
+function wb_gam_get_user_streak( int $user_id ): array {
+	return \WBGam\Engine\StreakEngine::get_streak( $user_id );
+}
+
+/**
+ * Get the leaderboard for a given period.
+ *
+ * @param string $period 'all'|'weekly'|'monthly'|'daily'
+ * @param int    $limit  Number of entries to return.
+ * @return array List of leaderboard entries.
+ */
+function wb_gam_get_leaderboard( string $period = 'all', int $limit = 10 ): array {
+	return \WBGam\Engine\LeaderboardEngine::get_leaderboard( $period, $limit );
+}
+
+/**
+ * Check if a feature flag is enabled.
+ *
+ * @param string $feature Feature flag key (e.g. 'cohort_leagues').
+ * @return bool True if the feature is enabled.
+ */
+function wb_gam_is_feature_enabled( string $feature ): bool {
+	return \WBGam\Engine\FeatureFlags::is_enabled( $feature );
+}

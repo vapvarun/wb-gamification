@@ -187,6 +187,8 @@ final class NotificationBridge {
 
 		$events = self::flush( $user_id );
 
+		wp_enqueue_style( 'wb-gamification' );
+
 		// Always output the markup shell (JS needs the DOM nodes).
 		// Seed script only if there are events.
 		?>

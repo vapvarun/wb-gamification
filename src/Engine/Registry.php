@@ -106,6 +106,20 @@ final class Registry {
 			return;
 		}
 
+		if ( isset( self::$actions[ $action['id'] ] ) ) {
+			_doing_it_wrong(
+				__METHOD__,
+				sprintf(
+					/* translators: 1: action ID, 2: plugin name */
+					'Gamification action ID "%1$s" is already registered by "%2$s". Use a unique vendor-prefixed ID (e.g. "myplugin/action_name").',
+					$action['id'],
+					self::$actions[ $action['id'] ]['plugin'] ?? 'unknown'
+				),
+				'1.0.0'
+			);
+			return;
+		}
+
 		self::$actions[ $action['id'] ] = $action;
 
 		// Auto-hook to WordPress — routes through Engine::process() (Phase 0+).

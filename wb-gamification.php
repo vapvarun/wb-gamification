@@ -69,6 +69,7 @@ use WBGam\Admin\ManualAwardPage;
 use WBGam\API\CredentialController;
 use WBGam\API\RedemptionController;
 use WBGam\Engine\CredentialExpiryEngine;
+use WBGam\Engine\LeaderboardEngine;
 use WBGam\Engine\ShortcodeHandler;
 
 /**
@@ -107,6 +108,9 @@ final class WB_Gamification {
 		add_action( 'plugins_loaded', array( Engine::class, 'init' ), 8 );
 		add_action( 'plugins_loaded', array( WPHooks::class, 'init' ), 8 );
 		add_action( 'plugins_loaded', array( BPHooks::class, 'init' ), 10 );
+
+		// Leaderboard snapshot cron + object cache layer.
+		add_action( 'plugins_loaded', array( LeaderboardEngine::class, 'init' ), 10 );
 
 		// All remaining engines boot via FeatureFlags (core = always, pro = flag-gated).
 		add_action( 'plugins_loaded', array( FeatureFlags::class, 'boot_engines' ), 10 );
@@ -191,8 +195,19 @@ final class WB_Gamification {
 	}
 
 	public function enqueue_assets(): void {
-		wp_enqueue_style( 'wb-gamification', WB_GAM_URL . 'assets/css/frontend.css', array(), WB_GAM_VERSION );
-		wp_enqueue_script_module( 'wb-gamification-interactivity', WB_GAM_URL . 'assets/interactivity/index.js', array(), WB_GAM_VERSION );
+		// Register but don't enqueue — blocks and shortcodes will enqueue as needed.
+		wp_register_style(
+			'wb-gamification',
+			WB_GAM_URL . 'assets/css/frontend.css',
+			array(),
+			WB_GAM_VERSION
+		);
+		wp_register_script_module(
+			'wb-gamification-interactivity',
+			WB_GAM_URL . 'assets/interactivity/index.js',
+			array(),
+			WB_GAM_VERSION
+		);
 	}
 
 	/**
@@ -224,6 +239,7 @@ register_activation_hook(
 		set_transient( 'wb_gam_do_redirect', true, 30 );
 		LogPruner::activate();
 		LeaderboardNudge::activate();
+		LeaderboardEngine::activate();
 		TenureBadgeEngine::activate();
 		WeeklyEmailEngine::activate();
 		CohortEngine::activate();
@@ -238,6 +254,7 @@ register_deactivation_hook(
 	function () {
 		LogPruner::deactivate();
 		LeaderboardNudge::deactivate();
+		LeaderboardEngine::deactivate();
 		TenureBadgeEngine::deactivate();
 		WeeklyEmailEngine::deactivate();
 		CohortEngine::deactivate();

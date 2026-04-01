@@ -16,6 +16,12 @@
  * never shown on the leaderboard (not even their rank shown to others).
  * They can still retrieve their own private rank.
  *
+ * Performance:
+ *   - Object cache (2 min TTL) on get_leaderboard() and get_user_rank()
+ *   - cache_users() call before avatar loop to eliminate N+1 queries
+ *   - Snapshot cron writes top 500 to wb_gam_leaderboard_cache every 5 minutes
+ *   - get_leaderboard() reads from snapshot when fresh (< 10 min old)
+ *
  * @package WB_Gamification
  * @since   0.1.0
  */
@@ -30,6 +36,68 @@ defined( 'ABSPATH' ) || exit;
  * @package WB_Gamification
  */
 final class LeaderboardEngine {
+
+	/**
+	 * Initialize cron hooks and custom schedule interval.
+	 *
+	 * Called from plugins_loaded via FeatureFlags or directly.
+	 *
+	 * @return void
+	 */
+	public static function init(): void {
+		// Register the custom five-minute cron interval.
+		add_filter( 'cron_schedules', array( __CLASS__, 'add_cron_schedules' ) );
+
+		// Schedule the snapshot cron if not already scheduled.
+		if ( ! wp_next_scheduled( 'wb_gam_leaderboard_snapshot' ) ) {
+			wp_schedule_event( time(), 'five_minutes', 'wb_gam_leaderboard_snapshot' );
+		}
+
+		// Hook the snapshot writer to the cron event.
+		add_action( 'wb_gam_leaderboard_snapshot', array( __CLASS__, 'write_snapshot' ) );
+	}
+
+	/**
+	 * Register the five-minute cron interval.
+	 *
+	 * @param array<string, array{interval: int, display: string}> $schedules Existing cron schedules.
+	 * @return array<string, array{interval: int, display: string}>
+	 */
+	public static function add_cron_schedules( array $schedules ): array {
+		if ( ! isset( $schedules['five_minutes'] ) ) {
+			$schedules['five_minutes'] = array(
+				'interval' => 300,
+				'display'  => esc_html__( 'Every 5 Minutes', 'wb-gamification' ),
+			);
+		}
+		return $schedules;
+	}
+
+	/**
+	 * Activation hook — schedule the leaderboard snapshot cron.
+	 *
+	 * @return void
+	 */
+	public static function activate(): void {
+		// Register the schedule first so wp_schedule_event can find it.
+		add_filter( 'cron_schedules', array( __CLASS__, 'add_cron_schedules' ) );
+
+		if ( ! wp_next_scheduled( 'wb_gam_leaderboard_snapshot' ) ) {
+			wp_schedule_event( time(), 'five_minutes', 'wb_gam_leaderboard_snapshot' );
+		}
+	}
+
+	/**
+	 * Deactivation hook — clear the leaderboard snapshot cron.
+	 *
+	 * @return void
+	 */
+	public static function deactivate(): void {
+		$timestamp = wp_next_scheduled( 'wb_gam_leaderboard_snapshot' );
+		if ( $timestamp ) {
+			wp_unschedule_event( $timestamp, 'wb_gam_leaderboard_snapshot' );
+		}
+	}
 
 	/**
 	 * Get the top-N members for a period, respecting opt-outs.
@@ -48,7 +116,31 @@ final class LeaderboardEngine {
 	): array {
 		global $wpdb;
 
-		$limit        = max( 1, min( 100, $limit ) );
+		$limit = max( 1, min( 100, $limit ) );
+
+		// ── Object cache check ────────────────────────────────────────────────
+		$cache_key = sprintf(
+			'wb_gam_lb_%s_%d_%s_%d',
+			$period,
+			$limit,
+			$scope_type ? $scope_type : 'global',
+			$scope_id
+		);
+		$cached = wp_cache_get( $cache_key, 'wb_gamification' );
+		if ( false !== $cached ) {
+			return (array) $cached;
+		}
+
+		// ── Try snapshot table for global scopes ──────────────────────────────
+		if ( '' === $scope_type && 0 === $scope_id ) {
+			$snapshot_result = self::read_from_snapshot( $period, $limit );
+			if ( null !== $snapshot_result ) {
+				wp_cache_set( $cache_key, $snapshot_result, 'wb_gamification', 120 );
+				return $snapshot_result;
+			}
+		}
+
+		// ── Full query fallback ───────────────────────────────────────────────
 		$period_start = self::get_period_start( $period );
 		$opt_out_ids  = self::get_opted_out_ids();
 		$scope_ids    = self::resolve_scope( $scope_type, $scope_id );
@@ -64,7 +156,6 @@ final class LeaderboardEngine {
 
 		if ( ! empty( $opt_out_ids ) ) {
 			$placeholders = implode( ',', array_fill( 0, count( $opt_out_ids ), '%d' ) );
-			$where_parts  = array_merge( $where_parts, array() );
 			$where_values = array_merge( $where_values, $opt_out_ids );
 			// phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
 			$opt_out_clause = "AND p.user_id NOT IN ($placeholders)";
@@ -108,20 +199,15 @@ final class LeaderboardEngine {
 			: $wpdb->get_results( $query, ARRAY_A ); // phpcs:ignore
 
 		if ( ! $rows ) {
-			return array();
+			$result = array();
+			wp_cache_set( $cache_key, $result, 'wb_gamification', 120 );
+			return $result;
 		}
 
-		$result = array();
-		foreach ( $rows as $rank_zero => $row ) {
-			$user_id  = (int) $row['user_id'];
-			$result[] = array(
-				'rank'         => $rank_zero + 1,
-				'user_id'      => $user_id,
-				'display_name' => $row['display_name'],
-				'avatar_url'   => get_avatar_url( $user_id, array( 'size' => 48 ) ),
-				'points'       => (int) $row['total_points'],
-			);
-		}
+		$result = self::hydrate_rows( $rows );
+
+		// Store in object cache with 2-minute TTL.
+		wp_cache_set( $cache_key, $result, 'wb_gamification', 120 );
 
 		return $result;
 	}
@@ -145,6 +231,13 @@ final class LeaderboardEngine {
 		int $scope_id = 0
 	): array {
 		global $wpdb;
+
+		// ── Object cache check ────────────────────────────────────────────────
+		$cache_key = sprintf( 'wb_gam_rank_%d_%s_%s_%d', $user_id, $period, $scope_type ? $scope_type : 'global', $scope_id );
+		$cached    = wp_cache_get( $cache_key, 'wb_gamification' );
+		if ( false !== $cached ) {
+			return (array) $cached;
+		}
 
 		$period_start = self::get_period_start( $period );
 		$opt_out_ids  = self::get_opted_out_ids();
@@ -175,14 +268,160 @@ final class LeaderboardEngine {
 		// Find the lowest total above ours to calculate gap.
 		$next_total = self::get_next_threshold( $user_total, $period_start, $opt_out_ids, $scope_ids );
 
-		return array(
+		$result = array(
 			'rank'           => $above_rank + 1,
 			'points'         => $user_total,
 			'points_to_next' => null !== $next_total ? ( $next_total - $user_total ) : null,
 		);
+
+		// Store in object cache with 2-minute TTL.
+		wp_cache_set( $cache_key, $result, 'wb_gamification', 120 );
+
+		return $result;
+	}
+
+	// ── Snapshot writer ────────────────────────────────────────────────────────
+
+	/**
+	 * Write leaderboard snapshot to the cache table.
+	 *
+	 * Called by WP-Cron every 5 minutes. Truncates and rewrites the top 500
+	 * users for each period into `wb_gam_leaderboard_cache`.
+	 *
+	 * @return void
+	 */
+	public static function write_snapshot(): void {
+		global $wpdb;
+
+		$cache_table  = $wpdb->prefix . 'wb_gam_leaderboard_cache';
+		$points_table = $wpdb->prefix . 'wb_gam_points';
+
+		// Truncate existing snapshot data.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching
+		$wpdb->query( "TRUNCATE TABLE {$cache_table}" );
+
+		$periods = array(
+			'all'   => null,
+			'month' => self::get_period_start( 'month' ),
+			'week'  => self::get_period_start( 'week' ),
+			'day'   => self::get_period_start( 'day' ),
+		);
+
+		foreach ( $periods as $period_key => $period_start ) {
+			$where = '';
+			if ( null !== $period_start ) {
+				$where = $wpdb->prepare( 'WHERE created_at >= %s', $period_start );
+			}
+
+			// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$wpdb->query(
+				"INSERT INTO {$cache_table} (user_id, period, total_points, rank, updated_at)
+				 SELECT user_id, '{$period_key}' AS period, SUM(points) AS total_points,
+				        RANK() OVER (ORDER BY SUM(points) DESC) AS `rank`,
+				        NOW() AS updated_at
+				   FROM {$points_table}
+				   {$where}
+				  GROUP BY user_id
+				  ORDER BY total_points DESC
+				  LIMIT 500"
+			);
+			// phpcs:enable
+		}
 	}
 
 	// ── Private helpers ────────────────────────────────────────────────────────
+
+	/**
+	 * Try to read leaderboard data from the snapshot cache table.
+	 *
+	 * Returns null if the snapshot is stale (> 10 minutes old) or empty.
+	 * Only used for global (unscoped) leaderboard requests since the snapshot
+	 * does not respect per-request opt-outs or scopes.
+	 *
+	 * @param string $period    Period key: 'all', 'month', 'week', 'day'.
+	 * @param int    $limit     Maximum rows to return.
+	 * @return array<int, array{rank: int, user_id: int, display_name: string, avatar_url: string, points: int}>|null
+	 */
+	private static function read_from_snapshot( string $period, int $limit ): ?array {
+		global $wpdb;
+
+		$cache_table = $wpdb->prefix . 'wb_gam_leaderboard_cache';
+		$opt_out_ids = self::get_opted_out_ids();
+
+		// Check snapshot freshness — must be less than 10 minutes old.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching
+		$snapshot_age = $wpdb->get_var( "SELECT TIMESTAMPDIFF(MINUTE, MAX(updated_at), NOW()) FROM {$cache_table}" );
+
+		if ( null === $snapshot_age || (int) $snapshot_age >= 10 ) {
+			return null;
+		}
+
+		$period_key = in_array( $period, array( 'all', 'month', 'week', 'day' ), true ) ? $period : 'all';
+
+		// Build opt-out exclusion for snapshot read.
+		$opt_out_clause = '';
+		$query_values   = array( $period_key );
+
+		if ( ! empty( $opt_out_ids ) ) {
+			$placeholders   = implode( ',', array_fill( 0, count( $opt_out_ids ), '%d' ) );
+			$opt_out_clause = "AND c.user_id NOT IN ($placeholders)";
+			$query_values   = array_merge( $query_values, $opt_out_ids );
+		}
+
+		$query_values[] = $limit;
+
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$rows = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT c.user_id, c.total_points, u.display_name
+				   FROM {$cache_table} c
+				   JOIN {$wpdb->users} u ON u.ID = c.user_id
+				  WHERE c.period = %s {$opt_out_clause}
+				  ORDER BY c.rank ASC
+				  LIMIT %d",
+				$query_values
+			),
+			ARRAY_A
+		);
+		// phpcs:enable
+
+		if ( ! $rows ) {
+			return null;
+		}
+
+		return self::hydrate_rows( $rows );
+	}
+
+	/**
+	 * Hydrate raw DB rows into the leaderboard result format.
+	 *
+	 * Adds rank, avatar_url, and properly types all fields. Uses cache_users()
+	 * to eliminate N+1 avatar/user-meta queries.
+	 *
+	 * @param array<int, array{user_id: string, total_points: string, display_name: string}> $rows Raw DB rows.
+	 * @return array<int, array{rank: int, user_id: int, display_name: string, avatar_url: string, points: int}>
+	 */
+	private static function hydrate_rows( array $rows ): array {
+		// Pre-cache all user objects to avoid N+1 queries in the avatar loop.
+		$user_ids = array_column( $rows, 'user_id' );
+		if ( ! empty( $user_ids ) ) {
+			cache_users( array_map( 'intval', $user_ids ) );
+		}
+
+		$result = array();
+		foreach ( $rows as $rank_zero => $row ) {
+			$user_id  = (int) $row['user_id'];
+			$result[] = array(
+				'rank'         => $rank_zero + 1,
+				'user_id'      => $user_id,
+				'display_name' => $row['display_name'],
+				'avatar_url'   => get_avatar_url( $user_id, array( 'size' => 48 ) ),
+				'points'       => (int) $row['total_points'],
+			);
+		}
+
+		return $result;
+	}
 
 	/**
 	 * Return the MySQL datetime string for the start of a period.

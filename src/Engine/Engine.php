@@ -40,6 +40,17 @@ final class Engine {
 	private static bool $initialized = false;
 
 	/**
+	 * Static cache for action-enabled option checks.
+	 *
+	 * These options are NOT autoloaded, so each `get_option()` call is a DB
+	 * query the first time. Caching per-request avoids repeated lookups when
+	 * the same action fires multiple times (e.g. bulk imports).
+	 *
+	 * @var array<string, bool>
+	 */
+	private static array $enabled_cache = [];
+
+	/**
 	 * Boot the engine — registers async event processing callback.
 	 */
 	public static function init(): void {
@@ -52,6 +63,19 @@ final class Engine {
 
 		// Action Scheduler handler for async event processing.
 		add_action( 'wb_gam_process_event_async', array( __CLASS__, 'handle_async' ) );
+	}
+
+	/**
+	 * Check whether a specific action is enabled, with per-request static cache.
+	 *
+	 * @param string $action_id Action identifier to check.
+	 * @return bool True if the action is enabled (default: true).
+	 */
+	private static function is_action_enabled( string $action_id ): bool {
+		if ( ! isset( self::$enabled_cache[ $action_id ] ) ) {
+			self::$enabled_cache[ $action_id ] = (bool) get_option( 'wb_gam_enabled_' . $action_id, true );
+		}
+		return self::$enabled_cache[ $action_id ];
 	}
 
 	/**
@@ -79,7 +103,7 @@ final class Engine {
 		// Sync gate: validate + rate-limit checks (fast, no writes).
 		$action = Registry::get_action( $event->action_id );
 		if ( null !== $action ) {
-			if ( ! (bool) get_option( 'wb_gam_enabled_' . $event->action_id, true ) ) {
+			if ( ! self::is_action_enabled( $event->action_id ) ) {
 				return false;
 			}
 			if ( ! PointsEngine::passes_rate_limits( $event->user_id, $event->action_id, $action ) ) {
@@ -138,7 +162,7 @@ final class Engine {
 
 		// Registered-action checks: enabled + rate limits.
 		if ( null !== $action ) {
-			if ( ! (bool) get_option( 'wb_gam_enabled_' . $event->action_id, true ) ) {
+			if ( ! self::is_action_enabled( $event->action_id ) ) {
 				return false;
 			}
 			if ( ! PointsEngine::passes_rate_limits( $event->user_id, $event->action_id, $action ) ) {

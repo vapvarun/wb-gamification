@@ -77,9 +77,10 @@ final class PersonalRecordEngine {
 	 * @param int        $points     Points awarded (not the total — just this award).
 	 */
 	public static function check_personal_records( int $user_id, Event|array $event_data, int $points ): void {
-		self::maybe_record( $user_id, 'day', self::period_total( $user_id, 'day' ) );
-		self::maybe_record( $user_id, 'week', self::period_total( $user_id, 'week' ) );
-		self::maybe_record( $user_id, 'month', self::period_total( $user_id, 'month' ) );
+		$totals = self::period_totals( $user_id );
+		self::maybe_record( $user_id, 'day', $totals['day_total'] );
+		self::maybe_record( $user_id, 'week', $totals['week_total'] );
+		self::maybe_record( $user_id, 'month', $totals['month_total'] );
 	}
 
 	// ── Record detection ────────────────────────────────────────────────────────
@@ -140,34 +141,42 @@ final class PersonalRecordEngine {
 	// ── Helpers ─────────────────────────────────────────────────────────────────
 
 	/**
-	 * Sum points for a user within a period (day / week / month).
+	 * Fetch day, week, and month point totals in a single query.
 	 *
-	 * @param int    $user_id User ID to sum points for.
-	 * @param string $period  'day' | 'week' | 'month'.
-	 * @return int Total points for the period.
+	 * Uses CASE WHEN expressions so the DB scans only rows from the current
+	 * month (widest range) and conditionally buckets them into the three periods.
+	 *
+	 * @param int $user_id User ID to sum points for.
+	 * @return array{day_total: int, week_total: int, month_total: int}
 	 */
-	private static function period_total( int $user_id, string $period ): int {
+	private static function period_totals( int $user_id ): array {
 		global $wpdb;
 
-		$period_starts = array(
-			'day'   => gmdate( 'Y-m-d' ) . ' 00:00:00',
-			'week'  => gmdate( 'Y-m-d', strtotime( 'monday this week' ) ) . ' 00:00:00',
-			'month' => gmdate( 'Y-m-01' ) . ' 00:00:00',
+		$day_start   = gmdate( 'Y-m-d' ) . ' 00:00:00';
+		$week_start  = gmdate( 'Y-m-d', strtotime( 'monday this week' ) ) . ' 00:00:00';
+		$month_start = gmdate( 'Y-m-01' ) . ' 00:00:00';
+
+		$row = $wpdb->get_row(
+			$wpdb->prepare(
+				"SELECT
+					COALESCE(SUM(CASE WHEN created_at >= %s THEN points ELSE 0 END), 0) AS day_total,
+					COALESCE(SUM(CASE WHEN created_at >= %s THEN points ELSE 0 END), 0) AS week_total,
+					COALESCE(SUM(CASE WHEN created_at >= %s THEN points ELSE 0 END), 0) AS month_total
+				FROM {$wpdb->prefix}wb_gam_points
+				WHERE user_id = %d AND created_at >= %s",
+				$day_start,
+				$week_start,
+				$month_start,
+				$user_id,
+				$month_start
+			),
+			ARRAY_A
 		);
 
-		$start = $period_starts[ $period ] ?? null;
-		if ( null === $start ) {
-			return 0;
-		}
-
-		return (int) $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT COALESCE(SUM(points),0)
-				   FROM {$wpdb->prefix}wb_gam_points
-				  WHERE user_id = %d AND created_at >= %s",
-				$user_id,
-				$start
-			)
+		return array(
+			'day_total'   => (int) ( $row['day_total'] ?? 0 ),
+			'week_total'  => (int) ( $row['week_total'] ?? 0 ),
+			'month_total' => (int) ( $row['month_total'] ?? 0 ),
 		);
 	}
 

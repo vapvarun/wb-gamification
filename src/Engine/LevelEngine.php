@@ -26,6 +26,55 @@ defined( 'ABSPATH' ) || exit;
 final class LevelEngine {
 
 	/**
+	 * Static cache of all level rows for the current request.
+	 * Avoids repeated object-cache lookups within a single page load.
+	 *
+	 * @var array<int, array{id: int, name: string, min_points: int, icon_url: string|null}>|null
+	 */
+	private static ?array $levels_cache = null;
+
+	/**
+	 * Load all level rows, using a static cache (per-request) backed by object cache (cross-request).
+	 *
+	 * Levels are admin-only data that almost never changes, so a 1-hour TTL is safe.
+	 *
+	 * @return array<int, array{id: int, name: string, min_points: int, icon_url: string|null}>
+	 */
+	private static function get_all_levels(): array {
+		if ( null !== self::$levels_cache ) {
+			return self::$levels_cache;
+		}
+
+		$cached = wp_cache_get( 'wb_gam_levels_all', 'wb_gamification' );
+		if ( false !== $cached ) {
+			self::$levels_cache = (array) $cached;
+			return self::$levels_cache;
+		}
+
+		global $wpdb;
+		$rows = $wpdb->get_results(
+			"SELECT id, name, min_points, icon_url FROM {$wpdb->prefix}wb_gam_levels ORDER BY min_points ASC",
+			ARRAY_A
+		) ?: array();
+
+		self::$levels_cache = array_map(
+			static function ( array $row ): array {
+				return array(
+					'id'         => (int) $row['id'],
+					'name'       => $row['name'],
+					'min_points' => (int) $row['min_points'],
+					'icon_url'   => $row['icon_url'] ?: null,
+				);
+			},
+			$rows
+		);
+
+		wp_cache_set( 'wb_gam_levels_all', self::$levels_cache, 'wb_gamification', 3600 ); // 1 hr TTL.
+
+		return self::$levels_cache;
+	}
+
+	/**
 	 * Check whether a user's points put them in a new level, and promote if so.
 	 *
 	 * Called by Engine::process() after every successful point award.
@@ -80,30 +129,20 @@ final class LevelEngine {
 	 * @return array{ id: int, name: string, min_points: int, icon_url: string|null }|null
 	 */
 	public static function get_level_for_points( int $points ): ?array {
-		global $wpdb;
+		$levels = self::get_all_levels();
+		$match  = null;
 
-		$row = $wpdb->get_row(
-			$wpdb->prepare(
-				"SELECT id, name, min_points, icon_url
-				   FROM {$wpdb->prefix}wb_gam_levels
-				  WHERE min_points <= %d
-				  ORDER BY min_points DESC
-				  LIMIT 1",
-				$points
-			),
-			ARRAY_A
-		);
-
-		if ( ! $row ) {
-			return null;
+		// Levels are sorted by min_points ASC, so walk forward and keep the
+		// last one whose threshold the user has reached.
+		foreach ( $levels as $level ) {
+			if ( $level['min_points'] <= $points ) {
+				$match = $level;
+			} else {
+				break; // Sorted ASC — no further matches possible.
+			}
 		}
 
-		return array(
-			'id'         => (int) $row['id'],
-			'name'       => $row['name'],
-			'min_points' => (int) $row['min_points'],
-			'icon_url'   => $row['icon_url'] ?: null,
-		);
+		return $match;
 	}
 
 	/**
@@ -113,32 +152,17 @@ final class LevelEngine {
 	 * @return array{ id: int, name: string, min_points: int, icon_url: string|null }|null
 	 */
 	public static function get_next_level( int $user_id ): ?array {
-		global $wpdb;
-
 		$points = PointsEngine::get_total( $user_id );
+		$levels = self::get_all_levels();
 
-		$row = $wpdb->get_row(
-			$wpdb->prepare(
-				"SELECT id, name, min_points, icon_url
-				   FROM {$wpdb->prefix}wb_gam_levels
-				  WHERE min_points > %d
-				  ORDER BY min_points ASC
-				  LIMIT 1",
-				$points
-			),
-			ARRAY_A
-		);
-
-		if ( ! $row ) {
-			return null;
+		// Levels are sorted by min_points ASC — return the first one above the user's total.
+		foreach ( $levels as $level ) {
+			if ( $level['min_points'] > $points ) {
+				return $level;
+			}
 		}
 
-		return array(
-			'id'         => (int) $row['id'],
-			'name'       => $row['name'],
-			'min_points' => (int) $row['min_points'],
-			'icon_url'   => $row['icon_url'] ?: null,
-		);
+		return null; // Already at max level.
 	}
 
 	/**
@@ -148,14 +172,9 @@ final class LevelEngine {
 	 * @return array<int, array{ id: int, name: string, min_points: int, is_current: bool }>
 	 */
 	public static function get_all_levels_for_user( int $user_id ): array {
-		global $wpdb;
+		$levels = self::get_all_levels();
 
-		$rows = $wpdb->get_results(
-			"SELECT id, name, min_points FROM {$wpdb->prefix}wb_gam_levels ORDER BY min_points ASC",
-			ARRAY_A
-		);
-
-		if ( empty( $rows ) ) {
+		if ( empty( $levels ) ) {
 			return array();
 		}
 
@@ -164,13 +183,13 @@ final class LevelEngine {
 		return array_map(
 			static function ( array $row ) use ( $current ): array {
 				return array(
-					'id'         => (int) $row['id'],
+					'id'         => $row['id'],
 					'name'       => $row['name'],
-					'min_points' => (int) $row['min_points'],
-					'is_current' => $current && ( (int) $row['id'] === $current['id'] ),
+					'min_points' => $row['min_points'],
+					'is_current' => $current && ( $row['id'] === $current['id'] ),
 				);
 			},
-			$rows
+			$levels
 		);
 	}
 

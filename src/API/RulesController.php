@@ -400,10 +400,11 @@ class RulesController extends WP_REST_Controller {
 	}
 
 	/**
-	 * Bust the BadgeEngine rules cache so new/updated rules take effect immediately.
+	 * Bust the rules caches so new/updated rules take effect immediately.
 	 */
 	private function flush_rules_cache(): void {
 		wp_cache_delete( 'wb_gam_badge_rules', 'wb_gamification' );
+		wp_cache_delete( 'wb_gam_multiplier_rules', 'wb_gamification' );
 	}
 
 	/**

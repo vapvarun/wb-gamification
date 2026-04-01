@@ -343,6 +343,8 @@ final class ShortcodeHandler {
 	 * @return string HTML output.
 	 */
 	private static function block( string $block_slug, array $attrs ): string {
+		wp_enqueue_style( 'wb-gamification' );
+
 		return render_block(
 			array(
 				'blockName'    => "wb-gamification/{$block_slug}",

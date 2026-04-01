@@ -106,6 +106,11 @@ final class TenureBadgeEngine {
 	 * Runs on every plugins_loaded but is a no-op after first run.
 	 */
 	public static function ensure_badges_exist(): void {
+		// After the first successful seed, skip all 4 SELECT queries on every page load.
+		if ( get_option( 'wb_gam_tenure_seeded' ) ) {
+			return;
+		}
+
 		global $wpdb;
 		$table = $wpdb->prefix . 'wb_gam_badge_defs';
 
@@ -131,6 +136,9 @@ final class TenureBadgeEngine {
 				array( '%s', '%s', '%s', '%s' )
 			);
 		}
+
+		// Mark as seeded so subsequent page loads skip entirely.
+		update_option( 'wb_gam_tenure_seeded', 1, true ); // autoload=true for fast check.
 	}
 
 	// ── Daily check ─────────────────────────────────────────────────────────────
