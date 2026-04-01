@@ -74,8 +74,15 @@ return [
 				if ( ! $comment ) {
 					return 0;
 				}
+				// Skip product reviews — WooCommerce manifest handles those separately.
 				$post = get_post( $comment->comment_post_ID );
-				return $post ? (int) $post->post_author : 0;
+				if ( ! $post ) {
+					return 0;
+				}
+				if ( 'product' === $post->post_type ) {
+					return 0;
+				}
+				return (int) $post->post_author;
 			},
 			'default_points' => 3,
 			'category'       => 'wordpress',
@@ -139,6 +146,11 @@ return [
 				if ( ! $comment || empty( $comment->user_id ) ) {
 					return 0;
 				}
+				// Skip product reviews — WooCommerce manifest handles those separately.
+				$post = get_post( $comment->comment_post_ID );
+				if ( $post && 'product' === $post->post_type ) {
+					return 0;
+				}
 				return (int) $comment->user_id;
 			},
 			'default_points'  => 5,
@@ -156,6 +168,11 @@ return [
 			'hook'            => 'transition_comment_status',
 			'user_callback'   => function ( string $new_status, string $old_status, \WP_Comment $comment ): int {
 				if ( 'approved' !== $new_status || 'approved' === $old_status ) {
+					return 0;
+				}
+				// Skip product reviews — WooCommerce manifest handles those separately.
+				$post = get_post( $comment->comment_post_ID );
+				if ( $post && 'product' === $post->post_type ) {
 					return 0;
 				}
 				return (int) $comment->user_id;
