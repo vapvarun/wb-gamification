@@ -126,13 +126,13 @@ final class NudgeEngine {
 	 */
 	private static function check_unclaimed_reward( array $challenges ): ?array {
 		foreach ( $challenges as $ch ) {
-			// A challenge is "unclaimed" if completed === true and claimed === false.
-			if ( ! empty( $ch['completed'] ) && isset( $ch['claimed'] ) && ! $ch['claimed'] ) {
-				$title  = $ch['title'] ?? 'a challenge';
-				$bonus  = (int) ( $ch['bonus_points'] ?? 0 );
+			// A completed challenge is worth celebrating — bonus points were auto-awarded.
+			if ( ! empty( $ch['completed'] ) ) {
+				$title = $ch['title'] ?? 'a challenge';
+				$bonus = (int) ( $ch['bonus_points'] ?? 0 );
 				return array(
 					'message' => sprintf(
-						'You completed %s! Claim your +%d bonus points',
+						'You completed %s! +%d bonus points earned',
 						$title,
 						$bonus
 					),
@@ -332,7 +332,7 @@ final class NudgeEngine {
 
 		return array(
 			'message' => sprintf(
-				"Keep going! You've earned %d points this week",
+				"Keep going! You've earned %d points so far",
 				$total
 			),
 			'panel' => 'earning',
