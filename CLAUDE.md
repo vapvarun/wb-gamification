@@ -20,6 +20,27 @@
 
 ---
 
+## Execution Rules (Non-Negotiable)
+
+**Every task follows this loop:**
+```
+Plan item → Implement → Browser verify → Fix gaps → THEN mark done
+```
+
+1. **Read the spec first** — before writing a single line, read the task description in `plans/v1-master-plan.md` and any linked spec file
+2. **Implement** — write the code
+3. **Verify against spec** — use Playwright MCP to screenshot and confirm output matches what was designed
+4. **Quality check** — WPCS, test at 390px viewport, check a11y, verify no regressions
+5. **Only then** mark the task done
+
+**Sub-agent rules:**
+- Each agent gets the FULL spec context — not a vague "build X"
+- Agent output is reviewed before committing — never auto-commit agent work
+- If an agent produces code that doesn't match the spec, fix or reject — don't ship it
+- Parallel agents work on independent tasks only — never two agents editing the same file
+
+---
+
 ## Key Commands
 
 ```bash
