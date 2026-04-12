@@ -254,6 +254,133 @@ CORS headers in `src/API/ApiKeyAuth.php` when API key auth is used.
 
 ---
 
+## Phase 2.75: Developer Platform Foundation
+
+> 5-year foundation. Make the plugin a platform that WordPress devs extend and external devs consume. Two extension models: **manifests** (90% case, declarative) + **hooks** (10% case, imperative). REST API serves headless/mobile consumers.
+
+### Task 32: Hook Contract Audit & Stabilization
+
+**Goal:** Every hook the plugin fires becomes a documented, versioned contract. Breaking changes require deprecation cycle.
+
+**Audit scope:**
+- [ ] Inventory all `do_action()` calls across `src/Engine/`, `src/API/`, `src/Admin/`, `src/BuddyPress/`
+- [ ] Inventory all `apply_filters()` calls
+- [ ] Classify each: **public** (devs depend on it) vs **internal** (may change)
+- [ ] Prefix audit: all public hooks must use `wb_gam_` prefix consistently
+- [ ] Add missing hooks at key decision points:
+  - Before/after points awarded: `wb_gam_before_points_award`, `wb_gam_after_points_award`
+  - Before/after badge earned: `wb_gam_before_badge_award`, `wb_gam_after_badge_award`
+  - Before/after level change: `wb_gam_before_level_change`, `wb_gam_after_level_change`
+  - Challenge completed: `wb_gam_challenge_completed`
+  - Kudos given: `wb_gam_kudos_given`
+  - Event processed: `wb_gam_event_processed`
+  - Leaderboard calculated: `wb_gam_leaderboard_snapshot`
+  - Streak milestone: `wb_gam_streak_milestone`
+  - Rule evaluation: `wb_gam_rule_evaluated` (filter — devs can override pass/fail)
+  - Notification dispatched: `wb_gam_notification_sent`
+- [ ] Document each public hook: name, args, when it fires, example usage
+- [ ] Tag all public hooks with `@since 1.0.0` PHPDoc
+
+**Output:** `docs/website/developer-guide/hooks-filters.md` updated with complete reference
+
+### Task 33: Manifest Spec & Developer Guide
+
+**Goal:** Formalize the manifest system so any WordPress plugin can add gamification actions in 5 minutes.
+
+**What exists:** `ManifestLoader::scan()` auto-discovers `wb-gamification.php` files in other plugin directories. Each manifest returns an array of actions. This works but isn't documented.
+
+**Deliverables:**
+- [ ] Write manifest specification: file naming, return format, action schema, category system
+- [ ] Create example manifest template (`docs/website/developer-guide/manifest-template.php`)
+- [ ] Document the auto-discovery mechanism (ManifestLoader scan paths, priority, caching)
+- [ ] Add validation: ManifestLoader validates returned arrays and logs warnings for malformed manifests
+- [ ] Support manifest versioning: `'manifest_version' => 2` key for future format changes
+- [ ] Add `wb_gam_manifest_loaded` action hook for devs to modify loaded manifests
+- [ ] Add `wb_gam_manifest_paths` filter for devs to add custom scan directories
+- [ ] Write "Build Your First Integration" tutorial (5 min → working integration)
+
+**Output:** Complete manifest spec + tutorial in `docs/website/developer-guide/`
+
+### Task 34: Public API Functions Audit
+
+**Goal:** `wb_gam_*` functions in `src/Extensions/functions.php` become the stable PHP SDK. Any function here is a public contract.
+
+**Audit:**
+- [ ] Inventory current functions, verify all 12 claimed functions exist
+- [ ] Add missing essential functions:
+  - `wb_gam_has_badge( int $user_id, string $badge_id ): bool`
+  - `wb_gam_get_user_badges( int $user_id ): array`
+  - `wb_gam_get_user_streak( int $user_id, string $type ): ?array`
+  - `wb_gam_get_user_challenges( int $user_id ): array`
+  - `wb_gam_get_leaderboard( string $period, int $limit ): array`
+  - `wb_gam_submit_event( int $user_id, string $action_id, array $meta ): bool`
+  - `wb_gam_get_actions(): array` (all registered actions with point values)
+- [ ] Add `@since 1.0.0` to all functions
+- [ ] Write PHPDoc with examples for each function
+- [ ] Ensure all functions are unit tested
+
+**Output:** Complete, documented, tested public API
+
+### Task 35: REST API — OpenAPI Spec Export
+
+**Goal:** External devs (mobile, headless, AI agents) get a machine-readable API spec.
+
+**Deliverables:**
+- [ ] Add `GET /wb-gamification/v1/openapi.json` endpoint that auto-generates OpenAPI 3.0 spec from registered routes + schemas
+- [ ] All 18 controllers already have `get_item_schema()` — wire them into the spec generator
+- [ ] Include auth methods: cookie/nonce (local), API key (remote)
+- [ ] Include example request/response for each endpoint
+- [ ] Verify spec imports cleanly into Postman, Swagger UI, and Stoplight
+- [ ] Add `GET /wb-gamification/v1/openapi.html` — embedded Swagger UI for browsing (optional, behind feature flag)
+
+**Output:** Auto-generated, always-current OpenAPI spec
+
+### Task 36: Webhook System Polish
+
+**Goal:** `WebhookDispatcher` already exists but needs to be a first-class integration surface for Zapier/Make/n8n.
+
+**Deliverables:**
+- [ ] Verify HMAC signature validation works end-to-end
+- [ ] Document all webhook event types and their payloads
+- [ ] Add retry logic (3 retries with exponential backoff via Action Scheduler)
+- [ ] Add webhook delivery log (last 50 deliveries per webhook, success/fail, response code)
+- [ ] Add admin UI for webhook management (if not already in settings)
+- [ ] Test with Zapier, Make, and n8n — document connection setup for each
+
+**Output:** Production-ready webhook system with docs
+
+### Task 37: JS SDK Scaffold
+
+**Goal:** `@wbcom/wb-gamification` npm package — typed JavaScript SDK for headless consumers.
+
+**Deliverables:**
+- [ ] Scaffold package with TypeScript
+- [ ] Auto-generate client from OpenAPI spec (Task 35)
+- [ ] Core methods: `client.members.get()`, `client.leaderboard.get()`, `client.events.submit()`, `client.badges.list()`
+- [ ] Auth: API key header injection
+- [ ] Publish to npm (or GitHub Packages)
+- [ ] README with quickstart: `npm install @wbcom/wb-gamification`
+
+**Output:** Typed JS SDK on npm
+
+### Task 38: Developer Portal Page
+
+**Goal:** A dedicated page on the docs website that ties everything together for developers.
+
+**Deliverables:**
+- [ ] "Getting Started for Developers" guide — 3 paths:
+  1. **WordPress dev:** "Add gamification to your plugin" → manifest tutorial
+  2. **Theme dev:** "Display gamification in your theme" → blocks + shortcodes + PHP functions
+  3. **App dev:** "Build against the API" → REST API + JS SDK + webhooks
+- [ ] Architecture overview diagram (event → rule → effect pipeline)
+- [ ] Extension points map: where to hook in at each layer
+- [ ] Changelog with migration guides (for when hooks change)
+- [ ] Code examples repository link
+
+**Output:** Developer portal section on docs website
+
+---
+
 ## Execution Order (Updated 2026-04-12)
 
 | Phase | Tasks | Status | Estimated |
@@ -262,9 +389,10 @@ CORS headers in `src/API/ApiKeyAuth.php` when API key auth is used.
 | Phase 1: Core Cleanup | Tasks 1-13 | **DONE** | ~8 hours |
 | Phase 2: Premium UX | Tasks 14-19 | **DONE** | ~7 hours |
 | **Phase 2.5: Frontend UX Audit** | **Tasks 25-31** | **NEXT** | **5-7 hours** |
+| **Phase 2.75: Developer Platform** | **Tasks 32-38** | **After 2.5** | **8-12 hours** |
 | Phase 3: Pro Scaffold | Tasks 20-21 | Pending | 3-4 hours |
 | Phase 4: Build & Release | Tasks 22-24 | Pending | 2 hours |
-| **Total** | **38 tasks** | | **~31-36 hours** |
+| **Total** | **45 tasks** | | **~40-48 hours** |
 
 ---
 
@@ -304,16 +432,23 @@ AI agent discovers capabilities via:
 ### Free Plugin
 - Points, Badges, Levels, Streaks, Leaderboard, Challenges, Kudos, PersonalRecord
 - 4 integrations (BuddyPress, WooCommerce, LearnDash, bbPress)
+- **Gamification Hub page** (auto-created, card grid, slide-in panels, smart nudge)
 - **API key authentication for cross-site usage**
 - **Capabilities discovery endpoint for AI agents**
 - **WP Abilities API registration**
-- **Full REST schemas on all 15+ controllers**
+- **Full REST schemas on all 18 controllers**
+- **OpenAPI 3.0 spec auto-export**
 - **CORS support for cross-origin requests**
 - Premium admin UX (dashboard, settings, badge library, challenge manager, API keys)
 - Toast notifications
-- 11 blocks + 11 shortcodes (including earning-guide)
+- 12 blocks + 12 shortcodes (including hub + earning-guide)
 - Full REST API + WP-CLI
-- Public SDK (12 functions)
+- **Stable public PHP API** (20+ `wb_gam_*` functions, documented, tested)
+- **Documented hook contract** (all `wb_gam_` actions/filters with `@since` tags)
+- **Manifest spec** for third-party integrations (auto-discovery, 5-min setup)
+- **JS SDK** (`@wbcom/wb-gamification` on npm)
+- **Webhook system** (HMAC-signed, retry logic, Zapier/Make/n8n ready)
+- **Developer portal** (3 paths: WP dev, theme dev, app dev)
 - RTL support
 - Object cache everywhere, async pipeline, leaderboard snapshots
 - Scales to 100K members
