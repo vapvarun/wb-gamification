@@ -68,7 +68,8 @@ $progress  = LevelEngine::get_progress_percent( $user_id );
 $badges    = BadgeEngine::get_user_badges( $user_id );
 $streak    = StreakEngine::get_streak( $user_id );
 $challenges = ChallengeEngine::get_active_challenges( $user_id );
-$rank       = LeaderboardEngine::get_user_rank( $user_id, 'week' );
+$rank_data  = LeaderboardEngine::get_user_rank( $user_id, 'week' );
+$rank       = (int) ( $rank_data['rank'] ?? 0 );
 $kudos_recv = KudosEngine::get_received_count( $user_id );
 
 $badge_count = count( $badges );
