@@ -349,7 +349,7 @@ $wrapper_attrs = get_block_wrapper_attributes(
 				</button>
 				<span class="gam-panel__title" data-wp-text="state.panelTitle"></span>
 			</div>
-			<div class="gam-panel__body" data-wp-html="state.panelContent"></div>
+			<div class="gam-panel__body" id="gam-panel-body"></div>
 		</div>
 	</div>
 

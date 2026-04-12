@@ -37,7 +37,6 @@ const { state, actions } = store( 'wb-gamification/hub', {
 	state: {
 		panelOpen:    false,
 		panelTitle:   '',
-		panelContent: '',
 		_activePanel: '',
 	},
 
@@ -57,12 +56,18 @@ const { state, actions } = store( 'wb-gamification/hub', {
 			}
 
 			const tpl = document.getElementById( `gam-tpl-${ key }` );
-			if ( ! tpl ) {
+			const body = document.getElementById( 'gam-panel-body' );
+			if ( ! tpl || ! body ) {
 				return;
 			}
 
+			// Clear previous content, clone template into panel body.
+			while ( body.firstChild ) {
+				body.removeChild( body.firstChild );
+			}
+			body.appendChild( tpl.content.cloneNode( true ) );
+
 			state.panelTitle   = PANEL_TITLES[ key ];
-			state.panelContent = tpl.innerHTML;
 			state._activePanel = key;
 			state.panelOpen    = true;
 
@@ -76,8 +81,15 @@ const { state, actions } = store( 'wb-gamification/hub', {
 		 */
 		closePanel() {
 			state.panelOpen    = false;
-			state.panelContent = '';
 			state._activePanel = '';
+
+			// Clear panel body.
+			const body = document.getElementById( 'gam-panel-body' );
+			if ( body ) {
+				while ( body.firstChild ) {
+					body.removeChild( body.firstChild );
+				}
+			}
 
 			document.body.style.overflow = '';
 		},
@@ -121,12 +133,18 @@ const { state, actions } = store( 'wb-gamification/hub', {
 				document.getElementById( `gam-tpl-${ preOpen }` )
 			) {
 				requestAnimationFrame( () => {
-					state.panelTitle   = PANEL_TITLES[ preOpen ];
-					state.panelContent = document.getElementById( `gam-tpl-${ preOpen }` ).innerHTML;
-					state._activePanel = preOpen;
-					state.panelOpen    = true;
-
-					document.body.style.overflow = 'hidden';
+					const tpl  = document.getElementById( `gam-tpl-${ preOpen }` );
+					const body = document.getElementById( 'gam-panel-body' );
+					if ( tpl && body ) {
+						while ( body.firstChild ) {
+							body.removeChild( body.firstChild );
+						}
+						body.appendChild( tpl.content.cloneNode( true ) );
+						state.panelTitle   = PANEL_TITLES[ preOpen ];
+						state._activePanel = preOpen;
+						state.panelOpen    = true;
+						document.body.style.overflow = 'hidden';
+					}
 				} );
 			}
 		},

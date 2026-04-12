@@ -36,7 +36,7 @@
   --gam-shadow-hover: 0 4px 16px rgba(0,0,0,0.08);
   --gam-transition: 0.2s ease;
   --gam-gap: 16px;
-  --gam-page-max: 960px;
+  --gam-page-max: 100%;
 }
 
 /* PAGE CONTAINER */
@@ -314,6 +314,20 @@
   opacity: 0;
   visibility: hidden;
   transition: opacity 0.25s ease, visibility 0.25s ease;
+}
+
+/* Account for WP admin bar when logged in */
+.admin-bar .gam-panel-backdrop {
+  top: 32px;
+}
+@media screen and (max-width: 782px) {
+  .admin-bar .gam-panel-backdrop,
+  .admin-bar .gam-panel {
+    top: 46px;
+  }
+}
+.admin-bar .gam-panel {
+  top: 32px;
 }
 
 .gam-panel-backdrop.active {
