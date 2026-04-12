@@ -26,6 +26,7 @@ use WBGam\Engine\Registry;
 defined( 'ABSPATH' ) || exit;
 
 wp_enqueue_style( 'wb-gamification-hub' );
+wp_enqueue_script_module( 'wb-gamification-hub' );
 
 $user_id = get_current_user_id();
 
@@ -187,9 +188,10 @@ $context = wp_json_encode( array( 'preOpen' => $pre_open ) );
 
 $wrapper_attrs = get_block_wrapper_attributes(
 	array(
-		'class'              => 'gam-page',
+		'class'               => 'gam-page',
 		'data-wp-interactive' => 'wb-gamification/hub',
-		'data-wp-context'    => $context,
+		'data-wp-context'     => $context,
+		'data-wp-init'        => 'callbacks.init',
 	)
 );
 ?>
@@ -335,6 +337,8 @@ $wrapper_attrs = get_block_wrapper_attributes(
 	>
 		<div
 			class="gam-panel"
+			role="dialog"
+			aria-modal="true"
 			data-wp-on--click="actions.stopPropagation"
 		>
 			<div class="gam-panel__header">
