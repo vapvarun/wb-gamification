@@ -1,0 +1,17 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "wb-gamification/hub",
+	"version": "1.0.0",
+	"title": "Gamification Hub",
+	"category": "widgets",
+	"description": "Member gamification dashboard — stats, badges, challenges, leaderboard, and more in a connected card layout with slide-in detail panels.",
+	"keywords": [ "gamification", "hub", "dashboard", "points", "badges" ],
+	"supports": {
+		"html": false,
+		"align": [ "wide", "full" ],
+		"multiple": false
+	},
+	"render": "file:./render.php",
+	"textdomain": "wb-gamification"
+}

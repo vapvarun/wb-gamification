@@ -262,7 +262,7 @@ final class WB_Gamification {
 	}
 
 	public function register_blocks(): void {
-		$blocks = array( 'leaderboard', 'member-points', 'badge-showcase', 'level-progress', 'challenges', 'streak', 'top-members', 'kudos-feed', 'year-recap', 'points-history' );
+		$blocks = array( 'leaderboard', 'member-points', 'badge-showcase', 'level-progress', 'challenges', 'streak', 'top-members', 'kudos-feed', 'year-recap', 'points-history', 'earning-guide', 'hub' );
 		foreach ( $blocks as $block ) {
 			$path = WB_GAM_PATH . 'blocks/' . $block;
 			if ( file_exists( $path . '/block.json' ) ) {
@@ -283,6 +283,20 @@ final class WB_Gamification {
 			'wb-gamification-interactivity',
 			WB_GAM_URL . 'assets/interactivity/index.js',
 			array(),
+			WB_GAM_VERSION
+		);
+
+		// Hub block assets.
+		wp_register_style(
+			'wb-gamification-hub',
+			WB_GAM_URL . 'assets/css/hub.css',
+			array(),
+			WB_GAM_VERSION
+		);
+		wp_register_script_module(
+			'wb-gamification-hub',
+			WB_GAM_URL . 'assets/interactivity/hub.js',
+			array( '@wordpress/interactivity' ),
 			WB_GAM_VERSION
 		);
 
