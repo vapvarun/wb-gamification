@@ -43,7 +43,7 @@ if ( 0 === $user_id ) {
 	?>
 	<div <?php echo $wrapper_attrs; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>>
 		<div class="gam-nudge">
-			<span class="gam-nudge__icon"><i class="lucide-log-in"></i></span>
+			<span class="gam-nudge__icon"><i class="icon-log-in"></i></span>
 			<div class="gam-nudge__body">
 				<span class="gam-nudge__label"><?php esc_html_e( 'Join the community', 'wb-gamification' ); ?></span>
 				<span class="gam-nudge__text"><?php esc_html_e( 'Log in to track your points, earn badges, and climb the leaderboard.', 'wb-gamification' ); ?></span>
@@ -207,7 +207,7 @@ $wrapper_attrs = get_block_wrapper_attributes(
 		$nudge_panel = $nudge['panel'] ?? '';
 		?>
 		<div class="gam-nudge">
-			<span class="gam-nudge__icon"><i class="lucide-<?php echo esc_attr( $nudge_icon ); ?>"></i></span>
+			<span class="gam-nudge__icon"><i class="icon-<?php echo esc_attr( $nudge_icon ); ?>"></i></span>
 			<div class="gam-nudge__body">
 				<span class="gam-nudge__label"><?php esc_html_e( 'Suggested for you', 'wb-gamification' ); ?></span>
 				<span class="gam-nudge__text"><?php echo esc_html( $nudge['message'] ); ?></span>
@@ -232,14 +232,14 @@ $wrapper_attrs = get_block_wrapper_attributes(
 	<div class="gam-stats">
 		<?php // Stat 1: Total Points. ?>
 		<div class="gam-stat">
-			<span class="gam-stat__icon"><i class="lucide-star"></i></span>
+			<span class="gam-stat__icon"><i class="icon-star"></i></span>
 			<span class="gam-stat__value"><?php echo esc_html( number_format_i18n( $total_pts ) ); ?></span>
 			<span class="gam-stat__label"><?php esc_html_e( 'Total Points', 'wb-gamification' ); ?></span>
 		</div>
 
 		<?php // Stat 2: Current Level + progress bar. ?>
 		<div class="gam-stat">
-			<span class="gam-stat__icon"><i class="lucide-trending-up"></i></span>
+			<span class="gam-stat__icon"><i class="icon-trending-up"></i></span>
 			<span class="gam-stat__value"><?php echo esc_html( $level_name ); ?></span>
 			<span class="gam-stat__label"><?php esc_html_e( 'Current Level', 'wb-gamification' ); ?></span>
 			<div class="gam-stat__bar">
@@ -260,14 +260,14 @@ $wrapper_attrs = get_block_wrapper_attributes(
 
 		<?php // Stat 3: Badges Earned. ?>
 		<div class="gam-stat">
-			<span class="gam-stat__icon"><i class="lucide-award"></i></span>
+			<span class="gam-stat__icon"><i class="icon-award"></i></span>
 			<span class="gam-stat__value"><?php echo esc_html( number_format_i18n( $badge_count ) ); ?></span>
 			<span class="gam-stat__label"><?php esc_html_e( 'Badges Earned', 'wb-gamification' ); ?></span>
 		</div>
 
 		<?php // Stat 4: Day Streak. ?>
 		<div class="gam-stat">
-			<span class="gam-stat__icon"><i class="lucide-flame"></i></span>
+			<span class="gam-stat__icon"><i class="icon-flame"></i></span>
 			<span class="gam-stat__value"><?php echo esc_html( number_format_i18n( $current_streak ) ); ?></span>
 			<span class="gam-stat__label"><?php esc_html_e( 'Day Streak', 'wb-gamification' ); ?></span>
 			<span class="gam-stat__sub">
@@ -295,7 +295,7 @@ $wrapper_attrs = get_block_wrapper_attributes(
 				data-wp-context="<?php echo esc_attr( wp_json_encode( array( 'panel' => $key ) ) ); ?>"
 			>
 				<div class="gam-card__head">
-					<span class="gam-card__icon"><i class="lucide-<?php echo esc_attr( $card['icon'] ); ?>"></i></span>
+					<span class="gam-card__icon"><i class="icon-<?php echo esc_attr( $card['icon'] ); ?>"></i></span>
 					<span class="gam-card__title"><?php echo esc_html( $card['title'] ); ?></span>
 					<?php if ( ! empty( $card['pill'] ) ) : ?>
 						<span class="gam-pill <?php echo esc_attr( $card['pill']['class'] ); ?>">
@@ -344,7 +344,7 @@ $wrapper_attrs = get_block_wrapper_attributes(
 		>
 			<div class="gam-panel__header">
 				<button class="gam-panel__back" data-wp-on--click="actions.closePanel">
-					<i class="lucide-arrow-left"></i>
+					<i class="icon-arrow-left"></i>
 					<span class="screen-reader-text"><?php esc_html_e( 'Close panel', 'wb-gamification' ); ?></span>
 				</button>
 				<span class="gam-panel__title" data-wp-text="state.panelTitle"></span>
