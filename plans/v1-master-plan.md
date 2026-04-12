@@ -172,7 +172,23 @@ CORS headers in `src/API/ApiKeyAuth.php` when API key auth is used.
 
 > Added 2026-04-12. Covers all user-facing screens — blocks, overlays, modals, admin pages.
 
-### Task 25: Modal/Overlay Accessibility Fixes
+### Task 25: Gamification Hub Page
+
+**Goal:** Single auto-created page that connects all 11 blocks into a card-grid dashboard with slide-in panels and a smart nudge bar.
+
+**Full spec:** `plans/frontend-hub-flow-spec.md`
+
+**New files:**
+- `blocks/hub/block.json` + `blocks/hub/render.php` — Hub block
+- `assets/css/hub.css` — Hub-specific styles (theme-independent color system, Lucide icons)
+- `assets/interactivity/hub.js` — Panel open/close, nudge CTA
+- `src/Engine/NudgeEngine.php` — 7-priority nudge logic
+- Shortcode: `[wb_gam_hub]` via `ShortcodeHandler.php`
+- Auto-create "Gamification" page on activation via `Installer.php`
+
+**Components:** Smart nudge bar → stats row (4 cards) → card grid (6 cards: badges, challenges, leaderboard, earning guide, kudos, activity) → slide-in panels reusing existing block `render_block()` output
+
+### Task 26: Modal/Overlay Accessibility Fixes (a11y)
 
 **Problem:** Frontend overlay (.wb-gam-overlay) and admin modal (.wbgam-modal) lack ARIA attributes, ESC key handling, and focus traps.
 
@@ -198,13 +214,13 @@ CORS headers in `src/API/ApiKeyAuth.php` when API key auth is used.
 - [ ] Earning guide columns
 - [ ] All admin pages at 390px (settings, badges, challenges, manual award, API keys, dashboard)
 
-### Task 27: First-Run UX Completion
+### Task 28: First-Run UX Completion
 
-**From first-run-ux-polish-spec.md — remaining items:**
-- [ ] Fix 1: Setup wizard skip button — add help text ("Default values are already set — you can always change them later")
-- [ ] Fix 2: Dashboard welcome card — verify it renders for new installs (SettingsPage.php has code, needs browser test)
+**Remaining items:**
+- [ ] Setup wizard skip button — add help text below skip button: "Default values are already set — you can always change them later." File: `src/Admin/SetupWizard.php`
+- [ ] Dashboard welcome card — browser-verify it renders for new installs (code exists in SettingsPage.php)
 
-### Task 28: Empty States Audit
+### Task 29: Empty States Audit
 
 **Verify every block handles zero-data gracefully:**
 - [ ] Leaderboard with 0 members
@@ -217,7 +233,7 @@ CORS headers in `src/API/ApiKeyAuth.php` when API key auth is used.
 - [ ] Year recap with no activity
 - [ ] Earning guide with 0 enabled actions
 
-### Task 29: Interactivity Polish
+### Task 30: Interactivity Polish
 
 **Quick wins to improve UX feel:**
 - [ ] Leaderboard period switching — add JS toggle via Interactivity API (currently server-only)
@@ -225,7 +241,7 @@ CORS headers in `src/API/ApiKeyAuth.php` when API key auth is used.
 - [ ] Color-blind safe rank indicators — add text labels alongside gold/silver/bronze colors
 - [ ] Locked badges — show unlock condition text (not just greyed-out)
 
-### Task 30: Admin Page Design Consistency Audit
+### Task 31: Admin Page Design Consistency Audit
 
 **Ensure all admin pages match the Notion-inspired design system from admin-premium.css:**
 - [ ] Dashboard (AnalyticsDashboard.php) — does it use wbgam- card pattern?
@@ -245,10 +261,10 @@ CORS headers in `src/API/ApiKeyAuth.php` when API key auth is used.
 | Phase 0: REST & AI Foundation | Tasks 0.1-0.7 | **DONE** | ~5 hours |
 | Phase 1: Core Cleanup | Tasks 1-13 | **DONE** | ~8 hours |
 | Phase 2: Premium UX | Tasks 14-19 | **DONE** | ~7 hours |
-| **Phase 2.5: Frontend UX Audit** | **Tasks 25-30** | **NEXT** | **4-6 hours** |
+| **Phase 2.5: Frontend UX Audit** | **Tasks 25-31** | **NEXT** | **5-7 hours** |
 | Phase 3: Pro Scaffold | Tasks 20-21 | Pending | 3-4 hours |
 | Phase 4: Build & Release | Tasks 22-24 | Pending | 2 hours |
-| **Total** | **37 tasks** | | **~30-35 hours** |
+| **Total** | **38 tasks** | | **~31-36 hours** |
 
 ---
 
