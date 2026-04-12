@@ -1,34 +1,60 @@
-# WB Gamification — Plans & Scope
+# WB Gamification — Plans & Specs
 
-All product planning, specs, QA checklists, and design documents for both free and pro plugins.
+> **Single source of truth.** All plans, specs, and checklists live here. No duplicates elsewhere.
 
-## Product
+## Status Overview (Updated 2026-04-12)
 
-| Document | Description |
-|----------|-------------|
-| [PRODUCT-VISION.md](PRODUCT-VISION.md) | Full product vision, architecture, competitive analysis, free/pro split, deployment modes, Reign Stack context |
-| [ADMIN-DESIGN-SYSTEM.md](ADMIN-DESIGN-SYSTEM.md) | Wbcom shared admin UX guidelines — sidebar + card layout pattern used across all new plugins |
+| Phase | Status | Plan |
+|-------|--------|------|
+| Phase 0: REST & AI Foundation | **DONE** | [v1-master-plan.md](v1-master-plan.md) |
+| Phase 1: Core Cleanup & Scalability | **DONE** | [v1-master-plan.md](v1-master-plan.md) |
+| Phase 2: Premium Admin UX | **DONE** | [v1-master-plan.md](v1-master-plan.md) |
+| Phase 2 extras: BadgeShare + RankAutomation | **DONE** | [phase2-completion-plan.md](phase2-completion-plan.md) |
+| First-Run UX Polish | **5/6 done** (skip button text pending) | [first-run-ux-polish-spec.md](first-run-ux-polish-spec.md) |
+| **Phase 2.5: Frontend UX Audit** | **NEXT** | [v1-master-plan.md](v1-master-plan.md) Tasks 25-30 |
+| **Frontend Hub & Connected Flow** | **NEXT** | [frontend-hub-flow-spec.md](frontend-hub-flow-spec.md) |
+| Phase 3: Pro Plugin Scaffold | Pending | [v1-master-plan.md](v1-master-plan.md) |
+| Phase 4: Build & Release | Pending | [v1-master-plan.md](v1-master-plan.md) |
 
-## Implementation Plans
+---
 
-| Document | Description |
-|----------|-------------|
-| [v1-master-plan.md](v1-master-plan.md) | v1.0.0 master plan — 24 tasks from feature flags to release ZIP |
-| [100k-scalability-cleanup-plan.md](100k-scalability-cleanup-plan.md) | 100K member scalability: async pipeline, leaderboard cache, lazy-load engines, dead code removal |
-| [phase2-completion-plan.md](phase2-completion-plan.md) | Phase 2 completion: badges, leaderboard, kudos, badge share, rank automation, credential expiry |
+## Documents
 
-## Design Specs
+### The Master Plan
 
-| Document | Description |
-|----------|-------------|
-| [universal-engine-audit-spec.md](universal-engine-audit-spec.md) | Universal engine audit: lazy-load, public API, async pipeline, admin UI, cron consolidation |
-| [first-run-ux-polish-spec.md](first-run-ux-polish-spec.md) | First-run UX polish: welcome card, earning guide block, readme.txt, wizard improvements |
+| Document | What it covers |
+|----------|---------------|
+| [v1-master-plan.md](v1-master-plan.md) | **Start here.** All phases 0-4, 37 tasks, execution order, what ships in 1.0.0 |
 
-## Quality
+### Active Specs (work to do)
 
-| Document | Description |
-|----------|-------------|
-| [QA-CHECKLIST.md](QA-CHECKLIST.md) | 200+ checkpoint QA checklist covering free + pro features across 16 sections |
+| Document | What it covers |
+|----------|---------------|
+| [frontend-hub-flow-spec.md](frontend-hub-flow-spec.md) | Hub page, card grid, slide-in panels, smart nudge engine, auto-page creation, color system |
+| [first-run-ux-polish-spec.md](first-run-ux-polish-spec.md) | Setup wizard skip text (only remaining item) |
+
+### Reference (completed work, kept for context)
+
+| Document | What it covers |
+|----------|---------------|
+| [PRODUCT-VISION.md](PRODUCT-VISION.md) | Product vision, architecture philosophy, competitive analysis, free/pro split |
+| [ADMIN-DESIGN-SYSTEM.md](ADMIN-DESIGN-SYSTEM.md) | Wbcom shared admin UX — sidebar + card layout pattern |
+| [QA-CHECKLIST.md](QA-CHECKLIST.md) | 200+ checkpoint QA checklist for free + pro |
+| [100k-scalability-cleanup-plan.md](100k-scalability-cleanup-plan.md) | Scalability work (completed in Phase 1) |
+| [phase2-completion-plan.md](phase2-completion-plan.md) | BadgeShare + RankAutomation (completed) |
+| [universal-engine-audit-spec.md](universal-engine-audit-spec.md) | Engine audit spec (completed) |
+
+---
+
+## What's Next (in order)
+
+1. **Frontend Hub & Connected Flow** — build the hub page from [frontend-hub-flow-spec.md](frontend-hub-flow-spec.md)
+2. **Frontend UX Audit** — Tasks 25-30 in master plan (modals, mobile 390px, empty states, interactivity, admin consistency)
+3. **First-run skip button text** — last item from [first-run-ux-polish-spec.md](first-run-ux-polish-spec.md)
+4. **Phase 3: Pro Plugin Scaffold** — split pro engines to separate plugin
+5. **Phase 4: Build & Release** — Grunt, EDD SDK, version bump, zip
+
+---
 
 ## Free vs Pro Scope
 
@@ -54,53 +80,23 @@ All product planning, specs, QA checklists, and design documents for both free a
 | WP-CLI commands (6 commands incl. doctor) | Done |
 | Toast notifications (Interactivity API + REST polling) | Done |
 | Privacy (GDPR export/erasure) | Done |
-| Log pruning (configurable retention) | Done |
 | Rank automation rules | Done |
+| **Gamification Hub page** | **Next** |
 
 ### Pro Plugin (wb-gamification-pro)
 
 | Feature | Flag Key | Status |
 |---------|----------|--------|
-| Cohort leagues (Duolingo-style weekly competition) | `cohort_leagues` | Done |
-| Community challenges (team goals, global progress) | `community_challenges` | Done |
+| Cohort leagues | `cohort_leagues` | Done (in free, moves to pro in Phase 3) |
+| Community challenges | `community_challenges` | Done |
 | Weekly recap emails | `weekly_emails` | Done |
 | Leaderboard nudge emails | `leaderboard_nudge` | Done |
 | Cosmetics / profile frames | `cosmetics` | Done |
-| Tenure badges (anniversary milestones) | `tenure_badges` | Done |
-| Site-first badges (first user to do X) | `site_first_badges` | Done |
+| Tenure badges | `tenure_badges` | Done |
+| Site-first badges | `site_first_badges` | Done |
 | Status retention engine | `status_retention` | Done |
 | Badge share pages (OG, LinkedIn, OpenBadges 3.0) | `badge_share` | Done |
-| Redemption store (spend points on rewards) | N/A (controller) | Done |
-| Outbound webhooks (HMAC-signed, Zapier/Make/n8n) | N/A (controller) | Done |
-| API key authentication (cross-site gamification center) | N/A (ApiKeyAuth) | Done |
-| EDD license management | N/A (LicenseManager) | Done |
-
-### Integration Manifests (Auto-detected)
-
-| Plugin | Manifest Location | Actions | Free/Pro |
-|--------|-------------------|---------|----------|
-| WordPress Core | integrations/wordpress.php | 8 actions | Free |
-| BuddyPress | integrations/buddypress.php | 10 actions | Free |
-| bbPress | integrations/bbpress.php | 3 actions | Free |
-| WooCommerce | integrations/woocommerce.php | 4 actions | Free |
-| LearnDash | integrations/learndash.php | 5 actions | Free |
-| LifterLMS | integrations/contrib/lifterlms.php | 5 actions | Free |
-| MemberPress | integrations/contrib/memberpress.php | 3 actions | Free |
-| GiveWP | integrations/contrib/givewp.php | 4 actions | Free |
-| The Events Calendar | integrations/contrib/the-events-calendar.php | 3 actions | Free |
-| WPMediaVerse Pro | wpmediaverse-pro/wb-gamification.php | 17 actions | Pro (MVS) |
-
-**Total: 62 gamification actions** across 10 integration manifests.
-
-## CLI Readiness Check
-
-Run `wp wb-gamification doctor --verbose` before any release. It validates:
-- 20 database tables
-- Default levels and badges
-- Action registrations and duplicate hook detection
-- Kudos option alignment
-- Feature flags vs pro addon status
-- REST API routes
-- Cron jobs
-- Integration detection
-- Market readiness (readme, .pot, blocks, shortcodes, minified assets)
+| Redemption store | N/A | Done |
+| Outbound webhooks | N/A | Done |
+| API key authentication | N/A | Done |
+| EDD license management | N/A | Done |
