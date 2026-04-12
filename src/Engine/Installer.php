@@ -344,6 +344,46 @@ final class Installer {
 		self::seed_default_badges();
 
 		update_option( 'wb_gam_db_version', WB_GAM_VERSION );
+
+		// Auto-create Gamification hub page if it doesn't exist.
+		self::maybe_create_hub_page();
+	}
+
+	/**
+	 * Create the Gamification hub page if one doesn't already exist.
+	 *
+	 * Uses post meta `_wb_gam_hub_page` to detect existing pages,
+	 * preventing duplicates on reactivation.
+	 *
+	 * @since 1.0.0
+	 */
+	private static function maybe_create_hub_page(): void {
+		$existing = get_posts( array(
+			'post_type'   => 'page',
+			'meta_key'    => '_wb_gam_hub_page', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
+			'meta_value'  => '1', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value
+			'numberposts' => 1,
+			'post_status' => array( 'publish', 'draft', 'private', 'trash' ),
+			'fields'      => 'ids',
+		) );
+
+		if ( ! empty( $existing ) ) {
+			update_option( 'wb_gam_hub_page_id', $existing[0], false );
+			return;
+		}
+
+		$page_id = wp_insert_post( array(
+			'post_title'   => __( 'Gamification', 'wb-gamification' ),
+			'post_content' => '<!-- wp:wb-gamification/hub /-->',
+			'post_status'  => 'publish',
+			'post_type'    => 'page',
+			'post_author'  => get_current_user_id() ?: 1,
+		) );
+
+		if ( $page_id && ! is_wp_error( $page_id ) ) {
+			update_post_meta( $page_id, '_wb_gam_hub_page', '1' );
+			update_option( 'wb_gam_hub_page_id', $page_id, false );
+		}
 	}
 
 	/**

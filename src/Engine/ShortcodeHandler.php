@@ -51,6 +51,7 @@ final class ShortcodeHandler {
 		add_shortcode( 'wb_gam_year_recap', array( __CLASS__, 'render_year_recap' ) );
 		add_shortcode( 'wb_gam_points_history', array( __CLASS__, 'render_points_history' ) );
 		add_shortcode( 'wb_gam_earning_guide', array( __CLASS__, 'render_earning_guide' ) );
+		add_shortcode( 'wb_gam_hub', array( __CLASS__, 'render_hub' ) );
 	}
 
 	// ── Shortcode renderers ───────────────────────────────────────────────────
@@ -300,6 +301,18 @@ final class ShortcodeHandler {
 		$atts['show_action_label'] = filter_var( $atts['show_action_label'], FILTER_VALIDATE_BOOLEAN );
 
 		return self::block( 'points-history', $atts );
+	}
+
+	/**
+	 * Render [wb_gam_hub].
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param array|string $atts Shortcode attributes (none used).
+	 * @return string HTML output.
+	 */
+	public static function render_hub( $atts = array() ): string {
+		return self::block( 'hub', array() );
 	}
 
 	// ── Public attribute normalizers (used by tests) ──────────────────────────

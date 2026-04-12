@@ -286,11 +286,19 @@ final class WB_Gamification {
 			WB_GAM_VERSION
 		);
 
+		// Lucide icon font — used by hub page.
+		wp_register_style(
+			'lucide-icons',
+			'https://unpkg.com/lucide-static@0.469.0/font/lucide.css',
+			array(),
+			'0.469.0'
+		);
+
 		// Hub block assets.
 		wp_register_style(
 			'wb-gamification-hub',
 			WB_GAM_URL . 'assets/css/hub.css',
-			array(),
+			array( 'lucide-icons' ),
 			WB_GAM_VERSION
 		);
 		wp_register_script_module(
