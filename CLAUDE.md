@@ -144,7 +144,22 @@ WB_GAM_BASENAME  // 'wb-gamification/wb-gamification.php'
 
 ---
 
-## 🟡 Pending / Phase 5+
+## 🟡 Next Up — Frontend UX Audit (Phase 2.5)
+
+See `plans/v1-master-plan.md` Tasks 25-30 for full details:
+- **Task 25:** Modal/overlay accessibility (ARIA, ESC key, focus trap)
+- **Task 26:** Mobile 390px viewport audit (all 11 blocks + all admin pages)
+- **Task 27:** First-run UX (skip button help text, welcome card browser test)
+- **Task 28:** Empty states audit (verify all blocks handle zero-data)
+- **Task 29:** Interactivity polish (leaderboard period switch, heatmap tooltips, color-blind labels)
+- **Task 30:** Admin design consistency audit (all pages match premium CSS system)
+
+## 🔜 After UX Audit
+
+- **Phase 3:** Pro plugin scaffold (split pro engines to `wb-gamification-pro`)
+- **Phase 4:** Build & release (Grunt, EDD SDK, version bump, zip packaging)
+
+## 🟣 Phase 5+ (Deferred)
 
 - **GraphQL API** — flexible queries for mobile/headless frontends
 - **WebSocket real-time** — enterprise tier (SSE already done; WS is bidirectional layer)
@@ -198,6 +213,16 @@ Version tracked by `get_option('wb_gam_db_version')`. Migrations live in `DbUpgr
 | Admin settings | `src/Admin/SettingsPage.php` |
 | Analytics dashboard | `src/Admin/AnalyticsDashboard.php` |
 | Manual award UI | `src/Admin/ManualAwardPage.php` |
+| Badge library UI | `src/Admin/BadgeAdminPage.php` |
+| Challenge manager UI | `src/Admin/ChallengeManagerPage.php` |
+| API keys UI | `src/Admin/ApiKeysPage.php` |
+| Badge share page | `src/Engine/BadgeSharePage.php` |
+| API key auth | `src/API/ApiKeyAuth.php` |
+| Capabilities API | `src/API/CapabilitiesController.php` |
+| Abilities registration | `src/API/AbilitiesRegistration.php` |
+| Feature flags | `src/Engine/FeatureFlags.php` |
+| Async evaluator | `src/Engine/AsyncEvaluator.php` |
+| Doctor CLI | `src/CLI/DoctorCommand.php` |
 | REST members endpoint | `src/API/MembersController.php` |
 | REST points endpoint | `src/API/PointsController.php` |
 | OpenBadges 3.0 endpoint | `src/API/CredentialController.php` |
@@ -216,15 +241,15 @@ Version tracked by `get_option('wb_gam_db_version')`. Migrations live in `DbUpgr
 Namespace: `/wp-json/wb-gamification/v1/`
 
 Controllers registered in `WB_Gamification::register_routes()`:
-`Members`, `Points`, `Badges`, `Leaderboard`, `Actions`, `Kudos`, `BadgeShare`, `Challenges`, `Events`, `Webhooks`, `Rules`, `Recap`, `Credential`, `Redemption`
+`Members`, `Points`, `Badges`, `Leaderboard`, `Actions`, `Kudos`, `BadgeShare`, `Challenges`, `Events`, `Webhooks`, `Rules`, `Recap`, `Credential`, `Redemption`, `Capabilities`, `Levels`, `ApiKeyAuth`
 
 ---
 
 ## Registered Blocks
 
-`leaderboard`, `member-points`, `badge-showcase`, `level-progress`, `challenges`, `streak`, `top-members`, `kudos-feed`, `year-recap`, `points-history`
+`leaderboard`, `member-points`, `badge-showcase`, `level-progress`, `challenges`, `streak`, `top-members`, `kudos-feed`, `year-recap`, `points-history`, `earning-guide`
 
-All blocks live in `blocks/{slug}/` and are registered dynamically from `WB_Gamification::register_blocks()`.
+All 11 blocks live in `blocks/{slug}/` and are registered dynamically from `WB_Gamification::register_blocks()`. Each has a matching shortcode via `ShortcodeHandler`.
 
 ---
 
@@ -232,7 +257,7 @@ All blocks live in `blocks/{slug}/` and are registered dynamically from `WB_Gami
 
 | Version | Key Changes |
 |---|---|
-| **0.5.1** | WP-CLI commands (`points award`, `member status`, `actions list`, `logs prune`, `export user`) |
+| **0.5.1** | WP-CLI commands, API Key Auth, Capabilities endpoint, Abilities API, REST schemas on all 16 controllers, CORS support, site_id column, earning-guide block, CI workflows, Grunt build, EDD SDK, readme.txt |
 | **0.5.0** | Shortcodes, manual award UI, points-history block, badge admin page, dashboard KPIs, empty states, CSS/JS extracted to assets/, full PHPDoc docblocks |
 | **0.4.0** | BadgeSharePage, RankAutomation UI, cosmetics engine, cohort leagues, rate limiter, weekly email engine, Phase 4 integrations complete |
 | **0.3.0** | CredentialExpiryEngine, `validity_days`/`expires_at` columns on user_badges, OpenBadges 3.0 credential issuance |

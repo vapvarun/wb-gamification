@@ -10,9 +10,9 @@
 
 ---
 
-## Phase 0: REST API & AI Integration Foundation (MUST DO FIRST)
+## Phase 0: REST API & AI Integration Foundation [COMPLETED]
 
-### Task 0.1: API Key Authentication System [DONE - in progress]
+### Task 0.1: API Key Authentication System [DONE]
 
 **Goal:** Enable cross-site usage — remote WordPress sites authenticate via API key instead of cookie/nonce.
 
@@ -30,7 +30,7 @@
 - Site ID flows into event metadata for attribution
 - `$GLOBALS['wb_gam_remote_site_id']` set during request for cross-site tracking
 
-### Task 0.2: Capabilities Discovery Endpoint [DONE - in progress]
+### Task 0.2: Capabilities Discovery Endpoint [DONE]
 
 **Goal:** Mobile apps, AI agents, and remote sites can discover what the API offers.
 
@@ -60,153 +60,27 @@
 }
 ```
 
-### Task 0.3: REST Schema Completeness
+### Task 0.3: REST Schema Completeness [DONE]
 
 **Goal:** All 14 REST controllers have proper `get_item_schema()` for OpenAPI/Swagger discovery.
 
-**Files missing schema:**
-- `src/API/ActionsController.php`
-- `src/API/BadgeShareController.php`
-- `src/API/CredentialController.php`
-- `src/API/EventsController.php`
-- `src/API/PointsController.php`
-- `src/API/RecapController.php`
+All 16 controllers now have `get_item_schema()` — verified via grep.
 
-Each controller gets a `get_item_schema()` method describing the response shape in JSON Schema format.
+### Task 0.4: WP Abilities API Registration [DONE]
 
-### Task 0.4: WP Abilities API Registration
+`src/API/AbilitiesRegistration.php` — registers all gamification capabilities. Fallback REST endpoint `/wb-gamification/v1/abilities` for pre-6.9 WordPress.
 
-**Goal:** Register all gamification capabilities with the WordPress Abilities API so AI agents (Claude, GPT, Gemini) can discover and use the gamification system programmatically.
+### Task 0.5: API Keys Admin Page [DONE]
 
-**Files:**
-- Create: `src/API/AbilitiesRegistration.php`
+`src/Admin/ApiKeysPage.php` (9K) — submenu page for key management (create, view, revoke, delete).
 
-**Abilities to register:**
-```php
-[
-    // Read abilities
-    'wb-gamification.read-leaderboard' => [
-        'label'       => 'Read gamification leaderboard',
-        'description' => 'Retrieve ranked member lists by points for any period',
-        'endpoint'    => '/wb-gamification/v1/leaderboard',
-        'methods'     => ['GET'],
-    ],
-    'wb-gamification.read-member-profile' => [
-        'label'       => 'Read member gamification profile',
-        'description' => 'Get points, level, badges, streak for a member',
-        'endpoint'    => '/wb-gamification/v1/members/{id}',
-        'methods'     => ['GET'],
-    ],
-    'wb-gamification.read-badges' => [
-        'label'       => 'List available badges',
-        'description' => 'Get all badge definitions and their award criteria',
-        'endpoint'    => '/wb-gamification/v1/badges',
-        'methods'     => ['GET'],
-    ],
-    'wb-gamification.read-challenges' => [
-        'label'       => 'List active challenges',
-        'description' => 'Get current challenges with progress and deadlines',
-        'endpoint'    => '/wb-gamification/v1/challenges',
-        'methods'     => ['GET'],
-    ],
-    'wb-gamification.read-actions' => [
-        'label'       => 'List registered gamification actions',
-        'description' => 'Enumerate all point-earning actions with their values',
-        'endpoint'    => '/wb-gamification/v1/actions',
-        'methods'     => ['GET'],
-    ],
-    // Write abilities
-    'wb-gamification.award-points' => [
-        'label'       => 'Award points to a member',
-        'description' => 'Manually award gamification points with reason',
-        'endpoint'    => '/wb-gamification/v1/events',
-        'methods'     => ['POST'],
-        'requires'    => 'manage_options',
-    ],
-    'wb-gamification.submit-event' => [
-        'label'       => 'Submit a gamification event',
-        'description' => 'Report a user action for point evaluation',
-        'endpoint'    => '/wb-gamification/v1/events',
-        'methods'     => ['POST'],
-    ],
-    'wb-gamification.give-kudos' => [
-        'label'       => 'Give kudos to another member',
-        'description' => 'Send peer recognition with a message',
-        'endpoint'    => '/wb-gamification/v1/kudos',
-        'methods'     => ['POST'],
-    ],
-    'wb-gamification.redeem-points' => [
-        'label'       => 'Redeem points for rewards',
-        'description' => 'Spend accumulated points on reward catalog items',
-        'endpoint'    => '/wb-gamification/v1/redemption/redeem',
-        'methods'     => ['POST'],
-    ],
-    // Admin abilities
-    'wb-gamification.manage-badges' => [
-        'label'       => 'Create and manage badges',
-        'description' => 'Full CRUD on badge definitions and award rules',
-        'endpoint'    => '/wb-gamification/v1/badges',
-        'methods'     => ['GET', 'POST', 'PUT', 'DELETE'],
-        'requires'    => 'manage_options',
-    ],
-    'wb-gamification.manage-api-keys' => [
-        'label'       => 'Manage API keys for cross-site access',
-        'description' => 'Create, revoke, and list API keys for remote sites',
-        'endpoint'    => '/wb-gamification/v1/api-keys',
-        'methods'     => ['GET', 'POST', 'DELETE'],
-        'requires'    => 'manage_options',
-    ],
-]
-```
+### Task 0.6: CORS Support for Cross-Origin Requests [DONE]
 
-**Registration approach:**
-- Check `function_exists('wp_register_ability')` for WP 6.9+
-- Fallback: register as a REST endpoint `/wb-gamification/v1/abilities` that returns the same data
-- This ensures AI agents can discover capabilities on ANY WordPress version
+CORS headers in `src/API/ApiKeyAuth.php` when API key auth is used.
 
-### Task 0.5: API Keys Admin Page
+### Task 0.7: Site ID on Events Table [DONE]
 
-**Goal:** Admin UI for managing API keys (create, view, revoke, delete).
-
-**Files:**
-- Create: `src/Admin/ApiKeysPage.php`
-
-**UI:**
-- Submenu "API Keys" under Gamification
-- List of keys: label, site_id, created date, last used, status (active/revoked)
-- "Generate New Key" form: label, site_id, user to associate
-- Key shown ONCE on creation (like GitHub tokens)
-- Revoke/delete buttons per key
-
-### Task 0.6: CORS Support for Cross-Origin Requests
-
-**Files:**
-- Modify: `src/API/ApiKeyAuth.php`
-
-**Add CORS headers when API key auth is used:**
-```php
-add_action( 'rest_api_init', function() {
-    remove_filter( 'rest_pre_serve_request', 'rest_send_cors_headers' );
-    add_filter( 'rest_pre_serve_request', function( $value ) {
-        $origin = get_http_origin();
-        if ( $origin ) {
-            header( 'Access-Control-Allow-Origin: ' . esc_url_raw( $origin ) );
-            header( 'Access-Control-Allow-Credentials: true' );
-            header( 'Access-Control-Allow-Headers: X-WB-Gam-Key, Content-Type, Authorization' );
-        }
-        return $value;
-    } );
-} );
-```
-
-### Task 0.7: Site ID on Events Table
-
-**Files:**
-- Modify: `src/Engine/Installer.php` — add `site_id VARCHAR(100) DEFAULT ''` to `wb_gam_events`
-- Modify: `src/Engine/DbUpgrader.php` — migration to ALTER TABLE add column
-- Modify: `src/Engine/Engine.php` — persist site_id from event metadata into the column
-
-This enables querying "show me all events from mediaverse-prod" or "leaderboard for jetonomy-site only".
+`site_id VARCHAR(100)` column + index on `wb_gam_events`. Installer and DbUpgrader updated.
 
 ---
 
@@ -228,76 +102,25 @@ This enables querying "show me all events from mediaverse-prod" or "leaderboard 
 
 ---
 
-## Phase 2: Premium Admin UX (Free Plugin)
+## Phase 2: Premium Admin UX (Free Plugin) [COMPLETED]
 
-### Task 14: Admin CSS Design System
+### Task 14: Admin CSS Design System [DONE]
+`assets/css/admin-premium.css` (1775 lines) — Notion-inspired cards, toggles, status pills, RTL logical properties, responsive breakpoints at 1024/640px.
 
-**Goal:** Notion-inspired admin UX — cards, toggles, whitespace, system fonts. Shared across all Wbcom plugins.
+### Task 15: Dashboard Page (Redesign) [DONE]
+`src/Admin/AnalyticsDashboard.php` (16K) — KPI cards, period selector, activity feed, top members.
 
-**Files:**
-- Create: `assets/css/admin-premium.css`
-- Modify: `wb-gamification.php::enqueue_admin_assets()`
+### Task 16: Settings Page (Redesign) [DONE]
+`src/Admin/SettingsPage.php` (50K) — card-based, 5+ tabs including Points/Levels/Features/Integrations/Automation, rank automation rules UI, first-run welcome card.
 
-Design tokens:
-- Cards: white bg, 1px border #e0e0e0, 8px radius, 24px padding, subtle shadow on hover
-- Toggles: iOS-style switch replacing all checkboxes
-- Status pills: rounded, color-coded (green=active, amber=pending, red=inactive, blue=info)
-- Typography: -apple-system, system-ui. 14px base. 600 weight for headings.
-- Spacing: 24px section gaps, 16px inner gaps
-- Toasts: fixed bottom-right, slide-in animation, auto-dismiss 4s
-- RTL: all layout uses logical properties (margin-inline-start, padding-inline-end)
+### Task 17: Badge Library (Redesign) [DONE]
+`src/Admin/BadgeAdminPage.php` (24K) — grid cards, wp.media() icon picker, earned counts, credential flag support.
 
-### Task 15: Dashboard Page (Redesign)
+### Task 18: Challenge Manager (New Admin Page) [DONE]
+`src/Admin/ChallengeManagerPage.php` (14K) — create/manage challenges with card layout, status management.
 
-**Goal:** Replace current AnalyticsDashboard with a clean KPI dashboard.
-
-Layout:
-- Top row: 4 KPI cards (Total Points Awarded, Active Members, Badges Earned, Challenges Completed) with sparkline trend
-- Second row: 2 cards — "Recent Activity" feed (last 10 events) + "Quick Actions" (Award Points, Create Challenge, View Leaderboard)
-- Third row: "Top Members This Week" mini-leaderboard (5 rows)
-- Period selector: 7d / 30d / 90d / All
-- If standalone center mode: show "Connected Sites" card with site_id list and event counts
-
-### Task 16: Settings Page (Redesign)
-
-**Goal:** Card-based settings with toggle switches, inline descriptions, AJAX save.
-
-Tabs: Points | Levels | Features | Integrations | API Keys
-
-- Points tab: card per action category, toggle + point value per action
-- Levels tab: sortable level cards with name, threshold, icon preview
-- Features tab: toggle grid for all optional engines (from FeatureFlags)
-- Integrations tab: status cards per integration (active/inactive based on plugin detection)
-- API Keys tab: key management (from Task 0.5)
-- AJAX save + toast notification
-
-### Task 17: Badge Library (Redesign)
-
-**Goal:** Grid of badge cards with built-in icon picker.
-
-- Badge grid: cards showing icon, name, earned count, status pill
-- Create/edit modal with: name, description, icon picker, auto-award conditions
-- Icon picker: grid of 50+ built-in SVGs + "Upload Custom" option
-- Auto-award conditions: simple dropdowns — "When user reaches [X] points" / "When user earns [action] [N] times"
-
-### Task 18: Challenge Manager (New Admin Page)
-
-**Goal:** Admins can create/manage challenges without code. Plug-and-play.
-
-- List view: card per challenge with title, action, target, progress bar, status pill, dates
-- Create form: Title, Action (dropdown), Target Count, Start Date, End Date, Bonus Points
-- Smart defaults: start=now, end=+7days, target=10, bonus=50
-- Status management: Active/Paused/Completed with one-click toggle
-
-### Task 19: Toast Notification System
-
-**Goal:** Instant feedback when users earn points, badges, or complete challenges.
-
-- NotificationBridge stores pending toasts in user transient on award
-- Frontend JS polls `/members/me/notifications` every 30s (or on page focus)
-- Toast slides in from bottom-right: icon + message + point count, auto-dismiss 4s
-- Badge earned: special toast with badge icon
-- Challenge complete: "Challenge Complete! +[X] bonus points"
+### Task 19: Toast Notification System [DONE]
+`assets/js/toast.js` (139 lines) — polls `/members/me/toasts` every 30s, 6 notification types (points/badge/challenge/level_up/streak/kudos), `aria-live="polite"`, auto-dismiss 4s.
 
 ---
 
@@ -345,16 +168,87 @@ Tabs: Points | Levels | Features | Integrations | API Keys
 
 ---
 
-## Execution Order (Updated)
+## Phase 2.5: Frontend UX Audit & Polish
+
+> Added 2026-04-12. Covers all user-facing screens — blocks, overlays, modals, admin pages.
+
+### Task 25: Modal/Overlay Accessibility Fixes
+
+**Problem:** Frontend overlay (.wb-gam-overlay) and admin modal (.wbgam-modal) lack ARIA attributes, ESC key handling, and focus traps.
+
+**Fixes needed:**
+- Frontend overlay: add `role="alertdialog"`, `aria-modal="true"`, ESC key dismiss handler, focus trap
+- Admin modal CSS framework: add `role="dialog"`, `aria-modal="true"`, ESC handler, backdrop click close, focus trap
+- Both: ensure `.wb-gam-overlay__dismiss` and `.wbgam-modal-close` have `aria-label`
+
+**Files:** `assets/css/frontend.css`, `assets/interactivity/index.js`, `assets/css/admin-premium.css`
+
+### Task 26: Mobile Responsiveness Audit (390px)
+
+**Problem:** Frontend CSS has only a 480px breakpoint. Per CLAUDE.md rule, every UI change must be verified at 390px.
+
+**Audit scope — verify each at 390px viewport:**
+- [ ] All 11 block render outputs
+- [ ] Leaderboard table (scrollable or card-based?)
+- [ ] Badge showcase grid (single column?)
+- [ ] Streak heatmap (readability?)
+- [ ] Toast notifications (position, overlap?)
+- [ ] Level-up overlay card (padding, width?)
+- [ ] Year-recap stats grid
+- [ ] Earning guide columns
+- [ ] All admin pages at 390px (settings, badges, challenges, manual award, API keys, dashboard)
+
+### Task 27: First-Run UX Completion
+
+**From first-run-ux-polish-spec.md — remaining items:**
+- [ ] Fix 1: Setup wizard skip button — add help text ("Default values are already set — you can always change them later")
+- [ ] Fix 2: Dashboard welcome card — verify it renders for new installs (SettingsPage.php has code, needs browser test)
+
+### Task 28: Empty States Audit
+
+**Verify every block handles zero-data gracefully:**
+- [ ] Leaderboard with 0 members
+- [ ] Badge showcase with 0 badges earned
+- [ ] Challenges with 0 active challenges
+- [ ] Kudos feed with 0 kudos
+- [ ] Points history with 0 transactions
+- [ ] Streak with 0-day streak
+- [ ] Top members with 0 data
+- [ ] Year recap with no activity
+- [ ] Earning guide with 0 enabled actions
+
+### Task 29: Interactivity Polish
+
+**Quick wins to improve UX feel:**
+- [ ] Leaderboard period switching — add JS toggle via Interactivity API (currently server-only)
+- [ ] Streak heatmap — add hover tooltips showing day + point count
+- [ ] Color-blind safe rank indicators — add text labels alongside gold/silver/bronze colors
+- [ ] Locked badges — show unlock condition text (not just greyed-out)
+
+### Task 30: Admin Page Design Consistency Audit
+
+**Ensure all admin pages match the Notion-inspired design system from admin-premium.css:**
+- [ ] Dashboard (AnalyticsDashboard.php) — does it use wbgam- card pattern?
+- [ ] Settings (SettingsPage.php) — card-based tabs, toggles vs checkboxes?
+- [ ] Badge Library (BadgeAdminPage.php) — grid cards consistent?
+- [ ] Challenge Manager (ChallengeManagerPage.php) — matches design system?
+- [ ] Manual Award (ManualAwardPage.php) — card layout?
+- [ ] API Keys (ApiKeysPage.php) — table + form pattern consistent?
+- [ ] Setup Wizard (SetupWizard.php) — uses premium CSS?
+
+---
+
+## Execution Order (Updated 2026-04-12)
 
 | Phase | Tasks | Status | Estimated |
 |-------|-------|--------|-----------|
-| Phase 0: REST & AI Foundation | Tasks 0.1-0.7 | In progress | 4-5 hours |
+| Phase 0: REST & AI Foundation | Tasks 0.1-0.7 | **DONE** | ~5 hours |
 | Phase 1: Core Cleanup | Tasks 1-13 | **DONE** | ~8 hours |
-| Phase 2: Premium UX | Tasks 14-19 | Pending | 6-8 hours |
+| Phase 2: Premium UX | Tasks 14-19 | **DONE** | ~7 hours |
+| **Phase 2.5: Frontend UX Audit** | **Tasks 25-30** | **NEXT** | **4-6 hours** |
 | Phase 3: Pro Scaffold | Tasks 20-21 | Pending | 3-4 hours |
 | Phase 4: Build & Release | Tasks 22-24 | Pending | 2 hours |
-| **Total** | **31 tasks** | | **~24-28 hours** |
+| **Total** | **37 tasks** | | **~30-35 hours** |
 
 ---
 
@@ -401,7 +295,7 @@ AI agent discovers capabilities via:
 - **CORS support for cross-origin requests**
 - Premium admin UX (dashboard, settings, badge library, challenge manager, API keys)
 - Toast notifications
-- 10 blocks + 10 shortcodes
+- 11 blocks + 11 shortcodes (including earning-guide)
 - Full REST API + WP-CLI
 - Public SDK (12 functions)
 - RTL support

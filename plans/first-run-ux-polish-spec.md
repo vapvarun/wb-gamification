@@ -9,7 +9,7 @@
 
 ---
 
-## Fix 1: Setup Wizard — Skip Button Help Text
+## Fix 1: Setup Wizard — Skip Button Help Text [PENDING]
 
 **Problem:** The "Skip & configure manually" button submits the form but applies no defaults. Admin lands on settings page without context.
 
@@ -21,9 +21,11 @@
 
 ---
 
-## Fix 2: Empty Dashboard — First-Run Hint
+## Fix 2: Empty Dashboard — First-Run Hint [DONE — needs browser verification]
 
 **Problem:** Dashboard KPI cards show all 0s on first visit. Admin may think something is broken.
+
+**Status:** Code exists in `src/Admin/SettingsPage.php` (grep confirms `dismissed_welcome` / first-run logic). Needs Playwright browser test to verify rendering.
 
 **Fix:** Detect first-run state (no points in DB) and show an info card above the KPIs:
 - Heading: "Getting Started"
@@ -38,9 +40,11 @@
 
 ---
 
-## Fix 3: readme.txt for WordPress.org
+## Fix 3: readme.txt for WordPress.org [DONE]
 
-**Problem:** No readme.txt file — required for .org submission and standard plugin distribution.
+**Status:** `readme.txt` exists in plugin root (created in latest pull).
+
+**Original problem:** No readme.txt file — required for .org submission and standard plugin distribution.
 
 **Fix:** Create `readme.txt` with:
 - Plugin name, contributors, tags, stable tag, tested up to, requires PHP
@@ -54,9 +58,11 @@
 
 ---
 
-## Fix 4: Earning Guide Block (Member-Facing)
+## Fix 4: Earning Guide Block (Member-Facing) [DONE]
 
-**Problem:** Members have no way to discover how to earn points. Blocks show status but not instructions.
+**Status:** `blocks/earning-guide/block.json` + `blocks/earning-guide/render.php` exist. Shortcode `[wb_gam_earning_guide]` registered in ShortcodeHandler.
+
+**Original problem:** Members have no way to discover how to earn points. Blocks show status but not instructions.
 
 **Fix:** Add a new block + shortcode `[wb_gam_earning_guide]` that renders the action registry as a user-friendly card grid:
 - Shows each enabled action: icon, label, points value
@@ -88,20 +94,20 @@
 
 **Fix:** Run `grunt build` before release. No code change needed — just a release-process step documented in the QA checklist.
 
-**Status:** Existing Gruntfile handles this. Add to pre-release checklist.
+**Status:** Existing Gruntfile handles this. `.min.css` and `.min.js` files now exist on disk. Add to pre-release checklist.
 
 ---
 
-## Implementation Priority
+## Implementation Priority (Updated 2026-04-12)
 
-| Fix | Effort | Impact | Priority |
-|-----|--------|--------|----------|
-| Fix 1: Skip button help text | 5 min | Low | P3 |
-| Fix 2: First-run welcome card | 30 min | High | P1 |
-| Fix 3: readme.txt | 30 min | High (required for .org) | P1 |
-| Fix 4: Earning guide block | 1 hour | Medium | P2 |
-| Fix 5: Doctor MVS Pro check | Done | Low | Done |
-| Fix 6: Minified assets | `grunt build` | High | P1 (release step) |
+| Fix | Effort | Impact | Priority | Status |
+|-----|--------|--------|----------|--------|
+| Fix 1: Skip button help text | 5 min | Low | P3 | **PENDING** |
+| Fix 2: First-run welcome card | 30 min | High | P1 | **Code done, needs browser test** |
+| Fix 3: readme.txt | 30 min | High (required for .org) | P1 | **DONE** |
+| Fix 4: Earning guide block | 1 hour | Medium | P2 | **DONE** |
+| Fix 5: Doctor MVS Pro check | Done | Low | Done | **DONE** |
+| Fix 6: Minified assets | `grunt build` | High | P1 (release step) | **DONE** |
 
 ---
 

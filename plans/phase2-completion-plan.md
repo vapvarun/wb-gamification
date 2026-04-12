@@ -4,6 +4,11 @@
 
 **Goal:** Ship the two unbuilt Phase 2 features: (1) a human-readable credential share page with LinkedIn integration, and (2) a no-code admin UI for rank automation rules.
 
+**Status (Updated 2026-04-12): BOTH TASKS COMPLETE.**
+- `src/Engine/BadgeSharePage.php` exists (9K) — rewrite rules, OG meta, LinkedIn button
+- `src/Admin/SettingsPage.php` has automation tab (21 references to "automation" found)
+- Both wired into `wb-gamification.php`
+
 **Architecture:** `BadgeSharePage` registers a rewrite rule and renders a public HTML share page via `template_redirect`. The Rank Automation UI is a new `automation` tab added to the existing `SettingsPage` class — no new files, same form-POST + nonce pattern already used by Points and Levels tabs.
 
 **Tech Stack:** PHP 8.1, WordPress rewrite API, Brain\Monkey + PHPUnit for unit tests, existing `wb_gam_rank_automation_rules` option + `RankAutomation.php` schema.
