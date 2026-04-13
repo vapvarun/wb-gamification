@@ -30,15 +30,36 @@ defined( 'ABSPATH' ) || exit;
 final class ManifestLoader {
 
 	/**
+	 * All validated action definitions collected during the current scan.
+	 *
+	 * @var array<int, array>
+	 */
+	private static array $loaded_actions = array();
+
+	/**
 	 * Scan all manifest locations and register discovered triggers.
 	 *
 	 * Runs at plugins_loaded priority 5, before Registry::init() at 6.
 	 */
 	public static function scan(): void {
+		self::$loaded_actions = array();
+
 		$bp_active = function_exists( 'buddypress' );
 
 		self::load_first_party( $bp_active );
 		self::load_from_plugins( $bp_active );
+
+		/**
+		 * Fires after all manifest files have been loaded and validated.
+		 *
+		 * Use this hook to inspect, modify, or extend the set of discovered
+		 * action definitions before they are registered with the engine.
+		 *
+		 * @since 1.0.0
+		 *
+		 * @param array $actions All loaded action definitions.
+		 */
+		do_action( 'wb_gam_manifests_loaded', self::$loaded_actions );
 	}
 
 	/**
@@ -47,25 +68,41 @@ final class ManifestLoader {
 	 * @param bool $bp_active Whether BuddyPress is active.
 	 */
 	private static function load_first_party( bool $bp_active ): void {
-		$dir = WB_GAM_PATH . 'integrations/';
-		if ( ! is_dir( $dir ) ) {
-			return;
-		}
+		$paths = array( WB_GAM_PATH . 'integrations/' );
 
-		$files = glob( $dir . '*.php' );
-		if ( empty( $files ) ) {
-			return;
-		}
+		/**
+		 * Filters the directories scanned for gamification manifest files.
+		 *
+		 * Add custom directory paths to this array so the ManifestLoader
+		 * discovers manifest files in non-standard locations (e.g. themes
+		 * or mu-plugins).
+		 *
+		 * @since 1.0.0
+		 *
+		 * @param string[] $paths Array of directory paths to scan for *.php manifest files.
+		 */
+		$paths = apply_filters( 'wb_gam_manifest_paths', $paths );
 
-		foreach ( $files as $file ) {
-			$slug = basename( $file, '.php' );
-
-			// BuddyPress manifest: only load when BP is active.
-			if ( 'buddypress' === $slug && ! $bp_active ) {
+		foreach ( $paths as $dir ) {
+			if ( ! is_dir( $dir ) ) {
 				continue;
 			}
 
-			self::register_from_file( $file, $bp_active );
+			$files = glob( $dir . '*.php' );
+			if ( empty( $files ) ) {
+				continue;
+			}
+
+			foreach ( $files as $file ) {
+				$slug = basename( $file, '.php' );
+
+				// BuddyPress manifest: only load when BP is active.
+				if ( 'buddypress' === $slug && ! $bp_active ) {
+					continue;
+				}
+
+				self::register_from_file( $file, $bp_active );
+			}
 		}
 	}
 
@@ -108,11 +145,20 @@ final class ManifestLoader {
 		// phpcs:ignore WPThemeReview.CoreFunctionality.FileInclude.FileIncludeFound
 		$manifest = include $file;
 
-		if ( ! is_array( $manifest ) || empty( $manifest['triggers'] ) ) {
+		// Validate manifest return value.
+		if ( ! is_array( $manifest ) ) {
+			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+				error_log( sprintf( 'WB Gamification: Manifest %s did not return an array.', $file ) );
+			}
 			return;
 		}
 
-		self::register_manifest( $manifest, $bp_active );
+		if ( empty( $manifest['triggers'] ) ) {
+			return;
+		}
+
+		self::register_manifest( $manifest, $file, $bp_active );
 	}
 
 	/**
@@ -122,12 +168,37 @@ final class ManifestLoader {
 	 *   standalone_only: true     — skip when BuddyPress is active (BP covers the same event).
 	 *   requires_buddypress: true — skip when BuddyPress is NOT active.
 	 *
-	 * @param array $manifest  Manifest data with optional 'plugin', 'version', and 'triggers' keys.
-	 * @param bool  $bp_active Whether BuddyPress is active.
+	 * @param array  $manifest  Manifest data with optional 'plugin', 'version', and 'triggers' keys.
+	 * @param string $file      Absolute path to the manifest file (used in debug messages).
+	 * @param bool   $bp_active Whether BuddyPress is active.
 	 */
-	private static function register_manifest( array $manifest, bool $bp_active ): void {
+	private static function register_manifest( array $manifest, string $file, bool $bp_active ): void {
+		$required_keys = array( 'id', 'hook', 'default_points' );
+
 		foreach ( (array) ( $manifest['triggers'] ?? array() ) as $trigger ) {
 			if ( ! is_array( $trigger ) ) {
+				continue;
+			}
+
+			// Validate required keys exist on each trigger.
+			$skip = false;
+			foreach ( $required_keys as $key ) {
+				if ( empty( $trigger[ $key ] ) ) {
+					if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+						// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+						error_log(
+							sprintf(
+								'WB Gamification: Action in %s missing required key "%s".',
+								$file,
+								$key
+							)
+						);
+					}
+					$skip = true;
+					break;
+				}
+			}
+			if ( $skip ) {
 				continue;
 			}
 
@@ -149,6 +220,9 @@ final class ManifestLoader {
 			if ( ! empty( $manifest['plugin'] ) && ! isset( $trigger['plugin'] ) ) {
 				$trigger['plugin'] = $manifest['plugin'];
 			}
+
+			// Track the validated action for the wb_gam_manifests_loaded hook.
+			self::$loaded_actions[] = $trigger;
 
 			wb_gamification_register_action( $trigger );
 		}

@@ -114,10 +114,11 @@
         { "file": "hooks-filters.md", "title": "Hooks & Filters Reference", "slug": "hooks-filters-wbgam", "order": 2 },
         { "file": "rest-api.md", "title": "REST API Reference", "slug": "rest-api-wbgam", "order": 3 },
         { "file": "manifest-files.md", "title": "Writing Integration Manifests", "slug": "manifest-files-wbgam", "order": 4 },
-        { "file": "wp-cli.md", "title": "WP-CLI Commands", "slug": "wp-cli-wbgam", "order": 5 },
-        { "file": "helper-functions.md", "title": "PHP Helper Functions", "slug": "helper-functions-wbgam", "order": 6 },
-        { "file": "cross-site-api.md", "title": "Cross-Site API & Gamification Center", "slug": "cross-site-api-wbgam", "order": 7 },
-        { "file": "database-schema.md", "title": "Database Schema", "slug": "database-schema-wbgam", "order": 8 }
+        { "file": "build-first-integration.md", "title": "Build Your First Integration", "slug": "build-first-integration-wbgam", "order": 5 },
+        { "file": "wp-cli.md", "title": "WP-CLI Commands", "slug": "wp-cli-wbgam", "order": 6 },
+        { "file": "helper-functions.md", "title": "PHP Helper Functions", "slug": "helper-functions-wbgam", "order": 7 },
+        { "file": "cross-site-api.md", "title": "Cross-Site API & Gamification Center", "slug": "cross-site-api-wbgam", "order": 8 },
+        { "file": "database-schema.md", "title": "Database Schema", "slug": "database-schema-wbgam", "order": 9 }
       ]
     }
   ],

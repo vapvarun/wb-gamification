@@ -182,3 +182,39 @@ add_action( 'wb_gamification_register', function() {
 ```
 
 This fires after `Registry::init()` at `plugins_loaded` priority 6.
+
+## Validation
+
+The ManifestLoader validates every manifest and trigger at load time:
+
+1. **Manifest must return an array.** If the file does not `return array( ... )`, it is skipped. When `WP_DEBUG` is enabled, a message is logged to `debug.log`.
+2. **Each trigger must include `id`, `hook`, and `default_points`.** Missing any of these causes the trigger to be skipped with a debug log entry identifying the file and missing key.
+
+This means you can ship a manifest confidently — malformed entries are silently ignored in production and loudly reported during development.
+
+## Developer Hooks
+
+### `wb_gam_manifest_paths` (filter)
+
+Add custom directories for the manifest scanner. The ManifestLoader scans every directory in this array for `*.php` files:
+
+```php
+add_filter( 'wb_gam_manifest_paths', function ( array $paths ): array {
+    $paths[] = get_stylesheet_directory() . '/gamification/';
+    return $paths;
+} );
+```
+
+### `wb_gam_manifests_loaded` (action)
+
+Fires after all manifests have been loaded and validated. Receives the complete array of action definitions:
+
+```php
+add_action( 'wb_gam_manifests_loaded', function ( array $actions ): void {
+    error_log( 'WB Gamification loaded ' . count( $actions ) . ' manifest actions.' );
+} );
+```
+
+## Quick Start
+
+New to manifest files? Follow the [Build Your First Integration](build-first-integration.md) tutorial to create a working manifest in 5 minutes.
