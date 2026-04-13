@@ -136,6 +136,7 @@ use WBGam\API\RedemptionController;
 use WBGam\API\LevelsController;
 use WBGam\API\CapabilitiesController;
 use WBGam\API\AbilitiesRegistration;
+use WBGam\API\OpenApiController;
 use WBGam\API\ApiKeyAuth;
 use WBGam\Engine\CredentialExpiryEngine;
 use WBGam\Engine\LeaderboardEngine;
@@ -259,6 +260,7 @@ final class WB_Gamification {
 		( new RedemptionController() )->register_routes();
 		( new LevelsController() )->register_routes();
 		( new CapabilitiesController() )->register_routes();
+		( new OpenApiController() )->register_routes();
 	}
 
 	public function register_blocks(): void {
