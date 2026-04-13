@@ -34,11 +34,11 @@ class ShortcodeHandlerTest extends TestCase {
 		parent::tearDown();
 	}
 
-	public function test_init_registers_ten_shortcodes(): void {
+	public function test_init_registers_all_shortcodes(): void {
 		$registered = [];
 
 		Functions\expect( 'add_shortcode' )
-			->times( 10 )
+			->times( 12 )
 			->andReturnUsing( static function ( string $tag ) use ( &$registered ): void {
 				$registered[] = $tag;
 			} );
@@ -56,6 +56,8 @@ class ShortcodeHandlerTest extends TestCase {
 			'wb_gam_kudos_feed',
 			'wb_gam_year_recap',
 			'wb_gam_points_history',
+			'wb_gam_earning_guide',
+			'wb_gam_hub',
 		];
 
 		sort( $expected );
