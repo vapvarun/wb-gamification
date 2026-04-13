@@ -234,7 +234,7 @@ final class NotificationBridge {
 			<div
 				class="wb-gam-overlay wb-gam-overlay--level-up"
 				data-wp-bind--hidden="!state.levelUp.active"
-				role="dialog"
+				role="alertdialog"
 				aria-modal="true"
 				aria-label="<?php esc_attr_e( 'Level up!', 'wb-gamification' ); ?>"
 			>
@@ -249,6 +249,7 @@ final class NotificationBridge {
 					<p class="wb-gam-overlay__title" data-wp-text="state.levelUp.levelName"></p>
 					<button
 						class="wb-gam-overlay__dismiss"
+						aria-label="<?php esc_attr_e( 'Close', 'wb-gamification' ); ?>"
 						data-wp-on--click="actions.dismissLevelUp"
 					><?php esc_html_e( 'Awesome!', 'wb-gamification' ); ?></button>
 				</div>
@@ -258,7 +259,7 @@ final class NotificationBridge {
 			<div
 				class="wb-gam-overlay wb-gam-overlay--streak"
 				data-wp-bind--hidden="!state.streakMilestone.active"
-				role="dialog"
+				role="alertdialog"
 				aria-modal="true"
 				aria-label="<?php esc_attr_e( 'Streak milestone!', 'wb-gamification' ); ?>"
 			>
@@ -271,6 +272,7 @@ final class NotificationBridge {
 					<p class="wb-gam-overlay__sub"><?php esc_html_e( 'Keep showing up — you\'re on fire!', 'wb-gamification' ); ?></p>
 					<button
 						class="wb-gam-overlay__dismiss"
+						aria-label="<?php esc_attr_e( 'Close', 'wb-gamification' ); ?>"
 						data-wp-on--click="actions.dismissStreakMilestone"
 					><?php esc_html_e( 'Keep it up!', 'wb-gamification' ); ?></button>
 				</div>

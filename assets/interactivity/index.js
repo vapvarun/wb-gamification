@@ -161,6 +161,18 @@ const { state, actions } = store( 'wb-gamification', {
 			events.forEach( e => actions.push( e ) );
 			// Clear so the next page load starts clean.
 			window.wbGamNotifications = [];
+
+			// ESC key handler: dismiss any active overlay.
+			document.addEventListener( 'keydown', ( e ) => {
+				if ( e.key === 'Escape' ) {
+					if ( state.levelUp.active ) {
+						actions.dismissLevelUp();
+					}
+					if ( state.streakMilestone.active ) {
+						actions.dismissStreakMilestone();
+					}
+				}
+			} );
 		},
 	},
 } );
