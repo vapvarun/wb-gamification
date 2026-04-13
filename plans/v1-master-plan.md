@@ -389,7 +389,7 @@ CORS headers in `src/API/ApiKeyAuth.php` when API key auth is used.
 | Phase 1: Core Cleanup | Tasks 1-13 | **DONE** | ~8 hours |
 | Phase 2: Premium UX | Tasks 14-19 | **DONE** | ~7 hours |
 | **Phase 2.5: Frontend UX Audit** | **Tasks 25-31** | **DONE** | **~5 hours** |
-| **Phase 2.75: Developer Platform** | **Tasks 32-38** | **NEXT** | **8-12 hours** |
+| **Phase 2.75: Developer Platform** | **Tasks 32-38** | **DONE** | **~4 hours** |
 | Phase 3: Pro Scaffold | Tasks 20-21 | Pending | 3-4 hours |
 | Phase 4: Build & Release | Tasks 22-24 | Pending | 2 hours |
 | **Total** | **45 tasks** | | **~40-48 hours** |
