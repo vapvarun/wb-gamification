@@ -1303,6 +1303,15 @@
 	white-space: nowrap;
 }
 
+.wb-gam-earning-guide__empty,
+.wb-gam-year-recap__empty {
+	color: var(--wb-gam-silver);
+	font-size: 0.9375rem;
+	text-align: center;
+	padding: 2rem;
+	margin: 0;
+}
+
 @media (max-width: 480px) {
 	.wb-gam-earning-guide__grid {
 		grid-template-columns: 1fr !important;

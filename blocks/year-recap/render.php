@@ -19,6 +19,12 @@ if ( $user_id <= 0 ) {
 	$user_id = get_current_user_id();
 }
 if ( ! $user_id ) {
+	$wrapper_attrs = get_block_wrapper_attributes( array( 'class' => 'wb-gam-year-recap' ) );
+	printf(
+		'<div %s><p class="wb-gam-year-recap__empty">%s</p></div>',
+		$wrapper_attrs, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		esc_html__( 'Log in to see your year in review.', 'wb-gamification' )
+	);
 	return;
 }
 
@@ -31,7 +37,13 @@ $accent_color = sanitize_hex_color( $attributes['accent_color'] ?? '' );
 $recap = RecapEngine::get_recap( $user_id, $year );
 $user  = get_userdata( $user_id );
 
-if ( ! $user ) {
+if ( ! $user || empty( $recap['total_points'] ) ) {
+	$wrapper_attrs = get_block_wrapper_attributes( array( 'class' => 'wb-gam-year-recap' ) );
+	printf(
+		'<div %s><p class="wb-gam-year-recap__empty">%s</p></div>',
+		$wrapper_attrs, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		esc_html__( 'Your year in review will appear here once you start earning points.', 'wb-gamification' )
+	);
 	return;
 }
 

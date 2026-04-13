@@ -19,6 +19,12 @@ defined( 'ABSPATH' ) || exit;
 
 $actions = Registry::get_actions();
 if ( empty( $actions ) ) {
+	$wrapper_attrs = get_block_wrapper_attributes( array( 'class' => 'wb-gam-earning-guide' ) );
+	printf(
+		'<div %s><p class="wb-gam-earning-guide__empty">%s</p></div>',
+		$wrapper_attrs, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		esc_html__( 'No earning opportunities available yet.', 'wb-gamification' )
+	);
 	return;
 }
 
@@ -48,6 +54,12 @@ foreach ( $actions as $id => $action ) {
 }
 
 if ( empty( $grouped ) ) {
+	$wrapper_attrs = get_block_wrapper_attributes( array( 'class' => 'wb-gam-earning-guide' ) );
+	printf(
+		'<div %s><p class="wb-gam-earning-guide__empty">%s</p></div>',
+		$wrapper_attrs, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		esc_html__( 'No earning opportunities available yet.', 'wb-gamification' )
+	);
 	return;
 }
 
