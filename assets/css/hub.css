@@ -128,15 +128,15 @@
 .gam-stats {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: var(--gam-gap);
-  margin-bottom: 20px;
+  gap: 12px;
+  margin-bottom: 16px;
 }
 
 .gam-stat {
   background: var(--gam-surface);
   border: 1px solid var(--gam-border);
   border-radius: var(--gam-radius);
-  padding: 16px;
+  padding: 14px 12px;
   text-align: center;
   box-shadow: var(--gam-shadow);
 }
@@ -195,7 +195,7 @@
 .gam-cards {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: var(--gam-gap);
+  gap: 12px;
 }
 
 .gam-card {
@@ -395,6 +395,67 @@
 .gam-panel__body {
   padding: 20px;
 }
+
+/* ── Panel-scoped block overrides ──
+   Force existing block grids into single/two column layouts
+   inside the 520px panel so they don't overflow. */
+
+/* Earning guide: force 1-2 columns max */
+.gam-panel__body .wb-gam-earning-guide__grid {
+  grid-template-columns: repeat(2, 1fr) !important;
+}
+
+/* Badge showcase: constrain grid */
+.gam-panel__body .wb-gam-badge-showcase__list {
+  grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+}
+
+/* Leaderboard: full width table */
+.gam-panel__body .wb-gam-leaderboard {
+  overflow-x: auto;
+}
+
+/* Streak heatmap: scroll if wider than panel */
+.gam-panel__body .wb-gam-streak__heatmap {
+  overflow-x: auto;
+  max-width: 100%;
+}
+
+/* Year recap stats: 2 columns */
+.gam-panel__body .wb-gam-recap__stats {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+/* ── Empty state enhancements ──
+   When blocks render empty content inside panels,
+   show a helpful message with a subtle CTA feel. */
+
+.gam-panel__body .wb-gam-challenges__empty,
+.gam-panel__body .wb-gam-badge-showcase__empty,
+.gam-panel__body .wb-gam-leaderboard__empty,
+.gam-panel__body .wb-gam-kudos-feed__empty,
+.gam-panel__body .wb-gam-points-history__empty {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--gam-text-muted);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* Empty state icon placeholder */
+.gam-panel__body [class*="__empty"]::before {
+  display: block;
+  font-family: 'lucide';
+  font-size: 32px;
+  color: var(--gam-border);
+  margin-bottom: 12px;
+}
+
+.gam-panel__body .wb-gam-badge-showcase__empty::before { content: "\e053"; /* award */ }
+.gam-panel__body .wb-gam-challenges__empty::before { content: "\e183"; /* target */ }
+.gam-panel__body .wb-gam-leaderboard__empty::before { content: "\e376"; /* trophy */ }
+.gam-panel__body .wb-gam-kudos-feed__empty::before { content: "\e2d6"; /* heart-handshake */ }
+.gam-panel__body .wb-gam-points-history__empty::before { content: "\e1f4"; /* history */ }
 
 /* Badge grid inside panel */
 .gam-badge-grid {
