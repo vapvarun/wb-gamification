@@ -70,6 +70,9 @@ use WBGam\Admin\BadgeAdminPage;
 use WBGam\Admin\ChallengeManagerPage;
 use WBGam\Admin\ManualAwardPage;
 use WBGam\Admin\ApiKeysPage;
+use WBGam\Admin\RedemptionStorePage;
+use WBGam\Admin\CommunityChallengesPage;
+use WBGam\Admin\CohortSettingsPage;
 use WBGam\API\CredentialController;
 use WBGam\API\RedemptionController;
 use WBGam\API\LevelsController;
@@ -146,6 +149,9 @@ final class WB_Gamification {
 			add_action( 'plugins_loaded', array( ChallengeManagerPage::class, 'init' ), 10 );
 			add_action( 'plugins_loaded', array( ManualAwardPage::class, 'init' ), 10 );
 			add_action( 'plugins_loaded', array( ApiKeysPage::class, 'init' ), 10 );
+			add_action( 'plugins_loaded', array( RedemptionStorePage::class, 'init' ), 10 );
+			add_action( 'plugins_loaded', array( CommunityChallengesPage::class, 'init' ), 10 );
+			add_action( 'plugins_loaded', array( CohortSettingsPage::class, 'init' ), 10 );
 		}
 	}
 
