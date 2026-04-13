@@ -234,7 +234,7 @@ final class SetupWizard {
 						<?php esc_html_e( 'Skip &amp; configure manually', 'wb-gamification' ); ?>
 					</button>
 					<p class="description" style="margin-top:8px;">
-						<?php esc_html_e( 'Default point values are already set for all actions. You can fine-tune them from the Settings page anytime.', 'wb-gamification' ); ?>
+						<?php esc_html_e( 'Default values are already set — you can always change them later.', 'wb-gamification' ); ?>
 					</p>
 				</div>
 
