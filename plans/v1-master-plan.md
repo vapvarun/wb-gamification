@@ -380,7 +380,7 @@ CORS headers in `src/API/ApiKeyAuth.php` when API key auth is used.
 | **Phase 2.5: Frontend UX Audit** | **Tasks 25-31** | **DONE** | **~5 hours** |
 | **Phase 2.75: Developer Platform** | **Tasks 32-38** | **DONE** | **~4 hours** |
 | Phase 3: All Free (no pro split) | — | **DONE** | — |
-| Phase 4: Build & Release | Tasks 22-24 | **NEXT** | 2 hours |
+| Phase 4: Build & Release | Tasks 22-24 | **DONE** | ~1 hour |
 | **Total** | **45 tasks** | | **~32 hours** |
 
 ---
