@@ -243,6 +243,16 @@ final class BadgeEngine {
 		 */
 		do_action( 'wb_gamification_badge_awarded', $user_id, $def ?? [], $badge_id );
 
+		/**
+		 * Fires after a badge is awarded to a user.
+		 *
+		 * @since 1.0.0
+		 *
+		 * @param int    $user_id  User who earned the badge.
+		 * @param string $badge_id Badge identifier.
+		 */
+		do_action( 'wb_gam_after_badge_award', $user_id, $badge_id );
+
 		// Dispatch outbound webhook.
 		WebhookDispatcher::dispatch(
 			'badge_awarded',

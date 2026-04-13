@@ -270,10 +270,32 @@ final class Engine {
 		 */
 		do_action( 'wb_gamification_points_awarded', $event->user_id, $event, $points );
 
+		/**
+		 * Fires after points are awarded to a user.
+		 *
+		 * @since 1.0.0
+		 *
+		 * @param int    $user_id   User who received points.
+		 * @param int    $points    Number of points awarded.
+		 * @param string $action_id Action that triggered the award.
+		 * @param int    $object_id Related object ID.
+		 */
+		do_action( 'wb_gam_after_points_award', $event->user_id, $points, $event->action_id, $event->object_id );
+
 		// Side-effects.
 		LevelEngine::maybe_level_up( $event->user_id );
 		StreakEngine::record_activity( $event->user_id );
 		WebhookDispatcher::dispatch( 'points_awarded', $event->user_id, $event, $points, array() );
+
+		/**
+		 * Fires after a gamification event is fully processed.
+		 *
+		 * @since 1.0.0
+		 *
+		 * @param array $event Event data array.
+		 * @param int   $user_id User ID.
+		 */
+		do_action( 'wb_gam_event_processed', (array) $event->metadata, $event->user_id );
 
 		return true;
 	}

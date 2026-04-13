@@ -161,6 +161,17 @@ final class KudosEngine {
 		 */
 		do_action( 'wb_gamification_kudos_given', $giver_id, $receiver_id, $message, $kudos_id );
 
+		/**
+		 * Fires after kudos are given.
+		 *
+		 * @since 1.0.0
+		 *
+		 * @param int    $giver_id    User who gave kudos.
+		 * @param int    $receiver_id User who received kudos.
+		 * @param string $message     Kudos message.
+		 */
+		do_action( 'wb_gam_kudos_given', $giver_id, $receiver_id, $message );
+
 		return true;
 	}
 

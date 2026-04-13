@@ -263,6 +263,16 @@ final class ChallengeEngine {
 		 * @param array $challenge Full challenge row.
 		 */
 		do_action( 'wb_gamification_challenge_completed', $user_id, $challenge );
+
+		/**
+		 * Fires when a user completes a challenge.
+		 *
+		 * @since 1.0.0
+		 *
+		 * @param int   $user_id   User who completed the challenge.
+		 * @param array $challenge Challenge data array.
+		 */
+		do_action( 'wb_gam_challenge_completed', $user_id, $challenge );
 	}
 
 	// ── DB helpers ───────────────────────────────────────────────────────────────

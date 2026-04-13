@@ -108,6 +108,26 @@ final class LevelEngine {
 			 * @param int $new_level_id  New level ID.
 			 */
 			do_action( 'wb_gamification_level_changed', $user_id, $current_level_id, $new_level['id'] );
+
+			// Resolve old level data from all levels by ID.
+			$old_level_data = null;
+			foreach ( self::get_all_levels() as $lvl ) {
+				if ( $lvl['id'] === $current_level_id ) {
+					$old_level_data = $lvl;
+					break;
+				}
+			}
+
+			/**
+			 * Fires after a user's level changes.
+			 *
+			 * @since 1.0.0
+			 *
+			 * @param int        $user_id   User whose level changed.
+			 * @param array|null $new_level New level data (id, name, min_points) or null.
+			 * @param array|null $old_level Previous level data or null.
+			 */
+			do_action( 'wb_gam_level_changed', $user_id, $new_level, $old_level_data );
 		}
 	}
 

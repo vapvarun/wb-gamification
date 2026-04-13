@@ -197,6 +197,16 @@ final class StreakEngine {
 		 */
 		do_action( 'wb_gamification_streak_milestone', $user_id, $streak_days );
 
+		/**
+		 * Fires when a user reaches a streak milestone.
+		 *
+		 * @since 1.0.0
+		 *
+		 * @param int $user_id       User who reached the milestone.
+		 * @param int $streak_days   Current streak day count.
+		 */
+		do_action( 'wb_gam_streak_milestone', $user_id, $streak_days );
+
 		// Award bonus points if configured.
 		$bonus = (int) get_option( self::OPT_BONUS_PTS, 10 );
 		if ( $bonus > 0 ) {
