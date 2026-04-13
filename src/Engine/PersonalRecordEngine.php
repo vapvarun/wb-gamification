@@ -72,9 +72,9 @@ final class PersonalRecordEngine {
 	 * (async batch path via AsyncEvaluator). The event data is unused — only
 	 * the user_id matters for period-total lookups.
 	 *
-	 * @param int        $user_id    User who just earned points.
+	 * @param int         $user_id    User who just earned points.
 	 * @param Event|array $event_data The event that triggered the award (Event or plain array).
-	 * @param int        $points     Points awarded (not the total — just this award).
+	 * @param int         $points     Points awarded (not the total — just this award).
 	 */
 	public static function check_personal_records( int $user_id, Event|array $event_data, int $points ): void {
 		$totals = self::period_totals( $user_id );

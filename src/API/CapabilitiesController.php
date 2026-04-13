@@ -66,10 +66,10 @@ final class CapabilitiesController extends WP_REST_Controller {
 	 * @return WP_REST_Response Response containing capabilities data.
 	 */
 	public function get_capabilities( WP_REST_Request $request ): WP_REST_Response {
-		$user_id  = get_current_user_id();
-		$is_admin = current_user_can( 'manage_options' );
+		$user_id   = get_current_user_id();
+		$is_admin  = current_user_can( 'manage_options' );
 		$is_authed = $user_id > 0;
-		$site_id  = $GLOBALS['wb_gam_remote_site_id'] ?? '';
+		$site_id   = $GLOBALS['wb_gam_remote_site_id'] ?? '';
 
 		$capabilities = array(
 			'authenticated' => $is_authed,

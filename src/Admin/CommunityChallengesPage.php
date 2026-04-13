@@ -313,7 +313,7 @@ final class CommunityChallengesPage {
 			'target_action' => sanitize_key( $_POST['target_action'] ?? '*' ),
 			'starts_at'     => sanitize_text_field( wp_unslash( $_POST['starts_at'] ?? '' ) ),
 			'ends_at'       => sanitize_text_field( wp_unslash( $_POST['ends_at'] ?? '' ) ),
-			'bonus_points'  => max( 0, (int) ( $_POST['bonus_points'] ?? 100 ) ),
+			'bonus_points'  => max( 0, absint( wp_unslash( $_POST['bonus_points'] ?? 100 ) ) ),
 			'status'        => 'active',
 		);
 

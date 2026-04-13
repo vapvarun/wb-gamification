@@ -215,12 +215,12 @@ final class RedemptionStorePage {
 						<tbody>
 						<?php foreach ( $items as $item ) : ?>
 							<?php
-							$type_labels = array(
+							$type_labels  = array(
 								'custom'         => __( 'Custom', 'wb-gamification' ),
 								'discount_pct'   => __( '% Discount', 'wb-gamification' ),
 								'discount_fixed' => __( 'Fixed Discount', 'wb-gamification' ),
 							);
-							$type_label  = $type_labels[ $item['reward_type'] ] ?? $item['reward_type'];
+							$type_label   = $type_labels[ $item['reward_type'] ] ?? $item['reward_type'];
 							$status_class = $item['is_active'] ? 'active' : 'info';
 							$stock_label  = ( null === $item['stock'] || 0 === (int) $item['stock'] )
 								? __( 'Unlimited', 'wb-gamification' )

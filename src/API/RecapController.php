@@ -131,8 +131,14 @@ class RecapController extends WP_REST_Controller {
 					'type'        => 'object',
 					'description' => 'Member metadata (display name, avatar).',
 					'properties'  => array(
-						'display_name' => array( 'type' => 'string', 'description' => 'Member display name.' ),
-						'avatar_url'   => array( 'type' => 'string', 'description' => 'Member avatar URL.' ),
+						'display_name' => array(
+							'type'        => 'string',
+							'description' => 'Member display name.',
+						),
+						'avatar_url'   => array(
+							'type'        => 'string',
+							'description' => 'Member avatar URL.',
+						),
 					),
 				),
 			),

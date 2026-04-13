@@ -88,8 +88,8 @@ final class BadgeAdminPage {
 		global $wpdb;
 
 		// phpcs:disable WordPress.Security.NonceVerification.Recommended -- GET params used for routing/display only, no data modification.
-		$editing  = sanitize_key( $_GET['badge'] ?? '' );
-		$notice   = sanitize_key( $_GET['notice'] ?? '' );
+		$editing = sanitize_key( $_GET['badge'] ?? '' );
+		$notice  = sanitize_key( $_GET['notice'] ?? '' );
 		// phpcs:enable WordPress.Security.NonceVerification.Recommended
 
 		$notice_map = array(
@@ -275,13 +275,15 @@ final class BadgeAdminPage {
 									<th><label for="wb-gam-badge-closes-at"><?php esc_html_e( 'Closes at', 'wb-gamification' ); ?></label></th>
 									<td>
 										<input type="datetime-local" name="badge_closes_at" id="wb-gam-badge-closes-at" class="wbgam-input"
-											value="<?php
+											value="
+											<?php
 											if ( ! empty( $badge['closes_at'] ) ) {
 												$dt = new \DateTime( $badge['closes_at'], new \DateTimeZone( 'UTC' ) );
 												$dt->setTimezone( wp_timezone() );
 												echo esc_attr( $dt->format( 'Y-m-d\TH:i' ) );
 											}
-											?>">
+											?>
+											">
 										<p class="description">
 											<?php esc_html_e( 'Stop awarding this badge after this date. Leave blank for no cutoff.', 'wb-gamification' ); ?>
 											<?php
@@ -372,10 +374,10 @@ final class BadgeAdminPage {
 			<div class="wbgam-grid-4">
 				<?php foreach ( $badges as $b ) : ?>
 					<?php
-					$config     = json_decode( $b['condition'] ?? '{}', true ) ?: array();
-					$cond_type  = $config['condition_type'] ?? 'admin_awarded';
-					$has_rule   = 'admin_awarded' !== $cond_type;
-					$edit_url   = admin_url( 'admin.php?page=wb-gamification-badges&badge=' . rawurlencode( $b['id'] ) );
+					$config    = json_decode( $b['condition'] ?? '{}', true ) ?: array();
+					$cond_type = $config['condition_type'] ?? 'admin_awarded';
+					$has_rule  = 'admin_awarded' !== $cond_type;
+					$edit_url  = admin_url( 'admin.php?page=wb-gamification-badges&badge=' . rawurlencode( $b['id'] ) );
 					?>
 					<a href="<?php echo esc_url( $edit_url ); ?>" class="wbgam-badge-card" style="text-decoration:none;">
 						<div class="wbgam-badge-card__icon">
@@ -449,7 +451,9 @@ final class BadgeAdminPage {
 		} else {
 			$closes_at = null;
 		}
-		$max_earners   = '' !== ( $_POST['badge_max_earners'] ?? '' ) ? absint( $_POST['badge_max_earners'] ) : null;
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput -- absint() sanitizes.
+		$raw_earners = isset( $_POST['badge_max_earners'] ) ? wp_unslash( $_POST['badge_max_earners'] ) : '';
+		$max_earners = '' !== $raw_earners ? absint( $raw_earners ) : null;
 
 		$badge_data = array(
 			'name'          => sanitize_text_field( wp_unslash( $_POST['badge_name'] ?? '' ) ),

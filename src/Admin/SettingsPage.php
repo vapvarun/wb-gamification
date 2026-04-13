@@ -118,7 +118,7 @@ final class SettingsPage {
 		$action = sanitize_key( $_POST['wb_gam_automation_action'] ?? 'add' );
 
 		if ( 'delete' === $action ) {
-			$index = (int) ( $_POST['wb_gam_rule_index'] ?? -1 );
+			$index = (int) wp_unslash( $_POST['wb_gam_rule_index'] ?? -1 ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- cast to int sanitizes.
 			if ( isset( $existing_rules[ $index ] ) ) {
 				array_splice( $existing_rules, $index, 1 );
 				update_option( 'wb_gam_rank_automation_rules', wp_json_encode( array_values( $existing_rules ) ) );
@@ -148,7 +148,7 @@ final class SettingsPage {
 
 		foreach ( $actions as $action_id => $action ) {
 			$key    = 'wb_gam_points_' . sanitize_key( $action_id );
-			$points = isset( $_POST[ $key ] ) ? (int) wp_unslash( $_POST[ $key ] ) : null;
+			$points = isset( $_POST[ $key ] ) ? absint( wp_unslash( $_POST[ $key ] ) ) : null; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 
 			if ( null !== $points && $points >= 0 ) {
 				update_option( 'wb_gam_points_' . $action_id, $points );
@@ -160,7 +160,7 @@ final class SettingsPage {
 
 		// Also save log retention.
 		if ( isset( $_POST['wb_gam_log_retention_months'] ) ) {
-			$months = max( 1, min( 24, (int) wp_unslash( $_POST['wb_gam_log_retention_months'] ) ) );
+			$months = max( 1, min( 24, absint( wp_unslash( $_POST['wb_gam_log_retention_months'] ) ) ) );
 			update_option( 'wb_gam_log_retention_months', $months );
 		}
 		// phpcs:enable WordPress.Security.NonceVerification.Missing
@@ -175,13 +175,13 @@ final class SettingsPage {
 	private static function save_kudos_settings(): void {
 		// phpcs:disable WordPress.Security.NonceVerification.Missing -- Nonce verified by check_admin_referer() in handle_save().
 		if ( isset( $_POST['wb_gam_kudos_daily_limit'] ) ) {
-			update_option( 'wb_gam_kudos_daily_limit', max( 1, min( 999, (int) wp_unslash( $_POST['wb_gam_kudos_daily_limit'] ) ) ) );
+			update_option( 'wb_gam_kudos_daily_limit', max( 1, min( 999, absint( wp_unslash( $_POST['wb_gam_kudos_daily_limit'] ) ) ) ) );
 		}
 		if ( isset( $_POST['wb_gam_kudos_receiver_points'] ) ) {
-			update_option( 'wb_gam_kudos_receiver_points', max( 0, min( 9999, (int) wp_unslash( $_POST['wb_gam_kudos_receiver_points'] ) ) ) );
+			update_option( 'wb_gam_kudos_receiver_points', max( 0, min( 9999, absint( wp_unslash( $_POST['wb_gam_kudos_receiver_points'] ) ) ) ) );
 		}
 		if ( isset( $_POST['wb_gam_kudos_giver_points'] ) ) {
-			update_option( 'wb_gam_kudos_giver_points', max( 0, min( 9999, (int) wp_unslash( $_POST['wb_gam_kudos_giver_points'] ) ) ) );
+			update_option( 'wb_gam_kudos_giver_points', max( 0, min( 9999, absint( wp_unslash( $_POST['wb_gam_kudos_giver_points'] ) ) ) ) );
 		}
 		// phpcs:enable WordPress.Security.NonceVerification.Missing
 
@@ -261,7 +261,7 @@ final class SettingsPage {
 		if ( 'add' === $op ) {
 			// phpcs:disable WordPress.Security.NonceVerification.Missing -- nonce verified above.
 			$new_name   = sanitize_text_field( wp_unslash( $_POST['wb_gam_new_level_name'] ?? '' ) );
-			$new_points = max( 1, (int) wp_unslash( $_POST['wb_gam_new_level_points'] ?? 0 ) );
+			$new_points = max( 1, absint( wp_unslash( $_POST['wb_gam_new_level_points'] ?? 0 ) ) );
 			// phpcs:enable WordPress.Security.NonceVerification.Missing
 
 			if ( $new_name ) {
@@ -316,7 +316,7 @@ final class SettingsPage {
 	 * Handle level deletion via admin-post.php (GET link with nonce).
 	 */
 	public static function handle_delete_level(): void {
-		$level_id = isset( $_GET['level_id'] ) ? (int) wp_unslash( $_GET['level_id'] ) : 0;
+		$level_id = isset( $_GET['level_id'] ) ? absint( wp_unslash( $_GET['level_id'] ) ) : 0;
 		check_admin_referer( 'wb_gam_delete_level_' . $level_id );
 
 		if ( ! current_user_can( 'manage_options' ) || $level_id <= 0 ) {
@@ -743,15 +743,15 @@ final class SettingsPage {
 
 		<div class="wb-gam-admin-quick-links">
 			<a href="<?php echo esc_url( admin_url( 'admin.php?page=wb-gamification-analytics' ) ); ?>"
-			   class="button button-primary">
+				class="button button-primary">
 				<?php esc_html_e( 'Full Analytics', 'wb-gamification' ); ?>
 			</a>
 			<a href="<?php echo esc_url( admin_url( 'admin.php?page=wb-gamification-award' ) ); ?>"
-			   class="button">
+				class="button">
 				<?php esc_html_e( 'Award Points', 'wb-gamification' ); ?>
 			</a>
 			<a href="<?php echo esc_url( admin_url( 'admin.php?page=wb-gamification&tab=points' ) ); ?>"
-			   class="button">
+				class="button">
 				<?php esc_html_e( 'Configure Points', 'wb-gamification' ); ?>
 			</a>
 		</div>

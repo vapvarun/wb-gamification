@@ -118,7 +118,7 @@ class KudosController extends WP_REST_Controller {
 	 * @param WP_REST_Request $request Full details about the request.
 	 * @return true|WP_Error True if the request has permission, WP_Error otherwise.
 	 */
-	public function create_item_permissions_check($request ): bool|WP_Error {
+	public function create_item_permissions_check( $request ): bool|WP_Error {
 		if ( ! is_user_logged_in() ) {
 			return new WP_Error(
 				'rest_forbidden',
@@ -135,7 +135,7 @@ class KudosController extends WP_REST_Controller {
 	 * @param WP_REST_Request $request Full details about the request.
 	 * @return true|WP_Error True if the request has permission, WP_Error otherwise.
 	 */
-	public function require_logged_in($request ): bool|WP_Error {
+	public function require_logged_in( $request ): bool|WP_Error {
 		if ( ! is_user_logged_in() ) {
 			return new WP_Error(
 				'rest_forbidden',
@@ -154,7 +154,7 @@ class KudosController extends WP_REST_Controller {
 	 * @param WP_REST_Request $request Full details about the request.
 	 * @return WP_REST_Response Response containing recent kudos.
 	 */
-	public function get_items($request): WP_REST_Response {
+	public function get_items( $request ): WP_REST_Response {
 		$limit = (int) $request->get_param( 'limit' );
 		$feed  = KudosEngine::get_recent( $limit );
 
@@ -167,7 +167,7 @@ class KudosController extends WP_REST_Controller {
 	 * @param WP_REST_Request $request Full details about the request.
 	 * @return WP_REST_Response|WP_Error Response on success, WP_Error on failure.
 	 */
-	public function create_item($request): WP_REST_Response|WP_Error {
+	public function create_item( $request ): WP_REST_Response|WP_Error {
 		$giver_id    = get_current_user_id();
 		$receiver_id = (int) $request->get_param( 'receiver_id' );
 		$message     = (string) $request->get_param( 'message' );
@@ -211,7 +211,7 @@ class KudosController extends WP_REST_Controller {
 	 * @param WP_REST_Request $request Full details about the request.
 	 * @return WP_REST_Response Response containing kudos stats.
 	 */
-	public function get_my_stats($request ): WP_REST_Response {
+	public function get_my_stats( $request ): WP_REST_Response {
 		$user_id     = get_current_user_id();
 		$daily_limit = (int) get_option( 'wb_gam_kudos_daily_limit', 5 );
 		$sent_today  = KudosEngine::get_daily_sent_count( $user_id );

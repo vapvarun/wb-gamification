@@ -273,7 +273,7 @@ class ChallengesController extends WP_REST_Controller {
 	public function create_item( $request ): WP_REST_Response|WP_Error {
 		global $wpdb;
 
-		$data = array(
+		$data    = array(
 			'title'        => sanitize_text_field( $request['title'] ),
 			'action_id'    => sanitize_key( $request['action_id'] ),
 			'target'       => absint( $request['target'] ?? 10 ),

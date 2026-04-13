@@ -284,7 +284,7 @@ final class ChallengeManagerPage {
 			'title'        => sanitize_text_field( wp_unslash( $_POST['title'] ?? '' ) ),
 			'action_id'    => sanitize_key( $_POST['action_id'] ?? '' ),
 			'target'       => max( 1, absint( $_POST['target'] ?? 10 ) ),
-			'bonus_points' => max( 0, (int) ( $_POST['bonus_points'] ?? 50 ) ),
+			'bonus_points' => max( 0, absint( wp_unslash( $_POST['bonus_points'] ?? 50 ) ) ),
 			'starts_at'    => sanitize_text_field( wp_unslash( $_POST['starts_at'] ?? '' ) ),
 			'ends_at'      => sanitize_text_field( wp_unslash( $_POST['ends_at'] ?? '' ) ),
 			'status'       => 'active',

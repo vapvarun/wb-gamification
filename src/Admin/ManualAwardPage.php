@@ -117,9 +117,9 @@ final class ManualAwardPage {
 									<?php
 									wp_dropdown_users(
 										array(
-											'name'              => 'wb_gam_user_id',
-											'id'                => 'wb_gam_award_user',
-											'show_option_none'  => __( '— Select a user —', 'wb-gamification' ),
+											'name' => 'wb_gam_user_id',
+											'id'   => 'wb_gam_award_user',
+											'show_option_none' => __( '— Select a user —', 'wb-gamification' ),
 											'option_none_value' => '0',
 										)
 									);

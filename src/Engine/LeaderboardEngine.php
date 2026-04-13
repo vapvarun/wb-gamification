@@ -126,7 +126,7 @@ final class LeaderboardEngine {
 			$scope_type ? $scope_type : 'global',
 			$scope_id
 		);
-		$cached = wp_cache_get( $cache_key, 'wb_gamification' );
+		$cached    = wp_cache_get( $cache_key, 'wb_gamification' );
 		if ( false !== $cached ) {
 			return (array) $cached;
 		}

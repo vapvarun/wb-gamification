@@ -161,8 +161,8 @@ final class WB_Gamification {
 			return;
 		}
 
-		$uid  = (int) wp_unslash( $_GET['uid'] ?? 0 );
-		$tok  = sanitize_text_field( wp_unslash( $_GET['tok'] ?? '' ) );
+		$uid = absint( wp_unslash( $_GET['uid'] ?? 0 ) );
+		$tok = sanitize_text_field( wp_unslash( $_GET['tok'] ?? '' ) );
 		// phpcs:enable WordPress.Security.NonceVerification.Recommended
 		$user = $uid ? get_userdata( $uid ) : null;
 
@@ -381,12 +381,12 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 	add_action(
 		'cli_init',
 		function () {
-			WP_CLI::add_command( 'wb-gamification points',  WBGam\CLI\PointsCommand::class );
-			WP_CLI::add_command( 'wb-gamification member',  WBGam\CLI\MemberCommand::class );
+			WP_CLI::add_command( 'wb-gamification points', WBGam\CLI\PointsCommand::class );
+			WP_CLI::add_command( 'wb-gamification member', WBGam\CLI\MemberCommand::class );
 			WP_CLI::add_command( 'wb-gamification actions', WBGam\CLI\ActionsCommand::class );
-			WP_CLI::add_command( 'wb-gamification logs',    WBGam\CLI\LogsCommand::class );
-			WP_CLI::add_command( 'wb-gamification export',  WBGam\CLI\ExportCommand::class );
-			WP_CLI::add_command( 'wb-gamification doctor',  WBGam\CLI\DoctorCommand::class );
+			WP_CLI::add_command( 'wb-gamification logs', WBGam\CLI\LogsCommand::class );
+			WP_CLI::add_command( 'wb-gamification export', WBGam\CLI\ExportCommand::class );
+			WP_CLI::add_command( 'wb-gamification doctor', WBGam\CLI\DoctorCommand::class );
 		}
 	);
 }

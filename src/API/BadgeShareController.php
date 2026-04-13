@@ -104,22 +104,52 @@ class BadgeShareController extends WP_REST_Controller {
 					'type'        => 'object',
 					'description' => 'Badge definition.',
 					'properties'  => array(
-						'id'            => array( 'type' => 'string', 'description' => 'Badge identifier.' ),
-						'name'          => array( 'type' => 'string', 'description' => 'Badge display name.' ),
-						'description'   => array( 'type' => 'string', 'description' => 'Badge description.' ),
-						'image_url'     => array( 'type' => 'string', 'description' => 'Badge image URL.' ),
-						'is_credential' => array( 'type' => 'boolean', 'description' => 'Whether badge is a credential.' ),
-						'category'      => array( 'type' => 'string', 'description' => 'Badge category.' ),
+						'id'            => array(
+							'type'        => 'string',
+							'description' => 'Badge identifier.',
+						),
+						'name'          => array(
+							'type'        => 'string',
+							'description' => 'Badge display name.',
+						),
+						'description'   => array(
+							'type'        => 'string',
+							'description' => 'Badge description.',
+						),
+						'image_url'     => array(
+							'type'        => 'string',
+							'description' => 'Badge image URL.',
+						),
+						'is_credential' => array(
+							'type'        => 'boolean',
+							'description' => 'Whether badge is a credential.',
+						),
+						'category'      => array(
+							'type'        => 'string',
+							'description' => 'Badge category.',
+						),
 					),
 				),
 				'earner'     => array(
 					'type'        => 'object',
 					'description' => 'Member who earned the badge.',
 					'properties'  => array(
-						'user_id'      => array( 'type' => 'integer', 'description' => 'WordPress user ID.' ),
-						'display_name' => array( 'type' => 'string', 'description' => 'Display name.' ),
-						'avatar_url'   => array( 'type' => 'string', 'description' => 'Avatar URL.' ),
-						'profile_url'  => array( 'type' => 'string', 'description' => 'Profile page URL.' ),
+						'user_id'      => array(
+							'type'        => 'integer',
+							'description' => 'WordPress user ID.',
+						),
+						'display_name' => array(
+							'type'        => 'string',
+							'description' => 'Display name.',
+						),
+						'avatar_url'   => array(
+							'type'        => 'string',
+							'description' => 'Avatar URL.',
+						),
+						'profile_url'  => array(
+							'type'        => 'string',
+							'description' => 'Profile page URL.',
+						),
 					),
 				),
 				'earned_at'  => array(
@@ -130,26 +160,50 @@ class BadgeShareController extends WP_REST_Controller {
 					'type'        => 'object',
 					'description' => 'Issuing site info.',
 					'properties'  => array(
-						'name' => array( 'type' => 'string', 'description' => 'Site name.' ),
-						'url'  => array( 'type' => 'string', 'description' => 'Site URL.' ),
+						'name' => array(
+							'type'        => 'string',
+							'description' => 'Site name.',
+						),
+						'url'  => array(
+							'type'        => 'string',
+							'description' => 'Site URL.',
+						),
 					),
 				),
 				'share_urls' => array(
 					'type'        => 'object',
 					'description' => 'Sharing URLs.',
 					'properties'  => array(
-						'linkedin' => array( 'type' => 'string', 'description' => 'LinkedIn share URL.' ),
-						'self'     => array( 'type' => 'string', 'description' => 'Self-referencing URL.' ),
+						'linkedin' => array(
+							'type'        => 'string',
+							'description' => 'LinkedIn share URL.',
+						),
+						'self'     => array(
+							'type'        => 'string',
+							'description' => 'Self-referencing URL.',
+						),
 					),
 				),
 				'og'         => array(
 					'type'        => 'object',
 					'description' => 'Open Graph metadata.',
 					'properties'  => array(
-						'title'       => array( 'type' => 'string', 'description' => 'OG title.' ),
-						'description' => array( 'type' => 'string', 'description' => 'OG description.' ),
-						'image'       => array( 'type' => 'string', 'description' => 'OG image URL.' ),
-						'url'         => array( 'type' => 'string', 'description' => 'OG canonical URL.' ),
+						'title'       => array(
+							'type'        => 'string',
+							'description' => 'OG title.',
+						),
+						'description' => array(
+							'type'        => 'string',
+							'description' => 'OG description.',
+						),
+						'image'       => array(
+							'type'        => 'string',
+							'description' => 'OG image URL.',
+						),
+						'url'         => array(
+							'type'        => 'string',
+							'description' => 'OG canonical URL.',
+						),
 					),
 				),
 			),

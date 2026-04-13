@@ -156,7 +156,7 @@ class RedemptionController extends WP_REST_Controller {
 	 * @param WP_REST_Request $request Full details about the request.
 	 * @return WP_REST_Response Response containing reward items and balance.
 	 */
-	public function get_items($request): WP_REST_Response {
+	public function get_items( $request ): WP_REST_Response {
 		$items   = RedemptionEngine::get_items();
 		$balance = is_user_logged_in() ? PointsEngine::get_total( get_current_user_id() ) : null;
 
@@ -174,7 +174,7 @@ class RedemptionController extends WP_REST_Controller {
 	 * @param WP_REST_Request $request Full details about the request.
 	 * @return WP_REST_Response|WP_Error Response on success, WP_Error on failure.
 	 */
-	public function get_item($request): WP_REST_Response|WP_Error {
+	public function get_item( $request ): WP_REST_Response|WP_Error {
 		$item = RedemptionEngine::get_item( (int) $request['id'] );
 		return $item
 			? rest_ensure_response( $this->prepare_item_for_response( $item ) )
@@ -187,7 +187,7 @@ class RedemptionController extends WP_REST_Controller {
 	 * @param WP_REST_Request $request Full details about the request.
 	 * @return WP_REST_Response|WP_Error Response on success, WP_Error on failure.
 	 */
-	public function create_item($request): WP_REST_Response|WP_Error {
+	public function create_item( $request ): WP_REST_Response|WP_Error {
 		global $wpdb;
 
 		$inserted = $wpdb->insert(
@@ -217,7 +217,7 @@ class RedemptionController extends WP_REST_Controller {
 	 * @param WP_REST_Request $request Full details about the request.
 	 * @return WP_REST_Response|WP_Error Response on success, WP_Error on failure.
 	 */
-	public function update_item($request): WP_REST_Response|WP_Error {
+	public function update_item( $request ): WP_REST_Response|WP_Error {
 		global $wpdb;
 
 		$id   = (int) $request['id'];
@@ -255,7 +255,7 @@ class RedemptionController extends WP_REST_Controller {
 	 * @param WP_REST_Request $request Full details about the request.
 	 * @return WP_REST_Response|WP_Error Response on success, WP_Error on failure.
 	 */
-	public function delete_item($request): WP_REST_Response|WP_Error {
+	public function delete_item( $request ): WP_REST_Response|WP_Error {
 		global $wpdb;
 
 		$id = (int) $request['id'];
@@ -279,7 +279,7 @@ class RedemptionController extends WP_REST_Controller {
 	 * @param WP_REST_Request $request Full details about the request.
 	 * @return WP_REST_Response|WP_Error Response on success, WP_Error on failure.
 	 */
-	public function redeem($request ): WP_REST_Response|WP_Error {
+	public function redeem( $request ): WP_REST_Response|WP_Error {
 		$result = RedemptionEngine::redeem( get_current_user_id(), (int) $request['item_id'] );
 
 		if ( ! $result['success'] ) {
@@ -295,7 +295,7 @@ class RedemptionController extends WP_REST_Controller {
 	 * @param WP_REST_Request $request Full details about the request.
 	 * @return WP_REST_Response Response containing the user's redemption history.
 	 */
-	public function get_my_history($request ): WP_REST_Response {
+	public function get_my_history( $request ): WP_REST_Response {
 		return rest_ensure_response( RedemptionEngine::get_user_redemptions( get_current_user_id() ) );
 	}
 
@@ -304,7 +304,8 @@ class RedemptionController extends WP_REST_Controller {
 	/**
 	 * Shape a raw reward item DB row into the REST response format.
 	 *
-	 * @param array $item Raw row from the redemption items table.
+	 * @param array           $item    Raw row from the redemption items table.
+	 * @param WP_REST_Request $request Full details about the request.
 	 * @return array Formatted item data for the REST response.
 	 */
 	public function prepare_item_for_response( $item, $request = null ): array {

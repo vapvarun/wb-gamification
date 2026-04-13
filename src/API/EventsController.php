@@ -147,7 +147,7 @@ class EventsController extends WP_REST_Controller {
 	 * @param WP_REST_Request $request Full details about the request.
 	 * @return WP_REST_Response|WP_Error Response on success, WP_Error on failure.
 	 */
-	public function create_item($request): WP_REST_Response|WP_Error {
+	public function create_item( $request ): WP_REST_Response|WP_Error {
 		$action_id = (string) $request['action_id'];
 		$user_id   = (int) $request['user_id'];
 		$object_id = (int) $request['object_id'];
@@ -219,7 +219,7 @@ class EventsController extends WP_REST_Controller {
 	 * @param WP_REST_Request $request Full details about the request.
 	 * @return true|WP_Error True if the request has permission, WP_Error otherwise.
 	 */
-	public function create_item_permissions_check($request ): bool|WP_Error {
+	public function create_item_permissions_check( $request ): bool|WP_Error {
 		if ( ! is_user_logged_in() ) {
 			return new WP_Error(
 				'rest_not_logged_in',

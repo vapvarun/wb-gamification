@@ -115,10 +115,22 @@ class CredentialController extends WP_REST_Controller {
 					'type'        => 'object',
 					'description' => 'Issuer profile.',
 					'properties'  => array(
-						'id'   => array( 'type' => 'string', 'description' => 'Issuer URL.' ),
-						'type' => array( 'type' => 'string', 'description' => 'Issuer type.' ),
-						'name' => array( 'type' => 'string', 'description' => 'Issuer name.' ),
-						'url'  => array( 'type' => 'string', 'description' => 'Issuer website URL.' ),
+						'id'   => array(
+							'type'        => 'string',
+							'description' => 'Issuer URL.',
+						),
+						'type' => array(
+							'type'        => 'string',
+							'description' => 'Issuer type.',
+						),
+						'name' => array(
+							'type'        => 'string',
+							'description' => 'Issuer name.',
+						),
+						'url'  => array(
+							'type'        => 'string',
+							'description' => 'Issuer website URL.',
+						),
 					),
 				),
 				'issuanceDate'      => array(
@@ -137,9 +149,18 @@ class CredentialController extends WP_REST_Controller {
 					'type'        => 'object',
 					'description' => 'Achievement subject (the earner).',
 					'properties'  => array(
-						'id'          => array( 'type' => 'string', 'description' => 'Subject URI.' ),
-						'type'        => array( 'type' => 'string', 'description' => 'Subject type.' ),
-						'name'        => array( 'type' => 'string', 'description' => 'Earner display name.' ),
+						'id'          => array(
+							'type'        => 'string',
+							'description' => 'Subject URI.',
+						),
+						'type'        => array(
+							'type'        => 'string',
+							'description' => 'Subject type.',
+						),
+						'name'        => array(
+							'type'        => 'string',
+							'description' => 'Earner display name.',
+						),
 						'achievement' => array(
 							'type'        => 'object',
 							'description' => 'Achievement definition.',

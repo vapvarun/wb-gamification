@@ -156,7 +156,7 @@ class RulesController extends WP_REST_Controller {
 	 * @param WP_REST_Request $request Full details about the request.
 	 * @return WP_REST_Response Response containing matching rules.
 	 */
-	public function get_items($request): WP_REST_Response {
+	public function get_items( $request ): WP_REST_Response {
 		global $wpdb;
 
 		$where  = array( '1=1' );
@@ -198,7 +198,7 @@ class RulesController extends WP_REST_Controller {
 	 * @param WP_REST_Request $request Full details about the request.
 	 * @return WP_REST_Response|WP_Error Response on success, WP_Error on failure.
 	 */
-	public function get_item($request): WP_REST_Response|WP_Error {
+	public function get_item( $request ): WP_REST_Response|WP_Error {
 		$row = $this->fetch_row( (int) $request['id'] );
 		return $row
 			? rest_ensure_response( $this->prepare_item( $row ) )
@@ -211,7 +211,7 @@ class RulesController extends WP_REST_Controller {
 	 * @param WP_REST_Request $request Full details about the request.
 	 * @return WP_REST_Response|WP_Error Response on success, WP_Error on failure.
 	 */
-	public function create_item($request): WP_REST_Response|WP_Error {
+	public function create_item( $request ): WP_REST_Response|WP_Error {
 		global $wpdb;
 
 		$rule_config = $request['rule_config'];
@@ -250,7 +250,7 @@ class RulesController extends WP_REST_Controller {
 	 * @param WP_REST_Request $request Full details about the request.
 	 * @return WP_REST_Response|WP_Error Response on success, WP_Error on failure.
 	 */
-	public function update_item($request): WP_REST_Response|WP_Error {
+	public function update_item( $request ): WP_REST_Response|WP_Error {
 		global $wpdb;
 
 		$id  = (int) $request['id'];
@@ -301,7 +301,7 @@ class RulesController extends WP_REST_Controller {
 	 * @param WP_REST_Request $request Full details about the request.
 	 * @return WP_REST_Response|WP_Error Response on success, WP_Error on failure.
 	 */
-	public function delete_item($request): WP_REST_Response|WP_Error {
+	public function delete_item( $request ): WP_REST_Response|WP_Error {
 		global $wpdb;
 
 		$id  = (int) $request['id'];

@@ -136,8 +136,8 @@ final class NudgeEngine {
 						$title,
 						$bonus
 					),
-					'panel' => 'challenges',
-					'icon'  => 'trophy',
+					'panel'   => 'challenges',
+					'icon'    => 'trophy',
 				);
 			}
 		}
@@ -172,8 +172,8 @@ final class NudgeEngine {
 					$remaining,
 					$next_level['name']
 				),
-				'panel' => 'earning',
-				'icon'  => 'trending-up',
+				'panel'   => 'earning',
+				'icon'    => 'trending-up',
 			);
 		}
 
@@ -212,8 +212,8 @@ final class NudgeEngine {
 				"Don't break your %d-day streak! Do any activity to keep it",
 				(int) $streak['current_streak']
 			),
-			'panel' => 'earning',
-			'icon'  => 'flame',
+			'panel'   => 'earning',
+			'icon'    => 'flame',
 		);
 	}
 
@@ -248,8 +248,8 @@ final class NudgeEngine {
 					$recent_count,
 					1 === $recent_count ? '' : 's'
 				),
-				'panel' => 'badges',
-				'icon'  => 'award',
+				'panel'   => 'badges',
+				'icon'    => 'award',
 			);
 		}
 
@@ -288,8 +288,8 @@ final class NudgeEngine {
 						$pct,
 						$remaining
 					),
-					'panel' => 'challenges',
-					'icon'  => 'target',
+					'panel'   => 'challenges',
+					'icon'    => 'target',
 				);
 			}
 		}
@@ -335,8 +335,8 @@ final class NudgeEngine {
 				"Keep going! You've earned %d points so far",
 				$total
 			),
-			'panel' => 'earning',
-			'icon'  => 'zap',
+			'panel'   => 'earning',
+			'icon'    => 'zap',
 		);
 	}
 }

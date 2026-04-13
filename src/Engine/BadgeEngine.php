@@ -175,7 +175,7 @@ final class BadgeEngine {
 		global $wpdb;
 
 		// Compute expiry if the badge_def specifies a validity window.
-		$def        = self::get_badge_def( $badge_id );
+		$def = self::get_badge_def( $badge_id );
 
 		// Eligibility gate: closes_at — stop awarding after the cutoff date.
 		if ( $def && ! empty( $def['closes_at'] ) && gmdate( 'Y-m-d H:i:s' ) >= $def['closes_at'] ) {
@@ -207,7 +207,7 @@ final class BadgeEngine {
 		 * @param string $badge_id     Badge definition ID.
 		 * @param array  $badge_def    Full badge definition array (name, category, etc.).
 		 */
-		if ( ! (bool) apply_filters( 'wb_gamification_should_award_badge', true, $user_id, $badge_id, $def ?? [] ) ) {
+		if ( ! (bool) apply_filters( 'wb_gamification_should_award_badge', true, $user_id, $badge_id, $def ?? array() ) ) {
 			return false;
 		}
 
@@ -241,7 +241,7 @@ final class BadgeEngine {
 		 * @param string     $badge_id Badge identifier.
 		 * @param array|null $def      Badge definition row, or null if not found.
 		 */
-		do_action( 'wb_gamification_badge_awarded', $user_id, $def ?? [], $badge_id );
+		do_action( 'wb_gamification_badge_awarded', $user_id, $def ?? array(), $badge_id );
 
 		/**
 		 * Fires after a badge is awarded to a user.

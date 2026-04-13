@@ -106,7 +106,7 @@ final class AbilitiesRegistration {
 
 		return array(
 			// === Read abilities ===
-			'wb-gamification/read-leaderboard'  => array(
+			'wb-gamification/read-leaderboard'   => array(
 				'label'       => 'Read gamification leaderboard',
 				'description' => 'Retrieve ranked member lists by points for any period (daily, weekly, monthly, all-time). Supports group scoping.',
 				'endpoint'    => $base . '/leaderboard',
@@ -126,7 +126,7 @@ final class AbilitiesRegistration {
 				'auth'        => 'none',
 				'category'    => 'gamification',
 			),
-			'wb-gamification/read-member'       => array(
+			'wb-gamification/read-member'        => array(
 				'label'       => 'Read member gamification profile',
 				'description' => 'Get a member\'s total points, current level, earned badges, active streak, and rank.',
 				'endpoint'    => $base . '/members/{id}',
@@ -141,7 +141,7 @@ final class AbilitiesRegistration {
 				'auth'        => 'optional',
 				'category'    => 'gamification',
 			),
-			'wb-gamification/read-badges'       => array(
+			'wb-gamification/read-badges'        => array(
 				'label'       => 'List badge definitions',
 				'description' => 'Get all available badges with their name, image, description, and auto-award criteria.',
 				'endpoint'    => $base . '/badges',
@@ -149,7 +149,7 @@ final class AbilitiesRegistration {
 				'auth'        => 'none',
 				'category'    => 'gamification',
 			),
-			'wb-gamification/read-challenges'   => array(
+			'wb-gamification/read-challenges'    => array(
 				'label'       => 'List active challenges',
 				'description' => 'Get current challenges with target action, progress, deadline, and bonus points.',
 				'endpoint'    => $base . '/challenges',
@@ -157,7 +157,7 @@ final class AbilitiesRegistration {
 				'auth'        => 'optional',
 				'category'    => 'gamification',
 			),
-			'wb-gamification/read-actions'      => array(
+			'wb-gamification/read-actions'       => array(
 				'label'       => 'List registered gamification actions',
 				'description' => 'Enumerate all point-earning actions with their values, cooldowns, and categories.',
 				'endpoint'    => $base . '/actions',
@@ -183,7 +183,7 @@ final class AbilitiesRegistration {
 			),
 
 			// === Write abilities ===
-			'wb-gamification/submit-event'      => array(
+			'wb-gamification/submit-event'       => array(
 				'label'       => 'Submit a gamification event',
 				'description' => 'Report a user action (e.g. post published, course completed) for point evaluation. The engine applies rules, cooldowns, and multipliers automatically.',
 				'endpoint'    => $base . '/events',
@@ -213,7 +213,7 @@ final class AbilitiesRegistration {
 				'auth'        => 'required',
 				'category'    => 'gamification',
 			),
-			'wb-gamification/award-points'      => array(
+			'wb-gamification/award-points'       => array(
 				'label'       => 'Manually award points',
 				'description' => 'Award points to a user with a custom reason. Bypasses action rules — direct point grant.',
 				'endpoint'    => $base . '/events',
@@ -243,7 +243,7 @@ final class AbilitiesRegistration {
 				'auth'        => 'admin',
 				'category'    => 'gamification',
 			),
-			'wb-gamification/give-kudos'        => array(
+			'wb-gamification/give-kudos'         => array(
 				'label'       => 'Give kudos to another member',
 				'description' => 'Send peer recognition with a message. Subject to daily limit.',
 				'endpoint'    => $base . '/kudos',
@@ -263,7 +263,7 @@ final class AbilitiesRegistration {
 			),
 
 			// === Admin abilities ===
-			'wb-gamification/manage-badges'     => array(
+			'wb-gamification/manage-badges'      => array(
 				'label'       => 'Manage badge definitions',
 				'description' => 'Create, update, and delete badge definitions and their auto-award conditions.',
 				'endpoint'    => $base . '/badges',
@@ -271,7 +271,7 @@ final class AbilitiesRegistration {
 				'auth'        => 'admin',
 				'category'    => 'gamification',
 			),
-			'wb-gamification/manage-api-keys'   => array(
+			'wb-gamification/manage-api-keys'    => array(
 				'label'       => 'Manage API keys',
 				'description' => 'Create, list, revoke, and delete API keys for cross-site gamification access.',
 				'endpoint'    => $base . '/api-keys',

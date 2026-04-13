@@ -256,5 +256,4 @@ final class DbUpgrader {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.SchemaChange
 		$wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}wb_gam_partners" );
 	}
-
 }

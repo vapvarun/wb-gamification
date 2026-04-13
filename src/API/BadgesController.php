@@ -200,7 +200,7 @@ class BadgesController extends WP_REST_Controller {
 	 * @param WP_REST_Request $request Full details about the request.
 	 * @return WP_REST_Response Response containing all badge definitions.
 	 */
-	public function get_items($request): WP_REST_Response {
+	public function get_items( $request ): WP_REST_Response {
 		$user_id  = (int) $request->get_param( 'user_id' );
 		$category = (string) $request->get_param( 'category' );
 
@@ -234,7 +234,7 @@ class BadgesController extends WP_REST_Controller {
 	 * @param WP_REST_Request $request Full details about the request.
 	 * @return WP_REST_Response|WP_Error Response on success, WP_Error on failure.
 	 */
-	public function get_item($request): WP_REST_Response|WP_Error {
+	public function get_item( $request ): WP_REST_Response|WP_Error {
 		$badge_id = sanitize_key( $request['id'] );
 		$def      = BadgeEngine::get_badge_def( $badge_id );
 
@@ -297,8 +297,8 @@ class BadgesController extends WP_REST_Controller {
 		}
 
 		// Return refreshed badge definition.
-		$updated             = BadgeEngine::get_badge_def( $badge_id );
-		$rarity              = $this->get_rarity_map();
+		$updated               = BadgeEngine::get_badge_def( $badge_id );
+		$rarity                = $this->get_rarity_map();
 		$updated['rarity_pct'] = $rarity[ $badge_id ] ?? 0.0;
 
 		return rest_ensure_response( $updated );
@@ -331,8 +331,8 @@ class BadgesController extends WP_REST_Controller {
 		$wpdb->delete( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Cascade delete.
 			$wpdb->prefix . 'wb_gam_rules',
 			array(
-				'rule_type'  => 'badge_condition',
-				'target_id'  => $badge_id,
+				'rule_type' => 'badge_condition',
+				'target_id' => $badge_id,
 			),
 			array( '%s', '%s' )
 		);

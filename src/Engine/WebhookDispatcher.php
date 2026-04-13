@@ -224,8 +224,8 @@ final class WebhookDispatcher {
 		string $signature,
 		string $payload
 	): void {
-		$decoded     = json_decode( $payload, true );
-		$event_type  = $decoded['event'] ?? 'unknown';
+		$decoded    = json_decode( $payload, true );
+		$event_type = $decoded['event'] ?? 'unknown';
 
 		$response = wp_remote_post(
 			$url,

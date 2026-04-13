@@ -197,7 +197,7 @@ function wb_gam_get_user_streak( int $user_id ): array {
  *
  * @since 1.0.0
  *
- * @param string $period 'all'|'week'|'month'|'day'
+ * @param string $period 'all'|'week'|'month'|'day'.
  * @param int    $limit  Number of entries to return.
  * @return array List of leaderboard entries.
  */
