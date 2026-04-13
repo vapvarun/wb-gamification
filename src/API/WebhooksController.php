@@ -4,11 +4,13 @@
  *
  * CRUD management for outbound webhook registrations.
  *
- * GET    /wb-gamification/v1/webhooks        List registered webhooks
- * POST   /wb-gamification/v1/webhooks        Register a new webhook
- * GET    /wb-gamification/v1/webhooks/{id}   Get single webhook
- * PUT    /wb-gamification/v1/webhooks/{id}   Update a webhook
- * DELETE /wb-gamification/v1/webhooks/{id}   Remove a webhook
+ * GET    /wb-gamification/v1/webhooks              List registered webhooks
+ * POST   /wb-gamification/v1/webhooks              Register a new webhook
+ * GET    /wb-gamification/v1/webhooks/{id}         Get single webhook
+ * PUT    /wb-gamification/v1/webhooks/{id}         Update a webhook
+ * DELETE /wb-gamification/v1/webhooks/{id}         Remove a webhook
+ * GET    /wb-gamification/v1/webhooks/{id}/log     Delivery log (last 50)
+ * DELETE /wb-gamification/v1/webhooks/{id}/log     Clear delivery log
  *
  * All endpoints require manage_options.
  *
@@ -25,6 +27,7 @@
 
 namespace WBGam\API;
 
+use WBGam\Engine\WebhookDispatcher;
 use WP_REST_Controller;
 use WP_REST_Response;
 use WP_REST_Request;
@@ -126,6 +129,36 @@ class WebhooksController extends WP_REST_Controller {
 					'permission_callback' => array( $this, 'admin_check' ),
 				),
 				'schema' => array( $this, 'get_item_schema' ),
+			)
+		);
+
+		// Delivery log for a single webhook.
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/(?P<id>[\d]+)/log',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_delivery_log' ),
+					'permission_callback' => array( $this, 'admin_check' ),
+					'args'                => array(
+						'id' => array(
+							'type'    => 'integer',
+							'minimum' => 1,
+						),
+					),
+				),
+				array(
+					'methods'             => WP_REST_Server::DELETABLE,
+					'callback'            => array( $this, 'clear_delivery_log' ),
+					'permission_callback' => array( $this, 'admin_check' ),
+					'args'                => array(
+						'id' => array(
+							'type'    => 'integer',
+							'minimum' => 1,
+						),
+					),
+				),
 			)
 		);
 	}
@@ -249,12 +282,62 @@ class WebhooksController extends WP_REST_Controller {
 
 		$wpdb->delete( $wpdb->prefix . 'wb_gam_webhooks', array( 'id' => $id ), array( '%d' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- Write operation; no cache needed.
 
+		// Clean up delivery log when a webhook is deleted.
+		WebhookDispatcher::clear_delivery_log( $id );
+
 		return new WP_REST_Response(
 			array(
 				'deleted' => true,
 				'id'      => $id,
 			),
 			200
+		);
+	}
+
+	/**
+	 * Retrieve the delivery log for a webhook.
+	 *
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return WP_REST_Response|WP_Error Response on success, WP_Error on failure.
+	 */
+	public function get_delivery_log( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+		$id  = (int) $request['id'];
+		$row = $this->fetch_row( $id );
+		if ( ! $row ) {
+			return new WP_Error( 'rest_not_found', __( 'Webhook not found.', 'wb-gamification' ), array( 'status' => 404 ) );
+		}
+
+		$log = WebhookDispatcher::get_delivery_log( $id );
+
+		return rest_ensure_response(
+			array(
+				'webhook_id' => $id,
+				'entries'    => $log,
+				'count'      => count( $log ),
+			)
+		);
+	}
+
+	/**
+	 * Clear the delivery log for a webhook.
+	 *
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return WP_REST_Response|WP_Error Response on success, WP_Error on failure.
+	 */
+	public function clear_delivery_log( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+		$id  = (int) $request['id'];
+		$row = $this->fetch_row( $id );
+		if ( ! $row ) {
+			return new WP_Error( 'rest_not_found', __( 'Webhook not found.', 'wb-gamification' ), array( 'status' => 404 ) );
+		}
+
+		WebhookDispatcher::clear_delivery_log( $id );
+
+		return rest_ensure_response(
+			array(
+				'cleared'    => true,
+				'webhook_id' => $id,
+			)
 		);
 	}
 

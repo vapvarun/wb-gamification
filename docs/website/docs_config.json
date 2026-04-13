@@ -118,7 +118,8 @@
         { "file": "wp-cli.md", "title": "WP-CLI Commands", "slug": "wp-cli-wbgam", "order": 6 },
         { "file": "helper-functions.md", "title": "PHP Helper Functions", "slug": "helper-functions-wbgam", "order": 7 },
         { "file": "cross-site-api.md", "title": "Cross-Site API & Gamification Center", "slug": "cross-site-api-wbgam", "order": 8 },
-        { "file": "database-schema.md", "title": "Database Schema", "slug": "database-schema-wbgam", "order": 9 }
+        { "file": "database-schema.md", "title": "Database Schema", "slug": "database-schema-wbgam", "order": 9 },
+        { "file": "webhooks.md", "title": "Outbound Webhooks", "slug": "webhooks-developer-wbgam", "order": 10 }
       ]
     }
   ],
