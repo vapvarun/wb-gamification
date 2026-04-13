@@ -142,9 +142,9 @@
 }
 
 .gam-stat__icon {
-  width: 32px;
-  height: 32px;
-  margin: 0 auto 8px;
+  width: 36px;
+  height: 36px;
+  margin: 0 auto 10px;
   background: var(--gam-accent-light);
   border-radius: 50%;
   display: flex;
@@ -154,20 +154,22 @@
 }
 
 .gam-stat__icon i {
-  font-size: 16px;
+  font-size: 18px;
 }
 
 .gam-stat__value {
-  font-size: 26px;
+  font-size: 24px;
   font-weight: 700;
   color: var(--gam-text);
   line-height: 1.2;
+  white-space: nowrap;
 }
 
 .gam-stat__label {
   font-size: 12px;
   color: var(--gam-text-muted);
-  margin-top: 2px;
+  margin-top: 4px;
+  display: block;
 }
 
 .gam-stat__bar {

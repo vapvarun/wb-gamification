@@ -274,7 +274,7 @@ $wrapper_attrs = get_block_wrapper_attributes(
 				<?php
 				printf(
 					/* translators: %s: longest streak number */
-					esc_html__( 'Best: %s days', 'wb-gamification' ),
+					esc_html( _n( 'Best: %s day', 'Best: %s days', $longest_streak, 'wb-gamification' ) ),
 					esc_html( number_format_i18n( $longest_streak ) )
 				);
 				?>
