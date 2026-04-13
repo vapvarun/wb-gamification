@@ -108,19 +108,28 @@ $wrapper_attrs = get_block_wrapper_attributes( [ 'class' => 'wb-gam-streak' ] );
 				if ( $pts > 0 ) {
 					$level = (int) ceil( ( $pts / $max_pts ) * 4 ); // 1–4
 				}
+
+				$formatted_date = date_i18n( 'M j', $ts );
+				if ( $pts > 0 ) {
+					$title_text = sprintf(
+						/* translators: 1 = formatted date (e.g. "Apr 12"), 2 = points count */
+						__( '%1$s: %2$s points', 'wb-gamification' ),
+						$formatted_date,
+						number_format_i18n( $pts )
+					);
+				} else {
+					$title_text = sprintf(
+						/* translators: %s = formatted date (e.g. "Apr 12") */
+						__( '%s: No activity', 'wb-gamification' ),
+						$formatted_date
+					);
+				}
+
 				printf(
-					'<span class="wb-gam-streak__cell wb-gam-streak__cell--%d" title="%s: %s pts" aria-label="%s"></span>',
+					'<span class="wb-gam-streak__cell wb-gam-streak__cell--%d" title="%s" aria-label="%s"></span>',
 					esc_attr( $level ),
-					esc_attr( $date ),
-					esc_attr( number_format_i18n( $pts ) ),
-					esc_attr(
-						sprintf(
-							/* translators: 1 = date, 2 = points */
-							__( '%1$s: %2$s points', 'wb-gamification' ),
-							$date,
-							number_format_i18n( $pts )
-						)
-					)
+					esc_attr( $title_text ),
+					esc_attr( $title_text )
 				);
 			}
 			?>

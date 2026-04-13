@@ -50,8 +50,23 @@ $wrapper_attributes = get_block_wrapper_attributes( [ 'class' => 'wb-gam-leaderb
 		<ol class="wb-gam-leaderboard__list">
 			<?php foreach ( $rows as $row ) : ?>
 				<li class="wb-gam-leaderboard__entry wb-gam-rank-<?php echo esc_attr( $row['rank'] ); ?>">
-					<span class="wb-gam-leaderboard__rank" aria-label="<?php esc_attr_e( 'Rank', 'wb-gamification' ); ?>">
+					<?php
+					$rank_num   = (int) $row['rank'];
+					$rank_label = '';
+					if ( 1 === $rank_num ) {
+						$rank_label = __( '1st place', 'wb-gamification' );
+					} elseif ( 2 === $rank_num ) {
+						$rank_label = __( '2nd place', 'wb-gamification' );
+					} elseif ( 3 === $rank_num ) {
+						$rank_label = __( '3rd place', 'wb-gamification' );
+					}
+					$rank_aria = $rank_label ? $rank_label : __( 'Rank', 'wb-gamification' );
+					?>
+					<span class="wb-gam-leaderboard__rank" aria-label="<?php echo esc_attr( $rank_aria ); ?>">
 						<?php echo esc_html( $row['rank'] ); ?>
+						<?php if ( $rank_label ) : ?>
+							<span class="wb-gam-leaderboard__rank-ordinal"><?php echo esc_html( $rank_label ); ?></span>
+						<?php endif; ?>
 					</span>
 
 					<?php if ( $show_avatars ) : ?>

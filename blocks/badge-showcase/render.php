@@ -104,6 +104,17 @@ $wrapper_attributes = get_block_wrapper_attributes( [ 'class' => 'wb-gam-badge-s
 						<span class="wb-gam-badge-showcase__locked-label" aria-label="<?php esc_attr_e( 'Not yet earned', 'wb-gamification' ); ?>">
 							<?php esc_html_e( 'Locked', 'wb-gamification' ); ?>
 						</span>
+						<?php
+						$unlock_hint = '';
+						if ( ! empty( $badge['description'] ) ) {
+							$unlock_hint = $badge['description'];
+						} else {
+							$unlock_hint = __( 'Keep earning to unlock', 'wb-gamification' );
+						}
+						?>
+						<span class="wb-gam-badge-showcase__hint">
+							<?php echo esc_html( $unlock_hint ); ?>
+						</span>
 					<?php endif; ?>
 				</li>
 			<?php endforeach; ?>

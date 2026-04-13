@@ -66,6 +66,15 @@
 .wb-gam-rank-2 .wb-gam-leaderboard__rank { color: var(--wb-gam-silver); }
 .wb-gam-rank-3 .wb-gam-leaderboard__rank { color: var(--wb-gam-bronze); }
 
+.wb-gam-leaderboard__rank-ordinal {
+	display: block;
+	font-size: 0.625rem;
+	font-weight: 600;
+	line-height: 1;
+	text-transform: lowercase;
+	letter-spacing: 0.02em;
+}
+
 .wb-gam-leaderboard__avatar img {
 	border-radius: 50%;
 	display: block;
@@ -220,6 +229,18 @@
 	color: var(--wb-gam-locked);
 	text-transform: uppercase;
 	letter-spacing: 0.04em;
+}
+
+.wb-gam-badge-showcase__hint {
+	display: block;
+	font-size: 0.625rem;
+	line-height: 1.3;
+	color: var(--wb-gam-text-muted);
+	margin-block-start: 0.125rem;
+	max-width: 10rem;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 
 /* ── Kudos Feed ─────────────────────────────────────────────────────────────── */
