@@ -1,0 +1,22 @@
+{
+  "name": "@wbcom/wb-gamification",
+  "version": "1.0.0",
+  "description": "TypeScript SDK for the WB Gamification REST API",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": ["gamification", "wordpress", "api", "sdk", "buddypress"],
+  "author": "Wbcom Designs",
+  "license": "GPL-2.0-or-later",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/vapvarun/wb-gamification"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  }
+}
