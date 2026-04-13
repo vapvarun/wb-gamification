@@ -110,16 +110,17 @@
       "order": 7,
       "description": "Technical reference for developers integrating with WB Gamification",
       "docs": [
-        { "file": "architecture.md", "title": "Architecture Overview", "slug": "architecture-wbgam", "order": 1 },
-        { "file": "hooks-filters.md", "title": "Hooks & Filters Reference", "slug": "hooks-filters-wbgam", "order": 2 },
-        { "file": "rest-api.md", "title": "REST API Reference", "slug": "rest-api-wbgam", "order": 3 },
-        { "file": "manifest-files.md", "title": "Writing Integration Manifests", "slug": "manifest-files-wbgam", "order": 4 },
-        { "file": "build-first-integration.md", "title": "Build Your First Integration", "slug": "build-first-integration-wbgam", "order": 5 },
-        { "file": "wp-cli.md", "title": "WP-CLI Commands", "slug": "wp-cli-wbgam", "order": 6 },
-        { "file": "helper-functions.md", "title": "PHP Helper Functions", "slug": "helper-functions-wbgam", "order": 7 },
-        { "file": "cross-site-api.md", "title": "Cross-Site API & Gamification Center", "slug": "cross-site-api-wbgam", "order": 8 },
-        { "file": "database-schema.md", "title": "Database Schema", "slug": "database-schema-wbgam", "order": 9 },
-        { "file": "webhooks.md", "title": "Outbound Webhooks", "slug": "webhooks-developer-wbgam", "order": 10 }
+        { "file": "getting-started.md", "title": "Getting Started for Developers", "slug": "getting-started-developers-wbgam", "order": 1 },
+        { "file": "architecture.md", "title": "Architecture Overview", "slug": "architecture-wbgam", "order": 2 },
+        { "file": "hooks-filters.md", "title": "Hooks & Filters Reference", "slug": "hooks-filters-wbgam", "order": 3 },
+        { "file": "rest-api.md", "title": "REST API Reference", "slug": "rest-api-wbgam", "order": 4 },
+        { "file": "manifest-files.md", "title": "Writing Integration Manifests", "slug": "manifest-files-wbgam", "order": 5 },
+        { "file": "build-first-integration.md", "title": "Build Your First Integration", "slug": "build-first-integration-wbgam", "order": 6 },
+        { "file": "wp-cli.md", "title": "WP-CLI Commands", "slug": "wp-cli-wbgam", "order": 7 },
+        { "file": "helper-functions.md", "title": "PHP Helper Functions", "slug": "helper-functions-wbgam", "order": 8 },
+        { "file": "cross-site-api.md", "title": "Cross-Site API & Gamification Center", "slug": "cross-site-api-wbgam", "order": 9 },
+        { "file": "database-schema.md", "title": "Database Schema", "slug": "database-schema-wbgam", "order": 10 },
+        { "file": "webhooks.md", "title": "Outbound Webhooks", "slug": "webhooks-developer-wbgam", "order": 11 }
       ]
     }
   ],
