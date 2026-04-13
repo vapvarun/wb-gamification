@@ -30,68 +30,7 @@ require_once WB_GAM_PATH . 'vendor/autoload.php';
 // Action Scheduler — must be loaded after autoloader, before plugins_loaded.
 require_once WB_GAM_PATH . 'vendor/woocommerce/action-scheduler/action-scheduler.php';
 
-// EDD SL SDK — free plugin auto-updates with preset key.
-$wbgam_sdk_file = WB_GAM_PATH . 'vendor/easy-digital-downloads/edd-sl-sdk/edd-sl-sdk.php';
-if ( file_exists( $wbgam_sdk_file ) ) {
-	require_once $wbgam_sdk_file;
-}
-$wbgam_edd_item_id = 0; // Placeholder — set when EDD product created on wbcomdesigns.com.
-if ( $wbgam_edd_item_id > 0 ) {
-	add_action(
-		'edd_sl_sdk_registry',
-		function ( $registry ) use ( $wbgam_edd_item_id ) {
-			$registry->register(
-				array(
-					'id'      => 'wb-gamification',
-					'url'     => 'https://wbcomdesigns.com',
-					'item_id' => $wbgam_edd_item_id,
-					'version' => WB_GAM_VERSION,
-					'file'    => WB_GAM_FILE,
-					'license' => 'wbcomfree4b7c2d9e1a5f8c3b6d0e7a2f9c1b5e33',
-				)
-			);
-		}
-	);
-}
-
-// Auto-activate preset key on first load (only when SDK is present and item_id is set).
-if ( file_exists( $wbgam_sdk_file ) ) {
-	add_action(
-		'admin_init',
-		function () {
-			$preset_key = 'wbcomfree4b7c2d9e1a5f8c3b6d0e7a2f9c1b5e33';
-			$item_id    = 0; // Placeholder — set when EDD product created.
-			$option     = 'wb_gamification_license_key';
-			$activated  = 'wb_gamification_preset_activated';
-
-			if ( ! $item_id || get_option( $activated ) ) {
-				return;
-			}
-
-			update_option( $option, $preset_key, false );
-
-			$response = wp_remote_post(
-				'https://wbcomdesigns.com',
-				array(
-					'timeout' => 15,
-					'body'    => array(
-						'edd_action' => 'activate_license',
-						'license'    => $preset_key,
-						'item_id'    => $item_id,
-						'url'        => home_url(),
-					),
-				)
-			);
-
-			if ( ! is_wp_error( $response ) ) {
-				$body = json_decode( wp_remote_retrieve_body( $response ), true );
-				if ( 'valid' === ( $body['license'] ?? '' ) ) {
-					update_option( $activated, 1, false );
-				}
-			}
-		}
-	);
-}
+// Note: WB Gamification is 100% free. No license SDK needed.
 
 use WBGam\Engine\Registry;
 use WBGam\Engine\Engine;

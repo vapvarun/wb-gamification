@@ -69,24 +69,23 @@ final class FeatureFlags {
 	];
 
 	/**
-	 * Default state for every pro feature flag.
+	 * Default state for every feature flag.
 	 *
-	 * Defaults to false for fresh installs — features activate when
-	 * the admin enables them in settings and the pro addon is active.
-	 * Existing installs keep their saved values via the option.
+	 * All features enabled by default — WB Gamification is 100% free.
+	 * Admins can toggle individual features off in Settings → Features.
 	 *
 	 * @var array<string, bool>
 	 */
 	private const DEFAULTS = [
-		'cohort_leagues'       => false,
-		'weekly_emails'        => false,
-		'leaderboard_nudge'    => false,
-		'status_retention'     => false,
-		'cosmetics'            => false,
-		'community_challenges' => false,
-		'site_first_badges'    => false,
-		'tenure_badges'        => false,
-		'badge_share'          => false,
+		'cohort_leagues'       => true,
+		'weekly_emails'        => true,
+		'leaderboard_nudge'    => true,
+		'status_retention'     => true,
+		'cosmetics'            => true,
+		'community_challenges' => true,
+		'site_first_badges'    => true,
+		'tenure_badges'        => true,
+		'badge_share'          => true,
 	];
 
 	/**
@@ -182,14 +181,12 @@ final class FeatureFlags {
 			}
 		}
 
-		// Pro engines — only boot if pro plugin is active AND feature is enabled.
-		if ( self::is_pro_active() ) {
-			foreach ( self::PRO_ENGINES as $flag => $class ) {
-				if ( self::is_enabled( $flag ) ) {
-					$fqcn = $namespace . $class;
-					if ( method_exists( $fqcn, 'init' ) ) {
-						$fqcn::init();
-					}
+		// Optional engines — boot if feature flag is enabled (all on by default).
+		foreach ( self::PRO_ENGINES as $flag => $class ) {
+			if ( self::is_enabled( $flag ) ) {
+				$fqcn = $namespace . $class;
+				if ( method_exists( $fqcn, 'init' ) ) {
+					$fqcn::init();
 				}
 			}
 		}

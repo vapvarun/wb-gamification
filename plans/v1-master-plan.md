@@ -124,23 +124,12 @@ CORS headers in `src/API/ApiKeyAuth.php` when API key auth is used.
 
 ---
 
-## Phase 3: Pro Plugin Scaffold
+## Phase 3: All Features Free [COMPLETED — No Pro Split]
 
-### Task 20: Create wb-gamification-pro Plugin
-
-- Scaffold plugin with PSR-4 autoload under `WBGamPro\`
-- Require wb-gamification (free) as dependency
-- Hook into `wb_gam_engines_booted` from free plugin
-- Move Pro engines: CohortEngine, RecapEngine, RedemptionEngine, CosmeticEngine, WeeklyEmailEngine, LeaderboardNudge, StatusRetentionEngine, CommunityChallengeEngine, SiteFirstBadgeEngine, TenureBadgeEngine, BadgeSharePage
-- Move contrib integrations: memberpress, lifterlms, the-events-calendar, givewp
-- EDD SDK with placeholder product ID
-
-### Task 21: Pro Admin Pages
-
-- Redemption Store admin: product-card layout, create reward items, set point costs, stock management
-- Community Challenges admin: create group challenges, set targets, view progress
-- Cohort Settings: enable/disable leagues, set tier names, promotion/demotion percentages
-- All pages use the premium CSS design system from Task 14
+> Decision (2026-04-13): WB Gamification ships 100% free. No pro plugin, no license gates.
+> All engines boot unconditionally. Feature flags remain as admin toggles (on by default).
+> EDD SDK removed. Pro engine gate (`is_pro_active()`) removed from `boot_engines()`.
+> Feature flag defaults changed from `false` to `true`.
 
 ---
 
@@ -390,9 +379,9 @@ CORS headers in `src/API/ApiKeyAuth.php` when API key auth is used.
 | Phase 2: Premium UX | Tasks 14-19 | **DONE** | ~7 hours |
 | **Phase 2.5: Frontend UX Audit** | **Tasks 25-31** | **DONE** | **~5 hours** |
 | **Phase 2.75: Developer Platform** | **Tasks 32-38** | **DONE** | **~4 hours** |
-| Phase 3: Pro Scaffold | Tasks 20-21 | Pending | 3-4 hours |
-| Phase 4: Build & Release | Tasks 22-24 | Pending | 2 hours |
-| **Total** | **45 tasks** | | **~40-48 hours** |
+| Phase 3: All Free (no pro split) | — | **DONE** | — |
+| Phase 4: Build & Release | Tasks 22-24 | **NEXT** | 2 hours |
+| **Total** | **45 tasks** | | **~32 hours** |
 
 ---
 
@@ -429,37 +418,27 @@ AI agent discovers capabilities via:
 
 ## What Ships in 1.0.0
 
-### Free Plugin
-- Points, Badges, Levels, Streaks, Leaderboard, Challenges, Kudos, PersonalRecord
-- 4 integrations (BuddyPress, WooCommerce, LearnDash, bbPress)
+### Everything — 100% Free
+- **Core:** Points, Badges, Levels, Streaks, Leaderboard, Challenges, Kudos, PersonalRecord
+- **Advanced:** Cohort leagues, Community challenges, Redemption store, Cosmetics, Badge sharing, Weekly emails, Leaderboard nudge, Status retention, Site-first badges, Tenure badges
+- **9 integrations:** BuddyPress, WooCommerce, LearnDash, bbPress, MemberPress, LifterLMS, Events Calendar, GiveWP, WPMediaVerse
 - **Gamification Hub page** (auto-created, card grid, slide-in panels, smart nudge)
-- **API key authentication for cross-site usage**
-- **Capabilities discovery endpoint for AI agents**
-- **WP Abilities API registration**
-- **Full REST schemas on all 18 controllers**
-- **OpenAPI 3.0 spec auto-export**
-- **CORS support for cross-origin requests**
-- Premium admin UX (dashboard, settings, badge library, challenge manager, API keys)
-- Toast notifications
-- 12 blocks + 12 shortcodes (including hub + earning-guide)
-- Full REST API + WP-CLI
-- **Stable public PHP API** (20+ `wb_gam_*` functions, documented, tested)
-- **Documented hook contract** (all `wb_gam_` actions/filters with `@since` tags)
+- **API key authentication** for cross-site usage + CORS
+- **Capabilities + Abilities API** for AI agent discovery
+- **Full REST schemas** on all 18+ controllers + OpenAPI 3.0 spec
+- **Premium admin UX** (dashboard, settings, badge library, challenge manager, API keys)
+- **Toast notifications** (real-time, 6 event types)
+- **12 blocks + 12 shortcodes** (including hub + earning-guide)
+- **Full REST API + WP-CLI** (6 commands incl. doctor)
+- **Public PHP API** (15+ `wb_gam_*` functions, documented)
+- **Documented hook contract** (49+ hooks with `@since` tags)
 - **Manifest spec** for third-party integrations (auto-discovery, 5-min setup)
-- **JS SDK** (`@wbcom/wb-gamification` on npm)
-- **Webhook system** (HMAC-signed, retry logic, Zapier/Make/n8n ready)
+- **JS SDK** (`@wbcom/wb-gamification` TypeScript)
+- **Webhook system** (HMAC-signed, retry logic, delivery log, Zapier/Make/n8n ready)
 - **Developer portal** (3 paths: WP dev, theme dev, app dev)
-- RTL support
-- Object cache everywhere, async pipeline, leaderboard snapshots
+- RTL support, object cache, async pipeline, leaderboard snapshots
 - Scales to 100K members
 
-### Pro Plugin
-- Cohort leagues, Recap, Redemption store, Cosmetics
-- Weekly emails, Leaderboard nudge, Status retention
-- Community challenges, Site-first badges, Tenure badges, Badge share
-- Extra integrations (MemberPress, LifterLMS, Events Calendar, GiveWP)
-- Premium admin pages (redemption, community challenges, cohort settings)
-
 ### Deferred
-- 1.1.0: Advanced kudos, contrib integration polish
+- 1.1.0: Advanced kudos, contrib integration polish, admin pages for redemption/community challenges/cohort
 - 1.2.0: Dark mode, Multi-site network support
