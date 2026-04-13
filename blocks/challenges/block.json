@@ -2,7 +2,7 @@
 	"$schema": "https://schemas.wp.org/trunk/block.json",
 	"apiVersion": 3,
 	"name": "wb-gamification/challenges",
-	"version": "0.1.0",
+	"version": "1.0.0",
 	"title": "Challenges",
 	"category": "widgets",
 	"description": "Display active gamification challenges with current user's progress.",
