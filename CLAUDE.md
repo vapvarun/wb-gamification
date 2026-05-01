@@ -43,6 +43,58 @@ Plan item → Implement → Browser verify → Fix gaps → THEN mark done
 
 ---
 
+## Local CI pipeline (REQUIRED before push)
+
+This plugin has a self-contained local-CI gate. No external service runs the gate — every contributor runs it on their own machine, and an opt-in pre-push hook runs it automatically before every `git push`.
+
+```bash
+composer install-hooks    # one-time per clone — activates bin/git-hooks/pre-push
+composer ci               # full pipeline (~30s + browser journeys)
+composer ci:no-journeys   # everything except browser-dependent journeys
+composer ci:quick         # PHP lint + coding-rules only (~10s, for tight loops)
+```
+
+What the gate runs (in order, see `bin/local-ci.sh`):
+
+| Stage | Tool | Catches |
+|---|---|---|
+| 1.1 PHP lint | `php -l` on every source PHP file | syntax errors |
+| 1.2 WPCS | `composer phpcs` (skipped if `vendor/bin/phpcs` not installed) | WordPress coding standards |
+| 1.3 PHPStan | `composer phpstan` (skipped if no `phpstan.neon`) | static type errors |
+| 2.1 Coding rules | `bin/coding-rules-check.sh` | plugin-specific rules (see below) |
+| 3.1 Manifest | `jq` on `audit/manifest.json` | manifest validity + freshness |
+| 4.1 Journeys | `bin/run-journeys.sh` | customer flows end-to-end (skipped if site unreachable) |
+
+**Plugin-specific coding rules** (in `bin/coding-rules-check.sh`):
+- Rule 1 — `current_user_can('wb-gamification/...')` is BANNED. Those slugs are WP Abilities API discovery, not capabilities. Use a real cap (`manage_options` or `wb_gam_*`).
+- Rule 2 — REST `__return_true` permission_callback is allowed only for the 12 documented public controllers (catalog reads, OG share, OpenBadges credential, leaderboard, OpenAPI spec, etc.). New `__return_true` outside the allowlist fails the gate. See `audit/ROLE_MATRIX.md` for the rationale.
+
+**Bypass for emergencies only**: `SKIP_LOCAL_CI=1 git push`.
+
+## Customer journeys
+
+Bug fixes that survive a refactor are journey-covered. See `audit/journeys/README.md` for the schema and the executor contract. The 4 critical journeys today:
+
+| Journey | Priority | Purpose |
+|---|---|---|
+| `customer/01-earn-points-via-rest` | critical | Canonical event → points → ledger pipeline |
+| `customer/02-view-leaderboard-block` | critical | Block render → REST → cache + live-query parity |
+| `admin/01-manual-award-points` | critical | Admin REST + cap drift sentinel for `wb_gam_award_manual` |
+| `security/01-rest-public-allowlist` | high | Live counterpart to coding-rule 2 — verify only documented endpoints are anonymous |
+
+When a new bug is fixed, add or update the journey that would have caught it. The journey IS the regression test.
+
+Discover + filter:
+```bash
+composer journeys:dry-run               # list what would run
+composer journeys:critical              # only critical-priority
+bash bin/run-journeys.sh --only customer/02
+```
+
+Journey runs land in `audit/journey-runs/{run-id}/` (gitignored — they are per-run artifacts).
+
+---
+
 ## Key Commands
 
 ```bash
