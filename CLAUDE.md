@@ -1,5 +1,7 @@
 # WB Gamification — CLAUDE.md
 
+> **READ FIRST:** [`audit/manifest.json`](audit/manifest.json) is the canonical inventory — 39 REST endpoints, 20 tables, 12 blocks, 12 shortcodes, 9 cron hooks, 6 WP-CLI commands, 10 admin pages, 55 fired hooks (43 actions + 12 filters). Use this before grepping. Quick index: [`audit/manifest.summary.json`](audit/manifest.summary.json). Reports: [`audit/FEATURE_AUDIT.md`](audit/FEATURE_AUDIT.md), [`audit/CODE_FLOWS.md`](audit/CODE_FLOWS.md), [`audit/ROLE_MATRIX.md`](audit/ROLE_MATRIX.md). Quality baseline: [`audit/wppqa-baseline-2026-05-02/SUMMARY.md`](audit/wppqa-baseline-2026-05-02/SUMMARY.md). Browse the inventory as a graph: `cd audit && python3 -m http.server 8765` then open http://localhost:8765/graph.html. Refresh after non-trivial changes via `/wp-plugin-onboard --refresh`.
+
 > Session orientation for AI assistants. Read this first.
 
 ---

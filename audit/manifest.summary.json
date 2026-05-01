@@ -1,0 +1,52 @@
+{
+  "$schema": "https://wpmediaverse.com/schemas/wp-plugin-manifest-summary-v2.json",
+  "plugin": {
+    "slug": "wb-gamification",
+    "name": "WB Gamification",
+    "version": "1.0.0",
+    "namespace": "WBGam\\",
+    "main_file": "wb-gamification.php",
+    "extends": null,
+    "extension_hook_fired": "wb_gam_free_loaded"
+  },
+  "counts": {
+    "rest_endpoints": 39,
+    "ajax_handlers": 0,
+    "admin_pages": 10,
+    "shortcodes": 12,
+    "blocks": 12,
+    "tables": 20,
+    "capabilities": 2,
+    "services": 37,
+    "hooks_fired": 55,
+    "cron_hooks": 9,
+    "wp_cli_commands": 6,
+    "actions_distinct": 43,
+    "filters_distinct": 12
+  },
+  "namespaces": {
+    "rest": "wb-gamification/v1"
+  },
+  "auth_modes": ["cookie+nonce", "Application Passwords", "API Keys"],
+  "buddypress_aware": true,
+  "detail": "audit/manifest.json",
+  "reports": {
+    "feature_audit": "audit/FEATURE_AUDIT.md",
+    "code_flows": "audit/CODE_FLOWS.md",
+    "role_matrix": "audit/ROLE_MATRIX.md",
+    "graph": "audit/graph.html",
+    "wppqa_baseline": "audit/wppqa-baseline-2026-05-02/SUMMARY.md"
+  },
+  "static_analysis_flags": {
+    "cap_drift_enforced_undeclared": 1,
+    "manage_options_gate_count": 32,
+    "wppqa_high": 0,
+    "wppqa_high_false_positives": 1,
+    "wppqa_medium": 9,
+    "wppqa_low": 2
+  },
+  "generated": {
+    "at": "2026-05-02T00:00:00Z",
+    "schema_version": "v2.2"
+  }
+}
