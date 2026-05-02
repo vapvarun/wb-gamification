@@ -201,9 +201,9 @@ final class BadgeAdminPage {
 								</tr>
 								<?php else : ?>
 								<tr>
-									<th><label><?php esc_html_e( 'Badge ID', 'wb-gamification' ); ?></label></th>
+									<th><label for="wb-gam-badge-id-readonly"><?php esc_html_e( 'Badge ID', 'wb-gamification' ); ?></label></th>
 									<td>
-										<input type="text" name="badge_id" class="regular-text wbgam-input" value="<?php echo esc_attr( $badge['id'] ?? '' ); ?>" readonly>
+										<input type="text" name="badge_id" id="wb-gam-badge-id-readonly" class="regular-text wbgam-input" value="<?php echo esc_attr( $badge['id'] ?? '' ); ?>" readonly>
 										<p class="description"><?php esc_html_e( 'ID cannot be changed after creation.', 'wb-gamification' ); ?></p>
 									</td>
 								</tr>
@@ -265,7 +265,7 @@ final class BadgeAdminPage {
 									<th><?php esc_html_e( 'Is Credential', 'wb-gamification' ); ?></th>
 									<td>
 										<label>
-											<input type="checkbox" name="badge_is_credential" value="1" <?php checked( ! empty( $badge['is_credential'] ) ); ?>>
+											<input type="checkbox" name="badge_is_credential" id="wb-gam-badge-is-credential" value="1" <?php checked( ! empty( $badge['is_credential'] ) ); ?>>
 											<?php esc_html_e( 'Mark as shareable credential (LinkedIn, OpenBadges)', 'wb-gamification' ); ?>
 										</label>
 										<p class="description"><?php esc_html_e( 'Enable OpenBadges 3.0 verifiable credential issuance. Members can share a verified badge URL.', 'wb-gamification' ); ?></p>
