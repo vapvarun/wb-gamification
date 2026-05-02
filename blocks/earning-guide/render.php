@@ -17,6 +17,8 @@ use WBGam\Engine\Registry;
 
 defined( 'ABSPATH' ) || exit;
 
+
+use WBGam\Engine\BlockHooks;
 $actions = Registry::get_actions();
 if ( empty( $actions ) ) {
 	$wrapper_attrs = get_block_wrapper_attributes( array( 'class' => 'wb-gam-earning-guide' ) );
@@ -69,6 +71,9 @@ ksort( $grouped );
 $wrapper_attrs = get_block_wrapper_attributes(
 	array( 'class' => 'wb-gam-earning-guide' )
 );
+
+
+BlockHooks::before( 'earning-guide', $attributes );
 ?>
 <div <?php echo $wrapper_attrs; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>>
 	<?php foreach ( $grouped as $category => $items ) : ?>
@@ -94,3 +99,5 @@ $wrapper_attrs = get_block_wrapper_attributes(
 		</div>
 	<?php endforeach; ?>
 </div>
+
+<?php BlockHooks::after( 'earning-guide', $attributes ); ?>

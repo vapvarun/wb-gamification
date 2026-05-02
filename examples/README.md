@@ -17,6 +17,7 @@ Concrete, copy-paste-ready integrations for third-party plugins, themes, and ext
 | Define a brand-new challenge mechanic (not just "do X N times") | [`07-custom-challenge-type/`](07-custom-challenge-type/) |
 | Add a column / annotation to the leaderboard | [`08-leaderboard-customization/`](08-leaderboard-customization/) |
 | Replace the default weekly recap email with a branded variant | [`09-override-email-template/`](09-override-email-template/) |
+| Inject UI before/after any block render | [`10-inject-into-block-render/`](10-inject-into-block-render/) |
 
 ## Quick decision guide
 

@@ -17,18 +17,34 @@ This document tracks every place where the third-party integration story is weak
 
 ## Gap inventory
 
-### G1 — Block render layer has no extension slots [HIGH]
+### G1 — Block render layer has no extension slots [HIGH] — **CLOSED 2026-05-02**
 
-**Problem.** Each `blocks/{slug}/render.php` is a closed render — third parties can't add UI inside an existing block (e.g. add a "Send Kudos" button to the leaderboard, or a custom column to the points-history table).
+**Was.** Each `blocks/{slug}/render.php` was a closed render. Third parties couldn't add UI inside an existing block without forking the block.
 
-**Workaround today.** Fork the block via `register_block_type` collision, or build a competing block alongside. Both are bad — the fork eats updates, the parallel block fragments the UX.
+**Resolved by.** A new `WBGam\Engine\BlockHooks` helper that all 12 blocks call, plus 3 hooks per block:
 
-**What "fixing" looks like.**
-- Add `do_action( 'wb_gam_block_{slug}_before_render', $attributes, $context )` and `_after_render` to every block render.
-- Add a `wb_gam_block_{slug}_columns` filter to list-style blocks (leaderboard, points-history) so columns are pluggable.
-- Document the per-block extension contract in `docs/website/developer-guide/extending-blocks.md`.
+- **`wb_gam_block_before_render`** (action) — fires immediately before each block emits HTML; receives `($slug, $attributes, $context)`.
+- **`wb_gam_block_after_render`** (action) — fires after each block finishes its HTML.
+- **`wb_gam_block_data`** (filter) — transformable per-block payload (where invoked).
 
-**Scoping.** ~1-2 days for the hooks; ~1-2 days for the docs + example. Touches all 12 block render files. Defer until at least one consumer asks (today the BuddyPress + Reign theme are the only frontends and they don't extend blocks).
+Empty-state paths intentionally skip the hooks — extensions don't fire when the block didn't render.
+
+**Files:**
+
+- `src/Engine/BlockHooks.php` (new) — uniform hook helper.
+- `blocks/{slug}/render.php` ×12 — all patched to call `BlockHooks::before` + `BlockHooks::after`.
+- `examples/10-inject-into-block-render/` — 4 worked patterns (CTA append, banner prepend, data filter, impression tracking).
+- `docs/website/developer-guide/extending-blocks.md` (new) — full reference.
+
+**What it cost.** ~80 lines added to BlockHooks helper; 1 `use` statement + ~3 lines of hook calls per block × 12 blocks = ~50 lines total in the block files. Net new extension surface: 36 hook firings (3 per block × 12 blocks) + 1 example + 1 doc.
+
+**What's NOT in this fix (still gaps for future work):**
+
+- No "skip default render" flag — replacing a block requires `ob_start()` capture in `before_render` + `ob_get_clean()` in `after_render`. Awkward but possible.
+- No column-injection for tabular blocks — `points-history`, `leaderboard`, `top-members` columns are still hardcoded in their templates. Adding pluggable columns requires per-block template surgery.
+- Wrapper `<div>` attributes are not filterable from outside.
+
+These are tracked as future-roadmap items; close them when a real consumer needs them.
 
 ---
 
@@ -140,7 +156,7 @@ add_filter( 'wb_gam_admin_submenu_pages', function( $pages ) {
 Recommended next moves, in order:
 
 1. ~~**G2 — email templates**~~ — **CLOSED 2026-05-02** ✓
-2. **G1 — block extension slots** (~2-3 days, unlocks the next 3-4 partner integrations). Highest strategic value.
+2. ~~**G1 — block extension slots**~~ — **CLOSED 2026-05-02** ✓
 3. **G4 — event replay CLI** (~1 day, support team will love it). Operational quality-of-life.
 
 Skip the rest until a real consumer asks. G3/G5/G6/G7 are correct-shape gaps but not blocking known consumers; speculatively closing them risks adding maintenance burden for unused surfaces.

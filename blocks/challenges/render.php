@@ -12,6 +12,7 @@ defined( 'ABSPATH' ) || exit;
 
 use WBGam\Engine\ChallengeEngine;
 
+use WBGam\Engine\BlockHooks;
 $user_id = (int) ( $attributes['user_id'] ?? 0 );
 if ( $user_id <= 0 ) {
 	$user_id = get_current_user_id();
@@ -32,6 +33,9 @@ if ( $limit > 0 ) {
 }
 
 $wrapper_attrs = get_block_wrapper_attributes( [ 'class' => 'wb-gam-challenges' ] );
+
+
+BlockHooks::before( 'challenges', $attributes );
 ?>
 <div <?php echo $wrapper_attrs; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>>
 	<?php if ( empty( $challenges ) ) : ?>
@@ -107,3 +111,5 @@ $wrapper_attrs = get_block_wrapper_attributes( [ 'class' => 'wb-gam-challenges' 
 		</ul>
 	<?php endif; ?>
 </div>
+
+<?php BlockHooks::after( 'challenges', $attributes ); ?>

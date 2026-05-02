@@ -16,6 +16,7 @@ defined( 'ABSPATH' ) || exit;
 
 use WBGam\Engine\BadgeEngine;
 
+use WBGam\Engine\BlockHooks;
 $user_id     = (int) ( $attributes['user_id'] ?? 0 );
 $show_locked = (bool) ( $attributes['show_locked'] ?? false );
 $category    = sanitize_key( $attributes['category'] ?? '' );
@@ -59,6 +60,9 @@ if ( $limit > 0 && count( $badges ) > $limit ) {
 }
 
 $wrapper_attributes = get_block_wrapper_attributes( [ 'class' => 'wb-gam-badge-showcase' ] );
+
+
+BlockHooks::before( 'badge-showcase', $attributes );
 ?>
 <div <?php echo $wrapper_attributes; ?>>
 	<?php if ( empty( $badges ) ) : ?>
@@ -121,3 +125,5 @@ $wrapper_attributes = get_block_wrapper_attributes( [ 'class' => 'wb-gam-badge-s
 		</ul>
 	<?php endif; ?>
 </div>
+
+<?php BlockHooks::after( 'badge-showcase', $attributes ); ?>
