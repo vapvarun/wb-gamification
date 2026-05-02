@@ -52,20 +52,20 @@ For each: `curl -fsS $SITE_URL/wp-json{route}` returns 200 and parseable JSON.
 | `/wb-gamification/v1/redemptions/me` | GET | 401 — own history requires login |
 | `/wb-gamification/v1/challenges/1/complete` | POST | 401 — complete challenge requires login |
 
-For each: response status is 401 OR 403 with `code` of `rest_not_logged_in` / `rest_forbidden`.
+For each: response status is 4xx — typically 401 (`rest_not_logged_in`) or 403 (`rest_forbidden`). For routes whose body has required params, an empty/missing-param request will return 400 (`rest_missing_callback_param`) BEFORE the permission_callback runs — that's still anonymous-rejected. Send a syntactically-valid body if you want to assert the cap-side response code specifically.
 
 ### 3. Admin-required routes (must reject anonymous + subscriber)
 
-Run each twice — once anonymous, once as `?autologin=test_user` (subscriber). Both must reject.
+Run each twice — once anonymous, once as `?autologin=test_user` (subscriber). Both must reject. **Send a fully-valid request body** so the assertion lands on `permission_callback` rejection (403/401), not WP's pre-permission param validation (which returns 400).
 
-| Route | Method | Expected |
-|---|---|---|
-| `/wb-gamification/v1/points/award` | POST | 401/403 |
-| `/wb-gamification/v1/points/1` | DELETE | 401/403 |
-| `/wb-gamification/v1/badges/test/award` | POST | 401/403 |
-| `/wb-gamification/v1/rules` | POST | 401/403 |
-| `/wb-gamification/v1/webhooks` | POST | 401/403 |
-| `/wb-gamification/v1/redemptions/items` | POST | 401/403 |
+| Route | Method | Expected | Sample valid body |
+|---|---|---|---|
+| `/wb-gamification/v1/points/award` | POST | 4xx (403 with valid body) | `{"user_id":1,"points":1,"reason":"test"}` |
+| `/wb-gamification/v1/points/1` | DELETE | 4xx (403) | (no body required) |
+| `/wb-gamification/v1/badges/test/award` | POST | 4xx (403 with valid body) | `{"badge_id":"test","user_id":1}` |
+| `/wb-gamification/v1/rules` | POST | 4xx (403 with valid body) | `{"rule_type":"badge_condition","rule_config":{}}` |
+| `/wb-gamification/v1/webhooks` | POST | 4xx (403 with valid body) | `{"url":"https://example.com/hook","events":["points_awarded"]}` |
+| `/wb-gamification/v1/redemptions/items` | POST | 4xx (403 with valid body) | `{"title":"test","reward_type":"manual","points_cost":100}` (the `reward_type` field is an enum — pick a value the server accepts; `manual` works on most installs) |
 
 ### 4. Cross-user member reads (must reject other-user)
 

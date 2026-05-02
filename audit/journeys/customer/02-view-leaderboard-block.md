@@ -27,10 +27,10 @@ Verifies the entire leaderboard surface — block render → REST `/leaderboard`
 - **Action**: `curl -s $SITE_URL/wp-json/wb-gamification/v1/leaderboard?period=all_time&limit=10`
 - **Expect**:
   - 200 OK
-  - JSON shape: `{ "results": [ { "user_id": <int>, "display_name": <str>, "points": <int>, "rank": <int> }, ... ] }`
-  - `results.length` ≤ 10
-  - `results[0].rank == 1`
-- **Capture**: `TOP_USER_ID` ← `.results[0].user_id`, `TOP_POINTS` ← `.results[0].points`
+  - JSON shape: `{ "period": "all", "scope": { "type": <str>, "id": <int> }, "rows": [ { "rank": <int>, "user_id": <int>, "display_name": <str>, "avatar_url": <str>, "points": <int> }, ... ] }`
+  - `rows.length` ≤ 10
+  - `rows[0].rank == 1`
+- **Capture**: `TOP_USER_ID` ← `.rows[0].user_id`, `TOP_POINTS` ← `.rows[0].points`
 - **On fail**: `src/API/LeaderboardController.php:66` (get_leaderboard) or schema regression in `wb_gam_leaderboard_cache`
 
 ### 2. Browser render — anonymous
@@ -62,7 +62,7 @@ ALL of the following hold:
 
 | Symptom | Likely cause | File to inspect |
 |---|---|---|
-| `results: []` but DB has points rows | Cache empty + live-query fallback broken | `src/Engine/LeaderboardEngine.php` |
+| `rows: []` but DB has points rows | Cache empty + live-query fallback broken | `src/Engine/LeaderboardEngine.php` |
 | Block renders empty `<div></div>` | `render.php` returned empty due to REST call failing in render context | `blocks/leaderboard/render.php` |
 | `me` returns 401 on logged-in user | `require_logged_in` rejecting cookie auth | `src/API/LeaderboardController.php:127` |
 | Ranks tied but cache says rank=2 for both | Tie-break logic mismatch between cache & live-query | `src/Engine/LeaderboardEngine.php` |
