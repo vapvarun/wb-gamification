@@ -18,6 +18,9 @@ Concrete, copy-paste-ready integrations for third-party plugins, themes, and ext
 | Add a column / annotation to the leaderboard | [`08-leaderboard-customization/`](08-leaderboard-customization/) |
 | Replace the default weekly recap email with a branded variant | [`09-override-email-template/`](09-override-email-template/) |
 | Inject UI before/after any block render | [`10-inject-into-block-render/`](10-inject-into-block-render/) |
+| Fulfil a redemption by unlocking a LearnDash course | [`11-redemption-learndash-course/`](11-redemption-learndash-course/) |
+| Fulfil a redemption by joining a BuddyPress group | [`12-redemption-bp-group/`](12-redemption-bp-group/) |
+| Fulfil swag / gift-card redemptions through a manual queue + email | [`13-redemption-manual-queue/`](13-redemption-manual-queue/) |
 
 ## Quick decision guide
 
