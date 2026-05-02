@@ -159,7 +159,7 @@
 
   "capabilities": [
     { "cap": "manage_options", "default_roles": ["administrator"], "registered_at": "WordPress core", "enforced_at": ["src/Admin/SettingsPage.php:88","src/Admin/SettingsPage.php:93","src/API/PointsController.php:268","src/API/RulesController.php:447","src/API/BadgesController.php:173","src/API/ChallengesController.php:222","src/API/RedemptionController.php:421","src/API/WebhooksController.php:421","..."], "enforcement_count": 32, "meta": false, "requires_context": "none", "note": "Permission monoculture — all admin-side gating uses this single core cap. No granular plugin caps registered." },
-    { "cap": "wb_gam_award_manual", "default_roles": [], "registered_at": null, "enforced_at": ["src/API/PointsController.php:273"], "enforcement_count": 1, "meta": false, "requires_context": "none", "note": "Enforced as a fallback in PointsController::admin_permission_check (after manage_options) — intended for the WP Abilities API, but never registered via add_cap()/add_role(). Site owners cannot grant this cap. Effectively dormant unless an external mechanism (Abilities API plugin, role manager) issues it." }
+    { "cap": "wb_gam_award_manual", "default_roles": ["administrator"], "registered_at": "src/Engine/Capabilities.php (granted on activation; cleaned up in uninstall.php)", "enforced_at": ["src/API/PointsController.php:273"], "enforcement_count": 1, "meta": false, "requires_context": "none", "note": "Enforced as a fallback in PointsController::admin_permission_check (after manage_options). Granted to administrator on plugin activation; site owners can grant it to other roles via a role-manager plugin (User Role Editor, Members, etc.) or programmatically via $role->add_cap('wb_gam_award_manual')." }
   ],
 
   "services": [
@@ -269,8 +269,9 @@
     "cap_context_mismatches": [],
     "cap_drift": {
       "declared_but_unenforced": [],
-      "enforced_but_undeclared": [
-        { "cap": "wb_gam_award_manual", "enforced_at": "src/API/PointsController.php:273", "note": "Used as a secondary gate after manage_options. No add_cap()/add_role() registers it — site owners cannot grant it without an external role-manager plugin or the WP Abilities API. Either drop the cap (rely on manage_options) or register it via a role assignment so it is grantable." }
+      "enforced_but_undeclared": [],
+      "resolved": [
+        { "cap": "wb_gam_award_manual", "resolved_at": "Capabilities::register() called from activation hook — wb-gamification.php:325", "note": "Was previously enforced at PointsController.php:273 but unregistered. Now granted to administrator on activation, removed on uninstall." }
       ],
       "manage_options_gate_count": 32,
       "manage_options_gate_note": "All admin-side gating (REST + admin pages) uses bare current_user_can('manage_options'). Permission monoculture — only full admins can operate the plugin. Future granular caps (wb_gam_manage_badges, wb_gam_award_points, wb_gam_view_analytics) would let staff/community-managers operate without admin role."

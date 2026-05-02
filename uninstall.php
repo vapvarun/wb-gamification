@@ -121,7 +121,26 @@ if ( function_exists( 'as_unschedule_all_actions' ) ) {
 }
 
 // -------------------------------------------------------------------------
-// 6. Delete user meta.
+// 6. Remove plugin custom capabilities from every role.
+// -------------------------------------------------------------------------
+$plugin_caps = array(
+	'wb_gam_award_manual',
+);
+
+foreach ( wp_roles()->roles as $role_name => $_role_data ) {
+	$role = get_role( $role_name );
+	if ( ! $role ) {
+		continue;
+	}
+	foreach ( $plugin_caps as $cap ) {
+		if ( $role->has_cap( $cap ) ) {
+			$role->remove_cap( $cap );
+		}
+	}
+}
+
+// -------------------------------------------------------------------------
+// 7. Delete user meta.
 // -------------------------------------------------------------------------
 $user_meta_keys = array(
 	'wb_gam_level_id',
