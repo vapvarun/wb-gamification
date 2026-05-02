@@ -36,7 +36,8 @@ v1.0.0 shipped. All 45 tasks from `v1-master-plan.md` complete. Subsequent work 
 | [`PRODUCT-VISION.md`](PRODUCT-VISION.md) | Active | Product philosophy, architecture rationale, competitive analysis. |
 | [`TECH-STACK.md`](TECH-STACK.md) | Active | Technology stack rationale (PHP/JS/DB/AI/Mobile/Privacy layers) + 5-year roadmap + decision log. |
 | [`frontend-hub-flow-spec.md`](frontend-hub-flow-spec.md) | Shipped | Hub page design spec (now live). |
-| [`QA-CHECKLIST.md`](QA-CHECKLIST.md) | Active | 200+ pre-release QA checkpoints. Used per release. |
+| [`QA-MANUAL-TEST-PLAN.md`](QA-MANUAL-TEST-PLAN.md) | **Active — primary QA document** | Human-walkable, 6-persona manual test plan covering every surface. Use this for every release. |
+| [`QA-CHECKLIST.md`](QA-CHECKLIST.md) | Archived (v1.0) | Original 200+ checkpoint v1.0 QA list. Sections 5–16 are still useful as a complement; superseded by QA-MANUAL-TEST-PLAN.md as the primary doc. |
 | [`PRE-RELEASE-CHECKLIST.md`](PRE-RELEASE-CHECKLIST.md) | Active | Build + release steps. |
 | [`2026-04-12-hub-page-implementation.md`](2026-04-12-hub-page-implementation.md) | Historical | Implementation plan for the Hub page (shipped). |
 | [`INTEGRATION-GAPS-ROADMAP.md`](INTEGRATION-GAPS-ROADMAP.md) | **Active** | 7 known gaps in the third-party integration story, with severity + workaround + scoping. The current "what's next" backlog. |

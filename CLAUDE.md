@@ -4,7 +4,7 @@
 >
 > **Folder map:**
 > - [`audit/`](audit/) — machine-generated inventory + reports + journeys + wppqa runs. Hand-edits get overwritten on refresh. See [`audit/README.md`](audit/README.md).
-> - [`plans/`](plans/) — human-authored design docs + roadmaps. Open backlog in [`plans/INTEGRATION-GAPS-ROADMAP.md`](plans/INTEGRATION-GAPS-ROADMAP.md). See [`plans/README.md`](plans/README.md).
+> - [`plans/`](plans/) — human-authored design docs + roadmaps. Architecture in [`plans/ARCHITECTURE-DRIVEN-PLAN.md`](plans/ARCHITECTURE-DRIVEN-PLAN.md); QA team uses [`plans/QA-MANUAL-TEST-PLAN.md`](plans/QA-MANUAL-TEST-PLAN.md). See [`plans/README.md`](plans/README.md).
 > - [`examples/`](examples/) — 10 third-party integration samples (manifest, REST, webhook, badge/challenge, email override, block injection). See [`examples/README.md`](examples/README.md).
 > - [`docs/website/`](docs/website/) — customer-facing documentation, owned by the docs team.
 > - [`.wordpress-org/`](.wordpress-org/) — banner / icon / 10 screenshots ready for SVN sync.
