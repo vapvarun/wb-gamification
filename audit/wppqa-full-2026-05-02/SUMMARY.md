@@ -74,7 +74,7 @@ Product-level a11y check (separate from the heuristic phpcs noise). The raw repo
 
 These are real for users with assistive tech. Worth a separate hardening pass.
 
-### 2. Marketing — 3 errors / 4 warnings
+### 2. Marketing — 3 errors / 4 warnings (now spec'd, awaiting design)
 
 WordPress.org submission readiness:
 
