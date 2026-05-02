@@ -574,6 +574,7 @@ final class SettingsPage {
 											<input
 												type="checkbox"
 												name="<?php echo esc_attr( 'wb_gam_enabled_' . $action_id ); ?>"
+												aria-label="<?php /* translators: %s: gamification action label */ echo esc_attr( sprintf( __( 'Enable %s', 'wb-gamification' ), $action['label'] ?? $action_id ) ); ?>"
 												<?php checked( $enabled ); ?>
 											>
 										</td>
@@ -587,6 +588,7 @@ final class SettingsPage {
 											<input
 												type="number"
 												name="<?php echo esc_attr( 'wb_gam_points_' . $action_id ); ?>"
+												aria-label="<?php /* translators: %s: gamification action label */ echo esc_attr( sprintf( __( 'Points for %s', 'wb-gamification' ), $action['label'] ?? $action_id ) ); ?>"
 												value="<?php echo esc_attr( $pts ); ?>"
 												min="0"
 												max="9999"
@@ -797,6 +799,7 @@ final class SettingsPage {
 									<input
 										type="text"
 										name="wb_gam_level[<?php echo esc_attr( $level['id'] ); ?>][name]"
+										aria-label="<?php esc_attr_e( 'Level name', 'wb-gamification' ); ?>"
 										value="<?php echo esc_attr( $level['name'] ); ?>"
 										class="wb-gam-input-full"
 									>
@@ -805,6 +808,7 @@ final class SettingsPage {
 									<input
 										type="number"
 										name="wb_gam_level[<?php echo esc_attr( $level['id'] ); ?>][min_points]"
+										aria-label="<?php esc_attr_e( 'Level minimum points', 'wb-gamification' ); ?>"
 										value="<?php echo esc_attr( $level['min_points'] ); ?>"
 										min="0"
 										class="wb-gam-input-medium"
