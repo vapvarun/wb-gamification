@@ -358,6 +358,8 @@ add_action(
 	'plugins_loaded',
 	function () {
 		WB_Gamification::instance();
+		// Idempotent — only writes when CAPS_VERSION moves forward.
+		WBGam\Engine\Capabilities::sync();
 	},
 	0
 );

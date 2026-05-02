@@ -262,15 +262,15 @@ class PointsController extends WP_REST_Controller {
 	/**
 	 * Check if the current user has permission to manage points.
 	 *
+	 * Accepts manage_options (default WP admin gate) or the granular
+	 * wb_gam_award_manual cap (registered via Capabilities). Both pass
+	 * for administrators by default; site owners can grant
+	 * wb_gam_award_manual to non-admin roles via a role-manager plugin.
+	 *
 	 * @return true|WP_Error True if the request has permission, WP_Error otherwise.
 	 */
 	public function admin_permission_check(): bool|WP_Error {
-		if ( current_user_can( 'manage_options' ) ) {
-			return true;
-		}
-
-		// Honour the Abilities API if available.
-		if ( function_exists( 'current_user_can' ) && current_user_can( 'wb_gam_award_manual' ) ) {
+		if ( \WBGam\Engine\Capabilities::user_can( 'wb_gam_award_manual' ) ) {
 			return true;
 		}
 

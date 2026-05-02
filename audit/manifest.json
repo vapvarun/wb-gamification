@@ -158,8 +158,13 @@
   ],
 
   "capabilities": [
-    { "cap": "manage_options", "default_roles": ["administrator"], "registered_at": "WordPress core", "enforced_at": ["src/Admin/SettingsPage.php:88","src/Admin/SettingsPage.php:93","src/API/PointsController.php:268","src/API/RulesController.php:447","src/API/BadgesController.php:173","src/API/ChallengesController.php:222","src/API/RedemptionController.php:421","src/API/WebhooksController.php:421","..."], "enforcement_count": 32, "meta": false, "requires_context": "none", "note": "Permission monoculture — all admin-side gating uses this single core cap. No granular plugin caps registered." },
-    { "cap": "wb_gam_award_manual", "default_roles": ["administrator"], "registered_at": "src/Engine/Capabilities.php (granted on activation; cleaned up in uninstall.php)", "enforced_at": ["src/API/PointsController.php:273"], "enforcement_count": 1, "meta": false, "requires_context": "none", "note": "Enforced as a fallback in PointsController::admin_permission_check (after manage_options). Granted to administrator on plugin activation; site owners can grant it to other roles via a role-manager plugin (User Role Editor, Members, etc.) or programmatically via $role->add_cap('wb_gam_award_manual')." }
+    { "cap": "manage_options", "default_roles": ["administrator"], "registered_at": "WordPress core", "enforced_at": ["src/Admin/SettingsPage.php (multiple)","via Capabilities::user_can in every REST controller's admin_check"], "enforcement_count": "primary admin gate; passes alongside any granular cap below", "meta": false, "requires_context": "none", "note": "Default WP admin gate. Every REST controller's permission method accepts manage_options OR the corresponding granular plugin cap below — administrators keep working without reconfiguration; site owners can delegate individual surfaces to non-admin roles by granting the granular cap." },
+    { "cap": "wb_gam_award_manual", "default_roles": ["administrator"], "registered_at": "src/Engine/Capabilities.php (granted on activation + plugins_loaded sync; cleaned up in uninstall.php)", "enforced_at": ["src/API/PointsController.php:268 (admin_permission_check)"], "enforcement_count": 1, "meta": false, "requires_context": "none", "note": "Manual point award + revoke. Grant to non-admin roles to delegate point-award rights." },
+    { "cap": "wb_gam_manage_badges", "default_roles": ["administrator"], "registered_at": "src/Engine/Capabilities.php", "enforced_at": ["src/API/BadgesController.php:172 (admin_check)","src/API/BadgesController.php:184 (award_permissions_check)","src/API/RulesController.php:446 (admin_check)"], "enforcement_count": 3, "meta": false, "requires_context": "none", "note": "Badge library + rule management + manual badge award. Same surface as the Badges admin page." },
+    { "cap": "wb_gam_manage_challenges", "default_roles": ["administrator"], "registered_at": "src/Engine/Capabilities.php", "enforced_at": ["src/API/ChallengesController.php:221 (admin_check)"], "enforcement_count": 1, "meta": false, "requires_context": "none", "note": "Individual + community challenge create/update/delete." },
+    { "cap": "wb_gam_manage_rewards", "default_roles": ["administrator"], "registered_at": "src/Engine/Capabilities.php", "enforced_at": ["src/API/RedemptionController.php:420 (admin_check)"], "enforcement_count": 1, "meta": false, "requires_context": "none", "note": "Redemption store catalog management." },
+    { "cap": "wb_gam_manage_webhooks", "default_roles": ["administrator"], "registered_at": "src/Engine/Capabilities.php", "enforced_at": ["src/API/WebhooksController.php:420 (admin_check)"], "enforcement_count": 1, "meta": false, "requires_context": "none", "note": "Outbound webhook configuration + delivery log access." },
+    { "cap": "wb_gam_view_analytics", "default_roles": ["administrator"], "registered_at": "src/Engine/Capabilities.php", "enforced_at": ["(reserved for AnalyticsDashboard menu cap when admin pages adopt granular gating)"], "enforcement_count": 0, "meta": false, "requires_context": "none", "note": "Reserved. Today the AnalyticsDashboard admin page still uses manage_options as its menu cap; the granular cap is registered so site owners can pre-grant it before the admin page-cap update lands." }
   ],
 
   "services": [
@@ -268,13 +273,15 @@
     "dead_listeners_notes": "Naive paired-grep flagged 2 candidates (wb_gam_leaderboard_snapshot, wb_gam_process_event_async). Both are CRON / Action-Scheduler hooks fired by WP core / Action Scheduler — NOT plugin-fired hooks. False positives. No real dead listeners detected.",
     "cap_context_mismatches": [],
     "cap_drift": {
-      "declared_but_unenforced": [],
+      "declared_but_unenforced": [
+        { "cap": "wb_gam_view_analytics", "registered_at": "src/Engine/Capabilities.php", "note": "Registered on activation but no enforcement site yet. Reserved for the AnalyticsDashboard admin page when it adopts granular gating in a follow-up." }
+      ],
       "enforced_but_undeclared": [],
       "resolved": [
-        { "cap": "wb_gam_award_manual", "resolved_at": "Capabilities::register() called from activation hook — wb-gamification.php:325", "note": "Was previously enforced at PointsController.php:273 but unregistered. Now granted to administrator on activation, removed on uninstall." }
+        { "cap": "wb_gam_award_manual", "resolved_at": "Capabilities::register() called from activation hook + plugins_loaded sync", "note": "Was previously enforced at PointsController.php:273 but unregistered. Now granted to administrator on activation, removed on uninstall." }
       ],
-      "manage_options_gate_count": 32,
-      "manage_options_gate_note": "All admin-side gating (REST + admin pages) uses bare current_user_can('manage_options'). Permission monoculture — only full admins can operate the plugin. Future granular caps (wb_gam_manage_badges, wb_gam_award_points, wb_gam_view_analytics) would let staff/community-managers operate without admin role."
+      "manage_options_gate_count": "still primary; granular caps now layered alongside",
+      "manage_options_gate_note": "Every REST controller's permission method now accepts manage_options OR the corresponding granular cap (Capabilities::user_can('wb_gam_*')). Administrators keep working without reconfiguration. Site owners can delegate individual surfaces to non-admin roles via User Role Editor / Members / programmatic add_cap. The admin pages still use manage_options as their menu cap; granular caps for menu items are a future follow-up."
     },
     "extensibility_gaps": [],
     "js_only_activation": [],

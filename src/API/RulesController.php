@@ -439,15 +439,18 @@ class RulesController extends WP_REST_Controller {
 	}
 
 	/**
-	 * Check if the current user is an administrator.
+	 * Check if the current user can manage gamification rules.
+	 *
+	 * Rules are part of the badge surface — same gate as BadgesController.
+	 * Accepts manage_options or wb_gam_manage_badges.
 	 *
 	 * @return true|WP_Error True if the request has permission, WP_Error otherwise.
 	 */
 	public function admin_check(): bool|WP_Error {
-		if ( current_user_can( 'manage_options' ) ) {
+		if ( \WBGam\Engine\Capabilities::user_can( 'wb_gam_manage_badges' ) ) {
 			return true;
 		}
-		return new WP_Error( 'rest_forbidden', __( 'Admin only.', 'wb-gamification' ), array( 'status' => 403 ) );
+		return new WP_Error( 'rest_forbidden', __( 'You do not have permission to manage rules.', 'wb-gamification' ), array( 'status' => 403 ) );
 	}
 
 	/**
