@@ -53,9 +53,9 @@ module.exports = function( grunt ) {
 						expand: true,
 						src: [
 							'**',
-							'!.git/**', '!.gitignore', '!.github/**',
+							'!.git/**', '!.gitignore', '!.github/**', '!.wordpress-org/**',
 							'!node_modules/**', '!tests/**', '!bin/**', '!dist/**',
-							'!docs/**', '!plans/**',
+							'!docs/**', '!plans/**', '!audit/**',
 							'!phpunit.xml.dist', '!phpunit.xml',
 							'!phpstan.neon.dist', '!phpstan-baseline.neon',
 							'!phpcs.xml', '!.phpcs.xml',
