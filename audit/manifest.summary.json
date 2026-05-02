@@ -35,7 +35,7 @@
     "code_flows": "audit/CODE_FLOWS.md",
     "role_matrix": "audit/ROLE_MATRIX.md",
     "graph": "audit/graph.html",
-    "wppqa_baseline": "audit/wppqa-baseline-2026-05-02/SUMMARY.md"
+    "wppqa_baseline": "audit/wppqa-runs/2026-05-02-baseline/SUMMARY.md"
   },
   "static_analysis_flags": {
     "cap_drift_enforced_undeclared": 1,
