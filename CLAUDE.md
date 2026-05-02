@@ -5,11 +5,11 @@
 > **Folder map:**
 > - [`audit/`](audit/) — machine-generated inventory + reports + journeys + wppqa runs. Hand-edits get overwritten on refresh. See [`audit/README.md`](audit/README.md).
 > - [`plans/`](plans/) — human-authored design docs + roadmaps. Open backlog in [`plans/INTEGRATION-GAPS-ROADMAP.md`](plans/INTEGRATION-GAPS-ROADMAP.md). See [`plans/README.md`](plans/README.md).
-> - [`examples/`](examples/) — 8 third-party integration samples (drop-a-file manifest, REST events, webhook listener, custom badge/challenge, filter usage). See [`examples/README.md`](examples/README.md).
+> - [`examples/`](examples/) — 10 third-party integration samples (manifest, REST, webhook, badge/challenge, email override, block injection). See [`examples/README.md`](examples/README.md).
 > - [`docs/website/`](docs/website/) — customer-facing documentation, owned by the docs team.
 > - [`.wordpress-org/`](.wordpress-org/) — banner / icon / 10 screenshots ready for SVN sync.
 >
-> **Audit reports:** [`audit/FEATURE_AUDIT.md`](audit/FEATURE_AUDIT.md), [`audit/CODE_FLOWS.md`](audit/CODE_FLOWS.md), [`audit/ROLE_MATRIX.md`](audit/ROLE_MATRIX.md), [`audit/CLOSE-OUT-2026-05-02.md`](audit/CLOSE-OUT-2026-05-02.md). Quality baseline: [`audit/wppqa-runs/2026-05-02-baseline/SUMMARY.md`](audit/wppqa-runs/2026-05-02-baseline/SUMMARY.md). Browse as graph: `cd audit && python3 -m http.server 8765` then http://localhost:8765/graph.html. Refresh after non-trivial changes via `/wp-plugin-onboard --refresh`.
+> **Audit reports:** [`audit/FEATURE_AUDIT.md`](audit/FEATURE_AUDIT.md), [`audit/CODE_FLOWS.md`](audit/CODE_FLOWS.md), [`audit/ROLE_MATRIX.md`](audit/ROLE_MATRIX.md), [`audit/CLOSE-OUT-2026-05-02.md`](audit/CLOSE-OUT-2026-05-02.md), [`audit/FEATURE-COMPLETENESS-2026-05-02.md`](audit/FEATURE-COMPLETENESS-2026-05-02.md) (per-feature × surface matrix — half-cooked items, logging gaps, test coverage). Quality baseline: [`audit/wppqa-runs/2026-05-02-baseline/SUMMARY.md`](audit/wppqa-runs/2026-05-02-baseline/SUMMARY.md). Browse as graph: `cd audit && python3 -m http.server 8765` then http://localhost:8765/graph.html. Refresh after non-trivial changes via `/wp-plugin-onboard --refresh`.
 
 > Session orientation for AI assistants. Read this first.
 
