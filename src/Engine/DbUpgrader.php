@@ -82,6 +82,7 @@ final class DbUpgrader {
 			'0.3.0' => 'upgrade_to_0_3_0',
 			'0.5.0' => 'upgrade_to_0_5_0',
 			'1.0.0' => 'upgrade_to_1_0_0',
+			'1.1.0' => 'upgrade_to_1_1_0',
 		);
 	}
 
@@ -255,5 +256,30 @@ final class DbUpgrader {
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.SchemaChange
 		$wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}wb_gam_partners" );
+	}
+
+	/**
+	 * 1.1.0 → drop the cosmetics tables.
+	 *
+	 * Per plans/ARCHITECTURE-DRIVEN-PLAN.md, the CosmeticEngine had no
+	 * user-facing surface (no admin, no REST, no block) — a Tier-violation
+	 * from the engine surface contract. The class is removed in v1.1.0;
+	 * this migration drops the two tables it used.
+	 *
+	 * Safe to re-run: DROP TABLE IF EXISTS is idempotent. Clean v1.1.0
+	 * installs that never had the tables are a no-op.
+	 *
+	 * NOTE: PersonalRecordEngine is preserved as an Internal-only tier
+	 * engine — it computes derived state (wb_gam_pr_best_week/day/month
+	 * user_meta) consumed by WeeklyEmailEngine's "Personal best!" badge.
+	 * Its lack of standalone surface is by-design, not a violation.
+	 */
+	private static function upgrade_to_1_1_0(): void {
+		global $wpdb;
+
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.SchemaChange
+		$wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}wb_gam_user_cosmetics" );
+		$wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}wb_gam_cosmetics" );
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.SchemaChange
 	}
 }

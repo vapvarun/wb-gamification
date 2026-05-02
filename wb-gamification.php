@@ -73,6 +73,7 @@ use WBGam\Admin\ApiKeysPage;
 use WBGam\Admin\RedemptionStorePage;
 use WBGam\Admin\CommunityChallengesPage;
 use WBGam\Admin\CohortSettingsPage;
+use WBGam\Admin\WebhooksAdminPage;
 use WBGam\API\CredentialController;
 use WBGam\API\RedemptionController;
 use WBGam\API\LevelsController;
@@ -152,6 +153,7 @@ final class WB_Gamification {
 			add_action( 'plugins_loaded', array( RedemptionStorePage::class, 'init' ), 10 );
 			add_action( 'plugins_loaded', array( CommunityChallengesPage::class, 'init' ), 10 );
 			add_action( 'plugins_loaded', array( CohortSettingsPage::class, 'init' ), 10 );
+			add_action( 'plugins_loaded', array( WebhooksAdminPage::class, 'init' ), 10 );
 		}
 	}
 
@@ -209,7 +211,7 @@ final class WB_Gamification {
 	}
 
 	public function register_blocks(): void {
-		$blocks = array( 'leaderboard', 'member-points', 'badge-showcase', 'level-progress', 'challenges', 'streak', 'top-members', 'kudos-feed', 'year-recap', 'points-history', 'earning-guide', 'hub' );
+		$blocks = array( 'leaderboard', 'member-points', 'badge-showcase', 'level-progress', 'challenges', 'streak', 'top-members', 'kudos-feed', 'year-recap', 'points-history', 'earning-guide', 'hub', 'community-challenges', 'cohort-rank' );
 		foreach ( $blocks as $block ) {
 			$path = WB_GAM_PATH . 'blocks/' . $block;
 			if ( file_exists( $path . '/block.json' ) ) {
@@ -390,6 +392,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			WP_CLI::add_command( 'wb-gamification logs', WBGam\CLI\LogsCommand::class );
 			WP_CLI::add_command( 'wb-gamification export', WBGam\CLI\ExportCommand::class );
 			WP_CLI::add_command( 'wb-gamification doctor', WBGam\CLI\DoctorCommand::class );
+			WP_CLI::add_command( 'wb-gamification replay', WBGam\CLI\ReplayCommand::class );
 		}
 	);
 }

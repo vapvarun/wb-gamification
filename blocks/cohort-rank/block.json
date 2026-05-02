@@ -1,0 +1,30 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "wb-gamification/cohort-rank",
+	"version": "1.0.0",
+	"title": "Cohort Rank",
+	"category": "widgets",
+	"description": "Display the current member's cohort league standing — tier, rank within cohort, points this week.",
+	"keywords": [
+		"gamification",
+		"cohort",
+		"league",
+		"rank"
+	],
+	"textdomain": "wb-gamification",
+	"attributes": {
+		"user_id": {
+			"type": "integer",
+			"default": 0
+		},
+		"limit": {
+			"type": "integer",
+			"default": 5
+		}
+	},
+	"supports": {
+		"html": false
+	},
+	"render": "file:./render.php"
+}

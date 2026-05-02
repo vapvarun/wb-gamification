@@ -138,8 +138,6 @@ class DoctorCommand {
 			'wb_gam_cohort_members',
 			'wb_gam_redemption_items',
 			'wb_gam_redemptions',
-			'wb_gam_cosmetics',
-			'wb_gam_user_cosmetics',
 			'wb_gam_leaderboard_cache',
 		];
 

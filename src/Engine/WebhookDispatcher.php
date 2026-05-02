@@ -327,6 +327,14 @@ final class WebhookDispatcher {
 	): void {
 		$next_retry = $current_retry + 1;
 		if ( $next_retry > self::MAX_RETRIES ) {
+			Log::error(
+				'WebhookDispatcher: delivery permanently failed after exhausting retries.',
+				array(
+					'webhook_id' => $webhook_id,
+					'url'        => $url,
+					'attempts'   => $current_retry,
+				)
+			);
 			return;
 		}
 
