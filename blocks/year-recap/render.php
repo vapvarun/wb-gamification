@@ -13,6 +13,8 @@ use WBGam\Engine\RecapEngine;
 
 defined( 'ABSPATH' ) || exit;
 
+
+use WBGam\Engine\BlockHooks;
 // Resolve user.
 $user_id = (int) ( $attributes['user_id'] ?? 0 );
 if ( $user_id <= 0 ) {
@@ -56,6 +58,9 @@ $accent_style = $accent_color
 
 $wrapper_attrs = get_block_wrapper_attributes( [ 'class' => 'wb-gam-year-recap' ] );
 
+
+
+BlockHooks::before( 'year-recap', $attributes );
 // Helpers for stat display.
 $fmt_num = static fn( int $n ): string => number_format_i18n( $n );
 
@@ -225,3 +230,5 @@ $fmt_num = static fn( int $n ): string => number_format_i18n( $n );
 	<?php endif; ?>
 
 </div>
+
+<?php BlockHooks::after( 'year-recap', $attributes ); ?>

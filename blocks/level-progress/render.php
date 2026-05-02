@@ -13,6 +13,7 @@ defined( 'ABSPATH' ) || exit;
 use WBGam\Engine\LevelEngine;
 use WBGam\Engine\PointsEngine;
 
+use WBGam\Engine\BlockHooks;
 $user_id = (int) ( $attributes['user_id'] ?? 0 );
 if ( $user_id <= 0 ) {
 	$user_id = get_current_user_id();
@@ -48,6 +49,9 @@ if ( ! $level ) {
 }
 
 $wrapper_attrs = get_block_wrapper_attributes( [ 'class' => 'wb-gam-level-progress' ] );
+
+
+BlockHooks::before( 'level-progress', $attributes );
 ?>
 <div <?php echo $wrapper_attrs; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>>
 	<div class="wb-gam-level-progress__header">
@@ -104,3 +108,5 @@ $wrapper_attrs = get_block_wrapper_attributes( [ 'class' => 'wb-gam-level-progre
 		</div>
 	<?php endif; ?>
 </div>
+
+<?php BlockHooks::after( 'level-progress', $attributes ); ?>

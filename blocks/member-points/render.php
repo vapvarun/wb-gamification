@@ -17,6 +17,7 @@ defined( 'ABSPATH' ) || exit;
 use WBGam\Engine\PointsEngine;
 use WBGam\Engine\LevelEngine;
 
+use WBGam\Engine\BlockHooks;
 $user_id = (int) ( $attributes['user_id'] ?? 0 );
 
 // Fall back to current user.
@@ -48,6 +49,9 @@ $next_level       = $show_level ? LevelEngine::get_next_level( $user_id ) : null
 $progress_pct     = $show_progress ? LevelEngine::get_progress_percent( $user_id ) : 0;
 
 $wrapper_attributes = get_block_wrapper_attributes( [ 'class' => 'wb-gam-member-points' ] );
+
+
+BlockHooks::before( 'member-points', $attributes );
 ?>
 <div <?php echo $wrapper_attributes; ?>>
 	<div class="wb-gam-member-points__total">
@@ -91,3 +95,5 @@ $wrapper_attributes = get_block_wrapper_attributes( [ 'class' => 'wb-gam-member-
 		<?php endif; ?>
 	<?php endif; ?>
 </div>
+
+<?php BlockHooks::after( 'member-points', $attributes ); ?>

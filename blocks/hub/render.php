@@ -25,6 +25,8 @@ use WBGam\Engine\Registry;
 
 defined( 'ABSPATH' ) || exit;
 
+
+use WBGam\Engine\BlockHooks;
 wp_enqueue_style( 'wb-gamification-hub' );
 wp_enqueue_script_module( 'wb-gamification-hub' );
 
@@ -195,6 +197,9 @@ $wrapper_attrs = get_block_wrapper_attributes(
 		'data-wp-init'        => 'callbacks.init',
 	)
 );
+
+
+BlockHooks::before( 'hub', $attributes );
 ?>
 <div <?php echo $wrapper_attrs; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>>
 
@@ -354,3 +359,5 @@ $wrapper_attrs = get_block_wrapper_attributes(
 	</div>
 
 </div>
+
+<?php BlockHooks::after( 'hub', $attributes ); ?>

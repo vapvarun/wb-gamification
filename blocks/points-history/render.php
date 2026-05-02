@@ -14,6 +14,7 @@ defined( 'ABSPATH' ) || exit;
 
 use WBGam\Engine\PointsEngine;
 
+use WBGam\Engine\BlockHooks;
 $user_id = (int) ( $attributes['user_id'] ?? 0 );
 if ( $user_id <= 0 ) {
 	$user_id = get_current_user_id();
@@ -35,6 +36,9 @@ $show_label = ! empty( $attributes['show_action_label'] );
 $rows = PointsEngine::get_history( $user_id, $limit );
 
 $wrapper_attrs = get_block_wrapper_attributes( array( 'class' => 'wb-gam-points-history' ) );
+
+
+BlockHooks::before( 'points-history', $attributes );
 ?>
 <div <?php echo $wrapper_attrs; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>>
 
@@ -84,3 +88,5 @@ $wrapper_attrs = get_block_wrapper_attributes( array( 'class' => 'wb-gam-points-
 
 	<?php endif; ?>
 </div>
+
+<?php BlockHooks::after( 'points-history', $attributes ); ?>

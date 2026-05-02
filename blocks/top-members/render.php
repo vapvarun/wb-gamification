@@ -15,6 +15,7 @@ defined( 'ABSPATH' ) || exit;
 use WBGam\Engine\LeaderboardEngine;
 use WBGam\Engine\LevelEngine;
 
+use WBGam\Engine\BlockHooks;
 $limit      = max( 1, min( 20, (int) ( $attributes['limit'] ?? 3 ) ) );
 $period_map = [
 	'all_time'   => 'all',
@@ -76,6 +77,9 @@ if ( $show_level ) {
 $wrapper_attrs = get_block_wrapper_attributes(
 	[ 'class' => 'wb-gam-top-members wb-gam-top-members--' . esc_attr( $layout ) ]
 );
+
+
+BlockHooks::before( 'top-members', $attributes );
 ?>
 <div <?php echo $wrapper_attrs; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>>
 
@@ -180,3 +184,5 @@ $wrapper_attrs = get_block_wrapper_attributes(
 
 	<?php endif; ?>
 </div>
+
+<?php BlockHooks::after( 'top-members', $attributes ); ?>

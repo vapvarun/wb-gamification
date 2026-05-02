@@ -15,12 +15,16 @@ defined( 'ABSPATH' ) || exit;
 
 use WBGam\Engine\KudosEngine;
 
+use WBGam\Engine\BlockHooks;
 $limit        = max( 1, min( 50, (int) ( $attributes['limit'] ?? 10 ) ) );
 $show_messages = (bool) ( $attributes['show_messages'] ?? true );
 
 $kudos = KudosEngine::get_recent( $limit );
 
 $wrapper_attributes = get_block_wrapper_attributes( [ 'class' => 'wb-gam-kudos-feed' ] );
+
+
+BlockHooks::before( 'kudos-feed', $attributes );
 ?>
 <div <?php echo $wrapper_attributes; ?>>
 	<div class="wb-gam-kudos-feed__header">
@@ -76,3 +80,5 @@ $wrapper_attributes = get_block_wrapper_attributes( [ 'class' => 'wb-gam-kudos-f
 		</ul>
 	<?php endif; ?>
 </div>
+
+<?php BlockHooks::after( 'kudos-feed', $attributes ); ?>

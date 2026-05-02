@@ -13,6 +13,7 @@ defined( 'ABSPATH' ) || exit;
 
 use WBGam\Engine\LeaderboardEngine;
 
+use WBGam\Engine\BlockHooks;
 $period     = $attributes['period'] ?? 'all';
 $limit      = (int) ( $attributes['limit'] ?? 10 );
 $scope_type = sanitize_key( $attributes['scope_type'] ?? '' );
@@ -31,6 +32,9 @@ $period_labels = [
 $period_label = $period_labels[ $period ] ?? __( 'All Time', 'wb-gamification' );
 
 $wrapper_attributes = get_block_wrapper_attributes( [ 'class' => 'wb-gam-leaderboard' ] );
+
+
+BlockHooks::before( 'leaderboard', $attributes );
 ?>
 <div <?php echo $wrapper_attributes; ?>>
 	<div class="wb-gam-leaderboard__header">
@@ -154,3 +158,5 @@ $wrapper_attributes = get_block_wrapper_attributes( [ 'class' => 'wb-gam-leaderb
 	}
 	?>
 </div>
+
+<?php BlockHooks::after( 'leaderboard', $attributes ); ?>

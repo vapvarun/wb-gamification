@@ -12,6 +12,7 @@ defined( 'ABSPATH' ) || exit;
 
 use WBGam\Engine\StreakEngine;
 
+use WBGam\Engine\BlockHooks;
 $user_id = (int) ( $attributes['user_id'] ?? 0 );
 if ( $user_id <= 0 ) {
 	$user_id = get_current_user_id();
@@ -52,6 +53,9 @@ foreach ( $milestones as $ms ) {
 }
 
 $wrapper_attrs = get_block_wrapper_attributes( [ 'class' => 'wb-gam-streak' ] );
+
+
+BlockHooks::before( 'streak', $attributes );
 ?>
 <div <?php echo $wrapper_attrs; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>>
 	<div class="wb-gam-streak__stats">
@@ -136,3 +140,5 @@ $wrapper_attrs = get_block_wrapper_attributes( [ 'class' => 'wb-gam-streak' ] );
 		</div>
 	<?php endif; ?>
 </div>
+
+<?php BlockHooks::after( 'streak', $attributes ); ?>
