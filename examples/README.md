@@ -16,6 +16,7 @@ Concrete, copy-paste-ready integrations for third-party plugins, themes, and ext
 | Tier-based or context-aware point multipliers ("VIPs earn 2× points") | [`06-modify-points-per-action/`](06-modify-points-per-action/) |
 | Define a brand-new challenge mechanic (not just "do X N times") | [`07-custom-challenge-type/`](07-custom-challenge-type/) |
 | Add a column / annotation to the leaderboard | [`08-leaderboard-customization/`](08-leaderboard-customization/) |
+| Replace the default weekly recap email with a branded variant | [`09-override-email-template/`](09-override-email-template/) |
 
 ## Quick decision guide
 

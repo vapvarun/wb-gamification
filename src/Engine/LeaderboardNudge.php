@@ -149,6 +149,28 @@ final class LeaderboardNudge {
 
 		$message = self::build_message( $user_id, $rank, $points, $points_to_next );
 
+		/**
+		 * Filter the leaderboard-nudge message body before send.
+		 *
+		 * Use to localise / re-tone / append custom CTAs without
+		 * subclassing the engine. Receives the rendered string plus
+		 * full context.
+		 *
+		 * @param string   $message        Default message body.
+		 * @param int      $user_id        User being nudged.
+		 * @param int      $rank           Current weekly rank.
+		 * @param int      $points         Points earned this week.
+		 * @param int|null $points_to_next Points needed for next rank (null = #1).
+		 */
+		$message = (string) apply_filters(
+			'wb_gamification_nudge_message',
+			$message,
+			$user_id,
+			$rank,
+			$points,
+			$points_to_next
+		);
+
 		// BuddyPress notification.
 		if ( function_exists( 'bp_notifications_add_notification' ) ) {
 			bp_notifications_add_notification(

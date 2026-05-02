@@ -32,18 +32,23 @@ This document tracks every place where the third-party integration story is weak
 
 ---
 
-### G2 — Email templates inline-rendered [MEDIUM]
+### G2 — Email templates inline-rendered [MEDIUM] — **CLOSED 2026-05-02**
 
-**Problem.** `WeeklyEmailEngine::run()` and `LeaderboardNudge::run()` build the email HTML inline. Third parties (or the team itself) can't theme, swap, or fully restructure these emails without a fork.
+**Was.** `WeeklyEmailEngine::run()` and `LeaderboardNudge::run()` built the email HTML inline. Third parties (or the team itself) could not theme, swap, or fully restructure these emails without a fork.
 
-**Workaround today.** Filter the body content via a `wb_gamification_weekly_email_html` action listener (does not exist yet — this is a hypothetical workaround). Today the only realistic workaround is to disable the engine and re-implement in your own plugin.
+**Resolved by.** A new `WBGam\Engine\Email` helper that does `locate_template()`-style override resolution + 3 new filters:
 
-**What "fixing" looks like.**
-- Move the inline HTML into `templates/emails/weekly-recap.php` and `templates/emails/leaderboard-nudge.php`.
-- Use `locate_template()`-style override resolution: `wb-gamification/emails/weekly-recap.php` in the theme wins.
-- Add `wb_gamification_email_template_path` filter for full programmatic override.
+- **`templates/emails/weekly-recap.php`** — the inline HTML moved into a real template file.
+- **`Email::render( $template, $vars )`** — locates and renders with theme-override support.
+- **Theme override path:** `YOUR-THEME/wb-gamification/emails/weekly-recap.php` (child theme wins over parent via `locate_template()`).
+- **Filter `wb_gamification_email_template_path`** — full programmatic override.
+- **Filter `wb_gamification_weekly_email_body`** — replace the rendered HTML body entirely.
+- **Filter `wb_gamification_email_from_header`** — replace the From header.
+- **Filter `wb_gamification_nudge_message`** — replace the leaderboard-nudge message body (LeaderboardNudge uses plain text, not HTML — single-filter override is enough).
 
-**Scoping.** ~half a day. Touches 2 engine files. Worth doing because email is the highest-friction surface to customize and the customer-visible touch point with the most variation in expectations.
+**Example:** [`/examples/09-override-email-template/`](../examples/09-override-email-template/) ships a complete branded variant of the weekly recap that drops into a theme verbatim.
+
+**What it cost.** ~120 lines added (Email helper + filter wires), ~150 lines removed (inline HTML → template file). One template file. Net code reduction of ~30 lines plus a real extension surface.
 
 ---
 
@@ -132,9 +137,9 @@ add_filter( 'wb_gam_admin_submenu_pages', function( $pages ) {
 
 ## Priority recommendation
 
-If we have one week of integration-quality work to spend, in order:
+Recommended next moves, in order:
 
-1. **G2 — email templates** (½ day, broad customer benefit). Highest ROI fix.
+1. ~~**G2 — email templates**~~ — **CLOSED 2026-05-02** ✓
 2. **G1 — block extension slots** (~2-3 days, unlocks the next 3-4 partner integrations). Highest strategic value.
 3. **G4 — event replay CLI** (~1 day, support team will love it). Operational quality-of-life.
 

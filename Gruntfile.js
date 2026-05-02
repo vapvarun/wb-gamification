@@ -61,7 +61,7 @@ module.exports = function( grunt ) {
 							'!phpcs.xml', '!.phpcs.xml',
 							'!package.json', '!package-lock.json',
 							'!composer.json', '!composer.lock',
-							'!Gruntfile.js', '!CLAUDE.md', '!PLAN.md',
+							'!Gruntfile.js', '!CLAUDE.md',
 							'!**/*.md',
 							'!vendor/bin/**', '!vendor/phpunit/**',
 							'!vendor/squizlabs/**', '!vendor/wp-coding-standards/**',
