@@ -83,6 +83,19 @@ final class RedemptionStorePage {
 			);
 		}
 
+		$edit_config = array();
+		if ( $edit_data && ! empty( $edit_data['reward_config'] ) ) {
+			$decoded     = json_decode( $edit_data['reward_config'], true );
+			$edit_config = is_array( $decoded ) ? $decoded : array();
+		}
+
+		$woo_active     = class_exists( '\WC_Coupon' );
+		$credits_active = class_exists( '\Wbcom\Credits\Credits' );
+		$credits_slugs  = array();
+		if ( $credits_active && class_exists( '\Wbcom\Credits\Registry' ) ) {
+			$credits_slugs = \Wbcom\Credits\Registry::instance()->get_slugs();
+		}
+
 		$notice_map = array(
 			'saved'   => array( 'success', __( 'Reward item saved.', 'wb-gamification' ) ),
 			'deleted' => array( 'success', __( 'Reward item deleted.', 'wb-gamification' ) ),
@@ -152,16 +165,83 @@ final class RedemptionStorePage {
 								<td>
 									<select name="reward_type" id="wb-gam-reward-type" class="wbgam-select">
 										<option value="custom" <?php selected( $edit_data['reward_type'] ?? 'custom', 'custom' ); ?>>
-											<?php esc_html_e( 'Custom Reward', 'wb-gamification' ); ?>
+											<?php esc_html_e( 'Custom Reward (fulfilled via hook)', 'wb-gamification' ); ?>
 										</option>
-										<option value="discount_pct" <?php selected( $edit_data['reward_type'] ?? '', 'discount_pct' ); ?>>
-											<?php esc_html_e( 'WooCommerce — Percentage Discount', 'wb-gamification' ); ?>
-										</option>
-										<option value="discount_fixed" <?php selected( $edit_data['reward_type'] ?? '', 'discount_fixed' ); ?>>
-											<?php esc_html_e( 'WooCommerce — Fixed Discount', 'wb-gamification' ); ?>
-										</option>
+										<?php if ( $woo_active ) : ?>
+											<option value="discount_pct" <?php selected( $edit_data['reward_type'] ?? '', 'discount_pct' ); ?>>
+												<?php esc_html_e( 'WooCommerce — Percentage Discount', 'wb-gamification' ); ?>
+											</option>
+											<option value="discount_fixed" <?php selected( $edit_data['reward_type'] ?? '', 'discount_fixed' ); ?>>
+												<?php esc_html_e( 'WooCommerce — Fixed Discount', 'wb-gamification' ); ?>
+											</option>
+											<option value="free_shipping" <?php selected( $edit_data['reward_type'] ?? '', 'free_shipping' ); ?>>
+												<?php esc_html_e( 'WooCommerce — Free Shipping', 'wb-gamification' ); ?>
+											</option>
+											<option value="free_product" <?php selected( $edit_data['reward_type'] ?? '', 'free_product' ); ?>>
+												<?php esc_html_e( 'WooCommerce — Free Product', 'wb-gamification' ); ?>
+											</option>
+										<?php endif; ?>
+										<?php if ( $credits_active ) : ?>
+											<option value="wbcom_credits" <?php selected( $edit_data['reward_type'] ?? '', 'wbcom_credits' ); ?>>
+												<?php esc_html_e( 'Wbcom Credits — Top up balance', 'wb-gamification' ); ?>
+											</option>
+										<?php endif; ?>
 									</select>
-									<p class="description"><?php esc_html_e( 'Custom rewards are fulfilled via hook. WooCommerce rewards auto-generate a coupon code.', 'wb-gamification' ); ?></p>
+									<p class="description">
+										<?php esc_html_e( 'Custom rewards fire wb_gamification_points_redeemed for your code to listen on. WooCommerce rewards auto-generate a coupon. Wbcom Credits adds to a registered SDK ledger.', 'wb-gamification' ); ?>
+										<?php if ( ! $woo_active ) : ?>
+											<br><em><?php esc_html_e( 'WooCommerce is not active — coupon-based rewards are hidden.', 'wb-gamification' ); ?></em>
+										<?php endif; ?>
+										<?php if ( ! $credits_active ) : ?>
+											<br><em><?php esc_html_e( 'Wbcom Credits SDK is not loaded by any active plugin — credit topup is hidden.', 'wb-gamification' ); ?></em>
+										<?php endif; ?>
+									</p>
+								</td>
+							</tr>
+							<tr class="wb-gam-config-row" data-show-for="discount_pct discount_fixed">
+								<th><label for="wb-gam-cfg-amount"><?php esc_html_e( 'Discount amount', 'wb-gamification' ); ?></label></th>
+								<td>
+									<input type="number" name="cfg_amount" id="wb-gam-cfg-amount" class="small-text wbgam-input"
+										value="<?php echo esc_attr( $edit_config['amount'] ?? '10' ); ?>" min="1" step="0.01">
+									<p class="description">
+										<span class="wb-gam-cfg-hint" data-hint-for="discount_pct"><?php esc_html_e( 'Percentage off the cart (e.g. 10 = 10%).', 'wb-gamification' ); ?></span>
+										<span class="wb-gam-cfg-hint" data-hint-for="discount_fixed"><?php esc_html_e( 'Fixed amount off the cart in store currency.', 'wb-gamification' ); ?></span>
+									</p>
+								</td>
+							</tr>
+							<tr class="wb-gam-config-row" data-show-for="free_product">
+								<th><label for="wb-gam-cfg-product"><?php esc_html_e( 'WooCommerce product ID', 'wb-gamification' ); ?></label></th>
+								<td>
+									<input type="number" name="cfg_product_id" id="wb-gam-cfg-product" class="small-text wbgam-input"
+										value="<?php echo esc_attr( $edit_config['product_id'] ?? '' ); ?>" min="1">
+									<p class="description"><?php esc_html_e( 'Numeric ID of the product to give away free. Member receives a single-use 100%-off coupon scoped to this product.', 'wb-gamification' ); ?></p>
+								</td>
+							</tr>
+							<tr class="wb-gam-config-row" data-show-for="wbcom_credits">
+								<th><label for="wb-gam-cfg-slug"><?php esc_html_e( 'Credits destination', 'wb-gamification' ); ?></label></th>
+								<td>
+									<?php if ( ! empty( $credits_slugs ) ) : ?>
+										<select name="cfg_slug" id="wb-gam-cfg-slug" class="wbgam-select">
+											<?php foreach ( $credits_slugs as $slug_option ) : ?>
+												<option value="<?php echo esc_attr( $slug_option ); ?>" <?php selected( $edit_config['slug'] ?? '', $slug_option ); ?>>
+													<?php echo esc_html( $slug_option ); ?>
+												</option>
+											<?php endforeach; ?>
+										</select>
+									<?php else : ?>
+										<input type="text" name="cfg_slug" id="wb-gam-cfg-slug" class="regular-text wbgam-input"
+											value="<?php echo esc_attr( $edit_config['slug'] ?? '' ); ?>"
+											placeholder="<?php esc_attr_e( 'plugin-slug-here', 'wb-gamification' ); ?>">
+									<?php endif; ?>
+									<p class="description"><?php esc_html_e( 'Which plugin\'s credit ledger to top up. Each plugin that uses the Wbcom Credits SDK registers its own slug.', 'wb-gamification' ); ?></p>
+								</td>
+							</tr>
+							<tr class="wb-gam-config-row" data-show-for="wbcom_credits">
+								<th><label for="wb-gam-cfg-credits"><?php esc_html_e( 'Credits to add', 'wb-gamification' ); ?></label></th>
+								<td>
+									<input type="number" name="cfg_credits" id="wb-gam-cfg-credits" class="small-text wbgam-input"
+										value="<?php echo esc_attr( $edit_config['amount'] ?? '100' ); ?>" min="1" step="1">
+									<p class="description"><?php esc_html_e( 'How many credits to deposit into the ledger when this reward is redeemed.', 'wb-gamification' ); ?></p>
 								</td>
 							</tr>
 							<tr>
@@ -219,6 +299,9 @@ final class RedemptionStorePage {
 								'custom'         => __( 'Custom', 'wb-gamification' ),
 								'discount_pct'   => __( '% Discount', 'wb-gamification' ),
 								'discount_fixed' => __( 'Fixed Discount', 'wb-gamification' ),
+								'free_shipping'  => __( 'Free Shipping', 'wb-gamification' ),
+								'free_product'   => __( 'Free Product', 'wb-gamification' ),
+								'wbcom_credits'  => __( 'Wbcom Credits', 'wb-gamification' ),
 							);
 							$type_label   = $type_labels[ $item['reward_type'] ] ?? $item['reward_type'];
 							$status_class = $item['is_active'] ? 'active' : 'info';
@@ -265,6 +348,37 @@ final class RedemptionStorePage {
 			</div>
 			<?php endif; ?>
 		</div>
+		<style>
+			.wb-gam-config-row { display: none; }
+			.wb-gam-config-row.is-visible { display: table-row; }
+			.wb-gam-cfg-hint { display: none; }
+			.wb-gam-cfg-hint.is-visible { display: inline; }
+			@media (max-width: 640px) {
+				.wbgam-card-body table.form-table th,
+				.wbgam-card-body table.form-table td { display: block; width: 100%; padding: 8px 0; }
+				.wb-gam-config-row.is-visible { display: block; }
+			}
+		</style>
+		<script>
+			(function () {
+				var typeSelect = document.getElementById('wb-gam-reward-type');
+				if (!typeSelect) { return; }
+				var rows  = document.querySelectorAll('.wb-gam-config-row');
+				var hints = document.querySelectorAll('.wb-gam-cfg-hint');
+				function sync() {
+					var type = typeSelect.value;
+					rows.forEach(function (row) {
+						var allowed = (row.getAttribute('data-show-for') || '').split(/\s+/);
+						row.classList.toggle('is-visible', allowed.indexOf(type) !== -1);
+					});
+					hints.forEach(function (hint) {
+						hint.classList.toggle('is-visible', hint.getAttribute('data-hint-for') === type);
+					});
+				}
+				typeSelect.addEventListener('change', sync);
+				sync();
+			})();
+		</script>
 		<?php
 	}
 
@@ -285,18 +399,35 @@ final class RedemptionStorePage {
 		$table = $wpdb->prefix . 'wb_gam_redemption_items';
 		$id    = absint( $_POST['reward_id'] ?? 0 );
 
-		$stock_raw = absint( $_POST['stock'] ?? 0 );
+		$stock_raw   = absint( $_POST['stock'] ?? 0 );
+		$reward_type = sanitize_key( $_POST['reward_type'] ?? 'custom' );
+
+		$config = array();
+		switch ( $reward_type ) {
+			case 'discount_pct':
+			case 'discount_fixed':
+				$config['amount'] = max( 0.01, (float) ( $_POST['cfg_amount'] ?? 10 ) );
+				break;
+			case 'free_product':
+				$config['product_id'] = absint( $_POST['cfg_product_id'] ?? 0 );
+				break;
+			case 'wbcom_credits':
+				$config['slug']   = sanitize_key( $_POST['cfg_slug'] ?? '' );
+				$config['amount'] = max( 1, absint( $_POST['cfg_credits'] ?? 0 ) );
+				break;
+		}
 
 		$data = array(
-			'title'       => sanitize_text_field( wp_unslash( $_POST['title'] ?? '' ) ),
-			'description' => sanitize_textarea_field( wp_unslash( $_POST['description'] ?? '' ) ),
-			'points_cost' => max( 1, absint( $_POST['points_cost'] ?? 100 ) ),
-			'reward_type' => sanitize_key( $_POST['reward_type'] ?? 'custom' ),
-			'stock'       => 0 === $stock_raw ? null : $stock_raw,
-			'is_active'   => absint( $_POST['is_active'] ?? 1 ) ? 1 : 0,
+			'title'         => sanitize_text_field( wp_unslash( $_POST['title'] ?? '' ) ),
+			'description'   => sanitize_textarea_field( wp_unslash( $_POST['description'] ?? '' ) ),
+			'points_cost'   => max( 1, absint( $_POST['points_cost'] ?? 100 ) ),
+			'reward_type'   => $reward_type,
+			'reward_config' => $config ? wp_json_encode( $config ) : '',
+			'stock'         => 0 === $stock_raw ? null : $stock_raw,
+			'is_active'     => absint( $_POST['is_active'] ?? 1 ) ? 1 : 0,
 		);
 
-		$formats = array( '%s', '%s', '%d', '%s', '%d', '%d' );
+		$formats = array( '%s', '%s', '%d', '%s', '%s', '%d', '%d' );
 
 		if ( $id > 0 ) {
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- Admin form handler, single row update.

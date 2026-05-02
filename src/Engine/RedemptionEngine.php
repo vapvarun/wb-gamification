@@ -8,16 +8,27 @@
  *
  * Reward types:
  *   discount_pct   — % off WooCommerce order (requires WooCommerce)
- *   discount_fixed — Fixed amount off (requires WooCommerce)
+ *   discount_fixed — Fixed amount off WooCommerce order (requires WooCommerce)
+ *   free_shipping  — Free-shipping WooCommerce coupon (requires WooCommerce)
+ *   free_product   — 100%-off coupon scoped to a specific product (requires WooCommerce)
+ *   wbcom_credits  — Top up balance in a Wbcom Credits SDK slug
+ *                    (requires the wbcom-credits-sdk to be loaded by another plugin)
  *   custom         — Admin-defined reward, fulfillment handled via hook
+ *
+ * Reward config (JSON in reward_config column) per type:
+ *   discount_pct/discount_fixed: { "amount": 10 }
+ *   free_product:                { "product_id": 42 }
+ *   wbcom_credits:               { "slug": "mp", "amount": 100 }
+ *   free_shipping / custom:      {}
  *
  * Flow:
  *   1. Admin defines reward items in wp_gam_redemption_items via admin UI
  *      or POST /redemptions/items (admin only).
  *   2. Member redeems: POST /redemptions with { item_id }.
  *   3. Engine validates member has sufficient points, deducts them,
- *      creates a redemption record, fires action hook for fulfillment.
- *   4. For WooCommerce rewards: creates a unique coupon and returns the code.
+ *      creates a redemption record, dispatches per-type fulfillment.
+ *   4. WooCommerce types create a coupon; wbcom_credits tops up an SDK ledger;
+ *      custom defers to the wb_gamification_points_redeemed action.
  *
  * @package WB_Gamification
  * @since   0.1.0
@@ -186,7 +197,9 @@ final class RedemptionEngine {
 		$coupon_code = null;
 		$config      = json_decode( $item['reward_config'] ?? '{}', true ) ?: array();
 
-		if ( in_array( $item['reward_type'], array( 'discount_pct', 'discount_fixed' ), true ) ) {
+		$woo_types = array( 'discount_pct', 'discount_fixed', 'free_shipping', 'free_product' );
+
+		if ( in_array( $item['reward_type'], $woo_types, true ) ) {
 			$coupon_code = self::create_woo_coupon( $user_id, $item, $config, $redemption_id );
 			$wpdb->update(
 				$wpdb->prefix . 'wb_gam_redemptions',
@@ -194,6 +207,13 @@ final class RedemptionEngine {
 					'status'      => $coupon_code ? 'fulfilled' : 'failed',
 					'coupon_code' => $coupon_code,
 				),
+				array( 'id' => $redemption_id )
+			);
+		} elseif ( 'wbcom_credits' === $item['reward_type'] ) {
+			$ok = self::topup_wbcom_credits( $user_id, $item, $config );
+			$wpdb->update(
+				$wpdb->prefix . 'wb_gam_redemptions',
+				array( 'status' => $ok ? 'fulfilled' : 'failed' ),
 				array( 'id' => $redemption_id )
 			);
 		} else {
@@ -233,19 +253,50 @@ final class RedemptionEngine {
 	 * @return string|null Generated coupon code or null on failure.
 	 */
 	private static function create_woo_coupon( int $user_id, array $item, array $config, int $redemption_id ): ?string {
-		if ( ! function_exists( 'wc_create_coupon' ) && ! class_exists( '\WC_Coupon' ) ) {
+		if ( ! class_exists( '\WC_Coupon' ) ) {
 			return null;
 		}
 
-		$user     = get_userdata( $user_id );
-		$code     = strtoupper( 'WBG-' . substr( md5( $redemption_id . $user_id . time() ), 0, 8 ) );
-		$discount = (float) ( $config['amount'] ?? 10 );
-		$type     = 'discount_pct' === $item['reward_type'] ? 'percent' : 'fixed_cart';
+		$user = get_userdata( $user_id );
+		if ( ! $user ) {
+			return null;
+		}
+
+		$code   = strtoupper( 'WBG-' . substr( md5( $redemption_id . $user_id . microtime( true ) ), 0, 8 ) );
+		$type   = $item['reward_type'];
+		$amount = (float) ( $config['amount'] ?? 10 );
 
 		$coupon = new \WC_Coupon();
 		$coupon->set_code( $code );
-		$coupon->set_discount_type( $type );
-		$coupon->set_amount( $discount );
+
+		switch ( $type ) {
+			case 'discount_pct':
+				$coupon->set_discount_type( 'percent' );
+				$coupon->set_amount( $amount );
+				break;
+			case 'discount_fixed':
+				$coupon->set_discount_type( 'fixed_cart' );
+				$coupon->set_amount( $amount );
+				break;
+			case 'free_shipping':
+				$coupon->set_discount_type( 'percent' );
+				$coupon->set_amount( 0 );
+				$coupon->set_free_shipping( true );
+				break;
+			case 'free_product':
+				$product_id = (int) ( $config['product_id'] ?? 0 );
+				if ( $product_id <= 0 ) {
+					Log::warning( 'redemption: free_product missing product_id', array( 'item_id' => $item['id'] ?? 0 ) );
+					return null;
+				}
+				$coupon->set_discount_type( 'percent' );
+				$coupon->set_amount( 100 );
+				$coupon->set_product_ids( array( $product_id ) );
+				break;
+			default:
+				return null;
+		}
+
 		$coupon->set_usage_limit( 1 );
 		$coupon->set_usage_limit_per_user( 1 );
 		$coupon->set_email_restrictions( array( $user->user_email ) );
@@ -255,6 +306,60 @@ final class RedemptionEngine {
 		$coupon->save();
 
 		return $code;
+	}
+
+	/**
+	 * Top up a Wbcom Credits SDK ledger when the reward type is `wbcom_credits`.
+	 *
+	 * Uses the SDK's static API; safe no-op if the SDK is not loaded on this
+	 * install (e.g. the issuing plugin was deactivated). Logs the failure so
+	 * the admin can see why the redemption sits as `failed`.
+	 *
+	 * @param int   $user_id User receiving the credits.
+	 * @param array $item    Reward item row.
+	 * @param array $config  Decoded reward_config: { slug: string, amount: int }.
+	 * @return bool True on successful topup.
+	 */
+	private static function topup_wbcom_credits( int $user_id, array $item, array $config ): bool {
+		if ( ! class_exists( '\Wbcom\Credits\Credits' ) ) {
+			Log::warning(
+				'redemption: wbcom_credits reward attempted but SDK not loaded',
+				array( 'item_id' => $item['id'] ?? 0 )
+			);
+			return false;
+		}
+
+		$slug   = isset( $config['slug'] ) ? sanitize_key( (string) $config['slug'] ) : '';
+		$amount = isset( $config['amount'] ) ? (int) $config['amount'] : 0;
+
+		if ( '' === $slug || $amount <= 0 ) {
+			Log::warning(
+				'redemption: wbcom_credits reward has invalid config',
+				array(
+					'item_id' => $item['id'] ?? 0,
+					'slug'    => $slug,
+					'amount'  => $amount,
+				)
+			);
+			return false;
+		}
+
+		$note   = sprintf( 'WB Gamification redemption — %s', $item['title'] );
+		$result = \Wbcom\Credits\Credits::topup( $slug, $user_id, $amount, $note );
+
+		if ( false === $result ) {
+			Log::error(
+				'redemption: wbcom_credits topup returned false',
+				array(
+					'user_id' => $user_id,
+					'slug'    => $slug,
+					'amount'  => $amount,
+				)
+			);
+			return false;
+		}
+
+		return true;
 	}
 
 	// ── User redemption history ──────────────────────────────────────────────
