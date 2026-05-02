@@ -42,7 +42,7 @@ final class RedemptionStorePage {
 			'wb-gamification',
 			__( 'Redemption Store', 'wb-gamification' ),
 			__( 'Redemption Store', 'wb-gamification' ),
-			'manage_options',
+			'wb_gam_manage_rewards',
 			'wb-gam-redemption',
 			array( __CLASS__, 'render_page' )
 		);
@@ -276,7 +276,7 @@ final class RedemptionStorePage {
 	public static function handle_save(): void {
 		check_admin_referer( 'wb_gam_save_reward', 'wb_gam_reward_nonce' );
 
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! \WBGam\Engine\Capabilities::user_can( 'wb_gam_manage_rewards' ) ) {
 			wp_die( esc_html__( 'Permission denied.', 'wb-gamification' ) );
 		}
 
@@ -338,7 +338,7 @@ final class RedemptionStorePage {
 		$id = absint( $_GET['reward_id'] ?? $_POST['reward_id'] ?? 0 );
 		check_admin_referer( 'wb_gam_delete_reward_' . $id );
 
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! \WBGam\Engine\Capabilities::user_can( 'wb_gam_manage_rewards' ) ) {
 			wp_die( esc_html__( 'Permission denied.', 'wb-gamification' ) );
 		}
 

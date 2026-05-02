@@ -53,7 +53,7 @@ final class AnalyticsDashboard {
 			'wb-gamification',
 			__( 'Analytics', 'wb-gamification' ),
 			__( 'Analytics', 'wb-gamification' ),
-			'manage_options',
+			'wb_gam_view_analytics',
 			'wb-gamification-analytics',
 			array( __CLASS__, 'render_page' )
 		);

@@ -71,7 +71,7 @@ final class BadgeAdminPage {
 			'wb-gamification',
 			__( 'Badge Library', 'wb-gamification' ),
 			__( 'Badges', 'wb-gamification' ),
-			'manage_options',
+			'wb_gam_manage_badges',
 			'wb-gamification-badges',
 			array( __CLASS__, 'render_page' )
 		);
@@ -427,7 +427,7 @@ final class BadgeAdminPage {
 	 * @return void
 	 */
 	public static function handle_save(): void {
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! \WBGam\Engine\Capabilities::user_can( 'wb_gam_manage_badges' ) ) {
 			wp_die( esc_html__( 'Permission denied.', 'wb-gamification' ) );
 		}
 
@@ -518,7 +518,7 @@ final class BadgeAdminPage {
 	 * @return void
 	 */
 	public static function handle_delete(): void {
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! \WBGam\Engine\Capabilities::user_can( 'wb_gam_manage_badges' ) ) {
 			wp_die( esc_html__( 'Permission denied.', 'wb-gamification' ) );
 		}
 

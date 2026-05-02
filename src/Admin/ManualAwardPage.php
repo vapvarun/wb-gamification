@@ -50,7 +50,7 @@ final class ManualAwardPage {
 			'wb-gamification',
 			__( 'Award Points', 'wb-gamification' ),
 			__( 'Award Points', 'wb-gamification' ),
-			'manage_options',
+			'wb_gam_award_manual',
 			'wb-gamification-award',
 			array( __CLASS__, 'render_page' )
 		);
@@ -64,7 +64,7 @@ final class ManualAwardPage {
 	 * @return void
 	 */
 	public static function render_page(): void {
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! \WBGam\Engine\Capabilities::user_can( 'wb_gam_award_manual' ) ) {
 			wp_die( esc_html__( 'You do not have permission to access this page.', 'wb-gamification' ) );
 		}
 
@@ -232,7 +232,7 @@ final class ManualAwardPage {
 	 * @return void
 	 */
 	public static function handle_award(): void {
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! \WBGam\Engine\Capabilities::user_can( 'wb_gam_award_manual' ) ) {
 			wp_die( esc_html__( 'Insufficient permissions.', 'wb-gamification' ), '', array( 'response' => 403 ) );
 		}
 

@@ -9,14 +9,21 @@
 
 All caps are granted to `administrator` on plugin activation (and on `plugins_loaded` for existing installs via `Capabilities::sync()`). Removed from every role on uninstall.
 
-| Cap | Unlocks | Registered | Enforced |
+| Cap | Unlocks | REST surfaces | Admin pages |
 |---|---|---|---|
-| `wb_gam_award_manual` | Manual point award + revoke | `src/Engine/Capabilities.php` | `src/API/PointsController.php` |
-| `wb_gam_manage_badges` | Badge library + rules + manual badge award | `src/Engine/Capabilities.php` | `src/API/BadgesController.php`, `src/API/RulesController.php` |
-| `wb_gam_manage_challenges` | Individual + community challenge CRUD | `src/Engine/Capabilities.php` | `src/API/ChallengesController.php` |
-| `wb_gam_manage_rewards` | Redemption store catalog | `src/Engine/Capabilities.php` | `src/API/RedemptionController.php` |
-| `wb_gam_manage_webhooks` | Outbound webhook config + delivery log | `src/Engine/Capabilities.php` | `src/API/WebhooksController.php` |
-| `wb_gam_view_analytics` | Reserved (AnalyticsDashboard menu cap) | `src/Engine/Capabilities.php` | (pending — admin page cap update) |
+| `wb_gam_award_manual` | Manual point award + revoke | `PointsController` | Award Points |
+| `wb_gam_manage_badges` | Badge library + rules + manual badge award | `BadgesController`, `RulesController` | Badges (library) |
+| `wb_gam_manage_challenges` | Individual + community challenges + cohort leagues | `ChallengesController` | Challenges, Community Challenges, Cohort Leagues |
+| `wb_gam_manage_rewards` | Redemption store catalog | `RedemptionController` | Redemption Store |
+| `wb_gam_manage_webhooks` | Outbound webhook config + delivery log | `WebhooksController` | _none — REST-only_ |
+| `wb_gam_view_analytics` | Analytics dashboard read | _none_ | Analytics |
+
+**Admin pages that intentionally keep `manage_options`:**
+- **Gamification** (top-level menu / `SettingsPage`) — broad settings surface, admin-only by design.
+- **Setup Wizard** (`SetupWizard`) — one-time first-run flow.
+- **API Keys** (`ApiKeysPage`) — API key issuance is security-sensitive; not delegated.
+
+**Layered model.** Every gate accepts `manage_options` OR the granular cap via `\WBGam\Engine\Capabilities::user_can( $cap )`. Admins (who have `manage_options`) keep working without reconfiguration. Site owners grant a granular cap to a non-admin role via User Role Editor / Members / programmatic `$role->add_cap()` and that role gains access to exactly that surface — both REST endpoints AND admin menu visibility AND per-page authorization checks.
 
 ---
 
