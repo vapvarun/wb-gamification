@@ -157,7 +157,17 @@ final class WeeklyEmailEngine {
 		 */
 		$body = (string) apply_filters( 'wb_gamification_weekly_email_body', $body, $user, $data );
 
-		wp_mail( $user->user_email, $subject, $body, $headers );
+		$sent = wp_mail( $user->user_email, $subject, $body, $headers );
+		if ( ! $sent ) {
+			Log::error(
+				'WeeklyEmailEngine: wp_mail returned false.',
+				array(
+					'user_id'    => $user_id,
+					'recipient'  => $user->user_email,
+					'subject'    => $subject,
+				)
+			);
+		}
 
 		/**
 		 * Fires after a weekly summary email is sent.

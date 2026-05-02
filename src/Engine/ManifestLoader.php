@@ -147,10 +147,10 @@ final class ManifestLoader {
 
 		// Validate manifest return value.
 		if ( ! is_array( $manifest ) ) {
-			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-				error_log( sprintf( 'WB Gamification: Manifest %s did not return an array.', $file ) );
-			}
+			Log::warning(
+				'ManifestLoader: manifest did not return an array.',
+				array( 'file' => $file )
+			);
 			return;
 		}
 
@@ -184,16 +184,13 @@ final class ManifestLoader {
 			$skip = false;
 			foreach ( $required_keys as $key ) {
 				if ( empty( $trigger[ $key ] ) ) {
-					if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-						// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-						error_log(
-							sprintf(
-								'WB Gamification: Action in %s missing required key "%s".',
-								$file,
-								$key
-							)
-						);
-					}
+					Log::warning(
+						'ManifestLoader: trigger missing required key.',
+						array(
+							'file' => $file,
+							'key'  => $key,
+						)
+					);
 					$skip = true;
 					break;
 				}

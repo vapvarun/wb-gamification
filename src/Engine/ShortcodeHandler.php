@@ -52,6 +52,8 @@ final class ShortcodeHandler {
 		add_shortcode( 'wb_gam_points_history', array( __CLASS__, 'render_points_history' ) );
 		add_shortcode( 'wb_gam_earning_guide', array( __CLASS__, 'render_earning_guide' ) );
 		add_shortcode( 'wb_gam_hub', array( __CLASS__, 'render_hub' ) );
+		add_shortcode( 'wb_gam_community_challenges', array( __CLASS__, 'render_community_challenges' ) );
+		add_shortcode( 'wb_gam_cohort_rank', array( __CLASS__, 'render_cohort_rank' ) );
 	}
 
 	// ── Shortcode renderers ───────────────────────────────────────────────────
@@ -313,6 +315,48 @@ final class ShortcodeHandler {
 	 */
 	public static function render_hub( $atts = array() ): string {
 		return self::block( 'hub', array() );
+	}
+
+	/**
+	 * Render the community challenges shortcode.
+	 *
+	 * @param array|string $atts [limit, show_progress_bar].
+	 * @return string Rendered HTML.
+	 */
+	public static function render_community_challenges( $atts = array() ): string {
+		$atts = shortcode_atts(
+			array(
+				'limit'             => 0,
+				'show_progress_bar' => 'true',
+			),
+			(array) $atts,
+			'wb_gam_community_challenges'
+		);
+		return self::block( 'community-challenges', array(
+			'limit'             => (int) $atts['limit'],
+			'show_progress_bar' => 'false' !== $atts['show_progress_bar'],
+		) );
+	}
+
+	/**
+	 * Render the cohort rank shortcode.
+	 *
+	 * @param array|string $atts [user_id, limit].
+	 * @return string Rendered HTML.
+	 */
+	public static function render_cohort_rank( $atts = array() ): string {
+		$atts = shortcode_atts(
+			array(
+				'user_id' => 0,
+				'limit'   => 5,
+			),
+			(array) $atts,
+			'wb_gam_cohort_rank'
+		);
+		return self::block( 'cohort-rank', array(
+			'user_id' => (int) $atts['user_id'],
+			'limit'   => (int) $atts['limit'],
+		) );
 	}
 
 	// ── Public attribute normalizers (used by tests) ──────────────────────────

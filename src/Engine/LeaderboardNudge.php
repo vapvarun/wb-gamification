@@ -261,6 +261,15 @@ final class LeaderboardNudge {
 			get_bloginfo( 'name' )
 		);
 
-		wp_mail( $user->user_email, $subject, $message );
+		$sent = wp_mail( $user->user_email, $subject, $message );
+		if ( ! $sent ) {
+			Log::error(
+				'LeaderboardNudge: wp_mail returned false.',
+				array(
+					'user_id'   => $user_id,
+					'recipient' => $user->user_email,
+				)
+			);
+		}
 	}
 }

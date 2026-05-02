@@ -228,6 +228,14 @@ final class BadgeEngine {
 		);
 
 		if ( ! $inserted ) {
+			Log::error(
+				'BadgeEngine: failed to insert wb_gam_user_badges row.',
+				array(
+					'user_id'  => $user_id,
+					'badge_id' => $badge_id,
+					'wpdb_err' => $wpdb->last_error ?: 'unknown',
+				)
+			);
 			return false;
 		}
 

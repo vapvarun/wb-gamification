@@ -294,33 +294,6 @@ final class Installer {
 		) $charset;"
 		);
 
-		// Cosmetics catalog.
-		dbDelta(
-			"CREATE TABLE {$wpdb->prefix}wb_gam_cosmetics (
-			id          VARCHAR(100) NOT NULL,
-			name        VARCHAR(255) NOT NULL,
-			type        VARCHAR(50)  NOT NULL,
-			asset_url   VARCHAR(500),
-			css_class   VARCHAR(100),
-			award_type  VARCHAR(30)  DEFAULT 'admin',
-			cost        INT UNSIGNED DEFAULT 0,
-			is_active   TINYINT(1)   DEFAULT 1,
-			PRIMARY KEY (id)
-		) $charset;"
-		);
-
-		// User-owned cosmetics.
-		dbDelta(
-			"CREATE TABLE {$wpdb->prefix}wb_gam_user_cosmetics (
-			user_id      BIGINT UNSIGNED NOT NULL,
-			cosmetic_id  VARCHAR(100)    NOT NULL,
-			is_active    TINYINT(1)      DEFAULT 0,
-			awarded_at   DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
-			PRIMARY KEY (user_id, cosmetic_id),
-			KEY cosmetic_id (cosmetic_id)
-		) $charset;"
-		);
-
 		// Leaderboard snapshot cache — written by cron, read by LeaderboardEngine.
 		// Note: `rank` is a MySQL 8.0 reserved word — must be backtick-escaped.
 		dbDelta(
