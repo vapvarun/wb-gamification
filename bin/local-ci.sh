@@ -89,7 +89,7 @@ done < <(find . -type f -name '*.php' \
 if [ "$MODE" = "quick" ]; then
   step "QUICK" "skipping WPCS / PHPStan / wppqa / journeys"
 else
-  if [ -f phpcs.xml ] || [ -f .phpcs.xml.dist ]; then
+  if [ -f phpcs.xml ] || [ -f phpcs.xml.dist ] || [ -f .phpcs.xml ] || [ -f .phpcs.xml.dist ]; then
     if [ -x vendor/bin/phpcs ]; then
       run_stage "1.2" "WPCS (phpcs)" composer phpcs
     else

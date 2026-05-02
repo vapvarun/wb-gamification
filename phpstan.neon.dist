@@ -1,0 +1,31 @@
+includes:
+    - vendor/szepeviktor/phpstan-wordpress/extension.neon
+
+parameters:
+    level: 5
+    paths:
+        - src
+        - wb-gamification.php
+        - integrations
+        - blocks
+        - uninstall.php
+    excludePaths:
+        - tests
+        - vendor
+        - node_modules
+        - dist
+        - build
+        - audit
+        - sdk
+    bootstrapFiles:
+        - vendor/szepeviktor/phpstan-wordpress/bootstrap.php
+    treatPhpDocTypesAsCertain: false
+    inferPrivatePropertyTypeFromConstructor: true
+    ignoreErrors:
+        # WordPress globals + dynamic plugin checks generate noise. Quiet
+        # the most common WP-specific patterns; tighten over time.
+        - '#Variable \$wpdb in isset\(\) always exists#'
+        - '#Constant (WB_GAM_PATH|WB_GAM_URL|WB_GAM_FILE|WB_GAM_VERSION|WB_GAM_BASENAME) not found#'
+        # Action Scheduler is loaded conditionally — its functions are
+        # discovered at runtime and may not be visible to static analysis.
+        - '#Function as_(enqueue_async_action|schedule_single_action|unschedule_all_actions) not found#'
