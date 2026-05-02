@@ -44,7 +44,7 @@ final class ChallengeManagerPage {
 			'wb-gamification',
 			__( 'Challenges', 'wb-gamification' ),
 			__( 'Challenges', 'wb-gamification' ),
-			'manage_options',
+			'wb_gam_manage_challenges',
 			'wb-gam-challenges',
 			array( __CLASS__, 'render_page' )
 		);
@@ -271,7 +271,7 @@ final class ChallengeManagerPage {
 	public static function handle_save(): void {
 		check_admin_referer( 'wb_gam_save_challenge', 'wb_gam_challenge_nonce' );
 
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! \WBGam\Engine\Capabilities::user_can( 'wb_gam_manage_challenges' ) ) {
 			wp_die( esc_html__( 'Permission denied.', 'wb-gamification' ) );
 		}
 
@@ -333,7 +333,7 @@ final class ChallengeManagerPage {
 		$id = absint( $_GET['challenge_id'] ?? $_POST['challenge_id'] ?? 0 );
 		check_admin_referer( 'wb_gam_delete_challenge_' . $id );
 
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! \WBGam\Engine\Capabilities::user_can( 'wb_gam_manage_challenges' ) ) {
 			wp_die( esc_html__( 'Permission denied.', 'wb-gamification' ) );
 		}
 

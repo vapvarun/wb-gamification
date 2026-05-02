@@ -66,7 +66,7 @@ final class CohortSettingsPage {
 			'wb-gamification',
 			__( 'Cohort Leagues', 'wb-gamification' ),
 			__( 'Cohort Leagues', 'wb-gamification' ),
-			'manage_options',
+			'wb_gam_manage_challenges',
 			'wb-gam-cohort',
 			array( __CLASS__, 'render_page' )
 		);
@@ -243,7 +243,7 @@ final class CohortSettingsPage {
 	public static function handle_save(): void {
 		check_admin_referer( 'wb_gam_save_cohort_settings', 'wb_gam_cohort_nonce' );
 
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! \WBGam\Engine\Capabilities::user_can( 'wb_gam_manage_challenges' ) ) {
 			wp_die( esc_html__( 'Permission denied.', 'wb-gamification' ) );
 		}
 
