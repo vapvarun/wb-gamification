@@ -1,6 +1,24 @@
-# WB Gamification v1.0.0 — Complete QA Checklist
+# WB Gamification v1.0.0 — Complete QA Checklist (archived)
 
-> Assign each section to a different QA agent. Every item must be verified against actual code, not assumed.
+> ⚠️ **ARCHIVED — superseded for v1.1+.**
+>
+> This checklist was written for the v1.0.0 release in April 2026. Several items reference surfaces that no longer exist (the Pro plugin, the CosmeticEngine, the EDD SDK auto-activate flow), since the v1.0.0 → v1.1 work consolidated to a single free plugin and removed the cosmetic engine.
+>
+> **For v1.1+ QA, use [`plans/QA-MANUAL-TEST-PLAN.md`](QA-MANUAL-TEST-PLAN.md)** — a 6-persona, human-walkable test plan with a coverage matrix proving every surface has a test step. The bug-report template is also there.
+>
+> This document is preserved for two reasons:
+>
+> 1. Historical reference for what shipped in v1.0.
+> 2. Sections 5–16 (REST API, Database, Admin UI, Frontend, Public PHP API, Security, Build, CI/CD, BuddyPress, Cron, WP-CLI) are still mostly accurate — they just need to be cross-checked against the new manual test plan rather than walked alone.
+>
+> When walking these sections, ignore any reference to:
+>
+> - "Pro plugin" / `wb-gamification-pro.php` — there is no Pro plugin in v1.1+; everything is in the free plugin.
+> - `CosmeticEngine` / `cosmetic_granted` / `wb_gam_cosmetics` table — removed in v1.1 via `DbUpgrader::upgrade_to_1_1_0()`.
+> - EDD SDK auto-activate — removed.
+> - `LicenseManager::init()` — removed with the Pro split.
+>
+> The manual test plan covers all v1.1 additions: community-challenges block, cohort-rank block, Webhooks admin page, `replay` CLI command, granular plugin capabilities, pluggable email templates, block extension hooks, and the v1.0 → v1.1 upgrade flow.
 
 ---
 
