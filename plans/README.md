@@ -34,6 +34,7 @@ v1.0.0 shipped. All 45 tasks from `v1-master-plan.md` complete. Subsequent work 
 |------|---|------|
 | [`v1-master-plan.md`](v1-master-plan.md) | Historical | All 45 tasks across all phases — preserved as reference. |
 | [`PRODUCT-VISION.md`](PRODUCT-VISION.md) | Active | Product philosophy, architecture rationale, competitive analysis. |
+| [`TECH-STACK.md`](TECH-STACK.md) | Active | Technology stack rationale (PHP/JS/DB/AI/Mobile/Privacy layers) + 5-year roadmap + decision log. |
 | [`frontend-hub-flow-spec.md`](frontend-hub-flow-spec.md) | Shipped | Hub page design spec (now live). |
 | [`QA-CHECKLIST.md`](QA-CHECKLIST.md) | Active | 200+ pre-release QA checkpoints. Used per release. |
 | [`PRE-RELEASE-CHECKLIST.md`](PRE-RELEASE-CHECKLIST.md) | Active | Build + release steps. |
@@ -44,7 +45,7 @@ v1.0.0 shipped. All 45 tasks from `v1-master-plan.md` complete. Subsequent work 
 
 Most v1 follow-ups are done. Open backlog (in priority order):
 
-1. **G2 — pluggable email templates** (½ day, broad customer benefit). See `INTEGRATION-GAPS-ROADMAP.md`.
+1. ~~**G2 — pluggable email templates**~~ — **CLOSED 2026-05-02** (PR #13) ✓
 2. **G1 — block extension slots** (~2-3 days, unlocks partner integrations).
 3. **G4 — event replay CLI** (~1 day, support quality-of-life).
 4. **Default badges** — ship a curated set of badge definitions with the plugin.
