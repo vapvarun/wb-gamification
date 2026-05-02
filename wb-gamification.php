@@ -321,6 +321,7 @@ register_activation_hook(
 	__FILE__,
 	function () {
 		Installer::install();
+		WBGam\Engine\Capabilities::register();
 		set_transient( 'wb_gam_do_redirect', true, 30 );
 		LogPruner::activate();
 		LeaderboardNudge::activate();
