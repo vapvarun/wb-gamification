@@ -20,9 +20,11 @@ The single most important flow in the plugin: a tracked event arrives, the engin
 - Site: `$SITE_URL`
 - Test user login: `test_user` (subscriber role) via `?autologin=test_user`
 - Capture user ID from the login response (`USER_ID`).
-- DB clean (optional, ensures repeatable starting state):
+- DB clean (optional — repeatable runs add a `wp_post_receives_comment` event each time, increasing the user's total by the action's configured points):
   ```sql
-  DELETE FROM wp_wb_gam_events WHERE user_id = $USER_ID AND action = 'journey_smoke_test';
+  -- Optional: delete events tagged by this journey's metadata.source
+  -- (the `metadata` column is JSON; LIKE on the serialized value is the cheapest filter):
+  DELETE FROM wp_wb_gam_events WHERE user_id = $USER_ID AND metadata LIKE '%journey_smoke_test%';
   DELETE FROM wp_wb_gam_points WHERE user_id = $USER_ID AND reason = 'journey_smoke_test';
   ```
 
@@ -34,18 +36,19 @@ The single most important flow in the plugin: a tracked event arrives, the engin
 - **Capture**: `STARTING_TOTAL` ← `.total`
 - **On fail**: `src/API/MembersController.php:88` (get_points handler) or schema mismatch
 
-### 2. Ingest a synthetic event
+### 2. Ingest an event for a registered action
 - **Action**: `POST $SITE_URL/wp-json/wb-gamification/v1/events` with body
   ```json
-  { "action": "journey_smoke_test", "points": 7, "metadata": { "source": "journey" } }
+  { "action_id": "wp_post_receives_comment", "metadata": { "source": "journey_smoke_test" } }
   ```
-- **Expect**: 200/201 OK, JSON contains `event_id` (UUID).
-- **Capture**: `EVENT_ID` ← `.event_id`
-- **On fail**: `src/API/EventsController.php:70` (create_item handler) or `create_item_permissions_check` rejecting the test user
+- **Expect**: 200 OK, JSON shape `{ "processed": true, "event_id": <uuid>, "action_id": "wp_post_receives_comment", "user_id": <int> }`.
+- **Capture**: `EVENT_ID` ← `.event_id`. `EXPECTED_DELTA` ← the action's `default_points` (3 for `wp_post_receives_comment`, see `GET /actions`; site owners may override via the `wb_gam_points_<action_id>` option).
+- **On fail**: `src/API/EventsController.php:70` (create_item handler), or unrecognized `action_id`, or `create_item_permissions_check` rejecting the test user.
+- **Note**: The endpoint requires `action_id` (a registered action). Points come from the action's configured value, not from the request body — there is no `points` field on `/events`.
 
 ### 3. Wait for async processing
 - **Action**: poll up to 5× at 1s intervals: `GET /wp-json/wb-gamification/v1/members/$USER_ID/points`
-- **Expect**: `.total == STARTING_TOTAL + 7` within 5s
+- **Expect**: `.total == STARTING_TOTAL + EXPECTED_DELTA` within 5s
 - **On fail**: Action Scheduler queue stuck, or `Engine::handle_async()` errored. Check:
   - WP cron is running (`wp cron event list | grep action_scheduler_run_queue`)
   - `src/Engine/Engine.php:65` (the listener for `wb_gam_process_event_async`)
@@ -53,19 +56,19 @@ The single most important flow in the plugin: a tracked event arrives, the engin
   - `wp wb-gamification doctor` (the `DoctorCommand` will report queue/schema health)
 
 ### 4. Verify event row in DB
-- **Action**: `mysql_query "SELECT id, user_id, action, points FROM wp_wb_gam_events WHERE id = '$EVENT_ID'"`
-- **Expect**: exactly 1 row with `user_id = $USER_ID`, `action = 'journey_smoke_test'`, `points = 7`.
+- **Action**: `mysql_query "SELECT id, user_id, action_id, object_id FROM wp_wb_gam_events WHERE id = '$EVENT_ID'"`
+- **Expect**: exactly 1 row with `user_id = $USER_ID`, `action_id = 'wp_post_receives_comment'`. (The events table has `action_id`, not `action`. Note also: there is no `points` column on `wb_gam_events` — the points layer lives in `wb_gam_points`.)
 
 ### 5. Verify points-ledger row
 - **Action**: `mysql_query "SELECT id, user_id, points, event_id FROM wp_wb_gam_points WHERE event_id = '$EVENT_ID'"`
-- **Expect**: exactly 1 row with `points = 7` and `event_id = $EVENT_ID` (FK back to events).
+- **Expect**: exactly 1 row with `points = EXPECTED_DELTA` and `event_id = $EVENT_ID` (FK back to events).
 
 ## Pass criteria
 
 ALL of the following hold:
 1. `members/{id}/points` returns 200 in step 1 with a numeric `total`.
-2. `POST /events` returns 200/201 with an `event_id`.
-3. The user's total increases by 7 within 5s.
+2. `POST /events` returns 200 with `processed:true` and `event_id` set.
+3. The user's total increases by `EXPECTED_DELTA` within 5s.
 4. `wb_gam_events` and `wb_gam_points` both contain the new row, properly linked.
 5. The `wb_gamification_points_awarded` action fired (verifiable via a test listener if instrumented; otherwise relax this assertion).
 
