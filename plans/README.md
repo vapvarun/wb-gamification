@@ -37,6 +37,7 @@ v1.0.0 shipped. All 45 tasks from `v1-master-plan.md` complete. Subsequent work 
 | [`TECH-STACK.md`](TECH-STACK.md) | Active | Technology stack rationale (PHP/JS/DB/AI/Mobile/Privacy layers) + 5-year roadmap + decision log. |
 | [`frontend-hub-flow-spec.md`](frontend-hub-flow-spec.md) | Shipped | Hub page design spec (now live). |
 | [`QA-MANUAL-TEST-PLAN.md`](QA-MANUAL-TEST-PLAN.md) | **Active — primary QA document** | Human-walkable, 6-persona manual test plan covering every surface. Use this for every release. |
+| [`UX-ADMIN-AUDIT-2026-05-03.md`](UX-ADMIN-AUDIT-2026-05-03.md) | **Active — pre-customer-release backlog** | Fresh-eyes admin UX audit. 3 Critical / 5 High / 7 Medium confusion points found during a live admin walk. ~21h total to ship-clean; ~11h for Critical+High only. |
 | [`QA-CHECKLIST.md`](QA-CHECKLIST.md) | Archived (v1.0) | Original 200+ checkpoint v1.0 QA list. Sections 5–16 are still useful as a complement; superseded by QA-MANUAL-TEST-PLAN.md as the primary doc. |
 | [`PRE-RELEASE-CHECKLIST.md`](PRE-RELEASE-CHECKLIST.md) | Active | Build + release steps. |
 | [`2026-04-12-hub-page-implementation.md`](2026-04-12-hub-page-implementation.md) | Historical | Implementation plan for the Hub page (shipped). |
