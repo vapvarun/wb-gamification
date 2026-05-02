@@ -3,7 +3,20 @@
 **Generated**: 2026-05-02
 **Source**: [`audit/manifest.json`](manifest.json)
 
-> **TL;DR — permission monoculture.** All admin operations gate on `manage_options` (32 separate checks). One custom cap (`wb_gam_award_manual`) is enforced but never registered. Any non-admin role gets read-only access at best.
+> **TL;DR — granular caps available alongside `manage_options`.** Every REST controller's permission method accepts `manage_options` (default WP admin gate) OR the corresponding granular plugin cap below. Administrators keep working without reconfiguration. Site owners can delegate individual surfaces to non-admin roles by granting the granular cap via User Role Editor / Members / programmatic `$role->add_cap()`. The admin pages still use `manage_options` as their menu cap (granular menu caps are a future follow-up).
+
+## Plugin custom capabilities
+
+All caps are granted to `administrator` on plugin activation (and on `plugins_loaded` for existing installs via `Capabilities::sync()`). Removed from every role on uninstall.
+
+| Cap | Unlocks | Registered | Enforced |
+|---|---|---|---|
+| `wb_gam_award_manual` | Manual point award + revoke | `src/Engine/Capabilities.php` | `src/API/PointsController.php` |
+| `wb_gam_manage_badges` | Badge library + rules + manual badge award | `src/Engine/Capabilities.php` | `src/API/BadgesController.php`, `src/API/RulesController.php` |
+| `wb_gam_manage_challenges` | Individual + community challenge CRUD | `src/Engine/Capabilities.php` | `src/API/ChallengesController.php` |
+| `wb_gam_manage_rewards` | Redemption store catalog | `src/Engine/Capabilities.php` | `src/API/RedemptionController.php` |
+| `wb_gam_manage_webhooks` | Outbound webhook config + delivery log | `src/Engine/Capabilities.php` | `src/API/WebhooksController.php` |
+| `wb_gam_view_analytics` | Reserved (AnalyticsDashboard menu cap) | `src/Engine/Capabilities.php` | (pending — admin page cap update) |
 
 ---
 

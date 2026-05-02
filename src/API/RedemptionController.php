@@ -413,14 +413,16 @@ class RedemptionController extends WP_REST_Controller {
 	}
 
 	/**
-	 * Check if the current user is an administrator.
+	 * Check if the current user can manage the redemption store catalog.
+	 *
+	 * Accepts manage_options or the granular wb_gam_manage_rewards cap.
 	 *
 	 * @return true|WP_Error True if the request has permission, WP_Error otherwise.
 	 */
 	public function admin_check(): bool|WP_Error {
-		return current_user_can( 'manage_options' )
+		return \WBGam\Engine\Capabilities::user_can( 'wb_gam_manage_rewards' )
 			? true
-			: new WP_Error( 'rest_forbidden', __( 'Admin only.', 'wb-gamification' ), array( 'status' => 403 ) );
+			: new WP_Error( 'rest_forbidden', __( 'You do not have permission to manage rewards.', 'wb-gamification' ), array( 'status' => 403 ) );
 	}
 
 	/**

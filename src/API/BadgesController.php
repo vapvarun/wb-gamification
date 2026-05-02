@@ -165,27 +165,33 @@ class BadgesController extends WP_REST_Controller {
 	// ── Permission checks ──────────────────────────────────────────────────────
 
 	/**
-	 * Check if the current user is an administrator.
+	 * Check if the current user can manage badge definitions and rules.
+	 *
+	 * Accepts either manage_options (default WP admin gate) or the granular
+	 * wb_gam_manage_badges plugin cap, so site owners can delegate badge
+	 * management to non-admin roles via a role-manager plugin.
 	 *
 	 * @return true|WP_Error True if the request has permission, WP_Error otherwise.
 	 */
 	public function admin_check(): bool|WP_Error {
-		return current_user_can( 'manage_options' )
+		return \WBGam\Engine\Capabilities::user_can( 'wb_gam_manage_badges' )
 			? true
-			: new WP_Error( 'rest_forbidden', __( 'Admin only.', 'wb-gamification' ), array( 'status' => 403 ) );
+			: new WP_Error( 'rest_forbidden', __( 'You do not have permission to manage badges.', 'wb-gamification' ), array( 'status' => 403 ) );
 	}
 
 	/**
 	 * Check if the current user can manually award a badge.
 	 *
+	 * Same surface as admin_check — manual award is a managing-badges action.
+	 *
 	 * @param WP_REST_Request $request Full details about the request.
 	 * @return true|WP_Error True if the request has permission, WP_Error otherwise.
 	 */
 	public function award_permissions_check( $request ): bool|WP_Error {
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! \WBGam\Engine\Capabilities::user_can( 'wb_gam_manage_badges' ) ) {
 			return new WP_Error(
 				'rest_forbidden',
-				__( 'Only administrators can award badges manually.', 'wb-gamification' ),
+				__( 'You do not have permission to award badges.', 'wb-gamification' ),
 				array( 'status' => 403 )
 			);
 		}
