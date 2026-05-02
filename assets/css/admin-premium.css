@@ -538,6 +538,12 @@
 	box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
 }
 
+/* Keyboard focus — keep a visible ring even when outline is suppressed. */
+.wbgam-input:focus-visible {
+	outline: 2px solid var(--wbgam-input-focus);
+	outline-offset: 2px;
+}
+
 .wbgam-input:disabled {
 	background: #f3f4f6;
 	color: var(--wbgam-text-muted);
@@ -574,6 +580,12 @@
 	box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
 }
 
+/* Keyboard focus — keep a visible ring even when outline is suppressed. */
+.wbgam-textarea:focus-visible {
+	outline: 2px solid var(--wbgam-input-focus);
+	outline-offset: 2px;
+}
+
 .wbgam-select {
 	display: block;
 	width: 100%;
@@ -600,6 +612,12 @@
 .wbgam-select:focus {
 	border-color: var(--wbgam-input-focus);
 	box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+/* Keyboard focus — keep a visible ring even when outline is suppressed. */
+.wbgam-select:focus-visible {
+	outline: 2px solid var(--wbgam-input-focus);
+	outline-offset: 2px;
 }
 
 .wbgam-select:disabled {

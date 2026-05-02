@@ -432,6 +432,12 @@
 	box-shadow: 0 0 0 2px rgba(108, 99, 255, 0.15);
 }
 
+/* Keyboard focus — keep a visible ring even when outline is suppressed. */
+.wbgam-input:focus-visible {
+	outline: 2px solid var(--wb-gam-primary);
+	outline-offset: 2px;
+}
+
 .wbgam-select {
 	border: 1px solid var(--wb-gam-border);
 	border-radius: var(--wb-gam-radius);
@@ -444,6 +450,12 @@
 	border-color: var(--wb-gam-primary);
 	outline: none;
 	box-shadow: 0 0 0 2px rgba(108, 99, 255, 0.15);
+}
+
+/* Keyboard focus — keep a visible ring even when outline is suppressed. */
+.wbgam-select:focus-visible {
+	outline: 2px solid var(--wb-gam-primary);
+	outline-offset: 2px;
 }
 
 /* Status pills */
