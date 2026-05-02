@@ -159,9 +159,9 @@ All data is preserved in the database. Reactivating the plugin restores everythi
 5. **Setup Wizard** — 5 starter templates with point previews. Choose your site type and go.
 6. **Award Points** — Manual point award page with user selector, point amount, and reason field.
 7. **API Keys** — Generate and manage API keys for remote site authentication.
-8. **Leaderboard Block** — Frontend leaderboard with avatars, rank, and points. Configurable period and limit.
-9. **Member Profile** — BuddyPress profile header showing level, points, and progress bar.
-10. **Earning Guide Block** — Frontend display showing all actions with point values, grouped by category.
+8. **Member Hub (Frontend)** — The default Hub page combining points total, level progress, badge count, streak, and a leaderboard widget showing the member's rank.
+9. **How-to-Earn Drawer** — Hub side drawer listing every earnable action with point values. Updates live as admins change the point config.
+10. **Redemption Store** — Admin catalog UI to define rewards (custom or WooCommerce-backed) with point cost, stock, and active/inactive status.
 
 == Upgrade Notice ==
 
