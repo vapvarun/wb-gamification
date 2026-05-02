@@ -54,6 +54,7 @@ final class ShortcodeHandler {
 		add_shortcode( 'wb_gam_hub', array( __CLASS__, 'render_hub' ) );
 		add_shortcode( 'wb_gam_community_challenges', array( __CLASS__, 'render_community_challenges' ) );
 		add_shortcode( 'wb_gam_cohort_rank', array( __CLASS__, 'render_cohort_rank' ) );
+		add_shortcode( 'wb_gam_redemption_store', array( __CLASS__, 'render_redemption_store' ) );
 	}
 
 	// ── Shortcode renderers ───────────────────────────────────────────────────
@@ -356,6 +357,29 @@ final class ShortcodeHandler {
 		return self::block( 'cohort-rank', array(
 			'user_id' => (int) $atts['user_id'],
 			'limit'   => (int) $atts['limit'],
+		) );
+	}
+
+	/**
+	 * Render the redemption store shortcode.
+	 *
+	 * @param array|string $atts [limit, columns, show_balance].
+	 * @return string Rendered HTML.
+	 */
+	public static function render_redemption_store( $atts = array() ): string {
+		$atts = shortcode_atts(
+			array(
+				'limit'        => 0,
+				'columns'      => 3,
+				'show_balance' => 'true',
+			),
+			(array) $atts,
+			'wb_gam_redemption_store'
+		);
+		return self::block( 'redemption-store', array(
+			'limit'        => (int) $atts['limit'],
+			'columns'      => max( 1, min( 4, (int) $atts['columns'] ) ),
+			'show_balance' => 'false' !== $atts['show_balance'],
 		) );
 	}
 

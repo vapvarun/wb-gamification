@@ -211,7 +211,7 @@ final class WB_Gamification {
 	}
 
 	public function register_blocks(): void {
-		$blocks = array( 'leaderboard', 'member-points', 'badge-showcase', 'level-progress', 'challenges', 'streak', 'top-members', 'kudos-feed', 'year-recap', 'points-history', 'earning-guide', 'hub', 'community-challenges', 'cohort-rank' );
+		$blocks = array( 'leaderboard', 'member-points', 'badge-showcase', 'level-progress', 'challenges', 'streak', 'top-members', 'kudos-feed', 'year-recap', 'points-history', 'earning-guide', 'hub', 'community-challenges', 'cohort-rank', 'redemption-store' );
 		foreach ( $blocks as $block ) {
 			$path = WB_GAM_PATH . 'blocks/' . $block;
 			if ( file_exists( $path . '/block.json' ) ) {
