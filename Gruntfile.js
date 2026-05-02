@@ -55,7 +55,7 @@ module.exports = function( grunt ) {
 							'**',
 							'!.git/**', '!.gitignore', '!.github/**', '!.wordpress-org/**',
 							'!node_modules/**', '!tests/**', '!bin/**', '!dist/**',
-							'!docs/**', '!plans/**', '!audit/**',
+							'!docs/**', '!plans/**', '!audit/**', '!examples/**',
 							'!phpunit.xml.dist', '!phpunit.xml',
 							'!phpstan.neon.dist', '!phpstan-baseline.neon',
 							'!phpcs.xml', '!.phpcs.xml',

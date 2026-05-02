@@ -1,6 +1,15 @@
 # WB Gamification — CLAUDE.md
 
-> **READ FIRST:** [`audit/manifest.json`](audit/manifest.json) is the canonical inventory — 39 REST endpoints, 20 tables, 12 blocks, 12 shortcodes, 9 cron hooks, 6 WP-CLI commands, 10 admin pages, 55 fired hooks (43 actions + 12 filters). Use this before grepping. Quick index: [`audit/manifest.summary.json`](audit/manifest.summary.json). Reports: [`audit/FEATURE_AUDIT.md`](audit/FEATURE_AUDIT.md), [`audit/CODE_FLOWS.md`](audit/CODE_FLOWS.md), [`audit/ROLE_MATRIX.md`](audit/ROLE_MATRIX.md). Quality baseline: [`audit/wppqa-baseline-2026-05-02/SUMMARY.md`](audit/wppqa-baseline-2026-05-02/SUMMARY.md). Browse the inventory as a graph: `cd audit && python3 -m http.server 8765` then open http://localhost:8765/graph.html. Refresh after non-trivial changes via `/wp-plugin-onboard --refresh`.
+> **READ FIRST:** [`audit/manifest.json`](audit/manifest.json) is the canonical inventory — 39 REST endpoints, 20 tables, 12 blocks, 12 shortcodes, 9 cron hooks, 6 WP-CLI commands, 10 admin pages, 55 fired hooks (43 actions + 12 filters). Use this before grepping. Quick index: [`audit/manifest.summary.json`](audit/manifest.summary.json).
+>
+> **Folder map:**
+> - [`audit/`](audit/) — machine-generated inventory + reports + journeys + wppqa runs. Hand-edits get overwritten on refresh. See [`audit/README.md`](audit/README.md).
+> - [`plans/`](plans/) — human-authored design docs + roadmaps. Open backlog in [`plans/INTEGRATION-GAPS-ROADMAP.md`](plans/INTEGRATION-GAPS-ROADMAP.md). See [`plans/README.md`](plans/README.md).
+> - [`examples/`](examples/) — 8 third-party integration samples (drop-a-file manifest, REST events, webhook listener, custom badge/challenge, filter usage). See [`examples/README.md`](examples/README.md).
+> - [`docs/website/`](docs/website/) — customer-facing documentation, owned by the docs team.
+> - [`.wordpress-org/`](.wordpress-org/) — banner / icon / 10 screenshots ready for SVN sync.
+>
+> **Audit reports:** [`audit/FEATURE_AUDIT.md`](audit/FEATURE_AUDIT.md), [`audit/CODE_FLOWS.md`](audit/CODE_FLOWS.md), [`audit/ROLE_MATRIX.md`](audit/ROLE_MATRIX.md), [`audit/CLOSE-OUT-2026-05-02.md`](audit/CLOSE-OUT-2026-05-02.md). Quality baseline: [`audit/wppqa-runs/2026-05-02-baseline/SUMMARY.md`](audit/wppqa-runs/2026-05-02-baseline/SUMMARY.md). Browse as graph: `cd audit && python3 -m http.server 8765` then http://localhost:8765/graph.html. Refresh after non-trivial changes via `/wp-plugin-onboard --refresh`.
 
 > Session orientation for AI assistants. Read this first.
 

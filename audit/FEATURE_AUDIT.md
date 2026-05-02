@@ -194,4 +194,4 @@ These are facts about the current code state, not opinions:
 5. **wppqa false positive** — `BadgeAdminPage.php:526` flagged for nonce-without-cap, but `current_user_can('manage_options')` IS called at line 521. Heuristic missed it.
 6. **Tap targets** — 16px button height in `assets/css/admin-premium.css:766` and `.min.css:1` (minimum 40px per a11y).
 
-See `audit/wppqa-baseline-2026-05-02/SUMMARY.md` for the full quality baseline.
+See `audit/wppqa-runs/2026-05-02-baseline/SUMMARY.md` for the full quality baseline.
