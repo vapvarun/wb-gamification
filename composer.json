@@ -38,7 +38,18 @@
     },
     "scripts": {
         "test": "php -d auto_prepend_file=tests/prepend.php vendor/bin/phpunit --configuration phpunit.xml.dist",
-        "test:unit": "php -d auto_prepend_file=tests/prepend.php vendor/bin/phpunit --configuration phpunit.xml.dist --testsuite Unit"
+        "test:unit": "php -d auto_prepend_file=tests/prepend.php vendor/bin/phpunit --configuration phpunit.xml.dist --testsuite Unit",
+        "phpcs": "@php vendor/bin/phpcs --standard=.phpcs.xml --report=summary",
+        "phpcs:fix": "@php vendor/bin/phpcbf --standard=.phpcs.xml",
+        "phpstan": "@php vendor/bin/phpstan analyse --memory-limit=512M",
+        "ci": "bash bin/local-ci.sh",
+        "ci:quick": "bash bin/local-ci.sh --quick",
+        "ci:no-journeys": "bash bin/local-ci.sh --no-journeys",
+        "journeys": "bash bin/run-journeys.sh",
+        "journeys:critical": "bash bin/run-journeys.sh --priority critical",
+        "journeys:dry-run": "bash bin/run-journeys.sh --dry-run",
+        "coding-rules": "bash bin/coding-rules-check.sh",
+        "install-hooks": "git config core.hooksPath bin/git-hooks && echo 'Pre-push hook installed (bypass with SKIP_LOCAL_CI=1)'"
     },
     "config": {
         "optimize-autoloader": true,

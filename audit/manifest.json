@@ -1,0 +1,443 @@
+{
+  "$schema": "https://wpmediaverse.com/schemas/wp-plugin-manifest-v2.json",
+  "plugin": {
+    "slug": "wb-gamification",
+    "name": "WB Gamification",
+    "version": "1.0.0",
+    "namespace": "WBGam\\",
+    "main_file": "wb-gamification.php",
+    "text_domain": "wb-gamification",
+    "extends": null,
+    "extension_hook_consumed": null,
+    "extension_hook_fired": "wb_gam_free_loaded",
+    "description": "Complete gamification plugin for BuddyPress and WordPress. Part of the Reign Stack. Points, badges, levels, leaderboards, challenges, and streaks — zero config, works out of the box.",
+    "requires_wp": "6.4",
+    "requires_php": "8.1",
+    "architecture": "Event-sourced, manifest auto-discovery, zero-config. Engine owns three surfaces: event normalization → rule evaluation → output."
+  },
+
+  "rest": {
+    "namespace": "wb-gamification/v1",
+    "endpoints": [
+      { "route": "/wb-gamification/v1/abilities", "methods": ["GET"], "handler": "AbilitiesRegistration::get_abilities_response", "permission": "__return_true", "purpose": "Fallback REST endpoint for WP Abilities API (WP 6.9+).", "where": "src/API/AbilitiesRegistration.php:67" },
+      { "route": "/wb-gamification/v1/actions", "methods": ["GET"], "handler": "ActionsController::get_items", "permission": "__return_true", "purpose": "List all registered gamification actions.", "where": "src/API/ActionsController.php:51" },
+      { "route": "/wb-gamification/v1/actions/(?P<id>[a-z0-9_]+)", "methods": ["GET"], "handler": "ActionsController::get_item", "permission": "__return_true", "purpose": "Retrieve a single gamification action definition.", "where": "src/API/ActionsController.php:63" },
+      { "route": "/wb-gamification/v1/badges", "methods": ["GET"], "handler": "BadgesController::get_items", "permission": "__return_true", "purpose": "List all badge definitions.", "where": "src/API/BadgesController.php:64" },
+      { "route": "/wb-gamification/v1/badges/(?P<id>[a-z0-9_-]+)", "methods": ["GET","PUT","DELETE"], "handler": "BadgesController::get_item|update_item|delete_item", "permission": "get_item_permissions_check|admin_check|admin_check", "purpose": "Retrieve, update, or delete a badge definition.", "where": "src/API/BadgesController.php:93" },
+      { "route": "/wb-gamification/v1/badges/(?P<id>[a-z0-9_-]+)/award", "methods": ["POST"], "handler": "BadgesController::award_badge", "permission": "award_permissions_check", "purpose": "Manually award a badge to a user.", "where": "src/API/BadgesController.php:140" },
+      { "route": "/wb-gamification/v1/badges/(?P<badge_id>[a-z0-9_-]+)/share/(?P<user_id>[\\d]+)", "methods": ["GET"], "handler": "BadgeShareController::get_share_card", "permission": "__return_true", "purpose": "Retrieve shareable badge award card (OG-ready).", "where": "src/API/BadgeShareController.php:66" },
+      { "route": "/wb-gamification/v1/badges/(?P<badge_id>[a-z0-9_]+)/credential/(?P<user_id>[\\d]+)", "methods": ["GET"], "handler": "CredentialController::get_credential", "permission": "__return_true", "purpose": "Retrieve OpenBadges 3.0 verifiable credential.", "where": "src/API/CredentialController.php:65" },
+      { "route": "/wb-gamification/v1/capabilities", "methods": ["GET"], "handler": "CapabilitiesController::get_capabilities", "permission": "__return_true", "purpose": "Discovery endpoint listing capabilities (mobile apps, remote sites).", "where": "src/API/CapabilitiesController.php:48" },
+      { "route": "/wb-gamification/v1/challenges", "methods": ["GET"], "handler": "ChallengesController::get_items", "permission": "__return_true", "purpose": "List challenges.", "where": "src/API/ChallengesController.php:58" },
+      { "route": "/wb-gamification/v1/challenges", "methods": ["POST"], "handler": "ChallengesController::create_item", "permission": "admin_check", "purpose": "Create a new challenge (admin only).", "where": "src/API/ChallengesController.php:58" },
+      { "route": "/wb-gamification/v1/challenges/(?P<id>[\\d]+)", "methods": ["GET","PUT","DELETE"], "handler": "ChallengesController::get_item|update_item|delete_item", "permission": "__return_true|admin_check|admin_check", "purpose": "Retrieve, update, or delete a challenge.", "where": "src/API/ChallengesController.php:116" },
+      { "route": "/wb-gamification/v1/challenges/(?P<id>[\\d]+)/complete", "methods": ["POST"], "handler": "ChallengesController::complete_challenge", "permission": "require_logged_in", "purpose": "Mark a challenge as completed by the current user.", "where": "src/API/ChallengesController.php:184" },
+      { "route": "/wb-gamification/v1/events", "methods": ["POST"], "handler": "EventsController::create_item", "permission": "create_item_permissions_check", "purpose": "Ingest a gamification event from any source (headless, mobile, API, third-party).", "where": "src/API/EventsController.php:70" },
+      { "route": "/wb-gamification/v1/kudos", "methods": ["GET"], "handler": "KudosController::get_items", "permission": "__return_true", "purpose": "Retrieve recent kudos feed.", "where": "src/API/KudosController.php:56" },
+      { "route": "/wb-gamification/v1/kudos", "methods": ["POST"], "handler": "KudosController::create_item", "permission": "create_item_permissions_check", "purpose": "Give kudos to another member.", "where": "src/API/KudosController.php:56" },
+      { "route": "/wb-gamification/v1/kudos/me", "methods": ["GET"], "handler": "KudosController::get_my_stats", "permission": "require_logged_in", "purpose": "Retrieve current user's kudos sent/received counts and daily budget.", "where": "src/API/KudosController.php:100" },
+      { "route": "/wb-gamification/v1/leaderboard", "methods": ["GET"], "handler": "LeaderboardController::get_leaderboard", "permission": "__return_true", "purpose": "Retrieve public leaderboard rankings.", "where": "src/API/LeaderboardController.php:66" },
+      { "route": "/wb-gamification/v1/leaderboard/group/(?P<group_id>[\\d]+)", "methods": ["GET"], "handler": "LeaderboardController::get_group_leaderboard", "permission": "__return_true", "purpose": "Retrieve leaderboard scoped to a specific BuddyPress group.", "where": "src/API/LeaderboardController.php:81" },
+      { "route": "/wb-gamification/v1/leaderboard/me", "methods": ["GET"], "handler": "LeaderboardController::get_my_rank", "permission": "require_logged_in", "purpose": "Retrieve current user's rank and position on leaderboard.", "where": "src/API/LeaderboardController.php:105" },
+      { "route": "/wb-gamification/v1/levels", "methods": ["GET"], "handler": "LevelsController::get_items", "permission": "__return_true", "purpose": "List all level definitions with progression thresholds.", "where": "src/API/LevelsController.php:51" },
+      { "route": "/wb-gamification/v1/members/(?P<id>[\\d]+)", "methods": ["GET"], "handler": "MembersController::get_item", "permission": "get_item_permissions_check", "purpose": "Retrieve full member profile (points, level, badges, streaks).", "where": "src/API/MembersController.php:73" },
+      { "route": "/wb-gamification/v1/members/(?P<id>[\\d]+)/points", "methods": ["GET"], "handler": "MembersController::get_points", "permission": "get_item_permissions_check", "purpose": "Retrieve member's total points and historical point transactions.", "where": "src/API/MembersController.php:88" },
+      { "route": "/wb-gamification/v1/members/(?P<id>[\\d]+)/level", "methods": ["GET"], "handler": "MembersController::get_level", "permission": "get_item_permissions_check", "purpose": "Retrieve member's current level and progress toward next level.", "where": "src/API/MembersController.php:119" },
+      { "route": "/wb-gamification/v1/members/(?P<id>[\\d]+)/badges", "methods": ["GET"], "handler": "MembersController::get_badges", "permission": "get_item_permissions_check", "purpose": "Retrieve all badges earned by a member.", "where": "src/API/MembersController.php:133" },
+      { "route": "/wb-gamification/v1/members/(?P<id>[\\d]+)/events", "methods": ["GET"], "handler": "MembersController::get_events", "permission": "get_item_permissions_check", "purpose": "Retrieve member's activity log of gamification events.", "where": "src/API/MembersController.php:147" },
+      { "route": "/wb-gamification/v1/members/(?P<id>[\\d]+)/streak", "methods": ["GET"], "handler": "MembersController::get_streak", "permission": "get_item_permissions_check", "purpose": "Retrieve member's current streak data and history.", "where": "src/API/MembersController.php:178" },
+      { "route": "/wb-gamification/v1/members/me/toasts", "methods": ["GET"], "handler": "MembersController::get_toasts", "permission": "get_toasts_permissions_check", "purpose": "Retrieve toast notifications for the current user.", "where": "src/API/MembersController.php:204" },
+      { "route": "/wb-gamification/v1/openapi.json", "methods": ["GET"], "handler": "OpenApiController::get_spec", "permission": "__return_true", "purpose": "Retrieve OpenAPI 3.0.3 specification for the API.", "where": "src/API/OpenApiController.php:47" },
+      { "route": "/wb-gamification/v1/points/award", "methods": ["POST"], "handler": "PointsController::award", "permission": "admin_permission_check", "purpose": "Manually award points to a user (admin only).", "where": "src/API/PointsController.php:60" },
+      { "route": "/wb-gamification/v1/points/(?P<id>[\\d]+)", "methods": ["DELETE"], "handler": "PointsController::revoke", "permission": "admin_permission_check", "purpose": "Revoke/delete a point transaction (admin only).", "where": "src/API/PointsController.php:98" },
+      { "route": "/wb-gamification/v1/members/(?P<id>[\\d]+)/recap", "methods": ["GET"], "handler": "RecapController::get_recap", "permission": "permissions_check", "purpose": "Retrieve year-in-community recap data for a member.", "where": "src/API/RecapController.php:62" },
+      { "route": "/wb-gamification/v1/redemptions/items", "methods": ["GET"], "handler": "RedemptionController::get_items", "permission": "__return_true", "purpose": "List redemption items.", "where": "src/API/RedemptionController.php:69" },
+      { "route": "/wb-gamification/v1/redemptions/items", "methods": ["POST"], "handler": "RedemptionController::create_item", "permission": "admin_check", "purpose": "Create a redemption item (admin only).", "where": "src/API/RedemptionController.php:69" },
+      { "route": "/wb-gamification/v1/redemptions/items/(?P<id>[\\d]+)", "methods": ["GET","PUT","DELETE"], "handler": "RedemptionController::get_item|update_item|delete_item", "permission": "__return_true|admin_check|admin_check", "purpose": "Retrieve, update, or delete a redemption item.", "where": "src/API/RedemptionController.php:87" },
+      { "route": "/wb-gamification/v1/redemptions", "methods": ["POST"], "handler": "RedemptionController::redeem", "permission": "require_logged_in", "purpose": "Redeem points for a redemption item.", "where": "src/API/RedemptionController.php:117" },
+      { "route": "/wb-gamification/v1/redemptions/me", "methods": ["GET"], "handler": "RedemptionController::get_my_history", "permission": "require_logged_in", "purpose": "Retrieve current user's redemption history.", "where": "src/API/RedemptionController.php:138" },
+      { "route": "/wb-gamification/v1/rules", "methods": ["GET","POST"], "handler": "RulesController::get_items|create_item", "permission": "admin_check", "purpose": "List or create gamification rules (admin only).", "where": "src/API/RulesController.php:87" },
+      { "route": "/wb-gamification/v1/rules/(?P<id>[\\d]+)", "methods": ["GET","PUT","DELETE"], "handler": "RulesController::get_item|update_item|delete_item", "permission": "admin_check", "purpose": "Retrieve, update, or delete a gamification rule (admin only).", "where": "src/API/RulesController.php:120" },
+      { "route": "/wb-gamification/v1/webhooks", "methods": ["GET","POST"], "handler": "WebhooksController::get_items|create_item", "permission": "admin_check", "purpose": "List or create webhooks (admin only).", "where": "src/API/WebhooksController.php:85" },
+      { "route": "/wb-gamification/v1/webhooks/(?P<id>[\\d]+)", "methods": ["GET","PUT","DELETE"], "handler": "WebhooksController::get_item|update_item|delete_item", "permission": "admin_check", "purpose": "Retrieve, update, or delete a webhook (admin only).", "where": "src/API/WebhooksController.php:105" },
+      { "route": "/wb-gamification/v1/webhooks/(?P<id>[\\d]+)/log", "methods": ["GET","DELETE"], "handler": "WebhooksController::get_delivery_log|clear_delivery_log", "permission": "admin_check", "purpose": "Retrieve or clear webhook delivery log (admin only).", "where": "src/API/WebhooksController.php:136" }
+    ],
+    "notes": "39 register_rest_route() calls. Some routes registered as a single call covering multiple methods (e.g., GET+POST on the same path); manifest expands those for clarity. No AJAX layer — all interactive UI talks to REST."
+  },
+
+  "ajax": [],
+
+  "admin_pages": [
+    { "title": "WB Gamification", "menu_title": "Gamification", "slug": "wb-gamification", "parent": null, "capability": "manage_options", "icon": "dashicons-awards", "position": 56, "render": "SettingsPage::render", "source": "src/Admin/SettingsPage.php:48" },
+    { "title": "Award Points", "menu_title": "Award Points", "slug": "wb-gamification-award", "parent": "wb-gamification", "capability": "manage_options", "render": "ManualAwardPage::render_page", "source": "src/Admin/ManualAwardPage.php:49" },
+    { "title": "Redemption Store", "menu_title": "Redemption Store", "slug": "wb-gam-redemption", "parent": "wb-gamification", "capability": "manage_options", "render": "RedemptionStorePage::render_page", "source": "src/Admin/RedemptionStorePage.php:41" },
+    { "title": "Gamification Setup", "menu_title": "(hidden)", "slug": "wb-gamification-setup", "parent": null, "capability": "manage_options", "render": "SetupWizard::render", "source": "src/Admin/SetupWizard.php:40", "hidden": true, "purpose": "First-run setup wizard, parent slug intentionally null so it does not appear in the menu." },
+    { "title": "Challenges", "menu_title": "Challenges", "slug": "wb-gam-challenges", "parent": "wb-gamification", "capability": "manage_options", "render": "ChallengeManagerPage::render_page", "source": "src/Admin/ChallengeManagerPage.php:43" },
+    { "title": "Community Challenges", "menu_title": "Community Challenges", "slug": "wb-gam-community-challenges", "parent": "wb-gamification", "capability": "manage_options", "render": "CommunityChallengesPage::render_page", "source": "src/Admin/CommunityChallengesPage.php:43" },
+    { "title": "Cohort Leagues", "menu_title": "Cohort Leagues", "slug": "wb-gam-cohort", "parent": "wb-gamification", "capability": "manage_options", "render": "CohortSettingsPage::render_page", "source": "src/Admin/CohortSettingsPage.php:65" },
+    { "title": "Analytics", "menu_title": "Analytics", "slug": "wb-gamification-analytics", "parent": "wb-gamification", "capability": "manage_options", "render": "AnalyticsDashboard::render_page", "source": "src/Admin/AnalyticsDashboard.php:52" },
+    { "title": "API Keys", "menu_title": "API Keys", "slug": "wb-gam-api-keys", "parent": "wb-gamification", "capability": "manage_options", "render": "ApiKeysPage::render_page", "source": "src/Admin/ApiKeysPage.php:43" },
+    { "title": "Badge Library", "menu_title": "Badges", "slug": "wb-gamification-badges", "parent": "wb-gamification", "capability": "manage_options", "render": "BadgeAdminPage::render_page", "source": "src/Admin/BadgeAdminPage.php:70" }
+  ],
+
+  "settings": [
+    { "key": "wb_gam_db_version", "type": "string", "purpose": "Tracks DB schema version for DbUpgrader migrations." },
+    { "key": "wb_gam_wizard_complete", "type": "boolean", "purpose": "Marks setup wizard as completed; gates first-run banners." },
+    { "key": "wb_gam_kudos_daily_limit", "type": "integer", "purpose": "Per-user daily kudos cap (giver budget)." },
+    { "key": "wb_gam_kudos_giver_points", "type": "integer", "purpose": "Points awarded to the giver per kudos." },
+    { "key": "wb_gam_kudos_receiver_points", "type": "integer", "purpose": "Points awarded to the receiver per kudos." },
+    { "key": "wb_gam_log_retention_months", "type": "integer", "purpose": "Months to retain pruneable log rows; consumed by LogPruner." },
+    { "key": "wb_gam_events_retention_months", "type": "integer", "purpose": "Months to retain raw events; consumed by event-pruning cron." },
+    { "key": "wb_gam_rank_automation_rules", "type": "array", "purpose": "Automation rules mapping point thresholds → roles." },
+    { "key": "wb_gam_leaderboard_mode", "type": "string", "purpose": "Leaderboard period (daily/weekly/monthly/all-time) default." },
+    { "key": "wb_gam_hub_page_id", "type": "integer", "purpose": "ID of the auto-created hub page where the [wb_gam_hub] shortcode lives." },
+    { "key": "wb_gam_tenure_seeded", "type": "boolean", "purpose": "Has the tenure seeding migration run for existing users?" },
+    { "key": "wb_gam_template", "type": "string", "purpose": "Active starter template (community/learning/marketplace/blank)." },
+    { "key": "wb_gam_nudge_email", "type": "string|boolean", "purpose": "Weekly nudge email enable + From address." },
+    { "key": "wb_gam_weekly_email_from_name", "type": "string", "purpose": "From-name for weekly recap email." },
+    { "key": "wb_gam_enabled_*", "type": "boolean", "purpose": "Per-feature kill switch (challenges, kudos, streaks, etc.)." },
+    { "key": "wb_gam_points_*", "type": "integer", "purpose": "Per-action point values used by the rule engine." },
+    { "key": "wb_gam_bp_stream_*", "type": "boolean", "purpose": "BuddyPress activity stream toggles." },
+    { "key": "wb_gam_webhook_log_*", "type": "array", "purpose": "Per-webhook delivery log retained for the dashboard." }
+  ],
+
+  "shortcodes": [
+    { "tag": "wb_gam_leaderboard", "handler": "ShortcodeHandler::render_leaderboard", "where": "src/Engine/ShortcodeHandler.php:43" },
+    { "tag": "wb_gam_member_points", "handler": "ShortcodeHandler::render_member_points", "where": "src/Engine/ShortcodeHandler.php:44" },
+    { "tag": "wb_gam_badge_showcase", "handler": "ShortcodeHandler::render_badge_showcase", "where": "src/Engine/ShortcodeHandler.php:45" },
+    { "tag": "wb_gam_level_progress", "handler": "ShortcodeHandler::render_level_progress", "where": "src/Engine/ShortcodeHandler.php:46" },
+    { "tag": "wb_gam_challenges", "handler": "ShortcodeHandler::render_challenges", "where": "src/Engine/ShortcodeHandler.php:47" },
+    { "tag": "wb_gam_streak", "handler": "ShortcodeHandler::render_streak", "where": "src/Engine/ShortcodeHandler.php:48" },
+    { "tag": "wb_gam_top_members", "handler": "ShortcodeHandler::render_top_members", "where": "src/Engine/ShortcodeHandler.php:49" },
+    { "tag": "wb_gam_kudos_feed", "handler": "ShortcodeHandler::render_kudos_feed", "where": "src/Engine/ShortcodeHandler.php:50" },
+    { "tag": "wb_gam_year_recap", "handler": "ShortcodeHandler::render_year_recap", "where": "src/Engine/ShortcodeHandler.php:51" },
+    { "tag": "wb_gam_points_history", "handler": "ShortcodeHandler::render_points_history", "where": "src/Engine/ShortcodeHandler.php:52" },
+    { "tag": "wb_gam_earning_guide", "handler": "ShortcodeHandler::render_earning_guide", "where": "src/Engine/ShortcodeHandler.php:53" },
+    { "tag": "wb_gam_hub", "handler": "ShortcodeHandler::render_hub", "where": "src/Engine/ShortcodeHandler.php:54" }
+  ],
+
+  "blocks": [
+    { "name": "wb-gamification/badge-showcase", "render": "blocks/badge-showcase/render.php", "interactivity": false, "layout_owning": false, "shortcode_pair": "wb_gam_badge_showcase" },
+    { "name": "wb-gamification/challenges", "render": "blocks/challenges/render.php", "interactivity": false, "layout_owning": false, "shortcode_pair": "wb_gam_challenges" },
+    { "name": "wb-gamification/earning-guide", "render": "blocks/earning-guide/render.php", "interactivity": false, "layout_owning": false, "shortcode_pair": "wb_gam_earning_guide" },
+    { "name": "wb-gamification/hub", "render": "blocks/hub/render.php", "interactivity": false, "layout_owning": true, "shortcode_pair": "wb_gam_hub", "notes": "Layout-owning: full-width member hub page. Auto-installed on first activation per `wb_gam_hub_page_id` option." },
+    { "name": "wb-gamification/kudos-feed", "render": "blocks/kudos-feed/render.php", "interactivity": false, "layout_owning": false, "shortcode_pair": "wb_gam_kudos_feed" },
+    { "name": "wb-gamification/leaderboard", "render": "blocks/leaderboard/render.php", "interactivity": false, "layout_owning": false, "shortcode_pair": "wb_gam_leaderboard" },
+    { "name": "wb-gamification/level-progress", "render": "blocks/level-progress/render.php", "interactivity": false, "layout_owning": false, "shortcode_pair": "wb_gam_level_progress" },
+    { "name": "wb-gamification/member-points", "render": "blocks/member-points/render.php", "interactivity": false, "layout_owning": false, "shortcode_pair": "wb_gam_member_points" },
+    { "name": "wb-gamification/points-history", "render": "blocks/points-history/render.php", "interactivity": false, "layout_owning": false, "shortcode_pair": "wb_gam_points_history" },
+    { "name": "wb-gamification/streak", "render": "blocks/streak/render.php", "interactivity": false, "layout_owning": false, "shortcode_pair": "wb_gam_streak" },
+    { "name": "wb-gamification/top-members", "render": "blocks/top-members/render.php", "interactivity": false, "layout_owning": false, "shortcode_pair": "wb_gam_top_members" },
+    { "name": "wb-gamification/year-recap", "render": "blocks/year-recap/render.php", "interactivity": false, "layout_owning": false, "shortcode_pair": "wb_gam_year_recap" }
+  ],
+
+  "post_types": [],
+  "taxonomies": [],
+
+  "tables": [
+    { "name": "{prefix}wb_gam_events", "purpose": "Immutable event log (UUID PK, source of truth for all gamification activity)." },
+    { "name": "{prefix}wb_gam_points", "purpose": "Points ledger (derived from events; event_id FK)." },
+    { "name": "{prefix}wb_gam_user_badges", "purpose": "Earned badges per user; supports `expires_at` for time-bound credentials." },
+    { "name": "{prefix}wb_gam_badge_defs", "purpose": "Badge definitions (name, description, image, criteria)." },
+    { "name": "{prefix}wb_gam_rules", "purpose": "All rule conditions (points, badge, level thresholds)." },
+    { "name": "{prefix}wb_gam_levels", "purpose": "Level definitions (name, threshold, icon)." },
+    { "name": "{prefix}wb_gam_challenges", "purpose": "Individual challenge definitions." },
+    { "name": "{prefix}wb_gam_challenge_log", "purpose": "Per-user progress on challenges." },
+    { "name": "{prefix}wb_gam_community_challenges", "purpose": "Group/community challenge definitions." },
+    { "name": "{prefix}wb_gam_community_challenge_contributions", "purpose": "Per-user contributions to community challenges." },
+    { "name": "{prefix}wb_gam_kudos", "purpose": "Kudos given/received log." },
+    { "name": "{prefix}wb_gam_member_prefs", "purpose": "Per-user notification/privacy preferences." },
+    { "name": "{prefix}wb_gam_leaderboard_cache", "purpose": "Leaderboard snapshot cache (refreshed every 5 min by cron)." },
+    { "name": "{prefix}wb_gam_webhooks", "purpose": "Registered outbound webhook endpoints + delivery state." },
+    { "name": "{prefix}wb_gam_streaks", "purpose": "Streak state per user (current count, longest, last-activity-on)." },
+    { "name": "{prefix}wb_gam_redemptions", "purpose": "Redemption transactions (points spent → reward delivered)." },
+    { "name": "{prefix}wb_gam_redemption_items", "purpose": "Redemption store catalog." },
+    { "name": "{prefix}wb_gam_cosmetics", "purpose": "Cosmetic definitions (frames, profile decorations)." },
+    { "name": "{prefix}wb_gam_user_cosmetics", "purpose": "Cosmetics granted to/equipped by users." },
+    { "name": "{prefix}wb_gam_cohort_members", "purpose": "Cohort league membership (assignment + tier)." }
+  ],
+
+  "capabilities": [
+    { "cap": "manage_options", "default_roles": ["administrator"], "registered_at": "WordPress core", "enforced_at": ["src/Admin/SettingsPage.php:88","src/Admin/SettingsPage.php:93","src/API/PointsController.php:268","src/API/RulesController.php:447","src/API/BadgesController.php:173","src/API/ChallengesController.php:222","src/API/RedemptionController.php:421","src/API/WebhooksController.php:421","..."], "enforcement_count": 32, "meta": false, "requires_context": "none", "note": "Permission monoculture — all admin-side gating uses this single core cap. No granular plugin caps registered." },
+    { "cap": "wb_gam_award_manual", "default_roles": [], "registered_at": null, "enforced_at": ["src/API/PointsController.php:273"], "enforcement_count": 1, "meta": false, "requires_context": "none", "note": "Enforced as a fallback in PointsController::admin_permission_check (after manage_options) — intended for the WP Abilities API, but never registered via add_cap()/add_role(). Site owners cannot grant this cap. Effectively dormant unless an external mechanism (Abilities API plugin, role manager) issues it." }
+  ],
+
+  "services": [
+    { "key": "Engine", "class": "WBGam\\Engine\\Engine", "purpose": "Central event processor. Listeners write events; engine evaluates rules and dispatches outputs." },
+    { "key": "Registry", "class": "WBGam\\Engine\\Registry", "purpose": "Auto-registers actions discovered by ManifestLoader." },
+    { "key": "ManifestLoader", "class": "WBGam\\Engine\\ManifestLoader", "purpose": "Scans integration files for action manifests at plugins_loaded@5." },
+    { "key": "BadgeEngine", "class": "WBGam\\Engine\\BadgeEngine", "purpose": "Rule-based badge evaluation triggered by events." },
+    { "key": "PointsEngine", "class": "WBGam\\Engine\\PointsEngine", "purpose": "Append-only points ledger with action-scheduler async processing." },
+    { "key": "LevelEngine", "class": "WBGam\\Engine\\LevelEngine", "purpose": "Computes user level from points totals against level thresholds." },
+    { "key": "LeaderboardEngine", "class": "WBGam\\Engine\\LeaderboardEngine", "purpose": "Daily/weekly/monthly/all-time leaderboards with scopes; cached via cron." },
+    { "key": "ChallengeEngine", "class": "WBGam\\Engine\\ChallengeEngine", "purpose": "Individual challenge progress + completion." },
+    { "key": "CommunityChallengeEngine", "class": "WBGam\\Engine\\CommunityChallengeEngine", "purpose": "Group/community challenge progress aggregation." },
+    { "key": "KudosEngine", "class": "WBGam\\Engine\\KudosEngine", "purpose": "Peer kudos with cooldown + daily budget." },
+    { "key": "StreakEngine", "class": "WBGam\\Engine\\StreakEngine", "purpose": "Daily/weekly streak tracking per user." },
+    { "key": "RecapEngine", "class": "WBGam\\Engine\\RecapEngine", "purpose": "Year-in-review recap generator." },
+    { "key": "RedemptionEngine", "class": "WBGam\\Engine\\RedemptionEngine", "purpose": "Points → reward redemption transactions." },
+    { "key": "CosmeticEngine", "class": "WBGam\\Engine\\CosmeticEngine", "purpose": "Cosmetic frames/decorations grant + equip." },
+    { "key": "CohortEngine", "class": "WBGam\\Engine\\CohortEngine", "purpose": "Cohort-based leaderboard leagues." },
+    { "key": "TenureBadgeEngine", "class": "WBGam\\Engine\\TenureBadgeEngine", "purpose": "Anniversary/tenure badges based on registration date." },
+    { "key": "SiteFirstBadgeEngine", "class": "WBGam\\Engine\\SiteFirstBadgeEngine", "purpose": "Awards 'first ever' badges to the first user to perform a tracked action." },
+    { "key": "RuleEngine", "class": "WBGam\\Engine\\RuleEngine", "purpose": "Generic rule evaluation pipeline." },
+    { "key": "RankAutomation", "class": "WBGam\\Engine\\RankAutomation", "purpose": "Auto-assign WordPress roles based on point thresholds." },
+    { "key": "RateLimiter", "class": "WBGam\\Engine\\RateLimiter", "purpose": "Per-action daily caps." },
+    { "key": "AsyncEvaluator", "class": "WBGam\\Engine\\AsyncEvaluator", "purpose": "Action-Scheduler async event processing." },
+    { "key": "WebhookDispatcher", "class": "WBGam\\Engine\\WebhookDispatcher", "purpose": "Outbound webhook delivery (Zapier/Make/n8n)." },
+    { "key": "WeeklyEmailEngine", "class": "WBGam\\Engine\\WeeklyEmailEngine", "purpose": "Weekly recap email to opted-in users." },
+    { "key": "LeaderboardNudge", "class": "WBGam\\Engine\\LeaderboardNudge", "purpose": "Weekly nudge email about leaderboard standing." },
+    { "key": "NudgeEngine", "class": "WBGam\\Engine\\NudgeEngine", "purpose": "Generic nudge dispatcher (re-engagement)." },
+    { "key": "NotificationBridge", "class": "WBGam\\Engine\\NotificationBridge", "purpose": "Bridges plugin events to BuddyPress notifications." },
+    { "key": "PersonalRecordEngine", "class": "WBGam\\Engine\\PersonalRecordEngine", "purpose": "Tracks personal-best metrics." },
+    { "key": "StatusRetentionEngine", "class": "WBGam\\Engine\\StatusRetentionEngine", "purpose": "Retains/expires status-based rewards." },
+    { "key": "CredentialExpiryEngine", "class": "WBGam\\Engine\\CredentialExpiryEngine", "purpose": "Expires badge credentials based on validity_days." },
+    { "key": "LogPruner", "class": "WBGam\\Engine\\LogPruner", "purpose": "Daily cleanup of old log rows." },
+    { "key": "DbUpgrader", "class": "WBGam\\Engine\\DbUpgrader", "purpose": "Schema migrations gated by wb_gam_db_version option." },
+    { "key": "Installer", "class": "WBGam\\Engine\\Installer", "purpose": "Activation hook — creates all tables + seeds defaults." },
+    { "key": "FeatureFlags", "class": "WBGam\\Engine\\FeatureFlags", "purpose": "Per-feature kill switches read from wb_gam_enabled_* options." },
+    { "key": "Privacy", "class": "WBGam\\Engine\\Privacy", "purpose": "GDPR-style export/erase handlers." },
+    { "key": "Event", "class": "WBGam\\Engine\\Event", "purpose": "Value object for normalized events." },
+    { "key": "BadgeSharePage", "class": "WBGam\\Engine\\BadgeSharePage", "purpose": "Public OG-ready badge share URL handler." },
+    { "key": "ShortcodeHandler", "class": "WBGam\\Engine\\ShortcodeHandler", "purpose": "Registers all 12 shortcodes." }
+  ],
+
+  "hooks_fired": [
+    { "name": "wb_gam_engines_booted", "type": "action", "purpose": "All engines have been instantiated and wired to plugins_loaded.", "consumed_by": [] },
+    { "name": "wb_gam_free_loaded", "type": "action", "purpose": "Free plugin fully loaded — extension hook for future Pro plugin to bootstrap.", "consumed_by": [] },
+    { "name": "wb_gam_manifests_loaded", "type": "action", "purpose": "ManifestLoader has finished scanning action manifests; Registry is populated.", "consumed_by": [] },
+    { "name": "wb_gam_event_processed", "type": "action", "purpose": "An event has finished evaluating rules + dispatching outputs.", "consumed_by": [] },
+    { "name": "wb_gam_after_points_award", "type": "action", "purpose": "Points were awarded (event-flavoured legacy alias).", "consumed_by": [] },
+    { "name": "wb_gam_after_badge_award", "type": "action", "purpose": "A badge was awarded (legacy alias).", "consumed_by": [] },
+    { "name": "wb_gam_challenge_completed", "type": "action", "purpose": "Challenge completed (legacy alias).", "consumed_by": [] },
+    { "name": "wb_gam_kudos_given", "type": "action", "purpose": "Kudos given (legacy alias).", "consumed_by": [] },
+    { "name": "wb_gam_level_changed", "type": "action", "purpose": "Level changed (legacy alias).", "consumed_by": [] },
+    { "name": "wb_gam_streak_milestone", "type": "action", "purpose": "Streak milestone reached (legacy alias).", "consumed_by": [] },
+    { "name": "wb_gamification_points_awarded", "type": "action", "purpose": "Canonical: points awarded with full event payload.", "consumed_by": [] },
+    { "name": "wb_gamification_before_points_awarded", "type": "action", "purpose": "Pre-flight before points are written; allows last-mile veto.", "consumed_by": [] },
+    { "name": "wb_gamification_points_revoked", "type": "action", "purpose": "Admin revoked a point row.", "consumed_by": [] },
+    { "name": "wb_gamification_points_redeemed", "type": "action", "purpose": "Points spent in the redemption store.", "consumed_by": [] },
+    { "name": "wb_gamification_badge_awarded", "type": "action", "purpose": "Canonical: badge awarded.", "consumed_by": [] },
+    { "name": "wb_gamification_credential_expired", "type": "action", "purpose": "OpenBadges 3.0 credential expired (CredentialExpiryEngine).", "consumed_by": [] },
+    { "name": "wb_gamification_level_changed", "type": "action", "purpose": "Canonical: level changed.", "consumed_by": [] },
+    { "name": "wb_gamification_personal_record", "type": "action", "purpose": "User hit a new personal best.", "consumed_by": [] },
+    { "name": "wb_gamification_kudos_given", "type": "action", "purpose": "Canonical: kudos given.", "consumed_by": [] },
+    { "name": "wb_gamification_streak_milestone", "type": "action", "purpose": "Canonical: streak milestone reached.", "consumed_by": [] },
+    { "name": "wb_gamification_streak_broken", "type": "action", "purpose": "Streak broken (StreakEngine).", "consumed_by": [] },
+    { "name": "wb_gamification_challenge_created", "type": "action", "purpose": "Admin created a challenge (REST or admin UI).", "consumed_by": [] },
+    { "name": "wb_gamification_challenge_updated", "type": "action", "purpose": "Admin updated a challenge.", "consumed_by": [] },
+    { "name": "wb_gamification_challenge_deleted", "type": "action", "purpose": "Admin deleted a challenge.", "consumed_by": [] },
+    { "name": "wb_gamification_challenge_completed", "type": "action", "purpose": "Canonical: challenge completed.", "consumed_by": [] },
+    { "name": "wb_gamification_community_challenge_created", "type": "action", "purpose": "Admin created a community challenge.", "consumed_by": [] },
+    { "name": "wb_gamification_community_challenge_updated", "type": "action", "purpose": "Admin updated a community challenge.", "consumed_by": [] },
+    { "name": "wb_gamification_community_challenge_deleted", "type": "action", "purpose": "Admin deleted a community challenge.", "consumed_by": [] },
+    { "name": "wb_gamification_community_challenge_completed", "type": "action", "purpose": "Community challenge target reached.", "consumed_by": [] },
+    { "name": "wb_gamification_cohort_settings_saved", "type": "action", "purpose": "Cohort league settings updated.", "consumed_by": [] },
+    { "name": "wb_gamification_cohort_outcome", "type": "action", "purpose": "Cohort cycle finished (promotion/relegation).", "consumed_by": [] },
+    { "name": "wb_gamification_cosmetic_granted", "type": "action", "purpose": "Cosmetic frame/decoration granted to a user.", "consumed_by": [] },
+    { "name": "wb_gamification_reward_created", "type": "action", "purpose": "Redemption catalog item created.", "consumed_by": [] },
+    { "name": "wb_gamification_reward_updated", "type": "action", "purpose": "Redemption catalog item updated.", "consumed_by": [] },
+    { "name": "wb_gamification_reward_deleted", "type": "action", "purpose": "Redemption catalog item deleted.", "consumed_by": [] },
+    { "name": "wb_gamification_rank_automation_action", "type": "action", "purpose": "Automation rule fired — role added/removed based on points threshold.", "consumed_by": [] },
+    { "name": "wb_gamification_register", "type": "action", "purpose": "Plugin self-registers — extension point for integrations to plug in early.", "consumed_by": [] },
+    { "name": "wb_gamification_retention_nudge", "type": "action", "purpose": "Re-engagement nudge dispatched.", "consumed_by": [] },
+    { "name": "wb_gamification_weekly_nudge", "type": "action", "purpose": "Weekly leaderboard nudge dispatched.", "consumed_by": [] },
+    { "name": "wb_gamification_weekly_email_sent", "type": "action", "purpose": "Weekly recap email sent to a user.", "consumed_by": [] },
+    { "name": "wb_gamification_events_pruned", "type": "action", "purpose": "Old events pruned from wb_gam_events table.", "consumed_by": [] },
+    { "name": "wb_gamification_log_pruned", "type": "action", "purpose": "Old log rows pruned by LogPruner.", "consumed_by": [] },
+    { "name": "wb_gamification_user_data_erased", "type": "action", "purpose": "GDPR erase request fulfilled (Privacy::handle_erase).", "consumed_by": [] },
+    { "name": "wb_gam_manifest_paths", "type": "filter", "purpose": "Filter the list of manifest file paths scanned by ManifestLoader. Use to add custom integration manifests.", "consumed_by": [] },
+    { "name": "wb_gamification_before_evaluate", "type": "filter", "purpose": "Modify event payload immediately before rule evaluation.", "consumed_by": [] },
+    { "name": "wb_gamification_before_kudos", "type": "filter", "purpose": "Modify or veto a kudos action before it is recorded.", "consumed_by": [] },
+    { "name": "wb_gamification_credential_document", "type": "filter", "purpose": "Modify the OpenBadges 3.0 credential document before signing.", "consumed_by": [] },
+    { "name": "wb_gamification_event_metadata", "type": "filter", "purpose": "Augment event metadata before it is stored.", "consumed_by": [] },
+    { "name": "wb_gamification_leaderboard_results", "type": "filter", "purpose": "Modify leaderboard results before output.", "consumed_by": [] },
+    { "name": "wb_gamification_points_for_action", "type": "filter", "purpose": "Modify the points value for a given action just before award.", "consumed_by": [] },
+    { "name": "wb_gamification_rank_automation_rules", "type": "filter", "purpose": "Modify rank automation ruleset before evaluation.", "consumed_by": [] },
+    { "name": "wb_gamification_recap_data", "type": "filter", "purpose": "Augment year-in-review recap data.", "consumed_by": [] },
+    { "name": "wb_gamification_should_award_badge", "type": "filter", "purpose": "Final veto on whether a badge should be awarded.", "consumed_by": [] },
+    { "name": "wb_gamification_should_send_weekly_nudge", "type": "filter", "purpose": "Veto sending the weekly nudge to a specific user.", "consumed_by": [] },
+    { "name": "wb_gamification_toast_data", "type": "filter", "purpose": "Modify toast notification payload.", "consumed_by": [] }
+  ],
+
+  "interactivity": [],
+  "ui_activation": [],
+
+  "static_analysis": {
+    "dead_listeners": [],
+    "dead_listeners_notes": "Naive paired-grep flagged 2 candidates (wb_gam_leaderboard_snapshot, wb_gam_process_event_async). Both are CRON / Action-Scheduler hooks fired by WP core / Action Scheduler — NOT plugin-fired hooks. False positives. No real dead listeners detected.",
+    "cap_context_mismatches": [],
+    "cap_drift": {
+      "declared_but_unenforced": [],
+      "enforced_but_undeclared": [
+        { "cap": "wb_gam_award_manual", "enforced_at": "src/API/PointsController.php:273", "note": "Used as a secondary gate after manage_options. No add_cap()/add_role() registers it — site owners cannot grant it without an external role-manager plugin or the WP Abilities API. Either drop the cap (rely on manage_options) or register it via a role assignment so it is grantable." }
+      ],
+      "manage_options_gate_count": 32,
+      "manage_options_gate_note": "All admin-side gating (REST + admin pages) uses bare current_user_can('manage_options'). Permission monoculture — only full admins can operate the plugin. Future granular caps (wb_gam_manage_badges, wb_gam_award_points, wb_gam_view_analytics) would let staff/community-managers operate without admin role."
+    },
+    "extensibility_gaps": [],
+    "js_only_activation": [],
+    "rest_hang_risks": [],
+    "visual_required_no_enforcement": [],
+    "grid_track_overflow_risks": [],
+    "hook_signature_drift": [],
+    "adapter_undefined_calls": [],
+    "registry_bypasses": [],
+    "suppressed_baseline_inventory": {
+      "stub_class_missing": { "count": 0, "action": "no phpstan-baseline.neon present" },
+      "stub_const_missing": { "count": 0, "action": "no phpstan-baseline.neon present" },
+      "undef_var_risk": { "count": 0, "action": "no phpstan-baseline.neon present" },
+      "real_type_debt": { "count": 0, "action": "no phpstan-baseline.neon present" },
+      "phpcs_excludes": { "count": 0, "action": "review .phpcs.xml — only project-scope rules, no per-file excludes" }
+    },
+    "registry_strategy": [],
+    "wppqa_baseline_findings": {
+      "high": [
+        { "code": "nonce-no-cap", "where": "src/Admin/BadgeAdminPage.php:526", "verdict": "false_positive", "note": "wppqa heuristic missed the current_user_can('manage_options') check at line 521, 5 lines above the nonce check. The cap check IS present." }
+      ],
+      "medium": {
+        "inline_onclick": [
+          "blocks/year-recap/render.php:208",
+          "src/Admin/ApiKeysPage.php:153",
+          "src/Admin/BadgeAdminPage.php:360",
+          "src/Admin/ChallengeManagerPage.php:244",
+          "src/Admin/CommunityChallengesPage.php:270",
+          "src/Admin/RedemptionStorePage.php:249",
+          "src/Admin/SettingsPage.php:818",
+          "src/Admin/SettingsPage.php:944"
+        ],
+        "breakpoint_proliferation": "6 distinct breakpoints (390/480/640/782/900/1024px); frontend-responsive Rule 1 wants ≤3."
+      },
+      "low": {
+        "tap_target_small": ["assets/css/admin-premium.css:766", "assets/css/admin-premium.min.css:1"]
+      }
+    }
+  },
+
+  "buddypress_integration": {
+    "enabled_when": "Detected via class_exists('BuddyPress') / function_exists('buddypress')",
+    "manager": "WBGam\\BuddyPress\\HooksIntegration",
+    "sub_classes": [
+      { "class": "WBGam\\BuddyPress\\ActivityIntegration", "purpose": "Posts gamification events into the BP activity stream." },
+      { "class": "WBGam\\BuddyPress\\DirectoryIntegration", "purpose": "Adds points/badge filters to the members directory." },
+      { "class": "WBGam\\BuddyPress\\HooksIntegration", "purpose": "Wires BP profile/group hooks to gamification events." },
+      { "class": "WBGam\\BuddyPress\\ProfileIntegration", "purpose": "Renders gamification panels on the BP profile screen." }
+    ]
+  },
+
+  "frontend_assets": {
+    "js": [
+      "assets/js/admin-badge.js",
+      "assets/js/admin-settings.js",
+      "assets/js/settings-nav.js",
+      "assets/js/toast.js"
+    ],
+    "css": [
+      "assets/css/admin.css",
+      "assets/css/admin-analytics.css",
+      "assets/css/admin-premium.css",
+      "assets/css/frontend.css",
+      "assets/css/hub.css",
+      "assets/css/share-page.css"
+    ]
+  },
+
+  "cron": [
+    { "hook": "wb_gam_leaderboard_snapshot", "interval": "five_minutes (custom)", "handler": "LeaderboardEngine::write_snapshot", "where": "src/Engine/LeaderboardEngine.php:53" },
+    { "hook": "wb_gam_weekly_nudge", "interval": "weekly", "handler": "LeaderboardNudge::run", "where": "src/Engine/LeaderboardNudge.php:51" },
+    { "hook": "wb_gam_weekly_email", "interval": "weekly", "handler": "WeeklyEmailEngine::run", "where": "src/Engine/WeeklyEmailEngine.php:64" },
+    { "hook": "wb_gam_cohort_assign", "interval": "weekly", "handler": "CohortEngine::assign_cohorts", "where": "src/Engine/CohortEngine.php:54" },
+    { "hook": "wb_gam_cohort_process", "interval": "weekly", "handler": "CohortEngine::process_outcomes", "where": "src/Engine/CohortEngine.php:59" },
+    { "hook": "wb_gam_tenure_check", "interval": "daily", "handler": "TenureBadgeEngine::check_tenure", "where": "src/Engine/TenureBadgeEngine.php:88" },
+    { "hook": "wb_gam_status_retention_check", "interval": "weekly", "handler": "StatusRetentionEngine::check", "where": "src/Engine/StatusRetentionEngine.php:51" },
+    { "hook": "wb_gam_credential_expiry_check", "interval": "weekly", "handler": "CredentialExpiryEngine::check_expirations", "where": "src/Engine/CredentialExpiryEngine.php:49" },
+    { "hook": "wb_gam_prune_logs", "interval": "daily", "handler": "LogPruner::run", "where": "src/Engine/LogPruner.php:33" }
+  ],
+
+  "wp_cli": [
+    { "command": "wb-gamification points", "class": "WBGam\\CLI\\PointsCommand", "where": "wb-gamification.php:384", "purpose": "Award/revoke/list points for a user." },
+    { "command": "wb-gamification member", "class": "WBGam\\CLI\\MemberCommand", "where": "wb-gamification.php:385", "purpose": "Inspect or repair a member's gamification state." },
+    { "command": "wb-gamification actions", "class": "WBGam\\CLI\\ActionsCommand", "where": "wb-gamification.php:386", "purpose": "List/inspect registered gamification actions." },
+    { "command": "wb-gamification logs", "class": "WBGam\\CLI\\LogsCommand", "where": "wb-gamification.php:387", "purpose": "Inspect/prune the event log." },
+    { "command": "wb-gamification export", "class": "WBGam\\CLI\\ExportCommand", "where": "wb-gamification.php:388", "purpose": "Export user gamification data (JSON)." },
+    { "command": "wb-gamification doctor", "class": "WBGam\\CLI\\DoctorCommand", "where": "wb-gamification.php:389", "purpose": "Health check of cron schedules, DB schema, and engine wiring." }
+  ],
+
+  "storage_drivers": [],
+
+  "security": {
+    "uploads_gate": "n/a — no upload endpoints",
+    "signing_entry_points": ["src/API/CredentialController.php (OpenBadges 3.0 signed credentials)"],
+    "always_sign_filter": null,
+    "rate_limit_middleware": "WBGam\\Engine\\RateLimiter (per-action daily caps; called from event ingestion path)",
+    "nonces": [
+      { "name": "wb_gam_dismiss_welcome", "where": "src/Admin/SettingsPage.php:93", "purpose": "Dismiss first-run welcome banner." },
+      { "name": "wb_gam_delete_badge_{id}", "where": "src/Admin/BadgeAdminPage.php:526", "purpose": "Delete badge from admin UI (paired with manage_options check on line 521)." },
+      { "name": "wp_rest", "where": "wb-gamification.php:272", "purpose": "Standard wp_rest nonce passed to JS via wp_localize_script for cookie-authenticated REST." }
+    ],
+    "auth_modes": ["cookie+nonce (wp_rest)", "Application Passwords (WP core)", "API Keys (src/API/ApiKeyAuth.php)"]
+  },
+
+  "ci_guards": {
+    "script": ".github/workflows/ + composer scripts (phpcs, phpstan, phpunit)",
+    "url_emission_regex": null,
+    "storage_internal_marker": null,
+    "phpstan_level": null,
+    "phpcs_config": ".phpcs.xml"
+  },
+
+  "coding_rules": [
+    "Event-sourced architecture: events in → rules evaluate → effects out. No write to derived tables outside engine classes.",
+    "Auto-discovery via ManifestLoader at plugins_loaded@5 — drop a manifest file, get a registered action.",
+    "REST is the only interactive API surface — no AJAX (admin-ajax.php) layer.",
+    "WPCS via mcp__wpcs__* MCP tools, NOT direct phpcs CLI (the CLI ignores .phpcs.xml when run from outside the plugin)."
+  ],
+
+  "build_commands": {
+    "release": "grunt dist (Gruntfile.js — copy/clean/compress to wb-gamification.zip)",
+    "ci_local": "composer test && composer phpcs"
+  },
+
+  "category_sources": {
+    "rest":          ["src/API/**/*.php"],
+    "ajax":          ["src/Admin/**/*.php", "src/API/**/*.php"],
+    "admin_pages":   ["src/Admin/**/*.php"],
+    "settings":      ["src/Admin/**/*.php", "src/Engine/**/*.php"],
+    "shortcodes":    ["src/Engine/ShortcodeHandler.php"],
+    "blocks":        ["blocks/**/block.json", "blocks/**/render.php"],
+    "post_types":    ["src/**/*.php"],
+    "taxonomies":    ["src/**/*.php"],
+    "tables":        ["src/Engine/Installer.php", "src/Engine/DbUpgrader.php"],
+    "capabilities":  ["src/**/*.php"],
+    "services":      ["src/Engine/**/*.php"],
+    "hooks_fired":   ["src/**/*.php", "blocks/**/*.php", "integrations/**/*.php"],
+    "interactivity": ["assets/interactivity/**/*.js", "blocks/**/view.js"],
+    "ui_activation": ["assets/css/**/*.css", "blocks/**/style.css", "blocks/**/*.css"],
+    "frontend_assets": ["assets/**/*.{js,css}"],
+    "cron":          ["src/Engine/**/*.php"],
+    "wp_cli":        ["wb-gamification.php", "src/CLI/**/*.php"],
+    "security":      ["src/Admin/**/*.php", "src/API/**/*.php"]
+  },
+
+  "generated": {
+    "at": "2026-05-02T00:00:00Z",
+    "from": "wp-plugin-onboard skill",
+    "branch": "main",
+    "schema_version": "v2.2",
+    "scan_scope": "gruntfile",
+    "scan_path": ".",
+    "php_file_count": 111,
+    "coverage": {
+      "rest":          { "manifest": 39, "baseline": 39, "gap_pct": 0 },
+      "ajax":          { "manifest": 0,  "baseline": 0,  "gap_pct": 0 },
+      "actions_fired": { "manifest": 43, "baseline": 43, "gap_pct": 0 },
+      "filters_fired": { "manifest": 12, "baseline": 12, "gap_pct": 0 },
+      "tables":        { "manifest": 20, "baseline": 21, "gap_pct": 4.8, "note": "21 CREATE TABLE statements but 20 distinct tables ($cache_table is defined twice in safety paths)." },
+      "blocks":        { "manifest": 12, "baseline": 12, "gap_pct": 0 },
+      "shortcodes":    { "manifest": 12, "baseline": 12, "gap_pct": 0 },
+      "cron":          { "manifest": 9,  "baseline": 12, "gap_pct": 25, "note": "12 wp_schedule_event calls but 9 distinct cron hooks — same hook scheduled defensively in multiple paths (LeaderboardNudge x2, LeaderboardEngine x2, LogPruner x2)." },
+      "wp_cli":        { "manifest": 6,  "baseline": 6,  "gap_pct": 0 },
+      "admin_pages":   { "manifest": 10, "baseline": 10, "gap_pct": 0 }
+    }
+  }
+}
