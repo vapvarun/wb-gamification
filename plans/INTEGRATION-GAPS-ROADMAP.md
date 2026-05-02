@@ -136,6 +136,27 @@ add_filter( 'wb_gam_admin_submenu_pages', function( $pages ) {
 
 ---
 
+### G8 — Blocks below the Wbcom Block Quality Standard [MEDIUM]
+
+**Problem.** All 15 Gutenberg blocks violate the canonical Wbcom Block Quality Standard documented in `~/.claude/skills/wp-block-development/references/block-quality-standard.md` (derived from auditing Kadence Blocks, Stackable, Spectra, Otter Blocks). Plugin has no `src/shared/` infrastructure, no design tokens, no responsive editor controls (Desktop/Tablet/Mobile), no per-side spacing, no hover states, no per-instance scoped CSS, and no editor InspectorControls panels on most blocks.
+
+The most recent block (`redemption-store`, PR #20) additionally violates this plugin's own existing conventions — uses inline `<style>` and `<script>` instead of `assets/css/frontend.css` + the IA pattern that `hub` follows, and uses raw `fetch()` + `window.confirm()` where `wp.apiFetch` and a styled confirm should be used.
+
+**Workaround today.** Blocks render correctly and are functional — this is architectural debt, not user-visible bugs. Theme overrides, responsive layouts, and editor customisation just aren't possible per-block.
+
+**What "fixing" looks like.** Full plan in [`WBCOM-BLOCK-STANDARD-MIGRATION.md`](WBCOM-BLOCK-STANDARD-MIGRATION.md). Five phases:
+- **A** — Build infra (`@wordpress/scripts`, webpack)
+- **B** — `src/shared/` ported from wbcom-essential v4.5.0
+- **C** — `redemption-store` rebuilt as pilot/canonical reference
+- **D** — Bulk migration of remaining 14 blocks in 5 groups
+- **E** — Cleanup of legacy assets + CI gate
+
+**Scoping.** ~65 hours / ~8 working days for the full migration. The pilot phases (A+B+C) are ~22 hours; the remaining 14 blocks are ~43 hours.
+
+**Why it's tracked here, not done.** The user has explicitly banned patch-on-patch fixes. Bringing redemption-store into line with this plugin's existing convention while leaving the broader Wbcom standard gap untouched would be exactly that — a patch that gets re-patched when the migration runs.
+
+---
+
 ### G7 — No JS SDK [MEDIUM]
 
 **Problem.** Frontend integrations talk REST manually. No `@wbcom/wb-gamification-js-sdk` published. Every consumer hand-rolls auth + endpoint paths + response shape handling.
