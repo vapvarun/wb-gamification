@@ -188,6 +188,10 @@ final class NotificationBridge {
 		$events = self::flush( $user_id );
 
 		wp_enqueue_style( 'wb-gamification' );
+		// Mount the IA store BEFORE the markup renders so the
+		// data-wp-bind attributes resolve on first paint and the
+		// streak / level-up overlays start hidden, not stuck-visible.
+		wp_enqueue_script_module( 'wb-gamification-notifications' );
 
 		// Always output the markup shell (JS needs the DOM nodes).
 		// Seed script only if there are events.
@@ -234,6 +238,8 @@ final class NotificationBridge {
 			<div
 				class="wb-gam-overlay wb-gam-overlay--level-up"
 				data-wp-bind--hidden="!state.levelUp.active"
+				data-wp-on--click="actions.dismissLevelUp"
+				hidden
 				role="alertdialog"
 				aria-modal="true"
 				aria-label="<?php esc_attr_e( 'Level up!', 'wb-gamification' ); ?>"
@@ -259,6 +265,8 @@ final class NotificationBridge {
 			<div
 				class="wb-gam-overlay wb-gam-overlay--streak"
 				data-wp-bind--hidden="!state.streakMilestone.active"
+				data-wp-on--click="actions.dismissStreakMilestone"
+				hidden
 				role="alertdialog"
 				aria-modal="true"
 				aria-label="<?php esc_attr_e( 'Streak milestone!', 'wb-gamification' ); ?>"

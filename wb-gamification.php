@@ -273,6 +273,18 @@ final class WB_Gamification {
 			WB_GAM_VERSION
 		);
 
+		// Notifications IA store — drives the level-up + streak-milestone
+		// overlays and the toast stack rendered by NotificationBridge.
+		// Without this module the overlay markup mounts but never binds,
+		// leaving the streak overlay permanently visible with an inert
+		// dismiss button (customer locked out of the page).
+		wp_register_script_module(
+			'wb-gamification-notifications',
+			WB_GAM_URL . 'assets/interactivity/notifications.js',
+			array( '@wordpress/interactivity' ),
+			WB_GAM_VERSION
+		);
+
 		// Toast notification poller for logged-in users.
 		if ( is_user_logged_in() ) {
 			wp_enqueue_script(
@@ -409,6 +421,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			WP_CLI::add_command( 'wb-gamification export', WBGam\CLI\ExportCommand::class );
 			WP_CLI::add_command( 'wb-gamification doctor', WBGam\CLI\DoctorCommand::class );
 			WP_CLI::add_command( 'wb-gamification replay', WBGam\CLI\ReplayCommand::class );
+			WP_CLI::add_command( 'wb-gamification qa', WBGam\CLI\QASeedCommand::class );
 		}
 	);
 }
