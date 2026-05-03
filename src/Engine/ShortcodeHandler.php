@@ -459,6 +459,6 @@ final class ShortcodeHandler {
 			'show_category_headers' => 'true' === $atts['show_category_headers'],
 		);
 
-		return self::render_block_shortcode( 'earning-guide', $attrs );
+		return self::block( 'earning-guide', $attrs );
 	}
 }
