@@ -1,0 +1,4 @@
+.is-editor-preview.wb-gam-badge-showcase {
+	outline: 1px dashed var( --wp-admin-theme-color, var( --wb-gam-color-accent ) );
+	outline-offset: 2px;
+}
