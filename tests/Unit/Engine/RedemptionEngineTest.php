@@ -104,14 +104,25 @@ class RedemptionEngineTest extends TestCase {
 		];
 
 		$wpdb->expects( 'get_row' )->andReturn( $item );
-		$wpdb->expects( 'prepare' )->andReturnArg( 0 );
+		$wpdb->shouldReceive( 'prepare' )->andReturnUsing( static fn ( $sql ) => $sql );
 
-		// Mock PointsEngine::get_total() to return 50 (not enough).
-		Functions\expect( '__' )->andReturnArg( 0 );
-		Functions\expect( 'wp_cache_get' )->andReturn( 50 );
+		// The redeem flow takes an atomic balance check via SELECT … FOR
+		// UPDATE inside a transaction, which bypasses the object cache.
+		// Mock the transaction wrapper + the locked-balance read so the
+		// "insufficient points" branch can be exercised end-to-end.
+		$wpdb->shouldReceive( 'query' )->with( 'START TRANSACTION' )->andReturn( true );
+		$wpdb->shouldReceive( 'get_var' )->andReturn( 50 ); // 50 < cost 10,000 → insufficient.
+		$wpdb->shouldReceive( 'query' )->with( 'ROLLBACK' )->andReturn( true );
+
+		Functions\when( '__' )->returnArg( 1 );
+		Functions\when( 'wp_cache_get' )->justReturn( false );
+		Functions\when( 'number_format_i18n' )->alias(
+			static fn ( $n, $decimals = 0 ) => number_format( (float) $n, (int) $decimals )
+		);
 
 		$result = RedemptionEngine::redeem( 1, 1 );
 
 		$this->assertFalse( $result['success'] );
+		$this->assertNull( $result['redemption_id'] );
 	}
 }
