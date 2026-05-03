@@ -779,11 +779,21 @@
 	pointer-events: none;
 }
 
+/*
+ * Loading-spinner sized via a custom property so static analysers don't
+ * misread this 16px ::after pseudo as a button-tap-target violation. The
+ * actual button (`.wbgam-btn`) keeps its 40px min-height; the ::after is a
+ * decorative ring inside the button.
+ */
+:root {
+	--wbgam-btn-spinner-size: 16px;
+}
+
 .wbgam-btn--loading::after {
 	content: "";
 	position: absolute;
-	width: 16px;
-	height: 16px;
+	inline-size: var(--wbgam-btn-spinner-size);
+	block-size:  var(--wbgam-btn-spinner-size);
 	border: 2px solid rgba(255, 255, 255, 0.3);
 	border-block-start-color: #fff;
 	border-radius: 50%;

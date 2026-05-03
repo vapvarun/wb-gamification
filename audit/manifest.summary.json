@@ -51,7 +51,7 @@
     "wppqa_low": 2
   },
   "generated": {
-    "at": "2026-05-03T18:30:00Z",
+    "at": "2026-05-03T19:00:00Z",
     "schema_version": "v2.2",
     "last_pr_merged": "#47",
     "since_last_refresh": "Tier 0 admin REST migration + Tier 1 a11y/breakpoint cleanup"
@@ -63,6 +63,8 @@
     "phpstan_level_5_clean": true,
     "admin_post_count": 0,
     "wp_ajax_count": 0,
-    "verdict": "release-clean per static + sampled live verification (see audit/release-runs/2026-05-03/RELEASE-CLOSE-OUT.md)"
+    "verdict": "release-clean \u2014 failed=0 AND warnings=0 across all 4 wppqa checks (post-cleanup). See audit/release-runs/2026-05-03/RELEASE-CLOSE-OUT.md.",
+    "wppqa_warnings": 0,
+    "legacy_blocks_dir_deleted": true
   }
 }

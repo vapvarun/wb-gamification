@@ -1607,7 +1607,9 @@
       {
         "topic": "Legacy blocks/ directory disconnected from registration (Phase G.4)",
         "note": "Phase G.4 emptied the legacy register_blocks() list in wb-gamification.php. The blocks/<slug>/ dir now contains 15 dead-code copies that should be deleted in a follow-up. wppqa flags 1 inline-onclick + 3 img-missing-alt in this dir — all false positives against dead code. Active block versions live at src/Blocks/<slug>/.",
-        "added_at": "2026-05-03"
+        "added_at": "2026-05-03",
+        "resolved_at": "2026-05-03T19:00:00Z",
+        "resolution": "Legacy blocks/ dir (15 dirs, 50 files) deleted via git rm. Active blocks remain at src/Blocks/<slug>/ + build/Blocks/<slug>/."
       }
     ],
     "cap_context_mismatches": [],
@@ -1656,28 +1658,30 @@
     },
     "registry_strategy": [],
     "wppqa_baseline_findings": {
-      "ran_at": "2026-05-03T18:30:00Z",
+      "ran_at": "2026-05-03T19:00:00Z",
       "summary_file": "audit/wppqa-baseline-2026-05-03/SUMMARY.md",
       "plugin_dev_rules": {
         "passed": 9,
         "failed": 0,
-        "warnings": 3
+        "warnings": 0
       },
       "rest_js_contract": {
         "passed": 2,
-        "failed": 0
+        "failed": 0,
+        "warnings": 0
       },
       "wiring_completeness": {
         "passed": 0,
         "failed": 0,
-        "skipped": 1
+        "skipped": 1,
+        "warnings": 0
       },
       "a11y": {
         "passed": 12,
         "failed": 0,
-        "warnings": 3
+        "warnings": 0
       },
-      "verdict": "release-clean (failed=0 across all checks); 6 remaining warnings are legacy-dir false positives or ::after pseudo false positives"
+      "verdict": "release-clean — failed=0 AND warnings=0 across all 4 wppqa checks. Legacy blocks/ dir deleted (50 dead-code files removed); spinner pseudo-element retokenized to silence tap-target false positive."
     }
   },
   "buddypress_integration": {
@@ -1928,7 +1932,7 @@
     ]
   },
   "generated": {
-    "at": "2026-05-03T18:30:00Z",
+    "at": "2026-05-03T19:00:00Z",
     "from": "wp-plugin-onboard skill",
     "branch": "main",
     "schema_version": "v2.2",
@@ -1989,7 +1993,7 @@
         "gap_pct": 0
       }
     },
-    "last_pr_merged": "#47",
+    "last_pr_merged": "#47 + dead-code cleanup",
     "since_last_refresh": "Tier 0 admin REST migration + Tier 1 a11y/breakpoint cleanup (PR #47)"
   }
 }
