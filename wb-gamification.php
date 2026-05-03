@@ -212,9 +212,11 @@ final class WB_Gamification {
 	}
 
 	public function register_blocks(): void {
-		// Legacy hardcoded list — shrinks as blocks migrate to src/blocks/* + build/blocks/*.
-		// `redemption-store` migrated in Phase C; the build/blocks/ Registrar (init@20) owns it now.
-		$blocks = array( 'leaderboard', 'member-points', 'badge-showcase', 'level-progress', 'challenges', 'streak', 'top-members', 'kudos-feed', 'year-recap', 'points-history', 'earning-guide', 'hub', 'community-challenges', 'cohort-rank' );
+		// Legacy hardcoded list — shrinks as blocks migrate to src/Blocks/* + build/Blocks/*.
+		// Phase C: `redemption-store` migrated.
+		// Phase D.1: `member-points`, `streak`, `level-progress`, `earning-guide` migrated.
+		// The build/Blocks/ Registrar (init@20) owns the migrated slugs now.
+		$blocks = array( 'leaderboard', 'badge-showcase', 'challenges', 'top-members', 'kudos-feed', 'year-recap', 'points-history', 'hub', 'community-challenges', 'cohort-rank' );
 		foreach ( $blocks as $block ) {
 			$path = WB_GAM_PATH . 'blocks/' . $block;
 			if ( file_exists( $path . '/block.json' ) ) {
