@@ -108,6 +108,7 @@ final class WB_Gamification {
 		add_action( 'init', array( $this, 'handle_unsubscribe' ) );
 		add_action( 'rest_api_init', array( $this, 'register_routes' ) );
 		add_action( 'init', array( $this, 'register_blocks' ) );
+		( new \WBGam\Blocks\Registrar( WB_GAM_PATH . 'build' ) )->init();
 		add_action( 'init', array( ShortcodeHandler::class, 'init' ) );
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_assets' ) );
 
