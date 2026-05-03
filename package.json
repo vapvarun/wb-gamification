@@ -5,7 +5,16 @@
 	"description": "Complete gamification plugin for BuddyPress and WordPress.",
 	"author": "Wbcom Designs",
 	"license": "GPL-2.0-or-later",
+	"scripts": {
+		"build": "node bin/build-blocks.js",
+		"start": "wp-scripts start",
+		"format": "wp-scripts format",
+		"lint:js": "wp-scripts lint-js",
+		"lint:css": "wp-scripts lint-style",
+		"packages-update": "wp-scripts packages-update"
+	},
 	"devDependencies": {
+		"@wordpress/scripts": "^27.0.0",
 		"grunt": "^1.6.1",
 		"grunt-contrib-clean": "^2.0.1",
 		"grunt-contrib-compress": "^2.0.0",
@@ -13,5 +22,9 @@
 		"grunt-contrib-cssmin": "^5.0.0",
 		"grunt-contrib-uglify": "^5.2.2",
 		"grunt-wp-i18n": "^1.0.4"
+	},
+	"engines": {
+		"node": ">=20.0.0",
+		"npm": ">=10.0.0"
 	}
 }
