@@ -54,10 +54,13 @@
 	--wb-gam-color-border: #e2e8f0;
 	--wb-gam-color-surface: #f8fafc;
 	--wb-gam-color-surface-alt: #f1f5f9;
-	--wb-gam-color-accent: var(--wbcom-link-color, #0073aa);
-	--wb-gam-color-accent-hover: var(--wbcom-link-hover-color, #005a87);
-	--wb-gam-color-accent-light: rgba(0, 115, 170, 0.08);
-	--wb-gam-color-accent-ring: rgba(0, 115, 170, 0.2);
+	/* Accent — defaults match `--gam-accent` from assets/css/hub.css so
+	   new standard blocks visually align with the existing hub UI.
+	   Themes may override via `--wbcom-link-color`. */
+	--wb-gam-color-accent: var(--wbcom-link-color, #5b4cdb);
+	--wb-gam-color-accent-hover: var(--wbcom-link-hover-color, #4338b2);
+	--wb-gam-color-accent-light: rgba(91, 76, 219, 0.08);
+	--wb-gam-color-accent-ring: rgba(91, 76, 219, 0.2);
 
 	/* Colors — semantic */
 	--wb-gam-color-success: #16a34a;
@@ -68,6 +71,11 @@
 	--wb-gam-color-danger-bg: #fef2f2;
 	--wb-gam-color-info: #2563eb;
 	--wb-gam-color-info-bg: #eff6ff;
+
+	/* Interaction states */
+	--wb-gam-color-disabled: var(--wb-gam-color-surface-alt);
+	--wb-gam-color-disabled-text: var(--wb-gam-color-text-light);
+	--wb-gam-color-focus: #ffd54a;
 
 	/* Responsive breakpoints (used by CSS generation utility) */
 	--wb-gam-bp-tablet: 1024px;

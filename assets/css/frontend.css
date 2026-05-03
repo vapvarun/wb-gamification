@@ -7,18 +7,29 @@
  */
 
 /* ── Design tokens ──────────────────────────────────────────────────────────── */
+/*
+ * Legacy aliases bridge the older --wb-gam-* names used by the 14
+ * pre-standard blocks to the canonical Wbcom Block Quality Standard
+ * tokens defined in `src/shared/design-tokens.css` (loaded via the
+ * `wb-gam-tokens` style handle, which this file declares as a hard
+ * dependency in plugin bootstrap). Every block — pilot or legacy —
+ * resolves the same accent / surface / border palette.
+ *
+ * Phase D of the block-standard migration will inline these aliases
+ * into each block's own stylesheet and remove this :root block.
+ */
 :root {
-	--wb-gam-primary:        #6c63ff;
-	--wb-gam-primary-light:  #ede9fe;
+	--wb-gam-primary:        var( --wb-gam-color-accent );
+	--wb-gam-primary-light:  var( --wb-gam-color-accent-light );
 	--wb-gam-gold:           #f59e0b;
 	--wb-gam-silver:         #9ca3af;
 	--wb-gam-bronze:         #d97706;
-	--wb-gam-locked:         #d1d5db;
-	--wb-gam-text:           inherit;
-	--wb-gam-radius:         8px;
-	--wb-gam-gap:            0.75rem;
-	--wb-gam-border:         #e5e7eb;
-	--wb-gam-text-muted:     #6b7280;
+	--wb-gam-locked:         var( --wb-gam-color-disabled );
+	--wb-gam-text:           var( --wb-gam-color-text, inherit );
+	--wb-gam-radius:         var( --wb-gam-radius-md );
+	--wb-gam-gap:            var( --wb-gam-space-sm );
+	--wb-gam-border:         var( --wb-gam-color-border );
+	--wb-gam-text-muted:     var( --wb-gam-color-text-muted );
 }
 
 /* ── Leaderboard ────────────────────────────────────────────────────────────── */
