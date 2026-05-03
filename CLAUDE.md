@@ -353,6 +353,7 @@ Documentation: see [`docs/website/developer-guide/block-attributes.md`](docs/web
 
 | Version | Key Changes |
 |---|---|
+| **1.0.0** (in flight) | Wbcom Block Quality Standard migration (G8) — closed across PRs #21 → #41. All 15 blocks now consume `--wb-gam-*` design tokens, declare the standard attribute schema (uniqueId, per-side spacing × 3 breakpoints, typography, hover colours, shadow, border, visibility), register via `WBGam\Blocks\Registrar` from `build/Blocks/<slug>/`, and gate on `bin/check-block-standard.sh` (CI stage 2.3). Per-block CSS now lives in `src/Blocks/<slug>/style.css`; `assets/css/frontend.css` shrunk 1,425 → 293 lines. Pre-existing test failures (NudgeEngineTest alias-mock collisions, RedemptionEngineTest transaction wiring, ShortcodeHandlerTest hardcoded list) closed in #42. |
 | **0.5.1** | WP-CLI commands, API Key Auth, Capabilities endpoint, Abilities API, REST schemas on all 16 controllers, CORS support, site_id column, earning-guide block, CI workflows, Grunt build, EDD SDK, readme.txt |
 | **0.5.0** | Shortcodes, manual award UI, points-history block, badge admin page, dashboard KPIs, empty states, CSS/JS extracted to assets/, full PHPDoc docblocks |
 | **0.4.0** | BadgeSharePage, RankAutomation UI, cosmetics engine, cohort leagues, rate limiter, weekly email engine, Phase 4 integrations complete |
