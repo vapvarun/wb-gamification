@@ -29,9 +29,62 @@ final class ApiKeysPage {
 	 */
 	public static function init(): void {
 		add_action( 'admin_menu', array( __CLASS__, 'register_page' ) );
-		add_action( 'admin_post_wb_gam_create_api_key', array( __CLASS__, 'handle_create' ) );
-		add_action( 'admin_post_wb_gam_revoke_api_key', array( __CLASS__, 'handle_revoke' ) );
-		add_action( 'admin_post_wb_gam_delete_api_key', array( __CLASS__, 'handle_delete' ) );
+		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_assets' ) );
+		// admin_post_wb_gam_{create,revoke,delete}_api_key removed in 1.0.0:
+		// page now consumes /wb-gamification/v1/api-keys (POST/PATCH/DELETE)
+		// directly via assets/js/admin-api-keys.js. See Tier 0.C migration.
+	}
+
+	/**
+	 * Enqueue REST-driven JS bundle on the API Keys admin page only.
+	 *
+	 * @param string $hook_suffix Current admin page hook.
+	 * @return void
+	 */
+	public static function enqueue_assets( string $hook_suffix ): void {
+		if ( 'gamification_page_wb-gam-api-keys' !== $hook_suffix ) {
+			return;
+		}
+
+		wp_enqueue_script(
+			'wb-gam-admin-rest-utils',
+			plugins_url( 'assets/js/admin-rest-utils.js', WB_GAM_FILE ),
+			array(),
+			WB_GAM_VERSION,
+			true
+		);
+		wp_enqueue_script(
+			'wb-gam-admin-api-keys',
+			plugins_url( 'assets/js/admin-api-keys.js', WB_GAM_FILE ),
+			array( 'wb-gam-admin-rest-utils' ),
+			WB_GAM_VERSION,
+			true
+		);
+
+		wp_localize_script(
+			'wb-gam-admin-api-keys',
+			'wbGamApiKeysSettings',
+			array(
+				'restUrl' => esc_url_raw( rest_url( 'wb-gamification/v1' ) ),
+				'nonce'   => wp_create_nonce( 'wp_rest' ),
+				'i18n'    => array(
+					'active'         => __( 'Active', 'wb-gamification' ),
+					'revoked'        => __( 'Revoked', 'wb-gamification' ),
+					'revoke'         => __( 'Revoke', 'wb-gamification' ),
+					'delete'         => __( 'Delete', 'wb-gamification' ),
+					'created'        => __( 'API key generated.', 'wb-gamification' ),
+					'create_failed'  => __( 'Failed to generate API key.', 'wb-gamification' ),
+					'label_required' => __( 'Label is required.', 'wb-gamification' ),
+					'revoked_msg'    => __( 'API key revoked.', 'wb-gamification' ),
+					'revoke_failed'  => __( 'Failed to revoke key.', 'wb-gamification' ),
+					'deleted'        => __( 'API key deleted.', 'wb-gamification' ),
+					'delete_failed'  => __( 'Failed to delete key.', 'wb-gamification' ),
+					'confirm_delete' => __( 'Delete this key permanently?', 'wb-gamification' ),
+					'refresh_failed' => __( 'Failed to load API keys.', 'wb-gamification' ),
+					'row_no_key'     => __( 'Reload the page and try again.', 'wb-gamification' ),
+				),
+			)
+		);
 	}
 
 	/**
@@ -56,22 +109,16 @@ final class ApiKeysPage {
 	 * @return void
 	 */
 	public static function render_page(): void {
-		$keys    = ApiKeyAuth::get_keys();
-		$new_key = get_transient( 'wb_gam_new_api_key' );
-		if ( $new_key ) {
-			delete_transient( 'wb_gam_new_api_key' );
-		}
+		$keys = ApiKeyAuth::get_keys();
 		?>
-		<div class="wrap wbgam-wrap">
+		<div class="wrap wbgam-wrap" data-wb-gam-api-keys-root>
 			<h1 class="wbgam-page-title"><?php esc_html_e( 'API Keys', 'wb-gamification' ); ?></h1>
 			<p class="wbgam-page-desc"><?php esc_html_e( 'Generate API keys for remote sites to connect to this gamification center. Keys authenticate via the X-WB-Gam-Key header.', 'wb-gamification' ); ?></p>
 
-			<?php if ( $new_key ) : ?>
-				<div class="notice notice-success wb-gam-notice">
-					<p><strong><?php esc_html_e( 'New API key generated. Copy it now — it will not be shown again:', 'wb-gamification' ); ?></strong></p>
-					<p><code class="wbgam-key-display"><?php echo esc_html( $new_key ); ?></code></p>
-				</div>
-			<?php endif; ?>
+			<div class="notice notice-success wb-gam-notice" data-wb-gam-api-keys-fresh style="display:none;">
+				<p><strong><?php esc_html_e( 'New API key generated. Copy it now — it will not be shown again:', 'wb-gamification' ); ?></strong></p>
+				<p><code class="wbgam-key-display" data-wb-gam-api-keys-fresh-code></code></p>
+			</div>
 
 			<!-- Generate Key Form -->
 			<div class="wbgam-card" style="margin-bottom:24px;">
@@ -79,16 +126,14 @@ final class ApiKeysPage {
 					<h3 class="wbgam-card-title"><?php esc_html_e( 'Generate New Key', 'wb-gamification' ); ?></h3>
 				</div>
 				<div class="wbgam-card-body">
-					<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
-						<?php wp_nonce_field( 'wb_gam_create_api_key', 'wb_gam_key_nonce' ); ?>
-						<input type="hidden" name="action" value="wb_gam_create_api_key">
+					<form data-wb-gam-api-keys-create-form>
 						<table class="form-table">
 							<tr>
 								<th><label for="key_label"><?php esc_html_e( 'Label', 'wb-gamification' ); ?></label></th>
 								<td>
-										<input type="text" id="key_label" name="key_label" class="regular-text wbgam-input" placeholder="e.g. MediaVerse Production" required>
-										<p class="description"><?php esc_html_e( 'A human-readable name to identify this key, e.g. the site or application it belongs to.', 'wb-gamification' ); ?></p>
-									</td>
+									<input type="text" id="key_label" name="key_label" class="regular-text wbgam-input" placeholder="e.g. MediaVerse Production" required>
+									<p class="description"><?php esc_html_e( 'A human-readable name to identify this key, e.g. the site or application it belongs to.', 'wb-gamification' ); ?></p>
+								</td>
 							</tr>
 							<tr>
 								<th><label for="site_id"><?php esc_html_e( 'Site ID', 'wb-gamification' ); ?></label></th>
@@ -98,14 +143,13 @@ final class ApiKeysPage {
 								</td>
 							</tr>
 						</table>
-						<p><button type="submit" class="wbgam-btn"><?php esc_html_e( 'Generate Key', 'wb-gamification' ); ?></button></p>
+						<p><button type="submit" class="wbgam-btn" data-wb-gam-api-keys-create><?php esc_html_e( 'Generate Key', 'wb-gamification' ); ?></button></p>
 					</form>
 				</div>
 			</div>
 
-			<!-- Active Keys List -->
-			<?php if ( ! empty( $keys ) ) : ?>
-			<div class="wbgam-card">
+			<!-- Active Keys List (server-rendered for first paint; JS rerenders on every mutation) -->
+			<div class="wbgam-card" data-wb-gam-api-keys-card<?php echo empty( $keys ) ? ' style="display:none;"' : ''; ?>>
 				<div class="wbgam-card-header">
 					<h3 class="wbgam-card-title"><?php esc_html_e( 'Active Keys', 'wb-gamification' ); ?></h3>
 				</div>
@@ -122,12 +166,12 @@ final class ApiKeysPage {
 								<th><?php esc_html_e( 'Actions', 'wb-gamification' ); ?></th>
 							</tr>
 						</thead>
-						<tbody>
+						<tbody data-wb-gam-api-keys-tbody>
 							<?php foreach ( $keys as $key => $data ) : ?>
-								<tr>
+								<tr data-key-preview="<?php echo esc_attr( substr( $key, 0, 10 ) . '…' . substr( $key, -4 ) ); ?>" data-full-key="<?php echo esc_attr( $key ); ?>">
 									<td><strong><?php echo esc_html( $data['label'] ?? '' ); ?></strong></td>
 									<td><code><?php echo esc_html( $data['site_id'] ?? '—' ); ?></code></td>
-									<td><code><?php echo esc_html( substr( $key, 0, 12 ) . '...' ); ?></code></td>
+									<td><code><?php echo esc_html( substr( $key, 0, 10 ) . '…' . substr( $key, -4 ) ); ?></code></td>
 									<td><?php echo esc_html( $data['created'] ?? '' ); ?></td>
 									<td><?php echo esc_html( $data['last_used'] ?: '—' ); ?></td>
 									<td>
@@ -139,19 +183,9 @@ final class ApiKeysPage {
 									</td>
 									<td>
 										<?php if ( ! empty( $data['active'] ) ) : ?>
-											<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="display:inline;">
-												<?php wp_nonce_field( 'wb_gam_revoke_api_key', 'wb_gam_key_nonce' ); ?>
-												<input type="hidden" name="action" value="wb_gam_revoke_api_key">
-												<input type="hidden" name="api_key" value="<?php echo esc_attr( $key ); ?>">
-												<button type="submit" class="wbgam-btn wbgam-btn--sm wbgam-btn--secondary"><?php esc_html_e( 'Revoke', 'wb-gamification' ); ?></button>
-											</form>
+											<button type="button" class="wbgam-btn wbgam-btn--sm wbgam-btn--secondary" data-wb-gam-api-key-action="revoke"><?php esc_html_e( 'Revoke', 'wb-gamification' ); ?></button>
 										<?php endif; ?>
-										<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="display:inline;">
-											<?php wp_nonce_field( 'wb_gam_delete_api_key', 'wb_gam_key_nonce' ); ?>
-											<input type="hidden" name="action" value="wb_gam_delete_api_key">
-											<input type="hidden" name="api_key" value="<?php echo esc_attr( $key ); ?>">
-											<button type="submit" class="wbgam-btn wbgam-btn--sm wbgam-btn--danger" onclick="return confirm('<?php esc_attr_e( 'Delete this key permanently?', 'wb-gamification' ); ?>');" style="margin-left:4px;"><?php esc_html_e( 'Delete', 'wb-gamification' ); ?></button>
-										</form>
+										<button type="button" class="wbgam-btn wbgam-btn--sm wbgam-btn--danger" data-wb-gam-api-key-action="delete" style="margin-inline-start:4px;"><?php esc_html_e( 'Delete', 'wb-gamification' ); ?></button>
 									</td>
 								</tr>
 							<?php endforeach; ?>
@@ -159,72 +193,13 @@ final class ApiKeysPage {
 					</table>
 				</div>
 			</div>
-			<?php else : ?>
-			<div class="wbgam-empty">
+
+			<div class="wbgam-empty" data-wb-gam-api-keys-empty<?php echo empty( $keys ) ? '' : ' style="display:none;"'; ?>>
 				<div class="wbgam-empty-icon"><span class="dashicons dashicons-admin-network" style="font-size:48px;width:48px;height:48px;color:var(--wbgam-text-muted);"></span></div>
 				<div class="wbgam-empty-title"><?php esc_html_e( 'No API keys yet', 'wb-gamification' ); ?></div>
 				<p><?php esc_html_e( 'Generate your first API key above to connect remote sites.', 'wb-gamification' ); ?></p>
 			</div>
-			<?php endif; ?>
 		</div>
 		<?php
-	}
-
-	/**
-	 * Handle API key creation form submission.
-	 *
-	 * @return void
-	 */
-	public static function handle_create(): void {
-		check_admin_referer( 'wb_gam_create_api_key', 'wb_gam_key_nonce' );
-		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_die( 'Unauthorized' );
-		}
-
-		$label   = sanitize_text_field( wp_unslash( $_POST['key_label'] ?? '' ) );
-		$site_id = sanitize_key( wp_unslash( $_POST['site_id'] ?? '' ) );
-
-		if ( ! $label ) {
-			wp_safe_redirect( admin_url( 'admin.php?page=wb-gam-api-keys&error=no_label' ) );
-			exit;
-		}
-
-		$key = ApiKeyAuth::create_key( $label, get_current_user_id(), $site_id );
-		set_transient( 'wb_gam_new_api_key', $key, 60 );
-
-		wp_safe_redirect( admin_url( 'admin.php?page=wb-gam-api-keys' ) );
-		exit;
-	}
-
-	/**
-	 * Handle API key revocation form submission.
-	 *
-	 * @return void
-	 */
-	public static function handle_revoke(): void {
-		check_admin_referer( 'wb_gam_revoke_api_key', 'wb_gam_key_nonce' );
-		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_die( 'Unauthorized' );
-		}
-		$key = sanitize_text_field( wp_unslash( $_POST['api_key'] ?? '' ) );
-		ApiKeyAuth::revoke_key( $key );
-		wp_safe_redirect( admin_url( 'admin.php?page=wb-gam-api-keys' ) );
-		exit;
-	}
-
-	/**
-	 * Handle API key deletion form submission.
-	 *
-	 * @return void
-	 */
-	public static function handle_delete(): void {
-		check_admin_referer( 'wb_gam_delete_api_key', 'wb_gam_key_nonce' );
-		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_die( 'Unauthorized' );
-		}
-		$key = sanitize_text_field( wp_unslash( $_POST['api_key'] ?? '' ) );
-		ApiKeyAuth::delete_key( $key );
-		wp_safe_redirect( admin_url( 'admin.php?page=wb-gam-api-keys' ) );
-		exit;
 	}
 }

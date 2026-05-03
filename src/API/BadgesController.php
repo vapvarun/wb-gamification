@@ -60,7 +60,7 @@ class BadgesController extends WP_REST_Controller {
 	 * @return void
 	 */
 	public function register_routes(): void {
-		// GET /badges.
+		// GET /badges  +  POST /badges.
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base,
@@ -85,6 +85,12 @@ class BadgesController extends WP_REST_Controller {
 						),
 					),
 				),
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'create_item' ),
+					'permission_callback' => array( $this, 'admin_check' ),
+					'args'                => $this->save_args( true ),
+				),
 				'schema' => array( $this, 'get_item_schema' ),
 			)
 		);
@@ -106,24 +112,7 @@ class BadgesController extends WP_REST_Controller {
 					'permission_callback' => array( $this, 'admin_check' ),
 					'args'                => array_merge(
 						$this->get_badge_id_args(),
-						array(
-							'name'        => array(
-								'type'              => 'string',
-								'sanitize_callback' => 'sanitize_text_field',
-							),
-							'description' => array(
-								'type'              => 'string',
-								'sanitize_callback' => 'sanitize_textarea_field',
-							),
-							'image_url'   => array(
-								'type'              => 'string',
-								'sanitize_callback' => 'esc_url_raw',
-							),
-							'category'    => array(
-								'type'              => 'string',
-								'sanitize_callback' => 'sanitize_key',
-							),
-						)
+						$this->save_args( false )
 					),
 				),
 				array(
@@ -270,6 +259,236 @@ class BadgesController extends WP_REST_Controller {
 	 * @param WP_REST_Request $request Full details about the request.
 	 * @return WP_REST_Response|WP_Error Response on success, WP_Error on failure.
 	 */
+	/**
+	 * Build the args schema for badge create + update.
+	 *
+	 * @param bool $on_create Whether `id` and `name` are required (true on create).
+	 * @return array<string, array<string, mixed>>
+	 */
+	private function save_args( bool $on_create ): array {
+		$args = array(
+			'name'          => array(
+				'required'          => $on_create,
+				'type'              => 'string',
+				'sanitize_callback' => 'sanitize_text_field',
+			),
+			'description'   => array(
+				'type'              => 'string',
+				'sanitize_callback' => 'sanitize_textarea_field',
+			),
+			'image_url'     => array(
+				'type'              => 'string',
+				'sanitize_callback' => 'esc_url_raw',
+			),
+			'category'      => array(
+				'type'              => 'string',
+				'sanitize_callback' => 'sanitize_key',
+			),
+			'is_credential' => array(
+				'type' => 'boolean',
+			),
+			'closes_at'     => array(
+				'type'              => 'string',
+				'sanitize_callback' => 'sanitize_text_field',
+				'description'       => 'UTC timestamp (Y-m-d H:i:s) after which the badge stops awarding. Empty string clears the cutoff.',
+			),
+			'max_earners'   => array(
+				'type'        => array( 'integer', 'null' ),
+				'minimum'     => 1,
+				'description' => 'Cap on how many members may earn this badge. Null = unlimited.',
+			),
+			'condition'     => array(
+				'type'        => 'object',
+				'description' => 'Auto-award rule. Shape: { type: "admin_awarded"|"point_milestone"|"action_count", points?: int, action_id?: string, count?: int }.',
+			),
+		);
+		if ( $on_create ) {
+			$args = array_merge(
+				array(
+					'id' => array(
+						'required'          => true,
+						'type'              => 'string',
+						'sanitize_callback' => 'sanitize_key',
+						'description'       => 'Unique badge identifier (a-z, 0-9, dash, underscore).',
+					),
+				),
+				$args
+			);
+		}
+		return $args;
+	}
+
+	/**
+	 * Build the badge_defs row + format array from a request.
+	 *
+	 * @param WP_REST_Request $request  Request.
+	 * @param bool            $with_id  Whether to include the id column (insert).
+	 * @return array{row: array<string, mixed>, formats: array<int, string>}
+	 */
+	private function collect_badge_row( WP_REST_Request $request, bool $with_id ): array {
+		$row = array();
+		$formats = array();
+		if ( $with_id ) {
+			$row['id'] = sanitize_key( (string) $request->get_param( 'id' ) );
+			$formats[] = '%s';
+		}
+		$nullable_fields = array(
+			'name'        => array( '%s', 'sanitize_text_field' ),
+			'description' => array( '%s', 'sanitize_textarea_field' ),
+			'image_url'   => array( '%s', 'esc_url_raw' ),
+			'category'    => array( '%s', 'sanitize_key' ),
+		);
+		foreach ( $nullable_fields as $field => $spec ) {
+			if ( null !== $request->get_param( $field ) ) {
+				$row[ $field ] = call_user_func( $spec[1], (string) $request->get_param( $field ) );
+				$formats[]     = $spec[0];
+			}
+		}
+		if ( null !== $request->get_param( 'is_credential' ) ) {
+			$row['is_credential'] = $request->get_param( 'is_credential' ) ? 1 : 0;
+			$formats[]            = '%d';
+		}
+		// closes_at: empty string clears the cutoff; non-empty stored verbatim (callers send UTC).
+		if ( null !== $request->get_param( 'closes_at' ) ) {
+			$raw                = (string) $request->get_param( 'closes_at' );
+			$row['closes_at']   = '' === $raw ? null : $raw;
+			$formats[]          = '%s';
+		}
+		if ( null !== $request->get_param( 'max_earners' ) ) {
+			$raw                = $request->get_param( 'max_earners' );
+			$row['max_earners'] = ( null === $raw || '' === $raw ) ? null : max( 1, (int) $raw );
+			$formats[]          = '%d';
+		}
+		return array(
+			'row'     => $row,
+			'formats' => $formats,
+		);
+	}
+
+	/**
+	 * Persist the auto-award condition rule for a badge.
+	 *
+	 * Replaces any existing rule row in `wb_gam_rules` for this badge. When
+	 * `condition.type === 'admin_awarded'` the rule row is deleted (admin
+	 * award only, no automatic trigger).
+	 *
+	 * @param string                                                                    $badge_id  Badge id.
+	 * @param array{type?: string, points?: int, action_id?: string, count?: int}|null  $condition Condition payload.
+	 * @return void
+	 */
+	private function persist_condition( string $badge_id, ?array $condition ): void {
+		global $wpdb;
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- DELETE-then-INSERT for rule replacement.
+		$wpdb->delete(
+			$wpdb->prefix . 'wb_gam_rules',
+			array(
+				'rule_type' => 'badge_condition',
+				'target_id' => $badge_id,
+			),
+			array( '%s', '%s' )
+		);
+
+		if ( ! is_array( $condition ) ) {
+			return;
+		}
+
+		$type = sanitize_key( (string) ( $condition['type'] ?? 'admin_awarded' ) );
+		if ( 'admin_awarded' === $type || '' === $type ) {
+			return;
+		}
+
+		$config = array( 'condition_type' => $type );
+		if ( 'point_milestone' === $type ) {
+			$config['points'] = max( 1, (int) ( $condition['points'] ?? 100 ) );
+		} elseif ( 'action_count' === $type ) {
+			$config['action_id'] = sanitize_key( (string) ( $condition['action_id'] ?? '' ) );
+			$config['count']     = max( 1, (int) ( $condition['count'] ?? 1 ) );
+		}
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- INSERT.
+		$wpdb->insert(
+			$wpdb->prefix . 'wb_gam_rules',
+			array(
+				'rule_type'   => 'badge_condition',
+				'target_id'   => $badge_id,
+				'rule_config' => wp_json_encode( $config ),
+				'is_active'   => 1,
+			),
+			array( '%s', '%s', '%s', '%d' )
+		);
+
+		wp_cache_delete( 'wb_gam_badge_rules', 'wb_gamification' );
+	}
+
+	/**
+	 * Create a new badge definition (admin only).
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function create_item( $request ): WP_REST_Response|WP_Error {
+		global $wpdb;
+
+		$badge_id = sanitize_key( (string) $request->get_param( 'id' ) );
+		if ( '' === $badge_id ) {
+			return new WP_Error(
+				'rest_badge_invalid_id',
+				__( 'A badge id is required.', 'wb-gamification' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		if ( null !== BadgeEngine::get_badge_def( $badge_id ) ) {
+			return new WP_Error(
+				'rest_badge_exists',
+				__( 'A badge with this id already exists. Use PATCH /badges/{id} to update.', 'wb-gamification' ),
+				array( 'status' => 409 )
+			);
+		}
+
+		$collected = $this->collect_badge_row( $request, true );
+		$row       = $collected['row'];
+		$formats   = $collected['formats'];
+
+		/**
+		 * Filter — abort badge creation by returning WP_Error.
+		 *
+		 * @param array           $row     Sanitised badge row.
+		 * @param WP_REST_Request $request REST request.
+		 */
+		$filtered = apply_filters( 'wb_gam_before_create_badge', $row, $request );
+		if ( is_wp_error( $filtered ) ) {
+			return $filtered;
+		}
+		if ( is_array( $filtered ) ) {
+			$row = $filtered;
+		}
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- INSERT.
+		$inserted = $wpdb->insert(
+			$wpdb->prefix . 'wb_gam_badge_defs',
+			$row,
+			$formats
+		);
+
+		if ( false === $inserted ) {
+			return new WP_Error(
+				'rest_badge_create_failed',
+				__( 'Failed to create badge.', 'wb-gamification' ),
+				array( 'status' => 500 )
+			);
+		}
+
+		$condition_param = $request->get_param( 'condition' );
+		$this->persist_condition( $badge_id, is_array( $condition_param ) ? $condition_param : null );
+
+		$created = BadgeEngine::get_badge_def( $badge_id );
+		do_action( 'wb_gam_after_create_badge', $created, $request );
+
+		return rest_ensure_response( $created );
+	}
+
 	public function update_item( $request ): WP_REST_Response|WP_Error {
 		global $wpdb;
 
@@ -284,23 +503,41 @@ class BadgesController extends WP_REST_Controller {
 			);
 		}
 
-		$data = array();
-		if ( isset( $request['name'] ) ) {
-			$data['name'] = sanitize_text_field( $request['name'] );
+		$collected = $this->collect_badge_row( $request, false );
+		$data      = $collected['row'];
+		$formats   = $collected['formats'];
+
+		/**
+		 * Filter — abort the update by returning WP_Error.
+		 *
+		 * @param array           $data    Sanitised diff (only changed fields).
+		 * @param array|null      $def     Pre-update badge definition.
+		 * @param WP_REST_Request $request REST request.
+		 */
+		$filtered = apply_filters( 'wb_gam_before_update_badge', $data, $def, $request );
+		if ( is_wp_error( $filtered ) ) {
+			return $filtered;
 		}
-		if ( isset( $request['description'] ) ) {
-			$data['description'] = sanitize_textarea_field( $request['description'] );
-		}
-		if ( isset( $request['image_url'] ) ) {
-			$data['image_url'] = esc_url_raw( $request['image_url'] );
-		}
-		if ( isset( $request['category'] ) ) {
-			$data['category'] = sanitize_key( $request['category'] );
+		if ( is_array( $filtered ) ) {
+			$data = $filtered;
 		}
 
 		if ( $data ) {
-			$wpdb->update( $wpdb->prefix . 'wb_gam_badge_defs', $data, array( 'id' => $badge_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- REST write operation.
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- REST write operation.
+			$wpdb->update(
+				$wpdb->prefix . 'wb_gam_badge_defs',
+				$data,
+				array( 'id' => $badge_id ),
+				$formats,
+				array( '%s' )
+			);
 		}
+
+		if ( null !== $request->get_param( 'condition' ) ) {
+			$this->persist_condition( $badge_id, (array) $request->get_param( 'condition' ) );
+		}
+
+		do_action( 'wb_gam_after_update_badge', $badge_id, $data, $request );
 
 		// Return refreshed badge definition.
 		$updated               = BadgeEngine::get_badge_def( $badge_id );

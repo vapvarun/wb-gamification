@@ -139,7 +139,7 @@
 	margin: 0;
 }
 
-@media (max-width: 480px) {
+@media (max-width: 640px) {
 	.wb-gam-earning-guide__grid {
 		grid-template-columns: 1fr !important;
 	}
@@ -198,7 +198,7 @@
 	}
 }
 
-@media (max-width: 390px) {
+@media (max-width: 640px) {
 	.wb-gam-member-points__total {
 		flex-direction: row;
 		align-items: baseline;

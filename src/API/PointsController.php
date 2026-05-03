@@ -75,9 +75,9 @@ class PointsController extends WP_REST_Controller {
 						'points'  => array(
 							'required'          => true,
 							'type'              => 'integer',
-							'minimum'           => 1,
+							'minimum'           => -100000,
 							'maximum'           => 100000,
-							'sanitize_callback' => 'absint',
+							'description'       => 'Positive to award, negative to debit. Zero is rejected.',
 						),
 						'reason'  => array(
 							'type'              => 'string',
@@ -172,6 +172,38 @@ class PointsController extends WP_REST_Controller {
 		if ( ! get_userdata( $user_id ) ) {
 			return new WP_Error( 'rest_user_invalid', __( 'Member not found.', 'wb-gamification' ), array( 'status' => 404 ) );
 		}
+		if ( 0 === $points ) {
+			return new WP_Error(
+				'rest_points_zero',
+				__( 'Points must be non-zero (positive to award, negative to debit).', 'wb-gamification' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		// Negative input → debit via PointsEngine::debit; positive → standard award path.
+		if ( $points < 0 ) {
+			$ok = \WBGam\Engine\PointsEngine::debit( $user_id, abs( $points ), 'manual_admin_deduct' );
+			if ( ! $ok ) {
+				return new WP_Error(
+					'rest_points_debit_failed',
+					__( 'Failed to debit points.', 'wb-gamification' ),
+					array( 'status' => 500 )
+				);
+			}
+			if ( '' !== $note ) {
+				update_user_meta( $user_id, '_wb_gam_last_award_note', sanitize_text_field( $note ) );
+			}
+			return new WP_REST_Response(
+				array(
+					'awarded' => false,
+					'debited' => true,
+					'user_id' => $user_id,
+					'points'  => $points,
+					'reason'  => $reason,
+				),
+				201
+			);
+		}
 
 		$event = new Event(
 			array(
@@ -188,9 +220,14 @@ class PointsController extends WP_REST_Controller {
 
 		Engine::process( $event );
 
+		if ( '' !== $note ) {
+			update_user_meta( $user_id, '_wb_gam_last_award_note', sanitize_text_field( $note ) );
+		}
+
 		return new WP_REST_Response(
 			array(
 				'awarded' => true,
+				'debited' => false,
 				'user_id' => $user_id,
 				'points'  => $points,
 				'reason'  => $reason,

@@ -28,9 +28,10 @@ final class BadgeAdminPage {
 	 */
 	public static function init(): void {
 		add_action( 'admin_menu', array( __CLASS__, 'add_submenu' ) );
-		add_action( 'admin_post_wb_gam_save_badge', array( __CLASS__, 'handle_save' ) );
-		add_action( 'admin_post_wb_gam_delete_badge', array( __CLASS__, 'handle_delete' ) );
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_assets' ) );
+		// admin_post_wb_gam_{save,delete}_badge removed in 1.0.0 — page now
+		// consumes /wb-gamification/v1/badges (POST + DELETE) via the generic
+		// admin-rest-form driver. See Tier 0.C migration.
 	}
 
 	/**
@@ -57,6 +58,34 @@ final class BadgeAdminPage {
 			array(
 				'chooseIcon' => __( 'Choose Badge Icon', 'wb-gamification' ),
 				'useIcon'    => __( 'Use as Icon', 'wb-gamification' ),
+			)
+		);
+
+		// REST-form driver dependencies (Tier 0.C).
+		wp_enqueue_script(
+			'wb-gam-admin-rest-utils',
+			plugins_url( 'assets/js/admin-rest-utils.js', WB_GAM_FILE ),
+			array(),
+			WB_GAM_VERSION,
+			true
+		);
+		wp_enqueue_script(
+			'wb-gam-admin-rest-form',
+			plugins_url( 'assets/js/admin-rest-form.js', WB_GAM_FILE ),
+			array( 'wb-gam-admin-rest-utils' ),
+			WB_GAM_VERSION,
+			true
+		);
+		wp_localize_script(
+			'wb-gam-admin-rest-form',
+			'wbGamBadgesSettings',
+			array(
+				'restUrl' => esc_url_raw( rest_url( 'wb-gamification/v1' ) ),
+				'nonce'   => wp_create_nonce( 'wp_rest' ),
+				'i18n'    => array(
+					'saved'  => __( 'Badge saved.', 'wb-gamification' ),
+					'failed' => __( 'Failed to save the badge.', 'wb-gamification' ),
+				),
 			)
 		);
 	}
@@ -184,18 +213,25 @@ final class BadgeAdminPage {
 						</h3>
 					</div>
 					<div class="wbgam-card-body">
-						<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
-							<?php wp_nonce_field( 'wb_gam_save_badge', 'wb_gam_badge_nonce' ); ?>
-							<input type="hidden" name="action" value="wb_gam_save_badge">
-							<input type="hidden" name="original_id" value="<?php echo esc_attr( $editing ); ?>">
-
+						<?php
+						// Build the REST endpoint path: POST /badges (create) or POST /badges/{id} (update).
+						$rest_path = $is_new ? '/badges' : '/badges/' . rawurlencode( $editing );
+						?>
+						<form
+							data-wb-gam-rest-form="wbGamBadgesSettings"
+							data-wb-gam-rest-method="POST"
+							data-wb-gam-rest-path="<?php echo esc_attr( $rest_path ); ?>"
+							data-wb-gam-rest-success-toast="<?php esc_attr_e( 'Badge saved.', 'wb-gamification' ); ?>"
+							data-wb-gam-rest-error-toast="<?php esc_attr_e( 'Failed to save the badge.', 'wb-gamification' ); ?>"
+							data-wb-gam-rest-after="reload"
+						>
 							<table class="form-table">
 								<?php if ( $is_new ) : ?>
 								<tr>
 									<th><label for="wb-gam-badge-id"><?php esc_html_e( 'Badge ID', 'wb-gamification' ); ?></label></th>
 									<td>
-										<input type="text" name="badge_id" id="wb-gam-badge-id" class="regular-text wbgam-input"
-											value="" placeholder="e.g. first_post">
+										<input type="text" name="id" id="wb-gam-badge-id" class="regular-text wbgam-input"
+											value="" placeholder="e.g. first_post" required>
 										<p class="description"><?php esc_html_e( 'Lowercase letters, numbers, underscores only.', 'wb-gamification' ); ?></p>
 									</td>
 								</tr>
@@ -203,7 +239,7 @@ final class BadgeAdminPage {
 								<tr>
 									<th><label for="wb-gam-badge-id-readonly"><?php esc_html_e( 'Badge ID', 'wb-gamification' ); ?></label></th>
 									<td>
-										<input type="text" name="badge_id" id="wb-gam-badge-id-readonly" class="regular-text wbgam-input" value="<?php echo esc_attr( $badge['id'] ?? '' ); ?>" readonly>
+										<input type="text" id="wb-gam-badge-id-readonly" class="regular-text wbgam-input" value="<?php echo esc_attr( $badge['id'] ?? '' ); ?>" readonly>
 										<p class="description"><?php esc_html_e( 'ID cannot be changed after creation.', 'wb-gamification' ); ?></p>
 									</td>
 								</tr>
@@ -211,14 +247,14 @@ final class BadgeAdminPage {
 								<tr>
 									<th><label for="wb-gam-badge-name"><?php esc_html_e( 'Name', 'wb-gamification' ); ?></label></th>
 									<td>
-										<input type="text" name="badge_name" id="wb-gam-badge-name" class="regular-text wbgam-input" value="<?php echo esc_attr( $badge['name'] ?? '' ); ?>" required>
+										<input type="text" name="name" id="wb-gam-badge-name" class="regular-text wbgam-input" value="<?php echo esc_attr( $badge['name'] ?? '' ); ?>" required>
 										<p class="description"><?php esc_html_e( 'Display name shown to members when they earn this badge.', 'wb-gamification' ); ?></p>
 									</td>
 								</tr>
 								<tr>
 									<th><label for="wb-gam-badge-description"><?php esc_html_e( 'Description', 'wb-gamification' ); ?></label></th>
 									<td>
-										<textarea name="badge_description" id="wb-gam-badge-description" rows="3" class="large-text wbgam-input"><?php echo esc_textarea( $badge['description'] ?? '' ); ?></textarea>
+										<textarea name="description" id="wb-gam-badge-description" rows="3" class="large-text wbgam-input"><?php echo esc_textarea( $badge['description'] ?? '' ); ?></textarea>
 										<p class="description"><?php esc_html_e( 'Explains what this badge is for. Shown on badge cards and share pages.', 'wb-gamification' ); ?></p>
 									</td>
 								</tr>
@@ -232,7 +268,7 @@ final class BadgeAdminPage {
 												<span class="dashicons dashicons-awards"></span>
 											<?php endif; ?>
 										</div>
-										<input type="hidden" name="badge_image_url" id="wb-gam-badge-image-url" value="<?php echo esc_attr( $badge['image_url'] ?? '' ); ?>">
+										<input type="hidden" name="image_url" id="wb-gam-badge-image-url" value="<?php echo esc_attr( $badge['image_url'] ?? '' ); ?>">
 										<button type="button" class="wbgam-btn wbgam-btn--secondary wbgam-btn--sm" id="wb-gam-choose-icon">
 											<?php esc_html_e( 'Choose Icon', 'wb-gamification' ); ?>
 										</button>
@@ -251,7 +287,7 @@ final class BadgeAdminPage {
 								<tr>
 									<th><label for="wb-gam-badge-category"><?php esc_html_e( 'Category', 'wb-gamification' ); ?></label></th>
 									<td>
-										<select name="badge_category" id="wb-gam-badge-category" class="wbgam-select">
+										<select name="category" id="wb-gam-badge-category" class="wbgam-select">
 											<?php foreach ( array( 'general', 'points', 'wordpress', 'buddypress', 'special' ) as $cat ) : ?>
 												<option value="<?php echo esc_attr( $cat ); ?>" <?php selected( $badge['category'] ?? 'general', $cat ); ?>>
 													<?php echo esc_html( ucfirst( $cat ) ); ?>
@@ -265,7 +301,7 @@ final class BadgeAdminPage {
 									<th><?php esc_html_e( 'Is Credential', 'wb-gamification' ); ?></th>
 									<td>
 										<label>
-											<input type="checkbox" name="badge_is_credential" id="wb-gam-badge-is-credential" value="1" <?php checked( ! empty( $badge['is_credential'] ) ); ?>>
+											<input type="checkbox" name="is_credential" id="wb-gam-badge-is-credential" value="1" <?php checked( ! empty( $badge['is_credential'] ) ); ?>>
 											<?php esc_html_e( 'Mark as shareable credential (LinkedIn, OpenBadges)', 'wb-gamification' ); ?>
 										</label>
 										<p class="description"><?php esc_html_e( 'Enable OpenBadges 3.0 verifiable credential issuance. Members can share a verified badge URL.', 'wb-gamification' ); ?></p>
@@ -274,7 +310,7 @@ final class BadgeAdminPage {
 								<tr>
 									<th><label for="wb-gam-badge-closes-at"><?php esc_html_e( 'Closes at', 'wb-gamification' ); ?></label></th>
 									<td>
-										<input type="datetime-local" name="badge_closes_at" id="wb-gam-badge-closes-at" class="wbgam-input"
+										<input type="datetime-local" name="closes_at" id="wb-gam-badge-closes-at" class="wbgam-input"
 											value="
 											<?php
 											if ( ! empty( $badge['closes_at'] ) ) {
@@ -299,7 +335,7 @@ final class BadgeAdminPage {
 								<tr>
 									<th><label for="wb-gam-badge-max-earners"><?php esc_html_e( 'Max earners', 'wb-gamification' ); ?></label></th>
 									<td>
-										<input type="number" name="badge_max_earners" id="wb-gam-badge-max-earners" class="small-text wbgam-input"
+										<input type="number" name="max_earners" id="wb-gam-badge-max-earners" class="small-text wbgam-input"
 											min="1" value="<?php echo esc_attr( $badge['max_earners'] ?? '' ); ?>">
 										<p class="description"><?php esc_html_e( 'Stop awarding after this many members earn it. Leave blank for unlimited.', 'wb-gamification' ); ?></p>
 									</td>
@@ -311,7 +347,7 @@ final class BadgeAdminPage {
 								<tr>
 									<th><label for="wb-gam-condition-type"><?php esc_html_e( 'When user...', 'wb-gamification' ); ?></label></th>
 									<td>
-										<select name="condition_type" id="wb-gam-condition-type" class="wbgam-select" onchange="wbGamToggleConditionFields(this.value)">
+										<select name="condition[type]" id="wb-gam-condition-type" class="wbgam-select" onchange="wbGamToggleConditionFields(this.value)">
 											<option value="admin_awarded" <?php selected( $condition['condition_type'], 'admin_awarded' ); ?>><?php esc_html_e( 'Admin awarded only (manual)', 'wb-gamification' ); ?></option>
 											<option value="point_milestone" <?php selected( $condition['condition_type'], 'point_milestone' ); ?>><?php esc_html_e( 'Reaches a point milestone', 'wb-gamification' ); ?></option>
 											<option value="action_count" <?php selected( $condition['condition_type'], 'action_count' ); ?>><?php esc_html_e( 'Performs an action N times', 'wb-gamification' ); ?></option>
@@ -322,14 +358,14 @@ final class BadgeAdminPage {
 								<tr id="wb-gam-field-points" <?php echo 'point_milestone' !== $condition['condition_type'] ? 'class="wb-gam-hidden"' : ''; ?>>
 									<th><label for="wb-gam-condition-points"><?php esc_html_e( 'Points Threshold', 'wb-gamification' ); ?></label></th>
 									<td>
-										<input type="number" name="condition_points" id="wb-gam-condition-points" class="small-text wbgam-input" min="1" value="<?php echo esc_attr( $condition['points'] ?? 100 ); ?>">
+										<input type="number" name="condition[points]" id="wb-gam-condition-points" class="small-text wbgam-input" min="1" value="<?php echo esc_attr( $condition['points'] ?? 100 ); ?>">
 										<p class="description"><?php esc_html_e( 'The badge is awarded when the member\'s total points reach or exceed this value.', 'wb-gamification' ); ?></p>
 									</td>
 								</tr>
 								<tr id="wb-gam-field-action" <?php echo 'action_count' !== $condition['condition_type'] ? 'class="wb-gam-hidden"' : ''; ?>>
 									<th><label for="wb-gam-condition-action-id"><?php esc_html_e( 'Action', 'wb-gamification' ); ?></label></th>
 									<td>
-										<select name="condition_action_id" id="wb-gam-condition-action-id" class="wbgam-select">
+										<select name="condition[action_id]" id="wb-gam-condition-action-id" class="wbgam-select">
 											<?php foreach ( $actions as $action_id => $action_data ) : ?>
 												<option value="<?php echo esc_attr( $action_id ); ?>" <?php selected( $condition['action_id'] ?? '', $action_id ); ?>>
 													<?php echo esc_html( $action_data['label'] ?? $action_id ); ?>
@@ -345,7 +381,7 @@ final class BadgeAdminPage {
 								<tr id="wb-gam-field-count" <?php echo 'action_count' !== $condition['condition_type'] ? 'class="wb-gam-hidden"' : ''; ?>>
 									<th><label for="wb-gam-condition-count"><?php esc_html_e( 'Target Count', 'wb-gamification' ); ?></label></th>
 									<td>
-										<input type="number" name="condition_count" id="wb-gam-condition-count" class="small-text wbgam-input" min="1" value="<?php echo esc_attr( $condition['count'] ?? 1 ); ?>">
+										<input type="number" name="condition[count]" id="wb-gam-condition-count" class="small-text wbgam-input" min="1" value="<?php echo esc_attr( $condition['count'] ?? 1 ); ?>">
 										<p class="description"><?php esc_html_e( 'How many times the action must be performed to earn this badge.', 'wb-gamification' ); ?></p>
 									</td>
 								</tr>
@@ -356,11 +392,20 @@ final class BadgeAdminPage {
 									<?php echo $is_new ? esc_html__( 'Create Badge', 'wb-gamification' ) : esc_html__( 'Save Changes', 'wb-gamification' ); ?>
 								</button>
 								<?php if ( ! $is_new ) : ?>
-									<a href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin-post.php?action=wb_gam_delete_badge&badge=' . $editing ), 'wb_gam_delete_badge_' . $editing ) ); ?>"
-										onclick="return confirm('<?php esc_attr_e( 'Delete this badge and all earned records?', 'wb-gamification' ); ?>')"
-										class="wbgam-btn wbgam-btn--danger" style="margin-left:8px;">
+									<button
+										type="button"
+										class="wbgam-btn wbgam-btn--danger"
+										style="margin-left:8px;"
+										data-wb-gam-rest-action="wbGamBadgesSettings"
+										data-wb-gam-rest-method="DELETE"
+										data-wb-gam-rest-path="/badges/<?php echo esc_attr( rawurlencode( $editing ) ); ?>"
+										data-wb-gam-rest-confirm="<?php esc_attr_e( 'Delete this badge and all earned records?', 'wb-gamification' ); ?>"
+										data-wb-gam-rest-success-toast="<?php esc_attr_e( 'Badge deleted.', 'wb-gamification' ); ?>"
+										data-wb-gam-rest-error-toast="<?php esc_attr_e( 'Failed to delete badge.', 'wb-gamification' ); ?>"
+										data-wb-gam-rest-after="reload"
+									>
 										<?php esc_html_e( 'Delete Badge', 'wb-gamification' ); ?>
-									</a>
+									</button>
 								<?php endif; ?>
 							</p>
 						</form>
@@ -426,121 +471,8 @@ final class BadgeAdminPage {
 	 *
 	 * @return void
 	 */
-	public static function handle_save(): void {
-		if ( ! \WBGam\Engine\Capabilities::user_can( 'wb_gam_manage_badges' ) ) {
-			wp_die( esc_html__( 'Permission denied.', 'wb-gamification' ) );
-		}
-
-		check_admin_referer( 'wb_gam_save_badge', 'wb_gam_badge_nonce' );
-
-		global $wpdb;
-
-		$badge_id    = sanitize_key( $_POST['badge_id'] ?? '' );
-		$original_id = sanitize_key( $_POST['original_id'] ?? '' );
-		$is_new      = empty( $original_id );
-
-		if ( ! $badge_id ) {
-			wp_safe_redirect( admin_url( 'admin.php?page=wb-gamification-badges&notice=error' ) );
-			exit;
-		}
-
-		$closes_at_raw = sanitize_text_field( wp_unslash( $_POST['badge_closes_at'] ?? '' ) );
-		if ( $closes_at_raw ) {
-			$dt        = \DateTime::createFromFormat( 'Y-m-d\TH:i', $closes_at_raw, wp_timezone() );
-			$closes_at = $dt ? $dt->setTimezone( new \DateTimeZone( 'UTC' ) )->format( 'Y-m-d H:i:s' ) : null;
-		} else {
-			$closes_at = null;
-		}
-		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput -- absint() sanitizes.
-		$raw_earners = isset( $_POST['badge_max_earners'] ) ? wp_unslash( $_POST['badge_max_earners'] ) : '';
-		$max_earners = '' !== $raw_earners ? absint( $raw_earners ) : null;
-
-		$badge_data = array(
-			'name'          => sanitize_text_field( wp_unslash( $_POST['badge_name'] ?? '' ) ),
-			'description'   => sanitize_textarea_field( wp_unslash( $_POST['badge_description'] ?? '' ) ),
-			'image_url'     => esc_url_raw( wp_unslash( $_POST['badge_image_url'] ?? '' ) ),
-			'category'      => sanitize_key( $_POST['badge_category'] ?? 'general' ),
-			'is_credential' => ! empty( $_POST['badge_is_credential'] ) ? 1 : 0,
-			'closes_at'     => $closes_at,
-			'max_earners'   => $max_earners,
-		);
-
-		if ( $is_new ) {
-			$badge_data['id'] = $badge_id;
-			$wpdb->insert( $wpdb->prefix . 'wb_gam_badge_defs', $badge_data );
-		} else {
-			$wpdb->update( $wpdb->prefix . 'wb_gam_badge_defs', $badge_data, array( 'id' => $original_id ) );
-		}
-
-		// Save / update condition rule.
-		$condition_type = sanitize_key( $_POST['condition_type'] ?? 'admin_awarded' );
-		$config         = array( 'condition_type' => $condition_type );
-
-		if ( 'point_milestone' === $condition_type ) {
-			$config['points'] = absint( $_POST['condition_points'] ?? 100 );
-		} elseif ( 'action_count' === $condition_type ) {
-			$config['action_id'] = sanitize_key( $_POST['condition_action_id'] ?? '' );
-			$config['count']     = absint( $_POST['condition_count'] ?? 1 );
-		}
-
-		// Delete existing condition rules for this badge, then re-insert.
-		$wpdb->delete(
-			$wpdb->prefix . 'wb_gam_rules',
-			array(
-				'rule_type' => 'badge_condition',
-				'target_id' => $badge_id,
-			),
-			array( '%s', '%s' )
-		);
-
-		if ( 'admin_awarded' !== $condition_type ) {
-			$wpdb->insert(
-				$wpdb->prefix . 'wb_gam_rules',
-				array(
-					'rule_type'   => 'badge_condition',
-					'target_id'   => $badge_id,
-					'rule_config' => wp_json_encode( $config ),
-					'is_active'   => 1,
-				),
-				array( '%s', '%s', '%s', '%d' )
-			);
-		}
-
-		wp_cache_delete( 'wb_gam_badge_rules', 'wb_gamification' );
-
-		wp_safe_redirect( admin_url( 'admin.php?page=wb-gamification-badges&notice=saved' ) );
-		exit;
-	}
-
-	/**
-	 * Handle the badge delete action via admin-post.php.
-	 *
-	 * @return void
-	 */
-	public static function handle_delete(): void {
-		if ( ! \WBGam\Engine\Capabilities::user_can( 'wb_gam_manage_badges' ) ) {
-			wp_die( esc_html__( 'Permission denied.', 'wb-gamification' ) );
-		}
-
-		$badge_id = sanitize_key( $_GET['badge'] ?? '' );
-		check_admin_referer( 'wb_gam_delete_badge_' . $badge_id );
-
-		global $wpdb;
-
-		$wpdb->delete( $wpdb->prefix . 'wb_gam_badge_defs', array( 'id' => $badge_id ), array( '%s' ) );
-		$wpdb->delete( $wpdb->prefix . 'wb_gam_user_badges', array( 'badge_id' => $badge_id ), array( '%s' ) );
-		$wpdb->delete(
-			$wpdb->prefix . 'wb_gam_rules',
-			array(
-				'rule_type' => 'badge_condition',
-				'target_id' => $badge_id,
-			),
-			array( '%s', '%s' )
-		);
-
-		wp_cache_delete( 'wb_gam_badge_rules', 'wb_gamification' );
-
-		wp_safe_redirect( admin_url( 'admin.php?page=wb-gamification-badges&notice=deleted' ) );
-		exit;
-	}
+	// handle_save() / handle_delete() removed in 1.0.0 (Tier 0.C). Badges are
+	// now written by BadgesController (POST /badges and POST /badges/{id} for
+	// create/update; DELETE /badges/{id} for deletion). The condition rule is
+	// passed as a nested `condition` object on the badge save endpoint.
 }

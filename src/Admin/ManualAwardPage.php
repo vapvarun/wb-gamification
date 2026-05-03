@@ -12,8 +12,6 @@
 
 namespace WBGam\Admin;
 
-use WBGam\Engine\PointsEngine;
-
 defined( 'ABSPATH' ) || exit;
 
 /**
@@ -37,7 +35,47 @@ final class ManualAwardPage {
 	 */
 	public static function init(): void {
 		add_action( 'admin_menu', array( __CLASS__, 'add_submenu' ) );
-		add_action( 'admin_post_wb_gam_manual_award', array( __CLASS__, 'handle_award' ) );
+		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_assets' ) );
+		// admin_post_wb_gam_manual_award removed in 1.0.0 — page now consumes
+		// /wb-gamification/v1/points/award via the generic admin-rest-form driver.
+	}
+
+	/**
+	 * Enqueue the REST-driven JS bundle on the Award Points page.
+	 *
+	 * @param string $hook_suffix Current admin page hook.
+	 * @return void
+	 */
+	public static function enqueue_assets( string $hook_suffix ): void {
+		if ( 'gamification_page_wb-gamification-award' !== $hook_suffix ) {
+			return;
+		}
+		wp_enqueue_script(
+			'wb-gam-admin-rest-utils',
+			plugins_url( 'assets/js/admin-rest-utils.js', WB_GAM_FILE ),
+			array(),
+			WB_GAM_VERSION,
+			true
+		);
+		wp_enqueue_script(
+			'wb-gam-admin-rest-form',
+			plugins_url( 'assets/js/admin-rest-form.js', WB_GAM_FILE ),
+			array( 'wb-gam-admin-rest-utils' ),
+			WB_GAM_VERSION,
+			true
+		);
+		wp_localize_script(
+			'wb-gam-admin-rest-form',
+			'wbGamManualAwardSettings',
+			array(
+				'restUrl' => esc_url_raw( rest_url( 'wb-gamification/v1' ) ),
+				'nonce'   => wp_create_nonce( 'wp_rest' ),
+				'i18n'    => array(
+					'saved'  => __( 'Points awarded.', 'wb-gamification' ),
+					'failed' => __( 'Failed to award points.', 'wb-gamification' ),
+				),
+			)
+		);
 	}
 
 	/**
@@ -104,10 +142,14 @@ final class ManualAwardPage {
 					<h3 class="wbgam-card-title"><?php esc_html_e( 'Award or Deduct Points', 'wb-gamification' ); ?></h3>
 				</div>
 				<div class="wbgam-card-body">
-					<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
-						<input type="hidden" name="action" value="wb_gam_manual_award" />
-						<?php wp_nonce_field( 'wb_gam_manual_award', 'wb_gam_nonce' ); ?>
-
+					<form
+						data-wb-gam-rest-form="wbGamManualAwardSettings"
+						data-wb-gam-rest-method="POST"
+						data-wb-gam-rest-path="/points/award"
+						data-wb-gam-rest-success-toast="<?php esc_attr_e( 'Points awarded.', 'wb-gamification' ); ?>"
+						data-wb-gam-rest-error-toast="<?php esc_attr_e( 'Failed to award points.', 'wb-gamification' ); ?>"
+						data-wb-gam-rest-after="reload"
+					>
 						<table class="form-table" role="presentation">
 							<tr>
 								<th scope="row">
@@ -117,7 +159,7 @@ final class ManualAwardPage {
 									<?php
 									wp_dropdown_users(
 										array(
-											'name' => 'wb_gam_user_id',
+											'name' => 'user_id',
 											'id'   => 'wb_gam_award_user',
 											'show_option_none' => __( '— Select a user —', 'wb-gamification' ),
 											'option_none_value' => '0',
@@ -135,7 +177,7 @@ final class ManualAwardPage {
 									<input
 										type="number"
 										id="wb_gam_award_points"
-										name="wb_gam_points"
+										name="points"
 										class="small-text wbgam-input"
 										value="0"
 										min="-<?php echo esc_attr( self::MAX_POINTS ); ?>"
@@ -161,7 +203,7 @@ final class ManualAwardPage {
 									<input
 										type="text"
 										id="wb_gam_award_note"
-										name="wb_gam_note"
+										name="note"
 										class="regular-text wbgam-input"
 										placeholder="<?php esc_attr_e( 'e.g. Contest winner, Support bonus, Policy violation', 'wb-gamification' ); ?>"
 										maxlength="200"
@@ -223,50 +265,9 @@ final class ManualAwardPage {
 
 	// ── Form handler ─────────────────────────────────────────────────────────
 
-	/**
-	 * Handle the wb_gam_manual_award admin-post form submission.
-	 *
-	 * Verifies nonce and capability before awarding or debiting points.
-	 * Redirects back to the admin page with a success/fail notice parameter.
-	 *
-	 * @return void
-	 */
-	public static function handle_award(): void {
-		if ( ! \WBGam\Engine\Capabilities::user_can( 'wb_gam_award_manual' ) ) {
-			wp_die( esc_html__( 'Insufficient permissions.', 'wb-gamification' ), '', array( 'response' => 403 ) );
-		}
-
-		check_admin_referer( 'wb_gam_manual_award', 'wb_gam_nonce' );
-
-		// phpcs:disable WordPress.Security.NonceVerification.Missing -- handled by check_admin_referer above.
-		$user_id = absint( wp_unslash( $_POST['wb_gam_user_id'] ?? 0 ) );
-		$points  = self::normalize_points( intval( wp_unslash( $_POST['wb_gam_points'] ?? 0 ) ) );
-		$note    = sanitize_text_field( wp_unslash( $_POST['wb_gam_note'] ?? '' ) );
-		// phpcs:enable WordPress.Security.NonceVerification.Missing
-
-		$success = false;
-
-		if ( $user_id > 0 && 0 !== $points ) {
-			if ( $points > 0 ) {
-				$success = PointsEngine::award( $user_id, 'manual_admin', $points );
-			} else {
-				$success = PointsEngine::debit( $user_id, abs( $points ), 'manual_admin_deduct' );
-			}
-
-			if ( $success && '' !== $note ) {
-				update_user_meta( $user_id, '_wb_gam_last_award_note', $note );
-			}
-		}
-
-		$redirect = add_query_arg(
-			'wb_gam_award_done',
-			$success ? 'ok' : 'fail',
-			admin_url( 'admin.php?page=wb-gamification-award' )
-		);
-
-		wp_safe_redirect( $redirect );
-		exit;
-	}
+	// handle_award() removed in 1.0.0 (Tier 0.C). Manual point awards are now
+	// written by PointsController::award (POST /wb-gamification/v1/points/award).
+	// The admin form uses the generic admin-rest-form driver via data-* attrs.
 
 	// ── Public helpers (used by tests) ────────────────────────────────────────
 

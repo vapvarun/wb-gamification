@@ -56,10 +56,32 @@ final class Registrar {
 	}
 
 	/**
-	 * Hook block registration onto `init`.
+	 * Hook block registration onto `init` and shared-asset injection
+	 * onto `render_block`.
 	 */
 	public function init(): void {
 		add_action( 'init', array( $this, 'register_blocks' ), 20 );
+		add_filter( 'render_block', array( $this, 'enqueue_shared_block_assets' ), 10, 2 );
+	}
+
+	/**
+	 * Just-in-time enqueue the shared `wb-gam-block-card` style on any
+	 * wb-gamification/* block render, so the canonical card surface
+	 * loads on pages that contain at least one of our blocks without
+	 * each block.json having to declare it.
+	 *
+	 * @param string               $block_content Rendered block markup.
+	 * @param array<string, mixed> $block         Parsed block.
+	 */
+	public function enqueue_shared_block_assets( string $block_content, array $block ): string {
+		$name = isset( $block['blockName'] ) ? (string) $block['blockName'] : '';
+		if ( '' === $name || 0 !== strpos( $name, 'wb-gamification/' ) ) {
+			return $block_content;
+		}
+		if ( wp_style_is( 'wb-gam-block-card', 'registered' ) ) {
+			wp_enqueue_style( 'wb-gam-block-card' );
+		}
+		return $block_content;
 	}
 
 	/**

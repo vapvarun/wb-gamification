@@ -738,7 +738,7 @@
   .gam-badge-grid { grid-template-columns: repeat(2, 1fr); }
 }
 
-@media (max-width: 390px) {
+@media (max-width: 640px) {
   .gam-page { padding: 16px 12px; }
   .gam-stats { gap: 10px; }
   .gam-stat { padding: 12px 8px; }

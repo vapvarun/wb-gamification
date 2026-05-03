@@ -526,7 +526,6 @@
 	border-radius: 6px;
 	line-height: 1.5;
 	transition: border-color var(--wbgam-transition), box-shadow var(--wbgam-transition);
-	outline: none;
 }
 
 .wbgam-input::placeholder {
@@ -572,7 +571,6 @@
 	resize: vertical;
 	min-height: 80px;
 	transition: border-color var(--wbgam-transition), box-shadow var(--wbgam-transition);
-	outline: none;
 }
 
 .wbgam-textarea:focus {
@@ -600,7 +598,6 @@
 	line-height: 1.5;
 	appearance: none;
 	transition: border-color var(--wbgam-transition), box-shadow var(--wbgam-transition);
-	outline: none;
 	cursor: pointer;
 }
 
@@ -685,7 +682,6 @@
 	text-decoration: none;
 	white-space: nowrap;
 	transition: background var(--wbgam-transition), border-color var(--wbgam-transition), color var(--wbgam-transition), box-shadow var(--wbgam-transition);
-	outline: none;
 }
 
 .wbgam-btn:focus-visible {

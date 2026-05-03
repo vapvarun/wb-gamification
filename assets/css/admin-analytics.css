@@ -59,7 +59,7 @@
 	margin-block-end: 1.5rem;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1024px) {
 	.wb-gam-analytics__two-col { grid-template-columns: 1fr; }
 }
 

@@ -246,11 +246,9 @@ final class NotificationBridge {
 			>
 				<div class="wb-gam-overlay__card">
 					<p class="wb-gam-overlay__eyebrow"><?php esc_html_e( 'Level up!', 'wb-gamification' ); ?></p>
-					<img
-						class="wb-gam-overlay__icon"
+					<img alt="" class="wb-gam-overlay__icon"
 						data-wp-bind--src="state.levelUp.iconUrl"
 						data-wp-bind--hidden="!state.levelUp.iconUrl"
-						alt=""
 					/>
 					<p class="wb-gam-overlay__title" data-wp-text="state.levelUp.levelName"></p>
 					<button

@@ -304,7 +304,7 @@
 	.wbgam-grid-4 { grid-template-columns: repeat(2, 1fr); }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 640px) {
 	.wbgam-grid-3 { grid-template-columns: 1fr; }
 	.wbgam-grid-4 { grid-template-columns: 1fr; }
 }
@@ -426,16 +426,76 @@
 	transition: border-color 0.15s;
 }
 
-.wbgam-input:focus {
+/* Mouse focus only: drop the browser outline (box-shadow ring suffices). */
+.wbgam-input:focus:not(:focus-visible) {
 	border-color: var(--wb-gam-primary);
-	outline: none;
 	box-shadow: 0 0 0 2px rgba(108, 99, 255, 0.15);
 }
 
-/* Keyboard focus — keep a visible ring even when outline is suppressed. */
+/* Keyboard focus: explicit outline + same border tint. */
+/* ── Shared confirm modal (admin-rest-utils.js) ───────────────────── */
+
+.wb-gam-confirm-overlay {
+	position: fixed;
+	inset: 0;
+	background: rgba( 26, 26, 46, 0.55 );
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	z-index: 100000;
+	animation: wbgam-fade-in 0.15s ease;
+}
+
+@keyframes wbgam-fade-in {
+	from { opacity: 0; }
+	to   { opacity: 1; }
+}
+
+.wb-gam-confirm-dialog {
+	background: #fff;
+	border-radius: 10px;
+	box-shadow: 0 20px 60px rgba( 0, 0, 0, 0.25 );
+	padding: 24px;
+	max-width: 420px;
+	width: calc( 100% - 32px );
+	animation: wbgam-zoom-in 0.18s ease;
+}
+
+@keyframes wbgam-zoom-in {
+	from { opacity: 0; transform: scale( 0.96 ); }
+	to   { opacity: 1; transform: scale( 1 ); }
+}
+
+.wb-gam-confirm-dialog__title {
+	font-size: 18px;
+	font-weight: 600;
+	margin: 0 0 8px;
+	color: #1a1a2e;
+}
+
+.wb-gam-confirm-dialog__body {
+	font-size: 14px;
+	color: #555770;
+	margin: 0 0 20px;
+	line-height: 1.5;
+}
+
+.wb-gam-confirm-dialog__actions {
+	display: flex;
+	justify-content: flex-end;
+	gap: 8px;
+}
+
+.wb-gam-confirm-dialog__actions .button {
+	min-height: 40px;
+}
+
+/* Mouse focus only — keep the visual ring for keyboard users below. */
 .wbgam-input:focus-visible {
+	border-color: var(--wb-gam-primary);
 	outline: 2px solid var(--wb-gam-primary);
 	outline-offset: 2px;
+	box-shadow: 0 0 0 2px rgba(108, 99, 255, 0.15);
 }
 
 .wbgam-select {
@@ -446,16 +506,18 @@
 	background: #fff;
 }
 
-.wbgam-select:focus {
+/* Mouse focus only: drop the browser outline (box-shadow ring suffices). */
+.wbgam-select:focus:not(:focus-visible) {
 	border-color: var(--wb-gam-primary);
-	outline: none;
 	box-shadow: 0 0 0 2px rgba(108, 99, 255, 0.15);
 }
 
-/* Keyboard focus — keep a visible ring even when outline is suppressed. */
+/* Keyboard focus: explicit outline + same border tint. */
 .wbgam-select:focus-visible {
+	border-color: var(--wb-gam-primary);
 	outline: 2px solid var(--wb-gam-primary);
 	outline-offset: 2px;
+	box-shadow: 0 0 0 2px rgba(108, 99, 255, 0.15);
 }
 
 /* Status pills */
