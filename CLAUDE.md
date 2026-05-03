@@ -313,10 +313,14 @@ Version tracked by `get_option('wb_gam_db_version')`. Migrations live in `DbUpgr
 | Redemption store endpoint | `src/API/RedemptionController.php` |
 | BuddyPress hooks | `src/BuddyPress/HooksIntegration.php` |
 | WP-CLI commands | `src/CLI/` (PointsCommand, MemberCommand, ActionsCommand, LogsCommand, ExportCommand) |
-| Block registration | `blocks/` (leaderboard, member-points, badge-showcase, etc.) |
-| Frontend CSS | `assets/css/frontend.css` |
+| Block registration | `src/Blocks/<slug>/` — Wbcom Block Quality Standard. Auto-discovered from `build/Blocks/<slug>/` by `WBGam\Blocks\Registrar` (init@20). |
+| Per-instance CSS generator | `src/Blocks/CSS.php` (`WBGam\Blocks\CSS`) — emits `--wb-gam-*` scoped rules in `wp_footer`. |
+| Block auto-registrar | `src/Blocks/Registrar.php` (`WBGam\Blocks\Registrar`). |
+| Shared editor controls | `src/shared/components/` — Responsive/Spacing/Typography/BoxShadow/BorderRadius/ColorHover/DeviceVisibility + `StandardLayoutPanel` / `StandardStylePanel`. |
+| Design tokens | `src/shared/design-tokens.css` — registered as `wb-gam-tokens` style handle, depended on by `wb-gamification`. |
+| Frontend CSS | `assets/css/frontend.css` (legacy block selectors will move to per-block style.css in Phase F). |
 | Admin CSS | `assets/css/admin.css` |
-| Interactivity API store | `assets/interactivity/index.js` |
+| Interactivity API store (hub) | `assets/interactivity/hub.js`; legacy `index.js` slated for removal in Phase F. |
 
 ---
 
@@ -331,9 +335,17 @@ Controllers registered in `WB_Gamification::register_routes()`:
 
 ## Registered Blocks
 
-`leaderboard`, `member-points`, `badge-showcase`, `level-progress`, `challenges`, `streak`, `top-members`, `kudos-feed`, `year-recap`, `points-history`, `earning-guide`
+`leaderboard`, `member-points`, `badge-showcase`, `level-progress`, `challenges`, `streak`, `top-members`, `kudos-feed`, `year-recap`, `points-history`, `earning-guide`, `redemption-store`, `community-challenges`, `cohort-rank`, `hub` — **15 blocks**, all Wbcom Block Quality Standard compliant (apiVersion 3, standard attribute schema, `--wb-gam-*` design tokens, per-instance scoped CSS).
 
-All 11 blocks live in `blocks/{slug}/` and are registered dynamically from `WB_Gamification::register_blocks()`. Each has a matching shortcode via `ShortcodeHandler`.
+Source: `src/Blocks/<slug>/{block.json, index.js, edit.js, render.php, editor.css}` (plus `view.js` + `style.css` for IA-driven blocks).
+
+Build: `npm run build` (uses `@wordpress/scripts`, sets `WP_EXPERIMENTAL_MODULES=true` for Interactivity API view modules) → `build/Blocks/<slug>/`.
+
+Discovery: `WBGam\Blocks\Registrar` scans `build/Blocks/*/block.json` on `init@20` and calls `register_block_type` per slug. Each block also has a matching shortcode via `ShortcodeHandler`.
+
+CI gate: `bin/check-block-standard.sh` (wired into `composer ci` as stage 2.3) fails the build if any `block.json` is missing the standard attribute schema.
+
+Documentation: see [`docs/website/developer-guide/block-attributes.md`](docs/website/developer-guide/block-attributes.md) and [`plans/WBCOM-BLOCK-STANDARD-MIGRATION.md`](plans/WBCOM-BLOCK-STANDARD-MIGRATION.md).
 
 ---
 
