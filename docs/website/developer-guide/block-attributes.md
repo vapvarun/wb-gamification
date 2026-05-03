@@ -5,6 +5,8 @@ WB Gamification blocks adhere to the canonical [Wbcom Block Quality Standard](ht
 This document is the reference for that schema as it ships in `wb-gamification`. Consumers building editor plugins, custom blocks that extend ours, or REST integrations should read it before relying on attribute names.
 
 > **Source of truth:** `src/shared/utils/attributes.js` (JavaScript export) and `src/Blocks/CSS.php` (PHP consumer). The standard is shared with `wbcom-essential`; both are derived from `~/.claude/skills/wp-block-development/references/block-quality-standard.md`.
+>
+> **Directory casing matters.** Block sources live at `src/Blocks/<slug>/` (capital B, matches the `WBGam\Blocks\` PSR-4 namespace) and compile to `build/Blocks/<slug>/`. The Registrar scans `build/Blocks/` — case-sensitive on Linux production.
 
 ## Where the schema lives
 

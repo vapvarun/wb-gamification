@@ -3,7 +3,7 @@
  * Wbcom Block Standard — block build orchestrator.
  *
  * Runs `@wordpress/scripts build` when at least one block exists at
- * `src/blocks/<slug>/block.json`. Before any blocks have been migrated
+ * `src/Blocks/<slug>/block.json`. Before any blocks have been migrated
  * (Phase A bootstrap) it emits an empty `build/` directory so downstream
  * tooling — the PHP block registrar, CI artefact gates — sees a
  * well-formed output even when there is nothing to compile yet.
@@ -17,7 +17,7 @@ const { spawnSync } = require( 'child_process' );
 const path = require( 'path' );
 
 const ROOT = path.resolve( __dirname, '..' );
-const BLOCKS_DIR = path.join( ROOT, 'src', 'blocks' );
+const BLOCKS_DIR = path.join( ROOT, 'src', 'Blocks' );
 const BUILD_DIR = path.join( ROOT, 'build' );
 
 function hasMigratedBlocks() {
@@ -38,7 +38,7 @@ if ( ! hasMigratedBlocks() ) {
 		'# Phase A bootstrap — no blocks migrated yet. See plans/WBCOM-BLOCK-STANDARD-MIGRATION.md.\n'
 	);
 	process.stdout.write(
-		'wb-gamification: src/blocks/ has no block.json yet — emitted empty build/.\n'
+		'wb-gamification: src/Blocks/ has no block.json yet — emitted empty build/.\n'
 	);
 	process.exit( 0 );
 }
@@ -49,7 +49,13 @@ const result = spawnSync(
 	{
 		cwd: ROOT,
 		stdio: 'inherit',
-		env: process.env,
+		env: {
+			...process.env,
+			// Enable @wordpress/scripts module pipeline so blocks declaring
+			// `viewScriptModule` (the standard for Interactivity API view
+			// modules) compile alongside the classic editorScript entry.
+			WP_EXPERIMENTAL_MODULES: 'true',
+		},
 	}
 );
 

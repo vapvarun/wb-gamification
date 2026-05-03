@@ -35,7 +35,7 @@ class RegistrarTest extends TestCase {
 		Registrar::reset();
 
 		$this->tmp = sys_get_temp_dir() . '/wb-gam-registrar-' . uniqid();
-		mkdir( $this->tmp . '/blocks', 0755, true );
+		mkdir( $this->tmp . '/Blocks', 0755, true );
 
 		Functions\stubs(
 			array(
@@ -105,7 +105,7 @@ class RegistrarTest extends TestCase {
 	}
 
 	private function seed_block( string $slug ): void {
-		$dir = $this->tmp . '/blocks/' . $slug;
+		$dir = $this->tmp . '/Blocks/' . $slug;
 		mkdir( $dir, 0755, true );
 		file_put_contents(
 			$dir . '/block.json',

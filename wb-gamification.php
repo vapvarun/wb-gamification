@@ -212,7 +212,9 @@ final class WB_Gamification {
 	}
 
 	public function register_blocks(): void {
-		$blocks = array( 'leaderboard', 'member-points', 'badge-showcase', 'level-progress', 'challenges', 'streak', 'top-members', 'kudos-feed', 'year-recap', 'points-history', 'earning-guide', 'hub', 'community-challenges', 'cohort-rank', 'redemption-store' );
+		// Legacy hardcoded list — shrinks as blocks migrate to src/blocks/* + build/blocks/*.
+		// `redemption-store` migrated in Phase C; the build/blocks/ Registrar (init@20) owns it now.
+		$blocks = array( 'leaderboard', 'member-points', 'badge-showcase', 'level-progress', 'challenges', 'streak', 'top-members', 'kudos-feed', 'year-recap', 'points-history', 'earning-guide', 'hub', 'community-challenges', 'cohort-rank' );
 		foreach ( $blocks as $block ) {
 			$path = WB_GAM_PATH . 'blocks/' . $block;
 			if ( file_exists( $path . '/block.json' ) ) {
@@ -222,11 +224,22 @@ final class WB_Gamification {
 	}
 
 	public function enqueue_assets(): void {
+		// Wbcom Block Quality Standard — design tokens that every standardised
+		// block consumes. Registered standalone so blocks can declare it as a
+		// dependency without importing from JS (CSS @import would land tokens
+		// in the editor chunk via wp-scripts' style split).
+		wp_register_style(
+			'wb-gam-tokens',
+			WB_GAM_URL . 'src/shared/design-tokens.css',
+			array(),
+			WB_GAM_VERSION
+		);
+
 		// Register but don't enqueue — blocks and shortcodes will enqueue as needed.
 		wp_register_style(
 			'wb-gamification',
 			WB_GAM_URL . 'assets/css/frontend.css',
-			array(),
+			array( 'wb-gam-tokens' ),
 			WB_GAM_VERSION
 		);
 		wp_register_script_module(
