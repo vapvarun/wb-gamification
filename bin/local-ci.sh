@@ -104,6 +104,14 @@ else
       warn "1.3 PHPStan skipped — vendor/bin/phpstan not present"
     fi
   fi
+
+  if [ -f package.json ] && grep -q '"build"' package.json; then
+    if [ -d node_modules ]; then
+      run_stage "1.4" "JS build (npm run build)" npm run build
+    else
+      warn "1.4 JS build skipped — run 'npm install' first"
+    fi
+  fi
 fi
 
 # ─── 2.x — Security + Architecture (always cheap) ────────────────────────────

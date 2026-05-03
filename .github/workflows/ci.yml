@@ -83,3 +83,25 @@ jobs:
 
       - name: Run PHPCS with WordPress-Extra standard
         run: vendor/bin/phpcs --standard=WordPress-Extra --extensions=php --ignore=vendor,node_modules,build,assets/js/min -n . 2>/dev/null || echo "WPCS completed with warnings"
+
+  js-build:
+    name: JS build (@wordpress/scripts)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install npm dependencies
+        run: npm ci
+
+      - name: Build blocks
+        run: npm run build
+
+      - name: Verify build/ artefact exists
+        run: test -d build || (echo "build/ directory missing after npm run build" && exit 1)

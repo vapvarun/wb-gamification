@@ -4,6 +4,7 @@ node_modules/
 .DS_Store
 *.zip
 /dist/
+/build/
 .superpowers/
 .claude-tmp/
 audit/journey-runs/
