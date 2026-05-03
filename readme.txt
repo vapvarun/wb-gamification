@@ -21,8 +21,8 @@ The engine awards points automatically when members perform actions on your site
 * **Zero config** — 5 starter templates pre-configure everything. Pick one and go.
 * **Universal** — Works with plain WordPress, BuddyPress, WooCommerce, LearnDash, bbPress, and 5 more plugins. Auto-detects what you have installed.
 * **Scalable** — Async award pipeline, snapshot-cached leaderboards, object caching everywhere. Built for 100K+ members.
-* **API-first** — 38 REST endpoints, outbound webhooks, WP Abilities API. Mobile apps, headless frontends, and AI agents are first-class consumers.
-* **No add-on model** — Every integration ships free. No paid extensions for BuddyPress support, WooCommerce support, etc.
+* **API-first** — 51 REST endpoints, outbound webhooks, WP Abilities API. Mobile apps, headless frontends, and AI agents are first-class consumers. Admin UI is REST-driven internally — what the admin saves is what the API exposes (no parallel form-post surface).
+* **No add-on model** — Every integration, every advanced engagement mechanic, every admin surface ships free. No paid extensions for BuddyPress support, cohort leagues, redemption store, or webhooks.
 
 = Core Features (Free) =
 
@@ -33,15 +33,22 @@ The engine awards points automatically when members perform actions on your site
 * **Challenges** — Time-bound goals with bonus points. Admin creates challenges, members track progress automatically.
 * **Streaks** — Daily activity tracking with grace periods, milestone detection (7, 30, 100, 365 days), and bonus rewards.
 * **Peer Kudos** — Members recognize each other with kudos. Configurable daily limits and point awards for both sender and receiver.
-* **11 Gutenberg Blocks** — Leaderboard, member points, badge showcase, level progress, challenges, streak, top members, kudos feed, year recap, points history, earning guide.
-* **11 Shortcodes** — Every block is also available as a shortcode for the classic editor.
-* **REST API** — 38 endpoints across 16 controllers. Full CRUD for all resources. API key authentication for cross-site setups.
+* **15 Gutenberg Blocks** — Leaderboard, member points, badge showcase, level progress, challenges, streak, top members, kudos feed, year recap, points history, earning guide, hub, redemption store, community challenges, cohort rank. Every block follows the Wbcom Block Quality Standard (apiVersion 3, per-side spacing × 3 breakpoints, hover/focus states, design tokens, per-instance scoped CSS).
+* **15 Shortcodes** — Every block is also available as a shortcode for classic editor and page builders (Elementor, Beaver Builder, Bricks).
+* **REST API** — 51 endpoints across 19 controllers. Full CRUD for all resources. API key authentication for cross-site setups. Admin UI consumes the same REST API as 3rd-party integrations.
 * **BuddyPress Integration** — Profile rank display, activity feed events, member directory badges, notification bridge.
-* **Toast Notifications** — Real-time bottom-right popups when members earn points, badges, or level up. 6 notification types with auto-dismiss.
+* **Toast Notifications** — Real-time bottom-right popups when members earn points, badges, or level up. 6 notification types with auto-dismiss. Promise-based confirm modals replace native browser dialogs (a11y-friendly).
 * **Analytics Dashboard** — 6 KPI cards, top actions, top earners, daily points sparkline. Period selector (7/30/90 days).
-* **WP-CLI Commands** — `points award`, `member status`, `actions list`, `logs prune`, `export user`, `doctor` readiness check.
-* **Developer Hooks** — 31 action hooks and 8 filter hooks for extending the engine.
-* **Privacy Compliant** — GDPR data export and erasure via WordPress privacy tools.
+* **WP-CLI Commands** — `points award`, `member status`, `actions list`, `logs prune`, `export user`, `qa seed_pages`, `doctor` readiness check, plus a release-zip builder.
+* **Developer Hooks** — 54 action hooks and 31 filter hooks for extending every write path. Every REST endpoint fires `before_*` filters (return WP_Error to abort) and `after_*` actions.
+* **Cohort Leagues** — Duolingo-style weekly competitions with promotion/demotion percentages and per-cohort leaderboards.
+* **Community Challenges** — Team goals with global progress (Pokemon GO model). Members contribute to a shared counter; everyone earns when the target is hit.
+* **Redemption Store** — Members spend points on rewards. Built-in support for custom rewards (your hook), WooCommerce coupons, and Wbcom Credits SDK.
+* **Badge Sharing** — Public share pages with OG meta, LinkedIn deep-links, OpenBadges 3.0 verifiable credentials.
+* **Outbound Webhooks** — HMAC-signed webhooks for Zapier, Make, n8n. Configure events from the admin UI; deliveries auto-retry up to 3 times.
+* **Weekly Recap Emails** — Automated weekly summary sent to members (opt-out per user).
+* **Tenure & Site-First Badges** — Anniversary milestones (1yr, 2yr, 5yr, 10yr) plus first-mover badges that the first member to perform an action earns uniquely.
+* **Privacy Compliant** — GDPR data export and erasure via WordPress privacy tools. Members opt out of leaderboard / hide rank from profile.
 
 = Integrations (Auto-detected) =
 
@@ -59,19 +66,17 @@ All integrations are auto-detected and require zero configuration. Install the p
 
 **Total: 62 gamification actions** across 10 integration manifests.
 
-= Pro Add-on Features =
+= Roadmap =
 
-The Pro add-on unlocks advanced engagement mechanics:
+The free plugin ships every gamification mechanic out of the box. Future add-ons will focus on enterprise-grade features:
 
-* **Cohort Leagues** — Duolingo-style weekly competitions with promotion/demotion
-* **Community Challenges** — Team goals with global progress (Pokemon GO model)
-* **Redemption Store** — Members spend points on rewards (discounts, custom rewards)
-* **Badge Sharing** — Public share pages with OG meta, LinkedIn deep-links, OpenBadges 3.0 verifiable credentials
-* **Outbound Webhooks** — HMAC-signed webhooks for Zapier, Make, n8n
-* **Weekly Recap Emails** — Automated weekly summary sent to members
-* **Profile Cosmetics** — Frames and visual upgrades for member profiles
-* **Tenure Badges** — Anniversary milestone badges (1yr, 2yr, 5yr, 10yr)
-* **Site-First Badges** — First member to perform an action earns a unique badge
+* **Profile Cosmetics & Frames** — Visual upgrades members can purchase with points (in development)
+* **Mission Mode** — Branching, narrative-driven gamification flows
+* **Real-time WebSocket layer** — Live leaderboard updates and notifications without polling
+* **GraphQL API** — Flexible queries for mobile/headless frontends
+* **AI intelligence** — Churn prediction, adaptive challenges, anti-gaming detection
+* **JS/RN SDKs** — `@wbcom/wb-gamification-js-sdk` and React Native equivalent
+* **ActivityPub federation** — Gamification events into the fediverse
 
 == Installation ==
 
@@ -128,6 +133,20 @@ All data is preserved in the database. Reactivating the plugin restores everythi
 
 == Changelog ==
 
+= 1.2.0 =
+**Architectural upgrade — admin REST migration + a11y polish + verification suite.**
+
+* **REST migration (Tier 0)** — Eliminated all 17 `admin_post_*` form-post handlers. Admin UI is now 100% REST-driven; mobile/3rd-party clients see the same API surface. New endpoints: Levels CRUD, Cohort Settings GET/POST, API Keys GET/POST + revoke + DELETE, Community Challenges full CRUD, Badges create + extended schema with nested condition rule. Total REST surface: 51 endpoints across 19 controllers.
+* **New JS infrastructure** — Generic `admin-rest-form.js` driver lets any admin form become REST-driven via `data-wb-gam-rest-*` attributes (supports nested objects, top-level arrays, datetime-local → UTC auto-convert). Shared `admin-rest-utils.js` provides `apiFetch` + `toast` + promise-based confirm modal. No per-page JS for new admin pages.
+* **A11y polish (Tier 1)** — All 8 `outline:none` admin focus indicators tightened to `:focus:not(:focus-visible)` with explicit keyboard outlines. Native `window.confirm()` replaced everywhere with a focus-trapped, Esc-dismissable, backdrop-clickable modal. CSS breakpoints consolidated 6 → 3 (640/782/1024).
+* **Bug fixes from verification** — Fixed `period` enum drift in `AbilitiesRegistration` (`[daily, weekly, monthly, all]` → `[all, day, week, month]`), Webhooks event-enum mismatch (`badge_awarded` vs `badge_earned`), Manual Award debit regression (REST `absint()` was stripping negative sign), 4 self-introduced a11y regressions in `block-card.css`.
+* **Hub block visibility** — Fixed legacy `register_blocks()` shadowing the Registrar so hub / community-challenges / cohort-rank now insert cleanly without "doesn't include support" message.
+* **Plug-and-play badge library** — 37 bundled SVG badge images auto-link via `Installer::default_badge_image_url()` + `DbUpgrader::upgrade_to_1_2_0()`. No more NULL `image_url` in seeded badges.
+* **Per-unit QA pages** — `wp wb-gamification qa seed_pages` creates 15 side-by-side block↔shortcode parity pages so QA can verify each unit individually.
+* **Standards score** — `wppqa_check_plugin_dev_rules` failed=0 + warnings=0. `wppqa_check_a11y` failed=0 + warnings=0. `wppqa_check_rest_js_contract` 0 issues. `wppqa_check_wiring_completeness` 0 issues. PHPStan level 5 clean. PHPUnit 108 tests passing. Block standard 15/15.
+* **Release verification** — 9-tier journey suite under `audit/journeys/release/` covers static foundations → editor surface → frontend × 1280+390 → earning journey → admin surface → integration matrix → a11y → theme matrix → release zip. Run via `composer journeys`.
+* **Cleanup** — Deleted 50 dead-code files in legacy `blocks/` directory (disconnected since Phase G.4 block-standard migration).
+
 = 1.0.0 =
 * Initial release.
 * Event-sourced points engine with 30+ auto-detected actions across 10 integrations.
@@ -164,6 +183,9 @@ All data is preserved in the database. Reactivating the plugin restores everythi
 10. **Redemption Store** — Admin catalog UI to define rewards (custom or WooCommerce-backed) with point cost, stock, and active/inactive status.
 
 == Upgrade Notice ==
+
+= 1.2.0 =
+Architectural upgrade — admin UI now consumes the same REST API as 3rd-party integrations (no more form-post handlers). 8 a11y focus-indicator fixes, breakpoint consolidation, native confirm dialogs replaced with accessible modals. New endpoints for Levels / Cohort Settings / API Keys / Community Challenges. Includes plug-and-play badge SVGs and per-unit QA pages. Safe upgrade — no DB schema changes beyond the existing 1.2.0 migration.
 
 = 1.0.0 =
 Initial release. Install and activate to start gamifying your WordPress site immediately.
