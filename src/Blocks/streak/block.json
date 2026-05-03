@@ -1,0 +1,56 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "wb-gamification/streak",
+	"version": "2.0.0",
+	"title": "Streak",
+	"category": "widgets",
+	"description": "Show a member's current activity streak, longest streak, and optional contribution heatmap.",
+	"keywords": [ "gamification", "streak", "heatmap", "activity", "consistency" ],
+	"textdomain": "wb-gamification",
+	"attributes": {
+		"uniqueId":         { "type": "string",  "default": "" },
+
+		"user_id":          { "type": "integer", "default": 0 },
+		"show_longest":     { "type": "boolean", "default": true },
+		"show_heatmap":     { "type": "boolean", "default": false },
+		"heatmap_days":     { "type": "integer", "default": 90 },
+
+		"padding":          { "type": "object",  "default": { "top": 16, "right": 16, "bottom": 16, "left": 16 } },
+		"paddingTablet":    { "type": "object" },
+		"paddingMobile":    { "type": "object" },
+		"paddingUnit":      { "type": "string",  "default": "px" },
+		"margin":           { "type": "object",  "default": { "top": 0, "right": 0, "bottom": 0, "left": 0 } },
+		"marginTablet":     { "type": "object" },
+		"marginMobile":     { "type": "object" },
+		"marginUnit":       { "type": "string",  "default": "px" },
+
+		"accentColor":      { "type": "string",  "default": "" },
+		"accentHoverColor": { "type": "string",  "default": "" },
+		"cardBackground":   { "type": "string",  "default": "" },
+		"cardBorderColor":  { "type": "string",  "default": "" },
+
+		"boxShadow":        { "type": "boolean", "default": false },
+		"shadowHorizontal": { "type": "number",  "default": 0 },
+		"shadowVertical":   { "type": "number",  "default": 4 },
+		"shadowBlur":       { "type": "number",  "default": 12 },
+		"shadowSpread":     { "type": "number",  "default": 0 },
+		"shadowColor":      { "type": "string",  "default": "rgba(0, 0, 0, 0.08)" },
+
+		"borderRadius":     { "type": "object",  "default": { "top": 12, "right": 12, "bottom": 12, "left": 12 } },
+		"borderRadiusUnit": { "type": "string",  "default": "px" },
+
+		"hideOnDesktop":    { "type": "boolean", "default": false },
+		"hideOnTablet":     { "type": "boolean", "default": false },
+		"hideOnMobile":     { "type": "boolean", "default": false }
+	},
+	"supports": {
+		"html": false,
+		"align": [ "wide", "full" ],
+		"anchor": true,
+		"className": true
+	},
+	"editorScript": "file:./index.js",
+	"editorStyle":  "file:./index.css",
+	"render":       "file:./render.php"
+}
