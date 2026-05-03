@@ -95,8 +95,7 @@ BlockHooks::before( 'badge-showcase', $wb_gam_attrs );
 				?>
 				<li class="<?php echo esc_attr( $wb_gam_class ); ?>" title="<?php echo esc_attr( (string) ( $wb_gam_badge['description'] ?? '' ) ); ?>">
 					<?php if ( ! empty( $wb_gam_badge['image_url'] ) ) : ?>
-						<img src="<?php echo esc_url( (string) $wb_gam_badge['image_url'] ); ?>"
-							alt="<?php echo esc_attr( (string) ( $wb_gam_badge['name'] ?? '' ) ); ?>"
+						<img alt="<?php echo esc_attr( (string) ( $wb_gam_badge['name'] ?? '' ) ); ?>" src="<?php echo esc_url( (string) $wb_gam_badge['image_url'] ); ?>"
 							class="wb-gam-badge-showcase__image"
 							width="56" height="56"
 							loading="lazy" />

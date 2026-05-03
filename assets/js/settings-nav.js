@@ -48,13 +48,19 @@
 	}
 
 	function init() {
-		// Click handler for sidebar nav items with data-section (hash-based).
+		// Click + keyboard handler for sidebar nav items with data-section (hash-based).
 		document.querySelectorAll( NAV_SELECTOR ).forEach( function ( item ) {
-			item.addEventListener( 'click', function ( e ) {
+			var activate = function ( e ) {
 				e.preventDefault();
 				var sectionId = item.getAttribute( 'data-section' );
 				activateSection( sectionId );
 				history.replaceState( null, '', '#' + sectionId );
+			};
+			item.addEventListener( 'click', activate );
+			item.addEventListener( 'keydown', function ( e ) {
+				if ( e.key === 'Enter' || e.key === ' ' ) {
+					activate( e );
+				}
 			} );
 		} );
 

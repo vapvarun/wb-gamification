@@ -1,0 +1,269 @@
+/**
+ * Shared Block-Card stylesheet (Phase G.2)
+ *
+ * Single canonical card pattern consumed by every standardised block.
+ * Mirrors the `.gam-card` family from `assets/css/hub.css` so blocks
+ * inherit the same premium UX as the hub page (white surface, soft
+ * shadow, 10px radius, accent-light icon chip, hover lift).
+ *
+ * Loaded via the `wb-gam-block-card` style handle, which depends on
+ * `wb-gam-tokens`. Per-block style.css files declare it as a
+ * dependency in block.json (`"style": ["wb-gam-block-card", "file:./style-index.css"]`)
+ * so the shared base loads before per-block deltas.
+ *
+ * BEM:
+ *   .wb-gam-card                  — the card surface
+ *   .wb-gam-card__head            — flex row: icon + meta pill
+ *   .wb-gam-card__icon            — accent-tinted square (40x40)
+ *   .wb-gam-card__title           — block heading (15/600)
+ *   .wb-gam-card__desc            — small description (13)
+ *   .wb-gam-card__value           — primary metric/number (28/700)
+ *   .wb-gam-card__meta            — secondary line (12/muted)
+ *   .wb-gam-card__body            — slot for the block-specific render (lists, charts)
+ *   .wb-gam-card__footer          — slot for CTAs, "View all" links
+ *   .wb-gam-card__cta             — inline action link with arrow
+ *
+ * Modifiers:
+ *   .wb-gam-card--interactive     — hover/keyboard lift (use only when the entire card is a link)
+ *   .wb-gam-card--compact         — reduced padding for sidebar layouts
+ *   .wb-gam-card--empty           — neutralised state for "no data" messages
+ *
+ * Pills (re-used inside cards):
+ *   .wb-gam-pill, .wb-gam-pill--success|warning|info|accent
+ */
+
+.wb-gam-card,
+[class*="wp-block-wb-gamification-"]:not(.wp-block-wb-gamification-hub) {
+	background: var( --wb-gam-color-surface );
+	border: 1px solid var( --wb-gam-color-border );
+	border-radius: var( --wb-gam-radius-md );
+	padding: var( --wb-gam-space-lg );
+	box-shadow: var( --wb-gam-shadow-sm );
+	color: var( --wb-gam-color-text );
+	font-family: inherit;
+	box-sizing: border-box;
+}
+
+.wb-gam-card {
+	display: flex;
+	flex-direction: column;
+	gap: var( --wb-gam-space-sm );
+	transition: border-color var( --wb-gam-transition-fast ),
+		box-shadow var( --wb-gam-transition-fast ),
+		transform var( --wb-gam-transition-fast );
+}
+
+/*
+ * Hover lift only on cards that opt-in (e.g. interactive variants).
+ * Block-root surfaces stay calm — they aren't whole-card links.
+ */
+
+.wb-gam-card--interactive {
+	cursor: pointer;
+	text-decoration: none;
+}
+
+.wb-gam-card--interactive:hover {
+	border-color: var( --wb-gam-color-border-hover );
+	box-shadow: var( --wb-gam-shadow-md );
+}
+
+.wb-gam-card--interactive:focus-visible {
+	border-color: var( --wb-gam-color-border-hover );
+	box-shadow: var( --wb-gam-shadow-md );
+	outline: 2px solid var( --wb-gam-color-accent );
+	outline-offset: 2px;
+}
+
+.wb-gam-card--compact {
+	padding: var( --wb-gam-space-md );
+	gap: var( --wb-gam-space-xs );
+}
+
+.wb-gam-card--empty {
+	background: var( --wb-gam-color-surface-hover );
+	border-style: dashed;
+	box-shadow: none;
+	align-items: center;
+	justify-content: center;
+	min-height: 96px;
+	color: var( --wb-gam-color-text-light );
+	text-align: center;
+}
+
+.wb-gam-card__head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var( --wb-gam-space-sm );
+	margin: 0;
+}
+
+.wb-gam-card__icon {
+	width: 40px;
+	height: 40px;
+	background: var( --wb-gam-color-accent-light );
+	color: var( --wb-gam-color-accent );
+	border-radius: var( --wb-gam-radius-sm );
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+}
+
+.wb-gam-card__icon svg,
+.wb-gam-card__icon i,
+.wb-gam-card__icon img {
+	width: 20px;
+	height: 20px;
+}
+
+.wb-gam-card__title {
+	font-size: var( --wb-gam-font-md );
+	font-weight: var( --wb-gam-weight-semibold );
+	color: var( --wb-gam-color-text );
+	margin: 0;
+	line-height: var( --wb-gam-leading-tight );
+}
+
+.wb-gam-card__desc {
+	font-size: var( --wb-gam-font-sm );
+	color: var( --wb-gam-color-text-muted );
+	margin: 0;
+	line-height: var( --wb-gam-leading-normal );
+}
+
+.wb-gam-card__value {
+	font-size: 28px;
+	font-weight: var( --wb-gam-weight-bold );
+	color: var( --wb-gam-color-text );
+	line-height: 1.1;
+	margin: 0;
+}
+
+.wb-gam-card__meta {
+	font-size: var( --wb-gam-font-xs );
+	color: var( --wb-gam-color-text-light );
+	margin: 0;
+}
+
+.wb-gam-card__body {
+	display: flex;
+	flex-direction: column;
+	gap: var( --wb-gam-space-sm );
+	margin: 0;
+}
+
+.wb-gam-card__body > * {
+	margin: 0;
+}
+
+.wb-gam-card__footer {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var( --wb-gam-space-sm );
+	padding-top: var( --wb-gam-space-sm );
+	border-top: 1px solid var( --wb-gam-color-border );
+	margin-top: auto;
+}
+
+.wb-gam-card__cta {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	font-size: var( --wb-gam-font-xs );
+	font-weight: var( --wb-gam-weight-semibold );
+	color: var( --wb-gam-color-accent-text );
+	text-decoration: none;
+	transition: color var( --wb-gam-transition-fast );
+}
+
+.wb-gam-card__cta:hover {
+	color: var( --wb-gam-color-accent );
+	text-decoration: underline;
+}
+
+.wb-gam-card__cta:focus-visible {
+	color: var( --wb-gam-color-accent );
+	text-decoration: underline;
+	outline: 2px solid var( --wb-gam-color-accent );
+	outline-offset: 2px;
+	border-radius: 2px;
+}
+
+.wb-gam-card__cta::after {
+	content: "→";
+	transition: transform var( --wb-gam-transition-fast );
+}
+
+.wb-gam-card__cta:hover::after {
+	transform: translateX( 2px );
+}
+
+/* ── Pills ──────────────────────────────────────────────────────── */
+
+.wb-gam-pill {
+	display: inline-flex;
+	align-items: center;
+	font-size: 11px;
+	font-weight: var( --wb-gam-weight-semibold );
+	padding: 2px 8px;
+	border-radius: 999px;
+	white-space: nowrap;
+}
+
+.wb-gam-pill--success {
+	background: var( --wb-gam-color-success-bg );
+	color: var( --wb-gam-color-success );
+}
+
+.wb-gam-pill--warning {
+	background: var( --wb-gam-color-warning-bg );
+	color: var( --wb-gam-color-warning );
+}
+
+.wb-gam-pill--info {
+	background: var( --wb-gam-color-info-bg );
+	color: var( --wb-gam-color-info );
+}
+
+.wb-gam-pill--accent {
+	background: var( --wb-gam-color-accent-light );
+	color: var( --wb-gam-color-accent-text );
+}
+
+/* ── Empty-state utility (used by .wb-gam-card--empty contents) ─── */
+
+.wb-gam-card__empty-icon {
+	width: 32px;
+	height: 32px;
+	color: var( --wb-gam-color-text-light );
+	opacity: 0.6;
+	margin-bottom: var( --wb-gam-space-xs );
+}
+
+/* ── Responsive ─────────────────────────────────────────────────── */
+
+@media (max-width: 1024px) {
+	.wb-gam-card { padding: var( --wb-gam-space-md ); }
+	.wb-gam-card__value { font-size: 24px; }
+}
+
+@media (max-width: 640px) {
+	.wb-gam-card { padding: var( --wb-gam-space-md ); gap: var( --wb-gam-space-xs ); }
+	.wb-gam-card__icon { width: 36px; height: 36px; }
+	.wb-gam-card__icon svg,
+	.wb-gam-card__icon i,
+	.wb-gam-card__icon img { width: 18px; height: 18px; }
+	.wb-gam-card__title { font-size: var( --wb-gam-font-sm ); }
+	.wb-gam-card__value { font-size: 22px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.wb-gam-card,
+	.wb-gam-card__cta,
+	.wb-gam-card__cta::after {
+		transition: none;
+	}
+}

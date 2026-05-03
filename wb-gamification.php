@@ -81,6 +81,9 @@ use WBGam\API\CapabilitiesController;
 use WBGam\API\AbilitiesRegistration;
 use WBGam\API\OpenApiController;
 use WBGam\API\ApiKeyAuth;
+use WBGam\API\ApiKeysController;
+use WBGam\API\CohortSettingsController;
+use WBGam\API\CommunityChallengesController;
 use WBGam\Engine\CredentialExpiryEngine;
 use WBGam\Engine\LeaderboardEngine;
 use WBGam\Engine\ShortcodeHandler;
@@ -209,20 +212,17 @@ final class WB_Gamification {
 		( new LevelsController() )->register_routes();
 		( new CapabilitiesController() )->register_routes();
 		( new OpenApiController() )->register_routes();
+		( new ApiKeysController() )->register_routes();
+		( new CohortSettingsController() )->register_routes();
+		( new CommunityChallengesController() )->register_routes();
 	}
 
 	public function register_blocks(): void {
-		// Legacy hardcoded list — shrinks as blocks migrate to src/Blocks/* + build/Blocks/*.
-		// Phase C: `redemption-store` migrated.
-		// Phase D.1: `member-points`, `streak`, `level-progress`, `earning-guide` migrated.
-		// The build/Blocks/ Registrar (init@20) owns the migrated slugs now.
-		$blocks = array( 'leaderboard', 'badge-showcase', 'challenges', 'top-members', 'kudos-feed', 'year-recap', 'points-history', 'hub', 'community-challenges', 'cohort-rank' );
-		foreach ( $blocks as $block ) {
-			$path = WB_GAM_PATH . 'blocks/' . $block;
-			if ( file_exists( $path . '/block.json' ) ) {
-				register_block_type( $path );
-			}
-		}
+		// All 15 blocks now live under `build/Blocks/<slug>/` and are registered by
+		// `WBGam\Blocks\Registrar` on `init@20`. The legacy `blocks/<slug>/` directory
+		// is deprecated and must NOT be re-registered here — older block.json files
+		// in that path lack the standard editorScript declaration and would shadow
+		// the migrated build/ output (silent editor "no support" failures).
 	}
 
 	public function enqueue_assets(): void {
@@ -234,6 +234,19 @@ final class WB_Gamification {
 			'wb-gam-tokens',
 			WB_GAM_URL . 'src/shared/design-tokens.css',
 			array(),
+			WB_GAM_VERSION
+		);
+
+		// Phase G.2 — shared block-card stylesheet. Single canonical
+		// `.wb-gam-card` family that every block consumes so the 15
+		// frontends share the hub's premium card UX (white surface,
+		// 10px radius, soft shadow, accent-tinted icon chip, hover
+		// lift). Blocks add this handle as a render-time dependency
+		// alongside their per-block style.
+		wp_register_style(
+			'wb-gam-block-card',
+			WB_GAM_URL . 'src/shared/block-card.css',
+			array( 'wb-gam-tokens' ),
 			WB_GAM_VERSION
 		);
 
@@ -269,6 +282,18 @@ final class WB_Gamification {
 		wp_register_script_module(
 			'wb-gamification-hub',
 			WB_GAM_URL . 'assets/interactivity/hub.js',
+			array( '@wordpress/interactivity' ),
+			WB_GAM_VERSION
+		);
+
+		// Notifications IA store — drives the level-up + streak-milestone
+		// overlays and the toast stack rendered by NotificationBridge.
+		// Without this module the overlay markup mounts but never binds,
+		// leaving the streak overlay permanently visible with an inert
+		// dismiss button (customer locked out of the page).
+		wp_register_script_module(
+			'wb-gamification-notifications',
+			WB_GAM_URL . 'assets/interactivity/notifications.js',
 			array( '@wordpress/interactivity' ),
 			WB_GAM_VERSION
 		);
@@ -409,6 +434,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			WP_CLI::add_command( 'wb-gamification export', WBGam\CLI\ExportCommand::class );
 			WP_CLI::add_command( 'wb-gamification doctor', WBGam\CLI\DoctorCommand::class );
 			WP_CLI::add_command( 'wb-gamification replay', WBGam\CLI\ReplayCommand::class );
+			WP_CLI::add_command( 'wb-gamification qa', WBGam\CLI\QASeedCommand::class );
 		}
 	);
 }

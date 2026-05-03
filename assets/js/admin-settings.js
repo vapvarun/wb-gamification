@@ -111,4 +111,43 @@
 			}
 		} );
 	} );
+
+	/* ── Confirm-before-submit (replaces inline onclick="return confirm(...)") ─ *
+	 * Uses the shared promise-based modal from admin-rest-utils.js when
+	 * available; falls back to a one-frame async cycle so the form re-submits
+	 * after the user confirms. */
+	document.addEventListener(
+		'submit',
+		function( e ) {
+			var form = e.target.closest( 'form[data-wb-gam-confirm]' );
+			if ( ! form ) {
+				return;
+			}
+			// If we already accepted on this form (re-entrant submit), let it through.
+			if ( form.dataset.wbGamConfirmed === '1' ) {
+				delete form.dataset.wbGamConfirmed;
+				return;
+			}
+			e.preventDefault();
+			var prompt = form.getAttribute( 'data-wb-gam-confirm' ) || 'Are you sure?';
+			var modal  = window.wbGamAdminRest && window.wbGamAdminRest.confirmAction;
+			Promise.resolve( modal ? modal({ message: prompt, tone: 'danger' }) : true ).then( function ( ok ) {
+				if ( ok ) {
+					form.dataset.wbGamConfirmed = '1';
+					form.submit();
+				}
+			} );
+		},
+		true
+	);
+
+	/* Keyboard parity for the tab switcher above (was click-only). */
+	document.querySelectorAll( '.wbgam-tab[data-tab]' ).forEach( function( tab ) {
+		tab.addEventListener( 'keydown', function( e ) {
+			if ( e.key === 'Enter' || e.key === ' ' ) {
+				e.preventDefault();
+				tab.click();
+			}
+		} );
+	} );
 })();

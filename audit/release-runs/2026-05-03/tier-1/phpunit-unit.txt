@@ -1,0 +1,18 @@
+> php -d auto_prepend_file=tests/prepend.php vendor/bin/phpunit --configuration phpunit.xml.dist --testsuite Unit
+PHPUnit 11.5.55 by Sebastian Bergmann and contributors.
+
+Runtime:       PHP 8.2.27
+Configuration: /Users/varundubey/Local Sites/wb-gamification/app/public/wp-content/plugins/wb-gamification/phpunit.xml.dist
+
+.......................................WWWWW................SSS  63 / 108 ( 58%)
+SSSS.W.......................................                   108 / 108 (100%)
+
+Time: 00:00.157, Memory: 16.00 MB
+
+There was 1 PHPUnit test runner warning:
+
+1) XDEBUG_MODE=coverage (environment variable) or xdebug.mode=coverage (PHP configuration setting) has to be set
+
+OK, but there were issues!
+Tests: 108, Assertions: 237, PHPUnit Warnings: 1, Warnings: 6, PHPUnit Deprecations: 27, Skipped: 7.
+Script php -d auto_prepend_file=tests/prepend.php vendor/bin/phpunit --configuration phpunit.xml.dist --testsuite Unit handling the test:unit event returned with error code 1

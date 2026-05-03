@@ -103,8 +103,7 @@ BlockHooks::before( 'member-points', $wb_gam_attrs );
 	<?php if ( $wb_gam_level && $wb_gam_show_level ) : ?>
 		<div class="wb-gam-member-points__level">
 			<?php if ( ! empty( $wb_gam_level['icon_url'] ) ) : ?>
-				<img src="<?php echo esc_url( $wb_gam_level['icon_url'] ); ?>"
-					alt="<?php echo esc_attr( (string) ( $wb_gam_level['name'] ?? '' ) ); ?>"
+				<img alt="<?php echo esc_attr( (string) ( $wb_gam_level['name'] ?? '' ) ); ?>" src="<?php echo esc_url( $wb_gam_level['icon_url'] ); ?>"
 					class="wb-gam-member-points__level-icon"
 					width="24" height="24" />
 			<?php endif; ?>

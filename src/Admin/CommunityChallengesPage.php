@@ -30,8 +30,48 @@ final class CommunityChallengesPage {
 	 */
 	public static function init(): void {
 		add_action( 'admin_menu', array( __CLASS__, 'register_page' ) );
-		add_action( 'admin_post_wb_gam_save_community_challenge', array( __CLASS__, 'handle_save' ) );
-		add_action( 'admin_post_wb_gam_delete_community_challenge', array( __CLASS__, 'handle_delete' ) );
+		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_assets' ) );
+		// admin_post_wb_gam_{save,delete}_community_challenge removed in 1.0.0 —
+		// page now consumes /wb-gamification/v1/community-challenges via the
+		// generic admin-rest-form driver. See Tier 0.C migration.
+	}
+
+	/**
+	 * Enqueue REST-driven JS bundle on the Community Challenges admin page only.
+	 *
+	 * @param string $hook_suffix Current admin page hook.
+	 * @return void
+	 */
+	public static function enqueue_assets( string $hook_suffix ): void {
+		if ( 'gamification_page_wb-gam-community-challenges' !== $hook_suffix ) {
+			return;
+		}
+		wp_enqueue_script(
+			'wb-gam-admin-rest-utils',
+			plugins_url( 'assets/js/admin-rest-utils.js', WB_GAM_FILE ),
+			array(),
+			WB_GAM_VERSION,
+			true
+		);
+		wp_enqueue_script(
+			'wb-gam-admin-rest-form',
+			plugins_url( 'assets/js/admin-rest-form.js', WB_GAM_FILE ),
+			array( 'wb-gam-admin-rest-utils' ),
+			WB_GAM_VERSION,
+			true
+		);
+		wp_localize_script(
+			'wb-gam-admin-rest-form',
+			'wbGamCommunityChallengesSettings',
+			array(
+				'restUrl' => esc_url_raw( rest_url( 'wb-gamification/v1' ) ),
+				'nonce'   => wp_create_nonce( 'wp_rest' ),
+				'i18n'    => array(
+					'saved'  => __( 'Community challenge saved.', 'wb-gamification' ),
+					'failed' => __( 'Failed to save the community challenge.', 'wb-gamification' ),
+				),
+			)
+		);
 	}
 
 	/**
@@ -112,10 +152,17 @@ final class CommunityChallengesPage {
 					</h3>
 				</div>
 				<div class="wbgam-card-body">
-					<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
-						<?php wp_nonce_field( 'wb_gam_save_community_challenge', 'wb_gam_community_challenge_nonce' ); ?>
-						<input type="hidden" name="action" value="wb_gam_save_community_challenge">
-						<input type="hidden" name="challenge_id" value="<?php echo esc_attr( $editing ); ?>">
+					<?php
+					$cc_rest_path = $editing ? '/community-challenges/' . (int) $editing : '/community-challenges';
+					?>
+					<form
+						data-wb-gam-rest-form="wbGamCommunityChallengesSettings"
+						data-wb-gam-rest-method="POST"
+						data-wb-gam-rest-path="<?php echo esc_attr( $cc_rest_path ); ?>"
+						data-wb-gam-rest-success-toast="<?php esc_attr_e( 'Community challenge saved.', 'wb-gamification' ); ?>"
+						data-wb-gam-rest-error-toast="<?php esc_attr_e( 'Failed to save the community challenge.', 'wb-gamification' ); ?>"
+						data-wb-gam-rest-after="reload"
+					>
 
 						<table class="form-table">
 							<tr>
@@ -266,11 +313,20 @@ final class CommunityChallengesPage {
 									<a href="<?php echo esc_url( admin_url( 'admin.php?page=wb-gam-community-challenges&edit=' . $c['id'] ) ); ?>" class="wbgam-btn wbgam-btn--sm wbgam-btn--secondary">
 										<?php esc_html_e( 'Edit', 'wb-gamification' ); ?>
 									</a>
-									<a href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin-post.php?action=wb_gam_delete_community_challenge&challenge_id=' . $c['id'] ), 'wb_gam_delete_community_challenge_' . $c['id'] ) ); ?>"
-										onclick="return confirm('<?php esc_attr_e( 'Delete this community challenge?', 'wb-gamification' ); ?>')"
-										class="wbgam-btn wbgam-btn--sm wbgam-btn--danger" style="margin-left:4px;">
+									<button
+										type="button"
+										class="wbgam-btn wbgam-btn--sm wbgam-btn--danger"
+										style="margin-left:4px;"
+										data-wb-gam-rest-action="wbGamCommunityChallengesSettings"
+										data-wb-gam-rest-method="DELETE"
+										data-wb-gam-rest-path="/community-challenges/<?php echo (int) $c['id']; ?>"
+										data-wb-gam-rest-confirm="<?php esc_attr_e( 'Delete this community challenge?', 'wb-gamification' ); ?>"
+										data-wb-gam-rest-success-toast="<?php esc_attr_e( 'Community challenge deleted.', 'wb-gamification' ); ?>"
+										data-wb-gam-rest-error-toast="<?php esc_attr_e( 'Failed to delete community challenge.', 'wb-gamification' ); ?>"
+										data-wb-gam-rest-after="remove-row"
+									>
 										<?php esc_html_e( 'Delete', 'wb-gamification' ); ?>
-									</a>
+									</button>
 								</td>
 							</tr>
 						<?php endforeach; ?>
@@ -289,103 +345,10 @@ final class CommunityChallengesPage {
 		<?php
 	}
 
-	/**
-	 * Handle the community challenge create/update form submission via admin-post.php.
-	 *
-	 * @return void
-	 */
-	public static function handle_save(): void {
-		check_admin_referer( 'wb_gam_save_community_challenge', 'wb_gam_community_challenge_nonce' );
-
-		if ( ! \WBGam\Engine\Capabilities::user_can( 'wb_gam_manage_challenges' ) ) {
-			wp_die( esc_html__( 'Permission denied.', 'wb-gamification' ) );
-		}
-
-		global $wpdb;
-
-		$table = $wpdb->prefix . 'wb_gam_community_challenges';
-		$id    = absint( $_POST['challenge_id'] ?? 0 );
-
-		$data = array(
-			'title'         => sanitize_text_field( wp_unslash( $_POST['title'] ?? '' ) ),
-			'description'   => sanitize_textarea_field( wp_unslash( $_POST['description'] ?? '' ) ),
-			'target_count'  => max( 1, absint( $_POST['target_count'] ?? 100 ) ),
-			'target_action' => sanitize_key( $_POST['target_action'] ?? '*' ),
-			'starts_at'     => sanitize_text_field( wp_unslash( $_POST['starts_at'] ?? '' ) ),
-			'ends_at'       => sanitize_text_field( wp_unslash( $_POST['ends_at'] ?? '' ) ),
-			'bonus_points'  => max( 0, absint( wp_unslash( $_POST['bonus_points'] ?? 100 ) ) ),
-			'status'        => 'active',
-		);
-
-		$formats = array( '%s', '%s', '%d', '%s', '%s', '%s', '%d', '%s' );
-
-		if ( $id > 0 ) {
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- Admin form handler, single row update.
-			$wpdb->update( $table, $data, array( 'id' => $id ), $formats, array( '%d' ) );
-
-			/**
-			 * Fires after a community challenge is updated by an admin.
-			 *
-			 * @since 1.0.0
-			 * @param int   $challenge_id Challenge ID.
-			 * @param array $data         Challenge data that was saved.
-			 */
-			do_action( 'wb_gamification_community_challenge_updated', $id, $data );
-		} else {
-			$data['global_progress'] = 0;
-			$formats[]               = '%d';
-
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- Admin form handler, single row insert.
-			$wpdb->insert( $table, $data, $formats );
-			$new_id = (int) $wpdb->insert_id;
-
-			/**
-			 * Fires after a new community challenge is created by an admin.
-			 *
-			 * @since 1.0.0
-			 * @param int   $challenge_id New challenge ID.
-			 * @param array $data         Challenge data.
-			 */
-			do_action( 'wb_gamification_community_challenge_created', $new_id, $data );
-		}
-
-		wp_safe_redirect( admin_url( 'admin.php?page=wb-gam-community-challenges&notice=saved' ) );
-		exit;
-	}
-
-	/**
-	 * Handle the community challenge delete action via admin-post.php.
-	 *
-	 * @return void
-	 */
-	public static function handle_delete(): void {
-		$id = absint( $_GET['challenge_id'] ?? $_POST['challenge_id'] ?? 0 );
-		check_admin_referer( 'wb_gam_delete_community_challenge_' . $id );
-
-		if ( ! \WBGam\Engine\Capabilities::user_can( 'wb_gam_manage_challenges' ) ) {
-			wp_die( esc_html__( 'Permission denied.', 'wb-gamification' ) );
-		}
-
-		global $wpdb;
-
-		if ( $id > 0 ) {
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- Admin form handler, single row delete.
-			$wpdb->delete( $wpdb->prefix . 'wb_gam_community_challenges', array( 'id' => $id ), array( '%d' ) );
-
-			// Also clean up contributions.
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- Admin form handler, cascade delete.
-			$wpdb->delete( $wpdb->prefix . 'wb_gam_community_challenge_contributions', array( 'challenge_id' => $id ), array( '%d' ) );
-
-			/**
-			 * Fires after a community challenge is deleted by an admin.
-			 *
-			 * @since 1.0.0
-			 * @param int $challenge_id The deleted challenge ID.
-			 */
-			do_action( 'wb_gamification_community_challenge_deleted', $id );
-		}
-
-		wp_safe_redirect( admin_url( 'admin.php?page=wb-gam-community-challenges&notice=deleted' ) );
-		exit;
-	}
+	// handle_save() / handle_delete() removed in 1.0.0 (Tier 0.C). Community
+	// challenges are now written by CommunityChallengesController (POST
+	// /community-challenges and POST /community-challenges/{id}; DELETE
+	// /community-challenges/{id}). Backwards-compatible legacy hooks
+	// (wb_gamification_community_challenge_{created,updated,deleted}) still
+	// fire from the REST controller until 1.1.0.
 }

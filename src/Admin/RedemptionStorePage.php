@@ -28,8 +28,48 @@ final class RedemptionStorePage {
 	 */
 	public static function init(): void {
 		add_action( 'admin_menu', array( __CLASS__, 'register_page' ) );
-		add_action( 'admin_post_wb_gam_save_reward', array( __CLASS__, 'handle_save' ) );
-		add_action( 'admin_post_wb_gam_delete_reward', array( __CLASS__, 'handle_delete' ) );
+		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_assets' ) );
+		// admin_post_wb_gam_{save,delete}_reward removed in 1.0.0 — page now
+		// consumes /wb-gamification/v1/redemptions/items via the generic
+		// admin-rest-form driver. See Tier 0.C migration.
+	}
+
+	/**
+	 * Enqueue REST-driven JS bundle on the Redemption Store admin page only.
+	 *
+	 * @param string $hook_suffix Current admin page hook.
+	 * @return void
+	 */
+	public static function enqueue_assets( string $hook_suffix ): void {
+		if ( 'gamification_page_wb-gam-redemption' !== $hook_suffix ) {
+			return;
+		}
+		wp_enqueue_script(
+			'wb-gam-admin-rest-utils',
+			plugins_url( 'assets/js/admin-rest-utils.js', WB_GAM_FILE ),
+			array(),
+			WB_GAM_VERSION,
+			true
+		);
+		wp_enqueue_script(
+			'wb-gam-admin-rest-form',
+			plugins_url( 'assets/js/admin-rest-form.js', WB_GAM_FILE ),
+			array( 'wb-gam-admin-rest-utils' ),
+			WB_GAM_VERSION,
+			true
+		);
+		wp_localize_script(
+			'wb-gam-admin-rest-form',
+			'wbGamRedemptionSettings',
+			array(
+				'restUrl' => esc_url_raw( rest_url( 'wb-gamification/v1' ) ),
+				'nonce'   => wp_create_nonce( 'wp_rest' ),
+				'i18n'    => array(
+					'saved'  => __( 'Reward saved.', 'wb-gamification' ),
+					'failed' => __( 'Failed to save the reward.', 'wb-gamification' ),
+				),
+			)
+		);
 	}
 
 	/**
@@ -121,10 +161,17 @@ final class RedemptionStorePage {
 					</h3>
 				</div>
 				<div class="wbgam-card-body">
-					<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
-						<?php wp_nonce_field( 'wb_gam_save_reward', 'wb_gam_reward_nonce' ); ?>
-						<input type="hidden" name="action" value="wb_gam_save_reward">
-						<input type="hidden" name="reward_id" value="<?php echo esc_attr( $editing ); ?>">
+					<?php
+					$reward_rest_path = $editing ? '/redemptions/items/' . (int) $editing : '/redemptions/items';
+					?>
+					<form
+						data-wb-gam-rest-form="wbGamRedemptionSettings"
+						data-wb-gam-rest-method="POST"
+						data-wb-gam-rest-path="<?php echo esc_attr( $reward_rest_path ); ?>"
+						data-wb-gam-rest-success-toast="<?php esc_attr_e( 'Reward saved.', 'wb-gamification' ); ?>"
+						data-wb-gam-rest-error-toast="<?php esc_attr_e( 'Failed to save the reward.', 'wb-gamification' ); ?>"
+						data-wb-gam-rest-after="reload"
+					>
 
 						<table class="form-table">
 							<tr>
@@ -201,7 +248,7 @@ final class RedemptionStorePage {
 							<tr class="wb-gam-config-row" data-show-for="discount_pct discount_fixed">
 								<th><label for="wb-gam-cfg-amount"><?php esc_html_e( 'Discount amount', 'wb-gamification' ); ?></label></th>
 								<td>
-									<input type="number" name="cfg_amount" id="wb-gam-cfg-amount" class="small-text wbgam-input"
+									<input type="number" name="reward_config[amount]" id="wb-gam-cfg-amount" class="small-text wbgam-input"
 										value="<?php echo esc_attr( $edit_config['amount'] ?? '10' ); ?>" min="1" step="0.01">
 									<p class="description">
 										<span class="wb-gam-cfg-hint" data-hint-for="discount_pct"><?php esc_html_e( 'Percentage off the cart (e.g. 10 = 10%).', 'wb-gamification' ); ?></span>
@@ -212,7 +259,7 @@ final class RedemptionStorePage {
 							<tr class="wb-gam-config-row" data-show-for="free_product">
 								<th><label for="wb-gam-cfg-product"><?php esc_html_e( 'WooCommerce product ID', 'wb-gamification' ); ?></label></th>
 								<td>
-									<input type="number" name="cfg_product_id" id="wb-gam-cfg-product" class="small-text wbgam-input"
+									<input type="number" name="reward_config[product_id]" id="wb-gam-cfg-product" class="small-text wbgam-input"
 										value="<?php echo esc_attr( $edit_config['product_id'] ?? '' ); ?>" min="1">
 									<p class="description"><?php esc_html_e( 'Numeric ID of the product to give away free. Member receives a single-use 100%-off coupon scoped to this product.', 'wb-gamification' ); ?></p>
 								</td>
@@ -221,7 +268,7 @@ final class RedemptionStorePage {
 								<th><label for="wb-gam-cfg-slug"><?php esc_html_e( 'Credits destination', 'wb-gamification' ); ?></label></th>
 								<td>
 									<?php if ( ! empty( $credits_slugs ) ) : ?>
-										<select name="cfg_slug" id="wb-gam-cfg-slug" class="wbgam-select">
+										<select name="reward_config[slug]" id="wb-gam-cfg-slug" class="wbgam-select">
 											<?php foreach ( $credits_slugs as $slug_option ) : ?>
 												<option value="<?php echo esc_attr( $slug_option ); ?>" <?php selected( $edit_config['slug'] ?? '', $slug_option ); ?>>
 													<?php echo esc_html( $slug_option ); ?>
@@ -229,7 +276,7 @@ final class RedemptionStorePage {
 											<?php endforeach; ?>
 										</select>
 									<?php else : ?>
-										<input type="text" name="cfg_slug" id="wb-gam-cfg-slug" class="regular-text wbgam-input"
+										<input type="text" name="reward_config[slug]" id="wb-gam-cfg-slug" class="regular-text wbgam-input"
 											value="<?php echo esc_attr( $edit_config['slug'] ?? '' ); ?>"
 											placeholder="<?php esc_attr_e( 'plugin-slug-here', 'wb-gamification' ); ?>">
 									<?php endif; ?>
@@ -239,7 +286,7 @@ final class RedemptionStorePage {
 							<tr class="wb-gam-config-row" data-show-for="wbcom_credits">
 								<th><label for="wb-gam-cfg-credits"><?php esc_html_e( 'Credits to add', 'wb-gamification' ); ?></label></th>
 								<td>
-									<input type="number" name="cfg_credits" id="wb-gam-cfg-credits" class="small-text wbgam-input"
+									<input type="number" name="reward_config[credits]" id="wb-gam-cfg-credits" class="small-text wbgam-input"
 										value="<?php echo esc_attr( $edit_config['amount'] ?? '100' ); ?>" min="1" step="1">
 									<p class="description"><?php esc_html_e( 'How many credits to deposit into the ledger when this reward is redeemed.', 'wb-gamification' ); ?></p>
 								</td>
@@ -328,11 +375,20 @@ final class RedemptionStorePage {
 									<a href="<?php echo esc_url( admin_url( 'admin.php?page=wb-gam-redemption&edit=' . $item['id'] ) ); ?>" class="wbgam-btn wbgam-btn--sm wbgam-btn--secondary">
 										<?php esc_html_e( 'Edit', 'wb-gamification' ); ?>
 									</a>
-									<a href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin-post.php?action=wb_gam_delete_reward&reward_id=' . $item['id'] ), 'wb_gam_delete_reward_' . $item['id'] ) ); ?>"
-										onclick="return confirm('<?php esc_attr_e( 'Delete this reward?', 'wb-gamification' ); ?>')"
-										class="wbgam-btn wbgam-btn--sm wbgam-btn--danger" style="margin-left:4px;">
+									<button
+										type="button"
+										class="wbgam-btn wbgam-btn--sm wbgam-btn--danger"
+										style="margin-left:4px;"
+										data-wb-gam-rest-action="wbGamRedemptionSettings"
+										data-wb-gam-rest-method="DELETE"
+										data-wb-gam-rest-path="/redemptions/items/<?php echo (int) $item['id']; ?>"
+										data-wb-gam-rest-confirm="<?php esc_attr_e( 'Delete this reward?', 'wb-gamification' ); ?>"
+										data-wb-gam-rest-success-toast="<?php esc_attr_e( 'Reward deleted.', 'wb-gamification' ); ?>"
+										data-wb-gam-rest-error-toast="<?php esc_attr_e( 'Failed to delete reward.', 'wb-gamification' ); ?>"
+										data-wb-gam-rest-after="remove-row"
+									>
 										<?php esc_html_e( 'Delete', 'wb-gamification' ); ?>
-									</a>
+									</button>
 								</td>
 							</tr>
 						<?php endforeach; ?>
@@ -382,113 +438,8 @@ final class RedemptionStorePage {
 		<?php
 	}
 
-	/**
-	 * Handle the reward create/update form submission via admin-post.php.
-	 *
-	 * @return void
-	 */
-	public static function handle_save(): void {
-		check_admin_referer( 'wb_gam_save_reward', 'wb_gam_reward_nonce' );
-
-		if ( ! \WBGam\Engine\Capabilities::user_can( 'wb_gam_manage_rewards' ) ) {
-			wp_die( esc_html__( 'Permission denied.', 'wb-gamification' ) );
-		}
-
-		global $wpdb;
-
-		$table = $wpdb->prefix . 'wb_gam_redemption_items';
-		$id    = absint( $_POST['reward_id'] ?? 0 );
-
-		$stock_raw   = absint( $_POST['stock'] ?? 0 );
-		$reward_type = sanitize_key( $_POST['reward_type'] ?? 'custom' );
-
-		$config = array();
-		switch ( $reward_type ) {
-			case 'discount_pct':
-			case 'discount_fixed':
-				$config['amount'] = max( 0.01, (float) ( $_POST['cfg_amount'] ?? 10 ) );
-				break;
-			case 'free_product':
-				$config['product_id'] = absint( $_POST['cfg_product_id'] ?? 0 );
-				break;
-			case 'wbcom_credits':
-				$config['slug']   = sanitize_key( $_POST['cfg_slug'] ?? '' );
-				$config['amount'] = max( 1, absint( $_POST['cfg_credits'] ?? 0 ) );
-				break;
-		}
-
-		$data = array(
-			'title'         => sanitize_text_field( wp_unslash( $_POST['title'] ?? '' ) ),
-			'description'   => sanitize_textarea_field( wp_unslash( $_POST['description'] ?? '' ) ),
-			'points_cost'   => max( 1, absint( $_POST['points_cost'] ?? 100 ) ),
-			'reward_type'   => $reward_type,
-			'reward_config' => $config ? wp_json_encode( $config ) : '',
-			'stock'         => 0 === $stock_raw ? null : $stock_raw,
-			'is_active'     => absint( $_POST['is_active'] ?? 1 ) ? 1 : 0,
-		);
-
-		$formats = array( '%s', '%s', '%d', '%s', '%s', '%d', '%d' );
-
-		if ( $id > 0 ) {
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- Admin form handler, single row update.
-			$wpdb->update( $table, $data, array( 'id' => $id ), $formats, array( '%d' ) );
-
-			/**
-			 * Fires after a redemption reward item is updated by an admin.
-			 *
-			 * @since 1.0.0
-			 * @param int   $item_id Item ID.
-			 * @param array $data    Item data that was saved.
-			 */
-			do_action( 'wb_gamification_reward_updated', $id, $data );
-		} else {
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- Admin form handler, single row insert.
-			$wpdb->insert( $table, $data, $formats );
-			$new_id = (int) $wpdb->insert_id;
-
-			/**
-			 * Fires after a new redemption reward item is created by an admin.
-			 *
-			 * @since 1.0.0
-			 * @param int   $item_id New item ID.
-			 * @param array $data    Item data.
-			 */
-			do_action( 'wb_gamification_reward_created', $new_id, $data );
-		}
-
-		wp_safe_redirect( admin_url( 'admin.php?page=wb-gam-redemption&notice=saved' ) );
-		exit;
-	}
-
-	/**
-	 * Handle the reward delete action via admin-post.php.
-	 *
-	 * @return void
-	 */
-	public static function handle_delete(): void {
-		$id = absint( $_GET['reward_id'] ?? $_POST['reward_id'] ?? 0 );
-		check_admin_referer( 'wb_gam_delete_reward_' . $id );
-
-		if ( ! \WBGam\Engine\Capabilities::user_can( 'wb_gam_manage_rewards' ) ) {
-			wp_die( esc_html__( 'Permission denied.', 'wb-gamification' ) );
-		}
-
-		global $wpdb;
-
-		if ( $id > 0 ) {
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- Admin form handler, single row delete.
-			$wpdb->delete( $wpdb->prefix . 'wb_gam_redemption_items', array( 'id' => $id ), array( '%d' ) );
-
-			/**
-			 * Fires after a redemption reward item is deleted by an admin.
-			 *
-			 * @since 1.0.0
-			 * @param int $item_id The deleted item ID.
-			 */
-			do_action( 'wb_gamification_reward_deleted', $id );
-		}
-
-		wp_safe_redirect( admin_url( 'admin.php?page=wb-gam-redemption&notice=deleted' ) );
-		exit;
-	}
+	// handle_save() / handle_delete() removed in 1.0.0 (Tier 0.C). Rewards are
+	// now written by RedemptionController (POST /redemptions/items + POST
+	// /redemptions/items/{id}; DELETE /redemptions/items/{id}). The reward
+	// configuration is sent as a nested `reward_config` object on save.
 }

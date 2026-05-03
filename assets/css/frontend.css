@@ -6,31 +6,14 @@
  * in child theme or via the Global Styles panel.
  */
 
-/* ── Design tokens ──────────────────────────────────────────────────────────── */
 /*
- * Legacy aliases bridge the older --wb-gam-* names used by the 14
- * pre-standard blocks to the canonical Wbcom Block Quality Standard
- * tokens defined in `src/shared/design-tokens.css` (loaded via the
- * `wb-gam-tokens` style handle, which this file declares as a hard
- * dependency in plugin bootstrap). Every block — pilot or legacy —
- * resolves the same accent / surface / border palette.
- *
- * Phase D of the block-standard migration will inline these aliases
- * into each block's own stylesheet and remove this :root block.
+ * Design tokens (canonical + shorthand aliases) live in
+ * `src/shared/design-tokens.css`, registered as the `wb-gam-tokens`
+ * style handle which this file (`wb-gamification`) depends on.
+ * All blocks consume tokens via that handle alone — frontend.css is
+ * legacy global polish (toasts, hub-only utilities) and must NOT
+ * redeclare tokens.
  */
-:root {
-	--wb-gam-primary:        var( --wb-gam-color-accent );
-	--wb-gam-primary-light:  var( --wb-gam-color-accent-light );
-	--wb-gam-gold:           #f59e0b;
-	--wb-gam-silver:         #9ca3af;
-	--wb-gam-bronze:         #d97706;
-	--wb-gam-locked:         var( --wb-gam-color-disabled );
-	--wb-gam-text:           var( --wb-gam-color-text, inherit );
-	--wb-gam-radius:         var( --wb-gam-radius-md );
-	--wb-gam-gap:            var( --wb-gam-space-sm );
-	--wb-gam-border:         var( --wb-gam-color-border );
-	--wb-gam-text-muted:     var( --wb-gam-color-text-muted );
-}
 
 /* ── Toasts ──────────────────────────────────────────────────────────────────── */
 .wb-gam-toasts {
@@ -211,7 +194,7 @@
 }
 
 
-@media (max-width: 480px) {
+@media (max-width: 640px) {
 	.wb-gam-earning-guide__grid {
 		grid-template-columns: 1fr !important;
 	}
@@ -270,7 +253,7 @@
 	}
 }
 
-@media (max-width: 390px) {
+@media (max-width: 640px) {
 	.wb-gam-member-points__total {
 		flex-direction: row;
 		align-items: baseline;

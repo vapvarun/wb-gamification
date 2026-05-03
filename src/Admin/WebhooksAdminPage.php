@@ -18,7 +18,6 @@
 namespace WBGam\Admin;
 
 use WBGam\Engine\Capabilities;
-use WBGam\Engine\Log;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -37,8 +36,48 @@ final class WebhooksAdminPage {
 	 */
 	public static function init(): void {
 		add_action( 'admin_menu', array( __CLASS__, 'register_menu' ) );
-		add_action( 'admin_post_wb_gam_webhook_save', array( __CLASS__, 'handle_save' ) );
-		add_action( 'admin_post_wb_gam_webhook_delete', array( __CLASS__, 'handle_delete' ) );
+		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_assets' ) );
+		// admin_post_wb_gam_webhook_{save,delete} removed in 1.0.0 — page now
+		// consumes /wb-gamification/v1/webhooks (POST/DELETE) directly via the
+		// generic admin-rest-form driver. See Tier 0.C migration.
+	}
+
+	/**
+	 * Enqueue REST-driven JS bundle on the Webhooks admin page only.
+	 *
+	 * @param string $hook_suffix Current admin page hook.
+	 * @return void
+	 */
+	public static function enqueue_assets( string $hook_suffix ): void {
+		if ( 'gamification_page_wb-gam-webhooks' !== $hook_suffix ) {
+			return;
+		}
+		wp_enqueue_script(
+			'wb-gam-admin-rest-utils',
+			plugins_url( 'assets/js/admin-rest-utils.js', WB_GAM_FILE ),
+			array(),
+			WB_GAM_VERSION,
+			true
+		);
+		wp_enqueue_script(
+			'wb-gam-admin-rest-form',
+			plugins_url( 'assets/js/admin-rest-form.js', WB_GAM_FILE ),
+			array( 'wb-gam-admin-rest-utils' ),
+			WB_GAM_VERSION,
+			true
+		);
+		wp_localize_script(
+			'wb-gam-admin-rest-form',
+			'wbGamWebhooksSettings',
+			array(
+				'restUrl' => esc_url_raw( rest_url( 'wb-gamification/v1' ) ),
+				'nonce'   => wp_create_nonce( 'wp_rest' ),
+				'i18n'    => array(
+					'saved'  => __( 'Webhook saved.', 'wb-gamification' ),
+					'failed' => __( 'Failed to save the webhook.', 'wb-gamification' ),
+				),
+			)
+		);
 	}
 
 	/**
@@ -77,9 +116,15 @@ final class WebhooksAdminPage {
 			<?php endif; ?>
 
 			<h2><?php esc_html_e( 'Add Webhook', 'wb-gamification' ); ?></h2>
-			<form method="post" action="<?php echo esc_url( $action_url ); ?>" class="wb-gam-webhook-form">
-				<?php wp_nonce_field( 'wb_gam_webhook_save', self::NONCE_NAME ); ?>
-				<input type="hidden" name="action" value="wb_gam_webhook_save">
+			<form
+				class="wb-gam-webhook-form"
+				data-wb-gam-rest-form="wbGamWebhooksSettings"
+				data-wb-gam-rest-method="POST"
+				data-wb-gam-rest-path="/webhooks"
+				data-wb-gam-rest-success-toast="<?php esc_attr_e( 'Webhook saved.', 'wb-gamification' ); ?>"
+				data-wb-gam-rest-error-toast="<?php esc_attr_e( 'Failed to save the webhook.', 'wb-gamification' ); ?>"
+				data-wb-gam-rest-after="reload"
+			>
 
 				<table class="form-table" role="presentation">
 					<tr>
@@ -139,16 +184,6 @@ final class WebhooksAdminPage {
 					<tbody>
 						<?php foreach ( $webhooks as $hook ) :
 							$events = json_decode( $hook['events'], true ) ?: array();
-							$delete_url = wp_nonce_url(
-								add_query_arg(
-									array(
-										'action'     => 'wb_gam_webhook_delete',
-										'webhook_id' => (int) $hook['id'],
-									),
-									admin_url( 'admin-post.php' )
-								),
-								'wb_gam_webhook_delete_' . $hook['id']
-							);
 						?>
 							<tr>
 								<td><code><?php echo esc_html( $hook['url'] ); ?></code></td>
@@ -162,11 +197,19 @@ final class WebhooksAdminPage {
 								</td>
 								<td><?php echo esc_html( $hook['created_at'] ); ?></td>
 								<td>
-									<a href="<?php echo esc_url( $delete_url ); ?>"
-									   class="button button-link-delete"
-									   onclick="return confirm('<?php echo esc_js( __( 'Delete this webhook? Existing deliveries already in flight will still complete.', 'wb-gamification' ) ); ?>');">
+									<button
+										type="button"
+										class="button button-link-delete"
+										data-wb-gam-rest-action="wbGamWebhooksSettings"
+										data-wb-gam-rest-method="DELETE"
+										data-wb-gam-rest-path="/webhooks/<?php echo (int) $hook['id']; ?>"
+										data-wb-gam-rest-confirm="<?php esc_attr_e( 'Delete this webhook? Existing deliveries already in flight will still complete.', 'wb-gamification' ); ?>"
+										data-wb-gam-rest-success-toast="<?php esc_attr_e( 'Webhook deleted.', 'wb-gamification' ); ?>"
+										data-wb-gam-rest-error-toast="<?php esc_attr_e( 'Failed to delete webhook.', 'wb-gamification' ); ?>"
+										data-wb-gam-rest-after="remove-row"
+									>
 										<?php esc_html_e( 'Delete', 'wb-gamification' ); ?>
-									</a>
+									</button>
 								</td>
 							</tr>
 						<?php endforeach; ?>
@@ -177,79 +220,10 @@ final class WebhooksAdminPage {
 		<?php
 	}
 
-	// ── Form handlers ──────────────────────────────────────────────────────────
-
-	/**
-	 * Handle the "Add Webhook" form submission.
-	 */
-	public static function handle_save(): void {
-		if ( ! Capabilities::user_can( 'wb_gam_manage_webhooks' ) ) {
-			wp_die( esc_html__( 'Permission denied.', 'wb-gamification' ) );
-		}
-
-		check_admin_referer( 'wb_gam_webhook_save', self::NONCE_NAME );
-
-		$url    = isset( $_POST['url'] ) ? esc_url_raw( wp_unslash( $_POST['url'] ) ) : '';
-		$secret = isset( $_POST['secret'] ) ? sanitize_text_field( wp_unslash( $_POST['secret'] ) ) : '';
-		$events = isset( $_POST['events'] ) ? array_map( 'sanitize_key', (array) wp_unslash( $_POST['events'] ) ) : array();
-
-		if ( empty( $url ) ) {
-			self::redirect_back( 'invalid_url' );
-		}
-
-		if ( empty( $secret ) ) {
-			$secret = wp_generate_password( 32, false );
-		}
-
-		$valid_events = array_keys( self::available_events() );
-		$events       = array_values( array_intersect( $events, $valid_events ) );
-
-		global $wpdb;
-		$inserted = $wpdb->insert(
-			$wpdb->prefix . 'wb_gam_webhooks',
-			array(
-				'url'    => $url,
-				'secret' => $secret,
-				'events' => wp_json_encode( $events ),
-				'is_active' => 1,
-			),
-			array( '%s', '%s', '%s', '%d' )
-		);
-
-		if ( false === $inserted ) {
-			Log::error(
-				'WebhooksAdminPage: failed to insert wb_gam_webhooks row.',
-				array(
-					'url'      => $url,
-					'wpdb_err' => $wpdb->last_error ?: 'unknown',
-				)
-			);
-			self::redirect_back( 'save_failed' );
-		}
-
-		self::redirect_back( 'saved' );
-	}
-
-	/**
-	 * Handle the per-row delete action.
-	 */
-	public static function handle_delete(): void {
-		if ( ! Capabilities::user_can( 'wb_gam_manage_webhooks' ) ) {
-			wp_die( esc_html__( 'Permission denied.', 'wb-gamification' ) );
-		}
-
-		$webhook_id = isset( $_GET['webhook_id'] ) ? (int) $_GET['webhook_id'] : 0;
-		check_admin_referer( 'wb_gam_webhook_delete_' . $webhook_id );
-
-		global $wpdb;
-		$wpdb->delete(
-			$wpdb->prefix . 'wb_gam_webhooks',
-			array( 'id' => $webhook_id ),
-			array( '%d' )
-		);
-
-		self::redirect_back( 'deleted' );
-	}
+	// handle_save() / handle_delete() removed in 1.0.0 (Tier 0.C). Webhooks are
+	// now written by WebhooksController endpoints (POST + DELETE on
+	// /wb-gamification/v1/webhooks). The admin UI uses the generic
+	// admin-rest-form driver via data-* attributes.
 
 	// ── Helpers ────────────────────────────────────────────────────────────────
 
@@ -259,16 +233,16 @@ final class WebhooksAdminPage {
 	 * @return array<string,string> Event name → human description.
 	 */
 	private static function available_events(): array {
+		// Must match WebhooksController::ALLOWED_EVENTS — the REST schema is
+		// the canonical source of truth (admin UI + 3rd-party clients agree
+		// on the same enum).
 		return array(
-			'points_awarded'                => __( 'Points awarded to a member', 'wb-gamification' ),
-			'points_revoked'                => __( 'Points revoked by an admin', 'wb-gamification' ),
-			'badge_awarded'                 => __( 'Member earned a badge', 'wb-gamification' ),
-			'level_changed'                 => __( 'Member crossed a level threshold', 'wb-gamification' ),
-			'streak_milestone'              => __( 'Streak milestone reached', 'wb-gamification' ),
-			'streak_broken'                 => __( 'Streak broken', 'wb-gamification' ),
-			'kudos_given'                   => __( 'Peer kudos transaction', 'wb-gamification' ),
-			'challenge_completed'           => __( 'Individual challenge completed', 'wb-gamification' ),
-			'community_challenge_completed' => __( 'Community challenge target reached', 'wb-gamification' ),
+			'points_awarded'      => __( 'Points awarded to a member', 'wb-gamification' ),
+			'badge_earned'        => __( 'Member earned a badge', 'wb-gamification' ),
+			'level_changed'       => __( 'Member crossed a level threshold', 'wb-gamification' ),
+			'streak_milestone'    => __( 'Streak milestone reached', 'wb-gamification' ),
+			'challenge_completed' => __( 'Individual challenge completed', 'wb-gamification' ),
+			'kudos_given'         => __( 'Peer kudos transaction', 'wb-gamification' ),
 		);
 	}
 
@@ -288,25 +262,10 @@ final class WebhooksAdminPage {
 	}
 
 	/**
-	 * Redirect back to the page with a notice.
-	 *
-	 * @param string $notice Notice key.
-	 */
-	private static function redirect_back( string $notice ): void {
-		wp_safe_redirect(
-			add_query_arg(
-				array(
-					'page'   => self::PAGE_SLUG,
-					'notice' => $notice,
-				),
-				admin_url( 'admin.php' )
-			)
-		);
-		exit;
-	}
-
-	/**
 	 * Notice text by key.
+	 *
+	 * Retained for the legacy `?notice=...` query-arg pattern that older
+	 * bookmarks may still use; current admin UI shows toasts instead.
 	 *
 	 * @param string $key Notice key.
 	 * @return string Localized notice.

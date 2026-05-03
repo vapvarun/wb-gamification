@@ -1,0 +1,49 @@
+wppqa_check_plugin_dev_rules — 2026-05-03
+
+Passed: 0 | Failed: 12 | Skipped: 0 | Duration: 57ms
+
+HIGH (12) — Nonce check without capability check
+=================================================
+Pattern: handler verifies nonce but never calls current_user_can(). Nonces
+prevent CSRF; they don't authorize. Any logged-in user with a stolen
+nonce can submit. Each must pair with `if ( ! current_user_can( '...' ) ) wp_die();`
+or equivalent before processing.
+
+  src/Admin/BadgeAdminPage.php:434
+  src/Admin/BadgeAdminPage.php:526
+  src/Admin/ChallengeManagerPage.php:272
+  src/Admin/ChallengeManagerPage.php:334
+  src/Admin/CohortSettingsPage.php:244
+  src/Admin/CommunityChallengesPage.php:298
+  src/Admin/CommunityChallengesPage.php:363
+  src/Admin/ManualAwardPage.php:239
+  src/Admin/RedemptionStorePage.php:391
+  src/Admin/RedemptionStorePage.php:470
+  src/Admin/WebhooksAdminPage.php:190
+  src/Admin/WebhooksAdminPage.php:242
+
+MEDIUM (9) — Inline onclick attribute
+=====================================
+Pattern: `<button onclick="...">` inline. Fights Interactivity API + event
+delegation + CSP. Replace with `data-wp-on--click="actions.X"` for IA
+blocks, or attach a delegated `addEventListener` for admin pages.
+
+  blocks/year-recap/render.php:213
+  src/Admin/ApiKeysPage.php:153
+  src/Admin/BadgeAdminPage.php:360
+  src/Admin/ChallengeManagerPage.php:244
+  src/Admin/CommunityChallengesPage.php:270
+  src/Admin/RedemptionStorePage.php:332
+  src/Admin/SettingsPage.php:822
+  src/Admin/SettingsPage.php:948
+  src/Admin/WebhooksAdminPage.php:167
+
+MEDIUM (1) — 6 distinct breakpoints found
+=========================================
+frontend-responsive Rule 1: stick to 3 breakpoints (640/1024/1440 typical).
+Found: 1024, 390, 480, 640, 782, 900. Component-local fixes drifting.
+
+LOW (2) — Button height 16px < 40px tap target
+==============================================
+  assets/css/admin-premium.css:786
+  assets/css/admin-premium.min.css:1

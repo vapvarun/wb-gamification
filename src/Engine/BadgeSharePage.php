@@ -185,8 +185,7 @@ final class BadgeSharePage {
 		?>
 		<div class="wb-gam-share-page">
 			<?php if ( $badge['image_url'] ) : ?>
-				<img src="<?php echo esc_url( $badge['image_url'] ); ?>"
-					alt="<?php echo esc_attr( $badge['name'] ); ?>"
+				<img alt="<?php echo esc_attr( $badge['name'] ); ?>" src="<?php echo esc_url( $badge['image_url'] ); ?>"
 					width="160" height="160"
 					class="wb-gam-share-page__badge-img" />
 			<?php endif; ?>

@@ -9,20 +9,20 @@
 	--wb-gam-space-2xl: 48px;
 	--wb-gam-space-3xl: 64px;
 
-	/* Border radius scale */
+	/* Border radius scale (md/lg tuned to match assets/css/hub.css) */
 	--wb-gam-radius-none: 0;
-	--wb-gam-radius-sm: 4px;
-	--wb-gam-radius-md: 8px;
-	--wb-gam-radius-lg: 12px;
-	--wb-gam-radius-xl: 16px;
+	--wb-gam-radius-sm: 6px;
+	--wb-gam-radius-md: 10px;
+	--wb-gam-radius-lg: 14px;
+	--wb-gam-radius-xl: 18px;
 	--wb-gam-radius-full: 9999px;
 
-	/* Shadow presets */
+	/* Shadow presets (sm/md tuned to match assets/css/hub.css — softer than Tailwind defaults) */
 	--wb-gam-shadow-none: none;
-	--wb-gam-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
-	--wb-gam-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
-	--wb-gam-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
-	--wb-gam-shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+	--wb-gam-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
+	--wb-gam-shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08);
+	--wb-gam-shadow-lg: 0 10px 24px rgba(0, 0, 0, 0.10);
+	--wb-gam-shadow-xl: 0 20px 32px rgba(0, 0, 0, 0.12);
 
 	/* Typography scale */
 	--wb-gam-font-xs: 12px;
@@ -46,31 +46,40 @@
 	--wb-gam-leading-normal: 1.5;
 	--wb-gam-leading-relaxed: 1.75;
 
-	/* Colors — neutral palette */
+	/* Colors — neutral palette (tuned to match assets/css/hub.css `--gam-*` family) */
 	--wb-gam-color-white: #ffffff;
-	--wb-gam-color-text: #1e293b;
-	--wb-gam-color-text-muted: #475569;
-	--wb-gam-color-text-light: #64748b;
-	--wb-gam-color-border: #e2e8f0;
-	--wb-gam-color-surface: #f8fafc;
+	--wb-gam-color-text: #1a1a2e;
+	--wb-gam-color-text-muted: #555770;
+	--wb-gam-color-text-light: #8b8da3;
+	--wb-gam-color-border: #e2e3ed;
+	--wb-gam-color-border-hover: #c8c9d9;
+	--wb-gam-color-surface: #ffffff;
+	--wb-gam-color-surface-hover: #f7f7fb;
 	--wb-gam-color-surface-alt: #f1f5f9;
+	--wb-gam-color-page: #f8fafc;
 	/* Accent — defaults match `--gam-accent` from assets/css/hub.css so
 	   new standard blocks visually align with the existing hub UI.
 	   Themes may override via `--wbcom-link-color`. */
 	--wb-gam-color-accent: var(--wbcom-link-color, #5b4cdb);
 	--wb-gam-color-accent-hover: var(--wbcom-link-hover-color, #4338b2);
-	--wb-gam-color-accent-light: rgba(91, 76, 219, 0.08);
+	--wb-gam-color-accent-light: #ededfc;
+	--wb-gam-color-accent-text: #4338b2;
 	--wb-gam-color-accent-ring: rgba(91, 76, 219, 0.2);
 
-	/* Colors — semantic */
-	--wb-gam-color-success: #16a34a;
-	--wb-gam-color-success-bg: #dcfce7;
-	--wb-gam-color-warning: #d97706;
-	--wb-gam-color-warning-bg: #fef3c7;
+	/* Colors — semantic (matched to assets/css/hub.css) */
+	--wb-gam-color-success: #0d9f6e;
+	--wb-gam-color-success-bg: #ecfdf3;
+	--wb-gam-color-warning: #c2770e;
+	--wb-gam-color-warning-bg: #fef7ec;
 	--wb-gam-color-danger: #ef4444;
 	--wb-gam-color-danger-bg: #fef2f2;
 	--wb-gam-color-info: #2563eb;
-	--wb-gam-color-info-bg: #eff6ff;
+	--wb-gam-color-info-bg: #eff4ff;
+
+	/* Rank/medal palette (used by leaderboard, top-members, year-recap) */
+	--wb-gam-color-gold: #b8860b;
+	--wb-gam-color-silver: #6b7280;
+	--wb-gam-color-bronze: #a0522d;
 
 	/* Interaction states */
 	--wb-gam-color-disabled: var(--wb-gam-color-surface-alt);
@@ -93,4 +102,32 @@
 	--wb-gam-z-dropdown: 10;
 	--wb-gam-z-overlay: 100;
 	--wb-gam-z-modal: 1000;
+
+	/* ── Shorthand aliases ──────────────────────────────────────────
+	 * Per-block stylesheets in src/Blocks/<slug>/style.css consume
+	 * these short names. Defined here (not frontend.css) so the
+	 * `wb-gam-tokens` handle is sufficient — blocks no longer depend
+	 * on the legacy `wb-gamification` (frontend.css) bundle being
+	 * enqueued. */
+	--wb-gam-primary: var(--wb-gam-color-accent);
+	--wb-gam-primary-light: var(--wb-gam-color-accent-light);
+	--wb-gam-primary-text: var(--wb-gam-color-accent-text);
+	--wb-gam-text: var(--wb-gam-color-text);
+	--wb-gam-text-secondary: var(--wb-gam-color-text-muted);
+	--wb-gam-text-muted: var(--wb-gam-color-text-light);
+	--wb-gam-border: var(--wb-gam-color-border);
+	--wb-gam-card-bg: var(--wb-gam-color-surface);
+	--wb-gam-card-bg-hover: var(--wb-gam-color-surface-hover);
+	--wb-gam-radius: var(--wb-gam-radius-md);
+	--wb-gam-radius-card: var(--wb-gam-radius-md);
+	--wb-gam-shadow: var(--wb-gam-shadow-sm);
+	--wb-gam-shadow-hover: var(--wb-gam-shadow-md);
+	--wb-gam-gap: var(--wb-gam-space-md);
+	--wb-gam-transition: var(--wb-gam-transition-fast);
+	--wb-gam-gold: var(--wb-gam-color-gold);
+	--wb-gam-silver: var(--wb-gam-color-silver);
+	--wb-gam-bronze: var(--wb-gam-color-bronze);
+	--wb-gam-locked: var(--wb-gam-color-disabled);
+	--wb-gam-fill: var(--wb-gam-color-accent);
+	--wb-gam-recap-accent: var(--wb-gam-color-accent);
 }

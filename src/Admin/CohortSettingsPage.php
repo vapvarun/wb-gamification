@@ -53,7 +53,50 @@ final class CohortSettingsPage {
 	 */
 	public static function init(): void {
 		add_action( 'admin_menu', array( __CLASS__, 'register_page' ) );
-		add_action( 'admin_post_wb_gam_save_cohort_settings', array( __CLASS__, 'handle_save' ) );
+		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_assets' ) );
+		// admin_post_wb_gam_save_cohort_settings removed in 1.0.0:
+		// page now consumes /wb-gamification/v1/cohort-settings (POST) directly
+		// via assets/js/admin-cohort.js. See Tier 0.C migration.
+	}
+
+	/**
+	 * Enqueue REST-driven JS bundle on the Cohort Leagues admin page only.
+	 *
+	 * @param string $hook_suffix Current admin page hook.
+	 * @return void
+	 */
+	public static function enqueue_assets( string $hook_suffix ): void {
+		if ( 'gamification_page_wb-gam-cohort' !== $hook_suffix ) {
+			return;
+		}
+
+		wp_enqueue_script(
+			'wb-gam-admin-rest-utils',
+			plugins_url( 'assets/js/admin-rest-utils.js', WB_GAM_FILE ),
+			array(),
+			WB_GAM_VERSION,
+			true
+		);
+		wp_enqueue_script(
+			'wb-gam-admin-cohort',
+			plugins_url( 'assets/js/admin-cohort.js', WB_GAM_FILE ),
+			array( 'wb-gam-admin-rest-utils' ),
+			WB_GAM_VERSION,
+			true
+		);
+
+		wp_localize_script(
+			'wb-gam-admin-cohort',
+			'wbGamCohortSettings',
+			array(
+				'restUrl' => esc_url_raw( rest_url( 'wb-gamification/v1' ) ),
+				'nonce'   => wp_create_nonce( 'wp_rest' ),
+				'i18n'    => array(
+					'saved'  => __( 'Cohort league settings saved.', 'wb-gamification' ),
+					'failed' => __( 'Failed to save cohort settings.', 'wb-gamification' ),
+				),
+			)
+		);
 	}
 
 	/**
@@ -119,10 +162,7 @@ final class CohortSettingsPage {
 					<h3 class="wbgam-card-title"><?php esc_html_e( 'League Settings', 'wb-gamification' ); ?></h3>
 				</div>
 				<div class="wbgam-card-body">
-					<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
-						<?php wp_nonce_field( 'wb_gam_save_cohort_settings', 'wb_gam_cohort_nonce' ); ?>
-						<input type="hidden" name="action" value="wb_gam_save_cohort_settings">
-
+					<form data-wb-gam-cohort-form>
 						<table class="form-table">
 							<tr>
 								<th><label for="wb-gam-cohort-enabled"><?php esc_html_e( 'Enable Cohort Leagues', 'wb-gamification' ); ?></label></th>
@@ -209,7 +249,7 @@ final class CohortSettingsPage {
 						</table>
 
 						<p>
-							<button type="submit" class="wbgam-btn">
+							<button type="submit" class="wbgam-btn" data-wb-gam-cohort-save>
 								<?php esc_html_e( 'Save Settings', 'wb-gamification' ); ?>
 							</button>
 						</p>
@@ -235,48 +275,10 @@ final class CohortSettingsPage {
 		<?php
 	}
 
-	/**
-	 * Handle the cohort settings form submission via admin-post.php.
-	 *
-	 * @return void
-	 */
-	public static function handle_save(): void {
-		check_admin_referer( 'wb_gam_save_cohort_settings', 'wb_gam_cohort_nonce' );
-
-		if ( ! \WBGam\Engine\Capabilities::user_can( 'wb_gam_manage_challenges' ) ) {
-			wp_die( esc_html__( 'Permission denied.', 'wb-gamification' ) );
-		}
-
-		// Save cohort-specific settings.
-		$settings = array(
-			'tier_1'      => sanitize_text_field( wp_unslash( $_POST['tier_1'] ?? 'Bronze' ) ),
-			'tier_2'      => sanitize_text_field( wp_unslash( $_POST['tier_2'] ?? 'Silver' ) ),
-			'tier_3'      => sanitize_text_field( wp_unslash( $_POST['tier_3'] ?? 'Gold' ) ),
-			'tier_4'      => sanitize_text_field( wp_unslash( $_POST['tier_4'] ?? 'Diamond' ) ),
-			'promote_pct' => max( 1, min( 50, absint( $_POST['promote_pct'] ?? 20 ) ) ),
-			'demote_pct'  => max( 1, min( 50, absint( $_POST['demote_pct'] ?? 20 ) ) ),
-			'duration'    => in_array( ( $_POST['duration'] ?? 'weekly' ), array( 'weekly', 'monthly' ), true )
-				? sanitize_key( $_POST['duration'] )
-				: 'weekly',
-		);
-
-		update_option( self::OPTION_KEY, $settings );
-
-		// Update the feature flag for cohort_leagues.
-		$features                    = FeatureFlags::get_all();
-		$features['cohort_leagues']  = (bool) absint( $_POST['cohort_enabled'] ?? 1 );
-		FeatureFlags::update( $features );
-
-		/**
-		 * Fires after cohort league settings are saved.
-		 *
-		 * @since 1.0.0
-		 * @param array $settings The saved settings.
-		 * @param bool  $enabled  Whether cohort leagues are enabled.
-		 */
-		do_action( 'wb_gamification_cohort_settings_saved', $settings, $features['cohort_leagues'] );
-
-		wp_safe_redirect( admin_url( 'admin.php?page=wb-gam-cohort&notice=saved' ) );
-		exit;
-	}
+	// handle_save() removed in 1.0.0 (Tier 0.C). Cohort settings are now
+	// written by CohortSettingsController::update_item() (POST
+	// /wb-gamification/v1/cohort-settings). The legacy
+	// `wb_gamification_cohort_settings_saved` hook still fires from the REST
+	// path for back-compat (kept until 1.1.0); new listeners should subscribe
+	// to `wb_gam_after_save_cohort_settings`.
 }

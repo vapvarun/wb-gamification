@@ -109,9 +109,8 @@ BlockHooks::before( 'level-progress', $wb_gam_attrs );
 <div <?php echo $wb_gam_wrapper; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>>
 	<div class="wb-gam-level-progress__header">
 		<?php if ( $wb_gam_show_icon && ! empty( $wb_gam_level['icon_url'] ) ) : ?>
-			<img
+			<img alt="<?php echo esc_attr( (string) ( $wb_gam_level['name'] ?? '' ) ); ?>"
 				src="<?php echo esc_url( (string) $wb_gam_level['icon_url'] ); ?>"
-				alt="<?php echo esc_attr( (string) ( $wb_gam_level['name'] ?? '' ) ); ?>"
 				class="wb-gam-level-progress__icon"
 				width="48"
 				height="48"
