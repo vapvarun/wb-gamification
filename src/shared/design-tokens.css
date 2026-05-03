@@ -1,0 +1,88 @@
+:root {
+	/* Spacing scale (used by SpacingControl) */
+	--wb-gam-space-0: 0;
+	--wb-gam-space-xs: 4px;
+	--wb-gam-space-sm: 8px;
+	--wb-gam-space-md: 16px;
+	--wb-gam-space-lg: 24px;
+	--wb-gam-space-xl: 32px;
+	--wb-gam-space-2xl: 48px;
+	--wb-gam-space-3xl: 64px;
+
+	/* Border radius scale */
+	--wb-gam-radius-none: 0;
+	--wb-gam-radius-sm: 4px;
+	--wb-gam-radius-md: 8px;
+	--wb-gam-radius-lg: 12px;
+	--wb-gam-radius-xl: 16px;
+	--wb-gam-radius-full: 9999px;
+
+	/* Shadow presets */
+	--wb-gam-shadow-none: none;
+	--wb-gam-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+	--wb-gam-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+	--wb-gam-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+	--wb-gam-shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+
+	/* Typography scale */
+	--wb-gam-font-xs: 12px;
+	--wb-gam-font-sm: 14px;
+	--wb-gam-font-md: 16px;
+	--wb-gam-font-lg: 18px;
+	--wb-gam-font-xl: 20px;
+	--wb-gam-font-2xl: 24px;
+	--wb-gam-font-3xl: 30px;
+	--wb-gam-font-4xl: 36px;
+	--wb-gam-font-5xl: 48px;
+
+	/* Font weights */
+	--wb-gam-weight-normal: 400;
+	--wb-gam-weight-medium: 500;
+	--wb-gam-weight-semibold: 600;
+	--wb-gam-weight-bold: 700;
+
+	/* Line heights */
+	--wb-gam-leading-tight: 1.25;
+	--wb-gam-leading-normal: 1.5;
+	--wb-gam-leading-relaxed: 1.75;
+
+	/* Colors — neutral palette */
+	--wb-gam-color-white: #ffffff;
+	--wb-gam-color-text: #1e293b;
+	--wb-gam-color-text-muted: #475569;
+	--wb-gam-color-text-light: #64748b;
+	--wb-gam-color-border: #e2e8f0;
+	--wb-gam-color-surface: #f8fafc;
+	--wb-gam-color-surface-alt: #f1f5f9;
+	--wb-gam-color-accent: var(--wbcom-link-color, #0073aa);
+	--wb-gam-color-accent-hover: var(--wbcom-link-hover-color, #005a87);
+	--wb-gam-color-accent-light: rgba(0, 115, 170, 0.08);
+	--wb-gam-color-accent-ring: rgba(0, 115, 170, 0.2);
+
+	/* Colors — semantic */
+	--wb-gam-color-success: #16a34a;
+	--wb-gam-color-success-bg: #dcfce7;
+	--wb-gam-color-warning: #d97706;
+	--wb-gam-color-warning-bg: #fef3c7;
+	--wb-gam-color-danger: #ef4444;
+	--wb-gam-color-danger-bg: #fef2f2;
+	--wb-gam-color-info: #2563eb;
+	--wb-gam-color-info-bg: #eff6ff;
+
+	/* Responsive breakpoints (used by CSS generation utility) */
+	--wb-gam-bp-tablet: 1024px;
+	--wb-gam-bp-mobile: 767px;
+
+	/* Transition */
+	--wb-gam-transition-fast: 150ms ease;
+	--wb-gam-transition-normal: 300ms ease;
+	--wb-gam-transition-slow: 500ms ease;
+
+	/* Z-index scale */
+	--wb-gam-z-below: -1;
+	--wb-gam-z-base: 0;
+	--wb-gam-z-above: 1;
+	--wb-gam-z-dropdown: 10;
+	--wb-gam-z-overlay: 100;
+	--wb-gam-z-modal: 1000;
+}
