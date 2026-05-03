@@ -1682,6 +1682,43 @@
         "warnings": 0
       },
       "verdict": "release-clean — failed=0 AND warnings=0 across all 4 wppqa checks. Legacy blocks/ dir deleted (50 dead-code files removed); spinner pseudo-element retokenized to silence tap-target false positive."
+    },
+    "enum_consistency_findings": {
+      "ran_at": "2026-05-03T19:30:00Z",
+      "results": [
+        {
+          "field": "period",
+          "verdict": "real_drift_fixed",
+          "files": [
+            "src/API/AbilitiesRegistration.php:117",
+            "src/API/LeaderboardController.php:251",
+            "src/Engine/LeaderboardEngine.php:359"
+          ],
+          "before": "AbilitiesRegistration declared [daily, weekly, monthly, all]; controller + engine accept singular [all, day, week, month]. 3rd-party Abilities-API callers using the documented plural would silently fall back to 'all' (no validate_callback enforces the enum at the controller).",
+          "fix": "Aligned AbilitiesRegistration to the canonical singular forms. Documented in code comment.",
+          "follow_up": "Consider adding validate_callback on LeaderboardController::get_scope_args[period] so unknown values return 400 instead of falling through to default. Filed as a hygiene improvement, not a release blocker."
+        },
+        {
+          "field": "status (challenge_status)",
+          "verdict": "false_positive_documented",
+          "files": [
+            "src/API/ChallengesController.php:170",
+            "src/API/CommunityChallengesController.php:71"
+          ],
+          "explanation": "ChallengesController write enum [active, inactive] is the row-state set. CommunityChallengesController GET filter enum [active, inactive, all] is a query-filter set where 'all' = 'don't filter'. Different concerns, same variable name. The 'all' in CommunityChallenges is intentional for read-side filtering and doesn't apply to writes. Linter groups by name; no actual contract drift."
+        },
+        {
+          "field": "type",
+          "verdict": "false_positive_documented",
+          "files": [
+            "src/API/MembersController.php:593 (notification kinds: badge, challenge, kudos, level_up, points, streak_milestone)",
+            "src/Engine/RankAutomation.php:130 (automation actions: add_bp_group, change_wp_role, send_bp_message)",
+            "src/Engine/RuleEngine.php:115 (rule conditions: action_id_match, day_of_week, metadata_gte)"
+          ],
+          "explanation": "Three completely unrelated logical fields all named 'type' in their respective contexts. The wppqa linter groups by the variable/key name 'type' and flags the disagreement, but these never share a code path. False positive."
+        }
+      ],
+      "verdict": "1 real drift fixed (period); 2 false positives documented. Re-running wppqa_check_enum_consistency will still report all 3 — the linter's grouping heuristic doesn't follow context. Acknowledge and proceed."
     }
   },
   "buddypress_integration": {
@@ -1932,7 +1969,7 @@
     ]
   },
   "generated": {
-    "at": "2026-05-03T19:00:00Z",
+    "at": "2026-05-03T19:30:00Z",
     "from": "wp-plugin-onboard skill",
     "branch": "main",
     "schema_version": "v2.2",

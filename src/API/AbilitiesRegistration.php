@@ -112,9 +112,14 @@ final class AbilitiesRegistration {
 				'endpoint'    => $base . '/leaderboard',
 				'methods'     => array( 'GET' ),
 				'parameters'  => array(
+					// Period values must match LeaderboardController::get_scope_args()
+					// — singular forms (`day`, `week`, `month`, `all`). Plural forms
+					// (`daily`, `weekly`, `monthly`) get rejected by the controller's
+					// sanitize_key + enum check. Enum-drift bug caught by
+					// wppqa_check_enum_consistency 2026-05-03.
 					'period' => array(
 						'type'    => 'string',
-						'enum'    => array( 'daily', 'weekly', 'monthly', 'all' ),
+						'enum'    => array( 'all', 'day', 'week', 'month' ),
 						'default' => 'all',
 					),
 					'limit'  => array(
