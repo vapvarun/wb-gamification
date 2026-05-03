@@ -40,7 +40,6 @@ if ( ! empty( $wb_gam_attrs['cardBorderColor'] ) ) {
 $wb_gam_classes = array_filter( array( 'wb-gam-points-history', 'wb-gam-block-' . $wb_gam_unique, $wb_gam_visibility ) );
 
 wp_enqueue_style( 'wb-gam-tokens' );
-wp_enqueue_style( 'wb-gamification' );
 
 if ( $wb_gam_user_id <= 0 ) {
 	$wb_gam_classes[] = 'wb-gam-points-history--guest';

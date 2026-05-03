@@ -1,0 +1,197 @@
+/**
+ * Top Members — frontend stylesheet.
+ *
+ * Phase F migration: extracted from assets/css/frontend.css so the
+ * block ships its own CSS via block.json (`style` field).
+ */
+
+/* ── Top Members ────────────────────────────────────────────────────────────── */
+.wb-gam-top-members__podium {
+	display: flex;
+	justify-content: center;
+	align-items: flex-end;
+	gap: 1rem;
+	padding-block-end: 1rem;
+}
+
+.wb-gam-top-members__podium-slot {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 0.375rem;
+	flex: 1;
+	max-width: 140px;
+	text-align: center;
+}
+
+/* 1st place taller */
+.wb-gam-top-members__podium-slot--1 { order: 2; }
+.wb-gam-top-members__podium-slot--2 { order: 1; }
+.wb-gam-top-members__podium-slot--3 { order: 3; }
+
+.wb-gam-top-members__podium-crown {
+	font-size: 1.5rem;
+	line-height: 1;
+	min-height: 1.75rem;
+}
+
+.wb-gam-top-members__avatar-link img {
+	border-radius: 50%;
+	display: block;
+}
+
+.wb-gam-top-members__podium-slot--1 .wb-gam-top-members__avatar-link img {
+	box-shadow: 0 0 0 3px var(--wb-gam-gold);
+}
+
+.wb-gam-top-members__rank-badge {
+	font-size: 0.75rem;
+	font-weight: 700;
+	padding: 0.125rem 0.5rem;
+	border-radius: 999px;
+}
+
+.wb-gam-top-members__rank-badge--1 { background: var(--wb-gam-gold);   color: #fff; }
+.wb-gam-top-members__rank-badge--2 { background: var(--wb-gam-silver); color: #fff; }
+.wb-gam-top-members__rank-badge--3 { background: var(--wb-gam-bronze); color: #fff; }
+
+.wb-gam-top-members__name {
+	font-weight: 600;
+	font-size: 0.875rem;
+	color: inherit;
+	text-decoration: none;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	max-width: 100%;
+}
+
+.wb-gam-top-members__name:hover { text-decoration: underline; }
+
+.wb-gam-top-members__points {
+	font-size: 1rem;
+	font-weight: 700;
+	color: var(--wb-gam-primary);
+}
+
+.wb-gam-top-members__pts-label {
+	font-size: 0.75rem;
+	font-weight: 400;
+	color: var(--wb-gam-silver);
+}
+
+.wb-gam-top-members__level,
+.wb-gam-top-members__badges {
+	font-size: 0.75rem;
+	color: var(--wb-gam-silver);
+}
+
+/* Rest list (rank 4+) */
+.wb-gam-top-members__rest {
+	list-style: none;
+	margin: 0.5rem 0 0;
+	padding: 0;
+	border-top: 1px solid #e5e7eb;
+	padding-top: 0.75rem;
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+}
+
+.wb-gam-top-members__rest-item {
+	display: flex;
+	align-items: center;
+	gap: 0.625rem;
+}
+
+.wb-gam-top-members__rest-item img { border-radius: 50%; }
+
+.wb-gam-top-members__rest-rank {
+	min-width: 2rem;
+	font-size: 0.8125rem;
+	font-weight: 600;
+	color: var(--wb-gam-silver);
+}
+
+.wb-gam-top-members__rest-name {
+	flex: 1;
+	font-size: 0.875rem;
+	color: inherit;
+	text-decoration: none;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.wb-gam-top-members__rest-name:hover { text-decoration: underline; }
+
+.wb-gam-top-members__rest-points {
+	font-size: 0.8125rem;
+	font-weight: 600;
+	color: var(--wb-gam-primary);
+}
+
+/* List layout */
+.wb-gam-top-members--list .wb-gam-top-members__list {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: var(--wb-gam-gap);
+}
+
+.wb-gam-top-members__list-item {
+	display: flex;
+	align-items: center;
+	gap: 0.625rem;
+	padding: 0.5rem 0.75rem;
+	border-radius: var(--wb-gam-radius);
+	background: #f9fafb;
+}
+
+.wb-gam-top-members__list-item img { border-radius: 50%; }
+
+.wb-gam-top-members__list-rank {
+	min-width: 2rem;
+	font-weight: 700;
+	color: var(--wb-gam-silver);
+	font-size: 0.875rem;
+	text-align: center;
+}
+
+.wb-gam-top-members__list-info {
+	flex: 1;
+	overflow: hidden;
+	display: flex;
+	flex-direction: column;
+}
+
+.wb-gam-top-members__list-name {
+	font-weight: 500;
+	font-size: 0.9375rem;
+	color: inherit;
+	text-decoration: none;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.wb-gam-top-members__list-name:hover { text-decoration: underline; }
+
+.wb-gam-top-members__list-level {
+	font-size: 0.75rem;
+	color: var(--wb-gam-silver);
+}
+
+.wb-gam-top-members__list-points {
+	font-weight: 600;
+	color: var(--wb-gam-primary);
+	font-size: 0.9375rem;
+	white-space: nowrap;
+}
+
+.wb-gam-top-members__list-badges {
+	font-size: 0.8125rem;
+	color: var(--wb-gam-silver);
+}

@@ -1,0 +1,79 @@
+/**
+ * Kudos Feed — frontend stylesheet.
+ *
+ * Phase F migration: extracted from assets/css/frontend.css so the
+ * block ships its own CSS via block.json (`style` field).
+ */
+
+/* ── Kudos Feed ─────────────────────────────────────────────────────────────── */
+.wb-gam-kudos-feed__title {
+	margin-block-end: 1rem;
+	font-size: 1.125rem;
+	font-weight: 600;
+}
+
+.wb-gam-kudos-feed__list {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: var(--wb-gam-gap);
+}
+
+.wb-gam-kudos-feed__item {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+	padding: 0.625rem 0.75rem;
+	border-radius: var(--wb-gam-radius);
+	background: #f9fafb;
+}
+
+.wb-gam-kudos-feed__giver,
+.wb-gam-kudos-feed__receiver {
+	display: flex;
+	align-items: center;
+	gap: 0.375rem;
+	font-weight: 500;
+}
+
+.wb-gam-kudos-feed__giver img,
+.wb-gam-kudos-feed__receiver img {
+	border-radius: 50%;
+}
+
+.wb-gam-kudos-feed__giver a,
+.wb-gam-kudos-feed__receiver a {
+	color: inherit;
+	text-decoration: none;
+}
+
+.wb-gam-kudos-feed__giver a:hover,
+.wb-gam-kudos-feed__receiver a:hover {
+	text-decoration: underline;
+}
+
+.wb-gam-kudos-feed__arrow {
+	color: var(--wb-gam-primary);
+	font-size: 1rem;
+	flex-shrink: 0;
+}
+
+.wb-gam-kudos-feed__message {
+	flex-basis: 100%;
+	font-size: 0.875rem;
+	font-style: italic;
+	color: #6b7280;
+	margin: 0;
+	padding-inline-start: 0.25rem;
+	border-inline-start: 2px solid var(--wb-gam-primary-light);
+}
+
+.wb-gam-kudos-feed__time {
+	margin-inline-start: auto;
+	font-size: 0.75rem;
+	color: var(--wb-gam-silver);
+	white-space: nowrap;
+}

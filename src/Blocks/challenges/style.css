@@ -1,0 +1,119 @@
+/**
+ * Challenges — frontend stylesheet.
+ *
+ * Phase F migration: extracted from assets/css/frontend.css so the
+ * block ships its own CSS via block.json (`style` field).
+ */
+
+/* ── Challenges ─────────────────────────────────────────────────────────────── */
+.wb-gam-challenges__list {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: var(--wb-gam-gap);
+}
+
+.wb-gam-challenges__item {
+	padding: 0.75rem;
+	border-radius: var(--wb-gam-radius);
+	background: #f9fafb;
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+	border-inline-start: 3px solid var(--wb-gam-primary);
+}
+
+.wb-gam-challenges__item--completed {
+	border-inline-start-color: #10b981;
+	background: #f0fdf4;
+}
+
+.wb-gam-challenges__header {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	flex-wrap: wrap;
+}
+
+.wb-gam-challenges__title {
+	font-weight: 600;
+	flex: 1;
+	font-size: 0.9375rem;
+}
+
+.wb-gam-challenges__badge {
+	font-size: 0.6875rem;
+	font-weight: 600;
+	padding: 0.1875rem 0.5rem;
+	border-radius: 999px;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+}
+
+.wb-gam-challenges__badge--team {
+	background: var(--wb-gam-primary-light);
+	color: var(--wb-gam-primary);
+}
+
+.wb-gam-challenges__badge--done {
+	background: #d1fae5;
+	color: #065f46;
+}
+
+.wb-gam-challenges__meta {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+	flex-wrap: wrap;
+}
+
+.wb-gam-challenges__progress-text {
+	font-size: 0.8125rem;
+	font-weight: 600;
+	color: var(--wb-gam-primary);
+}
+
+.wb-gam-challenges__bonus {
+	font-size: 0.8125rem;
+	color: var(--wb-gam-gold);
+	font-weight: 600;
+}
+
+.wb-gam-challenges__deadline {
+	font-size: 0.75rem;
+	color: var(--wb-gam-silver);
+	margin-inline-start: auto;
+}
+
+.wb-gam-challenges__bar-wrap {
+	height: 6px;
+	background: #e5e7eb;
+	border-radius: 999px;
+	overflow: hidden;
+}
+
+.wb-gam-challenges__item--completed .wb-gam-challenges__bar-wrap {
+	background: #a7f3d0;
+}
+
+.wb-gam-challenges__bar {
+	height: 100%;
+	width: var(--wb-gam-fill, 0%);
+	background: var(--wb-gam-primary);
+	border-radius: 999px;
+	transition: width 0.4s ease;
+}
+
+.wb-gam-challenges__item--completed .wb-gam-challenges__bar {
+	background: #10b981;
+}
+
+.wb-gam-challenges__empty {
+	color: var(--wb-gam-silver);
+	font-size: 0.9375rem;
+	text-align: center;
+	padding: 2rem;
+	margin: 0;
+}

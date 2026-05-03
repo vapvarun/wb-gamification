@@ -41,7 +41,6 @@ if ( ! empty( $wb_gam_attrs['cardBorderColor'] ) ) {
 $wb_gam_classes = array_filter( array( 'wb-gam-cohort-rank', 'wb-gam-block-' . $wb_gam_unique, $wb_gam_visibility ) );
 
 wp_enqueue_style( 'wb-gam-tokens' );
-wp_enqueue_style( 'wb-gamification' );
 
 if ( ! $wb_gam_user_id ) {
 	$wb_gam_classes[] = 'wb-gam-cohort-rank--guest';

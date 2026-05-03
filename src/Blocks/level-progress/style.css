@@ -1,0 +1,80 @@
+/**
+ * Level Progress — frontend stylesheet.
+ *
+ * Phase F migration: extracted from assets/css/frontend.css so the
+ * block ships its own CSS via block.json (`style` field).
+ */
+
+/* ── Level Progress ─────────────────────────────────────────────────────────── */
+.wb-gam-level-progress {
+	display: flex;
+	flex-direction: column;
+	gap: 0.625rem;
+}
+
+.wb-gam-level-progress__header {
+	display: flex;
+	align-items: center;
+	gap: var(--wb-gam-gap);
+}
+
+.wb-gam-level-progress__icon {
+	flex-shrink: 0;
+	border-radius: var(--wb-gam-radius);
+	object-fit: contain;
+}
+
+.wb-gam-level-progress__info {
+	display: flex;
+	flex-direction: column;
+	gap: 0.125rem;
+}
+
+.wb-gam-level-progress__label {
+	font-size: 0.75rem;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	color: var(--wb-gam-silver);
+}
+
+.wb-gam-level-progress__name {
+	font-weight: 700;
+	font-size: 1.125rem;
+}
+
+.wb-gam-level-progress__points {
+	font-size: 0.875rem;
+	color: var(--wb-gam-primary);
+	font-weight: 500;
+}
+
+.wb-gam-level-progress__bar-wrap {
+	height: 10px;
+	background: #e5e7eb;
+	border-radius: 999px;
+	overflow: hidden;
+}
+
+.wb-gam-level-progress__bar {
+	height: 100%;
+	width: var(--wb-gam-fill, 0%);
+	background: linear-gradient(90deg, var(--wb-gam-primary), #a78bfa);
+	border-radius: 999px;
+	transition: width 0.5s ease;
+}
+
+.wb-gam-level-progress__pct {
+	font-size: 0.75rem;
+	color: var(--wb-gam-silver);
+	text-align: right;
+}
+
+.wb-gam-level-progress__next {
+	font-size: 0.8125rem;
+	color: #6b7280;
+}
+
+.wb-gam-level-progress__next--max {
+	color: var(--wb-gam-gold);
+	font-weight: 600;
+}

@@ -1,0 +1,65 @@
+/**
+ * Member Points — frontend stylesheet.
+ *
+ * Phase F migration: extracted from assets/css/frontend.css so the
+ * block ships its own CSS via block.json (`style` field).
+ */
+
+/* ── Member Points ──────────────────────────────────────────────────────────── */
+.wb-gam-member-points {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+}
+
+.wb-gam-member-points__total {
+	display: flex;
+	align-items: baseline;
+	gap: 0.375rem;
+}
+
+.wb-gam-member-points__number {
+	font-size: 2rem;
+	font-weight: 700;
+	line-height: 1;
+	color: var(--wb-gam-primary);
+}
+
+.wb-gam-member-points__label {
+	font-size: 0.875rem;
+	color: var(--wb-gam-silver);
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+}
+
+.wb-gam-member-points__level {
+	display: flex;
+	align-items: center;
+	gap: 0.375rem;
+	font-weight: 500;
+}
+
+.wb-gam-member-points__level-icon {
+	flex-shrink: 0;
+}
+
+.wb-gam-member-points__progress {
+	height: 8px;
+	background: #e5e7eb;
+	border-radius: 999px;
+	overflow: hidden;
+}
+
+.wb-gam-member-points__progress-bar {
+	height: 100%;
+	width: var(--wb-gam-fill, 0%);
+	background: var(--wb-gam-primary);
+	border-radius: 999px;
+	transition: width 0.4s ease;
+}
+
+.wb-gam-member-points__next {
+	font-size: 0.8125rem;
+	color: var(--wb-gam-silver);
+	margin: 0;
+}

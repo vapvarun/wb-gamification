@@ -51,7 +51,6 @@ if ( ! empty( $wb_gam_attrs['cardBorderColor'] ) ) {
 }
 
 wp_enqueue_style( 'wb-gam-tokens' );
-wp_enqueue_style( 'wb-gamification' );
 
 if ( ! $wb_gam_user_id ) {
 	$wb_gam_classes[] = 'wb-gam-level-progress--guest';
