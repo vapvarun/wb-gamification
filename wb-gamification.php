@@ -216,8 +216,9 @@ final class WB_Gamification {
 		// Phase C: `redemption-store` migrated.
 		// Phase D.1: `member-points`, `streak`, `level-progress`, `earning-guide` migrated.
 		// Phase D.2: `leaderboard`, `top-members`, `points-history`, `badge-showcase`, `kudos-feed` migrated.
+		// Phase D.3: `challenges`, `community-challenges`, `cohort-rank` migrated.
 		// The build/Blocks/ Registrar (init@20) owns the migrated slugs now.
-		$blocks = array( 'challenges', 'year-recap', 'hub', 'community-challenges', 'cohort-rank' );
+		$blocks = array( 'year-recap', 'hub' );
 		foreach ( $blocks as $block ) {
 			$path = WB_GAM_PATH . 'blocks/' . $block;
 			if ( file_exists( $path . '/block.json' ) ) {
