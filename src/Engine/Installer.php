@@ -555,8 +555,9 @@ final class Installer {
 					'description'   => $description,
 					'category'      => $category,
 					'is_credential' => $is_credential,
+					'image_url'     => self::default_badge_image_url( $id ),
 				),
-				array( '%s', '%s', '%s', '%s', '%d' )
+				array( '%s', '%s', '%s', '%s', '%d', '%s' )
 			);
 
 			if ( isset( $conditions[ $id ] ) ) {
@@ -572,6 +573,44 @@ final class Installer {
 				);
 			}
 		}
+	}
+
+	/**
+	 * Resolve the bundled SVG asset for a given badge id.
+	 *
+	 * The plugin ships 37 ready-made badge SVGs in `assets/badges/`. Most
+	 * filenames match the badge id exactly; a handful predate the
+	 * naming convention and live under a slightly different filename
+	 * (e.g. `tenure_1yr` → `1_year_member.svg`). The mapping below
+	 * captures those exceptions so the seed inserts the right URL on
+	 * first install and `DbUpgrader::backfill_default_badge_images()`
+	 * can replay the same logic on existing sites.
+	 *
+	 * @param string $id Badge id from the seed list.
+	 * @return string Absolute URL to the bundled SVG, or '' when the
+	 *                badge id has no shipped artwork.
+	 */
+	public static function default_badge_image_url( string $id ): string {
+		static $aliases = array(
+			'first_100_day_streak' => 'century_streak_pioneer',
+			'first_10k_points'     => 'first_10k',
+			'first_friend'         => 'first_connection',
+			'five_thousand_points' => 'five_thousand_strong',
+			'ten_thousand_points'  => 'ten_thousand_club',
+			'tenure_1yr'           => '1_year_member',
+			'tenure_2yr'           => '2_year_member',
+			'tenure_5yr'           => '5_year_member',
+			'tenure_10yr'          => '10_year_member',
+		);
+
+		$slug = $aliases[ $id ] ?? $id;
+		$path = WB_GAM_PATH . 'assets/badges/' . $slug . '.svg';
+
+		if ( ! file_exists( $path ) ) {
+			return '';
+		}
+
+		return WB_GAM_URL . 'assets/badges/' . $slug . '.svg';
 	}
 
 	/**

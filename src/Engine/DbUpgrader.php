@@ -83,6 +83,7 @@ final class DbUpgrader {
 			'0.5.0' => 'upgrade_to_0_5_0',
 			'1.0.0' => 'upgrade_to_1_0_0',
 			'1.1.0' => 'upgrade_to_1_1_0',
+			'1.2.0' => 'upgrade_to_1_2_0',
 		);
 	}
 
@@ -281,5 +282,43 @@ final class DbUpgrader {
 		$wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}wb_gam_user_cosmetics" );
 		$wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}wb_gam_cosmetics" );
 		// phpcs:enable WordPress.DB.DirectDatabaseQuery.SchemaChange
+	}
+
+	/**
+	 * 1.2.0 — Backfill `image_url` on the seeded badge defs.
+	 *
+	 * The plugin has shipped 37 ready-made badge SVGs in `assets/badges/`
+	 * since 0.4.0, but `Installer::seed_default_badges()` was inserting
+	 * rows with `image_url = NULL`, so `badge-showcase` blocks rendered
+	 * the 🏅 placeholder for every default badge. This migration walks
+	 * the badge_defs table on existing installs and links each row to
+	 * its bundled SVG via `Installer::default_badge_image_url()`,
+	 * touching only rows whose `image_url` is currently NULL or empty
+	 * so admin-customised artwork is preserved.
+	 */
+	private static function upgrade_to_1_2_0(): void {
+		global $wpdb;
+
+		$table = $wpdb->prefix . 'wb_gam_badge_defs';
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from $wpdb->prefix.
+		$ids = $wpdb->get_col( "SELECT id FROM `{$table}` WHERE image_url IS NULL OR image_url = ''" );
+		if ( ! is_array( $ids ) || empty( $ids ) ) {
+			return;
+		}
+
+		foreach ( $ids as $id ) {
+			$url = Installer::default_badge_image_url( (string) $id );
+			if ( '' === $url ) {
+				continue;
+			}
+			$wpdb->update(
+				$table,
+				array( 'image_url' => $url ),
+				array( 'id' => $id ),
+				array( '%s' ),
+				array( '%s' )
+			);
+		}
 	}
 }
