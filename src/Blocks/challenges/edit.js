@@ -1,0 +1,85 @@
+import { __ } from '@wordpress/i18n';
+import { useBlockProps, InspectorControls } from '@wordpress/block-editor';
+import { PanelBody, ToggleControl, TextControl, RangeControl } from '@wordpress/components';
+import { useState } from '@wordpress/element';
+import ServerSideRender from '@wordpress/server-side-render';
+
+import {
+	useUniqueId,
+	StandardLayoutPanel,
+	StandardStylePanel,
+} from '../../shared';
+
+const Edit = ( { attributes, setAttributes, clientId } ) => {
+	const {
+		uniqueId,
+		user_id: userId,
+		show_completed: showCompleted,
+		show_progress_bar: showBar,
+		limit,
+	} = attributes;
+
+	useUniqueId( clientId, uniqueId, setAttributes );
+	const [ device, setDevice ] = useState( 'Desktop' );
+
+	const blockProps = useBlockProps( {
+		className: `wb-gam-block-${ uniqueId } wb-gam-challenges is-editor-preview`,
+	} );
+
+	return (
+		<>
+			<InspectorControls>
+				<PanelBody title={ __( 'Content', 'wb-gamification' ) } initialOpen>
+					<TextControl
+						label={ __( 'User ID', 'wb-gamification' ) }
+						help={ __( '0 = currently logged-in user.', 'wb-gamification' ) }
+						value={ String( userId ?? 0 ) }
+						type="number"
+						onChange={ ( value ) => setAttributes( { user_id: parseInt( value, 10 ) || 0 } ) }
+						__nextHasNoMarginBottom
+					/>
+					<ToggleControl
+						label={ __( 'Show completed challenges', 'wb-gamification' ) }
+						checked={ !! showCompleted }
+						onChange={ ( value ) => setAttributes( { show_completed: !! value } ) }
+					/>
+					<ToggleControl
+						label={ __( 'Show progress bars', 'wb-gamification' ) }
+						checked={ !! showBar }
+						onChange={ ( value ) => setAttributes( { show_progress_bar: !! value } ) }
+					/>
+					<RangeControl
+						label={ __( 'Limit (0 = all)', 'wb-gamification' ) }
+						value={ limit }
+						min={ 0 }
+						max={ 50 }
+						onChange={ ( value ) => setAttributes( { limit: value ?? 0 } ) }
+					/>
+				</PanelBody>
+
+				<StandardLayoutPanel
+					attributes={ attributes }
+					setAttributes={ setAttributes }
+					device={ device }
+					onDeviceChange={ setDevice }
+					uniqueId={ uniqueId }
+				/>
+
+				<StandardStylePanel
+					attributes={ attributes }
+					setAttributes={ setAttributes }
+					device={ device }
+					onDeviceChange={ setDevice }
+					uniqueId={ uniqueId }
+					accentLabel={ __( 'Challenges accent', 'wb-gamification' ) }
+				/>
+			</InspectorControls>
+
+			<div { ...blockProps }>
+				<ServerSideRender block="wb-gamification/challenges" attributes={ attributes } />
+			</div>
+		</>
+	);
+};
+
+export default Edit;
