@@ -38,7 +38,6 @@ if ( ! empty( $wb_gam_attrs['cardBorderColor'] ) ) {
 $wb_gam_classes = array_filter( array( 'wb-gam-community-challenges', 'wb-gam-block-' . $wb_gam_unique, $wb_gam_visibility ) );
 
 wp_enqueue_style( 'wb-gam-tokens' );
-wp_enqueue_style( 'wb-gamification' );
 
 $wb_gam_challenges = CommunityChallengeEngine::get_active();
 if ( $wb_gam_limit > 0 ) {

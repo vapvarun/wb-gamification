@@ -120,7 +120,6 @@ $wb_gam_wrapper_attrs = get_block_wrapper_attributes(
 );
 
 wp_enqueue_style( 'wb-gam-tokens' );
-wp_enqueue_style( 'wb-gamification' );
 
 BlockHooks::before(
 	'redemption-store',

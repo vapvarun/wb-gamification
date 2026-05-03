@@ -48,7 +48,6 @@ if ( ! empty( $wb_gam_attrs['cardBorderColor'] ) ) {
 $wb_gam_classes = array_filter( array( 'wb-gam-badge-showcase', 'wb-gam-block-' . $wb_gam_unique, $wb_gam_visibility ) );
 
 wp_enqueue_style( 'wb-gam-tokens' );
-wp_enqueue_style( 'wb-gamification' );
 
 $wb_gam_badges = $wb_gam_show_locked
 	? BadgeEngine::get_all_badges_for_user( $wb_gam_user_id )

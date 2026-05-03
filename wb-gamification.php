@@ -244,12 +244,12 @@ final class WB_Gamification {
 			array( 'wb-gam-tokens' ),
 			WB_GAM_VERSION
 		);
-		wp_register_script_module(
-			'wb-gamification-interactivity',
-			WB_GAM_URL . 'assets/interactivity/index.js',
-			array(),
-			WB_GAM_VERSION
-		);
+		// `wb-gamification-interactivity` removed in Phase F. The legacy
+		// IA store at `assets/interactivity/index.js` was orphaned once
+		// every block migrated to `viewScriptModule` (Phases C → D.5);
+		// no remaining code path enqueued the handle. The hub block
+		// continues to use its own dedicated module
+		// (`assets/interactivity/hub.js` / `wb-gamification-hub`).
 
 		// Lucide icon font — bundled locally for hub page.
 		wp_register_style(
