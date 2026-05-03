@@ -47,7 +47,6 @@ if ( ! empty( $wb_gam_attrs['cardBorderColor'] ) ) {
 }
 
 wp_enqueue_style( 'wb-gam-tokens' );
-wp_enqueue_style( 'wb-gamification' );
 
 $wb_gam_rows = LeaderboardEngine::get_leaderboard( $wb_gam_period, $wb_gam_limit );
 

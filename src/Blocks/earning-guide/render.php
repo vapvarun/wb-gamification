@@ -48,7 +48,6 @@ if ( ! empty( $wb_gam_attrs['cardBorderColor'] ) ) {
 }
 
 wp_enqueue_style( 'wb-gam-tokens' );
-wp_enqueue_style( 'wb-gamification' );
 
 $wb_gam_actions = Registry::get_actions();
 

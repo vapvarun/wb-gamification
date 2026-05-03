@@ -1,0 +1,80 @@
+/**
+ * Streak — frontend stylesheet.
+ *
+ * Phase F migration: extracted from assets/css/frontend.css so the
+ * block ships its own CSS via block.json (`style` field).
+ */
+
+/* ── Streak ──────────────────────────────────────────────────────────────────── */
+.wb-gam-streak {
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+}
+
+.wb-gam-streak__stats {
+	display: flex;
+	gap: 1.5rem;
+	align-items: flex-end;
+}
+
+.wb-gam-streak__stat {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 0.25rem;
+}
+
+.wb-gam-streak__flame {
+	font-size: 1.75rem;
+	line-height: 1;
+}
+
+.wb-gam-streak__number {
+	font-size: 2.25rem;
+	font-weight: 800;
+	line-height: 1;
+	color: var(--wb-gam-primary);
+}
+
+.wb-gam-streak__number--longest {
+	font-size: 1.5rem;
+	color: var(--wb-gam-silver);
+}
+
+.wb-gam-streak__label {
+	font-size: 0.75rem;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	color: var(--wb-gam-silver);
+}
+
+.wb-gam-streak__nudge {
+	font-size: 0.875rem;
+	color: #6b7280;
+	margin: 0;
+}
+
+.wb-gam-streak__nudge--elite {
+	color: var(--wb-gam-gold);
+	font-weight: 600;
+}
+
+/* Heatmap */
+.wb-gam-streak__heatmap {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 3px;
+}
+
+.wb-gam-streak__cell {
+	width: 12px;
+	height: 12px;
+	border-radius: 2px;
+	background: #e5e7eb;
+}
+
+.wb-gam-streak__cell-1 { background: #c4b5fd; }
+.wb-gam-streak__cell-2 { background: #a78bfa; }
+.wb-gam-streak__cell-3 { background: #7c3aed; }
+.wb-gam-streak__cell-4 { background: #4c1d95; }

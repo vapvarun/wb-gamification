@@ -136,7 +136,13 @@ add_filter( 'wb_gam_admin_submenu_pages', function( $pages ) {
 
 ---
 
-### G8 — Blocks below the Wbcom Block Quality Standard [MEDIUM]
+### G8 — Blocks below the Wbcom Block Quality Standard [MEDIUM] — **CLOSED 2026-05-03**
+
+> Migration shipped across PRs #21 → #30 (plan + 5 phases A → E + Phase F dead-code drop). All 15 blocks now consume `--wb-gam-*` design tokens, declare the standard attribute schema, register via `WBGam\Blocks\Registrar` from `build/Blocks/<slug>/`, and gate on `bin/check-block-standard.sh` (CI stage 2.3). Phase F also removed the orphaned `assets/interactivity/index.js` registration.
+
+> **Phase G (deferred follow-up):** the legacy block-specific selectors in `assets/css/frontend.css` (1,425 lines) still ship alongside the migrated blocks. Phase G will extract per-block CSS sections into `src/Blocks/<slug>/style.css` files, bundled via `@wordpress/scripts`, and shrink `frontend.css` to shared utilities only (toasts, overlays, empty states, design-token aliases). Estimated 4–6 h with browser regression testing of all 15 blocks at 4 viewports — best as its own PR after #30 lands.
+
+
 
 **Problem.** All 15 Gutenberg blocks violate the canonical Wbcom Block Quality Standard documented in `~/.claude/skills/wp-block-development/references/block-quality-standard.md` (derived from auditing Kadence Blocks, Stackable, Spectra, Otter Blocks). Plugin has no `src/shared/` infrastructure, no design tokens, no responsive editor controls (Desktop/Tablet/Mobile), no per-side spacing, no hover states, no per-instance scoped CSS, and no editor InspectorControls panels on most blocks.
 

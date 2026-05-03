@@ -1,0 +1,220 @@
+/**
+ * Points History — frontend stylesheet.
+ *
+ * Phase F migration: extracted from assets/css/frontend.css so the
+ * block ships its own CSS via block.json (`style` field).
+ */
+
+/* ── Points History ─────────────────────────────────────────────────────────── */
+.wb-gam-points-history__list {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+}
+
+.wb-gam-points-history__item {
+	display: flex;
+	align-items: center;
+	gap: var(--wb-gam-gap);
+	padding: 0.625rem 0.25rem;
+	border-bottom: 1px solid #f3f4f6;
+}
+
+.wb-gam-points-history__item:last-child {
+	border-bottom: none;
+}
+
+.wb-gam-points-history__action {
+	flex: 1;
+	font-size: 0.9375rem;
+	font-weight: 500;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.wb-gam-points-history__points {
+	font-size: 0.9375rem;
+	font-weight: 700;
+	white-space: nowrap;
+	min-width: 4.5rem;
+	text-align: right;
+}
+
+.wb-gam-points-history__item--positive .wb-gam-points-history__points {
+	color: #10b981;
+}
+
+.wb-gam-points-history__item--negative .wb-gam-points-history__points {
+	color: #ef4444;
+}
+
+.wb-gam-points-history__date {
+	font-size: 0.8125rem;
+	color: var(--wb-gam-silver);
+	white-space: nowrap;
+	min-width: 5.5rem;
+	text-align: right;
+}
+
+.wb-gam-points-history__empty {
+	color: var(--wb-gam-silver);
+	font-size: 0.9375rem;
+	text-align: center;
+	padding: 2rem;
+	margin: 0;
+}
+
+.wb-gam-progress-fill {
+	width: var(--wb-gam-fill, 0%);
+}
+
+/* ==========================================================================
+   Earning Guide
+   ========================================================================== */
+
+.wb-gam-earning-guide__category {
+	font-size: 12px;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+	color: var(--wb-gam-text-secondary, #6b7280);
+	margin: 24px 0 12px;
+	padding: 0;
+}
+
+.wb-gam-earning-guide__category:first-child {
+	margin-top: 0;
+}
+
+.wb-gam-earning-guide__grid {
+	display: grid;
+	gap: 12px;
+}
+
+.wb-gam-earning-guide__card {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding: 12px 16px;
+	background: var(--wb-gam-card-bg, #fff);
+	border: 1px solid var(--wb-gam-border, #e5e7eb);
+	border-radius: 8px;
+	transition: box-shadow 0.15s ease;
+}
+
+.wb-gam-earning-guide__card:hover {
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.wb-gam-earning-guide__icon {
+	font-size: 20px;
+	width: 20px;
+	height: 20px;
+	color: var(--wb-gam-primary, #3b82f6);
+	flex-shrink: 0;
+}
+
+.wb-gam-earning-guide__label {
+	flex: 1;
+	font-size: 14px;
+	color: var(--wb-gam-text, #1e1e1e);
+}
+
+.wb-gam-earning-guide__pts {
+	font-size: 13px;
+	font-weight: 700;
+	color: var(--wb-gam-primary, #3b82f6);
+	white-space: nowrap;
+}
+
+.wb-gam-earning-guide__empty,
+.wb-gam-year-recap__empty {
+	color: var(--wb-gam-silver);
+	font-size: 0.9375rem;
+	text-align: center;
+	padding: 2rem;
+	margin: 0;
+}
+
+@media (max-width: 480px) {
+	.wb-gam-earning-guide__grid {
+		grid-template-columns: 1fr !important;
+	}
+}
+
+/* ─── Phase D.1 responsive baseline ─────────────────────────────────────────
+ * Mobile-first breakpoints for the four migrated static-display blocks.
+ * Phase E will fold these into per-block style.css files; for now they
+ * keep the legacy markup behaving correctly at narrow viewports.
+ */
+
+@media (max-width: 1024px) {
+	.wb-gam-earning-guide__grid {
+		grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+	}
+}
+
+@media (max-width: 640px) {
+	.wb-gam-member-points {
+		gap: 0.5rem;
+	}
+
+	.wb-gam-member-points__number {
+		font-size: 2.25rem;
+	}
+
+	.wb-gam-streak__stats {
+		gap: 1rem;
+		flex-wrap: wrap;
+	}
+
+	.wb-gam-streak__number {
+		font-size: 1.875rem;
+	}
+
+	.wb-gam-streak__heatmap {
+		overflow-x: auto;
+		flex-wrap: nowrap;
+		padding-block-end: 4px;
+	}
+
+	.wb-gam-level-progress__header {
+		flex-wrap: wrap;
+	}
+
+	.wb-gam-level-progress__name {
+		font-size: 1rem;
+	}
+
+	.wb-gam-earning-guide__grid {
+		grid-template-columns: 1fr !important;
+	}
+
+	.wb-gam-earning-guide__card {
+		padding: 12px 14px;
+	}
+}
+
+@media (max-width: 390px) {
+	.wb-gam-member-points__total {
+		flex-direction: row;
+		align-items: baseline;
+		gap: 0.5rem;
+	}
+
+	.wb-gam-streak__number {
+		font-size: 1.625rem;
+	}
+
+	.wb-gam-level-progress__icon {
+		width: 36px;
+		height: 36px;
+	}
+
+	.wb-gam-earning-guide__category {
+		font-size: 1rem;
+	}
+}
