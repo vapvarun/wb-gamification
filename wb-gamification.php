@@ -212,13 +212,11 @@ final class WB_Gamification {
 	}
 
 	public function register_blocks(): void {
-		// Wbcom Block Quality Standard migration complete (Phases C → D.5).
-		// Every block now ships from `build/Blocks/<slug>/` via the
-		// `WBGam\Blocks\Registrar` registered at init@20. The legacy
-		// hardcoded list below is intentionally empty and stays only as a
-		// safety net for plugin extensions that drop block.json files
-		// into `blocks/<slug>/` directly.
-		$blocks = array();
+		// Legacy hardcoded list — shrinks as blocks migrate to src/Blocks/* + build/Blocks/*.
+		// Phase C: `redemption-store` migrated.
+		// Phase D.1: `member-points`, `streak`, `level-progress`, `earning-guide` migrated.
+		// The build/Blocks/ Registrar (init@20) owns the migrated slugs now.
+		$blocks = array( 'leaderboard', 'badge-showcase', 'challenges', 'top-members', 'kudos-feed', 'year-recap', 'points-history', 'hub', 'community-challenges', 'cohort-rank' );
 		foreach ( $blocks as $block ) {
 			$path = WB_GAM_PATH . 'blocks/' . $block;
 			if ( file_exists( $path . '/block.json' ) ) {
