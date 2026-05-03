@@ -1,0 +1,7 @@
+=== WB Gamification coding-rules check ===
+Plugin: /Users/varundubey/Local Sites/wb-gamification/app/public/wp-content/plugins/wb-gamification
+
+✓ Rule 1 — no native cap checks for wb-gamification/* abilities
+✓ Rule 2 — REST __return_true usage is on the allowlist only
+
+All coding rules pass.
