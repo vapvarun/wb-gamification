@@ -115,7 +115,7 @@ final class ApiKeysPage {
 			<h1 class="wbgam-page-title"><?php esc_html_e( 'API Keys', 'wb-gamification' ); ?></h1>
 			<p class="wbgam-page-desc"><?php esc_html_e( 'Generate API keys for remote sites to connect to this gamification center. Keys authenticate via the X-WB-Gam-Key header.', 'wb-gamification' ); ?></p>
 
-			<div class="notice notice-success wb-gam-notice" data-wb-gam-api-keys-fresh style="display:none;">
+			<div class="notice notice-success wb-gam-notice is-dismissible" data-wb-gam-api-keys-fresh style="display:none;">
 				<p><strong><?php esc_html_e( 'New API key generated. Copy it now — it will not be shown again:', 'wb-gamification' ); ?></strong></p>
 				<p><code class="wbgam-key-display" data-wb-gam-api-keys-fresh-code></code></p>
 			</div>

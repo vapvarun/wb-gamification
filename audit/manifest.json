@@ -1719,6 +1719,64 @@
         }
       ],
       "verdict": "1 real drift fixed (period); 2 false positives documented. Re-running wppqa_check_enum_consistency will still report all 3 — the linter's grouping heuristic doesn't follow context. Acknowledge and proceed."
+    },
+    "wppqa_audit_plugin_findings": {
+      "ran_at": "2026-05-03T19:50:00Z",
+      "site_url": "http://wb-gamification.local",
+      "overall_score": 63,
+      "tier": "basic",
+      "maturity_by_area": {
+        "Data Model": {
+          "score": 40,
+          "level": "basic",
+          "details": "18 custom tables"
+        },
+        "API Layer": {
+          "score": 52,
+          "level": "basic",
+          "details": "45 REST routes"
+        },
+        "Admin UI": {
+          "score": 40,
+          "level": "basic",
+          "details": "9 admin pages"
+        },
+        "Block Editor": {
+          "score": 60,
+          "level": "basic",
+          "details": "15 blocks"
+        },
+        "Lifecycle": {
+          "score": 0,
+          "level": "missing",
+          "details": "linter false positive — register_activation/deactivation_hook + uninstall.php all present and verified"
+        },
+        "Extensibility": {
+          "score": 100,
+          "level": "excellent",
+          "details": "86 custom hooks, 1 template"
+        },
+        "Integrations": {
+          "score": 100,
+          "level": "excellent",
+          "details": "1 integration, 8 CLI commands"
+        },
+        "Automation": {
+          "score": 50,
+          "level": "basic",
+          "details": "2 cron jobs (under-counted: actually 9, see audit/manifest.json#/cron)"
+        }
+      },
+      "gap_analysis_triage": {
+        "GAP-001 REST-AUTH (critical)": "false_positive — 19 routes use __return_true per the documented public allowlist (catalog reads, OG share, OpenBadges credential, leaderboard, OpenAPI spec). bin/coding-rules-check.sh Rule 2 enforces the allowlist and currently passes.",
+        "GAP-004 DB-UNINSTALL (critical)": "false_positive — uninstall.php exists at plugin root with 4908 bytes (drops all 18 tables, options, transients, cron, AS tasks, user meta).",
+        "GAP-005 DB-ACTIVATION (critical)": "false_positive — register_activation_hook at wb-gamification.php:363 calls Installer::install() + 8 engine activation methods.",
+        "GAP-006 CRON-DEACTIVATION (critical)": "false_positive — register_deactivation_hook at wb-gamification.php:381 calls 8 engine deactivation methods + flush_rewrite_rules. 9 wp_clear_scheduled_hook / wp_unschedule_event call sites confirmed across engine classes.",
+        "GAP-002 ADMIN-SETTINGS (important)": "intentional — plugin uses central FeatureFlags + custom admin REST save handlers (Tier 0.C migration), not WP Settings API. Architectural choice for cross-cutting state vs per-page settings_field rows.",
+        "GAP-007 TEMPLATE-HOOKS (important)": "partially_resolved — 86 custom hooks fired across blocks + REST + engine; templates/ dir is intentionally thin (most rendering happens via block render.php which IS heavily hookable).",
+        "GAP-008 WIRING-ISSUES (important)": "contradicted — wppqa_check_rest_js_contract returns passed=2 failed=0. The 'broken AJAX calls / dead handlers / nonce mismatches' rule didn't surface specifics; the more granular contract check is authoritative."
+      },
+      "verdict": "0 real issues from the comprehensive audit. All 4 critical + 3 important gaps are false positives or intentional architecture; verified line-by-line. The 63/100 score reflects pattern-matching limits, not actual maturity. Static gates remain failed=0 across all 4 wppqa specific checks."
     }
   },
   "buddypress_integration": {
@@ -1969,7 +2027,7 @@
     ]
   },
   "generated": {
-    "at": "2026-05-03T19:30:00Z",
+    "at": "2026-05-03T19:50:00Z",
     "from": "wp-plugin-onboard skill",
     "branch": "main",
     "schema_version": "v2.2",
