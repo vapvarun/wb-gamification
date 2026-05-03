@@ -1349,3 +1349,77 @@
 		grid-template-columns: 1fr !important;
 	}
 }
+
+/* ─── Phase D.1 responsive baseline ─────────────────────────────────────────
+ * Mobile-first breakpoints for the four migrated static-display blocks.
+ * Phase E will fold these into per-block style.css files; for now they
+ * keep the legacy markup behaving correctly at narrow viewports.
+ */
+
+@media (max-width: 1024px) {
+	.wb-gam-earning-guide__grid {
+		grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+	}
+}
+
+@media (max-width: 640px) {
+	.wb-gam-member-points {
+		gap: 0.5rem;
+	}
+
+	.wb-gam-member-points__number {
+		font-size: 2.25rem;
+	}
+
+	.wb-gam-streak__stats {
+		gap: 1rem;
+		flex-wrap: wrap;
+	}
+
+	.wb-gam-streak__number {
+		font-size: 1.875rem;
+	}
+
+	.wb-gam-streak__heatmap {
+		overflow-x: auto;
+		flex-wrap: nowrap;
+		padding-block-end: 4px;
+	}
+
+	.wb-gam-level-progress__header {
+		flex-wrap: wrap;
+	}
+
+	.wb-gam-level-progress__name {
+		font-size: 1rem;
+	}
+
+	.wb-gam-earning-guide__grid {
+		grid-template-columns: 1fr !important;
+	}
+
+	.wb-gam-earning-guide__card {
+		padding: 12px 14px;
+	}
+}
+
+@media (max-width: 390px) {
+	.wb-gam-member-points__total {
+		flex-direction: row;
+		align-items: baseline;
+		gap: 0.5rem;
+	}
+
+	.wb-gam-streak__number {
+		font-size: 1.625rem;
+	}
+
+	.wb-gam-level-progress__icon {
+		width: 36px;
+		height: 36px;
+	}
+
+	.wb-gam-earning-guide__category {
+		font-size: 1rem;
+	}
+}
