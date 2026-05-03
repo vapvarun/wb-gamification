@@ -1,13 +1,16 @@
 <?php
 /**
- * Auto-registers wb-gamification blocks from `build/blocks/*\/block.json`.
+ * Auto-registers wb-gamification blocks from `build/Blocks/*\/block.json`.
  *
  * Phase B of the Wbcom Block Quality Standard migration introduces this
- * registrar so that blocks compiled from `src/blocks/<slug>/` via
+ * registrar so that blocks compiled from `src/Blocks/<slug>/` via
  * `npm run build` are discovered without hand-editing the bootstrap.
  * Hardcoded entries in `WB_Gamification::register_blocks()` shrink as
  * blocks migrate; the Registrar takes ownership of every slug listed
- * under `build/blocks/`.
+ * under `build/Blocks/`.
+ *
+ * Capital `Blocks/` is intentional — it matches both the `WBGam\Blocks\`
+ * PSR-4 namespace and works on case-sensitive Linux filesystems.
  *
  * @see plans/WBCOM-BLOCK-STANDARD-MIGRATION.md Phase B.6
  *
@@ -32,7 +35,7 @@ final class Registrar {
 	private static $registered = array();
 
 	/**
-	 * Absolute path to the build directory containing `blocks/`.
+	 * Absolute path to the build directory containing `Blocks/`.
 	 *
 	 * @var string
 	 */
@@ -41,10 +44,15 @@ final class Registrar {
 	/**
 	 * Construct the registrar with the directory it should scan.
 	 *
+	 * The directory is `<build_dir>/Blocks/` to match the PSR-4 layout
+	 * — `src/Blocks/<slug>/block.json` compiles to
+	 * `build/Blocks/<slug>/block.json`. The path is intentionally
+	 * case-sensitive (matters on Linux production filesystems).
+	 *
 	 * @param string $build_dir Absolute path. Trailing slash optional.
 	 */
 	public function __construct( string $build_dir ) {
-		$this->build_dir = trailingslashit( $build_dir ) . 'blocks/';
+		$this->build_dir = trailingslashit( $build_dir ) . 'Blocks/';
 	}
 
 	/**

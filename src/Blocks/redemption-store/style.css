@@ -1,0 +1,341 @@
+/**
+ * Redemption Store — frontend stylesheet.
+ *
+ * Phase C of the Wbcom Block Quality Standard migration moves the
+ * previous inline `<style>` block into a tokenised stylesheet served
+ * by `@wordpress/scripts`. Per-instance overrides (padding, margin,
+ * shadow, radius, accent colour) are emitted by `WBGam\Blocks\CSS`
+ * scoped to `.wb-gam-block-{uniqueId}`; this file holds only the
+ * shared structural and default visual rules.
+ *
+ * Design tokens (`--wb-gam-*` variables) load via the global
+ * `wb-gam-tokens` stylesheet handle (`src/shared/design-tokens.css`)
+ * which `render.php` enqueues. Importing tokens from JS would land
+ * them in the editor chunk under wp-scripts' default style split, so
+ * we keep them as a separate, plain CSS asset registered from PHP.
+ *
+ * @see src/shared/design-tokens.css for the --wb-gam-* token contract.
+ */
+
+.wb-gam-redemption {
+	/* Block-local theming proxies — every value flows from the global
+	   `--wb-gam-*` token contract (src/shared/design-tokens.css,
+	   enqueued via the `wb-gam-tokens` handle). No hardcoded hex; if a
+	   token is missing the cascade inherits from the parent / theme. */
+	--wb-gam-redemption-accent: var( --wb-gam-color-accent );
+	--wb-gam-redemption-accent-hover: var( --wb-gam-color-accent-hover );
+	--wb-gam-redemption-text-on-accent: var( --wb-gam-color-white );
+	--wb-gam-redemption-card-bg: var( --wb-gam-color-white );
+	--wb-gam-redemption-card-border: var( --wb-gam-color-border );
+	--wb-gam-redemption-text: var( --wb-gam-color-text );
+	--wb-gam-redemption-muted: var( --wb-gam-color-text-muted );
+	--wb-gam-redemption-muted-bg: var( --wb-gam-color-accent-light );
+	--wb-gam-redemption-disabled: var( --wb-gam-color-surface-alt );
+	--wb-gam-redemption-cols: 3;
+
+	font-family: var( --wp--preset--font-family--system, system-ui, -apple-system, sans-serif );
+	color: var( --wb-gam-redemption-text );
+	display: block;
+}
+
+.wb-gam-redemption[ data-columns="1" ] { --wb-gam-redemption-cols: 1; }
+.wb-gam-redemption[ data-columns="2" ] { --wb-gam-redemption-cols: 2; }
+.wb-gam-redemption[ data-columns="3" ] { --wb-gam-redemption-cols: 3; }
+.wb-gam-redemption[ data-columns="4" ] { --wb-gam-redemption-cols: 4; }
+
+.wb-gam-redemption__header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var( --wb-gam-space-md );
+	margin-bottom: var( --wb-gam-space-lg );
+	flex-wrap: wrap;
+}
+
+.wb-gam-redemption__title {
+	margin: 0;
+	font-size: var( --wb-gam-font-2xl );
+	font-weight: var( --wb-gam-weight-bold, 700 );
+	line-height: 1.2;
+	letter-spacing: -0.01em;
+}
+
+.wb-gam-redemption__balance {
+	display: inline-flex;
+	align-items: baseline;
+	gap: 6px;
+	background: var( --wb-gam-redemption-muted-bg );
+	color: var( --wb-gam-redemption-accent );
+	padding: 8px 16px;
+	border-radius: var( --wb-gam-radius-full );
+	font-weight: var( --wb-gam-weight-semibold, 600 );
+	font-size: var( --wb-gam-font-sm );
+	white-space: nowrap;
+}
+
+.wb-gam-redemption__grid {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: grid;
+	gap: var( --wb-gam-space-md );
+	grid-template-columns: repeat( var( --wb-gam-redemption-cols ), minmax( 0, 1fr ) );
+}
+
+.wb-gam-redemption__card {
+	display: flex;
+	flex-direction: column;
+	gap: var( --wb-gam-space-sm );
+	background: var( --wb-gam-redemption-card-bg );
+	border: 1px solid var( --wb-gam-redemption-card-border );
+	border-radius: var( --wb-gam-radius-lg );
+	padding: var( --wb-gam-space-lg );
+	transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+	min-height: 200px;
+}
+
+.wb-gam-redemption__card:hover {
+	transform: translateY( -2px );
+	box-shadow: var( --wb-gam-shadow-md );
+	border-color: var( --wb-gam-color-accent-ring );
+}
+
+.wb-gam-redemption__name {
+	margin: 0;
+	font-size: var( --wb-gam-font-md );
+	font-weight: var( --wb-gam-weight-semibold, 600 );
+	line-height: 1.35;
+	color: var( --wb-gam-redemption-text );
+}
+
+.wb-gam-redemption__desc {
+	margin: 0;
+	color: var( --wb-gam-redemption-muted );
+	font-size: var( --wb-gam-font-sm );
+	line-height: 1.5;
+}
+
+.wb-gam-redemption__meta {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: var( --wb-gam-space-sm );
+	padding-top: var( --wb-gam-space-xs );
+	border-top: 1px dashed var( --wb-gam-redemption-card-border );
+	margin-top: var( --wb-gam-space-xs );
+}
+
+.wb-gam-redemption__cost {
+	font-weight: var( --wb-gam-weight-bold, 700 );
+	font-size: var( --wb-gam-font-xl );
+	color: var( --wb-gam-redemption-accent );
+	line-height: 1;
+}
+
+.wb-gam-redemption__cost-unit {
+	font-weight: var( --wb-gam-weight-medium, 500 );
+	color: var( --wb-gam-redemption-muted );
+	margin-left: 4px;
+	font-size: var( --wb-gam-font-xs );
+	letter-spacing: 0.02em;
+	text-transform: uppercase;
+}
+
+.wb-gam-redemption__stock {
+	font-size: var( --wb-gam-font-xs );
+	color: var( --wb-gam-redemption-muted );
+	font-weight: var( --wb-gam-weight-medium, 500 );
+}
+
+.wb-gam-redemption__stock.is-out {
+	color: var( --wb-gam-color-danger );
+	font-weight: var( --wb-gam-weight-semibold, 600 );
+}
+
+.wb-gam-redemption__action {
+	margin-top: auto;
+	display: flex;
+	flex-direction: column;
+	gap: var( --wb-gam-space-xs );
+}
+
+.wb-gam-redemption__btn {
+	width: 100%;
+	padding: 12px 16px;
+	border: 0;
+	border-radius: var( --wb-gam-radius-md );
+	background: var( --wb-gam-redemption-accent );
+	color: var( --wb-gam-redemption-text-on-accent );
+	font-weight: var( --wb-gam-weight-semibold, 600 );
+	font-size: var( --wb-gam-font-sm );
+	cursor: pointer;
+	transition: background 0.15s ease, opacity 0.15s ease;
+	letter-spacing: 0.01em;
+}
+
+.wb-gam-redemption__btn:hover:not( [ disabled ] ),
+.wb-gam-redemption__btn:focus-visible:not( [ disabled ] ) {
+	background: var( --wb-gam-redemption-accent-hover );
+}
+
+.wb-gam-redemption__btn:focus-visible {
+	outline: 3px solid var( --wb-gam-color-focus );
+	outline-offset: 2px;
+}
+
+.wb-gam-redemption__btn[ disabled ] {
+	background: var( --wb-gam-color-disabled );
+	color: var( --wb-gam-color-disabled-text );
+	cursor: not-allowed;
+}
+
+.wb-gam-redemption__btn.is-loading {
+	opacity: 0.65;
+	pointer-events: none;
+}
+
+.wb-gam-redemption__login {
+	display: inline-block;
+	padding: 10px 14px;
+	border-radius: var( --wb-gam-radius-md );
+	background: var( --wb-gam-redemption-muted-bg );
+	color: var( --wb-gam-redemption-accent );
+	text-align: center;
+	text-decoration: none;
+	font-weight: var( --wb-gam-weight-semibold, 600 );
+	width: 100%;
+	box-sizing: border-box;
+	transition: background 0.15s ease;
+}
+
+.wb-gam-redemption__login:hover,
+.wb-gam-redemption__login:focus-visible {
+	background: var( --wb-gam-color-accent-light );
+}
+
+.wb-gam-redemption__confirm {
+	background: var( --wb-gam-redemption-card-bg );
+	border: 1px solid var( --wb-gam-redemption-card-border );
+	border-radius: var( --wb-gam-radius-md );
+	padding: var( --wb-gam-space-sm );
+	font-size: var( --wb-gam-font-sm );
+	display: flex;
+	flex-direction: column;
+	gap: var( --wb-gam-space-xs );
+}
+
+.wb-gam-redemption__confirm-message {
+	margin: 0;
+	color: var( --wb-gam-redemption-text );
+}
+
+.wb-gam-redemption__confirm-actions {
+	display: flex;
+	gap: var( --wb-gam-space-xs );
+}
+
+.wb-gam-redemption__confirm-yes,
+.wb-gam-redemption__confirm-no {
+	flex: 1;
+	padding: 8px 12px;
+	border-radius: var( --wb-gam-radius-sm );
+	border: 1px solid var( --wb-gam-redemption-card-border );
+	background: var( --wb-gam-redemption-card-bg );
+	color: var( --wb-gam-redemption-text );
+	font-weight: var( --wb-gam-weight-semibold, 600 );
+	font-size: var( --wb-gam-font-xs );
+	cursor: pointer;
+}
+
+.wb-gam-redemption__confirm-yes {
+	background: var( --wb-gam-redemption-accent );
+	border-color: var( --wb-gam-redemption-accent );
+	color: var( --wb-gam-redemption-text-on-accent );
+}
+
+.wb-gam-redemption__confirm-yes:hover,
+.wb-gam-redemption__confirm-yes:focus-visible {
+	background: var( --wb-gam-redemption-accent-hover );
+	border-color: var( --wb-gam-redemption-accent-hover );
+}
+
+.wb-gam-redemption__confirm-no:hover,
+.wb-gam-redemption__confirm-no:focus-visible {
+	background: var( --wb-gam-redemption-muted-bg );
+}
+
+.wb-gam-redemption__result {
+	font-size: var( --wb-gam-font-sm );
+	padding: var( --wb-gam-space-xs );
+	border-radius: var( --wb-gam-radius-sm );
+	margin-top: var( --wb-gam-space-xs );
+}
+
+.wb-gam-redemption__result.is-success {
+	background: var( --wb-gam-color-success-bg );
+	color: var( --wb-gam-color-success );
+}
+
+.wb-gam-redemption__result.is-error {
+	background: var( --wb-gam-color-danger-bg );
+	color: var( --wb-gam-color-danger );
+}
+
+.wb-gam-redemption__result-code {
+	display: inline-block;
+	background: var( --wb-gam-redemption-card-bg );
+	padding: 2px 6px;
+	border-radius: var( --wb-gam-radius-sm );
+	font-weight: var( --wb-gam-weight-semibold, 600 );
+	user-select: all;
+	margin-left: 4px;
+}
+
+.wb-gam-redemption__empty {
+	padding: var( --wb-gam-space-lg );
+	text-align: center;
+	color: var( --wb-gam-redemption-muted );
+	background: var( --wb-gam-color-surface );
+	border-radius: var( --wb-gam-radius-lg );
+	font-size: var( --wb-gam-font-sm );
+}
+
+@media ( max-width: 1024px ) {
+	.wb-gam-redemption[ data-columns="3" ],
+	.wb-gam-redemption[ data-columns="4" ] {
+		--wb-gam-redemption-cols: 2;
+	}
+	.wb-gam-hide-tablet { display: none !important; }
+}
+
+@media ( max-width: 640px ) {
+	.wb-gam-redemption {
+		--wb-gam-redemption-cols: 1 !important;
+	}
+	.wb-gam-redemption__header {
+		align-items: flex-start;
+	}
+	.wb-gam-redemption__title {
+		font-size: var( --wb-gam-font-xl );
+	}
+	.wb-gam-redemption__card {
+		padding: var( --wb-gam-space-md );
+	}
+	.wb-gam-hide-mobile { display: none !important; }
+}
+
+.wb-gam-hide-desktop { display: none !important; }
+@media ( max-width: 1024px ) and ( min-width: 641px ) {
+	.wb-gam-hide-desktop { display: revert !important; }
+}
+
+@media ( prefers-reduced-motion: reduce ) {
+	.wb-gam-redemption__card,
+	.wb-gam-redemption__btn,
+	.wb-gam-redemption__login {
+		transition: none;
+	}
+	.wb-gam-redemption__card:hover {
+		transform: none;
+	}
+}
