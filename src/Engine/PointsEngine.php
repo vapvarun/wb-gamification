@@ -87,7 +87,21 @@ final class PointsEngine {
 			array( '%s', '%d', '%s', '%d', '%d', '%s' )
 		);
 
-		return (bool) $inserted;
+		if ( ! $inserted ) {
+			Log::error(
+				'PointsEngine::insert_point_row — ledger insert failed',
+				array(
+					'user_id'   => $event->user_id,
+					'action_id' => $event->action_id,
+					'points'    => $points,
+					'event_id'  => $event->event_id,
+					'db_error'  => $wpdb->last_error,
+				)
+			);
+			return false;
+		}
+
+		return true;
 	}
 
 	/**
@@ -118,11 +132,23 @@ final class PointsEngine {
 			array( '%s', '%d', '%s', '%d', '%d', '%s' )
 		);
 
-		if ( $inserted ) {
-			wp_cache_delete( "wb_gam_total_{$user_id}", 'wb_gamification' );
+		if ( ! $inserted ) {
+			Log::error(
+				'PointsEngine::debit — ledger debit failed',
+				array(
+					'user_id'   => $user_id,
+					'action_id' => $action_id,
+					'amount'    => $amount,
+					'event_id'  => $event_id,
+					'db_error'  => $wpdb->last_error,
+				)
+			);
+			return false;
 		}
 
-		return (bool) $inserted;
+		wp_cache_delete( "wb_gam_total_{$user_id}", 'wb_gamification' );
+
+		return true;
 	}
 
 	// ── Legacy / public API ────────────────────────────────────────────────────
