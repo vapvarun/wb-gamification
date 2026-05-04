@@ -61,6 +61,7 @@ use WBGam\BuddyPress\ProfileIntegration;
 use WBGam\BuddyPress\DirectoryIntegration;
 use WBGam\BuddyPress\ActivityIntegration as BPActivity;
 use WBGam\Integrations\WordPress\HooksIntegration as WPHooks;
+use WBGam\Integrations\WooCommerce\RefundHandler as WCRefundHandler;
 use WBGam\Admin\SettingsPage;
 use WBGam\Admin\SetupWizard;
 use WBGam\Admin\AnalyticsDashboard;
@@ -126,6 +127,7 @@ final class WB_Gamification {
 		add_action( 'plugins_loaded', array( Engine::class, 'init' ), 8 );
 		add_action( 'plugins_loaded', array( WPHooks::class, 'init' ), 8 );
 		add_action( 'plugins_loaded', array( BPHooks::class, 'init' ), 10 );
+		add_action( 'plugins_loaded', array( WCRefundHandler::class, 'init' ), 10 );
 
 		// Leaderboard snapshot cron + object cache layer.
 		add_action( 'plugins_loaded', array( LeaderboardEngine::class, 'init' ), 10 );

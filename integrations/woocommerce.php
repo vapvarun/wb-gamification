@@ -117,5 +117,25 @@ return [
 			'cooldown'       => 300,
 		],
 
+		[
+			'id'                => 'wc_add_to_cart',
+			'label'             => 'Add a product to cart',
+			'description'       => 'Awarded when a logged-in member adds a product to their cart. Cooldown limits farming.',
+			// WC fires: do_action( 'woocommerce_add_to_cart', $cart_item_key, $product_id, $quantity, $variation_id, $variation, $cart_item_data ).
+			'hook'              => 'woocommerce_add_to_cart',
+			'user_callback'     => function ( string $cart_item_key, int $product_id ): int {
+				$user_id = (int) get_current_user_id();
+				return $user_id > 0 ? $user_id : 0;
+			},
+			'metadata_callback' => function ( string $cart_item_key, int $product_id ): array {
+				return array( 'product_id' => $product_id );
+			},
+			'default_points'    => 1,
+			'category'          => 'commerce',
+			'icon'              => 'dashicons-cart',
+			'repeatable'        => true,
+			'cooldown'          => 300,
+		],
+
 	],
 ];

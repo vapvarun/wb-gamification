@@ -7,8 +7,7 @@
  * Actions covered:
  *   New topic created      — bbp_new_topic
  *   New reply posted       — bbp_new_reply
- *   Reply marked as answer — bbp_toggle_reply_to_resolved (if using Resolved Replies)
- *   Topic closed           — bbp_toggle_topic_close (topic author, when topic is resolved)
+ *   Topic closed           — bbp_closed_topic (topic author)
  *
  * Note: These run as standalone_only: false — they fire alongside BuddyPress
  * activity feed triggers because bbPress actions are structurally different
@@ -60,23 +59,24 @@ return [
 		],
 
 		[
-			'id'             => 'bbp_topic_closed',
-			'label'          => 'Topic resolved / closed',
-			'description'    => 'Awarded to the topic author when their topic is marked as resolved.',
-			'hook'           => 'bbp_toggle_topic_close',
-			'user_callback'  => function ( array $r, int $topic_id ): int {
-				// Only award on close (not re-open).
-				if ( empty( $r['is_closed'] ) ) {
-					return 0;
-				}
+			'id'                => 'bbp_topic_closed',
+			'label'             => 'Topic resolved / closed',
+			'description'       => 'Awarded to the topic author when their topic is closed (resolved).',
+			// bbPress fires: do_action( 'bbp_closed_topic', $topic_id ).
+			// Note: 'bbp_toggle_topic_close' is an admin-action string CONSTANT, not a hook.
+			'hook'              => 'bbp_closed_topic',
+			'user_callback'     => function ( int $topic_id ): int {
 				$topic = get_post( $topic_id );
 				return $topic ? (int) $topic->post_author : 0;
 			},
-			'default_points' => 20,
-			'category'       => 'social',
-			'icon'           => 'dashicons-yes-alt',
-			'repeatable'     => true,
-			'cooldown'       => 0,
+			'metadata_callback' => function ( int $topic_id ): array {
+				return array( 'topic_id' => $topic_id );
+			},
+			'default_points'    => 20,
+			'category'          => 'social',
+			'icon'              => 'dashicons-yes-alt',
+			'repeatable'        => true,
+			'cooldown'          => 0,
 		],
 
 	],
