@@ -273,3 +273,68 @@
 		font-size: 1rem;
 	}
 }
+
+/* ── BP activity-stream cards ─────────────────────────────────────────────── */
+.wb-gam-activity-card {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+	padding: 0.75rem 1rem;
+	margin-block-start: 0.5rem;
+	border: 1px solid var(--wb-gam-color-border, #e5e7eb);
+	border-radius: 12px;
+	background: var(--wb-gam-color-surface, #fafafa);
+}
+
+.wb-gam-activity-card__icon {
+	flex: 0 0 auto;
+	width: 56px;
+	height: 56px;
+	border-radius: 10px;
+	object-fit: cover;
+	background: #fff;
+}
+
+.wb-gam-activity-card__body {
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
+.wb-gam-activity-card__title {
+	display: block;
+	font-size: 0.95rem;
+	font-weight: 600;
+	color: var(--wb-gam-color-text, #111827);
+}
+
+.wb-gam-activity-card__desc {
+	margin-block-start: 0.125rem;
+	font-size: 0.875rem;
+	color: var(--wb-gam-color-text-muted, #6b7280);
+	line-height: 1.4;
+}
+
+.wb-gam-activity-card--badge { border-left: 3px solid #d99304; }
+.wb-gam-activity-card--level { border-left: 3px solid #2563eb; }
+.wb-gam-activity-card--kudos { border-left: 3px solid #e11d48; }
+.wb-gam-activity-card--challenge { border-left: 3px solid #16a34a; }
+
+@media (max-width: 640px) {
+	.wb-gam-activity-card {
+		gap: 0.625rem;
+		padding: 0.625rem 0.75rem;
+	}
+
+	.wb-gam-activity-card__icon {
+		width: 44px;
+		height: 44px;
+	}
+
+	.wb-gam-activity-card__title {
+		font-size: 0.9rem;
+	}
+
+	.wb-gam-activity-card__desc {
+		font-size: 0.8125rem;
+	}
+}

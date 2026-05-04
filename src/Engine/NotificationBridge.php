@@ -77,11 +77,13 @@ final class NotificationBridge {
 	/**
 	 * Queue a badge notification for the user.
 	 *
-	 * @param int    $user_id   User who earned the badge.
-	 * @param array  $badge     Badge data array.
-	 * @param string $earned_at Timestamp when the badge was earned.
+	 * BadgeEngine fires: do_action( 'wb_gamification_badge_awarded', $user_id, $def, $badge_id )
+	 *
+	 * @param int    $user_id  User who earned the badge.
+	 * @param array  $badge    Badge definition array (name, description, image_url, …).
+	 * @param string $badge_id Badge slug (matches $badge['id']).
 	 */
-	public static function on_badge_awarded( int $user_id, array $badge, string $earned_at ): void {
+	public static function on_badge_awarded( int $user_id, array $badge, string $badge_id = '' ): void {
 		self::push(
 			$user_id,
 			array(
@@ -100,11 +102,23 @@ final class NotificationBridge {
 	/**
 	 * Queue a level-up notification for the user.
 	 *
-	 * @param int   $user_id   User who levelled up.
-	 * @param array $new_level New level data.
-	 * @param array $old_level Previous level data.
+	 * LevelEngine fires: do_action( 'wb_gamification_level_changed', $user_id, $old_level_id, $new_level_id )
+	 *
+	 * @param int $user_id      User who levelled up.
+	 * @param int $old_level_id Previous level ID (unused, retained for hook signature).
+	 * @param int $new_level_id New level ID.
 	 */
-	public static function on_level_changed( int $user_id, array $new_level, array $old_level ): void {
+	public static function on_level_changed( int $user_id, int $old_level_id, int $new_level_id ): void {
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		$new_level = $wpdb->get_row(
+			$wpdb->prepare(
+				"SELECT name, icon_url FROM {$wpdb->prefix}wb_gam_levels WHERE id = %d",
+				$new_level_id
+			),
+			ARRAY_A
+		) ?: array();
+
 		self::push(
 			$user_id,
 			array(

@@ -203,5 +203,83 @@ return [
 			'requires_buddypress' => true,
 		],
 
+		[
+			'id'                  => 'bp_avatar_upload',
+			'label'               => 'Upload profile photo',
+			'description'         => 'Awarded the first time a member uploads a profile avatar.',
+			// BP fires: do_action( 'bp_members_avatar_uploaded', $item_id, $type, $args, $cropped_avatar ).
+			'hook'                => 'bp_members_avatar_uploaded',
+			'user_callback'       => fn( int $item_id, string $type = '' ) => $item_id,
+			'metadata_callback'   => function ( int $item_id, string $type = '' ): array {
+				return array( 'avatar_type' => $type );
+			},
+			'default_points'      => 10,
+			'category'            => 'buddypress',
+			'icon'                => 'dashicons-id',
+			'repeatable'          => false,
+			'requires_buddypress' => true,
+		],
+
+		[
+			'id'                  => 'bp_cover_upload',
+			'label'               => 'Upload cover photo',
+			'description'         => 'Awarded the first time a member uploads a profile cover image.',
+			// BP fires: do_action( 'members_cover_image_uploaded', $item_id, $name, $cover_url, $feedback_code ).
+			// $feedback_code === 1 means success — anything else is a soft-failure path we shouldn't reward.
+			'hook'                => 'members_cover_image_uploaded',
+			'user_callback'       => function ( int $item_id, string $name = '', string $cover_url = '', int $feedback_code = 0 ): int {
+				return 1 === $feedback_code ? $item_id : 0;
+			},
+			'default_points'      => 10,
+			'category'            => 'buddypress',
+			'icon'                => 'dashicons-format-image',
+			'repeatable'          => false,
+			'requires_buddypress' => true,
+		],
+
+		[
+			'id'                  => 'bp_group_cover_upload',
+			'label'               => 'Upload group cover photo',
+			'description'         => 'Awarded once per group when an admin uploads a cover image for a group.',
+			// BP fires: do_action( 'groups_cover_image_uploaded', $item_id, $name, $cover_url, $feedback_code ).
+			// We award the acting user (the admin who uploaded), not the group creator —
+			// repeatability is "false" with action_id namespaced by group via metadata, so each
+			// fresh group cover earns once per (user, group) pair through the rate-limiter.
+			'hook'                => 'groups_cover_image_uploaded',
+			'user_callback'       => function ( int $item_id, string $name = '', string $cover_url = '', int $feedback_code = 0 ): int {
+				return 1 === $feedback_code ? get_current_user_id() : 0;
+			},
+			'metadata_callback'   => function ( int $item_id, string $name = '', string $cover_url = '', int $feedback_code = 0 ): array {
+				return array( 'group_id' => $item_id );
+			},
+			'default_points'      => 10,
+			'category'            => 'buddypress',
+			'icon'                => 'dashicons-cover-image',
+			'repeatable'          => true,
+			'requires_buddypress' => true,
+		],
+
+		[
+			'id'                  => 'bp_message_sent',
+			'label'               => 'Send a private message',
+			'description'         => 'Awarded for sending a 1:1 message. Cooldown applies to limit spam.',
+			// BP fires: do_action_ref_array( 'messages_message_sent', array( &$message, $r ) ).
+			'hook'                => 'messages_message_sent',
+			'user_callback'       => function ( $message ): int {
+				return is_object( $message ) ? (int) ( $message->sender_id ?? 0 ) : 0;
+			},
+			'metadata_callback'   => function ( $message ): array {
+				return array(
+					'thread_id' => is_object( $message ) ? (int) ( $message->thread_id ?? 0 ) : 0,
+				);
+			},
+			'default_points'      => 3,
+			'category'            => 'buddypress',
+			'icon'                => 'dashicons-email',
+			'repeatable'          => true,
+			'cooldown'            => 60,
+			'requires_buddypress' => true,
+		],
+
 	],
 ];
