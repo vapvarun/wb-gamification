@@ -136,8 +136,8 @@ BlockHooks::before(
 		<?php if ( $wb_gam_balance && $wb_gam_user_id ) : ?>
 			<span class="wb-gam-redemption__balance" data-wb-gam-balance>
 				<?php
-				/* translators: %s: formatted point total */
 				printf(
+					/* translators: %s: formatted point total */
 					esc_html__( 'Balance: %s pts', 'wb-gamification' ),
 					'<span data-wb-gam-balance-text>' . esc_html( number_format_i18n( $wb_gam_balance_pts ) ) . '</span>'
 				);
@@ -212,8 +212,8 @@ BlockHooks::before(
 						<?php elseif ( $wb_gam_insufficient ) : ?>
 							<button type="button" class="wb-gam-redemption__btn" disabled>
 								<?php
-								/* translators: %s: formatted points still needed */
 								printf(
+									/* translators: %s: formatted points still needed to afford this reward */
 									esc_html__( 'Need %s more pts', 'wb-gamification' ),
 									esc_html( number_format_i18n( $wb_gam_missing_points ) )
 								);
@@ -242,8 +242,8 @@ BlockHooks::before(
 							>
 								<p class="wb-gam-redemption__confirm-message">
 									<?php
-									/* translators: %s: formatted point cost */
 									printf(
+										/* translators: %s: formatted point cost of this reward */
 										esc_html__( 'Redeem this reward? %s pts will be deducted.', 'wb-gamification' ),
 										esc_html( number_format_i18n( $wb_gam_cost ) )
 									);

@@ -50,7 +50,7 @@ rsync -a --delete \
     --exclude='.editorconfig' --exclude='.distignore' --exclude='.DS_Store' --exclude='.phpunit.result.cache' \
     --exclude='.idea/' --exclude='.vscode/' \
     --exclude='node_modules/' \
-    --exclude='tests/' --exclude='plans/' --exclude='docs/' --exclude='audit/' --exclude='examples/' \
+    --exclude='tests/' --exclude='plan/' --exclude='docs/' --exclude='audit/' --exclude='examples/' \
     --exclude='dist/' --exclude='bin/' --exclude='src/' \
     --exclude='*.map' --exclude='package.json' --exclude='package-lock.json' \
     --exclude='composer.json' --exclude='composer.lock' \

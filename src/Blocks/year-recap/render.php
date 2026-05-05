@@ -160,7 +160,7 @@ BlockHooks::before( 'year-recap', $wb_gam_attrs );
 				<span class="wb-gam-recap__stat-value">
 					<?php
 					/* translators: %d = percentile (0-100) */
-					printf( esc_html__( 'Top %d%%', 'wb-gamification' ), max( 1, 100 - (int) $wb_gam_recap['percentile'] ) );
+					printf( esc_html__( 'Top %d%%', 'wb-gamification' ), absint( max( 1, 100 - (int) $wb_gam_recap['percentile'] ) ) );
 					?>
 				</span>
 				<span class="wb-gam-recap__stat-label"><?php esc_html_e( 'Community Rank', 'wb-gamification' ); ?></span>
@@ -197,10 +197,10 @@ BlockHooks::before( 'year-recap', $wb_gam_attrs );
 						<span class="wb-gam-recap__top-action-count">
 							<?php
 							$wb_gam_count = (int) ( $wb_gam_action['event_count'] ?? 0 );
-							/* translators: %d = event count */
 							printf(
+								/* translators: %d: number of times the action was performed */
 								esc_html( _n( '%d time', '%d times', $wb_gam_count, 'wb-gamification' ) ),
-								$wb_gam_count
+								(int) $wb_gam_count
 							);
 							?>
 						</span>
@@ -215,8 +215,8 @@ BlockHooks::before( 'year-recap', $wb_gam_attrs );
 			<h3 class="wb-gam-recap__section-title">
 				<?php
 				$wb_gam_count = (int) $wb_gam_recap['badges_earned']['count'];
-				/* translators: %d = badge count */
-				printf( esc_html( _n( '%d Badge Earned', '%d Badges Earned', $wb_gam_count, 'wb-gamification' ) ), $wb_gam_count );
+				/* translators: %d: number of badges earned */
+				printf( esc_html( _n( '%d Badge Earned', '%d Badges Earned', $wb_gam_count, 'wb-gamification' ) ), (int) $wb_gam_count );
 				?>
 			</h3>
 			<div class="wb-gam-recap__badges-list">

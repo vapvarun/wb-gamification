@@ -4,7 +4,7 @@
 >
 > **Folder map:**
 > - [`audit/`](audit/) — machine-generated inventory + reports + journeys + wppqa runs. Hand-edits get overwritten on refresh. See [`audit/README.md`](audit/README.md).
-> - [`plans/`](plans/) — human-authored design docs + roadmaps. Architecture in [`plans/ARCHITECTURE-DRIVEN-PLAN.md`](plans/ARCHITECTURE-DRIVEN-PLAN.md); QA team uses [`plans/QA-MANUAL-TEST-PLAN.md`](plans/QA-MANUAL-TEST-PLAN.md). See [`plans/README.md`](plans/README.md).
+> - [`plan/`](plan/) — human-authored design docs + roadmaps. Architecture in [`plan/ARCHITECTURE-DRIVEN-PLAN.md`](plan/ARCHITECTURE-DRIVEN-PLAN.md); QA team uses [`plan/QA-MANUAL-TEST-PLAN.md`](plan/QA-MANUAL-TEST-PLAN.md). See [`plan/README.md`](plan/README.md).
 > - [`examples/`](examples/) — 10 third-party integration samples (manifest, REST, webhook, badge/challenge, email override, block injection). See [`examples/README.md`](examples/README.md).
 > - [`docs/website/`](docs/website/) — customer-facing documentation, owned by the docs team.
 > - [`.wordpress-org/`](.wordpress-org/) — banner / icon / 10 screenshots ready for SVN sync.
@@ -20,14 +20,35 @@
 | Field | Value |
 |---|---|
 | **Name** | WB Gamification |
-| **Version** | 1.0.0 |
+| **Version** | 1.0.0 (pre-launch) |
 | **Path** | `wp-content/plugins/wb-gamification/` |
 | **Namespace** | `WBGam\` (PSR-4, maps to `src/`) |
 | **PHP** | 8.1+ required |
 | **Architecture** | Event-sourced, manifest auto-discovery, zero-config |
 | **Part of** | Reign Stack — Wbcom's self-owned community platform |
+| **Basecamp project** | [WP Gamification](https://3.basecamp.com/5798509/buckets/47162271) — ID `47162271` |
+| **Bug card table** | [Card Table](https://3.basecamp.com/5798509/buckets/47162271/card_tables/9860004450) — ID `9860004450` |
 
 **Design principle:** Events in → rules evaluate → effects out. The engine owns three surfaces: event normalization, rule evaluation, output. Everything else (BuddyPress display, WooCommerce triggers, mobile) is a consumer.
+
+### Basecamp card-table workflow
+
+Every bug / feature / scope item flows through this kanban (matches the canonical Wbcom column layout used across BuddyPress, WPMediaVerse, Jetonomy):
+
+| # | Column | ID | When to use |
+|---|---|---|---|
+| 0 | [Triage](https://3.basecamp.com/5798509/buckets/47162271/card_tables/columns/9860004451) | `9860004451` | Inbound — all new cards land here |
+| 1 | [Not now](https://3.basecamp.com/5798509/buckets/47162271/card_tables/columns/9860004452) | `9860004452` | Deferred — won't action this cycle |
+| 2 | [Scope](https://3.basecamp.com/5798509/buckets/47162271/card_tables/columns/9860019752) | `9860019752` | Requirements / planning / design specs |
+| 3 | [Figuring it out](https://3.basecamp.com/5798509/buckets/47162271/card_tables/columns/9860028286) | `9860028286` | Investigation / repro / cause hypothesis |
+| 4 | [UI Issues](https://3.basecamp.com/5798509/buckets/47162271/card_tables/columns/9860020277) | `9860020277` | Visual / layout / a11y bugs |
+| 5 | [Bugs](https://3.basecamp.com/5798509/buckets/47162271/card_tables/columns/9860020654) | `9860020654` | Functional / logic bugs ready to fix |
+| 6 | [In progress](https://3.basecamp.com/5798509/buckets/47162271/card_tables/columns/9860004458) | `9860004458` | Actively coding |
+| 7 | [Ready for Testing](https://3.basecamp.com/5798509/buckets/47162271/card_tables/columns/9860021091) | `9860021091` | Pushed — awaiting QA pickup |
+| 8 | [Testing](https://3.basecamp.com/5798509/buckets/47162271/card_tables/columns/9860028737) | `9860028737` | QA actively verifying |
+| 9 | [Done](https://3.basecamp.com/5798509/buckets/47162271/card_tables/columns/9860004460) | `9860004460` | Verified + shipped |
+
+**Comment formatting** in basecamp is HTML, not markdown — use `<strong>`, `<br>`. Pattern: pick from Bugs/UI Issues → fix → comment with root cause + fix + screenshot → move to Ready for Testing → QA moves to Testing → if pass, Done.
 
 ---
 
@@ -38,7 +59,7 @@
 Plan item → Implement → Browser verify → Fix gaps → THEN mark done
 ```
 
-1. **Read the spec first** — before writing a single line, read the task description in `plans/v1-master-plan.md` and any linked spec file
+1. **Read the spec first** — before writing a single line, read the task description in `plan/v1-master-plan.md` and any linked spec file
 2. **Implement** — write the code
 3. **Verify against spec** — use Playwright MCP to screenshot and confirm output matches what was designed
 4. **Quality check** — WPCS, test at 390px viewport, check a11y, verify no regressions
@@ -230,7 +251,7 @@ WB_GAM_BASENAME  // 'wb-gamification/wb-gamification.php'
 
 ## 🟡 Next Up — Frontend UX Audit (Phase 2.5)
 
-See `plans/v1-master-plan.md` Tasks 25-30 for full details:
+See `plan/v1-master-plan.md` Tasks 25-30 for full details:
 - **Task 25:** Modal/overlay accessibility (ARIA, ESC key, focus trap)
 - **Task 26:** Mobile 390px viewport audit (all 11 blocks + all admin pages)
 - **Task 27:** First-run UX (skip button help text, welcome card browser test)
@@ -345,7 +366,7 @@ Discovery: `WBGam\Blocks\Registrar` scans `build/Blocks/*/block.json` on `init@2
 
 CI gate: `bin/check-block-standard.sh` (wired into `composer ci` as stage 2.3) fails the build if any `block.json` is missing the standard attribute schema.
 
-Documentation: see [`docs/website/developer-guide/block-attributes.md`](docs/website/developer-guide/block-attributes.md) and [`plans/WBCOM-BLOCK-STANDARD-MIGRATION.md`](plans/WBCOM-BLOCK-STANDARD-MIGRATION.md).
+Documentation: see [`docs/website/developer-guide/block-attributes.md`](docs/website/developer-guide/block-attributes.md) and [`plan/WBCOM-BLOCK-STANDARD-MIGRATION.md`](plan/WBCOM-BLOCK-STANDARD-MIGRATION.md).
 
 ---
 
@@ -353,7 +374,7 @@ Documentation: see [`docs/website/developer-guide/block-attributes.md`](docs/web
 
 | Version | Key Changes |
 |---|---|
-| **1.2.0** (PR #47, 2026-05-03) | **Tier 0 admin REST migration**: 17 admin form-post hooks → 0 (`admin_post_wb_gam_*` count = 0). 5 controllers built/extended (Levels CRUD, CohortSettings GET/POST, ApiKeys CRUD + revoke, CommunityChallenges CRUD, Badges create + extended schema with nested condition rule). 5 JS modules: shared `admin-rest-utils.js`, generic `admin-rest-form.js` (data-attr-driven, supports nested objects + arrays + datetime-local→UTC), bespoke admin-levels/cohort/api-keys. 9 admin pages migrated; promise-based confirm modal replaces `window.confirm()`. **Tier 1 a11y**: 8 outline:none focus indicators tightened to `:focus:not(:focus-visible)`; 6→3 breakpoints consolidated (640/782/1024); 5 alt-attribute false-positives flattened. **Real bugs caught + fixed during verification**: webhook event-enum mismatch (`badge_awarded` vs `badge_earned`), manual-award debit regression (REST `absint()` stripped negative sign), 4 self-introduced a11y errors in `block-card.css`, hub/community-challenges/cohort-rank editor "doesn't include support" (legacy register shadowing). **V1 release verification suite**: 9-tier journey plan in `plans/V1-RELEASE-VERIFICATION-PLAN.md`, 9 release-tier journeys under `audit/journeys/release/`, full close-out at `audit/release-runs/2026-05-03/RELEASE-CLOSE-OUT.md`. wppqa baseline failed=0 across all 4 checks. |
+| **1.2.0** (PR #47, 2026-05-03) | **Tier 0 admin REST migration**: 17 admin form-post hooks → 0 (`admin_post_wb_gam_*` count = 0). 5 controllers built/extended (Levels CRUD, CohortSettings GET/POST, ApiKeys CRUD + revoke, CommunityChallenges CRUD, Badges create + extended schema with nested condition rule). 5 JS modules: shared `admin-rest-utils.js`, generic `admin-rest-form.js` (data-attr-driven, supports nested objects + arrays + datetime-local→UTC), bespoke admin-levels/cohort/api-keys. 9 admin pages migrated; promise-based confirm modal replaces `window.confirm()`. **Tier 1 a11y**: 8 outline:none focus indicators tightened to `:focus:not(:focus-visible)`; 6→3 breakpoints consolidated (640/782/1024); 5 alt-attribute false-positives flattened. **Real bugs caught + fixed during verification**: webhook event-enum mismatch (`badge_awarded` vs `badge_earned`), manual-award debit regression (REST `absint()` stripped negative sign), 4 self-introduced a11y errors in `block-card.css`, hub/community-challenges/cohort-rank editor "doesn't include support" (legacy register shadowing). **V1 release verification suite**: 9-tier journey plan in `plan/V1-RELEASE-VERIFICATION-PLAN.md`, 9 release-tier journeys under `audit/journeys/release/`, full close-out at `audit/release-runs/2026-05-03/RELEASE-CLOSE-OUT.md`. wppqa baseline failed=0 across all 4 checks. |
 | **1.0.0** | Wbcom Block Quality Standard migration (G8) — closed across PRs #21 → #41. All 15 blocks now consume `--wb-gam-*` design tokens, declare the standard attribute schema (uniqueId, per-side spacing × 3 breakpoints, typography, hover colours, shadow, border, visibility), register via `WBGam\Blocks\Registrar` from `build/Blocks/<slug>/`, and gate on `bin/check-block-standard.sh` (CI stage 2.3). Per-block CSS now lives in `src/Blocks/<slug>/style.css`; `assets/css/frontend.css` shrunk 1,425 → 293 lines. Pre-existing test failures (NudgeEngineTest alias-mock collisions, RedemptionEngineTest transaction wiring, ShortcodeHandlerTest hardcoded list) closed in #42. |
 | **0.5.1** | WP-CLI commands, API Key Auth, Capabilities endpoint, Abilities API, REST schemas on all 16 controllers, CORS support, site_id column, earning-guide block, CI workflows, Grunt build, EDD SDK, readme.txt |
 | **0.5.0** | Shortcodes, manual award UI, points-history block, badge admin page, dashboard KPIs, empty states, CSS/JS extracted to assets/, full PHPDoc docblocks |

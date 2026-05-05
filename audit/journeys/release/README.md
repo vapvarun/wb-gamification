@@ -1,6 +1,6 @@
 # Release verification journeys
 
-These 9 journeys correspond 1:1 to the 9 tiers in `plans/V1-RELEASE-VERIFICATION-PLAN.md`. Run them in order before tagging a release. A failing journey blocks the tag.
+These 9 journeys correspond 1:1 to the 9 tiers in `plan/V1-RELEASE-VERIFICATION-PLAN.md`. Run them in order before tagging a release. A failing journey blocks the tag.
 
 | # | Journey | Priority | Runtime | Gate |
 |---|---|---|---|---|

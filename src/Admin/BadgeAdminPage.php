@@ -179,13 +179,15 @@ final class BadgeAdminPage {
 
 		?>
 		<div class="wrap wbgam-wrap">
-			<h1 class="wbgam-page-title"><?php esc_html_e( 'Badge Library', 'wb-gamification' ); ?></h1>
-			<p class="wbgam-page-desc"><?php esc_html_e( 'Create and manage badges to reward your community members for milestones and achievements.', 'wb-gamification' ); ?></p>
+			<header class="wbgam-page-header">
+				<div class="wbgam-page-header__main">
+					<h1 class="wbgam-page-header__title"><?php esc_html_e( 'Badge Library', 'wb-gamification' ); ?></h1>
+					<p class="wbgam-page-header__desc"><?php esc_html_e( 'Create and manage badges to reward your community members for milestones and achievements.', 'wb-gamification' ); ?></p>
+				</div>
+			</header>
 
 			<?php if ( isset( $notice_map[ $notice ] ) ) : ?>
-				<div class="notice notice-<?php echo esc_attr( $notice_map[ $notice ][0] ); ?> is-dismissible">
-					<p><?php echo esc_html( $notice_map[ $notice ][1] ); ?></p>
-				</div>
+				<div class="wbgam-banner wbgam-banner--<?php echo esc_attr( $notice_map[ $notice ][0] ); ?> wbgam-stack-block" role="status" aria-live="polite"><span class="wbgam-banner__icon dashicons dashicons-yes-alt" aria-hidden="true"></span><div class="wbgam-banner__body"><p class="wbgam-banner__desc"><?php echo esc_html( $notice_map[ $notice ][1] ); ?></p></div></div>
 			<?php endif; ?>
 
 			<!-- Toolbar -->
@@ -273,11 +275,11 @@ final class BadgeAdminPage {
 											<?php esc_html_e( 'Choose Icon', 'wb-gamification' ); ?>
 										</button>
 										<?php if ( ! empty( $badge['image_url'] ) ) : ?>
-											<button type="button" class="wbgam-btn wbgam-btn--sm wbgam-btn--danger" id="wb-gam-remove-icon" style="margin-left:4px;">
+											<button type="button" class="wbgam-btn wbgam-btn--sm wbgam-btn--danger wbgam-ms-xs" id="wb-gam-remove-icon">
 												<?php esc_html_e( 'Remove', 'wb-gamification' ); ?>
 											</button>
 										<?php else : ?>
-											<button type="button" class="wbgam-btn wbgam-btn--sm wbgam-btn--danger" id="wb-gam-remove-icon" style="margin-left:4px;display:none;">
+											<button type="button" class="wbgam-btn wbgam-btn--sm wbgam-btn--danger wbgam-ms-xs wbgam-is-hidden" id="wb-gam-remove-icon">
 												<?php esc_html_e( 'Remove', 'wb-gamification' ); ?>
 											</button>
 										<?php endif; ?>
@@ -395,7 +397,7 @@ final class BadgeAdminPage {
 									<button
 										type="button"
 										class="wbgam-btn wbgam-btn--danger"
-										style="margin-left:8px;"
+										class="wbgam-ms-sm"
 										data-wb-gam-rest-action="wbGamBadgesSettings"
 										data-wb-gam-rest-method="DELETE"
 										data-wb-gam-rest-path="/badges/<?php echo esc_attr( rawurlencode( $editing ) ); ?>"
@@ -424,7 +426,7 @@ final class BadgeAdminPage {
 					$has_rule  = 'admin_awarded' !== $cond_type;
 					$edit_url  = admin_url( 'admin.php?page=wb-gamification-badges&badge=' . rawurlencode( $b['id'] ) );
 					?>
-					<a href="<?php echo esc_url( $edit_url ); ?>" class="wbgam-badge-card" style="text-decoration:none;">
+					<a href="<?php echo esc_url( $edit_url ); ?>" class="wbgam-badge-card wbgam-is-link-clean">
 						<div class="wbgam-badge-card__icon">
 							<?php if ( ! empty( $b['image_url'] ) ) : ?>
 								<img src="<?php echo esc_url( $b['image_url'] ); ?>" alt="<?php echo esc_attr( $b['name'] ); ?>">
@@ -450,10 +452,10 @@ final class BadgeAdminPage {
 			</div>
 			<?php elseif ( ! $show_form ) : ?>
 			<div class="wbgam-empty">
-				<div class="wbgam-empty-icon"><span class="dashicons dashicons-awards" style="font-size:48px;width:48px;height:48px;color:var(--wb-gam-locked);"></span></div>
+				<div class="wbgam-empty-icon"><span class="dashicons dashicons-awards wbgam-icon-xl"></span></div>
 				<div class="wbgam-empty-title"><?php esc_html_e( 'No badges yet', 'wb-gamification' ); ?></div>
 				<p><?php esc_html_e( 'Badges reward members for milestones, actions, and achievements. Create your first badge to get started.', 'wb-gamification' ); ?></p>
-				<p style="margin-top:1rem;">
+				<p class="wbgam-mt-md">
 					<a href="<?php echo esc_url( admin_url( 'admin.php?page=wb-gamification-badges&action=new' ) ); ?>" class="wbgam-btn">
 						<?php esc_html_e( 'Create your first badge', 'wb-gamification' ); ?>
 					</a>

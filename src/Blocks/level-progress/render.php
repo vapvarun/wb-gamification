@@ -144,8 +144,8 @@ BlockHooks::before( 'level-progress', $wb_gam_attrs );
 		<div class="wb-gam-level-progress__next">
 			<?php
 			$wb_gam_pts_needed = (int) ( $wb_gam_next['min_points'] ?? 0 ) - $wb_gam_points;
-			/* translators: 1 = points needed, 2 = level name */
 			printf(
+				/* translators: 1: formatted points needed to reach next level, 2: name of the next level */
 				esc_html__( '%1$s pts to %2$s', 'wb-gamification' ),
 				esc_html( number_format_i18n( max( 0, $wb_gam_pts_needed ) ) ),
 				esc_html( (string) ( $wb_gam_next['name'] ?? '' ) )

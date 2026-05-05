@@ -112,16 +112,27 @@ final class ApiKeysPage {
 		$keys = ApiKeyAuth::get_keys();
 		?>
 		<div class="wrap wbgam-wrap" data-wb-gam-api-keys-root>
-			<h1 class="wbgam-page-title"><?php esc_html_e( 'API Keys', 'wb-gamification' ); ?></h1>
-			<p class="wbgam-page-desc"><?php esc_html_e( 'Generate API keys for remote sites to connect to this gamification center. Keys authenticate via the X-WB-Gam-Key header.', 'wb-gamification' ); ?></p>
+			<header class="wbgam-page-header">
+				<div class="wbgam-page-header__main">
+					<h1 class="wbgam-page-header__title"><?php esc_html_e( 'API Keys', 'wb-gamification' ); ?></h1>
+					<p class="wbgam-page-header__desc"><?php esc_html_e( 'Generate API keys for remote sites to connect to this gamification center. Keys authenticate via the X-WB-Gam-Key header.', 'wb-gamification' ); ?></p>
+				</div>
+			</header>
 
-			<div class="notice notice-success wb-gam-notice is-dismissible" data-wb-gam-api-keys-fresh style="display:none;">
-				<p><strong><?php esc_html_e( 'New API key generated. Copy it now — it will not be shown again:', 'wb-gamification' ); ?></strong></p>
-				<p><code class="wbgam-key-display" data-wb-gam-api-keys-fresh-code></code></p>
+			<div class="wbgam-banner wbgam-banner--success wbgam-stack-block wbgam-is-hidden" data-wb-gam-api-keys-fresh role="status" aria-live="polite">
+				<span class="wbgam-banner__icon dashicons dashicons-yes-alt" aria-hidden="true"></span>
+				<div class="wbgam-banner__body">
+					<strong class="wbgam-banner__title"><?php esc_html_e( 'New API key generated', 'wb-gamification' ); ?></strong>
+					<p class="wbgam-banner__desc"><?php esc_html_e( 'Copy it now — it will not be shown again.', 'wb-gamification' ); ?></p>
+					<code class="wbgam-key-display" data-wb-gam-api-keys-fresh-code></code>
+				</div>
+				<button type="button" class="wbgam-banner__dismiss" data-wb-gam-banner-dismiss aria-label="<?php esc_attr_e( 'Dismiss', 'wb-gamification' ); ?>">
+					<span class="dashicons dashicons-no-alt" aria-hidden="true"></span>
+				</button>
 			</div>
 
 			<!-- Generate Key Form -->
-			<div class="wbgam-card" style="margin-bottom:24px;">
+			<div class="wbgam-card wbgam-stack-block">
 				<div class="wbgam-card-header">
 					<h3 class="wbgam-card-title"><?php esc_html_e( 'Generate New Key', 'wb-gamification' ); ?></h3>
 				</div>
@@ -149,11 +160,11 @@ final class ApiKeysPage {
 			</div>
 
 			<!-- Active Keys List (server-rendered for first paint; JS rerenders on every mutation) -->
-			<div class="wbgam-card" data-wb-gam-api-keys-card<?php echo empty( $keys ) ? ' style="display:none;"' : ''; ?>>
+			<div class="wbgam-card" data-wb-gam-api-keys-card<?php echo empty( $keys ) ? ' class="wbgam-is-hidden"' : ''; ?>>
 				<div class="wbgam-card-header">
 					<h3 class="wbgam-card-title"><?php esc_html_e( 'Active Keys', 'wb-gamification' ); ?></h3>
 				</div>
-				<div class="wbgam-card-body" style="padding:0;">
+				<div class="wbgam-card-body wbgam-card-body--flush">
 					<table class="wbgam-table">
 						<thead>
 							<tr>
@@ -185,7 +196,7 @@ final class ApiKeysPage {
 										<?php if ( ! empty( $data['active'] ) ) : ?>
 											<button type="button" class="wbgam-btn wbgam-btn--sm wbgam-btn--secondary" data-wb-gam-api-key-action="revoke"><?php esc_html_e( 'Revoke', 'wb-gamification' ); ?></button>
 										<?php endif; ?>
-										<button type="button" class="wbgam-btn wbgam-btn--sm wbgam-btn--danger" data-wb-gam-api-key-action="delete" style="margin-inline-start:4px;"><?php esc_html_e( 'Delete', 'wb-gamification' ); ?></button>
+										<button type="button" class="wbgam-btn wbgam-btn--sm wbgam-btn--danger wbgam-ms-xs" data-wb-gam-api-key-action="delete"><?php esc_html_e( 'Delete', 'wb-gamification' ); ?></button>
 									</td>
 								</tr>
 							<?php endforeach; ?>
@@ -194,8 +205,8 @@ final class ApiKeysPage {
 				</div>
 			</div>
 
-			<div class="wbgam-empty" data-wb-gam-api-keys-empty<?php echo empty( $keys ) ? '' : ' style="display:none;"'; ?>>
-				<div class="wbgam-empty-icon"><span class="dashicons dashicons-admin-network" style="font-size:48px;width:48px;height:48px;color:var(--wbgam-text-muted);"></span></div>
+			<div class="wbgam-empty" data-wb-gam-api-keys-empty<?php echo empty( $keys ) ? '' : ' class="wbgam-is-hidden"'; ?>>
+				<div class="wbgam-empty-icon"><span class="dashicons dashicons-admin-network wbgam-icon-xl wbgam-icon-xl--muted"></span></div>
 				<div class="wbgam-empty-title"><?php esc_html_e( 'No API keys yet', 'wb-gamification' ); ?></div>
 				<p><?php esc_html_e( 'Generate your first API key above to connect remote sites.', 'wb-gamification' ); ?></p>
 			</div>

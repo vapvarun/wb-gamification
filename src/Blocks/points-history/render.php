@@ -91,8 +91,8 @@ BlockHooks::before( 'points-history', $wb_gam_attrs );
 					<?php endif; ?>
 					<span class="wb-gam-points-history__points">
 						<?php
-						/* translators: %s = formatted points with sign (e.g. "+10" or "-5") */
 						printf(
+							/* translators: %s: formatted points with sign, e.g. "+10" or "-5" */
 							esc_html__( '%s pts', 'wb-gamification' ),
 							esc_html( ( $wb_gam_pts >= 0 ? '+' : '' ) . number_format_i18n( $wb_gam_pts ) )
 						);

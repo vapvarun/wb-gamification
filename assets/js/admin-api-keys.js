@@ -123,7 +123,16 @@
 			return;
 		}
 		code.textContent = secret;
-		panel.style.display = '';
+		panel.classList.remove( 'wbgam-is-hidden' );
+
+		// Wire the inline-banner dismiss button (idempotent — only attaches once).
+		const dismiss = panel.querySelector( '[data-wb-gam-banner-dismiss]' );
+		if ( dismiss && ! dismiss.dataset.wired ) {
+			dismiss.dataset.wired = '1';
+			dismiss.addEventListener( 'click', function () {
+				panel.classList.add( 'wbgam-is-hidden' );
+			} );
+		}
 	}
 
 	async function refresh() {

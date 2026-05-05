@@ -66,7 +66,13 @@ final class CohortSettingsPage {
 	 * @return void
 	 */
 	public static function enqueue_assets( string $hook_suffix ): void {
-		if ( 'gamification_page_wb-gam-cohort' !== $hook_suffix ) {
+		// Cohort settings now live as a tab inside the main Settings page
+		// (toplevel_page_wb-gamification) since 1.0.0. The legacy submenu
+		// hook is preserved so any third-party that still routes to it
+		// works during the transition.
+		$is_cohort_surface = 'toplevel_page_wb-gamification' === $hook_suffix
+			|| 'gamification_page_wb-gam-cohort' === $hook_suffix;
+		if ( ! $is_cohort_surface ) {
 			return;
 		}
 
@@ -105,14 +111,11 @@ final class CohortSettingsPage {
 	 * @return void
 	 */
 	public static function register_page(): void {
-		add_submenu_page(
-			'wb-gamification',
-			__( 'Cohort Leagues', 'wb-gamification' ),
-			__( 'Cohort Leagues', 'wb-gamification' ),
-			'wb_gam_manage_challenges',
-			'wb-gam-cohort',
-			array( __CLASS__, 'render_page' )
-		);
+		// Cohort Leagues moved into the main Settings page as a tab in 1.0.0
+		// (admin-ux-rulebook Rule 1 — CONFIG-only pages are settings tabs,
+		// not separate submenus). Kept method as a no-op so any third-party
+		// plugin that hooks 'admin_menu' depending on this submenu doesn't
+		// 500 on the first request after upgrade.
 	}
 
 	/**
@@ -133,6 +136,27 @@ final class CohortSettingsPage {
 	 * @return void
 	 */
 	public static function render_page(): void {
+		?>
+		<div class="wrap wbgam-wrap">
+			<header class="wbgam-page-header">
+				<div class="wbgam-page-header__main">
+					<h1 class="wbgam-page-header__title"><?php esc_html_e( 'Cohort Leagues', 'wb-gamification' ); ?></h1>
+					<p class="wbgam-page-header__desc"><?php esc_html_e( 'Duolingo-style weekly leagues where members compete in tiers. Top performers promote, bottom performers demote each cycle.', 'wb-gamification' ); ?></p>
+				</div>
+			</header>
+			<?php self::render_inline(); ?>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Render only the body of the cohort settings page — the cards, no
+	 * outer `<div class="wrap">` and no page header. Designed for embedding
+	 * inside the main Settings sidebar shell as a tab section.
+	 *
+	 * @since 1.0.0
+	 */
+	public static function render_inline(): void {
 		$settings = self::get_settings();
 		$features = FeatureFlags::get_all();
 		$enabled  = ! empty( $features['cohort_leagues'] );
@@ -146,18 +170,12 @@ final class CohortSettingsPage {
 		);
 
 		?>
-		<div class="wrap wbgam-wrap">
-			<h1 class="wbgam-page-title"><?php esc_html_e( 'Cohort Leagues', 'wb-gamification' ); ?></h1>
-			<p class="wbgam-page-desc"><?php esc_html_e( 'Duolingo-style weekly leagues where members compete in tiers. Top performers promote, bottom performers demote each cycle.', 'wb-gamification' ); ?></p>
-
-			<?php if ( isset( $notice_map[ $notice ] ) ) : ?>
-				<div class="notice notice-<?php echo esc_attr( $notice_map[ $notice ][0] ); ?> is-dismissible">
-					<p><?php echo esc_html( $notice_map[ $notice ][1] ); ?></p>
-				</div>
-			<?php endif; ?>
+		<?php if ( isset( $notice_map[ $notice ] ) ) : ?>
+			<div class="wbgam-banner wbgam-banner--<?php echo esc_attr( $notice_map[ $notice ][0] ); ?> wbgam-stack-block" role="status" aria-live="polite"><span class="wbgam-banner__icon dashicons dashicons-yes-alt" aria-hidden="true"></span><div class="wbgam-banner__body"><p class="wbgam-banner__desc"><?php echo esc_html( $notice_map[ $notice ][1] ); ?></p></div></div>
+		<?php endif; ?>
 
 			<!-- Settings Card -->
-			<div class="wbgam-card" style="margin-bottom:24px;">
+			<div class="wbgam-card wbgam-stack-block">
 				<div class="wbgam-card-header">
 					<h3 class="wbgam-card-title"><?php esc_html_e( 'League Settings', 'wb-gamification' ); ?></h3>
 				</div>
@@ -181,37 +199,37 @@ final class CohortSettingsPage {
 							<tr>
 								<th><?php esc_html_e( 'Tier Names', 'wb-gamification' ); ?></th>
 								<td>
-									<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;max-width:480px;">
+									<div class="wbgam-grid-2col">
 										<div>
 											<label for="wb-gam-tier-1" class="screen-reader-text"><?php esc_html_e( 'Tier 1', 'wb-gamification' ); ?></label>
 											<input type="text" name="tier_1" id="wb-gam-tier-1" class="regular-text wbgam-input"
 												value="<?php echo esc_attr( $settings['tier_1'] ); ?>"
 												placeholder="<?php esc_attr_e( 'Bronze', 'wb-gamification' ); ?>">
-											<small style="color:var(--wb-gam-muted);"><?php esc_html_e( 'Tier 1 (lowest)', 'wb-gamification' ); ?></small>
+											<small class="wbgam-text-muted"><?php esc_html_e( 'Tier 1 (lowest)', 'wb-gamification' ); ?></small>
 										</div>
 										<div>
 											<label for="wb-gam-tier-2" class="screen-reader-text"><?php esc_html_e( 'Tier 2', 'wb-gamification' ); ?></label>
 											<input type="text" name="tier_2" id="wb-gam-tier-2" class="regular-text wbgam-input"
 												value="<?php echo esc_attr( $settings['tier_2'] ); ?>"
 												placeholder="<?php esc_attr_e( 'Silver', 'wb-gamification' ); ?>">
-											<small style="color:var(--wb-gam-muted);"><?php esc_html_e( 'Tier 2', 'wb-gamification' ); ?></small>
+											<small class="wbgam-text-muted"><?php esc_html_e( 'Tier 2', 'wb-gamification' ); ?></small>
 										</div>
 										<div>
 											<label for="wb-gam-tier-3" class="screen-reader-text"><?php esc_html_e( 'Tier 3', 'wb-gamification' ); ?></label>
 											<input type="text" name="tier_3" id="wb-gam-tier-3" class="regular-text wbgam-input"
 												value="<?php echo esc_attr( $settings['tier_3'] ); ?>"
 												placeholder="<?php esc_attr_e( 'Gold', 'wb-gamification' ); ?>">
-											<small style="color:var(--wb-gam-muted);"><?php esc_html_e( 'Tier 3', 'wb-gamification' ); ?></small>
+											<small class="wbgam-text-muted"><?php esc_html_e( 'Tier 3', 'wb-gamification' ); ?></small>
 										</div>
 										<div>
 											<label for="wb-gam-tier-4" class="screen-reader-text"><?php esc_html_e( 'Tier 4', 'wb-gamification' ); ?></label>
 											<input type="text" name="tier_4" id="wb-gam-tier-4" class="regular-text wbgam-input"
 												value="<?php echo esc_attr( $settings['tier_4'] ); ?>"
 												placeholder="<?php esc_attr_e( 'Diamond', 'wb-gamification' ); ?>">
-											<small style="color:var(--wb-gam-muted);"><?php esc_html_e( 'Tier 4 (highest)', 'wb-gamification' ); ?></small>
+											<small class="wbgam-text-muted"><?php esc_html_e( 'Tier 4 (highest)', 'wb-gamification' ); ?></small>
 										</div>
 									</div>
-									<p class="description" style="margin-top:8px;"><?php esc_html_e( 'Customize the display names for each league tier.', 'wb-gamification' ); ?></p>
+									<p class="description wbgam-mt-sm"><?php esc_html_e( 'Customize the display names for each league tier.', 'wb-gamification' ); ?></p>
 								</td>
 							</tr>
 							<tr>
@@ -263,7 +281,7 @@ final class CohortSettingsPage {
 					<h3 class="wbgam-card-title"><?php esc_html_e( 'How Cohort Leagues Work', 'wb-gamification' ); ?></h3>
 				</div>
 				<div class="wbgam-card-body">
-					<ol style="margin:0;padding-left:20px;line-height:1.8;">
+					<ol class="wbgam-list-narrow">
 						<li><?php esc_html_e( 'Active members are grouped into cohorts of ~30 users at similar tiers each cycle.', 'wb-gamification' ); ?></li>
 						<li><?php esc_html_e( 'Members earn points through normal actions during the cycle.', 'wb-gamification' ); ?></li>
 						<li><?php esc_html_e( 'At the end of each cycle, top performers promote and bottom performers demote.', 'wb-gamification' ); ?></li>
@@ -271,7 +289,6 @@ final class CohortSettingsPage {
 					</ol>
 				</div>
 			</div>
-		</div>
 		<?php
 	}
 

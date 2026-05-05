@@ -93,11 +93,16 @@ final class AnalyticsDashboard {
 
 		$stats = self::get_stats( $period );
 		?>
-		<div class="wrap wb-gam-analytics">
-			<h1><?php esc_html_e( 'Gamification Analytics', 'wb-gamification' ); ?></h1>
+		<div class="wrap wbgam-wrap wb-gam-analytics">
+			<header class="wbgam-page-header">
+				<div class="wbgam-page-header__main">
+					<h1 class="wbgam-page-header__title"><?php esc_html_e( 'Gamification Analytics', 'wb-gamification' ); ?></h1>
+					<p class="wbgam-page-header__desc"><?php esc_html_e( 'Engagement at a glance — points awarded, badges earned, streaks, kudos and challenge completion across your community.', 'wb-gamification' ); ?></p>
+				</div>
+			</header>
 
 			<!-- Period selector -->
-			<div class="wb-gam-analytics__period-bar">
+			<div class="wb-gam-analytics__period-bar wbgam-stack-block">
 				<?php
 				foreach ( array(
 					7  => __( '7 days', 'wb-gamification' ),

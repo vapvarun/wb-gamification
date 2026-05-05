@@ -103,119 +103,144 @@ final class WebhooksAdminPage {
 		}
 
 		$webhooks = self::list_webhooks();
-		$action_url = admin_url( 'admin-post.php' );
 		?>
-		<div class="wrap">
-			<h1><?php esc_html_e( 'Webhooks', 'wb-gamification' ); ?></h1>
-			<p><?php esc_html_e( 'Outbound webhooks notify external services (Zapier, Slack, custom servers) when gamification events fire. Failed deliveries auto-retry up to 3 times with exponential backoff.', 'wb-gamification' ); ?></p>
+		<div class="wrap wbgam-wrap">
+			<header class="wbgam-page-header">
+				<div class="wbgam-page-header__main">
+					<h1 class="wbgam-page-header__title"><?php esc_html_e( 'Webhooks', 'wb-gamification' ); ?></h1>
+					<p class="wbgam-page-header__desc"><?php esc_html_e( 'Outbound webhooks notify external services (Zapier, Slack, custom servers) when gamification events fire. Failed deliveries auto-retry up to 3 times with exponential backoff.', 'wb-gamification' ); ?></p>
+				</div>
+			</header>
 
 			<?php if ( isset( $_GET['notice'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only notice display. ?>
-				<div class="notice notice-success is-dismissible">
-					<p><?php echo esc_html( self::notice_text( sanitize_key( wp_unslash( $_GET['notice'] ) ) ) ); ?></p>
+				<div class="wbgam-banner wbgam-banner--success wbgam-stack-block" role="status" aria-live="polite">
+					<span class="wbgam-banner__icon dashicons dashicons-yes-alt" aria-hidden="true"></span>
+					<div class="wbgam-banner__body">
+						<p class="wbgam-banner__desc"><?php echo esc_html( self::notice_text( sanitize_key( wp_unslash( $_GET['notice'] ) ) ) ); ?></p>
+					</div>
 				</div>
 			<?php endif; ?>
 
-			<h2><?php esc_html_e( 'Add Webhook', 'wb-gamification' ); ?></h2>
-			<form
-				class="wb-gam-webhook-form"
-				data-wb-gam-rest-form="wbGamWebhooksSettings"
-				data-wb-gam-rest-method="POST"
-				data-wb-gam-rest-path="/webhooks"
-				data-wb-gam-rest-success-toast="<?php esc_attr_e( 'Webhook saved.', 'wb-gamification' ); ?>"
-				data-wb-gam-rest-error-toast="<?php esc_attr_e( 'Failed to save the webhook.', 'wb-gamification' ); ?>"
-				data-wb-gam-rest-after="reload"
-			>
-
-				<table class="form-table" role="presentation">
-					<tr>
-						<th scope="row">
-							<label for="wb-gam-webhook-url"><?php esc_html_e( 'Endpoint URL', 'wb-gamification' ); ?></label>
-						</th>
-						<td>
-							<input type="url" id="wb-gam-webhook-url" name="url" class="regular-text" required placeholder="https://example.com/webhook" />
-							<p class="description"><?php esc_html_e( 'HTTPS only in production. Each delivery POSTs JSON with an X-WB-Gam-Signature HMAC header.', 'wb-gamification' ); ?></p>
-						</td>
-					</tr>
-					<tr>
-						<th scope="row">
-							<label for="wb-gam-webhook-secret"><?php esc_html_e( 'Secret', 'wb-gamification' ); ?></label>
-						</th>
-						<td>
-							<input type="text" id="wb-gam-webhook-secret" name="secret" class="regular-text" required placeholder="<?php esc_attr_e( 'auto-generated if blank', 'wb-gamification' ); ?>" />
-							<p class="description"><?php esc_html_e( 'Used to sign every payload (sha256 HMAC). Receiver verifies the signature before trusting the delivery.', 'wb-gamification' ); ?></p>
-						</td>
-					</tr>
-					<tr>
-						<th scope="row"><?php esc_html_e( 'Events', 'wb-gamification' ); ?></th>
-						<td>
-							<fieldset>
-								<legend class="screen-reader-text"><?php esc_html_e( 'Events to subscribe to', 'wb-gamification' ); ?></legend>
-								<?php foreach ( self::available_events() as $event => $label ) : ?>
-									<label class="wb-gam-event-checkbox">
-										<input type="checkbox" name="events[]" value="<?php echo esc_attr( $event ); ?>" />
-										<code><?php echo esc_html( $event ); ?></code>
-										<span class="description">— <?php echo esc_html( $label ); ?></span>
-									</label><br>
-								<?php endforeach; ?>
-							</fieldset>
-						</td>
-					</tr>
-				</table>
-
-				<?php submit_button( __( 'Add Webhook', 'wb-gamification' ) ); ?>
-			</form>
-
-			<h2><?php esc_html_e( 'Configured Webhooks', 'wb-gamification' ); ?></h2>
-			<?php if ( empty( $webhooks ) ) : ?>
-				<p class="wb-gam-empty">
-					<?php esc_html_e( 'No webhooks configured yet. Add one above.', 'wb-gamification' ); ?>
-				</p>
-			<?php else : ?>
-				<table class="wp-list-table widefat fixed striped">
-					<thead>
-						<tr>
-							<th><?php esc_html_e( 'URL', 'wb-gamification' ); ?></th>
-							<th><?php esc_html_e( 'Events', 'wb-gamification' ); ?></th>
-							<th><?php esc_html_e( 'Active', 'wb-gamification' ); ?></th>
-							<th><?php esc_html_e( 'Created', 'wb-gamification' ); ?></th>
-							<th><?php esc_html_e( 'Actions', 'wb-gamification' ); ?></th>
-						</tr>
-					</thead>
-					<tbody>
-						<?php foreach ( $webhooks as $hook ) :
-							$events = json_decode( $hook['events'], true ) ?: array();
-						?>
+			<!-- Add Webhook Card -->
+			<div class="wbgam-card wbgam-stack-block">
+				<div class="wbgam-card-header">
+					<h3 class="wbgam-card-title"><?php esc_html_e( 'Add Webhook', 'wb-gamification' ); ?></h3>
+				</div>
+				<div class="wbgam-card-body">
+					<form
+						class="wb-gam-webhook-form"
+						data-wb-gam-rest-form="wbGamWebhooksSettings"
+						data-wb-gam-rest-method="POST"
+						data-wb-gam-rest-path="/webhooks"
+						data-wb-gam-rest-success-toast="<?php esc_attr_e( 'Webhook saved.', 'wb-gamification' ); ?>"
+						data-wb-gam-rest-error-toast="<?php esc_attr_e( 'Failed to save the webhook.', 'wb-gamification' ); ?>"
+						data-wb-gam-rest-after="reload"
+					>
+						<table class="form-table" role="presentation">
 							<tr>
-								<td><code><?php echo esc_html( $hook['url'] ); ?></code></td>
+								<th scope="row">
+									<label for="wb-gam-webhook-url"><?php esc_html_e( 'Endpoint URL', 'wb-gamification' ); ?></label>
+								</th>
 								<td>
-									<?php foreach ( $events as $e ) : ?>
-										<code class="wb-gam-event-tag"><?php echo esc_html( $e ); ?></code>
-									<?php endforeach; ?>
-								</td>
-								<td>
-									<?php echo $hook['is_active'] ? '✓' : '—'; ?>
-								</td>
-								<td><?php echo esc_html( $hook['created_at'] ); ?></td>
-								<td>
-									<button
-										type="button"
-										class="button button-link-delete"
-										data-wb-gam-rest-action="wbGamWebhooksSettings"
-										data-wb-gam-rest-method="DELETE"
-										data-wb-gam-rest-path="/webhooks/<?php echo (int) $hook['id']; ?>"
-										data-wb-gam-rest-confirm="<?php esc_attr_e( 'Delete this webhook? Existing deliveries already in flight will still complete.', 'wb-gamification' ); ?>"
-										data-wb-gam-rest-success-toast="<?php esc_attr_e( 'Webhook deleted.', 'wb-gamification' ); ?>"
-										data-wb-gam-rest-error-toast="<?php esc_attr_e( 'Failed to delete webhook.', 'wb-gamification' ); ?>"
-										data-wb-gam-rest-after="remove-row"
-									>
-										<?php esc_html_e( 'Delete', 'wb-gamification' ); ?>
-									</button>
+									<input type="url" id="wb-gam-webhook-url" name="url" class="regular-text wbgam-input" required placeholder="https://example.com/webhook" />
+									<p class="description"><?php esc_html_e( 'HTTPS only in production. Each delivery POSTs JSON with an X-WB-Gam-Signature HMAC header.', 'wb-gamification' ); ?></p>
 								</td>
 							</tr>
-						<?php endforeach; ?>
-					</tbody>
-				</table>
-			<?php endif; ?>
+							<tr>
+								<th scope="row">
+									<label for="wb-gam-webhook-secret"><?php esc_html_e( 'Secret', 'wb-gamification' ); ?></label>
+								</th>
+								<td>
+									<input type="text" id="wb-gam-webhook-secret" name="secret" class="regular-text wbgam-input" required placeholder="<?php esc_attr_e( 'auto-generated if blank', 'wb-gamification' ); ?>" />
+									<p class="description"><?php esc_html_e( 'Used to sign every payload (sha256 HMAC). Receiver verifies the signature before trusting the delivery.', 'wb-gamification' ); ?></p>
+								</td>
+							</tr>
+							<tr>
+								<th scope="row"><?php esc_html_e( 'Events', 'wb-gamification' ); ?></th>
+								<td>
+									<fieldset class="wbgam-event-list">
+										<legend class="screen-reader-text"><?php esc_html_e( 'Events to subscribe to', 'wb-gamification' ); ?></legend>
+										<?php foreach ( self::available_events() as $event => $label ) : ?>
+											<label class="wbgam-event-list__item">
+												<input type="checkbox" name="events[]" value="<?php echo esc_attr( $event ); ?>" />
+												<code class="wbgam-event-list__code"><?php echo esc_html( $event ); ?></code>
+												<span class="wbgam-event-list__desc"><?php echo esc_html( $label ); ?></span>
+											</label>
+										<?php endforeach; ?>
+									</fieldset>
+								</td>
+							</tr>
+						</table>
+						<p class="submit">
+							<button type="submit" class="wbgam-btn"><?php esc_html_e( 'Add Webhook', 'wb-gamification' ); ?></button>
+						</p>
+					</form>
+				</div>
+			</div>
+
+			<!-- Configured Webhooks Card -->
+			<div class="wbgam-card">
+				<div class="wbgam-card-header">
+					<h3 class="wbgam-card-title"><?php esc_html_e( 'Configured Webhooks', 'wb-gamification' ); ?></h3>
+				</div>
+				<div class="wbgam-card-body">
+					<?php if ( empty( $webhooks ) ) : ?>
+						<p class="wbgam-text-muted"><?php esc_html_e( 'No webhooks configured yet. Add one above.', 'wb-gamification' ); ?></p>
+					<?php else : ?>
+						<div class="wbgam-table-scroll">
+							<table class="wbgam-table">
+								<thead>
+									<tr>
+										<th><?php esc_html_e( 'URL', 'wb-gamification' ); ?></th>
+										<th><?php esc_html_e( 'Events', 'wb-gamification' ); ?></th>
+										<th><?php esc_html_e( 'Active', 'wb-gamification' ); ?></th>
+										<th><?php esc_html_e( 'Created', 'wb-gamification' ); ?></th>
+										<th><?php esc_html_e( 'Actions', 'wb-gamification' ); ?></th>
+									</tr>
+								</thead>
+								<tbody>
+									<?php
+									foreach ( $webhooks as $hook ) :
+										$events = json_decode( $hook['events'], true ) ?: array();
+										?>
+										<tr>
+											<td><code><?php echo esc_html( $hook['url'] ); ?></code></td>
+											<td>
+												<?php foreach ( $events as $e ) : ?>
+													<code class="wb-gam-event-tag"><?php echo esc_html( $e ); ?></code>
+												<?php endforeach; ?>
+											</td>
+											<td>
+												<?php if ( $hook['is_active'] ) : ?>
+													<span class="wbgam-pill wbgam-pill--active"><?php esc_html_e( 'Active', 'wb-gamification' ); ?></span>
+												<?php else : ?>
+													<span class="wbgam-pill wbgam-pill--inactive"><?php esc_html_e( 'Paused', 'wb-gamification' ); ?></span>
+												<?php endif; ?>
+											</td>
+											<td><?php echo esc_html( $hook['created_at'] ); ?></td>
+											<td>
+												<button
+													type="button"
+													class="wbgam-btn wbgam-btn--sm wbgam-btn--danger"
+													data-wb-gam-rest-action="wbGamWebhooksSettings"
+													data-wb-gam-rest-method="DELETE"
+													data-wb-gam-rest-path="/webhooks/<?php echo (int) $hook['id']; ?>"
+													data-wb-gam-rest-confirm="<?php esc_attr_e( 'Delete this webhook? Existing deliveries already in flight will still complete.', 'wb-gamification' ); ?>"
+													data-wb-gam-rest-success-toast="<?php esc_attr_e( 'Webhook deleted.', 'wb-gamification' ); ?>"
+													data-wb-gam-rest-error-toast="<?php esc_attr_e( 'Failed to delete webhook.', 'wb-gamification' ); ?>"
+													data-wb-gam-rest-after="remove-row"
+												>
+													<?php esc_html_e( 'Delete', 'wb-gamification' ); ?>
+												</button>
+											</td>
+										</tr>
+									<?php endforeach; ?>
+								</tbody>
+							</table>
+						</div>
+					<?php endif; ?>
+				</div>
+			</div>
 		</div>
 		<?php
 	}

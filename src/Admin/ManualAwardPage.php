@@ -127,17 +127,24 @@ final class ManualAwardPage {
 
 		?>
 		<div class="wrap wbgam-wrap">
-			<h1 class="wbgam-page-title"><?php esc_html_e( 'Award Points', 'wb-gamification' ); ?></h1>
-			<p class="wbgam-page-desc"><?php esc_html_e( 'Manually grant or deduct points from any user. All awards go through the standard engine so hooks, badges, and streaks fire normally.', 'wb-gamification' ); ?></p>
+			<header class="wbgam-page-header">
+				<div class="wbgam-page-header__main">
+					<h1 class="wbgam-page-header__title"><?php esc_html_e( 'Award Points', 'wb-gamification' ); ?></h1>
+					<p class="wbgam-page-header__desc"><?php esc_html_e( 'Manually grant or deduct points from any user. All awards go through the standard engine so hooks, badges, and streaks fire normally.', 'wb-gamification' ); ?></p>
+				</div>
+			</header>
 
 			<?php if ( isset( $notice_map[ $notice ] ) ) : ?>
-				<div class="notice notice-<?php echo esc_attr( $notice_map[ $notice ][0] ); ?> is-dismissible wb-gam-notice">
-					<p><?php echo esc_html( $notice_map[ $notice ][1] ); ?></p>
+				<div class="wbgam-banner wbgam-banner--<?php echo esc_attr( $notice_map[ $notice ][0] ); ?> wbgam-stack-block" role="status" aria-live="polite">
+					<span class="wbgam-banner__icon dashicons dashicons-yes-alt" aria-hidden="true"></span>
+					<div class="wbgam-banner__body">
+						<p class="wbgam-banner__desc"><?php echo esc_html( $notice_map[ $notice ][1] ); ?></p>
+					</div>
 				</div>
 			<?php endif; ?>
 
 			<!-- Award Form Card -->
-			<div class="wbgam-card" style="margin-bottom:24px;">
+			<div class="wbgam-card wbgam-stack-block">
 				<div class="wbgam-card-header">
 					<h3 class="wbgam-card-title"><?php esc_html_e( 'Award or Deduct Points', 'wb-gamification' ); ?></h3>
 				</div>
@@ -197,6 +204,46 @@ final class ManualAwardPage {
 							</tr>
 							<tr>
 								<th scope="row">
+									<label for="wb_gam_award_point_type"><?php esc_html_e( 'Currency', 'wb-gamification' ); ?></label>
+								</th>
+								<td>
+									<?php
+									$wb_gam_point_types = ( new \WBGam\Services\PointTypeService() )->list();
+									$wb_gam_default_pt  = ( new \WBGam\Services\PointTypeService() )->default_slug();
+									?>
+									<select
+										id="wb_gam_award_point_type"
+										name="point_type"
+										class="wbgam-select"
+									>
+										<?php foreach ( $wb_gam_point_types as $wb_gam_pt ) : ?>
+											<option
+												value="<?php echo esc_attr( (string) $wb_gam_pt['slug'] ); ?>"
+												<?php selected( (string) $wb_gam_pt['slug'], $wb_gam_default_pt ); ?>
+											>
+												<?php echo esc_html( (string) $wb_gam_pt['label'] ); ?>
+												<?php if ( (int) $wb_gam_pt['is_default'] === 1 ) : ?>
+													<?php esc_html_e( '(default)', 'wb-gamification' ); ?>
+												<?php endif; ?>
+											</option>
+										<?php endforeach; ?>
+									</select>
+									<p class="description">
+										<?php
+										printf(
+											/* translators: %s URL of the Point Types admin page. */
+											wp_kses(
+												__( 'Which currency to award. <a href="%s">Manage point types</a>.', 'wb-gamification' ),
+												array( 'a' => array( 'href' => array() ) )
+											),
+											esc_url( admin_url( 'admin.php?page=wb-gam-point-types' ) )
+										);
+										?>
+									</p>
+								</td>
+							</tr>
+							<tr>
+								<th scope="row">
 									<label for="wb_gam_award_note"><?php esc_html_e( 'Reason / Note', 'wb-gamification' ); ?></label>
 								</th>
 								<td>
@@ -224,7 +271,7 @@ final class ManualAwardPage {
 				<div class="wbgam-card-header">
 					<h3 class="wbgam-card-title"><?php esc_html_e( 'Recent Manual Awards', 'wb-gamification' ); ?></h3>
 				</div>
-				<div class="wbgam-card-body" style="padding:0;">
+				<div class="wbgam-card-body wbgam-card-body--flush">
 					<table class="wbgam-table">
 						<thead>
 							<tr>
@@ -254,7 +301,7 @@ final class ManualAwardPage {
 			</div>
 			<?php else : ?>
 			<div class="wbgam-empty">
-				<div class="wbgam-empty-icon"><span class="dashicons dashicons-star-filled" style="font-size:48px;width:48px;height:48px;color:var(--wbgam-text-muted);"></span></div>
+				<div class="wbgam-empty-icon"><span class="dashicons dashicons-star-filled wbgam-icon-xl wbgam-icon-xl--muted"></span></div>
 				<div class="wbgam-empty-title"><?php esc_html_e( 'No manual awards yet', 'wb-gamification' ); ?></div>
 				<p><?php esc_html_e( 'Use the form above to grant or deduct points from any member.', 'wb-gamification' ); ?></p>
 			</div>

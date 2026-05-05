@@ -35,7 +35,7 @@ if ( ! hasMigratedBlocks() ) {
 	mkdirSync( BUILD_DIR, { recursive: true } );
 	writeFileSync(
 		path.join( BUILD_DIR, '.gitkeep' ),
-		'# Phase A bootstrap — no blocks migrated yet. See plans/WBCOM-BLOCK-STANDARD-MIGRATION.md.\n'
+		'# Phase A bootstrap — no blocks migrated yet. See plan/WBCOM-BLOCK-STANDARD-MIGRATION.md.\n'
 	);
 	process.stdout.write(
 		'wb-gamification: src/Blocks/ has no block.json yet — emitted empty build/.\n'

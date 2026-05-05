@@ -41,6 +41,7 @@ $tables = array(
 	'wb_gam_community_challenge_contributions',
 	'wb_gam_redemptions',
 	'wb_gam_cosmetics',
+	'wb_gam_point_types',
 );
 
 foreach ( $tables as $table ) {
@@ -59,6 +60,7 @@ $known_options = array(
 	'wb_gam_rank_automation_rules',
 	'wb_gam_template',
 	'wb_gam_wizard_complete',
+	'wb_gam_feature_point_types_v1',
 );
 
 foreach ( $known_options as $option ) {

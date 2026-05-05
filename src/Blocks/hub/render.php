@@ -285,7 +285,17 @@ BlockHooks::before( 'hub', $wb_gam_attrs );
 					<?php endif; ?>
 				</div>
 				<p class="gam-card__desc"><?php echo esc_html( (string) $wb_gam_card['desc'] ); ?></p>
-				<span class="gam-card__link"><?php echo wp_kses_post( sprintf( __( 'View %s', 'wb-gamification' ), '&rarr;' ) ); ?></span>
+				<span class="gam-card__link">
+					<?php
+					echo wp_kses_post(
+						sprintf(
+							/* translators: %s: HTML right-arrow entity displayed inline as the "view" affordance */
+							__( 'View %s', 'wb-gamification' ),
+							'&rarr;'
+						)
+					);
+					?>
+				</span>
 			</div>
 		<?php endforeach; ?>
 	</div>

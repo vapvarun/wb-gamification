@@ -28,6 +28,7 @@ final class Installer {
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 
 		// Immutable event log — source of truth for all gamification state.
+		// `point_type` records which currency the resulting award affected (analytics + audit).
 		dbDelta(
 			"CREATE TABLE {$wpdb->prefix}wb_gam_events (
 			id         VARCHAR(36)     NOT NULL,
@@ -35,17 +36,21 @@ final class Installer {
 			action_id  VARCHAR(100)    NOT NULL,
 			object_id  BIGINT UNSIGNED DEFAULT NULL,
 			metadata   LONGTEXT,
+			point_type VARCHAR(60)     NOT NULL DEFAULT 'points',
 			site_id    VARCHAR(100)    NOT NULL DEFAULT '',
 			created_at DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			PRIMARY KEY (id),
 			KEY idx_user_action (user_id, action_id),
 			KEY idx_user_created (user_id, created_at),
+			KEY idx_user_type_created (user_id, point_type, created_at),
 			KEY idx_created (created_at),
 			KEY idx_site_id (site_id)
 		) $charset;"
 		);
 
 		// Points ledger — derived from events; event_id nullable until Phase 0 Engine is built.
+		// `point_type` scopes the row to a specific currency (points / xp / coins / ...).
+		// Default 'points' preserves single-currency behaviour for back-compat.
 		dbDelta(
 			"CREATE TABLE {$wpdb->prefix}wb_gam_points (
 			id         BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -53,14 +58,32 @@ final class Installer {
 			user_id    BIGINT UNSIGNED NOT NULL,
 			action_id  VARCHAR(100)    NOT NULL,
 			points     INT             NOT NULL,
+			point_type VARCHAR(60)     NOT NULL DEFAULT 'points',
 			object_id  BIGINT UNSIGNED DEFAULT NULL,
 			created_at DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			PRIMARY KEY (id),
 			KEY idx_event (event_id),
 			KEY idx_user_created (user_id, created_at),
 			KEY idx_user_action_created (user_id, action_id, created_at),
+			KEY idx_user_type_created (user_id, point_type, created_at),
 			KEY idx_action (action_id),
 			KEY idx_created (created_at)
+		) $charset;"
+		);
+
+		// Point types — defines available currencies (Points / XP / Coins / Karma / ...).
+		// Seeded with one default 'points' row so single-currency installs work without setup.
+		dbDelta(
+			"CREATE TABLE {$wpdb->prefix}wb_gam_point_types (
+			slug        VARCHAR(60)     NOT NULL,
+			label       VARCHAR(100)    NOT NULL,
+			description TEXT,
+			icon        VARCHAR(100)    DEFAULT NULL,
+			is_default  TINYINT(1)      NOT NULL DEFAULT 0,
+			position    INT UNSIGNED    NOT NULL DEFAULT 0,
+			created_at  DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			PRIMARY KEY (slug),
+			KEY idx_default (is_default)
 		) $charset;"
 		);
 
@@ -315,6 +338,9 @@ final class Installer {
 
 		// Seed default badge library (30 badges).
 		self::seed_default_badges();
+
+		// Seed default point type — 'points' as the primary currency.
+		self::seed_default_point_types();
 
 		update_option( 'wb_gam_db_version', WB_GAM_VERSION );
 
@@ -657,5 +683,33 @@ final class Installer {
 		foreach ( $levels as $level ) {
 			$wpdb->insert( $table, $level );
 		}
+	}
+
+	/**
+	 * Seed the default `points` point type.
+	 *
+	 * Idempotent — uses INSERT IGNORE on the slug primary key so re-activation
+	 * never duplicates the seed row. Sites can rename the label / icon later
+	 * via the admin UI; the slug stays as 'points' to keep back-compat for
+	 * every column that defaults to `'points'`.
+	 *
+	 * @since 1.0.0
+	 */
+	private static function seed_default_point_types(): void {
+		global $wpdb;
+		$table = $wpdb->prefix . 'wb_gam_point_types';
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from $wpdb->prefix; INSERT IGNORE is the deterministic upsert path.
+		$wpdb->query(
+			$wpdb->prepare(
+				"INSERT IGNORE INTO $table (slug, label, description, icon, is_default, position) VALUES (%s, %s, %s, %s, %d, %d)",
+				'points',
+				'Points',
+				'Primary points currency. Renamable; the slug stays as `points` for back-compat.',
+				'star',
+				1,
+				0
+			)
+		);
 	}
 }

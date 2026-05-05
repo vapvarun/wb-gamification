@@ -135,17 +135,19 @@ final class ChallengeManagerPage {
 
 		?>
 		<div class="wrap wbgam-wrap">
-			<h1 class="wbgam-page-title"><?php esc_html_e( 'Challenge Manager', 'wb-gamification' ); ?></h1>
-			<p class="wbgam-page-desc"><?php esc_html_e( 'Create challenges to engage your community. Set an action, target, and bonus points.', 'wb-gamification' ); ?></p>
+			<header class="wbgam-page-header">
+				<div class="wbgam-page-header__main">
+					<h1 class="wbgam-page-header__title"><?php esc_html_e( 'Challenge Manager', 'wb-gamification' ); ?></h1>
+					<p class="wbgam-page-header__desc"><?php esc_html_e( 'Create challenges to engage your community. Set an action, target, and bonus points.', 'wb-gamification' ); ?></p>
+				</div>
+			</header>
 
 			<?php if ( isset( $notice_map[ $notice ] ) ) : ?>
-				<div class="notice notice-<?php echo esc_attr( $notice_map[ $notice ][0] ); ?> is-dismissible">
-					<p><?php echo esc_html( $notice_map[ $notice ][1] ); ?></p>
-				</div>
+				<div class="wbgam-banner wbgam-banner--<?php echo esc_attr( $notice_map[ $notice ][0] ); ?> wbgam-stack-block" role="status" aria-live="polite"><span class="wbgam-banner__icon dashicons dashicons-yes-alt" aria-hidden="true"></span><div class="wbgam-banner__body"><p class="wbgam-banner__desc"><?php echo esc_html( $notice_map[ $notice ][1] ); ?></p></div></div>
 			<?php endif; ?>
 
 			<!-- Create/Edit Form Card -->
-			<div class="wbgam-card" style="margin-bottom:24px;">
+			<div class="wbgam-card wbgam-stack-block">
 				<div class="wbgam-card-header">
 					<h3 class="wbgam-card-title">
 						<?php echo $editing ? esc_html__( 'Edit Challenge', 'wb-gamification' ) : esc_html__( 'Create Challenge', 'wb-gamification' ); ?>
@@ -228,7 +230,7 @@ final class ChallengeManagerPage {
 								<?php echo $editing ? esc_html__( 'Update Challenge', 'wb-gamification' ) : esc_html__( 'Create Challenge', 'wb-gamification' ); ?>
 							</button>
 							<?php if ( $editing ) : ?>
-								<a href="<?php echo esc_url( admin_url( 'admin.php?page=wb-gam-challenges' ) ); ?>" class="wbgam-btn wbgam-btn--secondary" style="margin-left:8px;">
+								<a href="<?php echo esc_url( admin_url( 'admin.php?page=wb-gam-challenges' ) ); ?>" class="wbgam-btn wbgam-btn--secondary wbgam-ms-sm">
 									<?php esc_html_e( 'Cancel', 'wb-gamification' ); ?>
 								</a>
 							<?php endif; ?>
@@ -243,7 +245,7 @@ final class ChallengeManagerPage {
 				<div class="wbgam-card-header">
 					<h3 class="wbgam-card-title"><?php esc_html_e( 'All Challenges', 'wb-gamification' ); ?></h3>
 				</div>
-				<div class="wbgam-card-body" style="padding:0;">
+				<div class="wbgam-card-body wbgam-card-body--flush">
 					<table class="wbgam-table">
 						<thead>
 							<tr>
@@ -289,7 +291,7 @@ final class ChallengeManagerPage {
 									<button
 										type="button"
 										class="wbgam-btn wbgam-btn--sm wbgam-btn--danger"
-										style="margin-left:4px;"
+										class="wbgam-ms-xs"
 										data-wb-gam-rest-action="wbGamChallengesSettings"
 										data-wb-gam-rest-method="DELETE"
 										data-wb-gam-rest-path="/challenges/<?php echo (int) $c['id']; ?>"
@@ -309,7 +311,7 @@ final class ChallengeManagerPage {
 			</div>
 			<?php else : ?>
 			<div class="wbgam-empty">
-				<div class="wbgam-empty-icon"><span class="dashicons dashicons-flag" style="font-size:48px;width:48px;height:48px;color:var(--wb-gam-locked);"></span></div>
+				<div class="wbgam-empty-icon"><span class="dashicons dashicons-flag wbgam-icon-xl"></span></div>
 				<div class="wbgam-empty-title"><?php esc_html_e( 'No challenges yet', 'wb-gamification' ); ?></div>
 				<p><?php esc_html_e( 'Create your first challenge above to engage your community.', 'wb-gamification' ); ?></p>
 			</div>

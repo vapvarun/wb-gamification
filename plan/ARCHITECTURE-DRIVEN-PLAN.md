@@ -168,7 +168,7 @@ A single PR or a tightly-coupled series of PRs (with the same branch root) lands
 
 ## What this plan supersedes
 
-- `plans/INTEGRATION-GAPS-ROADMAP.md` — G2/G1 already closed; G4 closed in Phase 4 here; G3/G5/G6/G7 stay deferred per the table above. The roadmap doc moves to historical-context status.
+- `plan/INTEGRATION-GAPS-ROADMAP.md` — G2/G1 already closed; G4 closed in Phase 4 here; G3/G5/G6/G7 stay deferred per the table above. The roadmap doc moves to historical-context status.
 - `audit/FEATURE-COMPLETENESS-2026-05-02.md` recommended next moves — every numbered item is now mapped to a phase here, OR is in the deferred table above.
 
 There is one plan, in this file. Execution follows.

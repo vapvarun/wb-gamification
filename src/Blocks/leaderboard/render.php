@@ -109,8 +109,11 @@ BlockHooks::before( 'leaderboard', $wb_gam_attrs );
 						$wb_gam_uid = (int) ( $wb_gam_row['user_id'] ?? 0 );
 						$wb_gam_dn  = (string) ( $wb_gam_row['display_name'] ?? '' );
 						if ( function_exists( 'bp_core_get_user_domain' ) ) {
-							$wb_gam_url = esc_url( bp_core_get_user_domain( $wb_gam_uid ) );
-							printf( '<a href="%s">%s</a>', $wb_gam_url, esc_html( $wb_gam_dn ) );
+							printf(
+								'<a href="%1$s">%2$s</a>',
+								esc_url( bp_core_get_user_domain( $wb_gam_uid ) ),
+								esc_html( $wb_gam_dn )
+							);
 						} else {
 							echo esc_html( $wb_gam_dn );
 						}

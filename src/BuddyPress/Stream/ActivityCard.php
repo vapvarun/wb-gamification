@@ -27,10 +27,10 @@ final class ActivityCard {
 	 * Render the activity content card.
 	 *
 	 * BP runs activity content through `wp_kses_post()`, which:
-	 *   - strips the `class` attribute from `<strong>` (only span/p/div allow it)
-	 *   - drops `data:` URIs from `<img src>` (not in default allowed protocols)
+	 *   - strips the `class` attribute from `&lt;strong&gt;` (only span/p/div allow it)
+	 *   - drops `data:` URIs from image src attributes (not in default allowed protocols)
 	 *
-	 * Output uses `<span>` for the title and absolute URLs for icons accordingly.
+	 * Output uses `&lt;span&gt;` for the title and absolute URLs for icons accordingly.
 	 *
 	 * @param string $type        One of: badge, level, kudos, challenge.
 	 * @param string $image_url   Absolute URL for the icon/avatar (no data: URIs).

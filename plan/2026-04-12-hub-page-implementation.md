@@ -8,7 +8,7 @@
 
 **Tech Stack:** PHP 8.1, WordPress 6.5+ Block API, Interactivity API, Lucide icons (CSS font), CSS custom properties
 
-**Design Spec:** `plans/frontend-hub-flow-spec.md`
+**Design Spec:** `plan/frontend-hub-flow-spec.md`
 **Working Prototype:** `.superpowers/brainstorm/98241-1776001804/content/flow-architecture-v2.html`
 
 ---

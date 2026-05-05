@@ -131,8 +131,8 @@ BlockHooks::before(
 					<span class="wb-gam-cohort-rank__name"><?php echo esc_html( (string) ( $wb_gam_entry['display_name'] ?? '' ) ); ?></span>
 					<span class="wb-gam-cohort-rank__points">
 						<?php
-						/* translators: %s = points earned this week */
 						printf(
+							/* translators: %s: points earned this week */
 							esc_html__( '%s pts', 'wb-gamification' ),
 							esc_html( number_format_i18n( (int) ( $wb_gam_entry['week_pts'] ?? 0 ) ) )
 						);

@@ -311,6 +311,12 @@ final class Engine {
 	private static function persist_event( Event $event ): void {
 		global $wpdb;
 
+		// Resolve point_type for the event log so analytics queries can scope by currency
+		// without re-parsing the JSON metadata blob.
+		$point_type = ( new \WBGam\Services\PointTypeService() )->resolve(
+			isset( $event->metadata['point_type'] ) ? (string) $event->metadata['point_type'] : null
+		);
+
 		$wpdb->insert(
 			$wpdb->prefix . 'wb_gam_events',
 			array(
@@ -319,10 +325,11 @@ final class Engine {
 				'action_id'  => $event->action_id,
 				'object_id'  => $event->object_id ?: null,
 				'metadata'   => ! empty( $event->metadata ) ? wp_json_encode( $event->metadata ) : null,
+				'point_type' => $point_type,
 				'site_id'    => $event->metadata['_site_id'] ?? '',
 				'created_at' => gmdate( 'Y-m-d H:i:s' ),
 			),
-			array( '%s', '%d', '%s', '%d', '%s', '%s', '%s' )
+			array( '%s', '%d', '%s', '%d', '%s', '%s', '%s', '%s' )
 		);
 	}
 }

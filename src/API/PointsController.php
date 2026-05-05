@@ -66,28 +66,34 @@ class PointsController extends WP_REST_Controller {
 					'callback'            => array( $this, 'award' ),
 					'permission_callback' => array( $this, 'admin_permission_check' ),
 					'args'                => array(
-						'user_id' => array(
+						'user_id'    => array(
 							'required'          => true,
 							'type'              => 'integer',
 							'minimum'           => 1,
 							'sanitize_callback' => 'absint',
 						),
-						'points'  => array(
+						'points'     => array(
 							'required'          => true,
 							'type'              => 'integer',
 							'minimum'           => -100000,
 							'maximum'           => 100000,
 							'description'       => 'Positive to award, negative to debit. Zero is rejected.',
 						),
-						'reason'  => array(
+						'reason'     => array(
 							'type'              => 'string',
 							'default'           => 'manual_award',
 							'sanitize_callback' => 'sanitize_text_field',
 						),
-						'note'    => array(
+						'note'       => array(
 							'type'              => 'string',
 							'default'           => '',
 							'sanitize_callback' => 'sanitize_textarea_field',
+						),
+						'point_type' => array(
+							'type'              => 'string',
+							'default'           => '',
+							'description'       => 'Optional point-type slug. Defaults to the primary type if omitted or unknown.',
+							'sanitize_callback' => 'sanitize_key',
 						),
 					),
 				),
@@ -164,10 +170,11 @@ class PointsController extends WP_REST_Controller {
 	 * @return WP_REST_Response|WP_Error Response on success, WP_Error on failure.
 	 */
 	public function award( WP_REST_Request $request ): WP_REST_Response|WP_Error {
-		$user_id = (int) $request['user_id'];
-		$points  = (int) $request['points'];
-		$reason  = (string) $request['reason'];
-		$note    = (string) $request['note'];
+		$user_id    = (int) $request['user_id'];
+		$points     = (int) $request['points'];
+		$reason     = (string) $request['reason'];
+		$note       = (string) $request['note'];
+		$type_input = (string) $request['point_type'];
 
 		if ( ! get_userdata( $user_id ) ) {
 			return new WP_Error( 'rest_user_invalid', __( 'Member not found.', 'wb-gamification' ), array( 'status' => 404 ) );
@@ -180,9 +187,12 @@ class PointsController extends WP_REST_Controller {
 			);
 		}
 
+		// Resolve the requested point type (falls back to primary type for unknown / empty input).
+		$point_type = ( new \WBGam\Services\PointTypeService() )->resolve( $type_input );
+
 		// Negative input → debit via PointsEngine::debit; positive → standard award path.
 		if ( $points < 0 ) {
-			$ok = \WBGam\Engine\PointsEngine::debit( $user_id, abs( $points ), 'manual_admin_deduct' );
+			$ok = \WBGam\Engine\PointsEngine::debit( $user_id, abs( $points ), 'manual_admin_deduct', '', $point_type );
 			if ( ! $ok ) {
 				return new WP_Error(
 					'rest_points_debit_failed',
@@ -195,11 +205,12 @@ class PointsController extends WP_REST_Controller {
 			}
 			return new WP_REST_Response(
 				array(
-					'awarded' => false,
-					'debited' => true,
-					'user_id' => $user_id,
-					'points'  => $points,
-					'reason'  => $reason,
+					'awarded'    => false,
+					'debited'    => true,
+					'user_id'    => $user_id,
+					'points'     => $points,
+					'point_type' => $point_type,
+					'reason'     => $reason,
 				),
 				201
 			);
@@ -211,6 +222,7 @@ class PointsController extends WP_REST_Controller {
 				'user_id'   => $user_id,
 				'metadata'  => array(
 					'points'     => $points,
+					'point_type' => $point_type,
 					'reason'     => $reason,
 					'note'       => $note,
 					'awarded_by' => get_current_user_id(),
@@ -226,11 +238,12 @@ class PointsController extends WP_REST_Controller {
 
 		return new WP_REST_Response(
 			array(
-				'awarded' => true,
-				'debited' => false,
-				'user_id' => $user_id,
-				'points'  => $points,
-				'reason'  => $reason,
+				'awarded'    => true,
+				'debited'    => false,
+				'user_id'    => $user_id,
+				'points'     => $points,
+				'point_type' => $point_type,
+				'reason'     => $reason,
 			),
 			201
 		);

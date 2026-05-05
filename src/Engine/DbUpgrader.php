@@ -34,24 +34,142 @@ final class DbUpgrader {
 
 	/**
 	 * Run any pending migrations on plugins_loaded.
+	 *
+	 * Two passes:
+	 *   1. Versioned migrations (0.1.0 → WB_GAM_VERSION) — the legacy upgrade pipeline.
+	 *   2. Feature migrations — option-flag-gated, idempotent, run independently of
+	 *      WB_GAM_VERSION so v1.0 critical-gap schemas land on dev boxes whose
+	 *      `wb_gam_db_version` option is already higher than WB_GAM_VERSION.
 	 */
 	public static function init(): void {
 		$current = get_option( self::OPT_KEY, '0.0.0' );
 
-		if ( version_compare( $current, WB_GAM_VERSION, '>=' ) ) {
+		if ( version_compare( $current, WB_GAM_VERSION, '<' ) ) {
+			// Prevent concurrent upgrade runs (e.g. two simultaneous requests on activation).
+			if ( ! get_transient( self::LOCK_KEY ) ) {
+				set_transient( self::LOCK_KEY, 1, self::LOCK_TTL );
+
+				self::run( $current );
+
+				update_option( self::OPT_KEY, WB_GAM_VERSION );
+				delete_transient( self::LOCK_KEY );
+			}
+		}
+
+		// Feature migrations always run (gated by per-feature option flags).
+		self::ensure_feature_migrations();
+	}
+
+	/**
+	 * Run idempotent feature-flag-gated schema migrations.
+	 *
+	 * Each migration uses its own option flag so it runs exactly once per site,
+	 * decoupled from `wb_gam_db_version` / `WB_GAM_VERSION`. This lets v1.0 cycle
+	 * features add schema without bumping the public version, and keeps internal
+	 * dev boxes (db_version=1.2.0 from pre-launch iterations) in sync.
+	 *
+	 * @since 1.0.0
+	 */
+	private static function ensure_feature_migrations(): void {
+		self::ensure_point_types_schema();
+	}
+
+	/**
+	 * Ensure `wb_gam_point_types` table exists and `point_type` columns are present
+	 * on `wb_gam_points` and `wb_gam_events`.
+	 *
+	 * Idempotent — guards on column existence (information_schema lookup) and uses
+	 * `INSERT IGNORE` for the default-type seed.
+	 *
+	 * @since 1.0.0
+	 */
+	private static function ensure_point_types_schema(): void {
+		$flag_key = 'wb_gam_feature_point_types_v1';
+		if ( get_option( $flag_key ) ) {
 			return;
 		}
 
-		// Prevent concurrent upgrade runs (e.g. two simultaneous requests on activation).
-		if ( get_transient( self::LOCK_KEY ) ) {
+		global $wpdb;
+		$charset = $wpdb->get_charset_collate();
+
+		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+
+		// 1. Create the point_types table if missing (dbDelta is idempotent).
+		dbDelta(
+			"CREATE TABLE {$wpdb->prefix}wb_gam_point_types (
+			slug        VARCHAR(60)     NOT NULL,
+			label       VARCHAR(100)    NOT NULL,
+			description TEXT,
+			icon        VARCHAR(100)    DEFAULT NULL,
+			is_default  TINYINT(1)      NOT NULL DEFAULT 0,
+			position    INT UNSIGNED    NOT NULL DEFAULT 0,
+			created_at  DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			PRIMARY KEY (slug),
+			KEY idx_default (is_default)
+		) $charset;"
+		);
+
+		// 2. Add point_type column to wb_gam_points if missing.
+		self::add_point_type_column( $wpdb->prefix . 'wb_gam_points', 'AFTER points' );
+
+		// 3. Add point_type column to wb_gam_events if missing.
+		self::add_point_type_column( $wpdb->prefix . 'wb_gam_events', 'AFTER metadata' );
+
+		// 4. Seed the default 'points' type. INSERT IGNORE = no duplicate on re-run.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- bootstrapped table name; INSERT IGNORE on PK.
+		$wpdb->query(
+			$wpdb->prepare(
+				"INSERT IGNORE INTO {$wpdb->prefix}wb_gam_point_types (slug, label, description, icon, is_default, position) VALUES (%s, %s, %s, %s, %d, %d)",
+				'points',
+				'Points',
+				'Primary points currency. Renamable; the slug stays as `points` for back-compat.',
+				'star',
+				1,
+				0
+			)
+		);
+
+		update_option( $flag_key, '1' );
+	}
+
+	/**
+	 * Add a `point_type VARCHAR(60) NOT NULL DEFAULT 'points'` column to a table
+	 * if it does not already exist.
+	 *
+	 * @param string $table       Fully-qualified table name (with prefix).
+	 * @param string $position_sql `AFTER <col>` or empty string for end-of-row.
+	 */
+	private static function add_point_type_column( string $table, string $position_sql ): void {
+		global $wpdb;
+
+		// Check existing columns. SHOW COLUMNS is the idiomatic guard for ALTER idempotency.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name validated upstream.
+		$exists = $wpdb->get_var(
+			$wpdb->prepare(
+				"SHOW COLUMNS FROM $table LIKE %s",
+				'point_type'
+			)
+		);
+
+		if ( $exists ) {
 			return;
 		}
-		set_transient( self::LOCK_KEY, 1, self::LOCK_TTL );
 
-		self::run( $current );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- bootstrap-time DDL; column / table names validated upstream; default is a static string literal.
+		$wpdb->query( "ALTER TABLE $table ADD COLUMN point_type VARCHAR(60) NOT NULL DEFAULT 'points' $position_sql" );
 
-		update_option( self::OPT_KEY, WB_GAM_VERSION );
-		delete_transient( self::LOCK_KEY );
+		// Add the user/type/created index for fast per-type balance queries.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- bootstrap-time index creation.
+		$index_exists = $wpdb->get_var(
+			$wpdb->prepare(
+				"SHOW INDEX FROM $table WHERE Key_name = %s",
+				'idx_user_type_created'
+			)
+		);
+		if ( ! $index_exists ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- bootstrap-time DDL.
+			$wpdb->query( "ALTER TABLE $table ADD KEY idx_user_type_created (user_id, point_type, created_at)" );
+		}
 	}
 
 	// ── Dispatcher ───────────────────────────────────────────────────────────────

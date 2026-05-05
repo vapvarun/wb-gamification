@@ -3,7 +3,7 @@
  * Plugin Name: WB Gamification
  * Plugin URI:  https://wbcomdesigns.com/
  * Description: Complete gamification plugin for BuddyPress and WordPress. Part of the Reign Stack. Points, badges, levels, leaderboards, challenges, and streaks — zero config, works out of the box.
- * Version:     1.2.0
+ * Version:     1.0.0
  * Author:      Wbcom Designs
  * Author URI:  https://wbcomdesigns.com/
  * License:     GPL-2.0+
@@ -18,7 +18,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'WB_GAM_VERSION', '1.2.0' );
+define( 'WB_GAM_VERSION', '1.0.0' );
 define( 'WB_GAM_FILE', __FILE__ );
 define( 'WB_GAM_PATH', plugin_dir_path( __FILE__ ) );
 define( 'WB_GAM_URL', plugin_dir_url( __FILE__ ) );
@@ -46,6 +46,7 @@ use WBGam\Engine\TenureBadgeEngine;
 use WBGam\Engine\WeeklyEmailEngine;
 use WBGam\API\MembersController;
 use WBGam\API\PointsController;
+use WBGam\API\PointTypesController;
 use WBGam\API\BadgesController;
 use WBGam\API\LeaderboardController;
 use WBGam\API\ActionsController;
@@ -75,6 +76,7 @@ use WBGam\Admin\RedemptionStorePage;
 use WBGam\Admin\CommunityChallengesPage;
 use WBGam\Admin\CohortSettingsPage;
 use WBGam\Admin\WebhooksAdminPage;
+use WBGam\Admin\PointTypesPage;
 use WBGam\API\CredentialController;
 use WBGam\API\RedemptionController;
 use WBGam\API\LevelsController;
@@ -160,6 +162,7 @@ final class WB_Gamification {
 			add_action( 'plugins_loaded', array( CommunityChallengesPage::class, 'init' ), 10 );
 			add_action( 'plugins_loaded', array( CohortSettingsPage::class, 'init' ), 10 );
 			add_action( 'plugins_loaded', array( WebhooksAdminPage::class, 'init' ), 10 );
+			add_action( 'plugins_loaded', array( PointTypesPage::class, 'init' ), 10 );
 		}
 	}
 
@@ -199,6 +202,7 @@ final class WB_Gamification {
 	public function register_routes(): void {
 		( new MembersController() )->register_routes();
 		( new PointsController() )->register_routes();
+		( new PointTypesController() )->register_routes();
 		( new BadgesController() )->register_routes();
 		( new LeaderboardController() )->register_routes();
 		( new ActionsController() )->register_routes();

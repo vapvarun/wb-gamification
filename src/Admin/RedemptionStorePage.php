@@ -70,6 +70,17 @@ final class RedemptionStorePage {
 				),
 			)
 		);
+
+		// Reward-type field toggle (replaces the legacy inline <script>).
+		// Matching CSS rules (.wb-gam-config-row.is-visible etc.) live in the
+		// shared assets/css/admin.css, so no separate stylesheet to enqueue.
+		wp_enqueue_script(
+			'wb-gam-admin-reward-type-toggle',
+			plugins_url( 'assets/js/admin-reward-type-toggle.js', WB_GAM_FILE ),
+			array(),
+			WB_GAM_VERSION,
+			true
+		);
 	}
 
 	/**
@@ -144,17 +155,19 @@ final class RedemptionStorePage {
 
 		?>
 		<div class="wrap wbgam-wrap">
-			<h1 class="wbgam-page-title"><?php esc_html_e( 'Redemption Store', 'wb-gamification' ); ?></h1>
-			<p class="wbgam-page-desc"><?php esc_html_e( 'Create rewards that members can purchase with earned points.', 'wb-gamification' ); ?></p>
+			<header class="wbgam-page-header">
+				<div class="wbgam-page-header__main">
+					<h1 class="wbgam-page-header__title"><?php esc_html_e( 'Redemption Store', 'wb-gamification' ); ?></h1>
+					<p class="wbgam-page-header__desc"><?php esc_html_e( 'Create rewards that members can purchase with earned points.', 'wb-gamification' ); ?></p>
+				</div>
+			</header>
 
 			<?php if ( isset( $notice_map[ $notice ] ) ) : ?>
-				<div class="notice notice-<?php echo esc_attr( $notice_map[ $notice ][0] ); ?> is-dismissible">
-					<p><?php echo esc_html( $notice_map[ $notice ][1] ); ?></p>
-				</div>
+				<div class="wbgam-banner wbgam-banner--<?php echo esc_attr( $notice_map[ $notice ][0] ); ?> wbgam-stack-block" role="status" aria-live="polite"><span class="wbgam-banner__icon dashicons dashicons-yes-alt" aria-hidden="true"></span><div class="wbgam-banner__body"><p class="wbgam-banner__desc"><?php echo esc_html( $notice_map[ $notice ][1] ); ?></p></div></div>
 			<?php endif; ?>
 
 			<!-- Create/Edit Form Card -->
-			<div class="wbgam-card" style="margin-bottom:24px;">
+			<div class="wbgam-card wbgam-stack-block">
 				<div class="wbgam-card-header">
 					<h3 class="wbgam-card-title">
 						<?php echo $editing ? esc_html__( 'Edit Reward', 'wb-gamification' ) : esc_html__( 'Add Reward', 'wb-gamification' ); ?>
@@ -312,7 +325,7 @@ final class RedemptionStorePage {
 								<?php echo $editing ? esc_html__( 'Update Reward', 'wb-gamification' ) : esc_html__( 'Add Reward', 'wb-gamification' ); ?>
 							</button>
 							<?php if ( $editing ) : ?>
-								<a href="<?php echo esc_url( admin_url( 'admin.php?page=wb-gam-redemption' ) ); ?>" class="wbgam-btn wbgam-btn--secondary" style="margin-left:8px;">
+								<a href="<?php echo esc_url( admin_url( 'admin.php?page=wb-gam-redemption' ) ); ?>" class="wbgam-btn wbgam-btn--secondary wbgam-ms-sm">
 									<?php esc_html_e( 'Cancel', 'wb-gamification' ); ?>
 								</a>
 							<?php endif; ?>
@@ -327,7 +340,7 @@ final class RedemptionStorePage {
 				<div class="wbgam-card-header">
 					<h3 class="wbgam-card-title"><?php esc_html_e( 'All Rewards', 'wb-gamification' ); ?></h3>
 				</div>
-				<div class="wbgam-card-body" style="padding:0;">
+				<div class="wbgam-card-body wbgam-card-body--flush">
 					<table class="wbgam-table">
 						<thead>
 							<tr>
@@ -360,7 +373,7 @@ final class RedemptionStorePage {
 								<td>
 									<strong><?php echo esc_html( $item['title'] ); ?></strong>
 									<?php if ( ! empty( $item['description'] ) ) : ?>
-										<br><small style="color:var(--wb-gam-muted);"><?php echo esc_html( wp_trim_words( $item['description'], 12 ) ); ?></small>
+										<br><small class="wbgam-text-muted"><?php echo esc_html( wp_trim_words( $item['description'], 12 ) ); ?></small>
 									<?php endif; ?>
 								</td>
 								<td><strong><?php echo esc_html( number_format_i18n( $item['points_cost'] ) ); ?></strong> <?php esc_html_e( 'pts', 'wb-gamification' ); ?></td>
@@ -378,7 +391,7 @@ final class RedemptionStorePage {
 									<button
 										type="button"
 										class="wbgam-btn wbgam-btn--sm wbgam-btn--danger"
-										style="margin-left:4px;"
+										class="wbgam-ms-xs"
 										data-wb-gam-rest-action="wbGamRedemptionSettings"
 										data-wb-gam-rest-method="DELETE"
 										data-wb-gam-rest-path="/redemptions/items/<?php echo (int) $item['id']; ?>"
@@ -398,44 +411,16 @@ final class RedemptionStorePage {
 			</div>
 			<?php else : ?>
 			<div class="wbgam-empty">
-				<div class="wbgam-empty-icon"><span class="dashicons dashicons-cart" style="font-size:48px;width:48px;height:48px;color:var(--wb-gam-locked);"></span></div>
+				<div class="wbgam-empty-icon"><span class="dashicons dashicons-cart wbgam-icon-xl"></span></div>
 				<div class="wbgam-empty-title"><?php esc_html_e( 'No rewards yet', 'wb-gamification' ); ?></div>
 				<p><?php esc_html_e( 'Create your first reward above to open the redemption store for your members.', 'wb-gamification' ); ?></p>
 			</div>
 			<?php endif; ?>
 		</div>
-		<style>
-			.wb-gam-config-row { display: none; }
-			.wb-gam-config-row.is-visible { display: table-row; }
-			.wb-gam-cfg-hint { display: none; }
-			.wb-gam-cfg-hint.is-visible { display: inline; }
-			@media (max-width: 640px) {
-				.wbgam-card-body table.form-table th,
-				.wbgam-card-body table.form-table td { display: block; width: 100%; padding: 8px 0; }
-				.wb-gam-config-row.is-visible { display: block; }
-			}
-		</style>
-		<script>
-			(function () {
-				var typeSelect = document.getElementById('wb-gam-reward-type');
-				if (!typeSelect) { return; }
-				var rows  = document.querySelectorAll('.wb-gam-config-row');
-				var hints = document.querySelectorAll('.wb-gam-cfg-hint');
-				function sync() {
-					var type = typeSelect.value;
-					rows.forEach(function (row) {
-						var allowed = (row.getAttribute('data-show-for') || '').split(/\s+/);
-						row.classList.toggle('is-visible', allowed.indexOf(type) !== -1);
-					});
-					hints.forEach(function (hint) {
-						hint.classList.toggle('is-visible', hint.getAttribute('data-hint-for') === type);
-					});
-				}
-				typeSelect.addEventListener('change', sync);
-				sync();
-			})();
-		</script>
 		<?php
+		// Reward-type toggle CSS  → assets/css/admin-redemption.css
+		// Reward-type toggle JS   → assets/js/admin-reward-type-toggle.js
+		// Both are enqueued via enqueue_assets() — never inline.
 	}
 
 	// handle_save() / handle_delete() removed in 1.0.0 (Tier 0.C). Rewards are

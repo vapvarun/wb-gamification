@@ -328,7 +328,7 @@ For each of the 15 blocks at **both** 1280px AND 390px viewports:
 4. `bin/build-release.sh` → produces `dist/wb-gamification-1.0.0.zip`
 5. Extract to `/tmp/wb-gam-release-test/`
 6. `wp plugin check /tmp/wb-gam-release-test/wb-gamification --severity=error` → 0 errors
-7. Verify zip excludes: `.git/`, `node_modules/`, `tests/`, `plans/`, `docs/`, `bin/`, `src/`, `dist/`, `*.map`, `composer.json`, `composer.lock`, `package*.json`, `phpstan.neon*`, `phpcs.xml*`, `phpunit.xml*`, `audit/`, `examples/`, `CLAUDE.md`
+7. Verify zip excludes: `.git/`, `node_modules/`, `tests/`, `plan/`, `docs/`, `bin/`, `src/`, `dist/`, `*.map`, `composer.json`, `composer.lock`, `package*.json`, `phpstan.neon*`, `phpcs.xml*`, `phpunit.xml*`, `audit/`, `examples/`, `CLAUDE.md`
 8. Verify zip includes: `wb-gamification.php`, `readme.txt`, `LICENSE`, `CHANGELOG.md`, `languages/wb-gamification.pot`, `languages/wb-gamification-rtl.css` (if applicable), `assets/`, `build/`, `includes/`, `vendor/`, `templates/`, `uninstall.php`
 9. Generate `.pot`: `wp i18n make-pot . languages/wb-gamification.pot --domain=wb-gamification --exclude=node_modules,vendor,build,tests`
 10. Generate RTL stylesheets: `npx rtlcss assets/css/frontend.css assets/css/frontend-rtl.css` (and admin.css)

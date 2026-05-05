@@ -8,7 +8,7 @@
  * Run once via `node bin/extract-block-css.mjs`. Idempotent: refuses
  * to overwrite an existing per-block style.css.
  *
- * @see plans/WBCOM-BLOCK-STANDARD-MIGRATION.md Phase F
+ * @see plan/WBCOM-BLOCK-STANDARD-MIGRATION.md Phase F
  */
 
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';

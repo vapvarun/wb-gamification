@@ -1,4 +1,4 @@
-# `plans/` — human-authored design docs and roadmaps
+# `plan/` — human-authored design docs and roadmaps
 
 > **Owner:** humans + work-execution agents (wp-builder, wp-fixer). Hand-authored. Bound to specific releases or sprints.
 
@@ -6,12 +6,12 @@
 
 | Type of document | Goes in |
 |---|---|
-| Release plans, sprint specs, design docs, roadmaps | `plans/` (this folder) |
+| Release plans, sprint specs, design docs, roadmaps | `plan/` (this folder) |
 | Machine-generated inventory, audit reports | `audit/` |
 | Customer-facing documentation | `docs/website/` |
 | Integration code samples for third parties | `examples/` |
 
-This folder must **not** contain machine-generated artefacts. The wp-plugin-onboard skill specifically enforces this — its outputs go to `audit/`, never `plans/`.
+This folder must **not** contain machine-generated artefacts. The wp-plugin-onboard skill specifically enforces this — its outputs go to `audit/`, never `plan/`.
 
 ## Status (2026-04-13)
 

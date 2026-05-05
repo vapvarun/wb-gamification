@@ -13,7 +13,7 @@ estimated_runtime_minutes: 8
 
 # Tier 9 — Release Engineering Gate
 
-The release zip must NOT contain dev artefacts (src/, tests/, audit/, plans/, node_modules/, composer*, package*, phpunit*, phpstan*, .git*, CLAUDE.md). Plugin Check must run on the BUILT zip — never on the source tree (per Part 17.7.3 of wp-plugin-development).
+The release zip must NOT contain dev artefacts (src/, tests/, audit/, plan/, node_modules/, composer*, package*, phpunit*, phpstan*, .git*, CLAUDE.md). Plugin Check must run on the BUILT zip — never on the source tree (per Part 17.7.3 of wp-plugin-development).
 
 ## Setup
 

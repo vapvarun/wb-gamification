@@ -36,7 +36,7 @@ This audit is intentionally fresh-eyes; it does NOT re-litigate any item already
 **Evidence:**
 - `blocks/` lists 14 blocks, none for redemption (`ls blocks/`)
 - `src/Engine/ShortcodeHandler.php` registers 14 shortcodes, none for redemption (`grep add_shortcode src/Engine/ShortcodeHandler.php`)
-- `plans/ARCHITECTURE-DRIVEN-PLAN.md` Phase 3 explicitly listed `redemption-store` block as required to close RedemptionEngine's frontend tier — PR #16 built `community-challenges` and `cohort-rank` blocks but missed this one
+- `plan/ARCHITECTURE-DRIVEN-PLAN.md` Phase 3 explicitly listed `redemption-store` block as required to close RedemptionEngine's frontend tier — PR #16 built `community-challenges` and `cohort-rank` blocks but missed this one
 **Why "Critical":** This is the headline feature for any community using points (the "what do I do with my points?" question). Without it, the entire engine has no consumer surface.
 **Fix:** Build `blocks/redemption-store/{block.json,render.php}` plus `wb_gam_redemption_store` shortcode. Reuse RedemptionEngine::list_active() and RedemptionController response shape. ~3 hours.
 

@@ -124,8 +124,8 @@ BlockHooks::before( 'member-points', $wb_gam_attrs );
 			<p class="wb-gam-member-points__next">
 				<?php
 				$wb_gam_pts_to_next = max( 0, (int) ( $wb_gam_next_level['min_points'] ?? 0 ) - $wb_gam_points );
-				/* translators: 1: points to next level, 2: next level name */
 				printf(
+					/* translators: 1: formatted points needed for next level, 2: name of the next level */
 					esc_html__( '%1$s pts to %2$s', 'wb-gamification' ),
 					esc_html( number_format_i18n( $wb_gam_pts_to_next ) ),
 					esc_html( (string) ( $wb_gam_next_level['name'] ?? '' ) )

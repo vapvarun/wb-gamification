@@ -14,14 +14,35 @@
 
 namespace WBGam\Engine;
 
+use WBGam\Services\PointTypeService;
+
 defined( 'ABSPATH' ) || exit;
 
 /**
  * Data-access layer for the points ledger — rate-limit checks and DB write methods.
  *
+ * Multi-currency support (since 1.0.0): every read/write method accepts an
+ * optional `point_type` parameter that scopes the operation to one currency.
+ * Defaults preserve single-currency behaviour: callers that don't pass a type
+ * read/write the primary type (typically slug `points`).
+ *
  * @package WB_Gamification
  */
 final class PointsEngine {
+
+	/**
+	 * Resolve a point-type input to a known slug. Centralised so every method
+	 * shares the same back-compat fallback (= primary type).
+	 *
+	 * @param string|null $type Raw input.
+	 */
+	private static function resolve_type( ?string $type ): string {
+		static $service = null;
+		if ( null === $service ) {
+			$service = new PointTypeService();
+		}
+		return $service->resolve( $type );
+	}
 
 	// ── Internal methods called by Engine ─────────────────────────────────────
 
@@ -74,6 +95,8 @@ final class PointsEngine {
 	public static function insert_point_row( Event $event, int $points ): bool {
 		global $wpdb;
 
+		$type = self::resolve_type( $event->metadata['point_type'] ?? null );
+
 		$inserted = $wpdb->insert(
 			$wpdb->prefix . 'wb_gam_points',
 			array(
@@ -81,25 +104,29 @@ final class PointsEngine {
 				'user_id'    => $event->user_id,
 				'action_id'  => $event->action_id,
 				'points'     => $points,
+				'point_type' => $type,
 				'object_id'  => $event->object_id ?: null,
 				'created_at' => current_time( 'mysql' ),
 			),
-			array( '%s', '%d', '%s', '%d', '%d', '%s' )
+			array( '%s', '%d', '%s', '%d', '%s', '%d', '%s' )
 		);
 
 		if ( ! $inserted ) {
 			Log::error(
 				'PointsEngine::insert_point_row — ledger insert failed',
 				array(
-					'user_id'   => $event->user_id,
-					'action_id' => $event->action_id,
-					'points'    => $points,
-					'event_id'  => $event->event_id,
-					'db_error'  => $wpdb->last_error,
+					'user_id'    => $event->user_id,
+					'action_id'  => $event->action_id,
+					'points'     => $points,
+					'point_type' => $type,
+					'event_id'   => $event->event_id,
+					'db_error'   => $wpdb->last_error,
 				)
 			);
 			return false;
 		}
+
+		wp_cache_delete( self::cache_key_total( $event->user_id, $type ), 'wb_gamification' );
 
 		return true;
 	}
@@ -110,14 +137,17 @@ final class PointsEngine {
 	 * Inserts a negative row in the ledger. The caller is responsible for
 	 * verifying the user has sufficient balance before calling this.
 	 *
-	 * @param int    $user_id   User to debit.
-	 * @param int    $amount    Positive integer; stored as negative in the ledger.
-	 * @param string $action_id Action context label (e.g. 'redemption').
-	 * @param string $event_id  Optional UUID reference to a source event.
-	 * @return bool             True if the row was inserted.
+	 * @param int         $user_id   User to debit.
+	 * @param int         $amount    Positive integer; stored as negative in the ledger.
+	 * @param string      $action_id Action context label (e.g. 'redemption').
+	 * @param string      $event_id  Optional UUID reference to a source event.
+	 * @param string|null $type      Optional point-type slug. Defaults to primary type.
+	 * @return bool                  True if the row was inserted.
 	 */
-	public static function debit( int $user_id, int $amount, string $action_id, string $event_id = '' ): bool {
+	public static function debit( int $user_id, int $amount, string $action_id, string $event_id = '', ?string $type = null ): bool {
 		global $wpdb;
+
+		$type = self::resolve_type( $type );
 
 		$inserted = $wpdb->insert(
 			$wpdb->prefix . 'wb_gam_points',
@@ -126,29 +156,42 @@ final class PointsEngine {
 				'user_id'    => $user_id,
 				'action_id'  => $action_id,
 				'points'     => -abs( $amount ),
+				'point_type' => $type,
 				'object_id'  => null,
 				'created_at' => current_time( 'mysql' ),
 			),
-			array( '%s', '%d', '%s', '%d', '%d', '%s' )
+			array( '%s', '%d', '%s', '%d', '%s', '%d', '%s' )
 		);
 
 		if ( ! $inserted ) {
 			Log::error(
 				'PointsEngine::debit — ledger debit failed',
 				array(
-					'user_id'   => $user_id,
-					'action_id' => $action_id,
-					'amount'    => $amount,
-					'event_id'  => $event_id,
-					'db_error'  => $wpdb->last_error,
+					'user_id'    => $user_id,
+					'action_id'  => $action_id,
+					'amount'     => $amount,
+					'point_type' => $type,
+					'event_id'   => $event_id,
+					'db_error'   => $wpdb->last_error,
 				)
 			);
 			return false;
 		}
 
-		wp_cache_delete( "wb_gam_total_{$user_id}", 'wb_gamification' );
+		wp_cache_delete( self::cache_key_total( $user_id, $type ), 'wb_gamification' );
 
 		return true;
+	}
+
+	/**
+	 * Cache key for a user/type balance lookup. Single source of truth so
+	 * every read/write site uses the same key shape.
+	 *
+	 * @param int    $user_id User ID.
+	 * @param string $type    Resolved point-type slug.
+	 */
+	private static function cache_key_total( int $user_id, string $type ): string {
+		return "wb_gam_total_{$user_id}_{$type}";
 	}
 
 	// ── Legacy / public API ────────────────────────────────────────────────────
@@ -189,9 +232,17 @@ final class PointsEngine {
 	 * @param int    $object_id Optional context object.
 	 * @return bool
 	 */
-	public static function award( int $user_id, string $action_id, int $points, int $object_id = 0 ): bool {
+	public static function award( int $user_id, string $action_id, int $points, int $object_id = 0, ?string $type = null ): bool {
 		if ( $points <= 0 || $user_id <= 0 ) {
 			return false;
+		}
+
+		$metadata = array(
+			'points' => $points,
+			'manual' => true,
+		);
+		if ( null !== $type && '' !== $type ) {
+			$metadata['point_type'] = self::resolve_type( $type );
 		}
 
 		return Engine::process(
@@ -200,10 +251,7 @@ final class PointsEngine {
 					'action_id' => $action_id,
 					'user_id'   => $user_id,
 					'object_id' => $object_id,
-					'metadata'  => array(
-						'points' => $points,
-						'manual' => true,
-					),
+					'metadata'  => $metadata,
 				)
 			)
 		);
@@ -212,13 +260,15 @@ final class PointsEngine {
 	// ── Read methods ──────────────────────────────────────────────────────────
 
 	/**
-	 * Get total points for a user.
+	 * Get total points for a user, optionally scoped to a single point type.
 	 *
-	 * @param int $user_id User ID to look up.
+	 * @param int         $user_id User ID to look up.
+	 * @param string|null $type    Optional point-type slug. Defaults to primary type.
 	 * @return int Total points balance.
 	 */
-	public static function get_total( int $user_id ): int {
-		$cache_key = "wb_gam_total_{$user_id}";
+	public static function get_total( int $user_id, ?string $type = null ): int {
+		$type      = self::resolve_type( $type );
+		$cache_key = self::cache_key_total( $user_id, $type );
 		$cached    = wp_cache_get( $cache_key, 'wb_gamification' );
 
 		if ( false !== $cached ) {
@@ -228,14 +278,48 @@ final class PointsEngine {
 		global $wpdb;
 		$total = (int) $wpdb->get_var(
 			$wpdb->prepare(
-				"SELECT COALESCE(SUM(points), 0) FROM {$wpdb->prefix}wb_gam_points WHERE user_id = %d",
-				$user_id
+				"SELECT COALESCE(SUM(points), 0)
+				   FROM {$wpdb->prefix}wb_gam_points
+				  WHERE user_id = %d AND point_type = %s",
+				$user_id,
+				$type
 			)
 		);
 
 		wp_cache_set( $cache_key, $total, 'wb_gamification', 300 );
 
 		return $total;
+	}
+
+	/**
+	 * Get every per-type balance for a user as a slug => total map.
+	 *
+	 * Single SQL aggregation across all types — used by Hub block, member
+	 * profile, and the GET /members/{id}/points multi-currency response.
+	 *
+	 * @param int $user_id User ID.
+	 * @return array<string,int> Map of type-slug => integer balance.
+	 */
+	public static function get_totals_by_type( int $user_id ): array {
+		global $wpdb;
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- aggregate across types; result is small (one row per active type).
+		$rows = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT point_type, COALESCE(SUM(points), 0) AS total
+				   FROM {$wpdb->prefix}wb_gam_points
+				  WHERE user_id = %d
+				  GROUP BY point_type",
+				$user_id
+			),
+			ARRAY_A
+		);
+
+		$out = array();
+		foreach ( (array) $rows as $row ) {
+			$out[ (string) $row['point_type'] ] = (int) $row['total'];
+		}
+		return $out;
 	}
 
 	/**
@@ -259,28 +343,50 @@ final class PointsEngine {
 	/**
 	 * Get recent point transactions for a user, newest first.
 	 *
-	 * @param int $user_id User ID to look up.
-	 * @param int $limit   Maximum rows to return (1–100).
-	 * @return array<int, array{action_id: string, points: int, created_at: string}>
+	 * Pass `$type = null` (default) to return entries across every point type.
+	 * Pass a specific slug to scope to one currency.
+	 *
+	 * @param int         $user_id User ID to look up.
+	 * @param int         $limit   Maximum rows to return (1–100).
+	 * @param string|null $type    Optional point-type filter. Null = all types.
+	 * @return array<int, array{action_id: string, points: int, point_type: string, created_at: string}>
 	 */
-	public static function get_history( int $user_id, int $limit = 20 ): array {
+	public static function get_history( int $user_id, int $limit = 20, ?string $type = null ): array {
 		global $wpdb;
 
 		$limit = max( 1, min( 100, $limit ) );
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$rows = $wpdb->get_results(
-			$wpdb->prepare(
-				"SELECT action_id, points, created_at
-				   FROM {$wpdb->prefix}wb_gam_points
-				  WHERE user_id = %d
-				  ORDER BY created_at DESC
-				  LIMIT %d",
-				$user_id,
-				$limit
-			),
-			ARRAY_A
-		);
+		if ( null !== $type && '' !== $type ) {
+			$resolved = self::resolve_type( $type );
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$rows = $wpdb->get_results(
+				$wpdb->prepare(
+					"SELECT action_id, points, point_type, created_at
+					   FROM {$wpdb->prefix}wb_gam_points
+					  WHERE user_id = %d AND point_type = %s
+					  ORDER BY created_at DESC
+					  LIMIT %d",
+					$user_id,
+					$resolved,
+					$limit
+				),
+				ARRAY_A
+			);
+		} else {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$rows = $wpdb->get_results(
+				$wpdb->prepare(
+					"SELECT action_id, points, point_type, created_at
+					   FROM {$wpdb->prefix}wb_gam_points
+					  WHERE user_id = %d
+					  ORDER BY created_at DESC
+					  LIMIT %d",
+					$user_id,
+					$limit
+				),
+				ARRAY_A
+			);
+		}
 
 		return $rows ?: array();
 	}

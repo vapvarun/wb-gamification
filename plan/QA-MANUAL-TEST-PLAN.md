@@ -480,7 +480,7 @@ Sign-off:
 - [`audit/journeys/`](../audit/journeys/) — agent-executable versions of 4 of the critical journeys (for automation; the manual walkthrough above is the authoritative human test).
 - [`audit/ROLE_MATRIX.md`](../audit/ROLE_MATRIX.md) — RBAC reference; useful for Persona 3.
 - [`audit/FEATURE-COMPLETENESS-2026-05-02.md`](../audit/FEATURE-COMPLETENESS-2026-05-02.md) — feature×surface matrix; useful when verifying coverage.
-- [`plans/ARCHITECTURE-DRIVEN-PLAN.md`](ARCHITECTURE-DRIVEN-PLAN.md) — why each surface exists (context for QA team if they wonder "why does this engine have no admin UI?").
+- [`plan/ARCHITECTURE-DRIVEN-PLAN.md`](ARCHITECTURE-DRIVEN-PLAN.md) — why each surface exists (context for QA team if they wonder "why does this engine have no admin UI?").
 
 ## Maintenance
 

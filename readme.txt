@@ -4,7 +4,7 @@ Tags: gamification, points, badges, leaderboard, buddypress
 Requires at least: 6.4
 Tested up to: 6.9
 Requires PHP: 8.1
-Stable tag: 1.2.0
+Stable tag: 1.0.0
 License: GPL-2.0+
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -133,22 +133,8 @@ All data is preserved in the database. Reactivating the plugin restores everythi
 
 == Changelog ==
 
-= 1.2.0 =
-**Architectural upgrade — admin REST migration + a11y polish + verification suite.**
-
-* **REST migration (Tier 0)** — Eliminated all 17 `admin_post_*` form-post handlers. Admin UI is now 100% REST-driven; mobile/3rd-party clients see the same API surface. New endpoints: Levels CRUD, Cohort Settings GET/POST, API Keys GET/POST + revoke + DELETE, Community Challenges full CRUD, Badges create + extended schema with nested condition rule. Total REST surface: 51 endpoints across 19 controllers.
-* **New JS infrastructure** — Generic `admin-rest-form.js` driver lets any admin form become REST-driven via `data-wb-gam-rest-*` attributes (supports nested objects, top-level arrays, datetime-local → UTC auto-convert). Shared `admin-rest-utils.js` provides `apiFetch` + `toast` + promise-based confirm modal. No per-page JS for new admin pages.
-* **A11y polish (Tier 1)** — All 8 `outline:none` admin focus indicators tightened to `:focus:not(:focus-visible)` with explicit keyboard outlines. Native `window.confirm()` replaced everywhere with a focus-trapped, Esc-dismissable, backdrop-clickable modal. CSS breakpoints consolidated 6 → 3 (640/782/1024).
-* **Bug fixes from verification** — Fixed `period` enum drift in `AbilitiesRegistration` (`[daily, weekly, monthly, all]` → `[all, day, week, month]`), Webhooks event-enum mismatch (`badge_awarded` vs `badge_earned`), Manual Award debit regression (REST `absint()` was stripping negative sign), 4 self-introduced a11y regressions in `block-card.css`.
-* **Hub block visibility** — Fixed legacy `register_blocks()` shadowing the Registrar so hub / community-challenges / cohort-rank now insert cleanly without "doesn't include support" message.
-* **Plug-and-play badge library** — 37 bundled SVG badge images auto-link via `Installer::default_badge_image_url()` + `DbUpgrader::upgrade_to_1_2_0()`. No more NULL `image_url` in seeded badges.
-* **Per-unit QA pages** — `wp wb-gamification qa seed_pages` creates 15 side-by-side block↔shortcode parity pages so QA can verify each unit individually.
-* **Standards score** — `wppqa_check_plugin_dev_rules` failed=0 + warnings=0. `wppqa_check_a11y` failed=0 + warnings=0. `wppqa_check_rest_js_contract` 0 issues. `wppqa_check_wiring_completeness` 0 issues. PHPStan level 5 clean. PHPUnit 108 tests passing. Block standard 15/15.
-* **Release verification** — 9-tier journey suite under `audit/journeys/release/` covers static foundations → editor surface → frontend × 1280+390 → earning journey → admin surface → integration matrix → a11y → theme matrix → release zip. Run via `composer journeys`.
-* **Cleanup** — Deleted 50 dead-code files in legacy `blocks/` directory (disconnected since Phase G.4 block-standard migration).
-
 = 1.0.0 =
-* Initial release.
+* First public release.
 * Event-sourced points engine with 30+ auto-detected actions across 10 integrations.
 * 30 pre-built badges with point milestone and action count auto-award conditions.
 * 5-level progression system (Newcomer to Champion) with configurable thresholds.
@@ -184,8 +170,5 @@ All data is preserved in the database. Reactivating the plugin restores everythi
 
 == Upgrade Notice ==
 
-= 1.2.0 =
-Architectural upgrade — admin UI now consumes the same REST API as 3rd-party integrations (no more form-post handlers). 8 a11y focus-indicator fixes, breakpoint consolidation, native confirm dialogs replaced with accessible modals. New endpoints for Levels / Cohort Settings / API Keys / Community Challenges. Includes plug-and-play badge SVGs and per-unit QA pages. Safe upgrade — no DB schema changes beyond the existing 1.2.0 migration.
-
 = 1.0.0 =
-Initial release. Install and activate to start gamifying your WordPress site immediately.
+First public release. Install and activate to start gamifying your WordPress site immediately.

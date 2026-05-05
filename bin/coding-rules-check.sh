@@ -78,6 +78,7 @@ check_unauthenticated_rest_allowlist() {
         'LeaderboardController.php'   # /leaderboard, /leaderboard/group/{id} — public ranks
         'LevelsController.php'        # /levels — public level defs
         'OpenApiController.php'       # /openapi.json — public spec
+        'PointTypesController.php'    # /point-types READ — public catalogue (consumers need it to scope queries)
         'RedemptionController.php'    # /redemptions/items READ — public catalog
     )
 
@@ -100,6 +101,66 @@ check_unauthenticated_rest_allowlist() {
     fi
 }
 
+# Rule 3: no inline `style="..."` attributes in admin PHP.
+# Per plan/ARCHITECTURE.md "no inline JS or CSS" — admin pages must use the
+# wbgam-* utility classes in assets/css/admin.css, never inline styles.
+# Exception: dynamic CSS-variable pass-throughs (style="--var:value")
+# and dynamic-width markers (style="width:N%") that serve as data conduits.
+check_no_inline_styles_in_admin_php() {
+    local hits
+    hits=$(grep -rEn 'style="[^"]+"' "$PLUGIN_DIR/src/Admin/" 2>/dev/null \
+            | grep -vE 'style="--[a-zA-Z][a-zA-Z0-9_-]*:' \
+            | grep -vE 'style="width:<\?php' \
+            || true)
+    if [ -n "$hits" ]; then
+        violation "Rule 3 — inline style=\"...\" in admin PHP (use wbgam-* utility classes):"
+        echo "$hits" | sed 's/^/    /'
+        echo "    Fix: extract to a utility class in assets/css/admin.css and reference via class=\"...\"."
+    else
+        ok "Rule 3 — no inline style= attributes in src/Admin/"
+    fi
+}
+
+# Rule 4: no inline <script> blocks in PHP. Move to assets/js/ + wp_enqueue_script.
+# Scans only *.php under src/ (skips JS / CSS / comments / vendor / tests).
+check_no_inline_scripts_in_php() {
+    local hits
+    hits=$(grep -rEn --include='*.php' '<script(\s|>)' "$PLUGIN_DIR/src/" 2>/dev/null \
+            | grep -vE '/(tests|vendor)/' \
+            | grep -vE '^\s*[*]' \
+            | grep -vE '^[^:]*:[0-9]+:\s*\*' \
+            | grep -vE '^[^:]*:[0-9]+:\s*//' \
+            || true)
+    if [ -n "$hits" ]; then
+        violation "Rule 4 — inline <script> blocks in PHP (move to assets/js/ + wp_enqueue_script):"
+        echo "$hits" | sed 's/^/    /'
+        echo "    Fix: create assets/js/<file>.js, register via wp_enqueue_script() in enqueue_assets()."
+    else
+        ok "Rule 4 — no inline <script> blocks in PHP"
+    fi
+}
+
+# Rule 5: no inline <style> blocks in PHP either.
+# Allowlist: src/Blocks/CSS.php — the documented unique-ID-scoped block CSS
+# emitter that has to ship as a single inline <style> per Phase G architecture.
+check_no_inline_style_blocks_in_php() {
+    local hits
+    hits=$(grep -rEn --include='*.php' '<style(\s|>)' "$PLUGIN_DIR/src/" 2>/dev/null \
+            | grep -vE '/(tests|vendor)/' \
+            | grep -vE 'src/Blocks/CSS\.php' \
+            | grep -vE '^\s*[*]' \
+            | grep -vE '^[^:]*:[0-9]+:\s*\*' \
+            | grep -vE '^[^:]*:[0-9]+:\s*//' \
+            || true)
+    if [ -n "$hits" ]; then
+        violation "Rule 5 — inline <style> blocks in PHP (move to assets/css/ + wp_enqueue_style):"
+        echo "$hits" | sed 's/^/    /'
+        echo "    Fix: extract to assets/css/<file>.css, register via wp_enqueue_style()."
+    else
+        ok "Rule 5 — no inline <style> blocks in PHP"
+    fi
+}
+
 # ------------------------------------------------------------------------------
 
 echo "=== WB Gamification coding-rules check ==="
@@ -108,6 +169,9 @@ echo ""
 
 check_no_native_cap_check_for_plugin_abilities
 check_unauthenticated_rest_allowlist
+check_no_inline_styles_in_admin_php
+check_no_inline_scripts_in_php
+check_no_inline_style_blocks_in_php
 
 echo ""
 COUNT=$(violations_count)

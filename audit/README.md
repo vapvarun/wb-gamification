@@ -71,7 +71,7 @@ Single-page summary of an audit/fix campaign. Each campaign produces one of thes
 
 ## What goes elsewhere
 
-- **Release plans, sprint specs, design docs** → `plans/`
+- **Release plans, sprint specs, design docs** → `plan/`
 - **Customer-facing documentation** → `docs/website/`
 - **Integration code samples for third parties** → `examples/`
 - **Per-run journey results** → `audit/journey-runs/` (gitignored)

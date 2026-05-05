@@ -165,7 +165,7 @@ CORS headers in `src/API/ApiKeyAuth.php` when API key auth is used.
 
 **Goal:** Single auto-created page that connects all 11 blocks into a card-grid dashboard with slide-in panels and a smart nudge bar.
 
-**Full spec:** `plans/frontend-hub-flow-spec.md`
+**Full spec:** `plan/frontend-hub-flow-spec.md`
 
 **New files:**
 - `blocks/hub/block.json` + `blocks/hub/render.php` — Hub block

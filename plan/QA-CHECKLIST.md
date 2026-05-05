@@ -4,7 +4,7 @@
 >
 > This checklist was written for the v1.0.0 release in April 2026. Several items reference surfaces that no longer exist (the Pro plugin, the CosmeticEngine, the EDD SDK auto-activate flow), since the v1.0.0 → v1.1 work consolidated to a single free plugin and removed the cosmetic engine.
 >
-> **For v1.1+ QA, use [`plans/QA-MANUAL-TEST-PLAN.md`](QA-MANUAL-TEST-PLAN.md)** — a 6-persona, human-walkable test plan with a coverage matrix proving every surface has a test step. The bug-report template is also there.
+> **For v1.1+ QA, use [`plan/QA-MANUAL-TEST-PLAN.md`](QA-MANUAL-TEST-PLAN.md)** — a 6-persona, human-walkable test plan with a coverage matrix proving every surface has a test step. The bug-report template is also there.
 >
 > This document is preserved for two reasons:
 >
@@ -343,7 +343,7 @@
 - [ ] `Gruntfile.js` exists in free plugin
 - [ ] `package.json` exists with grunt devDependencies
 - [ ] `npx grunt dist` produces `dist/wb-gamification-1.0.0.zip`
-- [ ] ZIP excludes: docs/, tests/, node_modules/, .git/, plans/, *.md, dev vendor packages, integrations/contrib/
+- [ ] ZIP excludes: docs/, tests/, node_modules/, .git/, plan/, *.md, dev vendor packages, integrations/contrib/
 - [ ] ZIP includes: src/, assets/, blocks/, integrations/ (core only), vendor/edd-sdk/, languages/
 
 ### EDD SDK
