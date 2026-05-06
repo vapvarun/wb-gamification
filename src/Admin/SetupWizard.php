@@ -76,9 +76,34 @@ final class SetupWizard {
 
 		$template = sanitize_key( wp_unslash( $_POST['wb_gam_template'] ) );
 		self::apply_template( $template );
+		self::apply_defaults_from_form();
 		update_option( 'wb_gam_wizard_complete', true );
 		wp_safe_redirect( admin_url( 'admin.php?page=wb-gamification&setup=complete' ) );
 		exit;
+	}
+
+	/**
+	 * Persist the wizard's notification + privacy toggles.
+	 *
+	 * Fires alongside apply_template() so admins land on the dashboard with
+	 * the defaults they actually picked at install time, not the engine's
+	 * conservative ship-defaults (which leave every email off and every
+	 * member-facing public surface gated). Each option is whitelisted —
+	 * unknown keys never reach update_option().
+	 */
+	private static function apply_defaults_from_form(): void {
+		$toggles = array(
+			'wb_gam_email_level_up'            => 'email_level_up',
+			'wb_gam_email_badge_earned'        => 'email_badge_earned',
+			'wb_gam_email_challenge_completed' => 'email_challenge_completed',
+			'wb_gam_profile_public_enabled'    => 'profile_public',
+		);
+
+		foreach ( $toggles as $option_key => $form_key ) {
+			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce checked in caller.
+			$value = isset( $_POST[ $form_key ] ) ? '1' : '0';
+			update_option( $option_key, $value );
+		}
 	}
 
 	/**
@@ -223,6 +248,47 @@ final class SetupWizard {
 					<?php endforeach; ?>
 
 				</div>
+
+				<fieldset class="wb-gam-wizard-defaults">
+					<legend class="wb-gam-wizard-defaults__title">
+						<?php esc_html_e( 'Default notifications & privacy', 'wb-gamification' ); ?>
+					</legend>
+					<p class="description wb-gam-wizard-defaults__hint">
+						<?php esc_html_e( 'These will be applied along with the template you pick. Change any of them later in Settings.', 'wb-gamification' ); ?>
+					</p>
+
+					<label class="wb-gam-wizard-toggle">
+						<input type="checkbox" name="email_level_up" value="1">
+						<span class="wb-gam-wizard-toggle__label">
+							<strong><?php esc_html_e( 'Send level-up emails', 'wb-gamification' ); ?></strong>
+							<span class="description"><?php esc_html_e( 'Notify members when they reach a new level.', 'wb-gamification' ); ?></span>
+						</span>
+					</label>
+
+					<label class="wb-gam-wizard-toggle">
+						<input type="checkbox" name="email_badge_earned" value="1">
+						<span class="wb-gam-wizard-toggle__label">
+							<strong><?php esc_html_e( 'Send badge-earned emails', 'wb-gamification' ); ?></strong>
+							<span class="description"><?php esc_html_e( 'Notify members when they earn a badge.', 'wb-gamification' ); ?></span>
+						</span>
+					</label>
+
+					<label class="wb-gam-wizard-toggle">
+						<input type="checkbox" name="email_challenge_completed" value="1">
+						<span class="wb-gam-wizard-toggle__label">
+							<strong><?php esc_html_e( 'Send challenge-completed emails', 'wb-gamification' ); ?></strong>
+							<span class="description"><?php esc_html_e( 'Notify members when they finish a challenge.', 'wb-gamification' ); ?></span>
+						</span>
+					</label>
+
+					<label class="wb-gam-wizard-toggle">
+						<input type="checkbox" name="profile_public" value="1" checked>
+						<span class="wb-gam-wizard-toggle__label">
+							<strong><?php esc_html_e( 'Enable public profile pages', 'wb-gamification' ); ?></strong>
+							<span class="description"><?php esc_html_e( 'Let members opt in to a sharable profile at /u/{username}. Each member must still flip the per-user privacy toggle.', 'wb-gamification' ); ?></span>
+						</span>
+					</label>
+				</fieldset>
 
 				<div class="wb-gam-wizard-skip-row">
 					<button

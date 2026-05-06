@@ -1,9 +1,27 @@
 # WB Gamification — Role / Permission Matrix
 
-**Generated**: 2026-05-02
+**Generated**: 2026-05-06 (v1.0.0 release-candidate refresh)
 **Source**: [`audit/manifest.json`](manifest.json)
 
 > **TL;DR — granular caps available alongside `manage_options`.** Every REST controller's permission method accepts `manage_options` (default WP admin gate) OR the corresponding granular plugin cap below. Administrators keep working without reconfiguration. Site owners can delegate individual surfaces to non-admin roles by granting the granular cap via User Role Editor / Members / programmatic `$role->add_cap()`. The admin pages still use `manage_options` as their menu cap (granular menu caps are a future follow-up).
+
+---
+
+## v1.0.0 sprint additions
+
+| Surface | Permission gate | Notes |
+|---|---|---|
+| `POST /submissions` | `is_user_logged_in()` | Member-facing submit; `SubmissionService` enforces `DAILY_CAP=5` per user via `SubmissionRepository::count_today_for_user`. |
+| `GET /submissions`, `POST /submissions/{id}/approve`, `POST /submissions/{id}/reject` | `current_user_can( 'manage_options' )` | Admin-only review queue. |
+| `GET /settings/emails`, `POST /settings/emails` | `current_user_can( 'manage_options' )` | Per-event email toggles (`wb_gam_email_level_up`, `_badge_earned`, `_challenge_completed`); whitelist in `EmailSettingsController::EVENTS`. Default OFF. |
+| `GET /point-types*`, `GET /point-type-conversions*` | Public read | Catalog reads consistent with other catalog endpoints. |
+| Write `/point-types*`, `/point-type-conversions*` | `current_user_can( 'manage_options' )` | Admin-only currency CRUD. |
+| `POST /point-types/{from}/convert` | `is_user_logged_in()` | Member-facing currency conversion; `PointTypeConversionService` validates against admin-defined rules + transaction-locked. |
+| Public profile `/u/{user_login}` | Site option `wb_gam_profile_public_enabled` AND user_meta `wb_gam_profile_public` | Both required — site owner enables feature, member opts in. Returns 404 if either gate fails. |
+
+All new admin pages (Point Types, Conversions, Submissions) use `manage_options` as their menu cap, consistent with the existing matrix.
+
+---
 
 ## Plugin custom capabilities
 

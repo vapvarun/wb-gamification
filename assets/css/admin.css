@@ -214,6 +214,72 @@
 	text-decoration: underline;
 }
 
+/* Default toggles fieldset shown below the template grid. */
+.wb-gam-wizard-defaults {
+	margin: 28px 0 8px;
+	padding: 20px 24px;
+	border: 1px solid #dcdcde;
+	border-radius: 4px;
+	background: #fff;
+}
+
+.wb-gam-wizard-defaults__title {
+	font-size: 14px;
+	font-weight: 600;
+	margin: 0 0 4px;
+	padding: 0;
+}
+
+.wb-gam-wizard-defaults__hint {
+	margin: 0 0 16px;
+	color: #50575e;
+}
+
+.wb-gam-wizard-toggle {
+	display: flex;
+	gap: 12px;
+	align-items: flex-start;
+	padding: 10px 0;
+	border-top: 1px solid #f0f0f1;
+	cursor: pointer;
+}
+
+.wb-gam-wizard-toggle:first-of-type {
+	border-top: none;
+}
+
+.wb-gam-wizard-toggle input[type="checkbox"] {
+	margin-top: 4px;
+	flex-shrink: 0;
+}
+
+.wb-gam-wizard-toggle__label {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+
+.wb-gam-wizard-toggle__label strong {
+	font-size: 13px;
+	color: #1d2939;
+}
+
+.wb-gam-wizard-toggle__label .description {
+	font-size: 12px;
+	color: #6b7280;
+	line-height: 1.5;
+}
+
+@media (max-width: 640px) {
+	.wb-gam-wizard-defaults {
+		padding: 16px;
+	}
+
+	.wb-gam-wizard-toggle {
+		padding: 12px 0;
+	}
+}
+
 /* ── Settings page tables ────────────────────────────────────────────────────── */
 .wb-gam-settings-table { margin-bottom: 20px; }
 .wb-gam-levels-table   { max-width: 600px; }
@@ -1087,6 +1153,80 @@
 /* Card with accent left-border (used on Quick Links / featured callouts). */
 .wbgam-card--accent {
 	border-inline-start: 4px solid var(--wbgam-primary, #2563eb);
+}
+
+/* Success card — used by post-Setup-Wizard banner + other "you're all set" callouts. */
+.wbgam-card--success {
+	border-inline-start: 4px solid var(--wbgam-success, #16a34a);
+	background: var(--wbgam-success-soft, #f0fdf4);
+}
+
+.wbgam-card--success .wbgam-card-title .icon-check-circle {
+	color: var(--wbgam-success, #16a34a);
+	margin-inline-end: 6px;
+}
+
+/* Action row — primary + secondary buttons aligned in a flex row, wraps on mobile. */
+.wbgam-actions-row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+	margin: 12px 0 0;
+}
+
+/* Inline status text shown next to the test-event button. */
+.wbgam-test-event-status {
+	font-size: 13px;
+	color: #50575e;
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+}
+
+.wbgam-test-event-status--success {
+	color: #166534;
+}
+
+.wbgam-test-event-status--success .icon-check-circle {
+	color: #16a34a;
+}
+
+.wbgam-test-event-status--error {
+	color: #b32d2e;
+}
+
+.wbgam-test-event-status--pending {
+	color: #6b7280;
+}
+
+.wbgam-test-event-status a {
+	margin-inline-start: 6px;
+	font-weight: 600;
+	text-decoration: none;
+}
+
+@media (max-width: 640px) {
+	.wbgam-test-event-status {
+		width: 100%;
+		margin-top: 8px;
+	}
+}
+
+.wbgam-actions-row .wbgam-btn .icon-external-link,
+.wbgam-actions-row .wbgam-btn .icon-edit {
+	margin-inline-end: 6px;
+}
+
+@media (max-width: 640px) {
+	.wbgam-actions-row {
+		flex-direction: column;
+		align-items: stretch;
+	}
+
+	.wbgam-actions-row .wbgam-btn {
+		justify-content: center;
+	}
 }
 
 /* ──────────────────────────────────────────────────────────────────────────

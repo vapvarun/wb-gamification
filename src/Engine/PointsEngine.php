@@ -397,22 +397,24 @@ final class PointsEngine {
 			// either table. Every chunk either fully commits or fully rolls back.
 			$wpdb->query( 'START TRANSACTION' );
 
-			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- bulk INSERT, single statement, parameterized via prepare().
+			// phpcs:disable WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- bulk INSERT, single statement, parameterized via prepare().
 			$events_ok = $wpdb->query( $wpdb->prepare(
 				"INSERT INTO {$wpdb->prefix}wb_gam_events (id, user_id, object_id, action_id, metadata, point_type, site_id, created_at) VALUES " . implode( ',', $event_ph ),
 				...$event_args
 			) );
+			// phpcs:enable WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
 			if ( false === $events_ok ) {
 				$wpdb->query( 'ROLLBACK' );
 				Log::error( 'PointsEngine::award_batch — events INSERT failed', array( 'chunk_size' => count( $chunk ), 'db_error' => $wpdb->last_error ) );
 				continue;
 			}
 
-			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- bulk INSERT, single statement.
+			// phpcs:disable WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- bulk INSERT, single statement.
 			$inserted = $wpdb->query( $wpdb->prepare(
 				"INSERT INTO {$wpdb->prefix}wb_gam_points (event_id, user_id, action_id, points, point_type, object_id, created_at) VALUES " . implode( ',', $point_ph ),
 				...$point_args
 			) );
+			// phpcs:enable WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
 			if ( false === $inserted ) {
 				$wpdb->query( 'ROLLBACK' );
 				Log::error( 'PointsEngine::award_batch — points INSERT failed', array( 'chunk_size' => count( $chunk ), 'db_error' => $wpdb->last_error ) );
@@ -430,12 +432,13 @@ final class PointsEngine {
 				$totals_args[] = $type;
 				$totals_args[] = $points * $count;
 			}
-			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- bulk UPSERT.
+			// phpcs:disable WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- bulk UPSERT.
 			$totals_ok = $wpdb->query( $wpdb->prepare(
 				"INSERT INTO {$wpdb->prefix}wb_gam_user_totals (user_id, point_type, total) VALUES " . implode( ',', $totals_ph ) .
 				" ON DUPLICATE KEY UPDATE total = total + VALUES(total)",
 				...$totals_args
 			) );
+			// phpcs:enable WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
 			if ( false === $totals_ok ) {
 				$wpdb->query( 'ROLLBACK' );
 				Log::error( 'PointsEngine::award_batch — user_totals UPSERT failed', array( 'chunk_size' => count( $chunk ), 'db_error' => $wpdb->last_error ) );

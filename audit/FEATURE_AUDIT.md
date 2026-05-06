@@ -1,9 +1,34 @@
 # WB Gamification — Feature Audit Report
 
-**Generated**: 2026-05-02
+**Generated**: 2026-05-06 (v1.0.0 release-candidate refresh)
 **Version**: 1.0.0
 **Source**: [`audit/manifest.json`](manifest.json)
-**Counts**: 39 REST endpoints · 0 AJAX handlers · 10 admin pages · 12 blocks · 12 shortcodes · 20 DB tables · 9 cron hooks · 6 WP-CLI commands · 55 fired hooks (43 actions + 12 filters)
+**Counts**: 65 REST endpoints · 0 AJAX handlers · 13 admin pages · 17 blocks · 15 shortcodes · 22 DB tables · 9 cron hooks · 10 WP-CLI commands · 85 fired hooks (54 actions + 31 filters)
+
+---
+
+## v1.0.0 release sprint additions (2026-05-06)
+
+Closes the four critical v1.0 gaps from `plan/v1.0-release-plan.md`. Inventory deltas vs the 2026-05-02 baseline:
+
+| Surface | Added | Files |
+|---|---|---|
+| Tables | `wb_gam_point_types`, `wb_gam_point_type_conversions`, `wb_gam_user_totals`, `wb_gam_submissions` | `src/Engine/Installer.php`, `src/Engine/DbUpgrader.php` |
+| REST endpoints | `/point-types*` (4), `/point-type-conversions*` (4), `/point-types/{from}/convert`, `/settings/emails` (2), `/submissions` (1), `/submissions/{id}/approve`, `/submissions/{id}/reject` | `src/API/PointTypesController.php`, `PointTypeConversionsController.php`, `EmailSettingsController.php`, `SubmissionsController.php` |
+| Admin pages | Point Types, Conversions, Submissions | `src/Admin/PointTypesPage.php`, `PointTypeConversionsPage.php`, `SubmissionsPage.php` |
+| Blocks | `daily-bonus`, `submit-achievement` (Wbcom Block Quality Standard compliant) | `src/Blocks/daily-bonus/`, `src/Blocks/submit-achievement/` |
+| Engines | `TransactionalEmailEngine`, `LoginBonusEngine`, `ProfilePage` | `src/Engine/` |
+| Services | `PointTypeService`, `PointTypeConversionService`, `SubmissionService` | `src/Services/` |
+| Repositories | `PointTypeRepository`, `PointTypeConversionRepository`, `SubmissionRepository` | `src/Repository/` |
+| Email templates | `level-up.php`, `badge-earned.php`, `challenge-completed.php`, `leaderboard-nudge.php` | `templates/emails/` |
+| WP-CLI commands | `wb-gamification email-test`, `scale` (seed/benchmark/teardown) | `src/CLI/EmailCommand.php`, `ScaleCommand.php` |
+| Public surfaces | `/u/{user_login}` profile pages with privacy gate, OG meta + Schema.org JSON-LD | `src/Engine/ProfilePage.php` |
+
+**Scale hardening also landed** in this sprint: materialised `user_totals`, batched `LogPruner`, batch award API on `PointsEngine`, leaderboard upsert pattern. Hot-path read budgets in `composer scale:bench` all pass under target on a 1M-row dataset.
+
+**wppqa baseline**: `audit/wppqa-baseline-2026-05-07/SUMMARY.md` — failed=0 across `plugin_dev_rules`, `rest_js_contract`, `wiring_completeness`.
+
+---
 
 > **Architecture in one line:** Event-sourced — events in → rules evaluate → effects out. The Engine owns three surfaces: event normalization, rule evaluation, output. Everything else (BuddyPress display, WooCommerce triggers, mobile) is a consumer.
 

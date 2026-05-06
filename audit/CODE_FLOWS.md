@@ -1,9 +1,101 @@
 # WB Gamification — Code Flow Maps
 
-**Generated**: 2026-05-02
+**Generated**: 2026-05-06 (v1.0.0 release-candidate refresh)
 **Source**: [`audit/manifest.json`](manifest.json)
 
 > **Read this before tracing a bug.** The plugin is event-sourced. The same surface (REST, admin form, BuddyPress event, WC order) all funnel into the same engine pipeline. Most bugs are not in the surface — they are in the rule evaluator, the cron snapshot, or a missing manifest entry.
+
+---
+
+## v1.0.0 release sprint — new flows
+
+### Flow: Multi-currency point award (Phase 1–5 sprint)
+
+```
+event in (action_id, user_id, …)
+  → Registry::resolve_action_point_type( action_id )       — single source of truth
+  → PointsEngine::award( user_id, points, type, action_id )
+      → INSERT wb_gam_events (point_type stamped)
+      → INSERT wb_gam_points (point_type stamped)
+      → UPSERT wb_gam_user_totals (user_id, point_type, total)   — materialised
+      → cache invalidate by point_type
+      → fire wb_gam_points_awarded
+```
+
+`PointsEngine::award_batch()` runs the same flow inside `START TRANSACTION` for bulk award paths.
+
+### Flow: Currency conversion (`/point-types/{from}/convert`)
+
+```
+POST /point-types/{from}/convert {to, amount}
+  → PointTypeConversionService::convert
+      → START TRANSACTION + SELECT … FOR UPDATE on user_totals row
+      → DEBIT row in wb_gam_points (negative, point_type = from)
+      → CREDIT row in wb_gam_points (positive, point_type = to)
+      → both share event_id (linked ledger pair)
+      → UPSERT both user_totals rows
+      → COMMIT or ROLLBACK
+```
+
+### Flow: Login bonus
+
+```
+wp_login fires
+  → LoginBonusEngine::on_login( $user_login, $user )
+      → reads user_meta wb_gam_login_streak / _last_award
+      → if today_is_new_day:
+           bumps streak (or resets if missed > 1 day)
+           tier = LoginBonusEngine::tier_for_day( streak_day )
+           PointsEngine::award( … )
+           fires wb_gam_login_bonus_claimed
+```
+
+State lives in user_meta (`wb_gam_login_streak`, `wb_gam_login_streak_max`, `wb_gam_login_last_award`). No schema migration.
+
+### Flow: Transactional emails
+
+```
+wb_gam_level_changed fires (after LevelEngine commits new level)
+  → TransactionalEmailEngine::on_level_up
+      → check option wb_gam_email_level_up (default false; per-event opt-in)
+      → resolve old/new level via LevelEngine::get_level_for_user + iterate get_all_levels_for_user
+      → render via Email::render( 'level-up', $vars )    — theme override aware
+      → wp_mail with Email::from_header()
+```
+
+Same shape for `badge_earned` and `challenge_completed`.
+
+### Flow: UGC submission queue
+
+```
+member submit (REST POST /submissions { action_id, evidence, evidence_url })
+  → SubmissionsController::submit
+      → SubmissionService::submit (validates action_id, rate-limits at DAILY_CAP=5)
+      → INSERT wb_gam_submissions status=pending
+      → fire wb_gam_submission_created
+admin approve (REST POST /submissions/{id}/approve)
+  → SubmissionService::approve
+      → set_status approved
+      → PointsEngine::award( default_points from action manifest )    — same engine
+      → fire wb_gam_submission_approved
+admin reject  (REST POST /submissions/{id}/reject { notes })
+  → SubmissionService::reject — records notes, fires wb_gam_submission_rejected
+```
+
+Approval routes through `PointsEngine::award` so badges/levels/totals stay consistent — single source of truth.
+
+### Flow: Public profile pages `/u/{user_login}`
+
+```
+template_redirect fires
+  → ProfilePage::render_profile
+      → privacy gate: option wb_gam_profile_public_enabled AND user_meta wb_gam_profile_public
+      → wp_head injects OG meta + Schema.org Person JSON-LD
+      → get_header() / do_shortcode( '[wb_gam_badge_showcase]' ) / do_shortcode( '[wb_gam_points_history]' ) / get_footer()
+      → exit
+```
+
+---
 
 ---
 

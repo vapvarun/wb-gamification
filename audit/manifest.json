@@ -10,10 +10,10 @@
     "extends": null,
     "extension_hook_consumed": null,
     "extension_hook_fired": "wb_gam_free_loaded",
-    "description": "Complete gamification plugin for BuddyPress and WordPress. Part of the Reign Stack. Points, badges, levels, leaderboards, challenges, and streaks — zero config, works out of the box.",
+    "description": "Complete gamification plugin for BuddyPress and WordPress. Part of the Reign Stack. Points, badges, levels, leaderboards, challenges, and streaks \u2014 zero config, works out of the box.",
     "requires_wp": "6.4",
     "requires_php": "8.1",
-    "architecture": "Event-sourced, manifest auto-discovery, zero-config. Engine owns three surfaces: event normalization → rule evaluation → output."
+    "architecture": "Event-sourced, manifest auto-discovery, zero-config. Engine owns three surfaces: event normalization \u2192 rule evaluation \u2192 output."
   },
   "rest": {
     "namespace": "wb-gamification/v1",
@@ -489,7 +489,7 @@
         ],
         "handler": "WBGam\\API\\ApiKeysController::get_items|create_item",
         "permission": "manage_options",
-        "purpose": "List / create API keys (Tier 0.A — secret returned once on POST)"
+        "purpose": "List / create API keys (Tier 0.A \u2014 secret returned once on POST)"
       },
       {
         "route": "/wb-gamification/v1/api-keys/(?P<key>wbgam_[A-Za-z0-9]+)/revoke",
@@ -656,7 +656,7 @@
         ],
         "handler": "SubmissionsController::handle_approve",
         "permission": "manage_options",
-        "purpose": "Approve submission → fires earning event."
+        "purpose": "Approve submission \u2192 fires earning event."
       },
       {
         "route": "/wb-gamification/v1/submissions/(?P<id>[\\d]+)/reject",
@@ -678,7 +678,7 @@
         "purpose": "Per-event transactional email toggles."
       }
     ],
-    "notes": "39 register_rest_route() calls. Some routes registered as a single call covering multiple methods (e.g., GET+POST on the same path); manifest expands those for clarity. No AJAX layer — all interactive UI talks to REST."
+    "notes": "39 register_rest_route() calls. Some routes registered as a single call covering multiple methods (e.g., GET+POST on the same path); manifest expands those for clarity. No AJAX layer \u2014 all interactive UI talks to REST."
   },
   "ajax": [],
   "admin_pages": [
@@ -849,7 +849,7 @@
     {
       "key": "wb_gam_rank_automation_rules",
       "type": "array",
-      "purpose": "Automation rules mapping point thresholds → roles."
+      "purpose": "Automation rules mapping point thresholds \u2192 roles."
     },
     {
       "key": "wb_gam_leaderboard_mode",
@@ -1171,7 +1171,7 @@
     },
     {
       "name": "{prefix}wb_gam_redemptions",
-      "purpose": "Redemption transactions (points spent → reward delivered)."
+      "purpose": "Redemption transactions (points spent \u2192 reward delivered)."
     },
     {
       "name": "{prefix}wb_gam_redemption_items",
@@ -1183,7 +1183,7 @@
     },
     {
       "name": "{prefix}wb_gam_point_types",
-      "purpose": "Currency catalogue — slug, label, icon, is_default flag, position. Site can define Points/XP/Coins/etc."
+      "purpose": "Currency catalogue \u2014 slug, label, icon, is_default flag, position. Site can define Points/XP/Coins/etc."
     },
     {
       "name": "{prefix}wb_gam_point_type_conversions",
@@ -1192,6 +1192,15 @@
     {
       "name": "{prefix}wb_gam_submissions",
       "purpose": "Pending achievement submissions queue. One row per submitted achievement; approval updates status + fires the matching earning event."
+    },
+    {
+      "name": "{prefix}wb_gam_user_totals",
+      "purpose": "Materialised per-user, per-point-type total. Read by PointsEngine::get_total \u2014 avoids SUM() across the points ledger on the hot path. UPSERT pattern in PointsEngine::award + award_batch.",
+      "primary_key": "(user_id, point_type)",
+      "indexes": [
+        "idx_total"
+      ],
+      "introduced": "1.0.0 (multi-currency sprint, 2026-05-06)"
     }
   ],
   "capabilities": [
@@ -1208,7 +1217,7 @@
       "enforcement_count": "primary admin gate; passes alongside any granular cap below",
       "meta": false,
       "requires_context": "none",
-      "note": "Default WP admin gate. Every REST controller's permission method accepts manage_options OR the corresponding granular plugin cap below — administrators keep working without reconfiguration; site owners can delegate individual surfaces to non-admin roles by granting the granular cap."
+      "note": "Default WP admin gate. Every REST controller's permission method accepts manage_options OR the corresponding granular plugin cap below \u2014 administrators keep working without reconfiguration; site owners can delegate individual surfaces to non-admin roles by granting the granular cap."
     },
     {
       "cap": "wb_gam_award_manual",
@@ -1292,7 +1301,7 @@
       "enforcement_count": 1,
       "meta": false,
       "requires_context": "none",
-      "note": "Outbound webhook configuration + delivery log access (REST only — no dedicated admin page; webhook config goes through the REST API)."
+      "note": "Outbound webhook configuration + delivery log access (REST only \u2014 no dedicated admin page; webhook config goes through the REST API)."
     },
     {
       "cap": "wb_gam_view_analytics",
@@ -1373,7 +1382,7 @@
     {
       "key": "RedemptionEngine",
       "class": "WBGam\\Engine\\RedemptionEngine",
-      "purpose": "Points → reward redemption transactions."
+      "purpose": "Points \u2192 reward redemption transactions."
     },
     {
       "key": "CosmeticEngine",
@@ -1468,7 +1477,7 @@
     {
       "key": "Installer",
       "class": "WBGam\\Engine\\Installer",
-      "purpose": "Activation hook — creates all tables + seeds defaults."
+      "purpose": "Activation hook \u2014 creates all tables + seeds defaults."
     },
     {
       "key": "FeatureFlags",
@@ -1523,7 +1532,7 @@
       "key": "SubmissionService",
       "class": "WBGam\\Services\\SubmissionService",
       "added": "1.0.0",
-      "purpose": "Submission lifecycle — submit/approve/reject + rate-limit + approval awards."
+      "purpose": "Submission lifecycle \u2014 submit/approve/reject + rate-limit + approval awards."
     },
     {
       "key": "SubmissionRepository",
@@ -1542,7 +1551,7 @@
     {
       "name": "wb_gam_free_loaded",
       "type": "action",
-      "purpose": "Free plugin fully loaded — extension hook for future Pro plugin to bootstrap.",
+      "purpose": "Free plugin fully loaded \u2014 extension hook for future Pro plugin to bootstrap.",
       "consumed_by": []
     },
     {
@@ -1746,13 +1755,13 @@
     {
       "name": "wb_gamification_rank_automation_action",
       "type": "action",
-      "purpose": "Automation rule fired — role added/removed based on points threshold.",
+      "purpose": "Automation rule fired \u2014 role added/removed based on points threshold.",
       "consumed_by": []
     },
     {
       "name": "wb_gamification_register",
       "type": "action",
-      "purpose": "Plugin self-registers — extension point for integrations to plug in early.",
+      "purpose": "Plugin self-registers \u2014 extension point for integrations to plug in early.",
       "consumed_by": []
     },
     {
@@ -1869,10 +1878,10 @@
   "static_analysis": {
     "dead_listeners": [],
     "dead_listeners_notes": [
-      "Naive paired-grep flagged 2 candidates (wb_gam_leaderboard_snapshot, wb_gam_process_event_async). Both are CRON / Action-Scheduler hooks fired by WP core / Action Scheduler — NOT plugin-fired hooks. False positives. No real dead listeners detected.",
+      "Naive paired-grep flagged 2 candidates (wb_gam_leaderboard_snapshot, wb_gam_process_event_async). Both are CRON / Action-Scheduler hooks fired by WP core / Action Scheduler \u2014 NOT plugin-fired hooks. False positives. No real dead listeners detected.",
       {
         "topic": "Legacy blocks/ directory disconnected from registration (Phase G.4)",
-        "note": "Phase G.4 emptied the legacy register_blocks() list in wb-gamification.php. The blocks/<slug>/ dir now contains 15 dead-code copies that should be deleted in a follow-up. wppqa flags 1 inline-onclick + 3 img-missing-alt in this dir — all false positives against dead code. Active block versions live at src/Blocks/<slug>/.",
+        "note": "Phase G.4 emptied the legacy register_blocks() list in wb-gamification.php. The blocks/<slug>/ dir now contains 15 dead-code copies that should be deleted in a follow-up. wppqa flags 1 inline-onclick + 3 img-missing-alt in this dir \u2014 all false positives against dead code. Active block versions live at src/Blocks/<slug>/.",
         "added_at": "2026-05-03",
         "resolved_at": "2026-05-03T19:00:00Z",
         "resolution": "Legacy blocks/ dir (15 dirs, 50 files) deleted via git rm. Active blocks remain at src/Blocks/<slug>/ + build/Blocks/<slug>/."
@@ -1889,8 +1898,8 @@
           "note": "Was previously enforced at PointsController.php:273 but unregistered. Now granted to administrator on activation, removed on uninstall."
         }
       ],
-      "manage_options_gate_count": "intentional only — top-level menu (SettingsPage), Setup Wizard, API Keys page",
-      "manage_options_gate_note": "Phase 1 (PR #6) gave every REST controller a granular-cap fallback. Phase 2 (this) extended the same model to admin menu caps + per-page capability checks. 6 of 9 admin submenu pages now use granular caps for both menu visibility AND inner authorization checks: AnalyticsDashboard (wb_gam_view_analytics), BadgeAdminPage (wb_gam_manage_badges), ChallengeManagerPage + CommunityChallengesPage + CohortSettingsPage (wb_gam_manage_challenges), RedemptionStorePage (wb_gam_manage_rewards), ManualAwardPage (wb_gam_award_manual). Three pages keep manage_options intentionally: SettingsPage (top-level menu, broad settings surface), SetupWizard (one-time first-run, admin-only by design), ApiKeysPage (API key issuance — security-sensitive, admin-only). Capabilities::user_can() means admins keep working unchanged on every surface."
+      "manage_options_gate_count": "intentional only \u2014 top-level menu (SettingsPage), Setup Wizard, API Keys page",
+      "manage_options_gate_note": "Phase 1 (PR #6) gave every REST controller a granular-cap fallback. Phase 2 (this) extended the same model to admin menu caps + per-page capability checks. 6 of 9 admin submenu pages now use granular caps for both menu visibility AND inner authorization checks: AnalyticsDashboard (wb_gam_view_analytics), BadgeAdminPage (wb_gam_manage_badges), ChallengeManagerPage + CommunityChallengesPage + CohortSettingsPage (wb_gam_manage_challenges), RedemptionStorePage (wb_gam_manage_rewards), ManualAwardPage (wb_gam_award_manual). Three pages keep manage_options intentionally: SettingsPage (top-level menu, broad settings surface), SetupWizard (one-time first-run, admin-only by design), ApiKeysPage (API key issuance \u2014 security-sensitive, admin-only). Capabilities::user_can() means admins keep working unchanged on every surface."
     },
     "extensibility_gaps": [],
     "js_only_activation": [],
@@ -1919,7 +1928,7 @@
       },
       "phpcs_excludes": {
         "count": 0,
-        "action": "review .phpcs.xml — only project-scope rules, no per-file excludes"
+        "action": "review .phpcs.xml \u2014 only project-scope rules, no per-file excludes"
       }
     },
     "registry_strategy": [],
@@ -1947,7 +1956,7 @@
         "failed": 0,
         "warnings": 0
       },
-      "verdict": "release-clean — failed=0 AND warnings=0 across all 4 wppqa checks. Legacy blocks/ dir deleted (50 dead-code files removed); spinner pseudo-element retokenized to silence tap-target false positive."
+      "verdict": "release-clean \u2014 failed=0 AND warnings=0 across all 4 wppqa checks. Legacy blocks/ dir deleted (50 dead-code files removed); spinner pseudo-element retokenized to silence tap-target false positive."
     },
     "enum_consistency_findings": {
       "ran_at": "2026-05-03T19:30:00Z",
@@ -1984,7 +1993,7 @@
           "explanation": "Three completely unrelated logical fields all named 'type' in their respective contexts. The wppqa linter groups by the variable/key name 'type' and flags the disagreement, but these never share a code path. False positive."
         }
       ],
-      "verdict": "1 real drift fixed (period); 2 false positives documented. Re-running wppqa_check_enum_consistency will still report all 3 — the linter's grouping heuristic doesn't follow context. Acknowledge and proceed."
+      "verdict": "1 real drift fixed (period); 2 false positives documented. Re-running wppqa_check_enum_consistency will still report all 3 \u2014 the linter's grouping heuristic doesn't follow context. Acknowledge and proceed."
     },
     "wppqa_audit_plugin_findings": {
       "ran_at": "2026-05-03T19:50:00Z",
@@ -2015,7 +2024,7 @@
         "Lifecycle": {
           "score": 0,
           "level": "missing",
-          "details": "linter false positive — register_activation/deactivation_hook + uninstall.php all present and verified"
+          "details": "linter false positive \u2014 register_activation/deactivation_hook + uninstall.php all present and verified"
         },
         "Extensibility": {
           "score": 100,
@@ -2034,13 +2043,13 @@
         }
       },
       "gap_analysis_triage": {
-        "GAP-001 REST-AUTH (critical)": "false_positive — 19 routes use __return_true per the documented public allowlist (catalog reads, OG share, OpenBadges credential, leaderboard, OpenAPI spec). bin/coding-rules-check.sh Rule 2 enforces the allowlist and currently passes.",
-        "GAP-004 DB-UNINSTALL (critical)": "false_positive — uninstall.php exists at plugin root with 4908 bytes (drops all 18 tables, options, transients, cron, AS tasks, user meta).",
-        "GAP-005 DB-ACTIVATION (critical)": "false_positive — register_activation_hook at wb-gamification.php:363 calls Installer::install() + 8 engine activation methods.",
-        "GAP-006 CRON-DEACTIVATION (critical)": "false_positive — register_deactivation_hook at wb-gamification.php:381 calls 8 engine deactivation methods + flush_rewrite_rules. 9 wp_clear_scheduled_hook / wp_unschedule_event call sites confirmed across engine classes.",
-        "GAP-002 ADMIN-SETTINGS (important)": "intentional — plugin uses central FeatureFlags + custom admin REST save handlers (Tier 0.C migration), not WP Settings API. Architectural choice for cross-cutting state vs per-page settings_field rows.",
-        "GAP-007 TEMPLATE-HOOKS (important)": "partially_resolved — 86 custom hooks fired across blocks + REST + engine; templates/ dir is intentionally thin (most rendering happens via block render.php which IS heavily hookable).",
-        "GAP-008 WIRING-ISSUES (important)": "contradicted — wppqa_check_rest_js_contract returns passed=2 failed=0. The 'broken AJAX calls / dead handlers / nonce mismatches' rule didn't surface specifics; the more granular contract check is authoritative."
+        "GAP-001 REST-AUTH (critical)": "false_positive \u2014 19 routes use __return_true per the documented public allowlist (catalog reads, OG share, OpenBadges credential, leaderboard, OpenAPI spec). bin/coding-rules-check.sh Rule 2 enforces the allowlist and currently passes.",
+        "GAP-004 DB-UNINSTALL (critical)": "false_positive \u2014 uninstall.php exists at plugin root with 4908 bytes (drops all 18 tables, options, transients, cron, AS tasks, user meta).",
+        "GAP-005 DB-ACTIVATION (critical)": "false_positive \u2014 register_activation_hook at wb-gamification.php:363 calls Installer::install() + 8 engine activation methods.",
+        "GAP-006 CRON-DEACTIVATION (critical)": "false_positive \u2014 register_deactivation_hook at wb-gamification.php:381 calls 8 engine deactivation methods + flush_rewrite_rules. 9 wp_clear_scheduled_hook / wp_unschedule_event call sites confirmed across engine classes.",
+        "GAP-002 ADMIN-SETTINGS (important)": "intentional \u2014 plugin uses central FeatureFlags + custom admin REST save handlers (Tier 0.C migration), not WP Settings API. Architectural choice for cross-cutting state vs per-page settings_field rows.",
+        "GAP-007 TEMPLATE-HOOKS (important)": "partially_resolved \u2014 86 custom hooks fired across blocks + REST + engine; templates/ dir is intentionally thin (most rendering happens via block render.php which IS heavily hookable).",
+        "GAP-008 WIRING-ISSUES (important)": "contradicted \u2014 wppqa_check_rest_js_contract returns passed=2 failed=0. The 'broken AJAX calls / dead handlers / nonce mismatches' rule didn't surface specifics; the more granular contract check is authoritative."
       },
       "verdict": "0 real issues from the comprehensive audit. All 4 critical + 3 important gaps are false positives or intentional architecture; verified line-by-line. The 63/100 score reflects pattern-matching limits, not actual maturity. Static gates remain failed=0 across all 4 wppqa specific checks."
     },
@@ -2209,7 +2218,7 @@
   ],
   "storage_drivers": [],
   "security": {
-    "uploads_gate": "n/a — no upload endpoints",
+    "uploads_gate": "n/a \u2014 no upload endpoints",
     "signing_entry_points": [
       "src/API/CredentialController.php (OpenBadges 3.0 signed credentials)"
     ],
@@ -2246,13 +2255,13 @@
     "phpcs_config": ".phpcs.xml"
   },
   "coding_rules": [
-    "Event-sourced architecture: events in → rules evaluate → effects out. No write to derived tables outside engine classes.",
-    "Auto-discovery via ManifestLoader at plugins_loaded@5 — drop a manifest file, get a registered action.",
-    "REST is the only interactive API surface — no AJAX (admin-ajax.php) layer.",
+    "Event-sourced architecture: events in \u2192 rules evaluate \u2192 effects out. No write to derived tables outside engine classes.",
+    "Auto-discovery via ManifestLoader at plugins_loaded@5 \u2014 drop a manifest file, get a registered action.",
+    "REST is the only interactive API surface \u2014 no AJAX (admin-ajax.php) layer.",
     "WPCS via mcp__wpcs__* MCP tools, NOT direct phpcs CLI (the CLI ignores .phpcs.xml when run from outside the plugin)."
   ],
   "build_commands": {
-    "release": "grunt dist (Gruntfile.js — copy/clean/compress to wb-gamification.zip)",
+    "release": "grunt dist (Gruntfile.js \u2014 copy/clean/compress to wb-gamification.zip)",
     "ci_local": "composer test && composer phpcs"
   },
   "category_sources": {
@@ -2323,8 +2332,8 @@
     ]
   },
   "generated": {
-    "at": "2026-05-06T11:01:44Z",
-    "from": "wp-plugin-onboard skill (refresh — v1.0 gaps #2/#3/#4/#5 closed)",
+    "at": "2026-05-06T14:11:07Z",
+    "from": "targeted refresh \u2014 added missing wp_cli_commands + wb_gam_user_totals table after 2026-05-06 onboarding sprint",
     "branch": "main",
     "schema_version": "v2.2",
     "scan_scope": "gruntfile",
@@ -2371,7 +2380,7 @@
         "manifest": 9,
         "baseline": 12,
         "gap_pct": 25,
-        "note": "12 wp_schedule_event calls but 9 distinct cron hooks — same hook scheduled defensively in multiple paths (LeaderboardNudge x2, LeaderboardEngine x2, LogPruner x2)."
+        "note": "12 wp_schedule_event calls but 9 distinct cron hooks \u2014 same hook scheduled defensively in multiple paths (LeaderboardNudge x2, LeaderboardEngine x2, LogPruner x2)."
       },
       "wp_cli": {
         "manifest": 6,
@@ -2385,6 +2394,111 @@
       }
     },
     "last_pr_merged": "#47 + dead-code cleanup",
-    "since_last_refresh": "Tier 0 admin REST migration + Tier 1 a11y/breakpoint cleanup (PR #47)"
-  }
+    "since_last_refresh": "first-time admin onboarding: setup banner, welcome card refresh, default toggles, test-event button, member-side first-earn welcome toast, IA toast template fix"
+  },
+  "wp_cli_commands": [
+    {
+      "command": "wp wb-gamification points",
+      "class": "WBGam\\CLI\\PointsCommand",
+      "subcommands": [
+        "award",
+        "revoke",
+        "balance",
+        "history"
+      ],
+      "supports": [
+        "--type=",
+        "--user=",
+        "--points=",
+        "--message="
+      ]
+    },
+    {
+      "command": "wp wb-gamification member",
+      "class": "WBGam\\CLI\\MemberCommand",
+      "subcommands": [
+        "status",
+        "reset",
+        "prefs"
+      ],
+      "supports": [
+        "--type=",
+        "--user="
+      ]
+    },
+    {
+      "command": "wp wb-gamification actions",
+      "class": "WBGam\\CLI\\ActionsCommand",
+      "subcommands": [
+        "list"
+      ]
+    },
+    {
+      "command": "wp wb-gamification logs",
+      "class": "WBGam\\CLI\\LogsCommand",
+      "subcommands": [
+        "prune"
+      ],
+      "supports": [
+        "--before=",
+        "--dry-run"
+      ]
+    },
+    {
+      "command": "wp wb-gamification export",
+      "class": "WBGam\\CLI\\ExportCommand",
+      "subcommands": [
+        "user"
+      ],
+      "supports": [
+        "--user=",
+        "--format=json|csv"
+      ]
+    },
+    {
+      "command": "wp wb-gamification doctor",
+      "class": "WBGam\\CLI\\DoctorCommand",
+      "subcommands": [
+        "run",
+        "smoke"
+      ]
+    },
+    {
+      "command": "wp wb-gamification replay",
+      "class": "WBGam\\CLI\\ReplayCommand",
+      "subcommands": [
+        "events"
+      ],
+      "purpose": "Replay archived events through the engine for migration / reindex paths."
+    },
+    {
+      "command": "wp wb-gamification qa",
+      "class": "WBGam\\CLI\\QASeedCommand",
+      "subcommands": [
+        "seed-pages",
+        "remove-pages"
+      ],
+      "purpose": "Seed QA test pages with side-by-side block + shortcode rendering for parity verification."
+    },
+    {
+      "command": "wp wb-gamification scale",
+      "class": "WBGam\\CLI\\ScaleCommand",
+      "subcommands": [
+        "seed",
+        "benchmark",
+        "teardown"
+      ],
+      "purpose": "Synthetic 1M-row dataset for scale benchmark gate (composer scale:bench)."
+    },
+    {
+      "command": "wp wb-gamification email-test",
+      "class": "WBGam\\CLI\\EmailCommand",
+      "method": "test",
+      "supports": [
+        "--user=",
+        "--event=level_up|badge_earned|challenge_completed"
+      ],
+      "purpose": "Bypass per-event toggle and dry-run a transactional email via the renderer pipeline."
+    }
+  ]
 }

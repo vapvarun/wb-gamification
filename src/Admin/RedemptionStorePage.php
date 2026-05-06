@@ -274,7 +274,7 @@ final class RedemptionStorePage {
 								<td>
 									<input type="number" name="reward_config[product_id]" id="wb-gam-cfg-product" class="small-text wbgam-input"
 										value="<?php echo esc_attr( $edit_config['product_id'] ?? '' ); ?>" min="1">
-									<p class="description"><?php esc_html_e( 'Numeric ID of the product to give away free. Member receives a single-use 100%-off coupon scoped to this product.', 'wb-gamification' ); ?></p>
+									<p class="description"><?php esc_html_e( 'Numeric ID of the product to give away free. Member receives a single-use full-discount coupon scoped to this product.', 'wb-gamification' ); ?></p>
 								</td>
 							</tr>
 							<tr class="wb-gam-config-row" data-show-for="wbcom_credits">

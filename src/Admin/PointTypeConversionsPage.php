@@ -111,8 +111,8 @@ final class PointTypeConversionsPage {
 						<p class="wbgam-banner__desc">
 							<?php
 							printf(
-								/* translators: %s: link to Point Types admin page. */
 								wp_kses(
+									/* translators: %s: link to Point Types admin page. */
 									__( 'Conversion rules need at least two point types. Visit <a href="%s">Point Types</a> to add another currency (e.g. XP, Coins, Karma) before defining a conversion rule.', 'wb-gamification' ),
 									array( 'a' => array( 'href' => array() ) )
 								),

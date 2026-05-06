@@ -218,8 +218,8 @@ final class PointTypesPage {
 									<p class="description">
 										<?php
 										printf(
-											/* translators: %s: link to the Lucide icons site. */
 											wp_kses(
+												/* translators: %s: link to the Lucide icons site. */
 												__( 'Lucide icon name (e.g. <code>star</code>, <code>coins</code>, <code>flame</code>). Browse all icons at <a href="%s" target="_blank" rel="noopener">lucide.dev/icons</a>.', 'wb-gamification' ),
 												array(
 													'code' => array(),

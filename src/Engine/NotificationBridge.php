@@ -64,12 +64,47 @@ final class NotificationBridge {
 			return;
 		}
 
+		// First-earn explainer — push a one-time welcome toast so the member
+		// understands what just happened and where to see their progress.
+		// Gated by user_meta so it fires exactly once per user, the first time
+		// they earn any points. Hub URL is included in the detail line so they
+		// know where to look.
+		if ( ! get_user_meta( $user_id, 'wb_gam_seen_first_earn_toast', true ) ) {
+			update_user_meta( $user_id, 'wb_gam_seen_first_earn_toast', 1 );
+
+			$hub_page_id = (int) get_option( 'wb_gam_hub_page_id', 0 );
+			$hub_url     = $hub_page_id ? get_permalink( $hub_page_id ) : '';
+
+			$detail = $hub_url
+				? sprintf(
+					/* translators: %s: URL to the Gamification Hub page. */
+					__( 'See your full progress — points, badges, levels, leaderboard — at %s', 'wb-gamification' ),
+					wp_make_link_relative( $hub_url )
+				)
+				: __( 'Earn more points by being active on the site — every action counts.', 'wb-gamification' );
+
+			self::push(
+				$user_id,
+				array(
+					'type'    => 'welcome',
+					'message' => __( 'Welcome — you just earned your first points!', 'wb-gamification' ),
+					'detail'  => $detail,
+					'icon'    => 'icon-sparkles',
+				)
+			);
+		}
+
 		self::push(
 			$user_id,
 			array(
-				'type'   => 'points',
-				'points' => $points,
-				'detail' => self::action_label( $event->action_id ),
+				'type'    => 'points',
+				'points'  => $points,
+				'message' => sprintf(
+					/* translators: %d: number of points awarded. */
+					_n( '+%d point', '+%d points', $points, 'wb-gamification' ),
+					$points
+				),
+				'detail'  => self::action_label( $event->action_id ),
 			)
 		);
 	}
@@ -223,12 +258,10 @@ final class NotificationBridge {
 				aria-live="polite"
 				aria-relevant="additions"
 			>
-				<template data-wp-each="state.toasts" data-wp-each-key="context.toast.id">
+				<template data-wp-each--toast="state.toasts" data-wp-each-key="context.toast.id">
 					<div
 						class="wb-gam-toast"
 						data-wp-bind--data-type="context.toast.type"
-						data-wp-context='{ "toastId": "" }'
-						data-wp-init--set-id="actions.dismissToast"
 					>
 						<span class="wb-gam-toast__icon" data-wp-bind--class="state.toastIconClass" aria-hidden="true"></span>
 						<div class="wb-gam-toast__body">

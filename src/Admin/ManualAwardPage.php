@@ -231,8 +231,8 @@ final class ManualAwardPage {
 									<p class="description">
 										<?php
 										printf(
-											/* translators: %s URL of the Point Types admin page. */
 											wp_kses(
+												/* translators: %s URL of the Point Types admin page. */
 												__( 'Which currency to award. <a href="%s">Manage point types</a>.', 'wb-gamification' ),
 												array( 'a' => array( 'href' => array() ) )
 											),

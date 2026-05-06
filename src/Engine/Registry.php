@@ -121,8 +121,8 @@ final class Registry {
 				sprintf(
 					/* translators: 1: action ID, 2: plugin name */
 					'Gamification action ID "%1$s" is already registered by "%2$s". Use a unique vendor-prefixed ID (e.g. "myplugin/action_name").',
-					$action['id'],
-					self::$actions[ $action['id'] ]['plugin'] ?? 'unknown'
+					esc_html( $action['id'] ),
+					esc_html( self::$actions[ $action['id'] ]['plugin'] ?? 'unknown' )
 				),
 				'1.0.0'
 			);

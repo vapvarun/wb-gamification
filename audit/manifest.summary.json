@@ -15,12 +15,12 @@
     "admin_pages": 13,
     "shortcodes": 15,
     "blocks": 17,
-    "tables": 21,
+    "tables": 22,
     "capabilities": 2,
     "services": 43,
-    "hooks_fired": 55,
+    "hooks_fired": 85,
     "cron_hooks": 9,
-    "wp_cli_commands": 6,
+    "wp_cli_commands": 10,
     "actions_distinct": 54,
     "filters_distinct": 31,
     "admin_post_handlers": 0
@@ -51,10 +51,10 @@
     "wppqa_low": 2
   },
   "generated": {
-    "at": "2026-05-03T19:00:00Z",
+    "at": "2026-05-06T14:11:07Z",
     "schema_version": "v2.2",
     "last_pr_merged": "#47",
-    "since_last_refresh": "Tier 0 admin REST migration + Tier 1 a11y/breakpoint cleanup"
+    "since_last_refresh": "first-time admin onboarding sprint: setup banner, welcome card refresh, default toggles, test-event button, member-side first-earn welcome toast, IA toast template fix; v1.0 critical-gap cards (#2 emails, #3 profile pages, #4 login bonus, #5 UGC submissions); multi-currency sprint Phases 1-5"
   },
   "release_verdict": {
     "wppqa_failed": 0,

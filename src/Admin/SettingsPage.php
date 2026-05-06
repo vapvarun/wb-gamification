@@ -40,6 +40,7 @@ final class SettingsPage {
 		add_action( 'admin_init', array( __CLASS__, 'handle_dismiss_welcome' ) );
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_levels_assets' ) );
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_settings_toggles' ) );
+		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_test_event' ) );
 		// admin_post_wb_gam_save_levels + admin_post_wb_gam_delete_level removed in 1.0.0:
 		// the Levels tab now consumes /wb-gamification/v1/levels (POST/PATCH/DELETE)
 		// directly via assets/js/admin-levels.js. See Tier 0.C migration.
@@ -335,6 +336,61 @@ final class SettingsPage {
 	 *
 	 * @param string $hook_suffix Current admin page hook.
 	 */
+	/**
+	 * Enqueue the "Send a test event" button script on the Dashboard tab.
+	 *
+	 * Only fires when the first-run welcome card is actually rendered (no
+	 * points awarded yet AND admin hasn't dismissed it) — avoids loading the
+	 * script on every Settings page view forever.
+	 *
+	 * @param string $hook_suffix Current admin page hook.
+	 */
+	public static function enqueue_test_event( string $hook_suffix ): void {
+		if ( 'toplevel_page_wb-gamification' !== $hook_suffix ) {
+			return;
+		}
+
+		$dismissed = get_user_meta( get_current_user_id(), 'wb_gam_dismissed_welcome', true );
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only force flag for dev browser-test.
+		$force = isset( $_GET['wb_gam_force_welcome'] ) && '1' === $_GET['wb_gam_force_welcome'];
+		if ( $dismissed && ! $force ) {
+			return;
+		}
+
+		$stats = AnalyticsDashboard::get_stats( 30 );
+		if ( ! $force && ( (int) $stats['points_total'] > 0 || (int) $stats['active_members'] > 0 ) ) {
+			return;
+		}
+
+		wp_enqueue_script(
+			'wb-gam-admin-test-event',
+			plugins_url( 'assets/js/admin-test-event.js', WB_GAM_FILE ),
+			array(),
+			WB_GAM_VERSION,
+			true
+		);
+
+		$hub_page_id = (int) get_option( 'wb_gam_hub_page_id', 0 );
+		$hub_url     = $hub_page_id ? get_permalink( $hub_page_id ) : '';
+
+		wp_localize_script(
+			'wb-gam-admin-test-event',
+			'wbGamTestEvent',
+			array(
+				'restUrl' => esc_url_raw( rest_url( 'wb-gamification/v1/' ) ),
+				'nonce'   => wp_create_nonce( 'wp_rest' ),
+				'userId'  => get_current_user_id(),
+				'hubUrl'  => esc_url_raw( $hub_url ),
+				'i18n'    => array(
+					'sending' => __( 'Awarding…', 'wb-gamification' ),
+					'success' => __( 'Test event sent. Visit your Hub to see the welcome toast.', 'wb-gamification' ),
+					'viewHub' => __( 'Open Hub', 'wb-gamification' ),
+					'error'   => __( 'Could not send test event. Check the error log.', 'wb-gamification' ),
+				),
+			)
+		);
+	}
+
 	public static function enqueue_settings_toggles( string $hook_suffix ): void {
 		if ( 'toplevel_page_wb-gamification' !== $hook_suffix ) {
 			return;
@@ -476,13 +532,7 @@ final class SettingsPage {
 						<div class="wbgam-banner__body"><p class="wbgam-banner__desc"><?php esc_html_e( 'Settings saved.', 'wb-gamification' ); ?></p></div>
 					</div>
 				<?php endif; ?>
-				<?php // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- display-only flag set by our own redirect. ?>
-				<?php if ( isset( $_GET['setup'] ) && 'complete' === $_GET['setup'] ) : ?>
-					<div class="wbgam-banner wbgam-banner--success wbgam-stack-block" role="status" aria-live="polite">
-						<span class="wbgam-banner__icon icon-check-circle" aria-hidden="true"></span>
-						<div class="wbgam-banner__body"><p class="wbgam-banner__desc"><?php esc_html_e( 'Setup complete! Review your point values below.', 'wb-gamification' ); ?></p></div>
-					</div>
-				<?php endif; ?>
+				<?php // The richer post-Setup-Wizard banner with Hub URL + View/Edit buttons is rendered by render_dashboard_tab(). ?>
 
 				<?php settings_errors( 'wb_gamification' ); ?>
 
@@ -800,18 +850,86 @@ final class SettingsPage {
 	private static function render_dashboard_tab(): void {
 		$stats = AnalyticsDashboard::get_stats( 30 );
 
-		// Show first-run welcome card if no points awarded yet and admin hasn't dismissed it.
-		$dismissed = get_user_meta( get_current_user_id(), 'wb_gam_dismissed_welcome', true );
-		if ( ! $dismissed && 0 === (int) $stats['points_total'] && 0 === (int) $stats['active_members'] ) :
+		$hub_page_id = (int) get_option( 'wb_gam_hub_page_id', 0 );
+		$hub_url     = $hub_page_id ? get_permalink( $hub_page_id ) : '';
+		$hub_edit    = $hub_page_id ? get_edit_post_link( $hub_page_id ) : '';
+
+		// Show one-time success banner immediately after the Setup Wizard finishes.
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only banner driven by post-redirect query, no state mutation.
+		if ( isset( $_GET['setup'] ) && 'complete' === sanitize_key( wp_unslash( $_GET['setup'] ) ) && $hub_url ) :
 			?>
-			<div class="wbgam-settings-card wbgam-stack-block wbgam-card--accent">
+			<div class="wbgam-settings-card wbgam-stack-block wbgam-card--success">
+				<div class="wbgam-card-header">
+					<h3 class="wbgam-card-title">
+						<span class="icon-check-circle" aria-hidden="true"></span>
+						<?php esc_html_e( 'Setup complete — your Gamification Hub is ready', 'wb-gamification' ); ?>
+					</h3>
+				</div>
+				<div class="wbgam-card-body">
+					<p>
+						<?php
+						printf(
+							wp_kses(
+								/* translators: %s: hub page URL. */
+								__( 'A page was auto-created at <code>%s</code> with the full member hub. Share this link with your community — they can see their points, badges, level progress, leaderboard, and challenges all in one place.', 'wb-gamification' ),
+								array( 'code' => array() )
+							),
+							esc_html( wp_make_link_relative( $hub_url ) )
+						);
+						?>
+					</p>
+					<p class="wbgam-actions-row">
+						<a href="<?php echo esc_url( $hub_url ); ?>" target="_blank" rel="noopener" class="wbgam-btn wbgam-btn--primary">
+							<span class="icon-external-link" aria-hidden="true"></span>
+							<?php esc_html_e( 'View Hub page', 'wb-gamification' ); ?>
+						</a>
+						<?php if ( $hub_edit ) : ?>
+							<a href="<?php echo esc_url( $hub_edit ); ?>" class="wbgam-btn wbgam-btn--secondary">
+								<span class="icon-edit" aria-hidden="true"></span>
+								<?php esc_html_e( 'Edit Hub page', 'wb-gamification' ); ?>
+							</a>
+						<?php endif; ?>
+					</p>
+				</div>
+			</div>
+			<?php
+		endif;
+
+		// Show first-run welcome card if no points awarded yet and admin hasn't dismissed it.
+		// `?wb_gam_force_welcome=1` bypasses the gate so admins (or the QA browser
+		// runner) can re-open the card on a populated install.
+		$dismissed = get_user_meta( get_current_user_id(), 'wb_gam_dismissed_welcome', true );
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only force flag.
+		$force_welcome = isset( $_GET['wb_gam_force_welcome'] ) && '1' === $_GET['wb_gam_force_welcome'];
+		$show_welcome  = $force_welcome || ( ! $dismissed && 0 === (int) $stats['points_total'] && 0 === (int) $stats['active_members'] );
+		if ( $show_welcome ) :
+			?>
+			<div class="wbgam-settings-card wbgam-stack-block wbgam-card--accent" data-wb-gam-welcome>
 				<div class="wbgam-card-header">
 					<h3 class="wbgam-card-title"><?php esc_html_e( 'Getting Started', 'wb-gamification' ); ?></h3>
 					<a href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin.php?page=wb-gamification&dismiss_welcome=1' ), 'wb_gam_dismiss_welcome' ) ); ?>" class="wbgam-btn wbgam-btn--sm wbgam-btn--secondary"><?php esc_html_e( 'Dismiss', 'wb-gamification' ); ?></a>
 				</div>
 				<div class="wbgam-card-body">
 					<p><?php esc_html_e( 'Your gamification system is active! Points, badges, and levels will appear here as members interact with your site. Here are some next steps:', 'wb-gamification' ); ?></p>
+					<p class="wbgam-actions-row">
+						<button
+							type="button"
+							class="wbgam-btn wbgam-btn--secondary"
+							data-wb-gam-test-event
+							data-points="10"
+						>
+							<span class="icon-zap" aria-hidden="true"></span>
+							<?php esc_html_e( 'Send a test event (award yourself 10 points)', 'wb-gamification' ); ?>
+						</button>
+						<span class="wbgam-test-event-status" data-wb-gam-test-event-status role="status" aria-live="polite"></span>
+					</p>
 					<p class="wbgam-quick-nav">
+						<?php if ( $hub_url ) : ?>
+							<a href="<?php echo esc_url( $hub_url ); ?>" target="_blank" rel="noopener" class="wbgam-quick-nav__item">
+								<span class="icon-external-link"></span>
+								<?php esc_html_e( 'Visit your Hub (preview as member)', 'wb-gamification' ); ?>
+							</a>
+						<?php endif; ?>
 						<a href="#points" class="wbgam-quick-nav__item" data-section="points">
 							<span class="icon-star"></span>
 							<?php esc_html_e( 'Configure point values', 'wb-gamification' ); ?>
