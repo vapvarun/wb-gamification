@@ -94,7 +94,7 @@ final class NotificationBridge {
 					$badge['name'] ?? ''
 				),
 				'detail'  => $badge['description'] ?? null,
-				'icon'    => '🏅',
+				'icon'    => 'icon-medal',
 			)
 		);
 	}
@@ -161,7 +161,7 @@ final class NotificationBridge {
 					__( 'Challenge complete: %s', 'wb-gamification' ),
 					$challenge['title'] ?? ''
 				),
-				'icon'    => '🎯',
+				'icon'    => 'icon-target',
 			)
 		);
 	}
@@ -182,7 +182,7 @@ final class NotificationBridge {
 				'type'    => 'kudos',
 				'message' => __( 'Someone gave you kudos!', 'wb-gamification' ),
 				'detail'  => $message ?: null,
-				'icon'    => '👏',
+				'icon'    => 'icon-heart-handshake',
 			)
 		);
 	}
@@ -230,7 +230,7 @@ final class NotificationBridge {
 						data-wp-context='{ "toastId": "" }'
 						data-wp-init--set-id="actions.dismissToast"
 					>
-						<span class="wb-gam-toast__icon" data-wp-text="context.toast.icon"></span>
+						<span class="wb-gam-toast__icon" data-wp-bind--class="state.toastIconClass" aria-hidden="true"></span>
 						<div class="wb-gam-toast__body">
 							<strong class="wb-gam-toast__message" data-wp-text="context.toast.message"></strong>
 							<span

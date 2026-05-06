@@ -114,7 +114,7 @@ final class WebhooksAdminPage {
 
 			<?php if ( isset( $_GET['notice'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only notice display. ?>
 				<div class="wbgam-banner wbgam-banner--success wbgam-stack-block" role="status" aria-live="polite">
-					<span class="wbgam-banner__icon dashicons dashicons-yes-alt" aria-hidden="true"></span>
+					<span class="wbgam-banner__icon icon-check-circle" aria-hidden="true"></span>
 					<div class="wbgam-banner__body">
 						<p class="wbgam-banner__desc"><?php echo esc_html( self::notice_text( sanitize_key( wp_unslash( $_GET['notice'] ) ) ) ); ?></p>
 					</div>

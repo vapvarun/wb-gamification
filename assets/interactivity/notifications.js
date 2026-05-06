@@ -20,13 +20,15 @@ import { store, getContext } from '@wordpress/interactivity';
 
 const NS = 'wb-gamification';
 
+// Lucide icon classes — toasts ship a Lucide font dependency from the
+// admin/frontend stylesheet so these slugs render via `:before` content.
 const ICON_FOR_TYPE = {
-	points:     '✨',
-	badge:      '🏅',
-	level_up:   '🚀',
-	streak:     '🔥',
-	challenge:  '🎯',
-	kudos:      '👏',
+	points:     'icon-sparkles',
+	badge:      'icon-medal',
+	level_up:   'icon-rocket',
+	streak:     'icon-flame',
+	challenge:  'icon-target',
+	kudos:      'icon-heart-handshake',
 };
 
 const initialState = {
@@ -46,7 +48,18 @@ let toastSequence = 0;
 const nextToastId = () => `wb-gam-toast-${ ++toastSequence }`;
 
 const { state, actions } = store( NS, {
-	state: initialState,
+	state: {
+		...initialState,
+		// Derived: full class string for the per-toast icon span. Reads
+		// the per-iteration toast from context (set by data-wp-each) and
+		// composes the Lucide-icon CSS class with the static base class.
+		// Replaces the legacy emoji-as-text rendering in the markup.
+		get toastIconClass() {
+			const ctx = getContext();
+			const slug = ctx?.toast?.icon || 'icon-bell';
+			return `wb-gam-toast__icon ${ slug }`;
+		},
+	},
 
 	actions: {
 		dismissToast() {

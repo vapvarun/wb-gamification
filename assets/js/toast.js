@@ -28,15 +28,16 @@
 	document.body.appendChild( container );
 
 	/**
-	 * Icon map for toast types.
+	 * Lucide icon class map for toast types. The toast lucide-icons
+	 * stylesheet must be enqueued on the page for these to render.
 	 */
 	var iconMap = {
-		points:    '\u2B50',
-		badge:     '\uD83C\uDFC5',
-		challenge: '\uD83C\uDFAF',
-		level_up:  '\uD83D\uDE80',
-		streak:    '\uD83D\uDD25',
-		kudos:     '\uD83D\uDC4F'
+		points:    'icon-sparkles',
+		badge:     'icon-medal',
+		challenge: 'icon-target',
+		level_up:  'icon-rocket',
+		streak:    'icon-flame',
+		kudos:     'icon-heart-handshake'
 	};
 
 	/**
@@ -77,8 +78,9 @@
 		el.setAttribute( 'data-type', toast.type || 'points' );
 
 		var icon = document.createElement( 'span' );
-		icon.className = 'wb-gam-toast__icon';
-		icon.textContent = toast.icon || iconMap[ toast.type ] || iconMap.points;
+		var iconClass = toast.icon || iconMap[ toast.type ] || iconMap.points;
+		icon.className = 'wb-gam-toast__icon ' + iconClass;
+		icon.setAttribute( 'aria-hidden', 'true' );
 		el.appendChild( icon );
 
 		var body = document.createElement( 'div' );

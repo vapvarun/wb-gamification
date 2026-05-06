@@ -128,7 +128,7 @@ final class AnalyticsDashboard {
 						__( 'Last %d days', 'wb-gamification' ),
 						$period
 					),
-					'⭐'
+					'icon-star'
 				);
 				self::kpi_card(
 					__( 'Active Members', 'wb-gamification' ),
@@ -138,7 +138,7 @@ final class AnalyticsDashboard {
 						__( '%d total members', 'wb-gamification' ),
 						$stats['total_members']
 					),
-					'👥'
+					'icon-users'
 				);
 				self::kpi_card(
 					__( 'Badges Earned', 'wb-gamification' ),
@@ -148,7 +148,7 @@ final class AnalyticsDashboard {
 						__( '%s%% of active members', 'wb-gamification' ),
 						$stats['badge_earner_pct']
 					),
-					'🏅'
+					'icon-medal'
 				);
 				self::kpi_card(
 					__( 'Challenges Completed', 'wb-gamification' ),
@@ -158,7 +158,7 @@ final class AnalyticsDashboard {
 						__( '%s%% completion rate', 'wb-gamification' ),
 						$stats['challenge_completion_pct']
 					),
-					'🎯'
+					'icon-target'
 				);
 				self::kpi_card(
 					__( 'Active Streaks', 'wb-gamification' ),
@@ -168,7 +168,7 @@ final class AnalyticsDashboard {
 						__( '%s%% streak health', 'wb-gamification' ),
 						$stats['streak_health_pct']
 					),
-					'🔥'
+					'icon-flame'
 				);
 				self::kpi_card(
 					__( 'Kudos Given', 'wb-gamification' ),
@@ -178,7 +178,7 @@ final class AnalyticsDashboard {
 						__( 'Last %d days', 'wb-gamification' ),
 						$period
 					),
-					'👏'
+					'icon-heart-handshake'
 				);
 				?>
 			</div>
@@ -451,7 +451,7 @@ final class AnalyticsDashboard {
 	public static function kpi_card( string $title, string $value, string $sub, string $icon ): void {
 		?>
 		<div class="wb-gam-analytics__kpi-card wb-gam-admin-kpi-card">
-			<span class="wb-gam-analytics__kpi-icon wb-gam-admin-kpi-icon"><?php echo esc_html( $icon ); ?></span>
+			<span class="wb-gam-analytics__kpi-icon wb-gam-admin-kpi-icon <?php echo esc_attr( $icon ); ?>" aria-hidden="true"></span>
 			<span class="wb-gam-analytics__kpi-value wb-gam-admin-kpi-value"><?php echo esc_html( $value ); ?></span>
 			<span class="wb-gam-analytics__kpi-title wb-gam-admin-kpi-title"><?php echo esc_html( $title ); ?></span>
 			<span class="wb-gam-analytics__kpi-sub wb-gam-admin-kpi-sub"><?php echo esc_html( $sub ); ?></span>

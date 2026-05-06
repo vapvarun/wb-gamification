@@ -105,7 +105,7 @@ final class PointTypeConversionsPage {
 					</div>
 				</header>
 				<div class="wbgam-banner wbgam-banner--info wbgam-stack-block">
-					<span class="wbgam-banner__icon dashicons dashicons-info" aria-hidden="true"></span>
+					<span class="wbgam-banner__icon icon-info" aria-hidden="true"></span>
 					<div class="wbgam-banner__body">
 						<strong class="wbgam-banner__title"><?php esc_html_e( 'Add a second currency first', 'wb-gamification' ); ?></strong>
 						<p class="wbgam-banner__desc">

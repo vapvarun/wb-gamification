@@ -282,10 +282,13 @@ final class WeeklyEmailEngine {
 			sprintf( __( 'Your week in %s', 'wb-gamification' ), get_bloginfo( 'name' ) )
 		);
 
+		// Email subject markers — Unicode emojis stripped per the
+		// Lucide-only rule. Subject lines can't render CSS-driven icons,
+		// so we use textual modifiers instead.
 		if ( $data['is_best'] ) {
-			$template .= ' 🏆';
+			$template .= ' — ' . __( 'Personal best!', 'wb-gamification' );
 		} elseif ( $data['streak']['current_streak'] >= 7 ) {
-			$template .= ' 🔥';
+			$template .= ' — ' . __( 'Streak active', 'wb-gamification' );
 		}
 
 		return $template;

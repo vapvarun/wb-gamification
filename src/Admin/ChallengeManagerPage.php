@@ -143,7 +143,7 @@ final class ChallengeManagerPage {
 			</header>
 
 			<?php if ( isset( $notice_map[ $notice ] ) ) : ?>
-				<div class="wbgam-banner wbgam-banner--<?php echo esc_attr( $notice_map[ $notice ][0] ); ?> wbgam-stack-block" role="status" aria-live="polite"><span class="wbgam-banner__icon dashicons dashicons-yes-alt" aria-hidden="true"></span><div class="wbgam-banner__body"><p class="wbgam-banner__desc"><?php echo esc_html( $notice_map[ $notice ][1] ); ?></p></div></div>
+				<div class="wbgam-banner wbgam-banner--<?php echo esc_attr( $notice_map[ $notice ][0] ); ?> wbgam-stack-block" role="status" aria-live="polite"><span class="wbgam-banner__icon icon-check-circle" aria-hidden="true"></span><div class="wbgam-banner__body"><p class="wbgam-banner__desc"><?php echo esc_html( $notice_map[ $notice ][1] ); ?></p></div></div>
 			<?php endif; ?>
 
 			<!-- Create/Edit Form Card -->
@@ -311,7 +311,7 @@ final class ChallengeManagerPage {
 			</div>
 			<?php else : ?>
 			<div class="wbgam-empty">
-				<div class="wbgam-empty-icon"><span class="dashicons dashicons-flag wbgam-icon-xl"></span></div>
+				<div class="wbgam-empty-icon"><span class="icon-flag wbgam-icon-xl"></span></div>
 				<div class="wbgam-empty-title"><?php esc_html_e( 'No challenges yet', 'wb-gamification' ); ?></div>
 				<p><?php esc_html_e( 'Create your first challenge above to engage your community.', 'wb-gamification' ); ?></p>
 			</div>

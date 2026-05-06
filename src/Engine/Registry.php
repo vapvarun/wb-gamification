@@ -90,7 +90,7 @@ final class Registry {
 		$defaults = array(
 			'description' => '',
 			'category'    => 'general',
-			'icon'        => 'dashicons-star-filled',
+			'icon'        => 'icon-star',
 			'repeatable'  => true,
 			'cooldown'    => 0,
 			'daily_cap'   => 0,

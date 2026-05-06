@@ -187,7 +187,7 @@ final class BadgeAdminPage {
 			</header>
 
 			<?php if ( isset( $notice_map[ $notice ] ) ) : ?>
-				<div class="wbgam-banner wbgam-banner--<?php echo esc_attr( $notice_map[ $notice ][0] ); ?> wbgam-stack-block" role="status" aria-live="polite"><span class="wbgam-banner__icon dashicons dashicons-yes-alt" aria-hidden="true"></span><div class="wbgam-banner__body"><p class="wbgam-banner__desc"><?php echo esc_html( $notice_map[ $notice ][1] ); ?></p></div></div>
+				<div class="wbgam-banner wbgam-banner--<?php echo esc_attr( $notice_map[ $notice ][0] ); ?> wbgam-stack-block" role="status" aria-live="polite"><span class="wbgam-banner__icon icon-check-circle" aria-hidden="true"></span><div class="wbgam-banner__body"><p class="wbgam-banner__desc"><?php echo esc_html( $notice_map[ $notice ][1] ); ?></p></div></div>
 			<?php endif; ?>
 
 			<!-- Toolbar -->
@@ -267,7 +267,7 @@ final class BadgeAdminPage {
 											<?php if ( ! empty( $badge['image_url'] ) ) : ?>
 												<img src="<?php echo esc_url( $badge['image_url'] ); ?>" alt="">
 											<?php else : ?>
-												<span class="dashicons dashicons-awards"></span>
+												<span class="icon-award"></span>
 											<?php endif; ?>
 										</div>
 										<input type="hidden" name="image_url" id="wb-gam-badge-image-url" value="<?php echo esc_attr( $badge['image_url'] ?? '' ); ?>">
@@ -431,7 +431,7 @@ final class BadgeAdminPage {
 							<?php if ( ! empty( $b['image_url'] ) ) : ?>
 								<img src="<?php echo esc_url( $b['image_url'] ); ?>" alt="<?php echo esc_attr( $b['name'] ); ?>">
 							<?php else : ?>
-								<span class="dashicons dashicons-awards"></span>
+								<span class="icon-award"></span>
 							<?php endif; ?>
 						</div>
 						<p class="wbgam-badge-card__name"><?php echo esc_html( $b['name'] ); ?></p>
@@ -452,7 +452,7 @@ final class BadgeAdminPage {
 			</div>
 			<?php elseif ( ! $show_form ) : ?>
 			<div class="wbgam-empty">
-				<div class="wbgam-empty-icon"><span class="dashicons dashicons-awards wbgam-icon-xl"></span></div>
+				<div class="wbgam-empty-icon"><span class="icon-award wbgam-icon-xl"></span></div>
 				<div class="wbgam-empty-title"><?php esc_html_e( 'No badges yet', 'wb-gamification' ); ?></div>
 				<p><?php esc_html_e( 'Badges reward members for milestones, actions, and achievements. Create your first badge to get started.', 'wb-gamification' ); ?></p>
 				<p class="wbgam-mt-md">

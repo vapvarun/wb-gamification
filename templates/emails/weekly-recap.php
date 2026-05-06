@@ -37,7 +37,7 @@ $points_line = sprintf(
 );
 
 if ( $is_best ) {
-	$points_line .= ' — <strong style="color:#f59e0b;">🏆 ' . esc_html__( 'Personal best!', 'wb-gamification' ) . '</strong>';
+	$points_line .= ' — <strong style="color:#f59e0b;">' . esc_html__( 'Personal best!', 'wb-gamification' ) . '</strong>';
 }
 ?>
 <!DOCTYPE html>
@@ -87,7 +87,7 @@ hr { border:none; border-top:1px solid #f3f4f6; margin:1rem 0; }
 
 		<!-- Points (or whatever the site's default currency is). -->
 		<div class="stat">
-			<p class="stat-label">⭐ <?php
+			<p class="stat-label"><?php
 				printf(
 					/* translators: %s: currency label (e.g. "Points", "Coins"). */
 					esc_html__( '%s this week', 'wb-gamification' ),
@@ -99,7 +99,7 @@ hr { border:none; border-top:1px solid #f3f4f6; margin:1rem 0; }
 
 		<!-- Streak -->
 		<div class="stat">
-			<p class="stat-label">🔥 <?php esc_html_e( 'Activity streak', 'wb-gamification' ); ?></p>
+			<p class="stat-label"><?php esc_html_e( 'Activity streak', 'wb-gamification' ); ?></p>
 			<p class="stat-value">
 				<?php
 				echo esc_html(
@@ -117,7 +117,7 @@ hr { border:none; border-top:1px solid #f3f4f6; margin:1rem 0; }
 		<?php if ( null !== $rank ) : ?>
 		<!-- Rank -->
 		<div class="stat">
-			<p class="stat-label">🏅 <?php esc_html_e( 'Your leaderboard rank', 'wb-gamification' ); ?></p>
+			<p class="stat-label"><?php esc_html_e( 'Your leaderboard rank', 'wb-gamification' ); ?></p>
 			<p class="stat-value">
 				<?php
 				echo esc_html(
@@ -135,7 +135,7 @@ hr { border:none; border-top:1px solid #f3f4f6; margin:1rem 0; }
 		<?php if ( ! empty( $badges_this_week ) ) : ?>
 		<!-- Badges -->
 		<div class="stat">
-			<p class="stat-label">🎖 <?php esc_html_e( 'Badges earned this week', 'wb-gamification' ); ?></p>
+			<p class="stat-label"><?php esc_html_e( 'Badges earned this week', 'wb-gamification' ); ?></p>
 			<ul class="badge-list">
 				<?php foreach ( $badges_this_week as $badge ) : ?>
 					<li><strong><?php echo esc_html( $badge['name'] ); ?></strong><?php echo $badge['description'] ? ' — ' . esc_html( $badge['description'] ) : ''; ?></li>
@@ -147,7 +147,7 @@ hr { border:none; border-top:1px solid #f3f4f6; margin:1rem 0; }
 		<?php if ( ! empty( $challenges_this_week ) ) : ?>
 		<!-- Challenges -->
 		<div class="stat">
-			<p class="stat-label">🎯 <?php esc_html_e( 'Challenges completed', 'wb-gamification' ); ?></p>
+			<p class="stat-label"><?php esc_html_e( 'Challenges completed', 'wb-gamification' ); ?></p>
 			<ul class="challenge-list">
 				<?php foreach ( $challenges_this_week as $ch ) : ?>
 					<li><?php echo esc_html( $ch['title'] ); ?></li>

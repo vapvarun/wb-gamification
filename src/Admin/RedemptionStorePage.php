@@ -163,7 +163,7 @@ final class RedemptionStorePage {
 			</header>
 
 			<?php if ( isset( $notice_map[ $notice ] ) ) : ?>
-				<div class="wbgam-banner wbgam-banner--<?php echo esc_attr( $notice_map[ $notice ][0] ); ?> wbgam-stack-block" role="status" aria-live="polite"><span class="wbgam-banner__icon dashicons dashicons-yes-alt" aria-hidden="true"></span><div class="wbgam-banner__body"><p class="wbgam-banner__desc"><?php echo esc_html( $notice_map[ $notice ][1] ); ?></p></div></div>
+				<div class="wbgam-banner wbgam-banner--<?php echo esc_attr( $notice_map[ $notice ][0] ); ?> wbgam-stack-block" role="status" aria-live="polite"><span class="wbgam-banner__icon icon-check-circle" aria-hidden="true"></span><div class="wbgam-banner__body"><p class="wbgam-banner__desc"><?php echo esc_html( $notice_map[ $notice ][1] ); ?></p></div></div>
 			<?php endif; ?>
 
 			<!-- Create/Edit Form Card -->
@@ -424,7 +424,7 @@ final class RedemptionStorePage {
 			</div>
 			<?php else : ?>
 			<div class="wbgam-empty">
-				<div class="wbgam-empty-icon"><span class="dashicons dashicons-cart wbgam-icon-xl"></span></div>
+				<div class="wbgam-empty-icon"><span class="icon-shopping-cart wbgam-icon-xl"></span></div>
 				<div class="wbgam-empty-title"><?php esc_html_e( 'No rewards yet', 'wb-gamification' ); ?></div>
 				<p><?php esc_html_e( 'Create your first reward above to open the redemption store for your members.', 'wb-gamification' ); ?></p>
 			</div>

@@ -68,7 +68,7 @@ if ( ! empty( $wb_gam_actions ) ) {
 
 		$wb_gam_grouped[ $wb_gam_category ][] = array(
 			'label'  => (string) ( $wb_gam_action['label'] ?? $wb_gam_id ),
-			'icon'   => (string) ( $wb_gam_action['icon'] ?? 'dashicons-star-filled' ),
+			'icon'   => (string) ( $wb_gam_action['icon'] ?? 'icon-star' ),
 			'points' => $wb_gam_pts,
 		);
 	}
@@ -104,7 +104,7 @@ BlockHooks::before( 'earning-guide', $wb_gam_attrs );
 		<div class="wb-gam-earning-guide__grid" style="grid-template-columns:repeat(<?php echo (int) $wb_gam_columns; ?>,minmax(0,1fr));">
 			<?php foreach ( $wb_gam_items as $wb_gam_item ) : ?>
 				<div class="wb-gam-earning-guide__card">
-					<span class="wb-gam-earning-guide__icon dashicons <?php echo esc_attr( (string) $wb_gam_item['icon'] ); ?>"></span>
+					<span class="wb-gam-earning-guide__icon <?php echo esc_attr( (string) $wb_gam_item['icon'] ); ?>"></span>
 					<span class="wb-gam-earning-guide__label"><?php echo esc_html( (string) $wb_gam_item['label'] ); ?></span>
 					<span class="wb-gam-earning-guide__pts">
 						<?php

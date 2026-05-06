@@ -136,7 +136,7 @@ final class ManualAwardPage {
 
 			<?php if ( isset( $notice_map[ $notice ] ) ) : ?>
 				<div class="wbgam-banner wbgam-banner--<?php echo esc_attr( $notice_map[ $notice ][0] ); ?> wbgam-stack-block" role="status" aria-live="polite">
-					<span class="wbgam-banner__icon dashicons dashicons-yes-alt" aria-hidden="true"></span>
+					<span class="wbgam-banner__icon icon-check-circle" aria-hidden="true"></span>
 					<div class="wbgam-banner__body">
 						<p class="wbgam-banner__desc"><?php echo esc_html( $notice_map[ $notice ][1] ); ?></p>
 					</div>
@@ -316,7 +316,7 @@ final class ManualAwardPage {
 			</div>
 			<?php else : ?>
 			<div class="wbgam-empty">
-				<div class="wbgam-empty-icon"><span class="dashicons dashicons-star-filled wbgam-icon-xl wbgam-icon-xl--muted"></span></div>
+				<div class="wbgam-empty-icon"><span class="icon-star wbgam-icon-xl wbgam-icon-xl--muted"></span></div>
 				<div class="wbgam-empty-title"><?php esc_html_e( 'No manual awards yet', 'wb-gamification' ); ?></div>
 				<p><?php esc_html_e( 'Use the form above to grant or deduct points from any member.', 'wb-gamification' ); ?></p>
 			</div>
