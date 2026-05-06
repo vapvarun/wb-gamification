@@ -19,13 +19,14 @@ The next weekly email send picks it up. Child themes win over parent themes (`lo
 
 ## How resolution works
 
-`Email::locate( 'weekly-recap' )` checks paths in this order, first match wins:
+`Email::locate( 'weekly-recap' )` delegates to `Templates::locate( 'emails/weekly-recap.php' )` which checks paths in this order, first match wins:
 
-1. `wb_gamification_email_template_path` filter return value (full programmatic override)
-2. `{theme}/wb-gamification/emails/weekly-recap.php` (this example's path)
-3. `{plugin}/templates/emails/weekly-recap.php` (the plugin's bundled default)
+1. `wb_gam_template_path` filter return value (full programmatic override — applies to ALL templates, not just emails)
+2. `{child-theme}/wb-gamification/emails/weekly-recap.php`
+3. `{parent-theme}/wb-gamification/emails/weekly-recap.php`
+4. `{plugin}/templates/emails/weekly-recap.php` (bundled default)
 
-Your theme override is path 2. The default is path 3. As long as your file exists at the theme path, it wins.
+Your theme override is paths 2–3. The default is path 4. As long as your file exists at a theme path, it wins.
 
 ## Available template variables
 
@@ -51,11 +52,11 @@ The variables are unchanged whether you're rendering the default or a theme over
 
 ## Programmatic override (for plugins)
 
-If you're building a plugin (not a theme), use the filter instead:
+If you're building a plugin (not a theme), use the filter instead. Note: `wb_gam_template_path` fires for **every** plugin template (emails, partials, share pages), so check `$relative` to scope your override:
 
 ```php
-add_filter( 'wb_gamification_email_template_path', function ( $path, $template, $context ) {
-    if ( 'weekly-recap' === $template ) {
+add_filter( 'wb_gam_template_path', function ( $path, $relative, $context ) {
+    if ( 'emails/weekly-recap.php' === $relative ) {
         return YOUR_PLUGIN_PATH . 'templates/wb-gam-weekly-recap.php';
     }
     return $path;

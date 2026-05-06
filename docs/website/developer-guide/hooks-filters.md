@@ -550,6 +550,25 @@ $path = \WBGam\Engine\Templates::locate( 'emails/weekly-recap.php' );
 // 4. Plugin: wb-gamification/templates/emails/weekly-recap.php
 ```
 
+### Email templates (always overridable)
+
+Every email the plugin sends routes through `Email::render()` → `Templates::locate()`, so the override path is identical to other plugin templates. Two emails ship today:
+
+| Template | Slug | Sent by | Variables passed |
+|---|---|---|---|
+| `templates/emails/weekly-recap.php` | `weekly-recap` | `WeeklyEmailEngine` (Pro) | user, name, site_name, points_this_week, total_points, badges_this_week, challenges_this_week, streak, rank, unsub_url |
+| `templates/emails/leaderboard-nudge.php` | `leaderboard-nudge` | `LeaderboardNudge` | user, name, site_name, site_url, message, rank, points |
+
+Override either by copying to your theme:
+
+```bash
+mkdir -p wp-content/themes/your-theme/wb-gamification/emails/
+cp wp-content/plugins/wb-gamification/templates/emails/leaderboard-nudge.php \
+   wp-content/themes/your-theme/wb-gamification/emails/
+```
+
+Then customise. Variables documented in the `@var` block at the top of each template are extracted into local scope.
+
 Render directly:
 
 ```php

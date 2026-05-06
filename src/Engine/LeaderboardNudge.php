@@ -255,13 +255,33 @@ final class LeaderboardNudge {
 			return;
 		}
 
-		$subject = sprintf(
+		$site_name = (string) get_bloginfo( 'name' );
+		$subject   = sprintf(
 			/* translators: %s: site name */
 			__( 'Your weekly community ranking at %s', 'wb-gamification' ),
-			get_bloginfo( 'name' )
+			$site_name
 		);
 
-		$sent = wp_mail( $user->user_email, $subject, $message );
+		// Render the themed template — themes can drop a custom file at
+		// {theme}/wb-gamification/emails/leaderboard-nudge.php to override.
+		$rank_data = LeaderboardEngine::get_user_rank( $user_id, 'week' );
+		$body      = Email::render( 'leaderboard-nudge', array(
+			'user'      => $user,
+			'name'      => esc_html( (string) $user->display_name ),
+			'site_name' => $site_name,
+			'site_url'  => home_url( '/' ),
+			'message'   => $message,
+			'rank'      => isset( $rank_data['rank'] ) ? (int) $rank_data['rank'] : null,
+			'points'    => isset( $rank_data['points'] ) ? (int) $rank_data['points'] : 0,
+		) );
+		// Fallback to plain text if the template wasn't found (e.g. devs
+		// deleted the file or filtered the path to '').
+		if ( '' === $body ) {
+			$body = $message;
+		}
+
+		$headers = array( 'Content-Type: text/html; charset=UTF-8', 'From: ' . Email::from_header() );
+		$sent    = wp_mail( $user->user_email, $subject, $body, $headers );
 		if ( ! $sent ) {
 			Log::error(
 				'LeaderboardNudge: wp_mail returned false.',

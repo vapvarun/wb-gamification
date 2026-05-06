@@ -2,18 +2,15 @@
 /**
  * WB Gamification — Email template renderer
  *
- * Locates and renders email templates with theme-override support.
+ * Thin convenience wrapper around `Templates::locate()` / `Templates::render()`
+ * with email-specific defaults (HTML content-type header, From header
+ * sourced from settings option chain).
  *
- * Resolution order (first match wins):
- *   1. Theme override:  YOUR-THEME/wb-gamification/emails/{template}.php
- *   2. Plugin default:  WB_GAM_PATH/templates/emails/{template}.php
- *   3. Programmatic override via wb_gamification_email_template_path filter.
- *
- * Themes can drop a custom template anywhere in the theme tree by placing
- * it at:
- *   {theme}/wb-gamification/emails/weekly-recap.php
- * — the next email send will pick it up automatically. Child themes win
- * over parent themes (locate_template handles that).
+ * Resolution order (handled by Templates::locate, first match wins):
+ *   1. Filter:   wb_gam_template_path
+ *   2. Theme:    {child-theme}/wb-gamification/emails/{template}.php
+ *   3. Theme:    {parent-theme}/wb-gamification/emails/{template}.php
+ *   4. Plugin:   WB_GAM_PATH/templates/emails/{template}.php
  *
  * @package WB_Gamification
  * @since   1.0.0
@@ -69,37 +66,11 @@ final class Email {
 	 * @return string Absolute path to the template, or '' if not found.
 	 */
 	public static function locate( string $template ): string {
-		$slug          = sanitize_key( $template );
-		$theme_subpath = "wb-gamification/emails/{$slug}.php";
-		$plugin_path   = WB_GAM_PATH . "templates/emails/{$slug}.php";
+		$slug = sanitize_key( $template );
 
-		// Theme override resolved via locate_template (handles child→parent fallback).
-		$theme_match = locate_template( $theme_subpath );
-		$default     = $theme_match ?: $plugin_path;
-
-		/**
-		 * Filter the resolved email template path.
-		 *
-		 * Use to fully override the resolution — point at a custom file
-		 * anywhere on the filesystem.
-		 *
-		 * @since 1.0.0
-		 *
-		 * @param string $path     Resolved path (theme override or plugin default).
-		 * @param string $template Template slug requested.
-		 * @param array  $context  ['theme_match' => string|false, 'plugin_path' => string].
-		 */
-		$path = (string) apply_filters(
-			'wb_gamification_email_template_path',
-			$default,
-			$slug,
-			array(
-				'theme_match' => $theme_match,
-				'plugin_path' => $plugin_path,
-			)
-		);
-
-		return is_readable( $path ) ? $path : '';
+		// Single resolver — Templates::locate handles theme override, child→parent
+		// fallback, and the wb_gam_template_path filter for programmatic override.
+		return Templates::locate( "emails/{$slug}.php" );
 	}
 
 	/**
