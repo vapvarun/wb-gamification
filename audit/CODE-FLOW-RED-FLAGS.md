@@ -2,11 +2,13 @@
 
 **Generated:** 2026-05-06
 **Lens:** read-only audit of major code flows. Each flag is a deferred concern — **fixes happen in the next session**, this doc just maps them.
-**Severity legend:** 🔴 critical · 🟠 high · 🟡 medium · 🟢 noted
+**Severity legend:** 🔴 critical · 🟠 high · 🟡 medium · 🟢 noted · ✅ closed in 2a730d9 (2026-05-06)
+
+> **Update 2026-05-06:** all critical + high flags (F1–F7) **closed in commit `2a730d9`**. The 7 fixes ship as a single end-to-end change because F1+F2 are paired (hash storage requires the new table; migration replaces the legacy wp_options blob in the same step). Code below is the original audit prose; status indicator at the top of each section reflects the current state. Medium flags (F8–F14) remain deferred.
 
 ---
 
-## 🔴 Critical
+## 🔴 ✅ Critical (closed in 2a730d9)
 
 ### F1 · API keys stored in PLAINTEXT (security)
 
@@ -54,7 +56,7 @@ update_option( self::OPTION_KEY, $keys );
 
 ---
 
-## 🟠 High
+## 🟠 ✅ High (closed in 2a730d9 — F6 was verification-only)
 
 ### F3 · `event_id` is nullable + not UNIQUE — replay isn't enforced at the schema level
 
