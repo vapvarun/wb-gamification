@@ -112,6 +112,44 @@ final class WebhooksAdminPage {
 				</div>
 			</header>
 
+			<details class="wbgam-help-panel">
+				<summary class="wbgam-help-panel__summary">
+					<span class="icon-info" aria-hidden="true"></span>
+					<?php esc_html_e( 'How webhook delivery + signing works', 'wb-gamification' ); ?>
+				</summary>
+				<div class="wbgam-help-panel__body">
+					<p>
+						<strong><?php esc_html_e( 'Delivery:', 'wb-gamification' ); ?></strong>
+						<?php esc_html_e( 'When a subscribed event fires (e.g. points awarded, badge earned), the dispatcher POSTs a JSON body to your endpoint URL. Delivery is async (Action Scheduler queue) so the page-load that triggered the event is never blocked.', 'wb-gamification' ); ?>
+					</p>
+					<p>
+						<strong><?php esc_html_e( 'Signature verification:', 'wb-gamification' ); ?></strong>
+						<?php
+						printf(
+							wp_kses(
+								/* translators: %s: header name wrapped in code */
+								__( 'Each request includes a %s header containing an HMAC-SHA256 signature of the raw body, computed with your webhook secret. Always verify before trusting the delivery — anyone can hit your URL.', 'wb-gamification' ),
+								array( 'code' => array() )
+							),
+							'<code>X-WB-Gam-Signature</code>'
+						);
+						?>
+					</p>
+					<p>
+						<strong><?php esc_html_e( 'Retry behavior:', 'wb-gamification' ); ?></strong>
+						<?php esc_html_e( 'A non-2xx response (or a network failure) schedules a retry with exponential backoff (1m → 5m → 30m). After 3 failed attempts the webhook is automatically paused. Resume by editing the row in the database (set is_active=1) — admin UI flag in v1.1.', 'wb-gamification' ); ?>
+					</p>
+					<p>
+						<strong><?php esc_html_e( 'Payload shape:', 'wb-gamification' ); ?></strong>
+						<?php esc_html_e( 'JSON object with `event` (e.g. badge_earned), `user_id`, `data` (event-specific fields), and `fired_at` (ISO 8601). Match against the event slug to dispatch on the receiver side.', 'wb-gamification' ); ?>
+					</p>
+					<p>
+						<strong><?php esc_html_e( 'Production hygiene:', 'wb-gamification' ); ?></strong>
+						<?php esc_html_e( 'Use HTTPS endpoints only. Rotate the secret if you suspect a leak (delete + recreate the webhook). Failed deliveries log to the WP error log with full request/response context.', 'wb-gamification' ); ?>
+					</p>
+				</div>
+			</details>
+
 			<?php if ( isset( $_GET['notice'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only notice display. ?>
 				<div class="wbgam-banner wbgam-banner--success wbgam-stack-block" role="status" aria-live="polite">
 					<span class="wbgam-banner__icon icon-check-circle" aria-hidden="true"></span>
@@ -152,7 +190,9 @@ final class WebhooksAdminPage {
 								</th>
 								<td>
 									<input type="text" id="wb-gam-webhook-secret" name="secret" class="regular-text wbgam-input" required placeholder="<?php esc_attr_e( 'auto-generated if blank', 'wb-gamification' ); ?>" />
-									<p class="description"><?php esc_html_e( 'Used to sign every payload (sha256 HMAC). Receiver verifies the signature before trusting the delivery.', 'wb-gamification' ); ?></p>
+									<p class="description">
+										<?php esc_html_e( 'Used to sign every payload via HMAC-SHA256. The receiver computes the same HMAC over the raw request body and compares against the X-WB-Gam-Signature header. If you leave this blank, a 32-byte random secret is generated for you.', 'wb-gamification' ); ?>
+									</p>
 								</td>
 							</tr>
 							<tr>
@@ -161,13 +201,16 @@ final class WebhooksAdminPage {
 									<fieldset class="wbgam-event-list">
 										<legend class="screen-reader-text"><?php esc_html_e( 'Events to subscribe to', 'wb-gamification' ); ?></legend>
 										<?php foreach ( self::available_events() as $event => $label ) : ?>
-											<label class="wbgam-event-list__item">
+											<label class="wbgam-event-list__item" title="<?php echo esc_attr( self::event_payload_hint( $event ) ); ?>">
 												<input type="checkbox" name="events[]" value="<?php echo esc_attr( $event ); ?>" />
 												<code class="wbgam-event-list__code"><?php echo esc_html( $event ); ?></code>
 												<span class="wbgam-event-list__desc"><?php echo esc_html( $label ); ?></span>
 											</label>
 										<?php endforeach; ?>
 									</fieldset>
+									<p class="description">
+										<?php esc_html_e( 'Hover any event for the payload schema. Pick only the events your receiver knows how to handle — extra events waste delivery attempts.', 'wb-gamification' ); ?>
+									</p>
 								</td>
 							</tr>
 						</table>
@@ -269,6 +312,32 @@ final class WebhooksAdminPage {
 			'challenge_completed' => __( 'Individual challenge completed', 'wb-gamification' ),
 			'kudos_given'         => __( 'Peer kudos transaction', 'wb-gamification' ),
 		);
+	}
+
+	/**
+	 * Tooltip describing the payload shape for an event — shown on hover
+	 * over the event checkbox. Helps admins decide which events to pick
+	 * without leaving the page to read docs.
+	 *
+	 * @param string $event Event slug.
+	 */
+	private static function event_payload_hint( string $event ): string {
+		switch ( $event ) {
+			case 'points_awarded':
+				return __( 'Fires every time PointsEngine::award succeeds. Payload: user_id, points, point_type, action_id, event_id.', 'wb-gamification' );
+			case 'badge_earned':
+				return __( 'Fires when a member earns a new badge. Payload: user_id, badge_id, badge_slug, badge_name, earned_at.', 'wb-gamification' );
+			case 'level_changed':
+				return __( 'Fires when a member crosses a level threshold (up OR down). Payload: user_id, old_level_id, new_level_id, new_level_name.', 'wb-gamification' );
+			case 'streak_milestone':
+				return __( 'Fires at every streak checkpoint (7/14/30/60/100/180/365 days). Payload: user_id, streak_length, milestone_days.', 'wb-gamification' );
+			case 'challenge_completed':
+				return __( 'Fires when a member completes an individual challenge. Payload: user_id, challenge_id, challenge_slug, completed_at.', 'wb-gamification' );
+			case 'kudos_given':
+				return __( 'Fires for every peer-to-peer kudos. Payload: giver_id, receiver_id, kudos_id, message (truncated to 200 chars).', 'wb-gamification' );
+			default:
+				return '';
+		}
 	}
 
 	/**

@@ -119,6 +119,44 @@ final class ApiKeysPage {
 				</div>
 			</header>
 
+			<details class="wbgam-help-panel">
+				<summary class="wbgam-help-panel__summary">
+					<span class="icon-info" aria-hidden="true"></span>
+					<?php esc_html_e( 'How API keys work + when to use them', 'wb-gamification' ); ?>
+				</summary>
+				<div class="wbgam-help-panel__body">
+					<p>
+						<strong><?php esc_html_e( 'When you need a key:', 'wb-gamification' ); ?></strong>
+						<?php esc_html_e( 'Use API keys when a remote server (different domain, no logged-in user) needs to fire gamification events or read member data. Examples: a mobile app backend, a separate WordPress site funneling activity into this hub, an external CRM. If the consumer is a logged-in WordPress user (browser, admin), use cookie + nonce auth instead — no key needed.', 'wb-gamification' ); ?>
+					</p>
+					<p>
+						<strong><?php esc_html_e( 'How authentication works:', 'wb-gamification' ); ?></strong>
+						<?php
+						printf(
+							wp_kses(
+								/* translators: %s: header name wrapped in code */
+								__( 'Send the key in the %s request header on every API call. The middleware looks up the key, sets the request as authenticated for that site, and updates the last-used timestamp. Failed lookups return 401.', 'wb-gamification' ),
+								array( 'code' => array() )
+							),
+							'<code>X-WB-Gam-Key</code>'
+						);
+						?>
+					</p>
+					<p>
+						<strong><?php esc_html_e( 'Storage + display:', 'wb-gamification' ); ?></strong>
+						<?php esc_html_e( 'The full key is shown ONCE on creation — copy it before navigating away. After that, only the prefix + last-4 are visible. The full key is hashed in the database; even an admin with full DB access cannot recover it. If lost, generate a new one and revoke the old.', 'wb-gamification' ); ?>
+					</p>
+					<p>
+						<strong><?php esc_html_e( 'Revoke vs Delete:', 'wb-gamification' ); ?></strong>
+						<?php esc_html_e( 'Revoke disables the key but keeps the audit trail (created_at, last_used, label). Use this when a remote site is decommissioned or the key may be compromised. Delete removes the key entirely — only use for keys created in error or for testing. Once deleted, requests using the key will 401 immediately.', 'wb-gamification' ); ?>
+					</p>
+					<p>
+						<strong><?php esc_html_e( 'Production hygiene:', 'wb-gamification' ); ?></strong>
+						<?php esc_html_e( 'One key per remote site (never share). Rotate annually or whenever staff turnover happens. Store on the receiving side in a secrets manager — never commit to git or paste into ticket comments.', 'wb-gamification' ); ?>
+					</p>
+				</div>
+			</details>
+
 			<div class="wbgam-banner wbgam-banner--success wbgam-stack-block wbgam-is-hidden" data-wb-gam-api-keys-fresh role="status" aria-live="polite">
 				<span class="wbgam-banner__icon icon-check-circle" aria-hidden="true"></span>
 				<div class="wbgam-banner__body">
