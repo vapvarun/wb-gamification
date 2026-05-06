@@ -14,6 +14,7 @@ defined( 'ABSPATH' ) || exit;
 
 use WBGam\Blocks\CSS as WB_Gam_Block_CSS;
 use WBGam\Engine\BlockHooks;
+use WBGam\Engine\Privacy;
 use WBGam\Engine\RecapEngine;
 
 $wb_gam_attrs   = is_array( $attributes ) ? $attributes : array();
@@ -26,6 +27,14 @@ if ( $wb_gam_user_id <= 0 ) {
 	$wb_gam_user_id = get_current_user_id();
 }
 
+
+// Privacy gate — see plan/PRIVACY-MODEL.md. T1 (achievement-shaped) data
+// is public when the site kill-switch + member toggle are both ON, OR
+// when the viewer is the owner / admin. Otherwise zero out the user_id
+// so the block falls through to its empty-state path.
+if ( $wb_gam_user_id > 0 && ! Privacy::can_view_public_profile( $wb_gam_user_id ) ) {
+	$wb_gam_user_id = 0;
+}
 WB_Gam_Block_CSS::add( $wb_gam_unique, $wb_gam_attrs );
 $wb_gam_visibility = WB_Gam_Block_CSS::get_visibility_classes( $wb_gam_attrs );
 

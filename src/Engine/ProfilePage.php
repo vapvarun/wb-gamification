@@ -135,6 +135,20 @@ final class ProfilePage {
 			$level['name'] ?? __( 'Newcomer', 'wb-gamification' )
 		);
 
+		// Canonical link — claim the /u/{slug} URL as the authoritative
+		// destination for this member's gamification showcase. Without this,
+		// search engines may treat WP core's /author/{slug}/ archive as the
+		// canonical and our richer /u/{slug} page never wins. Themes that
+		// emit their own canonical for the 404/template should not also
+		// fire here because we exit before the theme template loads — but
+		// a defensive remove_action skips any duplicate from rel-canonical
+		// plugins that hooked at the same priority.
+		remove_action( 'wp_head', 'rel_canonical' );
+		printf(
+			'<link rel="canonical" href="%s" />' . "\n",
+			esc_url( $page_url )
+		);
+
 		// OG tags.
 		printf(
 			'<meta property="og:title" content="%s" />' . "\n",

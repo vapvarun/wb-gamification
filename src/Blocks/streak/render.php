@@ -15,6 +15,7 @@ defined( 'ABSPATH' ) || exit;
 
 use WBGam\Blocks\CSS as WB_Gam_Block_CSS;
 use WBGam\Engine\BlockHooks;
+use WBGam\Engine\Privacy;
 use WBGam\Engine\StreakEngine;
 
 $wb_gam_attrs   = is_array( $attributes ) ? $attributes : array();
@@ -25,6 +26,15 @@ $wb_gam_unique  = ! empty( $wb_gam_attrs['uniqueId'] )
 $wb_gam_user_id = (int) ( $wb_gam_attrs['user_id'] ?? 0 );
 if ( $wb_gam_user_id <= 0 ) {
 	$wb_gam_user_id = get_current_user_id();
+}
+
+// Privacy gate. T1 fields (current/longest streak) need a public profile.
+// T2 field (heatmap — daily activity timeline) needs self/admin only.
+// See plan/PRIVACY-MODEL.md.
+$wb_gam_can_t1 = $wb_gam_user_id > 0 && Privacy::can_view_public_profile( $wb_gam_user_id );
+$wb_gam_can_t2 = $wb_gam_user_id > 0 && Privacy::can_view_private_history( $wb_gam_user_id );
+if ( ! $wb_gam_can_t1 ) {
+	$wb_gam_user_id = 0;
 }
 
 WB_Gam_Block_CSS::add( $wb_gam_unique, $wb_gam_attrs );
@@ -70,7 +80,7 @@ if ( ! $wb_gam_user_id ) {
 }
 
 $wb_gam_show_longest = ! empty( $wb_gam_attrs['show_longest'] );
-$wb_gam_show_heatmap = ! empty( $wb_gam_attrs['show_heatmap'] );
+$wb_gam_show_heatmap = ! empty( $wb_gam_attrs['show_heatmap'] ) && $wb_gam_can_t2;
 $wb_gam_heatmap_days = max( 1, min( 365, (int) ( $wb_gam_attrs['heatmap_days'] ?? 90 ) ) );
 
 $wb_gam_streak  = StreakEngine::get_streak( $wb_gam_user_id );

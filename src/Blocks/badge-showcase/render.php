@@ -12,6 +12,7 @@ defined( 'ABSPATH' ) || exit;
 use WBGam\Blocks\CSS as WB_Gam_Block_CSS;
 use WBGam\Engine\BadgeEngine;
 use WBGam\Engine\BlockHooks;
+use WBGam\Engine\Privacy;
 
 $wb_gam_attrs   = is_array( $attributes ) ? $attributes : array();
 $wb_gam_unique  = ! empty( $wb_gam_attrs['uniqueId'] )
@@ -25,6 +26,15 @@ $wb_gam_limit       = (int) ( $wb_gam_attrs['limit'] ?? 0 );
 
 if ( 0 === $wb_gam_user_id ) {
 	$wb_gam_user_id = get_current_user_id();
+}
+
+// Privacy gate — badges are T1 data and visible only when the public-profile
+// rule passes (see plan/PRIVACY-MODEL.md). Locked badges have no privacy
+// implication so they remain available when show_locked is set even if the
+// target user is private — the block becomes a generic "available badges"
+// catalog in that mode.
+if ( $wb_gam_user_id > 0 && ! Privacy::can_view_public_profile( $wb_gam_user_id ) ) {
+	$wb_gam_user_id = 0;
 }
 
 if ( $wb_gam_user_id <= 0 && ! $wb_gam_show_locked ) {
