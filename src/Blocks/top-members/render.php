@@ -51,6 +51,18 @@ wp_enqueue_style( 'wb-gam-tokens' );
 $wb_gam_point_type = (string) ( $wb_gam_attrs['pointType'] ?? '' );
 $wb_gam_rows       = LeaderboardEngine::get_leaderboard( $wb_gam_period, $wb_gam_limit, '', 0, $wb_gam_point_type );
 
+/**
+ * Filter the top-members rows before render.
+ *
+ * Twin of `wb_gam_block_leaderboard_data` for the podium-layout block.
+ *
+ * @since 1.0.0
+ *
+ * @param array $rows       Array of {rank, user_id, display_name, points, …} rows.
+ * @param array $attributes Block attributes (period, limit, layout, pointType).
+ */
+$wb_gam_rows = (array) apply_filters( 'wb_gam_block_top_members_data', $wb_gam_rows, $wb_gam_attrs );
+
 // Currency label so the block can show "100 Coins" once a site has more
 // than the primary currency (falls back to "pts" otherwise).
 $wb_gam_pt_service   = new \WBGam\Services\PointTypeService();

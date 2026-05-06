@@ -45,6 +45,20 @@ wp_enqueue_style( 'wb-gam-tokens' );
 $wb_gam_point_type = (string) ( $wb_gam_attrs['pointType'] ?? '' );
 $wb_gam_rows       = LeaderboardEngine::get_leaderboard( $wb_gam_period, $wb_gam_limit, $wb_gam_scope_type, $wb_gam_scope_id, $wb_gam_point_type );
 
+/**
+ * Filter the leaderboard rows before render.
+ *
+ * Use this hook to reorder, exclude, or add display fields to entries
+ * — e.g. tag VIP members, splice in a "you" row, or attach extra
+ * metadata that the surrounding theme renders below the block.
+ *
+ * @since 1.0.0
+ *
+ * @param array $rows       Array of {rank, user_id, display_name, points, …} rows.
+ * @param array $attributes Block attributes (period, limit, scope, pointType).
+ */
+$wb_gam_rows = (array) apply_filters( 'wb_gam_block_leaderboard_data', $wb_gam_rows, $wb_gam_attrs );
+
 // Resolve the currency label so leaderboard entries say "100 Coins" rather
 // than always "100 pts" once a site defines additional point types.
 $wb_gam_pt_service   = new \WBGam\Services\PointTypeService();

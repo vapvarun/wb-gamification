@@ -65,6 +65,21 @@ $wb_gam_show_label = ! empty( $wb_gam_attrs['show_action_label'] );
 $wb_gam_point_type = (string) ( $wb_gam_attrs['pointType'] ?? '' );
 $wb_gam_rows       = PointsEngine::get_history( $wb_gam_user_id, $wb_gam_limit, $wb_gam_point_type ?: null );
 
+/**
+ * Filter the points-history rows before render.
+ *
+ * Devs can mutate, group, or hide rows based on action_id, point_type,
+ * or any custom logic — e.g. mask manual-award rows, collapse same-day
+ * activity into a single line.
+ *
+ * @since 1.0.0
+ *
+ * @param array $rows       Array of {action_id, points, point_type, created_at} rows.
+ * @param array $attributes Block attributes (limit, show_action_label, pointType).
+ * @param int   $user_id    User whose history is being rendered.
+ */
+$wb_gam_rows = (array) apply_filters( 'wb_gam_block_points_history_data', $wb_gam_rows, $wb_gam_attrs, $wb_gam_user_id );
+
 // Pre-fetch label map so each row can render its actual currency name (no
 // N+1 — single $service->list() call). Rows from sites with only the
 // primary currency keep saying "Points".

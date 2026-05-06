@@ -93,6 +93,33 @@ $wb_gam_level        = $wb_gam_show_level ? LevelEngine::get_level_for_user( $wb
 $wb_gam_next_level   = $wb_gam_show_level ? LevelEngine::get_next_level( $wb_gam_user_id ) : null;
 $wb_gam_progress_pct = $wb_gam_show_progress ? (int) LevelEngine::get_progress_percent( $wb_gam_user_id ) : 0;
 
+/**
+ * Filter the member-points block data before render.
+ *
+ * @since 1.0.0
+ *
+ * @param array $data       ['points', 'label', 'level', 'next_level', 'progress_pct'].
+ * @param array $attributes Block attributes (user_id, show_level, show_progress_bar, pointType).
+ * @param int   $user_id    Member whose tile is being rendered.
+ */
+$wb_gam_block_data = (array) apply_filters(
+	'wb_gam_block_member_points_data',
+	array(
+		'points'       => $wb_gam_points,
+		'label'        => $wb_gam_points_label,
+		'level'        => $wb_gam_level,
+		'next_level'   => $wb_gam_next_level,
+		'progress_pct' => $wb_gam_progress_pct,
+	),
+	$wb_gam_attrs,
+	$wb_gam_user_id
+);
+$wb_gam_points       = (int) ( $wb_gam_block_data['points'] ?? $wb_gam_points );
+$wb_gam_points_label = (string) ( $wb_gam_block_data['label'] ?? $wb_gam_points_label );
+$wb_gam_level        = $wb_gam_block_data['level'] ?? $wb_gam_level;
+$wb_gam_next_level   = $wb_gam_block_data['next_level'] ?? $wb_gam_next_level;
+$wb_gam_progress_pct = (int) ( $wb_gam_block_data['progress_pct'] ?? $wb_gam_progress_pct );
+
 $wb_gam_wrapper = get_block_wrapper_attributes(
 	array(
 		'class' => implode( ' ', $wb_gam_classes ),

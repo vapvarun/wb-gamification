@@ -88,6 +88,11 @@ return [
 			'category'       => 'wordpress',
 			'icon'           => 'dashicons-admin-comments',
 			'repeatable'     => true,
+			// Rate-limit: comment_post can be spammed by a single commenter
+			// hitting the same post repeatedly. Cap at 10 comment awards/day
+			// per author so a coordinated comment-spam ring can't grind.
+			'cooldown'        => 0,
+			'daily_cap'       => 10,
 			'standalone_only' => false,
 		],
 

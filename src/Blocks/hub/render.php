@@ -135,6 +135,20 @@ foreach ( $wb_gam_pt_catalog as $wb_gam_pt ) {
 		'convert_rules'  => $wb_gam_outbound[ $wb_gam_slug ] ?? array(),
 	);
 }
+
+/**
+ * Filter the hub block's currency tiles before render.
+ *
+ * Reorder, add custom currency tiles (e.g. an external loyalty balance
+ * pulled from another system), or hide tiles based on user role.
+ *
+ * @since 1.0.0
+ *
+ * @param array $currencies Array of {slug, label, icon, balance, is_default, convert_rules} tiles.
+ * @param array $attributes Block attributes.
+ * @param int   $user_id    Member whose hub is being rendered.
+ */
+$wb_gam_currencies = (array) apply_filters( 'wb_gam_block_hub_currencies', $wb_gam_currencies, $wb_gam_attrs, $wb_gam_user_id );
 $wb_gam_level      = LevelEngine::get_level_for_user( $wb_gam_user_id );
 $wb_gam_next_lvl   = LevelEngine::get_next_level( $wb_gam_user_id );
 $wb_gam_progress   = (int) LevelEngine::get_progress_percent( $wb_gam_user_id );

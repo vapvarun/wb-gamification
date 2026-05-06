@@ -186,6 +186,10 @@ return [
 			'category'            => 'buddypress',
 			'icon'                => 'dashicons-admin-post',
 			'repeatable'          => true,
+			// Rate-limit: publish_post fires on every Publish click + revisions.
+			// Cap at 5 awards/day so a member can't grind by republishing.
+			'cooldown'            => 600,
+			'daily_cap'           => 5,
 			'requires_buddypress' => true,
 		],
 

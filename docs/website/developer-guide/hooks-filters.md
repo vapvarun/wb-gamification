@@ -469,3 +469,105 @@ Control whether a weekly nudge email should be sent to a specific user.
 | `wb_gamification_recap_data` | RecapEngine.php | Pro |
 | `wb_gamification_rank_automation_rules` | RankAutomation.php | Free |
 | `wb_gamification_should_send_weekly_nudge` | LeaderboardNudge.php | Pro |
+
+---
+
+## Block extension API
+
+Every server-rendered block fires two action hooks (for HTML injection) and several expose a data filter (for data mutation before render).
+
+### Universal block actions (fire on all 15 blocks)
+
+#### `wb_gam_block_before_render`
+
+Fires immediately before a block emits any HTML. Use to inject UI above the block, log impressions, or short-circuit via output capture.
+
+```php
+add_action( 'wb_gam_block_before_render', function( string $slug, array $attributes, array $context ) {
+    if ( $slug === 'leaderboard' ) {
+        echo '<div class="my-leaderboard-banner">Top players this week →</div>';
+    }
+}, 10, 3 );
+```
+
+#### `wb_gam_block_after_render`
+
+Fires immediately after the block finishes its HTML. Use to append UI (share button, CTA), inject analytics beacons, or react to the render.
+
+```php
+add_action( 'wb_gam_block_after_render', function( string $slug, array $attributes, array $context ) {
+    if ( $slug === 'kudos-feed' && is_user_logged_in() ) {
+        echo '<a class="my-give-kudos-cta" href="#">Send kudos →</a>';
+    }
+}, 10, 3 );
+```
+
+### Per-block data filters
+
+Filters fire on the data the block is about to render — devs can reorder, remove, or add fields. Each filter is named `wb_gam_block_<slug>_data` (or `_currencies` for the hub).
+
+| Filter | Block | Filtered value |
+|---|---|---|
+| `wb_gam_block_leaderboard_data` | leaderboard | Array of `{rank, user_id, display_name, points}` rows |
+| `wb_gam_block_top_members_data` | top-members | Same shape as leaderboard |
+| `wb_gam_block_points_history_data` | points-history | Array of `{action_id, points, point_type, created_at}` rows |
+| `wb_gam_block_member_points_data` | member-points | `{points, label, level, next_level, progress_pct}` map |
+| `wb_gam_block_hub_currencies` | hub | Array of `{slug, label, icon, balance, is_default, convert_rules}` tiles |
+
+```php
+// Example: hide certain users from every leaderboard.
+add_filter( 'wb_gam_block_leaderboard_data', function( array $rows, array $attrs ) {
+    return array_values( array_filter( $rows, fn( $r ) => ! in_array( $r['user_id'], [42, 99], true ) ) );
+}, 10, 2 );
+
+// Example: add a custom currency tile to the hub.
+add_filter( 'wb_gam_block_hub_currencies', function( array $tiles, array $attrs, int $user_id ) {
+    $tiles[] = [
+        'slug'           => 'external_loyalty',
+        'label'          => __( 'Loyalty', 'my-plugin' ),
+        'icon'           => 'gem',
+        'balance'        => my_external_loyalty_balance( $user_id ),
+        'is_default'     => false,
+        'convert_rules'  => [],
+    ];
+    return $tiles;
+}, 10, 3 );
+```
+
+The remaining 10 blocks (badge-showcase, challenges, cohort-rank, community-challenges, earning-guide, kudos-feed, level-progress, redemption-store, streak, year-recap) only expose the universal actions today; per-block data filters land in 1.0.1. Devs needing data mutation against those blocks before then can use `wb_gam_block_before_render` with output buffering.
+
+---
+
+## Theme template overrides
+
+Plugin-shipped templates can be overridden by themes via the standard `locate_template()` chain. Use `Templates::locate()` from any extension code:
+
+```php
+$path = \WBGam\Engine\Templates::locate( 'emails/weekly-recap.php' );
+// 1. Filter: wb_gam_template_path  (full programmatic override)
+// 2. Theme:  {child-theme}/wb-gamification/emails/weekly-recap.php
+// 3. Theme:  {parent-theme}/wb-gamification/emails/weekly-recap.php
+// 4. Plugin: wb-gamification/templates/emails/weekly-recap.php
+```
+
+Render directly:
+
+```php
+echo \WBGam\Engine\Templates::render( 'emails/weekly-recap.php', [
+    'user'   => $user,
+    'points' => $points,
+] );
+```
+
+Override a path entirely via filter:
+
+```php
+add_filter( 'wb_gam_template_path', function( string $path, string $relative, array $ctx ) {
+    if ( $relative === 'emails/weekly-recap.php' ) {
+        return MY_PLUGIN_PATH . 'custom-templates/recap.php';
+    }
+    return $path;
+}, 10, 3 );
+```
+
+**Note:** Block render PHP (`src/Blocks/<slug>/render.php`) is **not** theme-overridable — Gutenberg's block API doesn't permit it. Use `wb_gam_block_<slug>_data` to mutate input data, or `wb_gam_block_after_render` to inject HTML.
