@@ -1,9 +1,14 @@
 /**
  * Admin: API Keys — REST-driven (replaces 3 admin-post.php form-post handlers).
  *
- * /wb-gamification/v1/api-keys             — POST + GET (list)
- * /wb-gamification/v1/api-keys/{key}/revoke — PATCH
- * /wb-gamification/v1/api-keys/{key}        — DELETE
+ * /wb-gamification/v1/api-keys              — POST + GET (list)
+ * /wb-gamification/v1/api-keys/{id}/revoke  — PATCH
+ * /wb-gamification/v1/api-keys/{id}         — DELETE
+ *
+ * v1.1+ ID-based routes — server stores hashed keys, can't look up by full
+ * secret because the secret is never persisted. Each row has a stable id
+ * the admin UI uses for revoke/delete. Full secret is only ever returned
+ * in the create response.
  *
  * Depends on assets/js/admin-rest-utils.js (window.wbGamAdminRest).
  *
@@ -50,10 +55,8 @@
 
 		items.forEach( function ( item ) {
 			const tr = document.createElement( 'tr' );
-			tr.dataset.keyPreview = item.key_preview;
-			if ( item.key ) {
-				tr.dataset.fullKey = item.key;
-			}
+			tr.dataset.keyPreview = item.key_preview || '';
+			tr.dataset.keyId      = String( item.id || '' );
 
 			tr.appendChild( cellText( item.label || '', { strong: true } ) );
 			tr.appendChild( cellCode( item.site_id || '—' ) );
@@ -186,21 +189,14 @@
 		if ( ! tr ) {
 			return;
 		}
-		// Server-side action targets the FULL key, but we only have the preview
-		// in the rendered table. The list response includes neither the full
-		// key nor a row id; the full secret is only present in create response.
-		// Solution: read the FULL key out of dataset.fullKey, set on render
-		// from `item.key_preview` (server already returns truncated). For revoke/delete,
-		// pass the preview back — server matches against the preview substring.
-		// SAFER: include the full key as a hidden data attribute by piggy-backing
-		// on the key_preview field. That requires the server to expose either
-		// the full key or a stable id. The current REST controller returns
-		// neither in get_items() (intentional — the secret never leaves once
-		// created). Workaround for migrations: server now returns a `key`
-		// (full secret) field in the list only when the caller is admin,
-		// see ApiKeysController updates.
-		const fullKey = tr.dataset.fullKey;
-		if ( ! fullKey ) {
+
+		// Server-side action targets the row by stable id. Pre-1.1 the action
+		// targeted the full key, which broke after migration to hashed
+		// storage (the server can't look up by full key anymore — it only
+		// has the hash). The id is exposed by the list response and rendered
+		// into tr.dataset.keyId on every refresh.
+		const keyId = tr.dataset.keyId;
+		if ( ! keyId ) {
 			utils.toast( i18n.row_no_key || 'Reload the page and try again.', 'error' );
 			return;
 		}
@@ -216,7 +212,7 @@
 				return;
 			}
 			button.disabled = true;
-			const result = await utils.apiFetch( 'DELETE', '/api-keys/' + encodeURIComponent( fullKey ), null, settings );
+			const result = await utils.apiFetch( 'DELETE', '/api-keys/' + encodeURIComponent( keyId ), null, settings );
 			if ( result.ok ) {
 				utils.toast( i18n.deleted || 'API key deleted.', 'success' );
 				await refresh();
@@ -226,7 +222,7 @@
 			}
 		} else if ( action === 'revoke' ) {
 			button.disabled = true;
-			const result = await utils.apiFetch( 'PATCH', '/api-keys/' + encodeURIComponent( fullKey ) + '/revoke', null, settings );
+			const result = await utils.apiFetch( 'PATCH', '/api-keys/' + encodeURIComponent( keyId ) + '/revoke', null, settings );
 			if ( result.ok ) {
 				utils.toast( i18n.revoked || 'API key revoked.', 'success' );
 				await refresh();

@@ -216,22 +216,25 @@ final class ApiKeysPage {
 							</tr>
 						</thead>
 						<tbody data-wb-gam-api-keys-tbody>
-							<?php foreach ( $keys as $key => $data ) : ?>
-								<tr data-key-preview="<?php echo esc_attr( substr( $key, 0, 10 ) . '…' . substr( $key, -4 ) ); ?>" data-full-key="<?php echo esc_attr( $key ); ?>">
-									<td><strong><?php echo esc_html( $data['label'] ?? '' ); ?></strong></td>
-									<td><code><?php echo esc_html( $data['site_id'] ?? '—' ); ?></code></td>
-									<td><code><?php echo esc_html( substr( $key, 0, 10 ) . '…' . substr( $key, -4 ) ); ?></code></td>
-									<td><?php echo esc_html( $data['created'] ?? '' ); ?></td>
-									<td><?php echo esc_html( $data['last_used'] ?: '—' ); ?></td>
+							<?php
+							foreach ( $keys as $row ) :
+								$preview = $row['key_prefix'] . '…' . $row['key_suffix'];
+								?>
+								<tr data-key-preview="<?php echo esc_attr( $preview ); ?>" data-key-id="<?php echo esc_attr( (string) $row['id'] ); ?>">
+									<td><strong><?php echo esc_html( $row['label'] ); ?></strong></td>
+									<td><code><?php echo esc_html( '' !== $row['site_id'] ? $row['site_id'] : '—' ); ?></code></td>
+									<td><code><?php echo esc_html( $preview ); ?></code></td>
+									<td><?php echo esc_html( $row['created_at'] ); ?></td>
+									<td><?php echo esc_html( $row['last_used'] ?: '—' ); ?></td>
 									<td>
-										<?php if ( ! empty( $data['active'] ) ) : ?>
+										<?php if ( 1 === (int) $row['is_active'] ) : ?>
 											<span class="wbgam-pill wbgam-pill--active"><?php esc_html_e( 'Active', 'wb-gamification' ); ?></span>
 										<?php else : ?>
 											<span class="wbgam-pill wbgam-pill--danger"><?php esc_html_e( 'Revoked', 'wb-gamification' ); ?></span>
 										<?php endif; ?>
 									</td>
 									<td>
-										<?php if ( ! empty( $data['active'] ) ) : ?>
+										<?php if ( 1 === (int) $row['is_active'] ) : ?>
 											<button type="button" class="wbgam-btn wbgam-btn--sm wbgam-btn--secondary" data-wb-gam-api-key-action="revoke"><?php esc_html_e( 'Revoke', 'wb-gamification' ); ?></button>
 										<?php endif; ?>
 										<button type="button" class="wbgam-btn wbgam-btn--sm wbgam-btn--danger wbgam-ms-xs" data-wb-gam-api-key-action="delete"><?php esc_html_e( 'Delete', 'wb-gamification' ); ?></button>

@@ -39,7 +39,7 @@ final class PointsEngine {
 	 *
 	 * @param string|null $type Raw input.
 	 */
-	private static function resolve_type( ?string $type ): string {
+	public static function resolve_type( ?string $type ): string {
 		static $service = null;
 		if ( null === $service ) {
 			$service = new PointTypeService();
@@ -101,10 +101,18 @@ final class PointsEngine {
 	 * @param int   $points Points to record.
 	 * @return bool         True on success.
 	 */
-	public static function insert_point_row( Event $event, int $points ): bool {
+	public static function insert_point_row( Event $event, int $points, ?string $type = null ): bool {
 		global $wpdb;
 
-		$type = self::resolve_type( $event->metadata['point_type'] ?? null );
+		// Caller (Engine::process) resolves $type ONCE up-front and passes it
+		// explicitly so the rate-limit check + this writer agree on which
+		// currency the award lands in. Falling back to metadata only when no
+		// caller resolution was supplied (legacy direct invocations).
+		// See plan/PRIVACY-MODEL.md adjacent: filter contracts shouldn't
+		// silently override engine-resolved invariants.
+		if ( null === $type ) {
+			$type = self::resolve_type( $event->metadata['point_type'] ?? null );
+		}
 
 		$inserted = $wpdb->insert(
 			$wpdb->prefix . 'wb_gam_points',

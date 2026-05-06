@@ -45,6 +45,17 @@ use WBGam\Services\PointTypeService;
 final class TransactionalEmailEngine {
 
 	/**
+	 * Action Scheduler hook for the deferred send.
+	 *
+	 * Listeners enqueue here instead of calling wp_mail() directly so the
+	 * page-load that triggered the event (level_changed, badge_awarded,
+	 * challenge_completed) returns immediately. The actual outbound mail
+	 * runs in an AS worker. Mirrors the WeeklyEmailEngine pattern.
+	 */
+	private const AS_HOOK  = 'wb_gam_send_transactional_email';
+	private const AS_GROUP = 'wb-gamification-emails';
+
+	/**
 	 * Boot — bind one listener per event hook. Each listener is gated on
 	 * an admin option so site owners can disable individual email types
 	 * without touching code.
@@ -53,6 +64,37 @@ final class TransactionalEmailEngine {
 		add_action( 'wb_gam_level_changed', array( __CLASS__, 'on_level_up' ), 10, 3 );
 		add_action( 'wb_gam_badge_awarded', array( __CLASS__, 'on_badge_earned' ), 10, 3 );
 		add_action( 'wb_gam_challenge_completed', array( __CLASS__, 'on_challenge_completed' ), 10, 2 );
+		add_action( self::AS_HOOK, array( __CLASS__, 'send_async' ), 10, 1 );
+	}
+
+	/**
+	 * AS worker — receives the rendered email payload and calls wp_mail.
+	 *
+	 * Split from the original on_* listeners so the synchronous page-load
+	 * isn't blocked on wp_mail() finishing (SMTP timeouts, slow MTAs,
+	 * Mailgun rate limits — all of those used to freeze the response that
+	 * fired the event). With Action Scheduler the user gets their response
+	 * immediately; mail goes out within seconds via the AS worker.
+	 *
+	 * Falls back to synchronous send on hosts without Action Scheduler so
+	 * unit tests + early-boot paths still work.
+	 *
+	 * @param array{to:string, subject:string, body:string} $payload Pre-rendered email.
+	 */
+	public static function send_async( array $payload ): void {
+		$to      = (string) ( $payload['to'] ?? '' );
+		$subject = (string) ( $payload['subject'] ?? '' );
+		$body    = (string) ( $payload['body'] ?? '' );
+
+		if ( '' === $to || '' === $subject || '' === $body ) {
+			Log::error(
+				'TransactionalEmailEngine::send_async — invalid payload',
+				array( 'has_to' => '' !== $to, 'has_subject' => '' !== $subject, 'has_body' => '' !== $body )
+			);
+			return;
+		}
+
+		self::send_now( $to, $subject, $body );
 	}
 
 	/**
@@ -243,13 +285,49 @@ final class TransactionalEmailEngine {
 	}
 
 	/**
-	 * Send the rendered HTML body via wp_mail with the canonical From header.
+	 * Enqueue an email for async delivery (or send immediately if Action
+	 * Scheduler is unavailable, e.g. unit tests / very early boot).
+	 *
+	 * Replaces the previous synchronous send() call site. Listeners on
+	 * wb_gam_level_changed / _badge_awarded / _challenge_completed should
+	 * call this method, NOT send_now().
 	 *
 	 * @param string $to      Recipient email.
 	 * @param string $subject Subject line.
 	 * @param string $body    HTML body.
 	 */
 	private static function send( string $to, string $subject, string $body ): bool {
+		$payload = array(
+			'to'      => $to,
+			'subject' => $subject,
+			'body'    => $body,
+		);
+
+		// Enqueue async if Action Scheduler is available — the page-load that
+		// fired the event isn't blocked on wp_mail() finishing.
+		if ( function_exists( 'as_enqueue_async_action' ) ) {
+			as_enqueue_async_action( self::AS_HOOK, array( $payload ), self::AS_GROUP );
+			return true;
+		}
+
+		// Fallback — synchronous send. Hits during unit tests + very early
+		// boot before Action Scheduler is loaded.
+		return self::send_now( $to, $subject, $body );
+	}
+
+	/**
+	 * Send the rendered HTML body via wp_mail with the canonical From header.
+	 *
+	 * Called from the Action Scheduler worker (send_async) AND the sync
+	 * fallback inside send(). Returns true if wp_mail accepted the
+	 * message; logs to error log on false. wp_mail's own filters
+	 * (wp_mail_from, wp_mail_content_type, etc.) still apply.
+	 *
+	 * @param string $to      Recipient email.
+	 * @param string $subject Subject line.
+	 * @param string $body    HTML body.
+	 */
+	private static function send_now( string $to, string $subject, string $body ): bool {
 		$headers = array(
 			'Content-Type: text/html; charset=UTF-8',
 			'From: ' . Email::from_header(),
@@ -257,7 +335,7 @@ final class TransactionalEmailEngine {
 		$sent = wp_mail( $to, $subject, $body, $headers );
 		if ( ! $sent ) {
 			Log::error(
-				'TransactionalEmailEngine::send — wp_mail returned false',
+				'TransactionalEmailEngine::send_now — wp_mail returned false',
 				array(
 					'to'      => $to,
 					'subject' => $subject,

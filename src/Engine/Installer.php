@@ -397,6 +397,30 @@ final class Installer {
 		) $charset;"
 		);
 
+		// API keys — dedicated table replacing the legacy wb_gam_api_keys
+		// option. Stores SHA-256 hashes of issued keys (never plaintext) so
+		// DB backups + dump exports can't expose live keys. The full key is
+		// shown once on creation; thereafter the prefix + suffix are visible
+		// for identification.
+		dbDelta(
+			"CREATE TABLE {$wpdb->prefix}wb_gam_api_keys (
+			id          BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+			key_hash    VARCHAR(64)     NOT NULL,
+			key_prefix  VARCHAR(16)     NOT NULL,
+			key_suffix  VARCHAR(8)      NOT NULL,
+			label       VARCHAR(255)    NOT NULL,
+			user_id     BIGINT UNSIGNED NOT NULL,
+			site_id     VARCHAR(64)     DEFAULT NULL,
+			is_active   TINYINT(1)      NOT NULL DEFAULT 1,
+			created_at  DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			last_used   DATETIME        DEFAULT NULL,
+			PRIMARY KEY (id),
+			UNIQUE KEY idx_key_hash (key_hash),
+			KEY idx_active (is_active),
+			KEY idx_user_id (user_id)
+		) $charset;"
+		);
+
 		// Seed default levels.
 		self::seed_default_levels();
 

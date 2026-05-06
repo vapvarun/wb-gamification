@@ -78,6 +78,7 @@ final class DbUpgrader {
 		self::ensure_user_totals_table();
 		self::ensure_leaderboard_cache_unique_key();
 		self::ensure_submissions_table();
+		self::ensure_api_keys_table();
 	}
 
 	/**
@@ -87,6 +88,66 @@ final class DbUpgrader {
 	 *
 	 * @since 1.0.0
 	 */
+	/**
+	 * Migrate API keys from the legacy plaintext wp_options blob to the new
+	 * dedicated wb_gam_api_keys table with hashed storage.
+	 *
+	 * Why: pre-1.1 stored full keys verbatim in `wb_gam_api_keys` option.
+	 * DB backups, `wp option get`, and any plugin with admin DB access could
+	 * read live credentials. Schema/storage redesign hashes the key with
+	 * SHA-256(wp_salt('auth') . $key) — the lookup is O(1) on the unique
+	 * index, the secret never lives in the DB.
+	 *
+	 * Migration policy: there is NO automatic re-hash of legacy keys, because
+	 * (a) hashing requires the plaintext we're trying to remove, and (b) we
+	 * want admins to consciously rotate keys after the security upgrade.
+	 * The legacy wp_options entry is deleted on first migration; admins
+	 * regenerate keys for paired remote sites via the API Keys admin page.
+	 * One-time admin notice surfaces the rotation requirement.
+	 *
+	 * Idempotent: feature-flag gated.
+	 */
+	private static function ensure_api_keys_table(): void {
+		$flag_key = 'wb_gam_feature_api_keys_table_v1';
+		if ( get_option( $flag_key ) ) {
+			return;
+		}
+
+		global $wpdb;
+		$charset = $wpdb->get_charset_collate();
+		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+
+		dbDelta(
+			"CREATE TABLE {$wpdb->prefix}wb_gam_api_keys (
+			id          BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+			key_hash    VARCHAR(64)     NOT NULL,
+			key_prefix  VARCHAR(16)     NOT NULL,
+			key_suffix  VARCHAR(8)      NOT NULL,
+			label       VARCHAR(255)    NOT NULL,
+			user_id     BIGINT UNSIGNED NOT NULL,
+			site_id     VARCHAR(64)     DEFAULT NULL,
+			is_active   TINYINT(1)      NOT NULL DEFAULT 1,
+			created_at  DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			last_used   DATETIME        DEFAULT NULL,
+			PRIMARY KEY (id),
+			UNIQUE KEY idx_key_hash (key_hash),
+			KEY idx_active (is_active),
+			KEY idx_user_id (user_id)
+		) $charset;"
+		);
+
+		// Drop the legacy plaintext option. Existing pairings break — by
+		// design — admins regenerate keys via the API Keys admin page.
+		$had_legacy = (bool) get_option( 'wb_gam_api_keys' );
+		delete_option( 'wb_gam_api_keys' );
+
+		if ( $had_legacy ) {
+			set_transient( 'wb_gam_api_keys_legacy_purged', '1', WEEK_IN_SECONDS );
+		}
+
+		update_option( $flag_key, '1' );
+	}
+
 	private static function ensure_submissions_table(): void {
 		$flag_key = 'wb_gam_feature_submissions_v1';
 		if ( get_option( $flag_key ) ) {

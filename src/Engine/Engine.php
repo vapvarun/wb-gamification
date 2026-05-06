@@ -160,6 +160,17 @@ final class Engine {
 
 		$action = Registry::get_action( $event->action_id );
 
+		// Resolve the currency ONCE — before any filter runs, before rate-limit
+		// check, before persist. Both passes_rate_limits and insert_point_row
+		// must agree on which ledger this award lands in; otherwise a filter
+		// that mutates `point_type` in metadata can drop the award into a
+		// different currency than the cap is counting (and vice versa).
+		// Manual / unregistered awards fall back to metadata for $type because
+		// they have no Registry entry to resolve from.
+		$resolved_type = null !== $action
+			? PointsEngine::resolve_type( Registry::resolve_action_point_type( $action ) ?: null )
+			: PointsEngine::resolve_type( $event->metadata['point_type'] ?? null );
+
 		// Registered-action checks: enabled + rate limits.
 		if ( null !== $action ) {
 			if ( ! self::is_action_enabled( $event->action_id ) ) {
@@ -253,9 +264,38 @@ final class Engine {
 		global $wpdb;
 		$wpdb->query( 'START TRANSACTION' );
 
-		self::persist_event( $event );
+		// Rate-limit re-check INSIDE the transaction. The earlier check
+		// happens before metadata filters fire and before the transaction
+		// opens — under concurrent bursts (rapid clicks, retried API
+		// calls), two requests can both pass the early check and both
+		// reach this point. Re-checking inside the transaction tightens
+		// the TOCTOU window dramatically; the residual race is the small
+		// window between this check and the insert. For absolute caps
+		// (e.g. anti-fraud) callers should add a UNIQUE constraint on
+		// the relevant key shape — see plan/v1.1-rate-limit-hardening.
+		if ( null !== $action && ! PointsEngine::passes_rate_limits( $event->user_id, $event->action_id, $action ) ) {
+			$wpdb->query( 'ROLLBACK' );
+			return false;
+		}
 
-		if ( ! PointsEngine::insert_point_row( $event, $points ) ) {
+		// Replay protection — persist_event returns false when the event_id
+		// already exists (PK collision on wb_gam_events.id). Without this
+		// check the points insert proceeds against the FIRST events row's
+		// id and the caller has effectively double-awarded.
+		if ( ! self::persist_event( $event ) ) {
+			$wpdb->query( 'ROLLBACK' );
+			Log::error(
+				'Engine::process — duplicate event_id rejected; possible replay or retry storm.',
+				array(
+					'event_id'  => $event->event_id,
+					'user_id'   => $event->user_id,
+					'action_id' => $event->action_id,
+				)
+			);
+			return false;
+		}
+
+		if ( ! PointsEngine::insert_point_row( $event, $points, $resolved_type ) ) {
 			$wpdb->query( 'ROLLBACK' );
 			return false;
 		}
@@ -314,7 +354,7 @@ final class Engine {
 	 *
 	 * @param Event $event The event to persist.
 	 */
-	private static function persist_event( Event $event ): void {
+	private static function persist_event( Event $event ): bool {
 		global $wpdb;
 
 		// Resolve point_type for the event log so analytics queries can scope by currency
@@ -323,7 +363,8 @@ final class Engine {
 			isset( $event->metadata['point_type'] ) ? (string) $event->metadata['point_type'] : null
 		);
 
-		$wpdb->insert(
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- ledger insert; not cacheable.
+		$inserted = $wpdb->insert(
 			$wpdb->prefix . 'wb_gam_events',
 			array(
 				'id'         => $event->event_id,
@@ -337,5 +378,12 @@ final class Engine {
 			),
 			array( '%s', '%d', '%s', '%d', '%s', '%s', '%s', '%s' )
 		);
+
+		// Replay protection — if the same event_id is submitted twice (network
+		// retry, double-tap, malicious replay), the PRIMARY KEY constraint on
+		// wb_gam_events.id rejects the second insert. Caller must abort the
+		// transaction to prevent an orphan points row from being committed
+		// against the FIRST events row's id.
+		return false !== $inserted;
 	}
 }

@@ -3,14 +3,16 @@
  * REST API: API Keys Controller
  *
  * GET    /wb-gamification/v1/api-keys              List all API keys (sensitive — admin only)
- * POST   /wb-gamification/v1/api-keys              Create a new key (returns full key once)
- * PATCH  /wb-gamification/v1/api-keys/{key}/revoke Deactivate a key (keeps audit trail)
- * DELETE /wb-gamification/v1/api-keys/{key}        Permanently delete a key
+ * POST   /wb-gamification/v1/api-keys              Create a new key (returns full secret ONCE)
+ * PATCH  /wb-gamification/v1/api-keys/{id}/revoke  Deactivate a key (keeps audit trail)
+ * DELETE /wb-gamification/v1/api-keys/{id}         Permanently delete a key
  *
- * The full secret value is returned ONLY in the create response and is
- * never echoed back via GET (only a truncated preview). Frontend consumers
- * must capture the secret on the create response and show it once to the
- * user — admin UI follows the "show once" pattern.
+ * STORAGE MODEL (v1.1+):
+ *   Keys are stored as SHA-256 hashes in a dedicated wb_gam_api_keys table.
+ *   The full secret is returned ONLY in the create response — the database
+ *   has no way to reverse the hash, so subsequent reads return prefix +
+ *   suffix only. revoke + delete operate on the row id, not the secret
+ *   (admins don't have the secret after creation).
  *
  * @package WB_Gamification
  * @since   1.0.0
@@ -88,38 +90,38 @@ final class ApiKeysController extends WP_REST_Controller {
 			)
 		);
 
-		// PATCH /api-keys/{key}/revoke.
+		// PATCH /api-keys/{id}/revoke.
 		register_rest_route(
 			$this->namespace,
-			'/' . $this->rest_base . '/(?P<key>wbgam_[A-Za-z0-9]+)/revoke',
+			'/' . $this->rest_base . '/(?P<id>[\d]+)/revoke',
 			array(
 				array(
 					'methods'             => WP_REST_Server::EDITABLE,
 					'callback'            => array( $this, 'revoke_item' ),
 					'permission_callback' => array( $this, 'admin_check' ),
 					'args'                => array(
-						'key' => array(
-							'type'              => 'string',
-							'sanitize_callback' => 'sanitize_text_field',
+						'id' => array(
+							'type'              => 'integer',
+							'sanitize_callback' => 'absint',
 						),
 					),
 				),
 			)
 		);
 
-		// DELETE /api-keys/{key}.
+		// DELETE /api-keys/{id}.
 		register_rest_route(
 			$this->namespace,
-			'/' . $this->rest_base . '/(?P<key>wbgam_[A-Za-z0-9]+)',
+			'/' . $this->rest_base . '/(?P<id>[\d]+)',
 			array(
 				array(
 					'methods'             => WP_REST_Server::DELETABLE,
 					'callback'            => array( $this, 'delete_item' ),
 					'permission_callback' => array( $this, 'admin_check' ),
 					'args'                => array(
-						'key' => array(
-							'type'              => 'string',
-							'sanitize_callback' => 'sanitize_text_field',
+						'id' => array(
+							'type'              => 'integer',
+							'sanitize_callback' => 'absint',
 						),
 					),
 				),
@@ -161,14 +163,9 @@ final class ApiKeysController extends WP_REST_Controller {
 	 * @return WP_REST_Response
 	 */
 	public function get_items( $request ): WP_REST_Response {
-		$keys  = ApiKeyAuth::get_keys();
-		$items = array();
-		foreach ( $keys as $secret => $meta ) {
-			$items[] = array_merge(
-				$this->shape_for_list( $secret, $meta ),
-				array( 'key' => $secret )
-			);
-		}
+		$rows  = ApiKeyAuth::get_keys();
+		$items = array_map( array( $this, 'shape_row' ), $rows );
+
 		return new WP_REST_Response(
 			array(
 				'items'    => $items,
@@ -225,15 +222,37 @@ final class ApiKeysController extends WP_REST_Controller {
 		}
 
 		$secret = ApiKeyAuth::create_key( $label, get_current_user_id(), $site_id );
-		$keys   = ApiKeyAuth::get_keys();
-		$meta   = $keys[ $secret ] ?? array();
 
-		do_action( 'wb_gam_after_create_api_key', $secret, $meta, $request );
+		// Re-list to find the freshly-created row by prefix+suffix match.
+		// We can't query by hash here without re-hashing; we trust that
+		// create_key inserted the most-recent row with our prefix+suffix.
+		$prefix  = substr( $secret, 0, 14 );
+		$suffix  = substr( $secret, -4 );
+		$row     = null;
+		foreach ( ApiKeyAuth::get_keys() as $candidate ) {
+			if ( $candidate['key_prefix'] === $prefix && $candidate['key_suffix'] === $suffix ) {
+				$row = $candidate;
+				break;
+			}
+		}
+		$row = $row ?: array(
+			'id'         => 0,
+			'label'      => $label,
+			'site_id'    => $site_id,
+			'user_id'    => get_current_user_id(),
+			'key_prefix' => $prefix,
+			'key_suffix' => $suffix,
+			'is_active'  => 1,
+			'created_at' => gmdate( 'Y-m-d H:i:s' ),
+			'last_used'  => null,
+		);
+
+		do_action( 'wb_gam_after_create_api_key', (int) $row['id'], $row, $request );
 
 		// Full secret returned ONCE — clients must capture it now.
 		return new WP_REST_Response(
 			array_merge(
-				$this->shape_for_list( $secret, $meta ),
+				$this->shape_row( $row ),
 				array( 'secret' => $secret )
 			),
 			201
@@ -250,9 +269,9 @@ final class ApiKeysController extends WP_REST_Controller {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function revoke_item( $request ) {
-		$key = (string) $request->get_param( 'key' );
+		$id = (int) $request->get_param( 'id' );
 
-		if ( ! ApiKeyAuth::revoke_key( $key ) ) {
+		if ( ! ApiKeyAuth::revoke_key( $id ) ) {
 			return new WP_Error(
 				'wb_gam_api_key_not_found',
 				__( 'API key not found.', 'wb-gamification' ),
@@ -260,12 +279,11 @@ final class ApiKeysController extends WP_REST_Controller {
 			);
 		}
 
-		$keys = ApiKeyAuth::get_keys();
-		$meta = $keys[ $key ] ?? array();
+		$row = $this->find_row_by_id( $id );
 
-		do_action( 'wb_gam_after_revoke_api_key', $key, $meta, $request );
+		do_action( 'wb_gam_after_revoke_api_key', $id, $row, $request );
 
-		return new WP_REST_Response( $this->shape_for_list( $key, $meta ), 200 );
+		return new WP_REST_Response( $this->shape_row( $row ?: array() ), 200 );
 	}
 
 	/**
@@ -275,9 +293,9 @@ final class ApiKeysController extends WP_REST_Controller {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function delete_item( $request ) {
-		$key  = (string) $request->get_param( 'key' );
-		$keys = ApiKeyAuth::get_keys();
-		if ( ! isset( $keys[ $key ] ) ) {
+		$id  = (int) $request->get_param( 'id' );
+		$row = $this->find_row_by_id( $id );
+		if ( ! $row ) {
 			return new WP_Error(
 				'wb_gam_api_key_not_found',
 				__( 'API key not found.', 'wb-gamification' ),
@@ -285,52 +303,60 @@ final class ApiKeysController extends WP_REST_Controller {
 			);
 		}
 
-		$previous = $keys[ $key ];
-		ApiKeyAuth::delete_key( $key );
+		ApiKeyAuth::delete_key( $id );
 
-		do_action( 'wb_gam_after_delete_api_key', $key, $previous, $request );
+		do_action( 'wb_gam_after_delete_api_key', $id, $row, $request );
 
 		return new WP_REST_Response(
 			array(
 				'deleted'  => true,
-				'key'      => $this->mask( $key ),
-				'previous' => $this->shape_for_list( $key, $previous ),
+				'id'       => $id,
+				'previous' => $this->shape_row( $row ),
 			),
 			200
 		);
 	}
 
 	/**
-	 * Build the public-facing list shape for one key.
+	 * Look up a single key row by its DB id. Returns null if missing.
 	 *
-	 * @param string               $secret Full key value (NEVER returned in this shape).
-	 * @param array<string, mixed> $meta   Key metadata.
-	 * @return array<string, mixed>
+	 * @param int $id Row id.
+	 * @return array<string,mixed>|null
 	 */
-	private function shape_for_list( string $secret, array $meta ): array {
-		return array(
-			'key_preview' => $this->mask( $secret ),
-			'label'       => isset( $meta['label'] ) ? (string) $meta['label'] : '',
-			'site_id'     => isset( $meta['site_id'] ) ? (string) $meta['site_id'] : '',
-			'user_id'     => isset( $meta['user_id'] ) ? (int) $meta['user_id'] : 0,
-			'active'      => ! empty( $meta['active'] ),
-			'created_at'  => isset( $meta['created'] ) ? (string) $meta['created'] : '',
-			'last_used'   => isset( $meta['last_used'] ) ? (string) $meta['last_used'] : '',
-			'permissions' => isset( $meta['permissions'] ) ? (array) $meta['permissions'] : array(),
-		);
+	private function find_row_by_id( int $id ): ?array {
+		foreach ( ApiKeyAuth::get_keys() as $row ) {
+			if ( (int) $row['id'] === $id ) {
+				return $row;
+			}
+		}
+		return null;
 	}
 
 	/**
-	 * Truncate a secret for display in lists ("wbgam_AbCd…wXyZ").
+	 * Shape a single row from ApiKeyAuth::get_keys() for the REST response.
 	 *
-	 * @param string $secret Full secret.
-	 * @return string
+	 * The hash never leaves this controller — only metadata + display
+	 * markers (prefix, suffix) the admin can use to identify the key
+	 * without recovering it.
+	 *
+	 * @param array<string, mixed> $row Row from ApiKeyAuth::get_keys().
+	 * @return array<string, mixed>
 	 */
-	private function mask( string $secret ): string {
-		if ( strlen( $secret ) < 14 ) {
-			return $secret;
-		}
-		return substr( $secret, 0, 10 ) . '…' . substr( $secret, -4 );
+	private function shape_row( array $row ): array {
+		$prefix = (string) ( $row['key_prefix'] ?? '' );
+		$suffix = (string) ( $row['key_suffix'] ?? '' );
+		return array(
+			'id'          => isset( $row['id'] ) ? (int) $row['id'] : 0,
+			'label'       => isset( $row['label'] ) ? (string) $row['label'] : '',
+			'site_id'     => isset( $row['site_id'] ) ? (string) $row['site_id'] : '',
+			'user_id'     => isset( $row['user_id'] ) ? (int) $row['user_id'] : 0,
+			'key_prefix'  => $prefix,
+			'key_suffix'  => $suffix,
+			'key_preview' => '' !== $prefix ? ( $prefix . '…' . $suffix ) : '',
+			'active'      => ! empty( $row['is_active'] ),
+			'created_at'  => isset( $row['created_at'] ) ? (string) $row['created_at'] : '',
+			'last_used'   => isset( $row['last_used'] ) ? (string) ( $row['last_used'] ?? '' ) : '',
+		);
 	}
 
 	/**
@@ -344,14 +370,29 @@ final class ApiKeysController extends WP_REST_Controller {
 			'title'      => 'wb-gamification-api-key',
 			'type'       => 'object',
 			'properties' => array(
+				'id'          => array(
+					'type'        => 'integer',
+					'description' => 'Stable row id used for revoke + delete.',
+					'readonly'    => true,
+				),
+				'key_prefix'  => array(
+					'type'        => 'string',
+					'description' => 'First 14 characters ("wbgam_" + 8 chars). Safe to display.',
+					'readonly'    => true,
+				),
+				'key_suffix'  => array(
+					'type'        => 'string',
+					'description' => 'Last 4 characters. Safe to display.',
+					'readonly'    => true,
+				),
 				'key_preview' => array(
 					'type'        => 'string',
-					'description' => 'Truncated key preview ("wbgam_AbCd…wXyZ").',
+					'description' => 'prefix + ellipsis + suffix, ready for tables.',
 					'readonly'    => true,
 				),
 				'secret'      => array(
 					'type'        => 'string',
-					'description' => 'Full key value — present ONLY in the create response.',
+					'description' => 'Full key value — present ONLY in the create response. Never returned by GET.',
 					'readonly'    => true,
 				),
 				'label'       => array( 'type' => 'string' ),
@@ -373,10 +414,6 @@ final class ApiKeysController extends WP_REST_Controller {
 					'type'     => 'string',
 					'format'   => 'date-time',
 					'readonly' => true,
-				),
-				'permissions' => array(
-					'type'    => 'array',
-					'items'   => array( 'type' => 'string' ),
 				),
 			),
 		);
