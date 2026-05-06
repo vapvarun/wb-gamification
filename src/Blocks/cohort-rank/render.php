@@ -77,6 +77,13 @@ if ( null === $wb_gam_standing ) {
 }
 
 $wb_gam_standings    = array_slice( (array) ( $wb_gam_standing['standings'] ?? array() ), 0, $wb_gam_limit );
+
+// Cohort standings are scored in the site's primary currency — resolve
+// its label so the per-row figure says "240 Coins" on a coins-default
+// site instead of always "240 pts".
+$wb_gam_pt_service   = new \WBGam\Services\PointTypeService();
+$wb_gam_pt_record    = $wb_gam_pt_service->get( $wb_gam_pt_service->default_slug() );
+$wb_gam_points_label = (string) ( $wb_gam_pt_record['label'] ?? __( 'pts', 'wb-gamification' ) );
 $wb_gam_current_rank = null;
 foreach ( $wb_gam_standing['standings'] ?? array() as $wb_gam_entry ) {
 	if ( (int) ( $wb_gam_entry['user_id'] ?? 0 ) === $wb_gam_user_id ) {
@@ -132,9 +139,10 @@ BlockHooks::before(
 					<span class="wb-gam-cohort-rank__points">
 						<?php
 						printf(
-							/* translators: %s: points earned this week */
-							esc_html__( '%s pts', 'wb-gamification' ),
-							esc_html( number_format_i18n( (int) ( $wb_gam_entry['week_pts'] ?? 0 ) ) )
+							/* translators: 1: amount earned, 2: currency label. */
+							esc_html__( '%1$s %2$s', 'wb-gamification' ),
+							esc_html( number_format_i18n( (int) ( $wb_gam_entry['week_pts'] ?? 0 ) ) ),
+							esc_html( $wb_gam_points_label )
 						);
 						?>
 					</span>

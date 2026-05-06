@@ -47,6 +47,17 @@ $wb_gam_user_id     = get_current_user_id();
 $wb_gam_point_type  = (string) ( $wb_gam_attrs['pointType'] ?? '' );
 $wb_gam_balance_pts = $wb_gam_user_id ? (int) PointsEngine::get_total( $wb_gam_user_id, $wb_gam_point_type ) : 0;
 
+// Pre-fetch the currency label map so each reward can render its own
+// point_type label without an N+1 query inside the loop. Each reward
+// item carries a `point_type` field — the cost suffix matches that
+// type so a "Coins" reward says "100 Coins" not "100 pts".
+$wb_gam_pt_service = new \WBGam\Services\PointTypeService();
+$wb_gam_label_map  = array();
+foreach ( $wb_gam_pt_service->list() as $wb_gam_pt ) {
+	$wb_gam_label_map[ (string) $wb_gam_pt['slug'] ] = (string) $wb_gam_pt['label'];
+}
+$wb_gam_default_label = $wb_gam_label_map[ $wb_gam_pt_service->default_slug() ] ?? __( 'pts', 'wb-gamification' );
+
 WB_Gam_Block_CSS::add( $wb_gam_unique, $wb_gam_attrs );
 
 $wb_gam_visibility = WB_Gam_Block_CSS::get_visibility_classes( $wb_gam_attrs );
@@ -158,6 +169,8 @@ BlockHooks::before(
 				$wb_gam_out_of_stock   = ( null !== $wb_gam_stock && (int) $wb_gam_stock <= 0 );
 				$wb_gam_insufficient   = $wb_gam_user_id && $wb_gam_balance_pts < $wb_gam_cost;
 				$wb_gam_missing_points = max( 0, $wb_gam_cost - $wb_gam_balance_pts );
+				$wb_gam_item_type      = (string) ( $wb_gam_item['point_type'] ?? $wb_gam_pt_service->default_slug() );
+				$wb_gam_item_label     = $wb_gam_label_map[ $wb_gam_item_type ] ?? $wb_gam_default_label;
 				$wb_gam_card_context   = wp_json_encode(
 					array(
 						'itemId'         => (int) ( $wb_gam_item['id'] ?? 0 ),
@@ -185,7 +198,7 @@ BlockHooks::before(
 					<div class="wb-gam-redemption__meta">
 						<span class="wb-gam-redemption__cost">
 							<?php echo esc_html( number_format_i18n( $wb_gam_cost ) ); ?>
-							<small class="wb-gam-redemption__cost-unit"><?php esc_html_e( 'pts', 'wb-gamification' ); ?></small>
+							<small class="wb-gam-redemption__cost-unit"><?php echo esc_html( $wb_gam_item_label ); ?></small>
 						</span>
 						<?php if ( $wb_gam_stock_on && null !== $wb_gam_stock ) : ?>
 							<span class="wb-gam-redemption__stock<?php echo $wb_gam_out_of_stock ? ' is-out' : ''; ?>">
@@ -214,9 +227,10 @@ BlockHooks::before(
 							<button type="button" class="wb-gam-redemption__btn" disabled>
 								<?php
 								printf(
-									/* translators: %s: formatted points still needed to afford this reward */
-									esc_html__( 'Need %s more pts', 'wb-gamification' ),
-									esc_html( number_format_i18n( $wb_gam_missing_points ) )
+									/* translators: 1: amount needed, 2: currency label. */
+									esc_html__( 'Need %1$s more %2$s', 'wb-gamification' ),
+									esc_html( number_format_i18n( $wb_gam_missing_points ) ),
+									esc_html( $wb_gam_item_label )
 								);
 								?>
 							</button>
@@ -228,8 +242,8 @@ BlockHooks::before(
 								data-wp-bind--disabled="context.loading"
 								data-wp-class--is-loading="context.loading"
 								aria-label="<?php
-									/* translators: 1: reward name, 2: cost in points */
-									echo esc_attr( sprintf( __( 'Redeem %1$s for %2$d points', 'wb-gamification' ), (string) ( $wb_gam_item['title'] ?? '' ), $wb_gam_cost ) );
+									/* translators: 1: reward name, 2: cost amount, 3: currency label. */
+									echo esc_attr( sprintf( __( 'Redeem %1$s for %2$d %3$s', 'wb-gamification' ), (string) ( $wb_gam_item['title'] ?? '' ), $wb_gam_cost, $wb_gam_item_label ) );
 								?>">
 								<span data-wp-bind--hidden="context.redeemed"><?php echo esc_html( $wb_gam_btn_lbl ); ?></span>
 								<span data-wp-bind--hidden="!context.redeemed" hidden><?php esc_html_e( 'Redeemed', 'wb-gamification' ); ?></span>
@@ -244,9 +258,10 @@ BlockHooks::before(
 								<p class="wb-gam-redemption__confirm-message">
 									<?php
 									printf(
-										/* translators: %s: formatted point cost of this reward */
-										esc_html__( 'Redeem this reward? %s pts will be deducted.', 'wb-gamification' ),
-										esc_html( number_format_i18n( $wb_gam_cost ) )
+										/* translators: 1: cost amount, 2: currency label. */
+										esc_html__( 'Redeem this reward? %1$s %2$s will be deducted.', 'wb-gamification' ),
+										esc_html( number_format_i18n( $wb_gam_cost ) ),
+										esc_html( $wb_gam_item_label )
 									);
 									?>
 								</p>

@@ -14,6 +14,7 @@
  * @var string   $unsub_url             Already-escaped one-tap unsubscribe URL.
  * @var int      $points_this_week      Points earned in the last 7 days.
  * @var int      $total_points          Lifetime point total.
+ * @var string   $points_label          Currency label resolved from the site's default point type (e.g. "Points", "Coins").
  * @var bool     $is_best               True if this week beats the personal best.
  * @var int      $best_week             Previous personal-best weekly total.
  * @var array    $badges_this_week      [{name, description}, ...] earned this week.
@@ -27,10 +28,12 @@
 defined( 'ABSPATH' ) || exit;
 
 $points_line = sprintf(
-	/* translators: 1 = points earned, 2 = total points */
-	__( 'You earned <strong>%1$s points</strong> this week (total: %2$s pts)', 'wb-gamification' ),
+	/* translators: 1: amount this week, 2: lower-cased currency label, 3: total amount, 4: lower-cased currency label */
+	__( 'You earned <strong>%1$s %2$s</strong> this week (total: %3$s %4$s)', 'wb-gamification' ),
 	number_format_i18n( $points_this_week ),
-	number_format_i18n( $total_points )
+	esc_html( strtolower( $points_label ) ),
+	number_format_i18n( $total_points ),
+	esc_html( strtolower( $points_label ) )
 );
 
 if ( $is_best ) {
@@ -82,9 +85,15 @@ hr { border:none; border-top:1px solid #f3f4f6; margin:1rem 0; }
 			?>
 		</p>
 
-		<!-- Points -->
+		<!-- Points (or whatever the site's default currency is). -->
 		<div class="stat">
-			<p class="stat-label">⭐ <?php esc_html_e( 'Points this week', 'wb-gamification' ); ?></p>
+			<p class="stat-label">⭐ <?php
+				printf(
+					/* translators: %s: currency label (e.g. "Points", "Coins"). */
+					esc_html__( '%s this week', 'wb-gamification' ),
+					esc_html( $points_label )
+				);
+			?></p>
 			<p class="stat-value"><?php echo wp_kses_post( $points_line ); ?></p>
 		</div>
 

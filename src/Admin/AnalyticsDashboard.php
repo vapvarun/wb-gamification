@@ -232,11 +232,18 @@ final class AnalyticsDashboard {
 					<?php if ( empty( $stats['top_earners'] ) ) : ?>
 						<p class="description"><?php esc_html_e( 'No data yet.', 'wb-gamification' ); ?></p>
 					<?php else : ?>
+						<?php
+						// Resolve the default currency label so the analytics
+						// header reads e.g. "Coins" on coins-default sites.
+						$pt_service          = new \WBGam\Services\PointTypeService();
+						$pt_record_analytics = $pt_service->get( $pt_service->default_slug() );
+						$points_label_admin  = (string) ( $pt_record_analytics['label'] ?? __( 'Points', 'wb-gamification' ) );
+						?>
 						<table class="widefat striped">
 							<thead>
 								<tr>
 									<th><?php esc_html_e( 'Member', 'wb-gamification' ); ?></th>
-									<th><?php esc_html_e( 'Points', 'wb-gamification' ); ?></th>
+									<th><?php echo esc_html( $points_label_admin ); ?></th>
 								</tr>
 							</thead>
 							<tbody>

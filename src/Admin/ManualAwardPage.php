@@ -178,7 +178,7 @@ final class ManualAwardPage {
 							</tr>
 							<tr>
 								<th scope="row">
-									<label for="wb_gam_award_points"><?php esc_html_e( 'Points', 'wb-gamification' ); ?></label>
+									<label for="wb_gam_award_points"><?php esc_html_e( 'Amount', 'wb-gamification' ); ?></label>
 								</th>
 								<td>
 									<input
@@ -276,14 +276,28 @@ final class ManualAwardPage {
 						<thead>
 							<tr>
 								<th><?php esc_html_e( 'User', 'wb-gamification' ); ?></th>
-								<th><?php esc_html_e( 'Points', 'wb-gamification' ); ?></th>
+								<th><?php esc_html_e( 'Amount', 'wb-gamification' ); ?></th>
+								<th><?php esc_html_e( 'Currency', 'wb-gamification' ); ?></th>
 								<th><?php esc_html_e( 'Note', 'wb-gamification' ); ?></th>
 								<th><?php esc_html_e( 'Date', 'wb-gamification' ); ?></th>
 							</tr>
 						</thead>
 						<tbody>
+							<?php
+							// Pre-fetch the currency label map so each row can show
+							// its own type label without an N+1 lookup.
+							$pt_service = new \WBGam\Services\PointTypeService();
+							$pt_label_map = array();
+							foreach ( $pt_service->list() as $pt ) {
+								$pt_label_map[ (string) $pt['slug'] ] = (string) $pt['label'];
+							}
+							?>
 							<?php foreach ( $recent as $row ) : ?>
-								<?php $user = get_userdata( (int) $row['user_id'] ); ?>
+								<?php
+								$user      = get_userdata( (int) $row['user_id'] );
+								$row_slug  = (string) ( $row['point_type'] ?? $pt_service->default_slug() );
+								$row_label = $pt_label_map[ $row_slug ] ?? $row_slug;
+								?>
 							<tr>
 								<td><?php echo esc_html( $user ? $user->display_name : '#' . $row['user_id'] ); ?></td>
 								<td>
@@ -291,6 +305,7 @@ final class ManualAwardPage {
 										<?php echo esc_html( ( (int) $row['points'] >= 0 ? '+' : '' ) . number_format_i18n( (int) $row['points'] ) ); ?>
 									</span>
 								</td>
+								<td><?php echo esc_html( $row_label ); ?></td>
 								<td><?php echo esc_html( (string) ( $row['note'] ?? '' ) ); ?></td>
 								<td><?php echo esc_html( date_i18n( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), strtotime( $row['created_at'] ) ) ); ?></td>
 							</tr>
@@ -351,7 +366,7 @@ final class ManualAwardPage {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- admin list view, infrequent, no caching needed.
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT user_id, points, created_at
+				"SELECT user_id, points, point_type, created_at
 				   FROM {$wpdb->prefix}wb_gam_points
 				  WHERE action_id IN ('manual_admin', 'manual_admin_deduct')
 				  ORDER BY created_at DESC

@@ -248,6 +248,12 @@ final class WeeklyEmailEngine {
 		// Total points.
 		$total_points = PointsEngine::get_total( $user_id );
 
+		// Resolve the configured currency label so the email reads
+		// "You earned 240 Coins this week" on coins-default sites.
+		$pt_service   = new \WBGam\Services\PointTypeService();
+		$pt_record    = $pt_service->get( $pt_service->default_slug() );
+		$points_label = (string) ( $pt_record['label'] ?? __( 'Points', 'wb-gamification' ) );
+
 		return compact(
 			'points_this_week',
 			'is_best',
@@ -256,7 +262,8 @@ final class WeeklyEmailEngine {
 			'challenges_this_week',
 			'streak',
 			'rank',
-			'total_points'
+			'total_points',
+			'points_label'
 		);
 	}
 

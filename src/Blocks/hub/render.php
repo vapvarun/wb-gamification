@@ -292,14 +292,7 @@ BlockHooks::before( 'hub', $wb_gam_attrs );
 				<span class="gam-stat__icon"><i class="icon-<?php echo esc_attr( $wb_gam_currency['icon'] ); ?>"></i></span>
 				<span class="gam-stat__value"><?php echo esc_html( number_format_i18n( $wb_gam_currency['balance'] ) ); ?></span>
 				<span class="gam-stat__label">
-					<?php
-					if ( $wb_gam_currency['is_default'] && 1 === count( $wb_gam_currencies ) ) {
-						/* translators: shown on single-currency sites — keeps the legacy "Total Points" copy. */
-						esc_html_e( 'Total Points', 'wb-gamification' );
-					} else {
-						echo esc_html( $wb_gam_currency['label'] );
-					}
-					?>
+					<?php echo esc_html( $wb_gam_currency['label'] ); ?>
 				</span>
 				<?php if ( ! empty( $wb_gam_currency['convert_rules'] ) ) : ?>
 					<button

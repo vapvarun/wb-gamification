@@ -2236,8 +2236,8 @@
     ]
   },
   "generated": {
-    "at": "2026-05-06T06:00:00Z",
-    "from": "wp-plugin-onboard skill (refresh — multi-currency, conversions, hub-convert UI, CLI --type, code-flow audit)",
+    "at": "2026-05-06T07:30:00Z",
+    "from": "wp-plugin-onboard skill (refresh — hardcoded label sweep + transactional integrity + hook prefix unification + multi-currency leaks)",
     "branch": "main",
     "schema_version": "v2.2",
     "scan_scope": "gruntfile",

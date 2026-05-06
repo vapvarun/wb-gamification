@@ -353,6 +353,15 @@ final class RedemptionStorePage {
 							</tr>
 						</thead>
 						<tbody>
+						<?php
+						// Pre-fetch the currency label map so each row's cost
+						// suffix matches the reward's actual point_type.
+						$pt_service   = new \WBGam\Services\PointTypeService();
+						$pt_label_map = array();
+						foreach ( $pt_service->list() as $pt ) {
+							$pt_label_map[ (string) $pt['slug'] ] = (string) $pt['label'];
+						}
+						?>
 						<?php foreach ( $items as $item ) : ?>
 							<?php
 							$type_labels  = array(
@@ -376,7 +385,11 @@ final class RedemptionStorePage {
 										<br><small class="wbgam-text-muted"><?php echo esc_html( wp_trim_words( $item['description'], 12 ) ); ?></small>
 									<?php endif; ?>
 								</td>
-								<td><strong><?php echo esc_html( number_format_i18n( $item['points_cost'] ) ); ?></strong> <?php esc_html_e( 'pts', 'wb-gamification' ); ?></td>
+								<?php
+								$item_slug  = (string) ( $item['point_type'] ?? $pt_service->default_slug() );
+								$item_label = $pt_label_map[ $item_slug ] ?? $item_slug;
+								?>
+								<td><strong><?php echo esc_html( number_format_i18n( $item['points_cost'] ) ); ?></strong> <?php echo esc_html( $item_label ); ?></td>
 								<td><code><?php echo esc_html( $type_label ); ?></code></td>
 								<td><?php echo esc_html( $stock_label ); ?></td>
 								<td>

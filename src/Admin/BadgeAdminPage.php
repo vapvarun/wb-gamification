@@ -358,10 +358,10 @@ final class BadgeAdminPage {
 									</td>
 								</tr>
 								<tr id="wb-gam-field-points" <?php echo 'point_milestone' !== $condition['condition_type'] ? 'class="wb-gam-hidden"' : ''; ?>>
-									<th><label for="wb-gam-condition-points"><?php esc_html_e( 'Points Threshold', 'wb-gamification' ); ?></label></th>
+									<th><label for="wb-gam-condition-points"><?php esc_html_e( 'Balance Threshold', 'wb-gamification' ); ?></label></th>
 									<td>
 										<input type="number" name="condition[points]" id="wb-gam-condition-points" class="small-text wbgam-input" min="1" value="<?php echo esc_attr( $condition['points'] ?? 100 ); ?>">
-										<p class="description"><?php esc_html_e( 'The badge is awarded when the member\'s total points reach or exceed this value.', 'wb-gamification' ); ?></p>
+										<p class="description"><?php esc_html_e( 'The badge is awarded when the member\'s balance for the triggering currency reaches or exceeds this value. The currency is whichever point type the awarding action is configured to grant.', 'wb-gamification' ); ?></p>
 									</td>
 								</tr>
 								<tr id="wb-gam-field-action" <?php echo 'action_count' !== $condition['condition_type'] ? 'class="wb-gam-hidden"' : ''; ?>>
