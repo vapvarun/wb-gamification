@@ -11,6 +11,8 @@
 	"attributes": {
 		"uniqueId":          { "type": "string",  "default": "" },
 
+		"pointType":        { "type": "string",  "default": "" },
+
 		"limit":             { "type": "integer", "default": 0 },
 		"columns":           { "type": "integer", "default": 3 },
 		"showBalance":       { "type": "boolean", "default": true },

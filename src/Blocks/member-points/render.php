@@ -79,8 +79,9 @@ if ( ! $wb_gam_user ) {
 
 $wb_gam_show_level    = ! isset( $wb_gam_attrs['show_level'] ) || ! empty( $wb_gam_attrs['show_level'] );
 $wb_gam_show_progress = ! isset( $wb_gam_attrs['show_progress_bar'] ) || ! empty( $wb_gam_attrs['show_progress_bar'] );
+$wb_gam_point_type    = (string) ( $wb_gam_attrs['pointType'] ?? '' );
 
-$wb_gam_points       = (int) PointsEngine::get_total( $wb_gam_user_id );
+$wb_gam_points       = (int) PointsEngine::get_total( $wb_gam_user_id, $wb_gam_point_type );
 $wb_gam_level        = $wb_gam_show_level ? LevelEngine::get_level_for_user( $wb_gam_user_id ) : null;
 $wb_gam_next_level   = $wb_gam_show_level ? LevelEngine::get_next_level( $wb_gam_user_id ) : null;
 $wb_gam_progress_pct = $wb_gam_show_progress ? (int) LevelEngine::get_progress_percent( $wb_gam_user_id ) : 0;

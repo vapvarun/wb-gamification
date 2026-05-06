@@ -90,6 +90,23 @@ if ( 0 === $wb_gam_user_id ) {
 
 $wb_gam_nudge      = NudgeEngine::get_nudge( $wb_gam_user_id );
 $wb_gam_total_pts  = (int) PointsEngine::get_total( $wb_gam_user_id );
+
+// Multi-currency: aggregate balance + meta for every active point type.
+// Sites with only the primary type render exactly one tile (same as before).
+$wb_gam_pt_service = new \WBGam\Services\PointTypeService();
+$wb_gam_pt_catalog = $wb_gam_pt_service->list();
+$wb_gam_balances   = PointsEngine::get_totals_by_type( $wb_gam_user_id );
+$wb_gam_currencies = array();
+foreach ( $wb_gam_pt_catalog as $wb_gam_pt ) {
+	$wb_gam_slug         = (string) $wb_gam_pt['slug'];
+	$wb_gam_currencies[] = array(
+		'slug'    => $wb_gam_slug,
+		'label'   => (string) $wb_gam_pt['label'],
+		'icon'    => (string) ( $wb_gam_pt['icon'] ?? 'star' ),
+		'balance' => (int) ( $wb_gam_balances[ $wb_gam_slug ] ?? 0 ),
+		'is_default' => (int) $wb_gam_pt['is_default'] === 1,
+	);
+}
 $wb_gam_level      = LevelEngine::get_level_for_user( $wb_gam_user_id );
 $wb_gam_next_lvl   = LevelEngine::get_next_level( $wb_gam_user_id );
 $wb_gam_progress   = (int) LevelEngine::get_progress_percent( $wb_gam_user_id );
@@ -228,11 +245,22 @@ BlockHooks::before( 'hub', $wb_gam_attrs );
 	<?php endif; ?>
 
 	<div class="gam-stats">
-		<div class="gam-stat">
-			<span class="gam-stat__icon"><i class="icon-star"></i></span>
-			<span class="gam-stat__value"><?php echo esc_html( number_format_i18n( $wb_gam_total_pts ) ); ?></span>
-			<span class="gam-stat__label"><?php esc_html_e( 'Total Points', 'wb-gamification' ); ?></span>
-		</div>
+		<?php foreach ( $wb_gam_currencies as $wb_gam_currency ) : ?>
+			<div class="gam-stat gam-stat--currency" data-point-type="<?php echo esc_attr( $wb_gam_currency['slug'] ); ?>">
+				<span class="gam-stat__icon"><i class="icon-<?php echo esc_attr( $wb_gam_currency['icon'] ); ?>"></i></span>
+				<span class="gam-stat__value"><?php echo esc_html( number_format_i18n( $wb_gam_currency['balance'] ) ); ?></span>
+				<span class="gam-stat__label">
+					<?php
+					if ( $wb_gam_currency['is_default'] && 1 === count( $wb_gam_currencies ) ) {
+						/* translators: shown on single-currency sites — keeps the legacy "Total Points" copy. */
+						esc_html_e( 'Total Points', 'wb-gamification' );
+					} else {
+						echo esc_html( $wb_gam_currency['label'] );
+					}
+					?>
+				</span>
+			</div>
+		<?php endforeach; ?>
 
 		<div class="gam-stat">
 			<span class="gam-stat__icon"><i class="icon-trending-up"></i></span>

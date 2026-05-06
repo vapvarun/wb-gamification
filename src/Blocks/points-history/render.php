@@ -62,7 +62,8 @@ if ( $wb_gam_user_id <= 0 ) {
 $wb_gam_limit      = max( 1, min( 100, (int) ( $wb_gam_attrs['limit'] ?? 20 ) ) );
 $wb_gam_show_label = ! empty( $wb_gam_attrs['show_action_label'] );
 
-$wb_gam_rows    = PointsEngine::get_history( $wb_gam_user_id, $wb_gam_limit );
+$wb_gam_point_type = (string) ( $wb_gam_attrs['pointType'] ?? '' );
+$wb_gam_rows       = PointsEngine::get_history( $wb_gam_user_id, $wb_gam_limit, $wb_gam_point_type ?: null );
 $wb_gam_wrapper = get_block_wrapper_attributes(
 	array(
 		'class' => implode( ' ', $wb_gam_classes ),

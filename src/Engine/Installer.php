@@ -290,6 +290,7 @@ final class Installer {
 			title         VARCHAR(255)    NOT NULL,
 			description   TEXT,
 			points_cost   INT UNSIGNED    NOT NULL,
+			point_type    VARCHAR(60)     NOT NULL DEFAULT 'points',
 			reward_type   VARCHAR(50)     NOT NULL,
 			reward_config LONGTEXT,
 			stock         INT UNSIGNED    DEFAULT NULL,

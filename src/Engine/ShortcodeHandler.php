@@ -81,6 +81,7 @@ final class ShortcodeHandler {
 				'user_id'           => 0,
 				'show_level'        => true,
 				'show_progress_bar' => true,
+				'type'              => '',
 			),
 			(array) $atts,
 			'wb_gam_member_points'
@@ -89,6 +90,8 @@ final class ShortcodeHandler {
 		$atts['user_id']           = (int) $atts['user_id'];
 		$atts['show_level']        = filter_var( $atts['show_level'], FILTER_VALIDATE_BOOLEAN );
 		$atts['show_progress_bar'] = filter_var( $atts['show_progress_bar'], FILTER_VALIDATE_BOOLEAN );
+		$atts['pointType']         = sanitize_key( (string) $atts['type'] );
+		unset( $atts['type'] );
 
 		return self::block( 'member-points', $atts );
 	}
@@ -132,6 +135,7 @@ final class ShortcodeHandler {
 				'show_progress_bar' => true,
 				'show_next_level'   => true,
 				'show_icon'         => true,
+				'type'              => '',
 			),
 			(array) $atts,
 			'wb_gam_level_progress'
@@ -141,6 +145,8 @@ final class ShortcodeHandler {
 		$atts['show_progress_bar'] = filter_var( $atts['show_progress_bar'], FILTER_VALIDATE_BOOLEAN );
 		$atts['show_next_level']   = filter_var( $atts['show_next_level'], FILTER_VALIDATE_BOOLEAN );
 		$atts['show_icon']         = filter_var( $atts['show_icon'], FILTER_VALIDATE_BOOLEAN );
+		$atts['pointType']         = sanitize_key( (string) $atts['type'] );
+		unset( $atts['type'] );
 
 		return self::block( 'level-progress', $atts );
 	}
@@ -211,6 +217,7 @@ final class ShortcodeHandler {
 				'show_badges' => false,
 				'show_level'  => false,
 				'layout'      => 'podium',
+				'type'        => '',
 			),
 			(array) $atts,
 			'wb_gam_top_members'
@@ -221,6 +228,8 @@ final class ShortcodeHandler {
 		$atts['show_level']  = filter_var( $atts['show_level'], FILTER_VALIDATE_BOOLEAN );
 		$atts['layout']      = in_array( $atts['layout'], array( 'podium', 'list' ), true )
 			? $atts['layout'] : 'podium';
+		$atts['pointType']   = sanitize_key( (string) $atts['type'] );
+		unset( $atts['type'] );
 
 		return self::block( 'top-members', $atts );
 	}
@@ -294,6 +303,7 @@ final class ShortcodeHandler {
 				'user_id'           => 0,
 				'limit'             => 20,
 				'show_action_label' => true,
+				'type'              => '',
 			),
 			(array) $atts,
 			'wb_gam_points_history'
@@ -302,6 +312,8 @@ final class ShortcodeHandler {
 		$atts['user_id']           = (int) $atts['user_id'];
 		$atts['limit']             = max( 1, min( 100, (int) $atts['limit'] ) );
 		$atts['show_action_label'] = filter_var( $atts['show_action_label'], FILTER_VALIDATE_BOOLEAN );
+		$atts['pointType']         = sanitize_key( (string) $atts['type'] );
+		unset( $atts['type'] );
 
 		return self::block( 'points-history', $atts );
 	}
@@ -350,13 +362,15 @@ final class ShortcodeHandler {
 			array(
 				'user_id' => 0,
 				'limit'   => 5,
+				'type'    => '',
 			),
 			(array) $atts,
 			'wb_gam_cohort_rank'
 		);
 		return self::block( 'cohort-rank', array(
-			'user_id' => (int) $atts['user_id'],
-			'limit'   => (int) $atts['limit'],
+			'user_id'   => (int) $atts['user_id'],
+			'limit'     => (int) $atts['limit'],
+			'pointType' => sanitize_key( (string) $atts['type'] ),
 		) );
 	}
 
@@ -372,6 +386,7 @@ final class ShortcodeHandler {
 				'limit'        => 0,
 				'columns'      => 3,
 				'show_balance' => 'true',
+				'type'         => '',
 			),
 			(array) $atts,
 			'wb_gam_redemption_store'
@@ -380,6 +395,7 @@ final class ShortcodeHandler {
 			'limit'        => (int) $atts['limit'],
 			'columns'      => max( 1, min( 4, (int) $atts['columns'] ) ),
 			'show_balance' => 'false' !== $atts['show_balance'],
+			'pointType'    => sanitize_key( (string) $atts['type'] ),
 		) );
 	}
 
@@ -399,6 +415,7 @@ final class ShortcodeHandler {
 				'scope_type'   => '',
 				'scope_id'     => 0,
 				'show_avatars' => true,
+				'type'         => '',
 			),
 			$atts,
 			'wb_gam_leaderboard'
@@ -407,6 +424,10 @@ final class ShortcodeHandler {
 		$atts['limit']        = max( 1, min( 100, (int) $atts['limit'] ) );
 		$atts['scope_id']     = (int) $atts['scope_id'];
 		$atts['show_avatars'] = filter_var( $atts['show_avatars'], FILTER_VALIDATE_BOOLEAN );
+
+		// Forward `type=""` shortcode arg to block's `pointType` attribute.
+		$atts['pointType'] = sanitize_key( (string) $atts['type'] );
+		unset( $atts['type'] );
 
 		return $atts;
 	}

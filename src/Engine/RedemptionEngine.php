@@ -58,7 +58,7 @@ final class RedemptionEngine {
 		global $wpdb;
 
 		return $wpdb->get_results(
-			"SELECT id, title, description, points_cost, reward_type, reward_config, stock, is_active
+			"SELECT id, title, description, points_cost, point_type, reward_type, reward_config, stock, is_active
 			   FROM {$wpdb->prefix}wb_gam_redemption_items
 			  WHERE is_active = 1
 			  ORDER BY points_cost ASC",
@@ -77,7 +77,7 @@ final class RedemptionEngine {
 
 		$row = $wpdb->get_row(
 			$wpdb->prepare(
-				"SELECT id, title, description, points_cost, reward_type, reward_config, stock, is_active
+				"SELECT id, title, description, points_cost, point_type, reward_type, reward_config, stock, is_active
 				   FROM {$wpdb->prefix}wb_gam_redemption_items WHERE id = %d",
 				$item_id
 			),
@@ -109,6 +109,7 @@ final class RedemptionEngine {
 		}
 
 		$cost = (int) $item['points_cost'];
+		$type = ( new \WBGam\Services\PointTypeService() )->resolve( (string) ( $item['point_type'] ?? '' ) );
 
 		// Check stock (quick pre-check before transaction).
 		if ( null !== $item['stock'] && (int) $item['stock'] <= 0 ) {
@@ -123,11 +124,12 @@ final class RedemptionEngine {
 		// ── Atomic balance check + debit (prevents TOCTOU race condition) ────
 		$wpdb->query( 'START TRANSACTION' );
 
-		// Lock the user's point rows to prevent concurrent redemptions.
+		// Lock the user's point rows for this currency to prevent concurrent redemptions.
 		$balance = (int) $wpdb->get_var(
 			$wpdb->prepare(
-				"SELECT COALESCE(SUM(points), 0) FROM {$wpdb->prefix}wb_gam_points WHERE user_id = %d FOR UPDATE",
-				$user_id
+				"SELECT COALESCE(SUM(points), 0) FROM {$wpdb->prefix}wb_gam_points WHERE user_id = %d AND point_type = %s FOR UPDATE",
+				$user_id,
+				$type
 			)
 		);
 
@@ -154,10 +156,11 @@ final class RedemptionEngine {
 				'metadata'  => array(
 					'item_id'     => $item_id,
 					'points_cost' => -$cost,
+					'point_type'  => $type,
 				),
 			)
 		);
-		PointsEngine::debit( $user_id, $cost, 'redemption', $event->event_id );
+		PointsEngine::debit( $user_id, $cost, 'redemption', $event->event_id, $type );
 
 		// Atomic stock decrement (inside the transaction).
 		if ( null !== $item['stock'] ) {

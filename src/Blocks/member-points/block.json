@@ -11,6 +11,8 @@
 	"attributes": {
 		"uniqueId":         { "type": "string",  "default": "" },
 
+		"pointType":        { "type": "string",  "default": "" },
+
 		"user_id":          { "type": "integer", "default": 0 },
 		"show_level":       { "type": "boolean", "default": true },
 		"show_progress_bar": { "type": "boolean", "default": true },

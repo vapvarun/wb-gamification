@@ -740,6 +740,10 @@ final class SettingsPage {
 							<span class="dashicons dashicons-star-filled"></span>
 							<?php esc_html_e( 'Configure point values', 'wb-gamification' ); ?>
 						</a>
+						<a href="<?php echo esc_url( admin_url( 'admin.php?page=wb-gam-point-types' ) ); ?>" class="wbgam-quick-nav__item">
+							<span class="dashicons dashicons-tag"></span>
+							<?php esc_html_e( 'Add a currency (XP, Coins…)', 'wb-gamification' ); ?>
+						</a>
 						<a href="<?php echo esc_url( admin_url( 'admin.php?page=wb-gam-challenges' ) ); ?>" class="wbgam-quick-nav__item">
 							<span class="dashicons dashicons-flag"></span>
 							<?php esc_html_e( 'Create a challenge', 'wb-gamification' ); ?>

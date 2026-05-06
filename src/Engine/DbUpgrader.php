@@ -72,6 +72,33 @@ final class DbUpgrader {
 	 */
 	private static function ensure_feature_migrations(): void {
 		self::ensure_point_types_schema();
+		self::ensure_redemption_point_type_column();
+	}
+
+	/**
+	 * Add `point_type` column to `wb_gam_redemption_items` so each reward can
+	 * be priced in a specific currency. Idempotent — guards on column existence.
+	 *
+	 * @since 1.0.0
+	 */
+	private static function ensure_redemption_point_type_column(): void {
+		$flag_key = 'wb_gam_feature_redemption_point_type_v1';
+		if ( get_option( $flag_key ) ) {
+			return;
+		}
+
+		global $wpdb;
+		$table = $wpdb->prefix . 'wb_gam_redemption_items';
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- bootstrapped table name.
+		$exists = $wpdb->get_var( $wpdb->prepare( "SHOW COLUMNS FROM $table LIKE %s", 'point_type' ) );
+
+		if ( ! $exists ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- bootstrap-time DDL.
+			$wpdb->query( "ALTER TABLE $table ADD COLUMN point_type VARCHAR(60) NOT NULL DEFAULT 'points' AFTER points_cost" );
+		}
+
+		update_option( $flag_key, '1' );
 	}
 
 	/**

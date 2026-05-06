@@ -112,19 +112,25 @@ final class LeaderboardEngine {
 		string $period = 'all',
 		int $limit = 10,
 		string $scope_type = '',
-		int $scope_id = 0
+		int $scope_id = 0,
+		string $point_type = ''
 	): array {
 		global $wpdb;
 
 		$limit = max( 1, min( 100, $limit ) );
 
+		// Resolve the requested point type — empty string = primary, unknown
+		// slug also falls back to primary via PointTypeService.
+		$resolved_type = ( new \WBGam\Services\PointTypeService() )->resolve( $point_type ?: null );
+
 		// ── Object cache check ────────────────────────────────────────────────
 		$cache_key = sprintf(
-			'wb_gam_lb_%s_%d_%s_%d',
+			'wb_gam_lb_%s_%d_%s_%d_%s',
 			$period,
 			$limit,
 			$scope_type ? $scope_type : 'global',
-			$scope_id
+			$scope_id,
+			$resolved_type
 		);
 		$cached    = wp_cache_get( $cache_key, 'wb_gamification' );
 		if ( false !== $cached ) {
@@ -132,7 +138,10 @@ final class LeaderboardEngine {
 		}
 
 		// ── Try snapshot table for global scopes ──────────────────────────────
-		if ( '' === $scope_type && 0 === $scope_id ) {
+		// Snapshot only contains primary type rankings — fall through to live
+		// query when a non-primary type is requested.
+		$primary_type = ( new \WBGam\Services\PointTypeService() )->default_slug();
+		if ( '' === $scope_type && 0 === $scope_id && $resolved_type === $primary_type ) {
 			$snapshot_result = self::read_from_snapshot( $period, $limit );
 			if ( null !== $snapshot_result ) {
 				wp_cache_set( $cache_key, $snapshot_result, 'wb_gamification', 120 );
@@ -148,6 +157,11 @@ final class LeaderboardEngine {
 		// Build WHERE clause.
 		$where_parts  = array();
 		$where_values = array();
+
+		// Always scope by point_type so per-currency leaderboards work even
+		// without the cache table being keyed by type yet (Phase 3b).
+		$where_parts[]  = 'p.point_type = %s';
+		$where_values[] = $resolved_type;
 
 		if ( $period_start ) {
 			$where_parts[]  = 'p.created_at >= %s';

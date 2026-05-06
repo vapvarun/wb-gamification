@@ -109,6 +109,12 @@ class MembersController extends WP_REST_Controller {
 								'maximum'           => 100,
 								'sanitize_callback' => 'absint',
 							),
+							'type'     => array(
+								'type'              => 'string',
+								'default'           => '',
+								'description'       => 'Optional point-type slug to scope total + history. Empty = primary type. Unknown slug falls back to primary.',
+								'sanitize_callback' => 'sanitize_key',
+							),
 						)
 					),
 				),
@@ -333,30 +339,62 @@ class MembersController extends WP_REST_Controller {
 
 		global $wpdb;
 
-		$total = PointsEngine::get_total( $user_id );
+		// Optional ?type= query filter — scopes total + history to a specific currency.
+		$type_input = (string) $request->get_param( 'type' );
+		$pt_service = new \WBGam\Services\PointTypeService();
+		$type_scope = '' !== $type_input ? $pt_service->resolve( $type_input ) : null;
+
+		// `total` continues to mean "primary type total" for back-compat.
+		// `by_type` is the multi-currency breakdown (additive).
+		$total      = PointsEngine::get_total( $user_id, null === $type_scope ? null : $type_scope );
+		$by_type    = PointsEngine::get_totals_by_type( $user_id );
+		$primary    = $pt_service->default_slug();
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- Paginated history; user-specific data not suitable for generic cache.
-		$rows = $wpdb->get_results(
-			$wpdb->prepare(
-				"SELECT id, event_id, action_id, points, object_id, created_at
-				   FROM {$wpdb->prefix}wb_gam_points
-				  WHERE user_id = %d
-				  ORDER BY created_at DESC
-				  LIMIT %d OFFSET %d",
-				$user_id,
-				$per_page,
-				$offset
-			),
-			ARRAY_A
-		);
+		$rows = null !== $type_scope
+			? $wpdb->get_results(
+				$wpdb->prepare(
+					"SELECT id, event_id, action_id, points, point_type, object_id, created_at
+					   FROM {$wpdb->prefix}wb_gam_points
+					  WHERE user_id = %d AND point_type = %s
+					  ORDER BY created_at DESC
+					  LIMIT %d OFFSET %d",
+					$user_id,
+					$type_scope,
+					$per_page,
+					$offset
+				),
+				ARRAY_A
+			)
+			: $wpdb->get_results(
+				$wpdb->prepare(
+					"SELECT id, event_id, action_id, points, point_type, object_id, created_at
+					   FROM {$wpdb->prefix}wb_gam_points
+					  WHERE user_id = %d
+					  ORDER BY created_at DESC
+					  LIMIT %d OFFSET %d",
+					$user_id,
+					$per_page,
+					$offset
+				),
+				ARRAY_A
+			);
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- Row count for pagination; user-specific, not cacheable generically.
-		$total_rows = (int) $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT COUNT(*) FROM {$wpdb->prefix}wb_gam_points WHERE user_id = %d",
-				$user_id
+		$total_rows = null !== $type_scope
+			? (int) $wpdb->get_var(
+				$wpdb->prepare(
+					"SELECT COUNT(*) FROM {$wpdb->prefix}wb_gam_points WHERE user_id = %d AND point_type = %s",
+					$user_id,
+					$type_scope
+				)
 			)
-		);
+			: (int) $wpdb->get_var(
+				$wpdb->prepare(
+					"SELECT COUNT(*) FROM {$wpdb->prefix}wb_gam_points WHERE user_id = %d",
+					$user_id
+				)
+			);
 
 		$history = array_map(
 			static function ( array $row ): array {
@@ -365,6 +403,7 @@ class MembersController extends WP_REST_Controller {
 					'event_id'   => $row['event_id'],
 					'action_id'  => $row['action_id'],
 					'points'     => (int) $row['points'],
+					'point_type' => (string) ( $row['point_type'] ?? '' ),
 					'object_id'  => $row['object_id'] ? (int) $row['object_id'] : null,
 					'created_at' => $row['created_at'],
 				);
@@ -376,6 +415,8 @@ class MembersController extends WP_REST_Controller {
 			array(
 				'total'   => $total,
 				'history' => $history,
+				'by_type' => $by_type,
+				'primary' => $primary,
 			)
 		);
 

@@ -11,6 +11,8 @@
 	"attributes": {
 		"uniqueId":         { "type": "string",  "default": "" },
 
+		"pointType":        { "type": "string",  "default": "" },
+
 		"limit":            { "type": "integer", "default": 3 },
 		"period":           { "type": "string",  "default": "all_time" },
 		"show_badges":      { "type": "boolean", "default": true },

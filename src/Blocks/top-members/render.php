@@ -48,7 +48,8 @@ if ( ! empty( $wb_gam_attrs['cardBorderColor'] ) ) {
 
 wp_enqueue_style( 'wb-gam-tokens' );
 
-$wb_gam_rows = LeaderboardEngine::get_leaderboard( $wb_gam_period, $wb_gam_limit );
+$wb_gam_point_type = (string) ( $wb_gam_attrs['pointType'] ?? '' );
+$wb_gam_rows       = LeaderboardEngine::get_leaderboard( $wb_gam_period, $wb_gam_limit, '', 0, $wb_gam_point_type );
 
 $wb_gam_classes = array_filter(
 	array(

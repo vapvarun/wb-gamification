@@ -57,26 +57,30 @@ final class PointsEngine {
 	 * @return bool             True if the award is allowed to proceed.
 	 */
 	public static function passes_rate_limits( int $user_id, string $action_id, array $action ): bool {
+		// Resolve the currency this action awards — rate-limit caps scope per-type so
+		// e.g. a daily 3× cap on points doesn't block earning XP.
+		$type = self::resolve_type( isset( $action['point_type'] ) ? (string) $action['point_type'] : null );
+
 		// Cooldown check.
 		$cooldown = (int) ( $action['cooldown'] ?? 0 );
-		if ( $cooldown > 0 && self::is_on_cooldown( $user_id, $action_id, $cooldown ) ) {
+		if ( $cooldown > 0 && self::is_on_cooldown( $user_id, $action_id, $cooldown, $type ) ) {
 			return false;
 		}
 
 		// Repeatable check.
-		if ( ! ( $action['repeatable'] ?? true ) && self::get_action_count( $user_id, $action_id ) > 0 ) {
+		if ( ! ( $action['repeatable'] ?? true ) && self::get_action_count( $user_id, $action_id, $type ) > 0 ) {
 			return false;
 		}
 
 		// Daily cap check.
 		$daily_cap = (int) ( $action['daily_cap'] ?? 0 );
-		if ( $daily_cap > 0 && self::get_today_count( $user_id, $action_id ) >= $daily_cap ) {
+		if ( $daily_cap > 0 && self::get_today_count( $user_id, $action_id, $type ) >= $daily_cap ) {
 			return false;
 		}
 
 		// Weekly cap check.
 		$weekly_cap = (int) ( $action['weekly_cap'] ?? 0 );
-		if ( $weekly_cap > 0 && self::get_week_count( $user_id, $action_id ) >= $weekly_cap ) {
+		if ( $weekly_cap > 0 && self::get_week_count( $user_id, $action_id, $type ) >= $weekly_cap ) {
 			return false;
 		}
 
@@ -325,12 +329,28 @@ final class PointsEngine {
 	/**
 	 * Get how many times a user has performed a specific action.
 	 *
-	 * @param int    $user_id   User ID to check.
-	 * @param string $action_id Action ID to count.
+	 * Pass `$type = null` (default) for all-type count; pass a slug to scope
+	 * to one currency. Per-type scoping is what makes the non-repeatable
+	 * check work correctly under multi-currency.
+	 *
+	 * @param int         $user_id   User ID to check.
+	 * @param string      $action_id Action ID to count.
+	 * @param string|null $type      Optional point-type filter. Null = all types.
 	 * @return int Number of times the action has been performed.
 	 */
-	public static function get_action_count( int $user_id, string $action_id ): int {
+	public static function get_action_count( int $user_id, string $action_id, ?string $type = null ): int {
 		global $wpdb;
+		if ( null !== $type && '' !== $type ) {
+			return (int) $wpdb->get_var(
+				$wpdb->prepare(
+					"SELECT COUNT(*) FROM {$wpdb->prefix}wb_gam_points
+					 WHERE user_id = %d AND action_id = %s AND point_type = %s",
+					$user_id,
+					$action_id,
+					$type
+				)
+			);
+		}
 		return (int) $wpdb->get_var(
 			$wpdb->prepare(
 				"SELECT COUNT(*) FROM {$wpdb->prefix}wb_gam_points WHERE user_id = %d AND action_id = %s",
@@ -396,21 +416,26 @@ final class PointsEngine {
 	/**
 	 * Check whether a user is within the cooldown window for an action.
 	 *
+	 * Scoped by point_type so two currencies with the same action don't
+	 * inherit each other's cooldown.
+	 *
 	 * @param int    $user_id          User to check.
 	 * @param string $action_id        Action to check.
 	 * @param int    $cooldown_seconds Cooldown duration in seconds.
+	 * @param string $type             Resolved point-type slug.
 	 * @return bool True if the user is still within the cooldown period.
 	 */
-	private static function is_on_cooldown( int $user_id, string $action_id, int $cooldown_seconds ): bool {
+	private static function is_on_cooldown( int $user_id, string $action_id, int $cooldown_seconds, string $type ): bool {
 		global $wpdb;
 
 		$last = $wpdb->get_var(
 			$wpdb->prepare(
 				"SELECT created_at FROM {$wpdb->prefix}wb_gam_points
-				WHERE user_id = %d AND action_id = %s
+				WHERE user_id = %d AND action_id = %s AND point_type = %s
 				ORDER BY created_at DESC LIMIT 1",
 				$user_id,
-				$action_id
+				$action_id,
+				$type
 			)
 		);
 
@@ -426,23 +451,27 @@ final class PointsEngine {
 	/**
 	 * Count how many times a user has performed an action today (site timezone).
 	 *
+	 * Scoped by point_type — daily caps don't cross currencies.
+	 *
 	 * @param int    $user_id   User to check.
 	 * @param string $action_id Action to count.
+	 * @param string $type      Resolved point-type slug.
 	 * @return int Number of times the action was performed today.
 	 */
-	private static function get_today_count( int $user_id, string $action_id ): int {
+	private static function get_today_count( int $user_id, string $action_id, string $type ): int {
 		global $wpdb;
-		// Use range comparison so MySQL can use the idx_user_action_created index.
+		// Use range comparison so MySQL can use the idx_user_type_created index.
 		// wp_date() returns times in the site timezone, matching current_time('mysql').
 		$day_start = wp_date( 'Y-m-d 00:00:00' );
 		$day_end   = wp_date( 'Y-m-d 00:00:00', strtotime( '+1 day' ) );
 		return (int) $wpdb->get_var(
 			$wpdb->prepare(
 				"SELECT COUNT(*) FROM {$wpdb->prefix}wb_gam_points
-				WHERE user_id = %d AND action_id = %s
+				WHERE user_id = %d AND action_id = %s AND point_type = %s
 				  AND created_at >= %s AND created_at < %s",
 				$user_id,
 				$action_id,
+				$type,
 				$day_start,
 				$day_end
 			)
@@ -452,21 +481,24 @@ final class PointsEngine {
 	/**
 	 * Count how many times a user has performed an action this ISO week.
 	 *
+	 * Scoped by point_type — weekly caps don't cross currencies.
+	 *
 	 * @param int    $user_id   User to check.
 	 * @param string $action_id Action to count.
+	 * @param string $type      Resolved point-type slug.
 	 * @return int Number of times the action was performed this week.
 	 */
-	private static function get_week_count( int $user_id, string $action_id ): int {
+	private static function get_week_count( int $user_id, string $action_id, string $type ): int {
 		global $wpdb;
 		// ISO week start: Monday 00:00:00 in site timezone.
-		// Range comparison allows index seek on idx_user_action_created.
 		$week_start = wp_date( 'Y-m-d 00:00:00', strtotime( 'monday this week' ) );
 		return (int) $wpdb->get_var(
 			$wpdb->prepare(
 				"SELECT COUNT(*) FROM {$wpdb->prefix}wb_gam_points
-				WHERE user_id = %d AND action_id = %s AND created_at >= %s",
+				WHERE user_id = %d AND action_id = %s AND point_type = %s AND created_at >= %s",
 				$user_id,
 				$action_id,
+				$type,
 				$week_start
 			)
 		);

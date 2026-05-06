@@ -44,7 +44,8 @@ if ( $wb_gam_limit > 0 ) {
 }
 
 $wb_gam_user_id     = get_current_user_id();
-$wb_gam_balance_pts = $wb_gam_user_id ? (int) PointsEngine::get_total( $wb_gam_user_id ) : 0;
+$wb_gam_point_type  = (string) ( $wb_gam_attrs['pointType'] ?? '' );
+$wb_gam_balance_pts = $wb_gam_user_id ? (int) PointsEngine::get_total( $wb_gam_user_id, $wb_gam_point_type ) : 0;
 
 WB_Gam_Block_CSS::add( $wb_gam_unique, $wb_gam_attrs );
 

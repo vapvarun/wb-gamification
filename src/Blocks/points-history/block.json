@@ -11,6 +11,8 @@
 	"attributes": {
 		"uniqueId":          { "type": "string",  "default": "" },
 
+		"pointType":        { "type": "string",  "default": "" },
+
 		"user_id":           { "type": "integer", "default": 0 },
 		"limit":             { "type": "integer", "default": 20 },
 		"show_action_label": { "type": "boolean", "default": true },

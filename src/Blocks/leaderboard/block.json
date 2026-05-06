@@ -11,6 +11,8 @@
 	"attributes": {
 		"uniqueId":         { "type": "string",  "default": "" },
 
+		"pointType":        { "type": "string",  "default": "" },
+
 		"period":           { "type": "string",  "default": "all" },
 		"limit":            { "type": "integer", "default": 10 },
 		"scope_type":       { "type": "string",  "default": "" },

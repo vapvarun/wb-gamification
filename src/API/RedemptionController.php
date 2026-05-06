@@ -190,18 +190,21 @@ class RedemptionController extends WP_REST_Controller {
 	public function create_item( $request ): WP_REST_Response|WP_Error {
 		global $wpdb;
 
+		$point_type = ( new \WBGam\Services\PointTypeService() )->resolve( (string) ( $request['point_type'] ?? '' ) );
+
 		$inserted = $wpdb->insert(
 			$wpdb->prefix . 'wb_gam_redemption_items',
 			array(
 				'title'         => sanitize_text_field( $request['title'] ),
 				'description'   => sanitize_textarea_field( $request['description'] ?? '' ),
 				'points_cost'   => absint( $request['points_cost'] ),
+				'point_type'    => $point_type,
 				'reward_type'   => $request['reward_type'],
 				'reward_config' => wp_json_encode( $request['reward_config'] ?? array() ),
 				'stock'         => isset( $request['stock'] ) ? absint( $request['stock'] ) : null,
 				'is_active'     => 1,
 			),
-			array( '%s', '%s', '%d', '%s', '%s', '%d', '%d' )
+			array( '%s', '%s', '%d', '%s', '%s', '%s', '%d', '%d' )
 		);
 
 		if ( ! $inserted ) {
@@ -233,6 +236,8 @@ class RedemptionController extends WP_REST_Controller {
 			$data['description'] = sanitize_textarea_field( $request['description'] ); }
 		if ( isset( $request['points_cost'] ) ) {
 			$data['points_cost'] = absint( $request['points_cost'] ); }
+		if ( isset( $request['point_type'] ) ) {
+			$data['point_type'] = ( new \WBGam\Services\PointTypeService() )->resolve( (string) $request['point_type'] ); }
 		if ( isset( $request['reward_type'] ) ) {
 			$data['reward_type'] = $request['reward_type']; }
 		if ( isset( $request['reward_config'] ) ) {
@@ -314,6 +319,7 @@ class RedemptionController extends WP_REST_Controller {
 			'title'         => $item['title'],
 			'description'   => $item['description'],
 			'points_cost'   => (int) $item['points_cost'],
+			'point_type'    => (string) ( $item['point_type'] ?? 'points' ),
 			'reward_type'   => $item['reward_type'],
 			'reward_config' => json_decode( $item['reward_config'] ?? '{}', true ) ?: array(),
 			'stock'         => null !== $item['stock'] ? (int) $item['stock'] : null,
@@ -391,6 +397,12 @@ class RedemptionController extends WP_REST_Controller {
 				'required' => $required,
 				'type'     => 'integer',
 				'minimum'  => 1,
+			),
+			'point_type'    => array(
+				'type'              => 'string',
+				'default'           => '',
+				'description'       => 'Optional point-type slug. Empty = primary type. Unknown slug falls back to primary.',
+				'sanitize_callback' => 'sanitize_key',
 			),
 			'reward_type'   => array(
 				'required' => $required,

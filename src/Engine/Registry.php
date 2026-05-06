@@ -97,9 +97,18 @@ final class Registry {
 			'weekly_cap'  => 0,
 			// null = derive from repeatable: true → async, false → sync.
 			'async'       => null,
+			// Empty string = primary point type (resolved at process() time).
+			'point_type'  => '',
 		);
 
 		$action = wp_parse_args( $args, $defaults );
+
+		// Validate point_type slug shape (we don't hit the DB here — resolution
+		// happens at award-time in PointTypeService::resolve(), which falls back
+		// to the primary type if the slug isn't registered).
+		if ( '' !== $action['point_type'] ) {
+			$action['point_type'] = (string) preg_replace( '/[^a-z0-9_-]/', '', strtolower( (string) $action['point_type'] ) );
+		}
 
 		if ( empty( $action['id'] ) || empty( $action['hook'] ) || ! is_callable( $action['user_callback'] ) ) {
 			_doing_it_wrong( __METHOD__, 'WB Gamification: action must have id, hook, and user_callback.', '0.1.0' );
@@ -138,6 +147,13 @@ final class Registry {
 				$metadata = isset( $action['metadata_callback'] ) && is_callable( $action['metadata_callback'] )
 					? (array) call_user_func_array( $action['metadata_callback'], $params )
 					: array();
+
+				// Stamp the action's declared point_type into the event metadata
+				// so PointsEngine::insert_point_row() and Engine::persist_event()
+				// route the row to the correct currency. Empty = primary type.
+				if ( ! empty( $action['point_type'] ) && ! isset( $metadata['point_type'] ) ) {
+					$metadata['point_type'] = (string) $action['point_type'];
+				}
 
 				$event = new Event(
 					array(
