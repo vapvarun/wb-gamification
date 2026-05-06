@@ -65,14 +65,21 @@ final class RefundHandler {
 			return;
 		}
 
-		// Debit only if the customer has at least the award value left — avoids
-		// tipping a freshly-zero balance into the negatives for legacy orders
-		// whose original award was lost or capped by rate-limiter.
-		if ( PointsEngine::get_total( $customer_id ) < $points ) {
+		// Resolve the currency the original award flowed into — defaults to the
+		// primary type when the action manifest doesn't declare a point_type.
+		// Refund must debit the same currency, not blanket-debit primary.
+		$action     = Registry::get_action( self::ACTION_ID_AWARD );
+		$point_type = is_array( $action ) ? (string) ( $action['point_type'] ?? '' ) : '';
+		$resolved   = ( new \WBGam\Services\PointTypeService() )->resolve( $point_type ?: null );
+
+		// Debit only if the customer has at least the award value left in that
+		// currency — avoids tipping a freshly-zero balance into the negatives
+		// for legacy orders whose original award was lost or capped.
+		if ( PointsEngine::get_total( $customer_id, $resolved ) < $points ) {
 			return;
 		}
 
-		PointsEngine::debit( $customer_id, $points, self::ACTION_ID_DEBIT );
+		PointsEngine::debit( $customer_id, $points, self::ACTION_ID_DEBIT, '', $resolved );
 	}
 
 	/**

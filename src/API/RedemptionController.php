@@ -157,13 +157,21 @@ class RedemptionController extends WP_REST_Controller {
 	 * @return WP_REST_Response Response containing reward items and balance.
 	 */
 	public function get_items( $request ): WP_REST_Response {
-		$items   = RedemptionEngine::get_items();
-		$balance = is_user_logged_in() ? PointsEngine::get_total( get_current_user_id() ) : null;
+		$items = RedemptionEngine::get_items();
+
+		// Per-type balance map for the current user — frontend uses this to
+		// flag insufficient-balance state per reward currency. `current_balance`
+		// stays as the primary-type total for back-compat with single-currency
+		// consumers.
+		$user_id  = get_current_user_id();
+		$balance  = is_user_logged_in() ? PointsEngine::get_total( $user_id ) : null;
+		$by_type  = is_user_logged_in() ? PointsEngine::get_totals_by_type( $user_id ) : array();
 
 		return rest_ensure_response(
 			array(
 				'items'           => array_map( array( $this, 'prepare_item_for_response' ), $items ),
 				'current_balance' => $balance,
+				'balances_by_type' => $by_type,
 			)
 		);
 	}

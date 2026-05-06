@@ -291,3 +291,95 @@ Total v1.0-blocking work: **~7 dev-days** for one engineer, less in parallel.
 - Release plan: `plan/v1.0-release-plan.md`
 
 Updated by Varun — 2026-05-06.
+
+---
+
+## Phase 4 add — Currency Conversion (added 2026-05-06)
+
+User-facing ask: "100 points = 1 coin". Site admin defines exchange rates between point types; members convert balance from one to another via a UI button.
+
+### Schema
+
+```
+{prefix}wb_gam_point_type_conversions
+  ├─ id BIGINT UNSIGNED AUTO_INCREMENT PK
+  ├─ from_type VARCHAR(60) NOT NULL    — source currency slug
+  ├─ to_type   VARCHAR(60) NOT NULL    — destination currency slug
+  ├─ from_amount INT UNSIGNED NOT NULL — e.g. 100
+  ├─ to_amount   INT UNSIGNED NOT NULL — e.g. 1
+  ├─ is_active TINYINT(1) DEFAULT 1
+  ├─ min_convert INT UNSIGNED DEFAULT 0   — minimum source amount per conversion
+  ├─ max_convert_per_day INT UNSIGNED DEFAULT 0 — anti-abuse cap (0 = unlimited)
+  ├─ created_at DATETIME
+  └─ UNIQUE KEY pair (from_type, to_type)
+```
+
+### Layered code
+
+- `WBGam\Repository\PointTypeConversionRepository` — SQL only
+- `WBGam\Services\PointTypeConversionService` — validation + atomic convert
+- `WBGam\API\PointTypeConversionsController` — CRUD + `POST /point-types/{slug}/convert`
+- `WBGam\Admin\PointTypeConversionsPage` — admin: define rate pairs
+
+### Convert flow (atomic)
+
+```php
+// PointTypeConversionService::convert(int $user_id, string $from, string $to, int $amount): array
+1. Validate from/to slugs exist + a conversion rule exists for the pair
+2. Validate $amount is a multiple of $rule->from_amount (or accept fractional with floor)
+3. Compute $debit_amount + $credit_amount
+4. Check daily cap ($wb_gam_user_conversion_count_today < max_convert_per_day)
+5. START TRANSACTION
+6. Lock user's from-type balance with FOR UPDATE
+7. If balance < debit_amount → ROLLBACK + return 'insufficient'
+8. PointsEngine::debit($user_id, $debit_amount, 'convert_'.$from, $event_id, $from)
+9. PointsEngine::award($user_id, 'convert_'.$to, $credit_amount, 0, $to)
+10. COMMIT
+11. Fire wb_gam_point_type_converted action with payload
+```
+
+### REST surface
+
+- `GET /point-types/{slug}/conversions` — list rules where from_type or to_type matches
+- `POST /point-types/{slug}/convert` — body: { to_type, amount } — admin-cap or self-convert
+- Admin CRUD on `/point-type-conversions`
+
+### Frontend
+
+- Hub block per-currency tile gets a "Convert" button when at least one outbound rule exists
+- Modal shows rate ("100 Points → 1 Coin"), amount input with live preview, submit
+- Toast confirms on success: "Converted 500 Points → 5 Coins"
+
+### Rate-limit + audit
+
+- Same `wb_gam_user_conversions` count helper pattern as rate-limit caps
+- Each conversion writes 2 ledger rows + 2 event rows tagged with `convert_*` action_id, linked via shared event_id metadata
+
+### Effort
+
+S (1 dev-day for backend + REST; +0.5 day for admin UI; +0.5 day for member UI). Adds to **Phase 4** of the multi-point plan, not v1.0 launch-blocking — but small enough to land in v1.0.x as a quick win.
+
+---
+
+## Audit findings (2026-05-06)
+
+After Phases 1-3 + 5 landed, swept every `PointsEngine::get_total/get_history/debit` call site. Two real bugs found + fixed in same commit:
+
+| Site | Issue | Fix |
+|---|---|---|
+| `Integrations/WooCommerce/RefundHandler` | Refund debits primary type even when order awarded a different type | Read action's `point_type` from Registry; debit + balance check scoped to that currency |
+| `API/RedemptionController::get_items` | Frontend store gets only primary balance — no way to flag insufficient on multi-currency rewards | Returns `balances_by_type` map alongside legacy `current_balance` |
+
+### Acceptable un-typed call sites (back-compat)
+
+These read primary balance by design and stay as-is until per-type levels/badges land in Phase 4:
+
+- `LevelEngine::get_level_for_user` / `get_progress_percent` — levels are primary-type only (Phase 4 = per-type levels)
+- `BadgeEngine::evaluate_points_threshold` — badge condition rule (Phase 4 = per-type badges)
+- `SiteFirstBadgeEngine`, `StatusRetentionEngine`, `NudgeEngine` — primary-type only
+- `WeeklyEmailEngine::send_to_user` — digest reports primary balance
+- `Privacy::export_user_data` — exports primary balance (multi-currency is additive)
+- `MembersController::get_item` — `points` field IS primary balance for back-compat
+- `BuddyPress\ProfileIntegration` — BP profile shows primary balance
+- `CLI\PointsCommand`, `CLI\MemberCommand`, `CLI\ExportCommand` — `--type=` flag is Phase 4
+

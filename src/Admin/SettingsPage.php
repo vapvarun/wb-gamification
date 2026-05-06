@@ -552,6 +552,14 @@ final class SettingsPage {
 			'social'     => __( 'Social', 'wb-gamification' ),
 			'general'    => __( 'General', 'wb-gamification' ),
 		);
+
+		// Resolve the default currency label once — used for the section title +
+		// table column header so the UI never hard-codes "Points" when the site
+		// has renamed the primary type or set a different currency as default.
+		$wb_gam_pt_service    = new \WBGam\Services\PointTypeService();
+		$wb_gam_default_pt    = $wb_gam_pt_service->get( $wb_gam_pt_service->default_slug() );
+		$wb_gam_default_label = $wb_gam_default_pt ? (string) $wb_gam_default_pt['label'] : __( 'Points', 'wb-gamification' );
+		$wb_gam_section_title = strtoupper( $wb_gam_default_label );
 		?>
 		<form method="post" action="<?php echo esc_url( admin_url( 'admin.php?page=wb-gamification&tab=points' ) ); ?>">
 			<?php wp_nonce_field( 'wb_gam_save_settings', 'wb_gam_settings_nonce' ); ?>
@@ -559,8 +567,16 @@ final class SettingsPage {
 			<?php if ( empty( $actions ) ) : ?>
 				<div class="wbgam-settings-card">
 					<div class="wbgam-settings-card__head">
-						<p class="wbgam-settings-card__title"><?php esc_html_e( 'POINTS', 'wb-gamification' ); ?></p>
-						<p class="wbgam-settings-card__desc"><?php esc_html_e( 'Configure point values for each action.', 'wb-gamification' ); ?></p>
+						<p class="wbgam-settings-card__title"><?php echo esc_html( $wb_gam_section_title ); ?></p>
+						<p class="wbgam-settings-card__desc">
+							<?php
+							printf(
+								/* translators: %s: default currency label (e.g. Points / XP). */
+								esc_html__( 'Configure %s values for each action.', 'wb-gamification' ),
+								esc_html( strtolower( $wb_gam_default_label ) )
+							);
+							?>
+						</p>
 					</div>
 					<div class="wbgam-settings-card__body wbgam-settings-card__body--cozy">
 						<p><?php esc_html_e( 'No gamification actions are registered yet. Triggers load automatically once BuddyPress or other integrations are active.', 'wb-gamification' ); ?></p>
@@ -609,7 +625,7 @@ final class SettingsPage {
 									<tr>
 										<th class="wb-gam-col-toggle"><?php esc_html_e( 'On', 'wb-gamification' ); ?></th>
 										<th><?php esc_html_e( 'Action', 'wb-gamification' ); ?></th>
-										<th class="wb-gam-col-points"><?php esc_html_e( 'Points', 'wb-gamification' ); ?></th>
+										<th class="wb-gam-col-points"><?php echo esc_html( $wb_gam_default_label ); ?></th>
 										<th class="wb-gam-col-flag"><?php esc_html_e( 'Repeat', 'wb-gamification' ); ?></th>
 										<th class="wb-gam-col-flag"><?php esc_html_e( 'Daily cap', 'wb-gamification' ); ?></th>
 									</tr>
