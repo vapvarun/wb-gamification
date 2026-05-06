@@ -314,8 +314,8 @@ final class Privacy {
 			);
 		}
 
-		// Per-user toggles stored in user_meta (v1.0 sprint additions). Each
-		// is T2 personal data and belongs in the export under data portability.
+		// Per-user toggles + derived caches stored in user_meta. Each is T2
+		// personal data and belongs in the export under data portability.
 		$meta_groups = array(
 			'wb_gam_profile_public'         => __( 'Public profile enabled (per-user)', 'wb-gamification' ),
 			'wb_gam_login_streak'           => __( 'Login bonus streak (current)', 'wb-gamification' ),
@@ -323,6 +323,9 @@ final class Privacy {
 			'wb_gam_login_last_award'       => __( 'Login bonus last awarded', 'wb-gamification' ),
 			'wb_gam_seen_first_earn_toast'  => __( 'Seen first-earn welcome toast', 'wb-gamification' ),
 			'wb_gam_dismissed_welcome'      => __( 'Dismissed admin welcome card', 'wb-gamification' ),
+			'wb_gam_level_id'               => __( 'Current level ID (cached)', 'wb-gamification' ),
+			'wb_gam_level_name'             => __( 'Current level name (cached)', 'wb-gamification' ),
+			'wb_gam_league_tier'            => __( 'Cohort league tier', 'wb-gamification' ),
 		);
 		$meta_rows = array();
 		foreach ( $meta_groups as $key => $label ) {
@@ -498,8 +501,11 @@ final class Privacy {
 			array( '%d' )
 		);
 
-		// User meta — personal-record keys + v1.0 sprint additions. All of
-		// these are user-scoped data and must be removed under GDPR Art. 17.
+		// User meta — personal-record keys + v1.0 sprint additions + derived
+		// caches. All of these are user-scoped data and must be removed under
+		// GDPR Art. 17. The list mirrors the export side above; bin/coding-
+		// rules-check.sh Rule 11 enforces both lists stay in sync as new
+		// surfaces are added.
 		$user_meta_keys = array(
 			'wb_gam_pr_best_week',         // personal-record best week.
 			'wb_gam_login_streak',         // login bonus engine — current streak.
@@ -508,6 +514,9 @@ final class Privacy {
 			'wb_gam_seen_first_earn_toast', // notification bridge — one-time flag.
 			'wb_gam_dismissed_welcome',    // settings page — admin welcome dismissal.
 			'wb_gam_profile_public',       // member's own privacy choice.
+			'wb_gam_level_id',             // LevelEngine — denormalized current level (cache).
+			'wb_gam_level_name',           // LevelEngine — denormalized level name (cache).
+			'wb_gam_league_tier',          // CohortEngine — current cohort league tier.
 		);
 		foreach ( $user_meta_keys as $meta_key ) {
 			delete_user_meta( $user_id, $meta_key );

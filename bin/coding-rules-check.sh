@@ -172,11 +172,80 @@ echo "=== WB Gamification coding-rules check ==="
 echo "Plugin: $PLUGIN_DIR"
 echo ""
 
+# Rule 11: every user-scoped surface (wb_gam_* table with user_id column,
+# every wb_gam_* user_meta key) MUST be referenced in src/Engine/Privacy.php
+# so it lands in both export_user_data and erase_user_data.
+#
+# Why: shipping a new user-scoped surface without updating Privacy.php
+# leaves ghost data after a GDPR erase request and an incomplete export.
+# This rule prevents the v1.0 sprint pattern (6 user_meta keys + 1 table
+# shipped without Privacy.php updates — fixed in commit fc1675a) from
+# recurring. See plan/PRIVACY-MODEL.md § Cross-cutting principles #6.
+check_privacy_coverage_for_user_scoped_surfaces() {
+    local privacy_file="$PLUGIN_DIR/src/Engine/Privacy.php"
+    if [ ! -f "$privacy_file" ]; then
+        violation "Rule 11 — src/Engine/Privacy.php missing entirely"
+        return
+    fi
+
+    local missing=""
+
+    # User-scoped wb_gam_* tables — extracted from Installer.php CREATE TABLE
+    # statements that include a `user_id` column. Each table must appear in
+    # Privacy.php (as `wb_gam_<name>` literal) for both export and erase.
+    local table_names
+    table_names=$(awk '
+        /CREATE TABLE/ { in_create = 1; tname = ""; has_uid = 0; next }
+        in_create && match($0, /\{\$wpdb->prefix\}wb_gam_[a-z_]+/) {
+            tname = substr($0, RSTART, RLENGTH);
+            sub(/^\{\$wpdb->prefix\}/, "", tname);
+        }
+        in_create && /\<user_id\>/ { has_uid = 1 }
+        in_create && /\)\s*\$charset_collate\s*;/ {
+            if ( has_uid && tname != "" ) print tname;
+            in_create = 0;
+        }
+    ' "$PLUGIN_DIR/src/Engine/Installer.php" 2>/dev/null | sort -u)
+
+    for tbl in $table_names; do
+        if ! grep -q "$tbl" "$privacy_file"; then
+            missing="${missing}    Table $tbl — has user_id column but not referenced in Privacy.php\n"
+        fi
+    done
+
+    # User-meta keys — every literal 'wb_gam_*' meta_key passed to
+    # update_user_meta() / get_user_meta() / delete_user_meta() in src/
+    # (excluding Privacy.php itself, which is the consumer side).
+    local meta_keys
+    meta_keys=$(grep -rEho "(update|get|add|delete)_user_meta\(\s*[^,]+,\s*['\"]wb_gam_[a-z_]+['\"]" \
+                    "$PLUGIN_DIR/src/" --include="*.php" 2>/dev/null \
+                | grep -vE "Privacy\.php" \
+                | sed -E "s/.*['\"]( *wb_gam_[a-z_]+ *)['\"].*/\1/" \
+                | tr -d ' ' \
+                | sort -u)
+
+    for key in $meta_keys; do
+        if ! grep -q "['\"]$key['\"]" "$privacy_file"; then
+            missing="${missing}    User meta '$key' — used elsewhere but not referenced in Privacy.php\n"
+        fi
+    done
+
+    if [ -n "$missing" ]; then
+        violation "Rule 11 — user-scoped surfaces missing from Privacy::export_user_data + erase_user_data:"
+        printf "%b" "$missing"
+        echo "    Fix: add the table/meta to BOTH export_user_data and erase_user_data."
+        echo "         See plan/PRIVACY-MODEL.md § Cross-cutting principles #6."
+    else
+        ok "Rule 11 — every user-scoped table + meta key is wired into Privacy.php"
+    fi
+}
+
 check_no_native_cap_check_for_plugin_abilities
 check_unauthenticated_rest_allowlist
 check_no_inline_styles_in_admin_php
 check_no_inline_scripts_in_php
 check_no_inline_style_blocks_in_php
+check_privacy_coverage_for_user_scoped_surfaces
 
 echo ""
 COUNT=$(violations_count)
