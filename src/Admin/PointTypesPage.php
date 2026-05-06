@@ -141,6 +141,10 @@ final class PointTypesPage {
 													data-wb-gam-rest-method="PUT"
 													data-wb-gam-rest-path="/point-types/<?php echo esc_attr( $slug ); ?>"
 													data-wb-gam-rest-body='{"is_default":true}'
+													data-wb-gam-rest-confirm="<?php
+													/* translators: %s: candidate point-type label about to be promoted to default. */
+													echo esc_attr( sprintf( __( 'Make %s the default currency? Actions without an explicit currency will start awarding this type going forward. Existing balances are NOT migrated — every row keeps its original ledger.', 'wb-gamification' ), (string) $type['label'] ) );
+													?>"
 													data-wb-gam-rest-success-toast="<?php esc_attr_e( 'Default point type updated.', 'wb-gamification' ); ?>"
 													data-wb-gam-rest-after="reload">
 													<?php esc_html_e( 'Make default', 'wb-gamification' ); ?>

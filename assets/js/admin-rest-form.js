@@ -245,6 +245,18 @@
 		const failure = button.dataset.wbGamRestErrorToast || ( settings.i18n && settings.i18n.failed ) || 'Action failed.';
 		const after   = button.dataset.wbGamRestAfter || '';
 
+		// Optional inline JSON body — `data-wb-gam-rest-body='{"is_default":true}'`.
+		// Falls through to null when omitted (DELETE etc. need no body).
+		let body = null;
+		if ( button.dataset.wbGamRestBody ) {
+			try {
+				body = JSON.parse( button.dataset.wbGamRestBody );
+			} catch ( parseErr ) {
+				utils.toast( 'Invalid REST body on action button.', 'error' );
+				return;
+			}
+		}
+
 		if ( confirm ) {
 			const ok = await utils.confirmAction( { message: confirm, tone: 'danger' } );
 			if ( ! ok ) {
@@ -254,7 +266,7 @@
 
 		button.disabled = true;
 		try {
-			const result = await utils.apiFetch( method, path, null, settings );
+			const result = await utils.apiFetch( method, path, body, settings );
 			if ( result.ok ) {
 				utils.toast( success, 'success' );
 				applyAfter( after, button );

@@ -16,6 +16,9 @@ namespace WBGam\Engine;
 
 use WBGam\Services\PointTypeService;
 
+// Registry lives in the same namespace; no `use` needed but referencing
+// here for readers — see WBGam\Engine\Registry::resolve_action_point_type().
+
 defined( 'ABSPATH' ) || exit;
 
 /**
@@ -57,9 +60,11 @@ final class PointsEngine {
 	 * @return bool             True if the award is allowed to proceed.
 	 */
 	public static function passes_rate_limits( int $user_id, string $action_id, array $action ): bool {
-		// Resolve the currency this action awards — rate-limit caps scope per-type so
-		// e.g. a daily 3× cap on points doesn't block earning XP.
-		$type = self::resolve_type( isset( $action['point_type'] ) ? (string) $action['point_type'] : null );
+		// Resolve the currency this action awards — must match the resolution
+		// used by the award path (Registry::register_action closure) so the
+		// daily/weekly cap counts the SAME ledger the action will actually
+		// write to. Reads admin-override first, then manifest, then primary.
+		$type = self::resolve_type( Registry::resolve_action_point_type( $action ) ?: null );
 
 		// Cooldown check.
 		$cooldown = (int) ( $action['cooldown'] ?? 0 );

@@ -67,8 +67,12 @@ foreach ( $known_options as $option ) {
 	delete_option( $option );
 }
 
-// Delete wildcard options: wb_gam_points_* and wb_gam_enabled_*.
-$wildcard_prefixes = array( 'wb_gam_points_%', 'wb_gam_enabled_%' );
+// Delete wildcard options: per-action point amount, enable flag, currency override.
+$wildcard_prefixes = array(
+	'wb_gam_points_%',
+	'wb_gam_enabled_%',
+	'wb_gam_point_type_%',
+);
 
 foreach ( $wildcard_prefixes as $like_pattern ) {
 	$option_names = $wpdb->get_col(

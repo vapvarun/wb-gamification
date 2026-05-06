@@ -148,11 +148,15 @@ final class Registry {
 					? (array) call_user_func_array( $action['metadata_callback'], $params )
 					: array();
 
-				// Stamp the action's declared point_type into the event metadata
-				// so PointsEngine::insert_point_row() and Engine::persist_event()
-				// route the row to the correct currency. Empty = primary type.
-				if ( ! empty( $action['point_type'] ) && ! isset( $metadata['point_type'] ) ) {
-					$metadata['point_type'] = (string) $action['point_type'];
+				// Resolve the currency this action awards via the canonical
+				// helper so both ledger-write AND rate-limit checks see the
+				// same value. PointsEngine::insert_point_row() and
+				// Engine::persist_event() read metadata['point_type'] when set.
+				if ( ! isset( $metadata['point_type'] ) ) {
+					$resolved = self::resolve_action_point_type( $action );
+					if ( '' !== $resolved ) {
+						$metadata['point_type'] = $resolved;
+					}
 				}
 
 				$event = new Event(
@@ -256,5 +260,33 @@ final class Registry {
 	 */
 	public static function get_action( string $id ): ?array {
 		return self::$actions[ $id ] ?? null;
+	}
+
+	/**
+	 * Resolve the currency slug an action should award.
+	 *
+	 * Single source of truth used by both the award path
+	 * (Registry::register_action() closure) and the rate-limit path
+	 * (PointsEngine::passes_rate_limits()) so cap counts and ledger writes
+	 * always agree on which currency the action belongs to.
+	 *
+	 * Resolution order:
+	 *   1. Admin override — `wb_gam_point_type_<action_id>` option
+	 *   2. Manifest declaration — `$action['point_type']`
+	 *   3. Empty string — caller passes through `PointTypeService::resolve()`
+	 *      which falls back to the primary slug.
+	 *
+	 * @param array $action Registered action config.
+	 * @return string Resolved point-type slug, or empty for "use primary".
+	 */
+	public static function resolve_action_point_type( array $action ): string {
+		$action_id = (string) ( $action['id'] ?? '' );
+		if ( '' !== $action_id ) {
+			$override = (string) get_option( 'wb_gam_point_type_' . $action_id, '' );
+			if ( '' !== $override ) {
+				return $override;
+			}
+		}
+		return (string) ( $action['point_type'] ?? '' );
 	}
 }

@@ -148,7 +148,8 @@ final class SettingsPage {
 	 */
 	private static function save_points_settings(): void {
 		// phpcs:disable WordPress.Security.NonceVerification.Missing -- Nonce verified by check_admin_referer() in handle_save().
-		$actions = Registry::get_actions();
+		$actions    = Registry::get_actions();
+		$pt_service = new \WBGam\Services\PointTypeService();
 
 		foreach ( $actions as $action_id => $action ) {
 			$key    = 'wb_gam_points_' . sanitize_key( $action_id );
@@ -160,6 +161,20 @@ final class SettingsPage {
 
 			$enabled_key = 'wb_gam_enabled_' . sanitize_key( $action_id );
 			update_option( 'wb_gam_enabled_' . $action_id, isset( $_POST[ $enabled_key ] ) ? true : false );
+
+			// Per-action currency override. Stored only when set and known —
+			// PointTypeService::resolve() falls back to primary for any
+			// unknown slug, so we don't write garbage. Empty submit clears
+			// the override (action falls back to manifest declaration).
+			$type_key = 'wb_gam_point_type_' . sanitize_key( $action_id );
+			if ( isset( $_POST[ $type_key ] ) ) {
+				$raw_type = sanitize_key( wp_unslash( $_POST[ $type_key ] ) ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+				if ( '' === $raw_type ) {
+					delete_option( 'wb_gam_point_type_' . $action_id );
+				} elseif ( $pt_service->get( $raw_type ) ) {
+					update_option( 'wb_gam_point_type_' . $action_id, $raw_type );
+				}
+			}
 		}
 
 		// Also save log retention.
@@ -557,9 +572,16 @@ final class SettingsPage {
 		// table column header so the UI never hard-codes "Points" when the site
 		// has renamed the primary type or set a different currency as default.
 		$wb_gam_pt_service    = new \WBGam\Services\PointTypeService();
-		$wb_gam_default_pt    = $wb_gam_pt_service->get( $wb_gam_pt_service->default_slug() );
+		$wb_gam_pt_catalog    = $wb_gam_pt_service->list();
+		$wb_gam_default_slug  = $wb_gam_pt_service->default_slug();
+		$wb_gam_default_pt    = $wb_gam_pt_service->get( $wb_gam_default_slug );
 		$wb_gam_default_label = $wb_gam_default_pt ? (string) $wb_gam_default_pt['label'] : __( 'Points', 'wb-gamification' );
 		$wb_gam_section_title = strtoupper( $wb_gam_default_label );
+
+		// Multi-currency mode: when the site has > 1 point type, show a per-action
+		// currency picker in the settings table. Otherwise the currency column is
+		// hidden — there's nothing to choose between.
+		$wb_gam_multi_currency = count( $wb_gam_pt_catalog ) > 1;
 		?>
 		<form method="post" action="<?php echo esc_url( admin_url( 'admin.php?page=wb-gamification&tab=points' ) ); ?>">
 			<?php wp_nonce_field( 'wb_gam_save_settings', 'wb_gam_settings_nonce' ); ?>
@@ -625,7 +647,10 @@ final class SettingsPage {
 									<tr>
 										<th class="wb-gam-col-toggle"><?php esc_html_e( 'On', 'wb-gamification' ); ?></th>
 										<th><?php esc_html_e( 'Action', 'wb-gamification' ); ?></th>
-										<th class="wb-gam-col-points"><?php echo esc_html( $wb_gam_default_label ); ?></th>
+										<th class="wb-gam-col-points"><?php esc_html_e( 'Amount', 'wb-gamification' ); ?></th>
+										<?php if ( $wb_gam_multi_currency ) : ?>
+											<th class="wb-gam-col-currency"><?php esc_html_e( 'Currency', 'wb-gamification' ); ?></th>
+										<?php endif; ?>
 										<th class="wb-gam-col-flag"><?php esc_html_e( 'Repeat', 'wb-gamification' ); ?></th>
 										<th class="wb-gam-col-flag"><?php esc_html_e( 'Daily cap', 'wb-gamification' ); ?></th>
 									</tr>
@@ -633,11 +658,16 @@ final class SettingsPage {
 									<tbody>
 									<?php
 									foreach ( $cat_actions as $action ) :
-										$action_id  = $action['id'];
-										$pts        = (int) get_option( 'wb_gam_points_' . $action_id, $action['default_points'] );
-										$enabled    = (bool) get_option( 'wb_gam_enabled_' . $action_id, true );
-										$repeatable = (bool) ( $action['repeatable'] ?? true );
-										$daily_cap  = (int) ( $action['daily_cap'] ?? 0 );
+										$action_id   = $action['id'];
+										$pts         = (int) get_option( 'wb_gam_points_' . $action_id, $action['default_points'] );
+										$enabled     = (bool) get_option( 'wb_gam_enabled_' . $action_id, true );
+										$repeatable  = (bool) ( $action['repeatable'] ?? true );
+										$daily_cap   = (int) ( $action['daily_cap'] ?? 0 );
+										// Resolve current currency: admin override > manifest > primary.
+										$action_type = \WBGam\Engine\Registry::resolve_action_point_type( $action );
+										if ( '' === $action_type ) {
+											$action_type = $wb_gam_default_slug;
+										}
 										?>
 										<tr>
 											<td>
@@ -663,13 +693,28 @@ final class SettingsPage {
 												<input
 													type="number"
 													name="<?php echo esc_attr( 'wb_gam_points_' . $action_id ); ?>"
-													aria-label="<?php /* translators: %s: gamification action label */ echo esc_attr( sprintf( __( 'Points for %s', 'wb-gamification' ), $action['label'] ?? $action_id ) ); ?>"
+													aria-label="<?php /* translators: %s: gamification action label */ echo esc_attr( sprintf( __( 'Amount for %s', 'wb-gamification' ), $action['label'] ?? $action_id ) ); ?>"
 													value="<?php echo esc_attr( $pts ); ?>"
 													min="0"
 													max="9999"
 													class="wbgam-input wbgam-input--xs"
 												>
 											</td>
+											<?php if ( $wb_gam_multi_currency ) : ?>
+												<td>
+													<select
+														name="<?php echo esc_attr( 'wb_gam_point_type_' . $action_id ); ?>"
+														class="wbgam-select wbgam-select--sm"
+														aria-label="<?php /* translators: %s: gamification action label */ echo esc_attr( sprintf( __( 'Currency for %s', 'wb-gamification' ), $action['label'] ?? $action_id ) ); ?>"
+													>
+														<?php foreach ( $wb_gam_pt_catalog as $wb_gam_pt_choice ) : ?>
+															<option value="<?php echo esc_attr( (string) $wb_gam_pt_choice['slug'] ); ?>" <?php selected( $action_type, (string) $wb_gam_pt_choice['slug'] ); ?>>
+																<?php echo esc_html( (string) $wb_gam_pt_choice['label'] ); ?>
+															</option>
+														<?php endforeach; ?>
+													</select>
+												</td>
+											<?php endif; ?>
 											<td>
 												<?php if ( $repeatable ) : ?>
 													<span class="wbgam-pill wbgam-pill--info"><?php esc_html_e( 'Yes', 'wb-gamification' ); ?></span>
