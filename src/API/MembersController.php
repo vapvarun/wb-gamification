@@ -23,6 +23,7 @@ namespace WBGam\API;
 use WBGam\Engine\PointsEngine;
 use WBGam\Engine\LevelEngine;
 use WBGam\Engine\StreakEngine;
+use WBGam\Engine\Privacy;
 use WP_REST_Controller;
 use WP_REST_Response;
 use WP_REST_Request;
@@ -70,6 +71,7 @@ class MembersController extends WP_REST_Controller {
 	 */
 	public function register_routes(): void {
 		// GET /members/{id}.
+		// T1 gate — response is shaped to drop T2 fields for non-self/non-admin.
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base . '/(?P<id>[\d]+)',
@@ -77,7 +79,7 @@ class MembersController extends WP_REST_Controller {
 				array(
 					'methods'             => WP_REST_Server::READABLE,
 					'callback'            => array( $this, 'get_item' ),
-					'permission_callback' => array( $this, 'get_item_permissions_check' ),
+					'permission_callback' => array( $this, 't1_permissions_check' ),
 					'args'                => $this->get_member_id_args(),
 				),
 				'schema' => array( $this, 'get_item_schema' ),
@@ -85,6 +87,7 @@ class MembersController extends WP_REST_Controller {
 		);
 
 		// GET /members/{id}/points.
+		// T2 gate — full points history is behavioral data; self+admin only.
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base . '/(?P<id>[\d]+)/points',
@@ -92,7 +95,7 @@ class MembersController extends WP_REST_Controller {
 				array(
 					'methods'             => WP_REST_Server::READABLE,
 					'callback'            => array( $this, 'get_points' ),
-					'permission_callback' => array( $this, 'get_item_permissions_check' ),
+					'permission_callback' => array( $this, 't2_permissions_check' ),
 					'args'                => array_merge(
 						$this->get_member_id_args(),
 						array(
@@ -122,6 +125,7 @@ class MembersController extends WP_REST_Controller {
 		);
 
 		// GET /members/{id}/level.
+		// T1 gate — level name + progress is achievement-shaped.
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base . '/(?P<id>[\d]+)/level',
@@ -129,13 +133,14 @@ class MembersController extends WP_REST_Controller {
 				array(
 					'methods'             => WP_REST_Server::READABLE,
 					'callback'            => array( $this, 'get_level' ),
-					'permission_callback' => array( $this, 'get_item_permissions_check' ),
+					'permission_callback' => array( $this, 't1_permissions_check' ),
 					'args'                => $this->get_member_id_args(),
 				),
 			)
 		);
 
 		// GET /members/{id}/badges.
+		// T1 gate — badge list is the canonical "show off what I earned" payload.
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base . '/(?P<id>[\d]+)/badges',
@@ -143,13 +148,14 @@ class MembersController extends WP_REST_Controller {
 				array(
 					'methods'             => WP_REST_Server::READABLE,
 					'callback'            => array( $this, 'get_badges' ),
-					'permission_callback' => array( $this, 'get_item_permissions_check' ),
+					'permission_callback' => array( $this, 't1_permissions_check' ),
 					'args'                => $this->get_member_id_args(),
 				),
 			)
 		);
 
 		// GET /members/{id}/events.
+		// T2 gate — full event log w/ metadata is behavioral data; self+admin only.
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base . '/(?P<id>[\d]+)/events',
@@ -157,7 +163,7 @@ class MembersController extends WP_REST_Controller {
 				array(
 					'methods'             => WP_REST_Server::READABLE,
 					'callback'            => array( $this, 'get_events' ),
-					'permission_callback' => array( $this, 'get_item_permissions_check' ),
+					'permission_callback' => array( $this, 't2_permissions_check' ),
 					'args'                => array_merge(
 						$this->get_member_id_args(),
 						array(
@@ -181,6 +187,8 @@ class MembersController extends WP_REST_Controller {
 		);
 
 		// GET /members/{id}/streak.
+		// T1 gate — entry allowed for public viewers; callback strips the T2
+		// fields (last_active, heatmap, grace_used) when viewer is not self/admin.
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base . '/(?P<id>[\d]+)/streak',
@@ -188,7 +196,7 @@ class MembersController extends WP_REST_Controller {
 				array(
 					'methods'             => WP_REST_Server::READABLE,
 					'callback'            => array( $this, 'get_streak' ),
-					'permission_callback' => array( $this, 'get_item_permissions_check' ),
+					'permission_callback' => array( $this, 't1_permissions_check' ),
 					'args'                => array_merge(
 						$this->get_member_id_args(),
 						array(
@@ -223,36 +231,63 @@ class MembersController extends WP_REST_Controller {
 	// ── Permission checks ──────────────────────────────────────────────────────
 
 	/**
-	 * Check if the current user can read the requested member's data.
+	 * T1 (achievements / showcase) gate — applies to /members/{id},
+	 * /level, /badges, /streak (entry only; callback strips T2 fields).
 	 *
-	 * Permission levels:
-	 *   - Self-read or admin: full profile (private fields included).
-	 *   - Other authenticated users: public data only (enforced in callback).
-	 *   - Unauthenticated: public data only (enforced in callback via opt-out check).
+	 * Allows the request through when EITHER:
+	 *   • viewer is the target themselves OR an admin
+	 *   • OR the site kill-switch is ON AND the member's per-account toggle is ON
+	 *
+	 * Otherwise returns 403. The callback is responsible for shaping the
+	 * response — anonymous/peer viewers must NEVER receive T2 fields even
+	 * when the gate lets them in. See Privacy::can_view_public_profile().
 	 *
 	 * @param WP_REST_Request $request Full details about the request.
-	 * @return true|WP_Error True if the request has permission, WP_Error otherwise.
+	 * @return true|WP_Error True if allowed, 404 if user missing, 403 if gated.
 	 */
-	public function get_item_permissions_check( $request ): bool|WP_Error {
+	public function t1_permissions_check( $request ): bool|WP_Error {
 		$target_id = (int) $request['id'];
 
 		if ( ! get_userdata( $target_id ) ) {
 			return new WP_Error( 'rest_user_invalid', __( 'Member not found.', 'wb-gamification' ), array( 'status' => 404 ) );
 		}
 
-		$current = get_current_user_id();
-
-		if ( ! $current ) {
-			// Unauthenticated gets public-only data (enforced in callback).
-			return true;
+		if ( ! Privacy::can_view_public_profile( $target_id ) ) {
+			return new WP_Error(
+				'rest_forbidden',
+				__( 'This member\'s profile is not public.', 'wb-gamification' ),
+				array( 'status' => 403 )
+			);
 		}
 
-		// Self-read or admin always OK for full data.
-		if ( $current === $target_id || current_user_can( 'manage_options' ) ) {
-			return true;
+		return true;
+	}
+
+	/**
+	 * T2 (behavioral history) gate — applies to /points history and /events.
+	 *
+	 * Self + admin only, ALWAYS. Behavioral history reveals when/how a member
+	 * spends time and is never appropriate to share with peers or anonymous
+	 * callers, regardless of any toggle. See Privacy::can_view_private_history().
+	 *
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return true|WP_Error True if allowed, 404 if user missing, 403 otherwise.
+	 */
+	public function t2_permissions_check( $request ): bool|WP_Error {
+		$target_id = (int) $request['id'];
+
+		if ( ! get_userdata( $target_id ) ) {
+			return new WP_Error( 'rest_user_invalid', __( 'Member not found.', 'wb-gamification' ), array( 'status' => 404 ) );
 		}
 
-		// Other authenticated users get public data only (enforced in callback).
+		if ( ! Privacy::can_view_private_history( $target_id ) ) {
+			return new WP_Error(
+				'rest_forbidden',
+				__( 'You do not have permission to view this member\'s activity history.', 'wb-gamification' ),
+				array( 'status' => 403 )
+			);
+		}
+
 		return true;
 	}
 
@@ -289,20 +324,16 @@ class MembersController extends WP_REST_Controller {
 			return new WP_Error( 'rest_user_invalid', __( 'Member not found.', 'wb-gamification' ), array( 'status' => 404 ) );
 		}
 
-		$points   = PointsEngine::get_total( $user_id );
-		$by_type  = PointsEngine::get_totals_by_type( $user_id );
-		$level    = LevelEngine::get_level_for_user( $user_id );
-		$next     = LevelEngine::get_next_level( $user_id );
-		$prefs    = $this->get_member_prefs( $user_id );
+		$points = PointsEngine::get_total( $user_id );
+		$level  = LevelEngine::get_level_for_user( $user_id );
+		$next   = LevelEngine::get_next_level( $user_id );
 
+		// T1 fields — always shown when the request is allowed by the gate.
 		$data = array(
-			'id'             => $user_id,
-			'display_name'   => $user->display_name,
-			'avatar_url'     => get_avatar_url( $user_id, array( 'size' => 96 ) ),
-			'points'         => $points,
-			// Multi-currency breakdown: { slug: balance } map. On single-currency
-			// sites this is `{ "points": <same as 'points' field> }`.
-			'points_by_type' => $by_type,
+			'id'           => $user_id,
+			'display_name' => $user->display_name,
+			'avatar_url'   => get_avatar_url( $user_id, array( 'size' => 96 ) ),
+			'points'       => $points,
 			'level'        => $level
 				? array(
 					'id'              => $level['id'],
@@ -315,12 +346,21 @@ class MembersController extends WP_REST_Controller {
 				)
 				: null,
 			'badges_count' => $this->get_badge_count( $user_id ),
-			'preferences'  => array(
+		);
+
+		// T2 fields — only when viewer is the owner or admin. Multi-currency
+		// breakdown reveals what currencies the user holds + balances; the
+		// preferences object includes the user's privacy choices (leaking
+		// these defeats the choice itself). See plan/PRIVACY-MODEL.md.
+		if ( Privacy::can_view_private_history( $user_id ) ) {
+			$prefs                  = $this->get_member_prefs( $user_id );
+			$data['points_by_type'] = PointsEngine::get_totals_by_type( $user_id );
+			$data['preferences']    = array(
 				'show_rank'           => (bool) $prefs['show_rank'],
 				'leaderboard_opt_out' => (bool) $prefs['leaderboard_opt_out'],
 				'notification_mode'   => $prefs['notification_mode'],
-			),
-		);
+			);
+		}
 
 		return rest_ensure_response( $data );
 	}
@@ -596,20 +636,27 @@ class MembersController extends WP_REST_Controller {
 		}
 
 		$streak  = StreakEngine::get_streak( $user_id );
-		$heatmap = $heatmap_days > 0
-			? StreakEngine::get_contribution_data( $user_id, $heatmap_days )
-			: null;
+		$private = Privacy::can_view_private_history( $user_id );
 
-		return rest_ensure_response(
-			array(
-				'current_streak' => $streak['current_streak'],
-				'longest_streak' => $streak['longest_streak'],
-				'last_active'    => $streak['last_active'],
-				'grace_used'     => $streak['grace_used'],
-				'milestones'     => array( 7, 14, 30, 60, 100, 180, 365 ),
-				'heatmap'        => $heatmap,
-			)
+		// T1 fields — current + longest are achievement-shaped. Always returned
+		// when the gate lets the request through.
+		$data = array(
+			'current_streak' => $streak['current_streak'],
+			'longest_streak' => $streak['longest_streak'],
+			'milestones'     => array( 7, 14, 30, 60, 100, 180, 365 ),
 		);
+
+		// T2 fields — last_active timestamp + heatmap reveal a daily activity
+		// pattern (when the member was online). Owner/admin only.
+		if ( $private ) {
+			$data['last_active'] = $streak['last_active'];
+			$data['grace_used']  = $streak['grace_used'];
+			$data['heatmap']     = $heatmap_days > 0
+				? StreakEngine::get_contribution_data( $user_id, $heatmap_days )
+				: null;
+		}
+
+		return rest_ensure_response( $data );
 	}
 
 	/**

@@ -44,6 +44,68 @@ final class Privacy {
 		add_filter( 'wp_privacy_personal_data_erasers', array( __CLASS__, 'register_eraser' ) );
 	}
 
+	// ── Permission helpers (single source of truth for the privacy model) ───
+	//
+	// Every REST permission_callback, block render, shortcode, and profile-page
+	// renderer that exposes member data MUST consult one of these two methods.
+	// Local copies of the privacy logic are forbidden — see plan/PRIVACY-MODEL.md
+	// § Cross-cutting principles #2 ("No callback-deferred enforcement").
+
+	/**
+	 * Can the viewer read the target member's T1 (achievements) data?
+	 *
+	 * T1 = display_name, level, badges, points total, badges count, level
+	 * progress %. Public when both site + member switches are ON, OR when
+	 * the viewer is the target themselves OR an admin.
+	 *
+	 * @param int      $target_id User whose data is requested.
+	 * @param int|null $viewer_id Defaults to current user ID (0 for anon).
+	 * @return bool True if the viewer may read T1 data for the target.
+	 */
+	public static function can_view_public_profile( int $target_id, ?int $viewer_id = null ): bool {
+		if ( $target_id <= 0 ) {
+			return false;
+		}
+		$viewer_id = $viewer_id ?? get_current_user_id();
+
+		// Self or admin always allowed.
+		if ( $viewer_id > 0 && ( $viewer_id === $target_id || user_can( $viewer_id, 'manage_options' ) ) ) {
+			return true;
+		}
+
+		// Site-level kill switch.
+		if ( ! (bool) get_option( 'wb_gam_profile_public_enabled', true ) ) {
+			return false;
+		}
+
+		// Member-level toggle.
+		return (bool) get_user_meta( $target_id, 'wb_gam_profile_public', true );
+	}
+
+	/**
+	 * Can the viewer read the target member's T2 (behavioral history) data?
+	 *
+	 * T2 = points history rows, event log with metadata, streak heatmap,
+	 * last_active timestamp, preferences object, points_by_type breakdown.
+	 * Always private to self + admin only — never togglable. This is the
+	 * trust line the plugin holds (see plan/PRIVACY-MODEL.md § The mental
+	 * model).
+	 *
+	 * @param int      $target_id User whose data is requested.
+	 * @param int|null $viewer_id Defaults to current user ID.
+	 * @return bool True if the viewer may read T2 data for the target.
+	 */
+	public static function can_view_private_history( int $target_id, ?int $viewer_id = null ): bool {
+		if ( $target_id <= 0 ) {
+			return false;
+		}
+		$viewer_id = $viewer_id ?? get_current_user_id();
+		if ( $viewer_id <= 0 ) {
+			return false;
+		}
+		return $viewer_id === $target_id || user_can( $viewer_id, 'manage_options' );
+	}
+
 	// ── Registration ────────────────────────────────────────────────────────
 
 	/**
@@ -252,6 +314,96 @@ final class Privacy {
 			);
 		}
 
+		// Per-user toggles stored in user_meta (v1.0 sprint additions). Each
+		// is T2 personal data and belongs in the export under data portability.
+		$meta_groups = array(
+			'wb_gam_profile_public'         => __( 'Public profile enabled (per-user)', 'wb-gamification' ),
+			'wb_gam_login_streak'           => __( 'Login bonus streak (current)', 'wb-gamification' ),
+			'wb_gam_login_streak_max'       => __( 'Login bonus streak (best)', 'wb-gamification' ),
+			'wb_gam_login_last_award'       => __( 'Login bonus last awarded', 'wb-gamification' ),
+			'wb_gam_seen_first_earn_toast'  => __( 'Seen first-earn welcome toast', 'wb-gamification' ),
+			'wb_gam_dismissed_welcome'      => __( 'Dismissed admin welcome card', 'wb-gamification' ),
+		);
+		$meta_rows = array();
+		foreach ( $meta_groups as $key => $label ) {
+			$value = get_user_meta( $user_id, $key, true );
+			if ( '' === $value || null === $value ) {
+				continue;
+			}
+			$meta_rows[] = array(
+				'name'  => $label,
+				'value' => is_scalar( $value ) ? (string) $value : wp_json_encode( $value ),
+			);
+		}
+		if ( $meta_rows ) {
+			$data_groups[] = array(
+				'group_id'    => 'wb-gam-user-meta',
+				'group_label' => __( 'Gamification Personal Settings', 'wb-gamification' ),
+				'item_id'     => 'wb-gam-user-meta-' . $user_id,
+				'data'        => $meta_rows,
+			);
+		}
+
+		// UGC submissions (v1.0 sprint).
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- one-shot personal-data export query.
+		$submissions = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT action_id, evidence, evidence_url, status, notes, created_at, reviewed_at
+				   FROM {$wpdb->prefix}wb_gam_submissions
+				  WHERE user_id = %d
+				  ORDER BY created_at DESC",
+				$user_id
+			),
+			ARRAY_A
+		) ?: array();
+		foreach ( $submissions as $i => $row ) {
+			$data_groups[] = array(
+				'group_id'    => 'wb-gam-submissions',
+				'group_label' => __( 'Achievement Submissions', 'wb-gamification' ),
+				'item_id'     => 'wb-gam-submission-' . $i,
+				'data'        => array(
+					array( 'name' => __( 'Action', 'wb-gamification' ),       'value' => $row['action_id'] ),
+					array( 'name' => __( 'Evidence', 'wb-gamification' ),     'value' => (string) $row['evidence'] ),
+					array( 'name' => __( 'Evidence URL', 'wb-gamification' ), 'value' => (string) $row['evidence_url'] ),
+					array( 'name' => __( 'Status', 'wb-gamification' ),       'value' => $row['status'] ),
+					array( 'name' => __( 'Reviewer notes', 'wb-gamification' ), 'value' => (string) $row['notes'] ),
+					array( 'name' => __( 'Submitted', 'wb-gamification' ),    'value' => $row['created_at'] ),
+					array( 'name' => __( 'Reviewed', 'wb-gamification' ),     'value' => (string) ( $row['reviewed_at'] ?? '' ) ),
+				),
+			);
+		}
+
+		// Full event log (immutable T2 record). Belongs in the export under
+		// data portability — it's the authoritative log of what the user did
+		// on the site (with metadata context). Distinct from points-history,
+		// which is the derived ledger.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- one-shot personal-data export query.
+		$events = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT action_id, object_id, metadata, point_type, site_id, created_at
+				   FROM {$wpdb->prefix}wb_gam_events
+				  WHERE user_id = %d
+				  ORDER BY created_at DESC",
+				$user_id
+			),
+			ARRAY_A
+		) ?: array();
+		foreach ( $events as $i => $row ) {
+			$data_groups[] = array(
+				'group_id'    => 'wb-gam-events',
+				'group_label' => __( 'Activity Event Log', 'wb-gamification' ),
+				'item_id'     => 'wb-gam-event-' . $i,
+				'data'        => array(
+					array( 'name' => __( 'Action', 'wb-gamification' ),    'value' => $row['action_id'] ),
+					array( 'name' => __( 'Object ID', 'wb-gamification' ), 'value' => (string) ( $row['object_id'] ?? '' ) ),
+					array( 'name' => __( 'Metadata', 'wb-gamification' ),  'value' => (string) ( $row['metadata'] ?? '' ) ),
+					array( 'name' => __( 'Currency', 'wb-gamification' ),  'value' => (string) ( $row['point_type'] ?? '' ) ),
+					array( 'name' => __( 'Site ID', 'wb-gamification' ),   'value' => (string) ( $row['site_id'] ?? '' ) ),
+					array( 'name' => __( 'Date', 'wb-gamification' ),      'value' => $row['created_at'] ),
+				),
+			);
+		}
+
 		return array(
 			'data' => $data_groups,
 			'done' => true,
@@ -332,15 +484,34 @@ final class Privacy {
 		// Member preferences.
 		$removed += (int) $wpdb->delete( $wpdb->prefix . 'wb_gam_member_prefs', array( 'user_id' => $user_id ), array( '%d' ) );
 
-		// User meta (personal-record keys).
-		$wpdb->delete( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- GDPR erasure must target a specific meta_key.
-			$wpdb->usermeta,
-			array(
-				'user_id'  => $user_id,
-				'meta_key' => 'wb_gam_pr_best_week', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
-			),
-			array( '%d', '%s' )
+		// UGC submissions (v1.0 sprint). The user's own submissions are deleted
+		// outright. Submissions where the erased user was the *reviewer* (admin
+		// action) are anonymized — reviewer_id zeroed but the row retained, so
+		// the audit trail of what was approved/rejected isn't lost when an
+		// admin departs.
+		$removed += (int) $wpdb->delete( $wpdb->prefix . 'wb_gam_submissions', array( 'user_id' => $user_id ), array( '%d' ) );
+		$wpdb->update(
+			$wpdb->prefix . 'wb_gam_submissions',
+			array( 'reviewer_id' => 0 ),
+			array( 'reviewer_id' => $user_id ),
+			array( '%d' ),
+			array( '%d' )
 		);
+
+		// User meta — personal-record keys + v1.0 sprint additions. All of
+		// these are user-scoped data and must be removed under GDPR Art. 17.
+		$user_meta_keys = array(
+			'wb_gam_pr_best_week',         // personal-record best week.
+			'wb_gam_login_streak',         // login bonus engine — current streak.
+			'wb_gam_login_streak_max',     // login bonus engine — best streak.
+			'wb_gam_login_last_award',     // login bonus engine — last award timestamp.
+			'wb_gam_seen_first_earn_toast', // notification bridge — one-time flag.
+			'wb_gam_dismissed_welcome',    // settings page — admin welcome dismissal.
+			'wb_gam_profile_public',       // member's own privacy choice.
+		);
+		foreach ( $user_meta_keys as $meta_key ) {
+			delete_user_meta( $user_id, $meta_key );
+		}
 
 		$wpdb->query( 'COMMIT' );
 
