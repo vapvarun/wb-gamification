@@ -42,6 +42,7 @@ $tables = array(
 	'wb_gam_redemptions',
 	'wb_gam_cosmetics',
 	'wb_gam_point_types',
+	'wb_gam_point_type_conversions',
 );
 
 foreach ( $tables as $table ) {
@@ -61,6 +62,8 @@ $known_options = array(
 	'wb_gam_template',
 	'wb_gam_wizard_complete',
 	'wb_gam_feature_point_types_v1',
+	'wb_gam_feature_redemption_point_type_v1',
+	'wb_gam_feature_point_type_conversions_v1',
 );
 
 foreach ( $known_options as $option ) {

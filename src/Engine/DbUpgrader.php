@@ -73,6 +73,47 @@ final class DbUpgrader {
 	private static function ensure_feature_migrations(): void {
 		self::ensure_point_types_schema();
 		self::ensure_redemption_point_type_column();
+		self::ensure_point_type_conversions_table();
+	}
+
+	/**
+	 * Create the `wb_gam_point_type_conversions` table on existing sites.
+	 * Idempotent — `dbDelta` is safe to re-run; flag stops the work after first
+	 * successful pass.
+	 *
+	 * @since 1.0.0
+	 */
+	private static function ensure_point_type_conversions_table(): void {
+		$flag_key = 'wb_gam_feature_point_type_conversions_v1';
+		if ( get_option( $flag_key ) ) {
+			return;
+		}
+
+		global $wpdb;
+		$charset = $wpdb->get_charset_collate();
+
+		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+
+		dbDelta(
+			"CREATE TABLE {$wpdb->prefix}wb_gam_point_type_conversions (
+			id                  BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+			from_type           VARCHAR(60)     NOT NULL,
+			to_type             VARCHAR(60)     NOT NULL,
+			from_amount         INT UNSIGNED    NOT NULL,
+			to_amount           INT UNSIGNED    NOT NULL,
+			min_convert         INT UNSIGNED    NOT NULL DEFAULT 1,
+			cooldown_seconds    INT UNSIGNED    NOT NULL DEFAULT 0,
+			max_per_day         INT UNSIGNED    NOT NULL DEFAULT 0,
+			is_active           TINYINT(1)      NOT NULL DEFAULT 1,
+			created_at          DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			PRIMARY KEY (id),
+			UNIQUE KEY pair (from_type, to_type),
+			KEY idx_from_active (from_type, is_active),
+			KEY idx_to_active (to_type, is_active)
+		) $charset;"
+		);
+
+		update_option( $flag_key, '1' );
 	}
 
 	/**

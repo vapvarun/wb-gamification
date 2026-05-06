@@ -87,6 +87,30 @@ final class Installer {
 		) $charset;"
 		);
 
+		// Currency conversion rates — admin defines pairs like
+		// '100 points → 1 coin' and members convert balance via REST.
+		// Defaults are permissive (no cooldown, no daily cap, min 1) so
+		// real-site usage isn't blocked out of the box; admins tighten
+		// per-rule only if their economy needs it.
+		dbDelta(
+			"CREATE TABLE {$wpdb->prefix}wb_gam_point_type_conversions (
+			id                  BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+			from_type           VARCHAR(60)     NOT NULL,
+			to_type             VARCHAR(60)     NOT NULL,
+			from_amount         INT UNSIGNED    NOT NULL,
+			to_amount           INT UNSIGNED    NOT NULL,
+			min_convert         INT UNSIGNED    NOT NULL DEFAULT 1,
+			cooldown_seconds    INT UNSIGNED    NOT NULL DEFAULT 0,
+			max_per_day         INT UNSIGNED    NOT NULL DEFAULT 0,
+			is_active           TINYINT(1)      NOT NULL DEFAULT 1,
+			created_at          DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			PRIMARY KEY (id),
+			UNIQUE KEY pair (from_type, to_type),
+			KEY idx_from_active (from_type, is_active),
+			KEY idx_to_active (to_type, is_active)
+		) $charset;"
+		);
+
 		// Earned badges.
 		dbDelta(
 			"CREATE TABLE {$wpdb->prefix}wb_gam_user_badges (

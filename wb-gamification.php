@@ -47,6 +47,7 @@ use WBGam\Engine\WeeklyEmailEngine;
 use WBGam\API\MembersController;
 use WBGam\API\PointsController;
 use WBGam\API\PointTypesController;
+use WBGam\API\PointTypeConversionsController;
 use WBGam\API\BadgesController;
 use WBGam\API\LeaderboardController;
 use WBGam\API\ActionsController;
@@ -77,6 +78,7 @@ use WBGam\Admin\CommunityChallengesPage;
 use WBGam\Admin\CohortSettingsPage;
 use WBGam\Admin\WebhooksAdminPage;
 use WBGam\Admin\PointTypesPage;
+use WBGam\Admin\PointTypeConversionsPage;
 use WBGam\API\CredentialController;
 use WBGam\API\RedemptionController;
 use WBGam\API\LevelsController;
@@ -163,6 +165,7 @@ final class WB_Gamification {
 			add_action( 'plugins_loaded', array( CohortSettingsPage::class, 'init' ), 10 );
 			add_action( 'plugins_loaded', array( WebhooksAdminPage::class, 'init' ), 10 );
 			add_action( 'plugins_loaded', array( PointTypesPage::class, 'init' ), 10 );
+			add_action( 'plugins_loaded', array( PointTypeConversionsPage::class, 'init' ), 10 );
 		}
 	}
 
@@ -203,6 +206,7 @@ final class WB_Gamification {
 		( new MembersController() )->register_routes();
 		( new PointsController() )->register_routes();
 		( new PointTypesController() )->register_routes();
+		( new PointTypeConversionsController() )->register_routes();
 		( new BadgesController() )->register_routes();
 		( new LeaderboardController() )->register_routes();
 		( new ActionsController() )->register_routes();

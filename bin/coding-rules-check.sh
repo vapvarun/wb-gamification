@@ -79,6 +79,7 @@ check_unauthenticated_rest_allowlist() {
         'LevelsController.php'        # /levels — public level defs
         'OpenApiController.php'       # /openapi.json — public spec
         'PointTypesController.php'    # /point-types READ — public catalogue (consumers need it to scope queries)
+        'PointTypeConversionsController.php' # /point-type-conversions READ — public list of active conversion rules
         'RedemptionController.php'    # /redemptions/items READ — public catalog
     )
 
