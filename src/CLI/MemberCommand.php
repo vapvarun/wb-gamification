@@ -27,8 +27,9 @@ class MemberCommand {
 	 *
 	 * ## OPTIONS
 	 *
-	 * --user=<id>
-	 * : User ID, login name, or email address.
+	 * <user>
+	 * : User ID, login name, or email address. Positional because --user= is
+	 *   a reserved WP-CLI global flag.
 	 *
 	 * [--type=<slug>]
 	 * : Show the balance for a single point-type only (e.g. 'points',
@@ -36,15 +37,15 @@ class MemberCommand {
 	 *
 	 * ## EXAMPLES
 	 *
-	 *   wp wb-gamification member status --user=42
-	 *   wp wb-gamification member status --user=jane@example.com
-	 *   wp wb-gamification member status --user=42 --type=coins
+	 *   wp wb-gamification member status 42
+	 *   wp wb-gamification member status jane@example.com
+	 *   wp wb-gamification member status 42 --type=coins
 	 *
-	 * @param array $args       Positional args (unused).
+	 * @param array $args       Positional args ([0] = user reference).
 	 * @param array $assoc_args Named args.
 	 */
 	public function status( array $args, array $assoc_args ): void {
-		$user = $this->resolve_user( $assoc_args['user'] ?? '' );
+		$user = $this->resolve_user( (string) ( $args[0] ?? '' ) );
 
 		if ( ! $user ) {
 			\WP_CLI::error( 'User not found.' );

@@ -29,22 +29,23 @@ class ExportCommand {
 	 *
 	 * ## OPTIONS
 	 *
-	 * --user=<id>
-	 * : User ID, login name, or email address.
+	 * <user>
+	 * : User ID, login name, or email address. Positional because --user= is
+	 *   a reserved WP-CLI global flag.
 	 *
 	 * [--format=<fmt>]
 	 * : Output format. Only 'json' is supported. Default: json.
 	 *
 	 * ## EXAMPLES
 	 *
-	 *   wp wb-gamification export user --user=42
-	 *   wp wb-gamification export user --user=jane@example.com > export.json
+	 *   wp wb-gamification export user 42
+	 *   wp wb-gamification export user jane@example.com > export.json
 	 *
-	 * @param array $args       Positional args (unused).
+	 * @param array $args       Positional args ([0] = user reference).
 	 * @param array $assoc_args Named args.
 	 */
 	public function user( array $args, array $assoc_args ): void {
-		$user   = $this->resolve_user( $assoc_args['user'] ?? '' );
+		$user   = $this->resolve_user( (string) ( $args[0] ?? '' ) );
 		$format = $assoc_args['format'] ?? 'json';
 
 		if ( ! $user ) {

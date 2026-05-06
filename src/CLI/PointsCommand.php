@@ -27,8 +27,10 @@ class PointsCommand {
 	 *
 	 * ## OPTIONS
 	 *
-	 * --user=<id>
-	 * : User ID, login name, or email address.
+	 * <user>
+	 * : User ID, login name, or email address. Positional rather than
+	 *   --user= because --user is a reserved WP-CLI global flag (runs the
+	 *   command as that user instead of routing it to the subcommand).
 	 *
 	 * --points=<n>
 	 * : Number of points to award (positive integer).
@@ -45,15 +47,15 @@ class PointsCommand {
 	 *
 	 * ## EXAMPLES
 	 *
-	 *   wp wb-gamification points award --user=42 --points=100
-	 *   wp wb-gamification points award --user=jane --points=50 --message="Community hero this month"
-	 *   wp wb-gamification points award --user=42 --points=10 --type=coins
+	 *   wp wb-gamification points award 42 --points=100
+	 *   wp wb-gamification points award jane --points=50 --message="Community hero this month"
+	 *   wp wb-gamification points award 42 --points=10 --type=coins
 	 *
-	 * @param array $args       Positional args (unused).
+	 * @param array $args       Positional args ([0] = user reference).
 	 * @param array $assoc_args Named args.
 	 */
 	public function award( array $args, array $assoc_args ): void {
-		$user   = $this->resolve_user( $assoc_args['user'] ?? '' );
+		$user   = $this->resolve_user( (string) ( $args[0] ?? '' ) );
 		$points = (int) ( $assoc_args['points'] ?? 0 );
 
 		if ( ! $user ) {

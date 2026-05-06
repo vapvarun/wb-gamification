@@ -49,22 +49,23 @@ class ReplayCommand {
 	 *
 	 * ## OPTIONS
 	 *
-	 * --user=<id>
-	 * : User ID, login name, or email address.
+	 * <user>
+	 * : User ID, login name, or email address. Positional because --user= is
+	 *   a reserved WP-CLI global flag.
 	 *
 	 * [--dry-run]
 	 * : Print what WOULD be awarded, but don't grant anything.
 	 *
 	 * ## EXAMPLES
 	 *
-	 *   wp wb-gamification replay user --user=42
-	 *   wp wb-gamification replay user --user=jane@example.com --dry-run
+	 *   wp wb-gamification replay user 42
+	 *   wp wb-gamification replay user jane@example.com --dry-run
 	 *
-	 * @param array $args       Positional args (unused).
+	 * @param array $args       Positional args ([0] = user reference).
 	 * @param array $assoc_args Named args.
 	 */
 	public function user( array $args, array $assoc_args ): void {
-		$user = $this->resolve_user( $assoc_args['user'] ?? '' );
+		$user = $this->resolve_user( (string) ( $args[0] ?? '' ) );
 		if ( ! $user ) {
 			\WP_CLI::error( 'User not found.' );
 		}

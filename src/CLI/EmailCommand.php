@@ -33,22 +33,23 @@ class EmailCommand {
 	 *
 	 * ## OPTIONS
 	 *
-	 * --user=<id>
-	 * : User ID, login name, or email address.
+	 * <user>
+	 * : User ID, login name, or email address. Positional because --user= is
+	 *   a reserved WP-CLI global flag.
 	 *
 	 * --event=<slug>
 	 * : Email type. One of: level_up | badge_earned | challenge_completed | weekly_recap | leaderboard_nudge.
 	 *
 	 * ## EXAMPLES
 	 *
-	 *   wp wb-gamification email-test --user=42 --event=level_up
-	 *   wp wb-gamification email-test --user=jane --event=badge_earned
+	 *   wp wb-gamification email-test 42 --event=level_up
+	 *   wp wb-gamification email-test jane --event=badge_earned
 	 *
-	 * @param array $args       Positional args (unused).
+	 * @param array $args       Positional args ([0] = user reference).
 	 * @param array $assoc_args Named args.
 	 */
 	public function test( array $args, array $assoc_args ): void {
-		$user = $this->resolve_user( $assoc_args['user'] ?? '' );
+		$user = $this->resolve_user( (string) ( $args[0] ?? '' ) );
 		$event = sanitize_key( $assoc_args['event'] ?? '' );
 
 		if ( ! $user ) {
