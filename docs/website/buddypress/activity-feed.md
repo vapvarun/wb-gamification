@@ -10,10 +10,10 @@ All four event types are registered under the `wb_gamification` component and ap
 
 | Event | Activity Type | Hook That Triggers It |
 |-------|--------------|----------------------|
-| Badge earned | `badge_earned` | `wb_gamification_badge_awarded` |
-| Level reached | `level_changed` | `wb_gamification_level_changed` |
-| Kudos given | `kudos_given` | `wb_gamification_kudos_given` |
-| Challenge completed | `challenge_completed` | `wb_gamification_challenge_completed` |
+| Badge earned | `badge_earned` | `wb_gam_badge_awarded` |
+| Level reached | `level_changed` | `wb_gam_level_changed` |
+| Kudos given | `kudos_given` | `wb_gam_kudos_given` |
+| Challenge completed | `challenge_completed` | `wb_gam_challenge_completed` |
 
 Each activity entry links back to the member's BuddyPress profile URL via `bp_core_get_user_domain()`.
 
@@ -48,11 +48,11 @@ You can also toggle these from the admin settings page without writing code.
 
 ## Quality-Weighted Reactions
 
-`ActivityIntegration` also hooks into the `wb_gamification_points_for_action` filter to apply a quality bonus. When a member receives a reaction on an `activity_update` post (rather than a comment or other type), the points awarded for `bp_reactions_received` are boosted to a minimum of 5 (compared to the default 3).
+`ActivityIntegration` also hooks into the `wb_gam_points_for_action` filter to apply a quality bonus. When a member receives a reaction on an `activity_update` post (rather than a comment or other type), the points awarded for `bp_reactions_received` are boosted to a minimum of 5 (compared to the default 3).
 
 ```php
 // This filter runs at priority 10 inside ActivityIntegration.
-add_filter( 'wb_gamification_points_for_action', function( $points, $action_id, $user_id, $event ) {
+add_filter( 'wb_gam_points_for_action', function( $points, $action_id, $user_id, $event ) {
     // Only modifies bp_reactions_received on activity_update posts.
     if ( 'bp_reactions_received' === $action_id && 'activity_update' === ( $event->metadata['activity_type'] ?? '' ) ) {
         return max( $points, 5 );

@@ -5,7 +5,7 @@
  * Use case: add a custom column or annotation to the leaderboard
  * results without forking the leaderboard block.
  *
- * The wb_gamification_leaderboard_results filter runs in
+ * The wb_gam_leaderboard_results filter runs in
  * LeaderboardController::get_leaderboard right before the response is
  * returned. It receives the rows array and lets you transform it.
  *
@@ -21,7 +21,7 @@ defined( 'ABSPATH' ) || exit;
  * flow or a profile-field plugin) and adds it to each row.
  */
 add_filter(
-	'wb_gamification_leaderboard_results',
+	'wb_gam_leaderboard_results',
 	function ( array $rows, array $args ): array {
 		foreach ( $rows as &$row ) {
 			$country = get_user_meta( $row['user_id'], 'country', true );
@@ -42,7 +42,7 @@ add_filter(
  * via REST: GET /leaderboard?scope_type=country&scope_id=US
  */
 add_filter(
-	'wb_gamification_leaderboard_results',
+	'wb_gam_leaderboard_results',
 	function ( array $rows, array $args ): array {
 		if ( ( $args['scope']['type'] ?? '' ) !== 'country' ) {
 			return $rows;
@@ -79,7 +79,7 @@ add_filter(
  * leaderboards (>50 rows), batch the query or pre-compute via cron.
  */
 add_filter(
-	'wb_gamification_leaderboard_results',
+	'wb_gam_leaderboard_results',
 	function ( array $rows, array $args ): array {
 		global $wpdb;
 
@@ -122,9 +122,9 @@ function yourplugin_country_to_flag_emoji( string $code ): string {
  * filter the snapshot before it's written:
  */
 add_filter(
-	'wb_gamification_leaderboard_snapshot',
+	'wb_gam_leaderboard_snapshot',
 	function ( array $snapshot, string $period ): array {
-		// Same shape as wb_gamification_leaderboard_results — apply same
+		// Same shape as wb_gam_leaderboard_results — apply same
 		// transforms to keep cached + live consistent.
 		return $snapshot;
 	},

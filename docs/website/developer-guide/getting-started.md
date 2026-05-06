@@ -21,7 +21,7 @@ The fastest way is a **manifest file** -- a single PHP file that tells WB Gamifi
 
 ```php
 // Register a custom action programmatically.
-wb_gamification_register_action( array(
+wb_gam_register_action( array(
     'id'             => 'my_plugin_action',
     'label'          => 'Custom Action',
     'hook'           => 'my_plugin_did_something',
@@ -159,9 +159,9 @@ Output Consumers
 
 | Layer | How to extend | Documentation |
 |-------|--------------|---------------|
-| **Add actions** | Manifest file or `wb_gamification_register_action()` | [Manifest tutorial](build-first-integration.md) |
-| **Modify points** | `wb_gamification_points_for_action` filter | [Hooks reference](hooks-filters.md) |
-| **Custom badge rules** | `wb_gamification_should_award_badge` filter | [Hooks reference](hooks-filters.md) |
+| **Add actions** | Manifest file or `wb_gam_register_action()` | [Manifest tutorial](build-first-integration.md) |
+| **Modify points** | `wb_gam_points_for_action` filter | [Hooks reference](hooks-filters.md) |
+| **Custom badge rules** | `wb_gam_should_award_badge` filter | [Hooks reference](hooks-filters.md) |
 | **React to events** | `wb_gam_after_points_award` action | [Hooks reference](hooks-filters.md) |
 | **React to badges** | `wb_gam_after_badge_award` action | [Hooks reference](hooks-filters.md) |
 | **React to levels** | `wb_gam_level_changed` action | [Hooks reference](hooks-filters.md) |

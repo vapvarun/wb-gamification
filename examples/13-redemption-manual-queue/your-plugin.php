@@ -25,7 +25,7 @@ const RMQ_NONCE = 'rmq_mark_fulfilled';
 
 // 1. Notify on redemption.
 add_action(
-	'wb_gamification_points_redeemed',
+	'wb_gam_points_redeemed',
 	function ( $redemption_id, $user_id, $item, $coupon_code ) {
 		if ( 'custom' !== ( $item['reward_type'] ?? '' ) ) {
 			return;

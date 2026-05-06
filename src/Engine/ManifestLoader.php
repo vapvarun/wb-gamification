@@ -221,7 +221,7 @@ final class ManifestLoader {
 			// Track the validated action for the wb_gam_manifests_loaded hook.
 			self::$loaded_actions[] = $trigger;
 
-			wb_gamification_register_action( $trigger );
+			wb_gam_register_action( $trigger );
 		}
 	}
 }

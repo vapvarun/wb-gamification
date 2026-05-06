@@ -41,7 +41,7 @@ final class WeeklyEmailEngine {
 
 	private const CRON_HOOK   = 'wb_gam_weekly_email';
 	private const AS_HOOK     = 'wb_gam_weekly_email_user';
-	private const AS_GROUP    = 'wb_gamification_email';
+	private const AS_GROUP    = 'wb_gam_email';
 	private const OPT_ENABLED = 'wb_gam_weekly_email_enabled';
 
 	// ── Boot ────────────────────────────────────────────────────────────────────
@@ -155,7 +155,7 @@ final class WeeklyEmailEngine {
 		 * @param \WP_User $user    Recipient.
 		 * @param array    $data    Summary data.
 		 */
-		$body = (string) apply_filters( 'wb_gamification_weekly_email_body', $body, $user, $data );
+		$body = (string) apply_filters( 'wb_gam_weekly_email_body', $body, $user, $data );
 
 		$sent = wp_mail( $user->user_email, $subject, $body, $headers );
 		if ( ! $sent ) {
@@ -175,7 +175,7 @@ final class WeeklyEmailEngine {
 		 * @param int   $user_id User who received the email.
 		 * @param array $data    Summary data.
 		 */
-		do_action( 'wb_gamification_weekly_email_sent', $user_id, $data );
+		do_action( 'wb_gam_weekly_email_sent', $user_id, $data );
 	}
 
 	// ── Data gathering ───────────────────────────────────────────────────────────
@@ -292,7 +292,7 @@ final class WeeklyEmailEngine {
 	 *
 	 *   YOUR-THEME/wb-gamification/emails/weekly-recap.php
 	 *
-	 * Or filter `wb_gamification_email_template_path` for full
+	 * Or filter `wb_gam_email_template_path` for full
 	 * programmatic override.
 	 *
 	 * @param \WP_User $user WP_User object for the recipient.

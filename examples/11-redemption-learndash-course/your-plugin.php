@@ -5,7 +5,7 @@
  * Version: 1.0.0
  *
  * Why this lives in examples/ — WB Gamification's RedemptionEngine fires
- * `wb_gamification_points_redeemed` after every successful redemption. For
+ * `wb_gam_points_redeemed` after every successful redemption. For
  * the built-in WooCommerce + Wbcom Credits types the engine fulfils itself.
  * For `custom` rewards it parks the row at status='pending_fulfillment' and
  * defers to listeners like this one.
@@ -25,7 +25,7 @@
 defined( 'ABSPATH' ) || exit;
 
 add_action(
-	'wb_gamification_points_redeemed',
+	'wb_gam_points_redeemed',
 	function ( $redemption_id, $user_id, $item, $coupon_code ) {
 		// Bail unless this is a custom-type reward.
 		if ( 'custom' !== ( $item['reward_type'] ?? '' ) ) {

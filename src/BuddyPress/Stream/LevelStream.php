@@ -3,7 +3,7 @@
  * WB Gamification — BuddyPress level_changed stream poster.
  *
  * LevelEngine fires:
- *   do_action( 'wb_gamification_level_changed', $user_id, $old_level_id, $new_level_id )
+ *   do_action( 'wb_gam_level_changed', $user_id, $old_level_id, $new_level_id )
  *
  * @package WB_Gamification
  * @since   1.2.1
@@ -28,7 +28,7 @@ final class LevelStream {
 	 * Wire the engine action to this poster.
 	 */
 	public static function init(): void {
-		add_action( 'wb_gamification_level_changed', array( __CLASS__, 'post' ), 10, 3 );
+		add_action( 'wb_gam_level_changed', array( __CLASS__, 'post' ), 10, 3 );
 	}
 
 	/**

@@ -17,9 +17,9 @@ All hooks register on `plugins_loaded`. The priority order ensures each layer is
 | 0 | `WB_Gamification::instance()` | Registers all hooks, constants, autoloader |
 | 1 | `DbUpgrader::init()` | Runs schema migrations if `wb_gam_db_version` is behind |
 | 5 | `ManifestLoader::scan()` | Auto-discovers `wb-gamification.php` manifests in every plugin directory |
-| 6 | `Registry::init()` | Registers discovered actions and badge triggers; fires `wb_gamification_register` |
+| 6 | `Registry::init()` | Registers discovered actions and badge triggers; fires `wb_gam_register` |
 | 8 | `Engine::init()`, `WPHooks`, `BPHooks` | Boots the event pipeline; registers WordPress and BuddyPress trigger hooks |
-| 10 | `BadgeEngine`, `ChallengeEngine`, `StreakEngine`, etc. | Secondary engines subscribe to `wb_gamification_points_awarded` |
+| 10 | `BadgeEngine`, `ChallengeEngine`, `StreakEngine`, etc. | Secondary engines subscribe to `wb_gam_points_awarded` |
 | 12 | `NotificationBridge` | Subscribes to badge/level/streak hooks to dispatch BP notifications |
 | 15 | `Privacy` | Registers GDPR erasure and export handlers |
 | 20 | `SiteFirstBadgeEngine` | Subscribes last so site-first-action checks see all other state |
@@ -47,16 +47,16 @@ Every gamification event flows through `Engine::process()` in this order:
 1. Validate (user_id > 0, action_id not empty)
 2. Check action enabled  (get_option wb_gam_enabled_{action_id})
 3. Rate-limit gate       (daily_cap, cooldown — PointsEngine::passes_rate_limits())
-4. Enrich metadata       (apply_filters: wb_gamification_event_metadata)
-5. Before-evaluate gate  (apply_filters: wb_gamification_before_evaluate — return false to abort)
+4. Enrich metadata       (apply_filters: wb_gam_event_metadata)
+5. Before-evaluate gate  (apply_filters: wb_gam_before_evaluate — return false to abort)
 6. Persist event         (INSERT wb_gam_events — UUID PK, immutable)
-7. Calculate points      (admin option → wb_gamification_points_for_action filter → RuleEngine multipliers)
+7. Calculate points      (admin option → wb_gam_points_for_action filter → RuleEngine multipliers)
 8. Write points ledger   (INSERT wb_gam_points with event_id FK)
-9. Fire hooks            (do_action: wb_gamification_points_awarded)
+9. Fire hooks            (do_action: wb_gam_points_awarded)
 10. Side effects         (LevelEngine::maybe_level_up, StreakEngine::record_activity, WebhookDispatcher::dispatch)
 ```
 
-Steps 1–5 are synchronous and write nothing. Steps 6–10 are the only database writes. This means `apply_filters('wb_gamification_before_evaluate', true, $event)` can abort processing without leaving any trace in the database.
+Steps 1–5 are synchronous and write nothing. Steps 6–10 are the only database writes. This means `apply_filters('wb_gam_before_evaluate', true, $event)` can abort processing without leaving any trace in the database.
 
 ## Async Processing
 

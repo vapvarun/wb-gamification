@@ -26,7 +26,7 @@ add_action( 'wb_gam_engines_booted', 'yourplugin_register_custom_badges' );
  * condition; the engine handles the actual awarding.
  */
 function yourplugin_register_custom_badges(): void {
-	if ( ! function_exists( 'wb_gamification_register_badge_trigger' ) ) {
+	if ( ! function_exists( 'wb_gam_register_badge_trigger' ) ) {
 		return;
 	}
 
@@ -38,7 +38,7 @@ function yourplugin_register_custom_badges(): void {
 	 * runs an additional time-of-day check, and awards the badge if it
 	 * passes.
 	 */
-	wb_gamification_register_badge_trigger( [
+	wb_gam_register_badge_trigger( [
 		'id'          => 'night_owl',
 		'label'       => __( 'Night Owl', 'your-plugin' ),
 		'description' => __( 'Awarded for commenting between midnight and 4 AM.', 'your-plugin' ),
@@ -71,7 +71,7 @@ function yourplugin_register_custom_badges(): void {
 	 * Demonstrates state-tracking via user meta. The condition closure
 	 * counts distinct dates and awards once on the 7th day.
 	 */
-	wb_gamification_register_badge_trigger( [
+	wb_gam_register_badge_trigger( [
 		'id'          => 'comment_streak',
 		'label'       => __( 'Comment Streak', 'your-plugin' ),
 		'description' => __( 'Awarded for commenting 7 days in a row.', 'your-plugin' ),
@@ -126,7 +126,7 @@ function yourplugin_register_custom_badges(): void {
  * For example, "don't award the night_owl badge to admins":
  */
 add_filter(
-	'wb_gamification_should_award_badge',
+	'wb_gam_should_award_badge',
 	function ( bool $should_award, string $badge_id, int $user_id ) {
 		if ( 'night_owl' !== $badge_id ) {
 			return $should_award;

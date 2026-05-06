@@ -8,9 +8,9 @@
  * How it works:
  *   1. Admin creates a community challenge (title, target_action, target_count,
  *      starts_at, ends_at, bonus_points).
- *   2. Engine hooks `wb_gamification_points_awarded` — every matching event
+ *   2. Engine hooks `wb_gam_points_awarded` — every matching event
  *      increments the global counter atomically.
- *   3. When counter reaches target, Engine fires `wb_gamification_community_challenge_completed`
+ *   3. When counter reaches target, Engine fires `wb_gam_community_challenge_completed`
  *      and awards bonus_points to every user who contributed at least one event.
  *   4. A live counter is served via REST at GET /community-challenges/{id}.
  *
@@ -36,7 +36,7 @@ final class CommunityChallengeEngine {
 	 * Register the points-awarded hook for community challenge processing.
 	 */
 	public static function init(): void {
-		add_action( 'wb_gamification_points_awarded', array( __CLASS__, 'on_points_awarded' ), 20, 3 );
+		add_action( 'wb_gam_points_awarded', array( __CLASS__, 'on_points_awarded' ), 20, 3 );
 	}
 
 	// ── Event hook ──────────────────────────────────────────────────────────
@@ -177,7 +177,7 @@ final class CommunityChallengeEngine {
 		 * @param int $bonus_points  Bonus points awarded to contributors.
 		 * @param int $contributors  Number of contributing users.
 		 */
-		do_action( 'wb_gamification_community_challenge_completed', $challenge_id, $bonus_points, count( $contributors ) );
+		do_action( 'wb_gam_community_challenge_completed', $challenge_id, $bonus_points, count( $contributors ) );
 	}
 
 	// ── Public API ───────────────────────────────────────────────────────────

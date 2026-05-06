@@ -158,7 +158,7 @@ final class CohortSettingsController extends WP_REST_Controller {
 
 		do_action( 'wb_gam_after_save_cohort_settings', $settings, $enabled, $request );
 		// Backwards-compatible legacy hook (kept until 1.1.0).
-		do_action( 'wb_gamification_cohort_settings_saved', $settings, $enabled );
+		do_action( 'wb_gam_cohort_settings_saved', $settings, $enabled );
 
 		return new WP_REST_Response( $this->current_state(), 200 );
 	}

@@ -197,6 +197,6 @@ final class StatusRetentionEngine {
 		 * @param int    $pts_needed Points gap to next level.
 		 * @param string $message   Human-readable nudge message.
 		 */
-		do_action( 'wb_gamification_retention_nudge', $user_id, $level, $next, $pts_needed, $message );
+		do_action( 'wb_gam_retention_nudge', $user_id, $level, $next, $pts_needed, $message );
 	}
 }

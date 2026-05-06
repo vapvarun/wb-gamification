@@ -48,7 +48,7 @@ final class Registry {
 	private static bool $initialized = false;
 
 	/**
-	 * Initialize the registry — fires 'wb_gamification_register' action
+	 * Initialize the registry — fires 'wb_gam_register' action
 	 * so all extensions can register their actions.
 	 */
 	public static function init(): void {
@@ -63,7 +63,7 @@ final class Registry {
 		 *
 		 * @since 0.1.0
 		 */
-		do_action( 'wb_gamification_register' );
+		do_action( 'wb_gam_register' );
 	}
 
 	/**

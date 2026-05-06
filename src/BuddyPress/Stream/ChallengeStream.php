@@ -3,7 +3,7 @@
  * WB Gamification — BuddyPress challenge_completed stream poster.
  *
  * ChallengeEngine fires:
- *   do_action( 'wb_gamification_challenge_completed', $user_id, $challenge_array )
+ *   do_action( 'wb_gam_challenge_completed', $user_id, $challenge_array )
  *
  * @package WB_Gamification
  * @since   1.2.1
@@ -28,7 +28,7 @@ final class ChallengeStream {
 	 * Wire the engine action to this poster.
 	 */
 	public static function init(): void {
-		add_action( 'wb_gamification_challenge_completed', array( __CLASS__, 'post' ), 10, 2 );
+		add_action( 'wb_gam_challenge_completed', array( __CLASS__, 'post' ), 10, 2 );
 	}
 
 	/**

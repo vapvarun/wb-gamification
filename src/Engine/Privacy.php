@@ -281,7 +281,26 @@ final class Privacy {
 		$user_id = (int) $user->ID;
 		global $wpdb;
 
+		// Snapshot the per-type currencies BEFORE we delete user_totals so we
+		// can bust the matching object-cache keys after the transaction commits.
+		$pt_slugs = array_column(
+			(array) $wpdb->get_results(
+				$wpdb->prepare(
+					"SELECT DISTINCT point_type FROM {$wpdb->prefix}wb_gam_user_totals WHERE user_id = %d",
+					$user_id
+				),
+				ARRAY_A
+			),
+			'point_type'
+		);
+
 		$removed = 0;
+
+		// Atomic erase — every delete must succeed or none. Without the
+		// transaction, an interruption between deletes leaves an inconsistent
+		// half-erased state (e.g. ledger gone but user_totals intact, which
+		// would let get_total() keep returning the stale balance).
+		$wpdb->query( 'START TRANSACTION' );
 
 		// Events log.
 		$removed += (int) $wpdb->delete( $wpdb->prefix . 'wb_gam_events', array( 'user_id' => $user_id ), array( '%d' ) );
@@ -323,15 +342,21 @@ final class Privacy {
 			array( '%d', '%s' )
 		);
 
-		// Bust object cache.
-		wp_cache_delete( 'wb_gam_points_' . $user_id, 'wb_gamification' );
+		$wpdb->query( 'COMMIT' );
+
+		// Bust the per-type object-cache key matching what get_total reads.
+		// Without this loop, get_total returns the cached pre-erase balance
+		// for up to the cache TTL after the user's data is gone.
+		foreach ( $pt_slugs as $slug ) {
+			wp_cache_delete( PointsEngine::cache_key_total( $user_id, (string) $slug ), 'wb_gamification' );
+		}
 
 		/**
 		 * Fires after a user's gamification data has been erased.
 		 *
 		 * @param int $user_id The user ID whose data was erased.
 		 */
-		do_action( 'wb_gamification_user_data_erased', $user_id );
+		do_action( 'wb_gam_user_data_erased', $user_id );
 
 		return array(
 			'items_removed'  => $removed > 0,

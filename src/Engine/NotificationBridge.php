@@ -37,12 +37,12 @@ final class NotificationBridge {
 	 */
 	public static function init(): void {
 		// Collect events from action hooks.
-		add_action( 'wb_gamification_points_awarded', array( __CLASS__, 'on_points_awarded' ), 99, 3 );
-		add_action( 'wb_gamification_badge_awarded', array( __CLASS__, 'on_badge_awarded' ), 99, 3 );
-		add_action( 'wb_gamification_level_changed', array( __CLASS__, 'on_level_changed' ), 99, 3 );
-		add_action( 'wb_gamification_streak_milestone', array( __CLASS__, 'on_streak_milestone' ), 99, 2 );
-		add_action( 'wb_gamification_challenge_completed', array( __CLASS__, 'on_challenge_completed' ), 99, 2 );
-		add_action( 'wb_gamification_kudos_given', array( __CLASS__, 'on_kudos_given' ), 99, 4 );
+		add_action( 'wb_gam_points_awarded', array( __CLASS__, 'on_points_awarded' ), 99, 3 );
+		add_action( 'wb_gam_badge_awarded', array( __CLASS__, 'on_badge_awarded' ), 99, 3 );
+		add_action( 'wb_gam_level_changed', array( __CLASS__, 'on_level_changed' ), 99, 3 );
+		add_action( 'wb_gam_streak_milestone', array( __CLASS__, 'on_streak_milestone' ), 99, 2 );
+		add_action( 'wb_gam_challenge_completed', array( __CLASS__, 'on_challenge_completed' ), 99, 2 );
+		add_action( 'wb_gam_kudos_given', array( __CLASS__, 'on_kudos_given' ), 99, 4 );
 
 		// Output markup + seed script once, in the footer.
 		add_action( 'wp_footer', array( __CLASS__, 'render' ), 5 );
@@ -77,7 +77,7 @@ final class NotificationBridge {
 	/**
 	 * Queue a badge notification for the user.
 	 *
-	 * BadgeEngine fires: do_action( 'wb_gamification_badge_awarded', $user_id, $def, $badge_id )
+	 * BadgeEngine fires: do_action( 'wb_gam_badge_awarded', $user_id, $def, $badge_id )
 	 *
 	 * @param int    $user_id  User who earned the badge.
 	 * @param array  $badge    Badge definition array (name, description, image_url, …).
@@ -102,7 +102,7 @@ final class NotificationBridge {
 	/**
 	 * Queue a level-up notification for the user.
 	 *
-	 * LevelEngine fires: do_action( 'wb_gamification_level_changed', $user_id, $old_level_id, $new_level_id )
+	 * LevelEngine fires: do_action( 'wb_gam_level_changed', $user_id, $old_level_id, $new_level_id )
 	 *
 	 * @param int $user_id      User who levelled up.
 	 * @param int $old_level_id Previous level ID (unused, retained for hook signature).
@@ -328,7 +328,7 @@ final class NotificationBridge {
 		 * @param array $event   Notification data (type, message, detail, icon).
 		 * @param int   $user_id User who will see the toast.
 		 */
-		$event = (array) apply_filters( 'wb_gamification_toast_data', $event, $user_id );
+		$event = (array) apply_filters( 'wb_gam_toast_data', $event, $user_id );
 		if ( empty( $event ) ) {
 			return;
 		}

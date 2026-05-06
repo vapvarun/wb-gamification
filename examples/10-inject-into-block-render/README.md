@@ -72,7 +72,7 @@ Generic `after_render` listener that counts render impressions per block. Useful
 | Empty state (e.g. user not logged in, no data) | NO — extension shouldn't fire for non-renders | NO |
 | Main render path | YES (right before the wrapper `<div>`) | YES (right after the closing `</div>`) |
 
-Empty-state paths intentionally skip the hooks. If your extension needs to know about empty states, listen to the underlying engine event (e.g. `wb_gamification_streak_broken`) instead.
+Empty-state paths intentionally skip the hooks. If your extension needs to know about empty states, listen to the underlying engine event (e.g. `wb_gam_streak_broken`) instead.
 
 ## What you can do
 

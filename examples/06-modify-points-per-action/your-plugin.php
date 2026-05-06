@@ -6,7 +6,7 @@
  * touching the engine, you can transform the points awarded for any
  * action just before they're written to the ledger.
  *
- * The wb_gamification_points_for_action filter runs INSIDE PointsEngine
+ * The wb_gam_points_for_action filter runs INSIDE PointsEngine
  * just before the points row is inserted, after rate-limiting, after
  * before-evaluate, before the points_awarded action fires.
  *
@@ -22,7 +22,7 @@ defined( 'ABSPATH' ) || exit;
  * Premium members get 1.5×.
  */
 add_filter(
-	'wb_gamification_points_for_action',
+	'wb_gam_points_for_action',
 	function ( int $points, string $action_id, int $user_id ): int {
 		$tier = get_user_meta( $user_id, 'yourplugin_membership_tier', true );
 
@@ -48,7 +48,7 @@ add_filter(
  * The filter receives the action_id, so we can check before mutating.
  */
 add_filter(
-	'wb_gamification_points_for_action',
+	'wb_gam_points_for_action',
 	function ( int $points, string $action_id, int $user_id ): int {
 		if ( 'wp_publish_post' !== $action_id ) {
 			return $points;
@@ -90,7 +90,7 @@ add_filter(
  * 2026-06-01 and 2026-06-08 inclusive.
  */
 add_filter(
-	'wb_gamification_points_for_action',
+	'wb_gam_points_for_action',
 	function ( int $points, string $action_id, int $user_id ): int {
 		$campaign_start = strtotime( '2026-06-01 00:00:00 UTC' );
 		$campaign_end   = strtotime( '2026-06-08 23:59:59 UTC' );
@@ -115,7 +115,7 @@ add_filter(
  * before relying.)
  */
 add_filter(
-	'wb_gamification_points_for_action',
+	'wb_gam_points_for_action',
 	function ( int $points, string $action_id, int $user_id ): int {
 		// Don't award points to users flagged as spam-suspected
 		$is_suspicious = get_user_meta( $user_id, '_anti_spam_flagged', true );
@@ -132,12 +132,12 @@ add_filter(
 /**
  * Bonus: track HOW the multiplier was applied.
  *
- * Hook the wb_gamification_points_awarded action to log the final
+ * Hook the wb_gam_points_awarded action to log the final
  * value — useful for support / debugging when users ask "why did I
  * only get N points?"
  */
 add_action(
-	'wb_gamification_points_awarded',
+	'wb_gam_points_awarded',
 	function ( int $user_id, int $points, string $reason ) {
 		if ( ! defined( 'YOURPLUGIN_DEBUG' ) || ! YOURPLUGIN_DEBUG ) {
 			return;

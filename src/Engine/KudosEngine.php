@@ -11,7 +11,7 @@
  *                     giver   gets `wb_gam_kudos_giver_points`    (default 2).
  *   - Both awards flow through Engine::process() — full pipeline:
  *     event log, badge evaluation, level-up, streaks, webhooks.
- *   - Fires `wb_gamification_kudos_given` after successful DB insert.
+ *   - Fires `wb_gam_kudos_given` after successful DB insert.
  *
  * @package WB_Gamification
  * @since   0.1.0
@@ -87,7 +87,7 @@ final class KudosEngine {
 		 * @param int           $receiver_id User receiving kudos.
 		 * @param string        $message     Optional kudos message.
 		 */
-		$gate = apply_filters( 'wb_gamification_before_kudos', true, $giver_id, $receiver_id, $message );
+		$gate = apply_filters( 'wb_gam_before_kudos', true, $giver_id, $receiver_id, $message );
 		if ( is_wp_error( $gate ) ) {
 			return $gate;
 		}
@@ -159,7 +159,7 @@ final class KudosEngine {
 		 * @param string $message     Optional kudos message.
 		 * @param int    $kudos_id    DB row ID of the new kudos record.
 		 */
-		do_action( 'wb_gamification_kudos_given', $giver_id, $receiver_id, $message, $kudos_id );
+		do_action( 'wb_gam_kudos_given', $giver_id, $receiver_id, $message, $kudos_id );
 
 		/**
 		 * Fires after kudos are given.

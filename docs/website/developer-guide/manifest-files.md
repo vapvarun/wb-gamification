@@ -59,7 +59,7 @@ return [
 | `description` | string | No | Longer description shown in tooltips and the setup wizard |
 | `hook` | string | Yes | WordPress action hook name to listen on |
 | `user_callback` | callable | Yes | Receives the hook arguments. Must return the WordPress user ID to award points to |
-| `metadata_callback` | callable | No | Receives the hook arguments. Returns an array merged into event metadata (available in `wb_gamification_points_for_action` filter) |
+| `metadata_callback` | callable | No | Receives the hook arguments. Returns an array merged into event metadata (available in `wb_gam_points_for_action` filter) |
 | `default_points` | int | Yes | Default points awarded. Admins can override this in the settings UI |
 | `category` | string | No | Category slug for grouping in the admin UI (e.g. `buddypress`, `woocommerce`) |
 | `icon` | string | No | Dashicon class (e.g. `dashicons-heart`) for the admin UI |
@@ -166,8 +166,8 @@ Both flags are stripped from the trigger before it is passed to `Registry::regis
 You can also call the PHP helper directly instead of using a manifest file. This is useful when your trigger logic is complex enough to warrant a full class:
 
 ```php
-add_action( 'wb_gamification_register', function() {
-    wb_gamification_register_action( [
+add_action( 'wb_gam_register', function() {
+    wb_gam_register_action( [
         'id'             => 'my_plugin_action',
         'label'          => 'My Action',
         'hook'           => 'my_plugin_hook',

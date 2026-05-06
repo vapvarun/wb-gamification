@@ -6,7 +6,7 @@ All functions are defined in `src/Extensions/functions.php` and available global
 
 ## Action Registration
 
-### `wb_gamification_register_action( array $args ): void`
+### `wb_gam_register_action( array $args ): void`
 
 Register a custom action that awards points when a WordPress hook fires. Routes directly to `Registry::register_action()`.
 
@@ -26,8 +26,8 @@ Register a custom action that awards points when a WordPress hook fires. Routes 
 | `$args['weekly_cap']` | int | No | Max awards per week. `0` = unlimited |
 
 ```php
-add_action( 'wb_gamification_register', function() {
-    wb_gamification_register_action( [
+add_action( 'wb_gam_register', function() {
+    wb_gam_register_action( [
         'id'             => 'my_plugin_signup',
         'label'          => 'Signed up via My Plugin',
         'hook'           => 'my_plugin_user_signup',
@@ -39,7 +39,7 @@ add_action( 'wb_gamification_register', function() {
 } );
 ```
 
-### `wb_gamification_register_badge_trigger( array $args ): void`
+### `wb_gam_register_badge_trigger( array $args ): void`
 
 Register a custom badge trigger condition. Routes to `Registry::register_badge_trigger()`.
 
@@ -50,7 +50,7 @@ Register a custom badge trigger condition. Routes to `Registry::register_badge_t
 | `$args['hook']` | string | Yes | WordPress hook to listen on |
 | `$args['condition']` | callable | Yes | Returns `true` when the badge should be awarded |
 
-### `wb_gamification_register_challenge_type( array $args ): void`
+### `wb_gam_register_challenge_type( array $args ): void`
 
 Register a custom challenge type. Routes to `Registry::register_challenge_type()`.
 

@@ -351,6 +351,6 @@ final class CommunityChallengesPage {
 	// challenges are now written by CommunityChallengesController (POST
 	// /community-challenges and POST /community-challenges/{id}; DELETE
 	// /community-challenges/{id}). Backwards-compatible legacy hooks
-	// (wb_gamification_community_challenge_{created,updated,deleted}) still
+	// (wb_gam_community_challenge_{created,updated,deleted}) still
 	// fire from the REST controller until 1.1.0.
 }

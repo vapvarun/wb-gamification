@@ -19,7 +19,7 @@ add_action( 'wb_gam_engines_booted', 'yourplugin_register_custom_challenges' );
  * Register custom challenge types.
  */
 function yourplugin_register_custom_challenges(): void {
-	if ( ! function_exists( 'wb_gamification_register_challenge_type' ) ) {
+	if ( ! function_exists( 'wb_gam_register_challenge_type' ) ) {
 		return;
 	}
 
@@ -29,7 +29,7 @@ function yourplugin_register_custom_challenges(): void {
 	 * Different from the default "do X N times" challenge in that it
 	 * REQUIRES consecutive days. Missing a day resets progress.
 	 */
-	wb_gamification_register_challenge_type( [
+	wb_gam_register_challenge_type( [
 		'id'          => 'streak_challenge',
 		'label'       => __( 'Streak Challenge', 'your-plugin' ),
 		'description' => __( 'Complete an action on N consecutive days. Missing a day resets progress.', 'your-plugin' ),
@@ -81,7 +81,7 @@ function yourplugin_register_custom_challenges(): void {
 	 * Each event counts only if its action_id is unique within the
 	 * challenge window.
 	 */
-	wb_gamification_register_challenge_type( [
+	wb_gam_register_challenge_type( [
 		'id'          => 'diversity_challenge',
 		'label'       => __( 'Diversity Challenge', 'your-plugin' ),
 		'description' => __( 'Perform M different distinct actions during the challenge.', 'your-plugin' ),
@@ -117,12 +117,12 @@ function yourplugin_register_custom_challenges(): void {
 /**
  * Bonus: react to challenge completion.
  *
- * The engine fires wb_gamification_challenge_completed when any
+ * The engine fires wb_gam_challenge_completed when any
  * challenge (built-in or custom) hits its target. Hook this to grant
  * extra rewards beyond the configured bonus_points.
  */
 add_action(
-	'wb_gamification_challenge_completed',
+	'wb_gam_challenge_completed',
 	function ( int $user_id, int $challenge_id ) {
 		// Send a personal congrats email
 		// Or grant a temporary cosmetic via CosmeticEngine

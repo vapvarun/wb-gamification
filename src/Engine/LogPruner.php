@@ -94,14 +94,14 @@ final class LogPruner {
 			'wb_gam_points',
 			(int) get_option( 'wb_gam_log_retention_months', 6 ),
 			$started,
-			'wb_gamification_log_pruned'
+			'wb_gam_log_pruned'
 		);
 
 		self::prune_table(
 			'wb_gam_events',
 			(int) get_option( 'wb_gam_events_retention_months', 12 ),
 			$started,
-			'wb_gamification_events_pruned'
+			'wb_gam_events_pruned'
 		);
 
 		return $points_deleted;

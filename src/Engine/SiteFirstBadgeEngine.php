@@ -60,9 +60,9 @@ final class SiteFirstBadgeEngine {
 	 * Register hooks for level-changed, points-awarded, streak-milestone, and badge seeding.
 	 */
 	public static function init(): void {
-		add_action( 'wb_gamification_level_changed', array( __CLASS__, 'on_level_changed' ), 10, 3 );
-		add_action( 'wb_gamification_points_awarded', array( __CLASS__, 'on_points_awarded' ), 30, 3 );
-		add_action( 'wb_gamification_streak_milestone', array( __CLASS__, 'on_streak_milestone' ), 10, 2 );
+		add_action( 'wb_gam_level_changed', array( __CLASS__, 'on_level_changed' ), 10, 3 );
+		add_action( 'wb_gam_points_awarded', array( __CLASS__, 'on_points_awarded' ), 30, 3 );
+		add_action( 'wb_gam_streak_milestone', array( __CLASS__, 'on_streak_milestone' ), 10, 2 );
 		add_action( 'plugins_loaded', array( __CLASS__, 'ensure_badges_exist' ), 20 );
 	}
 
@@ -71,7 +71,7 @@ final class SiteFirstBadgeEngine {
 	/**
 	 * Check for first-champion badge on level change.
 	 *
-	 * LevelEngine fires: do_action( 'wb_gamification_level_changed', $user_id, $old_level_id, $new_level_id )
+	 * LevelEngine fires: do_action( 'wb_gam_level_changed', $user_id, $old_level_id, $new_level_id )
 	 *
 	 * @param int $user_id      User who levelled up.
 	 * @param int $old_level_id Previous level ID.

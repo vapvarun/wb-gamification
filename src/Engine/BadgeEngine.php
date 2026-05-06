@@ -17,7 +17,7 @@
  *     { "condition_type": "admin_awarded" }
  *
  * Custom condition types can be registered via the
- * `wb_gamification_badge_condition` filter.
+ * `wb_gam_badge_condition` filter.
  *
  * @package WB_Gamification
  * @since   0.1.0
@@ -41,7 +41,7 @@ final class BadgeEngine {
 	 * Boot — hook into the points-awarded action to evaluate conditions.
 	 */
 	public static function init(): void {
-		add_action( 'wb_gamification_points_awarded', array( __CLASS__, 'evaluate_on_award' ), 10, 3 );
+		add_action( 'wb_gam_points_awarded', array( __CLASS__, 'evaluate_on_award' ), 10, 3 );
 	}
 
 	// ── Award pipeline ─────────────────────────────────────────────────────────
@@ -81,7 +81,12 @@ final class BadgeEngine {
 
 		// Load earned badge IDs in one query for in-memory filtering.
 		$earned = self::get_user_earned_badge_ids( $user_id );
-		$total  = PointsEngine::get_total( $user_id );
+
+		// Resolve the currency the triggering event awarded — point_milestone
+		// badges must check the SAME currency, otherwise a "100 coins" badge
+		// would silently grant on the user's points balance instead.
+		$event_type = isset( $event->metadata['point_type'] ) ? (string) $event->metadata['point_type'] : '';
+		$total      = PointsEngine::get_total( $user_id, $event_type ?: null );
 
 		foreach ( $rules as $rule ) {
 			if ( in_array( $rule['badge_id'], $earned, true ) ) {
@@ -144,7 +149,7 @@ final class BadgeEngine {
 				 * @param int    $total   Current point total.
 				 */
 				return (bool) apply_filters(
-					'wb_gamification_badge_condition',
+					'wb_gam_badge_condition',
 					false,
 					$type,
 					$config,
@@ -207,7 +212,7 @@ final class BadgeEngine {
 		 * @param string $badge_id     Badge definition ID.
 		 * @param array  $badge_def    Full badge definition array (name, category, etc.).
 		 */
-		if ( ! (bool) apply_filters( 'wb_gamification_should_award_badge', true, $user_id, $badge_id, $def ?? array() ) ) {
+		if ( ! (bool) apply_filters( 'wb_gam_should_award_badge', true, $user_id, $badge_id, $def ?? array() ) ) {
 			return false;
 		}
 
@@ -249,7 +254,7 @@ final class BadgeEngine {
 		 * @param string     $badge_id Badge identifier.
 		 * @param array|null $def      Badge definition row, or null if not found.
 		 */
-		do_action( 'wb_gamification_badge_awarded', $user_id, $def ?? array(), $badge_id );
+		do_action( 'wb_gam_badge_awarded', $user_id, $def ?? array(), $badge_id );
 
 		/**
 		 * Fires after a badge is awarded to a user.

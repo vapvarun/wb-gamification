@@ -14,7 +14,7 @@
 defined( 'ABSPATH' ) || exit;
 
 add_action(
-	'wb_gamification_points_redeemed',
+	'wb_gam_points_redeemed',
 	function ( $redemption_id, $user_id, $item, $coupon_code ) {
 		if ( 'custom' !== ( $item['reward_type'] ?? '' ) ) {
 			return;

@@ -18,7 +18,7 @@ Use this when you need to register triggers conditionally — only if a setting 
 We hook `wb_gam_engines_booted` (fired by WB Gamification once all engines are wired). When this action runs, three guarantees hold:
 
 1. WB Gamification is installed and active.
-2. The `wb_gamification_register_action()` helper exists.
+2. The `wb_gam_register_action()` helper exists.
 3. The Registry is ready to receive triggers.
 
 If WB Gamification is NOT installed, the action never fires and our code never runs. No fatal, no `function_exists()` guards needed inside the callback.
@@ -36,9 +36,9 @@ If WB Gamification is NOT installed, the action never fires and our code never r
 ## Three public registration helpers
 
 ```php
-wb_gamification_register_action( $args );           // Track a custom event
-wb_gamification_register_badge_trigger( $args );    // Custom badge condition
-wb_gamification_register_challenge_type( $args );   // Custom challenge mechanic
+wb_gam_register_action( $args );           // Track a custom event
+wb_gam_register_badge_trigger( $args );    // Custom badge condition
+wb_gam_register_challenge_type( $args );   // Custom challenge mechanic
 ```
 
 See [Example 05](../05-custom-badge-condition/) and [Example 07](../07-custom-challenge-type/) for badge trigger / challenge type patterns.
@@ -70,8 +70,8 @@ If you genuinely need to register at `init` (because you're listening on an `ini
 
 ```php
 add_action( 'init', function () {
-	if ( function_exists( 'wb_gamification_register_action' ) ) {
-		wb_gamification_register_action( [ /* ... */ ] );
+	if ( function_exists( 'wb_gam_register_action' ) ) {
+		wb_gam_register_action( [ /* ... */ ] );
 	}
 } );
 ```

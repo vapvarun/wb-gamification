@@ -4,7 +4,7 @@
  *
  * Executes configurable automation rules when a member levels up.
  * No UI builder required — rules are defined via the
- * `wb_gamification_rank_automation_rules` filter or the
+ * `wb_gam_rank_automation_rules` filter or the
  * `wb_gam_rank_automation_rules` option (JSON array).
  *
  * Rule schema (each rule is an array):
@@ -30,7 +30,7 @@
  *
  * Usage in a plugin or functions.php:
  *
- *   add_filter( 'wb_gamification_rank_automation_rules', function( array $rules ): array {
+ *   add_filter( 'wb_gam_rank_automation_rules', function( array $rules ): array {
  *       $rules[] = [
  *           'trigger_level_id' => 3,
  *           'actions' => [
@@ -60,7 +60,7 @@ final class RankAutomation {
 	 * Register the level-changed action hook.
 	 */
 	public static function init(): void {
-		add_action( 'wb_gamification_level_changed', array( __CLASS__, 'on_level_changed' ), 20, 3 );
+		add_action( 'wb_gam_level_changed', array( __CLASS__, 'on_level_changed' ), 20, 3 );
 	}
 
 	// ── Hook handler ────────────────────────────────────────────────────────────
@@ -93,7 +93,7 @@ final class RankAutomation {
 	 *
 	 * Rules come from two sources (merged):
 	 *   1. `wb_gam_rank_automation_rules` option — JSON array (admin-configurable)
-	 *   2. `wb_gamification_rank_automation_rules` filter — code-level rules
+	 *   2. `wb_gam_rank_automation_rules` filter — code-level rules
 	 *
 	 * @return array[]
 	 */
@@ -113,7 +113,7 @@ final class RankAutomation {
 		 *
 		 * @param array[] $rules Array of rule definitions (see class docblock for schema).
 		 */
-		return (array) apply_filters( 'wb_gamification_rank_automation_rules', $option_rules );
+		return (array) apply_filters( 'wb_gam_rank_automation_rules', $option_rules );
 	}
 
 	// ── Action execution ────────────────────────────────────────────────────────
@@ -154,7 +154,7 @@ final class RankAutomation {
 				 * @param array  $action  Full action definition.
 				 * @param string $type    Action type string.
 				 */
-				do_action( 'wb_gamification_rank_automation_action', $user_id, $action, $type );
+				do_action( 'wb_gam_rank_automation_action', $user_id, $action, $type );
 				break;
 		}
 	}

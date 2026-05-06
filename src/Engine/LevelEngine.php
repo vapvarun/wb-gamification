@@ -107,7 +107,7 @@ final class LevelEngine {
 			 * @param int $old_level_id  Previous level ID.
 			 * @param int $new_level_id  New level ID.
 			 */
-			do_action( 'wb_gamification_level_changed', $user_id, $current_level_id, $new_level['id'] );
+			do_action( 'wb_gam_level_changed', $user_id, $current_level_id, $new_level['id'] );
 
 			// Resolve old level data from all levels by ID.
 			$old_level_data = null;

@@ -47,7 +47,7 @@ final class ApiKeyAuth {
 
 		// Inject remote site_id into event metadata for cross-site attribution.
 		add_filter(
-			'wb_gamification_event_metadata',
+			'wb_gam_event_metadata',
 			function ( $metadata ) {
 				if ( ! empty( $GLOBALS['wb_gam_remote_site_id'] ) ) {
 					$metadata['_site_id'] = $GLOBALS['wb_gam_remote_site_id'];

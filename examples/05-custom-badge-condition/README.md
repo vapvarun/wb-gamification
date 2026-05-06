@@ -14,7 +14,7 @@ Out of the box, badges are awarded based on rules in `wb_gam_rules` (point thres
 
 ## How it works
 
-`wb_gamification_register_badge_trigger()` (defined in `src/Extensions/functions.php:64`) registers a hook + condition pair. When the hook fires, your closure runs. If it returns `true`, the engine awards the badge whose `id` you specified.
+`wb_gam_register_badge_trigger()` (defined in `src/Extensions/functions.php:64`) registers a hook + condition pair. When the hook fires, your closure runs. If it returns `true`, the engine awards the badge whose `id` you specified.
 
 You're responsible for two things:
 
@@ -39,10 +39,10 @@ For high-volume use cases, replace user meta with a custom DB table (the engine 
 
 ## The veto layer
 
-After your `condition` returns `true`, the engine fires the `wb_gamification_should_award_badge` filter. This is your last chance to deny the award based on additional context (subscriber-only, country restriction, anti-gaming check, etc.).
+After your `condition` returns `true`, the engine fires the `wb_gam_should_award_badge` filter. This is your last chance to deny the award based on additional context (subscriber-only, country restriction, anti-gaming check, etc.).
 
 ```php
-add_filter( 'wb_gamification_should_award_badge', function ( $should, $badge_id, $user_id ) {
+add_filter( 'wb_gam_should_award_badge', function ( $should, $badge_id, $user_id ) {
     if ( 'night_owl' === $badge_id && yourplugin_is_anti_gaming_flagged( $user_id ) ) {
         return false;
     }
@@ -62,7 +62,7 @@ wp wb-gamification member status --user=42 | grep night_owl
 curl http://your-site/wp-json/wb-gamification/v1/members/42/badges | jq '.badges[] | select(.id == "night_owl")'
 ```
 
-Successful awards also fire the `wb_gamification_badge_awarded` action — the BP notification bridge and webhook dispatcher react automatically.
+Successful awards also fire the `wb_gam_badge_awarded` action — the BP notification bridge and webhook dispatcher react automatically.
 
 ## Related
 

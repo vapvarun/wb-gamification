@@ -144,7 +144,7 @@ final class WB_Gamification {
 
 		// Async award pipeline — collects events at priority 50 (after sync listeners
 		// BadgeEngine@10, ChallengeEngine@15; before NotificationBridge@99).
-		add_action( 'wb_gamification_points_awarded', array( AsyncEvaluator::class, 'enqueue' ), 50, 3 );
+		add_action( 'wb_gam_points_awarded', array( AsyncEvaluator::class, 'enqueue' ), 50, 3 );
 
 		// BuddyPress integrations — must boot on bp_loaded, not plugins_loaded.
 		add_action( 'bp_loaded', array( ProfileIntegration::class, 'init' ) );

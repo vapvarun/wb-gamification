@@ -7,7 +7,7 @@
  * batched Action Scheduler job that runs after the request completes.
  *
  * Flow:
- *   1. Hooked to `wb_gamification_points_awarded` at priority 50
+ *   1. Hooked to `wb_gam_points_awarded` at priority 50
  *      (after sync listeners like BadgeEngine/ChallengeEngine, before
  *      NotificationBridge at 99).
  *   2. Collects award events in a static array during the request.
@@ -85,7 +85,7 @@ final class AsyncEvaluator {
 	/**
 	 * Queue an award event for async evaluation.
 	 *
-	 * Called from the `wb_gamification_points_awarded` hook at priority 50.
+	 * Called from the `wb_gam_points_awarded` hook at priority 50.
 	 * The Event object is decomposed into a plain array because the readonly
 	 * value object has no serialize support.
 	 *

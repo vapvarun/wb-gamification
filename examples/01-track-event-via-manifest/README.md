@@ -16,7 +16,7 @@ The simplest, lowest-coupling integration. Your plugin's directory contains a fi
 $files = glob( WP_PLUGIN_DIR . '/*/wb-gamification.php' );
 ```
 
-For each match, the file is `include`d. If it returns an array with a `triggers` key, each trigger is validated and registered with the engine via `wb_gamification_register_action()`.
+For each match, the file is `include`d. If it returns an array with a `triggers` key, each trigger is validated and registered with the engine via `wb_gam_register_action()`.
 
 ## Files in this example
 

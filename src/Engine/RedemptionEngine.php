@@ -28,7 +28,7 @@
  *   3. Engine validates member has sufficient points, deducts them,
  *      creates a redemption record, dispatches per-type fulfillment.
  *   4. WooCommerce types create a coupon; wbcom_credits tops up an SDK ledger;
- *      custom defers to the wb_gamification_points_redeemed action.
+ *      custom defers to the wb_gam_points_redeemed action.
  *
  * @package WB_Gamification
  * @since   0.1.0
@@ -235,7 +235,7 @@ final class RedemptionEngine {
 		 * @param array  $item          Reward item data.
 		 * @param string|null $coupon_code WooCommerce coupon code, or null.
 		 */
-		do_action( 'wb_gamification_points_redeemed', $redemption_id, $user_id, $item, $coupon_code );
+		do_action( 'wb_gam_points_redeemed', $redemption_id, $user_id, $item, $coupon_code );
 
 		return array(
 			'success'       => true,

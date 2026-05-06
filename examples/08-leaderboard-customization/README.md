@@ -21,7 +21,7 @@ Annotate, filter, or restructure leaderboard results without forking the leaderb
 
 ```php
 apply_filters(
-    'wb_gamification_leaderboard_results',
+    'wb_gam_leaderboard_results',
     array $rows,    // Sorted rows from the engine
     array $args     // Original query args (period, scope, limit, offset)
 );
@@ -60,9 +60,9 @@ Pattern: branch on `$args['scope']['type']` to enable scope-specific behaviour (
 
 ## Cache vs live
 
-`wb_gamification_leaderboard_results` runs INSIDE `LeaderboardController::get_leaderboard` — the on-the-fly response. The cron-cached snapshot at `wb_gam_leaderboard_cache` is written by `LeaderboardEngine::write_snapshot` and uses a separate filter (`wb_gamification_leaderboard_snapshot`). For consistent behaviour between cache and live, filter both. The example file demonstrates this.
+`wb_gam_leaderboard_results` runs INSIDE `LeaderboardController::get_leaderboard` — the on-the-fly response. The cron-cached snapshot at `wb_gam_leaderboard_cache` is written by `LeaderboardEngine::write_snapshot` and uses a separate filter (`wb_gam_leaderboard_snapshot`). For consistent behaviour between cache and live, filter both. The example file demonstrates this.
 
-If you only filter `wb_gamification_leaderboard_results`, the cache lag (up to 5 min) means viewers might see different leaderboards depending on whether the cache was hit. For most use cases that's acceptable; for SLA-critical scoring, hook both filters.
+If you only filter `wb_gam_leaderboard_results`, the cache lag (up to 5 min) means viewers might see different leaderboards depending on whether the cache was hit. For most use cases that's acceptable; for SLA-critical scoring, hook both filters.
 
 ## Performance
 
@@ -74,9 +74,9 @@ Filter runs once per request, on every row. Three rules:
 
 ## Related filters
 
-- `wb_gamification_recap_data` — annotate year-in-review data (same pattern, different surface)
-- `wb_gamification_event_metadata` — augment event metadata at storage time
-- `wb_gamification_credential_document` — modify OpenBadges 3.0 credential JSON before signing
+- `wb_gam_recap_data` — annotate year-in-review data (same pattern, different surface)
+- `wb_gam_event_metadata` — augment event metadata at storage time
+- `wb_gam_credential_document` — modify OpenBadges 3.0 credential JSON before signing
 
 ## Related examples
 

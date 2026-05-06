@@ -15,7 +15,7 @@ You sell or run an LMS site and want top earners to redeem their points for cour
 
 2. **Member redeems** the reward via the redemption store block (or REST).
 
-3. **`RedemptionEngine::redeem()`** validates points, debits them, marks the row `pending_fulfillment`, then fires `wb_gamification_points_redeemed`.
+3. **`RedemptionEngine::redeem()`** validates points, debits them, marks the row `pending_fulfillment`, then fires `wb_gam_points_redeemed`.
 
 4. **This listener** picks up the action, finds `course:<id>` in the description, calls `ld_update_course_access( $user_id, $course_id, false )`, and updates the redemption row to `fulfilled`.
 

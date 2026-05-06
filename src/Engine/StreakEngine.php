@@ -17,7 +17,7 @@
  *                                  → extend streak, set grace_used = 1
  *       • otherwise               → reset streak to 1, clear grace flag
  *   - Milestones: 7, 14, 30, 60, 100, 180, 365 days trigger:
- *       1. `wb_gamification_streak_milestone` action (for UI overlay)
+ *       1. `wb_gam_streak_milestone` action (for UI overlay)
  *       2. Bonus points via Engine::process() if option > 0
  *
  * Streak data stored in wb_gam_streaks (one row per user).
@@ -74,7 +74,7 @@ final class StreakEngine {
 		 * @param int $user_id    The user whose streak is being evaluated.
 		 */
 		$grace_days = (int) apply_filters(
-			'wb_gamification_streak_grace_days',
+			'wb_gam_streak_grace_days',
 			(int) get_option( self::OPT_GRACE_DAYS, 1 ),
 			$user_id
 		);
@@ -109,7 +109,7 @@ final class StreakEngine {
 				 * @param int $old_streak The streak count before it was reset.
 				 * @param int $gap        Number of inactive days that caused the break.
 				 */
-				do_action( 'wb_gamification_streak_broken', $user_id, $old_streak, $gap );
+				do_action( 'wb_gam_streak_broken', $user_id, $old_streak, $gap );
 			}
 		}
 
@@ -195,7 +195,7 @@ final class StreakEngine {
 		 * @param int $user_id     User who hit the milestone.
 		 * @param int $streak_days Number of consecutive days.
 		 */
-		do_action( 'wb_gamification_streak_milestone', $user_id, $streak_days );
+		do_action( 'wb_gam_streak_milestone', $user_id, $streak_days );
 
 		/**
 		 * Fires when a user reaches a streak milestone.

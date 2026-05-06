@@ -253,7 +253,7 @@ final class PointsEngine {
 	 * @param int    $user_id User ID.
 	 * @param string $type    Resolved point-type slug.
 	 */
-	private static function cache_key_total( int $user_id, string $type ): string {
+	public static function cache_key_total( int $user_id, string $type ): string {
 		return "wb_gam_total_{$user_id}_{$type}";
 	}
 
@@ -328,9 +328,9 @@ final class PointsEngine {
 	 * rows via batched multi-VALUES INSERT instead of N round-trips.
 	 *
 	 * Bypasses rate-limit / cooldown checks — caller is admin-controlled.
-	 * Does NOT fire `wb_gamification_points_awarded` per row (to avoid
+	 * Does NOT fire `wb_gam_points_awarded` per row (to avoid
 	 * stampeding badge / streak / level evaluations); fires the bulk hook
-	 * `wb_gamification_points_awarded_batch` once with the user-id list.
+	 * `wb_gam_points_awarded_batch` once with the user-id list.
 	 *
 	 * @param int[]       $user_ids  Users to award. Duplicates allowed.
 	 * @param string      $action_id Action context label (e.g. 'csv_import').
@@ -391,21 +391,37 @@ final class PointsEngine {
 				$point_args[] = $now;
 			}
 
+			// Atomic chunk: events + points + user_totals UPSERT all in one
+			// transaction. Without this, a partial failure (max_allowed_packet
+			// exceeded, connection drop, FK constraint) leaves orphan rows in
+			// either table. Every chunk either fully commits or fully rolls back.
+			$wpdb->query( 'START TRANSACTION' );
+
 			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- bulk INSERT, single statement, parameterized via prepare().
-			$wpdb->query( $wpdb->prepare(
+			$events_ok = $wpdb->query( $wpdb->prepare(
 				"INSERT INTO {$wpdb->prefix}wb_gam_events (id, user_id, object_id, action_id, metadata, point_type, site_id, created_at) VALUES " . implode( ',', $event_ph ),
 				...$event_args
 			) );
+			if ( false === $events_ok ) {
+				$wpdb->query( 'ROLLBACK' );
+				Log::error( 'PointsEngine::award_batch — events INSERT failed', array( 'chunk_size' => count( $chunk ), 'db_error' => $wpdb->last_error ) );
+				continue;
+			}
+
 			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- bulk INSERT, single statement.
-			$inserted = (int) $wpdb->query( $wpdb->prepare(
+			$inserted = $wpdb->query( $wpdb->prepare(
 				"INSERT INTO {$wpdb->prefix}wb_gam_points (event_id, user_id, action_id, points, point_type, object_id, created_at) VALUES " . implode( ',', $point_ph ),
 				...$point_args
 			) );
-			$total += $inserted;
+			if ( false === $inserted ) {
+				$wpdb->query( 'ROLLBACK' );
+				Log::error( 'PointsEngine::award_batch — points INSERT failed', array( 'chunk_size' => count( $chunk ), 'db_error' => $wpdb->last_error ) );
+				continue;
+			}
 
 			// Bulk-update materialised user-totals — group duplicate UIDs first
 			// (chunk may contain the same uid N times for an N-point award).
-			$counts = array_count_values( array_map( 'intval', $chunk ) );
+			$counts      = array_count_values( array_map( 'intval', $chunk ) );
 			$totals_ph   = array();
 			$totals_args = array();
 			foreach ( $counts as $uid => $count ) {
@@ -415,11 +431,19 @@ final class PointsEngine {
 				$totals_args[] = $points * $count;
 			}
 			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- bulk UPSERT.
-			$wpdb->query( $wpdb->prepare(
+			$totals_ok = $wpdb->query( $wpdb->prepare(
 				"INSERT INTO {$wpdb->prefix}wb_gam_user_totals (user_id, point_type, total) VALUES " . implode( ',', $totals_ph ) .
 				" ON DUPLICATE KEY UPDATE total = total + VALUES(total)",
 				...$totals_args
 			) );
+			if ( false === $totals_ok ) {
+				$wpdb->query( 'ROLLBACK' );
+				Log::error( 'PointsEngine::award_batch — user_totals UPSERT failed', array( 'chunk_size' => count( $chunk ), 'db_error' => $wpdb->last_error ) );
+				continue;
+			}
+
+			$wpdb->query( 'COMMIT' );
+			$total += (int) $inserted;
 
 			// Bust the per-type total cache for every affected user. One
 			// wp_cache_delete per UID is unavoidable with the per-key shape;
@@ -442,7 +466,7 @@ final class PointsEngine {
 		 * @param string $type      Currency slug.
 		 * @param int    $total     Ledger rows inserted.
 		 */
-		do_action( 'wb_gamification_points_awarded_batch', $user_ids, $action_id, $points, $type, $total );
+		do_action( 'wb_gam_points_awarded_batch', $user_ids, $action_id, $points, $type, $total );
 
 		return $total;
 	}
@@ -510,13 +534,17 @@ final class PointsEngine {
 	public static function get_totals_by_type( int $user_id ): array {
 		global $wpdb;
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- aggregate across types; result is small (one row per active type).
+		// Read from the materialised user_totals table — same source of truth
+		// as get_total(). Without this, after LogPruner runs the multi-currency
+		// breakdown returns lower numbers than the single-type read, causing
+		// inconsistent UI between the hub tile (uses materialised) and the
+		// privacy export / REST points_by_type (was using live SUM).
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- single PK-prefix lookup; result is small.
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT point_type, COALESCE(SUM(points), 0) AS total
-				   FROM {$wpdb->prefix}wb_gam_points
-				  WHERE user_id = %d
-				  GROUP BY point_type",
+				"SELECT point_type, total
+				   FROM {$wpdb->prefix}wb_gam_user_totals
+				  WHERE user_id = %d",
 				$user_id
 			),
 			ARRAY_A

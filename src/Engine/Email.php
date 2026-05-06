@@ -58,7 +58,7 @@ final class Email {
 	 * Locate the absolute path to an email template.
 	 *
 	 * Resolution:
-	 *   1. wb_gamification_email_template_path filter (full programmatic override).
+	 *   1. wb_gam_email_template_path filter (full programmatic override).
 	 *   2. {theme}/wb-gamification/emails/{template}.php  (child theme wins).
 	 *   3. WB_GAM_PATH/templates/emails/{template}.php   (plugin default).
 	 *
@@ -95,7 +95,7 @@ final class Email {
 		 * @param string $name_option_key  The option key the name came from.
 		 */
 		return (string) apply_filters(
-			'wb_gamification_email_from_header',
+			'wb_gam_email_from_header',
 			sprintf( '%s <%s>', $name, $email ),
 			$name,
 			$email,

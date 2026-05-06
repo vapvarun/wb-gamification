@@ -266,7 +266,7 @@ class PointsController extends WP_REST_Controller {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- Revoke operation; row fetched immediately before deletion, caching would be misleading.
 		$row = $wpdb->get_row(
 			$wpdb->prepare(
-				"SELECT id, user_id, points FROM {$wpdb->prefix}wb_gam_points WHERE id = %d",
+				"SELECT id, user_id, points, point_type FROM {$wpdb->prefix}wb_gam_points WHERE id = %d",
 				$row_id
 			),
 			ARRAY_A
@@ -276,6 +276,15 @@ class PointsController extends WP_REST_Controller {
 			return new WP_Error( 'rest_not_found', __( 'Points row not found.', 'wb-gamification' ), array( 'status' => 404 ) );
 		}
 
+		$user_id    = (int) $row['user_id'];
+		$points     = (int) $row['points'];
+		$point_type = (string) ( $row['point_type'] ?? 'points' );
+
+		// Atomic: delete ledger row + decrement materialised total in one
+		// transaction. Without this, any failure between the DELETE and the
+		// bump_user_total leaves wb_gam_user_totals permanently inflated.
+		$wpdb->query( 'START TRANSACTION' );
+
 		$deleted = $wpdb->delete(
 			$wpdb->prefix . 'wb_gam_points',
 			array( 'id' => $row_id ),
@@ -283,11 +292,19 @@ class PointsController extends WP_REST_Controller {
 		);
 
 		if ( ! $deleted ) {
+			$wpdb->query( 'ROLLBACK' );
 			return new WP_Error( 'rest_delete_failed', __( 'Could not revoke points.', 'wb-gamification' ), array( 'status' => 500 ) );
 		}
 
-		// Bust the cached total for the affected user.
-		wp_cache_delete( 'wb_gam_points_' . (int) $row['user_id'], 'wb_gamification' );
+		// Decrement the materialised total — `bump_user_total` is the canonical
+		// helper that every ledger mutation must call. The negative delta
+		// applied here mirrors the row's stored value.
+		\WBGam\Engine\PointsEngine::bump_user_total( $user_id, $point_type, -$points );
+
+		$wpdb->query( 'COMMIT' );
+
+		// Bust the per-type cache key matching what get_total reads.
+		wp_cache_delete( \WBGam\Engine\PointsEngine::cache_key_total( $user_id, $point_type ), 'wb_gamification' );
 
 		/**
 		 * Fires after a point row is revoked by an admin.
@@ -296,7 +313,7 @@ class PointsController extends WP_REST_Controller {
 		 * @param array $row     The deleted row data.
 		 * @param int   $admin   Admin user ID who performed the action.
 		 */
-		do_action( 'wb_gamification_points_revoked', $row_id, $row, get_current_user_id() );
+		do_action( 'wb_gam_points_revoked', $row_id, $row, get_current_user_id() );
 
 		return new WP_REST_Response(
 			array(

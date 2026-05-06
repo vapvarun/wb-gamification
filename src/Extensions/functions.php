@@ -6,7 +6,7 @@
  * gamification triggers, badge conditions, and challenge types.
  *
  * Usage:
- *   wb_gamification_register_action( [ 'id' => '...', 'hook' => '...', ... ] );
+ *   wb_gam_register_action( [ 'id' => '...', 'hook' => '...', ... ] );
  *
  * @package WB_Gamification
  */
@@ -42,7 +42,7 @@ defined( 'ABSPATH' ) || exit;
  *
  * @since 1.0.0
  */
-function wb_gamification_register_action( array $args ): void {
+function wb_gam_register_action( array $args ): void {
 	Registry::register_action( $args );
 }
 
@@ -61,7 +61,7 @@ function wb_gamification_register_action( array $args ): void {
  *
  * @since 1.0.0
  */
-function wb_gamification_register_badge_trigger( array $args ): void {
+function wb_gam_register_badge_trigger( array $args ): void {
 	Registry::register_badge_trigger( $args );
 }
 
@@ -80,7 +80,7 @@ function wb_gamification_register_badge_trigger( array $args ): void {
  *
  * @since 1.0.0
  */
-function wb_gamification_register_challenge_type( array $args ): void {
+function wb_gam_register_challenge_type( array $args ): void {
 	Registry::register_challenge_type( $args );
 }
 
@@ -266,7 +266,7 @@ function wb_gam_submit_event( int $user_id, string $action_id, array $meta = arr
  * Get all registered gamification actions.
  *
  * Returns the full list of actions that have been registered
- * via manifests or the wb_gamification_register_action() API.
+ * via manifests or the wb_gam_register_action() API.
  *
  * @since 1.0.0
  *

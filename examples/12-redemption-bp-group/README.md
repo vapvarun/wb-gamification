@@ -15,7 +15,7 @@ Your community runs on BuddyPress and you want to gate access to specific groups
 
 2. **Member redeems** the reward.
 
-3. **This listener** picks up `wb_gamification_points_redeemed`, finds `group:<id>`, calls `groups_join_group( $group_id, $user_id )`, and updates redemption status.
+3. **This listener** picks up `wb_gam_points_redeemed`, finds `group:<id>`, calls `groups_join_group( $group_id, $user_id )`, and updates redemption status.
 
 ## Files
 

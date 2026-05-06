@@ -32,7 +32,7 @@ add_action( 'wb_gam_engines_booted', 'yourplugin_register_gamification_triggers'
  * Define the actions your plugin tracks.
  *
  * Called only when WB Gamification has booted, so we can safely call
- * wb_gamification_register_action() without function_exists() checks.
+ * wb_gam_register_action() without function_exists() checks.
  */
 function yourplugin_register_gamification_triggers(): void {
 
@@ -42,7 +42,7 @@ function yourplugin_register_gamification_triggers(): void {
 	}
 
 	// Always-on trigger.
-	wb_gamification_register_action( [
+	wb_gam_register_action( [
 		'id'             => 'yourplugin_thing_done',
 		'label'          => __( 'Did the thing', 'your-plugin' ),
 		'description'    => __( 'Awarded when the user completes the primary action.', 'your-plugin' ),
@@ -57,7 +57,7 @@ function yourplugin_register_gamification_triggers(): void {
 	// Conditional 2: only register the "premium" trigger for sites running
 	// your premium add-on. Demonstrates mid-runtime conditional registration.
 	if ( defined( 'YOURPLUGIN_PREMIUM_ACTIVE' ) && YOURPLUGIN_PREMIUM_ACTIVE ) {
-		wb_gamification_register_action( [
+		wb_gam_register_action( [
 			'id'             => 'yourplugin_premium_thing_done',
 			'label'          => __( 'Did the premium thing', 'your-plugin' ),
 			'hook'           => 'yourplugin_premium_event',
@@ -73,7 +73,7 @@ function yourplugin_register_gamification_triggers(): void {
 	// This pattern lets a theme add per-CPT triggers.
 	$cpts_to_track = (array) apply_filters( 'yourplugin_gamification_cpts', [ 'product', 'course' ] );
 	foreach ( $cpts_to_track as $cpt ) {
-		wb_gamification_register_action( [
+		wb_gam_register_action( [
 			'id'             => "yourplugin_publish_{$cpt}",
 			/* translators: %s: post type label */
 			'label'          => sprintf( __( 'Publish a %s', 'your-plugin' ), ucfirst( $cpt ) ),
@@ -96,11 +96,11 @@ function yourplugin_register_gamification_triggers(): void {
  * fire, badge triggers test a CONDITION and award a badge.
  */
 add_action( 'wb_gam_engines_booted', function () {
-	if ( ! function_exists( 'wb_gamification_register_badge_trigger' ) ) {
+	if ( ! function_exists( 'wb_gam_register_badge_trigger' ) ) {
 		return;
 	}
 
-	wb_gamification_register_badge_trigger( [
+	wb_gam_register_badge_trigger( [
 		'id'          => 'yourplugin_super_user',
 		'label'       => __( 'Super User', 'your-plugin' ),
 		'description' => __( 'Awarded after 100 things done.', 'your-plugin' ),

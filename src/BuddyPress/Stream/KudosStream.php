@@ -3,7 +3,7 @@
  * WB Gamification — BuddyPress kudos_given stream poster.
  *
  * KudosEngine fires:
- *   do_action( 'wb_gamification_kudos_given', $giver_id, $receiver_id, $message, $kudos_id )
+ *   do_action( 'wb_gam_kudos_given', $giver_id, $receiver_id, $message, $kudos_id )
  *
  * @package WB_Gamification
  * @since   1.2.1
@@ -28,7 +28,7 @@ final class KudosStream {
 	 * Wire the engine action to this poster.
 	 */
 	public static function init(): void {
-		add_action( 'wb_gamification_kudos_given', array( __CLASS__, 'post' ), 10, 4 );
+		add_action( 'wb_gam_kudos_given', array( __CLASS__, 'post' ), 10, 4 );
 	}
 
 	/**

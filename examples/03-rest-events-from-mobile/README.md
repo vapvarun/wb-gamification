@@ -90,7 +90,7 @@ The `event_id` is a UUID v4. Use it to correlate with downstream effects (the po
 2. Action Scheduler queues `wb_gam_process_event_async` for this event.
 3. Async job runs (within 1-30 seconds, depending on cron health):
    - Rule engine evaluates the event against active rules.
-   - Points awarded → `wb_gam_points` row written, `wb_gamification_points_awarded` action fires.
+   - Points awarded → `wb_gam_points` row written, `wb_gam_points_awarded` action fires.
    - Badges checked → `wb_gam_user_badges` updated if conditions met.
    - Streaks updated → `wb_gam_streaks` row written.
    - Webhooks dispatched → outbound HTTP calls to subscribers.
@@ -112,7 +112,7 @@ The OpenAPI spec is the canonical contract — generate typed clients from it vi
 
 ## Rate limits
 
-`RateLimiter` enforces per-user, per-action daily caps if the action defines `daily_cap > 0`. Hit the cap and the engine silently skips awarding (the event still gets recorded for audit). The HTTP response stays 200 — observers who care should listen for `wb_gamification_points_awarded` rather than assuming success from the REST status.
+`RateLimiter` enforces per-user, per-action daily caps if the action defines `daily_cap > 0`. Hit the cap and the engine silently skips awarding (the event still gets recorded for audit). The HTTP response stays 200 — observers who care should listen for `wb_gam_points_awarded` rather than assuming success from the REST status.
 
 ## Common errors
 

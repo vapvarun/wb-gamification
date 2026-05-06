@@ -10,7 +10,7 @@
  * Delivery:
  *   1. BuddyPress notification (if BP active)
  *   2. wp_mail email (if wb_gam_nudge_email = 1, default 0)
- *   3. Always fires `wb_gamification_weekly_nudge` for custom integrations.
+ *   3. Always fires `wb_gam_weekly_nudge` for custom integrations.
  *
  * Architecture:
  *   - Weekly cron schedules one AS job per active user to avoid request timeout.
@@ -143,7 +143,7 @@ final class LeaderboardNudge {
 		 * @param int   $user_id     User being nudged.
 		 * @param array $rank_data   { rank, points, points_to_next }
 		 */
-		if ( ! (bool) apply_filters( 'wb_gamification_should_send_weekly_nudge', true, $user_id, $rank_data ) ) {
+		if ( ! (bool) apply_filters( 'wb_gam_should_send_weekly_nudge', true, $user_id, $rank_data ) ) {
 			return;
 		}
 
@@ -163,7 +163,7 @@ final class LeaderboardNudge {
 		 * @param int|null $points_to_next Points needed for next rank (null = #1).
 		 */
 		$message = (string) apply_filters(
-			'wb_gamification_nudge_message',
+			'wb_gam_nudge_message',
 			$message,
 			$user_id,
 			$rank,
@@ -202,7 +202,7 @@ final class LeaderboardNudge {
 		 * @param int|null $points_to_next Points to overtake the next rank. Null = #1.
 		 * @param string $message        Human-readable nudge message.
 		 */
-		do_action( 'wb_gamification_weekly_nudge', $user_id, $rank, $points, $points_to_next, $message );
+		do_action( 'wb_gam_weekly_nudge', $user_id, $rank, $points, $points_to_next, $message );
 	}
 
 	// ── Helpers ─────────────────────────────────────────────────────────────────

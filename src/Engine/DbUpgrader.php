@@ -151,6 +151,13 @@ final class DbUpgrader {
 			// Drop legacy single-type indexes; replace with type-aware composites.
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 			$wpdb->query( "ALTER TABLE $table DROP INDEX idx_period_rank, DROP INDEX idx_user_period, ADD KEY idx_type_period_rank (point_type, period, `rank`), ADD KEY idx_user_type_period (user_id, point_type, period)" );
+			// Existing rows were filled with DEFAULT 'points' but on a multi-
+			// currency site they were aggregated across all currencies — the
+			// data is misleading. TRUNCATE so the next snapshot cron rebuilds
+			// every (period × point_type) combination cleanly. Reads will
+			// fall through to the live SUM until the next 5-minute cron tick.
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$wpdb->query( "TRUNCATE TABLE $table" );
 		}
 
 		update_option( $flag_key, '1' );

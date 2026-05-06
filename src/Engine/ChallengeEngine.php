@@ -11,13 +11,13 @@
  *   team       — a BP group collectively achieves N completions together
  *
  * Progress flow:
- *   1. `wb_gamification_points_awarded` fires after every award.
+ *   1. `wb_gam_points_awarded` fires after every award.
  *   2. ChallengeEngine::on_points_awarded() queries active challenges
  *      matching the event's action_id (single query, cached for 60s).
  *   3. For each matching challenge, increments the user's progress row.
  *   4. If progress >= target AND not already completed, marks complete
  *      and awards bonus_points.
- *   5. Fires `wb_gamification_challenge_completed`.
+ *   5. Fires `wb_gam_challenge_completed`.
  *
  * Team challenges:
  *   Each member in the BP group gets their own wb_gam_challenge_log row.
@@ -54,7 +54,7 @@ final class ChallengeEngine {
 	 * Register the points-awarded hook for challenge processing.
 	 */
 	public static function init(): void {
-		add_action( 'wb_gamification_points_awarded', array( __CLASS__, 'on_points_awarded' ), 15, 3 );
+		add_action( 'wb_gam_points_awarded', array( __CLASS__, 'on_points_awarded' ), 15, 3 );
 	}
 
 	// ── Event hook ───────────────────────────────────────────────────────────────
@@ -262,7 +262,7 @@ final class ChallengeEngine {
 		 * @param int   $user_id   User who completed the challenge.
 		 * @param array $challenge Full challenge row.
 		 */
-		do_action( 'wb_gamification_challenge_completed', $user_id, $challenge );
+		do_action( 'wb_gam_challenge_completed', $user_id, $challenge );
 
 		/**
 		 * Fires when a user completes a challenge.

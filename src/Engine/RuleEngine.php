@@ -137,7 +137,7 @@ final class RuleEngine {
 				 * @param Event                $event     The event being evaluated.
 				 */
 				return (bool) apply_filters(
-					'wb_gamification_rule_condition',
+					'wb_gam_rule_condition',
 					false,
 					$condition,
 					$event

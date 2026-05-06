@@ -25,11 +25,11 @@ You can add as many custom types as you like. Each gets its own progress + reset
 
 ## How it works
 
-`wb_gamification_register_challenge_type()` (in `src/Extensions/functions.php:83`) registers a hook → progress-callback pair. When any event matching the challenge's `target_action` fires:
+`wb_gam_register_challenge_type()` (in `src/Extensions/functions.php:83`) registers a hook → progress-callback pair. When any event matching the challenge's `target_action` fires:
 
 1. The engine looks up active challenges for this user.
 2. For each challenge whose `type` matches a registered custom type, the registered `progress` closure runs.
-3. If the closure returns `'completed'`, the engine writes the completion + fires `wb_gamification_challenge_completed`.
+3. If the closure returns `'completed'`, the engine writes the completion + fires `wb_gam_challenge_completed`.
 4. Otherwise the returned int is stored as current progress (visible to the user via `/members/{id}/challenges`).
 
 ## Files in this example
@@ -80,7 +80,7 @@ For inspiration, look at the engine's own state tables: `wb_gam_streaks`, `wb_ga
 
 ## Reacting to completion
 
-`wb_gamification_challenge_completed` fires for built-in AND custom challenges. The example file demonstrates listening for completions to layer additional rewards on top of `bonus_points`.
+`wb_gam_challenge_completed` fires for built-in AND custom challenges. The example file demonstrates listening for completions to layer additional rewards on top of `bonus_points`.
 
 ## Verification
 

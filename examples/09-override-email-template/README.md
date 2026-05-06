@@ -68,7 +68,7 @@ add_filter( 'wb_gam_template_path', function ( $path, $relative, $context ) {
 If you want to skip the template system entirely and build the body string yourself:
 
 ```php
-add_filter( 'wb_gamification_weekly_email_body', function ( $body, $user, $data ) {
+add_filter( 'wb_gam_weekly_email_body', function ( $body, $user, $data ) {
     // $body is the rendered HTML from the template; replace it entirely.
     return your_custom_body_builder( $user, $data );
 }, 10, 3 );
@@ -81,10 +81,10 @@ This filter runs AFTER the template renders, so even if a theme override is in p
 The From header uses `Email::from_header( 'wb_gam_weekly_email_from_name' )`. Override either of:
 
 - The `wb_gam_weekly_email_from_name` option (admin → Settings → Gamification, or `update_option`).
-- The `wb_gamification_email_from_header` filter for the full header string.
+- The `wb_gam_email_from_header` filter for the full header string.
 
 ```php
-add_filter( 'wb_gamification_email_from_header', function ( $header, $name, $email ) {
+add_filter( 'wb_gam_email_from_header', function ( $header, $name, $email ) {
     return sprintf( 'Community Bot <community@%s>', wp_parse_url( home_url(), PHP_URL_HOST ) );
 }, 10, 3 );
 ```
@@ -109,4 +109,4 @@ If you don't see the override take effect, check:
 ## Related
 
 - This closes [G2 in INTEGRATION-GAPS-ROADMAP.md](../../plans/INTEGRATION-GAPS-ROADMAP.md).
-- For hooking events to send custom emails (instead of overriding the existing one), see [Example 04](../04-listen-via-webhook/) or use `add_action( 'wb_gamification_points_awarded', ... )` directly.
+- For hooking events to send custom emails (instead of overriding the existing one), see [Example 04](../04-listen-via-webhook/) or use `add_action( 'wb_gam_points_awarded', ... )` directly.

@@ -75,7 +75,7 @@ Empty-state render paths intentionally skip the hooks:
 - No data to show (e.g. no badges earned, no challenges active)
 - Block is hidden by an admin gate
 
-If you need to know about those states, listen to the underlying engine event — `wb_gamification_streak_broken`, `wb_gamification_points_awarded`, etc. — rather than the block hooks.
+If you need to know about those states, listen to the underlying engine event — `wb_gam_streak_broken`, `wb_gam_points_awarded`, etc. — rather than the block hooks.
 
 ## Common patterns
 

@@ -291,7 +291,7 @@ class CredentialController extends WP_REST_Controller {
 			 */
 		);
 
-		$credential = (array) apply_filters( 'wb_gamification_credential_document', $credential, $badge_id, $user_id );
+		$credential = (array) apply_filters( 'wb_gam_credential_document', $credential, $badge_id, $user_id );
 
 		$response = new WP_REST_Response( $credential, 200 );
 		$response->header( 'Content-Type', 'application/ld+json' );

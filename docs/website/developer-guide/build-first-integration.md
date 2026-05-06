@@ -105,12 +105,12 @@ wp wb-gamification actions list
 If your trigger logic is too complex for a static manifest, register actions programmatically from your plugin's `functions.php` or a class constructor:
 
 ```php
-add_action( 'wb_gamification_register', function () {
-    if ( ! function_exists( 'wb_gamification_register_action' ) ) {
+add_action( 'wb_gam_register', function () {
+    if ( ! function_exists( 'wb_gam_register_action' ) ) {
         return;
     }
 
-    wb_gamification_register_action( array(
+    wb_gam_register_action( array(
         'id'             => 'my_reviews_submitted',
         'label'          => 'Submitted a Review',
         'hook'           => 'my_reviews_after_submit',
@@ -126,7 +126,7 @@ add_action( 'wb_gamification_register', function () {
 } );
 ```
 
-The `wb_gamification_register` action fires at `plugins_loaded` priority 6, after all manifests have been loaded.
+The `wb_gam_register` action fires at `plugins_loaded` priority 6, after all manifests have been loaded.
 
 ---
 

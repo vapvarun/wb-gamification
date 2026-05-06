@@ -19,7 +19,7 @@
  *
  * Limitations:
  *   - `admin_awarded` badge rules are never auto-evaluated by design.
- *   - Custom rule types registered via `wb_gamification_badge_condition`
+ *   - Custom rule types registered via `wb_gam_badge_condition`
  *     filter run if the listener doesn't depend on the synthetic event
  *     payload's metadata.
  *
@@ -209,7 +209,7 @@ class ReplayCommand {
 				}
 				return false; // Block the actual award in dry-run mode.
 			};
-			add_filter( 'wb_gamification_should_award_badge', $capturer, 99, 3 );
+			add_filter( 'wb_gam_should_award_badge', $capturer, 99, 3 );
 
 			foreach ( $action_ids as $aid ) {
 				$event = new Event( array(
@@ -220,7 +220,7 @@ class ReplayCommand {
 				BadgeEngine::evaluate_on_award( $user_id, $event, 0 );
 			}
 
-			remove_filter( 'wb_gamification_should_award_badge', $capturer, 99 );
+			remove_filter( 'wb_gam_should_award_badge', $capturer, 99 );
 
 			$awarded = array_keys( $intended );
 

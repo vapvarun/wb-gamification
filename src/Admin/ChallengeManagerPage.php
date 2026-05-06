@@ -323,6 +323,6 @@ final class ChallengeManagerPage {
 	// handle_save() / handle_delete() removed in 1.0.0 (Tier 0.C). Challenges
 	// are now written by ChallengesController (POST /challenges and POST
 	// /challenges/{id}; DELETE /challenges/{id}). Backwards-compatible legacy
-	// hooks (wb_gamification_challenge_{created,updated,deleted}) still fire
+	// hooks (wb_gam_challenge_{created,updated,deleted}) still fire
 	// from the REST controller until 1.1.0.
 }

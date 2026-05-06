@@ -265,13 +265,28 @@ final class PointTypeConversionService {
 		global $wpdb;
 		$wpdb->query( 'START TRANSACTION' );
 
-		// Lock from-balance row.
+		// Lock the from-balance ledger rows.
 		$balance = (int) $wpdb->get_var(
 			$wpdb->prepare(
 				"SELECT COALESCE(SUM(points), 0) FROM {$wpdb->prefix}wb_gam_points
 				WHERE user_id = %d AND point_type = %s FOR UPDATE",
 				$user_id,
 				$from
+			)
+		);
+
+		// Lock the materialised user_totals rows for BOTH currencies. Without
+		// these locks, two concurrent conversions for the same user can both
+		// pass the balance check and both run UPSERT on user_totals, losing
+		// one update (read-modify-write race). Touch both currencies up-front
+		// so the lock acquisition order is consistent across requests.
+		$wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT total FROM {$wpdb->prefix}wb_gam_user_totals
+				WHERE user_id = %d AND point_type IN (%s, %s) FOR UPDATE",
+				$user_id,
+				$from,
+				$to
 			)
 		);
 
@@ -313,10 +328,11 @@ final class PointTypeConversionService {
 			);
 		}
 
-		// Mirror event row for audit grouping (debit row already inserted via
-		// PointsEngine::debit; we record the convert event separately so the
-		// repo's count_today() / last_conversion_at() helpers find it).
-		$wpdb->insert(
+		// Mirror event row for audit grouping. Failure here (e.g. duplicate
+		// event_id from a replayed request) MUST roll back the debit — without
+		// this check, the user's points are gone but no event row exists and
+		// no credit is issued.
+		$event_inserted = $wpdb->insert(
 			$wpdb->prefix . 'wb_gam_events',
 			array(
 				'id'         => $shared_event_id,
@@ -329,11 +345,16 @@ final class PointTypeConversionService {
 			array( '%s', '%d', '%s', '%s', '%s', '%s' )
 		);
 
-		// Credit the destination type. Use PointsEngine::award which routes
-		// through the standard pipeline (rate-limit checks etc. — we set the
-		// action's $action config to skip caps via the override-aware
-		// resolver below would be ideal, but for simplicity we award via a
-		// direct ledger insert.
+		if ( ! $event_inserted ) {
+			$wpdb->query( 'ROLLBACK' );
+			return array(
+				'ok'    => false,
+				'error' => 'event_insert_failed',
+			);
+		}
+
+		// Credit the destination type via direct ledger insert (skips the
+		// rate-limit pipeline — convert is admin-controlled).
 		$credit_inserted = $wpdb->insert(
 			$wpdb->prefix . 'wb_gam_points',
 			array(
@@ -356,16 +377,18 @@ final class PointTypeConversionService {
 			);
 		}
 
-		// Direct ledger inserts above bypass PointsEngine::insert_point_row,
-		// so the materialised user-totals row needs an explicit bump for the
-		// credit side. Debit side (PointsEngine::debit at line 307) already
-		// bumped its total via the engine.
+		// Bump the credit-side materialised total INSIDE the transaction so
+		// it's covered by the same atomic guarantee as the ledger writes.
+		// Debit side already bumped via PointsEngine::debit (also in-transaction).
 		PointsEngine::bump_user_total( $user_id, $to, $credit_amount );
 
-		wp_cache_delete( "wb_gam_total_{$user_id}_{$from}", 'wb_gamification' );
-		wp_cache_delete( "wb_gam_total_{$user_id}_{$to}", 'wb_gamification' );
-
 		$wpdb->query( 'COMMIT' );
+
+		// Cache invalidation runs AFTER COMMIT — at this point the data is
+		// durable. Use the canonical cache key helper so this matches what
+		// PointsEngine::get_total reads.
+		wp_cache_delete( PointsEngine::cache_key_total( $user_id, $from ), 'wb_gamification' );
+		wp_cache_delete( PointsEngine::cache_key_total( $user_id, $to ), 'wb_gamification' );
 
 		/**
 		 * Fires after a successful currency conversion.

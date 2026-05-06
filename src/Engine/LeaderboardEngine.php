@@ -9,7 +9,7 @@
  *
  * Scope: by default the leaderboard is site-wide. Pass scope_type + scope_id
  * to filter to a defined set of users. Scope resolution is extensible via the
- * `wb_gamification_leaderboard_scope_user_ids` filter — BuddyPress integration
+ * `wb_gam_leaderboard_scope_user_ids` filter — BuddyPress integration
  * and third-party plugins hook in here to return the relevant user IDs.
  *
  * Opt-out: users with `leaderboard_opt_out = 1` in wb_gam_member_prefs are
@@ -231,22 +231,37 @@ final class LeaderboardEngine {
 	 * Returned even if the user has opted out of public leaderboard display —
 	 * this is private data for the member themselves.
 	 *
-	 * @param int    $user_id  User to calculate rank for.
-	 * @param string $period   Period: 'all' | 'month' | 'week' | 'day'.
+	 * @param int    $user_id    User to calculate rank for.
+	 * @param string $period     Period: 'all' | 'month' | 'week' | 'day'.
 	 * @param string $scope_type Optional scope type.
 	 * @param int    $scope_id   Optional scope ID.
+	 * @param string $point_type Optional currency slug — defaults to primary. Without
+	 *                           this filter, multi-currency sites compute rank
+	 *                           against the SUM of all currencies, which inflates
+	 *                           rank vs the public leaderboard which DOES filter.
 	 * @return array{rank: int, points: int, points_to_next: int|null}
 	 */
 	public static function get_user_rank(
 		int $user_id,
 		string $period = 'all',
 		string $scope_type = '',
-		int $scope_id = 0
+		int $scope_id = 0,
+		string $point_type = ''
 	): array {
 		global $wpdb;
 
+		// Resolve the currency once so cache key + queries match.
+		$resolved_type = ( new \WBGam\Services\PointTypeService() )->resolve( $point_type ?: null );
+
 		// ── Object cache check ────────────────────────────────────────────────
-		$cache_key = sprintf( 'wb_gam_rank_%d_%s_%s_%d', $user_id, $period, $scope_type ? $scope_type : 'global', $scope_id );
+		$cache_key = sprintf(
+			'wb_gam_rank_%d_%s_%s_%d_%s',
+			$user_id,
+			$period,
+			$scope_type ? $scope_type : 'global',
+			$scope_id,
+			$resolved_type
+		);
 		$cached    = wp_cache_get( $cache_key, 'wb_gamification' );
 		if ( false !== $cached ) {
 			return (array) $cached;
@@ -258,28 +273,31 @@ final class LeaderboardEngine {
 		$opt_out_ids = array_filter( $opt_out_ids, fn( $id ) => $id !== $user_id );
 		$scope_ids   = self::resolve_scope( $scope_type, $scope_id );
 
-		// Get user's own total for the period.
+		// Get user's own total for the period — scoped by currency so the
+		// rank computation matches what the public leaderboard sees.
 		if ( $period_start ) {
 			$user_total_sql = $wpdb->prepare(
 				"SELECT COALESCE(SUM(points),0) FROM {$wpdb->prefix}wb_gam_points
-				 WHERE user_id = %d AND created_at >= %s",
+				 WHERE user_id = %d AND point_type = %s AND created_at >= %s",
 				$user_id,
+				$resolved_type,
 				$period_start
 			);
 		} else {
 			$user_total_sql = $wpdb->prepare(
 				"SELECT COALESCE(SUM(points),0) FROM {$wpdb->prefix}wb_gam_points
-				 WHERE user_id = %d",
-				$user_id
+				 WHERE user_id = %d AND point_type = %s",
+				$user_id,
+				$resolved_type
 			);
 		}
 		$user_total = (int) $wpdb->get_var( $user_total_sql ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 
 		// Count users with strictly more points (their count + 1 = our rank).
-		$above_rank = self::count_users_above( $user_total, $period_start, $opt_out_ids, $scope_ids );
+		$above_rank = self::count_users_above( $user_total, $period_start, $opt_out_ids, $scope_ids, $resolved_type );
 
 		// Find the lowest total above ours to calculate gap.
-		$next_total = self::get_next_threshold( $user_total, $period_start, $opt_out_ids, $scope_ids );
+		$next_total = self::get_next_threshold( $user_total, $period_start, $opt_out_ids, $scope_ids, $resolved_type );
 
 		$result = array(
 			'rank'           => $above_rank + 1,
@@ -455,7 +473,7 @@ final class LeaderboardEngine {
 		 * @param array $result Hydrated leaderboard rows (rank, user_id, display_name, avatar_url, points).
 		 * @param array $rows   Raw DB rows before hydration.
 		 */
-		return (array) apply_filters( 'wb_gamification_leaderboard_results', $result, $rows );
+		return (array) apply_filters( 'wb_gam_leaderboard_results', $result, $rows );
 	}
 
 	/**
@@ -502,7 +520,7 @@ final class LeaderboardEngine {
 		 * @param int    $scope_id   Scope object ID.
 		 */
 		return (array) apply_filters(
-			'wb_gamification_leaderboard_scope_user_ids',
+			'wb_gam_leaderboard_scope_user_ids',
 			array(),
 			$scope_type,
 			$scope_id
@@ -535,12 +553,15 @@ final class LeaderboardEngine {
 		int $threshold,
 		?string $period_start,
 		array $opt_out_ids,
-		array $scope_ids
+		array $scope_ids,
+		string $point_type = 'points'
 	): int {
 		global $wpdb;
 
-		$values = array();
-		$where  = '';
+		// Always scope by point_type so multi-currency rank counts match the
+		// public leaderboard which also filters per-currency.
+		$values   = array( $point_type );
+		$where    = ' AND p.point_type = %s';
 
 		if ( $period_start ) {
 			$where   .= ' AND p.created_at >= %s';
@@ -587,12 +608,13 @@ final class LeaderboardEngine {
 		int $threshold,
 		?string $period_start,
 		array $opt_out_ids,
-		array $scope_ids
+		array $scope_ids,
+		string $point_type = 'points'
 	): ?int {
 		global $wpdb;
 
-		$values = array();
-		$where  = '';
+		$values = array( $point_type );
+		$where  = ' AND p.point_type = %s';
 
 		if ( $period_start ) {
 			$where   .= ' AND p.created_at >= %s';

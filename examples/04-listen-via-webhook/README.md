@@ -104,4 +104,4 @@ Example direct Slack subscription:
 ## Related
 
 - Firing events INTO WB Gamification → [Example 03](../03-rest-events-from-mobile/)
-- Reacting to events in PHP (same plugin install) → use `add_action( 'wb_gamification_points_awarded', ... )` directly; no webhook needed.
+- Reacting to events in PHP (same plugin install) → use `add_action( 'wb_gam_points_awarded', ... )` directly; no webhook needed.

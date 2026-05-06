@@ -248,7 +248,7 @@ final class RedemptionStorePage {
 										<?php endif; ?>
 									</select>
 									<p class="description">
-										<?php esc_html_e( 'Custom rewards fire wb_gamification_points_redeemed for your code to listen on. WooCommerce rewards auto-generate a coupon. Wbcom Credits adds to a registered SDK ledger.', 'wb-gamification' ); ?>
+										<?php esc_html_e( 'Custom rewards fire wb_gam_points_redeemed for your code to listen on. WooCommerce rewards auto-generate a coupon. Wbcom Credits adds to a registered SDK ledger.', 'wb-gamification' ); ?>
 										<?php if ( ! $woo_active ) : ?>
 											<br><em><?php esc_html_e( 'WooCommerce is not active — coupon-based rewards are hidden.', 'wb-gamification' ); ?></em>
 										<?php endif; ?>

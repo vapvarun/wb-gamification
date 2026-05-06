@@ -276,7 +276,7 @@ final class CohortEngine {
 				 * @param string $outcome  'promoted' | 'demoted' | 'stayed'.
 				 * @param int    $pts      Points earned this week.
 				 */
-				do_action( 'wb_gamification_cohort_outcome', $uid, $cur_tier, $new_tier, $outcome, $entry['pts'] );
+				do_action( 'wb_gam_cohort_outcome', $uid, $cur_tier, $new_tier, $outcome, $entry['pts'] );
 			}
 		}
 	}

@@ -199,7 +199,7 @@ final class RecapEngine {
 		 * @param int   $user_id User ID.
 		 * @param int   $year    Recap year.
 		 */
-		$recap = (array) apply_filters( 'wb_gamification_recap_data', $recap, $user_id, $year );
+		$recap = (array) apply_filters( 'wb_gam_recap_data', $recap, $user_id, $year );
 
 		wp_cache_set( $cache_key, $recap, self::CACHE_GROUP, self::CACHE_TTL );
 

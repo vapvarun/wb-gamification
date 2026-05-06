@@ -11,7 +11,7 @@
  *   Earn badge → credential verifiable → credential expires (410 Gone) →
  *   member receives nudge → completes renewal action → re-earns badge.
  *
- * The renewal action is not hardcoded here — the `wb_gamification_credential_expired`
+ * The renewal action is not hardcoded here — the `wb_gam_credential_expired`
  * hook lets the site admin trigger whatever re-qualification flow makes sense.
  *
  * @package WB_Gamification
@@ -118,7 +118,7 @@ final class CredentialExpiryEngine {
 			 * @param string $badge_id   Badge identifier.
 			 * @param string $expired_at MySQL datetime of expiry.
 			 */
-			do_action( 'wb_gamification_credential_expired', $user_id, $badge_id, $row['expires_at'] );
+			do_action( 'wb_gam_credential_expired', $user_id, $badge_id, $row['expires_at'] );
 		}
 	}
 

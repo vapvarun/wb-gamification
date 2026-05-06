@@ -177,7 +177,7 @@ final class Engine {
 		 * @param array<string, mixed> $metadata Current metadata.
 		 * @param Event                $event    The event being processed.
 		 */
-		$enriched = (array) apply_filters( 'wb_gamification_event_metadata', $event->metadata, $event );
+		$enriched = (array) apply_filters( 'wb_gam_event_metadata', $event->metadata, $event );
 
 		if ( $enriched !== $event->metadata ) {
 			$event = new Event(
@@ -200,14 +200,12 @@ final class Engine {
 		 * @param bool  $proceed Whether to proceed.
 		 * @param Event $event   The event.
 		 */
-		if ( ! (bool) apply_filters( 'wb_gamification_before_evaluate', true, $event ) ) {
+		if ( ! (bool) apply_filters( 'wb_gam_before_evaluate', true, $event ) ) {
 			return false;
 		}
 
-		// Persist the raw event — source of truth, never deleted (except GDPR).
-		self::persist_event( $event );
-
-		// Determine base points.
+		// Determine base points BEFORE the transaction so the early return
+		// for $points <= 0 doesn't leave the transaction open.
 		if ( null !== $action ) {
 			$points = (int) get_option( 'wb_gam_points_' . $event->action_id, $action['default_points'] );
 		} else {
@@ -226,7 +224,7 @@ final class Engine {
 		 * @param int    $user_id   User ID.
 		 * @param Event  $event     Full event object (metadata available).
 		 */
-		$points = (int) apply_filters( 'wb_gamification_points_for_action', $points, $event->action_id, $event->user_id, $event );
+		$points = (int) apply_filters( 'wb_gam_points_for_action', $points, $event->action_id, $event->user_id, $event );
 
 		// Apply any stored rule multipliers (day-of-week, order-total, etc.).
 		$points = RuleEngine::apply_multipliers( $points, $event );
@@ -246,14 +244,23 @@ final class Engine {
 		 * @param Event $event   Full event object.
 		 * @param int   $points  Final points (after multipliers).
 		 */
-		do_action( 'wb_gamification_before_points_awarded', $event->user_id, $event, $points );
+		do_action( 'wb_gam_before_points_awarded', $event->user_id, $event, $points );
 
-		// Write the derived ledger row. PointsEngine::insert_point_row()
-		// already busts the per-user/per-type total cache, so no follow-up
-		// cache_delete is needed here.
+		// Atomic: events row + points row + user_totals UPSERT all in one
+		// transaction. Without this, a partial failure between events insert
+		// and points insert leaves an orphan event with no ledger entry; or
+		// a points insert without a user_totals bump leaves drift.
+		global $wpdb;
+		$wpdb->query( 'START TRANSACTION' );
+
+		self::persist_event( $event );
+
 		if ( ! PointsEngine::insert_point_row( $event, $points ) ) {
+			$wpdb->query( 'ROLLBACK' );
 			return false;
 		}
+
+		$wpdb->query( 'COMMIT' );
 
 		/**
 		 * Fires after points are awarded.
@@ -267,7 +274,7 @@ final class Engine {
 		 * @param Event $event   Full event object.
 		 * @param int   $points  Points awarded.
 		 */
-		do_action( 'wb_gamification_points_awarded', $event->user_id, $event, $points );
+		do_action( 'wb_gam_points_awarded', $event->user_id, $event, $points );
 
 		/**
 		 * Fires after points are awarded to a user.

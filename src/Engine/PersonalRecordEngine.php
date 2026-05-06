@@ -12,10 +12,10 @@
  *   - best_day   : highest single-day points total ever
  *
  * How it works:
- *   - Hooked onto `wb_gamification_points_awarded` (runs after every award).
+ *   - Hooked onto `wb_gam_points_awarded` (runs after every award).
  *   - Calculates the current period total for the user.
  *   - Compares against the stored personal best in user meta.
- *   - If a new personal best is set, fires `wb_gamification_personal_record`
+ *   - If a new personal best is set, fires `wb_gam_personal_record`
  *     and sends a BP notification.
  *
  * Personal bests are stored in user meta:
@@ -41,7 +41,7 @@ final class PersonalRecordEngine {
 	/**
 	 * Register with AsyncEvaluator for batched async processing.
 	 *
-	 * Previously hooked synchronously on `wb_gamification_points_awarded` at
+	 * Previously hooked synchronously on `wb_gam_points_awarded` at
 	 * priority 20. Now deferred to reduce per-award DB queries from ~12-15 to ~5.
 	 */
 	public static function init(): void {
@@ -135,7 +135,7 @@ final class PersonalRecordEngine {
 		 * @param int    $previous Previous personal best (0 if first time).
 		 * @param string $message  Human-readable congratulations message.
 		 */
-		do_action( 'wb_gamification_personal_record', $user_id, $period, $current, $previous, $message );
+		do_action( 'wb_gam_personal_record', $user_id, $period, $current, $previous, $message );
 	}
 
 	// ── Helpers ─────────────────────────────────────────────────────────────────

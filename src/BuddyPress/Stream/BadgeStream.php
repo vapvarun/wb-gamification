@@ -3,7 +3,7 @@
  * WB Gamification — BuddyPress badge_earned stream poster.
  *
  * BadgeEngine fires:
- *   do_action( 'wb_gamification_badge_awarded', $user_id, $def, $badge_id )
+ *   do_action( 'wb_gam_badge_awarded', $user_id, $def, $badge_id )
  *
  * @package WB_Gamification
  * @since   1.2.1
@@ -28,7 +28,7 @@ final class BadgeStream {
 	 * Wire the engine action to this poster.
 	 */
 	public static function init(): void {
-		add_action( 'wb_gamification_badge_awarded', array( __CLASS__, 'post' ), 10, 3 );
+		add_action( 'wb_gam_badge_awarded', array( __CLASS__, 'post' ), 10, 3 );
 	}
 
 	/**

@@ -235,7 +235,7 @@ final class CommunityChallengesController extends WP_REST_Controller {
 
 		do_action( 'wb_gam_after_create_community_challenge', $row, $request );
 		// Backwards-compatible legacy hook (kept until 1.1.0).
-		do_action( 'wb_gamification_community_challenge_created', $id, $data );
+		do_action( 'wb_gam_community_challenge_created', $id, $data );
 
 		return new WP_REST_Response( $row, 201 );
 	}
@@ -307,7 +307,7 @@ final class CommunityChallengesController extends WP_REST_Controller {
 		$fresh = $this->fetch_one( $id );
 
 		do_action( 'wb_gam_after_update_community_challenge', $fresh, $current, $request );
-		do_action( 'wb_gamification_community_challenge_updated', $id, $updates );
+		do_action( 'wb_gam_community_challenge_updated', $id, $updates );
 
 		return new WP_REST_Response( $fresh, 200 );
 	}
@@ -342,7 +342,7 @@ final class CommunityChallengesController extends WP_REST_Controller {
 		);
 
 		do_action( 'wb_gam_after_delete_community_challenge', $current, $request );
-		do_action( 'wb_gamification_community_challenge_deleted', $id );
+		do_action( 'wb_gam_community_challenge_deleted', $id );
 
 		return new WP_REST_Response(
 			array(

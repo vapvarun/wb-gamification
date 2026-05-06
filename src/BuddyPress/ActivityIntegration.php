@@ -5,15 +5,15 @@
  * Two responsibilities:
  *
  * 1. Quality-weighted reaction points — reactions on activity_update posts
- *    award 5 pts instead of the default 3, via `wb_gamification_points_for_action`.
+ *    award 5 pts instead of the default 3, via `wb_gam_points_for_action`.
  *
  * 2. BP activity-type registration + delegation. Each event type lives in a
  *    dedicated poster under `WBGam\BuddyPress\Stream\`:
  *
- *      - BadgeStream     ← wb_gamification_badge_awarded
- *      - LevelStream     ← wb_gamification_level_changed
- *      - KudosStream     ← wb_gamification_kudos_given
- *      - ChallengeStream ← wb_gamification_challenge_completed
+ *      - BadgeStream     ← wb_gam_badge_awarded
+ *      - LevelStream     ← wb_gam_level_changed
+ *      - KudosStream     ← wb_gam_kudos_given
+ *      - ChallengeStream ← wb_gam_challenge_completed
  *
  *    Stream toggles (1 = enabled, 0 = disabled, default 1):
  *      wb_gam_bp_stream_badge_earned
@@ -53,7 +53,7 @@ final class ActivityIntegration {
 		}
 
 		// Quality-weighted points (reactions on activity_update worth more).
-		add_filter( 'wb_gamification_points_for_action', array( __CLASS__, 'quality_weight_reactions' ), 10, 4 );
+		add_filter( 'wb_gam_points_for_action', array( __CLASS__, 'quality_weight_reactions' ), 10, 4 );
 
 		// Register custom BP activity types so the activity directory filters list them.
 		add_action( 'bp_register_activity_actions', array( __CLASS__, 'register_activity_types' ) );

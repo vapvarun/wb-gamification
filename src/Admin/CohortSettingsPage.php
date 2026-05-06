@@ -295,7 +295,7 @@ final class CohortSettingsPage {
 	// handle_save() removed in 1.0.0 (Tier 0.C). Cohort settings are now
 	// written by CohortSettingsController::update_item() (POST
 	// /wb-gamification/v1/cohort-settings). The legacy
-	// `wb_gamification_cohort_settings_saved` hook still fires from the REST
+	// `wb_gam_cohort_settings_saved` hook still fires from the REST
 	// path for back-compat (kept until 1.1.0); new listeners should subscribe
 	// to `wb_gam_after_save_cohort_settings`.
 }
