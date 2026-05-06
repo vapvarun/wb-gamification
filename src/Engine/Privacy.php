@@ -323,6 +323,7 @@ final class Privacy {
 			'wb_gam_login_last_award'       => __( 'Login bonus last awarded', 'wb-gamification' ),
 			'wb_gam_seen_first_earn_toast'  => __( 'Seen first-earn welcome toast', 'wb-gamification' ),
 			'wb_gam_dismissed_welcome'      => __( 'Dismissed admin welcome card', 'wb-gamification' ),
+			'wb_gam_dismissed_checklist'    => __( 'Dismissed admin setup checklist', 'wb-gamification' ),
 			'wb_gam_level_id'               => __( 'Current level ID (cached)', 'wb-gamification' ),
 			'wb_gam_level_name'             => __( 'Current level name (cached)', 'wb-gamification' ),
 			'wb_gam_league_tier'            => __( 'Cohort league tier', 'wb-gamification' ),
@@ -513,6 +514,7 @@ final class Privacy {
 			'wb_gam_login_last_award',     // login bonus engine — last award timestamp.
 			'wb_gam_seen_first_earn_toast', // notification bridge — one-time flag.
 			'wb_gam_dismissed_welcome',    // settings page — admin welcome dismissal.
+			'wb_gam_dismissed_checklist',  // settings page — admin setup-checklist dismissal.
 			'wb_gam_profile_public',       // member's own privacy choice.
 			'wb_gam_level_id',             // LevelEngine — denormalized current level (cache).
 			'wb_gam_level_name',           // LevelEngine — denormalized level name (cache).

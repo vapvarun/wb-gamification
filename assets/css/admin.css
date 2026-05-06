@@ -1175,6 +1175,147 @@
 	margin: 12px 0 0;
 }
 
+/* Setup-progress checklist on the dashboard. Items are auto-checked from
+   live site state — admins don't manually mark things done. Each row has
+   an icon column, a body, and an action link aligned right. */
+.wbgam-checklist {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.wbgam-checklist__item {
+	display: flex;
+	align-items: flex-start;
+	gap: 12px;
+	padding: 12px 0;
+	border-top: 1px solid #f0f0f1;
+}
+
+.wbgam-checklist__item:first-child {
+	border-top: none;
+	padding-top: 0;
+}
+
+.wbgam-checklist__icon {
+	flex-shrink: 0;
+	font-size: 18px;
+	color: var(--wb-gam-text-muted, #6b7280);
+	margin-top: 2px;
+}
+
+.wbgam-checklist__item.is-done .wbgam-checklist__icon {
+	color: var(--wbgam-success, #16a34a);
+}
+
+.wbgam-checklist__body {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	min-width: 0;
+}
+
+.wbgam-checklist__title {
+	font-size: 13px;
+	font-weight: 600;
+	color: #1d2939;
+}
+
+.wbgam-checklist__item.is-done .wbgam-checklist__title {
+	color: var(--wb-gam-text-muted, #6b7280);
+	text-decoration: line-through;
+	text-decoration-color: rgba(0, 0, 0, 0.18);
+}
+
+.wbgam-checklist__desc {
+	font-size: 12px;
+	color: var(--wb-gam-text-muted, #6b7280);
+	line-height: 1.5;
+}
+
+.wbgam-checklist__action {
+	flex-shrink: 0;
+}
+
+@media (max-width: 640px) {
+	.wbgam-checklist__item {
+		flex-wrap: wrap;
+	}
+
+	.wbgam-checklist__action {
+		margin-left: 30px; /* align under the body, past the icon */
+	}
+}
+
+/* Card header actions — accommodate multiple buttons (Re-run wizard + Dismiss). */
+.wbgam-card-header__actions {
+	display: inline-flex;
+	gap: 6px;
+	flex-wrap: wrap;
+}
+
+/* Collapsible "How this works" help panel — used at the top of admin pages
+   that need a workflow explainer. <details> is closed by default (no JS,
+   no accessibility tree-tax for repeat visitors). */
+.wbgam-help-panel {
+	background: #f8fafc;
+	border: 1px solid #e5e7eb;
+	border-radius: var(--wb-gam-radius, 8px);
+	padding: 12px 16px;
+	margin: 0 0 20px;
+}
+
+.wbgam-help-panel__summary {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	cursor: pointer;
+	font-weight: 600;
+	font-size: 13px;
+	color: #1d2939;
+	user-select: none;
+}
+
+.wbgam-help-panel__summary:hover {
+	color: var(--wb-gam-primary, #2563eb);
+}
+
+.wbgam-help-panel__summary .icon-info {
+	color: var(--wb-gam-primary, #2563eb);
+}
+
+.wbgam-help-panel__body {
+	margin-top: 12px;
+	padding-top: 12px;
+	border-top: 1px solid #f0f0f1;
+	font-size: 13px;
+	line-height: 1.6;
+	color: #374151;
+}
+
+.wbgam-help-panel__body p {
+	margin: 0 0 10px;
+}
+
+.wbgam-help-panel__body p:last-child {
+	margin-bottom: 0;
+}
+
+.wbgam-help-panel__body code {
+	background: #fff;
+	padding: 1px 6px;
+	border: 1px solid #e5e7eb;
+	border-radius: 3px;
+	font-size: 12px;
+}
+
+@media (max-width: 640px) {
+	.wbgam-help-panel {
+		padding: 12px;
+	}
+}
+
 /* Inline status text shown next to the test-event button. */
 .wbgam-test-event-status {
 	font-size: 13px;

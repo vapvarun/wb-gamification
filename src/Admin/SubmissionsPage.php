@@ -84,23 +84,57 @@ final class SubmissionsPage {
 				</div>
 			</header>
 
+			<details class="wbgam-help-panel">
+				<summary class="wbgam-help-panel__summary">
+					<span class="icon-info" aria-hidden="true"></span>
+					<?php esc_html_e( 'How this queue works', 'wb-gamification' ); ?>
+				</summary>
+				<div class="wbgam-help-panel__body">
+					<p>
+						<?php esc_html_e( 'Members submit evidence of an achievement (a description and an optional URL or attachment) using the Submit Achievement block. The submission lands here for your review. Approve to fire the standard earning event — the member receives points, may earn a badge, may level up, and any matching webhooks fire just like an automatic earn. Reject to record a reason for the member. There is no penalty for rejection.', 'wb-gamification' ); ?>
+					</p>
+					<p>
+						<strong><?php esc_html_e( 'Where members submit:', 'wb-gamification' ); ?></strong>
+						<?php
+						printf(
+							wp_kses(
+								/* translators: %s: shortcode wrapped in code tags */
+								__( 'Add the %s block (or shortcode) to a page on the front end. Logged-in members will see a form; everyone else sees a "log in to submit" prompt.', 'wb-gamification' ),
+								array( 'code' => array() )
+							),
+							'<code>wb-gamification/submit-achievement</code>'
+						);
+						?>
+					</p>
+					<p>
+						<strong><?php esc_html_e( 'Anti-spam:', 'wb-gamification' ); ?></strong>
+						<?php esc_html_e( 'Each member is rate-limited to 5 submissions per day by default. Filter `wb_gam_submission_daily_cap` to change.', 'wb-gamification' ); ?>
+					</p>
+				</div>
+			</details>
+
 			<div class="wbgam-card">
 				<div class="wbgam-card-body wbgam-card-body--flush">
 					<?php if ( empty( $pending ) ) : ?>
 						<div class="wbgam-empty">
 							<div class="wbgam-empty-icon"><span class="icon-check-circle wbgam-icon-xl"></span></div>
 							<h3><?php esc_html_e( 'No pending submissions.', 'wb-gamification' ); ?></h3>
-							<p><?php esc_html_e( 'When members submit achievements that require approval, they\'ll appear here.', 'wb-gamification' ); ?></p>
+							<p>
+								<?php esc_html_e( 'When members submit achievements that require approval, they\'ll appear here.', 'wb-gamification' ); ?>
+							</p>
+							<p class="description">
+								<?php esc_html_e( 'Tip: place the Submit Achievement block on a member-only page so people know where to share their wins.', 'wb-gamification' ); ?>
+							</p>
 						</div>
 					<?php else : ?>
 						<table class="wbgam-table">
 							<thead>
 								<tr>
-									<th><?php esc_html_e( 'Member', 'wb-gamification' ); ?></th>
-									<th><?php esc_html_e( 'Action', 'wb-gamification' ); ?></th>
-									<th><?php esc_html_e( 'Evidence', 'wb-gamification' ); ?></th>
+									<th title="<?php esc_attr_e( 'The member who submitted the achievement.', 'wb-gamification' ); ?>"><?php esc_html_e( 'Member', 'wb-gamification' ); ?></th>
+									<th title="<?php esc_attr_e( 'Which earnable action the member is claiming. Must match a registered action ID.', 'wb-gamification' ); ?>"><?php esc_html_e( 'Action', 'wb-gamification' ); ?></th>
+									<th title="<?php esc_attr_e( 'The text + optional URL the member submitted as proof.', 'wb-gamification' ); ?>"><?php esc_html_e( 'Evidence', 'wb-gamification' ); ?></th>
 									<th><?php esc_html_e( 'Submitted', 'wb-gamification' ); ?></th>
-									<th><?php esc_html_e( 'Decision', 'wb-gamification' ); ?></th>
+									<th title="<?php esc_attr_e( 'Approve fires the standard earning event (points + badges + level). Reject lets you write a short reason.', 'wb-gamification' ); ?>"><?php esc_html_e( 'Decision', 'wb-gamification' ); ?></th>
 								</tr>
 							</thead>
 							<tbody>

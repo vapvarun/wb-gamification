@@ -38,6 +38,7 @@ final class SettingsPage {
 		add_action( 'admin_menu', array( __CLASS__, 'register_page' ) );
 		add_action( 'admin_init', array( __CLASS__, 'handle_save' ) );
 		add_action( 'admin_init', array( __CLASS__, 'handle_dismiss_welcome' ) );
+		add_action( 'admin_init', array( __CLASS__, 'handle_dismiss_checklist' ) );
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_levels_assets' ) );
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_settings_toggles' ) );
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_test_event' ) );
@@ -109,6 +110,98 @@ final class SettingsPage {
 			wp_safe_redirect( admin_url( 'admin.php?page=wb-gamification' ) );
 			exit;
 		}
+	}
+
+	/**
+	 * Dismiss the setup-progress checklist for the current admin.
+	 *
+	 * Separate from the welcome card — admins may want to keep "Getting
+	 * Started" visible while hiding the checklist (or vice versa).
+	 */
+	public static function handle_dismiss_checklist(): void {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- nonce checked below.
+		if ( empty( $_GET['dismiss_checklist'] ) || empty( $_GET['_wpnonce'] ) ) {
+			return;
+		}
+		if ( ! wp_verify_nonce( sanitize_key( $_GET['_wpnonce'] ), 'wb_gam_dismiss_checklist' ) ) {
+			return;
+		}
+		if ( current_user_can( 'manage_options' ) ) {
+			update_user_meta( get_current_user_id(), 'wb_gam_dismissed_checklist', 1 );
+			wp_safe_redirect( admin_url( 'admin.php?page=wb-gamification' ) );
+			exit;
+		}
+	}
+
+	/**
+	 * Compute setup-checklist step state from live site data.
+	 *
+	 * Each step queries the site (option, meta, table count) so admins
+	 * never need to manually mark a step done — it self-checks. Returns
+	 * a list of associative arrays consumed by the dashboard render.
+	 *
+	 * @param int $hub_page_id Current hub page ID (0 if not yet auto-created).
+	 * @param int $points_total Last-30-days point total from analytics.
+	 * @return array<int, array{title:string, desc:string, done:bool, action_url?:string, action_label?:string, action_target?:string}>
+	 */
+	private static function compute_setup_checklist( int $hub_page_id, int $points_total ): array {
+		global $wpdb;
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.DirectQuery -- One small COUNT for setup-checklist UI; not a hot path.
+		$badge_count = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}wb_gam_badge_defs" );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.DirectQuery -- Same.
+		$level_count = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}wb_gam_levels" );
+
+		$wizard_done = (bool) get_option( 'wb_gam_wizard_complete' );
+		$template    = (string) get_option( 'wb_gam_template', '' );
+
+		$hub_url  = $hub_page_id ? get_permalink( $hub_page_id ) : '';
+		$hub_edit = $hub_page_id ? get_edit_post_link( $hub_page_id ) : '';
+
+		return array(
+			array(
+				'title'        => __( 'Run the Setup Wizard', 'wb-gamification' ),
+				'desc'         => __( 'Pick a starter template so points + leaderboard are pre-configured for your community.', 'wb-gamification' ),
+				'done'         => $wizard_done && '' !== $template,
+				'action_url'   => admin_url( 'admin.php?page=wb-gamification-setup' ),
+				'action_label' => __( 'Run wizard', 'wb-gamification' ),
+			),
+			array(
+				'title'        => __( 'Define your levels', 'wb-gamification' ),
+				'desc'         => __( 'Levels turn point thresholds into named milestones (e.g. Newcomer → Regular → Expert).', 'wb-gamification' ),
+				'done'         => $level_count > 0,
+				'action_url'   => admin_url( 'admin.php?page=wb-gamification#levels' ),
+				'action_label' => __( 'Add levels', 'wb-gamification' ),
+			),
+			array(
+				'title'        => __( 'Build your badge library', 'wb-gamification' ),
+				'desc'         => __( 'Badges are the visible rewards — earned on milestones, streaks, or specific actions.', 'wb-gamification' ),
+				'done'         => $badge_count > 0,
+				'action_url'   => admin_url( 'admin.php?page=wb-gamification-badges' ),
+				'action_label' => __( 'Add badges', 'wb-gamification' ),
+			),
+			array(
+				'title'        => __( 'Place the Hub block on a page', 'wb-gamification' ),
+				'desc'         => $hub_url
+					? sprintf(
+						/* translators: %s: relative URL to the hub page */
+						__( 'Auto-created at %s. Edit the page to customize the layout.', 'wb-gamification' ),
+						wp_make_link_relative( $hub_url )
+					)
+					: __( 'Auto-creates on activation; if you deleted the page, place [wb_gam_hub] on any page.', 'wb-gamification' ),
+				'done'         => $hub_page_id > 0,
+				'action_url'   => $hub_edit ?: admin_url( 'edit.php?post_type=page' ),
+				'action_label' => $hub_edit ? __( 'Edit Hub page', 'wb-gamification' ) : __( 'Create page', 'wb-gamification' ),
+			),
+			array(
+				'title'        => __( 'See points flow end-to-end', 'wb-gamification' ),
+				'desc'         => __( 'Click "Send a test event" above (or do a real action like publishing a post) to confirm the engine fires.', 'wb-gamification' ),
+				'done'         => $points_total > 0,
+				'action_url'   => $hub_url ?: admin_url( 'admin.php?page=wb-gamification' ),
+				'action_label' => __( 'Open Hub', 'wb-gamification' ),
+				'action_target' => '_blank',
+			),
+		);
 	}
 
 	/**
@@ -907,7 +1000,10 @@ final class SettingsPage {
 			<div class="wbgam-settings-card wbgam-stack-block wbgam-card--accent" data-wb-gam-welcome>
 				<div class="wbgam-card-header">
 					<h3 class="wbgam-card-title"><?php esc_html_e( 'Getting Started', 'wb-gamification' ); ?></h3>
-					<a href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin.php?page=wb-gamification&dismiss_welcome=1' ), 'wb_gam_dismiss_welcome' ) ); ?>" class="wbgam-btn wbgam-btn--sm wbgam-btn--secondary"><?php esc_html_e( 'Dismiss', 'wb-gamification' ); ?></a>
+					<span class="wbgam-card-header__actions">
+						<a href="<?php echo esc_url( admin_url( 'admin.php?page=wb-gamification-setup' ) ); ?>" class="wbgam-btn wbgam-btn--sm wbgam-btn--secondary" title="<?php esc_attr_e( 'Re-run the Setup Wizard to pick a different starter template or change defaults.', 'wb-gamification' ); ?>"><?php esc_html_e( 'Re-run wizard', 'wb-gamification' ); ?></a>
+						<a href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin.php?page=wb-gamification&dismiss_welcome=1' ), 'wb_gam_dismiss_welcome' ) ); ?>" class="wbgam-btn wbgam-btn--sm wbgam-btn--secondary"><?php esc_html_e( 'Dismiss', 'wb-gamification' ); ?></a>
+					</span>
 				</div>
 				<div class="wbgam-card-body">
 					<p><?php esc_html_e( 'Your gamification system is active! Points, badges, and levels will appear here as members interact with your site. Here are some next steps:', 'wb-gamification' ); ?></p>
@@ -947,6 +1043,55 @@ final class SettingsPage {
 							<?php esc_html_e( 'View badge library', 'wb-gamification' ); ?>
 						</a>
 					</p>
+				</div>
+			</div>
+			<?php
+		endif;
+
+		// Setup-progress checklist — visible until every step is checked OR the
+		// admin dismisses it. Each step queries the live site state; admins
+		// don't need to manually mark anything done. Hides itself once the
+		// last step turns green.
+		$checklist_dismissed = (bool) get_user_meta( get_current_user_id(), 'wb_gam_dismissed_checklist', true );
+		$checklist_steps     = self::compute_setup_checklist( $hub_page_id, (int) $stats['points_total'] );
+		$checklist_done      = count( array_filter( $checklist_steps, static fn( $step ) => $step['done'] ) );
+		$checklist_total     = count( $checklist_steps );
+
+		if ( ! $checklist_dismissed && $checklist_done < $checklist_total ) :
+			?>
+			<div class="wbgam-settings-card wbgam-stack-block wbgam-card--accent">
+				<div class="wbgam-card-header">
+					<h3 class="wbgam-card-title">
+						<?php
+						printf(
+							/* translators: 1: completed step count, 2: total step count */
+							esc_html__( 'Setup checklist (%1$d / %2$d)', 'wb-gamification' ),
+							(int) $checklist_done,
+							(int) $checklist_total
+						);
+						?>
+					</h3>
+					<a href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin.php?page=wb-gamification&dismiss_checklist=1' ), 'wb_gam_dismiss_checklist' ) ); ?>" class="wbgam-btn wbgam-btn--sm wbgam-btn--secondary">
+						<?php esc_html_e( 'Dismiss', 'wb-gamification' ); ?>
+					</a>
+				</div>
+				<div class="wbgam-card-body">
+					<ul class="wbgam-checklist">
+						<?php foreach ( $checklist_steps as $step ) : ?>
+							<li class="wbgam-checklist__item <?php echo $step['done'] ? 'is-done' : ''; ?>">
+								<span class="wbgam-checklist__icon icon-<?php echo $step['done'] ? 'check-circle' : 'circle'; ?>" aria-hidden="true"></span>
+								<span class="wbgam-checklist__body">
+									<strong class="wbgam-checklist__title"><?php echo esc_html( $step['title'] ); ?></strong>
+									<span class="wbgam-checklist__desc"><?php echo esc_html( $step['desc'] ); ?></span>
+								</span>
+								<?php if ( ! $step['done'] && ! empty( $step['action_url'] ) ) : ?>
+									<a class="wbgam-btn wbgam-btn--sm wbgam-checklist__action" href="<?php echo esc_url( $step['action_url'] ); ?>"<?php echo ! empty( $step['action_target'] ) ? ' target="' . esc_attr( $step['action_target'] ) . '" rel="noopener"' : ''; ?>>
+										<?php echo esc_html( $step['action_label'] ); ?>
+									</a>
+								<?php endif; ?>
+							</li>
+						<?php endforeach; ?>
+					</ul>
 				</div>
 			</div>
 			<?php
