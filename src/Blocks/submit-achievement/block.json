@@ -1,0 +1,42 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "wb-gamification/submit-achievement",
+	"version": "1.0.0",
+	"title": "Submit Achievement",
+	"category": "widgets",
+	"description": "Lets members submit an achievement (text + optional URL) for admin approval. Approved submissions fire the standard earning event.",
+	"keywords": [ "gamification", "submit", "achievement", "ugc" ],
+	"textdomain": "wb-gamification",
+	"attributes": {
+		"uniqueId":         { "type": "string",  "default": "" },
+
+		"padding":          { "type": "object",  "default": { "top": 16, "right": 16, "bottom": 16, "left": 16 } },
+		"paddingTablet":    { "type": "object" },
+		"paddingMobile":    { "type": "object" },
+		"paddingUnit":      { "type": "string",  "default": "px" },
+		"margin":           { "type": "object",  "default": { "top": 0, "right": 0, "bottom": 0, "left": 0 } },
+		"marginTablet":     { "type": "object" },
+		"marginMobile":     { "type": "object" },
+		"marginUnit":       { "type": "string",  "default": "px" },
+
+		"accentColor":      { "type": "string",  "default": "" },
+		"cardBackground":   { "type": "string",  "default": "" },
+		"cardBorderColor":  { "type": "string",  "default": "" },
+
+		"borderRadius":     { "type": "object",  "default": { "top": 12, "right": 12, "bottom": 12, "left": 12 } },
+		"borderRadiusUnit": { "type": "string",  "default": "px" },
+
+		"hideOnDesktop":    { "type": "boolean", "default": false },
+		"hideOnTablet":     { "type": "boolean", "default": false },
+		"hideOnMobile":     { "type": "boolean", "default": false }
+	},
+	"supports": {
+		"html": false,
+		"align": [ "wide", "full" ],
+		"anchor": true,
+		"className": true
+	},
+	"render":     "file:./render.php",
+	"viewScript": "file:./view.js"
+}

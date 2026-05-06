@@ -630,6 +630,52 @@
         "permission": "is_user_logged_in",
         "purpose": "Atomic member-facing convert: debits source + credits destination, FOR-UPDATE locked, shared event_id.",
         "where": "src/API/PointTypeConversionsController.php:95"
+      },
+      {
+        "route": "/wb-gamification/v1/submissions",
+        "methods": [
+          "GET"
+        ],
+        "handler": "SubmissionsController::handle_list",
+        "permission": "manage_options",
+        "purpose": "Admin queue list."
+      },
+      {
+        "route": "/wb-gamification/v1/submissions",
+        "methods": [
+          "POST"
+        ],
+        "handler": "SubmissionsController::handle_submit",
+        "permission": "is_user_logged_in",
+        "purpose": "Member submits an achievement."
+      },
+      {
+        "route": "/wb-gamification/v1/submissions/(?P<id>[\\d]+)/approve",
+        "methods": [
+          "POST"
+        ],
+        "handler": "SubmissionsController::handle_approve",
+        "permission": "manage_options",
+        "purpose": "Approve submission → fires earning event."
+      },
+      {
+        "route": "/wb-gamification/v1/submissions/(?P<id>[\\d]+)/reject",
+        "methods": [
+          "POST"
+        ],
+        "handler": "SubmissionsController::handle_reject",
+        "permission": "manage_options",
+        "purpose": "Reject submission with optional reason."
+      },
+      {
+        "route": "/wb-gamification/v1/settings/emails",
+        "methods": [
+          "GET",
+          "POST"
+        ],
+        "handler": "EmailSettingsController",
+        "permission": "manage_options",
+        "purpose": "Per-event transactional email toggles."
       }
     ],
     "notes": "39 register_rest_route() calls. Some routes registered as a single call covering multiple methods (e.g., GET+POST on the same path); manifest expands those for clarity. No AJAX layer — all interactive UI talks to REST."
@@ -751,6 +797,17 @@
       "source": "src/Admin/PointTypeConversionsPage.php:76",
       "added": "1.0.0",
       "purpose": "Admin-defined exchange rates between currencies; toggleable, with optional cooldown + daily-cap."
+    },
+    {
+      "title": "Submissions",
+      "menu_title": "Submissions",
+      "slug": "wb-gam-submissions",
+      "parent": "wb-gamification",
+      "capability": "manage_options",
+      "render": "SubmissionsPage::render_page",
+      "source": "src/Admin/SubmissionsPage.php",
+      "added": "1.0.0",
+      "purpose": "Approve / reject pending member achievement submissions; approval fires the matching action through the standard earning pipeline."
     }
   ],
   "settings": [
@@ -1033,6 +1090,20 @@
       "render": "src/Blocks/redemption-store/render.php",
       "interactivity": true,
       "layout_owning": false
+    },
+    {
+      "name": "wb-gamification/daily-bonus",
+      "render": "src/Blocks/daily-bonus/render.php",
+      "interactivity": false,
+      "layout_owning": false,
+      "added": "1.0.0"
+    },
+    {
+      "name": "wb-gamification/submit-achievement",
+      "render": "src/Blocks/submit-achievement/render.php",
+      "interactivity": false,
+      "layout_owning": false,
+      "added": "1.0.0"
     }
   ],
   "post_types": [],
@@ -1117,6 +1188,10 @@
     {
       "name": "{prefix}wb_gam_point_type_conversions",
       "purpose": "Admin-defined exchange rates between currencies (e.g. 100 points = 1 coin) with optional cooldown + daily cap."
+    },
+    {
+      "name": "{prefix}wb_gam_submissions",
+      "purpose": "Pending achievement submissions queue. One row per submitted achievement; approval updates status + fires the matching earning event."
     }
   ],
   "capabilities": [
@@ -1443,6 +1518,18 @@
       "class": "WBGam\\Repository\\PointTypeConversionRepository",
       "added": "1.0.0",
       "purpose": "SQL repo for wb_gam_point_type_conversions; active-only filter."
+    },
+    {
+      "key": "SubmissionService",
+      "class": "WBGam\\Services\\SubmissionService",
+      "added": "1.0.0",
+      "purpose": "Submission lifecycle — submit/approve/reject + rate-limit + approval awards."
+    },
+    {
+      "key": "SubmissionRepository",
+      "class": "WBGam\\Repository\\SubmissionRepository",
+      "added": "1.0.0",
+      "purpose": "SQL repo for wb_gam_submissions."
     }
   ],
   "hooks_fired": [
@@ -2236,8 +2323,8 @@
     ]
   },
   "generated": {
-    "at": "2026-05-06T10:11:43Z",
-    "from": "wp-plugin-onboard skill (refresh — 15/15 block data filters + Lucide icon migration + admin enqueue fix + post-fix verification)",
+    "at": "2026-05-06T11:01:44Z",
+    "from": "wp-plugin-onboard skill (refresh — v1.0 gaps #2/#3/#4/#5 closed)",
     "branch": "main",
     "schema_version": "v2.2",
     "scan_scope": "gruntfile",

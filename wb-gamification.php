@@ -79,6 +79,7 @@ use WBGam\Admin\CohortSettingsPage;
 use WBGam\Admin\WebhooksAdminPage;
 use WBGam\Admin\PointTypesPage;
 use WBGam\Admin\PointTypeConversionsPage;
+use WBGam\Admin\SubmissionsPage;
 use WBGam\API\CredentialController;
 use WBGam\API\RedemptionController;
 use WBGam\API\LevelsController;
@@ -90,6 +91,7 @@ use WBGam\API\ApiKeysController;
 use WBGam\API\CohortSettingsController;
 use WBGam\API\CommunityChallengesController;
 use WBGam\API\EmailSettingsController;
+use WBGam\API\SubmissionsController;
 use WBGam\Engine\CredentialExpiryEngine;
 use WBGam\Engine\LeaderboardEngine;
 use WBGam\Engine\ShortcodeHandler;
@@ -167,6 +169,7 @@ final class WB_Gamification {
 			add_action( 'plugins_loaded', array( WebhooksAdminPage::class, 'init' ), 10 );
 			add_action( 'plugins_loaded', array( PointTypesPage::class, 'init' ), 10 );
 			add_action( 'plugins_loaded', array( PointTypeConversionsPage::class, 'init' ), 10 );
+			add_action( 'plugins_loaded', array( SubmissionsPage::class, 'init' ), 10 );
 		}
 	}
 
@@ -227,6 +230,7 @@ final class WB_Gamification {
 		( new CohortSettingsController() )->register_routes();
 		( new CommunityChallengesController() )->register_routes();
 		( new EmailSettingsController() )->register_routes();
+		( new SubmissionsController() )->register_routes();
 	}
 
 	public function register_blocks(): void {

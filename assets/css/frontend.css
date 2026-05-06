@@ -338,3 +338,42 @@
 		font-size: 0.8125rem;
 	}
 }
+
+/* ── Public profile page (Engine\ProfilePage) ───────────────────────────── */
+.wb-gam-profile-page {
+	max-width: 800px;
+	margin: 32px auto;
+	padding: 0 16px;
+}
+.wb-gam-profile-page__hero {
+	display: flex;
+	align-items: center;
+	gap: 20px;
+	background: var(--wb-gam-color-white, #fff);
+	border: 1px solid var(--wb-gam-color-border, #e5e7eb);
+	border-radius: 12px;
+	padding: 24px;
+	margin-bottom: 24px;
+}
+.wb-gam-profile-page__avatar img {
+	border-radius: 50%;
+	width: 96px;
+	height: 96px;
+	object-fit: cover;
+}
+.wb-gam-profile-page__name {
+	margin: 0;
+	font-size: 22px;
+	font-weight: 700;
+	color: var(--wb-gam-color-text, #1f2937);
+}
+.wb-gam-profile-page__stats {
+	margin: 6px 0 0;
+	color: var(--wb-gam-color-text-muted, #6b7280);
+	font-size: 14px;
+}
+.wb-gam-profile-page__section { margin-bottom: 28px; }
+@media (max-width: 640px) {
+	.wb-gam-profile-page__hero { flex-direction: column; text-align: center; padding: 18px; }
+	.wb-gam-profile-page__avatar img { width: 80px; height: 80px; }
+}

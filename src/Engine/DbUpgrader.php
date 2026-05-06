@@ -77,6 +77,45 @@ final class DbUpgrader {
 		self::ensure_leaderboard_cache_point_type_column();
 		self::ensure_user_totals_table();
 		self::ensure_leaderboard_cache_unique_key();
+		self::ensure_submissions_table();
+	}
+
+	/**
+	 * Create wb_gam_submissions on existing installs.
+	 *
+	 * Idempotent — feature-flag gated.
+	 *
+	 * @since 1.0.0
+	 */
+	private static function ensure_submissions_table(): void {
+		$flag_key = 'wb_gam_feature_submissions_v1';
+		if ( get_option( $flag_key ) ) {
+			return;
+		}
+
+		global $wpdb;
+		$charset = $wpdb->get_charset_collate();
+		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+
+		dbDelta(
+			"CREATE TABLE {$wpdb->prefix}wb_gam_submissions (
+			id           BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+			user_id      BIGINT UNSIGNED NOT NULL,
+			action_id    VARCHAR(60)     NOT NULL,
+			evidence     TEXT            NULL,
+			evidence_url VARCHAR(2048)   NULL,
+			status       VARCHAR(20)     NOT NULL DEFAULT 'pending',
+			reviewer_id  BIGINT UNSIGNED NULL,
+			notes        TEXT            NULL,
+			reviewed_at  DATETIME        NULL,
+			created_at   DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			PRIMARY KEY (id),
+			KEY idx_user_status (user_id, status),
+			KEY idx_status_created (status, created_at)
+		) $charset;"
+		);
+
+		update_option( $flag_key, '1' );
 	}
 
 	/**

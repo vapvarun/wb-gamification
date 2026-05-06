@@ -124,6 +124,9 @@ check_no_inline_styles_in_admin_php() {
 
 # Rule 4: no inline <script> blocks in PHP. Move to assets/js/ + wp_enqueue_script.
 # Scans only *.php under src/ (skips JS / CSS / comments / vendor / tests).
+# Allowlist: ProfilePage.php — JSON-LD MUST emit an inline
+# <script type="application/ld+json"> per W3C spec for Schema.org. The JSON
+# payload is per-request and can't be moved to a static asset file.
 check_no_inline_scripts_in_php() {
     local hits
     hits=$(grep -rEn --include='*.php' '<script(\s|>)' "$PLUGIN_DIR/src/" 2>/dev/null \
@@ -131,6 +134,7 @@ check_no_inline_scripts_in_php() {
             | grep -vE '^\s*[*]' \
             | grep -vE '^[^:]*:[0-9]+:\s*\*' \
             | grep -vE '^[^:]*:[0-9]+:\s*//' \
+            | grep -vE 'src/Engine/ProfilePage\.php.*ld\+json' \
             || true)
     if [ -n "$hits" ]; then
         violation "Rule 4 — inline <script> blocks in PHP (move to assets/js/ + wp_enqueue_script):"

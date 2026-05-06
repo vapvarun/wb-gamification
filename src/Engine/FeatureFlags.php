@@ -49,6 +49,7 @@ final class FeatureFlags {
 		'CredentialExpiryEngine',
 		'TransactionalEmailEngine',
 		'LoginBonusEngine',
+		'ProfilePage',
 	];
 
 	/**

@@ -1,0 +1,81 @@
+/* Submit Achievement — block styles. */
+
+.wb-gam-submit-achievement {
+	background: var(--wb-gam-color-white, #fff);
+	border: 1px solid var(--wb-gam-color-border, #e5e7eb);
+	border-radius: var(--wb-gam-radius-md, 12px);
+	padding: 20px;
+}
+
+.wb-gam-submit-achievement__guest {
+	margin: 0;
+	color: var(--wb-gam-color-text-muted, #6b7280);
+	font-size: 14px;
+}
+
+.wb-gam-submit-achievement__form {
+	display: flex;
+	flex-direction: column;
+	gap: 14px;
+	margin: 0;
+}
+
+.wb-gam-submit-achievement__field {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	font-size: 14px;
+}
+
+.wb-gam-submit-achievement__field span {
+	font-weight: 500;
+	color: var(--wb-gam-color-text, #1f2937);
+}
+
+.wb-gam-submit-achievement__field select,
+.wb-gam-submit-achievement__field input,
+.wb-gam-submit-achievement__field textarea {
+	width: 100%;
+	padding: 10px 12px;
+	border: 1px solid var(--wb-gam-color-border, #d4d4d4);
+	border-radius: 8px;
+	background: #fff;
+	font-size: 14px;
+	font-family: inherit;
+}
+
+.wb-gam-submit-achievement__field textarea { resize: vertical; min-height: 72px; }
+
+.wb-gam-submit-achievement__field select:focus,
+.wb-gam-submit-achievement__field input:focus,
+.wb-gam-submit-achievement__field textarea:focus {
+	outline: 2px solid color-mix(in srgb, var(--wb-gam-color-accent, #2563eb) 25%, transparent);
+	border-color: var(--wb-gam-color-accent, #2563eb);
+}
+
+.wb-gam-submit-achievement__submit {
+	align-self: flex-start;
+	background: var(--wb-gam-color-accent, #2563eb);
+	color: #fff;
+	border: none;
+	padding: 10px 20px;
+	border-radius: 8px;
+	font-size: 14px;
+	font-weight: 600;
+	cursor: pointer;
+}
+
+.wb-gam-submit-achievement__submit:hover:not(:disabled) {
+	filter: brightness(0.95);
+}
+
+.wb-gam-submit-achievement__submit:disabled {
+	opacity: 0.6;
+	cursor: not-allowed;
+}
+
+.wb-gam-submit-achievement__status {
+	margin: 0;
+	font-size: 13px;
+	min-height: 18px;
+}

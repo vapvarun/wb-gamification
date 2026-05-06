@@ -10,14 +10,14 @@
     "extension_hook_fired": "wb_gam_free_loaded"
   },
   "counts": {
-    "rest_endpoints": 60,
+    "rest_endpoints": 65,
     "ajax_handlers": 0,
-    "admin_pages": 12,
+    "admin_pages": 13,
     "shortcodes": 15,
-    "blocks": 15,
-    "tables": 20,
+    "blocks": 17,
+    "tables": 21,
     "capabilities": 2,
-    "services": 41,
+    "services": 43,
     "hooks_fired": 55,
     "cron_hooks": 9,
     "wp_cli_commands": 6,
@@ -67,5 +67,5 @@
     "wppqa_warnings": 0,
     "legacy_blocks_dir_deleted": true
   },
-  "generated_at": "2026-05-06T10:11:43Z"
+  "generated_at": "2026-05-06T11:01:44Z"
 }

@@ -342,6 +342,28 @@ final class Installer {
 		) $charset;"
 		);
 
+		// UGC achievement submissions — pending queue admins review.
+		// Members POST evidence (text + optional URL); admin approves
+		// → fires the corresponding action so points + badges flow
+		// through the standard pipeline. One row per submission.
+		dbDelta(
+			"CREATE TABLE {$wpdb->prefix}wb_gam_submissions (
+			id           BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+			user_id      BIGINT UNSIGNED NOT NULL,
+			action_id    VARCHAR(60)     NOT NULL,
+			evidence     TEXT            NULL,
+			evidence_url VARCHAR(2048)   NULL,
+			status       VARCHAR(20)     NOT NULL DEFAULT 'pending',
+			reviewer_id  BIGINT UNSIGNED NULL,
+			notes        TEXT            NULL,
+			reviewed_at  DATETIME        NULL,
+			created_at   DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			PRIMARY KEY (id),
+			KEY idx_user_status (user_id, status),
+			KEY idx_status_created (status, created_at)
+		) $charset;"
+		);
+
 		// Materialised user-totals — incrementally updated on every award/debit
 		// so PointsEngine::get_total() is a single-row PK lookup instead of a
 		// SUM against the full ledger. Critical for 100k-user scale: a hub
