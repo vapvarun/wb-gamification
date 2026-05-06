@@ -513,6 +513,16 @@ Filters fire on the data the block is about to render — devs can reorder, remo
 | `wb_gam_block_points_history_data` | points-history | Array of `{action_id, points, point_type, created_at}` rows |
 | `wb_gam_block_member_points_data` | member-points | `{points, label, level, next_level, progress_pct}` map |
 | `wb_gam_block_hub_currencies` | hub | Array of `{slug, label, icon, balance, is_default, convert_rules}` tiles |
+| `wb_gam_block_badge_showcase_data` | badge-showcase | Array of `{id, name, icon_url, earned, ...}` badges |
+| `wb_gam_block_challenges_data` | challenges | Array of active challenges for the user |
+| `wb_gam_block_cohort_rank_data` | cohort-rank | Array of cohort standings rows |
+| `wb_gam_block_community_challenges_data` | community-challenges | Array of active community challenges |
+| `wb_gam_block_earning_guide_data` | earning-guide | Category-keyed action map `[ category => [{label,icon,points}, ...] ]` |
+| `wb_gam_block_kudos_feed_data` | kudos-feed | Array of recent kudos rows |
+| `wb_gam_block_level_progress_data` | level-progress | `{points, level, next, pct}` map |
+| `wb_gam_block_redemption_store_data` | redemption-store | Array of reward items |
+| `wb_gam_block_streak_data` | streak | `{streak, heatmap}` map |
+| `wb_gam_block_year_recap_data` | year-recap | Yearly recap aggregates map |
 
 ```php
 // Example: hide certain users from every leaderboard.
@@ -534,7 +544,7 @@ add_filter( 'wb_gam_block_hub_currencies', function( array $tiles, array $attrs,
 }, 10, 3 );
 ```
 
-The remaining 10 blocks (badge-showcase, challenges, cohort-rank, community-challenges, earning-guide, kudos-feed, level-progress, redemption-store, streak, year-recap) only expose the universal actions today; per-block data filters land in 1.0.1. Devs needing data mutation against those blocks before then can use `wb_gam_block_before_render` with output buffering.
+All 15 blocks expose a data filter — every member-facing render path is mutable from extension code without forking the render PHP.
 
 ---
 

@@ -65,6 +65,17 @@ if ( '' !== $wb_gam_category ) {
 	);
 }
 
+/**
+ * Filter the badge-showcase block badges before render.
+ *
+ * @since 1.0.0
+ *
+ * @param array $badges     [{id, name, icon_url, earned, ...}, ...].
+ * @param array $attributes Block attributes (show_locked, category, user_id).
+ * @param int   $user_id    Member whose showcase is rendered.
+ */
+$wb_gam_badges = (array) apply_filters( 'wb_gam_block_badge_showcase_data', $wb_gam_badges, $wb_gam_attrs, $wb_gam_user_id );
+
 if ( $wb_gam_limit > 0 && count( $wb_gam_badges ) > $wb_gam_limit ) {
 	$wb_gam_badges = array_slice( $wb_gam_badges, 0, $wb_gam_limit );
 }

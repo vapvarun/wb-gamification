@@ -49,13 +49,19 @@ final class SettingsPage {
 	 * Register the top-level gamification admin menu page.
 	 */
 	public static function register_page(): void {
+		// Admin menu icon — pass 'none' so WordPress doesn't paint anything,
+		// then the Lucide award glyph is applied via CSS (admin.css targets
+		// `#adminmenu .toplevel_page_wb-gamification .wp-menu-image:before`
+		// with `content: "\e053"` from the Lucide font). Keeps the menu icon
+		// on the same Lucide font as every other plugin icon — no SVG, no
+		// dashicon.
 		add_menu_page(
 			__( 'WB Gamification', 'wb-gamification' ),
 			__( 'Gamification', 'wb-gamification' ),
 			'manage_options',
 			'wb-gamification',
 			array( __CLASS__, 'render' ),
-			'icon-award',
+			'none',
 			56
 		);
 	}

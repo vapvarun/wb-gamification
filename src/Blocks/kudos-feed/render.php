@@ -41,6 +41,16 @@ wp_enqueue_style( 'wb-gam-tokens' );
 
 $wb_gam_kudos = KudosEngine::get_recent( $wb_gam_limit );
 
+/**
+ * Filter the kudos-feed entries before render.
+ *
+ * @since 1.0.0
+ *
+ * @param array $kudos      Recent kudos rows.
+ * @param array $attributes Block attributes (limit).
+ */
+$wb_gam_kudos = (array) apply_filters( 'wb_gam_block_kudos_feed_data', $wb_gam_kudos, $wb_gam_attrs );
+
 $wb_gam_wrapper = get_block_wrapper_attributes(
 	array(
 		'class' => implode( ' ', $wb_gam_classes ),

@@ -74,6 +74,18 @@ if ( ! empty( $wb_gam_actions ) ) {
 	}
 }
 
+/**
+ * Filter the earning-guide grouped action map before render.
+ *
+ * Map shape: [ category => [ ['label','icon','points'], ... ] ].
+ *
+ * @since 1.0.0
+ *
+ * @param array $grouped    Category-keyed action list.
+ * @param array $attributes Block attributes.
+ */
+$wb_gam_grouped = (array) apply_filters( 'wb_gam_block_earning_guide_data', $wb_gam_grouped, $wb_gam_attrs );
+
 $wb_gam_wrapper = get_block_wrapper_attributes(
 	array(
 		'class' => implode( ' ', $wb_gam_classes ),

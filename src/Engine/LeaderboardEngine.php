@@ -327,9 +327,14 @@ final class LeaderboardEngine {
 		$cache_table  = $wpdb->prefix . 'wb_gam_leaderboard_cache';
 		$points_table = $wpdb->prefix . 'wb_gam_points';
 
-		// Truncate existing snapshot data.
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching
-		$wpdb->query( "TRUNCATE TABLE {$cache_table}" );
+		// Snapshot start time — every row written this tick will have
+		// updated_at >= $started. After all (period × currency) inserts
+		// finish, anything older than $started is a stragger from the
+		// previous snapshot whose user dropped out of the top-500 — purge
+		// in one DELETE at the end. Reads during the rebuild always see
+		// SOME valid data (old or new), eliminating the read-through
+		// window that the legacy TRUNCATE pattern had on every cron tick.
+		$started = current_time( 'mysql' );
 
 		$periods = array(
 			'all'   => null,
@@ -354,6 +359,10 @@ final class LeaderboardEngine {
 					$where .= $wpdb->prepare( ' AND created_at >= %s', $period_start );
 				}
 
+				// UPSERT — insert new rows, update existing rows in place.
+				// The UNIQUE KEY (user_id, period, point_type) on the cache
+				// table is what makes ON DUPLICATE KEY UPDATE work; it was
+				// added by DbUpgrader::ensure_leaderboard_cache_unique_key.
 				// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 				$wpdb->query( $wpdb->prepare(
 					"INSERT INTO {$cache_table} (user_id, period, point_type, total_points, `rank`, updated_at)
@@ -364,13 +373,27 @@ final class LeaderboardEngine {
 					   {$where}
 					  GROUP BY user_id
 					  ORDER BY total_points DESC
-					  LIMIT 500",
+					  LIMIT 500
+					ON DUPLICATE KEY UPDATE
+					   total_points = VALUES(total_points),
+					   `rank`       = VALUES(`rank`),
+					   updated_at   = VALUES(updated_at)",
 					$period_key,
 					$slug
 				) );
 				// phpcs:enable
 			}
 		}
+
+		// Purge stragglers — rows from the previous snapshot whose user
+		// dropped out of the top-500 this tick. Their updated_at is older
+		// than the start of this rebuild, so a single bounded DELETE clears
+		// them without affecting any concurrent reads.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$wpdb->query( $wpdb->prepare(
+			"DELETE FROM {$cache_table} WHERE updated_at < %s",
+			$started
+		) );
 	}
 
 	// ── Private helpers ────────────────────────────────────────────────────────

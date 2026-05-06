@@ -76,6 +76,27 @@ $wb_gam_heatmap_days = max( 1, min( 365, (int) ( $wb_gam_attrs['heatmap_days'] ?
 $wb_gam_streak  = StreakEngine::get_streak( $wb_gam_user_id );
 $wb_gam_heatmap = $wb_gam_show_heatmap ? StreakEngine::get_contribution_data( $wb_gam_user_id, $wb_gam_heatmap_days ) : array();
 
+/**
+ * Filter the streak block data before render.
+ *
+ * @since 1.0.0
+ *
+ * @param array $data       ['streak', 'heatmap'].
+ * @param array $attributes Block attributes (show_heatmap, heatmap_days).
+ * @param int   $user_id    Member whose streak is rendered.
+ */
+$wb_gam_block_data = (array) apply_filters(
+	'wb_gam_block_streak_data',
+	array(
+		'streak'  => $wb_gam_streak,
+		'heatmap' => $wb_gam_heatmap,
+	),
+	$wb_gam_attrs,
+	$wb_gam_user_id
+);
+$wb_gam_streak  = $wb_gam_block_data['streak'] ?? $wb_gam_streak;
+$wb_gam_heatmap = (array) ( $wb_gam_block_data['heatmap'] ?? $wb_gam_heatmap );
+
 $wb_gam_current = (int) ( $wb_gam_streak['current_streak'] ?? 0 );
 $wb_gam_longest = (int) ( $wb_gam_streak['longest_streak'] ?? 0 );
 

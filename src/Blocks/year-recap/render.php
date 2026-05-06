@@ -72,6 +72,17 @@ $wb_gam_show_kudos   = ! isset( $wb_gam_attrs['show_kudos'] ) || ! empty( $wb_ga
 
 $wb_gam_recap = RecapEngine::get_recap( $wb_gam_user_id, $wb_gam_year );
 
+/**
+ * Filter the year-recap data before render.
+ *
+ * @since 1.0.0
+ *
+ * @param array $recap      Yearly recap aggregates.
+ * @param array $attributes Block attributes (year).
+ * @param int   $user_id    Member whose recap is rendered.
+ */
+$wb_gam_recap = (array) apply_filters( 'wb_gam_block_year_recap_data', $wb_gam_recap, $wb_gam_attrs, $wb_gam_user_id );
+
 // Recap totals are scored in the site's primary currency — resolve
 // its label so the "peak week" line reads as the configured default.
 $wb_gam_pt_service   = new \WBGam\Services\PointTypeService();

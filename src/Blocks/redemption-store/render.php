@@ -43,6 +43,16 @@ if ( $wb_gam_limit > 0 ) {
 	$wb_gam_items = array_slice( $wb_gam_items, 0, $wb_gam_limit );
 }
 
+/**
+ * Filter the redemption-store items before render.
+ *
+ * @since 1.0.0
+ *
+ * @param array $items      Reward items {id, title, points_cost, point_type, stock, ...}.
+ * @param array $attributes Block attributes (limit, pointType).
+ */
+$wb_gam_items = (array) apply_filters( 'wb_gam_block_redemption_store_data', $wb_gam_items, $wb_gam_attrs );
+
 $wb_gam_user_id     = get_current_user_id();
 $wb_gam_point_type  = (string) ( $wb_gam_attrs['pointType'] ?? '' );
 $wb_gam_balance_pts = $wb_gam_user_id ? (int) PointsEngine::get_total( $wb_gam_user_id, $wb_gam_point_type ) : 0;

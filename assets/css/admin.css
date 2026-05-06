@@ -1207,3 +1207,19 @@
 		align-items: stretch;
 	}
 }
+
+/* WP admin sidebar — paint the Lucide `award` glyph as the menu icon
+   for the Gamification top-level entry. SettingsPage::register_page
+   passes icon='none' so WordPress emits an empty `.wp-menu-image`
+   div; this rule fills it from the Lucide font (already enqueued on
+   every WB Gamification admin page). Same Unicode point as
+   `.icon-award:before` (\e053) — single source of truth. */
+#adminmenu .toplevel_page_wb-gamification .wp-menu-image:before {
+	content: "\e053";
+	font-family: "lucide";
+	font-size: 18px;
+	font-style: normal;
+	font-weight: normal;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+}

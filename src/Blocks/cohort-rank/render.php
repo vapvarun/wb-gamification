@@ -78,6 +78,17 @@ if ( null === $wb_gam_standing ) {
 
 $wb_gam_standings    = array_slice( (array) ( $wb_gam_standing['standings'] ?? array() ), 0, $wb_gam_limit );
 
+/**
+ * Filter the cohort-rank standings before render.
+ *
+ * @since 1.0.0
+ *
+ * @param array $standings  Cohort standings rows.
+ * @param array $attributes Block attributes (limit).
+ * @param int   $user_id    Member whose cohort is rendered.
+ */
+$wb_gam_standings = (array) apply_filters( 'wb_gam_block_cohort_rank_data', $wb_gam_standings, $wb_gam_attrs, $wb_gam_user_id );
+
 // Cohort standings are scored in the site's primary currency — resolve
 // its label so the per-row figure says "240 Coins" on a coins-default
 // site instead of always "240 pts".

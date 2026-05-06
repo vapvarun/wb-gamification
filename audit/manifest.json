@@ -2236,8 +2236,8 @@
     ]
   },
   "generated": {
-    "at": "2026-05-06T07:30:00Z",
-    "from": "wp-plugin-onboard skill (refresh — hardcoded label sweep + transactional integrity + hook prefix unification + multi-currency leaks)",
+    "at": "2026-05-06T10:11:43Z",
+    "from": "wp-plugin-onboard skill (refresh — 15/15 block data filters + Lucide icon migration + admin enqueue fix + post-fix verification)",
     "branch": "main",
     "schema_version": "v2.2",
     "scan_scope": "gruntfile",

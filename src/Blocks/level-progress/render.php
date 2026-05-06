@@ -80,6 +80,31 @@ $wb_gam_level  = LevelEngine::get_level_for_user( $wb_gam_user_id );
 $wb_gam_next   = LevelEngine::get_next_level( $wb_gam_user_id );
 $wb_gam_pct    = (float) LevelEngine::get_progress_percent( $wb_gam_user_id );
 
+/**
+ * Filter the level-progress block data before render.
+ *
+ * @since 1.0.0
+ *
+ * @param array $data       ['points', 'level', 'next', 'pct'].
+ * @param array $attributes Block attributes (show_icon, pointType).
+ * @param int   $user_id    Member whose progress is rendered.
+ */
+$wb_gam_block_data = (array) apply_filters(
+	'wb_gam_block_level_progress_data',
+	array(
+		'points' => $wb_gam_points,
+		'level'  => $wb_gam_level,
+		'next'   => $wb_gam_next,
+		'pct'    => $wb_gam_pct,
+	),
+	$wb_gam_attrs,
+	$wb_gam_user_id
+);
+$wb_gam_points = (int) ( $wb_gam_block_data['points'] ?? $wb_gam_points );
+$wb_gam_level  = $wb_gam_block_data['level'] ?? $wb_gam_level;
+$wb_gam_next   = $wb_gam_block_data['next'] ?? $wb_gam_next;
+$wb_gam_pct    = (float) ( $wb_gam_block_data['pct'] ?? $wb_gam_pct );
+
 if ( ! $wb_gam_level ) {
 	$wb_gam_classes[] = 'wb-gam-level-progress--empty';
 	$wb_gam_wrapper   = get_block_wrapper_attributes(

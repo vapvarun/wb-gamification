@@ -44,6 +44,16 @@ if ( $wb_gam_limit > 0 ) {
 	$wb_gam_challenges = array_slice( $wb_gam_challenges, 0, $wb_gam_limit );
 }
 
+/**
+ * Filter the community-challenges block list before render.
+ *
+ * @since 1.0.0
+ *
+ * @param array $challenges Active community challenges.
+ * @param array $attributes Block attributes (limit).
+ */
+$wb_gam_challenges = (array) apply_filters( 'wb_gam_block_community_challenges_data', $wb_gam_challenges, $wb_gam_attrs );
+
 $wb_gam_wrapper = get_block_wrapper_attributes(
 	array(
 		'class' => implode( ' ', $wb_gam_classes ),

@@ -76,6 +76,46 @@ final class DbUpgrader {
 		self::ensure_point_type_conversions_table();
 		self::ensure_leaderboard_cache_point_type_column();
 		self::ensure_user_totals_table();
+		self::ensure_leaderboard_cache_unique_key();
+	}
+
+	/**
+	 * Add a UNIQUE KEY (user_id, period, point_type) to wb_gam_leaderboard_cache
+	 * so write_snapshot can use INSERT ... ON DUPLICATE KEY UPDATE instead
+	 * of TRUNCATE + INSERT. Removes the brief read-through window on every
+	 * 5-minute cron tick where reads fell back to the live SUM.
+	 *
+	 * Idempotent: feature-flag gated. Drops the legacy
+	 * idx_user_type_period non-unique key first since it would conflict
+	 * with the new UNIQUE on the same columns.
+	 *
+	 * @since 1.0.0
+	 */
+	private static function ensure_leaderboard_cache_unique_key(): void {
+		$flag_key = 'wb_gam_feature_leaderboard_cache_unique_key_v1';
+		if ( get_option( $flag_key ) ) {
+			return;
+		}
+
+		global $wpdb;
+		$table = $wpdb->prefix . 'wb_gam_leaderboard_cache';
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$existing = (array) $wpdb->get_col( "SHOW INDEX FROM `{$table}`", 2 );
+
+		if ( in_array( 'idx_user_type_period', $existing, true ) ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$wpdb->query( "ALTER TABLE `{$table}` DROP INDEX idx_user_type_period" );
+		}
+		if ( ! in_array( 'uniq_user_period_type', $existing, true ) ) {
+			// Truncate first to avoid duplicate-key collisions on existing rows.
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$wpdb->query( "TRUNCATE TABLE `{$table}`" );
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$wpdb->query( "ALTER TABLE `{$table}` ADD UNIQUE KEY uniq_user_period_type (user_id, period, point_type)" );
+		}
+
+		update_option( $flag_key, '1' );
 	}
 
 	/**

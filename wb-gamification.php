@@ -356,9 +356,19 @@ final class WB_Gamification {
 		remove_all_actions( 'all_admin_notices' );
 		// Re-add only our own notices.
 		add_action( 'admin_notices', array( $this, 'render_own_notices' ) );
-		// Lucide icon font — mandatory dependency for every admin page so
-		// every UI surface (banners, empty-states, sidebar nav, accordion
-		// chevrons) can use the canonical Lucide set instead of dashicons.
+		// Lucide icon font — register inline if not already (the frontend
+		// register_styles only fires on wp_enqueue_scripts which doesn't
+		// run for admin pages). Mandatory dependency for every admin
+		// surface so banners, empty-states, sidebar nav, accordion
+		// chevrons all render the Lucide set.
+		if ( ! wp_style_is( 'lucide-icons', 'registered' ) ) {
+			wp_register_style(
+				'lucide-icons',
+				WB_GAM_URL . 'assets/fonts/lucide.css',
+				array(),
+				'0.469.0'
+			);
+		}
 		wp_enqueue_style( 'lucide-icons' );
 		wp_enqueue_style(
 			'wb-gam-admin',

@@ -47,6 +47,17 @@ wp_enqueue_style( 'wb-gam-tokens' );
 
 $wb_gam_challenges = ChallengeEngine::get_active_challenges( (int) $wb_gam_user_id );
 
+/**
+ * Filter the challenges block list before render.
+ *
+ * @since 1.0.0
+ *
+ * @param array $challenges Active challenges for the user.
+ * @param array $attributes Block attributes.
+ * @param int   $user_id    Member whose challenges are rendered.
+ */
+$wb_gam_challenges = (array) apply_filters( 'wb_gam_block_challenges_data', $wb_gam_challenges, $wb_gam_attrs, (int) $wb_gam_user_id );
+
 if ( ! $wb_gam_show_completed ) {
 	$wb_gam_challenges = array_filter( $wb_gam_challenges, static fn( $ch ) => empty( $ch['completed'] ) );
 }

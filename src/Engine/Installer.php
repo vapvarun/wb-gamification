@@ -370,8 +370,8 @@ final class Installer {
 			`rank`       INT UNSIGNED    NOT NULL DEFAULT 0,
 			updated_at   DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			PRIMARY KEY (id),
-			KEY idx_type_period_rank (point_type, period, `rank`),
-			KEY idx_user_type_period (user_id, point_type, period)
+			UNIQUE KEY uniq_user_period_type (user_id, period, point_type),
+			KEY idx_type_period_rank (point_type, period, `rank`)
 		) $charset;"
 		);
 

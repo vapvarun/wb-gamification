@@ -1,8 +1,10 @@
-# wppqa baseline — 2026-05-06 (post-multi-currency)
+# wppqa baseline — 2026-05-06 (post-1.0.0-audit-sprint)
 
-Run AFTER multi-currency Phase 1–5 implementation, currency-conversion v1, hub-convert UI, member-facing currency labels, CLI `--type` flag, code-flow audit (cache-key cleanup + Privacy/REST `points_by_type` extension).
+Run AFTER multi-currency Phase 1–5, currency-conversion v1, hub-convert UI, member-facing currency labels, CLI `--type` flag, code-flow audit, P0+P1 audit fixes (drift bugs + transaction wrapping), wb_gam_* prefix unification, hardcoded-label sweep, and dashicon/emoji → Lucide migration.
 
 A pre-sprint-1 baseline run earlier in the day is preserved at `SUMMARY.pre-sprint1.md` for diffing.
+
+**Re-validated post-icon-sweep (commit `e9ea493`): all checks remain `failed=0`.**
 
 ## Per-check results
 
