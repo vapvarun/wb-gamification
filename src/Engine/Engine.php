@@ -183,7 +183,22 @@ final class Engine {
 
 		/**
 		 * Enrich event metadata before rule evaluation.
-		 * Add quality signals, word counts, AI scores, etc.
+		 *
+		 * Listeners may add fields like quality signals, word counts, AI
+		 * scores, or remote-site context. Mutating any field is allowed,
+		 * but be aware of two contracts the engine enforces:
+		 *
+		 *   - `point_type` is resolved BEFORE this filter runs (from the
+		 *     Registry action definition, not from metadata). Mutating
+		 *     metadata['point_type'] here has NO effect on which currency
+		 *     the resulting award lands in. To change the awarded currency
+		 *     for an action, override via the Registry layer or
+		 *     `wb_gam_resolve_action_point_type` filter (if exposed).
+		 *
+		 *   - The filter fires OUTSIDE the award transaction. Listeners
+		 *     should perform read-only enrichment only — no DB writes,
+		 *     no `PointsEngine::award` calls, no side effects that need
+		 *     to roll back if the award itself rolls back.
 		 *
 		 * @param array<string, mixed> $metadata Current metadata.
 		 * @param Event                $event    The event being processed.
@@ -206,7 +221,16 @@ final class Engine {
 		/**
 		 * Gate to block event processing.
 		 *
-		 * Return false to abort without recording anything.
+		 * Return false to abort without recording anything. Use to short-
+		 * circuit awards based on user role, time of day, A/B-test bucket,
+		 * fraud signals, etc.
+		 *
+		 * IMPORTANT — listeners run OUTSIDE the award transaction:
+		 *   - Don't perform DB writes from a listener; if the award itself
+		 *     rolls back later, your write isn't covered.
+		 *   - Don't call PointsEngine::award / debit / award_batch from
+		 *     a listener — recursion + non-atomic mutations.
+		 *   - Read-only checks (cap evaluation, role checks) are safe.
 		 *
 		 * @param bool  $proceed Whether to proceed.
 		 * @param Event $event   The event.

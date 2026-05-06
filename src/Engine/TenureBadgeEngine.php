@@ -215,6 +215,10 @@ final class TenureBadgeEngine {
 			$diff = $reg->diff( $now );
 			return (int) $diff->y;
 		} catch ( \Exception $e ) {
+			Log::error(
+				'TenureBadgeEngine — year-diff failed, returning 0 (no tenure badges will fire for this user this run)',
+				array( 'error' => $e->getMessage() )
+			);
 			return 0;
 		}
 	}

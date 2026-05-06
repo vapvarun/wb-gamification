@@ -4,7 +4,17 @@
 **Lens:** read-only audit of major code flows. Each flag is a deferred concern — **fixes happen in the next session**, this doc just maps them.
 **Severity legend:** 🔴 critical · 🟠 high · 🟡 medium · 🟢 noted · ✅ closed in 2a730d9 (2026-05-06)
 
-> **Update 2026-05-06:** all critical + high flags (F1–F7) **closed in commit `2a730d9`**. The 7 fixes ship as a single end-to-end change because F1+F2 are paired (hash storage requires the new table; migration replaces the legacy wp_options blob in the same step). Code below is the original audit prose; status indicator at the top of each section reflects the current state. Medium flags (F8–F14) remain deferred.
+> **Update 2026-05-06:** all critical + high flags (F1–F7) **closed in commit `2a730d9`**.
+>
+> **Update 2026-05-06 (later):** medium flags (F8–F14) **re-verified before fixing** per "check code flow first" directive. Findings:
+> - **F12 was already correct** — `UNIQUE KEY user_badge (user_id, badge_id)` already exists on `wb_gam_user_badges`. Audit was wrong.
+> - **F11 (revoked-key audit log)** is observability-only — revoked keys 401 immediately, no security boundary gap. Skipped (nice-to-have, not a real flag).
+> - **F13 (cosmetic export formatting)** — skipped per the original audit note.
+> - **F8 + F14** — filter contracts: zero internal listeners exist; concern is only theoretical for 3rd parties. Closed via docblock additions in `Engine::process` documenting the transaction boundary + point_type resolution invariant.
+> - **F9** — actual staleness window is ~7 min (5-min snapshot + 2-min cache), not 5-min. Closed via help panel on Award Points page explaining the cycle + how to diagnose missing snapshots.
+> - **F10** — 4 silent `\Exception` catches now log via `Log::error` before falling back. Real fix.
+>
+> Medium-flag closure landed in a follow-up commit. Code below is the original audit prose; status indicator at the top of each section reflects the current state.
 
 ---
 
@@ -133,7 +143,7 @@ But in `as_schedule_single_action` for retries the code may pass either the reco
 
 ---
 
-## 🟡 Medium
+## 🟡 ✅ Medium (audit re-verified — most were no-op, real fixes shipped)
 
 ### F8 · `wb_gam_before_evaluate` filter fires BEFORE the transaction starts
 

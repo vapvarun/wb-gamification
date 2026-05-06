@@ -134,6 +134,35 @@ final class ManualAwardPage {
 				</div>
 			</header>
 
+			<details class="wbgam-help-panel">
+				<summary class="wbgam-help-panel__summary">
+					<span class="icon-info" aria-hidden="true"></span>
+					<?php esc_html_e( 'When will the leaderboard reflect this award?', 'wb-gamification' ); ?>
+				</summary>
+				<div class="wbgam-help-panel__body">
+					<p>
+						<?php esc_html_e( 'Member-facing dashboards (points total, level, badges) update immediately on award. Leaderboards, however, read from a snapshot table that\'s rewritten by a 5-minute cron, with an additional 2-minute object cache on top.', 'wb-gamification' ); ?>
+					</p>
+					<p>
+						<strong><?php esc_html_e( 'Worst-case staleness:', 'wb-gamification' ); ?></strong>
+						<?php esc_html_e( 'about 7 minutes from award to leaderboard reflection (5-min snapshot cycle + 2-min cache TTL). For larger sites with persistent object cache enabled, the snapshot is the authoritative source — the live SUM-based fallback is reserved for cache misses.', 'wb-gamification' ); ?>
+					</p>
+					<p>
+						<strong><?php esc_html_e( 'If the leaderboard never updates:', 'wb-gamification' ); ?></strong>
+						<?php
+						printf(
+							wp_kses(
+								/* translators: %s: cron hook name */
+								__( 'Check that WP-Cron is firing. The %s cron hook should appear in `wp cron event list` and run every 5 minutes. If it\'s missing, deactivate + reactivate the plugin to re-register schedules.', 'wb-gamification' ),
+								array( 'code' => array() )
+							),
+							'<code>wb_gam_leaderboard_snapshot</code>'
+						);
+						?>
+					</p>
+				</div>
+			</details>
+
 			<?php if ( isset( $notice_map[ $notice ] ) ) : ?>
 				<div class="wbgam-banner wbgam-banner--<?php echo esc_attr( $notice_map[ $notice ][0] ); ?> wbgam-stack-block" role="status" aria-live="polite">
 					<span class="wbgam-banner__icon icon-check-circle" aria-hidden="true"></span>

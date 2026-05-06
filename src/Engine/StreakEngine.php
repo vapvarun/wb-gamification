@@ -336,6 +336,10 @@ final class StreakEngine {
 		try {
 			new \DateTimeZone( $tz );
 		} catch ( \Exception $e ) {
+			Log::error(
+				'StreakEngine — invalid timezone, falling back to UTC',
+				array( 'tz' => $tz, 'error' => $e->getMessage() )
+			);
 			$tz = 'UTC';
 		}
 
@@ -353,6 +357,10 @@ final class StreakEngine {
 			$dt = new \DateTime( 'now', new \DateTimeZone( $tz ) );
 			return $dt->format( 'Y-m-d' );
 		} catch ( \Exception $e ) {
+			Log::error(
+				'StreakEngine — date construction failed, falling back to UTC today',
+				array( 'tz' => $tz, 'error' => $e->getMessage() )
+			);
 			return gmdate( 'Y-m-d' );
 		}
 	}
@@ -375,6 +383,10 @@ final class StreakEngine {
 			$diff = $d1->diff( $d2 );
 			return abs( $diff->days );
 		} catch ( \Exception $e ) {
+			Log::error(
+				'StreakEngine — day-diff failed, returning 999 to force streak reset (corrupt date stored?)',
+				array( 'from' => $from, 'to' => $to, 'tz' => $tz, 'error' => $e->getMessage() )
+			);
 			return 999; // Triggers a reset on error.
 		}
 	}
