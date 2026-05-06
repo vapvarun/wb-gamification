@@ -76,8 +76,8 @@ wb-gamification/
 ├── uninstall.php                 # Drops all 20 tables on plugin removal
 ├── composer.json + vendor/       # PSR-4 autoload + dependencies (Action Scheduler, etc.)
 ├── package.json + node_modules/  # Block build (npm run build)
-├── webpack.config.js             # @wordpress/scripts default config
-├── Gruntfile.js                  # Legacy build pipeline (still used for some assets)
+├── webpack.config.js             # @wordpress/scripts default config — npm run build
+├── bin/build-release.sh          # Release packager (rsync + zip; replaces legacy Gruntfile)
 ├── phpstan.neon.dist             # PHPStan level 5 config
 ├── phpunit.xml.dist              # PHPUnit config
 ├── .phpcs.xml                    # WPCS config (project-specific allowlist)
