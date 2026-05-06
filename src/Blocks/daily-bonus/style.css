@@ -1,0 +1,118 @@
+/* Daily login bonus — block styles. */
+
+.wb-gam-daily-bonus {
+	background: var(--wb-gam-color-white, #fff);
+	border: 1px solid var(--wb-gam-color-border, #e5e7eb);
+	border-radius: var(--wb-gam-radius-md, 12px);
+	padding: 20px;
+	color: var(--wb-gam-color-text, #1f2937);
+}
+
+.wb-gam-daily-bonus__guest {
+	margin: 0;
+	color: var(--wb-gam-color-text-muted, #6b7280);
+	font-size: 14px;
+}
+
+.wb-gam-daily-bonus__head {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	margin-bottom: 16px;
+}
+
+.wb-gam-daily-bonus__icon {
+	font-size: 28px;
+	color: var(--wb-gam-color-accent, #2563eb);
+}
+
+.wb-gam-daily-bonus__streak {
+	display: block;
+	font-size: 18px;
+	font-weight: 600;
+}
+
+.wb-gam-daily-bonus__max {
+	display: block;
+	font-size: 13px;
+	color: var(--wb-gam-color-text-muted, #6b7280);
+	margin-top: 2px;
+}
+
+.wb-gam-daily-bonus__today {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 12px;
+	margin-bottom: 16px;
+}
+
+.wb-gam-daily-bonus__chip {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 8px 14px;
+	border-radius: 999px;
+	background: var(--wb-gam-color-accent, #2563eb);
+	color: #fff;
+	font-size: 14px;
+	font-weight: 600;
+}
+
+.wb-gam-daily-bonus__chip--claimed {
+	background: #16a34a;
+}
+
+.wb-gam-daily-bonus__next {
+	font-size: 13px;
+	color: var(--wb-gam-color-text-muted, #6b7280);
+}
+
+.wb-gam-daily-bonus__ladder {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+	gap: 8px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.wb-gam-daily-bonus__tier {
+	padding: 10px 12px;
+	border-radius: 8px;
+	background: var(--wb-gam-color-surface-muted, #f3f4f6);
+	text-align: center;
+	font-size: 12px;
+	color: var(--wb-gam-color-text-muted, #6b7280);
+	transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.wb-gam-daily-bonus__tier.is-reached {
+	background: color-mix(in srgb, var(--wb-gam-color-accent, #2563eb) 14%, transparent);
+	color: var(--wb-gam-color-accent, #2563eb);
+	font-weight: 600;
+}
+
+.wb-gam-daily-bonus__tier-day {
+	display: block;
+	font-size: 11px;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	margin-bottom: 2px;
+}
+
+.wb-gam-daily-bonus__tier-bonus {
+	display: block;
+	font-size: 14px;
+	color: var(--wb-gam-color-text, #1f2937);
+	font-weight: 600;
+}
+
+.wb-gam-daily-bonus__tier.is-reached .wb-gam-daily-bonus__tier-bonus {
+	color: var(--wb-gam-color-accent, #2563eb);
+}
+
+@media (max-width: 640px) {
+	.wb-gam-daily-bonus { padding: 16px; }
+	.wb-gam-daily-bonus__ladder { grid-template-columns: repeat(3, 1fr); }
+}

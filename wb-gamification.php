@@ -89,6 +89,7 @@ use WBGam\API\ApiKeyAuth;
 use WBGam\API\ApiKeysController;
 use WBGam\API\CohortSettingsController;
 use WBGam\API\CommunityChallengesController;
+use WBGam\API\EmailSettingsController;
 use WBGam\Engine\CredentialExpiryEngine;
 use WBGam\Engine\LeaderboardEngine;
 use WBGam\Engine\ShortcodeHandler;
@@ -225,6 +226,7 @@ final class WB_Gamification {
 		( new ApiKeysController() )->register_routes();
 		( new CohortSettingsController() )->register_routes();
 		( new CommunityChallengesController() )->register_routes();
+		( new EmailSettingsController() )->register_routes();
 	}
 
 	public function register_blocks(): void {
@@ -472,6 +474,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			WP_CLI::add_command( 'wb-gamification replay', WBGam\CLI\ReplayCommand::class );
 			WP_CLI::add_command( 'wb-gamification qa', WBGam\CLI\QASeedCommand::class );
 			WP_CLI::add_command( 'wb-gamification scale', WBGam\CLI\ScaleCommand::class );
+			WP_CLI::add_command( 'wb-gamification email-test', array( WBGam\CLI\EmailCommand::class, 'test' ) );
 		}
 	);
 }

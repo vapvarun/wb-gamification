@@ -447,6 +447,10 @@ final class SettingsPage {
 						<span class="icon-refresh-cw"></span>
 						<?php esc_html_e( 'Rules', 'wb-gamification' ); ?>
 					</a>
+					<a class="wbgam-settings-nav-item" href="#emails" data-section="emails">
+						<span class="icon-mail"></span>
+						<?php esc_html_e( 'Emails', 'wb-gamification' ); ?>
+					</a>
 				</div>
 
 				<!-- ADVANCED -->
@@ -510,6 +514,11 @@ final class SettingsPage {
 				<!-- Rules (Automation) section -->
 				<div class="wbgam-settings-section" id="section-rules">
 					<?php self::render_automation_tab(); ?>
+				</div>
+
+				<!-- Emails section -->
+				<div class="wbgam-settings-section" id="section-emails">
+					<?php self::render_emails_section(); ?>
 				</div>
 
 				<!-- Integrations section -->
@@ -1227,6 +1236,77 @@ final class SettingsPage {
 	}
 
 	// ── Integrations section ──────────────────────────────────────────────────
+
+	/**
+	 * Render the Emails section — per-event toggles for transactional emails.
+	 *
+	 * Each email type has a wb_gam_email_<slug> option. Default OFF so
+	 * existing sites don't get a flood of email after upgrade. Saves via
+	 * the generic admin REST form driver (Tier-0 pattern), no admin_post.
+	 */
+	private static function render_emails_section(): void {
+		$events = array(
+			'level_up'            => array(
+				'label'       => __( 'Level up', 'wb-gamification' ),
+				'description' => __( 'Sent when a member reaches a new level.', 'wb-gamification' ),
+			),
+			'badge_earned'        => array(
+				'label'       => __( 'Badge earned', 'wb-gamification' ),
+				'description' => __( 'Sent when a member earns a badge.', 'wb-gamification' ),
+			),
+			'challenge_completed' => array(
+				'label'       => __( 'Challenge completed', 'wb-gamification' ),
+				'description' => __( 'Sent when a member finishes a challenge.', 'wb-gamification' ),
+			),
+		);
+		?>
+		<div class="wbgam-card">
+			<div class="wbgam-card-header">
+				<h2 class="wbgam-card-title"><?php esc_html_e( 'Transactional emails', 'wb-gamification' ); ?></h2>
+				<p class="wbgam-card-desc"><?php esc_html_e( 'Toggle which gamification events trigger an email to the member. All emails respect each member\'s notification preference and use the theme template at YOUR-THEME/wb-gamification/emails/{slug}.php when present.', 'wb-gamification' ); ?></p>
+			</div>
+			<div class="wbgam-card-body">
+				<form data-wb-gam-rest-form="wbGamSettings"
+					data-wb-gam-rest-method="POST"
+					data-wb-gam-rest-path="/settings/emails"
+					data-wb-gam-rest-success-toast="<?php esc_attr_e( 'Email settings saved.', 'wb-gamification' ); ?>"
+					data-wb-gam-rest-error-toast="<?php esc_attr_e( 'Could not save email settings.', 'wb-gamification' ); ?>">
+					<?php foreach ( $events as $slug => $meta ) : ?>
+						<?php $enabled = (bool) get_option( 'wb_gam_email_' . $slug, false ); ?>
+						<div class="wbgam-toggle-row">
+							<label class="wbgam-switch" for="wb_gam_email_<?php echo esc_attr( $slug ); ?>">
+								<input
+									type="checkbox"
+									id="wb_gam_email_<?php echo esc_attr( $slug ); ?>"
+									name="<?php echo esc_attr( $slug ); ?>"
+									value="1"
+									<?php checked( $enabled ); ?>
+								>
+								<span class="wbgam-switch__slider" aria-hidden="true"></span>
+							</label>
+							<div class="wbgam-toggle-row__body">
+								<strong class="wbgam-toggle-row__title"><?php echo esc_html( $meta['label'] ); ?></strong>
+								<p class="wbgam-toggle-row__desc"><?php echo esc_html( $meta['description'] ); ?></p>
+							</div>
+						</div>
+					<?php endforeach; ?>
+					<div class="wbgam-card-footer">
+						<button type="submit" class="wbgam-btn"><?php esc_html_e( 'Save email settings', 'wb-gamification' ); ?></button>
+					</div>
+				</form>
+				<p class="wbgam-help">
+					<?php
+					printf(
+						/* translators: %s: WP-CLI command */
+						esc_html__( 'Test any template before enabling: %s', 'wb-gamification' ),
+						'<code>wp wb-gamification email-test --user=1 --event=level_up</code>'
+					);
+					?>
+				</p>
+			</div>
+		</div>
+		<?php
+	}
 
 	/**
 	 * Render the Integrations status section (card layout).

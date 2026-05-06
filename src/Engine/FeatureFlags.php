@@ -47,6 +47,8 @@ final class FeatureFlags {
 		'NotificationBridge',
 		'Privacy',
 		'CredentialExpiryEngine',
+		'TransactionalEmailEngine',
+		'LoginBonusEngine',
 	];
 
 	/**
