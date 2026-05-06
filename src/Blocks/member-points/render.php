@@ -81,6 +81,13 @@ $wb_gam_show_level    = ! isset( $wb_gam_attrs['show_level'] ) || ! empty( $wb_g
 $wb_gam_show_progress = ! isset( $wb_gam_attrs['show_progress_bar'] ) || ! empty( $wb_gam_attrs['show_progress_bar'] );
 $wb_gam_point_type    = (string) ( $wb_gam_attrs['pointType'] ?? '' );
 
+// Resolve the currency label so the tile says "Coins" / "XP" instead of
+// always "Points" once a site defines additional currencies.
+$wb_gam_pt_service   = new \WBGam\Services\PointTypeService();
+$wb_gam_resolved_pt  = $wb_gam_pt_service->resolve( $wb_gam_point_type ?: null );
+$wb_gam_pt_record    = $wb_gam_pt_service->get( $wb_gam_resolved_pt );
+$wb_gam_points_label = (string) ( $wb_gam_pt_record['label'] ?? __( 'Points', 'wb-gamification' ) );
+
 $wb_gam_points       = (int) PointsEngine::get_total( $wb_gam_user_id, $wb_gam_point_type );
 $wb_gam_level        = $wb_gam_show_level ? LevelEngine::get_level_for_user( $wb_gam_user_id ) : null;
 $wb_gam_next_level   = $wb_gam_show_level ? LevelEngine::get_next_level( $wb_gam_user_id ) : null;
@@ -98,7 +105,7 @@ BlockHooks::before( 'member-points', $wb_gam_attrs );
 <div <?php echo $wb_gam_wrapper; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>>
 	<div class="wb-gam-member-points__total">
 		<span class="wb-gam-member-points__number"><?php echo esc_html( number_format_i18n( $wb_gam_points ) ); ?></span>
-		<span class="wb-gam-member-points__label"><?php esc_html_e( 'Points', 'wb-gamification' ); ?></span>
+		<span class="wb-gam-member-points__label"><?php echo esc_html( $wb_gam_points_label ); ?></span>
 	</div>
 
 	<?php if ( $wb_gam_level && $wb_gam_show_level ) : ?>
@@ -126,9 +133,10 @@ BlockHooks::before( 'member-points', $wb_gam_attrs );
 				<?php
 				$wb_gam_pts_to_next = max( 0, (int) ( $wb_gam_next_level['min_points'] ?? 0 ) - $wb_gam_points );
 				printf(
-					/* translators: 1: formatted points needed for next level, 2: name of the next level */
-					esc_html__( '%1$s pts to %2$s', 'wb-gamification' ),
+					/* translators: 1: formatted points needed for next level, 2: currency label, 3: name of the next level. */
+					esc_html__( '%1$s %2$s to %3$s', 'wb-gamification' ),
 					esc_html( number_format_i18n( $wb_gam_pts_to_next ) ),
+					esc_html( $wb_gam_points_label ),
 					esc_html( (string) ( $wb_gam_next_level['name'] ?? '' ) )
 				);
 				?>

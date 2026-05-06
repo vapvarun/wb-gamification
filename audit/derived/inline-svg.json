@@ -1,0 +1,7 @@
+{
+  "name": "inline-svg",
+  "computed_at": "2026-05-06T06:02:55Z",
+  "input_globs": ["src/**/*.php"],
+  "result_count": 1,
+  "notes": "1 raw <svg> tags in PHP outside the Lucide icon helper. Plugin uses lucide_icon() helper for all icons; raw SVG should be kept to zero."
+}

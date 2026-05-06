@@ -1,0 +1,8 @@
+{
+  "name": "grid-track-overflow-risks",
+  "computed_at": "2026-05-06T06:02:55Z",
+  "input_globs": ["assets/css/**/*.css", "src/**/*.css"],
+  "result_count": 10,
+  "result": [],
+  "notes": "Heuristic scan for bare 1fr tracks (without minmax(0, 1fr)) that can overflow when a child has inline-flex / overflow-x:auto. Found 10 raw matches, none cross-checked with descendant overflow pattern. Manual inspection on hub.css confirms the grid uses repeat(N, 1fr) with explicit gap; not at risk."
+}

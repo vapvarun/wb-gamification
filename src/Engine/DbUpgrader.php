@@ -74,6 +74,86 @@ final class DbUpgrader {
 		self::ensure_point_types_schema();
 		self::ensure_redemption_point_type_column();
 		self::ensure_point_type_conversions_table();
+		self::ensure_leaderboard_cache_point_type_column();
+		self::ensure_user_totals_table();
+	}
+
+	/**
+	 * Create + backfill `wb_gam_user_totals` so PointsEngine::get_total() can
+	 * read a single PK row instead of running SUM against the full ledger.
+	 *
+	 * Idempotent: feature-flag gated. Backfill is one-shot — uses
+	 * `INSERT ... ON DUPLICATE KEY UPDATE` with a SUM subquery so subsequent
+	 * runs are no-ops on already-populated rows.
+	 *
+	 * @since 1.0.0
+	 */
+	private static function ensure_user_totals_table(): void {
+		$flag_key = 'wb_gam_feature_user_totals_v1';
+		if ( get_option( $flag_key ) ) {
+			return;
+		}
+
+		global $wpdb;
+		$charset = $wpdb->get_charset_collate();
+
+		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+
+		dbDelta(
+			"CREATE TABLE {$wpdb->prefix}wb_gam_user_totals (
+			user_id    BIGINT UNSIGNED NOT NULL,
+			point_type VARCHAR(60)     NOT NULL DEFAULT 'points',
+			total      BIGINT          NOT NULL DEFAULT 0,
+			updated_at DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+			PRIMARY KEY (user_id, point_type),
+			KEY idx_type_total (point_type, total)
+		) $charset;"
+		);
+
+		// One-shot backfill from existing ledger.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$wpdb->query(
+			"INSERT INTO {$wpdb->prefix}wb_gam_user_totals (user_id, point_type, total)
+			 SELECT user_id, point_type, COALESCE(SUM(points), 0)
+			   FROM {$wpdb->prefix}wb_gam_points
+			  GROUP BY user_id, point_type
+			 ON DUPLICATE KEY UPDATE total = VALUES(total)"
+		);
+
+		update_option( $flag_key, '1' );
+	}
+
+	/**
+	 * Add `point_type` column to `wb_gam_leaderboard_cache` so the snapshot
+	 * cron can pre-aggregate per-currency rankings (otherwise a multi-currency
+	 * site falls through to the live SUM query against `wb_gam_points` for
+	 * every non-primary leaderboard read — fatal at 100k users).
+	 *
+	 * Idempotent: column existence guard + INSERT IGNORE-style flag.
+	 *
+	 * @since 1.0.0
+	 */
+	private static function ensure_leaderboard_cache_point_type_column(): void {
+		$flag_key = 'wb_gam_feature_leaderboard_cache_point_type_v1';
+		if ( get_option( $flag_key ) ) {
+			return;
+		}
+
+		global $wpdb;
+		$table = $wpdb->prefix . 'wb_gam_leaderboard_cache';
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- bootstrapped table name.
+		$exists = $wpdb->get_var( $wpdb->prepare( "SHOW COLUMNS FROM $table LIKE %s", 'point_type' ) );
+
+		if ( ! $exists ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- bootstrap-time DDL.
+			$wpdb->query( "ALTER TABLE $table ADD COLUMN point_type VARCHAR(60) NOT NULL DEFAULT 'points' AFTER period" );
+			// Drop legacy single-type indexes; replace with type-aware composites.
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$wpdb->query( "ALTER TABLE $table DROP INDEX idx_period_rank, DROP INDEX idx_user_period, ADD KEY idx_type_period_rank (point_type, period, `rank`), ADD KEY idx_user_type_period (user_id, point_type, period)" );
+		}
+
+		update_option( $flag_key, '1' );
 	}
 
 	/**

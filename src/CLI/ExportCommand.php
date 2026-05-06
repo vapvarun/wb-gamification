@@ -58,14 +58,16 @@ class ExportCommand {
 		$uid = $user->ID;
 
 		$data = array(
-			'user_id'        => $uid,
-			'display_name'   => $user->display_name,
-			'email'          => $user->user_email,
-			'exported_at'    => gmdate( 'c' ),
-			'points_total'   => PointsEngine::get_total( $uid ),
-			'points_history' => PointsEngine::get_history( $uid, 100 ),
-			'badges'         => BadgeEngine::get_user_badges( $uid ),
-			'level'          => LevelEngine::get_level_for_user( $uid ),
+			'user_id'           => $uid,
+			'display_name'      => $user->display_name,
+			'email'             => $user->user_email,
+			'exported_at'       => gmdate( 'c' ),
+			'points_total'      => PointsEngine::get_total( $uid ),
+			// Multi-currency breakdown — empty on single-currency sites.
+			'points_by_type'    => PointsEngine::get_totals_by_type( $uid ),
+			'points_history'    => PointsEngine::get_history( $uid, 100 ),
+			'badges'            => BadgeEngine::get_user_badges( $uid ),
+			'level'             => LevelEngine::get_level_for_user( $uid ),
 		);
 
 		\WP_CLI::line( (string) wp_json_encode( $data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE ) );

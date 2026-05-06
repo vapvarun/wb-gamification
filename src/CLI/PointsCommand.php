@@ -9,6 +9,7 @@
 namespace WBGam\CLI;
 
 use WBGam\Engine\PointsEngine;
+use WBGam\Services\PointTypeService;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -38,10 +39,15 @@ class PointsCommand {
 	 * [--message=<msg>]
 	 * : Optional admin note stored in event metadata.
 	 *
+	 * [--type=<slug>]
+	 * : Point-type slug to award against (e.g. 'points', 'coins'). Defaults
+	 * to the site's configured default currency.
+	 *
 	 * ## EXAMPLES
 	 *
 	 *   wp wb-gamification points award --user=42 --points=100
 	 *   wp wb-gamification points award --user=jane --points=50 --message="Community hero this month"
+	 *   wp wb-gamification points award --user=42 --points=10 --type=coins
 	 *
 	 * @param array $args       Positional args (unused).
 	 * @param array $assoc_args Named args.
@@ -61,17 +67,21 @@ class PointsCommand {
 		$action_id = sanitize_key( $assoc_args['action'] ?? 'manual' ) ?: 'manual';
 		$message   = sanitize_text_field( $assoc_args['message'] ?? '' );
 
-		$awarded = PointsEngine::award( $user->ID, $action_id, $points );
+		$type      = $this->resolve_type( $assoc_args['type'] ?? '' );
+		$type_data = ( new PointTypeService() )->get( $type );
+		$label     = $type_data ? (string) $type_data['label'] : 'pts';
+
+		$awarded = PointsEngine::award( $user->ID, $action_id, $points, 0, $type );
 
 		if ( ! $awarded ) {
 			\WP_CLI::error( 'Award failed — check that the user is valid and points > 0.' );
 		}
 
-		$new_total = PointsEngine::get_total( $user->ID );
+		$new_total = PointsEngine::get_total( $user->ID, $type );
 
 		$summary = $message
-			? sprintf( 'Awarded %d pts to %s (%s). New total: %d.', $points, $user->display_name, $message, $new_total )
-			: sprintf( 'Awarded %d pts to %s. New total: %d.', $points, $user->display_name, $new_total );
+			? sprintf( 'Awarded %d %s to %s (%s). New total: %d.', $points, $label, $user->display_name, $message, $new_total )
+			: sprintf( 'Awarded %d %s to %s. New total: %d.', $points, $label, $user->display_name, $new_total );
 
 		\WP_CLI::success( $summary );
 	}
@@ -96,5 +106,27 @@ class PointsCommand {
 		}
 
 		return $user ?: null;
+	}
+
+	/**
+	 * Resolve a --type flag to a known point-type slug.
+	 *
+	 * Empty input or an unknown slug falls back to the site default — same
+	 * behaviour as the REST/admin-side resolver, so CLI awards are never
+	 * silently misrouted.
+	 *
+	 * @param string $input Raw --type flag value.
+	 */
+	private function resolve_type( string $input ): string {
+		$service = new PointTypeService();
+		$slug    = $service->resolve( '' === $input ? null : $input );
+
+		if ( '' !== $input && $slug !== sanitize_key( $input ) ) {
+			\WP_CLI::warning(
+				sprintf( "Unknown point-type '%s' — falling back to '%s'.", $input, $slug )
+			);
+		}
+
+		return $slug;
 	}
 }

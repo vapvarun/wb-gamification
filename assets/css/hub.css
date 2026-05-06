@@ -747,3 +747,115 @@
   .gam-nudge { padding: 12px 14px; }
   .gam-panel { width: 100vw; }
 }
+
+/* CURRENCY CONVERT — per-tile button + shared modal. */
+.gam-stat__convert {
+  margin-top: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 6px;
+  padding: 4px 10px;
+  cursor: pointer;
+  border: 1px solid var(--wb-gam-color-border, #d4d4d4);
+  background: var(--wb-gam-color-white, #fff);
+  color: var(--wb-gam-color-accent, #2563eb);
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+.gam-stat__convert:hover,
+.gam-stat__convert:focus-visible {
+  background: var(--wb-gam-color-accent, #2563eb);
+  color: #fff;
+  border-color: var(--wb-gam-color-accent, #2563eb);
+}
+.gam-stat__convert:focus:not(:focus-visible) { outline: none; }
+
+.wbgam-convert-dialog {
+  border: none;
+  border-radius: 12px;
+  padding: 0;
+  width: min(420px, calc(100vw - 32px));
+  max-width: 420px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.18);
+  background: #fff;
+  color: inherit;
+}
+.wbgam-convert-dialog::backdrop {
+  background: rgba(15, 23, 42, 0.45);
+}
+.wbgam-convert-form { display: flex; flex-direction: column; gap: 0; margin: 0; }
+.wbgam-convert-form__head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--wb-gam-color-border, #e5e7eb);
+}
+.wbgam-convert-form__title { margin: 0; font-size: 16px; font-weight: 600; }
+.wbgam-convert-form__close {
+  background: transparent; border: none; cursor: pointer;
+  font-size: 22px; line-height: 1; padding: 4px 8px;
+  color: var(--wb-gam-color-text-muted, #6b7280);
+  border-radius: 6px;
+}
+.wbgam-convert-form__close:hover { background: var(--wb-gam-color-surface-muted, #f3f4f6); }
+.wbgam-convert-form__body { padding: 18px 20px; display: flex; flex-direction: column; gap: 14px; }
+.wbgam-convert-form__balance { margin: 0; font-size: 13px; color: var(--wb-gam-color-text-muted, #6b7280); }
+.wbgam-convert-form__balance strong { color: inherit; font-weight: 600; }
+.wbgam-convert-form__field { display: flex; flex-direction: column; gap: 6px; font-size: 13px; }
+.wbgam-convert-form__field span { font-weight: 500; color: inherit; }
+.wbgam-convert-form__field select,
+.wbgam-convert-form__field input {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--wb-gam-color-border, #d4d4d4);
+  border-radius: 6px;
+  background: #fff;
+  font-size: 14px;
+}
+.wbgam-convert-form__field select:focus,
+.wbgam-convert-form__field input:focus {
+  border-color: var(--wb-gam-color-accent, #2563eb);
+  outline: 2px solid color-mix(in srgb, var(--wb-gam-color-accent, #2563eb) 25%, transparent);
+  outline-offset: 0;
+}
+.wbgam-convert-form__preview {
+  margin: 0;
+  padding: 8px 10px;
+  background: var(--wb-gam-color-surface-muted, #f3f4f6);
+  border-radius: 6px;
+  font-size: 13px;
+  min-height: 18px;
+  color: var(--wb-gam-color-text, #1f2937);
+}
+.wbgam-convert-form__preview:empty { display: none; }
+.wbgam-convert-form__actions {
+  display: flex; justify-content: flex-end; gap: 8px;
+  padding: 14px 20px;
+  border-top: 1px solid var(--wb-gam-color-border, #e5e7eb);
+  background: var(--wb-gam-color-surface-muted, #fafafa);
+  border-radius: 0 0 12px 12px;
+}
+.wbgam-convert-form__actions .wbgam-btn {
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 6px;
+  border: 1px solid var(--wb-gam-color-accent, #2563eb);
+  background: var(--wb-gam-color-accent, #2563eb);
+  color: #fff;
+  cursor: pointer;
+}
+.wbgam-convert-form__actions .wbgam-btn:hover:not(:disabled) {
+  filter: brightness(0.95);
+}
+.wbgam-convert-form__actions .wbgam-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.wbgam-convert-form__actions .wbgam-btn--secondary {
+  background: #fff;
+  color: inherit;
+  border-color: var(--wb-gam-color-border, #d4d4d4);
+}
+
+@media (max-width: 640px) {
+  .wbgam-convert-dialog { width: calc(100vw - 24px); border-radius: 10px; }
+  .wbgam-convert-form__head,
+  .wbgam-convert-form__body,
+  .wbgam-convert-form__actions { padding-left: 16px; padding-right: 16px; }
+}

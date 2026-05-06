@@ -1,0 +1,8 @@
+{
+  "name": "rest-hang-risks",
+  "computed_at": "2026-05-06T06:02:55Z",
+  "input_globs": ["assets/js/**/*.js", "src/**/*.js"],
+  "result_count": 0,
+  "result": [],
+  "notes": "8 JS files use apiFetch/fetch. Manual review at scaffold time: hub-convert.js + admin-rest-form.js wrap apiFetch with .catch(); no AbortController in current code, but hub-convert reloads the page on success so a hung request blocks only the modal. Acceptable for v1.0; revisit when adding long-running flows."
+}

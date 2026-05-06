@@ -1,0 +1,10 @@
+{
+  "name": "dead-listeners",
+  "computed_at": "2026-05-06T06:02:55Z",
+  "input_globs": [
+    "src/**/*.php"
+  ],
+  "result_count": 0,
+  "result": [],
+  "notes": "WP/WC/BP core hooks already filtered out; only wb_gam_* prefixed listeners that no own do_action/apply_filters fires."
+}

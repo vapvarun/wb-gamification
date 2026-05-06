@@ -1,0 +1,8 @@
+{
+  "name": "adapter-undefined-calls",
+  "computed_at": "2026-05-06T06:02:55Z",
+  "input_globs": ["src/**/*.php"],
+  "result_count": 0,
+  "result": [],
+  "notes": "Plugin uses concrete classes for engines (no adapter/interface registry pattern). PointTypeService/PointTypeRepository are direct concrete dependencies, not interface-typed registry slots. N/A."
+}

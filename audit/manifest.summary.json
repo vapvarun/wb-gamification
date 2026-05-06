@@ -10,14 +10,14 @@
     "extension_hook_fired": "wb_gam_free_loaded"
   },
   "counts": {
-    "rest_endpoints": 51,
+    "rest_endpoints": 60,
     "ajax_handlers": 0,
-    "admin_pages": 11,
+    "admin_pages": 12,
     "shortcodes": 15,
     "blocks": 15,
     "tables": 20,
     "capabilities": 2,
-    "services": 37,
+    "services": 41,
     "hooks_fired": 55,
     "cron_hooks": 9,
     "wp_cli_commands": 6,
@@ -63,8 +63,9 @@
     "phpstan_level_5_clean": true,
     "admin_post_count": 0,
     "wp_ajax_count": 0,
-    "verdict": "release-clean \u2014 failed=0 AND warnings=0 across all 4 wppqa checks (post-cleanup). See audit/release-runs/2026-05-03/RELEASE-CLOSE-OUT.md.",
+    "verdict": "release-clean — failed=0 AND warnings=0 across all 4 wppqa checks (post-cleanup). See audit/release-runs/2026-05-03/RELEASE-CLOSE-OUT.md.",
     "wppqa_warnings": 0,
     "legacy_blocks_dir_deleted": true
-  }
+  },
+  "generated_at": "2026-05-06T06:00:00Z"
 }

@@ -248,13 +248,12 @@ final class Engine {
 		 */
 		do_action( 'wb_gamification_before_points_awarded', $event->user_id, $event, $points );
 
-		// Write the derived ledger row.
+		// Write the derived ledger row. PointsEngine::insert_point_row()
+		// already busts the per-user/per-type total cache, so no follow-up
+		// cache_delete is needed here.
 		if ( ! PointsEngine::insert_point_row( $event, $points ) ) {
 			return false;
 		}
-
-		// Bust the per-user total cache.
-		wp_cache_delete( "wb_gam_total_{$event->user_id}", 'wb_gamification' );
 
 		/**
 		 * Fires after points are awarded.

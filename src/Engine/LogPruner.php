@@ -54,54 +54,105 @@ final class LogPruner {
 	}
 
 	/**
+	 * Per-query batch size. Larger batches finish faster but each statement
+	 * holds a longer row-lock; 1000 is the sweet spot on InnoDB for both
+	 * shared-host and dedicated-MySQL deployments.
+	 */
+	private const BATCH_SIZE = 1000;
+
+	/**
+	 * Hard runtime budget per cron tick (seconds). Stops the loop before
+	 * WP-Cron's 60s default expires so the next tick can pick up where
+	 * we left off rather than colliding.
+	 */
+	private const MAX_RUNTIME_SECONDS = 50;
+
+	/**
 	 * Delete rows older than the retention period.
 	 *
-	 * @return int Number of rows deleted.
+	 * Batched until empty (or runtime budget reached), so a 100k-user site
+	 * that adds millions of rows between cron ticks doesn't fall behind.
+	 * Each statement deletes BATCH_SIZE rows; the loop continues until
+	 * either no more rows match or MAX_RUNTIME_SECONDS elapses.
+	 *
+	 * IMPORTANT — balance semantics under retention:
+	 *   The pruner deliberately does NOT decrement `wb_gam_user_totals`.
+	 *   The materialised user-total represents the lifetime accumulated
+	 *   balance and is the source of truth for `PointsEngine::get_total()`.
+	 *   Pruning the audit ledger does not "burn" earned points, it only
+	 *   removes per-row history beyond the retention horizon.
+	 *
+	 *   This intentionally fixes a legacy bug where SUM-based get_total
+	 *   silently shrunk users' displayed balance after every prune.
+	 *
+	 * @return int Total rows deleted from wb_gam_points (back-compat return).
 	 */
 	public static function prune(): int {
-		global $wpdb;
+		$started = microtime( true );
 
-		$months = (int) get_option( 'wb_gam_log_retention_months', 6 );
+		$points_deleted = self::prune_table(
+			'wb_gam_points',
+			(int) get_option( 'wb_gam_log_retention_months', 6 ),
+			$started,
+			'wb_gamification_log_pruned'
+		);
+
+		self::prune_table(
+			'wb_gam_events',
+			(int) get_option( 'wb_gam_events_retention_months', 12 ),
+			$started,
+			'wb_gamification_events_pruned'
+		);
+
+		return $points_deleted;
+	}
+
+	/**
+	 * Batched DELETE loop for one table.
+	 *
+	 * @param string $table_suffix `wb_gam_points` or `wb_gam_events`.
+	 * @param int    $months       Retention months; 0 disables.
+	 * @param float  $started      Timestamp from microtime(true) at cron start.
+	 * @param string $hook         Action hook fired with (deleted, cutoff).
+	 * @return int Total rows deleted across all batches in this tick.
+	 */
+	private static function prune_table( string $table_suffix, int $months, float $started, string $hook ): int {
 		if ( $months <= 0 ) {
 			return 0;
 		}
 
-		$cutoff  = gmdate( 'Y-m-d H:i:s', strtotime( "-{$months} months" ) );
-		$deleted = (int) $wpdb->query(
-			$wpdb->prepare(
-				"DELETE FROM {$wpdb->prefix}wb_gam_points WHERE created_at < %s LIMIT 5000",
-				$cutoff
-			)
-		);
+		global $wpdb;
+		$table  = $wpdb->prefix . $table_suffix;
+		$cutoff = gmdate( 'Y-m-d H:i:s', strtotime( "-{$months} months" ) );
+		$total  = 0;
 
-		/**
-		 * Fires after the points log is pruned.
-		 *
-		 * @param int    $deleted Number of rows deleted.
-		 * @param string $cutoff  ISO datetime cutoff used.
-		 */
-		do_action( 'wb_gamification_log_pruned', $deleted, $cutoff );
-
-		// Prune events table.
-		$events_months = (int) get_option( 'wb_gam_events_retention_months', 12 );
-		if ( $events_months > 0 ) {
-			$events_cutoff  = gmdate( 'Y-m-d H:i:s', strtotime( "-{$events_months} months" ) );
-			$deleted_events = (int) $wpdb->query(
+		do {
+			$batch = (int) $wpdb->query(
 				$wpdb->prepare(
-					"DELETE FROM {$wpdb->prefix}wb_gam_events WHERE created_at < %s LIMIT 5000",
-					$events_cutoff
+					"DELETE FROM `{$table}` WHERE created_at < %s LIMIT %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table from $wpdb->prefix.
+					$cutoff,
+					self::BATCH_SIZE
 				)
 			);
+			$total += $batch;
 
-			/**
-			 * Fires after the events log is pruned.
-			 *
-			 * @param int    $deleted_events Number of event rows deleted.
-			 * @param string $events_cutoff  ISO datetime cutoff used.
-			 */
-			do_action( 'wb_gamification_events_pruned', $deleted_events, $events_cutoff );
-		}
+			// Stop when the table is drained OR runtime budget is spent.
+			if ( $batch < self::BATCH_SIZE ) {
+				break;
+			}
+			if ( ( microtime( true ) - $started ) >= self::MAX_RUNTIME_SECONDS ) {
+				break;
+			}
+		} while ( true );
 
-		return $deleted;
+		/**
+		 * Fires after a log table is pruned (one fire per cron tick, per table).
+		 *
+		 * @param int    $total  Number of rows deleted in this tick.
+		 * @param string $cutoff ISO datetime cutoff used.
+		 */
+		do_action( $hook, $total, $cutoff );
+
+		return $total;
 	}
 }

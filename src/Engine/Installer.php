@@ -342,6 +342,22 @@ final class Installer {
 		) $charset;"
 		);
 
+		// Materialised user-totals — incrementally updated on every award/debit
+		// so PointsEngine::get_total() is a single-row PK lookup instead of a
+		// SUM against the full ledger. Critical for 100k-user scale: a hub
+		// page render touches get_total for every visible currency tile, and
+		// the SUM cost grows linearly with rows-per-user (~10–1000 awards).
+		dbDelta(
+			"CREATE TABLE {$wpdb->prefix}wb_gam_user_totals (
+			user_id    BIGINT UNSIGNED NOT NULL,
+			point_type VARCHAR(60)     NOT NULL DEFAULT 'points',
+			total      BIGINT          NOT NULL DEFAULT 0,
+			updated_at DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+			PRIMARY KEY (user_id, point_type),
+			KEY idx_type_total (point_type, total)
+		) $charset;"
+		);
+
 		// Leaderboard snapshot cache — written by cron, read by LeaderboardEngine.
 		// Note: `rank` is a MySQL 8.0 reserved word — must be backtick-escaped.
 		dbDelta(
@@ -349,12 +365,13 @@ final class Installer {
 			id           BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
 			user_id      BIGINT UNSIGNED NOT NULL,
 			period       VARCHAR(20)     NOT NULL DEFAULT 'all',
+			point_type   VARCHAR(60)     NOT NULL DEFAULT 'points',
 			total_points BIGINT          NOT NULL DEFAULT 0,
 			`rank`       INT UNSIGNED    NOT NULL DEFAULT 0,
 			updated_at   DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			PRIMARY KEY (id),
-			KEY idx_period_rank (period, `rank`),
-			KEY idx_user_period (user_id, period)
+			KEY idx_type_period_rank (point_type, period, `rank`),
+			KEY idx_user_type_period (user_id, point_type, period)
 		) $charset;"
 		);
 

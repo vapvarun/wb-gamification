@@ -538,6 +538,98 @@
         "handler": "WBGam\\API\\BadgesController::create_item",
         "permission": "manage_options || wb_gam_manage_badges",
         "purpose": "Create badge with full schema + nested condition rule (Tier 0.C)"
+      },
+      {
+        "route": "/wb-gamification/v1/point-types",
+        "methods": [
+          "GET"
+        ],
+        "handler": "PointTypesController::handle_list",
+        "permission": "__return_true",
+        "purpose": "Public catalogue of active point types.",
+        "where": "src/API/PointTypesController.php:60"
+      },
+      {
+        "route": "/wb-gamification/v1/point-types",
+        "methods": [
+          "POST"
+        ],
+        "handler": "PointTypesController::handle_create",
+        "permission": "manage_options",
+        "purpose": "Create a new currency.",
+        "where": "src/API/PointTypesController.php:60"
+      },
+      {
+        "route": "/wb-gamification/v1/point-types/(?P<slug>[a-z0-9_-]+)",
+        "methods": [
+          "PUT",
+          "PATCH"
+        ],
+        "handler": "PointTypesController::handle_update",
+        "permission": "manage_options",
+        "purpose": "Update currency metadata.",
+        "where": "src/API/PointTypesController.php:78"
+      },
+      {
+        "route": "/wb-gamification/v1/point-types/(?P<slug>[a-z0-9_-]+)",
+        "methods": [
+          "DELETE"
+        ],
+        "handler": "PointTypesController::handle_delete",
+        "permission": "manage_options",
+        "purpose": "Delete a non-default currency.",
+        "where": "src/API/PointTypesController.php:78"
+      },
+      {
+        "route": "/wb-gamification/v1/point-type-conversions",
+        "methods": [
+          "GET"
+        ],
+        "handler": "PointTypeConversionsController::handle_list",
+        "permission": "__return_true",
+        "purpose": "List active conversion rules.",
+        "where": "src/API/PointTypeConversionsController.php:58"
+      },
+      {
+        "route": "/wb-gamification/v1/point-type-conversions",
+        "methods": [
+          "POST"
+        ],
+        "handler": "PointTypeConversionsController::handle_create",
+        "permission": "manage_options",
+        "purpose": "Create a conversion rule.",
+        "where": "src/API/PointTypeConversionsController.php:58"
+      },
+      {
+        "route": "/wb-gamification/v1/point-type-conversions/(?P<id>[\\d]+)",
+        "methods": [
+          "PUT",
+          "PATCH"
+        ],
+        "handler": "PointTypeConversionsController::handle_update",
+        "permission": "manage_options",
+        "purpose": "Update a conversion rule.",
+        "where": "src/API/PointTypeConversionsController.php:76"
+      },
+      {
+        "route": "/wb-gamification/v1/point-type-conversions/(?P<id>[\\d]+)",
+        "methods": [
+          "DELETE"
+        ],
+        "handler": "PointTypeConversionsController::handle_delete",
+        "permission": "manage_options",
+        "purpose": "Delete a conversion rule.",
+        "where": "src/API/PointTypeConversionsController.php:76"
+      },
+      {
+        "route": "/wb-gamification/v1/point-types/(?P<from>[a-z0-9_-]+)/convert",
+        "methods": [
+          "POST"
+        ],
+        "handler": "PointTypeConversionsController::convert",
+        "permission": "is_user_logged_in",
+        "purpose": "Atomic member-facing convert: debits source + credits destination, FOR-UPDATE locked, shared event_id.",
+        "where": "src/API/PointTypeConversionsController.php:95"
       }
     ],
     "notes": "39 register_rest_route() calls. Some routes registered as a single call covering multiple methods (e.g., GET+POST on the same path); manifest expands those for clarity. No AJAX layer — all interactive UI talks to REST."
@@ -603,15 +695,6 @@
       "source": "src/Admin/CommunityChallengesPage.php:43"
     },
     {
-      "title": "Cohort Leagues",
-      "menu_title": "Cohort Leagues",
-      "slug": "wb-gam-cohort",
-      "parent": "wb-gamification",
-      "capability": "manage_options",
-      "render": "CohortSettingsPage::render_page",
-      "source": "src/Admin/CohortSettingsPage.php:65"
-    },
-    {
       "title": "Analytics",
       "menu_title": "Analytics",
       "slug": "wb-gamification-analytics",
@@ -637,6 +720,37 @@
       "capability": "manage_options",
       "render": "BadgeAdminPage::render_page",
       "source": "src/Admin/BadgeAdminPage.php:70"
+    },
+    {
+      "title": "Webhooks",
+      "menu_title": "Webhooks",
+      "slug": "wb-gam-webhooks",
+      "parent": "wb-gamification",
+      "capability": "manage_options",
+      "render": "WebhooksAdminPage::render_page",
+      "source": "src/Admin/WebhooksAdminPage.php:87"
+    },
+    {
+      "title": "Point Types",
+      "menu_title": "Point Types",
+      "slug": "wb-gam-point-types",
+      "parent": "wb-gamification",
+      "capability": "manage_options",
+      "render": "PointTypesPage::render_page",
+      "source": "src/Admin/PointTypesPage.php:77",
+      "added": "1.0.0",
+      "purpose": "CRUD for currencies. Marks default. Lists per-type balance aggregates."
+    },
+    {
+      "title": "Conversions",
+      "menu_title": "Conversions",
+      "slug": "wb-gam-point-type-conversions",
+      "parent": "wb-gamification",
+      "capability": "manage_options",
+      "render": "PointTypeConversionsPage::render_page",
+      "source": "src/Admin/PointTypeConversionsPage.php:76",
+      "added": "1.0.0",
+      "purpose": "Admin-defined exchange rates between currencies; toggleable, with optional cooldown + daily-cap."
     }
   ],
   "settings": [
@@ -791,6 +905,29 @@
       "tag": "wb_gam_hub",
       "handler": "ShortcodeHandler::render_hub",
       "where": "src/Engine/ShortcodeHandler.php:54"
+    },
+    {
+      "tag": "wb_gam_cohort_rank",
+      "handler": "ShortcodeHandler::render_cohort_rank",
+      "attrs": [
+        "pointType",
+        "limit"
+      ]
+    },
+    {
+      "tag": "wb_gam_community_challenges",
+      "handler": "ShortcodeHandler::render_community_challenges",
+      "attrs": [
+        "limit"
+      ]
+    },
+    {
+      "tag": "wb_gam_redemption_store",
+      "handler": "ShortcodeHandler::render_redemption_store",
+      "attrs": [
+        "columns",
+        "pointType"
+      ]
     }
   ],
   "blocks": [
@@ -878,6 +1015,24 @@
       "interactivity": false,
       "layout_owning": false,
       "shortcode_pair": "wb_gam_year_recap"
+    },
+    {
+      "name": "wb-gamification/cohort-rank",
+      "render": "src/Blocks/cohort-rank/render.php",
+      "interactivity": false,
+      "layout_owning": false
+    },
+    {
+      "name": "wb-gamification/community-challenges",
+      "render": "src/Blocks/community-challenges/render.php",
+      "interactivity": false,
+      "layout_owning": false
+    },
+    {
+      "name": "wb-gamification/redemption-store",
+      "render": "src/Blocks/redemption-store/render.php",
+      "interactivity": true,
+      "layout_owning": false
     }
   ],
   "post_types": [],
@@ -952,16 +1107,16 @@
       "purpose": "Redemption store catalog."
     },
     {
-      "name": "{prefix}wb_gam_cosmetics",
-      "purpose": "Cosmetic definitions (frames, profile decorations)."
-    },
-    {
-      "name": "{prefix}wb_gam_user_cosmetics",
-      "purpose": "Cosmetics granted to/equipped by users."
-    },
-    {
       "name": "{prefix}wb_gam_cohort_members",
       "purpose": "Cohort league membership (assignment + tier)."
+    },
+    {
+      "name": "{prefix}wb_gam_point_types",
+      "purpose": "Currency catalogue — slug, label, icon, is_default flag, position. Site can define Points/XP/Coins/etc."
+    },
+    {
+      "name": "{prefix}wb_gam_point_type_conversions",
+      "purpose": "Admin-defined exchange rates between currencies (e.g. 100 points = 1 coin) with optional cooldown + daily cap."
     }
   ],
   "capabilities": [
@@ -1264,6 +1419,30 @@
       "key": "ShortcodeHandler",
       "class": "WBGam\\Engine\\ShortcodeHandler",
       "purpose": "Registers all 12 shortcodes."
+    },
+    {
+      "key": "PointTypeService",
+      "class": "WBGam\\Services\\PointTypeService",
+      "added": "1.0.0",
+      "purpose": "Currency catalogue + canonical resolve($input):slug helper."
+    },
+    {
+      "key": "PointTypeConversionService",
+      "class": "WBGam\\Services\\PointTypeConversionService",
+      "added": "1.0.0",
+      "purpose": "Atomic convert flow with FOR-UPDATE locking + shared event_id."
+    },
+    {
+      "key": "PointTypeRepository",
+      "class": "WBGam\\Repository\\PointTypeRepository",
+      "added": "1.0.0",
+      "purpose": "SQL repo for wb_gam_point_types with cache wrapper + slug normalisation."
+    },
+    {
+      "key": "PointTypeConversionRepository",
+      "class": "WBGam\\Repository\\PointTypeConversionRepository",
+      "added": "1.0.0",
+      "purpose": "SQL repo for wb_gam_point_type_conversions; active-only filter."
     }
   ],
   "hooks_fired": [
@@ -1777,7 +1956,26 @@
         "GAP-008 WIRING-ISSUES (important)": "contradicted — wppqa_check_rest_js_contract returns passed=2 failed=0. The 'broken AJAX calls / dead handlers / nonce mismatches' rule didn't surface specifics; the more granular contract check is authoritative."
       },
       "verdict": "0 real issues from the comprehensive audit. All 4 critical + 3 important gaps are false positives or intentional architecture; verified line-by-line. The 63/100 score reflects pattern-matching limits, not actual maturity. Static gates remain failed=0 across all 4 wppqa specific checks."
-    }
+    },
+    "_derived_cache_dir": "audit/derived/",
+    "_computed_at": "2026-05-06T06:02:55Z",
+    "_files": [
+      "dead-listeners.json",
+      "cap-context-mismatches.json",
+      "extensibility-gaps.json",
+      "js-only-activation.json",
+      "rest-hang-risks.json",
+      "visual-required-no-enforcement.json",
+      "grid-track-overflow-risks.json",
+      "hook-signature-drift.json",
+      "adapter-undefined-calls.json",
+      "registry-bypasses.json",
+      "suppressed-baseline-errors.json",
+      "adapter-registry-strategy.json",
+      "em-dash-i18n.json",
+      "inline-svg.json",
+      "icon-sources.json"
+    ]
   },
   "buddypress_integration": {
     "enabled_when": "Detected via class_exists('BuddyPress') / function_exists('buddypress')",
@@ -1878,13 +2076,24 @@
       "command": "wb-gamification points",
       "class": "WBGam\\CLI\\PointsCommand",
       "where": "wb-gamification.php:384",
-      "purpose": "Award/revoke/list points for a user."
+      "purpose": "Award points to a user. Accepts --type=<slug> for multi-currency sites; defaults to primary currency.",
+      "flags": [
+        "--user",
+        "--points",
+        "--action",
+        "--message",
+        "--type"
+      ]
     },
     {
       "command": "wb-gamification member",
       "class": "WBGam\\CLI\\MemberCommand",
       "where": "wb-gamification.php:385",
-      "purpose": "Inspect or repair a member's gamification state."
+      "purpose": "Inspect a member status. Lists per-currency balances on multi-currency sites; --type=<slug> filters to one currency.",
+      "flags": [
+        "--user",
+        "--type"
+      ]
     },
     {
       "command": "wb-gamification actions",
@@ -2027,8 +2236,8 @@
     ]
   },
   "generated": {
-    "at": "2026-05-03T19:50:00Z",
-    "from": "wp-plugin-onboard skill",
+    "at": "2026-05-06T06:00:00Z",
+    "from": "wp-plugin-onboard skill (refresh — multi-currency, conversions, hub-convert UI, CLI --type, code-flow audit)",
     "branch": "main",
     "schema_version": "v2.2",
     "scan_scope": "gruntfile",

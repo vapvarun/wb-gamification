@@ -224,7 +224,8 @@ final class RedemptionEngine {
 			$wpdb->update( $wpdb->prefix . 'wb_gam_redemptions', array( 'status' => 'pending_fulfillment' ), array( 'id' => $redemption_id ) );
 		}
 
-		wp_cache_delete( "wb_gam_total_{$user_id}", self::CACHE_GROUP );
+		// PointsEngine::debit (called above) already busts the per-type total
+		// cache, so no follow-up cache_delete is needed here.
 
 		/**
 		 * Fires after a redemption is created.

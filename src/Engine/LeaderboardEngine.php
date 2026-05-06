@@ -138,11 +138,10 @@ final class LeaderboardEngine {
 		}
 
 		// ── Try snapshot table for global scopes ──────────────────────────────
-		// Snapshot only contains primary type rankings — fall through to live
-		// query when a non-primary type is requested.
-		$primary_type = ( new \WBGam\Services\PointTypeService() )->default_slug();
-		if ( '' === $scope_type && 0 === $scope_id && $resolved_type === $primary_type ) {
-			$snapshot_result = self::read_from_snapshot( $period, $limit );
+		// Snapshot now covers EVERY active currency (Phase 3b) — only scoped
+		// requests (BP groups, cohorts) still fall through to the live query.
+		if ( '' === $scope_type && 0 === $scope_id ) {
+			$snapshot_result = self::read_from_snapshot( $period, $limit, $resolved_type );
 			if ( null !== $snapshot_result ) {
 				wp_cache_set( $cache_key, $snapshot_result, 'wb_gamification', 120 );
 				return $snapshot_result;
@@ -321,25 +320,38 @@ final class LeaderboardEngine {
 			'day'   => self::get_period_start( 'day' ),
 		);
 
-		foreach ( $periods as $period_key => $period_start ) {
-			$where = '';
-			if ( null !== $period_start ) {
-				$where = $wpdb->prepare( 'WHERE created_at >= %s', $period_start );
-			}
+		// One snapshot per (period × currency). Without this loop, every
+		// non-primary leaderboard read at 100k users would fall through to
+		// the live SUM query against wb_gam_points (full-table aggregation).
+		$pt_service = new \WBGam\Services\PointTypeService();
+		$currencies = array_map( static fn( $row ) => (string) $row['slug'], $pt_service->list() );
+		if ( empty( $currencies ) ) {
+			$currencies = array( $pt_service->default_slug() );
+		}
 
-			// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			$wpdb->query(
-				"INSERT INTO {$cache_table} (user_id, period, total_points, `rank`, updated_at)
-				 SELECT user_id, '{$period_key}' AS period, SUM(points) AS total_points,
-				        RANK() OVER (ORDER BY SUM(points) DESC) AS `rank`,
-				        NOW() AS updated_at
-				   FROM {$points_table}
-				   {$where}
-				  GROUP BY user_id
-				  ORDER BY total_points DESC
-				  LIMIT 500"
-			);
-			// phpcs:enable
+		foreach ( $currencies as $slug ) {
+			foreach ( $periods as $period_key => $period_start ) {
+				$where = $wpdb->prepare( 'WHERE point_type = %s', $slug );
+				if ( null !== $period_start ) {
+					$where .= $wpdb->prepare( ' AND created_at >= %s', $period_start );
+				}
+
+				// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				$wpdb->query( $wpdb->prepare(
+					"INSERT INTO {$cache_table} (user_id, period, point_type, total_points, `rank`, updated_at)
+					 SELECT user_id, %s AS period, %s AS point_type, SUM(points) AS total_points,
+					        RANK() OVER (ORDER BY SUM(points) DESC) AS `rank`,
+					        NOW() AS updated_at
+					   FROM {$points_table}
+					   {$where}
+					  GROUP BY user_id
+					  ORDER BY total_points DESC
+					  LIMIT 500",
+					$period_key,
+					$slug
+				) );
+				// phpcs:enable
+			}
 		}
 	}
 
@@ -356,7 +368,7 @@ final class LeaderboardEngine {
 	 * @param int    $limit     Maximum rows to return.
 	 * @return array<int, array{rank: int, user_id: int, display_name: string, avatar_url: string, points: int}>|null
 	 */
-	private static function read_from_snapshot( string $period, int $limit ): ?array {
+	private static function read_from_snapshot( string $period, int $limit, string $point_type = 'points' ): ?array {
 		global $wpdb;
 
 		$cache_table = $wpdb->prefix . 'wb_gam_leaderboard_cache';
@@ -374,7 +386,7 @@ final class LeaderboardEngine {
 
 		// Build opt-out exclusion for snapshot read.
 		$opt_out_clause = '';
-		$query_values   = array( $period_key );
+		$query_values   = array( $period_key, $point_type );
 
 		if ( ! empty( $opt_out_ids ) ) {
 			$placeholders   = implode( ',', array_fill( 0, count( $opt_out_ids ), '%d' ) );
@@ -390,7 +402,7 @@ final class LeaderboardEngine {
 				"SELECT c.user_id, c.total_points, u.display_name
 				   FROM {$cache_table} c
 				   JOIN {$wpdb->users} u ON u.ID = c.user_id
-				  WHERE c.period = %s {$opt_out_clause}
+				  WHERE c.period = %s AND c.point_type = %s {$opt_out_clause}
 				  ORDER BY c.`rank` ASC
 				  LIMIT %d",
 				$query_values

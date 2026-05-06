@@ -45,6 +45,13 @@ wp_enqueue_style( 'wb-gam-tokens' );
 $wb_gam_point_type = (string) ( $wb_gam_attrs['pointType'] ?? '' );
 $wb_gam_rows       = LeaderboardEngine::get_leaderboard( $wb_gam_period, $wb_gam_limit, $wb_gam_scope_type, $wb_gam_scope_id, $wb_gam_point_type );
 
+// Resolve the currency label so leaderboard entries say "100 Coins" rather
+// than always "100 pts" once a site defines additional point types.
+$wb_gam_pt_service   = new \WBGam\Services\PointTypeService();
+$wb_gam_resolved_pt  = $wb_gam_pt_service->resolve( $wb_gam_point_type ?: null );
+$wb_gam_pt_record    = $wb_gam_pt_service->get( $wb_gam_resolved_pt );
+$wb_gam_points_label = (string) ( $wb_gam_pt_record['label'] ?? __( 'pts', 'wb-gamification' ) );
+
 $wb_gam_period_labels = array(
 	'all'   => __( 'All Time', 'wb-gamification' ),
 	'month' => __( 'This Month', 'wb-gamification' ),
@@ -121,10 +128,14 @@ BlockHooks::before( 'leaderboard', $wb_gam_attrs );
 						?>
 					</span>
 
-					<span class="wb-gam-leaderboard__points" aria-label="<?php esc_attr_e( 'Points', 'wb-gamification' ); ?>">
+					<span class="wb-gam-leaderboard__points" aria-label="<?php echo esc_attr( $wb_gam_points_label ); ?>">
 						<?php
-						/* translators: %s: formatted points number */
-						printf( esc_html__( '%s pts', 'wb-gamification' ), esc_html( number_format_i18n( (int) ( $wb_gam_row['points'] ?? 0 ) ) ) );
+						printf(
+							/* translators: 1: formatted points number, 2: currency label (e.g. "Points", "Coins"). */
+							esc_html__( '%1$s %2$s', 'wb-gamification' ),
+							esc_html( number_format_i18n( (int) ( $wb_gam_row['points'] ?? 0 ) ) ),
+							esc_html( $wb_gam_points_label )
+						);
 						?>
 					</span>
 				</li>
@@ -150,15 +161,23 @@ BlockHooks::before( 'leaderboard', $wb_gam_attrs );
 					</span>
 					<span class="wb-gam-leaderboard__my-rank-points">
 						<?php
-						/* translators: %s = formatted points total */
-						printf( esc_html__( '%s pts', 'wb-gamification' ), esc_html( number_format_i18n( (int) ( $wb_gam_my_rank['points'] ?? 0 ) ) ) );
+						printf(
+							/* translators: 1: formatted points total, 2: currency label. */
+							esc_html__( '%1$s %2$s', 'wb-gamification' ),
+							esc_html( number_format_i18n( (int) ( $wb_gam_my_rank['points'] ?? 0 ) ) ),
+							esc_html( $wb_gam_points_label )
+						);
 						?>
 					</span>
 					<?php if ( null !== ( $wb_gam_my_rank['points_to_next'] ?? null ) ) : ?>
 						<span class="wb-gam-leaderboard__my-rank-gap">
 							<?php
-							/* translators: %s = points needed to move up one rank */
-							printf( esc_html__( '%s pts from the next rank', 'wb-gamification' ), esc_html( number_format_i18n( (int) $wb_gam_my_rank['points_to_next'] ) ) );
+							printf(
+								/* translators: 1: points needed to move up one rank, 2: currency label. */
+								esc_html__( '%1$s %2$s from the next rank', 'wb-gamification' ),
+								esc_html( number_format_i18n( (int) $wb_gam_my_rank['points_to_next'] ) ),
+								esc_html( $wb_gam_points_label )
+							);
 							?>
 						</span>
 					<?php endif; ?>

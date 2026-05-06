@@ -26,14 +26,36 @@ final class PointTypeRepository {
 	public const DEFAULT_SLUG       = 'points';
 
 	/**
+	 * Per-request in-process cache. Populated on first read, cleared on
+	 * write. Critical for 100k-user scale: a single hub render touches the
+	 * catalogue from 5+ block renders + Engine + Leaderboard. Without this
+	 * static, every call goes through wp_cache_get → SQL on hosts without
+	 * a persistent object cache (Redis/Memcached). With this static, the
+	 * second-and-onwards call within one PHP request is free.
+	 *
+	 * @var array<int, array<string,mixed>>|null
+	 */
+	private static ?array $request_cache_all = null;
+
+	/** @var string|null */
+	private static ?string $request_cache_default = null;
+
+	/**
 	 * Return every active point type, ordered by position then slug.
+	 *
+	 * Resolution order: in-process static → wp_cache → SQL.
 	 *
 	 * @return array<int, array{slug:string,label:string,description:?string,icon:?string,is_default:int,position:int,created_at:string}>
 	 */
 	public function all(): array {
+		if ( null !== self::$request_cache_all ) {
+			return self::$request_cache_all;
+		}
+
 		$cached = wp_cache_get( self::CACHE_KEY_ALL, self::CACHE_GROUP );
 		if ( false !== $cached ) {
-			return (array) $cached;
+			self::$request_cache_all = (array) $cached;
+			return self::$request_cache_all;
 		}
 
 		global $wpdb;
@@ -47,6 +69,7 @@ final class PointTypeRepository {
 		) ?: array();
 
 		wp_cache_set( self::CACHE_KEY_ALL, $rows, self::CACHE_GROUP, self::CACHE_TTL_SECONDS );
+		self::$request_cache_all = $rows;
 
 		return $rows;
 	}
@@ -88,18 +111,25 @@ final class PointTypeRepository {
 	 * row is flagged as default — guarantees callers always have a usable slug.
 	 */
 	public function default_slug(): string {
+		if ( null !== self::$request_cache_default ) {
+			return self::$request_cache_default;
+		}
+
 		$cached = wp_cache_get( self::CACHE_KEY_DEFAULT, self::CACHE_GROUP );
 		if ( is_string( $cached ) && '' !== $cached ) {
+			self::$request_cache_default = $cached;
 			return $cached;
 		}
 
 		foreach ( $this->all() as $row ) {
 			if ( (int) $row['is_default'] === 1 ) {
 				wp_cache_set( self::CACHE_KEY_DEFAULT, $row['slug'], self::CACHE_GROUP, self::CACHE_TTL_SECONDS );
+				self::$request_cache_default = $row['slug'];
 				return $row['slug'];
 			}
 		}
 
+		self::$request_cache_default = self::DEFAULT_SLUG;
 		return self::DEFAULT_SLUG;
 	}
 
@@ -261,9 +291,15 @@ final class PointTypeRepository {
 
 	/**
 	 * Drop cached lookups. Called after every write.
+	 *
+	 * Invalidates BOTH the persistent wp_cache layer AND the in-process
+	 * static — otherwise an admin who creates a new currency would see
+	 * stale list output for the rest of the request.
 	 */
 	private function flush_cache(): void {
 		wp_cache_delete( self::CACHE_KEY_ALL, self::CACHE_GROUP );
 		wp_cache_delete( self::CACHE_KEY_DEFAULT, self::CACHE_GROUP );
+		self::$request_cache_all     = null;
+		self::$request_cache_default = null;
 	}
 }

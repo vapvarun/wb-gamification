@@ -1,0 +1,8 @@
+{
+  "name": "visual-required-no-enforcement",
+  "computed_at": "2026-05-06T06:02:55Z",
+  "input_globs": ["src/Admin/**/*.php", "src/Blocks/**/render.php"],
+  "result_count": 0,
+  "result": [],
+  "notes": "Plugin uses REST-driven admin forms (data-wb-gam-rest-* attrs); native HTML required attribute is set on every form input via the schema. No <input type=hidden> + visual-required-span pattern found."
+}

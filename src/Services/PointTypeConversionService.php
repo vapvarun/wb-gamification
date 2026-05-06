@@ -356,6 +356,12 @@ final class PointTypeConversionService {
 			);
 		}
 
+		// Direct ledger inserts above bypass PointsEngine::insert_point_row,
+		// so the materialised user-totals row needs an explicit bump for the
+		// credit side. Debit side (PointsEngine::debit at line 307) already
+		// bumped its total via the engine.
+		PointsEngine::bump_user_total( $user_id, $to, $credit_amount );
+
 		wp_cache_delete( "wb_gam_total_{$user_id}_{$from}", 'wb_gamification' );
 		wp_cache_delete( "wb_gam_total_{$user_id}_{$to}", 'wb_gamification' );
 

@@ -135,6 +135,7 @@ final class PointsEngine {
 			return false;
 		}
 
+		self::bump_user_total( $event->user_id, $type, $points );
 		wp_cache_delete( self::cache_key_total( $event->user_id, $type ), 'wb_gamification' );
 
 		return true;
@@ -187,9 +188,62 @@ final class PointsEngine {
 			return false;
 		}
 
+		self::bump_user_total( $user_id, $type, -abs( $amount ) );
 		wp_cache_delete( self::cache_key_total( $user_id, $type ), 'wb_gamification' );
 
 		return true;
+	}
+
+	/**
+	 * Apply a delta to the materialised user-totals row.
+	 *
+	 * Atomic UPSERT — `INSERT ... ON DUPLICATE KEY UPDATE` so the row is
+	 * created on first award and incremented on every subsequent write.
+	 * Read path (get_total) does a single PK lookup against this table
+	 * instead of SUM-aggregating the ledger.
+	 *
+	 * PUBLIC because surfaces that perform direct ledger inserts
+	 * (PointTypeConversionService's atomic credit path) must explicitly
+	 * keep the materialised total in lockstep — failing to call this after
+	 * a direct INSERT would silently drift the cached balance from truth.
+	 *
+	 * Failure to update the materialised total is logged but never blocks
+	 * the ledger write — the ledger remains the source of truth, and a
+	 * one-shot backfill can repair drift.
+	 *
+	 * @param int    $user_id User affected.
+	 * @param string $type    Resolved point-type slug.
+	 * @param int    $delta   Signed delta to apply (positive for award, negative for debit).
+	 */
+	public static function bump_user_total( int $user_id, string $type, int $delta ): void {
+		if ( 0 === $delta ) {
+			return;
+		}
+
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- atomic UPSERT.
+		$ok = $wpdb->query(
+			$wpdb->prepare(
+				"INSERT INTO {$wpdb->prefix}wb_gam_user_totals (user_id, point_type, total)
+				 VALUES (%d, %s, %d)
+				 ON DUPLICATE KEY UPDATE total = total + VALUES(total)",
+				$user_id,
+				$type,
+				$delta
+			)
+		);
+
+		if ( false === $ok ) {
+			Log::error(
+				'PointsEngine::bump_user_total — UPSERT failed',
+				array(
+					'user_id'    => $user_id,
+					'point_type' => $type,
+					'delta'      => $delta,
+					'db_error'   => $wpdb->last_error,
+				)
+			);
+		}
 	}
 
 	/**
@@ -266,6 +320,133 @@ final class PointsEngine {
 		);
 	}
 
+	/**
+	 * Award the same number of points to many users in one round-trip.
+	 *
+	 * For bulk-import scenarios (LMS course completion of 5000 students,
+	 * BP group sync, CSV import). Inserts both event-log and points-ledger
+	 * rows via batched multi-VALUES INSERT instead of N round-trips.
+	 *
+	 * Bypasses rate-limit / cooldown checks — caller is admin-controlled.
+	 * Does NOT fire `wb_gamification_points_awarded` per row (to avoid
+	 * stampeding badge / streak / level evaluations); fires the bulk hook
+	 * `wb_gamification_points_awarded_batch` once with the user-id list.
+	 *
+	 * @param int[]       $user_ids  Users to award. Duplicates allowed.
+	 * @param string      $action_id Action context label (e.g. 'csv_import').
+	 * @param int         $points    Points awarded to each user.
+	 * @param string|null $type      Optional currency slug. Defaults to primary.
+	 * @return int                   Number of ledger rows inserted (0 on failure).
+	 */
+	public static function award_batch( array $user_ids, string $action_id, int $points, ?string $type = null ): int {
+		if ( empty( $user_ids ) || $points <= 0 ) {
+			return 0;
+		}
+		$user_ids = array_values( array_filter( $user_ids, static fn( $u ) => (int) $u > 0 ) );
+		if ( empty( $user_ids ) ) {
+			return 0;
+		}
+
+		global $wpdb;
+		$type   = self::resolve_type( $type );
+		$now    = current_time( 'mysql' );
+		$now_utc = gmdate( 'Y-m-d H:i:s' );
+
+		// Chunk to keep packet size under MySQL's max_allowed_packet (default 64MB
+		// covers ~500k rows; 5000 is the conservative ceiling for shared hosts).
+		$chunks = array_chunk( $user_ids, 5000 );
+		$total  = 0;
+
+		foreach ( $chunks as $chunk ) {
+			$event_rows  = array();
+			$point_rows  = array();
+			$event_ph    = array();
+			$point_ph    = array();
+			$event_args  = array();
+			$point_args  = array();
+			$ids_for_evt = array();
+
+			foreach ( $chunk as $uid ) {
+				$uid       = (int) $uid;
+				$event_id  = wp_generate_uuid4();
+				$ids_for_evt[ $event_id ] = $uid;
+
+				$event_ph[]   = '(%s, %d, %d, %s, %s, %s, %s, %s)';
+				$event_args[] = $event_id;
+				$event_args[] = $uid;
+				$event_args[] = 0; // object_id
+				$event_args[] = $action_id;
+				$event_args[] = wp_json_encode( array( 'points' => $points, 'manual' => true, 'batch' => true, 'point_type' => $type ) );
+				$event_args[] = $type;
+				$event_args[] = ''; // site_id
+				$event_args[] = $now_utc;
+
+				$point_ph[]   = '(%s, %d, %s, %d, %s, %d, %s)';
+				$point_args[] = $event_id;
+				$point_args[] = $uid;
+				$point_args[] = $action_id;
+				$point_args[] = $points;
+				$point_args[] = $type;
+				$point_args[] = 0; // object_id
+				$point_args[] = $now;
+			}
+
+			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- bulk INSERT, single statement, parameterized via prepare().
+			$wpdb->query( $wpdb->prepare(
+				"INSERT INTO {$wpdb->prefix}wb_gam_events (id, user_id, object_id, action_id, metadata, point_type, site_id, created_at) VALUES " . implode( ',', $event_ph ),
+				...$event_args
+			) );
+			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- bulk INSERT, single statement.
+			$inserted = (int) $wpdb->query( $wpdb->prepare(
+				"INSERT INTO {$wpdb->prefix}wb_gam_points (event_id, user_id, action_id, points, point_type, object_id, created_at) VALUES " . implode( ',', $point_ph ),
+				...$point_args
+			) );
+			$total += $inserted;
+
+			// Bulk-update materialised user-totals — group duplicate UIDs first
+			// (chunk may contain the same uid N times for an N-point award).
+			$counts = array_count_values( array_map( 'intval', $chunk ) );
+			$totals_ph   = array();
+			$totals_args = array();
+			foreach ( $counts as $uid => $count ) {
+				$totals_ph[]   = '(%d, %s, %d)';
+				$totals_args[] = $uid;
+				$totals_args[] = $type;
+				$totals_args[] = $points * $count;
+			}
+			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- bulk UPSERT.
+			$wpdb->query( $wpdb->prepare(
+				"INSERT INTO {$wpdb->prefix}wb_gam_user_totals (user_id, point_type, total) VALUES " . implode( ',', $totals_ph ) .
+				" ON DUPLICATE KEY UPDATE total = total + VALUES(total)",
+				...$totals_args
+			) );
+
+			// Bust the per-type total cache for every affected user. One
+			// wp_cache_delete per UID is unavoidable with the per-key shape;
+			// O(n) on chunk size, but free without a remote roundtrip on
+			// most object-cache backends.
+			foreach ( array_keys( $counts ) as $uid ) {
+				wp_cache_delete( self::cache_key_total( (int) $uid, $type ), 'wb_gamification' );
+			}
+		}
+
+		/**
+		 * Fires once after a batch award completes.
+		 *
+		 * Use this to schedule async badge/level recompute for the affected
+		 * users instead of running them per-row inside the hot loop.
+		 *
+		 * @param int[]  $user_ids  Users awarded.
+		 * @param string $action_id Action context.
+		 * @param int    $points    Points per user.
+		 * @param string $type      Currency slug.
+		 * @param int    $total     Ledger rows inserted.
+		 */
+		do_action( 'wb_gamification_points_awarded_batch', $user_ids, $action_id, $points, $type, $total );
+
+		return $total;
+	}
+
 	// ── Read methods ──────────────────────────────────────────────────────────
 
 	/**
@@ -285,15 +466,32 @@ final class PointsEngine {
 		}
 
 		global $wpdb;
-		$total = (int) $wpdb->get_var(
+		// Read from the materialised user-totals table — single-row PK lookup,
+		// O(log n) instead of full-aggregation O(rows-per-user). Falls back to
+		// SUM only when the row is missing (covers the brief window between a
+		// fresh install and the user's first award, plus any backfill drift).
+		$total = $wpdb->get_var(
 			$wpdb->prepare(
-				"SELECT COALESCE(SUM(points), 0)
-				   FROM {$wpdb->prefix}wb_gam_points
+				"SELECT total FROM {$wpdb->prefix}wb_gam_user_totals
 				  WHERE user_id = %d AND point_type = %s",
 				$user_id,
 				$type
 			)
 		);
+
+		if ( null === $total ) {
+			$total = (int) $wpdb->get_var(
+				$wpdb->prepare(
+					"SELECT COALESCE(SUM(points), 0)
+					   FROM {$wpdb->prefix}wb_gam_points
+					  WHERE user_id = %d AND point_type = %s",
+					$user_id,
+					$type
+				)
+			);
+		} else {
+			$total = (int) $total;
+		}
 
 		wp_cache_set( $cache_key, $total, 'wb_gamification', 300 );
 

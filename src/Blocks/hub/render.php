@@ -58,6 +58,10 @@ wp_enqueue_style( 'wb-gam-tokens' );
 wp_enqueue_style( 'wb-gamification-hub' );
 wp_enqueue_script_module( 'wb-gamification-hub' );
 
+// Conversion modal asset is registered globally; only enqueue when this hub
+// instance actually has outbound conversion rules (cheap pre-check below).
+$wb_gam_has_conv_rules = false;
+
 $wb_gam_user_id = get_current_user_id();
 
 // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only panel pre-open from URL.
@@ -88,23 +92,47 @@ if ( 0 === $wb_gam_user_id ) {
 	return;
 }
 
-$wb_gam_nudge      = NudgeEngine::get_nudge( $wb_gam_user_id );
-$wb_gam_total_pts  = (int) PointsEngine::get_total( $wb_gam_user_id );
+$wb_gam_nudge = NudgeEngine::get_nudge( $wb_gam_user_id );
 
 // Multi-currency: aggregate balance + meta for every active point type.
 // Sites with only the primary type render exactly one tile (same as before).
-$wb_gam_pt_service = new \WBGam\Services\PointTypeService();
-$wb_gam_pt_catalog = $wb_gam_pt_service->list();
-$wb_gam_balances   = PointsEngine::get_totals_by_type( $wb_gam_user_id );
+$wb_gam_pt_service   = new \WBGam\Services\PointTypeService();
+$wb_gam_conv_service = new \WBGam\Services\PointTypeConversionService();
+$wb_gam_pt_catalog   = $wb_gam_pt_service->list();
+$wb_gam_balances     = PointsEngine::get_totals_by_type( $wb_gam_user_id );
+
+// Index outbound conversion rules per source-type slug — so each currency
+// tile can show a "Convert" button only when a rule exists for that slug.
+$wb_gam_conv_rules = $wb_gam_conv_service->list_active();
+$wb_gam_outbound   = array();
+foreach ( $wb_gam_conv_rules as $wb_gam_rule ) {
+	$wb_gam_outbound[ (string) $wb_gam_rule['from_type'] ][] = $wb_gam_rule;
+}
+$wb_gam_has_conv_rules = ! empty( $wb_gam_conv_rules );
+
+if ( $wb_gam_has_conv_rules ) {
+	wp_enqueue_script( 'wb-gamification-hub-convert' );
+	// One-shot localisation; safe to call again — wp_localize_script is idempotent for repeated identical data, and the modal is a singleton.
+	wp_localize_script(
+		'wb-gamification-hub-convert',
+		'wbGamHubConvert',
+		array(
+			'restUrl' => esc_url_raw( rest_url( 'wb-gamification/v1/' ) ),
+			'nonce'   => wp_create_nonce( 'wp_rest' ),
+		)
+	);
+}
+
 $wb_gam_currencies = array();
 foreach ( $wb_gam_pt_catalog as $wb_gam_pt ) {
 	$wb_gam_slug         = (string) $wb_gam_pt['slug'];
 	$wb_gam_currencies[] = array(
-		'slug'    => $wb_gam_slug,
-		'label'   => (string) $wb_gam_pt['label'],
-		'icon'    => (string) ( $wb_gam_pt['icon'] ?? 'star' ),
-		'balance' => (int) ( $wb_gam_balances[ $wb_gam_slug ] ?? 0 ),
-		'is_default' => (int) $wb_gam_pt['is_default'] === 1,
+		'slug'           => $wb_gam_slug,
+		'label'          => (string) $wb_gam_pt['label'],
+		'icon'           => (string) ( $wb_gam_pt['icon'] ?? 'star' ),
+		'balance'        => (int) ( $wb_gam_balances[ $wb_gam_slug ] ?? 0 ),
+		'is_default'     => (int) $wb_gam_pt['is_default'] === 1,
+		'convert_rules'  => $wb_gam_outbound[ $wb_gam_slug ] ?? array(),
 	);
 }
 $wb_gam_level      = LevelEngine::get_level_for_user( $wb_gam_user_id );
@@ -259,6 +287,22 @@ BlockHooks::before( 'hub', $wb_gam_attrs );
 					}
 					?>
 				</span>
+				<?php if ( ! empty( $wb_gam_currency['convert_rules'] ) ) : ?>
+					<button
+						type="button"
+						class="gam-stat__convert wbgam-btn wbgam-btn--sm wbgam-btn--secondary"
+						data-wb-gam-convert-open
+						data-from-type="<?php echo esc_attr( $wb_gam_currency['slug'] ); ?>"
+						data-from-label="<?php echo esc_attr( $wb_gam_currency['label'] ); ?>"
+						data-balance="<?php echo esc_attr( (string) $wb_gam_currency['balance'] ); ?>"
+						aria-label="<?php
+						/* translators: %s: currency label being converted. */
+						echo esc_attr( sprintf( __( 'Convert %s', 'wb-gamification' ), $wb_gam_currency['label'] ) );
+						?>"
+					>
+						<?php esc_html_e( 'Convert', 'wb-gamification' ); ?>
+					</button>
+				<?php endif; ?>
 			</div>
 		<?php endforeach; ?>
 
@@ -358,6 +402,66 @@ BlockHooks::before( 'hub', $wb_gam_attrs );
 			<div class="gam-panel__body" id="gam-panel-body"></div>
 		</div>
 	</div>
+
+	<?php if ( ! empty( $wb_gam_conv_rules ) ) : ?>
+		<!-- Currency-conversion modal — shared across all currency tiles. -->
+		<dialog class="wbgam-convert-dialog" data-wb-gam-convert-dialog>
+			<form method="dialog" class="wbgam-convert-form" data-wb-gam-convert-form>
+				<header class="wbgam-convert-form__head">
+					<h2 class="wbgam-convert-form__title"><?php esc_html_e( 'Convert balance', 'wb-gamification' ); ?></h2>
+					<button type="button" class="wbgam-convert-form__close" data-wb-gam-convert-close aria-label="<?php esc_attr_e( 'Close', 'wb-gamification' ); ?>">×</button>
+				</header>
+				<div class="wbgam-convert-form__body">
+					<p class="wbgam-convert-form__balance">
+						<?php
+						printf(
+							/* translators: 1: balance amount, 2: currency label */
+							esc_html__( 'You have %1$s %2$s available.', 'wb-gamification' ),
+							'<strong data-wb-gam-convert-balance>0</strong>',
+							'<span data-wb-gam-convert-from-label></span>'
+						);
+						?>
+					</p>
+					<label class="wbgam-convert-form__field">
+						<span><?php esc_html_e( 'Convert to', 'wb-gamification' ); ?></span>
+						<select data-wb-gam-convert-to required>
+							<?php foreach ( $wb_gam_conv_rules as $wb_gam_rule ) : ?>
+								<option
+									value="<?php echo esc_attr( (string) $wb_gam_rule['to_type'] ); ?>"
+									data-from-type="<?php echo esc_attr( (string) $wb_gam_rule['from_type'] ); ?>"
+									data-from-amount="<?php echo esc_attr( (string) $wb_gam_rule['from_amount'] ); ?>"
+									data-to-amount="<?php echo esc_attr( (string) $wb_gam_rule['to_amount'] ); ?>"
+									data-min="<?php echo esc_attr( (string) ( $wb_gam_rule['min_convert'] ?? 1 ) ); ?>"
+								>
+									<?php
+									$wb_gam_to_label = isset( $wb_gam_rule['to']['label'] ) ? (string) $wb_gam_rule['to']['label'] : (string) $wb_gam_rule['to_type'];
+									$wb_gam_fr_label = isset( $wb_gam_rule['from']['label'] ) ? (string) $wb_gam_rule['from']['label'] : (string) $wb_gam_rule['from_type'];
+									printf(
+										/* translators: 1: source amount, 2: source label, 3: destination amount, 4: destination label */
+										esc_html__( '%1$d %2$s = %3$d %4$s', 'wb-gamification' ),
+										(int) $wb_gam_rule['from_amount'],
+										esc_html( $wb_gam_fr_label ),
+										(int) $wb_gam_rule['to_amount'],
+										esc_html( $wb_gam_to_label )
+									);
+									?>
+								</option>
+							<?php endforeach; ?>
+						</select>
+					</label>
+					<label class="wbgam-convert-form__field">
+						<span><?php esc_html_e( 'Amount to spend', 'wb-gamification' ); ?></span>
+						<input type="number" min="1" required data-wb-gam-convert-amount placeholder="0">
+					</label>
+					<p class="wbgam-convert-form__preview" data-wb-gam-convert-preview aria-live="polite"></p>
+				</div>
+				<footer class="wbgam-convert-form__actions">
+					<button type="button" class="wbgam-btn wbgam-btn--secondary" data-wb-gam-convert-close><?php esc_html_e( 'Cancel', 'wb-gamification' ); ?></button>
+					<button type="submit" class="wbgam-btn" data-wb-gam-convert-submit><?php esc_html_e( 'Convert', 'wb-gamification' ); ?></button>
+				</footer>
+			</form>
+		</dialog>
+	<?php endif; ?>
 </div>
 <?php
 BlockHooks::after( 'hub', $wb_gam_attrs );

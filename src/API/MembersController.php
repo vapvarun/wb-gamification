@@ -289,16 +289,20 @@ class MembersController extends WP_REST_Controller {
 			return new WP_Error( 'rest_user_invalid', __( 'Member not found.', 'wb-gamification' ), array( 'status' => 404 ) );
 		}
 
-		$points = PointsEngine::get_total( $user_id );
-		$level  = LevelEngine::get_level_for_user( $user_id );
-		$next   = LevelEngine::get_next_level( $user_id );
-		$prefs  = $this->get_member_prefs( $user_id );
+		$points   = PointsEngine::get_total( $user_id );
+		$by_type  = PointsEngine::get_totals_by_type( $user_id );
+		$level    = LevelEngine::get_level_for_user( $user_id );
+		$next     = LevelEngine::get_next_level( $user_id );
+		$prefs    = $this->get_member_prefs( $user_id );
 
 		$data = array(
-			'id'           => $user_id,
-			'display_name' => $user->display_name,
-			'avatar_url'   => get_avatar_url( $user_id, array( 'size' => 96 ) ),
-			'points'       => $points,
+			'id'             => $user_id,
+			'display_name'   => $user->display_name,
+			'avatar_url'     => get_avatar_url( $user_id, array( 'size' => 96 ) ),
+			'points'         => $points,
+			// Multi-currency breakdown: { slug: balance } map. On single-currency
+			// sites this is `{ "points": <same as 'points' field> }`.
+			'points_by_type' => $by_type,
 			'level'        => $level
 				? array(
 					'id'              => $level['id'],
@@ -755,11 +759,16 @@ class MembersController extends WP_REST_Controller {
 			'title'      => 'wb-gamification-member',
 			'type'       => 'object',
 			'properties' => array(
-				'id'           => array( 'type' => 'integer' ),
-				'display_name' => array( 'type' => 'string' ),
-				'points'       => array( 'type' => 'integer' ),
-				'level'        => array( 'type' => array( 'object', 'null' ) ),
-				'badges_count' => array( 'type' => 'integer' ),
+				'id'             => array( 'type' => 'integer' ),
+				'display_name'   => array( 'type' => 'string' ),
+				'points'         => array( 'type' => 'integer' ),
+				'points_by_type' => array(
+					'type'                 => 'object',
+					'additionalProperties' => array( 'type' => 'integer' ),
+					'description'          => 'Map of point-type slug → balance (multi-currency breakdown).',
+				),
+				'level'          => array( 'type' => array( 'object', 'null' ) ),
+				'badges_count'   => array( 'type' => 'integer' ),
 			),
 		);
 	}

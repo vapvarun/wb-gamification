@@ -1,0 +1,8 @@
+{
+  "name": "extensibility-gaps",
+  "computed_at": "2026-05-06T06:02:55Z",
+  "input_globs": ["src/**/*.php", "templates/**/*.php"],
+  "result_count": 0,
+  "result": [],
+  "notes": "Hub block already exposes wb_gamification_hub_cards filter (line 233 render.php) for third-party card injection. Setting tabs use sidebar nav driven by config array (no hardcoded list). No other multi-step wizards detected."
+}

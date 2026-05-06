@@ -296,6 +296,18 @@ final class WB_Gamification {
 			WB_GAM_VERSION
 		);
 
+		// Currency-conversion modal — wires the per-tile Convert button on the
+		// hub block. Plain script (not a module) so it can use wp.apiFetch + the
+		// existing toast handle without dragging the IA bundle into every page.
+		wp_register_script(
+			'wb-gamification-hub-convert',
+			WB_GAM_URL . 'assets/js/hub-convert.js',
+			array( 'wp-api-fetch', 'wp-i18n' ),
+			WB_GAM_VERSION,
+			true
+		);
+		wp_set_script_translations( 'wb-gamification-hub-convert', 'wb-gamification' );
+
 		// Notifications IA store — drives the level-up + streak-milestone
 		// overlays and the toast stack rendered by NotificationBridge.
 		// Without this module the overlay markup mounts but never binds,
@@ -445,6 +457,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			WP_CLI::add_command( 'wb-gamification doctor', WBGam\CLI\DoctorCommand::class );
 			WP_CLI::add_command( 'wb-gamification replay', WBGam\CLI\ReplayCommand::class );
 			WP_CLI::add_command( 'wb-gamification qa', WBGam\CLI\QASeedCommand::class );
+			WP_CLI::add_command( 'wb-gamification scale', WBGam\CLI\ScaleCommand::class );
 		}
 	);
 }

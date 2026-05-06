@@ -64,6 +64,15 @@ $wb_gam_show_label = ! empty( $wb_gam_attrs['show_action_label'] );
 
 $wb_gam_point_type = (string) ( $wb_gam_attrs['pointType'] ?? '' );
 $wb_gam_rows       = PointsEngine::get_history( $wb_gam_user_id, $wb_gam_limit, $wb_gam_point_type ?: null );
+
+// Pre-fetch label map so each row can render its actual currency name (no
+// N+1 — single $service->list() call). Rows from sites with only the
+// primary currency keep saying "Points".
+$wb_gam_pt_service = new \WBGam\Services\PointTypeService();
+$wb_gam_label_map  = array();
+foreach ( $wb_gam_pt_service->list() as $wb_gam_pt ) {
+	$wb_gam_label_map[ (string) $wb_gam_pt['slug'] ] = (string) $wb_gam_pt['label'];
+}
 $wb_gam_wrapper = get_block_wrapper_attributes(
 	array(
 		'class' => implode( ' ', $wb_gam_classes ),
@@ -81,8 +90,10 @@ BlockHooks::before( 'points-history', $wb_gam_attrs );
 	<?php else : ?>
 		<ul class="wb-gam-points-history__list" role="list">
 			<?php foreach ( $wb_gam_rows as $wb_gam_row ) :
-				$wb_gam_pts     = (int) ( $wb_gam_row['points'] ?? 0 );
-				$wb_gam_pos_neg = $wb_gam_pts >= 0 ? 'positive' : 'negative';
+				$wb_gam_pts        = (int) ( $wb_gam_row['points'] ?? 0 );
+				$wb_gam_pos_neg    = $wb_gam_pts >= 0 ? 'positive' : 'negative';
+				$wb_gam_row_type   = (string) ( $wb_gam_row['point_type'] ?? '' );
+				$wb_gam_row_label  = $wb_gam_label_map[ $wb_gam_row_type ] ?? __( 'pts', 'wb-gamification' );
 				?>
 				<li class="wb-gam-points-history__item wb-gam-points-history__item--<?php echo esc_attr( $wb_gam_pos_neg ); ?>">
 					<?php if ( $wb_gam_show_label ) : ?>
@@ -93,9 +104,10 @@ BlockHooks::before( 'points-history', $wb_gam_attrs );
 					<span class="wb-gam-points-history__points">
 						<?php
 						printf(
-							/* translators: %s: formatted points with sign, e.g. "+10" or "-5" */
-							esc_html__( '%s pts', 'wb-gamification' ),
-							esc_html( ( $wb_gam_pts >= 0 ? '+' : '' ) . number_format_i18n( $wb_gam_pts ) )
+							/* translators: 1: formatted points with sign, e.g. "+10" or "-5"; 2: currency label (e.g. "Points", "Coins"). */
+							esc_html__( '%1$s %2$s', 'wb-gamification' ),
+							esc_html( ( $wb_gam_pts >= 0 ? '+' : '' ) . number_format_i18n( $wb_gam_pts ) ),
+							esc_html( $wb_gam_row_label )
 						);
 						?>
 					</span>

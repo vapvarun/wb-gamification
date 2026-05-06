@@ -55,11 +55,17 @@ final class PointTypeService {
 	 * @param string|null $input Raw input.
 	 */
 	public function resolve( ?string $input ): string {
-		if ( null !== $input && '' !== $input ) {
-			$slug = PointTypeRepository::normalise_slug( $input );
-			if ( '' !== $slug && $this->repo->exists( $slug ) ) {
-				return $slug;
-			}
+		// Hot-path fast-return: empty/null input is the most common case
+		// (every block render that doesn't filter by type, every action
+		// without an admin-set point_type override). Skip the normalise +
+		// exists() round-trip and go straight to the cached default.
+		if ( null === $input || '' === $input ) {
+			return $this->repo->default_slug();
+		}
+
+		$slug = PointTypeRepository::normalise_slug( $input );
+		if ( '' !== $slug && $this->repo->exists( $slug ) ) {
+			return $slug;
 		}
 		return $this->repo->default_slug();
 	}

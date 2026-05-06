@@ -1,0 +1,8 @@
+{
+  "name": "adapter-registry-strategy",
+  "computed_at": "2026-05-06T06:02:55Z",
+  "input_globs": ["src/**/*.php"],
+  "result_count": 0,
+  "result": [],
+  "notes": "N/A — no registry/adapter pattern in plugin. All engine dependencies are direct concrete instances."
+}

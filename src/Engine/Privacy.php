@@ -97,24 +97,34 @@ final class Privacy {
 
 		$data_groups = array();
 
-		// Points summary.
-		$total         = PointsEngine::get_total( $user_id );
+		// Points summary — one row per currency on multi-currency sites.
+		$balances     = PointsEngine::get_totals_by_type( $user_id );
+		$pt_service   = new \WBGam\Services\PointTypeService();
+		$summary_rows = array();
+		foreach ( $pt_service->list() as $pt ) {
+			$slug   = (string) $pt['slug'];
+			$label  = (string) $pt['label'];
+			$total  = (int) ( $balances[ $slug ] ?? 0 );
+			$summary_rows[] = array(
+				'name'  => sprintf(
+					/* translators: %s: currency label (e.g. "Points", "Coins"). */
+					__( 'Total %s', 'wb-gamification' ),
+					$label
+				),
+				'value' => (string) $total,
+			);
+		}
 		$data_groups[] = array(
 			'group_id'    => 'wb-gam-points',
 			'group_label' => __( 'Gamification Points', 'wb-gamification' ),
 			'item_id'     => 'wb-gam-points-' . $user_id,
-			'data'        => array(
-				array(
-					'name'  => __( 'Total Points', 'wb-gamification' ),
-					'value' => (string) $total,
-				),
-			),
+			'data'        => $summary_rows,
 		);
 
-		// Points history (all).
+		// Points history (all currencies).
 		$history = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT action_id, points, created_at FROM {$wpdb->prefix}wb_gam_points WHERE user_id = %d ORDER BY created_at DESC",
+				"SELECT action_id, points, point_type, created_at FROM {$wpdb->prefix}wb_gam_points WHERE user_id = %d ORDER BY created_at DESC",
 				$user_id
 			),
 			ARRAY_A
@@ -133,6 +143,10 @@ final class Privacy {
 					array(
 						'name'  => __( 'Points', 'wb-gamification' ),
 						'value' => $row['points'],
+					),
+					array(
+						'name'  => __( 'Currency', 'wb-gamification' ),
+						'value' => (string) ( $row['point_type'] ?? '' ),
 					),
 					array(
 						'name'  => __( 'Date', 'wb-gamification' ),
@@ -274,6 +288,12 @@ final class Privacy {
 
 		// Points ledger.
 		$removed += (int) $wpdb->delete( $wpdb->prefix . 'wb_gam_points', array( 'user_id' => $user_id ), array( '%d' ) );
+
+		// Materialised user-totals — must mirror the ledger delete, otherwise
+		// the user's row keeps a non-zero balance after GDPR erase. Same
+		// applies to the leaderboard cache (snapshot retains the user's rank).
+		$removed += (int) $wpdb->delete( $wpdb->prefix . 'wb_gam_user_totals', array( 'user_id' => $user_id ), array( '%d' ) );
+		$removed += (int) $wpdb->delete( $wpdb->prefix . 'wb_gam_leaderboard_cache', array( 'user_id' => $user_id ), array( '%d' ) );
 
 		// Earned badges.
 		$removed += (int) $wpdb->delete( $wpdb->prefix . 'wb_gam_user_badges', array( 'user_id' => $user_id ), array( '%d' ) );
