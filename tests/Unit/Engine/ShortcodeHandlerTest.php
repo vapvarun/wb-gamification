@@ -28,6 +28,12 @@ class ShortcodeHandlerTest extends TestCase {
 			}
 			return $out;
 		} );
+		// WP core helpers used by the normaliser — pure functions, safe to stub.
+		Functions\when( 'sanitize_key' )->alias( static function ( $key ) {
+			$key = strtolower( (string) $key );
+			return preg_replace( '/[^a-z0-9_\-]/', '', $key );
+		} );
+		Functions\when( 'absint' )->alias( static fn( $v ) => abs( (int) $v ) );
 	}
 
 	protected function tearDown(): void {
@@ -123,6 +129,10 @@ class ShortcodeHandlerTest extends TestCase {
 	public static function shortcodeDispatchProvider(): array {
 		$cases = array();
 		foreach ( QAPages::MAP as $block_slug => $unit ) {
+			// Block-only units (no shortcode counterpart) skip dispatch testing.
+			if ( '' === ( $unit['shortcode'] ?? '' ) ) {
+				continue;
+			}
 			// Convert `wb_gam_member_points` → `member_points` (handler suffix).
 			$handler_method = preg_replace( '/^wb_gam_/', '', $unit['shortcode'] );
 			$cases[ $unit['shortcode'] ] = array( $handler_method, $block_slug );

@@ -119,8 +119,23 @@ else
 fi
 # ─── End agent-smoke gate ───────────────────────────────────────────────────
 
+# EXIT trap — always restore composer dev deps + return to ROOT_DIR.
+# Without this, an early failure (or a successful build that exits while CWD is
+# dist/) leaves vendor/ in --no-dev state, breaking the next local PHPUnit /
+# PHPStan / WPCS run for the developer.
+RESTORE_COMPOSER_DEV=0
+restore_composer_dev() {
+    local rc=$?
+    if [ "${RESTORE_COMPOSER_DEV}" -eq 1 ] && [ -f "${ROOT_DIR}/composer.json" ]; then
+        ( cd "${ROOT_DIR}" && composer install --quiet ) || true
+    fi
+    return "${rc}"
+}
+trap restore_composer_dev EXIT
+
 # Ensure production deps + build artefacts are fresh.
 if [ -f "${ROOT_DIR}/composer.json" ]; then
+    RESTORE_COMPOSER_DEV=1
     composer install --no-dev --optimize-autoloader --quiet
 fi
 if [ -f "${ROOT_DIR}/package.json" ] && command -v npm >/dev/null 2>&1; then
@@ -150,16 +165,12 @@ rsync -a --delete \
     --exclude='CLAUDE.md' --exclude='*.log' --exclude='wp-content/' \
     "${ROOT_DIR}/" "${STAGE}/"
 
-cd "${DIST_DIR}"
-zip -qr "${SLUG}-${VERSION}.zip" "${SLUG}"
+( cd "${DIST_DIR}" && zip -qr "${SLUG}-${VERSION}.zip" "${SLUG}" )
 ZIP_PATH="${DIST_DIR}/${SLUG}-${VERSION}.zip"
 SIZE_KB=$(($(wc -c < "${ZIP_PATH}") / 1024))
 
-# Restore composer dev deps for continued local work.
-if [ -f "${ROOT_DIR}/composer.json" ]; then
-    composer install --quiet
-fi
+# Composer dev deps restored automatically by the EXIT trap above. No explicit
+# restore call here — the trap handles success and failure paths uniformly.
 
-cd "${ROOT_DIR}"
 echo "→ ${ZIP_PATH} (${SIZE_KB} KB)"
 echo "→ Next: extract to a tmp dir + run \`wp plugin check\` per release-gate (Part 17.7.3)."

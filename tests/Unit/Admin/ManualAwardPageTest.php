@@ -34,7 +34,7 @@ class ManualAwardPageTest extends TestCase {
 
 		Functions\expect( 'add_action' )
 			->once()
-			->with( 'admin_post_wb_gam_manual_award', \Mockery::type( 'array' ) );
+			->with( 'admin_enqueue_scripts', \Mockery::type( 'array' ) );
 
 		ManualAwardPage::init();
 	}
