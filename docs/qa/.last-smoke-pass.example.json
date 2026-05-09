@@ -1,0 +1,60 @@
+{
+  "release_version": "1.0.0",
+  "ran_at": "2026-05-09T14:30:00Z",
+  "site": "http://wb-gamification.local",
+  "agent": "sonnet",
+  "sections": {
+    "A_fresh_install":     { "pass": 0, "fail": 0, "skipped": 3 },
+    "B_upgrade":           { "pass": 0, "fail": 0, "skipped": 3 },
+    "C_core_flows":        { "pass": 18, "fail": 0, "skipped": 0 },
+    "D_regression_guards": { "pass": 16, "fail": 0, "skipped": 0 },
+    "E_integrations":      { "pass": 5, "fail": 0, "skipped": 4 },
+    "F_cross_browser":     { "pass": 4, "fail": 0, "skipped": 0 }
+  },
+  "journey_runs": [
+    {
+      "slug": "earn-points-via-rest",
+      "path": "audit/journeys/customer/01-earn-points-via-rest.md",
+      "outcome": "PASS",
+      "duration_seconds": 47,
+      "failure_step": null,
+      "expected": null,
+      "actual": null
+    },
+    {
+      "slug": "view-leaderboard-block",
+      "path": "audit/journeys/customer/02-view-leaderboard-block.md",
+      "outcome": "PASS",
+      "duration_seconds": 23,
+      "failure_step": null,
+      "expected": null,
+      "actual": null
+    },
+    {
+      "slug": "manual-award-points",
+      "path": "audit/journeys/admin/01-manual-award-points.md",
+      "outcome": "PASS",
+      "duration_seconds": 31,
+      "failure_step": null,
+      "expected": null,
+      "actual": null
+    },
+    {
+      "slug": "rest-public-allowlist",
+      "path": "audit/journeys/security/01-rest-public-allowlist.md",
+      "outcome": "PASS",
+      "duration_seconds": 19,
+      "failure_step": null,
+      "expected": null,
+      "actual": null
+    }
+  ],
+  "failures": [],
+  "debug_log_issues": [],
+  "manual_required": [
+    "Firefox Desktop: composer time picker on community-challenges block",
+    "Safari iOS 390px: leaderboard period switcher dropdown",
+    "Safari iOS 390px: hub tabs horizontal scroll",
+    "Safari iOS 390px: toast notification stacking"
+  ]
+}
