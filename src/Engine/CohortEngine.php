@@ -339,6 +339,7 @@ final class CohortEngine {
 		foreach ( $members as &$m ) {
 			$m['user_id']  = (int) $m['user_id'];
 			$m['week_pts'] = (int) $m['week_pts'];
+			$m['rank']     = $rank++;
 			if ( $m['user_id'] === $user_id ) {
 				$m['is_me'] = true;
 			}
