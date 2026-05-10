@@ -1,0 +1,289 @@
+/* WB Gamification — store hero composition shared styles.
+ * Theme: warm amber (matches the in-plugin brand logo gradient).
+ *  - Fraunces italic for headline emphasis
+ *  - Manrope for body
+ *  - JetBrains Mono for kicker / pills / numerals
+ */
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400;1,9..144,600&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+:root {
+	--ink:        #1a1410;
+	--ink-soft:   #4a3f37;
+	--ink-mute:   #8c7868;
+	--paper:      #fdf9f3;
+	--paper-warm: #f5ebd9;
+	--brand:      #d97706;   /* amber-600, matches plugin logo */
+	--brand-deep: #b45309;
+	--accent:     #f59e0b;
+	--gold-tint:  #fde68a;
+	--frame:      rgba(26, 20, 16, 0.18);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body { height: 100%; }
+
+body {
+	width: 1440px;
+	height: 810px;
+	font-family: 'Manrope', system-ui, sans-serif;
+	background: var(--paper);
+	color: var(--ink);
+	overflow: hidden;
+	position: relative;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+}
+
+/* Inset frame — thin ink rule 24px from edges */
+.hero-frame {
+	position: absolute;
+	inset: 24px;
+	border: 1px solid var(--frame);
+	border-radius: 4px;
+	pointer-events: none;
+	z-index: 1;
+}
+
+/* Background numeral — translucent serif anchor */
+.hero-bg-numeral {
+	position: absolute;
+	font-family: 'Fraunces', 'Georgia', serif;
+	font-style: italic;
+	font-weight: 400;
+	font-size: 760px;
+	line-height: 0.85;
+	color: var(--ink);
+	opacity: 0.06;
+	user-select: none;
+	pointer-events: none;
+	z-index: 0;
+}
+
+/* Two-column flex */
+.hero-grid {
+	position: relative;
+	z-index: 2;
+	display: grid;
+	grid-template-columns: 1.1fr 1fr;
+	gap: 72px;
+	height: 100%;
+	padding: 88px 96px;
+	align-items: center;
+}
+
+/* Left column — copy block */
+.copy-kicker {
+	font-family: 'JetBrains Mono', monospace;
+	font-size: 13px;
+	font-weight: 500;
+	letter-spacing: 0.18em;
+	text-transform: uppercase;
+	color: var(--brand-deep);
+	margin-bottom: 28px;
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+.copy-kicker::before {
+	content: '';
+	width: 28px;
+	height: 1px;
+	background: var(--brand-deep);
+}
+
+.copy-headline {
+	font-family: 'Manrope', sans-serif;
+	font-weight: 700;
+	font-size: 76px;
+	line-height: 1.02;
+	letter-spacing: -0.025em;
+	color: var(--ink);
+	margin-bottom: 28px;
+}
+.copy-headline em {
+	font-family: 'Fraunces', serif;
+	font-style: italic;
+	font-weight: 600;
+	color: var(--brand-deep);
+	font-size: 1.05em;
+}
+
+.copy-lede {
+	font-family: 'Manrope', sans-serif;
+	font-weight: 400;
+	font-size: 21px;
+	line-height: 1.45;
+	color: var(--ink-soft);
+	max-width: 520px;
+	margin-bottom: 40px;
+}
+
+.copy-pills {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+}
+.pill {
+	font-family: 'JetBrains Mono', monospace;
+	font-size: 12px;
+	font-weight: 500;
+	letter-spacing: 0.04em;
+	color: var(--ink);
+	background: var(--paper-warm);
+	border: 1px solid var(--frame);
+	padding: 7px 14px;
+	border-radius: 999px;
+}
+.pill.dark {
+	background: var(--ink);
+	color: var(--paper);
+	border-color: var(--ink);
+}
+
+/* Right column — product visual */
+.visual-stack {
+	position: relative;
+	display: grid;
+	grid-template-rows: auto auto auto;
+	gap: 16px;
+	align-self: center;
+}
+
+.card {
+	background: #fff;
+	border: 1px solid var(--frame);
+	border-radius: 14px;
+	padding: 20px 24px;
+	box-shadow: 0 12px 32px rgba(26, 20, 16, 0.06);
+}
+
+/* Leaderboard card */
+.lb-head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin-bottom: 14px;
+}
+.lb-title {
+	font-family: 'Manrope', sans-serif;
+	font-weight: 700;
+	font-size: 14px;
+	letter-spacing: 0.02em;
+	color: var(--ink);
+}
+.lb-period {
+	font-family: 'JetBrains Mono', monospace;
+	font-size: 10px;
+	color: var(--ink-mute);
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+}
+.lb-row {
+	display: grid;
+	grid-template-columns: 28px 1fr auto;
+	align-items: center;
+	gap: 12px;
+	padding: 9px 0;
+	border-top: 1px solid rgba(26, 20, 16, 0.06);
+}
+.lb-row:first-of-type { border-top: 0; padding-top: 4px; }
+.lb-rank {
+	font-family: 'JetBrains Mono', monospace;
+	font-weight: 700;
+	font-size: 13px;
+	color: var(--ink-mute);
+}
+.lb-row.gold .lb-rank { color: var(--brand); }
+.lb-name {
+	font-family: 'Manrope', sans-serif;
+	font-weight: 600;
+	font-size: 14px;
+	color: var(--ink);
+}
+.lb-points {
+	font-family: 'JetBrains Mono', monospace;
+	font-weight: 700;
+	font-size: 13px;
+	color: var(--ink);
+}
+.lb-row.gold .lb-points { color: var(--brand-deep); }
+
+/* KPI strip */
+.kpi-row {
+	display: grid;
+	grid-template-columns: 1fr 1fr 1fr;
+	gap: 12px;
+}
+.kpi {
+	background: #fff;
+	border: 1px solid var(--frame);
+	border-radius: 12px;
+	padding: 16px 18px;
+}
+.kpi-label {
+	font-family: 'JetBrains Mono', monospace;
+	font-size: 10px;
+	letter-spacing: 0.1em;
+	text-transform: uppercase;
+	color: var(--ink-mute);
+	margin-bottom: 6px;
+}
+.kpi-value {
+	font-family: 'Fraunces', serif;
+	font-weight: 600;
+	font-size: 32px;
+	line-height: 1;
+	color: var(--ink);
+	letter-spacing: -0.02em;
+}
+.kpi.brand {
+	background: var(--brand);
+	border-color: var(--brand);
+	color: var(--paper);
+}
+.kpi.brand .kpi-label { color: rgba(253, 249, 243, 0.7); }
+.kpi.brand .kpi-value { color: var(--paper); }
+
+/* Badge strip */
+.badges-row {
+	display: flex;
+	gap: 10px;
+	align-items: center;
+	background: var(--ink);
+	color: var(--paper);
+	border-radius: 12px;
+	padding: 16px 18px;
+}
+.badges-label {
+	font-family: 'JetBrains Mono', monospace;
+	font-size: 10px;
+	letter-spacing: 0.1em;
+	text-transform: uppercase;
+	color: rgba(253, 249, 243, 0.6);
+	margin-right: 4px;
+}
+.badge-chip {
+	width: 28px;
+	height: 28px;
+	border-radius: 50%;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 14px;
+	border: 2px solid var(--ink);
+	margin-left: -8px;
+}
+.badge-chip:first-of-type { margin-left: 0; }
+.badge-chip.gold   { background: var(--accent); }
+.badge-chip.amber  { background: var(--brand); }
+.badge-chip.cream  { background: var(--gold-tint); }
+.badge-chip.deep   { background: var(--brand-deep); color: #fff; }
+.badge-chip.paper  { background: var(--paper-warm); color: var(--ink); }
+.badge-count {
+	font-family: 'JetBrains Mono', monospace;
+	font-size: 12px;
+	font-weight: 600;
+	color: var(--paper);
+	margin-left: auto;
+}
