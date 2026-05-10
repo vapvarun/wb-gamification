@@ -2,8 +2,10 @@
  * Submit Achievement — view-side handler.
  *
  * Listens for form submit, POSTs to /submissions, shows inline success
- * or error. No external nonce middleware — the rest_url + nonce are
- * passed via data-attrs on the wrapper.
+ * or error. No external nonce middleware — the rest_url + nonce + every
+ * user-facing string are passed via data-attrs on the wrapper. PHP
+ * renders those through `__('…', 'wb-gamification')` so the view.js
+ * stays locale-agnostic.
  */
 ( function () {
 	function init( wrapper ) {
@@ -14,6 +16,9 @@
 		}
 		const restUrl = wrapper.getAttribute( 'data-rest-url' );
 		const nonce = wrapper.getAttribute( 'data-rest-nonce' );
+		const i18nSuccess = wrapper.getAttribute( 'data-i18n-success' ) || 'Submitted!';
+		const i18nFailed = wrapper.getAttribute( 'data-i18n-failed' ) || 'Submission failed.';
+		const i18nNetwork = wrapper.getAttribute( 'data-i18n-network' ) || 'Network error.';
 
 		form.addEventListener( 'submit', function ( ev ) {
 			ev.preventDefault();
@@ -40,17 +45,17 @@
 				.then( ( r ) => r.json().then( ( data ) => ( { ok: r.ok, data } ) ) )
 				.then( ( { ok, data } ) => {
 					if ( ! ok || ( data && data.code ) ) {
-						status.textContent = ( data && data.message ) || 'Submission failed.';
+						status.textContent = ( data && data.message ) || i18nFailed;
 						status.style.color = '#b91c1c';
 						submit.disabled = false;
 						return;
 					}
-					status.textContent = 'Submitted! A reviewer will look at it soon.';
+					status.textContent = i18nSuccess;
 					status.style.color = '#16a34a';
 					form.reset();
 				} )
 				.catch( () => {
-					status.textContent = 'Network error.';
+					status.textContent = i18nNetwork;
 					status.style.color = '#b91c1c';
 					submit.disabled = false;
 				} );

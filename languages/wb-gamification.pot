@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-05-10T11:09:11+00:00\n"
+"POT-Creation-Date: 2026-05-10T11:16:59+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: wb-gamification\n"
@@ -3791,27 +3791,39 @@ msgstr ""
 msgid "Log in to submit an achievement."
 msgstr ""
 
-#: src/Blocks/submit-achievement/render.php:71
+#: src/Blocks/submit-achievement/render.php:67
+msgid "Submitted! A reviewer will look at it soon."
+msgstr ""
+
+#: src/Blocks/submit-achievement/render.php:68
+msgid "Submission failed."
+msgstr ""
+
+#: src/Blocks/submit-achievement/render.php:69
+msgid "Network error."
+msgstr ""
+
+#: src/Blocks/submit-achievement/render.php:77
 msgid "What did you do?"
 msgstr ""
 
-#: src/Blocks/submit-achievement/render.php:73
+#: src/Blocks/submit-achievement/render.php:79
 msgid "— pick an action —"
 msgstr ""
 
-#: src/Blocks/submit-achievement/render.php:81
+#: src/Blocks/submit-achievement/render.php:87
 msgid "Tell us about it"
 msgstr ""
 
-#: src/Blocks/submit-achievement/render.php:82
+#: src/Blocks/submit-achievement/render.php:88
 msgid "What happened? Add details for the reviewer."
 msgstr ""
 
-#: src/Blocks/submit-achievement/render.php:86
+#: src/Blocks/submit-achievement/render.php:92
 msgid "Link (optional)"
 msgstr ""
 
-#: src/Blocks/submit-achievement/render.php:91
+#: src/Blocks/submit-achievement/render.php:97
 msgid "Submit for review"
 msgstr ""
 

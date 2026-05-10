@@ -61,6 +61,12 @@ $wb_gam_wrapper = get_block_wrapper_attributes( array(
 	'data-rest-url'        => esc_url_raw( rest_url( 'wb-gamification/v1' ) ),
 	'data-rest-nonce'      => wp_create_nonce( 'wp_rest' ),
 	'data-actions'         => wp_json_encode( $wb_gam_actions ),
+	// i18n strings consumed by view.js. Same pattern as the redemption-store
+	// block — render-time translations flow through the PHP textdomain so
+	// view.js stays string-free and ships to every locale unchanged.
+	'data-i18n-success'    => __( 'Submitted! A reviewer will look at it soon.', 'wb-gamification' ),
+	'data-i18n-failed'     => __( 'Submission failed.', 'wb-gamification' ),
+	'data-i18n-network'    => __( 'Network error.', 'wb-gamification' ),
 ) );
 
 BlockHooks::before( 'submit-achievement', $wb_gam_attrs );
