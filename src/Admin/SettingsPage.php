@@ -563,7 +563,7 @@ final class SettingsPage {
 						<?php esc_html_e( 'Points', 'wb-gamification' ); ?>
 					</a>
 					<a class="wbgam-settings-nav-item" href="#levels" data-section="levels">
-						<span class="icon-bar-chart-3"></span>
+						<span class="icon-chart-bar"></span>
 						<?php esc_html_e( 'Levels', 'wb-gamification' ); ?>
 					</a>
 				</div>
@@ -621,7 +621,7 @@ final class SettingsPage {
 				<?php // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- display-only flag set by our own redirect. ?>
 				<?php if ( isset( $_GET['saved'] ) ) : ?>
 					<div class="wbgam-banner wbgam-banner--success wbgam-stack-block" role="status" aria-live="polite">
-						<span class="wbgam-banner__icon icon-check-circle" aria-hidden="true"></span>
+						<span class="wbgam-banner__icon icon-circle-check" aria-hidden="true"></span>
 						<div class="wbgam-banner__body"><p class="wbgam-banner__desc"><?php esc_html_e( 'Settings saved.', 'wb-gamification' ); ?></p></div>
 					</div>
 				<?php endif; ?>
@@ -699,6 +699,7 @@ final class SettingsPage {
 					</a>
 				</div>
 			</header>
+			<hr class="wp-header-end" />
 			<?php self::render_dashboard_tab(); ?>
 		</div>
 		<?php
@@ -954,7 +955,7 @@ final class SettingsPage {
 			<div class="wbgam-settings-card wbgam-stack-block wbgam-card--success">
 				<div class="wbgam-card-header">
 					<h3 class="wbgam-card-title">
-						<span class="icon-check-circle" aria-hidden="true"></span>
+						<span class="icon-circle-check" aria-hidden="true"></span>
 						<?php esc_html_e( 'Setup complete — your Gamification Hub is ready', 'wb-gamification' ); ?>
 					</h3>
 				</div>
@@ -978,7 +979,7 @@ final class SettingsPage {
 						</a>
 						<?php if ( $hub_edit ) : ?>
 							<a href="<?php echo esc_url( $hub_edit ); ?>" class="wbgam-btn wbgam-btn--secondary">
-								<span class="icon-edit" aria-hidden="true"></span>
+								<span class="icon-pencil" aria-hidden="true"></span>
 								<?php esc_html_e( 'Edit Hub page', 'wb-gamification' ); ?>
 							</a>
 						<?php endif; ?>

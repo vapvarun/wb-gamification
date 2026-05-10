@@ -1570,26 +1570,28 @@
 }
 
 .wbgam-settings-sidebar__logo {
-	width: 32px;
-	height: 32px;
+	width: 40px;
+	height: 40px;
 	background: linear-gradient(135deg, #f59e0b, #d97706);
 	color: #fff;
-	border-radius: 8px;
+	border-radius: 10px;
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	font-size: 18px;
+	font-size: 22px;
+	flex-shrink: 0;
 }
 
 .wbgam-settings-sidebar__brand strong {
 	display: block;
-	font-size: 14px;
+	font-size: 16px;
 	font-weight: 700;
+	line-height: 1.25;
 	color: #1e1e1e;
 }
 
 .wbgam-settings-sidebar__brand span {
-	font-size: 10px;
+	font-size: 11px;
 	font-weight: 600;
 	text-transform: uppercase;
 	letter-spacing: 0.08em;
@@ -1604,24 +1606,26 @@
 
 .wbgam-settings-nav-group__label {
 	display: block;
-	font-size: 10px;
+	font-size: 11px;
 	font-weight: 700;
 	text-transform: uppercase;
-	letter-spacing: 0.06em;
+	letter-spacing: 0.08em;
 	color: #757575;
-	padding: 12px 20px 6px;
+	padding: 14px 20px 6px;
 }
 
-/* Nav items */
+/* Nav items — 40px min tap target (skill Part 7.5), 14px label, 18px icon */
 
 .wbgam-settings-nav-item {
 	display: flex;
 	align-items: center;
-	gap: 10px;
-	padding: 8px 20px;
+	gap: 12px;
+	padding: 10px 20px;
+	min-height: 40px;
 	color: #50575e;
 	text-decoration: none;
-	font-size: 13px;
+	font-size: 14px;
+	line-height: 1.4;
 	border-left: 3px solid transparent;
 	transition: background 0.15s, color 0.15s;
 }
@@ -1639,13 +1643,21 @@
 	font-weight: 600;
 }
 
+/* Lucide icons render via font glyph — explicitly size them so they don't
+ * inherit the 14px label size and look thin. 18px hits the modern admin-
+ * sidebar ratio (icon ≈ 1.3× label). */
+
+.wbgam-settings-nav-item [class^="icon-"],
 .wbgam-settings-nav-item .dashicons {
-	font-size: 16px;
-	width: 16px;
-	height: 16px;
+	font-size: 18px;
+	width: 18px;
+	height: 18px;
+	line-height: 1;
+	flex-shrink: 0;
 	opacity: 0.7;
 }
 
+.wbgam-settings-nav-item.is-active [class^="icon-"],
 .wbgam-settings-nav-item.is-active .dashicons {
 	opacity: 1;
 }

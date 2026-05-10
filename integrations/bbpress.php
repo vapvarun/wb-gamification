@@ -74,7 +74,7 @@ return [
 			},
 			'default_points'    => 20,
 			'category'          => 'social',
-			'icon'              => 'icon-check-circle',
+			'icon'              => 'icon-circle-check',
 			'repeatable'        => true,
 			'cooldown'          => 0,
 		],

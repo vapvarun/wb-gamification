@@ -70,7 +70,7 @@
 				status.className = 'wbgam-test-event-status wbgam-test-event-status--success';
 				clearStatus();
 				const icon = document.createElement( 'span' );
-				icon.className = 'icon-check-circle';
+				icon.className = 'icon-circle-check';
 				icon.setAttribute( 'aria-hidden', 'true' );
 				status.appendChild( icon );
 				status.appendChild( document.createTextNode( ' ' + ( i18n.success || 'Test event sent. Visit your Hub to see the welcome toast.' ) ) );

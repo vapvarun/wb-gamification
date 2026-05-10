@@ -117,7 +117,7 @@ BlockHooks::before( 'daily-bonus', $wb_gam_attrs );
 	<div class="wb-gam-daily-bonus__today">
 		<?php if ( $wb_gam_data['today_claimed'] ) : ?>
 			<span class="wb-gam-daily-bonus__chip wb-gam-daily-bonus__chip--claimed">
-				<span class="icon-check-circle" aria-hidden="true"></span>
+				<span class="icon-circle-check" aria-hidden="true"></span>
 				<?php
 				printf(
 					/* translators: 1: amount, 2: currency label. */

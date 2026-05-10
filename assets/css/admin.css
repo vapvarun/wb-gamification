@@ -1161,7 +1161,7 @@
 	background: var(--wbgam-success-soft, #f0fdf4);
 }
 
-.wbgam-card--success .wbgam-card-title .icon-check-circle {
+.wbgam-card--success .wbgam-card-title .icon-circle-check {
 	color: var(--wbgam-success, #16a34a);
 	margin-inline-end: 6px;
 }
@@ -1329,7 +1329,7 @@
 	color: #166534;
 }
 
-.wbgam-test-event-status--success .icon-check-circle {
+.wbgam-test-event-status--success .icon-circle-check {
 	color: #16a34a;
 }
 
@@ -1355,7 +1355,7 @@
 }
 
 .wbgam-actions-row .wbgam-btn .icon-external-link,
-.wbgam-actions-row .wbgam-btn .icon-edit {
+.wbgam-actions-row .wbgam-btn .icon-pencil {
 	margin-inline-end: 6px;
 }
 

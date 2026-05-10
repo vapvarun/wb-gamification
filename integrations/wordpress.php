@@ -184,7 +184,7 @@ return [
 			},
 			'default_points'  => 5,
 			'category'        => 'wordpress',
-			'icon'            => 'icon-check-circle',
+			'icon'            => 'icon-circle-check',
 			'repeatable'      => true,
 			'standalone_only' => true,
 		],

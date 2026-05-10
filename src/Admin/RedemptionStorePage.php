@@ -161,9 +161,10 @@ final class RedemptionStorePage {
 					<p class="wbgam-page-header__desc"><?php esc_html_e( 'Create rewards that members can purchase with earned points.', 'wb-gamification' ); ?></p>
 				</div>
 			</header>
+			<hr class="wp-header-end" />
 
 			<?php if ( isset( $notice_map[ $notice ] ) ) : ?>
-				<div class="wbgam-banner wbgam-banner--<?php echo esc_attr( $notice_map[ $notice ][0] ); ?> wbgam-stack-block" role="status" aria-live="polite"><span class="wbgam-banner__icon icon-check-circle" aria-hidden="true"></span><div class="wbgam-banner__body"><p class="wbgam-banner__desc"><?php echo esc_html( $notice_map[ $notice ][1] ); ?></p></div></div>
+				<div class="wbgam-banner wbgam-banner--<?php echo esc_attr( $notice_map[ $notice ][0] ); ?> wbgam-stack-block" role="status" aria-live="polite"><span class="wbgam-banner__icon icon-circle-check" aria-hidden="true"></span><div class="wbgam-banner__body"><p class="wbgam-banner__desc"><?php echo esc_html( $notice_map[ $notice ][1] ); ?></p></div></div>
 			<?php endif; ?>
 
 			<!-- Create/Edit Form Card -->

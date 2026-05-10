@@ -98,6 +98,7 @@ final class PointTypesPage {
 					<p class="wbgam-page-header__desc"><?php esc_html_e( 'Define the point currencies your site supports — e.g. Points for general activity, XP for learning, Coins for the redemption store. Each currency has its own ledger; balances stay isolated. The default currency is used when an action does not specify a type.', 'wb-gamification' ); ?></p>
 				</div>
 			</header>
+			<hr class="wp-header-end" />
 
 			<!-- Existing types card -->
 			<div class="wbgam-card wbgam-stack-block">
