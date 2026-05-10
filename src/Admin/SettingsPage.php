@@ -1172,6 +1172,130 @@ final class SettingsPage {
 				<?php esc_html_e( 'Configure Points', 'wb-gamification' ); ?>
 			</a>
 		</div>
+
+		<?php
+		// Activity proof + engagement signal — what a customer wants to see
+		// every time they open the Dashboard: "Is the system running? Who's
+		// winning right now? What's earning the most points?". The same
+		// $stats payload already powers the standalone Analytics page; reusing
+		// it here keeps Dashboard cheap and Analytics consistent.
+		$has_top_earners = ! empty( $stats['top_earners'] );
+		$has_top_actions = ! empty( $stats['top_actions'] );
+		$recent_kudos    = \WBGam\Engine\KudosEngine::get_recent( 6 );
+		?>
+		<div class="wbgam-dashboard-row">
+
+			<!-- Top members (30d) -->
+			<div class="wbgam-card">
+				<div class="wbgam-card-header">
+					<h3 class="wbgam-card-title">
+						<span class="icon-trophy" aria-hidden="true"></span>
+						<?php esc_html_e( 'Top members — last 30 days', 'wb-gamification' ); ?>
+					</h3>
+					<a class="wbgam-card-link" href="<?php echo esc_url( admin_url( 'admin.php?page=wb-gamification-analytics' ) ); ?>">
+						<?php esc_html_e( 'View all', 'wb-gamification' ); ?>
+					</a>
+				</div>
+				<div class="wbgam-card-body">
+					<?php if ( ! $has_top_earners ) : ?>
+						<p class="wbgam-empty"><?php esc_html_e( 'No earnings yet — points will appear here as members engage.', 'wb-gamification' ); ?></p>
+					<?php else : ?>
+						<ol class="wbgam-rank-list" role="list">
+							<?php
+							$rank = 0;
+							foreach ( array_slice( (array) $stats['top_earners'], 0, 6 ) as $row ) :
+								++$rank;
+								$user = isset( $row['user_id'] ) ? get_userdata( (int) $row['user_id'] ) : null;
+								if ( ! $user ) {
+									continue;
+								}
+								?>
+								<li class="wbgam-rank-list__item">
+									<span class="wbgam-rank-list__rank">#<?php echo esc_html( (string) $rank ); ?></span>
+									<span class="wbgam-rank-list__avatar" aria-hidden="true"><?php echo get_avatar( $user->ID, 28 ); ?></span>
+									<span class="wbgam-rank-list__name"><?php echo esc_html( $user->display_name ); ?></span>
+									<span class="wbgam-rank-list__points"><?php echo esc_html( number_format_i18n( (int) ( $row['pts'] ?? 0 ) ) ); ?></span>
+								</li>
+							<?php endforeach; ?>
+						</ol>
+					<?php endif; ?>
+				</div>
+			</div>
+
+			<!-- Top actions (30d) -->
+			<div class="wbgam-card">
+				<div class="wbgam-card-header">
+					<h3 class="wbgam-card-title">
+						<span class="icon-zap" aria-hidden="true"></span>
+						<?php esc_html_e( 'Top actions — last 30 days', 'wb-gamification' ); ?>
+					</h3>
+					<a class="wbgam-card-link" href="<?php echo esc_url( admin_url( 'admin.php?page=wb-gamification&tab=points' ) ); ?>">
+						<?php esc_html_e( 'Configure', 'wb-gamification' ); ?>
+					</a>
+				</div>
+				<div class="wbgam-card-body">
+					<?php if ( ! $has_top_actions ) : ?>
+						<p class="wbgam-empty"><?php esc_html_e( 'No actions logged yet.', 'wb-gamification' ); ?></p>
+					<?php else : ?>
+						<ul class="wbgam-action-list" role="list">
+							<?php foreach ( array_slice( (array) $stats['top_actions'], 0, 6 ) as $row ) : ?>
+								<li class="wbgam-action-list__item">
+									<span class="wbgam-action-list__name"><?php echo esc_html( str_replace( '_', ' ', (string) ( $row['action_id'] ?? '' ) ) ); ?></span>
+									<span class="wbgam-action-list__count">
+										<?php
+										printf(
+											/* translators: %d: number of times this action fired in the last 30 days */
+											esc_html( _n( '%d event', '%d events', (int) ( $row["events"] ?? 0 ), 'wb-gamification' ) ),
+											(int) ( $row["events"] ?? 0 )
+										);
+										?>
+									</span>
+									<span class="wbgam-action-list__points"><?php echo esc_html( number_format_i18n( (int) ( $row["pts"] ?? 0 ) ) ); ?></span>
+								</li>
+							<?php endforeach; ?>
+						</ul>
+					<?php endif; ?>
+				</div>
+			</div>
+
+		</div>
+
+		<?php if ( ! empty( $recent_kudos ) ) : ?>
+			<div class="wbgam-card wbgam-dashboard-row__full">
+				<div class="wbgam-card-header">
+					<h3 class="wbgam-card-title">
+						<span class="icon-heart-handshake" aria-hidden="true"></span>
+						<?php esc_html_e( 'Recent kudos', 'wb-gamification' ); ?>
+					</h3>
+					<a class="wbgam-card-link" href="<?php echo esc_url( admin_url( 'admin.php?page=wb-gamification&tab=kudos' ) ); ?>">
+						<?php esc_html_e( 'Manage kudos', 'wb-gamification' ); ?>
+					</a>
+				</div>
+				<div class="wbgam-card-body">
+					<ul class="wbgam-kudos-feed" role="list">
+						<?php foreach ( $recent_kudos as $kudo ) : ?>
+							<li class="wbgam-kudos-feed__item">
+								<span class="wbgam-kudos-feed__giver"><?php echo esc_html( $kudo['giver_name'] ); ?></span>
+								<span class="wbgam-kudos-feed__arrow" aria-hidden="true">→</span>
+								<span class="wbgam-kudos-feed__receiver"><?php echo esc_html( $kudo['receiver_name'] ); ?></span>
+								<?php if ( ! empty( $kudo['message'] ) ) : ?>
+									<span class="wbgam-kudos-feed__message"><?php echo esc_html( '“' . wp_trim_words( (string) $kudo['message'], 14 ) . '”' ); ?></span>
+								<?php endif; ?>
+								<span class="wbgam-kudos-feed__time">
+									<?php
+									printf(
+										/* translators: %s: human-readable time difference, e.g. "3 hours" */
+										esc_html__( '%s ago', 'wb-gamification' ),
+										esc_html( human_time_diff( strtotime( (string) $kudo['created_at'] ), current_time( 'timestamp' ) ) )
+									);
+									?>
+								</span>
+							</li>
+						<?php endforeach; ?>
+					</ul>
+				</div>
+			</div>
+		<?php endif; ?>
 		<?php
 	}
 

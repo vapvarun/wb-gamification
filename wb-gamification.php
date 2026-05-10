@@ -30,7 +30,90 @@ require_once WB_GAM_PATH . 'vendor/autoload.php';
 // Action Scheduler — must be loaded after autoloader, before plugins_loaded.
 require_once WB_GAM_PATH . 'vendor/woocommerce/action-scheduler/action-scheduler.php';
 
-// Note: WB Gamification is 100% free. No license SDK needed.
+// EDD Software Licensing SDK — free plugin auto-updates with preset key.
+//
+// WB Gamification is GPLv2 free, but it's distributed from
+// store.wbcomdesigns.com (not the wp.org repo), so without an updater
+// users would never see "1 update available" in their WordPress admin.
+// We bundle the EDD SL SDK + a preset license key (no charge, just a
+// registration token) so update checks flow through the EDD store,
+// the same way Jetonomy free does.
+//
+// item_id 1662147 = WB Gamification on EDD.
+const WB_GAM_LICENSE_PRESET_KEY = 'wbcomfree6e2a9c1d7b4f3c8a0e5d9b2f1a7c6e11';
+const WB_GAM_EDD_ITEM_ID        = 1662147;
+const WB_GAM_EDD_STORE_URL      = 'https://wbcomdesigns.com';
+
+add_action(
+	'edd_sl_sdk_registry',
+	static function ( $registry ): void {
+		$registry->register(
+			array(
+				'id'      => 'wb-gamification',
+				'url'     => WB_GAM_EDD_STORE_URL,
+				'item_id' => WB_GAM_EDD_ITEM_ID,
+				'version' => WB_GAM_VERSION,
+				'file'    => WB_GAM_FILE,
+				'license' => WB_GAM_LICENSE_PRESET_KEY,
+			)
+		);
+	}
+);
+
+if ( file_exists( WB_GAM_PATH . 'vendor/easy-digital-downloads/edd-sl-sdk/edd-sl-sdk.php' ) ) {
+	require_once WB_GAM_PATH . 'vendor/easy-digital-downloads/edd-sl-sdk/edd-sl-sdk.php';
+}
+
+// Auto-activate the preset license key on first load so the SDK can
+// reach the store + downloads work without admin intervention. The
+// activation is idempotent — once `wb_gam_preset_activated` is set
+// for this domain, the request is skipped on every subsequent load.
+add_action(
+	'admin_init',
+	static function (): void {
+		$preset_key = WB_GAM_LICENSE_PRESET_KEY;
+		$option     = 'wb_gam_license_key';
+		$activated  = 'wb_gam_preset_activated';
+
+		// Already activated for this domain — skip.
+		if ( get_option( $activated ) ) {
+			return;
+		}
+
+		// Store the key so the SDK can find it.
+		update_option( $option, $preset_key, false );
+
+		// Activate with the EDD store.
+		$response = wp_remote_post(
+			WB_GAM_EDD_STORE_URL,
+			array(
+				'timeout' => 15,
+				'body'    => array(
+					'edd_action' => 'activate_license',
+					'license'    => $preset_key,
+					'item_id'    => WB_GAM_EDD_ITEM_ID,
+					'url'        => home_url(),
+				),
+			)
+		);
+
+		if ( ! is_wp_error( $response ) ) {
+			$body = json_decode( wp_remote_retrieve_body( $response ), true );
+			if ( 'valid' === ( $body['license'] ?? '' ) ) {
+				update_option( $activated, 1, false );
+				// Auto-enable usage tracking checkbox the SDK reads.
+				update_option(
+					$option . '_allow_tracking',
+					array(
+						'allowed'   => true,
+						'timestamp' => time(),
+					),
+					false
+				);
+			}
+		}
+	}
+);
 
 use WBGam\Engine\Registry;
 use WBGam\Engine\Engine;
@@ -384,15 +467,13 @@ final class WB_Gamification {
 			);
 		}
 		wp_enqueue_style( 'lucide-icons' );
+		// Single canonical admin stylesheet. The previous build shipped a
+		// second `admin-premium.css` that duplicated 19+ selectors and split
+		// tokens across two namespaces — patch-work that won't scale to
+		// thousands of installs. Consolidated into admin.css in 1.0.0.
 		wp_enqueue_style(
 			'wb-gam-admin',
 			WB_GAM_URL . 'assets/css/admin.css',
-			array( 'lucide-icons' ),
-			WB_GAM_VERSION
-		);
-		wp_enqueue_style(
-			'wb-gamification-admin-premium',
-			WB_GAM_URL . 'assets/css/admin-premium.css',
 			array( 'lucide-icons' ),
 			WB_GAM_VERSION
 		);
