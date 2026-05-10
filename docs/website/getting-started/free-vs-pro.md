@@ -13,7 +13,7 @@ WB Gamification is a complete gamification system in the free version. Pro adds 
 | **Individual challenges** | Yes | Yes |
 | **Activity streaks with milestones** | Yes | Yes |
 | **Peer kudos** | Yes | Yes |
-| **11 Gutenberg blocks** | Yes | Yes |
+| **17 Gutenberg blocks** | Yes | Yes |
 | **11 shortcodes** | Yes | Yes |
 | **38 REST API endpoints** | Yes | Yes |
 | **9 plugin integrations** (WP, BP, WooCommerce, LearnDash, bbPress, LifterLMS, MemberPress, GiveWP, The Events Calendar) | Yes | Yes |

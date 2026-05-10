@@ -65,7 +65,7 @@ apply_filters( 'wb_gam_block_data', mixed $data, string $slug, array $attributes
 - `$slug` — block slug
 - `$attributes` — block attributes
 
-Returns the filtered data. **Note:** not every block fires this filter today — see the block's `render.php` to confirm before relying on it. The action hooks fire for all 12 blocks unconditionally.
+Returns the filtered data. **Note:** not every block fires this filter today — see the block's `render.php` to confirm before relying on it. The action hooks fire for all 17 blocks unconditionally.
 
 ## When hooks DON'T fire
 
