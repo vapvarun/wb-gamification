@@ -437,30 +437,78 @@ final class Installer {
 	}
 
 	/**
-	 * Create the Gamification hub page if one doesn't already exist.
+	 * Idempotently ensure exactly one Gamification hub page exists.
 	 *
-	 * Uses post meta `_wb_gam_hub_page` to detect existing pages,
-	 * preventing duplicates on reactivation.
+	 * Resolution order — first hit wins, never creates if any earlier tier
+	 * matches:
+	 *   1. `wb_gam_hub_page_id` option points to a live, non-trashed page → reuse
+	 *   2. Any page tagged with `_wb_gam_hub_page` meta → adopt
+	 *   3. Any page whose post_content already contains the hub block
+	 *      (`<!-- wp:wb-gamification/hub /-->`) → adopt (covers DB imports
+	 *      from staging where meta was lost but content survived)
+	 *   4. None of the above → create a new page once
+	 *
+	 * Pre-1.0.0 only checked tier 2; if the meta was wiped (DB reset, manual
+	 * cleanup, page rebuilt from import without meta) the installer kept
+	 * creating fresh pages — leading to "Gamification", "Gamification 2",
+	 * "Gamification 3"... in the page list across reactivations.
 	 *
 	 * @since 1.0.0
 	 */
 	private static function maybe_create_hub_page(): void {
-		$existing = get_posts(
+		// Tier 1 — option already points at a valid live page.
+		$stored_id = (int) get_option( 'wb_gam_hub_page_id', 0 );
+		if ( $stored_id > 0 ) {
+			$stored_post = get_post( $stored_id );
+			if (
+				$stored_post instanceof \WP_Post
+				&& 'page' === $stored_post->post_type
+				&& 'trash' !== $stored_post->post_status
+			) {
+				// Backfill the meta in case it was lost — keeps tier 2 a valid path
+				// for future runs even after option-only restorations.
+				if ( '1' !== get_post_meta( $stored_id, '_wb_gam_hub_page', true ) ) {
+					update_post_meta( $stored_id, '_wb_gam_hub_page', '1' );
+				}
+				return;
+			}
+			// Stale pointer — fall through to discovery / creation.
+		}
+
+		// Tier 2 — adopt any page tagged with our meta.
+		$tagged = get_posts(
 			array(
-				'post_type' => 'page',
-				'meta_key'  => '_wb_gam_hub_page', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
-			'meta_value'    => '1', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value
-			'numberposts'   => 1,
-			'post_status'   => array( 'publish', 'draft', 'private', 'trash' ),
-			'fields'        => 'ids',
+				'post_type'   => 'page',
+				'meta_key'    => '_wb_gam_hub_page', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
+				'meta_value'  => '1', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value
+				'numberposts' => 1,
+				'post_status' => array( 'publish', 'draft', 'private', 'trash' ),
+				'fields'      => 'ids',
 			)
 		);
-
-		if ( ! empty( $existing ) ) {
-			update_option( 'wb_gam_hub_page_id', $existing[0], false );
+		if ( ! empty( $tagged ) ) {
+			update_option( 'wb_gam_hub_page_id', (int) $tagged[0], false );
 			return;
 		}
 
+		// Tier 3 — adopt any page already rendering our hub block.
+		$with_block = get_posts(
+			array(
+				'post_type'   => 'page',
+				's'           => 'wp:wb-gamification/hub',
+				'numberposts' => 1,
+				'post_status' => array( 'publish', 'draft', 'private' ),
+				'fields'      => 'ids',
+			)
+		);
+		if ( ! empty( $with_block ) ) {
+			$adopt_id = (int) $with_block[0];
+			update_post_meta( $adopt_id, '_wb_gam_hub_page', '1' );
+			update_option( 'wb_gam_hub_page_id', $adopt_id, false );
+			return;
+		}
+
+		// Tier 4 — none found, create one.
 		$page_id = wp_insert_post(
 			array(
 				'post_title'   => __( 'Gamification', 'wb-gamification' ),
@@ -470,10 +518,27 @@ final class Installer {
 				'post_author'  => get_current_user_id() ?: 1,
 			)
 		);
-
 		if ( $page_id && ! is_wp_error( $page_id ) ) {
 			update_post_meta( $page_id, '_wb_gam_hub_page', '1' );
-			update_option( 'wb_gam_hub_page_id', $page_id, false );
+			update_option( 'wb_gam_hub_page_id', (int) $page_id, false );
+		}
+	}
+
+	/**
+	 * Clear the hub-page option when the hub page is trashed or deleted.
+	 *
+	 * Without this, a stale option lingers pointing at a trashed/missing
+	 * page, and the next reactivation would land back at tier 1 with a
+	 * stale pointer and skip recreating — leaving the site without a hub.
+	 * The caller is the registered handler for `wp_trash_post` and
+	 * `delete_post` actions; see WB_Gamification::register_hooks().
+	 *
+	 * @param int $post_id Post being trashed or deleted.
+	 */
+	public static function on_hub_page_removed( int $post_id ): void {
+		$stored_id = (int) get_option( 'wb_gam_hub_page_id', 0 );
+		if ( $stored_id > 0 && $stored_id === $post_id ) {
+			delete_option( 'wb_gam_hub_page_id' );
 		}
 	}
 

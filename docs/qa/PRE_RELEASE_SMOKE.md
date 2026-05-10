@@ -28,7 +28,11 @@
 - [ ] All 22 custom DB tables created: `wp db tables --all-tables | grep -c '^wp_wb_gam_'` returns 22
 - [ ] `wp option get wb_gam_db_version` equals `DbUpgrader::TARGET`
 - [ ] First REST request after activation returns 200 — no manual permalink flush needed: `curl -fsS http://wb-gamification.local/wp-json/wb-gamification/v1/openapi.json` (regression guard against `D.activation-rewrite`)
+- [ ] After activation, loading any `/wp-admin/` URL auto-redirects to `?page=wb-gamification-setup` (option `wb_gam_pending_setup_redirect` armed by activation hook, consumed on first admin load — survives any activation-to-admin gap, no 30s ceiling)
 - [ ] Setup wizard renders with 5 starter template cards; selecting one persists `wb_gam_template` + sets `wb_gam_wizard_complete`
+- [ ] "Skip & configure manually" exits without writing any email/privacy toggles (engine defaults stay in force)
+- [ ] After completion, the wizard URL still renders (re-runnable) with the current template highlighted "Current" + a "you've already completed setup" notice
+- [ ] Admin notice "Welcome — run setup wizard" appears on plugin admin pages until completion, never after, never on non-plugin pages
 - [ ] Hub page exists: `wp option get wb_gam_hub_page_id` returns a numeric page ID
 - [ ] Deactivate → reactivate → no duplicate tables, no re-run migrations, schedule count for `wb_gam_*` cron events stable
 

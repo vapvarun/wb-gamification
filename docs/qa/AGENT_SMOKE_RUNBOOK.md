@@ -155,9 +155,10 @@ For C / E steps without a journey pointer, walk the contract from scratch — ex
 **What to verify:** all 22 expected custom tables (per manifest.json) exist and the stored db-version option matches `DbUpgrader::TARGET`.
 **Acceptance:** `wp wb-gamification doctor` reports schema OK; `SHOW TABLES LIKE 'wp_wb_gam_%'` returns 22 rows.
 
-### A3 — Setup wizard renders
-**What to verify:** activating fires the redirect to **Gamification Setup** wizard; the wizard's 5 starter template cards render; selecting one persists `wb_gam_template` option and exits the wizard cleanly.
-**Acceptance:** wizard URL returns 200, 5 cards in DOM, post-select redirect lands on overview, `wb_gam_wizard_complete` option = `true`.
+### A3 — Setup wizard renders + auto-redirects
+**What to verify:** the activation hook arms a persistent redirect signal (option `wb_gam_pending_setup_redirect`); the next admin page load consumes it and lands the admin on **Gamification Setup**; the wizard renders 5 starter template cards; selecting one persists `wb_gam_template` and exits to the overview with `wb_gam_wizard_complete = true`. The wizard URL stays reachable after completion (admins can re-run with a different template).
+**Why it matters:** broken first-run = customer leaves before configuring anything; broken re-run = admins can't switch templates without WP-CLI.
+**Acceptance:** after `deactivate → activate → load any /wp-admin/* URL`, user lands on `?page=wb-gamification-setup` with 5 cards in DOM. `wb_gam_pending_setup_redirect` is deleted post-redirect. After picking a template, `wb_gam_template` matches choice and `wb_gam_wizard_complete = true`. Re-visiting the wizard URL after completion still renders, with a "you've already completed setup" notice and a "Re-apply this template" button on the current card. The "welcome — run setup" admin notice appears on plugin admin pages until completion, never after.
 
 ---
 
@@ -310,6 +311,9 @@ Each row repros a past bug that caused customer pain. These rows stay specific o
 | D.public-allowlist-drift | A new admin route shipped without a `permission_callback`, accidentally going public | All routes outside the documented allowlist reject anonymous (covered by the security journey) |
 | D.action-scheduler-orphan | Deactivation didn't unregister cron events; reactivation duplicated them | After deactivate-then-activate, `wp cron event list \| grep -c wb_gam_` matches the documented schedule count exactly |
 | D.granular-cap-merge | An update overwrote the administrator's `capabilities` array instead of merging, dropping unrelated caps | After upgrade, `get_role("administrator")->capabilities` contains every pre-existing cap PLUS the eight `wb_gam_*` caps |
+| D.wizard-redirect-30s-too-short | Activation set a 30s `wb_gam_do_redirect` transient; any WP-CLI activate followed by minutes-later browser navigation silently dropped the redirect — admins never saw the wizard | After `wp plugin deactivate wb-gamification && wp plugin activate wb-gamification`, wait 5 minutes (or any duration > 30s), then load `/wp-admin/`. Expect HTTP 302 to `?page=wb-gamification-setup`. Verify `wb_gam_pending_setup_redirect` option is set immediately after activation and deleted after the redirect fires. The legacy `wb_gam_do_redirect` transient must NOT exist. |
+| D.wizard-skip-applies-toggles | Old wizard's "Skip & configure manually" button still wrote the email + privacy toggle options, surprising admins who expected skip to mean "leave defaults alone" | Click Skip with all toggles unchecked; verify `wb_gam_email_level_up`, `wb_gam_email_badge_earned`, `wb_gam_email_challenge_completed`, `wb_gam_profile_public_enabled` options remain unset (engine ship-defaults stay in force) |
+| D.wizard-rerun-blocked | Once `wb_gam_wizard_complete` was true, the wizard submenu was never registered, so visiting `?page=wb-gamification-setup` 404'd — no way to switch templates without a WP-CLI option-delete dance | After completing the wizard, visit `/wp-admin/admin.php?page=wb-gamification-setup`. Page renders with the "you've already completed setup" notice; current template is highlighted with a "Current" badge; submitting overwrites `wb_gam_template` to the new choice. |
 
 Every customer-visible fix ships a matching D row in the same PR. After 2 clean releases of a D row, promote it into the main C/E flow.
 

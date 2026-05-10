@@ -61,6 +61,7 @@ $known_options = array(
 	'wb_gam_rank_automation_rules',
 	'wb_gam_template',
 	'wb_gam_wizard_complete',
+	'wb_gam_pending_setup_redirect',
 	'wb_gam_feature_point_types_v1',
 	'wb_gam_feature_redemption_point_type_v1',
 	'wb_gam_feature_point_type_conversions_v1',
@@ -95,7 +96,8 @@ foreach ( $wildcard_prefixes as $like_pattern ) {
 // -------------------------------------------------------------------------
 // 3. Delete transients.
 // -------------------------------------------------------------------------
-delete_transient( 'wb_gam_do_redirect' );
+// Note: wb_gam_do_redirect transient retired in 1.0.0 — wizard redirect
+// now driven by the persistent wb_gam_pending_setup_redirect option above.
 
 // Wildcard transients: wb_gam_site_first_*.
 $wpdb->query(

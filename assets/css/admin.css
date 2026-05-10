@@ -1504,3 +1504,30 @@
 	-webkit-font-smoothing: antialiased;
 	-moz-osx-font-smoothing: grayscale;
 }
+
+/* ─── Welcome notice + 3rd-party-notice filter ────────────────────────────────
+ * Used by SetupWizard::maybe_show_welcome_notice and by
+ * WB_Gamification::suppress_third_party_notices. Keeps PHP free of inline
+ * style attributes (per coding-rule 3 + admin-ux-rulebook rule 6.14).
+ * ────────────────────────────────────────────────────────────────────────── */
+
+/* Welcome-banner CTA spacing (RTL-aware). */
+.wb-gam-notice .wb-gam-notice__cta {
+	margin-inline-start: 8px;
+}
+
+/* 3rd-party-notice suppression on plugin admin pages.
+ * Keeps: our own (.wb-gam-notice), critical core (.update-nag, .error,
+ * .update-message). Hides: marketing notices and stale "Settings updated"
+ * banners from unrelated plugins on plugin admin pages.
+ *
+ * Scoped to body classes WP emits for our pages — `toplevel_page_wb-gamification`
+ * and any `*_page_wb-gamification*` / `*_page_wb-gam-*` submenu screen id. */
+body.toplevel_page_wb-gamification #wpbody-content > .notice:not(.wb-gam-notice):not(.update-nag):not(.error):not(.update-message),
+body.toplevel_page_wb-gamification #wpbody-content > .updated:not(.wb-gam-notice),
+body[class*="_page_wb-gamification"] #wpbody-content > .notice:not(.wb-gam-notice):not(.update-nag):not(.error):not(.update-message),
+body[class*="_page_wb-gamification"] #wpbody-content > .updated:not(.wb-gam-notice),
+body[class*="_page_wb-gam-"] #wpbody-content > .notice:not(.wb-gam-notice):not(.update-nag):not(.error):not(.update-message),
+body[class*="_page_wb-gam-"] #wpbody-content > .updated:not(.wb-gam-notice) {
+	display: none !important;
+}
