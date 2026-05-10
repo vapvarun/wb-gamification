@@ -137,22 +137,33 @@ final class NotificationBridge {
 	/**
 	 * Queue a level-up notification for the user.
 	 *
-	 * LevelEngine fires: do_action( 'wb_gam_level_changed', $user_id, $old_level_id, $new_level_id )
+	 * LevelEngine fires: do_action( 'wb_gam_level_changed', $user_id, $new_level, $old_level )
 	 *
-	 * @param int $user_id      User who levelled up.
-	 * @param int $old_level_id Previous level ID (unused, retained for hook signature).
-	 * @param int $new_level_id New level ID.
+	 * Pre-1.0.0 LevelEngine also fired a second time with int IDs; that
+	 * legacy fire was removed. This listener was migrated to the array
+	 * signature at the same time.
+	 *
+	 * @param int        $user_id   User who levelled up.
+	 * @param array|null $new_level New level data (id, name, min_points, icon_url) or null.
+	 * @param array|null $old_level Previous level data or null.
 	 */
-	public static function on_level_changed( int $user_id, int $old_level_id, int $new_level_id ): void {
-		global $wpdb;
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery
-		$new_level = $wpdb->get_row(
-			$wpdb->prepare(
-				"SELECT name, icon_url FROM {$wpdb->prefix}wb_gam_levels WHERE id = %d",
-				$new_level_id
-			),
-			ARRAY_A
-		) ?: array();
+	public static function on_level_changed( int $user_id, ?array $new_level = null, ?array $old_level = null ): void {
+		// Resilient to listeners receiving null — fall back to a fresh read.
+		if ( null === $new_level || empty( $new_level['id'] ) ) {
+			global $wpdb;
+			$current_id = (int) get_user_meta( $user_id, 'wb_gam_level_id', true );
+			if ( $current_id <= 0 ) {
+				return;
+			}
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			$new_level = $wpdb->get_row(
+				$wpdb->prepare(
+					"SELECT name, icon_url FROM {$wpdb->prefix}wb_gam_levels WHERE id = %d",
+					$current_id
+				),
+				ARRAY_A
+			) ?: array();
+		}
 
 		self::push(
 			$user_id,

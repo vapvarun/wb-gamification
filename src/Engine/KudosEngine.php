@@ -91,6 +91,22 @@ final class KudosEngine {
 			);
 		}
 
+		// Race-condition guard — atomic distributed lock via the object cache.
+		// Two parallel POST /kudos with the same giver+receiver both pass the
+		// has_recent_kudos_to_receiver check before either writes a row, so
+		// both INSERTs succeed and bypass the cooldown. wp_cache_add() is
+		// atomic across Redis/Memcached and returns false if the key exists.
+		// Hold the lock for the cooldown window so concurrent attempts within
+		// it are rejected at the lock layer, not the DB layer.
+		$lock_key = sprintf( 'kudos_lock_%d_%d', $giver_id, $receiver_id );
+		$lock_ttl = max( 60, $receiver_cooldown ); // Floor 60s for safety.
+		if ( ! wp_cache_add( $lock_key, time(), 'wb_gamification', $lock_ttl ) ) {
+			return new WP_Error(
+				'wb_gam_kudos_cooldown',
+				__( 'You recently gave kudos to this member. Try again later.', 'wb-gamification' )
+			);
+		}
+
 		/**
 		 * Filter whether kudos should be allowed.
 		 *

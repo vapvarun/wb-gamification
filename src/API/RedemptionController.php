@@ -296,7 +296,19 @@ class RedemptionController extends WP_REST_Controller {
 		$result = RedemptionEngine::redeem( get_current_user_id(), (int) $request['item_id'] );
 
 		if ( ! $result['success'] ) {
-			return new WP_Error( 'redemption_failed', $result['error'], array( 'status' => 400 ) );
+			// Map known engine reasons to specific error codes per the agent
+			// runbook contract. Unknown reasons keep the generic
+			// `redemption_failed` so future engine errors don't 500.
+			$code   = 'redemption_failed';
+			$reason = (string) ( $result['reason'] ?? '' );
+			if ( 'insufficient' === $reason || str_contains( strtolower( (string) ( $result['error'] ?? '' ) ), 'insufficient' ) ) {
+				$code = 'wb_gam_redemption_insufficient';
+			} elseif ( 'out_of_stock' === $reason ) {
+				$code = 'wb_gam_redemption_out_of_stock';
+			} elseif ( 'inactive' === $reason ) {
+				$code = 'wb_gam_redemption_inactive';
+			}
+			return new WP_Error( $code, $result['error'], array( 'status' => 400 ) );
 		}
 
 		return new WP_REST_Response( $result, 201 );
