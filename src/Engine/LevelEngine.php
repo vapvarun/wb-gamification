@@ -100,15 +100,6 @@ final class LevelEngine {
 		// Only fire the level-changed hook when upgrading from a previous level
 		// (not on the initial Newcomer assignment).
 		if ( $current_level_id > 0 ) {
-			/**
-			 * Fires when a member moves to a new level.
-			 *
-			 * @param int $user_id       User who levelled up.
-			 * @param int $old_level_id  Previous level ID.
-			 * @param int $new_level_id  New level ID.
-			 */
-			do_action( 'wb_gam_level_changed', $user_id, $current_level_id, $new_level['id'] );
-
 			// Resolve old level data from all levels by ID.
 			$old_level_data = null;
 			foreach ( self::get_all_levels() as $lvl ) {
@@ -120,6 +111,16 @@ final class LevelEngine {
 
 			/**
 			 * Fires after a user's level changes.
+			 *
+			 * Pre-1.0.0 this hook also fired immediately above with an
+			 * int-only signature `(user_id, old_level_id, new_level_id)`.
+			 * That broke listeners typed for the array signature
+			 * (WebhookDispatcher::on_level_changed, TransactionalEmailEngine,
+			 * NotificationBridge) — every level-up triggered a
+			 * `TypeError: Argument #2 must be of type ?array, int given`
+			 * fatal that aborted the award request mid-pipeline. The
+			 * legacy fire was removed in 1.0.0; all listeners now receive
+			 * the typed array signature reliably.
 			 *
 			 * @since 1.0.0
 			 *

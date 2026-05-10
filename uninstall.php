@@ -62,6 +62,7 @@ $known_options = array(
 	'wb_gam_template',
 	'wb_gam_wizard_complete',
 	'wb_gam_pending_setup_redirect',
+	'wb_gam_leaderboard_invalidated_at',
 	'wb_gam_feature_point_types_v1',
 	'wb_gam_feature_redemption_point_type_v1',
 	'wb_gam_feature_point_type_conversions_v1',

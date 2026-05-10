@@ -123,7 +123,21 @@ final class LeaderboardEngine {
 	 * Settings rescue button) can call it explicitly.
 	 */
 	public static function invalidate_cache(): void {
+		// Tier 1 — bump the object-cache last-changed stamp. Every cache key
+		// in get_leaderboard() / get_user_rank() embeds this stamp, so all
+		// prior keys become unreachable in one operation.
 		wp_cache_set_last_changed( 'wb_gamification' );
+
+		// Tier 2 — record the invalidation time. read_from_snapshot() (which
+		// reads the wb_gam_leaderboard_cache SQL TABLE — separate cache layer
+		// with its own 10-minute freshness check) compares the snapshot's
+		// MAX(updated_at) against this option and bails if the option is
+		// newer. Without this, the snapshot serves stale data for up to
+		// 10 minutes after a points award even with the object cache busted.
+		// The cron rebuild every 5 minutes (wb_gam_leaderboard_snapshot)
+		// closes the gap; in the worst case readers fall through to the
+		// live SUM query, which is correct (just slower).
+		update_option( 'wb_gam_leaderboard_invalidated_at', time(), false );
 
 		/**
 		 * Fires after the leaderboard cache is invalidated.
@@ -462,11 +476,27 @@ final class LeaderboardEngine {
 		$cache_table = $wpdb->prefix . 'wb_gam_leaderboard_cache';
 		$opt_out_ids = self::get_opted_out_ids();
 
-		// Check snapshot freshness — must be less than 10 minutes old.
+		// Check snapshot freshness — must be less than 10 minutes old AND
+		// not older than the most recent cache invalidation. The latter
+		// covers the gap between a points award (which calls
+		// invalidate_cache) and the next 5-minute snapshot cron — without
+		// this check, the snapshot would still serve stale data for up
+		// to 10 minutes after every award.
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching
-		$snapshot_age = $wpdb->get_var( "SELECT TIMESTAMPDIFF(MINUTE, MAX(updated_at), NOW()) FROM {$cache_table}" );
+		$snapshot_built_at = $wpdb->get_var( "SELECT UNIX_TIMESTAMP(MAX(updated_at)) FROM {$cache_table}" );
+		if ( null === $snapshot_built_at ) {
+			return null;
+		}
+		$snapshot_built_at = (int) $snapshot_built_at;
 
-		if ( null === $snapshot_age || (int) $snapshot_age >= 10 ) {
+		if ( ( time() - $snapshot_built_at ) >= 600 ) { // 10 min hard cap
+			return null;
+		}
+
+		$invalidated_at = (int) get_option( 'wb_gam_leaderboard_invalidated_at', 0 );
+		if ( $invalidated_at > $snapshot_built_at ) {
+			// Snapshot is older than the most recent invalidation — fall
+			// through to the live query path, which is always correct.
 			return null;
 		}
 
