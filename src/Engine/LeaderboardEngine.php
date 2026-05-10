@@ -53,6 +53,13 @@ final class LeaderboardEngine {
 			wp_schedule_event( time(), 'five_minutes', 'wb_gam_leaderboard_snapshot' );
 		}
 
+		// Cache invalidation — bump the wb_gamification group's last-changed
+		// stamp on every points-awarded event so leaderboard cache keys (which
+		// embed the stamp) auto-orphan instead of serving stale data for up
+		// to 120 seconds. Per skill Part 2.7 (incrementor pattern).
+		add_action( 'wb_gam_points_awarded', array( __CLASS__, 'invalidate_cache' ), 5, 0 );
+		add_action( 'wb_gam_points_awarded_batch', array( __CLASS__, 'invalidate_cache' ), 5, 0 );
+
 		// Hook the snapshot writer to the cron event.
 		add_action( 'wb_gam_leaderboard_snapshot', array( __CLASS__, 'write_snapshot' ) );
 	}
@@ -100,6 +107,51 @@ final class LeaderboardEngine {
 	}
 
 	/**
+	 * Invalidate every leaderboard cache key in one call.
+	 *
+	 * Bumps the wb_gamification cache group's last-changed stamp. Every
+	 * cache key in get_leaderboard() and get_user_rank() embeds that
+	 * stamp, so a bump here orphans every key reachable via either path
+	 * — Redis / Memcached evict via LRU, in-memory cache resets next
+	 * request. No manual key tracking needed.
+	 *
+	 * Hooked to `wb_gam_points_awarded` and `wb_gam_points_awarded_batch`
+	 * in init() at priority 5 so it runs before badge / challenge / streak
+	 * listeners that might re-read the leaderboard.
+	 *
+	 * Also exposed publicly so admin tools (the recompute CLI flag,
+	 * Settings rescue button) can call it explicitly.
+	 */
+	public static function invalidate_cache(): void {
+		// Tier 1 — bump the object-cache last-changed stamp. Every cache key
+		// in get_leaderboard() / get_user_rank() embeds this stamp, so all
+		// prior keys become unreachable in one operation.
+		wp_cache_set_last_changed( 'wb_gamification' );
+
+		// Tier 2 — record the invalidation time. read_from_snapshot() (which
+		// reads the wb_gam_leaderboard_cache SQL TABLE — separate cache layer
+		// with its own 10-minute freshness check) compares the snapshot's
+		// MAX(updated_at) against this option and bails if the option is
+		// newer. Without this, the snapshot serves stale data for up to
+		// 10 minutes after a points award even with the object cache busted.
+		// The cron rebuild every 5 minutes (wb_gam_leaderboard_snapshot)
+		// closes the gap; in the worst case readers fall through to the
+		// live SUM query, which is correct (just slower).
+		update_option( 'wb_gam_leaderboard_invalidated_at', time(), false );
+
+		/**
+		 * Fires after the leaderboard cache is invalidated.
+		 *
+		 * Lets other modules clear their own derived caches that depend on
+		 * leaderboard freshness (top-N member tiles, monthly digest emails,
+		 * etc.) without coupling them to the points-awarded hook directly.
+		 *
+		 * @since 1.0.0
+		 */
+		do_action( 'wb_gam_leaderboard_cache_invalidated' );
+	}
+
+	/**
 	 * Get the top-N members for a period, respecting opt-outs.
 	 *
 	 * @param string $period     Period: 'all' | 'month' | 'week' | 'day'.
@@ -124,15 +176,20 @@ final class LeaderboardEngine {
 		$resolved_type = ( new \WBGam\Services\PointTypeService() )->resolve( $point_type ?: null );
 
 		// ── Object cache check ────────────────────────────────────────────────
-		$cache_key = sprintf(
-			'wb_gam_lb_%s_%d_%s_%d_%s',
+		// Cache key embeds the wb_gamification group's last-changed stamp so
+		// invalidate_cache() (called on wb_gam_points_awarded) auto-orphans
+		// every key when any award fires — no manual delete walk needed.
+		$last_changed = wp_cache_get_last_changed( 'wb_gamification' );
+		$cache_key    = sprintf(
+			'wb_gam_lb_%s_%d_%s_%d_%s_%s',
 			$period,
 			$limit,
 			$scope_type ? $scope_type : 'global',
 			$scope_id,
-			$resolved_type
+			$resolved_type,
+			$last_changed
 		);
-		$cached    = wp_cache_get( $cache_key, 'wb_gamification' );
+		$cached       = wp_cache_get( $cache_key, 'wb_gamification' );
 		if ( false !== $cached ) {
 			return (array) $cached;
 		}
@@ -254,13 +311,17 @@ final class LeaderboardEngine {
 		$resolved_type = ( new \WBGam\Services\PointTypeService() )->resolve( $point_type ?: null );
 
 		// ── Object cache check ────────────────────────────────────────────────
-		$cache_key = sprintf(
-			'wb_gam_rank_%d_%s_%s_%d_%s',
+		// Cache key embeds the wb_gamification group's last-changed stamp —
+		// see get_leaderboard() for the rationale.
+		$last_changed = wp_cache_get_last_changed( 'wb_gamification' );
+		$cache_key    = sprintf(
+			'wb_gam_rank_%d_%s_%s_%d_%s_%s',
 			$user_id,
 			$period,
 			$scope_type ? $scope_type : 'global',
 			$scope_id,
-			$resolved_type
+			$resolved_type,
+			$last_changed
 		);
 		$cached    = wp_cache_get( $cache_key, 'wb_gamification' );
 		if ( false !== $cached ) {
@@ -415,11 +476,27 @@ final class LeaderboardEngine {
 		$cache_table = $wpdb->prefix . 'wb_gam_leaderboard_cache';
 		$opt_out_ids = self::get_opted_out_ids();
 
-		// Check snapshot freshness — must be less than 10 minutes old.
+		// Check snapshot freshness — must be less than 10 minutes old AND
+		// not older than the most recent cache invalidation. The latter
+		// covers the gap between a points award (which calls
+		// invalidate_cache) and the next 5-minute snapshot cron — without
+		// this check, the snapshot would still serve stale data for up
+		// to 10 minutes after every award.
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching
-		$snapshot_age = $wpdb->get_var( "SELECT TIMESTAMPDIFF(MINUTE, MAX(updated_at), NOW()) FROM {$cache_table}" );
+		$snapshot_built_at = $wpdb->get_var( "SELECT UNIX_TIMESTAMP(MAX(updated_at)) FROM {$cache_table}" );
+		if ( null === $snapshot_built_at ) {
+			return null;
+		}
+		$snapshot_built_at = (int) $snapshot_built_at;
 
-		if ( null === $snapshot_age || (int) $snapshot_age >= 10 ) {
+		if ( ( time() - $snapshot_built_at ) >= 600 ) { // 10 min hard cap
+			return null;
+		}
+
+		$invalidated_at = (int) get_option( 'wb_gam_leaderboard_invalidated_at', 0 );
+		if ( $invalidated_at > $snapshot_built_at ) {
+			// Snapshot is older than the most recent invalidation — fall
+			// through to the live query path, which is always correct.
 			return null;
 		}
 

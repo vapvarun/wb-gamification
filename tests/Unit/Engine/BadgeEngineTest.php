@@ -74,7 +74,7 @@ class BadgeEngineTest extends TestCase {
 	//   1. has_badge → already-held → no-op
 	//   2. closes_at cutoff in the past → expired-promo → no-op
 	//   3. max_earners cap reached → no-op
-	//   4. wb_gamification_should_award_badge filter returns false → no-op
+	//   4. wb_gam_should_award_badge filter returns false → no-op
 	// All four MUST short-circuit before $wpdb->insert is called.
 
 	private function setup_award_environment( array $cache_overrides = array() ): void {
@@ -176,7 +176,7 @@ class BadgeEngineTest extends TestCase {
 
 		Functions\when( 'apply_filters' )->alias(
 			static function ( $hook, $value, ...$args ) {
-				return 'wb_gamification_should_award_badge' === $hook ? false : $value;
+				return 'wb_gam_should_award_badge' === $hook ? false : $value;
 			}
 		);
 

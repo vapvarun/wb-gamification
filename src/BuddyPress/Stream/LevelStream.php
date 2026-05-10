@@ -2,8 +2,12 @@
 /**
  * WB Gamification — BuddyPress level_changed stream poster.
  *
- * LevelEngine fires:
- *   do_action( 'wb_gam_level_changed', $user_id, $old_level_id, $new_level_id )
+ * LevelEngine fires the canonical 1.0.0 signature:
+ *   do_action( 'wb_gam_level_changed', $user_id, $new_level, $old_level )
+ *
+ * Where $new_level / $old_level are arrays (id, name, min_points, icon_url)
+ * or null. Pre-1.0.0 the hook fired a second time with int IDs; that
+ * legacy fire was removed (see LevelEngine docblock).
  *
  * @package WB_Gamification
  * @since   1.2.1
@@ -34,16 +38,25 @@ final class LevelStream {
 	/**
 	 * Post a level_changed activity for the user.
 	 *
-	 * @param int $user_id      User who levelled up.
-	 * @param int $old_level_id Previous level ID (kept for hook signature).
-	 * @param int $new_level_id New level ID.
+	 * @param int        $user_id   User who levelled up.
+	 * @param array|null $new_level New level data (id, name, min_points, icon_url) or null.
+	 * @param array|null $old_level Previous level data or null.
 	 */
-	public static function post( int $user_id, int $old_level_id, int $new_level_id ): void {
+	public static function post( int $user_id, ?array $new_level = null, ?array $old_level = null ): void {
 		if ( ! self::is_enabled() || ! function_exists( 'bp_activity_add' ) ) {
 			return;
 		}
 
-		$level      = ActivityCard::lookup_level( $new_level_id );
+		$new_level_id = is_array( $new_level ) ? (int) ( $new_level['id'] ?? 0 ) : 0;
+		if ( $new_level_id <= 0 ) {
+			return;
+		}
+
+		// Prefer the array payload — fall back to ActivityCard lookup only if
+		// the caller passed a partial array (resilience against hook re-fires).
+		$level      = is_array( $new_level ) && isset( $new_level['name'] )
+			? $new_level
+			: ActivityCard::lookup_level( $new_level_id );
 		$level_name = $level['name'] ?? get_user_meta( $user_id, 'wb_gam_level_name', true );
 		if ( ! $level_name ) {
 			$level_name = __( 'a new level', 'wb-gamification' );

@@ -83,6 +83,7 @@ final class SubmissionsPage {
 					</p>
 				</div>
 			</header>
+			<hr class="wp-header-end" />
 
 			<details class="wbgam-help-panel">
 				<summary class="wbgam-help-panel__summary">
@@ -117,7 +118,7 @@ final class SubmissionsPage {
 				<div class="wbgam-card-body wbgam-card-body--flush">
 					<?php if ( empty( $pending ) ) : ?>
 						<div class="wbgam-empty">
-							<div class="wbgam-empty-icon"><span class="icon-check-circle wbgam-icon-xl"></span></div>
+							<div class="wbgam-empty-icon"><span class="icon-circle-check wbgam-icon-xl"></span></div>
 							<h3><?php esc_html_e( 'No pending submissions.', 'wb-gamification' ); ?></h3>
 							<p>
 								<?php esc_html_e( 'When members submit achievements that require approval, they\'ll appear here.', 'wb-gamification' ); ?>

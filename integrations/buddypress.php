@@ -164,7 +164,7 @@ return [
 			'user_callback'       => fn( int $poll_id, int $user_id ) => $user_id,
 			'default_points'      => 10,
 			'category'            => 'buddypress',
-			'icon'                => 'icon-bar-chart-3',
+			'icon'                => 'icon-chart-bar',
 			'repeatable'          => true,
 			'requires_buddypress' => true,
 		],

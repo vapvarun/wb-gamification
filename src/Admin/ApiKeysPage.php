@@ -118,6 +118,7 @@ final class ApiKeysPage {
 					<p class="wbgam-page-header__desc"><?php esc_html_e( 'Generate API keys for remote sites to connect to this gamification center. Keys authenticate via the X-WB-Gam-Key header.', 'wb-gamification' ); ?></p>
 				</div>
 			</header>
+			<hr class="wp-header-end" />
 
 			<details class="wbgam-help-panel">
 				<summary class="wbgam-help-panel__summary">
@@ -158,7 +159,7 @@ final class ApiKeysPage {
 			</details>
 
 			<div class="wbgam-banner wbgam-banner--success wbgam-stack-block wbgam-is-hidden" data-wb-gam-api-keys-fresh role="status" aria-live="polite">
-				<span class="wbgam-banner__icon icon-check-circle" aria-hidden="true"></span>
+				<span class="wbgam-banner__icon icon-circle-check" aria-hidden="true"></span>
 				<div class="wbgam-banner__body">
 					<strong class="wbgam-banner__title"><?php esc_html_e( 'New API key generated', 'wb-gamification' ); ?></strong>
 					<p class="wbgam-banner__desc"><?php esc_html_e( 'Copy it now — it will not be shown again.', 'wb-gamification' ); ?></p>

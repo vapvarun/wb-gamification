@@ -68,11 +68,20 @@ final class RankAutomation {
 	/**
 	 * Called when a member advances to a new level.
 	 *
-	 * @param int $user_id      User who levelled up.
-	 * @param int $old_level_id Previous level ID.
-	 * @param int $new_level_id New level ID.
+	 * Receives the canonical 1.0.0 wb_gam_level_changed signature: array
+	 * level data, not int IDs. Use `$new_level['id']` to match against
+	 * rule `trigger_level_id`.
+	 *
+	 * @param int        $user_id   User who levelled up.
+	 * @param array|null $new_level New level data (id, name, min_points) or null.
+	 * @param array|null $old_level Previous level data or null.
 	 */
-	public static function on_level_changed( int $user_id, int $old_level_id, int $new_level_id ): void {
+	public static function on_level_changed( int $user_id, ?array $new_level = null, ?array $old_level = null ): void {
+		$new_level_id = is_array( $new_level ) ? (int) ( $new_level['id'] ?? 0 ) : 0;
+		if ( $new_level_id <= 0 ) {
+			return;
+		}
+
 		$rules = self::get_rules();
 
 		foreach ( $rules as $rule ) {

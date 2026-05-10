@@ -8,7 +8,7 @@ Stable tag: 1.0.0
 License: GPL-2.0+
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Complete gamification engine for WordPress and BuddyPress. Points, badges, levels, leaderboards, challenges, streaks, and kudos — zero config, works out of the box.
+Complete gamification for WordPress + BuddyPress. Points, badges, levels, leaderboards, challenges, streaks, kudos — zero config, works instantly.
 
 == Description ==
 
@@ -142,8 +142,8 @@ All data is preserved in the database. Reactivating the plugin restores everythi
 * Individual challenges with admin manager, bonus points, and date ranges.
 * Daily streak tracking with grace period, 7 milestones, and bonus rewards.
 * Peer kudos with daily limits, receiver/giver points, and feed display.
-* 11 Gutenberg blocks and 11 shortcodes for frontend display.
-* REST API with 38 endpoints across 16 controllers.
+* 17 Gutenberg blocks and 15 shortcodes for frontend display.
+* REST API with 65 endpoints across 24 controllers.
 * API key authentication for cross-site gamification center mode.
 * WP Abilities API registration (12 abilities) for AI agent discovery.
 * 9 first-party integration manifests (BuddyPress, bbPress, WooCommerce, LearnDash, LifterLMS, MemberPress, GiveWP, The Events Calendar).
@@ -153,7 +153,7 @@ All data is preserved in the database. Reactivating the plugin restores everythi
 * Toast notifications via Interactivity API and REST polling.
 * WP-CLI commands: points, member, actions, logs, export, doctor.
 * GDPR-compliant data export and erasure.
-* 50-page documentation at docs/website/.
+* 60+ pages of documentation at docs/website/.
 
 == Screenshots ==
 

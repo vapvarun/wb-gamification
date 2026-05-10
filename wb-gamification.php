@@ -115,7 +115,12 @@ final class WB_Gamification {
 	}
 
 	private function init_hooks(): void {
-		add_action( 'init', array( $this, 'load_textdomain' ) );
+		// load_plugin_textdomain() is no longer needed — WordPress 4.6+ auto-
+		// loads translations for plugins hosted on WordPress.org based on the
+		// Text Domain header. For Wbcom-distributed plugins the .pot ships in
+		// languages/ and i18n falls back to the file-system loader.
+		// (Leaving load_textdomain registered triggers PluginCheck's
+		// DiscouragedFunctions sniff with no benefit.)
 		add_action( 'init', array( $this, 'handle_unsubscribe' ) );
 		add_action( 'rest_api_init', array( $this, 'register_routes' ) );
 		add_action( 'init', array( $this, 'register_blocks' ) );
@@ -149,6 +154,11 @@ final class WB_Gamification {
 		// BadgeEngine@10, ChallengeEngine@15; before NotificationBridge@99).
 		add_action( 'wb_gam_points_awarded', array( AsyncEvaluator::class, 'enqueue' ), 50, 3 );
 
+		// Clear hub-page option when the hub page is trashed/deleted so a stale
+		// pointer doesn't suppress recreation on the next reactivation.
+		add_action( 'wp_trash_post', array( Installer::class, 'on_hub_page_removed' ) );
+		add_action( 'before_delete_post', array( Installer::class, 'on_hub_page_removed' ) );
+
 		// BuddyPress integrations — must boot on bp_loaded, not plugins_loaded.
 		add_action( 'bp_loaded', array( ProfileIntegration::class, 'init' ) );
 		add_action( 'bp_loaded', array( DirectoryIntegration::class, 'init' ) );
@@ -156,6 +166,10 @@ final class WB_Gamification {
 
 		if ( is_admin() ) {
 			add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_assets' ) );
+			// 3rd-party-notice suppression is body-class-scoped CSS in
+			// assets/css/admin.css — no PHP needed, no inline <style>, and
+			// the rule is active on every plugin admin page that loads
+			// admin.css (which `enqueue_admin_assets` always does).
 			add_action( 'plugins_loaded', array( SettingsPage::class, 'init' ), 10 );
 			add_action( 'plugins_loaded', array( SetupWizard::class, 'init' ), 10 );
 			add_action( 'plugins_loaded', array( AnalyticsDashboard::class, 'init' ), 10 );
@@ -202,9 +216,8 @@ final class WB_Gamification {
 		exit;
 	}
 
-	public function load_textdomain(): void {
-		load_plugin_textdomain( 'wb-gamification', false, WB_GAM_PATH . 'languages' );
-	}
+	// load_textdomain() removed — superseded by WP 4.6+ auto-loader. See
+	// register_hooks() comment above for details.
 
 	public function register_routes(): void {
 		( new MembersController() )->register_routes();
@@ -357,11 +370,6 @@ final class WB_Gamification {
 			return;
 		}
 
-		// Suppress third-party admin notices on our pages for clean UX.
-		remove_all_actions( 'admin_notices' );
-		remove_all_actions( 'all_admin_notices' );
-		// Re-add only our own notices.
-		add_action( 'admin_notices', array( $this, 'render_own_notices' ) );
 		// Lucide icon font — register inline if not already (the frontend
 		// register_styles only fires on wp_enqueue_scripts which doesn't
 		// run for admin pages). Mandatory dependency for every admin
@@ -390,13 +398,6 @@ final class WB_Gamification {
 		);
 	}
 
-	/**
-	 * Render only our own admin notices (suppresses third-party noise).
-	 */
-	public function render_own_notices(): void {
-		// Only show WB Gamification notices (class="wb-gam-notice").
-		// All third-party notices are suppressed via remove_all_actions + CSS.
-	}
 }
 
 /**
@@ -407,7 +408,14 @@ register_activation_hook(
 	function () {
 		Installer::install();
 		WBGam\Engine\Capabilities::register();
-		set_transient( 'wb_gam_do_redirect', true, 30 );
+		// Wizard redirect — only on first install, never on re-activation post-setup.
+		// The option persists until SetupWizard::maybe_redirect() consumes it on
+		// the first subsequent admin page load, regardless of activation-to-admin
+		// gap. Pre-1.0.0 used a 30s transient that silently dropped the redirect
+		// any time the gap exceeded 30s (typical with WP-CLI activation flows).
+		if ( ! get_option( 'wb_gam_wizard_complete' ) ) {
+			update_option( 'wb_gam_pending_setup_redirect', '1' );
+		}
 		LogPruner::activate();
 		LeaderboardNudge::activate();
 		LeaderboardEngine::activate();

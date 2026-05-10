@@ -20,6 +20,7 @@ class PointsEngineTest extends TestCase {
 	protected function setUp(): void {
 		parent::setUp();
 		Monkey\setUp();
+		$this->stubResolveType();
 	}
 
 	protected function tearDown(): void {
@@ -42,10 +43,14 @@ class PointsEngineTest extends TestCase {
 			)
 			->andReturn( 1 );
 
+		// bump_user_total — atomic UPSERT via prepare + query.
+		$wpdb->shouldReceive( 'prepare' )->andReturnUsing( static fn( $q ) => $q );
+		$wpdb->shouldReceive( 'query' )->andReturn( 1 );
+
 		$wpdb->prefix = 'wp_';
 
 		Functions\expect( 'current_time' )->once()->andReturn( '2026-01-01 00:00:00' );
-		Functions\expect( 'wp_cache_delete' )->once()->with( 'wb_gam_total_7', 'wb_gamification' );
+		Functions\expect( 'wp_cache_delete' )->once()->with( 'wb_gam_total_7_points', 'wb_gamification' );
 
 		$result = PointsEngine::debit( 7, 50, 'redemption' );
 
@@ -57,6 +62,9 @@ class PointsEngineTest extends TestCase {
 
 		$wpdb = $this->mockWpdb();
 		$wpdb->expects( 'insert' )->once()->andReturn( false );
+		$wpdb->shouldReceive( 'prepare' )->andReturnUsing( static fn( $q ) => $q );
+		$wpdb->shouldReceive( 'query' )->andReturn( 1 );
+		$wpdb->last_error = 'mocked error';
 		$wpdb->prefix = 'wp_';
 
 		Functions\expect( 'current_time' )->once()->andReturn( '2026-01-01 00:00:00' );
@@ -80,6 +88,10 @@ class PointsEngineTest extends TestCase {
 				\Mockery::any()
 			)
 			->andReturn( 1 );
+
+		// bump_user_total — atomic UPSERT via prepare + query.
+		$wpdb->shouldReceive( 'prepare' )->andReturnUsing( static fn( $q ) => $q );
+		$wpdb->shouldReceive( 'query' )->andReturn( 1 );
 
 		Functions\expect( 'current_time' )->once()->andReturn( '2026-01-01 00:00:00' );
 		Functions\expect( 'wp_cache_delete' )->once();
@@ -120,10 +132,22 @@ class PointsEngineTest extends TestCase {
 	// ── get_total() ──────────────────────────────────────────────────────────
 
 	public function test_get_total_returns_cached_value(): void {
-		Functions\expect( 'wp_cache_get' )
-			->once()
-			->with( 'wb_gam_total_42', 'wb_gamification' )
-			->andReturn( 500 );
+		// Cache returns the type-default lookup ('points') AND the user's total.
+		// Cache key shape: wb_gam_total_<user>_<type> (post-multi-currency rename).
+		Functions\when( 'wp_cache_get' )->alias(
+			static function ( string $key, string $group ): mixed {
+				if ( 'wb_gamification' !== $group ) {
+					return false;
+				}
+				if ( 'point_types_default' === $key ) {
+					return 'points';
+				}
+				if ( 'wb_gam_total_42_points' === $key ) {
+					return 500;
+				}
+				return false;
+			}
+		);
 
 		$total = PointsEngine::get_total( 42 );
 
@@ -136,5 +160,24 @@ class PointsEngineTest extends TestCase {
 		$wpdb         = \Mockery::mock( 'wpdb' );
 		$wpdb->prefix = 'wp_';
 		return $wpdb;
+	}
+
+	/**
+	 * Stub the resolve_type() chain so PointTypeService doesn't hit the DB.
+	 *
+	 * resolve_type(null) → PointTypeService::resolve(null) → repo->default_slug()
+	 * → wp_cache_get('point_types_default', 'wb_gamification'). When that hits,
+	 * the rest of the chain skips DB. Returning 'points' (DEFAULT_SLUG) lets
+	 * unit tests run without a real wpdb behind PointTypeRepository.
+	 */
+	private function stubResolveType(): void {
+		Functions\when( 'wp_cache_get' )->alias(
+			static function ( string $key, string $group ): mixed {
+				if ( 'wb_gamification' === $group && 'point_types_default' === $key ) {
+					return 'points';
+				}
+				return false;
+			}
+		);
 	}
 }

@@ -111,6 +111,7 @@ final class WebhooksAdminPage {
 					<p class="wbgam-page-header__desc"><?php esc_html_e( 'Outbound webhooks notify external services (Zapier, Slack, custom servers) when gamification events fire. Failed deliveries auto-retry up to 3 times with exponential backoff.', 'wb-gamification' ); ?></p>
 				</div>
 			</header>
+			<hr class="wp-header-end" />
 
 			<details class="wbgam-help-panel">
 				<summary class="wbgam-help-panel__summary">
@@ -152,7 +153,7 @@ final class WebhooksAdminPage {
 
 			<?php if ( isset( $_GET['notice'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only notice display. ?>
 				<div class="wbgam-banner wbgam-banner--success wbgam-stack-block" role="status" aria-live="polite">
-					<span class="wbgam-banner__icon icon-check-circle" aria-hidden="true"></span>
+					<span class="wbgam-banner__icon icon-circle-check" aria-hidden="true"></span>
 					<div class="wbgam-banner__body">
 						<p class="wbgam-banner__desc"><?php echo esc_html( self::notice_text( sanitize_key( wp_unslash( $_GET['notice'] ) ) ) ); ?></p>
 					</div>

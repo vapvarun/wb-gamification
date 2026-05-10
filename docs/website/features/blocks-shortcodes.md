@@ -1,6 +1,6 @@
 # Blocks and Shortcodes
 
-WB Gamification includes 11 Gutenberg blocks and 11 matching shortcodes. Every shortcode renders identically to its block counterpart — use whichever fits your page-building workflow.
+WB Gamification includes 17 Gutenberg blocks (15 with matching shortcodes; daily-bonus and submit-achievement are block-only). Every shortcode renders identically to its block counterpart — use whichever fits your page-building workflow.
 
 All shortcodes begin with `[wb_gam_` and all blocks are found in the block inserter under the **WB Gamification** category.
 

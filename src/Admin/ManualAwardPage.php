@@ -133,6 +133,7 @@ final class ManualAwardPage {
 					<p class="wbgam-page-header__desc"><?php esc_html_e( 'Manually grant or deduct points from any user. All awards go through the standard engine so hooks, badges, and streaks fire normally.', 'wb-gamification' ); ?></p>
 				</div>
 			</header>
+			<hr class="wp-header-end" />
 
 			<details class="wbgam-help-panel">
 				<summary class="wbgam-help-panel__summary">
@@ -165,7 +166,7 @@ final class ManualAwardPage {
 
 			<?php if ( isset( $notice_map[ $notice ] ) ) : ?>
 				<div class="wbgam-banner wbgam-banner--<?php echo esc_attr( $notice_map[ $notice ][0] ); ?> wbgam-stack-block" role="status" aria-live="polite">
-					<span class="wbgam-banner__icon icon-check-circle" aria-hidden="true"></span>
+					<span class="wbgam-banner__icon icon-circle-check" aria-hidden="true"></span>
 					<div class="wbgam-banner__body">
 						<p class="wbgam-banner__desc"><?php echo esc_html( $notice_map[ $notice ][1] ); ?></p>
 					</div>

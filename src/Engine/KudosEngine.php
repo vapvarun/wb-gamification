@@ -66,12 +66,44 @@ final class KudosEngine {
 		$daily_limit = (int) get_option( self::OPT_DAILY_LIMIT, self::DEFAULT_DAILY_LIMIT );
 		if ( self::get_daily_sent_count( $giver_id ) >= $daily_limit ) {
 			return new WP_Error(
-				'wb_gam_kudos_limit',
+				'wb_gam_kudos_cooldown',
 				sprintf(
 					/* translators: %d: daily kudos limit */
 					__( 'You have reached your daily kudos limit (%d).', 'wb-gamification' ),
 					$daily_limit
 				)
+			);
+		}
+
+		// Per-receiver cooldown — prevents a giver from spam-kudosing the same
+		// receiver. Default 60 minutes; site owner can override via the
+		// `wb_gam_kudos_per_receiver_cooldown_seconds` filter (return 0 to disable).
+		$receiver_cooldown = (int) apply_filters(
+			'wb_gam_kudos_per_receiver_cooldown_seconds',
+			HOUR_IN_SECONDS,
+			$giver_id,
+			$receiver_id
+		);
+		if ( $receiver_cooldown > 0 && self::has_recent_kudos_to_receiver( $giver_id, $receiver_id, $receiver_cooldown ) ) {
+			return new WP_Error(
+				'wb_gam_kudos_cooldown',
+				__( 'You recently gave kudos to this member. Try again later.', 'wb-gamification' )
+			);
+		}
+
+		// Race-condition guard — atomic distributed lock via the object cache.
+		// Two parallel POST /kudos with the same giver+receiver both pass the
+		// has_recent_kudos_to_receiver check before either writes a row, so
+		// both INSERTs succeed and bypass the cooldown. wp_cache_add() is
+		// atomic across Redis/Memcached and returns false if the key exists.
+		// Hold the lock for the cooldown window so concurrent attempts within
+		// it are rejected at the lock layer, not the DB layer.
+		$lock_key = sprintf( 'kudos_lock_%d_%d', $giver_id, $receiver_id );
+		$lock_ttl = max( 60, $receiver_cooldown ); // Floor 60s for safety.
+		if ( ! wp_cache_add( $lock_key, time(), 'wb_gamification', $lock_ttl ) ) {
+			return new WP_Error(
+				'wb_gam_kudos_cooldown',
+				__( 'You recently gave kudos to this member. Try again later.', 'wb-gamification' )
 			);
 		}
 
@@ -154,23 +186,18 @@ final class KudosEngine {
 		/**
 		 * Fires after a kudos is successfully recorded.
 		 *
+		 * Pre-1.0.0 this hook also fired a 3-arg variant immediately after
+		 * the 4-arg one. That broke listeners registered with `accepted_args=4`
+		 * (PHP TypeError: missing $kudos_id) on every kudos send. The 3-arg
+		 * fire was redundant — the kudos_id is always available — so it was
+		 * removed in 1.0.0. All listeners now receive 4 args reliably.
+		 *
 		 * @param int    $giver_id    User who gave the kudos.
 		 * @param int    $receiver_id User who received the kudos.
 		 * @param string $message     Optional kudos message.
 		 * @param int    $kudos_id    DB row ID of the new kudos record.
 		 */
 		do_action( 'wb_gam_kudos_given', $giver_id, $receiver_id, $message, $kudos_id );
-
-		/**
-		 * Fires after kudos are given.
-		 *
-		 * @since 1.0.0
-		 *
-		 * @param int    $giver_id    User who gave kudos.
-		 * @param int    $receiver_id User who received kudos.
-		 * @param string $message     Kudos message.
-		 */
-		do_action( 'wb_gam_kudos_given', $giver_id, $receiver_id, $message );
 
 		return true;
 	}
@@ -193,6 +220,36 @@ final class KudosEngine {
 				gmdate( 'Y-m-d' ) . ' 00:00:00'
 			)
 		);
+	}
+
+	/**
+	 * Has this giver kudos'd this receiver within the cooldown window?
+	 *
+	 * Used by the per-receiver cooldown gate in send(). Anti-spam — keeps
+	 * a giver from rapid-firing kudos to the same person. Window is in
+	 * seconds, filterable via `wb_gam_kudos_per_receiver_cooldown_seconds`.
+	 *
+	 * @param int $giver_id           User who is sending.
+	 * @param int $receiver_id        User they want to send to.
+	 * @param int $cooldown_seconds   Time window to check.
+	 */
+	public static function has_recent_kudos_to_receiver( int $giver_id, int $receiver_id, int $cooldown_seconds ): bool {
+		if ( $cooldown_seconds <= 0 ) {
+			return false;
+		}
+		global $wpdb;
+		$count = (int) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM {$wpdb->prefix}wb_gam_kudos
+				  WHERE giver_id = %d
+				    AND receiver_id = %d
+				    AND created_at >= %s",
+				$giver_id,
+				$receiver_id,
+				gmdate( 'Y-m-d H:i:s', time() - $cooldown_seconds )
+			)
+		);
+		return $count > 0;
 	}
 
 	/**

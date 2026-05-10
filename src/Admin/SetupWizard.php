@@ -1,10 +1,11 @@
 <?php
 /**
- * Setup Wizard — shown once on first activation.
+ * Setup Wizard — first-impression onboarding flow.
  *
- * Guides the site owner through choosing a starter template so
- * points are pre-configured for their use-case before they ever
- * visit the main settings screen.
+ * Guides the site owner through choosing a starter template so points are
+ * pre-configured for their use-case before they ever visit the main settings
+ * screen. Idempotent: re-runnable any time via the URL or via the admin
+ * notice that appears on plugin pages until completion.
  *
  * @package WB_Gamification
  * @since   0.1.0
@@ -15,69 +16,190 @@ namespace WBGam\Admin;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Displays the one-time setup wizard shown after first plugin activation.
+ * Sets up, renders, and processes the WB Gamification onboarding wizard.
  *
  * @package WB_Gamification
  */
 final class SetupWizard {
 
 	/**
-	 * Register hooks — skipped entirely once the wizard has been completed.
+	 * URL slug for the wizard page.
+	 */
+	public const PAGE_SLUG = 'wb-gamification-setup';
+
+	/**
+	 * Option flagging that the wizard has been completed at least once.
+	 * Suppresses the auto-redirect on subsequent activations and the
+	 * "welcome" admin notice on plugin admin pages.
+	 */
+	public const COMPLETED_OPTION = 'wb_gam_wizard_complete';
+
+	/**
+	 * Option set by the activation hook to request a one-time auto-redirect
+	 * to the wizard on the next admin page load. Persists indefinitely
+	 * until {@see maybe_redirect()} consumes it — survives any
+	 * activation-to-admin gap (WP-CLI flows, slow workflows, multisite
+	 * cascades).
+	 */
+	public const PENDING_REDIRECT_OPTION = 'wb_gam_pending_setup_redirect';
+
+	/**
+	 * Nonce action name for the wizard form.
+	 */
+	private const NONCE_ACTION = 'wb_gam_setup_nonce';
+
+	/**
+	 * Register hooks. Idempotent — every load registers the same set; gating
+	 * happens inside each handler so admins can re-run the wizard at any
+	 * time via the URL.
 	 */
 	public static function init(): void {
-		if ( get_option( 'wb_gam_wizard_complete' ) ) {
-			return;
-		}
 		add_action( 'admin_menu', array( __CLASS__, 'register_page' ) );
-		add_action( 'admin_init', array( __CLASS__, 'maybe_redirect' ) );
+		// Auto-redirect on admin_init:1 — earlier than the default 10 so any
+		// later admin_init callback that emits output doesn't block our redirect.
+		add_action( 'admin_init', array( __CLASS__, 'maybe_redirect' ), 1 );
 		add_action( 'admin_init', array( __CLASS__, 'handle_submission' ) );
+		add_action( 'admin_notices', array( __CLASS__, 'maybe_show_welcome_notice' ) );
 	}
 
 	/**
-	 * Register a hidden submenu page for the wizard URL.
+	 * Register the wizard URL as a hidden submenu page.
+	 *
+	 * Always registered so admins can re-run the wizard after completion
+	 * (`?page=wb-gamification-setup`). Hidden from the menu (parent = null)
+	 * to avoid clutter.
 	 */
 	public static function register_page(): void {
 		add_submenu_page(
-			null,
+			null, // No parent — page accessible only by URL.
 			__( 'Gamification Setup', 'wb-gamification' ),
 			'',
 			'manage_options',
-			'wb-gamification-setup',
+			self::PAGE_SLUG,
 			array( __CLASS__, 'render' )
 		);
 	}
 
 	/**
-	 * Redirect to the wizard immediately after plugin activation.
+	 * Auto-redirect to the wizard after activation.
+	 *
+	 * Driven by {@see PENDING_REDIRECT_OPTION}, set in the activation hook
+	 * (only when the wizard hasn't been completed yet). Consumes the flag on
+	 * the first admin page load and redirects, unless the admin is already
+	 * on the wizard or in the multisite-activate context.
 	 */
 	public static function maybe_redirect(): void {
-		if ( ! get_transient( 'wb_gam_do_redirect' ) ) {
+		if ( ! get_option( self::PENDING_REDIRECT_OPTION ) ) {
 			return;
 		}
-		delete_transient( 'wb_gam_do_redirect' );
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- activate-multi is a WP core flag, not user input.
-		if ( ! is_network_admin() && ! isset( $_GET['activate-multi'] ) ) {
-			wp_safe_redirect( admin_url( 'admin.php?page=wb-gamification-setup' ) );
-			exit;
+
+		// Consume the signal so we never re-fire after the first admin visit.
+		delete_option( self::PENDING_REDIRECT_OPTION );
+
+		if ( is_network_admin() ) {
+			return;
 		}
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- activate-multi is a WP core GET flag, not user input we trust.
+		if ( isset( $_GET['activate-multi'] ) ) {
+			return;
+		}
+
+		// Avoid redirect loops if the admin is already on the wizard URL
+		// (e.g. opened the link manually, then triggered another admin_init
+		// via XHR or a back/forward navigation).
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- page-slug compare, no state mutation.
+		$current_page = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : '';
+		if ( self::PAGE_SLUG === $current_page ) {
+			return;
+		}
+
+		wp_safe_redirect( admin_url( 'admin.php?page=' . self::PAGE_SLUG ) );
+		exit;
 	}
 
 	/**
-	 * Process the template selection form.
+	 * Show a "welcome — run setup" notice on plugin admin pages until done.
+	 *
+	 * Fallback for installs where the activation auto-redirect was suppressed
+	 * (must-use plugin redirects, hosting filters, or activation via a route
+	 * that didn't pass through admin_init). Notice is scoped to plugin pages
+	 * only — never spams the global dashboard.
+	 */
+	public static function maybe_show_welcome_notice(): void {
+		if ( get_option( self::COMPLETED_OPTION ) ) {
+			return;
+		}
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return;
+		}
+
+		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+		if ( null === $screen ) {
+			return;
+		}
+		// Scope to plugin's own admin pages (any wb-gamification-* screen id).
+		if ( false === strpos( (string) $screen->id, 'wb-gamification' ) ) {
+			return;
+		}
+		// Don't double-up: the wizard page itself is the welcome experience.
+		if ( false !== strpos( (string) $screen->id, self::PAGE_SLUG ) ) {
+			return;
+		}
+
+		$wizard_url = esc_url( admin_url( 'admin.php?page=' . self::PAGE_SLUG ) );
+		// Class `wb-gam-notice` whitelists this notice past the body-scoped CSS
+		// filter declared in assets/css/admin.css (Welcome notice section).
+		// Class `wb-gam-notice__cta` styles the CTA button spacing — see
+		// the same CSS file. No inline style attributes (coding-rule 3).
+		printf(
+			'<div class="notice notice-info wb-gam-notice"><p><strong>%1$s</strong> %2$s <a href="%3$s" class="button button-primary wb-gam-notice__cta">%4$s</a></p></div>',
+			esc_html__( 'Welcome to WB Gamification!', 'wb-gamification' ),
+			esc_html__( 'Pick a starter template to pre-configure points for your use case — takes 30 seconds.', 'wb-gamification' ),
+			$wizard_url, // Already escaped via esc_url.
+			esc_html__( 'Run the setup wizard', 'wb-gamification' )
+		);
+	}
+
+	/**
+	 * Process the template selection form submission.
 	 */
 	public static function handle_submission(): void {
 		if ( ! isset( $_POST['wb_gam_template'] ) ) {
 			return;
 		}
-		check_admin_referer( 'wb_gam_setup_nonce' );
+		check_admin_referer( self::NONCE_ACTION );
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_die( esc_html__( 'Unauthorized', 'wb-gamification' ) );
+			wp_die( esc_html__( 'You do not have permission to complete the setup wizard.', 'wb-gamification' ) );
 		}
 
 		$template = sanitize_key( wp_unslash( $_POST['wb_gam_template'] ) );
-		self::apply_template( $template );
-		self::apply_defaults_from_form();
-		update_option( 'wb_gam_wizard_complete', true );
+
+		/**
+		 * Fires when an admin submits the setup wizard, before any state
+		 * is persisted. Extensions can short-circuit defaults or capture
+		 * the choice for analytics.
+		 *
+		 * @param string $template Template slug, or 'skip'.
+		 */
+		do_action( 'wb_gamification_setup_wizard_started', $template );
+
+		// Skip path: don't write any template or toggle defaults — site owner
+		// will configure manually. Just mark the wizard complete.
+		if ( 'skip' !== $template ) {
+			self::apply_template( $template );
+			self::apply_defaults_from_form();
+		}
+
+		update_option( self::COMPLETED_OPTION, true );
+
+		/**
+		 * Fires after the wizard's state has been persisted.
+		 *
+		 * @param string $template Template slug, or 'skip'.
+		 */
+		do_action( 'wb_gamification_setup_wizard_completed', $template );
+
 		wp_safe_redirect( admin_url( 'admin.php?page=wb-gamification&setup=complete' ) );
 		exit;
 	}
@@ -85,11 +207,11 @@ final class SetupWizard {
 	/**
 	 * Persist the wizard's notification + privacy toggles.
 	 *
-	 * Fires alongside apply_template() so admins land on the dashboard with
-	 * the defaults they actually picked at install time, not the engine's
-	 * conservative ship-defaults (which leave every email off and every
-	 * member-facing public surface gated). Each option is whitelisted —
-	 * unknown keys never reach update_option().
+	 * Only called when a real template was chosen — the Skip path leaves all
+	 * toggle defaults at their engine ship-defaults so an admin who said
+	 * "configure manually" doesn't get unexpected option writes.
+	 *
+	 * Each option is whitelisted — unknown POST keys never reach update_option().
 	 */
 	private static function apply_defaults_from_form(): void {
 		$toggles = array(
@@ -100,7 +222,7 @@ final class SetupWizard {
 		);
 
 		foreach ( $toggles as $option_key => $form_key ) {
-			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce checked in caller.
+			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified in caller (handle_submission).
 			$value = isset( $_POST[ $form_key ] ) ? '1' : '0';
 			update_option( $option_key, $value );
 		}
@@ -109,8 +231,7 @@ final class SetupWizard {
 	/**
 	 * Persist the chosen template's point values and leaderboard mode.
 	 *
-	 * @param string $template Template key (e.g. 'blog', 'community', 'course').
-	 * @return void
+	 * @param string $template Template key.
 	 */
 	private static function apply_template( string $template ): void {
 		$configs = self::get_template_configs();
@@ -198,63 +319,78 @@ final class SetupWizard {
 			wp_die( esc_html__( 'You do not have permission to access this page.', 'wb-gamification' ) );
 		}
 
-		$configs = self::get_template_configs();
+		$configs        = self::get_template_configs();
+		$is_re_run      = (bool) get_option( self::COMPLETED_OPTION );
+		$current_tpl    = (string) get_option( 'wb_gam_template', '' );
 		?>
 		<div class="wrap wb-gam-wizard-wrap">
 
 			<div class="wb-gam-wizard-header">
-				<h1>
-					<?php esc_html_e( 'Welcome to WB Gamification', 'wb-gamification' ); ?>
-				</h1>
+				<h1><?php esc_html_e( 'Welcome to WB Gamification', 'wb-gamification' ); ?></h1>
 				<p>
 					<?php esc_html_e( 'Choose a starter template to pre-configure your point values. You can change everything later from the settings screen.', 'wb-gamification' ); ?>
 				</p>
+				<?php if ( $is_re_run && '' !== $current_tpl ) : ?>
+					<p class="notice notice-info wb-gam-wizard-rerun-notice">
+						<?php
+						printf(
+							/* translators: %s: name of the currently-applied template (e.g. "Community Engagement") */
+							esc_html__( 'You\'ve already completed setup with the %s template. Picking a new one will overwrite the matching point values.', 'wb-gamification' ),
+							'<strong>' . esc_html( $configs[ $current_tpl ]['label'] ?? $current_tpl ) . '</strong>'
+						);
+						?>
+					</p>
+				<?php endif; ?>
 			</div>
 
 			<form method="post">
-				<?php wp_nonce_field( 'wb_gam_setup_nonce' ); ?>
+				<?php wp_nonce_field( self::NONCE_ACTION ); ?>
 
-				<div class="wb-gam-wizard-grid">
+				<fieldset class="wb-gam-wizard-grid-fieldset">
+					<legend class="screen-reader-text">
+						<?php esc_html_e( 'Choose a starter template', 'wb-gamification' ); ?>
+					</legend>
 
-					<?php foreach ( $configs as $key => $config ) : ?>
-						<div class="wb-gam-wizard-card">
-							<div>
-								<h3 class="wb-gam-wizard-card__title">
-									<?php echo esc_html( $config['label'] ); ?>
-								</h3>
-								<p class="wb-gam-wizard-card__desc">
-									<?php echo esc_html( $config['description'] ); ?>
-								</p>
-								<p class="wb-gam-wizard-card__points">
+					<div class="wb-gam-wizard-grid" role="group" aria-label="<?php esc_attr_e( 'Starter template options', 'wb-gamification' ); ?>">
+						<?php foreach ( $configs as $key => $config ) : ?>
+							<div class="wb-gam-wizard-card<?php echo $key === $current_tpl ? ' wb-gam-wizard-card--current' : ''; ?>">
+								<div>
+									<h3 class="wb-gam-wizard-card__title">
+										<?php echo esc_html( $config['label'] ); ?>
+										<?php if ( $key === $current_tpl ) : ?>
+											<span class="wb-gam-wizard-card__badge">
+												<?php esc_html_e( 'Current', 'wb-gamification' ); ?>
+											</span>
+										<?php endif; ?>
+									</h3>
+									<p class="wb-gam-wizard-card__desc">
+										<?php echo esc_html( $config['description'] ); ?>
+									</p>
+									<?php echo self::render_point_summary( $config['points'] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- helper escapes internally. ?>
+								</div>
+								<button
+									type="submit"
+									name="wb_gam_template"
+									value="<?php echo esc_attr( $key ); ?>"
+									class="button button-primary wb-gam-wizard-card__btn"
+								>
 									<?php
-									$point_labels = array();
-									foreach ( $config['points'] as $action => $pts ) {
-										/* translators: 1: point value, 2: action name */
-										$point_labels[] = sprintf( '%d pts &mdash; %s', (int) $pts, esc_html( $action ) );
-									}
-									echo implode( '<br>', $point_labels ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+									echo $key === $current_tpl
+										? esc_html__( 'Re-apply this template', 'wb-gamification' )
+										: esc_html__( 'Use this template', 'wb-gamification' );
 									?>
-								</p>
+								</button>
 							</div>
-							<button
-								type="submit"
-								name="wb_gam_template"
-								value="<?php echo esc_attr( $key ); ?>"
-								class="button button-primary wb-gam-wizard-card__btn"
-							>
-								<?php esc_html_e( 'Use this template', 'wb-gamification' ); ?>
-							</button>
-						</div>
-					<?php endforeach; ?>
-
-				</div>
+						<?php endforeach; ?>
+					</div>
+				</fieldset>
 
 				<fieldset class="wb-gam-wizard-defaults">
 					<legend class="wb-gam-wizard-defaults__title">
 						<?php esc_html_e( 'Default notifications & privacy', 'wb-gamification' ); ?>
 					</legend>
 					<p class="description wb-gam-wizard-defaults__hint">
-						<?php esc_html_e( 'These will be applied along with the template you pick. Change any of them later in Settings.', 'wb-gamification' ); ?>
+						<?php esc_html_e( 'Applied alongside the template you pick (skipped if you choose to configure manually). Change any of these later in Settings.', 'wb-gamification' ); ?>
 					</p>
 
 					<label class="wb-gam-wizard-toggle">
@@ -285,7 +421,9 @@ final class SetupWizard {
 						<input type="checkbox" name="profile_public" value="1" checked>
 						<span class="wb-gam-wizard-toggle__label">
 							<strong><?php esc_html_e( 'Enable public profile pages', 'wb-gamification' ); ?></strong>
-							<span class="description"><?php esc_html_e( 'Let members opt in to a sharable profile at /u/{username}. Each member must still flip the per-user privacy toggle.', 'wb-gamification' ); ?></span>
+							<span class="description">
+								<?php esc_html_e( 'Let members opt in to a sharable profile at /u/{username}. Each member must still flip the per-user privacy toggle.', 'wb-gamification' ); ?>
+							</span>
 						</span>
 					</label>
 				</fieldset>
@@ -297,15 +435,41 @@ final class SetupWizard {
 						value="skip"
 						class="button button-link wb-gam-wizard-skip-btn"
 					>
-						<?php esc_html_e( 'Skip &amp; configure manually', 'wb-gamification' ); ?>
+						<?php esc_html_e( 'Skip & configure manually', 'wb-gamification' ); ?>
 					</button>
 					<p class="description wbgam-mt-sm">
-						<?php esc_html_e( 'Default values are already set — you can always change them later.', 'wb-gamification' ); ?>
+						<?php esc_html_e( 'Skip leaves the engine\'s conservative defaults in place — every email off, public profiles off. Change anything later in Settings.', 'wb-gamification' ); ?>
 					</p>
 				</div>
 
 			</form>
 		</div>
 		<?php
+	}
+
+	/**
+	 * Build the "N pts — action" summary block for one template card.
+	 *
+	 * Each label is composed via sprintf with `(int)` and esc_html on the
+	 * variable parts; the only HTML is the literal `<br>` separator and
+	 * the `&mdash;` entity. wp_kses_post() wraps the final string for an
+	 * extra safety net.
+	 *
+	 * @param array<string, int> $points Map of action_id → point value.
+	 * @return string Safe HTML.
+	 */
+	private static function render_point_summary( array $points ): string {
+		if ( empty( $points ) ) {
+			return '';
+		}
+		$rows = array();
+		foreach ( $points as $action_id => $pts ) {
+			$rows[] = sprintf(
+				'%d pts &mdash; %s',
+				(int) $pts,
+				esc_html( $action_id )
+			);
+		}
+		return '<p class="wb-gam-wizard-card__points">' . wp_kses_post( implode( '<br>', $rows ) ) . '</p>';
 	}
 }

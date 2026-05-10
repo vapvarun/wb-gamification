@@ -100,6 +100,7 @@ final class AnalyticsDashboard {
 					<p class="wbgam-page-header__desc"><?php esc_html_e( 'Engagement at a glance — points awarded, badges earned, streaks, kudos and challenge completion across your community.', 'wb-gamification' ); ?></p>
 				</div>
 			</header>
+			<hr class="wp-header-end" />
 
 			<!-- Period selector -->
 			<div class="wb-gam-analytics__period-bar wbgam-stack-block">

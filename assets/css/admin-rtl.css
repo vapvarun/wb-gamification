@@ -1,0 +1,1533 @@
+/**
+ * WB Gamification — Shared Admin Styles
+ *
+ * Design tokens mirror frontend.css so both surfaces share the same palette.
+ * Component classes replace inline styles in SettingsPage.php and other admin pages.
+ *
+ * @since 0.6.0
+ */
+
+/* ── Design tokens (same as frontend.css :root) ────────────────────────────── */
+:root {
+	--wb-gam-primary:        #6c63ff;
+	--wb-gam-primary-light:  #ede9fe;
+	--wb-gam-gold:           #f59e0b;
+	--wb-gam-silver:         #9ca3af;
+	--wb-gam-bronze:         #d97706;
+	--wb-gam-radius:         8px;
+	--wb-gam-border:         #e5e7eb;
+	--wb-gam-text-muted:     #6b7280;
+	--wb-gam-gap:            1rem;
+	--wb-gam-text:           #1d2939;
+	--wb-gam-locked:         #d1d5db;
+}
+
+/* ── Nav tabs ───────────────────────────────────────────────────────────────── */
+.wb-gam-admin-nav {
+	margin-top: 16px;
+}
+
+/* ── Page header ────────────────────────────────────────────────────────────── */
+.wb-gam-admin-header {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	margin: 20px 0 0;
+}
+
+.wb-gam-admin-header h1 {
+	margin: 0;
+}
+
+/* ── Mode badge ─────────────────────────────────────────────────────────────── */
+.wb-gam-mode-badge {
+	display: inline-block;
+	padding: 3px 10px;
+	border-radius: 3px;
+	font-size: 12px;
+	font-weight: 600;
+	color: #fff;
+	line-height: 1.5;
+}
+
+.wb-gam-mode-badge--community  { background: #00a32a; }
+.wb-gam-mode-badge--standalone { background: #0073aa; }
+
+/* ── Tab content panel ──────────────────────────────────────────────────────── */
+.wb-gam-admin-tab-content {
+	background: #fff;
+	border: 1px solid #c3c4c7;
+	border-top: none;
+	padding: 24px;
+}
+
+/* ── Section headings inside tabs ──────────────────────────────────────────── */
+.wb-gam-admin-section-heading {
+	margin: 20px 0 8px;
+	text-transform: capitalize;
+}
+
+/* ── Description text ───────────────────────────────────────────────────────── */
+.wb-gam-admin-description {
+	color: var(--wb-gam-text-muted);
+	margin-top: 0;
+}
+
+/* ── Dashboard tab KPI strip ────────────────────────────────────────────────── */
+.wb-gam-admin-kpi-strip {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+	gap: 1rem;
+	margin-block-end: 1.5rem;
+}
+
+.wb-gam-admin-kpi-card {
+	background: #fff;
+	border: 1px solid var(--wb-gam-border);
+	border-radius: var(--wb-gam-radius);
+	padding: 1.125rem 1rem;
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+	transition: box-shadow 0.15s;
+}
+
+.wb-gam-admin-kpi-card:hover {
+	box-shadow: 0 2px 8px rgba(108, 99, 255, 0.1);
+}
+
+.wb-gam-admin-kpi-icon {
+	font-size: 1.375rem;
+	line-height: 1;
+}
+
+.wb-gam-admin-kpi-value {
+	font-size: 1.625rem;
+	font-weight: 800;
+	line-height: 1.1;
+	color: #1d2939;
+}
+
+.wb-gam-admin-kpi-title {
+	font-size: 0.8125rem;
+	font-weight: 600;
+	color: #374151;
+}
+
+.wb-gam-admin-kpi-sub {
+	font-size: 0.75rem;
+	color: var(--wb-gam-silver);
+}
+
+/* ── Dashboard tab quick links ──────────────────────────────────────────────── */
+.wb-gam-admin-quick-links {
+	display: flex;
+	gap: 0.75rem;
+	flex-wrap: wrap;
+	margin-block-end: 1.5rem;
+}
+
+/* ── Responsive ─────────────────────────────────────────────────────────────── */
+@media (max-width: 782px) {
+	.wb-gam-admin-kpi-strip {
+		grid-template-columns: repeat(2, 1fr);
+	}
+}
+
+/* ── Utility ────────────────────────────────────────────────────────────────── */
+.wb-gam-hidden { display: none; }
+
+.wb-gam-positive { color: #00a32a; }
+.wb-gam-negative { color: #b32d2e; }
+
+/* ── Badge Admin ────────────────────────────────────────────────────────────── */
+.wb-gam-back-link {
+	display: inline-block;
+	margin-bottom: 1rem;
+}
+
+.wb-gam-badge-form { max-width: 700px; }
+
+.wb-gam-delete-link { color: #a00; }
+
+.wb-gam-badge-id-hint { color: #999; }
+
+/* ── Setup Wizard ────────────────────────────────────────────────────────────── */
+.wb-gam-wizard-wrap { max-width: 1100px; }
+
+.wb-gam-wizard-header { margin: 40px 0 8px; }
+
+.wb-gam-wizard-header h1 {
+	font-size: 28px;
+	font-weight: 700;
+	margin: 0 0 10px;
+}
+
+.wb-gam-wizard-header p {
+	font-size: 15px;
+	color: #50575e;
+	margin: 0;
+}
+
+.wb-gam-wizard-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+	gap: 20px;
+	margin: 30px 0;
+}
+
+.wb-gam-wizard-card {
+	background: #fff;
+	border: 1px solid #dcdcde;
+	border-radius: 4px;
+	padding: 24px;
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+}
+
+.wb-gam-wizard-card__title {
+	margin: 0 0 10px;
+	font-size: 16px;
+	font-weight: 600;
+}
+
+.wb-gam-wizard-card__desc {
+	margin: 0 0 20px;
+	color: #50575e;
+	font-size: 13px;
+	line-height: 1.6;
+}
+
+.wb-gam-wizard-card__points {
+	margin: 0 0 20px;
+	font-size: 12px;
+	color: #787c82;
+}
+
+.wb-gam-wizard-card__btn { align-self: flex-start; }
+
+.wb-gam-wizard-skip-row { margin-top: 10px; }
+
+.wb-gam-wizard-skip-btn {
+	color: #787c82;
+	text-decoration: underline;
+}
+
+/* Default toggles fieldset shown below the template grid. */
+.wb-gam-wizard-defaults {
+	margin: 28px 0 8px;
+	padding: 20px 24px;
+	border: 1px solid #dcdcde;
+	border-radius: 4px;
+	background: #fff;
+}
+
+.wb-gam-wizard-defaults__title {
+	font-size: 14px;
+	font-weight: 600;
+	margin: 0 0 4px;
+	padding: 0;
+}
+
+.wb-gam-wizard-defaults__hint {
+	margin: 0 0 16px;
+	color: #50575e;
+}
+
+.wb-gam-wizard-toggle {
+	display: flex;
+	gap: 12px;
+	align-items: flex-start;
+	padding: 10px 0;
+	border-top: 1px solid #f0f0f1;
+	cursor: pointer;
+}
+
+.wb-gam-wizard-toggle:first-of-type {
+	border-top: none;
+}
+
+.wb-gam-wizard-toggle input[type="checkbox"] {
+	margin-top: 4px;
+	flex-shrink: 0;
+}
+
+.wb-gam-wizard-toggle__label {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+
+.wb-gam-wizard-toggle__label strong {
+	font-size: 13px;
+	color: #1d2939;
+}
+
+.wb-gam-wizard-toggle__label .description {
+	font-size: 12px;
+	color: #6b7280;
+	line-height: 1.5;
+}
+
+@media (max-width: 640px) {
+	.wb-gam-wizard-defaults {
+		padding: 16px;
+	}
+
+	.wb-gam-wizard-toggle {
+		padding: 12px 0;
+	}
+}
+
+/* ── Settings page tables ────────────────────────────────────────────────────── */
+.wb-gam-settings-table { margin-bottom: 20px; }
+.wb-gam-levels-table   { max-width: 600px; }
+.wb-gam-automation-table { margin-bottom: 24px; }
+.wb-gam-mb-24 { margin-bottom: 24px; }
+
+.wb-gam-form-inline { display: inline; }
+
+.wb-gam-action-desc { color: #646970; font-size: 12px; }
+.wb-gam-action-code { font-size: 11px; color: #999; }
+.wb-gam-hint-text   { color: #999; font-size: 0.85em; }
+
+/* column width helpers */
+.wb-gam-col-toggle  { width: 28px; }
+.wb-gam-col-points  { width: 90px; }
+.wb-gam-col-flag    { width: 80px; }
+.wb-gam-col-pts-min { width: 160px; }
+
+/* input size helpers */
+.wb-gam-input-narrow { width: 70px; }
+
+/* Compact number input — used in settings tables where we need a tight 80px field. */
+.wbgam-input.wbgam-input--xs {
+	width: 5rem;
+	padding: 0.375rem 0.5rem;
+	text-align: center;
+	font-variant-numeric: tabular-nums;
+}
+
+/* iOS-style toggle switch — replaces native checkbox in premium-UX tables.
+   Markup:
+     <label class="wbgam-switch">
+       <input type="checkbox">
+       <span class="wbgam-switch__track" aria-hidden="true"></span>
+     </label>
+*/
+.wbgam-switch {
+	position: relative;
+	display: inline-flex;
+	align-items: center;
+	width: 2.25rem;
+	height: 1.25rem;
+	cursor: pointer;
+	flex-shrink: 0;
+}
+.wbgam-switch input {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	margin: 0;
+	opacity: 0;
+	cursor: pointer;
+	z-index: 1;
+}
+.wbgam-switch__track {
+	width: 100%;
+	height: 100%;
+	background: #d1d5db;
+	border-radius: 999px;
+	transition: background 0.15s ease;
+	position: relative;
+}
+.wbgam-switch__track::before {
+	content: "";
+	position: absolute;
+	top: 2px;
+	inset-inline-start: 2px;
+	width: 1rem;
+	height: 1rem;
+	background: #fff;
+	border-radius: 50%;
+	box-shadow: 0 1px 2px rgba( 0, 0, 0, 0.15 );
+	transition: transform 0.15s ease;
+}
+.wbgam-switch input:checked + .wbgam-switch__track {
+	background: var( --wbgam-primary, #2563eb );
+}
+.wbgam-switch input:checked + .wbgam-switch__track::before {
+	transform: translateX( -1rem );
+}
+.wbgam-switch input:focus-visible + .wbgam-switch__track {
+	outline: 2px solid var( --wbgam-primary, #2563eb );
+	outline-offset: 2px;
+}
+[dir="rtl"] .wbgam-switch input:checked + .wbgam-switch__track::before {
+	transform: translateX( 1rem );
+}
+
+/* Two-line action cell — title on top, helper description in muted small. */
+.wbgam-action-cell {
+	display: flex;
+	flex-direction: column;
+	gap: 0.125rem;
+}
+.wbgam-action-cell__title {
+	color: var( --wb-gam-text, #1e1e1e );
+	font-weight: 600;
+}
+.wbgam-action-cell__desc {
+	color: var( --wb-gam-text-muted, #6b7280 );
+	font-size: 0.8125rem;
+	line-height: 1.4;
+}
+
+/* Compact select — used in settings tables for per-row currency picker. */
+.wbgam-select.wbgam-select--sm {
+	min-width: 7rem;
+	max-width: 10rem;
+	padding: 0.375rem 0.5rem 0.375rem 1.75rem;
+	font-size: 0.8125rem;
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+   Premium page header — replaces the bare H1 + description floating above
+   the first card. Pairs with the wbgam-wrap layout so every admin page has
+   the same look (matches MediaVerse / Jetonomy pattern).
+   Markup:
+     <header class="wbgam-page-header">
+       <div class="wbgam-page-header__main">
+         <h1 class="wbgam-page-header__title">Title</h1>
+         <p class="wbgam-page-header__desc">Description</p>
+       </div>
+       <div class="wbgam-page-header__actions">…optional buttons…</div>
+     </header>
+   ────────────────────────────────────────────────────────────────────────── */
+
+.wbgam-page-header {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: 1.5rem;
+	flex-wrap: wrap;
+	background: #fff;
+	border: 1px solid var( --wb-gam-border, #e5e7eb );
+	border-radius: var( --wb-gam-radius, 8px );
+	padding: 1.25rem 1.5rem;
+	margin-block-end: 1.5rem;
+}
+.wbgam-page-header__main {
+	flex: 1 1 auto;
+	min-width: 0;
+}
+.wbgam-page-header__title {
+	margin: 0;
+	font-size: 1.375rem;
+	font-weight: 600;
+	line-height: 1.2;
+	color: var( --wb-gam-text, #1e1e1e );
+}
+.wbgam-page-header__desc {
+	margin: 0.375rem 0 0;
+	color: var( --wb-gam-text-muted, #6b7280 );
+	font-size: 0.875rem;
+	line-height: 1.5;
+}
+.wbgam-page-header__actions {
+	display: flex;
+	gap: 0.5rem;
+	flex-wrap: wrap;
+	flex-shrink: 0;
+}
+@media ( max-width: 640px ) {
+	.wbgam-page-header {
+		padding: 1rem;
+	}
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+   Settings page topbar — full-width header card above the 2-col layout.
+   Mirrors the MediaVerse / Jetonomy reference: logo + title + version +
+   subtitle on the left, optional action button on the right.
+   ────────────────────────────────────────────────────────────────────────── */
+
+.wbgam-wrap,
+.wbgam-settings-wrap {
+	margin-block-start: 1.25rem;
+}
+
+.wbgam-settings-topbar {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 1.5rem;
+	flex-wrap: wrap;
+	background: #fff;
+	border: 1px solid var( --wb-gam-border, #e5e7eb );
+	border-radius: var( --wb-gam-radius, 8px );
+	padding: 1.25rem 1.5rem;
+	margin: 1.25rem 0 1.5rem 1.5rem;
+}
+.wbgam-settings-topbar__brand {
+	display: flex;
+	align-items: center;
+	gap: 1rem;
+	flex: 1 1 auto;
+	min-width: 0;
+}
+.wbgam-settings-topbar__logo {
+	flex-shrink: 0;
+	width: 3rem;
+	height: 3rem;
+	font-size: 2rem;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	background: linear-gradient( -135deg, var( --wbgam-primary, #2563eb ), #6366f1 );
+	color: #fff;
+	border-radius: 0.625rem;
+}
+.wbgam-settings-topbar__title {
+	margin: 0;
+	font-size: 1.5rem;
+	font-weight: 600;
+	line-height: 1.2;
+	color: var( --wb-gam-text, #1e1e1e );
+	display: flex;
+	align-items: center;
+	gap: 0.625rem;
+	flex-wrap: wrap;
+}
+.wbgam-settings-topbar__version {
+	font-size: 0.75rem;
+	font-weight: 600;
+	color: var( --wb-gam-text-muted, #6b7280 );
+	background: #f3f4f6;
+	padding: 0.125rem 0.5rem;
+	border-radius: 999px;
+	letter-spacing: 0.02em;
+}
+.wbgam-settings-topbar__desc {
+	margin: 0.375rem 0 0;
+	color: var( --wb-gam-text-muted, #6b7280 );
+	font-size: 0.875rem;
+	line-height: 1.5;
+}
+.wbgam-settings-topbar__actions {
+	display: flex;
+	gap: 0.5rem;
+	flex-wrap: wrap;
+	flex-shrink: 0;
+}
+@media ( max-width: 782px ) {
+	.wbgam-settings-topbar {
+		margin-inline-end: 0;
+	}
+}
+@media ( max-width: 640px ) {
+	.wbgam-settings-topbar {
+		padding: 1rem;
+	}
+	.wbgam-settings-topbar__logo {
+		width: 2.5rem;
+		height: 2.5rem;
+		font-size: 1.625rem;
+	}
+	.wbgam-settings-topbar__title {
+		font-size: 1.25rem;
+	}
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+   Inline banner — replaces WP `notice notice-*` so feedback lives inside
+   our card framework (admin-ux-rulebook Rule 10).
+   Variants: --success / --info / --warning / --error.
+   ────────────────────────────────────────────────────────────────────────── */
+
+.wbgam-banner {
+	display: flex;
+	align-items: flex-start;
+	gap: 0.875rem;
+	background: #fff;
+	border: 1px solid var( --wb-gam-border, #e5e7eb );
+	border-inline-start: 4px solid #6b7280;
+	border-radius: var( --wb-gam-radius, 8px );
+	padding: 1rem 1.25rem;
+}
+.wbgam-banner--success { border-inline-start-color: #16a34a; background: #f0fdf4; }
+.wbgam-banner--info    { border-inline-start-color: #2563eb; background: #eff6ff; }
+.wbgam-banner--warning { border-inline-start-color: #d97706; background: #fffbeb; }
+.wbgam-banner--error   { border-inline-start-color: #dc2626; background: #fef2f2; }
+.wbgam-banner__icon {
+	flex-shrink: 0;
+	font-size: 1.5rem;
+	width: 1.5rem;
+	height: 1.5rem;
+}
+.wbgam-banner--success .wbgam-banner__icon { color: #16a34a; }
+.wbgam-banner--info    .wbgam-banner__icon { color: #2563eb; }
+.wbgam-banner--warning .wbgam-banner__icon { color: #d97706; }
+.wbgam-banner--error   .wbgam-banner__icon { color: #dc2626; }
+.wbgam-banner__body { flex: 1 1 auto; min-width: 0; }
+.wbgam-banner__title {
+	display: block;
+	font-weight: 600;
+	color: var( --wb-gam-text, #1e1e1e );
+}
+.wbgam-banner__desc {
+	margin: 0.25rem 0;
+	font-size: 0.875rem;
+	color: var( --wb-gam-text-muted, #6b7280 );
+}
+.wbgam-banner__dismiss {
+	flex-shrink: 0;
+	background: none;
+	border: 0;
+	padding: 0.25rem;
+	cursor: pointer;
+	color: var( --wb-gam-text-muted, #6b7280 );
+	border-radius: 4px;
+}
+.wbgam-banner__dismiss:hover,
+.wbgam-banner__dismiss:focus-visible {
+	background: rgba( 0, 0, 0, 0.04 );
+	color: var( --wb-gam-text, #1e1e1e );
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+   Accordion (HTML <details>) — wraps a settings-card so the head becomes
+   the toggleable summary. Used to group integration-specific point actions
+   (WordPress, BuddyPress, WooCommerce, …) into collapsible cards on the
+   Points tab. WordPress section is open by default; others collapsed.
+   ────────────────────────────────────────────────────────────────────────── */
+
+.wbgam-accordion {
+	overflow: hidden;
+}
+.wbgam-accordion > .wbgam-accordion__head {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+	cursor: pointer;
+	list-style: none;
+	user-select: none;
+	transition: background 0.12s ease;
+}
+.wbgam-accordion > .wbgam-accordion__head:hover {
+	background: #fafafe;
+}
+.wbgam-accordion > .wbgam-accordion__head::-webkit-details-marker { display: none; }
+.wbgam-accordion__chevron {
+	flex-shrink: 0;
+	font-size: 1.125rem;
+	color: var( --wb-gam-text-muted, #6b7280 );
+	transition: transform 0.15s ease;
+}
+.wbgam-accordion[open] > .wbgam-accordion__head .wbgam-accordion__chevron {
+	transform: rotate( -90deg );
+}
+.wbgam-accordion__head-text {
+	display: flex;
+	flex-direction: column;
+	gap: 0.125rem;
+	flex: 1 1 auto;
+	min-width: 0;
+}
+.wbgam-accordion__head-text .wbgam-settings-card__title {
+	margin: 0;
+}
+.wbgam-accordion__head-text .wbgam-settings-card__desc {
+	margin: 0;
+}
+[dir="rtl"] .wbgam-accordion__chevron {
+	transform: rotate( -180deg );
+}
+[dir="rtl"] .wbgam-accordion[open] > .wbgam-accordion__head .wbgam-accordion__chevron {
+	transform: rotate( -90deg );
+}
+
+/* Stacked checkbox list with code tag + description.
+   Used on the Webhooks "Events to subscribe to" group. */
+.wbgam-event-list {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+}
+.wbgam-event-list__item {
+	display: flex;
+	align-items: center;
+	gap: 0.625rem;
+	padding: 0.5rem 0.75rem;
+	border: 1px solid var( --wb-gam-border, #e5e7eb );
+	border-radius: 6px;
+	cursor: pointer;
+	transition: border-color 0.12s ease, background 0.12s ease;
+}
+.wbgam-event-list__item:hover {
+	border-color: var( --wbgam-primary, #2563eb );
+	background: #fafafe;
+}
+.wbgam-event-list__item input[type="checkbox"] {
+	margin: 0;
+}
+.wbgam-event-list__code {
+	font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+	font-size: 0.8125rem;
+	background: #f3f4f6;
+	padding: 0.125rem 0.5rem;
+	border-radius: 4px;
+}
+.wbgam-event-list__desc {
+	color: var( --wb-gam-text-muted, #6b7280 );
+	font-size: 0.875rem;
+}
+.wb-gam-input-medium { width: 120px; }
+.wb-gam-input-full   { width: 100%; }
+
+/* ── Premium Admin Components ──────────────────────────────────────────────── */
+
+/* Page wrapper */
+.wbgam-wrap {
+	max-width: 1200px;
+}
+
+.wbgam-page-title {
+	font-size: 1.625rem;
+	font-weight: 700;
+	margin: 0 0 0.25rem;
+	color: var(--wb-gam-text);
+}
+
+.wbgam-page-desc {
+	color: var(--wb-gam-text-muted);
+	font-size: 0.9375rem;
+	margin: 0 0 1.5rem;
+}
+
+/* Card component */
+.wbgam-card {
+	background: #fff;
+	border: 1px solid var(--wb-gam-border);
+	border-radius: var(--wb-gam-radius);
+	overflow: hidden;
+}
+
+.wbgam-card-header {
+	padding: 1rem 1.25rem;
+	border-bottom: 1px solid var(--wb-gam-border);
+	background: #fafafa;
+}
+
+.wbgam-card-title {
+	margin: 0;
+	font-size: 0.9375rem;
+	font-weight: 600;
+	color: var(--wb-gam-text);
+}
+
+.wbgam-card-body {
+	padding: 1.25rem;
+}
+
+/* Grid layouts */
+.wbgam-grid-3 {
+	display: grid;
+	grid-template-columns: repeat(3, 1fr);
+	gap: 1rem;
+}
+
+.wbgam-grid-4 {
+	display: grid;
+	grid-template-columns: repeat(4, 1fr);
+	gap: 1rem;
+}
+
+@media (max-width: 1024px) {
+	.wbgam-grid-4 { grid-template-columns: repeat(3, 1fr); }
+}
+
+@media (max-width: 782px) {
+	.wbgam-grid-3 { grid-template-columns: repeat(2, 1fr); }
+	.wbgam-grid-4 { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 640px) {
+	.wbgam-grid-3 { grid-template-columns: 1fr; }
+	.wbgam-grid-4 { grid-template-columns: 1fr; }
+}
+
+/* Badge card */
+.wbgam-badge-card {
+	background: #fff;
+	border: 1px solid var(--wb-gam-border);
+	border-radius: var(--wb-gam-radius);
+	padding: 1.25rem;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 0.625rem;
+	text-align: center;
+	cursor: pointer;
+	transition: box-shadow 0.15s, border-color 0.15s;
+}
+
+.wbgam-badge-card:hover {
+	border-color: var(--wb-gam-primary);
+	box-shadow: 0 2px 12px rgba(108, 99, 255, 0.12);
+}
+
+.wbgam-badge-card__icon {
+	width: 64px;
+	height: 64px;
+	border-radius: 50%;
+	background: var(--wb-gam-primary-light);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+	overflow: hidden;
+}
+
+.wbgam-badge-card__icon img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	border-radius: 50%;
+}
+
+.wbgam-badge-card__icon .dashicons {
+	font-size: 28px;
+	width: 28px;
+	height: 28px;
+	color: var(--wb-gam-primary);
+}
+
+.wbgam-badge-card__name {
+	font-size: 0.875rem;
+	font-weight: 600;
+	color: var(--wb-gam-text);
+	margin: 0;
+}
+
+.wbgam-badge-card__earned {
+	font-size: 0.75rem;
+	color: var(--wb-gam-text-muted);
+	margin: 0;
+}
+
+/* Buttons */
+.wbgam-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.375rem;
+	padding: 0.5rem 1.125rem;
+	font-size: 0.8125rem;
+	font-weight: 600;
+	line-height: 1.5;
+	color: #fff;
+	background: var(--wb-gam-primary);
+	border: none;
+	border-radius: var(--wb-gam-radius);
+	cursor: pointer;
+	text-decoration: none;
+	transition: opacity 0.15s;
+}
+
+.wbgam-btn:hover {
+	opacity: 0.88;
+	color: #fff;
+}
+
+.wbgam-btn--secondary {
+	background: transparent;
+	color: var(--wb-gam-primary);
+	border: 1px solid var(--wb-gam-primary);
+}
+
+.wbgam-btn--secondary:hover {
+	background: var(--wb-gam-primary-light);
+	color: var(--wb-gam-primary);
+}
+
+.wbgam-btn--sm {
+	padding: 0.25rem 0.625rem;
+	font-size: 0.75rem;
+}
+
+.wbgam-btn--danger {
+	background: #dc2626;
+}
+
+.wbgam-btn--danger:hover {
+	opacity: 0.88;
+	color: #fff;
+}
+
+/* Form inputs */
+.wbgam-input {
+	border: 1px solid var(--wb-gam-border);
+	border-radius: var(--wb-gam-radius);
+	padding: 0.5rem 0.75rem;
+	font-size: 0.875rem;
+	transition: border-color 0.15s;
+}
+
+/* Mouse focus only: drop the browser outline (box-shadow ring suffices). */
+.wbgam-input:focus:not(:focus-visible) {
+	border-color: var(--wb-gam-primary);
+	box-shadow: 0 0 0 2px rgba(108, 99, 255, 0.15);
+}
+
+/* Keyboard focus: explicit outline + same border tint. */
+/* ── Shared confirm modal (admin-rest-utils.js) ───────────────────── */
+
+.wb-gam-confirm-overlay {
+	position: fixed;
+	inset: 0;
+	background: rgba( 26, 26, 46, 0.55 );
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	z-index: 100000;
+	animation: wbgam-fade-in 0.15s ease;
+}
+
+@keyframes wbgam-fade-in {
+	from { opacity: 0; }
+	to   { opacity: 1; }
+}
+
+.wb-gam-confirm-dialog {
+	background: #fff;
+	border-radius: 10px;
+	box-shadow: 0 20px 60px rgba( 0, 0, 0, 0.25 );
+	padding: 24px;
+	max-width: 420px;
+	width: calc( 100% - 32px );
+	animation: wbgam-zoom-in 0.18s ease;
+}
+
+@keyframes wbgam-zoom-in {
+	from { opacity: 0; transform: scale( 0.96 ); }
+	to   { opacity: 1; transform: scale( 1 ); }
+}
+
+.wb-gam-confirm-dialog__title {
+	font-size: 18px;
+	font-weight: 600;
+	margin: 0 0 8px;
+	color: #1a1a2e;
+}
+
+.wb-gam-confirm-dialog__body {
+	font-size: 14px;
+	color: #555770;
+	margin: 0 0 20px;
+	line-height: 1.5;
+}
+
+.wb-gam-confirm-dialog__actions {
+	display: flex;
+	justify-content: flex-end;
+	gap: 8px;
+}
+
+.wb-gam-confirm-dialog__actions .button {
+	min-height: 40px;
+}
+
+/* Mouse focus only — keep the visual ring for keyboard users below. */
+.wbgam-input:focus-visible {
+	border-color: var(--wb-gam-primary);
+	outline: 2px solid var(--wb-gam-primary);
+	outline-offset: 2px;
+	box-shadow: 0 0 0 2px rgba(108, 99, 255, 0.15);
+}
+
+.wbgam-select {
+	border: 1px solid var(--wb-gam-border);
+	border-radius: var(--wb-gam-radius);
+	padding: 0.5rem 0.75rem;
+	font-size: 0.875rem;
+	background: #fff;
+}
+
+/* Mouse focus only: drop the browser outline (box-shadow ring suffices). */
+.wbgam-select:focus:not(:focus-visible) {
+	border-color: var(--wb-gam-primary);
+	box-shadow: 0 0 0 2px rgba(108, 99, 255, 0.15);
+}
+
+/* Keyboard focus: explicit outline + same border tint. */
+.wbgam-select:focus-visible {
+	border-color: var(--wb-gam-primary);
+	outline: 2px solid var(--wb-gam-primary);
+	outline-offset: 2px;
+	box-shadow: 0 0 0 2px rgba(108, 99, 255, 0.15);
+}
+
+/* Status pills */
+.wbgam-pill {
+	display: inline-block;
+	padding: 0.125rem 0.5rem;
+	font-size: 0.6875rem;
+	font-weight: 600;
+	border-radius: 999px;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+}
+
+.wbgam-pill--active {
+	background: #dcfce7;
+	color: #166534;
+}
+
+.wbgam-pill--inactive {
+	background: #f3f4f6;
+	color: #6b7280;
+}
+
+.wbgam-pill--info {
+	background: #dbeafe;
+	color: #1e40af;
+}
+
+.wbgam-pill--warning {
+	background: #fef3c7;
+	color: #92400e;
+}
+
+/* Tables */
+.wbgam-table {
+	width: 100%;
+	border-collapse: collapse;
+	font-size: 0.875rem;
+}
+
+.wbgam-table th {
+	text-align: right;
+	padding: 0.625rem 0.75rem;
+	font-weight: 600;
+	font-size: 0.75rem;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	color: var(--wb-gam-text-muted);
+	border-bottom: 1px solid var(--wb-gam-border);
+	background: #fafafa;
+}
+
+.wbgam-table td {
+	padding: 0.625rem 0.75rem;
+	border-bottom: 1px solid #f3f4f6;
+	color: var(--wb-gam-text);
+}
+
+.wbgam-table tbody tr:hover {
+	background: #fafafe;
+}
+
+/* Horizontal-scroll wrap for tables that don't reflow at narrow viewports.
+   Matches the canonical 640/782/1024 breakpoint discipline — tables collapse
+   into a scrollable region under 640px instead of overflowing the card. */
+.wbgam-table-scroll {
+	overflow-x: auto;
+	-webkit-overflow-scrolling: touch;
+	width: 100%;
+	max-width: 100%;
+}
+
+.wbgam-table-scroll > .wbgam-table {
+	min-width: 640px;
+}
+
+/* Vertical spacing utility for sibling cards on the same page.
+   Matches `gap: 1.25rem` between settings cards (admin-ux-rulebook Rule 4). */
+.wbgam-stack-block {
+	margin-block-end: 1.25rem;
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+   Utility classes to replace inline styles across admin pages.
+   Per admin-ux-rulebook + plan/ARCHITECTURE.md rule "no inline JS or CSS",
+   admin pages must use tokens / utilities, not style="…" attributes.
+   ────────────────────────────────────────────────────────────────────────── */
+
+.wbgam-card-body--flush { padding: 0; }
+.wbgam-mt-sm { margin-block-start: 0.5rem; }
+.wbgam-mt-md { margin-block-start: 1rem; }
+.wbgam-ms-xs { margin-inline-start: 0.25rem; }
+.wbgam-ms-sm { margin-inline-start: 0.5rem; }
+.wbgam-is-hidden { display: none !important; }
+.wbgam-is-link-clean { text-decoration: none; }
+.wbgam-grid-2col {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 0.75rem;
+	max-width: 480px;
+}
+.wbgam-flex-row {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+}
+.wbgam-text-muted { color: var(--wb-gam-muted); }
+.wbgam-text-meta {
+	font-size: 0.75rem;
+	white-space: nowrap;
+}
+.wbgam-icon-xl {
+	font-size: 48px;
+	width: 48px;
+	height: 48px;
+	color: var(--wb-gam-locked);
+}
+.wbgam-icon-xl--muted { color: var(--wb-gam-muted); }
+.wbgam-progress {
+	flex: 1;
+	background: var(--wb-gam-bg-alt, #eee);
+	border-radius: 6px;
+	height: 10px;
+	overflow: hidden;
+}
+.wbgam-progress__bar {
+	height: 100%;
+	background: var(--wb-gam-accent, #6366f1);
+	border-radius: 6px;
+	transition: width 0.3s ease;
+}
+.wbgam-list-narrow {
+	margin: 0;
+	padding-inline-start: 1.25rem;
+	line-height: 1.8;
+}
+.wbgam-cell--minw {
+	min-width: 160px;
+}
+
+/* Settings-page-specific utilities (Pattern A) */
+.wbgam-settings-card__body--cozy { padding: 1.5rem 1.25rem; }
+.wbgam-table-reset {
+	border: none !important;
+	box-shadow: none !important;
+}
+.wbgam-table-reset--full {
+	max-width: 100%;
+}
+.wbgam-section__footer--flat {
+	border: none !important;
+	margin-block-start: 0 !important;
+}
+.wbgam-empty-row {
+	padding: 1.25rem;
+	color: #757575;
+}
+.wbgam-col-actions { width: 80px; }
+
+/* Decorative quick-link nav row used on the dashboard tab. */
+.wbgam-quick-nav {
+	display: flex;
+	gap: 0.75rem;
+	flex-wrap: wrap;
+	margin-block-start: 0.75rem;
+}
+.wbgam-quick-nav__item {
+	border: 1px solid var(--wbgam-border, #e5e7eb);
+	border-radius: 6px;
+	padding: 0.5rem 1rem;
+	text-decoration: none;
+	display: inline-flex;
+	align-items: center;
+	gap: 0.5rem;
+	color: var(--wbgam-text, #1e1e1e);
+}
+.wbgam-quick-nav__item:hover,
+.wbgam-quick-nav__item:focus-visible {
+	border-color: var(--wbgam-primary, #2563eb);
+	color: var(--wbgam-primary, #2563eb);
+}
+
+/* Card with accent left-border (used on Quick Links / featured callouts). */
+.wbgam-card--accent {
+	border-inline-start: 4px solid var(--wbgam-primary, #2563eb);
+}
+
+/* Success card — used by post-Setup-Wizard banner + other "you're all set" callouts. */
+.wbgam-card--success {
+	border-inline-start: 4px solid var(--wbgam-success, #16a34a);
+	background: var(--wbgam-success-soft, #f0fdf4);
+}
+
+.wbgam-card--success .wbgam-card-title .icon-circle-check {
+	color: var(--wbgam-success, #16a34a);
+	margin-inline-end: 6px;
+}
+
+/* Action row — primary + secondary buttons aligned in a flex row, wraps on mobile. */
+.wbgam-actions-row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+	margin: 12px 0 0;
+}
+
+/* Setup-progress checklist on the dashboard. Items are auto-checked from
+   live site state — admins don't manually mark things done. Each row has
+   an icon column, a body, and an action link aligned right. */
+.wbgam-checklist {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.wbgam-checklist__item {
+	display: flex;
+	align-items: flex-start;
+	gap: 12px;
+	padding: 12px 0;
+	border-top: 1px solid #f0f0f1;
+}
+
+.wbgam-checklist__item:first-child {
+	border-top: none;
+	padding-top: 0;
+}
+
+.wbgam-checklist__icon {
+	flex-shrink: 0;
+	font-size: 18px;
+	color: var(--wb-gam-text-muted, #6b7280);
+	margin-top: 2px;
+}
+
+.wbgam-checklist__item.is-done .wbgam-checklist__icon {
+	color: var(--wbgam-success, #16a34a);
+}
+
+.wbgam-checklist__body {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	min-width: 0;
+}
+
+.wbgam-checklist__title {
+	font-size: 13px;
+	font-weight: 600;
+	color: #1d2939;
+}
+
+.wbgam-checklist__item.is-done .wbgam-checklist__title {
+	color: var(--wb-gam-text-muted, #6b7280);
+	text-decoration: line-through;
+	text-decoration-color: rgba(0, 0, 0, 0.18);
+}
+
+.wbgam-checklist__desc {
+	font-size: 12px;
+	color: var(--wb-gam-text-muted, #6b7280);
+	line-height: 1.5;
+}
+
+.wbgam-checklist__action {
+	flex-shrink: 0;
+}
+
+@media (max-width: 640px) {
+	.wbgam-checklist__item {
+		flex-wrap: wrap;
+	}
+
+	.wbgam-checklist__action {
+		margin-right: 30px; /* align under the body, past the icon */
+	}
+}
+
+/* Card header actions — accommodate multiple buttons (Re-run wizard + Dismiss). */
+.wbgam-card-header__actions {
+	display: inline-flex;
+	gap: 6px;
+	flex-wrap: wrap;
+}
+
+/* Collapsible "How this works" help panel — used at the top of admin pages
+   that need a workflow explainer. <details> is closed by default (no JS,
+   no accessibility tree-tax for repeat visitors). */
+.wbgam-help-panel {
+	background: #f8fafc;
+	border: 1px solid #e5e7eb;
+	border-radius: var(--wb-gam-radius, 8px);
+	padding: 12px 16px;
+	margin: 0 0 20px;
+}
+
+.wbgam-help-panel__summary {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	cursor: pointer;
+	font-weight: 600;
+	font-size: 13px;
+	color: #1d2939;
+	user-select: none;
+}
+
+.wbgam-help-panel__summary:hover {
+	color: var(--wb-gam-primary, #2563eb);
+}
+
+.wbgam-help-panel__summary .icon-info {
+	color: var(--wb-gam-primary, #2563eb);
+}
+
+.wbgam-help-panel__body {
+	margin-top: 12px;
+	padding-top: 12px;
+	border-top: 1px solid #f0f0f1;
+	font-size: 13px;
+	line-height: 1.6;
+	color: #374151;
+}
+
+.wbgam-help-panel__body p {
+	margin: 0 0 10px;
+}
+
+.wbgam-help-panel__body p:last-child {
+	margin-bottom: 0;
+}
+
+.wbgam-help-panel__body code {
+	background: #fff;
+	padding: 1px 6px;
+	border: 1px solid #e5e7eb;
+	border-radius: 3px;
+	font-size: 12px;
+}
+
+@media (max-width: 640px) {
+	.wbgam-help-panel {
+		padding: 12px;
+	}
+}
+
+/* Inline status text shown next to the test-event button. */
+.wbgam-test-event-status {
+	font-size: 13px;
+	color: #50575e;
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+}
+
+.wbgam-test-event-status--success {
+	color: #166534;
+}
+
+.wbgam-test-event-status--success .icon-circle-check {
+	color: #16a34a;
+}
+
+.wbgam-test-event-status--error {
+	color: #b32d2e;
+}
+
+.wbgam-test-event-status--pending {
+	color: #6b7280;
+}
+
+.wbgam-test-event-status a {
+	margin-inline-start: 6px;
+	font-weight: 600;
+	text-decoration: none;
+}
+
+@media (max-width: 640px) {
+	.wbgam-test-event-status {
+		width: 100%;
+		margin-top: 8px;
+	}
+}
+
+.wbgam-actions-row .wbgam-btn .icon-external-link,
+.wbgam-actions-row .wbgam-btn .icon-pencil {
+	margin-inline-end: 6px;
+}
+
+@media (max-width: 640px) {
+	.wbgam-actions-row {
+		flex-direction: column;
+		align-items: stretch;
+	}
+
+	.wbgam-actions-row .wbgam-btn {
+		justify-content: center;
+	}
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+   Redemption Store — reward-type form toggle + automation rule-action toggle.
+   Originally lived in inline \3c style> blocks; consolidated here so we ship
+   a single admin stylesheet (admin.css) instead of one per admin page.
+   JS for these classes lives at:
+     assets/js/admin-reward-type-toggle.js
+     assets/js/admin-rule-action-toggle.js
+   ────────────────────────────────────────────────────────────────────────── */
+
+.wb-gam-config-row,
+.wb-gam-cfg-hint,
+.wb-gam-auto-field-row {
+	display: none;
+}
+.wb-gam-config-row.is-visible {
+	display: table-row;
+}
+.wb-gam-cfg-hint.is-visible {
+	display: inline;
+}
+.wb-gam-auto-field-row.is-visible {
+	display: table-row;
+}
+
+@media (max-width: 640px) {
+	.wbgam-card-body table.form-table th,
+	.wbgam-card-body table.form-table td {
+		display: block;
+		width: 100%;
+		padding: 0.5rem 0;
+	}
+	.wb-gam-config-row.is-visible {
+		display: block;
+	}
+}
+
+/* Empty state */
+.wbgam-empty {
+	text-align: center;
+	padding: 3rem 1.5rem;
+	background: #fff;
+	border: 1px dashed var(--wb-gam-border);
+	border-radius: var(--wb-gam-radius);
+}
+
+.wbgam-empty-icon {
+	font-size: 3rem;
+	margin-bottom: 0.75rem;
+}
+
+.wbgam-empty-title {
+	font-size: 1.125rem;
+	font-weight: 600;
+	margin-bottom: 0.375rem;
+	color: var(--wb-gam-text);
+}
+
+.wbgam-empty p {
+	color: var(--wb-gam-text-muted);
+	margin: 0;
+}
+
+/* Badge admin inline form panel */
+.wbgam-badge-form-panel {
+	margin-bottom: 1.5rem;
+}
+
+.wbgam-badge-form-panel .wbgam-card {
+	transition: box-shadow 0.2s;
+}
+
+.wbgam-badge-form-panel .wbgam-card:focus-within {
+	box-shadow: 0 2px 12px rgba(108, 99, 255, 0.08);
+}
+
+/* Badge icon preview */
+.wbgam-badge-icon-preview {
+	width: 64px;
+	height: 64px;
+	border-radius: 50%;
+	background: var(--wb-gam-primary-light);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	overflow: hidden;
+	margin-bottom: 0.5rem;
+}
+
+.wbgam-badge-icon-preview img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	border-radius: 50%;
+}
+
+.wbgam-badge-icon-preview .dashicons {
+	font-size: 28px;
+	width: 28px;
+	height: 28px;
+	color: var(--wb-gam-primary);
+}
+
+/* Top toolbar */
+.wbgam-toolbar {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin-bottom: 1rem;
+	gap: 1rem;
+	flex-wrap: wrap;
+}
+
+@media (max-width: 640px) {
+	.wbgam-toolbar {
+		flex-direction: column;
+		align-items: stretch;
+	}
+}
+
+/* WP admin sidebar — paint the Lucide `award` glyph as the menu icon
+   for the Gamification top-level entry. SettingsPage::register_page
+   passes icon='none' so WordPress emits an empty `.wp-menu-image`
+   div; this rule fills it from the Lucide font (already enqueued on
+   every WB Gamification admin page). Same Unicode point as
+   `.icon-award:before` (\e053) — single source of truth. */
+#adminmenu .toplevel_page_wb-gamification .wp-menu-image:before {
+	content: "\e053";
+	font-family: "lucide";
+	font-size: 18px;
+	font-style: normal;
+	font-weight: normal;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+}
+
+/* ─── Welcome notice + 3rd-party-notice filter ────────────────────────────────
+ * Used by SetupWizard::maybe_show_welcome_notice and by
+ * WB_Gamification::suppress_third_party_notices. Keeps PHP free of inline
+ * style attributes (per coding-rule 3 + admin-ux-rulebook rule 6.14).
+ * ────────────────────────────────────────────────────────────────────────── */
+
+/* Welcome-banner CTA spacing (RTL-aware). */
+.wb-gam-notice .wb-gam-notice__cta {
+	margin-inline-start: 8px;
+}
+
+/* 3rd-party-notice suppression on plugin admin pages.
+ * Keeps: our own (.wb-gam-notice), critical core (.update-nag, .error,
+ * .update-message). Hides: marketing notices and stale "Settings updated"
+ * banners from unrelated plugins on plugin admin pages.
+ *
+ * Scoped to body classes WP emits for our pages — `toplevel_page_wb-gamification`
+ * and any `*_page_wb-gamification*` / `*_page_wb-gam-*` submenu screen id. */
+body.toplevel_page_wb-gamification #wpbody-content > .notice:not(.wb-gam-notice):not(.update-nag):not(.error):not(.update-message),
+body.toplevel_page_wb-gamification #wpbody-content > .updated:not(.wb-gam-notice),
+body[class*="_page_wb-gamification"] #wpbody-content > .notice:not(.wb-gam-notice):not(.update-nag):not(.error):not(.update-message),
+body[class*="_page_wb-gamification"] #wpbody-content > .updated:not(.wb-gam-notice),
+body[class*="_page_wb-gam-"] #wpbody-content > .notice:not(.wb-gam-notice):not(.update-nag):not(.error):not(.update-message),
+body[class*="_page_wb-gam-"] #wpbody-content > .updated:not(.wb-gam-notice) {
+	display: none !important;
+}

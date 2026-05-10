@@ -140,6 +140,18 @@ final class QAPages {
 			'block_attrs'     => '{"columns":3,"showBalance":true,"showStock":true}',
 			'shortcode_attrs' => 'columns="3" show_balance="1" show_stock="1"',
 		),
+		'daily-bonus'          => array(
+			'shortcode'       => '',
+			'title'           => 'Daily Login Bonus',
+			'block_attrs'     => '{}',
+			'shortcode_attrs' => '',
+		),
+		'submit-achievement'   => array(
+			'shortcode'       => '',
+			'title'           => 'Submit Achievement',
+			'block_attrs'     => '{}',
+			'shortcode_attrs' => '',
+		),
 	);
 
 	/**
@@ -167,20 +179,9 @@ final class QAPages {
 	public static function build_post_content( string $block_slug, array $unit ): string {
 		$block_name     = 'wb-gamification/' . $block_slug;
 		$block_attrs    = $unit['block_attrs'] ?: '';
-		$shortcode_open = '[' . $unit['shortcode']
-			. ( '' !== $unit['shortcode_attrs'] ? ' ' . $unit['shortcode_attrs'] : '' )
-			. ']';
+		$has_shortcode  = '' !== ( $unit['shortcode'] ?? '' );
 
-		// Caption text uses HTML-entity brackets so do_shortcode can't
-		// match the literal `[wb_gam_*]` in a heading and render it
-		// twice (once in the heading, once in the wp:shortcode block).
-		$shortcode_caption = '&#91;' . $unit['shortcode']
-			. ( '' !== $unit['shortcode_attrs'] ? ' ' . $unit['shortcode_attrs'] : '' )
-			. '&#93;';
-
-		// Two H2-led sections — block then shortcode — so QA can scroll
-		// vertically and confirm both halves render identically.
-		return implode( "\n", array(
+		$lines = array(
 			"<!-- wp:heading {\"level\":2} -->",
 			"<h2 class=\"wp-block-heading\">Block — <code>wp:{$block_name}</code></h2>",
 			"<!-- /wp:heading -->",
@@ -191,22 +192,46 @@ final class QAPages {
 			"<hr class=\"wp-block-separator has-alpha-channel-opacity\"/>",
 			"<!-- /wp:separator -->",
 			"",
-			"<!-- wp:heading {\"level\":2} -->",
-			"<h2 class=\"wp-block-heading\">Shortcode — <code>{$shortcode_caption}</code></h2>",
-			"<!-- /wp:heading -->",
-			"",
-			"<!-- wp:shortcode -->",
-			"{$shortcode_open}",
-			"<!-- /wp:shortcode -->",
-			"",
-			"<!-- wp:separator -->",
-			"<hr class=\"wp-block-separator has-alpha-channel-opacity\"/>",
-			"<!-- /wp:separator -->",
-			"",
-			"<!-- wp:paragraph {\"className\":\"wb-gam-qa-footer\"} -->",
-			"<p class=\"wb-gam-qa-footer\"><em>Both halves above must render identically. Mismatch = bug.</em></p>",
-			"<!-- /wp:paragraph -->"
-		) );
+		);
+
+		if ( $has_shortcode ) {
+			$shortcode_open = '[' . $unit['shortcode']
+				. ( '' !== $unit['shortcode_attrs'] ? ' ' . $unit['shortcode_attrs'] : '' )
+				. ']';
+
+			// Caption text uses HTML-entity brackets so do_shortcode can't
+			// match the literal `[wb_gam_*]` in a heading and render it
+			// twice (once in the heading, once in the wp:shortcode block).
+			$shortcode_caption = '&#91;' . $unit['shortcode']
+				. ( '' !== $unit['shortcode_attrs'] ? ' ' . $unit['shortcode_attrs'] : '' )
+				. '&#93;';
+
+			$lines = array_merge( $lines, array(
+				"<!-- wp:heading {\"level\":2} -->",
+				"<h2 class=\"wp-block-heading\">Shortcode — <code>{$shortcode_caption}</code></h2>",
+				"<!-- /wp:heading -->",
+				"",
+				"<!-- wp:shortcode -->",
+				"{$shortcode_open}",
+				"<!-- /wp:shortcode -->",
+				"",
+				"<!-- wp:separator -->",
+				"<hr class=\"wp-block-separator has-alpha-channel-opacity\"/>",
+				"<!-- /wp:separator -->",
+				"",
+				"<!-- wp:paragraph {\"className\":\"wb-gam-qa-footer\"} -->",
+				"<p class=\"wb-gam-qa-footer\"><em>Both halves above must render identically. Mismatch = bug.</em></p>",
+				"<!-- /wp:paragraph -->",
+			) );
+		} else {
+			// Block-only unit (no shortcode counterpart). Render the block
+			// once with a footer that says so, instead of an empty shortcode.
+			$lines[] = "<!-- wp:paragraph {\"className\":\"wb-gam-qa-footer\"} -->";
+			$lines[] = "<p class=\"wb-gam-qa-footer\"><em>Block-only unit — no shortcode counterpart.</em></p>";
+			$lines[] = "<!-- /wp:paragraph -->";
+		}
+
+		return implode( "\n", $lines );
 	}
 
 	/**
@@ -229,13 +254,22 @@ final class QAPages {
 			// Without the encoding, every list item renders its full
 			// shortcode inline — turning the index into a gallery
 			// instead of a navigation page.
-			$rows .= sprintf(
-				'<li><a href="%s">%s</a> — <code>wp:wb-gamification/%s</code> + <code>&#91;%s&#93;</code></li>',
-				esc_url( $url ),
-				esc_html( $unit['title'] ),
-				esc_html( $slug ),
-				esc_html( $unit['shortcode'] )
-			);
+			if ( '' !== ( $unit['shortcode'] ?? '' ) ) {
+				$rows .= sprintf(
+					'<li><a href="%s">%s</a> — <code>wp:wb-gamification/%s</code> + <code>&#91;%s&#93;</code></li>',
+					esc_url( $url ),
+					esc_html( $unit['title'] ),
+					esc_html( $slug ),
+					esc_html( $unit['shortcode'] )
+				);
+			} else {
+				$rows .= sprintf(
+					'<li><a href="%s">%s</a> — <code>wp:wb-gamification/%s</code> <em>(block-only)</em></li>',
+					esc_url( $url ),
+					esc_html( $unit['title'] ),
+					esc_html( $slug )
+				);
+			}
 		}
 
 		return implode( "\n", array(

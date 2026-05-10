@@ -100,11 +100,16 @@ final class TransactionalEmailEngine {
 	/**
 	 * Send the level-up email.
 	 *
-	 * @param int $user_id      User who levelled up.
-	 * @param int $old_level_id Previous level row ID (0 if no prior level).
-	 * @param int $new_level_id New level row ID.
+	 * Receives the canonical 1.0.0 wb_gam_level_changed signature: array
+	 * level data, not int IDs. Pre-1.0.0 the hook fired a second time
+	 * with int args; that legacy fire was removed (see LevelEngine docblock)
+	 * and this listener was migrated to match.
+	 *
+	 * @param int        $user_id   User who levelled up.
+	 * @param array|null $new_level New level data (id, name, min_points) or null.
+	 * @param array|null $old_level Previous level data or null.
 	 */
-	public static function on_level_up( int $user_id, int $old_level_id, int $new_level_id ): void {
+	public static function on_level_up( int $user_id, ?array $new_level = null, ?array $old_level = null ): void {
 		if ( ! self::is_enabled( 'level_up' ) ) {
 			return;
 		}
@@ -114,21 +119,13 @@ final class TransactionalEmailEngine {
 			return;
 		}
 
-		// `wb_gam_level_changed` fires AFTER the level meta is updated, so
-		// LevelEngine::get_level_for_user() returns the new level. Old level
-		// is looked up by ID via the all-levels list.
-		$new_level = LevelEngine::get_level_for_user( $user_id );
+		// Fall back to looking the level up if the caller passed null —
+		// keeps the listener resilient to filter-based hook re-fires.
+		if ( null === $new_level ) {
+			$new_level = LevelEngine::get_level_for_user( $user_id );
+		}
 		if ( ! $new_level ) {
 			return;
-		}
-		$old_level = null;
-		if ( $old_level_id ) {
-			foreach ( LevelEngine::get_all_levels_for_user( $user_id ) as $row ) {
-				if ( (int) ( $row['id'] ?? 0 ) === $old_level_id ) {
-					$old_level = $row;
-					break;
-				}
-			}
 		}
 
 		$pt_service   = new PointTypeService();

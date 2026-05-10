@@ -144,6 +144,7 @@ final class CohortSettingsPage {
 					<p class="wbgam-page-header__desc"><?php esc_html_e( 'Duolingo-style weekly leagues where members compete in tiers. Top performers promote, bottom performers demote each cycle.', 'wb-gamification' ); ?></p>
 				</div>
 			</header>
+			<hr class="wp-header-end" />
 			<?php self::render_inline(); ?>
 		</div>
 		<?php
@@ -171,7 +172,7 @@ final class CohortSettingsPage {
 
 		?>
 		<?php if ( isset( $notice_map[ $notice ] ) ) : ?>
-			<div class="wbgam-banner wbgam-banner--<?php echo esc_attr( $notice_map[ $notice ][0] ); ?> wbgam-stack-block" role="status" aria-live="polite"><span class="wbgam-banner__icon icon-check-circle" aria-hidden="true"></span><div class="wbgam-banner__body"><p class="wbgam-banner__desc"><?php echo esc_html( $notice_map[ $notice ][1] ); ?></p></div></div>
+			<div class="wbgam-banner wbgam-banner--<?php echo esc_attr( $notice_map[ $notice ][0] ); ?> wbgam-stack-block" role="status" aria-live="polite"><span class="wbgam-banner__icon icon-circle-check" aria-hidden="true"></span><div class="wbgam-banner__body"><p class="wbgam-banner__desc"><?php echo esc_html( $notice_map[ $notice ][1] ); ?></p></div></div>
 		<?php endif; ?>
 
 			<!-- Settings Card -->

@@ -65,11 +65,14 @@
 }
 
 .wb-gam-leaderboard__name {
-	flex: 1;
+	flex: 1 1 0;
+	min-width: 0;
+	max-width: 100%;
 	font-weight: 500;
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
+	word-break: break-word;
 }
 
 .wb-gam-leaderboard__name a {
@@ -85,4 +88,25 @@
 	font-weight: 600;
 	color: var(--wb-gam-primary);
 	white-space: nowrap;
+	flex-shrink: 0;
+}
+
+/* Mobile breakpoint — keep the row contained at 390px (smallest standard
+ * viewport per skill Part 7.5). The flex track with avatar + name + points
+ * was overflowing horizontally on long names because flex children default
+ * to min-width:auto. The min-width:0 + max-width:100% above already handle
+ * desktop; this block tightens the spacing and font-size on mobile so the
+ * points column always stays readable. */
+@media (max-width: 640px) {
+	.wb-gam-leaderboard__row {
+		gap: 8px;
+	}
+	.wb-gam-leaderboard__name {
+		font-size: 14px;
+		max-width: 100%;
+		overflow: hidden;
+	}
+	.wb-gam-leaderboard__points {
+		font-size: 14px;
+	}
 }

@@ -48,7 +48,7 @@ wb_gam_award_points( $user_id, 50, 'custom_reward' );
 Use **Gutenberg blocks** or **shortcodes** -- no PHP knowledge needed.
 
 **Blocks (recommended):**
-Add any of the 12 blocks in the editor: Hub, Leaderboard, Badge Showcase, Level Progress, Challenges, Streak, Top Members, Kudos Feed, Year Recap, Points History, Earning Guide.
+Add any of the 17 blocks in the editor: Leaderboard, Hub, Member Points, Points History, Badge Showcase, Earning Guide, Daily Bonus, Streak, Challenges, Community Challenges, Cohort Rank, Top Members, Kudos Feed, Submit Achievement, Level Progress, Redemption Store, Year Recap.
 
 **Shortcodes (classic themes):**
 
@@ -145,7 +145,7 @@ Rule Evaluation Engine
   |- KudosEngine   -> peer recognition
        |
 Output Consumers
-  |- Gutenberg blocks (12 blocks)
+  |- Gutenberg blocks (17 blocks)
   |- BuddyPress (profile, directory, activity)
   |- REST API (18 controllers)
   |- Webhooks (Zapier, Make, n8n)

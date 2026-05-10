@@ -38,9 +38,12 @@ final class AbilitiesRegistration {
 	 * @return void
 	 */
 	public static function init(): void {
-		// WP 6.9+ Abilities API.
+		// WP 6.9+ Abilities API. Registration MUST happen on
+		// `wp_abilities_api_init` per core's contract — using the generic
+		// `init` hook triggers a `_doing_it_wrong` notice on every page
+		// load and the abilities silently fail to register.
 		if ( function_exists( 'wp_register_ability' ) ) {
-			add_action( 'init', array( __CLASS__, 'register_abilities' ) );
+			add_action( 'wp_abilities_api_init', array( __CLASS__, 'register_abilities' ) );
 		}
 
 		// Fallback REST endpoint — works on any WP version.

@@ -1,0 +1,449 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>WB Gamification — integrations spotlight</title>
+<link rel="stylesheet" href="_shared.css">
+<style>
+/* ============================================================
+   Integrations spotlight — 1440×810
+   Same brand language as hero-free.html (ink + warm amber +
+   Fraunces italic + Manrope), but reorganized as a populated
+   integration matrix instead of a two-column hero.
+   ============================================================ */
+
+body {
+	background: var(--paper);
+	width: 1440px;
+	height: 900px;
+}
+
+/* Override _shared.css default body sizing so the composition fills the
+   spotlight slot's native 8:5 aspect (1440 × 900) — the previous 810
+   height left a 90px paper-colored band below the window. */
+
+/* Window chrome */
+.window {
+	position: relative;
+	z-index: 2;
+	width: calc(100% - 96px);
+	margin: 48px;
+	height: calc(100% - 96px);
+	min-height: 804px;
+	background: #fff;
+	border: 1px solid var(--frame);
+	border-radius: 14px;
+	box-shadow: 0 24px 64px rgba(26, 20, 16, 0.10);
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+}
+
+.window-bar {
+	display: flex;
+	align-items: center;
+	gap: 14px;
+	padding: 14px 20px;
+	border-bottom: 1px solid var(--frame);
+	background: linear-gradient(180deg, #fff, #fbfaf6);
+}
+.window-dots { display: flex; gap: 6px; }
+.window-dots span {
+	width: 11px; height: 11px; border-radius: 50%;
+}
+.window-dots span:nth-child(1) { background: #f87171; }
+.window-dots span:nth-child(2) { background: #fbbf24; }
+.window-dots span:nth-child(3) { background: #34d399; }
+.window-url {
+	font-family: 'JetBrains Mono', monospace;
+	font-size: 11px;
+	color: var(--ink-mute);
+	letter-spacing: 0.05em;
+	background: var(--paper);
+	border: 1px solid var(--frame);
+	border-radius: 6px;
+	padding: 5px 12px;
+	flex: 1;
+	max-width: 580px;
+	margin: 0 auto;
+	text-align: center;
+}
+.window-meta {
+	font-family: 'JetBrains Mono', monospace;
+	font-size: 10px;
+	color: var(--ink-mute);
+	letter-spacing: 0.12em;
+	text-transform: uppercase;
+}
+
+.window-body {
+	padding: 28px 36px 32px;
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	gap: 18px;
+}
+
+/* Header strip */
+.head-row {
+	display: flex;
+	align-items: flex-end;
+	justify-content: space-between;
+	gap: 24px;
+	padding-bottom: 14px;
+	border-bottom: 1px solid var(--frame);
+}
+.head-eyebrow {
+	font-family: 'JetBrains Mono', monospace;
+	font-size: 11px;
+	font-weight: 500;
+	letter-spacing: 0.18em;
+	text-transform: uppercase;
+	color: var(--brand-deep);
+	margin-bottom: 8px;
+}
+.head-title {
+	font-family: 'Manrope', sans-serif;
+	font-weight: 700;
+	font-size: 26px;
+	line-height: 1.15;
+	letter-spacing: -0.01em;
+	color: var(--ink);
+}
+.head-title em {
+	font-family: 'Fraunces', serif;
+	font-style: italic;
+	font-weight: 600;
+	color: var(--brand-deep);
+}
+.head-subtitle {
+	font-family: 'Manrope', sans-serif;
+	font-size: 14px;
+	color: var(--ink-soft);
+	margin-top: 4px;
+}
+.head-stats {
+	display: flex;
+	gap: 22px;
+	align-items: flex-end;
+}
+.head-stat .v {
+	font-family: 'Fraunces', serif;
+	font-weight: 600;
+	font-size: 30px;
+	color: var(--ink);
+	line-height: 1;
+}
+.head-stat .l {
+	font-family: 'JetBrains Mono', monospace;
+	font-size: 10px;
+	letter-spacing: 0.12em;
+	text-transform: uppercase;
+	color: var(--ink-mute);
+	margin-top: 4px;
+}
+.head-stat .v.brand { color: var(--brand-deep); }
+
+/* Grid */
+.grid {
+	display: grid;
+	grid-template-columns: repeat(4, 1fr);
+	gap: 12px;
+	flex: 1;
+}
+
+/* Integration tile */
+.tile {
+	background: #fff;
+	border: 1px solid var(--frame);
+	border-radius: 10px;
+	padding: 14px 16px;
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	position: relative;
+	min-height: 120px;
+}
+.tile.active {
+	border-color: rgba(217, 119, 6, 0.35);
+	background: linear-gradient(180deg, #fffbf2, #fff);
+}
+.tile.soon {
+	border-style: dashed;
+	background: var(--paper);
+}
+
+.tile-head {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}
+.tile-icon {
+	width: 32px;
+	height: 32px;
+	border-radius: 7px;
+	background: var(--paper-warm);
+	color: var(--ink);
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	font-family: 'Fraunces', serif;
+	font-style: italic;
+	font-weight: 600;
+	font-size: 16px;
+	flex-shrink: 0;
+}
+.tile.active .tile-icon { background: var(--brand); color: #fff; }
+.tile.soon .tile-icon { background: var(--ink); color: var(--paper); }
+
+.tile-name {
+	font-family: 'Manrope', sans-serif;
+	font-weight: 600;
+	font-size: 14px;
+	color: var(--ink);
+	letter-spacing: -0.005em;
+	flex: 1;
+	min-width: 0;
+}
+
+.tile-status {
+	font-family: 'JetBrains Mono', monospace;
+	font-size: 9px;
+	font-weight: 700;
+	letter-spacing: 0.12em;
+	text-transform: uppercase;
+	padding: 3px 7px;
+	border-radius: 4px;
+}
+.status-active { color: #166534; background: #d1fae5; }
+.status-detected { color: var(--ink-mute); background: var(--paper-warm); }
+.status-soon { color: var(--brand-deep); background: var(--gold-tint); }
+
+.tile-rule {
+	font-family: 'JetBrains Mono', monospace;
+	font-size: 10.5px;
+	color: var(--ink-soft);
+	line-height: 1.55;
+}
+.tile-rule .pts {
+	color: var(--brand-deep);
+	font-weight: 700;
+}
+
+/* Special "developer" tile spans 2 columns */
+.tile-dev {
+	grid-column: span 2;
+	background: var(--ink);
+	color: var(--paper);
+	border-color: var(--ink);
+}
+.tile-dev .tile-name { color: var(--paper); }
+.tile-dev .tile-icon {
+	background: var(--brand);
+	color: #fff;
+}
+.tile-dev .tile-rule { color: rgba(253, 249, 243, 0.78); }
+.tile-dev .tile-rule .pts { color: var(--accent); }
+.tile-dev .tile-status { color: var(--ink); background: var(--accent); }
+.tile-dev-rules {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	font-family: 'JetBrains Mono', monospace;
+	font-size: 10.5px;
+	color: rgba(253, 249, 243, 0.85);
+}
+.tile-dev-rules .row::before {
+	content: "→ ";
+	color: var(--accent);
+	margin-right: 4px;
+}
+
+/* Footer hint */
+.footer {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 24px;
+	padding-top: 14px;
+	border-top: 1px dashed var(--frame);
+	font-family: 'Manrope', sans-serif;
+	font-size: 13px;
+	color: var(--ink-soft);
+}
+.footer strong {
+	color: var(--ink);
+	font-weight: 600;
+}
+.footer-pills {
+	display: flex;
+	gap: 6px;
+}
+.footer-pill {
+	font-family: 'JetBrains Mono', monospace;
+	font-size: 10px;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	background: var(--paper);
+	border: 1px solid var(--frame);
+	color: var(--ink);
+	padding: 5px 10px;
+	border-radius: 999px;
+}
+</style>
+</head>
+<body>
+
+<div class="hero-frame"></div>
+<div class="hero-bg-numeral" style="top: -200px; right: -120px;">10</div>
+
+<div class="window">
+	<div class="window-bar">
+		<div class="window-dots"><span></span><span></span><span></span></div>
+		<div class="window-url">community.example.com / wp-admin / WB&nbsp;Gamification → Settings → Integrations</div>
+		<div class="window-meta">Auto-detected</div>
+	</div>
+
+	<div class="window-body">
+
+		<!-- Header strip -->
+		<div class="head-row">
+			<div>
+				<div class="head-eyebrow">Integration Status</div>
+				<h1 class="head-title">10 integrations <em>auto-light up.</em></h1>
+				<div class="head-subtitle">Install any supported plugin → triggers + point rules appear in this list. No code, no manual mapping.</div>
+			</div>
+			<div class="head-stats">
+				<div class="head-stat"><div class="v brand">3</div><div class="l">Active now</div></div>
+				<div class="head-stat"><div class="v">5</div><div class="l">Detected</div></div>
+				<div class="head-stat"><div class="v">2</div><div class="l">Coming</div></div>
+			</div>
+		</div>
+
+		<!-- Tile grid -->
+		<div class="grid">
+
+			<!-- ROW 1: ACTIVE -->
+			<div class="tile active">
+				<div class="tile-head">
+					<span class="tile-icon">B</span>
+					<span class="tile-name">BuddyPress</span>
+					<span class="tile-status status-active">Active</span>
+				</div>
+				<div class="tile-rule">activity_update <span class="pts">+10</span><br>group_join <span class="pts">+25</span></div>
+			</div>
+
+			<div class="tile active">
+				<div class="tile-head">
+					<span class="tile-icon">W</span>
+					<span class="tile-name">WooCommerce</span>
+					<span class="tile-status status-active">Active</span>
+				</div>
+				<div class="tile-rule">order_completed <span class="pts">+50</span><br>review_left <span class="pts">+15</span></div>
+			</div>
+
+			<div class="tile active">
+				<div class="tile-head">
+					<span class="tile-icon">L</span>
+					<span class="tile-name">LearnDash</span>
+					<span class="tile-status status-active">Active</span>
+				</div>
+				<div class="tile-rule">course_completed <span class="pts">+100</span><br>quiz_passed <span class="pts">+25</span></div>
+			</div>
+
+			<div class="tile">
+				<div class="tile-head">
+					<span class="tile-icon">b</span>
+					<span class="tile-name">bbPress</span>
+					<span class="tile-status status-detected">Detected</span>
+				</div>
+				<div class="tile-rule">topic_started <span class="pts">+10</span><br>helpful_reply <span class="pts">+5</span></div>
+			</div>
+
+			<!-- ROW 2: DETECTED -->
+			<div class="tile">
+				<div class="tile-head">
+					<span class="tile-icon">L</span>
+					<span class="tile-name">LifterLMS</span>
+					<span class="tile-status status-detected">Detected</span>
+				</div>
+				<div class="tile-rule">lesson_completed <span class="pts">+15</span><br>certificate <span class="pts">+50</span></div>
+			</div>
+
+			<div class="tile">
+				<div class="tile-head">
+					<span class="tile-icon">E</span>
+					<span class="tile-name">Elementor</span>
+					<span class="tile-status status-detected">Detected</span>
+				</div>
+				<div class="tile-rule">form_submitted <span class="pts">+5</span><br>landing_visit <span class="pts">+1</span></div>
+			</div>
+
+			<div class="tile">
+				<div class="tile-head">
+					<span class="tile-icon">G</span>
+					<span class="tile-name">GiveWP</span>
+					<span class="tile-status status-detected">Detected</span>
+				</div>
+				<div class="tile-rule">donation_made <span class="pts">+75</span><br>recurring_set <span class="pts">+25</span></div>
+			</div>
+
+			<div class="tile">
+				<div class="tile-head">
+					<span class="tile-icon">$</span>
+					<span class="tile-name">Easy Digital&nbsp;Downloads</span>
+					<span class="tile-status status-detected">Detected</span>
+				</div>
+				<div class="tile-rule">purchase <span class="pts">+50</span><br>review <span class="pts">+10</span></div>
+			</div>
+
+			<!-- ROW 3: COMING SOON + DEVELOPER -->
+			<div class="tile soon">
+				<div class="tile-head">
+					<span class="tile-icon">J</span>
+					<span class="tile-name">Jetonomy</span>
+					<span class="tile-status status-soon">Soon</span>
+				</div>
+				<div class="tile-rule">post_created <span class="pts">+20</span><br>reply_accepted <span class="pts">+15</span></div>
+			</div>
+
+			<div class="tile soon">
+				<div class="tile-head">
+					<span class="tile-icon">M</span>
+					<span class="tile-name">WPMediaVerse</span>
+					<span class="tile-status status-soon">Soon</span>
+				</div>
+				<div class="tile-rule">media_uploaded <span class="pts">+10</span><br>album_shared <span class="pts">+25</span></div>
+			</div>
+
+			<div class="tile tile-dev">
+				<div class="tile-head">
+					<span class="tile-icon">{}</span>
+					<span class="tile-name">Bring your own integration</span>
+					<span class="tile-status">Developer</span>
+				</div>
+				<div class="tile-dev-rules">
+					<div class="row"><code>do_action('wb_gam_award_points', $user, 'your_action', 25);</code></div>
+					<div class="row">Register a custom action via WP Abilities, REST, or filter.</div>
+					<div class="row">Same engine: events, badges, levels, leaderboards, streaks <span class="pts">→ free.</span></div>
+				</div>
+			</div>
+
+		</div>
+
+		<!-- Footer hint strip -->
+		<div class="footer">
+			<div><strong>Developer-friendly</strong> — every action above is just a <code style="font-family:'JetBrains Mono',monospace;background:var(--paper-warm);padding:2px 6px;border-radius:4px;">do_action</code> call. Add yours in 3 lines.</div>
+			<div class="footer-pills">
+				<span class="footer-pill">WP Abilities API</span>
+				<span class="footer-pill">REST</span>
+				<span class="footer-pill">WP-CLI</span>
+				<span class="footer-pill">Filters</span>
+			</div>
+		</div>
+
+	</div>
+</div>
+
+</body>
+</html>
