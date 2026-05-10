@@ -14,7 +14,13 @@
 
 body {
 	background: var(--paper);
+	width: 1440px;
+	height: 900px;
 }
+
+/* Override _shared.css default body sizing so the composition fills the
+   spotlight slot's native 8:5 aspect (1440 × 900) — the previous 810
+   height left a 90px paper-colored band below the window. */
 
 /* Window chrome */
 .window {
@@ -23,6 +29,7 @@ body {
 	width: calc(100% - 96px);
 	margin: 48px;
 	height: calc(100% - 96px);
+	min-height: 804px;
 	background: #fff;
 	border: 1px solid var(--frame);
 	border-radius: 14px;
