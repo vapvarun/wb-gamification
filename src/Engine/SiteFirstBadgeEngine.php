@@ -71,23 +71,20 @@ final class SiteFirstBadgeEngine {
 	/**
 	 * Check for first-champion badge on level change.
 	 *
-	 * LevelEngine fires: do_action( 'wb_gam_level_changed', $user_id, $old_level_id, $new_level_id )
+	 * LevelEngine fires the canonical 1.0.0 signature: array level data, not
+	 * int IDs. The legacy int variant was removed in 1.0.0 — listeners get
+	 * `$new_level['name']` directly so no DB lookup is needed.
 	 *
-	 * @param int $user_id      User who levelled up.
-	 * @param int $old_level_id Previous level ID.
-	 * @param int $new_level_id New level ID.
+	 * @param int        $user_id   User who levelled up.
+	 * @param array|null $new_level New level data (id, name, min_points) or null.
+	 * @param array|null $old_level Previous level data or null.
 	 */
-	public static function on_level_changed( int $user_id, int $old_level_id, int $new_level_id ): void {
-		global $wpdb;
+	public static function on_level_changed( int $user_id, ?array $new_level = null, ?array $old_level = null ): void {
+		if ( ! is_array( $new_level ) || empty( $new_level['name'] ) ) {
+			return;
+		}
 
-		$level_name = $wpdb->get_var( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
-			$wpdb->prepare(
-				"SELECT name FROM {$wpdb->prefix}wb_gam_levels WHERE id = %d",
-				$new_level_id
-			)
-		);
-
-		if ( 'Champion' === $level_name ) {
+		if ( 'Champion' === $new_level['name'] ) {
 			self::maybe_award( 'first_champion', $user_id );
 		}
 	}
