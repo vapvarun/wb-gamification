@@ -61,11 +61,17 @@ class DoctorCommand {
 	 * [--fix]
 	 * : Auto-fix issues that can be repaired (re-seed levels, badges, etc.).
 	 *
+	 * [--recompute-leaderboard]
+	 * : Force a fresh leaderboard snapshot AND invalidate every cached
+	 *   leaderboard / rank entry. Useful when the cached snapshot has
+	 *   drifted from the live ledger after a bulk import / migration / outage.
+	 *
 	 * ## EXAMPLES
 	 *
 	 *     wp wb-gamification doctor
 	 *     wp wb-gamification doctor --verbose
 	 *     wp wb-gamification doctor --fix
+	 *     wp wb-gamification doctor --recompute-leaderboard
 	 *
 	 * @param array $args       Positional arguments (unused).
 	 * @param array $assoc_args Associative arguments.
@@ -73,6 +79,18 @@ class DoctorCommand {
 	public function __invoke( array $args, array $assoc_args ): void {
 		$this->verbose = WP_CLI\Utils\get_flag_value( $assoc_args, 'verbose', false );
 		$this->fix     = WP_CLI\Utils\get_flag_value( $assoc_args, 'fix', false );
+
+		// Short-circuit one-shot mode: --recompute-leaderboard rebuilds the
+		// snapshot + invalidates every cache key, then exits without running
+		// the full diagnostic suite. Designed for the "leaderboard wrong"
+		// support ticket — admin runs this, snapshot rebuilds in seconds.
+		if ( WP_CLI\Utils\get_flag_value( $assoc_args, 'recompute-leaderboard', false ) ) {
+			WP_CLI::line( WP_CLI::colorize( '%BWB Gamification — leaderboard recompute%n' ) );
+			\WBGam\Engine\LeaderboardEngine::write_snapshot();
+			\WBGam\Engine\LeaderboardEngine::invalidate_cache();
+			WP_CLI::success( 'Leaderboard snapshot rebuilt and cache invalidated.' );
+			return;
+		}
 
 		WP_CLI::line( '' );
 		WP_CLI::line( WP_CLI::colorize( '%BWWB Gamification Doctor v' . WB_GAM_VERSION . '%n' ) );

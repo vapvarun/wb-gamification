@@ -183,10 +183,14 @@ class KudosController extends WP_REST_Controller {
 		$result = KudosEngine::send( $giver_id, $receiver_id, $message );
 
 		if ( is_wp_error( $result ) ) {
+			$code = $result->get_error_code();
+			// Cooldown / rate-limit responses use HTTP 429 per RFC 6585; other
+			// errors (self-kudos, invalid user, db error) stay at 422.
+			$status = ( 'wb_gam_kudos_cooldown' === $code ) ? 429 : 422;
 			return new WP_Error(
-				$result->get_error_code(),
+				$code,
 				$result->get_error_message(),
-				array( 'status' => 422 )
+				array( 'status' => $status )
 			);
 		}
 
