@@ -526,26 +526,28 @@ final class SettingsPage {
 
 		$bp_active = function_exists( 'buddypress' );
 		?>
-		<header class="wbgam-settings-topbar">
-			<div class="wbgam-settings-topbar__brand">
-				<span class="wbgam-settings-topbar__logo icon-award" aria-hidden="true"></span>
-				<div class="wbgam-settings-topbar__text">
-					<h1 class="wbgam-settings-topbar__title">
-						<?php esc_html_e( 'WB Gamification', 'wb-gamification' ); ?>
-						<span class="wbgam-settings-topbar__version">v<?php echo esc_html( WB_GAM_VERSION ); ?></span>
-					</h1>
-					<p class="wbgam-settings-topbar__desc">
-						<?php esc_html_e( 'Points, badges, levels, leaderboards, challenges and streaks — configure your community gamification engine.', 'wb-gamification' ); ?>
-					</p>
+		<div class="wrap wbgam-wrap" id="wb-gam-settings">
+			<header class="wbgam-page-header wbgam-settings-topbar">
+				<div class="wbgam-settings-topbar__brand">
+					<span class="wbgam-settings-topbar__logo icon-award" aria-hidden="true"></span>
+					<div class="wbgam-settings-topbar__text">
+						<h1 class="wbgam-settings-topbar__title">
+							<?php esc_html_e( 'WB Gamification', 'wb-gamification' ); ?>
+							<span class="wbgam-settings-topbar__version">v<?php echo esc_html( WB_GAM_VERSION ); ?></span>
+						</h1>
+						<p class="wbgam-settings-topbar__desc">
+							<?php esc_html_e( 'Points, badges, levels, leaderboards, challenges and streaks — configure your community gamification engine.', 'wb-gamification' ); ?>
+						</p>
+					</div>
 				</div>
-			</div>
-			<div class="wbgam-settings-topbar__actions">
-				<a class="wbgam-btn wbgam-btn--secondary" href="<?php echo esc_url( admin_url( 'admin.php?page=wb-gamification-setup' ) ); ?>">
-					<span class="icon-settings" aria-hidden="true"></span>
-					<?php esc_html_e( 'Run Setup Wizard', 'wb-gamification' ); ?>
-				</a>
-			</div>
-		</header>
+				<div class="wbgam-settings-topbar__actions">
+					<a class="wbgam-btn wbgam-btn--secondary" href="<?php echo esc_url( admin_url( 'admin.php?page=wb-gamification-setup' ) ); ?>">
+						<span class="icon-settings" aria-hidden="true"></span>
+						<?php esc_html_e( 'Run Setup Wizard', 'wb-gamification' ); ?>
+					</a>
+				</div>
+			</header>
+			<hr class="wp-header-end" />
 		<div class="wbgam-settings-wrap">
 
 			<!-- Sidebar -->
@@ -671,6 +673,7 @@ final class SettingsPage {
 			</div>
 
 		</div>
+		</div><!-- /.wrap.wbgam-wrap -->
 		<?php
 	}
 
