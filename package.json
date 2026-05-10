@@ -1,12 +1,16 @@
 {
 	"name": "wb-gamification",
-	"version": "1.0.0",
+	"version": "1.2.0",
 	"private": true,
 	"description": "Complete gamification plugin for BuddyPress and WordPress.",
 	"author": "Wbcom Designs",
 	"license": "GPL-2.0-or-later",
 	"scripts": {
 		"build": "node bin/build-blocks.js",
+		"build:rtl": "node bin/build-rtl.js",
+		"build:min": "node bin/build-min.js",
+		"build:pot": "wp i18n make-pot . languages/wb-gamification.pot --slug=wb-gamification --domain=wb-gamification --exclude=node_modules,vendor,tests,plan,audit,docs,examples,marketing,dist,build,.git",
+		"build:release": "node bin/build-blocks.js && node bin/build-rtl.js && node bin/build-min.js",
 		"start": "wp-scripts start",
 		"format": "wp-scripts format",
 		"lint:js": "wp-scripts lint-js",
@@ -15,7 +19,9 @@
 	},
 	"devDependencies": {
 		"@wordpress/icons": "^9.49.0",
-		"@wordpress/scripts": "^27.0.0"
+		"@wordpress/scripts": "^27.0.0",
+		"clean-css": "^5.3.3",
+		"rtlcss": "^4.3.0"
 	},
 	"engines": {
 		"node": ">=20.0.0",

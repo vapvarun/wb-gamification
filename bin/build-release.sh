@@ -119,58 +119,108 @@ else
 fi
 # ─── End agent-smoke gate ───────────────────────────────────────────────────
 
-# EXIT trap — always restore composer dev deps + return to ROOT_DIR.
-# Without this, an early failure (or a successful build that exits while CWD is
-# dist/) leaves vendor/ in --no-dev state, breaking the next local PHPUnit /
-# PHPStan / WPCS run for the developer.
-RESTORE_COMPOSER_DEV=0
-restore_composer_dev() {
-    local rc=$?
-    if [ "${RESTORE_COMPOSER_DEV}" -eq 1 ] && [ -f "${ROOT_DIR}/composer.json" ]; then
-        ( cd "${ROOT_DIR}" && composer install --quiet ) || true
-    fi
-    return "${rc}"
-}
-trap restore_composer_dev EXIT
-
-# Ensure production deps + build artefacts are fresh.
-if [ -f "${ROOT_DIR}/composer.json" ]; then
-    RESTORE_COMPOSER_DEV=1
-    composer install --no-dev --optimize-autoloader --quiet
-fi
+# Regenerate build artefacts from current source. The npm script chains:
+# blocks → rtl → min. POT generation uses wp-cli when available.
 if [ -f "${ROOT_DIR}/package.json" ] && command -v npm >/dev/null 2>&1; then
     if [ ! -d "${ROOT_DIR}/node_modules" ]; then
         npm install --silent
     fi
-    npm run build --silent
+    npm run build:release --silent
+    if command -v wp >/dev/null 2>&1; then
+        npm run build:pot --silent || true
+    else
+        echo "  WARN: wp-cli not on PATH; using committed languages/wb-gamification.pot."
+    fi
 fi
 
-# Stage the release in dist/<slug>/
+# Stage the release. Excludes live in a heredoc-fed temp file so the
+# manifest reads as a single flat list (matches the jetonomy build
+# script). Composer's prod-only install runs IN STAGING — keeps the
+# developer's source vendor/ in --dev state for next local PHPUnit run.
 STAGE="${DIST_DIR}/${SLUG}"
 rm -rf "${STAGE}" "${DIST_DIR}/${SLUG}-${VERSION}.zip"
 mkdir -p "${STAGE}"
 
-rsync -a --delete \
-    --exclude='.git/' --exclude='.github/' --exclude='.gitignore' --exclude='.gitattributes' \
-    --exclude='.editorconfig' --exclude='.distignore' --exclude='.DS_Store' --exclude='.phpunit.result.cache' \
-    --exclude='.idea/' --exclude='.vscode/' \
-    --exclude='node_modules/' \
-    --exclude='tests/' --exclude='plan/' --exclude='docs/' --exclude='audit/' --exclude='examples/' \
-    --exclude='dist/' --exclude='bin/' --exclude='src/' \
-    --exclude='*.map' --exclude='package.json' --exclude='package-lock.json' \
-    --exclude='composer.json' --exclude='composer.lock' \
-    --exclude='webpack.config.js' --exclude='phpcs.xml*' --exclude='.phpcs.xml*' \
-    --exclude='phpstan.neon*' --exclude='phpstan-bootstrap.php' --exclude='phpstan-stubs/' \
-    --exclude='phpunit.xml*' \
-    --exclude='CLAUDE.md' --exclude='*.log' --exclude='wp-content/' \
-    "${ROOT_DIR}/" "${STAGE}/"
+EXCLUDES_FILE="$(mktemp)"
+# shellcheck disable=SC2064
+trap "rm -f '${EXCLUDES_FILE}'" EXIT
+cat > "${EXCLUDES_FILE}" <<'EXCLUDES_EOF'
+# VCS / IDE noise
+.git/
+.github/
+.gitignore
+.gitattributes
+.editorconfig
+.distignore
+.DS_Store
+.idea/
+.vscode/
+.husky/
+.claude/
+.claude-tmp/
+.superpowers/
+.wppqa-out/
+.playwright-mcp/
+
+# Build tooling — kept out of the customer zip
+bin/
+tests/
+node_modules/
+package.json
+package-lock.json
+composer.lock
+webpack.config.js
+phpcs.xml
+phpcs.xml.dist
+.phpcs.xml
+.phpcs.xml.dist
+phpstan.neon
+phpstan.neon.dist
+phpstan-*.neon
+phpstan-*.neon.dist
+phpstan-bootstrap.php
+phpstan-stubs/
+phpunit.xml
+phpunit.xml.dist
+.phpunit.result.cache
+
+# Internal documentation
+docs/
+plan/
+audit/
+examples/
+marketing/
+*.md
+
+# Output + log noise
+dist/
+*.map
+*.log
+wp-content/
+verify-*.png
+verify-*.jpg
+EXCLUDES_EOF
+
+# What stays in the zip:
+#   • src/ build/ assets/ languages/ templates/ includes/ sdk/ integrations/
+#   • vendor/ wholesale (composer prod deps + EDD SL SDK, no per-file excludes)
+#   • wb-gamification.php uninstall.php readme.txt
+#
+# composer.json IS included — needed for the staging composer install
+# below; deleted after vendor/ regenerates so customers don't see it.
+rsync -a --delete --exclude-from="${EXCLUDES_FILE}" "${ROOT_DIR}/" "${STAGE}/"
+
+if [ -f "${STAGE}/composer.json" ]; then
+    pushd "${STAGE}" > /dev/null
+    composer install --no-dev --optimize-autoloader --quiet
+    # Drop both manifests now that vendor/ is built — customers don't need them.
+    rm -f composer.json composer.lock
+    popd > /dev/null
+fi
 
 ( cd "${DIST_DIR}" && zip -qr "${SLUG}-${VERSION}.zip" "${SLUG}" )
 ZIP_PATH="${DIST_DIR}/${SLUG}-${VERSION}.zip"
 SIZE_KB=$(($(wc -c < "${ZIP_PATH}") / 1024))
-
-# Composer dev deps restored automatically by the EXIT trap above. No explicit
-# restore call here — the trap handles success and failure paths uniformly.
 
 echo "→ ${ZIP_PATH} (${SIZE_KB} KB)"
 echo "→ Next: extract to a tmp dir + run \`wp plugin check\` per release-gate (Part 17.7.3)."
