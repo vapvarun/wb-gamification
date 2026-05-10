@@ -115,7 +115,12 @@ final class WB_Gamification {
 	}
 
 	private function init_hooks(): void {
-		add_action( 'init', array( $this, 'load_textdomain' ) );
+		// load_plugin_textdomain() is no longer needed — WordPress 4.6+ auto-
+		// loads translations for plugins hosted on WordPress.org based on the
+		// Text Domain header. For Wbcom-distributed plugins the .pot ships in
+		// languages/ and i18n falls back to the file-system loader.
+		// (Leaving load_textdomain registered triggers PluginCheck's
+		// DiscouragedFunctions sniff with no benefit.)
 		add_action( 'init', array( $this, 'handle_unsubscribe' ) );
 		add_action( 'rest_api_init', array( $this, 'register_routes' ) );
 		add_action( 'init', array( $this, 'register_blocks' ) );
@@ -211,9 +216,8 @@ final class WB_Gamification {
 		exit;
 	}
 
-	public function load_textdomain(): void {
-		load_plugin_textdomain( 'wb-gamification', false, WB_GAM_PATH . 'languages' );
-	}
+	// load_textdomain() removed — superseded by WP 4.6+ auto-loader. See
+	// register_hooks() comment above for details.
 
 	public function register_routes(): void {
 		( new MembersController() )->register_routes();
