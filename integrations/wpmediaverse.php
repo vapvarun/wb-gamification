@@ -30,6 +30,28 @@ if ( ! defined( 'MVS_VERSION' ) ) {
 
 $pro_active = defined( 'MVS_PRO_VERSION' );
 
+if ( ! function_exists( 'wb_gam_mvs_media_author' ) ) {
+	/**
+	 * Resolve a MediaVerse media item's author.
+	 *
+	 * Used by reaction/comment/favorite triggers where the hook fires with the
+	 * *actor* user_id but the gamification award goes to the media *owner*.
+	 * The MediaRepository service is a non-static class on the container —
+	 * resolving through the container is the documented Pro-boundary pattern.
+	 *
+	 * @param int $media_id Media post ID.
+	 * @return int Author user ID (0 on miss).
+	 */
+	function wb_gam_mvs_media_author( int $media_id ): int {
+		if ( ! class_exists( '\WPMediaVerse\Core\Plugin' ) ) {
+			return 0;
+		}
+		$container = \WPMediaVerse\Core\Plugin::container();
+		$repo      = $container ? $container->get( 'media_repository' ) : null;
+		return $repo ? (int) $repo->get_author( $media_id ) : 0;
+	}
+}
+
 $free_triggers = array(
 
 	/*
@@ -43,14 +65,16 @@ $free_triggers = array(
 		'label'             => __( 'Upload a photo', 'wb-gamification' ),
 		'description'       => __( 'Awarded when a member uploads a photo or video.', 'wb-gamification' ),
 		'hook'              => 'mvs_media_uploaded',
-		'user_callback'     => function ( int $media_id, array $file_data ): int {
-			return \WPMediaVerse\Repository\MediaRepository::get_author( $media_id );
+		// Signature (MVS 1.2.3+): ($media_id, $file_data, $user_id, $media_type).
+		'user_callback'     => function ( int $media_id, array $file_data, int $user_id = 0, string $media_type = '' ): int {
+			return $user_id ?: (int) ( $file_data['user_id'] ?? 0 );
 		},
-		'metadata_callback' => function ( int $media_id, array $file_data ): array {
+		'metadata_callback' => function ( int $media_id, array $file_data, int $user_id = 0, string $media_type = '' ): array {
 			return array(
 				'media_id'   => $media_id,
-				'media_type' => \WPMediaVerse\Repository\MediaRepository::get( $media_id, 'media_type' ),
-				'file_type'  => isset( $file_data['type'] ) ? $file_data['type'] : '',
+				'media_type' => $media_type ?: (string) ( $file_data['media_type'] ?? '' ),
+				'file_type'  => (string) ( $file_data['file_type'] ?? $file_data['mime'] ?? '' ),
+				'is_first'   => ! empty( $file_data['is_first'] ),
 			);
 		},
 		'default_points'    => 10,
@@ -62,11 +86,12 @@ $free_triggers = array(
 
 	array(
 		'id'             => 'mvs_create_album',
-		'label'          => __( 'Create an album', 'wb-gamification' ),
-		'description'    => __( 'Awarded when a member creates a new album.', 'wb-gamification' ),
+		'label'          => __( 'Add items to an album', 'wb-gamification' ),
+		'description'    => __( 'Awarded when a member adds media to an album (rewards the actor, not just the album owner).', 'wb-gamification' ),
 		'hook'           => 'mvs_album_items_added',
-		'user_callback'  => function ( int $album_id, array $media_ids, int $added ): int {
-			return \WPMediaVerse\Repository\MediaRepository::get_author( $album_id );
+		// Signature (MVS 1.2.3+): ($album_id, $actor_id, $media_ids, $added).
+		'user_callback'  => function ( int $album_id, int $actor_id, array $media_ids, int $added ): int {
+			return $actor_id;
 		},
 		'default_points' => 15,
 		'category'       => 'media',
@@ -87,7 +112,7 @@ $free_triggers = array(
 		'description'       => __( 'Awarded to the media owner when someone likes their photo.', 'wb-gamification' ),
 		'hook'              => 'mvs_reaction_added',
 		'user_callback'     => function ( int $media_id, int $user_id, string $type ): int {
-			$author = \WPMediaVerse\Repository\MediaRepository::get_author( $media_id );
+			$author = wb_gam_mvs_media_author( $media_id );
 			// Don't award for liking your own content.
 			return ( $author && $author !== $user_id ) ? $author : 0;
 		},
@@ -111,7 +136,7 @@ $free_triggers = array(
 		'description'       => __( 'Awarded to the media owner when someone comments on their photo.', 'wb-gamification' ),
 		'hook'              => 'mvs_comment_created',
 		'user_callback'     => function ( int $media_id, int $user_id, int $comment_id, string $content ): int {
-			$author = \WPMediaVerse\Repository\MediaRepository::get_author( $media_id );
+			$author = wb_gam_mvs_media_author( $media_id );
 			return ( $author && $author !== $user_id ) ? $author : 0;
 		},
 		'metadata_callback' => function ( int $media_id, int $user_id, int $comment_id, string $content ): array {
@@ -157,7 +182,7 @@ $free_triggers = array(
 			if ( 'added' !== $action ) {
 				return 0;
 			}
-			$author = \WPMediaVerse\Repository\MediaRepository::get_author( $media_id );
+			$author = wb_gam_mvs_media_author( $media_id );
 			return ( $author && $author !== $user_id ) ? $author : 0;
 		},
 		'default_points' => 2,
@@ -276,46 +301,31 @@ if ( $pro_active ) {
 			'repeatable'     => true,
 		),
 
+		// Single per-rank trigger replaces the previous 1st/2nd/3rd hard-coded
+		// triggers. Uses MVS Pro 1.2.3+ `mvs_challenge_winner_named` action
+		// fired once per top-3 rank. Points scale with rank via points_callback.
 		array(
-			'id'             => 'mvs_challenge_win_1st',
-			'label'          => __( 'Win 1st place in a photo challenge', 'wb-gamification' ),
-			'description'    => __( 'Awarded to the 1st place winner of a photo challenge.', 'wb-gamification' ),
-			'hook'           => 'mvs_challenge_finalized',
-			'user_callback'  => function ( int $challenge_id, array $results ): int {
-				return isset( $results['winner_1st'] ) ? (int) $results['winner_1st'] : 0;
+			'id'                => 'mvs_challenge_winner',
+			'label'             => __( 'Place in a photo challenge', 'wb-gamification' ),
+			'description'       => __( 'Awarded to the top-3 finishers of a photo challenge (200/100/50 points for 1st/2nd/3rd).', 'wb-gamification' ),
+			'hook'              => 'mvs_challenge_winner_named',
+			'user_callback'     => function ( int $challenge_id, int $user_id, int $rank ): int {
+				return $user_id;
 			},
-			'default_points' => 200,
-			'category'       => 'competition',
-			'icon'           => 'dashicons-trophy',
-			'repeatable'     => true,
-		),
-
-		array(
-			'id'             => 'mvs_challenge_win_2nd',
-			'label'          => __( 'Win 2nd place in a photo challenge', 'wb-gamification' ),
-			'description'    => __( 'Awarded to the 2nd place finisher of a photo challenge.', 'wb-gamification' ),
-			'hook'           => 'mvs_challenge_finalized',
-			'user_callback'  => function ( int $challenge_id, array $results ): int {
-				return isset( $results['winner_2nd'] ) ? (int) $results['winner_2nd'] : 0;
+			'points_callback'   => function ( int $challenge_id, int $user_id, int $rank ): int {
+				$scale = array( 1 => 200, 2 => 100, 3 => 50 );
+				return $scale[ $rank ] ?? 0;
 			},
-			'default_points' => 100,
-			'category'       => 'competition',
-			'icon'           => 'dashicons-awards',
-			'repeatable'     => true,
-		),
-
-		array(
-			'id'             => 'mvs_challenge_win_3rd',
-			'label'          => __( 'Win 3rd place in a photo challenge', 'wb-gamification' ),
-			'description'    => __( 'Awarded to the 3rd place finisher of a photo challenge.', 'wb-gamification' ),
-			'hook'           => 'mvs_challenge_finalized',
-			'user_callback'  => function ( int $challenge_id, array $results ): int {
-				return isset( $results['winner_3rd'] ) ? (int) $results['winner_3rd'] : 0;
+			'metadata_callback' => function ( int $challenge_id, int $user_id, int $rank ): array {
+				return array(
+					'challenge_id' => $challenge_id,
+					'rank'         => $rank,
+				);
 			},
-			'default_points' => 50,
-			'category'       => 'competition',
-			'icon'           => 'dashicons-star-half',
-			'repeatable'     => true,
+			'default_points'    => 200,
+			'category'          => 'competition',
+			'icon'              => 'dashicons-trophy',
+			'repeatable'        => true,
 		),
 
 		array(
