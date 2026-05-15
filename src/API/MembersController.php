@@ -446,6 +446,11 @@ class MembersController extends WP_REST_Controller {
 					'id'         => (int) $row['id'],
 					'event_id'   => $row['event_id'],
 					'action_id'  => $row['action_id'],
+					// Human label resolved from the manifest registry so clients
+					// (JS blocks, mobile apps, support tools) don't have to
+					// duplicate the lookup. Falls back to a title-cased
+					// action_id when the source plugin is deactivated.
+					'label'      => \WBGam\Engine\Registry::label_for( (string) $row['action_id'] ),
 					'points'     => (int) $row['points'],
 					'point_type' => (string) ( $row['point_type'] ?? '' ),
 					'object_id'  => $row['object_id'] ? (int) $row['object_id'] : null,
@@ -606,6 +611,7 @@ class MembersController extends WP_REST_Controller {
 				return array(
 					'id'         => $row['id'],
 					'action_id'  => $row['action_id'],
+					'label'      => \WBGam\Engine\Registry::label_for( (string) $row['action_id'] ),
 					'object_id'  => $row['object_id'] ? (int) $row['object_id'] : null,
 					'metadata'   => $row['metadata'] ? json_decode( $row['metadata'], true ) : null,
 					'created_at' => $row['created_at'],

@@ -13,6 +13,7 @@ use WBGam\Blocks\CSS as WB_Gam_Block_CSS;
 use WBGam\Engine\BlockHooks;
 use WBGam\Engine\PointsEngine;
 use WBGam\Engine\Privacy;
+use WBGam\Engine\Registry;
 
 $wb_gam_attrs   = is_array( $attributes ) ? $attributes : array();
 $wb_gam_unique  = ! empty( $wb_gam_attrs['uniqueId'] )
@@ -114,15 +115,20 @@ BlockHooks::before( 'points-history', $wb_gam_attrs );
 	<?php else : ?>
 		<ul class="wb-gam-points-history__list" role="list">
 			<?php foreach ( $wb_gam_rows as $wb_gam_row ) :
-				$wb_gam_pts        = (int) ( $wb_gam_row['points'] ?? 0 );
-				$wb_gam_pos_neg    = $wb_gam_pts >= 0 ? 'positive' : 'negative';
-				$wb_gam_row_type   = (string) ( $wb_gam_row['point_type'] ?? '' );
-				$wb_gam_row_label  = $wb_gam_label_map[ $wb_gam_row_type ] ?? __( 'pts', 'wb-gamification' );
+				$wb_gam_pts          = (int) ( $wb_gam_row['points'] ?? 0 );
+				$wb_gam_pos_neg      = $wb_gam_pts >= 0 ? 'positive' : 'negative';
+				$wb_gam_row_type     = (string) ( $wb_gam_row['point_type'] ?? '' );
+				$wb_gam_row_label    = $wb_gam_label_map[ $wb_gam_row_type ] ?? __( 'pts', 'wb-gamification' );
+				$wb_gam_row_action   = (string) ( $wb_gam_row['action_id'] ?? '' );
+				// Manifest-driven label so members read "Write a meaningful comment"
+				// instead of "mvs_give_comment". title= keeps the raw action_id
+				// reachable for support/debugging.
+				$wb_gam_action_label = Registry::label_for( $wb_gam_row_action );
 				?>
 				<li class="wb-gam-points-history__item wb-gam-points-history__item--<?php echo esc_attr( $wb_gam_pos_neg ); ?>">
 					<?php if ( $wb_gam_show_label ) : ?>
-						<span class="wb-gam-points-history__action">
-							<?php echo esc_html( ucwords( str_replace( '_', ' ', (string) ( $wb_gam_row['action_id'] ?? '' ) ) ) ); ?>
+						<span class="wb-gam-points-history__action" title="<?php echo esc_attr( $wb_gam_row_action ); ?>">
+							<?php echo esc_html( $wb_gam_action_label ); ?>
 						</span>
 					<?php endif; ?>
 					<span class="wb-gam-points-history__points">

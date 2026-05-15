@@ -263,6 +263,53 @@ final class Registry {
 	}
 
 	/**
+	 * Resolve an action_id to a human-readable label.
+	 *
+	 * Used by surfaces that display history rows (points-history block,
+	 * the [wb_gam_points_history] shortcode, the REST history response,
+	 * admin diagnostics) so members see "Write a meaningful comment"
+	 * instead of "mvs_give_comment".
+	 *
+	 * Resolution order:
+	 *   1. Manifest `label` field, if the action is currently registered.
+	 *   2. Built-in label for engine-emitted action_ids (manual award,
+	 *      manual debit, redemption, debit) that have no manifest entry
+	 *      because they're fired directly by the engine, not by a trigger.
+	 *   3. Title-cased action_id (e.g. "Mvs Give Comment") as a final
+	 *      fallback so a deactivated plugin doesn't leave history rows
+	 *      with an unrecognisable identifier.
+	 *
+	 * @since 1.0.1
+	 *
+	 * @param string $action_id Action identifier (may be from a deactivated plugin).
+	 * @return string Display label. Always returns a non-empty string when
+	 *                $action_id is non-empty.
+	 */
+	public static function label_for( string $action_id ): string {
+		if ( '' === $action_id ) {
+			return '';
+		}
+
+		$action = self::get_action( $action_id );
+		if ( is_array( $action ) && ! empty( $action['label'] ) ) {
+			return (string) $action['label'];
+		}
+
+		$built_in = array(
+			'manual'        => __( 'Manual award', 'wb-gamification' ),
+			'manual_award'  => __( 'Manual award', 'wb-gamification' ),
+			'manual_debit'  => __( 'Manual adjustment', 'wb-gamification' ),
+			'debit'         => __( 'Debit', 'wb-gamification' ),
+			'redemption'    => __( 'Redemption', 'wb-gamification' ),
+		);
+		if ( isset( $built_in[ $action_id ] ) ) {
+			return $built_in[ $action_id ];
+		}
+
+		return ucwords( str_replace( array( '_', '-' ), ' ', $action_id ) );
+	}
+
+	/**
 	 * Resolve the currency slug an action should award.
 	 *
 	 * Single source of truth used by both the award path
