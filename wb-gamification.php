@@ -25,6 +25,28 @@ define( 'WB_GAM_URL', plugin_dir_url( __FILE__ ) );
 define( 'WB_GAM_BASENAME', plugin_basename( __FILE__ ) );
 
 // Autoloader — PSR-4 for all WBGam\ classes + functions.php.
+//
+// Production zips ship vendor/ pre-built (see bin/build-release.sh). A bare
+// git clone has no vendor/ until `composer install` runs, so guard the
+// require to fail gracefully with an admin notice instead of a fatal that
+// locks the user out of wp-admin.
+if ( ! file_exists( WB_GAM_PATH . 'vendor/autoload.php' ) ) {
+	add_action(
+		'admin_notices',
+		static function (): void {
+			if ( ! current_user_can( 'activate_plugins' ) ) {
+				return;
+			}
+			echo '<div class="notice notice-error"><p><strong>' .
+				esc_html__( 'WB Gamification could not start: Composer dependencies are missing.', 'wb-gamification' ) .
+				'</strong></p><p>' .
+				esc_html__( 'Run `composer install` in the plugin directory, or install the official release zip from store.wbcomdesigns.com which ships dependencies pre-built.', 'wb-gamification' ) .
+				'</p></div>';
+		}
+	);
+	return;
+}
+
 require_once WB_GAM_PATH . 'vendor/autoload.php';
 
 // Action Scheduler — must be loaded after autoloader, before plugins_loaded.
