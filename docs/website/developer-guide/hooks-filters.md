@@ -76,6 +76,62 @@ add_action( 'wb_gam_points_redeemed', function( int $redemption_id, int $user_id
 
 ---
 
+#### `wb_gam_award_skipped`
+
+Fires when the engine intentionally skips an award. Use it to surface a contextual hint to the member ("you've already racked up your daily 50 reactions") so silent skips don't feel like the system is broken.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$user_id` | `int` | User who would have been awarded. |
+| `$action_id` | `string` | Action that was triggered (e.g. `mvs_give_comment`). |
+| `$reason` | `string` | Closed-set machine reason (table below). |
+| `$context` | `array` | Optional payload with cap counts, cooldown duration, etc. |
+
+**Reason taxonomy** (closed set):
+
+| Reason | Fired from | Common context keys |
+|--------|------------|---------------------|
+| `cooldown` | `PointsEngine::passes_rate_limits()` cooldown branch | `cooldown_seconds`, `point_type` |
+| `non_repeatable` | `PointsEngine::passes_rate_limits()` non-repeatable branch | `point_type` |
+| `daily_cap` | `PointsEngine::passes_rate_limits()` daily-cap branch | `daily_cap_used`, `daily_cap_max`, `point_type` |
+| `weekly_cap` | `PointsEngine::passes_rate_limits()` weekly-cap branch | `weekly_cap_used`, `weekly_cap_max`, `point_type` |
+| `self_action` | `Registry` hook callback when `user_callback` returns 0 | (none) |
+| `sandboxed` | Jetonomy adapter — `wb_gam_sandboxed` user meta veto | `delta`, `adapter` |
+| `pre_change_veto` | Adapter `*_pre_change` filters that return 0 for non-sandbox reasons | adapter-specific |
+| `insufficient_balance` | Future debit-balance check | `requested`, `balance` |
+
+```php
+/**
+ * Show a toast when a member maxes out their daily comment award.
+ *
+ * The action is a no-op when nobody listens — zero overhead by default.
+ *
+ * @since 1.0.1
+ *
+ * @param int    $user_id   Member who would have been awarded.
+ * @param string $action_id Action that was skipped.
+ * @param string $reason    Closed-set reason (see table above).
+ * @param array  $context   Optional payload.
+ */
+add_action( 'wb_gam_award_skipped', function( int $user_id, string $action_id, string $reason, array $context ) {
+    if ( 'daily_cap' !== $reason || $user_id !== get_current_user_id() ) {
+        return;
+    }
+    $action = WBGam\Engine\Registry::get_action( $action_id );
+    $label  = WBGam\Engine\Registry::label_for( $action_id );
+    wb_gam_enqueue_toast(
+        sprintf(
+            /* translators: 1: action label, 2: max daily count */
+            __( 'You\'ve already maxed out today\'s %1$s reward (%2$d). Back tomorrow!', 'my-plugin' ),
+            $label,
+            (int) ( $context['daily_cap_max'] ?? 0 )
+        )
+    );
+}, 10, 4 );
+```
+
+---
+
 ### Badges
 
 #### `wb_gam_badge_awarded`

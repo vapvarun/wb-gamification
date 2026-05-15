@@ -69,24 +69,109 @@ final class PointsEngine {
 		// Cooldown check.
 		$cooldown = (int) ( $action['cooldown'] ?? 0 );
 		if ( $cooldown > 0 && self::is_on_cooldown( $user_id, $action_id, $cooldown, $type ) ) {
+			/** This filter is documented in src/Engine/PointsEngine.php — see wb_gam_award_skipped. */
+			do_action(
+				'wb_gam_award_skipped',
+				$user_id,
+				$action_id,
+				'cooldown',
+				array(
+					'cooldown_seconds' => $cooldown,
+					'point_type'       => $type,
+				)
+			);
 			return false;
 		}
 
 		// Repeatable check.
 		if ( ! ( $action['repeatable'] ?? true ) && self::get_action_count( $user_id, $action_id, $type ) > 0 ) {
+			/** This filter is documented in src/Engine/PointsEngine.php — see wb_gam_award_skipped. */
+			do_action(
+				'wb_gam_award_skipped',
+				$user_id,
+				$action_id,
+				'non_repeatable',
+				array( 'point_type' => $type )
+			);
 			return false;
 		}
 
 		// Daily cap check.
 		$daily_cap = (int) ( $action['daily_cap'] ?? 0 );
-		if ( $daily_cap > 0 && self::get_today_count( $user_id, $action_id, $type ) >= $daily_cap ) {
-			return false;
+		if ( $daily_cap > 0 ) {
+			$daily_used = self::get_today_count( $user_id, $action_id, $type );
+			if ( $daily_used >= $daily_cap ) {
+				/** This filter is documented in src/Engine/PointsEngine.php — see wb_gam_award_skipped. */
+				do_action(
+					'wb_gam_award_skipped',
+					$user_id,
+					$action_id,
+					'daily_cap',
+					array(
+						'daily_cap_used' => $daily_used,
+						'daily_cap_max'  => $daily_cap,
+						'point_type'     => $type,
+					)
+				);
+				return false;
+			}
 		}
 
 		// Weekly cap check.
 		$weekly_cap = (int) ( $action['weekly_cap'] ?? 0 );
-		if ( $weekly_cap > 0 && self::get_week_count( $user_id, $action_id, $type ) >= $weekly_cap ) {
-			return false;
+		if ( $weekly_cap > 0 ) {
+			$weekly_used = self::get_week_count( $user_id, $action_id, $type );
+			if ( $weekly_used >= $weekly_cap ) {
+				/**
+				 * Fires when the engine intentionally skips an award.
+				 *
+				 * Listeners can surface a contextual hint to the user — a toast
+				 * ("you've already racked up your daily 50 reactions"), a
+				 * leaderboard banner, an admin diagnostics row — instead of
+				 * leaving the member to wonder why nothing happened.
+				 *
+				 * Reasons emitted by the engine itself:
+				 *   - cooldown        — within action.cooldown window
+				 *   - non_repeatable  — already-claimed action.repeatable=false trigger
+				 *   - daily_cap       — action.daily_cap reached
+				 *   - weekly_cap      — action.weekly_cap reached
+				 *   - self_action     — user_callback returned 0 (commenting on
+				 *                       your own media, etc.)
+				 *
+				 * Reasons emitted by adapters (e.g. Jetonomy):
+				 *   - sandboxed        — wb_gam_sandboxed user meta veto
+				 *   - pre_change_veto  — adapter filter returned 0 for any
+				 *                        non-sandbox reason
+				 *   - insufficient_balance — debit refused due to balance
+				 *
+				 * Zero performance cost when nothing is listening — WP's
+				 * default do_action behaviour.
+				 *
+				 * @since 1.0.1
+				 *
+				 * @param int    $user_id   User who would have been awarded.
+				 * @param string $action_id Action that was triggered.
+				 * @param string $reason    Closed-set machine reason (above list).
+				 * @param array  $context   Optional payload. Common keys:
+				 *                          - point_type (string)
+				 *                          - cooldown_seconds (int)
+				 *                          - daily_cap_used (int) / daily_cap_max (int)
+				 *                          - weekly_cap_used (int) / weekly_cap_max (int)
+				 *                          - object_id (int)
+				 */
+				do_action(
+					'wb_gam_award_skipped',
+					$user_id,
+					$action_id,
+					'weekly_cap',
+					array(
+						'weekly_cap_used' => $weekly_used,
+						'weekly_cap_max'  => $weekly_cap,
+						'point_type'      => $type,
+					)
+				);
+				return false;
+			}
 		}
 
 		return true;

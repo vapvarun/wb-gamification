@@ -140,6 +140,14 @@ final class Registry {
 				$params  = func_get_args();
 				$user_id = (int) call_user_func_array( $action['user_callback'], $params );
 				if ( $user_id <= 0 ) {
+					/** This filter is documented in src/Engine/PointsEngine.php — see wb_gam_award_skipped. */
+					do_action(
+						'wb_gam_award_skipped',
+						$user_id,
+						(string) $action['id'],
+						'self_action',
+						array()
+					);
 					return;
 				}
 

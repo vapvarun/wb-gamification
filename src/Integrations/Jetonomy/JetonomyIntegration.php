@@ -111,6 +111,17 @@ final class JetonomyIntegration {
 
 		// Sandboxed users get zero rep impact in either direction.
 		if ( get_user_meta( $user_id, self::META_SANDBOXED, true ) ) {
+			/** This filter is documented in src/Engine/PointsEngine.php — see wb_gam_award_skipped. */
+			do_action(
+				'wb_gam_award_skipped',
+				$user_id,
+				(string) $action,
+				'sandboxed',
+				array(
+					'delta'    => $delta,
+					'adapter'  => 'jetonomy',
+				)
+			);
 			return 0;
 		}
 
