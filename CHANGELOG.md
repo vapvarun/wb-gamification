@@ -6,6 +6,37 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 
 ## [Unreleased]
 
+## [1.3.0] — 2026-05-18
+
+Jetonomy 1.4.3 + Pro event triggers and an in-tree WPMediaVerse Free + Pro manifest stack.
+
+### Added
+
+- **Jetonomy 1.4.3 integration** — reputation and leaderboard wiring via the manifest layer.
+- **Jetonomy Pro event triggers** — polls, direct messages, badges, and reactions emit gamification events.
+- **WPMediaVerse Free + Pro manifests** — owned in-tree so the host site no longer ships the manifest layer.
+- **`wb_gam_award_skipped` hook** — fires from every silent-skip path in the engine so integrations can react to skipped awards.
+
+### Fixed
+
+- Points history view renders the manifest label instead of the raw `action_id`.
+- WPMediaVerse handlers use upstream hook arguments instead of a broken static lookup.
+- Boot path shows an admin notice instead of a fatal error when `vendor/` is missing (#49).
+
+## [1.2.0] — 2026-05-10
+
+Distribution pipeline and admin polish ahead of the integration release.
+
+### Added
+
+- EDD SDK integration for automatic plugin updates from wbcomdesigns.com.
+
+### Changed
+
+- Consolidated admin stylesheets into a single `assets/css/admin.css`.
+- Populated admin dashboard with KPI cards, top actions, top earners, and a daily sparkline.
+- `submit-achievement` view.js is translation-ready.
+
 ## [1.0.0] — 2026-05-06
 
 First public release.

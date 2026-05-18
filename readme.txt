@@ -4,7 +4,7 @@ Tags: gamification, points, badges, leaderboard, buddypress
 Requires at least: 6.4
 Tested up to: 6.9
 Requires PHP: 8.1
-Stable tag: 1.2.0
+Stable tag: 1.3.0
 License: GPL-2.0+
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -133,6 +133,27 @@ All data is preserved in the database. Reactivating the plugin restores everythi
 
 == Changelog ==
 
+= 1.3.0 - May 2026 =
+
+Jetonomy 1.4.3 and Jetonomy Pro event triggers, plus an in-tree WPMediaVerse Free + Pro manifest stack.
+
+* New      - Jetonomy 1.4.3 reputation and leaderboard integration.
+* New      - Jetonomy Pro event triggers for polls, direct messages, badges, and reactions.
+* New      - WPMediaVerse Free and Pro integration manifests shipped in-tree so the host site no longer carries the manifest layer.
+* New      - Engine now fires wb_gam_award_skipped from every silent-skip path so integrations can react to skipped awards.
+* Fix      - Points history view renders the manifest label instead of the raw action_id.
+* Fix      - WPMediaVerse handlers use upstream hook arguments instead of a broken static lookup.
+* Fix      - Boot path shows an admin notice instead of a fatal error when vendor/ is missing.
+
+= 1.2.0 - May 2026 =
+
+Distribution pipeline and admin polish ahead of the integration release.
+
+* New      - EDD SDK integration for automatic plugin updates from wbcomdesigns.com.
+* Improve  - Consolidated admin stylesheets into a single admin.css.
+* Improve  - Populated admin dashboard with KPI cards, top actions, top earners, and a daily sparkline.
+* Dev      - submit-achievement view.js is translation-ready.
+
 = 1.0.0 =
 * First public release.
 * Event-sourced points engine with 30+ auto-detected actions across 10 integrations.
@@ -169,6 +190,12 @@ All data is preserved in the database. Reactivating the plugin restores everythi
 10. **Redemption Store** — Admin catalog UI to define rewards (custom or WooCommerce-backed) with point cost, stock, and active/inactive status.
 
 == Upgrade Notice ==
+
+= 1.3.0 =
+Adds Jetonomy 1.4.3 + Pro event coverage and ships the WPMediaVerse manifests in-tree. Safe upgrade with no schema changes.
+
+= 1.2.0 =
+Adds EDD SDK auto-updates and consolidates the admin stylesheets. Safe upgrade with no schema changes.
 
 = 1.0.0 =
 First public release. Install and activate to start gamifying your WordPress site immediately.
