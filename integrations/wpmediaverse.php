@@ -28,7 +28,15 @@ if ( ! defined( 'MVS_VERSION' ) ) {
 	return array();
 }
 
-$pro_active = defined( 'MVS_PRO_VERSION' );
+// WPMediaVerse Pro <= 1.1.3 still ships its own wb-gamification.php manifest
+// for the same mvs_* action IDs. Defer to Pro's manifest when Pro is active
+// so the IDs register exactly once. When Pro drops its manifest in a future
+// release, remove this guard so the in-tree manifest owns both surfaces.
+if ( defined( 'MVS_PRO_VERSION' ) ) {
+	return array();
+}
+
+$pro_active = false;
 
 if ( ! function_exists( 'wb_gam_mvs_media_author' ) ) {
 	/**
