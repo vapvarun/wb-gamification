@@ -111,17 +111,22 @@
 
 		container.appendChild( el );
 
+		// Animate in — toast slides from the top and fades. Without this,
+		// the toast popped in instantly which read as a glitch to non-tech
+		// users (Basecamp 9925151443 suggestion).
+		requestAnimationFrame( function () {
+			el.classList.add( 'wb-gam-toast--enter' );
+		} );
+
 		// Auto-dismiss after 4 seconds.
 		setTimeout( function() {
 			if ( el.parentNode ) {
-				el.style.opacity = '0';
-				el.style.transform = 'translateX(1rem)';
-				el.style.transition = 'opacity 0.3s, transform 0.3s';
+				el.classList.add( 'wb-gam-toast--exit' );
 				setTimeout( function() {
 					if ( el.parentNode ) {
 						el.remove();
 					}
-				}, 300 );
+				}, 320 );
 			}
 		}, 4000 );
 	}
@@ -129,13 +134,24 @@
 	// Check on page load after a 2-second delay (let page settle).
 	setTimeout( checkToasts, 2000 );
 
-	// Poll every 30 seconds.
-	setInterval( checkToasts, 30000 );
-
-	// Also check when tab regains focus.
+	// Poll every 8 seconds while the tab is active (was 30s — the long
+	// interval is what made achievements feel like they only appeared on
+	// page reload). When the tab is hidden we slow back to 60s to stay off
+	// the server. Visibilitychange refresh below picks up anything queued
+	// during the hidden window.
+	var FAST_INTERVAL_MS = 8000;
+	var IDLE_INTERVAL_MS = 60000;
+	var timer = setInterval( checkToasts, FAST_INTERVAL_MS );
 	document.addEventListener( 'visibilitychange', function() {
-		if ( ! document.hidden ) {
+		clearInterval( timer );
+		if ( document.hidden ) {
+			timer = setInterval( checkToasts, IDLE_INTERVAL_MS );
+		} else {
 			checkToasts();
+			timer = setInterval( checkToasts, FAST_INTERVAL_MS );
 		}
 	} );
+	// Also check on window focus — covers browsers that don't reliably
+	// fire visibilitychange when the admin alt-tabs back from a tool.
+	window.addEventListener( 'focus', checkToasts );
 })();

@@ -38,7 +38,23 @@ return [
 			'hook'           => 'woocommerce_order_status_completed',
 			'user_callback'  => function ( int $order_id ): int {
 				$order = wc_get_order( $order_id );
-				return $order ? (int) $order->get_customer_id() : 0;
+				if ( ! $order ) {
+					return 0;
+				}
+				// Fall through customer_id → billing_email → fail. Guests
+				// who later create an account using the same email pick up
+				// retroactive credit; admins testing through the cart with
+				// their own login still resolve via customer_id.
+				$customer_id = (int) $order->get_customer_id();
+				if ( $customer_id > 0 ) {
+					return $customer_id;
+				}
+				$billing_email = (string) $order->get_billing_email();
+				if ( '' !== $billing_email ) {
+					$user = get_user_by( 'email', $billing_email );
+					return $user ? (int) $user->ID : 0;
+				}
+				return 0;
 			},
 			'default_points' => 25,
 			'category'       => 'commerce',
@@ -58,6 +74,13 @@ return [
 					return 0;
 				}
 				$customer_id = (int) $order->get_customer_id();
+				if ( ! $customer_id ) {
+					$billing_email = (string) $order->get_billing_email();
+					if ( '' !== $billing_email ) {
+						$user        = get_user_by( 'email', $billing_email );
+						$customer_id = $user ? (int) $user->ID : 0;
+					}
+				}
 				if ( ! $customer_id ) {
 					return 0;
 				}

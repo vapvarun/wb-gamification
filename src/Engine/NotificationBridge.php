@@ -94,15 +94,36 @@ final class NotificationBridge {
 			);
 		}
 
+		// Resolve the currency label for this award so the toast string is
+		// in sync with the admin-configured point type instead of always
+		// reading "+5 points" on an XP / Coins / custom-currency site
+		// (Basecamp 9925427545). PointTypeService::resolve() falls back to
+		// the primary currency for unknown slugs, so the lookup never
+		// throws even when the event predates the multi-currency tables.
+		$wb_gam_point_type = '';
+		if ( property_exists( $event, 'point_type' ) ) {
+			$wb_gam_point_type = (string) $event->point_type;
+		}
+		if ( '' === $wb_gam_point_type ) {
+			$action_def = \WBGam\Engine\Registry::get_action( $event->action_id );
+			if ( is_array( $action_def ) ) {
+				$wb_gam_point_type = \WBGam\Engine\Registry::resolve_action_point_type( $action_def );
+			}
+		}
+		$pt_service = new \WBGam\Services\PointTypeService();
+		$pt_record  = $pt_service->get( $wb_gam_point_type ) ?: $pt_service->get( $pt_service->default_slug() );
+		$label      = (string) ( $pt_record['label'] ?? __( 'points', 'wb-gamification' ) );
+
 		self::push(
 			$user_id,
 			array(
 				'type'    => 'points',
 				'points'  => $points,
 				'message' => sprintf(
-					/* translators: %d: number of points awarded. */
-					_n( '+%d point', '+%d points', $points, 'wb-gamification' ),
-					$points
+					/* translators: 1: signed integer (e.g. "+5"), 2: currency label ("points", "XP", "Coins"). */
+					__( '+%1$d %2$s', 'wb-gamification' ),
+					$points,
+					$label
 				),
 				'detail'  => self::action_label( $event->action_id ),
 			)

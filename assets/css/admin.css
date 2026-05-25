@@ -257,6 +257,32 @@
 
 .wb-gam-wizard-card__btn { align-self: flex-start; }
 
+/* Unavailable state — Basecamp 9925226356. Card stays visible so the
+ * admin can read the description; muted background + locked badge + a
+ * disabled submit make it clear why nothing happens on click. */
+.wb-gam-wizard-card--unavailable {
+	background: #f9fafb;
+	border-color: #e5e7eb;
+	opacity: 0.9;
+}
+.wb-gam-wizard-card__badge--locked {
+	background: #fee2e2;
+	color: #991b1b;
+}
+.wb-gam-wizard-card__unavailable-note {
+	margin: 10px 0 12px;
+	padding: 8px 12px;
+	background: #fef3c7;
+	border-left: 3px solid #f59e0b;
+	border-radius: 4px;
+	font-size: 13px;
+	color: #78350f;
+}
+.wb-gam-wizard-card--unavailable .wb-gam-wizard-card__btn[disabled] {
+	cursor: not-allowed;
+	opacity: 0.7;
+}
+
 .wb-gam-wizard-skip-row { margin-top: 10px; }
 
 .wb-gam-wizard-skip-btn {

@@ -1,6 +1,6 @@
 import { __ } from '@wordpress/i18n';
 import { useBlockProps, InspectorControls } from '@wordpress/block-editor';
-import { PanelBody, ToggleControl, RangeControl } from '@wordpress/components';
+import { PanelBody, ToggleControl, RangeControl, TextControl } from '@wordpress/components';
 import { useState } from '@wordpress/element';
 import ServerSideRender from '@wordpress/server-side-render';
 
@@ -11,7 +11,14 @@ import {
 } from '../../shared';
 
 const Edit = ( { attributes, setAttributes, clientId } ) => {
-	const { uniqueId, limit, show_messages: showMessages } = attributes;
+	const {
+		uniqueId,
+		limit,
+		show_messages: showMessages,
+		show_give_form: showGiveForm,
+		give_form_to: giveFormTo,
+		give_form_label: giveFormLabel,
+	} = attributes;
 
 	useUniqueId( clientId, uniqueId, setAttributes );
 	const [ device, setDevice ] = useState( 'Desktop' );
@@ -36,6 +43,28 @@ const Edit = ( { attributes, setAttributes, clientId } ) => {
 						checked={ !! showMessages }
 						onChange={ ( value ) => setAttributes( { show_messages: !! value } ) }
 					/>
+					<ToggleControl
+						label={ __( 'Show give-kudos form', 'wb-gamification' ) }
+						help={ __( 'Render a small form above the feed so logged-in members can send kudos directly from this block.', 'wb-gamification' ) }
+						checked={ !! showGiveForm }
+						onChange={ ( value ) => setAttributes( { show_give_form: !! value } ) }
+					/>
+					{ showGiveForm && (
+						<>
+							<TextControl
+								label={ __( 'Lock recipient (username)', 'wb-gamification' ) }
+								help={ __( 'Optional. When set, the form hides the recipient field and always sends to this user.', 'wb-gamification' ) }
+								value={ giveFormTo || '' }
+								onChange={ ( value ) => setAttributes( { give_form_to: value } ) }
+							/>
+							<TextControl
+								label={ __( 'Submit button label', 'wb-gamification' ) }
+								help={ __( 'Optional. Defaults to "Send kudos".', 'wb-gamification' ) }
+								value={ giveFormLabel || '' }
+								onChange={ ( value ) => setAttributes( { give_form_label: value } ) }
+							/>
+						</>
+					) }
 				</PanelBody>
 
 				<StandardLayoutPanel

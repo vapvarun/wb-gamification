@@ -185,20 +185,6 @@ $wb_gam_cards = array(
 		'block_slug'  => 'badge-showcase',
 		'block_attrs' => array( 'show_locked' => true ),
 	),
-	'challenges'  => array(
-		'icon'        => 'target',
-		'title'       => __( 'Challenges', 'wb-gamification' ),
-		'desc'        => sprintf(
-			/* translators: %d: number of active challenges */
-			_n( '%d active challenge', '%d active challenges', $wb_gam_active_count, 'wb-gamification' ),
-			$wb_gam_active_count
-		),
-		'pill'        => $wb_gam_active_count > 0
-			? array( 'text' => (string) $wb_gam_active_count, 'class' => 'gam-pill--warning' )
-			: null,
-		'block_slug'  => 'challenges',
-		'block_attrs' => array(),
-	),
 	'leaderboard' => array(
 		'icon'        => 'trophy',
 		'title'       => __( 'Leaderboard', 'wb-gamification' ),
@@ -250,6 +236,32 @@ $wb_gam_cards = array(
 		'block_attrs' => array(),
 	),
 );
+
+// Challenges card is only meaningful when there's something to enter. An
+// empty "0 active challenges" tile pointing at a panel that also says
+// "no active challenges" is two layers of empty state for the same fact —
+// confusing for non-technical members. Conditionally inject the card so the
+// hub grid collapses cleanly when nothing's running (Basecamp 9925231618).
+if ( $wb_gam_active_count > 0 ) {
+	$wb_gam_challenges_card = array(
+		'icon'        => 'target',
+		'title'       => __( 'Challenges', 'wb-gamification' ),
+		'desc'        => sprintf(
+			/* translators: %d: number of active challenges */
+			_n( '%d active challenge', '%d active challenges', $wb_gam_active_count, 'wb-gamification' ),
+			$wb_gam_active_count
+		),
+		'pill'        => array( 'text' => (string) $wb_gam_active_count, 'class' => 'gam-pill--warning' ),
+		'block_slug'  => 'challenges',
+		'block_attrs' => array(),
+	);
+	// Insert immediately after `badges` so card order stays predictable.
+	$wb_gam_cards = array_merge(
+		array_slice( $wb_gam_cards, 0, 1, true ),
+		array( 'challenges' => $wb_gam_challenges_card ),
+		array_slice( $wb_gam_cards, 1, null, true )
+	);
+}
 
 $wb_gam_context = wp_json_encode( array( 'preOpen' => $wb_gam_pre_open ) );
 

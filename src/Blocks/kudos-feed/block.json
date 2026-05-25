@@ -5,14 +5,17 @@
 	"version": "2.0.0",
 	"title": "Kudos Feed",
 	"category": "widgets",
-	"description": "Display a live feed of recent peer kudos.",
-	"keywords": [ "kudos", "recognition", "peers", "gamification" ],
+	"description": "Display a live feed of recent peer kudos and optionally let members send kudos.",
+	"keywords": [ "kudos", "recognition", "peers", "gamification", "give kudos" ],
 	"textdomain": "wb-gamification",
 	"attributes": {
 		"uniqueId":         { "type": "string",  "default": "" },
 
 		"limit":            { "type": "integer", "default": 10 },
 		"show_messages":    { "type": "boolean", "default": true },
+		"show_give_form":   { "type": "boolean", "default": false },
+		"give_form_to":     { "type": "string",  "default": "" },
+		"give_form_label":  { "type": "string",  "default": "" },
 
 		"padding":          { "type": "object",  "default": { "top": 16, "right": 16, "bottom": 16, "left": 16 } },
 		"paddingTablet":    { "type": "object" },

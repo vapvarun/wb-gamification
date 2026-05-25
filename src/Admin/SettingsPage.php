@@ -42,6 +42,7 @@ final class SettingsPage {
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_levels_assets' ) );
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_settings_toggles' ) );
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_test_event' ) );
+		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_emails_form' ) );
 		// admin_post_wb_gam_save_levels + admin_post_wb_gam_delete_level removed in 1.0.0:
 		// the Levels tab now consumes /wb-gamification/v1/levels (POST/PATCH/DELETE)
 		// directly via assets/js/admin-levels.js. See Tier 0.C migration.
@@ -92,6 +93,41 @@ final class SettingsPage {
 		} elseif ( 'automation' === $tab ) {
 			self::save_automation_settings();
 		}
+
+		// Preserve the active sidebar section after save (Basecamp 9925119779).
+		// Sidebar nav uses URL hash (#points, #kudos, #emails…) but the form
+		// action hardcodes ?tab=…; without a hash on the redirect target the
+		// JS picks the first sidebar item and the admin lands on Dashboard.
+		// The settings-nav.js submit handler stamps `_wp_http_referer` with
+		// the current hash, so we redirect back to that referer instead of
+		// silently rendering the same URL. Browsers honour the `#section` in
+		// Location headers (RFC 7231 §7.1.2).
+		$tab_to_hash = array(
+			'points'     => 'points',
+			'kudos'      => 'kudos',
+			'automation' => 'rules',
+		);
+		$fallback   = admin_url( 'admin.php?page=wb-gamification' );
+		if ( isset( $tab_to_hash[ $tab ] ) ) {
+			$fallback .= '#' . $tab_to_hash[ $tab ];
+		}
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified in check_admin_referer above.
+		$referer    = isset( $_POST['_wp_http_referer'] ) ? wp_unslash( $_POST['_wp_http_referer'] ) : '';
+		$target_url = $fallback;
+		if ( is_string( $referer ) && '' !== $referer ) {
+			$candidate = wp_validate_redirect( $referer, '' );
+			if ( '' !== $candidate ) {
+				$target_url = $candidate;
+			}
+		}
+		// settings_errors stash so the success notice survives the redirect.
+		set_transient(
+			'wb_gam_settings_saved_' . get_current_user_id(),
+			array( 'tab' => $tab ),
+			60
+		);
+		wp_safe_redirect( $target_url );
+		exit;
 	}
 
 	/**
@@ -374,11 +410,13 @@ final class SettingsPage {
 		if ( 'toplevel_page_wb-gamification' !== $hook_suffix ) {
 			return;
 		}
-		// Only enqueue on the Levels tab to keep other tabs lean.
-		$tab = isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) : 'points'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- non-mutating tab dispatch.
-		if ( 'levels' !== $tab ) {
-			return;
-		}
+		// Settings page navigates by URL hash (`#levels`), not `?tab=levels`,
+		// so PHP cannot tell at render time which sidebar section the admin is
+		// looking at. The old gate on $_GET['tab'] === 'levels' meant the
+		// Levels JS never loaded — Add/Save/Delete buttons just navigated to
+		// `#levels` without doing anything. Always enqueue on the settings
+		// page; the script is small (≈ 12 KB) and only binds to its own
+		// data-attrs so it is inert when the Levels section is hidden.
 
 		wp_enqueue_script(
 			'wb-gam-admin-rest-utils',
@@ -438,6 +476,50 @@ final class SettingsPage {
 	 *
 	 * @param string $hook_suffix Current admin page hook.
 	 */
+	/**
+	 * Enqueue the generic REST form driver + wbGamSettings localisation for
+	 * the Emails section toggles.
+	 *
+	 * The Emails form uses the data-wb-gam-rest-form attribute pattern shared
+	 * with WebhooksAdminPage / ManualAwardPage, but the JS driver was never
+	 * enqueued on this page — without it the toggle form fell back to a
+	 * native GET submit that wiped the URL and never saved any toggle
+	 * (Basecamp 9925227946 / 9925205802 Issue 2).
+	 *
+	 * @param string $hook_suffix Current admin page hook.
+	 */
+	public static function enqueue_emails_form( string $hook_suffix ): void {
+		if ( 'toplevel_page_wb-gamification' !== $hook_suffix ) {
+			return;
+		}
+		wp_enqueue_script(
+			'wb-gam-admin-rest-utils',
+			plugins_url( 'assets/js/admin-rest-utils.js', WB_GAM_FILE ),
+			array(),
+			WB_GAM_VERSION,
+			true
+		);
+		wp_enqueue_script(
+			'wb-gam-admin-rest-form',
+			plugins_url( 'assets/js/admin-rest-form.js', WB_GAM_FILE ),
+			array( 'wb-gam-admin-rest-utils' ),
+			WB_GAM_VERSION,
+			true
+		);
+		wp_localize_script(
+			'wb-gam-admin-rest-form',
+			'wbGamSettings',
+			array(
+				'restUrl' => esc_url_raw( rest_url( 'wb-gamification/v1' ) ),
+				'nonce'   => wp_create_nonce( 'wp_rest' ),
+				'i18n'    => array(
+					'saved'  => __( 'Settings saved.', 'wb-gamification' ),
+					'failed' => __( 'Failed to save settings.', 'wb-gamification' ),
+				),
+			)
+		);
+	}
+
 	public static function enqueue_test_event( string $hook_suffix ): void {
 		if ( 'toplevel_page_wb-gamification' !== $hook_suffix ) {
 			return;
@@ -516,11 +598,12 @@ final class SettingsPage {
 		if ( 'toplevel_page_wb-gamification' !== $hook_suffix ) {
 			return;
 		}
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- non-mutating tab dispatch.
-		$tab = isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) : 'points';
-		if ( 'automation' !== $tab ) {
-			return;
-		}
+		// Settings page is hash-routed (#rules), so the old `?tab=automation`
+		// gate stopped the action-row toggle JS from ever loading and the
+		// rule form's per-action context fields (BP group id, role slug,
+		// message subject/content) never appeared on dropdown change
+		// (Basecamp 9925298656 issue 1). Always enqueue — the script is a
+		// no-op if the rules form isn't on the page.
 
 		wp_enqueue_script(
 			'wb-gam-admin-rule-action-toggle',
@@ -917,7 +1000,6 @@ final class SettingsPage {
 												<?php $wb_gam_cooldown = (int) ( $action['cooldown'] ?? 0 ); ?>
 												<input
 													type="number"
-													name="cooldown"
 													data-wb-gam-action-override="cooldown"
 													data-wb-gam-action-id="<?php echo esc_attr( $action_id ); ?>"
 													value="<?php echo esc_attr( $wb_gam_cooldown ); ?>"
@@ -931,7 +1013,6 @@ final class SettingsPage {
 											<td>
 												<input
 													type="number"
-													name="daily_cap"
 													data-wb-gam-action-override="daily_cap"
 													data-wb-gam-action-id="<?php echo esc_attr( $action_id ); ?>"
 													value="<?php echo esc_attr( $daily_cap ); ?>"
@@ -1726,7 +1807,7 @@ final class SettingsPage {
 									value="1"
 									<?php checked( $enabled ); ?>
 								>
-								<span class="wbgam-switch__slider" aria-hidden="true"></span>
+								<span class="wbgam-switch__track" aria-hidden="true"></span>
 							</label>
 							<div class="wbgam-toggle-row__body">
 								<strong class="wbgam-toggle-row__title"><?php echo esc_html( $meta['label'] ); ?></strong>

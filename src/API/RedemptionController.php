@@ -57,7 +57,7 @@ class RedemptionController extends WP_REST_Controller {
 	 *
 	 * @var string[]
 	 */
-	private const VALID_REWARD_TYPES = array( 'discount_pct', 'discount_fixed', 'custom' );
+	private const VALID_REWARD_TYPES = array( 'discount_pct', 'discount_fixed', 'free_product', 'custom' );
 
 	/**
 	 * Register REST API routes.

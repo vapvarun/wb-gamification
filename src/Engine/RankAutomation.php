@@ -61,6 +61,23 @@ final class RankAutomation {
 	 */
 	public static function init(): void {
 		add_action( 'wb_gam_level_changed', array( __CLASS__, 'on_level_changed' ), 20, 3 );
+		// Also handle the very first level assignment (Newcomer / 0 pts) —
+		// the canonical "level changed" hook deliberately skips that case so
+		// brand-new users don't get a level-up toast. But rank-automation
+		// rules with `trigger_level_id = Newcomer` need to run, so listen
+		// here too and reuse the existing handler (Basecamp 9925298656).
+		add_action( 'wb_gam_level_assigned', array( __CLASS__, 'on_level_assigned' ), 20, 2 );
+	}
+
+	/**
+	 * Bridge `wb_gam_level_assigned` (2-arg) into the existing
+	 * `on_level_changed` handler signature.
+	 *
+	 * @param int   $user_id   Member who was just assigned their first level.
+	 * @param array $new_level Level data (id, name, min_points).
+	 */
+	public static function on_level_assigned( int $user_id, array $new_level ): void {
+		self::on_level_changed( $user_id, $new_level, null );
 	}
 
 	// ── Hook handler ────────────────────────────────────────────────────────────

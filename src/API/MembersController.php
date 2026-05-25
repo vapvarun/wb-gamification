@@ -690,11 +690,25 @@ class MembersController extends WP_REST_Controller {
 
 				switch ( $type ) {
 					case 'points':
-						$message = $toast['message'] ?? sprintf(
-							/* translators: %d: number of points */
-							__( '+%d points', 'wb-gamification' ),
-							$toast['points'] ?? 0
-						);
+						// Currency label is resolved when the toast is queued
+						// (NotificationBridge) and embedded in `message`. This
+						// fallback only triggers for toasts that were pushed
+						// without a pre-formatted message (legacy callers).
+						// Use the primary currency label so "+5 XP" still
+						// reads correctly on multi-currency sites.
+						if ( empty( $toast['message'] ) ) {
+							$pt_service   = new \WBGam\Services\PointTypeService();
+							$pt_record    = $pt_service->get( $pt_service->default_slug() );
+							$label_plural = (string) ( $pt_record['label'] ?? __( 'points', 'wb-gamification' ) );
+							$message      = sprintf(
+								/* translators: 1: signed point delta, 2: currency label. */
+								__( '+%1$d %2$s', 'wb-gamification' ),
+								$toast['points'] ?? 0,
+								$label_plural
+							);
+						} else {
+							$message = $toast['message'];
+						}
 						if ( ! empty( $toast['detail'] ) ) {
 							$message .= ' ' . $toast['detail'];
 						}

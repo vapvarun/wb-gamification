@@ -60,15 +60,40 @@
 			} );
 	}
 
+	function scheduleSave( input ) {
+		const actionId = input.dataset.wbGamActionId;
+		const field    = input.dataset.wbGamActionOverride;
+		const key      = actionId + '|' + field;
+		clearTimeout( timers[ key ] );
+		// Debounce window — long enough that holding a number-spinner key
+		// doesn't fire a request per tick, short enough that the value
+		// reaches the server before the admin walks away from the field.
+		timers[ key ] = setTimeout( function () {
+			save( actionId, field, input.value );
+		}, 600 );
+	}
+
 	inputs.forEach( function ( input ) {
+		// `input` fires while the admin is actually typing (or clicking the
+		// number-spinner). `change` only fires on blur/Enter for number
+		// inputs — Simran's repro showed values silently dropped when the
+		// admin typed a value, clicked Save before the field blurred, and
+		// the POST body never carried `cooldown` / `daily_cap`. Listening
+		// to both keeps real-time autosave honest and the field saves on
+		// blur even if the debounce timer hasn't fired yet (Basecamp
+		// 9925174468).
+		input.addEventListener( 'input', function () {
+			scheduleSave( input );
+		} );
 		input.addEventListener( 'change', function () {
-			const actionId = input.dataset.wbGamActionId;
-			const field    = input.dataset.wbGamActionOverride;
-			const key      = actionId + '|' + field;
-			clearTimeout( timers[ key ] );
-			timers[ key ] = setTimeout( function () {
-				save( actionId, field, input.value );
-			}, 250 );
+			scheduleSave( input );
+		} );
+		input.addEventListener( 'blur', function () {
+			const key = input.dataset.wbGamActionId + '|' + input.dataset.wbGamActionOverride;
+			if ( timers[ key ] ) {
+				clearTimeout( timers[ key ] );
+				save( input.dataset.wbGamActionId, input.dataset.wbGamActionOverride, input.value );
+			}
 		} );
 	} );
 }() );

@@ -20,6 +20,15 @@ $wb_gam_unique  = ! empty( $wb_gam_attrs['uniqueId'] )
 
 $wb_gam_limit         = max( 1, min( 50, (int) ( $wb_gam_attrs['limit'] ?? 10 ) ) );
 $wb_gam_show_messages = ! isset( $wb_gam_attrs['show_messages'] ) || ! empty( $wb_gam_attrs['show_messages'] );
+// New in 1.4.x — Basecamp 9919722274. Editor opt-in to render the
+// give-kudos form ABOVE the received-kudos feed so a single block
+// hosts the full peer-recognition flow. Falls back to feed-only when
+// the toggle is off (existing posts behave unchanged).
+$wb_gam_show_give_form = ! empty( $wb_gam_attrs['show_give_form'] );
+$wb_gam_give_form_atts = array(
+	'to'    => (string) ( $wb_gam_attrs['give_form_to'] ?? '' ),
+	'label' => (string) ( $wb_gam_attrs['give_form_label'] ?? '' ),
+);
 
 WB_Gam_Block_CSS::add( $wb_gam_unique, $wb_gam_attrs );
 $wb_gam_visibility = WB_Gam_Block_CSS::get_visibility_classes( $wb_gam_attrs );
@@ -64,6 +73,12 @@ BlockHooks::before( 'kudos-feed', $wb_gam_attrs );
 	<div class="wb-gam-kudos-feed__header">
 		<h3 class="wb-gam-kudos-feed__title"><?php esc_html_e( 'Kudos', 'wb-gamification' ); ?></h3>
 	</div>
+
+	<?php if ( $wb_gam_show_give_form ) :
+		// ShortcodeHandler::give_kudos_html escapes its own output and lazy
+		// enqueues assets/css/give-kudos.css + assets/js/give-kudos.js.
+		echo \WBGam\Engine\ShortcodeHandler::give_kudos_html( $wb_gam_give_form_atts ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+	endif; ?>
 
 	<?php if ( empty( $wb_gam_kudos ) ) : ?>
 		<p class="wb-gam-kudos-feed__empty"><?php esc_html_e( 'No kudos given yet — be the first!', 'wb-gamification' ); ?></p>

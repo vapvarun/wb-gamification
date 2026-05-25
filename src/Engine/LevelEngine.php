@@ -97,18 +97,18 @@ final class LevelEngine {
 		update_user_meta( $user_id, 'wb_gam_level_id', $new_level['id'] );
 		update_user_meta( $user_id, 'wb_gam_level_name', $new_level['name'] );
 
-		// Only fire the level-changed hook when upgrading from a previous level
-		// (not on the initial Newcomer assignment).
+		// Resolve old level data once for either fire-path below.
+		$old_level_data = null;
 		if ( $current_level_id > 0 ) {
-			// Resolve old level data from all levels by ID.
-			$old_level_data = null;
 			foreach ( self::get_all_levels() as $lvl ) {
 				if ( $lvl['id'] === $current_level_id ) {
 					$old_level_data = $lvl;
 					break;
 				}
 			}
+		}
 
+		if ( $current_level_id > 0 ) {
 			/**
 			 * Fires after a user's level changes.
 			 *
@@ -129,6 +129,26 @@ final class LevelEngine {
 			 * @param array|null $old_level Previous level data or null.
 			 */
 			do_action( 'wb_gam_level_changed', $user_id, $new_level, $old_level_data );
+		} else {
+			/**
+			 * Fires when a member is assigned their very first level — usually
+			 * Newcomer (or whatever level has min_points = 0). Pre-1.4.0
+			 * `wb_gam_level_changed` deliberately skipped this case, which
+			 * meant RankAutomation rules with a "trigger_level_id = Newcomer"
+			 * never fired (Basecamp 9925298656 issue 3). Now a dedicated
+			 * `wb_gam_level_assigned` hook always fires for the first
+			 * assignment so listeners can act on it (rank automation,
+			 * notification bridge, welcome email). Notification toasts and
+			 * "you levelled up" overlays continue to listen only to the
+			 * upgrade path via `wb_gam_level_changed` so a brand-new user
+			 * isn't bombarded with congratulations for being a Newcomer.
+			 *
+			 * @since 1.4.0
+			 *
+			 * @param int   $user_id   User who was assigned a starter level.
+			 * @param array $new_level Level data (id, name, min_points).
+			 */
+			do_action( 'wb_gam_level_assigned', $user_id, $new_level );
 		}
 	}
 

@@ -196,6 +196,27 @@ final class SetupWizard {
 
 		$template = sanitize_key( wp_unslash( $_POST['wb_gam_template'] ) );
 
+		// Belt-and-braces (Basecamp 9925226356): block server-side if the
+		// requested template's required integration is missing. The UI
+		// already disables the submit button, but a curious admin who
+		// inspects the form and re-enables it would otherwise apply a
+		// template seeded for an action the site can't even fire.
+		if ( 'skip' !== $template ) {
+			$configs = self::get_template_configs();
+			$cfg     = $configs[ $template ] ?? null;
+			if ( $cfg && ! empty( $cfg['requires']['callback'] ) && is_callable( $cfg['requires']['callback'] ) ) {
+				if ( ! (bool) call_user_func( $cfg['requires']['callback'] ) ) {
+					$plugin = (string) ( $cfg['requires']['plugin'] ?? __( 'a required plugin', 'wb-gamification' ) );
+					wp_die(
+						/* translators: %s: required plugin name */
+						esc_html( sprintf( __( 'This starter template needs %s active before it can be applied. Install / activate it from the Plugins screen and re-run the wizard.', 'wb-gamification' ), $plugin ) ),
+						esc_html__( 'Template unavailable', 'wb-gamification' ),
+						array( 'response' => 400, 'back_link' => true )
+					);
+				}
+			}
+		}
+
 		/**
 		 * Fires when an admin submits the setup wizard, before any state
 		 * is persisted. Extensions can short-circuit defaults or capture
@@ -288,6 +309,10 @@ final class SetupWizard {
 				'label'       => __( 'Community Engagement', 'wb-gamification' ),
 				'description' => __( 'Balanced — rewards posting, reactions, and social connection. Requires BuddyPress.', 'wb-gamification' ),
 				'leaderboard' => 'weekly',
+				'requires'    => array(
+					'callback' => static function (): bool { return function_exists( 'buddypress' ); },
+					'plugin'   => __( 'BuddyPress', 'wb-gamification' ),
+				),
 				'points'      => array(
 					'bp_activity_update'    => 10,
 					'bp_activity_comment'   => 5,
@@ -300,8 +325,12 @@ final class SetupWizard {
 			),
 			'course'    => array(
 				'label'       => __( 'Online Course', 'wb-gamification' ),
-				'description' => __( 'Course completion heavy — progress and credential badges.', 'wb-gamification' ),
+				'description' => __( 'Course completion heavy — progress and credential badges. Requires LearnDash.', 'wb-gamification' ),
 				'leaderboard' => 'cohort',
+				'requires'    => array(
+					'callback' => static function (): bool { return defined( 'LEARNDASH_VERSION' ); },
+					'plugin'   => __( 'LearnDash LMS', 'wb-gamification' ),
+				),
 				'points'      => array(
 					'lesson_complete' => 20,
 					'course_complete' => 100,
@@ -321,8 +350,12 @@ final class SetupWizard {
 			),
 			'nonprofit' => array(
 				'label'       => __( 'Nonprofit / Mission', 'wb-gamification' ),
-				'description' => __( 'Mission-aligned language. Team leaderboards only — impact over individual competition.', 'wb-gamification' ),
+				'description' => __( 'Mission-aligned language. Team leaderboards only — impact over individual competition. Requires BuddyPress.', 'wb-gamification' ),
 				'leaderboard' => 'team-only',
+				'requires'    => array(
+					'callback' => static function (): bool { return function_exists( 'buddypress' ); },
+					'plugin'   => __( 'BuddyPress', 'wb-gamification' ),
+				),
 				'points'      => array(
 					'volunteer_hours'    => 30,
 					'bp_activity_update' => 5,
@@ -373,8 +406,27 @@ final class SetupWizard {
 					</legend>
 
 					<div class="wb-gam-wizard-grid" role="group" aria-label="<?php esc_attr_e( 'Starter template options', 'wb-gamification' ); ?>">
-						<?php foreach ( $configs as $key => $config ) : ?>
-							<div class="wb-gam-wizard-card<?php echo $key === $current_tpl ? ' wb-gam-wizard-card--current' : ''; ?>">
+						<?php foreach ( $configs as $key => $config ) :
+							// Integration-gating (Basecamp 9925226356). When a
+							// template's required plugin isn't active we don't
+							// hide the option — admin still benefits from
+							// seeing the full menu — but we disable the
+							// submit button and surface an install hint so a
+							// non-technical admin understands why.
+							$requires_meta = $config['requires'] ?? null;
+							$requires_ok   = true;
+							if ( is_array( $requires_meta ) && isset( $requires_meta['callback'] ) && is_callable( $requires_meta['callback'] ) ) {
+								$requires_ok = (bool) call_user_func( $requires_meta['callback'] );
+							}
+							$card_classes = array( 'wb-gam-wizard-card' );
+							if ( $key === $current_tpl ) {
+								$card_classes[] = 'wb-gam-wizard-card--current';
+							}
+							if ( ! $requires_ok ) {
+								$card_classes[] = 'wb-gam-wizard-card--unavailable';
+							}
+							?>
+							<div class="<?php echo esc_attr( implode( ' ', $card_classes ) ); ?>">
 								<div>
 									<h3 class="wb-gam-wizard-card__title">
 										<?php echo esc_html( $config['label'] ); ?>
@@ -383,22 +435,44 @@ final class SetupWizard {
 												<?php esc_html_e( 'Current', 'wb-gamification' ); ?>
 											</span>
 										<?php endif; ?>
+										<?php if ( ! $requires_ok && is_array( $requires_meta ) && ! empty( $requires_meta['plugin'] ) ) : ?>
+											<span class="wb-gam-wizard-card__badge wb-gam-wizard-card__badge--locked">
+												<?php
+												/* translators: %s: required plugin name */
+												printf( esc_html__( 'Requires %s', 'wb-gamification' ), esc_html( (string) $requires_meta['plugin'] ) );
+												?>
+											</span>
+										<?php endif; ?>
 									</h3>
 									<p class="wb-gam-wizard-card__desc">
 										<?php echo esc_html( $config['description'] ); ?>
 									</p>
 									<?php echo self::render_point_summary( $config['points'] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- helper escapes internally. ?>
+									<?php if ( ! $requires_ok && is_array( $requires_meta ) ) : ?>
+										<p class="wb-gam-wizard-card__unavailable-note">
+											<?php
+											/* translators: %s: required plugin name */
+											printf( esc_html__( 'Install and activate %s to use this starter. The point values it would seed depend on that plugin\'s events.', 'wb-gamification' ), '<strong>' . esc_html( (string) $requires_meta['plugin'] ) . '</strong>' );
+											?>
+										</p>
+									<?php endif; ?>
 								</div>
 								<button
 									type="submit"
 									name="wb_gam_template"
 									value="<?php echo esc_attr( $key ); ?>"
 									class="button button-primary wb-gam-wizard-card__btn"
+									<?php disabled( ! $requires_ok ); ?>
+									<?php if ( ! $requires_ok ) : ?>aria-disabled="true"<?php endif; ?>
 								>
 									<?php
-									echo $key === $current_tpl
-										? esc_html__( 'Re-apply this template', 'wb-gamification' )
-										: esc_html__( 'Use this template', 'wb-gamification' );
+									if ( ! $requires_ok ) {
+										esc_html_e( 'Unavailable', 'wb-gamification' );
+									} elseif ( $key === $current_tpl ) {
+										esc_html_e( 'Re-apply this template', 'wb-gamification' );
+									} else {
+										esc_html_e( 'Use this template', 'wb-gamification' );
+									}
 									?>
 								</button>
 							</div>

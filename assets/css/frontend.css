@@ -16,15 +16,23 @@
  */
 
 /* ── Toasts ──────────────────────────────────────────────────────────────────── */
+/* Top-center stack — Basecamp 9925151443. Members were missing achievement
+ * toasts because they fired bottom-right where the BuddyX live-chat widget
+ * sits. Top-center puts the reward right under the WP admin bar where the
+ * eye naturally lands when a click resolves. Stack overlays inside the
+ * container so multiple toasts cascade without competing for screen real-
+ * estate with the action being performed. */
 .wb-gam-toasts {
 	position: fixed;
-	inset-block-end: 1.5rem;
-	inset-inline-end: 1.5rem;
+	top: 1rem;
+	left: 50%;
+	transform: translateX(-50%);
 	z-index: 9999;
 	display: flex;
 	flex-direction: column;
+	align-items: center;
 	gap: 0.625rem;
-	max-width: min(360px, calc(100vw - 3rem));
+	width: min(420px, calc(100vw - 2rem));
 	pointer-events: none;
 }
 
@@ -35,19 +43,46 @@
 	padding: 0.75rem 1rem;
 	background: #fff;
 	border-radius: var(--wb-gam-radius);
-	box-shadow: 0 4px 20px rgba(0,0,0,.12);
-	border-inline-start: 3px solid var(--wb-gam-primary);
+	box-shadow: 0 8px 24px rgba(0, 0, 0, 0.16);
+	border-inline-start: 4px solid var(--wb-gam-primary);
 	pointer-events: auto;
-	animation: wb-gam-toast-in 0.25s ease forwards;
+	width: 100%;
+	/* Initial off-screen position — JS removes `--enter` to slide in. */
+	opacity: 0;
+	transform: translateY(-12px);
+	transition: opacity 320ms ease, transform 320ms ease;
+}
+
+.wb-gam-toast--enter {
+	opacity: 1;
+	transform: translateY(0);
+}
+
+.wb-gam-toast--exit {
+	opacity: 0;
+	transform: translateY(-12px);
 }
 
 .wb-gam-toast[data-type="badge"]     { border-inline-start-color: var(--wb-gam-gold); }
 .wb-gam-toast[data-type="challenge"] { border-inline-start-color: #10b981; }
 .wb-gam-toast[data-type="kudos"]     { border-inline-start-color: #ec4899; }
+.wb-gam-toast[data-type="level_up"]  { border-inline-start-color: #2563eb; }
+.wb-gam-toast[data-type="streak"]    { border-inline-start-color: #f59e0b; }
 
+/* Old keyframe — kept for any third-party legacy consumer that ID'd it. */
 @keyframes wb-gam-toast-in {
-	from { opacity: 0; transform: translateX(1rem); }
-	to   { opacity: 1; transform: translateX(0); }
+	from { opacity: 0; transform: translateY(-12px); }
+	to   { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 640px) {
+	.wb-gam-toasts {
+		width: calc(100vw - 1.5rem);
+		top: 0.75rem;
+	}
+	.wb-gam-toast {
+		padding: 0.625rem 0.75rem;
+	}
 }
 
 .wb-gam-toast__icon {
