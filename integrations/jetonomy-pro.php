@@ -143,6 +143,31 @@ return array(
 		),
 
 		array(
+			'id'                => 'jetonomy_pro_dm_received',
+			'label'             => 'Receive a Jetonomy private message',
+			'description'       => 'Awarded to the recipient when a Jetonomy private message is delivered. Daily cap protects against spam-DM gaming.',
+			// Pro fires: do_action( 'jetonomy_pro_dm_received', int $message_id, int $conversation_id, int $sender_id, int $recipient_id ).
+			'hook'              => 'jetonomy_pro_dm_received',
+			'user_callback'     => function ( int $message_id, int $conversation_id, int $sender_id, int $recipient_id ): int {
+				// Never reward DMs from the same user (rare edge: self-thread).
+				return $sender_id !== $recipient_id ? $recipient_id : 0;
+			},
+			'metadata_callback' => function ( int $message_id, int $conversation_id, int $sender_id, int $recipient_id ): array {
+				return array(
+					'message_id'      => $message_id,
+					'conversation_id' => $conversation_id,
+					'sender_id'       => $sender_id,
+				);
+			},
+			'default_points'    => 1,
+			'category'          => 'social',
+			'icon'              => 'icon-inbox',
+			'repeatable'        => true,
+			'cooldown'          => 120,
+			'daily_cap'         => 10,
+		),
+
+		array(
 			'id'                => 'jetonomy_pro_reaction_added',
 			'label'             => 'Send a reaction',
 			'description'       => 'Awarded when a member adds a reaction to a post or reply. Removing a reaction does not award.',

@@ -39,6 +39,16 @@ Bug-sweep release. 11 reported issues fixed plus two stability wins discovered d
 
 - **Leaderboard rows** show points-with-icon plus badges-earned count alongside each member. New helper `BadgeEngine::count_user_badges()` reuses the object-cached badge list so leaderboard rendering stays O(N) on per-user lookup.
 - **BuddyPress member directory** rank line now renders Level · Points · Badge count (with icons) instead of just the level name. Falls back gracefully — nothing rendered for members with no level, no points, and no badges.
+- **Jetonomy free integration** — new `integrations/jetonomy.php` manifest covers four events that previously had no gamification coverage:
+  - `jetonomy_space_joined` (5 pts) — joining a community space.
+  - `jetonomy_join_request_approved` (10 pts) — admission to a gated space.
+  - `jetonomy_trust_level_up` (50 pts) — promotion to a higher Jetonomy trust level (demotions never award).
+  - `jetonomy_membership_activated` (25 pts) — paid-membership activation across all 9 host-plugin adapters (RCP, PMPro, MemberPress, WooCommerce Subscriptions, Sensei, LearnDash, MasterStudy, Tutor, LifterLMS).
+- **Jetonomy Pro DM-received** (1 pt, cooldown 120 s, daily cap 10) — recipient earns points when a Jetonomy private message is delivered. Self-DMs return user id 0 so they never award. Daily cap protects against spam-DM gaming.
+
+### Removed
+
+- `JetonomyIntegration` no longer registers three filter listeners (`jetonomy_reputation_points_map`, `jetonomy_reputation_pre_change`, `jetonomy_leaderboard_items`) — audit of Jetonomy 1.4.4 confirmed those filters have no emit site upstream, so the listeners + their supporting methods (`filter_points_map`, `filter_pre_change`, `filter_leaderboard_items`, `campaign_is_active`, `campaign_covers_action`) were dead code. The `wb_gam_sandboxed` veto preserved by moving the check into the working `on_reputation_changed` mirror path. Tracked upstream as a Jetonomy card to land the missing filter emissions.
 
 ### Dev
 

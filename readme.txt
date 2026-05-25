@@ -154,6 +154,9 @@ Bug-sweep release. 11 reported issues fixed plus two stability wins discovered d
 * Fix      - BuddyPress activity filter labels now expose four distinct entries (Badge earned, Level up, Kudos sent, Challenge complete) instead of collapsing into one Gamification row; sites can override via the wb_gam_activity_context_label filter.
 * Fix      - Gamification top-level admin menu icon now renders on every wp-admin page (Lucide font + the icon-paint CSS rule are enqueued globally so the icon does not disappear when viewing Posts, Pages, Tools, etc.).
 * Improve  - Leaderboard rows now show points-with-icon and badges-earned count next to each member; member directory entries now display Level, Points, and Badge count instead of just the level name.
+* New      - Jetonomy free integration manifest covers four previously-unrewarded events: joining a space, approval into a gated space, trust-level promotion (TL0 to TL5), and paid-membership activation (RCP / PMPro / MemberPress / WooCommerce Subscriptions / Sensei / LearnDash / MasterStudy / Tutor / LifterLMS).
+* New      - Jetonomy Pro DM-received signal (recipient side) now earns gamification points with cooldown plus daily cap to prevent spam-DM gaming.
+* Improve  - JetonomyIntegration class no longer registers three filter listeners (jetonomy_reputation_points_map, jetonomy_reputation_pre_change, jetonomy_leaderboard_items) that have no emit sites in upstream Jetonomy 1.4.4. Listeners were dead wiring; removal clears confusion about which contracts the integration actually honors. Sandbox veto via wb_gam_sandboxed user meta now runs on the working jetonomy_reputation_changed mirror path instead.
 * Dev      - New wb_gam_as_retention_days filter (default 7) to tune Action Scheduler retention per site.
 * Dev      - New wb_gam_activity_context_label filter exposes BP activity context labels for per-type customisation.
 
