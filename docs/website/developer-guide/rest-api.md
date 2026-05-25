@@ -239,12 +239,13 @@ Give kudos to another member.
 
 **Permission:** Must be logged in
 
-**Body:**
+**Body:** one of `receiver_id` or `recipient_login` is required.
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `receiver_id` | int | Yes | User ID of recipient |
-| `message` | string | No | Optional message (max 255 chars) |
+| `receiver_id` | int | conditional | User ID of recipient. |
+| `recipient_login` | string | conditional | *Added in 1.4.0.* User login (username) or email of recipient. Resolved server-side. Use this when the giver does not know the recipient's user_id (e.g. the frontend `[wb_gam_give_kudos]` shortcode). |
+| `message` | string | No | Optional message (max 255 chars). |
 
 **Response (201):**
 
@@ -267,6 +268,44 @@ Current user's kudos stats: `received_total`, `daily_limit`, `sent_today`, `dail
 All registered gamification actions with labels, categories, point values, and enabled state.
 
 **Permission:** `manage_options`
+
+### `GET /actions/{id}`
+
+A single action by ID, with all admin overrides applied to `cooldown`, `daily_cap`, and `weekly_cap`.
+
+**Permission:** public
+
+### `POST /actions/{id}/overrides`
+
+*Added in 1.4.0.* Set per-action overrides for `cooldown`, `daily_cap`, and `weekly_cap` without touching the manifest. Stored in the `wb_gam_action_overrides` site option, keyed by action ID. The engine reads these on every rate-limit check so the override takes effect immediately for new awards.
+
+**Permission:** `manage_options`
+
+**Body:** all fields are optional; omit a field to leave it unchanged.
+
+| Field | Type | Description |
+|---|---|---|
+| `cooldown` | int (≥0) | Minimum seconds between awards. `0` disables the cooldown. |
+| `daily_cap` | int (≥0) | Daily cap per user per action. `0` allows unlimited. |
+| `weekly_cap` | int (≥0) | Weekly cap per user per action. `0` allows unlimited. |
+
+**Response (200):**
+
+```json
+{
+  "action_id": "bp_activity_update",
+  "overrides": { "cooldown": 120, "daily_cap": 5 },
+  "effective": { "cooldown": 120, "daily_cap": 5, "weekly_cap": 0 }
+}
+```
+
+### `DELETE /actions/{id}/overrides`
+
+*Added in 1.4.0.* Reset overrides for one action — the next read falls back to the manifest values.
+
+**Permission:** `manage_options`
+
+**Response (200):** `{ "action_id": "bp_activity_update", "reset": true }`
 
 ---
 

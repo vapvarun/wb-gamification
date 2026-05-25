@@ -326,6 +326,43 @@ Fires after all gamification data for a user is erased (GDPR).
 
 ## Filter Hooks
 
+### `wb_gam_as_retention_days`
+
+*Added in 1.4.0.*
+
+Number of days the daily Action Scheduler cleanup keeps `actionscheduler_actions` rows for, regardless of status (complete, failed, pending). Anything older than this is removed. Default `7`. Minimum `1`.
+
+```php
+// Keep two weeks of AS history instead of one.
+add_filter( 'wb_gam_as_retention_days', function () {
+    return 14;
+} );
+```
+
+The cleanup runs daily on the `wb_gam_as_cleanup` cron hook. See `WBGam\Engine\ActionSchedulerCleaner`.
+
+---
+
+### `wb_gam_activity_context_label`
+
+*Added in 1.4.0.*
+
+Override the BuddyPress activity context-group label for a gamification activity type. BP groups activity-filter dropdowns by this label, so per-type labels give each gamification action its own row in the directory filter dropdown. The default is the per-type human label (Badge earned, Level up, Kudos sent, Challenge complete).
+
+```php
+// Collapse all gamification activities back into a single "Gamification" filter group.
+add_filter( 'wb_gam_activity_context_label', function () {
+    return __( 'Gamification', 'wb-gamification' );
+} );
+```
+
+| Parameter | Type | Description |
+|---|---|---|
+| `$context` | `string` | Default context label (the per-type label). |
+| `$key` | `string` | Activity action key (`badge_earned`, `level_changed`, `kudos_given`, `challenge_completed`). |
+
+---
+
 ### `wb_gam_points_for_action`
 
 Modify points before they are written. Called after admin option lookup, before multipliers.

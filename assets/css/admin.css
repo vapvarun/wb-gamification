@@ -744,6 +744,20 @@
 	max-width: 1600px;
 }
 
+/*
+ * Inline-edit autosave feedback for per-action override inputs (Settings →
+ * Points). admin-action-overrides.js toggles these classes on the input
+ * for ~1s after the REST round-trip completes.
+ */
+.wbgam-input--saved {
+	transition: box-shadow 0.2s ease;
+	box-shadow: 0 0 0 2px rgba( 34, 197, 94, 0.45 );
+}
+
+.wbgam-input--error {
+	box-shadow: 0 0 0 2px rgba( 239, 68, 68, 0.55 );
+}
+
 .wbgam-page-title {
 	font-size: var(--wbgam-fs-2xl);
 	font-weight: 700;

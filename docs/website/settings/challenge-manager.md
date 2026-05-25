@@ -4,6 +4,19 @@ Go to **WB Gamification > Challenges** in your admin menu.
 
 Challenges give members a time-limited goal: perform a specific action a set number of times before the deadline to earn bonus points. Progress counts only while the challenge is active.
 
+## Individual vs Community Challenges
+
+*Unified in 1.4.0.* The Challenge Manager page now has two tabs:
+
+- **Individual Challenges** — each member works toward their own copy of the goal. Points and bonuses are awarded per member.
+- **Community Challenges** — the whole community works toward one shared goal. Every member's contribution counts toward the collective target.
+
+The two tabs share the same admin page (the standalone *Community Challenges* submenu was removed). Existing direct links to `?page=wb-gam-community-challenges` continue to work — they now load the same page with the Community tab pre-selected.
+
+## Time Zones
+
+*Fixed in 1.4.0.* All challenge **Start Date** and **End Date** values are stored in UTC. When you open the edit form, the displayed time is automatically converted to your browser's local timezone — so a challenge created at "9:00 AM your time" is shown as 9:00 AM on every edit, regardless of how your server is configured. The activation check is also in UTC, so a challenge configured to start at 9:00 AM local time becomes active at 9:00 AM local time without drift.
+
 ## Creating a Challenge
 
 The **Create Challenge** form is at the top of the page.

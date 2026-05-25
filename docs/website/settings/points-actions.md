@@ -43,13 +43,21 @@ Actions are grouped into cards by category:
 
 If a category does not appear, the plugin that provides it is not active on your site.
 
-## Understanding "Repeatable" and "Daily Cap"
+## Understanding "Repeatable", "Cooldown" and "Daily Cap"
 
 **Repeatable: Once** — Useful for one-time milestones like "Complete your profile" or "Write your first post." The member earns the points exactly one time, no matter how many times they perform the action.
 
-**Repeatable: Yes** — The action counts every time. Use the Daily Cap to prevent abuse.
+**Repeatable: Yes** — The action counts every time. Use the Cooldown and Daily Cap fields to prevent abuse.
 
-**Daily cap** — A hard ceiling on how many times an action can earn points in one calendar day (UTC). For example, if commenting has a daily cap of 10, a member who posts 50 comments earns points for only the first 10 each day.
+**Cooldown (seconds)** — *Editable in 1.4.0.* The minimum gap between two awards of the same action for the same member. Set `bp_activity_comment` to a 60-second cooldown so a member can not earn points for 50 comments posted in 30 seconds. Set to `0` to disable the cooldown.
+
+**Daily cap** — *Editable in 1.4.0.* A hard ceiling on how many times an action can earn points in one calendar day (UTC). For example, if commenting has a daily cap of 10, a member who posts 50 comments earns points for only the first 10 each day. Set to `0` to allow unlimited awards per day.
+
+Both **Cooldown** and **Daily cap** are editable directly in the actions table. Type a new value and click outside the field — the change saves automatically (no Save button needed). A short green flash confirms the save.
+
+Setting either field to `0` is itself a saved override that turns the limit off — it does **not** restore the manifest default value. To revert to the manifest default (for example, to put a 60-second cooldown back after you set it to `0`), call `DELETE /wp-json/wb-gamification/v1/actions/{action_id}/overrides` via REST or remove the action's row from the `wb_gam_action_overrides` site option.
+
+Overrides are stored in the `wb_gam_action_overrides` site option, keyed by action ID. The engine merges overrides on top of the manifest values, so the same effective values are used by rate-limit checks, the admin display, and REST consumers.
 
 ## Log Retention
 

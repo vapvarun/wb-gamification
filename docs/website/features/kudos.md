@@ -47,6 +47,38 @@ This creates a visible culture of recognition. When members see others being rec
 | `limit` | 10 | How many recent kudos to show (max 50) |
 | `show_messages` | 1 | Whether to display the kudos message |
 
+## Sending Kudos (Give Kudos Shortcode)
+
+*New in 1.4.0.*
+
+Members can send kudos directly from the frontend via the `[wb_gam_give_kudos]` shortcode. Drop it into any page, template part, or BuddyPress profile section.
+
+**Shortcode:**
+
+```
+[wb_gam_give_kudos]
+[wb_gam_give_kudos to="username"]
+[wb_gam_give_kudos label="Cheer this member"]
+```
+
+| Attribute | Default | Description |
+|---|---|---|
+| `to` | — | Lock the form to a specific recipient by `user_login` or `user_id`. When set, the recipient field is hidden. |
+| `label` | "Send Kudos" | Custom submit button label. |
+
+The shortcode wraps an underlying server-side block (`wb-gamification/give-kudos`) so theme builders and template-builder plugins that consume blocks via `render_block()` can use the same render path. The block is not yet wired into the WordPress block inserter — use the shortcode for now.
+
+**Behavior:**
+
+- Logged-out visitors see a sign-in prompt instead of the form.
+- Logged-in members see a recipient input (or the locked recipient if `to=` is set), a message field (max 255 characters), and a Send button.
+- Submitting POSTs to `POST /wb-gamification/v1/kudos` with `recipient_login` (the server resolves the username or email to a user ID).
+- The form respects the kudos cooldown — repeat sends to the same recipient get a polite "try again later" message.
+- Status feedback appears below the submit button (success, cooldown, network error).
+- Responsive: stacks vertically with a full-width submit button on screens ≤640 px.
+
+A common placement is the BuddyPress member profile page (with `to="{{member_login}}"`) so visitors can send kudos directly to the profile they are viewing.
+
 ## BuddyPress Integration
 
 When BuddyPress is active:
