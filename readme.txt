@@ -152,6 +152,8 @@ Bug-sweep release. 11 reported issues fixed plus two stability wins discovered d
 * Fix      - ChallengeEngine duplicate do_action removed so BP activity rows, webhook deliveries, and emails fire once per challenge completion instead of twice.
 * Fix      - KudosController create_item resolves recipient_login (username or email) server-side for the new give-kudos block; receiver_id remains supported.
 * Fix      - BuddyPress activity filter labels now expose four distinct entries (Badge earned, Level up, Kudos sent, Challenge complete) instead of collapsing into one Gamification row; sites can override via the wb_gam_activity_context_label filter.
+* Fix      - Gamification top-level admin menu icon now renders on every wp-admin page (Lucide font + the icon-paint CSS rule are enqueued globally so the icon does not disappear when viewing Posts, Pages, Tools, etc.).
+* Improve  - Leaderboard rows now show points-with-icon and badges-earned count next to each member; member directory entries now display Level, Points, and Badge count instead of just the level name.
 * Dev      - New wb_gam_as_retention_days filter (default 7) to tune Action Scheduler retention per site.
 * Dev      - New wb_gam_activity_context_label filter exposes BP activity context labels for per-type customisation.
 

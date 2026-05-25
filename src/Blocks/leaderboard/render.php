@@ -143,6 +143,7 @@ BlockHooks::before( 'leaderboard', $wb_gam_attrs );
 					</span>
 
 					<span class="wb-gam-leaderboard__points" aria-label="<?php echo esc_attr( $wb_gam_points_label ); ?>">
+						<span class="wb-gam-leaderboard__points-icon icon-sparkles" aria-hidden="true"></span>
 						<?php
 						printf(
 							/* translators: 1: formatted points number, 2: currency label (e.g. "Points", "Coins"). */
@@ -152,6 +153,30 @@ BlockHooks::before( 'leaderboard', $wb_gam_attrs );
 						);
 						?>
 					</span>
+
+					<?php
+					/*
+					 * Badge count beside points — added in 1.4.0 (B15).
+					 * Reads the materialised count, never the per-badge rows, so
+					 * even 1000-row leaderboards stay O(N) on the per-user lookup.
+					 */
+					$wb_gam_badge_count = (int) \WBGam\Engine\BadgeEngine::count_user_badges( (int) ( $wb_gam_row['user_id'] ?? 0 ) );
+					if ( $wb_gam_badge_count > 0 ) :
+						?>
+						<span class="wb-gam-leaderboard__badges" aria-label="<?php
+							/* translators: %d: badges earned count. */
+							echo esc_attr( sprintf( _n( '%d badge', '%d badges', $wb_gam_badge_count, 'wb-gamification' ), $wb_gam_badge_count ) );
+						?>">
+							<span class="wb-gam-leaderboard__badges-icon icon-medal" aria-hidden="true"></span>
+							<?php
+							printf(
+								/* translators: %d: number of badges earned. */
+								esc_html( _n( '%d badge', '%d badges', $wb_gam_badge_count, 'wb-gamification' ) ),
+								(int) $wb_gam_badge_count
+							);
+							?>
+						</span>
+					<?php endif; ?>
 				</li>
 			<?php endforeach; ?>
 		</ol>

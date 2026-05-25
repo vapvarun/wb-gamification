@@ -274,6 +274,11 @@ final class WB_Gamification {
 
 		if ( is_admin() ) {
 			add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_assets' ) );
+			// Lucide font is required on every admin screen so the WB Gam menu
+			// icon (painted via CSS pseudo-element) renders even when the
+			// admin is viewing a non-WB-Gam page. Without this the menu icon
+			// shows as a blank square on Posts, Pages, Tools, etc.
+			add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_global_admin_lucide' ) );
 			// 3rd-party-notice suppression is body-class-scoped CSS in
 			// assets/css/admin.css — no PHP needed, no inline <style>, and
 			// the rule is active on every plugin admin page that loads
@@ -473,6 +478,42 @@ final class WB_Gamification {
 	 * @param string $hook Current admin page hook suffix.
 	 * @return void
 	 */
+	/**
+	 * Enqueue the Lucide icon font on every admin page.
+	 *
+	 * The WB Gamification top-level menu icon is painted via a CSS pseudo-
+	 * element that consumes a Lucide glyph (see `admin.css` rule against
+	 * `#adminmenu .toplevel_page_wb-gamification .wp-menu-image:before`).
+	 * Without the font loaded globally, the icon renders as a blank square
+	 * whenever the admin is viewing a page outside the plugin's own screens.
+	 *
+	 * The selector only matches the WB Gamification menu node, so the font
+	 * isn't visually applied elsewhere — only the font file is loaded.
+	 *
+	 * @return void
+	 */
+	public function enqueue_global_admin_lucide(): void {
+		if ( ! wp_style_is( 'lucide-icons', 'registered' ) ) {
+			wp_register_style(
+				'lucide-icons',
+				WB_GAM_URL . 'assets/fonts/lucide.css',
+				array(),
+				'0.469.0'
+			);
+		}
+		wp_enqueue_style( 'lucide-icons' );
+
+		// Menu-icon paint rule — depends on Lucide font; tiny dedicated
+		// stylesheet so the full admin.css (gated to plugin pages) stays
+		// out of every wp-admin page load.
+		wp_enqueue_style(
+			'wb-gam-admin-menu-icon',
+			WB_GAM_URL . 'assets/css/admin-menu-icon.css',
+			array( 'lucide-icons' ),
+			WB_GAM_VERSION
+		);
+	}
+
 	public function enqueue_admin_assets( string $hook ): void {
 		if ( false === strpos( $hook, 'wb-gamification' ) && false === strpos( $hook, 'wb-gam' ) ) {
 			return;

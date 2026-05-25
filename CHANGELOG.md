@@ -33,6 +33,12 @@ Bug-sweep release. 11 reported issues fixed plus two stability wins discovered d
 - **Duplicate challenge completion side effects** — `ChallengeEngine::complete_challenge()` no longer calls `do_action('wb_gam_challenge_completed')` twice; BP activity rows, webhook deliveries, and emails now fire once per completion.
 - **Kudos recipient lookup** — `KudosController::create_item` accepts a `recipient_login` field and resolves usernames or emails to user IDs server-side, so the new give-kudos block doesn't depend on the public `/wp/v2/users` endpoint (which only returns post authors).
 - **BP activity filter labels** — `ActivityIntegration::register_activity_types` now exposes four distinct filter entries (Badge earned, Level up, Kudos sent, Challenge complete) instead of collapsing into one Gamification row. Sites can override via the new `wb_gam_activity_context_label` filter.
+- **Admin menu icon disappears outside plugin pages** — the Gamification top-level menu icon is painted via a CSS pseudo-element that uses the Lucide font. The font + paint rule were only loaded on WB Gamification admin pages, so the icon showed as a blank square on Posts, Pages, Tools, etc. Both are now enqueued globally on every admin screen via a dedicated `wb-gam-admin-menu-icon` style handle.
+
+### Improved (post-merge follow-ups)
+
+- **Leaderboard rows** show points-with-icon plus badges-earned count alongside each member. New helper `BadgeEngine::count_user_badges()` reuses the object-cached badge list so leaderboard rendering stays O(N) on per-user lookup.
+- **BuddyPress member directory** rank line now renders Level · Points · Badge count (with icons) instead of just the level name. Falls back gracefully — nothing rendered for members with no level, no points, and no badges.
 
 ### Dev
 

@@ -293,6 +293,25 @@ final class BadgeEngine {
 	}
 
 	/**
+	 * Count badges earned by a user.
+	 *
+	 * Reuses the object-cached `get_user_earned_badge_ids()` so the
+	 * leaderboard / member directory adornments don't add a per-user DB
+	 * query when the directory renders 20+ rows.
+	 *
+	 * @since 1.4.0
+	 *
+	 * @param int $user_id User to look up.
+	 * @return int Total number of earned (non-expired) badges.
+	 */
+	public static function count_user_badges( int $user_id ): int {
+		if ( $user_id <= 0 ) {
+			return 0;
+		}
+		return count( self::get_user_earned_badge_ids( $user_id ) );
+	}
+
+	/**
 	 * Get all earned badge IDs for a user (single query, object-cache backed).
 	 *
 	 * @param int $user_id User to look up.
