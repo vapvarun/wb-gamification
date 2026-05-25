@@ -77,6 +77,101 @@ class ActionsController extends WP_REST_Controller {
 				),
 			)
 		);
+
+		// PUT/POST /actions/{id}/overrides — admin-only edit of cooldown,
+		// daily_cap, weekly_cap without touching the manifest. Reset by sending
+		// 0 for the field or DELETE on this endpoint.
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/(?P<id>[a-z0-9_]+)/overrides',
+			array(
+				array(
+					'methods'             => array( 'POST', 'PUT' ),
+					'callback'            => array( $this, 'update_overrides' ),
+					'permission_callback' => array( $this, 'overrides_permissions_check' ),
+					'args'                => array(
+						'id'         => array( 'required' => true, 'type' => 'string' ),
+						'cooldown'   => array( 'type' => 'integer', 'minimum' => 0, 'sanitize_callback' => 'absint' ),
+						'daily_cap'  => array( 'type' => 'integer', 'minimum' => 0, 'sanitize_callback' => 'absint' ),
+						'weekly_cap' => array( 'type' => 'integer', 'minimum' => 0, 'sanitize_callback' => 'absint' ),
+					),
+				),
+				array(
+					'methods'             => 'DELETE',
+					'callback'            => array( $this, 'delete_overrides' ),
+					'permission_callback' => array( $this, 'overrides_permissions_check' ),
+					'args'                => array(
+						'id' => array( 'required' => true, 'type' => 'string' ),
+					),
+				),
+			)
+		);
+	}
+
+	/**
+	 * Overrides write gate — site admin only.
+	 *
+	 * @param \WP_REST_Request $request Request.
+	 * @return true|\WP_Error
+	 */
+	public function overrides_permissions_check( $request ): bool|\WP_Error {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return new \WP_Error(
+				'rest_forbidden',
+				__( 'You do not have permission to edit action settings.', 'wb-gamification' ),
+				array( 'status' => 403 )
+			);
+		}
+		return true;
+	}
+
+	/**
+	 * Persist per-action overrides for cooldown / daily_cap / weekly_cap.
+	 *
+	 * @param \WP_REST_Request $request Request.
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public function update_overrides( $request ) {
+		$id = sanitize_key( (string) $request->get_param( 'id' ) );
+		if ( null === Registry::get_action( $id ) ) {
+			return new \WP_Error( 'rest_action_invalid', __( 'Unknown action.', 'wb-gamification' ), array( 'status' => 404 ) );
+		}
+
+		$option = get_option( 'wb_gam_action_overrides', array() );
+		$option = is_array( $option ) ? $option : array();
+		$row    = isset( $option[ $id ] ) && is_array( $option[ $id ] ) ? $option[ $id ] : array();
+
+		foreach ( array( 'cooldown', 'daily_cap', 'weekly_cap' ) as $field ) {
+			if ( null !== $request->get_param( $field ) ) {
+				$row[ $field ] = (int) $request->get_param( $field );
+			}
+		}
+
+		$option[ $id ] = $row;
+		update_option( 'wb_gam_action_overrides', $option, false );
+
+		return rest_ensure_response(
+			array(
+				'action_id' => $id,
+				'overrides' => $row,
+				'effective' => array_intersect_key( Registry::get_action( $id ), array_flip( array( 'cooldown', 'daily_cap', 'weekly_cap' ) ) ),
+			)
+		);
+	}
+
+	/**
+	 * Reset per-action overrides — fall back to manifest defaults.
+	 *
+	 * @param \WP_REST_Request $request Request.
+	 * @return \WP_REST_Response
+	 */
+	public function delete_overrides( $request ): \WP_REST_Response {
+		$id     = sanitize_key( (string) $request->get_param( 'id' ) );
+		$option = get_option( 'wb_gam_action_overrides', array() );
+		$option = is_array( $option ) ? $option : array();
+		unset( $option[ $id ] );
+		update_option( 'wb_gam_action_overrides', $option, false );
+		return rest_ensure_response( array( 'action_id' => $id, 'reset' => true ) );
 	}
 
 	/**

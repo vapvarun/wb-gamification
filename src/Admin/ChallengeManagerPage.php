@@ -143,6 +143,15 @@ final class ChallengeManagerPage {
 			</header>
 			<hr class="wp-header-end" />
 
+			<nav class="wbgam-tabs nav-tab-wrapper" aria-label="<?php esc_attr_e( 'Challenge type', 'wb-gamification' ); ?>">
+				<a href="<?php echo esc_url( admin_url( 'admin.php?page=wb-gam-challenges' ) ); ?>" class="nav-tab nav-tab-active">
+					<?php esc_html_e( 'Individual Challenges', 'wb-gamification' ); ?>
+				</a>
+				<a href="<?php echo esc_url( admin_url( 'admin.php?page=wb-gam-community-challenges' ) ); ?>" class="nav-tab">
+					<?php esc_html_e( 'Community Challenges', 'wb-gamification' ); ?>
+				</a>
+			</nav>
+
 			<?php if ( isset( $notice_map[ $notice ] ) ) : ?>
 				<div class="wbgam-banner wbgam-banner--<?php echo esc_attr( $notice_map[ $notice ][0] ); ?> wbgam-stack-block" role="status" aria-live="polite"><span class="wbgam-banner__icon icon-circle-check" aria-hidden="true"></span><div class="wbgam-banner__body"><p class="wbgam-banner__desc"><?php echo esc_html( $notice_map[ $notice ][1] ); ?></p></div></div>
 			<?php endif; ?>
@@ -212,6 +221,7 @@ final class ChallengeManagerPage {
 								<th><label for="wb-gam-challenge-starts"><?php esc_html_e( 'Start Date', 'wb-gamification' ); ?></label></th>
 								<td>
 									<input type="datetime-local" name="starts_at" id="wb-gam-challenge-starts" class="wbgam-input"
+										data-wb-gam-utc
 										value="<?php echo esc_attr( $edit_data['starts_at'] ?? gmdate( 'Y-m-d\TH:i' ) ); ?>">
 									<p class="description"><?php esc_html_e( 'When this challenge becomes available to members. Actions before this date will not count.', 'wb-gamification' ); ?></p>
 								</td>
@@ -220,6 +230,7 @@ final class ChallengeManagerPage {
 								<th><label for="wb-gam-challenge-ends"><?php esc_html_e( 'End Date', 'wb-gamification' ); ?></label></th>
 								<td>
 									<input type="datetime-local" name="ends_at" id="wb-gam-challenge-ends" class="wbgam-input"
+										data-wb-gam-utc
 										value="<?php echo esc_attr( $edit_data['ends_at'] ?? gmdate( 'Y-m-d\TH:i', strtotime( '+7 days' ) ) ); ?>">
 									<p class="description"><?php esc_html_e( 'Deadline for the challenge. Members must reach the target before this date. Defaults to 7 days from now.', 'wb-gamification' ); ?></p>
 								</td>

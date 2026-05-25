@@ -39,7 +39,7 @@ return [
 			'icon'                => 'icon-message-circle',
 			'repeatable'          => true,
 			'cooldown'            => 30,
-			'async'               => true,
+			'async'               => false,
 			'requires_buddypress' => true,
 		],
 
@@ -64,7 +64,7 @@ return [
 			'icon'                => 'icon-message-square',
 			'repeatable'          => true,
 			'cooldown'            => 30,
-			'async'               => true,
+			'async'               => false,
 			'requires_buddypress' => true,
 		],
 

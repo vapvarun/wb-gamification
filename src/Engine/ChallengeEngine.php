@@ -27,8 +27,8 @@
  *
  * Time-limited challenges:
  *   starts_at / ends_at are checked before incrementing. Challenges with
- *   status = 'active' AND (starts_at IS NULL OR starts_at <= NOW())
- *   AND (ends_at IS NULL OR ends_at >= NOW()) are considered active.
+ *   status = 'active' AND (starts_at IS NULL OR starts_at <= UTC_TIMESTAMP())
+ *   AND (ends_at IS NULL OR ends_at >= UTC_TIMESTAMP()) are considered active.
  *
  * @package WB_Gamification
  * @since   0.1.0
@@ -98,8 +98,8 @@ final class ChallengeEngine {
 			        period, starts_at, ends_at
 			   FROM {$wpdb->prefix}wb_gam_challenges
 			  WHERE status = 'active'
-			    AND (starts_at IS NULL OR starts_at <= NOW())
-			    AND (ends_at IS NULL OR ends_at >= NOW())
+			    AND (starts_at IS NULL OR starts_at <= UTC_TIMESTAMP())
+			    AND (ends_at IS NULL OR ends_at >= UTC_TIMESTAMP())
 			  ORDER BY id ASC",
 			ARRAY_A
 		);
@@ -257,14 +257,6 @@ final class ChallengeEngine {
 		}
 
 		/**
-		 * Fires when a member completes a challenge.
-		 *
-		 * @param int   $user_id   User who completed the challenge.
-		 * @param array $challenge Full challenge row.
-		 */
-		do_action( 'wb_gam_challenge_completed', $user_id, $challenge );
-
-		/**
 		 * Fires when a user completes a challenge.
 		 *
 		 * @since 1.0.0
@@ -299,8 +291,8 @@ final class ChallengeEngine {
 				   FROM {$wpdb->prefix}wb_gam_challenges
 				  WHERE status = 'active'
 				    AND action_id = %s
-				    AND (starts_at IS NULL OR starts_at <= NOW())
-				    AND (ends_at IS NULL OR ends_at >= NOW())",
+				    AND (starts_at IS NULL OR starts_at <= UTC_TIMESTAMP())
+				    AND (ends_at IS NULL OR ends_at >= UTC_TIMESTAMP())",
 				$action_id
 			),
 			ARRAY_A

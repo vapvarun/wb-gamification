@@ -77,14 +77,21 @@ class KudosController extends WP_REST_Controller {
 					'callback'            => array( $this, 'create_item' ),
 					'permission_callback' => array( $this, 'create_item_permissions_check' ),
 					'args'                => array(
-						'receiver_id' => array(
-							'required'          => true,
+						'receiver_id'      => array(
+							'required'          => false,
 							'type'              => 'integer',
 							'minimum'           => 1,
 							'sanitize_callback' => 'absint',
-							'description'       => 'User ID of the member receiving kudos.',
+							'description'       => 'User ID of the member receiving kudos. One of receiver_id or recipient_login is required.',
 						),
-						'message'     => array(
+						'recipient_login'  => array(
+							'required'          => false,
+							'type'              => 'string',
+							'default'           => '',
+							'sanitize_callback' => 'sanitize_user',
+							'description'       => 'Login (username) or email of the member receiving kudos. Used by frontend forms where the giver does not know the recipient user_id.',
+						),
+						'message'          => array(
 							'type'              => 'string',
 							'default'           => '',
 							'sanitize_callback' => 'sanitize_text_field',
@@ -172,7 +179,22 @@ class KudosController extends WP_REST_Controller {
 		$receiver_id = (int) $request->get_param( 'receiver_id' );
 		$message     = (string) $request->get_param( 'message' );
 
-		if ( ! get_userdata( $receiver_id ) ) {
+		// Frontend forms send `recipient_login` (a user_login / email) instead
+		// of `receiver_id` — the public WP users REST endpoint only returns
+		// post authors, so member→ID resolution has to happen server-side.
+		if ( $receiver_id <= 0 ) {
+			$login = (string) $request->get_param( 'recipient_login' );
+			if ( '' !== $login ) {
+				$user = is_email( $login )
+					? get_user_by( 'email', $login )
+					: ( get_user_by( 'login', $login ) ?: get_user_by( 'slug', $login ) );
+				if ( $user ) {
+					$receiver_id = (int) $user->ID;
+				}
+			}
+		}
+
+		if ( $receiver_id <= 0 || ! get_userdata( $receiver_id ) ) {
 			return new WP_Error(
 				'rest_user_invalid',
 				__( 'Recipient not found.', 'wb-gamification' ),

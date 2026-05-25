@@ -103,12 +103,25 @@ final class ActivityIntegration {
 		);
 
 		foreach ( $types as $key => $label ) {
+			/**
+			 * Filter the context-group label for a gamification activity type.
+			 *
+			 * BP groups activity-filter dropdowns by this label. Returning the
+			 * same string for every type collapses all gamification activities
+			 * into a single "Gamification" filter row; per-type labels expose
+			 * each as its own filter option.
+			 *
+			 * @param string $context Default per-type label.
+			 * @param string $key     Activity action key (e.g. badge_earned).
+			 */
+			$context = apply_filters( 'wb_gam_activity_context_label', $label, $key );
+
 			bp_activity_set_action(
 				self::COMPONENT,
 				$key,
 				$label,
 				null,
-				__( 'Gamification', 'wb-gamification' ),
+				$context,
 				array( 'activity', 'member' )
 			);
 		}

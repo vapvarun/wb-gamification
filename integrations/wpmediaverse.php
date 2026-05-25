@@ -135,7 +135,7 @@ $free_triggers = array(
 		'category'          => 'media',
 		'icon'              => 'dashicons-heart',
 		'repeatable'        => true,
-		'async'             => true,
+		'async'             => false,
 	),
 
 	array(
@@ -159,7 +159,7 @@ $free_triggers = array(
 		'category'          => 'media',
 		'icon'              => 'dashicons-admin-comments',
 		'repeatable'        => true,
-		'async'             => true,
+		'async'             => false,
 	),
 
 	array(
@@ -197,7 +197,7 @@ $free_triggers = array(
 		'category'       => 'media',
 		'icon'           => 'dashicons-star-filled',
 		'repeatable'     => true,
-		'async'          => true,
+		'async'          => false,
 	),
 
 	/*

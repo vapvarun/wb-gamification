@@ -102,16 +102,30 @@ final class LeaderboardNudge {
 		}
 
 		foreach ( $user_ids as $user_id ) {
-			if ( function_exists( 'as_enqueue_async_action' ) ) {
-				as_enqueue_async_action(
-					self::AS_SINGLE_HOOK,
-					array( (int) $user_id ),
-					'wb-gamification-nudge'
-				);
-			} else {
-				// Fallback: run inline (fine for small sites).
-				self::send_nudge( (int) $user_id );
+			$uid = (int) $user_id;
+
+			if ( ! function_exists( 'as_enqueue_async_action' ) ) {
+				// Fallback: run inline (fine for small sites without AS).
+				self::send_nudge( $uid );
+				continue;
 			}
+
+			// Skip if a nudge is already pending for this user. Without this
+			// guard, repeated cron runs (or the cron firing while a previous
+			// batch is still queued) compound into a runaway pending queue —
+			// observed at 48k+ jobs/day on long-lived sites.
+			if (
+				function_exists( 'as_has_scheduled_action' )
+				&& as_has_scheduled_action( self::AS_SINGLE_HOOK, array( $uid ), 'wb-gamification-nudge' )
+			) {
+				continue;
+			}
+
+			as_enqueue_async_action(
+				self::AS_SINGLE_HOOK,
+				array( $uid ),
+				'wb-gamification-nudge'
+			);
 		}
 	}
 

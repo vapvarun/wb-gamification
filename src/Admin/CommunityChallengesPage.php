@@ -80,8 +80,12 @@ final class CommunityChallengesPage {
 	 * @return void
 	 */
 	public static function register_page(): void {
+		// Hidden submenu (null parent) — keeps the URL routable so existing
+		// bookmarks / docs / dashboard links don't 404, but the page is
+		// reached via the "Community" tab on the unified Challenges admin
+		// page (b9 merge — `?page=wb-gam-challenges&tab=community`).
 		add_submenu_page(
-			'wb-gamification',
+			null,
 			__( 'Community Challenges', 'wb-gamification' ),
 			__( 'Community Challenges', 'wb-gamification' ),
 			'wb_gam_manage_challenges',
@@ -137,11 +141,20 @@ final class CommunityChallengesPage {
 		<div class="wrap wbgam-wrap">
 			<header class="wbgam-page-header">
 				<div class="wbgam-page-header__main">
-					<h1 class="wbgam-page-header__title"><?php esc_html_e( 'Community Challenges', 'wb-gamification' ); ?></h1>
+					<h1 class="wbgam-page-header__title"><?php esc_html_e( 'Challenge Manager', 'wb-gamification' ); ?></h1>
 					<p class="wbgam-page-header__desc"><?php esc_html_e( 'Create group goals where the whole community works together toward a shared target.', 'wb-gamification' ); ?></p>
 				</div>
 			</header>
 			<hr class="wp-header-end" />
+
+			<nav class="wbgam-tabs nav-tab-wrapper" aria-label="<?php esc_attr_e( 'Challenge type', 'wb-gamification' ); ?>">
+				<a href="<?php echo esc_url( admin_url( 'admin.php?page=wb-gam-challenges' ) ); ?>" class="nav-tab">
+					<?php esc_html_e( 'Individual Challenges', 'wb-gamification' ); ?>
+				</a>
+				<a href="<?php echo esc_url( admin_url( 'admin.php?page=wb-gam-community-challenges' ) ); ?>" class="nav-tab nav-tab-active">
+					<?php esc_html_e( 'Community Challenges', 'wb-gamification' ); ?>
+				</a>
+			</nav>
 
 			<?php if ( isset( $notice_map[ $notice ] ) ) : ?>
 				<div class="wbgam-banner wbgam-banner--<?php echo esc_attr( $notice_map[ $notice ][0] ); ?> wbgam-stack-block" role="status" aria-live="polite"><span class="wbgam-banner__icon icon-circle-check" aria-hidden="true"></span><div class="wbgam-banner__body"><p class="wbgam-banner__desc"><?php echo esc_html( $notice_map[ $notice ][1] ); ?></p></div></div>
@@ -216,6 +229,7 @@ final class CommunityChallengesPage {
 								<th><label for="wb-gam-cc-starts"><?php esc_html_e( 'Start Date', 'wb-gamification' ); ?></label></th>
 								<td>
 									<input type="datetime-local" name="starts_at" id="wb-gam-cc-starts" class="wbgam-input"
+										data-wb-gam-utc
 										value="<?php echo esc_attr( $edit_data['starts_at'] ?? gmdate( 'Y-m-d\TH:i' ) ); ?>">
 									<p class="description"><?php esc_html_e( 'When this community challenge becomes active. Actions before this date will not count.', 'wb-gamification' ); ?></p>
 								</td>
@@ -224,6 +238,7 @@ final class CommunityChallengesPage {
 								<th><label for="wb-gam-cc-ends"><?php esc_html_e( 'End Date', 'wb-gamification' ); ?></label></th>
 								<td>
 									<input type="datetime-local" name="ends_at" id="wb-gam-cc-ends" class="wbgam-input"
+										data-wb-gam-utc
 										value="<?php echo esc_attr( $edit_data['ends_at'] ?? gmdate( 'Y-m-d\TH:i', strtotime( '+14 days' ) ) ); ?>">
 									<p class="description"><?php esc_html_e( 'Deadline for the challenge. Defaults to 14 days from now.', 'wb-gamification' ); ?></p>
 								</td>

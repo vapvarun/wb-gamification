@@ -6,6 +6,40 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 
 ## [Unreleased]
 
+## [1.4.0] — 2026-05-25
+
+Bug-sweep release. 11 reported issues fixed plus two stability wins discovered during code-level triage of the Basecamp queue.
+
+### Added
+
+- **Give-kudos block + shortcode** — new `wb-gamification/give-kudos` block and `[wb_gam_give_kudos]` shortcode let any logged-in member send kudos from any frontend page. Recipient resolved server-side from username or email.
+- **Per-action cooldown + daily-cap admin override** — Settings → Points table now exposes editable cooldown (seconds) and daily-cap inputs per action with autosave to `POST /actions/{id}/overrides`. Resettable via `DELETE`.
+- **ActionSchedulerCleaner** — daily cron prunes pending, failed, and complete `actionscheduler_actions` rows older than 7 days. Retention is filterable via `wb_gam_as_retention_days`. Prevents the long-running AS bloat that was causing slow page loads on busy installs.
+
+### Changed
+
+- Settings dashboard container now uses 1600px max-width on wide monitors; consolidated a duplicate `.wbgam-wrap` rule that was overriding the limit.
+- Challenges and Community Challenges admin pages unified under a single Challenges menu entry with Individual / Community tabs. Old `?page=wb-gam-community-challenges` URLs still route correctly.
+- Async flag dropped on five low-volume BuddyPress + WPMediaVerse actions (activity update, activity comment, friend accept, media reaction, media comment received, photo favorite received) so points update synchronously without Action Scheduler delay.
+- Admin notices now render above the WB Gamification chrome instead of being visually trapped inside `.wbgam-wrap` (DOM-level lift in `assets/js/admin-rest-form.js`).
+- Configure Points and Top Actions dashboard CTAs route to the in-page Points tab via hash anchor (`#points`) instead of the broken `?tab=points` query string.
+
+### Fixed
+
+- **LeaderboardNudge AS queue runaway** — `dispatch_batch()` now calls `as_has_scheduled_action()` before enqueueing per-user nudges, so repeated cron runs no longer compound into thousands of duplicate pending jobs.
+- **Challenge timezone drift** — `ChallengeEngine` start / end queries use `UTC_TIMESTAMP()` instead of MySQL `NOW()`, matching the UTC-stored values written by the admin form. Challenges now activate at the correct moment on servers with a non-UTC MySQL session timezone.
+- **datetime-local UTC hydration** — admin Challenge + Community Challenge edit inputs now convert UTC values to the browser's local time on page load (`data-wb-gam-utc` + `hydrateUtcDateTimeInputs`), so the saved time stops drifting by the timezone offset on every edit.
+- **Empty toast text** — `NotificationBridge::on_level_changed` and `on_streak_milestone` now backfill a translated `message` string so the toast bubble is no longer empty.
+- **Duplicate challenge completion side effects** — `ChallengeEngine::complete_challenge()` no longer calls `do_action('wb_gam_challenge_completed')` twice; BP activity rows, webhook deliveries, and emails now fire once per completion.
+- **Kudos recipient lookup** — `KudosController::create_item` accepts a `recipient_login` field and resolves usernames or emails to user IDs server-side, so the new give-kudos block doesn't depend on the public `/wp/v2/users` endpoint (which only returns post authors).
+- **BP activity filter labels** — `ActivityIntegration::register_activity_types` now exposes four distinct filter entries (Badge earned, Level up, Kudos sent, Challenge complete) instead of collapsing into one Gamification row. Sites can override via the new `wb_gam_activity_context_label` filter.
+
+### Dev
+
+- New filter `wb_gam_as_retention_days` (default `7`) to tune Action Scheduler retention per site.
+- New filter `wb_gam_activity_context_label` exposes BP activity context labels for per-type customisation.
+- New REST routes: `POST /actions/{id}/overrides`, `DELETE /actions/{id}/overrides` (admin-only).
+
 ## [1.3.0] — 2026-05-18
 
 Jetonomy 1.4.3 + Pro event triggers and an in-tree WPMediaVerse Free + Pro manifest stack.

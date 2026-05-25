@@ -280,6 +280,79 @@
 		}
 	}
 
+	/**
+	 * Hydrate UTC-stored datetime-local inputs to browser-local time.
+	 *
+	 * Server renders the value as `Y-m-d H:i:s` UTC. Without conversion, the
+	 * native <input type="datetime-local"> treats the string as already-local,
+	 * shifting the displayed time by the browser-server timezone offset on
+	 * every edit. Inputs annotated with `data-wb-gam-utc` are converted once
+	 * on load: parse as UTC, render in local `Y-m-d\TH:i` shape.
+	 */
+	function hydrateUtcDateTimeInputs() {
+		const inputs = document.querySelectorAll( 'input[type="datetime-local"][data-wb-gam-utc]' );
+		inputs.forEach( function ( input ) {
+			if ( ! input.value ) {
+				return;
+			}
+			// Server values may arrive as `Y-m-d H:i:s` or `Y-m-d\TH:i`; normalize.
+			const raw  = input.value.replace( ' ', 'T' );
+			const date = new Date( raw + 'Z' ); // Treat as UTC.
+			if ( isNaN( date.getTime() ) ) {
+				return;
+			}
+			const pad = function ( n ) { return n < 10 ? '0' + n : '' + n; };
+			input.value = date.getFullYear() + '-' +
+				pad( date.getMonth() + 1 ) + '-' +
+				pad( date.getDate() ) + 'T' +
+				pad( date.getHours() ) + ':' +
+				pad( date.getMinutes() );
+		} );
+	}
+
+	/**
+	 * Lift WP admin notices out of the .wbgam-wrap chrome.
+	 *
+	 * Plugin admin pages use `<div class="wrap wbgam-wrap">`. WordPress targets
+	 * `.wrap` for `admin_notices` injection, so notices visually appear *inside*
+	 * the plugin's styled container, inheriting its padding/max-width and
+	 * looking trapped. Move them to immediately before the wrap so they sit at
+	 * the standard WP location, with the standard WP styling.
+	 */
+	function liftAdminNotices() {
+		const wrap = document.querySelector( '.wrap.wbgam-wrap' );
+		if ( ! wrap || ! wrap.parentNode ) {
+			return;
+		}
+		// All known WP notice class patterns. `.update-nag` is rare but included.
+		const selector = '.notice, .error, .updated, .update-nag';
+		const notices  = wrap.querySelectorAll( selector );
+		notices.forEach( function ( notice ) {
+			// Only lift direct-ish descendants — leave notices nested deep in
+			// plugin-managed UI (e.g. a meta box) where they belong.
+			let depth = 0;
+			let node  = notice.parentNode;
+			while ( node && node !== wrap && depth < 5 ) {
+				node = node.parentNode;
+				depth++;
+			}
+			if ( node === wrap && depth <= 2 ) {
+				wrap.parentNode.insertBefore( notice, wrap );
+			}
+		} );
+	}
+
+	function onReady() {
+		hydrateUtcDateTimeInputs();
+		liftAdminNotices();
+	}
+
+	if ( document.readyState === 'loading' ) {
+		document.addEventListener( 'DOMContentLoaded', onReady );
+	} else {
+		onReady();
+	}
+
 	document.addEventListener( 'submit', onFormSubmit );
 	document.addEventListener( 'click', onActionClick );
 	// Keyboard parity: native <button> already supports Enter/Space, but the

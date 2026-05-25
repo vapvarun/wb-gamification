@@ -741,7 +741,7 @@
 
 /* Page wrapper */
 .wbgam-wrap {
-	max-width: 1200px;
+	max-width: 1600px;
 }
 
 .wbgam-page-title {
@@ -1861,7 +1861,7 @@ body[class*="_page_wb-gam-"] #wpbody-content > .updated:not(.wb-gam-notice) {
    ========================================================================== */
 
 .wbgam-wrap {
-	max-width: 1200px;
+	max-width: 1600px;
 	font-family: var(--wbgam-font);
 	color: var(--wbgam-text);
 	line-height: 1.5;

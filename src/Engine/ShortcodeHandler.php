@@ -48,6 +48,7 @@ final class ShortcodeHandler {
 		add_shortcode( 'wb_gam_streak', array( __CLASS__, 'render_streak' ) );
 		add_shortcode( 'wb_gam_top_members', array( __CLASS__, 'render_top_members' ) );
 		add_shortcode( 'wb_gam_kudos_feed', array( __CLASS__, 'render_kudos_feed' ) );
+		add_shortcode( 'wb_gam_give_kudos', array( __CLASS__, 'render_give_kudos' ) );
 		add_shortcode( 'wb_gam_year_recap', array( __CLASS__, 'render_year_recap' ) );
 		add_shortcode( 'wb_gam_points_history', array( __CLASS__, 'render_points_history' ) );
 		add_shortcode( 'wb_gam_earning_guide', array( __CLASS__, 'render_earning_guide' ) );
@@ -254,6 +255,155 @@ final class ShortcodeHandler {
 		$atts['show_messages'] = filter_var( $atts['show_messages'], FILTER_VALIDATE_BOOLEAN );
 
 		return self::block( 'kudos-feed', $atts );
+	}
+
+	/**
+	 * Render [wb_gam_give_kudos] — thin wrapper around `wb-gamification/give-kudos` block.
+	 *
+	 * Attributes:
+	 *   to    — recipient user_login OR user_id (optional; locks the form to
+	 *           one recipient instead of showing the username field).
+	 *   label — submit button label.
+	 *
+	 * @param array|string $atts Shortcode attributes.
+	 * @return string HTML output.
+	 */
+	public static function render_give_kudos( $atts ): string {
+		$atts = shortcode_atts(
+			array(
+				'to'    => '',
+				'label' => '',
+			),
+			(array) $atts,
+			'wb_gam_give_kudos'
+		);
+		return self::block( 'give-kudos', $atts );
+	}
+
+	/**
+	 * Shared render for the give-kudos UI. Used by both the shortcode and the
+	 * block's render.php. REST-only — no direct DB queries.
+	 *
+	 * @param array $atts Block / shortcode attributes (`to`, `label`).
+	 * @return string HTML.
+	 */
+	public static function give_kudos_html( array $atts ): string {
+		$atts = array_merge(
+			array(
+				'to'    => '',
+				'label' => '',
+			),
+			$atts
+		);
+		if ( '' === $atts['label'] ) {
+			$atts['label'] = __( 'Send Kudos', 'wb-gamification' );
+		}
+
+		if ( ! is_user_logged_in() ) {
+			return '<div class="wb-gam-give-kudos wb-gam-give-kudos--guest"><p>'
+				. esc_html__( 'Sign in to send kudos to other members.', 'wb-gamification' )
+				. '</p></div>';
+		}
+
+		$recipient_id    = 0;
+		$recipient_label = '';
+		if ( '' !== $atts['to'] ) {
+			$user = is_numeric( $atts['to'] )
+				? get_user_by( 'id', (int) $atts['to'] )
+				: get_user_by( 'login', $atts['to'] );
+			if ( $user ) {
+				$recipient_id    = (int) $user->ID;
+				$recipient_label = $user->display_name ?: $user->user_login;
+			}
+		}
+
+		self::enqueue_give_kudos_assets();
+		$rest_url = esc_url( rest_url( 'wb-gamification/v1/kudos' ) );
+		$nonce    = wp_create_nonce( 'wp_rest' );
+		$uid      = 'wbgam-give-kudos-' . wp_generate_password( 6, false, false );
+
+		ob_start();
+		?>
+		<form class="wb-gam-give-kudos" data-wb-gam-give-kudos="<?php echo esc_attr( $uid ); ?>"
+			data-rest-url="<?php echo esc_attr( $rest_url ); ?>"
+			data-rest-nonce="<?php echo esc_attr( $nonce ); ?>">
+			<?php if ( $recipient_id > 0 ) : ?>
+				<input type="hidden" name="receiver_id" value="<?php echo (int) $recipient_id; ?>" />
+				<p class="wb-gam-give-kudos__recipient">
+					<?php
+					printf(
+						/* translators: %s: recipient display name. */
+						esc_html__( 'Send a kudos to %s:', 'wb-gamification' ),
+						'<strong>' . esc_html( $recipient_label ) . '</strong>'
+					);
+					?>
+				</p>
+			<?php else : ?>
+				<label class="wb-gam-give-kudos__label" for="<?php echo esc_attr( $uid ); ?>-to">
+					<?php esc_html_e( 'Recipient (username)', 'wb-gamification' ); ?>
+				</label>
+				<input type="text" id="<?php echo esc_attr( $uid ); ?>-to" name="recipient_login" required
+					autocomplete="off" class="wb-gam-give-kudos__input" />
+			<?php endif; ?>
+
+			<label class="wb-gam-give-kudos__label" for="<?php echo esc_attr( $uid ); ?>-msg">
+				<?php esc_html_e( 'Message (optional)', 'wb-gamification' ); ?>
+			</label>
+			<textarea id="<?php echo esc_attr( $uid ); ?>-msg" name="message" rows="2" maxlength="255"
+				class="wb-gam-give-kudos__textarea"
+				placeholder="<?php esc_attr_e( 'Say something nice (max 255 chars)', 'wb-gamification' ); ?>"></textarea>
+
+			<button type="submit" class="wb-gam-give-kudos__submit">
+				<?php echo esc_html( $atts['label'] ); ?>
+			</button>
+
+			<p class="wb-gam-give-kudos__status" role="status" aria-live="polite"></p>
+		</form>
+		<?php
+		return (string) ob_get_clean();
+	}
+
+	/**
+	 * Enqueue the give-kudos block's CSS + JS bundle.
+	 *
+	 * Called by `give_kudos_html()` on render so the assets are only loaded
+	 * on pages that actually use the block / shortcode. Idempotent —
+	 * wp_enqueue_script bails if the handle is already registered.
+	 *
+	 * @return void
+	 */
+	private static function enqueue_give_kudos_assets(): void {
+		$handle = 'wb-gam-give-kudos';
+		if ( wp_script_is( $handle, 'enqueued' ) ) {
+			return;
+		}
+
+		wp_enqueue_style(
+			$handle,
+			plugins_url( 'assets/css/give-kudos.css', WB_GAM_FILE ),
+			array(),
+			WB_GAM_VERSION
+		);
+		wp_enqueue_script(
+			$handle,
+			plugins_url( 'assets/js/give-kudos.js', WB_GAM_FILE ),
+			array(),
+			WB_GAM_VERSION,
+			true
+		);
+		wp_localize_script(
+			$handle,
+			'wbGamGiveKudos',
+			array(
+				'i18n' => array(
+					'missingRecipient' => __( 'Please enter a recipient.', 'wb-gamification' ),
+					'sending'          => __( 'Sending…', 'wb-gamification' ),
+					'success'          => __( 'Kudos sent. Thanks for spreading kindness!', 'wb-gamification' ),
+					'failure'          => __( 'Could not send kudos. Please try again.', 'wb-gamification' ),
+					'network'          => __( 'Network error. Please try again.', 'wb-gamification' ),
+				),
+			)
+		);
 	}
 
 	/**

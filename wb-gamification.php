@@ -3,7 +3,7 @@
  * Plugin Name: WB Gamification
  * Plugin URI:  https://wbcomdesigns.com/
  * Description: Complete gamification plugin for BuddyPress and WordPress. Part of the Reign Stack. Points, badges, levels, leaderboards, challenges, and streaks — zero config, works out of the box.
- * Version:     1.3.0
+ * Version:     1.4.0
  * Author:      Wbcom Designs
  * Author URI:  https://wbcomdesigns.com/
  * License:     GPL-2.0+
@@ -18,7 +18,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'WB_GAM_VERSION', '1.3.0' );
+define( 'WB_GAM_VERSION', '1.4.0' );
 define( 'WB_GAM_FILE', __FILE__ );
 define( 'WB_GAM_PATH', plugin_dir_path( __FILE__ ) );
 define( 'WB_GAM_URL', plugin_dir_url( __FILE__ ) );
@@ -143,6 +143,7 @@ use WBGam\Engine\ManifestLoader;
 use WBGam\Engine\FeatureFlags;
 use WBGam\Engine\AsyncEvaluator;
 use WBGam\Engine\LogPruner;
+use WBGam\Engine\ActionSchedulerCleaner;
 use WBGam\Engine\LeaderboardNudge;
 use WBGam\Engine\Installer;
 use WBGam\Engine\BadgeSharePage;
@@ -522,6 +523,7 @@ register_activation_hook(
 			update_option( 'wb_gam_pending_setup_redirect', '1' );
 		}
 		LogPruner::activate();
+		ActionSchedulerCleaner::activate();
 		LeaderboardNudge::activate();
 		LeaderboardEngine::activate();
 		TenureBadgeEngine::activate();
@@ -537,6 +539,7 @@ register_deactivation_hook(
 	__FILE__,
 	function () {
 		LogPruner::deactivate();
+		ActionSchedulerCleaner::deactivate();
 		LeaderboardNudge::deactivate();
 		LeaderboardEngine::deactivate();
 		TenureBadgeEngine::deactivate();

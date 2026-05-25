@@ -165,11 +165,18 @@ final class NotificationBridge {
 			) ?: array();
 		}
 
+		$level_name = (string) ( $new_level['name'] ?? '' );
+		$message    = '' !== $level_name
+			/* translators: %s: new level name (e.g. "Champion"). */
+			? sprintf( __( 'You reached %s!', 'wb-gamification' ), $level_name )
+			: __( 'You leveled up!', 'wb-gamification' );
+
 		self::push(
 			$user_id,
 			array(
 				'type'      => 'level_up',
-				'levelName' => $new_level['name'] ?? '',
+				'message'   => $message,
+				'levelName' => $level_name,
 				'iconUrl'   => $new_level['icon_url'] ?? '',
 			)
 		);
@@ -185,8 +192,10 @@ final class NotificationBridge {
 		self::push(
 			$user_id,
 			array(
-				'type' => 'streak_milestone',
-				'days' => $streak_days,
+				'type'    => 'streak_milestone',
+				/* translators: %d: number of consecutive days. */
+				'message' => sprintf( _n( '%d-day streak!', '%d-day streak!', $streak_days, 'wb-gamification' ), $streak_days ),
+				'days'    => $streak_days,
 			)
 		);
 	}

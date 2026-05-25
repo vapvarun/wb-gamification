@@ -239,7 +239,58 @@ final class Registry {
 	 * @return array<string, array>
 	 */
 	public static function get_actions(): array {
-		return self::$actions;
+		$overrides = self::get_overrides();
+		if ( empty( $overrides ) ) {
+			return self::$actions;
+		}
+		$out = array();
+		foreach ( self::$actions as $id => $action ) {
+			$out[ $id ] = self::apply_overrides( $action, $overrides );
+		}
+		return $out;
+	}
+
+	/**
+	 * Read the per-action override option.
+	 *
+	 * Site admins can edit `cooldown`, `daily_cap`, and `weekly_cap` per
+	 * action without forking the manifest. The override row is stored in
+	 * the `wb_gam_action_overrides` option, keyed by action_id.
+	 *
+	 * Empty / missing override values fall through to manifest defaults.
+	 *
+	 * @return array<string, array{cooldown?:int, daily_cap?:int, weekly_cap?:int}>
+	 */
+	private static function get_overrides(): array {
+		$opt = get_option( 'wb_gam_action_overrides', array() );
+		return is_array( $opt ) ? $opt : array();
+	}
+
+	/**
+	 * Layer admin overrides onto a manifest action definition.
+	 *
+	 * Override keys: cooldown (seconds), daily_cap (count), weekly_cap (count).
+	 * A value of 0 means "no limit"; only positive overrides are applied so
+	 * an empty override row doesn't silently disable a manifest cap.
+	 *
+	 * @param array $action    Manifest action.
+	 * @param array $overrides Full overrides option (see `get_overrides()`).
+	 * @return array Action with admin overrides applied.
+	 */
+	private static function apply_overrides( array $action, array $overrides ): array {
+		$id = $action['id'] ?? '';
+		if ( '' === $id || empty( $overrides[ $id ] ) || ! is_array( $overrides[ $id ] ) ) {
+			return $action;
+		}
+		foreach ( array( 'cooldown', 'daily_cap', 'weekly_cap' ) as $key ) {
+			if ( isset( $overrides[ $id ][ $key ] ) ) {
+				$val = (int) $overrides[ $id ][ $key ];
+				if ( $val >= 0 ) {
+					$action[ $key ] = $val;
+				}
+			}
+		}
+		return $action;
 	}
 
 	/**
@@ -267,7 +318,13 @@ final class Registry {
 	 * @return array|null Action definition or null if not registered.
 	 */
 	public static function get_action( string $id ): ?array {
-		return self::$actions[ $id ] ?? null;
+		if ( ! isset( self::$actions[ $id ] ) ) {
+			return null;
+		}
+		$overrides = self::get_overrides();
+		return empty( $overrides )
+			? self::$actions[ $id ]
+			: self::apply_overrides( self::$actions[ $id ], $overrides );
 	}
 
 	/**

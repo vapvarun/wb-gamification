@@ -484,6 +484,34 @@ final class SettingsPage {
 		);
 	}
 
+	/**
+	 * Enqueue the per-action overrides autosave script.
+	 *
+	 * Inline-rendered next to the Points-tab actions table on settings
+	 * render. The script handle is registered once; the localised data
+	 * (REST base URL + nonce) is passed via wp_localize_script.
+	 *
+	 * @return void
+	 */
+	private static function enqueue_action_overrides_script(): void {
+		$handle = 'wb-gam-admin-action-overrides';
+		wp_enqueue_script(
+			$handle,
+			plugins_url( 'assets/js/admin-action-overrides.js', WB_GAM_FILE ),
+			array(),
+			WB_GAM_VERSION,
+			true
+		);
+		wp_localize_script(
+			$handle,
+			'wbGamActionOverrides',
+			array(
+				'restBase' => rest_url( 'wb-gamification/v1/actions/' ),
+				'nonce'    => wp_create_nonce( 'wp_rest' ),
+			)
+		);
+	}
+
 	public static function enqueue_settings_toggles( string $hook_suffix ): void {
 		if ( 'toplevel_page_wb-gamification' !== $hook_suffix ) {
 			return;
@@ -697,7 +725,7 @@ final class SettingsPage {
 				</div>
 				<div class="wbgam-page-header__actions">
 					<?php self::render_mode_badge(); ?>
-					<a class="wbgam-btn wbgam-btn--secondary" href="<?php echo esc_url( admin_url( 'admin.php?page=wb-gamification&tab=points' ) ); ?>">
+					<a class="wbgam-btn wbgam-btn--secondary" href="<?php echo esc_url( admin_url( 'admin.php?page=wb-gamification#points' ) ); ?>">
 						<?php esc_html_e( 'Configure', 'wb-gamification' ); ?>
 					</a>
 				</div>
@@ -814,6 +842,7 @@ final class SettingsPage {
 											<th class="wb-gam-col-currency"><?php esc_html_e( 'Currency', 'wb-gamification' ); ?></th>
 										<?php endif; ?>
 										<th class="wb-gam-col-flag"><?php esc_html_e( 'Repeat', 'wb-gamification' ); ?></th>
+										<th class="wb-gam-col-flag"><?php esc_html_e( 'Cooldown (s)', 'wb-gamification' ); ?></th>
 										<th class="wb-gam-col-flag"><?php esc_html_e( 'Daily cap', 'wb-gamification' ); ?></th>
 									</tr>
 									</thead>
@@ -885,11 +914,33 @@ final class SettingsPage {
 												<?php endif; ?>
 											</td>
 											<td>
-												<?php if ( $daily_cap > 0 ) : ?>
-													<span class="wbgam-pill wbgam-pill--warning"><?php echo esc_html( $daily_cap ); ?></span>
-												<?php else : ?>
-													<span class="wbgam-pill wbgam-pill--inactive" aria-label="<?php esc_attr_e( 'No daily cap', 'wb-gamification' ); ?>">&infin;</span>
-												<?php endif; ?>
+												<?php $wb_gam_cooldown = (int) ( $action['cooldown'] ?? 0 ); ?>
+												<input
+													type="number"
+													name="cooldown"
+													data-wb-gam-action-override="cooldown"
+													data-wb-gam-action-id="<?php echo esc_attr( $action_id ); ?>"
+													value="<?php echo esc_attr( $wb_gam_cooldown ); ?>"
+													min="0"
+													max="86400"
+													step="1"
+													class="wbgam-input wbgam-input--xs"
+													aria-label="<?php /* translators: %s: action label */ echo esc_attr( sprintf( __( 'Cooldown in seconds for %s', 'wb-gamification' ), $action['label'] ?? $action_id ) ); ?>"
+												>
+											</td>
+											<td>
+												<input
+													type="number"
+													name="daily_cap"
+													data-wb-gam-action-override="daily_cap"
+													data-wb-gam-action-id="<?php echo esc_attr( $action_id ); ?>"
+													value="<?php echo esc_attr( $daily_cap ); ?>"
+													min="0"
+													max="9999"
+													step="1"
+													class="wbgam-input wbgam-input--xs"
+													aria-label="<?php /* translators: %s: action label */ echo esc_attr( sprintf( __( 'Daily cap for %s (0 = unlimited)', 'wb-gamification' ), $action['label'] ?? $action_id ) ); ?>"
+												>
 											</td>
 										</tr>
 									<?php endforeach; ?>
@@ -899,6 +950,8 @@ final class SettingsPage {
 						</div>
 					</details>
 				<?php endforeach; ?>
+
+				<?php self::enqueue_action_overrides_script(); ?>
 
 				<div class="wbgam-settings-card">
 					<div class="wbgam-settings-card__head">
@@ -1167,7 +1220,7 @@ final class SettingsPage {
 				class="button">
 				<?php esc_html_e( 'Award Points', 'wb-gamification' ); ?>
 			</a>
-			<a href="<?php echo esc_url( admin_url( 'admin.php?page=wb-gamification&tab=points' ) ); ?>"
+			<a href="<?php echo esc_url( admin_url( 'admin.php?page=wb-gamification#points' ) ); ?>"
 				class="button">
 				<?php esc_html_e( 'Configure Points', 'wb-gamification' ); ?>
 			</a>
@@ -1229,7 +1282,7 @@ final class SettingsPage {
 						<span class="icon-zap" aria-hidden="true"></span>
 						<?php esc_html_e( 'Top actions — last 30 days', 'wb-gamification' ); ?>
 					</h3>
-					<a class="wbgam-card-link" href="<?php echo esc_url( admin_url( 'admin.php?page=wb-gamification&tab=points' ) ); ?>">
+					<a class="wbgam-card-link" href="<?php echo esc_url( admin_url( 'admin.php?page=wb-gamification#points' ) ); ?>">
 						<?php esc_html_e( 'Configure', 'wb-gamification' ); ?>
 					</a>
 				</div>

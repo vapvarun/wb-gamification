@@ -42,6 +42,7 @@ final class FeatureFlags {
 		'ChallengeEngine',
 		'KudosEngine',
 		'LogPruner',
+		'ActionSchedulerCleaner',
 		'RankAutomation',
 		'PersonalRecordEngine',
 		'NotificationBridge',

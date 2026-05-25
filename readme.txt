@@ -4,7 +4,7 @@ Tags: gamification, points, badges, leaderboard, buddypress
 Requires at least: 6.4
 Tested up to: 6.9
 Requires PHP: 8.1
-Stable tag: 1.3.0
+Stable tag: 1.4.0
 License: GPL-2.0+
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -133,6 +133,28 @@ All data is preserved in the database. Reactivating the plugin restores everythi
 
 == Changelog ==
 
+= 1.4.0 - May 2026 =
+
+Bug-sweep release. 11 reported issues fixed plus two stability wins discovered during code-level triage of the queue.
+
+* New      - Give-kudos block + shortcode (wb-gamification/give-kudos, [wb_gam_give_kudos]) for sending kudos from any frontend page.
+* New      - Per-action cooldown + daily-cap admin override (Points settings table) with autosave to /actions/{id}/overrides REST.
+* New      - ActionSchedulerCleaner daily cron prunes pending, failed, and complete action-scheduler rows older than 7 days (filter wb_gam_as_retention_days).
+* Improve  - Settings dashboard container now uses 1600px max-width on wide monitors and consolidates a duplicate .wbgam-wrap rule.
+* Improve  - Challenges and Community Challenges admin pages unified under a single Challenges menu entry with Individual / Community tabs.
+* Improve  - Async award flag dropped on five low-volume BuddyPress + WPMediaVerse actions so points update synchronously without Action Scheduler delay.
+* Improve  - Admin notices now render above the WB Gamification chrome instead of being visually trapped inside .wbgam-wrap.
+* Improve  - Configure Points and Top Actions dashboard links route to the in-page Points tab via hash anchor instead of broken query-string routing.
+* Fix      - LeaderboardNudge no longer enqueues duplicate Action Scheduler jobs for the same user; a runaway loop on long-running sites is contained by the new as_has_scheduled_action guard.
+* Fix      - Challenge time queries use UTC_TIMESTAMP() instead of NOW() so UTC-stored start and end columns activate at the correct moment on servers with a non-UTC MySQL session timezone.
+* Fix      - datetime-local admin inputs hydrate UTC values into the browsers local time on page load so the Challenges and Community Challenges edit forms no longer drift the saved time by the timezone offset on every edit.
+* Fix      - Level-up and streak-milestone toasts now include a translated message string so the toast bubble is no longer empty.
+* Fix      - ChallengeEngine duplicate do_action removed so BP activity rows, webhook deliveries, and emails fire once per challenge completion instead of twice.
+* Fix      - KudosController create_item resolves recipient_login (username or email) server-side for the new give-kudos block; receiver_id remains supported.
+* Fix      - BuddyPress activity filter labels now expose four distinct entries (Badge earned, Level up, Kudos sent, Challenge complete) instead of collapsing into one Gamification row; sites can override via the wb_gam_activity_context_label filter.
+* Dev      - New wb_gam_as_retention_days filter (default 7) to tune Action Scheduler retention per site.
+* Dev      - New wb_gam_activity_context_label filter exposes BP activity context labels for per-type customisation.
+
 = 1.3.0 - May 2026 =
 
 Jetonomy 1.4.3 and Jetonomy Pro event triggers, plus an in-tree WPMediaVerse Free + Pro manifest stack.
@@ -190,6 +212,9 @@ Distribution pipeline and admin polish ahead of the integration release.
 10. **Redemption Store** — Admin catalog UI to define rewards (custom or WooCommerce-backed) with point cost, stock, and active/inactive status.
 
 == Upgrade Notice ==
+
+= 1.4.0 =
+Bug-sweep release with two stability wins: contains a LeaderboardNudge Action Scheduler runaway and adds a 7-day AS retention cron. Safe upgrade with no schema changes.
 
 = 1.3.0 =
 Adds Jetonomy 1.4.3 + Pro event coverage and ships the WPMediaVerse manifests in-tree. Safe upgrade with no schema changes.
