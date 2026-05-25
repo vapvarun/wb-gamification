@@ -138,13 +138,13 @@ final class CohortSettingsPage {
 	public static function render_page(): void {
 		?>
 		<div class="wrap wbgam-wrap">
+			<hr class="wp-header-end" />
 			<header class="wbgam-page-header">
 				<div class="wbgam-page-header__main">
 					<h1 class="wbgam-page-header__title"><?php esc_html_e( 'Cohort Leagues', 'wb-gamification' ); ?></h1>
 					<p class="wbgam-page-header__desc"><?php esc_html_e( 'Duolingo-style weekly leagues where members compete in tiers. Top performers promote, bottom performers demote each cycle.', 'wb-gamification' ); ?></p>
 				</div>
 			</header>
-			<hr class="wp-header-end" />
 			<?php self::render_inline(); ?>
 		</div>
 		<?php

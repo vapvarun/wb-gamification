@@ -497,7 +497,54 @@ final class DbUpgrader {
 			'1.0.0' => 'upgrade_to_1_0_0',
 			'1.1.0' => 'upgrade_to_1_1_0',
 			'1.2.0' => 'upgrade_to_1_2_0',
+			'1.4.0' => 'upgrade_to_1_4_0',
 		);
+	}
+
+	/**
+	 * 1.4.0 — resync user-meta level cache against the points ledger.
+	 *
+	 * Reported in Basecamp card 9914892576 ("Member levels are not getting
+	 * updated"). On every install we've seen with seeded test data or a
+	 * migrated points ledger, `wb_gam_level_id` and `wb_gam_level_name` in
+	 * user_meta drift from what {@see LevelEngine::get_level_for_points()}
+	 * computes from the same ledger. The drift is invisible until a UI
+	 * surface reads the cached meta directly (BP profile, BP directory,
+	 * `members` REST response) instead of routing through LevelEngine.
+	 *
+	 * This one-shot migration recomputes the canonical level for every user
+	 * with a points row, writes both meta keys back to the engine-derived
+	 * pair, and clears the per-request level cache so the next read sees
+	 * fresh values. Subsequent stale rows are caught by the self-heal added
+	 * to LevelEngine::get_level_for_user(), but doing the bulk pass once at
+	 * upgrade keeps users from waiting for someone to view their profile
+	 * before the rank shown on the directory matches the ledger.
+	 */
+	private static function upgrade_to_1_4_0(): void {
+		global $wpdb;
+
+		$ids = $wpdb->get_col(
+			"SELECT DISTINCT user_id FROM `{$wpdb->prefix}wb_gam_points`"
+		);
+		if ( empty( $ids ) ) {
+			return;
+		}
+
+		foreach ( $ids as $uid ) {
+			$user_id = (int) $uid;
+			if ( $user_id <= 0 ) {
+				continue;
+			}
+			$level = \WBGam\Engine\LevelEngine::get_level_for_user( $user_id );
+			if ( ! $level ) {
+				continue;
+			}
+			// `get_level_for_user()` already self-heals — the explicit
+			// `update_user_meta` here is belt-and-braces so the migration
+			// remains correct if the self-heal is ever removed.
+			update_user_meta( $user_id, 'wb_gam_level_id', $level['id'] );
+			update_user_meta( $user_id, 'wb_gam_level_name', $level['name'] );
+		}
 	}
 
 	// ── Migrations ───────────────────────────────────────────────────────────────

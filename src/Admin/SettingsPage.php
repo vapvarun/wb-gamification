@@ -555,6 +555,7 @@ final class SettingsPage {
 		$bp_active = function_exists( 'buddypress' );
 		?>
 		<div class="wrap wbgam-wrap" id="wb-gam-settings">
+			<hr class="wp-header-end" />
 			<header class="wbgam-page-header wbgam-settings-topbar">
 				<div class="wbgam-settings-topbar__brand">
 					<span class="wbgam-settings-topbar__logo icon-award" aria-hidden="true"></span>
@@ -575,7 +576,6 @@ final class SettingsPage {
 					</a>
 				</div>
 			</header>
-			<hr class="wp-header-end" />
 		<div class="wbgam-settings-wrap">
 
 			<!-- Sidebar -->
@@ -715,6 +715,7 @@ final class SettingsPage {
 		settings_errors( 'wb_gamification' );
 		?>
 		<div class="wrap wbgam-wrap" id="wb-gam-settings">
+			<hr class="wp-header-end" />
 			<header class="wbgam-page-header">
 				<div class="wbgam-page-header__main">
 					<h1 class="wbgam-page-header__title">
@@ -730,7 +731,6 @@ final class SettingsPage {
 					</a>
 				</div>
 			</header>
-			<hr class="wp-header-end" />
 			<?php self::render_dashboard_tab(); ?>
 		</div>
 		<?php

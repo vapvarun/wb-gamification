@@ -98,13 +98,13 @@ final class PointTypeConversionsPage {
 		if ( count( $types ) < 2 ) :
 			?>
 			<div class="wrap wbgam-wrap">
+				<hr class="wp-header-end" />
 				<header class="wbgam-page-header">
 					<div class="wbgam-page-header__main">
 						<h1 class="wbgam-page-header__title"><?php esc_html_e( 'Currency Conversions', 'wb-gamification' ); ?></h1>
 						<p class="wbgam-page-header__desc"><?php esc_html_e( 'Define exchange rates between point currencies — e.g. 100 Points → 1 Coin. Members convert their balance via the Hub block or REST API.', 'wb-gamification' ); ?></p>
 					</div>
 				</header>
-				<hr class="wp-header-end" />
 				<div class="wbgam-banner wbgam-banner--info wbgam-stack-block">
 					<span class="wbgam-banner__icon icon-info" aria-hidden="true"></span>
 					<div class="wbgam-banner__body">
@@ -129,6 +129,7 @@ final class PointTypeConversionsPage {
 		endif;
 		?>
 		<div class="wrap wbgam-wrap">
+			<hr class="wp-header-end" />
 			<header class="wbgam-page-header">
 				<div class="wbgam-page-header__main">
 					<h1 class="wbgam-page-header__title"><?php esc_html_e( 'Currency Conversions', 'wb-gamification' ); ?></h1>

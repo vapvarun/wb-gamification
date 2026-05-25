@@ -275,24 +275,39 @@
 }
 
 /* ── BP activity-stream cards ─────────────────────────────────────────────── */
+/* 1.4.0 redesign — Basecamp 9914967346. The previous 3px left ribbon was
+ * too subtle to read on a busy stream, and the muted surface let cards
+ * disappear behind BuddyPress's own background. New treatment: white
+ * surface, larger type-tinted icon chip, soft shadow on hover so the
+ * achievement reads at a glance. */
 .wb-gam-activity-card {
+	--wb-gam-card-accent: #6b7280;
+	--wb-gam-card-accent-soft: rgba(107, 114, 128, 0.12);
 	display: flex;
 	align-items: center;
-	gap: 0.75rem;
-	padding: 0.75rem 1rem;
-	margin-block-start: 0.5rem;
+	gap: 14px;
+	padding: 14px 18px;
+	margin-block-start: 8px;
 	border: 1px solid var(--wb-gam-color-border, #e5e7eb);
+	border-left: 4px solid var(--wb-gam-card-accent);
 	border-radius: 12px;
-	background: var(--wb-gam-color-surface, #fafafa);
+	background: #fff;
+	transition: box-shadow 160ms ease, transform 160ms ease;
+}
+
+.wb-gam-activity-card:hover {
+	box-shadow: 0 4px 16px rgba(15, 23, 42, 0.06);
 }
 
 .wb-gam-activity-card__icon {
 	flex: 0 0 auto;
 	width: 56px;
 	height: 56px;
-	border-radius: 10px;
+	border-radius: 12px;
 	object-fit: cover;
-	background: #fff;
+	background: var(--wb-gam-card-accent-soft);
+	padding: 8px;
+	box-sizing: border-box;
 }
 
 .wb-gam-activity-card__body {
@@ -308,16 +323,28 @@
 }
 
 .wb-gam-activity-card__desc {
-	margin-block-start: 0.125rem;
+	margin-block-start: 4px;
 	font-size: 0.875rem;
 	color: var(--wb-gam-color-text-muted, #6b7280);
-	line-height: 1.4;
+	line-height: 1.45;
 }
 
-.wb-gam-activity-card--badge { border-left: 3px solid #d99304; }
-.wb-gam-activity-card--level { border-left: 3px solid #2563eb; }
-.wb-gam-activity-card--kudos { border-left: 3px solid #e11d48; }
-.wb-gam-activity-card--challenge { border-left: 3px solid #16a34a; }
+.wb-gam-activity-card--badge {
+	--wb-gam-card-accent: #d99304;
+	--wb-gam-card-accent-soft: rgba(217, 147, 4, 0.12);
+}
+.wb-gam-activity-card--level {
+	--wb-gam-card-accent: #2563eb;
+	--wb-gam-card-accent-soft: rgba(37, 99, 235, 0.12);
+}
+.wb-gam-activity-card--kudos {
+	--wb-gam-card-accent: #e11d48;
+	--wb-gam-card-accent-soft: rgba(225, 29, 72, 0.10);
+}
+.wb-gam-activity-card--challenge {
+	--wb-gam-card-accent: #16a34a;
+	--wb-gam-card-accent-soft: rgba(22, 163, 74, 0.12);
+}
 
 @media (max-width: 640px) {
 	.wb-gam-activity-card {
@@ -376,4 +403,39 @@
 @media (max-width: 640px) {
 	.wb-gam-profile-page__hero { flex-direction: column; text-align: center; padding: 18px; }
 	.wb-gam-profile-page__avatar img { width: 80px; height: 80px; }
+}
+
+/* BuddyPress member directory rank line (DirectoryIntegration.php).
+ * Inline-SVG icons render as currentColor; muted text keeps rank meta
+ * subordinate to the member name above it. */
+.wb-gam-directory-rank {
+	display: inline-flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+	color: var(--wb-gam-color-text-muted, #65676b);
+	font-size: 13px;
+	line-height: 1.4;
+	margin-top: 2px;
+}
+.wb-gam-directory-rank > span {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	white-space: nowrap;
+}
+.wb-gam-directory-icon {
+	flex-shrink: 0;
+	width: 14px;
+	height: 14px;
+}
+.wb-gam-directory-level {
+	color: var(--wb-gam-color-text, #1f2937);
+	font-weight: 600;
+}
+.wb-gam-directory-points .wb-gam-directory-icon { color: var(--wb-gam-primary, #1d4ed8); }
+.wb-gam-directory-badges .wb-gam-directory-icon { color: var(--wb-gam-accent, #f59e0b); }
+@media (max-width: 640px) {
+	.wb-gam-directory-rank { gap: 6px; font-size: 12px; }
+	.wb-gam-directory-icon { width: 12px; height: 12px; }
 }

@@ -54,8 +54,14 @@ final class ProfileIntegration {
 			return;
 		}
 
-		$level_name_raw = get_user_meta( $user_id, 'wb_gam_level_name', true );
-		$level_name     = $level_name_raw ? $level_name_raw : __( 'Newcomer', 'wb-gamification' );
+		// Route through LevelEngine so the cached user_meta is self-healed
+		// when the points ledger has crossed a level threshold but the
+		// engine pipeline never ran for this user (manual SQL seed, sister
+		// product import, pre-1.4.0 stale cache). Falling back to the
+		// user_meta value verbatim leaves the rank stuck on whatever level
+		// was last persisted, which is what Simran observed in QA.
+		$level          = \WBGam\Engine\LevelEngine::get_level_for_user( (int) $user_id );
+		$level_name     = $level ? (string) $level['name'] : __( 'Newcomer', 'wb-gamification' );
 		$points         = PointsEngine::get_total( $user_id );
 
 		// Resolve the primary currency label so the BP profile shows

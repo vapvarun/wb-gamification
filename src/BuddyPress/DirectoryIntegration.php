@@ -26,6 +26,20 @@ final class DirectoryIntegration {
 			return;
 		}
 		add_action( 'bp_directory_members_item', array( __CLASS__, 'render_rank_in_directory' ) );
+		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'enqueue_directory_styles' ) );
+	}
+
+	/**
+	 * Load the shared frontend stylesheet on the BP members directory so the
+	 * rank line below each card picks up the `.wb-gam-directory-*` rules
+	 * appended in `assets/css/frontend.css`. Without this, the inline-SVG
+	 * icons render unstyled (no size, no muted colour) and the rank meta
+	 * collapses onto one un-spaced line.
+	 */
+	public static function enqueue_directory_styles(): void {
+		if ( function_exists( 'bp_is_members_directory' ) && bp_is_members_directory() ) {
+			wp_enqueue_style( 'wb-gamification' );
+		}
 	}
 
 	/**
@@ -49,7 +63,11 @@ final class DirectoryIntegration {
 			return;
 		}
 
-		$level_name   = (string) get_user_meta( $user_id, 'wb_gam_level_name', true );
+		// Route through LevelEngine so the cached user_meta is self-healed
+		// when the ledger has crossed a threshold without the engine running
+		// (admin-imported users, manual SQL seed, sister-plugin migrations).
+		$level        = \WBGam\Engine\LevelEngine::get_level_for_user( (int) $user_id );
+		$level_name   = $level ? (string) $level['name'] : '';
 		$badge_count  = \WBGam\Engine\BadgeEngine::count_user_badges( (int) $user_id );
 		$points_total = (int) \WBGam\Engine\PointsEngine::get_total( (int) $user_id );
 
@@ -63,7 +81,8 @@ final class DirectoryIntegration {
 		}
 		if ( $points_total > 0 ) {
 			$parts[] = sprintf(
-				'<span class="wb-gam-directory-points"><span class="icon-sparkles" aria-hidden="true"></span> %s</span>',
+				'<span class="wb-gam-directory-points">%1$s %2$s</span>',
+				\WBGam\Admin\Icon::svg( 'sparkles', array( 'size' => 14, 'class' => 'wb-gam-directory-icon' ) ),
 				esc_html( number_format_i18n( $points_total ) )
 			);
 		}
@@ -74,7 +93,8 @@ final class DirectoryIntegration {
 				$badge_count
 			);
 			$parts[] = sprintf(
-				'<span class="wb-gam-directory-badges"><span class="icon-medal" aria-hidden="true"></span> %s</span>',
+				'<span class="wb-gam-directory-badges">%1$s %2$s</span>',
+				\WBGam\Admin\Icon::svg( 'medal', array( 'size' => 14, 'class' => 'wb-gam-directory-icon' ) ),
 				esc_html( $badge_text )
 			);
 		}

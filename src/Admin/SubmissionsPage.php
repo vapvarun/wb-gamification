@@ -69,6 +69,7 @@ final class SubmissionsPage {
 		$total   = $repo->count_pending();
 		?>
 		<div class="wrap wbgam-wrap">
+			<hr class="wp-header-end" />
 			<header class="wbgam-page-header">
 				<div class="wbgam-page-header__main">
 					<h1 class="wbgam-page-header__title"><?php esc_html_e( 'Submission Queue', 'wb-gamification' ); ?></h1>
@@ -83,7 +84,6 @@ final class SubmissionsPage {
 					</p>
 				</div>
 			</header>
-			<hr class="wp-header-end" />
 
 			<details class="wbgam-help-panel">
 				<summary class="wbgam-help-panel__summary">

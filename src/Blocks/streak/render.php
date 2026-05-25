@@ -144,24 +144,51 @@ BlockHooks::before( 'streak', $wb_gam_attrs );
 		<?php endif; ?>
 	</div>
 
-	<?php if ( $wb_gam_next_mile ) : ?>
-		<p class="wb-gam-streak__nudge">
-			<?php
-			echo esc_html(
-				sprintf(
-					/* translators: 1 = days remaining, 2 = milestone target */
-					_n(
-						'%1$d more day to reach the %2$d-day milestone!',
-						'%1$d more days to reach the %2$d-day milestone!',
-						$wb_gam_next_mile - $wb_gam_current,
-						'wb-gamification'
-					),
-					$wb_gam_next_mile - $wb_gam_current,
-					$wb_gam_next_mile
-				)
-			);
-			?>
-		</p>
+	<?php if ( $wb_gam_next_mile ) :
+		// Progress bar percent — kept inside [0,100] so a 0-day current
+		// streak still shows a flat track and a partial week reads as a
+		// proportional fill. Added in 1.4.0 (Basecamp 9919406312) so
+		// members get a visual cue, not just a sentence, of how close
+		// they are to the next milestone.
+		$wb_gam_progress_pct = (int) round( max( 0, min( 100, ( $wb_gam_current / $wb_gam_next_mile ) * 100 ) ) );
+		?>
+		<div class="wb-gam-streak__progress" role="progressbar"
+			aria-valuenow="<?php echo esc_attr( (string) $wb_gam_current ); ?>"
+			aria-valuemin="0"
+			aria-valuemax="<?php echo esc_attr( (string) $wb_gam_next_mile ); ?>"
+			aria-label="<?php
+				/* translators: 1 = current streak, 2 = milestone target */
+				echo esc_attr( sprintf( __( 'Streak progress: %1$d of %2$d days', 'wb-gamification' ), $wb_gam_current, $wb_gam_next_mile ) );
+			?>">
+			<div class="wb-gam-streak__progress-track">
+				<div class="wb-gam-streak__progress-fill" style="width: <?php echo esc_attr( (string) $wb_gam_progress_pct ); ?>%;"></div>
+			</div>
+			<div class="wb-gam-streak__progress-meta">
+				<span class="wb-gam-streak__progress-current">
+					<?php
+					/* translators: 1 = current streak, 2 = milestone target */
+					printf( esc_html__( '%1$d / %2$d days', 'wb-gamification' ), (int) $wb_gam_current, (int) $wb_gam_next_mile );
+					?>
+				</span>
+				<span class="wb-gam-streak__progress-nudge">
+					<?php
+					echo esc_html(
+						sprintf(
+							/* translators: 1 = days remaining, 2 = milestone target */
+							_n(
+								'%1$d more day to reach the %2$d-day milestone!',
+								'%1$d more days to reach the %2$d-day milestone!',
+								$wb_gam_next_mile - $wb_gam_current,
+								'wb-gamification'
+							),
+							$wb_gam_next_mile - $wb_gam_current,
+							$wb_gam_next_mile
+						)
+					);
+					?>
+				</span>
+			</div>
+		</div>
 	<?php else : ?>
 		<p class="wb-gam-streak__nudge wb-gam-streak__nudge--elite">
 			<?php esc_html_e( 'Amazing — you have hit every milestone! Keep it up!', 'wb-gamification' ); ?>

@@ -179,13 +179,13 @@ final class BadgeAdminPage {
 
 		?>
 		<div class="wrap wbgam-wrap">
+			<hr class="wp-header-end" />
 			<header class="wbgam-page-header">
 				<div class="wbgam-page-header__main">
 					<h1 class="wbgam-page-header__title"><?php esc_html_e( 'Badge Library', 'wb-gamification' ); ?></h1>
 					<p class="wbgam-page-header__desc"><?php esc_html_e( 'Create and manage badges to reward your community members for milestones and achievements.', 'wb-gamification' ); ?></p>
 				</div>
 			</header>
-			<hr class="wp-header-end" />
 
 			<?php if ( isset( $notice_map[ $notice ] ) ) : ?>
 				<div class="wbgam-banner wbgam-banner--<?php echo esc_attr( $notice_map[ $notice ][0] ); ?> wbgam-stack-block" role="status" aria-live="polite"><span class="wbgam-banner__icon icon-circle-check" aria-hidden="true"></span><div class="wbgam-banner__body"><p class="wbgam-banner__desc"><?php echo esc_html( $notice_map[ $notice ][1] ); ?></p></div></div>

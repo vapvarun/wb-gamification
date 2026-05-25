@@ -105,13 +105,13 @@ final class WebhooksAdminPage {
 		$webhooks = self::list_webhooks();
 		?>
 		<div class="wrap wbgam-wrap">
+			<hr class="wp-header-end" />
 			<header class="wbgam-page-header">
 				<div class="wbgam-page-header__main">
 					<h1 class="wbgam-page-header__title"><?php esc_html_e( 'Webhooks', 'wb-gamification' ); ?></h1>
 					<p class="wbgam-page-header__desc"><?php esc_html_e( 'Outbound webhooks notify external services (Zapier, Slack, custom servers) when gamification events fire. Failed deliveries auto-retry up to 3 times with exponential backoff.', 'wb-gamification' ); ?></p>
 				</div>
 			</header>
-			<hr class="wp-header-end" />
 
 			<details class="wbgam-help-panel">
 				<summary class="wbgam-help-panel__summary">

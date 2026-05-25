@@ -60,6 +60,55 @@
 	font-weight: 600;
 }
 
+/* Progress bar — Basecamp 9919406312. The plain "6 more days" sentence
+ * gave members no visual sense of how far they had come; replacing it
+ * with a real bar lets the eye read the milestone at a glance. */
+.wb-gam-streak__progress {
+	margin-top: 6px;
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.wb-gam-streak__progress-track {
+	background: var(--wb-gam-color-border, #e5e7eb);
+	border-radius: 999px;
+	height: 8px;
+	overflow: hidden;
+}
+
+.wb-gam-streak__progress-fill {
+	height: 100%;
+	background: linear-gradient(90deg, #f97316 0%, #f59e0b 100%);
+	border-radius: 999px;
+	transition: width 320ms ease;
+	min-width: 4px;
+}
+
+.wb-gam-streak__progress-meta {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: 4px 12px;
+	font-size: 0.8125rem;
+}
+
+.wb-gam-streak__progress-current {
+	font-weight: 600;
+	color: var(--wb-gam-color-text, #1f2937);
+}
+
+.wb-gam-streak__progress-nudge {
+	color: var(--wb-gam-color-text-muted, #6b7280);
+}
+
+@media (max-width: 480px) {
+	.wb-gam-streak__progress-meta {
+		font-size: 0.75rem;
+	}
+}
+
 /* Heatmap */
 .wb-gam-streak__heatmap {
 	display: flex;

@@ -3,6 +3,11 @@
  *
  * Phase F migration: extracted from assets/css/frontend.css so the
  * block ships its own CSS via block.json (`style` field).
+ *
+ * 1.4.0 redesign — Basecamp 9919406312. Each badge now reads as a
+ * collectible card (white surface, soft shadow, hover lift) instead of
+ * a floating icon + tiny caption. Cards expand to ~120px so the name
+ * and meta line are legible without a magnifying glass.
  */
 
 /* ── Badge Showcase ─────────────────────────────────────────────────────────── */
@@ -10,78 +15,124 @@
 	list-style: none;
 	margin: 0;
 	padding: 0;
-	display: flex;
-	flex-wrap: wrap;
-	gap: var(--wb-gam-gap);
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+	gap: 12px;
 }
 
 .wb-gam-badge-showcase__badge {
 	display: flex;
 	flex-direction: column;
 	align-items: center;
-	gap: 0.375rem;
-	width: 80px;
+	gap: 8px;
+	padding: 14px 10px;
 	text-align: center;
 	cursor: default;
+	background: var(--wb-gam-color-white, #fff);
+	border: 1px solid var(--wb-gam-color-border, #e5e7eb);
+	border-radius: 12px;
+	transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
+	min-height: 140px;
+	justify-content: flex-start;
+}
+
+.wb-gam-badge-showcase__badge:hover {
+	transform: translateY(-2px);
+	box-shadow: 0 4px 16px rgba(15, 23, 42, 0.08);
+	border-color: var(--wb-gam-color-border-strong, #d1d5db);
 }
 
 .wb-gam-badge-showcase__badge--locked {
-	opacity: 0.35;
+	background: var(--wb-gam-color-surface-muted, #f9fafb);
+}
+
+.wb-gam-badge-showcase__badge--locked .wb-gam-badge-showcase__image,
+.wb-gam-badge-showcase__badge--locked .wb-gam-badge-showcase__placeholder {
+	opacity: 0.4;
 	filter: grayscale(1);
 }
 
 .wb-gam-badge-showcase__badge--credential .wb-gam-badge-showcase__image {
-	box-shadow: 0 0 0 2px var(--wb-gam-primary);
-	border-radius: 4px;
+	box-shadow: 0 0 0 2px var(--wb-gam-primary, #1d4ed8);
+	border-radius: 8px;
 }
 
 .wb-gam-badge-showcase__image {
-	width: 56px;
-	height: 56px;
+	width: 64px;
+	height: 64px;
 	object-fit: contain;
 }
 
 .wb-gam-badge-showcase__placeholder {
-	font-size: 2.5rem;
+	font-size: 2.75rem;
 	line-height: 1;
-	display: block;
-	width: 56px;
-	height: 56px;
+	width: 64px;
+	height: 64px;
 	display: flex;
 	align-items: center;
 	justify-content: center;
 }
 
 .wb-gam-badge-showcase__name {
-	font-size: 0.75rem;
-	font-weight: 500;
+	font-size: 0.875rem;
+	font-weight: 600;
+	line-height: 1.25;
+	color: var(--wb-gam-color-text, #1f2937);
 	overflow: hidden;
 	display: -webkit-box;
 	-webkit-line-clamp: 2;
 	-webkit-box-orient: vertical;
-	overflow: hidden;
 }
 
 .wb-gam-badge-showcase__earned-at {
-	font-size: 0.6875rem;
-	color: var(--wb-gam-silver);
+	font-size: 0.75rem;
+	color: var(--wb-gam-color-text-muted, #6b7280);
+	margin-top: auto;
 }
 
 .wb-gam-badge-showcase__locked-label {
 	font-size: 0.6875rem;
-	color: var(--wb-gam-locked);
+	font-weight: 600;
+	color: var(--wb-gam-locked, #9ca3af);
 	text-transform: uppercase;
-	letter-spacing: 0.04em;
+	letter-spacing: 0.06em;
+	margin-top: auto;
 }
 
 .wb-gam-badge-showcase__hint {
 	display: block;
-	font-size: 0.625rem;
-	line-height: 1.3;
-	color: var(--wb-gam-text-muted);
-	margin-block-start: 0.125rem;
-	max-width: 10rem;
+	font-size: 0.6875rem;
+	line-height: 1.35;
+	color: var(--wb-gam-color-text-muted, #6b7280);
+	margin-top: 4px;
 	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
+	display: -webkit-box;
+	-webkit-line-clamp: 2;
+	-webkit-box-orient: vertical;
+}
+
+.wb-gam-badge-showcase__empty {
+	margin: 0;
+	padding: 24px;
+	color: var(--wb-gam-color-text-muted, #6b7280);
+	text-align: center;
+}
+
+@media (max-width: 640px) {
+	.wb-gam-badge-showcase__list {
+		grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+		gap: 8px;
+	}
+	.wb-gam-badge-showcase__badge {
+		padding: 10px 6px;
+		min-height: 124px;
+	}
+	.wb-gam-badge-showcase__image,
+	.wb-gam-badge-showcase__placeholder {
+		width: 52px;
+		height: 52px;
+	}
+	.wb-gam-badge-showcase__name {
+		font-size: 0.8125rem;
+	}
 }

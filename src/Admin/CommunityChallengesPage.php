@@ -139,13 +139,13 @@ final class CommunityChallengesPage {
 
 		?>
 		<div class="wrap wbgam-wrap">
+			<hr class="wp-header-end" />
 			<header class="wbgam-page-header">
 				<div class="wbgam-page-header__main">
 					<h1 class="wbgam-page-header__title"><?php esc_html_e( 'Challenge Manager', 'wb-gamification' ); ?></h1>
 					<p class="wbgam-page-header__desc"><?php esc_html_e( 'Create group goals where the whole community works together toward a shared target.', 'wb-gamification' ); ?></p>
 				</div>
 			</header>
-			<hr class="wp-header-end" />
 
 			<nav class="wbgam-tabs nav-tab-wrapper" aria-label="<?php esc_attr_e( 'Challenge type', 'wb-gamification' ); ?>">
 				<a href="<?php echo esc_url( admin_url( 'admin.php?page=wb-gam-challenges' ) ); ?>" class="nav-tab">

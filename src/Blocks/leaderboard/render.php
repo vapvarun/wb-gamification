@@ -143,8 +143,9 @@ BlockHooks::before( 'leaderboard', $wb_gam_attrs );
 					</span>
 
 					<span class="wb-gam-leaderboard__points" aria-label="<?php echo esc_attr( $wb_gam_points_label ); ?>">
-						<span class="wb-gam-leaderboard__points-icon icon-sparkles" aria-hidden="true"></span>
 						<?php
+						// Inline SVG so the icon renders without a font dependency.
+						echo \WBGam\Admin\Icon::svg( 'sparkles', array( 'size' => 16, 'class' => 'wb-gam-leaderboard__points-icon' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Static SVG built from fixed allowlist.
 						printf(
 							/* translators: 1: formatted points number, 2: currency label (e.g. "Points", "Coins"). */
 							esc_html__( '%1$s %2$s', 'wb-gamification' ),
@@ -167,8 +168,8 @@ BlockHooks::before( 'leaderboard', $wb_gam_attrs );
 							/* translators: %d: badges earned count. */
 							echo esc_attr( sprintf( _n( '%d badge', '%d badges', $wb_gam_badge_count, 'wb-gamification' ), $wb_gam_badge_count ) );
 						?>">
-							<span class="wb-gam-leaderboard__badges-icon icon-medal" aria-hidden="true"></span>
 							<?php
+							echo \WBGam\Admin\Icon::svg( 'medal', array( 'size' => 16, 'class' => 'wb-gam-leaderboard__badges-icon' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Static SVG built from fixed allowlist.
 							printf(
 								/* translators: %d: number of badges earned. */
 								esc_html( _n( '%d badge', '%d badges', $wb_gam_badge_count, 'wb-gamification' ) ),

@@ -89,6 +89,34 @@
 	color: var(--wb-gam-primary);
 	white-space: nowrap;
 	flex-shrink: 0;
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+}
+
+.wb-gam-leaderboard__badges {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	color: var(--wb-gam-text-muted, #65676b);
+	font-size: 13px;
+	font-weight: 500;
+	white-space: nowrap;
+	flex-shrink: 0;
+	margin-left: 8px;
+}
+
+/* Inline-SVG sizing — points + badges glyphs render as currentColor SVGs.
+ * vertical-align:-2px brings the icon onto the text baseline. */
+.wb-gam-leaderboard__points-icon,
+.wb-gam-leaderboard__badges-icon {
+	flex-shrink: 0;
+	width: 16px;
+	height: 16px;
+}
+
+.wb-gam-leaderboard__badges-icon {
+	color: var(--wb-gam-accent, #f59e0b);
 }
 
 /* Mobile breakpoint — keep the row contained at 390px (smallest standard
@@ -108,5 +136,9 @@
 	}
 	.wb-gam-leaderboard__points {
 		font-size: 14px;
+	}
+	.wb-gam-leaderboard__badges {
+		font-size: 12px;
+		margin-left: 4px;
 	}
 }

@@ -140,7 +140,31 @@ final class LevelEngine {
 	 *         Null only if no levels are configured (fresh install before seeding).
 	 */
 	public static function get_level_for_user( int $user_id ): ?array {
-		return self::get_level_for_points( PointsEngine::get_total( $user_id ) );
+		$level = self::get_level_for_points( PointsEngine::get_total( $user_id ) );
+
+		// Self-heal stale user_meta. Pre-1.4.0 the level_id / level_name cache
+		// in user_meta only updated when PointsEngine::award fired through the
+		// engine (which calls maybe_level_up at the end of the pipeline). Any
+		// points written via a non-engine code path — manual DB insert, an
+		// older Privacy export round-trip, the QA seed CLI, a migration from
+		// a sister product — left the cache pointing at whatever level the
+		// user was at the last time the engine ran. Reading the level became
+		// stable (always derived from the points ledger) but the directory
+		// rank line + leaderboard rank meta + REST `members` response keep
+		// reading user_meta because that's what listeners typed against.
+		// Detecting the mismatch here and patching the meta inline keeps the
+		// engine the single source of truth without forcing a points-replay
+		// migration; every getter call self-corrects on the way out.
+		if ( $level && $user_id > 0 ) {
+			$cached_id   = (int) get_user_meta( $user_id, 'wb_gam_level_id', true );
+			$cached_name = (string) get_user_meta( $user_id, 'wb_gam_level_name', true );
+			if ( $cached_id !== $level['id'] || $cached_name !== $level['name'] ) {
+				update_user_meta( $user_id, 'wb_gam_level_id', $level['id'] );
+				update_user_meta( $user_id, 'wb_gam_level_name', $level['name'] );
+			}
+		}
+
+		return $level;
 	}
 
 	/**

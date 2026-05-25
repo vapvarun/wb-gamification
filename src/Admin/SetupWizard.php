@@ -89,28 +89,49 @@ final class SetupWizard {
 	 * on the wizard or in the multisite-activate context.
 	 */
 	public static function maybe_redirect(): void {
-		if ( ! get_option( self::PENDING_REDIRECT_OPTION ) ) {
-			return;
-		}
-
-		// Consume the signal so we never re-fire after the first admin visit.
-		delete_option( self::PENDING_REDIRECT_OPTION );
-
+		// Skip in contexts where the redirect would be harmful or
+		// non-meaningful regardless of the trigger that brought us here.
 		if ( is_network_admin() ) {
 			return;
 		}
-
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- activate-multi is a WP core GET flag, not user input we trust.
 		if ( isset( $_GET['activate-multi'] ) ) {
 			return;
 		}
-
-		// Avoid redirect loops if the admin is already on the wizard URL
-		// (e.g. opened the link manually, then triggered another admin_init
-		// via XHR or a back/forward navigation).
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- page-slug compare, no state mutation.
 		$current_page = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : '';
 		if ( self::PAGE_SLUG === $current_page ) {
+			return;
+		}
+
+		// Two trigger paths into the wizard:
+		//
+		//  1. Activation hook explicitly set the pending flag. This is the
+		//     authoritative signal — fires on every fresh activation, no
+		//     matter where the admin then navigates next.
+		//
+		//  2. Wizard has never been completed AND the admin has just landed
+		//     on the plugin's primary Dashboard page. Catches WP-CLI / hosting
+		//     panel activations that bypass the activation hook redirect, and
+		//     test reactivations on dev sandboxes where the pending flag was
+		//     consumed by an earlier visit. A per-user_meta sticky guard
+		//     prevents the redirect from looping if the admin dismisses the
+		//     wizard and walks back to the Dashboard.
+		$has_pending = (bool) get_option( self::PENDING_REDIRECT_OPTION );
+		if ( $has_pending ) {
+			delete_option( self::PENDING_REDIRECT_OPTION );
+		}
+
+		$first_visit_redirect = false;
+		if ( ! $has_pending && ! get_option( self::COMPLETED_OPTION ) && 'wb-gamification' === $current_page ) {
+			$user_id = get_current_user_id();
+			if ( $user_id > 0 && ! get_user_meta( $user_id, 'wb_gam_setup_seen', true ) ) {
+				update_user_meta( $user_id, 'wb_gam_setup_seen', '1' );
+				$first_visit_redirect = true;
+			}
+		}
+
+		if ( ! $has_pending && ! $first_visit_redirect ) {
 			return;
 		}
 
