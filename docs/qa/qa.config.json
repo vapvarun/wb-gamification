@@ -24,7 +24,6 @@
     "woocommerce",
     "learndash",
     "bbpress",
-    "elementor",
     "advanced-custom-fields"
   ],
 
@@ -39,7 +38,8 @@
   "fixture_cleanup_sql": [
     "DELETE FROM {prefix}wb_gam_events WHERE metadata LIKE '%journey_smoke_test%' OR metadata LIKE '%agent_runbook%'",
     "DELETE FROM {prefix}wb_gam_points WHERE reason LIKE '%journey_smoke%' OR reason LIKE '%agent_runbook%' OR reason = 'tier4_test'",
-    "DELETE FROM {prefix}wb_gam_kudos WHERE message LIKE '%smoke-%'"
+    "DELETE FROM {prefix}wb_gam_kudos WHERE message LIKE '%smoke-%'",
+    "DELETE FROM {prefix}options WHERE option_name = 'wb_gam_action_overrides'"
   ],
 
   "debug_log_whitelist": [

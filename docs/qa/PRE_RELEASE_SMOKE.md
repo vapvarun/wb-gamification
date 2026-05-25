@@ -88,6 +88,16 @@ Each row is a permanent fixture against a past customer-pain bug. Walk every one
 - [ ] **D.cli-replay-idempotent** — `wp wb-gamification replay` run twice on the same event leaves the ledger SUM identical
 - [ ] **D.action-scheduler-orphan** — after deactivate-then-activate, `wp cron event list \| grep -c wb_gam_` matches the documented schedule count exactly
 - [ ] **D.granular-cap-merge** — upgrade preserves every pre-existing administrator cap PLUS the eight `wb_gam_*` caps
+- [ ] **D.challenge-tz-utc** (v1.4.0) — server with non-UTC MySQL session: create challenge starting "now"; verify it becomes active immediately and the admin form re-displays the same time after save+reload
+- [ ] **D.toast-empty-text** (v1.4.0) — push a level_up + streak_milestone via REST; `GET /members/me/toasts` returns non-empty `message` fields ("Level up: …" and "%d-day streak!")
+- [ ] **D.challenge-double-action** (v1.4.0) — complete a challenge with a counter listener on `wb_gam_challenge_completed`; counter increments by exactly 1
+- [ ] **D.bp-activity-filter-labels** (v1.4.0) — BP activity directory shows 4 distinct gamification filter rows (Badge earned, Level up, Kudos sent, Challenge complete) instead of one "Gamification"
+- [ ] **D.admin-notices-position** (v1.4.0) — settings save success notice renders ABOVE the WB Gamification page header, not inside the chrome
+- [ ] **D.give-kudos-block** (v1.4.0) — `[wb_gam_give_kudos]` shortcode renders form; POST with `recipient_login` (username or email) creates a kudos row; submit again hits cooldown
+- [ ] **D.action-overrides** (v1.4.0) — set cooldown=120 + daily_cap=5 on an action via Settings UI; `Registry::get_action()` returns the overridden values; `DELETE /actions/{id}/overrides` resets to manifest
+- [ ] **D.nudge-dedup** (v1.4.0) — run `LeaderboardNudge::dispatch_batch()` twice in a row; pending AS jobs in `wp_actionscheduler_actions WHERE hook='wb_gam_nudge_single_user'` does NOT double — `as_has_scheduled_action` guard prevents duplicates
+- [ ] **D.as-retention** (v1.4.0) — manually call `ActionSchedulerCleaner::cleanup()` on a site with >7d old rows; complete/failed/pending counts older than 7 days drop to 0; rows ≤7d untouched
+- [ ] **D.datetime-utc-hydration** (v1.4.0) — open Challenges admin in a non-UTC browser timezone; `data-wb-gam-utc` inputs display UTC values converted to local; save round-trip preserves the displayed time
 
 **Rule:** every customer-visible fix that ships after this document adds a new row here AND a new fixture in `AGENT_SMOKE_RUNBOOK.md` Section D in the same PR.
 
@@ -99,7 +109,6 @@ For each host plugin, check the integration adds value when present AND is silen
 - [ ] **WooCommerce** — completed order fires purchase action; refund debits the awarded points
 - [ ] **LearnDash** — completing a lesson fires the configured action; daily cap (if set) enforced
 - [ ] **bbPress** — creating a topic / reply lands an event with correct `action_id`
-- [ ] **Elementor** — widget renders any of the 17 blocks; settings round-trip on save
 - [ ] **ACF** — rule editor lists ACF field keys when ACF active; renders "no fields detected" when absent
 - [ ] **Graceful degradation** — deactivate ANY of the integrations; no fatal on any admin or front-end page
 
@@ -138,3 +147,11 @@ Append a section below per release with the specific regression guards added tha
 
 ### v1.0.0 release
 - (initial baseline; row-by-row history begins with v1.0.1)
+
+### v1.4.0 release (bug sweep)
+- 11 reported customer issues fixed + 2 stability wins discovered during code-level triage.
+- 11 new Section D regression rows added covering: challenge timezone, toast text, duplicate `do_action`, BP filter labels, admin notice position, give-kudos block, per-action overrides, LeaderboardNudge dedup, AS retention cleanup, datetime UTC hydration.
+- New REST routes to smoke: `POST /actions/{id}/overrides`, `DELETE /actions/{id}/overrides`, `POST /kudos` (with `recipient_login`).
+- New cron to smoke: `wb_gam_as_cleanup` (daily, retention default 7 days, filter `wb_gam_as_retention_days`).
+- New block to smoke: `wb-gamification/give-kudos` + `[wb_gam_give_kudos]` shortcode.
+- Elementor removed from Section E integrations list (was a decorative toggle with no shipped code; deactivated as of this release).
