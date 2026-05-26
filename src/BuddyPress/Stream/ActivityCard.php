@@ -45,10 +45,22 @@ final class ActivityCard {
 		$title_html = esc_html( $title );
 		$desc_html  = esc_html( $description );
 
+		// Type label rendered above the title — confirms what just
+		// happened at a glance even on a busy BP activity stream.
+		// Added 1.4.0 (Basecamp #9914967346 v2 redesign).
+		$type_labels = array(
+			'badge'     => __( 'Badge earned', 'wb-gamification' ),
+			'level'     => __( 'Level up', 'wb-gamification' ),
+			'kudos'     => __( 'Kudos', 'wb-gamification' ),
+			'challenge' => __( 'Challenge completed', 'wb-gamification' ),
+		);
+		$eyebrow = esc_html( $type_labels[ $type ] ?? ucfirst( $type ) );
+
 		return sprintf(
 			'<div class="wb-gam-activity-card wb-gam-activity-card--%1$s">'
 				. '<img class="wb-gam-activity-card__icon" src="%2$s" alt="%3$s" width="64" height="64" />'
 				. '<div class="wb-gam-activity-card__body">'
+					. '<span class="wb-gam-activity-card__eyebrow">%5$s</span>'
 					. '<span class="wb-gam-activity-card__title"><strong>%4$s</strong></span>'
 					. ( '' !== $desc_html ? '<div class="wb-gam-activity-card__desc">' . $desc_html . '</div>' : '' )
 				. '</div>'
@@ -56,7 +68,8 @@ final class ActivityCard {
 			$type_class,
 			$src,
 			$alt,
-			$title_html
+			$title_html,
+			$eyebrow
 		);
 	}
 
