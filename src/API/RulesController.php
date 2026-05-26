@@ -19,7 +19,7 @@
  *       { "condition_type": "action_count", "action_id": "wp_publish_post", "count": 10 }
  *       { "condition_type": "admin_awarded" }
  *
- *   point_multiplier — temporary or permanent per-action point multipliers
+ *   points_multiplier — temporary or permanent per-action point multipliers
  *     Config examples:
  *       { "action_id": "bp_activity_update", "multiplier": 2.0 }
  *       { "action_id": "*", "multiplier": 1.5, "starts_at": "2024-01-01", "ends_at": "2024-01-07" }
@@ -68,7 +68,7 @@ class RulesController extends WP_REST_Controller {
 	 *
 	 * @var string[]
 	 */
-	private const VALID_RULE_TYPES = array( 'badge_condition', 'point_multiplier' );
+	private const VALID_RULE_TYPES = array( 'badge_condition', 'points_multiplier' );
 
 	/**
 	 * Allowed condition types for badge_condition rules.
@@ -424,7 +424,7 @@ class RulesController extends WP_REST_Controller {
 			'target_id'   => array(
 				'type'              => 'string',
 				'sanitize_callback' => 'sanitize_key',
-				'description'       => 'Badge ID (for badge_condition) or action ID (for point_multiplier).',
+				'description'       => 'Badge ID (for badge_condition) or action ID (for points_multiplier).',
 			),
 			'rule_config' => array(
 				'required'    => $required,

@@ -152,6 +152,18 @@ final class QAPages {
 			'block_attrs'     => '{}',
 			'shortcode_attrs' => '',
 		),
+		'give-kudos'           => array(
+			'shortcode'       => 'wb_gam_give_kudos',
+			'title'           => 'Give Kudos',
+			'block_attrs'     => '{}',
+			'shortcode_attrs' => '',
+		),
+		'user-status-bar'      => array(
+			'shortcode'       => '',
+			'title'           => 'User Status Bar',
+			'block_attrs'     => '{}',
+			'shortcode_attrs' => '',
+		),
 	);
 
 	/**

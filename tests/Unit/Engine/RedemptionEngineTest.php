@@ -64,6 +64,11 @@ class RedemptionEngineTest extends TestCase {
 	}
 
 	public function test_redeem_returns_error_when_out_of_stock(): void {
+		// Stock semantics shifted in 1.4.0 (Basecamp #9925383280): NULL/0
+		// mean "unlimited", positive integers mean finite. Out-of-stock now
+		// fires when a concurrent redemption races us — the atomic UPDATE
+		// finds `stock > 0` false because someone else took the last unit
+		// between our SELECT and our UPDATE. Mock that path.
 		global $wpdb;
 		$wpdb         = \Mockery::mock( 'wpdb' );
 		$wpdb->prefix = 'wp_';
@@ -73,19 +78,47 @@ class RedemptionEngineTest extends TestCase {
 			'title'         => 'Test Reward',
 			'is_active'     => '1',
 			'points_cost'   => '100',
-			'stock'         => '0',
+			'stock'         => '1',
+			'point_type'    => '',
 			'reward_type'   => 'custom',
 			'reward_config' => '{}',
 		];
 
-		$wpdb->expects( 'get_row' )->andReturn( $item );
-		$wpdb->expects( 'prepare' )->andReturnArg( 0 );
+		$wpdb->shouldReceive( 'get_row' )->andReturn( $item );
+		$wpdb->shouldReceive( 'prepare' )->andReturnUsing( static fn ( $sql ) => $sql );
 
-		Functions\expect( '__' )->andReturnArg( 0 );
+		// Atomic balance check — sufficient (so we get past the insufficient branch).
+		$wpdb->shouldReceive( 'get_var' )->andReturn( 500 );
+
+		// PointsEngine::debit performs an INSERT into the ledger and an
+		// INSERT … ON DUPLICATE KEY UPDATE on the materialised totals
+		// before the stock UPDATE happens; the engine's transactional
+		// ordering is debit-then-decrement so a failed decrement triggers
+		// a ROLLBACK that undoes the debit.
+		$wpdb->shouldReceive( 'insert' )->andReturn( 1 );
+		$wpdb->insert_id = 42;
+
+		// query() catch-all: START TRANSACTION + ROLLBACK + the totals
+		// INSERT all succeed; the stock decrement UPDATE returns 0 rows to
+		// simulate losing the race. Order matters — specific matcher first
+		// so the UPDATE branch is caught before the catch-all fires.
+		$wpdb->shouldReceive( 'query' )
+			->with( \Mockery::pattern( '/UPDATE\s+wp_wb_gam_redemption_items/i' ) )
+			->andReturn( 0 );
+		$wpdb->shouldReceive( 'query' )->andReturn( true );
+
+		Functions\when( '__' )->returnArg( 1 );
+		Functions\when( 'wp_cache_get' )->justReturn( false );
+		Functions\when( 'wp_cache_set' )->justReturn( true );
+		Functions\when( 'wp_cache_delete' )->justReturn( true );
+		Functions\when( 'do_action' )->justReturn( null );
+		Functions\when( 'current_time' )->justReturn( '2026-05-27 12:00:00' );
+		Functions\when( 'sanitize_key' )->returnArg();
 
 		$result = RedemptionEngine::redeem( 1, 1 );
 
 		$this->assertFalse( $result['success'] );
+		$this->assertSame( 'out_of_stock', $result['reason'] );
 	}
 
 	public function test_redeem_returns_error_when_insufficient_points(): void {

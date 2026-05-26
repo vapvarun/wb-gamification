@@ -37,8 +37,9 @@
     }
   },
   "scripts": {
-    "test": "php -d auto_prepend_file=tests/prepend.php vendor/bin/phpunit --configuration phpunit.xml.dist",
-    "test:unit": "php -d auto_prepend_file=tests/prepend.php vendor/bin/phpunit --configuration phpunit.xml.dist --testsuite Unit",
+    "test": "php -d auto_prepend_file=tests/prepend.php vendor/bin/phpunit --configuration phpunit.xml.dist --no-coverage",
+    "test:unit": "php -d auto_prepend_file=tests/prepend.php vendor/bin/phpunit --configuration phpunit.xml.dist --testsuite Unit --no-coverage",
+    "test:coverage": "XDEBUG_MODE=coverage php -d auto_prepend_file=tests/prepend.php vendor/bin/phpunit --configuration phpunit.xml.dist",
     "phpcs": "@php vendor/bin/phpcs --standard=.phpcs.xml --report=summary",
     "phpcs:fix": "@php vendor/bin/phpcbf --standard=.phpcs.xml",
     "phpstan": "@php vendor/bin/phpstan analyse --memory-limit=512M",

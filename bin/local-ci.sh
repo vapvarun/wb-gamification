@@ -87,29 +87,54 @@ done < <(find . -type f -name '*.php' \
 [ "$PHP_LINT_FAILED" = "0" ] && pass "PHP lint clean"
 
 if [ "$MODE" = "quick" ]; then
-  step "QUICK" "skipping WPCS / PHPStan / wppqa / journeys"
+  step "QUICK" "skipping WPCS / PHPStan / PHPUnit / wppqa / journeys"
 else
+  # WPCS, PHPStan, PHPUnit are non-negotiable in non-quick mode. Force-fail
+  # the build when vendor/ is missing — silent skips hid PHPUnit failures
+  # for weeks before the 2026-05-27 audit caught it (3 stale tests).
+  # Bypass: SKIP_VENDOR_CHECK=1 (only when bootstrapping a brand-new clone).
   if [ -f phpcs.xml ] || [ -f phpcs.xml.dist ] || [ -f .phpcs.xml ] || [ -f .phpcs.xml.dist ]; then
     if [ -x vendor/bin/phpcs ]; then
       run_stage "1.2" "WPCS (phpcs)" composer phpcs
+    elif [ "${SKIP_VENDOR_CHECK:-0}" = "1" ]; then
+      warn "1.2 WPCS skipped — SKIP_VENDOR_CHECK=1 set"
     else
-      warn "1.2 WPCS skipped — run 'composer install' first"
+      fail "1.2 WPCS — vendor/bin/phpcs missing. Run 'composer install'."
     fi
   fi
 
   if [ -f phpstan.neon ] || [ -f phpstan.neon.dist ]; then
     if [ -x vendor/bin/phpstan ]; then
       run_stage "1.3" "PHPStan static analysis" composer phpstan
+    elif [ "${SKIP_VENDOR_CHECK:-0}" = "1" ]; then
+      warn "1.3 PHPStan skipped — SKIP_VENDOR_CHECK=1 set"
     else
-      warn "1.3 PHPStan skipped — vendor/bin/phpstan not present"
+      fail "1.3 PHPStan — vendor/bin/phpstan missing. Run 'composer install'."
+    fi
+  fi
+
+  # PHPUnit — runs after WPCS + PHPStan so syntax/type failures surface
+  # before behaviour failures. Added 2026-05-27 in response to the
+  # stability audit finding that the suite had been silently red for
+  # weeks (3 stale-fixture failures in ShortcodeHandlerTest +
+  # RedemptionEngineTest that no gate caught).
+  if [ -f phpunit.xml.dist ] || [ -f phpunit.xml ]; then
+    if [ -x vendor/bin/phpunit ]; then
+      run_stage "1.5" "PHPUnit (composer test)" composer test
+    elif [ "${SKIP_VENDOR_CHECK:-0}" = "1" ]; then
+      warn "1.5 PHPUnit skipped — SKIP_VENDOR_CHECK=1 set"
+    else
+      fail "1.5 PHPUnit — vendor/bin/phpunit missing. Run 'composer install'."
     fi
   fi
 
   if [ -f package.json ] && grep -q '"build"' package.json; then
     if [ -d node_modules ]; then
       run_stage "1.4" "JS build (npm run build)" npm run build
+    elif [ "${SKIP_VENDOR_CHECK:-0}" = "1" ]; then
+      warn "1.4 JS build skipped — SKIP_VENDOR_CHECK=1 set"
     else
-      warn "1.4 JS build skipped — run 'npm install' first"
+      fail "1.4 JS build — node_modules missing. Run 'npm install'."
     fi
   fi
 fi
@@ -155,6 +180,15 @@ fi
 # reports failed=0. Refresh via /wp-plugin-onboard --refresh in Claude.
 if [ -x bin/wppqa-baseline-check.sh ] && [ "$MODE" != "quick" ]; then
   run_stage "2.6" "wppqa baseline (wp-plugin-qa MCP)" bash bin/wppqa-baseline-check.sh
+fi
+
+# 2.7 — enum-drift gate. Cross-layer contract check: every controller's
+# VALID_* enum must align with the engine that consumes the value. Added
+# 2026-05-27 in response to the stability audit — caught a real
+# `point_multiplier` vs `points_multiplier` typo on first run. See
+# audit/STABILITY-2026-05-27.md §4.D.
+if [ -x bin/check-enum-drift.sh ] && [ "$MODE" != "quick" ]; then
+  run_stage "2.7" "Enum drift (cross-layer contract)" bash bin/check-enum-drift.sh
 fi
 
 # ─── 3.x — Manifest freshness ────────────────────────────────────────────────

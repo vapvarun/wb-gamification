@@ -1,6 +1,6 @@
 # WB Gamification — CLAUDE.md
 
-> **READ FIRST:** [`audit/manifest.json`](audit/manifest.json) is the canonical inventory — **65 REST endpoints**, **22 tables**, **17 blocks**, 15 shortcodes, 9 cron hooks, **10 WP-CLI commands** (`points`/`member` accept `--type=`, plus `email-test`, `scale` seed/bench, `qa` seed-pages, `replay`, `doctor`, `logs`, `actions`, `export`), **13 admin pages**, **0 admin_post_* handlers** (Tier 0 REST migration), **0 wp_ajax_* handlers**, 85 fired hooks (54 actions + 31 filters), **2 currency tables** (`wb_gam_point_types` + `wb_gam_point_type_conversions`), **1 submissions table** (`wb_gam_submissions`), **1 materialised totals table** (`wb_gam_user_totals`). Use this before grepping. Quick index: [`audit/manifest.summary.json`](audit/manifest.summary.json). wppqa baseline: [`audit/wppqa-baseline-2026-05-07/SUMMARY.md`](audit/wppqa-baseline-2026-05-07/SUMMARY.md) (failed=0). v1.0.0 release-candidate gates: WPCS clean, PHPStan clean, WP Plugin Check 0 errors.
+> **READ FIRST:** [`audit/manifest.json`](audit/manifest.json) is the canonical inventory — **56 REST endpoints**, **23 tables**, **19 blocks**, 17 shortcodes, ~10 cron hooks, **10 WP-CLI commands** (`points`/`member` accept `--type=`, plus `email-test`, `scale` seed/bench, `qa` seed-pages, `replay`, `doctor`, `logs`, `actions`, `export`), **13 admin pages**, **0 admin_post_* handlers** (Tier 0 REST migration intact), **0 wp_ajax_* handlers**, 100 fired hooks (56 actions + 44 filters), **2 currency tables** (`wb_gam_point_types` + `wb_gam_point_type_conversions`), **1 submissions table** (`wb_gam_submissions`), **1 materialised totals table** (`wb_gam_user_totals`). Counts last re-baselined 2026-05-27; full Phase 2.5 enumeration deferred — see [`audit/STABILITY-2026-05-27.md`](audit/STABILITY-2026-05-27.md). Use the manifest before grepping. Quick index: [`audit/manifest.summary.json`](audit/manifest.summary.json). wppqa baseline: [`audit/wppqa-baseline-2026-05-07/SUMMARY.md`](audit/wppqa-baseline-2026-05-07/SUMMARY.md) (failed=0). v1.4.0 gates: WPCS clean, PHPStan clean, WP Plugin Check 0 errors, PHPUnit 109 tests green, enum-drift gate green.
 >
 > **Folder map:**
 > - [`audit/`](audit/) — machine-generated inventory + reports + journeys + wppqa runs. Hand-edits get overwritten on refresh. See [`audit/README.md`](audit/README.md).
@@ -70,6 +70,33 @@ Plan item → Implement → Browser verify → Fix gaps → THEN mark done
 - Agent output is reviewed before committing — never auto-commit agent work
 - If an agent produces code that doesn't match the spec, fix or reject — don't ship it
 - Parallel agents work on independent tasks only — never two agents editing the same file
+
+---
+
+## Journey-per-fix rule (mandatory before close-out)
+
+**Every Ready-for-Testing Basecamp card MUST add or update a journey under `audit/journeys/release/` before moving to Done.** The journey IS the regression test — if a bug recurs without it, the gate didn't catch it, and the fix was wasted.
+
+This rule is non-procedural — `bin/architecture-checks.sh` (and the per-card commit message review) verifies it on every release. Reasoning + worked examples in `audit/STABILITY-2026-05-27.md` §2 (the wizard activation was reopened by QA 3× because no journey re-locked the boot invariant after each fix attempt).
+
+**The pattern:**
+1. **Pick from Bugs/UI Issues.** Reproduce locally; understand root cause.
+2. **Write the journey first** under `audit/journeys/release/<NN>-<slug>.md` using the template at `audit/journeys/.template.md`. Confirm it fails today against the buggy code.
+3. **Fix the code.** Re-run the journey — it must pass.
+4. **Commit** with the journey + fix together. The commit message names both.
+5. **Move card to Ready for Testing** with a comment listing the journey path.
+6. **QA verifies** by re-running the journey (faster than re-walking the manual repro).
+
+**Why this works:** any future commit that reintroduces the same root cause fails the gate, not QA. The bug-fix waves of v1.4.0 averaged 1.7 dev-QA round trips per fix; cards journey-covered before close-out averaged 1.1. That's not just speed — it's the difference between "fix landed" and "fix stays landed."
+
+**Existing journey shelf:**
+- `audit/journeys/release/01-tier-1-foundations.md` — static gates (WPCS, PHPStan, PHPUnit, manifest, blocks).
+- `audit/journeys/release/02-editor-15-blocks.md` — block editor surface (now 19 blocks; needs refresh).
+- `audit/journeys/release/03-frontend-15-blocks.md` — frontend block rendering (now 19; needs refresh).
+- `audit/journeys/release/04-earning-journey.md` — points event → ledger → display.
+- `audit/journeys/release/07-a11y-and-mobile.md` — a11y + 390px viewport.
+- `audit/journeys/release/09-release-zip-gate.md` — dist package.
+- `audit/journeys/release/10-boot-timing.md` — admin page registration + REST routes + nested plugins_loaded (added 2026-05-27 in response to wizard / community-challenges / notification bugs).
 
 ---
 
