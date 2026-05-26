@@ -1,0 +1,52 @@
+# bin/check-css-orphans.sh baseline — PHP classes with no matching CSS rule.
+# Each line is a class name. New orphans fail the gate; legitimate fixes
+# (matching CSS added) should DELETE the line from this file in the same commit.
+# Generated: 2026-05-26T21:10:33Z
+
+wb-gam-col-currency
+wb-gam-daily-bonus__head-text
+wb-gam-event-tag
+wb-gam-give-kudos__recipient
+wb-gam-give-kudos--guest
+wb-gam-kudos-feed__header
+wb-gam-leaderboard__badges-count
+wb-gam-leaderboard__my-rank
+wb-gam-leaderboard__my-rank-gap
+wb-gam-leaderboard__my-rank-label
+wb-gam-leaderboard__my-rank-points
+wb-gam-leaderboard__my-rank-position
+wb-gam-leaderboard__points-number
+wb-gam-level-progress__empty
+wb-gam-member-points__guest
+wb-gam-member-points__level-name
+wb-gam-my-rewards__when
+wb-gam-points-count
+wb-gam-profile-page__head
+wb-gam-profile-rank
+wb-gam-progress-bar
+wb-gam-rank-
+wb-gam-rank-badge
+wb-gam-recap__avatar
+wb-gam-recap__header-text
+wb-gam-recap__stat--badges
+wb-gam-recap__stat--challenges
+wb-gam-recap__stat--events
+wb-gam-recap__stat--kudos
+wb-gam-recap__stat--percentile
+wb-gam-recap__stat--points
+wb-gam-streak__empty
+wb-gam-streak__stat--current
+wb-gam-streak__stat--longest
+wb-gam-submit-achievement__field--editor
+wb-gam-submit-achievement__hint
+wb-gam-submit-achievement__label
+wb-gam-top-members__empty
+wb-gam-webhook-form
+wbgam-badge--success
+wbgam-card-desc
+wbgam-help
+wbgam-settings-topbar__text
+wbgam-toggle-row
+wbgam-toggle-row__body
+wbgam-toggle-row__desc
+wbgam-toggle-row__title

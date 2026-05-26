@@ -191,6 +191,35 @@ if [ -x bin/check-enum-drift.sh ] && [ "$MODE" != "quick" ]; then
   run_stage "2.7" "Enum drift (cross-layer contract)" bash bin/check-enum-drift.sh
 fi
 
+# 2.8 — CSS-class orphan gate. Every wbgam-*/wb-gam-* class emitted by a
+# PHP template must have a matching CSS selector somewhere. Catches the
+# Basecamp #9925205802 Issue 2 bug class — Setup Wizard switch was
+# invisible because PHP wrote `__slider` and CSS only knew `__track`.
+# Baseline-driven (audit/css-orphan-baseline.txt); fails only on NEW
+# orphans. Refresh: bin/check-css-orphans.sh --update-baseline.
+if [ -x bin/check-css-orphans.sh ] && [ "$MODE" != "quick" ]; then
+  run_stage "2.8" "CSS orphan classes (PHP → CSS contract)" bash bin/check-css-orphans.sh
+fi
+
+# 2.9 — Action sync/async manifest invariant. Every action manifest entry
+# with repeatable=true must declare async explicitly — default-routing
+# was the root cause of Basecamp #9925589914 (WC events queued through
+# Action Scheduler when admins expected immediate awards). Baseline at
+# audit/action-async-baseline.txt; refresh with --update-baseline.
+if [ -x bin/check-action-async.sh ] && [ "$MODE" != "quick" ]; then
+  run_stage "2.9" "Action manifest sync/async invariant" bash bin/check-action-async.sh
+fi
+
+# 2.10 — Critical event-wiring gate. Hardcoded list of internal events
+# that MUST have both a firer and a listener inside this plugin. Catches
+# the Basecamp #9927383947 bug class — RedemptionEngine fired
+# `wb_gam_points_redeemed` but TransactionalEmailEngine forgot to
+# subscribe. Extension-point hooks (consumed by third parties) are NOT
+# in scope; add new entries to CRITICAL_EVENTS in the script.
+if [ -x bin/check-event-wiring.sh ] && [ "$MODE" != "quick" ]; then
+  run_stage "2.10" "Critical event wiring" bash bin/check-event-wiring.sh
+fi
+
 # ─── 3.x — Manifest freshness ────────────────────────────────────────────────
 
 if [ "$MODE" != "quick" ]; then
