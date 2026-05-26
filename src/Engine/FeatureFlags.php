@@ -1,10 +1,11 @@
 <?php
 /**
- * Feature Flags — free/pro engine split and lazy loading.
+ * Feature Flags — single-plugin engine boot and per-feature toggles.
  *
- * Separates engines into:
- *   - Core (free, always loaded)
- *   - Pro  (loaded only when wb-gamification-pro is active AND the feature flag is on)
+ * All engines ship in the free plugin. Heavy / opt-in engines are listed
+ * in OPTIONAL_ENGINES and gated by a per-feature flag that defaults to
+ * `true`, so admins can disable individual features in Settings → Features
+ * without code changes.
  *
  * @package WB_Gamification
  * @since   1.0.0
@@ -15,10 +16,10 @@ namespace WBGam\Engine;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Manages feature flags and boots engines based on free/pro status.
+ * Manages feature flags and boots engines.
  *
- * Core engines always boot. Pro engines boot only when the pro add-on
- * is active AND the individual feature flag is enabled in settings.
+ * Core engines always boot. Optional engines boot only when their
+ * feature flag is enabled in settings (all enabled by default).
  */
 final class FeatureFlags {
 
@@ -30,7 +31,7 @@ final class FeatureFlags {
 	private const OPTION_KEY = 'wb_gam_features';
 
 	/**
-	 * Core engines — always boot (free plugin).
+	 * Core engines — always boot.
 	 *
 	 * Excludes ManifestLoader, Registry, and Engine which keep their own
 	 * priority-ordered `add_action` calls (priorities 5, 6, 8).
@@ -54,13 +55,13 @@ final class FeatureFlags {
 	];
 
 	/**
-	 * Optional pro engines mapped by feature flag key.
+	 * Optional engines mapped by feature flag key.
 	 *
-	 * Boot only when the flag is on AND the pro plugin is active.
+	 * Boot when the flag is on (defaults to true for every flag).
 	 *
 	 * @var array<string, string>
 	 */
-	private const PRO_ENGINES = [
+	private const OPTIONAL_ENGINES = [
 		'cohort_leagues'       => 'CohortEngine',
 		'weekly_emails'        => 'WeeklyEmailEngine',
 		'leaderboard_nudge'    => 'LeaderboardNudge',
@@ -74,8 +75,8 @@ final class FeatureFlags {
 	/**
 	 * Default state for every feature flag.
 	 *
-	 * All features enabled by default — WB Gamification is 100% free.
-	 * Admins can toggle individual features off in Settings → Features.
+	 * All features enabled by default. Admins can toggle individual
+	 * features off in Settings → Features.
 	 *
 	 * @var array<string, bool>
 	 */
@@ -96,17 +97,6 @@ final class FeatureFlags {
 	 * @var array<string, bool>|null
 	 */
 	private static ?array $features = null;
-
-	/**
-	 * Whether the pro add-on is active.
-	 *
-	 * Pro plugin defines `WB_GAM_PRO_VERSION` on load.
-	 *
-	 * @return bool
-	 */
-	public static function is_pro_active(): bool {
-		return defined( 'WB_GAM_PRO_VERSION' );
-	}
 
 	/**
 	 * Check if a specific feature flag is enabled.
@@ -155,12 +145,12 @@ final class FeatureFlags {
 	}
 
 	/**
-	 * Get the pro engine map (flag key => class name).
+	 * Get the optional engine map (flag key => class name).
 	 *
 	 * @return array<string, string>
 	 */
-	public static function get_pro_engine_map(): array {
-		return self::PRO_ENGINES;
+	public static function get_optional_engine_map(): array {
+		return self::OPTIONAL_ENGINES;
 	}
 
 	/**
@@ -183,8 +173,8 @@ final class FeatureFlags {
 			}
 		}
 
-		// Optional engines — boot if feature flag is enabled (all on by default).
-		foreach ( self::PRO_ENGINES as $flag => $class ) {
+		// Optional engines — boot if their feature flag is enabled (all on by default).
+		foreach ( self::OPTIONAL_ENGINES as $flag => $class ) {
 			if ( self::is_enabled( $flag ) ) {
 				$fqcn = $namespace . $class;
 				if ( method_exists( $fqcn, 'init' ) ) {
@@ -196,8 +186,8 @@ final class FeatureFlags {
 		/**
 		 * Fires after all engines have booted.
 		 *
-		 * Pro plugin hooks here to register additional engines or override
-		 * behaviour.
+		 * Third-party extensions hook here to register additional engines
+		 * or override behaviour.
 		 *
 		 * @since 1.0.0
 		 */

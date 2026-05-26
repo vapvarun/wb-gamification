@@ -65,7 +65,7 @@ final class StatusRetentionEngine {
 	 * Run the weekly status retention check for all recently active users.
 	 */
 	public static function run(): void {
-		if ( ! FeatureFlags::is_pro_active() || ! FeatureFlags::is_enabled( 'status_retention' ) ) {
+		if ( ! FeatureFlags::is_enabled( 'status_retention' ) ) {
 			return;
 		}
 

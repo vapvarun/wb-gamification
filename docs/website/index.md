@@ -77,13 +77,13 @@ The plugin auto-detects host plugins on activation and enables matching point ac
 
 ### I'm an advanced operator
 
-- **[Cohort Leagues](pro-features/cohort-leagues.md)** — auto-ranking within signup-week / role / custom groups.
-- **[Community Challenges](pro-features/community-challenges.md)** — aggregate-group goals with per-contributor reward distribution.
-- **[Redemption Store](pro-features/redemption-store.md)** — point-cost rewards (custom or WooCommerce-backed).
-- **[Webhooks](pro-features/webhooks.md)** — outbound webhooks to Zapier / Make / n8n.
-- **[Weekly Emails](pro-features/weekly-emails.md)** — personalised digest cadence.
-- **[Badge Sharing](pro-features/badge-sharing.md)** — public OG share URL with social-image fallback.
-- **[Cosmetics](pro-features/cosmetics.md)** — profile frames + per-user visual customisation.
+- **[Cohort Leagues](features/cohort-leagues.md)** — auto-ranking within signup-week / role / custom groups.
+- **[Community Challenges](features/community-challenges.md)** — aggregate-group goals with per-contributor reward distribution.
+- **[Redemption Store](features/redemption-store.md)** — point-cost rewards (custom or WooCommerce-backed).
+- **[Webhooks](features/webhooks.md)** — outbound webhooks to Zapier / Make / n8n.
+- **[Weekly Emails](features/weekly-emails.md)** — personalised digest cadence.
+- **[Badge Sharing](features/badge-sharing.md)** — public OG share URL with social-image fallback.
+- **[Cosmetics](features/cosmetics.md)** — profile frames + per-user visual customisation.
 
 ---
 

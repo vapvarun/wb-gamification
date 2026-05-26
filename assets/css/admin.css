@@ -69,7 +69,6 @@
 	--wb-gam-text-muted:     #6b7280;
 	--wb-gam-gap:            var(--wbgam-gap-sm);
 	--wb-gam-text:           #1d2939;
-	--wb-gam-locked:         #d1d5db;
 }
 
 /* ── Nav tabs ───────────────────────────────────────────────────────────────── */
@@ -1173,7 +1172,7 @@
 	font-size: var(--wbgam-fs-display);
 	width: 48px;
 	height: 48px;
-	color: var(--wb-gam-locked);
+	color: var(--wbgam-text-muted);
 }
 .wbgam-icon-xl--muted { color: var(--wb-gam-muted); }
 .wbgam-progress {
@@ -1866,7 +1865,6 @@ body[class*="_page_wb-gam-"] #wpbody-content > .updated:not(.wb-gam-notice) {
 	--wb-gam-accent: var(--wbgam-primary);
 	--wb-gam-bg-alt: var(--wbgam-bg);
 	--wb-gam-muted: var(--wbgam-text-muted);
-	--wb-gam-locked: var(--wbgam-text-muted);
 	--wb-gam-gap: var(--wbgam-gap);
 	--wb-gam-silver: var(--wbgam-text-muted);
 	--wb-gam-gold: var(--wbgam-warning);
@@ -3519,21 +3517,6 @@ body[class*="_page_wb-gam-"] #wpbody-content > .updated:not(.wb-gam-notice) {
 .wbgam-settings-nav-item.is-active [class^="icon-"],
 .wbgam-settings-nav-item.is-active .dashicons {
 	opacity: 1;
-}
-
-/* Pro badge */
-
-.wbgam-pro-badge {
-	display: inline-block;
-	background: linear-gradient(135deg, #6366f1, #8b5cf6);
-	color: #fff;
-	font-size: var(--wbgam-fs-2xs);
-	font-weight: 700;
-	padding: 1px 6px;
-	border-radius: 3px;
-	text-transform: uppercase;
-	letter-spacing: 0.04em;
-	margin-left: auto;
 }
 
 /* Content area */

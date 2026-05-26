@@ -81,7 +81,7 @@ final class WeeklyEmailEngine {
 	 * Fired by WP-Cron. Queues one AS job per eligible user.
 	 */
 	public static function dispatch_batch(): void {
-		if ( ! FeatureFlags::is_pro_active() || ! FeatureFlags::is_enabled( 'weekly_emails' ) ) {
+		if ( ! FeatureFlags::is_enabled( 'weekly_emails' ) ) {
 			return;
 		}
 

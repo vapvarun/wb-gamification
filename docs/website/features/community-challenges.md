@@ -4,7 +4,7 @@ Community Challenges let your entire membership work toward a shared goal — si
 
 ## How It Differs from Individual Challenges
 
-Individual challenges (free feature) are per-member: each person has their own progress bar and wins or loses independently. Community challenges have one progress bar shared across all participants. No member can complete it alone.
+Individual challenges are per-member: each person has their own progress bar and wins or loses independently. Community challenges have one progress bar shared across all participants. No member can complete it alone.
 
 ## Creating a Community Challenge
 
@@ -28,7 +28,4 @@ When the global counter reaches the target before the deadline, every member who
 
 If the deadline passes before the target is reached, the challenge expires without awarding bonus points.
 
-## Requirements
-
-- Pro add-on active
-- `community_challenges` feature flag enabled
+Community Challenges are enabled by default. To turn the feature off site-wide, set the `community_challenges` key to `false` in the `wb_gam_features` option.

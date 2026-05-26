@@ -3,8 +3,9 @@
  * Async Award Evaluator
  *
  * Reduces per-award synchronous DB queries by deferring non-critical
- * evaluators (PersonalRecordEngine, future Pro engines) to a single
- * batched Action Scheduler job that runs after the request completes.
+ * evaluators (PersonalRecordEngine and other heavy listeners) to a
+ * single batched Action Scheduler job that runs after the request
+ * completes.
  *
  * Flow:
  *   1. Hooked to `wb_gam_points_awarded` at priority 50

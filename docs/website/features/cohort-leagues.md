@@ -26,12 +26,7 @@ The cohort model also prevents discouragement. A member with 200 points never ap
 
 ## Setup
 
-1. Go to **WB Gamification → Settings → Pro Features**.
-2. Enable the **Cohort Leagues** toggle.
-3. Go to **WB Gamification → Leagues** to configure tier names, cohort size, and promotion/demotion thresholds.
-4. The engine runs its weekly sort automatically via WordPress cron.
+1. Go to **WB Gamification → Leagues** to configure tier names, cohort size, and promotion/demotion thresholds.
+2. The engine runs its weekly sort automatically via WordPress cron.
 
-## Requirements
-
-- Pro add-on active
-- `cohort_leagues` feature flag enabled
+Cohort Leagues are enabled by default. To turn them off site-wide, set the `cohort_leagues` key to `false` in the `wb_gam_features` option (or via the `wb_gam_feature_flags` filter).

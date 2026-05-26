@@ -93,7 +93,7 @@ What the gate runs (in order, see `bin/local-ci.sh`):
 | 1.3 PHPStan | `composer phpstan` (skipped if no `phpstan.neon`) | static type errors |
 | 1.4 JS build | `npm run build` (skipped if no `node_modules`) | block JS / interactivity compile |
 | 2.1 Coding rules | `bin/coding-rules-check.sh` | plugin-specific rules (Rules 1-5, 11) |
-| 2.2 Architecture | `bin/architecture-checks.sh` | Free/Pro contract invariants |
+| 2.2 Architecture | `bin/architecture-checks.sh` | Engine-boot contract invariants |
 | 2.3 Block standard | `bin/check-block-standard.sh` | Wbcom Block Quality Standard |
 | 2.4 UX audit | `bin/ux-audit.sh` (vendored from `~/.claude/skills/ux-audit/`) | ux-foundation compliance: inline `<style>`/`<script>`, native alert/confirm, theme-sidebar hidden, dashicons drift, raw RTL margins |
 | 2.5 Plugin-dev rules | `bin/plugin-dev-rules-check.sh` | wp-plugin-development gates: no jQuery on frontend, no admin-ajax on customer surfaces, blocks declare `wb-gam-tokens` dep, per-block style.css present, BP integrations boot on `bp_loaded` |
@@ -283,8 +283,9 @@ See `plan/v1-master-plan.md` Tasks 25-30 for full details:
 
 ## 🔜 After UX Audit
 
-- **Phase 3:** Pro plugin scaffold (split pro engines to `wb-gamification-pro`)
-- **Phase 4:** Build & release (Grunt, EDD SDK, version bump, zip packaging)
+- **Phase 3:** Build & release (Grunt, version bump, zip packaging)
+
+> **No Pro tier.** wb-gamification is shipped as a single free plugin — every engine boots in this codebase. Any historical references to a "Pro plugin", "Pro engines", `WB_GAM_PRO_VERSION`, or `wb-gamification-pro` left in `plan/`, `audit/`, or older docs are stale.
 
 ## 🟣 Phase 5+ (Deferred)
 

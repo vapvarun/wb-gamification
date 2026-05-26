@@ -122,5 +122,5 @@ See [Manifest Files](../developer-guide/manifest-files.md) for the full manifest
 
 - **[Points](points.md)** — single-currency basics
 - **[Leaderboard](leaderboard.md)** — currency-scoped rankings
-- **[Redemption Store](../pro-features/redemption-store.md)** — currency-scoped reward catalogs
+- **[Redemption Store](redemption-store.md)** — currency-scoped reward catalogs
 - **[Helper Functions](../developer-guide/helper-functions.md)** — `wb_gam_award_points` API

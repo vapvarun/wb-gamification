@@ -2,9 +2,11 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task.
 
-**Goal:** Ship wb-gamification 1.0.0 as a stable, scalable, API-first gamification engine for 100K+ member communities. Works as local plugin AND standalone gamification center for cross-site usage. Free + Pro split. REST-ready for mobile apps, AI agents, and headless frontends.
+**Goal:** Ship wb-gamification 1.0.0 as a stable, scalable, API-first gamification engine for 100K+ member communities. Works as local plugin AND standalone gamification center for cross-site usage. Single free plugin — no add-on tier. REST-ready for mobile apps, AI agents, and headless frontends.
 
-**Architecture:** Event-sourced core (free) with lazy-loaded Pro engines behind license check. API key authentication for cross-site mode. WP Abilities API registration for AI agent discovery. Full REST schemas on all endpoints. Enhanced WordPress native admin UX. Async pipeline for non-critical listeners. Leaderboard snapshot cache.
+**Architecture:** Event-sourced core with every engine bundled in one plugin. Heavy / opt-in engines gate on per-feature flags in `wb_gam_features` (all default to on). API key authentication for cross-site mode. WP Abilities API registration for AI agent discovery. Full REST schemas on all endpoints. Enhanced WordPress native admin UX. Async pipeline for non-critical listeners. Leaderboard snapshot cache.
+
+> **Historical note:** Earlier task descriptions in this file mention a Pro plugin / `WB_GAM_PRO_VERSION` / EDD license check. Those were collapsed in v1.0 — the constant, the license check, and the pro-engine gate are all removed. Treat every "Pro engine" reference below as "optional engine in the single plugin".
 
 **Tech Stack:** PHP 8.1+, WordPress 6.5+, Action Scheduler, WP Object Cache API, WP Interactivity API, WP Abilities API
 
@@ -86,7 +88,7 @@ CORS headers in `src/API/ApiKeyAuth.php` when API key auth is used.
 
 ## Phase 1: Core Cleanup & Scalability (Free Plugin) [COMPLETED]
 
-### Task 1: Free/Pro Engine Split + Feature Flags [DONE]
+### Task 1: Optional Engine Split + Feature Flags [DONE]
 ### Task 2: Dead Code Removal [DONE]
 ### Task 3: Integration Cleanup [DONE]
 ### Task 4: Async Award Pipeline [DONE]
@@ -139,13 +141,9 @@ CORS headers in `src/API/ApiKeyAuth.php` when API key auth is used.
 
 - RTL CSS generation, CSS/JS minification, .pot file generation
 - Dist task: clean → copy → compress to versioned zip
-- Free zip: `wb-gamification-1.0.0.zip`
-- Pro zip: `wb-gamification-pro-1.0.0.zip`
+- Output zip: `wb-gamification-1.0.0.zip`
 
-### Task 23: EDD SDK Integration
-
-- Free: preset key `wbcomfree...` pattern, auto-activate on first load
-- Pro: EDD SL SDK with product ID (placeholder until EDD product created)
+### Task 23: EDD SDK Integration *(removed in v1.0 — no licensed product to gate)*
 
 ### Task 24: Version Bump + Final Checks
 

@@ -15,18 +15,15 @@ docs/website/
 ├── docs_config.json               Publish pipeline categorisation
 ├── image_map.json                 Image-asset upload tracking (auto-managed)
 │
-├── getting-started/               5 docs — installation, wizard, quick-start, how-it-works, free-vs-pro
-├── features/                      11 docs — points, levels, badges, challenges, streaks, kudos, leaderboard, …
+├── getting-started/               4 docs — installation, wizard, quick-start, how-it-works
+├── features/                      18 docs — every shipped gamification feature in one folder
 ├── settings/                      8 docs — admin-screen-by-screen configuration walkthroughs
 ├── integrations/                  7 docs — per-host-plugin integration notes
 ├── buddypress/                    3 docs — BP-specific surfaces
-├── pro-features/                  8 docs — advanced engagement mechanics (NOT a paywall — see note below)
 └── developer-guide/               13 docs — REST, hooks, custom actions, OpenBadges, webhooks, …
 ```
 
-## "Pro features" naming
-
-The `pro-features/` folder reflects features that are *advanced* in scope (cohort leagues, redemption store, webhooks, weekly emails, …) — not paywalled. **WB Gamification has no paid tier.** Every feature ships in the single free plugin. The folder name is preserved because the publish pipeline (`docs_config.json`) maps it to a "Pro Features" category on the customer-facing site, where readers expect to find advanced configuration topics grouped together.
+**Every feature is in the free plugin.** There is no paid tier and no add-on. The legacy `pro-features/` folder was retired on 2026-05-26 — its contents merged into `features/`.
 
 ## Publishing
 

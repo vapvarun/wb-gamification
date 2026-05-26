@@ -629,18 +629,6 @@ add_action(
 	0
 );
 
-/**
- * Fires after the free plugin is fully loaded. Pro plugin hooks here.
- *
- * @since 1.0.0
- */
-add_action(
-	'plugins_loaded',
-	function () {
-		do_action( 'wb_gam_free_loaded' );
-	},
-	20
-);
 
 /**
  * WP-CLI commands.

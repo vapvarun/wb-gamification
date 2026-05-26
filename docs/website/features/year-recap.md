@@ -74,5 +74,5 @@ The recap output can be filtered with `wb_gam_year_recap_data` to add custom sta
 ## See Also
 
 - **[Privacy](privacy.md)** — how member opt-out controls the public URL
-- **[Cohort Leagues](../pro-features/cohort-leagues.md)** — adds cohort-comparison to recap
+- **[Cohort Leagues](cohort-leagues.md)** — adds cohort-comparison to recap
 - **[Notifications](notifications.md)** — December email reminders

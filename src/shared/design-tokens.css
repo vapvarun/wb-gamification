@@ -158,7 +158,6 @@
 	--wb-gam-gold: var(--wb-gam-color-gold);
 	--wb-gam-silver: var(--wb-gam-color-silver);
 	--wb-gam-bronze: var(--wb-gam-color-bronze);
-	--wb-gam-locked: var(--wb-gam-color-disabled);
 	--wb-gam-fill: var(--wb-gam-color-accent);
 	--wb-gam-recap-accent: var(--wb-gam-color-accent);
 }

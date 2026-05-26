@@ -66,8 +66,6 @@ When creating or editing a badge, you can set the following optional limits:
 
 Badges marked as **Credential** badges generate a verifiable digital credential following the OpenBadges 3.0 standard. Members can download the credential JSON file, share it on LinkedIn, or include it in a digital portfolio to prove they earned the badge on your site.
 
-This feature is part of **WB Gamification Pro**.
-
 ## Viewing Badges
 
 Members can see their earned badges in:

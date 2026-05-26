@@ -1,8 +1,6 @@
 # Feature Catalog
 
-The complete inventory of WB Gamification features. Every row is shipped in v1.0.0 — there is **no add-on tier**, no upsell, no paid extension. The "tier" column reflects which engine layer owns the feature.
-
-> The `pro-features/` documentation folder reflects features that are *advanced* in scope (cohort leagues, redemption store, webhooks, etc.) — not paywalled. Everything ships in the single free plugin.
+The complete inventory of WB Gamification features. Every row is shipped in the single plugin — there is no add-on, no upsell, no paid extension. The "tier" column reflects which engine layer owns the feature.
 
 ---
 
@@ -32,7 +30,7 @@ The complete inventory of WB Gamification features. Every row is shipped in v1.0
 |---|---|---|---|
 | Hub page | Core | Auto-created at `/gamification` | [Quick Start](getting-started/quick-start.md) |
 | Public profile pages | Core | `/u/{user_login}` | [Privacy](features/privacy.md) |
-| Badge share URL (OG-ready) | Core | `/?wb-gam-share=<badge_slug>` | [Badge Sharing](pro-features/badge-sharing.md) |
+| Badge share URL (OG-ready) | Core | `/?wb-gam-share=<badge_slug>` | [Badge Sharing](features/badge-sharing.md) |
 | OpenBadges 3.0 credentials | Core | `/credentials/{badge}/{user}` | [OpenBadges](developer-guide/openbadges.md) |
 | Toast notifications | Core | (automatic — Interactivity API) | [Notifications](features/notifications.md) |
 
@@ -51,13 +49,13 @@ Every block has a matching shortcode and is fully responsive at 390px viewport w
 | Daily Bonus | (block-only) | — |
 | Streak | `wb_gam_streak` | [Blocks & Shortcodes](features/blocks-shortcodes.md) |
 | Challenges | `wb_gam_challenges` | [Blocks & Shortcodes](features/blocks-shortcodes.md) |
-| Community Challenges | `wb_gam_community_challenges` | [Community Challenges](pro-features/community-challenges.md) |
-| Cohort Rank | `wb_gam_cohort_rank` | [Cohort Leagues](pro-features/cohort-leagues.md) |
+| Community Challenges | `wb_gam_community_challenges` | [Community Challenges](features/community-challenges.md) |
+| Cohort Rank | `wb_gam_cohort_rank` | [Cohort Leagues](features/cohort-leagues.md) |
 | Top Members | `wb_gam_top_members` | [Blocks & Shortcodes](features/blocks-shortcodes.md) |
 | Kudos Feed | `wb_gam_kudos_feed` | [Kudos](features/kudos.md) |
 | Submit Achievement | (block-only) | — |
 | Level Progress | `wb_gam_level_progress` | [Levels](features/levels.md) |
-| Redemption Store | `wb_gam_redemption_store` | [Redemption Store](pro-features/redemption-store.md) |
+| Redemption Store | `wb_gam_redemption_store` | [Redemption Store](features/redemption-store.md) |
 | Year Recap | `wb_gam_year_recap` | — |
 
 ## Admin pages (13)

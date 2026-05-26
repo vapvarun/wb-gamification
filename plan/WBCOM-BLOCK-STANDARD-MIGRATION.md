@@ -229,10 +229,9 @@ These choices change the plan; surface them before Phase A.
    - hub: more complex, biggest payoff if standardised, but riskier.
    - **Recommendation:** redemption-store as pilot.
 
-4. **Free tier vs Pro tier scope?**
-   - Wbcom standard separates Free (mandatory baseline) and Pro (premium features via filter hooks).
-   - This plugin is single-tier today.
-   - **Recommendation:** ship Free tier across all 15 blocks; revisit Pro tier post-migration.
+4. **Tier scope?**
+   - The Wbcom block standard separates a mandatory baseline (always available) from optional advanced controls extended via filter hooks. wb-gamification ships every control in the single plugin — there is no separate Pro tier.
+   - **Recommendation:** ship the standard baseline across all 15 blocks.
 
 5. **Backwards compatibility?**
    - `block.json` attribute changes break existing `<!-- wp:wb-gamification/X -->` markup in posts.
@@ -246,7 +245,7 @@ These choices change the plan; surface them before Phase A.
 - **Dependency injection refactor** — out of scope; the plugin's PHP architecture is fine.
 - **REST contract changes** — the existing REST API stays as-is; only frontend block consumption changes.
 - **Admin UI standardisation** — that's the audit's C2/C3 from `UX-ADMIN-AUDIT-2026-05-03.md`, separate effort.
-- **Pro tier** — single-tier plugin today.
+- **Tiering** — single-tier plugin today; no Pro split is planned.
 - **Bringing every legacy hardcoded value into a token** — only the standard tokens `--wb-gam-spacing-*`, `--wb-gam-font-*`, `--wb-gam-accent`, etc. The plugin can keep its other CSS values for now.
 
 ---

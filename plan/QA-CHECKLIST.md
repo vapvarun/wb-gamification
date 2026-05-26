@@ -1,8 +1,8 @@
 # WB Gamification v1.0.0 — Complete QA Checklist (archived)
 
-> ⚠️ **ARCHIVED — superseded for v1.1+.**
+> ⚠️ **ARCHIVED — superseded for v1.1+. Has no Pro tier — every reference to "Pro plugin", "Pro engines", "Pro integrations", `WB_GAM_PRO_VERSION`, or `wb-gamification-pro` below is a historical artifact. Skip those rows.**
 >
-> This checklist was written for the v1.0.0 release in April 2026. Several items reference surfaces that no longer exist (the Pro plugin, the CosmeticEngine, the EDD SDK auto-activate flow), since the v1.0.0 → v1.1 work consolidated to a single free plugin and removed the cosmetic engine.
+> This checklist was written for the v1.0.0 release in April 2026. Several items reference surfaces that no longer exist (the Pro plugin, the CosmeticEngine, the EDD SDK auto-activate flow), since the v1.0.0 → v1.1 work consolidated to a single plugin and removed the cosmetic engine.
 >
 > **For v1.1+ QA, use [`plan/QA-MANUAL-TEST-PLAN.md`](QA-MANUAL-TEST-PLAN.md)** — a 6-persona, human-walkable test plan with a coverage matrix proving every surface has a test step. The bug-report template is also there.
 >
@@ -35,25 +35,15 @@
 - [ ] EDD SDK loads with `file_exists()` guard
 - [ ] EDD auto-activate guarded by `file_exists()` AND `$item_id > 0`
 
-### Pro Plugin (`wb-gamification-pro`)
-
-- [ ] `wb-gamification-pro.php` loads without fatal when free plugin is active
-- [ ] Shows admin notice when free plugin is NOT active
-- [ ] Defines `WB_GAM_PRO_VERSION` constant (1.0.0)
-- [ ] PSR-4 namespace `WBGamPro\` maps to `includes/`
-- [ ] Hooks into `wb_gam_engines_booted` action from free plugin
-- [ ] `Plugin::init()` calls `LicenseManager::init()`
-- [ ] `Plugin::init()` calls `boot_engines()` and `load_integrations()`
+_Pro Plugin section deleted — there is no `wb-gamification-pro` companion plugin in v1.1+._
 
 ---
 
 ## Section 2: Feature Flags & Engine Loading
 
-- [ ] `FeatureFlags.php` exists with `CORE_ENGINES` and `PRO_ENGINES` constants
-- [ ] `is_pro_active()` checks `defined('WB_GAM_PRO_VERSION')`
-- [ ] Core engines boot WITHOUT pro plugin: BadgeEngine, ChallengeEngine, KudosEngine, PersonalRecordEngine, Privacy, NotificationBridge, LogPruner, RankAutomation, CredentialExpiryEngine
-- [ ] Pro engines DO NOT boot without pro plugin: CohortEngine, WeeklyEmailEngine, LeaderboardNudge, StatusRetentionEngine, CosmeticEngine, CommunityChallengeEngine, SiteFirstBadgeEngine, TenureBadgeEngine, BadgeSharePage, RecapEngine, RedemptionEngine
-- [ ] Pro engines boot when pro IS active and feature flag is enabled
+- [ ] `FeatureFlags.php` exists with `CORE_ENGINES` and `OPTIONAL_ENGINES` constants
+- [ ] Core engines always boot: BadgeEngine, ChallengeEngine, KudosEngine, PersonalRecordEngine, Privacy, NotificationBridge, LogPruner, RankAutomation, CredentialExpiryEngine
+- [ ] Optional engines boot when their feature flag in `wb_gam_features` is enabled (all on by default): CohortEngine, WeeklyEmailEngine, LeaderboardNudge, StatusRetentionEngine, CommunityChallengeEngine, SiteFirstBadgeEngine, TenureBadgeEngine, BadgeSharePage
 - [ ] `wb_gam_engines_booted` action fires after all engines
 - [ ] Feature flags stored in single option `wb_gam_features`
 - [ ] `wb_gam_is_feature_enabled()` public function works
@@ -89,10 +79,7 @@
 - [ ] `givewp.php` present in contrib/
 - [ ] `ManifestLoader::scan()` does NOT load contrib/ files (only `integrations/*.php`)
 
-### Pro Integrations (in pro plugin `integrations/`)
-
-- [ ] Same 4 contrib files present in Pro plugin's `integrations/`
-- [ ] Pro `Plugin::init()` loads them via `wb_gamification_register_action()`
+_Pro Integrations section deleted — there is no Pro plugin in v1.1+._
 
 ---
 
@@ -350,8 +337,7 @@
 
 - [ ] `vendor/easy-digital-downloads/edd-sl-sdk/edd-sl-sdk.php` exists in free plugin
 - [ ] `vendor/easy-digital-downloads/edd-sl-sdk/edd-sl-sdk.php` exists in pro plugin
-- [ ] Free: preset key registration with `file_exists()` guard
-- [ ] Pro: `LicenseManager::init()` called, `ITEM_ID` placeholder (0)
+- [ ] (EDD license SDK rows removed — no licensed product to gate)
 
 ### Version Consistency
 
@@ -359,7 +345,6 @@
 - [ ] `WB_GAM_VERSION` constant: 1.0.0
 - [ ] `package.json` version: 1.0.0
 - [ ] `CLAUDE.md` version: 1.0.0
-- [ ] Pro plugin version: 1.0.0
 - [ ] Git tag `v1.0.0` exists
 
 ---
@@ -374,11 +359,6 @@
 - [ ] PHP Lint 8.2: PASS
 - [ ] PHP Lint 8.3: PASS
 - [ ] PHP Lint 8.4: PASS
-
-### Pro Plugin GitHub Actions
-
-- [ ] PHPStan with free dependency: PASS
-- [ ] PHP Lint 8.0-8.4: ALL PASS
 
 ### Local Quality Checks
 
@@ -403,16 +383,16 @@
 
 - [ ] `wb_gam_leaderboard_snapshot` — every 5 minutes
 - [ ] `wb_gam_prune_logs` — monthly (points + events)
-- [ ] `wb_gam_tenure_check` — daily (Pro: TenureBadgeEngine)
-- [ ] `wb_gam_weekly_email` — weekly Mon 08:30 (Pro: WeeklyEmailEngine)
-- [ ] `wb_gam_cohort_assign` — weekly Mon 00:05 (Pro: CohortEngine)
-- [ ] `wb_gam_cohort_process` — weekly Sun 23:00 (Pro: CohortEngine)
-- [ ] `wb_gam_status_retention` — weekly Wed 18:00 (Pro: StatusRetentionEngine)
-- [ ] `wb_gam_credential_expiry` — weekly Fri 06:00 (Pro: CredentialExpiryEngine)
+- [ ] `wb_gam_tenure_check` — daily (TenureBadgeEngine)
+- [ ] `wb_gam_weekly_email` — weekly Mon 08:30 (WeeklyEmailEngine)
+- [ ] `wb_gam_cohort_assign` — weekly Mon 00:05 (CohortEngine)
+- [ ] `wb_gam_cohort_process` — weekly Sun 23:00 (CohortEngine)
+- [ ] `wb_gam_status_retention` — weekly Wed 18:00 (StatusRetentionEngine)
+- [ ] `wb_gam_credential_expiry` — weekly Fri 06:00 (CredentialExpiryEngine)
 
 ### Feature Flag Guards
 
-- [ ] All Pro cron callbacks check `FeatureFlags::is_enabled()` before executing
+- [ ] Optional cron callbacks check `FeatureFlags::is_enabled()` before executing
 - [ ] Cron jobs spread across the week (not all on Monday)
 
 ### Action Scheduler

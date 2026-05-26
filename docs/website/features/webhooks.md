@@ -53,7 +53,3 @@ Always verify signatures before processing webhook data. Reject any request wher
 ## Admin Management
 
 View all registered webhooks, their last delivery status, and recent delivery logs at **WB Gamification → Webhooks**. You can pause, edit, or delete any webhook from this screen.
-
-## Requirements
-
-- Pro add-on active (no separate feature flag required)

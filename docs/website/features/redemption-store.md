@@ -31,7 +31,3 @@ Every redemption is recorded with the member ID, reward ID, points spent, timest
 ## Stock Management
 
 Stock counts decrement on each successful redemption. If you set no stock limit, the reward is unlimited. You can update stock at any time from the reward edit screen.
-
-## Requirements
-
-- Pro add-on active (no separate feature flag required)

@@ -107,7 +107,6 @@ class DoctorCommand {
 		$this->check_integrations();
 		$this->check_rest_api();
 		$this->check_cron();
-		$this->check_pro_addon();
 		$this->check_market_readiness();
 
 		WP_CLI::line( '' );
@@ -446,30 +445,19 @@ class DoctorCommand {
 	// ── Feature Flags ───────────────────────────────────────────────────────────
 
 	/**
-	 * Check feature flag state vs pro addon status.
+	 * Check which optional feature flags are enabled.
 	 */
 	private function check_feature_flags(): void {
 		$this->section( 'Feature Flags' );
 
 		$flags    = FeatureFlags::get_all();
-		$pro      = FeatureFlags::is_pro_active();
 		$enabled  = array_filter( $flags );
 		$disabled = array_diff_key( $flags, $enabled );
 
-		if ( $pro ) {
-			$this->pass( 'Pro addon active' );
-			if ( ! empty( $disabled ) ) {
-				$this->warn( count( $disabled ) . ' pro features disabled: ' . implode( ', ', array_keys( $disabled ) ) );
-			} else {
-				$this->pass( 'All ' . count( $enabled ) . ' pro features enabled' );
-			}
-		} else {
-			$this->pass( 'Free mode (pro addon not active)' );
-			if ( ! empty( $enabled ) ) {
-				$this->warn( count( $enabled ) . ' pro flags set to true but pro addon not active (no effect): ' . implode( ', ', array_keys( $enabled ) ) );
-			} else {
-				$this->pass( 'All pro feature flags correctly set to false' );
-			}
+		$this->pass( count( $enabled ) . ' of ' . count( $flags ) . ' optional features enabled' );
+
+		if ( ! empty( $disabled ) ) {
+			$this->pass( 'Disabled: ' . implode( ', ', array_keys( $disabled ) ) );
 		}
 	}
 
@@ -512,16 +500,23 @@ class DoctorCommand {
 			$this->pass( 'Not installed: ' . implode( ', ', $inactive ) );
 		}
 
-		// Check if WPMediaVerse has a gamification manifest (Pro feature).
+		// Check if WPMediaVerse ships a gamification manifest (either edition).
 		if ( defined( 'MVS_VERSION' ) ) {
-			$mvs_pro_manifest  = WP_PLUGIN_DIR . '/wpmediaverse-pro/wb-gamification.php';
-			$mvs_free_manifest = WP_PLUGIN_DIR . '/wpmediaverse/wb-gamification.php';
-			if ( file_exists( $mvs_pro_manifest ) ) {
-				$this->pass( 'WPMediaVerse Pro gamification manifest found' );
-			} elseif ( file_exists( $mvs_free_manifest ) ) {
+			$mvs_manifests = array(
+				WP_PLUGIN_DIR . '/wpmediaverse/wb-gamification.php',
+				WP_PLUGIN_DIR . '/wpmediaverse-pro/wb-gamification.php',
+			);
+			$found_manifest = false;
+			foreach ( $mvs_manifests as $manifest ) {
+				if ( file_exists( $manifest ) ) {
+					$found_manifest = true;
+					break;
+				}
+			}
+			if ( $found_manifest ) {
 				$this->pass( 'WPMediaVerse gamification manifest found' );
 			} else {
-				$this->warn( 'WPMediaVerse active but no gamification manifest — media actions not registered (Pro feature)' );
+				$this->warn( 'WPMediaVerse active but no gamification manifest — media actions not registered' );
 			}
 		}
 
@@ -607,41 +602,6 @@ class DoctorCommand {
 				$this->pass( $label . ' scheduled (next: ' . $when . ')' );
 			} else {
 				$this->warn( $label . ' (' . $hook . ') not scheduled' );
-			}
-		}
-	}
-
-	// ── Pro Addon ───────────────────────────────────────────────────────────────
-
-	/**
-	 * Check pro addon status and compatibility.
-	 */
-	private function check_pro_addon(): void {
-		$this->section( 'Pro Addon' );
-
-		if ( ! FeatureFlags::is_pro_active() ) {
-			$this->pass( 'Running in free mode' );
-
-			// Verify pro plugin directory exists.
-			$pro_path = WP_PLUGIN_DIR . '/wb-gamification-pro/wb-gamification-pro.php';
-			if ( file_exists( $pro_path ) ) {
-				$this->warn( 'Pro plugin files exist but not activated' );
-			} else {
-				$this->pass( 'Pro plugin not installed (expected for free-only testing)' );
-			}
-			return;
-		}
-
-		$this->pass( 'Pro addon active — version: ' . ( defined( 'WB_GAM_PRO_VERSION' ) ? WB_GAM_PRO_VERSION : 'unknown' ) );
-
-		// Check free/pro version compatibility.
-		if ( defined( 'WB_GAM_PRO_VERSION' ) ) {
-			$free_major = explode( '.', WB_GAM_VERSION )[0] ?? '0';
-			$pro_major  = explode( '.', WB_GAM_PRO_VERSION )[0] ?? '0';
-			if ( $free_major === $pro_major ) {
-				$this->pass( 'Free/Pro major versions match' );
-			} else {
-				$this->fail( 'Version mismatch — Free ' . WB_GAM_VERSION . ' vs Pro ' . WB_GAM_PRO_VERSION );
 			}
 		}
 	}

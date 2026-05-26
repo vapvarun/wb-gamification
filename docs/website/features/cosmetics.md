@@ -37,8 +37,3 @@ To grant a cosmetic item to a specific member:
 4. Click **Grant**.
 
 You can also award cosmetics automatically as badge rewards or level-up bonuses using the Rules engine.
-
-## Requirements
-
-- Pro add-on active
-- `cosmetics` feature flag enabled

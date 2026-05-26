@@ -4,7 +4,7 @@ Complete reference for all action hooks and filter hooks in WB Gamification. Use
 
 **Convention:** Hooks prefixed `wb_gamification_` are stable public API. Hooks prefixed `wb_gam_` are internal (may change between versions).
 
-**Pro label:** Hooks marked **[Pro]** fire only when the Pro add-on is active. They are safe to hook into from any code — they simply never fire without Pro.
+Every hook listed below ships in the plugin — there is no separate Pro tier. A few hooks only fire when their optional engine's feature flag is enabled in `wb_gam_features` (defaults to `true` for every flag); those are called out where relevant.
 
 ---
 
@@ -149,8 +149,7 @@ add_action( 'wb_gam_badge_awarded', function( int $user_id, array $badge_def, st
 
 ---
 
-#### `wb_gam_credential_expired` **[Pro]**
-
+#### `wb_gam_credential_expired`
 Fires when a badge credential passes its `expires_at` date during the daily expiry check.
 
 ```php
@@ -246,8 +245,7 @@ Fires when an admin updates an existing challenge.
 
 Fires when an admin deletes a challenge.
 
-#### `wb_gam_community_challenge_completed` **[Pro]**
-
+#### `wb_gam_community_challenge_completed`
 Fires when a community (team) challenge reaches its global target.
 
 ---
@@ -266,22 +264,18 @@ add_action( 'wb_gam_kudos_given', function( int $giver_id, int $receiver_id, str
 
 ---
 
-### Pro Engine Hooks
+### Optional Engine Hooks
 
-#### `wb_gam_weekly_email_sent` **[Pro]**
-
+#### `wb_gam_weekly_email_sent`
 Fires after a weekly recap email is sent.
 
-#### `wb_gam_weekly_nudge` **[Pro]**
-
+#### `wb_gam_weekly_nudge`
 Fires when a leaderboard nudge email is sent.
 
-#### `wb_gam_cosmetic_granted` **[Pro]**
-
+#### `wb_gam_cosmetic_granted`
 Fires when a cosmetic/frame is granted to a member.
 
-#### `wb_gam_cohort_outcome` **[Pro]**
-
+#### `wb_gam_cohort_outcome`
 Fires when a cohort league season ends with promotion/demotion results.
 
 ```php
@@ -290,8 +284,7 @@ add_action( 'wb_gam_cohort_outcome', function( int $user_id, int $old_tier, int 
 }, 10, 5 );
 ```
 
-#### `wb_gam_retention_nudge` **[Pro]**
-
+#### `wb_gam_retention_nudge`
 Fires when a re-engagement nudge is sent to an inactive member.
 
 #### `wb_gam_personal_record`
@@ -304,7 +297,7 @@ Fires when a member sets a personal record.
 
 #### `wb_gam_engines_booted`
 
-Fires after all engines have initialized. Pro plugin hooks here to register additional engines.
+Fires after all engines have initialized. Third-party extensions hook here to register additional engines.
 
 #### `wb_gam_register`
 
@@ -434,7 +427,7 @@ add_filter( 'wb_gam_should_award_badge', function( bool $should, int $user_id, s
 Override the grace period (days before streak breaks) per user.
 
 ```php
-// Pro members get 3 grace days instead of 1.
+// Members with the 'premium_member' cap get 3 grace days instead of 1.
 add_filter( 'wb_gam_streak_grace_days', function( int $days, int $user_id ) {
     if ( user_can( $user_id, 'premium_member' ) ) {
         return 3;
@@ -498,16 +491,14 @@ add_filter( 'wb_gam_toast_data', function( array $event, int $user_id ) {
 
 Modify the OpenBadges 3.0 JSON-LD credential before it is returned.
 
-### `wb_gam_recap_data` **[Pro]**
-
+### `wb_gam_recap_data`
 Modify the year-in-review recap data before display.
 
 ### `wb_gam_rank_automation_rules`
 
 Modify rank automation rules before they are evaluated.
 
-### `wb_gam_should_send_weekly_nudge` **[Pro]**
-
+### `wb_gam_should_send_weekly_nudge`
 Control whether a weekly nudge email should be sent to a specific user.
 
 ---
@@ -516,52 +507,52 @@ Control whether a weekly nudge email should be sent to a specific user.
 
 ### Actions (28 total)
 
-| Hook | File | Free/Pro |
-|------|------|----------|
-| `wb_gam_before_points_awarded` | Engine.php | Free |
-| `wb_gam_points_awarded` | Engine.php | Free |
-| `wb_gam_points_revoked` | PointsController.php | Free |
-| `wb_gam_points_redeemed` | RedemptionEngine.php | Free |
-| `wb_gam_badge_awarded` | BadgeEngine.php | Free |
-| `wb_gam_credential_expired` | CredentialExpiryEngine.php | Pro |
-| `wb_gam_level_changed` | LevelEngine.php | Free |
-| `wb_gam_streak_milestone` | StreakEngine.php | Free |
-| `wb_gam_streak_broken` | StreakEngine.php | Free |
-| `wb_gam_challenge_completed` | ChallengeEngine.php | Free |
-| `wb_gam_challenge_created` | ChallengeManagerPage.php | Free |
-| `wb_gam_challenge_updated` | ChallengeManagerPage.php | Free |
-| `wb_gam_challenge_deleted` | ChallengeManagerPage.php | Free |
-| `wb_gam_community_challenge_completed` | CommunityChallengeEngine.php | Pro |
-| `wb_gam_kudos_given` | KudosEngine.php | Free |
-| `wb_gam_rank_automation_action` | RankAutomation.php | Free |
-| `wb_gam_personal_record` | PersonalRecordEngine.php | Free |
-| `wb_gam_weekly_email_sent` | WeeklyEmailEngine.php | Pro |
-| `wb_gam_weekly_nudge` | LeaderboardNudge.php | Pro |
-| `wb_gam_cosmetic_granted` | CosmeticEngine.php | Pro |
-| `wb_gam_cohort_outcome` | CohortEngine.php | Pro |
-| `wb_gam_retention_nudge` | StatusRetentionEngine.php | Pro |
-| `wb_gam_log_pruned` | LogPruner.php | Free |
-| `wb_gam_events_pruned` | LogPruner.php | Free |
-| `wb_gam_user_data_erased` | Privacy.php | Free |
-| `wb_gam_engines_booted` | FeatureFlags.php | Free |
-| `wb_gam_register` | Registry.php | Free |
+| Hook | File |
+|------|------|
+| `wb_gam_before_points_awarded` | Engine.php |
+| `wb_gam_points_awarded` | Engine.php |
+| `wb_gam_points_revoked` | PointsController.php |
+| `wb_gam_points_redeemed` | RedemptionEngine.php |
+| `wb_gam_badge_awarded` | BadgeEngine.php |
+| `wb_gam_credential_expired` | CredentialExpiryEngine.php |
+| `wb_gam_level_changed` | LevelEngine.php |
+| `wb_gam_streak_milestone` | StreakEngine.php |
+| `wb_gam_streak_broken` | StreakEngine.php |
+| `wb_gam_challenge_completed` | ChallengeEngine.php |
+| `wb_gam_challenge_created` | ChallengeManagerPage.php |
+| `wb_gam_challenge_updated` | ChallengeManagerPage.php |
+| `wb_gam_challenge_deleted` | ChallengeManagerPage.php |
+| `wb_gam_community_challenge_completed` | CommunityChallengeEngine.php |
+| `wb_gam_kudos_given` | KudosEngine.php |
+| `wb_gam_rank_automation_action` | RankAutomation.php |
+| `wb_gam_personal_record` | PersonalRecordEngine.php |
+| `wb_gam_weekly_email_sent` | WeeklyEmailEngine.php |
+| `wb_gam_weekly_nudge` | LeaderboardNudge.php |
+| `wb_gam_cosmetic_granted` | CosmeticEngine.php |
+| `wb_gam_cohort_outcome` | CohortEngine.php |
+| `wb_gam_retention_nudge` | StatusRetentionEngine.php |
+| `wb_gam_log_pruned` | LogPruner.php |
+| `wb_gam_events_pruned` | LogPruner.php |
+| `wb_gam_user_data_erased` | Privacy.php |
+| `wb_gam_engines_booted` | FeatureFlags.php |
+| `wb_gam_register` | Registry.php |
 
 ### Filters (11 total)
 
-| Hook | File | Free/Pro |
-|------|------|----------|
-| `wb_gam_points_for_action` | Engine.php | Free |
-| `wb_gam_before_evaluate` | Engine.php | Free |
-| `wb_gam_event_metadata` | Engine.php | Free |
-| `wb_gam_should_award_badge` | BadgeEngine.php | Free |
-| `wb_gam_streak_grace_days` | StreakEngine.php | Free |
-| `wb_gam_before_kudos` | KudosEngine.php | Free |
-| `wb_gam_leaderboard_results` | LeaderboardEngine.php | Free |
-| `wb_gam_toast_data` | NotificationBridge.php | Free |
-| `wb_gam_credential_document` | CredentialController.php | Free |
-| `wb_gam_recap_data` | RecapEngine.php | Pro |
-| `wb_gam_rank_automation_rules` | RankAutomation.php | Free |
-| `wb_gam_should_send_weekly_nudge` | LeaderboardNudge.php | Pro |
+| Hook | File |
+|------|------|
+| `wb_gam_points_for_action` | Engine.php |
+| `wb_gam_before_evaluate` | Engine.php |
+| `wb_gam_event_metadata` | Engine.php |
+| `wb_gam_should_award_badge` | BadgeEngine.php |
+| `wb_gam_streak_grace_days` | StreakEngine.php |
+| `wb_gam_before_kudos` | KudosEngine.php |
+| `wb_gam_leaderboard_results` | LeaderboardEngine.php |
+| `wb_gam_toast_data` | NotificationBridge.php |
+| `wb_gam_credential_document` | CredentialController.php |
+| `wb_gam_recap_data` | RecapEngine.php |
+| `wb_gam_rank_automation_rules` | RankAutomation.php |
+| `wb_gam_should_send_weekly_nudge` | LeaderboardNudge.php |
 
 ---
 

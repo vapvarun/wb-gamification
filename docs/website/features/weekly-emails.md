@@ -15,12 +15,13 @@ The email uses your site name and custom sender details.
 
 ## Configuration
 
-1. Enable the feature under **WB Gamification → Settings → Pro Features → Weekly Emails**.
-2. Go to **WB Gamification → Settings → Emails**.
-3. Set the **sender name** and **sender email address**.
-4. Optionally customize the email subject line.
+1. Go to **WB Gamification → Settings → Emails**.
+2. Set the **sender name** and **sender email address**.
+3. Optionally customize the email subject line.
 
 Emails send automatically once per week via WordPress cron (`wp_wb_gam_weekly_email`). The send day and time are configurable in settings.
+
+Weekly Recap Emails are enabled by default. To turn them off site-wide, set the `weekly_emails` key to `false` in the `wb_gam_features` option.
 
 ## Disabling for Individual Members
 
@@ -32,11 +33,6 @@ If emails are not sending, check:
 
 1. WordPress cron is running (`wp cron event list`).
 2. Your hosting environment allows `wp_mail()` outbound connections.
-3. The feature flag is enabled.
+3. The `weekly_emails` feature flag has not been turned off in `wb_gam_features`.
 
 For reliable delivery on high-volume sites, use a transactional email service (SendGrid, Mailgun, Postmark) connected via a WordPress SMTP plugin.
-
-## Requirements
-
-- Pro add-on active
-- `weekly_emails` feature flag enabled

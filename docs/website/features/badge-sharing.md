@@ -39,11 +39,6 @@ Credential badges include a pre-built LinkedIn deep-link on the share page. Clic
 
 Non-credential badges still get OG share pages — they just do not output the JSON-LD block or the LinkedIn link.
 
-## Feature Flag
+## Toggling the feature
 
-Enable badge sharing under **WB Gamification → Settings → Pro Features → Badge Share**.
-
-## Requirements
-
-- Pro add-on active
-- `badge_share` feature flag enabled
+Badge Sharing is enabled by default. To turn it off site-wide, set the `badge_share` key to `false` in the `wb_gam_features` option.
