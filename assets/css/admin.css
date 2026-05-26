@@ -202,59 +202,247 @@
 .wb-gam-badge-id-hint { color: #999; }
 
 /* ── Setup Wizard ────────────────────────────────────────────────────────────── */
-.wb-gam-wizard-wrap { max-width: 1100px; }
-
-.wb-gam-wizard-header { margin: 40px 0 8px; }
-
-.wb-gam-wizard-header h1 {
-	font-size: var(--wbgam-fs-3xl);
-	font-weight: 700;
-	margin: 0 0 10px;
+.wb-gam-wizard-wrap {
+	max-width: 1180px;
+	padding-bottom: 40px;
 }
 
-.wb-gam-wizard-header p {
+/* Hero band — step pill + larger title + lede line. Replaces the old
+ * .wb-gam-wizard-header so first-time admins immediately see the wizard
+ * is a guided flow, not a settings dump. */
+.wb-gam-wizard-hero {
+	margin: 32px 0 28px;
+	padding: 28px 32px;
+	background: linear-gradient(135deg, rgba(37, 99, 235, 0.06), rgba(99, 102, 241, 0.04));
+	border: 1px solid #dcdcde;
+	border-radius: 12px;
+}
+
+.wb-gam-wizard-hero__step {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	padding: 4px 12px 4px 4px;
+	margin: 0 0 12px;
+	background: #fff;
+	border: 1px solid #dcdcde;
+	border-radius: 999px;
+	font-size: var(--wbgam-fs-xs);
+	font-weight: 600;
+	color: #1d2939;
+}
+
+.wb-gam-wizard-hero__step-num {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 22px;
+	height: 22px;
+	padding: 0 6px;
+	background: var(--wbgam-primary, #2563eb);
+	color: #fff;
+	border-radius: 999px;
+	font-size: var(--wbgam-fs-2xs);
+	font-weight: 700;
+}
+
+.wb-gam-wizard-hero__title {
+	margin: 0 0 6px;
+	font-size: 1.6rem;
+	font-weight: 700;
+	line-height: 1.25;
+	color: #1d2939;
+}
+
+.wb-gam-wizard-hero__lede {
+	margin: 0;
+	max-width: 720px;
 	font-size: var(--wbgam-fs-base);
 	color: #50575e;
+	line-height: 1.55;
+}
+
+.wb-gam-wizard-rerun-notice {
+	margin: 16px 0 0;
+	padding: 10px 14px;
+	background: #fff;
+	border: 1px solid #dcdcde;
+	border-left: 3px solid var(--wbgam-primary, #2563eb);
+	border-radius: 6px;
+	font-size: var(--wbgam-fs-sm);
+	color: #1d2939;
+}
+
+.wb-gam-wizard-grid-fieldset {
 	margin: 0;
+	padding: 0;
+	border: 0;
 }
 
 .wb-gam-wizard-grid {
 	display: grid;
-	grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-	gap: var(--wbgam-gap-md);
-	margin: 30px 0;
+	grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+	gap: 20px;
+	margin: 0 0 32px;
 }
 
+/* Card — elevation on hover/focus-within, primary-tinted border on
+ * current/recommended states, disabled muted state for integration-locked
+ * templates. The whole card is clickable via the submit button at the
+ * footer; ::focus-within mirrors the visual focus ring onto the card. */
 .wb-gam-wizard-card {
-	background: var(--wbgam-card-bg);
-	border: 1px solid #dcdcde;
-	border-radius: var(--wbgam-radius-sm);
-	padding: 24px;
+	position: relative;
 	display: flex;
 	flex-direction: column;
 	justify-content: space-between;
+	padding: 22px;
+	background: var(--wbgam-card-bg, #fff);
+	border: 1px solid #dcdcde;
+	border-radius: 10px;
+	box-shadow: 0 1px 0 rgba(15, 23, 42, 0.02);
+	transition: border-color 0.15s ease, box-shadow 0.2s ease, transform 0.15s ease;
+}
+
+.wb-gam-wizard-card:hover {
+	border-color: #c3c4c7;
+	box-shadow: 0 6px 18px -8px rgba(15, 23, 42, 0.18);
+	transform: translateY(-1px);
+}
+
+.wb-gam-wizard-card:focus-within {
+	border-color: var(--wbgam-primary, #2563eb);
+	box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18);
+}
+
+.wb-gam-wizard-card--recommended {
+	border-color: var(--wbgam-primary, #2563eb);
+	box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.25), 0 6px 18px -8px rgba(37, 99, 235, 0.25);
+}
+
+.wb-gam-wizard-card--current {
+	border-color: #16a34a;
+	box-shadow: 0 0 0 1px rgba(22, 163, 74, 0.2);
+}
+
+.wb-gam-wizard-card__body {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+}
+
+.wb-gam-wizard-card__head {
+	display: flex;
+	gap: 14px;
+	align-items: flex-start;
+}
+
+.wb-gam-wizard-card__icon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 44px;
+	height: 44px;
+	flex-shrink: 0;
+	background: rgba(37, 99, 235, 0.08);
+	color: var(--wbgam-primary, #2563eb);
+	border-radius: 10px;
+}
+
+.wb-gam-wizard-card__head-text {
+	flex: 1;
+	min-width: 0;
 }
 
 .wb-gam-wizard-card__title {
-	margin: 0 0 10px;
+	margin: 0 0 6px;
 	font-size: var(--wbgam-fs-md);
 	font-weight: 600;
+	color: #1d2939;
+	line-height: 1.3;
+}
+
+.wb-gam-wizard-card__badges {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+}
+
+.wb-gam-wizard-card__badge {
+	display: inline-flex;
+	align-items: center;
+	padding: 2px 8px;
+	font-size: var(--wbgam-fs-2xs);
+	font-weight: 600;
+	letter-spacing: 0.01em;
+	text-transform: uppercase;
+	background: #f1f5f9;
+	color: #475569;
+	border-radius: 999px;
+}
+
+.wb-gam-wizard-card__badge--recommended {
+	background: rgba(37, 99, 235, 0.12);
+	color: #1d4ed8;
+}
+
+.wb-gam-wizard-card__badge--current {
+	background: rgba(22, 163, 74, 0.12);
+	color: #15803d;
+}
+
+.wb-gam-wizard-card__badge--locked {
+	background: #fee2e2;
+	color: #991b1b;
 }
 
 .wb-gam-wizard-card__desc {
-	margin: 0 0 20px;
+	margin: 0;
 	color: #50575e;
 	font-size: var(--wbgam-fs-sm);
-	line-height: 1.6;
+	line-height: 1.55;
 }
 
 .wb-gam-wizard-card__points {
-	margin: 0 0 20px;
+	list-style: none;
+	margin: 4px 0 0;
+	padding: 12px 0 0;
+	border-top: 1px dashed #e5e7eb;
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
 	font-size: var(--wbgam-fs-xs);
-	color: #787c82;
 }
 
-.wb-gam-wizard-card__btn { align-self: flex-start; }
+.wb-gam-wizard-card__points li {
+	display: flex;
+	align-items: baseline;
+	gap: 10px;
+	margin: 0;
+}
+
+.wb-gam-wizard-card__points-pts {
+	flex-shrink: 0;
+	min-width: 56px;
+	padding: 1px 8px;
+	background: #f1f5f9;
+	color: #1d2939;
+	border-radius: 4px;
+	font-weight: 600;
+	text-align: center;
+}
+
+.wb-gam-wizard-card__points-label {
+	color: #50575e;
+	line-height: 1.4;
+}
+
+.wb-gam-wizard-card__btn {
+	align-self: stretch;
+	margin-top: 18px;
+	justify-content: center;
+	display: inline-flex;
+	align-items: center;
+}
 
 /* Unavailable state — Basecamp 9925226356. Card stays visible so the
  * admin can read the description; muted background + locked badge + a
@@ -262,69 +450,102 @@
 .wb-gam-wizard-card--unavailable {
 	background: #f9fafb;
 	border-color: #e5e7eb;
-	opacity: 0.9;
+	opacity: 0.92;
 }
-.wb-gam-wizard-card__badge--locked {
-	background: #fee2e2;
-	color: #991b1b;
+
+.wb-gam-wizard-card--unavailable:hover {
+	transform: none;
+	box-shadow: none;
+	border-color: #e5e7eb;
 }
+
 .wb-gam-wizard-card__unavailable-note {
-	margin: 10px 0 12px;
+	margin: 10px 0 0;
 	padding: 8px 12px;
 	background: #fef3c7;
 	border-left: 3px solid #f59e0b;
 	border-radius: 4px;
-	font-size: 13px;
+	font-size: var(--wbgam-fs-xs);
 	color: #78350f;
 }
+
 .wb-gam-wizard-card--unavailable .wb-gam-wizard-card__btn[disabled] {
 	cursor: not-allowed;
 	opacity: 0.7;
 }
 
-.wb-gam-wizard-skip-row { margin-top: 10px; }
-
-.wb-gam-wizard-skip-btn {
-	color: #787c82;
-	text-decoration: underline;
-}
-
-/* Default toggles fieldset shown below the template grid. */
+/* Step 2 — defaults card. Numbered legend matches the hero's step pill
+ * so the two-step structure (pick template → tune defaults) reads at a
+ * glance. Toggles split into a 2-column grid on desktop to compress the
+ * vertical chrome the QA flagged. */
 .wb-gam-wizard-defaults {
-	margin: 28px 0 8px;
-	padding: 20px 24px;
+	margin: 0 0 28px;
+	padding: 24px 28px;
+	background: var(--wbgam-card-bg, #fff);
 	border: 1px solid #dcdcde;
-	border-radius: var(--wbgam-radius-sm);
-	background: var(--wbgam-card-bg);
+	border-radius: 12px;
 }
 
 .wb-gam-wizard-defaults__title {
-	font-size: var(--wbgam-fs-base);
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	font-size: var(--wbgam-fs-md);
 	font-weight: 600;
-	margin: 0 0 4px;
+	color: #1d2939;
+	margin: 0 0 6px;
 	padding: 0;
 }
 
+.wb-gam-wizard-defaults__step {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 24px;
+	height: 24px;
+	background: var(--wbgam-primary, #2563eb);
+	color: #fff;
+	border-radius: 999px;
+	font-size: var(--wbgam-fs-2xs);
+	font-weight: 700;
+}
+
 .wb-gam-wizard-defaults__hint {
-	margin: 0 0 16px;
+	margin: 0 0 18px;
+	font-size: var(--wbgam-fs-sm);
 	color: #50575e;
+}
+
+.wb-gam-wizard-defaults__grid {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 14px;
 }
 
 .wb-gam-wizard-toggle {
 	display: flex;
-	gap: var(--wbgam-gap-md);
+	gap: 12px;
 	align-items: flex-start;
-	padding: 10px 0;
-	border-top: 1px solid #f0f0f1;
+	padding: 12px 14px;
+	background: #f9fafb;
+	border: 1px solid #f0f0f1;
+	border-radius: 8px;
 	cursor: pointer;
+	transition: background-color 0.15s ease, border-color 0.15s ease;
 }
 
-.wb-gam-wizard-toggle:first-of-type {
-	border-top: none;
+.wb-gam-wizard-toggle:hover {
+	background: #f3f4f6;
+	border-color: #e5e7eb;
+}
+
+.wb-gam-wizard-toggle:focus-within {
+	border-color: var(--wbgam-primary, #2563eb);
+	box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
 }
 
 .wb-gam-wizard-toggle input[type="checkbox"] {
-	margin-top: 4px;
+	margin: 3px 0 0;
 	flex-shrink: 0;
 }
 
@@ -342,16 +563,72 @@
 .wb-gam-wizard-toggle__label .description {
 	font-size: var(--wbgam-fs-xs);
 	color: #6b7280;
-	line-height: 1.5;
+	line-height: 1.45;
+}
+
+/* Wizard footer — paired skip button + reassuring copy. Replaces the
+ * orphaned underlined link with proper visual hierarchy and a 40px tap
+ * target. */
+.wb-gam-wizard-footer {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: space-between;
+	align-items: center;
+	gap: 16px;
+	padding: 20px 24px;
+	background: #f9fafb;
+	border: 1px solid #e5e7eb;
+	border-radius: 12px;
+}
+
+.wb-gam-wizard-footer__copy {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	max-width: 60ch;
+	font-size: var(--wbgam-fs-sm);
+	color: #50575e;
+}
+
+.wb-gam-wizard-footer__copy strong {
+	color: #1d2939;
+	font-weight: 600;
+}
+
+.wb-gam-wizard-skip-btn {
+	min-height: 40px;
+}
+
+@media (max-width: 1024px) {
+	.wb-gam-wizard-defaults__grid {
+		grid-template-columns: 1fr;
+	}
 }
 
 @media (max-width: 640px) {
+	.wb-gam-wizard-hero {
+		padding: 22px 18px;
+	}
+
+	.wb-gam-wizard-hero__title {
+		font-size: 1.35rem;
+	}
+
+	.wb-gam-wizard-grid {
+		grid-template-columns: 1fr;
+		gap: 14px;
+	}
+
 	.wb-gam-wizard-defaults {
+		padding: 18px;
+	}
+
+	.wb-gam-wizard-footer {
 		padding: 16px;
 	}
 
-	.wb-gam-wizard-toggle {
-		padding: 12px 0;
+	.wb-gam-wizard-footer .wb-gam-wizard-skip-btn {
+		width: 100%;
 	}
 }
 

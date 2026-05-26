@@ -13,6 +13,8 @@
 
 namespace WBGam\Admin;
 
+use WBGam\Engine\Registry;
+
 defined( 'ABSPATH' ) || exit;
 
 /**
@@ -47,6 +49,13 @@ final class SetupWizard {
 	 * Nonce action name for the wizard form.
 	 */
 	private const NONCE_ACTION = 'wb_gam_setup_nonce';
+
+	/**
+	 * Template flagged with the "Recommended" pill for new admins. Chosen
+	 * because it works on any install (no plugin gating) and seeds the most
+	 * popular point shape from the template library.
+	 */
+	private const RECOMMENDED_TEMPLATE = 'community';
 
 	/**
 	 * Register hooks. Idempotent — every load registers the same set; gating
@@ -374,22 +383,33 @@ final class SetupWizard {
 		}
 
 		$configs        = self::get_template_configs();
+		$icons          = self::get_template_icons();
 		$is_re_run      = (bool) get_option( self::COMPLETED_OPTION );
 		$current_tpl    = (string) get_option( 'wb_gam_template', '' );
 		?>
 		<div class="wrap wb-gam-wizard-wrap">
 
-			<div class="wb-gam-wizard-header">
-				<h1><?php esc_html_e( 'Welcome to WB Gamification', 'wb-gamification' ); ?></h1>
-				<p>
-					<?php esc_html_e( 'Choose a starter template to pre-configure your point values. You can change everything later from the settings screen.', 'wb-gamification' ); ?>
+			<div class="wb-gam-wizard-hero">
+				<div class="wb-gam-wizard-hero__step">
+					<span class="wb-gam-wizard-hero__step-num">1</span>
+					<?php esc_html_e( 'Pick a starting point', 'wb-gamification' ); ?>
+				</div>
+				<h1 class="wb-gam-wizard-hero__title">
+					<?php
+					echo $is_re_run
+						? esc_html__( 'Update your gamification template', 'wb-gamification' )
+						: esc_html__( 'Welcome to WB Gamification', 'wb-gamification' );
+					?>
+				</h1>
+				<p class="wb-gam-wizard-hero__lede">
+					<?php esc_html_e( 'Each template seeds sensible point values for a different use case. Every value is editable later from Settings.', 'wb-gamification' ); ?>
 				</p>
 				<?php if ( $is_re_run && '' !== $current_tpl ) : ?>
-					<p class="notice notice-info wb-gam-wizard-rerun-notice">
+					<p class="wb-gam-wizard-rerun-notice">
 						<?php
 						printf(
 							/* translators: %s: name of the currently-applied template (e.g. "Community Engagement") */
-							esc_html__( 'You\'ve already completed setup with the %s template. Picking a new one will overwrite the matching point values.', 'wb-gamification' ),
+							esc_html__( 'You\'re already running the %s template. Picking a new one will overwrite the matching point values; everything else stays put.', 'wb-gamification' ),
 							'<strong>' . esc_html( $configs[ $current_tpl ]['label'] ?? $current_tpl ) . '</strong>'
 						);
 						?>
@@ -418,32 +438,50 @@ final class SetupWizard {
 							if ( is_array( $requires_meta ) && isset( $requires_meta['callback'] ) && is_callable( $requires_meta['callback'] ) ) {
 								$requires_ok = (bool) call_user_func( $requires_meta['callback'] );
 							}
-							$card_classes = array( 'wb-gam-wizard-card' );
+							$is_recommended = ( ! $is_re_run && self::RECOMMENDED_TEMPLATE === $key && $requires_ok );
+							$card_classes   = array( 'wb-gam-wizard-card' );
 							if ( $key === $current_tpl ) {
 								$card_classes[] = 'wb-gam-wizard-card--current';
 							}
 							if ( ! $requires_ok ) {
 								$card_classes[] = 'wb-gam-wizard-card--unavailable';
 							}
+							if ( $is_recommended ) {
+								$card_classes[] = 'wb-gam-wizard-card--recommended';
+							}
 							?>
 							<div class="<?php echo esc_attr( implode( ' ', $card_classes ) ); ?>">
-								<div>
-									<h3 class="wb-gam-wizard-card__title">
-										<?php echo esc_html( $config['label'] ); ?>
-										<?php if ( $key === $current_tpl ) : ?>
-											<span class="wb-gam-wizard-card__badge">
-												<?php esc_html_e( 'Current', 'wb-gamification' ); ?>
-											</span>
-										<?php endif; ?>
-										<?php if ( ! $requires_ok && is_array( $requires_meta ) && ! empty( $requires_meta['plugin'] ) ) : ?>
-											<span class="wb-gam-wizard-card__badge wb-gam-wizard-card__badge--locked">
-												<?php
-												/* translators: %s: required plugin name */
-												printf( esc_html__( 'Requires %s', 'wb-gamification' ), esc_html( (string) $requires_meta['plugin'] ) );
-												?>
-											</span>
-										<?php endif; ?>
-									</h3>
+								<div class="wb-gam-wizard-card__body">
+									<div class="wb-gam-wizard-card__head">
+										<div class="wb-gam-wizard-card__icon" aria-hidden="true">
+											<?php echo isset( $icons[ $key ] ) ? wp_kses( $icons[ $key ], self::svg_kses_rules() ) : ''; ?>
+										</div>
+										<div class="wb-gam-wizard-card__head-text">
+											<h3 class="wb-gam-wizard-card__title">
+												<?php echo esc_html( $config['label'] ); ?>
+											</h3>
+											<div class="wb-gam-wizard-card__badges">
+												<?php if ( $is_recommended ) : ?>
+													<span class="wb-gam-wizard-card__badge wb-gam-wizard-card__badge--recommended">
+														<?php esc_html_e( 'Recommended', 'wb-gamification' ); ?>
+													</span>
+												<?php endif; ?>
+												<?php if ( $key === $current_tpl ) : ?>
+													<span class="wb-gam-wizard-card__badge wb-gam-wizard-card__badge--current">
+														<?php esc_html_e( 'Current', 'wb-gamification' ); ?>
+													</span>
+												<?php endif; ?>
+												<?php if ( ! $requires_ok && is_array( $requires_meta ) && ! empty( $requires_meta['plugin'] ) ) : ?>
+													<span class="wb-gam-wizard-card__badge wb-gam-wizard-card__badge--locked">
+														<?php
+														/* translators: %s: required plugin name */
+														printf( esc_html__( 'Requires %s', 'wb-gamification' ), esc_html( (string) $requires_meta['plugin'] ) );
+														?>
+													</span>
+												<?php endif; ?>
+											</div>
+										</div>
+									</div>
 									<p class="wb-gam-wizard-card__desc">
 										<?php echo esc_html( $config['description'] ); ?>
 									</p>
@@ -482,60 +520,62 @@ final class SetupWizard {
 
 				<fieldset class="wb-gam-wizard-defaults">
 					<legend class="wb-gam-wizard-defaults__title">
-						<?php esc_html_e( 'Default notifications & privacy', 'wb-gamification' ); ?>
+						<span class="wb-gam-wizard-defaults__step">2</span>
+						<?php esc_html_e( 'Tune defaults', 'wb-gamification' ); ?>
 					</legend>
-					<p class="description wb-gam-wizard-defaults__hint">
-						<?php esc_html_e( 'Applied alongside the template you pick (skipped if you choose to configure manually). Change any of these later in Settings.', 'wb-gamification' ); ?>
+					<p class="wb-gam-wizard-defaults__hint">
+						<?php esc_html_e( 'Applied alongside the template you pick (skipped if you choose to configure manually). Every option is reversible from Settings.', 'wb-gamification' ); ?>
 					</p>
 
-					<label class="wb-gam-wizard-toggle">
-						<input type="checkbox" name="email_level_up" value="1">
-						<span class="wb-gam-wizard-toggle__label">
-							<strong><?php esc_html_e( 'Send level-up emails', 'wb-gamification' ); ?></strong>
-							<span class="description"><?php esc_html_e( 'Notify members when they reach a new level.', 'wb-gamification' ); ?></span>
-						</span>
-					</label>
-
-					<label class="wb-gam-wizard-toggle">
-						<input type="checkbox" name="email_badge_earned" value="1">
-						<span class="wb-gam-wizard-toggle__label">
-							<strong><?php esc_html_e( 'Send badge-earned emails', 'wb-gamification' ); ?></strong>
-							<span class="description"><?php esc_html_e( 'Notify members when they earn a badge.', 'wb-gamification' ); ?></span>
-						</span>
-					</label>
-
-					<label class="wb-gam-wizard-toggle">
-						<input type="checkbox" name="email_challenge_completed" value="1">
-						<span class="wb-gam-wizard-toggle__label">
-							<strong><?php esc_html_e( 'Send challenge-completed emails', 'wb-gamification' ); ?></strong>
-							<span class="description"><?php esc_html_e( 'Notify members when they finish a challenge.', 'wb-gamification' ); ?></span>
-						</span>
-					</label>
-
-					<label class="wb-gam-wizard-toggle">
-						<input type="checkbox" name="profile_public" value="1" checked>
-						<span class="wb-gam-wizard-toggle__label">
-							<strong><?php esc_html_e( 'Enable public profile pages', 'wb-gamification' ); ?></strong>
-							<span class="description">
-								<?php esc_html_e( 'Let members opt in to a sharable profile at /u/{username}. Each member must still flip the per-user privacy toggle.', 'wb-gamification' ); ?>
+					<div class="wb-gam-wizard-defaults__grid">
+						<label class="wb-gam-wizard-toggle">
+							<input type="checkbox" name="email_level_up" value="1">
+							<span class="wb-gam-wizard-toggle__label">
+								<strong><?php esc_html_e( 'Level-up emails', 'wb-gamification' ); ?></strong>
+								<span class="description"><?php esc_html_e( 'Notify members when they reach a new level.', 'wb-gamification' ); ?></span>
 							</span>
-						</span>
-					</label>
+						</label>
+
+						<label class="wb-gam-wizard-toggle">
+							<input type="checkbox" name="email_badge_earned" value="1">
+							<span class="wb-gam-wizard-toggle__label">
+								<strong><?php esc_html_e( 'Badge-earned emails', 'wb-gamification' ); ?></strong>
+								<span class="description"><?php esc_html_e( 'Notify members when they earn a badge.', 'wb-gamification' ); ?></span>
+							</span>
+						</label>
+
+						<label class="wb-gam-wizard-toggle">
+							<input type="checkbox" name="email_challenge_completed" value="1">
+							<span class="wb-gam-wizard-toggle__label">
+								<strong><?php esc_html_e( 'Challenge-completed emails', 'wb-gamification' ); ?></strong>
+								<span class="description"><?php esc_html_e( 'Notify members when they finish a challenge.', 'wb-gamification' ); ?></span>
+							</span>
+						</label>
+
+						<label class="wb-gam-wizard-toggle">
+							<input type="checkbox" name="profile_public" value="1" checked>
+							<span class="wb-gam-wizard-toggle__label">
+								<strong><?php esc_html_e( 'Public profile pages', 'wb-gamification' ); ?></strong>
+								<span class="description"><?php esc_html_e( 'Let members opt in to a sharable profile at /u/{username}. Each member still flips their own privacy toggle.', 'wb-gamification' ); ?></span>
+							</span>
+						</label>
+					</div>
 				</fieldset>
 
-				<div class="wb-gam-wizard-skip-row">
+				<footer class="wb-gam-wizard-footer">
+					<div class="wb-gam-wizard-footer__copy">
+						<strong><?php esc_html_e( 'Prefer to start from scratch?', 'wb-gamification' ); ?></strong>
+						<span><?php esc_html_e( 'Skip leaves engine defaults in place — every email off, public profiles off. Configure everything yourself in Settings.', 'wb-gamification' ); ?></span>
+					</div>
 					<button
 						type="submit"
 						name="wb_gam_template"
 						value="skip"
-						class="button button-link wb-gam-wizard-skip-btn"
+						class="button button-secondary wb-gam-wizard-skip-btn"
 					>
 						<?php esc_html_e( 'Skip & configure manually', 'wb-gamification' ); ?>
 					</button>
-					<p class="description wbgam-mt-sm">
-						<?php esc_html_e( 'Skip leaves the engine\'s conservative defaults in place — every email off, public profiles off. Change anything later in Settings.', 'wb-gamification' ); ?>
-					</p>
-				</div>
+				</footer>
 
 			</form>
 		</div>
@@ -543,12 +583,12 @@ final class SetupWizard {
 	}
 
 	/**
-	 * Build the "N pts — action" summary block for one template card.
+	 * Build the bulleted "N pts — Human action" summary for one template card.
 	 *
-	 * Each label is composed via sprintf with `(int)` and esc_html on the
-	 * variable parts; the only HTML is the literal `<br>` separator and
-	 * the `&mdash;` entity. wp_kses_post() wraps the final string for an
-	 * extra safety net.
+	 * Resolves each action_id through {@see Registry::label_for()} so the
+	 * card surfaces a friendly verb ("Publish a blog post") instead of the
+	 * raw manifest id ("wp_publish_post") — closes the dev-jargon UX gap
+	 * reported alongside Basecamp 9925205802.
 	 *
 	 * @param array<string, int> $points Map of action_id → point value.
 	 * @return string Safe HTML.
@@ -557,14 +597,76 @@ final class SetupWizard {
 		if ( empty( $points ) ) {
 			return '';
 		}
-		$rows = array();
+		$items = array();
 		foreach ( $points as $action_id => $pts ) {
-			$rows[] = sprintf(
-				'%d pts &mdash; %s',
+			$label   = class_exists( Registry::class ) ? Registry::label_for( (string) $action_id ) : (string) $action_id;
+			$items[] = sprintf(
+				'<li><span class="wb-gam-wizard-card__points-pts">%1$d pts</span> <span class="wb-gam-wizard-card__points-label">%2$s</span></li>',
 				(int) $pts,
-				esc_html( $action_id )
+				esc_html( $label )
 			);
 		}
-		return '<p class="wb-gam-wizard-card__points">' . wp_kses_post( implode( '<br>', $rows ) ) . '</p>';
+		return '<ul class="wb-gam-wizard-card__points">' . implode( '', $items ) . '</ul>';
+	}
+
+	/**
+	 * Inline SVG icon per template, drawn from the Lucide icon set we ship
+	 * across the admin. Returned as raw markup so the calling template can
+	 * route through {@see svg_kses_rules()} for output sanitization.
+	 *
+	 * @return array<string, string> Map of template key → inline SVG markup.
+	 */
+	private static function get_template_icons(): array {
+		$attrs = 'width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" focusable="false" aria-hidden="true"';
+		return array(
+			'blog'      => '<svg ' . $attrs . '><path d="M4 19.5v-15a2 2 0 0 1 2-2h11l4 4v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2Z"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>',
+			'community' => '<svg ' . $attrs . '><circle cx="9" cy="8" r="3.2"/><path d="M2.5 19.5c.5-3 3.2-5 6.5-5s6 2 6.5 5"/><circle cx="17" cy="9" r="2.6"/><path d="M14.5 19.5c.4-2.4 2.3-4.2 5-4.5"/></svg>',
+			'course'    => '<svg ' . $attrs . '><path d="M3 6.5 12 3l9 3.5L12 10 3 6.5Z"/><path d="M7 8.5v5c0 1.7 2.3 3 5 3s5-1.3 5-3v-5"/><path d="M21 6.5v6"/></svg>',
+			'coaching'  => '<svg ' . $attrs . '><path d="M12 2.5 14.5 8 20 9l-4 4 1 5.6L12 16l-5 2.6L8 13 4 9l5.5-1L12 2.5Z"/></svg>',
+			'nonprofit' => '<svg ' . $attrs . '><path d="M12 21s-7-4.5-7-10.5A4.5 4.5 0 0 1 12 7a4.5 4.5 0 0 1 7 3.5C19 16.5 12 21 12 21Z"/></svg>',
+		);
+	}
+
+	/**
+	 * Allowed-tag rules for the icon SVGs above when passed through
+	 * `wp_kses()`. Limits the markup surface to exactly what the icon set
+	 * needs — no event attrs, no foreignObject, no script.
+	 *
+	 * @return array<string, array<string, true>>
+	 */
+	private static function svg_kses_rules(): array {
+		$shared = array(
+			'fill'             => true,
+			'stroke'           => true,
+			'stroke-width'     => true,
+			'stroke-linecap'   => true,
+			'stroke-linejoin'  => true,
+			'transform'        => true,
+			'opacity'          => true,
+		);
+		return array(
+			'svg'      => array(
+				'width'             => true,
+				'height'            => true,
+				'viewbox'           => true,
+				'viewBox'           => true,
+				'fill'              => true,
+				'stroke'            => true,
+				'stroke-width'      => true,
+				'stroke-linecap'    => true,
+				'stroke-linejoin'   => true,
+				'focusable'         => true,
+				'aria-hidden'       => true,
+				'role'              => true,
+				'xmlns'             => true,
+			),
+			'path'     => array_merge( $shared, array( 'd' => true ) ),
+			'circle'   => array_merge( $shared, array( 'cx' => true, 'cy' => true, 'r' => true ) ),
+			'rect'     => array_merge( $shared, array( 'x' => true, 'y' => true, 'width' => true, 'height' => true, 'rx' => true, 'ry' => true ) ),
+			'line'     => array_merge( $shared, array( 'x1' => true, 'y1' => true, 'x2' => true, 'y2' => true ) ),
+			'polyline' => array_merge( $shared, array( 'points' => true ) ),
+			'polygon'  => array_merge( $shared, array( 'points' => true ) ),
+			'g'        => $shared,
+		);
 	}
 }
