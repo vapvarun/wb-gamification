@@ -473,20 +473,24 @@ final class RedemptionStorePage {
 						</thead>
 						<tbody>
 							<?php
-							$status_pill_map = array(
-								'pending'              => 'info',
-								'pending_fulfillment'  => 'info',
-								'fulfilled'            => 'active',
-								'failed'               => 'error',
-								'refunded'             => 'warning',
+							// Status enum → human label + pill class. Avoid surfacing
+							// the raw snake_case enum to admins ("PENDING_FULFILLMENT"
+							// scans as a debug log, not a UI label).
+							$status_meta = array(
+								'pending'             => array( 'info',    __( 'Pending', 'wb-gamification' ) ),
+								'pending_fulfillment' => array( 'info',    __( 'Awaiting fulfilment', 'wb-gamification' ) ),
+								'fulfilled'           => array( 'active',  __( 'Fulfilled', 'wb-gamification' ) ),
+								'failed'              => array( 'error',   __( 'Failed', 'wb-gamification' ) ),
+								'refunded'            => array( 'warning', __( 'Refunded', 'wb-gamification' ) ),
 							);
 							?>
 							<?php foreach ( $transactions as $txn ) : ?>
 								<?php
-								$txn_user      = get_userdata( (int) $txn['user_id'] );
-								$txn_user_name = $txn_user ? $txn_user->display_name : sprintf( '#%d', (int) $txn['user_id'] );
-								$txn_when      = (string) ( $txn['created_at'] ?? '' );
-								$txn_pill      = $status_pill_map[ $txn['status'] ?? 'pending' ] ?? 'info';
+								$txn_user       = get_userdata( (int) $txn['user_id'] );
+								$txn_user_name  = $txn_user ? $txn_user->display_name : sprintf( '#%d', (int) $txn['user_id'] );
+								$txn_when       = (string) ( $txn['created_at'] ?? '' );
+								$txn_status_key = (string) ( $txn['status'] ?? 'pending' );
+								$txn_status     = $status_meta[ $txn_status_key ] ?? array( 'info', ucfirst( str_replace( '_', ' ', $txn_status_key ) ) );
 								?>
 								<tr>
 									<td><?php echo esc_html( $txn_when ? date_i18n( 'M j, Y · H:i', strtotime( $txn_when ) ) : '—' ); ?></td>
@@ -501,8 +505,8 @@ final class RedemptionStorePage {
 										<?php endif; ?>
 									</td>
 									<td>
-										<span class="wbgam-pill wbgam-pill--<?php echo esc_attr( $txn_pill ); ?>">
-											<?php echo esc_html( (string) ( $txn['status'] ?? 'pending' ) ); ?>
+										<span class="wbgam-pill wbgam-pill--<?php echo esc_attr( $txn_status[0] ); ?>">
+											<?php echo esc_html( $txn_status[1] ); ?>
 										</span>
 									</td>
 								</tr>
