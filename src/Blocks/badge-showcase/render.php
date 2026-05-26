@@ -2,6 +2,16 @@
 /**
  * Badge Showcase block — Wbcom Block Quality Standard render.
  *
+ * 1.4.0 UX refactor (Basecamp follow-up: hub flyout / "My Badges" panel):
+ *   - earned badges bubble to the top with a celebratory check pip
+ *   - locked badges are visibly dimmed + carry a padlock so a non-tech
+ *     member can see "haven't earned yet" at a glance
+ *   - header carries "N of M earned" with a real progress bar
+ *   - segmented filter (All / Earned / Locked) toggles client-side
+ *   - relative dates ("3 days ago") on earned within 30 days; absolute
+ *     month-day on older
+ *   - description shown inline (no more line-clamped tooltip-only text)
+ *
  * @package WB_Gamification
  *
  * @var array $attributes Block attributes.
@@ -28,11 +38,7 @@ if ( 0 === $wb_gam_user_id ) {
 	$wb_gam_user_id = get_current_user_id();
 }
 
-// Privacy gate — badges are T1 data and visible only when the public-profile
-// rule passes (see plan/PRIVACY-MODEL.md). Locked badges have no privacy
-// implication so they remain available when show_locked is set even if the
-// target user is private — the block becomes a generic "available badges"
-// catalog in that mode.
+// Privacy gate — see plan/PRIVACY-MODEL.md.
 if ( $wb_gam_user_id > 0 && ! Privacy::can_view_public_profile( $wb_gam_user_id ) ) {
 	$wb_gam_user_id = 0;
 }
@@ -80,15 +86,44 @@ if ( '' !== $wb_gam_category ) {
  *
  * @since 1.0.0
  *
- * @param array $badges     [{id, name, icon_url, earned, ...}, ...].
- * @param array $attributes Block attributes (show_locked, category, user_id).
+ * @param array $badges     Badge rows including earned flag + earned_at.
+ * @param array $attributes Block attributes.
  * @param int   $user_id    Member whose showcase is rendered.
  */
 $wb_gam_badges = (array) apply_filters( 'wb_gam_block_badge_showcase_data', $wb_gam_badges, $wb_gam_attrs, $wb_gam_user_id );
 
+// Sort earned first, then by earned_at desc; locked at end alphabetically.
+usort(
+	$wb_gam_badges,
+	static function ( array $a, array $b ): int {
+		$a_earned = ! empty( $a['earned'] );
+		$b_earned = ! empty( $b['earned'] );
+		if ( $a_earned !== $b_earned ) {
+			return $a_earned ? -1 : 1;
+		}
+		if ( $a_earned ) {
+			return strcmp( (string) ( $b['earned_at'] ?? '' ), (string) ( $a['earned_at'] ?? '' ) );
+		}
+		return strcasecmp( (string) ( $a['name'] ?? '' ), (string) ( $b['name'] ?? '' ) );
+	}
+);
+
 if ( $wb_gam_limit > 0 && count( $wb_gam_badges ) > $wb_gam_limit ) {
 	$wb_gam_badges = array_slice( $wb_gam_badges, 0, $wb_gam_limit );
 }
+
+// Totals for the header chip + filter pill counts.
+$wb_gam_total_count  = count( $wb_gam_badges );
+$wb_gam_earned_count = count(
+	array_filter(
+		$wb_gam_badges,
+		static fn( $b ) => ! empty( $b['earned'] )
+	)
+);
+$wb_gam_locked_count = $wb_gam_total_count - $wb_gam_earned_count;
+$wb_gam_progress_pct = $wb_gam_total_count > 0
+	? (int) round( ( $wb_gam_earned_count / $wb_gam_total_count ) * 100 )
+	: 0;
 
 $wb_gam_wrapper = get_block_wrapper_attributes(
 	array(
@@ -97,48 +132,133 @@ $wb_gam_wrapper = get_block_wrapper_attributes(
 	)
 );
 
+/**
+ * Build a "3 days ago" / "May 10" date label for a given earned_at.
+ *
+ * Relative for the last 30 days (more meaningful to a member who's
+ * actively earning), compact absolute for older. Falls back to
+ * date_format option if both calculations fail.
+ *
+ * @param string $iso Earned_at timestamp (string from DB).
+ * @return string
+ */
+$wb_gam_format_date = static function ( string $iso ): string {
+	$ts = strtotime( $iso );
+	if ( ! $ts ) {
+		return '';
+	}
+	$age = time() - $ts;
+	if ( $age >= 0 && $age < DAY_IN_SECONDS * 30 ) {
+		/* translators: %s: human-readable time difference */
+		return sprintf( esc_html__( '%s ago', 'wb-gamification' ), human_time_diff( $ts ) );
+	}
+	return date_i18n( get_option( 'date_format' ) ?: 'M j, Y', $ts );
+};
+
 BlockHooks::before( 'badge-showcase', $wb_gam_attrs );
 ?>
-<div <?php echo $wb_gam_wrapper; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>>
+<div <?php echo $wb_gam_wrapper; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+	data-wb-gam-badge-showcase
+	data-filter="all">
+
 	<?php if ( empty( $wb_gam_badges ) ) : ?>
-		<p class="wb-gam-badge-showcase__empty"><?php esc_html_e( 'No badges earned yet.', 'wb-gamification' ); ?></p>
+		<p class="wb-gam-badge-showcase__empty">
+			<?php echo \WBGam\Admin\Icon::svg( 'medal', array( 'size' => 28, 'class' => 'wb-gam-badge-showcase__empty-icon' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+			<span><?php esc_html_e( 'No badges to show yet — keep going!', 'wb-gamification' ); ?></span>
+		</p>
 	<?php else : ?>
+		<header class="wb-gam-badge-showcase__header">
+			<div class="wb-gam-badge-showcase__counter">
+				<span class="wb-gam-badge-showcase__count-num">
+					<?php
+					printf(
+						/* translators: 1: earned count, 2: total count */
+						esc_html__( '%1$d / %2$d', 'wb-gamification' ),
+						(int) $wb_gam_earned_count,
+						(int) $wb_gam_total_count
+					);
+					?>
+				</span>
+				<span class="wb-gam-badge-showcase__count-label"><?php esc_html_e( 'badges earned', 'wb-gamification' ); ?></span>
+			</div>
+
+			<div class="wb-gam-badge-showcase__progress" role="progressbar"
+				aria-valuemin="0"
+				aria-valuemax="<?php echo esc_attr( (string) $wb_gam_total_count ); ?>"
+				aria-valuenow="<?php echo esc_attr( (string) $wb_gam_earned_count ); ?>">
+				<div class="wb-gam-badge-showcase__progress-fill" style="width: <?php echo esc_attr( (string) $wb_gam_progress_pct ); ?>%"></div>
+			</div>
+
+			<?php if ( $wb_gam_show_locked && $wb_gam_locked_count > 0 && $wb_gam_earned_count > 0 ) : ?>
+				<nav class="wb-gam-badge-showcase__filters" role="tablist" aria-label="<?php esc_attr_e( 'Filter badges', 'wb-gamification' ); ?>">
+					<button type="button" class="wb-gam-badge-showcase__filter is-active"
+						role="tab" aria-selected="true" data-wb-gam-filter="all">
+						<?php esc_html_e( 'All', 'wb-gamification' ); ?>
+						<span class="wb-gam-badge-showcase__filter-count"><?php echo esc_html( number_format_i18n( $wb_gam_total_count ) ); ?></span>
+					</button>
+					<button type="button" class="wb-gam-badge-showcase__filter"
+						role="tab" aria-selected="false" data-wb-gam-filter="earned">
+						<?php esc_html_e( 'Earned', 'wb-gamification' ); ?>
+						<span class="wb-gam-badge-showcase__filter-count"><?php echo esc_html( number_format_i18n( $wb_gam_earned_count ) ); ?></span>
+					</button>
+					<button type="button" class="wb-gam-badge-showcase__filter"
+						role="tab" aria-selected="false" data-wb-gam-filter="locked">
+						<?php esc_html_e( 'Locked', 'wb-gamification' ); ?>
+						<span class="wb-gam-badge-showcase__filter-count"><?php echo esc_html( number_format_i18n( $wb_gam_locked_count ) ); ?></span>
+					</button>
+				</nav>
+			<?php endif; ?>
+		</header>
+
 		<ul class="wb-gam-badge-showcase__list" role="list">
 			<?php foreach ( $wb_gam_badges as $wb_gam_badge ) :
 				$wb_gam_is_earned = (bool) ( $wb_gam_badge['earned'] ?? false );
-				$wb_gam_class     = 'wb-gam-badge-showcase__badge';
-				if ( ! $wb_gam_is_earned ) {
-					$wb_gam_class .= ' wb-gam-badge-showcase__badge--locked';
-				}
+				$wb_gam_state     = $wb_gam_is_earned ? 'earned' : 'locked';
+				$wb_gam_class     = 'wb-gam-badge-showcase__badge wb-gam-badge-showcase__badge--' . $wb_gam_state;
 				if ( ! empty( $wb_gam_badge['is_credential'] ) ) {
 					$wb_gam_class .= ' wb-gam-badge-showcase__badge--credential';
 				}
+				$wb_gam_name = (string) ( $wb_gam_badge['name'] ?? '' );
+				$wb_gam_desc = (string) ( $wb_gam_badge['description'] ?? '' );
 				?>
-				<li class="<?php echo esc_attr( $wb_gam_class ); ?>" title="<?php echo esc_attr( (string) ( $wb_gam_badge['description'] ?? '' ) ); ?>">
-					<?php if ( ! empty( $wb_gam_badge['image_url'] ) ) : ?>
-						<img alt="<?php echo esc_attr( (string) ( $wb_gam_badge['name'] ?? '' ) ); ?>" src="<?php echo esc_url( (string) $wb_gam_badge['image_url'] ); ?>"
-							class="wb-gam-badge-showcase__image"
-							width="56" height="56"
-							loading="lazy" />
-					<?php else : ?>
-						<span class="wb-gam-badge-showcase__placeholder" aria-hidden="true">&#x1F3C5;</span>
-					<?php endif; ?>
+				<li class="<?php echo esc_attr( $wb_gam_class ); ?>"
+					data-state="<?php echo esc_attr( $wb_gam_state ); ?>">
+					<div class="wb-gam-badge-showcase__icon-wrap" aria-hidden="true">
+						<?php if ( ! empty( $wb_gam_badge['image_url'] ) ) : ?>
+							<img
+								alt="<?php echo esc_attr( $wb_gam_name ); ?>"
+								src="<?php echo esc_url( (string) $wb_gam_badge['image_url'] ); ?>"
+								class="wb-gam-badge-showcase__image"
+								width="56" height="56"
+								loading="lazy" />
+						<?php else : ?>
+							<span class="wb-gam-badge-showcase__placeholder">&#x1F3C5;</span>
+						<?php endif; ?>
 
-					<span class="wb-gam-badge-showcase__name"><?php echo esc_html( (string) ( $wb_gam_badge['name'] ?? '' ) ); ?></span>
+						<?php if ( $wb_gam_is_earned ) : ?>
+							<span class="wb-gam-badge-showcase__pip wb-gam-badge-showcase__pip--earned" aria-hidden="true">
+								<?php echo \WBGam\Admin\Icon::svg( 'check-circle', array( 'size' => 16 ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+							</span>
+						<?php else : ?>
+							<span class="wb-gam-badge-showcase__pip wb-gam-badge-showcase__pip--locked" aria-hidden="true">
+								<?php echo \WBGam\Admin\Icon::svg( 'shield', array( 'size' => 14 ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+							</span>
+						<?php endif; ?>
+					</div>
+
+					<span class="wb-gam-badge-showcase__name"><?php echo esc_html( $wb_gam_name ); ?></span>
 
 					<?php if ( $wb_gam_is_earned && ! empty( $wb_gam_badge['earned_at'] ) ) : ?>
-						<time class="wb-gam-badge-showcase__earned-at" datetime="<?php echo esc_attr( (string) $wb_gam_badge['earned_at'] ); ?>">
-							<?php echo esc_html( date_i18n( get_option( 'date_format' ), strtotime( (string) $wb_gam_badge['earned_at'] ) ) ); ?>
+						<time class="wb-gam-badge-showcase__earned-at"
+							datetime="<?php echo esc_attr( (string) $wb_gam_badge['earned_at'] ); ?>">
+							<?php echo esc_html( $wb_gam_format_date( (string) $wb_gam_badge['earned_at'] ) ); ?>
 						</time>
 					<?php elseif ( ! $wb_gam_is_earned ) : ?>
-						<span class="wb-gam-badge-showcase__locked-label" aria-label="<?php esc_attr_e( 'Not yet earned', 'wb-gamification' ); ?>">
-							<?php esc_html_e( 'Locked', 'wb-gamification' ); ?>
-						</span>
 						<span class="wb-gam-badge-showcase__hint">
 							<?php
 							echo esc_html(
-								! empty( $wb_gam_badge['description'] )
-									? (string) $wb_gam_badge['description']
+								'' !== $wb_gam_desc
+									? $wb_gam_desc
 									: __( 'Keep earning to unlock', 'wb-gamification' )
 							);
 							?>

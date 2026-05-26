@@ -108,11 +108,11 @@ BlockHooks::before( 'leaderboard', $wb_gam_attrs );
 <div <?php echo $wb_gam_wrapper; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>>
 	<div class="wb-gam-leaderboard__header">
 		<h3 class="wb-gam-leaderboard__title">
-			<?php
-			/* translators: %s: period label e.g. "This Week" */
-			printf( esc_html__( 'Leaderboard — %s', 'wb-gamification' ), esc_html( $wb_gam_period_label ) );
-			?>
+			<?php esc_html_e( 'Leaderboard', 'wb-gamification' ); ?>
 		</h3>
+		<span class="wb-gam-leaderboard__period" aria-label="<?php echo esc_attr( $wb_gam_period_label ); ?>">
+			<?php echo esc_html( $wb_gam_period_label ); ?>
+		</span>
 	</div>
 
 	<?php if ( empty( $wb_gam_rows ) ) : ?>

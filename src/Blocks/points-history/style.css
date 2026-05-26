@@ -1,11 +1,61 @@
 /**
  * Points History — frontend stylesheet.
  *
- * Phase F migration: extracted from assets/css/frontend.css so the
- * block ships its own CSS via block.json (`style` field).
+ * 1.4.0 UX refactor (Basecamp UX feedback 2026-05-26):
+ *   - rows grouped by day with a header strip showing daily total
+ *   - each row gets a typed icon + relative time + action label + signed
+ *     points pill, so a list of 20 manual awards stops looking identical
+ *   - manual-award reason / message renders inline below the action
+ *   - empty state has presence (icon + a real call-to-action paragraph)
  */
 
-/* ── Points History ─────────────────────────────────────────────────────────── */
+/* ── Wrapper tokens ─────────────────────────────────────────────── */
+.wb-gam-points-history {
+	--wb-gam-history-fg:      var( --wb-gam-color-text, #111827 );
+	--wb-gam-history-muted:   var( --wb-gam-color-text-muted, #6b7280 );
+	--wb-gam-history-border:  var( --wb-gam-color-border, #e5e7eb );
+	--wb-gam-history-positive: #047857;
+	--wb-gam-history-positive-soft: rgba( 4, 120, 87, 0.10 );
+	--wb-gam-history-negative: #b91c1c;
+	--wb-gam-history-negative-soft: rgba( 185, 28, 28, 0.10 );
+}
+
+/* ── Day group ──────────────────────────────────────────────────── */
+.wb-gam-points-history__group {
+	margin: 0 0 18px;
+}
+.wb-gam-points-history__group:last-child {
+	margin-bottom: 0;
+}
+
+.wb-gam-points-history__group-head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	padding: 6px 4px;
+	border-bottom: 1px solid var( --wb-gam-history-border );
+	margin-bottom: 4px;
+}
+
+.wb-gam-points-history__group-title {
+	margin: 0;
+	font-size: 0.8125rem;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+	color: var( --wb-gam-history-muted );
+}
+
+.wb-gam-points-history__group-total {
+	font-size: 0.8125rem;
+	font-weight: 600;
+	color: var( --wb-gam-history-positive );
+	font-variant-numeric: tabular-nums;
+	white-space: nowrap;
+}
+
+/* ── List + rows ────────────────────────────────────────────────── */
 .wb-gam-points-history__list {
 	list-style: none;
 	margin: 0;
@@ -17,54 +67,124 @@
 .wb-gam-points-history__item {
 	display: flex;
 	align-items: center;
-	gap: var(--wb-gam-gap);
-	padding: 0.625rem 0.25rem;
-	border-bottom: 1px solid #f3f4f6;
+	gap: 12px;
+	padding: 10px 4px;
+	border-bottom: 1px solid var( --wb-gam-history-border );
 }
-
 .wb-gam-points-history__item:last-child {
 	border-bottom: none;
 }
 
+.wb-gam-points-history__icon {
+	flex-shrink: 0;
+	width: 32px;
+	height: 32px;
+	border-radius: 50%;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+}
+.wb-gam-points-history__item--positive .wb-gam-points-history__icon {
+	background: var( --wb-gam-history-positive-soft );
+	color: var( --wb-gam-history-positive );
+}
+.wb-gam-points-history__item--negative .wb-gam-points-history__icon {
+	background: var( --wb-gam-history-negative-soft );
+	color: var( --wb-gam-history-negative );
+}
+
+.wb-gam-points-history__body {
+	flex: 1 1 0;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+
 .wb-gam-points-history__action {
-	flex: 1;
 	font-size: 0.9375rem;
+	font-weight: 600;
+	color: var( --wb-gam-history-fg );
+	line-height: 1.3;
+	overflow-wrap: anywhere;
+}
+
+.wb-gam-points-history__message {
+	font-size: 0.8125rem;
+	color: var( --wb-gam-history-fg );
+	opacity: 0.85;
+	line-height: 1.35;
+	overflow-wrap: anywhere;
+}
+
+.wb-gam-points-history__time {
+	font-size: 0.75rem;
+	color: var( --wb-gam-history-muted );
 	font-weight: 500;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
 }
 
 .wb-gam-points-history__points {
-	font-size: 0.9375rem;
+	flex-shrink: 0;
+	padding: 4px 10px;
+	border-radius: 999px;
+	font-size: 0.875rem;
 	font-weight: 700;
+	font-variant-numeric: tabular-nums;
 	white-space: nowrap;
-	min-width: 4.5rem;
-	text-align: right;
 }
-
 .wb-gam-points-history__item--positive .wb-gam-points-history__points {
-	color: #10b981;
+	color: var( --wb-gam-history-positive );
+	background: var( --wb-gam-history-positive-soft );
 }
-
 .wb-gam-points-history__item--negative .wb-gam-points-history__points {
-	color: #ef4444;
+	color: var( --wb-gam-history-negative );
+	background: var( --wb-gam-history-negative-soft );
 }
 
-.wb-gam-points-history__date {
-	font-size: 0.8125rem;
-	color: var(--wb-gam-silver);
-	white-space: nowrap;
-	min-width: 5.5rem;
-	text-align: right;
-}
-
+/* ── Empty state ─────────────────────────────────────────────────── */
 .wb-gam-points-history__empty {
-	color: var(--wb-gam-silver);
-	font-size: 0.9375rem;
-	text-align: center;
-	padding: 2rem;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 12px;
+	padding: 32px 24px;
 	margin: 0;
+	background: var( --wb-gam-color-surface-muted, #f9fafb );
+	border-radius: 12px;
+	text-align: center;
+}
+.wb-gam-points-history__empty p {
+	margin: 0;
+	color: var( --wb-gam-history-muted );
+	font-size: 0.9375rem;
+	max-width: 36ch;
+}
+.wb-gam-points-history__empty-icon {
+	color: var( --wb-gam-color-accent, #d99304 );
+	opacity: 0.6;
+}
+
+/* ── Mobile ──────────────────────────────────────────────────────── */
+@media (max-width: 480px) {
+	.wb-gam-points-history__item {
+		gap: 10px;
+		padding: 10px 0;
+	}
+	.wb-gam-points-history__icon {
+		width: 28px;
+		height: 28px;
+	}
+	.wb-gam-points-history__action {
+		font-size: 0.875rem;
+	}
+	.wb-gam-points-history__points {
+		font-size: 0.8125rem;
+		padding: 3px 8px;
+	}
+	.wb-gam-points-history__group-title,
+	.wb-gam-points-history__group-total {
+		font-size: 0.75rem;
+	}
 }
 
 .wb-gam-progress-fill {

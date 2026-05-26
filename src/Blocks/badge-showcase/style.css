@@ -1,138 +1,356 @@
 /**
  * Badge Showcase — frontend stylesheet.
  *
- * Phase F migration: extracted from assets/css/frontend.css so the
- * block ships its own CSS via block.json (`style` field).
- *
- * 1.4.0 redesign — Basecamp 9919406312. Each badge now reads as a
- * collectible card (white surface, soft shadow, hover lift) instead of
- * a floating icon + tiny caption. Cards expand to ~120px so the name
- * and meta line are legible without a magnifying glass.
+ * 1.4.0 UX refactor (hub flyout / "My Badges" panel):
+ *   - earned card: white surface, colored ring around image, green check
+ *     pip top-right, earned date visible
+ *   - locked card: muted surface, grayscale image, padlock pip, hint text
+ *   - clear "N / M earned" header with progress bar + filter tabs
+ *   - grid is responsive — auto-fills the available column width so the
+ *     flyout panel doesn't waste space
  */
 
-/* ── Badge Showcase ─────────────────────────────────────────────────────────── */
+/* ── Wrapper ───────────────────────────────────────────────────────── */
+.wb-gam-badge-showcase {
+	--wb-gam-badge-earned-bg:    var( --wb-gam-color-white, #fff );
+	--wb-gam-badge-locked-bg:    var( --wb-gam-color-surface-muted, #f9fafb );
+	--wb-gam-badge-border:       var( --wb-gam-color-border, #e5e7eb );
+	--wb-gam-badge-text:         var( --wb-gam-color-text, #111827 );
+	--wb-gam-badge-text-muted:   var( --wb-gam-color-text-muted, #6b7280 );
+	--wb-gam-badge-accent:       var( --wb-gam-color-accent, #d99304 );
+	--wb-gam-badge-success:      #16a34a;
+	--wb-gam-badge-success-soft: rgba( 22, 163, 74, 0.12 );
+	--wb-gam-badge-locked-soft:  rgba( 156, 163, 175, 0.16 );
+}
+
+/* ── Header ────────────────────────────────────────────────────────── */
+.wb-gam-badge-showcase__header {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 12px 16px;
+	margin: 0 0 16px;
+	padding: 0;
+}
+
+.wb-gam-badge-showcase__counter {
+	display: inline-flex;
+	align-items: baseline;
+	gap: 6px;
+	flex-shrink: 0;
+}
+
+.wb-gam-badge-showcase__count-num {
+	font-size: 1.5rem;
+	font-weight: 700;
+	color: var( --wb-gam-badge-text );
+	font-variant-numeric: tabular-nums;
+}
+
+.wb-gam-badge-showcase__count-label {
+	font-size: 0.875rem;
+	color: var( --wb-gam-badge-text-muted );
+	font-weight: 500;
+}
+
+.wb-gam-badge-showcase__progress {
+	flex: 1 1 120px;
+	min-width: 80px;
+	height: 6px;
+	background: var( --wb-gam-badge-border );
+	border-radius: 999px;
+	overflow: hidden;
+	order: 3;
+	width: 100%;
+}
+
+.wb-gam-badge-showcase__progress-fill {
+	height: 100%;
+	background: linear-gradient( 90deg, var( --wb-gam-badge-accent ), var( --wb-gam-badge-success ) );
+	border-radius: 999px;
+	transition: width 360ms ease;
+	min-width: 4px;
+}
+
+/* ── Filters ───────────────────────────────────────────────────────── */
+.wb-gam-badge-showcase__filters {
+	display: inline-flex;
+	gap: 4px;
+	background: var( --wb-gam-badge-locked-bg );
+	border-radius: 999px;
+	padding: 4px;
+	flex-shrink: 0;
+	margin-left: auto;
+}
+
+.wb-gam-badge-showcase__filter {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 6px 14px;
+	border-radius: 999px;
+	border: 0;
+	background: transparent;
+	color: var( --wb-gam-badge-text-muted );
+	font-size: 0.8125rem;
+	font-weight: 500;
+	cursor: pointer;
+	transition: background 160ms ease, color 160ms ease;
+}
+
+.wb-gam-badge-showcase__filter:hover {
+	color: var( --wb-gam-badge-text );
+}
+
+.wb-gam-badge-showcase__filter.is-active {
+	background: var( --wb-gam-badge-earned-bg );
+	color: var( --wb-gam-badge-text );
+	box-shadow: 0 1px 2px rgba( 0, 0, 0, 0.06 );
+}
+
+.wb-gam-badge-showcase__filter-count {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 20px;
+	height: 18px;
+	padding: 0 6px;
+	border-radius: 999px;
+	font-size: 0.6875rem;
+	font-weight: 700;
+	background: var( --wb-gam-badge-border );
+	color: var( --wb-gam-badge-text );
+}
+
+.wb-gam-badge-showcase__filter.is-active .wb-gam-badge-showcase__filter-count {
+	background: var( --wb-gam-badge-accent );
+	color: #fff;
+}
+
+.wb-gam-badge-showcase__filter:focus-visible {
+	outline: 2px solid var( --wb-gam-badge-accent );
+	outline-offset: 2px;
+}
+
+/* ── Grid ──────────────────────────────────────────────────────────── */
 .wb-gam-badge-showcase__list {
 	list-style: none;
 	margin: 0;
 	padding: 0;
 	display: grid;
-	grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+	grid-template-columns: repeat( auto-fill, minmax( 130px, 1fr ) );
 	gap: 12px;
 }
 
 .wb-gam-badge-showcase__badge {
+	position: relative;
 	display: flex;
 	flex-direction: column;
 	align-items: center;
 	gap: 8px;
-	padding: 14px 10px;
+	padding: 16px 10px 14px;
 	text-align: center;
-	cursor: default;
-	background: var(--wb-gam-color-white, #fff);
-	border: 1px solid var(--wb-gam-color-border, #e5e7eb);
-	border-radius: 12px;
-	transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
-	min-height: 140px;
-	justify-content: flex-start;
+	background: var( --wb-gam-badge-earned-bg );
+	border: 1px solid var( --wb-gam-badge-border );
+	border-radius: 14px;
+	min-height: 156px;
+	transition: transform 200ms ease, box-shadow 200ms ease, border-color 200ms ease;
 }
 
 .wb-gam-badge-showcase__badge:hover {
-	transform: translateY(-2px);
-	box-shadow: 0 4px 16px rgba(15, 23, 42, 0.08);
-	border-color: var(--wb-gam-color-border-strong, #d1d5db);
+	transform: translateY( -2px );
+	box-shadow: 0 6px 20px rgba( 15, 23, 42, 0.08 );
 }
 
+/* ── Earned card ──────────────────────────────────────────────────── */
+.wb-gam-badge-showcase__badge--earned {
+	border-color: rgba( 22, 163, 74, 0.30 );
+}
+
+.wb-gam-badge-showcase__badge--earned .wb-gam-badge-showcase__icon-wrap {
+	background: var( --wb-gam-badge-success-soft );
+}
+
+/* ── Locked card ──────────────────────────────────────────────────── */
 .wb-gam-badge-showcase__badge--locked {
-	background: var(--wb-gam-color-surface-muted, #f9fafb);
+	background: var( --wb-gam-badge-locked-bg );
+	border-color: var( --wb-gam-badge-border );
+}
+
+.wb-gam-badge-showcase__badge--locked .wb-gam-badge-showcase__icon-wrap {
+	background: var( --wb-gam-badge-locked-soft );
 }
 
 .wb-gam-badge-showcase__badge--locked .wb-gam-badge-showcase__image,
 .wb-gam-badge-showcase__badge--locked .wb-gam-badge-showcase__placeholder {
-	opacity: 0.4;
-	filter: grayscale(1);
+	filter: grayscale( 1 );
+	opacity: 0.5;
 }
 
-.wb-gam-badge-showcase__badge--credential .wb-gam-badge-showcase__image {
-	box-shadow: 0 0 0 2px var(--wb-gam-primary, #1d4ed8);
-	border-radius: 8px;
+.wb-gam-badge-showcase__badge--locked .wb-gam-badge-showcase__name {
+	color: var( --wb-gam-badge-text-muted );
+}
+
+/* ── Icon wrap (circular backdrop) ────────────────────────────────── */
+.wb-gam-badge-showcase__icon-wrap {
+	position: relative;
+	width: 78px;
+	height: 78px;
+	border-radius: 50%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
 }
 
 .wb-gam-badge-showcase__image {
-	width: 64px;
-	height: 64px;
+	width: 56px;
+	height: 56px;
 	object-fit: contain;
 }
 
 .wb-gam-badge-showcase__placeholder {
-	font-size: 2.75rem;
+	font-size: 2.25rem;
 	line-height: 1;
-	width: 64px;
-	height: 64px;
 	display: flex;
 	align-items: center;
 	justify-content: center;
 }
 
+/* ── Pip (top-right indicator) ────────────────────────────────────── */
+.wb-gam-badge-showcase__pip {
+	position: absolute;
+	top: -4px;
+	right: -4px;
+	width: 24px;
+	height: 24px;
+	border-radius: 50%;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	background: #fff;
+	border: 2px solid var( --wb-gam-badge-earned-bg );
+}
+
+.wb-gam-badge-showcase__pip--earned {
+	color: var( --wb-gam-badge-success );
+	border-color: var( --wb-gam-badge-earned-bg );
+	box-shadow: 0 2px 6px rgba( 22, 163, 74, 0.25 );
+}
+
+.wb-gam-badge-showcase__pip--locked {
+	color: var( --wb-gam-badge-text-muted );
+	background: var( --wb-gam-badge-locked-bg );
+	border-color: var( --wb-gam-badge-locked-bg );
+}
+
+/* ── Text ─────────────────────────────────────────────────────────── */
 .wb-gam-badge-showcase__name {
-	font-size: 0.875rem;
+	font-size: 0.9375rem;
 	font-weight: 600;
 	line-height: 1.25;
-	color: var(--wb-gam-color-text, #1f2937);
+	color: var( --wb-gam-badge-text );
 	overflow: hidden;
 	display: -webkit-box;
 	-webkit-line-clamp: 2;
 	-webkit-box-orient: vertical;
+	min-height: 2.3em;
 }
 
 .wb-gam-badge-showcase__earned-at {
+	display: inline-block;
+	padding: 3px 10px;
+	border-radius: 999px;
 	font-size: 0.75rem;
-	color: var(--wb-gam-color-text-muted, #6b7280);
-	margin-top: auto;
-}
-
-.wb-gam-badge-showcase__locked-label {
-	font-size: 0.6875rem;
 	font-weight: 600;
-	color: var(--wb-gam-locked, #9ca3af);
-	text-transform: uppercase;
-	letter-spacing: 0.06em;
+	color: var( --wb-gam-badge-success );
+	background: var( --wb-gam-badge-success-soft );
 	margin-top: auto;
 }
 
 .wb-gam-badge-showcase__hint {
-	display: block;
-	font-size: 0.6875rem;
-	line-height: 1.35;
-	color: var(--wb-gam-color-text-muted, #6b7280);
-	margin-top: 4px;
-	overflow: hidden;
 	display: -webkit-box;
 	-webkit-line-clamp: 2;
 	-webkit-box-orient: vertical;
+	overflow: hidden;
+	font-size: 0.75rem;
+	line-height: 1.35;
+	color: var( --wb-gam-badge-text-muted );
+	margin-top: auto;
 }
 
+/* ── Empty state ─────────────────────────────────────────────────── */
 .wb-gam-badge-showcase__empty {
-	margin: 0;
+	display: flex;
+	align-items: center;
+	gap: 12px;
 	padding: 24px;
-	color: var(--wb-gam-color-text-muted, #6b7280);
-	text-align: center;
+	margin: 0;
+	background: var( --wb-gam-badge-locked-bg );
+	border-radius: 12px;
+	color: var( --wb-gam-badge-text-muted );
+	font-size: 0.9375rem;
 }
 
+.wb-gam-badge-showcase__empty-icon {
+	flex-shrink: 0;
+	color: var( --wb-gam-badge-accent );
+	opacity: 0.6;
+}
+
+/* ── Hidden via filter ─────────────────────────────────────────────── */
+.wb-gam-badge-showcase[data-filter="earned"] .wb-gam-badge-showcase__badge[data-state="locked"],
+.wb-gam-badge-showcase[data-filter="locked"] .wb-gam-badge-showcase__badge[data-state="earned"] {
+	display: none;
+}
+
+/* ── Credential ring ──────────────────────────────────────────────── */
+.wb-gam-badge-showcase__badge--credential .wb-gam-badge-showcase__image {
+	box-shadow: 0 0 0 2px var( --wb-gam-primary, #1d4ed8 );
+	border-radius: 8px;
+}
+
+/* ── Mobile ────────────────────────────────────────────────────────── */
 @media (max-width: 640px) {
 	.wb-gam-badge-showcase__list {
-		grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+		grid-template-columns: repeat( auto-fill, minmax( 110px, 1fr ) );
 		gap: 8px;
 	}
 	.wb-gam-badge-showcase__badge {
-		padding: 10px 6px;
-		min-height: 124px;
+		padding: 12px 8px 10px;
+		min-height: 138px;
+	}
+	.wb-gam-badge-showcase__icon-wrap {
+		width: 64px;
+		height: 64px;
 	}
 	.wb-gam-badge-showcase__image,
 	.wb-gam-badge-showcase__placeholder {
-		width: 52px;
-		height: 52px;
+		width: 44px;
+		height: 44px;
 	}
-	.wb-gam-badge-showcase__name {
-		font-size: 0.8125rem;
+	.wb-gam-badge-showcase__count-num {
+		font-size: 1.25rem;
+	}
+	.wb-gam-badge-showcase__filters {
+		margin-left: 0;
+		width: 100%;
+		order: 4;
+	}
+	.wb-gam-badge-showcase__filter {
+		flex: 1;
+		justify-content: center;
+		padding: 6px 8px;
+	}
+}
+
+/* ── Reduced motion ─────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+	.wb-gam-badge-showcase__badge,
+	.wb-gam-badge-showcase__progress-fill {
+		transition: none;
+	}
+	.wb-gam-badge-showcase__badge:hover {
+		transform: none;
 	}
 }
