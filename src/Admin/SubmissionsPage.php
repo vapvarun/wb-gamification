@@ -149,7 +149,16 @@ final class SubmissionsPage {
 										<td><code><?php echo esc_html( $action_label ); ?></code></td>
 										<td>
 											<?php if ( ! empty( $row['evidence'] ) ) : ?>
-												<p class="wbgam-text-muted"><?php echo esc_html( wp_trim_words( (string) $row['evidence'], 30 ) ); ?></p>
+												<?php
+												// Submissions are sanitised through wp_kses_post on
+												// insert (see SubmissionService::submit). Strip the
+												// HTML for the trimmed preview so rich-text submissions
+												// don't blow out the table cell. The Approve dialog
+												// can show the full HTML via the wp_kses_post-safe
+												// stored value if richer review is needed later.
+												$wb_gam_excerpt = wp_trim_words( wp_strip_all_tags( (string) $row['evidence'] ), 30 );
+												?>
+												<p class="wbgam-text-muted"><?php echo esc_html( $wb_gam_excerpt ); ?></p>
 											<?php endif; ?>
 											<?php if ( ! empty( $row['evidence_url'] ) ) : ?>
 												<a href="<?php echo esc_url( (string) $row['evidence_url'] ); ?>" target="_blank" rel="noopener">

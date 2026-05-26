@@ -29,6 +29,23 @@ final class NotificationBridge {
 
 	private const TRANSIENT_PREFIX = 'wb_gam_notif_';
 	private const TRANSIENT_TTL    = 300; // 5 minutes
+	/**
+	 * Maximum events kept per-user in the queue. Old events evict on push.
+	 * Bounded so a noisy account can't blow the option/transient size.
+	 *
+	 * @var int
+	 */
+	private const QUEUE_MAX_EVENTS = 50;
+	/**
+	 * User-meta key prefix for per-consumer delivery cursors. Each reader
+	 * tracks the largest `_id` it has already delivered to the client, so
+	 * the next read returns only newer events. Replaces the previous
+	 * destructive read-and-delete pattern that lost events whenever two
+	 * consumers raced for the same transient.
+	 *
+	 * @var string
+	 */
+	private const CURSOR_META_PREFIX = 'wb_gam_notif_cursor_';
 
 	// ── Boot ────────────────────────────────────────────────────────────────────
 
@@ -198,7 +215,7 @@ final class NotificationBridge {
 				'type'      => 'level_up',
 				'message'   => $message,
 				'levelName' => $level_name,
-				'iconUrl'   => $new_level['icon_url'] ?? '',
+				'icon_url'  => $new_level['icon_url'] ?? '',
 			)
 		);
 	}
@@ -275,7 +292,7 @@ final class NotificationBridge {
 			return;
 		}
 
-		$events = self::flush( $user_id );
+		$events = self::read_pending( $user_id, 'footer' );
 
 		wp_enqueue_style( 'wb-gamification' );
 		// Mount the IA store BEFORE the markup renders so the
@@ -407,23 +424,75 @@ final class NotificationBridge {
 			return;
 		}
 
-		$key      = self::TRANSIENT_PREFIX . $user_id;
-		$events   = get_transient( $key ) ?: array();
-		$events[] = $event;
+		$key    = self::TRANSIENT_PREFIX . $user_id;
+		$events = get_transient( $key );
+		$events = is_array( $events ) ? $events : array();
+
+		// Assign a monotonic id so consumers can checkpoint reads instead
+		// of destructively flushing the queue. Use the largest existing
+		// id + 1 (not count) so removing old events doesn't recycle ids.
+		$last_id = 0;
+		foreach ( $events as $existing ) {
+			if ( isset( $existing['_id'] ) && (int) $existing['_id'] > $last_id ) {
+				$last_id = (int) $existing['_id'];
+			}
+		}
+		$event['_id'] = $last_id + 1;
+		$event['_ts'] = time();
+		$events[]     = $event;
+
+		// Bound queue size — drop oldest first.
+		if ( count( $events ) > self::QUEUE_MAX_EVENTS ) {
+			$events = array_slice( $events, -self::QUEUE_MAX_EVENTS );
+		}
+
 		set_transient( $key, $events, self::TRANSIENT_TTL );
 	}
 
 	/**
-	 * Read and delete all pending events for a user.
+	 * Read pending events for a user that the given consumer has not yet delivered.
 	 *
-	 * @param int $user_id User whose events to flush.
-	 * @return array[]
+	 * Non-destructive: each consumer (footer render, heartbeat tick, REST
+	 * poll) maintains its own user-meta cursor. The transient stays intact
+	 * until its TTL or until the buffer fills — so the same notice can be
+	 * delivered once to each independent surface without a race.
+	 *
+	 * @param int    $user_id  Member id.
+	 * @param string $consumer Cursor namespace (e.g. 'footer', 'heartbeat', 'rest').
+	 *                         Each consumer gets its own cursor in user_meta.
+	 * @return array[] Unseen events for this consumer.
 	 */
-	private static function flush( int $user_id ): array {
+	public static function read_pending( int $user_id, string $consumer ): array {
+		if ( $user_id <= 0 ) {
+			return array();
+		}
+		$consumer = sanitize_key( $consumer );
+		if ( '' === $consumer ) {
+			return array();
+		}
+
 		$key    = self::TRANSIENT_PREFIX . $user_id;
 		$events = get_transient( $key );
-		delete_transient( $key );
-		return is_array( $events ) ? $events : array();
+		if ( ! is_array( $events ) || empty( $events ) ) {
+			return array();
+		}
+
+		$cursor   = (int) get_user_meta( $user_id, self::CURSOR_META_PREFIX . $consumer, true );
+		$unseen   = array();
+		$max_seen = $cursor;
+		foreach ( $events as $event ) {
+			$id = (int) ( $event['_id'] ?? 0 );
+			if ( $id > $cursor ) {
+				$unseen[]  = $event;
+				$max_seen = $id > $max_seen ? $id : $max_seen;
+			}
+		}
+
+		if ( ! empty( $unseen ) ) {
+			update_user_meta( $user_id, self::CURSOR_META_PREFIX . $consumer, $max_seen );
+		}
+
+		return $unseen;
 	}
 
 	// ── Helpers ──────────────────────────────────────────────────────────────────

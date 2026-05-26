@@ -34,6 +34,14 @@ wp_enqueue_style( 'wb-gam-tokens' );
 wp_enqueue_style( 'lucide-icons' );
 wp_enqueue_script( 'wp-api-fetch' );
 
+// Frontend wp_editor() requires the editor scripts. wp_enqueue_editor()
+// loads tinymce-core + quicktags + media (if available). Members without
+// upload_files capability still get the rich-text toolbar; the "Add Media"
+// button is hidden for them automatically by the media_buttons flag below.
+if ( is_user_logged_in() ) {
+	wp_enqueue_editor();
+}
+
 if ( ! is_user_logged_in() ) {
 	$wb_gam_wrapper = get_block_wrapper_attributes( array( 'class' => implode( ' ', $wb_gam_classes ) ) );
 	BlockHooks::before( 'submit-achievement', $wb_gam_attrs );
@@ -83,10 +91,40 @@ BlockHooks::before( 'submit-achievement', $wb_gam_attrs );
 			</select>
 		</label>
 
-		<label class="wb-gam-submit-achievement__field">
-			<span><?php esc_html_e( 'Tell us about it', 'wb-gamification' ); ?></span>
-			<textarea name="evidence" rows="3" placeholder="<?php esc_attr_e( 'What happened? Add details for the reviewer.', 'wb-gamification' ); ?>"></textarea>
-		</label>
+		<div class="wb-gam-submit-achievement__field wb-gam-submit-achievement__field--editor">
+			<span class="wb-gam-submit-achievement__label"><?php esc_html_e( 'Tell us about it', 'wb-gamification' ); ?></span>
+			<?php
+			// wp_editor() in frontend — teeny toolbar (bold/italic/list/link
+			// only) so the form stays compact. Media button visibility is
+			// gated by user capability: editors / authors get image upload;
+			// members without upload_files see formatting buttons only.
+			// The data-wb-gam-editor-id attr is read by view.js to pull
+			// content via tinyMCE.get( id ).getContent() at submit time.
+			$wb_gam_editor_id = 'wb-gam-submit-evidence-' . $wb_gam_unique;
+			wp_editor(
+				'',
+				$wb_gam_editor_id,
+				array(
+					'textarea_name' => 'evidence',
+					'textarea_rows' => 4,
+					'media_buttons' => current_user_can( 'upload_files' ),
+					'teeny'         => true,
+					'quicktags'     => true,
+					'tinymce'       => array(
+						'toolbar1' => 'bold,italic,bullist,numlist,link,unlink,undo,redo',
+						'toolbar2' => '',
+						'toolbar3' => '',
+						'paste_as_text' => true,
+					),
+				)
+			);
+			?>
+			<?php if ( ! current_user_can( 'upload_files' ) ) : ?>
+				<p class="wb-gam-submit-achievement__hint">
+					<?php esc_html_e( 'Tip: paste a media link in the optional URL field below to attach evidence.', 'wb-gamification' ); ?>
+				</p>
+			<?php endif; ?>
+		</div>
 
 		<label class="wb-gam-submit-achievement__field">
 			<span><?php esc_html_e( 'Link (optional)', 'wb-gamification' ); ?></span>

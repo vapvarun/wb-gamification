@@ -61,6 +61,12 @@ return [
 			'icon'           => 'icon-shopping-cart',
 			'repeatable'     => true,
 			'cooldown'       => 0,
+			// One award per order completion — already deduplicated by the
+			// hook itself (status_completed only fires when an order moves
+			// to completed). Running sync removes the Action Scheduler
+			// dependency that turned a "complete checkout → see points"
+			// expectation into a "wait for the next AS tick" surprise.
+			'async'          => false,
 		],
 
 		[
@@ -123,6 +129,10 @@ return [
 			'icon'           => 'icon-star-half',
 			'repeatable'     => true,
 			'cooldown'       => 86400, // One review point per product per day.
+			// Review submission is user-initiated and low-frequency. Run
+			// sync so the reviewer's points appear immediately after the
+			// comment posts.
+			'async'          => false,
 		],
 
 		[

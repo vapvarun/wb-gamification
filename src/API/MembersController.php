@@ -23,6 +23,7 @@ namespace WBGam\API;
 use WBGam\Engine\PointsEngine;
 use WBGam\Engine\LevelEngine;
 use WBGam\Engine\StreakEngine;
+use WBGam\Engine\NotificationBridge;
 use WBGam\Engine\Privacy;
 use WP_REST_Controller;
 use WP_REST_Response;
@@ -666,21 +667,19 @@ class MembersController extends WP_REST_Controller {
 	}
 
 	/**
-	 * Retrieve and flush pending toast notifications for the current user.
+	 * Retrieve pending toast notifications for the current user.
 	 *
-	 * Reads the user's notification transient and deletes it, returning
-	 * the queued toast messages. Called by the frontend toast.js poller.
+	 * Delegates to {@see NotificationBridge::read_pending()} with a
+	 * dedicated 'rest' cursor. Non-destructive: the footer renderer and
+	 * heartbeat channel maintain their own cursors so all three consumers
+	 * deliver the same notice exactly once, with no race for the transient.
 	 *
 	 * @param WP_REST_Request $request Full details about the request.
 	 * @return WP_REST_Response Toast notifications array.
 	 */
 	public function get_toasts( $request ): WP_REST_Response {
 		$user_id = get_current_user_id();
-		$key     = 'wb_gam_notif_' . $user_id;
-		$toasts  = get_transient( $key );
-		delete_transient( $key );
-
-		$result = is_array( $toasts ) ? $toasts : array();
+		$result  = NotificationBridge::read_pending( $user_id, 'rest' );
 
 		// Normalize toast data for frontend consumption.
 		$normalized = array_map(

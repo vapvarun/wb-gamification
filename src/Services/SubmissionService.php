@@ -65,7 +65,14 @@ final class SubmissionService {
 		$id = $this->repo->insert( array(
 			'user_id'      => $user_id,
 			'action_id'    => $action_id,
-			'evidence'     => sanitize_textarea_field( $evidence ),
+			// wp_kses_post() preserves the safe HTML (bold, italic, links,
+			// lists, embedded image tags from members with upload_files)
+			// emitted by wp_editor() while still stripping scripts,
+			// iframes, and dangerous attributes. Stricter than
+			// sanitize_textarea_field (which strips ALL HTML and made the
+			// rich editor pointless) but safe enough that the reviewer's
+			// rendered preview stays trustworthy.
+			'evidence'     => wp_kses_post( $evidence ),
 			'evidence_url' => esc_url_raw( $evidence_url ),
 		) );
 

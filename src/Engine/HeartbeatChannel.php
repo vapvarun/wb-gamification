@@ -228,27 +228,19 @@ final class HeartbeatChannel {
 	}
 
 	/**
-	 * Read + flush queued toast notifications for the current user.
+	 * Read pending toast notifications for the current user via heartbeat.
 	 *
-	 * Mirrors MembersController::get_toasts so the same payload reaches the
-	 * frontend via heartbeat instead of a separate REST poll. Once the
-	 * heartbeat-based toast.js refactor lands, the REST endpoint stays as
-	 * a compatibility surface for third-party clients.
+	 * Delegates to NotificationBridge::read_pending() with a dedicated
+	 * 'heartbeat' cursor. Non-destructive: the footer renderer and REST
+	 * poller maintain their own cursors and stay in sync with the same
+	 * source queue, eliminating the historical race where whichever reader
+	 * fired first drained the queue and the others saw nothing.
 	 *
 	 * @param int $user_id Member id.
 	 * @return array
 	 */
 	private static function flush_toasts( int $user_id ): array {
-		if ( $user_id <= 0 ) {
-			return array();
-		}
-		$key    = 'wb_gam_notif_' . $user_id;
-		$toasts = get_transient( $key );
-		if ( ! is_array( $toasts ) || empty( $toasts ) ) {
-			return array();
-		}
-		delete_transient( $key );
-		return $toasts;
+		return NotificationBridge::read_pending( $user_id, 'heartbeat' );
 	}
 
 	/**

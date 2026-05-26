@@ -39,10 +39,28 @@
 			submit.disabled = true;
 			setStatus( '', null );
 
+			// wp_editor mounts TinyMCE on top of the textarea. Pull the
+			// authored HTML from the editor instance (preserves bold /
+			// italic / link / list markup) and fall back to the bare
+			// textarea value for the quicktags / mobile path that bypasses
+			// TinyMCE.
+			const textarea = form.querySelector( 'textarea[name="evidence"]' );
+			let evidenceHtml = textarea ? textarea.value : '';
+			if (
+				typeof window.tinymce !== 'undefined' &&
+				textarea &&
+				textarea.id
+			) {
+				const editor = window.tinymce.get( textarea.id );
+				if ( editor && ! editor.isHidden() ) {
+					evidenceHtml = editor.getContent();
+				}
+			}
+
 			const fd = new FormData( form );
 			const body = {
 				action_id: fd.get( 'action_id' ),
-				evidence: fd.get( 'evidence' ) || '',
+				evidence: evidenceHtml,
 				evidence_url: fd.get( 'evidence_url' ) || '',
 			};
 
@@ -64,6 +82,19 @@
 					}
 					setStatus( i18nSuccess, 'success' );
 					form.reset();
+					// Reset the TinyMCE editor explicitly — form.reset()
+					// only touches the underlying textarea, leaving the
+					// rich-text instance still holding the submitted content.
+					if (
+						typeof window.tinymce !== 'undefined' &&
+						textarea &&
+						textarea.id
+					) {
+						const editor = window.tinymce.get( textarea.id );
+						if ( editor ) {
+							editor.setContent( '' );
+						}
+					}
 				} )
 				.catch( () => {
 					setStatus( i18nNetwork, 'error' );
