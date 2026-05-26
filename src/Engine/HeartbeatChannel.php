@@ -289,13 +289,21 @@ final class HeartbeatChannel {
 
 			// Trim the row payload to what the frontend renders. Avoid
 			// shipping internal flags or unbounded metadata.
+			//
+			// badge_count was added in 1.4.0 (Basecamp #9914601059) — the
+			// leaderboard block emits a server-rendered .__badges span and
+			// the view.js patcher reads this key on every tick to keep the
+			// count in sync without rebuilding the row (and dropping the
+			// SVG icon in the process).
 			$out[ $sig ] = array_map(
 				static function ( $row ) {
+					$uid = (int) ( $row['user_id'] ?? 0 );
 					return array(
-						'user_id'      => (int) ( $row['user_id'] ?? 0 ),
+						'user_id'      => $uid,
 						'display_name' => (string) ( $row['display_name'] ?? '' ),
 						'points'       => (int) ( $row['points'] ?? 0 ),
 						'rank'         => isset( $row['rank'] ) ? (int) $row['rank'] : null,
+						'badge_count'  => $uid > 0 ? (int) BadgeEngine::count_user_badges( $uid ) : 0,
 					);
 				},
 				(array) $rows

@@ -134,7 +134,9 @@ BlockHooks::before( 'leaderboard', $wb_gam_attrs );
 				}
 				$wb_gam_rank_aria = $wb_gam_rank_label ? $wb_gam_rank_label : __( 'Rank', 'wb-gamification' );
 				?>
-				<li class="wb-gam-leaderboard__entry wb-gam-rank-<?php echo (int) $wb_gam_rank_num; ?>">
+				<li class="wb-gam-leaderboard__entry wb-gam-rank-<?php echo (int) $wb_gam_rank_num; ?>"
+					data-user-id="<?php echo (int) ( $wb_gam_row['user_id'] ?? 0 ); ?>"
+					data-rank="<?php echo (int) $wb_gam_rank_num; ?>">
 					<span class="wb-gam-leaderboard__rank" aria-label="<?php echo esc_attr( $wb_gam_rank_aria ); ?>">
 						<?php echo (int) $wb_gam_rank_num; ?>
 						<?php if ( $wb_gam_rank_label ) : ?>
@@ -169,13 +171,17 @@ BlockHooks::before( 'leaderboard', $wb_gam_attrs );
 						<?php
 						// Inline SVG so the icon renders without a font dependency.
 						echo \WBGam\Admin\Icon::svg( 'sparkles', array( 'size' => 16, 'class' => 'wb-gam-leaderboard__points-icon' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Static SVG built from fixed allowlist.
-						printf(
-							/* translators: 1: formatted points number, 2: currency label (e.g. "Points", "Coins"). */
-							esc_html__( '%1$s %2$s', 'wb-gamification' ),
-							esc_html( number_format_i18n( (int) ( $wb_gam_row['points'] ?? 0 ) ) ),
-							esc_html( $wb_gam_points_label )
-						);
 						?>
+						<span class="wb-gam-leaderboard__points-number">
+							<?php
+							printf(
+								/* translators: 1: formatted points number, 2: currency label (e.g. "Points", "Coins"). */
+								esc_html__( '%1$s %2$s', 'wb-gamification' ),
+								esc_html( number_format_i18n( (int) ( $wb_gam_row['points'] ?? 0 ) ) ),
+								esc_html( $wb_gam_points_label )
+							);
+							?>
+						</span>
 					</span>
 
 					<?php
@@ -183,24 +189,32 @@ BlockHooks::before( 'leaderboard', $wb_gam_attrs );
 					 * Badge count beside points — added in 1.4.0 (B15).
 					 * Reads the materialised count, never the per-badge rows, so
 					 * even 1000-row leaderboards stay O(N) on the per-user lookup.
+					 *
+					 * Always emit the .wb-gam-leaderboard__badges span (even
+					 * when count = 0) so the heartbeat patcher has a stable
+					 * target to update when a member earns their first badge
+					 * mid-session. The `hidden` attribute keeps it visually
+					 * absent for zero-badge members until JS reveals it.
 					 */
 					$wb_gam_badge_count = (int) \WBGam\Engine\BadgeEngine::count_user_badges( (int) ( $wb_gam_row['user_id'] ?? 0 ) );
-					if ( $wb_gam_badge_count > 0 ) :
+					?>
+					<span class="wb-gam-leaderboard__badges" aria-label="<?php
+						/* translators: %d: badges earned count. */
+						echo esc_attr( sprintf( _n( '%d badge', '%d badges', max( 1, $wb_gam_badge_count ), 'wb-gamification' ), $wb_gam_badge_count ) );
+					?>" <?php echo $wb_gam_badge_count > 0 ? '' : 'hidden'; ?>>
+						<?php
+						echo \WBGam\Admin\Icon::svg( 'medal', array( 'size' => 16, 'class' => 'wb-gam-leaderboard__badges-icon' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Static SVG built from fixed allowlist.
 						?>
-						<span class="wb-gam-leaderboard__badges" aria-label="<?php
-							/* translators: %d: badges earned count. */
-							echo esc_attr( sprintf( _n( '%d badge', '%d badges', $wb_gam_badge_count, 'wb-gamification' ), $wb_gam_badge_count ) );
-						?>">
+						<span class="wb-gam-leaderboard__badges-count">
 							<?php
-							echo \WBGam\Admin\Icon::svg( 'medal', array( 'size' => 16, 'class' => 'wb-gam-leaderboard__badges-icon' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Static SVG built from fixed allowlist.
 							printf(
 								/* translators: %d: number of badges earned. */
-								esc_html( _n( '%d badge', '%d badges', $wb_gam_badge_count, 'wb-gamification' ) ),
+								esc_html( _n( '%d badge', '%d badges', max( 1, $wb_gam_badge_count ), 'wb-gamification' ) ),
 								(int) $wb_gam_badge_count
 							);
 							?>
 						</span>
-					<?php endif; ?>
+					</span>
 				</li>
 			<?php endforeach; ?>
 		</ol>

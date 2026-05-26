@@ -98,6 +98,12 @@
 				}
 			} );
 
+			// Cache a template row (first existing child) so net-new
+			// members from the heartbeat payload inherit the same structure
+			// — icons, badge wrapper, avatar slot — without view.js having
+			// to rebuild that markup from scratch.
+			var templateRow = list.firstElementChild || null;
+
 			var fragment = document.createDocumentFragment();
 
 			rows.forEach( function ( row, idx ) {
@@ -107,7 +113,7 @@
 				if ( li ) {
 					existing.delete( uid );
 				} else {
-					li = buildRow( row );
+					li = buildRow( row, templateRow );
 				}
 				updateRow( li, row, rank, pointsLabel );
 				fragment.appendChild( li );
@@ -124,7 +130,30 @@
 			list.appendChild( fragment );
 		}
 
-		function buildRow( row ) {
+		/**
+		 * Build a new <li> for a member who didn't have a server-rendered
+		 * row. Clones the structure of an existing row in the same list
+		 * so the icon nodes (sparkles + medal SVGs) and badge span are
+		 * preserved without duplicating their markup here. Falls back to
+		 * a minimal skeleton on first-ever render (no existing rows yet).
+		 */
+		function buildRow( row, templateRow ) {
+			if ( templateRow ) {
+				var clone = templateRow.cloneNode( true );
+				clone.setAttribute( 'data-user-id', String( row.user_id || 0 ) );
+				clone.className = 'wb-gam-leaderboard__entry';
+				// New row from heartbeat has no avatar context — server
+				// avatars are URL-specific; let the next full page render
+				// fill them. We just preserve the slot.
+				return clone;
+			}
+
+			// First-render fallback. The server always emits structured
+			// markup, so this path should be rare (only fires when a board
+			// is hydrated before its first server render — e.g. an SPA
+			// route swap). Mirror the server structure so the IA store sees
+			// consistent classes; icons will fill in on the next full
+			// render of the host page.
 			var li = document.createElement( 'li' );
 			li.className = 'wb-gam-leaderboard__entry';
 			li.setAttribute( 'data-user-id', String( row.user_id || 0 ) );
@@ -144,6 +173,14 @@
 			pointsSpan.appendChild( ptsNumber );
 			li.appendChild( pointsSpan );
 
+			var badgesSpan = document.createElement( 'span' );
+			badgesSpan.className = 'wb-gam-leaderboard__badges';
+			badgesSpan.hidden = true;
+			var badgesCount = document.createElement( 'span' );
+			badgesCount.className = 'wb-gam-leaderboard__badges-count';
+			badgesSpan.appendChild( badgesCount );
+			li.appendChild( badgesSpan );
+
 			return li;
 		}
 
@@ -154,14 +191,32 @@
 
 			var rankCell = li.querySelector( '.wb-gam-leaderboard__rank' );
 			if ( rankCell ) {
-				rankCell.textContent = String( rank );
+				// Patch only the leading text node — preserves the
+				// server-emitted <span class="wb-gam-leaderboard__rank-ordinal">
+				// child for podium rows so "1st place" doesn't disappear on
+				// the first heartbeat tick.
+				var rankText = String( rank );
+				var first    = rankCell.firstChild;
+				if ( first && first.nodeType === 3 ) {
+					if ( first.nodeValue.trim() !== rankText ) {
+						first.nodeValue = rankText;
+					}
+				} else {
+					rankCell.insertBefore( document.createTextNode( rankText ), rankCell.firstChild );
+				}
 			}
 
 			var nameCell = li.querySelector( '.wb-gam-leaderboard__name' );
 			if ( nameCell ) {
-				var newName = String( row.display_name || '' );
-				if ( nameCell.textContent !== newName ) {
-					nameCell.textContent = newName;
+				// Only patch when the row carries a fresh display_name.
+				// Skip when payload omits it — preserves the server-rendered
+				// <a> link to the member profile that the heartbeat payload
+				// doesn't ship.
+				if ( row.display_name ) {
+					var newName = String( row.display_name );
+					if ( nameCell.textContent !== newName ) {
+						nameCell.textContent = newName;
+					}
 				}
 			}
 
@@ -171,6 +226,24 @@
 				if ( ptsNumber.textContent !== ptsText ) {
 					ptsNumber.textContent = ptsText;
 					bump( ptsNumber );
+				}
+			}
+
+			// Badges — show/hide the wrapper based on count; patch the
+			// inner count span only. Leaves the medal SVG icon untouched
+			// (it lives in a sibling node inside the wrapper).
+			if ( typeof row.badge_count !== 'undefined' ) {
+				var badgesWrap  = li.querySelector( '.wb-gam-leaderboard__badges' );
+				var badgesCount = li.querySelector( '.wb-gam-leaderboard__badges-count' );
+				var n           = parseInt( row.badge_count, 10 ) || 0;
+				if ( badgesWrap ) {
+					badgesWrap.hidden = ( n <= 0 );
+				}
+				if ( badgesCount ) {
+					var badgesText = n + ' ' + ( n === 1 ? 'badge' : 'badges' );
+					if ( badgesCount.textContent !== badgesText ) {
+						badgesCount.textContent = badgesText;
+					}
 				}
 			}
 		}
