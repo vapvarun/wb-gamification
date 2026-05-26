@@ -55,9 +55,22 @@ class RedemptionController extends WP_REST_Controller {
 	/**
 	 * Allowed reward types for redemption items.
 	 *
+	 * Must stay in sync with the fulfilment switches in
+	 * {@see \WBGam\Engine\RedemptionEngine::redeem()} and
+	 * {@see \WBGam\Engine\RedemptionEngine::create_woo_coupon()}.
+	 * Missing a type here makes the items POST/PATCH reject a reward
+	 * the engine could actually fulfil (regression #9927682021).
+	 *
 	 * @var string[]
 	 */
-	private const VALID_REWARD_TYPES = array( 'discount_pct', 'discount_fixed', 'free_product', 'custom' );
+	private const VALID_REWARD_TYPES = array(
+		'discount_pct',
+		'discount_fixed',
+		'free_shipping',
+		'free_product',
+		'wbcom_credits',
+		'custom',
+	);
 
 	/**
 	 * Register REST API routes.
@@ -296,18 +309,17 @@ class RedemptionController extends WP_REST_Controller {
 		$result = RedemptionEngine::redeem( get_current_user_id(), (int) $request['item_id'] );
 
 		if ( ! $result['success'] ) {
-			// Map known engine reasons to specific error codes per the agent
-			// runbook contract. Unknown reasons keep the generic
-			// `redemption_failed` so future engine errors don't 500.
-			$code   = 'redemption_failed';
-			$reason = (string) ( $result['reason'] ?? '' );
-			if ( 'insufficient' === $reason || str_contains( strtolower( (string) ( $result['error'] ?? '' ) ), 'insufficient' ) ) {
-				$code = 'wb_gam_redemption_insufficient';
-			} elseif ( 'out_of_stock' === $reason ) {
-				$code = 'wb_gam_redemption_out_of_stock';
-			} elseif ( 'inactive' === $reason ) {
-				$code = 'wb_gam_redemption_inactive';
-			}
+			// Map every known engine reason to its dedicated error code.
+			// RedemptionEngine guarantees a `reason` key on every failure
+			// return; the default arm exists only for future-proofing
+			// (new engine reasons that haven't reached the controller yet).
+			$code = match ( (string) ( $result['reason'] ?? '' ) ) {
+				'not_found'    => 'wb_gam_redemption_not_found',
+				'inactive'     => 'wb_gam_redemption_inactive',
+				'out_of_stock' => 'wb_gam_redemption_out_of_stock',
+				'insufficient' => 'wb_gam_redemption_insufficient',
+				default        => 'wb_gam_redemption_failed',
+			};
 			return new WP_Error( $code, $result['error'], array( 'status' => 400 ) );
 		}
 

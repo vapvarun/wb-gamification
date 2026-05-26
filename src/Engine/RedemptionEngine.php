@@ -99,10 +99,21 @@ final class RedemptionEngine {
 
 		$item = self::get_item( $item_id );
 
-		if ( ! $item || ! $item['is_active'] ) {
+		if ( ! $item ) {
 			return array(
 				'success'       => false,
-				'error'         => __( 'Reward item not found or inactive.', 'wb-gamification' ),
+				'reason'        => 'not_found',
+				'error'         => __( 'Reward item not found.', 'wb-gamification' ),
+				'redemption_id' => null,
+				'coupon_code'   => null,
+			);
+		}
+
+		if ( ! $item['is_active'] ) {
+			return array(
+				'success'       => false,
+				'reason'        => 'inactive',
+				'error'         => __( 'This reward is not currently active.', 'wb-gamification' ),
 				'redemption_id' => null,
 				'coupon_code'   => null,
 			);
@@ -115,6 +126,7 @@ final class RedemptionEngine {
 		if ( null !== $item['stock'] && (int) $item['stock'] <= 0 ) {
 			return array(
 				'success'       => false,
+				'reason'        => 'out_of_stock',
 				'error'         => __( 'This reward is out of stock.', 'wb-gamification' ),
 				'redemption_id' => null,
 				'coupon_code'   => null,
@@ -137,6 +149,7 @@ final class RedemptionEngine {
 			$wpdb->query( 'ROLLBACK' );
 			return array(
 				'success'       => false,
+				'reason'        => 'insufficient',
 				'error'         => sprintf(
 					/* translators: 1: cost, 2: current balance */
 					__( 'Insufficient points. This reward costs %1$d pts; you have %2$d.', 'wb-gamification' ),
@@ -174,6 +187,7 @@ final class RedemptionEngine {
 				$wpdb->query( 'ROLLBACK' );
 				return array(
 					'success'       => false,
+					'reason'        => 'out_of_stock',
 					'error'         => __( 'This reward is out of stock.', 'wb-gamification' ),
 					'redemption_id' => null,
 					'coupon_code'   => null,

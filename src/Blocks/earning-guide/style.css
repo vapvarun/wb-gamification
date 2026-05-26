@@ -58,7 +58,7 @@
 
 .wb-gam-earning-guide__card {
 	display: flex;
-	align-items: center;
+	align-items: flex-start;
 	gap: 10px;
 	padding: 12px 14px;
 	background: var(--wb-gam-color-white);
@@ -66,6 +66,10 @@
 	border-radius: 10px;
 	transition: box-shadow 200ms ease, border-color 200ms ease;
 	min-width: 0;
+	/* Defensive — if a child miscalculates width (long pts pill, very
+	 * long label without spaces), keep content inside the card chrome
+	 * rather than bleeding into the next grid cell. */
+	overflow: hidden;
 }
 
 .wb-gam-earning-guide__card:hover {
@@ -86,8 +90,15 @@
 	font-size: 16px;
 }
 
-.wb-gam-earning-guide__label {
+.wb-gam-earning-guide__body {
 	flex: 1 1 0;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+
+.wb-gam-earning-guide__label {
 	min-width: 0;
 	font-size: 0.875rem;
 	font-weight: 500;
@@ -97,6 +108,16 @@
 	 * forum topic" must read in full. Card height grows to fit. */
 	overflow-wrap: anywhere;
 	word-break: break-word;
+}
+
+.wb-gam-earning-guide__meta {
+	font-size: 0.6875rem;
+	font-weight: 500;
+	line-height: 1.3;
+	color: var(--wb-gam-color-text-muted);
+	letter-spacing: 0.01em;
+	min-width: 0;
+	overflow-wrap: anywhere;
 }
 
 .wb-gam-earning-guide__pts {
@@ -109,6 +130,10 @@
 	background: var(--wb-gam-color-primary-soft);
 	font-variant-numeric: tabular-nums;
 	white-space: nowrap;
+	/* Pin to top so it aligns with the label, not midway against the
+	 * label + meta stack which would visually drift on tall cards. */
+	align-self: flex-start;
+	margin-top: 1px;
 }
 
 .wb-gam-earning-guide__empty {

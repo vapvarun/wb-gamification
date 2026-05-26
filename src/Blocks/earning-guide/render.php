@@ -67,9 +67,14 @@ if ( ! empty( $wb_gam_actions ) ) {
 		}
 
 		$wb_gam_grouped[ $wb_gam_category ][] = array(
-			'label'  => (string) ( $wb_gam_action['label'] ?? $wb_gam_id ),
-			'icon'   => (string) ( $wb_gam_action['icon'] ?? 'icon-star' ),
-			'points' => $wb_gam_pts,
+			'label'     => (string) ( $wb_gam_action['label'] ?? $wb_gam_id ),
+			'icon'      => (string) ( $wb_gam_action['icon'] ?? 'icon-star' ),
+			'points'    => $wb_gam_pts,
+			// Registry::get_actions() resolves admin overrides; manifest
+			// defaults to 0 ("unlimited") for both keys. Surface them in
+			// the guide so members aren't surprised by silent caps.
+			'cooldown'  => (int) ( $wb_gam_action['cooldown'] ?? 0 ),
+			'daily_cap' => (int) ( $wb_gam_action['daily_cap'] ?? 0 ),
 		);
 	}
 }
@@ -115,9 +120,48 @@ BlockHooks::before( 'earning-guide', $wb_gam_attrs );
 		<?php endif; ?>
 		<div class="wb-gam-earning-guide__grid" data-cols="<?php echo (int) $wb_gam_columns; ?>">
 			<?php foreach ( $wb_gam_items as $wb_gam_item ) : ?>
+				<?php
+				$wb_gam_meta_parts = array();
+				if ( $wb_gam_item['daily_cap'] > 0 ) {
+					$wb_gam_meta_parts[] = sprintf(
+						/* translators: %s: per-day cap count */
+						esc_html__( 'max %s/day', 'wb-gamification' ),
+						esc_html( number_format_i18n( $wb_gam_item['daily_cap'] ) )
+					);
+				}
+				if ( $wb_gam_item['cooldown'] > 0 ) {
+					$wb_gam_cd = $wb_gam_item['cooldown'];
+					if ( $wb_gam_cd >= 3600 ) {
+						$wb_gam_meta_parts[] = sprintf(
+							/* translators: %s: hours between earnings */
+							esc_html__( '%sh cooldown', 'wb-gamification' ),
+							esc_html( number_format_i18n( $wb_gam_cd / 3600, 1 ) )
+						);
+					} elseif ( $wb_gam_cd >= 60 ) {
+						$wb_gam_meta_parts[] = sprintf(
+							/* translators: %s: minutes between earnings */
+							esc_html__( '%sm cooldown', 'wb-gamification' ),
+							esc_html( number_format_i18n( (int) ( $wb_gam_cd / 60 ) ) )
+						);
+					} else {
+						$wb_gam_meta_parts[] = sprintf(
+							/* translators: %s: seconds between earnings */
+							esc_html__( '%ss cooldown', 'wb-gamification' ),
+							esc_html( number_format_i18n( $wb_gam_cd ) )
+						);
+					}
+				}
+				?>
 				<div class="wb-gam-earning-guide__card">
 					<span class="wb-gam-earning-guide__icon <?php echo esc_attr( (string) $wb_gam_item['icon'] ); ?>"></span>
-					<span class="wb-gam-earning-guide__label"><?php echo esc_html( (string) $wb_gam_item['label'] ); ?></span>
+					<span class="wb-gam-earning-guide__body">
+						<span class="wb-gam-earning-guide__label"><?php echo esc_html( (string) $wb_gam_item['label'] ); ?></span>
+						<?php if ( ! empty( $wb_gam_meta_parts ) ) : ?>
+							<span class="wb-gam-earning-guide__meta">
+								<?php echo esc_html( implode( ' · ', $wb_gam_meta_parts ) ); ?>
+							</span>
+						<?php endif; ?>
+					</span>
 					<span class="wb-gam-earning-guide__pts">
 						<?php
 						/* translators: %s: point value */

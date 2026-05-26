@@ -41,8 +41,13 @@ final class Capabilities {
 	private const CAPS = array(
 		// Manual point award + revoke (PointsController).
 		'wb_gam_award_manual'      => array( 'administrator' ),
-		// Badge library + rule management (BadgesController, RulesController, BadgeAdminPage).
+		// Badge library only (BadgesController, BadgeAdminPage).
 		'wb_gam_manage_badges'     => array( 'administrator' ),
+		// Rule / level / challenge definition management (RulesController).
+		// Distinct from badge management — rules govern the broader
+		// award + level + challenge surface. Granting badge cap alone
+		// does NOT grant rules cap.
+		'wb_gam_manage_rules'      => array( 'administrator' ),
 		// Individual + community challenges (ChallengesController).
 		'wb_gam_manage_challenges' => array( 'administrator' ),
 		// Redemption store catalog (RedemptionController).
@@ -69,7 +74,7 @@ final class Capabilities {
 	 *
 	 * @var string
 	 */
-	public const CAPS_VERSION = '1.1';
+	public const CAPS_VERSION = '1.2';
 
 	/**
 	 * Grant every plugin cap to its default roles.

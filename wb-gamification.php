@@ -290,20 +290,27 @@ final class WB_Gamification {
 			// assets/css/admin.css — no PHP needed, no inline <style>, and
 			// the rule is active on every plugin admin page that loads
 			// admin.css (which `enqueue_admin_assets` always does).
-			add_action( 'plugins_loaded', array( SettingsPage::class, 'init' ), 10 );
-			add_action( 'plugins_loaded', array( SetupWizard::class, 'init' ), 10 );
-			add_action( 'plugins_loaded', array( AnalyticsDashboard::class, 'init' ), 10 );
-			add_action( 'plugins_loaded', array( BadgeAdminPage::class, 'init' ), 10 );
-			add_action( 'plugins_loaded', array( ChallengeManagerPage::class, 'init' ), 10 );
-			add_action( 'plugins_loaded', array( ManualAwardPage::class, 'init' ), 10 );
-			add_action( 'plugins_loaded', array( ApiKeysPage::class, 'init' ), 10 );
-			add_action( 'plugins_loaded', array( RedemptionStorePage::class, 'init' ), 10 );
-			add_action( 'plugins_loaded', array( CommunityChallengesPage::class, 'init' ), 10 );
-			add_action( 'plugins_loaded', array( CohortSettingsPage::class, 'init' ), 10 );
-			add_action( 'plugins_loaded', array( WebhooksAdminPage::class, 'init' ), 10 );
-			add_action( 'plugins_loaded', array( PointTypesPage::class, 'init' ), 10 );
-			add_action( 'plugins_loaded', array( PointTypeConversionsPage::class, 'init' ), 10 );
-			add_action( 'plugins_loaded', array( SubmissionsPage::class, 'init' ), 10 );
+
+			// Boot admin modules directly. register_hooks() itself runs at
+			// plugins_loaded@0, so calling ::init() here is equivalent to
+			// (and strictly safer than) registering a nested
+			// add_action('plugins_loaded', …, 10). The nested pattern was
+			// the root cause of the chronic Setup Wizard reopen — fragile
+			// timing when WP_Filter::do_action is already mid-iteration.
+			SettingsPage::init();
+			SetupWizard::init();
+			AnalyticsDashboard::init();
+			BadgeAdminPage::init();
+			ChallengeManagerPage::init();
+			ManualAwardPage::init();
+			ApiKeysPage::init();
+			RedemptionStorePage::init();
+			CommunityChallengesPage::init();
+			CohortSettingsPage::init();
+			WebhooksAdminPage::init();
+			PointTypesPage::init();
+			PointTypeConversionsPage::init();
+			SubmissionsPage::init();
 		}
 	}
 
