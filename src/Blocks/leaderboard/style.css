@@ -119,6 +119,24 @@
 	color: var(--wb-gam-accent, #f59e0b);
 }
 
+/* Live-update bump — fires when view.js mutates a points cell on a
+ * heartbeat tick. Pulse-then-rest tells the member "this just moved"
+ * without a full row repaint. Respects reduced-motion preference. */
+@keyframes wb-gam-leaderboard-bump {
+	0%   { transform: scale( 1 ); }
+	35%  { transform: scale( 1.15 ); color: var( --wb-gam-accent, #f59e0b ); }
+	100% { transform: scale( 1 ); }
+}
+.wb-gam-leaderboard__bump {
+	display: inline-block;
+	animation: wb-gam-leaderboard-bump 480ms cubic-bezier( 0.34, 1.56, 0.64, 1 );
+}
+@media (prefers-reduced-motion: reduce) {
+	.wb-gam-leaderboard__bump {
+		animation: none;
+	}
+}
+
 /* Mobile breakpoint — keep the row contained at 390px (smallest standard
  * viewport per skill Part 7.5). The flex track with avatar + name + points
  * was overflowing horizontally on long names because flex children default

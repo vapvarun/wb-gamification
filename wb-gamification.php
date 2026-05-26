@@ -139,6 +139,7 @@ add_action(
 
 use WBGam\Engine\Registry;
 use WBGam\Engine\Engine;
+use WBGam\Engine\HeartbeatChannel;
 use WBGam\Engine\ManifestLoader;
 use WBGam\Engine\FeatureFlags;
 use WBGam\Engine\AsyncEvaluator;
@@ -251,6 +252,12 @@ final class WB_Gamification {
 
 		// Leaderboard snapshot cron + object cache layer.
 		add_action( 'plugins_loaded', array( LeaderboardEngine::class, 'init' ), 10 );
+
+		// Realtime channel — Heartbeat-backed broker that the frontend
+		// toast.js, leaderboard view modules, and user-status-bar block
+		// all subscribe to. Single source of "live" data so each block
+		// doesn't run its own setInterval poll loop.
+		add_action( 'plugins_loaded', array( HeartbeatChannel::class, 'init' ), 10 );
 
 		// WP Abilities API registration + fallback REST endpoint for AI agent discovery.
 		add_action( 'plugins_loaded', array( AbilitiesRegistration::class, 'init' ), 10 );
@@ -452,12 +459,28 @@ final class WB_Gamification {
 			WB_GAM_VERSION
 		);
 
-		// Toast notification poller for logged-in users.
+		// Realtime broker — WP Heartbeat client. Single subscription bus
+		// the toast renderer, leaderboard live-update view module, and
+		// the user-status-bar block all hook into. Always enqueued so
+		// guests on a public leaderboard page still get tick updates.
+		wp_enqueue_script( 'heartbeat' );
+		wp_enqueue_script(
+			'wb-gamification-realtime',
+			WB_GAM_URL . 'assets/js/heartbeat.js',
+			array( 'jquery', 'heartbeat' ),
+			WB_GAM_VERSION,
+			true
+		);
+
+		// Toast notification renderer for logged-in users. The renderer
+		// consumes wb-gamification-realtime instead of running its own
+		// poll loop; the wbGamToast localisation is kept as a fallback
+		// for third-party scripts that hit /members/me/toasts directly.
 		if ( is_user_logged_in() ) {
 			wp_enqueue_script(
 				'wb-gamification-toast',
 				WB_GAM_URL . 'assets/js/toast.js',
-				array(),
+				array( 'wb-gamification-realtime' ),
 				WB_GAM_VERSION,
 				true
 			);

@@ -74,10 +74,32 @@ $wb_gam_period_labels = array(
 );
 $wb_gam_period_label  = $wb_gam_period_labels[ $wb_gam_period ] ?? $wb_gam_period_labels['all'];
 
+// Realtime board signature — view.js registers this with the heartbeat
+// broker so the server returns fresh rows for this specific block every
+// tick. Stable signature (period + scope + limit + point_type + uniqueId)
+// lets two instances on the same page receive different snapshots.
+$wb_gam_board_sig = sprintf(
+	'lb:%s:%s:%d:%d:%s:%s',
+	$wb_gam_period,
+	$wb_gam_scope_type,
+	$wb_gam_scope_id,
+	$wb_gam_limit,
+	(string) ( $wb_gam_attrs['pointType'] ?? '' ),
+	$wb_gam_unique
+);
+
 $wb_gam_wrapper = get_block_wrapper_attributes(
 	array(
-		'class' => implode( ' ', $wb_gam_classes ),
-		'style' => '' !== $wb_gam_inline ? $wb_gam_inline : null,
+		'class'                    => implode( ' ', $wb_gam_classes ),
+		'style'                    => '' !== $wb_gam_inline ? $wb_gam_inline : null,
+		'data-wb-gam-board'        => 'leaderboard',
+		'data-wb-gam-board-sig'    => $wb_gam_board_sig,
+		'data-wb-gam-period'       => $wb_gam_period,
+		'data-wb-gam-scope-type'   => $wb_gam_scope_type,
+		'data-wb-gam-scope-id'     => (string) $wb_gam_scope_id,
+		'data-wb-gam-limit'        => (string) $wb_gam_limit,
+		'data-wb-gam-point-type'   => (string) ( $wb_gam_attrs['pointType'] ?? '' ),
+		'data-wb-gam-points-label' => $wb_gam_points_label,
 	)
 );
 

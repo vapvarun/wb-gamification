@@ -1,0 +1,216 @@
+/**
+ * User Status Bar — frontend stylesheet.
+ *
+ * Three layouts: floating (sticky pill in a corner), sticky-top (full-
+ * width bar pinned below the WP admin bar), inline (renders where the
+ * block was placed in the editor, no positioning). The CSS variables
+ * below let theme.json + the block's own attributes override accent /
+ * background / shadow without raw color values leaking into the markup.
+ */
+
+.wb-gam-status-bar {
+	--wb-gam-status-accent: var( --wb-gam-primary, #2563eb );
+	--wb-gam-status-bg: #ffffff;
+	--wb-gam-status-fg: var( --wb-gam-color-text, #111827 );
+	--wb-gam-status-muted: var( --wb-gam-color-text-muted, #6b7280 );
+	--wb-gam-status-border: var( --wb-gam-color-border, #e5e7eb );
+
+	z-index: 9990;
+	pointer-events: auto;
+	font: inherit;
+	color: var( --wb-gam-status-fg );
+}
+
+/* ── Layouts ───────────────────────────────────────────────────────── */
+
+.wb-gam-status-bar--floating {
+	position: fixed;
+	max-width: calc( 100vw - 2rem );
+}
+.wb-gam-status-bar--floating.wb-gam-status-bar--pos-top-right    { top: 1rem;    right: 1rem; }
+.wb-gam-status-bar--floating.wb-gam-status-bar--pos-top-left     { top: 1rem;    left:  1rem; }
+.wb-gam-status-bar--floating.wb-gam-status-bar--pos-bottom-right { bottom: 1rem; right: 1rem; }
+.wb-gam-status-bar--floating.wb-gam-status-bar--pos-bottom-left  { bottom: 1rem; left:  1rem; }
+
+/* WP admin-bar nudge so the bar doesn't sit under the toolbar. */
+body.admin-bar .wb-gam-status-bar--floating.wb-gam-status-bar--pos-top-right,
+body.admin-bar .wb-gam-status-bar--floating.wb-gam-status-bar--pos-top-left {
+	top: calc( 32px + 1rem );
+}
+
+.wb-gam-status-bar--sticky-top {
+	position: sticky;
+	top: 0;
+	width: 100%;
+}
+body.admin-bar .wb-gam-status-bar--sticky-top {
+	top: 32px;
+}
+
+.wb-gam-status-bar--inline {
+	display: block;
+}
+
+/* ── Inner pill ─────────────────────────────────────────────────────── */
+
+.wb-gam-status-bar__inner {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	padding: 12px 16px;
+	background: var( --wb-gam-status-bg );
+	border: 1px solid var( --wb-gam-status-border );
+	border-radius: 999px;
+	box-shadow: 0 8px 24px rgba( 15, 23, 42, 0.10 );
+	transition: box-shadow 200ms ease, transform 200ms ease;
+}
+
+.wb-gam-status-bar--inline .wb-gam-status-bar__inner {
+	display: flex;
+	width: 100%;
+}
+
+.wb-gam-status-bar__inner:hover {
+	box-shadow: 0 12px 32px rgba( 15, 23, 42, 0.14 );
+}
+
+.wb-gam-status-bar__toggle {
+	background: transparent;
+	border: 0;
+	padding: 4px;
+	cursor: pointer;
+	color: var( --wb-gam-status-muted );
+	border-radius: 999px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+}
+.wb-gam-status-bar__toggle:hover {
+	color: var( --wb-gam-status-fg );
+}
+.wb-gam-status-bar__toggle:focus-visible {
+	outline: 2px solid var( --wb-gam-status-accent );
+	outline-offset: 2px;
+}
+.wb-gam-status-bar__toggle-icon {
+	width: 14px;
+	height: 14px;
+	border-radius: 50%;
+	background: currentColor;
+	display: block;
+}
+
+.wb-gam-status-bar__body {
+	display: inline-flex;
+	align-items: center;
+	gap: 12px;
+	white-space: nowrap;
+	overflow: hidden;
+	transition: max-width 220ms ease, opacity 220ms ease;
+	max-width: 100%;
+}
+
+.wb-gam-status-bar.is-collapsed .wb-gam-status-bar__body {
+	max-width: 0;
+	opacity: 0;
+	pointer-events: none;
+}
+
+/* ── Stats ─────────────────────────────────────────────────────────── */
+
+.wb-gam-status-bar__stat {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	font-size: 0.875rem;
+	font-weight: 600;
+}
+
+.wb-gam-status-bar__stat--points    { color: var( --wb-gam-status-accent ); }
+.wb-gam-status-bar__stat--level     { color: var( --wb-gam-status-fg ); }
+.wb-gam-status-bar__stat--badges    { color: var( --wb-gam-gold, #d99304 ); }
+.wb-gam-status-bar__stat--streak    { color: var( --wb-gam-fire, #f59e0b ); }
+
+.wb-gam-status-bar__icon {
+	flex-shrink: 0;
+	width: 16px;
+	height: 16px;
+}
+
+.wb-gam-status-bar__value {
+	font-variant-numeric: tabular-nums;
+	font-weight: 700;
+	transition: color 200ms ease;
+}
+
+.wb-gam-status-bar__label {
+	font-weight: 500;
+	color: var( --wb-gam-status-muted );
+	font-size: 0.8125rem;
+}
+
+/* Bump animation on value change — gives the bar a "you earned something"
+ * feel without using a heavyweight toast. Triggered by view.js. */
+@keyframes wb-gam-status-bump {
+	0%   { transform: scale( 1 ); }
+	35%  { transform: scale( 1.18 ); }
+	100% { transform: scale( 1 ); }
+}
+.wb-gam-status-bar__value--bump {
+	display: inline-block;
+	animation: wb-gam-status-bump 480ms cubic-bezier( 0.34, 1.56, 0.64, 1 );
+}
+
+/* ── Progress bar ──────────────────────────────────────────────────── */
+
+.wb-gam-status-bar__progress {
+	flex: 0 0 64px;
+	height: 4px;
+	background: var( --wb-gam-status-border );
+	border-radius: 999px;
+	overflow: hidden;
+}
+.wb-gam-status-bar__progress-fill {
+	height: 100%;
+	background: linear-gradient( 90deg, var( --wb-gam-status-accent ), var( --wb-gam-gold, #f59e0b ) );
+	border-radius: 999px;
+	transition: width 360ms ease;
+	min-width: 2px;
+}
+
+/* ── Mobile ────────────────────────────────────────────────────────── */
+
+@media (max-width: 640px) {
+	.wb-gam-status-bar--floating {
+		max-width: calc( 100vw - 1rem );
+	}
+	.wb-gam-status-bar__inner {
+		padding: 8px 12px;
+		gap: 6px;
+	}
+	.wb-gam-status-bar__body {
+		gap: 8px;
+	}
+	.wb-gam-status-bar__stat {
+		font-size: 0.8125rem;
+	}
+	.wb-gam-status-bar__progress {
+		flex-basis: 40px;
+	}
+	/* Hide label text on mobile to keep the pill compact. */
+	.wb-gam-status-bar__label {
+		display: none;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.wb-gam-status-bar__value--bump {
+		animation: none;
+	}
+	.wb-gam-status-bar__progress-fill {
+		transition: none;
+	}
+	.wb-gam-status-bar__body {
+		transition: none;
+	}
+}

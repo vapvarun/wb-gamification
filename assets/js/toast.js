@@ -1,17 +1,23 @@
 /**
- * WB Gamification — Toast Notification System
+ * WB Gamification — Toast Notification Renderer.
  *
- * Polls the REST API for pending toast notifications (points, badges,
- * challenges) and renders them as dismissible toasts in the bottom-right
- * corner. Works alongside the Interactivity API overlay system for
- * level-up and streak milestones.
+ * Receives queued toast payloads from the wb-gamification-realtime broker
+ * (Heartbeat-backed) and renders them as dismissible notifications in
+ * the top-center stack. Replaces the pre-1.4.0 setInterval REST poller
+ * — the broker tells us when toasts arrive; we just paint them.
+ *
+ * Fallback: if the broker hasn't published yet (e.g. very first paint
+ * before Heartbeat ticks), we do one REST poll to flush whatever was
+ * queued by the previous request. After that, all updates come through
+ * the broker.
  *
  * @since 1.0.0
+ * @refactored 1.4.0 — moved to realtime broker subscription
  */
 
-/* global wbGamToast */
+/* global wbGamToast, wbGamRealtime */
 
-(function() {
+( function () {
 	'use strict';
 
 	if ( typeof wbGamToast === 'undefined' ) {
@@ -41,30 +47,15 @@
 	};
 
 	/**
-	 * Fetch and display pending toasts.
+	 * Render a queued payload of toasts.
+	 *
+	 * @param {Array<object>|undefined} toasts From the heartbeat / REST poll.
 	 */
-	function checkToasts() {
-		fetch( wbGamToast.restUrl + 'members/me/toasts', {
-			headers: { 'X-WP-Nonce': wbGamToast.nonce },
-			credentials: 'same-origin'
-		} )
-		.then( function( response ) {
-			if ( ! response.ok ) {
-				return [];
-			}
-			return response.json();
-		} )
-		.then( function( toasts ) {
-			if ( ! toasts || ! toasts.length ) {
-				return;
-			}
-			toasts.forEach( function( toast ) {
-				showToast( toast );
-			} );
-		} )
-		.catch( function() {
-			// Silently fail — toast polling is non-critical.
-		} );
+	function renderToasts( toasts ) {
+		if ( ! toasts || ! toasts.length ) {
+			return;
+		}
+		toasts.forEach( showToast );
 	}
 
 	/**
@@ -103,26 +94,24 @@
 		var close = document.createElement( 'button' );
 		close.className = 'wb-gam-toast__close';
 		close.setAttribute( 'aria-label', 'Dismiss' );
-		close.textContent = '\u2715';
-		close.addEventListener( 'click', function() {
+		close.textContent = '✕';
+		close.addEventListener( 'click', function () {
 			el.remove();
 		} );
 		el.appendChild( close );
 
 		container.appendChild( el );
 
-		// Animate in — toast slides from the top and fades. Without this,
-		// the toast popped in instantly which read as a glitch to non-tech
-		// users (Basecamp 9925151443 suggestion).
+		// Animate in.
 		requestAnimationFrame( function () {
 			el.classList.add( 'wb-gam-toast--enter' );
 		} );
 
 		// Auto-dismiss after 4 seconds.
-		setTimeout( function() {
+		setTimeout( function () {
 			if ( el.parentNode ) {
 				el.classList.add( 'wb-gam-toast--exit' );
-				setTimeout( function() {
+				setTimeout( function () {
 					if ( el.parentNode ) {
 						el.remove();
 					}
@@ -131,27 +120,45 @@
 		}, 4000 );
 	}
 
-	// Check on page load after a 2-second delay (let page settle).
-	setTimeout( checkToasts, 2000 );
+	/**
+	 * First-paint fallback — drain any toast queued before the broker
+	 * came online. Once the broker fires its first tick we never read
+	 * this endpoint again.
+	 */
+	function firstPaintFallback() {
+		fetch( wbGamToast.restUrl + 'members/me/toasts', {
+			headers: { 'X-WP-Nonce': wbGamToast.nonce },
+			credentials: 'same-origin'
+		} )
+			.then( function ( r ) { return r.ok ? r.json() : []; } )
+			.then( renderToasts )
+			.catch( function () { /* silent — broker will catch up */ } );
+	}
 
-	// Poll every 8 seconds while the tab is active (was 30s — the long
-	// interval is what made achievements feel like they only appeared on
-	// page reload). When the tab is hidden we slow back to 60s to stay off
-	// the server. Visibilitychange refresh below picks up anything queued
-	// during the hidden window.
-	var FAST_INTERVAL_MS = 8000;
-	var IDLE_INTERVAL_MS = 60000;
-	var timer = setInterval( checkToasts, FAST_INTERVAL_MS );
-	document.addEventListener( 'visibilitychange', function() {
-		clearInterval( timer );
-		if ( document.hidden ) {
-			timer = setInterval( checkToasts, IDLE_INTERVAL_MS );
-		} else {
-			checkToasts();
-			timer = setInterval( checkToasts, FAST_INTERVAL_MS );
+	/**
+	 * Subscribe to the realtime broker. The broker replays its last
+	 * payload synchronously on subscribe, so if heartbeat has already
+	 * ticked we paint immediately.
+	 */
+	function subscribe() {
+		if ( window.wbGamRealtime && typeof window.wbGamRealtime.subscribe === 'function' ) {
+			window.wbGamRealtime.subscribe( 'toasts', renderToasts );
+			return true;
 		}
-	} );
-	// Also check on window focus — covers browsers that don't reliably
-	// fire visibilitychange when the admin alt-tabs back from a tool.
-	window.addEventListener( 'focus', checkToasts );
-})();
+		return false;
+	}
+
+	if ( subscribe() ) {
+		// Broker already there — still do one fallback drain in case the
+		// page had a queued toast that pre-dated heartbeat's first tick.
+		firstPaintFallback();
+	} else {
+		// Broker not loaded yet (jQuery / wp.heartbeat boot order). Wait
+		// for the ready event the broker dispatches on init.
+		document.addEventListener( 'wbGamRealtimeReady', function () {
+			subscribe();
+		}, { once: true } );
+		// And drain anything queued from a previous request.
+		firstPaintFallback();
+	}
+}() );

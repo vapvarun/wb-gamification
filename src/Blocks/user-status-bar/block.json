@@ -1,25 +1,25 @@
 {
 	"$schema": "https://schemas.wp.org/trunk/block.json",
 	"apiVersion": 3,
-	"name": "wb-gamification/leaderboard",
-	"version": "2.0.0",
-	"title": "Gamification Leaderboard",
+	"name": "wb-gamification/user-status-bar",
+	"version": "1.0.0",
+	"title": "User Status Bar",
 	"category": "widgets",
-	"description": "Display a points leaderboard with configurable period and limit.",
-	"keywords": [ "leaderboard", "points", "gamification", "ranking" ],
+	"description": "Sticky / floating bar that shows the logged-in member's points, level, badges and streak. Updates live via the heartbeat realtime channel.",
+	"keywords": [ "gamification", "points", "level", "sticky", "header", "floating" ],
 	"textdomain": "wb-gamification",
 	"attributes": {
 		"uniqueId":         { "type": "string",  "default": "" },
+		"layout":           { "type": "string",  "default": "floating" },
+		"position":         { "type": "string",  "default": "top-right" },
+		"showLevel":        { "type": "boolean", "default": true },
+		"showBadges":       { "type": "boolean", "default": true },
+		"showStreak":       { "type": "boolean", "default": true },
+		"showProgress":     { "type": "boolean", "default": true },
+		"collapsible":      { "type": "boolean", "default": true },
+		"hideForGuests":    { "type": "boolean", "default": true },
 
-		"pointType":        { "type": "string",  "default": "" },
-
-		"period":           { "type": "string",  "default": "all" },
-		"limit":            { "type": "integer", "default": 10 },
-		"scope_type":       { "type": "string",  "default": "" },
-		"scope_id":         { "type": "integer", "default": 0 },
-		"show_avatars":     { "type": "boolean", "default": true },
-
-		"padding":          { "type": "object",  "default": { "top": 16, "right": 16, "bottom": 16, "left": 16 } },
+		"padding":          { "type": "object",  "default": { "top": 12, "right": 16, "bottom": 12, "left": 16 } },
 		"paddingTablet":    { "type": "object" },
 		"paddingMobile":    { "type": "object" },
 		"paddingUnit":      { "type": "string",  "default": "px" },
@@ -29,18 +29,17 @@
 		"marginUnit":       { "type": "string",  "default": "px" },
 
 		"accentColor":      { "type": "string",  "default": "" },
-		"accentHoverColor": { "type": "string",  "default": "" },
 		"cardBackground":   { "type": "string",  "default": "" },
 		"cardBorderColor":  { "type": "string",  "default": "" },
 
-		"boxShadow":        { "type": "boolean", "default": false },
+		"boxShadow":        { "type": "boolean", "default": true },
 		"shadowHorizontal": { "type": "number",  "default": 0 },
-		"shadowVertical":   { "type": "number",  "default": 4 },
-		"shadowBlur":       { "type": "number",  "default": 12 },
+		"shadowVertical":   { "type": "number",  "default": 8 },
+		"shadowBlur":       { "type": "number",  "default": 24 },
 		"shadowSpread":     { "type": "number",  "default": 0 },
-		"shadowColor":      { "type": "string",  "default": "rgba(0, 0, 0, 0.08)" },
+		"shadowColor":      { "type": "string",  "default": "rgba(15, 23, 42, 0.10)" },
 
-		"borderRadius":     { "type": "object",  "default": { "top": 12, "right": 12, "bottom": 12, "left": 12 } },
+		"borderRadius":     { "type": "object",  "default": { "top": 999, "right": 999, "bottom": 999, "left": 999 } },
 		"borderRadiusUnit": { "type": "string",  "default": "px" },
 
 		"hideOnDesktop":    { "type": "boolean", "default": false },
@@ -49,12 +48,10 @@
 	},
 	"supports": {
 		"html": false,
-		"align": [ "wide", "full" ],
 		"anchor": true,
 		"className": true
 	},
 	"editorScript": "file:./index.js",
-	"editorStyle":  "file:./index.css",
 	"style":        "file:./style-index.css",
 	"render":       "file:./render.php",
 	"viewScript":   "file:./view.js"
