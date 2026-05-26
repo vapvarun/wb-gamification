@@ -144,43 +144,48 @@
 }
 
 /* ── Narrow container (hub flyout / sidebar) ─────────────────────────
- * Re-flow the row so rank+avatar stay inline on the left and name +
- * points/badges stack vertically on the right. Keeps every cell on
- * the same logical row without truncating long display names.
- *
- * Markup grouping happens via flex-basis: the meta cells share a row
- * by claiming 100% width AFTER the name; auto-margins put points and
- * badges side-by-side underneath the name.
+ * Re-flow the row using CSS grid so name + points + badges all share
+ * the SAME left edge (column 3), and rank + avatar vertically center
+ * across both rows on the left. Without the markup wrapping points +
+ * badges into a single meta cell, we use a 4-column grid: name spans
+ * the 2 right columns on row 1; points + badges sit in those same 2
+ * columns on row 2. Same left edge, no double-indent, no truncation.
  */
 @container (max-width: 460px) {
 	.wb-gam-leaderboard__entry {
-		flex-wrap: wrap;
-		gap: 4px 10px;
-		align-items: flex-start;
+		display: grid;
+		grid-template-columns: auto auto auto 1fr;
+		grid-template-areas:
+			"rank avatar name   name"
+			"rank avatar points badges";
+		column-gap: 0.5rem;
+		row-gap: 0.125rem;
+		align-items: center;
 	}
-	.wb-gam-leaderboard__rank,
+	.wb-gam-leaderboard__rank {
+		grid-area: rank;
+		align-self: center;
+	}
 	.wb-gam-leaderboard__avatar {
+		grid-area: avatar;
 		align-self: center;
 	}
 	.wb-gam-leaderboard__name {
-		flex: 1 1 calc( 100% - 90px );
-		min-width: 0;
+		grid-area: name;
 		font-size: 0.9375rem;
+		min-width: 0;
 	}
-	.wb-gam-leaderboard__points,
-	.wb-gam-leaderboard__badges {
-		/* Sit on a row below the name, aligned with the name column. */
-		flex-basis: auto;
+	.wb-gam-leaderboard__points {
+		grid-area: points;
+		justify-self: start;
 		margin-left: 0;
 		font-size: 0.8125rem;
 	}
-	.wb-gam-leaderboard__points {
-		/* Indent points + badges to align under the name (rank width
-		 * 1.75rem + avatar 40px + gaps = ~80px). */
-		margin-left: calc( 1.75rem + 40px + 20px );
-	}
 	.wb-gam-leaderboard__badges {
-		margin-left: 0;
+		grid-area: badges;
+		justify-self: start;
+		margin-left: 0.5rem;
+		font-size: 0.8125rem;
 	}
 }
 

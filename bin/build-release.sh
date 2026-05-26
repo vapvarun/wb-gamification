@@ -22,6 +22,7 @@
 # Exit codes:
 #   0   ok — zip ready
 #   1   missing Version header
+#   25  static gates failed (composer ci:no-journeys)
 #   30  agent-smoke gate failed (missing/stale/mismatched/with from-failures)
 
 set -euo pipefail
@@ -32,9 +33,11 @@ SLUG="wb-gamification"
 DIST_DIR="${ROOT_DIR}/dist"
 
 SKIP_BROWSER_SMOKE=0
+SKIP_STATIC_GATES=0
 while [ $# -gt 0 ]; do
     case "$1" in
         --skip-browser-smoke) SKIP_BROWSER_SMOKE=1; shift ;;
+        --skip-static-gates)  SKIP_STATIC_GATES=1; shift ;;
         *) echo "Unknown flag: $1" >&2; exit 2 ;;
     esac
 done
@@ -48,6 +51,33 @@ if [ -z "${VERSION}" ]; then
 fi
 
 echo "→ Building ${SLUG} v${VERSION}"
+
+# ─── Static gate (mandatory before every release) ────────────────────────────
+# Runs `composer ci:no-journeys` which fans out to all gates:
+#   - PHP lint, WPCS, PHPStan, JS build (1.1–1.4)
+#   - coding-rules + architecture + block-standard (2.1–2.3)
+#   - ux-audit (ux-foundation compliance)              (2.4)
+#   - plugin-dev-rules (wp-plugin-development gates)   (2.5)
+#   - wppqa-baseline (wp-plugin-qa MCP freshness)      (2.6)
+#   - manifest freshness                               (3.1)
+# Refuses to package on any failure. Emergency bypass: --skip-static-gates.
+if [ "${SKIP_STATIC_GATES}" -eq 1 ]; then
+    echo "  WARN: static gates skipped (--skip-static-gates). Not for customer releases."
+else
+    echo "→ Running static gates (composer ci:no-journeys) ..."
+    if ! composer ci:no-journeys > /tmp/release-static-gate-$$.log 2>&1; then
+        echo "ERROR: static gates failed. Release blocked." >&2
+        echo "       See /tmp/release-static-gate-$$.log or re-run 'composer ci:no-journeys' for details." >&2
+        echo "       The new gates (2.4 ux-audit, 2.5 plugin-dev-rules, 2.6 wppqa-baseline) are MANDATORY." >&2
+        echo "       Emergency only: rerun with --skip-static-gates." >&2
+        tail -40 /tmp/release-static-gate-$$.log >&2
+        rm -f /tmp/release-static-gate-$$.log
+        exit 25
+    fi
+    rm -f /tmp/release-static-gate-$$.log
+    echo "  static gates green"
+fi
+# ─── End static gate ─────────────────────────────────────────────────────────
 
 # ─── Agent-smoke gate ───────────────────────────────────────────────────────
 # Refuses to package unless docs/qa/.last-smoke-pass.json:

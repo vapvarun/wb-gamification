@@ -45,7 +45,19 @@ Verifies the entire leaderboard surface — block render → REST `/leaderboard`
 - **Expect**: 200 OK, JSON `{ rank: <int>, points: <int>, user_id: <int> }`. `rank` must equal the position the test user occupies in step 1's results (or be `null` if they're outside the top N).
 - **On fail**: `src/API/LeaderboardController.php:105` (`get_my_rank`) — auth detection or rank-window calculation
 
-### 4. Verify cache vs live-query parity
+### 4. Verify long display names are not truncated
+- **Action**: pick a leaderboard row whose `display_name` is ≥ 18 characters (create one via DB if none exist:
+  `mysql_query "UPDATE wp_users SET display_name='Christopher Alexander Williamson' WHERE ID=2 LIMIT 1"`,
+  then bust the leaderboard cache and re-render). Re-navigate the leaderboard page and locate that user's row.
+- **Expect** — on the `.wb-gam-leaderboard__name` element for that user:
+  - `getComputedStyle(el).textOverflow` is NOT `"ellipsis"`.
+  - `el.scrollWidth <= el.offsetWidth + 1` — the name fits horizontally (row grows vertically if needed).
+  - The element's `textContent` matches the full DB display_name verbatim, no `…` or `...` suffix.
+- **On fail**:
+  - `text-overflow: ellipsis` present → `src/Blocks/leaderboard/style.css` regressed; the `__name` rule must use `overflow-wrap: anywhere; word-break: break-word;` instead.
+  - `scrollWidth > offsetWidth` → the container query at `@container (max-width: 460px)` isn't wrapping the row; check the flex-basis on `__points` + `__badges`.
+
+### 5. Verify cache vs live-query parity
 - **Action**: snapshot the cache value, then force a recompute: `wp wb-gamification doctor --recompute-leaderboard` (if the doctor command supports it; otherwise `mysql_query "TRUNCATE wp_wb_gam_leaderboard_cache"` + re-fetch step 1).
 - **Expect**: the post-recompute response matches the snapshot exactly (within rank ordering — points may shift by 1 if events landed during the interval).
 - **On fail**: `src/Engine/LeaderboardEngine.php:write_snapshot` is producing different results to the live-query fallback path. This is the single highest-impact "leaderboard wrong" bug.
@@ -56,7 +68,8 @@ ALL of the following hold:
 1. Anonymous `/leaderboard` returns 200 with a valid results array.
 2. Block renders on the page with at least the top user visible.
 3. `/leaderboard/me` returns the right rank for the logged-in test user.
-4. Cache and live-query produce equivalent ordering.
+4. Long display names render in full — no `text-overflow: ellipsis`, no horizontal clip.
+5. Cache and live-query produce equivalent ordering.
 
 ## Fail diagnostics
 
