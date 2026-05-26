@@ -218,7 +218,7 @@ final class RedemptionStorePage {
 								<td>
 									<input type="number" name="stock" id="wb-gam-reward-stock" class="small-text wbgam-input"
 										value="<?php echo esc_attr( $edit_data['stock'] ?? '0' ); ?>" min="0">
-									<p class="description"><?php esc_html_e( 'Number of available redemptions. Set to 0 for unlimited stock.', 'wb-gamification' ); ?></p>
+									<p class="description"><?php esc_html_e( 'Number of available redemptions. Leave 0 (or empty) for unlimited stock; any positive value is decremented atomically on each redemption.', 'wb-gamification' ); ?></p>
 								</td>
 							</tr>
 							<tr>
@@ -430,6 +430,92 @@ final class RedemptionStorePage {
 				<p><?php esc_html_e( 'Create your first reward above to open the redemption store for your members.', 'wb-gamification' ); ?></p>
 			</div>
 			<?php endif; ?>
+
+			<?php
+			// ── Transaction log (closes Basecamp #9860090437) ──────────
+			// Site owners had no admin-side audit trail of what was
+			// redeemed and by whom — every redeem wrote to wb_gam_redemptions
+			// but the table was only readable via direct DB query. This
+			// surfaces the last 50 redemptions inline so support staff can
+			// trace coupon codes and fulfilment status without WP-CLI.
+			$transactions_table     = $wpdb->prefix . 'wb_gam_redemptions';
+			$transaction_items_table = $wpdb->prefix . 'wb_gam_redemption_items';
+			// phpcs:disable WordPress.DB.DirectDatabaseQuery -- Admin list, infrequent, no cache invalidation needed.
+			$transactions = $wpdb->get_results(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table names are prefixed constants.
+				"SELECT r.id, r.user_id, r.points_cost, r.status, r.coupon_code, r.created_at,
+				        i.title AS reward_title, i.reward_type
+				   FROM {$transactions_table} r
+				   LEFT JOIN {$transaction_items_table} i ON i.id = r.item_id
+				  ORDER BY r.created_at DESC
+				  LIMIT 50",
+				ARRAY_A
+			) ?: array();
+			// phpcs:enable WordPress.DB.DirectDatabaseQuery
+			?>
+			<div class="wbgam-card wbgam-stack-block">
+				<div class="wbgam-card-header">
+					<h3 class="wbgam-card-title"><?php esc_html_e( 'Recent Redemptions', 'wb-gamification' ); ?></h3>
+					<p class="wbgam-card-desc"><?php esc_html_e( 'The last 50 redemptions across all members. Use this log to verify coupon delivery, fulfilment status, and overall store activity.', 'wb-gamification' ); ?></p>
+				</div>
+				<?php if ( ! empty( $transactions ) ) : ?>
+				<div class="wbgam-card-body wbgam-card-body--flush">
+					<table class="wbgam-table">
+						<thead>
+							<tr>
+								<th><?php esc_html_e( 'When', 'wb-gamification' ); ?></th>
+								<th><?php esc_html_e( 'Member', 'wb-gamification' ); ?></th>
+								<th><?php esc_html_e( 'Reward', 'wb-gamification' ); ?></th>
+								<th><?php esc_html_e( 'Points spent', 'wb-gamification' ); ?></th>
+								<th><?php esc_html_e( 'Coupon', 'wb-gamification' ); ?></th>
+								<th><?php esc_html_e( 'Status', 'wb-gamification' ); ?></th>
+							</tr>
+						</thead>
+						<tbody>
+							<?php
+							$status_pill_map = array(
+								'pending'              => 'info',
+								'pending_fulfillment'  => 'info',
+								'fulfilled'            => 'active',
+								'failed'               => 'error',
+								'refunded'             => 'warning',
+							);
+							?>
+							<?php foreach ( $transactions as $txn ) : ?>
+								<?php
+								$txn_user      = get_userdata( (int) $txn['user_id'] );
+								$txn_user_name = $txn_user ? $txn_user->display_name : sprintf( '#%d', (int) $txn['user_id'] );
+								$txn_when      = (string) ( $txn['created_at'] ?? '' );
+								$txn_pill      = $status_pill_map[ $txn['status'] ?? 'pending' ] ?? 'info';
+								?>
+								<tr>
+									<td><?php echo esc_html( $txn_when ? date_i18n( 'M j, Y · H:i', strtotime( $txn_when ) ) : '—' ); ?></td>
+									<td><?php echo esc_html( $txn_user_name ); ?></td>
+									<td><?php echo esc_html( (string) ( $txn['reward_title'] ?? __( '— deleted reward —', 'wb-gamification' ) ) ); ?></td>
+									<td><strong><?php echo esc_html( number_format_i18n( (int) $txn['points_cost'] ) ); ?></strong></td>
+									<td>
+										<?php if ( ! empty( $txn['coupon_code'] ) ) : ?>
+											<code><?php echo esc_html( (string) $txn['coupon_code'] ); ?></code>
+										<?php else : ?>
+											<span class="wbgam-text-muted">—</span>
+										<?php endif; ?>
+									</td>
+									<td>
+										<span class="wbgam-pill wbgam-pill--<?php echo esc_attr( $txn_pill ); ?>">
+											<?php echo esc_html( (string) ( $txn['status'] ?? 'pending' ) ); ?>
+										</span>
+									</td>
+								</tr>
+							<?php endforeach; ?>
+						</tbody>
+					</table>
+				</div>
+				<?php else : ?>
+				<div class="wbgam-card-body">
+					<p class="wbgam-text-muted"><?php esc_html_e( 'No redemptions yet — when members spend points, their transactions appear here.', 'wb-gamification' ); ?></p>
+				</div>
+				<?php endif; ?>
+			</div>
 		</div>
 		<?php
 		// Reward-type toggle CSS  → assets/css/admin-redemption.css

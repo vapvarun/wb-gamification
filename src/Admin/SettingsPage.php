@@ -1783,6 +1783,10 @@ final class SettingsPage {
 				'label'       => __( 'Challenge completed', 'wb-gamification' ),
 				'description' => __( 'Sent when a member finishes a challenge.', 'wb-gamification' ),
 			),
+			'redemption'          => array(
+				'label'       => __( 'Redemption confirmation', 'wb-gamification' ),
+				'description' => __( 'Sent when a member redeems a reward — includes the points spent, remaining balance, and the generated coupon code (if any).', 'wb-gamification' ),
+			),
 		);
 		?>
 		<div class="wbgam-card">

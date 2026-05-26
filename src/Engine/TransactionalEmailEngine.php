@@ -7,6 +7,7 @@
  *   wb_gam_level_changed       → templates/emails/level-up.php
  *   wb_gam_badge_awarded       → templates/emails/badge-earned.php
  *   wb_gam_challenge_completed → templates/emails/challenge-completed.php
+ *   wb_gam_points_redeemed     → templates/emails/redemption-confirmed.php
  *
  * Each event:
  *   1. Checks the matching enable option (`wb_gam_email_<event>` — default off
@@ -64,6 +65,7 @@ final class TransactionalEmailEngine {
 		add_action( 'wb_gam_level_changed', array( __CLASS__, 'on_level_up' ), 10, 3 );
 		add_action( 'wb_gam_badge_awarded', array( __CLASS__, 'on_badge_earned' ), 10, 3 );
 		add_action( 'wb_gam_challenge_completed', array( __CLASS__, 'on_challenge_completed' ), 10, 2 );
+		add_action( 'wb_gam_points_redeemed', array( __CLASS__, 'on_redemption' ), 10, 4 );
 		add_action( self::AS_HOOK, array( __CLASS__, 'send_async' ), 10, 1 );
 	}
 
@@ -262,11 +264,71 @@ final class TransactionalEmailEngine {
 	}
 
 	/**
+	 * Send the redemption-confirmed email.
+	 *
+	 * Bound to {@see RedemptionEngine::redeem()}'s `wb_gam_points_redeemed`
+	 * action. Members get a receipt summarising what they redeemed, the
+	 * points they spent, and (when applicable) the coupon code their
+	 * reward unlocked. Listener is idempotent — every redeem fires once
+	 * per redemption_id and the AS queue dedupes by payload.
+	 *
+	 * @param int         $redemption_id Row id in `wb_gam_redemptions`.
+	 * @param int         $user_id       Member who redeemed.
+	 * @param array       $item          Reward item row.
+	 * @param string|null $coupon_code   WooCommerce coupon code (if any).
+	 */
+	public static function on_redemption( int $redemption_id, int $user_id, array $item, ?string $coupon_code = null ): void {
+		if ( ! self::is_enabled( 'redemption' ) ) {
+			return;
+		}
+
+		$user = get_userdata( $user_id );
+		if ( ! $user ) {
+			return;
+		}
+
+		$pt_service   = new PointTypeService();
+		$pt_record    = $pt_service->get( (string) ( $item['point_type'] ?? $pt_service->default_slug() ) );
+		$points_label = (string) ( $pt_record['label'] ?? __( 'points', 'wb-gamification' ) );
+
+		$body = Email::render(
+			'redemption-confirmed',
+			array(
+				'user'           => $user,
+				'name'           => esc_html( (string) $user->display_name ),
+				'site_name'      => (string) get_bloginfo( 'name' ),
+				'site_url'       => home_url( '/' ),
+				'redemption_id'  => (int) $redemption_id,
+				'reward_title'   => (string) ( $item['title'] ?? __( 'Your reward', 'wb-gamification' ) ),
+				'reward_type'    => (string) ( $item['reward_type'] ?? 'custom' ),
+				'points_spent'   => (int) ( $item['points_cost'] ?? 0 ),
+				'points_label'   => $points_label,
+				'coupon_code'    => (string) ( $coupon_code ?? '' ),
+				'remaining'      => (int) PointsEngine::get_total( $user_id, (string) ( $item['point_type'] ?? '' ) ),
+			)
+		);
+
+		if ( '' === $body ) {
+			return;
+		}
+
+		self::send(
+			$user->user_email,
+			sprintf(
+				/* translators: %s: reward title. */
+				__( 'Your redemption: %s', 'wb-gamification' ),
+				$item['title'] ?? __( 'reward', 'wb-gamification' )
+			),
+			$body
+		);
+	}
+
+	/**
 	 * Whether a given email type is enabled. Default OFF so existing sites
 	 * don't suddenly start emailing every member after upgrade — admin opts
 	 * in via the Settings → Emails tab (or the wb_gam_email_<slug> option).
 	 *
-	 * @param string $slug 'level_up' | 'badge_earned' | 'challenge_completed'.
+	 * @param string $slug 'level_up' | 'badge_earned' | 'challenge_completed' | 'redemption'.
 	 */
 	private static function is_enabled( string $slug ): bool {
 		/**

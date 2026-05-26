@@ -56,6 +56,7 @@ final class ShortcodeHandler {
 		add_shortcode( 'wb_gam_community_challenges', array( __CLASS__, 'render_community_challenges' ) );
 		add_shortcode( 'wb_gam_cohort_rank', array( __CLASS__, 'render_cohort_rank' ) );
 		add_shortcode( 'wb_gam_redemption_store', array( __CLASS__, 'render_redemption_store' ) );
+		add_shortcode( 'wb_gam_my_rewards', array( __CLASS__, 'render_my_rewards' ) );
 	}
 
 	// ── Shortcode renderers ───────────────────────────────────────────────────
@@ -547,6 +548,104 @@ final class ShortcodeHandler {
 			'show_balance' => 'false' !== $atts['show_balance'],
 			'pointType'    => sanitize_key( (string) $atts['type'] ),
 		) );
+	}
+
+	/**
+	 * Render [wb_gam_my_rewards] — member-facing redemption history.
+	 *
+	 * Closes Basecamp #9927388714 / #9925383280 issue 3. The data path
+	 * already existed via {@see \WBGam\Engine\RedemptionEngine::get_user_redemptions()};
+	 * this shortcode wires it to a small inline list so members can see
+	 * what they've spent points on and the coupon code(s) generated.
+	 *
+	 * Attributes:
+	 *   limit       Max rows to render (default 10, capped at 50).
+	 *   show_status Show pending/fulfilled/failed pill (default true).
+	 *
+	 * @param array|string $atts Shortcode attributes.
+	 * @return string Rendered HTML (empty for guests).
+	 */
+	public static function render_my_rewards( $atts = array() ): string {
+		if ( ! is_user_logged_in() ) {
+			return '<div class="wb-gam-my-rewards wb-gam-my-rewards--guest"><p>'
+				. esc_html__( 'Log in to view your redemption history.', 'wb-gamification' )
+				. '</p></div>';
+		}
+
+		$atts = shortcode_atts(
+			array(
+				'limit'       => 10,
+				'show_status' => 'true',
+			),
+			(array) $atts,
+			'wb_gam_my_rewards'
+		);
+
+		$limit       = max( 1, min( 50, (int) $atts['limit'] ) );
+		$show_status = 'false' !== $atts['show_status'];
+
+		$rows = \WBGam\Engine\RedemptionEngine::get_user_redemptions( get_current_user_id(), $limit );
+
+		if ( empty( $rows ) ) {
+			return '<div class="wb-gam-my-rewards wb-gam-my-rewards--empty"><p>'
+				. esc_html__( 'You haven\'t redeemed any rewards yet. Visit the redemption store to spend your points.', 'wb-gamification' )
+				. '</p></div>';
+		}
+
+		$status_label_map = array(
+			'pending'             => __( 'Pending', 'wb-gamification' ),
+			'pending_fulfillment' => __( 'Awaiting fulfilment', 'wb-gamification' ),
+			'fulfilled'           => __( 'Fulfilled', 'wb-gamification' ),
+			'failed'              => __( 'Failed', 'wb-gamification' ),
+			'refunded'            => __( 'Refunded', 'wb-gamification' ),
+		);
+
+		ob_start();
+		?>
+		<div class="wb-gam-my-rewards">
+			<ul class="wb-gam-my-rewards__list" role="list">
+				<?php foreach ( $rows as $row ) :
+					$row_status      = (string) ( $row['status'] ?? 'pending' );
+					$row_status_text = $status_label_map[ $row_status ] ?? ucfirst( $row_status );
+					$row_when        = (string) ( $row['created_at'] ?? '' );
+					?>
+					<li class="wb-gam-my-rewards__item" data-status="<?php echo esc_attr( $row_status ); ?>">
+						<div class="wb-gam-my-rewards__title">
+							<strong><?php echo esc_html( (string) ( $row['title'] ?? __( '— deleted reward —', 'wb-gamification' ) ) ); ?></strong>
+							<?php if ( $show_status ) : ?>
+								<span class="wb-gam-my-rewards__status wb-gam-my-rewards__status--<?php echo esc_attr( $row_status ); ?>">
+									<?php echo esc_html( $row_status_text ); ?>
+								</span>
+							<?php endif; ?>
+						</div>
+						<div class="wb-gam-my-rewards__meta">
+							<span class="wb-gam-my-rewards__cost">
+								<?php
+								printf(
+									/* translators: %s: points spent */
+									esc_html__( '%s pts spent', 'wb-gamification' ),
+									esc_html( number_format_i18n( (int) ( $row['points_cost'] ?? 0 ) ) )
+								);
+								?>
+							</span>
+							<?php if ( $row_when ) : ?>
+								<span class="wb-gam-my-rewards__when">
+									<?php echo esc_html( human_time_diff( strtotime( $row_when ), time() ) . ' ' . __( 'ago', 'wb-gamification' ) ); ?>
+								</span>
+							<?php endif; ?>
+						</div>
+						<?php if ( ! empty( $row['coupon_code'] ) ) : ?>
+							<div class="wb-gam-my-rewards__coupon">
+								<span class="wb-gam-my-rewards__coupon-label"><?php esc_html_e( 'Use code:', 'wb-gamification' ); ?></span>
+								<code class="wb-gam-my-rewards__coupon-code"><?php echo esc_html( (string) $row['coupon_code'] ); ?></code>
+							</div>
+						<?php endif; ?>
+					</li>
+				<?php endforeach; ?>
+			</ul>
+		</div>
+		<?php
+		return (string) ob_get_clean();
 	}
 
 	// ── Public attribute normalizers (used by tests) ──────────────────────────

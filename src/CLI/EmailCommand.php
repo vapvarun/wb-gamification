@@ -38,7 +38,7 @@ class EmailCommand {
 	 *   a reserved WP-CLI global flag.
 	 *
 	 * --event=<slug>
-	 * : Email type. One of: level_up | badge_earned | challenge_completed | weekly_recap | leaderboard_nudge.
+	 * : Email type. One of: level_up | badge_earned | challenge_completed | redemption | weekly_recap | leaderboard_nudge.
 	 *
 	 * ## EXAMPLES
 	 *
@@ -55,8 +55,8 @@ class EmailCommand {
 		if ( ! $user ) {
 			\WP_CLI::error( 'User not found.' );
 		}
-		if ( ! in_array( $event, array( 'level_up', 'badge_earned', 'challenge_completed', 'weekly_recap', 'leaderboard_nudge' ), true ) ) {
-			\WP_CLI::error( 'Unknown --event. Use one of: level_up, badge_earned, challenge_completed, weekly_recap, leaderboard_nudge.' );
+		if ( ! in_array( $event, array( 'level_up', 'badge_earned', 'challenge_completed', 'redemption', 'weekly_recap', 'leaderboard_nudge' ), true ) ) {
+			\WP_CLI::error( 'Unknown --event. Use one of: level_up, badge_earned, challenge_completed, redemption, weekly_recap, leaderboard_nudge.' );
 		}
 
 		$pt_service   = new PointTypeService();
@@ -112,6 +112,19 @@ class EmailCommand {
 					'reward_label'         => sprintf( '50 %s', $points_label ),
 				);
 				$subject = __( '[TEST] Challenge completed: Sample Challenge', 'wb-gamification' );
+				break;
+
+			case 'redemption':
+				$template = 'redemption-confirmed';
+				$vars    += array(
+					'redemption_id' => 0,
+					'reward_title'  => __( 'Sample Reward', 'wb-gamification' ),
+					'reward_type'   => 'discount_pct',
+					'points_spent'  => 100,
+					'coupon_code'   => 'TEST-WBG-' . strtoupper( wp_generate_password( 6, false, false ) ),
+					'remaining'     => (int) PointsEngine::get_total( $user->ID ),
+				);
+				$subject = __( '[TEST] Your redemption: Sample Reward', 'wb-gamification' );
 				break;
 
 			case 'weekly_recap':

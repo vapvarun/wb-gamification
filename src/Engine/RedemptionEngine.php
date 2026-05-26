@@ -122,16 +122,11 @@ final class RedemptionEngine {
 		$cost = (int) $item['points_cost'];
 		$type = ( new \WBGam\Services\PointTypeService() )->resolve( (string) ( $item['point_type'] ?? '' ) );
 
-		// Check stock (quick pre-check before transaction).
-		if ( null !== $item['stock'] && (int) $item['stock'] <= 0 ) {
-			return array(
-				'success'       => false,
-				'reason'        => 'out_of_stock',
-				'error'         => __( 'This reward is out of stock.', 'wb-gamification' ),
-				'redemption_id' => null,
-				'coupon_code'   => null,
-			);
-		}
+		// Stock semantics — NULL or 0 means unlimited stock (the admin form
+		// description has always said "Set to 0 for unlimited stock"; the
+		// engine now honours that contract). Only positive finite stock is
+		// enforced. See Basecamp #9925383280.
+		$enforced_stock = is_null( $item['stock'] ?? null ) ? null : (int) $item['stock'];
 
 		// ── Atomic balance check + debit (prevents TOCTOU race condition) ────
 		$wpdb->query( 'START TRANSACTION' );
@@ -175,8 +170,10 @@ final class RedemptionEngine {
 		);
 		PointsEngine::debit( $user_id, $cost, 'redemption', $event->event_id, $type );
 
-		// Atomic stock decrement (inside the transaction).
-		if ( null !== $item['stock'] ) {
+		// Atomic stock decrement (inside the transaction). Only enforced
+		// when admin set a positive finite stock — NULL and 0 mean
+		// unlimited, so no row update is needed.
+		if ( null !== $enforced_stock && $enforced_stock > 0 ) {
 			$decremented = $wpdb->query(
 				$wpdb->prepare(
 					"UPDATE {$wpdb->prefix}wb_gam_redemption_items SET stock = stock - 1 WHERE id = %d AND stock > 0",

@@ -474,3 +474,87 @@
 	.wb-gam-directory-rank { gap: 6px; font-size: 12px; }
 	.wb-gam-directory-icon { width: 12px; height: 12px; }
 }
+
+/* ─────────────────────────────────────────────────────────────────────
+ * [wb_gam_my_rewards] — member-facing redemption history list
+ * Closes Basecamp #9927388714 / #9925383280 issue 3.
+ * Plain semantic list; cards use the shared --wb-gam tokens so the
+ * widget inherits site styling without per-theme overrides.
+ * ───────────────────────────────────────────────────────────────────── */
+.wb-gam-my-rewards { display: block; }
+.wb-gam-my-rewards--guest,
+.wb-gam-my-rewards--empty {
+	padding: 24px 16px;
+	border: 1px dashed var(--wb-gam-border, #e5e7eb);
+	border-radius: var(--wb-gam-radius, 8px);
+	text-align: center;
+	color: var(--wb-gam-text-muted, #6b7280);
+	font-size: 14px;
+}
+.wb-gam-my-rewards__list {
+	list-style: none;
+	padding: 0;
+	margin: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+.wb-gam-my-rewards__item {
+	background: var(--wb-gam-color-white, #fff);
+	border: 1px solid var(--wb-gam-border, #e5e7eb);
+	border-radius: var(--wb-gam-radius, 8px);
+	padding: 12px 14px;
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+.wb-gam-my-rewards__title {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	justify-content: space-between;
+	font-size: 14px;
+	color: var(--wb-gam-text, #1d2939);
+}
+.wb-gam-my-rewards__status {
+	font-size: 11px;
+	font-weight: 600;
+	letter-spacing: .04em;
+	text-transform: uppercase;
+	padding: 2px 8px;
+	border-radius: 999px;
+	background: var(--wb-gam-color-info-bg, #eff6ff);
+	color: var(--wb-gam-primary, #1d4ed8);
+	white-space: nowrap;
+}
+.wb-gam-my-rewards__status--fulfilled { background: #ecfdf5; color: #047857; }
+.wb-gam-my-rewards__status--failed    { background: #fef2f2; color: #b91c1c; }
+.wb-gam-my-rewards__status--refunded  { background: #fef9c3; color: #92400e; }
+.wb-gam-my-rewards__meta {
+	display: flex;
+	gap: 10px;
+	font-size: 12px;
+	color: var(--wb-gam-text-muted, #6b7280);
+}
+.wb-gam-my-rewards__cost { font-weight: 600; }
+.wb-gam-my-rewards__coupon {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin-top: 4px;
+	font-size: 13px;
+}
+.wb-gam-my-rewards__coupon-label { color: var(--wb-gam-text-muted, #6b7280); }
+.wb-gam-my-rewards__coupon-code {
+	font-family: 'SFMono-Regular', Menlo, Consolas, monospace;
+	font-weight: 700;
+	letter-spacing: .04em;
+	padding: 2px 8px;
+	border-radius: 4px;
+	background: #ecfdf5;
+	color: #065f46;
+	border: 1px dashed #34d399;
+}
+@media (max-width: 480px) {
+	.wb-gam-my-rewards__title { flex-direction: column; align-items: flex-start; gap: 4px; }
+}
