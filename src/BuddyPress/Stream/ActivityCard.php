@@ -115,10 +115,11 @@ final class ActivityCard {
 			return '';
 		}
 
-		$name = esc_html( $user->display_name );
+		$name        = esc_html( $user->display_name );
+		$profile_url = \WBGam\BuddyPress\UserUrl::resolve( (int) $user_id );
 
-		if ( function_exists( 'bp_core_get_user_domain' ) ) {
-			$url = esc_url( bp_core_get_user_domain( $user_id ) );
+		if ( '' !== $profile_url ) {
+			$url = esc_url( $profile_url );
 			return "<a href=\"{$url}\">{$name}</a>";
 		}
 

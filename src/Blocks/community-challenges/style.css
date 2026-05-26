@@ -34,9 +34,9 @@
 }
 
 .wb-gam-community-challenges__item {
-	background: #f9fafb;
-	border: 1px solid var(--wb-gam-border, #e5e7eb);
-	border-radius: var(--wb-gam-radius, 8px);
+	background: var(--wb-gam-color-surface-muted);
+	border: 1px solid var(--wb-gam-border);
+	border-radius: var(--wb-gam-radius);
 	padding: 0.875rem 1rem;
 	display: flex;
 	flex-direction: column;
@@ -71,7 +71,7 @@
 }
 
 .wb-gam-community-challenges__progress {
-	background: #e5e7eb;
+	background: var(--wb-gam-color-border);
 	border-radius: 999px;
 	height: 6px;
 	overflow: hidden;
@@ -104,14 +104,14 @@
 }
 
 .wb-gam-community-challenges__empty {
-	color: var(--wb-gam-silver, #6b7280);
+	color: var(--wb-gam-color-text-muted);
 	font-size: 0.9375rem;
 	margin: 0;
 	padding: 2rem;
 	text-align: center;
-	background: #f9fafb;
-	border: 1px dashed var(--wb-gam-border, #e5e7eb);
-	border-radius: var(--wb-gam-radius, 8px);
+	background: var(--wb-gam-color-surface-muted);
+	border: 1px dashed var(--wb-gam-border);
+	border-radius: var(--wb-gam-radius);
 }
 
 @media (max-width: 640px) {

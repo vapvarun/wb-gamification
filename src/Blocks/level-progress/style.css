@@ -50,7 +50,7 @@
 
 .wb-gam-level-progress__bar-wrap {
 	height: 10px;
-	background: #e5e7eb;
+	background: var(--wb-gam-color-border);
 	border-radius: 999px;
 	overflow: hidden;
 }
@@ -58,7 +58,7 @@
 .wb-gam-level-progress__bar {
 	height: 100%;
 	width: var(--wb-gam-fill, 0%);
-	background: linear-gradient(90deg, var(--wb-gam-primary), #a78bfa);
+	background: linear-gradient(90deg, var(--wb-gam-primary), var(--wb-gam-color-heatmap-2));
 	border-radius: 999px;
 	transition: width 0.5s ease;
 }
@@ -71,7 +71,7 @@
 
 .wb-gam-level-progress__next {
 	font-size: 0.8125rem;
-	color: #6b7280;
+	color: var(--wb-gam-color-text-muted);
 }
 
 .wb-gam-level-progress__next--max {

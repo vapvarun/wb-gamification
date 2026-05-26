@@ -262,9 +262,10 @@ class BadgeShareController extends WP_REST_Controller {
 
 		$site_name   = get_bloginfo( 'name' );
 		$site_url    = home_url();
-		$profile_url = function_exists( 'bp_core_get_user_domain' )
-			? bp_core_get_user_domain( $user_id )
-			: get_author_posts_url( $user_id );
+		$profile_url = \WBGam\BuddyPress\UserUrl::resolve( (int) $user_id );
+		if ( '' === $profile_url ) {
+			$profile_url = get_author_posts_url( $user_id );
+		}
 
 		// LinkedIn share URL — pre-filled with badge name and site.
 		$linkedin_url = add_query_arg(

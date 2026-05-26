@@ -45,7 +45,7 @@
 
 .wb-gam-member-points__progress {
 	height: 8px;
-	background: #e5e7eb;
+	background: var(--wb-gam-color-border);
 	border-radius: 999px;
 	overflow: hidden;
 }

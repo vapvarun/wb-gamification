@@ -129,7 +129,7 @@
 
 .wb-gam-badge-showcase__filter.is-active .wb-gam-badge-showcase__filter-count {
 	background: var( --wb-gam-badge-accent );
-	color: #fff;
+	color: var( --wb-gam-color-white );
 }
 
 .wb-gam-badge-showcase__filter:focus-visible {
@@ -262,7 +262,7 @@
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
-	background: #fff;
+	background: var( --wb-gam-color-white );
 	border: 2px solid var( --wb-gam-badge-earned-bg );
 }
 

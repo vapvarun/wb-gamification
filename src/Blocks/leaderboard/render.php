@@ -150,12 +150,13 @@ BlockHooks::before( 'leaderboard', $wb_gam_attrs );
 
 					<span class="wb-gam-leaderboard__name">
 						<?php
-						$wb_gam_uid = (int) ( $wb_gam_row['user_id'] ?? 0 );
-						$wb_gam_dn  = (string) ( $wb_gam_row['display_name'] ?? '' );
-						if ( function_exists( 'bp_core_get_user_domain' ) ) {
+						$wb_gam_uid     = (int) ( $wb_gam_row['user_id'] ?? 0 );
+						$wb_gam_dn      = (string) ( $wb_gam_row['display_name'] ?? '' );
+						$wb_gam_bp_link = \WBGam\BuddyPress\UserUrl::resolve( $wb_gam_uid );
+						if ( '' !== $wb_gam_bp_link ) {
 							printf(
 								'<a href="%1$s">%2$s</a>',
-								esc_url( bp_core_get_user_domain( $wb_gam_uid ) ),
+								esc_url( $wb_gam_bp_link ),
 								esc_html( $wb_gam_dn )
 							);
 						} else {

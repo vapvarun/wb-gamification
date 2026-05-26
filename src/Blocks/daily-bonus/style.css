@@ -53,14 +53,14 @@
 	gap: 6px;
 	padding: 8px 14px;
 	border-radius: 999px;
-	background: var(--wb-gam-color-accent, #2563eb);
-	color: #fff;
+	background: var(--wb-gam-color-accent);
+	color: var(--wb-gam-color-white);
 	font-size: 14px;
 	font-weight: 600;
 }
 
 .wb-gam-daily-bonus__chip--claimed {
-	background: #16a34a;
+	background: var(--wb-gam-color-success);
 }
 
 .wb-gam-daily-bonus__next {

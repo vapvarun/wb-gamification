@@ -149,9 +149,10 @@ BlockHooks::before( 'top-members', $wb_gam_attrs );
 				$wb_gam_row  = $wb_gam_entry['row'];
 				$wb_gam_rank = (int) $wb_gam_entry['rank'];
 				$wb_gam_uid  = (int) ( $wb_gam_row['user_id'] ?? 0 );
-				$wb_gam_url  = function_exists( 'bp_core_get_user_domain' )
-					? bp_core_get_user_domain( $wb_gam_uid )
-					: get_author_posts_url( $wb_gam_uid );
+				$wb_gam_url  = \WBGam\BuddyPress\UserUrl::resolve( $wb_gam_uid );
+				if ( '' === $wb_gam_url ) {
+					$wb_gam_url = get_author_posts_url( $wb_gam_uid );
+				}
 				?>
 				<div class="wb-gam-top-members__podium-slot wb-gam-top-members__podium-slot--<?php echo (int) $wb_gam_rank; ?>">
 					<div class="wb-gam-top-members__podium-crown">
@@ -185,9 +186,10 @@ BlockHooks::before( 'top-members', $wb_gam_attrs );
 				<?php foreach ( array_slice( $wb_gam_rows, 3 ) as $wb_gam_i => $wb_gam_row ) :
 					$wb_gam_uid  = (int) ( $wb_gam_row['user_id'] ?? 0 );
 					$wb_gam_rank = (int) $wb_gam_i + 4;
-					$wb_gam_url  = function_exists( 'bp_core_get_user_domain' )
-						? bp_core_get_user_domain( $wb_gam_uid )
-						: get_author_posts_url( $wb_gam_uid );
+					$wb_gam_url  = \WBGam\BuddyPress\UserUrl::resolve( $wb_gam_uid );
+					if ( '' === $wb_gam_url ) {
+						$wb_gam_url = get_author_posts_url( $wb_gam_uid );
+					}
 					?>
 					<li class="wb-gam-top-members__rest-item">
 						<span class="wb-gam-top-members__rest-rank"><?php echo esc_html( '#' . $wb_gam_rank ); ?></span>
@@ -206,9 +208,10 @@ BlockHooks::before( 'top-members', $wb_gam_attrs );
 			<?php foreach ( $wb_gam_rows as $wb_gam_rank_0 => $wb_gam_row ) :
 				$wb_gam_uid  = (int) ( $wb_gam_row['user_id'] ?? 0 );
 				$wb_gam_rank = (int) $wb_gam_rank_0 + 1;
-				$wb_gam_url  = function_exists( 'bp_core_get_user_domain' )
-					? bp_core_get_user_domain( $wb_gam_uid )
-					: get_author_posts_url( $wb_gam_uid );
+				$wb_gam_url  = \WBGam\BuddyPress\UserUrl::resolve( $wb_gam_uid );
+				if ( '' === $wb_gam_url ) {
+					$wb_gam_url = get_author_posts_url( $wb_gam_uid );
+				}
 				?>
 				<li class="wb-gam-top-members__list-item">
 					<span class="wb-gam-top-members__list-rank"><?php echo esc_html( '#' . $wb_gam_rank ); ?></span>

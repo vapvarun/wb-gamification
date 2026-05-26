@@ -85,8 +85,8 @@ BlockHooks::before( 'kudos-feed', $wb_gam_attrs );
 	<?php else : ?>
 		<ul class="wb-gam-kudos-feed__list" role="list">
 			<?php foreach ( $wb_gam_kudos as $wb_gam_item ) :
-				$wb_gam_giver_url    = function_exists( 'bp_core_get_user_domain' ) ? (string) bp_core_get_user_domain( (int) ( $wb_gam_item['giver_id'] ?? 0 ) ) : '';
-				$wb_gam_receiver_url = function_exists( 'bp_core_get_user_domain' ) ? (string) bp_core_get_user_domain( (int) ( $wb_gam_item['receiver_id'] ?? 0 ) ) : '';
+				$wb_gam_giver_url    = \WBGam\BuddyPress\UserUrl::resolve( (int) ( $wb_gam_item['giver_id'] ?? 0 ) );
+				$wb_gam_receiver_url = \WBGam\BuddyPress\UserUrl::resolve( (int) ( $wb_gam_item['receiver_id'] ?? 0 ) );
 				?>
 				<li class="wb-gam-kudos-feed__item">
 					<span class="wb-gam-kudos-feed__giver">
