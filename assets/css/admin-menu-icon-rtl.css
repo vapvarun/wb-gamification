@@ -1,0 +1,25 @@
+/*! admin-menu-icon-rtl.css — auto-generated from admin-menu-icon.css by bin/build-rtl.js. Do not edit by hand. */
+/**
+ * WP admin sidebar — Gamification top-level menu icon.
+ *
+ * Paints the Lucide `award` glyph (\e053) as the menu icon for the
+ * Gamification top-level entry. SettingsPage::register_page passes
+ * icon='none' so WordPress emits an empty .wp-menu-image; this rule
+ * fills it from the Lucide font.
+ *
+ * Enqueued globally on every admin page (alongside the Lucide font)
+ * so the menu icon renders regardless of which screen the admin is
+ * currently viewing. The selector is scoped to the Gamification menu
+ * node only — nothing else on the page is affected.
+ *
+ * @since 1.4.0
+ */
+#adminmenu .toplevel_page_wb-gamification .wp-menu-image:before {
+	content: "\e053";
+	font-family: "lucide";
+	font-size: 20px;
+	font-style: normal;
+	font-weight: normal;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+}

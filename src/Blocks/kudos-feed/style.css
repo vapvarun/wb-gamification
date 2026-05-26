@@ -28,7 +28,7 @@
 	gap: 0.5rem;
 	padding: 0.625rem 0.75rem;
 	border-radius: var(--wb-gam-radius);
-	background: #f9fafb;
+	background: var(--wb-gam-color-surface-muted);
 }
 
 .wb-gam-kudos-feed__giver,
@@ -65,7 +65,7 @@
 	flex-basis: 100%;
 	font-size: 0.875rem;
 	font-style: italic;
-	color: #6b7280;
+	color: var(--wb-gam-color-text-muted);
 	margin: 0;
 	padding-inline-start: 0.25rem;
 	border-inline-start: 2px solid var(--wb-gam-primary-light);

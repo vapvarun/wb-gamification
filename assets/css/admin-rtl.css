@@ -258,6 +258,32 @@
 
 .wb-gam-wizard-card__btn { align-self: flex-start; }
 
+/* Unavailable state — Basecamp 9925226356. Card stays visible so the
+ * admin can read the description; muted background + locked badge + a
+ * disabled submit make it clear why nothing happens on click. */
+.wb-gam-wizard-card--unavailable {
+	background: #f9fafb;
+	border-color: #e5e7eb;
+	opacity: 0.9;
+}
+.wb-gam-wizard-card__badge--locked {
+	background: #fee2e2;
+	color: #991b1b;
+}
+.wb-gam-wizard-card__unavailable-note {
+	margin: 10px 0 12px;
+	padding: 8px 12px;
+	background: #fef3c7;
+	border-right: 3px solid #f59e0b;
+	border-radius: 4px;
+	font-size: 13px;
+	color: #78350f;
+}
+.wb-gam-wizard-card--unavailable .wb-gam-wizard-card__btn[disabled] {
+	cursor: not-allowed;
+	opacity: 0.7;
+}
+
 .wb-gam-wizard-skip-row { margin-top: 10px; }
 
 .wb-gam-wizard-skip-btn {
@@ -742,7 +768,21 @@
 
 /* Page wrapper */
 .wbgam-wrap {
-	max-width: 1200px;
+	max-width: 1600px;
+}
+
+/*
+ * Inline-edit autosave feedback for per-action override inputs (Settings →
+ * Points). admin-action-overrides.js toggles these classes on the input
+ * for ~1s after the REST round-trip completes.
+ */
+.wbgam-input--saved {
+	transition: box-shadow 0.2s ease;
+	box-shadow: 0 0 0 2px rgba( 34, 197, 94, 0.45 );
+}
+
+.wbgam-input--error {
+	box-shadow: 0 0 0 2px rgba( 239, 68, 68, 0.55 );
 }
 
 .wbgam-page-title {
@@ -1862,7 +1902,7 @@ body[class*="_page_wb-gam-"] #wpbody-content > .updated:not(.wb-gam-notice) {
    ========================================================================== */
 
 .wbgam-wrap {
-	max-width: 1200px;
+	max-width: 1600px;
 	font-family: var(--wbgam-font);
 	color: var(--wbgam-text);
 	line-height: 1.5;

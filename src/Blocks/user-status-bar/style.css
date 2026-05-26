@@ -9,11 +9,11 @@
  */
 
 .wb-gam-status-bar {
-	--wb-gam-status-accent: var( --wb-gam-primary, #2563eb );
-	--wb-gam-status-bg: #ffffff;
-	--wb-gam-status-fg: var( --wb-gam-color-text, #111827 );
-	--wb-gam-status-muted: var( --wb-gam-color-text-muted, #6b7280 );
-	--wb-gam-status-border: var( --wb-gam-color-border, #e5e7eb );
+	--wb-gam-status-accent: var(--wb-gam-primary);
+	--wb-gam-status-bg:     var(--wb-gam-color-white);
+	--wb-gam-status-fg:     var(--wb-gam-color-text);
+	--wb-gam-status-muted:  var(--wb-gam-color-text-muted);
+	--wb-gam-status-border: var(--wb-gam-color-border);
 
 	z-index: 9990;
 	pointer-events: auto;
@@ -61,7 +61,7 @@ body.admin-bar .wb-gam-status-bar--sticky-top {
 	background: var( --wb-gam-status-bg );
 	border: 1px solid var( --wb-gam-status-border );
 	border-radius: 999px;
-	box-shadow: 0 8px 24px rgba( 15, 23, 42, 0.10 );
+	box-shadow: var(--wb-gam-shadow-lg);
 	transition: box-shadow 200ms ease, transform 200ms ease;
 }
 
@@ -71,7 +71,7 @@ body.admin-bar .wb-gam-status-bar--sticky-top {
 }
 
 .wb-gam-status-bar__inner:hover {
-	box-shadow: 0 12px 32px rgba( 15, 23, 42, 0.14 );
+	box-shadow: var(--wb-gam-shadow-xl);
 }
 
 .wb-gam-status-bar__toggle {
@@ -128,8 +128,8 @@ body.admin-bar .wb-gam-status-bar--sticky-top {
 
 .wb-gam-status-bar__stat--points    { color: var( --wb-gam-status-accent ); }
 .wb-gam-status-bar__stat--level     { color: var( --wb-gam-status-fg ); }
-.wb-gam-status-bar__stat--badges    { color: var( --wb-gam-gold, #d99304 ); }
-.wb-gam-status-bar__stat--streak    { color: var( --wb-gam-fire, #f59e0b ); }
+.wb-gam-status-bar__stat--badges    { color: var(--wb-gam-gold); }
+.wb-gam-status-bar__stat--streak    { color: var(--wb-gam-color-fire); }
 
 .wb-gam-status-bar__icon {
 	flex-shrink: 0;
@@ -172,7 +172,7 @@ body.admin-bar .wb-gam-status-bar--sticky-top {
 }
 .wb-gam-status-bar__progress-fill {
 	height: 100%;
-	background: linear-gradient( 90deg, var( --wb-gam-status-accent ), var( --wb-gam-gold, #f59e0b ) );
+	background: linear-gradient( 90deg, var( --wb-gam-status-accent ), var(--wb-gam-gold) );
 	border-radius: 999px;
 	transition: width 360ms ease;
 	min-width: 2px;

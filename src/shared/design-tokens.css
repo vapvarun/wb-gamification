@@ -69,12 +69,43 @@
 	/* Colors — semantic (matched to assets/css/hub.css) */
 	--wb-gam-color-success: #0d9f6e;
 	--wb-gam-color-success-bg: #ecfdf3;
+	--wb-gam-color-success-strong: #047857;
+	--wb-gam-color-success-soft: rgba(13, 159, 110, 0.12);
 	--wb-gam-color-warning: #c2770e;
 	--wb-gam-color-warning-bg: #fef7ec;
+	--wb-gam-color-warning-strong: #b45309;
+	--wb-gam-color-warning-soft: rgba(245, 158, 11, 0.15);
 	--wb-gam-color-danger: #ef4444;
 	--wb-gam-color-danger-bg: #fef2f2;
+	--wb-gam-color-danger-strong: #b91c1c;
+	--wb-gam-color-danger-soft: rgba(185, 28, 28, 0.10);
 	--wb-gam-color-info: #2563eb;
 	--wb-gam-color-info-bg: #eff4ff;
+	--wb-gam-color-info-soft: rgba(37, 99, 235, 0.10);
+
+	/* Extra neutrals — surface-muted is the "card lifted off a panel"
+	 * shade. Border-strong is the focus / hover stroke. */
+	--wb-gam-color-surface-muted: #f9fafb;
+	--wb-gam-color-border-strong: #d1d5db;
+	--wb-gam-color-locked-soft: rgba(156, 163, 175, 0.16);
+	--wb-gam-color-primary-soft: rgba(91, 76, 219, 0.10);
+
+	/* Accent variants tied to per-block accent (fire, gold-soft). */
+	--wb-gam-color-fire: #f59e0b;
+	--wb-gam-color-fire-light: #f97316;
+	--wb-gam-color-fire-strong: #b45309;
+	--wb-gam-color-fire-soft: rgba(245, 158, 11, 0.15);
+	--wb-gam-color-fire-gradient: linear-gradient(90deg, #f97316 0%, #f59e0b 100%);
+
+	/* Streak heatmap — 4 intensity steps of the primary accent (purple
+	 * family). Cell-0 is the empty state (border-strength), 1→4 ramps
+	 * from soft to deepest. Kept distinct from the regular primary
+	 * palette so heatmap legibility doesn't depend on theme accent. */
+	--wb-gam-color-heatmap-0: var(--wb-gam-color-border);
+	--wb-gam-color-heatmap-1: #c4b5fd;
+	--wb-gam-color-heatmap-2: #a78bfa;
+	--wb-gam-color-heatmap-3: #7c3aed;
+	--wb-gam-color-heatmap-4: #4c1d95;
 
 	/* Rank/medal palette (used by leaderboard, top-members, year-recap) */
 	--wb-gam-color-gold: #b8860b;

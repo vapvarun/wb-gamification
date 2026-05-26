@@ -113,7 +113,7 @@ BlockHooks::before( 'earning-guide', $wb_gam_attrs );
 		<?php if ( $wb_gam_show_h ) : ?>
 			<h3 class="wb-gam-earning-guide__category"><?php echo esc_html( ucfirst( $wb_gam_category ) ); ?></h3>
 		<?php endif; ?>
-		<div class="wb-gam-earning-guide__grid" style="grid-template-columns:repeat(<?php echo (int) $wb_gam_columns; ?>,minmax(0,1fr));">
+		<div class="wb-gam-earning-guide__grid" data-cols="<?php echo (int) $wb_gam_columns; ?>">
 			<?php foreach ( $wb_gam_items as $wb_gam_item ) : ?>
 				<div class="wb-gam-earning-guide__card">
 					<span class="wb-gam-earning-guide__icon <?php echo esc_attr( (string) $wb_gam_item['icon'] ); ?>"></span>

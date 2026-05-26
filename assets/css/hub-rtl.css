@@ -399,34 +399,23 @@
   padding: 20px;
 }
 
-/* ── Panel-scoped block overrides ──
-   Force existing block grids into single/two column layouts
-   inside the 520px panel so they don't overflow. */
+/* ── Panel-scoped block adjustments ──
+ *
+ * The blocks render the same markup wherever they appear; their own
+ * stylesheets ship container-query layouts so the grid adapts to the
+ * host width without needing a panel override. Only fixes that are
+ * panel-specific (heatmap horizontal scroll because the panel is too
+ * narrow for 90 cells) stay here.
+ *
+ * Previous overrides forced 90px badge cards which crammed the title
+ * into 2 ellipsed lines — removed in 1.4.0 in favour of the badge-
+ * showcase's own container queries (`@container (max-width: 520px)`
+ * yields 3 cols, `<= 360px` yields 2).
+ */
 
-/* Earning guide: force 1-2 columns max */
-.gam-panel__body .wb-gam-earning-guide__grid {
-  grid-template-columns: repeat(2, 1fr) !important;
-}
-
-/* Badge showcase: constrain grid */
-.gam-panel__body .wb-gam-badge-showcase__list {
-  grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
-}
-
-/* Leaderboard: full width table */
-.gam-panel__body .wb-gam-leaderboard {
-  overflow-x: auto;
-}
-
-/* Streak heatmap: scroll if wider than panel */
 .gam-panel__body .wb-gam-streak__heatmap {
-  overflow-x: auto;
-  max-width: 100%;
-}
-
-/* Year recap stats: 2 columns */
-.gam-panel__body .wb-gam-recap__stats {
-  grid-template-columns: repeat(2, 1fr);
+	overflow-x: auto;
+	max-width: 100%;
 }
 
 /* ── Empty state enhancements ──

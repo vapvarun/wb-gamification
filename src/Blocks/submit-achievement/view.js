@@ -20,11 +20,24 @@
 		const i18nFailed = wrapper.getAttribute( 'data-i18n-failed' ) || 'Submission failed.';
 		const i18nNetwork = wrapper.getAttribute( 'data-i18n-network' ) || 'Network error.';
 
+		const setStatus = ( text, tone ) => {
+			status.textContent = text;
+			status.classList.remove(
+				'wb-gam-submit-achievement__status--error',
+				'wb-gam-submit-achievement__status--success'
+			);
+			if ( tone === 'error' ) {
+				status.classList.add( 'wb-gam-submit-achievement__status--error' );
+			} else if ( tone === 'success' ) {
+				status.classList.add( 'wb-gam-submit-achievement__status--success' );
+			}
+		};
+
 		form.addEventListener( 'submit', function ( ev ) {
 			ev.preventDefault();
 			const submit = form.querySelector( 'button[type=submit]' );
 			submit.disabled = true;
-			status.textContent = '';
+			setStatus( '', null );
 
 			const fd = new FormData( form );
 			const body = {
@@ -45,18 +58,15 @@
 				.then( ( r ) => r.json().then( ( data ) => ( { ok: r.ok, data } ) ) )
 				.then( ( { ok, data } ) => {
 					if ( ! ok || ( data && data.code ) ) {
-						status.textContent = ( data && data.message ) || i18nFailed;
-						status.style.color = '#b91c1c';
+						setStatus( ( data && data.message ) || i18nFailed, 'error' );
 						submit.disabled = false;
 						return;
 					}
-					status.textContent = i18nSuccess;
-					status.style.color = '#16a34a';
+					setStatus( i18nSuccess, 'success' );
 					form.reset();
 				} )
 				.catch( () => {
-					status.textContent = i18nNetwork;
-					status.style.color = '#b91c1c';
+					setStatus( i18nNetwork, 'error' );
 					submit.disabled = false;
 				} );
 		} );

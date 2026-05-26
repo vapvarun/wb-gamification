@@ -11,16 +11,21 @@
  */
 
 /* ── Wrapper ───────────────────────────────────────────────────────── */
+/* Block-local aliases all resolve to global design tokens
+ * (src/shared/design-tokens.css). Per-block local names stay for
+ * readability inside this stylesheet, but every value flows from a
+ * single source so a token bump (e.g. theme.json override) cascades
+ * across every block. */
 .wb-gam-badge-showcase {
-	--wb-gam-badge-earned-bg:    var( --wb-gam-color-white, #fff );
-	--wb-gam-badge-locked-bg:    var( --wb-gam-color-surface-muted, #f9fafb );
-	--wb-gam-badge-border:       var( --wb-gam-color-border, #e5e7eb );
-	--wb-gam-badge-text:         var( --wb-gam-color-text, #111827 );
-	--wb-gam-badge-text-muted:   var( --wb-gam-color-text-muted, #6b7280 );
-	--wb-gam-badge-accent:       var( --wb-gam-color-accent, #d99304 );
-	--wb-gam-badge-success:      #16a34a;
-	--wb-gam-badge-success-soft: rgba( 22, 163, 74, 0.12 );
-	--wb-gam-badge-locked-soft:  rgba( 156, 163, 175, 0.16 );
+	--wb-gam-badge-earned-bg:    var( --wb-gam-color-white );
+	--wb-gam-badge-locked-bg:    var( --wb-gam-color-surface-muted );
+	--wb-gam-badge-border:       var( --wb-gam-color-border );
+	--wb-gam-badge-text:         var( --wb-gam-color-text );
+	--wb-gam-badge-text-muted:   var( --wb-gam-color-text-muted );
+	--wb-gam-badge-accent:       var( --wb-gam-color-warning );
+	--wb-gam-badge-success:      var( --wb-gam-color-success );
+	--wb-gam-badge-success-soft: var( --wb-gam-color-success-soft );
+	--wb-gam-badge-locked-soft:  var( --wb-gam-color-locked-soft );
 }
 
 /* ── Header ────────────────────────────────────────────────────────── */
@@ -133,13 +138,42 @@
 }
 
 /* ── Grid ──────────────────────────────────────────────────────────── */
+/* Container queries — the showcase adapts to its host width.
+ * Hub flyout (~720px) gets 5 cols; standalone page (~1100px) gets
+ * 7; a column inside a 3-col layout (~340px) gets 2. The badge
+ * cards need ~120px of horizontal breathing room — anything tighter
+ * crams the title and looks congested.
+ */
+.wb-gam-badge-showcase {
+	container-type: inline-size;
+}
+
 .wb-gam-badge-showcase__list {
 	list-style: none;
 	margin: 0;
 	padding: 0;
 	display: grid;
-	grid-template-columns: repeat( auto-fill, minmax( 130px, 1fr ) );
+	grid-template-columns: repeat( auto-fill, minmax( 140px, 1fr ) );
 	gap: 12px;
+}
+
+/* Container-query breakpoints keep card width readable regardless of
+ * the host (hub flyout, sidebar widget, full-page block). The min-
+ * width chosen for each step is the smallest at which the badge
+ * title can render on 1–2 lines without ellipsis. */
+@container (max-width: 520px) {
+	.wb-gam-badge-showcase__list {
+		/* Hub flyout (~465px wide) — 3 cols of ~140px each. */
+		grid-template-columns: repeat( 3, minmax( 0, 1fr ) );
+		gap: 10px;
+	}
+}
+
+@container (max-width: 360px) {
+	.wb-gam-badge-showcase__list {
+		grid-template-columns: repeat( 2, minmax( 0, 1fr ) );
+		gap: 8px;
+	}
 }
 
 .wb-gam-badge-showcase__badge {
@@ -250,10 +284,13 @@
 	font-weight: 600;
 	line-height: 1.25;
 	color: var( --wb-gam-badge-text );
-	overflow: hidden;
-	display: -webkit-box;
-	-webkit-line-clamp: 2;
-	-webkit-box-orient: vertical;
+	/* No line-clamp — badge names like "Five Hundred Strong" or
+	 * "1-Year Member" must render in full, not truncate with an
+	 * ellipsis. Cards in the grid grow vertically to fit the longest
+	 * name; align-items:stretch on the parent keeps them visually
+	 * aligned at the top. */
+	overflow-wrap: anywhere;
+	word-break: break-word;
 	min-height: 2.3em;
 }
 
@@ -269,14 +306,15 @@
 }
 
 .wb-gam-badge-showcase__hint {
-	display: -webkit-box;
-	-webkit-line-clamp: 2;
-	-webkit-box-orient: vertical;
-	overflow: hidden;
+	/* Hint text describes what action unlocks the badge — never
+	 * truncate, the member needs to read it in full to know what to do.
+	 * Card height grows to fit the longest hint in the row. */
 	font-size: 0.75rem;
-	line-height: 1.35;
+	line-height: 1.4;
 	color: var( --wb-gam-badge-text-muted );
 	margin-top: auto;
+	overflow-wrap: anywhere;
+	word-break: break-word;
 }
 
 /* ── Empty state ─────────────────────────────────────────────────── */
@@ -306,7 +344,7 @@
 
 /* ── Credential ring ──────────────────────────────────────────────── */
 .wb-gam-badge-showcase__badge--credential .wb-gam-badge-showcase__image {
-	box-shadow: 0 0 0 2px var( --wb-gam-primary, #1d4ed8 );
+	box-shadow: 0 0 0 2px var(--wb-gam-primary);
 	border-radius: 8px;
 }
 

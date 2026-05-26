@@ -128,6 +128,35 @@ if [ -x bin/check-block-standard.sh ]; then
   run_stage "2.3" "Wbcom Block Quality Standard" bash bin/check-block-standard.sh
 fi
 
+# 2.4 — UX audit (ux-foundation compliance).
+# Vendored from ~/.claude/skills/ux-audit/templates/ux-audit.sh on 2026-05-26.
+# Block-severity violations fail the build; advisory rows ship with next PR.
+if [ -x bin/ux-audit.sh ]; then
+  step "2.4" "UX audit (ux-foundation compliance)"
+  if PREFIX=wb-gam bash bin/ux-audit.sh "$PLUGIN_DIR" > /tmp/local-ci-ux-$$.log 2>&1; then
+    pass "UX audit — no block-severity violations"
+  else
+    fail "2.4 UX audit"
+    cat /tmp/local-ci-ux-$$.log | sed 's/^/    /'
+  fi
+  rm -f /tmp/local-ci-ux-$$.log
+fi
+
+# 2.5 — Plugin-development rules (portfolio-wide gates from
+# the wp-plugin-development skill: no jQuery on frontend, no admin-ajax
+# on customer surfaces, every block declares the wb-gam-tokens style dep,
+# every block ships its own style.css, BP integrations boot on bp_loaded).
+if [ -x bin/plugin-dev-rules-check.sh ]; then
+  run_stage "2.5" "Plugin-dev rules (wp-plugin-development gates)" bash bin/plugin-dev-rules-check.sh
+fi
+
+# 2.6 — wppqa baseline freshness (output of the wp-plugin-qa MCP checks).
+# Validates audit/wppqa-baseline-LATEST/SUMMARY.md exists, is ≤30d old, and
+# reports failed=0. Refresh via /wp-plugin-onboard --refresh in Claude.
+if [ -x bin/wppqa-baseline-check.sh ] && [ "$MODE" != "quick" ]; then
+  run_stage "2.6" "wppqa baseline (wp-plugin-qa MCP)" bash bin/wppqa-baseline-check.sh
+fi
+
 # ─── 3.x — Manifest freshness ────────────────────────────────────────────────
 
 if [ "$MODE" != "quick" ]; then

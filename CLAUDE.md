@@ -91,9 +91,17 @@ What the gate runs (in order, see `bin/local-ci.sh`):
 | 1.1 PHP lint | `php -l` on every source PHP file | syntax errors |
 | 1.2 WPCS | `composer phpcs` (skipped if `vendor/bin/phpcs` not installed) | WordPress coding standards |
 | 1.3 PHPStan | `composer phpstan` (skipped if no `phpstan.neon`) | static type errors |
-| 2.1 Coding rules | `bin/coding-rules-check.sh` | plugin-specific rules (see below) |
+| 1.4 JS build | `npm run build` (skipped if no `node_modules`) | block JS / interactivity compile |
+| 2.1 Coding rules | `bin/coding-rules-check.sh` | plugin-specific rules (Rules 1-5, 11) |
+| 2.2 Architecture | `bin/architecture-checks.sh` | Free/Pro contract invariants |
+| 2.3 Block standard | `bin/check-block-standard.sh` | Wbcom Block Quality Standard |
+| 2.4 UX audit | `bin/ux-audit.sh` (vendored from `~/.claude/skills/ux-audit/`) | ux-foundation compliance: inline `<style>`/`<script>`, native alert/confirm, theme-sidebar hidden, dashicons drift, raw RTL margins |
+| 2.5 Plugin-dev rules | `bin/plugin-dev-rules-check.sh` | wp-plugin-development gates: no jQuery on frontend, no admin-ajax on customer surfaces, blocks declare `wb-gam-tokens` dep, per-block style.css present, BP integrations boot on `bp_loaded` |
+| 2.6 wppqa baseline | `bin/wppqa-baseline-check.sh` | freshness + cleanliness of the `audit/wppqa-baseline-LATEST/SUMMARY.md` (output of the `wp-plugin-qa` MCP) |
 | 3.1 Manifest | `jq` on `audit/manifest.json` | manifest validity + freshness |
 | 4.1 Journeys | `bin/run-journeys.sh` | customer flows end-to-end (skipped if site unreachable) |
+
+Individual stages can be run via composer scripts: `composer coding-rules`, `composer plugin-dev-rules`, `composer ux-audit`, `composer wppqa-baseline`.
 
 **Plugin-specific coding rules** (in `bin/coding-rules-check.sh`):
 - Rule 1 — `current_user_can('wb-gamification/...')` is BANNED. Those slugs are WP Abilities API discovery, not capabilities. Use a real cap (`manage_options` or `wb_gam_*`).
