@@ -394,11 +394,18 @@ final class ManualAwardPage {
 		global $wpdb;
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- admin list view, infrequent, no caching needed.
+		// Action_ids written by the manual-award REST path:
+		//   - 'manual_award'        (positive awards — PointsController:221)
+		//   - 'manual_admin_deduct' (negative awards — PointsController:195)
+		// 'manual_admin' is kept for backward compatibility with pre-1.0
+		// rows. The previous query omitted 'manual_award' which is why
+		// every positive manual award appeared to vanish from the
+		// "Recent Manual Awards" table (Basecamp #9927666545).
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT user_id, points, point_type, created_at
 				   FROM {$wpdb->prefix}wb_gam_points
-				  WHERE action_id IN ('manual_admin', 'manual_admin_deduct')
+				  WHERE action_id IN ('manual_award', 'manual_admin', 'manual_admin_deduct')
 				  ORDER BY created_at DESC
 				  LIMIT %d",
 				max( 1, $limit )

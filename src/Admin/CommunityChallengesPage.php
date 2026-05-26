@@ -43,7 +43,27 @@ final class CommunityChallengesPage {
 	 * @return void
 	 */
 	public static function enqueue_assets( string $hook_suffix ): void {
-		if ( 'gamification_page_wb-gam-community-challenges' !== $hook_suffix ) {
+		// The page is registered with parent_slug=null (hidden submenu) so
+		// the resulting hook is `admin_page_wb-gam-community-challenges`
+		// — NOT `gamification_page_...`. Site owners also reach this page
+		// via the "Community" tab on the unified Challenges admin
+		// (`?page=wb-gam-challenges&tab=community`), so accept both hooks
+		// AND the explicit page-slug fallback. Failing the match here was
+		// the root cause of Basecamp #9927572402 — admin-rest-form.js never
+		// loaded, the create form fell through to browser-default GET
+		// submission, and the page rendered blank with the form data
+		// leaked into the query string.
+		$page         = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- page slug only used to gate asset enqueue.
+		$is_community = in_array(
+			$hook_suffix,
+			array(
+				'admin_page_wb-gam-community-challenges',
+				'gamification_page_wb-gam-community-challenges',
+				'gamification_page_wb-gam-challenges',
+			),
+			true
+		) || 'wb-gam-community-challenges' === $page;
+		if ( ! $is_community ) {
 			return;
 		}
 		wp_enqueue_script(

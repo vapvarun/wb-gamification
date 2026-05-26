@@ -653,10 +653,20 @@ final class SettingsPage {
 					</div>
 				</div>
 				<div class="wbgam-settings-topbar__actions">
-					<a class="wbgam-btn wbgam-btn--secondary" href="<?php echo esc_url( admin_url( 'admin.php?page=wb-gamification-setup' ) ); ?>">
-						<span class="icon-settings" aria-hidden="true"></span>
-						<?php esc_html_e( 'Run Setup Wizard', 'wb-gamification' ); ?>
-					</a>
+					<?php
+					// Hide the wizard-launch CTA once setup is completed — site owners
+					// who finished onboarding don't need the redundant "Run Setup
+					// Wizard" prompt every time they open Settings (Basecamp
+					// #9925205802 issue 3). They can still re-run the wizard by
+					// visiting the URL directly; we just don't surface it here.
+					$wb_gam_wizard_complete = (bool) get_option( SetupWizard::COMPLETED_OPTION );
+					if ( ! $wb_gam_wizard_complete ) :
+						?>
+						<a class="wbgam-btn wbgam-btn--secondary" href="<?php echo esc_url( admin_url( 'admin.php?page=wb-gamification-setup' ) ); ?>">
+							<span class="icon-settings" aria-hidden="true"></span>
+							<?php esc_html_e( 'Run Setup Wizard', 'wb-gamification' ); ?>
+						</a>
+					<?php endif; ?>
 				</div>
 			</header>
 		<div class="wbgam-settings-wrap">

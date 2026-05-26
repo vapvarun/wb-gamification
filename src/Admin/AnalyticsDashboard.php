@@ -491,7 +491,9 @@ final class AnalyticsDashboard {
 			'ld_course_completed'      => 'Completed a course',
 			'ld_lesson_completed'      => 'Completed a lesson',
 			'ld_quiz_completed'        => 'Passed a quiz',
-			'manual_admin'             => 'Admin manual award',
+			'manual_award'             => 'Admin manual award',
+			'manual_admin'             => 'Admin manual award (legacy)',
+			'manual_admin_deduct'      => 'Admin manual deduction',
 		);
 		return $map[ $action_id ] ?? $action_id;
 	}
