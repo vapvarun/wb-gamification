@@ -51,6 +51,7 @@
 		const rejectBtn = row.querySelector( '[data-wb-gam-submission-reject]' );
 
 		if ( approveBtn ) {
+			// keyboard-accessible: target is a native <button>.
 			approveBtn.addEventListener( 'click', function () {
 				approveBtn.disabled = true;
 				callDecision( id, 'approve', '' )

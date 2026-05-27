@@ -244,8 +244,8 @@ final class PointTypeConversionsPage {
 							<tr>
 								<th><label for="wb-gam-conv-from"><?php esc_html_e( 'From', 'wb-gamification' ); ?></label></th>
 								<td>
-									<input type="number" id="wb-gam-conv-from-amount" name="from_amount" class="wbgam-input wbgam-input--xs" required min="1" max="999999" value="100">
-									<select name="from_type" id="wb-gam-conv-from" class="wbgam-select" required>
+									<input type="number" id="wb-gam-conv-from-amount" name="from_amount" class="wbgam-input wbgam-input--xs" required min="1" max="999999" value="100" aria-label="<?php esc_attr_e( 'Amount to convert from', 'wb-gamification' ); ?>">
+									<select name="from_type" id="wb-gam-conv-from" class="wbgam-select" required aria-label="<?php esc_attr_e( 'Source currency', 'wb-gamification' ); ?>">
 										<?php foreach ( $types as $t ) : ?>
 											<option value="<?php echo esc_attr( (string) $t['slug'] ); ?>"><?php echo esc_html( (string) $t['label'] ); ?></option>
 										<?php endforeach; ?>
@@ -256,8 +256,8 @@ final class PointTypeConversionsPage {
 							<tr>
 								<th><label for="wb-gam-conv-to"><?php esc_html_e( 'To', 'wb-gamification' ); ?></label></th>
 								<td>
-									<input type="number" id="wb-gam-conv-to-amount" name="to_amount" class="wbgam-input wbgam-input--xs" required min="1" max="999999" value="1">
-									<select name="to_type" id="wb-gam-conv-to" class="wbgam-select" required>
+									<input type="number" id="wb-gam-conv-to-amount" name="to_amount" class="wbgam-input wbgam-input--xs" required min="1" max="999999" value="1" aria-label="<?php esc_attr_e( 'Amount to convert to', 'wb-gamification' ); ?>">
+									<select name="to_type" id="wb-gam-conv-to" class="wbgam-select" required aria-label="<?php esc_attr_e( 'Destination currency', 'wb-gamification' ); ?>">
 										<?php foreach ( $types as $t ) : ?>
 											<option value="<?php echo esc_attr( (string) $t['slug'] ); ?>"><?php echo esc_html( (string) $t['label'] ); ?></option>
 										<?php endforeach; ?>

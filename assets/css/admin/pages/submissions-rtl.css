@@ -75,11 +75,16 @@
 	transition: transform 120ms ease, border-color 120ms ease;
 }
 
-.wb-gam-submission-thumb:hover,
+.wb-gam-submission-thumb:hover {
+	transform: scale(1.06);
+	border-color: var(--wbgam-primary, #2563eb);
+}
+
 .wb-gam-submission-thumb:focus-visible {
 	transform: scale(1.06);
 	border-color: var(--wbgam-primary, #2563eb);
-	outline: none;
+	outline: 2px solid var(--wbgam-primary, #2563eb);
+	outline-offset: 2px;
 }
 
 .wb-gam-submission-thumb img {

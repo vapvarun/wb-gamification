@@ -106,6 +106,7 @@
 		};
 
 		// Open handlers — every Convert button on every currency tile.
+		// keyboard-accessible: target is a native <button> (hub/render.php:334).
 		document
 			.querySelectorAll( '[data-wb-gam-convert-open]' )
 			.forEach( ( btn ) => {

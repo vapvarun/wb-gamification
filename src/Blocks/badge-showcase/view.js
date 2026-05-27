@@ -24,6 +24,7 @@
 			return;
 		}
 		root[ BOUND ] = true;
+		// keyboard-accessible: filter tabs are native <button role="tab"> elements (render.php:218,223,228).
 		root.addEventListener( 'click', function ( event ) {
 			var tab = event.target.closest( '[data-wb-gam-filter]' );
 			if ( ! tab || ! root.contains( tab ) ) {

@@ -31,6 +31,7 @@
 				bar.classList.add( 'is-collapsed' );
 				toggle.setAttribute( 'aria-expanded', 'false' );
 			}
+			// keyboard-accessible: target is a native <button> (render.php:105).
 			toggle.addEventListener( 'click', function () {
 				var collapsed = bar.classList.toggle( 'is-collapsed' );
 				toggle.setAttribute( 'aria-expanded', collapsed ? 'false' : 'true' );

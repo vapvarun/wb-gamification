@@ -39,6 +39,7 @@
 		}
 	}
 
+	// keyboard-accessible: target is a native <button>.
 	button.addEventListener( 'click', function () {
 		const points = parseInt( button.dataset.points || '10', 10 );
 
