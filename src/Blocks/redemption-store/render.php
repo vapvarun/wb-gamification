@@ -286,10 +286,12 @@ BlockHooks::before(
 							<div class="wb-gam-redemption__confirm"
 								role="dialog"
 								aria-modal="false"
+								aria-labelledby="wb-gam-redemption-confirm-<?php echo esc_attr( (string) (int) ( $wb_gam_item['id'] ?? 0 ) ); ?>"
 								data-wp-bind--hidden="!context.confirming"
+								data-wp-on--keydown="actions.handleConfirmKeydown"
 								hidden
 							>
-								<p class="wb-gam-redemption__confirm-message">
+								<p id="wb-gam-redemption-confirm-<?php echo esc_attr( (string) (int) ( $wb_gam_item['id'] ?? 0 ) ); ?>" class="wb-gam-redemption__confirm-message">
 									<?php
 									printf(
 										/* translators: 1: cost amount, 2: currency label. */

@@ -63,6 +63,15 @@ store( NS, {
 			const ctx = getContext();
 			ctx.confirming = false;
 		},
+		handleConfirmKeydown( event ) {
+			// Esc closes the confirmation prompt — keyboard-accessibility parity
+			// with native <dialog>. The panel is not a true modal (aria-modal=false)
+			// so we don't trap focus; the cancel button is in tab order.
+			if ( event?.key === 'Escape' ) {
+				const ctx = getContext();
+				ctx.confirming = false;
+			}
+		},
 		* confirmRedeem() {
 			const ctx = getContext();
 			ctx.confirming = false;

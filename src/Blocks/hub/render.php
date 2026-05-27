@@ -434,24 +434,34 @@ BlockHooks::before( 'hub', $wb_gam_attrs );
 		<div class="gam-panel"
 			role="dialog"
 			aria-modal="true"
+			aria-labelledby="gam-panel-title"
 			data-wp-on--click="actions.stopPropagation">
 			<div class="gam-panel__header">
 				<button class="gam-panel__back" data-wp-on--click="actions.closePanel">
 					<i class="icon-arrow-left"></i>
 					<span class="screen-reader-text"><?php esc_html_e( 'Close panel', 'wb-gamification' ); ?></span>
 				</button>
-				<span class="gam-panel__title" data-wp-text="state.panelTitle"></span>
+				<span id="gam-panel-title" class="gam-panel__title" data-wp-text="state.panelTitle"></span>
 			</div>
 			<div class="gam-panel__body" id="gam-panel-body"></div>
 		</div>
 	</div>
 
 	<?php if ( ! empty( $wb_gam_conv_rules ) ) : ?>
-		<!-- Currency-conversion modal — shared across all currency tiles. -->
-		<dialog class="wbgam-convert-dialog" data-wb-gam-convert-dialog>
+		<!-- Currency-conversion modal — shared across all currency tiles.
+		     Native <dialog>::showModal() provides role=dialog + aria-modal=true +
+		     ESC + focus-trap implicitly. aria-labelledby points at the visible
+		     <h2> title so screen readers announce the dialog by name. -->
+		<dialog
+			class="wbgam-convert-dialog"
+			data-wb-gam-convert-dialog
+			role="dialog"
+			aria-modal="true"
+			aria-labelledby="wb-gam-convert-title"
+		>
 			<form method="dialog" class="wbgam-convert-form" data-wb-gam-convert-form>
 				<header class="wbgam-convert-form__head">
-					<h2 class="wbgam-convert-form__title"><?php esc_html_e( 'Convert balance', 'wb-gamification' ); ?></h2>
+					<h2 id="wb-gam-convert-title" class="wbgam-convert-form__title"><?php esc_html_e( 'Convert balance', 'wb-gamification' ); ?></h2>
 					<button type="button" class="wbgam-convert-form__close" data-wb-gam-convert-close aria-label="<?php esc_attr_e( 'Close', 'wb-gamification' ); ?>">×</button>
 				</header>
 				<div class="wbgam-convert-form__body">

@@ -1,12 +1,22 @@
 /**
  * Badge Showcase — filter tabs (All / Earned / Locked).
  *
- * The badge-showcase block is sometimes rendered inside the hub block's
- * flyout panel, which uses the WordPress Interactivity API directive
- * `data-wp-on--click="actions.stopPropagation"` on its dialog wrapper to
- * keep panel-internal clicks from closing the backdrop. That kills
+ * Not a modal. The badge-showcase block renders a `role="tablist"`
+ * navigation that switches between three filter views in-place; there
+ * is no full-screen / overlay surface to dismiss. ESC / focus-trap
+ * a11y handling is therefore not applicable — the tabs are native
+ * <button role="tab"> elements with keyboard parity guaranteed by the
+ * browser.
+ *
+ * The block is sometimes rendered inside the hub block's flyout panel,
+ * which uses the WordPress Interactivity API directive
+ * `data-wp-on--click="actions.stopPropagation"` on its dialog wrapper
+ * to keep panel-internal clicks from closing the backdrop. That kills
  * document-level delegation, so we wire listeners directly to each
- * showcase root the moment it mounts.
+ * showcase root the moment it mounts. The wrapping hub panel itself
+ * IS the dialog, with its own ESC + focus management (see
+ * assets/interactivity/hub.js callbacks.init); this filter-tab handler
+ * does not need to duplicate that logic.
  *
  * MutationObserver watches the whole body so the hub panel's template
  * clone is bound the instant it lands in `.gam-panel__body`.
