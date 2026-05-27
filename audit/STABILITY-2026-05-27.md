@@ -105,21 +105,23 @@ Xdebug coverage mode isn't enabled — `composer test` errors with `XDEBUG_MODE=
 
 ## 4. Proposed gates
 
-Items 4–10 from the original plan, ranked by leverage (bugs prevented per hour of effort):
+Items 4–10 from the original plan, ranked by leverage (bugs prevented per hour of effort).
 
-| # | Gate | Catches | Effort | Priority |
-|---|---|---|---:|---|
-| **A** | **Fix the 3 failing PHPUnit tests + gate PHPUnit in local-CI** | The QAPages drift test was designed to catch the block-add bug — it works, it just wasn't gated. | 30 min | **P0** |
-| **B** | **Refresh manifest + update CLAUDE.md header counts** | Grounds every future audit. | 15 min | **P0** |
-| **C** | **Boot-timing journey** | Every admin page registers cleanly; every REST controller resolves caps. Would have caught 3 of the 26 cards. | 90 min | **P0** |
-| **D** | **Enum-link gate** (`bin/check-enum-drift.sh`) | Diffs each `VALID_*` constant against its engine consumer. Would have caught the free-shipping 400 and the redemption-error mapping bug. | 45 min | **P0** |
-| **E** | **CSS-class orphan gate** | Greps `class="wbgam-foo"` in PHP vs `.wbgam-foo` in CSS; fails on orphans. Would have caught the Emails switch bug. | 30 min | **P1** |
-| **F** | **Sync/async manifest invariant** | Every action manifest must declare `async` explicitly when `repeatable=true`. Default-routing is the smell. | 30 min | **P1** |
-| **G** | **"Every fired `do_action('wb_gam_*')` has at least one `add_action`"** | Would have caught the missing redemption-email listener. | 45 min | **P1** |
-| **H** | **Force-fail local-CI when vendor/ missing** | Today WPCS + PHPStan silently skip. Remove the warn-and-skip path. | 10 min | **P0** |
-| **I** | **Enable xdebug coverage + set a floor (e.g. 60%, raise quarterly)** | Coverage drift is invisible today. | 60 min | **P1** |
-| **J** | **Journey-per-fix rule** (procedural) | Every Ready-for-Testing card must add a journey under `audit/journeys/release/` before close-out. CLAUDE.md says this; not enforced. | 0 dev / 100% discipline | **P0** |
-| **K** | **Bump PHPStan level 5 → 6 with baseline** | New code can't add type holes; existing covered by baseline. | 60 min | **P2** |
+**Status update — 2026-05-27**: items A–K all shipped (commits `343b0a1`, `ab60fce`, plus the PHPStan + coverage bump). Local-CI now runs 16 stages (was 10 at audit time).
+
+| # | Gate | Catches | Effort | Priority | Status |
+|---|---|---|---:|---|---|
+| **A** | **Fix the 3 failing PHPUnit tests + gate PHPUnit in local-CI** | The QAPages drift test was designed to catch the block-add bug — it works, it just wasn't gated. | 30 min | **P0** | ✅ `343b0a1` |
+| **B** | **Refresh manifest + update CLAUDE.md header counts** | Grounds every future audit. | 15 min | **P0** | ✅ `343b0a1` (full Phase 2.5 deferred) |
+| **C** | **Boot-timing journey** | Every admin page registers cleanly; every REST controller resolves caps. Would have caught 3 of the 26 cards. | 90 min | **P0** | ✅ `343b0a1` (journey 10) |
+| **D** | **Enum-link gate** (`bin/check-enum-drift.sh`) | Diffs each `VALID_*` constant against its engine consumer. Would have caught the free-shipping 400 and the redemption-error mapping bug. | 45 min | **P0** | ✅ `343b0a1` — caught real `point_multiplier` typo on first run |
+| **E** | **CSS-class orphan gate** | Greps `class="wbgam-foo"` in PHP vs `.wbgam-foo` in CSS; fails on orphans. Would have caught the Emails switch bug. | 30 min | **P1** | ✅ `ab60fce` (47 orphans baselined) |
+| **F** | **Sync/async manifest invariant** | Every action manifest must declare `async` explicitly when `repeatable=true`. Default-routing is the smell. | 30 min | **P1** | ✅ `ab60fce` (59 implicit baselined) |
+| **G** | **"Every fired `do_action('wb_gam_*')` has at least one `add_action`"** | Would have caught the missing redemption-email listener. | 45 min | **P1** | ✅ `ab60fce` (7 critical events gated) |
+| **H** | **Force-fail local-CI when vendor/ missing** | Today WPCS + PHPStan silently skip. Remove the warn-and-skip path. | 10 min | **P0** | ✅ `343b0a1` |
+| **I** | **Enable xdebug coverage + set a floor** | Coverage drift is invisible today. | 60 min | **P1** | ✅ Floor at 3.5% lines / 5.0% methods (baseline 3.79% / 5.60%) |
+| **J** | **Journey-per-fix rule** (procedural) | Every Ready-for-Testing card must add a journey under `audit/journeys/release/` before close-out. CLAUDE.md says this; not enforced. | 0 dev / 100% discipline | **P0** | ✅ Codified in CLAUDE.md |
+| **K** | **Bump PHPStan level 5 → 6 with baseline** | New code can't add type holes; existing covered by baseline. | 60 min | **P2** | ✅ Bumped to level 9 — codebase already passed max cleanly, no baseline needed |
 
 **Estimated total to ship A + B + C + D + H + J**: ~4 hours, blocks 8 of the next 10 bugs of the recurring classes seen above.
 

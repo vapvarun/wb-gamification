@@ -136,6 +136,31 @@ Individual stages can be run via composer scripts: `composer coding-rules`, `com
 
 **Bypass for emergencies only**: `SKIP_LOCAL_CI=1 git push`.
 
+### Stability gates (added 2026-05-27 per `audit/STABILITY-2026-05-27.md`)
+
+The stability audit added 6 new cross-layer contract gates plus PHPUnit + a coverage floor. Local-CI now runs 16 stages:
+
+| Stage | Tool | Catches the bug class from |
+|---|---|---|
+| 1.5 PHPUnit | `composer test` | Stale-fixture failures (the QAPages drift test caught block-add bugs that nobody noticed) |
+| 2.7 Enum drift | `bin/check-enum-drift.sh` | `point_multiplier` vs `points_multiplier` typo (caught a real bug on first run); Basecamp #9927682021 free-shipping 400; #9927027277 redemption error mapping |
+| 2.8 CSS orphans | `bin/check-css-orphans.sh` | Basecamp #9925205802 — PHP wrote `__slider` but CSS only knew `__track`, Emails switch was invisible. Baseline `audit/css-orphan-baseline.txt` |
+| 2.9 Action sync/async | `bin/check-action-async.sh` | Basecamp #9925589914 — WC events queued through Action Scheduler when admins expected immediate award. Baseline `audit/action-async-baseline.txt` |
+| 2.10 Event wiring | `bin/check-event-wiring.sh` | Basecamp #9927383947 — `wb_gam_points_redeemed` fired but TransactionalEmailEngine never subscribed |
+| 2.11 Coverage floor | `bin/check-coverage-floor.sh` (only when `build/coverage/coverage.txt` is fresh) | PHPUnit coverage silently sliding |
+
+PHPStan bumped from level 5 → **level 9** — codebase already passed at every level, so no baseline file needed; new code can't add type holes.
+
+**Run coverage on demand**: `composer test:coverage` (chains the floor check). Default `composer ci` skips coverage for speed.
+
+**Refresh a baseline** (after a legitimate fix made the gate noisy):
+```bash
+bin/check-css-orphans.sh   --update-baseline   # CSS orphan list
+bin/check-action-async.sh  --update-baseline   # implicit-async action list
+```
+
+The audit doc (`audit/STABILITY-2026-05-27.md`) classifies which gate maps to which v1.4.0 bug.
+
 ## Production hosting requirements (100k+ user sites)
 
 Plugin is built to scale per the v1.0 hardening sprint, but two host-level prerequisites are **required**, not optional, on sites with >10k active users:

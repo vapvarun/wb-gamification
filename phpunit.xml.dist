@@ -26,6 +26,8 @@
     <coverage>
         <report>
             <html outputDirectory="build/coverage"/>
+            <clover outputFile="build/coverage/clover.xml"/>
+            <text outputFile="build/coverage/coverage.txt" showUncoveredFiles="false" showOnlySummary="true"/>
         </report>
     </coverage>
 

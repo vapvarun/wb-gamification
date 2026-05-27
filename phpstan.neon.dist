@@ -2,7 +2,11 @@ includes:
     - vendor/szepeviktor/phpstan-wordpress/extension.neon
 
 parameters:
-    level: 5
+    # Level bumped 5 → 9 on 2026-05-27 after the stability audit found the
+    # entire codebase passes cleanly at every level up to max. Pinning to 9
+    # rather than `max` so PHPStan version upgrades don't silently raise the
+    # bar. See audit/STABILITY-2026-05-27.md §4.K.
+    level: 9
     paths:
         - src
         - wb-gamification.php

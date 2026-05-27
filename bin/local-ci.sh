@@ -220,6 +220,16 @@ if [ -x bin/check-event-wiring.sh ] && [ "$MODE" != "quick" ]; then
   run_stage "2.10" "Critical event wiring" bash bin/check-event-wiring.sh
 fi
 
+# 2.11 — Coverage floor. Only fires when build/coverage/coverage.txt is
+# present (produced by composer test:coverage). Default ci/ci:no-journeys
+# runs use --no-coverage for speed and silently skip this stage. CI runs
+# that explicitly opt into coverage (composer test:coverage) chain the
+# floor check after the report is written. Audit baseline at level 9
+# PHPStan + 109 PHPUnit / 3.79% lines / 5.60% methods (2026-05-27).
+if [ -x bin/check-coverage-floor.sh ] && [ -f build/coverage/coverage.txt ] && [ "$MODE" != "quick" ]; then
+  run_stage "2.11" "PHPUnit coverage floor" bash bin/check-coverage-floor.sh
+fi
+
 # ─── 3.x — Manifest freshness ────────────────────────────────────────────────
 
 if [ "$MODE" != "quick" ]; then
