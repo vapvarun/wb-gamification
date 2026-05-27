@@ -40,6 +40,12 @@ final class SubmissionsPage {
 		if ( 'gamification_page_wb-gam-submissions' !== $hook ) {
 			return;
 		}
+		wp_enqueue_style(
+			'wb-gam-page-submissions',
+			plugins_url( 'assets/css/admin/pages/submissions.css', WB_GAM_FILE ),
+			array( 'wb-gam-admin-utilities' ),
+			WB_GAM_VERSION
+		);
 		wp_enqueue_script(
 			'wb-gam-submissions-admin',
 			plugins_url( 'assets/js/admin-submissions.js', WB_GAM_FILE ),

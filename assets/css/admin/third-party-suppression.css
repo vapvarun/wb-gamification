@@ -1,0 +1,61 @@
+/**
+ * WB Gamification — Third-Party Notice Suppression
+ * =====================================================================
+ * Body-scoped rules that hide third-party admin notices on every plugin
+ * admin page so unrelated marketing banners don't bleed into our admin
+ * UI. Pre-1.4.1 the suppression list hardcoded 6 specific page slugs and
+ * missed several (the Setup Wizard at admin_page_wb-gamification-setup
+ * was the most visible — Basecamp #9932063294 / BuddyX's admin notice
+ * bleeding into the wizard container). The wildcard `body[class*="..."]`
+ * pattern catches every page WP emits a `*page_wb-gam(ification)` class
+ * on, so any new admin page automatically gets the suppression without
+ * a manual edit here.
+ *
+ * Body classes covered:
+ *   - `toplevel_page_wb-gamification`     (the parent menu page)
+ *   - `gamification_page_<slug>`          (every visible submenu)
+ *   - `admin_page_wb-gamification-setup`  (hidden wizard submenu)
+ *   - `admin_page_wb-gam-*`               (any other hidden submenu)
+ *
+ * Our own notices keep the `.wb-gam-notice` class so they pass the
+ * `:not()` filter and stay visible.
+ *
+ * Cascade position: loads FOURTH (after utilities.css), before any
+ * per-page sheet. Body-scoped + `!important` so it always wins against
+ * theme/third-party rules.
+ *
+ * Migration source: admin-core.css §24 + the secondary suppression
+ * block in admin-pages.css ("3rd-party-notice suppression on plugin
+ * admin pages").
+ *
+ * @package WB_Gamification
+ */
+
+body[class*="page_wb-gamification"] .notice:not(.wb-gam-notice),
+body[class*="page_wb-gam-"] .notice:not(.wb-gam-notice),
+body[class*="page_wb-gamification"] .update-nag,
+body[class*="page_wb-gam-"] .update-nag,
+body[class*="page_wb-gamification"] div.error:not(.wb-gam-notice),
+body[class*="page_wb-gam-"] div.error:not(.wb-gam-notice),
+body[class*="page_wb-gamification"] div.updated:not(.wb-gam-notice),
+body[class*="page_wb-gam-"] div.updated:not(.wb-gam-notice) {
+	display: none !important;
+}
+
+/* Secondary suppression — keeps the same intent but allows critical core
+ * notices (.update-nag, .error, .update-message) when they appear under
+ * #wpbody-content as a direct child. Used by WB_Gamification::suppress_third_party_notices
+ * for the more permissive case (top-of-page banners). */
+body.toplevel_page_wb-gamification #wpbody-content > .notice:not(.wb-gam-notice):not(.update-nag):not(.error):not(.update-message),
+body.toplevel_page_wb-gamification #wpbody-content > .updated:not(.wb-gam-notice),
+body[class*="_page_wb-gamification"] #wpbody-content > .notice:not(.wb-gam-notice):not(.update-nag):not(.error):not(.update-message),
+body[class*="_page_wb-gamification"] #wpbody-content > .updated:not(.wb-gam-notice),
+body[class*="_page_wb-gam-"] #wpbody-content > .notice:not(.wb-gam-notice):not(.update-nag):not(.error):not(.update-message),
+body[class*="_page_wb-gam-"] #wpbody-content > .updated:not(.wb-gam-notice) {
+	display: none !important;
+}
+
+/* Welcome-banner CTA spacing (RTL-aware). Used by SetupWizard::maybe_show_welcome_notice. */
+.wb-gam-notice .wb-gam-notice__cta {
+	margin-inline-start: 8px;
+}

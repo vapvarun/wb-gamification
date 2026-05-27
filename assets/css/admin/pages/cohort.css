@@ -1,0 +1,49 @@
+/**
+ * WB Gamification — Cohort Settings Page CSS
+ * =====================================================================
+ * Per-page styles for `WBGam\Admin\CohortSettingsPage` (menu slug:
+ * `wb-gamification`, embedded as a sub-section in the Settings sidebar).
+ * Manages cohort leagues (tier names, duration, promote/demote
+ * thresholds, enabled toggle).
+ *
+ * Cascade position: loads FIFTH (after suppression). Consumes
+ * components.css + utilities.css.
+ *
+ * Token policy: `var(--wbgam-*)` only.
+ *
+ * Migration source: page-specific field markers (no dedicated section
+ * existed in the old admin-pages.css — fields used generic .wbgam-input
+ * visuals).
+ *
+ * @package WB_Gamification
+ */
+
+/* Root wrapper marker. */
+.wb-gam-admin-cohort {
+	/* Container — visuals from .wbgam-settings-card. */
+}
+
+/* Tier name inputs — 4 fixed slots. */
+.wb-gam-tier-1,
+.wb-gam-tier-2,
+.wb-gam-tier-3,
+.wb-gam-tier-4 {
+	/* JS-bound tier name inputs — visuals from .wbgam-input. */
+}
+
+/* Threshold + cycle controls. */
+.wb-gam-cohort-enabled,
+.wb-gam-cohort-form,
+.wb-gam-cohort-save,
+.wb-gam-promote-pct,
+.wb-gam-demote-pct,
+.wb-gam-duration {
+	/* JS-bound form controls. */
+}
+
+/* Narrow ordered list — used for the "how cohorts work" explainer steps. */
+.wbgam-list-narrow {
+	margin: 0;
+	padding-inline-start: 1.25rem;
+	line-height: 1.8;
+}

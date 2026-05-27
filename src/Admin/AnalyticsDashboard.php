@@ -76,9 +76,15 @@ final class AnalyticsDashboard {
 			return;
 		}
 		wp_enqueue_style(
+			'wb-gam-page-analytics',
+			plugins_url( 'assets/css/admin/pages/analytics.css', WB_GAM_FILE ),
+			array( 'wb-gam-admin-utilities' ),
+			WB_GAM_VERSION
+		);
+		wp_enqueue_style(
 			'wb-gam-admin-analytics',
 			WB_GAM_URL . 'assets/css/admin-analytics.css',
-			array( 'wb-gam-admin' ),
+			array( 'wb-gam-page-analytics' ),
 			WB_GAM_VERSION
 		);
 	}

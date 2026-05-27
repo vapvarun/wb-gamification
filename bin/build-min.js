@@ -1,12 +1,15 @@
 #!/usr/bin/env node
 /**
- * bin/build-min.js — minify every .css in assets/css/ to a .min.css sibling.
- * The release zip ships both LTR and RTL sources alongside their .min.css
- * variants so plugin consumers can pick the served path (debug = source,
- * production = minified).
+ * bin/build-min.js — minify every .css in assets/css/ (recursive —
+ * descends into subdirectories like assets/css/admin/pages/) to a
+ * .min.css sibling. The release zip ships both LTR and RTL sources
+ * alongside their .min.css variants so plugin consumers can pick the
+ * served path (debug = source, production = minified).
  *
- * Source files: assets/css/*.css and assets/css/*-rtl.css (excluding *.min.css).
- * Output: assets/css/<name>.min.css and assets/css/<name>-rtl.min.css
+ * Source files: assets/css/**\/*.css and assets/css/**\/*-rtl.css
+ * (excluding *.min.css).
+ * Output: assets/css/**\/<name>.min.css and
+ * assets/css/**\/<name>-rtl.min.css alongside each source.
  *
  * Invocation: npm run build:min
  */
@@ -24,11 +27,37 @@ if (!fs.existsSync(CSS_DIR)) {
 	process.exit(0);
 }
 
-// Minify both LTR sources and -rtl.css. Skip already-minified output to avoid
-// recursive .min.min.css.
-const sources = fs.readdirSync(CSS_DIR).filter((f) => {
-	return f.endsWith('.css') && !f.endsWith('.min.css');
-});
+/**
+ * Walk a directory recursively, yielding absolute paths to every .css source
+ * file (excludes *.min.css siblings — keeps both LTR and -rtl.css).
+ *
+ * @param {string} dir Absolute directory path.
+ * @returns {string[]} Array of absolute file paths.
+ */
+function walkCss(dir) {
+	const out = [];
+	const entries = fs.readdirSync(dir, { withFileTypes: true });
+	for (const entry of entries) {
+		const full = path.join(dir, entry.name);
+		if (entry.isDirectory()) {
+			out.push(...walkCss(full));
+			continue;
+		}
+		if (!entry.isFile()) {
+			continue;
+		}
+		if (!entry.name.endsWith('.css')) {
+			continue;
+		}
+		if (entry.name.endsWith('.min.css')) {
+			continue;
+		}
+		out.push(full);
+	}
+	return out;
+}
+
+const sources = walkCss(CSS_DIR);
 
 if (sources.length === 0) {
 	process.stdout.write('build:min — no source CSS files found.\n');
@@ -42,9 +71,10 @@ const minifier = new CleanCSS({
 });
 
 let generated = 0;
-for (const filename of sources) {
-	const srcPath = path.join(CSS_DIR, filename);
-	const minPath = path.join(CSS_DIR, filename.replace(/\.css$/, '.min.css'));
+for (const srcPath of sources) {
+	const filename = path.basename(srcPath);
+	const dir = path.dirname(srcPath);
+	const minPath = path.join(dir, filename.replace(/\.css$/, '.min.css'));
 
 	const css = fs.readFileSync(srcPath, 'utf8');
 	const result = minifier.minify(css);
@@ -55,7 +85,8 @@ for (const filename of sources) {
 
 	fs.writeFileSync(minPath, result.styles);
 	generated += 1;
-	process.stdout.write(`  min  ${filename} → ${path.basename(minPath)} (${(result.styles.length / 1024).toFixed(1)} KB)\n`);
+	const rel = path.relative(CSS_DIR, srcPath);
+	process.stdout.write(`  min  ${rel} → ${path.relative(CSS_DIR, minPath)} (${(result.styles.length / 1024).toFixed(1)} KB)\n`);
 }
 
 process.stdout.write(`build:min — ${generated} file${generated === 1 ? '' : 's'} minified.\n`);

@@ -1,0 +1,50 @@
+/*! challenges-rtl.css — auto-generated from challenges.css by bin/build-rtl.js. Do not edit by hand. */
+/**
+ * WB Gamification — Challenge Manager Admin Page CSS
+ * =====================================================================
+ * Per-page styles for `WBGam\Admin\ChallengeManagerPage` (menu slug:
+ * `wb-gam-challenges`). Manages individual-user challenges (title /
+ * action / target / bonus / starts / ends).
+ *
+ * Cascade position: loads FIFTH (after suppression). Consumes
+ * components.css + utilities.css.
+ *
+ * Token policy: `var(--wbgam-*)` only.
+ *
+ * Migration source: page-specific field markers + .wbgam-tabs (shared
+ * with CommunityChallengesPage but kept here because both pages
+ * enqueue their own per-page sheets and tabs are stylistic, not
+ * structural — duplicating the rule is cheaper than promoting it).
+ *
+ * @package WB_Gamification
+ */
+
+/* Challenge form-field markers. */
+.wb-gam-challenge-action,
+.wb-gam-challenge-bonus,
+.wb-gam-challenge-ends,
+.wb-gam-challenge-starts,
+.wb-gam-challenge-target,
+.wb-gam-challenge-title {
+	/* JS-bound challenge form inputs — visuals from .wbgam-input/.wbgam-select. */
+}
+
+/* ==========================================================================
+   1. Tab Strip (also used by CommunityChallengesPage)
+   ========================================================================== */
+
+.wbgam-tabs {
+	display: flex;
+	gap: 0;
+	border-bottom: 2px solid var(--wbgam-border);
+	margin-block-end: var(--wbgam-gap);
+	overflow-x: auto;
+	-webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 640px) {
+
+	.wbgam-tabs {
+		gap: 0;
+	}
+}

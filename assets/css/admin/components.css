@@ -1,0 +1,1312 @@
+/**
+ * WB Gamification — Admin Components
+ * =====================================================================
+ * Reusable UI components shared across the 14 admin pages: page wrap,
+ * page header, settings topbar, cards, banners, buttons, inputs,
+ * selects, tables, pills, empty states, help panels, toggle switches,
+ * accordions, action cells, modals (confirm), toasts, KPI cards,
+ * settings sidebar/nav, and the badge card.
+ *
+ * Cascade position: loads SECOND (after tokens.css, before
+ * utilities.css). Consumes design tokens from tokens.css; never
+ * declares new tokens.
+ *
+ * Token policy (mandatory): use `var(--wbgam-*)` only. Legacy
+ * `var(--wb-gam-*)` aliases are accepted because the alias layer in
+ * tokens.css resolves them onto the canonical scale; do not add new
+ * `--wb-gam-*` references in new rules.
+ *
+ * Dynamic-modifier safety: rules whose modifier classes are built at
+ * runtime by PHP — `.wbgam-banner--{success|error|info|warning}`,
+ * `.wbgam-pill--{active|inactive|info|warning|neutral|danger}`,
+ * `.wb-gam-mode-badge--{community|standalone}` — stay co-located with
+ * their base selector here so a missing variant never breaks layout.
+ *
+ * Conflict resolution: where admin-core.css and admin-pages.css both
+ * defined the same component (.wbgam-pill, .wbgam-card, .wbgam-btn,
+ * .wbgam-input, .wbgam-select, .wbgam-table, .wbgam-empty), the
+ * admin-pages.css "premium" version won via cascade order in the old
+ * stack; that's the version preserved here. The older admin-core.css
+ * variants were never reaching production for those components.
+ *
+ * Migration source:
+ *   - admin-core.css §2-§19 (page wrap, cards, KPI strip, toggle,
+ *     pills, toasts, tables, forms, buttons, tabs, empty, dividers,
+ *     avatars, badges, progress, modals, dropdowns), §23 (settings
+ *     sidebar/wrap), §25 (submissions admin row affordances)
+ *   - admin-pages.css §1-§17 (overrides + per-feature components:
+ *     mode badge, KPI strip, wizard primitives moved to wizard.css,
+ *     page header, settings topbar, banner, accordion, event list,
+ *     premium card/btn/input/select/pill/table, welcome card,
+ *     dashboard rows, rank/action/kudos feeds, confirm modal, help
+ *     panel, test event status, toolbar)
+ *
+ * @package WB_Gamification
+ */
+
+/* ==========================================================================
+   1. Page Wrapper
+   ========================================================================== */
+
+.wbgam-wrap {
+	max-width: 1600px;
+	font-family: var(--wbgam-font);
+	color: var(--wbgam-text);
+	line-height: 1.5;
+	margin-block-start: 1.25rem;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+}
+
+.wbgam-settings-wrap {
+	margin-block-start: 1.25rem;
+}
+
+/* ==========================================================================
+   2. Page Header
+   ========================================================================== */
+
+.wbgam-page-header {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: 1.5rem;
+	flex-wrap: wrap;
+	background: var(--wbgam-card-bg);
+	border: 1px solid var(--wb-gam-border, #e5e7eb);
+	border-radius: var(--wb-gam-radius, 8px);
+	padding: 1.25rem 1.5rem;
+	margin-block-end: 1.5rem;
+}
+
+.wbgam-page-header__main {
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
+.wbgam-page-header__title {
+	margin: 0;
+	font-size: var(--wbgam-fs-xl);
+	font-weight: 600;
+	line-height: 1.2;
+	color: var(--wb-gam-text, #1e1e1e);
+}
+
+.wbgam-page-header__desc {
+	margin: 0.375rem 0 0;
+	color: var(--wb-gam-text-muted, #6b7280);
+	font-size: var(--wbgam-fs-base);
+	line-height: 1.5;
+}
+
+.wbgam-page-header__actions {
+	display: flex;
+	gap: var(--wbgam-gap-xs);
+	flex-wrap: wrap;
+	flex-shrink: 0;
+}
+
+@media (max-width: 640px) {
+
+	.wbgam-page-header {
+		padding: 1rem;
+	}
+}
+
+/* Page title / desc helpers (used by AnalyticsDashboard + other dashboards). */
+.wbgam-page-title {
+	font-size: var(--wbgam-fs-2xl);
+	font-weight: 700;
+	margin: 0 0 0.25rem;
+	color: var(--wb-gam-text);
+	line-height: 1.3;
+}
+
+.wbgam-page-desc {
+	color: var(--wb-gam-text-muted);
+	font-size: var(--wbgam-fs-base);
+	margin: 0 0 1.5rem;
+	line-height: 1.5;
+}
+
+/* ==========================================================================
+   3. Settings Topbar (Settings page brand header)
+   ========================================================================== */
+
+.wbgam-settings-topbar {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 1.5rem;
+	flex-wrap: wrap;
+	background: var(--wbgam-card-bg);
+	border: 1px solid var(--wb-gam-border, #e5e7eb);
+	border-radius: var(--wb-gam-radius, 8px);
+	padding: 1.25rem 1.5rem;
+	margin: 1.25rem 1.5rem 1.5rem 0;
+}
+
+.wbgam-settings-topbar__brand {
+	display: flex;
+	align-items: center;
+	gap: var(--wbgam-gap-sm);
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
+.wbgam-settings-topbar__logo {
+	flex-shrink: 0;
+	width: 3rem;
+	height: 3rem;
+	font-size: var(--wbgam-fs-3xl);
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	background: linear-gradient(135deg, var(--wbgam-primary, #2563eb), #6366f1);
+	color: #fff;
+	border-radius: 0.625rem;
+}
+
+.wbgam-settings-topbar__text {
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
+.wbgam-settings-topbar__title {
+	margin: 0;
+	font-size: var(--wbgam-fs-2xl);
+	font-weight: 600;
+	line-height: 1.2;
+	color: var(--wb-gam-text, #1e1e1e);
+	display: flex;
+	align-items: center;
+	gap: 0.625rem;
+	flex-wrap: wrap;
+}
+
+.wbgam-settings-topbar__version {
+	font-size: var(--wbgam-fs-xs);
+	font-weight: 600;
+	color: var(--wb-gam-text-muted, #6b7280);
+	background: #f3f4f6;
+	padding: 0.125rem 0.5rem;
+	border-radius: var(--wbgam-radius-pill);
+	letter-spacing: 0.02em;
+}
+
+.wbgam-settings-topbar__desc {
+	margin: 0.375rem 0 0;
+	color: var(--wb-gam-text-muted, #6b7280);
+	font-size: var(--wbgam-fs-base);
+	line-height: 1.5;
+}
+
+.wbgam-settings-topbar__actions {
+	display: flex;
+	gap: var(--wbgam-gap-xs);
+	flex-wrap: wrap;
+	flex-shrink: 0;
+}
+
+@media (max-width: 782px) {
+
+	.wbgam-settings-topbar {
+		margin-inline-end: 0;
+	}
+}
+
+@media (max-width: 640px) {
+
+	.wbgam-settings-topbar {
+		padding: 1rem;
+	}
+
+	.wbgam-settings-topbar__logo {
+		width: 2.5rem;
+		height: 2.5rem;
+		font-size: var(--wbgam-fs-2xl);
+	}
+
+	.wbgam-settings-topbar__title {
+		font-size: var(--wbgam-fs-xl);
+	}
+}
+
+/* ==========================================================================
+   4. Card Component (premium variant — admin-pages.css wins)
+   ========================================================================== */
+
+.wbgam-card {
+	background: var(--wbgam-card-bg);
+	border: 1px solid var(--wb-gam-border);
+	border-radius: var(--wb-gam-radius);
+	overflow: hidden;
+}
+
+.wbgam-card-header {
+	padding: 1rem 1.25rem;
+	border-bottom: 1px solid var(--wb-gam-border);
+	background: #fafafa;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--wbgam-gap-sm);
+}
+
+.wbgam-card-title {
+	margin: 0;
+	font-size: var(--wbgam-fs-base);
+	font-weight: 600;
+	color: var(--wb-gam-text);
+	line-height: 1.4;
+}
+
+.wbgam-card-desc {
+	font-size: var(--wbgam-fs-sm);
+	color: var(--wbgam-text-secondary);
+	margin: 4px 0 0;
+}
+
+.wbgam-card-body {
+	padding: 1.25rem;
+	font-size: var(--wbgam-fs-base);
+	color: var(--wbgam-text);
+}
+
+.wbgam-card-body--flush {
+	padding: 0;
+}
+
+.wbgam-card-footer {
+	margin-block-start: var(--wbgam-gap-sm);
+	padding-block-start: var(--wbgam-gap-sm);
+	border-block-start: 1px solid var(--wbgam-border);
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+	gap: var(--wbgam-gap-xs);
+}
+
+/* Card header actions — accommodate multiple buttons (Re-run wizard + Dismiss). */
+.wbgam-card-header__actions {
+	display: inline-flex;
+	gap: 6px;
+	flex-wrap: wrap;
+}
+
+/* Card link helper — "view all" style links inside card headers. */
+.wbgam-card-link {
+	font-size: var(--wbgam-fs-sm);
+	color: var(--wbgam-primary);
+	text-decoration: none;
+	font-weight: 500;
+	margin-left: auto;
+}
+
+.wbgam-card-link:hover {
+	text-decoration: underline;
+}
+
+/* Accent left-border — used on Quick Links / featured callouts. */
+.wbgam-card--accent {
+	border-inline-start: 4px solid var(--wbgam-primary, #2563eb);
+}
+
+/* Success card — used by post-Setup-Wizard banner + other "you're all set" callouts. */
+.wbgam-card--success {
+	border-inline-start: 4px solid var(--wbgam-success, #16a34a);
+	background: var(--wbgam-success-soft, #f0fdf4);
+}
+
+.wbgam-card--success .wbgam-card-title .icon-circle-check {
+	color: var(--wbgam-success, #16a34a);
+	margin-inline-end: 6px;
+}
+
+/* ==========================================================================
+   5. Banner (with dynamic --success|--info|--warning|--error variants)
+   Dynamic-modifier base: wbgam-banner — PHP builds the variant at runtime.
+   ========================================================================== */
+
+.wbgam-banner {
+	display: flex;
+	align-items: flex-start;
+	gap: 0.875rem;
+	background: var(--wbgam-card-bg);
+	border: 1px solid var(--wb-gam-border, #e5e7eb);
+	border-inline-start: 4px solid #6b7280;
+	border-radius: var(--wb-gam-radius, 8px);
+	padding: 1rem 1.25rem;
+}
+
+.wbgam-banner--success {
+	border-inline-start-color: #16a34a;
+	background: #f0fdf4;
+}
+
+.wbgam-banner--info {
+	border-inline-start-color: #2563eb;
+	background: #eff6ff;
+}
+
+.wbgam-banner--warning {
+	border-inline-start-color: #d97706;
+	background: #fffbeb;
+}
+
+.wbgam-banner--error {
+	border-inline-start-color: #dc2626;
+	background: #fef2f2;
+}
+
+.wbgam-banner__icon {
+	flex-shrink: 0;
+	font-size: var(--wbgam-fs-2xl);
+	width: 1.5rem;
+	height: 1.5rem;
+}
+
+.wbgam-banner--success .wbgam-banner__icon {
+	color: #16a34a;
+}
+
+.wbgam-banner--info .wbgam-banner__icon {
+	color: #2563eb;
+}
+
+.wbgam-banner--warning .wbgam-banner__icon {
+	color: #d97706;
+}
+
+.wbgam-banner--error .wbgam-banner__icon {
+	color: #dc2626;
+}
+
+.wbgam-banner__body {
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
+.wbgam-banner__title {
+	display: block;
+	font-weight: 600;
+	color: var(--wb-gam-text, #1e1e1e);
+}
+
+.wbgam-banner__desc {
+	margin: 0.25rem 0;
+	font-size: var(--wbgam-fs-base);
+	color: var(--wb-gam-text-muted, #6b7280);
+}
+
+.wbgam-banner__dismiss {
+	flex-shrink: 0;
+	background: none;
+	border: 0;
+	padding: 0.25rem;
+	cursor: pointer;
+	color: var(--wb-gam-text-muted, #6b7280);
+	border-radius: var(--wbgam-radius-sm);
+}
+
+.wbgam-banner__dismiss:hover,
+.wbgam-banner__dismiss:focus-visible {
+	background: rgba(0, 0, 0, 0.04);
+	color: var(--wb-gam-text, #1e1e1e);
+}
+
+/* ==========================================================================
+   6. Status Pills (premium variant — admin-pages.css wins)
+   Dynamic-modifier base: wbgam-pill — PHP builds variant at runtime.
+   ========================================================================== */
+
+.wbgam-pill {
+	display: inline-block;
+	padding: 0.125rem 0.5rem;
+	font-size: var(--wbgam-fs-2xs);
+	font-weight: 600;
+	border-radius: var(--wbgam-radius-pill);
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	gap: var(--wbgam-gap-2xs);
+}
+
+.wbgam-pill--active {
+	background: #dcfce7;
+	color: #166534;
+}
+
+.wbgam-pill--inactive {
+	background: #f3f4f6;
+	color: #6b7280;
+}
+
+.wbgam-pill--info {
+	background: #dbeafe;
+	color: #1e40af;
+}
+
+.wbgam-pill--warning {
+	background: #fef3c7;
+	color: #92400e;
+}
+
+.wbgam-pill--neutral {
+	color: var(--wbgam-text-secondary);
+	background: #f3f4f6;
+}
+
+.wbgam-pill--danger {
+	color: var(--wbgam-danger);
+	background: var(--wbgam-danger-bg);
+}
+
+.wbgam-pill-dot {
+	width: 6px;
+	height: 6px;
+	border-radius: 50%;
+	background: currentColor;
+	flex-shrink: 0;
+}
+
+/* ==========================================================================
+   7. Buttons (premium variant — admin-pages.css wins)
+   ========================================================================== */
+
+.wbgam-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.375rem;
+	padding: 0.5rem 1.125rem;
+	font-size: var(--wbgam-fs-sm);
+	font-weight: 600;
+	line-height: 1.5;
+	color: #fff;
+	background: var(--wb-gam-primary);
+	border: none;
+	border-radius: var(--wb-gam-radius);
+	cursor: pointer;
+	text-decoration: none;
+	white-space: nowrap;
+	transition: opacity 0.15s;
+}
+
+.wbgam-btn:hover {
+	opacity: 0.88;
+	color: #fff;
+}
+
+.wbgam-btn:focus-visible {
+	outline: 2px solid var(--wbgam-primary);
+	outline-offset: 2px;
+	box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.25);
+}
+
+.wbgam-btn--primary {
+	background: var(--wb-gam-primary);
+	color: #fff;
+}
+
+.wbgam-btn--secondary {
+	background: transparent;
+	color: var(--wb-gam-primary);
+	border: 1px solid var(--wb-gam-primary);
+}
+
+.wbgam-btn--secondary:hover {
+	background: var(--wb-gam-primary-light);
+	color: var(--wb-gam-primary);
+}
+
+.wbgam-btn--sm {
+	padding: 0.25rem 0.625rem;
+	font-size: var(--wbgam-fs-xs);
+}
+
+.wbgam-btn--danger {
+	background: #dc2626;
+	color: #fff;
+}
+
+.wbgam-btn--danger:hover {
+	opacity: 0.88;
+	color: #fff;
+}
+
+/* Disabled */
+.wbgam-btn:disabled,
+.wbgam-btn[disabled] {
+	opacity: 0.5;
+	cursor: not-allowed;
+	pointer-events: none;
+}
+
+/* Loading state — the ::after sized via --wbgam-btn-spinner-size token (set in tokens.css). */
+.wbgam-btn--loading {
+	position: relative;
+	color: transparent;
+	pointer-events: none;
+}
+
+.wbgam-btn--loading::after {
+	content: "";
+	position: absolute;
+	inline-size: var(--wbgam-btn-spinner-size);
+	block-size: var(--wbgam-btn-spinner-size);
+	border: 2px solid rgba(255, 255, 255, 0.3);
+	border-block-start-color: #fff;
+	border-radius: 50%;
+	animation: wbgam-spin 0.6s linear infinite;
+}
+
+.wbgam-btn--secondary.wbgam-btn--loading::after {
+	border-color: rgba(0, 0, 0, 0.15);
+	border-block-start-color: var(--wbgam-text);
+}
+
+@keyframes wbgam-spin {
+
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+/* ==========================================================================
+   8. Form Inputs (premium variant — admin-pages.css wins)
+   ========================================================================== */
+
+.wbgam-input {
+	display: block;
+	width: 100%;
+	border: 1px solid var(--wb-gam-border);
+	border-radius: var(--wb-gam-radius);
+	padding: 0.5rem 0.75rem;
+	font-size: var(--wbgam-fs-base);
+	font-family: var(--wbgam-font);
+	color: var(--wbgam-text);
+	background: var(--wbgam-card-bg);
+	line-height: 1.5;
+	transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.wbgam-input::placeholder {
+	color: var(--wbgam-text-muted);
+}
+
+/* Mouse focus only: drop the browser outline (box-shadow ring suffices). */
+.wbgam-input:focus:not(:focus-visible) {
+	border-color: var(--wb-gam-primary);
+	box-shadow: 0 0 0 2px rgba(108, 99, 255, 0.15);
+}
+
+/* Keyboard focus: explicit outline + same border tint. */
+.wbgam-input:focus-visible {
+	border-color: var(--wb-gam-primary);
+	outline: 2px solid var(--wb-gam-primary);
+	outline-offset: 2px;
+	box-shadow: 0 0 0 2px rgba(108, 99, 255, 0.15);
+}
+
+.wbgam-input:disabled {
+	background: #f3f4f6;
+	color: var(--wbgam-text-muted);
+	cursor: not-allowed;
+}
+
+.wbgam-input--error {
+	border-color: var(--wbgam-danger);
+	box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.55);
+}
+
+.wbgam-input--error:focus {
+	box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.12);
+}
+
+/* Compact number input — used in settings tables where we need a tight 80px field. */
+.wbgam-input--xs {
+	width: 5rem;
+	padding: 0.375rem 0.5rem;
+	text-align: center;
+	font-variant-numeric: tabular-nums;
+}
+
+/* Inline-edit autosave feedback for per-action override inputs (Settings → Points). */
+.wbgam-input--saved {
+	transition: box-shadow 0.2s ease;
+	box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.45);
+}
+
+.wbgam-textarea {
+	display: block;
+	width: 100%;
+	padding: 8px 12px;
+	font-size: var(--wbgam-fs-base);
+	font-family: var(--wbgam-font);
+	color: var(--wbgam-text);
+	background: var(--wbgam-card-bg);
+	border: 1px solid var(--wbgam-input-border);
+	border-radius: var(--wbgam-radius-md);
+	line-height: 1.5;
+	resize: vertical;
+	min-height: 80px;
+	transition: border-color var(--wbgam-transition), box-shadow var(--wbgam-transition);
+}
+
+.wbgam-textarea:focus {
+	border-color: var(--wbgam-input-focus);
+	box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+.wbgam-textarea:focus-visible {
+	outline: 2px solid var(--wbgam-input-focus);
+	outline-offset: 2px;
+}
+
+/* ==========================================================================
+   9. Select (premium variant — admin-pages.css wins)
+   ========================================================================== */
+
+.wbgam-select {
+	border: 1px solid var(--wb-gam-border);
+	border-radius: var(--wb-gam-radius);
+	padding: 0.5rem 0.75rem;
+	font-size: var(--wbgam-fs-base);
+	font-family: var(--wbgam-font);
+	color: var(--wbgam-text);
+	background: var(--wbgam-card-bg);
+	line-height: 1.5;
+	cursor: pointer;
+	transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.wbgam-select:focus:not(:focus-visible) {
+	border-color: var(--wb-gam-primary);
+	box-shadow: 0 0 0 2px rgba(108, 99, 255, 0.15);
+}
+
+.wbgam-select:focus-visible {
+	border-color: var(--wb-gam-primary);
+	outline: 2px solid var(--wb-gam-primary);
+	outline-offset: 2px;
+	box-shadow: 0 0 0 2px rgba(108, 99, 255, 0.15);
+}
+
+.wbgam-select:disabled {
+	background-color: #f3f4f6;
+	color: var(--wbgam-text-muted);
+	cursor: not-allowed;
+}
+
+/* Compact select — used in settings tables for per-row currency picker. */
+.wbgam-select--sm {
+	min-width: 7rem;
+	max-width: 10rem;
+	padding: 0.375rem 1.75rem 0.375rem 0.5rem;
+	font-size: var(--wbgam-fs-sm);
+}
+
+/* ==========================================================================
+   10. Toggle Switch (premium iOS-style)
+   ========================================================================== */
+
+.wbgam-switch {
+	position: relative;
+	display: inline-flex;
+	align-items: center;
+	width: 2.25rem;
+	height: 1.25rem;
+	cursor: pointer;
+	flex-shrink: 0;
+}
+
+.wbgam-switch input {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	margin: 0;
+	opacity: 0;
+	cursor: pointer;
+	z-index: 1;
+}
+
+.wbgam-switch__track {
+	width: 100%;
+	height: 100%;
+	background: #d1d5db;
+	border-radius: var(--wbgam-radius-pill);
+	transition: background 0.15s ease;
+	position: relative;
+}
+
+.wbgam-switch__track::before {
+	content: "";
+	position: absolute;
+	top: 2px;
+	inset-inline-start: 2px;
+	width: 1rem;
+	height: 1rem;
+	background: var(--wbgam-card-bg);
+	border-radius: 50%;
+	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+	transition: transform 0.15s ease;
+}
+
+.wbgam-switch input:checked + .wbgam-switch__track {
+	background: var(--wbgam-primary, #2563eb);
+}
+
+.wbgam-switch input:checked + .wbgam-switch__track::before {
+	transform: translateX(1rem);
+}
+
+.wbgam-switch input:focus-visible + .wbgam-switch__track {
+	outline: 2px solid var(--wbgam-primary, #2563eb);
+	outline-offset: 2px;
+}
+
+[dir="rtl"] .wbgam-switch input:checked + .wbgam-switch__track::before {
+	transform: translateX(-1rem);
+}
+
+/* Generic .wbgam-toggle wrapper (used as a labelled-checkbox row). */
+.wbgam-toggle {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.5rem;
+	cursor: pointer;
+}
+
+/* ==========================================================================
+   11. Tables (premium variant — admin-pages.css wins)
+   ========================================================================== */
+
+.wbgam-table {
+	width: 100%;
+	border-collapse: collapse;
+	font-size: var(--wbgam-fs-base);
+}
+
+.wbgam-table th {
+	text-align: left;
+	padding: 0.625rem 0.75rem;
+	font-weight: 600;
+	font-size: var(--wbgam-fs-xs);
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	color: var(--wb-gam-text-muted);
+	border-bottom: 1px solid var(--wb-gam-border);
+	background: #fafafa;
+}
+
+.wbgam-table td {
+	padding: 0.625rem 0.75rem;
+	border-bottom: 1px solid #f3f4f6;
+	color: var(--wb-gam-text);
+	vertical-align: middle;
+}
+
+.wbgam-table tbody tr:hover {
+	background: #fafafe;
+}
+
+.wbgam-table tr:last-child td {
+	border-bottom: none;
+}
+
+/* Horizontal-scroll wrap for tables that don't reflow at narrow viewports.
+   Matches the canonical 640/782/1024 breakpoint discipline — tables collapse
+   into a scrollable region under 640px instead of overflowing the card. */
+.wbgam-table-scroll {
+	overflow-x: auto;
+	-webkit-overflow-scrolling: touch;
+	width: 100%;
+	max-width: 100%;
+}
+
+.wbgam-table-scroll > .wbgam-table {
+	min-width: 640px;
+}
+
+/* Table reset (used when wrapping a form-table inside a settings-card). */
+.wbgam-table-reset {
+	border: none !important;
+	box-shadow: none !important;
+}
+
+.wbgam-table-reset--full {
+	max-width: 100%;
+}
+
+/* Empty-row inside a table body. */
+.wbgam-empty-row {
+	padding: 1.25rem;
+	color: #757575;
+}
+
+/* Column-width helpers — reused across multiple tables. */
+.wbgam-col-actions {
+	width: 80px;
+}
+
+/* ==========================================================================
+   12. Empty State (premium variant)
+   ========================================================================== */
+
+.wbgam-empty {
+	text-align: center;
+	padding: 3rem 1.5rem;
+	background: var(--wbgam-card-bg);
+	border: 1px dashed var(--wb-gam-border);
+	border-radius: var(--wb-gam-radius);
+	color: var(--wbgam-text-muted);
+}
+
+.wbgam-empty-icon {
+	font-size: var(--wbgam-fs-display);
+	margin-bottom: 0.75rem;
+	line-height: 1;
+}
+
+.wbgam-empty-title {
+	font-size: var(--wbgam-fs-lg);
+	font-weight: 600;
+	margin-bottom: 0.375rem;
+	color: var(--wb-gam-text);
+}
+
+.wbgam-empty p {
+	color: var(--wb-gam-text-muted);
+	margin: 0;
+}
+
+/* Compact empty variant — used as inline "no data yet" placeholder in dashboard cards. */
+.wbgam-empty--inline {
+	color: var(--wbgam-text-muted);
+	font-size: var(--wbgam-fs-sm);
+	margin: 0;
+	padding: 16px 0;
+	text-align: center;
+	border: none;
+}
+
+/* ==========================================================================
+   13. Help Panel (collapsible <details>)
+   ========================================================================== */
+
+.wbgam-help-panel {
+	background: #f8fafc;
+	border: 1px solid #e5e7eb;
+	border-radius: var(--wb-gam-radius, 8px);
+	padding: 12px 16px;
+	margin: 0 0 20px;
+}
+
+.wbgam-help-panel__summary {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--wbgam-gap-xs);
+	cursor: pointer;
+	font-weight: 600;
+	font-size: var(--wbgam-fs-sm);
+	color: #1d2939;
+	user-select: none;
+}
+
+.wbgam-help-panel__summary:hover {
+	color: var(--wb-gam-primary, #2563eb);
+}
+
+.wbgam-help-panel__summary .icon-info {
+	color: var(--wb-gam-primary, #2563eb);
+}
+
+.wbgam-help-panel__body {
+	margin-top: 12px;
+	padding-top: 12px;
+	border-top: 1px solid #f0f0f1;
+	font-size: var(--wbgam-fs-sm);
+	line-height: 1.6;
+	color: #374151;
+}
+
+.wbgam-help-panel__body p {
+	margin: 0 0 10px;
+}
+
+.wbgam-help-panel__body p:last-child {
+	margin-bottom: 0;
+}
+
+.wbgam-help-panel__body code {
+	background: var(--wbgam-card-bg);
+	padding: 1px 6px;
+	border: 1px solid #e5e7eb;
+	border-radius: 3px;
+	font-size: var(--wbgam-fs-xs);
+}
+
+/* Generic .wbgam-help inline helper text. */
+.wbgam-help {
+	font-size: var(--wbgam-fs-sm);
+	color: var(--wbgam-text-muted);
+	margin-block-start: 4px;
+}
+
+@media (max-width: 640px) {
+
+	.wbgam-help-panel {
+		padding: 12px;
+	}
+}
+
+/* ==========================================================================
+   14. Action Cell (two-line title + helper desc in tables)
+   ========================================================================== */
+
+.wbgam-action-cell {
+	display: flex;
+	flex-direction: column;
+	gap: 0.125rem;
+}
+
+.wbgam-action-cell__title {
+	color: var(--wb-gam-text, #1e1e1e);
+	font-weight: 600;
+}
+
+.wbgam-action-cell__desc {
+	color: var(--wb-gam-text-muted, #6b7280);
+	font-size: var(--wbgam-fs-sm);
+	line-height: 1.4;
+}
+
+/* ==========================================================================
+   15. Accordion (<details>-based collapsible card head)
+   ========================================================================== */
+
+.wbgam-accordion {
+	overflow: hidden;
+}
+
+.wbgam-accordion > .wbgam-accordion__head {
+	display: flex;
+	align-items: center;
+	gap: var(--wbgam-gap-md);
+	cursor: pointer;
+	list-style: none;
+	user-select: none;
+	transition: background 0.12s ease;
+}
+
+.wbgam-accordion > .wbgam-accordion__head:hover {
+	background: #fafafe;
+}
+
+.wbgam-accordion > .wbgam-accordion__head::-webkit-details-marker {
+	display: none;
+}
+
+.wbgam-accordion__chevron {
+	flex-shrink: 0;
+	font-size: var(--wbgam-fs-lg);
+	color: var(--wb-gam-text-muted, #6b7280);
+	transition: transform 0.15s ease;
+}
+
+.wbgam-accordion[open] > .wbgam-accordion__head .wbgam-accordion__chevron {
+	transform: rotate(90deg);
+}
+
+.wbgam-accordion__head-text {
+	display: flex;
+	flex-direction: column;
+	gap: 0.125rem;
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
+.wbgam-accordion__head-text .wbgam-settings-card__title {
+	margin: 0;
+}
+
+.wbgam-accordion__head-text .wbgam-settings-card__desc {
+	margin: 0;
+}
+
+[dir="rtl"] .wbgam-accordion__chevron {
+	transform: rotate(180deg);
+}
+
+[dir="rtl"] .wbgam-accordion[open] > .wbgam-accordion__head .wbgam-accordion__chevron {
+	transform: rotate(90deg);
+}
+
+/* ==========================================================================
+   16. Toolbar (page-level button row above a card)
+   ========================================================================== */
+
+.wbgam-toolbar {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin-bottom: 1rem;
+	gap: var(--wbgam-gap-sm);
+	flex-wrap: wrap;
+}
+
+@media (max-width: 640px) {
+
+	.wbgam-toolbar {
+		flex-direction: column;
+		align-items: stretch;
+	}
+}
+
+/* Action row — primary + secondary buttons aligned in a flex row, wraps on mobile. */
+.wbgam-actions-row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--wbgam-gap-xs);
+	margin: 12px 0 0;
+}
+
+.wbgam-actions-row .wbgam-btn .icon-external-link,
+.wbgam-actions-row .wbgam-btn .icon-pencil {
+	margin-inline-end: 6px;
+}
+
+@media (max-width: 640px) {
+
+	.wbgam-actions-row {
+		flex-direction: column;
+		align-items: stretch;
+	}
+
+	.wbgam-actions-row .wbgam-btn {
+		justify-content: center;
+	}
+}
+
+/* ==========================================================================
+   17. Toast Notifications (admin-rest-utils.js feedback layer)
+   ========================================================================== */
+
+.wbgam-toast-container {
+	position: fixed;
+	bottom: 24px;
+	inset-inline-end: 24px;
+	z-index: 999999;
+	display: flex;
+	flex-direction: column;
+	gap: var(--wbgam-gap-xs);
+	pointer-events: none;
+}
+
+.wbgam-toast {
+	background: #1e1e1e;
+	color: #fff;
+	padding: 12px 20px;
+	border-radius: var(--wbgam-card-radius);
+	font-size: var(--wbgam-fs-base);
+	font-family: var(--wbgam-font);
+	line-height: 1.5;
+	box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+	animation: wbgam-slide-in 0.3s ease forwards;
+	pointer-events: auto;
+	display: flex;
+	align-items: center;
+	gap: var(--wbgam-gap-md);
+	max-width: 400px;
+}
+
+.wbgam-toast--exiting {
+	animation: wbgam-slide-out 0.25s ease forwards;
+}
+
+@keyframes wbgam-slide-in {
+
+	from {
+		transform: translateX(100%);
+		opacity: 0;
+	}
+
+	to {
+		transform: translateX(0);
+		opacity: 1;
+	}
+}
+
+@keyframes wbgam-slide-out {
+
+	from {
+		transform: translateX(0);
+		opacity: 1;
+	}
+
+	to {
+		transform: translateX(100%);
+		opacity: 0;
+	}
+}
+
+@media (max-width: 640px) {
+
+	.wbgam-toast-container {
+		inset-inline-start: 16px;
+		inset-inline-end: 16px;
+		bottom: 16px;
+	}
+
+	.wbgam-toast {
+		max-width: 100%;
+	}
+}
+
+/* REST utils success/error toast classes (admin-rest-utils.js). */
+.wb-gam-rest-success-toast,
+.wb-gam-rest-error-toast {
+	/* Marker classes — actual visuals are applied by the toast container above.
+	   These selectors exist so PHP/JS can target without inline styling. */
+}
+
+/* ==========================================================================
+   18. Confirm Modal (admin-rest-utils.js)
+   ========================================================================== */
+
+.wb-gam-confirm-overlay {
+	position: fixed;
+	inset: 0;
+	background: rgba(26, 26, 46, 0.55);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	z-index: 100000;
+	animation: wbgam-fade-in 0.15s ease;
+}
+
+@keyframes wbgam-fade-in {
+
+	from {
+		opacity: 0;
+	}
+
+	to {
+		opacity: 1;
+	}
+}
+
+.wb-gam-confirm-dialog {
+	background: var(--wbgam-card-bg);
+	border-radius: 10px;
+	box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+	padding: 24px;
+	max-width: 420px;
+	width: calc(100% - 32px);
+	animation: wbgam-zoom-in 0.18s ease;
+}
+
+@keyframes wbgam-zoom-in {
+
+	from {
+		opacity: 0;
+		transform: scale(0.96);
+	}
+
+	to {
+		opacity: 1;
+		transform: scale(1);
+	}
+}
+
+.wb-gam-confirm-dialog__title {
+	font-size: var(--wbgam-fs-lg);
+	font-weight: 600;
+	margin: 0 0 8px;
+	color: #1a1a2e;
+}
+
+.wb-gam-confirm-dialog__body {
+	font-size: var(--wbgam-fs-base);
+	color: #555770;
+	margin: 0 0 20px;
+	line-height: 1.5;
+}
+
+.wb-gam-confirm-dialog__actions {
+	display: flex;
+	justify-content: flex-end;
+	gap: var(--wbgam-gap-xs);
+}
+
+.wb-gam-confirm-dialog__actions .button {
+	min-height: 40px;
+}
+
+/* Inline confirm-trigger marker (`data-confirm` on a button). */
+.wb-gam-confirm {
+	/* Marker class — visuals come from the .wbgam-btn variant the element wears. */
+}
+
+/* ==========================================================================
+   19. REST Form Markers (admin-rest-form.js / admin-rest-utils.js)
+   Shared, no visual styling beyond making the JS hooks discoverable. The
+   form markup itself uses .wbgam-input/.wbgam-select/.wbgam-btn for visuals.
+   ========================================================================== */
+
+.wb-gam-admin-rest-form,
+.wb-gam-admin-rest-utils,
+.wb-gam-rest-form,
+.wb-gam-rest-action,
+.wb-gam-rest-after,
+.wb-gam-rest-body,
+.wb-gam-rest-confirm,
+.wb-gam-rest-method,
+.wb-gam-rest-path {
+	/* JS hook markers — no visual rules. */
+}
+
+/* UTC datetime-local input marker — JS converts to UTC on submit. */
+.wb-gam-utc {
+	/* JS hook marker. */
+}
+
+/* ==========================================================================
+   20. Mode Badge (Standalone vs Community)
+   Dynamic-modifier base: wb-gam-mode-badge — variant built at runtime.
+   ========================================================================== */
+
+.wb-gam-mode-badge {
+	display: inline-block;
+	padding: 3px 10px;
+	border-radius: 3px;
+	font-size: var(--wbgam-fs-xs);
+	font-weight: 600;
+	color: #fff;
+	line-height: 1.5;
+}
+
+.wb-gam-mode-badge--community {
+	background: #00a32a;
+}
+
+.wb-gam-mode-badge--standalone {
+	background: #0073aa;
+}
+
+/* ==========================================================================
+   21. Challenges + Point Types + Community Challenges page wrappers
+   These slugs are page-specific .wb-gam-* roots that get treated as shared
+   because more than one page mounts them (Challenges + CommunityChallenges
+   share `.wb-gam-challenges`; ManualAwardPage + PointTypesPage +
+   PointTypeConversionsPage + SettingsPage share `.wb-gam-point-types`).
+   ========================================================================== */
+
+.wb-gam-challenges,
+.wb-gam-community-challenges,
+.wb-gam-point-types {
+	/* Marker wrapper classes — no specific visuals here; child elements
+	   inherit cards/tables/buttons from the components above. */
+}

@@ -45,6 +45,7 @@ final class SettingsPage {
 		add_action( 'admin_init', array( __CLASS__, 'handle_save' ) );
 		add_action( 'admin_init', array( __CLASS__, 'handle_dismiss_welcome' ) );
 		add_action( 'admin_init', array( __CLASS__, 'handle_dismiss_checklist' ) );
+		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_page_css' ) );
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_levels_assets' ) );
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_settings_toggles' ) );
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_test_event' ) );
@@ -400,6 +401,28 @@ final class SettingsPage {
 		return array(
 			'trigger_level_id' => $level_id,
 			'actions'          => array( $action ),
+		);
+	}
+
+	/**
+	 * Enqueue the per-page settings.css bundle on the Settings page only.
+	 *
+	 * The global tokens / components / utilities / suppression sheets are
+	 * enqueued by `WB_Gamification::enqueue_admin_assets`; this method adds
+	 * the page-specific overrides on top.
+	 *
+	 * @param string $hook_suffix Current admin page hook.
+	 * @return void
+	 */
+	public static function enqueue_page_css( string $hook_suffix ): void {
+		if ( 'toplevel_page_wb-gamification' !== $hook_suffix ) {
+			return;
+		}
+		wp_enqueue_style(
+			'wb-gam-page-settings',
+			plugins_url( 'assets/css/admin/pages/settings.css', WB_GAM_FILE ),
+			array( 'wb-gam-admin-utilities' ),
+			WB_GAM_VERSION
 		);
 	}
 

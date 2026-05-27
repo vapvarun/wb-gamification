@@ -1,0 +1,877 @@
+/**
+ * WB Gamification — Settings Page CSS
+ * =====================================================================
+ * Per-page styles for `WBGam\Admin\SettingsPage` (menu slug:
+ * `wb-gamification`). The Settings page is the most complex admin
+ * surface in the plugin: full-width sidebar layout, accordion-grouped
+ * Points tab, dashboard tab with KPI strip + checklist + dashboard
+ * rows + rank/action/kudos feeds, automation table, levels CRUD,
+ * test-event widget.
+ *
+ * Cascade position: loads FIFTH (after suppression). Consumes
+ * components.css + utilities.css; never redeclares tokens.
+ *
+ * Token policy: `var(--wbgam-*)` only.
+ *
+ * Migration source:
+ *   - admin-core.css §23 (settings full-width sidebar wrap, nav,
+ *     content, section cards, footer)
+ *   - admin-pages.css (settings table widths, mode badge moved to
+ *     components.css, KPI strip, quick links, automation table,
+ *     levels add/save form, accordion-grouped Points tab, dashboard
+ *     row/full, rank-list, action-list, kudos-feed, settings topbar
+ *     moved to components.css, test-event status, switch moved to
+ *     components.css)
+ *
+ * @package WB_Gamification
+ */
+
+/* ==========================================================================
+   1. Settings Full-Width Sidebar Layout
+   ========================================================================== */
+
+.wbgam-settings-wrap {
+	display: flex;
+	min-height: calc(100vh - 32px);
+	margin: -20px -20px -20px 0;
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+/* Sidebar */
+.wbgam-settings-sidebar {
+	width: 260px;
+	flex-shrink: 0;
+	background: var(--wbgam-card-bg);
+	border-right: 1px solid #e0e0e0;
+	padding: 24px 0;
+}
+
+.wbgam-settings-sidebar__brand {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 0 20px 20px;
+	border-bottom: 1px solid #e0e0e0;
+	margin-bottom: 12px;
+}
+
+.wbgam-settings-sidebar__logo {
+	width: 40px;
+	height: 40px;
+	background: linear-gradient(135deg, #f59e0b, #d97706);
+	color: #fff;
+	border-radius: 10px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: var(--wbgam-fs-xl);
+	flex-shrink: 0;
+}
+
+.wbgam-settings-sidebar__brand strong {
+	display: block;
+	font-size: var(--wbgam-fs-md);
+	font-weight: 700;
+	line-height: 1.25;
+	color: #1e1e1e;
+}
+
+.wbgam-settings-sidebar__brand span {
+	font-size: var(--wbgam-fs-2xs);
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.08em;
+	color: #757575;
+}
+
+/* Nav groups — compact density. */
+.wbgam-settings-nav,
+.wbgam-settings-nav-group {
+	margin-bottom: 0;
+}
+
+.wbgam-settings-nav-group__label {
+	display: block;
+	font-size: var(--wbgam-fs-2xs);
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.08em;
+	color: #757575;
+	padding: 14px 18px 4px;
+}
+
+.wbgam-settings-nav-group:first-of-type .wbgam-settings-nav-group__label {
+	padding-top: 8px;
+}
+
+.wbgam-settings-nav-item {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 6px 18px;
+	min-height: 32px;
+	color: #50575e;
+	text-decoration: none;
+	font-size: var(--wbgam-fs-base);
+	line-height: 1.3;
+	border-left: 3px solid transparent;
+	transition: background 0.15s, color 0.15s;
+}
+
+.wbgam-settings-nav-item:hover {
+	background: #f6f7f7;
+	color: #1d2327;
+	text-decoration: none;
+}
+
+.wbgam-settings-nav-item.is-active {
+	color: #2271b1;
+	background: #f0f6fc;
+	border-left-color: #2271b1;
+	font-weight: 600;
+}
+
+.wbgam-settings-nav-item [class^="icon-"],
+.wbgam-settings-nav-item .dashicons {
+	font-size: var(--wbgam-fs-md);
+	width: 16px;
+	height: 16px;
+	line-height: 1;
+	flex-shrink: 0;
+	opacity: 0.7;
+}
+
+.wbgam-settings-nav-item.is-active [class^="icon-"],
+.wbgam-settings-nav-item.is-active .dashicons {
+	opacity: 1;
+}
+
+/* Content area */
+.wbgam-settings-content {
+	flex: 1;
+	background: #f0f0f1;
+	padding: 10px 32px 24px;
+	min-width: 0;
+}
+
+/* Settings form root + slide-out (used in some flows). */
+.wbgam-settings-form,
+.wbgam-slide-out {
+	width: 100%;
+}
+
+/* Section cards */
+.wbgam-settings-card {
+	background: var(--wbgam-card-bg);
+	border: 1px solid #e2e8f0;
+	border-radius: var(--wbgam-card-radius);
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+	margin-bottom: 16px;
+	overflow: hidden;
+}
+
+.wbgam-settings-card__head {
+	padding: 14px 20px 12px;
+	border-bottom: 1px solid #e2e8f0;
+	background: #fafafa;
+}
+
+.wbgam-settings-card__title {
+	font-size: var(--wbgam-fs-sm);
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	color: #1e1e1e;
+	margin: 0 0 2px;
+}
+
+.wbgam-settings-card__desc {
+	font-size: var(--wbgam-fs-sm);
+	color: #757575;
+	margin: 0;
+}
+
+.wbgam-settings-card__body {
+	padding: 0;
+}
+
+.wbgam-settings-card__body--cozy {
+	padding: 1.5rem 1.25rem;
+}
+
+.wbgam-settings-card .form-table th {
+	padding: 16px 20px;
+	width: 200px;
+}
+
+.wbgam-settings-card .form-table td {
+	padding: 16px 20px;
+}
+
+/* Section visibility — JS toggles .is-active */
+.wbgam-settings-section {
+	display: none;
+}
+
+.wbgam-settings-section.is-active {
+	display: block;
+}
+
+/* Footer with save button */
+.wbgam-settings-section__footer {
+	padding: 16px 20px;
+	background: var(--wbgam-card-bg);
+	border: 1px solid #e2e8f0;
+	border-radius: var(--wbgam-card-radius);
+	margin-top: 8px;
+}
+
+.wbgam-settings-section__footer--flat,
+.wbgam-section__footer--flat {
+	border: none !important;
+	margin-block-start: 0 !important;
+}
+
+/* Settings sidebar responsive */
+@media (max-width: 782px) {
+
+	.wbgam-settings-wrap {
+		flex-direction: column;
+		margin: -20px -10px -20px -10px;
+	}
+
+	.wbgam-settings-sidebar {
+		width: 100%;
+		border-right: none;
+		border-bottom: 1px solid #e0e0e0;
+		padding: 16px 0;
+	}
+
+	.wbgam-settings-content {
+		padding: 16px;
+	}
+
+	.wbgam-settings-card .form-table th {
+		width: auto;
+		display: block;
+		padding: 12px 16px 0;
+	}
+
+	.wbgam-settings-card .form-table td {
+		display: block;
+		padding: 4px 16px 12px;
+	}
+}
+
+/* ==========================================================================
+   2. Tabs (Settings page in-section tabs)
+   ========================================================================== */
+
+.wbgam-tab {
+	padding: 12px 20px;
+	font-size: var(--wbgam-fs-base);
+	font-weight: 500;
+	color: var(--wbgam-text-secondary);
+	border-bottom: 2px solid transparent;
+	margin-bottom: -2px;
+	cursor: pointer;
+	transition: color var(--wbgam-transition), border-color var(--wbgam-transition);
+	text-decoration: none;
+	white-space: nowrap;
+	background: none;
+	border-top: none;
+	border-inline-start: none;
+	border-inline-end: none;
+	font-family: var(--wbgam-font);
+}
+
+.wbgam-tab:hover {
+	color: var(--wbgam-text);
+}
+
+.wbgam-tab--active {
+	color: var(--wbgam-primary);
+	border-bottom-color: var(--wbgam-primary);
+}
+
+.wbgam-tab-panel {
+	display: none;
+}
+
+.wbgam-tab-panel--active {
+	display: block;
+}
+
+/* ==========================================================================
+   3. Dashboard Tab — KPI Strip + Quick Links + Checklist + Dashboard Rows
+   ========================================================================== */
+
+.wb-gam-admin-kpi-strip {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+	gap: var(--wbgam-gap-sm);
+	margin-block-end: 1.5rem;
+}
+
+/* KPI card visuals — shared with AnalyticsDashboard which also enqueues
+   admin-analytics.css; rules kept here so the Settings dashboard tab
+   renders correctly even without analytics.css loading. */
+.wb-gam-admin-kpi-card {
+	background: var(--wbgam-card-bg);
+	border: 1px solid var(--wb-gam-border);
+	border-radius: var(--wb-gam-radius);
+	padding: 1.125rem 1rem;
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+	transition: box-shadow 0.15s;
+}
+
+.wb-gam-admin-kpi-card:hover {
+	box-shadow: 0 2px 8px rgba(108, 99, 255, 0.1);
+}
+
+.wb-gam-admin-kpi-icon {
+	font-size: var(--wbgam-fs-xl);
+	line-height: 1;
+}
+
+.wb-gam-admin-kpi-value {
+	font-size: var(--wbgam-fs-2xl);
+	font-weight: 800;
+	line-height: 1.1;
+	color: #1d2939;
+}
+
+.wb-gam-admin-kpi-title {
+	font-size: var(--wbgam-fs-sm);
+	font-weight: 600;
+	color: #374151;
+}
+
+.wb-gam-admin-kpi-sub {
+	font-size: var(--wbgam-fs-xs);
+	color: var(--wb-gam-silver);
+}
+
+.wb-gam-admin-quick-links {
+	display: flex;
+	gap: var(--wbgam-gap-md);
+	flex-wrap: wrap;
+	margin-block-end: 1.5rem;
+}
+
+@media (max-width: 782px) {
+
+	.wb-gam-admin-kpi-strip {
+		grid-template-columns: repeat(2, 1fr);
+	}
+}
+
+/* Welcome card */
+.wb-gam-welcome {
+	margin-block-end: 1.5rem;
+}
+
+/* Decorative quick-link nav row used on the dashboard tab. */
+.wbgam-quick-nav {
+	display: flex;
+	gap: var(--wbgam-gap-md);
+	flex-wrap: wrap;
+	margin-block-start: 0.75rem;
+}
+
+.wbgam-quick-nav__item {
+	border: 1px solid var(--wbgam-border, #e5e7eb);
+	border-radius: var(--wbgam-radius-md);
+	padding: 0.5rem 1rem;
+	text-decoration: none;
+	display: inline-flex;
+	align-items: center;
+	gap: var(--wbgam-gap-xs);
+	color: var(--wbgam-text, #1e1e1e);
+}
+
+.wbgam-quick-nav__item:hover,
+.wbgam-quick-nav__item:focus-visible {
+	border-color: var(--wbgam-primary, #2563eb);
+	color: var(--wbgam-primary, #2563eb);
+}
+
+/* Setup-progress checklist — items auto-checked from live site state. */
+.wbgam-checklist {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.wbgam-checklist__item {
+	display: flex;
+	align-items: flex-start;
+	gap: var(--wbgam-gap-md);
+	padding: 12px 0;
+	border-top: 1px solid #f0f0f1;
+}
+
+.wbgam-checklist__item:first-child {
+	border-top: none;
+	padding-top: 0;
+}
+
+.wbgam-checklist__icon {
+	flex-shrink: 0;
+	font-size: var(--wbgam-fs-lg);
+	color: var(--wb-gam-text-muted, #6b7280);
+	margin-top: 2px;
+}
+
+.wbgam-checklist__item.is-done .wbgam-checklist__icon {
+	color: var(--wbgam-success, #16a34a);
+}
+
+.wbgam-checklist__body {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	min-width: 0;
+}
+
+.wbgam-checklist__title {
+	font-size: var(--wbgam-fs-sm);
+	font-weight: 600;
+	color: #1d2939;
+}
+
+.wbgam-checklist__item.is-done .wbgam-checklist__title {
+	color: var(--wb-gam-text-muted, #6b7280);
+	text-decoration: line-through;
+	text-decoration-color: rgba(0, 0, 0, 0.18);
+}
+
+.wbgam-checklist__desc {
+	font-size: var(--wbgam-fs-xs);
+	color: var(--wb-gam-text-muted, #6b7280);
+	line-height: 1.5;
+}
+
+.wbgam-checklist__action {
+	flex-shrink: 0;
+}
+
+@media (max-width: 640px) {
+
+	.wbgam-checklist__item {
+		flex-wrap: wrap;
+	}
+
+	.wbgam-checklist__action {
+		margin-left: 30px; /* align under the body, past the icon */
+	}
+}
+
+/* Dashboard fill — Top Members + Top Actions side-by-side, then
+   Recent Kudos full-width below. */
+.wbgam-dashboard-row {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: var(--wbgam-gap-md);
+	margin: 24px 0 20px;
+}
+
+.wbgam-dashboard-row__full {
+	grid-column: 1 / -1;
+}
+
+.wbgam-dashboard-row .wbgam-card,
+.wbgam-dashboard-row__full {
+	background: var(--wbgam-card-bg);
+	border: 1px solid var(--wbgam-border);
+	border-radius: var(--wbgam-card-radius);
+	box-shadow: var(--wbgam-card-shadow);
+}
+
+/* Top members list */
+.wbgam-rank-list {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.wbgam-rank-list__item {
+	display: grid;
+	grid-template-columns: 32px 32px 1fr auto;
+	align-items: center;
+	gap: 10px;
+	padding: 8px 0;
+	border-bottom: 1px solid var(--wbgam-border);
+	font-size: var(--wbgam-fs-sm);
+}
+
+.wbgam-rank-list__item:last-child {
+	border-bottom: 0;
+}
+
+.wbgam-rank-list__rank {
+	font-weight: 700;
+	color: var(--wbgam-text-muted);
+	font-variant-numeric: tabular-nums;
+}
+
+.wbgam-rank-list__avatar img {
+	border-radius: 50%;
+	display: block;
+	width: 28px;
+	height: 28px;
+}
+
+.wbgam-rank-list__name {
+	color: var(--wbgam-text);
+	font-weight: 500;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.wbgam-rank-list__points {
+	color: var(--wbgam-primary);
+	font-weight: 600;
+	font-variant-numeric: tabular-nums;
+}
+
+/* Top actions list */
+.wbgam-action-list {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.wbgam-action-list__item {
+	display: grid;
+	grid-template-columns: 1fr auto auto;
+	align-items: center;
+	gap: var(--wbgam-gap-md);
+	padding: 8px 0;
+	border-bottom: 1px solid var(--wbgam-border);
+	font-size: var(--wbgam-fs-sm);
+}
+
+.wbgam-action-list__item:last-child {
+	border-bottom: 0;
+}
+
+.wbgam-action-list__name {
+	color: var(--wbgam-text);
+	font-weight: 500;
+	text-transform: capitalize;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.wbgam-action-list__count {
+	color: var(--wbgam-text-muted);
+	font-size: var(--wbgam-fs-xs);
+	font-variant-numeric: tabular-nums;
+}
+
+.wbgam-action-list__points {
+	color: var(--wbgam-primary);
+	font-weight: 600;
+	font-variant-numeric: tabular-nums;
+	min-width: 56px;
+	text-align: right;
+}
+
+/* Recent kudos feed — single line per kudo, scannable */
+.wbgam-kudos-feed {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.wbgam-kudos-feed__item {
+	display: flex;
+	align-items: center;
+	gap: var(--wbgam-gap-xs);
+	padding: 10px 0;
+	border-bottom: 1px solid var(--wbgam-border);
+	font-size: var(--wbgam-fs-sm);
+	flex-wrap: wrap;
+}
+
+.wbgam-kudos-feed__item:last-child {
+	border-bottom: 0;
+}
+
+.wbgam-kudos-feed__giver,
+.wbgam-kudos-feed__receiver {
+	font-weight: 600;
+	color: var(--wbgam-text);
+}
+
+.wbgam-kudos-feed__arrow {
+	color: var(--wbgam-text-muted);
+	font-weight: 700;
+}
+
+.wbgam-kudos-feed__message {
+	color: var(--wbgam-text-secondary);
+	font-style: italic;
+	flex: 1;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.wbgam-kudos-feed__time {
+	color: var(--wbgam-text-muted);
+	font-size: var(--wbgam-fs-xs);
+	margin-left: auto;
+	white-space: nowrap;
+}
+
+@media (max-width: 1024px) {
+
+	.wbgam-dashboard-row {
+		grid-template-columns: 1fr;
+	}
+}
+
+@media (max-width: 640px) {
+
+	.wbgam-rank-list__item {
+		grid-template-columns: 24px 28px 1fr auto;
+	}
+
+	.wbgam-action-list__item {
+		grid-template-columns: 1fr auto;
+	}
+
+	.wbgam-action-list__count {
+		display: none;
+	}
+
+	.wbgam-kudos-feed__time {
+		width: 100%;
+		margin-left: 0;
+	}
+}
+
+/* ==========================================================================
+   4. Points Tab — Action Overrides + Category Toggle
+   ========================================================================== */
+
+.wb-gam-admin-action-overrides,
+.wb-gam-admin-rule-action-toggle,
+.wbgam-category-toggle {
+	/* JS hook markers. */
+}
+
+.wb-gam-action-override {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--wbgam-gap-2xs);
+}
+
+.wb-gam-action-id {
+	font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+	font-size: var(--wbgam-fs-xs);
+	color: var(--wbgam-text-muted);
+}
+
+.wb-gam-action-desc {
+	color: #646970;
+	font-size: var(--wbgam-fs-xs);
+}
+
+/* ==========================================================================
+   5. Automation Table + Settings Tables + Column / Input Helpers
+   ========================================================================== */
+
+.wb-gam-settings-table {
+	margin-bottom: 20px;
+}
+
+.wb-gam-automation-table {
+	margin-bottom: 24px;
+}
+
+.wb-gam-form-inline {
+	display: inline;
+}
+
+/* Column width helpers (settings tables). */
+.wb-gam-col-toggle {
+	width: 28px;
+}
+
+.wb-gam-col-points {
+	width: 90px;
+}
+
+.wb-gam-col-flag {
+	width: 80px;
+}
+
+.wb-gam-col-pts-min {
+	width: 160px;
+}
+
+.wb-gam-col-currency {
+	width: 120px;
+}
+
+/* Input size helpers. */
+.wb-gam-input-narrow {
+	width: 70px;
+}
+
+.wb-gam-input-medium {
+	width: 120px;
+}
+
+.wb-gam-input-full {
+	width: 100%;
+}
+
+/* Kudos field markers — values bound via JS to live settings state. */
+.wb-gam-kudos-daily-limit,
+.wb-gam-kudos-giver-points,
+.wb-gam-kudos-receiver-points,
+.wb-gam-log-retention-months {
+	/* JS-bound numeric inputs — visuals come from .wbgam-input. */
+}
+
+/* ==========================================================================
+   6. Levels CRUD (admin-levels.js)
+   ========================================================================== */
+
+.wb-gam-admin-levels,
+.wb-gam-levels-root {
+	margin-block-end: 1.5rem;
+}
+
+.wb-gam-levels-table {
+	max-width: 600px;
+	width: 100%;
+}
+
+.wb-gam-levels-tbody tr {
+	border-bottom: 1px solid var(--wbgam-border);
+}
+
+.wb-gam-level-field {
+	display: inline-block;
+}
+
+.wb-gam-level-delete {
+	color: var(--wbgam-danger);
+	background: none;
+	border: 0;
+	cursor: pointer;
+	padding: 4px 8px;
+}
+
+.wb-gam-levels-add,
+.wb-gam-levels-add-form,
+.wb-gam-levels-bulk-form,
+.wb-gam-levels-save {
+	margin-top: 12px;
+}
+
+.wb-gam-new-level-name,
+.wb-gam-new-level-points {
+	margin-inline-end: 8px;
+}
+
+/* ==========================================================================
+   7. New Rule Builder (Settings → Rules)
+   ========================================================================== */
+
+.wb-gam-new-rule-content,
+.wb-gam-new-rule-group-id,
+.wb-gam-new-rule-role,
+.wb-gam-new-rule-sender-id,
+.wb-gam-new-rule-subject {
+	/* JS-bound rule-builder fields. */
+}
+
+/* ==========================================================================
+   8. Test Event Widget (admin-test-event.js)
+   ========================================================================== */
+
+.wb-gam-admin-test-event,
+.wb-gam-test-event {
+	margin-block-start: 1rem;
+}
+
+.wb-gam-test-event-status,
+.wbgam-test-event-status {
+	font-size: var(--wbgam-fs-sm);
+	color: #50575e;
+	display: inline-flex;
+	align-items: center;
+	gap: var(--wbgam-gap-2xs);
+}
+
+.wbgam-test-event-status--success {
+	color: #166534;
+}
+
+.wbgam-test-event-status--success .icon-circle-check {
+	color: #16a34a;
+}
+
+.wbgam-test-event-status--error {
+	color: #b32d2e;
+}
+
+.wbgam-test-event-status--pending {
+	color: #6b7280;
+}
+
+.wbgam-test-event-status a {
+	margin-inline-start: 6px;
+	font-weight: 600;
+	text-decoration: none;
+}
+
+@media (max-width: 640px) {
+
+	.wbgam-test-event-status {
+		width: 100%;
+		margin-top: 8px;
+	}
+}
+
+/* ==========================================================================
+   9. API Keys (settings section reference — full UI lives in api-keys.css)
+   ========================================================================== */
+
+.wb-gam-api-keys {
+	/* Wrapper marker shared with ApiKeysPage. */
+}
+
+/* ==========================================================================
+   10. Auto-Field Row (used by SettingsPage automations + ChallengeManagerPage)
+   ========================================================================== */
+
+.wb-gam-auto-field-row {
+	display: none;
+}
+
+.wb-gam-auto-field-row.is-visible {
+	display: table-row;
+}
+
+@media (max-width: 640px) {
+
+	.wbgam-card-body table.form-table th,
+	.wbgam-card-body table.form-table td {
+		display: block;
+		width: 100%;
+		padding: 0.5rem 0;
+	}
+}

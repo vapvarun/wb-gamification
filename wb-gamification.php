@@ -570,46 +570,62 @@ final class WB_Gamification {
 		}
 		wp_enqueue_style( 'lucide-icons' );
 
-		// Admin stylesheet — split into two files on 2026-05-27 because the
-		// single monolith had grown to 4037 lines. Cascade order matters:
+		// Admin stylesheet — refactored 2026-05-27 from the 4069-line
+		// admin-core + admin-pages pair into a four-layer cascade so the
+		// foundation (tokens / components / utilities / suppression) is
+		// shared across every admin page and per-page styling lives in
+		// dedicated files under assets/css/admin/pages/ that each admin
+		// page class enqueues for itself. Cascade order matters:
 		//
-		//   1. wb-gam-admin-core (assets/css/admin-core.css) — the
-		//      structured §1-§25 design system: tokens, components,
-		//      utilities, responsive breakpoints, the Settings full-width
-		//      wrap, third-party-notice suppression, and the Submissions
-		//      admin affordances. Foundation — loads first.
+		//   1. wb-gam-admin-tokens       — design tokens (:root only).
+		//   2. wb-gam-admin-components   — reusable UI primitives that
+		//                                  consume the tokens.
+		//   3. wb-gam-admin-utilities    — atomic helpers, skeletons,
+		//                                  responsive grid, print rules.
+		//   4. wb-gam-admin-suppression  — body-scoped third-party
+		//                                  notice suppression.
 		//
-		//   2. wb-gam-admin-pages (assets/css/admin-pages.css) — per-feature
-		//      page styling (Setup Wizard, Welcome notice banner, Badges /
-		//      Challenges / Redemption Store / Webhooks / Community
-		//      Challenges / Cohorts / Submissions). Overrides + ad-hoc —
-		//      loads second so page rules can win on conflict.
-		//
-		// Both files keep the `wb-gam-admin-*` handle prefix; legacy
-		// `wb-gam-admin` is preserved as an alias-enqueue below for any
-		// third-party code that depended on the old handle.
+		// Per-page CSS is enqueued by each admin page's own enqueue_assets
+		// method against `wb-gam-admin-utilities` as its dependency.
 		wp_enqueue_style(
-			'wb-gam-admin-core',
-			WB_GAM_URL . 'assets/css/admin-core.css',
+			'wb-gam-admin-tokens',
+			WB_GAM_URL . 'assets/css/admin/tokens.css',
 			array( 'lucide-icons' ),
 			WB_GAM_VERSION
 		);
 		wp_enqueue_style(
-			'wb-gam-admin-pages',
-			WB_GAM_URL . 'assets/css/admin-pages.css',
-			array( 'wb-gam-admin-core' ),
+			'wb-gam-admin-components',
+			WB_GAM_URL . 'assets/css/admin/components.css',
+			array( 'wb-gam-admin-tokens' ),
 			WB_GAM_VERSION
 		);
-		// Back-compat alias — any third-party code or per-page admin module
-		// that did `wp_enqueue_style( 'wb-gam-admin' )` keeps working. The
-		// alias has no `src` and depends on both new handles, so requesting
-		// it triggers the full stack via WP's dependency resolver.
-		wp_register_style(
-			'wb-gam-admin',
-			false,
-			array( 'wb-gam-admin-core', 'wb-gam-admin-pages' ),
+		wp_enqueue_style(
+			'wb-gam-admin-utilities',
+			WB_GAM_URL . 'assets/css/admin/utilities.css',
+			array( 'wb-gam-admin-components' ),
 			WB_GAM_VERSION
 		);
+		wp_enqueue_style(
+			'wb-gam-admin-suppression',
+			WB_GAM_URL . 'assets/css/admin/third-party-suppression.css',
+			array( 'wb-gam-admin-utilities' ),
+			WB_GAM_VERSION
+		);
+
+		// Back-compat aliases — any third-party code or per-page admin
+		// module that did `wp_enqueue_style( 'wb-gam-admin' )`,
+		// `'wb-gam-admin-core'`, or `'wb-gam-admin-pages'` keeps working.
+		// The aliases have no `src` and depend on the new four-layer
+		// stack, so requesting any of them resolves the full bundle.
+		$alias_deps = array(
+			'wb-gam-admin-tokens',
+			'wb-gam-admin-components',
+			'wb-gam-admin-utilities',
+			'wb-gam-admin-suppression',
+		);
+		wp_register_style( 'wb-gam-admin', false, $alias_deps, WB_GAM_VERSION );
+		wp_register_style( 'wb-gam-admin-core', false, $alias_deps, WB_GAM_VERSION );
+		wp_register_style( 'wb-gam-admin-pages', false, $alias_deps, WB_GAM_VERSION );
 	}
 
 }

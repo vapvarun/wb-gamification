@@ -1,0 +1,34 @@
+/**
+ * WB Gamification — Point Type Conversions Admin Page CSS
+ * =====================================================================
+ * Per-page styles for `WBGam\Admin\PointTypeConversionsPage` (menu
+ * slug: `wb-gam-conversions`). Defines exchange-rate rules between
+ * point currencies (from/to, ratio, min/cap, cooldown).
+ *
+ * Cascade position: loads FIFTH (after suppression). Consumes
+ * components.css + utilities.css.
+ *
+ * Token policy: `var(--wbgam-*)` only.
+ *
+ * Migration source: page-specific field markers (no dedicated section
+ * existed in the old admin-pages.css — fields used generic .wbgam-input
+ * visuals).
+ *
+ * @package WB_Gamification
+ */
+
+/* Root wrapper marker. */
+.wb-gam-conversions {
+	/* Container — visuals from .wbgam-wrap + .wbgam-card. */
+}
+
+/* Conversion form-field markers. */
+.wb-gam-conv-cap,
+.wb-gam-conv-cooldown,
+.wb-gam-conv-from,
+.wb-gam-conv-from-amount,
+.wb-gam-conv-min,
+.wb-gam-conv-to,
+.wb-gam-conv-to-amount {
+	/* JS-bound conversion-rule inputs — visuals from .wbgam-input. */
+}

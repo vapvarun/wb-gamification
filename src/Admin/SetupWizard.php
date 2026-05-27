@@ -84,6 +84,31 @@ final class SetupWizard {
 		add_action( 'admin_init', array( __CLASS__, 'maybe_redirect' ), 1 );
 		add_action( 'admin_init', array( __CLASS__, 'handle_submission' ) );
 		add_action( 'admin_notices', array( __CLASS__, 'maybe_show_welcome_notice' ) );
+		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_page_css' ) );
+	}
+
+	/**
+	 * Enqueue the per-page wizard.css bundle on the Setup Wizard page only.
+	 *
+	 * The global tokens / components / utilities / suppression sheets are
+	 * enqueued by `WB_Gamification::enqueue_admin_assets`; this method adds
+	 * the page-specific overrides on top.
+	 *
+	 * @param string $hook_suffix Current admin page hook.
+	 * @return void
+	 */
+	public static function enqueue_page_css( string $hook_suffix ): void {
+		// The wizard registers as a hidden submenu with parent = null, which
+		// gives it the `admin_page_wb-gamification-setup` hook suffix.
+		if ( 'admin_page_wb-gamification-setup' !== $hook_suffix ) {
+			return;
+		}
+		wp_enqueue_style(
+			'wb-gam-page-wizard',
+			plugins_url( 'assets/css/admin/pages/wizard.css', WB_GAM_FILE ),
+			array( 'wb-gam-admin-utilities' ),
+			WB_GAM_VERSION
+		);
 	}
 
 	/**

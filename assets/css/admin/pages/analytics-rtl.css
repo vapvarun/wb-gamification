@@ -1,0 +1,26 @@
+/*! analytics-rtl.css — auto-generated from analytics.css by bin/build-rtl.js. Do not edit by hand. */
+/**
+ * WB Gamification — Analytics Dashboard Page CSS
+ * =====================================================================
+ * Per-page styles for `WBGam\Admin\AnalyticsDashboard` (menu slug:
+ * `wb-gamification-analytics`).
+ *
+ * NOTE: The bulk of analytics styling lives in the dedicated
+ * `assets/css/admin-analytics.css` sheet (enqueued by
+ * `AnalyticsDashboard::enqueue`). This per-page sheet is intentionally
+ * thin — it only adds the page wrapper marker so the JSON usage map
+ * accounts for the `wb-gam-admin-analytics` and `wb-gam-admin` root
+ * classes.
+ *
+ * Cascade position: loads FIFTH (after suppression). Loads BEFORE
+ * `admin-analytics.css` because the dedicated analytics sheet has its
+ * own selectors (`.wb-gam-analytics__*`) that don't conflict.
+ *
+ * @package WB_Gamification
+ */
+
+.wb-gam-admin,
+.wb-gam-admin-analytics {
+	/* Wrapper markers — visuals from .wbgam-wrap +
+	   admin-analytics.css for the period bar / KPI grid / panels. */
+}

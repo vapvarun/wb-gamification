@@ -1,0 +1,88 @@
+/**
+ * WB Gamification — API Keys Admin Page CSS
+ * =====================================================================
+ * Per-page styles for `WBGam\Admin\ApiKeysPage` (menu slug:
+ * `wb-gam-api-keys`). Lists/creates/revokes REST API keys.
+ *
+ * Cascade position: loads FIFTH (after suppression). Consumes
+ * components.css + utilities.css.
+ *
+ * Token policy: `var(--wbgam-*)` only.
+ *
+ * Migration source: admin-core.css §23 (API key display) + the page-
+ * specific list/create form markers in admin-pages.css.
+ *
+ * @package WB_Gamification
+ */
+
+/* Root wrappers + JS hook markers. */
+.wb-gam-admin-api-keys,
+.wb-gam-api-keys-root {
+	/* Wrapper markers — visuals from .wbgam-wrap + .wbgam-card. */
+}
+
+.wb-gam-api-keys-card {
+	margin-block-end: 1.5rem;
+}
+
+.wb-gam-api-keys-create,
+.wb-gam-api-keys-create-form {
+	/* Create-key form markers. */
+}
+
+.wb-gam-api-keys-empty {
+	/* Empty-state marker — visuals from .wbgam-empty. */
+}
+
+.wb-gam-api-keys-tbody {
+	/* Table body marker. */
+}
+
+.wb-gam-api-key-action {
+	/* Per-row action button marker — visuals from .wbgam-btn. */
+}
+
+/* ==========================================================================
+   1. Fresh-Key Disclosure (shown once after creation)
+   ========================================================================== */
+
+.wb-gam-api-keys-fresh {
+	display: flex;
+	flex-direction: column;
+	gap: var(--wbgam-gap-xs);
+	padding: 1rem;
+	background: #f0fdf4;
+	border: 1px solid #16a34a;
+	border-radius: var(--wb-gam-radius);
+	margin-block-end: 1rem;
+}
+
+.wb-gam-api-keys-fresh-code {
+	font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+	font-size: var(--wbgam-fs-base);
+	padding: 8px 12px;
+	background: var(--wbgam-card-bg);
+	border: 1px solid var(--wbgam-border);
+	border-radius: var(--wbgam-radius-sm);
+	user-select: all;
+	word-break: break-all;
+}
+
+/* Banner dismiss button (page-specific instance). */
+.wb-gam-banner-dismiss {
+	/* JS hook — visuals from .wbgam-banner__dismiss. */
+}
+
+/* ==========================================================================
+   2. Key Display (used to render the masked / full key)
+   ========================================================================== */
+
+.wbgam-key-display {
+	font-size: var(--wbgam-fs-md);
+	padding: 8px 12px;
+	background: #f0f0f0;
+	display: inline-block;
+	user-select: all;
+	border-radius: var(--wbgam-card-radius);
+	font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}

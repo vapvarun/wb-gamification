@@ -1,0 +1,128 @@
+/*! redemption-store-rtl.css — auto-generated from redemption-store.css by bin/build-rtl.js. Do not edit by hand. */
+/**
+ * WB Gamification — Redemption Store Admin CSS
+ * =====================================================================
+ * Per-page styles for `WBGam\Admin\RedemptionStorePage` (menu slug:
+ * `wb-gam-redemption`). The rewards store admin:
+ *   - Reward CRUD form (title / cost / type / stock / status / desc)
+ *   - Type-conditional config rows (revealed by reward-type toggle JS)
+ *   - Convert dialog for points → store credit exchange
+ *
+ * Cascade position: loads FIFTH (after suppression). Consumes
+ * components.css + utilities.css.
+ *
+ * Token policy: `var(--wbgam-*)` only.
+ *
+ * Migration source: admin-pages.css "Redemption Store — reward-type
+ * form toggle" section (`.wb-gam-config-row`, `.wb-gam-cfg-hint`,
+ * `.wb-gam-cfg-*`).
+ *
+ * @package WB_Gamification
+ */
+
+/* Root wrapper marker. */
+.wb-gam-redemption {
+	/* Container — visuals from .wbgam-wrap. */
+}
+
+/* JS hook for reward-type toggle. */
+.wb-gam-admin-reward-type-toggle {
+	/* JS marker. */
+}
+
+/* ==========================================================================
+   1. Reward Form Field Markers
+   ========================================================================== */
+
+.wb-gam-reward-cost,
+.wb-gam-reward-desc,
+.wb-gam-reward-status,
+.wb-gam-reward-stock,
+.wb-gam-reward-title,
+.wb-gam-reward-type {
+	/* JS-bound input hooks — visuals from .wbgam-input/.wbgam-select. */
+}
+
+/* ==========================================================================
+   2. Reward-Type Conditional Rows (admin-reward-type-toggle.js)
+   ========================================================================== */
+
+.wb-gam-config-row,
+.wb-gam-cfg-hint {
+	display: none;
+}
+
+.wb-gam-config-row.is-visible {
+	display: table-row;
+}
+
+.wb-gam-cfg-hint.is-visible {
+	display: inline;
+}
+
+@media (max-width: 640px) {
+
+	.wb-gam-config-row.is-visible {
+		display: block;
+	}
+}
+
+/* Reward-type config field markers (rendered inside .wb-gam-config-row). */
+.wb-gam-cfg-amount,
+.wb-gam-cfg-credits,
+.wb-gam-cfg-product,
+.wb-gam-cfg-slug {
+	/* JS-bound config-row inputs. */
+}
+
+/* ==========================================================================
+   3. Convert Dialog (points → store credit, hub-convert.js)
+   ========================================================================== */
+
+.wb-gam-convert-dialog {
+	max-width: 480px;
+	border-radius: 10px;
+	border: 1px solid var(--wbgam-border);
+	padding: 0;
+}
+
+.wb-gam-convert-form {
+	padding: 1.25rem;
+	display: flex;
+	flex-direction: column;
+	gap: var(--wbgam-gap-sm);
+}
+
+.wb-gam-convert-from-label {
+	font-size: var(--wbgam-fs-sm);
+	color: var(--wbgam-text-secondary);
+	margin: 0;
+}
+
+.wb-gam-convert-balance {
+	font-size: var(--wbgam-fs-md);
+	font-weight: 600;
+	color: var(--wbgam-text);
+	font-variant-numeric: tabular-nums;
+}
+
+.wb-gam-convert-to {
+	display: flex;
+	flex-direction: column;
+	gap: var(--wbgam-gap-xs);
+}
+
+.wb-gam-convert-amount {
+	width: 100%;
+}
+
+.wb-gam-convert-preview {
+	font-size: var(--wbgam-fs-sm);
+	color: var(--wbgam-text-secondary);
+}
+
+.wb-gam-convert-submit,
+.wb-gam-convert-close,
+.wb-gam-convert-open {
+	/* Button markers — visuals from .wbgam-btn. */
+}

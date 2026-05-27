@@ -46,6 +46,13 @@ final class ApiKeysPage {
 			return;
 		}
 
+		wp_enqueue_style(
+			'wb-gam-page-api-keys',
+			plugins_url( 'assets/css/admin/pages/api-keys.css', WB_GAM_FILE ),
+			array( 'wb-gam-admin-utilities' ),
+			WB_GAM_VERSION
+		);
+
 		wp_enqueue_script(
 			'wb-gam-admin-rest-utils',
 			plugins_url( 'assets/js/admin-rest-utils.js', WB_GAM_FILE ),

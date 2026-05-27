@@ -41,6 +41,13 @@ final class PointTypeConversionsPage {
 			return;
 		}
 
+		wp_enqueue_style(
+			'wb-gam-page-point-type-conversions',
+			plugins_url( 'assets/css/admin/pages/point-type-conversions.css', WB_GAM_FILE ),
+			array( 'wb-gam-admin-utilities' ),
+			WB_GAM_VERSION
+		);
+
 		wp_enqueue_script(
 			'wb-gam-admin-rest-utils',
 			plugins_url( 'assets/js/admin-rest-utils.js', WB_GAM_FILE ),

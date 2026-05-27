@@ -58,6 +58,12 @@ final class WebhooksAdminPage {
 		if ( 'gamification_page_wb-gam-webhooks' !== $hook_suffix ) {
 			return;
 		}
+		wp_enqueue_style(
+			'wb-gam-page-webhooks',
+			plugins_url( 'assets/css/admin/pages/webhooks.css', WB_GAM_FILE ),
+			array( 'wb-gam-admin-utilities' ),
+			WB_GAM_VERSION
+		);
 		wp_enqueue_script(
 			'wb-gam-admin-rest-utils',
 			plugins_url( 'assets/js/admin-rest-utils.js', WB_GAM_FILE ),

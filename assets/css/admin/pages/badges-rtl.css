@@ -1,0 +1,173 @@
+/*! badges-rtl.css — auto-generated from badges.css by bin/build-rtl.js. Do not edit by hand. */
+/**
+ * WB Gamification — Badge Admin Page CSS
+ * =====================================================================
+ * Per-page styles for `WBGam\Admin\BadgeAdminPage` (menu slug:
+ * `wb-gamification-badges`). The badge library:
+ *   - Grid of badge cards (4-up on desktop, collapses via utilities)
+ *   - Inline form panel for create/edit
+ *   - Icon preview + media library picker
+ *   - Hidden / readonly inputs for advanced badge metadata
+ *
+ * Cascade position: loads FIFTH (after suppression). Consumes
+ * components.css (.wbgam-card, .wbgam-btn, .wbgam-input, .wbgam-pill,
+ * .wbgam-page-header) + utilities.css.
+ *
+ * Token policy: `var(--wbgam-*)` only.
+ *
+ * Migration source: admin-pages.css "Badge admin" / "Badge card" /
+ * "Badge icon preview" / "Badge admin inline form panel" sections.
+ *
+ * @package WB_Gamification
+ */
+
+/* Page root wrapper marker. */
+.wb-gam-admin-badge {
+	/* Marker — full layout comes from .wbgam-wrap + .wbgam-page-header. */
+}
+
+/* Hidden helper — used by the form to toggle visibility of advanced fields. */
+.wb-gam-hidden {
+	display: none;
+}
+
+/* ==========================================================================
+   1. Badge Card Grid
+   ========================================================================== */
+
+.wbgam-badge-card {
+	background: var(--wbgam-card-bg);
+	border: 1px solid var(--wb-gam-border);
+	border-radius: var(--wb-gam-radius);
+	padding: 1.25rem;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 0.625rem;
+	text-align: center;
+	cursor: pointer;
+	transition: box-shadow 0.15s, border-color 0.15s;
+}
+
+.wbgam-badge-card:hover {
+	border-color: var(--wb-gam-primary);
+	box-shadow: 0 2px 12px rgba(108, 99, 255, 0.12);
+}
+
+.wbgam-badge-card__icon {
+	width: 64px;
+	height: 64px;
+	border-radius: 50%;
+	background: var(--wb-gam-primary-light);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+	overflow: hidden;
+}
+
+.wbgam-badge-card__icon img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	border-radius: 50%;
+}
+
+.wbgam-badge-card__icon .dashicons {
+	font-size: var(--wbgam-fs-3xl);
+	width: 28px;
+	height: 28px;
+	color: var(--wb-gam-primary);
+}
+
+.wbgam-badge-card__name {
+	font-size: var(--wbgam-fs-base);
+	font-weight: 600;
+	color: var(--wb-gam-text);
+	margin: 0;
+}
+
+.wbgam-badge-card__earned {
+	font-size: var(--wbgam-fs-xs);
+	color: var(--wb-gam-text-muted);
+	margin: 0;
+}
+
+/* ==========================================================================
+   2. Badge Form Panel
+   ========================================================================== */
+
+.wbgam-badge-form-panel {
+	margin-bottom: 1.5rem;
+}
+
+.wbgam-badge-form-panel .wbgam-card {
+	transition: box-shadow 0.2s;
+}
+
+.wbgam-badge-form-panel .wbgam-card:focus-within {
+	box-shadow: 0 2px 12px rgba(108, 99, 255, 0.08);
+}
+
+/* Badge icon preview (inside form panel). */
+.wbgam-badge-icon-preview {
+	width: 64px;
+	height: 64px;
+	border-radius: 50%;
+	background: var(--wb-gam-primary-light);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	overflow: hidden;
+	margin-bottom: 0.5rem;
+}
+
+.wbgam-badge-icon-preview img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	border-radius: 50%;
+}
+
+.wbgam-badge-icon-preview .dashicons {
+	font-size: var(--wbgam-fs-3xl);
+	width: 28px;
+	height: 28px;
+	color: var(--wb-gam-primary);
+}
+
+/* ==========================================================================
+   3. Form-Field Markers (JS-bound; no visual rules — visuals from .wbgam-input).
+   ========================================================================== */
+
+.wb-gam-badge-category,
+.wb-gam-badge-closes-at,
+.wb-gam-badge-description,
+.wb-gam-badge-id,
+.wb-gam-badge-id-readonly,
+.wb-gam-badge-image-url,
+.wb-gam-badge-is-credential,
+.wb-gam-badge-max-earners,
+.wb-gam-badge-name {
+	/* Form-field hooks. */
+}
+
+.wb-gam-choose-icon,
+.wb-gam-remove-icon {
+	/* Media-library trigger + clear buttons. */
+}
+
+.wb-gam-icon-preview {
+	/* Inline preview element next to the chooser buttons. */
+}
+
+/* Condition builder (badge unlock conditions). */
+.wb-gam-condition-action-id,
+.wb-gam-condition-count,
+.wb-gam-condition-points,
+.wb-gam-condition-type,
+.wb-gam-field-action,
+.wb-gam-field-count,
+.wb-gam-field-points {
+	/* Condition-row marker fields. */
+}

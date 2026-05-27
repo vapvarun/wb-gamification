@@ -1,11 +1,9 @@
 # bin/check-css-orphans.sh baseline — PHP classes with no matching CSS rule.
 # Each line is a class name. New orphans fail the gate; legitimate fixes
 # (matching CSS added) should DELETE the line from this file in the same commit.
-# Generated: 2026-05-27T03:00:37Z
+# Generated: 2026-05-27T08:03:04Z
 
-wb-gam-col-currency
 wb-gam-daily-bonus__head-text
-wb-gam-event-tag
 wb-gam-give-kudos__recipient
 wb-gam-give-kudos--guest
 wb-gam-kudos-feed__header
@@ -41,11 +39,6 @@ wb-gam-submit-achievement__field--editor
 wb-gam-submit-achievement__hint
 wb-gam-submit-achievement__label
 wb-gam-top-members__empty
-wb-gam-webhook-form
-wbgam-badge--success
-wbgam-card-desc
-wbgam-help
-wbgam-settings-topbar__text
 wbgam-toggle-row
 wbgam-toggle-row__body
 wbgam-toggle-row__desc

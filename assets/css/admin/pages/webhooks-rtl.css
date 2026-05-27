@@ -1,0 +1,81 @@
+/*! webhooks-rtl.css — auto-generated from webhooks.css by bin/build-rtl.js. Do not edit by hand. */
+/**
+ * WB Gamification — Webhooks Admin Page CSS
+ * =====================================================================
+ * Per-page styles for `WBGam\Admin\WebhooksAdminPage` (menu slug:
+ * `wb-gamification-webhooks`). Manages outbound webhook endpoints
+ * with a checkbox grid of subscribed event types.
+ *
+ * Cascade position: loads FIFTH (after suppression). Consumes
+ * components.css + utilities.css.
+ *
+ * Token policy: `var(--wbgam-*)` only.
+ *
+ * Migration source: admin-pages.css "Stacked checkbox list with code
+ * tag + description" (the .wbgam-event-list group).
+ *
+ * @package WB_Gamification
+ */
+
+/* Root + JS hook markers. */
+.wb-gam-webhooks,
+.wb-gam-webhook-form {
+	/* Wrapper + form markers — visuals from .wbgam-wrap + .wbgam-card. */
+}
+
+.wb-gam-webhook-secret,
+.wb-gam-webhook-url {
+	/* JS-bound form inputs — visuals from .wbgam-input. */
+}
+
+.wb-gam-event-tag {
+	font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+	font-size: var(--wbgam-fs-xs);
+	background: #f3f4f6;
+	padding: 0.125rem 0.5rem;
+	border-radius: var(--wbgam-radius-sm);
+}
+
+/* ==========================================================================
+   1. Event List — Stacked checkbox list with code tag + description.
+   Used on the "Events to subscribe to" group.
+   ========================================================================== */
+
+.wbgam-event-list {
+	display: flex;
+	flex-direction: column;
+	gap: var(--wbgam-gap-xs);
+}
+
+.wbgam-event-list__item {
+	display: flex;
+	align-items: center;
+	gap: 0.625rem;
+	padding: 0.5rem 0.75rem;
+	border: 1px solid var(--wb-gam-border, #e5e7eb);
+	border-radius: var(--wbgam-radius-md);
+	cursor: pointer;
+	transition: border-color 0.12s ease, background 0.12s ease;
+}
+
+.wbgam-event-list__item:hover {
+	border-color: var(--wbgam-primary, #2563eb);
+	background: #fafafe;
+}
+
+.wbgam-event-list__item input[type="checkbox"] {
+	margin: 0;
+}
+
+.wbgam-event-list__code {
+	font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+	font-size: var(--wbgam-fs-sm);
+	background: #f3f4f6;
+	padding: 0.125rem 0.5rem;
+	border-radius: var(--wbgam-radius-sm);
+}
+
+.wbgam-event-list__desc {
+	color: var(--wb-gam-text-muted, #6b7280);
+	font-size: var(--wbgam-fs-base);
+}

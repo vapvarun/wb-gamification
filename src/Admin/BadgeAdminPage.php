@@ -50,6 +50,12 @@ final class BadgeAdminPage {
 		if ( false === strpos( $hook, 'wb-gamification-badges' ) ) {
 			return;
 		}
+		wp_enqueue_style(
+			'wb-gam-page-badges',
+			plugins_url( 'assets/css/admin/pages/badges.css', WB_GAM_FILE ),
+			array( 'wb-gam-admin-utilities' ),
+			WB_GAM_VERSION
+		);
 		wp_enqueue_media();
 		wp_enqueue_script(
 			'wb-gam-admin-badge',

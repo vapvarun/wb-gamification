@@ -1,0 +1,48 @@
+/**
+ * WB Gamification — Point Types Admin Page CSS
+ * =====================================================================
+ * Per-page styles for `WBGam\Admin\PointTypesPage` (menu slug:
+ * `wb-gam-point-types`). Manages point currencies (label, slug, icon,
+ * description, position).
+ *
+ * Cascade position: loads FIFTH (after suppression). Consumes
+ * components.css + utilities.css.
+ *
+ * Token policy: `var(--wbgam-*)` only.
+ *
+ * Migration source: page-specific field markers + the small
+ * .wbgam-badge inline label badges (admin-core.css §15 inline label
+ * badges; only used on this page).
+ *
+ * @package WB_Gamification
+ */
+
+/* Point-type form-field markers. */
+.wb-gam-pt-description,
+.wb-gam-pt-icon,
+.wb-gam-pt-label,
+.wb-gam-pt-position,
+.wb-gam-pt-slug {
+	/* JS-bound point-type form inputs — visuals from .wbgam-input/.wbgam-textarea. */
+}
+
+/* ==========================================================================
+   1. Inline Label Badge (used to flag "primary" / "system" point types)
+   ========================================================================== */
+
+.wbgam-badge {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--wbgam-gap-2xs);
+	padding: 1px 8px;
+	font-size: var(--wbgam-fs-xs);
+	font-weight: 500;
+	border-radius: var(--wbgam-radius-sm);
+	background: #f3f4f6;
+	color: var(--wbgam-text-secondary);
+}
+
+.wbgam-badge--success {
+	background: var(--wbgam-success-bg);
+	color: var(--wbgam-success);
+}
