@@ -210,6 +210,19 @@ use WBGam\Engine\CredentialExpiryEngine;
 use WBGam\Engine\LeaderboardEngine;
 use WBGam\Engine\ShortcodeHandler;
 
+// Defensive guard. WP's normal plugin loader includes this file exactly
+// once, but adjacent tooling can re-include it: Plugin Check sandboxes
+// plugin files for static analysis, wp-cli's `plugin check` subcommand
+// can read it for header parsing, and stale `dist/` build artefacts
+// previously sat under wp-content/plugins/wb-gamification/dist/ where
+// recursive scanners picked them up. The second include would otherwise
+// fatal on `Cannot declare class WB_Gamification` and take the whole
+// site down. Returning early keeps the plugin loadable in those
+// boundary contexts without changing first-load behaviour.
+if ( class_exists( '\\WB_Gamification', false ) ) {
+	return;
+}
+
 /**
  * Main plugin class — singleton loader.
  */
