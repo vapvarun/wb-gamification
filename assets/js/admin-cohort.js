@@ -34,6 +34,7 @@
 			tier_2:      ( form.querySelector( '[name="tier_2"]' ) || {} ).value || 'Silver',
 			tier_3:      ( form.querySelector( '[name="tier_3"]' ) || {} ).value || 'Gold',
 			tier_4:      ( form.querySelector( '[name="tier_4"]' ) || {} ).value || 'Diamond',
+			tier_5:      ( form.querySelector( '[name="tier_5"]' ) || {} ).value || 'Obsidian',
 			promote_pct: parseInt( ( form.querySelector( '[name="promote_pct"]' ) || {} ).value, 10 ) || 20,
 			demote_pct:  parseInt( ( form.querySelector( '[name="demote_pct"]' ) || {} ).value, 10 ) || 20,
 			duration:    ( form.querySelector( '[name="duration"]' ) || {} ).value || 'weekly',

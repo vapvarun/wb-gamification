@@ -52,6 +52,42 @@ final class CohortEngine {
 	private const CRON_PROCESS = 'wb_gam_cohort_process';
 
 	/**
+	 * Option key for admin-customised cohort settings (tier names, %s, etc.).
+	 * Mirrors {@see \WBGam\Admin\CohortSettingsPage::OPTION_KEY} +
+	 * {@see \WBGam\API\CohortSettingsController::OPTION_KEY}.
+	 *
+	 * Duplicated here as a const to avoid a circular Admin → Engine dependency.
+	 * The three constants MUST stay in lock-step.
+	 *
+	 * @var string
+	 */
+	public const SETTINGS_OPTION = 'wb_gam_cohort_settings';
+
+	/**
+	 * Resolve the display name for a given tier index.
+	 *
+	 * Reads {@see SETTINGS_OPTION} so admin tier-name edits flow to every
+	 * read-side surface (block render, REST `get_user_standing`, promotion
+	 * email subject lines). Falls back to the hard-coded TIERS constant
+	 * when the option is missing or the slot is empty — preserves the
+	 * pre-1.4.1 behaviour for installs that never visited the admin page.
+	 *
+	 * @param int $tier 0-indexed tier slot.
+	 * @return string The customised name if admins set one, else the default.
+	 */
+	public static function get_tier_name( int $tier ): string {
+		$default = self::TIERS[ $tier ] ?? 'Bronze';
+		$settings = get_option( self::SETTINGS_OPTION );
+		if ( ! is_array( $settings ) ) {
+			return $default;
+		}
+		// Admin form labels tiers 1-indexed (tier_1 = Bronze).
+		$key = 'tier_' . ( $tier + 1 );
+		$custom = isset( $settings[ $key ] ) ? (string) $settings[ $key ] : '';
+		return '' !== trim( $custom ) ? $custom : $default;
+	}
+
+	/**
 	 * Register cron action callbacks.
 	 */
 	public static function init(): void {
@@ -364,7 +400,7 @@ final class CohortEngine {
 		return array(
 			'cohort_id' => $row['cohort_id'],
 			'tier'      => (int) $row['tier'],
-			'tier_name' => self::TIERS[ (int) $row['tier'] ] ?? 'Bronze',
+			'tier_name' => self::get_tier_name( (int) $row['tier'] ),
 			'week'      => $week,
 			'standings' => array_values( $members ),
 		);

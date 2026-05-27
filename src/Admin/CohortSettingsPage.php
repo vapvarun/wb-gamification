@@ -41,6 +41,7 @@ final class CohortSettingsPage {
 		'tier_2'     => 'Silver',
 		'tier_3'     => 'Gold',
 		'tier_4'     => 'Diamond',
+		'tier_5'     => 'Obsidian',
 		'promote_pct' => 20,
 		'demote_pct'  => 20,
 		'duration'    => 'weekly',
@@ -234,10 +235,17 @@ final class CohortSettingsPage {
 											<input type="text" name="tier_4" id="wb-gam-tier-4" class="regular-text wbgam-input"
 												value="<?php echo esc_attr( $settings['tier_4'] ); ?>"
 												placeholder="<?php esc_attr_e( 'Diamond', 'wb-gamification' ); ?>">
-											<small class="wbgam-text-muted"><?php esc_html_e( 'Tier 4 (highest)', 'wb-gamification' ); ?></small>
+											<small class="wbgam-text-muted"><?php esc_html_e( 'Tier 4', 'wb-gamification' ); ?></small>
+										</div>
+										<div>
+											<label for="wb-gam-tier-5" class="screen-reader-text"><?php esc_html_e( 'Tier 5', 'wb-gamification' ); ?></label>
+											<input type="text" name="tier_5" id="wb-gam-tier-5" class="regular-text wbgam-input"
+												value="<?php echo esc_attr( $settings['tier_5'] ); ?>"
+												placeholder="<?php esc_attr_e( 'Obsidian', 'wb-gamification' ); ?>">
+											<small class="wbgam-text-muted"><?php esc_html_e( 'Tier 5 (highest)', 'wb-gamification' ); ?></small>
 										</div>
 									</div>
-									<p class="description wbgam-mt-sm"><?php esc_html_e( 'Customize the display names for each league tier.', 'wb-gamification' ); ?></p>
+									<p class="description wbgam-mt-sm"><?php esc_html_e( 'Customize the display names for each league tier. Members promote up the ladder from Tier 1 to Tier 5.', 'wb-gamification' ); ?></p>
 								</td>
 							</tr>
 							<tr>

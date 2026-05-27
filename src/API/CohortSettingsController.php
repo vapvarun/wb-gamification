@@ -143,6 +143,7 @@ final class CohortSettingsController extends WP_REST_Controller {
 			'tier_2'      => (string) $request->get_param( 'tier_2' ),
 			'tier_3'      => (string) $request->get_param( 'tier_3' ),
 			'tier_4'      => (string) $request->get_param( 'tier_4' ),
+			'tier_5'      => (string) $request->get_param( 'tier_5' ),
 			'promote_pct' => (int) $request->get_param( 'promote_pct' ),
 			'demote_pct'  => (int) $request->get_param( 'demote_pct' ),
 			'duration'    => (string) $request->get_param( 'duration' ),
@@ -192,6 +193,7 @@ final class CohortSettingsController extends WP_REST_Controller {
 			'tier_2'      => isset( $settings['tier_2'] ) ? (string) $settings['tier_2'] : 'Silver',
 			'tier_3'      => isset( $settings['tier_3'] ) ? (string) $settings['tier_3'] : 'Gold',
 			'tier_4'      => isset( $settings['tier_4'] ) ? (string) $settings['tier_4'] : 'Diamond',
+			'tier_5'      => isset( $settings['tier_5'] ) ? (string) $settings['tier_5'] : 'Obsidian',
 			'promote_pct' => isset( $settings['promote_pct'] ) ? (int) $settings['promote_pct'] : 20,
 			'demote_pct'  => isset( $settings['demote_pct'] ) ? (int) $settings['demote_pct'] : 20,
 			'duration'    => isset( $settings['duration'] ) ? (string) $settings['duration'] : 'weekly',
@@ -223,6 +225,11 @@ final class CohortSettingsController extends WP_REST_Controller {
 			),
 			'tier_4'      => array(
 				'required'          => true,
+				'type'              => 'string',
+				'sanitize_callback' => 'sanitize_text_field',
+			),
+			'tier_5'      => array(
+				'required'          => false,
 				'type'              => 'string',
 				'sanitize_callback' => 'sanitize_text_field',
 			),
@@ -265,6 +272,7 @@ final class CohortSettingsController extends WP_REST_Controller {
 				'tier_2'      => array( 'type' => 'string' ),
 				'tier_3'      => array( 'type' => 'string' ),
 				'tier_4'      => array( 'type' => 'string' ),
+				'tier_5'      => array( 'type' => 'string' ),
 				'promote_pct' => array(
 					'type'    => 'integer',
 					'minimum' => 1,
