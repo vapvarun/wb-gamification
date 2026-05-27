@@ -223,7 +223,7 @@ final class SetupWizard {
 		// Class `wb-gam-notice__cta` styles the CTA button spacing — see
 		// the same CSS file. No inline style attributes (coding-rule 3).
 		printf(
-			'<div class="notice notice-info wb-gam-notice"><p><strong>%1$s</strong> %2$s <a href="%3$s" class="button button-primary wb-gam-notice__cta">%4$s</a></p></div>',
+			'<div class="notice notice-info wb-gam-notice is-dismissible"><p><strong>%1$s</strong> %2$s <a href="%3$s" class="button button-primary wb-gam-notice__cta">%4$s</a></p></div>',
 			esc_html__( 'Welcome to WB Gamification!', 'wb-gamification' ),
 			esc_html__( 'Pick a starter template to pre-configure points for your use case — takes 30 seconds.', 'wb-gamification' ),
 			esc_url( $wizard_url ),
