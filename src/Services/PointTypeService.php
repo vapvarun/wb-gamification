@@ -44,6 +44,25 @@ final class PointTypeService {
 	}
 
 	/**
+	 * Return the registered slug list — flat array of normalised
+	 * `point_type` slugs. Use this for input validation when a caller
+	 * needs to reject unknown slugs explicitly (rather than relying
+	 * on {@see resolve()}'s silent fallback to the default slug).
+	 *
+	 * Added 1.4.1 — PointsController::award uses this to fail loudly
+	 * on unknown currency input instead of silently awarding the
+	 * primary currency. See audit/DATA-FLOW-ADMIN-REST-2026-05-27.md §G13.
+	 *
+	 * @return string[]
+	 */
+	public function list_slugs(): array {
+		return array_map(
+			static fn ( $row ) => (string) ( $row['slug'] ?? '' ),
+			$this->repo->all()
+		);
+	}
+
+	/**
 	 * Resolve an arbitrary input (slug string, null, '') to a known slug.
 	 *
 	 * Always returns a valid slug — callers can pass user input directly

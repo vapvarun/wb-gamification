@@ -414,6 +414,20 @@ final class CommunityChallengesController extends WP_REST_Controller {
 				'type'              => 'string',
 				'default'           => '*',
 				'sanitize_callback' => 'sanitize_key',
+				// Validate against the registered-actions list so admins can't
+				// save a challenge against an unknown action_id (challenge
+				// would silently never tick). Same enum-drift bug class as
+				// free-shipping reward type (#9927682021). Closes audit
+				// DATA-FLOW-ADMIN-REST-2026-05-27.md §G10. The `*` sentinel
+				// means "any action" so it bypasses the lookup.
+				'validate_callback' => static function ( $value ): bool {
+					$value = (string) $value;
+					if ( '*' === $value || '' === $value ) {
+						return true;
+					}
+					$actions = \WBGam\Engine\Registry::get_actions();
+					return array_key_exists( $value, $actions );
+				},
 			),
 			'starts_at'     => array(
 				'type'              => 'string',

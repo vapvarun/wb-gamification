@@ -53,7 +53,13 @@ final class WebhookDispatcher {
 		add_action( 'wb_gam_level_changed', array( self::class, 'on_level_changed' ), 50, 3 );
 		add_action( 'wb_gam_streak_milestone', array( self::class, 'on_streak_milestone' ), 50, 2 );
 		add_action( 'wb_gam_challenge_completed', array( self::class, 'on_challenge_completed' ), 50, 2 );
-		add_action( 'wb_gam_kudos_given', array( self::class, 'on_kudos_given' ), 50, 3 );
+		// kudos_given fires with 4 args (giver, receiver, message, kudos_id);
+		// pre-1.4.1 the dispatcher only accepted 3, so kudos_id silently
+		// dropped from outbound webhook payloads — subscribers couldn't
+		// dedupe retries against a kudos row id or re-fetch the row from
+		// `/wb-gamification/v1/kudos/{id}`. Closes audit
+		// DATA-FLOW-NOTIFICATIONS-2026-05-27.md §G12.
+		add_action( 'wb_gam_kudos_given', array( self::class, 'on_kudos_given' ), 50, 4 );
 	}
 
 	// ── Hook callbacks for wired event types ────────────────────────────────────
@@ -121,8 +127,10 @@ final class WebhookDispatcher {
 	 * @param int    $giver_id    User who gave kudos.
 	 * @param int    $receiver_id User who received kudos.
 	 * @param string $message     Kudos message.
+	 * @param int    $kudos_id    DB row id (added 1.4.1 — see §G12). Optional
+	 *                            default 0 so legacy 3-arg fires don't fatal.
 	 */
-	public static function on_kudos_given( int $giver_id, int $receiver_id, string $message ): void {
+	public static function on_kudos_given( int $giver_id, int $receiver_id, string $message, int $kudos_id = 0 ): void {
 		self::dispatch(
 			'kudos_given',
 			$giver_id,
@@ -131,6 +139,7 @@ final class WebhookDispatcher {
 			array(
 				'receiver_id' => $receiver_id,
 				'message'     => $message,
+				'kudos_id'    => $kudos_id,
 			)
 		);
 	}
@@ -266,18 +275,52 @@ final class WebhookDispatcher {
 	/**
 	 * Handle a scheduled retry delivery.
 	 *
+	 * Re-fetches the subscription row from `wb_gam_webhooks` on every
+	 * retry — `(url, secret)` are read fresh so a secret rotation that
+	 * happens between the initial dispatch and the eventual retry doesn't
+	 * leave the retry holding a stale HMAC the receiver will reject. The
+	 * payload is the only stable input (it represents a frozen moment in
+	 * the event timeline); URL + signature get re-derived.
+	 *
+	 * If the subscription was deleted between dispatch and retry, the
+	 * retry is dropped (no logging — nothing to log against).
+	 *
+	 * Closes audit/DATA-FLOW-NOTIFICATIONS-2026-05-27.md §G5.
+	 *
 	 * @param int   $webhook_id  DB ID of the webhook.
-	 * @param array $meta        Retry metadata containing url, signature, payload, retry_count.
+	 * @param array $meta        Retry metadata containing the original payload (URL + signature
+	 *                           are now re-derived from the current row, ignored if present).
 	 * @param int   $retry_count Current retry attempt number (1-based).
 	 */
 	public static function handle_retry( int $webhook_id, array $meta, int $retry_count ): void {
-		$url       = $meta['url'] ?? '';
-		$signature = $meta['signature'] ?? '';
-		$payload   = $meta['payload'] ?? '';
-		$decoded   = json_decode( $payload, true );
-		$event     = $decoded['event'] ?? 'unknown';
+		$payload = $meta['payload'] ?? '';
+		$decoded = json_decode( $payload, true );
+		$event   = $decoded['event'] ?? 'unknown';
 
-		if ( empty( $url ) || empty( $payload ) ) {
+		if ( empty( $payload ) ) {
+			return;
+		}
+
+		// Re-fetch current url + secret. If the subscription was deleted
+		// or disabled in between, drop the retry silently.
+		global $wpdb;
+		$row = $wpdb->get_row(
+			$wpdb->prepare(
+				"SELECT url, secret, status FROM {$wpdb->prefix}wb_gam_webhooks WHERE id = %d",
+				$webhook_id
+			),
+			ARRAY_A
+		);
+
+		if ( ! $row || 'active' !== ( $row['status'] ?? 'active' ) ) {
+			return;
+		}
+
+		$url       = (string) ( $row['url'] ?? '' );
+		$secret    = (string) ( $row['secret'] ?? '' );
+		$signature = hash_hmac( 'sha256', $payload, $secret );
+
+		if ( '' === $url ) {
 			return;
 		}
 

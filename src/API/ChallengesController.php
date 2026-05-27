@@ -98,6 +98,16 @@ class ChallengesController extends WP_REST_Controller {
 							'required'          => true,
 							'sanitize_callback' => 'sanitize_text_field',
 						),
+						'description'  => array(
+							// Added in 1.4.1 — DB table has had a `description`
+							// column since 1.0.0 and admin forms have always
+							// posted one, but the REST schema dropped it
+							// silently. Closes audit/DATA-FLOW-ADMIN-REST-
+							// 2026-05-27.md §G11.
+							'type'              => 'string',
+							'default'           => '',
+							'sanitize_callback' => 'sanitize_textarea_field',
+						),
 						'action_id'    => array(
 							'type'              => 'string',
 							'required'          => true,

@@ -70,10 +70,13 @@ final class EmailSettingsController extends WP_REST_Controller {
 	}
 
 	/**
-	 * Permission gate.
+	 * Permission gate. Uses the granular `wb_gam_manage_email_settings`
+	 * cap so a delegated role can manage transactional-email toggles
+	 * without full admin privileges. Pre-1.4.1 hardcoded `manage_options`.
+	 * Closes audit DATA-FLOW-ADMIN-REST-2026-05-27.md §G6.
 	 */
 	public function admin_check(): bool {
-		return current_user_can( 'manage_options' );
+		return \WBGam\Engine\Capabilities::user_can( 'wb_gam_manage_email_settings' );
 	}
 
 	/**

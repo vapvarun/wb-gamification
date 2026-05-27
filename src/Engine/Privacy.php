@@ -536,6 +536,13 @@ final class Privacy {
 			'wb_gam_level_id',             // LevelEngine — denormalized current level (cache).
 			'wb_gam_level_name',           // LevelEngine — denormalized level name (cache).
 			'wb_gam_league_tier',          // CohortEngine — current cohort league tier.
+			// Notification consumer cursors — NotificationBridge writes one
+			// per consumer (footer/heartbeat/rest). Pre-1.4.1 these three
+			// integers survived GDPR erase as orphan rows keyed on the
+			// deleted user's id (audit/DATA-FLOW-NOTIFICATIONS-2026-05-27.md §G8).
+			'wb_gam_notif_cursor_footer',
+			'wb_gam_notif_cursor_heartbeat',
+			'wb_gam_notif_cursor_rest',
 		);
 		foreach ( $user_meta_keys as $meta_key ) {
 			delete_user_meta( $user_id, $meta_key );

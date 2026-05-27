@@ -102,6 +102,20 @@ final class TransactionalEmailEngine {
 		$to      = (string) ( $payload['to'] ?? '' );
 		$subject = (string) ( $payload['subject'] ?? '' );
 		$body    = (string) ( $payload['body'] ?? '' );
+		$slug    = (string) ( $payload['slug'] ?? '' );
+		$user_id = (int) ( $payload['user_id'] ?? 0 );
+
+		// Worker-time re-check of the admin option + member-pref opt-out.
+		// The synchronous listener already gated on these at enqueue time,
+		// but the AS queue can run a minute or more after enqueue — the
+		// user may have toggled `notification_mode = 'none'` (or the admin
+		// may have flipped the option) in the gap. Re-validate at delivery
+		// to honour the most-recent decision. Closes audit
+		// DATA-FLOW-NOTIFICATIONS-2026-05-27.md §G7. Payload carries
+		// `slug` + `user_id` since the renderer enqueued them in 1.4.1.
+		if ( '' !== $slug && $user_id > 0 && ! self::is_enabled( $slug, $user_id ) ) {
+			return;
+		}
 
 		if ( '' === $to || '' === $subject || '' === $body ) {
 			Log::error(
@@ -175,7 +189,9 @@ final class TransactionalEmailEngine {
 				__( 'You reached %s!', 'wb-gamification' ),
 				$new_level['name']
 			),
-			$body
+			$body,
+			'level_up',
+			$user_id
 		);
 	}
 
@@ -222,7 +238,9 @@ final class TransactionalEmailEngine {
 				__( 'You earned the %s badge!', 'wb-gamification' ),
 				$def['name'] ?? $badge_id
 			),
-			$body
+			$body,
+			'badge_earned',
+			$user_id
 		);
 	}
 
@@ -274,7 +292,9 @@ final class TransactionalEmailEngine {
 				__( 'Challenge completed: %s', 'wb-gamification' ),
 				$challenge['title'] ?? ''
 			),
-			$body
+			$body,
+			'challenge_completed',
+			$user_id
 		);
 	}
 
@@ -334,7 +354,9 @@ final class TransactionalEmailEngine {
 				__( 'Your redemption: %s', 'wb-gamification' ),
 				$item['title'] ?? __( 'reward', 'wb-gamification' )
 			),
-			$body
+			$body,
+			'redemption',
+			$user_id
 		);
 	}
 
@@ -410,12 +432,24 @@ final class TransactionalEmailEngine {
 	 * @param string $to      Recipient email.
 	 * @param string $subject Subject line.
 	 * @param string $body    HTML body.
+	 * @param string $slug    Email-type slug (`level_up` | `badge_earned` |
+	 *                        `challenge_completed` | `redemption`) — used by the
+	 *                        worker to re-check is_enabled at delivery time.
+	 * @param int    $user_id Recipient user ID — used for the same re-check.
 	 */
-	private static function send( string $to, string $subject, string $body ): bool {
+	private static function send( string $to, string $subject, string $body, string $slug = '', int $user_id = 0 ): bool {
 		$payload = array(
 			'to'      => $to,
 			'subject' => $subject,
 			'body'    => $body,
+			// 1.4.1: payload now carries slug + user_id so the AS worker
+			// (send_async) can re-validate the opt-out + admin option at
+			// delivery time, not just at enqueue. Race scenario the audit
+			// flagged: user toggles `notification_mode='none'` after the
+			// listener fires but before the queue ticks. See
+			// audit/DATA-FLOW-NOTIFICATIONS-2026-05-27.md §G7.
+			'slug'    => $slug,
+			'user_id' => $user_id,
 		);
 
 		// Enqueue async if Action Scheduler is available — the page-load that

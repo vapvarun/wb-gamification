@@ -202,17 +202,41 @@ class PointsController extends WP_REST_Controller {
 			);
 		}
 
-		// Resolve the requested point type (falls back to primary type for unknown / empty input).
-		$point_type = ( new \WBGam\Services\PointTypeService() )->resolve( $type_input );
+		// Validate `point_type` against the registered currency catalog
+		// when non-empty. Pre-1.4.1 `PointTypeService::resolve()` silently
+		// fell back to the primary type for unknown slugs, so an admin who
+		// thought they were awarding "gems" actually awarded "points" with
+		// no error. Reject the request explicitly — same philosophy as
+		// the enum-drift gate. Closes audit
+		// DATA-FLOW-ADMIN-REST-2026-05-27.md §G13.
+		$pt_service = new \WBGam\Services\PointTypeService();
+		if ( '' !== $type_input ) {
+			$known = $pt_service->list_slugs();
+			if ( ! in_array( $type_input, $known, true ) ) {
+				return new WP_Error(
+					'rest_unknown_point_type',
+					sprintf(
+						/* translators: %s: unknown point type slug submitted by the admin */
+						__( 'Unknown point type "%s". Register the currency in Point Types before awarding.', 'wb-gamification' ),
+						$type_input
+					),
+					array( 'status' => 400 )
+				);
+			}
+		}
+		$point_type = $pt_service->resolve( $type_input );
 
 		// Negative input → debit via PointsEngine::debit; positive → standard award path.
 		if ( $points < 0 ) {
-			$ok = \WBGam\Engine\PointsEngine::debit( $user_id, abs( $points ), 'manual_admin_deduct', '', $point_type );
-			if ( ! $ok ) {
+			$debit_result = \WBGam\Engine\PointsEngine::debit( $user_id, abs( $points ), 'manual_admin_deduct', '', $point_type );
+			if ( empty( $debit_result['success'] ) ) {
+				$reason = $debit_result['reason'] ?? 'unknown';
 				return new WP_Error(
-					'rest_points_debit_failed',
-					__( 'Failed to debit points.', 'wb-gamification' ),
-					array( 'status' => 500 )
+					'insufficient_balance' === $reason ? 'rest_points_insufficient_balance' : 'rest_points_debit_failed',
+					'insufficient_balance' === $reason
+						? __( 'User does not have enough points to debit.', 'wb-gamification' )
+						: __( 'Failed to debit points.', 'wb-gamification' ),
+					array( 'status' => 400 )
 				);
 			}
 			if ( '' !== $note ) {

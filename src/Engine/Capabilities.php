@@ -59,6 +59,13 @@ final class Capabilities {
 		// controller already gated on this cap but the cap was never
 		// registered — granting it to non-admin roles did nothing.
 		'wb_gam_manage_levels'     => array( 'administrator' ),
+		// UGC submission queue (SubmissionsController). Added in 1.4.1
+		// after audit §G5 — pre-refactor the controller hardcoded
+		// `manage_options`, breaking the granular-delegation promise.
+		'wb_gam_manage_submissions' => array( 'administrator' ),
+		// Transactional email toggles (EmailSettingsController). Added
+		// in 1.4.1 after audit §G6 — same hardcode pattern as G5.
+		'wb_gam_manage_email_settings' => array( 'administrator' ),
 		// Analytics dashboard view (AnalyticsDashboard).
 		'wb_gam_view_analytics'    => array( 'administrator' ),
 	);
@@ -79,7 +86,7 @@ final class Capabilities {
 	 *
 	 * @var string
 	 */
-	public const CAPS_VERSION = '1.3';
+	public const CAPS_VERSION = '1.4';
 
 	/**
 	 * Grant every plugin cap to its default roles.

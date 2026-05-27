@@ -77,7 +77,13 @@ final class SubmissionsController extends WP_REST_Controller {
 	}
 
 	public function admin_check(): bool {
-		return current_user_can( 'manage_options' );
+		// Use the granular `wb_gam_manage_submissions` cap so a community-
+		// manager role with the gamification caps granted can approve/reject
+		// without escalating to a full admin. Pre-1.4.1 this hardcoded
+		// `manage_options` — broke the granular-cap promise the rest of the
+		// controllers honour. Closes audit
+		// DATA-FLOW-ADMIN-REST-2026-05-27.md §G5.
+		return \WBGam\Engine\Capabilities::user_can( 'wb_gam_manage_submissions' );
 	}
 
 	public function handle_submit( WP_REST_Request $request ) {
