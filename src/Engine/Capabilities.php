@@ -54,6 +54,11 @@ final class Capabilities {
 		'wb_gam_manage_rewards'    => array( 'administrator' ),
 		// Outbound webhooks (WebhooksController).
 		'wb_gam_manage_webhooks'   => array( 'administrator' ),
+		// Level definition CRUD (LevelsController). Added in 1.4.1 after
+		// audit/DATA-FLOW-ADMIN-REST-2026-05-27.md §G1 found the
+		// controller already gated on this cap but the cap was never
+		// registered — granting it to non-admin roles did nothing.
+		'wb_gam_manage_levels'     => array( 'administrator' ),
 		// Analytics dashboard view (AnalyticsDashboard).
 		'wb_gam_view_analytics'    => array( 'administrator' ),
 	);
@@ -74,7 +79,7 @@ final class Capabilities {
 	 *
 	 * @var string
 	 */
-	public const CAPS_VERSION = '1.2';
+	public const CAPS_VERSION = '1.3';
 
 	/**
 	 * Grant every plugin cap to its default roles.

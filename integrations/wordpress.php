@@ -101,11 +101,19 @@ return [
 		[
 			'id'              => 'wp_publish_post',
 			'label'           => 'Publish a blog post',
-			'description'     => 'Awarded when the author publishes a new post.',
-			'hook'            => 'publish_post',
-			'user_callback'   => function ( int $post_id ): int {
-				$post = get_post( $post_id );
-				if ( ! $post || 'post' !== $post->post_type ) {
+			'description'     => 'Awarded when the author publishes a new post — once per transition into the published state. Editing an already-published post does NOT re-award.',
+			// `transition_post_status` (not `publish_post`) because the
+			// latter fires on every save where status ends as `publish` —
+			// including edits — so authors re-earned 25pts on every
+			// Update click. The transition hook gives us $new + $old so
+			// we can scope to "left an unpublished state to become
+			// published". Caught by audit/DATA-FLOW-AWARD-2026-05-27.md §G9.
+			'hook'            => 'transition_post_status',
+			'user_callback'   => function ( string $new_status, string $old_status, $post ): int {
+				if ( 'publish' !== $new_status || 'publish' === $old_status ) {
+					return 0;
+				}
+				if ( ! ( $post instanceof \WP_Post ) || 'post' !== $post->post_type ) {
 					return 0;
 				}
 				return (int) $post->post_author;
@@ -120,11 +128,21 @@ return [
 		[
 			'id'              => 'wp_first_post',
 			'label'           => 'Publish first post ever',
-			'description'     => "Awarded once on the author's very first published post.",
-			'hook'            => 'publish_post',
-			'user_callback'   => function ( int $post_id ): int {
-				$post = get_post( $post_id );
-				if ( ! $post || 'post' !== $post->post_type ) {
+			'description'     => "Awarded once on the author's very first transition-to-publish for a post.",
+			// Same transition_post_status pattern as wp_publish_post.
+			// Without this fix, the first-post check also re-ran on every
+			// update because `count_user_posts` returned 1 for a single
+			// post under repeated edits, so the engine would attempt to
+			// award again — `repeatable: false` would correctly veto
+			// after the first, but every subsequent update wasted a
+			// rate-limit/manifest evaluation cycle. The transition gate
+			// stops the wasted work at the integration boundary.
+			'hook'            => 'transition_post_status',
+			'user_callback'   => function ( string $new_status, string $old_status, $post ): int {
+				if ( 'publish' !== $new_status || 'publish' === $old_status ) {
+					return 0;
+				}
+				if ( ! ( $post instanceof \WP_Post ) || 'post' !== $post->post_type ) {
 					return 0;
 				}
 				$author_id  = (int) $post->post_author;

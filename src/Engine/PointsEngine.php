@@ -243,7 +243,15 @@ final class PointsEngine {
 			return false;
 		}
 
-		self::bump_user_total( $event->user_id, $type, $points );
+		// Propagate the materialised-total UPSERT result back up. When this
+		// returns false, the caller (PointsEngine::debit, Engine::process)
+		// is inside a Transaction::run frame and the rollback signal makes
+		// the ledger insert above unwind too — without this, the ledger
+		// would commit but `wb_gam_user_totals` would stay stale forever.
+		// Closes audit §G12.
+		if ( ! self::bump_user_total( $event->user_id, $type, $points ) ) {
+			return false;
+		}
 		wp_cache_delete( self::cache_key_total( $event->user_id, $type ), 'wb_gamification' );
 
 		return true;
@@ -395,17 +403,22 @@ final class PointsEngine {
 	 * keep the materialised total in lockstep — failing to call this after
 	 * a direct INSERT would silently drift the cached balance from truth.
 	 *
-	 * Failure to update the materialised total is logged but never blocks
-	 * the ledger write — the ledger remains the source of truth, and a
-	 * one-shot backfill can repair drift.
+	 * Returns true on success, false when the UPSERT failed (the parent
+	 * Transaction::run frame inspects this so the whole ledger-write
+	 * sequence rolls back rather than committing a wb_gam_points row
+	 * whose materialised total never reflected the change). Pre-1.4.1
+	 * this method returned void and the failure was logged-and-forgotten,
+	 * leaving stale balances visible for the user's lifetime until a
+	 * manual backfill ran — audit/DATA-FLOW-AWARD-2026-05-27.md §G12.
 	 *
 	 * @param int    $user_id User affected.
 	 * @param string $type    Resolved point-type slug.
 	 * @param int    $delta   Signed delta to apply (positive for award, negative for debit).
+	 * @return bool           True on success or no-op (delta=0); false when the UPSERT failed.
 	 */
-	public static function bump_user_total( int $user_id, string $type, int $delta ): void {
+	public static function bump_user_total( int $user_id, string $type, int $delta ): bool {
 		if ( 0 === $delta ) {
-			return;
+			return true;
 		}
 
 		global $wpdb;
@@ -431,7 +444,10 @@ final class PointsEngine {
 					'db_error'   => $wpdb->last_error,
 				)
 			);
+			return false;
 		}
+
+		return true;
 	}
 
 	/**

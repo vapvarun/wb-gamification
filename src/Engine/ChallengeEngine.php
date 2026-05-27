@@ -252,10 +252,21 @@ final class ChallengeEngine {
 			array( '%d', '%d' )
 		);
 
-		// Award bonus points.
+		// Award bonus points — deferred via Engine::process_async so we
+		// don't recurse into our own listener.
+		//
+		// The original synchronous Engine::process() call ran inside the
+		// `wb_gam_points_awarded` callback that drove us here, and
+		// Engine::process_event re-evaluates challenges on every award.
+		// A challenge whose action_id is `challenge_completed` (or one
+		// that lists a recently-completed challenge's bonus as its
+		// trigger) would have caused infinite recursion until PHP timed
+		// out. Engine::process_async enqueues through Action Scheduler
+		// so the bonus award runs in a fresh request frame with a fresh
+		// call stack. Caught by audit/DATA-FLOW-AWARD-2026-05-27.md §G10.
 		$bonus = (int) $challenge['bonus_points'];
 		if ( $bonus > 0 ) {
-			Engine::process(
+			Engine::process_async(
 				new Event(
 					array(
 						'action_id' => 'challenge_completed',

@@ -78,6 +78,17 @@ final class Engine {
 
 		// Action Scheduler handler for async event processing.
 		add_action( 'wb_gam_process_event_async', array( __CLASS__, 'handle_async' ) );
+
+		// Invalidate the per-request action-enabled cache whenever an
+		// admin toggles a `wb_gam_enabled_<action>` option. Without this,
+		// long-running contexts (WP-CLI bulk imports, Action Scheduler
+		// workers, cron) keep awarding for an action the admin just
+		// disabled — the same request never re-reads the option.
+		// See audit/DATA-FLOW-AWARD-2026-05-27.md §G15. `updated_option`
+		// fires once per real change so the work is bounded.
+		add_action( 'updated_option', array( __CLASS__, 'maybe_flush_enabled_cache' ), 10, 1 );
+		add_action( 'added_option', array( __CLASS__, 'maybe_flush_enabled_cache' ), 10, 1 );
+		add_action( 'deleted_option', array( __CLASS__, 'maybe_flush_enabled_cache' ), 10, 1 );
 	}
 
 	/**
@@ -91,6 +102,32 @@ final class Engine {
 			self::$enabled_cache[ $action_id ] = (bool) get_option( 'wb_gam_enabled_' . $action_id, true );
 		}
 		return self::$enabled_cache[ $action_id ];
+	}
+
+	/**
+	 * Drop the per-request cache when a `wb_gam_enabled_<action>` option
+	 * gets written. Bound from {@see init()}; takes the option name from
+	 * the `updated_option` / `added_option` / `deleted_option` callbacks.
+	 *
+	 * @param string $option_name Option that was just written.
+	 * @return void
+	 */
+	public static function maybe_flush_enabled_cache( string $option_name ): void {
+		if ( str_starts_with( $option_name, 'wb_gam_enabled_' ) ) {
+			self::$enabled_cache = array();
+		}
+	}
+
+	/**
+	 * Explicitly drop the per-request action-enabled cache.
+	 *
+	 * Useful for WP-CLI flows that update many `wb_gam_enabled_*` options
+	 * in a tight loop and want to force a re-read before the next batch.
+	 *
+	 * @return void
+	 */
+	public static function flush_enabled_cache(): void {
+		self::$enabled_cache = array();
 	}
 
 	/**
@@ -355,17 +392,13 @@ final class Engine {
 		 */
 		do_action( 'wb_gam_points_awarded', $event->user_id, $event, $points );
 
-		/**
-		 * Fires after points are awarded to a user.
-		 *
-		 * @since 1.0.0
-		 *
-		 * @param int    $user_id   User who received points.
-		 * @param int    $points    Number of points awarded.
-		 * @param string $action_id Action that triggered the award.
-		 * @param int    $object_id Related object ID.
-		 */
-		do_action( 'wb_gam_after_points_award', $event->user_id, $points, $event->action_id, $event->object_id );
+		// NOTE: `wb_gam_after_points_award` (a 4-arg duplicate of the above
+		// hook) was removed on 2026-05-27 — no listener in the codebase
+		// subscribed to it, and listeners that need the same payload can
+		// use `wb_gam_points_awarded` instead. See audit/DATA-FLOW-AWARD-
+		// 2026-05-27.md §G8. If your code listened to the removed hook,
+		// switch to `wb_gam_points_awarded` and read fields off the Event
+		// object: $event->action_id, $event->object_id, $event->metadata.
 
 		// Side-effects.
 		LevelEngine::maybe_level_up( $event->user_id );

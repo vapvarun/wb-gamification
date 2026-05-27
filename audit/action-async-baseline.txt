@@ -3,21 +3,21 @@
 # line is '<file>:<line> <action_id>'. New entries fail the gate; legitimate
 # fixes (explicit 'async' => true|false added) should DELETE the line in the
 # same commit.
-# Generated: 2026-05-27T03:00:37Z
+# Generated: 2026-05-27T05:01:09Z
 
-integrations/bbpress.php:1595 jetonomy_pro_reaction_added
-integrations/bbpress.php:1652 bbp_new_topic
-integrations/bbpress.php:1667 bbp_new_reply
-integrations/bbpress.php:1682 bbp_topic_closed
-integrations/buddypress.php:1775 bp_friends_accepted
-integrations/buddypress.php:1792 bp_groups_join
-integrations/buddypress.php:1805 bp_groups_create
-integrations/buddypress.php:1834 bp_reactions_received
-integrations/buddypress.php:1863 bp_polls_created
-integrations/buddypress.php:1876 bp_publish_post
-integrations/buddypress.php:1900 bp_media_upload
-integrations/buddypress.php:1948 bp_group_cover_upload
-integrations/buddypress.php:1970 bp_message_sent
+integrations/bbpress.php:1613 jetonomy_pro_reaction_added
+integrations/bbpress.php:1670 bbp_new_topic
+integrations/bbpress.php:1685 bbp_new_reply
+integrations/bbpress.php:1700 bbp_topic_closed
+integrations/buddypress.php:1793 bp_friends_accepted
+integrations/buddypress.php:1810 bp_groups_join
+integrations/buddypress.php:1823 bp_groups_create
+integrations/buddypress.php:1852 bp_reactions_received
+integrations/buddypress.php:1881 bp_polls_created
+integrations/buddypress.php:1894 bp_publish_post
+integrations/buddypress.php:1918 bp_media_upload
+integrations/buddypress.php:1966 bp_group_cover_upload
+integrations/buddypress.php:1988 bp_message_sent
 integrations/contrib/givewp.php:780 give_donation_completed
 integrations/contrib/givewp.php:820 give_recurring_donation
 integrations/contrib/givewp.php:835 give_campaign_goal_reached
@@ -31,16 +31,16 @@ integrations/contrib/memberpress.php:897 mp_membership_renewed
 integrations/contrib/the-events-calendar.php:961 tec_rsvp_registered
 integrations/contrib/the-events-calendar.php:981 tec_ticket_purchased
 integrations/contrib/the-events-calendar.php:996 tec_event_checked_in
-integrations/jetonomy-pro.php:1403 jetonomy_membership_activated
-integrations/jetonomy-pro.php:1454 jetonomy_pro_poll_created
-integrations/jetonomy-pro.php:1476 jetonomy_pro_poll_voted
-integrations/jetonomy-pro.php:1498 jetonomy_pro_message_sent
-integrations/jetonomy-pro.php:1521 jetonomy_pro_conversation_created
-integrations/jetonomy-pro.php:1543 jetonomy_pro_badge_earned
-integrations/jetonomy-pro.php:1570 jetonomy_pro_dm_received
-integrations/jetonomy.php:1334 jetonomy_space_joined
-integrations/jetonomy.php:1357 jetonomy_join_request_approved
-integrations/jetonomy.php:1379 jetonomy_trust_level_up
+integrations/jetonomy-pro.php:1421 jetonomy_membership_activated
+integrations/jetonomy-pro.php:1472 jetonomy_pro_poll_created
+integrations/jetonomy-pro.php:1494 jetonomy_pro_poll_voted
+integrations/jetonomy-pro.php:1516 jetonomy_pro_message_sent
+integrations/jetonomy-pro.php:1539 jetonomy_pro_conversation_created
+integrations/jetonomy-pro.php:1561 jetonomy_pro_badge_earned
+integrations/jetonomy-pro.php:1588 jetonomy_pro_dm_received
+integrations/jetonomy.php:1352 jetonomy_space_joined
+integrations/jetonomy.php:1375 jetonomy_join_request_approved
+integrations/jetonomy.php:1397 jetonomy_trust_level_up
 integrations/learndash.php:389 mvs_streak_milestone
 integrations/learndash.php:475 ld_course_completed
 integrations/learndash.php:490 ld_lesson_completed
@@ -51,8 +51,8 @@ integrations/woocommerce.php:712 wc_wishlist_add
 integrations/woocommerce.php:727 wc_add_to_cart
 integrations/wordpress.php:1175 wp_post_receives_comment
 integrations/wordpress.php:1212 wp_publish_post
-integrations/wordpress.php:1252 wp_leave_comment
-integrations/wordpress.php:1280 wp_comment_approved
+integrations/wordpress.php:1270 wp_leave_comment
+integrations/wordpress.php:1298 wp_comment_approved
 integrations/wpmediaverse.php:111 mvs_create_album
 integrations/wpmediaverse.php:181 mvs_receive_follow
 integrations/wpmediaverse.php:225 mvs_give_comment

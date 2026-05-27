@@ -89,12 +89,35 @@ final class EmailSettingsController extends WP_REST_Controller {
 
 	/**
 	 * Save toggle state. Only whitelisted event slugs are accepted.
+	 *
+	 * Semantics: PATCH-like — only the slugs the request body explicitly
+	 * carries are written. Pre-1.4.1 every call wrote ALL 4 options
+	 * (whatever wasn't in the body became OFF), so a client that wanted
+	 * to flip a single toggle had to send all 4 values or risk silently
+	 * disabling unrelated ones. See audit/DATA-FLOW-ADMIN-REST-2026-05-27.md §G7.
+	 *
+	 * To verify a key is "actually in the body" (not just defaulting to
+	 * null from get_param()), the controller inspects the request's
+	 * decoded JSON params + body params + query params with `has_param()`-
+	 * style logic. WP REST doesn't expose `has_param`, so we read the
+	 * raw param map.
 	 */
 	public function handle_save( WP_REST_Request $request ): WP_REST_Response {
+		$body_params  = (array) $request->get_json_params();
+		$body_params += (array) $request->get_body_params();
+		$query_params = (array) $request->get_query_params();
+		$incoming_keys = array_keys( $body_params + $query_params );
+
 		$updated = array();
 		foreach ( self::EVENTS as $slug ) {
-			$incoming = $request->get_param( $slug );
-			$value    = ! empty( $incoming ) && '0' !== (string) $incoming;
+			// Only write the slug if the request explicitly carries it.
+			// Missing keys are NOT auto-toggled OFF (PATCH semantics).
+			if ( ! in_array( $slug, $incoming_keys, true ) ) {
+				$updated[ $slug ] = (bool) get_option( 'wb_gam_email_' . $slug, false );
+				continue;
+			}
+			$incoming        = $request->get_param( $slug );
+			$value           = ! empty( $incoming ) && '0' !== (string) $incoming;
 			update_option( 'wb_gam_email_' . $slug, $value ? '1' : '0' );
 			$updated[ $slug ] = $value;
 		}
