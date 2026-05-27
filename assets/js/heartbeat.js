@@ -51,9 +51,20 @@
 		var $ = jQuery;
 
 		// Tunable interval (seconds). Heartbeat accepts 'fast' (5s) for
-		// short bursts, 'standard' (15s) for the default. WP slows the
-		// tick when the tab is hidden — we don't override that.
-		var DEFAULT_INTERVAL = 'standard';
+		// short bursts, 'standard' (15s) for the default. We use 'fast'
+		// because the gamification surface is realtime-feel by design —
+		// points / badges / level-up toasts that appear ~5 seconds after
+		// the user did something feel like "the system noticed" instead
+		// of "I'll see it later." 15s lag was the dominant complaint on
+		// Basecamp #9925151443 ("toasts only appear on page reload or
+		// tab switch"). Members CAN opt to slow it back down via the
+		// `wb_gam_realtime_interval` JS filter if their host can't take
+		// the extra ticks. WP slows the tick when the tab is hidden —
+		// we don't override that.
+		var DEFAULT_INTERVAL = 'fast';
+		if ( window.wbGamRealtimeInterval ) {
+			DEFAULT_INTERVAL = String( window.wbGamRealtimeInterval );
+		}
 		wp.heartbeat.interval( DEFAULT_INTERVAL );
 
 		var subscribers = {
