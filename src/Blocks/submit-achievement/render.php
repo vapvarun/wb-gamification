@@ -44,9 +44,10 @@ wp_enqueue_style( 'lucide-icons' );
 wp_enqueue_script( 'wp-api-fetch' );
 
 // Frontend wp_editor() requires the editor scripts. wp_enqueue_editor()
-// loads tinymce-core + quicktags + media (if available). Members without
-// upload_files capability still get the rich-text toolbar; the "Add Media"
-// button is hidden for them automatically by the media_buttons flag below.
+// loads tinymce-core + quicktags + media. MemberUploadCap grants
+// upload_files to every logged-in user via a user_has_cap filter so the
+// Add Media button works for subscribers / contributors too — site
+// owners can opt out via the `wb_gam_grant_member_uploads` filter.
 if ( is_user_logged_in() ) {
 	wp_enqueue_editor();
 }

@@ -67,6 +67,11 @@ final class FeatureFlags {
 		'TransactionalEmailEngine',
 		'LoginBonusEngine',
 		'ProfilePage',
+		// Grants upload_files to logged-in members so the
+		// submit-achievement editor's Add Media button works for
+		// subscribers / contributors. Opt out via the
+		// `wb_gam_grant_member_uploads` filter.
+		'MemberUploadCap',
 	];
 
 	/**
