@@ -136,10 +136,15 @@ foreach ( $wb_gam_standing['standings'] ?? array() as $wb_gam_entry ) {
 	}
 }
 
+// data-tier drives the per-tier accent colour in the per-block CSS so
+// Bronze cohorts look distinct from Diamond cohorts. The legacy
+// rendering had a single primary-coloured dot that gave members no
+// visual sense of where their league sat in the hierarchy.
 $wb_gam_wrapper = get_block_wrapper_attributes(
 	array(
-		'class' => implode( ' ', $wb_gam_classes ),
-		'style' => '' !== $wb_gam_inline ? $wb_gam_inline : null,
+		'class'     => implode( ' ', $wb_gam_classes ),
+		'style'     => '' !== $wb_gam_inline ? $wb_gam_inline : null,
+		'data-tier' => (string) (int) ( $wb_gam_standing['tier'] ?? 0 ),
 	)
 );
 

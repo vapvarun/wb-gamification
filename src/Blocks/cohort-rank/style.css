@@ -39,8 +39,23 @@
 	width: 10px;
 	height: 10px;
 	border-radius: 50%;
-	background: var(--wb-gam-primary);
+	background: var( --wb-gam-tier-accent, var(--wb-gam-primary) );
 	flex-shrink: 0;
+	box-shadow: 0 0 0 3px var( --wb-gam-tier-accent-soft, rgba( 91, 76, 219, 0.15 ) );
+}
+
+/* Tier-specific accents so members SEE their league at a glance — the
+   colour ladder mirrors the gamification hierarchy customers expect
+   (bronze < silver < gold < diamond < obsidian). Block render emits
+   data-tier on the wrapper. */
+.wb-gam-cohort-rank[data-tier="0"] { --wb-gam-tier-accent: #b45309; --wb-gam-tier-accent-soft: rgba( 180, 83, 9, 0.15 ); }   /* Bronze */
+.wb-gam-cohort-rank[data-tier="1"] { --wb-gam-tier-accent: #6b7280; --wb-gam-tier-accent-soft: rgba( 107, 114, 128, 0.18 ); } /* Silver */
+.wb-gam-cohort-rank[data-tier="2"] { --wb-gam-tier-accent: #d97706; --wb-gam-tier-accent-soft: rgba( 217, 119, 6, 0.18 ); }   /* Gold */
+.wb-gam-cohort-rank[data-tier="3"] { --wb-gam-tier-accent: #2563eb; --wb-gam-tier-accent-soft: rgba( 37, 99, 235, 0.18 ); }   /* Diamond */
+.wb-gam-cohort-rank[data-tier="4"] { --wb-gam-tier-accent: #4b5563; --wb-gam-tier-accent-soft: rgba( 75, 85, 99, 0.22 ); }    /* Obsidian */
+
+.wb-gam-cohort-rank[data-tier] .wb-gam-cohort-rank__header {
+	border-block-end-color: var( --wb-gam-tier-accent-soft );
 }
 
 .wb-gam-cohort-rank__current-rank {
