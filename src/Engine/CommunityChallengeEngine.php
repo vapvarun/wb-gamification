@@ -222,6 +222,46 @@ final class CommunityChallengeEngine {
 	}
 
 	/**
+	 * Get all currently-visible community challenges — active OR completed
+	 * within the still-running date window.
+	 *
+	 * The community-challenges block uses this so a challenge that hit its
+	 * target doesn't VANISH from the list the instant it completes. Members
+	 * lose the dopamine hit + the "we did it!" social proof if a challenge
+	 * disappears mid-cycle. Completed-but-not-expired entries stay listed
+	 * (sorted last) until ends_at passes, giving members the full window
+	 * to celebrate.
+	 *
+	 * Active challenges sort first (ascending by ends_at — most urgent
+	 * first); completed challenges follow (descending by completed_at —
+	 * most-recently-completed first).
+	 *
+	 * @return array<int, array>
+	 */
+	public static function get_visible(): array {
+		global $wpdb;
+
+		$now = current_time( 'mysql' );
+
+		return $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT id, title, target_action, target_count, global_progress,
+				        bonus_points, starts_at, ends_at, status, completed_at
+				   FROM {$wpdb->prefix}wb_gam_community_challenges
+				  WHERE starts_at <= %s
+				    AND ends_at >= %s
+				    AND status IN ('active', 'completed')
+				  ORDER BY (status = 'active') DESC,
+				           CASE WHEN status = 'active' THEN ends_at ELSE NULL END ASC,
+				           CASE WHEN status = 'completed' THEN completed_at ELSE NULL END DESC",
+				$now,
+				$now
+			),
+			ARRAY_A
+		) ?: array();
+	}
+
+	/**
 	 * Get a single community challenge.
 	 *
 	 * @param int $id Community challenge ID.

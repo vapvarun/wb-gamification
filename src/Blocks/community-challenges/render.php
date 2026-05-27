@@ -62,7 +62,13 @@ $wb_gam_classes = array_filter( array( 'wb-gam-community-challenges', 'wb-gam-bl
 
 wp_enqueue_style( 'wb-gam-tokens' );
 
-$wb_gam_challenges = CommunityChallengeEngine::get_active();
+// get_visible() returns active challenges PLUS completed-but-not-expired
+// ones so a challenge that just hit its target stays listed (with a
+// "Completed!" badge) until its end date passes — gives members the full
+// celebration window. Pre-fix used get_active() which dropped completed
+// challenges immediately, leaving members with "no active challenges"
+// the second they hit the goal. Closes Basecamp #9932994598.
+$wb_gam_challenges = CommunityChallengeEngine::get_visible();
 if ( $wb_gam_limit > 0 ) {
 	$wb_gam_challenges = array_slice( $wb_gam_challenges, 0, $wb_gam_limit );
 }
@@ -100,19 +106,31 @@ BlockHooks::before( 'community-challenges', $wb_gam_attrs, array( 'count' => cou
 	<?php else : ?>
 		<ul class="wb-gam-community-challenges__list" role="list">
 			<?php foreach ( $wb_gam_challenges as $wb_gam_challenge ) :
-				$wb_gam_progress   = (int) ( $wb_gam_challenge['global_progress'] ?? 0 );
-				$wb_gam_target     = max( 1, (int) ( $wb_gam_challenge['target_count'] ?? 1 ) );
-				$wb_gam_pct        = min( 100, (int) round( ( $wb_gam_progress / $wb_gam_target ) * 100 ) );
-				$wb_gam_bonus      = (int) ( $wb_gam_challenge['bonus_points'] ?? 0 );
-				$wb_gam_ends_ts    = (int) strtotime( (string) ( $wb_gam_challenge['ends_at'] ?? 'now' ) );
-				$wb_gam_time_left  = $wb_gam_ends_ts > time()
+				$wb_gam_progress      = (int) ( $wb_gam_challenge['global_progress'] ?? 0 );
+				$wb_gam_target        = max( 1, (int) ( $wb_gam_challenge['target_count'] ?? 1 ) );
+				$wb_gam_pct           = min( 100, (int) round( ( $wb_gam_progress / $wb_gam_target ) * 100 ) );
+				$wb_gam_bonus         = (int) ( $wb_gam_challenge['bonus_points'] ?? 0 );
+				$wb_gam_ends_ts       = (int) strtotime( (string) ( $wb_gam_challenge['ends_at'] ?? 'now' ) );
+				$wb_gam_status        = (string) ( $wb_gam_challenge['status'] ?? 'active' );
+				$wb_gam_is_completed  = ( 'completed' === $wb_gam_status );
+				$wb_gam_time_left     = $wb_gam_ends_ts > time()
 					? human_time_diff( time(), $wb_gam_ends_ts )
 					: __( 'ended', 'wb-gamification' );
+				$wb_gam_item_classes  = 'wb-gam-community-challenges__item';
+				if ( $wb_gam_is_completed ) {
+					$wb_gam_item_classes .= ' wb-gam-community-challenges__item--completed';
+				}
 				?>
-				<li class="wb-gam-community-challenges__item">
+				<li class="<?php echo esc_attr( $wb_gam_item_classes ); ?>"<?php echo $wb_gam_is_completed ? ' data-status="completed"' : ''; ?>>
 					<div class="wb-gam-community-challenges__row">
 						<span class="wb-gam-community-challenges__challenge-title">
 							<?php echo esc_html( (string) ( $wb_gam_challenge['title'] ?? '' ) ); ?>
+							<?php if ( $wb_gam_is_completed ) : ?>
+								<span class="wb-gam-community-challenges__status-badge wb-gam-community-challenges__status-badge--completed">
+									<span class="icon-circle-check" aria-hidden="true"></span>
+									<?php esc_html_e( 'Completed', 'wb-gamification' ); ?>
+								</span>
+							<?php endif; ?>
 						</span>
 						<span class="wb-gam-community-challenges__bonus">
 							<?php
@@ -128,7 +146,7 @@ BlockHooks::before( 'community-challenges', $wb_gam_attrs, array( 'count' => cou
 							aria-valuemax="<?php echo esc_attr( (string) $wb_gam_target ); ?>"
 							aria-valuenow="<?php echo esc_attr( (string) $wb_gam_progress ); ?>">
 							<div class="wb-gam-community-challenges__progress-bar"
-								style="width:<?php echo esc_attr( (string) $wb_gam_pct ); ?>%"></div>
+								style="width:<?php echo esc_attr( $wb_gam_is_completed ? '100' : (string) $wb_gam_pct ); ?>%"></div>
 						</div>
 					<?php endif; ?>
 
@@ -144,8 +162,13 @@ BlockHooks::before( 'community-challenges', $wb_gam_attrs, array( 'count' => cou
 						</span>
 						<span class="wb-gam-community-challenges__time-left">
 							<?php
-							/* translators: %s = human-readable time remaining */
-							printf( esc_html__( '%s left', 'wb-gamification' ), esc_html( (string) $wb_gam_time_left ) );
+							if ( $wb_gam_is_completed ) {
+								/* translators: %s = human-readable time until the window closes (members keep seeing the win until then). */
+								printf( esc_html__( 'Celebrating for %s', 'wb-gamification' ), esc_html( (string) $wb_gam_time_left ) );
+							} else {
+								/* translators: %s = human-readable time remaining */
+								printf( esc_html__( '%s left', 'wb-gamification' ), esc_html( (string) $wb_gam_time_left ) );
+							}
 							?>
 						</span>
 					</div>

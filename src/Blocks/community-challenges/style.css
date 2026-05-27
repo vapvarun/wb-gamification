@@ -103,6 +103,43 @@
 	color: var(--wb-gam-silver, #6b7280);
 }
 
+/* Completed-but-not-yet-expired state. Members keep seeing the win
+   until ends_at passes — see CommunityChallengeEngine::get_visible.
+   Visual treatment: green left-border accent, soft green tint on the
+   card, full progress bar in success colour, "Completed" pill badge. */
+.wb-gam-community-challenges__item--completed {
+	border-color: rgba( 22, 163, 74, 0.35 );
+	background: linear-gradient( 180deg, rgba( 22, 163, 74, 0.06 ) 0, var(--wb-gam-color-surface-muted) 100% );
+	box-shadow: inset 4px 0 0 0 #16a34a;
+}
+
+.wb-gam-community-challenges__item--completed .wb-gam-community-challenges__progress-bar {
+	background: #16a34a;
+}
+
+.wb-gam-community-challenges__status-badge {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.25rem;
+	font-size: 0.6875rem;
+	font-weight: 700;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	padding: 0.125rem 0.5rem;
+	border-radius: 999px;
+	margin-inline-start: 0.5rem;
+	vertical-align: 1px;
+}
+
+.wb-gam-community-challenges__status-badge--completed {
+	background: #ecfdf5;
+	color: #047857;
+}
+
+.wb-gam-community-challenges__status-badge .icon-circle-check {
+	font-size: 0.75rem;
+}
+
 .wb-gam-community-challenges__empty {
 	color: var(--wb-gam-color-text-muted);
 	font-size: 0.9375rem;
