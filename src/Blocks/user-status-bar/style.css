@@ -26,16 +26,27 @@
 .wb-gam-status-bar--floating {
 	position: fixed;
 	max-width: calc( 100vw - 2rem );
+	/* Themes with their own sticky header (BuddyX, Astra Premium, etc.)
+	   can set this CSS variable on body / html to push the bar below the
+	   header without overriding our positioning rules. Default 0 keeps
+	   the bar at the configured corner. */
+	--wb-gam-status-bar-top-offset: 0px;
 }
-.wb-gam-status-bar--floating.wb-gam-status-bar--pos-top-right    { top: 1rem;    right: 1rem; }
-.wb-gam-status-bar--floating.wb-gam-status-bar--pos-top-left     { top: 1rem;    left:  1rem; }
+.wb-gam-status-bar--floating.wb-gam-status-bar--pos-top-right    { top: calc( 1rem + var( --wb-gam-status-bar-top-offset ) );    right: 1rem; }
+.wb-gam-status-bar--floating.wb-gam-status-bar--pos-top-left     { top: calc( 1rem + var( --wb-gam-status-bar-top-offset ) );    left:  1rem; }
 .wb-gam-status-bar--floating.wb-gam-status-bar--pos-bottom-right { bottom: 1rem; right: 1rem; }
 .wb-gam-status-bar--floating.wb-gam-status-bar--pos-bottom-left  { bottom: 1rem; left:  1rem; }
 
 /* WP admin-bar nudge so the bar doesn't sit under the toolbar. */
 body.admin-bar .wb-gam-status-bar--floating.wb-gam-status-bar--pos-top-right,
 body.admin-bar .wb-gam-status-bar--floating.wb-gam-status-bar--pos-top-left {
-	top: calc( 32px + 1rem );
+	top: calc( 32px + 1rem + var( --wb-gam-status-bar-top-offset ) );
+}
+@media ( max-width: 782px ) {
+	body.admin-bar .wb-gam-status-bar--floating.wb-gam-status-bar--pos-top-right,
+	body.admin-bar .wb-gam-status-bar--floating.wb-gam-status-bar--pos-top-left {
+		top: calc( 46px + 0.75rem + var( --wb-gam-status-bar-top-offset ) );
+	}
 }
 
 .wb-gam-status-bar--sticky-top {
@@ -95,9 +106,24 @@ body.admin-bar .wb-gam-status-bar--sticky-top {
 .wb-gam-status-bar__toggle-icon {
 	width: 14px;
 	height: 14px;
-	border-radius: 50%;
-	background: currentColor;
 	display: block;
+	/* Chevron drawn with inline SVG mask so it inherits currentColor and
+	   rotates cleanly when the bar is collapsed. Pre-1.4.1 this was a
+	   filled-circle "dot" with no semantic meaning — members had no
+	   visual cue that the bar was collapsible (Basecamp #9933306809). */
+	background-color: currentColor;
+	mask-image: url( "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='15 18 9 12 15 6'/%3E%3C/svg%3E" );
+	mask-repeat: no-repeat;
+	mask-position: center;
+	mask-size: contain;
+	-webkit-mask-image: url( "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='15 18 9 12 15 6'/%3E%3C/svg%3E" );
+	-webkit-mask-repeat: no-repeat;
+	-webkit-mask-position: center;
+	-webkit-mask-size: contain;
+	transition: transform 220ms ease;
+}
+.wb-gam-status-bar.is-collapsed .wb-gam-status-bar__toggle-icon {
+	transform: rotate( 180deg );
 }
 
 .wb-gam-status-bar__body {
