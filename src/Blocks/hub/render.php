@@ -42,6 +42,7 @@ use WBGam\Blocks\CSS as WB_Gam_Block_CSS;
 use WBGam\Engine\BadgeEngine;
 use WBGam\Engine\BlockHooks;
 use WBGam\Engine\ChallengeEngine;
+use WBGam\Engine\CommunityChallengeEngine;
 use WBGam\Engine\KudosEngine;
 use WBGam\Engine\LeaderboardEngine;
 use WBGam\Engine\LevelEngine;
@@ -178,7 +179,8 @@ $wb_gam_next_lvl   = LevelEngine::get_next_level( $wb_gam_user_id );
 $wb_gam_progress   = (int) LevelEngine::get_progress_percent( $wb_gam_user_id );
 $wb_gam_badges     = BadgeEngine::get_user_badges( $wb_gam_user_id );
 $wb_gam_streak     = StreakEngine::get_streak( $wb_gam_user_id );
-$wb_gam_challenges = ChallengeEngine::get_active_challenges( $wb_gam_user_id );
+$wb_gam_challenges           = ChallengeEngine::get_active_challenges( $wb_gam_user_id );
+$wb_gam_community_challenges = CommunityChallengeEngine::get_visible();
 $wb_gam_rank_data  = LeaderboardEngine::get_user_rank( $wb_gam_user_id, 'week' );
 $wb_gam_rank       = (int) ( $wb_gam_rank_data['rank'] ?? 0 );
 $wb_gam_kudos_recv = (int) KudosEngine::get_received_count( $wb_gam_user_id );
@@ -190,7 +192,9 @@ $wb_gam_locked     = max( 0, $wb_gam_total_defs - $wb_gam_badge_cnt );
 
 $wb_gam_current_streak = (int) ( $wb_gam_streak['current_streak'] ?? 0 );
 $wb_gam_longest_streak = (int) ( $wb_gam_streak['longest_streak'] ?? 0 );
-$wb_gam_active_count   = count( $wb_gam_challenges );
+$wb_gam_personal_count   = count( $wb_gam_challenges );
+$wb_gam_community_count  = count( $wb_gam_community_challenges );
+$wb_gam_active_count     = $wb_gam_personal_count + $wb_gam_community_count;
 $wb_gam_level_name     = (string) ( $wb_gam_level['name'] ?? __( 'Newcomer', 'wb-gamification' ) );
 
 $wb_gam_cards = array(
@@ -266,18 +270,59 @@ $wb_gam_cards = array(
 // "no active challenges" is two layers of empty state for the same fact —
 // confusing for non-technical members. Conditionally inject the card so the
 // hub grid collapses cleanly when nothing's running (Basecamp 9925231618).
+//
+// The card counts BOTH personal challenges (one-per-member) AND community
+// challenges (global counter, everyone contributes). Pre-1.4.1 the hub
+// only surfaced personal challenges, so an active community challenge was
+// invisible from the hub even though the dedicated community-challenges
+// block on a separate page would render it. Closes Basecamp #9932977222.
 if ( $wb_gam_active_count > 0 ) {
+	// Build the description from whichever buckets are non-empty so the
+	// copy is informative for community-only, personal-only, AND mixed
+	// states. The pill stays a single count of the combined total.
+	if ( $wb_gam_personal_count > 0 && $wb_gam_community_count > 0 ) {
+		$wb_gam_challenges_desc = sprintf(
+			/* translators: 1: personal challenge count, 2: community challenge count */
+			__( '%1$d personal, %2$d community', 'wb-gamification' ),
+			$wb_gam_personal_count,
+			$wb_gam_community_count
+		);
+	} elseif ( $wb_gam_community_count > 0 ) {
+		$wb_gam_challenges_desc = sprintf(
+			/* translators: %d: number of community challenges */
+			_n( '%d community challenge', '%d community challenges', $wb_gam_community_count, 'wb-gamification' ),
+			$wb_gam_community_count
+		);
+	} else {
+		$wb_gam_challenges_desc = sprintf(
+			/* translators: %d: number of personal challenges */
+			_n( '%d active challenge', '%d active challenges', $wb_gam_personal_count, 'wb-gamification' ),
+			$wb_gam_personal_count
+		);
+	}
+
+	// Panel renders the personal-challenges block first, then the
+	// community-challenges block — only the blocks that actually have
+	// data, so the panel doesn't show duplicate empty states.
+	$wb_gam_panel_blocks = array();
+	if ( $wb_gam_personal_count > 0 ) {
+		$wb_gam_panel_blocks[] = array( 'slug' => 'challenges',           'attrs' => array() );
+	}
+	if ( $wb_gam_community_count > 0 ) {
+		$wb_gam_panel_blocks[] = array( 'slug' => 'community-challenges', 'attrs' => array() );
+	}
+
 	$wb_gam_challenges_card = array(
-		'icon'        => 'target',
-		'title'       => __( 'Challenges', 'wb-gamification' ),
-		'desc'        => sprintf(
-			/* translators: %d: number of active challenges */
-			_n( '%d active challenge', '%d active challenges', $wb_gam_active_count, 'wb-gamification' ),
-			$wb_gam_active_count
-		),
-		'pill'        => array( 'text' => (string) $wb_gam_active_count, 'class' => 'gam-pill--warning' ),
-		'block_slug'  => 'challenges',
-		'block_attrs' => array(),
+		'icon'         => 'target',
+		'title'        => __( 'Challenges', 'wb-gamification' ),
+		'desc'         => $wb_gam_challenges_desc,
+		'pill'         => array( 'text' => (string) $wb_gam_active_count, 'class' => 'gam-pill--warning' ),
+		// Primary block_slug kept for backwards compatibility with any
+		// theme override reading the array. Combined panel rendering is
+		// driven by `panel_blocks` below.
+		'block_slug'   => 'challenges',
+		'block_attrs'  => array(),
+		'panel_blocks' => $wb_gam_panel_blocks,
 	);
 	// Insert immediately after `badges` so card order stays predictable.
 	$wb_gam_cards = array_merge(
@@ -416,12 +461,28 @@ BlockHooks::before( 'hub', $wb_gam_attrs );
 	</div>
 
 	<?php foreach ( $wb_gam_cards as $wb_gam_key => $wb_gam_card ) :
-		$wb_gam_block_markup = render_block(
-			array(
-				'blockName' => 'wb-gamification/' . $wb_gam_card['block_slug'],
-				'attrs'     => $wb_gam_card['block_attrs'],
-			)
-		);
+		// When a card declares `panel_blocks`, render each in order so a
+		// single tile can stack multiple inner blocks (e.g. Challenges =
+		// personal + community). Otherwise fall back to the legacy
+		// single-block_slug shape so every existing card keeps working.
+		if ( ! empty( $wb_gam_card['panel_blocks'] ) && is_array( $wb_gam_card['panel_blocks'] ) ) {
+			$wb_gam_block_markup = '';
+			foreach ( $wb_gam_card['panel_blocks'] as $wb_gam_panel_block ) {
+				$wb_gam_block_markup .= render_block(
+					array(
+						'blockName' => 'wb-gamification/' . (string) $wb_gam_panel_block['slug'],
+						'attrs'     => (array) ( $wb_gam_panel_block['attrs'] ?? array() ),
+					)
+				);
+			}
+		} else {
+			$wb_gam_block_markup = render_block(
+				array(
+					'blockName' => 'wb-gamification/' . $wb_gam_card['block_slug'],
+					'attrs'     => $wb_gam_card['block_attrs'],
+				)
+			);
+		}
 		?>
 		<template id="gam-tpl-<?php echo esc_attr( (string) $wb_gam_key ); ?>">
 			<?php echo $wb_gam_block_markup; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Block output is already escaped by each block's render callback. ?>
