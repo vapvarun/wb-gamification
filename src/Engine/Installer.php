@@ -33,6 +33,63 @@ defined( 'ABSPATH' ) || exit;
 final class Installer {
 
 	/**
+	 * Self-healing install — detects missing-tables state and runs the
+	 * full activation payload (tables, caps, wizard redirect) to recover.
+	 *
+	 * Why this exists separately from `install()`:
+	 *
+	 *   WordPress fires `register_activation_hook` only on the canonical
+	 *   activation path. The hook is skipped (or its effects are lost)
+	 *   in several real-world scenarios — `wp plugin activate` from CLI
+	 *   with `--skip-plugins`, site restores from a backup that kept the
+	 *   active_plugins option but lost custom tables, InstaWP / migration
+	 *   clones that snapshot the filesystem after activation but before
+	 *   `dbDelta` had run, and dev sites where the user manually
+	 *   reactivates after a DB reset.
+	 *
+	 *   Without this method, the plugin boots into a half-installed state:
+	 *   admin menu doesn't render (capability not granted), wizard
+	 *   doesn't auto-open, DbUpgrader tries to ALTER non-existent tables.
+	 *
+	 * Wired at `plugins_loaded@0`, ahead of `DbUpgrader::init` at
+	 * priority 1, so downstream engines see a fully-installed baseline.
+	 *
+	 * Idempotent: the SHOW TABLES probe is < 1 ms and skips the install
+	 * branch entirely on healthy sites.
+	 *
+	 * @since 1.4.1
+	 *
+	 * @return bool True if a fresh install ran this call. False on no-op.
+	 */
+	public static function maybe_install(): bool {
+		global $wpdb;
+
+		$events_table = $wpdb->prefix . 'wb_gam_events';
+		$found        = (string) $wpdb->get_var(
+			$wpdb->prepare( 'SHOW TABLES LIKE %s', $events_table )
+		);
+
+		if ( $events_table === $found ) {
+			return false;
+		}
+
+		// Mirror the activation hook payload — keep this in sync with the
+		// `register_activation_hook` callback in wb-gamification.php.
+		self::install();
+		\WBGam\Engine\Capabilities::register();
+		update_option( 'wb_gam_db_version', WB_GAM_VERSION );
+
+		// Only schedule the wizard auto-open when the wizard has never
+		// completed on this site. A re-install on a site that already
+		// finished setup shouldn't pull the admin back into onboarding.
+		if ( ! get_option( 'wb_gam_wizard_complete' ) ) {
+			update_option( 'wb_gam_pending_setup_redirect', '1' );
+		}
+
+		return true;
+	}
+
+	/**
 	 * Create all required tables and seed default data.
 	 */
 	public static function install(): void {

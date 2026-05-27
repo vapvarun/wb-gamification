@@ -695,6 +695,13 @@ register_deactivation_hook(
 add_action(
 	'plugins_loaded',
 	function () {
+		// Self-heal: re-runs the activation payload (tables + caps + wizard
+		// redirect) when the canonical hook never fired or its effects were
+		// lost. Covers CLI activation, site restores, container clones, and
+		// dev resets. No-op on healthy sites (single fast SHOW TABLES probe).
+		// See src/Engine/Installer::maybe_install() for the full rationale.
+		Installer::maybe_install();
+
 		WB_Gamification::instance();
 		// Idempotent — only writes when CAPS_VERSION moves forward.
 		WBGam\Engine\Capabilities::sync();
