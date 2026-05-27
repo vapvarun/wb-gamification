@@ -701,12 +701,18 @@ final class Installer {
 				'action_id'      => 'wp_user_register',
 				'count'          => 1,
 			),
-			// Post/comment badges use point milestones instead of action counts.
-			// This ensures they work on both standalone WP and BuddyPress installs,
-			// regardless of which action IDs are registered.
+			// "First X" badges must mirror the literal action ("posted first post",
+			// "left first comment") so the badge name reads true. Both wp_publish_post
+			// and wp_leave_comment are unconditionally registered by
+			// integrations/wordpress.php — they require WordPress only, no BuddyPress.
+			// Volume badges (prolific_writer, content_creator, engaged_reader) stay on
+			// point_milestone since "750 points worth of posting" is the intent, not
+			// "750 posts." Admins can switch any of these to action_count via the
+			// Badges admin page if their site needs a different threshold.
 			'first_post'           => array(
-				'condition_type' => 'point_milestone',
-				'points'         => 25,
+				'condition_type' => 'action_count',
+				'action_id'      => 'wp_publish_post',
+				'count'          => 1,
 			),
 			'prolific_writer'      => array(
 				'condition_type' => 'point_milestone',
@@ -717,8 +723,9 @@ final class Installer {
 				'points'         => 750,
 			),
 			'first_comment'        => array(
-				'condition_type' => 'point_milestone',
-				'points'         => 50,
+				'condition_type' => 'action_count',
+				'action_id'      => 'wp_leave_comment',
+				'count'          => 1,
 			),
 			'engaged_reader'       => array(
 				'condition_type' => 'point_milestone',
