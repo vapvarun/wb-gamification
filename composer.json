@@ -57,7 +57,7 @@
     "plugin-dev-rules": "bash bin/plugin-dev-rules-check.sh",
     "ux-audit": "PREFIX=wb-gam bash bin/ux-audit.sh",
     "wppqa-baseline": "bash bin/wppqa-baseline-check.sh",
-    "install-hooks": "git config core.hooksPath bin/git-hooks && echo 'Pre-push hook installed (bypass with SKIP_LOCAL_CI=1)'",
+    "install-hooks": "git config core.hooksPath .githooks && echo 'Pre-commit + pre-push hooks installed (bypass with SKIP_LOCAL_CI=1)'",
     "scale:seed": "wp wb-gamification scale seed --users=10000 --events-per-user=10",
     "scale:bench": "wp wb-gamification scale benchmark",
     "scale:teardown": "wp wb-gamification scale teardown"

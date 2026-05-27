@@ -105,7 +105,7 @@ This rule is non-procedural — `bin/architecture-checks.sh` (and the per-card c
 This plugin has a self-contained local-CI gate. No external service runs the gate — every contributor runs it on their own machine, and an opt-in pre-push hook runs it automatically before every `git push`.
 
 ```bash
-composer install-hooks    # one-time per clone — activates bin/git-hooks/pre-push
+composer install-hooks    # one-time per clone — activates .githooks/pre-commit + pre-push
 composer ci               # full pipeline (~30s + browser journeys)
 composer ci:no-journeys   # everything except browser-dependent journeys
 composer ci:quick         # PHP lint + coding-rules only (~10s, for tight loops)

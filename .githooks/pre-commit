@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+# Pre-commit gate — runs composer ci:quick (PHP lint + coding-rules, ~10s).
+# Catches syntax/WPCS/coding-rule errors during the commit attempt so the
+# author gets feedback before push time instead of after.
+#
+# Bypass for genuine emergencies (same semantics as pre-push):
+#   SKIP_LOCAL_CI=1 git commit ...
+#
+# Mirrors bin/git-hooks/pre-push so the two hooks behave consistently.
+
+set -euo pipefail
+
+if [ "${SKIP_LOCAL_CI:-0}" = "1" ]; then
+  echo "SKIP_LOCAL_CI=1 — skipping pre-commit gate."
+  exit 0
+fi
+
+cd "$(git rev-parse --show-toplevel)"
+
+echo "Pre-commit: running composer ci:quick (PHP lint + coding-rules)..."
+composer ci:quick || {
+  echo ""
+  echo "Pre-commit FAILED. Fix the issues above or bypass with:"
+  echo "  SKIP_LOCAL_CI=1 git commit ..."
+  exit 1
+}
