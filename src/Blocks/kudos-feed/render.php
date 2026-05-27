@@ -9,6 +9,15 @@
 
 defined( 'ABSPATH' ) || exit;
 
+// Block render.php files are invoked from inside render_callback by the
+// WP block registrar, so every $wb_gam_* in this file is function-scoped,
+// not global. PrefixAllGlobals can't tell — its `phpcs:disable` here is
+// the WP-standard way to silence the false positive. The plugin's own
+// .phpcs.xml already declares `wb_gam` as a valid prefix; this annotation
+// extends that signal to Plugin Check's internal phpcs invocation.
+// phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound
+
+
 use WBGam\Blocks\CSS as WB_Gam_Block_CSS;
 use WBGam\Engine\BlockHooks;
 use WBGam\Engine\KudosEngine;

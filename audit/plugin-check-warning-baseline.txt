@@ -4,7 +4,7 @@
 # in block templates, custom-table direct queries). Gate fails if the
 # TOTAL warning count grows above this baseline OR if a NEW code
 # appears that wasn't in the baseline.
-# Generated: 2026-05-27T02:28:44Z
+# Generated: 2026-05-27T02:43:55Z
 
 PluginCheck.Security.DirectDB.UnescapedDBParameter: 69
 WordPress.DB.DirectDatabaseQuery.DirectQuery: 269
@@ -17,8 +17,8 @@ WordPress.DB.SlowDBQuery.slow_db_query_meta_query: 1
 WordPress.NamingConventions.PrefixAllGlobals.DynamicHooknameFound: 1
 WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedFunctionFound: 16
 WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound: 120
-WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound: 600
+WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound: 9
 WordPress.Security.NonceVerification.Recommended: 1
 WordPress.Security.ValidatedSanitizedInput.InputNotSanitized: 1
 
-# total: 1267
+# total: 676
