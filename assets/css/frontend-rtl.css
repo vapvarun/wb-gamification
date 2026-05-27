@@ -25,6 +25,11 @@
  * estate with the action being performed. */
 .wb-gam-toasts {
 	position: fixed;
+	/* Base offset for logged-out / no-admin-bar contexts. Sites with the
+	 * WP admin bar visible push the stack down via the .admin-bar
+	 * overrides below — base value stays at 1rem so the stack sits at
+	 * a comfortable distance from the viewport top in every other case.
+	 * Closes Basecamp #9932190385 (toasts collided with admin bar). */
 	top: 1rem;
 	right: 50%;
 	transform: translateX(50%);
@@ -35,6 +40,20 @@
 	gap: 0.625rem;
 	width: min(420px, calc(100vw - 2rem));
 	pointer-events: none;
+}
+
+/* Admin-bar offset — WP emits body.admin-bar for logged-in users; the
+ * bar is 32px tall on desktop and grows to 46px on the mobile
+ * breakpoint (≤782px) per WP core's own CSS. Push the toast stack
+ * below the bar so the close button + content stay tappable + visible. */
+body.admin-bar .wb-gam-toasts {
+	top: calc(32px + 1rem);
+}
+
+@media (max-width: 782px) {
+	body.admin-bar .wb-gam-toasts {
+		top: calc(46px + 0.75rem);
+	}
 }
 
 .wb-gam-toast {

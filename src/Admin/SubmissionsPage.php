@@ -150,15 +150,64 @@ final class SubmissionsPage {
 										<td>
 											<?php if ( ! empty( $row['evidence'] ) ) : ?>
 												<?php
-												// Submissions are sanitised through wp_kses_post on
-												// insert (see SubmissionService::submit). Strip the
-												// HTML for the trimmed preview so rich-text submissions
-												// don't blow out the table cell. The Approve dialog
-												// can show the full HTML via the wp_kses_post-safe
-												// stored value if richer review is needed later.
-												$wb_gam_excerpt = wp_trim_words( wp_strip_all_tags( (string) $row['evidence'] ), 30 );
+												// Submissions are stored as wp_kses_post-sanitised HTML
+												// (SubmissionService::submit) because the front-end
+												// editor is now wp_editor (commit 5928f95 — members
+												// can embed images via the Add Media button when the
+												// upload_files cap is granted).
+												//
+												// Pre-1.4.2 this cell stripped HTML for a trimmed text
+												// excerpt and dropped every embedded image — admins
+												// couldn't preview attached media (Basecamp #9927858743
+												// reopen comment). Now the cell shows:
+												//   1. Text excerpt (30 words, scanning-friendly)
+												//   2. Thumbnail strip of every <img> in the submission
+												//      — each thumbnail links to the full-size image
+												//   3. A <details> reveal of the full sanitised HTML
+												//      for the rare cases where the excerpt + thumbs
+												//      aren't enough.
+												$wb_gam_evidence = (string) $row['evidence'];
+												$wb_gam_excerpt  = wp_trim_words( wp_strip_all_tags( $wb_gam_evidence ), 30 );
+												$wb_gam_img_urls = array();
+												if ( false !== stripos( $wb_gam_evidence, '<img' )
+													&& preg_match_all( '/<img[^>]+src=["\']([^"\']+)["\']/i', $wb_gam_evidence, $wb_gam_img_matches )
+												) {
+													$wb_gam_img_urls = array_slice( array_unique( $wb_gam_img_matches[1] ), 0, 8 );
+												}
 												?>
-												<p class="wbgam-text-muted"><?php echo esc_html( $wb_gam_excerpt ); ?></p>
+												<?php if ( '' !== $wb_gam_excerpt ) : ?>
+													<p class="wbgam-text-muted"><?php echo esc_html( $wb_gam_excerpt ); ?></p>
+												<?php endif; ?>
+												<?php if ( ! empty( $wb_gam_img_urls ) ) : ?>
+													<div class="wb-gam-submission-thumbs" role="list">
+														<?php foreach ( $wb_gam_img_urls as $wb_gam_img_url ) : ?>
+															<a href="<?php echo esc_url( $wb_gam_img_url ); ?>"
+															   target="_blank"
+															   rel="noopener"
+															   role="listitem"
+															   class="wb-gam-submission-thumb"
+															   aria-label="<?php esc_attr_e( 'Open attachment in a new tab', 'wb-gamification' ); ?>">
+																<img src="<?php echo esc_url( $wb_gam_img_url ); ?>"
+																     alt=""
+																     loading="lazy"
+																     decoding="async">
+															</a>
+														<?php endforeach; ?>
+													</div>
+												<?php endif; ?>
+												<details class="wb-gam-submission-detail">
+													<summary><?php esc_html_e( 'Show full submission', 'wb-gamification' ); ?></summary>
+													<div class="wb-gam-submission-detail__body">
+														<?php
+														// $wb_gam_evidence was already passed through
+														// wp_kses_post at insert time, so it's safe to
+														// emit here. wp_kses_post() again as a
+														// defence-in-depth wrapper — costs nothing
+														// since the input is already conformant.
+														echo wp_kses_post( $wb_gam_evidence );
+														?>
+													</div>
+												</details>
 											<?php endif; ?>
 											<?php if ( ! empty( $row['evidence_url'] ) ) : ?>
 												<a href="<?php echo esc_url( (string) $row['evidence_url'] ); ?>" target="_blank" rel="noopener">
