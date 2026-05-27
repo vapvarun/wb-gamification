@@ -200,7 +200,9 @@ BlockHooks::before(
 			foreach ( $wb_gam_items as $wb_gam_item ) :
 				$wb_gam_cost           = (int) ( $wb_gam_item['points_cost'] ?? 0 );
 				$wb_gam_stock          = $wb_gam_item['stock'] ?? null;
-				$wb_gam_out_of_stock   = ( null !== $wb_gam_stock && (int) $wb_gam_stock <= 0 );
+				// Stock semantics (matches RedemptionEngine + admin UI): NULL or 0 = unlimited; positive int = finite.
+				$wb_gam_is_unlimited   = ( null === $wb_gam_stock || 0 === (int) $wb_gam_stock );
+				$wb_gam_out_of_stock   = ( ! $wb_gam_is_unlimited && (int) $wb_gam_stock <= 0 );
 				$wb_gam_insufficient   = $wb_gam_user_id && $wb_gam_balance_pts < $wb_gam_cost;
 				$wb_gam_missing_points = max( 0, $wb_gam_cost - $wb_gam_balance_pts );
 				$wb_gam_item_type      = (string) ( $wb_gam_item['point_type'] ?? $wb_gam_pt_service->default_slug() );
@@ -234,7 +236,7 @@ BlockHooks::before(
 							<?php echo esc_html( number_format_i18n( $wb_gam_cost ) ); ?>
 							<small class="wb-gam-redemption__cost-unit"><?php echo esc_html( $wb_gam_item_label ); ?></small>
 						</span>
-						<?php if ( $wb_gam_stock_on && null !== $wb_gam_stock ) : ?>
+						<?php if ( $wb_gam_stock_on && ! $wb_gam_is_unlimited ) : ?>
 							<span class="wb-gam-redemption__stock<?php echo $wb_gam_out_of_stock ? ' is-out' : ''; ?>">
 								<?php
 								if ( $wb_gam_out_of_stock ) {
