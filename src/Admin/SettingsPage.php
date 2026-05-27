@@ -24,6 +24,12 @@ use WBGam\Admin\CohortSettingsPage;
 use WBGam\Engine\Registry;
 
 defined( 'ABSPATH' ) || exit;
+// Silencing convention-driven false positives so Plugin Check signal stays clean:
+//   - WordPress.DB.DirectDatabaseQuery.DirectQuery + .NoCaching + .SchemaChange:
+//     this file performs custom-table work. .phpcs.xml already excludes these
+//     for the local WPCS gate; this annotation extends the same intent to
+//     Plugin Check's internal phpcs invocation.
+// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
 
 /**
  * Renders and processes the WB Gamification settings page with
@@ -111,8 +117,10 @@ final class SettingsPage {
 		if ( isset( $tab_to_hash[ $tab ] ) ) {
 			$fallback .= '#' . $tab_to_hash[ $tab ];
 		}
-		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified in check_admin_referer above.
-		$referer    = isset( $_POST['_wp_http_referer'] ) ? wp_unslash( $_POST['_wp_http_referer'] ) : '';
+		// Nonce verified above via check_admin_referer; the referer is
+		// passed through wp_validate_redirect() before any use.
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing
+		$referer    = isset( $_POST['_wp_http_referer'] ) ? esc_url_raw( wp_unslash( $_POST['_wp_http_referer'] ) ) : '';
 		$target_url = $fallback;
 		if ( is_string( $referer ) && '' !== $referer ) {
 			$candidate = wp_validate_redirect( $referer, '' );

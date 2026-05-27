@@ -9,6 +9,12 @@
 namespace WBGam\CLI;
 
 defined( 'ABSPATH' ) || exit;
+// Silencing convention-driven false positives so Plugin Check signal stays clean:
+//   - WordPress.DB.DirectDatabaseQuery.DirectQuery + .NoCaching + .SchemaChange:
+//     this file performs custom-table work. .phpcs.xml already excludes these
+//     for the local WPCS gate; this annotation extends the same intent to
+//     Plugin Check's internal phpcs invocation.
+// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 
 /**
  * Manage the WB Gamification event log from the command line.

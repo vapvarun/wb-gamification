@@ -20,6 +20,12 @@ namespace WBGam\Admin;
 use WBGam\Engine\Capabilities;
 
 defined( 'ABSPATH' ) || exit;
+// Silencing convention-driven false positives so Plugin Check signal stays clean:
+//   - WordPress.DB.DirectDatabaseQuery.DirectQuery + .NoCaching + .SchemaChange:
+//     this file performs custom-table work. .phpcs.xml already excludes these
+//     for the local WPCS gate; this annotation extends the same intent to
+//     Plugin Check's internal phpcs invocation.
+// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 
 /**
  * Admin page for managing outbound webhooks.
@@ -151,11 +157,18 @@ final class WebhooksAdminPage {
 				</div>
 			</details>
 
-			<?php if ( isset( $_GET['notice'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only notice display. ?>
+			<?php
+			// Read-only notice display from a redirect set by the admin
+			// REST handler — no state mutation, no nonce needed.
+			// phpcs:disable WordPress.Security.NonceVerification.Recommended
+			$wb_gam_notice_slug = isset( $_GET['notice'] ) ? sanitize_key( wp_unslash( $_GET['notice'] ) ) : '';
+			// phpcs:enable WordPress.Security.NonceVerification.Recommended
+			?>
+			<?php if ( '' !== $wb_gam_notice_slug ) : ?>
 				<div class="wbgam-banner wbgam-banner--success wbgam-stack-block" role="status" aria-live="polite">
 					<span class="wbgam-banner__icon icon-circle-check" aria-hidden="true"></span>
 					<div class="wbgam-banner__body">
-						<p class="wbgam-banner__desc"><?php echo esc_html( self::notice_text( sanitize_key( wp_unslash( $_GET['notice'] ) ) ) ); ?></p>
+						<p class="wbgam-banner__desc"><?php echo esc_html( self::notice_text( $wb_gam_notice_slug ) ); ?></p>
 					</div>
 				</div>
 			<?php endif; ?>

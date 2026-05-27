@@ -13,6 +13,12 @@
 namespace WBGam\Admin;
 
 defined( 'ABSPATH' ) || exit;
+// Silencing convention-driven false positives so Plugin Check signal stays clean:
+//   - WordPress.DB.DirectDatabaseQuery.DirectQuery + .NoCaching + .SchemaChange:
+//     this file performs custom-table work. .phpcs.xml already excludes these
+//     for the local WPCS gate; this annotation extends the same intent to
+//     Plugin Check's internal phpcs invocation.
+// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
 
 /**
  * Manages the Badge Library admin page for creating, editing, and deleting badges.
@@ -172,8 +178,12 @@ final class BadgeAdminPage {
 		}
 
 		// Determine if the inline form should be visible.
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		$show_form = ! empty( $editing ) || isset( $_GET['action'] ) && 'new' === sanitize_key( $_GET['action'] );
+		// Read-only routing flag — `?action=new` toggles the create form
+		// visibility without persisting anything; no nonce needed.
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended
+		$wb_gam_action_param = isset( $_GET['action'] ) ? sanitize_key( wp_unslash( $_GET['action'] ) ) : '';
+		// phpcs:enable WordPress.Security.NonceVerification.Recommended
+		$show_form = ! empty( $editing ) || 'new' === $wb_gam_action_param;
 
 		$actions = \WBGam\Engine\Registry::get_actions();
 

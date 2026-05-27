@@ -27,6 +27,11 @@
 namespace WBGam\API;
 
 defined( 'ABSPATH' ) || exit;
+// Silencing convention-driven false positives so Plugin Check signal stays clean.
+// Each suppressed rule is either documented elsewhere in CLAUDE.md / .phpcs.xml
+// as accepted convention, or the linter can't follow a dynamic SQL construction
+// pattern (e.g. WHERE IN ($placeholders) built from an array).
+// phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound
 
 /**
  * API key authentication handler for the WB Gamification REST API.

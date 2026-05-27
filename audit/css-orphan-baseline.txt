@@ -1,7 +1,7 @@
 # bin/check-css-orphans.sh baseline — PHP classes with no matching CSS rule.
 # Each line is a class name. New orphans fail the gate; legitimate fixes
 # (matching CSS added) should DELETE the line from this file in the same commit.
-# Generated: 2026-05-26T21:10:33Z
+# Generated: 2026-05-27T03:00:37Z
 
 wb-gam-col-currency
 wb-gam-daily-bonus__head-text
