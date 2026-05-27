@@ -10,7 +10,7 @@
  * Delivery:
  *   1. BuddyPress notification (if BP active)
  *   2. wp_mail email (if wb_gam_nudge_email = 1, default 0)
- *   3. Always fires `wb_gam_weekly_nudge` for custom integrations.
+ *   3. Always fires `wb_gam_weekly_nudge_sent` for custom integrations.
  *
  * Architecture:
  *   - Weekly cron schedules one AS job per active user to avoid request timeout.
@@ -89,11 +89,30 @@ final class LeaderboardNudge {
 	// ── Batch dispatch ──────────────────────────────────────────────────────────
 
 	/**
+	 * Transient key that prevents dispatch_batch from running more than once
+	 * per hour. Defence-in-depth so a misbehaving listener can't trigger a
+	 * runaway re-enqueue cascade even if some future change re-introduces
+	 * a hook collision. See PERF-001 (audit/PERF-DIAG-2026-05-27.yaml).
+	 */
+	private const DISPATCH_LOCK_KEY = 'wb_gam_nudge_dispatch_lock';
+	private const DISPATCH_LOCK_TTL = HOUR_IN_SECONDS;
+
+	/**
 	 * Queue one AS job per active user (users with points this week).
 	 * Called by cron hook — runs quickly; actual nudges processed async.
 	 */
 	public static function dispatch_batch(): void {
 		global $wpdb;
+
+		// Single-fire-per-hour gate. Two callers in the same hour are
+		// almost certainly a bug — the weekly nudge cron should fire once
+		// per week; anything more is a sign of hook collision or duplicate
+		// scheduling. A short transient is cheaper than re-running the
+		// (possibly large) SELECT below and enqueueing redundant AS jobs.
+		if ( get_transient( self::DISPATCH_LOCK_KEY ) ) {
+			return;
+		}
+		set_transient( self::DISPATCH_LOCK_KEY, 1, self::DISPATCH_LOCK_TTL );
 
 		// Users who earned at least 1 point this week, not opted out.
 		$week_start = gmdate( 'Y-m-d', strtotime( 'monday this week' ) ) . ' 00:00:00';
@@ -153,6 +172,36 @@ final class LeaderboardNudge {
 	 * @param int $user_id User to nudge.
 	 */
 	public static function send_nudge( int $user_id ): void {
+		// Re-entrancy guard. The cron hook (CRON_HOOK = wb_gam_weekly_nudge)
+		// and the post-send extension hook used to share a name, so every
+		// completed nudge re-ran the batch dispatcher and spawned a fresh
+		// cascade of Action Scheduler jobs. The collision is gone (the
+		// extension hook is now wb_gam_weekly_nudge_sent, line below), but
+		// keeping this static guard means any future engineer who wires
+		// another listener that touches this method can't reintroduce the
+		// recursion class of bug. See audit/PERF-DIAG-2026-05-27.yaml
+		// PERF-001 for the original incident.
+		static $in_progress = array();
+		if ( isset( $in_progress[ $user_id ] ) ) {
+			return;
+		}
+		$in_progress[ $user_id ] = true;
+
+		try {
+			self::do_send_nudge( $user_id );
+		} finally {
+			unset( $in_progress[ $user_id ] );
+		}
+	}
+
+	/**
+	 * Perform the actual nudge work. Wrapped by send_nudge() so the
+	 * re-entrancy guard always cleans up its slot via the try/finally,
+	 * even on uncaught exceptions thrown by listener code.
+	 *
+	 * @param int $user_id User to nudge.
+	 */
+	private static function do_send_nudge( int $user_id ): void {
 		$rank_data = LeaderboardEngine::get_user_rank( $user_id, 'week' );
 
 		$rank           = $rank_data['rank'];
@@ -225,13 +274,22 @@ final class LeaderboardNudge {
 		 *
 		 * Custom integrations (Slack, push, SMS) hook in here.
 		 *
+		 * Renamed from `wb_gam_weekly_nudge` in 1.4.1 — the old name
+		 * collided with self::CRON_HOOK, which caused every completed
+		 * nudge to re-enter dispatch_batch and enqueue a fresh round of
+		 * Action Scheduler jobs (see audit/PERF-DIAG-2026-05-27.yaml
+		 * PERF-001). Listeners on the old name must move to this hook;
+		 * the old name is no longer fired.
+		 *
+		 * @since 1.4.1 Renamed from wb_gam_weekly_nudge to avoid cron-hook collision.
+		 *
 		 * @param int    $user_id        User who was nudged.
 		 * @param int    $rank           User's current weekly rank.
 		 * @param int    $points         Points earned this week.
 		 * @param int|null $points_to_next Points to overtake the next rank. Null = #1.
 		 * @param string $message        Human-readable nudge message.
 		 */
-		do_action( 'wb_gam_weekly_nudge', $user_id, $rank, $points, $points_to_next, $message );
+		do_action( 'wb_gam_weekly_nudge_sent', $user_id, $rank, $points, $points_to_next, $message );
 	}
 
 	// ── Helpers ─────────────────────────────────────────────────────────────────

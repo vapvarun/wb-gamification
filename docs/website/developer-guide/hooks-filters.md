@@ -269,8 +269,16 @@ add_action( 'wb_gam_kudos_given', function( int $giver_id, int $receiver_id, str
 #### `wb_gam_weekly_email_sent`
 Fires after a weekly recap email is sent.
 
-#### `wb_gam_weekly_nudge`
-Fires when a leaderboard nudge email is sent.
+#### `wb_gam_weekly_nudge_sent`
+Fires when a leaderboard nudge has been delivered to a member (after the BuddyPress notification + optional email).
+
+```php
+add_action( 'wb_gam_weekly_nudge_sent', function( int $user_id, int $rank, int $points, ?int $points_to_next, string $message ) {
+    // Custom integration: Slack ping, push notification, SMS, etc.
+}, 10, 5 );
+```
+
+Renamed from `wb_gam_weekly_nudge` in 1.4.1 — the old name collided with the cron schedule hook, causing every nudge to recursively re-enqueue the full batch. If you had a listener on the old name, move it to `wb_gam_weekly_nudge_sent`.
 
 #### `wb_gam_cosmetic_granted`
 Fires when a cosmetic/frame is granted to a member.
@@ -527,7 +535,7 @@ Control whether a weekly nudge email should be sent to a specific user.
 | `wb_gam_rank_automation_action` | RankAutomation.php |
 | `wb_gam_personal_record` | PersonalRecordEngine.php |
 | `wb_gam_weekly_email_sent` | WeeklyEmailEngine.php |
-| `wb_gam_weekly_nudge` | LeaderboardNudge.php |
+| `wb_gam_weekly_nudge_sent` | LeaderboardNudge.php |
 | `wb_gam_cosmetic_granted` | CosmeticEngine.php |
 | `wb_gam_cohort_outcome` | CohortEngine.php |
 | `wb_gam_retention_nudge` | StatusRetentionEngine.php |
