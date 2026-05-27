@@ -52,6 +52,42 @@ final class CommunityChallengeEngine {
 	 */
 	public static function init(): void {
 		add_action( 'wb_gam_points_awarded', array( __CLASS__, 'on_points_awarded' ), 20, 3 );
+		// AS bonus-award handler. complete_challenge() enqueues one job per
+		// contributor; this listener is what actually grants the points
+		// when the queue runs. Pre-1.4.1 the action was queued but had no
+		// listener — every community challenge "completed" without ever
+		// awarding the bonus (Basecamp #9933021972).
+		add_action( 'wb_gam_community_bonus_award', array( __CLASS__, 'award_community_bonus' ), 10, 3 );
+	}
+
+	/**
+	 * Action Scheduler callback — awards the community-challenge bonus to one contributor.
+	 *
+	 * Each job carries its own (user_id, challenge_id, points) tuple,
+	 * fanned out by {@see complete_challenge()}. Runs through the
+	 * standard PointsEngine::award path so the bonus goes through the
+	 * same ledger, currency, and badge-evaluation pipeline as any other
+	 * award — no shortcut writes to wp_wb_gam_points.
+	 *
+	 * @param int $user_id      Member receiving the bonus.
+	 * @param int $challenge_id Community challenge that triggered the bonus (for metadata).
+	 * @param int $points       Bonus points to award.
+	 * @return void
+	 */
+	public static function award_community_bonus( int $user_id, int $challenge_id, int $points ): void {
+		if ( $user_id <= 0 || $points <= 0 ) {
+			return;
+		}
+		// community_challenge_id rides in $object_id so the ledger row
+		// links back to the source. Action id mirrors the synthetic
+		// `community_challenge_completed` action that the action_label
+		// helper already knows about.
+		PointsEngine::award(
+			$user_id,
+			'community_challenge_completed',
+			$points,
+			$challenge_id
+		);
 	}
 
 	// ── Event hook ──────────────────────────────────────────────────────────
