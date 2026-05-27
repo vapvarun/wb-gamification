@@ -239,6 +239,17 @@ if [ -x bin/check-plugin-check.sh ] && [ "$MODE" != "quick" ]; then
   run_stage "2.12" "WP.org Plugin Check (0 errors in shipped code)" bash bin/check-plugin-check.sh
 fi
 
+# 2.13 — Boot invariants. Catches the class-hoist guard pattern where a
+# file-scope `class_exists($name, false)` guard sits above the same file's
+# class declaration. PHP hoists top-level classes at compile time, so the
+# guard always returns true → file exits early → boot closures never
+# register → admin menu disappears. Wired in 2026-05-27 after the
+# wb-gamification.php#L222 guard (added in commit 06d811c) silently broke
+# the admin menu for ~9 hours.
+if [ -x bin/check-boot-invariants.sh ]; then
+  run_stage "2.13" "Boot invariants (class-hoist guard contract)" bash bin/check-boot-invariants.sh
+fi
+
 # ─── 3.x — Manifest freshness ────────────────────────────────────────────────
 
 if [ "$MODE" != "quick" ]; then

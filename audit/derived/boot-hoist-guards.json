@@ -1,0 +1,8 @@
+{
+  "name": "boot-hoist-guards",
+  "computed_at": "2026-05-27T21:00:00Z",
+  "input_globs": ["**/*.php"],
+  "result": [],
+  "result_count": 0,
+  "notes": "Detects file-scope `class_exists($name, false)` guards preceding a same-file top-level class declaration. PHP class hoisting makes such guards always trigger, aborting the file before any add_action() past the guard registers. Surfaced 2026-05-27 after wb-gamification.php#L222 silently broke the admin menu for ~9 hours. Enforced by bin/check-boot-invariants.php (wired into local-ci 2.13)."
+}

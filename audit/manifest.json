@@ -2198,8 +2198,10 @@
       "adapter-registry-strategy.json",
       "em-dash-i18n.json",
       "inline-svg.json",
-      "icon-sources.json"
-    ]
+      "icon-sources.json",
+      "boot-hoist-guards.json"
+    ],
+    "boot_hoist_guards": []
   },
   "buddypress_integration": {
     "enabled_when": "Detected via class_exists('BuddyPress') / function_exists('buddypress')",

@@ -148,6 +148,7 @@ The stability audit added 6 new cross-layer contract gates plus PHPUnit + a cove
 | 2.9 Action sync/async | `bin/check-action-async.sh` | Basecamp #9925589914 — WC events queued through Action Scheduler when admins expected immediate award. Baseline `audit/action-async-baseline.txt` |
 | 2.10 Event wiring | `bin/check-event-wiring.sh` | Basecamp #9927383947 — `wb_gam_points_redeemed` fired but TransactionalEmailEngine never subscribed |
 | 2.11 Coverage floor | `bin/check-coverage-floor.sh` (only when `build/coverage/coverage.txt` is fresh) | PHPUnit coverage silently sliding |
+| 2.13 Boot invariants | `bin/check-boot-invariants.php` (wrapped by `bin/check-boot-invariants.sh`) | Class-hoisting guard regression — a file-scope `class_exists($name, false)` guard preceding the same file's top-level class declaration. PHP compile-time hoisting makes the guard always trigger, so the file aborts before any `add_action` past it registers. Surfaced 2026-05-27 after the wb-gamification.php#L222 guard (added in commit 06d811c) silently disabled the admin menu for ~9 hours. Findings cached at `audit/derived/boot-hoist-guards.json`. |
 
 PHPStan bumped from level 5 → **level 9** — codebase already passed at every level, so no baseline file needed; new code can't add type holes.
 
