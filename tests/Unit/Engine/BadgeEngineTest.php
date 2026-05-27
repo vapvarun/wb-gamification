@@ -203,15 +203,13 @@ class BadgeEngineTest extends TestCase {
 				'validity_days' => 0,
 			)
 		);
-		$wpdb->shouldReceive( 'insert' )
+		// 1.4.1 — award_badge now uses INSERT IGNORE via $wpdb->query()
+		// instead of $wpdb->insert() so the duplicate-key race documented
+		// in PERF-004 is absorbed silently. Mock query() returning 1 to
+		// represent a successful insert (rows_affected = 1).
+		$wpdb->shouldReceive( 'query' )
 			->once()
-			->with(
-				'wp_wb_gam_user_badges',
-				Mockery::on(
-					static fn ( $row ) => 7 === $row['user_id'] && 'first_post' === $row['badge_id']
-				),
-				Mockery::any()
-			)
+			->with( Mockery::on( static fn ( $sql ) => false !== strpos( $sql, 'INSERT IGNORE INTO `wp_wb_gam_user_badges`' ) ) )
 			->andReturn( 1 );
 		// Post-award hook fans out to WebhookDispatcher, which looks up
 		// subscribers via $wpdb->get_results — return an empty list so
@@ -237,7 +235,11 @@ class BadgeEngineTest extends TestCase {
 		$wpdb->shouldReceive( 'get_row' )->andReturn(
 			array( 'id' => 'first_post', 'closes_at' => null, 'max_earners' => null, 'validity_days' => 0 )
 		);
-		$wpdb->shouldReceive( 'insert' )->andReturn( false );
+		// 1.4.1 — INSERT IGNORE returns 0 rows on duplicate-key race (the
+		// race-loser path). $wpdb->last_error stays non-empty for a
+		// genuine DB failure; the mock sets it above so award_badge logs
+		// the failure and returns false.
+		$wpdb->shouldReceive( 'query' )->andReturn( 0 );
 
 		$this->assertFalse( BadgeEngine::award_badge( 7, 'first_post' ) );
 	}

@@ -243,26 +243,43 @@ final class BadgeEngine {
 			? gmdate( 'Y-m-d H:i:s', strtotime( "+{$validity} days" ) )
 			: null;
 
-		$inserted = $wpdb->insert(
-			$wpdb->prefix . 'wb_gam_user_badges',
-			array(
-				'user_id'    => $user_id,
-				'badge_id'   => $badge_id,
-				'earned_at'  => current_time( 'mysql' ),
-				'expires_at' => $expires_at,
-			),
-			array( '%d', '%s', '%s', '%s' )
+		// Race-safe insert. The has_badge() check above is a cache-backed
+		// read — two concurrent callers can both pass that gate with stale
+		// cache state and both reach this point. The wb_gam_user_badges
+		// table has UNIQUE(user_id, badge_id), so the second writer would
+		// otherwise trip a duplicate-key error and pollute debug.log. With
+		// INSERT IGNORE the DB is the arbiter: one writer wins (rows=1),
+		// the loser silently no-ops (rows=0) and we return false so the
+		// awarded-hook only fires once. See PERF-004
+		// (audit/PERF-DIAG-2026-05-27.yaml) for the original incident.
+		$badges_table = $wpdb->prefix . 'wb_gam_user_badges';
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from $wpdb->prefix + literal.
+		$inserted = (int) $wpdb->query(
+			$wpdb->prepare(
+				"INSERT IGNORE INTO `{$badges_table}` (user_id, badge_id, earned_at, expires_at) VALUES (%d, %s, %s, %s)",
+				$user_id,
+				$badge_id,
+				current_time( 'mysql' ),
+				$expires_at
+			)
 		);
 
-		if ( ! $inserted ) {
-			Log::error(
-				'BadgeEngine: failed to insert wb_gam_user_badges row.',
-				array(
-					'user_id'  => $user_id,
-					'badge_id' => $badge_id,
-					'wpdb_err' => $wpdb->last_error ?: 'unknown',
-				)
-			);
+		if ( $inserted < 1 ) {
+			// Two paths land here:
+			//   1. Race-loser — another concurrent caller already inserted
+			//      this badge. INSERT IGNORE no-ops; nothing to log.
+			//   2. Genuine DB failure — disk full, schema drift, etc.
+			//      $wpdb->last_error will be non-empty.
+			if ( '' !== (string) $wpdb->last_error ) {
+				Log::error(
+					'BadgeEngine: failed to insert wb_gam_user_badges row.',
+					array(
+						'user_id'  => $user_id,
+						'badge_id' => $badge_id,
+						'wpdb_err' => $wpdb->last_error,
+					)
+				);
+			}
 			return false;
 		}
 
