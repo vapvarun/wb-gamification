@@ -60,9 +60,43 @@ final class ActionSchedulerCleaner {
 	const DEFAULT_RETENTION_DAYS = 7;
 
 	/**
+	 * Row count above which the cleaner switches to panic mode and drops
+	 * retention to 1 hour for the dominant runaway hook. A healthy site
+	 * shouldn't see more than ~50k AS rows even on a busy week; crossing
+	 * 250k means something is recursively enqueueing and the daily
+	 * 7-day-retention pass can't catch up.
+	 *
+	 * See PERF-002 (audit/PERF-DIAG-2026-05-27.yaml) — the LeaderboardNudge
+	 * recursion grew the AS table to 3.6M rows in 40 hours and the cleaner
+	 * was structurally unable to defend against it.
+	 */
+	private const RUNAWAY_ROW_THRESHOLD = 250000;
+
+	/**
+	 * Aggressive retention used while runaway is active. One hour buys
+	 * enough breathing room to diagnose without making the cleaner itself
+	 * the symptom (an aggressive cleaner is a noisy cleaner).
+	 */
+	private const RUNAWAY_RETENTION_DAYS = 0; // means "now - 1 hour" via panic mode below
+
+	/**
+	 * Transient key that records the most recent runaway detection so
+	 * admin-facing tooling can surface the alert. Set on detection,
+	 * cleared when row count returns under the threshold.
+	 */
+	private const RUNAWAY_TRANSIENT_KEY = 'wb_gam_as_runaway_detected';
+
+	/**
 	 * Per-query batch size for the DELETE loop.
 	 */
 	private const BATCH_SIZE = 1000;
+
+	/**
+	 * Per-query batch size used while the cleaner is in panic mode.
+	 * Larger because we're racing the runaway hook, smaller than full
+	 * unbounded so each statement still completes quickly.
+	 */
+	private const PANIC_BATCH_SIZE = 5000;
 
 	/**
 	 * Hard runtime budget per cron tick (seconds). Stops the loop before
@@ -126,45 +160,124 @@ final class ActionSchedulerCleaner {
 			);
 		}
 
-		/**
-		 * Filter the AS retention horizon in days.
-		 *
-		 * Anything older than this — regardless of status (complete,
-		 * failed, pending) — gets removed on the daily cleanup tick.
-		 *
-		 * @param int $days Retention horizon. Default 7. Minimum 1.
-		 */
-		$days   = (int) apply_filters( 'wb_gam_as_retention_days', self::DEFAULT_RETENTION_DAYS );
-		$days   = max( 1, $days );
-		$cutoff = gmdate( 'Y-m-d H:i:s', strtotime( "-{$days} days" ) );
+		// Circuit breaker. If the table has crossed the runaway threshold,
+		// switch to a 1-hour retention horizon for `complete` + `failed`
+		// so we can claw back disk + worker pressure quickly. The normal
+		// daily cleaner can't keep up with a runaway hook spawning
+		// hundreds of jobs/sec.
+		$panic_mode = self::detect_runaway( $table );
 
-		$started = microtime( true );
-		$results = array(
-			'complete' => self::prune_status( 'complete', $cutoff, $started ),
-			'failed'   => self::prune_status( 'failed', $cutoff, $started ),
-			'pending'  => self::prune_status( 'pending', $cutoff, $started ),
+		if ( $panic_mode ) {
+			$days   = 0;
+			$cutoff = gmdate( 'Y-m-d H:i:s', time() - HOUR_IN_SECONDS );
+		} else {
+			/**
+			 * Filter the AS retention horizon in days.
+			 *
+			 * Anything older than this — regardless of status (complete,
+			 * failed, pending) — gets removed on the daily cleanup tick.
+			 *
+			 * @param int $days Retention horizon. Default 7. Minimum 1.
+			 */
+			$days   = (int) apply_filters( 'wb_gam_as_retention_days', self::DEFAULT_RETENTION_DAYS );
+			$days   = max( 1, $days );
+			$cutoff = gmdate( 'Y-m-d H:i:s', strtotime( "-{$days} days" ) );
+		}
+
+		$started    = microtime( true );
+		$batch_size = $panic_mode ? self::PANIC_BATCH_SIZE : self::BATCH_SIZE;
+		$results    = array(
+			'complete' => self::prune_status( 'complete', $cutoff, $started, $batch_size ),
+			'failed'   => self::prune_status( 'failed', $cutoff, $started, $batch_size ),
+			'pending'  => self::prune_status( 'pending', $cutoff, $started, $batch_size ),
 		);
 
 		/**
 		 * Fires after a single cleanup tick. Useful for monitoring + alerts.
 		 *
-		 * @param array  $results Per-status delete counts.
-		 * @param string $cutoff  ISO datetime cutoff used.
+		 * @param array  $results    Per-status delete counts.
+		 * @param string $cutoff     ISO datetime cutoff used.
+		 * @param bool   $panic_mode True if the cleaner was in panic mode this tick.
 		 */
-		do_action( 'wb_gam_as_cleaned', $results, $cutoff );
+		do_action( 'wb_gam_as_cleaned', $results, $cutoff, $panic_mode );
 
 		return $results;
 	}
 
 	/**
+	 * Detect whether the Action Scheduler tables are in runaway state.
+	 *
+	 * Sets / clears the runaway transient and fires `wb_gam_as_runaway_detected`
+	 * for monitoring integrations.
+	 *
+	 * @param string $table Fully-qualified actions table name.
+	 * @return bool True if the cleaner should run in panic mode.
+	 */
+	private static function detect_runaway( string $table ): bool {
+		global $wpdb;
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$row_count = (int) $wpdb->get_var( "SELECT COUNT(*) FROM `{$table}`" );
+
+		if ( $row_count < self::RUNAWAY_ROW_THRESHOLD ) {
+			delete_transient( self::RUNAWAY_TRANSIENT_KEY );
+			return false;
+		}
+
+		// Identify the dominant hook so the alert payload is actionable.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$top = (array) $wpdb->get_row(
+			"SELECT hook, COUNT(*) AS n FROM `{$table}` GROUP BY hook ORDER BY n DESC LIMIT 1",
+			ARRAY_A
+		);
+
+		$payload = array(
+			'rows'         => $row_count,
+			'threshold'    => self::RUNAWAY_ROW_THRESHOLD,
+			'top_hook'     => $top['hook'] ?? '',
+			'top_hook_n'   => isset( $top['n'] ) ? (int) $top['n'] : 0,
+			'detected_at'  => gmdate( 'Y-m-d H:i:s' ),
+		);
+		set_transient( self::RUNAWAY_TRANSIENT_KEY, $payload, DAY_IN_SECONDS );
+
+		/**
+		 * Fires when the Action Scheduler tables cross the runaway threshold.
+		 *
+		 * Wire monitoring / paging / Slack alerts here. Payload includes
+		 * the current row count, the dominant hook, and how many rows it
+		 * holds. The cleaner switches to a 1-hour panic retention horizon
+		 * for the rest of this tick to start clawing back rows.
+		 *
+		 * @since 1.4.1
+		 *
+		 * @param array{rows:int,threshold:int,top_hook:string,top_hook_n:int,detected_at:string} $payload
+		 */
+		do_action( 'wb_gam_as_runaway_detected', $payload );
+
+		return true;
+	}
+
+	/**
+	 * Read the latest runaway-detection payload, or false if the AS tables
+	 * are currently healthy. Useful for admin notices + Doctor CLI output.
+	 *
+	 * @return array{rows:int,threshold:int,top_hook:string,top_hook_n:int,detected_at:string}|false
+	 */
+	public static function get_runaway_state() {
+		$payload = get_transient( self::RUNAWAY_TRANSIENT_KEY );
+		return is_array( $payload ) ? $payload : false;
+	}
+
+	/**
 	 * Batched DELETE loop for one AS status.
 	 *
-	 * @param string $status  AS status: complete, failed, pending.
-	 * @param string $cutoff  ISO datetime; rows older than this are removed.
-	 * @param float  $started Timestamp from microtime(true) at cleanup start.
+	 * @param string $status     AS status: complete, failed, pending.
+	 * @param string $cutoff     ISO datetime; rows older than this are removed.
+	 * @param float  $started    Timestamp from microtime(true) at cleanup start.
+	 * @param int    $batch_size Per-query row limit. Larger in panic mode.
 	 * @return int Rows deleted from actionscheduler_actions in this tick.
 	 */
-	private static function prune_status( string $status, string $cutoff, float $started ): int {
+	private static function prune_status( string $status, string $cutoff, float $started, int $batch_size = self::BATCH_SIZE ): int {
 		global $wpdb;
 
 		$actions_table = $wpdb->prefix . 'actionscheduler_actions';
@@ -181,7 +294,7 @@ final class ActionSchedulerCleaner {
 					"SELECT action_id FROM `{$actions_table}` WHERE status = %s AND scheduled_date_gmt < %s LIMIT %d",
 					$status,
 					$cutoff,
-					self::BATCH_SIZE
+					$batch_size
 				)
 			);
 
@@ -199,7 +312,7 @@ final class ActionSchedulerCleaner {
 
 			$total += $deleted;
 
-			if ( $deleted < self::BATCH_SIZE ) {
+			if ( $deleted < $batch_size ) {
 				break;
 			}
 			if ( ( microtime( true ) - $started ) >= self::MAX_RUNTIME_SECONDS ) {

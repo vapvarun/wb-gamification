@@ -72,12 +72,23 @@ class DoctorCommand {
 	 *   leaderboard / rank entry. Useful when the cached snapshot has
 	 *   drifted from the live ledger after a bulk import / migration / outage.
 	 *
+	 * [--drain-action-scheduler]
+	 * : Loop ActionSchedulerCleaner::cleanup() until the AS tables are
+	 *   back under the runaway threshold (or 20 ticks elapse, whichever
+	 *   comes first). Use after PERF-001-class incidents when the daily
+	 *   cleaner can't catch up to a recursion-bloated queue.
+	 *
+	 * [--max-ticks=<n>]
+	 * : Cap the drain loop at N cleanup ticks. Default 20.
+	 *
 	 * ## EXAMPLES
 	 *
 	 *     wp wb-gamification doctor
 	 *     wp wb-gamification doctor --verbose
 	 *     wp wb-gamification doctor --fix
 	 *     wp wb-gamification doctor --recompute-leaderboard
+	 *     wp wb-gamification doctor --drain-action-scheduler
+	 *     wp wb-gamification doctor --drain-action-scheduler --max-ticks=40
 	 *
 	 * @param array $args       Positional arguments (unused).
 	 * @param array $assoc_args Associative arguments.
@@ -95,6 +106,16 @@ class DoctorCommand {
 			\WBGam\Engine\LeaderboardEngine::write_snapshot();
 			\WBGam\Engine\LeaderboardEngine::invalidate_cache();
 			WP_CLI::success( 'Leaderboard snapshot rebuilt and cache invalidated.' );
+			return;
+		}
+
+		// Short-circuit one-shot mode: drain Action Scheduler tables when a
+		// runaway hook has bloated them past what the daily cleaner can
+		// recover from. Loops the cleaner (which auto-detects runaway and
+		// switches to a 1-hour retention horizon) until the row count
+		// drops below the threshold or --max-ticks is reached.
+		if ( WP_CLI\Utils\get_flag_value( $assoc_args, 'drain-action-scheduler', false ) ) {
+			$this->drain_action_scheduler( (int) WP_CLI\Utils\get_flag_value( $assoc_args, 'max-ticks', 20 ) );
 			return;
 		}
 
@@ -690,6 +711,113 @@ class DoctorCommand {
 			$this->warn( 'Competing gamification plugins active: ' . implode( ', ', $conflicts ) . ' — may cause UX confusion' );
 		} else {
 			$this->pass( 'No competing gamification plugins detected' );
+		}
+	}
+
+	// ── One-shot operational helpers ────────────────────────────────────────────
+
+	/**
+	 * Drain the Action Scheduler tables after a runaway-hook incident.
+	 *
+	 * Loops `ActionSchedulerCleaner::cleanup()` (which auto-detects runaway
+	 * state and switches to a 1-hour retention horizon) until either the
+	 * AS row count drops back under the runaway threshold or `$max_ticks`
+	 * is exhausted. Each tick respects the cleaner's own 50-second runtime
+	 * budget — this is a long-running command, expect ~5 minutes per 1M
+	 * rows on a healthy local install.
+	 *
+	 * @param int $max_ticks Cap on cleanup() invocations. Defaults to 20.
+	 */
+	private function drain_action_scheduler( int $max_ticks ): void {
+		global $wpdb;
+
+		$table = $wpdb->prefix . 'actionscheduler_actions';
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		if ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) ) !== $table ) {
+			WP_CLI::error( 'Action Scheduler tables not found. Nothing to drain.' );
+			return;
+		}
+
+		WP_CLI::line( WP_CLI::colorize( '%BWB Gamification — Action Scheduler drain%n' ) );
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$before = (int) $wpdb->get_var( "SELECT COUNT(*) FROM `{$table}`" );
+		WP_CLI::line( sprintf( 'Initial row count: %s', number_format( $before ) ) );
+
+		$max_ticks = max( 1, $max_ticks );
+		$total     = array(
+			'complete' => 0,
+			'failed'   => 0,
+			'pending'  => 0,
+		);
+
+		for ( $tick = 1; $tick <= $max_ticks; $tick++ ) {
+			$result = \WBGam\Engine\ActionSchedulerCleaner::cleanup();
+
+			foreach ( array( 'complete', 'failed', 'pending' ) as $status ) {
+				$total[ $status ] += (int) ( $result[ $status ] ?? 0 );
+			}
+
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$current = (int) $wpdb->get_var( "SELECT COUNT(*) FROM `{$table}`" );
+
+			WP_CLI::line(
+				sprintf(
+					'tick %2d: complete=%s failed=%s pending=%s | rows now=%s',
+					$tick,
+					number_format( $result['complete'] ?? 0 ),
+					number_format( $result['failed']   ?? 0 ),
+					number_format( $result['pending']  ?? 0 ),
+					number_format( $current )
+				)
+			);
+
+			// All three statuses returned zero — no more candidates within the
+			// current retention horizon; further ticks would be no-ops.
+			$tick_deleted = (int) ( $result['complete'] ?? 0 )
+				+ (int) ( $result['failed']   ?? 0 )
+				+ (int) ( $result['pending']  ?? 0 );
+			if ( 0 === $tick_deleted ) {
+				WP_CLI::line( 'Tick produced no deletions — drain complete.' );
+				break;
+			}
+		}
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$after = (int) $wpdb->get_var( "SELECT COUNT(*) FROM `{$table}`" );
+
+		WP_CLI::line( '' );
+		WP_CLI::line(
+			sprintf(
+				'Drain finished. Rows: %s → %s (Δ %s deleted).',
+				number_format( $before ),
+				number_format( $after ),
+				number_format( $before - $after )
+			)
+		);
+		WP_CLI::line(
+			sprintf(
+				'Per-status totals: complete=%s failed=%s pending=%s',
+				number_format( $total['complete'] ),
+				number_format( $total['failed'] ),
+				number_format( $total['pending'] )
+			)
+		);
+
+		$runaway = \WBGam\Engine\ActionSchedulerCleaner::get_runaway_state();
+		if ( false === $runaway ) {
+			WP_CLI::success( 'AS tables are back under the runaway threshold.' );
+		} else {
+			WP_CLI::warning(
+				sprintf(
+					'Still in runaway state: %s rows (top hook: %s = %s rows). Re-run with --max-ticks=%d.',
+					number_format( $runaway['rows'] ),
+					$runaway['top_hook'],
+					number_format( $runaway['top_hook_n'] ),
+					$max_ticks * 2
+				)
+			);
 		}
 	}
 
