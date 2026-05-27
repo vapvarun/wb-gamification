@@ -152,18 +152,24 @@ if ( function_exists( 'as_unschedule_all_actions' ) ) {
 // -------------------------------------------------------------------------
 // 6. Remove plugin custom capabilities from every role.
 // -------------------------------------------------------------------------
-// Caught by 2026-05-27 audit (admin-rest G2): pre-refactor this list only
-// had `wb_gam_award_manual`, so the other 6 plugin-defined caps stayed in
-// every role after uninstall. Crosscheck against `Capabilities::CAPS` on
-// every cap-add commit.
+// This list MUST match `WBGam\Engine\Capabilities::CAPS` exactly — caps that
+// roll out via the plugin must also roll back on uninstall. Cross-checked
+// 2026-05-27 (WBG-011): the previous list had two dead entries
+// (wb_gam_manage_redemptions, wb_gam_manage_api_keys) that were never
+// declared anywhere, plus 4 missing entries (manage_levels, manage_submissions,
+// manage_email_settings, view_analytics) so those caps stayed on every role
+// forever. Order matches Capabilities::CAPS for easy visual diff.
 $plugin_caps = array(
 	'wb_gam_award_manual',
 	'wb_gam_manage_badges',
-	'wb_gam_manage_challenges',
-	'wb_gam_manage_redemptions',
-	'wb_gam_manage_webhooks',
-	'wb_gam_manage_api_keys',
 	'wb_gam_manage_rules',
+	'wb_gam_manage_challenges',
+	'wb_gam_manage_rewards',
+	'wb_gam_manage_webhooks',
+	'wb_gam_manage_levels',
+	'wb_gam_manage_submissions',
+	'wb_gam_manage_email_settings',
+	'wb_gam_view_analytics',
 );
 
 foreach ( wp_roles()->roles as $role_name => $_role_data ) {

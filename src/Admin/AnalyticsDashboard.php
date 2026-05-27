@@ -97,6 +97,19 @@ final class AnalyticsDashboard {
 	 * @return void
 	 */
 	public static function render_page(): void {
+		// Handler-level cap guard. The admin menu already gates visibility on
+		// wb_gam_view_analytics, but any direct-URL access path (quick links
+		// from another plugin, bookmarks shared across sites) bypasses the
+		// menu cap. Mirror the pattern from BadgeAdminPage / ChallengeManagerPage
+		// so the cap actually enforces on every render entry.
+		if ( ! current_user_can( 'wb_gam_view_analytics' ) ) {
+			wp_die(
+				esc_html__( 'You are not allowed to view analytics.', 'wb-gamification' ),
+				esc_html__( 'Forbidden', 'wb-gamification' ),
+				array( 'response' => 403 )
+			);
+		}
+
 		// phpcs:disable WordPress.Security.NonceVerification.Recommended -- GET param validated against allowlist, read-only analytics display.
 		$period = isset( $_GET['period'] ) && in_array( $_GET['period'], array( '7', '30', '90' ), true )
 			? (int) $_GET['period']
