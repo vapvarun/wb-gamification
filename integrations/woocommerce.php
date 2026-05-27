@@ -5,16 +5,32 @@
  * Auto-loaded by ManifestLoader. Fires only when WooCommerce is active.
  *
  * Actions covered:
- *   Order completed         — woocommerce_order_status_completed
- *   First purchase ever     — woocommerce_order_status_completed (once only)
- *   Product reviewed        — comment_post on product post type
- *   Wishlist item added     — yith_wcwl_added_to_wishlist (YITH Wishlist)
+ *   Order paid             — woocommerce_payment_complete (fires once
+ *                            per order when payment succeeds — handles
+ *                            both stores that move paid orders to
+ *                            "processing" awaiting shipment AND stores
+ *                            that auto-complete digital orders).
+ *   First purchase ever    — woocommerce_payment_complete (once only)
+ *   Product reviewed       — comment_post on product post type
+ *   Wishlist item added    — yith_wcwl_added_to_wishlist (YITH Wishlist)
+ *   Add to cart            — woocommerce_add_to_cart
  *
  * Points scale example:
  *   First purchase  →  50 pts (loyalty hook — reward the relationship, not just the spend)
  *   Each order      →  25 pts
  *   Leave a review  →  15 pts (quality signal — drives social proof)
  *   Add to wishlist →   5 pts (intent signal)
+ *
+ * NOTE: pre-1.4.1 wc_order_completed + wc_first_purchase listened on
+ * `woocommerce_order_status_completed`, which only fires when an admin
+ * explicitly marks an order as completed. For stores where paid orders
+ * sit in "processing" until shipment (the WC default for physical
+ * goods), members never earned points for their purchases — they had
+ * to wait for the admin to mark complete, sometimes days later. The
+ * symptom on Basecamp #9925589914 was "WC events other than
+ * add_to_cart not firing." Moving to `woocommerce_payment_complete`
+ * fires once when payment succeeds regardless of subsequent
+ * status — payment_complete is WC's canonical "money in hand" hook.
  *
  * @package WB_Gamification
  * @see     https://woocommerce.github.io/code-reference/
@@ -33,9 +49,9 @@ return [
 
 		[
 			'id'             => 'wc_order_completed',
-			'label'          => 'Complete a purchase',
-			'description'    => 'Awarded each time a customer completes an order.',
-			'hook'           => 'woocommerce_order_status_completed',
+			'label'          => 'Pay for an order',
+			'description'    => 'Awarded each time a customer pays for an order (fires once per order on payment success).',
+			'hook'           => 'woocommerce_payment_complete',
 			'user_callback'  => function ( int $order_id ): int {
 				$order = wc_get_order( $order_id );
 				if ( ! $order ) {
@@ -71,9 +87,9 @@ return [
 
 		[
 			'id'             => 'wc_first_purchase',
-			'label'          => 'Complete first purchase ever',
-			'description'    => 'Awarded once on a customer\'s very first completed order.',
-			'hook'           => 'woocommerce_order_status_completed',
+			'label'          => 'Make first purchase ever',
+			'description'    => 'Awarded once on a customer\'s very first paid order.',
+			'hook'           => 'woocommerce_payment_complete',
 			'user_callback'  => function ( int $order_id ): int {
 				$order = wc_get_order( $order_id );
 				if ( ! $order ) {
@@ -90,14 +106,18 @@ return [
 				if ( ! $customer_id ) {
 					return 0;
 				}
-				// Count completed orders for this customer.
-				$completed = wc_get_orders( [
+				// Count all PAID orders for this customer (processing OR
+				// completed). woocommerce_payment_complete fires after the
+				// current order has already moved to its paid state, so
+				// the count includes it. count === 1 → this IS the first
+				// paid order; > 1 means the customer has paid before.
+				$paid = wc_get_orders( [
 					'customer' => $customer_id,
-					'status'   => 'completed',
+					'status'   => array( 'processing', 'completed' ),
 					'limit'    => 2,
 					'return'   => 'ids',
 				] );
-				return count( $completed ) === 1 ? $customer_id : 0;
+				return count( $paid ) === 1 ? $customer_id : 0;
 			},
 			'default_points' => 50,
 			'category'       => 'commerce',
