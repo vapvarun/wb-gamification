@@ -75,9 +75,65 @@ final class NotificationBridge {
 		add_action( 'wb_gam_streak_milestone', array( __CLASS__, 'on_streak_milestone' ), 99, 2 );
 		add_action( 'wb_gam_challenge_completed', array( __CLASS__, 'on_challenge_completed' ), 99, 2 );
 		add_action( 'wb_gam_kudos_given', array( __CLASS__, 'on_kudos_given' ), 99, 4 );
+		// Skip toasts — surface "you hit the daily cap / cooldown" to the
+		// member so they understand why no points appeared. Pre-1.4.1 the
+		// engine fired `wb_gam_award_skipped` in 6 places (PointsEngine +
+		// Registry + Jetonomy) with no internal listener — pure dead-letter.
+		// Closes audit/DATA-FLOW-AWARD-2026-05-27.md §G17.
+		add_action( 'wb_gam_award_skipped', array( __CLASS__, 'on_award_skipped' ), 99, 4 );
 
 		// Output markup + seed script once, in the footer.
 		add_action( 'wp_footer', array( __CLASS__, 'render' ), 5 );
+	}
+
+	/**
+	 * Push a "skip toast" — informs the member why an action they just
+	 * performed did NOT award points. Only fires for reasons the member
+	 * can act on (cap hit, cooldown active). Silent for engine-internal
+	 * reasons (self-action, sandboxed) where a toast would be confusing.
+	 *
+	 * @since 1.4.1
+	 *
+	 * @param int    $user_id   User who would have been awarded.
+	 * @param string $action_id Action that was skipped.
+	 * @param string $reason    Closed-set reason from PointsEngine::passes_rate_limits.
+	 * @param array  $context   Optional context (daily_cap_used, cooldown_seconds, etc.).
+	 */
+	public static function on_award_skipped( int $user_id, string $action_id, string $reason, array $context = array() ): void {
+		if ( $user_id <= 0 ) {
+			return;
+		}
+
+		// Only the member-facing reasons get a toast — internal vetoes
+		// (sandboxed, self_action, pre_change_veto) confuse the user.
+		$user_facing_reasons = array( 'cooldown', 'daily_cap', 'weekly_cap' );
+		if ( ! in_array( $reason, $user_facing_reasons, true ) ) {
+			return;
+		}
+
+		$message = '';
+		switch ( $reason ) {
+			case 'cooldown':
+				$message = __( "You're on cooldown for this action — try again in a bit.", 'wb-gamification' );
+				break;
+			case 'daily_cap':
+				$message = __( "You've hit your daily limit for this action. Resets tomorrow.", 'wb-gamification' );
+				break;
+			case 'weekly_cap':
+				$message = __( "You've hit your weekly limit for this action. Resets next week.", 'wb-gamification' );
+				break;
+		}
+
+		self::push(
+			$user_id,
+			array(
+				'type'    => 'skip',
+				'reason'  => $reason,
+				'action'  => $action_id,
+				'message' => $message,
+				'context' => $context,
+			)
+		);
 	}
 
 	// ── Event collectors ────────────────────────────────────────────────────────
@@ -441,19 +497,40 @@ final class NotificationBridge {
 
 		$key    = self::TRANSIENT_PREFIX . $user_id;
 		$events = get_transient( $key );
-		$events = is_array( $events ) ? $events : array();
+		$existing_events = is_array( $events ) ? $events : array();
 
 		// Assign a monotonic id so consumers can checkpoint reads instead
 		// of destructively flushing the queue. Use the largest existing
 		// id + 1 (not count) so removing old events doesn't recycle ids.
 		$last_id = 0;
-		foreach ( $events as $existing ) {
+		foreach ( $existing_events as $existing ) {
 			if ( isset( $existing['_id'] ) && (int) $existing['_id'] > $last_id ) {
 				$last_id = (int) $existing['_id'];
 			}
 		}
+
+		// Transient-reset recovery: when the transient was wiped (TTL or
+		// `wp_cache_flush`) but per-consumer cursors in user_meta still
+		// reflect a prior queue's high-water mark, new events restart at
+		// `_id = 1` but every cursor is `>= 1000` from the old queue —
+		// every `read_pending` returns empty and the user never sees
+		// another toast for the lifetime of their account. Walk the
+		// three cursor metas and bump $last_id to their max before
+		// stamping the new event. Closes
+		// audit/DATA-FLOW-NOTIFICATIONS-2026-05-27.md §G13.
+		if ( empty( $existing_events ) ) {
+			$consumers = array( 'footer', 'heartbeat', 'rest' );
+			foreach ( $consumers as $consumer ) {
+				$cursor = (int) get_user_meta( $user_id, self::CURSOR_META_PREFIX . $consumer, true );
+				if ( $cursor > $last_id ) {
+					$last_id = $cursor;
+				}
+			}
+		}
+
 		$event['_id'] = $last_id + 1;
 		$event['_ts'] = time();
+		$events       = $existing_events;
 		$events[]     = $event;
 
 		// Bound queue size — drop oldest first.

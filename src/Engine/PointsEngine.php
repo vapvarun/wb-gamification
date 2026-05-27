@@ -252,6 +252,16 @@ final class PointsEngine {
 		if ( ! self::bump_user_total( $event->user_id, $type, $points ) ) {
 			return false;
 		}
+
+		// Cache-bust before COMMIT — safe today because there is NO step
+		// between this point and the outer COMMIT that can fail or
+		// rollback (Engine::process line ~388, Transaction::run closure
+		// returns truthy → COMMIT). Audit/DATA-FLOW-AWARD-2026-05-27.md §G19
+		// flagged the pattern as fragile rather than buggy: if a future
+		// commit adds a fallible step between `insert_point_row` and
+		// `COMMIT`, this cache-bust would need to move to AFTER the commit.
+		// Adding a `// AUDIT-G19` marker so the next maintainer reads this
+		// docblock when they add new transaction body steps.
 		wp_cache_delete( self::cache_key_total( $event->user_id, $type ), 'wb_gamification' );
 
 		return true;

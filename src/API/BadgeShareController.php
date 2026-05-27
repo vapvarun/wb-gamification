@@ -237,6 +237,32 @@ class BadgeShareController extends WP_REST_Controller {
 			);
 		}
 
+		/**
+		 * Whether the badge-share endpoint should honour the site's
+		 * `wb_gam_profile_public_enabled` kill-switch. The share-card
+		 * endpoint was designed to work even for members who opted out
+		 * of the public leaderboard (the credential URL is shared
+		 * deliberately), so the kill-switch is OFF by default — sites
+		 * that flip it on disable the entire share surface.
+		 *
+		 * Filter the default to true to make a site-wide public-profile
+		 * disable also disable badge sharing. Closes audit
+		 * DATA-FLOW-ADMIN-REST-2026-05-27.md §G15.
+		 *
+		 * @since 1.4.1
+		 *
+		 * @param bool $respects_kill_switch Default false.
+		 */
+		if ( (bool) apply_filters( 'wb_gam_badge_share_respects_privacy', false ) ) {
+			if ( ! (bool) get_option( 'wb_gam_profile_public_enabled', true ) ) {
+				return new WP_Error(
+					'rest_badge_share_disabled',
+					__( 'Badge sharing is disabled on this site.', 'wb-gamification' ),
+					array( 'status' => 403 )
+				);
+			}
+		}
+
 		$def = BadgeEngine::get_badge_def( $badge_id );
 		if ( null === $def ) {
 			return new WP_Error(

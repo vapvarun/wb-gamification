@@ -213,16 +213,13 @@ class ChallengesController extends WP_REST_Controller {
 				array(
 					'methods'             => WP_REST_Server::CREATABLE,
 					'callback'            => array( $this, 'complete_challenge' ),
-					'permission_callback' => function () {
-						if ( ! is_user_logged_in() ) {
-							return new \WP_Error(
-								'rest_not_logged_in',
-								__( 'You must be logged in to complete challenges.', 'wb-gamification' ),
-								array( 'status' => 401 )
-							);
-						}
-						return true;
-					},
+					// Use a named method instead of an inline closure so
+					// `bin/coding-rules-check.sh` Rule 2 (REST __return_true
+					// allowlist + permission_callback introspection) can
+					// statically discover the gate. Closures are opaque to
+					// the gate's grep-based introspection. Closes audit
+					// DATA-FLOW-ADMIN-REST-2026-05-27.md §G12.
+					'permission_callback' => array( $this, 'require_logged_in' ),
 					'args'                => array(
 						'id' => array(
 							'required'          => true,
@@ -251,6 +248,27 @@ class ChallengesController extends WP_REST_Controller {
 		return \WBGam\Engine\Capabilities::user_can( 'wb_gam_manage_challenges' )
 			? true
 			: new WP_Error( 'rest_forbidden', __( 'You do not have permission to manage challenges.', 'wb-gamification' ), array( 'status' => 403 ) );
+	}
+
+	/**
+	 * Permission gate for the `complete` endpoint — any logged-in user.
+	 *
+	 * Extracted from an inline closure in `register_routes()` so the
+	 * static gate at `bin/coding-rules-check.sh` can introspect it.
+	 *
+	 * @since 1.4.1
+	 *
+	 * @return true|WP_Error
+	 */
+	public function require_logged_in(): bool|WP_Error {
+		if ( ! is_user_logged_in() ) {
+			return new WP_Error(
+				'rest_not_logged_in',
+				__( 'You must be logged in to complete challenges.', 'wb-gamification' ),
+				array( 'status' => 401 )
+			);
+		}
+		return true;
 	}
 
 	// ── Callbacks ──────────────────────────────────────────────────────────────

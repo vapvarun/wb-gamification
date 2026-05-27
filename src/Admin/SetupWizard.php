@@ -280,6 +280,13 @@ final class SetupWizard {
 	 * Each option is whitelisted — unknown POST keys never reach update_option().
 	 */
 	private static function apply_defaults_from_form(): void {
+		// Canonical storage shape for every `wb_gam_email_*` option is the
+		// PHP-bool-coerced string `'1'` (on) or `'0'` (off). Read sites
+		// must use `(bool) get_option(..., false)` — never a strict
+		// `=== '1'` compare — because hosts with object-cache layers in
+		// the way can return a real bool. `EmailSettingsController::handle_get`
+		// and `TransactionalEmailEngine::is_enabled` both follow this
+		// contract. Audit/DATA-FLOW-ADMIN-REST-2026-05-27.md §G8.
 		$toggles = array(
 			'wb_gam_email_level_up'            => 'email_level_up',
 			'wb_gam_email_badge_earned'        => 'email_badge_earned',

@@ -30,11 +30,16 @@
 	}
 
 	function showRowError( row, message ) {
+		// Class-only styling so dark-mode + ux-foundation tokens apply;
+		// CSS rules live in assets/css/admin.css under the
+		// `.wb-gam-submission-error` selector. Pre-1.4.1 used raw hex +
+		// px in `style.cssText` which broke dark-mode and bypassed the
+		// design system. Closes audit
+		// DATA-FLOW-ADMIN-REST-2026-05-27.md §G9.
 		let err = row.querySelector( '.wb-gam-submission-error' );
 		if ( ! err ) {
 			err = document.createElement( 'div' );
 			err.className = 'wb-gam-submission-error';
-			err.style.cssText = 'color:#b91c1c;font-size:12px;margin-top:4px;';
 			row.querySelector( 'td:last-child' ).appendChild( err );
 		}
 		err.textContent = message;
@@ -62,15 +67,16 @@
 		if ( rejectBtn ) {
 			rejectBtn.addEventListener( 'click', function () {
 				// First click: render an inline reason input + Confirm button.
+				// Class-only styling — CSS rules live in admin.css.
+				// Closes audit DATA-FLOW-ADMIN-REST-2026-05-27.md §G9.
 				if ( ! row.querySelector( '.wb-gam-submission-reject-input' ) ) {
 					const wrap = document.createElement( 'div' );
 					wrap.className = 'wb-gam-submission-reject-input';
-					wrap.style.cssText = 'margin-top:6px;display:flex;gap:6px;';
 
 					const input = document.createElement( 'input' );
 					input.type = 'text';
 					input.placeholder = i18n.reason || 'Reason';
-					input.style.cssText = 'flex:1;padding:4px 8px;font-size:12px;';
+					input.className = 'wb-gam-submission-reject-input__field';
 
 					const confirm = document.createElement( 'button' );
 					confirm.type = 'button';

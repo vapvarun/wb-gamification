@@ -142,9 +142,14 @@ final class HeartbeatChannel {
 		}
 
 		$user_id = get_current_user_id();
-		$boards  = self::$pending_boards;
-		// Reset so a stale board list can't leak into a sibling request
-		// served by the same PHP-FPM worker.
+		// Read-then-reset BEFORE any other work. The static was a real
+		// cross-request leak risk: if a callback registered against the
+		// heartbeat filter chain threw between the copy and the reset,
+		// the next request served by the same PHP-FPM worker would
+		// inherit the previous client's board descriptors. Reset first;
+		// the local copy keeps our own snapshot. Closes
+		// audit/DATA-FLOW-NOTIFICATIONS-2026-05-27.md §G9.
+		$boards               = self::$pending_boards;
 		self::$pending_boards = array();
 
 		$out = array(

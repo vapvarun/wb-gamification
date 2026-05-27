@@ -214,17 +214,22 @@ final class WebhookDispatcher {
 
 		$user = get_userdata( $user_id );
 
-		$data = array_filter(
-			array_merge(
-				array(
-					'action_id' => $event ? $event->action_id : null,
-					'event_id'  => $event ? $event->event_id : null,
-					'object_id' => $event ? ( $event->object_id ?: null ) : null,
-					'metadata'  => $event ? ( $event->metadata ?: null ) : null,
-					'points'    => $points > 0 ? $points : null,
-				),
-				$extra_data
-			)
+		// Deterministic payload shape: every key always present, with explicit
+		// nulls for missing values. Pre-1.4.1 used `array_filter` which dropped
+		// any empty / zero / false / null entry — so subscribers saw a
+		// different field set per call and couldn't write a stable schema.
+		// HMAC signature reproducibility also depends on this — the same
+		// logical event must produce the same bytes. Closes audit
+		// DATA-FLOW-NOTIFICATIONS-2026-05-27.md §G14.
+		$data = array_merge(
+			array(
+				'action_id' => $event ? $event->action_id : null,
+				'event_id'  => $event ? $event->event_id : null,
+				'object_id' => $event && $event->object_id > 0 ? $event->object_id : null,
+				'metadata'  => $event ? $event->metadata : null,
+				'points'    => $points > 0 ? $points : null,
+			),
+			$extra_data
 		);
 
 		$payload = wp_json_encode(

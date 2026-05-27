@@ -179,15 +179,21 @@ class KudosController extends WP_REST_Controller {
 		$receiver_id = (int) $request->get_param( 'receiver_id' );
 		$message     = (string) $request->get_param( 'message' );
 
-		// Frontend forms send `recipient_login` (a user_login / email) instead
+		// Frontend forms send `recipient_login` (a user_login / slug) instead
 		// of `receiver_id` — the public WP users REST endpoint only returns
 		// post authors, so member→ID resolution has to happen server-side.
+		//
+		// Pre-1.4.1 also accepted `email` lookups here. Removed in 1.4.1
+		// because an email-as-recipient path lets any logged-in user POST
+		// arbitrary emails and infer email-to-account binding by error
+		// code (`rest_user_invalid` vs success). Subscriber-level account
+		// enumeration. Frontend forms only ever post login/slug now; the
+		// email path was unused but discoverable. Closes audit
+		// DATA-FLOW-ADMIN-REST-2026-05-27.md §G14.
 		if ( $receiver_id <= 0 ) {
 			$login = (string) $request->get_param( 'recipient_login' );
 			if ( '' !== $login ) {
-				$user = is_email( $login )
-					? get_user_by( 'email', $login )
-					: ( get_user_by( 'login', $login ) ?: get_user_by( 'slug', $login ) );
+				$user = get_user_by( 'login', $login ) ?: get_user_by( 'slug', $login );
 				if ( $user ) {
 					$receiver_id = (int) $user->ID;
 				}

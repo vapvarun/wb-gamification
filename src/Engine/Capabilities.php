@@ -115,12 +115,31 @@ final class Capabilities {
 	 * activation cycle still receive newly-introduced caps. No-op once
 	 * the option matches CAPS_VERSION.
 	 *
+	 * A short transient circuit-breaker prevents the version-mismatch
+	 * path from running register() on every page load when the option
+	 * write fails (e.g. broken `alloptions` cache, autoload misconfig).
+	 * Pre-1.4.1 those cases would loop every role × every cap on every
+	 * request until the write eventually succeeded — hammering the DB.
+	 * The transient is keyed on CAPS_VERSION so any future version bump
+	 * resets the breaker. Closes audit
+	 * DATA-FLOW-ADMIN-REST-2026-05-27.md §G16.
+	 *
 	 * @return void
 	 */
 	public static function sync(): void {
-		if ( get_option( self::CAPS_VERSION_OPTION ) !== self::CAPS_VERSION ) {
-			self::register();
+		if ( get_option( self::CAPS_VERSION_OPTION ) === self::CAPS_VERSION ) {
+			return;
 		}
+		// Circuit breaker — skip the heavy register() loop if we ran it
+		// within the last hour. The transient TTL is intentionally short
+		// so a broken option-write doesn't permanently strand the install
+		// at the old version; the next hour's request retries.
+		$breaker_key = self::CAPS_VERSION_OPTION . '_sync_check';
+		if ( get_transient( $breaker_key ) === self::CAPS_VERSION ) {
+			return;
+		}
+		self::register();
+		set_transient( $breaker_key, self::CAPS_VERSION, HOUR_IN_SECONDS );
 	}
 
 	/**

@@ -3931,3 +3931,28 @@ body[class*="_page_wb-gam-"] #wpbody-content > .updated:not(.wb-gam-notice) {
 .toplevel_page_wb-gamification div.updated:not(.wb-gam-notice) {
 	display: none !important;
 }
+
+/* ==========================================================================
+   25. Submissions admin — inline error + reject-reason editor
+   Replaces the previous JS `style.cssText` inline blocks. Uses
+   design-system tokens so dark mode + RTL stay consistent.
+   See audit/DATA-FLOW-ADMIN-REST-2026-05-27.md §G9.
+   ========================================================================== */
+
+.wb-gam-submission-error {
+	margin-top: 4px;
+	color: var(--wbgam-color-danger, #b91c1c);
+	font-size: var(--wbgam-fs-xs, 12px);
+}
+
+.wb-gam-submission-reject-input {
+	margin-top: 6px;
+	display: flex;
+	gap: 6px;
+}
+
+.wb-gam-submission-reject-input__field {
+	flex: 1;
+	padding: 4px 8px;
+	font-size: var(--wbgam-fs-xs, 12px);
+}

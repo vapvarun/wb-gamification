@@ -96,7 +96,16 @@ const { state, actions } = store( NS, {
 							state.levelUp = {
 								active:    true,
 								iconUrl:   event.icon_url || '',
-								levelName: event.message || event.detail || 'Level up!',
+								// Read the canonical `levelName` field first (PHP
+								// queues it explicitly at NotificationBridge:232);
+								// fall back to the translated message string for
+								// the design that says "You reached X!". Pre-1.4.1
+								// this preferred `event.message` so the overlay
+								// always rendered the localised sentence instead
+								// of the bare level name the design specced.
+								// Closes audit DATA-FLOW-NOTIFICATIONS-
+								// 2026-05-27.md §G10.
+								levelName: event.levelName || event.message || event.detail || 'Level up!',
 							};
 							levelUpShown = true;
 						}
