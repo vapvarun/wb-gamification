@@ -250,6 +250,16 @@ if [ -x bin/check-boot-invariants.sh ]; then
   run_stage "2.13" "Boot invariants (class-hoist guard contract)" bash bin/check-boot-invariants.sh
 fi
 
+# 2.14 — Badge condition contract. Asserts every auto-awarded badge's
+# seeded condition matches what its name/description promises ("First X"
+# → action_count=1; "Published 10 posts" → action_count=10; etc.). Wired
+# 2026-05-27 after the audit per Basecamp #9933079634 surfaced 5 badges
+# (first_post, prolific_writer, content_creator, first_comment,
+# engaged_reader) whose point_milestone seed contradicted their names.
+if [ -x bin/check-badge-condition-contract.sh ]; then
+  run_stage "2.14" "Badge condition contract (seed-vs-name)" bash bin/check-badge-condition-contract.sh
+fi
+
 # ─── 3.x — Manifest freshness ────────────────────────────────────────────────
 
 if [ "$MODE" != "quick" ]; then

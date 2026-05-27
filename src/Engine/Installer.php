@@ -701,26 +701,25 @@ final class Installer {
 				'action_id'      => 'wp_user_register',
 				'count'          => 1,
 			),
-			// "First X" badges must mirror the literal action ("posted first post",
-			// "left first comment") so the badge name reads true. Both wp_publish_post
-			// and wp_leave_comment are unconditionally registered by
-			// integrations/wordpress.php — they require WordPress only, no BuddyPress.
-			// Volume badges (prolific_writer, content_creator, engaged_reader) stay on
-			// point_milestone since "750 points worth of posting" is the intent, not
-			// "750 posts." Admins can switch any of these to action_count via the
-			// Badges admin page if their site needs a different threshold.
+			// WordPress action badges. Every badge's condition mirrors the literal
+			// action its name and description promise — "Published 10 posts" means
+			// 10 posts, not "250 points worth of activity." Both wp_publish_post and
+			// wp_leave_comment are unconditionally registered by
+			// integrations/wordpress.php, no BuddyPress required.
 			'first_post'           => array(
 				'condition_type' => 'action_count',
 				'action_id'      => 'wp_publish_post',
 				'count'          => 1,
 			),
 			'prolific_writer'      => array(
-				'condition_type' => 'point_milestone',
-				'points'         => 250,
+				'condition_type' => 'action_count',
+				'action_id'      => 'wp_publish_post',
+				'count'          => 10,
 			),
 			'content_creator'      => array(
-				'condition_type' => 'point_milestone',
-				'points'         => 750,
+				'condition_type' => 'action_count',
+				'action_id'      => 'wp_publish_post',
+				'count'          => 25,
 			),
 			'first_comment'        => array(
 				'condition_type' => 'action_count',
@@ -728,8 +727,9 @@ final class Installer {
 				'count'          => 1,
 			),
 			'engaged_reader'       => array(
-				'condition_type' => 'point_milestone',
-				'points'         => 150,
+				'condition_type' => 'action_count',
+				'action_id'      => 'wp_leave_comment',
+				'count'          => 10,
 			),
 
 			// BuddyPress actions.
