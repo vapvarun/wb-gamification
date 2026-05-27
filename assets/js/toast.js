@@ -47,15 +47,46 @@
 	};
 
 	/**
-	 * Render a queued payload of toasts.
+	 * Set of toast `_id`s already rendered in this page session.
 	 *
-	 * @param {Array<object>|undefined} toasts From the heartbeat / REST poll.
+	 * Three independent delivery paths can hand us the same event:
+	 *   1. The page-load seed via `window.wbGamNotifications` (cursor=footer).
+	 *   2. The Heartbeat broker (cursor=heartbeat) — fires on every tick and
+	 *      also replays the last payload to late subscribers.
+	 *   3. The REST fallback fetch (cursor=rest).
+	 *
+	 * Each cursor advances independently on the PHP side, so the SAME event
+	 * `_id` can arrive twice on a single page load (broker replay + REST
+	 * fallback). This Set guarantees one visible toast per `_id` no matter
+	 * how many surfaces deliver it. Closes Basecamp #9932791974.
+	 *
+	 * Fallback key for legacy payloads missing `_id`: type+message+_ts.
+	 */
+	var seenIds = new Set();
+
+	/**
+	 * Render a queued payload of toasts, deduping by `_id` so the same
+	 * event never paints twice.
+	 *
+	 * @param {Array<object>|undefined} toasts From the heartbeat / REST poll / seed.
 	 */
 	function renderToasts( toasts ) {
 		if ( ! toasts || ! toasts.length ) {
 			return;
 		}
-		toasts.forEach( showToast );
+		toasts.forEach( function ( toast ) {
+			if ( ! toast || typeof toast !== 'object' ) {
+				return;
+			}
+			var key = toast._id != null
+				? 'id:' + toast._id
+				: 'fp:' + ( toast.type || '' ) + '|' + ( toast.message || '' ) + '|' + ( toast._ts || '' );
+			if ( seenIds.has( key ) ) {
+				return;
+			}
+			seenIds.add( key );
+			showToast( toast );
+		} );
 	}
 
 	/**
@@ -148,17 +179,23 @@
 		return false;
 	}
 
-	if ( subscribe() ) {
-		// Broker already there — still do one fallback drain in case the
-		// page had a queued toast that pre-dated heartbeat's first tick.
-		firstPaintFallback();
-	} else {
-		// Broker not loaded yet (jQuery / wp.heartbeat boot order). Wait
-		// for the ready event the broker dispatches on init.
-		document.addEventListener( 'wbGamRealtimeReady', function () {
-			subscribe();
-		}, { once: true } );
-		// And drain anything queued from a previous request.
+	// Step 1 — paint anything that arrived in the page-load seed
+	// (cursor=footer, same payload the IA store reads for overlays).
+	// This was the missing path that left users staring at an empty
+	// container for ~15 seconds until the first heartbeat tick.
+	if ( window.wbGamNotifications && Array.isArray( window.wbGamNotifications ) ) {
+		renderToasts( window.wbGamNotifications );
+	}
+
+	// Step 2 — subscribe to the realtime broker. If the broker is up, we
+	// rely on it for live delivery. We do NOT also call firstPaintFallback
+	// because the broker's replay covers anything queued before subscribe
+	// (heartbeat.js:120) and the REST fallback would just re-deliver the
+	// same events under a different cursor (the original duplicate path).
+	if ( ! subscribe() ) {
+		document.addEventListener( 'wbGamRealtimeReady', subscribe, { once: true } );
+		// Broker not online — REST fallback is the only real-time path.
+		// Dedupe still protects us if heartbeat boots before this resolves.
 		firstPaintFallback();
 	}
 }() );
