@@ -79,6 +79,11 @@ class WebhooksController extends WP_REST_Controller {
 		'streak_milestone',
 		'challenge_completed',
 		'kudos_given',
+		// Added 1.4.1 (audit §G2) — RedemptionEngine fires
+		// `wb_gam_points_redeemed`; WebhookDispatcher::on_redemption
+		// now subscribes and dispatches this event type so Zapier /
+		// Make / n8n integrations can react to redemptions.
+		'redemption',
 	);
 
 	/**

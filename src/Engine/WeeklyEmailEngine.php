@@ -143,6 +143,24 @@ final class WeeklyEmailEngine {
 			return;
 		}
 
+		// Worker-time re-check of the opt-out state. The batch SQL at
+		// `dispatch_batch` already filters `notification_mode != 'none'`
+		// at enqueue, but the AS queue can run minutes later — a user
+		// who clicks the unsubscribe link in that window must NOT receive
+		// the recap that was already enqueued. Cheap PK lookup; SELECT
+		// cost is negligible compared to wp_mail.
+		// Closes audit/DATA-FLOW-NOTIFICATIONS-2026-05-27.md §G11.
+		global $wpdb;
+		$mode = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT notification_mode FROM {$wpdb->prefix}wb_gam_member_prefs WHERE user_id = %d",
+				$user_id
+			)
+		);
+		if ( 'none' === $mode ) {
+			return;
+		}
+
 		$data = self::gather_data( $user_id );
 
 		// Skip if nothing noteworthy happened this week.

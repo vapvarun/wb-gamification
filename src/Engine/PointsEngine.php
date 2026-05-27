@@ -304,23 +304,25 @@ final class PointsEngine {
 		// audit-log invariant ALWAYS holds — every wb_gam_points row gets
 		// a matching wb_gam_events row regardless of how the caller invoked.
 		if ( ! ( $event instanceof Event ) ) {
-			$event_id = (string) $event;
-			$event    = new Event(
+			$caller_event_id = (string) $event;
+			$event           = new Event(
 				array(
-					'action_id' => $action_id,
-					'user_id'   => $user_id,
-					'metadata'  => array(
+					// Honour caller-supplied event_id when present
+					// (RedemptionEngine passes its own UUID so the
+					// redemption row's event_id matches the audit row).
+					// Pass at construction time — Event::event_id is
+					// readonly and can't be overwritten afterwards.
+					'event_id'   => '' !== $caller_event_id ? $caller_event_id : null,
+					'action_id'  => $action_id,
+					'user_id'    => $user_id,
+					'point_type' => $resolved_type,
+					'metadata'   => array(
 						'points_cost'    => -$amount,
 						'point_type'     => $resolved_type,
 						'_legacy_caller' => 1,
 					),
 				)
 			);
-			// Honour caller-supplied event_id when present (RedemptionEngine
-			// passes its own UUID so the redemption row's event_id matches).
-			if ( '' !== $event_id ) {
-				$event->event_id = $event_id;
-			}
 		}
 
 		return Transaction::run(

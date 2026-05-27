@@ -438,6 +438,22 @@ final class TransactionalEmailEngine {
 	 * @param int    $user_id Recipient user ID — used for the same re-check.
 	 */
 	private static function send( string $to, string $subject, string $body, string $slug = '', int $user_id = 0 ): bool {
+		// Per-user / per-slug burst cap. Backfills + bulk awards can
+		// trigger dozens of emails for one user in seconds (50 badges
+		// from `wp wb-gamification replay`, mass manual award). SMTP
+		// providers (SES, Mailgun) rate-limit and may sandbox the sender.
+		// The cap is a 5-min counter per (user, slug); when it overflows,
+		// the additional sends are dropped (and a debug log entry warns).
+		// Cap defaults to 5; filterable per slug.
+		// Closes audit/DATA-FLOW-NOTIFICATIONS-2026-05-27.md §G4.
+		if ( $user_id > 0 && '' !== $slug && self::is_rate_limited( $user_id, $slug ) ) {
+			Log::debug(
+				'TransactionalEmailEngine::send — burst cap hit; dropping email.',
+				array( 'user_id' => $user_id, 'slug' => $slug )
+			);
+			return false;
+		}
+
 		$payload = array(
 			'to'      => $to,
 			'subject' => $subject,
@@ -492,5 +508,47 @@ final class TransactionalEmailEngine {
 			);
 		}
 		return $sent;
+	}
+
+	/**
+	 * Whether a (user, slug) pair has hit its 5-minute burst cap.
+	 *
+	 * Implemented as a short-lived transient counter so the cap survives
+	 * across requests (a backfill that produces 50 badges in one CLI run
+	 * still gets coalesced, even though each badge insert is its own page
+	 * load). Default cap is 5 emails per 5-minute window per (user, slug);
+	 * filter `wb_gam_email_burst_cap` to override per slug.
+	 *
+	 * Returns true (rate-limited) AFTER incrementing the counter, so the
+	 * Nth+1 attempt is dropped. This keeps the cap simple — no separate
+	 * "check then increment" race.
+	 *
+	 * @since 1.4.1
+	 *
+	 * @param int    $user_id Recipient.
+	 * @param string $slug    Email-type slug.
+	 * @return bool
+	 */
+	private static function is_rate_limited( int $user_id, string $slug ): bool {
+		$transient_key = 'wb_gam_email_burst_' . $slug . '_' . $user_id;
+		$current       = (int) get_transient( $transient_key );
+		++$current;
+		set_transient( $transient_key, $current, 5 * MINUTE_IN_SECONDS );
+
+		/**
+		 * Per-slug burst cap. Default 5 emails per 5-minute window per
+		 * (user, slug). Set to 0 to disable rate-limiting for a slug;
+		 * set high (e.g. 100) for transactional categories where every
+		 * delivery matters (e.g. redemption confirmations carrying a
+		 * coupon code the user is waiting on).
+		 *
+		 * @since 1.4.1
+		 *
+		 * @param int    $cap  Default cap (5).
+		 * @param string $slug Email-type slug.
+		 */
+		$cap = (int) apply_filters( 'wb_gam_email_burst_cap', 5, $slug );
+
+		return $cap > 0 && $current > $cap;
 	}
 }

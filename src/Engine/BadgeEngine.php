@@ -100,8 +100,15 @@ final class BadgeEngine {
 		// Resolve the currency the triggering event awarded — point_milestone
 		// badges must check the SAME currency, otherwise a "100 coins" badge
 		// would silently grant on the user's points balance instead.
-		$event_type = isset( $event->metadata['point_type'] ) ? (string) $event->metadata['point_type'] : '';
-		$total      = PointsEngine::get_total( $user_id, $event_type ?: null );
+		//
+		// Read `$event->point_type` first (stamped by Engine::process in
+		// 1.4.1) — it's the canonical answer. Falls back to metadata for
+		// callers that bypass Engine::process (legacy synthetic events),
+		// then to empty string (which PointsEngine::get_total treats as
+		// "primary currency"). See audit/DATA-FLOW-AWARD-2026-05-27.md §G5/G6.
+		$event_type = $event->point_type
+			?? ( isset( $event->metadata['point_type'] ) ? (string) $event->metadata['point_type'] : '' );
+		$total      = PointsEngine::get_total( $user_id, '' !== $event_type ? $event_type : null );
 
 		foreach ( $rules as $rule ) {
 			if ( in_array( $rule['badge_id'], $earned, true ) ) {

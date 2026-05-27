@@ -223,6 +223,15 @@ final class Engine {
 			? PointsEngine::resolve_type( Registry::resolve_action_point_type( $action ) ?: null )
 			: PointsEngine::resolve_type( $event->metadata['point_type'] ?? null );
 
+		// Stamp the resolved type onto the Event so downstream listeners
+		// (BadgeEngine, NotificationBridge, LevelEngine) read the canonical
+		// currency directly instead of digging back through metadata or
+		// re-resolving via Registry — both fall back to the primary type
+		// for internal-callsite events (challenge bonus, streak milestone,
+		// manual award, redemption) and silently produced wrong-currency
+		// reads. Closes audit/DATA-FLOW-AWARD-2026-05-27.md §G5/G6/G14.
+		$event = $event->with_point_type( $resolved_type );
+
 		// Registered-action checks: enabled + rate limits.
 		if ( null !== $action ) {
 			if ( ! self::is_action_enabled( $event->action_id ) ) {

@@ -63,11 +63,31 @@ final class Event {
 	public readonly string $created_at;
 
 	/**
+	 * Resolved point-type slug this event lands in. Null until
+	 * {@see \WBGam\Engine\Engine::process()} stamps the resolved currency
+	 * (after Registry resolution + manifest override + metadata fallback
+	 * all run). Downstream consumers (BadgeEngine, NotificationBridge,
+	 * LevelEngine) read this in preference to digging back through
+	 * `$metadata['point_type']` or re-running Registry resolution.
+	 *
+	 * Stamping the resolved type as a first-class field closes the
+	 * multi-currency drift hole the 2026-05-27 audit found
+	 * (DATA-FLOW-AWARD-2026-05-27.md §G5/G6/G14): every internal callsite
+	 * that synthesised an Event lost the currency context because the
+	 * metadata-injection path only ran for Registry-discovered actions.
+	 *
+	 * @since 1.4.1
+	 * @var string|null
+	 */
+	public readonly ?string $point_type;
+
+	/**
 	 * Construct a new Event value object.
 	 *
 	 * Accepted keys: action_id (string), user_id (int), object_id (int, optional),
 	 * metadata (array, optional), created_at (string ISO-8601, optional),
-	 * event_id (string UUID, optional — auto-generated when omitted).
+	 * event_id (string UUID, optional — auto-generated when omitted),
+	 * point_type (string|null, optional — set after Engine::process resolves).
 	 *
 	 * @param array $args Event data array.
 	 */
@@ -79,9 +99,40 @@ final class Event {
 		$this->created_at = isset( $args['created_at'] )
 			? (string) $args['created_at']
 			: gmdate( 'Y-m-d\TH:i:s\Z' );
-		$this->event_id   = isset( $args['event_id'] )
+		$this->event_id   = isset( $args['event_id'] ) && '' !== $args['event_id']
 			? (string) $args['event_id']
 			: self::generate_uuid();
+		$this->point_type = isset( $args['point_type'] ) && '' !== (string) $args['point_type']
+			? (string) $args['point_type']
+			: null;
+	}
+
+	/**
+	 * Return a clone of this Event with the resolved point_type stamped in.
+	 *
+	 * Used by {@see \WBGam\Engine\Engine::process()} to publish the resolved
+	 * currency as a first-class field once Registry resolution has run.
+	 * Re-emits all other fields verbatim — strict value-object semantics.
+	 * Also stamps `metadata['point_type']` so listeners that already read
+	 * the metadata path stay correct.
+	 *
+	 * @since 1.4.1
+	 *
+	 * @param string $point_type Resolved point-type slug.
+	 * @return Event Brand-new instance, original unchanged.
+	 */
+	public function with_point_type( string $point_type ): Event {
+		return new Event(
+			array(
+				'action_id'  => $this->action_id,
+				'user_id'    => $this->user_id,
+				'object_id'  => $this->object_id,
+				'metadata'   => array_merge( $this->metadata, array( 'point_type' => $point_type ) ),
+				'created_at' => $this->created_at,
+				'event_id'   => $this->event_id,
+				'point_type' => $point_type,
+			)
+		);
 	}
 
 	/**

@@ -60,6 +60,13 @@ final class WebhookDispatcher {
 		// `/wb-gamification/v1/kudos/{id}`. Closes audit
 		// DATA-FLOW-NOTIFICATIONS-2026-05-27.md §G12.
 		add_action( 'wb_gam_kudos_given', array( self::class, 'on_kudos_given' ), 50, 4 );
+
+		// Redemption event — Zapier/Make/n8n integrations want a webhook
+		// when a member redeems a reward. Closes audit
+		// DATA-FLOW-NOTIFICATIONS-2026-05-27.md §G2. TransactionalEmailEngine
+		// already subscribes to the same hook (commit ab7e79e); both run
+		// in parallel as independent consumers.
+		add_action( 'wb_gam_points_redeemed', array( self::class, 'on_redemption' ), 50, 4 );
 	}
 
 	// ── Hook callbacks for wired event types ────────────────────────────────────
@@ -124,6 +131,35 @@ final class WebhookDispatcher {
 	/**
 	 * Dispatch a webhook when kudos are given.
 	 *
+	 * Dispatch a webhook when a user redeems a reward.
+	 *
+	 * Subscribes to `wb_gam_points_redeemed` — same hook the transactional
+	 * email engine listens on. Both consumers fire independently. Closes
+	 * audit/DATA-FLOW-NOTIFICATIONS-2026-05-27.md §G2.
+	 *
+	 * @param int    $redemption_id Row id in `wb_gam_redemptions`.
+	 * @param int    $user_id       User who redeemed.
+	 * @param array  $item          Reward item snapshot (id, title, points_cost, reward_type, ...).
+	 * @param string|null $coupon_code Generated coupon code (WC types) or null.
+	 */
+	public static function on_redemption( int $redemption_id, int $user_id, array $item, ?string $coupon_code = null ): void {
+		self::dispatch(
+			'redemption',
+			$user_id,
+			null,
+			0,
+			array(
+				'redemption_id' => $redemption_id,
+				'item_id'       => (int) ( $item['id'] ?? 0 ),
+				'item_title'    => (string) ( $item['title'] ?? '' ),
+				'points_cost'   => (int) ( $item['points_cost'] ?? 0 ),
+				'reward_type'   => (string) ( $item['reward_type'] ?? '' ),
+				'coupon_code'   => $coupon_code,
+			)
+		);
+	}
+
+	/**
 	 * @param int    $giver_id    User who gave kudos.
 	 * @param int    $receiver_id User who received kudos.
 	 * @param string $message     Kudos message.
@@ -265,11 +301,46 @@ final class WebhookDispatcher {
 
 		if ( $status_code >= 400 ) {
 			self::log_delivery( $webhook_id, $event_type, $status_code, false );
+			// Terminal 4xx — receiver permanently refuses (revoked endpoint,
+			// bad secret, gone). Don't waste retries on something that won't
+			// improve in 14 minutes. 408 / 425 / 429 are transient and DO
+			// retry. Closes audit/DATA-FLOW-NOTIFICATIONS-2026-05-27.md §G6.
+			if ( self::is_terminal_status( $status_code ) ) {
+				Log::warning(
+					'WebhookDispatcher: dropping retry on permanent 4xx response.',
+					array(
+						'webhook_id'  => $webhook_id,
+						'event'       => $event_type,
+						'status_code' => $status_code,
+					)
+				);
+				return;
+			}
 			self::maybe_schedule_retry( $webhook_id, $url, $signature, $payload, 0 );
 			return;
 		}
 
 		self::log_delivery( $webhook_id, $event_type, $status_code, true );
+	}
+
+	/**
+	 * Whether a 4xx response should stop further retries.
+	 *
+	 * 4xx generally indicates a client error the receiver won't recover from
+	 * in the retry window (revoked endpoint, wrong secret, gone). The three
+	 * transient exceptions get retried like 5xx — 408 (request timeout),
+	 * 425 (too early), 429 (too many requests).
+	 *
+	 * @since 1.4.1
+	 *
+	 * @param int $status_code HTTP status from the receiver.
+	 * @return bool True for permanent 4xx; false for transient 4xx or 5xx.
+	 */
+	private static function is_terminal_status( int $status_code ): bool {
+		if ( $status_code < 400 || $status_code >= 500 ) {
+			return false;
+		}
+		return ! in_array( $status_code, array( 408, 425, 429 ), true );
 	}
 
 	/**
@@ -347,6 +418,20 @@ final class WebhookDispatcher {
 
 		if ( $status_code >= 400 ) {
 			self::log_delivery( $webhook_id, $event, $status_code, false );
+			// Same terminal-4xx logic as deliver() — don't keep retrying a
+			// receiver that's permanently refusing. Audit §G6.
+			if ( self::is_terminal_status( $status_code ) ) {
+				Log::warning(
+					'WebhookDispatcher: dropping retry on permanent 4xx response.',
+					array(
+						'webhook_id'  => $webhook_id,
+						'event'       => $event,
+						'status_code' => $status_code,
+						'attempt'     => $retry_count,
+					)
+				);
+				return;
+			}
 			self::maybe_schedule_retry( $webhook_id, $url, $signature, $payload, $retry_count );
 			return;
 		}
