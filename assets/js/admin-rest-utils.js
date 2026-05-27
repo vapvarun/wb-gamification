@@ -83,7 +83,18 @@
 		if ( body ) {
 			init.body = JSON.stringify( body );
 		}
-		const response = await fetch( url, init );
+		let response;
+		try {
+			response = await fetch( url, init );
+		} catch ( e ) {
+			// Network failure (offline, ad-blocker, aborted). Surface as a
+			// structured result so callers don't have to special-case rejection.
+			return {
+				ok: false,
+				status: 0,
+				data: { message: ( e && e.message ) || 'Network error.' },
+			};
+		}
 		let data = null;
 		try {
 			data = await response.json();
