@@ -428,6 +428,73 @@ final class BadgeAdminPage {
 								<?php endif; ?>
 							</p>
 						</form>
+
+						<?php if ( ! $is_new ) : ?>
+							<?php
+							// Manual-award panel — POSTs to /badges/{id}/award via the
+							// shared admin-rest-form pipeline. The endpoint accepts the
+							// award regardless of condition_type (admin_awarded badges
+							// have no auto rule, so this is the ONLY way they ever land
+							// on a member; auto-award badges still accept manual grants
+							// for one-off "give them this badge anyway" admin actions).
+							// Mirrors the wp_dropdown_users pattern already used by
+							// ManualAwardPage for the points-award form so admins see
+							// the same control across both surfaces. Closes Basecamp
+							// #9933208551.
+							?>
+							<div class="wbgam-card wbgam-stack-block wbgam-mt-lg">
+								<div class="wbgam-card-header">
+									<h3 class="wbgam-card-title">
+										<?php esc_html_e( 'Award this badge to a user', 'wb-gamification' ); ?>
+									</h3>
+								</div>
+								<div class="wbgam-card-body">
+									<p class="wbgam-card__desc">
+										<?php
+										if ( 'admin_awarded' === $condition['condition_type'] ) {
+											esc_html_e( 'This badge is admin-awarded only. Use the form below to grant it to a specific member.', 'wb-gamification' );
+										} else {
+											esc_html_e( 'Manually grant this badge to a specific member. Useful for one-off recognition outside the auto-award rule.', 'wb-gamification' );
+										}
+										?>
+									</p>
+									<form
+										data-wb-gam-rest-form="wbGamBadgesSettings"
+										data-wb-gam-rest-method="POST"
+										data-wb-gam-rest-path="/badges/<?php echo esc_attr( rawurlencode( $editing ) ); ?>/award"
+										data-wb-gam-rest-success-toast="<?php esc_attr_e( 'Badge awarded.', 'wb-gamification' ); ?>"
+										data-wb-gam-rest-error-toast="<?php esc_attr_e( 'Failed to award badge.', 'wb-gamification' ); ?>"
+										data-wb-gam-rest-after="reset"
+									>
+										<table class="form-table" role="presentation">
+											<tr>
+												<th scope="row">
+													<label for="wb-gam-badge-award-user"><?php esc_html_e( 'User', 'wb-gamification' ); ?></label>
+												</th>
+												<td>
+													<?php
+													wp_dropdown_users(
+														array(
+															'name'              => 'user_id',
+															'id'                => 'wb-gam-badge-award-user',
+															'show_option_none'  => __( '— Select a user —', 'wb-gamification' ),
+															'option_none_value' => '0',
+														)
+													);
+													?>
+													<p class="description"><?php esc_html_e( 'Member who will receive the badge.', 'wb-gamification' ); ?></p>
+												</td>
+											</tr>
+										</table>
+										<p>
+											<button type="submit" class="wbgam-btn">
+												<?php esc_html_e( 'Award Badge', 'wb-gamification' ); ?>
+											</button>
+										</p>
+									</form>
+								</div>
+							</div>
+						<?php endif; ?>
 					</div>
 				</div>
 			</div>
