@@ -17,4 +17,5 @@ defined( 'ABSPATH' ) || exit;
  * @var array  $attributes Block attributes.
  * @var string $content    Inner HTML (unused).
  */
+// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- helper builds HTML via esc_attr/esc_html internally and is the canonical source for the give-kudos UI consumed by both the block and the shortcode (see ShortcodeHandler::give_kudos_html).
 echo \WBGam\Engine\ShortcodeHandler::give_kudos_html( $attributes ?? array() );

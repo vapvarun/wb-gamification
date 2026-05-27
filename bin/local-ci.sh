@@ -230,6 +230,15 @@ if [ -x bin/check-coverage-floor.sh ] && [ -f build/coverage/coverage.txt ] && [
   run_stage "2.11" "PHPUnit coverage floor" bash bin/check-coverage-floor.sh
 fi
 
+# 2.12 — WordPress.org Plugin Check. The submission bar: 0 ERRORs in
+# shipped code (src/, integrations/, wb-gamification.php). WARNINGs are
+# tracked against a baseline so the count can't grow. Wired in
+# 2026-05-27 after fixing 3 ERRORs (1 was from the wizard refactor in
+# the same session). Refresh: bin/check-plugin-check.sh --update-baseline.
+if [ -x bin/check-plugin-check.sh ] && [ "$MODE" != "quick" ]; then
+  run_stage "2.12" "WP.org Plugin Check (0 errors in shipped code)" bash bin/check-plugin-check.sh
+fi
+
 # ─── 3.x — Manifest freshness ────────────────────────────────────────────────
 
 if [ "$MODE" != "quick" ]; then

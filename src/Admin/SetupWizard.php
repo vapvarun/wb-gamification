@@ -177,7 +177,7 @@ final class SetupWizard {
 			return;
 		}
 
-		$wizard_url = esc_url( admin_url( 'admin.php?page=' . self::PAGE_SLUG ) );
+		$wizard_url = admin_url( 'admin.php?page=' . self::PAGE_SLUG );
 		// Class `wb-gam-notice` whitelists this notice past the body-scoped CSS
 		// filter declared in assets/css/admin.css (Welcome notice section).
 		// Class `wb-gam-notice__cta` styles the CTA button spacing — see
@@ -186,7 +186,7 @@ final class SetupWizard {
 			'<div class="notice notice-info wb-gam-notice"><p><strong>%1$s</strong> %2$s <a href="%3$s" class="button button-primary wb-gam-notice__cta">%4$s</a></p></div>',
 			esc_html__( 'Welcome to WB Gamification!', 'wb-gamification' ),
 			esc_html__( 'Pick a starter template to pre-configure points for your use case — takes 30 seconds.', 'wb-gamification' ),
-			$wizard_url, // Already escaped via esc_url.
+			esc_url( $wizard_url ),
 			esc_html__( 'Run the setup wizard', 'wb-gamification' )
 		);
 	}

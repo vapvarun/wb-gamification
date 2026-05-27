@@ -160,9 +160,9 @@ BlockHooks::before( 'challenges', $wb_gam_attrs );
 					<?php if ( '' !== $wb_gam_action_label && empty( $wb_gam_ch['completed'] ) ) : ?>
 						<p class="wb-gam-challenges__hint">
 							<?php
-							/* translators: 1: action label e.g. "Comment on a post", 2: remaining count */
 							printf(
 								esc_html(
+									/* translators: 1: action label e.g. "Comment on a post", 2: remaining count */
 									_n(
 										'%2$d more &middot; %1$s',
 										'%2$d more &middot; %1$s',
