@@ -57,8 +57,15 @@
 }
 
 .wb-gam-earning-guide__card {
+	/* Two-row card so the label has the FULL card width to lay out
+	 * naturally instead of fighting the icon + points pill for the
+	 * remaining middle column. Pre-1.4.1 used a single-row flex with
+	 * the label between icon and pts pill — in 3-4 column grids the
+	 * label collapsed into a single tall vertical word column on long
+	 * strings like "Win 1st place in a photo challenge". Basecamp
+	 * conversation 2026-05-28. */
 	display: flex;
-	align-items: flex-start;
+	flex-direction: column;
 	gap: 10px;
 	padding: 12px 14px;
 	background: var(--wb-gam-color-white);
@@ -70,6 +77,13 @@
 	 * long label without spaces), keep content inside the card chrome
 	 * rather than bleeding into the next grid cell. */
 	overflow: hidden;
+}
+
+.wb-gam-earning-guide__card-head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
 }
 
 .wb-gam-earning-guide__card:hover {
@@ -91,7 +105,8 @@
 }
 
 .wb-gam-earning-guide__body {
-	flex: 1 1 0;
+	/* Now a full-width row beneath the icon+pts head. min-width:0 stays
+	 * so long labels wrap inside the card rather than blowing it out. */
 	min-width: 0;
 	display: flex;
 	flex-direction: column;
@@ -103,11 +118,13 @@
 	font-size: 0.875rem;
 	font-weight: 500;
 	color: var(--wb-gam-color-text);
-	line-height: 1.3;
-	/* Never truncate — labels like "Comment on a post" or "Reply to a
-	 * forum topic" must read in full. Card height grows to fit. */
-	overflow-wrap: anywhere;
-	word-break: break-word;
+	line-height: 1.35;
+	/* Now that the label sits below the icon+pts head with the full card
+	 * width to lay out, wrapping happens at word boundaries — only fall
+	 * back to mid-word splits if a single token actually overflows. */
+	overflow-wrap: break-word;
+	word-break: normal;
+	hyphens: auto;
 }
 
 .wb-gam-earning-guide__meta {

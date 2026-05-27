@@ -177,21 +177,23 @@ BlockHooks::before( 'earning-guide', $wb_gam_attrs );
 				}
 				?>
 				<div class="wb-gam-earning-guide__card">
-					<span class="wb-gam-earning-guide__icon <?php echo esc_attr( (string) $wb_gam_item['icon'] ); ?>"></span>
-					<span class="wb-gam-earning-guide__body">
+					<div class="wb-gam-earning-guide__card-head">
+						<span class="wb-gam-earning-guide__icon <?php echo esc_attr( (string) $wb_gam_item['icon'] ); ?>" aria-hidden="true"></span>
+						<span class="wb-gam-earning-guide__pts">
+							<?php
+							/* translators: %s: point value */
+							printf( esc_html__( '+%s pts', 'wb-gamification' ), esc_html( number_format_i18n( (int) $wb_gam_item['points'] ) ) );
+							?>
+						</span>
+					</div>
+					<div class="wb-gam-earning-guide__body">
 						<span class="wb-gam-earning-guide__label"><?php echo esc_html( (string) $wb_gam_item['label'] ); ?></span>
 						<?php if ( ! empty( $wb_gam_meta_parts ) ) : ?>
 							<span class="wb-gam-earning-guide__meta">
 								<?php echo esc_html( implode( ' · ', $wb_gam_meta_parts ) ); ?>
 							</span>
 						<?php endif; ?>
-					</span>
-					<span class="wb-gam-earning-guide__pts">
-						<?php
-						/* translators: %s: point value */
-						printf( esc_html__( '+%s pts', 'wb-gamification' ), esc_html( number_format_i18n( (int) $wb_gam_item['points'] ) ) );
-						?>
-					</span>
+					</div>
 				</div>
 			<?php endforeach; ?>
 		</div>
