@@ -1,0 +1,12 @@
+{
+  "check": "wppqa_check_wiring_completeness",
+  "run_at": "2026-05-27T20:30:00Z",
+  "plugin_path": "/Users/varundubey/Local Sites/wb-gamification/app/public/wp-content/plugins/wb-gamification",
+  "duration_ms": 1,
+  "passed": 0,
+  "failed": 0,
+  "skipped": 1,
+  "issues": [],
+  "notes": "Scanner only inspects templates/ directory. WB Gamification renders predominantly through Gutenberg blocks (build/Blocks/) + admin page classes (src/Admin/) + a small templates/ dir (6 files per audit inventory). The skipped test is the templates-vs-admin wiring check — not applicable to this plugin's architecture. Settings save/read parity is enforced via REST controllers + admin pages, not via Settings API in templates.",
+  "raw_output": "WIRING CHECK\n==================================================\n\nPassed: 0 | Failed: 0 | Skipped: 1 | Duration: 1ms\n\nNo issues found.\n"
+}

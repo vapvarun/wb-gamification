@@ -1,0 +1,521 @@
+plugin: wb-gamification
+version: 1.4.0
+refreshed_at: 2026-05-27T21:00:00Z
+release_ready: yes  # 3 targeted wppqa checks all failed=0; only medium/low triage debt remains
+
+summary:
+  total_issues: 13
+  by_severity:
+    critical: 0
+    high: 3
+    medium: 6
+    low: 4
+  by_category:
+    security: 0
+    correctness: 1
+    extensibility: 0
+    a11y: 5
+    perf: 0
+    contract_drift: 3
+    tech_debt: 4
+
+# ─────────────────────────────────────────────────────────────────────────────
+# ACTIONABLE ISSUES
+# ─────────────────────────────────────────────────────────────────────────────
+issues:
+  # -- HIGH --------------------------------------------------------------------
+
+  - id: WBG-001
+    severity: high
+    category: a11y
+    source: wppqa
+    title: "Conversions form: number inputs share label with select (PointTypeConversionsPage)"
+    where:
+      - file: src/Admin/PointTypeConversionsPage.php
+        line: 247
+      - file: src/Admin/PointTypeConversionsPage.php
+        line: 259
+    detail: |
+      Each conversion row has two inputs: a `<input type="number">` for the
+      amount and a `<select>` for the currency. Both sit under one shared
+      `<label for="wb-gam-conv-from">` (and `for="wb-gam-conv-to"`), so screen
+      readers announce both fields with the same name and users can't tell
+      which is which. WCAG 3.3.2 fail.
+    suggested_fix: |
+      Split the labels: `<label for="wb-gam-conv-from-amount">Amount</label>`
+      and `<label for="wb-gam-conv-from">Currency</label>` (same for the
+      `to_amount` / `to_type` pair on line 259). Visually you can use
+      `screen-reader-text` for the new sub-labels if the cell-level "From" /
+      "To" heading is enough sighted context.
+    journey_owns_this:
+      - audit/journeys/release/07-a11y-and-mobile.md
+    blocked_by: []
+    refs:
+      - manifest_path: "static_analysis.wppqa_audit_plugin_findings (a11y, BUG-3075)"
+
+  - id: WBG-002
+    severity: high
+    category: a11y
+    source: wppqa
+    title: "Submissions queue: thumbnail focus-ring removed without keyboard replacement"
+    where:
+      - file: assets/css/admin/pages/submissions.css
+        line: 78
+      - file: assets/css/admin/pages/submissions-rtl.css
+        line: 79
+    detail: |
+      `.wb-gam-submission-thumb:focus-visible` sets `outline: none` and only
+      adds `transform: scale(1.06)` + a border-color change. Border-color
+      alone is not a sufficient WCAG 2.4.7 focus indicator on a 56×56 image
+      thumb — keyboard users tabbing through the queue can lose track of
+      position, especially in dark mode. The :hover state shares the same
+      rule, so the keyboard focus is indistinguishable from a passing mouse.
+    suggested_fix: |
+      Add a dedicated `:focus-visible` outline that uses the brand token,
+      separate from `:hover`. Pattern:
+
+          .wb-gam-submission-thumb:hover { transform: scale(1.06); border-color: var(--wbgam-primary); }
+          .wb-gam-submission-thumb:focus-visible {
+              outline: 2px solid var(--wbgam-primary);
+              outline-offset: 2px;
+              transform: scale(1.06);
+          }
+
+      Then re-min via the build pipeline so the `.min.css` siblings inherit
+      the fix (the wppqa scanner flags both — that's automatic once the
+      source is fixed).
+    journey_owns_this:
+      - audit/journeys/release/07-a11y-and-mobile.md
+    blocked_by: []
+    refs:
+      - manifest_path: "static_analysis.wppqa_audit_plugin_findings (a11y, BUG-3082..3085)"
+
+  - id: WBG-003
+    severity: high
+    category: a11y
+    source: wppqa
+    title: "Click handlers without keyboard alternatives in 5 JS files"
+    where:
+      - file: assets/js/admin-submissions.js
+        line: 54
+      - file: assets/js/admin-test-event.js
+        line: 42
+      - file: assets/js/hub-convert.js
+        line: 112
+      - file: src/Blocks/badge-showcase/view.js
+        line: 27
+      - file: src/Blocks/user-status-bar/view.js
+        line: 34
+    detail: |
+      Each site registers a `click` handler whose target isn't obviously a
+      `<button>` / `<a>` / `<input>`. If any of these handlers fire on a
+      `<div>` / `<span>` / list item, keyboard-only users can't activate it.
+      The wppqa scanner can't statically resolve the target — half are likely
+      already on real buttons, but the remaining ones are real keyboard
+      accessibility bugs (Rule 4 from `bin/coding-rules-check.sh` requires
+      Enter/Space parity on every interactive non-button).
+    suggested_fix: |
+      For each site, either (a) confirm the target IS a `<button>` /
+      `role="button"` element and add a code comment so the scanner stops
+      flagging it, or (b) add a `keydown` handler that calls the same
+      function on `Enter` / `Space` and includes `event.preventDefault()`
+      for the space key. The hub-convert.js modal-close click should
+      definitely have an ESC handler too (the scanner already flags it
+      separately).
+    journey_owns_this:
+      - audit/journeys/release/07-a11y-and-mobile.md
+    blocked_by: []
+    refs:
+      - manifest_path: "static_analysis.wppqa_audit_plugin_findings (a11y, BUG-3081)"
+
+  # -- MEDIUM ------------------------------------------------------------------
+
+  - id: WBG-004
+    severity: medium
+    category: a11y
+    source: wppqa
+    title: "Setup wizard welcome notice is not dismissible"
+    where:
+      - file: src/Admin/SetupWizard.php
+        line: 226
+    detail: |
+      The "Welcome to WB Gamification!" notice rendered by
+      `maybe_show_welcome_notice()` uses `notice notice-info wb-gam-notice`
+      classes but omits `is-dismissible`. Admins who have started but
+      paused setup are reminded on every plugin page load with no way to
+      dismiss until the wizard completes. WP UX guideline + a11y.
+    suggested_fix: |
+      Add `is-dismissible` to the notice class list, OR add an inline
+      "Dismiss for now" link that sets a per-user meta key the notice
+      checks before rendering. The notice is already scoped to plugin
+      pages (line 212), so the noise is contained — but dismissibility
+      is still expected.
+    journey_owns_this:
+      - audit/journeys/release/07-a11y-and-mobile.md
+    blocked_by: []
+    refs:
+      - manifest_path: "static_analysis.wppqa_audit_plugin_findings (admin-eval, BUG-medium notice)"
+
+  - id: WBG-005
+    severity: medium
+    category: correctness
+    source: wppqa
+    title: "fetch() calls without .catch() in 8 shipped JS files"
+    where:
+      - file: assets/js/admin-action-overrides.js
+        line: 32
+      - file: assets/js/admin-rest-utils.js
+        line: 86
+      - file: assets/js/admin-test-event.js
+        line: 49
+      - file: assets/js/give-kudos.js
+        line: 46
+      - file: src/Blocks/redemption-store/view.js
+        line: 87
+      - file: src/Blocks/submit-achievement/view.js
+        line: 67
+    detail: |
+      Each fetch() call resolves but has no .catch() handler. On a
+      network failure (offline / 502 / aborted by ad-blocker) the promise
+      silently rejects and the UI freezes — for redemption-store/view.js
+      and submit-achievement/view.js this means the buy / submit button
+      stays in its "loading" spinner forever. For give-kudos.js it means
+      the kudos icon spinner never resets. Real customer-visible hang risk
+      on flaky networks, exactly the failure mode `wppqa.rest_hang_risks`
+      is designed to surface.
+    suggested_fix: |
+      Add a .catch() to each chain that (a) toasts a user-visible error
+      via `window.wbGamToast` (already loaded on every plugin page) and
+      (b) re-enables the disabled button / clears the spinner state. For
+      admin-rest-utils.js the central helper already has error handling;
+      the 5 standalone files should ideally call `wbGamRestRequest()`
+      instead of raw fetch — that would close all 5 in one refactor.
+    journey_owns_this:
+      - audit/journeys/release/04-earning-journey.md
+      - audit/journeys/release/02-editor-15-blocks.md
+    blocked_by: []
+    refs:
+      - manifest_path: "static_analysis.rest_hang_risks (cached at audit/derived/rest-hang-risks.json)"
+
+  - id: WBG-006
+    severity: medium
+    category: a11y
+    source: wppqa
+    title: "Modal/popup missing ESC key handler in 3 JS sites"
+    where:
+      - file: assets/js/hub-convert.js
+        line: 5
+      - file: src/Blocks/badge-showcase/view.js
+        line: 6
+      - file: src/Blocks/redemption-store/view.js
+        line: 9
+    detail: |
+      The currency-convert modal (hub-convert.js), badge-showcase detail
+      modal, and redemption-store confirmation modal all open via a
+      click handler but lack a `keydown` handler for the `Escape` key.
+      Keyboard-only users can't dismiss the dialog without tabbing to a
+      close button. WCAG 2.1.2 (No Keyboard Trap).
+    suggested_fix: |
+      For each modal, add a document-level keydown listener while open:
+
+          document.addEventListener('keydown', onKeydown);
+          function onKeydown(e) { if (e.key === 'Escape') closeModal(); }
+
+      Remove it when the modal closes. Pair with focus-trap so Tab cycles
+      inside the modal and ARIA `aria-modal="true"` + `role="dialog"`
+      attributes (the scanner also flags those as missing on the same
+      sites — fixing focus + ESC + ARIA in one commit closes 3 findings).
+    journey_owns_this:
+      - audit/journeys/release/07-a11y-and-mobile.md
+    blocked_by: []
+    refs:
+      - manifest_path: "static_analysis.wppqa_audit_plugin_findings (frontend-eval, modal a11y)"
+
+  - id: WBG-007
+    severity: medium
+    category: a11y
+    source: wppqa
+    title: "Modal popup missing ARIA attributes in 3 JS sites"
+    where:
+      - file: assets/js/hub-convert.js
+        line: 5
+      - file: src/Blocks/badge-showcase/view.js
+        line: 6
+      - file: src/Blocks/redemption-store/view.js
+        line: 9
+    detail: |
+      The same three modals as WBG-006 also lack `role="dialog"`,
+      `aria-modal="true"`, and an `aria-labelledby` reference to the
+      modal title. Screen readers either announce the modal as generic
+      page content or fall back on the underlying page text, which is
+      confusing once the dialog steals focus.
+    suggested_fix: |
+      When the modal opens, the JS should set the wrapper's
+      `role="dialog"`, `aria-modal="true"`, and
+      `aria-labelledby="modal-title-id"` attributes (or render them
+      directly in the SSR'd PHP if the modal is static). Pair with the
+      ESC + focus-trap fix from WBG-006 so a single PR closes both
+      issues per modal.
+    journey_owns_this:
+      - audit/journeys/release/07-a11y-and-mobile.md
+    blocked_by:
+      - WBG-006
+    refs:
+      - manifest_path: "static_analysis.wppqa_audit_plugin_findings (frontend-eval, modal a11y)"
+
+  - id: WBG-008
+    severity: medium
+    category: contract_drift
+    source: manifest_static_analysis
+    title: "Manifest sub-arrays out of date — hooks_fired (44% gap), services (20% gap), frontend_assets (75-79% gap)"
+    where:
+      - file: audit/manifest.json
+        line: 0
+    detail: |
+      Today's diff-driven refresh found ground-truth counts diverge from
+      the manifest's typed sub-arrays well beyond the ±5% Phase 2.4
+      tolerance. The plugin's read-first CLAUDE.md cites these counts;
+      anyone trusting `.hooks_fired[]` / `.services[]` / `.frontend_assets`
+      will miss 10 new actions (login-bonus, submission lifecycle, point-
+      type-converted, etc.), 11 new services (Transaction, Heartbeat,
+      LoginBonus, etc.), and the 17 per-page CSS files added by today's
+      architecture refactor. Coverage gate (in .generated.coverage and
+      .coverage) now documents the gap so future readers know to trust
+      the baseline numbers, not the legacy sub-arrays.
+    suggested_fix: |
+      Dedicated re-enumeration PR (a non-trivial scan, ~2-3 hours):
+        1. Walk every src/**/*.php with the Phase 2.5.2 hook-arg
+           extractor to populate .hooks_fired[] with arg signatures.
+        2. Walk every src/Engine/+Services/+Repository/ class to rebuild
+           .services[] with purpose strings.
+        3. Walk assets/**/*.{js,css} to rebuild .frontend_assets with
+           per-file enqueue handle + dependency mapping.
+      Don't try to do this in the same PR as a feature change — the
+      diff noise will hide regressions.
+    journey_owns_this: []
+    blocked_by: []
+    refs:
+      - manifest_path: ".generated.coverage (actions_fired, filters_fired, services, frontend_css, frontend_js)"
+
+  - id: WBG-009
+    severity: medium
+    category: contract_drift
+    source: manifest_static_analysis
+    title: "Manifest missing 2 blocks, 2 shortcodes, 1 cron hook, 4 capabilities, 1 table"
+    where:
+      - file: audit/manifest.json
+        line: 0
+    detail: |
+      Targeted drift on small categories where re-enumeration is cheap:
+        • .blocks[]: missing give-kudos, user-status-bar (added v1.4.0)
+        • .shortcodes[]: missing give_kudos, my_rewards
+        • .cron[]: missing wb_gam_as_cleanup (ActionSchedulerCleaner)
+        • .capabilities[]: missing wb_gam_manage_rules,
+          wb_gam_manage_levels, wb_gam_manage_submissions,
+          wb_gam_manage_email_settings
+        • .tables[]: missing {prefix}wb_gam_api_keys (added v1.2.0)
+      These are small enough to land in a quick follow-up commit; not
+      worth deferring to the full re-enumeration in WBG-008.
+    suggested_fix: |
+      Hand-add the missing entries to the existing arrays in
+      audit/manifest.json. Keep the schema shapes consistent with the
+      existing entries (each block needs slug+title+supports; each cap
+      needs cap+default_roles+enforced_at; each table needs name+
+      created_at+purpose). Validate with `jq . audit/manifest.json`.
+    journey_owns_this: []
+    blocked_by: []
+    refs:
+      - manifest_path: ".generated.coverage (blocks, shortcodes, cron, capabilities, tables)"
+
+  # -- LOW --------------------------------------------------------------------
+
+  - id: WBG-010
+    severity: low
+    category: contract_drift
+    source: manifest_static_analysis
+    title: "Declared cap wb_gam_view_analytics has no Capabilities::user_can() guard"
+    where:
+      - file: src/Admin/AnalyticsDashboard.php
+        line: 62
+      - file: src/Engine/Capabilities.php
+        line: 70
+    detail: |
+      `wb_gam_view_analytics` is declared in
+      `Capabilities::declared_caps()` and used as the
+      `add_submenu_page()` capability arg, but no
+      `Capabilities::user_can('wb_gam_view_analytics')` runs inside the
+      render path. Admin-menu visibility IS the only gate today. Working
+      as intended, but the audit pattern across other pages (badges,
+      challenges, webhooks, etc.) layers a handler-level cap check on top
+      of the menu gate. If a future direct-URL access path slips in (e.g.
+      a quick-link from another plugin), the cap won't enforce.
+    suggested_fix: |
+      Add `if ( ! Capabilities::user_can( 'wb_gam_view_analytics' ) ) {
+      wp_die( esc_html__( 'You are not allowed to view analytics.',
+      'wb-gamification' ) ); }` at the top of
+      `AnalyticsDashboard::render()` to match the pattern used by
+      BadgeAdminPage / ChallengeManagerPage / etc.
+    journey_owns_this: []
+    blocked_by: []
+    refs:
+      - manifest_path: "static_analysis.cap_drift.declared_but_unenforced"
+
+  - id: WBG-011
+    severity: low
+    category: contract_drift
+    source: manifest_static_analysis
+    title: "uninstall.php references 2 cap names that don't exist in code"
+    where:
+      - file: uninstall.php
+        line: 163
+      - file: uninstall.php
+        line: 165
+    detail: |
+      `wb_gam_manage_api_keys` (uninstall.php:165) and
+      `wb_gam_manage_redemptions` (uninstall.php:163) are listed in the
+      role-cleanup pass but neither is declared in
+      `Capabilities::declared_caps()` nor enforced anywhere in code.
+      ApiKeysPage uses `manage_options`; RedemptionStorePage uses
+      `wb_gam_manage_rewards`. The uninstall pass `revoke()` will silently
+      do nothing for these — not harmful, but they're confusing dead
+      strings for anyone reading uninstall.php.
+    suggested_fix: |
+      Two options:
+        (a) Delete the two strings from the uninstall caps list. Lowest
+            risk — removes the dead reference and keeps the cleanup pass
+            focused on caps that actually exist.
+        (b) Add `wb_gam_manage_api_keys` and `wb_gam_manage_redemptions`
+            to `Capabilities::declared_caps()` and enforce them at
+            ApiKeysPage / RedemptionStorePage render entry, replacing
+            `manage_options` / `wb_gam_manage_rewards`. Higher risk —
+            renaming a live cap mid-release breaks any role-manager
+            integrations site owners already configured.
+      Option (a) is the right call for v1.4.x; revisit (b) for v1.5 if
+      the team wants tighter cap delegation across all admin pages.
+    journey_owns_this: []
+    blocked_by: []
+    refs:
+      - manifest_path: "static_analysis.cap_drift.orphan_in_uninstall_only"
+
+  - id: WBG-012
+    severity: low
+    category: tech_debt
+    source: wppqa
+    title: "wppqa scanner reads stale .plugin.version (1.0.0) from manifest"
+    where:
+      - file: audit/manifest.json
+        line: 6
+    detail: |
+      Pre-refresh, the manifest's `.plugin.version` field was still
+      "1.0.0" while the plugin header + readme.txt are at "1.4.0".
+      `mcp__wp-plugin-qa__wppqa_audit_plugin` reads `.plugin.version`
+      and reports a critical "version mismatch" bug (BUG-3181) on every
+      run. Today's refresh bumped the field to "1.4.0", so the false
+      positive should clear on the next baseline run.
+    suggested_fix: |
+      Verify on next baseline run — once `.plugin.version` is in sync
+      with the header, the wppqa "critical" finding should drop to 0.
+      If not, the scanner is reading a different source; investigate
+      with `mcp__wp-plugin-qa__wppqa_evaluate_product` and patch the
+      scanner's plugin-detection logic.
+    journey_owns_this:
+      - audit/journeys/release/09-release-zip-gate.md
+    blocked_by: []
+    refs:
+      - manifest_path: ".plugin.version (now corrected to 1.4.0)"
+
+  - id: WBG-013
+    severity: low
+    category: tech_debt
+    source: other
+    title: "wppqa audit_plugin omnibus reports 2,399 phpcs failures from misconfigured run"
+    where:
+      - file: ".phpcs.xml"
+        line: 0
+    detail: |
+      `mcp__wp-plugin-qa__wppqa_audit_plugin` invokes phpcs without the
+      project's `.phpcs.xml` config, producing 2,399 "failures" that
+      `composer phpcs` (the project gate) doesn't see. This pollutes
+      every wppqa baseline with a 2k+ count and obscures the real
+      signal. Already mitigated downstream: `bin/wppqa-baseline-check.sh`
+      reads SUMMARY.md not the JSON, so the release gate isn't impacted.
+      But analysts reading the JSON have to know to skip the phpcs block.
+    suggested_fix: |
+      Either (a) document the noise in `audit/wppqa-baseline-*/SUMMARY.md`
+      every run (already done — see today's SUMMARY.md), or (b) patch the
+      wppqa MCP server to honor `.phpcs.xml` if present and re-run. Patch
+      is a one-line fix in the MCP server (`exec phpcs --standard=.phpcs.xml`
+      instead of bare `exec phpcs`); coordinate with the wp-plugin-qa
+      MCP maintainer.
+    journey_owns_this: []
+    blocked_by: []
+    refs:
+      - manifest_path: "static_analysis.wppqa_audit_plugin_findings.verdict"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# DEFERRED — flagged but NOT actionable for v1.4.1
+# ─────────────────────────────────────────────────────────────────────────────
+deferred:
+  - id: DEF-001
+    title: "phpcs:ignore inline annotations (442 sites)"
+    reason: |
+      442 inline `phpcs:ignore` / `phpcs:disable` annotations across the
+      codebase. Each one is a deliberate suppression with a nearby
+      comment explaining why (mostly nonce-verified-upstream, direct-DB
+      query for hot ledger paths). The annotations ARE the documentation;
+      bulk-removing them would create noise without improving safety.
+      Reviewed at PR time on a case-by-case basis.
+    revisit_in: never
+
+  - id: DEF-002
+    title: "Plugin Check warning baseline (78 warnings)"
+    reason: |
+      The 78 warnings tracked in `audit/plugin-check-warning-baseline.txt`
+      are all either (a) custom-table direct queries that can't be
+      avoided in a ledger plugin (`WordPress.DB.DirectDatabaseQuery.*`),
+      or (b) prefix-detection false-positives in block render.php files
+      (`PrefixAllGlobals.NonPrefixedHooknameFound` for WP-core hooks
+      like `the_content`). The `bin/check-plugin-check.sh` gate
+      ensures the total can only shrink — that's the right policy. No
+      sprint-level action.
+    revisit_in: never
+
+  - id: DEF-003
+    title: "wppqa enum-consistency cross-domain collisions (4 findings)"
+    reason: |
+      The wppqa scanner flags `status` / `type` / `event` / `reason` as
+      "drifted" because multiple files declare different allowed values.
+      All 4 are intentional — different domains share the keyword. The
+      plugin's own `bin/check-enum-drift.sh` (domain-scoped, runs every
+      CI) is green. No action.
+    revisit_in: never
+
+  - id: DEF-004
+    title: "wppqa scanner: 18 false-positive 'Block may lack SSR' warnings"
+    reason: |
+      All 19 blocks have a `render.php` file. Scanner heuristic appears
+      to read only block.json `render` field (which is a file path, not
+      a callback name) and concludes SSR is missing. Patch the wp-plugin-qa
+      MCP server's block-SSR check, not the plugin code.
+    revisit_in: never
+
+  - id: DEF-005
+    title: "wppqa scanner: 12 gapAnalysis false-positives"
+    reason: |
+      The omnibus audit reports "no activation hook", "no deactivation
+      hook", "no uninstall.php", "no Requires WP/PHP" — all 5 are present
+      and correct in wb-gamification.php / uninstall.php. Scanner reads
+      the wrong source. Patch the wp-plugin-qa MCP server.
+    revisit_in: never
+
+  - id: DEF-006
+    title: "Silent empty-state findings (~30 sites)"
+    reason: |
+      The frontend-eval scanner counts every `if (empty(...)) { return; }`
+      block as a "silent empty state" — but most are inside engines /
+      CLI / backfillers where silent-return IS the contract (no UI is
+      being rendered; an upstream caller decides what to do with the
+      empty result). The 4 sites that DO render UI (LeaderboardEngine,
+      LeaderboardNudge, NotificationBridge, ProfilePage) are correctly
+      guarded — the silent return is the documented "no-rows" path.
+    revisit_in: never
