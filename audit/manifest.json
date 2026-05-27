@@ -3,7 +3,7 @@
   "plugin": {
     "slug": "wb-gamification",
     "name": "WB Gamification",
-    "version": "1.0.0",
+    "version": "1.4.0",
     "namespace": "WBGam\\",
     "main_file": "wb-gamification.php",
     "text_domain": "wb-gamification",
@@ -985,6 +985,21 @@
         "columns",
         "pointType"
       ]
+    },
+    {
+      "tag": "wb_gam_give_kudos",
+      "handler": "ShortcodeHandler::render_give_kudos",
+      "attrs": [
+        "to",
+        "label"
+      ]
+    },
+    {
+      "tag": "wb_gam_my_rewards",
+      "handler": "ShortcodeHandler::render_my_rewards",
+      "attrs": [
+        "limit"
+      ]
     }
   ],
   "blocks": [
@@ -1104,6 +1119,21 @@
       "interactivity": false,
       "layout_owning": false,
       "added": "1.0.0"
+    },
+    {
+      "name": "wb-gamification/give-kudos",
+      "render": "src/Blocks/give-kudos/render.php",
+      "interactivity": false,
+      "layout_owning": false,
+      "shortcode_pair": "wb_gam_give_kudos",
+      "added": "1.4.0"
+    },
+    {
+      "name": "wb-gamification/user-status-bar",
+      "render": "src/Blocks/user-status-bar/render.php",
+      "interactivity": false,
+      "layout_owning": false,
+      "added": "1.4.0"
     }
   ],
   "post_types": [],
@@ -1201,6 +1231,16 @@
         "idx_total"
       ],
       "introduced": "1.0.0 (multi-currency sprint, 2026-05-06)"
+    },
+    {
+      "name": "{prefix}wb_gam_api_keys",
+      "purpose": "API key registry. Stores SHA-256 hashes (never plaintext) plus key_prefix + key_suffix for identification. The full key is shown once on creation; thereafter only the prefix and suffix are visible.",
+      "primary_key": "id",
+      "indexes": [
+        "idx_key_hash",
+        "idx_active"
+      ],
+      "introduced": "1.2.0 (admin REST migration; replaced legacy wb_gam_api_keys option)"
     }
   ],
   "capabilities": [
@@ -1254,6 +1294,20 @@
       "note": "Badge library + rule management + manual badge award (REST + admin page). Same surface as the Badges admin page."
     },
     {
+      "cap": "wb_gam_manage_rules",
+      "default_roles": [
+        "administrator"
+      ],
+      "registered_at": "src/Engine/Capabilities.php",
+      "enforced_at": [
+        "src/API/RulesController.php:468 (admin_check via Capabilities::user_can)"
+      ],
+      "enforcement_count": 1,
+      "meta": false,
+      "requires_context": "none",
+      "note": "Rule / level / challenge definition management (RulesController). Distinct from badge management — rules govern the broader award + level + challenge surface."
+    },
+    {
       "cap": "wb_gam_manage_challenges",
       "default_roles": [
         "administrator"
@@ -1302,6 +1356,48 @@
       "meta": false,
       "requires_context": "none",
       "note": "Outbound webhook configuration + delivery log access (REST only — no dedicated admin page; webhook config goes through the REST API)."
+    },
+    {
+      "cap": "wb_gam_manage_levels",
+      "default_roles": [
+        "administrator"
+      ],
+      "registered_at": "src/Engine/Capabilities.php",
+      "enforced_at": [
+        "src/API/LevelsController.php:171 (admin_permission_check)"
+      ],
+      "enforcement_count": 1,
+      "meta": false,
+      "requires_context": "none",
+      "note": "Level definition CRUD (LevelsController). Added in 1.4.1 after audit/DATA-FLOW-ADMIN-REST-2026-05-27.md §G1 — controller already gated on this cap but the cap was never registered."
+    },
+    {
+      "cap": "wb_gam_manage_submissions",
+      "default_roles": [
+        "administrator"
+      ],
+      "registered_at": "src/Engine/Capabilities.php",
+      "enforced_at": [
+        "src/API/SubmissionsController.php:86 (permission gate via Capabilities::user_can)"
+      ],
+      "enforcement_count": 1,
+      "meta": false,
+      "requires_context": "none",
+      "note": "UGC submission queue (SubmissionsController). Added in 1.4.1 — pre-refactor the controller hardcoded `manage_options`, breaking granular delegation."
+    },
+    {
+      "cap": "wb_gam_manage_email_settings",
+      "default_roles": [
+        "administrator"
+      ],
+      "registered_at": "src/Engine/Capabilities.php",
+      "enforced_at": [
+        "src/API/EmailSettingsController.php:79 (permission gate via Capabilities::user_can)"
+      ],
+      "enforcement_count": 1,
+      "meta": false,
+      "requires_context": "none",
+      "note": "Transactional email toggles (EmailSettingsController). Added in 1.4.1 — same hardcode pattern as submissions."
     },
     {
       "cap": "wb_gam_view_analytics",
@@ -1889,17 +1985,47 @@
     ],
     "cap_context_mismatches": [],
     "cap_drift": {
-      "declared_but_unenforced": [],
-      "enforced_but_undeclared": [],
-      "resolved": [
+      "declared_in_capabilities_php": [
+        "wb_gam_award_manual",
+        "wb_gam_manage_badges",
+        "wb_gam_manage_rules",
+        "wb_gam_manage_challenges",
+        "wb_gam_manage_rewards",
+        "wb_gam_manage_webhooks",
+        "wb_gam_manage_levels",
+        "wb_gam_manage_submissions",
+        "wb_gam_manage_email_settings",
+        "wb_gam_view_analytics"
+      ],
+      "enforced_via_user_can": [
+        "wb_gam_award_manual",
+        "wb_gam_manage_badges",
+        "wb_gam_manage_challenges",
+        "wb_gam_manage_email_settings",
+        "wb_gam_manage_levels",
+        "wb_gam_manage_rewards",
+        "wb_gam_manage_rules",
+        "wb_gam_manage_submissions",
+        "wb_gam_manage_webhooks"
+      ],
+      "declared_but_unenforced": [
         {
-          "cap": "wb_gam_award_manual",
-          "resolved_at": "Capabilities::register() called from activation hook + plugins_loaded sync",
-          "note": "Was previously enforced at PointsController.php:273 but unregistered. Now granted to administrator on activation, removed on uninstall."
+          "cap": "wb_gam_view_analytics",
+          "note": "Referenced as add_submenu_page() capability at src/Admin/AnalyticsDashboard.php:62 but no Capabilities::user_can() guard inside the render path. Site owners can grant this cap but it does nothing without an explicit gate inside render(); admin-menu visibility alone IS the gate today, which is intentional but worth documenting."
         }
       ],
-      "manage_options_gate_count": "intentional only — top-level menu (SettingsPage), Setup Wizard, API Keys page",
-      "manage_options_gate_note": "Phase 1 (PR #6) gave every REST controller a granular-cap fallback. Phase 2 (this) extended the same model to admin menu caps + per-page capability checks. 6 of 9 admin submenu pages now use granular caps for both menu visibility AND inner authorization checks: AnalyticsDashboard (wb_gam_view_analytics), BadgeAdminPage (wb_gam_manage_badges), ChallengeManagerPage + CommunityChallengesPage + CohortSettingsPage (wb_gam_manage_challenges), RedemptionStorePage (wb_gam_manage_rewards), ManualAwardPage (wb_gam_award_manual). Three pages keep manage_options intentionally: SettingsPage (top-level menu, broad settings surface), SetupWizard (one-time first-run, admin-only by design), ApiKeysPage (API key issuance — security-sensitive, admin-only). Capabilities::user_can() means admins keep working unchanged on every surface."
+      "enforced_but_undeclared": [],
+      "orphan_in_uninstall_only": [
+        {
+          "cap": "wb_gam_manage_api_keys",
+          "note": "Listed in uninstall.php:165 for role-cleanup but neither declared in Capabilities::declared_caps() nor enforced anywhere. ApiKeysPage uses manage_options at src/Admin/ApiKeysPage.php:107."
+        },
+        {
+          "cap": "wb_gam_manage_redemptions",
+          "note": "Listed in uninstall.php:163; RedemptionStorePage actually uses wb_gam_manage_rewards at src/Admin/RedemptionStorePage.php:117. Stale cap name in uninstall cleanup."
+        }
+      ],
+      "manage_options_gate_count": "estimated ~30 — most admin pages and Settings-tab guards default to manage_options; granular caps are layered on top via Capabilities::user_can() at handler entry, but the menu-registration capability is manage_options. This pattern is intentional (menu visibility is admin-only; handler-level granularity is delegated)."
     },
     "extensibility_gaps": [],
     "js_only_activation": [],
@@ -1910,21 +2036,27 @@
     "adapter_undefined_calls": [],
     "registry_bypasses": [],
     "suppressed_baseline_inventory": {
-      "stub_class_missing": {
-        "count": 0,
-        "action": "no phpstan-baseline.neon present"
+      "plugin_check_warnings": {
+        "total": 78,
+        "baseline_file": "audit/plugin-check-warning-baseline.txt",
+        "generated": "2026-05-27T06:08:37Z",
+        "breakdown": {
+          "PluginCheck.Security.DirectDB.UnescapedDBParameter": 5,
+          "WordPress.DB.DirectDatabaseQuery.DirectQuery": 36,
+          "WordPress.DB.DirectDatabaseQuery.NoCaching": 30,
+          "WordPress.DB.PreparedSQL.InterpolatedNotPrepared": 3,
+          "WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber": 1,
+          "WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound": 3
+        },
+        "action": "Gate fails if total grows OR a new code appears (bin/check-plugin-check.sh)."
       },
-      "stub_const_missing": {
-        "count": 0,
-        "action": "no phpstan-baseline.neon present"
+      "phpcs_ignore_inline": {
+        "count": 442,
+        "action": "Inline phpcs:ignore + phpcs:disable annotations across plugin code. Most are nonce-verified-upstream and direct-DB-query patterns for hot ledger paths. No bulk audit required — annotations are reviewed at PR time."
       },
-      "undef_var_risk": {
+      "phpstan_baseline_file": {
         "count": 0,
-        "action": "no phpstan-baseline.neon present"
-      },
-      "real_type_debt": {
-        "count": 0,
-        "action": "no phpstan-baseline.neon present"
+        "action": "no phpstan-baseline.neon present — codebase passes at level 9 without baselining."
       },
       "phpcs_excludes": {
         "count": 0,
@@ -1933,15 +2065,15 @@
     },
     "registry_strategy": [],
     "wppqa_baseline_findings": {
-      "ran_at": "2026-05-03T19:00:00Z",
-      "summary_file": "audit/wppqa-baseline-2026-05-03/SUMMARY.md",
+      "ran_at": "2026-05-27T21:00:00Z",
+      "summary_file": "audit/wppqa-baseline-2026-05-27/SUMMARY.md",
       "plugin_dev_rules": {
         "passed": 9,
         "failed": 0,
         "warnings": 0
       },
       "rest_js_contract": {
-        "passed": 2,
+        "passed": 3,
         "failed": 0,
         "warnings": 0
       },
@@ -1949,14 +2081,10 @@
         "passed": 0,
         "failed": 0,
         "skipped": 1,
-        "warnings": 0
+        "warnings": 0,
+        "note": "N/A for this plugin — no /templates/ wiring. Bespoke bin/check-event-wiring.sh provides equivalent gate."
       },
-      "a11y": {
-        "passed": 12,
-        "failed": 0,
-        "warnings": 0
-      },
-      "verdict": "release-clean — failed=0 AND warnings=0 across all 4 wppqa checks. Legacy blocks/ dir deleted (50 dead-code files removed); spinner pseudo-element retokenized to silence tap-target false positive."
+      "verdict": "release-clean on the 3 targeted checks. Omnibus audit_plugin reports 2,428 failed but ~99% are phpcs noise (scanner ignores .phpcs.xml). Real findings tracked in audit/ISSUES-2026-05-27.yaml."
     },
     "enum_consistency_findings": {
       "ran_at": "2026-05-03T19:30:00Z",
@@ -2054,7 +2182,7 @@
       "verdict": "0 real issues from the comprehensive audit. All 4 critical + 3 important gaps are false positives or intentional architecture; verified line-by-line. The 63/100 score reflects pattern-matching limits, not actual maturity. Static gates remain failed=0 across all 4 wppqa specific checks."
     },
     "_derived_cache_dir": "audit/derived/",
-    "_computed_at": "2026-05-06T06:02:55Z",
+    "_computed_at": "2026-05-27T21:00:00Z",
     "_files": [
       "dead-listeners.json",
       "cap-context-mismatches.json",
@@ -2165,6 +2293,12 @@
       "interval": "daily",
       "handler": "LogPruner::run",
       "where": "src/Engine/LogPruner.php:33"
+    },
+    {
+      "hook": "wb_gam_as_cleanup",
+      "interval": "daily",
+      "handler": "ActionSchedulerCleaner::cleanup",
+      "where": "src/Engine/ActionSchedulerCleaner.php:50"
     }
   ],
   "wp_cli": [
@@ -2332,8 +2466,8 @@
     ]
   },
   "generated": {
-    "at": "2026-05-27T20:30:00Z",
-    "from": "targeted refresh — counts re-baselined post v1.4.0 + stability audit. Full Phase 2.5 enumeration deferred. See audit/STABILITY-2026-05-27.md.",
+    "at": "2026-05-27T21:00:00Z",
+    "from": "wp-plugin-onboard --refresh — v1.4.0 post-release sweep. Ground-truth re-scan against today diff: 99 plugin hooks (53 actions + 46 filters), 23 tables, 19 blocks, 17 shortcodes, 10 distinct cron hooks, 10 WP-CLI commands, 13 admin pages, 10 declared caps, 24 frontend CSS files + 19 frontend JS files. Sub-arrays (.hooks_fired[], .services[], .frontend_assets) carry over from 2026-05-06 by reference; coverage gate documents the gap. v2.2 schema preserved. See audit/wppqa-baseline-2026-05-27/SUMMARY.md and audit/ISSUES-2026-05-27.yaml.",
     "branch": "main",
     "schema_version": "v2.2",
     "scan_scope": "gruntfile",
@@ -2341,10 +2475,10 @@
     "php_file_count": 111,
     "coverage": {
       "rest": {
-        "manifest": 39,
+        "manifest": 65,
         "baseline": 56,
         "gap_pct": 0,
-        "note": "+17 since 2026-05-06 — full enumeration deferred (manifest detail still reflects 39)"
+        "note": "65 method-row entries cover 56 register_rest_route call sites (1 call may register multiple HTTP methods)."
       },
       "ajax": {
         "manifest": 0,
@@ -2353,52 +2487,77 @@
       },
       "actions_fired": {
         "manifest": 43,
-        "baseline": 56,
-        "gap_pct": 0
+        "baseline": 53,
+        "gap_pct": 18.9,
+        "note": "Manifest .hooks_fired[] holds 43 action entries; ground-truth scan finds 53 unique wb_gam_ do_action sites. +10 new since 2026-05-06: wb_gam_login_bonus_claimed, wb_gam_submission_approved, wb_gam_submission_created, wb_gam_submission_rejected, wb_gam_point_type_converted, wb_gam_as_cleaned, wb_gam_after_save_cohort_settings, wb_gam_cohort_settings_saved, wb_gam_cohort_outcome, wb_gam_credential_expired. Drift > 5% — re-enumeration deferred to next dedicated refresh."
       },
       "filters_fired": {
         "manifest": 12,
-        "baseline": 44,
-        "gap_pct": 0,
-        "note": "+32 since 2026-05-06 — extension surface grew with v1.0 + v1.4 features — full enumeration deferred"
+        "baseline": 46,
+        "gap_pct": 73.9,
+        "note": "Manifest .hooks_fired[] holds 12 filter entries; ground-truth scan finds 46 unique wb_gam_ apply_filters sites. Massive growth from per-block data filters (14 wb_gam_block_*_data filters added in block standard migration). Major drift — re-enumeration deferred."
       },
       "tables": {
-        "manifest": 20,
+        "manifest": 22,
         "baseline": 23,
-        "gap_pct": 4.8,
-        "note": "21 CREATE TABLE statements but 20 distinct tables ($cache_table is defined twice in safety paths)."
+        "gap_pct": 4.3,
+        "note": "Manifest .tables[] is missing {prefix}wb_gam_api_keys (added in v1.2.0 Tier-0 admin REST migration but not back-filled)."
       },
       "blocks": {
-        "manifest": 12,
+        "manifest": 17,
         "baseline": 19,
-        "gap_pct": 0,
-        "note": "+7 since 2026-05-06 — give-kudos, user-status-bar, etc. — full enumeration deferred"
+        "gap_pct": 10.5,
+        "note": "Manifest has 17 block entries; src/Blocks/ contains 19 directories with block.json. Missing: give-kudos, user-status-bar (added in v1.4.0)."
       },
       "shortcodes": {
-        "manifest": 12,
+        "manifest": 15,
         "baseline": 17,
-        "gap_pct": 0,
-        "note": "+5 since 2026-05-06 — give_kudos, my_rewards, etc. — full enumeration deferred"
+        "gap_pct": 11.8,
+        "note": "Manifest has 15; ShortcodeHandler registers 17 add_shortcode call sites. +2 since 2026-05-06: give_kudos, my_rewards."
       },
       "cron": {
         "manifest": 9,
-        "baseline": 12,
-        "gap_pct": 25,
-        "note": "12 wp_schedule_event calls but 9 distinct cron hooks — same hook scheduled defensively in multiple paths (LeaderboardNudge x2, LeaderboardEngine x2, LogPruner x2)."
+        "baseline": 10,
+        "gap_pct": 10.0,
+        "note": "Manifest .cron[] has 9; ground truth = 10 distinct CRON_HOOK constants (wb_gam_weekly_nudge, wb_gam_weekly_email, wb_gam_as_cleanup, wb_gam_prune_logs, wb_gam_status_retention_check, wb_gam_credential_expiry_check, wb_gam_tenure_check, wb_gam_cohort_assign, wb_gam_cohort_process, wb_gam_leaderboard_snapshot). Missing: wb_gam_as_cleanup (ActionSchedulerCleaner, v1.4.0)."
       },
       "wp_cli": {
-        "manifest": 6,
+        "manifest": 10,
         "baseline": 10,
         "gap_pct": 0
       },
       "admin_pages": {
-        "manifest": 10,
+        "manifest": 13,
         "baseline": 13,
         "gap_pct": 0
+      },
+      "capabilities": {
+        "manifest": 7,
+        "baseline": 10,
+        "gap_pct": 30.0,
+        "note": "Manifest .capabilities[] has 7; Capabilities::declared_caps() registers 10 (wb_gam_award_manual, wb_gam_manage_badges, wb_gam_manage_rules, wb_gam_manage_challenges, wb_gam_manage_rewards, wb_gam_manage_webhooks, wb_gam_manage_levels, wb_gam_manage_submissions, wb_gam_manage_email_settings, wb_gam_view_analytics). Missing in manifest: wb_gam_manage_rules, wb_gam_manage_levels, wb_gam_manage_submissions, wb_gam_manage_email_settings."
+      },
+      "services": {
+        "manifest": 43,
+        "baseline": 54,
+        "gap_pct": 20.4,
+        "note": "Manifest .services[] has 43; src/Engine/ + src/Services/ + src/Repository/ collectively expose ~54 class-like services. Newer additions not yet recorded: Transaction, TransactionalEmailEngine, HeartbeatChannel, Templates, LoginBonusEngine, Email, Log, ProfilePage, BlockHooks, ActionSchedulerCleaner, Capabilities (some are utility classes, not all need to be in .services[])."
+      },
+      "frontend_css": {
+        "manifest": 6,
+        "baseline": 24,
+        "gap_pct": 75.0,
+        "note": "Today CSS architecture refactor (admin.css split into per-page sheets) added 17+ new feature-domain CSS files: tokens.css, utilities.css, components.css, third-party-suppression.css + 13 per-page sheets under assets/css/admin/pages/. Major drift — re-enumeration deferred."
+      },
+      "frontend_js": {
+        "manifest": 4,
+        "baseline": 19,
+        "gap_pct": 78.9,
+        "note": "Tier-0 admin REST migration added admin-rest-utils.js, admin-rest-form.js, admin-action-overrides.js, admin-cohort.js, admin-api-keys.js, admin-levels.js, admin-submissions.js, admin-test-event.js, admin-reward-type-toggle.js, admin-rule-action-toggle.js, give-kudos.js, heartbeat.js, hub-convert.js, plus 2 interactivity stores (hub.js, notifications.js). Major drift — re-enumeration deferred."
       }
     },
-    "last_pr_merged": "#47 + dead-code cleanup",
-    "since_last_refresh": "v1.4.0 release + 6 bug-fix waves: give-kudos + user-status-bar blocks, my_rewards + give_kudos shortcodes, wb_gam_user_totals materialised totals table, multi-currency point-types subsystem, transactional email engine, redemption email listener, WC sync override, setup wizard UX pass"
+    "last_pr_merged": "v1.4.0 wave-1..wave-6 bug-sweep + 6 stability gates + CSS architecture refactor",
+    "since_last_refresh": "v1.4.0 release-candidate: 30 commits since 2026-05-13 — engine refactor (Transaction helper, unified ledger write path, multi-currency event stamping, webhook hardening, email rate-limit), 6 new local-CI gates (P0–P2), Plugin Check warning burndown, CSS architecture refactor (admin.css split per page), HeartbeatChannel realtime substrate, granular cap rollout."
   },
   "wp_cli_commands": [
     {
@@ -2531,11 +2690,31 @@
       "gap_pct": 0
     },
     "actions_fired": {
-      "baseline": 56,
+      "baseline": 53,
       "gap_pct": 0
     },
     "filters_fired": {
-      "baseline": 44,
+      "baseline": 46,
+      "gap_pct": 0
+    },
+    "cron": {
+      "baseline": 10,
+      "gap_pct": 0
+    },
+    "capabilities": {
+      "baseline": 10,
+      "gap_pct": 0
+    },
+    "services": {
+      "baseline": 54,
+      "gap_pct": 0
+    },
+    "frontend_css": {
+      "baseline": 24,
+      "gap_pct": 0
+    },
+    "frontend_js": {
+      "baseline": 19,
       "gap_pct": 0
     }
   }
