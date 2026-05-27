@@ -12,6 +12,7 @@ use Brain\Monkey\Functions;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use PHPUnit\Framework\TestCase;
 use WBGam\Engine\PointsEngine;
+use WBGam\Engine\Transaction;
 
 class PointsEngineTest extends TestCase {
 
@@ -25,79 +26,112 @@ class PointsEngineTest extends TestCase {
 
 	protected function tearDown(): void {
 		Monkey\tearDown();
+		Transaction::reset_for_tests();
 		parent::tearDown();
 	}
 
 	// ── debit() ──────────────────────────────────────────────────────────────
+	//
+	// Post-1.4.1 debit() goes through Transaction::run with a FOR UPDATE
+	// balance lock, then writes both wb_gam_events (audit) and wb_gam_points
+	// (ledger). The mock has to cover all three: a get_var for the balance,
+	// two `insert` calls (events + points), and the transactional query()
+	// envelope ('START TRANSACTION' / 'COMMIT' / 'ROLLBACK'). Returns
+	// array{success: bool, reason?: string, event_id?: string, new_balance?: int}.
 
-	public function test_debit_inserts_negative_row_and_busts_cache(): void {
+	public function test_debit_writes_audit_row_and_ledger_row_and_busts_cache(): void {
 		global $wpdb;
 
-		$wpdb = $this->mockWpdb();
-		$wpdb->expects( 'insert' )
-			->once()
-			->with(
-				\Mockery::type( 'string' ), // table
-				\Mockery::on( fn( $data ) => $data['points'] === -50 && $data['user_id'] === 7 ),
-				\Mockery::type( 'array' )
-			)
-			->andReturn( 1 );
-
-		// bump_user_total — atomic UPSERT via prepare + query.
-		$wpdb->shouldReceive( 'prepare' )->andReturnUsing( static fn( $q ) => $q );
-		$wpdb->shouldReceive( 'query' )->andReturn( 1 );
-
+		$wpdb         = $this->mockWpdb();
 		$wpdb->prefix = 'wp_';
 
-		Functions\expect( 'current_time' )->once()->andReturn( '2026-01-01 00:00:00' );
-		Functions\expect( 'wp_cache_delete' )->once()->with( 'wb_gam_total_7_points', 'wb_gamification' );
+		// FOR UPDATE balance lock — return 200 so a debit of 50 has enough.
+		$wpdb->shouldReceive( 'prepare' )->andReturnUsing( static fn( $q ) => $q );
+		$wpdb->shouldReceive( 'get_var' )->andReturn( 200 );
+
+		// Two inserts: wb_gam_events (audit) + wb_gam_points (ledger).
+		$inserts = [];
+		$wpdb->shouldReceive( 'insert' )
+			->andReturnUsing(
+				static function ( $table, $data ) use ( &$inserts ): int {
+					$inserts[] = $data;
+					return 1;
+				}
+			);
+
+		// Transactional envelope + bump_user_total upsert.
+		$wpdb->shouldReceive( 'query' )->andReturn( 1 );
+
+		Functions\expect( 'current_time' )->atLeast()->once()->andReturn( '2026-01-01 00:00:00' );
+		Functions\stubs( array( 'wp_json_encode' => static fn( $v ) => json_encode( $v ) ) );
+		Functions\expect( 'wp_cache_delete' )->atLeast()->once();
 
 		$result = PointsEngine::debit( 7, 50, 'redemption' );
 
-		$this->assertTrue( $result );
+		$this->assertIsArray( $result );
+		$this->assertTrue( $result['success'] );
+		$this->assertSame( 150, $result['new_balance'] ); // 200 - 50
+
+		// Verify both rows were written and the ledger row has the negative amount.
+		$this->assertCount( 2, $inserts, 'Both events and points rows must be written for audit invariant.' );
+		$ledger_row = end( $inserts );
+		$this->assertSame( -50, $ledger_row['points'] );
+		$this->assertSame( 7, $ledger_row['user_id'] );
 	}
 
-	public function test_debit_returns_false_on_db_error(): void {
+	public function test_debit_rolls_back_when_balance_insufficient(): void {
 		global $wpdb;
 
-		$wpdb = $this->mockWpdb();
-		$wpdb->expects( 'insert' )->once()->andReturn( false );
-		$wpdb->shouldReceive( 'prepare' )->andReturnUsing( static fn( $q ) => $q );
-		$wpdb->shouldReceive( 'query' )->andReturn( 1 );
-		$wpdb->last_error = 'mocked error';
+		$wpdb         = $this->mockWpdb();
 		$wpdb->prefix = 'wp_';
 
-		Functions\expect( 'current_time' )->once()->andReturn( '2026-01-01 00:00:00' );
-		Functions\expect( 'wp_cache_delete' )->never();
+		$wpdb->shouldReceive( 'prepare' )->andReturnUsing( static fn( $q ) => $q );
+		// Balance < requested amount → debit refuses.
+		$wpdb->shouldReceive( 'get_var' )->andReturn( 10 );
+		// Should NOT call insert (transaction rolls back before write).
+		$wpdb->shouldReceive( 'insert' )->never();
+		$wpdb->shouldReceive( 'query' )->andReturn( 1 );
+
+		Functions\stubs( array( 'wp_json_encode' => static fn( $v ) => json_encode( $v ) ) );
 
 		$result = PointsEngine::debit( 7, 50, 'redemption' );
 
-		$this->assertFalse( $result );
+		$this->assertIsArray( $result );
+		$this->assertFalse( $result['success'] );
+		$this->assertSame( 'insufficient_balance', $result['reason'] );
 	}
 
 	public function test_debit_always_stores_negative_amount(): void {
 		global $wpdb;
 
-		$wpdb = $this->mockWpdb();
+		$wpdb         = $this->mockWpdb();
 		$wpdb->prefix = 'wp_';
-		$wpdb->expects( 'insert' )
-			->once()
-			->with(
-				\Mockery::any(),
-				\Mockery::on( fn( $data ) => $data['points'] < 0 ),
-				\Mockery::any()
-			)
-			->andReturn( 1 );
 
-		// bump_user_total — atomic UPSERT via prepare + query.
 		$wpdb->shouldReceive( 'prepare' )->andReturnUsing( static fn( $q ) => $q );
+		$wpdb->shouldReceive( 'get_var' )->andReturn( 500 );
+
+		$ledger_amount = null;
+		$wpdb->shouldReceive( 'insert' )->andReturnUsing(
+			static function ( $table, $data ) use ( &$ledger_amount ): int {
+				// The wb_gam_points insert has a `points` key; the events
+				// insert doesn't. Capture the points value when present.
+				if ( array_key_exists( 'points', $data ) ) {
+					$ledger_amount = $data['points'];
+				}
+				return 1;
+			}
+		);
 		$wpdb->shouldReceive( 'query' )->andReturn( 1 );
 
-		Functions\expect( 'current_time' )->once()->andReturn( '2026-01-01 00:00:00' );
-		Functions\expect( 'wp_cache_delete' )->once();
+		Functions\expect( 'current_time' )->atLeast()->once()->andReturn( '2026-01-01 00:00:00' );
+		Functions\stubs( array( 'wp_json_encode' => static fn( $v ) => json_encode( $v ) ) );
+		Functions\expect( 'wp_cache_delete' )->atLeast()->once();
 
-		// Even if a positive amount is passed in error, stored as negative.
-		PointsEngine::debit( 1, 100, 'test' );
+		// Even if a positive amount is passed, the ledger stores it negative.
+		$result = PointsEngine::debit( 1, 100, 'test' );
+
+		$this->assertTrue( $result['success'] );
+		$this->assertSame( -100, $ledger_amount );
 	}
 
 	// ── passes_rate_limits() ─────────────────────────────────────────────────

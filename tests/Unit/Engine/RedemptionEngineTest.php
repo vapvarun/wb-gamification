@@ -149,6 +149,11 @@ class RedemptionEngineTest extends TestCase {
 
 		Functions\when( '__' )->returnArg( 1 );
 		Functions\when( 'wp_cache_get' )->justReturn( false );
+		Functions\when( 'wp_cache_set' )->justReturn( true );
+		Functions\when( 'wp_cache_delete' )->justReturn( true );
+		Functions\when( 'do_action' )->justReturn( null );
+		Functions\when( 'current_time' )->justReturn( '2026-05-27 12:00:00' );
+		Functions\when( 'sanitize_key' )->returnArg();
 		Functions\when( 'number_format_i18n' )->alias(
 			static fn ( $n, $decimals = 0 ) => number_format( (float) $n, (int) $decimals )
 		);
@@ -157,5 +162,6 @@ class RedemptionEngineTest extends TestCase {
 
 		$this->assertFalse( $result['success'] );
 		$this->assertNull( $result['redemption_id'] );
+		$this->assertSame( 'insufficient', $result['reason'] );
 	}
 }

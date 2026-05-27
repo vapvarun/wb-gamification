@@ -127,7 +127,7 @@ final class TransactionalEmailEngine {
 	 * @param array|null $old_level Previous level data or null.
 	 */
 	public static function on_level_up( int $user_id, ?array $new_level = null, ?array $old_level = null ): void {
-		if ( ! self::is_enabled( 'level_up' ) ) {
+		if ( ! self::is_enabled( 'level_up', $user_id ) ) {
 			return;
 		}
 
@@ -187,7 +187,7 @@ final class TransactionalEmailEngine {
 	 * @param string $badge_id Badge slug.
 	 */
 	public static function on_badge_earned( int $user_id, array $def, string $badge_id ): void {
-		if ( ! self::is_enabled( 'badge_earned' ) ) {
+		if ( ! self::is_enabled( 'badge_earned', $user_id ) ) {
 			return;
 		}
 
@@ -233,7 +233,7 @@ final class TransactionalEmailEngine {
 	 * @param array $challenge Challenge config array.
 	 */
 	public static function on_challenge_completed( int $user_id, array $challenge ): void {
-		if ( ! self::is_enabled( 'challenge_completed' ) ) {
+		if ( ! self::is_enabled( 'challenge_completed', $user_id ) ) {
 			return;
 		}
 
@@ -293,7 +293,7 @@ final class TransactionalEmailEngine {
 	 * @param string|null $coupon_code   WooCommerce coupon code (if any).
 	 */
 	public static function on_redemption( int $redemption_id, int $user_id, array $item, ?string $coupon_code = null ): void {
-		if ( ! self::is_enabled( 'redemption' ) ) {
+		if ( ! self::is_enabled( 'redemption', $user_id ) ) {
 			return;
 		}
 
@@ -339,23 +339,64 @@ final class TransactionalEmailEngine {
 	}
 
 	/**
-	 * Whether a given email type is enabled. Default OFF so existing sites
-	 * don't suddenly start emailing every member after upgrade — admin opts
-	 * in via the Settings → Emails tab (or the wb_gam_email_<slug> option).
+	 * Whether a given email type is enabled for a given user.
 	 *
-	 * @param string $slug 'level_up' | 'badge_earned' | 'challenge_completed' | 'redemption'.
+	 * Three gates — ALL must pass:
+	 *   1. Admin option `wb_gam_email_{$slug}` is on. Default OFF so an
+	 *      upgrade doesn't suddenly start emailing the whole member base.
+	 *   2. The user's `wb_gam_member_prefs.notification_mode` is NOT 'none'.
+	 *      Members who hit the unsubscribe link in WeeklyEmailEngine's
+	 *      footer MUST also stop receiving transactional emails — that's
+	 *      the CAN-SPAM / GDPR contract the unsubscribe link implies.
+	 *      Pre-1.4.1 this engine bypassed the member-pref entirely
+	 *      (caught by the 2026-05-27 data-flow audit).
+	 *   3. The `wb_gam_email_enabled` filter is not vetoing.
+	 *
+	 * @since 1.0.0
+	 * @since 1.4.1 Second `$user_id` parameter added + member-pref gate.
+	 *
+	 * @param string $slug    'level_up' | 'badge_earned' | 'challenge_completed' | 'redemption'.
+	 * @param int    $user_id Recipient user ID. `<= 0` always returns false.
+	 * @return bool
 	 */
-	private static function is_enabled( string $slug ): bool {
+	private static function is_enabled( string $slug, int $user_id ): bool {
+		if ( $user_id <= 0 ) {
+			return false;
+		}
+
+		$enabled = (bool) get_option( 'wb_gam_email_' . $slug, false );
+
+		// Step 2 — opt-out gate. Skip the DB read when step 1 already
+		// disabled the email type — no point checking prefs we won't honour.
+		if ( $enabled ) {
+			global $wpdb;
+			$mode = $wpdb->get_var(
+				$wpdb->prepare(
+					"SELECT notification_mode FROM {$wpdb->prefix}wb_gam_member_prefs WHERE user_id = %d",
+					$user_id
+				)
+			);
+			if ( 'none' === $mode ) {
+				$enabled = false;
+			}
+		}
+
 		/**
 		 * Filter whether a transactional email type is enabled.
 		 *
-		 * Use to gate emails on per-user preference, role, A/B tests, etc.
+		 * Use to gate emails on additional per-user signals — role-based
+		 * suppression, A/B tests, frequency caps, lifecycle segmentation.
+		 * The defaults already cover admin-option + member-pref opt-out;
+		 * this filter is for everything beyond.
 		 *
-		 * @param bool   $enabled Default — admin option chain.
+		 * @since 1.0.0
+		 * @since 1.4.1 Third argument `$user_id` added so filters can scope per-recipient.
+		 *
+		 * @param bool   $enabled After admin-option + member-pref gates.
 		 * @param string $slug    Email slug.
+		 * @param int    $user_id Recipient user ID.
 		 */
-		$default = (bool) get_option( 'wb_gam_email_' . $slug, false );
-		return (bool) apply_filters( 'wb_gam_email_enabled', $default, $slug );
+		return (bool) apply_filters( 'wb_gam_email_enabled', $enabled, $slug, $user_id );
 	}
 
 	/**

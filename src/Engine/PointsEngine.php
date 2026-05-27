@@ -250,56 +250,136 @@ final class PointsEngine {
 	}
 
 	/**
-	 * Debit points from a user's balance.
+	 * Debit points from a user's balance — atomic + audited.
 	 *
-	 * Inserts a negative row in the ledger. The caller is responsible for
-	 * verifying the user has sufficient balance before calling this.
+	 * Goes through the same unified write path as {@see award()}: every
+	 * debit produces a `wb_gam_events` row (the audit-log invariant) and
+	 * a `wb_gam_points` row inside a single transaction with a
+	 * `SELECT … FOR UPDATE` balance lock so concurrent debits can't
+	 * drive the balance negative (the Jetonomy + Redemption race fix).
 	 *
-	 * @param int         $user_id   User to debit.
-	 * @param int         $amount    Positive integer; stored as negative in the ledger.
-	 * @param string      $action_id Action context label (e.g. 'redemption').
-	 * @param string      $event_id  Optional UUID reference to a source event.
-	 * @param string|null $type      Optional point-type slug. Defaults to primary type.
-	 * @return bool                  True if the row was inserted.
+	 * Re-entrant: when called inside an outer Transaction::run (e.g.
+	 * from RedemptionEngine::redeem which composes debit + stock +
+	 * redemption-record writes), the inner transaction is a no-op and
+	 * the outer scope owns commit/rollback. Standalone callers (e.g.
+	 * JetonomyIntegration::handle_change) get their own transaction
+	 * for free.
+	 *
+	 * Two call styles supported:
+	 *   1. Modern (preferred):
+	 *        $event = new Event([
+	 *            'action_id' => 'redemption',
+	 *            'user_id'   => $user_id,
+	 *            'metadata'  => [ 'item_id' => $id, 'point_type' => $type ],
+	 *        ]);
+	 *        $result = PointsEngine::debit( $user_id, $cost, 'redemption', $event, $type );
+	 *
+	 *   2. Legacy (kept for back-compat with existing callers):
+	 *        $result = PointsEngine::debit( $user_id, $cost, 'redemption', $event_id_string, $type );
+	 *
+	 * @param int          $user_id   User to debit.
+	 * @param int          $amount    Positive integer; stored as negative in the ledger.
+	 * @param string       $action_id Action context label (e.g. 'redemption').
+	 * @param Event|string $event     Either an Event object (preferred) or a UUID string referencing
+	 *                                a pre-persisted event. Legacy string form is auto-promoted to
+	 *                                a synthetic Event so the audit-log invariant holds.
+	 * @param string|null  $type      Optional point-type slug. Defaults to primary type.
+	 * @return array{success: bool, reason?: string, event_id?: string, new_balance?: int}
+	 *                                Structured result. `success=false` arrives with a `reason`:
+	 *                                `insufficient_balance` | `event_persist_failed` | `ledger_write_failed`.
 	 */
-	public static function debit( int $user_id, int $amount, string $action_id, string $event_id = '', ?string $type = null ): bool {
-		global $wpdb;
+	public static function debit( int $user_id, int $amount, string $action_id, Event|string $event = '', ?string $type = null ): array {
+		$resolved_type = self::resolve_type( $type );
+		$amount        = abs( $amount );
 
-		$type = self::resolve_type( $type );
-
-		$inserted = $wpdb->insert(
-			$wpdb->prefix . 'wb_gam_points',
-			array(
-				'event_id'   => $event_id ?: null,
-				'user_id'    => $user_id,
-				'action_id'  => $action_id,
-				'points'     => -abs( $amount ),
-				'point_type' => $type,
-				'object_id'  => null,
-				'created_at' => current_time( 'mysql' ),
-			),
-			array( '%s', '%d', '%s', '%d', '%s', '%d', '%s' )
-		);
-
-		if ( ! $inserted ) {
-			Log::error(
-				'PointsEngine::debit — ledger debit failed',
+		// Promote legacy `$event_id` string to a synthetic Event so the
+		// audit-log invariant ALWAYS holds — every wb_gam_points row gets
+		// a matching wb_gam_events row regardless of how the caller invoked.
+		if ( ! ( $event instanceof Event ) ) {
+			$event_id = (string) $event;
+			$event    = new Event(
 				array(
-					'user_id'    => $user_id,
-					'action_id'  => $action_id,
-					'amount'     => $amount,
-					'point_type' => $type,
-					'event_id'   => $event_id,
-					'db_error'   => $wpdb->last_error,
+					'action_id' => $action_id,
+					'user_id'   => $user_id,
+					'metadata'  => array(
+						'points_cost'    => -$amount,
+						'point_type'     => $resolved_type,
+						'_legacy_caller' => 1,
+					),
 				)
 			);
-			return false;
+			// Honour caller-supplied event_id when present (RedemptionEngine
+			// passes its own UUID so the redemption row's event_id matches).
+			if ( '' !== $event_id ) {
+				$event->event_id = $event_id;
+			}
 		}
 
-		self::bump_user_total( $user_id, $type, -abs( $amount ) );
-		wp_cache_delete( self::cache_key_total( $user_id, $type ), 'wb_gamification' );
+		return Transaction::run(
+			function () use ( $user_id, $amount, $event, $resolved_type ) {
+				global $wpdb;
 
-		return true;
+				// Atomic balance check with row lock — prevents the TOCTOU
+				// race where two concurrent debits both read balance=N,
+				// both subtract, and the balance lands at N - 2*amount.
+				$balance = (int) $wpdb->get_var(
+					$wpdb->prepare(
+						"SELECT COALESCE(SUM(points), 0) FROM {$wpdb->prefix}wb_gam_points WHERE user_id = %d AND point_type = %s FOR UPDATE",
+						$user_id,
+						$resolved_type
+					)
+				);
+
+				if ( $balance < $amount ) {
+					Log::warning(
+						'PointsEngine::debit — insufficient balance',
+						array(
+							'user_id'    => $user_id,
+							'action_id'  => $event->action_id,
+							'requested'  => $amount,
+							'balance'    => $balance,
+							'point_type' => $resolved_type,
+						)
+					);
+					return array(
+						'success' => false,
+						'reason'  => 'insufficient_balance',
+					);
+				}
+
+				// Audit-log invariant: every ledger row has a matching
+				// events row. Persist the event FIRST so the points row's
+				// FK target exists.
+				if ( ! Engine::persist_event( $event ) ) {
+					Log::error(
+						'PointsEngine::debit — event persist failed',
+						array(
+							'user_id'  => $user_id,
+							'event_id' => $event->event_id,
+							'db_error' => $wpdb->last_error,
+						)
+					);
+					return array(
+						'success' => false,
+						'reason'  => 'event_persist_failed',
+					);
+				}
+
+				if ( ! self::insert_point_row( $event, -$amount, $resolved_type ) ) {
+					// insert_point_row already logged.
+					return array(
+						'success' => false,
+						'reason'  => 'ledger_write_failed',
+					);
+				}
+
+				return array(
+					'success'     => true,
+					'event_id'    => $event->event_id,
+					'new_balance' => $balance - $amount,
+				);
+			}
+		);
 	}
 
 	/**

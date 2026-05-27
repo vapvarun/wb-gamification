@@ -393,7 +393,7 @@ final class Engine {
 	 *
 	 * @param Event $event The event to persist.
 	 */
-	private static function persist_event( Event $event ): bool {
+	public static function persist_event( Event $event ): bool {
 		global $wpdb;
 
 		// Resolve point_type for the event log so analytics queries can scope by currency

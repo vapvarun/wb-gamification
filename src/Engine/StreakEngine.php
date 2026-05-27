@@ -207,18 +207,16 @@ final class StreakEngine {
 		 * Front-end hooks in here to show the fire/celebration overlay.
 		 * BP integration posts to activity stream.
 		 *
-		 * @param int $user_id     User who hit the milestone.
-		 * @param int $streak_days Number of consecutive days.
-		 */
-		do_action( 'wb_gam_streak_milestone', $user_id, $streak_days );
-
-		/**
-		 * Fires when a user reaches a streak milestone.
+		 * NOTE: this hook used to fire TWICE (a second `do_action` followed
+		 * with the same args) — milestones produced duplicate toasts +
+		 * duplicate activity-stream posts. The duplicate was caught by the
+		 * 2026-05-27 data-flow audit and removed; the merged docblock here
+		 * preserves both `@since` tags from the original twin declarations.
 		 *
 		 * @since 1.0.0
 		 *
-		 * @param int $user_id       User who reached the milestone.
-		 * @param int $streak_days   Current streak day count.
+		 * @param int $user_id     User who hit the milestone.
+		 * @param int $streak_days Number of consecutive days.
 		 */
 		do_action( 'wb_gam_streak_milestone', $user_id, $streak_days );
 

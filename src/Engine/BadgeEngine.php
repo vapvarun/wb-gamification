@@ -281,9 +281,15 @@ final class BadgeEngine {
 		 */
 		do_action( 'wb_gam_after_badge_award', $user_id, $badge_id );
 
-		// Dispatch outbound webhook.
+		// Dispatch outbound webhook. Event name MUST match the
+		// WebhooksController::VALID_EVENTS allowlist (`'badge_earned'`).
+		// Any mismatch silently breaks every Zapier/Make subscriber that
+		// signed up for badge events. Was originally fixed in PR #47; the
+		// 2026-05-27 stability audit found it had regressed to
+		// `badge_awarded`. Canonical: `badge_earned`. Don't change without
+		// updating WebhooksController::VALID_EVENTS + an integration journey.
 		WebhookDispatcher::dispatch(
-			'badge_awarded',
+			'badge_earned',
 			$user_id,
 			null,
 			0,

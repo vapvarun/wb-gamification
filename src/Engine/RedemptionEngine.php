@@ -60,6 +60,53 @@ defined( 'ABSPATH' ) || exit;
  */
 final class RedemptionEngine {
 
+	/**
+	 * Side-channel used by the closure passed to Transaction::run() to
+	 * communicate the specific failure reason back to the public redeem()
+	 * method. Transaction::run can only signal "pass/fail" via its return
+	 * value (truthy/false), so a small static carrier translates the
+	 * closure's internal failure mode into the public error code the
+	 * controller maps to a REST error.
+	 *
+	 * Set inside the closure; consumed + cleared after Transaction::run
+	 * returns. Never inspect across requests.
+	 *
+	 * @var string|null
+	 */
+	private static ?string $last_failure_reason = null;
+
+	/**
+	 * Map an internal failure-reason slug to a localised error message.
+	 *
+	 * @param string   $reason       Failure reason — one of
+	 *                               `insufficient` | `out_of_stock` |
+	 *                               `ledger_write_failed` | `record_write_failed` |
+	 *                               `redemption_failed`.
+	 * @param int      $cost         Reward cost in points (for the insufficient message).
+	 * @param int|null $balance_hint Current user balance (for the insufficient message).
+	 * @return string                Translated error string for the API response.
+	 */
+	private static function error_message_for( string $reason, int $cost, ?int $balance_hint ): string {
+		switch ( $reason ) {
+			case 'insufficient':
+				return sprintf(
+					/* translators: 1: cost, 2: current balance */
+					__( 'Insufficient points. This reward costs %1$d pts; you have %2$d.', 'wb-gamification' ),
+					$cost,
+					(int) $balance_hint
+				);
+			case 'out_of_stock':
+				return __( 'This reward is out of stock.', 'wb-gamification' );
+			case 'ledger_write_failed':
+				return __( 'Could not record the redemption. Please try again — your points have not been deducted.', 'wb-gamification' );
+			case 'record_write_failed':
+				return __( 'Redemption could not be saved. Please try again — your points have not been deducted.', 'wb-gamification' );
+			default:
+				return __( 'Redemption failed. Please try again.', 'wb-gamification' );
+		}
+	}
+
+
 	private const CACHE_GROUP = 'wb_gamification';
 
 	// ── Public API ───────────────────────────────────────────────────────────
@@ -143,35 +190,11 @@ final class RedemptionEngine {
 		// enforced. See Basecamp #9925383280.
 		$enforced_stock = is_null( $item['stock'] ?? null ) ? null : (int) $item['stock'];
 
-		// ── Atomic balance check + debit (prevents TOCTOU race condition) ────
-		$wpdb->query( 'START TRANSACTION' );
-
-		// Lock the user's point rows for this currency to prevent concurrent redemptions.
-		$balance = (int) $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT COALESCE(SUM(points), 0) FROM {$wpdb->prefix}wb_gam_points WHERE user_id = %d AND point_type = %s FOR UPDATE",
-				$user_id,
-				$type
-			)
-		);
-
-		if ( $balance < $cost ) {
-			$wpdb->query( 'ROLLBACK' );
-			return array(
-				'success'       => false,
-				'reason'        => 'insufficient',
-				'error'         => sprintf(
-					/* translators: 1: cost, 2: current balance */
-					__( 'Insufficient points. This reward costs %1$d pts; you have %2$d.', 'wb-gamification' ),
-					$cost,
-					$balance
-				),
-				'redemption_id' => null,
-				'coupon_code'   => null,
-			);
-		}
-
-		// Debit points FIRST (inside the transaction).
+		// Build the canonical redemption event up-front so PointsEngine::debit
+		// can audit-log it, and the redemption record can later reference the
+		// same event_id (the prior implementation generated the event inside
+		// debit() then dropped the reference — events and redemptions were
+		// disconnected on the analytics side).
 		$event = new Event(
 			array(
 				'action_id' => 'points_redeemed',
@@ -183,44 +206,81 @@ final class RedemptionEngine {
 				),
 			)
 		);
-		PointsEngine::debit( $user_id, $cost, 'redemption', $event->event_id, $type );
 
-		// Atomic stock decrement (inside the transaction). Only enforced
-		// when admin set a positive finite stock — NULL and 0 mean
-		// unlimited, so no row update is needed.
-		if ( null !== $enforced_stock && $enforced_stock > 0 ) {
-			$decremented = $wpdb->query(
-				$wpdb->prepare(
-					"UPDATE {$wpdb->prefix}wb_gam_redemption_items SET stock = stock - 1 WHERE id = %d AND stock > 0",
-					$item_id
-				)
-			);
-			if ( ! $decremented ) {
-				$wpdb->query( 'ROLLBACK' );
-				return array(
-					'success'       => false,
-					'reason'        => 'out_of_stock',
-					'error'         => __( 'This reward is out of stock.', 'wb-gamification' ),
-					'redemption_id' => null,
-					'coupon_code'   => null,
+		// ── Single atomic transaction: debit + stock decrement + record ──────
+		// PRE-REFACTOR (commit f877744): debit ran in a transaction that
+		// committed BEFORE the redemption row INSERT. A crash between COMMIT
+		// and the INSERT would burn the user's points with no audit record
+		// of what they bought. The refactor wraps all three writes in a
+		// single Transaction::run frame so either everything commits or
+		// nothing does. The audit-log invariant (every wb_gam_points row
+		// has a matching wb_gam_events row) also now holds for debit, since
+		// PointsEngine::debit goes through the unified Engine::persist_event
+		// → PointsEngine::insert_point_row path.
+		$redemption_id = Transaction::run(
+			function () use ( $user_id, $item_id, $cost, $type, $event, $enforced_stock ) {
+				global $wpdb;
+
+				// Step 1 — debit (FOR UPDATE balance lock, audit-logged).
+				$debit = PointsEngine::debit( $user_id, $cost, 'redemption', $event, $type );
+				if ( ! $debit['success'] ) {
+					self::$last_failure_reason = ( 'insufficient_balance' === ( $debit['reason'] ?? '' ) )
+						? 'insufficient'
+						: 'ledger_write_failed';
+					return false;
+				}
+
+				// Step 2 — atomic stock decrement when finite stock is enforced.
+				// NULL or 0 stock means unlimited.
+				if ( null !== $enforced_stock && $enforced_stock > 0 ) {
+					$decremented = $wpdb->query(
+						$wpdb->prepare(
+							"UPDATE {$wpdb->prefix}wb_gam_redemption_items SET stock = stock - 1 WHERE id = %d AND stock > 0",
+							$item_id
+						)
+					);
+					if ( ! $decremented ) {
+						self::$last_failure_reason = 'out_of_stock';
+						return false;
+					}
+				}
+
+				// Step 3 — record the redemption inside the same transaction.
+				// Rolled back together with the debit if the record write fails.
+				$inserted = $wpdb->insert(
+					$wpdb->prefix . 'wb_gam_redemptions',
+					array(
+						'user_id'     => $user_id,
+						'item_id'     => $item_id,
+						'points_cost' => $cost,
+						'status'      => 'pending',
+					),
+					array( '%d', '%d', '%d', '%s' )
 				);
+				if ( ! $inserted ) {
+					self::$last_failure_reason = 'record_write_failed';
+					return false;
+				}
+
+				return (int) $wpdb->insert_id;
 			}
-		}
-
-		$wpdb->query( 'COMMIT' );
-
-		// Create redemption record.
-		$wpdb->insert(
-			$wpdb->prefix . 'wb_gam_redemptions',
-			array(
-				'user_id'     => $user_id,
-				'item_id'     => $item_id,
-				'points_cost' => $cost,
-				'status'      => 'pending',
-			),
-			array( '%d', '%d', '%d', '%s' )
 		);
-		$redemption_id = (int) $wpdb->insert_id;
+
+		// Translate transaction-level failure into the documented public shape.
+		if ( false === $redemption_id || null === $redemption_id ) {
+			$reason       = self::$last_failure_reason ?: 'redemption_failed';
+			self::$last_failure_reason = null;
+			$balance_hint = ( 'insufficient' === $reason )
+				? PointsEngine::get_total( $user_id, $type )
+				: null;
+			return array(
+				'success'       => false,
+				'reason'        => $reason,
+				'error'         => self::error_message_for( $reason, $cost, $balance_hint ),
+				'redemption_id' => null,
+				'coupon_code'   => null,
+			);
+		}
 
 		// Fulfillment.
 		$coupon_code = null;

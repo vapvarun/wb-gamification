@@ -219,7 +219,21 @@ class BadgesController extends WP_REST_Controller {
 			$user_id = get_current_user_id();
 		}
 
-		$badges = BadgeEngine::get_all_badges_for_user( $user_id );
+		// Privacy gate — the per-user response carries `earned` + `earned_at`
+		// fields, so anonymous reads against a specific user_id must honour
+		// the same `Privacy::can_view_public_profile` check every block
+		// renderer respects. Without this, anyone could iterate user IDs and
+		// harvest badge timestamps for users who opted out of public
+		// profiles. Caught by the 2026-05-27 data-flow audit (admin-rest G4).
+		// Self-reads bypass — a logged-in user always sees their own badges.
+		$wb_gam_self_or_no_user = ( 0 === $user_id || $user_id === get_current_user_id() );
+		if ( ! $wb_gam_self_or_no_user && ! \WBGam\Engine\Privacy::can_view_public_profile( $user_id ) ) {
+			// Treat as catalog read (no per-user enrichment). Strip earned + earned_at
+			// so the shape matches `?user_id` omitted from an anonymous client.
+			$badges = BadgeEngine::get_all_badges_for_user( 0 );
+		} else {
+			$badges = BadgeEngine::get_all_badges_for_user( $user_id );
+		}
 
 		// Filter by category if requested.
 		if ( '' !== $category ) {

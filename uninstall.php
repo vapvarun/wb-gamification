@@ -20,6 +20,14 @@ global $wpdb;
 //    Reason: DROP TABLE is a schema operation required during uninstall.
 //    Caching is not applicable here — tables are being permanently removed.
 // -------------------------------------------------------------------------
+// Every table the Installer creates must be listed here. The 2026-05-27
+// data-flow audit (admin-rest G3) found 3 tables were missing —
+// `wb_gam_user_totals` (materialised totals), `wb_gam_submissions` (UGC
+// queue), `wb_gam_leaderboard_cache` (snapshot store) — all introduced
+// in 1.0.0. Crosscheck this list against `src/Engine/Installer.php` on
+// every schema-add commit. The CI manifest check counts CREATE TABLEs
+// against the `tables` section, but does not currently diff against this
+// uninstall list.
 $tables = array(
 	'wb_gam_points',
 	'wb_gam_redemption_items',
@@ -43,6 +51,9 @@ $tables = array(
 	'wb_gam_cosmetics',
 	'wb_gam_point_types',
 	'wb_gam_point_type_conversions',
+	'wb_gam_user_totals',
+	'wb_gam_submissions',
+	'wb_gam_leaderboard_cache',
 );
 
 foreach ( $tables as $table ) {
@@ -66,6 +77,12 @@ $known_options = array(
 	'wb_gam_feature_point_types_v1',
 	'wb_gam_feature_redemption_point_type_v1',
 	'wb_gam_feature_point_type_conversions_v1',
+	// Email + privacy options added in 1.0.0 — caught by the 2026-05-27 audit.
+	'wb_gam_email_level_up',
+	'wb_gam_email_badge_earned',
+	'wb_gam_email_challenge_completed',
+	'wb_gam_email_redemption',
+	'wb_gam_profile_public_enabled',
 );
 
 foreach ( $known_options as $option ) {
@@ -135,8 +152,18 @@ if ( function_exists( 'as_unschedule_all_actions' ) ) {
 // -------------------------------------------------------------------------
 // 6. Remove plugin custom capabilities from every role.
 // -------------------------------------------------------------------------
+// Caught by 2026-05-27 audit (admin-rest G2): pre-refactor this list only
+// had `wb_gam_award_manual`, so the other 6 plugin-defined caps stayed in
+// every role after uninstall. Crosscheck against `Capabilities::CAPS` on
+// every cap-add commit.
 $plugin_caps = array(
 	'wb_gam_award_manual',
+	'wb_gam_manage_badges',
+	'wb_gam_manage_challenges',
+	'wb_gam_manage_redemptions',
+	'wb_gam_manage_webhooks',
+	'wb_gam_manage_api_keys',
+	'wb_gam_manage_rules',
 );
 
 foreach ( wp_roles()->roles as $role_name => $_role_data ) {
@@ -154,10 +181,19 @@ foreach ( wp_roles()->roles as $role_name => $_role_data ) {
 // -------------------------------------------------------------------------
 // 7. Delete user meta.
 // -------------------------------------------------------------------------
+// Caught by 2026-05-27 audit (admin-rest G3 + notifications G8): pre-refactor
+// the list missed the wizard sentinel and the per-consumer notification
+// cursors so the meta lingered after uninstall (also leaked across GDPR
+// erase). Crosscheck this against `add_user_meta` / `update_user_meta`
+// call sites on every commit that introduces new per-user state.
 $user_meta_keys = array(
 	'wb_gam_level_id',
 	'wb_gam_level_name',
 	'wb_gam_league_tier',
+	'wb_gam_setup_seen',
+	'wb_gam_notif_cursor_footer',
+	'wb_gam_notif_cursor_heartbeat',
+	'wb_gam_notif_cursor_rest',
 );
 
 foreach ( $user_meta_keys as $meta_key ) {
