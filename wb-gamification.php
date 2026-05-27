@@ -569,14 +569,45 @@ final class WB_Gamification {
 			);
 		}
 		wp_enqueue_style( 'lucide-icons' );
-		// Single canonical admin stylesheet. The previous build shipped a
-		// second `admin-premium.css` that duplicated 19+ selectors and split
-		// tokens across two namespaces — patch-work that won't scale to
-		// thousands of installs. Consolidated into admin.css in 1.0.0.
+
+		// Admin stylesheet — split into two files on 2026-05-27 because the
+		// single monolith had grown to 4037 lines. Cascade order matters:
+		//
+		//   1. wb-gam-admin-core (assets/css/admin-core.css) — the
+		//      structured §1-§25 design system: tokens, components,
+		//      utilities, responsive breakpoints, the Settings full-width
+		//      wrap, third-party-notice suppression, and the Submissions
+		//      admin affordances. Foundation — loads first.
+		//
+		//   2. wb-gam-admin-pages (assets/css/admin-pages.css) — per-feature
+		//      page styling (Setup Wizard, Welcome notice banner, Badges /
+		//      Challenges / Redemption Store / Webhooks / Community
+		//      Challenges / Cohorts / Submissions). Overrides + ad-hoc —
+		//      loads second so page rules can win on conflict.
+		//
+		// Both files keep the `wb-gam-admin-*` handle prefix; legacy
+		// `wb-gam-admin` is preserved as an alias-enqueue below for any
+		// third-party code that depended on the old handle.
 		wp_enqueue_style(
-			'wb-gam-admin',
-			WB_GAM_URL . 'assets/css/admin.css',
+			'wb-gam-admin-core',
+			WB_GAM_URL . 'assets/css/admin-core.css',
 			array( 'lucide-icons' ),
+			WB_GAM_VERSION
+		);
+		wp_enqueue_style(
+			'wb-gam-admin-pages',
+			WB_GAM_URL . 'assets/css/admin-pages.css',
+			array( 'wb-gam-admin-core' ),
+			WB_GAM_VERSION
+		);
+		// Back-compat alias — any third-party code or per-page admin module
+		// that did `wp_enqueue_style( 'wb-gam-admin' )` keeps working. The
+		// alias has no `src` and depends on both new handles, so requesting
+		// it triggers the full stack via WP's dependency resolver.
+		wp_register_style(
+			'wb-gam-admin',
+			false,
+			array( 'wb-gam-admin-core', 'wb-gam-admin-pages' ),
 			WB_GAM_VERSION
 		);
 	}
