@@ -3914,20 +3914,29 @@ body[class*="_page_wb-gam-"] #wpbody-content > .updated:not(.wb-gam-notice) {
 }
 
 /* ==========================================================================
-   24. Suppress Third-Party Admin Notices
-   Only on WB Gamification pages -- keeps our admin clean.
-   Our own notices use .wb-gam-notice class and are not affected.
+   24. Suppress third-party admin notices on EVERY plugin page.
+   Pre-1.4.1 the suppression list hardcoded 6 specific page slugs and missed
+   several (the Setup Wizard at admin_page_wb-gamification-setup was the
+   most visible — Basecamp #9932063294, BuddyX's admin notice bleeding into
+   the wizard container). Switched to a body-class wildcard that catches
+   every page WP emits a `page_wb-gam(ification)` class on:
+     - `toplevel_page_wb-gamification`     (the parent menu page)
+     - `gamification_page_<slug>`          (every visible submenu)
+     - `admin_page_wb-gamification-setup`  (hidden wizard submenu)
+     - `admin_page_wb-gam-*`               (any other hidden submenu)
+   Future-proof: any new admin page automatically gets the suppression
+   without a manual edit here. Our own notices keep the .wb-gam-notice
+   class so they pass the :not() filter.
    ========================================================================== */
 
-.toplevel_page_wb-gamification .notice:not(.wb-gam-notice),
-.gamification_page_wb-gamification-analytics .notice:not(.wb-gam-notice),
-.gamification_page_wb-gamification-badges .notice:not(.wb-gam-notice),
-.gamification_page_wb-gam-challenges .notice:not(.wb-gam-notice),
-.gamification_page_wb-gamification-award .notice:not(.wb-gam-notice),
-.gamification_page_wb-gam-api-keys .notice:not(.wb-gam-notice),
-.toplevel_page_wb-gamification .update-nag,
-.toplevel_page_wb-gamification div.error:not(.wb-gam-notice),
-.toplevel_page_wb-gamification div.updated:not(.wb-gam-notice) {
+body[class*="page_wb-gamification"] .notice:not(.wb-gam-notice),
+body[class*="page_wb-gam-"] .notice:not(.wb-gam-notice),
+body[class*="page_wb-gamification"] .update-nag,
+body[class*="page_wb-gam-"] .update-nag,
+body[class*="page_wb-gamification"] div.error:not(.wb-gam-notice),
+body[class*="page_wb-gam-"] div.error:not(.wb-gam-notice),
+body[class*="page_wb-gamification"] div.updated:not(.wb-gam-notice),
+body[class*="page_wb-gam-"] div.updated:not(.wb-gam-notice) {
 	display: none !important;
 }
 
