@@ -30,8 +30,15 @@ final class EmailSettingsController extends WP_REST_Controller {
 
 	/**
 	 * Whitelisted event slugs. Every other field in the POST body is dropped.
+	 *
+	 * `redemption` was missing pre-1.4.1 — TransactionalEmailEngine had the
+	 * listener, the template, and the gate, but the controller silently
+	 * filtered the slug out of every save and the settings UI iterates
+	 * this list so it never even rendered a toggle. Result: members who
+	 * redeemed a reward got the coupon on-screen but no email receipt
+	 * (Basecamp #9927383947). Adding it here restores the full pipeline.
 	 */
-	private const EVENTS = array( 'level_up', 'badge_earned', 'challenge_completed' );
+	private const EVENTS = array( 'level_up', 'badge_earned', 'challenge_completed', 'redemption' );
 
 	/**
 	 * REST namespace.
