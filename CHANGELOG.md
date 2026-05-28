@@ -6,6 +6,47 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 
 ## [Unreleased]
 
+## [1.5.0] - 2026-05-28
+
+Second bug-sweep release. Closes 21 reported issues across blocks, admin, notifications, and integrations. Adds a manual-award admin UI, a circuit-breaker for runaway Action Scheduler state, and two new local-CI gates that catch the bug classes we hit during the sweep before they ship again.
+
+### Added
+
+- **Manual-award form on the Badge edit screen.** New panel below the badge edit form (`BadgeAdminPage`) lets admins grant any rule-driven or manually-awarded badge to a chosen member without writing SQL. Uses the shared `admin-rest-form` pattern + `wp_dropdown_users`.
+- **`MemberUploadCap` engine.** Grants `upload_files` to every logged-in member via the `user_has_cap` filter so the Submit Achievement block's Add Media button works for non-admins. Opt-out filter: `wb_gam_grant_member_uploads`. Booted via `FeatureFlags::CORE_ENGINES`.
+- **Action Scheduler circuit-breaker + drain CLI.** `ActionSchedulerCleaner` now refuses to enqueue new cleanup jobs when the `actionscheduler_actions` table breaches the danger threshold; `wp wb-gamification as drain` provides a manual escape hatch. Closes the 3.5M-row runaway on the production install that triggered PERF-002.
+- **Local-CI gate 2.13 (boot-invariants).** PHP tokenizer-based detector (`bin/check-boot-invariants.php`) walks `token_get_all`, finds every `T_CLASS` at depth=0, and fails the build if a `class_exists($name, false)` guard sits above it. Root cause of the silent boot failure that hid the admin menu.
+- **Local-CI gate 2.14 (badge-condition contract).** Parses `Installer::seed_default_badges()` and asserts every "First X" / "N posts/comments" badge uses `action_count` with a matching action_id, and every "N points" badge uses `point_milestone`. Cross-references action_ids against `integrations/*.php`.
+- **`CommunityChallengeEngine::get_visible()`.** Returns active + completed-but-not-expired challenges so the block keeps completed challenges visible until their expiry.
+- **`CohortEngine::get_tier_name(int)` + `CohortEngine::SETTINGS_OPTION`.** Single resolver reads `wb_gam_cohort_settings` and falls back to the `TIERS` constant; consumed by the Cohort Rank block and admin surfaces.
+
+### Changed
+
+- **Toast notifications use WP Heartbeat `fast` interval (5 s).** `assets/js/heartbeat.js` default switched from `standard` (15 s) to `fast` for the gamification surface so realtime feedback feels immediate without paying the cost everywhere.
+- **Earning Guide card layout reflowed.** Icon + points sit on a top row; the action label drops to a full-width row below so long action names no longer wrap vertically inside a cramped middle column.
+- **Cohort Rank block carries tier-coloured accents.** `render.php` writes a `data-tier` attribute; per-tier CSS variables in `style.css` apply Bronze / Silver / Gold / Diamond accents.
+- **Community Challenges completed-state visual treatment.** New green pill + gradient card so completed challenges read distinctly from active ones. `index.js` now `import './style.css'` (the missing import was silently dropping per-block CSS from the webpack build).
+- **User Status Bar chevron + offset.** Replaced the filled-circle toggle with an SVG-mask chevron; added `--wb-gam-status-bar-top-offset` CSS variable so the sticky panel sits below custom theme admin bars.
+- **WooCommerce purchase events fire on `woocommerce_payment_complete`.** Previously bound to `woocommerce_order_status_completed`, which only fires when an admin manually marks the order complete. First-purchase count query now uses `status IN ('processing', 'completed')` to account for orders that the gateway has confirmed but the admin has not yet marked complete.
+- **Hub Challenges card combines counts.** `src/Blocks/hub/render.php` now uses a `panel_blocks` array supporting multiple blocks per hub panel; the Challenges card surfaces in-flight community challenges alongside personal challenges.
+- **Default badge conditions corrected to match badge names.** First Post / Prolific Writer / Content Creator track `action_count` of `wp_publish_post`; First Comment / Engaged Reader track `action_count` of `wp_leave_comment`. Replaces the 50-points placeholder that fired on the wrong trigger.
+
+### Fixed
+
+- **Class-hoist guard silently aborted boot.** Removed the `class_exists($plugin_class, false)` guard at the top of `wb-gamification.php`. PHP processes top-level class declarations during the compile phase, so the guard always returned true at file's first line; the boot closure never registered, the admin menu never appeared. Gate 2.13 (above) prevents the regression.
+- **Setup Wizard now triggers on first activation in CLI / sandbox flows.** `Installer::maybe_install` on `plugins_loaded@0` covers restore-from-backup, container clone, and `wp plugin activate` scenarios that bypass the standard activation hook.
+- **Redemption emails actually send.** Added `redemption` to the `EVENTS` whitelist in `EmailSettingsController` so the per-event toggle gates the redemption confirmation email correctly.
+- **Redemption Store reads `stock=0` as Unlimited.** Block contract aligned with the admin UI (which already documented `stock=0` = unlimited).
+- **Community challenge bonus no longer dead-letters.** `CommunityChallengeEngine` now registers `wb_gam_community_bonus_award` as an Action Scheduler handler that calls `PointsEngine::award` for every contributor; the bonus is no longer enqueued without a listener.
+- **Cohort tier names reach the frontend.** `CohortEngine::get_tier_name()` now reads `wb_gam_cohort_settings` and the Cohort Rank block consumes the new resolver instead of the raw `TIERS` constant.
+- **Duplicate toast notifications eliminated.** Set-based dedupe in `assets/js/toast.js` keyed on `_id` (or content fingerprint as fallback) closes the cursor-race that produced repeated bubbles when multiple heartbeat consumers fired in the same tick.
+- **LeaderboardNudge infinite-AS recursion contained.** `points_changed` broadcasts no longer re-enter `LeaderboardNudge::dispatch_batch` on installs where the change handler can loop back through the dispatcher.
+
+### Developer
+
+- **Manifest v2.2 refreshed end-to-end.** `audit/manifest.json` + `manifest.summary.json` now reflect 56 endpoints, 23 tables, 19 blocks, 44 services, 13 admin pages, 10 WP-CLI commands. `audit/derived/` caches 16 static-analysis sub-checks including the new `boot-hoist-guards` finder.
+- **plan/ + audit/ consolidated.** `plan/MASTER-CHECKLIST.md` is now the single roadmap (90 shipped / 10 pending); 21 dated release/bug-sweep/UX-audit files were folded in and removed. Recoverable via `git log --diff-filter=D --follow plan/<path>`.
+
 ## [1.4.0] — 2026-05-25
 
 Bug-sweep release. 11 reported issues fixed plus two stability wins discovered during code-level triage of the Basecamp queue.

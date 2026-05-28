@@ -4,7 +4,7 @@ Tags: gamification, points, badges, leaderboard, buddypress
 Requires at least: 6.4
 Tested up to: 6.9
 Requires PHP: 8.1
-Stable tag: 1.4.0
+Stable tag: 1.5.0
 License: GPL-2.0+
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -21,7 +21,7 @@ The engine awards points automatically when members perform actions on your site
 * **Zero config** — 5 starter templates pre-configure everything. Pick one and go.
 * **Universal** — Works with plain WordPress, BuddyPress, WooCommerce, LearnDash, bbPress, and 5 more plugins. Auto-detects what you have installed.
 * **Scalable** — Async award pipeline, snapshot-cached leaderboards, object caching everywhere. Built for 100K+ members.
-* **API-first** — 51 REST endpoints, outbound webhooks, WP Abilities API. Mobile apps, headless frontends, and AI agents are first-class consumers. Admin UI is REST-driven internally — what the admin saves is what the API exposes (no parallel form-post surface).
+* **API-first** — 56 REST endpoints, outbound webhooks, WP Abilities API. Mobile apps, headless frontends, and AI agents are first-class consumers. Admin UI is REST-driven internally — what the admin saves is what the API exposes (no parallel form-post surface).
 * **No add-on model** — Every integration, every advanced engagement mechanic, every admin surface ships free. No paid extensions for BuddyPress support, cohort leagues, redemption store, or webhooks.
 
 = Core Features (Free) =
@@ -33,14 +33,14 @@ The engine awards points automatically when members perform actions on your site
 * **Challenges** — Time-bound goals with bonus points. Admin creates challenges, members track progress automatically.
 * **Streaks** — Daily activity tracking with grace periods, milestone detection (7, 30, 100, 365 days), and bonus rewards.
 * **Peer Kudos** — Members recognize each other with kudos. Configurable daily limits and point awards for both sender and receiver.
-* **15 Gutenberg Blocks** — Leaderboard, member points, badge showcase, level progress, challenges, streak, top members, kudos feed, year recap, points history, earning guide, hub, redemption store, community challenges, cohort rank. Every block follows the Wbcom Block Quality Standard (apiVersion 3, per-side spacing × 3 breakpoints, hover/focus states, design tokens, per-instance scoped CSS).
-* **15 Shortcodes** — Every block is also available as a shortcode for classic editor and page builders (Elementor, Beaver Builder, Bricks).
-* **REST API** — 51 endpoints across 19 controllers. Full CRUD for all resources. API key authentication for cross-site setups. Admin UI consumes the same REST API as 3rd-party integrations.
+* **19 Gutenberg Blocks** — Leaderboard, member points, badge showcase, level progress, challenges, streak, top members, kudos feed, year recap, points history, earning guide, hub, redemption store, community challenges, cohort rank, daily bonus, give kudos, submit achievement, user status bar. Every block follows the Wbcom Block Quality Standard (apiVersion 3, per-side spacing × 3 breakpoints, hover/focus states, design tokens, per-instance scoped CSS).
+* **17 Shortcodes** — Every customer-facing block is also available as a shortcode for classic editor and page builders (Elementor, Beaver Builder, Bricks).
+* **REST API** — 56 endpoints across 19 controllers. Full CRUD for all resources. API key authentication for cross-site setups. Admin UI consumes the same REST API as 3rd-party integrations.
 * **BuddyPress Integration** — Profile rank display, activity feed events, member directory badges, notification bridge.
 * **Toast Notifications** — Real-time bottom-right popups when members earn points, badges, or level up. 6 notification types with auto-dismiss. Promise-based confirm modals replace native browser dialogs (a11y-friendly).
 * **Analytics Dashboard** — 6 KPI cards, top actions, top earners, daily points sparkline. Period selector (7/30/90 days).
 * **WP-CLI Commands** — `points award`, `member status`, `actions list`, `logs prune`, `export user`, `qa seed_pages`, `doctor` readiness check, plus a release-zip builder.
-* **Developer Hooks** — 54 action hooks and 31 filter hooks for extending every write path. Every REST endpoint fires `before_*` filters (return WP_Error to abort) and `after_*` actions.
+* **Developer Hooks** — 53 action hooks and 46 filter hooks for extending every write path. Every REST endpoint fires `before_*` filters (return WP_Error to abort) and `after_*` actions.
 * **Cohort Leagues** — Duolingo-style weekly competitions with promotion/demotion percentages and per-cohort leaderboards.
 * **Community Challenges** — Team goals with global progress (Pokemon GO model). Members contribute to a shared counter; everyone earns when the target is hit.
 * **Redemption Store** — Members spend points on rewards. Built-in support for custom rewards (your hook), WooCommerce coupons, and Wbcom Credits SDK.
@@ -121,7 +121,7 @@ Yes. Any plugin can drop a `wb-gamification.php` manifest file in its directory.
 
 = How do I check if everything is working? =
 
-Run `wp wb-gamification doctor` from WP-CLI. It validates all 20 database tables, registered actions, badge conditions, REST API routes, cron jobs, integration detection, and market readiness. Use `--verbose` for full detail or `--fix` to auto-repair issues.
+Run `wp wb-gamification doctor` from WP-CLI. It validates all 23 database tables, registered actions, badge conditions, REST API routes, cron jobs, integration detection, and market readiness. Use `--verbose` for full detail or `--fix` to auto-repair issues.
 
 = Is this GDPR compliant? =
 
@@ -129,9 +129,39 @@ Yes. WB Gamification integrates with WordPress privacy tools. Members can reques
 
 = What happens if I deactivate the plugin? =
 
-All data is preserved in the database. Reactivating the plugin restores everything. If you delete the plugin via the Plugins screen, the `uninstall.php` file removes all 20 tables, options, cron jobs, and transients — a clean uninstall.
+All data is preserved in the database. Reactivating the plugin restores everything. If you delete the plugin via the Plugins screen, the `uninstall.php` file removes all 23 tables, options, cron jobs, and transients — a clean uninstall.
 
 == Changelog ==
+
+= 1.5.0 - May 2026 =
+
+Second bug-sweep release. Closes 21 reported issues across blocks, admin, notifications, and integrations. Adds a manual-award admin UI, a circuit-breaker for runaway Action Scheduler state, and two new local-CI gates that catch the bug classes we hit during the sweep before they ship again.
+
+* New      - Manual-award form on the Badge edit screen lets admins grant any rule-driven or manually-awarded badge to a chosen member without writing SQL.
+* New      - MemberUploadCap engine grants the upload_files capability to all logged-in members so the Submit Achievement block's Add Media button works for non-admins. Opt-out filter wb_gam_grant_member_uploads.
+* New      - Action Scheduler circuit-breaker plus drain CLI (wp wb-gamification as drain) for sites whose actionscheduler_actions table has grown past safe limits.
+* New      - Local-CI gate 2.13 boot-invariants detects class_exists guards above top-level class declarations (the root cause of the silent boot failure that hid the admin menu on one install).
+* New      - Local-CI gate 2.14 enforces the seed-default-badge contract so every default badge condition (action_count, point_milestone) matches the badge name's literal action.
+* Improve  - Toast notifications now use the WordPress Heartbeat fast interval (5 s) on gamification surfaces so realtime feedback feels immediate.
+* Improve  - Earning Guide card layout puts the action label below the icon and points row so long action names no longer wrap vertically inside a cramped middle column.
+* Improve  - Cohort Rank block gets tier-coloured accents (Bronze / Silver / Gold / Diamond) driven by a data-tier attribute and per-tier CSS variables.
+* Improve  - Community Challenges block ships a proper completed-state visual treatment (green pill plus gradient card) so completed challenges read distinctly from active ones.
+* Improve  - User Status Bar block uses an SVG-mask chevron toggle and exposes a theme-aware top offset so the sticky panel sits below custom theme admin bars.
+* Improve  - Activity Stream block alignment tightened to match the Reign-stack social-feed conventions.
+* Fix      - Setup Wizard now triggers on first activation in CLI and one-click sandbox flows; Installer::maybe_install on plugins_loaded@0 covers restore-from-backup and container clone scenarios that bypassed the activation hook.
+* Fix      - WooCommerce purchase events fire on woocommerce_payment_complete instead of woocommerce_order_status_completed so members earn points the moment the gateway confirms payment, not whenever an admin manually marks the order complete. First-purchase detection counts processing and completed orders together.
+* Fix      - Redemption email events are now whitelisted in EmailSettingsController so the per-event toggle actually sends the redemption confirmation email when enabled.
+* Fix      - Redemption Store block reads stock=0 as Unlimited (not Out of stock) to match the documented admin contract.
+* Fix      - Hub Challenges card now surfaces in-flight community challenges alongside personal challenges and uses a panel_blocks array so the hub can mount multiple blocks per panel.
+* Fix      - Community challenge bonus award no longer dead-letters; CommunityChallengeEngine listens on its own wb_gam_community_bonus_award AS hook and routes through PointsEngine::award for every contributor.
+* Fix      - Completed community challenges remain visible until their expiry instead of vanishing the instant the global goal is hit; CommunityChallengeEngine::get_visible() returns active plus completed-but-not-expired entries.
+* Fix      - Cohort tier names edited from the Cohort Settings admin page now flow through to the Cohort Rank block via CohortEngine::get_tier_name() which reads wb_gam_cohort_settings before falling back to the TIERS constant.
+* Fix      - Duplicate toast notifications eliminated via a Set-based dedupe in assets/js/toast.js keyed on toast id or content fingerprint, closing the cursor-race that produced repeated bubbles.
+* Fix      - Default badge conditions corrected to match their names: First Post, Prolific Writer, and Content Creator track wp_publish_post action_count; First Comment and Engaged Reader track wp_leave_comment action_count. Replaces the 50-points placeholder that previously fired on the wrong trigger.
+* Fix      - LeaderboardNudge no longer enters infinite Action Scheduler recursion on databases where points_changed broadcasts can re-enter the dispatcher. Closes the 3.5M-row runaway encountered on one production install.
+* Fix      - Class-hoist guard at the top of wb-gamification.php removed; the guard ran against an already-hoisted top-level class declaration and silently aborted boot, hiding the Gamification admin menu on affected installs. Local-CI 2.13 now prevents the regression.
+* Dev      - Manifest v2.2 refreshed end-to-end; audit/derived/ now caches 16 static-analysis sub-checks including the new boot-hoist-guards finder.
+* Dev      - plan/ and audit/ folders consolidated; the single plan/MASTER-CHECKLIST.md replaces every dated release plan, bug-sweep spec, and UX-audit markdown that previously accumulated under plan/.
 
 = 1.4.0 - May 2026 =
 
@@ -217,6 +247,9 @@ Distribution pipeline and admin polish ahead of the integration release.
 10. **Redemption Store** — Admin catalog UI to define rewards (custom or WooCommerce-backed) with point cost, stock, and active/inactive status.
 
 == Upgrade Notice ==
+
+= 1.5.0 =
+Second bug-sweep release closing 21 reported issues. Adds a manual-award UI on the Badge edit screen, an Action Scheduler circuit-breaker, and two new local-CI gates. Safe upgrade with no schema changes.
 
 = 1.4.0 =
 Bug-sweep release with two stability wins: contains a LeaderboardNudge Action Scheduler runaway and adds a 7-day AS retention cron. Safe upgrade with no schema changes.

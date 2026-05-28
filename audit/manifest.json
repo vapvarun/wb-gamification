@@ -3,7 +3,7 @@
   "plugin": {
     "slug": "wb-gamification",
     "name": "WB Gamification",
-    "version": "1.4.0",
+    "version": "1.5.0",
     "namespace": "WBGam\\",
     "main_file": "wb-gamification.php",
     "text_domain": "wb-gamification",
@@ -1369,7 +1369,7 @@
       "enforcement_count": 1,
       "meta": false,
       "requires_context": "none",
-      "note": "Level definition CRUD (LevelsController). Added in 1.4.1 after audit/DATA-FLOW-ADMIN-REST-2026-05-27.md §G1 — controller already gated on this cap but the cap was never registered."
+      "note": "Level definition CRUD (LevelsController). Added in 1.5.0 after audit/DATA-FLOW-ADMIN-REST-2026-05-27.md §G1 — controller already gated on this cap but the cap was never registered."
     },
     {
       "cap": "wb_gam_manage_submissions",
@@ -1383,7 +1383,7 @@
       "enforcement_count": 1,
       "meta": false,
       "requires_context": "none",
-      "note": "UGC submission queue (SubmissionsController). Added in 1.4.1 — pre-refactor the controller hardcoded `manage_options`, breaking granular delegation."
+      "note": "UGC submission queue (SubmissionsController). Added in 1.5.0 — pre-refactor the controller hardcoded `manage_options`, breaking granular delegation."
     },
     {
       "cap": "wb_gam_manage_email_settings",
@@ -1397,7 +1397,7 @@
       "enforcement_count": 1,
       "meta": false,
       "requires_context": "none",
-      "note": "Transactional email toggles (EmailSettingsController). Added in 1.4.1 — same hardcode pattern as submissions."
+      "note": "Transactional email toggles (EmailSettingsController). Added in 1.5.0 — same hardcode pattern as submissions."
     },
     {
       "cap": "wb_gam_view_analytics",
@@ -1639,7 +1639,7 @@
     {
       "key": "MemberUploadCap",
       "class": "WBGam\\Engine\\MemberUploadCap",
-      "added": "1.4.1",
+      "added": "1.5.0",
       "purpose": "Bridges WP upload_files cap to logged-in members so the achievement editor Add Media button works for subscribers / contributors. Opt-out filter: wb_gam_grant_member_uploads."
     }
   ],

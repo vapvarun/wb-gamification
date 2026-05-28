@@ -29,7 +29,7 @@
 ### Engines (14 core, all booted via FeatureFlags::CORE_ENGINES)
 - [x] BadgeEngine — rule-based + admin-awarded badges
 - [x] ChallengeEngine — individual challenges
-- [x] CommunityChallengeEngine — group challenges (with bonus-award listener installed in 1.4.1)
+- [x] CommunityChallengeEngine — group challenges (with bonus-award listener installed in 1.5.0)
 - [x] KudosEngine — peer kudos with cooldown
 - [x] LogPruner — daily ledger cleanup
 - [x] ActionSchedulerCleaner — daily AS-table prune + circuit breaker for runaway state (PERF-002)
@@ -41,37 +41,37 @@
 - [x] TransactionalEmailEngine — per-event email gating, AS-backed delivery
 - [x] LoginBonusEngine — daily login bonus with tier ladder
 - [x] ProfilePage — public `/u/{user_login}` page with privacy gate, OG meta, Schema.org JSON-LD
-- [x] MemberUploadCap — grants `upload_files` to logged-in members for the achievement editor (1.4.1)
+- [x] MemberUploadCap — grants `upload_files` to logged-in members for the achievement editor (1.5.0)
 
 ### Optional engines (gated via flags, 8)
 - [x] CohortEngine — Duolingo-style weekly leagues with promote/demote percentages
 - [x] WeeklyEmailEngine
-- [x] LeaderboardNudge — fixed the infinite-AS recursion in 1.4.1 (PERF-001)
+- [x] LeaderboardNudge — fixed the infinite-AS recursion in 1.5.0 (PERF-001)
 - [x] StatusRetentionEngine
 - [x] SiteFirstBadgeEngine
 - [x] TenureBadgeEngine
 - [x] BadgeSharePage — public OG-ready share URL
-- [x] CohortSettingsPage — admin tier-name + percentages (5 tier slots from 1.4.1)
+- [x] CohortSettingsPage — admin tier-name + percentages (5 tier slots from 1.5.0)
 
 ### Blocks (19)
 - [x] All blocks on Wbcom Block Quality Standard (`--wb-gam-*` tokens, per-side spacing × 3 breakpoints, hover/shadow/border/visibility)
-- [x] Per-block CSS now compiles for every block (cohort-rank + community-challenges fixed in 1.4.1)
+- [x] Per-block CSS now compiles for every block (cohort-rank + community-challenges fixed in 1.5.0)
 - [x] hub (with new panel_blocks array supporting multi-block panels)
 - [x] leaderboard, member-points, badge-showcase, level-progress
 - [x] challenges, streak, top-members, kudos-feed
-- [x] year-recap, points-history, earning-guide (two-row card layout in 1.4.1)
-- [x] community-challenges (completed-state visual treatment in 1.4.1)
-- [x] cohort-rank (tier-coloured accents in 1.4.1)
-- [x] redemption-store (stock=0 → Unlimited contract aligned in 1.4.1)
-- [x] submit-achievement (Add Media now works for members in 1.4.1)
-- [x] user-status-bar (chevron toggle + theme-aware position in 1.4.1)
+- [x] year-recap, points-history, earning-guide (two-row card layout in 1.5.0)
+- [x] community-challenges (completed-state visual treatment in 1.5.0)
+- [x] cohort-rank (tier-coloured accents in 1.5.0)
+- [x] redemption-store (stock=0 → Unlimited contract aligned in 1.5.0)
+- [x] submit-achievement (Add Media now works for members in 1.5.0)
+- [x] user-status-bar (chevron toggle + theme-aware position in 1.5.0)
 - [x] daily-bonus, give-kudos
 
 ### Admin (13 pages)
 - [x] Settings (Points/Levels/Automation/Emails/Cohort tabs)
 - [x] Setup Wizard with starter templates
 - [x] Analytics Dashboard
-- [x] Badge Library (with manual-award form in 1.4.1)
+- [x] Badge Library (with manual-award form in 1.5.0)
 - [x] Challenge Manager
 - [x] Manual Award Points
 - [x] API Keys
@@ -101,21 +101,21 @@
 - [x] 2.10 Critical event wiring
 - [x] 2.11 Coverage floor
 - [x] 2.12 WP.org Plugin Check (0 errors)
-- [x] 2.13 Boot invariants (class-hoist guard contract) — **added 1.4.1**
-- [x] 2.14 Badge condition contract (seed-vs-name) — **added 1.4.1**
+- [x] 2.13 Boot invariants (class-hoist guard contract) — **added 1.5.0**
+- [x] 2.14 Badge condition contract (seed-vs-name) — **added 1.5.0**
 - [x] 3.1 Manifest freshness
 - [x] 4.1 Customer journeys
 
 ### Audit infrastructure
-- [x] `audit/manifest.json` v2.2 canonical inventory (refreshed 1.4.1)
+- [x] `audit/manifest.json` v2.2 canonical inventory (refreshed 1.5.0)
 - [x] `audit/manifest.summary.json` ≤3 KB CLAUDE.md READ-FIRST companion
 - [x] `audit/FEATURE_AUDIT.md`, `audit/CODE_FLOWS.md`, `audit/ROLE_MATRIX.md`
 - [x] `audit/graph.html` (Cytoscape) for visual inventory browsing
-- [x] `audit/derived/` cache for 16 static-analysis sub-checks (boot-hoist-guards added in 1.4.1)
+- [x] `audit/derived/` cache for 16 static-analysis sub-checks (boot-hoist-guards added in 1.5.0)
 - [x] `audit/journeys/` framework with 10 release-tier journeys
 - [x] `audit/wppqa-baseline-latest/SUMMARY.md` failed=0 across 4 checks
 
-### Bugs closed in 1.4.1 sweep (21 of 21)
+### Bugs closed in 1.5.0 sweep (21 of 21)
 - [x] #9914460166 Setup wizard not triggered on activation
 - [x] #9914967346 UI of gamification activity
 - [x] #9925151443 Real-time toasts (heartbeat → fast / 5s)

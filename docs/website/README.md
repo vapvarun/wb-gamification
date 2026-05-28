@@ -16,7 +16,7 @@ docs/website/
 ├── image_map.json                 Image-asset upload tracking (auto-managed)
 │
 ├── getting-started/               4 docs — installation, wizard, quick-start, how-it-works
-├── features/                      18 docs — every shipped gamification feature in one folder
+├── features/                      23 docs — every shipped gamification feature in one folder
 ├── settings/                      8 docs — admin-screen-by-screen configuration walkthroughs
 ├── integrations/                  7 docs — per-host-plugin integration notes
 ├── buddypress/                    3 docs — BP-specific surfaces
@@ -27,20 +27,13 @@ docs/website/
 
 ## Publishing
 
-Customer docs sync to `docs.wbcomdesigns.com` via the `wbcom-docs` MCP. The standard one-shot:
+**Source of truth is this directory + GitHub.** Edit the `.md` files here, commit, push. Whatever pipeline reads the repo handles publishing downstream — there is no remote upload step initiated from your laptop.
 
-```
-mcp__wbcom-docs__publish_product_docs({
-  product_slug: "wb-gamification",
-  product_path: "/path/to/wb-gamification",
-  product_type: "plugin",
-  sync_to_live: false   // verify locally first; flip to true once ready
-})
-```
+- Edit `.md` files under `docs/website/` and commit them like any other source file.
+- Keep `docs_config.json` and `image_map.json` in the repo — they travel with the docs.
+- Do **not** call `mcp__wbcom-docs__publish_product_docs` or any of the `mcp__wbcom-docs__*` tools. They push to a remote service that is not part of this team's publishing pipeline.
 
-The pipeline reads `docs_config.json` to categorise / order pages, uploads images referenced via `image_map.json`, and creates / updates docs on the target site.
-
-For the full workflow + nuances, see `~/.claude/workflows/plugin-docs-website.md`.
+For the rules around folder structure, filename conventions, image handling, and markdown style, see `~/.claude/workflows/wbcom-docs.md`.
 
 ## Editing rules
 
