@@ -1635,6 +1635,12 @@
       "class": "WBGam\\Repository\\SubmissionRepository",
       "added": "1.0.0",
       "purpose": "SQL repo for wb_gam_submissions."
+    },
+    {
+      "key": "MemberUploadCap",
+      "class": "WBGam\\Engine\\MemberUploadCap",
+      "added": "1.4.1",
+      "purpose": "Bridges WP upload_files cap to logged-in members so the achievement editor Add Media button works for subscribers / contributors. Opt-out filter: wb_gam_grant_member_uploads."
     }
   ],
   "hooks_fired": [
@@ -2468,7 +2474,7 @@
     ]
   },
   "generated": {
-    "at": "2026-05-27T21:00:00Z",
+    "at": "2026-05-28T01:44:38Z",
     "from": "wp-plugin-onboard --refresh — v1.4.0 post-release sweep. Ground-truth re-scan against today diff: 99 plugin hooks (53 actions + 46 filters), 23 tables, 19 blocks, 17 shortcodes, 10 distinct cron hooks, 10 WP-CLI commands, 13 admin pages, 10 declared caps, 24 frontend CSS files + 19 frontend JS files. Sub-arrays (.hooks_fired[], .services[], .frontend_assets) carry over from 2026-05-06 by reference; coverage gate documents the gap. v2.2 schema preserved. See audit/wppqa-baseline-2026-05-27/SUMMARY.md and audit/ISSUES-2026-05-27.yaml.",
     "branch": "main",
     "schema_version": "v2.2",
@@ -2558,8 +2564,8 @@
         "note": "Tier-0 admin REST migration added admin-rest-utils.js, admin-rest-form.js, admin-action-overrides.js, admin-cohort.js, admin-api-keys.js, admin-levels.js, admin-submissions.js, admin-test-event.js, admin-reward-type-toggle.js, admin-rule-action-toggle.js, give-kudos.js, heartbeat.js, hub-convert.js, plus 2 interactivity stores (hub.js, notifications.js). Major drift — re-enumeration deferred."
       }
     },
-    "last_pr_merged": "v1.4.0 wave-1..wave-6 bug-sweep + 6 stability gates + CSS architecture refactor",
-    "since_last_refresh": "v1.4.0 release-candidate: 30 commits since 2026-05-13 — engine refactor (Transaction helper, unified ledger write path, multi-currency event stamping, webhook hardening, email rate-limit), 6 new local-CI gates (P0–P2), Plugin Check warning burndown, CSS architecture refactor (admin.css split per page), HeartbeatChannel realtime substrate, granular cap rollout."
+    "last_pr_merged": "v1.4.0 bug-sweep session 2026-05-27 → 2026-05-28 — 21 Basecamp cards closed + 2 new local-CI gates",
+    "since_last_refresh": "19 commits — boot-guard regression fix + 8 PR-quality bug fixes + 12 feature/UX fixes. New gates: bin/check-boot-invariants.php (stage 2.13), bin/check-badge-condition-contract.php (stage 2.14). New engine: WBGam\\Engine\\MemberUploadCap (grants upload_files to logged-in members). Behaviour changes: WC purchase events now hook woocommerce_payment_complete (was status_completed); first_comment + first_post + prolific_writer + content_creator + engaged_reader badges now use action_count (was point_milestone); redemption email whitelist accepts the slug; cohort tier names + 5th-tier admin input wired through engine + REST + JS; CommunityChallengeEngine::award_community_bonus listener installed (the dead-letter that pre-fix never granted bonuses); heartbeat interval set to fast (5s) for realtime toasts; toast.js dedupes by _id across 3 cursors. UI: user-status-bar chevron toggle + theme top-offset CSS var; cohort-rank tier-coloured accent dot; community-challenges completed-state visual treatment + per-block style.css now compiles; earning-guide card layout (label below icon+pts so long labels read horizontally); manual badge-award form on Badge edit page; Hub Challenges card unites personal + community."
   },
   "wp_cli_commands": [
     {
