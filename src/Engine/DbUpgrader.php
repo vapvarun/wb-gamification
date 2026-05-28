@@ -94,6 +94,51 @@ final class DbUpgrader {
 		self::ensure_leaderboard_cache_unique_key();
 		self::ensure_submissions_table();
 		self::ensure_api_keys_table();
+		self::ensure_side_effect_failures_table();
+	}
+
+	/**
+	 * Create wb_gam_side_effect_failures on existing installs.
+	 *
+	 * Backing table for SideEffectDispatcher (v2.1 — decoupled side
+	 * effects). Holds failed level-up / streak / webhook handlers for
+	 * cron-driven reconciliation. See
+	 * plan/STABILITY-AND-ARCHITECTURE-V2.md §4.v2.1.
+	 *
+	 * Idempotent — feature-flag gated.
+	 *
+	 * @since 1.5.0
+	 */
+	private static function ensure_side_effect_failures_table(): void {
+		$flag_key = 'wb_gam_feature_side_effect_failures_v1';
+		if ( get_option( $flag_key ) ) {
+			return;
+		}
+
+		global $wpdb;
+		$charset = $wpdb->get_charset_collate();
+		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+
+		dbDelta(
+			"CREATE TABLE {$wpdb->prefix}wb_gam_side_effect_failures (
+			id              BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+			event_id        VARCHAR(64)     NOT NULL,
+			user_id         BIGINT UNSIGNED NOT NULL,
+			side_effect     VARCHAR(64)     NOT NULL,
+			points          INT             NOT NULL DEFAULT 0,
+			event_payload   TEXT            NOT NULL,
+			error_message   VARCHAR(500)    NOT NULL DEFAULT '',
+			retry_count     TINYINT UNSIGNED NOT NULL DEFAULT 0,
+			status          VARCHAR(20)     NOT NULL DEFAULT 'pending',
+			last_attempt_at DATETIME        NULL,
+			created_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			PRIMARY KEY (id),
+			KEY idx_status_attempt (status, last_attempt_at),
+			KEY idx_event_id       (event_id)
+			) {$charset};"
+		);
+
+		update_option( $flag_key, '1' );
 	}
 
 	/**

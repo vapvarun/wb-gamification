@@ -287,24 +287,29 @@ boot failure).
 that asserts no two consumers claim the same slot and errors loudly
 if a dependency claims a later slot than its dependent.
 
-### Finding B — Side effects after COMMIT
+### Finding B — Side effects after COMMIT *(closed in this wave)*
 
 Award flow's `LevelEngine::maybe_level_up`, `StreakEngine::record_activity`,
-`WebhookDispatcher::dispatch` ALL fire after the points commit. If
-any fail, the failure is silent — caught by the global logger, but
-no compensation, no retry, no audit trail.
+`WebhookDispatcher::dispatch` used to fire after the points commit
+with no failure-handling beyond the global logger.
 
-This trade-off is reasonable for write throughput (no need to hold
-the transaction open through 3 slow side effects), but is currently
-INVISIBLE in the code — there's no marker saying "this is an at-most-once
-side-effect, design accordingly."
+**Resolved**: the three calls were extracted to a
+`SideEffectDispatcher::dispatch(Event, points)` fan-out. Each handler
+is registered at Engine boot via `register_default_side_effects()`.
+`dispatch()` wraps every handler in try/catch; failures are persisted
+to `wb_gam_side_effect_failures` (new table) with retry counters. An
+hourly cron `wb_gam_reconcile_side_effects` replays pending failures
+up to `MAX_RETRIES` (3) times before marking the row `'exhausted'`
+for human triage. 5 PHPUnit tests cover the dispatch-success,
+dispatch-failure-isolation, retry-success, retry-exhausted, and
+orphaned-handler paths.
 
-**v2 proposal**: extract the side-effect block into a single
-`Engine::dispatch_side_effects(Event)` method that iterates a
-registered list of consumers. Each consumer is wrapped in a try/catch
-that logs failures to a `wb_gam_side_effect_failures` table for later
-reconciliation. The cron `wb_gam_reconcile_side_effects` (new) replays
-failed side-effects up to N times before giving up.
+Handler contract: each registered handler MUST be idempotent (the
+reconciler re-fires from the original Event payload). The three
+defaults already are — `maybe_level_up` derives current level from
+`wb_gam_user_totals` and writes only on diff; `record_activity`
+dedupes by date; `WebhookDispatcher::dispatch` enqueues at-least-once
+delivery (documented public contract).
 
 ### Finding C — NotificationBridge has 3 cursors with band-aid dedupe
 
@@ -332,17 +337,18 @@ the consumers.
 ## 4. v2 architecture proposal
 
 > Direction, not commitment. Each item below moves through plan/MASTER-CHECKLIST
-> with explicit drift gates before landing.
+> with explicit drift gates before landing. Version numbers were intentionally
+> dropped from this list — every item is in-scope for v1.5.0 (the only
+> version while the plugin is pre-release).
 
-### v2.1 — Decouple side effects (closes Finding B + #2)
+### v2.1 — Decouple side effects *(shipped)*
 
-Extract LevelEngine, StreakEngine, WebhookDispatcher invocations
-into a registered side-effect dispatch list. Failures land in
-`wb_gam_side_effect_failures` for reconciliation. Reconciler cron
-replays up to 3 times before giving up.
-
-**Sizing**: 1 commit. New table (DbUpgrader migration). New cron.
-~200 LOC engine refactor. Tests for the failure-and-replay path.
+`SideEffectDispatcher` (`src/Engine/SideEffectDispatcher.php`) +
+`wb_gam_side_effect_failures` table + `wb_gam_reconcile_side_effects`
+hourly cron. Engine refactor replaces the three inline calls with
+`SideEffectDispatcher::dispatch(Event, points)`. Default handlers
+registered for `level_up` / `streak` / `webhook`. 5 PHPUnit tests
+cover the failure-and-replay paths.
 
 ### v2.2 — Unified notification queue (closes Finding C + the 3-cursor dedupe debt)
 
@@ -404,38 +410,35 @@ consumer on the v2.5 foundation:
 
 ---
 
-## 5. Migration sequence
+## 5. Build sequence
 
-Order is informed by dependency:
+Pre-release: everything below lands as additive work on 1.5.0 HEAD.
+Version stays at 1.5.0 until the first customer release. Order is
+informed by dependency, not by release-tier.
 
 ```
-v1.5.0 (shipped)
-├── Foundation wave (commits 0c3e7c4 → 5e7f7d9, 11 commits)
-│   ├── Generators (readme, docs_config, hooks_fired, frontend_assets)
-│   ├── OpenAPI artefact + SDK toolchain + 64 methods
-│   ├── AS-schedule guard
-│   ├── 100k scale baseline
-│   ├── ping() wiring
-│   └── SSE scaffold (stage 1)
-│
-└── v1.6.0 (next release)
-    ├── v2.1 Decouple side effects                         [1 commit]
-    ├── v2.2 Unified notification queue                    [2 commits]
-    ├── v2.3 SSE stage 2 (storage + writer)                [1 commit]
-    ├── v2.3 SSE stage 3 (streaming loop)                  [1 commit]
-    ├── v2.4 Boot order contract                           [1 commit]
-    └── v2.3 SSE stage 4 (journey + default flip)          [1 commit]
+Foundation wave (shipped — commits 0c3e7c4 → b160c81, 12 commits)
+├── Generators (readme, docs_config, hooks_fired, frontend_assets)
+├── OpenAPI artefact + SDK toolchain + 64 methods
+├── AS-schedule guard
+├── 100k scale baseline
+├── ping() wiring
+├── SSE scaffold (stage 1)
+└── This stability + arch document
 
-v1.7.0 (features become projections)
-    ├── v2.5 Read-side projection scaffold                 [1 commit]
-    ├── AI intelligence v1 (heuristic projection)          [2 commits]
-    ├── GraphQL extension (projection via WPGraphQL)       [2 commits]
-    └── JS SDK method-coverage refinements                 [1 commit]
-
-v2.0.0 (federation + multi-server)
-    ├── Redis pub/sub for SSE                              [TBD]
-    ├── ActivityPub Outbox projection                      [TBD]
-    └── Pluggable AI provider interface                    [TBD]
+v2.1 Decouple side effects                  shipped  ✓
+v2.2 Unified notification queue             2 commits (migration + consumer-switch)
+v2.3 SSE stage 2 (storage + writer)         1 commit
+v2.3 SSE stage 3 (streaming loop)           1 commit
+v2.4 Boot order contract                    1 commit
+v2.3 SSE stage 4 (journey + default flip)   1 commit
+v2.5 Read-side projection scaffold          1 commit
+AI intelligence v1 (heuristic projection)   2 commits
+GraphQL extension (WPGraphQL bridge)        2 commits
+JS SDK method-coverage refinements          1 commit
+Redis pub/sub for SSE                       TBD (multi-server)
+ActivityPub Outbox projection               TBD (depends on ActivityPub plugin)
+Pluggable AI provider interface             TBD (after AI v1 lands)
 ```
 
 ---

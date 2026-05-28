@@ -140,6 +140,10 @@
 
 ---
 
+## ✅ v2 work shipped on 1.5.0 HEAD
+
+- [x] **v2.1 Decouple side effects** — `SideEffectDispatcher` + `wb_gam_side_effect_failures` table + hourly reconciler cron. Engine refactored to fan-out through dispatcher (try/catch isolation, retry up to 3 times, status='exhausted' for human triage). 5 PHPUnit tests cover success + failure-isolation + retry-success + retry-exhausted + orphan-handler paths.
+
 ## ⏳ Pending (4)
 
 > See [`STABILITY-AND-ARCHITECTURE-V2.md`](STABILITY-AND-ARCHITECTURE-V2.md) for the data-flow trace + v2 architecture trajectory that contextualises these items. The remaining work is no longer "build infrastructure" — it's feature projection on top of the foundation we now have.

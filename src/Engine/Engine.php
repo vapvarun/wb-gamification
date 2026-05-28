@@ -75,6 +75,8 @@ final class Engine {
 		self::$initialized = true;
 
 		WebhookDispatcher::init();
+		SideEffectDispatcher::boot();
+		self::register_default_side_effects();
 
 		// Action Scheduler handler for async event processing.
 		add_action( 'wb_gam_process_event_async', array( __CLASS__, 'handle_async' ) );
@@ -89,6 +91,52 @@ final class Engine {
 		add_action( 'updated_option', array( __CLASS__, 'maybe_flush_enabled_cache' ), 10, 1 );
 		add_action( 'added_option', array( __CLASS__, 'maybe_flush_enabled_cache' ), 10, 1 );
 		add_action( 'deleted_option', array( __CLASS__, 'maybe_flush_enabled_cache' ), 10, 1 );
+	}
+
+	/**
+	 * Register the engine's default side-effect handlers with
+	 * SideEffectDispatcher.
+	 *
+	 * Each handler must be idempotent. The reconciler cron re-fires
+	 * failed handlers from the original Event payload up to MAX_RETRIES
+	 * times; a non-idempotent handler would double-apply on retry.
+	 *
+	 *   level_up — LevelEngine::maybe_level_up is idempotent because it
+	 *              re-derives the current level from wb_gam_user_totals
+	 *              and only writes when level_id differs from the cached
+	 *              value in user_meta. Re-firing with the same state is
+	 *              a no-op.
+	 *
+	 *   streak   — StreakEngine::record_activity is idempotent because
+	 *              it dedupes on (user_id, YYYY-MM-DD). Re-firing on the
+	 *              same day is a no-op.
+	 *
+	 *   webhook  — WebhookDispatcher::dispatch enqueues one AS job per
+	 *              webhook subscription per event. If a job is enqueued
+	 *              twice for the same (subscription, event_id), the
+	 *              second job's deliver() call hits the same URL with
+	 *              the same payload — at-least-once delivery semantics
+	 *              are documented on the public webhook contract.
+	 */
+	private static function register_default_side_effects(): void {
+		SideEffectDispatcher::register(
+			'level_up',
+			static function ( Event $event, int $points ): void {
+				LevelEngine::maybe_level_up( $event->user_id );
+			}
+		);
+		SideEffectDispatcher::register(
+			'streak',
+			static function ( Event $event, int $points ): void {
+				StreakEngine::record_activity( $event->user_id );
+			}
+		);
+		SideEffectDispatcher::register(
+			'webhook',
+			static function ( Event $event, int $points ): void {
+				WebhookDispatcher::dispatch( 'points_awarded', $event->user_id, $event, $points, array() );
+			}
+		);
 	}
 
 	/**
@@ -413,10 +461,16 @@ final class Engine {
 		// switch to `wb_gam_points_awarded` and read fields off the Event
 		// object: $event->action_id, $event->object_id, $event->metadata.
 
-		// Side-effects.
-		LevelEngine::maybe_level_up( $event->user_id );
-		StreakEngine::record_activity( $event->user_id );
-		WebhookDispatcher::dispatch( 'points_awarded', $event->user_id, $event, $points, array() );
+		// Side-effects — routed through SideEffectDispatcher so failures
+		// land in wb_gam_side_effect_failures for reconciliation rather
+		// than disappearing silently. See v2.1 in
+		// plan/STABILITY-AND-ARCHITECTURE-V2.md (Finding B + #2).
+		//
+		// Each handler is registered once at boot (see register_default_side_effects()
+		// below). dispatch() wraps every registered handler in try/catch;
+		// one failure doesn't stop the others, and every failure becomes
+		// a retry candidate for the hourly reconciler cron.
+		SideEffectDispatcher::dispatch( $event, $points );
 
 		/**
 		 * Fires after a gamification event is fully processed.
