@@ -1835,7 +1835,7 @@
       "type": "action",
       "purpose": "",
       "fired_at": [
-        "src/Engine/Engine.php:505"
+        "src/Engine/Engine.php:519"
       ],
       "consumed_by": []
     },
@@ -1951,7 +1951,7 @@
       "type": "action",
       "purpose": "An event has finished evaluating rules + dispatching outputs.",
       "fired_at": [
-        "src/Engine/Engine.php:593"
+        "src/Engine/Engine.php:607"
       ],
       "consumed_by": []
     },
@@ -2049,7 +2049,7 @@
       "type": "action",
       "purpose": "",
       "fired_at": [
-        "src/Engine/Engine.php:564"
+        "src/Engine/Engine.php:578"
       ],
       "consumed_by": [
         "src/Engine/BadgeEngine.php:59 array( __CLASS__",
@@ -2626,7 +2626,7 @@
       "type": "filter",
       "purpose": "Filter the list of manifest file paths scanned by ManifestLoader. Use to add custom integration manifests.",
       "fired_at": [
-        "src/Engine/ManifestLoader.php:107"
+        "src/Engine/ManifestLoader.php:120"
       ],
       "consumed_by": []
     },
@@ -2644,7 +2644,7 @@
       "type": "filter",
       "purpose": "",
       "fired_at": [
-        "src/Engine/Engine.php:485"
+        "src/Engine/Engine.php:499"
       ],
       "consumed_by": [
         "src/BuddyPress/ActivityIntegration.php:71 array( __CLASS__"
@@ -2749,7 +2749,7 @@
       "type": "filter",
       "purpose": "",
       "fired_at": [
-        "integrations/wpmediaverse.php:279"
+        "integrations/wpmediaverse.php:280"
       ],
       "consumed_by": []
     },
@@ -2758,7 +2758,7 @@
       "type": "filter",
       "purpose": "",
       "fired_at": [
-        "integrations/wpmediaverse.php:421"
+        "integrations/wpmediaverse.php:422"
       ],
       "consumed_by": []
     },
@@ -2767,7 +2767,7 @@
       "type": "filter",
       "purpose": "",
       "fired_at": [
-        "integrations/wpmediaverse.php:437"
+        "integrations/wpmediaverse.php:438"
       ],
       "consumed_by": []
     }

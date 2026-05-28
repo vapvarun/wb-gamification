@@ -171,6 +171,23 @@ final class Registry {
 					? (array) call_user_func_array( $action['metadata_callback'], $params )
 					: array();
 
+				// Dynamic point scaling — when the manifest declares a
+				// points_callback, invoke it with the hook args so the action
+				// can scale points by rank, streak length, order total, etc.
+				// Result is stashed in metadata['_dynamic_points'] and picked
+				// up by Engine::process() in place of default_points. The
+				// metadata field travels through Action Scheduler intact, so
+				// the value computed here is still authoritative when the
+				// async job runs later. Returning 0 or a negative value falls
+				// back to default_points (Engine::process drops awards at 0
+				// regardless).
+				if ( isset( $action['points_callback'] ) && is_callable( $action['points_callback'] ) ) {
+					$dynamic = (int) call_user_func_array( $action['points_callback'], $params );
+					if ( $dynamic > 0 ) {
+						$metadata['_dynamic_points'] = $dynamic;
+					}
+				}
+
 				// Resolve the currency this action awards via the canonical
 				// helper so both ledger-write AND rate-limit checks see the
 				// same value. PointsEngine::insert_point_row() and

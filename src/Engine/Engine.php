@@ -465,7 +465,21 @@ final class Engine {
 		// Determine base points BEFORE the transaction so the early return
 		// for $points <= 0 doesn't leave the transaction open.
 		if ( null !== $action ) {
-			$points = (int) get_option( 'wb_gam_points_' . $event->action_id, $action['default_points'] );
+			// Dynamic points (computed by the manifest's points_callback from
+			// the hook args at fire time) override the per-action admin option
+			// and the default. This is how rank-based winners + streak-day
+			// scaling pass varying point totals through the engine — the
+			// callback runs in Registry::register_action()'s listener BEFORE
+			// the event is queued, so the value survives the Action Scheduler
+			// round-trip via metadata. The admin's per-action option
+			// (wb_gam_points_<id>) is intentionally bypassed when a dynamic
+			// value is set; site owners controlling rank-scaling override the
+			// callback at the manifest layer, not the option.
+			if ( isset( $event->metadata['_dynamic_points'] ) ) {
+				$points = (int) $event->metadata['_dynamic_points'];
+			} else {
+				$points = (int) get_option( 'wb_gam_points_' . $event->action_id, $action['default_points'] );
+			}
 		} else {
 			// Manual / unregistered awards carry the points value in metadata.
 			$points = (int) ( $event->metadata['points'] ?? 0 );

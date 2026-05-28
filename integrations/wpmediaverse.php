@@ -43,15 +43,16 @@ if ( ! defined( 'MVS_VERSION' ) ) {
 	return array();
 }
 
+// In-tree manifest is the canonical source for both Free and Pro action ids.
 // WPMediaVerse Pro <= 1.1.3 still ships its own wb-gamification.php manifest
-// for the same mvs_* action IDs. Defer to Pro's manifest when Pro is active
-// so the IDs register exactly once. When Pro drops its manifest in a future
-// release, remove this guard so the in-tree manifest owns both surfaces.
-if ( defined( 'MVS_PRO_VERSION' ) ) {
-	return array();
-}
-
-$pro_active = false;
+// with an older 3-action winner pattern (mvs_challenge_win_1st / _2nd / _3rd);
+// the in-tree manifest below uses the rank-based mvs_challenge_winner that
+// the same Pro plugin >= 1.2.3 fires through mvs_challenge_winner_named.
+// ManifestLoader silently skips duplicates from third-party files so the
+// in-tree definition always wins — bundled-Pro's 3 legacy ids still register
+// (in-tree doesn't have them) so members on the older Pro release continue
+// to earn for top-3 finishes until they upgrade.
+$pro_active = defined( 'MVS_PRO_VERSION' );
 
 if ( ! function_exists( 'wb_gam_mvs_media_author' ) ) {
 	/**

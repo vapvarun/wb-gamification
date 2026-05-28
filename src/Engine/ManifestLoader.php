@@ -78,6 +78,19 @@ final class ManifestLoader {
 	}
 
 	/**
+	 * Whether the in-flight scan is processing a third-party manifest.
+	 *
+	 * Set by load_from_plugins() before each register_from_file() call and
+	 * cleared after. Used by register_manifest() to silently skip duplicate
+	 * action_ids that third-party manifests redeclare — first-party (in-tree)
+	 * manifests always win precedence on collision so this plugin can ship
+	 * the canonical definition and bundled manifests gracefully fill gaps.
+	 *
+	 * @var bool
+	 */
+	private static bool $loading_third_party = false;
+
+	/**
 	 * Load first-party manifests bundled with this plugin.
 	 *
 	 * @param bool $bp_active Whether BuddyPress is active.
@@ -176,7 +189,12 @@ final class ManifestLoader {
 				continue;
 			}
 
-			self::register_from_file( $file, $bp_active );
+			self::$loading_third_party = true;
+			try {
+				self::register_from_file( $file, $bp_active );
+			} finally {
+				self::$loading_third_party = false;
+			}
 		}
 	}
 
@@ -265,6 +283,17 @@ final class ManifestLoader {
 			// can report which plugin registered the action on collision.
 			if ( ! empty( $manifest['plugin'] ) && ! isset( $trigger['plugin'] ) ) {
 				$trigger['plugin'] = $manifest['plugin'];
+			}
+
+			// Third-party manifests defer to first-party on collision. The
+			// in-tree manifest in this plugin is the canonical source for any
+			// integration we ship for; third-party bundled manifests (e.g.
+			// WPMediaVerse Pro <= 1.1.3 still ships its own wb-gamification.php)
+			// silently yield on duplicate ids so the in-tree definition wins.
+			// First-party-vs-first-party collisions still trip Registry's
+			// _doing_it_wrong path because they signal a genuine bug.
+			if ( self::$loading_third_party && null !== Registry::get_action( (string) $trigger['id'] ) ) {
+				continue;
 			}
 
 			// Track the validated action for the wb_gam_manifests_loaded hook.
