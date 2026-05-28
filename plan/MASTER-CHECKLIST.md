@@ -140,7 +140,11 @@
 
 ---
 
-## ⏳ Pending (10)
+## ⏳ Pending (11)
+
+### Stable-foundation wave (in progress, 1 of 2 commits shipped)
+- [x] **Release-prep orchestrator + drift-impossible generators** — `bin/cut-release.sh <X.Y.Z>` bumps version in 5 spots; `bin/build-readme.php` inlines feature counts from the manifest into `readme.txt`; `bin/build-docs-config.php` keeps `docs/website/docs_config.json` in sync with on-disk `.md` files (errors on dangling entries); `bin/build-blocks.js` safety-net copies orphaned per-block `style.css` into `build/` and warns when an `import './style.css'` is missing. `bin/cut-release.sh --check` proves idempotency by exiting non-zero on any drift.
+- [ ] **PHPStan custom rule: AS-schedule guard contract** — every `as_schedule_*` call must be either preceded by an `as_has_scheduled_action()` guard in the same method OR carry an explicit `@as-fire-once` docblock. Folds into the existing PHPStan stage 1.3 (no new local-CI stage). Six current fire-once call sites get annotated; future enqueues are forced to make the recursion-or-not choice.
 
 ### Performance / scale (3)
 - [ ] **Scale benchmark customisation** — `src/CLI/ScaleCommand.php` exists per skill scaffold but `BUDGETS_MS`, `seed()`, `benchmark()` bodies still ship as stubs. Customise for the actual hot paths (`PointsEngine::get_total`, `LeaderboardEngine::get_leaderboard`, `PointTypeService::list`) before claiming 100k-user readiness.

@@ -35,7 +35,7 @@ The engine awards points automatically when members perform actions on your site
 * **Peer Kudos** — Members recognize each other with kudos. Configurable daily limits and point awards for both sender and receiver.
 * **19 Gutenberg Blocks** — Leaderboard, member points, badge showcase, level progress, challenges, streak, top members, kudos feed, year recap, points history, earning guide, hub, redemption store, community challenges, cohort rank, daily bonus, give kudos, submit achievement, user status bar. Every block follows the Wbcom Block Quality Standard (apiVersion 3, per-side spacing × 3 breakpoints, hover/focus states, design tokens, per-instance scoped CSS).
 * **17 Shortcodes** — Every customer-facing block is also available as a shortcode for classic editor and page builders (Elementor, Beaver Builder, Bricks).
-* **REST API** — 56 endpoints across 19 controllers. Full CRUD for all resources. API key authentication for cross-site setups. Admin UI consumes the same REST API as 3rd-party integrations.
+* **REST API** — 56 endpoints across 26 controllers. Full CRUD for all resources. API key authentication for cross-site setups. Admin UI consumes the same REST API as 3rd-party integrations.
 * **BuddyPress Integration** — Profile rank display, activity feed events, member directory badges, notification bridge.
 * **Toast Notifications** — Real-time bottom-right popups when members earn points, badges, or level up. 6 notification types with auto-dismiss. Promise-based confirm modals replace native browser dialogs (a11y-friendly).
 * **Analytics Dashboard** — 6 KPI cards, top actions, top earners, daily points sparkline. Period selector (7/30/90 days).

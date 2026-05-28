@@ -118,6 +118,80 @@ function syncRenderPhp() {
 	}
 }
 
+/**
+ * Safety-net for the "forgot to import style.css in index.js" foot-gun.
+ *
+ * wp-scripts only compiles a block's style.css into build/Blocks/<slug>/style-index.css
+ * if the block's index.js executes `import './style.css'`. Two blocks
+ * (cohort-rank, community-challenges) shipped 1.5.0-era visual updates
+ * with the file in src/ but no import line — webpack happily produced
+ * the JS bundle, and the per-block CSS silently never appeared in build/.
+ * The frontend block then rendered without its styles.
+ *
+ * This sync runs AFTER wp-scripts:
+ *
+ *   - If src/Blocks/<slug>/style.css exists AND build/.../style-index.css exists
+ *     → webpack handled it via the import; leave alone.
+ *   - If src/Blocks/<slug>/style.css exists AND build/.../style-index.css is missing
+ *     → copy the source through unprocessed AND warn loudly so the author
+ *       knows to add the proper import (which would also unlock PostCSS).
+ *   - If src/Blocks/<slug>/style.css is missing
+ *     → nothing to do.
+ *
+ * Failure mode this prevents: block ships without its CSS. The block still
+ * renders (HTML is fine) so QA can easily miss it. Visual regression catches
+ * it only on screenshot diff — far downstream from the build failure.
+ */
+function syncBlockStyleCss() {
+	const slugs = readdirSync( BLOCKS_DIR, { withFileTypes: true } )
+		.filter( ( entry ) => entry.isDirectory() )
+		.map( ( entry ) => entry.name );
+
+	const orphans = [];
+	let copied = 0;
+
+	for ( const slug of slugs ) {
+		const src = path.join( BLOCKS_DIR, slug, 'style.css' );
+		if ( ! existsSync( src ) ) {
+			continue;
+		}
+		const dest = path.join( BUILD_DIR, 'Blocks', slug, 'style-index.css' );
+		if ( existsSync( dest ) ) {
+			// webpack handled it via the import. Nothing to do.
+			continue;
+		}
+		const destDir = path.dirname( dest );
+		if ( ! existsSync( destDir ) ) {
+			mkdirSync( destDir, { recursive: true } );
+		}
+		copyFileSync( src, dest );
+		orphans.push( slug );
+		copied++;
+	}
+
+	if ( orphans.length > 0 ) {
+		process.stderr.write(
+			`\nwb-gamification: WARN — ${ orphans.length } block(s) shipped style.css without a matching\n` +
+				`  \`import './style.css'\` in their index.js. The source CSS has been copied through\n` +
+				`  unprocessed so the block isn't unstyled in production, but PostCSS (autoprefixer,\n` +
+				`  nested CSS, etc.) did NOT run on it. Fix by adding the import at the top of each\n` +
+				`  block's index.js — webpack will take over and you can remove this safety-net path.\n` +
+				`  Affected blocks:\n`
+		);
+		for ( const slug of orphans ) {
+			process.stderr.write( `    · src/Blocks/${ slug }/index.js\n` );
+		}
+		process.stderr.write( '\n' );
+	}
+
+	if ( copied > 0 ) {
+		process.stdout.write(
+			`wb-gamification: copied ${ copied } unprocessed style.css file(s) into build/ (see WARN above).\n`
+		);
+	}
+}
+
 syncRenderPhp();
+syncBlockStyleCss();
 
 process.exit( 0 );
