@@ -73,6 +73,14 @@
 		source.addEventListener( 'message', handleMessage );
 		source.addEventListener( 'error', handleError );
 		source.addEventListener( 'close', handleServerClose );
+
+		// SSE controller emits events with named types (points, badge,
+		// level_up, kudos, etc.) using `event: <type>` lines. EventSource
+		// only fires the `message` handler for unnamed events, so we
+		// also listen on the explicit types our backend writes.
+		[ 'points', 'badge', 'level_up', 'streak_milestone', 'challenge_completed', 'kudos', 'skip', 'unknown' ].forEach( function ( type ) {
+			source.addEventListener( type, handleNamedEvent( type ) );
+		} );
 	}
 
 	function handleMessage( ev ) {
@@ -89,13 +97,24 @@
 			lastEventId = parseInt( ev.lastEventId, 10 ) || lastEventId;
 		}
 		// Dispatch into the broker. Subscribers don't know SSE exists.
+		// SSE messages come from wb_gam_notifications_queue rows whose
+		// payload is the full event object (with `type`, `_id`, etc.).
+		// Heartbeat consumers receive arrays of these — match the shape
+		// so subscribers don't need to special-case SSE.
 		if ( window.wbGamRealtime && typeof window.wbGamRealtime._dispatch === 'function' ) {
-			// Future: when stages 2-3 ship, heartbeat.js will expose
-			// _dispatch(channel, slice) as the broker's write side.
-			// For now this branch is dead code (heartbeat.js doesn't
-			// expose _dispatch yet) but keeps the contract documented.
-			window.wbGamRealtime._dispatch( payload.channel, payload.data );
+			window.wbGamRealtime._dispatch( 'toasts', [ payload ] );
 		}
+	}
+
+	function handleNamedEvent( eventName ) {
+		return function ( ev ) {
+			// `close` is the server-side soft-deadline marker; EventSource
+			// auto-reconnects. No subscriber action needed.
+			if ( 'close' === eventName ) {
+				return;
+			}
+			handleMessage( ev );
+		};
 	}
 
 	function handleError() {

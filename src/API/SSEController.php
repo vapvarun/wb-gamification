@@ -106,9 +106,24 @@ final class SSEController {
 	}
 
 	/**
-	 * Stream handler. Stage 1 = no-op: returns 503 with the configured
-	 * transport so the JS adapter knows to fall back. Stages 2-3 land
-	 * the real loop body.
+	 * Stream handler.
+	 *
+	 * Stages 2+3 of the rollout. Long-polls the wb_gam_notifications_queue
+	 * table (shipped in v2.2) for events whose id > last_event_id from
+	 * the request. Emits SSE-framed JSON for each, sleeps 2s, repeats
+	 * until either the 28-second soft deadline or
+	 * connection_aborted() fires.
+	 *
+	 * Environment hazards (per plan/REAL-TIME-TRANSPORT.md):
+	 *   - PHP-FPM session lock        → session_write_close() first
+	 *   - Output buffering            → drain + ob_implicit_flush(true)
+	 *   - max_execution_time          → set_time_limit(0) + soft 28s deadline
+	 *   - nginx + Cloudflare buffering → X-Accel-Buffering: no header
+	 *   - REST framework JSON wrapping → write raw bytes + exit (no return)
+	 *   - Floating connections        → connection_aborted() inside loop
+	 *
+	 * Returns nothing — exits the request inline. WordPress sees the
+	 * response as completed.
 	 */
 	public function stream( \WP_REST_Request $request ) {
 		if ( ! self::is_enabled() ) {
@@ -123,17 +138,120 @@ final class SSEController {
 			);
 		}
 
-		// Stage 2+ implementation lands here. For now, also return 503
-		// — we don't have the storage table yet, so even if enabled
-		// there's nothing to stream. This keeps the contract honest:
-		// the JS adapter's fallback path is exercised either way.
-		return new \WP_REST_Response(
-			array(
-				'code'    => 'sse_not_implemented',
-				'message' => 'SSE streaming loop ships in stage 2 of the rollout. See plan/REAL-TIME-TRANSPORT.md.',
+		$user_id = get_current_user_id();
+		if ( $user_id <= 0 ) {
+			// permission_callback should have caught this, but defense in depth.
+			return new \WP_REST_Response( array( 'code' => 'unauthenticated' ), 401 );
+		}
+
+		$last_id = (int) $request->get_param( 'last_event_id' );
+
+		// Release the session lock so other requests from the same user
+		// aren't blocked for the lifetime of this stream.
+		if ( function_exists( 'session_write_close' ) && PHP_SESSION_ACTIVE === session_status() ) {
+			session_write_close();
+		}
+
+		// Headers — text/event-stream + cache + buffering opt-outs.
+		header( 'Content-Type: text/event-stream' );
+		header( 'Cache-Control: no-cache' );
+		header( 'Connection: keep-alive' );
+		header( 'X-Accel-Buffering: no' );
+
+		// Drain every existing output buffer + disable implicit buffering.
+		while ( ob_get_level() > 0 ) {
+			ob_end_flush();
+		}
+		ob_implicit_flush( true );
+
+		// Lift the request time-limit so a 30s stream doesn't 504. Caller
+		// won't expect a return value; we'll exit() at the end.
+		if ( function_exists( 'set_time_limit' ) ) {
+			@set_time_limit( 0 ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- intentional: hosts that disable set_time_limit silently throw a warning.
+		}
+
+		// 4 KB padding comment so any proxy with a small buffer flushes
+		// the response on the first byte instead of waiting to fill.
+		echo ': ' . str_repeat( ' ', 4096 ) . "\n\n";
+		@ob_flush(); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- some configs throw when no buffer is active.
+		flush();
+
+		$started      = time();
+		$soft_deadline = $started + 28;
+		$poll_interval = 2;
+		$idle_max      = 25; // exit if we go this long with no events (lets client reconnect for fresh limits)
+		$last_event_at = $started;
+
+		while ( time() < $soft_deadline ) {
+			if ( connection_aborted() ) {
+				break;
+			}
+
+			$rows = self::fetch_pending( $user_id, $last_id );
+
+			foreach ( $rows as $row ) {
+				$last_id       = (int) $row['id'];
+				$last_event_at = time();
+
+				// SSE wire format: `id`, `event`, `data`. Each terminated
+				// by \n; record terminated by extra \n.
+				printf(
+					"id: %d\nevent: %s\ndata: %s\n\n",
+					$last_id,
+					(string) $row['event_type'],
+					(string) $row['payload_json']
+				);
+			}
+
+			// Keep-alive comment — proxies that idle-close after 30s of
+			// silence see ongoing bytes.
+			if ( empty( $rows ) ) {
+				echo ": keepalive\n\n";
+			}
+
+			@ob_flush(); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+			flush();
+
+			if ( ( time() - $last_event_at ) >= $idle_max ) {
+				break;
+			}
+
+			sleep( $poll_interval );
+		}
+
+		// Emit a `close` event so the client knows the server-side soft
+		// deadline ended — distinct from an error. EventSource will
+		// auto-reconnect from this state.
+		echo "event: close\ndata: {}\n\n";
+		@ob_flush(); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+		flush();
+
+		exit;
+	}
+
+	/**
+	 * Pull queued notifications for a user, ordered by id ascending.
+	 *
+	 * Bounded by LIMIT so a sudden 1000-event backlog can't ship in
+	 * a single SSE write. Subsequent loop iterations pick up the rest.
+	 *
+	 * @return array<int, array{id: int, event_type: string, payload_json: string}>
+	 */
+	private static function fetch_pending( int $user_id, int $last_id ): array {
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$rows = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT id, event_type, payload_json
+				   FROM {$wpdb->prefix}wb_gam_notifications_queue
+				  WHERE user_id = %d AND id > %d
+				  ORDER BY id ASC
+				  LIMIT 50",
+				$user_id,
+				$last_id
 			),
-			503,
-			array( 'Retry-After' => '60' )
+			ARRAY_A
 		);
+		return is_array( $rows ) ? $rows : array();
 	}
 }

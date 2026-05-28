@@ -144,6 +144,7 @@
 
 - [x] **v2.1 Decouple side effects** — `SideEffectDispatcher` + `wb_gam_side_effect_failures` table + hourly reconciler cron. Engine refactored to fan-out through dispatcher (try/catch isolation, retry up to 3 times, status='exhausted' for human triage). 5 PHPUnit tests cover success + failure-isolation + retry-success + retry-exhausted + orphan-handler paths.
 - [x] **v2.2 Notifications-queue durability (write-side)** — new `wb_gam_notifications_queue` table + dual-write from `NotificationBridge::push()`. Transient flush no longer strands user_meta cursors because the durable backup survives. Daily prune cron with 24h retention. Reader-side switch deferred to a follow-up commit; existing transient reads keep working unchanged. Re-scoped Finding C in `STABILITY-AND-ARCHITECTURE-V2.md` after re-reading code (the 3-cursor design is intentional, not a band-aid).
+- [x] **SSE stages 2 + 3** — Streaming loop in `SSEController::stream()` long-polls the notifications-queue table (consolidates the originally-planned `wb_gam_sse_events` table into the v2.2 queue). All 6 environment hazards handled (PHP-FPM session lock, output buffering, max_execution_time, nginx + Cloudflare buffering, REST JSON wrap, connection abort). `assets/js/sse.js` dispatches named-event types into the `wbGamRealtime` broker via new `_dispatch()` write-side API in `heartbeat.js` — existing toast/leaderboard consumers receive SSE-delivered events transparently. Still feature-flagged off by default; stage 4 (journey test + flag flip to `'auto'`) remaining.
 
 ## ⏳ Pending (4)
 

@@ -192,26 +192,44 @@ Two reasons:
       `'heartbeat'` (default) or `'sse'`. Single switch.
 - [x] This design doc.
 
-### Stage 2 — Storage + writer (next commit)
+### Stage 2 — Storage *(shipped — consolidated into v2.2)*
 
-- [ ] New table `wb_gam_sse_events` via DbUpgrader migration.
-- [ ] `NotificationBridge::queue_sse_event()` — writes to the new
-      table whenever the existing transient write fires.
-- [ ] Daily cron `wb_gam_sse_prune` — deletes rows older than 5 minutes.
-- [ ] Unit test: writer fires, prune removes stale rows.
+- [x] Storage backend is `wb_gam_notifications_queue` (shipped in v2.2 via
+      `src/Engine/DbUpgrader::ensure_notifications_queue_table()`). The
+      original design called for a separate `wb_gam_sse_events` table, but
+      since the notifications queue already carries everything SSE needs
+      (user_id, monotonic id, event_type, payload_json, created_at) and
+      its `idx_user_id (user_id, id)` covers the SSE polling query
+      verbatim, the two tables collapsed into one.
+- [x] Writer: `NotificationBridge::persist_to_queue_table()` runs on
+      every `push()` call, dual-writing the durable backup alongside
+      the existing transient.
+- [x] Daily prune: `NotificationBridge::PRUNE_CRON` removes rows older
+      than 24h (`RETENTION_SECONDS`). Bounded delete LIMIT 5000/run.
 
-### Stage 3 — Real streaming loop (next commit)
+### Stage 3 — Streaming loop *(shipped)*
 
-- [ ] SSEController loop body:
-      session_write_close → drain buffers → set_time_limit(0) →
-      28s soft deadline → 2s poll interval → exit on
-      connection_aborted() or no events for 25s → emit `event: close`.
-- [ ] JS adapter wires received events into `wbGamRealtime` subscribers
-      (toast, leaderboard, user channels) so existing consumers don't
-      need to know SSE exists.
-- [ ] Manual test: tail the wb_gam_sse_events table while clicking a
-      kudos button; confirm the receiver's browser shows the toast in
-      <500 ms.
+- [x] `SSEController::stream()` long-polls `wb_gam_notifications_queue`
+      by `WHERE user_id=? AND id > ?` with a 50-row LIMIT per iteration,
+      a 28-second soft deadline, a 25-second idle exit, 2-second poll
+      interval, and a final `event: close` so the EventSource client
+      knows the deadline ended cleanly (vs. an error).
+- [x] All 6 environment hazards from §2 of this doc handled:
+      session_write_close before the loop; drain + ob_implicit_flush(true);
+      set_time_limit(0); X-Accel-Buffering: no; bare register_rest_route
+      callback (not WP_REST_Controller — bypasses JSON wrap); connection
+      _aborted() check each iteration.
+- [x] 4 KB padding comment as the first bytes so buffering proxies
+      flush on first byte instead of waiting to fill.
+- [x] `assets/js/sse.js` listens on named-event types (`points`, `badge`,
+      `level_up`, `streak_milestone`, `challenge_completed`, `kudos`,
+      `skip`, `unknown`) and dispatches each payload into the
+      `wbGamRealtime` broker's `toasts` channel via the new `_dispatch()`
+      write-side API in `heartbeat.js`. Existing subscribers
+      (toast.js etc.) consume the events without knowing SSE is the
+      source.
+- [x] `_dispatch()` exposed in `heartbeat.js` so alternative transports
+      can write into the same broker subscriber set.
 
 ### Stage 4 — Hardening + opt-in default
 

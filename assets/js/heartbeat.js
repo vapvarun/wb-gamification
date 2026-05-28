@@ -167,6 +167,21 @@
 			 * use cases). May be null if no tick has happened yet.
 			 */
 			lastPayload: function () { return lastPayload; },
+
+			/**
+			 * Internal: write-side of the broker. Used by alternative
+			 * transports (SSE in assets/js/sse.js) to dispatch events
+			 * into the same channel set heartbeat publishes to.
+			 *
+			 * Subscribers don't know which transport delivered the
+			 * event — the broker is the contract.
+			 *
+			 * @param {string} channel One of the channel names.
+			 * @param {*}      slice   Channel-specific payload.
+			 */
+			_dispatch: function ( channel, slice ) {
+				fanout( channel, slice );
+			},
 		};
 
 		window.wbGamRealtime = api;
