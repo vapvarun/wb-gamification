@@ -469,6 +469,10 @@ v2.3 SSE stages 2 + 3 (storage + loop)      shipped  ✓
 v2.3 SSE stage 4 (journey + default flip)   1 commit
 v2.4 Boot order contract                    shipped  ✓
 v2.5 + AI v1 (intelligence projection)      shipped  ✓
+GraphQL extension (WPGraphQL bridge)         shipped  ✓
+ActivityPub Outbox projection                shipped  ✓
+SSE stage 4-prep (operational docs)          shipped  ✓
+SSE stage 4 (browser test + default flip)    needs Playwright
 v2.3 SSE stage 2 (storage + writer)         1 commit
 v2.3 SSE stage 3 (streaming loop)           1 commit
 v2.4 Boot order contract                    1 commit

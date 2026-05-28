@@ -406,6 +406,12 @@
           "title": "Extending Blocks",
           "slug": "extending-blocks-wbgam",
           "order": 13
+        },
+        {
+          "file": "realtime-transport.md",
+          "title": "Realtime transport \u2014 Heartbeat vs Server-Sent Events",
+          "slug": "realtime-transport-wbgam",
+          "order": 14
         }
       ]
     }

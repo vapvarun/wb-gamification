@@ -1807,7 +1807,8 @@
       "consumed_by": [
         "src/BuddyPress/Stream/BadgeStream.php:31 array( __CLASS__",
         "src/Engine/NotificationBridge.php:87 array( __CLASS__",
-        "src/Engine/TransactionalEmailEngine.php:81 array( __CLASS__"
+        "src/Engine/TransactionalEmailEngine.php:81 array( __CLASS__",
+        "src/Integrations/ActivityPub.php:47 array( __CLASS__"
       ]
     },
     {
@@ -1868,7 +1869,8 @@
         "src/BuddyPress/Stream/ChallengeStream.php:31 array( __CLASS__",
         "src/Engine/NotificationBridge.php:90 array( __CLASS__",
         "src/Engine/TransactionalEmailEngine.php:82 array( __CLASS__",
-        "src/Engine/WebhookDispatcher.php:55 array( self::class"
+        "src/Engine/WebhookDispatcher.php:55 array( self::class",
+        "src/Integrations/ActivityPub.php:49 array( __CLASS__"
       ]
     },
     {
@@ -2001,7 +2003,8 @@
         "src/Engine/RankAutomation.php:78 array( __CLASS__",
         "src/Engine/SiteFirstBadgeEngine.php:69 array( __CLASS__",
         "src/Engine/TransactionalEmailEngine.php:80 array( __CLASS__",
-        "src/Engine/WebhookDispatcher.php:53 array( self::class"
+        "src/Engine/WebhookDispatcher.php:53 array( self::class",
+        "src/Integrations/ActivityPub.php:48 array( __CLASS__"
       ]
     },
     {
@@ -2215,6 +2218,15 @@
       "purpose": "",
       "fired_at": [
         "src/BuddyPress/ActivityIntegration.php:132"
+      ],
+      "consumed_by": []
+    },
+    {
+      "name": "wb_gam_activitypub_activity",
+      "type": "filter",
+      "purpose": "",
+      "fired_at": [
+        "src/Integrations/ActivityPub.php:210"
       ],
       "consumed_by": []
     },

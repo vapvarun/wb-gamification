@@ -292,6 +292,17 @@ final class WB_Gamification {
 		BootOrder::register( 'intelligence_projector', BootOrder::SLOT_INTEGRATIONS, array( 'engine' ) );
 		add_action( 'plugins_loaded', array( \WBGam\Engine\IntelligenceProjector::class, 'boot' ), BootOrder::SLOT_INTEGRATIONS );
 
+		// GraphQL extension — registers types + root queries when
+		// WPGraphQL is loaded. No-op otherwise.
+		BootOrder::register( 'graphql', BootOrder::SLOT_INTEGRATIONS, array( 'engine' ) );
+		add_action( 'plugins_loaded', array( \WBGam\Integrations\GraphQL::class, 'boot' ), BootOrder::SLOT_INTEGRATIONS );
+
+		// ActivityPub federation — listens for badge/level/challenge
+		// events + publishes to the WP ActivityPub plugin's outbox.
+		// Site-level + per-user opt-in (both off by default).
+		BootOrder::register( 'activitypub', BootOrder::SLOT_INTEGRATIONS, array( 'engine' ) );
+		add_action( 'plugins_loaded', array( \WBGam\Integrations\ActivityPub::class, 'boot' ), BootOrder::SLOT_INTEGRATIONS );
+
 		// Realtime channel — Heartbeat-backed broker that the frontend
 		// toast.js, leaderboard view modules, and user-status-bar block
 		// all subscribe to. Single source of "live" data so each block
