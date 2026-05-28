@@ -140,7 +140,7 @@
 
 ---
 
-## ⏳ Pending (7)
+## ⏳ Pending (6)
 
 ### Stable-foundation wave (shipped 2026-05-28, all 3 commits)
 - [x] **Release-prep orchestrator + drift-impossible generators** — `bin/cut-release.sh <X.Y.Z>` bumps version in 5 spots; `bin/build-readme.php` inlines feature counts from the manifest into `readme.txt`; `bin/build-docs-config.php` keeps `docs/website/docs_config.json` in sync with on-disk `.md` files (errors on dangling entries); `bin/build-blocks.js` safety-net copies orphaned per-block `style.css` into `build/` and warns when an `import './style.css'` is missing. `bin/cut-release.sh --check` proves idempotency by exiting non-zero on any drift.
@@ -162,10 +162,10 @@
 ### Already closed (no action)
 - [x] **capabilities[] manifest coverage** (was listed pending, actually shipped) — manifest declares all 11 caps including the 4 supposedly missing (`wb_gam_manage_rules`, `wb_gam_manage_levels`, `wb_gam_manage_submissions`, `wb_gam_manage_email_settings`). Verified by `jq '.capabilities | length, [.[].cap]' audit/manifest.json` on 2026-05-28.
 
-### Feature next-ups (4)
+### Feature next-ups (3)
 - [ ] **GraphQL API** — flexible queries for mobile / headless front-ends. Schemas map 1:1 from `audit/openapi.json` via WPGraphQL extension.
 - [ ] **AI intelligence layer** — churn prediction, adaptive challenges, anti-gaming detection.
-- [ ] **JS SDK method coverage** — toolchain shipped (see above); hand-written client now covers 9 of 56 routes. Expand `sdk/src/client.ts` with helpers for the remaining 47 (member CRUD, badge admin, challenge management, redemption store, cohort, webhooks, point types + conversions, OpenAPI is already exposed). Power users can already reach every route via the generated `paths` types.
+- [x] **JS SDK method coverage** — `sdk/src/client.ts` expanded from 10 → 64 typed methods covering all 56 REST routes (members, leaderboard, badges, challenges, community challenges, kudos, points, events, actions, levels, point types + conversions, redemptions, submissions, webhooks, rules, API keys, cohort + email settings, discovery). Plus a public typed `request<T>(path, options)` escape hatch for direct route access. Added 11 new domain interfaces to `sdk/src/types.ts` (Level, PointType, PointTypeConversion, RedemptionItem, Redemption, Submission, Webhook, ApiKey, Toast, Rule, Recap, CommunityChallenge). Bundle size: 16 KB JS + 100 KB d.ts. Typecheck + build clean; `cut-release.sh --check` all 4 drift gates clean. README organised by domain. Power users still have `paths` / `components` for the long tail.
 - [ ] **ActivityPub federation** — gamification events into the fediverse.
 
 ---
