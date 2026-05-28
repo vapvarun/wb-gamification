@@ -73,24 +73,103 @@ final class SSEController {
 				),
 			)
 		);
+
+		// EventSource can't send custom headers, so WordPress's REST
+		// cookie-nonce check (rest_cookie_check_errors → 'rest_cookie_
+		// invalid_nonce') would reject every SSE connection even from
+		// authenticated users. Read-only GET on a per-user-scoped stream
+		// is safe to allow without the nonce — the auth cookie itself
+		// proves identity, and our check_permission() still gates on
+		// is_user_logged_in() AND scopes the stream to the current user.
+		add_filter( 'rest_authentication_errors', array( __CLASS__, 'maybe_bypass_nonce_for_stream' ), 99 );
+	}
+
+	/**
+	 * Allow nonce-less cookie auth for /events/stream only. Every other
+	 * REST endpoint still requires the X-WP-Nonce header for cookie auth.
+	 *
+	 * @param \WP_Error|mixed $error Current authentication error (may be null).
+	 * @return \WP_Error|mixed Pass-through unless we want to clear the
+	 *                        nonce error for the stream route.
+	 */
+	public static function maybe_bypass_nonce_for_stream( $error ) {
+		if ( ! ( $error instanceof \WP_Error ) ) {
+			return $error;
+		}
+		if ( 'rest_cookie_invalid_nonce' !== $error->get_error_code() ) {
+			return $error;
+		}
+
+		// Only bypass for the stream route. REQUEST_URI is the safest
+		// signal — `rest_route` query param OR pretty permalink form
+		// both end in the same trailing path.
+		$uri = isset( $_SERVER['REQUEST_URI'] ) ? (string) $_SERVER['REQUEST_URI'] : '';
+		if ( false === strpos( $uri, '/wb-gamification/v1/events/stream' ) ) {
+			return $error;
+		}
+
+		// Clear the error. is_user_logged_in() will now reflect the
+		// raw auth cookie, and check_permission() rejects guests.
+		return null;
 	}
 
 	/**
 	 * Auth gate. Logged-in users only; sender's events are scoped to
 	 * their own user_id by SSE storage writes elsewhere.
+	 *
+	 * EventSource can't send the X-WP-Nonce header WordPress's REST
+	 * cookie-auth pipeline requires. `is_user_logged_in()` returns
+	 * false during the REST request even when the auth cookie is set
+	 * because rest_cookie_check_errors clears the current user when
+	 * the nonce is missing. We re-validate the cookie directly here
+	 * and force-set the current user for the duration of the request
+	 * if it's valid. This is safe: the cookie itself is the
+	 * authentication factor; the nonce protects against CSRF on
+	 * write operations, and this endpoint is read-only.
 	 */
 	public function check_permission(): bool {
+		if ( is_user_logged_in() ) {
+			return true;
+		}
+		// Direct cookie validation. wp_validate_auth_cookie returns the
+		// user_id when the cookie is valid + unexpired.
+		if ( ! isset( $_COOKIE[ LOGGED_IN_COOKIE ] ) ) {
+			return false;
+		}
+		$user_id = wp_validate_auth_cookie( $_COOKIE[ LOGGED_IN_COOKIE ], 'logged_in' );
+		if ( ! $user_id ) {
+			return false;
+		}
+		wp_set_current_user( (int) $user_id );
 		return is_user_logged_in();
 	}
 
 	/**
-	 * Returns the active transport mode, defaulting to heartbeat so
-	 * existing installs are unaffected by upgrade.
+	 * Returns the active transport mode.
+	 *
+	 * Default flipped from 'heartbeat' to 'auto' on 2026-05-28 after the
+	 * two-tab Playwright journey verified:
+	 *   1. SSE controller authentication works (rest_authentication_errors
+	 *      filter + direct wp_validate_auth_cookie() in check_permission)
+	 *   2. EventSource streams text/event-stream with correct headers
+	 *   3. wb_gam_notifications_queue table receives kudos rows
+	 *   4. sse.js dispatches received events into wbGamRealtime broker
+	 *   5. Heartbeat path stays active in parallel — toast.js Set-dedupe
+	 *      collapses cross-transport duplicates so the user sees one toast
+	 *   6. EventSource auto-reconnects across the 28-second server-side
+	 *      soft deadline without losing events
+	 *
+	 * 'auto' = client tries SSE first; falls back to heartbeat on
+	 * EventSource connection error. Hosts that can't sustain SSE
+	 * (cPanel without PHP-FPM tuning, aggressive proxy buffering) get
+	 * the heartbeat path transparently. Site owners can pin to
+	 * 'heartbeat' explicitly via `wp option update wb_gam_realtime_transport
+	 * heartbeat`.
 	 */
 	public static function get_transport(): string {
-		$value = (string) get_option( self::TRANSPORT_OPTION, self::TRANSPORT_HEARTBEAT );
+		$value = (string) get_option( self::TRANSPORT_OPTION, self::TRANSPORT_AUTO );
 		if ( ! in_array( $value, array( self::TRANSPORT_HEARTBEAT, self::TRANSPORT_SSE, self::TRANSPORT_AUTO ), true ) ) {
-			return self::TRANSPORT_HEARTBEAT;
+			return self::TRANSPORT_AUTO;
 		}
 		return $value;
 	}
