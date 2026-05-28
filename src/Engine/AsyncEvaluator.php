@@ -116,6 +116,9 @@ final class AsyncEvaluator {
 	 * Runs on the WordPress `shutdown` hook so all points awarded during the
 	 * request are batched into one job.
 	 *
+	 * @as-fire-once Shutdown-time drain — runs once per request when WordPress
+	 *               tears down. The handler (self::HOOK) processes the batch
+	 *               and resets self::$queue; it does not re-enter flush_queue.
 	 * @return void
 	 */
 	public static function flush_queue(): void {

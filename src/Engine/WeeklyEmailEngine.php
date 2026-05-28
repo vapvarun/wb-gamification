@@ -94,6 +94,10 @@ final class WeeklyEmailEngine {
 
 	/**
 	 * Fired by WP-Cron. Queues one AS job per eligible user.
+	 *
+	 * @as-fire-once Weekly cron tick. Each iteration enqueues one job for a
+	 *               distinct user_id from the SELECT. The AS handler sends an
+	 *               email and does not re-enter dispatch_batch.
 	 */
 	public static function dispatch_batch(): void {
 		if ( ! FeatureFlags::is_enabled( 'weekly_emails' ) ) {

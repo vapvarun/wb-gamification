@@ -193,6 +193,9 @@ final class WebhookDispatcher {
 	 * @param Event|null $event       Full event object, or null for non-point events (e.g. badge_awarded).
 	 * @param int        $points      Points awarded (relevant for points_awarded type).
 	 * @param array      $extra_data  Additional event-specific data merged into the payload's data field.
+	 * @as-fire-once One enqueue per (webhook subscription × event). The async
+	 *               handler is self::deliver, which HTTP-POSTs and logs; it
+	 *               does not call dispatch() again.
 	 */
 	public static function dispatch(
 		string $event_type,
@@ -456,6 +459,11 @@ final class WebhookDispatcher {
 	 * @param string $signature   HMAC signature.
 	 * @param string $payload     JSON payload.
 	 * @param int    $current_retry Current retry count (0 = first failure).
+	 * @as-fire-once Per-failure escalation. Bounded by self::MAX_RETRIES, the
+	 *               next_retry guard above. Each call schedules exactly one
+	 *               retry; the retry handler is self::handle_retry which
+	 *               re-enters maybe_schedule_retry only after a new attempt
+	 *               fails — never reflexively.
 	 */
 	private static function maybe_schedule_retry(
 		int $webhook_id,

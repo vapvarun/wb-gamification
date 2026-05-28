@@ -145,6 +145,10 @@ final class Engine {
 	 * per group and jobs run sequentially.
 	 *
 	 * @param Event $event The event to queue.
+	 * @as-fire-once One enqueue per inbound Event. PointsEngine::award is the
+	 *               caller; each award produces one event, each event one job.
+	 *               The async handler does not re-enter process_async — it
+	 *               calls PointsEngine::award_batch directly.
 	 * @return bool True if queued (or synchronously processed as fallback).
 	 */
 	public static function process_async( Event $event ): bool {

@@ -436,6 +436,11 @@ final class TransactionalEmailEngine {
 	 *                        `challenge_completed` | `redemption`) — used by the
 	 *                        worker to re-check is_enabled at delivery time.
 	 * @param int    $user_id Recipient user ID — used for the same re-check.
+	 * @as-fire-once Per-event delivery. Caller is the listener on
+	 *               wb_gam_level_changed / _badge_awarded / _challenge_completed /
+	 *               redemption events. The AS handler is self::send_async which
+	 *               wp_mail()s and logs; it never re-enters send(). Per-user
+	 *               burst cap above bounds the path independent of recursion.
 	 */
 	private static function send( string $to, string $subject, string $body, string $slug = '', int $user_id = 0 ): bool {
 		// Per-user / per-slug burst cap. Backfills + bulk awards can

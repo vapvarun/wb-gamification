@@ -240,12 +240,36 @@ check_privacy_coverage_for_user_scoped_surfaces() {
     fi
 }
 
+# Rule 12: every as_schedule_*/as_enqueue_* call must be either preceded by an
+# as_has_scheduled_action() guard in the same method OR carry an @as-fire-once
+# docblock annotation. Closes the bug class that caused the LeaderboardNudge
+# Action Scheduler runaway in 1.4.0 (3.5M-row queue on one production install).
+#
+# Implementation: bin/check-as-schedule-guard.php (PHP token-walker, mirrors
+# the bin/check-boot-invariants.php + bin/check-badge-condition-contract.php
+# pattern). PHPStan was the original target but the local PHPStan install
+# is silently non-functional in this environment, so the token-walker is the
+# robust path. Lives inside this stage 2.1 (coding-rules) rather than as a
+# new stage, per the "fold into existing gate" preference.
+check_as_schedule_guard() {
+    local out
+    out=$(php "$PLUGIN_DIR/bin/check-as-schedule-guard.php" 2>&1)
+    local rc=$?
+    if [ "$rc" -eq 0 ]; then
+        ok "Rule 12 — every AS-schedule call is guarded or @as-fire-once annotated"
+    else
+        violation "Rule 12 — AS-schedule guard contract:"
+        echo "$out" | sed 's/^/    /'
+    fi
+}
+
 check_no_native_cap_check_for_plugin_abilities
 check_unauthenticated_rest_allowlist
 check_no_inline_styles_in_admin_php
 check_no_inline_scripts_in_php
 check_no_inline_style_blocks_in_php
 check_privacy_coverage_for_user_scoped_surfaces
+check_as_schedule_guard
 
 echo ""
 COUNT=$(violations_count)

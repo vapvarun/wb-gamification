@@ -182,6 +182,12 @@ final class CommunityChallengeEngine {
 	 *
 	 * @param int $challenge_id  The challenge to complete.
 	 * @param int $bonus_points  Points to award to each contributor.
+	 * @as-fire-once Per-completion one-shot. The atomic SET status='completed'
+	 *               UPDATE above guards against double-fire (a second caller
+	 *               sees $updated === 0 and bails). Each contributor gets one
+	 *               wb_gam_community_bonus_award job; the handler
+	 *               (award_community_bonus) calls PointsEngine::award and
+	 *               does not re-enter complete_challenge.
 	 */
 	private static function complete_challenge( int $challenge_id, int $bonus_points ): void {
 		global $wpdb;
