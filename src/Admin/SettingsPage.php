@@ -93,6 +93,8 @@ final class SettingsPage {
 			self::save_kudos_settings();
 		} elseif ( 'automation' === $tab ) {
 			self::save_automation_settings();
+		} elseif ( 'realtime' === $tab ) {
+			self::save_realtime_settings();
 		}
 
 		// Preserve the active sidebar section after save (Basecamp 9925119779).
@@ -107,6 +109,7 @@ final class SettingsPage {
 			'points'     => 'points',
 			'kudos'      => 'kudos',
 			'automation' => 'rules',
+			'realtime'   => 'realtime',
 		);
 		$fallback   = admin_url( 'admin.php?page=wb-gamification' );
 		if ( isset( $tab_to_hash[ $tab ] ) ) {
@@ -330,6 +333,27 @@ final class SettingsPage {
 	 * Persist kudos engine settings.
 	 * Nonce is verified by check_admin_referer() in handle_save().
 	 */
+	/**
+	 * Persist the Realtime transport selection.
+	 *
+	 * Nonce is verified by check_admin_referer() in handle_save().
+	 */
+	private static function save_realtime_settings(): void {
+		// phpcs:disable WordPress.Security.NonceVerification.Missing
+		$valid = array(
+			\WBGam\API\SSEController::TRANSPORT_HEARTBEAT,
+			\WBGam\API\SSEController::TRANSPORT_SSE,
+			\WBGam\API\SSEController::TRANSPORT_AUTO,
+		);
+		$raw = isset( $_POST['wb_gam_realtime_transport'] ) ? sanitize_key( wp_unslash( $_POST['wb_gam_realtime_transport'] ) ) : '';
+		if ( in_array( $raw, $valid, true ) ) {
+			update_option( \WBGam\API\SSEController::TRANSPORT_OPTION, $raw );
+		}
+		// phpcs:enable WordPress.Security.NonceVerification.Missing
+
+		add_settings_error( 'wb_gamification', 'saved', __( 'Realtime transport saved.', 'wb-gamification' ), 'success' );
+	}
+
 	private static function save_kudos_settings(): void {
 		// phpcs:disable WordPress.Security.NonceVerification.Missing -- Nonce verified by check_admin_referer() in handle_save().
 		if ( isset( $_POST['wb_gam_kudos_daily_limit'] ) ) {
@@ -757,6 +781,10 @@ final class SettingsPage {
 						<span class="icon-network"></span>
 						<?php esc_html_e( 'API Keys', 'wb-gamification' ); ?>
 					</a>
+					<a class="wbgam-settings-nav-item" href="#realtime" data-section="realtime">
+						<span class="icon-zap"></span>
+						<?php esc_html_e( 'Realtime', 'wb-gamification' ); ?>
+					</a>
 					<a class="wbgam-settings-nav-item" href="#integrations" data-section="integrations">
 						<span class="icon-link"></span>
 						<?php esc_html_e( 'Integrations', 'wb-gamification' ); ?>
@@ -810,6 +838,11 @@ final class SettingsPage {
 				<!-- Emails section -->
 				<div class="wbgam-settings-section" id="section-emails">
 					<?php self::render_emails_section(); ?>
+				</div>
+
+				<!-- Realtime section -->
+				<div class="wbgam-settings-section" id="section-realtime">
+					<?php self::render_realtime_section(); ?>
 				</div>
 
 				<!-- Integrations section -->
@@ -1790,6 +1823,82 @@ final class SettingsPage {
 
 			<div class="wbgam-settings-section__footer">
 				<?php submit_button( __( 'Save Changes', 'wb-gamification' ), 'primary', 'submit', false ); ?>
+			</div>
+		</form>
+		<?php
+	}
+
+	// ── Realtime section ──────────────────────────────────────────────────────
+
+	/**
+	 * Render the Realtime transport selector.
+	 *
+	 * Closes the "site owners must use wp-cli to flip transport" friction
+	 * we surfaced after the SSE rollout. Three radio options matching the
+	 * wb_gam_realtime_transport contract: heartbeat (universal, 5s),
+	 * sse (sub-second when host supports it), auto (SSE-first with
+	 * heartbeat fallback — the new default).
+	 */
+	private static function render_realtime_section(): void {
+		$current = \WBGam\API\SSEController::get_transport();
+		$saved   = (bool) ( isset( $_GET['saved'] ) && 'realtime' === ( $_GET['tab'] ?? '' ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+
+		$choices = array(
+			\WBGam\API\SSEController::TRANSPORT_AUTO => array(
+				'label'       => __( 'Auto (recommended)', 'wb-gamification' ),
+				'description' => __( 'Try Server-Sent Events first. Fall back to Heartbeat if the host can\'t sustain a long-poll stream. Best of both — sub-second toasts where SSE works, reliable 5-second polling everywhere else.', 'wb-gamification' ),
+			),
+			\WBGam\API\SSEController::TRANSPORT_SSE => array(
+				'label'       => __( 'Server-Sent Events only', 'wb-gamification' ),
+				'description' => __( 'Force the SSE stream. Faster receiver-side toasts (cross-user kudos, etc.) but requires host support (PHP-FPM long-poll, no aggressive proxy buffering). See the Realtime Transport doc for the host checklist.', 'wb-gamification' ),
+			),
+			\WBGam\API\SSEController::TRANSPORT_HEARTBEAT => array(
+				'label'       => __( 'Heartbeat only', 'wb-gamification' ),
+				'description' => __( 'Disable SSE entirely. WP Heartbeat polls every 5 seconds. Works everywhere; toasts arrive 0–5 seconds after the triggering event.', 'wb-gamification' ),
+			),
+		);
+		?>
+		<form method="post" action="<?php echo esc_url( admin_url( 'admin.php?page=wb-gamification&tab=realtime' ) ); ?>">
+			<?php wp_nonce_field( 'wb_gam_save_settings', 'wb_gam_settings_nonce' ); ?>
+
+			<div class="wbgam-card wbgam-stack-block">
+				<div class="wbgam-card-header">
+					<h2 class="wbgam-card-title">
+						<span class="icon-zap" aria-hidden="true"></span>
+						<?php esc_html_e( 'Realtime Transport', 'wb-gamification' ); ?>
+					</h2>
+					<p class="wbgam-card-desc">
+						<?php esc_html_e( 'Choose how members receive realtime notifications (kudos toasts, badge celebrations, leaderboard updates).', 'wb-gamification' ); ?>
+					</p>
+				</div>
+				<div class="wbgam-card-body">
+					<?php foreach ( $choices as $value => $info ) : ?>
+						<label class="wbgam-radio-option wbgam-stack-block">
+							<input type="radio"
+								name="wb_gam_realtime_transport"
+								value="<?php echo esc_attr( $value ); ?>"
+								<?php checked( $current, $value ); ?>
+							/>
+							<span class="wbgam-radio-option__body">
+								<strong><?php echo esc_html( $info['label'] ); ?></strong>
+								<span class="description"><?php echo esc_html( $info['description'] ); ?></span>
+							</span>
+						</label>
+					<?php endforeach; ?>
+
+					<p class="description wbgam-stack-block">
+						<?php
+						printf(
+							/* translators: %s: link to the realtime-transport doc */
+							esc_html__( 'Host requirements + verification tips: %s', 'wb-gamification' ),
+							'<a href="https://docs.wbcomdesigns.com/wb-gamification/developer-guide/realtime-transport-wbgam/" target="_blank" rel="noopener">' . esc_html__( 'Realtime Transport guide', 'wb-gamification' ) . '</a>'
+						);
+						?>
+					</p>
+				</div>
+				<div class="wbgam-settings-section__footer">
+					<?php submit_button( __( 'Save Transport', 'wb-gamification' ), 'primary', 'submit', false ); ?>
+				</div>
 			</div>
 		</form>
 		<?php

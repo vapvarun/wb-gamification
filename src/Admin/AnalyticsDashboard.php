@@ -301,6 +301,9 @@ final class AnalyticsDashboard {
 				<?php self::render_sparkline( $stats['daily_points'], $period ); ?>
 			</div>
 
+			<!-- Behavioural intelligence (v2.5 / AI v1 projection) -->
+			<?php self::render_intelligence_panels(); ?>
+
 		</div><!-- .wrap -->
 		<?php
 	}
@@ -521,6 +524,148 @@ final class AnalyticsDashboard {
 			'manual_admin_deduct'      => 'Admin manual deduction',
 		);
 		return $map[ $action_id ] ?? $action_id;
+	}
+
+	/**
+	 * Render two intelligence panels — high churn-risk + anomaly flagged.
+	 *
+	 * Surfaces the wb_gam_user_intelligence projection that
+	 * IntelligenceProjector populates on the daily cron. Without these
+	 * panels the projection is invisible to admins — useful for
+	 * scripts and the SDK, but hidden from the people who'd actually
+	 * use the data (community managers, growth team).
+	 *
+	 * Read-only listing. Sorts by churn_risk DESC for the risk panel,
+	 * by events_30d DESC for the anomaly panel. Caps at 25 rows per
+	 * panel — power users with a big install can build their own
+	 * reporting on top of the REST endpoint.
+	 */
+	private static function render_intelligence_panels(): void {
+		if ( ! get_option( 'wb_gam_feature_user_intelligence_v1' ) ) {
+			return; // Projection table not migrated yet — silent skip.
+		}
+
+		global $wpdb;
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$at_risk = $wpdb->get_results(
+			"SELECT i.user_id, i.churn_risk, i.engagement_score, i.recency_days, i.events_30d, u.display_name, u.user_login
+			   FROM {$wpdb->prefix}wb_gam_user_intelligence i
+			   JOIN {$wpdb->users} u ON u.ID = i.user_id
+			  WHERE i.churn_risk >= 0.7
+			  ORDER BY i.churn_risk DESC
+			  LIMIT 25",
+			ARRAY_A
+		);
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$anomalies = $wpdb->get_results(
+			"SELECT i.user_id, i.events_30d, i.action_diversity, i.engagement_score, u.display_name, u.user_login
+			   FROM {$wpdb->prefix}wb_gam_user_intelligence i
+			   JOIN {$wpdb->users} u ON u.ID = i.user_id
+			  WHERE i.anomaly_flag = 1
+			  ORDER BY i.events_30d DESC
+			  LIMIT 25",
+			ARRAY_A
+		);
+
+		$last_computed = (string) $wpdb->get_var(
+			"SELECT computed_at FROM {$wpdb->prefix}wb_gam_user_intelligence ORDER BY computed_at DESC LIMIT 1"
+		);
+		?>
+		<div class="wb-gam-analytics__two-col wbgam-mt-md">
+			<div class="wb-gam-analytics__panel">
+				<h2 class="wbgam-flex-row">
+					<span class="icon-trending-down" aria-hidden="true"></span>
+					<?php esc_html_e( 'Members at churn risk', 'wb-gamification' ); ?>
+				</h2>
+				<p class="description">
+					<?php esc_html_e( 'Members whose engagement score has fallen far enough that they\'re likely to drift away. Re-engage with a personalised nudge.', 'wb-gamification' ); ?>
+				</p>
+				<?php if ( empty( $at_risk ) ) : ?>
+					<p class="description"><?php esc_html_e( 'No members above the high-risk threshold (0.7). Either your community is exceptionally engaged or the projection cron hasn\'t finished its first pass — check back tomorrow.', 'wb-gamification' ); ?></p>
+				<?php else : ?>
+					<table class="widefat striped">
+						<thead>
+							<tr>
+								<th><?php esc_html_e( 'Member', 'wb-gamification' ); ?></th>
+								<th><?php esc_html_e( 'Risk', 'wb-gamification' ); ?></th>
+								<th><?php esc_html_e( 'Last seen', 'wb-gamification' ); ?></th>
+								<th><?php esc_html_e( '30d events', 'wb-gamification' ); ?></th>
+							</tr>
+						</thead>
+						<tbody>
+							<?php foreach ( $at_risk as $row ) : ?>
+								<tr>
+									<td><strong><?php echo esc_html( $row['display_name'] ?: $row['user_login'] ); ?></strong></td>
+									<td><?php echo esc_html( number_format( (float) $row['churn_risk'], 2 ) ); ?></td>
+									<td>
+										<?php
+										$days = (int) $row['recency_days'];
+										echo esc_html(
+											$days >= 999
+												? __( 'never', 'wb-gamification' )
+												: sprintf(
+													/* translators: %d: days */
+													_n( '%d day ago', '%d days ago', $days, 'wb-gamification' ),
+													$days
+												)
+										);
+										?>
+									</td>
+									<td><?php echo (int) $row['events_30d']; ?></td>
+								</tr>
+							<?php endforeach; ?>
+						</tbody>
+					</table>
+				<?php endif; ?>
+			</div>
+
+			<div class="wb-gam-analytics__panel">
+				<h2 class="wbgam-flex-row">
+					<span class="icon-alert-triangle" aria-hidden="true"></span>
+					<?php esc_html_e( 'Possible gaming activity', 'wb-gamification' ); ?>
+				</h2>
+				<p class="description">
+					<?php esc_html_e( 'High event volume with very low action diversity — the "bot grinding one action" pattern. Review before assuming abuse: some legitimate members really do only do one thing.', 'wb-gamification' ); ?>
+				</p>
+				<?php if ( empty( $anomalies ) ) : ?>
+					<p class="description"><?php esc_html_e( 'No members flagged. Anomaly detection requires >500 events in 30 days AND <3 distinct actions; communities below those volumes simply won\'t trip the heuristic.', 'wb-gamification' ); ?></p>
+				<?php else : ?>
+					<table class="widefat striped">
+						<thead>
+							<tr>
+								<th><?php esc_html_e( 'Member', 'wb-gamification' ); ?></th>
+								<th><?php esc_html_e( '30d events', 'wb-gamification' ); ?></th>
+								<th><?php esc_html_e( 'Actions used', 'wb-gamification' ); ?></th>
+							</tr>
+						</thead>
+						<tbody>
+							<?php foreach ( $anomalies as $row ) : ?>
+								<tr>
+									<td><strong><?php echo esc_html( $row['display_name'] ?: $row['user_login'] ); ?></strong></td>
+									<td><?php echo (int) $row['events_30d']; ?></td>
+									<td><?php echo (int) $row['action_diversity']; ?></td>
+								</tr>
+							<?php endforeach; ?>
+						</tbody>
+					</table>
+				<?php endif; ?>
+			</div>
+		</div>
+
+		<?php if ( ! empty( $last_computed ) ) : ?>
+			<p class="description wbgam-mt-sm">
+				<?php
+				printf(
+					/* translators: %s: timestamp */
+					esc_html__( 'Intelligence signals last computed: %s. Cron runs daily; force a refresh per-user via the REST endpoint or `wp eval` if you need fresher data.', 'wb-gamification' ),
+					'<code>' . esc_html( $last_computed ) . '</code>'
+				);
+				?>
+			</p>
+		<?php endif; ?>
+		<?php
 	}
 
 	private static function render_sparkline( array $daily_points, int $period ): void {

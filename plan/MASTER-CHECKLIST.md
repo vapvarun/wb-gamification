@@ -140,6 +140,13 @@
 
 ---
 
+## ✅ Post-wave follow-ups (admin/owner UX polish)
+
+- [x] **Setup wizard auto-trigger verified** — Playwright as admin → `/wp-admin/admin.php?page=wb-gamification` redirected automatically to `?page=wb-gamification-setup`. Both trigger paths (activation flag + first-visit-fallback via user_meta `wb_gam_setup_seen`) work.
+- [x] **Admin Realtime settings tab** — new "Realtime" nav item under Advanced group in `SettingsPage`. 3 radio options (auto/sse/heartbeat) matching `wb_gam_realtime_transport`; saves via the existing handle_save dispatch with `?tab=realtime`. Site owners no longer need `wp option update` to flip transport.
+- [x] **Intelligence admin view** — two new panels at the bottom of `wb-gamification-analytics`: "Members at churn risk" (churn_risk >= 0.7) and "Possible gaming activity" (anomaly_flag = 1). Each shows up to 25 rows from `wb_gam_user_intelligence` joined with display_name/user_login, sorted appropriately. "Last computed at" timestamp footer. Surfaces the AI v1 projection that was previously only reachable via REST/SDK/SQL.
+- [ ] **Toast wrapper duplication** — documented as known follow-up. Two `.wb-gam-toasts` containers exist (footer-rendered for IA-driven celebration overlays + JS-created `.wb-gam-toasts--rest` for the toast stack). Both empty when no content (height: 0), so no visual conflict today. Picking a single owner is a multi-commit refactor across `NotificationBridge::render()`, `assets/interactivity/notifications.js`, and `assets/js/toast.js` — deferred.
+
 ## ✅ v2 work shipped on 1.5.0 HEAD
 
 - [x] **v2.1 Decouple side effects** — `SideEffectDispatcher` + `wb_gam_side_effect_failures` table + hourly reconciler cron. Engine refactored to fan-out through dispatcher (try/catch isolation, retry up to 3 times, status='exhausted' for human triage). 5 PHPUnit tests cover success + failure-isolation + retry-success + retry-exhausted + orphan-handler paths.
