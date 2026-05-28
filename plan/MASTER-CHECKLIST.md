@@ -140,7 +140,7 @@
 
 ---
 
-## ⏳ Pending (10)
+## ⏳ Pending (9)
 
 ### Stable-foundation wave (both commits shipped)
 - [x] **Release-prep orchestrator + drift-impossible generators** — `bin/cut-release.sh <X.Y.Z>` bumps version in 5 spots; `bin/build-readme.php` inlines feature counts from the manifest into `readme.txt`; `bin/build-docs-config.php` keeps `docs/website/docs_config.json` in sync with on-disk `.md` files (errors on dangling entries); `bin/build-blocks.js` safety-net copies orphaned per-block `style.css` into `build/` and warns when an `import './style.css'` is missing. `bin/cut-release.sh --check` proves idempotency by exiting non-zero on any drift.
@@ -151,10 +151,12 @@
 - [ ] **SSE / WebSocket transport** — Replace the 5s heartbeat poll for realtime toasts with a true push channel. Out of scope for the realtime card (#9925151443) but the obvious follow-up.
 - [ ] **`wbGamRealtime.ping()` API surface** — Let user-driven actions force an immediate broker tick instead of waiting up to 5s. Reduces median latency further without changing transport.
 
-### Architecture / hygiene (3)
-- [ ] **Hooks_fired coverage gap** — manifest `.hooks_fired[]` has 43 action entries vs ground-truth 53, and 12 filter entries vs ground-truth 46. The `consumed_by[]` map needs a full re-enumeration so dead-listener detection works on the new `wb_gam_block_*_data` filters.
-- [ ] **frontend_assets re-enumeration** — manifest tracks 6 CSS / 4 JS files vs ground-truth 24 / 19. CSS architecture refactor (admin.css per-page split) added 17+ files no one back-filled.
-- [ ] **capabilities[] manifest coverage** — declares 7 of 10 caps. Missing: `wb_gam_manage_rules`, `wb_gam_manage_levels`, `wb_gam_manage_submissions`, `wb_gam_manage_email_settings`.
+### Architecture / hygiene (2)
+- [ ] **Hooks_fired coverage gap** — manifest `.hooks_fired[]` has 43 action entries (ground truth: **61** as of 2026-05-28) and 12 filter entries (ground truth: **47**). 18 actions + 35 filters missing. Separately, `consumed_by[]` is empty for every existing entry — dead-listener detection can't fire. Belongs to the next `/wp-plugin-onboard --refresh` Phase 2 + 2.5 pass; do not hand-enumerate here (the skill owns this category).
+- [ ] **frontend_assets re-enumeration** — manifest tracks 6 CSS / 4 JS files. Ground-truth (excluding `build/` + `dist/`): order-of-magnitude larger after the admin.css per-page split + per-block CSS architecture. Same owner as hooks: `/wp-plugin-onboard --refresh`.
+
+### Already closed (no action)
+- [x] **capabilities[] manifest coverage** (was listed pending, actually shipped) — manifest declares all 11 caps including the 4 supposedly missing (`wb_gam_manage_rules`, `wb_gam_manage_levels`, `wb_gam_manage_submissions`, `wb_gam_manage_email_settings`). Verified by `jq '.capabilities | length, [.[].cap]' audit/manifest.json` on 2026-05-28.
 
 ### Feature next-ups (4)
 - [ ] **GraphQL API** — flexible queries for mobile / headless front-ends.
