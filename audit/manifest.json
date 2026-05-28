@@ -2731,7 +2731,7 @@
       "type": "filter",
       "purpose": "",
       "fired_at": [
-        "src/Engine/NotificationBridge.php:513"
+        "src/Engine/NotificationBridge.php:489"
       ],
       "consumed_by": []
     },

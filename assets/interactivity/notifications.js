@@ -1,38 +1,37 @@
 /**
- * WB Gamification — Interactivity API store for the notification surface.
+ * WB Gamification — Interactivity API store for the celebration overlays.
  *
- * Powers the markup emitted by `WBGam\Engine\NotificationBridge::render()`:
- * a level-up overlay, a streak-milestone overlay, and a stack of toast
- * notifications. Without this store the overlay markup renders but never
- * binds — `data-wp-bind--hidden="!state.streakMilestone.active"` evaluates
- * to `!undefined` (truthy) which leaves the overlay permanently visible
- * AND the dismiss button inert because `actions.dismissStreakMilestone`
- * doesn't exist. Result: customer is locked out of the page.
+ * Powers the level-up overlay + streak-milestone overlay rendered by
+ * `WBGam\Engine\NotificationBridge::render()`. The toast stack lives
+ * elsewhere (assets/js/toast.js, single container appended to body) —
+ * this store does NOT touch toasts.
  *
- * Seed data flow:
- *   PHP transient → `window.wbGamNotifications` JSON → callbacks.init →
- *   state.levelUp / state.streakMilestone / state.toasts.
+ * Two inputs feed the overlays:
+ *   1. `window.wbGamNotifications` — page-load seed from the transient,
+ *      same payload the toast stack also consumes for the seed paint.
+ *   2. `window.wbGamRealtime` broker subscription — live deliveries via
+ *      heartbeat ticks and SSE pushes. Without this, a level_up event
+ *      that arrives 8 seconds after page load would render as a toast
+ *      (via toast.js) but skip the overlay treatment entirely. Closes
+ *      the asymmetry between seed-time and live-time overlay handling.
+ *
+ * Overlay-only event types:
+ *   - level_up         -> opens the level-up overlay
+ *   - streak_milestone -> opens the streak overlay
+ *
+ * Every other type passes through silently — toast.js owns those.
  *
  * @since 1.2.0
+ * @refactored 1.5.0 — toast stack moved out to single-owner toast.js;
+ *                    broker subscription added so live overlay events
+ *                    actually surface.
  */
 
 import { store, getContext } from '@wordpress/interactivity';
 
 const NS = 'wb-gamification';
 
-// Lucide icon classes — toasts ship a Lucide font dependency from the
-// admin/frontend stylesheet so these slugs render via `:before` content.
-const ICON_FOR_TYPE = {
-	points:     'icon-sparkles',
-	badge:      'icon-medal',
-	level_up:   'icon-rocket',
-	streak:     'icon-flame',
-	challenge:  'icon-target',
-	kudos:      'icon-heart-handshake',
-};
-
 const initialState = {
-	toasts: [],
 	levelUp: {
 		active:    false,
 		iconUrl:   '',
@@ -44,29 +43,12 @@ const initialState = {
 	},
 };
 
-let toastSequence = 0;
-const nextToastId = () => `wb-gam-toast-${ ++toastSequence }`;
-
 const { state, actions } = store( NS, {
 	state: {
 		...initialState,
-		// Derived: full class string for the per-toast icon span. Reads
-		// the per-iteration toast from context (set by data-wp-each) and
-		// composes the Lucide-icon CSS class with the static base class.
-		// Replaces the legacy emoji-as-text rendering in the markup.
-		get toastIconClass() {
-			const ctx = getContext();
-			const slug = ctx?.toast?.icon || 'icon-bell';
-			return `wb-gam-toast__icon ${ slug }`;
-		},
 	},
 
 	actions: {
-		dismissToast() {
-			const ctx = getContext();
-			state.toasts = state.toasts.filter( ( t ) => t.id !== ctx.toast.id );
-		},
-
 		dismissLevelUp() {
 			state.levelUp = { ...state.levelUp, active: false };
 		},
@@ -78,80 +60,119 @@ const { state, actions } = store( NS, {
 
 	callbacks: {
 		init() {
-			const events = Array.isArray( window.wbGamNotifications )
+			// Track the ids we've already rendered as an overlay so a
+			// live broker delivery of the same event (e.g. the broker
+			// replays the last payload to late subscribers) doesn't
+			// re-open an overlay the user just dismissed.
+			const seenOverlayIds = new Set();
+
+			/**
+			 * Open the matching overlay for one event. Returns true if
+			 * the event was an overlay type and was rendered (or skipped
+			 * because the dedupe set caught it); false for toast-type
+			 * events the toast stack should handle.
+			 *
+			 * @param {Object} event Single notification payload.
+			 * @return {boolean}
+			 */
+			function applyOverlay( event ) {
+				if ( ! event || typeof event !== 'object' ) {
+					return false;
+				}
+				if ( event.type !== 'level_up' && event.type !== 'streak_milestone' ) {
+					return false;
+				}
+
+				const dedupeKey = event._id != null
+					? `id:${ event._id }`
+					: `fp:${ event.type }|${ event.message || '' }|${ event._ts || '' }`;
+				if ( seenOverlayIds.has( dedupeKey ) ) {
+					return true;
+				}
+				seenOverlayIds.add( dedupeKey );
+
+				if ( event.type === 'level_up' ) {
+					state.levelUp = {
+						active:    true,
+						iconUrl:   event.icon_url || '',
+						// Read the canonical `levelName` field first (PHP
+						// queues it explicitly at NotificationBridge:232);
+						// fall back to the translated message for the design
+						// that reads "You reached X!". Pre-1.4.1 this
+						// preferred event.message and the overlay always
+						// rendered the localised sentence instead of the
+						// bare level name. Closes audit DATA-FLOW-
+						// NOTIFICATIONS-2026-05-27.md §G10.
+						levelName: event.levelName || event.message || event.detail || 'Level up!',
+					};
+				} else {
+					const days =
+						event.days
+						|| event.streak_length
+						|| ( typeof event.detail === 'string'
+							? ( event.detail.match( /\d+/ ) || [ '' ] )[ 0 ]
+							: '' );
+					state.streakMilestone = {
+						active: true,
+						days:   String( days ),
+					};
+				}
+				return true;
+			}
+
+			// 1. Page-load seed — drain whatever was queued before the
+			//    broker came online. Same payload toast.js also reads.
+			const seed = Array.isArray( window.wbGamNotifications )
 				? window.wbGamNotifications
 				: [];
-
 			let levelUpShown = false;
 			let streakShown  = false;
-
-			for ( const event of events ) {
-				if ( ! event || typeof event !== 'object' ) {
+			for ( const event of seed ) {
+				// First-of-type-only rule: if PHP queued multiple level_up
+				// events during one window (rare but possible on long-
+				// running tabs), only the first overlays. Subsequent same-
+				// type seed events skip — they were aggregated by the
+				// server already and the user gets one celebration.
+				if ( event && event.type === 'level_up' && levelUpShown ) {
 					continue;
 				}
-
-				switch ( event.type ) {
-					case 'level_up':
-						if ( ! levelUpShown ) {
-							state.levelUp = {
-								active:    true,
-								iconUrl:   event.icon_url || '',
-								// Read the canonical `levelName` field first (PHP
-								// queues it explicitly at NotificationBridge:232);
-								// fall back to the translated message string for
-								// the design that says "You reached X!". Pre-1.4.1
-								// this preferred `event.message` so the overlay
-								// always rendered the localised sentence instead
-								// of the bare level name the design specced.
-								// Closes audit DATA-FLOW-NOTIFICATIONS-
-								// 2026-05-27.md §G10.
-								levelName: event.levelName || event.message || event.detail || 'Level up!',
-							};
-							levelUpShown = true;
-						}
-						break;
-
-					case 'streak_milestone':
-						if ( ! streakShown ) {
-							const days =
-								event.days
-								|| event.streak_length
-								|| ( typeof event.detail === 'string'
-									? ( event.detail.match( /\d+/ ) || [ '' ] )[ 0 ]
-									: '' );
-							state.streakMilestone = {
-								active: true,
-								days:   String( days ),
-							};
-							streakShown = true;
-						}
-						break;
-
-					default:
-						state.toasts = [
-							...state.toasts,
-							{
-								id:      nextToastId(),
-								type:    event.type || 'points',
-								icon:    event.icon || ICON_FOR_TYPE[ event.type ] || '✨',
-								message: event.message || '',
-								detail:  event.detail || '',
-							},
-						];
+				if ( event && event.type === 'streak_milestone' && streakShown ) {
+					continue;
+				}
+				if ( applyOverlay( event ) ) {
+					if ( event.type === 'level_up' ) {
+						levelUpShown = true;
+					} else if ( event.type === 'streak_milestone' ) {
+						streakShown = true;
+					}
 				}
 			}
 
-			// Auto-dismiss toasts after 6 seconds — overlays stay until clicked.
-			if ( state.toasts.length ) {
-				const ids = state.toasts.map( ( t ) => t.id );
-				window.setTimeout( () => {
-					state.toasts = state.toasts.filter( ( t ) => ! ids.includes( t.id ) );
-				}, 6000 );
+			// 2. Live broker subscription — heartbeat-delivered and
+			//    SSE-delivered events. The broker replays its last payload
+			//    synchronously when we subscribe, so any tick that fired
+			//    between page-paint and this code running still reaches us.
+			function subscribeToBroker() {
+				if ( ! window.wbGamRealtime || typeof window.wbGamRealtime.subscribe !== 'function' ) {
+					return false;
+				}
+				window.wbGamRealtime.subscribe( 'toasts', ( events ) => {
+					if ( ! Array.isArray( events ) ) {
+						return;
+					}
+					for ( const event of events ) {
+						applyOverlay( event );
+					}
+				} );
+				return true;
 			}
 
-			// Escape closes any open overlay so a stuck customer always
-			// has an out — backstop for the case the dismiss button
-			// itself is blocked by a theme stylesheet.
+			if ( ! subscribeToBroker() ) {
+				document.addEventListener( 'wbGamRealtimeReady', subscribeToBroker, { once: true } );
+			}
+
+			// 3. Escape closes any open overlay — backstop for the case
+			//    a theme stylesheet blocks the dismiss button.
 			document.addEventListener( 'keydown', ( ev ) => {
 				if ( ev.key !== 'Escape' ) {
 					return;
@@ -164,6 +185,12 @@ const { state, actions } = store( NS, {
 					ev.preventDefault();
 				}
 			} );
+
+			// Suppress unused-import warning when @wordpress/interactivity's
+			// getContext stays untranspiled in dev builds — kept around so
+			// future overlay variants that read per-element context can
+			// hop right in without re-importing.
+			void getContext;
 		},
 	},
 } );

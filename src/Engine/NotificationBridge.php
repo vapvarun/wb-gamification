@@ -399,36 +399,12 @@ final class NotificationBridge {
 			data-wp-interactive="wb-gamification"
 			data-wp-init="callbacks.init"
 		>
-			<!-- Toast stack -->
-			<div
-				class="wb-gam-toasts"
-				role="region"
-				aria-label="<?php esc_attr_e( 'Notifications', 'wb-gamification' ); ?>"
-				aria-live="polite"
-				aria-relevant="additions"
-			>
-				<template data-wp-each--toast="state.toasts" data-wp-each-key="context.toast.id">
-					<div
-						class="wb-gam-toast"
-						data-wp-bind--data-type="context.toast.type"
-					>
-						<span class="wb-gam-toast__icon" data-wp-bind--class="state.toastIconClass" aria-hidden="true"></span>
-						<div class="wb-gam-toast__body">
-							<strong class="wb-gam-toast__message" data-wp-text="context.toast.message"></strong>
-							<span
-								class="wb-gam-toast__detail"
-								data-wp-text="context.toast.detail"
-								data-wp-bind--hidden="!context.toast.detail"
-							></span>
-						</div>
-						<button
-							class="wb-gam-toast__close"
-							aria-label="<?php esc_attr_e( 'Dismiss', 'wb-gamification' ); ?>"
-							data-wp-on--click="actions.dismissToast"
-						>&#x2715;</button>
-					</div>
-				</template>
-			</div>
+			<!--
+				Toast STACK is owned by assets/js/toast.js (single container,
+				lives in document.body). This element only carries the
+				celebration overlays (level-up + streak milestone) — those
+				are the IA store's surface.
+			-->
 
 			<!-- Level-up overlay -->
 			<div

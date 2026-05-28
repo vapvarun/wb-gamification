@@ -1,18 +1,28 @@
 /**
  * WB Gamification — Toast Notification Renderer.
  *
- * Receives queued toast payloads from the wb-gamification-realtime broker
- * (Heartbeat-backed) and renders them as dismissible notifications in
- * the top-center stack. Replaces the pre-1.4.0 setInterval REST poller
- * — the broker tells us when toasts arrive; we just paint them.
+ * Sole owner of the toast STACK surface. Creates ONE
+ * `<div class="wb-gam-toasts">` container appended to document.body and
+ * renders dismissible notifications in the top-center position.
  *
- * Fallback: if the broker hasn't published yet (e.g. very first paint
- * before Heartbeat ticks), we do one REST poll to flush whatever was
- * queued by the previous request. After that, all updates come through
- * the broker.
+ * Consumes three independent input paths, all deduped by event `_id`:
+ *   1. Page-load seed in `window.wbGamNotifications`.
+ *   2. wbGamRealtime broker live deliveries (heartbeat ticks + SSE).
+ *   3. REST `/members/me/toasts` poll — fallback only when the broker
+ *      doesn't come online (logged-out pages, third-party Heartbeat
+ *      strip).
+ *
+ * Event-type routing:
+ *   - level_up + streak_milestone → SKIPPED here, owned by the
+ *     Interactivity store overlay surface (assets/interactivity/
+ *     notifications.js). Toasts and overlays are different visual
+ *     treatments for different signal weights.
+ *   - everything else (points, badge, challenge, kudos, …) → toast.
  *
  * @since 1.0.0
- * @refactored 1.4.0 — moved to realtime broker subscription
+ * @refactored 1.4.0 — moved to realtime broker subscription.
+ * @refactored 1.5.0 — single-owner of the toast container; overlays
+ *                    routed out to the IA store.
  */
 
 /* global wbGamToast, wbGamRealtime */
@@ -24,9 +34,11 @@
 		return;
 	}
 
-	// Create the toast container.
+	// Create the single toast container. The `--rest` modifier was used
+	// in 1.4.0 to distinguish from a now-removed IA-rendered duplicate
+	// container; dropped in 1.5.0 as part of the single-owner refactor.
 	var container = document.createElement( 'div' );
-	container.className = 'wb-gam-toasts wb-gam-toasts--rest';
+	container.className = 'wb-gam-toasts';
 	container.setAttribute( 'role', 'region' );
 	container.setAttribute( 'aria-label', 'Notifications' );
 	container.setAttribute( 'aria-live', 'polite' );
@@ -99,6 +111,13 @@
 		}
 		toasts.forEach( function ( toast ) {
 			if ( ! toast || typeof toast !== 'object' ) {
+				return;
+			}
+			// Overlays (level-up + streak milestone) are the IA store's
+			// surface — different visual treatment, separate dismiss
+			// affordance, full-viewport modal. Skip them here so they
+			// don't ALSO render as a toast pill in the corner.
+			if ( toast.type === 'level_up' || toast.type === 'streak_milestone' ) {
 				return;
 			}
 			var key = toast._id != null
