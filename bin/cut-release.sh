@@ -96,6 +96,12 @@ if [ "${CHECK_MODE}" -eq 0 ]; then
     sed -i.bak "s/\"version\": \"${CURRENT_VERSION}\"/\"version\": \"${NEW_VERSION}\"/" package.json
     rm -f package.json.bak
 
+    # sdk/package.json — JS SDK version tracks the plugin version
+    if [ -f sdk/package.json ]; then
+        sed -i.bak "s/\"version\": \"${CURRENT_VERSION}\"/\"version\": \"${NEW_VERSION}\"/" sdk/package.json
+        rm -f sdk/package.json.bak
+    fi
+
     # readme.txt — Stable tag
     sed -i.bak "s/^Stable tag: ${CURRENT_VERSION}$/Stable tag: ${NEW_VERSION}/" readme.txt
     rm -f readme.txt.bak
@@ -156,6 +162,36 @@ if command -v wp >/dev/null 2>&1; then
 else
     echo "  WARN: wp-cli not on PATH — skipping audit/openapi.json refresh."
     echo "         Run 'wp wb-gamification openapi export' from a WP-CLI host before tagging."
+fi
+
+# JS SDK openapi-typescript types — sdk/src/openapi.d.ts must regenerate
+# byte-for-byte from audit/openapi.json. If audit/openapi.json drifted
+# but sdk/src/openapi.d.ts wasn't refreshed, downstream SDK consumers
+# would see a stale type surface. Skip cleanly if Node tooling isn't
+# installed yet (sdk/node_modules absent) so CI containers without the
+# SDK toolchain don't hard-fail.
+if [ -d sdk/node_modules ]; then
+    PRE_SDK_TYPES_HASH="$(shasum -a 256 sdk/src/openapi.d.ts 2>/dev/null | awk '{print $1}')"
+    (cd sdk && npm run gen-types --silent) >/dev/null 2>&1
+    POST_SDK_TYPES_HASH="$(shasum -a 256 sdk/src/openapi.d.ts | awk '{print $1}')"
+
+    if [ "${CHECK_MODE}" -eq 1 ]; then
+        if [ "${PRE_SDK_TYPES_HASH}" != "${POST_SDK_TYPES_HASH}" ]; then
+            echo "  ✗  sdk/src/openapi.d.ts drift detected (regen produced different output)" >&2
+            echo "       Run 'cd sdk && npm run gen-types' to refresh, then commit." >&2
+            exit 3
+        fi
+        echo "  ✓  sdk/src/openapi.d.ts in sync with audit/openapi.json"
+    else
+        if [ "${PRE_SDK_TYPES_HASH}" != "${POST_SDK_TYPES_HASH}" ]; then
+            echo "  ✓  sdk/src/openapi.d.ts regenerated from audit/openapi.json"
+        else
+            echo "  ✓  sdk/src/openapi.d.ts already in sync"
+        fi
+    fi
+else
+    echo "  WARN: sdk/node_modules missing — skipping JS SDK type regen."
+    echo "         Run 'cd sdk && npm install && npm run gen-types' before tagging."
 fi
 
 # ─── 3. --check mode: drift detection ──────────────────────────────────────

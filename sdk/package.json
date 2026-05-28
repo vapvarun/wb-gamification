@@ -1,12 +1,14 @@
 {
   "name": "@wbcom/wb-gamification",
-  "version": "1.0.0",
+  "version": "1.5.0",
   "description": "TypeScript SDK for the WB Gamification REST API",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": ["dist"],
   "scripts": {
-    "build": "tsc",
+    "gen-types": "openapi-typescript ../audit/openapi.json --output src/openapi.d.ts",
+    "build": "npm run gen-types && tsc && cp src/openapi.d.ts dist/openapi.d.ts",
+    "typecheck": "npm run gen-types && tsc --noEmit",
     "prepublishOnly": "npm run build"
   },
   "keywords": ["gamification", "wordpress", "api", "sdk", "buddypress"],
@@ -17,6 +19,7 @@
     "url": "https://github.com/vapvarun/wb-gamification"
   },
   "devDependencies": {
+    "openapi-typescript": "^7.0.0",
     "typescript": "^5.0.0"
   }
 }

@@ -66,3 +66,36 @@ const client = new WBGamification({
 | `giveKudos(receiverId, message)` | Send peer recognition |
 | `getActions()` | List all registered actions |
 | `getOpenApiSpec()` | Get the full OpenAPI 3.0 spec |
+
+The hand-written methods above cover 9 of 56 REST endpoints — the
+most-common surface for community apps. For the full 56-route type
+contract, import the generated OpenAPI types:
+
+```typescript
+import type { paths, components } from '@wbcom/wb-gamification';
+
+// paths describes every URL the API exposes:
+type LeaderboardResponse = paths['/leaderboard']['get']['responses']['200']['content']['application/json'];
+
+// components carries the shared schema definitions
+type Badge = components['schemas']['wb-gamification-badge'];
+```
+
+## Development
+
+```bash
+cd sdk
+npm install
+npm run gen-types     # regenerate src/openapi.d.ts from ../audit/openapi.json
+npm run build         # type-gen + tsc -> dist/
+npm run typecheck     # type-gen + tsc --noEmit (no dist write)
+```
+
+The SDK version tracks the plugin version. `bin/cut-release.sh` bumps
+`sdk/package.json` automatically and runs `npm run gen-types` so the
+committed `src/openapi.d.ts` matches `audit/openapi.json` byte-for-byte.
+
+The `gen-types` step is also wired into `bin/cut-release.sh --check`
+as a drift gate — running `--check` against a clean release state must
+exit 0, which proves `sdk/src/openapi.d.ts` was regenerated after any
+`audit/openapi.json` change.

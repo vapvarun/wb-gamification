@@ -5,6 +5,8 @@ node_modules/
 *.zip
 /dist/
 /build/
+/sdk/dist/
+/sdk/node_modules/
 .superpowers/
 .claude-tmp/
 audit/journey-runs/
