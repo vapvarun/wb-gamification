@@ -83,7 +83,15 @@ final class ManifestLoader {
 	 * @param bool $bp_active Whether BuddyPress is active.
 	 */
 	private static function load_first_party( bool $bp_active ): void {
-		$paths = array( WB_GAM_PATH . 'integrations/' );
+		// Two-tier first-party manifest layout:
+		//   integrations/            — direct-vendor integrations (BP, WC, WP-core)
+		//   integrations/contrib/    — third-party-shipped contrib manifests
+		//                              (LifterLMS, MemberPress, GiveWP, The Events Calendar)
+		// Both directories are scanned at top level (no recursive descent).
+		$paths = array(
+			WB_GAM_PATH . 'integrations/',
+			WB_GAM_PATH . 'integrations/contrib/',
+		);
 
 		/**
 		 * Filters the directories scanned for gamification manifest files.
