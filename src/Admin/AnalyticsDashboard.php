@@ -304,6 +304,9 @@ final class AnalyticsDashboard {
 			<!-- Behavioural intelligence (v2.5 / AI v1 projection) -->
 			<?php self::render_intelligence_panels(); ?>
 
+			<!-- Integration drift (unknown action_ids fired in the last 24h) -->
+			<?php self::render_unknown_actions_panel(); ?>
+
 		</div><!-- .wrap -->
 		<?php
 	}
@@ -665,6 +668,88 @@ final class AnalyticsDashboard {
 				?>
 			</p>
 		<?php endif; ?>
+		<?php
+	}
+
+	/**
+	 * Render the "unknown action_ids" diagnostic panel.
+	 *
+	 * Surfaces events that called `Engine::process()` with an action_id
+	 * that is not in the Registry — the silent failure class Engine
+	 * v1.5.0 started logging via `wb_gam_unknown_action`. The dashboard
+	 * is the production-facing surface; `debug.log` only works in dev.
+	 *
+	 * The buffer is a 24-hour transient (see {@see \WBGam\Engine\Engine}
+	 * UNKNOWN_ACTIONS_TRANSIENT), so it self-clears between runs and
+	 * doesn't grow unbounded. Empty buffer renders nothing — no panel,
+	 * no noise — so healthy installs see a clean dashboard.
+	 */
+	private static function render_unknown_actions_panel(): void {
+		$buffer = \WBGam\Engine\Engine::get_unknown_actions_recent();
+		if ( empty( $buffer ) ) {
+			return;
+		}
+		?>
+		<div class="wb-gam-analytics__panel wbgam-mt-md">
+			<h2 class="wbgam-flex-row">
+				<span class="icon-alert-triangle" aria-hidden="true"></span>
+				<?php esc_html_e( 'Unknown action IDs fired (last 24h)', 'wb-gamification' ); ?>
+			</h2>
+			<p class="description">
+				<?php esc_html_e( 'These events were rejected because the action_id was not registered with the engine. Usually means a typo in custom code, a deactivated integration plugin, or a manifest that did not load. Each row aggregates all firings of that ID.', 'wb-gamification' ); ?>
+			</p>
+			<table class="widefat striped">
+				<thead>
+					<tr>
+						<th><?php esc_html_e( 'Action ID', 'wb-gamification' ); ?></th>
+						<th><?php esc_html_e( 'Events', 'wb-gamification' ); ?></th>
+						<th><?php esc_html_e( 'Last seen', 'wb-gamification' ); ?></th>
+						<th><?php esc_html_e( 'Did you mean?', 'wb-gamification' ); ?></th>
+					</tr>
+				</thead>
+				<tbody>
+					<?php foreach ( $buffer as $action_id => $row ) : ?>
+						<tr>
+							<td><code><?php echo esc_html( (string) $action_id ); ?></code></td>
+							<td><?php echo (int) ( $row['count'] ?? 0 ); ?></td>
+							<td>
+								<?php
+								$seen = (int) ( $row['last_seen'] ?? 0 );
+								echo esc_html(
+									$seen > 0
+										? sprintf(
+											/* translators: %s: human-readable time difference */
+											__( '%s ago', 'wb-gamification' ),
+											human_time_diff( $seen )
+										)
+										: __( 'unknown', 'wb-gamification' )
+								);
+								?>
+							</td>
+							<td>
+								<?php
+								$suggestions = isset( $row['suggestions'] ) && is_array( $row['suggestions'] )
+									? $row['suggestions']
+									: array();
+								if ( empty( $suggestions ) ) {
+									echo '<span class="description">' . esc_html__( 'No close match in registered actions.', 'wb-gamification' ) . '</span>';
+								} else {
+									$mapped = array_map(
+										static fn( $s ) => '<code>' . esc_html( (string) $s ) . '</code>',
+										$suggestions
+									);
+									echo wp_kses( implode( ', ', $mapped ), array( 'code' => array() ) );
+								}
+								?>
+							</td>
+						</tr>
+					<?php endforeach; ?>
+				</tbody>
+			</table>
+			<p class="description wbgam-mt-sm">
+				<?php esc_html_e( 'Rows auto-expire after 24 hours. If a suggestion looks right, update the calling code to use that exact ID. If there is no suggestion, the owning integration plugin is probably not active or its manifest did not load.', 'wb-gamification' ); ?>
+			</p>
+		</div>
 		<?php
 	}
 

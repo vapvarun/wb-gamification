@@ -215,6 +215,13 @@ final class Engine {
 			)
 		);
 
+		// Record the miss for the admin observability surface. Without this
+		// the warning only lands in debug.log — production site owners don't
+		// see it. The transient feeds an analytics-dashboard panel so the
+		// person actually running the site can spot integration drift
+		// (typo'd action_id, deactivated plugin, missing manifest).
+		self::record_unknown_action( $action_id, $event->user_id, $suggestions );
+
 		/**
 		 * Fires when Engine::process() is handed an action_id that isn't in
 		 * the Registry and carries no manual points payload.
@@ -232,6 +239,92 @@ final class Engine {
 		 *                              the Registry (may be empty).
 		 */
 		do_action( 'wb_gam_unknown_action', $action_id, $event, $suggestions );
+	}
+
+	/**
+	 * Transient key for the unknown-action observability buffer.
+	 *
+	 * One key holds a small associative array keyed by action_id; admin
+	 * dashboard reads + renders. Kept off-DB-as-row to avoid a schema
+	 * migration for what is fundamentally a 24h diagnostic.
+	 */
+	private const UNKNOWN_ACTIONS_TRANSIENT = 'wb_gam_unknown_actions_recent';
+
+	/**
+	 * How long a row in the buffer survives before auto-expiry.
+	 */
+	private const UNKNOWN_ACTIONS_TTL = DAY_IN_SECONDS;
+
+	/**
+	 * How many distinct action_ids the buffer holds before dropping the
+	 * least-recently-seen entry. Keeps the option payload bounded.
+	 */
+	private const UNKNOWN_ACTIONS_MAX = 50;
+
+	/**
+	 * Record an unknown action_id miss for the admin dashboard.
+	 *
+	 * Aggregates by action_id so a hot loop firing the wrong id 10,000
+	 * times shows up as one row with count=10000, not 10,000 rows. Reads
+	 * → mutates → writes through `set_transient()`, which is atomic enough
+	 * for an observability counter (we accept a small race window losing
+	 * a count or two under contention; this is a diagnostic, not billing).
+	 *
+	 * @param string   $action_id   The unknown id.
+	 * @param int      $user_id     User the event was for.
+	 * @param string[] $suggestions Latest suggestion set from the matcher.
+	 */
+	private static function record_unknown_action( string $action_id, int $user_id, array $suggestions ): void {
+		$buffer = get_transient( self::UNKNOWN_ACTIONS_TRANSIENT );
+		if ( ! is_array( $buffer ) ) {
+			$buffer = array();
+		}
+
+		$now = time();
+
+		if ( isset( $buffer[ $action_id ] ) && is_array( $buffer[ $action_id ] ) ) {
+			$buffer[ $action_id ]['count']        = (int) ( $buffer[ $action_id ]['count'] ?? 0 ) + 1;
+			$buffer[ $action_id ]['last_seen']    = $now;
+			$buffer[ $action_id ]['last_user_id'] = $user_id;
+			$buffer[ $action_id ]['suggestions']  = $suggestions;
+		} else {
+			$buffer[ $action_id ] = array(
+				'count'        => 1,
+				'first_seen'   => $now,
+				'last_seen'    => $now,
+				'last_user_id' => $user_id,
+				'suggestions'  => $suggestions,
+			);
+		}
+
+		// Bound the buffer by evicting the least-recently-seen entries when
+		// the cardinality cap is hit. A site emitting 100+ distinct wrong
+		// action_ids in a day is almost certainly a bug; we don't need to
+		// catalogue all of them, just enough for the admin to triage.
+		if ( count( $buffer ) > self::UNKNOWN_ACTIONS_MAX ) {
+			uasort( $buffer, static fn( $a, $b ) => ( $b['last_seen'] ?? 0 ) <=> ( $a['last_seen'] ?? 0 ) );
+			$buffer = array_slice( $buffer, 0, self::UNKNOWN_ACTIONS_MAX, true );
+		}
+
+		set_transient( self::UNKNOWN_ACTIONS_TRANSIENT, $buffer, self::UNKNOWN_ACTIONS_TTL );
+	}
+
+	/**
+	 * Read the unknown-action observability buffer for the admin dashboard.
+	 *
+	 * Caller is responsible for capability checking; this is a pure read.
+	 * Rows are returned sorted by last_seen DESC so the most-recent miss
+	 * surfaces at the top.
+	 *
+	 * @return array<string, array{count:int, first_seen:int, last_seen:int, last_user_id:int, suggestions:string[]}>
+	 */
+	public static function get_unknown_actions_recent(): array {
+		$buffer = get_transient( self::UNKNOWN_ACTIONS_TRANSIENT );
+		if ( ! is_array( $buffer ) ) {
+			return array();
+		}
+		uasort( $buffer, static fn( $a, $b ) => ( $b['last_seen'] ?? 0 ) <=> ( $a['last_seen'] ?? 0 ) );
+		return $buffer;
 	}
 
 	/**

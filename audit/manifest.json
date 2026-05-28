@@ -1835,7 +1835,7 @@
       "type": "action",
       "purpose": "",
       "fired_at": [
-        "src/Engine/Engine.php:519"
+        "src/Engine/Engine.php:612"
       ],
       "consumed_by": []
     },
@@ -1951,7 +1951,7 @@
       "type": "action",
       "purpose": "An event has finished evaluating rules + dispatching outputs.",
       "fired_at": [
-        "src/Engine/Engine.php:607"
+        "src/Engine/Engine.php:700"
       ],
       "consumed_by": []
     },
@@ -2049,7 +2049,7 @@
       "type": "action",
       "purpose": "",
       "fired_at": [
-        "src/Engine/Engine.php:578"
+        "src/Engine/Engine.php:671"
       ],
       "consumed_by": [
         "src/Engine/BadgeEngine.php:59 array( __CLASS__",
@@ -2174,7 +2174,7 @@
       "purpose": "",
       "fired_at": [
         "src/Engine/Engine.php:178",
-        "src/Engine/Engine.php:234"
+        "src/Engine/Engine.php:241"
       ],
       "consumed_by": []
     },
@@ -2309,7 +2309,7 @@
       "type": "filter",
       "purpose": "",
       "fired_at": [
-        "src/Engine/Engine.php:461"
+        "src/Engine/Engine.php:554"
       ],
       "consumed_by": []
     },
@@ -2570,7 +2570,7 @@
       "type": "filter",
       "purpose": "",
       "fired_at": [
-        "src/Engine/Engine.php:429"
+        "src/Engine/Engine.php:522"
       ],
       "consumed_by": [
         "src/API/ApiKeyAuth.php:62 static function ( $metadata"
@@ -2644,7 +2644,7 @@
       "type": "filter",
       "purpose": "",
       "fired_at": [
-        "src/Engine/Engine.php:499"
+        "src/Engine/Engine.php:592"
       ],
       "consumed_by": [
         "src/BuddyPress/ActivityIntegration.php:71 array( __CLASS__"
