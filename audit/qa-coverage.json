@@ -1,0 +1,571 @@
+{
+  "schema_version": "v1",
+  "plugin": {
+    "slug": "wb-gamification",
+    "version": "1.0.0"
+  },
+  "generated": {
+    "at": "2026-05-27T08:47:09.404Z",
+    "manifest_at": "2026-05-27T20:30:00Z",
+    "manifest_branch": "main"
+  },
+  "categories": {
+    "rest": {
+      "total": 88,
+      "covered": 0,
+      "uncovered": 88,
+      "skipped": 0,
+      "covered_items": [],
+      "uncovered_items": [
+        {
+          "method": "GET",
+          "route": "/wb-gamification/v1/abilities",
+          "stub_command": "bin/qa-stub-gen.php rest GET \"/wb-gamification/v1/abilities\""
+        },
+        {
+          "method": "GET",
+          "route": "/wb-gamification/v1/actions",
+          "stub_command": "bin/qa-stub-gen.php rest GET \"/wb-gamification/v1/actions\""
+        },
+        {
+          "method": "GET",
+          "route": "/wb-gamification/v1/actions/(?P<id>[a-z0-9_]+)",
+          "stub_command": "bin/qa-stub-gen.php rest GET \"/wb-gamification/v1/actions/(?P<id>[a-z0-9_]+)\""
+        },
+        {
+          "method": "GET",
+          "route": "/wb-gamification/v1/badges",
+          "stub_command": "bin/qa-stub-gen.php rest GET \"/wb-gamification/v1/badges\""
+        },
+        {
+          "method": "GET",
+          "route": "/wb-gamification/v1/badges/(?P<id>[a-z0-9_-]+)",
+          "stub_command": "bin/qa-stub-gen.php rest GET \"/wb-gamification/v1/badges/(?P<id>[a-z0-9_-]+)\""
+        },
+        {
+          "method": "PUT",
+          "route": "/wb-gamification/v1/badges/(?P<id>[a-z0-9_-]+)",
+          "stub_command": "bin/qa-stub-gen.php rest PUT \"/wb-gamification/v1/badges/(?P<id>[a-z0-9_-]+)\""
+        },
+        {
+          "method": "DELETE",
+          "route": "/wb-gamification/v1/badges/(?P<id>[a-z0-9_-]+)",
+          "stub_command": "bin/qa-stub-gen.php rest DELETE \"/wb-gamification/v1/badges/(?P<id>[a-z0-9_-]+)\""
+        },
+        {
+          "method": "POST",
+          "route": "/wb-gamification/v1/badges/(?P<id>[a-z0-9_-]+)/award",
+          "stub_command": "bin/qa-stub-gen.php rest POST \"/wb-gamification/v1/badges/(?P<id>[a-z0-9_-]+)/award\""
+        },
+        {
+          "method": "GET",
+          "route": "/wb-gamification/v1/badges/(?P<badge_id>[a-z0-9_-]+)/share/(?P<user_id>[\\d]+)",
+          "stub_command": "bin/qa-stub-gen.php rest GET \"/wb-gamification/v1/badges/(?P<badge_id>[a-z0-9_-]+)/share/(?P<user_id>[\\d]+)\""
+        },
+        {
+          "method": "GET",
+          "route": "/wb-gamification/v1/badges/(?P<badge_id>[a-z0-9_]+)/credential/(?P<user_id>[\\d]+)",
+          "stub_command": "bin/qa-stub-gen.php rest GET \"/wb-gamification/v1/badges/(?P<badge_id>[a-z0-9_]+)/credential/(?P<user_id>[\\d]+)\""
+        },
+        {
+          "method": "GET",
+          "route": "/wb-gamification/v1/capabilities",
+          "stub_command": "bin/qa-stub-gen.php rest GET \"/wb-gamification/v1/capabilities\""
+        },
+        {
+          "method": "GET",
+          "route": "/wb-gamification/v1/challenges",
+          "stub_command": "bin/qa-stub-gen.php rest GET \"/wb-gamification/v1/challenges\""
+        },
+        {
+          "method": "POST",
+          "route": "/wb-gamification/v1/challenges",
+          "stub_command": "bin/qa-stub-gen.php rest POST \"/wb-gamification/v1/challenges\""
+        },
+        {
+          "method": "GET",
+          "route": "/wb-gamification/v1/challenges/(?P<id>[\\d]+)",
+          "stub_command": "bin/qa-stub-gen.php rest GET \"/wb-gamification/v1/challenges/(?P<id>[\\d]+)\""
+        },
+        {
+          "method": "PUT",
+          "route": "/wb-gamification/v1/challenges/(?P<id>[\\d]+)",
+          "stub_command": "bin/qa-stub-gen.php rest PUT \"/wb-gamification/v1/challenges/(?P<id>[\\d]+)\""
+        },
+        {
+          "method": "DELETE",
+          "route": "/wb-gamification/v1/challenges/(?P<id>[\\d]+)",
+          "stub_command": "bin/qa-stub-gen.php rest DELETE \"/wb-gamification/v1/challenges/(?P<id>[\\d]+)\""
+        },
+        {
+          "method": "POST",
+          "route": "/wb-gamification/v1/challenges/(?P<id>[\\d]+)/complete",
+          "stub_command": "bin/qa-stub-gen.php rest POST \"/wb-gamification/v1/challenges/(?P<id>[\\d]+)/complete\""
+        },
+        {
+          "method": "POST",
+          "route": "/wb-gamification/v1/events",
+          "stub_command": "bin/qa-stub-gen.php rest POST \"/wb-gamification/v1/events\""
+        },
+        {
+          "method": "GET",
+          "route": "/wb-gamification/v1/kudos",
+          "stub_command": "bin/qa-stub-gen.php rest GET \"/wb-gamification/v1/kudos\""
+        },
+        {
+          "method": "POST",
+          "route": "/wb-gamification/v1/kudos",
+          "stub_command": "bin/qa-stub-gen.php rest POST \"/wb-gamification/v1/kudos\""
+        },
+        {
+          "method": "GET",
+          "route": "/wb-gamification/v1/kudos/me",
+          "stub_command": "bin/qa-stub-gen.php rest GET \"/wb-gamification/v1/kudos/me\""
+        },
+        {
+          "method": "GET",
+          "route": "/wb-gamification/v1/leaderboard",
+          "stub_command": "bin/qa-stub-gen.php rest GET \"/wb-gamification/v1/leaderboard\""
+        },
+        {
+          "method": "GET",
+          "route": "/wb-gamification/v1/leaderboard/group/(?P<group_id>[\\d]+)",
+          "stub_command": "bin/qa-stub-gen.php rest GET \"/wb-gamification/v1/leaderboard/group/(?P<group_id>[\\d]+)\""
+        },
+        {
+          "method": "GET",
+          "route": "/wb-gamification/v1/leaderboard/me",
+          "stub_command": "bin/qa-stub-gen.php rest GET \"/wb-gamification/v1/leaderboard/me\""
+        },
+        {
+          "method": "GET",
+          "route": "/wb-gamification/v1/levels",
+          "stub_command": "bin/qa-stub-gen.php rest GET \"/wb-gamification/v1/levels\""
+        },
+        {
+          "method": "GET",
+          "route": "/wb-gamification/v1/members/(?P<id>[\\d]+)",
+          "stub_command": "bin/qa-stub-gen.php rest GET \"/wb-gamification/v1/members/(?P<id>[\\d]+)\""
+        },
+        {
+          "method": "GET",
+          "route": "/wb-gamification/v1/members/(?P<id>[\\d]+)/points",
+          "stub_command": "bin/qa-stub-gen.php rest GET \"/wb-gamification/v1/members/(?P<id>[\\d]+)/points\""
+        },
+        {
+          "method": "GET",
+          "route": "/wb-gamification/v1/members/(?P<id>[\\d]+)/level",
+          "stub_command": "bin/qa-stub-gen.php rest GET \"/wb-gamification/v1/members/(?P<id>[\\d]+)/level\""
+        },
+        {
+          "method": "GET",
+          "route": "/wb-gamification/v1/members/(?P<id>[\\d]+)/badges",
+          "stub_command": "bin/qa-stub-gen.php rest GET \"/wb-gamification/v1/members/(?P<id>[\\d]+)/badges\""
+        },
+        {
+          "method": "GET",
+          "route": "/wb-gamification/v1/members/(?P<id>[\\d]+)/events",
+          "stub_command": "bin/qa-stub-gen.php rest GET \"/wb-gamification/v1/members/(?P<id>[\\d]+)/events\""
+        },
+        {
+          "method": "GET",
+          "route": "/wb-gamification/v1/members/(?P<id>[\\d]+)/streak",
+          "stub_command": "bin/qa-stub-gen.php rest GET \"/wb-gamification/v1/members/(?P<id>[\\d]+)/streak\""
+        },
+        {
+          "method": "GET",
+          "route": "/wb-gamification/v1/members/me/toasts",
+          "stub_command": "bin/qa-stub-gen.php rest GET \"/wb-gamification/v1/members/me/toasts\""
+        },
+        {
+          "method": "GET",
+          "route": "/wb-gamification/v1/openapi.json",
+          "stub_command": "bin/qa-stub-gen.php rest GET \"/wb-gamification/v1/openapi.json\""
+        },
+        {
+          "method": "POST",
+          "route": "/wb-gamification/v1/points/award",
+          "stub_command": "bin/qa-stub-gen.php rest POST \"/wb-gamification/v1/points/award\""
+        },
+        {
+          "method": "DELETE",
+          "route": "/wb-gamification/v1/points/(?P<id>[\\d]+)",
+          "stub_command": "bin/qa-stub-gen.php rest DELETE \"/wb-gamification/v1/points/(?P<id>[\\d]+)\""
+        },
+        {
+          "method": "GET",
+          "route": "/wb-gamification/v1/members/(?P<id>[\\d]+)/recap",
+          "stub_command": "bin/qa-stub-gen.php rest GET \"/wb-gamification/v1/members/(?P<id>[\\d]+)/recap\""
+        },
+        {
+          "method": "GET",
+          "route": "/wb-gamification/v1/redemptions/items",
+          "stub_command": "bin/qa-stub-gen.php rest GET \"/wb-gamification/v1/redemptions/items\""
+        },
+        {
+          "method": "POST",
+          "route": "/wb-gamification/v1/redemptions/items",
+          "stub_command": "bin/qa-stub-gen.php rest POST \"/wb-gamification/v1/redemptions/items\""
+        },
+        {
+          "method": "GET",
+          "route": "/wb-gamification/v1/redemptions/items/(?P<id>[\\d]+)",
+          "stub_command": "bin/qa-stub-gen.php rest GET \"/wb-gamification/v1/redemptions/items/(?P<id>[\\d]+)\""
+        },
+        {
+          "method": "PUT",
+          "route": "/wb-gamification/v1/redemptions/items/(?P<id>[\\d]+)",
+          "stub_command": "bin/qa-stub-gen.php rest PUT \"/wb-gamification/v1/redemptions/items/(?P<id>[\\d]+)\""
+        },
+        {
+          "method": "DELETE",
+          "route": "/wb-gamification/v1/redemptions/items/(?P<id>[\\d]+)",
+          "stub_command": "bin/qa-stub-gen.php rest DELETE \"/wb-gamification/v1/redemptions/items/(?P<id>[\\d]+)\""
+        },
+        {
+          "method": "POST",
+          "route": "/wb-gamification/v1/redemptions",
+          "stub_command": "bin/qa-stub-gen.php rest POST \"/wb-gamification/v1/redemptions\""
+        },
+        {
+          "method": "GET",
+          "route": "/wb-gamification/v1/redemptions/me",
+          "stub_command": "bin/qa-stub-gen.php rest GET \"/wb-gamification/v1/redemptions/me\""
+        },
+        {
+          "method": "GET",
+          "route": "/wb-gamification/v1/rules",
+          "stub_command": "bin/qa-stub-gen.php rest GET \"/wb-gamification/v1/rules\""
+        },
+        {
+          "method": "POST",
+          "route": "/wb-gamification/v1/rules",
+          "stub_command": "bin/qa-stub-gen.php rest POST \"/wb-gamification/v1/rules\""
+        },
+        {
+          "method": "GET",
+          "route": "/wb-gamification/v1/rules/(?P<id>[\\d]+)",
+          "stub_command": "bin/qa-stub-gen.php rest GET \"/wb-gamification/v1/rules/(?P<id>[\\d]+)\""
+        },
+        {
+          "method": "PUT",
+          "route": "/wb-gamification/v1/rules/(?P<id>[\\d]+)",
+          "stub_command": "bin/qa-stub-gen.php rest PUT \"/wb-gamification/v1/rules/(?P<id>[\\d]+)\""
+        },
+        {
+          "method": "DELETE",
+          "route": "/wb-gamification/v1/rules/(?P<id>[\\d]+)",
+          "stub_command": "bin/qa-stub-gen.php rest DELETE \"/wb-gamification/v1/rules/(?P<id>[\\d]+)\""
+        },
+        {
+          "method": "GET",
+          "route": "/wb-gamification/v1/webhooks",
+          "stub_command": "bin/qa-stub-gen.php rest GET \"/wb-gamification/v1/webhooks\""
+        },
+        {
+          "method": "POST",
+          "route": "/wb-gamification/v1/webhooks",
+          "stub_command": "bin/qa-stub-gen.php rest POST \"/wb-gamification/v1/webhooks\""
+        },
+        {
+          "method": "GET",
+          "route": "/wb-gamification/v1/webhooks/(?P<id>[\\d]+)",
+          "stub_command": "bin/qa-stub-gen.php rest GET \"/wb-gamification/v1/webhooks/(?P<id>[\\d]+)\""
+        },
+        {
+          "method": "PUT",
+          "route": "/wb-gamification/v1/webhooks/(?P<id>[\\d]+)",
+          "stub_command": "bin/qa-stub-gen.php rest PUT \"/wb-gamification/v1/webhooks/(?P<id>[\\d]+)\""
+        },
+        {
+          "method": "DELETE",
+          "route": "/wb-gamification/v1/webhooks/(?P<id>[\\d]+)",
+          "stub_command": "bin/qa-stub-gen.php rest DELETE \"/wb-gamification/v1/webhooks/(?P<id>[\\d]+)\""
+        },
+        {
+          "method": "GET",
+          "route": "/wb-gamification/v1/webhooks/(?P<id>[\\d]+)/log",
+          "stub_command": "bin/qa-stub-gen.php rest GET \"/wb-gamification/v1/webhooks/(?P<id>[\\d]+)/log\""
+        },
+        {
+          "method": "DELETE",
+          "route": "/wb-gamification/v1/webhooks/(?P<id>[\\d]+)/log",
+          "stub_command": "bin/qa-stub-gen.php rest DELETE \"/wb-gamification/v1/webhooks/(?P<id>[\\d]+)/log\""
+        },
+        {
+          "method": "GET",
+          "route": "/wb-gamification/v1/levels",
+          "stub_command": "bin/qa-stub-gen.php rest GET \"/wb-gamification/v1/levels\""
+        },
+        {
+          "method": "POST",
+          "route": "/wb-gamification/v1/levels",
+          "stub_command": "bin/qa-stub-gen.php rest POST \"/wb-gamification/v1/levels\""
+        },
+        {
+          "method": "PATCH",
+          "route": "/wb-gamification/v1/levels/(?P<id>\\d+)",
+          "stub_command": "bin/qa-stub-gen.php rest PATCH \"/wb-gamification/v1/levels/(?P<id>\\d+)\""
+        },
+        {
+          "method": "DELETE",
+          "route": "/wb-gamification/v1/levels/(?P<id>\\d+)",
+          "stub_command": "bin/qa-stub-gen.php rest DELETE \"/wb-gamification/v1/levels/(?P<id>\\d+)\""
+        },
+        {
+          "method": "GET",
+          "route": "/wb-gamification/v1/cohort-settings",
+          "stub_command": "bin/qa-stub-gen.php rest GET \"/wb-gamification/v1/cohort-settings\""
+        },
+        {
+          "method": "POST",
+          "route": "/wb-gamification/v1/cohort-settings",
+          "stub_command": "bin/qa-stub-gen.php rest POST \"/wb-gamification/v1/cohort-settings\""
+        },
+        {
+          "method": "GET",
+          "route": "/wb-gamification/v1/api-keys",
+          "stub_command": "bin/qa-stub-gen.php rest GET \"/wb-gamification/v1/api-keys\""
+        },
+        {
+          "method": "POST",
+          "route": "/wb-gamification/v1/api-keys",
+          "stub_command": "bin/qa-stub-gen.php rest POST \"/wb-gamification/v1/api-keys\""
+        },
+        {
+          "method": "PATCH",
+          "route": "/wb-gamification/v1/api-keys/(?P<key>wbgam_[A-Za-z0-9]+)/revoke",
+          "stub_command": "bin/qa-stub-gen.php rest PATCH \"/wb-gamification/v1/api-keys/(?P<key>wbgam_[A-Za-z0-9]+)/revoke\""
+        },
+        {
+          "method": "DELETE",
+          "route": "/wb-gamification/v1/api-keys/(?P<key>wbgam_[A-Za-z0-9]+)",
+          "stub_command": "bin/qa-stub-gen.php rest DELETE \"/wb-gamification/v1/api-keys/(?P<key>wbgam_[A-Za-z0-9]+)\""
+        },
+        {
+          "method": "GET",
+          "route": "/wb-gamification/v1/community-challenges",
+          "stub_command": "bin/qa-stub-gen.php rest GET \"/wb-gamification/v1/community-challenges\""
+        },
+        {
+          "method": "POST",
+          "route": "/wb-gamification/v1/community-challenges",
+          "stub_command": "bin/qa-stub-gen.php rest POST \"/wb-gamification/v1/community-challenges\""
+        },
+        {
+          "method": "GET",
+          "route": "/wb-gamification/v1/community-challenges/(?P<id>\\d+)",
+          "stub_command": "bin/qa-stub-gen.php rest GET \"/wb-gamification/v1/community-challenges/(?P<id>\\d+)\""
+        },
+        {
+          "method": "PATCH",
+          "route": "/wb-gamification/v1/community-challenges/(?P<id>\\d+)",
+          "stub_command": "bin/qa-stub-gen.php rest PATCH \"/wb-gamification/v1/community-challenges/(?P<id>\\d+)\""
+        },
+        {
+          "method": "DELETE",
+          "route": "/wb-gamification/v1/community-challenges/(?P<id>\\d+)",
+          "stub_command": "bin/qa-stub-gen.php rest DELETE \"/wb-gamification/v1/community-challenges/(?P<id>\\d+)\""
+        },
+        {
+          "method": "POST",
+          "route": "/wb-gamification/v1/badges",
+          "stub_command": "bin/qa-stub-gen.php rest POST \"/wb-gamification/v1/badges\""
+        },
+        {
+          "method": "GET",
+          "route": "/wb-gamification/v1/point-types",
+          "stub_command": "bin/qa-stub-gen.php rest GET \"/wb-gamification/v1/point-types\""
+        },
+        {
+          "method": "POST",
+          "route": "/wb-gamification/v1/point-types",
+          "stub_command": "bin/qa-stub-gen.php rest POST \"/wb-gamification/v1/point-types\""
+        },
+        {
+          "method": "PUT",
+          "route": "/wb-gamification/v1/point-types/(?P<slug>[a-z0-9_-]+)",
+          "stub_command": "bin/qa-stub-gen.php rest PUT \"/wb-gamification/v1/point-types/(?P<slug>[a-z0-9_-]+)\""
+        },
+        {
+          "method": "PATCH",
+          "route": "/wb-gamification/v1/point-types/(?P<slug>[a-z0-9_-]+)",
+          "stub_command": "bin/qa-stub-gen.php rest PATCH \"/wb-gamification/v1/point-types/(?P<slug>[a-z0-9_-]+)\""
+        },
+        {
+          "method": "DELETE",
+          "route": "/wb-gamification/v1/point-types/(?P<slug>[a-z0-9_-]+)",
+          "stub_command": "bin/qa-stub-gen.php rest DELETE \"/wb-gamification/v1/point-types/(?P<slug>[a-z0-9_-]+)\""
+        },
+        {
+          "method": "GET",
+          "route": "/wb-gamification/v1/point-type-conversions",
+          "stub_command": "bin/qa-stub-gen.php rest GET \"/wb-gamification/v1/point-type-conversions\""
+        },
+        {
+          "method": "POST",
+          "route": "/wb-gamification/v1/point-type-conversions",
+          "stub_command": "bin/qa-stub-gen.php rest POST \"/wb-gamification/v1/point-type-conversions\""
+        },
+        {
+          "method": "PUT",
+          "route": "/wb-gamification/v1/point-type-conversions/(?P<id>[\\d]+)",
+          "stub_command": "bin/qa-stub-gen.php rest PUT \"/wb-gamification/v1/point-type-conversions/(?P<id>[\\d]+)\""
+        },
+        {
+          "method": "PATCH",
+          "route": "/wb-gamification/v1/point-type-conversions/(?P<id>[\\d]+)",
+          "stub_command": "bin/qa-stub-gen.php rest PATCH \"/wb-gamification/v1/point-type-conversions/(?P<id>[\\d]+)\""
+        },
+        {
+          "method": "DELETE",
+          "route": "/wb-gamification/v1/point-type-conversions/(?P<id>[\\d]+)",
+          "stub_command": "bin/qa-stub-gen.php rest DELETE \"/wb-gamification/v1/point-type-conversions/(?P<id>[\\d]+)\""
+        },
+        {
+          "method": "POST",
+          "route": "/wb-gamification/v1/point-types/(?P<from>[a-z0-9_-]+)/convert",
+          "stub_command": "bin/qa-stub-gen.php rest POST \"/wb-gamification/v1/point-types/(?P<from>[a-z0-9_-]+)/convert\""
+        },
+        {
+          "method": "GET",
+          "route": "/wb-gamification/v1/submissions",
+          "stub_command": "bin/qa-stub-gen.php rest GET \"/wb-gamification/v1/submissions\""
+        },
+        {
+          "method": "POST",
+          "route": "/wb-gamification/v1/submissions",
+          "stub_command": "bin/qa-stub-gen.php rest POST \"/wb-gamification/v1/submissions\""
+        },
+        {
+          "method": "POST",
+          "route": "/wb-gamification/v1/submissions/(?P<id>[\\d]+)/approve",
+          "stub_command": "bin/qa-stub-gen.php rest POST \"/wb-gamification/v1/submissions/(?P<id>[\\d]+)/approve\""
+        },
+        {
+          "method": "POST",
+          "route": "/wb-gamification/v1/submissions/(?P<id>[\\d]+)/reject",
+          "stub_command": "bin/qa-stub-gen.php rest POST \"/wb-gamification/v1/submissions/(?P<id>[\\d]+)/reject\""
+        },
+        {
+          "method": "GET",
+          "route": "/wb-gamification/v1/settings/emails",
+          "stub_command": "bin/qa-stub-gen.php rest GET \"/wb-gamification/v1/settings/emails\""
+        },
+        {
+          "method": "POST",
+          "route": "/wb-gamification/v1/settings/emails",
+          "stub_command": "bin/qa-stub-gen.php rest POST \"/wb-gamification/v1/settings/emails\""
+        }
+      ]
+    },
+    "ajax": {
+      "total": 0,
+      "covered": 0,
+      "uncovered": 0,
+      "skipped": 0,
+      "covered_items": [],
+      "uncovered_items": []
+    },
+    "hooks_fired": {
+      "total": 0,
+      "covered": 0,
+      "uncovered": 0,
+      "skipped": 55,
+      "covered_items": [],
+      "uncovered_items": [],
+      "_note": "Tracks only hooks with non-empty consumed_by. Skipped hooks are pure extensibility surface."
+    },
+    "cron": {
+      "total": 9,
+      "covered": 0,
+      "uncovered": 9,
+      "skipped": 0,
+      "covered_items": [],
+      "uncovered_items": [
+        {
+          "hook": "wb_gam_leaderboard_snapshot",
+          "stub_command": "bin/qa-stub-gen.php cron wb_gam_leaderboard_snapshot"
+        },
+        {
+          "hook": "wb_gam_weekly_nudge",
+          "stub_command": "bin/qa-stub-gen.php cron wb_gam_weekly_nudge"
+        },
+        {
+          "hook": "wb_gam_weekly_email",
+          "stub_command": "bin/qa-stub-gen.php cron wb_gam_weekly_email"
+        },
+        {
+          "hook": "wb_gam_cohort_assign",
+          "stub_command": "bin/qa-stub-gen.php cron wb_gam_cohort_assign"
+        },
+        {
+          "hook": "wb_gam_cohort_process",
+          "stub_command": "bin/qa-stub-gen.php cron wb_gam_cohort_process"
+        },
+        {
+          "hook": "wb_gam_tenure_check",
+          "stub_command": "bin/qa-stub-gen.php cron wb_gam_tenure_check"
+        },
+        {
+          "hook": "wb_gam_status_retention_check",
+          "stub_command": "bin/qa-stub-gen.php cron wb_gam_status_retention_check"
+        },
+        {
+          "hook": "wb_gam_credential_expiry_check",
+          "stub_command": "bin/qa-stub-gen.php cron wb_gam_credential_expiry_check"
+        },
+        {
+          "hook": "wb_gam_prune_logs",
+          "stub_command": "bin/qa-stub-gen.php cron wb_gam_prune_logs"
+        }
+      ]
+    },
+    "wp_cli": {
+      "total": 6,
+      "covered": 0,
+      "uncovered": 6,
+      "skipped": 0,
+      "covered_items": [],
+      "uncovered_items": [
+        {
+          "command": "wb-gamification points",
+          "stub_command": "bin/qa-stub-gen.php wp_cli wb-gamification points"
+        },
+        {
+          "command": "wb-gamification member",
+          "stub_command": "bin/qa-stub-gen.php wp_cli wb-gamification member"
+        },
+        {
+          "command": "wb-gamification actions",
+          "stub_command": "bin/qa-stub-gen.php wp_cli wb-gamification actions"
+        },
+        {
+          "command": "wb-gamification logs",
+          "stub_command": "bin/qa-stub-gen.php wp_cli wb-gamification logs"
+        },
+        {
+          "command": "wb-gamification export",
+          "stub_command": "bin/qa-stub-gen.php wp_cli wb-gamification export"
+        },
+        {
+          "command": "wb-gamification doctor",
+          "stub_command": "bin/qa-stub-gen.php wp_cli wb-gamification doctor"
+        }
+      ]
+    }
+  },
+  "summary": {
+    "categories_checked": 5,
+    "items_total": 103,
+    "items_covered": 0,
+    "items_uncovered": 103,
+    "items_skipped": 55,
+    "coverage_percent": 0
+  },
+  "drift": {
+    "previous_uncovered": null,
+    "current_uncovered": 103,
+    "delta": null
+  }
+}

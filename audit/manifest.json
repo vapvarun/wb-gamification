@@ -2090,7 +2090,7 @@
         "warnings": 0,
         "note": "N/A for this plugin — no /templates/ wiring. Bespoke bin/check-event-wiring.sh provides equivalent gate."
       },
-      "verdict": "release-clean on the 3 targeted checks. Omnibus audit_plugin reports 2,428 failed but ~99% are phpcs noise (scanner ignores .phpcs.xml). Real findings tracked in audit/ISSUES-2026-05-27.yaml."
+      "verdict": "release-clean on the 3 targeted checks. Omnibus audit_plugin reports 2,428 failed but ~99% are phpcs noise (scanner ignores .phpcs.xml). Real findings tracked via git history of audit/ISSUES-2026-05-27.yaml (closed 2026-05-28)."
     },
     "enum_consistency_findings": {
       "ran_at": "2026-05-03T19:30:00Z",

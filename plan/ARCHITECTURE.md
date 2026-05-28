@@ -19,7 +19,7 @@ This doc is the plugin-specific application of two canonical skills. **Skills wi
 
 **Strict ownership boundaries** (per `wp-plugin-onboard` skill):
 - `audit/` is owned **only** by `wp-plugin-onboard` — never hand-edit, always refresh
-- `plan/` (singular — per skill convention) is human-authored — release plans, design docs, audits like `CODEBASE-AUDIT-2026-05-06.md`
+- `plan/` is human-authored — evergreen design docs + the single roadmap in `MASTER-CHECKLIST.md`. Dated artefacts (release plans, bug-sweep specs, audits) were consolidated on 2026-05-28; recover specifics from `git log --diff-filter=D --follow plan/<path>`.
 - `docs/website/` is customer-facing (owned by docs team / `wbcom-docs` MCP)
 
 ## Enforcement: wp-plugin-qa MCP — the gate, not this doc
@@ -47,7 +47,7 @@ This doc describes patterns. The **`wp-plugin-qa` MCP** enforces them. Prose con
 | `wppqa_check_api` | Live REST behaviour — auth, nonce, malformed input | Pre-release on Local |
 | `wppqa_audit_plugin` | All of the above in one pass | Pre-release gate — must return failed=0 |
 
-Latest baseline: `audit/wppqa-baseline-2026-05-03/SUMMARY.md` — `failed=0` across all 4 checks.
+Latest baseline: `audit/wppqa-baseline-2026-05-27/SUMMARY.md` — `failed=0` across all 4 checks.
 
 ---
 
@@ -104,15 +104,12 @@ wb-gamification/
 │   ├── release-runs/             # Per-date release verification reports
 │   └── wppqa-baseline-*/         # Quality-baseline snapshots
 │
-├── plan/                        # HUMAN-AUTHORED design docs + roadmap
+├── plan/                        # HUMAN-AUTHORED design docs + roadmap (5 files, evergreen)
+│   ├── README.md                 # Folder index
+│   ├── MASTER-CHECKLIST.md       # Single roadmap — what's shipped vs pending
 │   ├── ARCHITECTURE.md           # ← this file
-│   ├── COMPETITIVE-ANALYSIS.md
-│   ├── CODEBASE-AUDIT-2026-05-06.md
-│   ├── v1.0-release-plan.md
-│   ├── v1.1-release-plan.md
-│   ├── QA-MANUAL-TEST-PLAN.md    # Persona walkthrough for QA team
-│   ├── V1-RELEASE-VERIFICATION-PLAN.md
-│   └── decisions/                # ADRs — one MD per significant decision (TODO: create)
+│   ├── PRODUCT-VISION.md         # Strategy + personas
+│   └── TECH-STACK.md             # Stack decisions
 │
 ├── docs/website/                 # Customer-facing documentation (owned by docs team)
 ├── examples/                     # 10 third-party integration samples
@@ -158,7 +155,7 @@ Per `wp-plugin-development` skill (`references/layered-architecture.md`), every 
 | 6. Templates | `templates/*.php` + `templates/partials/` | `templates/emails/`; block-PHP renderers live in `src/Blocks/<slug>/render.php` | ⚠ partial |
 | 7. Admin UI | `Admin/*Page.php` + `Admin/Settings/*.php` | `WBGam\Admin\*Page.php` | ✅ |
 
-**Gap**: Repository extraction (layer 3 split out of layer 4). For v1.0 we accept the deviation — the engines are stable, tested, and refactoring 40 files now is risky pre-launch. **Tracked as a v1.x roadmap item** — see `plan/CODEBASE-AUDIT-2026-05-06.md` § "Tier 2: Subnamespace src/Engine/" + the longer-term Tier 3 (full domain layout). Recommended pre-v2.0.
+**Gap**: Repository extraction (layer 3 split out of layer 4). For v1.0 we accept the deviation — the engines are stable, tested, and refactoring 40 files now is risky pre-launch. **Tracked as a v1.x roadmap item** — see `plan/MASTER-CHECKLIST.md` (was `plan/CODEBASE-AUDIT-2026-05-06.md`) § "Tier 2: Subnamespace src/Engine/" + the longer-term Tier 3 (full domain layout). Recommended pre-v2.0.
 
 When adding new code, **build to the canonical layers from day one** if you can — even if the surrounding code is mixed:
 - New domain → add a `WBGam\Repository\<Thing>Repository.php` for SQL + a `WBGam\Services\<Thing>Service.php` for logic
@@ -307,7 +304,7 @@ tests/Unit/
 
 **To add tests for new code**: mirror src/ path. New `src/Engine/Foo.php` → tests live at `tests/Unit/Engine/FooTest.php`.
 
-**Gap**: no `tests/Integration/REST/` tier. As REST surface grows past 51 endpoints, add HTTP-tier tests using `WP_REST_Request` round-trips. See `plan/CODEBASE-AUDIT-2026-05-06.md` § Recommendations.
+**Gap**: no `tests/Integration/REST/` tier. As REST surface grows past 51 endpoints, add HTTP-tier tests using `WP_REST_Request` round-trips. See `plan/MASTER-CHECKLIST.md` (was `plan/CODEBASE-AUDIT-2026-05-06.md`) § Recommendations.
 
 **CI gate**: `composer ci` runs PHP lint + WPCS + PHPStan + coding-rules + journeys (~30s + browser). Pre-push hook is opt-in via `composer install-hooks`.
 

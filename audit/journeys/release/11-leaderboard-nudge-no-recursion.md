@@ -28,7 +28,7 @@ This journey is the regression sentinel — any future commit that
 re-introduces the collision class of bug fails this gate, not QA.
 
 See:
-- `audit/PERF-DIAG-2026-05-27.yaml#PERF-001`
+- `git-history snapshot of audit/PERF-DIAG-2026-05-27.yaml (PERF-001 fix shipped in f33a6b5)`
 - Basecamp card 9932683754
 
 ## Setup

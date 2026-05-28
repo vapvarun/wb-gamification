@@ -26,7 +26,7 @@ Closes the four critical v1.0 gaps from `plan/v1.0-release-plan.md`. Inventory d
 
 **Scale hardening also landed** in this sprint: materialised `user_totals`, batched `LogPruner`, batch award API on `PointsEngine`, leaderboard upsert pattern. Hot-path read budgets in `composer scale:bench` all pass under target on a 1M-row dataset.
 
-**wppqa baseline**: `audit/wppqa-baseline-2026-05-07/SUMMARY.md` — failed=0 across `plugin_dev_rules`, `rest_js_contract`, `wiring_completeness`.
+**wppqa baseline**: `audit/wppqa-baseline-2026-05-27/SUMMARY.md` — failed=0 across `plugin_dev_rules`, `rest_js_contract`, `wiring_completeness`.
 
 ---
 

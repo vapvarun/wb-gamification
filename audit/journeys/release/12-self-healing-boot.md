@@ -34,7 +34,7 @@ via a single `SHOW TABLES` probe, and re-runs the activation payload
 the healthy-site no-op path AND the fresh-state heal path.
 
 See `src/Engine/Installer.php::maybe_install()` and
-`audit/PERF-DIAG-2026-05-27.yaml` follow-up notes.
+the git-history snapshot of `audit/PERF-DIAG-2026-05-27.yaml`.
 
 ## Setup
 

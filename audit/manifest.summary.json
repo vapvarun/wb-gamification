@@ -45,7 +45,7 @@
     "role_matrix": "audit/ROLE_MATRIX.md",
     "graph": "audit/graph.html",
     "wppqa_baseline": "audit/wppqa-baseline-2026-05-27/SUMMARY.md",
-    "issues_yaml": "audit/ISSUES-2026-05-27.yaml",
+    "issues_yaml": "git history of audit/ISSUES-2026-05-27.yaml",
     "stability_audit": "audit/STABILITY-2026-05-27.md"
   },
   "static_analysis_flags": {
@@ -87,7 +87,7 @@
     "admin_post_count": 0,
     "wp_ajax_count": 0,
     "legacy_blocks_dir_deleted": true,
-    "verdict": "release-clean on targeted wppqa (plugin_dev_rules + rest_js_contract + wiring_completeness all failed=0). Omnibus audit_plugin reports 2,428 failed but ~99% are phpcs noise (scanner ignores .phpcs.xml); 5 real actionable findings tracked in audit/ISSUES-2026-05-27.yaml."
+    "verdict": "release-clean on targeted wppqa (plugin_dev_rules + rest_js_contract + wiring_completeness all failed=0). Omnibus audit_plugin reports 2,428 failed but ~99% are phpcs noise (scanner ignores .phpcs.xml); 5 real actionable findings tracked in git history of audit/ISSUES-2026-05-27.yaml."
   },
   "generated_at": "2026-05-27T21:00:00Z"
 }

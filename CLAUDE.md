@@ -1,15 +1,15 @@
 # WB Gamification — CLAUDE.md
 
-> **READ FIRST:** [`audit/manifest.json`](audit/manifest.json) is the canonical inventory — **56 REST endpoints**, **23 tables**, **19 blocks**, 17 shortcodes, ~10 cron hooks, **10 WP-CLI commands** (`points`/`member` accept `--type=`, plus `email-test`, `scale` seed/bench, `qa` seed-pages, `replay`, `doctor`, `logs`, `actions`, `export`), **13 admin pages**, **0 admin_post_* handlers** (Tier 0 REST migration intact), **0 wp_ajax_* handlers**, 100 fired hooks (56 actions + 44 filters), **2 currency tables** (`wb_gam_point_types` + `wb_gam_point_type_conversions`), **1 submissions table** (`wb_gam_submissions`), **1 materialised totals table** (`wb_gam_user_totals`). Counts last re-baselined 2026-05-27; full Phase 2.5 enumeration deferred — see [`audit/STABILITY-2026-05-27.md`](audit/STABILITY-2026-05-27.md). Use the manifest before grepping. Quick index: [`audit/manifest.summary.json`](audit/manifest.summary.json). wppqa baseline: [`audit/wppqa-baseline-2026-05-07/SUMMARY.md`](audit/wppqa-baseline-2026-05-07/SUMMARY.md) (failed=0). v1.4.0 gates: WPCS clean, PHPStan clean, WP Plugin Check 0 errors, PHPUnit 109 tests green, enum-drift gate green.
+> **READ FIRST:** [`audit/manifest.json`](audit/manifest.json) is the canonical inventory — **56 REST endpoints**, **23 tables**, **19 blocks**, 17 shortcodes, ~10 cron hooks, **10 WP-CLI commands**, **13 admin pages**, **44 services**, **0 admin_post_* handlers** (Tier 0 REST migration intact), **0 wp_ajax_* handlers**. Quick index: [`audit/manifest.summary.json`](audit/manifest.summary.json) (≤3 KB). Refresh via `/wp-plugin-onboard --refresh` after non-trivial changes. Stability gates: [`audit/STABILITY-2026-05-27.md`](audit/STABILITY-2026-05-27.md). v1.4.0 release gates: WPCS clean, PHPStan level 9 clean, WP Plugin Check 0 errors, PHPUnit 109 tests green, all 14 local-CI stages green.
 >
 > **Folder map:**
-> - [`audit/`](audit/) — machine-generated inventory + reports + journeys + wppqa runs. Hand-edits get overwritten on refresh. See [`audit/README.md`](audit/README.md).
-> - [`plan/`](plan/) — human-authored design docs + roadmaps. Architecture in [`plan/ARCHITECTURE-DRIVEN-PLAN.md`](plan/ARCHITECTURE-DRIVEN-PLAN.md); QA team uses [`plan/QA-MANUAL-TEST-PLAN.md`](plan/QA-MANUAL-TEST-PLAN.md). See [`plan/README.md`](plan/README.md).
-> - [`examples/`](examples/) — 10 third-party integration samples (manifest, REST, webhook, badge/challenge, email override, block injection). See [`examples/README.md`](examples/README.md).
-> - [`docs/website/`](docs/website/) — customer-facing documentation, owned by the docs team.
-> - [`.wordpress-org/`](.wordpress-org/) — banner / icon / 10 screenshots ready for SVN sync.
+> - [`audit/`](audit/) — machine-generated inventory + reports + journeys. Hand-edits get overwritten on refresh. See [`audit/README.md`](audit/README.md). Key: [`manifest.json`](audit/manifest.json), [`FEATURE_AUDIT.md`](audit/FEATURE_AUDIT.md), [`CODE_FLOWS.md`](audit/CODE_FLOWS.md), [`ROLE_MATRIX.md`](audit/ROLE_MATRIX.md), [`graph.html`](audit/graph.html).
+> - [`plan/`](plan/) — human-authored evergreen design docs + the single roadmap. See [`plan/MASTER-CHECKLIST.md`](plan/MASTER-CHECKLIST.md) for what's shipped vs pending. Architecture in [`plan/ARCHITECTURE.md`](plan/ARCHITECTURE.md). Strategy in [`plan/PRODUCT-VISION.md`](plan/PRODUCT-VISION.md). Tech in [`plan/TECH-STACK.md`](plan/TECH-STACK.md). Dated release / bug-sweep / migration plans were folded into the master checklist on 2026-05-28; recover via git log if needed.
+> - [`examples/`](examples/) — 10 third-party integration samples. See [`examples/README.md`](examples/README.md).
+> - [`docs/`](docs/) — `docs/qa/` (release smoke runbook), `docs/website/` (customer-facing docs). Both active.
+> - [`.wordpress-org/`](.wordpress-org/) — banner / icon / screenshots for SVN sync.
 >
-> **Audit reports:** [`audit/FEATURE_AUDIT.md`](audit/FEATURE_AUDIT.md), [`audit/CODE_FLOWS.md`](audit/CODE_FLOWS.md), [`audit/ROLE_MATRIX.md`](audit/ROLE_MATRIX.md), [`audit/CLOSE-OUT-2026-05-02.md`](audit/CLOSE-OUT-2026-05-02.md), [`audit/FEATURE-COMPLETENESS-2026-05-02.md`](audit/FEATURE-COMPLETENESS-2026-05-02.md) (per-feature × surface matrix — half-cooked items, logging gaps, test coverage). Quality baseline: [`audit/wppqa-runs/2026-05-02-baseline/SUMMARY.md`](audit/wppqa-runs/2026-05-02-baseline/SUMMARY.md). Browse as graph: `cd audit && python3 -m http.server 8765` then http://localhost:8765/graph.html. Refresh after non-trivial changes via `/wp-plugin-onboard --refresh`.
+> **Browse as graph:** `cd audit && python3 -m http.server 8765` → http://localhost:8765/graph.html
 
 > Session orientation for AI assistants. Read this first.
 
@@ -59,7 +59,7 @@ Every bug / feature / scope item flows through this kanban (matches the canonica
 Plan item → Implement → Browser verify → Fix gaps → THEN mark done
 ```
 
-1. **Read the spec first** — before writing a single line, read the task description in `plan/v1-master-plan.md` and any linked spec file
+1. **Read the spec first** — before writing a single line, check [`plan/MASTER-CHECKLIST.md`](plan/MASTER-CHECKLIST.md) for status and any linked architecture file under `plan/`
 2. **Implement** — write the code
 3. **Verify against spec** — use Playwright MCP to screenshot and confirm output matches what was designed
 4. **Quality check** — WPCS, test at 390px viewport, check a11y, verify no regressions
@@ -325,14 +325,9 @@ WB_GAM_BASENAME  // 'wb-gamification/wb-gamification.php'
 
 ---
 
-## 🟡 Next Up — Frontend UX Audit (Phase 2.5)
+## 🟡 Next Up
 
-See `plan/v1-master-plan.md` Tasks 25-30 for full details:
-- **Task 25:** Modal/overlay accessibility (ARIA, ESC key, focus trap)
-- **Task 26:** Mobile 390px viewport audit (all 11 blocks + all admin pages)
-- **Task 27:** First-run UX (skip button help text, welcome card browser test)
-- **Task 28:** Empty states audit (verify all blocks handle zero-data)
-- **Task 29:** Interactivity polish (leaderboard period switch, heatmap tooltips, color-blind labels)
+See [`plan/MASTER-CHECKLIST.md`](plan/MASTER-CHECKLIST.md) — pending items live there. As of 2026-05-28: scale-benchmark customisation, SSE/WebSocket transport, hooks_fired re-enumeration, frontend_assets re-enumeration, capabilities manifest coverage, GraphQL API, AI intelligence layer, JS SDK, ActivityPub federation.
 - **Task 30:** Admin design consistency audit (all pages match premium CSS system)
 
 ## 🔜 After UX Audit
@@ -443,7 +438,7 @@ Discovery: `WBGam\Blocks\Registrar` scans `build/Blocks/*/block.json` on `init@2
 
 CI gate: `bin/check-block-standard.sh` (wired into `composer ci` as stage 2.3) fails the build if any `block.json` is missing the standard attribute schema.
 
-Documentation: see [`docs/website/developer-guide/block-attributes.md`](docs/website/developer-guide/block-attributes.md) and [`plan/WBCOM-BLOCK-STANDARD-MIGRATION.md`](plan/WBCOM-BLOCK-STANDARD-MIGRATION.md).
+Documentation: see [`docs/website/developer-guide/block-attributes.md`](docs/website/developer-guide/block-attributes.md). The Wbcom Block Quality Standard migration shipped in 1.0.0 — `bin/check-block-standard.sh` (CI stage 2.3) keeps it enforced.
 
 ---
 

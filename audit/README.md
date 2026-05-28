@@ -12,7 +12,9 @@ audit/
 ├── CODE_FLOWS.md                  ← traced pipelines (earn points, leaderboard read, ...)
 ├── ROLE_MATRIX.md                 ← per-route + per-page RBAC
 ├── graph.html                     ← interactive Cytoscape graph viewer
-├── CLOSE-OUT-2026-05-02.md        ← single-page summary of the audit/fix campaign
+├── STABILITY-2026-05-27.md        ← active stability-gate doc (referenced by CLAUDE.md)
+│
+├── derived/                       ← Per-sub-check cache for 16 static-analysis findings
 │
 ├── journeys/                      ← Customer-flow regression contracts
 │   ├── README.md
@@ -23,11 +25,15 @@ audit/
 │
 ├── journey-runs/                  ← Per-execution evidence (gitignored)
 │
-└── wppqa-runs/                    ← All wppqa MCP audit runs, dated
-    ├── 2026-05-02-baseline/       ← First run — partial 3-tool baseline
-    ├── 2026-05-02-full/           ← Second run — full audit + triage
-    └── 2026-05-02-final-REPORT.md ← Verbatim final audit (post-fix)
+├── wppqa-baseline-2026-05-27/     ← Latest wppqa baseline (failed=0)
+│
+├── action-async-baseline.txt      ← Stage 2.9 baseline (refresh via --update-baseline)
+├── css-orphan-baseline.txt        ← Stage 2.8 baseline
+├── plugin-check-warning-baseline.txt ← Stage 2.12 baseline
+└── qa-coverage.json               ← Manifest-driven coverage state
 ```
+
+> Older dated artefacts (CLOSE-OUT-2026-05-02.md, FEATURE-COMPLETENESS-2026-05-02.md, DATA-FLOW-*-2026-05-27.md, PERF-DIAG-2026-05-27.yaml, ISSUES-2026-05-27.yaml, CODE-FLOW-RED-FLAGS.md, SITE-OWNER-READINESS-AUDIT.md, CSS-USAGE-MAP-2026-05-27.json, wppqa-baseline-2026-05-{03,06,07}, release-runs/, wppqa-runs/) were removed on 2026-05-28 — every lesson they captured was either absorbed into the code, the manifest, or git history. Recover from `git log --diff-filter=D --follow audit/<path>` if needed.
 
 ## What each file is for
 

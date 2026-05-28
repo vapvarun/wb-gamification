@@ -107,7 +107,7 @@ return [
 			// including edits — so authors re-earned 25pts on every
 			// Update click. The transition hook gives us $new + $old so
 			// we can scope to "left an unpublished state to become
-			// published". Caught by audit/DATA-FLOW-AWARD-2026-05-27.md §G9.
+			// published". Caught by audit/manifest.json (the awarded-points pipeline) §G9.
 			'hook'            => 'transition_post_status',
 			'user_callback'   => function ( string $new_status, string $old_status, $post ): int {
 				if ( 'publish' !== $new_status || 'publish' === $old_status ) {
