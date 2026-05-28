@@ -140,6 +140,45 @@ else
     echo "  WARN: bin/build-docs-config.php not present yet — skipping"
 fi
 
+# Hooks fired — manifest.hooks_fired[] rebuilt from grep of every
+# do_action / apply_filters call site under src/ + integrations/.
+# Also re-syncs the matching count fields in manifest.summary.json.
+# IMPORTANT for --check: snapshot manifest BEFORE the regen so we can
+# detect any change to .hooks_fired[] OR the summary counts.
+if [ -f bin/build-hooks-fired.php ]; then
+    PRE_MANIFEST_HASH="$(shasum -a 256 audit/manifest.json | awk '{print $1}')"
+    PRE_SUMMARY_HASH="$(shasum -a 256 audit/manifest.summary.json | awk '{print $1}')"
+    php bin/build-hooks-fired.php >/dev/null 2>&1 || { echo "ERROR: bin/build-hooks-fired.php failed" >&2; exit 2; }
+    POST_MANIFEST_HASH="$(shasum -a 256 audit/manifest.json | awk '{print $1}')"
+    POST_SUMMARY_HASH="$(shasum -a 256 audit/manifest.summary.json | awk '{print $1}')"
+    if [ "${CHECK_MODE}" -eq 1 ] && { [ "${PRE_MANIFEST_HASH}" != "${POST_MANIFEST_HASH}" ] || [ "${PRE_SUMMARY_HASH}" != "${POST_SUMMARY_HASH}" ]; }; then
+        echo "  ✗  hooks_fired drift detected (do_action/apply_filters call sites changed)" >&2
+        echo "       Run 'php bin/build-hooks-fired.php' to refresh, then commit." >&2
+        exit 3
+    fi
+    echo "  ✓  audit/manifest.hooks_fired in sync with code"
+else
+    echo "  WARN: bin/build-hooks-fired.php not present yet — skipping"
+fi
+
+# Frontend assets — manifest.frontend_assets rebuilt from on-disk
+# canonical sources (drops *.min.* and *-rtl.* variants).
+if [ -f bin/build-frontend-assets.php ]; then
+    PRE_MANIFEST_HASH="$(shasum -a 256 audit/manifest.json | awk '{print $1}')"
+    PRE_SUMMARY_HASH="$(shasum -a 256 audit/manifest.summary.json | awk '{print $1}')"
+    php bin/build-frontend-assets.php >/dev/null 2>&1 || { echo "ERROR: bin/build-frontend-assets.php failed" >&2; exit 2; }
+    POST_MANIFEST_HASH="$(shasum -a 256 audit/manifest.json | awk '{print $1}')"
+    POST_SUMMARY_HASH="$(shasum -a 256 audit/manifest.summary.json | awk '{print $1}')"
+    if [ "${CHECK_MODE}" -eq 1 ] && { [ "${PRE_MANIFEST_HASH}" != "${POST_MANIFEST_HASH}" ] || [ "${PRE_SUMMARY_HASH}" != "${POST_SUMMARY_HASH}" ]; }; then
+        echo "  ✗  frontend_assets drift detected (new/removed CSS or JS files)" >&2
+        echo "       Run 'php bin/build-frontend-assets.php' to refresh, then commit." >&2
+        exit 3
+    fi
+    echo "  ✓  audit/manifest.frontend_assets in sync with disk"
+else
+    echo "  WARN: bin/build-frontend-assets.php not present yet — skipping"
+fi
+
 # OpenAPI spec — requires WP-CLI because it walks the REST_Server's
 # registered routes. Skip the step (with a clear note) when wp isn't on
 # PATH so this script still runs in CI containers that may not have it.

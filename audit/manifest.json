@@ -10,10 +10,10 @@
     "extends": null,
     "extension_hook_consumed": null,
     "extension_hook_fired": "wb_gam_free_loaded",
-    "description": "Complete gamification plugin for BuddyPress and WordPress. Part of the Reign Stack. Points, badges, levels, leaderboards, challenges, and streaks — zero config, works out of the box.",
+    "description": "Complete gamification plugin for BuddyPress and WordPress. Part of the Reign Stack. Points, badges, levels, leaderboards, challenges, and streaks \u2014 zero config, works out of the box.",
     "requires_wp": "6.4",
     "requires_php": "8.1",
-    "architecture": "Event-sourced, manifest auto-discovery, zero-config. Engine owns three surfaces: event normalization → rule evaluation → output."
+    "architecture": "Event-sourced, manifest auto-discovery, zero-config. Engine owns three surfaces: event normalization \u2192 rule evaluation \u2192 output."
   },
   "rest": {
     "namespace": "wb-gamification/v1",
@@ -489,7 +489,7 @@
         ],
         "handler": "WBGam\\API\\ApiKeysController::get_items|create_item",
         "permission": "manage_options",
-        "purpose": "List / create API keys (Tier 0.A — secret returned once on POST)"
+        "purpose": "List / create API keys (Tier 0.A \u2014 secret returned once on POST)"
       },
       {
         "route": "/wb-gamification/v1/api-keys/(?P<key>wbgam_[A-Za-z0-9]+)/revoke",
@@ -656,7 +656,7 @@
         ],
         "handler": "SubmissionsController::handle_approve",
         "permission": "manage_options",
-        "purpose": "Approve submission → fires earning event."
+        "purpose": "Approve submission \u2192 fires earning event."
       },
       {
         "route": "/wb-gamification/v1/submissions/(?P<id>[\\d]+)/reject",
@@ -678,7 +678,7 @@
         "purpose": "Per-event transactional email toggles."
       }
     ],
-    "notes": "39 register_rest_route() calls. Some routes registered as a single call covering multiple methods (e.g., GET+POST on the same path); manifest expands those for clarity. No AJAX layer — all interactive UI talks to REST."
+    "notes": "39 register_rest_route() calls. Some routes registered as a single call covering multiple methods (e.g., GET+POST on the same path); manifest expands those for clarity. No AJAX layer \u2014 all interactive UI talks to REST."
   },
   "ajax": [],
   "admin_pages": [
@@ -849,7 +849,7 @@
     {
       "key": "wb_gam_rank_automation_rules",
       "type": "array",
-      "purpose": "Automation rules mapping point thresholds → roles."
+      "purpose": "Automation rules mapping point thresholds \u2192 roles."
     },
     {
       "key": "wb_gam_leaderboard_mode",
@@ -1201,7 +1201,7 @@
     },
     {
       "name": "{prefix}wb_gam_redemptions",
-      "purpose": "Redemption transactions (points spent → reward delivered)."
+      "purpose": "Redemption transactions (points spent \u2192 reward delivered)."
     },
     {
       "name": "{prefix}wb_gam_redemption_items",
@@ -1213,7 +1213,7 @@
     },
     {
       "name": "{prefix}wb_gam_point_types",
-      "purpose": "Currency catalogue — slug, label, icon, is_default flag, position. Site can define Points/XP/Coins/etc."
+      "purpose": "Currency catalogue \u2014 slug, label, icon, is_default flag, position. Site can define Points/XP/Coins/etc."
     },
     {
       "name": "{prefix}wb_gam_point_type_conversions",
@@ -1225,7 +1225,7 @@
     },
     {
       "name": "{prefix}wb_gam_user_totals",
-      "purpose": "Materialised per-user, per-point-type total. Read by PointsEngine::get_total — avoids SUM() across the points ledger on the hot path. UPSERT pattern in PointsEngine::award + award_batch.",
+      "purpose": "Materialised per-user, per-point-type total. Read by PointsEngine::get_total \u2014 avoids SUM() across the points ledger on the hot path. UPSERT pattern in PointsEngine::award + award_batch.",
       "primary_key": "(user_id, point_type)",
       "indexes": [
         "idx_total"
@@ -1257,7 +1257,7 @@
       "enforcement_count": "primary admin gate; passes alongside any granular cap below",
       "meta": false,
       "requires_context": "none",
-      "note": "Default WP admin gate. Every REST controller's permission method accepts manage_options OR the corresponding granular plugin cap below — administrators keep working without reconfiguration; site owners can delegate individual surfaces to non-admin roles by granting the granular cap."
+      "note": "Default WP admin gate. Every REST controller's permission method accepts manage_options OR the corresponding granular plugin cap below \u2014 administrators keep working without reconfiguration; site owners can delegate individual surfaces to non-admin roles by granting the granular cap."
     },
     {
       "cap": "wb_gam_award_manual",
@@ -1305,7 +1305,7 @@
       "enforcement_count": 1,
       "meta": false,
       "requires_context": "none",
-      "note": "Rule / level / challenge definition management (RulesController). Distinct from badge management — rules govern the broader award + level + challenge surface."
+      "note": "Rule / level / challenge definition management (RulesController). Distinct from badge management \u2014 rules govern the broader award + level + challenge surface."
     },
     {
       "cap": "wb_gam_manage_challenges",
@@ -1355,7 +1355,7 @@
       "enforcement_count": 1,
       "meta": false,
       "requires_context": "none",
-      "note": "Outbound webhook configuration + delivery log access (REST only — no dedicated admin page; webhook config goes through the REST API)."
+      "note": "Outbound webhook configuration + delivery log access (REST only \u2014 no dedicated admin page; webhook config goes through the REST API)."
     },
     {
       "cap": "wb_gam_manage_levels",
@@ -1369,7 +1369,7 @@
       "enforcement_count": 1,
       "meta": false,
       "requires_context": "none",
-      "note": "Level definition CRUD (LevelsController). Added in 1.5.0 after audit/DATA-FLOW-ADMIN-REST-2026-05-27.md §G1 — controller already gated on this cap but the cap was never registered."
+      "note": "Level definition CRUD (LevelsController). Added in 1.5.0 after audit/DATA-FLOW-ADMIN-REST-2026-05-27.md \u00a7G1 \u2014 controller already gated on this cap but the cap was never registered."
     },
     {
       "cap": "wb_gam_manage_submissions",
@@ -1383,7 +1383,7 @@
       "enforcement_count": 1,
       "meta": false,
       "requires_context": "none",
-      "note": "UGC submission queue (SubmissionsController). Added in 1.5.0 — pre-refactor the controller hardcoded `manage_options`, breaking granular delegation."
+      "note": "UGC submission queue (SubmissionsController). Added in 1.5.0 \u2014 pre-refactor the controller hardcoded `manage_options`, breaking granular delegation."
     },
     {
       "cap": "wb_gam_manage_email_settings",
@@ -1397,7 +1397,7 @@
       "enforcement_count": 1,
       "meta": false,
       "requires_context": "none",
-      "note": "Transactional email toggles (EmailSettingsController). Added in 1.5.0 — same hardcode pattern as submissions."
+      "note": "Transactional email toggles (EmailSettingsController). Added in 1.5.0 \u2014 same hardcode pattern as submissions."
     },
     {
       "cap": "wb_gam_view_analytics",
@@ -1478,7 +1478,7 @@
     {
       "key": "RedemptionEngine",
       "class": "WBGam\\Engine\\RedemptionEngine",
-      "purpose": "Points → reward redemption transactions."
+      "purpose": "Points \u2192 reward redemption transactions."
     },
     {
       "key": "CosmeticEngine",
@@ -1573,7 +1573,7 @@
     {
       "key": "Installer",
       "class": "WBGam\\Engine\\Installer",
-      "purpose": "Activation hook — creates all tables + seeds defaults."
+      "purpose": "Activation hook \u2014 creates all tables + seeds defaults."
     },
     {
       "key": "FeatureFlags",
@@ -1628,7 +1628,7 @@
       "key": "SubmissionService",
       "class": "WBGam\\Services\\SubmissionService",
       "added": "1.0.0",
-      "purpose": "Submission lifecycle — submit/approve/reject + rate-limit + approval awards."
+      "purpose": "Submission lifecycle \u2014 submit/approve/reject + rate-limit + approval awards."
     },
     {
       "key": "SubmissionRepository",
@@ -1645,333 +1645,1107 @@
   ],
   "hooks_fired": [
     {
-      "name": "wb_gam_engines_booted",
-      "type": "action",
-      "purpose": "All engines have been instantiated and wired to plugins_loaded.",
-      "consumed_by": []
-    },
-    {
-      "name": "wb_gam_free_loaded",
-      "type": "action",
-      "purpose": "Free plugin fully loaded — extension hook for future Pro plugin to bootstrap.",
-      "consumed_by": []
-    },
-    {
-      "name": "wb_gam_manifests_loaded",
-      "type": "action",
-      "purpose": "ManifestLoader has finished scanning action manifests; Registry is populated.",
-      "consumed_by": []
-    },
-    {
-      "name": "wb_gam_event_processed",
-      "type": "action",
-      "purpose": "An event has finished evaluating rules + dispatching outputs.",
-      "consumed_by": []
-    },
-    {
-      "name": "wb_gam_after_points_award",
-      "type": "action",
-      "purpose": "Points were awarded (event-flavoured legacy alias).",
-      "consumed_by": []
-    },
-    {
       "name": "wb_gam_after_badge_award",
       "type": "action",
       "purpose": "A badge was awarded (legacy alias).",
+      "fired_at": [
+        "src/Engine/BadgeEngine.php:306"
+      ],
+      "consumed_by": []
+    },
+    {
+      "name": "wb_gam_after_create_api_key",
+      "type": "action",
+      "purpose": "",
+      "fired_at": [
+        "src/API/ApiKeysController.php:265"
+      ],
+      "consumed_by": []
+    },
+    {
+      "name": "wb_gam_after_create_badge",
+      "type": "action",
+      "purpose": "",
+      "fired_at": [
+        "src/API/BadgesController.php:516"
+      ],
+      "consumed_by": []
+    },
+    {
+      "name": "wb_gam_after_create_community_challenge",
+      "type": "action",
+      "purpose": "",
+      "fired_at": [
+        "src/API/CommunityChallengesController.php:251"
+      ],
+      "consumed_by": []
+    },
+    {
+      "name": "wb_gam_after_create_level",
+      "type": "action",
+      "purpose": "",
+      "fired_at": [
+        "src/API/LevelsController.php:249"
+      ],
+      "consumed_by": []
+    },
+    {
+      "name": "wb_gam_after_delete_api_key",
+      "type": "action",
+      "purpose": "",
+      "fired_at": [
+        "src/API/ApiKeysController.php:323"
+      ],
+      "consumed_by": []
+    },
+    {
+      "name": "wb_gam_after_delete_community_challenge",
+      "type": "action",
+      "purpose": "",
+      "fired_at": [
+        "src/API/CommunityChallengesController.php:359"
+      ],
+      "consumed_by": []
+    },
+    {
+      "name": "wb_gam_after_delete_level",
+      "type": "action",
+      "purpose": "",
+      "fired_at": [
+        "src/API/LevelsController.php:355"
+      ],
+      "consumed_by": []
+    },
+    {
+      "name": "wb_gam_after_revoke_api_key",
+      "type": "action",
+      "purpose": "",
+      "fired_at": [
+        "src/API/ApiKeysController.php:299"
+      ],
+      "consumed_by": []
+    },
+    {
+      "name": "wb_gam_after_save_cohort_settings",
+      "type": "action",
+      "purpose": "",
+      "fired_at": [
+        "src/API/CohortSettingsController.php:175"
+      ],
+      "consumed_by": []
+    },
+    {
+      "name": "wb_gam_after_update_badge",
+      "type": "action",
+      "purpose": "",
+      "fired_at": [
+        "src/API/BadgesController.php:569"
+      ],
+      "consumed_by": []
+    },
+    {
+      "name": "wb_gam_after_update_community_challenge",
+      "type": "action",
+      "purpose": "",
+      "fired_at": [
+        "src/API/CommunityChallengesController.php:324"
+      ],
+      "consumed_by": []
+    },
+    {
+      "name": "wb_gam_after_update_level",
+      "type": "action",
+      "purpose": "",
+      "fired_at": [
+        "src/API/LevelsController.php:315"
+      ],
+      "consumed_by": []
+    },
+    {
+      "name": "wb_gam_as_cleaned",
+      "type": "action",
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/ActionSchedulerCleaner.php:202"
+      ],
+      "consumed_by": []
+    },
+    {
+      "name": "wb_gam_as_runaway_detected",
+      "type": "action",
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/ActionSchedulerCleaner.php:255"
+      ],
+      "consumed_by": []
+    },
+    {
+      "name": "wb_gam_award_skipped",
+      "type": "action",
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/PointsEngine.php:105",
+        "src/Engine/PointsEngine.php:121",
+        "src/Engine/PointsEngine.php:178",
+        "src/Engine/PointsEngine.php:89",
+        "src/Engine/Registry.php:160",
+        "src/Integrations/Jetonomy/JetonomyIntegration.php:106"
+      ],
+      "consumed_by": [
+        "src/Engine/NotificationBridge.php:83 array( __CLASS__"
+      ]
+    },
+    {
+      "name": "wb_gam_badge_awarded",
+      "type": "action",
+      "purpose": "",
+      "fired_at": [
+        "src/BuddyPress/Stream/BadgeStream.php:6",
+        "src/Engine/BadgeEngine.php:296",
+        "src/Engine/NotificationBridge.php:224"
+      ],
+      "consumed_by": [
+        "src/BuddyPress/Stream/BadgeStream.php:31 array( __CLASS__",
+        "src/Engine/NotificationBridge.php:73 array( __CLASS__",
+        "src/Engine/TransactionalEmailEngine.php:81 array( __CLASS__"
+      ]
+    },
+    {
+      "name": "wb_gam_before_delete_community_challenge",
+      "type": "action",
+      "purpose": "",
+      "fired_at": [
+        "src/API/CommunityChallengesController.php:347"
+      ],
+      "consumed_by": []
+    },
+    {
+      "name": "wb_gam_before_delete_level",
+      "type": "action",
+      "purpose": "",
+      "fired_at": [
+        "src/API/LevelsController.php:349"
+      ],
+      "consumed_by": []
+    },
+    {
+      "name": "wb_gam_before_points_awarded",
+      "type": "action",
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/Engine.php:347"
+      ],
+      "consumed_by": []
+    },
+    {
+      "name": "wb_gam_block_after_render",
+      "type": "action",
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/BlockHooks.php:100"
+      ],
+      "consumed_by": []
+    },
+    {
+      "name": "wb_gam_block_before_render",
+      "type": "action",
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/BlockHooks.php:76"
+      ],
       "consumed_by": []
     },
     {
       "name": "wb_gam_challenge_completed",
       "type": "action",
       "purpose": "Challenge completed (legacy alias).",
+      "fired_at": [
+        "src/API/ChallengesController.php:573",
+        "src/BuddyPress/Stream/ChallengeStream.php:6",
+        "src/Engine/ChallengeEngine.php:293"
+      ],
+      "consumed_by": [
+        "src/BuddyPress/Stream/ChallengeStream.php:31 array( __CLASS__",
+        "src/Engine/NotificationBridge.php:76 array( __CLASS__",
+        "src/Engine/TransactionalEmailEngine.php:82 array( __CLASS__",
+        "src/Engine/WebhookDispatcher.php:55 array( self::class"
+      ]
+    },
+    {
+      "name": "wb_gam_cohort_outcome",
+      "type": "action",
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/CohortEngine.php:330"
+      ],
+      "consumed_by": []
+    },
+    {
+      "name": "wb_gam_cohort_settings_saved",
+      "type": "action",
+      "purpose": "",
+      "fired_at": [
+        "src/API/CohortSettingsController.php:177"
+      ],
+      "consumed_by": []
+    },
+    {
+      "name": "wb_gam_community_challenge_completed",
+      "type": "action",
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/CommunityChallengeEngine.php:237"
+      ],
+      "consumed_by": []
+    },
+    {
+      "name": "wb_gam_community_challenge_created",
+      "type": "action",
+      "purpose": "",
+      "fired_at": [
+        "src/API/CommunityChallengesController.php:253"
+      ],
+      "consumed_by": []
+    },
+    {
+      "name": "wb_gam_community_challenge_deleted",
+      "type": "action",
+      "purpose": "",
+      "fired_at": [
+        "src/API/CommunityChallengesController.php:360"
+      ],
+      "consumed_by": []
+    },
+    {
+      "name": "wb_gam_community_challenge_updated",
+      "type": "action",
+      "purpose": "",
+      "fired_at": [
+        "src/API/CommunityChallengesController.php:325"
+      ],
+      "consumed_by": []
+    },
+    {
+      "name": "wb_gam_credential_expired",
+      "type": "action",
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/CredentialExpiryEngine.php:136"
+      ],
+      "consumed_by": []
+    },
+    {
+      "name": "wb_gam_engines_booted",
+      "type": "action",
+      "purpose": "All engines have been instantiated and wired to plugins_loaded.",
+      "fired_at": [
+        "src/Engine/FeatureFlags.php:214"
+      ],
+      "consumed_by": []
+    },
+    {
+      "name": "wb_gam_event_processed",
+      "type": "action",
+      "purpose": "An event has finished evaluating rules + dispatching outputs.",
+      "fired_at": [
+        "src/Engine/Engine.php:429"
+      ],
       "consumed_by": []
     },
     {
       "name": "wb_gam_kudos_given",
       "type": "action",
       "purpose": "Kudos given (legacy alias).",
+      "fired_at": [
+        "src/BuddyPress/Stream/KudosStream.php:6",
+        "src/Engine/KudosEngine.php:215"
+      ],
+      "consumed_by": [
+        "src/BuddyPress/Stream/KudosStream.php:31 array( __CLASS__",
+        "src/Engine/NotificationBridge.php:77 array( __CLASS__",
+        "src/Engine/WebhookDispatcher.php:62 array( self::class"
+      ]
+    },
+    {
+      "name": "wb_gam_leaderboard_cache_invalidated",
+      "type": "action",
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/LeaderboardEngine.php:166"
+      ],
       "consumed_by": []
+    },
+    {
+      "name": "wb_gam_level_assigned",
+      "type": "action",
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/LevelEngine.php:166"
+      ],
+      "consumed_by": [
+        "src/Engine/RankAutomation.php:84 array( __CLASS__"
+      ]
     },
     {
       "name": "wb_gam_level_changed",
       "type": "action",
       "purpose": "Level changed (legacy alias).",
+      "fired_at": [
+        "src/BuddyPress/Stream/LevelStream.php:6",
+        "src/Engine/LevelEngine.php:146",
+        "src/Engine/NotificationBridge.php:249"
+      ],
+      "consumed_by": [
+        "src/BuddyPress/Stream/LevelStream.php:35 array( __CLASS__",
+        "src/Engine/NotificationBridge.php:74 array( __CLASS__",
+        "src/Engine/RankAutomation.php:78 array( __CLASS__",
+        "src/Engine/SiteFirstBadgeEngine.php:69 array( __CLASS__",
+        "src/Engine/TransactionalEmailEngine.php:80 array( __CLASS__",
+        "src/Engine/WebhookDispatcher.php:53 array( self::class"
+      ]
+    },
+    {
+      "name": "wb_gam_login_bonus_claimed",
+      "type": "action",
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/LoginBonusEngine.php:137"
+      ],
+      "consumed_by": []
+    },
+    {
+      "name": "wb_gam_manifests_loaded",
+      "type": "action",
+      "purpose": "ManifestLoader has finished scanning action manifests; Registry is populated.",
+      "fired_at": [
+        "src/Engine/ManifestLoader.php:77"
+      ],
+      "consumed_by": []
+    },
+    {
+      "name": "wb_gam_personal_record",
+      "type": "action",
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/PersonalRecordEngine.php:153"
+      ],
+      "consumed_by": []
+    },
+    {
+      "name": "wb_gam_point_type_converted",
+      "type": "action",
+      "purpose": "",
+      "fired_at": [
+        "src/Services/PointTypeConversionService.php:418"
+      ],
+      "consumed_by": []
+    },
+    {
+      "name": "wb_gam_points_awarded",
+      "type": "action",
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/Engine.php:406"
+      ],
+      "consumed_by": [
+        "src/Engine/BadgeEngine.php:59 array( __CLASS__",
+        "src/Engine/ChallengeEngine.php:72 array( __CLASS__",
+        "src/Engine/CommunityChallengeEngine.php:54 array( __CLASS__",
+        "src/Engine/LeaderboardEngine.php:75 array( __CLASS__",
+        "src/Engine/NotificationBridge.php:72 array( __CLASS__",
+        "src/Engine/SiteFirstBadgeEngine.php:70 array( __CLASS__"
+      ]
+    },
+    {
+      "name": "wb_gam_points_awarded_batch",
+      "type": "action",
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/PointsEngine.php:688"
+      ],
+      "consumed_by": [
+        "src/Engine/LeaderboardEngine.php:76 array( __CLASS__"
+      ]
+    },
+    {
+      "name": "wb_gam_points_redeemed",
+      "type": "action",
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/RedemptionEngine.php:324"
+      ],
+      "consumed_by": [
+        "src/Engine/TransactionalEmailEngine.php:83 array( __CLASS__",
+        "src/Engine/WebhookDispatcher.php:69 array( self::class"
+      ]
+    },
+    {
+      "name": "wb_gam_points_revoked",
+      "type": "action",
+      "purpose": "",
+      "fired_at": [
+        "src/API/PointsController.php:355"
+      ],
+      "consumed_by": []
+    },
+    {
+      "name": "wb_gam_rank_automation_action",
+      "type": "action",
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/RankAutomation.php:198"
+      ],
+      "consumed_by": []
+    },
+    {
+      "name": "wb_gam_register",
+      "type": "action",
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/Registry.php:81"
+      ],
+      "consumed_by": []
+    },
+    {
+      "name": "wb_gam_retention_nudge",
+      "type": "action",
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/StatusRetentionEngine.php:215"
+      ],
+      "consumed_by": []
+    },
+    {
+      "name": "wb_gam_streak_broken",
+      "type": "action",
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/StreakEngine.php:127"
+      ],
       "consumed_by": []
     },
     {
       "name": "wb_gam_streak_milestone",
       "type": "action",
       "purpose": "Streak milestone reached (legacy alias).",
+      "fired_at": [
+        "src/Engine/StreakEngine.php:221"
+      ],
+      "consumed_by": [
+        "src/Engine/NotificationBridge.php:75 array( __CLASS__",
+        "src/Engine/SiteFirstBadgeEngine.php:71 array( __CLASS__",
+        "src/Engine/WebhookDispatcher.php:54 array( self::class"
+      ]
+    },
+    {
+      "name": "wb_gam_submission_approved",
+      "type": "action",
+      "purpose": "",
+      "fired_at": [
+        "src/Services/SubmissionService.php:149"
+      ],
       "consumed_by": []
     },
     {
-      "name": "wb_gamification_points_awarded",
+      "name": "wb_gam_submission_created",
       "type": "action",
-      "purpose": "Canonical: points awarded with full event payload.",
+      "purpose": "",
+      "fired_at": [
+        "src/Services/SubmissionService.php:107"
+      ],
       "consumed_by": []
     },
     {
-      "name": "wb_gamification_before_points_awarded",
+      "name": "wb_gam_submission_rejected",
       "type": "action",
-      "purpose": "Pre-flight before points are written; allows last-mile veto.",
+      "purpose": "",
+      "fired_at": [
+        "src/Services/SubmissionService.php:184"
+      ],
       "consumed_by": []
     },
     {
-      "name": "wb_gamification_points_revoked",
+      "name": "wb_gam_user_data_erased",
       "type": "action",
-      "purpose": "Admin revoked a point row.",
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/Privacy.php:565"
+      ],
       "consumed_by": []
     },
     {
-      "name": "wb_gamification_points_redeemed",
+      "name": "wb_gam_weekly_email_sent",
       "type": "action",
-      "purpose": "Points spent in the redemption store.",
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/WeeklyEmailEngine.php:215"
+      ],
       "consumed_by": []
     },
     {
-      "name": "wb_gamification_badge_awarded",
+      "name": "wb_gam_weekly_nudge_sent",
       "type": "action",
-      "purpose": "Canonical: badge awarded.",
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/LeaderboardNudge.php:292"
+      ],
       "consumed_by": []
     },
     {
-      "name": "wb_gamification_credential_expired",
+      "name": "wb_gamification_setup_wizard_completed",
       "type": "action",
-      "purpose": "OpenBadges 3.0 credential expired (CredentialExpiryEngine).",
+      "purpose": "",
+      "fired_at": [
+        "src/Admin/SetupWizard.php:292"
+      ],
       "consumed_by": []
     },
     {
-      "name": "wb_gamification_level_changed",
+      "name": "wb_gamification_setup_wizard_started",
       "type": "action",
-      "purpose": "Canonical: level changed.",
+      "purpose": "",
+      "fired_at": [
+        "src/Admin/SetupWizard.php:276"
+      ],
       "consumed_by": []
     },
     {
-      "name": "wb_gamification_personal_record",
-      "type": "action",
-      "purpose": "User hit a new personal best.",
+      "name": "wb_gam_activity_context_label",
+      "type": "filter",
+      "purpose": "",
+      "fired_at": [
+        "src/BuddyPress/ActivityIntegration.php:132"
+      ],
       "consumed_by": []
     },
     {
-      "name": "wb_gamification_kudos_given",
-      "type": "action",
-      "purpose": "Canonical: kudos given.",
+      "name": "wb_gam_as_retention_days",
+      "type": "filter",
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/ActionSchedulerCleaner.php:182"
+      ],
       "consumed_by": []
     },
     {
-      "name": "wb_gamification_streak_milestone",
-      "type": "action",
-      "purpose": "Canonical: streak milestone reached.",
+      "name": "wb_gam_badge_condition",
+      "type": "filter",
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/BadgeEngine.php:174"
+      ],
       "consumed_by": []
     },
     {
-      "name": "wb_gamification_streak_broken",
-      "type": "action",
-      "purpose": "Streak broken (StreakEngine).",
+      "name": "wb_gam_badge_share_respects_privacy",
+      "type": "filter",
+      "purpose": "",
+      "fired_at": [
+        "src/API/BadgeShareController.php:256"
+      ],
       "consumed_by": []
     },
     {
-      "name": "wb_gamification_challenge_created",
-      "type": "action",
-      "purpose": "Admin created a challenge (REST or admin UI).",
+      "name": "wb_gam_before_create_api_key",
+      "type": "filter",
+      "purpose": "",
+      "fired_at": [
+        "src/API/ApiKeysController.php:224"
+      ],
       "consumed_by": []
     },
     {
-      "name": "wb_gamification_challenge_updated",
-      "type": "action",
-      "purpose": "Admin updated a challenge.",
+      "name": "wb_gam_before_create_badge",
+      "type": "filter",
+      "purpose": "",
+      "fired_at": [
+        "src/API/BadgesController.php:489"
+      ],
       "consumed_by": []
     },
     {
-      "name": "wb_gamification_challenge_deleted",
-      "type": "action",
-      "purpose": "Admin deleted a challenge.",
+      "name": "wb_gam_before_create_community_challenge",
+      "type": "filter",
+      "purpose": "",
+      "fired_at": [
+        "src/API/CommunityChallengesController.php:230"
+      ],
       "consumed_by": []
     },
     {
-      "name": "wb_gamification_challenge_completed",
-      "type": "action",
-      "purpose": "Canonical: challenge completed.",
+      "name": "wb_gam_before_create_level",
+      "type": "filter",
+      "purpose": "",
+      "fired_at": [
+        "src/API/LevelsController.php:214"
+      ],
       "consumed_by": []
     },
     {
-      "name": "wb_gamification_community_challenge_created",
-      "type": "action",
-      "purpose": "Admin created a community challenge.",
+      "name": "wb_gam_before_evaluate",
+      "type": "filter",
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/Engine.php:303"
+      ],
       "consumed_by": []
     },
     {
-      "name": "wb_gamification_community_challenge_updated",
-      "type": "action",
-      "purpose": "Admin updated a community challenge.",
+      "name": "wb_gam_before_kudos",
+      "type": "filter",
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/KudosEngine.php:137"
+      ],
       "consumed_by": []
     },
     {
-      "name": "wb_gamification_community_challenge_deleted",
-      "type": "action",
-      "purpose": "Admin deleted a community challenge.",
+      "name": "wb_gam_before_save_cohort_settings",
+      "type": "filter",
+      "purpose": "",
+      "fired_at": [
+        "src/API/CohortSettingsController.php:161"
+      ],
       "consumed_by": []
     },
     {
-      "name": "wb_gamification_community_challenge_completed",
-      "type": "action",
-      "purpose": "Community challenge target reached.",
+      "name": "wb_gam_before_update_badge",
+      "type": "filter",
+      "purpose": "",
+      "fired_at": [
+        "src/API/BadgesController.php:546"
+      ],
       "consumed_by": []
     },
     {
-      "name": "wb_gamification_cohort_settings_saved",
-      "type": "action",
-      "purpose": "Cohort league settings updated.",
+      "name": "wb_gam_before_update_community_challenge",
+      "type": "filter",
+      "purpose": "",
+      "fired_at": [
+        "src/API/CommunityChallengesController.php:304"
+      ],
       "consumed_by": []
     },
     {
-      "name": "wb_gamification_cohort_outcome",
-      "type": "action",
-      "purpose": "Cohort cycle finished (promotion/relegation).",
+      "name": "wb_gam_before_update_level",
+      "type": "filter",
+      "purpose": "",
+      "fired_at": [
+        "src/API/LevelsController.php:297"
+      ],
       "consumed_by": []
     },
     {
-      "name": "wb_gamification_cosmetic_granted",
-      "type": "action",
-      "purpose": "Cosmetic frame/decoration granted to a user.",
+      "name": "wb_gam_block_badge_showcase_data",
+      "type": "filter",
+      "purpose": "",
+      "fired_at": [
+        "src/Blocks/badge-showcase/render.php:117"
+      ],
       "consumed_by": []
     },
     {
-      "name": "wb_gamification_reward_created",
-      "type": "action",
-      "purpose": "Redemption catalog item created.",
+      "name": "wb_gam_block_challenges_data",
+      "type": "filter",
+      "purpose": "",
+      "fired_at": [
+        "src/Blocks/challenges/render.php:96"
+      ],
       "consumed_by": []
     },
     {
-      "name": "wb_gamification_reward_updated",
-      "type": "action",
-      "purpose": "Redemption catalog item updated.",
+      "name": "wb_gam_block_cohort_rank_data",
+      "type": "filter",
+      "purpose": "",
+      "fired_at": [
+        "src/Blocks/cohort-rank/render.php:123"
+      ],
       "consumed_by": []
     },
     {
-      "name": "wb_gamification_reward_deleted",
-      "type": "action",
-      "purpose": "Redemption catalog item deleted.",
+      "name": "wb_gam_block_community_challenges_data",
+      "type": "filter",
+      "purpose": "",
+      "fired_at": [
+        "src/Blocks/community-challenges/render.php:84"
+      ],
       "consumed_by": []
     },
     {
-      "name": "wb_gamification_rank_automation_action",
-      "type": "action",
-      "purpose": "Automation rule fired — role added/removed based on points threshold.",
+      "name": "wb_gam_block_css",
+      "type": "filter",
+      "purpose": "",
+      "fired_at": [
+        "src/Blocks/CSS.php:142"
+      ],
       "consumed_by": []
     },
     {
-      "name": "wb_gamification_register",
-      "type": "action",
-      "purpose": "Plugin self-registers — extension point for integrations to plug in early.",
+      "name": "wb_gam_block_daily_bonus_data",
+      "type": "filter",
+      "purpose": "",
+      "fired_at": [
+        "src/Blocks/daily-bonus/render.php:105"
+      ],
       "consumed_by": []
     },
     {
-      "name": "wb_gamification_retention_nudge",
-      "type": "action",
-      "purpose": "Re-engagement nudge dispatched.",
+      "name": "wb_gam_block_data",
+      "type": "filter",
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/BlockHooks.php:130"
+      ],
       "consumed_by": []
     },
     {
-      "name": "wb_gamification_weekly_nudge",
-      "type": "action",
-      "purpose": "Weekly leaderboard nudge dispatched.",
+      "name": "wb_gam_block_earning_guide_data",
+      "type": "filter",
+      "purpose": "",
+      "fired_at": [
+        "src/Blocks/earning-guide/render.php:116"
+      ],
       "consumed_by": []
     },
     {
-      "name": "wb_gamification_weekly_email_sent",
-      "type": "action",
-      "purpose": "Weekly recap email sent to a user.",
+      "name": "wb_gam_block_hub_currencies",
+      "type": "filter",
+      "purpose": "",
+      "fired_at": [
+        "src/Blocks/hub/render.php:176"
+      ],
       "consumed_by": []
     },
     {
-      "name": "wb_gamification_events_pruned",
-      "type": "action",
-      "purpose": "Old events pruned from wb_gam_events table.",
+      "name": "wb_gam_block_kudos_feed_data",
+      "type": "filter",
+      "purpose": "",
+      "fired_at": [
+        "src/Blocks/kudos-feed/render.php:85"
+      ],
       "consumed_by": []
     },
     {
-      "name": "wb_gamification_log_pruned",
-      "type": "action",
-      "purpose": "Old log rows pruned by LogPruner.",
+      "name": "wb_gam_block_leaderboard_data",
+      "type": "filter",
+      "purpose": "",
+      "fired_at": [
+        "src/Blocks/leaderboard/render.php:84"
+      ],
       "consumed_by": []
     },
     {
-      "name": "wb_gamification_user_data_erased",
-      "type": "action",
-      "purpose": "GDPR erase request fulfilled (Privacy::handle_erase).",
+      "name": "wb_gam_block_level_progress_data",
+      "type": "filter",
+      "purpose": "",
+      "fired_at": [
+        "src/Blocks/level-progress/render.php:126"
+      ],
+      "consumed_by": []
+    },
+    {
+      "name": "wb_gam_block_manifests",
+      "type": "filter",
+      "purpose": "",
+      "fired_at": [
+        "src/Blocks/Registrar.php:121"
+      ],
+      "consumed_by": []
+    },
+    {
+      "name": "wb_gam_block_member_points_data",
+      "type": "filter",
+      "purpose": "",
+      "fired_at": [
+        "src/Blocks/member-points/render.php:137"
+      ],
+      "consumed_by": []
+    },
+    {
+      "name": "wb_gam_block_points_history_data",
+      "type": "filter",
+      "purpose": "",
+      "fired_at": [
+        "src/Blocks/points-history/render.php:110"
+      ],
+      "consumed_by": []
+    },
+    {
+      "name": "wb_gam_block_redemption_store_data",
+      "type": "filter",
+      "purpose": "",
+      "fired_at": [
+        "src/Blocks/redemption-store/render.php:78"
+      ],
+      "consumed_by": []
+    },
+    {
+      "name": "wb_gam_block_streak_data",
+      "type": "filter",
+      "purpose": "",
+      "fired_at": [
+        "src/Blocks/streak/render.php:123"
+      ],
+      "consumed_by": []
+    },
+    {
+      "name": "wb_gam_block_top_members_data",
+      "type": "filter",
+      "purpose": "",
+      "fired_at": [
+        "src/Blocks/top-members/render.php:88"
+      ],
+      "consumed_by": []
+    },
+    {
+      "name": "wb_gam_block_year_recap_data",
+      "type": "filter",
+      "purpose": "",
+      "fired_at": [
+        "src/Blocks/year-recap/render.php:117"
+      ],
+      "consumed_by": []
+    },
+    {
+      "name": "wb_gam_credential_document",
+      "type": "filter",
+      "purpose": "",
+      "fired_at": [
+        "src/API/CredentialController.php:309"
+      ],
+      "consumed_by": []
+    },
+    {
+      "name": "wb_gam_email_burst_cap",
+      "type": "filter",
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/TransactionalEmailEngine.php:555"
+      ],
+      "consumed_by": []
+    },
+    {
+      "name": "wb_gam_email_enabled",
+      "type": "filter",
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/TransactionalEmailEngine.php:421"
+      ],
+      "consumed_by": []
+    },
+    {
+      "name": "wb_gam_email_from_header",
+      "type": "filter",
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/Email.php:113"
+      ],
+      "consumed_by": []
+    },
+    {
+      "name": "wb_gam_event_metadata",
+      "type": "filter",
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/Engine.php:271"
+      ],
+      "consumed_by": [
+        "src/API/ApiKeyAuth.php:62 static function ( $metadata"
+      ]
+    },
+    {
+      "name": "wb_gam_grant_member_uploads",
+      "type": "filter",
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/MemberUploadCap.php:71"
+      ],
+      "consumed_by": []
+    },
+    {
+      "name": "wb_gam_heartbeat_payload",
+      "type": "filter",
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/HeartbeatChannel.php:171"
+      ],
+      "consumed_by": []
+    },
+    {
+      "name": "wb_gam_kudos_per_receiver_cooldown_seconds",
+      "type": "filter",
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/KudosEngine.php:97"
+      ],
+      "consumed_by": []
+    },
+    {
+      "name": "wb_gam_leaderboard_results",
+      "type": "filter",
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/LeaderboardEngine.php:591"
+      ],
+      "consumed_by": []
+    },
+    {
+      "name": "wb_gam_leaderboard_scope_user_ids",
+      "type": "filter",
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/LeaderboardEngine.php:638"
+      ],
       "consumed_by": []
     },
     {
       "name": "wb_gam_manifest_paths",
       "type": "filter",
       "purpose": "Filter the list of manifest file paths scanned by ManifestLoader. Use to add custom integration manifests.",
+      "fired_at": [
+        "src/Engine/ManifestLoader.php:99"
+      ],
       "consumed_by": []
     },
     {
-      "name": "wb_gamification_before_evaluate",
+      "name": "wb_gam_nudge_message",
       "type": "filter",
-      "purpose": "Modify event payload immediately before rule evaluation.",
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/LeaderboardNudge.php:244"
+      ],
       "consumed_by": []
     },
     {
-      "name": "wb_gamification_before_kudos",
+      "name": "wb_gam_points_for_action",
       "type": "filter",
-      "purpose": "Modify or veto a kudos action before it is recorded.",
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/Engine.php:327"
+      ],
+      "consumed_by": [
+        "src/BuddyPress/ActivityIntegration.php:71 array( __CLASS__"
+      ]
+    },
+    {
+      "name": "wb_gam_rank_automation_rules",
+      "type": "filter",
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/RankAutomation.php:157"
+      ],
+      "consumed_by": [
+        "src/Engine/RankAutomation.php:33 function( array $rules"
+      ]
+    },
+    {
+      "name": "wb_gam_recap_data",
+      "type": "filter",
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/RecapEngine.php:217"
+      ],
       "consumed_by": []
     },
     {
-      "name": "wb_gamification_credential_document",
+      "name": "wb_gam_rule_condition",
       "type": "filter",
-      "purpose": "Modify the OpenBadges 3.0 credential document before signing.",
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/RuleEngine.php:155"
+      ],
       "consumed_by": []
     },
     {
-      "name": "wb_gamification_event_metadata",
+      "name": "wb_gam_should_award_badge",
       "type": "filter",
-      "purpose": "Augment event metadata before it is stored.",
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/BadgeEngine.php:237"
+      ],
+      "consumed_by": [
+        "src/CLI/ReplayCommand.php:219 $capturer"
+      ]
+    },
+    {
+      "name": "wb_gam_should_send_weekly_nudge",
+      "type": "filter",
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/LeaderboardNudge.php:224"
+      ],
       "consumed_by": []
     },
     {
-      "name": "wb_gamification_leaderboard_results",
+      "name": "wb_gam_streak_grace_days",
       "type": "filter",
-      "purpose": "Modify leaderboard results before output.",
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/StreakEngine.php:92"
+      ],
       "consumed_by": []
     },
     {
-      "name": "wb_gamification_points_for_action",
+      "name": "wb_gam_submission_daily_cap",
       "type": "filter",
-      "purpose": "Modify the points value for a given action just before award.",
+      "purpose": "",
+      "fired_at": [
+        "src/Services/SubmissionService.php:200"
+      ],
       "consumed_by": []
     },
     {
-      "name": "wb_gamification_rank_automation_rules",
+      "name": "wb_gam_template_path",
       "type": "filter",
-      "purpose": "Modify rank automation ruleset before evaluation.",
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/Templates.php:84"
+      ],
       "consumed_by": []
     },
     {
-      "name": "wb_gamification_recap_data",
+      "name": "wb_gam_toast_data",
       "type": "filter",
-      "purpose": "Augment year-in-review recap data.",
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/NotificationBridge.php:493"
+      ],
       "consumed_by": []
     },
     {
-      "name": "wb_gamification_should_award_badge",
+      "name": "wb_gam_weekly_email_body",
       "type": "filter",
-      "purpose": "Final veto on whether a badge should be awarded.",
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/WeeklyEmailEngine.php:195"
+      ],
       "consumed_by": []
     },
     {
-      "name": "wb_gamification_should_send_weekly_nudge",
+      "name": "wb_gam_wpmediaverse_free_triggers",
       "type": "filter",
-      "purpose": "Veto sending the weekly nudge to a specific user.",
+      "purpose": "",
+      "fired_at": [
+        "integrations/wpmediaverse.php:279"
+      ],
       "consumed_by": []
     },
     {
-      "name": "wb_gamification_toast_data",
+      "name": "wb_gam_wpmediaverse_pro_triggers",
       "type": "filter",
-      "purpose": "Modify toast notification payload.",
+      "purpose": "",
+      "fired_at": [
+        "integrations/wpmediaverse.php:421"
+      ],
+      "consumed_by": []
+    },
+    {
+      "name": "wb_gam_wpmediaverse_triggers",
+      "type": "filter",
+      "purpose": "",
+      "fired_at": [
+        "integrations/wpmediaverse.php:437"
+      ],
       "consumed_by": []
     }
   ],
@@ -1980,10 +2754,10 @@
   "static_analysis": {
     "dead_listeners": [],
     "dead_listeners_notes": [
-      "Naive paired-grep flagged 2 candidates (wb_gam_leaderboard_snapshot, wb_gam_process_event_async). Both are CRON / Action-Scheduler hooks fired by WP core / Action Scheduler — NOT plugin-fired hooks. False positives. No real dead listeners detected.",
+      "Naive paired-grep flagged 2 candidates (wb_gam_leaderboard_snapshot, wb_gam_process_event_async). Both are CRON / Action-Scheduler hooks fired by WP core / Action Scheduler \u2014 NOT plugin-fired hooks. False positives. No real dead listeners detected.",
       {
         "topic": "Legacy blocks/ directory disconnected from registration (Phase G.4)",
-        "note": "Phase G.4 emptied the legacy register_blocks() list in wb-gamification.php. The blocks/<slug>/ dir now contains 15 dead-code copies that should be deleted in a follow-up. wppqa flags 1 inline-onclick + 3 img-missing-alt in this dir — all false positives against dead code. Active block versions live at src/Blocks/<slug>/.",
+        "note": "Phase G.4 emptied the legacy register_blocks() list in wb-gamification.php. The blocks/<slug>/ dir now contains 15 dead-code copies that should be deleted in a follow-up. wppqa flags 1 inline-onclick + 3 img-missing-alt in this dir \u2014 all false positives against dead code. Active block versions live at src/Blocks/<slug>/.",
         "added_at": "2026-05-03",
         "resolved_at": "2026-05-03T19:00:00Z",
         "resolution": "Legacy blocks/ dir (15 dirs, 50 files) deleted via git rm. Active blocks remain at src/Blocks/<slug>/ + build/Blocks/<slug>/."
@@ -2031,7 +2805,7 @@
           "note": "Listed in uninstall.php:163; RedemptionStorePage actually uses wb_gam_manage_rewards at src/Admin/RedemptionStorePage.php:117. Stale cap name in uninstall cleanup."
         }
       ],
-      "manage_options_gate_count": "estimated ~30 — most admin pages and Settings-tab guards default to manage_options; granular caps are layered on top via Capabilities::user_can() at handler entry, but the menu-registration capability is manage_options. This pattern is intentional (menu visibility is admin-only; handler-level granularity is delegated)."
+      "manage_options_gate_count": "estimated ~30 \u2014 most admin pages and Settings-tab guards default to manage_options; granular caps are layered on top via Capabilities::user_can() at handler entry, but the menu-registration capability is manage_options. This pattern is intentional (menu visibility is admin-only; handler-level granularity is delegated)."
     },
     "extensibility_gaps": [],
     "js_only_activation": [],
@@ -2058,15 +2832,15 @@
       },
       "phpcs_ignore_inline": {
         "count": 442,
-        "action": "Inline phpcs:ignore + phpcs:disable annotations across plugin code. Most are nonce-verified-upstream and direct-DB-query patterns for hot ledger paths. No bulk audit required — annotations are reviewed at PR time."
+        "action": "Inline phpcs:ignore + phpcs:disable annotations across plugin code. Most are nonce-verified-upstream and direct-DB-query patterns for hot ledger paths. No bulk audit required \u2014 annotations are reviewed at PR time."
       },
       "phpstan_baseline_file": {
         "count": 0,
-        "action": "no phpstan-baseline.neon present — codebase passes at level 9 without baselining."
+        "action": "no phpstan-baseline.neon present \u2014 codebase passes at level 9 without baselining."
       },
       "phpcs_excludes": {
         "count": 0,
-        "action": "review .phpcs.xml — only project-scope rules, no per-file excludes"
+        "action": "review .phpcs.xml \u2014 only project-scope rules, no per-file excludes"
       }
     },
     "registry_strategy": [],
@@ -2088,7 +2862,7 @@
         "failed": 0,
         "skipped": 1,
         "warnings": 0,
-        "note": "N/A for this plugin — no /templates/ wiring. Bespoke bin/check-event-wiring.sh provides equivalent gate."
+        "note": "N/A for this plugin \u2014 no /templates/ wiring. Bespoke bin/check-event-wiring.sh provides equivalent gate."
       },
       "verdict": "release-clean on the 3 targeted checks. Omnibus audit_plugin reports 2,428 failed but ~99% are phpcs noise (scanner ignores .phpcs.xml). Real findings tracked via git history of audit/ISSUES-2026-05-27.yaml (closed 2026-05-28)."
     },
@@ -2127,7 +2901,7 @@
           "explanation": "Three completely unrelated logical fields all named 'type' in their respective contexts. The wppqa linter groups by the variable/key name 'type' and flags the disagreement, but these never share a code path. False positive."
         }
       ],
-      "verdict": "1 real drift fixed (period); 2 false positives documented. Re-running wppqa_check_enum_consistency will still report all 3 — the linter's grouping heuristic doesn't follow context. Acknowledge and proceed."
+      "verdict": "1 real drift fixed (period); 2 false positives documented. Re-running wppqa_check_enum_consistency will still report all 3 \u2014 the linter's grouping heuristic doesn't follow context. Acknowledge and proceed."
     },
     "wppqa_audit_plugin_findings": {
       "ran_at": "2026-05-03T19:50:00Z",
@@ -2158,7 +2932,7 @@
         "Lifecycle": {
           "score": 0,
           "level": "missing",
-          "details": "linter false positive — register_activation/deactivation_hook + uninstall.php all present and verified"
+          "details": "linter false positive \u2014 register_activation/deactivation_hook + uninstall.php all present and verified"
         },
         "Extensibility": {
           "score": 100,
@@ -2177,13 +2951,13 @@
         }
       },
       "gap_analysis_triage": {
-        "GAP-001 REST-AUTH (critical)": "false_positive — 19 routes use __return_true per the documented public allowlist (catalog reads, OG share, OpenBadges credential, leaderboard, OpenAPI spec). bin/coding-rules-check.sh Rule 2 enforces the allowlist and currently passes.",
-        "GAP-004 DB-UNINSTALL (critical)": "false_positive — uninstall.php exists at plugin root with 4908 bytes (drops all 18 tables, options, transients, cron, AS tasks, user meta).",
-        "GAP-005 DB-ACTIVATION (critical)": "false_positive — register_activation_hook at wb-gamification.php:363 calls Installer::install() + 8 engine activation methods.",
-        "GAP-006 CRON-DEACTIVATION (critical)": "false_positive — register_deactivation_hook at wb-gamification.php:381 calls 8 engine deactivation methods + flush_rewrite_rules. 9 wp_clear_scheduled_hook / wp_unschedule_event call sites confirmed across engine classes.",
-        "GAP-002 ADMIN-SETTINGS (important)": "intentional — plugin uses central FeatureFlags + custom admin REST save handlers (Tier 0.C migration), not WP Settings API. Architectural choice for cross-cutting state vs per-page settings_field rows.",
-        "GAP-007 TEMPLATE-HOOKS (important)": "partially_resolved — 86 custom hooks fired across blocks + REST + engine; templates/ dir is intentionally thin (most rendering happens via block render.php which IS heavily hookable).",
-        "GAP-008 WIRING-ISSUES (important)": "contradicted — wppqa_check_rest_js_contract returns passed=2 failed=0. The 'broken AJAX calls / dead handlers / nonce mismatches' rule didn't surface specifics; the more granular contract check is authoritative."
+        "GAP-001 REST-AUTH (critical)": "false_positive \u2014 19 routes use __return_true per the documented public allowlist (catalog reads, OG share, OpenBadges credential, leaderboard, OpenAPI spec). bin/coding-rules-check.sh Rule 2 enforces the allowlist and currently passes.",
+        "GAP-004 DB-UNINSTALL (critical)": "false_positive \u2014 uninstall.php exists at plugin root with 4908 bytes (drops all 18 tables, options, transients, cron, AS tasks, user meta).",
+        "GAP-005 DB-ACTIVATION (critical)": "false_positive \u2014 register_activation_hook at wb-gamification.php:363 calls Installer::install() + 8 engine activation methods.",
+        "GAP-006 CRON-DEACTIVATION (critical)": "false_positive \u2014 register_deactivation_hook at wb-gamification.php:381 calls 8 engine deactivation methods + flush_rewrite_rules. 9 wp_clear_scheduled_hook / wp_unschedule_event call sites confirmed across engine classes.",
+        "GAP-002 ADMIN-SETTINGS (important)": "intentional \u2014 plugin uses central FeatureFlags + custom admin REST save handlers (Tier 0.C migration), not WP Settings API. Architectural choice for cross-cutting state vs per-page settings_field rows.",
+        "GAP-007 TEMPLATE-HOOKS (important)": "partially_resolved \u2014 86 custom hooks fired across blocks + REST + engine; templates/ dir is intentionally thin (most rendering happens via block render.php which IS heavily hookable).",
+        "GAP-008 WIRING-ISSUES (important)": "contradicted \u2014 wppqa_check_rest_js_contract returns passed=2 failed=0. The 'broken AJAX calls / dead handlers / nonce mismatches' rule didn't surface specifics; the more granular contract check is authoritative."
       },
       "verdict": "0 real issues from the comprehensive audit. All 4 critical + 3 important gaps are false positives or intentional architecture; verified line-by-line. The 63/100 score reflects pattern-matching limits, not actual maturity. Static gates remain failed=0 across all 4 wppqa specific checks."
     },
@@ -2232,20 +3006,101 @@
     ]
   },
   "frontend_assets": {
-    "js": [
-      "assets/js/admin-badge.js",
-      "assets/js/admin-settings.js",
-      "assets/js/settings-nav.js",
-      "assets/js/toast.js"
-    ],
-    "css": [
-      "assets/css/admin.css",
-      "assets/css/admin-analytics.css",
-      "assets/css/admin-premium.css",
-      "assets/css/frontend.css",
-      "assets/css/hub.css",
-      "assets/css/share-page.css"
-    ]
+    "css": {
+      "global": [
+        "assets/css/admin-analytics.css",
+        "assets/css/admin-menu-icon.css",
+        "assets/css/frontend.css",
+        "assets/css/give-kudos.css",
+        "assets/css/hub.css",
+        "assets/css/share-page.css"
+      ],
+      "admin": [
+        "assets/css/admin/components.css",
+        "assets/css/admin/pages/analytics.css",
+        "assets/css/admin/pages/api-keys.css",
+        "assets/css/admin/pages/badges.css",
+        "assets/css/admin/pages/challenges.css",
+        "assets/css/admin/pages/cohort.css",
+        "assets/css/admin/pages/community-challenges.css",
+        "assets/css/admin/pages/point-type-conversions.css",
+        "assets/css/admin/pages/point-types.css",
+        "assets/css/admin/pages/redemption-store.css",
+        "assets/css/admin/pages/settings.css",
+        "assets/css/admin/pages/submissions.css",
+        "assets/css/admin/pages/webhooks.css",
+        "assets/css/admin/pages/wizard.css",
+        "assets/css/admin/third-party-suppression.css",
+        "assets/css/admin/tokens.css",
+        "assets/css/admin/utilities.css"
+      ],
+      "blocks": [
+        "src/Blocks/badge-showcase/style.css",
+        "src/Blocks/challenges/style.css",
+        "src/Blocks/cohort-rank/style.css",
+        "src/Blocks/community-challenges/style.css",
+        "src/Blocks/daily-bonus/style.css",
+        "src/Blocks/earning-guide/style.css",
+        "src/Blocks/kudos-feed/style.css",
+        "src/Blocks/leaderboard/style.css",
+        "src/Blocks/level-progress/style.css",
+        "src/Blocks/member-points/style.css",
+        "src/Blocks/points-history/style.css",
+        "src/Blocks/redemption-store/style.css",
+        "src/Blocks/streak/style.css",
+        "src/Blocks/submit-achievement/style.css",
+        "src/Blocks/top-members/style.css",
+        "src/Blocks/user-status-bar/style.css",
+        "src/Blocks/year-recap/style.css"
+      ]
+    },
+    "js": {
+      "global": [
+        "assets/js/admin-action-overrides.js",
+        "assets/js/admin-api-keys.js",
+        "assets/js/admin-badge.js",
+        "assets/js/admin-cohort.js",
+        "assets/js/admin-levels.js",
+        "assets/js/admin-rest-form.js",
+        "assets/js/admin-rest-utils.js",
+        "assets/js/admin-reward-type-toggle.js",
+        "assets/js/admin-rule-action-toggle.js",
+        "assets/js/admin-settings.js",
+        "assets/js/admin-submissions.js",
+        "assets/js/admin-test-event.js",
+        "assets/js/give-kudos.js",
+        "assets/js/heartbeat.js",
+        "assets/js/hub-convert.js",
+        "assets/js/settings-nav.js",
+        "assets/js/toast.js"
+      ],
+      "blocks": [
+        "src/Blocks/badge-showcase/index.js",
+        "src/Blocks/badge-showcase/view.js",
+        "src/Blocks/challenges/index.js",
+        "src/Blocks/cohort-rank/index.js",
+        "src/Blocks/community-challenges/index.js",
+        "src/Blocks/daily-bonus/index.js",
+        "src/Blocks/earning-guide/index.js",
+        "src/Blocks/hub/index.js",
+        "src/Blocks/kudos-feed/index.js",
+        "src/Blocks/leaderboard/index.js",
+        "src/Blocks/leaderboard/view.js",
+        "src/Blocks/level-progress/index.js",
+        "src/Blocks/member-points/index.js",
+        "src/Blocks/points-history/index.js",
+        "src/Blocks/redemption-store/index.js",
+        "src/Blocks/redemption-store/view.js",
+        "src/Blocks/streak/index.js",
+        "src/Blocks/submit-achievement/index.js",
+        "src/Blocks/submit-achievement/view.js",
+        "src/Blocks/top-members/index.js",
+        "src/Blocks/user-status-bar/index.js",
+        "src/Blocks/user-status-bar/view.js",
+        "src/Blocks/year-recap/index.js",
+        "src/Blocks/year-recap/view.js"
+      ]
+    }
   },
   "cron": [
     {
@@ -2360,7 +3215,7 @@
   ],
   "storage_drivers": [],
   "security": {
-    "uploads_gate": "n/a — no upload endpoints",
+    "uploads_gate": "n/a \u2014 no upload endpoints",
     "signing_entry_points": [
       "src/API/CredentialController.php (OpenBadges 3.0 signed credentials)"
     ],
@@ -2397,13 +3252,13 @@
     "phpcs_config": ".phpcs.xml"
   },
   "coding_rules": [
-    "Event-sourced architecture: events in → rules evaluate → effects out. No write to derived tables outside engine classes.",
-    "Auto-discovery via ManifestLoader at plugins_loaded@5 — drop a manifest file, get a registered action.",
-    "REST is the only interactive API surface — no AJAX (admin-ajax.php) layer.",
+    "Event-sourced architecture: events in \u2192 rules evaluate \u2192 effects out. No write to derived tables outside engine classes.",
+    "Auto-discovery via ManifestLoader at plugins_loaded@5 \u2014 drop a manifest file, get a registered action.",
+    "REST is the only interactive API surface \u2014 no AJAX (admin-ajax.php) layer.",
     "WPCS via mcp__wpcs__* MCP tools, NOT direct phpcs CLI (the CLI ignores .phpcs.xml when run from outside the plugin)."
   ],
   "build_commands": {
-    "release": "grunt dist (Gruntfile.js — copy/clean/compress to wb-gamification.zip)",
+    "release": "grunt dist (Gruntfile.js \u2014 copy/clean/compress to wb-gamification.zip)",
     "ci_local": "composer test && composer phpcs"
   },
   "category_sources": {
@@ -2475,7 +3330,7 @@
   },
   "generated": {
     "at": "2026-05-28T01:44:38Z",
-    "from": "wp-plugin-onboard --refresh — v1.4.0 post-release sweep. Ground-truth re-scan against today diff: 99 plugin hooks (53 actions + 46 filters), 23 tables, 19 blocks, 17 shortcodes, 10 distinct cron hooks, 10 WP-CLI commands, 13 admin pages, 10 declared caps, 24 frontend CSS files + 19 frontend JS files. Sub-arrays (.hooks_fired[], .services[], .frontend_assets) carry over from 2026-05-06 by reference; coverage gate documents the gap. v2.2 schema preserved. See audit/wppqa-baseline-2026-05-27/SUMMARY.md and audit/ISSUES-2026-05-27.yaml.",
+    "from": "wp-plugin-onboard --refresh \u2014 v1.4.0 post-release sweep. Ground-truth re-scan against today diff: 99 plugin hooks (53 actions + 46 filters), 23 tables, 19 blocks, 17 shortcodes, 10 distinct cron hooks, 10 WP-CLI commands, 13 admin pages, 10 declared caps, 24 frontend CSS files + 19 frontend JS files. Sub-arrays (.hooks_fired[], .services[], .frontend_assets) carry over from 2026-05-06 by reference; coverage gate documents the gap. v2.2 schema preserved. See audit/wppqa-baseline-2026-05-27/SUMMARY.md and audit/ISSUES-2026-05-27.yaml.",
     "branch": "main",
     "schema_version": "v2.2",
     "scan_scope": "gruntfile",
@@ -2496,19 +3351,19 @@
       "actions_fired": {
         "manifest": 43,
         "baseline": 53,
-        "gap_pct": 18.9,
-        "note": "Manifest .hooks_fired[] holds 43 action entries; ground-truth scan finds 53 unique wb_gam_ do_action sites. +10 new since 2026-05-06: wb_gam_login_bonus_claimed, wb_gam_submission_approved, wb_gam_submission_created, wb_gam_submission_rejected, wb_gam_point_type_converted, wb_gam_as_cleaned, wb_gam_after_save_cohort_settings, wb_gam_cohort_settings_saved, wb_gam_cohort_outcome, wb_gam_credential_expired. Drift > 5% — re-enumeration deferred to next dedicated refresh."
+        "gap_pct": 18.899999999999999,
+        "note": "Manifest .hooks_fired[] holds 43 action entries; ground-truth scan finds 53 unique wb_gam_ do_action sites. +10 new since 2026-05-06: wb_gam_login_bonus_claimed, wb_gam_submission_approved, wb_gam_submission_created, wb_gam_submission_rejected, wb_gam_point_type_converted, wb_gam_as_cleaned, wb_gam_after_save_cohort_settings, wb_gam_cohort_settings_saved, wb_gam_cohort_outcome, wb_gam_credential_expired. Drift > 5% \u2014 re-enumeration deferred to next dedicated refresh."
       },
       "filters_fired": {
         "manifest": 12,
         "baseline": 46,
-        "gap_pct": 73.9,
-        "note": "Manifest .hooks_fired[] holds 12 filter entries; ground-truth scan finds 46 unique wb_gam_ apply_filters sites. Massive growth from per-block data filters (14 wb_gam_block_*_data filters added in block standard migration). Major drift — re-enumeration deferred."
+        "gap_pct": 73.900000000000006,
+        "note": "Manifest .hooks_fired[] holds 12 filter entries; ground-truth scan finds 46 unique wb_gam_ apply_filters sites. Massive growth from per-block data filters (14 wb_gam_block_*_data filters added in block standard migration). Major drift \u2014 re-enumeration deferred."
       },
       "tables": {
         "manifest": 22,
         "baseline": 23,
-        "gap_pct": 4.3,
+        "gap_pct": 4.2999999999999998,
         "note": "Manifest .tables[] is missing {prefix}wb_gam_api_keys (added in v1.2.0 Tier-0 admin REST migration but not back-filled)."
       },
       "blocks": {
@@ -2520,13 +3375,13 @@
       "shortcodes": {
         "manifest": 15,
         "baseline": 17,
-        "gap_pct": 11.8,
+        "gap_pct": 11.800000000000001,
         "note": "Manifest has 15; ShortcodeHandler registers 17 add_shortcode call sites. +2 since 2026-05-06: give_kudos, my_rewards."
       },
       "cron": {
         "manifest": 9,
         "baseline": 10,
-        "gap_pct": 10.0,
+        "gap_pct": 10,
         "note": "Manifest .cron[] has 9; ground truth = 10 distinct CRON_HOOK constants (wb_gam_weekly_nudge, wb_gam_weekly_email, wb_gam_as_cleanup, wb_gam_prune_logs, wb_gam_status_retention_check, wb_gam_credential_expiry_check, wb_gam_tenure_check, wb_gam_cohort_assign, wb_gam_cohort_process, wb_gam_leaderboard_snapshot). Missing: wb_gam_as_cleanup (ActionSchedulerCleaner, v1.4.0)."
       },
       "wp_cli": {
@@ -2542,30 +3397,30 @@
       "capabilities": {
         "manifest": 7,
         "baseline": 10,
-        "gap_pct": 30.0,
+        "gap_pct": 30,
         "note": "Manifest .capabilities[] has 7; Capabilities::declared_caps() registers 10 (wb_gam_award_manual, wb_gam_manage_badges, wb_gam_manage_rules, wb_gam_manage_challenges, wb_gam_manage_rewards, wb_gam_manage_webhooks, wb_gam_manage_levels, wb_gam_manage_submissions, wb_gam_manage_email_settings, wb_gam_view_analytics). Missing in manifest: wb_gam_manage_rules, wb_gam_manage_levels, wb_gam_manage_submissions, wb_gam_manage_email_settings."
       },
       "services": {
         "manifest": 43,
         "baseline": 54,
-        "gap_pct": 20.4,
+        "gap_pct": 20.399999999999999,
         "note": "Manifest .services[] has 43; src/Engine/ + src/Services/ + src/Repository/ collectively expose ~54 class-like services. Newer additions not yet recorded: Transaction, TransactionalEmailEngine, HeartbeatChannel, Templates, LoginBonusEngine, Email, Log, ProfilePage, BlockHooks, ActionSchedulerCleaner, Capabilities (some are utility classes, not all need to be in .services[])."
       },
       "frontend_css": {
         "manifest": 6,
         "baseline": 24,
-        "gap_pct": 75.0,
-        "note": "Today CSS architecture refactor (admin.css split into per-page sheets) added 17+ new feature-domain CSS files: tokens.css, utilities.css, components.css, third-party-suppression.css + 13 per-page sheets under assets/css/admin/pages/. Major drift — re-enumeration deferred."
+        "gap_pct": 75,
+        "note": "Today CSS architecture refactor (admin.css split into per-page sheets) added 17+ new feature-domain CSS files: tokens.css, utilities.css, components.css, third-party-suppression.css + 13 per-page sheets under assets/css/admin/pages/. Major drift \u2014 re-enumeration deferred."
       },
       "frontend_js": {
         "manifest": 4,
         "baseline": 19,
-        "gap_pct": 78.9,
-        "note": "Tier-0 admin REST migration added admin-rest-utils.js, admin-rest-form.js, admin-action-overrides.js, admin-cohort.js, admin-api-keys.js, admin-levels.js, admin-submissions.js, admin-test-event.js, admin-reward-type-toggle.js, admin-rule-action-toggle.js, give-kudos.js, heartbeat.js, hub-convert.js, plus 2 interactivity stores (hub.js, notifications.js). Major drift — re-enumeration deferred."
+        "gap_pct": 78.900000000000006,
+        "note": "Tier-0 admin REST migration added admin-rest-utils.js, admin-rest-form.js, admin-action-overrides.js, admin-cohort.js, admin-api-keys.js, admin-levels.js, admin-submissions.js, admin-test-event.js, admin-reward-type-toggle.js, admin-rule-action-toggle.js, give-kudos.js, heartbeat.js, hub-convert.js, plus 2 interactivity stores (hub.js, notifications.js). Major drift \u2014 re-enumeration deferred."
       }
     },
-    "last_pr_merged": "v1.4.0 bug-sweep session 2026-05-27 → 2026-05-28 — 21 Basecamp cards closed + 2 new local-CI gates",
-    "since_last_refresh": "19 commits — boot-guard regression fix + 8 PR-quality bug fixes + 12 feature/UX fixes. New gates: bin/check-boot-invariants.php (stage 2.13), bin/check-badge-condition-contract.php (stage 2.14). New engine: WBGam\\Engine\\MemberUploadCap (grants upload_files to logged-in members). Behaviour changes: WC purchase events now hook woocommerce_payment_complete (was status_completed); first_comment + first_post + prolific_writer + content_creator + engaged_reader badges now use action_count (was point_milestone); redemption email whitelist accepts the slug; cohort tier names + 5th-tier admin input wired through engine + REST + JS; CommunityChallengeEngine::award_community_bonus listener installed (the dead-letter that pre-fix never granted bonuses); heartbeat interval set to fast (5s) for realtime toasts; toast.js dedupes by _id across 3 cursors. UI: user-status-bar chevron toggle + theme top-offset CSS var; cohort-rank tier-coloured accent dot; community-challenges completed-state visual treatment + per-block style.css now compiles; earning-guide card layout (label below icon+pts so long labels read horizontally); manual badge-award form on Badge edit page; Hub Challenges card unites personal + community."
+    "last_pr_merged": "v1.4.0 bug-sweep session 2026-05-27 \u2192 2026-05-28 \u2014 21 Basecamp cards closed + 2 new local-CI gates",
+    "since_last_refresh": "19 commits \u2014 boot-guard regression fix + 8 PR-quality bug fixes + 12 feature/UX fixes. New gates: bin/check-boot-invariants.php (stage 2.13), bin/check-badge-condition-contract.php (stage 2.14). New engine: WBGam\\Engine\\MemberUploadCap (grants upload_files to logged-in members). Behaviour changes: WC purchase events now hook woocommerce_payment_complete (was status_completed); first_comment + first_post + prolific_writer + content_creator + engaged_reader badges now use action_count (was point_milestone); redemption email whitelist accepts the slug; cohort tier names + 5th-tier admin input wired through engine + REST + JS; CommunityChallengeEngine::award_community_bonus listener installed (the dead-letter that pre-fix never granted bonuses); heartbeat interval set to fast (5s) for realtime toasts; toast.js dedupes by _id across 3 cursors. UI: user-status-bar chevron toggle + theme top-offset CSS var; cohort-rank tier-coloured accent dot; community-challenges completed-state visual treatment + per-block style.css now compiles; earning-guide card layout (label below icon+pts so long labels read horizontally); manual badge-award form on Badge edit page; Hub Challenges card unites personal + community."
   },
   "wp_cli_commands": [
     {
