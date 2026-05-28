@@ -140,6 +140,101 @@ final class Engine {
 	}
 
 	/**
+	 * Engine-internal action_ids that bypass the Registry by design.
+	 *
+	 * These are emitted directly by engine code (admin manual awards,
+	 * redemption debits, generic ledger writes) and have no manifest
+	 * entry — they must NOT trigger the `wb_gam_unknown_action` warning.
+	 *
+	 * @var string[]
+	 */
+	private const INTERNAL_ACTION_IDS = array(
+		'manual',
+		'manual_award',
+		'manual_debit',
+		'debit',
+		'redemption',
+		'kudos_received',
+		'kudos_given',
+	);
+
+	/**
+	 * Whether an action_id is engine-internal (not a manifest action).
+	 *
+	 * @param string $action_id Action identifier.
+	 * @return bool True if engine-internal.
+	 */
+	private static function is_engine_internal_action( string $action_id ): bool {
+		return in_array( $action_id, self::INTERNAL_ACTION_IDS, true );
+	}
+
+	/**
+	 * Emit a developer-facing warning for an unknown action_id.
+	 *
+	 * Fired from {@see process()} when the action_id is not in the Registry,
+	 * is not engine-internal, and carries no manual points payload. Three
+	 * surfaces light up:
+	 *   1. `Log::warning()` → debug log + Query Monitor;
+	 *   2. `do_action( 'wb_gam_unknown_action', ... )` → custom listeners
+	 *      (admin notices, Slack, Sentry).
+	 *   3. A per-action_id rate limit so a hot loop calling the wrong ID
+	 *      doesn't flood the log — one warning per action_id per request.
+	 *
+	 * @param Event $event The unprocessable event.
+	 */
+	private static function warn_unknown_action( Event $event ): void {
+		static $warned = array();
+
+		$action_id = $event->action_id;
+		if ( isset( $warned[ $action_id ] ) ) {
+			return;
+		}
+		$warned[ $action_id ] = true;
+
+		$suggestions = Registry::suggest_similar( $action_id, 3 );
+
+		$msg = sprintf(
+			/* translators: %s: unrecognised action_id */
+			__( 'Engine: action_id "%s" is not in the Registry. Manifest missing, plugin inactive, or typo.', 'wb-gamification' ),
+			$action_id
+		);
+		if ( ! empty( $suggestions ) ) {
+			$msg .= ' ' . sprintf(
+				/* translators: %s: comma-separated list of suggested action_ids */
+				__( 'Did you mean: %s?', 'wb-gamification' ),
+				implode( ', ', $suggestions )
+			);
+		}
+
+		Log::warning(
+			$msg,
+			array(
+				'action_id'   => $action_id,
+				'user_id'     => $event->user_id,
+				'suggestions' => $suggestions,
+			)
+		);
+
+		/**
+		 * Fires when Engine::process() is handed an action_id that isn't in
+		 * the Registry and carries no manual points payload.
+		 *
+		 * Use this to route the miss to your monitoring of choice. Default
+		 * behaviour (log + return false from process()) is unchanged — this
+		 * is purely observational. Listener runs OUTSIDE any award
+		 * transaction (no DB writes that need to roll back).
+		 *
+		 * @since 1.5.0
+		 *
+		 * @param string   $action_id   The unrecognised action_id.
+		 * @param Event    $event       The event that triggered the miss.
+		 * @param string[] $suggestions Up to 3 close-match action_ids from
+		 *                              the Registry (may be empty).
+		 */
+		do_action( 'wb_gam_unknown_action', $action_id, $event, $suggestions );
+	}
+
+	/**
 	 * Check whether a specific action is enabled, with per-request static cache.
 	 *
 	 * @param string $action_id Action identifier to check.
@@ -263,6 +358,21 @@ final class Engine {
 		}
 
 		$action = Registry::get_action( $event->action_id );
+
+		// Unknown action_id + no manual points → typo or missing manifest.
+		// The silent path here was the #1 confusion during integration testing:
+		// a wrong action_id resolved to $action = null, $points fell through
+		// to metadata['points'] (also 0), the engine returned false, and
+		// nothing surfaced to the caller, debug log, or admin. Now we log
+		// once with "did you mean …" suggestions and fire wb_gam_unknown_action
+		// so admin tooling (or a custom listener) can route the miss to a
+		// notice / Slack / monitoring channel.
+		if ( null === $action && empty( $event->metadata['points'] ) && ! self::is_engine_internal_action( $event->action_id ) ) {
+			self::warn_unknown_action( $event );
+			// Continue execution — the existing $points <= 0 gate at line ~380
+			// still rejects the event. The warning is observational, not a
+			// behaviour change.
+		}
 
 		// Resolve the currency ONCE — before any filter runs, before rate-limit
 		// check, before persist. Both passes_rate_limits and insert_point_row

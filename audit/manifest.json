@@ -1835,7 +1835,7 @@
       "type": "action",
       "purpose": "",
       "fired_at": [
-        "src/Engine/Engine.php:395"
+        "src/Engine/Engine.php:505"
       ],
       "consumed_by": []
     },
@@ -1951,7 +1951,7 @@
       "type": "action",
       "purpose": "An event has finished evaluating rules + dispatching outputs.",
       "fired_at": [
-        "src/Engine/Engine.php:483"
+        "src/Engine/Engine.php:593"
       ],
       "consumed_by": []
     },
@@ -2049,7 +2049,7 @@
       "type": "action",
       "purpose": "",
       "fired_at": [
-        "src/Engine/Engine.php:454"
+        "src/Engine/Engine.php:564"
       ],
       "consumed_by": [
         "src/Engine/BadgeEngine.php:59 array( __CLASS__",
@@ -2165,6 +2165,16 @@
       "purpose": "",
       "fired_at": [
         "src/Services/SubmissionService.php:184"
+      ],
+      "consumed_by": []
+    },
+    {
+      "name": "wb_gam_unknown_action",
+      "type": "action",
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/Engine.php:178",
+        "src/Engine/Engine.php:234"
       ],
       "consumed_by": []
     },
@@ -2299,7 +2309,7 @@
       "type": "filter",
       "purpose": "",
       "fired_at": [
-        "src/Engine/Engine.php:351"
+        "src/Engine/Engine.php:461"
       ],
       "consumed_by": []
     },
@@ -2560,7 +2570,7 @@
       "type": "filter",
       "purpose": "",
       "fired_at": [
-        "src/Engine/Engine.php:319"
+        "src/Engine/Engine.php:429"
       ],
       "consumed_by": [
         "src/API/ApiKeyAuth.php:62 static function ( $metadata"
@@ -2634,7 +2644,7 @@
       "type": "filter",
       "purpose": "",
       "fired_at": [
-        "src/Engine/Engine.php:375"
+        "src/Engine/Engine.php:485"
       ],
       "consumed_by": [
         "src/BuddyPress/ActivityIntegration.php:71 array( __CLASS__"

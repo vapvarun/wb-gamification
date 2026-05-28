@@ -327,6 +327,71 @@ final class Registry {
 	}
 
 	/**
+	 * Suggest registered action IDs similar to an unknown one.
+	 *
+	 * Used by the Engine to turn silent "action not in registry" misses into
+	 * actionable "did you mean…" hints — the #1 footgun is a typo'd action_id
+	 * that resolves to `$action === null`, drops `$points` to 0, and returns
+	 * false from `Engine::process()` without surfacing anything to the caller
+	 * or the debug log. Worked example: `wc_product_review` (singular) ->
+	 * suggests `wc_product_reviewed` (manifest's canonical past-tense form).
+	 *
+	 * Matching strategy (combined for breadth):
+	 *   1. Substring match — catches singular/plural and missing tense
+	 *      affixes (`wc_product_review` ⊂ `wc_product_reviewed`).
+	 *   2. Levenshtein distance ≤ 3 — catches transpositions and single-char
+	 *      typos.
+	 *
+	 * Results are deduplicated and ranked by score, capped at $limit. When
+	 * nothing fits the bar, an empty array is returned — "no suggestions"
+	 * is more honest than namespace-prefix noise that doesn't help the
+	 * caller. The owning plugin may simply be inactive, in which case the
+	 * canonical action isn't registered to be suggested.
+	 *
+	 * @since 1.5.0
+	 *
+	 * @param string $action_id The unknown / typo'd action_id.
+	 * @param int    $limit     Max suggestions to return.
+	 * @return string[] Suggested action IDs, best-match first.
+	 */
+	public static function suggest_similar( string $action_id, int $limit = 3 ): array {
+		if ( '' === $action_id || $limit <= 0 ) {
+			return array();
+		}
+
+		$candidates = array_keys( self::$actions );
+		if ( empty( $candidates ) ) {
+			return array();
+		}
+
+		$lower  = strtolower( $action_id );
+		$scored = array();
+
+		foreach ( $candidates as $candidate ) {
+			$cand_lower = strtolower( $candidate );
+
+			// Substring either direction — strongest signal.
+			if ( false !== strpos( $cand_lower, $lower ) || false !== strpos( $lower, $cand_lower ) ) {
+				$scored[ $candidate ] = -1;
+				continue;
+			}
+
+			$distance = levenshtein( $lower, $cand_lower );
+			if ( $distance <= 3 ) {
+				$scored[ $candidate ] = $distance;
+			}
+		}
+
+		if ( empty( $scored ) ) {
+			return array();
+		}
+
+		asort( $scored );
+
+		return array_slice( array_keys( $scored ), 0, $limit );
+	}
+
+	/**
 	 * Get a single registered action by ID.
 	 *
 	 * @param string $id Action ID to look up.
