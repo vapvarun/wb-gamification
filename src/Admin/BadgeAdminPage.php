@@ -442,14 +442,14 @@ final class BadgeAdminPage {
 							// the same control across both surfaces. Closes Basecamp
 							// #9933208551.
 							?>
-							<div class="wbgam-card wbgam-stack-block wbgam-mt-lg">
+							<div class="wbgam-card wbgam-stack-block wbgam-mt-md">
 								<div class="wbgam-card-header">
 									<h3 class="wbgam-card-title">
 										<?php esc_html_e( 'Award this badge to a user', 'wb-gamification' ); ?>
 									</h3>
 								</div>
 								<div class="wbgam-card-body">
-									<p class="wbgam-card__desc">
+									<p class="wbgam-card-desc">
 										<?php
 										if ( 'admin_awarded' === $condition['condition_type'] ) {
 											esc_html_e( 'This badge is admin-awarded only. Use the form below to grant it to a specific member.', 'wb-gamification' );
