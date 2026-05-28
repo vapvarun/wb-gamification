@@ -327,24 +327,15 @@ WB_GAM_BASENAME  // 'wb-gamification/wb-gamification.php'
 
 ## 🟡 Next Up
 
-See [`plan/MASTER-CHECKLIST.md`](plan/MASTER-CHECKLIST.md) — pending items live there. As of 2026-05-28: scale-benchmark customisation, SSE/WebSocket transport, hooks_fired re-enumeration, frontend_assets re-enumeration, capabilities manifest coverage, GraphQL API, AI intelligence layer, JS SDK, ActivityPub federation.
-- **Task 30:** Admin design consistency audit (all pages match premium CSS system)
-
-## 🔜 After UX Audit
-
-- **Phase 3:** Build & release (Grunt, version bump, zip packaging)
+[`plan/MASTER-CHECKLIST.md`](plan/MASTER-CHECKLIST.md) is the single source of truth — read it for the current shipped-vs-pending view. As of 2026-05-28 the foundation + v2 wave is complete; the only explicitly-deferred item is the toast wrapper duplication refactor (multi-commit, no functional impact today). Items historically listed here (scale-benchmark, SSE, hooks_fired re-enum, frontend_assets re-enum, capabilities manifest, GraphQL, AI intelligence, JS SDK, ActivityPub) all shipped — see the checklist for commit pointers.
 
 > **No Pro tier.** wb-gamification is shipped as a single free plugin — every engine boots in this codebase. Any historical references to a "Pro plugin", "Pro engines", `WB_GAM_PRO_VERSION`, or `wb-gamification-pro` left in `plan/`, `audit/`, or older docs are stale.
 
-## 🟣 Phase 5+ (Deferred)
+## 🟣 Genuinely deferred (multi-week or external-dep)
 
-- **GraphQL API** — flexible queries for mobile/headless frontends
-- **WebSocket real-time** — enterprise tier (SSE already done; WS is bidirectional layer)
-- **ActivityPub federation** — gamification events into the fediverse
-- **AI intelligence layer** — churn prediction, adaptive challenges, anti-gaming detection
-- **JS SDK** — `@wbcom/wb-gamification-js-sdk`
-- **React Native SDK** — `@wbcom/wb-gamification-rn-sdk`
-- **PHPStan CI** — currently manual, needs GitHub Actions integration
+- **React Native SDK** — `@wbcom/wb-gamification-rn-sdk`. No customer ask yet; would consume the same OpenAPI spec the JS SDK does.
+- **PHPStan in GitHub Actions** — `composer phpstan` works locally (level 9 clean) but PHPStan silently no-ops in the Local-by-Flywheel PHP build. CI wiring needs the GitHub Action runner to confirm output.
+- **WebSocket transport** — SSE shipped (stage 4 verified, default `'auto'`). WS would only matter if we needed bidirectional client→server streaming, which we don't today.
 
 ---
 
