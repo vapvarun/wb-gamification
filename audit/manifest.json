@@ -1802,7 +1802,8 @@
       "fired_at": [
         "src/BuddyPress/Stream/BadgeStream.php:6",
         "src/Engine/BadgeEngine.php:296",
-        "src/Engine/NotificationBridge.php:244"
+        "src/Engine/NotificationBridge.php:244",
+        "src/Integrations/ActivityPub.php:89"
       ],
       "consumed_by": [
         "src/BuddyPress/Stream/BadgeStream.php:31 array( __CLASS__",
@@ -2226,7 +2227,7 @@
       "type": "filter",
       "purpose": "",
       "fired_at": [
-        "src/Integrations/ActivityPub.php:210"
+        "src/Integrations/ActivityPub.php:213"
       ],
       "consumed_by": []
     },
