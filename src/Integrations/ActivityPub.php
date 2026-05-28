@@ -86,11 +86,14 @@ final class ActivityPub {
 	 * user's collection. AS2 vocabulary is intentionally compatible
 	 * with OpenBadges where they overlap.
 	 *
-	 * @param int    $user_id Recipient.
+	 * BadgeEngine fires the hook as: do_action( 'wb_gam_badge_awarded', $user_id, $def_array, $badge_id_string )
+	 * matching NotificationBridge::on_badge_awarded($user_id, $badge, $badge_id).
+	 *
+	 * @param int    $user_id  Recipient.
+	 * @param array  $badge    Badge metadata (name, description, image_url, ...).
 	 * @param string $badge_id Badge slug.
-	 * @param array  $badge   Badge metadata.
 	 */
-	public static function on_badge_awarded( int $user_id, string $badge_id, array $badge ): void {
+	public static function on_badge_awarded( int $user_id, array $badge, string $badge_id = '' ): void {
 		if ( ! self::is_enabled( $user_id ) ) {
 			return;
 		}
