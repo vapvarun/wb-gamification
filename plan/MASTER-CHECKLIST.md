@@ -140,15 +140,15 @@
 
 ---
 
-## ⏳ Pending (9)
+## ⏳ Pending (8)
 
 ### Stable-foundation wave (shipped 2026-05-28, all 3 commits)
 - [x] **Release-prep orchestrator + drift-impossible generators** — `bin/cut-release.sh <X.Y.Z>` bumps version in 5 spots; `bin/build-readme.php` inlines feature counts from the manifest into `readme.txt`; `bin/build-docs-config.php` keeps `docs/website/docs_config.json` in sync with on-disk `.md` files (errors on dangling entries); `bin/build-blocks.js` safety-net copies orphaned per-block `style.css` into `build/` and warns when an `import './style.css'` is missing. `bin/cut-release.sh --check` proves idempotency by exiting non-zero on any drift.
 - [x] **AS-schedule guard contract** — `bin/check-as-schedule-guard.php` (PHP token-walker) flags every `as_schedule_*` / `as_enqueue_*` call without an `as_has_scheduled_action()` guard in the same method AND without an `@as-fire-once` docblock annotation. The 7 existing fire-once call sites (`AsyncEvaluator::flush_queue`, `Engine::process_async`, `WeeklyEmailEngine::dispatch_batch`, `CommunityChallengeEngine::complete_challenge`, `WebhookDispatcher::dispatch`, `WebhookDispatcher::maybe_schedule_retry`, `TransactionalEmailEngine::send`) carry the annotation with a specific reason. Wired into `bin/coding-rules-check.sh` as Rule 12 — extends the existing stage 2.1, no new local-CI stage. Originally intended as a PHPStan rule, pivoted after PHPStan was found silently broken in the Local-by-Flywheel PHP build (exits 0 with zero output regardless of input — see `audit/` if added).
 - [x] **OpenAPI 3.0.3 spec artefact** — `wp wb-gamification openapi export` command (`src/CLI/OpenApiCommand.php`) writes `audit/openapi.json` (56 paths, 131 KB) by calling the new `OpenApiController::build_spec()` helper — same builder serves the runtime `/wb-gamification/v1/openapi.json` endpoint. `--check` mode is wired into `bin/cut-release.sh` as the third drift gate alongside readme.txt + docs_config.json. The committed artefact is the contract surface for the upcoming JS SDK, GraphQL extension, and any AI/headless consumer. Lives in `audit/` (canonical inventory) rather than `dist/` (gitignored build output).
 
-### Performance / scale (3)
-- [ ] **Scale benchmark customisation** — `src/CLI/ScaleCommand.php` exists per skill scaffold but `BUDGETS_MS`, `seed()`, `benchmark()` bodies still ship as stubs. Customise for the actual hot paths (`PointsEngine::get_total`, `LeaderboardEngine::get_leaderboard`, `PointTypeService::list`) before claiming 100k-user readiness.
+### Performance / scale (2)
+- [x] **Scale benchmark VERIFIED at 100k rows (2026-05-28)** — plan was stale: `src/CLI/ScaleCommand.php` was already implemented (not stubs), just never executed. Ran `seed --users=10000 --events-per-user=10` (100,015 rows / 10,003 users), then `benchmark` — all 6 hot-path queries PASS with 3x–300x headroom against `BUDGETS_MS`. The "Scalable — built for 100K+ members" claim in `readme.txt` is no longer faith-based. Baseline + procedure recorded in `audit/scale-baseline.md`. Not wired into local-CI (seeding costs ~2s per run; the existing PHPStan / WPCS / WP Plugin Check stages catch the regression categories this would). Re-run on schema changes touching `wb_gam_points` / `wb_gam_user_totals` / `wb_gam_leaderboard_cache`.
 - [ ] **SSE / WebSocket transport** — Replace the 5s heartbeat poll for realtime toasts with a true push channel. Out of scope for the realtime card (#9925151443) but the obvious follow-up.
 - [ ] **`wbGamRealtime.ping()` API surface** — Let user-driven actions force an immediate broker tick instead of waiting up to 5s. Reduces median latency further without changing transport.
 
