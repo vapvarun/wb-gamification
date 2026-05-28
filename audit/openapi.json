@@ -1,0 +1,3445 @@
+{
+    "openapi": "3.0.3",
+    "info": {
+        "title": "WB Gamification API",
+        "description": "Gamification engine REST API for points, badges, levels, leaderboards, challenges, kudos, and more.",
+        "version": "1.5.0",
+        "contact": {
+            "name": "Wbcom Designs",
+            "url": "https://wbcomdesigns.com"
+        }
+    },
+    "servers": [
+        {
+            "url": "http://wb-gamification.local/index.php?rest_route=/wb-gamification/v1"
+        }
+    ],
+    "paths": {
+        "/": {
+            "get": {
+                "summary": "Get ",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                }
+            }
+        },
+        "/members/{id}": {
+            "get": {
+                "summary": "Get members",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ]
+            }
+        },
+        "/members/{id}/points": {
+            "get": {
+                "summary": "Get members",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ]
+            }
+        },
+        "/members/{id}/level": {
+            "get": {
+                "summary": "Get members",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ]
+            }
+        },
+        "/members/{id}/badges": {
+            "get": {
+                "summary": "Get members",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ]
+            }
+        },
+        "/members/{id}/events": {
+            "get": {
+                "summary": "Get members",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ]
+            }
+        },
+        "/members/{id}/streak": {
+            "get": {
+                "summary": "Get members",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ]
+            }
+        },
+        "/members/me/toasts": {
+            "get": {
+                "summary": "Get members",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                }
+            }
+        },
+        "/points/award": {
+            "post": {
+                "summary": "Create points",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "user_id": {
+                                        "type": "integer",
+                                        "description": ""
+                                    },
+                                    "points": {
+                                        "type": "integer",
+                                        "description": "Positive to award, negative to debit. Zero is rejected."
+                                    },
+                                    "reason": {
+                                        "type": "string",
+                                        "description": ""
+                                    },
+                                    "note": {
+                                        "type": "string",
+                                        "description": ""
+                                    },
+                                    "point_type": {
+                                        "type": "string",
+                                        "description": "Optional point-type slug. Defaults to the primary type if omitted or unknown."
+                                    }
+                                },
+                                "required": [
+                                    "user_id",
+                                    "points"
+                                ]
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/points/{id}": {
+            "delete": {
+                "summary": "Delete points",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ]
+            }
+        },
+        "/point-types": {
+            "get": {
+                "summary": "Get point types",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                }
+            },
+            "post": {
+                "summary": "Create point types",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "slug": {
+                                        "type": "string",
+                                        "description": "Unique slug \u2014 lowercase, alphanumeric + dash + underscore. Immutable after creation."
+                                    },
+                                    "label": {
+                                        "type": "string",
+                                        "description": ""
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "description": ""
+                                    },
+                                    "icon": {
+                                        "type": "string",
+                                        "description": ""
+                                    },
+                                    "is_default": {
+                                        "type": "boolean",
+                                        "description": ""
+                                    },
+                                    "position": {
+                                        "type": "integer",
+                                        "description": ""
+                                    }
+                                },
+                                "required": [
+                                    "slug",
+                                    "label"
+                                ]
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/point-types/{slug}": {
+            "post": {
+                "summary": "Create point types",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "slug": {
+                                        "type": "string",
+                                        "description": "Unique slug \u2014 lowercase, alphanumeric + dash + underscore. Immutable after creation."
+                                    },
+                                    "label": {
+                                        "type": "string",
+                                        "description": ""
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "description": ""
+                                    },
+                                    "icon": {
+                                        "type": "string",
+                                        "description": ""
+                                    },
+                                    "is_default": {
+                                        "type": "boolean",
+                                        "description": ""
+                                    },
+                                    "position": {
+                                        "type": "integer",
+                                        "description": ""
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "slug",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ]
+            },
+            "put": {
+                "summary": "Update point types",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "slug": {
+                                        "type": "string",
+                                        "description": "Unique slug \u2014 lowercase, alphanumeric + dash + underscore. Immutable after creation."
+                                    },
+                                    "label": {
+                                        "type": "string",
+                                        "description": ""
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "description": ""
+                                    },
+                                    "icon": {
+                                        "type": "string",
+                                        "description": ""
+                                    },
+                                    "is_default": {
+                                        "type": "boolean",
+                                        "description": ""
+                                    },
+                                    "position": {
+                                        "type": "integer",
+                                        "description": ""
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "slug",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ]
+            },
+            "patch": {
+                "summary": "Update point types",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "slug": {
+                                        "type": "string",
+                                        "description": "Unique slug \u2014 lowercase, alphanumeric + dash + underscore. Immutable after creation."
+                                    },
+                                    "label": {
+                                        "type": "string",
+                                        "description": ""
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "description": ""
+                                    },
+                                    "icon": {
+                                        "type": "string",
+                                        "description": ""
+                                    },
+                                    "is_default": {
+                                        "type": "boolean",
+                                        "description": ""
+                                    },
+                                    "position": {
+                                        "type": "integer",
+                                        "description": ""
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "slug",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ]
+            },
+            "delete": {
+                "summary": "Delete point types",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "slug",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ]
+            }
+        },
+        "/point-type-conversions": {
+            "get": {
+                "summary": "Get point type conversions",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                }
+            },
+            "post": {
+                "summary": "Create point type conversions",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "from_type": {
+                                        "type": "string",
+                                        "description": ""
+                                    },
+                                    "to_type": {
+                                        "type": "string",
+                                        "description": ""
+                                    },
+                                    "from_amount": {
+                                        "type": "integer",
+                                        "description": ""
+                                    },
+                                    "to_amount": {
+                                        "type": "integer",
+                                        "description": ""
+                                    },
+                                    "min_convert": {
+                                        "type": "integer",
+                                        "description": ""
+                                    },
+                                    "cooldown_seconds": {
+                                        "type": "integer",
+                                        "description": ""
+                                    },
+                                    "max_per_day": {
+                                        "type": "integer",
+                                        "description": ""
+                                    },
+                                    "is_active": {
+                                        "type": "boolean",
+                                        "description": ""
+                                    }
+                                },
+                                "required": [
+                                    "from_type",
+                                    "to_type",
+                                    "from_amount",
+                                    "to_amount"
+                                ]
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/point-type-conversions/{id}": {
+            "post": {
+                "summary": "Create point type conversions",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "from_type": {
+                                        "type": "string",
+                                        "description": ""
+                                    },
+                                    "to_type": {
+                                        "type": "string",
+                                        "description": ""
+                                    },
+                                    "from_amount": {
+                                        "type": "integer",
+                                        "description": ""
+                                    },
+                                    "to_amount": {
+                                        "type": "integer",
+                                        "description": ""
+                                    },
+                                    "min_convert": {
+                                        "type": "integer",
+                                        "description": ""
+                                    },
+                                    "cooldown_seconds": {
+                                        "type": "integer",
+                                        "description": ""
+                                    },
+                                    "max_per_day": {
+                                        "type": "integer",
+                                        "description": ""
+                                    },
+                                    "is_active": {
+                                        "type": "boolean",
+                                        "description": ""
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ]
+            },
+            "put": {
+                "summary": "Update point type conversions",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "from_type": {
+                                        "type": "string",
+                                        "description": ""
+                                    },
+                                    "to_type": {
+                                        "type": "string",
+                                        "description": ""
+                                    },
+                                    "from_amount": {
+                                        "type": "integer",
+                                        "description": ""
+                                    },
+                                    "to_amount": {
+                                        "type": "integer",
+                                        "description": ""
+                                    },
+                                    "min_convert": {
+                                        "type": "integer",
+                                        "description": ""
+                                    },
+                                    "cooldown_seconds": {
+                                        "type": "integer",
+                                        "description": ""
+                                    },
+                                    "max_per_day": {
+                                        "type": "integer",
+                                        "description": ""
+                                    },
+                                    "is_active": {
+                                        "type": "boolean",
+                                        "description": ""
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ]
+            },
+            "patch": {
+                "summary": "Update point type conversions",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "from_type": {
+                                        "type": "string",
+                                        "description": ""
+                                    },
+                                    "to_type": {
+                                        "type": "string",
+                                        "description": ""
+                                    },
+                                    "from_amount": {
+                                        "type": "integer",
+                                        "description": ""
+                                    },
+                                    "to_amount": {
+                                        "type": "integer",
+                                        "description": ""
+                                    },
+                                    "min_convert": {
+                                        "type": "integer",
+                                        "description": ""
+                                    },
+                                    "cooldown_seconds": {
+                                        "type": "integer",
+                                        "description": ""
+                                    },
+                                    "max_per_day": {
+                                        "type": "integer",
+                                        "description": ""
+                                    },
+                                    "is_active": {
+                                        "type": "boolean",
+                                        "description": ""
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ]
+            },
+            "delete": {
+                "summary": "Delete point type conversions",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ]
+            }
+        },
+        "/point-types/{from}/convert": {
+            "post": {
+                "summary": "Create point types",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "to_type": {
+                                        "type": "string",
+                                        "description": ""
+                                    },
+                                    "amount": {
+                                        "type": "integer",
+                                        "description": ""
+                                    }
+                                },
+                                "required": [
+                                    "to_type",
+                                    "amount"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "from",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ]
+            }
+        },
+        "/badges": {
+            "get": {
+                "summary": "Get badges",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                }
+            },
+            "post": {
+                "summary": "Create badges",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "id": {
+                                        "type": "string",
+                                        "description": "Unique badge identifier (a-z, 0-9, dash, underscore)."
+                                    },
+                                    "name": {
+                                        "type": "string",
+                                        "description": ""
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "description": ""
+                                    },
+                                    "image_url": {
+                                        "type": "string",
+                                        "description": ""
+                                    },
+                                    "category": {
+                                        "type": "string",
+                                        "description": ""
+                                    },
+                                    "is_credential": {
+                                        "type": "boolean",
+                                        "description": ""
+                                    },
+                                    "closes_at": {
+                                        "type": "string",
+                                        "description": "UTC timestamp (Y-m-d H:i:s) after which the badge stops awarding. Empty string clears the cutoff."
+                                    },
+                                    "max_earners": {
+                                        "type": [
+                                            "integer",
+                                            "null"
+                                        ],
+                                        "description": "Cap on how many members may earn this badge. Null = unlimited."
+                                    },
+                                    "condition": {
+                                        "type": "object",
+                                        "description": "Auto-award rule. Shape: { type: \"admin_awarded\"|\"point_milestone\"|\"action_count\", points?: int, action_id?: string, count?: int }."
+                                    }
+                                },
+                                "required": [
+                                    "id",
+                                    "name"
+                                ]
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/badges/{id}": {
+            "get": {
+                "summary": "Get badges",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ]
+            },
+            "post": {
+                "summary": "Create badges",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "id": {
+                                        "type": "string",
+                                        "description": ""
+                                    },
+                                    "name": {
+                                        "type": "string",
+                                        "description": ""
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "description": ""
+                                    },
+                                    "image_url": {
+                                        "type": "string",
+                                        "description": ""
+                                    },
+                                    "category": {
+                                        "type": "string",
+                                        "description": ""
+                                    },
+                                    "is_credential": {
+                                        "type": "boolean",
+                                        "description": ""
+                                    },
+                                    "closes_at": {
+                                        "type": "string",
+                                        "description": "UTC timestamp (Y-m-d H:i:s) after which the badge stops awarding. Empty string clears the cutoff."
+                                    },
+                                    "max_earners": {
+                                        "type": [
+                                            "integer",
+                                            "null"
+                                        ],
+                                        "description": "Cap on how many members may earn this badge. Null = unlimited."
+                                    },
+                                    "condition": {
+                                        "type": "object",
+                                        "description": "Auto-award rule. Shape: { type: \"admin_awarded\"|\"point_milestone\"|\"action_count\", points?: int, action_id?: string, count?: int }."
+                                    }
+                                },
+                                "required": [
+                                    "id"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ]
+            },
+            "put": {
+                "summary": "Update badges",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "id": {
+                                        "type": "string",
+                                        "description": ""
+                                    },
+                                    "name": {
+                                        "type": "string",
+                                        "description": ""
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "description": ""
+                                    },
+                                    "image_url": {
+                                        "type": "string",
+                                        "description": ""
+                                    },
+                                    "category": {
+                                        "type": "string",
+                                        "description": ""
+                                    },
+                                    "is_credential": {
+                                        "type": "boolean",
+                                        "description": ""
+                                    },
+                                    "closes_at": {
+                                        "type": "string",
+                                        "description": "UTC timestamp (Y-m-d H:i:s) after which the badge stops awarding. Empty string clears the cutoff."
+                                    },
+                                    "max_earners": {
+                                        "type": [
+                                            "integer",
+                                            "null"
+                                        ],
+                                        "description": "Cap on how many members may earn this badge. Null = unlimited."
+                                    },
+                                    "condition": {
+                                        "type": "object",
+                                        "description": "Auto-award rule. Shape: { type: \"admin_awarded\"|\"point_milestone\"|\"action_count\", points?: int, action_id?: string, count?: int }."
+                                    }
+                                },
+                                "required": [
+                                    "id"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ]
+            },
+            "patch": {
+                "summary": "Update badges",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "id": {
+                                        "type": "string",
+                                        "description": ""
+                                    },
+                                    "name": {
+                                        "type": "string",
+                                        "description": ""
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "description": ""
+                                    },
+                                    "image_url": {
+                                        "type": "string",
+                                        "description": ""
+                                    },
+                                    "category": {
+                                        "type": "string",
+                                        "description": ""
+                                    },
+                                    "is_credential": {
+                                        "type": "boolean",
+                                        "description": ""
+                                    },
+                                    "closes_at": {
+                                        "type": "string",
+                                        "description": "UTC timestamp (Y-m-d H:i:s) after which the badge stops awarding. Empty string clears the cutoff."
+                                    },
+                                    "max_earners": {
+                                        "type": [
+                                            "integer",
+                                            "null"
+                                        ],
+                                        "description": "Cap on how many members may earn this badge. Null = unlimited."
+                                    },
+                                    "condition": {
+                                        "type": "object",
+                                        "description": "Auto-award rule. Shape: { type: \"admin_awarded\"|\"point_milestone\"|\"action_count\", points?: int, action_id?: string, count?: int }."
+                                    }
+                                },
+                                "required": [
+                                    "id"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ]
+            },
+            "delete": {
+                "summary": "Delete badges",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ]
+            }
+        },
+        "/badges/{id}/award": {
+            "post": {
+                "summary": "Create badges",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "id": {
+                                        "type": "string",
+                                        "description": ""
+                                    },
+                                    "user_id": {
+                                        "type": "integer",
+                                        "description": "User to award the badge to."
+                                    }
+                                },
+                                "required": [
+                                    "id",
+                                    "user_id"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ]
+            }
+        },
+        "/leaderboard": {
+            "get": {
+                "summary": "Get leaderboard",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                }
+            }
+        },
+        "/leaderboard/group/{group_id}": {
+            "get": {
+                "summary": "Get leaderboard",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "group_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ]
+            }
+        },
+        "/leaderboard/me": {
+            "get": {
+                "summary": "Get leaderboard",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                }
+            }
+        },
+        "/actions": {
+            "get": {
+                "summary": "Get actions",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                }
+            }
+        },
+        "/actions/{id}": {
+            "get": {
+                "summary": "Get actions",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ]
+            }
+        },
+        "/actions/{id}/overrides": {
+            "post": {
+                "summary": "Create actions",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "id": {
+                                        "type": "string",
+                                        "description": ""
+                                    },
+                                    "cooldown": {
+                                        "type": "integer",
+                                        "description": ""
+                                    },
+                                    "daily_cap": {
+                                        "type": "integer",
+                                        "description": ""
+                                    },
+                                    "weekly_cap": {
+                                        "type": "integer",
+                                        "description": ""
+                                    }
+                                },
+                                "required": [
+                                    "id"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ]
+            },
+            "put": {
+                "summary": "Update actions",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "id": {
+                                        "type": "string",
+                                        "description": ""
+                                    },
+                                    "cooldown": {
+                                        "type": "integer",
+                                        "description": ""
+                                    },
+                                    "daily_cap": {
+                                        "type": "integer",
+                                        "description": ""
+                                    },
+                                    "weekly_cap": {
+                                        "type": "integer",
+                                        "description": ""
+                                    }
+                                },
+                                "required": [
+                                    "id"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ]
+            },
+            "delete": {
+                "summary": "Delete actions",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ]
+            }
+        },
+        "/kudos": {
+            "get": {
+                "summary": "Get kudos",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                }
+            },
+            "post": {
+                "summary": "Create kudos",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "receiver_id": {
+                                        "type": "integer",
+                                        "description": "User ID of the member receiving kudos. One of receiver_id or recipient_login is required."
+                                    },
+                                    "recipient_login": {
+                                        "type": "string",
+                                        "description": "Login (username) or email of the member receiving kudos. Used by frontend forms where the giver does not know the recipient user_id."
+                                    },
+                                    "message": {
+                                        "type": "string",
+                                        "description": "Optional short message (max 255 chars)."
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/kudos/me": {
+            "get": {
+                "summary": "Get kudos",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                }
+            }
+        },
+        "/badges/{badge_id}/share/{user_id}": {
+            "get": {
+                "summary": "Get badges",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "badge_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ]
+            }
+        },
+        "/challenges": {
+            "get": {
+                "summary": "Get challenges",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                }
+            },
+            "post": {
+                "summary": "Create challenges",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "title": {
+                                        "type": "string",
+                                        "description": ""
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "description": ""
+                                    },
+                                    "action_id": {
+                                        "type": "string",
+                                        "description": ""
+                                    },
+                                    "target": {
+                                        "type": "integer",
+                                        "description": ""
+                                    },
+                                    "bonus_points": {
+                                        "type": "integer",
+                                        "description": ""
+                                    },
+                                    "starts_at": {
+                                        "type": "string",
+                                        "description": ""
+                                    },
+                                    "ends_at": {
+                                        "type": "string",
+                                        "description": ""
+                                    }
+                                },
+                                "required": [
+                                    "title",
+                                    "action_id"
+                                ]
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/challenges/{id}": {
+            "get": {
+                "summary": "Get challenges",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ]
+            },
+            "post": {
+                "summary": "Create challenges",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "title": {
+                                        "type": "string",
+                                        "description": ""
+                                    },
+                                    "action_id": {
+                                        "type": "string",
+                                        "description": ""
+                                    },
+                                    "target": {
+                                        "type": "integer",
+                                        "description": ""
+                                    },
+                                    "bonus_points": {
+                                        "type": "integer",
+                                        "description": ""
+                                    },
+                                    "starts_at": {
+                                        "type": "string",
+                                        "description": ""
+                                    },
+                                    "ends_at": {
+                                        "type": "string",
+                                        "description": ""
+                                    },
+                                    "status": {
+                                        "type": "string",
+                                        "description": ""
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ]
+            },
+            "put": {
+                "summary": "Update challenges",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "title": {
+                                        "type": "string",
+                                        "description": ""
+                                    },
+                                    "action_id": {
+                                        "type": "string",
+                                        "description": ""
+                                    },
+                                    "target": {
+                                        "type": "integer",
+                                        "description": ""
+                                    },
+                                    "bonus_points": {
+                                        "type": "integer",
+                                        "description": ""
+                                    },
+                                    "starts_at": {
+                                        "type": "string",
+                                        "description": ""
+                                    },
+                                    "ends_at": {
+                                        "type": "string",
+                                        "description": ""
+                                    },
+                                    "status": {
+                                        "type": "string",
+                                        "description": ""
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ]
+            },
+            "patch": {
+                "summary": "Update challenges",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "title": {
+                                        "type": "string",
+                                        "description": ""
+                                    },
+                                    "action_id": {
+                                        "type": "string",
+                                        "description": ""
+                                    },
+                                    "target": {
+                                        "type": "integer",
+                                        "description": ""
+                                    },
+                                    "bonus_points": {
+                                        "type": "integer",
+                                        "description": ""
+                                    },
+                                    "starts_at": {
+                                        "type": "string",
+                                        "description": ""
+                                    },
+                                    "ends_at": {
+                                        "type": "string",
+                                        "description": ""
+                                    },
+                                    "status": {
+                                        "type": "string",
+                                        "description": ""
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ]
+            },
+            "delete": {
+                "summary": "Delete challenges",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ]
+            }
+        },
+        "/challenges/{id}/complete": {
+            "post": {
+                "summary": "Create challenges",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "id": {
+                                        "type": "integer",
+                                        "description": ""
+                                    }
+                                },
+                                "required": [
+                                    "id"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ]
+            }
+        },
+        "/events": {
+            "post": {
+                "summary": "Create events",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "action_id": {
+                                        "type": "string",
+                                        "description": "Registered gamification action ID."
+                                    },
+                                    "user_id": {
+                                        "type": "integer",
+                                        "description": "User to credit. 0 = current user."
+                                    },
+                                    "object_id": {
+                                        "type": "integer",
+                                        "description": "Related object (post ID, comment ID, etc.)."
+                                    },
+                                    "metadata": {
+                                        "type": "object",
+                                        "description": "Arbitrary key/value context data."
+                                    }
+                                },
+                                "required": [
+                                    "action_id"
+                                ]
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/webhooks": {
+            "get": {
+                "summary": "Get webhooks",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                }
+            },
+            "post": {
+                "summary": "Create webhooks",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "url": {
+                                        "type": "string",
+                                        "description": "HTTPS URL to receive event payloads."
+                                    },
+                                    "events": {
+                                        "type": "array",
+                                        "description": "Event types to subscribe to."
+                                    },
+                                    "is_active": {
+                                        "type": "boolean",
+                                        "description": ""
+                                    }
+                                },
+                                "required": [
+                                    "url",
+                                    "events"
+                                ]
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/webhooks/{id}": {
+            "get": {
+                "summary": "Get webhooks",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ]
+            },
+            "post": {
+                "summary": "Create webhooks",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "url": {
+                                        "type": "string",
+                                        "description": "HTTPS URL to receive event payloads."
+                                    },
+                                    "events": {
+                                        "type": "array",
+                                        "description": "Event types to subscribe to."
+                                    },
+                                    "is_active": {
+                                        "type": "boolean",
+                                        "description": ""
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ]
+            },
+            "put": {
+                "summary": "Update webhooks",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "url": {
+                                        "type": "string",
+                                        "description": "HTTPS URL to receive event payloads."
+                                    },
+                                    "events": {
+                                        "type": "array",
+                                        "description": "Event types to subscribe to."
+                                    },
+                                    "is_active": {
+                                        "type": "boolean",
+                                        "description": ""
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ]
+            },
+            "patch": {
+                "summary": "Update webhooks",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "url": {
+                                        "type": "string",
+                                        "description": "HTTPS URL to receive event payloads."
+                                    },
+                                    "events": {
+                                        "type": "array",
+                                        "description": "Event types to subscribe to."
+                                    },
+                                    "is_active": {
+                                        "type": "boolean",
+                                        "description": ""
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ]
+            },
+            "delete": {
+                "summary": "Delete webhooks",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ]
+            }
+        },
+        "/webhooks/{id}/log": {
+            "get": {
+                "summary": "Get webhooks",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ]
+            },
+            "delete": {
+                "summary": "Delete webhooks",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ]
+            }
+        },
+        "/rules": {
+            "get": {
+                "summary": "Get rules",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                }
+            },
+            "post": {
+                "summary": "Create rules",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "rule_type": {
+                                        "type": "string",
+                                        "description": ""
+                                    },
+                                    "target_id": {
+                                        "type": "string",
+                                        "description": "Badge ID (for badge_condition) or action ID (for points_multiplier)."
+                                    },
+                                    "rule_config": {
+                                        "type": "object",
+                                        "description": "JSON condition/multiplier config. Structure depends on rule_type."
+                                    },
+                                    "is_active": {
+                                        "type": "boolean",
+                                        "description": ""
+                                    }
+                                },
+                                "required": [
+                                    "rule_type",
+                                    "rule_config"
+                                ]
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/rules/{id}": {
+            "get": {
+                "summary": "Get rules",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ]
+            },
+            "post": {
+                "summary": "Create rules",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "rule_type": {
+                                        "type": "string",
+                                        "description": ""
+                                    },
+                                    "target_id": {
+                                        "type": "string",
+                                        "description": "Badge ID (for badge_condition) or action ID (for points_multiplier)."
+                                    },
+                                    "rule_config": {
+                                        "type": "object",
+                                        "description": "JSON condition/multiplier config. Structure depends on rule_type."
+                                    },
+                                    "is_active": {
+                                        "type": "boolean",
+                                        "description": ""
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ]
+            },
+            "put": {
+                "summary": "Update rules",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "rule_type": {
+                                        "type": "string",
+                                        "description": ""
+                                    },
+                                    "target_id": {
+                                        "type": "string",
+                                        "description": "Badge ID (for badge_condition) or action ID (for points_multiplier)."
+                                    },
+                                    "rule_config": {
+                                        "type": "object",
+                                        "description": "JSON condition/multiplier config. Structure depends on rule_type."
+                                    },
+                                    "is_active": {
+                                        "type": "boolean",
+                                        "description": ""
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ]
+            },
+            "patch": {
+                "summary": "Update rules",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "rule_type": {
+                                        "type": "string",
+                                        "description": ""
+                                    },
+                                    "target_id": {
+                                        "type": "string",
+                                        "description": "Badge ID (for badge_condition) or action ID (for points_multiplier)."
+                                    },
+                                    "rule_config": {
+                                        "type": "object",
+                                        "description": "JSON condition/multiplier config. Structure depends on rule_type."
+                                    },
+                                    "is_active": {
+                                        "type": "boolean",
+                                        "description": ""
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ]
+            },
+            "delete": {
+                "summary": "Delete rules",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ]
+            }
+        },
+        "/members/{id}/recap": {
+            "get": {
+                "summary": "Get members",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ]
+            }
+        },
+        "/badges/{badge_id}/credential/{user_id}": {
+            "get": {
+                "summary": "Get badges",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "badge_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ]
+            }
+        },
+        "/redemptions/items": {
+            "get": {
+                "summary": "Get redemptions",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                }
+            },
+            "post": {
+                "summary": "Create redemptions",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "title": {
+                                        "type": "string",
+                                        "description": ""
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "description": ""
+                                    },
+                                    "points_cost": {
+                                        "type": "integer",
+                                        "description": ""
+                                    },
+                                    "point_type": {
+                                        "type": "string",
+                                        "description": "Optional point-type slug. Empty = primary type. Unknown slug falls back to primary."
+                                    },
+                                    "reward_type": {
+                                        "type": "string",
+                                        "description": ""
+                                    },
+                                    "reward_config": {
+                                        "type": "object",
+                                        "description": ""
+                                    },
+                                    "stock": {
+                                        "type": "integer",
+                                        "description": ""
+                                    },
+                                    "is_active": {
+                                        "type": "boolean",
+                                        "description": ""
+                                    }
+                                },
+                                "required": [
+                                    "title",
+                                    "points_cost",
+                                    "reward_type"
+                                ]
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/redemptions/items/{id}": {
+            "get": {
+                "summary": "Get redemptions",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ]
+            },
+            "post": {
+                "summary": "Create redemptions",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "title": {
+                                        "type": "string",
+                                        "description": ""
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "description": ""
+                                    },
+                                    "points_cost": {
+                                        "type": "integer",
+                                        "description": ""
+                                    },
+                                    "point_type": {
+                                        "type": "string",
+                                        "description": "Optional point-type slug. Empty = primary type. Unknown slug falls back to primary."
+                                    },
+                                    "reward_type": {
+                                        "type": "string",
+                                        "description": ""
+                                    },
+                                    "reward_config": {
+                                        "type": "object",
+                                        "description": ""
+                                    },
+                                    "stock": {
+                                        "type": "integer",
+                                        "description": ""
+                                    },
+                                    "is_active": {
+                                        "type": "boolean",
+                                        "description": ""
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ]
+            },
+            "put": {
+                "summary": "Update redemptions",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "title": {
+                                        "type": "string",
+                                        "description": ""
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "description": ""
+                                    },
+                                    "points_cost": {
+                                        "type": "integer",
+                                        "description": ""
+                                    },
+                                    "point_type": {
+                                        "type": "string",
+                                        "description": "Optional point-type slug. Empty = primary type. Unknown slug falls back to primary."
+                                    },
+                                    "reward_type": {
+                                        "type": "string",
+                                        "description": ""
+                                    },
+                                    "reward_config": {
+                                        "type": "object",
+                                        "description": ""
+                                    },
+                                    "stock": {
+                                        "type": "integer",
+                                        "description": ""
+                                    },
+                                    "is_active": {
+                                        "type": "boolean",
+                                        "description": ""
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ]
+            },
+            "patch": {
+                "summary": "Update redemptions",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "title": {
+                                        "type": "string",
+                                        "description": ""
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "description": ""
+                                    },
+                                    "points_cost": {
+                                        "type": "integer",
+                                        "description": ""
+                                    },
+                                    "point_type": {
+                                        "type": "string",
+                                        "description": "Optional point-type slug. Empty = primary type. Unknown slug falls back to primary."
+                                    },
+                                    "reward_type": {
+                                        "type": "string",
+                                        "description": ""
+                                    },
+                                    "reward_config": {
+                                        "type": "object",
+                                        "description": ""
+                                    },
+                                    "stock": {
+                                        "type": "integer",
+                                        "description": ""
+                                    },
+                                    "is_active": {
+                                        "type": "boolean",
+                                        "description": ""
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ]
+            },
+            "delete": {
+                "summary": "Delete redemptions",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ]
+            }
+        },
+        "/redemptions": {
+            "post": {
+                "summary": "Create redemptions",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "item_id": {
+                                        "type": "integer",
+                                        "description": ""
+                                    }
+                                },
+                                "required": [
+                                    "item_id"
+                                ]
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/redemptions/me": {
+            "get": {
+                "summary": "Get redemptions",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                }
+            }
+        },
+        "/levels": {
+            "get": {
+                "summary": "Get levels",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                }
+            },
+            "post": {
+                "summary": "Create levels",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "description": "Display name for the level (e.g. \"Champion\")."
+                                    },
+                                    "min_points": {
+                                        "type": "integer",
+                                        "description": "Minimum points required to reach this level."
+                                    },
+                                    "icon_url": {
+                                        "type": "string",
+                                        "description": "Optional icon URL."
+                                    }
+                                },
+                                "required": [
+                                    "name",
+                                    "min_points"
+                                ]
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/levels/{id}": {
+            "post": {
+                "summary": "Create levels",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "id": {
+                                        "type": "integer",
+                                        "description": ""
+                                    },
+                                    "name": {
+                                        "type": "string",
+                                        "description": ""
+                                    },
+                                    "min_points": {
+                                        "type": "integer",
+                                        "description": ""
+                                    },
+                                    "icon_url": {
+                                        "type": "string",
+                                        "description": ""
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ]
+            },
+            "put": {
+                "summary": "Update levels",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "id": {
+                                        "type": "integer",
+                                        "description": ""
+                                    },
+                                    "name": {
+                                        "type": "string",
+                                        "description": ""
+                                    },
+                                    "min_points": {
+                                        "type": "integer",
+                                        "description": ""
+                                    },
+                                    "icon_url": {
+                                        "type": "string",
+                                        "description": ""
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ]
+            },
+            "patch": {
+                "summary": "Update levels",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "id": {
+                                        "type": "integer",
+                                        "description": ""
+                                    },
+                                    "name": {
+                                        "type": "string",
+                                        "description": ""
+                                    },
+                                    "min_points": {
+                                        "type": "integer",
+                                        "description": ""
+                                    },
+                                    "icon_url": {
+                                        "type": "string",
+                                        "description": ""
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ]
+            },
+            "delete": {
+                "summary": "Delete levels",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ]
+            }
+        },
+        "/capabilities": {
+            "get": {
+                "summary": "Get capabilities",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                }
+            }
+        },
+        "/api-keys": {
+            "get": {
+                "summary": "Get api keys",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                }
+            },
+            "post": {
+                "summary": "Create api keys",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "label": {
+                                        "type": "string",
+                                        "description": "Human-readable key label (e.g. \"Mobile App\")."
+                                    },
+                                    "site_id": {
+                                        "type": "string",
+                                        "description": "Optional remote site identifier."
+                                    }
+                                },
+                                "required": [
+                                    "label"
+                                ]
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api-keys/{id}/revoke": {
+            "post": {
+                "summary": "Create api keys",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "id": {
+                                        "type": "integer",
+                                        "description": ""
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ]
+            },
+            "put": {
+                "summary": "Update api keys",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "id": {
+                                        "type": "integer",
+                                        "description": ""
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ]
+            },
+            "patch": {
+                "summary": "Update api keys",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "id": {
+                                        "type": "integer",
+                                        "description": ""
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ]
+            }
+        },
+        "/api-keys/{id}": {
+            "delete": {
+                "summary": "Delete api keys",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ]
+            }
+        },
+        "/cohort-settings": {
+            "get": {
+                "summary": "Get cohort settings",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                }
+            },
+            "post": {
+                "summary": "Create cohort settings",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "tier_1": {
+                                        "type": "string",
+                                        "description": ""
+                                    },
+                                    "tier_2": {
+                                        "type": "string",
+                                        "description": ""
+                                    },
+                                    "tier_3": {
+                                        "type": "string",
+                                        "description": ""
+                                    },
+                                    "tier_4": {
+                                        "type": "string",
+                                        "description": ""
+                                    },
+                                    "tier_5": {
+                                        "type": "string",
+                                        "description": ""
+                                    },
+                                    "promote_pct": {
+                                        "type": "integer",
+                                        "description": ""
+                                    },
+                                    "demote_pct": {
+                                        "type": "integer",
+                                        "description": ""
+                                    },
+                                    "duration": {
+                                        "type": "string",
+                                        "description": ""
+                                    },
+                                    "enabled": {
+                                        "type": "boolean",
+                                        "description": ""
+                                    }
+                                },
+                                "required": [
+                                    "tier_1",
+                                    "tier_2",
+                                    "tier_3",
+                                    "tier_4",
+                                    "promote_pct",
+                                    "demote_pct",
+                                    "duration",
+                                    "enabled"
+                                ]
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/community-challenges": {
+            "get": {
+                "summary": "Get community challenges",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                }
+            },
+            "post": {
+                "summary": "Create community challenges",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "title": {
+                                        "type": "string",
+                                        "description": ""
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "description": ""
+                                    },
+                                    "target_count": {
+                                        "type": "integer",
+                                        "description": ""
+                                    },
+                                    "target_action": {
+                                        "type": "string",
+                                        "description": ""
+                                    },
+                                    "starts_at": {
+                                        "type": "string",
+                                        "description": ""
+                                    },
+                                    "ends_at": {
+                                        "type": "string",
+                                        "description": ""
+                                    },
+                                    "bonus_points": {
+                                        "type": "integer",
+                                        "description": ""
+                                    },
+                                    "status": {
+                                        "type": "string",
+                                        "description": ""
+                                    }
+                                },
+                                "required": [
+                                    "title",
+                                    "target_count"
+                                ]
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/community-challenges/{id}": {
+            "get": {
+                "summary": "Get community challenges",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ]
+            },
+            "post": {
+                "summary": "Create community challenges",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "id": {
+                                        "type": "integer",
+                                        "description": ""
+                                    },
+                                    "title": {
+                                        "type": "string",
+                                        "description": ""
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "description": ""
+                                    },
+                                    "target_count": {
+                                        "type": "integer",
+                                        "description": ""
+                                    },
+                                    "target_action": {
+                                        "type": "string",
+                                        "description": ""
+                                    },
+                                    "starts_at": {
+                                        "type": "string",
+                                        "description": ""
+                                    },
+                                    "ends_at": {
+                                        "type": "string",
+                                        "description": ""
+                                    },
+                                    "bonus_points": {
+                                        "type": "integer",
+                                        "description": ""
+                                    },
+                                    "status": {
+                                        "type": "string",
+                                        "description": ""
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ]
+            },
+            "put": {
+                "summary": "Update community challenges",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "id": {
+                                        "type": "integer",
+                                        "description": ""
+                                    },
+                                    "title": {
+                                        "type": "string",
+                                        "description": ""
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "description": ""
+                                    },
+                                    "target_count": {
+                                        "type": "integer",
+                                        "description": ""
+                                    },
+                                    "target_action": {
+                                        "type": "string",
+                                        "description": ""
+                                    },
+                                    "starts_at": {
+                                        "type": "string",
+                                        "description": ""
+                                    },
+                                    "ends_at": {
+                                        "type": "string",
+                                        "description": ""
+                                    },
+                                    "bonus_points": {
+                                        "type": "integer",
+                                        "description": ""
+                                    },
+                                    "status": {
+                                        "type": "string",
+                                        "description": ""
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ]
+            },
+            "patch": {
+                "summary": "Update community challenges",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "id": {
+                                        "type": "integer",
+                                        "description": ""
+                                    },
+                                    "title": {
+                                        "type": "string",
+                                        "description": ""
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "description": ""
+                                    },
+                                    "target_count": {
+                                        "type": "integer",
+                                        "description": ""
+                                    },
+                                    "target_action": {
+                                        "type": "string",
+                                        "description": ""
+                                    },
+                                    "starts_at": {
+                                        "type": "string",
+                                        "description": ""
+                                    },
+                                    "ends_at": {
+                                        "type": "string",
+                                        "description": ""
+                                    },
+                                    "bonus_points": {
+                                        "type": "integer",
+                                        "description": ""
+                                    },
+                                    "status": {
+                                        "type": "string",
+                                        "description": ""
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ]
+            },
+            "delete": {
+                "summary": "Delete community challenges",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ]
+            }
+        },
+        "/settings/emails": {
+            "get": {
+                "summary": "Get settings",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                }
+            },
+            "post": {
+                "summary": "Create settings",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                }
+            }
+        },
+        "/submissions": {
+            "get": {
+                "summary": "Get submissions",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                }
+            },
+            "post": {
+                "summary": "Create submissions",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                }
+            }
+        },
+        "/submissions/{id}/approve": {
+            "post": {
+                "summary": "Create submissions",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ]
+            }
+        },
+        "/submissions/{id}/reject": {
+            "post": {
+                "summary": "Create submissions",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ]
+            }
+        },
+        "/abilities": {
+            "get": {
+                "summary": "Get abilities",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "securitySchemes": {
+            "cookieAuth": {
+                "type": "apiKey",
+                "in": "header",
+                "name": "X-WP-Nonce",
+                "description": "WordPress REST API nonce for cookie-based auth."
+            },
+            "apiKeyAuth": {
+                "type": "apiKey",
+                "in": "header",
+                "name": "X-WB-Gam-Key",
+                "description": "API key for cross-site authentication."
+            }
+        }
+    },
+    "security": [
+        {
+            "cookieAuth": []
+        },
+        {
+            "apiKeyAuth": []
+        }
+    ]
+}

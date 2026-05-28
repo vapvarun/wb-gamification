@@ -58,11 +58,27 @@ final class OpenApiController extends WP_REST_Controller {
 	/**
 	 * Build and return the full OpenAPI 3.0.3 specification.
 	 *
+	 * REST entry point. Wraps build_spec() (callable from CLI / static
+	 * code too) in a WP_REST_Response.
+	 *
 	 * @param WP_REST_Request $request Full details about the request.
 	 * @return WP_REST_Response The OpenAPI spec as JSON.
 	 */
 	public function get_spec( WP_REST_Request $request ): WP_REST_Response {
-		$spec = array(
+		return new WP_REST_Response( $this->build_spec(), 200 );
+	}
+
+	/**
+	 * Build the OpenAPI 3.0.3 spec array. Pure data — no HTTP context.
+	 *
+	 * Same builder serves the runtime REST endpoint AND the CLI
+	 * `wp wb-gamification openapi export` command (which writes the
+	 * artefact to disk for SDK / docs / GraphQL consumers).
+	 *
+	 * @return array<string, mixed> The full OpenAPI spec.
+	 */
+	public function build_spec(): array {
+		return array(
 			'openapi'    => '3.0.3',
 			'info'       => array(
 				'title'       => 'WB Gamification API',
@@ -98,8 +114,6 @@ final class OpenApiController extends WP_REST_Controller {
 				array( 'apiKeyAuth' => array() ),
 			),
 		);
-
-		return new WP_REST_Response( $spec, 200 );
 	}
 
 	/**

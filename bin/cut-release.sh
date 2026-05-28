@@ -134,6 +134,30 @@ else
     echo "  WARN: bin/build-docs-config.php not present yet — skipping"
 fi
 
+# OpenAPI spec — requires WP-CLI because it walks the REST_Server's
+# registered routes. Skip the step (with a clear note) when wp isn't on
+# PATH so this script still runs in CI containers that may not have it.
+if command -v wp >/dev/null 2>&1; then
+    if [ "${CHECK_MODE}" -eq 1 ]; then
+        if ! wp wb-gamification openapi export --check >/dev/null 2>&1; then
+            echo "  ✗  audit/openapi.json drift detected (controllers changed)" >&2
+            wp wb-gamification openapi export --check 2>&1 | sed 's/^/      /' >&2
+            exit 3
+        fi
+        echo "  ✓  audit/openapi.json in sync with controllers"
+    else
+        if wp wb-gamification openapi export 2>&1 | sed 's/^/      /'; then
+            echo "  ✓  audit/openapi.json refreshed from controllers"
+        else
+            echo "ERROR: wp wb-gamification openapi export failed" >&2
+            exit 2
+        fi
+    fi
+else
+    echo "  WARN: wp-cli not on PATH — skipping audit/openapi.json refresh."
+    echo "         Run 'wp wb-gamification openapi export' from a WP-CLI host before tagging."
+fi
+
 # ─── 3. --check mode: drift detection ──────────────────────────────────────
 if [ "${CHECK_MODE}" -eq 1 ]; then
     POST_README_HASH="$(shasum -a 256 readme.txt | awk '{print $1}')"
