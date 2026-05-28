@@ -96,6 +96,53 @@ final class DbUpgrader {
 		self::ensure_api_keys_table();
 		self::ensure_side_effect_failures_table();
 		self::ensure_notifications_queue_table();
+		self::ensure_user_intelligence_table();
+	}
+
+	/**
+	 * Create wb_gam_user_intelligence on existing installs.
+	 *
+	 * Read-side projection table for v2.5 + AI v1. Stores derived
+	 * per-user signals (engagement score, action diversity, churn
+	 * risk, last-activity timestamp) computed by IntelligenceProjector
+	 * from wb_gam_events on a daily cron. NOT a source of truth — the
+	 * row is recomputable from the event log at any time.
+	 *
+	 * Schema is denormalised on purpose: one row per user, all signals
+	 * inline so the read path is a single PK lookup. Anti-gaming +
+	 * cohort-membership signals can be added as columns later.
+	 *
+	 * Idempotent — feature-flag gated.
+	 *
+	 * @since 1.5.0
+	 */
+	private static function ensure_user_intelligence_table(): void {
+		$flag_key = 'wb_gam_feature_user_intelligence_v1';
+		if ( get_option( $flag_key ) ) {
+			return;
+		}
+
+		global $wpdb;
+		$charset = $wpdb->get_charset_collate();
+		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+
+		dbDelta(
+			"CREATE TABLE {$wpdb->prefix}wb_gam_user_intelligence (
+			user_id              BIGINT UNSIGNED NOT NULL,
+			engagement_score     DECIMAL(8,4)    NOT NULL DEFAULT 0,
+			action_diversity     SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+			recency_days         SMALLINT UNSIGNED NOT NULL DEFAULT 999,
+			events_30d           INT UNSIGNED    NOT NULL DEFAULT 0,
+			churn_risk           DECIMAL(4,3)    NOT NULL DEFAULT 0,
+			anomaly_flag         TINYINT UNSIGNED NOT NULL DEFAULT 0,
+			computed_at          DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			PRIMARY KEY (user_id),
+			KEY idx_churn_risk (churn_risk),
+			KEY idx_anomaly    (anomaly_flag, computed_at)
+			) {$charset};"
+		);
+
+		update_option( $flag_key, '1' );
 	}
 
 	/**

@@ -173,6 +173,25 @@ export class WBGamification {
     return this.request<Toast[]>('/members/me/toasts');
   }
 
+  /**
+   * Per-user behavioural intelligence (engagement, churn risk, diversity,
+   * anomaly flag). Computed by the daily IntelligenceProjector cron;
+   * on-demand recompute happens server-side if the user has events but
+   * no projection row yet.
+   */
+  async getMemberIntelligence(userId: number): Promise<{
+    user_id: number;
+    engagement_score: number;
+    action_diversity: number;
+    recency_days: number;
+    events_30d: number;
+    churn_risk: number;
+    anomaly_flag: boolean;
+    computed_at: string;
+  }> {
+    return this.request(`/members/${userId}/intelligence`);
+  }
+
   // ── Leaderboard ──────────────────────────────────────────────────────────
 
   async getLeaderboard(

@@ -2807,6 +2807,26 @@
                 }
             }
         },
+        "/members/{id}/intelligence": {
+            "get": {
+                "summary": "Get members",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ]
+            }
+        },
         "/api-keys": {
             "get": {
                 "summary": "Get api keys",

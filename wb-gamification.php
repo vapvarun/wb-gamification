@@ -202,6 +202,7 @@ use WBGam\API\CapabilitiesController;
 use WBGam\API\AbilitiesRegistration;
 use WBGam\API\OpenApiController;
 use WBGam\API\SSEController;
+use WBGam\API\IntelligenceController;
 use WBGam\API\ApiKeyAuth;
 use WBGam\API\ApiKeysController;
 use WBGam\API\CohortSettingsController;
@@ -285,6 +286,11 @@ final class WB_Gamification {
 		// Leaderboard snapshot cron + object cache layer.
 		BootOrder::register( 'leaderboard_engine', BootOrder::SLOT_INTEGRATIONS, array( 'engine' ) );
 		add_action( 'plugins_loaded', array( LeaderboardEngine::class, 'init' ), BootOrder::SLOT_INTEGRATIONS );
+
+		// v2.5 + AI v1 — read-side projection. Daily cron computes
+		// engagement / churn / diversity signals from the event log.
+		BootOrder::register( 'intelligence_projector', BootOrder::SLOT_INTEGRATIONS, array( 'engine' ) );
+		add_action( 'plugins_loaded', array( \WBGam\Engine\IntelligenceProjector::class, 'boot' ), BootOrder::SLOT_INTEGRATIONS );
 
 		// Realtime channel — Heartbeat-backed broker that the frontend
 		// toast.js, leaderboard view modules, and user-status-bar block
@@ -400,6 +406,7 @@ final class WB_Gamification {
 		( new CapabilitiesController() )->register_routes();
 		( new OpenApiController() )->register_routes();
 		( new SSEController() )->register_routes();
+		( new IntelligenceController() )->register_routes();
 		( new ApiKeysController() )->register_routes();
 		( new CohortSettingsController() )->register_routes();
 		( new CommunityChallengesController() )->register_routes();
