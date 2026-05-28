@@ -625,9 +625,19 @@ final class NotificationBridge {
 	 * Read pending events for a user that the given consumer has not yet delivered.
 	 *
 	 * Non-destructive: each consumer (footer render, heartbeat tick, REST
-	 * poll) maintains its own user-meta cursor. The transient stays intact
-	 * until its TTL or until the buffer fills — so the same notice can be
+	 * poll) maintains its own user-meta cursor. Same toast can be
 	 * delivered once to each independent surface without a race.
+	 *
+	 * v2.2b: reads now prefer the durable wb_gam_notifications_queue table
+	 * over the transient. Transient stays as a fallback for the case
+	 * where the migration hasn't run yet (very early boot on first
+	 * activation). When the table is the source of truth, cursors in
+	 * user_meta track the table's globally-monotonic auto-increment id —
+	 * the same cursor namespace key (CURSOR_META_PREFIX + consumer) is
+	 * reused. Pre-v2.2b cursors stored transient-`_id` values which are
+	 * RESET to 1 on cache flush; table ids are never reset, so any
+	 * lingering pre-v2.2b cursor is at worst harmlessly low (sees more
+	 * events than expected once) and self-heals on first read.
 	 *
 	 * @param int    $user_id  Member id.
 	 * @param string $consumer Cursor namespace (e.g. 'footer', 'heartbeat', 'rest').
@@ -641,6 +651,13 @@ final class NotificationBridge {
 		$consumer = sanitize_key( $consumer );
 		if ( '' === $consumer ) {
 			return array();
+		}
+
+		// Prefer the durable table when the migration has run. Falls
+		// through to the transient path on installs that haven't seen
+		// ensure_notifications_queue_table() yet.
+		if ( get_option( 'wb_gam_feature_notifications_queue_v1' ) ) {
+			return self::read_pending_from_table( $user_id, $consumer );
 		}
 
 		$key    = self::TRANSIENT_PREFIX . $user_id;
@@ -658,6 +675,61 @@ final class NotificationBridge {
 				$unseen[]  = $event;
 				$max_seen = $id > $max_seen ? $id : $max_seen;
 			}
+		}
+
+		if ( ! empty( $unseen ) ) {
+			update_user_meta( $user_id, self::CURSOR_META_PREFIX . $consumer, $max_seen );
+		}
+
+		return $unseen;
+	}
+
+	/**
+	 * Table-first read path for the durable queue. Returns events with
+	 * id > cursor for this consumer, decoded into the same shape the
+	 * transient path returns (so callers don't branch on storage).
+	 *
+	 * @param int    $user_id  Member id.
+	 * @param string $consumer Cursor namespace.
+	 * @return array[] Unseen events.
+	 */
+	private static function read_pending_from_table( int $user_id, string $consumer ): array {
+		global $wpdb;
+
+		$cursor = (int) get_user_meta( $user_id, self::CURSOR_META_PREFIX . $consumer, true );
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$rows = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT id, payload_json
+				   FROM {$wpdb->prefix}wb_gam_notifications_queue
+				  WHERE user_id = %d AND id > %d
+				  ORDER BY id ASC
+				  LIMIT %d",
+				$user_id,
+				$cursor,
+				self::QUEUE_MAX_EVENTS
+			),
+			ARRAY_A
+		);
+
+		if ( empty( $rows ) ) {
+			return array();
+		}
+
+		$unseen   = array();
+		$max_seen = $cursor;
+		foreach ( $rows as $row ) {
+			$payload = json_decode( (string) $row['payload_json'], true );
+			if ( ! is_array( $payload ) ) {
+				continue;
+			}
+			// Overwrite _id with the table's authoritative id so callers
+			// + the toast.js dedupe key stay coherent regardless of which
+			// path produced the event.
+			$payload['_id'] = (int) $row['id'];
+			$unseen[]       = $payload;
+			$max_seen       = max( $max_seen, (int) $row['id'] );
 		}
 
 		if ( ! empty( $unseen ) ) {

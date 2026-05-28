@@ -457,7 +457,7 @@ Foundation wave (shipped — commits 0c3e7c4 → b160c81, 12 commits)
 
 v2.1 Decouple side effects                  shipped  ✓
 v2.2 Notifications-queue durability         shipped (write-side)  ✓
-v2.2b Switch readers to table-first         1 commit (follow-up)
+v2.2b Switch readers to table-first         shipped  ✓
 v2.3 SSE stages 2 + 3 (storage + loop)      shipped  ✓
 v2.3 SSE stage 4 (journey + default flip)   1 commit
 v2.3 SSE stage 2 (storage + writer)         1 commit
