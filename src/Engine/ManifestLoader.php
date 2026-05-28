@@ -132,6 +132,12 @@ final class ManifestLoader {
 	/**
 	 * Scan all active plugin directories for third-party manifest files.
 	 *
+	 * A third-party plugin ships its own `wb-gamification.php` manifest in its
+	 * plugin directory. The file is only loaded when that plugin is active —
+	 * deactivated plugins leave the file on disk, but their manifest must not
+	 * register actions (otherwise the Registry stays polluted with stale IDs
+	 * after deactivation).
+	 *
 	 * @param bool $bp_active Whether BuddyPress is active.
 	 */
 	private static function load_from_plugins( bool $bp_active ): void {
@@ -144,9 +150,29 @@ final class ManifestLoader {
 			return;
 		}
 
+		// Build the active-plugin directory set once (handles both single-site
+		// and multisite network-activated plugins).
+		$active_basenames = array_merge(
+			(array) get_option( 'active_plugins', array() ),
+			array_keys( (array) get_site_option( 'active_sitewide_plugins', array() ) )
+		);
+		$active_dirs      = array();
+		foreach ( $active_basenames as $basename ) {
+			if ( false !== strpos( $basename, '/' ) ) {
+				$active_dirs[ strstr( $basename, '/', true ) ] = true;
+			}
+		}
+
 		foreach ( $files as $file ) {
 			// Skip our own plugin directory to avoid loading the main plugin file.
 			if ( 0 === strpos( $file, WB_GAM_PATH ) ) {
+				continue;
+			}
+
+			// Skip manifests belonging to inactive plugins. Files on disk persist
+			// across deactivation; only the active set should populate the registry.
+			$plugin_dir = basename( dirname( $file ) );
+			if ( empty( $active_dirs[ $plugin_dir ] ) ) {
 				continue;
 			}
 

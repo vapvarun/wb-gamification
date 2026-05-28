@@ -19,6 +19,28 @@ contaminate the results.
    — all 15 contrib actions (LifterLMS, MemberPress, GiveWP,
    The Events Calendar) were silently invisible to the engine. Fixed
    in `aa038dc`.
+3. **`ManifestLoader::load_from_plugins()` ignored plugin activation state.**
+   The glob over `WP_PLUGIN_DIR/*/wb-gamification.php` picked up
+   manifest files from deactivated plugins, leaving their action IDs
+   permanently in the registry. Caught when wpmediaverse-pro was
+   deactivated but `mvs_battle_win` / `mvs_tournament_win` /
+   `mvs_streak_milestone` still awarded points. Fixed by gating on
+   `active_plugins` + `active_sitewide_plugins`. Journey
+   `audit/journeys/release/13-third-party-manifest-active-gating.md`
+   pins the contract.
+
+**Known cross-plugin coordination gap (not a wb-gamification bug):**
+- WPMediaVerse Pro v1.1.3 ships its own bundled
+  `wb-gamification.php` manifest declaring an old 3-action winner
+  pattern (`mvs_challenge_win_1st` / `_2nd` / `_3rd`). The in-tree
+  manifest in this plugin has the newer single-action
+  `mvs_challenge_winner` + rank-based `points_callback` pattern but
+  defers to the bundled-Pro version (early-returns when
+  `MVS_PRO_VERSION` is defined). So `mvs_challenge_winner` is dead
+  code today. Fix path: WPMediaVerse Pro v1.1.4 drops its bundled
+  manifest, then the deferral guard at
+  `integrations/wpmediaverse.php:50-52` can be removed and the
+  in-tree manifest will own the surface.
 
 ---
 
