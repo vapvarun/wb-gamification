@@ -95,6 +95,15 @@
 							editor.setContent( '' );
 						}
 					}
+					// Force an immediate broker tick so the submission
+					// confirmation toast (or auto-approval points-delta
+					// toast when SubmissionService awards on submit) appears
+					// in <1s, not 5s. Submissions that go to the moderation
+					// queue still benefit because the "Pending review" toast
+					// fires from NotificationBridge on the same tick.
+					if ( window.wbGamRealtime && typeof window.wbGamRealtime.ping === 'function' ) {
+						window.wbGamRealtime.ping();
+					}
 				} )
 				.catch( () => {
 					setStatus( i18nNetwork, 'error' );

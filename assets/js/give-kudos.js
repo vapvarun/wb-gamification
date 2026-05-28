@@ -66,6 +66,14 @@
 						if ( loginEl ) {
 							loginEl.value = '';
 						}
+						// Force an immediate broker tick so the sender sees
+						// their points-delta toast in <1s instead of waiting
+						// up to 5s for the next heartbeat. The recipient's
+						// kudos-received toast goes through the same broker
+						// and is pushed on this tick too.
+						if ( window.wbGamRealtime && typeof window.wbGamRealtime.ping === 'function' ) {
+							window.wbGamRealtime.ping();
+						}
 					} else {
 						const msg = ( result && result.data && result.data.message ) || i18n.failure || '';
 						status.textContent = msg;

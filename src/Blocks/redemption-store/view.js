@@ -130,6 +130,16 @@ store( NS, {
 				if ( balanceText ) {
 					balanceText.textContent = formatNumber( ctx.balance );
 				}
+
+				// Force an immediate broker tick so the redemption-confirmed
+				// toast + any badge/level side-effects show up in <1s
+				// instead of waiting for the next heartbeat. We've already
+				// optimistically debited ctx.balance above; the broker tick
+				// also reconciles in case the server-side debit diverged
+				// (rare, but the heartbeat user-channel will correct it).
+				if ( window.wbGamRealtime && typeof window.wbGamRealtime.ping === 'function' ) {
+					window.wbGamRealtime.ping();
+				}
 			} catch ( error ) {
 				ctx.loading = false;
 				ctx.errorMessage =

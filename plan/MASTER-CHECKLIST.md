@@ -140,7 +140,7 @@
 
 ---
 
-## ⏳ Pending (8)
+## ⏳ Pending (7)
 
 ### Stable-foundation wave (shipped 2026-05-28, all 3 commits)
 - [x] **Release-prep orchestrator + drift-impossible generators** — `bin/cut-release.sh <X.Y.Z>` bumps version in 5 spots; `bin/build-readme.php` inlines feature counts from the manifest into `readme.txt`; `bin/build-docs-config.php` keeps `docs/website/docs_config.json` in sync with on-disk `.md` files (errors on dangling entries); `bin/build-blocks.js` safety-net copies orphaned per-block `style.css` into `build/` and warns when an `import './style.css'` is missing. `bin/cut-release.sh --check` proves idempotency by exiting non-zero on any drift.
@@ -148,10 +148,12 @@
 - [x] **OpenAPI 3.0.3 spec artefact** — `wp wb-gamification openapi export` command (`src/CLI/OpenApiCommand.php`) writes `audit/openapi.json` (56 paths, 131 KB) by calling the new `OpenApiController::build_spec()` helper — same builder serves the runtime `/wb-gamification/v1/openapi.json` endpoint. `--check` mode is wired into `bin/cut-release.sh` as the third drift gate alongside readme.txt + docs_config.json. The committed artefact is the contract surface for the upcoming JS SDK, GraphQL extension, and any AI/headless consumer. Lives in `audit/` (canonical inventory) rather than `dist/` (gitignored build output).
 - [x] **JS SDK toolchain wired from OpenAPI** — `sdk/` package now installs cleanly (`npm install`), regenerates `sdk/src/openapi.d.ts` from `audit/openapi.json` via openapi-typescript v7 (`npm run gen-types`, 3568 lines covering all 56 paths), and builds via `tsc` to a shippable `dist/` (index, client, types, openapi.d.ts all emitted). SDK version syncs to the plugin version automatically through `bin/cut-release.sh`. Added a fourth drift gate to `cut-release --check`: shasum of `sdk/src/openapi.d.ts` must equal a fresh regen against the current `audit/openapi.json`. Hand-written client coverage is still 9 / 56 endpoints — that's NOT foundation work (it's incremental method expansion) and lives as a separate pending item below. The toolchain is the foundation move; method expansion is feature work.
 
-### Performance / scale (2)
+### Performance / scale (1)
 - [x] **Scale benchmark VERIFIED at 100k rows (2026-05-28)** — plan was stale: `src/CLI/ScaleCommand.php` was already implemented (not stubs), just never executed. Ran `seed --users=10000 --events-per-user=10` (100,015 rows / 10,003 users), then `benchmark` — all 6 hot-path queries PASS with 3x–300x headroom against `BUDGETS_MS`. The "Scalable — built for 100K+ members" claim in `readme.txt` is no longer faith-based. Baseline + procedure recorded in `audit/scale-baseline.md`. Not wired into local-CI (seeding costs ~2s per run; the existing PHPStan / WPCS / WP Plugin Check stages catch the regression categories this would). Re-run on schema changes touching `wb_gam_points` / `wb_gam_user_totals` / `wb_gam_leaderboard_cache`.
 - [ ] **SSE / WebSocket transport** — Replace the 5s heartbeat poll for realtime toasts with a true push channel. Out of scope for the realtime card (#9925151443) but the obvious follow-up.
-- [ ] **`wbGamRealtime.ping()` API surface** — Let user-driven actions force an immediate broker tick instead of waiting up to 5s. Reduces median latency further without changing transport.
+
+### Already closed (no action)
+- [x] **`wbGamRealtime.ping()` API surface** — was listed pending, actually shipped. `window.wbGamRealtime.ping()` exists in `assets/js/heartbeat.js` (calls `wp.heartbeat.connectNow()`). What WAS missing was the wiring: no user-action handler called it. Wired on 2026-05-28 in 3 success paths — give-kudos POST, submit-achievement POST, redemption-store redeem. Median visible-toast latency on those flows drops from up-to-5s (waiting for next heartbeat tick) to <1s. hub-convert reloads the page on success so a ping is moot there; admin-test-event awards to the admin themselves and the toast is on the Hub (separate page), so the success message already directs the user there.
 
 ### Architecture / hygiene (2)
 - [ ] **Hooks_fired coverage gap** — manifest `.hooks_fired[]` has 43 action entries (ground truth: **61** as of 2026-05-28) and 12 filter entries (ground truth: **47**). 18 actions + 35 filters missing. Separately, `consumed_by[]` is empty for every existing entry — dead-listener detection can't fire. Belongs to the next `/wp-plugin-onboard --refresh` Phase 2 + 2.5 pass; do not hand-enumerate here (the skill owns this category).
