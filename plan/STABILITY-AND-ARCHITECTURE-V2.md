@@ -270,22 +270,29 @@ transitions, and the failure modes.
 Beyond the per-flow findings above, three structural debts surfaced
 while tracing:
 
-### Finding A — Implicit boot ordering
+### Finding A — Implicit boot ordering *(closed in this wave)*
 
-`wb-gamification.php` registers engines in a specific order:
-`Installer@0`, `ManifestLoader@5`, `Registry@6`, engines + APIs @8,
-integrations @10. The ordering is enforced by `add_action`'s priority
-argument; the contract is documented in CLAUDE.md prose.
+`wb-gamification.php` USED TO register engines using raw integer
+priorities (`add_action('plugins_loaded', …, 1)` for DbUpgrader,
+priority 5 for ManifestLoader, 6 for Registry, etc.). If a new engine
+landed with the wrong priority, the symptom was silent — listener
+registers before its dependency exists, callback fires, nothing
+happens.
 
-If a new engine is added with the wrong priority, the symptom is
-silent — a listener registers before the dependency exists, the
-callback fires, nothing happens. The class-hoist boot bug we caught
-in commit `61f62ca` is a related failure mode (same shape: silent
-boot failure).
+**Resolved**: `src/Engine/BootOrder.php` defines five slot constants
+(`SLOT_SCHEMA = 1`, `SLOT_REGISTRY = 6`, `SLOT_CORE = 8`,
+`SLOT_INTEGRATIONS = 10`, `SLOT_OPTIONAL = 10`) and exposes a
+`register(slug, slot, depends_on[])` API. A validator hooked at
+`plugins_loaded@99` walks the registration graph and logs WARN-level
+violations when a slug declares a dependency on another slug at a
+LATER slot. Violations don't break the page — silent boot was the
+bug we're fixing, not a new fatal surface — but they surface in
+monitoring + debug.log instead of being invisible.
 
-**v2 proposal**: introduce `BootOrder::register('engine-name', 8)`
-that asserts no two consumers claim the same slot and errors loudly
-if a dependency claims a later slot than its dependent.
+The 13 priority-driven `add_action('plugins_loaded', …)` calls in
+`wb-gamification.php` were migrated to use the SLOT constants and
+declare their dependencies via `BootOrder::register()`. The boot
+dependency graph is now data, not a CLAUDE.md prose comment.
 
 ### Finding B — Side effects after COMMIT *(closed in this wave)*
 
@@ -460,6 +467,7 @@ v2.2 Notifications-queue durability         shipped (write-side)  ✓
 v2.2b Switch readers to table-first         shipped  ✓
 v2.3 SSE stages 2 + 3 (storage + loop)      shipped  ✓
 v2.3 SSE stage 4 (journey + default flip)   1 commit
+v2.4 Boot order contract                    shipped  ✓
 v2.3 SSE stage 2 (storage + writer)         1 commit
 v2.3 SSE stage 3 (streaming loop)           1 commit
 v2.4 Boot order contract                    1 commit

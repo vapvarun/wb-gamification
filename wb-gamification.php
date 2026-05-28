@@ -146,6 +146,7 @@ add_action(
 use WBGam\Engine\Registry;
 use WBGam\Engine\Engine;
 use WBGam\Engine\HeartbeatChannel;
+use WBGam\Engine\BootOrder;
 use WBGam\Engine\ManifestLoader;
 use WBGam\Engine\FeatureFlags;
 use WBGam\Engine\AsyncEvaluator;
@@ -244,21 +245,46 @@ final class WB_Gamification {
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_assets' ) );
 
 		// DB schema upgrades run first.
-		add_action( 'plugins_loaded', array( DbUpgrader::class, 'init' ), 1 );
+		// Boot sequence uses the SLOT_* constants from BootOrder so the
+		// priority numbers stay explicit and the dependency graph is
+		// declared (validated at plugins_loaded@99). See
+		// plan/STABILITY-AND-ARCHITECTURE-V2.md § Finding A.
+		BootOrder::bind_validator();
 
-		// Boot sequence: ManifestLoader (5) → Registry (6) → AsyncEvaluator + Engine (8) → FeatureFlags (10).
-		add_action( 'plugins_loaded', array( ManifestLoader::class, 'scan' ), 5 );
-		add_action( 'plugins_loaded', array( Registry::class, 'init' ), 6 );
-		add_action( 'plugins_loaded', array( ApiKeyAuth::class, 'init' ), 8 );
-		add_action( 'plugins_loaded', array( AsyncEvaluator::class, 'init' ), 8 );
-		add_action( 'plugins_loaded', array( Engine::class, 'init' ), 8 );
-		add_action( 'plugins_loaded', array( WPHooks::class, 'init' ), 8 );
-		add_action( 'plugins_loaded', array( BPHooks::class, 'init' ), 10 );
-		add_action( 'plugins_loaded', array( WCRefundHandler::class, 'init' ), 10 );
-		add_action( 'plugins_loaded', array( JetonomyHooks::class, 'init' ), 10 );
+		BootOrder::register( 'db_upgrader', BootOrder::SLOT_SCHEMA );
+		add_action( 'plugins_loaded', array( DbUpgrader::class, 'init' ), BootOrder::SLOT_SCHEMA );
+
+		// Boot sequence: ManifestLoader → Registry → AsyncEvaluator + Engine → FeatureFlags.
+		BootOrder::register( 'manifest_loader', BootOrder::SLOT_REGISTRY - 1 );
+		add_action( 'plugins_loaded', array( ManifestLoader::class, 'scan' ), BootOrder::SLOT_REGISTRY - 1 );
+
+		BootOrder::register( 'registry', BootOrder::SLOT_REGISTRY, array( 'manifest_loader' ) );
+		add_action( 'plugins_loaded', array( Registry::class, 'init' ), BootOrder::SLOT_REGISTRY );
+
+		BootOrder::register( 'api_key_auth', BootOrder::SLOT_CORE );
+		add_action( 'plugins_loaded', array( ApiKeyAuth::class, 'init' ), BootOrder::SLOT_CORE );
+
+		BootOrder::register( 'async_evaluator', BootOrder::SLOT_CORE, array( 'registry' ) );
+		add_action( 'plugins_loaded', array( AsyncEvaluator::class, 'init' ), BootOrder::SLOT_CORE );
+
+		BootOrder::register( 'engine', BootOrder::SLOT_CORE, array( 'registry', 'db_upgrader' ) );
+		add_action( 'plugins_loaded', array( Engine::class, 'init' ), BootOrder::SLOT_CORE );
+
+		BootOrder::register( 'wp_hooks', BootOrder::SLOT_CORE, array( 'registry' ) );
+		add_action( 'plugins_loaded', array( WPHooks::class, 'init' ), BootOrder::SLOT_CORE );
+
+		BootOrder::register( 'bp_hooks', BootOrder::SLOT_INTEGRATIONS, array( 'engine' ) );
+		add_action( 'plugins_loaded', array( BPHooks::class, 'init' ), BootOrder::SLOT_INTEGRATIONS );
+
+		BootOrder::register( 'wc_refund_handler', BootOrder::SLOT_INTEGRATIONS, array( 'engine' ) );
+		add_action( 'plugins_loaded', array( WCRefundHandler::class, 'init' ), BootOrder::SLOT_INTEGRATIONS );
+
+		BootOrder::register( 'jetonomy_hooks', BootOrder::SLOT_INTEGRATIONS, array( 'engine' ) );
+		add_action( 'plugins_loaded', array( JetonomyHooks::class, 'init' ), BootOrder::SLOT_INTEGRATIONS );
 
 		// Leaderboard snapshot cron + object cache layer.
-		add_action( 'plugins_loaded', array( LeaderboardEngine::class, 'init' ), 10 );
+		BootOrder::register( 'leaderboard_engine', BootOrder::SLOT_INTEGRATIONS, array( 'engine' ) );
+		add_action( 'plugins_loaded', array( LeaderboardEngine::class, 'init' ), BootOrder::SLOT_INTEGRATIONS );
 
 		// Realtime channel — Heartbeat-backed broker that the frontend
 		// toast.js, leaderboard view modules, and user-status-bar block
