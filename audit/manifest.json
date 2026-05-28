@@ -3072,6 +3072,7 @@
         "assets/js/heartbeat.js",
         "assets/js/hub-convert.js",
         "assets/js/settings-nav.js",
+        "assets/js/sse.js",
         "assets/js/toast.js"
       ],
       "blocks": [

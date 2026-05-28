@@ -2797,6 +2797,16 @@
                 }
             }
         },
+        "/events/stream": {
+            "get": {
+                "summary": "Get events",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                }
+            }
+        },
         "/api-keys": {
             "get": {
                 "summary": "Get api keys",

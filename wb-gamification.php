@@ -200,6 +200,7 @@ use WBGam\API\LevelsController;
 use WBGam\API\CapabilitiesController;
 use WBGam\API\AbilitiesRegistration;
 use WBGam\API\OpenApiController;
+use WBGam\API\SSEController;
 use WBGam\API\ApiKeyAuth;
 use WBGam\API\ApiKeysController;
 use WBGam\API\CohortSettingsController;
@@ -372,6 +373,7 @@ final class WB_Gamification {
 		( new LevelsController() )->register_routes();
 		( new CapabilitiesController() )->register_routes();
 		( new OpenApiController() )->register_routes();
+		( new SSEController() )->register_routes();
 		( new ApiKeysController() )->register_routes();
 		( new CohortSettingsController() )->register_routes();
 		( new CommunityChallengesController() )->register_routes();
@@ -484,6 +486,29 @@ final class WB_Gamification {
 			WB_GAM_VERSION,
 			true
 		);
+
+		// SSE transport (scaffold; feature-flagged off by default). Loads
+		// alongside heartbeat.js; probes the transport option and no-ops
+		// when set to 'heartbeat'. Real streaming ships in stages 2-3 —
+		// see plan/REAL-TIME-TRANSPORT.md.
+		if ( is_user_logged_in() ) {
+			wp_enqueue_script(
+				'wb-gamification-sse',
+				WB_GAM_URL . 'assets/js/sse.js',
+				array( 'wb-gamification-realtime' ),
+				WB_GAM_VERSION,
+				true
+			);
+			wp_localize_script(
+				'wb-gamification-sse',
+				'wbGamSSEConfig',
+				array(
+					'streamUrl'   => esc_url_raw( rest_url( 'wb-gamification/v1/events/stream' ) ),
+					'transport'   => SSEController::get_transport(),
+					'lastEventId' => 0,
+				)
+			);
+		}
 
 		// Toast notification renderer for logged-in users. The renderer
 		// consumes wb-gamification-realtime instead of running its own
