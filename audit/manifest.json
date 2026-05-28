@@ -2616,7 +2616,7 @@
       "type": "filter",
       "purpose": "Filter the list of manifest file paths scanned by ManifestLoader. Use to add custom integration manifests.",
       "fired_at": [
-        "src/Engine/ManifestLoader.php:99"
+        "src/Engine/ManifestLoader.php:107"
       ],
       "consumed_by": []
     },
