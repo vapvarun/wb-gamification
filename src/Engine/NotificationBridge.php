@@ -67,6 +67,20 @@ final class NotificationBridge {
 	/**
 	 * Register action hooks for event collection and footer rendering.
 	 */
+	/**
+	 * Daily prune cron hook. Removes notifications older than the retention
+	 * window from the durable queue table. Transients still expire via TTL
+	 * and don't need an explicit prune.
+	 */
+	public const PRUNE_CRON = 'wb_gam_notifications_queue_prune';
+
+	/**
+	 * Retention window for the durable queue table (seconds). 24 hours is
+	 * a balance between "user catches up on toasts after a day away"
+	 * (covered) and "table doesn't grow indefinitely" (bounded).
+	 */
+	public const RETENTION_SECONDS = 86400;
+
 	public static function init(): void {
 		// Collect events from action hooks.
 		add_action( 'wb_gam_points_awarded', array( __CLASS__, 'on_points_awarded' ), 99, 3 );
@@ -75,6 +89,12 @@ final class NotificationBridge {
 		add_action( 'wb_gam_streak_milestone', array( __CLASS__, 'on_streak_milestone' ), 99, 2 );
 		add_action( 'wb_gam_challenge_completed', array( __CLASS__, 'on_challenge_completed' ), 99, 2 );
 		add_action( 'wb_gam_kudos_given', array( __CLASS__, 'on_kudos_given' ), 99, 4 );
+
+		// v2.2 — daily prune of the durable queue table.
+		add_action( self::PRUNE_CRON, array( __CLASS__, 'prune_queue' ) );
+		if ( ! wp_next_scheduled( self::PRUNE_CRON ) ) {
+			wp_schedule_event( time() + HOUR_IN_SECONDS, 'daily', self::PRUNE_CRON );
+		}
 		// Skip toasts — surface "you hit the daily cap / cooldown" to the
 		// member so they understand why no points appeared. Pre-1.4.1 the
 		// engine fired `wb_gam_award_skipped` in 6 places (PointsEngine +
@@ -539,6 +559,66 @@ final class NotificationBridge {
 		}
 
 		set_transient( $key, $events, self::TRANSIENT_TTL );
+
+		// v2.2 — durability dual-write. The transient above is the legacy
+		// path consumers still read from; the table is the new durable
+		// store that survives wp_cache_flush and feeds the SSE writer
+		// (stage 2 of the realtime transport rollout). When this commit
+		// has run on an install for one TTL cycle, readers can switch
+		// to table-first with the transient as fallback — but that's a
+		// follow-up; this commit is risk-free additive write only.
+		self::persist_to_queue_table( $user_id, $event );
+	}
+
+	/**
+	 * Daily cron: delete rows older than RETENTION_SECONDS from the
+	 * durable queue table. Bounded query (LIMIT 5000 per run) so a
+	 * sudden 24-hour backlog doesn't lock the table.
+	 *
+	 * @as-fire-once Daily cron tick. Bounded delete; cannot recurse.
+	 */
+	public static function prune_queue(): void {
+		if ( ! get_option( 'wb_gam_feature_notifications_queue_v1' ) ) {
+			return;
+		}
+		global $wpdb;
+		$cutoff = gmdate( 'Y-m-d H:i:s', time() - self::RETENTION_SECONDS );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$wpdb->query(
+			$wpdb->prepare(
+				"DELETE FROM {$wpdb->prefix}wb_gam_notifications_queue WHERE created_at < %s LIMIT 5000",
+				$cutoff
+			)
+		);
+	}
+
+	/**
+	 * Append one notification event to the durable queue table.
+	 *
+	 * @param int   $user_id Member id.
+	 * @param array $event   Notification payload (already stamped with _id, _ts).
+	 */
+	private static function persist_to_queue_table( int $user_id, array $event ): void {
+		global $wpdb;
+
+		// Feature-flag gated by the DbUpgrader migration. If the table
+		// doesn't exist yet (e.g. very-early-boot before the migration
+		// runs), silent skip — the transient still has the data.
+		if ( ! get_option( 'wb_gam_feature_notifications_queue_v1' ) ) {
+			return;
+		}
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$wpdb->insert(
+			$wpdb->prefix . 'wb_gam_notifications_queue',
+			array(
+				'user_id'      => $user_id,
+				'event_type'   => (string) ( $event['type'] ?? 'unknown' ),
+				'payload_json' => (string) wp_json_encode( $event ),
+				'created_at'   => gmdate( 'Y-m-d H:i:s' ),
+			),
+			array( '%d', '%s', '%s', '%s' )
+		);
 	}
 
 	/**

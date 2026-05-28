@@ -95,6 +95,51 @@ final class DbUpgrader {
 		self::ensure_submissions_table();
 		self::ensure_api_keys_table();
 		self::ensure_side_effect_failures_table();
+		self::ensure_notifications_queue_table();
+	}
+
+	/**
+	 * Create wb_gam_notifications_queue on existing installs.
+	 *
+	 * v2.2 — durability + SSE-readiness for the notification path. The
+	 * previous transient-based queue was lost on `wp_cache_flush`, which
+	 * stranded every per-consumer cursor in user_meta (cursor=>1000 but
+	 * new events restarted at _id=1, so `read_pending` never returned
+	 * anything). NotificationBridge had a defensive workaround that bumped
+	 * new event ids past existing cursors; this table eliminates the
+	 * root cause by giving every event a globally-monotonic auto-increment id.
+	 *
+	 * Schema is deliberately small — text payload, indexed by (user_id, id)
+	 * for the per-consumer read query, and (created_at) for the daily prune.
+	 *
+	 * Idempotent — feature-flag gated.
+	 *
+	 * @since 1.5.0
+	 */
+	private static function ensure_notifications_queue_table(): void {
+		$flag_key = 'wb_gam_feature_notifications_queue_v1';
+		if ( get_option( $flag_key ) ) {
+			return;
+		}
+
+		global $wpdb;
+		$charset = $wpdb->get_charset_collate();
+		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+
+		dbDelta(
+			"CREATE TABLE {$wpdb->prefix}wb_gam_notifications_queue (
+			id           BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+			user_id      BIGINT UNSIGNED NOT NULL,
+			event_type   VARCHAR(64)     NOT NULL,
+			payload_json TEXT            NOT NULL,
+			created_at   DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			PRIMARY KEY (id),
+			KEY idx_user_id (user_id, id),
+			KEY idx_created_at (created_at)
+			) {$charset};"
+		);
+
+		update_option( $flag_key, '1' );
 	}
 
 	/**

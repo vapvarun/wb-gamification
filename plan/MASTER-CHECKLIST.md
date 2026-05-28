@@ -143,6 +143,7 @@
 ## ✅ v2 work shipped on 1.5.0 HEAD
 
 - [x] **v2.1 Decouple side effects** — `SideEffectDispatcher` + `wb_gam_side_effect_failures` table + hourly reconciler cron. Engine refactored to fan-out through dispatcher (try/catch isolation, retry up to 3 times, status='exhausted' for human triage). 5 PHPUnit tests cover success + failure-isolation + retry-success + retry-exhausted + orphan-handler paths.
+- [x] **v2.2 Notifications-queue durability (write-side)** — new `wb_gam_notifications_queue` table + dual-write from `NotificationBridge::push()`. Transient flush no longer strands user_meta cursors because the durable backup survives. Daily prune cron with 24h retention. Reader-side switch deferred to a follow-up commit; existing transient reads keep working unchanged. Re-scoped Finding C in `STABILITY-AND-ARCHITECTURE-V2.md` after re-reading code (the 3-cursor design is intentional, not a band-aid).
 
 ## ⏳ Pending (4)
 

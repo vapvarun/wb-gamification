@@ -311,7 +311,36 @@ defaults already are — `maybe_level_up` derives current level from
 dedupes by date; `WebhookDispatcher::dispatch` enqueues at-least-once
 delivery (documented public contract).
 
-### Finding C — NotificationBridge has 3 cursors with band-aid dedupe
+### Finding C — NotificationBridge transient durability *(partially closed)*
+
+Re-scoped after reading the code: the "3-cursor dedupe" framing in
+the initial walk was wrong. The cursors ARE per-consumer (footer,
+heartbeat, rest) and ARE in user_meta already. Each consumer reading
+the same toast is by design — three independent surfaces, each
+delivering once. The Set-based dedupe in `assets/js/toast.js` is
+the correct collapse for a user who has all three surfaces active
+at once. NOT a band-aid.
+
+The REAL debt was **durability**: the queue lived in a transient
+which gets flushed on `wp_cache_flush`. When that happens, new event
+ids restart at 1 but user_meta cursors still reflect the old high-
+water mark — every `read_pending` returns empty for the lifetime of
+the user. The code had a defensive workaround (walk cursors to bump
+new ids past them) but the root cause was transient-only storage.
+
+**Resolved (additive)**: new `wb_gam_notifications_queue` MySQL
+table, dual-write from `NotificationBridge::push()`. Existing
+consumers still read from the transient; durable backup survives
+cache flushes. Daily prune cron (`wb_gam_notifications_queue_prune`)
+keeps the table bounded with a 24-hour retention window. This
+storage backend is also what SSE stage 2 needs — the streaming
+controller polls the table by `WHERE user_id=? AND id > ?` which
+the new `idx_user_id` covers.
+
+**Still pending** (future commit): switch readers to table-first.
+That requires verifying every existing read site, ensuring the
+fallback to transient is clean. Currently the table is write-only
+from consumers' perspective.
 
 `NotificationBridge` writes toasts to a transient queue. Three
 consumers read it: page-paint footer (cursor=footer), Heartbeat tick
@@ -427,7 +456,8 @@ Foundation wave (shipped — commits 0c3e7c4 → b160c81, 12 commits)
 └── This stability + arch document
 
 v2.1 Decouple side effects                  shipped  ✓
-v2.2 Unified notification queue             2 commits (migration + consumer-switch)
+v2.2 Notifications-queue durability         shipped (write-side)  ✓
+v2.2b Switch readers to table-first         1 commit (follow-up)
 v2.3 SSE stage 2 (storage + writer)         1 commit
 v2.3 SSE stage 3 (streaming loop)           1 commit
 v2.4 Boot order contract                    1 commit
