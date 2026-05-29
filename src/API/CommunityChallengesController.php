@@ -19,6 +19,7 @@
 
 namespace WBGam\API;
 
+use WBGam\Engine\Transaction;
 use WP_Error;
 use WP_REST_Controller;
 use WP_REST_Response;
@@ -239,11 +240,14 @@ final class CommunityChallengesController extends WP_REST_Controller {
 
 		global $wpdb;
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- INSERT.
-		$wpdb->insert(
+		$inserted = $wpdb->insert(
 			$wpdb->prefix . 'wb_gam_community_challenges',
 			$data,
 			array( '%s', '%s', '%d', '%s', '%s', '%s', '%d', '%s', '%d' )
 		);
+		if ( false === $inserted ) {
+			return new WP_Error( 'rest_create_failed', __( 'Could not create community challenge.', 'wb-gamification' ), array( 'status' => 500 ) );
+		}
 
 		$id  = (int) $wpdb->insert_id;
 		$row = $this->fetch_one( $id );
@@ -311,13 +315,16 @@ final class CommunityChallengesController extends WP_REST_Controller {
 
 		global $wpdb;
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- UPDATE.
-		$wpdb->update(
+		$updated = $wpdb->update(
 			$wpdb->prefix . 'wb_gam_community_challenges',
 			$updates,
 			array( 'id' => $id ),
 			$formats,
 			array( '%d' )
 		);
+		if ( false === $updated ) {
+			return new WP_Error( 'rest_update_failed', __( 'Could not update community challenge.', 'wb-gamification' ), array( 'status' => 500 ) );
+		}
 
 		$fresh = $this->fetch_one( $id );
 
@@ -347,14 +354,25 @@ final class CommunityChallengesController extends WP_REST_Controller {
 		do_action( 'wb_gam_before_delete_community_challenge', $current, $request );
 
 		global $wpdb;
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- DELETE.
-		$wpdb->delete( $wpdb->prefix . 'wb_gam_community_challenges', array( 'id' => $id ), array( '%d' ) );
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- Cascade delete.
-		$wpdb->delete(
-			$wpdb->prefix . 'wb_gam_community_challenge_contributions',
-			array( 'challenge_id' => $id ),
-			array( '%d' )
+		// Delete the challenge + cascade its contributions atomically so a
+		// partial failure can't orphan contribution rows.
+		$deleted = Transaction::run(
+			function () use ( $wpdb, $id ) {
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- DELETE.
+				if ( false === $wpdb->delete( $wpdb->prefix . 'wb_gam_community_challenges', array( 'id' => $id ), array( '%d' ) ) ) {
+					return false;
+				}
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- Cascade delete.
+				return false !== $wpdb->delete(
+					$wpdb->prefix . 'wb_gam_community_challenge_contributions',
+					array( 'challenge_id' => $id ),
+					array( '%d' )
+				);
+			}
 		);
+		if ( true !== $deleted ) {
+			return new WP_Error( 'rest_delete_failed', __( 'Could not delete community challenge.', 'wb-gamification' ), array( 'status' => 500 ) );
+		}
 
 		do_action( 'wb_gam_after_delete_community_challenge', $current, $request );
 		do_action( 'wb_gam_community_challenge_deleted', $id );

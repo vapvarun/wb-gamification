@@ -304,7 +304,11 @@ class RulesController extends WP_REST_Controller {
 			return rest_ensure_response( $this->prepare_item( $row ) );
 		}
 
-		$wpdb->update( $wpdb->prefix . 'wb_gam_rules', $data, array( 'id' => $id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- Write operation; cache flushed via flush_rules_cache().
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- Write operation; cache flushed via flush_rules_cache().
+		$updated = $wpdb->update( $wpdb->prefix . 'wb_gam_rules', $data, array( 'id' => $id ) );
+		if ( false === $updated ) {
+			return new WP_Error( 'rest_update_failed', __( 'Could not update rule.', 'wb-gamification' ), array( 'status' => 500 ) );
+		}
 		$this->flush_rules_cache();
 
 		return rest_ensure_response( $this->prepare_item( $this->fetch_row( $id ) ) );
@@ -325,7 +329,11 @@ class RulesController extends WP_REST_Controller {
 			return new WP_Error( 'rest_not_found', __( 'Rule not found.', 'wb-gamification' ), array( 'status' => 404 ) );
 		}
 
-		$wpdb->delete( $wpdb->prefix . 'wb_gam_rules', array( 'id' => $id ), array( '%d' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- Write operation; cache flushed via flush_rules_cache().
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- Write operation; cache flushed via flush_rules_cache().
+		$deleted = $wpdb->delete( $wpdb->prefix . 'wb_gam_rules', array( 'id' => $id ), array( '%d' ) );
+		if ( false === $deleted ) {
+			return new WP_Error( 'rest_delete_failed', __( 'Could not delete rule.', 'wb-gamification' ), array( 'status' => 500 ) );
+		}
 		$this->flush_rules_cache();
 
 		return new WP_REST_Response(

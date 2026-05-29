@@ -302,13 +302,16 @@ final class LevelsController extends WP_REST_Controller {
 
 		global $wpdb;
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- UPDATE.
-		$wpdb->update(
+		$updated = $wpdb->update(
 			$wpdb->prefix . 'wb_gam_levels',
 			$updates,
 			array( 'id' => $id ),
 			$formats,
 			array( '%d' )
 		);
+		if ( false === $updated ) {
+			return new WP_Error( 'rest_update_failed', __( 'Could not update level.', 'wb-gamification' ), array( 'status' => 500 ) );
+		}
 
 		$fresh = $this->fetch_one( $id );
 
@@ -350,7 +353,10 @@ final class LevelsController extends WP_REST_Controller {
 
 		global $wpdb;
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- DELETE.
-		$wpdb->delete( $wpdb->prefix . 'wb_gam_levels', array( 'id' => $id ), array( '%d' ) );
+		$deleted = $wpdb->delete( $wpdb->prefix . 'wb_gam_levels', array( 'id' => $id ), array( '%d' ) );
+		if ( false === $deleted ) {
+			return new WP_Error( 'rest_delete_failed', __( 'Could not delete level.', 'wb-gamification' ), array( 'status' => 500 ) );
+		}
 
 		do_action( 'wb_gam_after_delete_level', $current, $request );
 

@@ -337,8 +337,14 @@ class PointsController extends WP_REST_Controller {
 
 		// Decrement the materialised total — `bump_user_total` is the canonical
 		// helper that every ledger mutation must call. The negative delta
-		// applied here mirrors the row's stored value.
-		\WBGam\Engine\PointsEngine::bump_user_total( $user_id, $point_type, -$points );
+		// applied here mirrors the row's stored value. Its return MUST be
+		// checked: a failed UPSERT after a committed DELETE would leave
+		// wb_gam_user_totals permanently inflated (the drift this transaction
+		// exists to prevent).
+		if ( ! \WBGam\Engine\PointsEngine::bump_user_total( $user_id, $point_type, -$points ) ) {
+			$wpdb->query( 'ROLLBACK' );
+			return new WP_Error( 'rest_revoke_failed', __( 'Could not revoke points.', 'wb-gamification' ), array( 'status' => 500 ) );
+		}
 
 		$wpdb->query( 'COMMIT' );
 

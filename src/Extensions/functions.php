@@ -18,7 +18,14 @@ use WBGam\Engine\PointsEngine;
 use WBGam\Engine\LevelEngine;
 use WBGam\Engine\ChallengeEngine;
 
-defined( 'ABSPATH' ) || exit;
+// Direct-web-access guard. This file is loaded via Composer's `files`
+// autoload (composer.json), so it is required by `vendor/autoload.php`
+// — which CLI tooling (PHPStan, PHPUnit, phpcs) bootstraps WITHOUT
+// defining ABSPATH. A bare `defined( 'ABSPATH' ) || exit;` therefore
+// silently terminated every CLI run, turning the static-analysis and
+// test gates into no-ops. Allow CLI (incl. WP-CLI) so the gates run;
+// still block direct web access where SAPI is web and ABSPATH is unset.
+defined( 'ABSPATH' ) || 'cli' === PHP_SAPI || defined( 'WP_CLI' ) || exit;
 // Silencing convention-driven false positives so Plugin Check signal stays clean:
 //   - PrefixAllGlobals.NonPrefixedHooknameFound — plugin uses `wb_gam_*` as its
 //     established hook prefix (documented in CLAUDE.md, declared in .phpcs.xml).

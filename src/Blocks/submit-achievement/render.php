@@ -111,6 +111,12 @@ BlockHooks::before( 'submit-achievement', $wb_gam_attrs );
 			// The data-wb-gam-editor-id attr is read by view.js to pull
 			// content via tinyMCE.get( id ).getContent() at submit time.
 			$wb_gam_editor_id = 'wb-gam-submit-evidence-' . $wb_gam_unique;
+			// Scope the member upload-cap grant to this surface so the Add
+			// Media button below resolves for members without giving them
+			// site-wide Media Library access. See MemberUploadCap.
+			if ( class_exists( '\WBGam\Engine\MemberUploadCap' ) ) {
+				\WBGam\Engine\MemberUploadCap::enable_for_request();
+			}
 			wp_editor(
 				'',
 				$wb_gam_editor_id,

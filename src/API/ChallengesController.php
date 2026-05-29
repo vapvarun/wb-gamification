@@ -20,6 +20,7 @@ use WP_REST_Controller;
 use WP_REST_Response;
 use WP_REST_Request;
 use WP_REST_Server;
+use WBGam\Engine\Transaction;
 use WP_Error;
 
 defined( 'ABSPATH' ) || exit;
@@ -409,7 +410,11 @@ class ChallengesController extends WP_REST_Controller {
 		}
 
 		if ( $data ) {
-			$wpdb->update( $wpdb->prefix . 'wb_gam_challenges', $data, array( 'id' => $id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- REST write operation.
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- REST write operation.
+			$update_result = $wpdb->update( $wpdb->prefix . 'wb_gam_challenges', $data, array( 'id' => $id ) );
+			if ( false === $update_result ) {
+				return new WP_Error( 'rest_update_failed', __( 'Could not update challenge.', 'wb-gamification' ), array( 'status' => 500 ) );
+			}
 		}
 
 		$updated = $wpdb->get_row( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Read-after-write for response.
@@ -450,9 +455,21 @@ class ChallengesController extends WP_REST_Controller {
 			);
 		}
 
-		// Delete progress logs first, then the challenge itself.
-		$wpdb->delete( $wpdb->prefix . 'wb_gam_challenge_log', array( 'challenge_id' => $id ), array( '%d' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Cascade delete.
-		$wpdb->delete( $wpdb->prefix . 'wb_gam_challenges', array( 'id' => $id ), array( '%d' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- REST delete operation.
+		// Delete progress logs + the challenge itself atomically so a partial
+		// failure can't orphan challenge_log rows.
+		$deleted = Transaction::run(
+			function () use ( $wpdb, $id ) {
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Cascade delete.
+				if ( false === $wpdb->delete( $wpdb->prefix . 'wb_gam_challenge_log', array( 'challenge_id' => $id ), array( '%d' ) ) ) {
+					return false;
+				}
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- REST delete operation.
+				return false !== $wpdb->delete( $wpdb->prefix . 'wb_gam_challenges', array( 'id' => $id ), array( '%d' ) );
+			}
+		);
+		if ( true !== $deleted ) {
+			return new WP_Error( 'rest_delete_failed', __( 'Could not delete challenge.', 'wb-gamification' ), array( 'status' => 500 ) );
+		}
 
 		return new WP_REST_Response(
 			array(
@@ -526,7 +543,8 @@ class ChallengesController extends WP_REST_Controller {
 		$new_progress     = $current_progress + 1;
 
 		if ( $log ) {
-			$wpdb->update( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Progress update.
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Progress update.
+			$progress_written = $wpdb->update(
 				$wpdb->prefix . 'wb_gam_challenge_log',
 				array( 'progress' => $new_progress ),
 				array(
@@ -537,7 +555,8 @@ class ChallengesController extends WP_REST_Controller {
 				array( '%d', '%d' )
 			);
 		} else {
-			$wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- New progress row.
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- New progress row.
+			$progress_written = $wpdb->insert(
 				$wpdb->prefix . 'wb_gam_challenge_log',
 				array(
 					'user_id'      => $user_id,
@@ -548,12 +567,17 @@ class ChallengesController extends WP_REST_Controller {
 				array( '%d', '%d', '%d', '%s' )
 			);
 		}
+		// Don't report advanced progress to the member if the write failed.
+		if ( false === $progress_written ) {
+			return new WP_Error( 'rest_progress_failed', __( 'Could not record challenge progress.', 'wb-gamification' ), array( 'status' => 500 ) );
+		}
 
 		$completed = $new_progress >= (int) $challenge['target'];
 
 		// If target reached, mark complete and award bonus.
 		if ( $completed ) {
-			$wpdb->update( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Completion update.
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Completion update.
+			$completion_written = $wpdb->update(
 				$wpdb->prefix . 'wb_gam_challenge_log',
 				array( 'completed_at' => current_time( 'mysql' ) ),
 				array(
@@ -563,6 +587,12 @@ class ChallengesController extends WP_REST_Controller {
 				array( '%s' ),
 				array( '%d', '%d' )
 			);
+			// If completed_at didn't persist, do NOT fire the completion action
+			// (it awards a bonus): the log would stay un-completed and the next
+			// progress call would fire completion again -> double award.
+			if ( false === $completion_written ) {
+				return new WP_Error( 'rest_progress_failed', __( 'Could not mark the challenge complete.', 'wb-gamification' ), array( 'status' => 500 ) );
+			}
 
 			/**
 			 * Fires when a member completes a challenge via the REST API.

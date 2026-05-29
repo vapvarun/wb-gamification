@@ -741,6 +741,16 @@ register_deactivation_hook(
 		StatusRetentionEngine::deactivate();
 		CredentialExpiryEngine::deactivate();
 		BadgeSharePage::deactivate();
+
+		// v2.x engines (SideEffectDispatcher, IntelligenceProjector,
+		// NotificationBridge) schedule wp-cron hooks but predate the per-engine
+		// deactivate() convention above, so their events survived deactivation
+		// (smoke: D.action-scheduler-orphan — 3 wb_gam_ hooks left registered).
+		// Clear them here so deactivation leaves no orphaned scheduled events.
+		wp_clear_scheduled_hook( \WBGam\Engine\SideEffectDispatcher::RECONCILE_CRON );
+		wp_clear_scheduled_hook( \WBGam\Engine\IntelligenceProjector::COMPUTE_CRON );
+		wp_clear_scheduled_hook( \WBGam\Engine\NotificationBridge::PRUNE_CRON );
+
 		flush_rewrite_rules();
 	}
 );

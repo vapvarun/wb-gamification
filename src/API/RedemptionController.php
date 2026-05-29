@@ -275,7 +275,11 @@ class RedemptionController extends WP_REST_Controller {
 			$data['is_active'] = (int) $request['is_active']; }
 
 		if ( $data ) {
-			$wpdb->update( $wpdb->prefix . 'wb_gam_redemption_items', $data, array( 'id' => $id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- Write operation; no cache needed.
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- Write operation; no cache needed.
+			$updated = $wpdb->update( $wpdb->prefix . 'wb_gam_redemption_items', $data, array( 'id' => $id ) );
+			if ( false === $updated ) {
+				return new WP_Error( 'rest_update_failed', __( 'Could not update reward item.', 'wb-gamification' ), array( 'status' => 500 ) );
+			}
 		}
 
 		return rest_ensure_response( $this->prepare_item_for_response( RedemptionEngine::get_item( $id ) ) );
@@ -295,7 +299,11 @@ class RedemptionController extends WP_REST_Controller {
 			return new WP_Error( 'rest_not_found', __( 'Reward item not found.', 'wb-gamification' ), array( 'status' => 404 ) );
 		}
 
-		$wpdb->delete( $wpdb->prefix . 'wb_gam_redemption_items', array( 'id' => $id ), array( '%d' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- Write operation; no cache needed.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- Write operation; no cache needed.
+		$deleted = $wpdb->delete( $wpdb->prefix . 'wb_gam_redemption_items', array( 'id' => $id ), array( '%d' ) );
+		if ( false === $deleted ) {
+			return new WP_Error( 'rest_delete_failed', __( 'Could not delete reward item.', 'wb-gamification' ), array( 'status' => 500 ) );
+		}
 		return new WP_REST_Response(
 			array(
 				'deleted' => true,

@@ -237,6 +237,13 @@ final class ApiKeysController extends WP_REST_Controller {
 		}
 
 		$secret = ApiKeyAuth::create_key( $label, get_current_user_id(), $site_id );
+		if ( false === $secret ) {
+			return new WP_Error(
+				'rest_api_key_create_failed',
+				__( 'The API key could not be created. Please try again.', 'wb-gamification' ),
+				array( 'status' => 500 )
+			);
+		}
 
 		// Re-list to find the freshly-created row by prefix+suffix match.
 		// We can't query by hash here without re-hashing; we trust that
@@ -250,17 +257,17 @@ final class ApiKeysController extends WP_REST_Controller {
 				break;
 			}
 		}
-		$row = $row ?: array(
-			'id'         => 0,
-			'label'      => $label,
-			'site_id'    => $site_id,
-			'user_id'    => get_current_user_id(),
-			'key_prefix' => $prefix,
-			'key_suffix' => $suffix,
-			'is_active'  => 1,
-			'created_at' => gmdate( 'Y-m-d H:i:s' ),
-			'last_used'  => null,
-		);
+
+		// The insert reported success but the row can't be read back. Do NOT
+		// fabricate a synthetic id:0 row and hand out a secret for a key the
+		// admin can never manage or revoke — surface the inconsistency instead.
+		if ( null === $row ) {
+			return new WP_Error(
+				'rest_api_key_unreadable',
+				__( 'The API key was created but could not be retrieved. Check the API Keys list before retrying.', 'wb-gamification' ),
+				array( 'status' => 500 )
+			);
+		}
 
 		do_action( 'wb_gam_after_create_api_key', (int) $row['id'], $row, $request );
 

@@ -32,10 +32,30 @@ defined( 'ABSPATH' ) || exit;
 final class MemberUploadCap {
 
 	/**
+	 * Request-scoped flag: true only while a gamification surface that
+	 * legitimately needs member uploads (the achievement-submission editor)
+	 * is rendering. Set via {@see enable_for_request()} from that surface.
+	 *
+	 * @var bool
+	 */
+	private static bool $request_enabled = false;
+
+	/**
 	 * Hook the capability grant.
 	 */
 	public static function init(): void {
 		add_filter( 'user_has_cap', array( __CLASS__, 'grant_upload_to_members' ), 10, 4 );
+	}
+
+	/**
+	 * Opt the current request into the member upload grant.
+	 *
+	 * Called by the gamification surfaces that genuinely need it (e.g. the
+	 * submit-achievement block render) so the grant is scoped to those
+	 * surfaces instead of being site-wide on every request.
+	 */
+	public static function enable_for_request(): void {
+		self::$request_enabled = true;
 	}
 
 	/**
@@ -78,7 +98,47 @@ final class MemberUploadCap {
 			return $allcaps;
 		}
 
+		// Scope the grant. Previously upload_files was handed to EVERY logged-in
+		// user on EVERY cap check — meaning any subscriber gained the full Media
+		// Library, REST /wp/v2/media listing, and delete rights site-wide (a
+		// privilege-escalation / storage-abuse vector on open-registration
+		// communities). Now it is granted only in the two moments the feature
+		// actually needs it: (a) while a gamification surface that needs it is
+		// rendering (the submit-achievement editor calls enable_for_request()),
+		// so the Add Media button appears; and (b) during the media-modal upload
+		// action (plupload posts to the `upload-attachment` admin-ajax action),
+		// the only core path the editor's Add Media button uses to POST a file.
+		// Media Library browsing, REST media listing, and deletes never set
+		// either signal, so members no longer gain them.
+		if ( ! self::is_member_upload_context() ) {
+			return $allcaps;
+		}
+
 		$allcaps['upload_files'] = true;
 		return $allcaps;
+	}
+
+	/**
+	 * Whether the current request is a legitimate gamification upload context.
+	 *
+	 * @return bool
+	 */
+	private static function is_member_upload_context(): bool {
+		if ( self::$request_enabled ) {
+			return true;
+		}
+
+		// The WP media modal uploads via admin-ajax `upload-attachment`
+		// (plupload). This is the file-POST path the submission editor's Add
+		// Media button uses; it does NOT cover library browse/list/delete.
+		if ( function_exists( 'wp_doing_ajax' ) && wp_doing_ajax() ) {
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only routing check; core re-verifies the upload nonce + upload_files itself.
+			$action = isset( $_REQUEST['action'] ) ? sanitize_key( wp_unslash( $_REQUEST['action'] ) ) : '';
+			if ( 'upload-attachment' === $action ) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 }

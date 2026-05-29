@@ -16,6 +16,7 @@ namespace WBGam\Services;
 
 use WBGam\Engine\Event;
 use WBGam\Engine\PointsEngine;
+use WBGam\Engine\Transaction;
 use WBGam\Repository\PointTypeConversionRepository;
 
 defined( 'ABSPATH' ) || exit;
@@ -277,53 +278,21 @@ final class PointTypeConversionService {
 		$debit_amount  = $units * $from_amount;
 		$credit_amount = $units * $to_amount;
 
-		global $wpdb;
-		$wpdb->query( 'START TRANSACTION' );
-
-		// Lock the from-balance ledger rows.
-		$balance = (int) $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT COALESCE(SUM(points), 0) FROM {$wpdb->prefix}wb_gam_points
-				WHERE user_id = %d AND point_type = %s FOR UPDATE",
-				$user_id,
-				$from
-			)
-		);
-
-		// Lock the materialised user_totals rows for BOTH currencies. Without
-		// these locks, two concurrent conversions for the same user can both
-		// pass the balance check and both run UPSERT on user_totals, losing
-		// one update (read-modify-write race). Touch both currencies up-front
-		// so the lock acquisition order is consistent across requests.
-		$wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT total FROM {$wpdb->prefix}wb_gam_user_totals
-				WHERE user_id = %d AND point_type IN (%s, %s) FOR UPDATE",
-				$user_id,
-				$from,
-				$to
-			)
-		);
-
-		if ( $balance < $debit_amount ) {
-			$wpdb->query( 'ROLLBACK' );
-			return array(
-				'ok'      => false,
-				'error'   => 'insufficient',
-				'balance' => $balance,
-				'needed'  => $debit_amount,
-			);
-		}
-
 		$action_debit  = sprintf( 'convert_%s_to_%s', $from, $to );
-		$action_credit = sprintf( 'convert_%s_to_%s', $from, $to );
+		$action_credit = $action_debit;
 
-		// Shared event_id ties the two ledger rows together for audit + replay.
+		// One shared event_id ties the debit + credit ledger rows together for
+		// audit + replay. PointsEngine::debit() persists THIS Event row (and the
+		// debit ledger row) inside the transaction; the credit ledger row below
+		// references the same event_id. We pass the Event OBJECT (not its id
+		// string) so debit persists the rich conversion metadata, and so we do
+		// NOT insert a second, duplicate-PK events row.
 		$debit_event = new Event(
 			array(
-				'action_id' => $action_debit,
-				'user_id'   => $user_id,
-				'metadata'  => array(
+				'action_id'  => $action_debit,
+				'user_id'    => $user_id,
+				'point_type' => $from,
+				'metadata'   => array(
 					'point_type'    => $from,
 					'convert_to'    => $to,
 					'units'         => $units,
@@ -334,74 +303,131 @@ final class PointTypeConversionService {
 		);
 		$shared_event_id = $debit_event->event_id;
 
-		$ok_debit = PointsEngine::debit( $user_id, $debit_amount, $action_debit, $shared_event_id, $from );
-		if ( ! $ok_debit ) {
-			$wpdb->query( 'ROLLBACK' );
-			return array(
-				'ok'    => false,
-				'error' => 'debit_failed',
-			);
-		}
+		// Out-of-band failure reason + locked balance. Transaction::run() commits
+		// on a truthy return and rolls back on false/null, so the closure returns
+		// false to roll back and stashes WHY here for the caller's error shape.
+		$fail         = '';
+		$lock_balance = 0;
 
-		// Mirror event row for audit grouping. Failure here (e.g. duplicate
-		// event_id from a replayed request) MUST roll back the debit — without
-		// this check, the user's points are gone but no event row exists and
-		// no credit is issued.
-		$event_inserted = $wpdb->insert(
-			$wpdb->prefix . 'wb_gam_events',
-			array(
-				'id'         => $shared_event_id,
-				'user_id'    => $user_id,
-				'action_id'  => $action_debit,
-				'metadata'   => wp_json_encode( $debit_event->metadata ),
-				'point_type' => $from,
-				'created_at' => gmdate( 'Y-m-d H:i:s' ),
-			),
-			array( '%s', '%d', '%s', '%s', '%s', '%s' )
+		// The WHOLE flow runs inside one re-entrant transaction. debit() also
+		// calls Transaction::run(), but nested at inner depth — it does NOT open
+		// its own MySQL transaction (which previously triggered an implicit
+		// commit of the debit before the credit, the cause of debit-without-
+		// credit ledger corruption). This outer frame owns commit/rollback.
+		$result = Transaction::run(
+			function () use (
+				$user_id,
+				$from,
+				$to,
+				$debit_amount,
+				$credit_amount,
+				$units,
+				$action_debit,
+				$action_credit,
+				$debit_event,
+				$shared_event_id,
+				&$fail,
+				&$lock_balance
+			) {
+				global $wpdb;
+
+				// Lock the from-balance ledger rows.
+				$balance = (int) $wpdb->get_var(
+					$wpdb->prepare(
+						"SELECT COALESCE(SUM(points), 0) FROM {$wpdb->prefix}wb_gam_points
+						WHERE user_id = %d AND point_type = %s FOR UPDATE",
+						$user_id,
+						$from
+					)
+				);
+
+				// Lock the materialised user_totals rows for BOTH currencies.
+				// Without these locks, two concurrent conversions for the same
+				// user can both pass the balance check and both run UPSERT on
+				// user_totals, losing one update (read-modify-write race). Touch
+				// both currencies up-front so lock order is consistent.
+				$wpdb->get_var(
+					$wpdb->prepare(
+						"SELECT total FROM {$wpdb->prefix}wb_gam_user_totals
+						WHERE user_id = %d AND point_type IN (%s, %s) FOR UPDATE",
+						$user_id,
+						$from,
+						$to
+					)
+				);
+
+				if ( $balance < $debit_amount ) {
+					$fail         = 'insufficient';
+					$lock_balance = $balance;
+					return false;
+				}
+
+				// Debit the source type. Passing the Event OBJECT makes debit()
+				// persist exactly one wb_gam_events row (id = $shared_event_id)
+				// plus the debit ledger row. debit() returns array{success:bool}.
+				$debit = PointsEngine::debit( $user_id, $debit_amount, $action_debit, $debit_event, $from );
+				if ( empty( $debit['success'] ) ) {
+					$fail = (string) ( $debit['reason'] ?? 'debit_failed' );
+					return false;
+				}
+
+				// Credit the destination type via a direct ledger insert (skips
+				// the rate-limit pipeline — convert is admin-controlled). It
+				// shares the debit's event_id; the single events row debit()
+				// already persisted is the audit anchor for BOTH rows, so there
+				// is no second events insert here.
+				$credit_inserted = $wpdb->insert(
+					$wpdb->prefix . 'wb_gam_points',
+					array(
+						'event_id'   => $shared_event_id,
+						'user_id'    => $user_id,
+						'action_id'  => $action_credit,
+						'points'     => $credit_amount,
+						'point_type' => $to,
+						'object_id'  => null,
+						'created_at' => current_time( 'mysql' ),
+					),
+					array( '%s', '%d', '%s', '%d', '%s', '%d', '%s' )
+				);
+				if ( false === $credit_inserted ) {
+					$fail = 'credit_failed';
+					return false;
+				}
+
+				// Bump the credit-side materialised total inside the same
+				// transaction (debit side already bumped within debit()).
+				if ( ! PointsEngine::bump_user_total( $user_id, $to, $credit_amount ) ) {
+					$fail = 'credit_total_failed';
+					return false;
+				}
+
+				return array(
+					'ok'     => true,
+					'debit'  => $debit_amount,
+					'credit' => $credit_amount,
+					'units'  => $units,
+				);
+			}
 		);
 
-		if ( ! $event_inserted ) {
-			$wpdb->query( 'ROLLBACK' );
+		if ( ! is_array( $result ) ) {
+			// Rolled back — nothing committed. Surface why.
+			if ( 'insufficient' === $fail ) {
+				return array(
+					'ok'      => false,
+					'error'   => 'insufficient',
+					'balance' => $lock_balance,
+					'needed'  => $debit_amount,
+				);
+			}
 			return array(
 				'ok'    => false,
-				'error' => 'event_insert_failed',
+				'error' => '' !== $fail ? $fail : 'conversion_failed',
 			);
 		}
 
-		// Credit the destination type via direct ledger insert (skips the
-		// rate-limit pipeline — convert is admin-controlled).
-		$credit_inserted = $wpdb->insert(
-			$wpdb->prefix . 'wb_gam_points',
-			array(
-				'event_id'   => $shared_event_id,
-				'user_id'    => $user_id,
-				'action_id'  => $action_credit,
-				'points'     => $credit_amount,
-				'point_type' => $to,
-				'object_id'  => null,
-				'created_at' => current_time( 'mysql' ),
-			),
-			array( '%s', '%d', '%s', '%d', '%s', '%d', '%s' )
-		);
-
-		if ( ! $credit_inserted ) {
-			$wpdb->query( 'ROLLBACK' );
-			return array(
-				'ok'    => false,
-				'error' => 'credit_failed',
-			);
-		}
-
-		// Bump the credit-side materialised total INSIDE the transaction so
-		// it's covered by the same atomic guarantee as the ledger writes.
-		// Debit side already bumped via PointsEngine::debit (also in-transaction).
-		PointsEngine::bump_user_total( $user_id, $to, $credit_amount );
-
-		$wpdb->query( 'COMMIT' );
-
-		// Cache invalidation runs AFTER COMMIT — at this point the data is
-		// durable. Use the canonical cache key helper so this matches what
-		// PointsEngine::get_total reads.
+		// Cache invalidation runs AFTER commit — the data is durable now. Use
+		// the canonical cache key helper so this matches PointsEngine::get_total.
 		wp_cache_delete( PointsEngine::cache_key_total( $user_id, $from ), 'wb_gamification' );
 		wp_cache_delete( PointsEngine::cache_key_total( $user_id, $to ), 'wb_gamification' );
 

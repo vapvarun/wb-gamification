@@ -13,6 +13,7 @@
 
 namespace WBGam\Services;
 
+use WBGam\Engine\Log;
 use WBGam\Engine\PointsEngine;
 use WBGam\Engine\Registry;
 use WBGam\Repository\SubmissionRepository;
@@ -127,11 +128,27 @@ final class SubmissionService {
 		}
 
 		// Award via PointsEngine — uses the default points for this action.
+		// The award MUST succeed before we mark the submission approved:
+		// otherwise the moderator sees "approved" while the member receives
+		// zero points, with no retry and no trace.
 		$action = Registry::get_action( (string) $row['action_id'] );
 		if ( $action ) {
 			$points = (int) ( get_option( 'wb_gam_points_' . $row['action_id'], $action['default_points'] ?? 0 ) );
-			if ( $points > 0 ) {
-				PointsEngine::award( (int) $row['user_id'], (string) $row['action_id'], $points );
+			if ( $points > 0 && ! PointsEngine::award( (int) $row['user_id'], (string) $row['action_id'], $points ) ) {
+				Log::error(
+					'SubmissionService::approve — points award failed; submission left pending',
+					array(
+						'submission_id' => $id,
+						'user_id'       => (int) $row['user_id'],
+						'action_id'     => (string) $row['action_id'],
+						'points'        => $points,
+					)
+				);
+				return new WP_Error(
+					'wb_gam_award_failed',
+					__( 'Could not award points for this submission. It remains pending — please retry.', 'wb-gamification' ),
+					array( 'status' => 500 )
+				);
 			}
 		}
 

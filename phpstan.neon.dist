@@ -1,5 +1,12 @@
 includes:
     - vendor/szepeviktor/phpstan-wordpress/extension.neon
+    # Pre-existing level-9 debt captured 2026-05-30 when PHPStan first ran
+    # cleanly (the gate had silently no-op'd: src/Extensions/functions.php's
+    # `exit` killed the autoloader on CLI, the config referenced a non-existent
+    # `blocks` path, and the 512M limit OOM'd). New code must not add errors;
+    # burn this down over time. Regenerate: vendor/bin/phpstan analyse
+    # --generate-baseline=phpstan-baseline.neon --memory-limit=2G
+    - phpstan-baseline.neon
 
 parameters:
     # Level bumped 5 → 9 on 2026-05-27 after the stability audit found the
@@ -11,7 +18,6 @@ parameters:
         - src
         - wb-gamification.php
         - integrations
-        - blocks
         - uninstall.php
     excludePaths:
         - tests
@@ -25,10 +31,10 @@ parameters:
         - vendor/szepeviktor/phpstan-wordpress/bootstrap.php
     treatPhpDocTypesAsCertain: false
     inferPrivatePropertyTypeFromConstructor: true
+    reportUnmatchedIgnoredErrors: false
     ignoreErrors:
         # WordPress globals + dynamic plugin checks generate noise. Quiet
         # the most common WP-specific patterns; tighten over time.
-        - '#Variable \$wpdb in isset\(\) always exists#'
         - '#Constant (WB_GAM_PATH|WB_GAM_URL|WB_GAM_FILE|WB_GAM_VERSION|WB_GAM_BASENAME) not found#'
         # Action Scheduler is loaded conditionally — its functions are
         # discovered at runtime and may not be visible to static analysis.

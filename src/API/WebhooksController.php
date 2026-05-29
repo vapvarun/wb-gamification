@@ -271,7 +271,11 @@ class WebhooksController extends WP_REST_Controller {
 			return rest_ensure_response( $this->prepare_item( $row ) );
 		}
 
-		$wpdb->update( $wpdb->prefix . 'wb_gam_webhooks', $data, array( 'id' => $id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- Write operation; no cache needed.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- Write operation; no cache needed.
+		$updated = $wpdb->update( $wpdb->prefix . 'wb_gam_webhooks', $data, array( 'id' => $id ) );
+		if ( false === $updated ) {
+			return new WP_Error( 'rest_update_failed', __( 'Could not update webhook.', 'wb-gamification' ), array( 'status' => 500 ) );
+		}
 
 		return rest_ensure_response( $this->prepare_item( $this->fetch_row( $id ) ) );
 	}
@@ -291,7 +295,11 @@ class WebhooksController extends WP_REST_Controller {
 			return new WP_Error( 'rest_not_found', __( 'Webhook not found.', 'wb-gamification' ), array( 'status' => 404 ) );
 		}
 
-		$wpdb->delete( $wpdb->prefix . 'wb_gam_webhooks', array( 'id' => $id ), array( '%d' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- Write operation; no cache needed.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- Write operation; no cache needed.
+		$deleted = $wpdb->delete( $wpdb->prefix . 'wb_gam_webhooks', array( 'id' => $id ), array( '%d' ) );
+		if ( false === $deleted ) {
+			return new WP_Error( 'rest_delete_failed', __( 'Could not delete webhook.', 'wb-gamification' ), array( 'status' => 500 ) );
+		}
 
 		// Clean up delivery log when a webhook is deleted.
 		WebhookDispatcher::clear_delivery_log( $id );
