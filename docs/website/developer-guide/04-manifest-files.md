@@ -217,4 +217,4 @@ add_action( 'wb_gam_manifests_loaded', function ( array $actions ): void {
 
 ## Quick Start
 
-New to manifest files? Follow the [Build Your First Integration](build-first-integration.md) tutorial to create a working manifest in 5 minutes.
+New to manifest files? Follow the [Build Your First Integration](03-build-first-integration.md) tutorial to create a working manifest in 5 minutes.

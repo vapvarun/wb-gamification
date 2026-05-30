@@ -39,7 +39,7 @@ For the rules around folder structure, filename conventions, image handling, and
 
 - Customer docs are **journey-oriented**, not reference-oriented. Lead with what the reader is trying to *do*, then how to do it.
 - Every doc has a frontmatter-free Markdown title (`# Title`) — the publish pipeline lifts the title from the H1.
-- Internal cross-links use relative paths (`[Points](features/points.md)`). The pipeline rewrites to canonical doc URLs at publish.
+- Internal cross-links use relative paths (`[Points](features/01-points.md)`). The pipeline rewrites to canonical doc URLs at publish.
 - Screenshots go in the WP media library via the publish pipeline; reference them by the URL the pipeline returns. Don't embed local paths.
 - Don't duplicate content from `readme.txt`, the changelog, or the developer-side docs in `docs/` (root). Cross-link.
 - Keep `feature-catalog.md` in lockstep with what actually ships — it's the docs equivalent of `audit/manifest.summary.json`.

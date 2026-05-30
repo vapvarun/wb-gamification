@@ -139,12 +139,12 @@ The generator emits desktop rules at the top, then `@media (max-width: 1024px)` 
 
 ## Backwards compatibility
 
-Saved post content containing the pre-migration block markup will gain `deprecated` migrations during Phase D of [`WBCOM-BLOCK-STANDARD-MIGRATION`](../../../plans/WBCOM-BLOCK-STANDARD-MIGRATION.md). Until then, only blocks rebuilt to the new schema (`redemption-store` first) carry these attributes.
+Saved post content containing the pre-migration block markup will gain `deprecated` migrations during Phase D of `WBCOM-BLOCK-STANDARD-MIGRATION`. Until then, only blocks rebuilt to the new schema (`redemption-store` first) carry these attributes.
 
 ## See also
 
 - [`src/shared/utils/attributes.js`](../../../src/shared/utils/attributes.js) — JavaScript schema source
 - [`src/Blocks/CSS.php`](../../../src/Blocks/CSS.php) — PHP CSS generator
 - [`src/Blocks/Registrar.php`](../../../src/Blocks/Registrar.php) — `build/blocks/` auto-registrar
-- [`plans/WBCOM-BLOCK-STANDARD-MIGRATION.md`](../../../plans/WBCOM-BLOCK-STANDARD-MIGRATION.md) — full migration plan
-- [Extending Blocks](extending-blocks.md) — `wb_gam_block_before_render` / `_after_render` hooks
+- `plans/WBCOM-BLOCK-STANDARD-MIGRATION.md` — full migration plan
+- [Extending Blocks](06-extending-blocks.md) — `wb_gam_block_before_render` / `_after_render` hooks

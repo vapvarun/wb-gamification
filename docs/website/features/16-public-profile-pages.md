@@ -78,6 +78,6 @@ Settings → Privacy → Public Profiles.
 
 ## See Also
 
-- **[Privacy](privacy.md)** — full GDPR export and erasure behavior
-- **[Year Recap](year-recap.md)** — shareable per-year recap that uses the same opt-in flag
-- **[Badge Sharing](badge-sharing.md)** — sharable URL per badge with OG image
+- **[Privacy](22-privacy.md)** — full GDPR export and erasure behavior
+- **[Year Recap](15-year-recap.md)** — shareable per-year recap that uses the same opt-in flag
+- **[Badge Sharing](04-badge-sharing.md)** — sharable URL per badge with OG image

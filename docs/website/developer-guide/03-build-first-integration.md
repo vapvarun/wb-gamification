@@ -73,7 +73,7 @@ Every trigger must include these three keys or it will be skipped:
 | `hook` | string | The WordPress action hook that fires when the event occurs |
 | `default_points` | int | Default points awarded. Admins can override this in the settings UI |
 
-See the [Manifest Files reference](manifest-files.md) for the full list of optional fields (`user_callback`, `metadata_callback`, `cooldown`, `daily_cap`, `async`, etc.).
+See the [Manifest Files reference](04-manifest-files.md) for the full list of optional fields (`user_callback`, `metadata_callback`, `cooldown`, `daily_cap`, `async`, etc.).
 
 ---
 
@@ -169,6 +169,6 @@ Check your debug log at `wp-content/debug.log` to diagnose manifest issues.
 
 ## Next steps
 
-- [Manifest Files reference](manifest-files.md) — full field reference and conditional trigger flags
-- [PHP Helper Functions](helper-functions.md) — `wb_gam_get_user_points()`, `wb_gam_award_points()`, and more
-- [Hooks & Filters Reference](hooks-filters.md) — all available hooks for customisation
+- [Manifest Files reference](04-manifest-files.md) — full field reference and conditional trigger flags
+- [PHP Helper Functions](05-helper-functions.md) — `wb_gam_get_user_points()`, `wb_gam_award_points()`, and more
+- [Hooks & Filters Reference](12-hooks-overview.md) — all available hooks for customisation

@@ -8,16 +8,16 @@ The complete inventory of WB Gamification features. Every row is shipped in the 
 
 | Feature | Tier | Where it's configured | Where it's documented |
 |---|---|---|---|
-| Points engine (event-sourced) | Core | Settings → Points | [Points](features/points.md) |
-| Multi-currency points | Core | Settings → Point Types | [Points](features/points.md) |
+| Points engine (event-sourced) | Core | Settings → Points | [Points](features/01-points.md) |
+| Multi-currency points | Core | Settings → Point Types | [Points](features/01-points.md) |
 | Currency conversions | Core | Settings → Conversions | — |
 | Materialised user-totals | Core | (automatic — performance layer) | — |
 | Async award pipeline | Core | (automatic — Action Scheduler) | — |
-| Levels (5-tier progression) | Core | Settings → Levels | [Levels](features/levels.md) |
-| Badge engine | Core | Badges admin | [Badges](features/badges.md) |
-| Challenge engine | Core | Challenges admin | [Challenges](features/challenges.md) |
-| Streak engine | Core | Settings → Streaks | [Streaks](features/streaks.md) |
-| Kudos engine | Core | Settings → Kudos | [Kudos](features/kudos.md) |
+| Levels (5-tier progression) | Core | Settings → Levels | [Levels](features/05-levels.md) |
+| Badge engine | Core | Badges admin | [Badges](features/03-badges.md) |
+| Challenge engine | Core | Challenges admin | [Challenges](features/06-challenges.md) |
+| Streak engine | Core | Settings → Streaks | [Streaks](features/08-streaks.md) |
+| Kudos engine | Core | Settings → Kudos | [Kudos](features/09-kudos.md) |
 | Login bonus engine | Core | Settings → Daily Login | — |
 | Tenure / anniversary badges | Core | (automatic — fires on registration anniversary) | — |
 | Site-first-action badges | Core | (automatic — first user to perform action wins) | — |
@@ -28,11 +28,11 @@ The complete inventory of WB Gamification features. Every row is shipped in the 
 
 | Feature | Tier | Where it lives | Where it's documented |
 |---|---|---|---|
-| Hub page | Core | Auto-created at `/gamification` | [Quick Start](getting-started/quick-start.md) |
-| Public profile pages | Core | `/u/{user_login}` | [Privacy](features/privacy.md) |
-| Badge share URL (OG-ready) | Core | `/?wb-gam-share=<badge_slug>` | [Badge Sharing](features/badge-sharing.md) |
+| Hub page | Core | Auto-created at `/gamification` | [Quick Start](getting-started/02-quick-start.md) |
+| Public profile pages | Core | `/u/{user_login}` | [Privacy](features/22-privacy.md) |
+| Badge share URL (OG-ready) | Core | `/?wb-gam-share=<badge_slug>` | [Badge Sharing](features/04-badge-sharing.md) |
 | OpenBadges 3.0 credentials | Core | `/credentials/{badge}/{user}` | [OpenBadges](developer-guide/openbadges.md) |
-| Toast notifications | Core | (automatic — Interactivity API) | [Notifications](features/notifications.md) |
+| Toast notifications | Core | (automatic — Interactivity API) | [Notifications](features/18-notifications.md) |
 
 ## Gutenberg blocks (17)
 
@@ -40,22 +40,22 @@ Every block has a matching shortcode and is fully responsive at 390px viewport w
 
 | Block | Shortcode | Documented |
 |---|---|---|
-| Leaderboard | `wb_gam_leaderboard` | [Blocks & Shortcodes](features/blocks-shortcodes.md) |
-| Hub | `wb_gam_hub` | [Blocks & Shortcodes](features/blocks-shortcodes.md) |
-| Member Points | `wb_gam_member_points` | [Blocks & Shortcodes](features/blocks-shortcodes.md) |
-| Points History | `wb_gam_points_history` | [Blocks & Shortcodes](features/blocks-shortcodes.md) |
-| Badge Showcase | `wb_gam_badge_showcase` | [Blocks & Shortcodes](features/blocks-shortcodes.md) |
-| Earning Guide | `wb_gam_earning_guide` | [Blocks & Shortcodes](features/blocks-shortcodes.md) |
+| Leaderboard | `wb_gam_leaderboard` | [Blocks & Shortcodes](blocks/01-blocks-overview.md) |
+| Hub | `wb_gam_hub` | [Blocks & Shortcodes](blocks/01-blocks-overview.md) |
+| Member Points | `wb_gam_member_points` | [Blocks & Shortcodes](blocks/01-blocks-overview.md) |
+| Points History | `wb_gam_points_history` | [Blocks & Shortcodes](blocks/01-blocks-overview.md) |
+| Badge Showcase | `wb_gam_badge_showcase` | [Blocks & Shortcodes](blocks/01-blocks-overview.md) |
+| Earning Guide | `wb_gam_earning_guide` | [Blocks & Shortcodes](blocks/01-blocks-overview.md) |
 | Daily Bonus | (block-only) | — |
-| Streak | `wb_gam_streak` | [Blocks & Shortcodes](features/blocks-shortcodes.md) |
-| Challenges | `wb_gam_challenges` | [Blocks & Shortcodes](features/blocks-shortcodes.md) |
-| Community Challenges | `wb_gam_community_challenges` | [Community Challenges](features/community-challenges.md) |
-| Cohort Rank | `wb_gam_cohort_rank` | [Cohort Leagues](features/cohort-leagues.md) |
-| Top Members | `wb_gam_top_members` | [Blocks & Shortcodes](features/blocks-shortcodes.md) |
-| Kudos Feed | `wb_gam_kudos_feed` | [Kudos](features/kudos.md) |
+| Streak | `wb_gam_streak` | [Blocks & Shortcodes](blocks/01-blocks-overview.md) |
+| Challenges | `wb_gam_challenges` | [Blocks & Shortcodes](blocks/01-blocks-overview.md) |
+| Community Challenges | `wb_gam_community_challenges` | [Community Challenges](features/07-community-challenges.md) |
+| Cohort Rank | `wb_gam_cohort_rank` | [Cohort Leagues](features/11-cohort-leagues.md) |
+| Top Members | `wb_gam_top_members` | [Blocks & Shortcodes](blocks/01-blocks-overview.md) |
+| Kudos Feed | `wb_gam_kudos_feed` | [Kudos](features/09-kudos.md) |
 | Submit Achievement | (block-only) | — |
-| Level Progress | `wb_gam_level_progress` | [Levels](features/levels.md) |
-| Redemption Store | `wb_gam_redemption_store` | [Redemption Store](features/redemption-store.md) |
+| Level Progress | `wb_gam_level_progress` | [Levels](features/05-levels.md) |
+| Redemption Store | `wb_gam_redemption_store` | [Redemption Store](features/12-redemption-store.md) |
 | Year Recap | `wb_gam_year_recap` | — |
 
 ## Admin pages (13)
@@ -80,7 +80,7 @@ Every block has a matching shortcode and is fully responsive at 390px viewport w
 
 | Surface | Count | Reference |
 |---|---|---|
-| Endpoints | 65 | [REST API Reference](developer-guide/rest-api.md) |
+| Endpoints | 65 | [REST API Reference](developer-guide/15-rest-overview.md) |
 | Controllers | 24 | — |
 | Public read endpoints | 10 | (see allowlist below) |
 | Auth-required endpoints | 7 | — |
@@ -99,10 +99,10 @@ Auto-detected on activation. Each integration ships a manifest declaring its act
 | Host plugin | Tracked actions | Documented |
 |---|---|---|
 | WordPress core | publish post, leave comment, post receives comment, first post | [WordPress core](integrations/wordpress.md) |
-| BuddyPress | activity update / comment, reactions, friends accepted, groups join, kudos | [BuddyPress](integrations/buddypress.md) |
-| bbPress | topic create, reply | [bbPress](integrations/bbpress.md) |
-| WooCommerce | order completed, refund debit | [WooCommerce](integrations/woocommerce.md) |
-| LearnDash | lesson complete, course complete, quiz pass | [LearnDash](integrations/learndash.md) |
+| BuddyPress | activity update / comment, reactions, friends accepted, groups join, kudos | [BuddyPress](integrations/02-buddypress.md) |
+| bbPress | topic create, reply | [bbPress](integrations/05-bbpress.md) |
+| WooCommerce | order completed, refund debit | [WooCommerce](integrations/03-woocommerce.md) |
+| LearnDash | lesson complete, course complete, quiz pass | [LearnDash](integrations/04-learndash.md) |
 | LifterLMS | course complete, achievement earned | [LifterLMS](integrations/lifterlms.md) |
 | MemberPress | level join, level renew | [MemberPress](integrations/memberpress.md) |
 | GiveWP | donation made | [GiveWP](integrations/givewp.md) |

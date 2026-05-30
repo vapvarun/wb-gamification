@@ -14,7 +14,7 @@ The fastest way is a **manifest file** -- a single PHP file that tells WB Gamifi
 2. Return an array of action definitions
 3. WB Gamification auto-discovers it on activation
 
-[See the full manifest tutorial](build-first-integration.md)
+[See the full manifest tutorial](03-build-first-integration.md)
 [Download the manifest template](manifest-template.php)
 
 **For advanced use cases**, use the PHP API directly:
@@ -39,7 +39,7 @@ if ( wb_gam_has_badge( $user_id, 'first-post' ) ) {
 wb_gam_award_points( $user_id, 50, 'custom_reward' );
 ```
 
-[See all PHP API functions](helper-functions.md)
+[See all PHP API functions](05-helper-functions.md)
 
 ### Path 2: Theme Developer
 
@@ -73,7 +73,7 @@ $badges = wb_gam_get_user_badges( get_current_user_id() );
 $streak = wb_gam_get_user_streak( get_current_user_id() );
 ```
 
-[See all blocks and shortcodes](../features/blocks-shortcodes.md)
+[See all blocks and shortcodes](../blocks/01-blocks-overview.md)
 
 ### Path 3: App / Headless Developer
 
@@ -118,9 +118,9 @@ curl -X POST -H "X-WB-Gam-Key: YOUR_KEY" \
 **OpenAPI spec:** `GET /wp-json/wb-gamification/v1/openapi.json` -- import into Postman, Swagger UI, or any OpenAPI tool.
 
 **Webhooks** for real-time event notifications to your backend:
-[See webhook documentation](webhooks.md)
+[See webhook documentation](20-webhooks-overview.md)
 
-[See full REST API reference](rest-api.md)
+[See full REST API reference](15-rest-overview.md)
 
 ---
 
@@ -159,11 +159,11 @@ Output Consumers
 
 | Layer | How to extend | Documentation |
 |-------|--------------|---------------|
-| **Add actions** | Manifest file or `wb_gam_register_action()` | [Manifest tutorial](build-first-integration.md) |
-| **Modify points** | `wb_gam_points_for_action` filter | [Hooks reference](hooks-filters.md) |
-| **Custom badge rules** | `wb_gam_should_award_badge` filter | [Hooks reference](hooks-filters.md) |
-| **React to events** | `wb_gam_after_points_award` action | [Hooks reference](hooks-filters.md) |
-| **React to badges** | `wb_gam_after_badge_award` action | [Hooks reference](hooks-filters.md) |
-| **React to levels** | `wb_gam_level_changed` action | [Hooks reference](hooks-filters.md) |
-| **Custom display** | Shortcodes, blocks, or PHP API | [Blocks & shortcodes](../features/blocks-shortcodes.md) |
-| **External systems** | Webhooks or REST API | [Webhooks](webhooks.md), [REST API](rest-api.md) |
+| **Add actions** | Manifest file or `wb_gam_register_action()` | [Manifest tutorial](03-build-first-integration.md) |
+| **Modify points** | `wb_gam_points_for_action` filter | [Hooks reference](12-hooks-overview.md) |
+| **Custom badge rules** | `wb_gam_should_award_badge` filter | [Hooks reference](12-hooks-overview.md) |
+| **React to events** | `wb_gam_after_points_award` action | [Hooks reference](12-hooks-overview.md) |
+| **React to badges** | `wb_gam_after_badge_award` action | [Hooks reference](12-hooks-overview.md) |
+| **React to levels** | `wb_gam_level_changed` action | [Hooks reference](12-hooks-overview.md) |
+| **Custom display** | Shortcodes, blocks, or PHP API | [Blocks & shortcodes](../blocks/01-blocks-overview.md) |
+| **External systems** | Webhooks or REST API | [Webhooks](20-webhooks-overview.md), [REST API](15-rest-overview.md) |

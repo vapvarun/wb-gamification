@@ -116,11 +116,11 @@ wb_gam_award_points( $user_id, 'my_action', array(
 ) );
 ```
 
-See [Manifest Files](../developer-guide/manifest-files.md) for the full manifest spec.
+See [Manifest Files](../developer-guide/04-manifest-files.md) for the full manifest spec.
 
 ## See Also
 
-- **[Points](points.md)** — single-currency basics
-- **[Leaderboard](leaderboard.md)** — currency-scoped rankings
-- **[Redemption Store](redemption-store.md)** — currency-scoped reward catalogs
-- **[Helper Functions](../developer-guide/helper-functions.md)** — `wb_gam_award_points` API
+- **[Points](01-points.md)** — single-currency basics
+- **[Leaderboard](10-leaderboard.md)** — currency-scoped rankings
+- **[Redemption Store](12-redemption-store.md)** — currency-scoped reward catalogs
+- **[Helper Functions](../developer-guide/05-helper-functions.md)** — `wb_gam_award_points` API

@@ -68,7 +68,7 @@ Submissions are stored in the `wb_gam_submissions` table with the submitter's us
 
 ## See Also
 
-- **[Points](points.md)** — how the standard award pipeline integrates submissions
-- **[Notifications](notifications.md)** — toast / email behavior on approval
-- **[Privacy](privacy.md)** — what's exported and erased
-- **[Submit Achievement block](blocks-shortcodes.md)** — front-end submission form
+- **[Points](01-points.md)** — how the standard award pipeline integrates submissions
+- **[Notifications](18-notifications.md)** — toast / email behavior on approval
+- **[Privacy](22-privacy.md)** — what's exported and erased
+- **[Submit Achievement block](../blocks/01-blocks-overview.md)** — front-end submission form

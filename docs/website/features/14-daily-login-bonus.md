@@ -59,6 +59,6 @@ The login bonus does not store IP addresses or session identifiers. It tracks on
 
 ## See Also
 
-- **[Streaks](streaks.md)** — independent activity streak (any earning action) with milestones
-- **[Points](points.md)** — how the bonus integrates with the points ledger
-- **[Notifications](notifications.md)** — how the toast for the bonus appears
+- **[Streaks](08-streaks.md)** — independent activity streak (any earning action) with milestones
+- **[Points](01-points.md)** — how the bonus integrates with the points ledger
+- **[Notifications](18-notifications.md)** — how the toast for the bonus appears

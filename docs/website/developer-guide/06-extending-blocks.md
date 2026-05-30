@@ -152,7 +152,7 @@ add_action( 'wb_gam_block_after_render', function ( $slug ) {
 - **Inject a column into a tabular block.** The templates aren't column-pluggable. If you need this for a specific block, open an issue with the use case.
 - **Modify the wrapper `<div>` attributes.** The wrapper attrs are computed by `get_block_wrapper_attributes()` and not filterable from outside the block. Use the `_after_render` action with `ob_start()` if you must rewrite.
 
-These are tracked as future-roadmap items; see [`plans/INTEGRATION-GAPS-ROADMAP.md`](../../../../plans/INTEGRATION-GAPS-ROADMAP.md).
+These are tracked as future-roadmap items; see `plans/INTEGRATION-GAPS-ROADMAP.md`.
 
 ## Worked example
 
@@ -160,6 +160,6 @@ A complete worked example with 4 patterns lives at [`examples/10-inject-into-blo
 
 ## Related
 
-- [`hooks-filters.md`](hooks-filters.md) — full hook + filter reference (43 actions + 12 filters fired by the engine)
-- [`rest-api.md`](rest-api.md) — for replacing a block, build a competing block that reads the same REST endpoint
-- [`manifest-files.md`](manifest-files.md) — for tracking new events that flow through the engine + into block renders
+- [`hooks-filters.md`](12-hooks-overview.md) — full hook + filter reference (43 actions + 12 filters fired by the engine)
+- [`rest-api.md`](15-rest-overview.md) — for replacing a block, build a competing block that reads the same REST endpoint
+- [`manifest-files.md`](04-manifest-files.md) — for tracking new events that flow through the engine + into block renders
