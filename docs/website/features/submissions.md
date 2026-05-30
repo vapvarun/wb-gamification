@@ -7,7 +7,8 @@ Submissions let members claim achievements that the system cannot automatically 
 A submission is a member-supplied claim that they did something earnable. Each submission has:
 
 - **Title** — short description ("Volunteered 3 hours at Saturday cleanup")
-- **Optional URL** — link to evidence (photo, social post, completion certificate)
+- **Details + photo** — a short write-up of what they did, with an **Add Media** button to attach a photo as proof right in the form (a screenshot, event photo, or certificate). Every logged-in member can attach a photo this way — they don't need to be an admin.
+- **Optional URL** — or just paste a link to evidence hosted elsewhere (a social post, a Google Drive file)
 - **Action** — the gamification action this submission represents (admin defines the catalog)
 
 When an admin approves the submission, the system fires the standard event for that action. The member earns the configured points exactly as if the action had fired automatically. Badges, levels, streaks, and the leaderboard all update through the same path — there is no parallel "submitted points" track.
@@ -15,7 +16,7 @@ When an admin approves the submission, the system fires the standard event for t
 ## Member Flow
 
 1. Member places the **Submit Achievement block** on a page (or admins place it on the Hub).
-2. Member fills the form: title, optional URL, picks an action from the allowed list.
+2. Member fills the form: a title, a short description (with **Add Media** to attach a proof photo), an optional evidence URL, and picks an action from the allowed list.
 3. The submission lands in the moderation queue with status `pending`.
 4. Admin approves (→ points fire) or rejects (→ no points, member optionally notified).
 5. Approved submission appears on the member's points history with a "submitted" badge.

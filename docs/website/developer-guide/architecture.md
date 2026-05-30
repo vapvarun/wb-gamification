@@ -86,3 +86,20 @@ WB_GAM_BASENAME  // 'wb-gamification/wb-gamification.php'
 ## Database Version Tracking
 
 The current schema version is stored in `get_option('wb_gam_db_version')`. On each boot at priority 1, `DbUpgrader::init()` compares this to `WB_GAM_VERSION`. If behind, it runs the appropriate `upgrade_to_X_Y_Z()` methods in sequence. Each version gets its own upgrade method — no compound migrations.
+
+## Match the admin UI to your brand
+
+Every color in the admin screens reads from a single palette of CSS custom properties defined in `assets/css/admin/tokens.css` (the `--wbgam-*` tokens). No screen hard-codes a hex value, so you can re-theme the whole admin UI by overriding a few tokens — no need to touch component styles.
+
+Drop this in a small admin stylesheet (or a snippet plugin) to point the accent color at your brand:
+
+```css
+/* Re-brand the WB Gamification admin */
+:root {
+    --wbgam-primary:        #8b5cf6;  /* buttons, links, active states */
+    --wbgam-primary-hover:  #7c3aed;
+    --wbgam-primary-light:  #f5f3ff;  /* subtle accent backgrounds */
+}
+```
+
+The same pattern works for the success / warning / danger families and the surface, border, and text tokens. Because every rule resolves through these variables, one override cascades everywhere consistently.
