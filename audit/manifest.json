@@ -1658,7 +1658,7 @@
       "type": "action",
       "purpose": "",
       "fired_at": [
-        "src/API/ApiKeysController.php:265"
+        "src/API/ApiKeysController.php:272"
       ],
       "consumed_by": []
     },
@@ -1667,7 +1667,7 @@
       "type": "action",
       "purpose": "",
       "fired_at": [
-        "src/API/BadgesController.php:516"
+        "src/API/BadgesController.php:553"
       ],
       "consumed_by": []
     },
@@ -1676,7 +1676,7 @@
       "type": "action",
       "purpose": "",
       "fired_at": [
-        "src/API/CommunityChallengesController.php:251"
+        "src/API/CommunityChallengesController.php:256"
       ],
       "consumed_by": []
     },
@@ -1694,7 +1694,7 @@
       "type": "action",
       "purpose": "",
       "fired_at": [
-        "src/API/ApiKeysController.php:323"
+        "src/API/ApiKeysController.php:330"
       ],
       "consumed_by": []
     },
@@ -1703,7 +1703,7 @@
       "type": "action",
       "purpose": "",
       "fired_at": [
-        "src/API/CommunityChallengesController.php:359"
+        "src/API/CommunityChallengesController.php:379"
       ],
       "consumed_by": []
     },
@@ -1712,7 +1712,7 @@
       "type": "action",
       "purpose": "",
       "fired_at": [
-        "src/API/LevelsController.php:355"
+        "src/API/LevelsController.php:361"
       ],
       "consumed_by": []
     },
@@ -1721,7 +1721,7 @@
       "type": "action",
       "purpose": "",
       "fired_at": [
-        "src/API/ApiKeysController.php:299"
+        "src/API/ApiKeysController.php:306"
       ],
       "consumed_by": []
     },
@@ -1730,7 +1730,7 @@
       "type": "action",
       "purpose": "",
       "fired_at": [
-        "src/API/CohortSettingsController.php:175"
+        "src/API/CohortSettingsController.php:176"
       ],
       "consumed_by": []
     },
@@ -1739,7 +1739,7 @@
       "type": "action",
       "purpose": "",
       "fired_at": [
-        "src/API/BadgesController.php:569"
+        "src/API/BadgesController.php:616"
       ],
       "consumed_by": []
     },
@@ -1748,7 +1748,7 @@
       "type": "action",
       "purpose": "",
       "fired_at": [
-        "src/API/CommunityChallengesController.php:324"
+        "src/API/CommunityChallengesController.php:333"
       ],
       "consumed_by": []
     },
@@ -1757,7 +1757,7 @@
       "type": "action",
       "purpose": "",
       "fired_at": [
-        "src/API/LevelsController.php:315"
+        "src/API/LevelsController.php:318"
       ],
       "consumed_by": []
     },
@@ -1766,7 +1766,7 @@
       "type": "action",
       "purpose": "",
       "fired_at": [
-        "src/Engine/ActionSchedulerCleaner.php:202"
+        "src/Engine/ActionSchedulerCleaner.php:207"
       ],
       "consumed_by": []
     },
@@ -1775,7 +1775,7 @@
       "type": "action",
       "purpose": "",
       "fired_at": [
-        "src/Engine/ActionSchedulerCleaner.php:255"
+        "src/Engine/ActionSchedulerCleaner.php:260"
       ],
       "consumed_by": []
     },
@@ -1788,7 +1788,7 @@
         "src/Engine/PointsEngine.php:121",
         "src/Engine/PointsEngine.php:178",
         "src/Engine/PointsEngine.php:89",
-        "src/Engine/Registry.php:160",
+        "src/Engine/Registry.php:159",
         "src/Integrations/Jetonomy/JetonomyIntegration.php:106"
       ],
       "consumed_by": [
@@ -1817,7 +1817,7 @@
       "type": "action",
       "purpose": "",
       "fired_at": [
-        "src/API/CommunityChallengesController.php:347"
+        "src/API/CommunityChallengesController.php:356"
       ],
       "consumed_by": []
     },
@@ -1826,7 +1826,7 @@
       "type": "action",
       "purpose": "",
       "fired_at": [
-        "src/API/LevelsController.php:349"
+        "src/API/LevelsController.php:352"
       ],
       "consumed_by": []
     },
@@ -1862,7 +1862,7 @@
       "type": "action",
       "purpose": "Challenge completed (legacy alias).",
       "fired_at": [
-        "src/API/ChallengesController.php:573",
+        "src/API/ChallengesController.php:603",
         "src/BuddyPress/Stream/ChallengeStream.php:6",
         "src/Engine/ChallengeEngine.php:293"
       ],
@@ -1888,7 +1888,7 @@
       "type": "action",
       "purpose": "",
       "fired_at": [
-        "src/API/CohortSettingsController.php:177"
+        "src/API/CohortSettingsController.php:178"
       ],
       "consumed_by": []
     },
@@ -1906,7 +1906,7 @@
       "type": "action",
       "purpose": "",
       "fired_at": [
-        "src/API/CommunityChallengesController.php:253"
+        "src/API/CommunityChallengesController.php:258"
       ],
       "consumed_by": []
     },
@@ -1915,7 +1915,7 @@
       "type": "action",
       "purpose": "",
       "fired_at": [
-        "src/API/CommunityChallengesController.php:360"
+        "src/API/CommunityChallengesController.php:380"
       ],
       "consumed_by": []
     },
@@ -1924,7 +1924,7 @@
       "type": "action",
       "purpose": "",
       "fired_at": [
-        "src/API/CommunityChallengesController.php:325"
+        "src/API/CommunityChallengesController.php:334"
       ],
       "consumed_by": []
     },
@@ -2040,7 +2040,7 @@
       "type": "action",
       "purpose": "",
       "fired_at": [
-        "src/Services/PointTypeConversionService.php:418"
+        "src/Services/PointTypeConversionService.php:444"
       ],
       "consumed_by": []
     },
@@ -2065,7 +2065,7 @@
       "type": "action",
       "purpose": "",
       "fired_at": [
-        "src/Engine/PointsEngine.php:688"
+        "src/Engine/PointsEngine.php:719"
       ],
       "consumed_by": [
         "src/Engine/LeaderboardEngine.php:76 array( __CLASS__"
@@ -2076,7 +2076,7 @@
       "type": "action",
       "purpose": "",
       "fired_at": [
-        "src/Engine/RedemptionEngine.php:324"
+        "src/Engine/RedemptionEngine.php:322"
       ],
       "consumed_by": [
         "src/Engine/TransactionalEmailEngine.php:83 array( __CLASS__",
@@ -2088,7 +2088,7 @@
       "type": "action",
       "purpose": "",
       "fired_at": [
-        "src/API/PointsController.php:355"
+        "src/API/PointsController.php:361"
       ],
       "consumed_by": []
     },
@@ -2115,7 +2115,7 @@
       "type": "action",
       "purpose": "",
       "fired_at": [
-        "src/Engine/StatusRetentionEngine.php:215"
+        "src/Engine/StatusRetentionEngine.php:212"
       ],
       "consumed_by": []
     },
@@ -2146,7 +2146,7 @@
       "type": "action",
       "purpose": "",
       "fired_at": [
-        "src/Services/SubmissionService.php:149"
+        "src/Services/SubmissionService.php:168"
       ],
       "consumed_by": []
     },
@@ -2155,7 +2155,7 @@
       "type": "action",
       "purpose": "",
       "fired_at": [
-        "src/Services/SubmissionService.php:107"
+        "src/Services/SubmissionService.php:110"
       ],
       "consumed_by": []
     },
@@ -2164,7 +2164,7 @@
       "type": "action",
       "purpose": "",
       "fired_at": [
-        "src/Services/SubmissionService.php:184"
+        "src/Services/SubmissionService.php:203"
       ],
       "consumed_by": []
     },
@@ -2183,7 +2183,7 @@
       "type": "action",
       "purpose": "",
       "fired_at": [
-        "src/Engine/Privacy.php:565"
+        "src/Engine/Privacy.php:604"
       ],
       "consumed_by": []
     },
@@ -2210,7 +2210,7 @@
       "type": "action",
       "purpose": "",
       "fired_at": [
-        "src/Admin/SetupWizard.php:292"
+        "src/Admin/SetupWizard.php:295"
       ],
       "consumed_by": []
     },
@@ -2219,7 +2219,7 @@
       "type": "action",
       "purpose": "",
       "fired_at": [
-        "src/Admin/SetupWizard.php:276"
+        "src/Admin/SetupWizard.php:279"
       ],
       "consumed_by": []
     },
@@ -2246,7 +2246,7 @@
       "type": "filter",
       "purpose": "",
       "fired_at": [
-        "src/Engine/ActionSchedulerCleaner.php:182"
+        "src/Engine/ActionSchedulerCleaner.php:187"
       ],
       "consumed_by": []
     },
@@ -2282,7 +2282,7 @@
       "type": "filter",
       "purpose": "",
       "fired_at": [
-        "src/API/BadgesController.php:489"
+        "src/API/BadgesController.php:519"
       ],
       "consumed_by": []
     },
@@ -2291,7 +2291,7 @@
       "type": "filter",
       "purpose": "",
       "fired_at": [
-        "src/API/CommunityChallengesController.php:230"
+        "src/API/CommunityChallengesController.php:231"
       ],
       "consumed_by": []
     },
@@ -2336,7 +2336,7 @@
       "type": "filter",
       "purpose": "",
       "fired_at": [
-        "src/API/BadgesController.php:546"
+        "src/API/BadgesController.php:583"
       ],
       "consumed_by": []
     },
@@ -2345,7 +2345,7 @@
       "type": "filter",
       "purpose": "",
       "fired_at": [
-        "src/API/CommunityChallengesController.php:304"
+        "src/API/CommunityChallengesController.php:309"
       ],
       "consumed_by": []
     },
@@ -2543,7 +2543,7 @@
       "type": "filter",
       "purpose": "",
       "fired_at": [
-        "src/Engine/TransactionalEmailEngine.php:555"
+        "src/Engine/TransactionalEmailEngine.php:562"
       ],
       "consumed_by": []
     },
@@ -2552,7 +2552,7 @@
       "type": "filter",
       "purpose": "",
       "fired_at": [
-        "src/Engine/TransactionalEmailEngine.php:421"
+        "src/Engine/TransactionalEmailEngine.php:425"
       ],
       "consumed_by": []
     },
@@ -2573,7 +2573,7 @@
         "src/Engine/Engine.php:522"
       ],
       "consumed_by": [
-        "src/API/ApiKeyAuth.php:62 static function ( $metadata"
+        "src/API/ApiKeyAuth.php:52 static function ( $metadata"
       ]
     },
     {
@@ -2581,7 +2581,7 @@
       "type": "filter",
       "purpose": "",
       "fired_at": [
-        "src/Engine/MemberUploadCap.php:71"
+        "src/Engine/MemberUploadCap.php:91"
       ],
       "consumed_by": []
     },
@@ -2608,7 +2608,7 @@
       "type": "filter",
       "purpose": "",
       "fired_at": [
-        "src/Engine/LeaderboardEngine.php:591"
+        "src/Engine/LeaderboardEngine.php:595"
       ],
       "consumed_by": []
     },
@@ -2617,7 +2617,7 @@
       "type": "filter",
       "purpose": "",
       "fired_at": [
-        "src/Engine/LeaderboardEngine.php:638"
+        "src/Engine/LeaderboardEngine.php:642"
       ],
       "consumed_by": []
     },
@@ -2713,7 +2713,7 @@
       "type": "filter",
       "purpose": "",
       "fired_at": [
-        "src/Services/SubmissionService.php:200"
+        "src/Services/SubmissionService.php:219"
       ],
       "consumed_by": []
     },
@@ -2758,7 +2758,7 @@
       "type": "filter",
       "purpose": "",
       "fired_at": [
-        "integrations/wpmediaverse.php:422"
+        "integrations/wpmediaverse.php:426"
       ],
       "consumed_by": []
     },
@@ -2767,7 +2767,7 @@
       "type": "filter",
       "purpose": "",
       "fired_at": [
-        "integrations/wpmediaverse.php:438"
+        "integrations/wpmediaverse.php:442"
       ],
       "consumed_by": []
     }
