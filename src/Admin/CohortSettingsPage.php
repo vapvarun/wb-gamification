@@ -37,11 +37,11 @@ final class CohortSettingsPage {
 	 * @var array
 	 */
 	private const DEFAULTS = array(
-		'tier_1'     => 'Bronze',
-		'tier_2'     => 'Silver',
-		'tier_3'     => 'Gold',
-		'tier_4'     => 'Diamond',
-		'tier_5'     => 'Obsidian',
+		'tier_1'      => 'Bronze',
+		'tier_2'      => 'Silver',
+		'tier_3'      => 'Gold',
+		'tier_4'      => 'Diamond',
+		'tier_5'      => 'Obsidian',
 		'promote_pct' => 20,
 		'demote_pct'  => 20,
 		'duration'    => 'weekly',

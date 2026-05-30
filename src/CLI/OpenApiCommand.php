@@ -26,6 +26,12 @@ use WBGam\API\OpenApiController;
 
 defined( 'ABSPATH' ) || exit;
 
+// This is a WP-CLI command that writes a build artefact (the OpenAPI spec) to
+// disk and reads it back for --check. WP_Filesystem is designed for the web
+// request context (credentialled FS access); direct file I/O is the correct,
+// standard approach inside a CLI command running with shell-level permissions.
+// phpcs:disable WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents, WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents, WordPress.WP.AlternativeFunctions.file_system_operations_fwrite
+
 /**
  * Manage the OpenAPI 3.0.3 spec artefact.
  */
@@ -54,8 +60,8 @@ class OpenApiCommand {
 	 *     wp wb-gamification openapi export --output=dist/openapi.json
 	 *     wp wb-gamification openapi export --check
 	 *
-	 * @param array<int, string>     $args       Positional args (unused).
-	 * @param array<string, string>  $assoc_args Named args.
+	 * @param array<int, string>    $args       Positional args (unused).
+	 * @param array<string, string> $assoc_args Named args.
 	 * @return void
 	 */
 	public function export( array $args, array $assoc_args ): void {
@@ -68,6 +74,7 @@ class OpenApiCommand {
 		// `rest_get_server()` lazy-bootstraps; once that's done OpenApiController
 		// can enumerate paths.
 		rest_get_server();
+		// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- core WP hook, fired intentionally to bootstrap REST routes for the spec export.
 		do_action( 'rest_api_init' );
 
 		$controller = new OpenApiController();

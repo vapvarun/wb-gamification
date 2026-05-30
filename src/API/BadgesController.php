@@ -31,19 +31,19 @@ use WP_Error;
 
 defined( 'ABSPATH' ) || exit;
 // Silencing convention-driven false positives so Plugin Check signal stays clean:
-//   - PrefixAllGlobals.NonPrefixedHooknameFound — plugin uses `wb_gam_*` as its
-//     established hook prefix (documented in CLAUDE.md, declared in .phpcs.xml).
-//     Plugin Check auto-detects `wb_gamification` from the text-domain header
-//     and doesn't share the .phpcs.xml prefix list; hooks like
-//     `wb_gam_points_redeemed` are part of the public 1.0 API and can't rename.
-//   - PrefixAllGlobals.NonPrefixedFunctionFound — same convention. Helper
-//     functions exported under `wb_gam_*` are documented in `src/Extensions/`.
-//   - PluginCheck.Security.DirectDB.UnescapedDBParameter +
-//     WordPress.DB.PreparedSQL.InterpolatedNotPrepared — this file does custom-
-//     table work. Table names are interpolated from `{$wpdb->prefix}` plus
-//     literal constants (no user input); user-supplied values pass through
-//     `$wpdb->prepare()`. MySQL doesn't allow placeholder table names, so the
-//     interpolation is unavoidable.
+// - PrefixAllGlobals.NonPrefixedHooknameFound — plugin uses `wb_gam_*` as its
+// established hook prefix (documented in CLAUDE.md, declared in .phpcs.xml).
+// Plugin Check auto-detects `wb_gamification` from the text-domain header
+// and doesn't share the .phpcs.xml prefix list; hooks like
+// `wb_gam_points_redeemed` are part of the public 1.0 API and can't rename.
+// - PrefixAllGlobals.NonPrefixedFunctionFound — same convention. Helper
+// functions exported under `wb_gam_*` are documented in `src/Extensions/`.
+// - PluginCheck.Security.DirectDB.UnescapedDBParameter +
+// WordPress.DB.PreparedSQL.InterpolatedNotPrepared — this file does custom-
+// table work. Table names are interpolated from `{$wpdb->prefix}` plus
+// literal constants (no user input); user-supplied values pass through
+// `$wpdb->prepare()`. MySQL doesn't allow placeholder table names, so the
+// interpolation is unavoidable.
 // phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
 
 /**
@@ -357,7 +357,7 @@ class BadgesController extends WP_REST_Controller {
 	 * @return array{row: array<string, mixed>, formats: array<int, string>}
 	 */
 	private function collect_badge_row( WP_REST_Request $request, bool $with_id ): array {
-		$row = array();
+		$row     = array();
 		$formats = array();
 		if ( $with_id ) {
 			$row['id'] = sanitize_key( (string) $request->get_param( 'id' ) );
@@ -381,9 +381,9 @@ class BadgesController extends WP_REST_Controller {
 		}
 		// closes_at: empty string clears the cutoff; non-empty stored verbatim (callers send UTC).
 		if ( null !== $request->get_param( 'closes_at' ) ) {
-			$raw                = (string) $request->get_param( 'closes_at' );
-			$row['closes_at']   = '' === $raw ? null : $raw;
-			$formats[]          = '%s';
+			$raw              = (string) $request->get_param( 'closes_at' );
+			$row['closes_at'] = '' === $raw ? null : $raw;
+			$formats[]        = '%s';
 		}
 		if ( null !== $request->get_param( 'max_earners' ) ) {
 			$raw                = $request->get_param( 'max_earners' );
@@ -403,8 +403,8 @@ class BadgesController extends WP_REST_Controller {
 	 * `condition.type === 'admin_awarded'` the rule row is deleted (admin
 	 * award only, no automatic trigger).
 	 *
-	 * @param string                                                                    $badge_id  Badge id.
-	 * @param array{type?: string, points?: int, action_id?: string, count?: int}|null  $condition Condition payload.
+	 * @param string                                                                   $badge_id  Badge id.
+	 * @param array{type?: string, points?: int, action_id?: string, count?: int}|null $condition Condition payload.
 	 * @return bool True when the replace committed; false when it rolled back
 	 *              (caller MUST surface this — a half-applied replace would
 	 *              leave the badge with NO award condition, silently disabling

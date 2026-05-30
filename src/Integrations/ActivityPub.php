@@ -110,11 +110,11 @@ final class ActivityPub {
 			'type'     => 'Add',
 			'actor'    => self::actor_url_for( $wp_user ),
 			'object'   => array(
-				'type'        => 'Achievement',
-				'name'        => (string) ( $badge['name'] ?? $badge_id ),
-				'summary'     => (string) ( $badge['description'] ?? '' ),
-				'image'       => (string) ( $badge['image_url'] ?? '' ),
-				'wb:badgeId'  => $badge_id,
+				'type'       => 'Achievement',
+				'name'       => (string) ( $badge['name'] ?? $badge_id ),
+				'summary'    => (string) ( $badge['description'] ?? '' ),
+				'image'      => (string) ( $badge['image_url'] ?? '' ),
+				'wb:badgeId' => $badge_id,
 			),
 			'target'   => self::actor_url_for( $wp_user ) . '/collection/badges',
 		);
@@ -180,8 +180,8 @@ final class ActivityPub {
 			'type'     => 'Create',
 			'actor'    => self::actor_url_for( $wp_user ),
 			'object'   => array(
-				'type'         => 'Note',
-				'content'      => sprintf(
+				'type'           => 'Note',
+				'content'        => sprintf(
 					/* translators: 1: challenge title, 2: bonus points */
 					__( 'Completed the "%1$s" challenge — earned %2$d bonus points.', 'wb-gamification' ),
 					(string) ( $challenge['title'] ?? '' ),

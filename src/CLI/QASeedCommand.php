@@ -163,8 +163,14 @@ class QASeedCommand {
 				'posts_per_page' => -1,
 				'meta_query'     => array(
 					'relation' => 'OR',
-					array( 'key' => '_wb_gam_qa_seeded', 'compare' => 'EXISTS' ),
-					array( 'key' => '_wb_gam_qa_index',  'compare' => 'EXISTS' ),
+					array(
+						'key'     => '_wb_gam_qa_seeded',
+						'compare' => 'EXISTS',
+					),
+					array(
+						'key'     => '_wb_gam_qa_index',
+						'compare' => 'EXISTS',
+					),
 				),
 				'fields'         => 'ids',
 				'no_found_rows'  => true,
@@ -200,11 +206,11 @@ class QASeedCommand {
 	public function list_pages(): void {
 		$rows = array();
 		foreach ( QAPages::MAP as $block_slug => $unit ) {
-			$page = $this->find_page_by_slug( QAPages::page_slug_for( $block_slug ) );
+			$page   = $this->find_page_by_slug( QAPages::page_slug_for( $block_slug ) );
 			$rows[] = array(
-				'unit'  => $unit['title'],
-				'slug'  => $block_slug,
-				'url'   => $page ? get_permalink( $page->ID ) : '(not seeded)',
+				'unit' => $unit['title'],
+				'slug' => $block_slug,
+				'url'  => $page ? get_permalink( $page->ID ) : '(not seeded)',
 			);
 		}
 

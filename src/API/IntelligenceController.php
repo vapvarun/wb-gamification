@@ -110,7 +110,7 @@ final class IntelligenceController extends WP_REST_Controller {
 					'type'        => 'integer',
 					'description' => 'Number of distinct action_ids the user has fired in the last 30 days.',
 				),
-				'recency_days'    => array(
+				'recency_days'     => array(
 					'type'        => 'integer',
 					'description' => 'Days since the last recorded event. 999 = never active in window.',
 				),

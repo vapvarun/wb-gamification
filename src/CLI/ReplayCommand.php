@@ -35,10 +35,10 @@ use WBGam\Engine\Log;
 
 defined( 'ABSPATH' ) || exit;
 // Silencing convention-driven false positives so Plugin Check signal stays clean:
-//   - WordPress.DB.DirectDatabaseQuery.DirectQuery + .NoCaching + .SchemaChange:
-//     this file performs custom-table work. .phpcs.xml already excludes these
-//     for the local WPCS gate; this annotation extends the same intent to
-//     Plugin Check's internal phpcs invocation.
+// - WordPress.DB.DirectDatabaseQuery.DirectQuery + .NoCaching + .SchemaChange:
+// this file performs custom-table work. .phpcs.xml already excludes these
+// for the local WPCS gate; this annotation extends the same intent to
+// Plugin Check's internal phpcs invocation.
 // phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 
 /**
@@ -155,9 +155,9 @@ class ReplayCommand {
 		$progress = \WP_CLI\Utils\make_progress_bar( 'Users', count( $user_ids ) );
 		foreach ( $user_ids as $user_id ) {
 			$result = $this->replay_user( (int) $user_id, $dry_run );
-			$totals['users_scanned']++;
+			++$totals['users_scanned'];
 			if ( ! empty( $result['awarded'] ) ) {
-				$totals['users_with_award']++;
+				++$totals['users_with_award'];
 				$totals['awards_total'] += count( $result['awarded'] );
 			}
 			$progress->tick();
@@ -200,7 +200,7 @@ class ReplayCommand {
 		);
 
 		// 3. Always include a generic synthetic action so point_milestone rules
-		//    that don't pin to a specific action_id get a chance to fire.
+		// that don't pin to a specific action_id get a chance to fire.
 		$action_ids[] = '__replay__';
 
 		if ( $dry_run ) {
@@ -219,11 +219,13 @@ class ReplayCommand {
 			add_filter( 'wb_gam_should_award_badge', $capturer, 99, 3 );
 
 			foreach ( $action_ids as $aid ) {
-				$event = new Event( array(
-					'action_id' => (string) $aid,
-					'user_id'   => $user_id,
-					'metadata'  => array( '__replay__' => true ),
-				) );
+				$event = new Event(
+					array(
+						'action_id' => (string) $aid,
+						'user_id'   => $user_id,
+						'metadata'  => array( '__replay__' => true ),
+					)
+				);
 				BadgeEngine::evaluate_on_award( $user_id, $event, 0 );
 			}
 
@@ -243,11 +245,13 @@ class ReplayCommand {
 
 		// 4. Real run — call evaluate_on_award per action_id.
 		foreach ( $action_ids as $aid ) {
-			$event = new Event( array(
-				'action_id' => (string) $aid,
-				'user_id'   => $user_id,
-				'metadata'  => array( '__replay__' => true ),
-			) );
+			$event = new Event(
+				array(
+					'action_id' => (string) $aid,
+					'user_id'   => $user_id,
+					'metadata'  => array( '__replay__' => true ),
+				)
+			);
 			BadgeEngine::evaluate_on_award( $user_id, $event, 0 );
 		}
 
@@ -259,8 +263,8 @@ class ReplayCommand {
 			Log::warning(
 				'ReplayCommand: granted badges via replay.',
 				array(
-					'user_id'  => $user_id,
-					'badges'   => $awarded,
+					'user_id' => $user_id,
+					'badges'  => $awarded,
 				)
 			);
 		}

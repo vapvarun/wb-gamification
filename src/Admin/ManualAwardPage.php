@@ -14,10 +14,10 @@ namespace WBGam\Admin;
 
 defined( 'ABSPATH' ) || exit;
 // Silencing convention-driven false positives so Plugin Check signal stays clean:
-//   - WordPress.DB.DirectDatabaseQuery.DirectQuery + .NoCaching + .SchemaChange:
-//     this file performs custom-table work. .phpcs.xml already excludes these
-//     for the local WPCS gate; this annotation extends the same intent to
-//     Plugin Check's internal phpcs invocation.
+// - WordPress.DB.DirectDatabaseQuery.DirectQuery + .NoCaching + .SchemaChange:
+// this file performs custom-table work. .phpcs.xml already excludes these
+// for the local WPCS gate; this annotation extends the same intent to
+// Plugin Check's internal phpcs invocation.
 // phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 
 /**
@@ -322,7 +322,7 @@ final class ManualAwardPage {
 							<?php
 							// Pre-fetch the currency label map so each row can show
 							// its own type label without an N+1 lookup.
-							$pt_service = new \WBGam\Services\PointTypeService();
+							$pt_service   = new \WBGam\Services\PointTypeService();
 							$pt_label_map = array();
 							foreach ( $pt_service->list() as $pt ) {
 								$pt_label_map[ (string) $pt['slug'] ] = (string) $pt['label'];
@@ -401,10 +401,10 @@ final class ManualAwardPage {
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- admin list view, infrequent, no caching needed.
 		// Action_ids written by every "manual-ish" award path:
-		//   - 'manual_award'        (positive awards via REST → PointsController:221)
-		//   - 'manual_admin_deduct' (negative awards via REST → PointsController:195)
-		//   - 'manual'              (generic wb_gam_award_points() helper default)
-		//   - 'manual_admin'        (legacy pre-1.0 rows)
+		// - 'manual_award'        (positive awards via REST → PointsController:221)
+		// - 'manual_admin_deduct' (negative awards via REST → PointsController:195)
+		// - 'manual'              (generic wb_gam_award_points() helper default)
+		// - 'manual_admin'        (legacy pre-1.0 rows)
 		// The previous query omitted 'manual_award' AND 'manual' which is
 		// why every positive manual award appeared to vanish from the
 		// "Recent Manual Awards" table (Basecamp #9927666545). The browser

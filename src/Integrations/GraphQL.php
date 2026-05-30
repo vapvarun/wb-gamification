@@ -96,7 +96,10 @@ final class GraphQL {
 			array(
 				'description' => 'Badge definition + per-user earned state.',
 				'fields'      => array(
-					'id'          => array( 'type' => 'ID', 'description' => 'Stable badge slug.' ),
+					'id'          => array(
+						'type'        => 'ID',
+						'description' => 'Stable badge slug.',
+					),
 					'name'        => array( 'type' => 'String' ),
 					'description' => array( 'type' => 'String' ),
 					'imageUrl'    => array( 'type' => 'String' ),
@@ -132,11 +135,23 @@ final class GraphQL {
 				'description' => 'Behavioural intelligence signals — computed daily by IntelligenceProjector.',
 				'fields'      => array(
 					'userId'          => array( 'type' => 'Int' ),
-					'engagementScore' => array( 'type' => 'Float', 'description' => 'Composite engagement signal (0..~2.7).' ),
-					'actionDiversity' => array( 'type' => 'Int', 'description' => 'Distinct action_ids in the last 30 days.' ),
-					'recencyDays'     => array( 'type' => 'Int', 'description' => 'Days since last event. 999 = inactive in window.' ),
+					'engagementScore' => array(
+						'type'        => 'Float',
+						'description' => 'Composite engagement signal (0..~2.7).',
+					),
+					'actionDiversity' => array(
+						'type'        => 'Int',
+						'description' => 'Distinct action_ids in the last 30 days.',
+					),
+					'recencyDays'     => array(
+						'type'        => 'Int',
+						'description' => 'Days since last event. 999 = inactive in window.',
+					),
 					'events30d'       => array( 'type' => 'Int' ),
-					'churnRisk'       => array( 'type' => 'Float', 'description' => '0..1, higher = greater churn likelihood.' ),
+					'churnRisk'       => array(
+						'type'        => 'Float',
+						'description' => '0..1, higher = greater churn likelihood.',
+					),
 					'anomalyFlag'     => array( 'type' => 'Boolean' ),
 					'computedAt'      => array( 'type' => 'String' ),
 				),
@@ -175,7 +190,10 @@ final class GraphQL {
 						'type'        => 'String',
 						'description' => 'One of: all, week, month, day. Default "all".',
 					),
-					'limit'  => array( 'type' => 'Int', 'description' => 'Max rows. Default 10.' ),
+					'limit'  => array(
+						'type'        => 'Int',
+						'description' => 'Max rows. Default 10.',
+					),
 				),
 				'resolve'     => static function ( $root, array $args ) {
 					$period = (string) ( $args['period'] ?? 'all' );

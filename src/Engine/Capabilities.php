@@ -40,34 +40,34 @@ final class Capabilities {
 	 */
 	private const CAPS = array(
 		// Manual point award + revoke (PointsController).
-		'wb_gam_award_manual'      => array( 'administrator' ),
+		'wb_gam_award_manual'          => array( 'administrator' ),
 		// Badge library only (BadgesController, BadgeAdminPage).
-		'wb_gam_manage_badges'     => array( 'administrator' ),
+		'wb_gam_manage_badges'         => array( 'administrator' ),
 		// Rule / level / challenge definition management (RulesController).
 		// Distinct from badge management — rules govern the broader
 		// award + level + challenge surface. Granting badge cap alone
 		// does NOT grant rules cap.
-		'wb_gam_manage_rules'      => array( 'administrator' ),
+		'wb_gam_manage_rules'          => array( 'administrator' ),
 		// Individual + community challenges (ChallengesController).
-		'wb_gam_manage_challenges' => array( 'administrator' ),
+		'wb_gam_manage_challenges'     => array( 'administrator' ),
 		// Redemption store catalog (RedemptionController).
-		'wb_gam_manage_rewards'    => array( 'administrator' ),
+		'wb_gam_manage_rewards'        => array( 'administrator' ),
 		// Outbound webhooks (WebhooksController).
-		'wb_gam_manage_webhooks'   => array( 'administrator' ),
+		'wb_gam_manage_webhooks'       => array( 'administrator' ),
 		// Level definition CRUD (LevelsController). Added in 1.4.1 after
 		// audit/DATA-FLOW-ADMIN-REST-2026-05-27.md §G1 found the
 		// controller already gated on this cap but the cap was never
 		// registered — granting it to non-admin roles did nothing.
-		'wb_gam_manage_levels'     => array( 'administrator' ),
+		'wb_gam_manage_levels'         => array( 'administrator' ),
 		// UGC submission queue (SubmissionsController). Added in 1.4.1
 		// after audit §G5 — pre-refactor the controller hardcoded
 		// `manage_options`, breaking the granular-delegation promise.
-		'wb_gam_manage_submissions' => array( 'administrator' ),
+		'wb_gam_manage_submissions'    => array( 'administrator' ),
 		// Transactional email toggles (EmailSettingsController). Added
 		// in 1.4.1 after audit §G6 — same hardcode pattern as G5.
 		'wb_gam_manage_email_settings' => array( 'administrator' ),
 		// Analytics dashboard view (AnalyticsDashboard).
-		'wb_gam_view_analytics'    => array( 'administrator' ),
+		'wb_gam_view_analytics'        => array( 'administrator' ),
 	);
 
 	/**

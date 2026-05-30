@@ -17,19 +17,19 @@ use WBGam\Engine\Registry;
 
 defined( 'ABSPATH' ) || exit;
 // Silencing convention-driven false positives so Plugin Check signal stays clean:
-//   - PrefixAllGlobals.NonPrefixedHooknameFound — plugin uses `wb_gam_*` as its
-//     established hook prefix (documented in CLAUDE.md, declared in .phpcs.xml).
-//     Plugin Check auto-detects `wb_gamification` from the text-domain header
-//     and doesn't share the .phpcs.xml prefix list; hooks like
-//     `wb_gam_points_redeemed` are part of the public 1.0 API and can't rename.
-//   - PrefixAllGlobals.NonPrefixedFunctionFound — same convention. Helper
-//     functions exported under `wb_gam_*` are documented in `src/Extensions/`.
-//   - PluginCheck.Security.DirectDB.UnescapedDBParameter +
-//     WordPress.DB.PreparedSQL.InterpolatedNotPrepared — this file does custom-
-//     table work. Table names are interpolated from `{$wpdb->prefix}` plus
-//     literal constants (no user input); user-supplied values pass through
-//     `$wpdb->prepare()`. MySQL doesn't allow placeholder table names, so the
-//     interpolation is unavoidable.
+// - PrefixAllGlobals.NonPrefixedHooknameFound — plugin uses `wb_gam_*` as its
+// established hook prefix (documented in CLAUDE.md, declared in .phpcs.xml).
+// Plugin Check auto-detects `wb_gamification` from the text-domain header
+// and doesn't share the .phpcs.xml prefix list; hooks like
+// `wb_gam_points_redeemed` are part of the public 1.0 API and can't rename.
+// - PrefixAllGlobals.NonPrefixedFunctionFound — same convention. Helper
+// functions exported under `wb_gam_*` are documented in `src/Extensions/`.
+// - PluginCheck.Security.DirectDB.UnescapedDBParameter +
+// WordPress.DB.PreparedSQL.InterpolatedNotPrepared — this file does custom-
+// table work. Table names are interpolated from `{$wpdb->prefix}` plus
+// literal constants (no user input); user-supplied values pass through
+// `$wpdb->prepare()`. MySQL doesn't allow placeholder table names, so the
+// interpolation is unavoidable.
 // phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
 
 /**
@@ -155,17 +155,17 @@ final class SetupWizard {
 
 		// Two trigger paths into the wizard:
 		//
-		//  1. Activation hook explicitly set the pending flag. This is the
-		//     authoritative signal — fires on every fresh activation, no
-		//     matter where the admin then navigates next.
+		// 1. Activation hook explicitly set the pending flag. This is the
+		// authoritative signal — fires on every fresh activation, no
+		// matter where the admin then navigates next.
 		//
-		//  2. Wizard has never been completed AND the admin has just landed
-		//     on the plugin's primary Dashboard page. Catches WP-CLI / hosting
-		//     panel activations that bypass the activation hook redirect, and
-		//     test reactivations on dev sandboxes where the pending flag was
-		//     consumed by an earlier visit. A per-user_meta sticky guard
-		//     prevents the redirect from looping if the admin dismisses the
-		//     wizard and walks back to the Dashboard.
+		// 2. Wizard has never been completed AND the admin has just landed
+		// on the plugin's primary Dashboard page. Catches WP-CLI / hosting
+		// panel activations that bypass the activation hook redirect, and
+		// test reactivations on dev sandboxes where the pending flag was
+		// consumed by an earlier visit. A per-user_meta sticky guard
+		// prevents the redirect from looping if the admin dismisses the
+		// wizard and walks back to the Dashboard.
 		$has_pending = (bool) get_option( self::PENDING_REDIRECT_OPTION );
 		if ( $has_pending ) {
 			delete_option( self::PENDING_REDIRECT_OPTION );
@@ -260,7 +260,10 @@ final class SetupWizard {
 						/* translators: %s: required plugin name */
 						esc_html( sprintf( __( 'This starter template needs %s active before it can be applied. Install / activate it from the Plugins screen and re-run the wizard.', 'wb-gamification' ), $plugin ) ),
 						esc_html__( 'Template unavailable', 'wb-gamification' ),
-						array( 'response' => 400, 'back_link' => true )
+						array(
+							'response'  => 400,
+							'back_link' => true,
+						)
 					);
 				}
 			}
@@ -366,7 +369,8 @@ final class SetupWizard {
 				'description' => __( 'Balanced — rewards posting, reactions, and social connection. Requires BuddyPress.', 'wb-gamification' ),
 				'leaderboard' => 'weekly',
 				'requires'    => array(
-					'callback' => static function (): bool { return function_exists( 'buddypress' ); },
+					'callback' => static function (): bool {
+						return function_exists( 'buddypress' ); },
 					'plugin'   => __( 'BuddyPress', 'wb-gamification' ),
 				),
 				'points'      => array(
@@ -384,7 +388,8 @@ final class SetupWizard {
 				'description' => __( 'Course completion heavy — progress and credential badges. Requires LearnDash.', 'wb-gamification' ),
 				'leaderboard' => 'cohort',
 				'requires'    => array(
-					'callback' => static function (): bool { return defined( 'LEARNDASH_VERSION' ); },
+					'callback' => static function (): bool {
+						return defined( 'LEARNDASH_VERSION' ); },
 					'plugin'   => __( 'LearnDash LMS', 'wb-gamification' ),
 				),
 				'points'      => array(
@@ -409,7 +414,8 @@ final class SetupWizard {
 				'description' => __( 'Mission-aligned language. Team leaderboards only — impact over individual competition. Requires BuddyPress.', 'wb-gamification' ),
 				'leaderboard' => 'team-only',
 				'requires'    => array(
-					'callback' => static function (): bool { return function_exists( 'buddypress' ); },
+					'callback' => static function (): bool {
+						return function_exists( 'buddypress' ); },
 					'plugin'   => __( 'BuddyPress', 'wb-gamification' ),
 				),
 				'points'      => array(
@@ -429,10 +435,10 @@ final class SetupWizard {
 			wp_die( esc_html__( 'You do not have permission to access this page.', 'wb-gamification' ) );
 		}
 
-		$configs        = self::get_template_configs();
-		$icons          = self::get_template_icons();
-		$is_re_run      = (bool) get_option( self::COMPLETED_OPTION );
-		$current_tpl    = (string) get_option( 'wb_gam_template', '' );
+		$configs     = self::get_template_configs();
+		$icons       = self::get_template_icons();
+		$is_re_run   = (bool) get_option( self::COMPLETED_OPTION );
+		$current_tpl = (string) get_option( 'wb_gam_template', '' );
 		?>
 		<div class="wrap wb-gam-wizard-wrap">
 
@@ -473,7 +479,8 @@ final class SetupWizard {
 					</legend>
 
 					<div class="wb-gam-wizard-grid" role="group" aria-label="<?php esc_attr_e( 'Starter template options', 'wb-gamification' ); ?>">
-						<?php foreach ( $configs as $key => $config ) :
+						<?php
+						foreach ( $configs as $key => $config ) :
 							// Integration-gating (Basecamp 9925226356). When a
 							// template's required plugin isn't active we don't
 							// hide the option — admin still benefits from
@@ -548,7 +555,10 @@ final class SetupWizard {
 									value="<?php echo esc_attr( $key ); ?>"
 									class="button button-primary wb-gam-wizard-card__btn"
 									<?php disabled( ! $requires_ok ); ?>
-									<?php if ( ! $requires_ok ) : ?>aria-disabled="true"<?php endif; ?>
+									<?php
+									if ( ! $requires_ok ) :
+										?>
+										aria-disabled="true"<?php endif; ?>
 								>
 									<?php
 									if ( ! $requires_ok ) {
@@ -683,34 +693,59 @@ final class SetupWizard {
 	 */
 	private static function svg_kses_rules(): array {
 		$shared = array(
-			'fill'             => true,
-			'stroke'           => true,
-			'stroke-width'     => true,
-			'stroke-linecap'   => true,
-			'stroke-linejoin'  => true,
-			'transform'        => true,
-			'opacity'          => true,
+			'fill'            => true,
+			'stroke'          => true,
+			'stroke-width'    => true,
+			'stroke-linecap'  => true,
+			'stroke-linejoin' => true,
+			'transform'       => true,
+			'opacity'         => true,
 		);
 		return array(
 			'svg'      => array(
-				'width'             => true,
-				'height'            => true,
-				'viewbox'           => true,
-				'viewBox'           => true,
-				'fill'              => true,
-				'stroke'            => true,
-				'stroke-width'      => true,
-				'stroke-linecap'    => true,
-				'stroke-linejoin'   => true,
-				'focusable'         => true,
-				'aria-hidden'       => true,
-				'role'              => true,
-				'xmlns'             => true,
+				'width'           => true,
+				'height'          => true,
+				'viewbox'         => true,
+				'viewBox'         => true,
+				'fill'            => true,
+				'stroke'          => true,
+				'stroke-width'    => true,
+				'stroke-linecap'  => true,
+				'stroke-linejoin' => true,
+				'focusable'       => true,
+				'aria-hidden'     => true,
+				'role'            => true,
+				'xmlns'           => true,
 			),
 			'path'     => array_merge( $shared, array( 'd' => true ) ),
-			'circle'   => array_merge( $shared, array( 'cx' => true, 'cy' => true, 'r' => true ) ),
-			'rect'     => array_merge( $shared, array( 'x' => true, 'y' => true, 'width' => true, 'height' => true, 'rx' => true, 'ry' => true ) ),
-			'line'     => array_merge( $shared, array( 'x1' => true, 'y1' => true, 'x2' => true, 'y2' => true ) ),
+			'circle'   => array_merge(
+				$shared,
+				array(
+					'cx' => true,
+					'cy' => true,
+					'r'  => true,
+				)
+			),
+			'rect'     => array_merge(
+				$shared,
+				array(
+					'x'      => true,
+					'y'      => true,
+					'width'  => true,
+					'height' => true,
+					'rx'     => true,
+					'ry'     => true,
+				)
+			),
+			'line'     => array_merge(
+				$shared,
+				array(
+					'x1' => true,
+					'y1' => true,
+					'x2' => true,
+					'y2' => true,
+				)
+			),
 			'polyline' => array_merge( $shared, array( 'points' => true ) ),
 			'polygon'  => array_merge( $shared, array( 'points' => true ) ),
 			'g'        => $shared,

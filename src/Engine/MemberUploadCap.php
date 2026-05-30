@@ -65,10 +65,10 @@ final class MemberUploadCap {
 	 * grant only adds capabilities — it never revokes — so admins,
 	 * editors, and authors keep theirs untouched.
 	 *
-	 * @param array      $allcaps All capabilities currently flagged for this user.
-	 * @param string[]   $caps    The cap(s) being checked.
-	 * @param array      $args    [0] = primitive cap, [1] = user id, [2+] = context.
-	 * @param \WP_User   $user    User being checked.
+	 * @param array    $allcaps All capabilities currently flagged for this user.
+	 * @param string[] $caps    The cap(s) being checked.
+	 * @param array    $args    [0] = primitive cap, [1] = user id, [2+] = context.
+	 * @param \WP_User $user    User being checked.
 	 * @return array              Filtered allcaps.
 	 */
 	public static function grant_upload_to_members( array $allcaps, array $caps, array $args, $user ): array {

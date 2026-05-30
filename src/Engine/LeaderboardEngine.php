@@ -30,19 +30,19 @@ namespace WBGam\Engine;
 
 defined( 'ABSPATH' ) || exit;
 // Silencing convention-driven false positives so Plugin Check signal stays clean:
-//   - PrefixAllGlobals.NonPrefixedHooknameFound — plugin uses `wb_gam_*` as its
-//     established hook prefix (documented in CLAUDE.md, declared in .phpcs.xml).
-//     Plugin Check auto-detects `wb_gamification` from the text-domain header
-//     and doesn't share the .phpcs.xml prefix list; hooks like
-//     `wb_gam_points_redeemed` are part of the public 1.0 API and can't rename.
-//   - PrefixAllGlobals.NonPrefixedFunctionFound — same convention. Helper
-//     functions exported under `wb_gam_*` are documented in `src/Extensions/`.
-//   - PluginCheck.Security.DirectDB.UnescapedDBParameter +
-//     WordPress.DB.PreparedSQL.InterpolatedNotPrepared — this file does custom-
-//     table work. Table names are interpolated from `{$wpdb->prefix}` plus
-//     literal constants (no user input); user-supplied values pass through
-//     `$wpdb->prepare()`. MySQL doesn't allow placeholder table names, so the
-//     interpolation is unavoidable.
+// - PrefixAllGlobals.NonPrefixedHooknameFound — plugin uses `wb_gam_*` as its
+// established hook prefix (documented in CLAUDE.md, declared in .phpcs.xml).
+// Plugin Check auto-detects `wb_gamification` from the text-domain header
+// and doesn't share the .phpcs.xml prefix list; hooks like
+// `wb_gam_points_redeemed` are part of the public 1.0 API and can't rename.
+// - PrefixAllGlobals.NonPrefixedFunctionFound — same convention. Helper
+// functions exported under `wb_gam_*` are documented in `src/Extensions/`.
+// - PluginCheck.Security.DirectDB.UnescapedDBParameter +
+// WordPress.DB.PreparedSQL.InterpolatedNotPrepared — this file does custom-
+// table work. Table names are interpolated from `{$wpdb->prefix}` plus
+// literal constants (no user input); user-supplied values pass through
+// `$wpdb->prepare()`. MySQL doesn't allow placeholder table names, so the
+// interpolation is unavoidable.
 // phpcs:disable PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
 
 /**
@@ -338,7 +338,7 @@ final class LeaderboardEngine {
 			$resolved_type,
 			$last_changed
 		);
-		$cached    = wp_cache_get( $cache_key, 'wb_gamification' );
+		$cached       = wp_cache_get( $cache_key, 'wb_gamification' );
 		if ( false !== $cached ) {
 			return (array) $cached;
 		}
@@ -440,8 +440,9 @@ final class LeaderboardEngine {
 				// table is what makes ON DUPLICATE KEY UPDATE work; it was
 				// added by DbUpgrader::ensure_leaderboard_cache_unique_key.
 				// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				$wpdb->query( $wpdb->prepare(
-					"INSERT INTO {$cache_table} (user_id, period, point_type, total_points, `rank`, updated_at)
+				$wpdb->query(
+					$wpdb->prepare(
+						"INSERT INTO {$cache_table} (user_id, period, point_type, total_points, `rank`, updated_at)
 					 SELECT user_id, %s AS period, %s AS point_type, SUM(points) AS total_points,
 					        RANK() OVER (ORDER BY SUM(points) DESC) AS `rank`,
 					        NOW() AS updated_at
@@ -454,9 +455,10 @@ final class LeaderboardEngine {
 					   total_points = VALUES(total_points),
 					   `rank`       = VALUES(`rank`),
 					   updated_at   = VALUES(updated_at)",
-					$period_key,
-					$slug
-				) );
+						$period_key,
+						$slug
+					)
+				);
 				// phpcs:enable
 			}
 		}
@@ -466,10 +468,12 @@ final class LeaderboardEngine {
 		// than the start of this rebuild, so a single bounded DELETE clears
 		// them without affecting any concurrent reads.
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$wpdb->query( $wpdb->prepare(
-			"DELETE FROM {$cache_table} WHERE updated_at < %s",
-			$started
-		) );
+		$wpdb->query(
+			$wpdb->prepare(
+				"DELETE FROM {$cache_table} WHERE updated_at < %s",
+				$started
+			)
+		);
 	}
 
 	// ── Private helpers ────────────────────────────────────────────────────────
@@ -675,8 +679,8 @@ final class LeaderboardEngine {
 
 		// Always scope by point_type so multi-currency rank counts match the
 		// public leaderboard which also filters per-currency.
-		$values   = array( $point_type );
-		$where    = ' AND p.point_type = %s';
+		$values = array( $point_type );
+		$where  = ' AND p.point_type = %s';
 
 		if ( $period_start ) {
 			$where   .= ' AND p.created_at >= %s';

@@ -21,10 +21,10 @@ use WBGam\Engine\Capabilities;
 
 defined( 'ABSPATH' ) || exit;
 // Silencing convention-driven false positives so Plugin Check signal stays clean:
-//   - WordPress.DB.DirectDatabaseQuery.DirectQuery + .NoCaching + .SchemaChange:
-//     this file performs custom-table work. .phpcs.xml already excludes these
-//     for the local WPCS gate; this annotation extends the same intent to
-//     Plugin Check's internal phpcs invocation.
+// - WordPress.DB.DirectDatabaseQuery.DirectQuery + .NoCaching + .SchemaChange:
+// this file performs custom-table work. .phpcs.xml already excludes these
+// for the local WPCS gate; this annotation extends the same intent to
+// Plugin Check's internal phpcs invocation.
 // phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 
 /**
@@ -386,11 +386,16 @@ final class WebhooksAdminPage {
 	 */
 	private static function notice_text( string $key ): string {
 		switch ( $key ) {
-			case 'saved':       return __( 'Webhook saved.', 'wb-gamification' );
-			case 'deleted':     return __( 'Webhook deleted.', 'wb-gamification' );
-			case 'invalid_url': return __( 'A valid URL is required.', 'wb-gamification' );
-			case 'save_failed': return __( 'Failed to save the webhook. Check the error log for details.', 'wb-gamification' );
-			default:            return '';
+			case 'saved':
+				return __( 'Webhook saved.', 'wb-gamification' );
+			case 'deleted':
+				return __( 'Webhook deleted.', 'wb-gamification' );
+			case 'invalid_url':
+				return __( 'A valid URL is required.', 'wb-gamification' );
+			case 'save_failed':
+				return __( 'Failed to save the webhook. Check the error log for details.', 'wb-gamification' );
+			default:
+				return '';
 		}
 	}
 }

@@ -18,10 +18,10 @@ namespace WBGam\Engine;
 
 defined( 'ABSPATH' ) || exit;
 // Silencing convention-driven false positives so Plugin Check signal stays clean:
-//   - WordPress.DB.DirectDatabaseQuery.DirectQuery + .NoCaching + .SchemaChange:
-//     this file performs custom-table work. .phpcs.xml already excludes these
-//     for the local WPCS gate; this annotation extends the same intent to
-//     Plugin Check's internal phpcs invocation.
+// - WordPress.DB.DirectDatabaseQuery.DirectQuery + .NoCaching + .SchemaChange:
+// this file performs custom-table work. .phpcs.xml already excludes these
+// for the local WPCS gate; this annotation extends the same intent to
+// Plugin Check's internal phpcs invocation.
 // phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 
 /**
@@ -137,9 +137,9 @@ final class WebhookDispatcher {
 	 * email engine listens on. Both consumers fire independently. Closes
 	 * audit/DATA-FLOW-NOTIFICATIONS-2026-05-27.md §G2.
 	 *
-	 * @param int    $redemption_id Row id in `wb_gam_redemptions`.
-	 * @param int    $user_id       User who redeemed.
-	 * @param array  $item          Reward item snapshot (id, title, points_cost, reward_type, ...).
+	 * @param int         $redemption_id Row id in `wb_gam_redemptions`.
+	 * @param int         $user_id       User who redeemed.
+	 * @param array       $item          Reward item snapshot (id, title, points_cost, reward_type, ...).
 	 * @param string|null $coupon_code Generated coupon code (WC types) or null.
 	 */
 	public static function on_redemption( int $redemption_id, int $user_id, array $item, ?string $coupon_code = null ): void {

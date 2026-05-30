@@ -33,10 +33,10 @@ use WP_Error;
 
 defined( 'ABSPATH' ) || exit;
 // Silencing convention-driven false positives so Plugin Check signal stays clean:
-//   - WordPress.DB.DirectDatabaseQuery.DirectQuery + .NoCaching + .SchemaChange:
-//     this file performs custom-table work. .phpcs.xml already excludes these
-//     for the local WPCS gate; this annotation extends the same intent to
-//     Plugin Check's internal phpcs invocation.
+// - WordPress.DB.DirectDatabaseQuery.DirectQuery + .NoCaching + .SchemaChange:
+// this file performs custom-table work. .phpcs.xml already excludes these
+// for the local WPCS gate; this annotation extends the same intent to
+// Plugin Check's internal phpcs invocation.
 // phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 
 /**
@@ -397,9 +397,9 @@ class MembersController extends WP_REST_Controller {
 
 		// `total` continues to mean "primary type total" for back-compat.
 		// `by_type` is the multi-currency breakdown (additive).
-		$total      = PointsEngine::get_total( $user_id, null === $type_scope ? null : $type_scope );
-		$by_type    = PointsEngine::get_totals_by_type( $user_id );
-		$primary    = $pt_service->default_slug();
+		$total   = PointsEngine::get_total( $user_id, null === $type_scope ? null : $type_scope );
+		$by_type = PointsEngine::get_totals_by_type( $user_id );
+		$primary = $pt_service->default_slug();
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- Paginated history; user-specific data not suitable for generic cache.
 		$rows = null !== $type_scope

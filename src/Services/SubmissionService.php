@@ -21,19 +21,19 @@ use WP_Error;
 
 defined( 'ABSPATH' ) || exit;
 // Silencing convention-driven false positives so Plugin Check signal stays clean:
-//   - PrefixAllGlobals.NonPrefixedHooknameFound — plugin uses `wb_gam_*` as its
-//     established hook prefix (documented in CLAUDE.md, declared in .phpcs.xml).
-//     Plugin Check auto-detects `wb_gamification` from the text-domain header
-//     and doesn't share the .phpcs.xml prefix list; hooks like
-//     `wb_gam_points_redeemed` are part of the public 1.0 API and can't rename.
-//   - PrefixAllGlobals.NonPrefixedFunctionFound — same convention. Helper
-//     functions exported under `wb_gam_*` are documented in `src/Extensions/`.
-//   - PluginCheck.Security.DirectDB.UnescapedDBParameter +
-//     WordPress.DB.PreparedSQL.InterpolatedNotPrepared — this file does custom-
-//     table work. Table names are interpolated from `{$wpdb->prefix}` plus
-//     literal constants (no user input); user-supplied values pass through
-//     `$wpdb->prepare()`. MySQL doesn't allow placeholder table names, so the
-//     interpolation is unavoidable.
+// - PrefixAllGlobals.NonPrefixedHooknameFound — plugin uses `wb_gam_*` as its
+// established hook prefix (documented in CLAUDE.md, declared in .phpcs.xml).
+// Plugin Check auto-detects `wb_gamification` from the text-domain header
+// and doesn't share the .phpcs.xml prefix list; hooks like
+// `wb_gam_points_redeemed` are part of the public 1.0 API and can't rename.
+// - PrefixAllGlobals.NonPrefixedFunctionFound — same convention. Helper
+// functions exported under `wb_gam_*` are documented in `src/Extensions/`.
+// - PluginCheck.Security.DirectDB.UnescapedDBParameter +
+// WordPress.DB.PreparedSQL.InterpolatedNotPrepared — this file does custom-
+// table work. Table names are interpolated from `{$wpdb->prefix}` plus
+// literal constants (no user input); user-supplied values pass through
+// `$wpdb->prepare()`. MySQL doesn't allow placeholder table names, so the
+// interpolation is unavoidable.
 // phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
 
 final class SubmissionService {
@@ -78,19 +78,21 @@ final class SubmissionService {
 			);
 		}
 
-		$id = $this->repo->insert( array(
-			'user_id'      => $user_id,
-			'action_id'    => $action_id,
-			// wp_kses_post() preserves the safe HTML (bold, italic, links,
-			// lists, embedded image tags from members with upload_files)
-			// emitted by wp_editor() while still stripping scripts,
-			// iframes, and dangerous attributes. Stricter than
-			// sanitize_textarea_field (which strips ALL HTML and made the
-			// rich editor pointless) but safe enough that the reviewer's
-			// rendered preview stays trustworthy.
-			'evidence'     => wp_kses_post( $evidence ),
-			'evidence_url' => esc_url_raw( $evidence_url ),
-		) );
+		$id = $this->repo->insert(
+			array(
+				'user_id'      => $user_id,
+				'action_id'    => $action_id,
+				// wp_kses_post() preserves the safe HTML (bold, italic, links,
+				// lists, embedded image tags from members with upload_files)
+				// emitted by wp_editor() while still stripping scripts,
+				// iframes, and dangerous attributes. Stricter than
+				// sanitize_textarea_field (which strips ALL HTML and made the
+				// rich editor pointless) but safe enough that the reviewer's
+				// rendered preview stays trustworthy.
+				'evidence'     => wp_kses_post( $evidence ),
+				'evidence_url' => esc_url_raw( $evidence_url ),
+			)
+		);
 
 		if ( ! $id ) {
 			return new WP_Error( 'wb_gam_insert_failed', __( 'Could not record submission.', 'wb-gamification' ), array( 'status' => 500 ) );

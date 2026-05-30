@@ -30,19 +30,19 @@ namespace WBGam\Engine;
 
 defined( 'ABSPATH' ) || exit;
 // Silencing convention-driven false positives so Plugin Check signal stays clean:
-//   - PrefixAllGlobals.NonPrefixedHooknameFound — plugin uses `wb_gam_*` as its
-//     established hook prefix (documented in CLAUDE.md, declared in .phpcs.xml).
-//     Plugin Check auto-detects `wb_gamification` from the text-domain header
-//     and doesn't share the .phpcs.xml prefix list; hooks like
-//     `wb_gam_points_redeemed` are part of the public 1.0 API and can't rename.
-//   - PrefixAllGlobals.NonPrefixedFunctionFound — same convention. Helper
-//     functions exported under `wb_gam_*` are documented in `src/Extensions/`.
-//   - PluginCheck.Security.DirectDB.UnescapedDBParameter +
-//     WordPress.DB.PreparedSQL.InterpolatedNotPrepared — this file does custom-
-//     table work. Table names are interpolated from `{$wpdb->prefix}` plus
-//     literal constants (no user input); user-supplied values pass through
-//     `$wpdb->prepare()`. MySQL doesn't allow placeholder table names, so the
-//     interpolation is unavoidable.
+// - PrefixAllGlobals.NonPrefixedHooknameFound — plugin uses `wb_gam_*` as its
+// established hook prefix (documented in CLAUDE.md, declared in .phpcs.xml).
+// Plugin Check auto-detects `wb_gamification` from the text-domain header
+// and doesn't share the .phpcs.xml prefix list; hooks like
+// `wb_gam_points_redeemed` are part of the public 1.0 API and can't rename.
+// - PrefixAllGlobals.NonPrefixedFunctionFound — same convention. Helper
+// functions exported under `wb_gam_*` are documented in `src/Extensions/`.
+// - PluginCheck.Security.DirectDB.UnescapedDBParameter +
+// WordPress.DB.PreparedSQL.InterpolatedNotPrepared — this file does custom-
+// table work. Table names are interpolated from `{$wpdb->prefix}` plus
+// literal constants (no user input); user-supplied values pass through
+// `$wpdb->prepare()`. MySQL doesn't allow placeholder table names, so the
+// interpolation is unavoidable.
 // phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
 
 /**
@@ -351,7 +351,10 @@ final class StreakEngine {
 		} catch ( \Exception $e ) {
 			Log::error(
 				'StreakEngine — invalid timezone, falling back to UTC',
-				array( 'tz' => $tz, 'error' => $e->getMessage() )
+				array(
+					'tz'    => $tz,
+					'error' => $e->getMessage(),
+				)
 			);
 			$tz = 'UTC';
 		}
@@ -372,7 +375,10 @@ final class StreakEngine {
 		} catch ( \Exception $e ) {
 			Log::error(
 				'StreakEngine — date construction failed, falling back to UTC today',
-				array( 'tz' => $tz, 'error' => $e->getMessage() )
+				array(
+					'tz'    => $tz,
+					'error' => $e->getMessage(),
+				)
 			);
 			return gmdate( 'Y-m-d' );
 		}
@@ -398,7 +404,12 @@ final class StreakEngine {
 		} catch ( \Exception $e ) {
 			Log::error(
 				'StreakEngine — day-diff failed, returning 999 to force streak reset (corrupt date stored?)',
-				array( 'from' => $from, 'to' => $to, 'tz' => $tz, 'error' => $e->getMessage() )
+				array(
+					'from'  => $from,
+					'to'    => $to,
+					'tz'    => $tz,
+					'error' => $e->getMessage(),
+				)
 			);
 			return 999; // Triggers a reset on error.
 		}

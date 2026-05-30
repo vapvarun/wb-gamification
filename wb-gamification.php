@@ -18,10 +18,10 @@
 
 defined( 'ABSPATH' ) || exit;
 // Silencing convention-driven false positives so Plugin Check signal stays clean:
-//   - WordPress.DB.DirectDatabaseQuery.DirectQuery + .NoCaching + .SchemaChange:
-//     this file performs custom-table work. .phpcs.xml already excludes these
-//     for the local WPCS gate; this annotation extends the same intent to
-//     Plugin Check's internal phpcs invocation.
+// - WordPress.DB.DirectDatabaseQuery.DirectQuery + .NoCaching + .SchemaChange:
+// this file performs custom-table work. .phpcs.xml already excludes these
+// for the local WPCS gate; this annotation extends the same intent to
+// Plugin Check's internal phpcs invocation.
 // phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 
 define( 'WB_GAM_VERSION', '1.5.0' );
@@ -396,6 +396,11 @@ final class WB_Gamification {
 	// load_textdomain() removed — superseded by WP 4.6+ auto-loader. See
 	// register_hooks() comment above for details.
 
+	/**
+	 * Register all REST API controllers.
+	 *
+	 * @return void
+	 */
 	public function register_routes(): void {
 		( new MembersController() )->register_routes();
 		( new PointsController() )->register_routes();
@@ -646,13 +651,13 @@ final class WB_Gamification {
 		// dedicated files under assets/css/admin/pages/ that each admin
 		// page class enqueues for itself. Cascade order matters:
 		//
-		//   1. wb-gam-admin-tokens       — design tokens (:root only).
-		//   2. wb-gam-admin-components   — reusable UI primitives that
-		//                                  consume the tokens.
-		//   3. wb-gam-admin-utilities    — atomic helpers, skeletons,
-		//                                  responsive grid, print rules.
-		//   4. wb-gam-admin-suppression  — body-scoped third-party
-		//                                  notice suppression.
+		// 1. wb-gam-admin-tokens       — design tokens (:root only).
+		// 2. wb-gam-admin-components   — reusable UI primitives that
+		// consume the tokens.
+		// 3. wb-gam-admin-utilities    — atomic helpers, skeletons,
+		// responsive grid, print rules.
+		// 4. wb-gam-admin-suppression  — body-scoped third-party
+		// notice suppression.
 		//
 		// Per-page CSS is enqueued by each admin page's own enqueue_assets
 		// method against `wb-gam-admin-utilities` as its dependency.
@@ -696,7 +701,6 @@ final class WB_Gamification {
 		wp_register_style( 'wb-gam-admin-core', false, $alias_deps, WB_GAM_VERSION );
 		wp_register_style( 'wb-gam-admin-pages', false, $alias_deps, WB_GAM_VERSION );
 	}
-
 }
 
 /**

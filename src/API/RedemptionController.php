@@ -27,10 +27,10 @@ use WP_Error;
 
 defined( 'ABSPATH' ) || exit;
 // Silencing convention-driven false positives so Plugin Check signal stays clean:
-//   - WordPress.DB.DirectDatabaseQuery.DirectQuery + .NoCaching + .SchemaChange:
-//     this file performs custom-table work. .phpcs.xml already excludes these
-//     for the local WPCS gate; this annotation extends the same intent to
-//     Plugin Check's internal phpcs invocation.
+// - WordPress.DB.DirectDatabaseQuery.DirectQuery + .NoCaching + .SchemaChange:
+// this file performs custom-table work. .phpcs.xml already excludes these
+// for the local WPCS gate; this annotation extends the same intent to
+// Plugin Check's internal phpcs invocation.
 // phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
 
 /**
@@ -182,14 +182,14 @@ class RedemptionController extends WP_REST_Controller {
 		// flag insufficient-balance state per reward currency. `current_balance`
 		// stays as the primary-type total for back-compat with single-currency
 		// consumers.
-		$user_id  = get_current_user_id();
-		$balance  = is_user_logged_in() ? PointsEngine::get_total( $user_id ) : null;
-		$by_type  = is_user_logged_in() ? PointsEngine::get_totals_by_type( $user_id ) : array();
+		$user_id = get_current_user_id();
+		$balance = is_user_logged_in() ? PointsEngine::get_total( $user_id ) : null;
+		$by_type = is_user_logged_in() ? PointsEngine::get_totals_by_type( $user_id ) : array();
 
 		return rest_ensure_response(
 			array(
-				'items'           => array_map( array( $this, 'prepare_item_for_response' ), $items ),
-				'current_balance' => $balance,
+				'items'            => array_map( array( $this, 'prepare_item_for_response' ), $items ),
+				'current_balance'  => $balance,
 				'balances_by_type' => $by_type,
 			)
 		);

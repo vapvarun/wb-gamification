@@ -104,7 +104,7 @@ return array(
 			},
 			'metadata_callback' => function ( int $conversation_id, int $user_id, array $all_participants ): array {
 				return array(
-					'conversation_id'  => $conversation_id,
+					'conversation_id'   => $conversation_id,
 					'participant_count' => count( $all_participants ),
 				);
 			},

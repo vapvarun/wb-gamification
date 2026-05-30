@@ -103,7 +103,7 @@ final class SSEController {
 		// Only bypass for the stream route. REQUEST_URI is the safest
 		// signal — `rest_route` query param OR pretty permalink form
 		// both end in the same trailing path.
-		$uri = isset( $_SERVER['REQUEST_URI'] ) ? (string) $_SERVER['REQUEST_URI'] : '';
+		$uri = isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '';
 		if ( false === strpos( $uri, '/wb-gamification/v1/events/stream' ) ) {
 			return $error;
 		}
@@ -136,7 +136,7 @@ final class SSEController {
 		if ( ! isset( $_COOKIE[ LOGGED_IN_COOKIE ] ) ) {
 			return false;
 		}
-		$user_id = wp_validate_auth_cookie( $_COOKIE[ LOGGED_IN_COOKIE ], 'logged_in' );
+		$user_id = wp_validate_auth_cookie( sanitize_text_field( wp_unslash( $_COOKIE[ LOGGED_IN_COOKIE ] ) ), 'logged_in' );
 		if ( ! $user_id ) {
 			return false;
 		}
@@ -255,7 +255,7 @@ final class SSEController {
 		@ob_flush(); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- some configs throw when no buffer is active.
 		flush();
 
-		$started      = time();
+		$started       = time();
 		$soft_deadline = $started + 28;
 		$poll_interval = 2;
 		$idle_max      = 25; // exit if we go this long with no events (lets client reconnect for fresh limits)
