@@ -13,6 +13,7 @@ namespace WBGam\API;
 
 use WBGam\Engine\Registry;
 use WP_REST_Controller;
+use WP_REST_Request;
 use WP_REST_Response;
 use WP_REST_Server;
 use WP_Error;

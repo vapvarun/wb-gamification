@@ -269,7 +269,7 @@ final class QAPages {
 			// Without the encoding, every list item renders its full
 			// shortcode inline — turning the index into a gallery
 			// instead of a navigation page.
-			if ( '' !== ( $unit['shortcode'] ?? '' ) ) {
+			if ( '' !== $unit['shortcode'] ) {
 				$rows .= sprintf(
 					'<li><a href="%s">%s</a> — <code>wp:wb-gamification/%s</code> + <code>&#91;%s&#93;</code></li>',
 					esc_url( $url ),

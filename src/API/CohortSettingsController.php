@@ -159,6 +159,7 @@ final class CohortSettingsController extends WP_REST_Controller {
 		 * @param WP_REST_Request $request  Request.
 		 */
 		$filtered = apply_filters( 'wb_gam_before_save_cohort_settings', $settings, $enabled, $request );
+		// @phpstan-ignore-next-line filter may return WP_Error to abort
 		if ( is_wp_error( $filtered ) ) {
 			return $filtered;
 		}

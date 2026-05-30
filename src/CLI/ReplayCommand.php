@@ -160,9 +160,9 @@ class ReplayCommand {
 				++$totals['users_with_award'];
 				$totals['awards_total'] += count( $result['awarded'] );
 			}
-			$progress->tick();
+			$progress->tick(); // @phpstan-ignore-line cli\progress\Bar provided by WP-CLI at runtime
 		}
-		$progress->finish();
+		$progress->finish(); // @phpstan-ignore-line cli\progress\Bar provided by WP-CLI at runtime
 
 		\WP_CLI::success(
 			sprintf(

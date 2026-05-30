@@ -223,8 +223,8 @@ final class ManualAwardPage {
 										name="points"
 										class="small-text wbgam-input"
 										value="0"
-										min="-<?php echo esc_attr( self::MAX_POINTS ); ?>"
-										max="<?php echo esc_attr( self::MAX_POINTS ); ?>"
+										min="-<?php echo esc_attr( (string) self::MAX_POINTS ); ?>"
+										max="<?php echo esc_attr( (string) self::MAX_POINTS ); ?>"
 										required
 									/>
 									<p class="description">

@@ -107,8 +107,6 @@ final class RedemptionEngine {
 	}
 
 
-	private const CACHE_GROUP = 'wb_gamification';
-
 	// ── Public API ───────────────────────────────────────────────────────────
 
 	/**

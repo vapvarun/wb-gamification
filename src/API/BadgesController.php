@@ -386,8 +386,8 @@ class BadgesController extends WP_REST_Controller {
 			$formats[]        = '%s';
 		}
 		if ( null !== $request->get_param( 'max_earners' ) ) {
-			$raw                = $request->get_param( 'max_earners' );
-			$row['max_earners'] = ( null === $raw || '' === $raw ) ? null : max( 1, (int) $raw );
+			$raw                = (string) $request->get_param( 'max_earners' );
+			$row['max_earners'] = '' === $raw ? null : max( 1, (int) $raw );
 			$formats[]          = '%d';
 		}
 		return array(
@@ -517,6 +517,7 @@ class BadgesController extends WP_REST_Controller {
 		 * @param WP_REST_Request $request REST request.
 		 */
 		$filtered = apply_filters( 'wb_gam_before_create_badge', $row, $request );
+		// @phpstan-ignore-next-line -- filter may return WP_Error to abort.
 		if ( is_wp_error( $filtered ) ) {
 			return $filtered;
 		}
@@ -580,6 +581,7 @@ class BadgesController extends WP_REST_Controller {
 		 * @param WP_REST_Request $request REST request.
 		 */
 		$filtered = apply_filters( 'wb_gam_before_update_badge', $data, $def, $request );
+		// @phpstan-ignore-next-line -- filter may return WP_Error to abort.
 		if ( is_wp_error( $filtered ) ) {
 			return $filtered;
 		}

@@ -34,8 +34,7 @@ defined( 'ABSPATH' ) || exit;
  */
 final class WebhooksAdminPage {
 
-	private const PAGE_SLUG  = 'wb-gam-webhooks';
-	private const NONCE_NAME = 'wb_gam_webhooks_nonce';
+	private const PAGE_SLUG = 'wb-gam-webhooks';
 
 	/**
 	 * Hook the admin menu + form handlers.

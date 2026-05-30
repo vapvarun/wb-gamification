@@ -6,6 +6,7 @@
 	<file>src/</file>
 	<file>integrations/</file>
 	<file>wb-gamification.php</file>
+	<file>uninstall.php</file>
 
 	<arg name="extensions" value="php"/>
 	<arg name="colors"/>
@@ -119,6 +120,7 @@
 	<exclude-pattern>blocks/*</exclude-pattern>
 	<exclude-pattern>dist/*</exclude-pattern>
 	<exclude-pattern>tests/*</exclude-pattern>
-	<exclude-pattern>integrations/contrib/*</exclude-pattern>
+	<!-- integrations/contrib/* SHIPS in the customer zip (build-release.sh does
+	     not exclude it), so it is linted like the rest of the distribution. -->
 
 </ruleset>

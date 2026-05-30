@@ -151,8 +151,7 @@ final class Registry {
 		// passes $user_login + $user) forward all of them to user_callback.
 		add_action(
 			$action['hook'],
-			static function () use ( $action ) {
-				$params  = func_get_args();
+			static function ( ...$params ) use ( $action ) {
 				$user_id = (int) call_user_func_array( $action['user_callback'], $params );
 				if ( $user_id <= 0 ) {
 					/** This filter is documented in src/Engine/PointsEngine.php — see wb_gam_award_skipped. */

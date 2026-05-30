@@ -317,12 +317,12 @@ final class HeartbeatChannel {
 			// SVG icon in the process).
 			$out[ $sig ] = array_map(
 				static function ( $row ) {
-					$uid = (int) ( $row['user_id'] ?? 0 );
+					$uid = (int) $row['user_id'];
 					return array(
 						'user_id'      => $uid,
-						'display_name' => (string) ( $row['display_name'] ?? '' ),
-						'points'       => (int) ( $row['points'] ?? 0 ),
-						'rank'         => isset( $row['rank'] ) ? (int) $row['rank'] : null,
+						'display_name' => (string) $row['display_name'],
+						'points'       => (int) $row['points'],
+						'rank'         => (int) $row['rank'],
 						'badge_count'  => $uid > 0 ? (int) BadgeEngine::count_user_badges( $uid ) : 0,
 					);
 				},

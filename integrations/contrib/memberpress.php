@@ -65,8 +65,9 @@ return [
 				if ( ! isset( $event->member ) ) {
 					return 0;
 				}
-				$user    = new \MeprUser( $event->member->ID );
-				$subs    = $user->subscriptions();
+				// MeprUser provided by MemberPress at runtime.
+				$user = new \MeprUser( $event->member->ID ); // @phpstan-ignore-line
+				$subs = $user->subscriptions();
 				// Only award if this is the user's first subscription.
 				return count( $subs ) <= 1 ? (int) $event->member->ID : 0;
 			},

@@ -140,7 +140,7 @@ return [
 				if ( ! $comment || empty( $comment->user_id ) ) {
 					return 0;
 				}
-				$post = get_post( $comment->comment_post_ID );
+				$post = get_post( (int) $comment->comment_post_ID );
 				if ( ! $post || 'product' !== $post->post_type ) {
 					return 0;
 				}

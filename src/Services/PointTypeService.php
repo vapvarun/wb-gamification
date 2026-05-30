@@ -57,7 +57,7 @@ final class PointTypeService {
 	 */
 	public function list_slugs(): array {
 		return array_map(
-			static fn ( $row ) => (string) ( $row['slug'] ?? '' ),
+			static fn ( $row ) => (string) $row['slug'],
 			$this->repo->all()
 		);
 	}

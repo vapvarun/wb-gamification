@@ -41,16 +41,6 @@ defined( 'ABSPATH' ) || exit;
 final class ApiKeyAuth {
 
 	/**
-	 * Legacy option key (pre-1.1, plaintext storage). Read-only — purged
-	 * by `DbUpgrader::ensure_api_keys_table` on first upgrade. Retained
-	 * here as a constant only so the migration tooling has a name to
-	 * reference; nothing in this file writes to it.
-	 *
-	 * @var string
-	 */
-	private const LEGACY_OPTION_KEY = 'wb_gam_api_keys';
-
-	/**
 	 * Initialize API key authentication hooks.
 	 */
 	public static function init(): void {

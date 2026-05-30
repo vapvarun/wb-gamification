@@ -84,7 +84,6 @@ class OpenApiCommand {
 		$json = (string) wp_json_encode( $spec, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES );
 		if ( '' === $json ) {
 			$this->error( 'Failed to encode spec to JSON.' );
-			return;
 		}
 		$json .= "\n";
 
@@ -100,18 +99,15 @@ class OpenApiCommand {
 					$rel_output
 				)
 			);
-			return;
 		}
 
 		$dest_dir = dirname( $abs_output );
 		if ( ! is_dir( $dest_dir ) && ! wp_mkdir_p( $dest_dir ) ) {
 			$this->error( "Could not create directory: {$dest_dir}" );
-			return;
 		}
 
 		if ( false === file_put_contents( $abs_output, $json ) ) {
 			$this->error( "Failed to write {$abs_output}" );
-			return;
 		}
 
 		$path_count = is_array( $spec['paths'] ?? null ) ? count( $spec['paths'] ) : 0;

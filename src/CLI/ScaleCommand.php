@@ -278,7 +278,7 @@ final class ScaleCommand {
 		\WP_CLI::line( str_pad( 'Query', 28 ) . str_pad( 'Time', 12 ) . str_pad( 'Budget', 12 ) . 'Status' );
 		\WP_CLI::line( str_repeat( '─', 70 ) );
 		foreach ( $results as $key => $ms ) {
-			$budget = self::BUDGETS_MS[ $key ] ?? 100.0;
+			$budget = self::BUDGETS_MS[ $key ];
 			$pass   = $ms <= $budget;
 			if ( ! $pass ) {
 				++$failures;

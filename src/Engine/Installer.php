@@ -590,7 +590,7 @@ final class Installer {
 				'post_author'  => get_current_user_id() ?: 1,
 			)
 		);
-		if ( $page_id && ! is_wp_error( $page_id ) ) {
+		if ( $page_id ) {
 			update_post_meta( $page_id, '_wb_gam_hub_page', '1' );
 			update_option( 'wb_gam_hub_page_id', (int) $page_id, false );
 		}
@@ -818,18 +818,16 @@ final class Installer {
 				array( '%s', '%s', '%s', '%s', '%d', '%s' )
 			);
 
-			if ( isset( $conditions[ $id ] ) ) {
-				$wpdb->insert(
-					$rules_table,
-					array(
-						'rule_type'   => 'badge_condition',
-						'target_id'   => $id,
-						'rule_config' => wp_json_encode( $conditions[ $id ] ),
-						'is_active'   => 1,
-					),
-					array( '%s', '%s', '%s', '%d' )
-				);
-			}
+			$wpdb->insert(
+				$rules_table,
+				array(
+					'rule_type'   => 'badge_condition',
+					'target_id'   => $id,
+					'rule_config' => wp_json_encode( $conditions[ $id ] ),
+					'is_active'   => 1,
+				),
+				array( '%s', '%s', '%s', '%d' )
+			);
 		}
 	}
 

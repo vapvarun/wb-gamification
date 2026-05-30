@@ -73,13 +73,6 @@ final class ActionSchedulerCleaner {
 	private const RUNAWAY_ROW_THRESHOLD = 250000;
 
 	/**
-	 * Aggressive retention used while runaway is active. One hour buys
-	 * enough breathing room to diagnose without making the cleaner itself
-	 * the symptom (an aggressive cleaner is a noisy cleaner).
-	 */
-	private const RUNAWAY_RETENTION_DAYS = 0; // means "now - 1 hour" via panic mode below
-
-	/**
 	 * Transient key that records the most recent runaway detection so
 	 * admin-facing tooling can surface the alert. Set on detection,
 	 * cleared when row count returns under the threshold.
@@ -110,7 +103,7 @@ final class ActionSchedulerCleaner {
 	 * Called on plugins_loaded.
 	 */
 	public static function init(): void {
-		add_action( self::CRON_HOOK, array( __CLASS__, 'cleanup' ) );
+		add_action( self::CRON_HOOK, array( __CLASS__, 'run_cron' ) );
 
 		if ( ! wp_next_scheduled( self::CRON_HOOK ) ) {
 			wp_schedule_event( time() + HOUR_IN_SECONDS, self::CRON_RECUR, self::CRON_HOOK );
@@ -134,6 +127,18 @@ final class ActionSchedulerCleaner {
 		if ( $timestamp ) {
 			wp_unschedule_event( $timestamp, self::CRON_HOOK );
 		}
+	}
+
+	/**
+	 * Cron action callback. Runs the cleanup and discards the return value
+	 * so the hooked callback path returns void (action callbacks must not
+	 * return a value). The CLI calls cleanup() directly when it needs the
+	 * per-status counts.
+	 *
+	 * @return void
+	 */
+	public static function run_cron(): void {
+		self::cleanup();
 	}
 
 	/**

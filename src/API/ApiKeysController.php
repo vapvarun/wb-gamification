@@ -228,7 +228,7 @@ final class ApiKeysController extends WP_REST_Controller {
 			),
 			$request
 		);
-		if ( is_wp_error( $filtered ) ) {
+		if ( is_wp_error( $filtered ) ) { // @phpstan-ignore-line filter may return WP_Error to abort the create
 			return $filtered;
 		}
 		if ( is_array( $filtered ) ) {

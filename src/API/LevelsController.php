@@ -212,7 +212,7 @@ final class LevelsController extends WP_REST_Controller {
 		 * @param WP_REST_Request $request  Request.
 		 */
 		$filtered = apply_filters( 'wb_gam_before_create_level', $payload, $request );
-		if ( is_wp_error( $filtered ) ) {
+		if ( is_wp_error( $filtered ) ) { // @phpstan-ignore-line -- filter may return WP_Error to abort.
 			return $filtered;
 		}
 		$payload = is_array( $filtered ) ? $filtered : $payload;
@@ -295,7 +295,7 @@ final class LevelsController extends WP_REST_Controller {
 		 * @param WP_REST_Request $request  Request.
 		 */
 		$filtered = apply_filters( 'wb_gam_before_update_level', $updates, $current, $request );
-		if ( is_wp_error( $filtered ) ) {
+		if ( is_wp_error( $filtered ) ) { // @phpstan-ignore-line -- filter may return WP_Error to abort.
 			return $filtered;
 		}
 		$updates = is_array( $filtered ) ? $filtered : $updates;

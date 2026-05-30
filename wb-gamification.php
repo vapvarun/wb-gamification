@@ -495,6 +495,7 @@ final class WB_Gamification {
 		wp_register_script_module(
 			'wb-gamification-hub',
 			WB_GAM_URL . 'assets/interactivity/hub.js',
+			// @phpstan-ignore-next-line -- WP normalizes string module deps.
 			array( '@wordpress/interactivity' ),
 			WB_GAM_VERSION
 		);
@@ -519,6 +520,7 @@ final class WB_Gamification {
 		wp_register_script_module(
 			'wb-gamification-notifications',
 			WB_GAM_URL . 'assets/interactivity/notifications.js',
+			// @phpstan-ignore-next-line -- WP normalizes string module deps.
 			array( '@wordpress/interactivity' ),
 			WB_GAM_VERSION
 		);

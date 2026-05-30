@@ -256,9 +256,9 @@ final class LeaderboardEngine {
 			$scope_clause = '';
 		}
 
-		$where_clause = ! empty( $where_parts )
-			? 'WHERE ' . implode( ' AND ', $where_parts )
-			: '';
+		// $where_parts always carries at least the point_type clause, so the
+		// WHERE keyword is always emitted.
+		$where_clause = 'WHERE ' . implode( ' AND ', $where_parts );
 
 		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$query = "
@@ -278,10 +278,10 @@ final class LeaderboardEngine {
 
 		$where_values[] = $limit;
 
-		$rows = ! empty( $where_values )
-			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-			? $wpdb->get_results( $wpdb->prepare( $query, $where_values ), ARRAY_A )
-			: $wpdb->get_results( $query, ARRAY_A ); // phpcs:ignore
+		// $where_values always carries the point_type bind plus the LIMIT
+		// appended above, so the query is always prepared.
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+		$rows = $wpdb->get_results( $wpdb->prepare( $query, $where_values ), ARRAY_A );
 
 		if ( ! $rows ) {
 			$result = array();

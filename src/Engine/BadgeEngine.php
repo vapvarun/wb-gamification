@@ -290,8 +290,8 @@ final class BadgeEngine {
 		 * Fires when a member earns a badge.
 		 *
 		 * @param int        $user_id  User who earned the badge.
-		 * @param string     $badge_id Badge identifier.
 		 * @param array|null $def      Badge definition row, or null if not found.
+		 * @param string     $badge_id Badge identifier.
 		 */
 		do_action( 'wb_gam_badge_awarded', $user_id, $def ?? array(), $badge_id );
 

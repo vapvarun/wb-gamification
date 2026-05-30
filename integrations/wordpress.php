@@ -75,7 +75,7 @@ return [
 					return 0;
 				}
 				// Skip product reviews — WooCommerce manifest handles those separately.
-				$post = get_post( $comment->comment_post_ID );
+				$post = get_post( (int) $comment->comment_post_ID );
 				if ( ! $post ) {
 					return 0;
 				}
@@ -170,7 +170,7 @@ return [
 					return 0;
 				}
 				// Skip product reviews — WooCommerce manifest handles those separately.
-				$post = get_post( $comment->comment_post_ID );
+				$post = get_post( (int) $comment->comment_post_ID );
 				if ( $post && 'product' === $post->post_type ) {
 					return 0;
 				}
@@ -194,7 +194,7 @@ return [
 					return 0;
 				}
 				// Skip product reviews — WooCommerce manifest handles those separately.
-				$post = get_post( $comment->comment_post_ID );
+				$post = get_post( (int) $comment->comment_post_ID );
 				if ( $post && 'product' === $post->post_type ) {
 					return 0;
 				}

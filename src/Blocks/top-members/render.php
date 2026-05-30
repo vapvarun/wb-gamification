@@ -253,7 +253,7 @@ BlockHooks::before( 'top-members', $wb_gam_attrs );
 						<span class="wb-gam-top-members__pts-label"><?php echo esc_html( $wb_gam_points_label ); ?></span>
 					</span>
 					<?php if ( $wb_gam_show_badges && isset( $wb_gam_badge_count_map[ $wb_gam_uid ] ) ) : ?>
-						<span class="wb-gam-top-members__list-badges">&#x1F3C5; <?php echo esc_html( $wb_gam_badge_count_map[ $wb_gam_uid ] ); ?></span>
+						<span class="wb-gam-top-members__list-badges">&#x1F3C5; <?php echo esc_html( (string) $wb_gam_badge_count_map[ $wb_gam_uid ] ); ?></span>
 					<?php endif; ?>
 				</li>
 			<?php endforeach; ?>

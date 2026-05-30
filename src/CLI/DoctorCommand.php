@@ -747,7 +747,6 @@ class DoctorCommand {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		if ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) ) !== $table ) {
 			WP_CLI::error( 'Action Scheduler tables not found. Nothing to drain.' );
-			return;
 		}
 
 		WP_CLI::line( WP_CLI::colorize( '%BWB Gamification — Action Scheduler drain%n' ) );

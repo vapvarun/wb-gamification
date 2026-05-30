@@ -476,9 +476,9 @@ class MembersController extends WP_REST_Controller {
 			)
 		);
 
-		$response->header( 'X-WB-Gam-Total-Rows', $total_rows );
-		$response->header( 'X-WP-Total', $total_rows );
-		$response->header( 'X-WP-TotalPages', (int) ceil( $total_rows / $per_page ) );
+		$response->header( 'X-WB-Gam-Total-Rows', (string) $total_rows );
+		$response->header( 'X-WP-Total', (string) $total_rows );
+		$response->header( 'X-WP-TotalPages', (string) (int) ceil( $total_rows / $per_page ) );
 
 		return $response;
 	}
@@ -628,8 +628,8 @@ class MembersController extends WP_REST_Controller {
 		);
 
 		$response = rest_ensure_response( $events );
-		$response->header( 'X-WP-Total', $total_rows );
-		$response->header( 'X-WP-TotalPages', (int) ceil( $total_rows / $per_page ) );
+		$response->header( 'X-WP-Total', (string) $total_rows );
+		$response->header( 'X-WP-TotalPages', (string) (int) ceil( $total_rows / $per_page ) );
 
 		return $response;
 	}

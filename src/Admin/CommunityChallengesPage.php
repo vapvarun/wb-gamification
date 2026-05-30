@@ -121,12 +121,12 @@ final class CommunityChallengesPage {
 	 * @return void
 	 */
 	public static function register_page(): void {
-		// Hidden submenu (null parent) — keeps the URL routable so existing
+		// Hidden submenu (empty parent slug) — keeps the URL routable so existing
 		// bookmarks / docs / dashboard links don't 404, but the page is
 		// reached via the "Community" tab on the unified Challenges admin
 		// page (b9 merge — `?page=wb-gam-challenges&tab=community`).
 		add_submenu_page(
-			null,
+			'',
 			__( 'Community Challenges', 'wb-gamification' ),
 			__( 'Community Challenges', 'wb-gamification' ),
 			'wb_gam_manage_challenges',
@@ -350,7 +350,7 @@ final class CommunityChallengesPage {
 								<td class="wbgam-cell--minw">
 									<div class="wbgam-flex-row">
 										<div class="wbgam-progress">
-											<div class="wbgam-progress__bar" style="width:<?php echo esc_attr( $pct ); ?>%"></div>
+											<div class="wbgam-progress__bar" style="width:<?php echo esc_attr( (string) $pct ); ?>%"></div>
 										</div>
 										<span class="wbgam-text-meta"><?php echo esc_html( number_format_i18n( $progress ) . ' / ' . number_format_i18n( $target ) ); ?></span>
 									</div>

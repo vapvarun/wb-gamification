@@ -120,7 +120,7 @@ final class SetupWizard {
 	 */
 	public static function register_page(): void {
 		add_submenu_page(
-			null, // No parent — page accessible only by URL.
+			'', // No parent — page accessible only by URL (hidden submenu).
 			__( 'Gamification Setup', 'wb-gamification' ),
 			'',
 			'manage_options',
@@ -349,7 +349,7 @@ final class SetupWizard {
 	/**
 	 * Return all available starter template definitions.
 	 *
-	 * @return array<string, array{label: string, description: string, leaderboard: string, points: array<string, int>}>
+	 * @return array<string, array{label: string, description: string, leaderboard: string, requires?: array{callback: callable, plugin: string}, points: array<string, int>}>
 	 */
 	private static function get_template_configs(): array {
 		return array(

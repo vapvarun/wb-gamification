@@ -56,11 +56,13 @@ return [
 					return 0;
 				}
 				// Check if this is their first donation.
-				$donations = give_get_payments( [
-					'user_id' => $user_id,
-					'status'  => [ 'publish', 'give_subscription' ],
-					'number'  => 2,
-				] );
+				$donations = give_get_payments(
+					[
+						'user_id' => $user_id,
+						'status'  => [ 'publish', 'give_subscription' ],
+						'number'  => 2,
+					]
+				);
 				return count( $donations ) === 1 ? $user_id : 0;
 			},
 			'default_points' => 75,

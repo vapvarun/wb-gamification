@@ -856,37 +856,6 @@ final class SettingsPage {
 		<?php
 	}
 
-	/**
-	 * Render the standalone Dashboard tab (old tab=dashboard).
-	 *
-	 * Uses the original wrap + KPI layout since it's a full page, not a
-	 * sidebar section.
-	 */
-	private static function render_dashboard_page(): void {
-		settings_errors( 'wb_gamification' );
-		?>
-		<div class="wrap wbgam-wrap" id="wb-gam-settings">
-			<hr class="wp-header-end" />
-			<header class="wbgam-page-header">
-				<div class="wbgam-page-header__main">
-					<h1 class="wbgam-page-header__title">
-						<?php esc_html_e( 'WB Gamification', 'wb-gamification' ); ?>
-						<span class="wbgam-settings-topbar__version">v<?php echo esc_html( WB_GAM_VERSION ); ?></span>
-					</h1>
-					<p class="wbgam-page-header__desc"><?php esc_html_e( 'At-a-glance view of your community gamification — points, members, badges, challenges, streaks and kudos over the last 30 days.', 'wb-gamification' ); ?></p>
-				</div>
-				<div class="wbgam-page-header__actions">
-					<?php self::render_mode_badge(); ?>
-					<a class="wbgam-btn wbgam-btn--secondary" href="<?php echo esc_url( admin_url( 'admin.php?page=wb-gamification#points' ) ); ?>">
-						<?php esc_html_e( 'Configure', 'wb-gamification' ); ?>
-					</a>
-				</div>
-			</header>
-			<?php self::render_dashboard_tab(); ?>
-		</div>
-		<?php
-	}
-
 	// ── Points tab ────────────────────────────────────────────────────────────
 
 	/**
@@ -1036,7 +1005,7 @@ final class SettingsPage {
 													type="number"
 													name="<?php echo esc_attr( 'wb_gam_points_' . $action_id ); ?>"
 													aria-label="<?php /* translators: %s: gamification action label */ echo esc_attr( sprintf( __( 'Amount for %s', 'wb-gamification' ), $action['label'] ?? $action_id ) ); ?>"
-													value="<?php echo esc_attr( $pts ); ?>"
+													value="<?php echo esc_attr( (string) $pts ); ?>"
 													min="0"
 													max="9999"
 													class="wbgam-input wbgam-input--xs"
@@ -1070,7 +1039,7 @@ final class SettingsPage {
 													type="number"
 													data-wb-gam-action-override="cooldown"
 													data-wb-gam-action-id="<?php echo esc_attr( $action_id ); ?>"
-													value="<?php echo esc_attr( $wb_gam_cooldown ); ?>"
+													value="<?php echo esc_attr( (string) $wb_gam_cooldown ); ?>"
 													min="0"
 													max="86400"
 													step="1"
@@ -1083,7 +1052,7 @@ final class SettingsPage {
 													type="number"
 													data-wb-gam-action-override="daily_cap"
 													data-wb-gam-action-id="<?php echo esc_attr( $action_id ); ?>"
-													value="<?php echo esc_attr( $daily_cap ); ?>"
+													value="<?php echo esc_attr( (string) $daily_cap ); ?>"
 													min="0"
 													max="9999"
 													step="1"
@@ -1116,7 +1085,7 @@ final class SettingsPage {
 										type="number"
 										name="wb_gam_log_retention_months"
 										id="wb-gam-log-retention-months"
-										value="<?php echo esc_attr( (int) get_option( 'wb_gam_log_retention_months', 6 ) ); ?>"
+										value="<?php echo esc_attr( (string) (int) get_option( 'wb_gam_log_retention_months', 6 ) ); ?>"
 										min="1"
 										max="24"
 										class="wb-gam-input-narrow"
@@ -1799,21 +1768,21 @@ final class SettingsPage {
 						<tr>
 							<th scope="row"><label for="wb-gam-kudos-daily-limit"><?php esc_html_e( 'Max kudos per day', 'wb-gamification' ); ?></label></th>
 							<td>
-								<input type="number" name="wb_gam_kudos_daily_limit" id="wb-gam-kudos-daily-limit" value="<?php echo esc_attr( $daily_limit ); ?>" min="1" max="999" class="wb-gam-input-narrow">
+								<input type="number" name="wb_gam_kudos_daily_limit" id="wb-gam-kudos-daily-limit" value="<?php echo esc_attr( (string) $daily_limit ); ?>" min="1" max="999" class="wb-gam-input-narrow">
 								<p class="description"><?php esc_html_e( 'Maximum number of kudos a member can send per day. Prevents spam.', 'wb-gamification' ); ?></p>
 							</td>
 						</tr>
 						<tr>
 							<th scope="row"><label for="wb-gam-kudos-receiver-points"><?php esc_html_e( 'Points per kudos received', 'wb-gamification' ); ?></label></th>
 							<td>
-								<input type="number" name="wb_gam_kudos_receiver_points" id="wb-gam-kudos-receiver-points" value="<?php echo esc_attr( $receiver_points ); ?>" min="0" max="9999" class="wb-gam-input-narrow">
+								<input type="number" name="wb_gam_kudos_receiver_points" id="wb-gam-kudos-receiver-points" value="<?php echo esc_attr( (string) $receiver_points ); ?>" min="0" max="9999" class="wb-gam-input-narrow">
 								<p class="description"><?php esc_html_e( 'Points awarded to the member who receives kudos.', 'wb-gamification' ); ?></p>
 							</td>
 						</tr>
 						<tr>
 							<th scope="row"><label for="wb-gam-kudos-giver-points"><?php esc_html_e( 'Points per kudos given', 'wb-gamification' ); ?></label></th>
 							<td>
-								<input type="number" name="wb_gam_kudos_giver_points" id="wb-gam-kudos-giver-points" value="<?php echo esc_attr( $giver_points ); ?>" min="0" max="9999" class="wb-gam-input-narrow">
+								<input type="number" name="wb_gam_kudos_giver_points" id="wb-gam-kudos-giver-points" value="<?php echo esc_attr( (string) $giver_points ); ?>" min="0" max="9999" class="wb-gam-input-narrow">
 								<p class="description"><?php esc_html_e( 'Points awarded to the member who sends kudos. Encourages giving recognition.', 'wb-gamification' ); ?></p>
 							</td>
 						</tr>
@@ -2048,30 +2017,5 @@ final class SettingsPage {
 			</div>
 		</div>
 		<?php
-	}
-
-	// ── Mode badge ────────────────────────────────────────────────────────────
-
-	/**
-	 * Render the standalone/community mode badge in the page header.
-	 */
-	private static function render_mode_badge(): void {
-		$bp_active = function_exists( 'buddypress' );
-
-		if ( $bp_active ) {
-			$mode    = __( 'Community Mode', 'wb-gamification' );
-			$tooltip = __( 'BuddyPress is active — social points, badge notifications, and activity triggers are enabled.', 'wb-gamification' );
-		} else {
-			$mode    = __( 'Standalone Mode', 'wb-gamification' );
-			$tooltip = __( 'Running without BuddyPress — points and badges work normally; social features require BuddyPress to be installed and active.', 'wb-gamification' );
-		}
-
-		$modifier = $bp_active ? 'community' : 'standalone';
-		printf(
-			'<span class="wb-gam-mode-badge wb-gam-mode-badge--%s" title="%s">%s</span>',
-			esc_attr( $modifier ),
-			esc_attr( $tooltip ),
-			esc_html( $mode )
-		);
 	}
 }

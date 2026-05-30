@@ -46,9 +46,6 @@ final class StatusRetentionEngine {
 	private const CRON_HOOK  = 'wb_gam_status_retention_check';
 	private const NUDGE_META = 'wb_gam_last_retention_nudge';
 
-	/** Send nudge if user has earned < this fraction of level threshold this week. */
-	private const GAP_THRESHOLD = 0.85;
-
 	/**
 	 * Register the WP-Cron hook for the weekly retention check.
 	 */

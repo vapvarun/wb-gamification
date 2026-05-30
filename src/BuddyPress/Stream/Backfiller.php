@@ -70,7 +70,6 @@ final class Backfiller {
 			$needs_update = ( false !== strpos( (string) $row->action, '<strong></strong>' ) )
 				|| empty( $row->content )
 				|| false === strpos( (string) $row->content, 'wb-gam-activity-card__icon' )
-				|| false === strpos( (string) $row->content, 'wb-gam-activity-card__icon' )
 				|| false !== strpos( (string) $row->content, '<p class="wb-gam-activity-card__desc"' )
 				|| false !== strpos( (string) $row->content, 'data:image' )
 				|| false !== strpos( (string) $row->content, 'src="image/svg' )
@@ -142,7 +141,6 @@ final class Backfiller {
 		foreach ( $rows as $row ) {
 			$needs_update = empty( $row->content )
 				|| false === strpos( (string) $row->content, 'wb-gam-activity-card__icon' )
-				|| false === strpos( (string) $row->content, 'wb-gam-activity-card__icon' )
 				|| false !== strpos( (string) $row->content, '<p class="wb-gam-activity-card__desc"' )
 				|| false !== strpos( (string) $row->content, 'data:image' )
 				|| false !== strpos( (string) $row->content, 'src="image/svg' )
@@ -194,7 +192,6 @@ final class Backfiller {
 		$updated = 0;
 		foreach ( $rows as $row ) {
 			$needs_update = empty( $row->content )
-				|| false === strpos( (string) $row->content, 'wb-gam-activity-card__icon' )
 				|| false === strpos( (string) $row->content, 'wb-gam-activity-card__icon' )
 				|| false !== strpos( (string) $row->content, '<p class="wb-gam-activity-card__desc"' )
 				|| false !== strpos( (string) $row->content, 'data:image' )

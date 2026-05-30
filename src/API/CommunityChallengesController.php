@@ -229,6 +229,7 @@ final class CommunityChallengesController extends WP_REST_Controller {
 		 * @param WP_REST_Request $request Request.
 		 */
 		$filtered = apply_filters( 'wb_gam_before_create_community_challenge', $data, $request );
+		// @phpstan-ignore-next-line -- filter may return WP_Error to abort.
 		if ( is_wp_error( $filtered ) ) {
 			return $filtered;
 		}
@@ -306,6 +307,7 @@ final class CommunityChallengesController extends WP_REST_Controller {
 		 * @param WP_REST_Request $request Request.
 		 */
 		$filtered = apply_filters( 'wb_gam_before_update_community_challenge', $updates, $current, $request );
+		// @phpstan-ignore-next-line -- filter may return WP_Error to abort.
 		if ( is_wp_error( $filtered ) ) {
 			return $filtered;
 		}
