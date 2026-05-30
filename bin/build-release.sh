@@ -178,6 +178,7 @@ cat > "${EXCLUDES_FILE}" <<'EXCLUDES_EOF'
 # VCS / IDE noise
 .git/
 .github/
+.githooks/
 .gitignore
 .gitattributes
 .editorconfig

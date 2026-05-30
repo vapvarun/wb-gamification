@@ -876,3 +876,51 @@
 		padding: 0.5rem 0;
 	}
 }
+
+/* ==========================================================================
+   11. Realtime transport selector (Advanced > Realtime section)
+   ========================================================================== */
+
+.wbgam-radio-option {
+	display: flex;
+	align-items: flex-start;
+	gap: 0.75rem;
+	padding: 0.875rem 1rem;
+	border: 1px solid var(--wbgam-border, #e5e7eb);
+	border-radius: var(--wbgam-radius, 8px);
+	cursor: pointer;
+	transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.wbgam-radio-option:hover {
+	border-color: var(--wbgam-primary, #1d4ed8);
+	background-color: var(--wbgam-color-info-bg, #eff6ff);
+}
+
+.wbgam-radio-option:has(input[type="radio"]:checked) {
+	border-color: var(--wbgam-primary, #1d4ed8);
+	background-color: var(--wbgam-color-info-bg, #eff6ff);
+}
+
+.wbgam-radio-option input[type="radio"] {
+	margin-top: 0.25rem;
+	flex-shrink: 0;
+}
+
+.wbgam-radio-option__body {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+	flex: 1;
+}
+
+.wbgam-radio-option__body strong {
+	font-size: 0.9375rem;
+	color: var(--wbgam-text, #1d2939);
+}
+
+.wbgam-radio-option__body .description {
+	font-size: 0.8125rem;
+	color: var(--wbgam-text-muted, #6b7280);
+	line-height: 1.5;
+}
