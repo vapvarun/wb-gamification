@@ -51,7 +51,7 @@ Pick the path that matches what you're trying to do.
 
 1. **[Profile Display](buddypress/03-profile-display.md)** — gamification tab on member profiles with badges, points, streak.
 2. **[Activity Feed](buddypress/01-activity-feed.md)** — auto-tracked activity events that earn points.
-3. **[Members Directory](buddypress/members-directory.md)** — leaderboard-ranked members directory.
+3. **[Members Directory](buddypress/02-member-directory.md)** — leaderboard-ranked members directory.
 
 ### I'm integrating with another plugin
 
@@ -61,18 +61,18 @@ The plugin auto-detects host plugins on activation and enables matching point ac
 - **[bbPress](integrations/05-bbpress.md)** — topics, replies, voice in forums.
 - **[WooCommerce](integrations/03-woocommerce.md)** — purchases, refund-debit, customer-loyalty patterns.
 - **[LearnDash](integrations/04-learndash.md)** — lessons, courses, quizzes.
-- **[LifterLMS](integrations/lifterlms.md)** — courses, achievements, certificates.
-- **[MemberPress](integrations/memberpress.md)** — membership levels, renewals.
-- **[GiveWP](integrations/givewp.md)** — donations, fundraisers.
-- **[The Events Calendar](integrations/the-events-calendar.md)** — RSVPs, attendance.
+- **[LifterLMS](integrations/07-lifterlms.md)** — courses, achievements, certificates.
+- **[MemberPress](integrations/08-memberpress.md)** — membership levels, renewals.
+- **[GiveWP](integrations/09-givewp.md)** — donations, fundraisers.
+- **[The Events Calendar](integrations/10-the-events-calendar.md)** — RSVPs, attendance.
 
 ### I'm a developer building on top
 
 1. **[Hooks & Filters](developer-guide/12-hooks-overview.md)** — every action and filter the plugin fires, with parameter types and example listeners.
 2. **[REST API Reference](developer-guide/15-rest-overview.md)** — 65 endpoints with auth, envelope, error codes, curl examples.
-3. **[Adding Custom Actions](developer-guide/custom-actions.md)** — register a new tracked action via manifest or filter.
-4. **[Adding Custom Badges](developer-guide/custom-badges.md)** — programmatic badge registration with `wb_gam_should_award_badge` filter.
-5. **[OpenBadges 3.0](developer-guide/openbadges.md)** — credential issuance, verification, public credential URL.
+3. **[Adding Custom Actions](developer-guide/03-build-first-integration.md)** — register a new tracked action via manifest or filter.
+4. **[Adding Custom Badges](developer-guide/03-build-first-integration.md)** — programmatic badge registration with `wb_gam_should_award_badge` filter.
+5. **[OpenBadges 3.0](features/04-badge-sharing.md)** — credential issuance, verification, public credential URL.
 6. **[Outbound Webhooks](developer-guide/20-webhooks-overview.md)** — register, verify HMAC signatures, replay payloads.
 
 ### I'm an advanced operator

@@ -46,8 +46,8 @@ For the rules around folder structure, filename conventions, image handling, and
 
 ## What does NOT belong here
 
-- API reference internals — those live in [`docs/REST-API.md`](../REST-API.md) (developer-side, not customer-side). Customer-side REST docs at `developer-guide/rest-api.md` should be journey-oriented (e.g. "how to consume the leaderboard from your mobile app") not exhaustive.
-- Architecture internals — see [`docs/ARCHITECTURE.md`](../ARCHITECTURE.md).
+- API reference internals — those live in [`docs/REST-API.md`](developer-guide/15-rest-overview.md) (developer-side, not customer-side). Customer-side REST docs at `developer-guide/rest-api.md` should be journey-oriented (e.g. "how to consume the leaderboard from your mobile app") not exhaustive.
+- Architecture internals — see [`docs/ARCHITECTURE.md`](developer-guide/02-architecture.md).
 - QA infrastructure — see [`docs/qa/`](../qa/).
 - Developer / contributor process — `docs/CONTRIBUTING.md`.
 

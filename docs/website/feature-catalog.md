@@ -31,7 +31,7 @@ The complete inventory of WB Gamification features. Every row is shipped in the 
 | Hub page | Core | Auto-created at `/gamification` | [Quick Start](getting-started/02-quick-start.md) |
 | Public profile pages | Core | `/u/{user_login}` | [Privacy](features/22-privacy.md) |
 | Badge share URL (OG-ready) | Core | `/?wb-gam-share=<badge_slug>` | [Badge Sharing](features/04-badge-sharing.md) |
-| OpenBadges 3.0 credentials | Core | `/credentials/{badge}/{user}` | [OpenBadges](developer-guide/openbadges.md) |
+| OpenBadges 3.0 credentials | Core | `/credentials/{badge}/{user}` | [OpenBadges](features/04-badge-sharing.md) |
 | Toast notifications | Core | (automatic — Interactivity API) | [Notifications](features/18-notifications.md) |
 
 ## Gutenberg blocks (17)
@@ -98,15 +98,15 @@ Auto-detected on activation. Each integration ships a manifest declaring its act
 
 | Host plugin | Tracked actions | Documented |
 |---|---|---|
-| WordPress core | publish post, leave comment, post receives comment, first post | [WordPress core](integrations/wordpress.md) |
+| WordPress core | publish post, leave comment, post receives comment, first post | [WordPress core](integrations/11-wordpress.md) |
 | BuddyPress | activity update / comment, reactions, friends accepted, groups join, kudos | [BuddyPress](integrations/02-buddypress.md) |
 | bbPress | topic create, reply | [bbPress](integrations/05-bbpress.md) |
 | WooCommerce | order completed, refund debit | [WooCommerce](integrations/03-woocommerce.md) |
 | LearnDash | lesson complete, course complete, quiz pass | [LearnDash](integrations/04-learndash.md) |
-| LifterLMS | course complete, achievement earned | [LifterLMS](integrations/lifterlms.md) |
-| MemberPress | level join, level renew | [MemberPress](integrations/memberpress.md) |
-| GiveWP | donation made | [GiveWP](integrations/givewp.md) |
-| The Events Calendar | RSVP, attendance | [The Events Calendar](integrations/the-events-calendar.md) |
+| LifterLMS | course complete, achievement earned | [LifterLMS](integrations/07-lifterlms.md) |
+| MemberPress | level join, level renew | [MemberPress](integrations/08-memberpress.md) |
+| GiveWP | donation made | [GiveWP](integrations/09-givewp.md) |
+| The Events Calendar | RSVP, attendance | [The Events Calendar](integrations/10-the-events-calendar.md) |
 | Elementor | block widget rendering | (widget integration only) |
 | ACF | rule-editor field-context support | (rule-editor integration only) |
 
