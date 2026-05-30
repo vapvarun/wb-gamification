@@ -92,56 +92,14 @@ if ( file_exists( WB_GAM_PATH . 'vendor/easy-digital-downloads/edd-sl-sdk/edd-sl
 	require_once WB_GAM_PATH . 'vendor/easy-digital-downloads/edd-sl-sdk/edd-sl-sdk.php';
 }
 
-// Auto-activate the preset license key on first load so the SDK can
-// reach the store + downloads work without admin intervention. The
-// activation is idempotent — once `wb_gam_preset_activated` is set
-// for this domain, the request is skipped on every subsequent load.
-add_action(
-	'admin_init',
-	static function (): void {
-		$preset_key = WB_GAM_LICENSE_PRESET_KEY;
-		$option     = 'wb_gam_license_key';
-		$activated  = 'wb_gam_preset_activated';
-
-		// Already activated for this domain — skip.
-		if ( get_option( $activated ) ) {
-			return;
-		}
-
-		// Store the key so the SDK can find it.
-		update_option( $option, $preset_key, false );
-
-		// Activate with the EDD store.
-		$response = wp_remote_post(
-			WB_GAM_EDD_STORE_URL,
-			array(
-				'timeout' => 15,
-				'body'    => array(
-					'edd_action' => 'activate_license',
-					'license'    => $preset_key,
-					'item_id'    => WB_GAM_EDD_ITEM_ID,
-					'url'        => home_url(),
-				),
-			)
-		);
-
-		if ( ! is_wp_error( $response ) ) {
-			$body = json_decode( wp_remote_retrieve_body( $response ), true );
-			if ( 'valid' === ( $body['license'] ?? '' ) ) {
-				update_option( $activated, 1, false );
-				// Auto-enable usage tracking checkbox the SDK reads.
-				update_option(
-					$option . '_allow_tracking',
-					array(
-						'allowed'   => true,
-						'timestamp' => time(),
-					),
-					false
-				);
-			}
-		}
-	}
-);
+// Preactivate the bundled preset license so EDD update checks
+// authenticate without the site owner ever entering a key. The real work
+// lives in WBGam\Engine\LicenseActivator::activate() (the main file
+// declares a class, so it can't also hold a named function — WPCS
+// Universal.Files.SeparateFunctionsFromOO). It runs on plugin activation
+// (see register_activation_hook below) and on admin_init as an idempotent
+// fallback for CLI/restore activation paths and transient-error retries.
+add_action( 'admin_init', array( \WBGam\Engine\LicenseActivator::class, 'activate' ) );
 
 use WBGam\Engine\Registry;
 use WBGam\Engine\Engine;
@@ -713,6 +671,9 @@ register_activation_hook(
 	function () {
 		Installer::install();
 		WBGam\Engine\Capabilities::register();
+		// Preactivate the bundled license the instant the plugin is switched
+		// on, so updates flow with zero manual steps from the site owner.
+		\WBGam\Engine\LicenseActivator::activate();
 		// Wizard redirect — only on first install, never on re-activation post-setup.
 		// The option persists until SetupWizard::maybe_redirect() consumes it on
 		// the first subsequent admin page load, regardless of activation-to-admin
