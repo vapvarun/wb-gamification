@@ -167,6 +167,7 @@ Second bug-sweep release. Closes 21 reported issues across blocks, admin, notifi
 * Fix      - Default badge conditions corrected to match their names: First Post, Prolific Writer, and Content Creator track wp_publish_post action_count; First Comment and Engaged Reader track wp_leave_comment action_count. Replaces the 50-points placeholder that previously fired on the wrong trigger.
 * Fix      - LeaderboardNudge no longer enters infinite Action Scheduler recursion on databases where points_changed broadcasts can re-enter the dispatcher. Closes the 3.5M-row runaway encountered on one production install.
 * Fix      - Class-hoist guard at the top of wb-gamification.php removed; the guard ran against an already-hoisted top-level class declaration and silently aborted boot, hiding the Gamification admin menu on affected installs. Local-CI 2.13 now prevents the regression.
+* Dev      - Admin CSS is fully tokenized: every color now resolves through the --wbgam-* design-token palette in tokens.css (zero hardcoded hex outside the token block), so a single palette edit re-themes the whole admin UI.
 * Dev      - Manifest v2.2 refreshed end-to-end; audit/derived/ now caches 16 static-analysis sub-checks including the new boot-hoist-guards finder.
 * Dev      - plan/ and audit/ folders consolidated; the single plan/MASTER-CHECKLIST.md replaces every dated release plan, bug-sweep spec, and UX-audit markdown that previously accumulated under plan/.
 

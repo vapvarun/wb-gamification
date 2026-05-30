@@ -31,7 +31,7 @@
 .wb-gam-event-tag {
 	font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 	font-size: var(--wbgam-fs-xs);
-	background: #f3f4f6;
+	background: var(--wbgam-surface-muted);
 	padding: 0.125rem 0.5rem;
 	border-radius: var(--wbgam-radius-sm);
 }
@@ -52,15 +52,15 @@
 	align-items: center;
 	gap: 0.625rem;
 	padding: 0.5rem 0.75rem;
-	border: 1px solid var(--wb-gam-border, #e5e7eb);
+	border: 1px solid var(--wb-gam-border, var(--wbgam-border));
 	border-radius: var(--wbgam-radius-md);
 	cursor: pointer;
 	transition: border-color 0.12s ease, background 0.12s ease;
 }
 
 .wbgam-event-list__item:hover {
-	border-color: var(--wbgam-primary, #2563eb);
-	background: #fafafe;
+	border-color: var(--wbgam-primary, var(--wbgam-primary));
+	background: var(--wbgam-surface-tint);
 }
 
 .wbgam-event-list__item input[type="checkbox"] {
@@ -70,12 +70,12 @@
 .wbgam-event-list__code {
 	font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 	font-size: var(--wbgam-fs-sm);
-	background: #f3f4f6;
+	background: var(--wbgam-surface-muted);
 	padding: 0.125rem 0.5rem;
 	border-radius: var(--wbgam-radius-sm);
 }
 
 .wbgam-event-list__desc {
-	color: var(--wb-gam-text-muted, #6b7280);
+	color: var(--wb-gam-text-muted, var(--wbgam-text-secondary));
 	font-size: var(--wbgam-fs-base);
 }

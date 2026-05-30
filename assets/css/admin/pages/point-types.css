@@ -38,7 +38,7 @@
 	font-size: var(--wbgam-fs-xs);
 	font-weight: 500;
 	border-radius: var(--wbgam-radius-sm);
-	background: #f3f4f6;
+	background: var(--wbgam-surface-muted);
 	color: var(--wbgam-text-secondary);
 }
 

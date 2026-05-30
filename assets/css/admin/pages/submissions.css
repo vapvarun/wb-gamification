@@ -33,7 +33,7 @@
 /* Inline error feedback under a submission row. */
 .wb-gam-submission-error {
 	margin-top: 4px;
-	color: var(--wbgam-color-danger, #b91c1c);
+	color: var(--wbgam-color-danger, var(--wbgam-danger-dark));
 	font-size: var(--wbgam-fs-xs, 12px);
 }
 
@@ -67,22 +67,22 @@
 	display: inline-block;
 	width: 56px;
 	height: 56px;
-	border: 1px solid var(--wbgam-border, #e5e7eb);
+	border: 1px solid var(--wbgam-border, var(--wbgam-border));
 	border-radius: 4px;
 	overflow: hidden;
-	background: var(--wbgam-bg-muted, #f9fafb);
+	background: var(--wbgam-bg-muted, var(--wbgam-bg));
 	transition: transform 120ms ease, border-color 120ms ease;
 }
 
 .wb-gam-submission-thumb:hover {
 	transform: scale(1.06);
-	border-color: var(--wbgam-primary, #2563eb);
+	border-color: var(--wbgam-primary, var(--wbgam-primary));
 }
 
 .wb-gam-submission-thumb:focus-visible {
 	transform: scale(1.06);
-	border-color: var(--wbgam-primary, #2563eb);
-	outline: 2px solid var(--wbgam-primary, #2563eb);
+	border-color: var(--wbgam-primary, var(--wbgam-primary));
+	outline: 2px solid var(--wbgam-primary, var(--wbgam-primary));
 	outline-offset: 2px;
 }
 
@@ -100,20 +100,20 @@
 .wb-gam-submission-detail > summary {
 	cursor: pointer;
 	font-size: var(--wbgam-fs-xs, 12px);
-	color: var(--wbgam-text-muted, #6b7280);
+	color: var(--wbgam-text-muted, var(--wbgam-text-secondary));
 	user-select: none;
 }
 
 .wb-gam-submission-detail[open] > summary {
 	margin-bottom: 6px;
-	color: var(--wbgam-text, #1f2937);
+	color: var(--wbgam-text, var(--wbgam-gray-800));
 }
 
 .wb-gam-submission-detail__body {
 	padding: 10px 12px;
-	border: 1px solid var(--wbgam-border, #e5e7eb);
+	border: 1px solid var(--wbgam-border, var(--wbgam-border));
 	border-radius: 6px;
-	background: var(--wbgam-bg-muted, #f9fafb);
+	background: var(--wbgam-bg-muted, var(--wbgam-bg));
 	max-height: 400px;
 	overflow-y: auto;
 	font-size: var(--wbgam-fs-sm, 13px);

@@ -30,7 +30,7 @@
    ========================================================================== */
 
 .wbgam-skeleton {
-	background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
+	background: linear-gradient(90deg, var(--wbgam-surface-muted) 25%, var(--wbgam-border) 50%, var(--wbgam-surface-muted) 75%);
 	background-size: 200% 100%;
 	animation: wbgam-shimmer 1.5s infinite;
 	border-radius: var(--wbgam-radius-sm);
@@ -301,7 +301,7 @@
 
 	.wbgam-card {
 		box-shadow: none;
-		border: 1px solid #ddd;
+		border: 1px solid var(--wbgam-gray-300);
 		break-inside: avoid;
 	}
 

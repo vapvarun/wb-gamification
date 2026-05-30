@@ -54,6 +54,71 @@
 	--wbgam-input-focus: var(--wbgam-primary);
 	--wbgam-transition: 0.15s ease;
 
+	/* Extended palette — every literal color the admin sheets used to
+	   hard-code, lifted into tokens at its exact value (zero visual change).
+	   Replaces the ~140 raw-hex drift the 2026-05-30 color-token audit found.
+	   Grouped by family; numbered suffixes are darker/lighter steps. */
+
+	/* Brand / purple (legacy premium accent, still used on a few surfaces) */
+	--wbgam-purple: #6c63ff;
+	--wbgam-purple-light: #ede9fe;
+	--wbgam-indigo: #6366f1;
+
+	/* Primary / blue steps + WordPress-admin blues */
+	--wbgam-primary-dark: #1e40af;
+	--wbgam-primary-bg-strong: #dbeafe;
+	--wbgam-wp-blue: #2271b1;
+	--wbgam-wp-blue-dark: #0073aa;
+	--wbgam-wp-blue-bg: #f0f6fc;
+
+	/* Success / green steps */
+	--wbgam-success-strong: #16a34a;
+	--wbgam-success-dark: #15803d;
+	--wbgam-success-darker: #166534;
+	--wbgam-success-wp: #00a32a;
+	--wbgam-success-bg-strong: #dcfce7;
+	--wbgam-success-bg-soft: #f0fdf4;
+
+	/* Danger / red steps */
+	--wbgam-danger-dark: #b91c1c;
+	--wbgam-danger-darker: #991b1b;
+	--wbgam-wp-red: #b32d2e;
+	--wbgam-danger-bg-strong: #fee2e2;
+
+	/* Warning / amber steps + text-on-amber */
+	--wbgam-gold: #f59e0b;
+	--wbgam-warning-text: #92400e;
+	--wbgam-warning-text-dark: #78350f;
+	--wbgam-warning-bg-strong: #fef3c7;
+
+	/* Text / gray steps (brand + WordPress-admin grays) */
+	--wbgam-text-strong: #1d2939;
+	--wbgam-gray-800: #1f2937;
+	--wbgam-gray-700: #374151;
+	--wbgam-slate-600: #475569;
+	--wbgam-wp-text: #50575e;
+	--wbgam-wp-text-strong: #1d2327;
+	--wbgam-wp-text-light: #757575;
+	--wbgam-wp-gray: #646970;
+	--wbgam-text-alt: #555770;
+	--wbgam-navy: #1a1a2e;
+
+	/* Surfaces / borders (brand + WordPress-admin neutrals) */
+	--wbgam-surface-muted: #f3f4f6;
+	--wbgam-surface-soft: #fafafa;
+	--wbgam-surface-tint: #fafafe;
+	--wbgam-slate-50: #f8fafc;
+	--wbgam-slate-100: #f1f5f9;
+	--wbgam-slate-200: #e2e8f0;
+	--wbgam-border-light: #e0e0e0;
+	--wbgam-gray-100: #f0f0f0;
+	--wbgam-gray-200: #eee;
+	--wbgam-gray-300: #ddd;
+	--wbgam-wp-bg: #f0f0f1;
+	--wbgam-wp-bg-alt: #f6f7f7;
+	--wbgam-wp-border: #dcdcde;
+	--wbgam-wp-border-light: #c3c4c7;
+
 	/* Spacing scale — fills the gap between gap-xs (8) and gap-sm (16),
 	   adds a 2xs (4) for tight chip/icon spacing, and exposes the page/
 	   row/section margins as tokens so the same gap works everywhere. */
