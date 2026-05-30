@@ -13,6 +13,7 @@ namespace WBGam\API;
 
 use WBGam\Engine\Registry;
 use WP_REST_Controller;
+use WP_REST_Request;
 use WP_REST_Response;
 use WP_REST_Server;
 use WP_Error;
@@ -90,10 +91,25 @@ class ActionsController extends WP_REST_Controller {
 					'callback'            => array( $this, 'update_overrides' ),
 					'permission_callback' => array( $this, 'overrides_permissions_check' ),
 					'args'                => array(
-						'id'         => array( 'required' => true, 'type' => 'string' ),
-						'cooldown'   => array( 'type' => 'integer', 'minimum' => 0, 'sanitize_callback' => 'absint' ),
-						'daily_cap'  => array( 'type' => 'integer', 'minimum' => 0, 'sanitize_callback' => 'absint' ),
-						'weekly_cap' => array( 'type' => 'integer', 'minimum' => 0, 'sanitize_callback' => 'absint' ),
+						'id'         => array(
+							'required' => true,
+							'type'     => 'string',
+						),
+						'cooldown'   => array(
+							'type'              => 'integer',
+							'minimum'           => 0,
+							'sanitize_callback' => 'absint',
+						),
+						'daily_cap'  => array(
+							'type'              => 'integer',
+							'minimum'           => 0,
+							'sanitize_callback' => 'absint',
+						),
+						'weekly_cap' => array(
+							'type'              => 'integer',
+							'minimum'           => 0,
+							'sanitize_callback' => 'absint',
+						),
 					),
 				),
 				array(
@@ -101,7 +117,10 @@ class ActionsController extends WP_REST_Controller {
 					'callback'            => array( $this, 'delete_overrides' ),
 					'permission_callback' => array( $this, 'overrides_permissions_check' ),
 					'args'                => array(
-						'id' => array( 'required' => true, 'type' => 'string' ),
+						'id' => array(
+							'required' => true,
+							'type'     => 'string',
+						),
 					),
 				),
 			)
@@ -171,7 +190,12 @@ class ActionsController extends WP_REST_Controller {
 		$option = is_array( $option ) ? $option : array();
 		unset( $option[ $id ] );
 		update_option( 'wb_gam_action_overrides', $option, false );
-		return rest_ensure_response( array( 'action_id' => $id, 'reset' => true ) );
+		return rest_ensure_response(
+			array(
+				'action_id' => $id,
+				'reset'     => true,
+			)
+		);
 	}
 
 	/**

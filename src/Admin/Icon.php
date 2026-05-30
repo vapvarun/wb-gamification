@@ -33,8 +33,8 @@ final class Icon {
 	/**
 	 * Render a Lucide icon as an inline SVG string.
 	 *
-	 * @param string                                                                 $name Icon slug (e.g. 'star', 'coins').
-	 * @param array{size?:int|string,class?:string,title?:string,decorative?:bool}   $args Display options.
+	 * @param string                                                               $name Icon slug (e.g. 'star', 'coins').
+	 * @param array{size?:int|string,class?:string,title?:string,decorative?:bool} $args Display options.
 	 * @return string SVG markup. Empty string if the name isn't bundled.
 	 */
 	public static function svg( string $name, array $args = array() ): string {

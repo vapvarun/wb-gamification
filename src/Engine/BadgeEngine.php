@@ -27,19 +27,19 @@ namespace WBGam\Engine;
 
 defined( 'ABSPATH' ) || exit;
 // Silencing convention-driven false positives so Plugin Check signal stays clean:
-//   - PrefixAllGlobals.NonPrefixedHooknameFound — plugin uses `wb_gam_*` as its
-//     established hook prefix (documented in CLAUDE.md, declared in .phpcs.xml).
-//     Plugin Check auto-detects `wb_gamification` from the text-domain header
-//     and doesn't share the .phpcs.xml prefix list; hooks like
-//     `wb_gam_points_redeemed` are part of the public 1.0 API and can't rename.
-//   - PrefixAllGlobals.NonPrefixedFunctionFound — same convention. Helper
-//     functions exported under `wb_gam_*` are documented in `src/Extensions/`.
-//   - PluginCheck.Security.DirectDB.UnescapedDBParameter +
-//     WordPress.DB.PreparedSQL.InterpolatedNotPrepared — this file does custom-
-//     table work. Table names are interpolated from `{$wpdb->prefix}` plus
-//     literal constants (no user input); user-supplied values pass through
-//     `$wpdb->prepare()`. MySQL doesn't allow placeholder table names, so the
-//     interpolation is unavoidable.
+// - PrefixAllGlobals.NonPrefixedHooknameFound — plugin uses `wb_gam_*` as its
+// established hook prefix (documented in CLAUDE.md, declared in .phpcs.xml).
+// Plugin Check auto-detects `wb_gamification` from the text-domain header
+// and doesn't share the .phpcs.xml prefix list; hooks like
+// `wb_gam_points_redeemed` are part of the public 1.0 API and can't rename.
+// - PrefixAllGlobals.NonPrefixedFunctionFound — same convention. Helper
+// functions exported under `wb_gam_*` are documented in `src/Extensions/`.
+// - PluginCheck.Security.DirectDB.UnescapedDBParameter +
+// WordPress.DB.PreparedSQL.InterpolatedNotPrepared — this file does custom-
+// table work. Table names are interpolated from `{$wpdb->prefix}` plus
+// literal constants (no user input); user-supplied values pass through
+// `$wpdb->prepare()`. MySQL doesn't allow placeholder table names, so the
+// interpolation is unavoidable.
 // phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
 
 /**
@@ -266,10 +266,10 @@ final class BadgeEngine {
 
 		if ( $inserted < 1 ) {
 			// Two paths land here:
-			//   1. Race-loser — another concurrent caller already inserted
-			//      this badge. INSERT IGNORE no-ops; nothing to log.
-			//   2. Genuine DB failure — disk full, schema drift, etc.
-			//      $wpdb->last_error will be non-empty.
+			// 1. Race-loser — another concurrent caller already inserted
+			// this badge. INSERT IGNORE no-ops; nothing to log.
+			// 2. Genuine DB failure — disk full, schema drift, etc.
+			// $wpdb->last_error will be non-empty.
 			if ( '' !== (string) $wpdb->last_error ) {
 				Log::error(
 					'BadgeEngine: failed to insert wb_gam_user_badges row.',
@@ -290,8 +290,8 @@ final class BadgeEngine {
 		 * Fires when a member earns a badge.
 		 *
 		 * @param int        $user_id  User who earned the badge.
-		 * @param string     $badge_id Badge identifier.
 		 * @param array|null $def      Badge definition row, or null if not found.
+		 * @param string     $badge_id Badge identifier.
 		 */
 		do_action( 'wb_gam_badge_awarded', $user_id, $def ?? array(), $badge_id );
 

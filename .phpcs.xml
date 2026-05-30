@@ -6,6 +6,7 @@
 	<file>src/</file>
 	<file>integrations/</file>
 	<file>wb-gamification.php</file>
+	<file>uninstall.php</file>
 
 	<arg name="extensions" value="php"/>
 	<arg name="colors"/>
@@ -63,6 +64,16 @@
 		<exclude name="WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound"/>
 		<exclude name="Squiz.PHP.CommentedOutCode.Found"/>
 		<exclude name="Generic.Strings.UnnecessaryStringConcat.Found"/>
+
+		<!-- Realtime features (heartbeat, live leaderboard snapshot) deliberately
+		     use sub-15-minute cron intervals. This is a documented design choice
+		     (CLAUDE.md: 5s heartbeat, 5-min leaderboard refresh), not an oversight. -->
+		<exclude name="WordPress.WP.CronInterval.CronSchedulesInterval"/>
+
+		<!-- The plugin stores datetimes with current_time('mysql') (site timezone)
+		     and compares them with current_time('timestamp') for consistency
+		     (see PointsEngine cooldown logic). Intentional site-local convention. -->
+		<exclude name="WordPress.DateTime.CurrentTimeTimestamp.Requested"/>
 	</rule>
 
 	<rule ref="WordPress.NamingConventions.PrefixAllGlobals">
@@ -89,6 +100,15 @@
 		<properties>
 			<property name="custom_capabilities" type="array">
 				<element value="wb_gam_award_manual"/>
+				<element value="wb_gam_manage_badges"/>
+				<element value="wb_gam_manage_challenges"/>
+				<element value="wb_gam_manage_email_settings"/>
+				<element value="wb_gam_manage_levels"/>
+				<element value="wb_gam_manage_rewards"/>
+				<element value="wb_gam_manage_rules"/>
+				<element value="wb_gam_manage_submissions"/>
+				<element value="wb_gam_manage_webhooks"/>
+				<element value="wb_gam_view_analytics"/>
 				<element value="manage_options"/>
 			</property>
 		</properties>
@@ -100,6 +120,7 @@
 	<exclude-pattern>blocks/*</exclude-pattern>
 	<exclude-pattern>dist/*</exclude-pattern>
 	<exclude-pattern>tests/*</exclude-pattern>
-	<exclude-pattern>integrations/contrib/*</exclude-pattern>
+	<!-- integrations/contrib/* SHIPS in the customer zip (build-release.sh does
+	     not exclude it), so it is linted like the rest of the distribution. -->
 
 </ruleset>

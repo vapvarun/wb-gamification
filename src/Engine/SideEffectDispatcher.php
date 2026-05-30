@@ -40,9 +40,9 @@ defined( 'ABSPATH' ) || exit;
 
 final class SideEffectDispatcher {
 
-	public const TABLE_SUFFIX  = 'wb_gam_side_effect_failures';
+	public const TABLE_SUFFIX   = 'wb_gam_side_effect_failures';
 	public const RECONCILE_CRON = 'wb_gam_reconcile_side_effects';
-	public const MAX_RETRIES   = 3;
+	public const MAX_RETRIES    = 3;
 
 	/**
 	 * Registered side-effect handlers, keyed by slug.
@@ -67,11 +67,11 @@ final class SideEffectDispatcher {
 	/**
 	 * Engines call this to register a named side effect.
 	 *
-	 * @param string                       $slug    Stable identifier (e.g. 'level_up').
-	 *                                              Used as the dedupe key in the failures
-	 *                                              table; rename means losing pending retries.
-	 * @param callable(Event, int): void   $handler Receives the Event and the points awarded.
-	 *                                              Must be idempotent.
+	 * @param string                     $slug    Stable identifier (e.g. 'level_up').
+	 *                                            Used as the dedupe key in the failures
+	 *                                            table; rename means losing pending retries.
+	 * @param callable(Event, int): void $handler Receives the Event and the points awarded.
+	 *                                            Must be idempotent.
 	 */
 	public static function register( string $slug, callable $handler ): void {
 		self::$handlers[ $slug ] = $handler;
@@ -278,6 +278,7 @@ final class SideEffectDispatcher {
 
 	/**
 	 * Test-helper: reset registered handlers between tests.
+	 *
 	 * @internal
 	 */
 	public static function reset_handlers(): void {
@@ -286,6 +287,7 @@ final class SideEffectDispatcher {
 
 	/**
 	 * Test-helper: read the current handler registry.
+	 *
 	 * @internal
 	 * @return array<string, callable>
 	 */

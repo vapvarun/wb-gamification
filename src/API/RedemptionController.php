@@ -27,10 +27,10 @@ use WP_Error;
 
 defined( 'ABSPATH' ) || exit;
 // Silencing convention-driven false positives so Plugin Check signal stays clean:
-//   - WordPress.DB.DirectDatabaseQuery.DirectQuery + .NoCaching + .SchemaChange:
-//     this file performs custom-table work. .phpcs.xml already excludes these
-//     for the local WPCS gate; this annotation extends the same intent to
-//     Plugin Check's internal phpcs invocation.
+// - WordPress.DB.DirectDatabaseQuery.DirectQuery + .NoCaching + .SchemaChange:
+// this file performs custom-table work. .phpcs.xml already excludes these
+// for the local WPCS gate; this annotation extends the same intent to
+// Plugin Check's internal phpcs invocation.
 // phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
 
 /**
@@ -182,14 +182,14 @@ class RedemptionController extends WP_REST_Controller {
 		// flag insufficient-balance state per reward currency. `current_balance`
 		// stays as the primary-type total for back-compat with single-currency
 		// consumers.
-		$user_id  = get_current_user_id();
-		$balance  = is_user_logged_in() ? PointsEngine::get_total( $user_id ) : null;
-		$by_type  = is_user_logged_in() ? PointsEngine::get_totals_by_type( $user_id ) : array();
+		$user_id = get_current_user_id();
+		$balance = is_user_logged_in() ? PointsEngine::get_total( $user_id ) : null;
+		$by_type = is_user_logged_in() ? PointsEngine::get_totals_by_type( $user_id ) : array();
 
 		return rest_ensure_response(
 			array(
-				'items'           => array_map( array( $this, 'prepare_item_for_response' ), $items ),
-				'current_balance' => $balance,
+				'items'            => array_map( array( $this, 'prepare_item_data' ), $items ),
+				'current_balance'  => $balance,
 				'balances_by_type' => $by_type,
 			)
 		);
@@ -204,7 +204,7 @@ class RedemptionController extends WP_REST_Controller {
 	public function get_item( $request ): WP_REST_Response|WP_Error {
 		$item = RedemptionEngine::get_item( (int) $request['id'] );
 		return $item
-			? rest_ensure_response( $this->prepare_item_for_response( $item ) )
+			? rest_ensure_response( $this->prepare_item_data( $item ) )
 			: new WP_Error( 'rest_not_found', __( 'Reward item not found.', 'wb-gamification' ), array( 'status' => 404 ) );
 	}
 
@@ -238,7 +238,12 @@ class RedemptionController extends WP_REST_Controller {
 			return new WP_Error( 'rest_insert_failed', __( 'Could not create reward item.', 'wb-gamification' ), array( 'status' => 500 ) );
 		}
 
-		return new WP_REST_Response( $this->prepare_item_for_response( RedemptionEngine::get_item( $wpdb->insert_id ) ), 201 );
+		$created = RedemptionEngine::get_item( $wpdb->insert_id );
+		if ( null === $created ) {
+			return new WP_Error( 'rest_insert_failed', __( 'Could not create reward item.', 'wb-gamification' ), array( 'status' => 500 ) );
+		}
+
+		return new WP_REST_Response( $this->prepare_item_data( $created ), 201 );
 	}
 
 	/**
@@ -275,10 +280,19 @@ class RedemptionController extends WP_REST_Controller {
 			$data['is_active'] = (int) $request['is_active']; }
 
 		if ( $data ) {
-			$wpdb->update( $wpdb->prefix . 'wb_gam_redemption_items', $data, array( 'id' => $id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- Write operation; no cache needed.
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- Write operation; no cache needed.
+			$updated = $wpdb->update( $wpdb->prefix . 'wb_gam_redemption_items', $data, array( 'id' => $id ) );
+			if ( false === $updated ) {
+				return new WP_Error( 'rest_update_failed', __( 'Could not update reward item.', 'wb-gamification' ), array( 'status' => 500 ) );
+			}
 		}
 
-		return rest_ensure_response( $this->prepare_item_for_response( RedemptionEngine::get_item( $id ) ) );
+		$updated_item = RedemptionEngine::get_item( $id );
+		if ( null === $updated_item ) {
+			return new WP_Error( 'rest_not_found', __( 'Reward item not found.', 'wb-gamification' ), array( 'status' => 404 ) );
+		}
+
+		return rest_ensure_response( $this->prepare_item_data( $updated_item ) );
 	}
 
 	/**
@@ -295,7 +309,11 @@ class RedemptionController extends WP_REST_Controller {
 			return new WP_Error( 'rest_not_found', __( 'Reward item not found.', 'wb-gamification' ), array( 'status' => 404 ) );
 		}
 
-		$wpdb->delete( $wpdb->prefix . 'wb_gam_redemption_items', array( 'id' => $id ), array( '%d' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- Write operation; no cache needed.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- Write operation; no cache needed.
+		$deleted = $wpdb->delete( $wpdb->prefix . 'wb_gam_redemption_items', array( 'id' => $id ), array( '%d' ) );
+		if ( false === $deleted ) {
+			return new WP_Error( 'rest_delete_failed', __( 'Could not delete reward item.', 'wb-gamification' ), array( 'status' => 500 ) );
+		}
 		return new WP_REST_Response(
 			array(
 				'deleted' => true,
@@ -347,11 +365,10 @@ class RedemptionController extends WP_REST_Controller {
 	/**
 	 * Shape a raw reward item DB row into the REST response format.
 	 *
-	 * @param array           $item    Raw row from the redemption items table.
-	 * @param WP_REST_Request $request Full details about the request.
+	 * @param array $item Raw row from the redemption items table.
 	 * @return array Formatted item data for the REST response.
 	 */
-	public function prepare_item_for_response( $item, $request = null ): array {
+	public function prepare_item_data( array $item ): array {
 		return array(
 			'id'            => (int) $item['id'],
 			'title'         => $item['title'],

@@ -28,7 +28,7 @@ class ActionsCommand {
 	 * : Output format. Accepts table, csv, json, count. Default: table.
 	 *
 	 * [--category=<cat>]
-	 * : Filter by category (e.g. buddypress, wordpress, commerce).
+	 * : Filter by category (e.g. buddypress, WordPress, commerce).
 	 *
 	 * ## EXAMPLES
 	 *

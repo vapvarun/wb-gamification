@@ -113,9 +113,9 @@ final class EmailSettingsController extends WP_REST_Controller {
 	 * raw param map.
 	 */
 	public function handle_save( WP_REST_Request $request ): WP_REST_Response {
-		$body_params  = (array) $request->get_json_params();
-		$body_params += (array) $request->get_body_params();
-		$query_params = (array) $request->get_query_params();
+		$body_params   = (array) $request->get_json_params();
+		$body_params  += (array) $request->get_body_params();
+		$query_params  = (array) $request->get_query_params();
 		$incoming_keys = array_keys( $body_params + $query_params );
 
 		$updated = array();
@@ -126,11 +126,16 @@ final class EmailSettingsController extends WP_REST_Controller {
 				$updated[ $slug ] = (bool) get_option( 'wb_gam_email_' . $slug, false );
 				continue;
 			}
-			$incoming        = $request->get_param( $slug );
-			$value           = ! empty( $incoming ) && '0' !== (string) $incoming;
+			$incoming = $request->get_param( $slug );
+			$value    = ! empty( $incoming ) && '0' !== (string) $incoming;
 			update_option( 'wb_gam_email_' . $slug, $value ? '1' : '0' );
 			$updated[ $slug ] = $value;
 		}
-		return rest_ensure_response( array( 'ok' => true, 'settings' => $updated ) );
+		return rest_ensure_response(
+			array(
+				'ok'       => true,
+				'settings' => $updated,
+			)
+		);
 	}
 }

@@ -10,19 +10,19 @@ namespace WBGam\Engine;
 
 defined( 'ABSPATH' ) || exit;
 // Silencing convention-driven false positives so Plugin Check signal stays clean:
-//   - PrefixAllGlobals.NonPrefixedHooknameFound — plugin uses `wb_gam_*` as its
-//     established hook prefix (documented in CLAUDE.md, declared in .phpcs.xml).
-//     Plugin Check auto-detects `wb_gamification` from the text-domain header
-//     and doesn't share the .phpcs.xml prefix list; hooks like
-//     `wb_gam_points_redeemed` are part of the public 1.0 API and can't rename.
-//   - PrefixAllGlobals.NonPrefixedFunctionFound — same convention. Helper
-//     functions exported under `wb_gam_*` are documented in `src/Extensions/`.
-//   - PluginCheck.Security.DirectDB.UnescapedDBParameter +
-//     WordPress.DB.PreparedSQL.InterpolatedNotPrepared — this file does custom-
-//     table work. Table names are interpolated from `{$wpdb->prefix}` plus
-//     literal constants (no user input); user-supplied values pass through
-//     `$wpdb->prepare()`. MySQL doesn't allow placeholder table names, so the
-//     interpolation is unavoidable.
+// - PrefixAllGlobals.NonPrefixedHooknameFound — plugin uses `wb_gam_*` as its
+// established hook prefix (documented in CLAUDE.md, declared in .phpcs.xml).
+// Plugin Check auto-detects `wb_gamification` from the text-domain header
+// and doesn't share the .phpcs.xml prefix list; hooks like
+// `wb_gam_points_redeemed` are part of the public 1.0 API and can't rename.
+// - PrefixAllGlobals.NonPrefixedFunctionFound — same convention. Helper
+// functions exported under `wb_gam_*` are documented in `src/Extensions/`.
+// - PluginCheck.Security.DirectDB.UnescapedDBParameter +
+// WordPress.DB.PreparedSQL.InterpolatedNotPrepared — this file does custom-
+// table work. Table names are interpolated from `{$wpdb->prefix}` plus
+// literal constants (no user input); user-supplied values pass through
+// `$wpdb->prepare()`. MySQL doesn't allow placeholder table names, so the
+// interpolation is unavoidable.
 // phpcs:disable PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
 /**
@@ -590,7 +590,7 @@ final class Installer {
 				'post_author'  => get_current_user_id() ?: 1,
 			)
 		);
-		if ( $page_id && ! is_wp_error( $page_id ) ) {
+		if ( $page_id ) {
 			update_post_meta( $page_id, '_wb_gam_hub_page', '1' );
 			update_option( 'wb_gam_hub_page_id', (int) $page_id, false );
 		}
@@ -818,18 +818,16 @@ final class Installer {
 				array( '%s', '%s', '%s', '%s', '%d', '%s' )
 			);
 
-			if ( isset( $conditions[ $id ] ) ) {
-				$wpdb->insert(
-					$rules_table,
-					array(
-						'rule_type'   => 'badge_condition',
-						'target_id'   => $id,
-						'rule_config' => wp_json_encode( $conditions[ $id ] ),
-						'is_active'   => 1,
-					),
-					array( '%s', '%s', '%s', '%d' )
-				);
-			}
+			$wpdb->insert(
+				$rules_table,
+				array(
+					'rule_type'   => 'badge_condition',
+					'target_id'   => $id,
+					'rule_config' => wp_json_encode( $conditions[ $id ] ),
+					'is_active'   => 1,
+				),
+				array( '%s', '%s', '%s', '%d' )
+			);
 		}
 	}
 

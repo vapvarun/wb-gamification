@@ -21,19 +21,19 @@ use WBGam\Engine\LeaderboardEngine;
 
 defined( 'ABSPATH' ) || exit;
 // Silencing convention-driven false positives so Plugin Check signal stays clean:
-//   - PrefixAllGlobals.NonPrefixedHooknameFound — plugin uses `wb_gam_*` as its
-//     established hook prefix (documented in CLAUDE.md, declared in .phpcs.xml).
-//     Plugin Check auto-detects `wb_gamification` from the text-domain header
-//     and doesn't share the .phpcs.xml prefix list; hooks like
-//     `wb_gam_points_redeemed` are part of the public 1.0 API and can't rename.
-//   - PrefixAllGlobals.NonPrefixedFunctionFound — same convention. Helper
-//     functions exported under `wb_gam_*` are documented in `src/Extensions/`.
-//   - PluginCheck.Security.DirectDB.UnescapedDBParameter +
-//     WordPress.DB.PreparedSQL.InterpolatedNotPrepared — this file does custom-
-//     table work. Table names are interpolated from `{$wpdb->prefix}` plus
-//     literal constants (no user input); user-supplied values pass through
-//     `$wpdb->prepare()`. MySQL doesn't allow placeholder table names, so the
-//     interpolation is unavoidable.
+// - PrefixAllGlobals.NonPrefixedHooknameFound — plugin uses `wb_gam_*` as its
+// established hook prefix (documented in CLAUDE.md, declared in .phpcs.xml).
+// Plugin Check auto-detects `wb_gamification` from the text-domain header
+// and doesn't share the .phpcs.xml prefix list; hooks like
+// `wb_gam_points_redeemed` are part of the public 1.0 API and can't rename.
+// - PrefixAllGlobals.NonPrefixedFunctionFound — same convention. Helper
+// functions exported under `wb_gam_*` are documented in `src/Extensions/`.
+// - PluginCheck.Security.DirectDB.UnescapedDBParameter +
+// WordPress.DB.PreparedSQL.InterpolatedNotPrepared — this file does custom-
+// table work. Table names are interpolated from `{$wpdb->prefix}` plus
+// literal constants (no user input); user-supplied values pass through
+// `$wpdb->prepare()`. MySQL doesn't allow placeholder table names, so the
+// interpolation is unavoidable.
 // phpcs:disable PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
 
 /**
@@ -154,7 +154,7 @@ final class ScaleCommand {
 
 		$elapsed = round( microtime( true ) - $started, 1 );
 		\WP_CLI::success( "Seeded {$inserted} ledger rows in {$elapsed}s." );
-		\WP_CLI::line( "Cleanup: wp wb-gamification scale teardown" );
+		\WP_CLI::line( 'Cleanup: wp wb-gamification scale teardown' );
 	}
 
 	/**
@@ -206,78 +206,92 @@ final class ScaleCommand {
 
 		$ledger_rows = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}wb_gam_points" );
 		$user_rows   = (int) $wpdb->get_var( "SELECT COUNT(DISTINCT user_id) FROM {$wpdb->prefix}wb_gam_points" );
-		\WP_CLI::line( sprintf( "Dataset: %s ledger rows across %s users. Test uid=%d.", number_format( $ledger_rows ), number_format( $user_rows ), $uid ) );
+		\WP_CLI::line( sprintf( 'Dataset: %s ledger rows across %s users. Test uid=%d.', number_format( $ledger_rows ), number_format( $user_rows ), $uid ) );
 		\WP_CLI::line( str_repeat( '─', 70 ) );
 
 		$results = array();
 
 		// 1. Materialised get_total — the most-called read in the plugin.
-		$results['get_total_pk'] = self::time_op( function () use ( $uid ) {
-			wp_cache_flush();
-			return PointsEngine::get_total( $uid, 'points' );
-		} );
+		$results['get_total_pk'] = self::time_op(
+			function () use ( $uid ) {
+				wp_cache_flush();
+				return PointsEngine::get_total( $uid, 'points' );
+			}
+		);
 
 		// 2. Multi-currency breakdown for the hub.
-		$results['get_totals_by_type_pk'] = self::time_op( function () use ( $uid ) {
-			wp_cache_flush();
-			return PointsEngine::get_totals_by_type( $uid );
-		} );
+		$results['get_totals_by_type_pk'] = self::time_op(
+			function () use ( $uid ) {
+				wp_cache_flush();
+				return PointsEngine::get_totals_by_type( $uid );
+			}
+		);
 
 		// 3. Leaderboard from snapshot (top 10, this week).
-		$results['leaderboard_snapshot'] = self::time_op( function () {
-			wp_cache_flush();
-			return LeaderboardEngine::get_leaderboard( 'week', 10, '', 0, 'points' );
-		} );
+		$results['leaderboard_snapshot'] = self::time_op(
+			function () {
+				wp_cache_flush();
+				return LeaderboardEngine::get_leaderboard( 'week', 10, '', 0, 'points' );
+			}
+		);
 
 		// 4. Points history pagination — 20 rows, latest first.
-		$results['points_history_user'] = self::time_op( function () use ( $uid ) {
-			wp_cache_flush();
-			return PointsEngine::get_history( $uid, 20 );
-		} );
+		$results['points_history_user'] = self::time_op(
+			function () use ( $uid ) {
+				wp_cache_flush();
+				return PointsEngine::get_history( $uid, 20 );
+			}
+		);
 
 		// 5. Rate-limit today count — hot on every action that fires.
-		$results['rate_limit_today_count'] = self::time_op( function () use ( $uid, $wpdb ) {
-			$today = gmdate( 'Y-m-d 00:00:00' );
-			return (int) $wpdb->get_var(
-				$wpdb->prepare(
-					"SELECT COUNT(*) FROM {$wpdb->prefix}wb_gam_points
-					  WHERE user_id = %d AND action_id = %s AND created_at >= %s",
-					$uid,
-					'scale_seed',
-					$today
-				)
-			);
-		} );
+		$results['rate_limit_today_count'] = self::time_op(
+			function () use ( $uid, $wpdb ) {
+				$today = gmdate( 'Y-m-d 00:00:00' );
+				return (int) $wpdb->get_var(
+					$wpdb->prepare(
+						"SELECT COUNT(*) FROM {$wpdb->prefix}wb_gam_points
+                      WHERE user_id = %d AND action_id = %s AND created_at >= %s",
+						$uid,
+						'scale_seed',
+						$today
+					)
+				);
+			}
+		);
 
 		// 6. Convert pre-flight balance lookup with FOR UPDATE locking.
-		$results['convert_balance_lookup'] = self::time_op( function () use ( $uid, $wpdb ) {
-			return (int) $wpdb->get_var(
-				$wpdb->prepare(
-					"SELECT total FROM {$wpdb->prefix}wb_gam_user_totals
-					  WHERE user_id = %d AND point_type = %s",
-					$uid,
-					'points'
-				)
-			);
-		} );
+		$results['convert_balance_lookup'] = self::time_op(
+			function () use ( $uid, $wpdb ) {
+				return (int) $wpdb->get_var(
+					$wpdb->prepare(
+						"SELECT total FROM {$wpdb->prefix}wb_gam_user_totals
+                      WHERE user_id = %d AND point_type = %s",
+						$uid,
+						'points'
+					)
+				);
+			}
+		);
 
 		// Render.
 		$failures = 0;
 		\WP_CLI::line( str_pad( 'Query', 28 ) . str_pad( 'Time', 12 ) . str_pad( 'Budget', 12 ) . 'Status' );
 		\WP_CLI::line( str_repeat( '─', 70 ) );
 		foreach ( $results as $key => $ms ) {
-			$budget = self::BUDGETS_MS[ $key ] ?? 100.0;
+			$budget = self::BUDGETS_MS[ $key ];
 			$pass   = $ms <= $budget;
 			if ( ! $pass ) {
-				$failures++;
+				++$failures;
 			}
-			\WP_CLI::line( sprintf(
-				'%s%s%s%s',
-				str_pad( $key, 28 ),
-				str_pad( number_format( $ms, 2 ) . 'ms', 12 ),
-				str_pad( number_format( $budget, 1 ) . 'ms', 12 ),
-				$pass ? "\033[32mPASS\033[0m" : "\033[31mFAIL (over by " . number_format( $ms - $budget, 2 ) . "ms)\033[0m"
-			) );
+			\WP_CLI::line(
+				sprintf(
+					'%s%s%s%s',
+					str_pad( $key, 28 ),
+					str_pad( number_format( $ms, 2 ) . 'ms', 12 ),
+					str_pad( number_format( $budget, 1 ) . 'ms', 12 ),
+					$pass ? "\033[32mPASS\033[0m" : "\033[31mFAIL (over by " . number_format( $ms - $budget, 2 ) . "ms)\033[0m"
+				)
+			);
 		}
 		\WP_CLI::line( str_repeat( '─', 70 ) );
 		if ( 0 === $failures ) {

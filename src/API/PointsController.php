@@ -26,19 +26,19 @@ use WP_Error;
 
 defined( 'ABSPATH' ) || exit;
 // Silencing convention-driven false positives so Plugin Check signal stays clean:
-//   - PrefixAllGlobals.NonPrefixedHooknameFound — plugin uses `wb_gam_*` as its
-//     established hook prefix (documented in CLAUDE.md, declared in .phpcs.xml).
-//     Plugin Check auto-detects `wb_gamification` from the text-domain header
-//     and doesn't share the .phpcs.xml prefix list; hooks like
-//     `wb_gam_points_redeemed` are part of the public 1.0 API and can't rename.
-//   - PrefixAllGlobals.NonPrefixedFunctionFound — same convention. Helper
-//     functions exported under `wb_gam_*` are documented in `src/Extensions/`.
-//   - PluginCheck.Security.DirectDB.UnescapedDBParameter +
-//     WordPress.DB.PreparedSQL.InterpolatedNotPrepared — this file does custom-
-//     table work. Table names are interpolated from `{$wpdb->prefix}` plus
-//     literal constants (no user input); user-supplied values pass through
-//     `$wpdb->prepare()`. MySQL doesn't allow placeholder table names, so the
-//     interpolation is unavoidable.
+// - PrefixAllGlobals.NonPrefixedHooknameFound — plugin uses `wb_gam_*` as its
+// established hook prefix (documented in CLAUDE.md, declared in .phpcs.xml).
+// Plugin Check auto-detects `wb_gamification` from the text-domain header
+// and doesn't share the .phpcs.xml prefix list; hooks like
+// `wb_gam_points_redeemed` are part of the public 1.0 API and can't rename.
+// - PrefixAllGlobals.NonPrefixedFunctionFound — same convention. Helper
+// functions exported under `wb_gam_*` are documented in `src/Extensions/`.
+// - PluginCheck.Security.DirectDB.UnescapedDBParameter +
+// WordPress.DB.PreparedSQL.InterpolatedNotPrepared — this file does custom-
+// table work. Table names are interpolated from `{$wpdb->prefix}` plus
+// literal constants (no user input); user-supplied values pass through
+// `$wpdb->prepare()`. MySQL doesn't allow placeholder table names, so the
+// interpolation is unavoidable.
 // phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
 
 /**
@@ -88,11 +88,11 @@ class PointsController extends WP_REST_Controller {
 							'sanitize_callback' => 'absint',
 						),
 						'points'     => array(
-							'required'          => true,
-							'type'              => 'integer',
-							'minimum'           => -100000,
-							'maximum'           => 100000,
-							'description'       => 'Positive to award, negative to debit. Zero is rejected.',
+							'required'    => true,
+							'type'        => 'integer',
+							'minimum'     => -100000,
+							'maximum'     => 100000,
+							'description' => 'Positive to award, negative to debit. Zero is rejected.',
 						),
 						'reason'     => array(
 							'type'              => 'string',
@@ -337,8 +337,14 @@ class PointsController extends WP_REST_Controller {
 
 		// Decrement the materialised total — `bump_user_total` is the canonical
 		// helper that every ledger mutation must call. The negative delta
-		// applied here mirrors the row's stored value.
-		\WBGam\Engine\PointsEngine::bump_user_total( $user_id, $point_type, -$points );
+		// applied here mirrors the row's stored value. Its return MUST be
+		// checked: a failed UPSERT after a committed DELETE would leave
+		// wb_gam_user_totals permanently inflated (the drift this transaction
+		// exists to prevent).
+		if ( ! \WBGam\Engine\PointsEngine::bump_user_total( $user_id, $point_type, -$points ) ) {
+			$wpdb->query( 'ROLLBACK' );
+			return new WP_Error( 'rest_revoke_failed', __( 'Could not revoke points.', 'wb-gamification' ), array( 'status' => 500 ) );
+		}
 
 		$wpdb->query( 'COMMIT' );
 

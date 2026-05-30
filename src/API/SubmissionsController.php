@@ -96,7 +96,12 @@ final class SubmissionsController extends WP_REST_Controller {
 		if ( is_wp_error( $result ) ) {
 			return $result;
 		}
-		return rest_ensure_response( array( 'ok' => true, 'id' => (int) $result ) );
+		return rest_ensure_response(
+			array(
+				'ok' => true,
+				'id' => (int) $result,
+			)
+		);
 	}
 
 	public function handle_list( WP_REST_Request $request ): WP_REST_Response {

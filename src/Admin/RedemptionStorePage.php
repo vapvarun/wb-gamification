@@ -14,19 +14,19 @@ namespace WBGam\Admin;
 
 defined( 'ABSPATH' ) || exit;
 // Silencing convention-driven false positives so Plugin Check signal stays clean:
-//   - PrefixAllGlobals.NonPrefixedHooknameFound — plugin uses `wb_gam_*` as its
-//     established hook prefix (documented in CLAUDE.md, declared in .phpcs.xml).
-//     Plugin Check auto-detects `wb_gamification` from the text-domain header
-//     and doesn't share the .phpcs.xml prefix list; hooks like
-//     `wb_gam_points_redeemed` are part of the public 1.0 API and can't rename.
-//   - PrefixAllGlobals.NonPrefixedFunctionFound — same convention. Helper
-//     functions exported under `wb_gam_*` are documented in `src/Extensions/`.
-//   - PluginCheck.Security.DirectDB.UnescapedDBParameter +
-//     WordPress.DB.PreparedSQL.InterpolatedNotPrepared — this file does custom-
-//     table work. Table names are interpolated from `{$wpdb->prefix}` plus
-//     literal constants (no user input); user-supplied values pass through
-//     `$wpdb->prepare()`. MySQL doesn't allow placeholder table names, so the
-//     interpolation is unavoidable.
+// - PrefixAllGlobals.NonPrefixedHooknameFound — plugin uses `wb_gam_*` as its
+// established hook prefix (documented in CLAUDE.md, declared in .phpcs.xml).
+// Plugin Check auto-detects `wb_gamification` from the text-domain header
+// and doesn't share the .phpcs.xml prefix list; hooks like
+// `wb_gam_points_redeemed` are part of the public 1.0 API and can't rename.
+// - PrefixAllGlobals.NonPrefixedFunctionFound — same convention. Helper
+// functions exported under `wb_gam_*` are documented in `src/Extensions/`.
+// - PluginCheck.Security.DirectDB.UnescapedDBParameter +
+// WordPress.DB.PreparedSQL.InterpolatedNotPrepared — this file does custom-
+// table work. Table names are interpolated from `{$wpdb->prefix}` plus
+// literal constants (no user input); user-supplied values pass through
+// `$wpdb->prepare()`. MySQL doesn't allow placeholder table names, so the
+// interpolation is unavoidable.
 // phpcs:disable PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
 /**
@@ -459,7 +459,7 @@ final class RedemptionStorePage {
 			// but the table was only readable via direct DB query. This
 			// surfaces the last 50 redemptions inline so support staff can
 			// trace coupon codes and fulfilment status without WP-CLI.
-			$transactions_table     = $wpdb->prefix . 'wb_gam_redemptions';
+			$transactions_table      = $wpdb->prefix . 'wb_gam_redemptions';
 			$transaction_items_table = $wpdb->prefix . 'wb_gam_redemption_items';
 			// phpcs:disable WordPress.DB.DirectDatabaseQuery -- Admin list, infrequent, no cache invalidation needed.
 			$transactions = $wpdb->get_results(
@@ -498,10 +498,10 @@ final class RedemptionStorePage {
 							// the raw snake_case enum to admins ("PENDING_FULFILLMENT"
 							// scans as a debug log, not a UI label).
 							$status_meta = array(
-								'pending'             => array( 'info',    __( 'Pending', 'wb-gamification' ) ),
-								'pending_fulfillment' => array( 'info',    __( 'Awaiting fulfilment', 'wb-gamification' ) ),
-								'fulfilled'           => array( 'active',  __( 'Fulfilled', 'wb-gamification' ) ),
-								'failed'              => array( 'error',   __( 'Failed', 'wb-gamification' ) ),
+								'pending'             => array( 'info', __( 'Pending', 'wb-gamification' ) ),
+								'pending_fulfillment' => array( 'info', __( 'Awaiting fulfilment', 'wb-gamification' ) ),
+								'fulfilled'           => array( 'active', __( 'Fulfilled', 'wb-gamification' ) ),
+								'failed'              => array( 'error', __( 'Failed', 'wb-gamification' ) ),
 								'refunded'            => array( 'warning', __( 'Refunded', 'wb-gamification' ) ),
 							);
 							?>

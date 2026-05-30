@@ -21,52 +21,52 @@ return [
 		// ── Always-on triggers (Standalone + Community + Full) ──────────────
 
 		[
-			'id'             => 'wp_user_register',
-			'label'          => 'Join the site',
-			'description'    => 'Awarded once when a user registers.',
-			'hook'           => 'user_register',
-			'user_callback'  => fn( int $user_id ) => $user_id,
-			'default_points' => 15,
-			'category'       => 'wordpress',
-			'icon'           => 'icon-users',
-			'repeatable'     => false,
+			'id'              => 'wp_user_register',
+			'label'           => 'Join the site',
+			'description'     => 'Awarded once when a user registers.',
+			'hook'            => 'user_register',
+			'user_callback'   => fn( int $user_id ) => $user_id,
+			'default_points'  => 15,
+			'category'        => 'wordpress',
+			'icon'            => 'icon-users',
+			'repeatable'      => false,
 			'standalone_only' => false,
 		],
 
 		[
-			'id'             => 'wp_first_login',
-			'label'          => 'First login',
-			'description'    => 'Awarded once on the very first login.',
-			'hook'           => 'wp_login',
-			'user_callback'  => fn( string $user_login, \WP_User $user ) => $user->ID,
-			'default_points' => 10,
-			'category'       => 'wordpress',
-			'icon'           => 'icon-lock',
-			'repeatable'     => false,
+			'id'              => 'wp_first_login',
+			'label'           => 'First login',
+			'description'     => 'Awarded once on the very first login.',
+			'hook'            => 'wp_login',
+			'user_callback'   => fn( string $user_login, \WP_User $user ) => $user->ID,
+			'default_points'  => 10,
+			'category'        => 'wordpress',
+			'icon'            => 'icon-lock',
+			'repeatable'      => false,
 			'standalone_only' => false,
 		],
 
 		[
-			'id'             => 'wp_profile_complete',
-			'label'          => 'Complete WordPress profile',
-			'description'    => 'Awarded once when the user saves their WP profile with a bio.',
-			'hook'           => 'personal_options_update',
-			'user_callback'  => function ( int $user_id ): int {
+			'id'              => 'wp_profile_complete',
+			'label'           => 'Complete WordPress profile',
+			'description'     => 'Awarded once when the user saves their WP profile with a bio.',
+			'hook'            => 'personal_options_update',
+			'user_callback'   => function ( int $user_id ): int {
 				return get_user_meta( $user_id, 'description', true ) ? $user_id : 0;
 			},
-			'default_points' => 10,
-			'category'       => 'wordpress',
-			'icon'           => 'icon-user',
-			'repeatable'     => false,
+			'default_points'  => 10,
+			'category'        => 'wordpress',
+			'icon'            => 'icon-user',
+			'repeatable'      => false,
 			'standalone_only' => false,
 		],
 
 		[
-			'id'             => 'wp_post_receives_comment',
-			'label'          => 'Post receives a comment',
-			'description'    => 'Post author earns points when an approved comment is left on their content.',
-			'hook'           => 'comment_post',
-			'user_callback'  => function ( int $comment_id, int|string $approved ): int {
+			'id'              => 'wp_post_receives_comment',
+			'label'           => 'Post receives a comment',
+			'description'     => 'Post author earns points when an approved comment is left on their content.',
+			'hook'            => 'comment_post',
+			'user_callback'   => function ( int $comment_id, int|string $approved ): int {
 				if ( 1 !== (int) $approved ) {
 					return 0;
 				}
@@ -75,7 +75,7 @@ return [
 					return 0;
 				}
 				// Skip product reviews — WooCommerce manifest handles those separately.
-				$post = get_post( $comment->comment_post_ID );
+				$post = get_post( (int) $comment->comment_post_ID );
 				if ( ! $post ) {
 					return 0;
 				}
@@ -84,10 +84,10 @@ return [
 				}
 				return (int) $post->post_author;
 			},
-			'default_points' => 3,
-			'category'       => 'wordpress',
-			'icon'           => 'icon-message-circle',
-			'repeatable'     => true,
+			'default_points'  => 3,
+			'category'        => 'wordpress',
+			'icon'            => 'icon-message-circle',
+			'repeatable'      => true,
 			// Rate-limit: comment_post can be spammed by a single commenter
 			// hitting the same post repeatedly. Cap at 10 comment awards/day
 			// per author so a coordinated comment-spam ring can't grind.
@@ -170,7 +170,7 @@ return [
 					return 0;
 				}
 				// Skip product reviews — WooCommerce manifest handles those separately.
-				$post = get_post( $comment->comment_post_ID );
+				$post = get_post( (int) $comment->comment_post_ID );
 				if ( $post && 'product' === $post->post_type ) {
 					return 0;
 				}
@@ -194,7 +194,7 @@ return [
 					return 0;
 				}
 				// Skip product reviews — WooCommerce manifest handles those separately.
-				$post = get_post( $comment->comment_post_ID );
+				$post = get_post( (int) $comment->comment_post_ID );
 				if ( $post && 'product' === $post->post_type ) {
 					return 0;
 				}

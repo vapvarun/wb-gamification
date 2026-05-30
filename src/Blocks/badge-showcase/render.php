@@ -101,7 +101,7 @@ $wb_gam_badges = $wb_gam_show_locked
 
 if ( '' !== $wb_gam_category ) {
 	$wb_gam_badges = array_values(
-		array_filter( $wb_gam_badges, fn( $b ) => ( $b['category'] ?? '' ) === $wb_gam_category )
+		array_filter( $wb_gam_badges, fn( $b ) => $b['category'] === $wb_gam_category )
 	);
 }
 

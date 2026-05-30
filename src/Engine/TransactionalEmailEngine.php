@@ -38,19 +38,19 @@ namespace WBGam\Engine;
 
 defined( 'ABSPATH' ) || exit;
 // Silencing convention-driven false positives so Plugin Check signal stays clean:
-//   - PrefixAllGlobals.NonPrefixedHooknameFound — plugin uses `wb_gam_*` as its
-//     established hook prefix (documented in CLAUDE.md, declared in .phpcs.xml).
-//     Plugin Check auto-detects `wb_gamification` from the text-domain header
-//     and doesn't share the .phpcs.xml prefix list; hooks like
-//     `wb_gam_points_redeemed` are part of the public 1.0 API and can't rename.
-//   - PrefixAllGlobals.NonPrefixedFunctionFound — same convention. Helper
-//     functions exported under `wb_gam_*` are documented in `src/Extensions/`.
-//   - PluginCheck.Security.DirectDB.UnescapedDBParameter +
-//     WordPress.DB.PreparedSQL.InterpolatedNotPrepared — this file does custom-
-//     table work. Table names are interpolated from `{$wpdb->prefix}` plus
-//     literal constants (no user input); user-supplied values pass through
-//     `$wpdb->prepare()`. MySQL doesn't allow placeholder table names, so the
-//     interpolation is unavoidable.
+// - PrefixAllGlobals.NonPrefixedHooknameFound — plugin uses `wb_gam_*` as its
+// established hook prefix (documented in CLAUDE.md, declared in .phpcs.xml).
+// Plugin Check auto-detects `wb_gamification` from the text-domain header
+// and doesn't share the .phpcs.xml prefix list; hooks like
+// `wb_gam_points_redeemed` are part of the public 1.0 API and can't rename.
+// - PrefixAllGlobals.NonPrefixedFunctionFound — same convention. Helper
+// functions exported under `wb_gam_*` are documented in `src/Extensions/`.
+// - PluginCheck.Security.DirectDB.UnescapedDBParameter +
+// WordPress.DB.PreparedSQL.InterpolatedNotPrepared — this file does custom-
+// table work. Table names are interpolated from `{$wpdb->prefix}` plus
+// literal constants (no user input); user-supplied values pass through
+// `$wpdb->prepare()`. MySQL doesn't allow placeholder table names, so the
+// interpolation is unavoidable.
 // phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
 
 use WBGam\Services\PointTypeService;
@@ -120,7 +120,11 @@ final class TransactionalEmailEngine {
 		if ( '' === $to || '' === $subject || '' === $body ) {
 			Log::error(
 				'TransactionalEmailEngine::send_async — invalid payload',
-				array( 'has_to' => '' !== $to, 'has_subject' => '' !== $subject, 'has_body' => '' !== $body )
+				array(
+					'has_to'      => '' !== $to,
+					'has_subject' => '' !== $subject,
+					'has_body'    => '' !== $body,
+				)
 			);
 			return;
 		}
@@ -277,7 +281,7 @@ final class TransactionalEmailEngine {
 				'site_url'              => home_url( '/' ),
 				'challenge_title'       => (string) ( $challenge['title'] ?? '' ),
 				'challenge_description' => (string) ( $challenge['description'] ?? '' ),
-				'reward_label'         => $reward_label,
+				'reward_label'          => $reward_label,
 			)
 		);
 
@@ -329,17 +333,17 @@ final class TransactionalEmailEngine {
 		$body = Email::render(
 			'redemption-confirmed',
 			array(
-				'user'           => $user,
-				'name'           => esc_html( (string) $user->display_name ),
-				'site_name'      => (string) get_bloginfo( 'name' ),
-				'site_url'       => home_url( '/' ),
-				'redemption_id'  => (int) $redemption_id,
-				'reward_title'   => (string) ( $item['title'] ?? __( 'Your reward', 'wb-gamification' ) ),
-				'reward_type'    => (string) ( $item['reward_type'] ?? 'custom' ),
-				'points_spent'   => (int) ( $item['points_cost'] ?? 0 ),
-				'points_label'   => $points_label,
-				'coupon_code'    => (string) ( $coupon_code ?? '' ),
-				'remaining'      => (int) PointsEngine::get_total( $user_id, (string) ( $item['point_type'] ?? '' ) ),
+				'user'          => $user,
+				'name'          => esc_html( (string) $user->display_name ),
+				'site_name'     => (string) get_bloginfo( 'name' ),
+				'site_url'      => home_url( '/' ),
+				'redemption_id' => (int) $redemption_id,
+				'reward_title'  => (string) ( $item['title'] ?? __( 'Your reward', 'wb-gamification' ) ),
+				'reward_type'   => (string) ( $item['reward_type'] ?? 'custom' ),
+				'points_spent'  => (int) ( $item['points_cost'] ?? 0 ),
+				'points_label'  => $points_label,
+				'coupon_code'   => (string) ( $coupon_code ?? '' ),
+				'remaining'     => (int) PointsEngine::get_total( $user_id, (string) ( $item['point_type'] ?? '' ) ),
 			)
 		);
 
@@ -454,7 +458,10 @@ final class TransactionalEmailEngine {
 		if ( $user_id > 0 && '' !== $slug && self::is_rate_limited( $user_id, $slug ) ) {
 			Log::debug(
 				'TransactionalEmailEngine::send — burst cap hit; dropping email.',
-				array( 'user_id' => $user_id, 'slug' => $slug )
+				array(
+					'user_id' => $user_id,
+					'slug'    => $slug,
+				)
 			);
 			return false;
 		}
@@ -502,7 +509,7 @@ final class TransactionalEmailEngine {
 			'Content-Type: text/html; charset=UTF-8',
 			'From: ' . Email::from_header(),
 		);
-		$sent = wp_mail( $to, $subject, $body, $headers );
+		$sent    = wp_mail( $to, $subject, $body, $headers );
 		if ( ! $sent ) {
 			Log::error(
 				'TransactionalEmailEngine::send_now — wp_mail returned false',

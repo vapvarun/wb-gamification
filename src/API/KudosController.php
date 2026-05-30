@@ -77,21 +77,21 @@ class KudosController extends WP_REST_Controller {
 					'callback'            => array( $this, 'create_item' ),
 					'permission_callback' => array( $this, 'create_item_permissions_check' ),
 					'args'                => array(
-						'receiver_id'      => array(
+						'receiver_id'     => array(
 							'required'          => false,
 							'type'              => 'integer',
 							'minimum'           => 1,
 							'sanitize_callback' => 'absint',
 							'description'       => 'User ID of the member receiving kudos. One of receiver_id or recipient_login is required.',
 						),
-						'recipient_login'  => array(
+						'recipient_login' => array(
 							'required'          => false,
 							'type'              => 'string',
 							'default'           => '',
 							'sanitize_callback' => 'sanitize_user',
 							'description'       => 'Login (username) or email of the member receiving kudos. Used by frontend forms where the giver does not know the recipient user_id.',
 						),
-						'message'          => array(
+						'message'         => array(
 							'type'              => 'string',
 							'default'           => '',
 							'sanitize_callback' => 'sanitize_text_field',

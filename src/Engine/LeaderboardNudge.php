@@ -25,19 +25,19 @@ namespace WBGam\Engine;
 
 defined( 'ABSPATH' ) || exit;
 // Silencing convention-driven false positives so Plugin Check signal stays clean:
-//   - PrefixAllGlobals.NonPrefixedHooknameFound — plugin uses `wb_gam_*` as its
-//     established hook prefix (documented in CLAUDE.md, declared in .phpcs.xml).
-//     Plugin Check auto-detects `wb_gamification` from the text-domain header
-//     and doesn't share the .phpcs.xml prefix list; hooks like
-//     `wb_gam_points_redeemed` are part of the public 1.0 API and can't rename.
-//   - PrefixAllGlobals.NonPrefixedFunctionFound — same convention. Helper
-//     functions exported under `wb_gam_*` are documented in `src/Extensions/`.
-//   - PluginCheck.Security.DirectDB.UnescapedDBParameter +
-//     WordPress.DB.PreparedSQL.InterpolatedNotPrepared — this file does custom-
-//     table work. Table names are interpolated from `{$wpdb->prefix}` plus
-//     literal constants (no user input); user-supplied values pass through
-//     `$wpdb->prepare()`. MySQL doesn't allow placeholder table names, so the
-//     interpolation is unavoidable.
+// - PrefixAllGlobals.NonPrefixedHooknameFound — plugin uses `wb_gam_*` as its
+// established hook prefix (documented in CLAUDE.md, declared in .phpcs.xml).
+// Plugin Check auto-detects `wb_gamification` from the text-domain header
+// and doesn't share the .phpcs.xml prefix list; hooks like
+// `wb_gam_points_redeemed` are part of the public 1.0 API and can't rename.
+// - PrefixAllGlobals.NonPrefixedFunctionFound — same convention. Helper
+// functions exported under `wb_gam_*` are documented in `src/Extensions/`.
+// - PluginCheck.Security.DirectDB.UnescapedDBParameter +
+// WordPress.DB.PreparedSQL.InterpolatedNotPrepared — this file does custom-
+// table work. Table names are interpolated from `{$wpdb->prefix}` plus
+// literal constants (no user input); user-supplied values pass through
+// `$wpdb->prepare()`. MySQL doesn't allow placeholder table names, so the
+// interpolation is unavoidable.
 // phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
 
 /**
@@ -352,15 +352,18 @@ final class LeaderboardNudge {
 		// Render the themed template — themes can drop a custom file at
 		// {theme}/wb-gamification/emails/leaderboard-nudge.php to override.
 		$rank_data = LeaderboardEngine::get_user_rank( $user_id, 'week' );
-		$body      = Email::render( 'leaderboard-nudge', array(
-			'user'      => $user,
-			'name'      => esc_html( (string) $user->display_name ),
-			'site_name' => $site_name,
-			'site_url'  => home_url( '/' ),
-			'message'   => $message,
-			'rank'      => isset( $rank_data['rank'] ) ? (int) $rank_data['rank'] : null,
-			'points'    => isset( $rank_data['points'] ) ? (int) $rank_data['points'] : 0,
-		) );
+		$body      = Email::render(
+			'leaderboard-nudge',
+			array(
+				'user'      => $user,
+				'name'      => esc_html( (string) $user->display_name ),
+				'site_name' => $site_name,
+				'site_url'  => home_url( '/' ),
+				'message'   => $message,
+				'rank'      => isset( $rank_data['rank'] ) ? (int) $rank_data['rank'] : null,
+				'points'    => isset( $rank_data['points'] ) ? (int) $rank_data['points'] : 0,
+			)
+		);
 		// Fallback to plain text if the template wasn't found (e.g. devs
 		// deleted the file or filtered the path to '').
 		if ( '' === $body ) {

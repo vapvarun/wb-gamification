@@ -28,10 +28,10 @@ defined( 'ABSPATH' ) || exit;
  */
 final class ProfilePage {
 
-	private const QUERY_VAR    = 'wb_gam_profile';
-	private const OPT_ENABLED  = 'wb_gam_profile_public_enabled';
-	private const OPT_SLUG     = 'wb_gam_profile_slug_base';
-	public const META_PUBLIC   = 'wb_gam_profile_public';
+	private const QUERY_VAR   = 'wb_gam_profile';
+	private const OPT_ENABLED = 'wb_gam_profile_public_enabled';
+	private const OPT_SLUG    = 'wb_gam_profile_slug_base';
+	public const META_PUBLIC  = 'wb_gam_profile_public';
 
 	/**
 	 * Boot — register rewrite rule + query var + template hook.
@@ -125,7 +125,7 @@ final class ProfilePage {
 			$user->display_name,
 			$site_name
 		);
-		$desc  = sprintf(
+		$desc = sprintf(
 			/* translators: 1: display name, 2: amount, 3: currency label, 4: badge count, 5: level name */
 			__( '%1$s has earned %2$d %3$s, %4$d badges, and reached %5$s.', 'wb-gamification' ),
 			$user->display_name,

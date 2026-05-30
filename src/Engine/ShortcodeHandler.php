@@ -496,10 +496,13 @@ final class ShortcodeHandler {
 			(array) $atts,
 			'wb_gam_community_challenges'
 		);
-		return self::block( 'community-challenges', array(
-			'limit'             => (int) $atts['limit'],
-			'show_progress_bar' => 'false' !== $atts['show_progress_bar'],
-		) );
+		return self::block(
+			'community-challenges',
+			array(
+				'limit'             => (int) $atts['limit'],
+				'show_progress_bar' => 'false' !== $atts['show_progress_bar'],
+			)
+		);
 	}
 
 	/**
@@ -518,11 +521,14 @@ final class ShortcodeHandler {
 			(array) $atts,
 			'wb_gam_cohort_rank'
 		);
-		return self::block( 'cohort-rank', array(
-			'user_id'   => (int) $atts['user_id'],
-			'limit'     => (int) $atts['limit'],
-			'pointType' => sanitize_key( (string) $atts['type'] ),
-		) );
+		return self::block(
+			'cohort-rank',
+			array(
+				'user_id'   => (int) $atts['user_id'],
+				'limit'     => (int) $atts['limit'],
+				'pointType' => sanitize_key( (string) $atts['type'] ),
+			)
+		);
 	}
 
 	/**
@@ -542,12 +548,15 @@ final class ShortcodeHandler {
 			(array) $atts,
 			'wb_gam_redemption_store'
 		);
-		return self::block( 'redemption-store', array(
-			'limit'        => (int) $atts['limit'],
-			'columns'      => max( 1, min( 4, (int) $atts['columns'] ) ),
-			'show_balance' => 'false' !== $atts['show_balance'],
-			'pointType'    => sanitize_key( (string) $atts['type'] ),
-		) );
+		return self::block(
+			'redemption-store',
+			array(
+				'limit'        => (int) $atts['limit'],
+				'columns'      => max( 1, min( 4, (int) $atts['columns'] ) ),
+				'show_balance' => 'false' !== $atts['show_balance'],
+				'pointType'    => sanitize_key( (string) $atts['type'] ),
+			)
+		);
 	}
 
 	/**
@@ -604,7 +613,8 @@ final class ShortcodeHandler {
 		?>
 		<div class="wb-gam-my-rewards">
 			<ul class="wb-gam-my-rewards__list" role="list">
-				<?php foreach ( $rows as $row ) :
+				<?php
+				foreach ( $rows as $row ) :
 					$row_status      = (string) ( $row['status'] ?? 'pending' );
 					$row_status_text = $status_label_map[ $row_status ] ?? ucfirst( $row_status );
 					$row_when        = (string) ( $row['created_at'] ?? '' );

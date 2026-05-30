@@ -16,19 +16,19 @@ namespace WBGam\BuddyPress\Stream;
 
 defined( 'ABSPATH' ) || exit;
 // Silencing convention-driven false positives so Plugin Check signal stays clean:
-//   - PrefixAllGlobals.NonPrefixedHooknameFound — plugin uses `wb_gam_*` as its
-//     established hook prefix (documented in CLAUDE.md, declared in .phpcs.xml).
-//     Plugin Check auto-detects `wb_gamification` from the text-domain header
-//     and doesn't share the .phpcs.xml prefix list; hooks like
-//     `wb_gam_points_redeemed` are part of the public 1.0 API and can't rename.
-//   - PrefixAllGlobals.NonPrefixedFunctionFound — same convention. Helper
-//     functions exported under `wb_gam_*` are documented in `src/Extensions/`.
-//   - PluginCheck.Security.DirectDB.UnescapedDBParameter +
-//     WordPress.DB.PreparedSQL.InterpolatedNotPrepared — this file does custom-
-//     table work. Table names are interpolated from `{$wpdb->prefix}` plus
-//     literal constants (no user input); user-supplied values pass through
-//     `$wpdb->prepare()`. MySQL doesn't allow placeholder table names, so the
-//     interpolation is unavoidable.
+// - PrefixAllGlobals.NonPrefixedHooknameFound — plugin uses `wb_gam_*` as its
+// established hook prefix (documented in CLAUDE.md, declared in .phpcs.xml).
+// Plugin Check auto-detects `wb_gamification` from the text-domain header
+// and doesn't share the .phpcs.xml prefix list; hooks like
+// `wb_gam_points_redeemed` are part of the public 1.0 API and can't rename.
+// - PrefixAllGlobals.NonPrefixedFunctionFound — same convention. Helper
+// functions exported under `wb_gam_*` are documented in `src/Extensions/`.
+// - PluginCheck.Security.DirectDB.UnescapedDBParameter +
+// WordPress.DB.PreparedSQL.InterpolatedNotPrepared — this file does custom-
+// table work. Table names are interpolated from `{$wpdb->prefix}` plus
+// literal constants (no user input); user-supplied values pass through
+// `$wpdb->prepare()`. MySQL doesn't allow placeholder table names, so the
+// interpolation is unavoidable.
 // phpcs:disable PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
 /**
@@ -69,7 +69,6 @@ final class Backfiller {
 		foreach ( $rows as $row ) {
 			$needs_update = ( false !== strpos( (string) $row->action, '<strong></strong>' ) )
 				|| empty( $row->content )
-				|| false === strpos( (string) $row->content, 'wb-gam-activity-card__icon' )
 				|| false === strpos( (string) $row->content, 'wb-gam-activity-card__icon' )
 				|| false !== strpos( (string) $row->content, '<p class="wb-gam-activity-card__desc"' )
 				|| false !== strpos( (string) $row->content, 'data:image' )
@@ -142,7 +141,6 @@ final class Backfiller {
 		foreach ( $rows as $row ) {
 			$needs_update = empty( $row->content )
 				|| false === strpos( (string) $row->content, 'wb-gam-activity-card__icon' )
-				|| false === strpos( (string) $row->content, 'wb-gam-activity-card__icon' )
 				|| false !== strpos( (string) $row->content, '<p class="wb-gam-activity-card__desc"' )
 				|| false !== strpos( (string) $row->content, 'data:image' )
 				|| false !== strpos( (string) $row->content, 'src="image/svg' )
@@ -194,7 +192,6 @@ final class Backfiller {
 		$updated = 0;
 		foreach ( $rows as $row ) {
 			$needs_update = empty( $row->content )
-				|| false === strpos( (string) $row->content, 'wb-gam-activity-card__icon' )
 				|| false === strpos( (string) $row->content, 'wb-gam-activity-card__icon' )
 				|| false !== strpos( (string) $row->content, '<p class="wb-gam-activity-card__desc"' )
 				|| false !== strpos( (string) $row->content, 'data:image' )

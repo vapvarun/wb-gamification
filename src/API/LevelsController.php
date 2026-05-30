@@ -22,19 +22,19 @@ use WBGam\Engine\Capabilities;
 
 defined( 'ABSPATH' ) || exit;
 // Silencing convention-driven false positives so Plugin Check signal stays clean:
-//   - PrefixAllGlobals.NonPrefixedHooknameFound — plugin uses `wb_gam_*` as its
-//     established hook prefix (documented in CLAUDE.md, declared in .phpcs.xml).
-//     Plugin Check auto-detects `wb_gamification` from the text-domain header
-//     and doesn't share the .phpcs.xml prefix list; hooks like
-//     `wb_gam_points_redeemed` are part of the public 1.0 API and can't rename.
-//   - PrefixAllGlobals.NonPrefixedFunctionFound — same convention. Helper
-//     functions exported under `wb_gam_*` are documented in `src/Extensions/`.
-//   - PluginCheck.Security.DirectDB.UnescapedDBParameter +
-//     WordPress.DB.PreparedSQL.InterpolatedNotPrepared — this file does custom-
-//     table work. Table names are interpolated from `{$wpdb->prefix}` plus
-//     literal constants (no user input); user-supplied values pass through
-//     `$wpdb->prepare()`. MySQL doesn't allow placeholder table names, so the
-//     interpolation is unavoidable.
+// - PrefixAllGlobals.NonPrefixedHooknameFound — plugin uses `wb_gam_*` as its
+// established hook prefix (documented in CLAUDE.md, declared in .phpcs.xml).
+// Plugin Check auto-detects `wb_gamification` from the text-domain header
+// and doesn't share the .phpcs.xml prefix list; hooks like
+// `wb_gam_points_redeemed` are part of the public 1.0 API and can't rename.
+// - PrefixAllGlobals.NonPrefixedFunctionFound — same convention. Helper
+// functions exported under `wb_gam_*` are documented in `src/Extensions/`.
+// - PluginCheck.Security.DirectDB.UnescapedDBParameter +
+// WordPress.DB.PreparedSQL.InterpolatedNotPrepared — this file does custom-
+// table work. Table names are interpolated from `{$wpdb->prefix}` plus
+// literal constants (no user input); user-supplied values pass through
+// `$wpdb->prepare()`. MySQL doesn't allow placeholder table names, so the
+// interpolation is unavoidable.
 // phpcs:disable PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
 
 /**
@@ -212,7 +212,7 @@ final class LevelsController extends WP_REST_Controller {
 		 * @param WP_REST_Request $request  Request.
 		 */
 		$filtered = apply_filters( 'wb_gam_before_create_level', $payload, $request );
-		if ( is_wp_error( $filtered ) ) {
+		if ( is_wp_error( $filtered ) ) { // @phpstan-ignore-line -- filter may return WP_Error to abort.
 			return $filtered;
 		}
 		$payload = is_array( $filtered ) ? $filtered : $payload;
@@ -243,7 +243,7 @@ final class LevelsController extends WP_REST_Controller {
 			);
 		}
 
-		$id = (int) $wpdb->insert_id;
+		$id  = (int) $wpdb->insert_id;
 		$row = $this->fetch_one( $id );
 
 		do_action( 'wb_gam_after_create_level', $row, $request );
@@ -295,20 +295,23 @@ final class LevelsController extends WP_REST_Controller {
 		 * @param WP_REST_Request $request  Request.
 		 */
 		$filtered = apply_filters( 'wb_gam_before_update_level', $updates, $current, $request );
-		if ( is_wp_error( $filtered ) ) {
+		if ( is_wp_error( $filtered ) ) { // @phpstan-ignore-line -- filter may return WP_Error to abort.
 			return $filtered;
 		}
 		$updates = is_array( $filtered ) ? $filtered : $updates;
 
 		global $wpdb;
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- UPDATE.
-		$wpdb->update(
+		$updated = $wpdb->update(
 			$wpdb->prefix . 'wb_gam_levels',
 			$updates,
 			array( 'id' => $id ),
 			$formats,
 			array( '%d' )
 		);
+		if ( false === $updated ) {
+			return new WP_Error( 'rest_update_failed', __( 'Could not update level.', 'wb-gamification' ), array( 'status' => 500 ) );
+		}
 
 		$fresh = $this->fetch_one( $id );
 
@@ -350,7 +353,10 @@ final class LevelsController extends WP_REST_Controller {
 
 		global $wpdb;
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- DELETE.
-		$wpdb->delete( $wpdb->prefix . 'wb_gam_levels', array( 'id' => $id ), array( '%d' ) );
+		$deleted = $wpdb->delete( $wpdb->prefix . 'wb_gam_levels', array( 'id' => $id ), array( '%d' ) );
+		if ( false === $deleted ) {
+			return new WP_Error( 'rest_delete_failed', __( 'Could not delete level.', 'wb-gamification' ), array( 'status' => 500 ) );
+		}
 
 		do_action( 'wb_gam_after_delete_level', $current, $request );
 

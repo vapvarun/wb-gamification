@@ -38,19 +38,19 @@ use WP_Error;
 
 defined( 'ABSPATH' ) || exit;
 // Silencing convention-driven false positives so Plugin Check signal stays clean:
-//   - PrefixAllGlobals.NonPrefixedHooknameFound — plugin uses `wb_gam_*` as its
-//     established hook prefix (documented in CLAUDE.md, declared in .phpcs.xml).
-//     Plugin Check auto-detects `wb_gamification` from the text-domain header
-//     and doesn't share the .phpcs.xml prefix list; hooks like
-//     `wb_gam_points_redeemed` are part of the public 1.0 API and can't rename.
-//   - PrefixAllGlobals.NonPrefixedFunctionFound — same convention. Helper
-//     functions exported under `wb_gam_*` are documented in `src/Extensions/`.
-//   - PluginCheck.Security.DirectDB.UnescapedDBParameter +
-//     WordPress.DB.PreparedSQL.InterpolatedNotPrepared — this file does custom-
-//     table work. Table names are interpolated from `{$wpdb->prefix}` plus
-//     literal constants (no user input); user-supplied values pass through
-//     `$wpdb->prepare()`. MySQL doesn't allow placeholder table names, so the
-//     interpolation is unavoidable.
+// - PrefixAllGlobals.NonPrefixedHooknameFound — plugin uses `wb_gam_*` as its
+// established hook prefix (documented in CLAUDE.md, declared in .phpcs.xml).
+// Plugin Check auto-detects `wb_gamification` from the text-domain header
+// and doesn't share the .phpcs.xml prefix list; hooks like
+// `wb_gam_points_redeemed` are part of the public 1.0 API and can't rename.
+// - PrefixAllGlobals.NonPrefixedFunctionFound — same convention. Helper
+// functions exported under `wb_gam_*` are documented in `src/Extensions/`.
+// - PluginCheck.Security.DirectDB.UnescapedDBParameter +
+// WordPress.DB.PreparedSQL.InterpolatedNotPrepared — this file does custom-
+// table work. Table names are interpolated from `{$wpdb->prefix}` plus
+// literal constants (no user input); user-supplied values pass through
+// `$wpdb->prepare()`. MySQL doesn't allow placeholder table names, so the
+// interpolation is unavoidable.
 // phpcs:disable PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 
 /**
@@ -304,7 +304,11 @@ class RulesController extends WP_REST_Controller {
 			return rest_ensure_response( $this->prepare_item( $row ) );
 		}
 
-		$wpdb->update( $wpdb->prefix . 'wb_gam_rules', $data, array( 'id' => $id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- Write operation; cache flushed via flush_rules_cache().
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- Write operation; cache flushed via flush_rules_cache().
+		$updated = $wpdb->update( $wpdb->prefix . 'wb_gam_rules', $data, array( 'id' => $id ) );
+		if ( false === $updated ) {
+			return new WP_Error( 'rest_update_failed', __( 'Could not update rule.', 'wb-gamification' ), array( 'status' => 500 ) );
+		}
 		$this->flush_rules_cache();
 
 		return rest_ensure_response( $this->prepare_item( $this->fetch_row( $id ) ) );
@@ -325,7 +329,11 @@ class RulesController extends WP_REST_Controller {
 			return new WP_Error( 'rest_not_found', __( 'Rule not found.', 'wb-gamification' ), array( 'status' => 404 ) );
 		}
 
-		$wpdb->delete( $wpdb->prefix . 'wb_gam_rules', array( 'id' => $id ), array( '%d' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- Write operation; cache flushed via flush_rules_cache().
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- Write operation; cache flushed via flush_rules_cache().
+		$deleted = $wpdb->delete( $wpdb->prefix . 'wb_gam_rules', array( 'id' => $id ), array( '%d' ) );
+		if ( false === $deleted ) {
+			return new WP_Error( 'rest_delete_failed', __( 'Could not delete rule.', 'wb-gamification' ), array( 'status' => 500 ) );
+		}
 		$this->flush_rules_cache();
 
 		return new WP_REST_Response(

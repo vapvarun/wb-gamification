@@ -11,10 +11,10 @@ namespace WBGam\BuddyPress;
 
 defined( 'ABSPATH' ) || exit;
 // Silencing convention-driven false positives so Plugin Check signal stays clean:
-//   - WordPress.DB.DirectDatabaseQuery.DirectQuery + .NoCaching + .SchemaChange:
-//     this file performs custom-table work. .phpcs.xml already excludes these
-//     for the local WPCS gate; this annotation extends the same intent to
-//     Plugin Check's internal phpcs invocation.
+// - WordPress.DB.DirectDatabaseQuery.DirectQuery + .NoCaching + .SchemaChange:
+// this file performs custom-table work. .phpcs.xml already excludes these
+// for the local WPCS gate; this annotation extends the same intent to
+// Plugin Check's internal phpcs invocation.
 // phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 
 /**
@@ -88,7 +88,13 @@ final class DirectoryIntegration {
 		if ( $points_total > 0 ) {
 			$parts[] = sprintf(
 				'<span class="wb-gam-directory-points">%1$s %2$s</span>',
-				\WBGam\Admin\Icon::svg( 'sparkles', array( 'size' => 14, 'class' => 'wb-gam-directory-icon' ) ),
+				\WBGam\Admin\Icon::svg(
+					'sparkles',
+					array(
+						'size'  => 14,
+						'class' => 'wb-gam-directory-icon',
+					)
+				),
 				esc_html( number_format_i18n( $points_total ) )
 			);
 		}
@@ -100,7 +106,13 @@ final class DirectoryIntegration {
 			);
 			$parts[] = sprintf(
 				'<span class="wb-gam-directory-badges">%1$s %2$s</span>',
-				\WBGam\Admin\Icon::svg( 'medal', array( 'size' => 14, 'class' => 'wb-gam-directory-icon' ) ),
+				\WBGam\Admin\Icon::svg(
+					'medal',
+					array(
+						'size'  => 14,
+						'class' => 'wb-gam-directory-icon',
+					)
+				),
 				esc_html( $badge_text )
 			);
 		}

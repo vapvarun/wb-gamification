@@ -191,8 +191,8 @@ class PointTypesController extends WP_REST_Controller {
 	 * PUT /point-types/{slug} — admin update.
 	 */
 	public function handle_update( WP_REST_Request $request ): WP_REST_Response|WP_Error {
-		$slug   = (string) $request['slug'];
-		$input  = array();
+		$slug  = (string) $request['slug'];
+		$input = array();
 
 		foreach ( array( 'label', 'description', 'icon', 'position' ) as $key ) {
 			if ( $request->has_param( $key ) ) {

@@ -29,19 +29,19 @@ namespace WBGam\Engine;
 
 defined( 'ABSPATH' ) || exit;
 // Silencing convention-driven false positives so Plugin Check signal stays clean:
-//   - PrefixAllGlobals.NonPrefixedHooknameFound — plugin uses `wb_gam_*` as its
-//     established hook prefix (documented in CLAUDE.md, declared in .phpcs.xml).
-//     Plugin Check auto-detects `wb_gamification` from the text-domain header
-//     and doesn't share the .phpcs.xml prefix list; hooks like
-//     `wb_gam_points_redeemed` are part of the public 1.0 API and can't rename.
-//   - PrefixAllGlobals.NonPrefixedFunctionFound — same convention. Helper
-//     functions exported under `wb_gam_*` are documented in `src/Extensions/`.
-//   - PluginCheck.Security.DirectDB.UnescapedDBParameter +
-//     WordPress.DB.PreparedSQL.InterpolatedNotPrepared — this file does custom-
-//     table work. Table names are interpolated from `{$wpdb->prefix}` plus
-//     literal constants (no user input); user-supplied values pass through
-//     `$wpdb->prepare()`. MySQL doesn't allow placeholder table names, so the
-//     interpolation is unavoidable.
+// - PrefixAllGlobals.NonPrefixedHooknameFound — plugin uses `wb_gam_*` as its
+// established hook prefix (documented in CLAUDE.md, declared in .phpcs.xml).
+// Plugin Check auto-detects `wb_gamification` from the text-domain header
+// and doesn't share the .phpcs.xml prefix list; hooks like
+// `wb_gam_points_redeemed` are part of the public 1.0 API and can't rename.
+// - PrefixAllGlobals.NonPrefixedFunctionFound — same convention. Helper
+// functions exported under `wb_gam_*` are documented in `src/Extensions/`.
+// - PluginCheck.Security.DirectDB.UnescapedDBParameter +
+// WordPress.DB.PreparedSQL.InterpolatedNotPrepared — this file does custom-
+// table work. Table names are interpolated from `{$wpdb->prefix}` plus
+// literal constants (no user input); user-supplied values pass through
+// `$wpdb->prepare()`. MySQL doesn't allow placeholder table names, so the
+// interpolation is unavoidable.
 // phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
 
 /**
@@ -179,9 +179,9 @@ final class Privacy {
 		$pt_service   = new \WBGam\Services\PointTypeService();
 		$summary_rows = array();
 		foreach ( $pt_service->list() as $pt ) {
-			$slug   = (string) $pt['slug'];
-			$label  = (string) $pt['label'];
-			$total  = (int) ( $balances[ $slug ] ?? 0 );
+			$slug           = (string) $pt['slug'];
+			$label          = (string) $pt['label'];
+			$total          = (int) ( $balances[ $slug ] ?? 0 );
 			$summary_rows[] = array(
 				'name'  => sprintf(
 					/* translators: %s: currency label (e.g. "Points", "Coins"). */
@@ -332,19 +332,19 @@ final class Privacy {
 		// Per-user toggles + derived caches stored in user_meta. Each is T2
 		// personal data and belongs in the export under data portability.
 		$meta_groups = array(
-			'wb_gam_profile_public'         => __( 'Public profile enabled (per-user)', 'wb-gamification' ),
-			'wb_gam_login_streak'           => __( 'Login bonus streak (current)', 'wb-gamification' ),
-			'wb_gam_login_streak_max'       => __( 'Login bonus streak (best)', 'wb-gamification' ),
-			'wb_gam_login_last_award'       => __( 'Login bonus last awarded', 'wb-gamification' ),
-			'wb_gam_seen_first_earn_toast'  => __( 'Seen first-earn welcome toast', 'wb-gamification' ),
-			'wb_gam_dismissed_welcome'      => __( 'Dismissed admin welcome card', 'wb-gamification' ),
-			'wb_gam_dismissed_checklist'    => __( 'Dismissed admin setup checklist', 'wb-gamification' ),
-			'wb_gam_setup_seen'             => __( 'Seen the setup wizard', 'wb-gamification' ),
-			'wb_gam_level_id'               => __( 'Current level ID (cached)', 'wb-gamification' ),
-			'wb_gam_level_name'             => __( 'Current level name (cached)', 'wb-gamification' ),
-			'wb_gam_league_tier'            => __( 'Cohort league tier', 'wb-gamification' ),
+			'wb_gam_profile_public'        => __( 'Public profile enabled (per-user)', 'wb-gamification' ),
+			'wb_gam_login_streak'          => __( 'Login bonus streak (current)', 'wb-gamification' ),
+			'wb_gam_login_streak_max'      => __( 'Login bonus streak (best)', 'wb-gamification' ),
+			'wb_gam_login_last_award'      => __( 'Login bonus last awarded', 'wb-gamification' ),
+			'wb_gam_seen_first_earn_toast' => __( 'Seen first-earn welcome toast', 'wb-gamification' ),
+			'wb_gam_dismissed_welcome'     => __( 'Dismissed admin welcome card', 'wb-gamification' ),
+			'wb_gam_dismissed_checklist'   => __( 'Dismissed admin setup checklist', 'wb-gamification' ),
+			'wb_gam_setup_seen'            => __( 'Seen the setup wizard', 'wb-gamification' ),
+			'wb_gam_level_id'              => __( 'Current level ID (cached)', 'wb-gamification' ),
+			'wb_gam_level_name'            => __( 'Current level name (cached)', 'wb-gamification' ),
+			'wb_gam_league_tier'           => __( 'Cohort league tier', 'wb-gamification' ),
 		);
-		$meta_rows = array();
+		$meta_rows   = array();
 		foreach ( $meta_groups as $key => $label ) {
 			$value = get_user_meta( $user_id, $key, true );
 			if ( '' === $value || null === $value ) {
@@ -382,13 +382,34 @@ final class Privacy {
 				'group_label' => __( 'Achievement Submissions', 'wb-gamification' ),
 				'item_id'     => 'wb-gam-submission-' . $i,
 				'data'        => array(
-					array( 'name' => __( 'Action', 'wb-gamification' ),       'value' => $row['action_id'] ),
-					array( 'name' => __( 'Evidence', 'wb-gamification' ),     'value' => (string) $row['evidence'] ),
-					array( 'name' => __( 'Evidence URL', 'wb-gamification' ), 'value' => (string) $row['evidence_url'] ),
-					array( 'name' => __( 'Status', 'wb-gamification' ),       'value' => $row['status'] ),
-					array( 'name' => __( 'Reviewer notes', 'wb-gamification' ), 'value' => (string) $row['notes'] ),
-					array( 'name' => __( 'Submitted', 'wb-gamification' ),    'value' => $row['created_at'] ),
-					array( 'name' => __( 'Reviewed', 'wb-gamification' ),     'value' => (string) ( $row['reviewed_at'] ?? '' ) ),
+					array(
+						'name'  => __( 'Action', 'wb-gamification' ),
+						'value' => $row['action_id'],
+					),
+					array(
+						'name'  => __( 'Evidence', 'wb-gamification' ),
+						'value' => (string) $row['evidence'],
+					),
+					array(
+						'name'  => __( 'Evidence URL', 'wb-gamification' ),
+						'value' => (string) $row['evidence_url'],
+					),
+					array(
+						'name'  => __( 'Status', 'wb-gamification' ),
+						'value' => $row['status'],
+					),
+					array(
+						'name'  => __( 'Reviewer notes', 'wb-gamification' ),
+						'value' => (string) $row['notes'],
+					),
+					array(
+						'name'  => __( 'Submitted', 'wb-gamification' ),
+						'value' => $row['created_at'],
+					),
+					array(
+						'name'  => __( 'Reviewed', 'wb-gamification' ),
+						'value' => (string) ( $row['reviewed_at'] ?? '' ),
+					),
 				),
 			);
 		}
@@ -414,12 +435,30 @@ final class Privacy {
 				'group_label' => __( 'Activity Event Log', 'wb-gamification' ),
 				'item_id'     => 'wb-gam-event-' . $i,
 				'data'        => array(
-					array( 'name' => __( 'Action', 'wb-gamification' ),    'value' => $row['action_id'] ),
-					array( 'name' => __( 'Object ID', 'wb-gamification' ), 'value' => (string) ( $row['object_id'] ?? '' ) ),
-					array( 'name' => __( 'Metadata', 'wb-gamification' ),  'value' => (string) ( $row['metadata'] ?? '' ) ),
-					array( 'name' => __( 'Currency', 'wb-gamification' ),  'value' => (string) ( $row['point_type'] ?? '' ) ),
-					array( 'name' => __( 'Site ID', 'wb-gamification' ),   'value' => (string) ( $row['site_id'] ?? '' ) ),
-					array( 'name' => __( 'Date', 'wb-gamification' ),      'value' => $row['created_at'] ),
+					array(
+						'name'  => __( 'Action', 'wb-gamification' ),
+						'value' => $row['action_id'],
+					),
+					array(
+						'name'  => __( 'Object ID', 'wb-gamification' ),
+						'value' => (string) ( $row['object_id'] ?? '' ),
+					),
+					array(
+						'name'  => __( 'Metadata', 'wb-gamification' ),
+						'value' => (string) ( $row['metadata'] ?? '' ),
+					),
+					array(
+						'name'  => __( 'Currency', 'wb-gamification' ),
+						'value' => (string) ( $row['point_type'] ?? '' ),
+					),
+					array(
+						'name'  => __( 'Site ID', 'wb-gamification' ),
+						'value' => (string) ( $row['site_id'] ?? '' ),
+					),
+					array(
+						'name'  => __( 'Date', 'wb-gamification' ),
+						'value' => $row['created_at'],
+					),
 				),
 			);
 		}

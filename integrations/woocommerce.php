@@ -111,12 +111,14 @@ return [
 				// current order has already moved to its paid state, so
 				// the count includes it. count === 1 → this IS the first
 				// paid order; > 1 means the customer has paid before.
-				$paid = wc_get_orders( [
-					'customer' => $customer_id,
-					'status'   => array( 'processing', 'completed' ),
-					'limit'    => 2,
-					'return'   => 'ids',
-				] );
+				$paid = wc_get_orders(
+					[
+						'customer' => $customer_id,
+						'status'   => array( 'processing', 'completed' ),
+						'limit'    => 2,
+						'return'   => 'ids',
+					]
+				);
 				return count( $paid ) === 1 ? $customer_id : 0;
 			},
 			'default_points' => 50,
@@ -138,7 +140,7 @@ return [
 				if ( ! $comment || empty( $comment->user_id ) ) {
 					return 0;
 				}
-				$post = get_post( $comment->comment_post_ID );
+				$post = get_post( (int) $comment->comment_post_ID );
 				if ( ! $post || 'product' !== $post->post_type ) {
 					return 0;
 				}

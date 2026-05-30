@@ -2,7 +2,7 @@
 /**
  * Read-side projection: per-user behavioural intelligence signals.
  *
- * v2.5 (the projection pattern) + AI intelligence v1 (the heuristic
+ * V2.5 (the projection pattern) + AI intelligence v1 (the heuristic
  * implementation), shipped together because v2.5 was always going to
  * need a first example to validate the pattern.
  *

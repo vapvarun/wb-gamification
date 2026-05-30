@@ -21,6 +21,8 @@
 namespace WBGam\API;
 
 use WBGam\Engine\BadgeEngine;
+use WBGam\Engine\Transaction;
+use WBGam\Engine\Log;
 use WP_REST_Controller;
 use WP_REST_Response;
 use WP_REST_Request;
@@ -29,19 +31,19 @@ use WP_Error;
 
 defined( 'ABSPATH' ) || exit;
 // Silencing convention-driven false positives so Plugin Check signal stays clean:
-//   - PrefixAllGlobals.NonPrefixedHooknameFound — plugin uses `wb_gam_*` as its
-//     established hook prefix (documented in CLAUDE.md, declared in .phpcs.xml).
-//     Plugin Check auto-detects `wb_gamification` from the text-domain header
-//     and doesn't share the .phpcs.xml prefix list; hooks like
-//     `wb_gam_points_redeemed` are part of the public 1.0 API and can't rename.
-//   - PrefixAllGlobals.NonPrefixedFunctionFound — same convention. Helper
-//     functions exported under `wb_gam_*` are documented in `src/Extensions/`.
-//   - PluginCheck.Security.DirectDB.UnescapedDBParameter +
-//     WordPress.DB.PreparedSQL.InterpolatedNotPrepared — this file does custom-
-//     table work. Table names are interpolated from `{$wpdb->prefix}` plus
-//     literal constants (no user input); user-supplied values pass through
-//     `$wpdb->prepare()`. MySQL doesn't allow placeholder table names, so the
-//     interpolation is unavoidable.
+// - PrefixAllGlobals.NonPrefixedHooknameFound — plugin uses `wb_gam_*` as its
+// established hook prefix (documented in CLAUDE.md, declared in .phpcs.xml).
+// Plugin Check auto-detects `wb_gamification` from the text-domain header
+// and doesn't share the .phpcs.xml prefix list; hooks like
+// `wb_gam_points_redeemed` are part of the public 1.0 API and can't rename.
+// - PrefixAllGlobals.NonPrefixedFunctionFound — same convention. Helper
+// functions exported under `wb_gam_*` are documented in `src/Extensions/`.
+// - PluginCheck.Security.DirectDB.UnescapedDBParameter +
+// WordPress.DB.PreparedSQL.InterpolatedNotPrepared — this file does custom-
+// table work. Table names are interpolated from `{$wpdb->prefix}` plus
+// literal constants (no user input); user-supplied values pass through
+// `$wpdb->prepare()`. MySQL doesn't allow placeholder table names, so the
+// interpolation is unavoidable.
 // phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
 
 /**
@@ -355,7 +357,7 @@ class BadgesController extends WP_REST_Controller {
 	 * @return array{row: array<string, mixed>, formats: array<int, string>}
 	 */
 	private function collect_badge_row( WP_REST_Request $request, bool $with_id ): array {
-		$row = array();
+		$row     = array();
 		$formats = array();
 		if ( $with_id ) {
 			$row['id'] = sanitize_key( (string) $request->get_param( 'id' ) );
@@ -379,13 +381,13 @@ class BadgesController extends WP_REST_Controller {
 		}
 		// closes_at: empty string clears the cutoff; non-empty stored verbatim (callers send UTC).
 		if ( null !== $request->get_param( 'closes_at' ) ) {
-			$raw                = (string) $request->get_param( 'closes_at' );
-			$row['closes_at']   = '' === $raw ? null : $raw;
-			$formats[]          = '%s';
+			$raw              = (string) $request->get_param( 'closes_at' );
+			$row['closes_at'] = '' === $raw ? null : $raw;
+			$formats[]        = '%s';
 		}
 		if ( null !== $request->get_param( 'max_earners' ) ) {
-			$raw                = $request->get_param( 'max_earners' );
-			$row['max_earners'] = ( null === $raw || '' === $raw ) ? null : max( 1, (int) $raw );
+			$raw                = (string) $request->get_param( 'max_earners' );
+			$row['max_earners'] = '' === $raw ? null : max( 1, (int) $raw );
 			$formats[]          = '%d';
 		}
 		return array(
@@ -401,53 +403,81 @@ class BadgesController extends WP_REST_Controller {
 	 * `condition.type === 'admin_awarded'` the rule row is deleted (admin
 	 * award only, no automatic trigger).
 	 *
-	 * @param string                                                                    $badge_id  Badge id.
-	 * @param array{type?: string, points?: int, action_id?: string, count?: int}|null  $condition Condition payload.
-	 * @return void
+	 * @param string                                                                   $badge_id  Badge id.
+	 * @param array{type?: string, points?: int, action_id?: string, count?: int}|null $condition Condition payload.
+	 * @return bool True when the replace committed; false when it rolled back
+	 *              (caller MUST surface this — a half-applied replace would
+	 *              leave the badge with NO award condition, silently disabling
+	 *              auto-award).
 	 */
-	private function persist_condition( string $badge_id, ?array $condition ): void {
+	private function persist_condition( string $badge_id, ?array $condition ): bool {
 		global $wpdb;
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- DELETE-then-INSERT for rule replacement.
-		$wpdb->delete(
-			$wpdb->prefix . 'wb_gam_rules',
-			array(
-				'rule_type' => 'badge_condition',
-				'target_id' => $badge_id,
-			),
-			array( '%s', '%s' )
+		$type = is_array( $condition )
+			? sanitize_key( (string) ( $condition['type'] ?? 'admin_awarded' ) )
+			: '';
+
+		// DELETE-then-INSERT replace, atomically. Previously these two writes
+		// were unchecked and unwrapped: a committed DELETE followed by a failed
+		// INSERT left the badge with no condition row (it stopped auto-awarding
+		// for every user) while the REST handler still returned success.
+		$ok = Transaction::run(
+			function () use ( $wpdb, $badge_id, $condition, $type ) {
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- DELETE-then-INSERT for rule replacement.
+				$deleted = $wpdb->delete(
+					$wpdb->prefix . 'wb_gam_rules',
+					array(
+						'rule_type' => 'badge_condition',
+						'target_id' => $badge_id,
+					),
+					array( '%s', '%s' )
+				);
+				if ( false === $deleted ) {
+					return false;
+				}
+
+				// No condition payload, or admin-awarded only → no rule row.
+				if ( ! is_array( $condition ) || 'admin_awarded' === $type || '' === $type ) {
+					return true;
+				}
+
+				$config = array( 'condition_type' => $type );
+				if ( 'point_milestone' === $type ) {
+					$config['points'] = max( 1, (int) ( $condition['points'] ?? 100 ) );
+				} elseif ( 'action_count' === $type ) {
+					$config['action_id'] = sanitize_key( (string) ( $condition['action_id'] ?? '' ) );
+					$config['count']     = max( 1, (int) ( $condition['count'] ?? 1 ) );
+				}
+
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- INSERT.
+				$inserted = $wpdb->insert(
+					$wpdb->prefix . 'wb_gam_rules',
+					array(
+						'rule_type'   => 'badge_condition',
+						'target_id'   => $badge_id,
+						'rule_config' => wp_json_encode( $config ),
+						'is_active'   => 1,
+					),
+					array( '%s', '%s', '%s', '%d' )
+				);
+				return false !== $inserted;
+			}
 		);
 
-		if ( ! is_array( $condition ) ) {
-			return;
+		if ( true !== $ok ) {
+			Log::error(
+				'BadgesController::persist_condition — badge condition replace failed',
+				array(
+					'badge_id' => $badge_id,
+					'type'     => $type,
+					'db_error' => $wpdb->last_error,
+				)
+			);
+			return false;
 		}
-
-		$type = sanitize_key( (string) ( $condition['type'] ?? 'admin_awarded' ) );
-		if ( 'admin_awarded' === $type || '' === $type ) {
-			return;
-		}
-
-		$config = array( 'condition_type' => $type );
-		if ( 'point_milestone' === $type ) {
-			$config['points'] = max( 1, (int) ( $condition['points'] ?? 100 ) );
-		} elseif ( 'action_count' === $type ) {
-			$config['action_id'] = sanitize_key( (string) ( $condition['action_id'] ?? '' ) );
-			$config['count']     = max( 1, (int) ( $condition['count'] ?? 1 ) );
-		}
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- INSERT.
-		$wpdb->insert(
-			$wpdb->prefix . 'wb_gam_rules',
-			array(
-				'rule_type'   => 'badge_condition',
-				'target_id'   => $badge_id,
-				'rule_config' => wp_json_encode( $config ),
-				'is_active'   => 1,
-			),
-			array( '%s', '%s', '%s', '%d' )
-		);
 
 		wp_cache_delete( 'wb_gam_badge_rules', 'wb_gamification' );
+		return true;
 	}
 
 	/**
@@ -487,6 +517,7 @@ class BadgesController extends WP_REST_Controller {
 		 * @param WP_REST_Request $request REST request.
 		 */
 		$filtered = apply_filters( 'wb_gam_before_create_badge', $row, $request );
+		// @phpstan-ignore-next-line -- filter may return WP_Error to abort.
 		if ( is_wp_error( $filtered ) ) {
 			return $filtered;
 		}
@@ -510,7 +541,13 @@ class BadgesController extends WP_REST_Controller {
 		}
 
 		$condition_param = $request->get_param( 'condition' );
-		$this->persist_condition( $badge_id, is_array( $condition_param ) ? $condition_param : null );
+		if ( ! $this->persist_condition( $badge_id, is_array( $condition_param ) ? $condition_param : null ) ) {
+			return new WP_Error(
+				'rest_badge_condition_failed',
+				__( 'Badge created but its award condition could not be saved. Edit the badge and re-save its condition.', 'wb-gamification' ),
+				array( 'status' => 500 )
+			);
+		}
 
 		$created = BadgeEngine::get_badge_def( $badge_id );
 		do_action( 'wb_gam_after_create_badge', $created, $request );
@@ -544,6 +581,7 @@ class BadgesController extends WP_REST_Controller {
 		 * @param WP_REST_Request $request REST request.
 		 */
 		$filtered = apply_filters( 'wb_gam_before_update_badge', $data, $def, $request );
+		// @phpstan-ignore-next-line -- filter may return WP_Error to abort.
 		if ( is_wp_error( $filtered ) ) {
 			return $filtered;
 		}
@@ -553,17 +591,26 @@ class BadgesController extends WP_REST_Controller {
 
 		if ( $data ) {
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- REST write operation.
-			$wpdb->update(
+			$update_result = $wpdb->update(
 				$wpdb->prefix . 'wb_gam_badge_defs',
 				$data,
 				array( 'id' => $badge_id ),
 				$formats,
 				array( '%s' )
 			);
+			if ( false === $update_result ) {
+				return new WP_Error( 'rest_badge_update_failed', __( 'Could not update badge.', 'wb-gamification' ), array( 'status' => 500 ) );
+			}
 		}
 
 		if ( null !== $request->get_param( 'condition' ) ) {
-			$this->persist_condition( $badge_id, (array) $request->get_param( 'condition' ) );
+			if ( ! $this->persist_condition( $badge_id, (array) $request->get_param( 'condition' ) ) ) {
+				return new WP_Error(
+					'rest_badge_condition_failed',
+					__( 'Badge updated but its award condition could not be saved. Re-save the condition.', 'wb-gamification' ),
+					array( 'status' => 500 )
+				);
+			}
 		}
 
 		do_action( 'wb_gam_after_update_badge', $badge_id, $data, $request );
@@ -596,21 +643,33 @@ class BadgesController extends WP_REST_Controller {
 			);
 		}
 
-		// Cascade delete user badges first.
-		$wpdb->delete( $wpdb->prefix . 'wb_gam_user_badges', array( 'badge_id' => $badge_id ), array( '%s' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Cascade delete.
-
-		// Delete associated rules.
-		$wpdb->delete( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Cascade delete.
-			$wpdb->prefix . 'wb_gam_rules',
-			array(
-				'rule_type' => 'badge_condition',
-				'target_id' => $badge_id,
-			),
-			array( '%s', '%s' )
+		// Cascade delete (user badges + rules + definition) atomically so a
+		// partial failure can't orphan user_badges/rules rows that later
+		// mis-drive badge evaluation.
+		$deleted = Transaction::run(
+			function () use ( $wpdb, $badge_id ) {
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Cascade delete.
+				if ( false === $wpdb->delete( $wpdb->prefix . 'wb_gam_user_badges', array( 'badge_id' => $badge_id ), array( '%s' ) ) ) {
+					return false;
+				}
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Cascade delete.
+				if ( false === $wpdb->delete(
+					$wpdb->prefix . 'wb_gam_rules',
+					array(
+						'rule_type' => 'badge_condition',
+						'target_id' => $badge_id,
+					),
+					array( '%s', '%s' )
+				) ) {
+					return false;
+				}
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- REST delete operation.
+				return false !== $wpdb->delete( $wpdb->prefix . 'wb_gam_badge_defs', array( 'id' => $badge_id ), array( '%s' ) );
+			}
 		);
-
-		// Delete the definition.
-		$wpdb->delete( $wpdb->prefix . 'wb_gam_badge_defs', array( 'id' => $badge_id ), array( '%s' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- REST delete operation.
+		if ( true !== $deleted ) {
+			return new WP_Error( 'rest_badge_delete_failed', __( 'Could not delete badge.', 'wb-gamification' ), array( 'status' => 500 ) );
+		}
 
 		return new WP_REST_Response(
 			array(

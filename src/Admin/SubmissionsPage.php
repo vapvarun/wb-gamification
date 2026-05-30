@@ -145,9 +145,10 @@ final class SubmissionsPage {
 								</tr>
 							</thead>
 							<tbody>
-								<?php foreach ( $pending as $row ) :
-									$user = get_userdata( (int) $row['user_id'] );
-									$action = Registry::get_action( (string) $row['action_id'] );
+								<?php
+								foreach ( $pending as $row ) :
+									$user         = get_userdata( (int) $row['user_id'] );
+									$action       = Registry::get_action( (string) $row['action_id'] );
 									$action_label = $action['label'] ?? $row['action_id'];
 									?>
 									<tr data-submission-id="<?php echo (int) $row['id']; ?>">
@@ -166,12 +167,12 @@ final class SubmissionsPage {
 												// excerpt and dropped every embedded image — admins
 												// couldn't preview attached media (Basecamp #9927858743
 												// reopen comment). Now the cell shows:
-												//   1. Text excerpt (30 words, scanning-friendly)
-												//   2. Thumbnail strip of every <img> in the submission
-												//      — each thumbnail links to the full-size image
-												//   3. A <details> reveal of the full sanitised HTML
-												//      for the rare cases where the excerpt + thumbs
-												//      aren't enough.
+												// 1. Text excerpt (30 words, scanning-friendly)
+												// 2. Thumbnail strip of every <img> in the submission
+												// — each thumbnail links to the full-size image
+												// 3. A <details> reveal of the full sanitised HTML
+												// for the rare cases where the excerpt + thumbs
+												// aren't enough.
 												$wb_gam_evidence = (string) $row['evidence'];
 												$wb_gam_excerpt  = wp_trim_words( wp_strip_all_tags( $wb_gam_evidence ), 30 );
 												$wb_gam_img_urls = array();
@@ -188,15 +189,15 @@ final class SubmissionsPage {
 													<div class="wb-gam-submission-thumbs" role="list">
 														<?php foreach ( $wb_gam_img_urls as $wb_gam_img_url ) : ?>
 															<a href="<?php echo esc_url( $wb_gam_img_url ); ?>"
-															   target="_blank"
-															   rel="noopener"
-															   role="listitem"
-															   class="wb-gam-submission-thumb"
-															   aria-label="<?php esc_attr_e( 'Open attachment in a new tab', 'wb-gamification' ); ?>">
+																target="_blank"
+																rel="noopener"
+																role="listitem"
+																class="wb-gam-submission-thumb"
+																aria-label="<?php esc_attr_e( 'Open attachment in a new tab', 'wb-gamification' ); ?>">
 																<img src="<?php echo esc_url( $wb_gam_img_url ); ?>"
-																     alt=""
-																     loading="lazy"
-																     decoding="async">
+																	alt=""
+																	loading="lazy"
+																	decoding="async">
 															</a>
 														<?php endforeach; ?>
 													</div>

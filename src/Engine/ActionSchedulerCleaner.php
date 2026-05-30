@@ -21,19 +21,19 @@ namespace WBGam\Engine;
 
 defined( 'ABSPATH' ) || exit;
 // Silencing convention-driven false positives so Plugin Check signal stays clean:
-//   - PrefixAllGlobals.NonPrefixedHooknameFound — plugin uses `wb_gam_*` as its
-//     established hook prefix (documented in CLAUDE.md, declared in .phpcs.xml).
-//     Plugin Check auto-detects `wb_gamification` from the text-domain header
-//     and doesn't share the .phpcs.xml prefix list; hooks like
-//     `wb_gam_points_redeemed` are part of the public 1.0 API and can't rename.
-//   - PrefixAllGlobals.NonPrefixedFunctionFound — same convention. Helper
-//     functions exported under `wb_gam_*` are documented in `src/Extensions/`.
-//   - PluginCheck.Security.DirectDB.UnescapedDBParameter +
-//     WordPress.DB.PreparedSQL.InterpolatedNotPrepared — this file does custom-
-//     table work. Table names are interpolated from `{$wpdb->prefix}` plus
-//     literal constants (no user input); user-supplied values pass through
-//     `$wpdb->prepare()`. MySQL doesn't allow placeholder table names, so the
-//     interpolation is unavoidable.
+// - PrefixAllGlobals.NonPrefixedHooknameFound — plugin uses `wb_gam_*` as its
+// established hook prefix (documented in CLAUDE.md, declared in .phpcs.xml).
+// Plugin Check auto-detects `wb_gamification` from the text-domain header
+// and doesn't share the .phpcs.xml prefix list; hooks like
+// `wb_gam_points_redeemed` are part of the public 1.0 API and can't rename.
+// - PrefixAllGlobals.NonPrefixedFunctionFound — same convention. Helper
+// functions exported under `wb_gam_*` are documented in `src/Extensions/`.
+// - PluginCheck.Security.DirectDB.UnescapedDBParameter +
+// WordPress.DB.PreparedSQL.InterpolatedNotPrepared — this file does custom-
+// table work. Table names are interpolated from `{$wpdb->prefix}` plus
+// literal constants (no user input); user-supplied values pass through
+// `$wpdb->prepare()`. MySQL doesn't allow placeholder table names, so the
+// interpolation is unavoidable.
 // phpcs:disable PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
 
 /**
@@ -73,13 +73,6 @@ final class ActionSchedulerCleaner {
 	private const RUNAWAY_ROW_THRESHOLD = 250000;
 
 	/**
-	 * Aggressive retention used while runaway is active. One hour buys
-	 * enough breathing room to diagnose without making the cleaner itself
-	 * the symptom (an aggressive cleaner is a noisy cleaner).
-	 */
-	private const RUNAWAY_RETENTION_DAYS = 0; // means "now - 1 hour" via panic mode below
-
-	/**
 	 * Transient key that records the most recent runaway detection so
 	 * admin-facing tooling can surface the alert. Set on detection,
 	 * cleared when row count returns under the threshold.
@@ -110,7 +103,7 @@ final class ActionSchedulerCleaner {
 	 * Called on plugins_loaded.
 	 */
 	public static function init(): void {
-		add_action( self::CRON_HOOK, array( __CLASS__, 'cleanup' ) );
+		add_action( self::CRON_HOOK, array( __CLASS__, 'run_cron' ) );
 
 		if ( ! wp_next_scheduled( self::CRON_HOOK ) ) {
 			wp_schedule_event( time() + HOUR_IN_SECONDS, self::CRON_RECUR, self::CRON_HOOK );
@@ -134,6 +127,18 @@ final class ActionSchedulerCleaner {
 		if ( $timestamp ) {
 			wp_unschedule_event( $timestamp, self::CRON_HOOK );
 		}
+	}
+
+	/**
+	 * Cron action callback. Runs the cleanup and discards the return value
+	 * so the hooked callback path returns void (action callbacks must not
+	 * return a value). The CLI calls cleanup() directly when it needs the
+	 * per-status counts.
+	 *
+	 * @return void
+	 */
+	public static function run_cron(): void {
+		self::cleanup();
 	}
 
 	/**
@@ -232,11 +237,11 @@ final class ActionSchedulerCleaner {
 		);
 
 		$payload = array(
-			'rows'         => $row_count,
-			'threshold'    => self::RUNAWAY_ROW_THRESHOLD,
-			'top_hook'     => $top['hook'] ?? '',
-			'top_hook_n'   => isset( $top['n'] ) ? (int) $top['n'] : 0,
-			'detected_at'  => gmdate( 'Y-m-d H:i:s' ),
+			'rows'        => $row_count,
+			'threshold'   => self::RUNAWAY_ROW_THRESHOLD,
+			'top_hook'    => $top['hook'] ?? '',
+			'top_hook_n'  => isset( $top['n'] ) ? (int) $top['n'] : 0,
+			'detected_at' => gmdate( 'Y-m-d H:i:s' ),
 		);
 		set_transient( self::RUNAWAY_TRANSIENT_KEY, $payload, DAY_IN_SECONDS );
 

@@ -183,6 +183,12 @@ class PointTypeConversionsController extends WP_REST_Controller {
 
 	// ── Callbacks ───────────────────────────────────────────────────────────────
 
+	/**
+	 * List the active point-type conversion rules.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response
+	 */
 	public function handle_list( WP_REST_Request $request ): WP_REST_Response {
 		return new WP_REST_Response( $this->service->list_active(), 200 );
 	}
@@ -266,23 +272,23 @@ class PointTypeConversionsController extends WP_REST_Controller {
 	 */
 	private function error_response( string $code, array $extra = array() ): WP_Error {
 		$map = array(
-			'same_type'        => array( 400, __( 'Source and destination currencies must differ.', 'wb-gamification' ) ),
-			'invalid_type'     => array( 400, __( 'One or both point types are unknown.', 'wb-gamification' ) ),
-			'pair_exists'      => array( 409, __( 'A conversion rule for this pair already exists.', 'wb-gamification' ) ),
-			'invalid_rate'     => array( 400, __( 'Rate amounts must be positive integers.', 'wb-gamification' ) ),
-			'invalid_user'     => array( 401, __( 'You must be signed in to convert balance.', 'wb-gamification' ) ),
-			'no_rule'          => array( 404, __( 'No conversion rule is configured for this pair.', 'wb-gamification' ) ),
-			'below_min'        => array( 400, __( 'Amount is below the minimum allowed for this conversion.', 'wb-gamification' ) ),
-			'below_unit'       => array( 400, __( 'Amount is below one full conversion unit.', 'wb-gamification' ) ),
-			'cooldown'         => array( 429, __( 'You converted recently. Please wait before converting again.', 'wb-gamification' ) ),
-			'daily_cap'        => array( 429, __( 'Daily conversion cap reached for this pair.', 'wb-gamification' ) ),
-			'insufficient'     => array( 400, __( 'Insufficient balance to perform this conversion.', 'wb-gamification' ) ),
-			'debit_failed'     => array( 500, __( 'Could not debit the source balance.', 'wb-gamification' ) ),
-			'credit_failed'    => array( 500, __( 'Could not credit the destination balance.', 'wb-gamification' ) ),
-			'not_found'        => array( 404, __( 'Conversion rule not found.', 'wb-gamification' ) ),
-			'insert_failed'    => array( 500, __( 'Failed to save the conversion rule.', 'wb-gamification' ) ),
-			'update_failed'    => array( 500, __( 'Failed to update the conversion rule.', 'wb-gamification' ) ),
-			'delete_failed'    => array( 500, __( 'Failed to delete the conversion rule.', 'wb-gamification' ) ),
+			'same_type'     => array( 400, __( 'Source and destination currencies must differ.', 'wb-gamification' ) ),
+			'invalid_type'  => array( 400, __( 'One or both point types are unknown.', 'wb-gamification' ) ),
+			'pair_exists'   => array( 409, __( 'A conversion rule for this pair already exists.', 'wb-gamification' ) ),
+			'invalid_rate'  => array( 400, __( 'Rate amounts must be positive integers.', 'wb-gamification' ) ),
+			'invalid_user'  => array( 401, __( 'You must be signed in to convert balance.', 'wb-gamification' ) ),
+			'no_rule'       => array( 404, __( 'No conversion rule is configured for this pair.', 'wb-gamification' ) ),
+			'below_min'     => array( 400, __( 'Amount is below the minimum allowed for this conversion.', 'wb-gamification' ) ),
+			'below_unit'    => array( 400, __( 'Amount is below one full conversion unit.', 'wb-gamification' ) ),
+			'cooldown'      => array( 429, __( 'You converted recently. Please wait before converting again.', 'wb-gamification' ) ),
+			'daily_cap'     => array( 429, __( 'Daily conversion cap reached for this pair.', 'wb-gamification' ) ),
+			'insufficient'  => array( 400, __( 'Insufficient balance to perform this conversion.', 'wb-gamification' ) ),
+			'debit_failed'  => array( 500, __( 'Could not debit the source balance.', 'wb-gamification' ) ),
+			'credit_failed' => array( 500, __( 'Could not credit the destination balance.', 'wb-gamification' ) ),
+			'not_found'     => array( 404, __( 'Conversion rule not found.', 'wb-gamification' ) ),
+			'insert_failed' => array( 500, __( 'Failed to save the conversion rule.', 'wb-gamification' ) ),
+			'update_failed' => array( 500, __( 'Failed to update the conversion rule.', 'wb-gamification' ) ),
+			'delete_failed' => array( 500, __( 'Failed to delete the conversion rule.', 'wb-gamification' ) ),
 		);
 
 		$status  = isset( $map[ $code ] ) ? $map[ $code ][0] : 500;

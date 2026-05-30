@@ -14,10 +14,10 @@ use WBGam\Engine\PointsEngine;
 
 defined( 'ABSPATH' ) || exit;
 // Silencing convention-driven false positives so Plugin Check signal stays clean:
-//   - WordPress.DB.DirectDatabaseQuery.DirectQuery + .NoCaching + .SchemaChange:
-//     this file performs custom-table work. .phpcs.xml already excludes these
-//     for the local WPCS gate; this annotation extends the same intent to
-//     Plugin Check's internal phpcs invocation.
+// - WordPress.DB.DirectDatabaseQuery.DirectQuery + .NoCaching + .SchemaChange:
+// this file performs custom-table work. .phpcs.xml already excludes these
+// for the local WPCS gate; this annotation extends the same intent to
+// Plugin Check's internal phpcs invocation.
 // phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 
 /**
@@ -66,9 +66,9 @@ final class ProfileIntegration {
 		// product import, pre-1.4.0 stale cache). Falling back to the
 		// user_meta value verbatim leaves the rank stuck on whatever level
 		// was last persisted, which is what Simran observed in QA.
-		$level          = \WBGam\Engine\LevelEngine::get_level_for_user( (int) $user_id );
-		$level_name     = $level ? (string) $level['name'] : __( 'Newcomer', 'wb-gamification' );
-		$points         = PointsEngine::get_total( $user_id );
+		$level      = \WBGam\Engine\LevelEngine::get_level_for_user( (int) $user_id );
+		$level_name = $level ? (string) $level['name'] : __( 'Newcomer', 'wb-gamification' );
+		$points     = PointsEngine::get_total( $user_id );
 
 		// Resolve the primary currency label so the BP profile shows
 		// "1,200 Coins" on a coins-default site instead of "1,200 pts".
@@ -104,7 +104,7 @@ final class ProfileIntegration {
 			</span>
 			<?php if ( $next_level_points > 0 ) : ?>
 			<div class="wb-gam-progress-bar" title="<?php echo esc_attr( $progress_pct . '%' ); ?>">
-				<div class="wb-gam-progress-fill" style="--wb-gam-fill:<?php echo esc_attr( $progress_pct ); ?>%"></div>
+				<div class="wb-gam-progress-fill" style="--wb-gam-fill:<?php echo esc_attr( (string) $progress_pct ); ?>%"></div>
 			</div>
 			<?php endif; ?>
 		</div>

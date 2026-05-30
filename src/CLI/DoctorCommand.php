@@ -22,10 +22,10 @@ use WP_CLI;
 
 defined( 'ABSPATH' ) || exit;
 // Silencing convention-driven false positives so Plugin Check signal stays clean:
-//   - WordPress.DB.DirectDatabaseQuery.DirectQuery + .NoCaching + .SchemaChange:
-//     this file performs custom-table work. .phpcs.xml already excludes these
-//     for the local WPCS gate; this annotation extends the same intent to
-//     Plugin Check's internal phpcs invocation.
+// - WordPress.DB.DirectDatabaseQuery.DirectQuery + .NoCaching + .SchemaChange:
+// this file performs custom-table work. .phpcs.xml already excludes these
+// for the local WPCS gate; this annotation extends the same intent to
+// Plugin Check's internal phpcs invocation.
 // phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
 
 /**
@@ -40,7 +40,11 @@ class DoctorCommand {
 	 *
 	 * @var array{pass: int, warn: int, fail: int}
 	 */
-	private array $counts = [ 'pass' => 0, 'warn' => 0, 'fail' => 0 ];
+	private array $counts = [
+		'pass' => 0,
+		'warn' => 0,
+		'fail' => 0,
+	];
 
 	/**
 	 * Whether to show passing check details.
@@ -138,12 +142,14 @@ class DoctorCommand {
 
 		WP_CLI::line( '' );
 		WP_CLI::line( str_repeat( '─', 60 ) );
-		WP_CLI::line( sprintf(
-			'Results: %s pass, %s warn, %s fail',
-			WP_CLI::colorize( '%G' . $this->counts['pass'] . '%n' ),
-			WP_CLI::colorize( '%Y' . $this->counts['warn'] . '%n' ),
-			WP_CLI::colorize( '%R' . $this->counts['fail'] . '%n' )
-		) );
+		WP_CLI::line(
+			sprintf(
+				'Results: %s pass, %s warn, %s fail',
+				WP_CLI::colorize( '%G' . $this->counts['pass'] . '%n' ),
+				WP_CLI::colorize( '%Y' . $this->counts['warn'] . '%n' ),
+				WP_CLI::colorize( '%R' . $this->counts['fail'] . '%n' )
+			)
+		);
 
 		if ( $this->counts['fail'] > 0 ) {
 			WP_CLI::error( 'Plugin has failures that must be fixed before release.', false );
@@ -360,11 +366,16 @@ class DoctorCommand {
 			$cat          = $action['category'] ?? 'uncategorized';
 			$cats[ $cat ] = ( $cats[ $cat ] ?? 0 ) + 1;
 		}
-		$this->pass( 'Categories: ' . implode( ', ', array_map(
-			fn( $cat, $n ) => "$cat($n)",
-			array_keys( $cats ),
-			array_values( $cats )
-		) ) );
+		$this->pass(
+			'Categories: ' . implode(
+				', ',
+				array_map(
+					fn( $cat, $n ) => "$cat($n)",
+					array_keys( $cats ),
+					array_values( $cats )
+				)
+			)
+		);
 	}
 
 	// ── Duplicate Hooks ─────────────────────────────────────────────────────────
@@ -399,7 +410,7 @@ class DoctorCommand {
 			$known_ok = [
 				'woocommerce_order_status_completed' => 'first-time bonus',
 				'mepr-event-signup-completed'        => 'first-time bonus',
-				'give_complete_purchase'              => 'first-time bonus',
+				'give_complete_purchase'             => 'first-time bonus',
 				'publish_post'                       => 'standalone/BP split or first-post bonus',
 				'comment_post'                       => 'author/commenter split or product review',
 				'mvs_comment_created'                => 'give/receive pattern (different users)',
@@ -443,9 +454,9 @@ class DoctorCommand {
 	private function check_kudos_options(): void {
 		$this->section( 'Kudos Configuration' );
 
-		$daily   = (int) get_option( 'wb_gam_kudos_daily_limit', 5 );
-		$recv    = (int) get_option( 'wb_gam_kudos_receiver_points', 5 );
-		$giver   = (int) get_option( 'wb_gam_kudos_giver_points', 2 );
+		$daily = (int) get_option( 'wb_gam_kudos_daily_limit', 5 );
+		$recv  = (int) get_option( 'wb_gam_kudos_receiver_points', 5 );
+		$giver = (int) get_option( 'wb_gam_kudos_giver_points', 2 );
 
 		$this->pass( "Daily limit: $daily, Receiver pts: $recv, Giver pts: $giver" );
 
@@ -497,15 +508,15 @@ class DoctorCommand {
 		$this->section( 'Integrations' );
 
 		$integrations = [
-			'BuddyPress'           => function_exists( 'buddypress' ),
-			'bbPress'              => function_exists( 'bbpress' ),
-			'WooCommerce'          => class_exists( 'WooCommerce' ),
-			'LearnDash'            => defined( 'LEARNDASH_VERSION' ),
-			'LifterLMS'            => defined( 'LLMS_PLUGIN_FILE' ),
-			'MemberPress'          => defined( 'MEPR_VERSION' ),
-			'GiveWP'               => class_exists( 'Give' ),
-			'The Events Calendar'  => class_exists( 'Tribe__Events__Main' ),
-			'WPMediaVerse'         => defined( 'MVS_VERSION' ),
+			'BuddyPress'          => function_exists( 'buddypress' ),
+			'bbPress'             => function_exists( 'bbpress' ),
+			'WooCommerce'         => class_exists( 'WooCommerce' ),
+			'LearnDash'           => defined( 'LEARNDASH_VERSION' ),
+			'LifterLMS'           => defined( 'LLMS_PLUGIN_FILE' ),
+			'MemberPress'         => defined( 'MEPR_VERSION' ),
+			'GiveWP'              => class_exists( 'Give' ),
+			'The Events Calendar' => class_exists( 'Tribe__Events__Main' ),
+			'WPMediaVerse'        => defined( 'MVS_VERSION' ),
 		];
 
 		$active   = [];
@@ -529,7 +540,7 @@ class DoctorCommand {
 
 		// Check if WPMediaVerse ships a gamification manifest (either edition).
 		if ( defined( 'MVS_VERSION' ) ) {
-			$mvs_manifests = array(
+			$mvs_manifests  = array(
 				WP_PLUGIN_DIR . '/wpmediaverse/wb-gamification.php',
 				WP_PLUGIN_DIR . '/wpmediaverse-pro/wb-gamification.php',
 			);
@@ -618,7 +629,7 @@ class DoctorCommand {
 		$this->section( 'Cron Jobs' );
 
 		$expected = [
-			'wb_gam_prune_logs'         => 'Log pruner',
+			'wb_gam_prune_logs'           => 'Log pruner',
 			'wb_gam_leaderboard_snapshot' => 'Leaderboard snapshot',
 		];
 
@@ -697,11 +708,11 @@ class DoctorCommand {
 
 		// Check for competing gamification plugins.
 		$competitors = [
-			'mycred/mycred.php'           => 'myCred',
-			'gamipress/gamipress.php'     => 'GamiPress',
-			'badgeos/badgeos.php'         => 'BadgeOS',
+			'mycred/mycred.php'       => 'myCred',
+			'gamipress/gamipress.php' => 'GamiPress',
+			'badgeos/badgeos.php'     => 'BadgeOS',
 		];
-		$conflicts = [];
+		$conflicts   = [];
 		foreach ( $competitors as $file => $name ) {
 			if ( is_plugin_active( $file ) ) {
 				$conflicts[] = $name;
@@ -736,7 +747,6 @@ class DoctorCommand {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		if ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) ) !== $table ) {
 			WP_CLI::error( 'Action Scheduler tables not found. Nothing to drain.' );
-			return;
 		}
 
 		WP_CLI::line( WP_CLI::colorize( '%BWB Gamification — Action Scheduler drain%n' ) );
@@ -767,8 +777,8 @@ class DoctorCommand {
 					'tick %2d: complete=%s failed=%s pending=%s | rows now=%s',
 					$tick,
 					number_format( $result['complete'] ?? 0 ),
-					number_format( $result['failed']   ?? 0 ),
-					number_format( $result['pending']  ?? 0 ),
+					number_format( $result['failed'] ?? 0 ),
+					number_format( $result['pending'] ?? 0 ),
 					number_format( $current )
 				)
 			);
@@ -776,8 +786,8 @@ class DoctorCommand {
 			// All three statuses returned zero — no more candidates within the
 			// current retention horizon; further ticks would be no-ops.
 			$tick_deleted = (int) ( $result['complete'] ?? 0 )
-				+ (int) ( $result['failed']   ?? 0 )
-				+ (int) ( $result['pending']  ?? 0 );
+				+ (int) ( $result['failed'] ?? 0 )
+				+ (int) ( $result['pending'] ?? 0 );
 			if ( 0 === $tick_deleted ) {
 				WP_CLI::line( 'Tick produced no deletions — drain complete.' );
 				break;

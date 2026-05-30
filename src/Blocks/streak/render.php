@@ -224,7 +224,7 @@ BlockHooks::before( 'streak', $wb_gam_attrs );
 			<?php
 			$wb_gam_end_ts   = (int) current_time( 'timestamp' );
 			$wb_gam_start_ts = (int) strtotime( "-{$wb_gam_heatmap_days} days", $wb_gam_end_ts );
-			$wb_gam_max_pts  = ! empty( $wb_gam_heatmap ) ? max( $wb_gam_heatmap ) : 1;
+			$wb_gam_max_pts  = max( $wb_gam_heatmap );
 
 			for ( $wb_gam_ts = $wb_gam_start_ts; $wb_gam_ts <= $wb_gam_end_ts; $wb_gam_ts += DAY_IN_SECONDS ) {
 				$wb_gam_date  = gmdate( 'Y-m-d', $wb_gam_ts );

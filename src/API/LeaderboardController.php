@@ -206,6 +206,7 @@ class LeaderboardController extends WP_REST_Controller {
 		// Resolve group name if BP is active.
 		$group_name = '';
 		if ( function_exists( 'groups_get_group' ) ) {
+			/** @var object{id: int, name: string} $group BP_Groups_Group row. */
 			$group = groups_get_group( $group_id );
 			if ( empty( $group->id ) ) {
 				return new WP_Error( 'rest_not_found', __( 'Group not found.', 'wb-gamification' ), array( 'status' => 404 ) );

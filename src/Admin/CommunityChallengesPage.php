@@ -16,19 +16,19 @@ use WBGam\Engine\Registry;
 
 defined( 'ABSPATH' ) || exit;
 // Silencing convention-driven false positives so Plugin Check signal stays clean:
-//   - PrefixAllGlobals.NonPrefixedHooknameFound — plugin uses `wb_gam_*` as its
-//     established hook prefix (documented in CLAUDE.md, declared in .phpcs.xml).
-//     Plugin Check auto-detects `wb_gamification` from the text-domain header
-//     and doesn't share the .phpcs.xml prefix list; hooks like
-//     `wb_gam_points_redeemed` are part of the public 1.0 API and can't rename.
-//   - PrefixAllGlobals.NonPrefixedFunctionFound — same convention. Helper
-//     functions exported under `wb_gam_*` are documented in `src/Extensions/`.
-//   - PluginCheck.Security.DirectDB.UnescapedDBParameter +
-//     WordPress.DB.PreparedSQL.InterpolatedNotPrepared — this file does custom-
-//     table work. Table names are interpolated from `{$wpdb->prefix}` plus
-//     literal constants (no user input); user-supplied values pass through
-//     `$wpdb->prepare()`. MySQL doesn't allow placeholder table names, so the
-//     interpolation is unavoidable.
+// - PrefixAllGlobals.NonPrefixedHooknameFound — plugin uses `wb_gam_*` as its
+// established hook prefix (documented in CLAUDE.md, declared in .phpcs.xml).
+// Plugin Check auto-detects `wb_gamification` from the text-domain header
+// and doesn't share the .phpcs.xml prefix list; hooks like
+// `wb_gam_points_redeemed` are part of the public 1.0 API and can't rename.
+// - PrefixAllGlobals.NonPrefixedFunctionFound — same convention. Helper
+// functions exported under `wb_gam_*` are documented in `src/Extensions/`.
+// - PluginCheck.Security.DirectDB.UnescapedDBParameter +
+// WordPress.DB.PreparedSQL.InterpolatedNotPrepared — this file does custom-
+// table work. Table names are interpolated from `{$wpdb->prefix}` plus
+// literal constants (no user input); user-supplied values pass through
+// `$wpdb->prepare()`. MySQL doesn't allow placeholder table names, so the
+// interpolation is unavoidable.
 // phpcs:disable PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery
 
 /**
@@ -121,12 +121,12 @@ final class CommunityChallengesPage {
 	 * @return void
 	 */
 	public static function register_page(): void {
-		// Hidden submenu (null parent) — keeps the URL routable so existing
+		// Hidden submenu (empty parent slug) — keeps the URL routable so existing
 		// bookmarks / docs / dashboard links don't 404, but the page is
 		// reached via the "Community" tab on the unified Challenges admin
 		// page (b9 merge — `?page=wb-gam-challenges&tab=community`).
 		add_submenu_page(
-			null,
+			'',
 			__( 'Community Challenges', 'wb-gamification' ),
 			__( 'Community Challenges', 'wb-gamification' ),
 			'wb_gam_manage_challenges',
@@ -350,7 +350,7 @@ final class CommunityChallengesPage {
 								<td class="wbgam-cell--minw">
 									<div class="wbgam-flex-row">
 										<div class="wbgam-progress">
-											<div class="wbgam-progress__bar" style="width:<?php echo esc_attr( $pct ); ?>%"></div>
+											<div class="wbgam-progress__bar" style="width:<?php echo esc_attr( (string) $pct ); ?>%"></div>
 										</div>
 										<span class="wbgam-text-meta"><?php echo esc_html( number_format_i18n( $progress ) . ' / ' . number_format_i18n( $target ) ); ?></span>
 									</div>

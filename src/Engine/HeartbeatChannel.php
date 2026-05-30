@@ -42,19 +42,19 @@ namespace WBGam\Engine;
 
 defined( 'ABSPATH' ) || exit;
 // Silencing convention-driven false positives so Plugin Check signal stays clean:
-//   - PrefixAllGlobals.NonPrefixedHooknameFound — plugin uses `wb_gam_*` as its
-//     established hook prefix (documented in CLAUDE.md, declared in .phpcs.xml).
-//     Plugin Check auto-detects `wb_gamification` from the text-domain header
-//     and doesn't share the .phpcs.xml prefix list; hooks like
-//     `wb_gam_points_redeemed` are part of the public 1.0 API and can't rename.
-//   - PrefixAllGlobals.NonPrefixedFunctionFound — same convention. Helper
-//     functions exported under `wb_gam_*` are documented in `src/Extensions/`.
-//   - PluginCheck.Security.DirectDB.UnescapedDBParameter +
-//     WordPress.DB.PreparedSQL.InterpolatedNotPrepared — this file does custom-
-//     table work. Table names are interpolated from `{$wpdb->prefix}` plus
-//     literal constants (no user input); user-supplied values pass through
-//     `$wpdb->prepare()`. MySQL doesn't allow placeholder table names, so the
-//     interpolation is unavoidable.
+// - PrefixAllGlobals.NonPrefixedHooknameFound — plugin uses `wb_gam_*` as its
+// established hook prefix (documented in CLAUDE.md, declared in .phpcs.xml).
+// Plugin Check auto-detects `wb_gamification` from the text-domain header
+// and doesn't share the .phpcs.xml prefix list; hooks like
+// `wb_gam_points_redeemed` are part of the public 1.0 API and can't rename.
+// - PrefixAllGlobals.NonPrefixedFunctionFound — same convention. Helper
+// functions exported under `wb_gam_*` are documented in `src/Extensions/`.
+// - PluginCheck.Security.DirectDB.UnescapedDBParameter +
+// WordPress.DB.PreparedSQL.InterpolatedNotPrepared — this file does custom-
+// table work. Table names are interpolated from `{$wpdb->prefix}` plus
+// literal constants (no user input); user-supplied values pass through
+// `$wpdb->prepare()`. MySQL doesn't allow placeholder table names, so the
+// interpolation is unavoidable.
 // phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
 
 /**
@@ -190,18 +190,18 @@ final class HeartbeatChannel {
 		}
 
 		// Primary currency total (the floating bar's headline number).
-		$pt_service       = new \WBGam\Services\PointTypeService();
-		$primary_slug     = (string) $pt_service->default_slug();
-		$primary_record   = $pt_service->get( $primary_slug );
-		$primary_label    = (string) ( $primary_record['label'] ?? __( 'points', 'wb-gamification' ) );
-		$primary_total    = (int) PointsEngine::get_total( $user_id, $primary_slug );
+		$pt_service     = new \WBGam\Services\PointTypeService();
+		$primary_slug   = (string) $pt_service->default_slug();
+		$primary_record = $pt_service->get( $primary_slug );
+		$primary_label  = (string) ( $primary_record['label'] ?? __( 'points', 'wb-gamification' ) );
+		$primary_total  = (int) PointsEngine::get_total( $user_id, $primary_slug );
 
 		// All-currency totals — keyed by slug so a multi-currency theme
 		// (XP + Coins) can pick the slug it cares about without a second
 		// REST round-trip.
 		$by_type = array();
 		foreach ( (array) $pt_service->list() as $pt ) {
-			$slug             = (string) ( $pt['slug'] ?? '' );
+			$slug = (string) ( $pt['slug'] ?? '' );
 			if ( '' === $slug ) {
 				continue;
 			}
@@ -317,12 +317,12 @@ final class HeartbeatChannel {
 			// SVG icon in the process).
 			$out[ $sig ] = array_map(
 				static function ( $row ) {
-					$uid = (int) ( $row['user_id'] ?? 0 );
+					$uid = (int) $row['user_id'];
 					return array(
 						'user_id'      => $uid,
-						'display_name' => (string) ( $row['display_name'] ?? '' ),
-						'points'       => (int) ( $row['points'] ?? 0 ),
-						'rank'         => isset( $row['rank'] ) ? (int) $row['rank'] : null,
+						'display_name' => (string) $row['display_name'],
+						'points'       => (int) $row['points'],
+						'rank'         => (int) $row['rank'],
 						'badge_count'  => $uid > 0 ? (int) BadgeEngine::count_user_badges( $uid ) : 0,
 					);
 				},

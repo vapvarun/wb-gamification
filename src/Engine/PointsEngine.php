@@ -21,19 +21,19 @@ use WBGam\Services\PointTypeService;
 
 defined( 'ABSPATH' ) || exit;
 // Silencing convention-driven false positives so Plugin Check signal stays clean:
-//   - PrefixAllGlobals.NonPrefixedHooknameFound — plugin uses `wb_gam_*` as its
-//     established hook prefix (documented in CLAUDE.md, declared in .phpcs.xml).
-//     Plugin Check auto-detects `wb_gamification` from the text-domain header
-//     and doesn't share the .phpcs.xml prefix list; hooks like
-//     `wb_gam_points_redeemed` are part of the public 1.0 API and can't rename.
-//   - PrefixAllGlobals.NonPrefixedFunctionFound — same convention. Helper
-//     functions exported under `wb_gam_*` are documented in `src/Extensions/`.
-//   - PluginCheck.Security.DirectDB.UnescapedDBParameter +
-//     WordPress.DB.PreparedSQL.InterpolatedNotPrepared — this file does custom-
-//     table work. Table names are interpolated from `{$wpdb->prefix}` plus
-//     literal constants (no user input); user-supplied values pass through
-//     `$wpdb->prepare()`. MySQL doesn't allow placeholder table names, so the
-//     interpolation is unavoidable.
+// - PrefixAllGlobals.NonPrefixedHooknameFound — plugin uses `wb_gam_*` as its
+// established hook prefix (documented in CLAUDE.md, declared in .phpcs.xml).
+// Plugin Check auto-detects `wb_gamification` from the text-domain header
+// and doesn't share the .phpcs.xml prefix list; hooks like
+// `wb_gam_points_redeemed` are part of the public 1.0 API and can't rename.
+// - PrefixAllGlobals.NonPrefixedFunctionFound — same convention. Helper
+// functions exported under `wb_gam_*` are documented in `src/Extensions/`.
+// - PluginCheck.Security.DirectDB.UnescapedDBParameter +
+// WordPress.DB.PreparedSQL.InterpolatedNotPrepared — this file does custom-
+// table work. Table names are interpolated from `{$wpdb->prefix}` plus
+// literal constants (no user input); user-supplied values pass through
+// `$wpdb->prepare()`. MySQL doesn't allow placeholder table names, so the
+// interpolation is unavoidable.
 // phpcs:disable PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
 
 /**
@@ -564,8 +564,8 @@ final class PointsEngine {
 		}
 
 		global $wpdb;
-		$type   = self::resolve_type( $type );
-		$now    = current_time( 'mysql' );
+		$type    = self::resolve_type( $type );
+		$now     = current_time( 'mysql' );
 		$now_utc = gmdate( 'Y-m-d H:i:s' );
 
 		// Chunk to keep packet size under MySQL's max_allowed_packet (default 64MB
@@ -583,8 +583,8 @@ final class PointsEngine {
 			$ids_for_evt = array();
 
 			foreach ( $chunk as $uid ) {
-				$uid       = (int) $uid;
-				$event_id  = wp_generate_uuid4();
+				$uid                      = (int) $uid;
+				$event_id                 = wp_generate_uuid4();
 				$ids_for_evt[ $event_id ] = $uid;
 
 				$event_ph[]   = '(%s, %d, %d, %s, %s, %s, %s, %s)';
@@ -592,7 +592,14 @@ final class PointsEngine {
 				$event_args[] = $uid;
 				$event_args[] = 0; // object_id
 				$event_args[] = $action_id;
-				$event_args[] = wp_json_encode( array( 'points' => $points, 'manual' => true, 'batch' => true, 'point_type' => $type ) );
+				$event_args[] = wp_json_encode(
+					array(
+						'points'     => $points,
+						'manual'     => true,
+						'batch'      => true,
+						'point_type' => $type,
+					)
+				);
 				$event_args[] = $type;
 				$event_args[] = ''; // site_id
 				$event_args[] = $now_utc;
@@ -614,26 +621,42 @@ final class PointsEngine {
 			$wpdb->query( 'START TRANSACTION' );
 
 			// phpcs:disable WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- bulk INSERT, single statement, parameterized via prepare().
-			$events_ok = $wpdb->query( $wpdb->prepare(
-				"INSERT INTO {$wpdb->prefix}wb_gam_events (id, user_id, object_id, action_id, metadata, point_type, site_id, created_at) VALUES " . implode( ',', $event_ph ),
-				...$event_args
-			) );
+			$events_ok = $wpdb->query(
+				$wpdb->prepare(
+					"INSERT INTO {$wpdb->prefix}wb_gam_events (id, user_id, object_id, action_id, metadata, point_type, site_id, created_at) VALUES " . implode( ',', $event_ph ),
+					...$event_args
+				)
+			);
 			// phpcs:enable WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
 			if ( false === $events_ok ) {
 				$wpdb->query( 'ROLLBACK' );
-				Log::error( 'PointsEngine::award_batch — events INSERT failed', array( 'chunk_size' => count( $chunk ), 'db_error' => $wpdb->last_error ) );
+				Log::error(
+					'PointsEngine::award_batch — events INSERT failed',
+					array(
+						'chunk_size' => count( $chunk ),
+						'db_error'   => $wpdb->last_error,
+					)
+				);
 				continue;
 			}
 
 			// phpcs:disable WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- bulk INSERT, single statement.
-			$inserted = $wpdb->query( $wpdb->prepare(
-				"INSERT INTO {$wpdb->prefix}wb_gam_points (event_id, user_id, action_id, points, point_type, object_id, created_at) VALUES " . implode( ',', $point_ph ),
-				...$point_args
-			) );
+			$inserted = $wpdb->query(
+				$wpdb->prepare(
+					"INSERT INTO {$wpdb->prefix}wb_gam_points (event_id, user_id, action_id, points, point_type, object_id, created_at) VALUES " . implode( ',', $point_ph ),
+					...$point_args
+				)
+			);
 			// phpcs:enable WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
 			if ( false === $inserted ) {
 				$wpdb->query( 'ROLLBACK' );
-				Log::error( 'PointsEngine::award_batch — points INSERT failed', array( 'chunk_size' => count( $chunk ), 'db_error' => $wpdb->last_error ) );
+				Log::error(
+					'PointsEngine::award_batch — points INSERT failed',
+					array(
+						'chunk_size' => count( $chunk ),
+						'db_error'   => $wpdb->last_error,
+					)
+				);
 				continue;
 			}
 
@@ -649,15 +672,23 @@ final class PointsEngine {
 				$totals_args[] = $points * $count;
 			}
 			// phpcs:disable WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- bulk UPSERT.
-			$totals_ok = $wpdb->query( $wpdb->prepare(
-				"INSERT INTO {$wpdb->prefix}wb_gam_user_totals (user_id, point_type, total) VALUES " . implode( ',', $totals_ph ) .
-				" ON DUPLICATE KEY UPDATE total = total + VALUES(total)",
-				...$totals_args
-			) );
+			$totals_ok = $wpdb->query(
+				$wpdb->prepare(
+					"INSERT INTO {$wpdb->prefix}wb_gam_user_totals (user_id, point_type, total) VALUES " . implode( ',', $totals_ph ) .
+					' ON DUPLICATE KEY UPDATE total = total + VALUES(total)',
+					...$totals_args
+				)
+			);
 			// phpcs:enable WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
 			if ( false === $totals_ok ) {
 				$wpdb->query( 'ROLLBACK' );
-				Log::error( 'PointsEngine::award_batch — user_totals UPSERT failed', array( 'chunk_size' => count( $chunk ), 'db_error' => $wpdb->last_error ) );
+				Log::error(
+					'PointsEngine::award_batch — user_totals UPSERT failed',
+					array(
+						'chunk_size' => count( $chunk ),
+						'db_error'   => $wpdb->last_error,
+					)
+				);
 				continue;
 			}
 

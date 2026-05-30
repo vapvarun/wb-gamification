@@ -76,9 +76,9 @@ final class BootOrder {
 	 * the engine wants to declare a dependency contract OR when other
 	 * engines depend on it.
 	 *
-	 * @param string         $slug       Stable slug (e.g. 'engine', 'registry').
-	 * @param int            $slot       One of the SLOT_* constants.
-	 * @param array<string>  $depends_on Slugs of engines this one needs.
+	 * @param string        $slug       Stable slug (e.g. 'engine', 'registry').
+	 * @param int           $slot       One of the SLOT_* constants.
+	 * @param array<string> $depends_on Slugs of engines this one needs.
 	 */
 	public static function register( string $slug, int $slot, array $depends_on = array() ): void {
 		self::$registrations[ $slug ] = array(
@@ -106,7 +106,10 @@ final class BootOrder {
 				if ( ! isset( self::$registrations[ $dep ] ) ) {
 					Log::warning(
 						sprintf( 'BootOrder: %s declares dependency on unregistered slug %s.', $slug, $dep ),
-						array( 'slug' => $slug, 'depends_on' => $dep )
+						array(
+							'slug'       => $slug,
+							'depends_on' => $dep,
+						)
 					);
 					continue;
 				}
@@ -122,9 +125,9 @@ final class BootOrder {
 							$dep
 						),
 						array(
-							'dependent'      => $slug,
-							'dependent_slot' => $entry['slot'],
-							'dependency'     => $dep,
+							'dependent'       => $slug,
+							'dependent_slot'  => $entry['slot'],
+							'dependency'      => $dep,
 							'dependency_slot' => self::$registrations[ $dep ]['slot'],
 						)
 					);
@@ -135,6 +138,7 @@ final class BootOrder {
 
 	/**
 	 * Test-only helper to reset the registration state between tests.
+	 *
 	 * @internal
 	 */
 	public static function reset(): void {
@@ -143,6 +147,7 @@ final class BootOrder {
 
 	/**
 	 * Inspect the current registration graph.
+	 *
 	 * @internal
 	 * @return array<string, array{slot: int, depends_on: list<string>}>
 	 */

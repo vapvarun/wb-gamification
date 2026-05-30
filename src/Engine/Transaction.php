@@ -93,6 +93,8 @@ final class Transaction {
 	 *
 	 * @param callable $fn Closure executing the atomic work.
 	 * @return mixed       Whatever $fn returned (or null on cascading rollback).
+	 * @throws \Throwable  Re-thrown after the transaction is rolled back when
+	 *                     the closure throws.
 	 */
 	public static function run( callable $fn ): mixed {
 		global $wpdb;

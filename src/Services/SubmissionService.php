@@ -13,6 +13,7 @@
 
 namespace WBGam\Services;
 
+use WBGam\Engine\Log;
 use WBGam\Engine\PointsEngine;
 use WBGam\Engine\Registry;
 use WBGam\Repository\SubmissionRepository;
@@ -20,19 +21,19 @@ use WP_Error;
 
 defined( 'ABSPATH' ) || exit;
 // Silencing convention-driven false positives so Plugin Check signal stays clean:
-//   - PrefixAllGlobals.NonPrefixedHooknameFound — plugin uses `wb_gam_*` as its
-//     established hook prefix (documented in CLAUDE.md, declared in .phpcs.xml).
-//     Plugin Check auto-detects `wb_gamification` from the text-domain header
-//     and doesn't share the .phpcs.xml prefix list; hooks like
-//     `wb_gam_points_redeemed` are part of the public 1.0 API and can't rename.
-//   - PrefixAllGlobals.NonPrefixedFunctionFound — same convention. Helper
-//     functions exported under `wb_gam_*` are documented in `src/Extensions/`.
-//   - PluginCheck.Security.DirectDB.UnescapedDBParameter +
-//     WordPress.DB.PreparedSQL.InterpolatedNotPrepared — this file does custom-
-//     table work. Table names are interpolated from `{$wpdb->prefix}` plus
-//     literal constants (no user input); user-supplied values pass through
-//     `$wpdb->prepare()`. MySQL doesn't allow placeholder table names, so the
-//     interpolation is unavoidable.
+// - PrefixAllGlobals.NonPrefixedHooknameFound — plugin uses `wb_gam_*` as its
+// established hook prefix (documented in CLAUDE.md, declared in .phpcs.xml).
+// Plugin Check auto-detects `wb_gamification` from the text-domain header
+// and doesn't share the .phpcs.xml prefix list; hooks like
+// `wb_gam_points_redeemed` are part of the public 1.0 API and can't rename.
+// - PrefixAllGlobals.NonPrefixedFunctionFound — same convention. Helper
+// functions exported under `wb_gam_*` are documented in `src/Extensions/`.
+// - PluginCheck.Security.DirectDB.UnescapedDBParameter +
+// WordPress.DB.PreparedSQL.InterpolatedNotPrepared — this file does custom-
+// table work. Table names are interpolated from `{$wpdb->prefix}` plus
+// literal constants (no user input); user-supplied values pass through
+// `$wpdb->prepare()`. MySQL doesn't allow placeholder table names, so the
+// interpolation is unavoidable.
 // phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
 
 final class SubmissionService {
@@ -77,19 +78,21 @@ final class SubmissionService {
 			);
 		}
 
-		$id = $this->repo->insert( array(
-			'user_id'      => $user_id,
-			'action_id'    => $action_id,
-			// wp_kses_post() preserves the safe HTML (bold, italic, links,
-			// lists, embedded image tags from members with upload_files)
-			// emitted by wp_editor() while still stripping scripts,
-			// iframes, and dangerous attributes. Stricter than
-			// sanitize_textarea_field (which strips ALL HTML and made the
-			// rich editor pointless) but safe enough that the reviewer's
-			// rendered preview stays trustworthy.
-			'evidence'     => wp_kses_post( $evidence ),
-			'evidence_url' => esc_url_raw( $evidence_url ),
-		) );
+		$id = $this->repo->insert(
+			array(
+				'user_id'      => $user_id,
+				'action_id'    => $action_id,
+				// wp_kses_post() preserves the safe HTML (bold, italic, links,
+				// lists, embedded image tags from members with upload_files)
+				// emitted by wp_editor() while still stripping scripts,
+				// iframes, and dangerous attributes. Stricter than
+				// sanitize_textarea_field (which strips ALL HTML and made the
+				// rich editor pointless) but safe enough that the reviewer's
+				// rendered preview stays trustworthy.
+				'evidence'     => wp_kses_post( $evidence ),
+				'evidence_url' => esc_url_raw( $evidence_url ),
+			)
+		);
 
 		if ( ! $id ) {
 			return new WP_Error( 'wb_gam_insert_failed', __( 'Could not record submission.', 'wb-gamification' ), array( 'status' => 500 ) );
@@ -127,11 +130,27 @@ final class SubmissionService {
 		}
 
 		// Award via PointsEngine — uses the default points for this action.
+		// The award MUST succeed before we mark the submission approved:
+		// otherwise the moderator sees "approved" while the member receives
+		// zero points, with no retry and no trace.
 		$action = Registry::get_action( (string) $row['action_id'] );
 		if ( $action ) {
 			$points = (int) ( get_option( 'wb_gam_points_' . $row['action_id'], $action['default_points'] ?? 0 ) );
-			if ( $points > 0 ) {
-				PointsEngine::award( (int) $row['user_id'], (string) $row['action_id'], $points );
+			if ( $points > 0 && ! PointsEngine::award( (int) $row['user_id'], (string) $row['action_id'], $points ) ) {
+				Log::error(
+					'SubmissionService::approve — points award failed; submission left pending',
+					array(
+						'submission_id' => $id,
+						'user_id'       => (int) $row['user_id'],
+						'action_id'     => (string) $row['action_id'],
+						'points'        => $points,
+					)
+				);
+				return new WP_Error(
+					'wb_gam_award_failed',
+					__( 'Could not award points for this submission. It remains pending — please retry.', 'wb-gamification' ),
+					array( 'status' => 500 )
+				);
 			}
 		}
 

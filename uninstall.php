@@ -17,8 +17,8 @@ global $wpdb;
 // 1. Drop custom tables.
 //    phpcs:disable WordPress.DB.DirectDatabaseQuery.SchemaChange
 //    phpcs:disable WordPress.DB.DirectDatabaseQuery.NoCaching
-//    Reason: DROP TABLE is a schema operation required during uninstall.
-//    Caching is not applicable here — tables are being permanently removed.
+// Reason: DROP TABLE is a schema operation required during uninstall.
+// Caching is not applicable here — tables are being permanently removed.
 // -------------------------------------------------------------------------
 // Every table the Installer creates must be listed here. The 2026-05-27
 // data-flow audit (admin-rest G3) found 3 tables were missing —

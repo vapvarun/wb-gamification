@@ -138,7 +138,7 @@ All data is preserved in the database. Reactivating the plugin restores everythi
 Second bug-sweep release. Closes 21 reported issues across blocks, admin, notifications, and integrations. Adds a manual-award admin UI, a circuit-breaker for runaway Action Scheduler state, and two new local-CI gates that catch the bug classes we hit during the sweep before they ship again.
 
 * New      - Manual-award form on the Badge edit screen lets admins grant any rule-driven or manually-awarded badge to a chosen member without writing SQL.
-* New      - MemberUploadCap engine grants the upload_files capability to all logged-in members so the Submit Achievement block's Add Media button works for non-admins. Opt-out filter wb_gam_grant_member_uploads.
+* New      - MemberUploadCap engine grants the upload_files capability to members only while the Submit Achievement editor is rendering and during the media-upload action, so the Add Media button works for non-admins without exposing the full Media Library. Opt-out filter wb_gam_grant_member_uploads.
 * New      - Action Scheduler circuit-breaker plus drain CLI (wp wb-gamification as drain) for sites whose actionscheduler_actions table has grown past safe limits.
 * New      - Local-CI gate 2.13 boot-invariants detects class_exists guards above top-level class declarations (the root cause of the silent boot failure that hid the admin menu on one install).
 * New      - Local-CI gate 2.14 enforces the seed-default-badge contract so every default badge condition (action_count, point_milestone) matches the badge name's literal action.
@@ -148,6 +148,13 @@ Second bug-sweep release. Closes 21 reported issues across blocks, admin, notifi
 * Improve  - Community Challenges block ships a proper completed-state visual treatment (green pill plus gradient card) so completed challenges read distinctly from active ones.
 * Improve  - User Status Bar block uses an SVG-mask chevron toggle and exposes a theme-aware top offset so the sticky panel sits below custom theme admin bars.
 * Improve  - Activity Stream block alignment tightened to match the Reign-stack social-feed conventions.
+* Fix      - Point-type conversion now credits the destination currency. The conversion path previously debited the source point type but never wrote the credit (a broken transaction nesting plus a duplicate-key write), so members lost points on every conversion. Conversions now run as one atomic debit-plus-credit sharing a single audit event.
+* Fix      - Badge award conditions are saved atomically. A failed save no longer leaves a badge with no condition (which silently stopped it from auto-awarding); the editor now reports an error instead of a false success.
+* Fix      - API key creation verifies the key was stored before returning it, so admins are never handed a key that was never persisted and can never authenticate.
+* Fix      - Submission approval only marks a submission approved once its points award succeeds; on failure the submission stays pending instead of approving with zero points awarded.
+* Fix      - Admin REST writes across challenges, community challenges, levels, rules, webhooks, rewards, and badges now return a 500 on a database failure instead of silently reporting success, and multi-row deletes roll back together.
+* Fix      - Deactivating the plugin now clears every scheduled cron hook, leaving no orphaned events behind.
+* Security - The member upload_files grant is scoped to the achievement-submission flow instead of being granted site-wide to every logged-in user, closing a privilege-escalation and storage-abuse vector on open-registration communities.
 * Fix      - Setup Wizard now triggers on first activation in CLI and one-click sandbox flows; Installer::maybe_install on plugins_loaded@0 covers restore-from-backup and container clone scenarios that bypassed the activation hook.
 * Fix      - WooCommerce purchase events fire on woocommerce_payment_complete instead of woocommerce_order_status_completed so members earn points the moment the gateway confirms payment, not whenever an admin manually marks the order complete. First-purchase detection counts processing and completed orders together.
 * Fix      - Redemption email events are now whitelisted in EmailSettingsController so the per-event toggle actually sends the redemption confirmation email when enabled.

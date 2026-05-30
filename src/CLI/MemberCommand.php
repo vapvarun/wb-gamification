@@ -78,10 +78,10 @@ class MemberCommand {
 				\WP_CLI::line( sprintf( '%-8s %d', (string) $row['label'] . ':', $balance ) );
 			}
 		} else {
-			$primary  = $catalog[0] ?? null;
-			$label    = $primary ? (string) $primary['label'] : $default_label;
+			$primary      = $catalog[0] ?? null;
+			$label        = $primary ? (string) $primary['label'] : $default_label;
 			$primary_slug = $primary ? (string) $primary['slug'] : null;
-			$balance  = (int) ( $primary_slug ? ( $balances[ $primary_slug ] ?? 0 ) : 0 );
+			$balance      = (int) ( $primary_slug ? ( $balances[ $primary_slug ] ?? 0 ) : 0 );
 			\WP_CLI::line( sprintf( '%-8s %d', $label . ':', $balance ) );
 		}
 

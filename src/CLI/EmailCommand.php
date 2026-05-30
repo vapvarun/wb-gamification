@@ -49,7 +49,7 @@ class EmailCommand {
 	 * @param array $assoc_args Named args.
 	 */
 	public function test( array $args, array $assoc_args ): void {
-		$user = $this->resolve_user( (string) ( $args[0] ?? '' ) );
+		$user  = $this->resolve_user( (string) ( $args[0] ?? '' ) );
 		$event = sanitize_key( $assoc_args['event'] ?? '' );
 
 		if ( ! $user ) {
@@ -85,7 +85,7 @@ class EmailCommand {
 					'new_level_min'  => (int) ( $current['min_points'] ?? 100 ),
 					'points'         => (int) PointsEngine::get_total( $user->ID ),
 				);
-				$subject = sprintf(
+				$subject  = sprintf(
 					/* translators: %s: level name */
 					__( '[TEST] You reached %s!', 'wb-gamification' ),
 					$vars['new_level_name']
@@ -101,7 +101,7 @@ class EmailCommand {
 					'badge_image_url'   => '',
 					'share_url'         => home_url( '/' ),
 				);
-				$subject = __( '[TEST] You earned the Sample Badge!', 'wb-gamification' );
+				$subject  = __( '[TEST] You earned the Sample Badge!', 'wb-gamification' );
 				break;
 
 			case 'challenge_completed':
@@ -109,9 +109,9 @@ class EmailCommand {
 				$vars    += array(
 					'challenge_title'       => __( 'Sample Challenge', 'wb-gamification' ),
 					'challenge_description' => __( 'A sample challenge for email testing.', 'wb-gamification' ),
-					'reward_label'         => sprintf( '50 %s', $points_label ),
+					'reward_label'          => sprintf( '50 %s', $points_label ),
 				);
-				$subject = __( '[TEST] Challenge completed: Sample Challenge', 'wb-gamification' );
+				$subject  = __( '[TEST] Challenge completed: Sample Challenge', 'wb-gamification' );
 				break;
 
 			case 'redemption':
@@ -124,23 +124,26 @@ class EmailCommand {
 					'coupon_code'   => 'TEST-WBG-' . strtoupper( wp_generate_password( 6, false, false ) ),
 					'remaining'     => (int) PointsEngine::get_total( $user->ID ),
 				);
-				$subject = __( '[TEST] Your redemption: Sample Reward', 'wb-gamification' );
+				$subject  = __( '[TEST] Your redemption: Sample Reward', 'wb-gamification' );
 				break;
 
 			case 'weekly_recap':
 				$template = 'weekly-recap';
 				$vars    += array(
-					'unsub_url'           => '#',
-					'points_this_week'    => 120,
-					'total_points'        => (int) PointsEngine::get_total( $user->ID ),
-					'is_best'             => false,
-					'best_week'           => 100,
-					'badges_this_week'    => array(),
-					'challenges_this_week'=> array(),
-					'streak'              => array( 'current_streak' => 5, 'longest_streak' => 12 ),
-					'rank'                => 7,
+					'unsub_url'            => '#',
+					'points_this_week'     => 120,
+					'total_points'         => (int) PointsEngine::get_total( $user->ID ),
+					'is_best'              => false,
+					'best_week'            => 100,
+					'badges_this_week'     => array(),
+					'challenges_this_week' => array(),
+					'streak'               => array(
+						'current_streak' => 5,
+						'longest_streak' => 12,
+					),
+					'rank'                 => 7,
 				);
-				$subject = sprintf(
+				$subject  = sprintf(
 					/* translators: %s: site name */
 					__( '[TEST] Your week in %s', 'wb-gamification' ),
 					$site_name
@@ -154,7 +157,7 @@ class EmailCommand {
 					'rank'    => 3,
 					'points'  => 240,
 				);
-				$subject = sprintf(
+				$subject  = sprintf(
 					/* translators: %s: site name */
 					__( '[TEST] Your weekly community ranking at %s', 'wb-gamification' ),
 					$site_name
@@ -171,12 +174,12 @@ class EmailCommand {
 			'Content-Type: text/html; charset=UTF-8',
 			'From: ' . Email::from_header(),
 		);
-		$sent = wp_mail( $user->user_email, $subject, $body, $headers );
+		$sent    = wp_mail( $user->user_email, $subject, $body, $headers );
 
 		if ( $sent ) {
 			\WP_CLI::success( "Sent {$event} sample to {$user->user_email}." );
 		} else {
-			\WP_CLI::error( "wp_mail returned false. Check SMTP / mail server config." );
+			\WP_CLI::error( 'wp_mail returned false. Check SMTP / mail server config.' );
 		}
 	}
 

@@ -41,16 +41,6 @@ defined( 'ABSPATH' ) || exit;
 final class ApiKeyAuth {
 
 	/**
-	 * Legacy option key (pre-1.1, plaintext storage). Read-only — purged
-	 * by `DbUpgrader::ensure_api_keys_table` on first upgrade. Retained
-	 * here as a constant only so the migration tooling has a name to
-	 * reference; nothing in this file writes to it.
-	 *
-	 * @var string
-	 */
-	private const LEGACY_OPTION_KEY = 'wb_gam_api_keys';
-
-	/**
 	 * Initialize API key authentication hooks.
 	 */
 	public static function init(): void {
@@ -233,14 +223,18 @@ final class ApiKeyAuth {
 	 * @param string $label   Human-readable label.
 	 * @param int    $user_id WordPress user ID associated with the key.
 	 * @param string $site_id Optional remote site identifier.
-	 * @return string The full plaintext key (display once, then forget).
+	 * @return string|false The full plaintext key (display once, then forget),
+	 *                      or false when the row could not be persisted. The
+	 *                      caller MUST check for false — returning a key that
+	 *                      was never stored hands the admin a credential that
+	 *                      can never authenticate.
 	 */
-	public static function create_key( string $label, int $user_id, string $site_id = '' ): string {
+	public static function create_key( string $label, int $user_id, string $site_id = '' ): string|false {
 		$key = 'wbgam_' . wp_generate_password( 40, false );
 
 		global $wpdb;
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.DirectQuery -- admin write.
-		$wpdb->insert(
+		$inserted = $wpdb->insert(
 			$wpdb->prefix . 'wb_gam_api_keys',
 			array(
 				'key_hash'   => self::hash_key( $key ),
@@ -255,6 +249,10 @@ final class ApiKeyAuth {
 			),
 			array( '%s', '%s', '%s', '%s', '%d', '%s', '%d', '%s', '%s' )
 		);
+
+		if ( false === $inserted ) {
+			return false;
+		}
 
 		return $key;
 	}

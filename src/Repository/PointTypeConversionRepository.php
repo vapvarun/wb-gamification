@@ -17,10 +17,10 @@ namespace WBGam\Repository;
 
 defined( 'ABSPATH' ) || exit;
 // Silencing convention-driven false positives so Plugin Check signal stays clean:
-//   - WordPress.DB.DirectDatabaseQuery.DirectQuery + .NoCaching + .SchemaChange:
-//     this file performs custom-table work. .phpcs.xml already excludes these
-//     for the local WPCS gate; this annotation extends the same intent to
-//     Plugin Check's internal phpcs invocation.
+// - WordPress.DB.DirectDatabaseQuery.DirectQuery + .NoCaching + .SchemaChange:
+// this file performs custom-table work. .phpcs.xml already excludes these
+// for the local WPCS gate; this annotation extends the same intent to
+// Plugin Check's internal phpcs invocation.
 // phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 
 /**
@@ -135,7 +135,7 @@ final class PointTypeConversionRepository {
 	 * Update mutable fields on an existing rule. From/to slugs are
 	 * pair-unique, immutable — admin must delete + recreate to change them.
 	 *
-	 * @param int                                                                                          $id   Rule ID.
+	 * @param int                                                                                                            $id   Rule ID.
 	 * @param array{from_amount?:int,to_amount?:int,min_convert?:int,cooldown_seconds?:int,max_per_day?:int,is_active?:bool} $data Fields to update.
 	 */
 	public function update( int $id, array $data ): bool {

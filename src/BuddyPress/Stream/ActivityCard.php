@@ -54,7 +54,7 @@ final class ActivityCard {
 			'kudos'     => __( 'Kudos', 'wb-gamification' ),
 			'challenge' => __( 'Challenge completed', 'wb-gamification' ),
 		);
-		$eyebrow = esc_html( $type_labels[ $type ] ?? ucfirst( $type ) );
+		$eyebrow     = esc_html( $type_labels[ $type ] ?? ucfirst( $type ) );
 
 		return sprintf(
 			'<div class="wb-gam-activity-card wb-gam-activity-card--%1$s">'
