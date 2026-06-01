@@ -22,6 +22,7 @@ Performance and notification-quality release. Built to stay fast on large, live 
 - Heartbeat steady-state interval raised from 5s to 15s, with a 30-second fast burst after member actions and near-suspend on backgrounded tabs (cuts steady-state request load roughly 3x).
 - Member directory, leaderboard, and top-members blocks prime per-page data in a fixed number of queries, removing per-row N+1 (directory 82 to 4 queries per page; leaderboard badges 20 to 1; top-members levels 42 to 0 on warm data). Validated against a 1,000,000-row / 100,000-user dataset.
 - Reward toasts resolve a human reason for every award (action label, or the admin-entered reason for manual awards); only same-action awards merge.
+- Frontend surfaces (Hub, blocks, member profile) map their neutral color tokens (`--wb-gam-color-*`, `--gam-*`) to the host theme's `--bx-color-*` tokens, so they follow BuddyX and BuddyX Pro light/dark mode automatically. Muted text uses `color-mix` to stay readable on either surface. Themes that do not expose `--bx-color-*` fall back to the original light values, so behaviour is unchanged off the BuddyX family. Brand/semantic colors stay constant across modes.
 
 ### Fixed
 

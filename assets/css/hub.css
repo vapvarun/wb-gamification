@@ -11,13 +11,17 @@
 
 /* === THEME-INDEPENDENT COLOR SYSTEM === */
 :root {
-  --gam-text: #1a1a2e;
-  --gam-text-secondary: #555770;
-  --gam-text-muted: #8b8da3;
-  --gam-surface: #ffffff;
-  --gam-surface-hover: #f7f7fb;
-  --gam-border: #e2e3ed;
-  --gam-border-hover: #c8c9d9;
+  /* Neutrals mapped to the host theme's tokens so the Hub follows the
+   * theme's light/dark mode. BuddyX / BuddyX Pro expose --bx-color-* and
+   * flip them under :root[data-bx-mode="dark"]; themes without them fall
+   * back to the original light values. Brand colors below stay constant. */
+  --gam-text: var(--bx-color-fg, #1a1a2e);
+  --gam-text-secondary: color-mix(in srgb, var(--bx-color-fg, #1a1a2e) 70%, var(--bx-color-bg-elevated, #ffffff));
+  --gam-text-muted: color-mix(in srgb, var(--bx-color-fg, #1a1a2e) 50%, var(--bx-color-bg-elevated, #ffffff));
+  --gam-surface: var(--bx-color-bg-elevated, #ffffff);
+  --gam-surface-hover: var(--bx-color-bg-muted, #f7f7fb);
+  --gam-border: var(--bx-color-border, #e2e3ed);
+  --gam-border-hover: var(--bx-color-border, #c8c9d9);
   --gam-accent: #5b4cdb;
   --gam-accent-light: #ededfc;
   --gam-accent-text: #4338b2;

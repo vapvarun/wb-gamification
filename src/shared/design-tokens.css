@@ -46,17 +46,26 @@
 	--wb-gam-leading-normal: 1.5;
 	--wb-gam-leading-relaxed: 1.75;
 
-	/* Colors — neutral palette (tuned to match assets/css/hub.css `--gam-*` family) */
-	--wb-gam-color-white: #ffffff;
-	--wb-gam-color-text: #1a1a2e;
-	--wb-gam-color-text-muted: #555770;
-	--wb-gam-color-text-light: #8b8da3;
-	--wb-gam-color-border: #e2e3ed;
-	--wb-gam-color-border-hover: #c8c9d9;
-	--wb-gam-color-surface: #ffffff;
-	--wb-gam-color-surface-hover: #f7f7fb;
-	--wb-gam-color-surface-alt: #f1f5f9;
-	--wb-gam-color-page: #f8fafc;
+	/* Colors — neutral palette. Mapped to the host theme's color tokens so
+	 * the plugin follows the theme's light/dark mode automatically. BuddyX
+	 * and BuddyX Pro expose `--bx-color-*` and flip them under
+	 * :root[data-bx-mode="dark"] (and prefers-color-scheme); consuming those
+	 * here means cards/text/borders go dark with the theme. Any theme that
+	 * doesn't define `--bx-color-*` falls back to the original light values,
+	 * so behaviour is unchanged off the BuddyX family. Only NEUTRALS map to
+	 * the theme — brand/semantic colors (accent, success, fire, medals) stay
+	 * constant across modes. Muted/light text use color-mix so they keep a
+	 * readable contrast against whichever surface the theme provides. */
+	--wb-gam-color-white: var(--bx-color-bg-elevated, #ffffff);
+	--wb-gam-color-text: var(--bx-color-fg, #1a1a2e);
+	--wb-gam-color-text-muted: color-mix(in srgb, var(--bx-color-fg, #1a1a2e) 70%, var(--bx-color-bg-elevated, #ffffff));
+	--wb-gam-color-text-light: color-mix(in srgb, var(--bx-color-fg, #1a1a2e) 50%, var(--bx-color-bg-elevated, #ffffff));
+	--wb-gam-color-border: var(--bx-color-border, #e2e3ed);
+	--wb-gam-color-border-hover: var(--bx-color-border, #c8c9d9);
+	--wb-gam-color-surface: var(--bx-color-bg-elevated, #ffffff);
+	--wb-gam-color-surface-hover: var(--bx-color-bg-muted, #f7f7fb);
+	--wb-gam-color-surface-alt: var(--bx-color-bg-muted, #f1f5f9);
+	--wb-gam-color-page: var(--bx-color-bg-page, #f8fafc);
 	/* Accent — defaults match `--gam-accent` from assets/css/hub.css so
 	   new standard blocks visually align with the existing hub UI.
 	   Themes may override via `--wbcom-link-color`. */
@@ -84,9 +93,10 @@
 	--wb-gam-color-info-soft: rgba(37, 99, 235, 0.10);
 
 	/* Extra neutrals — surface-muted is the "card lifted off a panel"
-	 * shade. Border-strong is the focus / hover stroke. */
-	--wb-gam-color-surface-muted: #f9fafb;
-	--wb-gam-color-border-strong: #d1d5db;
+	 * shade. Border-strong is the focus / hover stroke. Theme-mapped (see
+	 * the neutral palette note above). */
+	--wb-gam-color-surface-muted: var(--bx-color-bg-muted, #f9fafb);
+	--wb-gam-color-border-strong: var(--bx-color-border, #d1d5db);
 	--wb-gam-color-locked-soft: rgba(156, 163, 175, 0.16);
 	--wb-gam-color-primary-soft: rgba(91, 76, 219, 0.10);
 
