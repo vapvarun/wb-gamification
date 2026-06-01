@@ -98,7 +98,7 @@ final class SubmissionsPage {
 				</summary>
 				<div class="wbgam-help-panel__body">
 					<p>
-						<?php esc_html_e( 'Members submit evidence of an achievement (a description and an optional URL or attachment) using the Submit Achievement block. The submission lands here for your review. Approve to fire the standard earning event — the member receives points, may earn a badge, may level up, and any matching webhooks fire just like an automatic earn. Reject to record a reason for the member. There is no penalty for rejection.', 'wb-gamification' ); ?>
+						<?php esc_html_e( 'Members submit evidence of an achievement (a description and an optional URL or attachment) using the Submit Achievement block. The submission lands here for your review. Approve to fire the standard earning event - the member receives points, may earn a badge, may level up, and any matching webhooks fire just like an automatic earn. Reject to record a reason for the member. There is no penalty for rejection.', 'wb-gamification' ); ?>
 					</p>
 					<p>
 						<strong><?php esc_html_e( 'Where members submit:', 'wb-gamification' ); ?></strong>

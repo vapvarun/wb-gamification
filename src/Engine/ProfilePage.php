@@ -127,7 +127,7 @@ final class ProfilePage {
 
 		$title = sprintf(
 			/* translators: 1: display name, 2: site name */
-			__( '%1$s — %2$s', 'wb-gamification' ),
+			__( '%1$s - %2$s', 'wb-gamification' ),
 			$user->display_name,
 			$site_name
 		);

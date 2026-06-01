@@ -98,9 +98,9 @@ final class RedemptionEngine {
 			case 'out_of_stock':
 				return __( 'This reward is out of stock.', 'wb-gamification' );
 			case 'ledger_write_failed':
-				return __( 'Could not record the redemption. Please try again — your points have not been deducted.', 'wb-gamification' );
+				return __( 'Could not record the redemption. Please try again - your points have not been deducted.', 'wb-gamification' );
 			case 'record_write_failed':
-				return __( 'Redemption could not be saved. Please try again — your points have not been deducted.', 'wb-gamification' );
+				return __( 'Redemption could not be saved. Please try again - your points have not been deducted.', 'wb-gamification' );
 			default:
 				return __( 'Redemption failed. Please try again.', 'wb-gamification' );
 		}

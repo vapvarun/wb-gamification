@@ -165,10 +165,10 @@ final class ApiKeyAuth {
 		?>
 		<div class="notice notice-warning is-dismissible">
 			<p>
-				<strong><?php esc_html_e( 'WB Gamification — API keys were rotated for security.', 'wb-gamification' ); ?></strong>
+				<strong><?php esc_html_e( 'WB Gamification - API keys were rotated for security.', 'wb-gamification' ); ?></strong>
 			</p>
 			<p>
-				<?php esc_html_e( 'Your previously-issued API keys were stored in plaintext. They have been removed and you\'ll need to issue new keys for any paired remote sites. The new storage format hashes keys at rest — even DB backups and admin DB access cannot recover them.', 'wb-gamification' ); ?>
+				<?php esc_html_e( 'Your previously-issued API keys were stored in plaintext. They have been removed and you\'ll need to issue new keys for any paired remote sites. The new storage format hashes keys at rest - even DB backups and admin DB access cannot recover them.', 'wb-gamification' ); ?>
 			</p>
 			<p>
 				<a href="<?php echo esc_url( admin_url( 'admin.php?page=wb-gam-api-keys' ) ); ?>" class="button button-primary">

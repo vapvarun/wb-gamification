@@ -88,7 +88,7 @@ final class AbilitiesRegistration {
 			array(
 				'plugin'      => 'wb-gamification',
 				'version'     => WB_GAM_VERSION,
-				'description' => 'Complete gamification engine for WordPress — points, badges, levels, leaderboards, challenges, streaks.',
+				'description' => 'Complete gamification engine for WordPress - points, badges, levels, leaderboards, challenges, streaks.',
 				'abilities'   => self::get_abilities(),
 			),
 			200
@@ -223,7 +223,7 @@ final class AbilitiesRegistration {
 			),
 			'wb-gamification/award-points'       => array(
 				'label'       => 'Manually award points',
-				'description' => 'Award points to a user with a custom reason. Bypasses action rules — direct point grant.',
+				'description' => 'Award points to a user with a custom reason. Bypasses action rules - direct point grant.',
 				'endpoint'    => $base . '/events',
 				'methods'     => array( 'POST' ),
 				'parameters'  => array(

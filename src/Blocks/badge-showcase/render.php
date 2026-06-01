@@ -188,7 +188,7 @@ BlockHooks::before( 'badge-showcase', $wb_gam_attrs );
 	<?php if ( empty( $wb_gam_badges ) ) : ?>
 		<p class="wb-gam-badge-showcase__empty">
 			<?php echo \WBGam\Admin\Icon::svg( 'medal', array( 'size' => 28, 'class' => 'wb-gam-badge-showcase__empty-icon' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
-			<span><?php esc_html_e( 'No badges to show yet — keep going!', 'wb-gamification' ); ?></span>
+			<span><?php esc_html_e( 'No badges to show yet - keep going!', 'wb-gamification' ); ?></span>
 		</p>
 	<?php else : ?>
 		<header class="wb-gam-badge-showcase__header">

@@ -111,7 +111,7 @@ class PointTypesController extends WP_REST_Controller {
 			'slug'        => array(
 				'required'          => $is_create,
 				'type'              => 'string',
-				'description'       => 'Unique slug — lowercase, alphanumeric + dash + underscore. Immutable after creation.',
+				'description'       => 'Unique slug - lowercase, alphanumeric + dash + underscore. Immutable after creation.',
 				'sanitize_callback' => 'sanitize_key',
 			),
 			'label'       => array(

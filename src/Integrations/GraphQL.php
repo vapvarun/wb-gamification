@@ -132,7 +132,7 @@ final class GraphQL {
 		register_graphql_object_type(
 			'WBGamIntelligence',
 			array(
-				'description' => 'Behavioural intelligence signals — computed daily by IntelligenceProjector.',
+				'description' => 'Behavioural intelligence signals - computed daily by IntelligenceProjector.',
 				'fields'      => array(
 					'userId'          => array( 'type' => 'Int' ),
 					'engagementScore' => array(

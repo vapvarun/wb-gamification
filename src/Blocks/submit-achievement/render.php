@@ -94,7 +94,7 @@ BlockHooks::before( 'submit-achievement', $wb_gam_attrs );
 		<label class="wb-gam-submit-achievement__field">
 			<span><?php esc_html_e( 'What did you do?', 'wb-gamification' ); ?></span>
 			<select name="action_id" required>
-				<option value=""><?php esc_html_e( '— pick an action —', 'wb-gamification' ); ?></option>
+				<option value=""><?php esc_html_e( '- pick an action -', 'wb-gamification' ); ?></option>
 				<?php foreach ( $wb_gam_actions as $wb_gam_a ) : ?>
 					<option value="<?php echo esc_attr( $wb_gam_a['id'] ); ?>"><?php echo esc_html( $wb_gam_a['label'] ); ?></option>
 				<?php endforeach; ?>

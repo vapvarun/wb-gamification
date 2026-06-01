@@ -186,7 +186,7 @@ final class NotificationBridge {
 		$message = '';
 		switch ( $reason ) {
 			case 'cooldown':
-				$message = __( "You're on cooldown for this action — try again in a bit.", 'wb-gamification' );
+				$message = __( "You're on cooldown for this action - try again in a bit.", 'wb-gamification' );
 				break;
 			case 'daily_cap':
 				$message = __( "You've hit your daily limit for this action. Resets tomorrow.", 'wb-gamification' );
@@ -238,16 +238,16 @@ final class NotificationBridge {
 			$detail = $hub_url
 				? sprintf(
 					/* translators: %s: URL to the Gamification Hub page. */
-					__( 'See your full progress — points, badges, levels, leaderboard — at %s', 'wb-gamification' ),
+					__( 'See your full progress - points, badges, levels, leaderboard - at %s', 'wb-gamification' ),
 					wp_make_link_relative( $hub_url )
 				)
-				: __( 'Earn more points by being active on the site — every action counts.', 'wb-gamification' );
+				: __( 'Earn more points by being active on the site - every action counts.', 'wb-gamification' );
 
 			self::push(
 				$user_id,
 				array(
 					'type'    => 'welcome',
-					'message' => __( 'Welcome — you just earned your first points!', 'wb-gamification' ),
+					'message' => __( 'Welcome - you just earned your first points!', 'wb-gamification' ),
 					'detail'  => $detail,
 					'icon'    => 'icon-sparkles',
 				)
@@ -504,7 +504,7 @@ final class NotificationBridge {
 						<span data-wp-text="state.streakMilestone.days"></span>
 						<?php esc_html_e( 'days', 'wb-gamification' ); ?>
 					</p>
-					<p class="wb-gam-overlay__sub"><?php esc_html_e( 'Keep showing up — you\'re on fire!', 'wb-gamification' ); ?></p>
+					<p class="wb-gam-overlay__sub"><?php esc_html_e( 'Keep showing up - you\'re on fire!', 'wb-gamification' ); ?></p>
 					<button
 						class="wb-gam-overlay__dismiss"
 						aria-label="<?php esc_attr_e( 'Close', 'wb-gamification' ); ?>"

@@ -150,6 +150,7 @@ Performance and notification-quality release. Built to stay fast on large, live 
 * Fix      - Duplicate toasts when both SSE and Heartbeat delivered the same event.
 * Fix      - Points toast showed a contextless "+N Points (M actions)" count instead of naming the action.
 * Fix      - Member profile pages at /u/{username} returned 404 for everyone because public visibility required an opt-in that no screen ever set; public profiles are now on by default, and the owner and admins can always view a profile.
+* Fix      - Removed em-dashes from all user-facing labels and descriptions (frontend blocks, member profile, admin settings) per house style; hyphens only. Existing seeded badge descriptions were migrated in the database too.
 
 
 = 1.5.1 - June 2026 =

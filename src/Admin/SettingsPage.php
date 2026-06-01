@@ -217,7 +217,7 @@ final class SettingsPage {
 			),
 			array(
 				'title'        => __( 'Build your badge library', 'wb-gamification' ),
-				'desc'         => __( 'Badges are the visible rewards — earned on milestones, streaks, or specific actions.', 'wb-gamification' ),
+				'desc'         => __( 'Badges are the visible rewards - earned on milestones, streaks, or specific actions.', 'wb-gamification' ),
 				'done'         => $badge_count > 0,
 				'action_url'   => admin_url( 'admin.php?page=wb-gamification-badges' ),
 				'action_label' => __( 'Add badges', 'wb-gamification' ),
@@ -704,7 +704,7 @@ final class SettingsPage {
 							<span class="wbgam-settings-topbar__version">v<?php echo esc_html( WB_GAM_VERSION ); ?></span>
 						</h1>
 						<p class="wbgam-settings-topbar__desc">
-							<?php esc_html_e( 'Points, badges, levels, leaderboards, challenges and streaks — configure your community gamification engine.', 'wb-gamification' ); ?>
+							<?php esc_html_e( 'Points, badges, levels, leaderboards, challenges and streaks - configure your community gamification engine.', 'wb-gamification' ); ?>
 						</p>
 					</div>
 				</div>
@@ -1137,7 +1137,7 @@ final class SettingsPage {
 				<div class="wbgam-card-header">
 					<h3 class="wbgam-card-title">
 						<span class="icon-circle-check" aria-hidden="true"></span>
-						<?php esc_html_e( 'Setup complete — your Gamification Hub is ready', 'wb-gamification' ); ?>
+						<?php esc_html_e( 'Setup complete - your Gamification Hub is ready', 'wb-gamification' ); ?>
 					</h3>
 				</div>
 				<div class="wbgam-card-body">
@@ -1146,7 +1146,7 @@ final class SettingsPage {
 						printf(
 							wp_kses(
 								/* translators: %s: hub page URL. */
-								__( 'A page was auto-created at <code>%s</code> with the full member hub. Share this link with your community — they can see their points, badges, level progress, leaderboard, and challenges all in one place.', 'wb-gamification' ),
+								__( 'A page was auto-created at <code>%s</code> with the full member hub. Share this link with your community - they can see their points, badges, level progress, leaderboard, and challenges all in one place.', 'wb-gamification' ),
 								array( 'code' => array() )
 							),
 							esc_html( wp_make_link_relative( $hub_url ) )
@@ -1368,7 +1368,7 @@ final class SettingsPage {
 				<div class="wbgam-card-header">
 					<h3 class="wbgam-card-title">
 						<span class="icon-trophy" aria-hidden="true"></span>
-						<?php esc_html_e( 'Top members — last 30 days', 'wb-gamification' ); ?>
+						<?php esc_html_e( 'Top members - last 30 days', 'wb-gamification' ); ?>
 					</h3>
 					<a class="wbgam-card-link" href="<?php echo esc_url( admin_url( 'admin.php?page=wb-gamification-analytics' ) ); ?>">
 						<?php esc_html_e( 'View all', 'wb-gamification' ); ?>
@@ -1376,7 +1376,7 @@ final class SettingsPage {
 				</div>
 				<div class="wbgam-card-body">
 					<?php if ( ! $has_top_earners ) : ?>
-						<p class="wbgam-empty"><?php esc_html_e( 'No earnings yet — points will appear here as members engage.', 'wb-gamification' ); ?></p>
+						<p class="wbgam-empty"><?php esc_html_e( 'No earnings yet - points will appear here as members engage.', 'wb-gamification' ); ?></p>
 					<?php else : ?>
 						<ol class="wbgam-rank-list" role="list">
 							<?php
@@ -1405,7 +1405,7 @@ final class SettingsPage {
 				<div class="wbgam-card-header">
 					<h3 class="wbgam-card-title">
 						<span class="icon-zap" aria-hidden="true"></span>
-						<?php esc_html_e( 'Top actions — last 30 days', 'wb-gamification' ); ?>
+						<?php esc_html_e( 'Top actions - last 30 days', 'wb-gamification' ); ?>
 					</h3>
 					<a class="wbgam-card-link" href="<?php echo esc_url( admin_url( 'admin.php?page=wb-gamification#points' ) ); ?>">
 						<?php esc_html_e( 'Configure', 'wb-gamification' ); ?>
@@ -1830,7 +1830,7 @@ final class SettingsPage {
 		$choices = array(
 			\WBGam\API\SSEController::TRANSPORT_HEARTBEAT => array(
 				'label'       => __( 'Heartbeat (recommended)', 'wb-gamification' ),
-				'description' => __( 'Shared WP Heartbeat polling. Polls every 15 seconds at rest and briefly speeds up to ~5 seconds right after the member does something, then eases back. Backgrounded tabs nearly suspend. Works everywhere and scales to large communities — no held server connections.', 'wb-gamification' ),
+				'description' => __( 'Shared WP Heartbeat polling. Polls every 15 seconds at rest and briefly speeds up to ~5 seconds right after the member does something, then eases back. Backgrounded tabs nearly suspend. Works everywhere and scales to large communities - no held server connections.', 'wb-gamification' ),
 			),
 			\WBGam\API\SSEController::TRANSPORT_AUTO      => array(
 				'label'       => __( 'Auto (SSE where allowed)', 'wb-gamification' ),
@@ -1838,7 +1838,7 @@ final class SettingsPage {
 			),
 			\WBGam\API\SSEController::TRANSPORT_SSE       => array(
 				'label'       => __( 'Server-Sent Events', 'wb-gamification' ),
-				'description' => __( 'Sub-second streaming, but each connection pins a PHP worker for its lifetime — this does NOT scale on a standard PHP-FPM pool. Off by default: SSE only activates when a developer returns true from the wb_gam_sse_allowed filter on infrastructure built for long-lived streaming. Without that filter this falls back to Heartbeat.', 'wb-gamification' ),
+				'description' => __( 'Sub-second streaming, but each connection pins a PHP worker for its lifetime - this does NOT scale on a standard PHP-FPM pool. Off by default: SSE only activates when a developer returns true from the wb_gam_sse_allowed filter on infrastructure built for long-lived streaming. Without that filter this falls back to Heartbeat.', 'wb-gamification' ),
 			),
 		);
 		?>
@@ -1889,7 +1889,7 @@ final class SettingsPage {
 						<?php esc_html_e( 'Notification placement', 'wb-gamification' ); ?>
 					</h2>
 					<p class="wbgam-card-desc">
-						<?php esc_html_e( 'Where reward toasts (points, badges, kudos) appear on screen. Bottom-right is recommended — it never overlaps your theme header or navigation. Choose a top position only if a chat or support widget already sits in the bottom corner.', 'wb-gamification' ); ?>
+						<?php esc_html_e( 'Where reward toasts (points, badges, kudos) appear on screen. Bottom-right is recommended - it never overlaps your theme header or navigation. Choose a top position only if a chat or support widget already sits in the bottom corner.', 'wb-gamification' ); ?>
 					</p>
 				</div>
 				<div class="wbgam-card-body">
@@ -1938,7 +1938,7 @@ final class SettingsPage {
 			),
 			'redemption'          => array(
 				'label'       => __( 'Redemption confirmation', 'wb-gamification' ),
-				'description' => __( 'Sent when a member redeems a reward — includes the points spent, remaining balance, and the generated coupon code (if any).', 'wb-gamification' ),
+				'description' => __( 'Sent when a member redeems a reward - includes the points spent, remaining balance, and the generated coupon code (if any).', 'wb-gamification' ),
 			),
 		);
 		?>

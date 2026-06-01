@@ -126,7 +126,7 @@ final class ManualAwardPage {
 
 		$notice_map = array(
 			'saved' => array( 'success', __( 'Points awarded successfully.', 'wb-gamification' ) ),
-			'error' => array( 'error', __( 'Award failed — check user and points value.', 'wb-gamification' ) ),
+			'error' => array( 'error', __( 'Award failed - check user and points value.', 'wb-gamification' ) ),
 		);
 
 		$recent = self::get_recent_manual_awards( 20 );
@@ -152,7 +152,7 @@ final class ManualAwardPage {
 					</p>
 					<p>
 						<strong><?php esc_html_e( 'Worst-case staleness:', 'wb-gamification' ); ?></strong>
-						<?php esc_html_e( 'about 7 minutes from award to leaderboard reflection (5-min snapshot cycle + 2-min cache TTL). For larger sites with persistent object cache enabled, the snapshot is the authoritative source — the live SUM-based fallback is reserved for cache misses.', 'wb-gamification' ); ?>
+						<?php esc_html_e( 'about 7 minutes from award to leaderboard reflection (5-min snapshot cycle + 2-min cache TTL). For larger sites with persistent object cache enabled, the snapshot is the authoritative source - the live SUM-based fallback is reserved for cache misses.', 'wb-gamification' ); ?>
 					</p>
 					<p>
 						<strong><?php esc_html_e( 'If the leaderboard never updates:', 'wb-gamification' ); ?></strong>
@@ -204,7 +204,7 @@ final class ManualAwardPage {
 										array(
 											'name' => 'user_id',
 											'id'   => 'wb_gam_award_user',
-											'show_option_none' => __( '— Select a user —', 'wb-gamification' ),
+											'show_option_none' => __( '- Select a user -', 'wb-gamification' ),
 											'option_none_value' => '0',
 										)
 									);

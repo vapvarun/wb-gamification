@@ -176,7 +176,7 @@ BlockHooks::before( 'points-history', $wb_gam_attrs );
 	<?php if ( empty( $wb_gam_rows ) ) : ?>
 		<div class="wb-gam-points-history__empty">
 			<?php echo \WBGam\Admin\Icon::svg( 'sparkles', array( 'size' => 28, 'class' => 'wb-gam-points-history__empty-icon' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
-			<p><?php esc_html_e( 'No point activity yet — earn your first points by participating in the community.', 'wb-gamification' ); ?></p>
+			<p><?php esc_html_e( 'No point activity yet - earn your first points by participating in the community.', 'wb-gamification' ); ?></p>
 		</div>
 	<?php else : ?>
 		<?php foreach ( $wb_gam_grouped as $wb_gam_day => $wb_gam_group ) :

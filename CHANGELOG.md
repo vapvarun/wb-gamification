@@ -31,6 +31,7 @@ Performance and notification-quality release. Built to stay fast on large, live 
 - Duplicate toasts when SSE and Heartbeat both delivered the same event. SSE now stamps the canonical queue id the client dedupe keys on.
 - Points toast displayed a contextless "+N Points (M actions)" count with no indication of what earned the points.
 - Member profile pages at `/u/{username}` returned 404 for every member: public visibility required an opt-in flag that no member-facing UI ever wrote. Public profiles now default to on (opt-out via a `0` per-user flag), the owner and admins can always view a profile, and the Privacy visibility check uses the same opt-out default.
+- Removed em-dashes (and en-dashes) from all translatable strings and seeded labels/descriptions across frontend and admin, replaced with hyphens per house style. Code comments are untouched. Existing seeded badge descriptions in the database were migrated too.
 
 
 ## [1.5.1] - 2026-06-01

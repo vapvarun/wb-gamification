@@ -414,7 +414,7 @@ final class ApiKeysController extends WP_REST_Controller {
 				),
 				'secret'      => array(
 					'type'        => 'string',
-					'description' => 'Full key value — present ONLY in the create response. Never returned by GET.',
+					'description' => 'Full key value - present ONLY in the create response. Never returned by GET.',
 					'readonly'    => true,
 				),
 				'label'       => array( 'type' => 'string' ),

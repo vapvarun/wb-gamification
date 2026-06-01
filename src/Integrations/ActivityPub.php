@@ -183,7 +183,7 @@ final class ActivityPub {
 				'type'           => 'Note',
 				'content'        => sprintf(
 					/* translators: 1: challenge title, 2: bonus points */
-					__( 'Completed the "%1$s" challenge — earned %2$d bonus points.', 'wb-gamification' ),
+					__( 'Completed the "%1$s" challenge - earned %2$d bonus points.', 'wb-gamification' ),
 					(string) ( $challenge['title'] ?? '' ),
 					(int) ( $challenge['bonus_points'] ?? 0 )
 				),

@@ -109,7 +109,7 @@ final class PointTypeConversionsPage {
 				<header class="wbgam-page-header">
 					<div class="wbgam-page-header__main">
 						<h1 class="wbgam-page-header__title"><?php esc_html_e( 'Currency Conversions', 'wb-gamification' ); ?></h1>
-						<p class="wbgam-page-header__desc"><?php esc_html_e( 'Define exchange rates between point currencies — e.g. 100 Points → 1 Coin. Members convert their balance via the Hub block or REST API.', 'wb-gamification' ); ?></p>
+						<p class="wbgam-page-header__desc"><?php esc_html_e( 'Define exchange rates between point currencies - e.g. 100 Points → 1 Coin. Members convert their balance via the Hub block or REST API.', 'wb-gamification' ); ?></p>
 					</div>
 				</header>
 				<div class="wbgam-banner wbgam-banner--info wbgam-stack-block">
@@ -140,7 +140,7 @@ final class PointTypeConversionsPage {
 			<header class="wbgam-page-header">
 				<div class="wbgam-page-header__main">
 					<h1 class="wbgam-page-header__title"><?php esc_html_e( 'Currency Conversions', 'wb-gamification' ); ?></h1>
-					<p class="wbgam-page-header__desc"><?php esc_html_e( 'Define exchange rates between point currencies — e.g. 100 Points → 1 Coin. Members convert their balance via the Hub block or REST API. Defaults are permissive — only set cooldown / daily cap if your economy needs it.', 'wb-gamification' ); ?></p>
+					<p class="wbgam-page-header__desc"><?php esc_html_e( 'Define exchange rates between point currencies - e.g. 100 Points → 1 Coin. Members convert their balance via the Hub block or REST API. Defaults are permissive - only set cooldown / daily cap if your economy needs it.', 'wb-gamification' ); ?></p>
 				</div>
 			</header>
 

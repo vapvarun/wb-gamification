@@ -215,7 +215,7 @@ final class PersonalRecordEngine {
 		if ( 0 === $previous ) {
 			return sprintf(
 				/* translators: 1: points, 2: period label e.g. "this week" */
-				__( 'Personal record! You earned %1$d points %2$s — your best ever!', 'wb-gamification' ),
+				__( 'Personal record! You earned %1$d points %2$s - your best ever!', 'wb-gamification' ),
 				$current,
 				$label
 			);
@@ -223,7 +223,7 @@ final class PersonalRecordEngine {
 
 		return sprintf(
 			/* translators: 1: points, 2: period label, 3: previous personal best */
-			__( 'New personal record! %1$d points %2$s — beating your previous best of %3$d!', 'wb-gamification' ),
+			__( 'New personal record! %1$d points %2$s - beating your previous best of %3$d!', 'wb-gamification' ),
 			$current,
 			$label,
 			$previous
