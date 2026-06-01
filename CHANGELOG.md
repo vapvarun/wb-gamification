@@ -6,6 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 
 ## [Unreleased]
 
+## [1.5.1] - 2026-06-01
+
+PHP compatibility hotfix. Restores parsing on PHP 8.0/8.1 and lowers the supported floor to PHP 8.0. CI now lints PHP 8.0 through 8.4.
+
+### Fixed
+
+- **Fatal `E_COMPILE_ERROR` on PHP 8.1 and below.** `KudosEngine::send()` declared a `true|WP_Error` return type. The standalone `true` literal type was only added in PHP 8.2, so on PHP 8.0/8.1 the engine parsed `true` as a class name (`WBGam\Engine\true`) and the whole site crashed with `Cannot use 'WBGam\Engine\true' as class name as it is reserved`. Widened to `bool|WP_Error` (the docblock keeps the precise `@return true|WP_Error`).
+- **`Event` value object used `readonly` properties (PHP 8.1+).** Broke parsing on PHP 8.0. Properties are now plain `public`; immutability is enforced by convention — the constructor is the only writer and `with_point_type()` returns a new instance.
+- **`OpenApiCommand::error()` used the `never` return type (PHP 8.1+).** Changed to `void` so the file parses on PHP 8.0.
+
+### Changed
+
+- Minimum supported PHP lowered from **8.1 to 8.0** (`Requires PHP`, `composer.json`). The CI lint matrix already covers 8.0–8.4.
+
 ## [1.5.0] - 2026-05-28
 
 Second bug-sweep release. Closes 21 reported issues across blocks, admin, notifications, and integrations. Adds a manual-award admin UI, a circuit-breaker for runaway Action Scheduler state, and two new local-CI gates that catch the bug classes we hit during the sweep before they ship again.

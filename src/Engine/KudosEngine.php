@@ -63,7 +63,7 @@ final class KudosEngine {
 	 * @param string $message     Optional short message (max 255 chars).
 	 * @return true|WP_Error      True on success; WP_Error describing the rejection.
 	 */
-	public static function send( int $giver_id, int $receiver_id, string $message = '' ): true|WP_Error {
+	public static function send( int $giver_id, int $receiver_id, string $message = '' ): bool|WP_Error {
 		if ( $giver_id === $receiver_id ) {
 			return new WP_Error(
 				'wb_gam_kudos_self',

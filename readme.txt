@@ -3,8 +3,8 @@ Contributors: vapvarun, wbcomdesigns
 Tags: gamification, points, badges, leaderboard, buddypress
 Requires at least: 6.4
 Tested up to: 6.9
-Requires PHP: 8.1
-Stable tag: 1.5.0
+Requires PHP: 8.0
+Stable tag: 1.5.1
 License: GPL-2.0+
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -133,6 +133,15 @@ All data is preserved in the database. Reactivating the plugin restores everythi
 
 == Changelog ==
 
+= 1.5.1 - June 2026 =
+
+PHP compatibility hotfix. Restores parsing on PHP 8.0 and 8.1 and lowers the supported floor to PHP 8.0.
+
+* Fix      - Fatal E_COMPILE_ERROR on PHP 8.1 and below. KudosEngine::send() declared a `true|WP_Error` return type; the standalone `true` literal type only exists in PHP 8.2+, so on PHP 8.0/8.1 it was parsed as a class name (WBGam\Engine\true) and crashed the site. Changed to `bool|WP_Error`.
+* Fix      - Event value object used readonly properties (PHP 8.1+), breaking parsing on PHP 8.0. Properties are now plain public; immutability is enforced by convention (constructor-only writes, copy-on-change).
+* Fix      - OpenApiCommand::error() used the `never` return type (PHP 8.1+); changed to `void` so the file parses on PHP 8.0.
+* Compat   - Minimum supported PHP lowered from 8.1 to 8.0. CI now lints PHP 8.0 through 8.4.
+
 = 1.5.0 - May 2026 =
 
 Second bug-sweep release. Closes 21 reported issues across blocks, admin, notifications, and integrations. Adds a manual-award admin UI, a circuit-breaker for runaway Action Scheduler state, and two new local-CI gates that catch the bug classes we hit during the sweep before they ship again.
@@ -255,6 +264,9 @@ Distribution pipeline and admin polish ahead of the integration release.
 10. **Redemption Store** — Admin catalog UI to define rewards (custom or WooCommerce-backed) with point cost, stock, and active/inactive status.
 
 == Upgrade Notice ==
+
+= 1.5.1 =
+PHP compatibility hotfix: fixes a fatal error on PHP 8.0/8.1 (broken `true` return type) and restores PHP 8.0 support. Strongly recommended for any site on PHP 8.1 or below. No schema changes.
 
 = 1.5.0 =
 Second bug-sweep release closing 21 reported issues. Adds a manual-award UI on the Badge edit screen, an Action Scheduler circuit-breaker, and two new local-CI gates. Safe upgrade with no schema changes.

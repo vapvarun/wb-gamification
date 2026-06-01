@@ -16,6 +16,11 @@ defined( 'ABSPATH' ) || exit;
 /**
  * Immutable typed value object carrying a gamification event through the engine pipeline.
  *
+ * Immutability is enforced by convention: properties are written once in the
+ * constructor and never reassigned, and mutations (e.g. {@see self::with_point_type()})
+ * return a brand-new instance. The `readonly` keyword is intentionally not used so
+ * the plugin keeps parsing on PHP 8.0 (its minimum supported version).
+ *
  * @package WB_Gamification
  */
 final class Event {
@@ -25,42 +30,42 @@ final class Event {
 	 *
 	 * @var string
 	 */
-	public readonly string $event_id;
+	public string $event_id;
 
 	/**
 	 * Registered action identifier (e.g. 'wp_publish_post').
 	 *
 	 * @var string
 	 */
-	public readonly string $action_id;
+	public string $action_id;
 
 	/**
 	 * WordPress user ID of the member who triggered the event.
 	 *
 	 * @var int
 	 */
-	public readonly int $user_id;
+	public int $user_id;
 
 	/**
 	 * Optional related object ID (post ID, comment ID, etc.).
 	 *
 	 * @var int
 	 */
-	public readonly int $object_id;
+	public int $object_id;
 
 	/**
 	 * Arbitrary key/value metadata attached to this event.
 	 *
 	 * @var array<string, mixed>
 	 */
-	public readonly array $metadata;
+	public array $metadata;
 
 	/**
 	 * ISO-8601 UTC timestamp at which the event occurred.
 	 *
 	 * @var string
 	 */
-	public readonly string $created_at;
+	public string $created_at;
 
 	/**
 	 * Resolved point-type slug this event lands in. Null until
@@ -79,7 +84,7 @@ final class Event {
 	 * @since 1.4.1
 	 * @var string|null
 	 */
-	public readonly ?string $point_type;
+	public ?string $point_type;
 
 	/**
 	 * Construct a new Event value object.

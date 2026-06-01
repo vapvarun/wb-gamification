@@ -138,7 +138,7 @@ class OpenApiCommand {
 	 * Emit an error and exit non-zero. Uses WP_CLI::error when available
 	 * (which exits 1 for us), otherwise writes to stderr and exits.
 	 */
-	private function error( string $message ): never {
+	private function error( string $message ): void {
 		if ( class_exists( '\\WP_CLI' ) ) {
 			\WP_CLI::error( $message );
 		}
