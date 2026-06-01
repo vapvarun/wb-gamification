@@ -139,6 +139,8 @@ Performance and notification-quality release. Built to stay fast on large, live 
 
 * New      - BuddyPress profile "Achievements" tab with Overview, Badges, Points, and Streak sub-tabs. Renders the displayed member's points, level progress, streak, badges, and points history by reusing the existing blocks - viewable on your own profile and other members'.
 * New      - WooCommerce My Account "Achievements" endpoint (/my-account/achievements/) for stores running WooCommerce without BuddyPress. Renders the member's full gamification dashboard by reusing the Hub block, with a link to the mapped Hub page. Loads only when WooCommerce is active.
+* New      - LearnDash profile shows a "My Achievements" link to the gamification dashboard (the mapped Hub page) for LMS communities without BuddyPress. Loads only when LearnDash is active.
+* Dev      - Member achievements surfaces share one renderer (WBGam\Engine\MemberSurface) with a wb_gam_member_surface_html filter, so the BuddyPress, WooCommerce, and LearnDash integrations reuse the same blocks and mapped-hub link with no duplicated display logic.
 * New      - Admin setting for notification placement (Settings > Realtime): bottom-right default, plus bottom-left, top-right, and top-center, with corner-aware slide-in.
 * New      - Filter wb_gam_sse_allowed to opt into SSE streaming on hosts provisioned for long-lived connections.
 * New      - Reusable batch cache-prime APIs PointsEngine::prime_totals() and BadgeEngine::prime_earned_badges() for per-row listing surfaces.

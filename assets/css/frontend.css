@@ -690,3 +690,28 @@ body.admin-bar .wb-gam-toasts--top-right {
 	font-weight: 600;
 	color: var(--wb-gam-color-accent);
 }
+
+/* LearnDash profile — single "My Achievements" hub link, aligned right so it
+ * reads as a profile action rather than a floating banner. */
+.wb-gam-ld-link {
+	margin: 0 0 16px;
+	text-align: right;
+}
+
+.wb-gam-ld-link__btn {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 8px 16px;
+	border-radius: var(--wb-gam-radius, 8px);
+	background: var(--wb-gam-color-accent-light);
+	color: var(--wb-gam-color-accent-text);
+	font-weight: 600;
+	font-size: 0.875rem;
+	text-decoration: none;
+}
+
+.wb-gam-ld-link__btn:hover {
+	background: var(--wb-gam-color-accent);
+	color: #fff;
+}

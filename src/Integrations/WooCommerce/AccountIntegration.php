@@ -16,6 +16,8 @@
 
 namespace WBGam\Integrations\WooCommerce;
 
+use WBGam\Engine\MemberSurface;
+
 defined( 'ABSPATH' ) || exit;
 
 /**
@@ -103,29 +105,11 @@ final class AccountIntegration {
 			return;
 		}
 
-		wp_enqueue_style( 'wb-gam-tokens' );
-		wp_enqueue_style( 'wb-gamification' );
-		wp_enqueue_style( 'lucide-icons' );
-		if ( wp_style_is( 'wb-gamification-hub', 'registered' ) ) {
-			wp_enqueue_style( 'wb-gamification-hub' );
-		}
-
-		$html = do_shortcode( '[wb_gam_hub]' );
-
-		$hub_page_id = (int) get_option( 'wb_gam_hub_page_id', 0 );
-		$hub_url     = $hub_page_id ? get_permalink( $hub_page_id ) : '';
-		$more        = '';
-		if ( $hub_url ) {
-			$more = sprintf(
-				'<p class="wb-gam-bp-achievements__more"><a href="%s">%s</a></p>',
-				esc_url( $hub_url ),
-				esc_html__( 'View full dashboard', 'wb-gamification' )
-			);
-		}
-
-		// $html is block-rendered markup, already escaped by the hub block's
-		// render callback (SSR). Re-escaping would corrupt it. Reuses the
-		// shared .wb-gam-bp-achievements wrapper (no profile-only class).
-		echo '<div class="wb-gam-bp-achievements">' . $html . $more . '</div>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		// My Account is always self-scoped, so render the full Hub block for
+		// the current user. MemberSurface owns the shared plumbing (assets,
+		// mapped "View full dashboard" link, wrapper) — same path as the
+		// BuddyPress tab, no duplicated display logic. Block SSR markup is
+		// already escaped; re-escaping would corrupt it.
+		echo MemberSurface::render( do_shortcode( '[wb_gam_hub]' ), (int) $user_id ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 	}
 }
