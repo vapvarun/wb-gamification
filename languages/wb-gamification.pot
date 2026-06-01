@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-06-01T17:04:05+00:00\n"
+"POT-Creation-Date: 2026-06-01T18:48:19+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: wb-gamification\n"
@@ -218,7 +218,7 @@ msgstr ""
 
 #: src/Admin/AnalyticsDashboard.php:170
 #: src/Admin/SettingsPage.php:1301
-#: src/Blocks/hub/render.php:417
+#: src/Blocks/hub/render.php:426
 msgid "Badges Earned"
 msgstr ""
 
@@ -308,6 +308,7 @@ msgstr ""
 #: src/Admin/SettingsPage.php:895
 #: src/Blocks/daily-bonus/render.php:93
 #: src/Blocks/member-points/render.php:120
+#: src/BuddyPress/ProfileIntegration.php:75
 #: src/CLI/EmailCommand.php:64
 #: src/CLI/MemberCommand.php:66
 #: src/Engine/Privacy.php:222
@@ -681,6 +682,7 @@ msgstr ""
 #: src/Admin/BadgeAdminPage.php:114
 #: src/Admin/SettingsPage.php:759
 #: src/Blocks/year-recap/render.php:206
+#: src/BuddyPress/ProfileIntegration.php:74
 #: src/Blocks/user-status-bar/edit.js:79
 msgid "Badges"
 msgstr ""
@@ -965,7 +967,7 @@ msgstr ""
 #: src/Admin/ChallengeManagerPage.php:106
 #: src/Admin/ChallengeManagerPage.php:107
 #: src/Admin/SettingsPage.php:755
-#: src/Blocks/hub/render.php:317
+#: src/Blocks/hub/render.php:326
 #: src/Blocks/year-recap/render.php:202
 msgid "Challenges"
 msgstr ""
@@ -1070,7 +1072,7 @@ msgstr ""
 #: src/Admin/ChallengeManagerPage.php:267
 #: src/Admin/CommunityChallengesPage.php:303
 #: src/Admin/RedemptionStorePage.php:351
-#: src/Blocks/hub/render.php:573
+#: src/Blocks/hub/render.php:582
 #: src/Blocks/redemption-store/render.php:317
 msgid "Cancel"
 msgstr ""
@@ -1561,7 +1563,7 @@ msgstr ""
 #. translators: 1: source amount, 2: source label, 3: destination amount, 4: destination label.
 #. translators: 1: source amount, 2: source label, 3: destination amount, 4: destination label
 #: src/Admin/PointTypeConversionsPage.php:179
-#: src/Blocks/hub/render.php:555
+#: src/Blocks/hub/render.php:564
 #, php-format
 msgid "%1$d %2$s = %3$d %4$s"
 msgstr ""
@@ -3966,7 +3968,7 @@ msgstr ""
 #: src/Blocks/top-members/render.php:96
 #: src/Blocks/user-status-bar/render.php:65
 #: src/Blocks/year-recap/render.php:123
-#: src/BuddyPress/ProfileIntegration.php:77
+#: src/BuddyPress/ProfileIntegration.php:177
 msgid "pts"
 msgstr ""
 
@@ -3994,7 +3996,7 @@ msgstr ""
 #: src/Blocks/leaderboard/render.php:271
 #: src/Blocks/points-history/render.php:248
 #: src/Blocks/year-recap/render.php:235
-#: src/BuddyPress/ProfileIntegration.php:99
+#: src/BuddyPress/ProfileIntegration.php:199
 #, php-format
 msgid "%1$s %2$s"
 msgstr ""
@@ -4121,7 +4123,7 @@ msgstr ""
 
 #: src/Blocks/hub/render.php:198
 #: src/Blocks/user-status-bar/render.php:125
-#: src/BuddyPress/ProfileIntegration.php:70
+#: src/BuddyPress/ProfileIntegration.php:170
 #: src/CLI/EmailCommand.php:83
 #: src/Engine/ProfilePage.php:141
 #: src/Engine/ProfilePage.php:280
@@ -4180,13 +4182,13 @@ msgid "Your recent point activity"
 msgstr ""
 
 #. translators: 1: personal challenge count, 2: community challenge count
-#: src/Blocks/hub/render.php:286
+#: src/Blocks/hub/render.php:295
 #, php-format
 msgid "%1$d personal, %2$d community"
 msgstr ""
 
 #. translators: %d: number of community challenges
-#: src/Blocks/hub/render.php:293
+#: src/Blocks/hub/render.php:302
 #, php-format
 msgid "%d community challenge"
 msgid_plural "%d community challenges"
@@ -4194,49 +4196,49 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %d: number of personal challenges
-#: src/Blocks/hub/render.php:299
+#: src/Blocks/hub/render.php:308
 #, php-format
 msgid "%d active challenge"
 msgid_plural "%d active challenges"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/Blocks/hub/render.php:357
+#: src/Blocks/hub/render.php:366
 msgid "Suggested for you"
 msgstr ""
 
-#: src/Blocks/hub/render.php:364
+#: src/Blocks/hub/render.php:373
 msgid "Let's go"
 msgstr ""
 
 #. translators: %s: currency label being converted.
-#: src/Blocks/hub/render.php:388
+#: src/Blocks/hub/render.php:397
 #, php-format
 msgid "Convert %s"
 msgstr ""
 
-#: src/Blocks/hub/render.php:391
-#: src/Blocks/hub/render.php:574
+#: src/Blocks/hub/render.php:400
+#: src/Blocks/hub/render.php:583
 msgid "Convert"
 msgstr ""
 
-#: src/Blocks/hub/render.php:400
+#: src/Blocks/hub/render.php:409
 #: src/Blocks/level-progress/render.php:179
 msgid "Current Level"
 msgstr ""
 
 #. translators: %s: next level name
-#: src/Blocks/hub/render.php:408
+#: src/Blocks/hub/render.php:417
 #, php-format
 msgid "Next: %s"
 msgstr ""
 
-#: src/Blocks/hub/render.php:423
+#: src/Blocks/hub/render.php:432
 msgid "Day Streak"
 msgstr ""
 
 #. translators: %s: longest streak number
-#: src/Blocks/hub/render.php:427
+#: src/Blocks/hub/render.php:436
 #, php-format
 msgid "Best: %s day"
 msgid_plural "Best: %s days"
@@ -4244,36 +4246,36 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %s: HTML right-arrow entity displayed inline as the "view" affordance
-#: src/Blocks/hub/render.php:453
+#: src/Blocks/hub/render.php:462
 #, php-format
 msgid "View %s"
 msgstr ""
 
-#: src/Blocks/hub/render.php:503
+#: src/Blocks/hub/render.php:512
 msgid "Close panel"
 msgstr ""
 
-#: src/Blocks/hub/render.php:525
+#: src/Blocks/hub/render.php:534
 msgid "Convert balance"
 msgstr ""
 
-#: src/Blocks/hub/render.php:526
+#: src/Blocks/hub/render.php:535
 #: src/Engine/NotificationBridge.php:485
 #: src/Engine/NotificationBridge.php:510
 msgid "Close"
 msgstr ""
 
 #. translators: 1: balance amount, 2: currency label
-#: src/Blocks/hub/render.php:533
+#: src/Blocks/hub/render.php:542
 #, php-format
 msgid "You have %1$s %2$s available."
 msgstr ""
 
-#: src/Blocks/hub/render.php:540
+#: src/Blocks/hub/render.php:549
 msgid "Convert to"
 msgstr ""
 
-#: src/Blocks/hub/render.php:567
+#: src/Blocks/hub/render.php:576
 msgid "Amount to spend"
 msgstr ""
 
@@ -4673,6 +4675,20 @@ msgstr ""
 msgid "Completed a challenge"
 msgstr ""
 
+#: src/BuddyPress/ProfileIntegration.php:63
+#: src/Integrations/WooCommerce/AccountIntegration.php:92
+msgid "Achievements"
+msgstr ""
+
+#: src/BuddyPress/ProfileIntegration.php:73
+msgid "Overview"
+msgstr ""
+
+#: src/BuddyPress/ProfileIntegration.php:76
+#: src/Blocks/user-status-bar/edit.js:84
+msgid "Streak"
+msgstr ""
+
 #: src/BuddyPress/Stream/ActivityCard.php:159
 msgid "a new badge"
 msgstr ""
@@ -4889,6 +4905,10 @@ msgstr ""
 #: src/Engine/LeaderboardNudge.php:348
 #, php-format
 msgid "Your weekly community ranking at %s"
+msgstr ""
+
+#: src/Engine/MemberSurface.php:78
+msgid "View full dashboard"
 msgstr ""
 
 #: src/Engine/NotificationBridge.php:189
@@ -5360,6 +5380,10 @@ msgstr ""
 #: src/Integrations/ActivityPub.php:186
 #, php-format
 msgid "Completed the \"%1$s\" challenge - earned %2$d bonus points."
+msgstr ""
+
+#: src/Integrations/LearnDash/ProfileIntegration.php:75
+msgid "My Achievements"
 msgstr ""
 
 #: src/Services/SubmissionService.php:61
@@ -5953,10 +5977,6 @@ msgstr ""
 
 #: src/Blocks/user-status-bar/edit.js:74
 msgid "Level"
-msgstr ""
-
-#: src/Blocks/user-status-bar/edit.js:84
-msgid "Streak"
 msgstr ""
 
 #: src/Blocks/user-status-bar/edit.js:89
