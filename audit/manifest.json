@@ -2183,7 +2183,7 @@
       "type": "action",
       "purpose": "",
       "fired_at": [
-        "src/Engine/Privacy.php:604"
+        "src/Engine/Privacy.php:605"
       ],
       "consumed_by": []
     },
@@ -2539,6 +2539,15 @@
       "consumed_by": []
     },
     {
+      "name": "wb_gam_defer_leaderboard_to_jetonomy",
+      "type": "filter",
+      "purpose": "",
+      "fired_at": [
+        "src/Integrations/Jetonomy/DisplayDefer.php:55"
+      ],
+      "consumed_by": []
+    },
+    {
       "name": "wb_gam_email_burst_cap",
       "type": "filter",
       "purpose": "",
@@ -2622,11 +2631,31 @@
       "consumed_by": []
     },
     {
+      "name": "wb_gam_learndash_profile_link",
+      "type": "filter",
+      "purpose": "",
+      "fired_at": [
+        "src/Integrations/LearnDash/ProfileIntegration.php:47"
+      ],
+      "consumed_by": [
+        "src/Integrations/LearnDash/ProfileIntegration.php:41 '__return_true'"
+      ]
+    },
+    {
       "name": "wb_gam_manifest_paths",
       "type": "filter",
       "purpose": "Filter the list of manifest file paths scanned by ManifestLoader. Use to add custom integration manifests.",
       "fired_at": [
         "src/Engine/ManifestLoader.php:120"
+      ],
+      "consumed_by": []
+    },
+    {
+      "name": "wb_gam_member_surface_html",
+      "type": "filter",
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/MemberSurface.php:107"
       ],
       "consumed_by": []
     },
@@ -2649,6 +2678,15 @@
       "consumed_by": [
         "src/BuddyPress/ActivityIntegration.php:71 array( __CLASS__"
       ]
+    },
+    {
+      "name": "wb_gam_profile_publicly_visible",
+      "type": "filter",
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/ProfilePage.php:236"
+      ],
+      "consumed_by": []
     },
     {
       "name": "wb_gam_rank_automation_rules",

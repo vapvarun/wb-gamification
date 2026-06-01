@@ -408,7 +408,7 @@ export interface paths {
             requestBody?: {
                 content: {
                     "application/json": {
-                        /** @description Unique slug — lowercase, alphanumeric + dash + underscore. Immutable after creation. */
+                        /** @description Unique slug - lowercase, alphanumeric + dash + underscore. Immutable after creation. */
                         slug: string;
                         label: string;
                         description?: string;
@@ -455,7 +455,7 @@ export interface paths {
             requestBody?: {
                 content: {
                     "application/json": {
-                        /** @description Unique slug — lowercase, alphanumeric + dash + underscore. Immutable after creation. */
+                        /** @description Unique slug - lowercase, alphanumeric + dash + underscore. Immutable after creation. */
                         slug?: string;
                         label?: string;
                         description?: string;
@@ -488,7 +488,7 @@ export interface paths {
             requestBody?: {
                 content: {
                     "application/json": {
-                        /** @description Unique slug — lowercase, alphanumeric + dash + underscore. Immutable after creation. */
+                        /** @description Unique slug - lowercase, alphanumeric + dash + underscore. Immutable after creation. */
                         slug?: string;
                         label?: string;
                         description?: string;
@@ -544,7 +544,7 @@ export interface paths {
             requestBody?: {
                 content: {
                     "application/json": {
-                        /** @description Unique slug — lowercase, alphanumeric + dash + underscore. Immutable after creation. */
+                        /** @description Unique slug - lowercase, alphanumeric + dash + underscore. Immutable after creation. */
                         slug?: string;
                         label?: string;
                         description?: string;
