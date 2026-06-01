@@ -30,6 +30,24 @@ final class ProfileIntegration {
 		if ( ! defined( 'LEARNDASH_VERSION' ) ) {
 			return;
 		}
+
+		/**
+		 * Whether to add the gamification link to the LearnDash profile.
+		 *
+		 * OFF by default. LearnDash's only profile extension point is a
+		 * top-of-page hook, so the link can't be placed as natively as the
+		 * BuddyPress tab or WooCommerce endpoint. Sites that want it opt in:
+		 *
+		 *   add_filter( 'wb_gam_learndash_profile_link', '__return_true' );
+		 *
+		 * @since 1.5.2
+		 *
+		 * @param bool $enabled Whether to show the link. Default false.
+		 */
+		if ( ! apply_filters( 'wb_gam_learndash_profile_link', false ) ) {
+			return;
+		}
+
 		add_action( 'learndash_shortcode_profile_before_template', array( __CLASS__, 'render' ) );
 	}
 
