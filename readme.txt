@@ -137,6 +137,7 @@ All data is preserved in the database. Reactivating the plugin restores everythi
 
 Performance and notification-quality release. Built to stay fast on large, live communities.
 
+* New      - BuddyPress profile "Achievements" tab with Overview, Badges, Points, and Streak sub-tabs. Renders the displayed member's points, level progress, streak, badges, and points history by reusing the existing blocks - viewable on your own profile and other members'.
 * New      - Admin setting for notification placement (Settings > Realtime): bottom-right default, plus bottom-left, top-right, and top-center, with corner-aware slide-in.
 * New      - Filter wb_gam_sse_allowed to opt into SSE streaming on hosts provisioned for long-lived connections.
 * New      - Reusable batch cache-prime APIs PointsEngine::prime_totals() and BadgeEngine::prime_earned_badges() for per-row listing surfaces.

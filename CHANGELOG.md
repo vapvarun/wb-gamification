@@ -12,6 +12,7 @@ Performance and notification-quality release. Built to stay fast on large, live 
 
 ### Added
 
+- BuddyPress profile "Achievements" tab with sub-tabs (Overview / Badges / Points / Streak). Renders the displayed member's points, level progress, streak, badges, and points history by reusing the existing blocks via their `user_id` shortcodes - no duplicated profile templates. Viewable on any member's profile, not just your own. Overview stays a concise personal summary (points + streak); the site-wide earning guide remains on the Hub.
 - Admin setting for toast notification placement (Settings > Realtime): bottom-right (default), bottom-left, top-right, top-center, with corner-aware slide-in.
 - `wb_gam_sse_allowed` filter to opt into SSE streaming on hosts provisioned for long-lived connections.
 - `PointsEngine::prime_totals()` and `BadgeEngine::prime_earned_badges()` batch cache-prime APIs for per-row listing surfaces.

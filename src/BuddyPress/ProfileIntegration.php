@@ -30,11 +30,146 @@ final class ProfileIntegration {
 	/**
 	 * Register hooks when BuddyPress is active.
 	 */
+	/**
+	 * Slug for the "Achievements" profile tab.
+	 */
+	private const NAV_SLUG = 'achievements';
+
 	public static function init(): void {
 		if ( ! function_exists( 'buddypress' ) ) {
 			return;
 		}
 		add_action( 'bp_before_member_header_meta', array( __CLASS__, 'render_rank' ) );
+		add_action( 'bp_setup_nav', array( __CLASS__, 'setup_nav' ), 100 );
+	}
+
+	/**
+	 * Register the "Achievements" profile tab and its sub-tabs.
+	 *
+	 * Each sub-tab renders existing gamification blocks (via their
+	 * shortcodes, scoped to the displayed member with `user_id`) so the
+	 * profile reuses the single source of block markup — no duplicated
+	 * profile-only templates to keep in sync.
+	 */
+	public static function setup_nav(): void {
+		$base       = function_exists( 'bp_displayed_user_url' )
+			? bp_displayed_user_url()
+			: bp_displayed_user_domain();
+		$parent_url = trailingslashit( $base ) . self::NAV_SLUG . '/';
+
+		bp_core_new_nav_item(
+			array(
+				'name'                => __( 'Achievements', 'wb-gamification' ),
+				'slug'                => self::NAV_SLUG,
+				'screen_function'     => array( __CLASS__, 'screen' ),
+				'position'            => 35,
+				'default_subnav_slug' => 'overview',
+				'item_css_id'         => 'wb-gam-achievements',
+			)
+		);
+
+		$subtabs  = array(
+			'overview' => __( 'Overview', 'wb-gamification' ),
+			'badges'   => __( 'Badges', 'wb-gamification' ),
+			'points'   => __( 'Points', 'wb-gamification' ),
+			'streak'   => __( 'Streak', 'wb-gamification' ),
+		);
+		$position = 10;
+		foreach ( $subtabs as $slug => $name ) {
+			bp_core_new_subnav_item(
+				array(
+					'name'            => $name,
+					'slug'            => $slug,
+					'parent_url'      => $parent_url,
+					'parent_slug'     => self::NAV_SLUG,
+					'screen_function' => array( __CLASS__, 'screen' ),
+					'position'        => $position,
+				)
+			);
+			$position += 10;
+		}
+	}
+
+	/**
+	 * Screen handler for the Achievements tab + sub-tabs. Hooks the content
+	 * renderer and loads BuddyPress's plugin template.
+	 */
+	public static function screen(): void {
+		add_action( 'bp_template_content', array( __CLASS__, 'screen_content' ) );
+		bp_core_load_template( 'members/single/plugins' );
+	}
+
+	/**
+	 * Render the current sub-tab's content from existing blocks, scoped to
+	 * the displayed member. bp_current_action() resolves to the sub-nav slug
+	 * (overview / badges / points / streak).
+	 */
+	public static function screen_content(): void {
+		$user_id = bp_displayed_user_id();
+		if ( ! $user_id ) {
+			return;
+		}
+
+		// Shared tokens + base frontend styles; per-block CSS enqueues at
+		// render time via each block's render callback. lucide-icons supplies
+		// the icon-font glyphs the earning-guide / stat blocks use (the Hub
+		// loads it implicitly; on a BP screen we must enqueue it ourselves,
+		// otherwise the action icons render as empty squares).
+		wp_enqueue_style( 'wb-gam-tokens' );
+		wp_enqueue_style( 'wb-gamification' );
+		wp_enqueue_style( 'lucide-icons' );
+
+		$render = static function ( string $tag ) use ( $user_id ): string {
+			return do_shortcode( sprintf( '[%s user_id="%d"]', $tag, (int) $user_id ) );
+		};
+
+		$action = bp_current_action();
+		$html   = '';
+		switch ( $action ) {
+			case 'badges':
+				$html = $render( 'wb_gam_badge_showcase' );
+				break;
+			case 'points':
+				$html = $render( 'wb_gam_points_history' );
+				break;
+			case 'streak':
+				$html = $render( 'wb_gam_streak' );
+				break;
+			case 'overview':
+			default:
+				// Keep Overview a concise, PERSONAL summary. member-points
+				// already shows the next level ("X to next level") and streak
+				// shows the next streak milestone, so the member's "what's next"
+				// is covered. The full earning guide is site-wide (same for
+				// everyone) and long, so it stays on the Hub, not every
+				// member's profile. Locked badges ("what to earn next") live in
+				// the Badges sub-tab.
+				$html = $render( 'wb_gam_member_points' )
+					. $render( 'wb_gam_streak' );
+				break;
+		}
+
+		// Link to the full Gamification Hub so the member can see every
+		// detail. Resolve from the MAPPED hub page (wb_gam_hub_page_id ->
+		// get_permalink), never a hardcoded /gamification/ slug, so it follows
+		// whatever page the site assigned. The Hub renders the CURRENT user's
+		// data, so only surface the link on the member's own profile.
+		$hub_link = '';
+		if ( get_current_user_id() === (int) $user_id ) {
+			$hub_page_id = (int) get_option( 'wb_gam_hub_page_id', 0 );
+			$hub_url     = $hub_page_id ? get_permalink( $hub_page_id ) : '';
+			if ( $hub_url ) {
+				$hub_link = sprintf(
+					'<p class="wb-gam-bp-achievements__more"><a href="%s">%s</a></p>',
+					esc_url( $hub_url ),
+					esc_html__( 'View full dashboard', 'wb-gamification' )
+				);
+			}
+		}
+
+		// $html is block-rendered markup, already escaped by each block's
+		// render callback (apiVersion 3 SSR). Re-escaping would corrupt it.
+		echo '<div class="wb-gam-bp-achievements">' . $html . $hub_link . '</div>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 	}
 
 	/**
