@@ -139,6 +139,7 @@ use WBGam\Integrations\WooCommerce\RefundHandler as WCRefundHandler;
 use WBGam\Integrations\WooCommerce\AccountIntegration as WCAccountIntegration;
 use WBGam\Integrations\LearnDash\ProfileIntegration as LearnDashProfile;
 use WBGam\Integrations\Jetonomy\JetonomyIntegration as JetonomyHooks;
+use WBGam\Integrations\Jetonomy\DisplayDefer as JetonomyDisplayDefer;
 use WBGam\Admin\SettingsPage;
 use WBGam\Admin\SetupWizard;
 use WBGam\Admin\AnalyticsDashboard;
@@ -248,6 +249,9 @@ final class WB_Gamification {
 
 		BootOrder::register( 'jetonomy_hooks', BootOrder::SLOT_INTEGRATIONS, array( 'engine' ) );
 		add_action( 'plugins_loaded', array( JetonomyHooks::class, 'init' ), BootOrder::SLOT_INTEGRATIONS );
+
+		BootOrder::register( 'jetonomy_display_defer', BootOrder::SLOT_INTEGRATIONS, array( 'engine' ) );
+		add_action( 'plugins_loaded', array( JetonomyDisplayDefer::class, 'init' ), BootOrder::SLOT_INTEGRATIONS );
 
 		// Leaderboard snapshot cron + object cache layer.
 		BootOrder::register( 'leaderboard_engine', BootOrder::SLOT_INTEGRATIONS, array( 'engine' ) );

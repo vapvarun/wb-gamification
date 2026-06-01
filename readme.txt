@@ -144,6 +144,8 @@ Performance and notification-quality release. Built to stay fast on large, live 
 * New      - Admin setting for notification placement (Settings > Realtime): bottom-right default, plus bottom-left, top-right, and top-center, with corner-aware slide-in.
 * New      - Filter wb_gam_sse_allowed to opt into SSE streaming on hosts provisioned for long-lived connections.
 * New      - Reusable batch cache-prime APIs PointsEngine::prime_totals() and BadgeEngine::prime_earned_badges() for per-row listing surfaces.
+* New      - On Jetonomy sites the leaderboard defers to Jetonomy's reputation ranking, since wb-gam already mirrors reputation 1:1 into points and the two rankings are identical. The wb-gam leaderboard and top-members blocks, shortcodes, and Hub card are hidden so members see one leaderboard. Badges are unaffected (both badge sets are kept). Filter wb_gam_defer_leaderboard_to_jetonomy to override.
+* Compat   - Jetonomy badges and reputation continue to award wb-gam points (Jetonomy badge earned, reputation change, space join, polls, messages); wb-gam adds the levels, streaks, challenges, and redemption layer on top.
 * Improve  - Realtime now defaults to WP Heartbeat instead of SSE, removing a long-poll that pinned a PHP worker per logged-in page; SSE is opt-in.
 * Improve  - Heartbeat polls every 15 seconds at rest (was 5), bursts to 5 seconds for 30 seconds after a member action, and nearly suspends on backgrounded tabs.
 * Improve  - Member directory, leaderboard, and top-members no longer run per-row queries; query count is now constant regardless of community size.

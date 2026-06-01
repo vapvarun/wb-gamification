@@ -19,6 +19,7 @@ Performance and notification-quality release. Built to stay fast on large, live 
 - Admin setting for toast notification placement (Settings > Realtime): bottom-right (default), bottom-left, top-right, top-center, with corner-aware slide-in.
 - `wb_gam_sse_allowed` filter to opt into SSE streaming on hosts provisioned for long-lived connections.
 - `PointsEngine::prime_totals()` and `BadgeEngine::prime_earned_badges()` batch cache-prime APIs for per-row listing surfaces.
+- `WBGam\Integrations\Jetonomy\DisplayDefer`: on a Jetonomy site the leaderboard defers to Jetonomy's reputation ranking. `JetonomyIntegration` already mirrors every reputation delta 1:1 into the points ledger, so wb-gam's leaderboard is a duplicate of Jetonomy's `ORDER BY reputation DESC` ranking. The `leaderboard` and `top-members` blocks/shortcodes are suppressed (via `render_block` + `do_shortcode_tag`) and the Hub `Leaderboard` card is dropped, so members see one ranking. Default-on when `JETONOMY_VERSION` is defined; override with `wb_gam_defer_leaderboard_to_jetonomy`. Badges are deliberately NOT deferred - wb-gam's badge engine (OpenBadges 3.0, expiry, share pages, cross-integration triggers) is the broader system and the two badge sets are complementary, not duplicates.
 
 ### Changed
 
