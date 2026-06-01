@@ -84,7 +84,13 @@ final class ProfilePage {
 			return;
 		}
 
-		if ( ! self::is_publicly_visible( (int) $user->ID ) ) {
+		// The profile owner and admins can always view the profile, even if
+		// the member has opted out of public visibility — "where can I see my
+		// own progress" must never 404 for the owner.
+		$can_view = self::is_publicly_visible( (int) $user->ID )
+			|| get_current_user_id() === (int) $user->ID
+			|| current_user_can( 'manage_options' );
+		if ( ! $can_view ) {
 			self::trigger_404();
 			return;
 		}
@@ -201,13 +207,33 @@ final class ProfilePage {
 	/**
 	 * Determine whether the profile is publicly visible.
 	 *
+	 * Opt-OUT model (default ON): public profiles showcase community
+	 * progress out of the box, so a member is visible unless they have
+	 * explicitly set the per-user flag to '0'. An empty/unset value means
+	 * public. The site-wide kill switch (OPT_ENABLED) still wins, and the
+	 * `wb_gam_profile_publicly_visible` filter lets a site override per user.
+	 *
+	 * (Before 1.5.2 this required an opt-IN flag that no member-facing UI
+	 * ever wrote, so every /u/ profile 404'd.)
+	 *
 	 * @param int $user_id User ID.
 	 */
 	public static function is_publicly_visible( int $user_id ): bool {
 		if ( ! get_option( self::OPT_ENABLED, '1' ) ) {
 			return false;
 		}
-		return (bool) get_user_meta( $user_id, self::META_PUBLIC, true );
+		// Default ON: only an explicit '0' makes the profile private.
+		$pref    = get_user_meta( $user_id, self::META_PUBLIC, true );
+		$visible = ( '0' !== (string) $pref );
+
+		/**
+		 * Filter whether a member's profile page is publicly visible.
+		 *
+		 * @since 1.5.2
+		 * @param bool $visible Whether the profile is public (default ON).
+		 * @param int  $user_id Profile owner user ID.
+		 */
+		return (bool) apply_filters( 'wb_gam_profile_publicly_visible', $visible, $user_id );
 	}
 
 	/**

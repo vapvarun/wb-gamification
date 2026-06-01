@@ -62,6 +62,58 @@ final class NotificationBridge {
 	 */
 	private const CURSOR_META_PREFIX = 'wb_gam_notif_cursor_';
 
+	/**
+	 * Option holding the admin-chosen toast stack position.
+	 *
+	 * @var string
+	 */
+	public const TOAST_POSITION_OPTION = 'wb_gam_toast_position';
+
+	/**
+	 * Allowed toast positions. The value maps 1:1 to a
+	 * `.wb-gam-toasts--{position}` CSS modifier (see assets/css/frontend.css)
+	 * and is validated again client-side in assets/js/toast.js.
+	 *
+	 * @var string[]
+	 */
+	public const TOAST_POSITIONS = array( 'top-right', 'top-center', 'bottom-right', 'bottom-left' );
+
+	/**
+	 * Default toast position. Bottom-right is the conventional ambient-
+	 * notification corner and never overlaps a top nav / sticky header
+	 * (the previous top-center default collided with BuddyX's sticky
+	 * header — Basecamp #9932190385).
+	 *
+	 * @var string
+	 */
+	public const TOAST_POSITION_DEFAULT = 'bottom-right';
+
+	/**
+	 * Resolve the configured toast position, validated against the allowed
+	 * set. Falls back to the default for an unset or unrecognized value.
+	 *
+	 * @return string One of self::TOAST_POSITIONS.
+	 */
+	public static function get_toast_position(): string {
+		$position = (string) get_option( self::TOAST_POSITION_OPTION, self::TOAST_POSITION_DEFAULT );
+
+		if ( ! in_array( $position, self::TOAST_POSITIONS, true ) ) {
+			$position = self::TOAST_POSITION_DEFAULT;
+		}
+
+		/**
+		 * Filters the toast stack position before it is sent to the client.
+		 *
+		 * @since 1.5.2
+		 *
+		 * @param string $position One of 'top-right', 'top-center',
+		 *                         'bottom-right', 'bottom-left'.
+		 */
+		$position = (string) apply_filters( 'wb_gam_toast_position', $position );
+
+		return in_array( $position, self::TOAST_POSITIONS, true ) ? $position : self::TOAST_POSITION_DEFAULT;
+	}
+
 	// ── Boot ────────────────────────────────────────────────────────────────────
 
 	/**
@@ -227,13 +279,18 @@ final class NotificationBridge {
 			array(
 				'type'    => 'points',
 				'points'  => $points,
+				// action_id travels to the client so toast.js only merges
+				// repeats of the SAME action (e.g. "Leave a comment x2") and
+				// keeps distinct actions as separate, individually-labeled
+				// toasts instead of a meaningless "+N points (M actions)".
+				'action'  => $event->action_id,
 				'message' => sprintf(
 					/* translators: 1: signed integer (e.g. "+5"), 2: currency label ("points", "XP", "Coins"). */
 					__( '+%1$d %2$s', 'wb-gamification' ),
 					$points,
 					$label
 				),
-				'detail'  => self::action_label( $event->action_id ),
+				'detail'  => self::resolve_award_detail( $event ),
 			)
 		);
 	}
@@ -718,24 +775,73 @@ final class NotificationBridge {
 	// ── Helpers ──────────────────────────────────────────────────────────────────
 
 	/**
-	 * Human-readable label for common action_ids.
+	 * Resolve the toast's "what you did" line for a points award.
+	 *
+	 * A points toast must ALWAYS say what the points were for — never a
+	 * bare number or count. Resolution order:
+	 *   1. An explicit human reason in the event metadata. Admin/manual
+	 *      awards carry the reason the admin typed (PointsController sets
+	 *      `metadata['reason']`), so the member sees e.g. "Community hero
+	 *      this month" instead of a generic label.
+	 *   2. The action's human label (self::action_label), which itself
+	 *      never returns empty.
+	 *
+	 * @param Event $event The award event.
+	 * @return string Non-empty, human-readable reason for the award.
+	 */
+	private static function resolve_award_detail( Event $event ): string {
+		$reason = isset( $event->metadata['reason'] ) ? trim( (string) $event->metadata['reason'] ) : '';
+		if ( '' !== $reason ) {
+			return $reason;
+		}
+
+		return self::action_label( $event->action_id );
+	}
+
+	/**
+	 * Human-readable label for an action_id — the toast's "what you did" line.
+	 *
+	 * Resolution order:
+	 *   1. The registered action's own manifest label (e.g. "Publish a blog
+	 *      post", "Leave a comment"). This is the canonical source — every
+	 *      manifest trigger declares a `label`, so this covers WordPress core,
+	 *      BuddyPress, WooCommerce, and every contrib integration without a
+	 *      per-id map to maintain.
+	 *   2. A small fallback map for ids that are NOT registered actions
+	 *      (kudos are fired directly; manual/admin awards use 'manual' /
+	 *      'manual_award').
+	 *   3. A generic "Points awarded" — NEVER empty, so the toast always
+	 *      states a reason rather than showing a contextless "+N points"
+	 *      or a bare "xN" count.
+	 *
+	 * Before 1.5.2 this returned a hardcoded map keyed on ids like
+	 * `post_publish` / `comment_publish` that never matched the real
+	 * manifest ids (`wp_publish_post` / `wp_leave_comment`), so the detail
+	 * line was null on every real award and toasts showed a bare "+N points"
+	 * with no context.
 	 *
 	 * @param string $action_id The action ID to look up.
-	 * @return string|null Translated label or null if unknown.
+	 * @return string Translated, human-readable, non-empty label.
 	 */
-	private static function action_label( string $action_id ): ?string {
-		$labels = array(
-			'register'            => __( 'for joining', 'wb-gamification' ),
-			'post_publish'        => __( 'for publishing', 'wb-gamification' ),
-			'comment_publish'     => __( 'for commenting', 'wb-gamification' ),
-			'bp_activity_post'    => __( 'for posting', 'wb-gamification' ),
-			'bp_activity_like'    => __( 'for liking', 'wb-gamification' ),
-			'bp_activity_comment' => __( 'for commenting', 'wb-gamification' ),
-			'bp_profile_updated'  => __( 'for updating profile', 'wb-gamification' ),
-			'give_kudos'          => __( 'for giving kudos', 'wb-gamification' ),
-			'receive_kudos'       => __( 'for receiving kudos', 'wb-gamification' ),
-		);
+	private static function action_label( string $action_id ): string {
+		// 1. Prefer the manifest's own label via the Registry.
+		$def = \WBGam\Engine\Registry::get_action( $action_id );
+		if ( is_array( $def ) && ! empty( $def['label'] ) ) {
+			return (string) $def['label'];
+		}
 
-		return $labels[ $action_id ] ?? null;
+		// 2. Ids that aren't registered as Registry actions.
+		$labels = array(
+			'give_kudos'    => __( 'Gave kudos', 'wb-gamification' ),
+			'receive_kudos' => __( 'Received kudos', 'wb-gamification' ),
+			'manual'        => __( 'Manual award', 'wb-gamification' ),
+			'manual_award'  => __( 'Manual award', 'wb-gamification' ),
+		);
+		if ( isset( $labels[ $action_id ] ) ) {
+			return $labels[ $action_id ];
+		}
+
+		// 3. Last-resort generic — still states that points were awarded.
+		return __( 'Points awarded', 'wb-gamification' );
 	}
 }

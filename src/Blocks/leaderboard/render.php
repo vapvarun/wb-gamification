@@ -146,6 +146,10 @@ BlockHooks::before( 'leaderboard', $wb_gam_attrs );
 	<?php else : ?>
 		<ol class="wb-gam-leaderboard__list">
 			<?php
+			// Warm the earned-badge cache for every row in one query so the
+			// per-row count_user_badges() below are cache hits — avoids an
+			// N+1 that would grow with the board size.
+			\WBGam\Engine\BadgeEngine::prime_earned_badges( array_column( $wb_gam_rows, 'user_id' ) );
 			foreach ( $wb_gam_rows as $wb_gam_row ) :
 				$wb_gam_rank_num   = (int) ( $wb_gam_row['rank'] ?? 0 );
 				$wb_gam_rank_label = '';

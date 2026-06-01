@@ -389,6 +389,49 @@ final class BadgeEngine {
 	}
 
 	/**
+	 * Warm the earned-badges cache for many users in one query.
+	 *
+	 * Listing surfaces (BP member directory, leaderboard) call
+	 * count_user_badges() / get_user_earned_badge_ids() per row. Without
+	 * priming, each row runs its own query. This batch-loads non-expired
+	 * badge IDs for the whole page and seeds the exact per-user cache key
+	 * those readers use, so each subsequent call is a cache hit. Users with
+	 * no badges are primed to an empty array (still a hit). Safe to call
+	 * repeatedly.
+	 *
+	 * @param int[] $user_ids Users to prime.
+	 * @return void
+	 */
+	public static function prime_earned_badges( array $user_ids ): void {
+		$ids = array_values( array_unique( array_filter( array_map( 'intval', $user_ids ), static fn( $id ) => $id > 0 ) ) );
+		if ( empty( $ids ) ) {
+			return;
+		}
+
+		global $wpdb;
+		$placeholders = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
+		$now          = gmdate( 'Y-m-d H:i:s' );
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $placeholders is built from an int count; all values pass through prepare().
+		$rows = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT user_id, badge_id FROM {$wpdb->prefix}wb_gam_user_badges
+				  WHERE ( expires_at IS NULL OR expires_at > %s )
+				    AND user_id IN ( $placeholders )",
+				array_merge( array( $now ), $ids )
+			)
+		);
+
+		$map = array_fill_keys( $ids, array() );
+		foreach ( (array) $rows as $row ) {
+			$map[ (int) $row->user_id ][] = (string) $row->badge_id;
+		}
+		foreach ( $map as $uid => $badge_ids ) {
+			wp_cache_set( "wb_gam_earned_badges_{$uid}", array_values( $badge_ids ), self::CACHE_GROUP, self::CACHE_TTL );
+		}
+	}
+
+	/**
 	 * Get earned badges with full definition data for a user.
 	 *
 	 * @param int $user_id User to look up.

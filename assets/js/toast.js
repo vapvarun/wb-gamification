@@ -37,8 +37,20 @@
 	// Create the single toast container. The `--rest` modifier was used
 	// in 1.4.0 to distinguish from a now-removed IA-rendered duplicate
 	// container; dropped in 1.5.0 as part of the single-owner refactor.
+	//
+	// Position is admin-configurable (Settings → Realtime). The server
+	// localizes wbGamToast.position; we map it to a `--{position}`
+	// modifier class that owns all placement + slide-direction CSS.
+	// Default bottom-right so the stack never overlaps a top nav / sticky
+	// header. Validate against the known set so a stale/garbage value
+	// can't inject an arbitrary class.
+	var POSITIONS = [ 'top-right', 'top-center', 'bottom-right', 'bottom-left' ];
+	var position  = wbGamToast.position;
+	if ( POSITIONS.indexOf( position ) === -1 ) {
+		position = 'bottom-right';
+	}
 	var container = document.createElement( 'div' );
-	container.className = 'wb-gam-toasts';
+	container.className = 'wb-gam-toasts wb-gam-toasts--' + position;
 	container.setAttribute( 'role', 'region' );
 	container.setAttribute( 'aria-label', 'Notifications' );
 	container.setAttribute( 'aria-live', 'polite' );
@@ -128,9 +140,19 @@
 			}
 			seenIds.add( key );
 
-			// Points-toast aggregation: if a previous points toast is
-			// still on screen, merge this one into it.
-			if ( toast.type === 'points' && lastPointsToast && lastPointsToast.el.parentNode ) {
+			// Points-toast aggregation: merge ONLY when the previous points
+			// toast is still on screen AND it's the same action (e.g. two
+			// quick comments → "Leave a comment x2"). Distinct actions stay
+			// as separate, individually-labeled toasts so the stack always
+			// says what each award was for — never a contextless
+			// "+N points (M actions)".
+			if (
+				toast.type === 'points'
+				&& lastPointsToast
+				&& lastPointsToast.el.parentNode
+				&& ( toast.action || '' ) === lastPointsToast.action
+				&& ( toast.detail || '' ) === lastPointsToast.actionLabel
+			) {
 				mergeIntoPointsToast( toast );
 				return;
 			}
@@ -162,21 +184,23 @@
 		lastPointsToast.points += add;
 		lastPointsToast.actionCount += 1;
 
-		// Re-render the message in place.
+		// Re-render the points total in place, preserving the currency label
+		// the server wrote after "+N " — typically "points" / "XP" / "Coins".
 		var msgEl = lastPointsToast.el.querySelector( '.wb-gam-toast__message' );
 		if ( msgEl ) {
-			// Preserve the currency label the server-side wrote into the
-			// last toast. The label is whatever came after "+N " in the
-			// message — typically "Points" / "XP" / "Coins".
-			var labelMatch = ( msgEl.textContent || '' ).match( /^\+\d+\s+(.+?)(?:\s+\(.*\))?$/ );
-			var label = labelMatch ? labelMatch[1] : 'Points';
-			msgEl.textContent = '+' + lastPointsToast.points + ' ' + label
-				+ ' (' + lastPointsToast.actionCount + ' actions)';
+			var labelMatch = ( msgEl.textContent || '' ).match( /^\+\d+\s+(.+?)(?:\s+×\d+)?$/ );
+			var label = labelMatch ? labelMatch[1] : 'points';
+			msgEl.textContent = '+' + lastPointsToast.points + ' ' + label;
 		}
-		// Hide the per-action detail line since we now span multiple actions.
+		// Detail line names the (same) action plus a repeat count, e.g.
+		// "Leave a comment x2". Only same-action toasts ever merge, so the
+		// label stays accurate across the merge.
 		var detailEl = lastPointsToast.el.querySelector( '.wb-gam-toast__detail' );
 		if ( detailEl ) {
-			detailEl.hidden = true;
+			detailEl.hidden = false;
+			detailEl.textContent = lastPointsToast.actionLabel
+				? lastPointsToast.actionLabel + ' ×' + lastPointsToast.actionCount
+				: '×' + lastPointsToast.actionCount;
 		}
 
 		// Reset the dismiss timer so the user has time to see the bump.
@@ -218,12 +242,16 @@
 		message.textContent = toast.message || '';
 		body.appendChild( message );
 
+		// Always create the detail line so a later same-action merge can
+		// populate it ("Leave a comment x2"). Hidden when there's no detail.
+		var detail = document.createElement( 'span' );
+		detail.className = 'wb-gam-toast__detail';
 		if ( toast.detail ) {
-			var detail = document.createElement( 'span' );
-			detail.className = 'wb-gam-toast__detail';
 			detail.textContent = toast.detail;
-			body.appendChild( detail );
+		} else {
+			detail.hidden = true;
 		}
+		body.appendChild( detail );
 
 		el.appendChild( body );
 
@@ -264,6 +292,8 @@
 				actionCount:  1,
 				dismissTimer: dismissTimer,
 				type:         'points',
+				action:       toast.action || '',
+				actionLabel:  toast.detail || '',
 			};
 			// Clear the reference when the toast leaves the DOM (close
 			// button click, auto-dismiss exit animation). After

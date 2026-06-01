@@ -37,6 +37,7 @@ use WBGam\Blocks\CSS as WB_Gam_Block_CSS;
 use WBGam\Engine\BlockHooks;
 use WBGam\Engine\LeaderboardEngine;
 use WBGam\Engine\LevelEngine;
+use WBGam\Engine\PointsEngine;
 
 $wb_gam_attrs   = is_array( $attributes ) ? $attributes : array();
 $wb_gam_unique  = ! empty( $wb_gam_attrs['uniqueId'] )
@@ -141,6 +142,13 @@ if ( $wb_gam_show_badges && ! empty( $wb_gam_user_ids ) ) {
 
 $wb_gam_level_map = array();
 if ( $wb_gam_show_level ) {
+	// Prime level user_meta AND points totals for the whole page so the
+	// per-row get_level_for_user() calls below are cache hits: it reads
+	// level meta (primed here) and get_total() (primed below), not one
+	// query each. Remaining writes are one-time self-heal on stale meta.
+	$wb_gam_level_ids = array_map( 'intval', $wb_gam_user_ids );
+	update_meta_cache( 'user', $wb_gam_level_ids );
+	PointsEngine::prime_totals( $wb_gam_level_ids );
 	foreach ( $wb_gam_user_ids as $wb_gam_uid ) {
 		$wb_gam_lvl = LevelEngine::get_level_for_user( (int) $wb_gam_uid );
 		if ( $wb_gam_lvl ) {

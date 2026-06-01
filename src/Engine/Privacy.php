@@ -93,8 +93,9 @@ final class Privacy {
 			return false;
 		}
 
-		// Member-level toggle.
-		return (bool) get_user_meta( $target_id, 'wb_gam_profile_public', true );
+		// Member-level toggle — opt-OUT model (default ON, see
+		// ProfilePage::is_publicly_visible). Only an explicit '0' is private.
+		return '0' !== (string) get_user_meta( $target_id, 'wb_gam_profile_public', true );
 	}
 
 	/**

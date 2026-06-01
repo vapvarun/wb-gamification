@@ -167,19 +167,72 @@ final class SSEController {
 	 * heartbeat`.
 	 */
 	public static function get_transport(): string {
-		$value = (string) get_option( self::TRANSPORT_OPTION, self::TRANSPORT_AUTO );
+		// Default HEARTBEAT (not AUTO). SSE here is a PHP long-poll that
+		// pins a worker per connection (see sse_allowed()); defaulting to
+		// SSE/auto does not scale for a live community on a standard pool.
+		$value = (string) get_option( self::TRANSPORT_OPTION, self::TRANSPORT_HEARTBEAT );
 		if ( ! in_array( $value, array( self::TRANSPORT_HEARTBEAT, self::TRANSPORT_SSE, self::TRANSPORT_AUTO ), true ) ) {
-			return self::TRANSPORT_AUTO;
+			return self::TRANSPORT_HEARTBEAT;
 		}
 		return $value;
 	}
 
 	/**
-	 * Returns true if SSE should be served. In auto mode the client
-	 * decides; we accept connections either way. In heartbeat mode we
-	 * refuse with 503 so JS adapter falls back permanently.
+	 * Whether SSE long-polling is permitted on this host.
+	 *
+	 * SSE here is a PHP long-poll: each connection pins a PHP-FPM worker
+	 * for the connection lifetime (the 28s soft deadline in stream()). A
+	 * large community would need roughly one held worker per concurrent
+	 * logged-in member, which no standard PHP-FPM pool can sustain. So SSE
+	 * is an opt-in capability: it activates ONLY when the site owner runs
+	 * a tier built for long-lived streaming (dedicated worker pool, no
+	 * proxy buffering) and returns true from this filter. Everyone else
+	 * gets WP Heartbeat, which returns immediately and is shared +
+	 * throttled by core.
+	 *
+	 * @return bool
+	 */
+	public static function sse_allowed(): bool {
+		/**
+		 * Filters whether SSE long-poll streaming may run on this host.
+		 *
+		 * Default false: SSE pins a PHP-FPM worker per connection and does
+		 * not scale on a shared/standard pool. Enable only on infrastructure
+		 * provisioned for long-lived streaming connections.
+		 *
+		 * @since 1.5.2
+		 * @param bool $allowed Whether SSE is permitted. Default false.
+		 */
+		return (bool) apply_filters( 'wb_gam_sse_allowed', false );
+	}
+
+	/**
+	 * The transport the CLIENT should actually use.
+	 *
+	 * Downgrades sse/auto to heartbeat when SSE isn't permitted on this
+	 * host, so the browser never opens an EventSource that would pin a
+	 * worker. This is what gets localized to sse.js.
+	 *
+	 * @return string
+	 */
+	public static function effective_transport(): string {
+		$mode = self::get_transport();
+		if ( ( self::TRANSPORT_SSE === $mode || self::TRANSPORT_AUTO === $mode ) && ! self::sse_allowed() ) {
+			return self::TRANSPORT_HEARTBEAT;
+		}
+		return $mode;
+	}
+
+	/**
+	 * Returns true if SSE should be served. Gated by sse_allowed() so a
+	 * stale client (or a hand-crafted request) can't pin a worker when
+	 * SSE isn't permitted — we refuse with 503 and the JS adapter falls
+	 * back to heartbeat permanently.
 	 */
 	public static function is_enabled(): bool {
+		if ( ! self::sse_allowed() ) {
+			return false;
+		}
 		$mode = self::get_transport();
 		return self::TRANSPORT_SSE === $mode || self::TRANSPORT_AUTO === $mode;
 	}
@@ -272,13 +325,28 @@ final class SSEController {
 				$last_id       = (int) $row['id'];
 				$last_event_at = time();
 
+				// Normalize the payload `_id` to the durable table row id
+				// before emitting. The footer seed + heartbeat both stamp
+				// the table id (NotificationBridge::read_pending_from_table),
+				// and the client dedupes toasts by `_id`. Streaming the raw
+				// payload_json here would send the original push `_id`, so
+				// the SAME event would arrive over SSE and over the footer/
+				// heartbeat path with two different keys — and render twice.
+				$payload = json_decode( (string) $row['payload_json'], true );
+				if ( is_array( $payload ) ) {
+					$payload['_id'] = $last_id;
+					$data           = (string) wp_json_encode( $payload );
+				} else {
+					$data = (string) $row['payload_json'];
+				}
+
 				// SSE wire format: `id`, `event`, `data`. Each terminated
 				// by \n; record terminated by extra \n.
 				printf(
 					"id: %d\nevent: %s\ndata: %s\n\n",
 					$last_id,
 					(string) $row['event_type'],
-					(string) $row['payload_json']
+					$data
 				);
 			}
 

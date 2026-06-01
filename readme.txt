@@ -4,7 +4,7 @@ Tags: gamification, points, badges, leaderboard, buddypress
 Requires at least: 6.4
 Tested up to: 6.9
 Requires PHP: 8.0
-Stable tag: 1.5.1
+Stable tag: 1.5.2
 License: GPL-2.0+
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -40,7 +40,7 @@ The engine awards points automatically when members perform actions on your site
 * **Toast Notifications** — Real-time bottom-right popups when members earn points, badges, or level up. 6 notification types with auto-dismiss. Promise-based confirm modals replace native browser dialogs (a11y-friendly).
 * **Analytics Dashboard** — 6 KPI cards, top actions, top earners, daily points sparkline. Period selector (7/30/90 days).
 * **WP-CLI Commands** — `points award`, `member status`, `actions list`, `logs prune`, `export user`, `qa seed_pages`, `doctor` readiness check, plus a release-zip builder.
-* **Developer Hooks** — 58 action hooks and 60 filter hooks for extending every write path. Every REST endpoint fires `before_*` filters (return WP_Error to abort) and `after_*` actions.
+* **Developer Hooks** — 58 action hooks and 62 filter hooks for extending every write path. Every REST endpoint fires `before_*` filters (return WP_Error to abort) and `after_*` actions.
 * **Cohort Leagues** — Duolingo-style weekly competitions with promotion/demotion percentages and per-cohort leaderboards.
 * **Community Challenges** — Team goals with global progress (Pokemon GO model). Members contribute to a shared counter; everyone earns when the target is hit.
 * **Redemption Store** — Members spend points on rewards. Built-in support for custom rewards (your hook), WooCommerce coupons, and Wbcom Credits SDK.
@@ -132,6 +132,23 @@ Yes. WB Gamification integrates with WordPress privacy tools. Members can reques
 All data is preserved in the database. Reactivating the plugin restores everything. If you delete the plugin via the Plugins screen, the `uninstall.php` file removes all 23 tables, options, cron jobs, and transients — a clean uninstall.
 
 == Changelog ==
+
+= 1.5.2 - June 2026 =
+
+Performance and notification-quality release. Built to stay fast on large, live communities.
+
+* New      - Admin setting for notification placement (Settings > Realtime): bottom-right default, plus bottom-left, top-right, and top-center, with corner-aware slide-in.
+* New      - Filter wb_gam_sse_allowed to opt into SSE streaming on hosts provisioned for long-lived connections.
+* New      - Reusable batch cache-prime APIs PointsEngine::prime_totals() and BadgeEngine::prime_earned_badges() for per-row listing surfaces.
+* Improve  - Realtime now defaults to WP Heartbeat instead of SSE, removing a long-poll that pinned a PHP worker per logged-in page; SSE is opt-in.
+* Improve  - Heartbeat polls every 15 seconds at rest (was 5), bursts to 5 seconds for 30 seconds after a member action, and nearly suspends on backgrounded tabs.
+* Improve  - Member directory, leaderboard, and top-members no longer run per-row queries; query count is now constant regardless of community size.
+* Improve  - Reward toasts always state what the points were for, using the action label or the admin-entered reason.
+* Fix      - Toast stack no longer overlaps the theme header or navigation.
+* Fix      - Duplicate toasts when both SSE and Heartbeat delivered the same event.
+* Fix      - Points toast showed a contextless "+N Points (M actions)" count instead of naming the action.
+* Fix      - Member profile pages at /u/{username} returned 404 for everyone because public visibility required an opt-in that no screen ever set; public profiles are now on by default, and the owner and admins can always view a profile.
+
 
 = 1.5.1 - June 2026 =
 

@@ -3,7 +3,7 @@
   "plugin": {
     "slug": "wb-gamification",
     "name": "WB Gamification",
-    "version": "1.5.0",
+    "version": "1.5.2",
     "namespace": "WBGam\\",
     "main_file": "wb-gamification.php",
     "text_domain": "wb-gamification",
@@ -1792,7 +1792,7 @@
         "src/Integrations/Jetonomy/JetonomyIntegration.php:106"
       ],
       "consumed_by": [
-        "src/Engine/NotificationBridge.php:103 array( __CLASS__"
+        "src/Engine/NotificationBridge.php:155 array( __CLASS__"
       ]
     },
     {
@@ -1802,12 +1802,12 @@
       "fired_at": [
         "src/BuddyPress/Stream/BadgeStream.php:6",
         "src/Engine/BadgeEngine.php:296",
-        "src/Engine/NotificationBridge.php:244",
+        "src/Engine/NotificationBridge.php:301",
         "src/Integrations/ActivityPub.php:89"
       ],
       "consumed_by": [
         "src/BuddyPress/Stream/BadgeStream.php:31 array( __CLASS__",
-        "src/Engine/NotificationBridge.php:87 array( __CLASS__",
+        "src/Engine/NotificationBridge.php:139 array( __CLASS__",
         "src/Engine/TransactionalEmailEngine.php:81 array( __CLASS__",
         "src/Integrations/ActivityPub.php:47 array( __CLASS__"
       ]
@@ -1868,7 +1868,7 @@
       ],
       "consumed_by": [
         "src/BuddyPress/Stream/ChallengeStream.php:31 array( __CLASS__",
-        "src/Engine/NotificationBridge.php:90 array( __CLASS__",
+        "src/Engine/NotificationBridge.php:142 array( __CLASS__",
         "src/Engine/TransactionalEmailEngine.php:82 array( __CLASS__",
         "src/Engine/WebhookDispatcher.php:55 array( self::class",
         "src/Integrations/ActivityPub.php:49 array( __CLASS__"
@@ -1965,7 +1965,7 @@
       ],
       "consumed_by": [
         "src/BuddyPress/Stream/KudosStream.php:31 array( __CLASS__",
-        "src/Engine/NotificationBridge.php:91 array( __CLASS__",
+        "src/Engine/NotificationBridge.php:143 array( __CLASS__",
         "src/Engine/WebhookDispatcher.php:62 array( self::class"
       ]
     },
@@ -1996,11 +1996,11 @@
       "fired_at": [
         "src/BuddyPress/Stream/LevelStream.php:6",
         "src/Engine/LevelEngine.php:146",
-        "src/Engine/NotificationBridge.php:269"
+        "src/Engine/NotificationBridge.php:326"
       ],
       "consumed_by": [
         "src/BuddyPress/Stream/LevelStream.php:35 array( __CLASS__",
-        "src/Engine/NotificationBridge.php:88 array( __CLASS__",
+        "src/Engine/NotificationBridge.php:140 array( __CLASS__",
         "src/Engine/RankAutomation.php:78 array( __CLASS__",
         "src/Engine/SiteFirstBadgeEngine.php:69 array( __CLASS__",
         "src/Engine/TransactionalEmailEngine.php:80 array( __CLASS__",
@@ -2056,7 +2056,7 @@
         "src/Engine/ChallengeEngine.php:72 array( __CLASS__",
         "src/Engine/CommunityChallengeEngine.php:54 array( __CLASS__",
         "src/Engine/LeaderboardEngine.php:75 array( __CLASS__",
-        "src/Engine/NotificationBridge.php:86 array( __CLASS__",
+        "src/Engine/NotificationBridge.php:138 array( __CLASS__",
         "src/Engine/SiteFirstBadgeEngine.php:70 array( __CLASS__"
       ]
     },
@@ -2136,7 +2136,7 @@
         "src/Engine/StreakEngine.php:221"
       ],
       "consumed_by": [
-        "src/Engine/NotificationBridge.php:89 array( __CLASS__",
+        "src/Engine/NotificationBridge.php:141 array( __CLASS__",
         "src/Engine/SiteFirstBadgeEngine.php:71 array( __CLASS__",
         "src/Engine/WebhookDispatcher.php:54 array( self::class"
       ]
@@ -2516,7 +2516,7 @@
       "type": "filter",
       "purpose": "",
       "fired_at": [
-        "src/Blocks/top-members/render.php:88"
+        "src/Blocks/top-members/render.php:89"
       ],
       "consumed_by": []
     },
@@ -2700,6 +2700,15 @@
       "consumed_by": []
     },
     {
+      "name": "wb_gam_sse_allowed",
+      "type": "filter",
+      "purpose": "",
+      "fired_at": [
+        "src/API/SSEController.php:206"
+      ],
+      "consumed_by": []
+    },
+    {
       "name": "wb_gam_streak_grace_days",
       "type": "filter",
       "purpose": "",
@@ -2731,7 +2740,16 @@
       "type": "filter",
       "purpose": "",
       "fired_at": [
-        "src/Engine/NotificationBridge.php:489"
+        "src/Engine/NotificationBridge.php:546"
+      ],
+      "consumed_by": []
+    },
+    {
+      "name": "wb_gam_toast_position",
+      "type": "filter",
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/NotificationBridge.php:112"
       ],
       "consumed_by": []
     },

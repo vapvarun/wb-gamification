@@ -6,6 +6,31 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 
 ## [Unreleased]
 
+## [1.5.2] - 2026-06-01
+
+Performance and notification-quality release. Built to stay fast on large, live communities.
+
+### Added
+
+- Admin setting for toast notification placement (Settings > Realtime): bottom-right (default), bottom-left, top-right, top-center, with corner-aware slide-in.
+- `wb_gam_sse_allowed` filter to opt into SSE streaming on hosts provisioned for long-lived connections.
+- `PointsEngine::prime_totals()` and `BadgeEngine::prime_earned_badges()` batch cache-prime APIs for per-row listing surfaces.
+
+### Changed
+
+- Realtime transport now defaults to WP Heartbeat instead of SSE/auto; SSE is opt-in behind `wb_gam_sse_allowed`. Removes a 28-second PHP-worker hold per logged-in page that did not scale on a standard PHP-FPM pool.
+- Heartbeat steady-state interval raised from 5s to 15s, with a 30-second fast burst after member actions and near-suspend on backgrounded tabs (cuts steady-state request load roughly 3x).
+- Member directory, leaderboard, and top-members blocks prime per-page data in a fixed number of queries, removing per-row N+1 (directory 82 to 4 queries per page; leaderboard badges 20 to 1; top-members levels 42 to 0 on warm data). Validated against a 1,000,000-row / 100,000-user dataset.
+- Reward toasts resolve a human reason for every award (action label, or the admin-entered reason for manual awards); only same-action awards merge.
+
+### Fixed
+
+- Toast stack overlapped the theme header/navigation; it now anchors to a configurable corner (default bottom-right).
+- Duplicate toasts when SSE and Heartbeat both delivered the same event. SSE now stamps the canonical queue id the client dedupe keys on.
+- Points toast displayed a contextless "+N Points (M actions)" count with no indication of what earned the points.
+- Member profile pages at `/u/{username}` returned 404 for every member: public visibility required an opt-in flag that no member-facing UI ever wrote. Public profiles now default to on (opt-out via a `0` per-user flag), the owner and admins can always view a profile, and the Privacy visibility check uses the same opt-out default.
+
+
 ## [1.5.1] - 2026-06-01
 
 PHP compatibility hotfix. Restores parsing on PHP 8.0/8.1 and lowers the supported floor to PHP 8.0. CI now lints PHP 8.0 through 8.4.

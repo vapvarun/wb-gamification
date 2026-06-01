@@ -25,14 +25,79 @@ defined( 'ABSPATH' ) || exit;
 final class DirectoryIntegration {
 
 	/**
+	 * Per-request map of user_id => show_rank (string|null), primed once for
+	 * the whole directory page by prime_directory(). Null until primed.
+	 *
+	 * @var array<int, string|null>|null
+	 */
+	private static ?array $prefs = null;
+
+	/**
 	 * Register hooks when BuddyPress is active.
 	 */
 	public static function init(): void {
 		if ( ! function_exists( 'buddypress' ) ) {
 			return;
 		}
+		// Prime ALL per-member rank data once, before the loop renders, so
+		// each row does zero queries. Without this the directory is a 3-4x
+		// query N+1 that grows with community size.
+		add_action( 'bp_before_directory_members_list', array( __CLASS__, 'prime_directory' ) );
 		add_action( 'bp_directory_members_item', array( __CLASS__, 'render_rank_in_directory' ) );
 		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'enqueue_directory_styles' ) );
+	}
+
+	/**
+	 * Batch-warm every per-member rank read for the current directory page.
+	 *
+	 * Fires on bp_before_directory_members_list (after the member loop is
+	 * queried, before the list HTML). Collects the page's member IDs and
+	 * warms points totals, earned-badge counts, level user_meta, and the
+	 * show_rank preference in a fixed handful of queries — turning
+	 * render_rank_in_directory()'s former O(rows) queries into O(1).
+	 *
+	 * @return void
+	 */
+	public static function prime_directory(): void {
+		$members = isset( $GLOBALS['members_template']->members ) ? $GLOBALS['members_template']->members : array();
+		if ( empty( $members ) || ! is_array( $members ) ) {
+			return;
+		}
+
+		$ids = array();
+		foreach ( $members as $member ) {
+			$uid = (int) ( $member->ID ?? 0 );
+			if ( $uid > 0 ) {
+				$ids[] = $uid;
+			}
+		}
+		$ids = array_values( array_unique( $ids ) );
+		if ( empty( $ids ) ) {
+			return;
+		}
+
+		// Engine cache primers — each subsequent per-row read becomes a hit.
+		\WBGam\Engine\PointsEngine::prime_totals( $ids );
+		\WBGam\Engine\BadgeEngine::prime_earned_badges( $ids );
+		// LevelEngine::get_level_for_user reads wb_gam_level_id / _name meta.
+		update_meta_cache( 'user', $ids );
+
+		// Batch the show_rank preference into the per-request map.
+		global $wpdb;
+		$placeholders = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $placeholders is built from an int count; all values pass through prepare().
+		$rows = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT user_id, show_rank FROM {$wpdb->prefix}wb_gam_member_prefs WHERE user_id IN ( $placeholders )",
+				$ids
+			),
+			OBJECT_K
+		);
+
+		self::$prefs = array();
+		foreach ( $ids as $uid ) {
+			self::$prefs[ $uid ] = isset( $rows[ $uid ] ) ? (string) $rows[ $uid ]->show_rank : null;
+		}
 	}
 
 	/**
@@ -57,14 +122,20 @@ final class DirectoryIntegration {
 			return;
 		}
 
-		// Respect opt-out preference.
-		global $wpdb;
-		$show_rank = $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT show_rank FROM {$wpdb->prefix}wb_gam_member_prefs WHERE user_id = %d",
-				$user_id
-			)
-		);
+		// Respect opt-out preference. Use the per-page primed map (set by
+		// prime_directory on bp_before_directory_members_list); fall back to
+		// a single lookup only if this rendered outside the normal loop.
+		if ( is_array( self::$prefs ) && array_key_exists( (int) $user_id, self::$prefs ) ) {
+			$show_rank = self::$prefs[ (int) $user_id ];
+		} else {
+			global $wpdb;
+			$show_rank = $wpdb->get_var(
+				$wpdb->prepare(
+					"SELECT show_rank FROM {$wpdb->prefix}wb_gam_member_prefs WHERE user_id = %d",
+					$user_id
+				)
+			);
+		}
 		if ( '0' === $show_rank ) {
 			return;
 		}
