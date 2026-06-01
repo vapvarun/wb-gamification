@@ -90,7 +90,7 @@ body.admin-bar .wb-gam-toasts--top-right {
 	align-items: flex-start;
 	gap: 0.625rem;
 	padding: 0.75rem 1rem;
-	background: #fff;
+	background: var(--wb-gam-color-surface, #fff);
 	border-radius: var(--wb-gam-radius);
 	box-shadow: 0 8px 24px rgba(0, 0, 0, 0.16);
 	border-inline-start: 4px solid var(--wb-gam-primary);
@@ -192,7 +192,7 @@ body.admin-bar .wb-gam-toasts--top-right {
 .wb-gam-overlay[hidden] { display: none; }
 
 .wb-gam-overlay__card {
-	background: #fff;
+	background: var(--wb-gam-color-surface, #fff);
 	border-radius: 16px;
 	padding: 2.5rem 2rem;
 	max-width: 340px;
@@ -641,9 +641,9 @@ body.admin-bar .wb-gam-toasts--top-right {
 	color: var(--wb-gam-primary, #1d4ed8);
 	white-space: nowrap;
 }
-.wb-gam-my-rewards__status--fulfilled { background: #ecfdf5; color: #047857; }
-.wb-gam-my-rewards__status--failed    { background: #fef2f2; color: #b91c1c; }
-.wb-gam-my-rewards__status--refunded  { background: #fef9c3; color: #92400e; }
+.wb-gam-my-rewards__status--fulfilled { background: var(--wb-gam-color-success-bg); color: var(--wb-gam-color-success); }
+.wb-gam-my-rewards__status--failed    { background: var(--wb-gam-color-danger-bg); color: var(--wb-gam-color-danger); }
+.wb-gam-my-rewards__status--refunded  { background: var(--wb-gam-color-warning-bg); color: var(--wb-gam-color-warning); }
 .wb-gam-my-rewards__meta {
 	display: flex;
 	gap: 10px;
@@ -665,9 +665,9 @@ body.admin-bar .wb-gam-toasts--top-right {
 	letter-spacing: .04em;
 	padding: 2px 8px;
 	border-radius: 4px;
-	background: #ecfdf5;
-	color: #065f46;
-	border: 1px dashed #34d399;
+	background: var(--wb-gam-color-success-bg, #ecfdf5);
+	color: var(--wb-gam-color-success, #065f46);
+	border: 1px dashed var(--wb-gam-color-success-soft, #34d399);
 }
 @media (max-width: 480px) {
 	.wb-gam-my-rewards__title { flex-direction: column; align-items: flex-start; gap: 4px; }

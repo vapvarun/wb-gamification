@@ -145,6 +145,7 @@ Performance and notification-quality release. Built to stay fast on large, live 
 * Improve  - Member directory, leaderboard, and top-members no longer run per-row queries; query count is now constant regardless of community size.
 * Improve  - Reward toasts always state what the points were for, using the action label or the admin-entered reason.
 * Improve  - Frontend surfaces (Hub, blocks, member profile) map their neutral colors to the active theme's tokens, so they follow BuddyX and BuddyX Pro light and dark mode automatically; themes without those tokens keep the original light palette.
+* Improve  - My Badges flyout shows two columns so each badge's art, title, and description are readable instead of cramped three-up.
 * Fix      - Toast stack no longer overlaps the theme header or navigation.
 * Fix      - Duplicate toasts when both SSE and Heartbeat delivered the same event.
 * Fix      - Points toast showed a contextless "+N Points (M actions)" count instead of naming the action.

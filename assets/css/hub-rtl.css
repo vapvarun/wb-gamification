@@ -24,14 +24,16 @@
   --gam-border: var(--bx-color-border, #e2e3ed);
   --gam-border-hover: var(--bx-color-border, #c8c9d9);
   --gam-accent: #5b4cdb;
-  --gam-accent-light: #ededfc;
-  --gam-accent-text: #4338b2;
+  /* Tints mixed over --gam-surface so icon chips / status pills adapt to
+   * dark mode (faint dark tint) instead of staying opaque light. */
+  --gam-accent-light: color-mix(in srgb, var(--gam-accent) 14%, var(--gam-surface));
+  --gam-accent-text: color-mix(in srgb, var(--gam-accent) 65%, var(--gam-text));
   --gam-success: #0d9f6e;
-  --gam-success-bg: #ecfdf3;
+  --gam-success-bg: color-mix(in srgb, var(--gam-success) 12%, var(--gam-surface));
   --gam-warning: #c2770e;
-  --gam-warning-bg: #fef7ec;
+  --gam-warning-bg: color-mix(in srgb, var(--gam-warning) 12%, var(--gam-surface));
   --gam-info: #2563eb;
-  --gam-info-bg: #eff4ff;
+  --gam-info-bg: color-mix(in srgb, var(--gam-info) 12%, var(--gam-surface));
   --gam-gold: #b8860b;
   --gam-silver: #6b7280;
   --gam-bronze: #a0522d;
@@ -453,11 +455,22 @@
 .gam-panel__body .wb-gam-kudos-feed__empty::before { content: "\e2d6"; /* heart-handshake */ }
 .gam-panel__body .wb-gam-points-history__empty::before { content: "\e1f4"; /* history */ }
 
-/* Badge grid inside panel */
+/* Badge grid inside panel — the slide-in panel is fixed-narrow even on
+ * desktop, so a 3-up grid crammed each badge (medal + 2-line title +
+ * description). Two columns give the badge art and text room to breathe.
+ * minmax(0,1fr) keeps it clean when the panel goes full-width on mobile. */
 .gam-badge-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
+}
+
+/* The "My Badges" flyout renders the badge-showcase BLOCK, whose own
+ * container-query defaults to 3-up at flyout width. Force 2-up inside the
+ * panel specifically (higher specificity than the block's bare selector),
+ * so the cards stay readable regardless of the panel's exact width. */
+.gam-panel__body .wb-gam-badge-showcase__list {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .gam-badge-item {
@@ -852,4 +865,17 @@
   .wbgam-convert-form__head,
   .wbgam-convert-form__body,
   .wbgam-convert-form__actions { padding-right: 16px; padding-left: 16px; }
+}
+
+/* Dark-mode accent — keep the brand purple, lighten on dark surfaces.
+ * Mirrors src/shared/design-tokens.css; --gam-accent-light / --gam-accent-text
+ * cascade from --gam-accent so they lighten automatically. */
+:root[data-bx-mode="dark"] .gam-page,
+body.buddyx-dark-theme .gam-page {
+  --gam-accent: color-mix(in srgb, #5b4cdb 60%, #ffffff);
+}
+@media (prefers-color-scheme: dark) {
+  :root[data-bx-mode="auto"] .gam-page {
+    --gam-accent: color-mix(in srgb, #5b4cdb 60%, #ffffff);
+  }
 }

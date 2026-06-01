@@ -71,25 +71,33 @@
 	   Themes may override via `--wbcom-link-color`. */
 	--wb-gam-color-accent: var(--wbcom-link-color, #5b4cdb);
 	--wb-gam-color-accent-hover: var(--wbcom-link-hover-color, #4338b2);
-	--wb-gam-color-accent-light: #ededfc;
-	--wb-gam-color-accent-text: #4338b2;
+	/* Tint backgrounds (icon chips, accent pills) are mixed OVER the theme
+	 * surface so they're a faint light tint in light mode and a faint dark
+	 * tint in dark mode — no opaque light blob on a dark card. */
+	--wb-gam-color-accent-light: color-mix(in srgb, var(--wb-gam-color-accent) 14%, var(--wb-gam-color-surface));
+	/* Accent label text blends toward the foreground so it stays readable on
+	 * the tinted chip in either mode. */
+	--wb-gam-color-accent-text: color-mix(in srgb, var(--wb-gam-color-accent) 65%, var(--wb-gam-color-text));
 	--wb-gam-color-accent-ring: rgba(91, 76, 219, 0.2);
 
-	/* Colors — semantic (matched to assets/css/hub.css) */
+	/* Colors — semantic. The solid hue stays constant; the `-bg` tint is
+	 * mixed over the theme surface so status chips / podium rows / pills
+	 * adapt to dark mode instead of showing an opaque light blob. (The
+	 * `-soft` rgba variants were already surface-agnostic.) */
 	--wb-gam-color-success: #0d9f6e;
-	--wb-gam-color-success-bg: #ecfdf3;
+	--wb-gam-color-success-bg: color-mix(in srgb, var(--wb-gam-color-success) 12%, var(--wb-gam-color-surface));
 	--wb-gam-color-success-strong: #047857;
 	--wb-gam-color-success-soft: rgba(13, 159, 110, 0.12);
 	--wb-gam-color-warning: #c2770e;
-	--wb-gam-color-warning-bg: #fef7ec;
+	--wb-gam-color-warning-bg: color-mix(in srgb, var(--wb-gam-color-warning) 12%, var(--wb-gam-color-surface));
 	--wb-gam-color-warning-strong: #b45309;
 	--wb-gam-color-warning-soft: rgba(245, 158, 11, 0.15);
 	--wb-gam-color-danger: #ef4444;
-	--wb-gam-color-danger-bg: #fef2f2;
+	--wb-gam-color-danger-bg: color-mix(in srgb, var(--wb-gam-color-danger) 12%, var(--wb-gam-color-surface));
 	--wb-gam-color-danger-strong: #b91c1c;
 	--wb-gam-color-danger-soft: rgba(185, 28, 28, 0.10);
 	--wb-gam-color-info: #2563eb;
-	--wb-gam-color-info-bg: #eff4ff;
+	--wb-gam-color-info-bg: color-mix(in srgb, var(--wb-gam-color-info) 12%, var(--wb-gam-color-surface));
 	--wb-gam-color-info-soft: rgba(37, 99, 235, 0.10);
 
 	/* Extra neutrals — surface-muted is the "card lifted off a panel"
@@ -170,4 +178,24 @@
 	--wb-gam-bronze: var(--wb-gam-color-bronze);
 	--wb-gam-fill: var(--wb-gam-color-accent);
 	--wb-gam-recap-accent: var(--wb-gam-color-accent);
+}
+
+/* ── Dark-mode accent ───────────────────────────────────────────────────────
+ * Keep the gamification brand purple, but lighten it on dark surfaces so
+ * glyphs, links, the level progress bar, and accent pills keep their punch
+ * and contrast. Light mode uses the pure hue defined in :root above. Scoped
+ * to the same dark selectors BuddyX / BuddyX Pro use: the data-bx-mode
+ * attribute, the prefers-color-scheme auto path, and the legacy
+ * .buddyx-dark-theme body class. accent-light / accent-text cascade from
+ * --wb-gam-color-accent, so they lighten with it automatically. */
+:root[data-bx-mode="dark"],
+body.buddyx-dark-theme {
+	--wb-gam-color-accent: color-mix(in srgb, #5b4cdb 60%, #ffffff);
+	--wb-gam-color-accent-hover: color-mix(in srgb, #5b4cdb 45%, #ffffff);
+}
+@media (prefers-color-scheme: dark) {
+	:root[data-bx-mode="auto"] {
+		--wb-gam-color-accent: color-mix(in srgb, #5b4cdb 60%, #ffffff);
+		--wb-gam-color-accent-hover: color-mix(in srgb, #5b4cdb 45%, #ffffff);
+	}
 }
