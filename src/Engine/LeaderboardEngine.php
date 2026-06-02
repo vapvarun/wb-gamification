@@ -647,7 +647,10 @@ final class LeaderboardEngine {
 	}
 
 	/**
-	 * Return all user IDs that have opted out of the public leaderboard.
+	 * Return all user IDs hidden from the public leaderboard: members who opted
+	 * out via their preferences PLUS accounts the site owner excluded from
+	 * gamification (Settings > Access). Excluded users can't earn, so they must
+	 * not appear in any ranking either.
 	 *
 	 * @return int[]
 	 */
@@ -656,7 +659,12 @@ final class LeaderboardEngine {
 		$ids = $wpdb->get_col(
 			"SELECT user_id FROM {$wpdb->prefix}wb_gam_member_prefs WHERE leaderboard_opt_out = 1"
 		);
-		return array_map( 'intval', $ids ?: array() );
+		$ids = array_map( 'intval', $ids ?: array() );
+
+		// Owner-excluded accounts (roles / users / sandboxed) never rank.
+		$ids = array_merge( $ids, PointsEngine::excluded_user_ids() );
+
+		return array_values( array_unique( $ids ) );
 	}
 
 	/**

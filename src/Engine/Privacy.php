@@ -344,6 +344,7 @@ final class Privacy {
 			'wb_gam_level_id'              => __( 'Current level ID (cached)', 'wb-gamification' ),
 			'wb_gam_level_name'            => __( 'Current level name (cached)', 'wb-gamification' ),
 			'wb_gam_league_tier'           => __( 'Cohort league tier', 'wb-gamification' ),
+			'wb_gam_sandboxed'             => __( 'Excluded from earning (sandboxed)', 'wb-gamification' ),
 		);
 		$meta_rows   = array();
 		foreach ( $meta_groups as $key => $label ) {
@@ -576,6 +577,7 @@ final class Privacy {
 			'wb_gam_level_id',             // LevelEngine — denormalized current level (cache).
 			'wb_gam_level_name',           // LevelEngine — denormalized level name (cache).
 			'wb_gam_league_tier',          // CohortEngine — current cohort league tier.
+			'wb_gam_sandboxed',            // Access settings — per-user earning veto.
 			// Notification consumer cursors — NotificationBridge writes one
 			// per consumer (footer/heartbeat/rest). Pre-1.4.1 these three
 			// integers survived GDPR erase as orphan rows keyed on the

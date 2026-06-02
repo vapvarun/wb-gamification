@@ -22,6 +22,20 @@ class PointsEngineTest extends TestCase {
 		parent::setUp();
 		Monkey\setUp();
 		$this->stubResolveType();
+
+		// passes_rate_limits()/award() now run user_can_earn(); stub its WP reads
+		// so the default is "user can earn" (no exclusions configured).
+		Functions\when( 'get_option' )->alias(
+			static function ( $name, $default_value = false ) {
+				return in_array( $name, array( 'wb_gam_excluded_users', 'wb_gam_excluded_roles' ), true )
+					? array()
+					: $default_value;
+			}
+		);
+		Functions\when( 'get_user_meta' )->justReturn( '' );
+		Functions\when( 'get_users' )->justReturn( array() );
+		Functions\when( 'apply_filters' )->returnArg( 2 );
+		\WBGam\Engine\PointsEngine::flush_exclusion_cache();
 	}
 
 	protected function tearDown(): void {

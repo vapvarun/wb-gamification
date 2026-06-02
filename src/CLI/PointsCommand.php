@@ -73,7 +73,9 @@ class PointsCommand {
 		$type_data = ( new PointTypeService() )->get( $type );
 		$label     = $type_data ? (string) $type_data['label'] : 'pts';
 
-		$awarded = PointsEngine::award( $user->ID, $action_id, $points, 0, $type );
+		// CLI is operator-driven, so a manual award overrides earning exclusion
+		// (force = true) - same override semantics as the admin Award Points UI.
+		$awarded = PointsEngine::award( $user->ID, $action_id, $points, 0, $type, true );
 
 		if ( ! $awarded ) {
 			\WP_CLI::error( 'Award failed — check that the user is valid and points > 0.' );
