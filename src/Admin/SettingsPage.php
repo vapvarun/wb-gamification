@@ -562,6 +562,11 @@ final class SettingsPage {
 					'recomputing'    => __( 'Rebuilding leaderboard...', 'wb-gamification' ),
 					'recomputed'     => __( 'Leaderboard rebuilt.', 'wb-gamification' ),
 					'recomputeError' => __( 'Could not rebuild the leaderboard.', 'wb-gamification' ),
+					'resetConfirm'   => __( 'Permanently delete ALL member progress (points, badges, streaks, kudos, leaderboards)? Configuration is kept. This cannot be undone.', 'wb-gamification' ),
+					'resetting'      => __( 'Resetting member progress...', 'wb-gamification' ),
+					/* translators: %d: number of data tables cleared */
+					'resetDone'      => __( 'Member progress reset (%d tables cleared). Reloading...', 'wb-gamification' ),
+					'resetError'     => __( 'Could not reset member progress.', 'wb-gamification' ),
 				),
 			)
 		);
@@ -2131,6 +2136,21 @@ final class SettingsPage {
 			</div>
 			<div class="wbgam-card-body">
 				<button type="button" id="wb-gam-recompute-leaderboard" class="wbgam-btn"><?php esc_html_e( 'Rebuild leaderboard', 'wb-gamification' ); ?></button>
+			</div>
+		</div>
+
+		<div class="wbgam-card wbgam-stack-block wb-gam-danger-zone">
+			<div class="wbgam-card-header">
+				<h2 class="wbgam-card-title">
+					<span class="icon-triangle-alert" aria-hidden="true"></span>
+					<?php esc_html_e( 'Reset member progress', 'wb-gamification' ); ?>
+				</h2>
+				<p class="wbgam-card-desc">
+					<?php esc_html_e( 'Permanently delete all accumulated member progress - points, the event log, earned badges, streaks, kudos, league membership, challenge logs, redemptions, and submissions - so the community starts fresh. Your configuration is kept: badge definitions, levels, rules, challenges, point types, rewards, member privacy settings, webhooks, and all settings survive. This cannot be undone.', 'wb-gamification' ); ?>
+				</p>
+			</div>
+			<div class="wbgam-card-body">
+				<button type="button" id="wb-gam-reset-progress" class="wbgam-btn wb-gam-btn-danger"><?php esc_html_e( 'Reset all member progress', 'wb-gamification' ); ?></button>
 			</div>
 		</div>
 		<?php

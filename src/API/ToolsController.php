@@ -65,6 +65,25 @@ class ToolsController {
 			)
 		);
 
+		// POST /tools/reset-progress — wipe member progress (keeps config).
+		register_rest_route(
+			$this->namespace,
+			'/tools/reset-progress',
+			array(
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'reset_progress' ),
+					'permission_callback' => array( $this, 'admin_permissions_check' ),
+					'args'                => array(
+						'confirm' => array(
+							'required' => true,
+							'type'     => 'boolean',
+						),
+					),
+				),
+			)
+		);
+
 		// POST /tools/import-settings — apply a previously exported document.
 		register_rest_route(
 			$this->namespace,
@@ -115,6 +134,26 @@ class ToolsController {
 		\WBGam\Engine\LeaderboardEngine::write_snapshot();
 		\WBGam\Engine\LeaderboardEngine::invalidate_cache();
 		return new WP_REST_Response( array( 'ok' => true ), 200 );
+	}
+
+	/**
+	 * POST /tools/reset-progress.
+	 *
+	 * Destructive: empties member-progress tables + progress meta, keeping all
+	 * configuration and definitions. Requires explicit confirm = true on top of
+	 * the admin permission gate.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function reset_progress( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+		if ( true !== $request['confirm'] ) {
+			return new WP_Error( 'rest_confirm_required', __( 'Resetting member progress must be explicitly confirmed.', 'wb-gamification' ), array( 'status' => 400 ) );
+		}
+
+		$result = \WBGam\Engine\ProgressReset::reset();
+
+		return new WP_REST_Response( array( 'ok' => true ) + $result, 200 );
 	}
 
 	/**
