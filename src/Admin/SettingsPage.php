@@ -556,6 +556,9 @@ final class SettingsPage {
 					/* translators: 1: applied count, 2: skipped count */
 					'imported'      => __( 'Imported %1$d settings (%2$d skipped). Reloading...', 'wb-gamification' ),
 					'noFile'        => __( 'Choose an export file first.', 'wb-gamification' ),
+					'recomputing'   => __( 'Rebuilding leaderboard...', 'wb-gamification' ),
+					'recomputed'    => __( 'Leaderboard rebuilt.', 'wb-gamification' ),
+					'recomputeError' => __( 'Could not rebuild the leaderboard.', 'wb-gamification' ),
 				),
 			)
 		);
@@ -2040,6 +2043,21 @@ final class SettingsPage {
 					<input type="file" id="wb-gam-import-file" accept="application/json,.json" />
 				</p>
 				<button type="button" id="wb-gam-import-settings" class="wbgam-btn"><?php esc_html_e( 'Import settings', 'wb-gamification' ); ?></button>
+			</div>
+		</div>
+
+		<div class="wbgam-card wbgam-stack-block">
+			<div class="wbgam-card-header">
+				<h2 class="wbgam-card-title">
+					<span class="icon-refresh-cw" aria-hidden="true"></span>
+					<?php esc_html_e( 'Maintenance', 'wb-gamification' ); ?>
+				</h2>
+				<p class="wbgam-card-desc">
+					<?php esc_html_e( 'Rebuild the leaderboard snapshot and clear its caches. Use this if the leaderboard looks stale after a manual award or import - it normally refreshes on a 5-minute cron.', 'wb-gamification' ); ?>
+				</p>
+			</div>
+			<div class="wbgam-card-body">
+				<button type="button" id="wb-gam-recompute-leaderboard" class="wbgam-btn"><?php esc_html_e( 'Rebuild leaderboard', 'wb-gamification' ); ?></button>
 			</div>
 		</div>
 		<?php

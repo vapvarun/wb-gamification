@@ -18,6 +18,7 @@
 	var exportBtn = document.getElementById( 'wb-gam-export-settings' );
 	var importBtn = document.getElementById( 'wb-gam-import-settings' );
 	var fileInput = document.getElementById( 'wb-gam-import-file' );
+	var recomputeBtn = document.getElementById( 'wb-gam-recompute-leaderboard' );
 
 	function toast( msg, tone ) {
 		if ( rest.toast ) {
@@ -49,6 +50,16 @@
 			a.click();
 			document.body.removeChild( a );
 			window.URL.revokeObjectURL( url );
+		} );
+	}
+
+	if ( recomputeBtn ) {
+		recomputeBtn.addEventListener( 'click', async function () {
+			recomputeBtn.disabled = true;
+			toast( i18n.recomputing, 'info' );
+			var res = await rest.apiFetch( 'POST', '/tools/recompute-leaderboard', {}, cfg );
+			recomputeBtn.disabled = false;
+			toast( res && res.ok ? i18n.recomputed : i18n.recomputeError, res && res.ok ? 'success' : 'error' );
 		} );
 	}
 

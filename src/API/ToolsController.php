@@ -52,6 +52,19 @@ class ToolsController {
 			)
 		);
 
+		// POST /tools/recompute-leaderboard — rebuild the snapshot + bust caches.
+		register_rest_route(
+			$this->namespace,
+			'/tools/recompute-leaderboard',
+			array(
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'recompute_leaderboard' ),
+					'permission_callback' => array( $this, 'admin_permissions_check' ),
+				),
+			)
+		);
+
 		// POST /tools/import-settings — apply a previously exported document.
 		register_rest_route(
 			$this->namespace,
@@ -87,6 +100,21 @@ class ToolsController {
 			);
 		}
 		return true;
+	}
+
+	/**
+	 * POST /tools/recompute-leaderboard.
+	 *
+	 * Rebuilds the leaderboard snapshot and invalidates every cached
+	 * leaderboard / rank entry. The fast, safe fix for a stale leaderboard
+	 * (same operation as `wp wb-gamification doctor --recompute-leaderboard`).
+	 *
+	 * @return WP_REST_Response
+	 */
+	public function recompute_leaderboard(): WP_REST_Response {
+		\WBGam\Engine\LeaderboardEngine::write_snapshot();
+		\WBGam\Engine\LeaderboardEngine::invalidate_cache();
+		return new WP_REST_Response( array( 'ok' => true ), 200 );
 	}
 
 	/**
