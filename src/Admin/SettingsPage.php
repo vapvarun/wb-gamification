@@ -98,6 +98,8 @@ final class SettingsPage {
 			self::save_realtime_settings();
 		} elseif ( 'access' === $tab ) {
 			self::save_access_settings();
+		} elseif ( 'modules' === $tab ) {
+			self::save_modules_settings();
 		}
 
 		// Preserve the active sidebar section after save (Basecamp 9925119779).
@@ -114,6 +116,7 @@ final class SettingsPage {
 			'automation' => 'rules',
 			'realtime'   => 'realtime',
 			'access'     => 'access',
+			'modules'    => 'modules',
 		);
 		$fallback    = admin_url( 'admin.php?page=wb-gamification' );
 		if ( isset( $tab_to_hash[ $tab ] ) ) {
@@ -849,6 +852,10 @@ final class SettingsPage {
 						<span class="icon-link"></span>
 						<?php esc_html_e( 'Integrations', 'wb-gamification' ); ?>
 					</a>
+					<a class="wbgam-settings-nav-item" href="#modules" data-section="modules">
+						<span class="icon-sliders"></span>
+						<?php esc_html_e( 'Modules', 'wb-gamification' ); ?>
+					</a>
 					<a class="wbgam-settings-nav-item" href="#tools" data-section="tools">
 						<span class="icon-wrench"></span>
 						<?php esc_html_e( 'Tools', 'wb-gamification' ); ?>
@@ -917,6 +924,11 @@ final class SettingsPage {
 				<!-- Integrations section -->
 				<div class="wbgam-settings-section" id="section-integrations">
 					<?php self::render_integrations_section( $bp_active ); ?>
+				</div>
+
+				<!-- Modules section -->
+				<div class="wbgam-settings-section" id="section-modules">
+					<?php self::render_modules_section(); ?>
 				</div>
 
 				<!-- Tools section -->
@@ -2003,6 +2015,67 @@ final class SettingsPage {
 
 			<div class="wbgam-settings-section__footer">
 				<?php submit_button( __( 'Save Access Settings', 'wb-gamification' ), 'primary', 'submit', false ); ?>
+			</div>
+		</form>
+		<?php
+	}
+
+	/**
+	 * Persist the optional-module on/off toggles (Settings > Modules).
+	 *
+	 * Nonce is verified by check_admin_referer() in handle_save().
+	 */
+	private static function save_modules_settings(): void {
+		// phpcs:disable WordPress.Security.NonceVerification.Missing -- Nonce verified by check_admin_referer() in handle_save().
+		$posted = array();
+		if ( isset( $_POST['wb_gam_modules'] ) && is_array( $_POST['wb_gam_modules'] ) ) {
+			$posted = array_map( 'sanitize_key', wp_unslash( (array) $_POST['wb_gam_modules'] ) );
+		}
+		// Checkbox semantics: present = enabled ('1'), absent = disabled ('0').
+		$map = array();
+		foreach ( array_keys( \WBGam\Engine\ModuleToggles::modules() ) as $slug ) {
+			$map[ $slug ] = in_array( $slug, $posted, true ) ? '1' : '0';
+		}
+		update_option( 'wb_gam_modules', $map );
+		// phpcs:enable WordPress.Security.NonceVerification.Missing
+	}
+
+	/**
+	 * Render the Modules section: turn optional engagement modules on or off.
+	 * A disabled module's blocks/shortcodes render nothing and its admin page
+	 * is hidden, but its data is preserved (re-enabling restores it).
+	 */
+	private static function render_modules_section(): void {
+		?>
+		<form method="post" action="<?php echo esc_url( admin_url( 'admin.php?page=wb-gamification&tab=modules' ) ); ?>">
+			<?php wp_nonce_field( 'wb_gam_save_settings', 'wb_gam_settings_nonce' ); ?>
+
+			<div class="wbgam-card wbgam-stack-block">
+				<div class="wbgam-card-header">
+					<h2 class="wbgam-card-title">
+						<span class="icon-sliders" aria-hidden="true"></span>
+						<?php esc_html_e( 'Optional modules', 'wb-gamification' ); ?>
+					</h2>
+					<p class="wbgam-card-desc">
+						<?php esc_html_e( 'Turn off engagement modules your community does not use. A disabled module is hidden from members (its blocks and shortcodes render nothing) and its admin page is removed. Nothing is deleted - re-enabling a module restores it exactly as it was. Points, badges, levels, and leaderboards are always on.', 'wb-gamification' ); ?>
+					</p>
+				</div>
+				<div class="wbgam-card-body">
+					<?php foreach ( \WBGam\Engine\ModuleToggles::modules() as $slug => $module ) : ?>
+						<label class="wbgam-checkbox-option wbgam-stack-block">
+							<input type="checkbox"
+								name="wb_gam_modules[]"
+								value="<?php echo esc_attr( $slug ); ?>"
+								<?php checked( \WBGam\Engine\ModuleToggles::enabled( $slug ) ); ?>
+							/>
+							<span><?php echo esc_html( $module['label'] ); ?></span>
+						</label>
+					<?php endforeach; ?>
+				</div>
+			</div>
+
+			<div class="wbgam-settings-section__footer">
+				<?php submit_button( __( 'Save Modules', 'wb-gamification' ), 'primary', 'submit', false ); ?>
 			</div>
 		</form>
 		<?php

@@ -255,6 +255,9 @@ final class WB_Gamification {
 		BootOrder::register( 'jetonomy_display_defer', BootOrder::SLOT_INTEGRATIONS, array( 'engine' ) );
 		add_action( 'plugins_loaded', array( JetonomyDisplayDefer::class, 'init' ), BootOrder::SLOT_INTEGRATIONS );
 
+		BootOrder::register( 'module_toggles', BootOrder::SLOT_INTEGRATIONS, array( 'engine' ) );
+		add_action( 'plugins_loaded', array( \WBGam\Engine\ModuleToggles::class, 'init' ), BootOrder::SLOT_INTEGRATIONS );
+
 		// Leaderboard snapshot cron + object cache layer.
 		BootOrder::register( 'leaderboard_engine', BootOrder::SLOT_INTEGRATIONS, array( 'engine' ) );
 		add_action( 'plugins_loaded', array( LeaderboardEngine::class, 'init' ), BootOrder::SLOT_INTEGRATIONS );
