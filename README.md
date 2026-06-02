@@ -1,8 +1,13 @@
 # WB Gamification
 
-Complete gamification engine for WordPress and BuddyPress. Points, badges, levels, leaderboards, challenges, streaks, and kudos — zero config, works out of the box.
+Complete gamification engine for WordPress and BuddyPress. Points, badges, levels, leaderboards, challenges, streaks, and kudos - zero config, works out of the box.
 
-**Part of the [Reign Stack](https://wbcomdesigns.com/) — Wbcom's self-owned community platform.**
+**Part of the [Reign Stack](https://wbcomdesigns.com/) - Wbcom's self-owned community platform.**
+
+- **Plugin page:** https://wbcomdesigns.com/downloads/wordpress-gamification-plugin/
+- **Documentation:** https://store.wbcomdesigns.com/wb-gamification/docs/
+
+> **Everything is free.** WB Gamification ships as a single plugin with no paid add-ons. Every engine, every integration, and every advanced mechanic (cohort leagues, redemption store, webhooks, OpenBadges, weekly emails) is included.
 
 ---
 
@@ -12,8 +17,8 @@ Complete gamification engine for WordPress and BuddyPress. Points, badges, level
 # Install & activate
 wp plugin activate wb-gamification
 
-# Choose a starter template (or skip to configure manually)
-# → Setup wizard appears automatically on first activation
+# A setup wizard appears automatically on first activation
+# Choose a starter template, or skip to configure manually.
 
 # Verify everything is working
 wp wb-gamification doctor --verbose
@@ -27,61 +32,57 @@ wp wb-gamification member status --user=42
 
 ## Features
 
-### Free
-
 | Feature | Details |
 |---------|---------|
-| **Points Engine** | Event-sourced, 30+ auto-detected actions, configurable per action |
-| **Badges** | 30 default badges, auto-award conditions, custom badge editor |
-| **Levels** | 5 default levels (Newcomer→Champion), customizable thresholds |
+| **Points Engine** | Event-sourced, 30+ auto-detected actions, configurable per action, multi-currency |
+| **Badges** | 30 default badges, auto-award conditions, custom badge editor, OpenBadges 3.0 credentials, badge share pages, expiry |
+| **Levels** | 5 default levels (Newcomer to Champion), customizable thresholds |
 | **Leaderboard** | All-time / monthly / weekly / daily, group scoping, snapshot cache |
-| **Challenges** | Time-bound goals, bonus points, admin manager |
-| **Streaks** | Daily tracking, grace period, 7 milestones (7→365 days) |
+| **Cohort Leagues** | Duolingo-style weekly competitions with promotion / demotion |
+| **Challenges** | Time-bound goals + community challenges (shared global progress) |
+| **Streaks** | Daily tracking, grace period, 7 milestones (7 to 365 days) |
 | **Peer Kudos** | Daily limits, receiver + giver points, feed display |
-| **Blocks** | 11 Gutenberg blocks + 11 shortcodes |
-| **REST API** | 38 endpoints, 16 controllers, API key auth |
-| **Integrations** | 9 auto-detected plugins (62 total actions) |
-| **Notifications** | Toast popups, BP notifications, activity feed events |
-| **Analytics** | 6 KPI cards, top actions/earners, daily sparkline |
-| **WP-CLI** | 6 commands including `doctor` readiness checker |
-| **Privacy** | GDPR export/erasure via WordPress privacy tools |
-
-### Pro Add-on
-
-| Feature | Description |
-|---------|-------------|
-| Cohort Leagues | Duolingo-style weekly competitions with promotion/demotion |
-| Community Challenges | Team goals with global progress (Pokemon GO model) |
-| Redemption Store | Spend points on rewards (discounts, custom) |
-| Badge Sharing | OG share pages, LinkedIn deep-links, OpenBadges 3.0 credentials |
-| Webhooks | HMAC-signed outbound webhooks for Zapier / Make / n8n |
-| Weekly Emails | Automated weekly recap sent to members |
-| Cosmetics | Profile frames and visual upgrades |
-| Tenure Badges | Anniversary milestones (1yr, 2yr, 5yr, 10yr) |
-| Site-First Badges | First member to perform an action earns a unique badge |
+| **Redemption Store** | Spend points on rewards (WooCommerce coupons, custom rewards, Wbcom Credits SDK) |
+| **Member surfaces** | BuddyPress profile "Achievements" tab, WooCommerce My Account endpoint, opt-in LearnDash link - all reuse the same blocks and the mapped Hub page |
+| **Blocks** | 19 Gutenberg blocks + 17 shortcodes (Wbcom Block Quality Standard) |
+| **REST API** | 56 endpoints across 26 controllers, API key auth, OpenAPI spec + TypeScript SDK |
+| **Integrations** | 12 auto-detected plugins (76 actions) + ActivityPub and GraphQL platform surfaces |
+| **Realtime** | Toast notifications via WP Heartbeat (SSE opt-in), configurable placement |
+| **Theming** | Follows BuddyX / BuddyX Pro light and dark mode automatically via theme tokens |
+| **Webhooks** | HMAC-signed outbound webhooks for Zapier / Make / n8n |
+| **Emails** | Weekly recap + transactional gamification emails (opt-out per user) |
+| **Analytics** | 6 KPI cards, top actions / earners, daily sparkline |
+| **WP-CLI** | 10 commands including `doctor` readiness checker and `scale` benchmark |
+| **Privacy** | GDPR export / erasure via WordPress privacy tools; public profiles at `/u/{user}` |
 
 ## Integrations
 
-All integrations are **auto-detected** — install the plugin, gamification actions appear automatically.
+All integrations are **auto-detected** - install the plugin, gamification actions appear automatically. The integration surface is tracked in [`audit/manifest.json#/integrations`](audit/manifest.json).
 
 | Plugin | Actions | Category |
 |--------|---------|----------|
 | WordPress Core | 8 | Registration, login, posts, comments, profile |
-| BuddyPress | 10 | Activity, friends, groups, profile, reactions, polls |
+| BuddyPress | 14 | Activity, comments, friends, groups, profile, reactions, polls, media, messages |
 | bbPress | 3 | Topics, replies, resolved |
-| WooCommerce | 4 | Orders, first purchase, reviews, wishlists |
+| WooCommerce | 5 | Orders, first purchase, reviews, wishlists |
 | LearnDash | 5 | Courses, lessons, topics, quizzes, assignments |
 | LifterLMS | 5 | Courses, lessons, quizzes, achievements, certificates |
 | MemberPress | 3 | Memberships, renewals, first signup |
 | GiveWP | 4 | Donations, first donation, recurring, campaign goals |
 | The Events Calendar | 3 | RSVPs, tickets, check-ins |
-| WPMediaVerse Pro | 17 | Uploads, albums, likes, follows, battles, tournaments |
+| WPMediaVerse | 15 | Uploads, albums, likes, follows, battles, tournaments |
+| Jetonomy | 4 | Space joins, gated admission, trust levels, membership |
+| Jetonomy Pro | 7 | Polls, messages, conversations, badge earned, DMs |
 
-**Total: 62 gamification actions** across 10 integration manifests.
+**Total: 76 gamification actions across 12 integration manifests.** Plus two platform integrations - **ActivityPub** (federate events to the fediverse) and **GraphQL** (query the gamification graph).
+
+### Jetonomy
+
+On a Jetonomy site, wb-gamification mirrors Jetonomy reputation 1:1 into points and awards points when a Jetonomy badge is earned. Because the rankings are then identical, the wb-gam leaderboard defers to Jetonomy's reputation leaderboard (override with the `wb_gam_defer_leaderboard_to_jetonomy` filter). Badges are kept - the two badge sets are complementary.
 
 ### Adding Your Own Integration
 
-Drop a `wb-gamification.php` file in your plugin directory:
+Drop a manifest file in your plugin and WB Gamification auto-discovers it at boot - no registration call needed:
 
 ```php
 <?php
@@ -102,48 +103,48 @@ return [
 ];
 ```
 
-WB Gamification auto-discovers it at boot — no registration call needed.
-
 ## Requirements
 
 - WordPress 6.4+
 - PHP 8.1+
-- MySQL 5.7+ / MariaDB 10.3+
+- MySQL 8.0+ / MariaDB 10.3+ (leaderboard snapshot uses window functions)
 - BuddyPress 14.0+ (optional, for social triggers and profile display)
+
+For sites over 10k active users a persistent object cache (Redis / Memcached) and Action Scheduler are required - see the docs.
 
 ## Architecture
 
 ```
 Trigger Sources (any WP hook, REST API, WP-CLI, manifest)
-         │
-         ▼
-Event Normalization (ManifestLoader → Registry → Event)
-         │
-         ▼
-Rule Evaluation (Points → Badges → Levels → Streaks → Challenges)
-         │
-         ▼
+         |
+         v
+Event Normalization (ManifestLoader -> Registry -> Event)
+         |
+         v
+Rule Evaluation (Points -> Badges -> Levels -> Streaks -> Challenges)
+         |
+         v
 Effects (Ledger write, notifications, activity feed, webhooks, WP hooks)
-         │
-         ▼
-Output Consumers (Blocks, BP display, REST API, mobile, Zapier)
+         |
+         v
+Output Consumers (Blocks, BP / WooCommerce / LearnDash surfaces, REST, mobile, Zapier)
 ```
 
 **The engine owns three things:** event normalization, rule evaluation, and output surfaces. Everything else is a consumer.
 
 ## Documentation
 
-**50 pages** across 7 categories at [`docs/website/`](docs/website/):
+Full documentation is published at **https://store.wbcomdesigns.com/wb-gamification/docs/** and authored in [`docs/website/`](docs/website/):
 
-| Category | Pages | Topics |
-|----------|-------|--------|
-| [Getting Started](docs/website/getting-started/) | 5 | Installation, wizard, quick start, free vs pro, how it works |
-| [Features](docs/website/features/) | 11 | Points, badges, levels, leaderboard, challenges, streaks, kudos, notifications, blocks, analytics, privacy |
-| [Settings](docs/website/settings/) | 8 | Points, levels, badges, challenges, kudos, automation, manual awards, API keys |
-| [Pro Features](docs/website/pro-features/) | 8 | Cohort leagues, community challenges, redemption store, badge sharing, webhooks, emails, cosmetics |
-| [Integrations](docs/website/integrations/) | 7 | BuddyPress, WooCommerce, LearnDash, bbPress, LifterLMS, MemberPress, GiveWP, TEC, WPMediaVerse |
-| [BuddyPress](docs/website/buddypress/) | 3 | Profile display, activity feed, member directory |
-| [Developer Guide](docs/website/developer-guide/) | 8 | Architecture, hooks/filters, REST API, manifests, WP-CLI, helpers, cross-site API, DB schema |
+| Category | Topics |
+|----------|--------|
+| [Getting Started](docs/website/getting-started/) | Installation, setup wizard, quick start, how it works |
+| [Features](docs/website/features/) | Points, multi-currency, badges, levels, leaderboard, challenges, streaks, kudos, cohort leagues, redemption, member surfaces, public profiles |
+| [Blocks](docs/website/blocks/) | All 19 blocks + the shortcode reference |
+| [Settings](docs/website/settings/) | Points, levels, badges, challenges, kudos, automation, realtime / notifications, API keys |
+| [Integrations](docs/website/integrations/) | BuddyPress, WooCommerce, LearnDash, bbPress, LifterLMS, MemberPress, GiveWP, TEC, WPMediaVerse, Jetonomy |
+| [BuddyPress](docs/website/buddypress/) | Profile display, achievements tab, activity feed, member directory |
+| [Developer Guide](docs/website/developer-guide/) | Architecture, hooks / filters, REST API, manifests, realtime transport, WP-CLI, helpers, cross-site API, DB schema |
 
 ## Developer Quick Reference
 
@@ -151,24 +152,24 @@ Output Consumers (Blocks, BP display, REST API, mobile, Zapier)
 
 ```php
 // Points awarded
-add_action( 'wb_gamification_points_awarded', function( $user_id, $event, $points ) {
+add_action( 'wb_gam_points_awarded', function( $user_id, $event, $points ) {
     // $event->action_id, $event->metadata, etc.
 }, 10, 3 );
 
 // Badge earned
-add_action( 'wb_gamification_badge_awarded', function( $user_id, $badge_id, $earned_at ) {
+add_action( 'wb_gam_badge_awarded', function( $user_id, $badge_id, $earned_at ) {
     // Send custom notification, log to CRM, etc.
 }, 10, 3 );
 
 // Level changed
-add_action( 'wb_gamification_level_changed', function( $user_id, $old_level, $new_level ) {
+add_action( 'wb_gam_level_changed', function( $user_id, $old_level, $new_level ) {
     // Unlock content, assign role, etc.
 }, 10, 3 );
 
 // Modify points before award
-add_filter( 'wb_gamification_points_for_action', function( $points, $action_id, $user_id ) {
+add_filter( 'wb_gam_points_for_action', function( $points, $action_id, $user_id ) {
     // Double points on weekends
-    if ( in_array( gmdate( 'l' ), [ 'Saturday', 'Sunday' ] ) ) {
+    if ( in_array( gmdate( 'l' ), [ 'Saturday', 'Sunday' ], true ) ) {
         return $points * 2;
     }
     return $points;
@@ -178,17 +179,17 @@ add_filter( 'wb_gamification_points_for_action', function( $points, $action_id, 
 ### Helper Functions
 
 ```php
-// Get user's total points
+// Get a user's total points
 $points = wb_gam_get_user_points( $user_id );
 
-// Check if user has a badge
+// Check if a user has a badge
 if ( wb_gam_has_badge( $user_id, 'first_post' ) ) { /* ... */ }
 
-// Get leaderboard
+// Get the leaderboard
 $leaders = wb_gam_get_leaderboard( 'week', 10 );
 
-// Register a custom action
-wb_gamification_register_action( [
+// Register a custom action in code
+wb_gam_register_action( [
     'id'             => 'my_action',
     'label'          => 'My Custom Action',
     'hook'           => 'my_plugin_hook',
@@ -200,17 +201,18 @@ wb_gamification_register_action( [
 ### WP-CLI
 
 ```bash
-wp wb-gamification doctor --verbose          # Full readiness check
+wp wb-gamification doctor --verbose            # Full readiness check
 wp wb-gamification points award --user=42 --points=100
 wp wb-gamification member status --user=42
 wp wb-gamification actions list --format=table
 wp wb-gamification logs prune --before=6months --dry-run
 wp wb-gamification export user --user=42 > export.json
+wp wb-gamification openapi export              # Refresh the OpenAPI spec
 ```
 
 ## License
 
-GPL-2.0+ — see [LICENSE](https://www.gnu.org/licenses/gpl-2.0.html).
+GPL-2.0+ - see [LICENSE](https://www.gnu.org/licenses/gpl-2.0.html).
 
 ## Credits
 
