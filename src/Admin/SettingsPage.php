@@ -50,6 +50,7 @@ final class SettingsPage {
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_settings_toggles' ) );
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_test_event' ) );
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_emails_form' ) );
+		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_tools_assets' ) );
 		// admin_post_wb_gam_save_levels + admin_post_wb_gam_delete_level removed in 1.0.0:
 		// the Levels tab now consumes /wb-gamification/v1/levels (POST/PATCH/DELETE)
 		// directly via assets/js/admin-levels.js. See Tier 0.C migration.
@@ -519,6 +520,48 @@ final class SettingsPage {
 	}
 
 	/**
+	 * Enqueue the settings import/export script for the Tools section.
+	 *
+	 * @param string $hook_suffix Current admin page hook.
+	 */
+	public static function enqueue_tools_assets( string $hook_suffix ): void {
+		if ( 'toplevel_page_wb-gamification' !== $hook_suffix ) {
+			return;
+		}
+		wp_enqueue_script(
+			'wb-gam-admin-rest-utils',
+			plugins_url( 'assets/js/admin-rest-utils.js', WB_GAM_FILE ),
+			array(),
+			WB_GAM_VERSION,
+			true
+		);
+		wp_enqueue_script(
+			'wb-gam-admin-tools',
+			plugins_url( 'assets/js/admin-tools.js', WB_GAM_FILE ),
+			array( 'wb-gam-admin-rest-utils' ),
+			WB_GAM_VERSION,
+			true
+		);
+		wp_localize_script(
+			'wb-gam-admin-tools',
+			'wbGamTools',
+			array(
+				'restUrl' => esc_url_raw( rest_url( 'wb-gamification/v1' ) ),
+				'nonce'   => wp_create_nonce( 'wp_rest' ),
+				'i18n'    => array(
+					'exporting'     => __( 'Preparing export...', 'wb-gamification' ),
+					'exportError'   => __( 'Export failed.', 'wb-gamification' ),
+					'importError'   => __( 'Import failed. Check that the file is a WB Gamification settings export.', 'wb-gamification' ),
+					'importConfirm' => __( 'Import these settings? This overwrites the matching settings on this site.', 'wb-gamification' ),
+					/* translators: 1: applied count, 2: skipped count */
+					'imported'      => __( 'Imported %1$d settings (%2$d skipped). Reloading...', 'wb-gamification' ),
+					'noFile'        => __( 'Choose an export file first.', 'wb-gamification' ),
+				),
+			)
+		);
+	}
+
+	/**
 	 * Enqueue the rule-action toggle script on the Automation tab.
 	 *
 	 * Replaces the legacy inline <script> that lived in render_automation_section()
@@ -803,6 +846,10 @@ final class SettingsPage {
 						<span class="icon-link"></span>
 						<?php esc_html_e( 'Integrations', 'wb-gamification' ); ?>
 					</a>
+					<a class="wbgam-settings-nav-item" href="#tools" data-section="tools">
+						<span class="icon-wrench"></span>
+						<?php esc_html_e( 'Tools', 'wb-gamification' ); ?>
+					</a>
 				</div>
 			</div>
 
@@ -867,6 +914,11 @@ final class SettingsPage {
 				<!-- Integrations section -->
 				<div class="wbgam-settings-section" id="section-integrations">
 					<?php self::render_integrations_section( $bp_active ); ?>
+				</div>
+
+				<!-- Tools section -->
+				<div class="wbgam-settings-section" id="section-tools">
+					<?php self::render_tools_section(); ?>
 				</div>
 			</div>
 
@@ -1950,6 +2002,46 @@ final class SettingsPage {
 				<?php submit_button( __( 'Save Access Settings', 'wb-gamification' ), 'primary', 'submit', false ); ?>
 			</div>
 		</form>
+		<?php
+	}
+
+	/**
+	 * Render the Tools section: settings import / export (config portability).
+	 */
+	private static function render_tools_section(): void {
+		?>
+		<div class="wbgam-card wbgam-stack-block">
+			<div class="wbgam-card-header">
+				<h2 class="wbgam-card-title">
+					<span class="icon-download" aria-hidden="true"></span>
+					<?php esc_html_e( 'Export settings', 'wb-gamification' ); ?>
+				</h2>
+				<p class="wbgam-card-desc">
+					<?php esc_html_e( 'Download this site\'s gamification configuration as a JSON file - points values, enabled actions, currencies, levels config, kudos, automation rules, realtime, access exclusions, and the hub page mapping. Runtime data (caches, schema versions, snapshots) is excluded so the file is safe to import elsewhere.', 'wb-gamification' ); ?>
+				</p>
+			</div>
+			<div class="wbgam-card-body">
+				<button type="button" id="wb-gam-export-settings" class="wbgam-btn"><?php esc_html_e( 'Export settings', 'wb-gamification' ); ?></button>
+			</div>
+		</div>
+
+		<div class="wbgam-card wbgam-stack-block">
+			<div class="wbgam-card-header">
+				<h2 class="wbgam-card-title">
+					<span class="icon-upload" aria-hidden="true"></span>
+					<?php esc_html_e( 'Import settings', 'wb-gamification' ); ?>
+				</h2>
+				<p class="wbgam-card-desc">
+					<?php esc_html_e( 'Apply a settings file exported from another WB Gamification site. Matching settings are overwritten; your content (badges, members, point ledgers) is never touched.', 'wb-gamification' ); ?>
+				</p>
+			</div>
+			<div class="wbgam-card-body">
+				<p>
+					<input type="file" id="wb-gam-import-file" accept="application/json,.json" />
+				</p>
+				<button type="button" id="wb-gam-import-settings" class="wbgam-btn"><?php esc_html_e( 'Import settings', 'wb-gamification' ); ?></button>
+			</div>
+		</div>
 		<?php
 	}
 

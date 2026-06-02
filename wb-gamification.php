@@ -170,6 +170,7 @@ use WBGam\API\ApiKeysController;
 use WBGam\API\CohortSettingsController;
 use WBGam\API\CommunityChallengesController;
 use WBGam\API\EmailSettingsController;
+use WBGam\API\ToolsController;
 use WBGam\API\SubmissionsController;
 use WBGam\Engine\CredentialExpiryEngine;
 use WBGam\Engine\LeaderboardEngine;
@@ -399,6 +400,7 @@ final class WB_Gamification {
 		( new CohortSettingsController() )->register_routes();
 		( new CommunityChallengesController() )->register_routes();
 		( new EmailSettingsController() )->register_routes();
+		( new ToolsController() )->register_routes();
 		( new SubmissionsController() )->register_routes();
 	}
 
