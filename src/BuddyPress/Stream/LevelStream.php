@@ -67,7 +67,7 @@ final class LevelStream {
 
 		$description = $min_points > 0
 			? sprintf(
-				/* translators: %d: points required for this level */
+				/* translators: %d: points required for this level. */
 				_n( 'Awarded for reaching %d point.', 'Awarded for reaching %d points.', $min_points, 'wb-gamification' ),
 				$min_points
 			)

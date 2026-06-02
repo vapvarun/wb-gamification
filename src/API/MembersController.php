@@ -973,7 +973,7 @@ class MembersController extends WP_REST_Controller {
 
 					case 'streak_milestone':
 						$message = sprintf(
-							/* translators: %d: streak day count */
+							/* translators: %d: streak day count. */
 							__( '%d-day streak!', 'wb-gamification' ),
 							$toast['days'] ?? 0
 						);

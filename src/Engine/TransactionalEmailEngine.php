@@ -189,7 +189,7 @@ final class TransactionalEmailEngine {
 		self::send(
 			$user->user_email,
 			sprintf(
-				/* translators: %s: new level name */
+				/* translators: %s: new level name. */
 				__( 'You reached %s!', 'wb-gamification' ),
 				$new_level['name']
 			),

@@ -170,7 +170,7 @@ final class AnalyticsDashboard {
 					__( 'Badges Earned', 'wb-gamification' ),
 					number_format_i18n( $stats['badges_earned'] ),
 					sprintf(
-						/* translators: %s = % of members who have earned any badge */
+						/* translators: %s: percentage of active members. */
 						__( '%s%% of active members', 'wb-gamification' ),
 						$stats['badge_earner_pct']
 					),
@@ -180,7 +180,7 @@ final class AnalyticsDashboard {
 					__( 'Challenges Completed', 'wb-gamification' ),
 					number_format_i18n( $stats['challenges_completed'] ),
 					sprintf(
-						/* translators: %s = % completion rate */
+						/* translators: %s: completion rate percentage. */
 						__( '%s%% completion rate', 'wb-gamification' ),
 						$stats['challenge_completion_pct']
 					),
@@ -190,7 +190,7 @@ final class AnalyticsDashboard {
 					__( 'Active Streaks', 'wb-gamification' ),
 					number_format_i18n( $stats['active_streaks'] ),
 					sprintf(
-						/* translators: %s = % of members with active streak */
+						/* translators: %s: streak health percentage. */
 						__( '%s%% streak health', 'wb-gamification' ),
 						$stats['streak_health_pct']
 					),
@@ -718,7 +718,7 @@ final class AnalyticsDashboard {
 								echo esc_html(
 									$seen > 0
 										? sprintf(
-											/* translators: %s: human-readable time difference */
+											/* translators: %s: human-readable time difference. */
 											__( '%s ago', 'wb-gamification' ),
 											human_time_diff( $seen )
 										)
