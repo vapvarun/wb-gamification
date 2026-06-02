@@ -142,7 +142,7 @@ $wb_gam_display_year = (int) $wb_gam_recap['year'];
 
 $wb_gam_share_title = sprintf(
 	/* translators: 1: user display name, 2: year */
-	__( '%1$s — %2$d in Community', 'wb-gamification' ),
+	__( '%1$s - %2$d in Community', 'wb-gamification' ),
 	$wb_gam_user->display_name,
 	$wb_gam_display_year
 );

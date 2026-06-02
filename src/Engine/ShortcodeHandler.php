@@ -621,7 +621,7 @@ final class ShortcodeHandler {
 					?>
 					<li class="wb-gam-my-rewards__item" data-status="<?php echo esc_attr( $row_status ); ?>">
 						<div class="wb-gam-my-rewards__title">
-							<strong><?php echo esc_html( (string) ( $row['title'] ?? __( '— deleted reward —', 'wb-gamification' ) ) ); ?></strong>
+							<strong><?php echo esc_html( (string) ( $row['title'] ?? __( '- deleted reward -', 'wb-gamification' ) ) ); ?></strong>
 							<?php if ( $show_status ) : ?>
 								<span class="wb-gam-my-rewards__status wb-gam-my-rewards__status--<?php echo esc_attr( $row_status ); ?>">
 									<?php echo esc_html( $row_status_text ); ?>

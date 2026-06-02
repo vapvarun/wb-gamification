@@ -123,7 +123,7 @@ final class AnalyticsDashboard {
 			<header class="wbgam-page-header">
 				<div class="wbgam-page-header__main">
 					<h1 class="wbgam-page-header__title"><?php esc_html_e( 'Gamification Analytics', 'wb-gamification' ); ?></h1>
-					<p class="wbgam-page-header__desc"><?php esc_html_e( 'Engagement at a glance — points awarded, badges earned, streaks, kudos and challenge completion across your community.', 'wb-gamification' ); ?></p>
+					<p class="wbgam-page-header__desc"><?php esc_html_e( 'Engagement at a glance - points awarded, badges earned, streaks, kudos and challenge completion across your community.', 'wb-gamification' ); ?></p>
 				</div>
 			</header>
 
@@ -249,7 +249,7 @@ final class AnalyticsDashboard {
 						echo esc_html(
 							sprintf(
 								/* translators: %d = number of days */
-								__( 'Top Earners — Last %d Days', 'wb-gamification' ),
+								__( 'Top Earners - Last %d Days', 'wb-gamification' ),
 								$period
 							)
 						);
@@ -586,7 +586,7 @@ final class AnalyticsDashboard {
 					<?php esc_html_e( 'Members whose engagement score has fallen far enough that they\'re likely to drift away. Re-engage with a personalised nudge.', 'wb-gamification' ); ?>
 				</p>
 				<?php if ( empty( $at_risk ) ) : ?>
-					<p class="description"><?php esc_html_e( 'No members above the high-risk threshold (0.7). Either your community is exceptionally engaged or the projection cron hasn\'t finished its first pass — check back tomorrow.', 'wb-gamification' ); ?></p>
+					<p class="description"><?php esc_html_e( 'No members above the high-risk threshold (0.7). Either your community is exceptionally engaged or the projection cron hasn\'t finished its first pass - check back tomorrow.', 'wb-gamification' ); ?></p>
 				<?php else : ?>
 					<table class="widefat striped">
 						<thead>
@@ -630,7 +630,7 @@ final class AnalyticsDashboard {
 					<?php esc_html_e( 'Possible gaming activity', 'wb-gamification' ); ?>
 				</h2>
 				<p class="description">
-					<?php esc_html_e( 'High event volume with very low action diversity — the "bot grinding one action" pattern. Review before assuming abuse: some legitimate members really do only do one thing.', 'wb-gamification' ); ?>
+					<?php esc_html_e( 'High event volume with very low action diversity - the "bot grinding one action" pattern. Review before assuming abuse: some legitimate members really do only do one thing.', 'wb-gamification' ); ?>
 				</p>
 				<?php if ( empty( $anomalies ) ) : ?>
 					<p class="description"><?php esc_html_e( 'No members flagged. Anomaly detection requires >500 events in 30 days AND <3 distinct actions; communities below those volumes simply won\'t trip the heuristic.', 'wb-gamification' ); ?></p>

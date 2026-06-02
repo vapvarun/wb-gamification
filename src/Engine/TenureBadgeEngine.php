@@ -67,17 +67,17 @@ final class TenureBadgeEngine {
 		'tenure_2yr'  => array(
 			'years'       => 2,
 			'name'        => '2-Year Member',
-			'description' => 'A two-year member — a valued, long-standing contributor.',
+			'description' => 'A two-year member - a valued, long-standing contributor.',
 		),
 		'tenure_5yr'  => array(
 			'years'       => 5,
 			'name'        => '5-Year Member',
-			'description' => 'Five years and counting — a true community pillar.',
+			'description' => 'Five years and counting - a true community pillar.',
 		),
 		'tenure_10yr' => array(
 			'years'       => 10,
 			'name'        => '10-Year Member',
-			'description' => 'A decade of community membership — legendary status.',
+			'description' => 'A decade of community membership - legendary status.',
 		),
 	);
 

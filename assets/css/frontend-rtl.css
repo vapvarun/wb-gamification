@@ -25,33 +25,63 @@
  * estate with the action being performed. */
 .wb-gam-toasts {
 	position: fixed;
-	/* Base offset for logged-out / no-admin-bar contexts. Sites with the
-	 * WP admin bar visible push the stack down via the .admin-bar
-	 * overrides below — base value stays at 1rem so the stack sits at
-	 * a comfortable distance from the viewport top in every other case.
-	 * Closes Basecamp #9932190385 (toasts collided with admin bar). */
-	top: 1rem;
-	right: 50%;
-	transform: translateX(50%);
 	z-index: 9999;
 	display: flex;
 	flex-direction: column;
-	align-items: center;
 	gap: 0.625rem;
 	width: min(420px, calc(100vw - 2rem));
 	pointer-events: none;
+	/* Slide direction for enter/exit — overridden per position variant
+	 * below. Bottom-anchored stacks slide up (+), top-anchored slide
+	 * down (-). Default matches the bottom-right default position. */
+	--wb-gam-toast-slide: 12px;
+}
+
+/* ── Position variants (admin-selectable in Settings → Realtime) ──────
+ * Default is bottom-right: the conventional ambient-notification corner
+ * that never overlaps a top nav / sticky header. (The old top-center
+ * default collided with BuddyX's centered sticky header — see the file
+ * header note + Basecamp #9932190385.) Sites that run a bottom-right
+ * chat widget can switch to top-center or another corner. Slide
+ * direction is corner-aware so a toast never flies across the viewport.
+ * The modifier class is set by assets/js/toast.js from the localized
+ * wbGamToast.position value. */
+.wb-gam-toasts--top-center {
+	top: 1rem;
+	right: 50%;
+	transform: translateX(50%);
+	align-items: center;
+	--wb-gam-toast-slide: -12px;
+}
+.wb-gam-toasts--top-right {
+	top: 1rem;
+	left: 1rem;
+	align-items: flex-end;
+	--wb-gam-toast-slide: -12px;
+}
+.wb-gam-toasts--bottom-right {
+	bottom: 1rem;
+	left: 1rem;
+	align-items: flex-end;
+}
+.wb-gam-toasts--bottom-left {
+	bottom: 1rem;
+	right: 1rem;
+	align-items: flex-start;
 }
 
 /* Admin-bar offset — WP emits body.admin-bar for logged-in users; the
  * bar is 32px tall on desktop and grows to 46px on the mobile
- * breakpoint (≤782px) per WP core's own CSS. Push the toast stack
- * below the bar so the close button + content stay tappable + visible. */
-body.admin-bar .wb-gam-toasts {
+ * breakpoint (≤782px) per WP core's own CSS. Only TOP-anchored stacks
+ * need pushing below the bar; bottom-anchored stacks clear it already. */
+body.admin-bar .wb-gam-toasts--top-center,
+body.admin-bar .wb-gam-toasts--top-right {
 	top: calc(32px + 1rem);
 }
 
 @media (max-width: 782px) {
-	body.admin-bar .wb-gam-toasts {
+	body.admin-bar .wb-gam-toasts--top-center,
+	body.admin-bar .wb-gam-toasts--top-right {
 		top: calc(46px + 0.75rem);
 	}
 }
@@ -61,15 +91,16 @@ body.admin-bar .wb-gam-toasts {
 	align-items: flex-start;
 	gap: 0.625rem;
 	padding: 0.75rem 1rem;
-	background: #fff;
+	background: var(--wb-gam-color-surface, #fff);
 	border-radius: var(--wb-gam-radius);
 	box-shadow: 0 8px 24px rgba(0, 0, 0, 0.16);
 	border-inline-start: 4px solid var(--wb-gam-primary);
 	pointer-events: auto;
 	width: 100%;
-	/* Initial off-screen position — JS removes `--enter` to slide in. */
+	/* Initial off-screen position — JS removes `--enter` to slide in.
+	 * Direction follows the stack's corner via --wb-gam-toast-slide. */
 	opacity: 0;
-	transform: translateY(-12px);
+	transform: translateY(var(--wb-gam-toast-slide, -12px));
 	transition: opacity 320ms ease, transform 320ms ease;
 }
 
@@ -80,7 +111,7 @@ body.admin-bar .wb-gam-toasts {
 
 .wb-gam-toast--exit {
 	opacity: 0;
-	transform: translateY(-12px);
+	transform: translateY(var(--wb-gam-toast-slide, -12px));
 }
 
 .wb-gam-toast[data-type="badge"]     { border-inline-start-color: var(--wb-gam-gold); }
@@ -98,8 +129,12 @@ body.admin-bar .wb-gam-toasts {
 @media (max-width: 640px) {
 	.wb-gam-toasts {
 		width: calc(100vw - 1.5rem);
-		top: 0.75rem;
 	}
+	/* Hug the screen edge on mobile; keep each variant's anchor side. */
+	.wb-gam-toasts--top-right,
+	.wb-gam-toasts--bottom-right { left: 0.75rem; }
+	.wb-gam-toasts--bottom-left { right: 0.75rem; }
+	.wb-gam-toasts--top-center { top: 0.75rem; }
 	.wb-gam-toast {
 		padding: 0.625rem 0.75rem;
 	}
@@ -158,7 +193,7 @@ body.admin-bar .wb-gam-toasts {
 .wb-gam-overlay[hidden] { display: none; }
 
 .wb-gam-overlay__card {
-	background: #fff;
+	background: var(--wb-gam-color-surface, #fff);
 	border-radius: 16px;
 	padding: 2.5rem 2rem;
 	max-width: 340px;
@@ -607,9 +642,9 @@ body.admin-bar .wb-gam-toasts {
 	color: var(--wb-gam-primary, #1d4ed8);
 	white-space: nowrap;
 }
-.wb-gam-my-rewards__status--fulfilled { background: #ecfdf5; color: #047857; }
-.wb-gam-my-rewards__status--failed    { background: #fef2f2; color: #b91c1c; }
-.wb-gam-my-rewards__status--refunded  { background: #fef9c3; color: #92400e; }
+.wb-gam-my-rewards__status--fulfilled { background: var(--wb-gam-color-success-bg); color: var(--wb-gam-color-success); }
+.wb-gam-my-rewards__status--failed    { background: var(--wb-gam-color-danger-bg); color: var(--wb-gam-color-danger); }
+.wb-gam-my-rewards__status--refunded  { background: var(--wb-gam-color-warning-bg); color: var(--wb-gam-color-warning); }
 .wb-gam-my-rewards__meta {
 	display: flex;
 	gap: 10px;
@@ -631,10 +666,53 @@ body.admin-bar .wb-gam-toasts {
 	letter-spacing: .04em;
 	padding: 2px 8px;
 	border-radius: 4px;
-	background: #ecfdf5;
-	color: #065f46;
-	border: 1px dashed #34d399;
+	background: var(--wb-gam-color-success-bg, #ecfdf5);
+	color: var(--wb-gam-color-success, #065f46);
+	border: 1px dashed var(--wb-gam-color-success-soft, #34d399);
 }
 @media (max-width: 480px) {
 	.wb-gam-my-rewards__title { flex-direction: column; align-items: flex-start; gap: 4px; }
+}
+
+/* BuddyPress "Achievements" profile tab — wraps the reused blocks rendered
+ * per sub-tab (Overview / Badges / Points / Streak). */
+.wb-gam-bp-achievements {
+	display: flex;
+	flex-direction: column;
+	gap: var(--wb-gam-space-lg, 24px);
+}
+
+.wb-gam-bp-achievements__more {
+	margin: 0;
+	text-align: center;
+}
+
+.wb-gam-bp-achievements__more a {
+	font-weight: 600;
+	color: var(--wb-gam-color-accent);
+}
+
+/* LearnDash profile — single "My Achievements" hub link, aligned right so it
+ * reads as a profile action rather than a floating banner. */
+.wb-gam-ld-link {
+	margin: 0 0 16px;
+	text-align: left;
+}
+
+.wb-gam-ld-link__btn {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 8px 16px;
+	border-radius: var(--wb-gam-radius, 8px);
+	background: var(--wb-gam-color-accent-light);
+	color: var(--wb-gam-color-accent-text);
+	font-weight: 600;
+	font-size: 0.875rem;
+	text-decoration: none;
+}
+
+.wb-gam-ld-link__btn:hover {
+	background: var(--wb-gam-color-accent);
+	color: #fff;
 }

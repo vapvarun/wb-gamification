@@ -3,7 +3,7 @@
     "info": {
         "title": "WB Gamification API",
         "description": "Gamification engine REST API for points, badges, levels, leaderboards, challenges, kudos, and more.",
-        "version": "1.5.0",
+        "version": "1.5.2",
         "contact": {
             "name": "Wbcom Designs",
             "url": "https://wbcomdesigns.com"
@@ -244,7 +244,7 @@
                                 "properties": {
                                     "slug": {
                                         "type": "string",
-                                        "description": "Unique slug \u2014 lowercase, alphanumeric + dash + underscore. Immutable after creation."
+                                        "description": "Unique slug - lowercase, alphanumeric + dash + underscore. Immutable after creation."
                                     },
                                     "label": {
                                         "type": "string",
@@ -293,7 +293,7 @@
                                 "properties": {
                                     "slug": {
                                         "type": "string",
-                                        "description": "Unique slug \u2014 lowercase, alphanumeric + dash + underscore. Immutable after creation."
+                                        "description": "Unique slug - lowercase, alphanumeric + dash + underscore. Immutable after creation."
                                     },
                                     "label": {
                                         "type": "string",
@@ -346,7 +346,7 @@
                                 "properties": {
                                     "slug": {
                                         "type": "string",
-                                        "description": "Unique slug \u2014 lowercase, alphanumeric + dash + underscore. Immutable after creation."
+                                        "description": "Unique slug - lowercase, alphanumeric + dash + underscore. Immutable after creation."
                                     },
                                     "label": {
                                         "type": "string",
@@ -399,7 +399,7 @@
                                 "properties": {
                                     "slug": {
                                         "type": "string",
-                                        "description": "Unique slug \u2014 lowercase, alphanumeric + dash + underscore. Immutable after creation."
+                                        "description": "Unique slug - lowercase, alphanumeric + dash + underscore. Immutable after creation."
                                     },
                                     "label": {
                                         "type": "string",

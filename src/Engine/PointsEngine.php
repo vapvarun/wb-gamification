@@ -773,6 +773,73 @@ final class PointsEngine {
 	}
 
 	/**
+	 * Warm the get_total() cache for many users in one round-trip.
+	 *
+	 * Any surface that renders a points figure per row (BP member
+	 * directory, leaderboard, member lists, REST list endpoints) would
+	 * otherwise call get_total() per user and hit the DB N times. Calling
+	 * this once with the page's user IDs collapses that to at most TWO
+	 * queries (materialised totals + a single SUM fallback for users whose
+	 * row hasn't materialised yet) and seeds the exact per-user cache key
+	 * get_total() reads — so every subsequent get_total() in the request is
+	 * a cache hit. Safe to call repeatedly; missing users are primed to 0.
+	 *
+	 * @param int[]       $user_ids Users to prime.
+	 * @param string|null $type     Point type slug; defaults to primary.
+	 * @return void
+	 */
+	public static function prime_totals( array $user_ids, ?string $type = null ): void {
+		$type = self::resolve_type( $type );
+		$ids  = array_values( array_unique( array_filter( array_map( 'intval', $user_ids ), static fn( $id ) => $id > 0 ) ) );
+		if ( empty( $ids ) ) {
+			return;
+		}
+
+		global $wpdb;
+		$placeholders = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
+
+		// Materialised totals — single PK-range read.
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $placeholders is built from an int count; all values pass through prepare().
+		$rows = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT user_id, total FROM {$wpdb->prefix}wb_gam_user_totals
+				  WHERE point_type = %s AND user_id IN ( $placeholders )",
+				array_merge( array( $type ), $ids )
+			),
+			OBJECT_K
+		);
+
+		$missing = array();
+		foreach ( $ids as $uid ) {
+			if ( isset( $rows[ $uid ] ) ) {
+				wp_cache_set( self::cache_key_total( $uid, $type ), (int) $rows[ $uid ]->total, 'wb_gamification', 300 );
+			} else {
+				$missing[] = $uid;
+			}
+		}
+
+		// SUM fallback for users without a materialised row — one query for
+		// the whole missing set, mirroring get_total()'s own fallback.
+		if ( ! empty( $missing ) ) {
+			$mp = implode( ',', array_fill( 0, count( $missing ), '%d' ) );
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $mp is built from an int count; all values pass through prepare().
+			$sums = $wpdb->get_results(
+				$wpdb->prepare(
+					"SELECT user_id, COALESCE(SUM(points),0) total FROM {$wpdb->prefix}wb_gam_points
+					  WHERE point_type = %s AND user_id IN ( $mp )
+					  GROUP BY user_id",
+					array_merge( array( $type ), $missing )
+				),
+				OBJECT_K
+			);
+			foreach ( $missing as $uid ) {
+				$val = isset( $sums[ $uid ] ) ? (int) $sums[ $uid ]->total : 0;
+				wp_cache_set( self::cache_key_total( $uid, $type ), $val, 'wb_gamification', 300 );
+			}
+		}
+	}
+
+	/**
 	 * Get every per-type balance for a user as a slug => total map.
 	 *
 	 * Single SQL aggregation across all types — used by Hub block, member

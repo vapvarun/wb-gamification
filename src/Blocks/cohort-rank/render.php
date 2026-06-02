@@ -175,7 +175,7 @@ BlockHooks::before(
 
 	<?php if ( empty( $wb_gam_standings ) ) : ?>
 		<p class="wb-gam-cohort-rank__empty">
-			<?php esc_html_e( 'No standings available yet — your cohort will populate as members earn points this week.', 'wb-gamification' ); ?>
+			<?php esc_html_e( 'No standings available yet - your cohort will populate as members earn points this week.', 'wb-gamification' ); ?>
 		</p>
 	<?php else : ?>
 		<ol class="wb-gam-cohort-rank__list" role="list">

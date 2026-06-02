@@ -101,7 +101,7 @@ return [
 		[
 			'id'              => 'wp_publish_post',
 			'label'           => 'Publish a blog post',
-			'description'     => 'Awarded when the author publishes a new post — once per transition into the published state. Editing an already-published post does NOT re-award.',
+			'description'     => 'Awarded when the author publishes a new post - once per transition into the published state. Editing an already-published post does NOT re-award.',
 			// `transition_post_status` (not `publish_post`) because the
 			// latter fires on every save where status ends as `publish` —
 			// including edits — so authors re-earned 25pts on every

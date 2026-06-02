@@ -11,6 +11,7 @@
 namespace WBGam\BuddyPress;
 
 use WBGam\Engine\PointsEngine;
+use WBGam\Engine\MemberSurface;
 
 defined( 'ABSPATH' ) || exit;
 // Silencing convention-driven false positives so Plugin Check signal stays clean:
@@ -30,11 +31,110 @@ final class ProfileIntegration {
 	/**
 	 * Register hooks when BuddyPress is active.
 	 */
+	/**
+	 * Slug for the "Achievements" profile tab.
+	 */
+	private const NAV_SLUG = 'achievements';
+
 	public static function init(): void {
 		if ( ! function_exists( 'buddypress' ) ) {
 			return;
 		}
 		add_action( 'bp_before_member_header_meta', array( __CLASS__, 'render_rank' ) );
+		add_action( 'bp_setup_nav', array( __CLASS__, 'setup_nav' ), 100 );
+	}
+
+	/**
+	 * Register the "Achievements" profile tab and its sub-tabs.
+	 *
+	 * Each sub-tab renders existing gamification blocks (via their
+	 * shortcodes, scoped to the displayed member with `user_id`) so the
+	 * profile reuses the single source of block markup — no duplicated
+	 * profile-only templates to keep in sync.
+	 */
+	public static function setup_nav(): void {
+		$base       = function_exists( 'bp_displayed_user_url' )
+			? bp_displayed_user_url()
+			: bp_displayed_user_domain();
+		$parent_url = trailingslashit( $base ) . self::NAV_SLUG . '/';
+
+		bp_core_new_nav_item(
+			array(
+				'name'                => __( 'Achievements', 'wb-gamification' ),
+				'slug'                => self::NAV_SLUG,
+				'screen_function'     => array( __CLASS__, 'screen' ),
+				'position'            => 35,
+				'default_subnav_slug' => 'overview',
+				'item_css_id'         => 'wb-gam-achievements',
+			)
+		);
+
+		$subtabs  = array(
+			'overview' => __( 'Overview', 'wb-gamification' ),
+			'badges'   => __( 'Badges', 'wb-gamification' ),
+			'points'   => __( 'Points', 'wb-gamification' ),
+			'streak'   => __( 'Streak', 'wb-gamification' ),
+		);
+		$position = 10;
+		foreach ( $subtabs as $slug => $name ) {
+			bp_core_new_subnav_item(
+				array(
+					'name'            => $name,
+					'slug'            => $slug,
+					'parent_url'      => $parent_url,
+					'parent_slug'     => self::NAV_SLUG,
+					'screen_function' => array( __CLASS__, 'screen' ),
+					'position'        => $position,
+				)
+			);
+			$position += 10;
+		}
+	}
+
+	/**
+	 * Screen handler for the Achievements tab + sub-tabs. Hooks the content
+	 * renderer and loads BuddyPress's plugin template.
+	 */
+	public static function screen(): void {
+		add_action( 'bp_template_content', array( __CLASS__, 'screen_content' ) );
+		bp_core_load_template( 'members/single/plugins' );
+	}
+
+	/**
+	 * Render the current sub-tab's content from existing blocks, scoped to
+	 * the displayed member. bp_current_action() resolves to the sub-nav slug
+	 * (overview / badges / points / streak).
+	 */
+	public static function screen_content(): void {
+		$user_id = (int) bp_displayed_user_id();
+		if ( ! $user_id ) {
+			return;
+		}
+
+		// Pick the blocks for the active sub-tab; MemberSurface owns the
+		// shared plumbing (asset enqueue, mapped hub link, wrapper). Overview
+		// stays a concise PERSONAL summary — member-points already shows the
+		// next level and streak shows the next milestone, so "what's next" is
+		// covered without the site-wide earning guide (that stays on the Hub).
+		// Locked badges ("what to earn next") live in the Badges sub-tab.
+		switch ( bp_current_action() ) {
+			case 'badges':
+				$tags = array( 'wb_gam_badge_showcase' );
+				break;
+			case 'points':
+				$tags = array( 'wb_gam_points_history' );
+				break;
+			case 'streak':
+				$tags = array( 'wb_gam_streak' );
+				break;
+			case 'overview':
+			default:
+				$tags = array( 'wb_gam_member_points', 'wb_gam_streak' );
+				break;
+		}
+
+		// Surface markup is block SSR + escaped link; re-escaping would corrupt it.
+		echo MemberSurface::render( MemberSurface::blocks( $tags, $user_id ), $user_id ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 	}
 
 	/**

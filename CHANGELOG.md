@@ -6,6 +6,39 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 
 ## [Unreleased]
 
+## [1.5.2] - 2026-06-01
+
+Performance and notification-quality release. Built to stay fast on large, live communities.
+
+### Added
+
+- WooCommerce My Account "Achievements" endpoint (`/my-account/achievements/`), gated on WooCommerce being active, for stores that run WooCommerce without BuddyPress. Renders the member's full Hub dashboard by reusing the hub block (My Account is always self-scoped) plus a link to the mapped Hub page. One-time guarded rewrite flush so the endpoint resolves after upgrade.
+- Optional LearnDash profile "My Achievements" link to the mapped Hub page (via `learndash_shortcode_profile_before_template`). OFF by default - LearnDash has no native profile-section API, so the link is opt-in via `add_filter( 'wb_gam_learndash_profile_link', '__return_true' )`. Deliberately a single link, not stat blocks.
+- Shared `WBGam\Engine\MemberSurface` renderer + `wb_gam_member_surface_html` filter: the BuddyPress tab, WooCommerce endpoint, and LearnDash link all reuse one path (asset enqueue, block rendering scoped to a member, mapped "View full dashboard" link, wrapper) with no duplicated display logic. Jetonomy is intentionally not given a surface - it has its own built-in leaderboard and its profiles ride on BuddyPress.
+- BuddyPress profile "Achievements" tab with sub-tabs (Overview / Badges / Points / Streak). Renders the displayed member's points, level progress, streak, badges, and points history by reusing the existing blocks via their `user_id` shortcodes - no duplicated profile templates. Viewable on any member's profile, not just your own. Overview stays a concise personal summary (points + streak); the site-wide earning guide remains on the Hub.
+- Admin setting for toast notification placement (Settings > Realtime): bottom-right (default), bottom-left, top-right, top-center, with corner-aware slide-in.
+- `wb_gam_sse_allowed` filter to opt into SSE streaming on hosts provisioned for long-lived connections.
+- `PointsEngine::prime_totals()` and `BadgeEngine::prime_earned_badges()` batch cache-prime APIs for per-row listing surfaces.
+- `WBGam\Integrations\Jetonomy\DisplayDefer`: on a Jetonomy site the leaderboard defers to Jetonomy's reputation ranking. `JetonomyIntegration` already mirrors every reputation delta 1:1 into the points ledger, so wb-gam's leaderboard is a duplicate of Jetonomy's `ORDER BY reputation DESC` ranking. The `leaderboard` and `top-members` blocks/shortcodes are suppressed (via `render_block` + `do_shortcode_tag`) and the Hub `Leaderboard` card is dropped, so members see one ranking. Default-on when `JETONOMY_VERSION` is defined; override with `wb_gam_defer_leaderboard_to_jetonomy`. Badges are deliberately NOT deferred - wb-gam's badge engine (OpenBadges 3.0, expiry, share pages, cross-integration triggers) is the broader system and the two badge sets are complementary, not duplicates.
+
+### Changed
+
+- Realtime transport now defaults to WP Heartbeat instead of SSE/auto; SSE is opt-in behind `wb_gam_sse_allowed`. Removes a 28-second PHP-worker hold per logged-in page that did not scale on a standard PHP-FPM pool.
+- Heartbeat steady-state interval raised from 5s to 15s, with a 30-second fast burst after member actions and near-suspend on backgrounded tabs (cuts steady-state request load roughly 3x).
+- Member directory, leaderboard, and top-members blocks prime per-page data in a fixed number of queries, removing per-row N+1 (directory 82 to 4 queries per page; leaderboard badges 20 to 1; top-members levels 42 to 0 on warm data). Validated against a 1,000,000-row / 100,000-user dataset.
+- Reward toasts resolve a human reason for every award (action label, or the admin-entered reason for manual awards); only same-action awards merge.
+- Frontend surfaces (Hub, blocks, member profile) map their neutral color tokens (`--wb-gam-color-*`, `--gam-*`) to the host theme's `--bx-color-*` tokens, so they follow BuddyX and BuddyX Pro light/dark mode automatically. Muted text uses `color-mix` to stay readable on either surface. Tint backgrounds (icon chips, status pills, podium rows) mix over the theme surface so they adapt instead of showing opaque light blobs, and the brand accent keeps its hue but lightens on dark surfaces for contrast. Themes that do not expose `--bx-color-*` fall back to the original light values, so behaviour is unchanged off the BuddyX family.
+- My Badges flyout shows two columns so each badge's art, title, and description are readable instead of cramped three-up.
+
+### Fixed
+
+- Toast stack overlapped the theme header/navigation; it now anchors to a configurable corner (default bottom-right).
+- Duplicate toasts when SSE and Heartbeat both delivered the same event. SSE now stamps the canonical queue id the client dedupe keys on.
+- Points toast displayed a contextless "+N Points (M actions)" count with no indication of what earned the points.
+- Member profile pages at `/u/{username}` returned 404 for every member: public visibility required an opt-in flag that no member-facing UI ever wrote. Public profiles now default to on (opt-out via a `0` per-user flag), the owner and admins can always view a profile, and the Privacy visibility check uses the same opt-out default.
+- Removed em-dashes (and en-dashes) from all translatable strings and seeded labels/descriptions across frontend and admin, replaced with hyphens per house style. Code comments are untouched. Existing seeded badge descriptions in the database were migrated too.
+
+
 ## [1.5.1] - 2026-06-01
 
 PHP compatibility hotfix. Restores parsing on PHP 8.0/8.1 and lowers the supported floor to PHP 8.0. CI now lints PHP 8.0 through 8.4.

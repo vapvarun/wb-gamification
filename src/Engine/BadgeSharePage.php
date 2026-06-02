@@ -125,7 +125,7 @@ final class BadgeSharePage {
 			static function ( array $parts ) use ( $badge, $user ): array {
 				$parts['title'] = sprintf(
 					/* translators: 1: badge name, 2: display name */
-					__( '%1$s — earned by %2$s', 'wb-gamification' ),
+					__( '%1$s - earned by %2$s', 'wb-gamification' ),
 					$badge['name'],
 					$user->display_name
 				);
@@ -139,7 +139,7 @@ final class BadgeSharePage {
 				$title = esc_attr(
 					sprintf(
 						/* translators: 1: badge name, 2: display name */
-						__( '%1$s — earned by %2$s', 'wb-gamification' ),
+						__( '%1$s - earned by %2$s', 'wb-gamification' ),
 						$badge['name'],
 						$user->display_name
 					)

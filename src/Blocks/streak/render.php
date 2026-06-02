@@ -215,7 +215,7 @@ BlockHooks::before( 'streak', $wb_gam_attrs );
 		</div>
 	<?php else : ?>
 		<p class="wb-gam-streak__nudge wb-gam-streak__nudge--elite">
-			<?php esc_html_e( 'Amazing — you have hit every milestone! Keep it up!', 'wb-gamification' ); ?>
+			<?php esc_html_e( 'Amazing - you have hit every milestone! Keep it up!', 'wb-gamification' ); ?>
 		</p>
 	<?php endif; ?>
 

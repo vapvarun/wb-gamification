@@ -140,7 +140,7 @@ final class WebhooksAdminPage {
 						printf(
 							wp_kses(
 								/* translators: %s: header name wrapped in code */
-								__( 'Each request includes a %s header containing an HMAC-SHA256 signature of the raw body, computed with your webhook secret. Always verify before trusting the delivery — anyone can hit your URL.', 'wb-gamification' ),
+								__( 'Each request includes a %s header containing an HMAC-SHA256 signature of the raw body, computed with your webhook secret. Always verify before trusting the delivery - anyone can hit your URL.', 'wb-gamification' ),
 								array( 'code' => array() )
 							),
 							'<code>X-WB-Gam-Signature</code>'
@@ -149,7 +149,7 @@ final class WebhooksAdminPage {
 					</p>
 					<p>
 						<strong><?php esc_html_e( 'Retry behavior:', 'wb-gamification' ); ?></strong>
-						<?php esc_html_e( 'A non-2xx response (or a network failure) schedules a retry with exponential backoff (1m → 5m → 30m). After 3 failed attempts the webhook is automatically paused. Resume by editing the row in the database (set is_active=1) — admin UI flag in v1.1.', 'wb-gamification' ); ?>
+						<?php esc_html_e( 'A non-2xx response (or a network failure) schedules a retry with exponential backoff (1m → 5m → 30m). After 3 failed attempts the webhook is automatically paused. Resume by editing the row in the database (set is_active=1) - admin UI flag in v1.1.', 'wb-gamification' ); ?>
 					</p>
 					<p>
 						<strong><?php esc_html_e( 'Payload shape:', 'wb-gamification' ); ?></strong>
@@ -228,7 +228,7 @@ final class WebhooksAdminPage {
 										<?php endforeach; ?>
 									</fieldset>
 									<p class="description">
-										<?php esc_html_e( 'Hover any event for the payload schema. Pick only the events your receiver knows how to handle — extra events waste delivery attempts.', 'wb-gamification' ); ?>
+										<?php esc_html_e( 'Hover any event for the payload schema. Pick only the events your receiver knows how to handle - extra events waste delivery attempts.', 'wb-gamification' ); ?>
 									</p>
 								</td>
 							</tr>

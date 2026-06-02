@@ -331,7 +331,7 @@ final class RecapEngine {
 		int $challenges
 	): string {
 		if ( $points <= 0 ) {
-			return __( 'Your journey starts here — see you next year!', 'wb-gamification' );
+			return __( 'Your journey starts here - see you next year!', 'wb-gamification' );
 		}
 
 		if ( $percentile >= 99 ) {
@@ -341,7 +341,7 @@ final class RecapEngine {
 		if ( $percentile >= 90 ) {
 			return sprintf(
 				/* translators: %d = percentile rank */
-				__( 'Top %d%% contributor — an outstanding year.', 'wb-gamification' ),
+				__( 'Top %d%% contributor - an outstanding year.', 'wb-gamification' ),
 				100 - $percentile
 			);
 		}
@@ -357,7 +357,7 @@ final class RecapEngine {
 		if ( count( $badges ) >= 5 ) {
 			return sprintf(
 				/* translators: %d = badge count */
-				__( 'A badge collector — you earned %d badges this year.', 'wb-gamification' ),
+				__( 'A badge collector - you earned %d badges this year.', 'wb-gamification' ),
 				count( $badges )
 			);
 		}
@@ -365,14 +365,14 @@ final class RecapEngine {
 		if ( $challenges >= 3 ) {
 			return sprintf(
 				/* translators: %d = challenges */
-				__( 'Challenge champion — you completed %d challenges this year.', 'wb-gamification' ),
+				__( 'Challenge champion - you completed %d challenges this year.', 'wb-gamification' ),
 				$challenges
 			);
 		}
 
 		return sprintf(
 			/* translators: %d = points earned */
-			__( 'You earned %s points this year — keep the momentum going!', 'wb-gamification' ),
+			__( 'You earned %s points this year - keep the momentum going!', 'wb-gamification' ),
 			number_format_i18n( $points )
 		);
 	}

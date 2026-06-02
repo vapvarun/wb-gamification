@@ -668,6 +668,15 @@
    9. Select (premium variant — admin-pages.css wins)
    ========================================================================== */
 
+/* Field label above a standalone control (select / input) inside a card. */
+.wbgam-field-label {
+	display: block;
+	margin-bottom: 0.375rem;
+	font-size: var(--wbgam-fs-sm, 0.8125rem);
+	font-weight: 600;
+	color: var(--wbgam-text);
+}
+
 .wbgam-select {
 	border: 1px solid var(--wb-gam-border);
 	border-radius: var(--wb-gam-radius);

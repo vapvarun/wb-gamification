@@ -103,7 +103,7 @@ final class PointTypesPage {
 			<header class="wbgam-page-header">
 				<div class="wbgam-page-header__main">
 					<h1 class="wbgam-page-header__title"><?php esc_html_e( 'Point Types', 'wb-gamification' ); ?></h1>
-					<p class="wbgam-page-header__desc"><?php esc_html_e( 'Define the point currencies your site supports — e.g. Points for general activity, XP for learning, Coins for the redemption store. Each currency has its own ledger; balances stay isolated. The default currency is used when an action does not specify a type.', 'wb-gamification' ); ?></p>
+					<p class="wbgam-page-header__desc"><?php esc_html_e( 'Define the point currencies your site supports - e.g. Points for general activity, XP for learning, Coins for the redemption store. Each currency has its own ledger; balances stay isolated. The default currency is used when an action does not specify a type.', 'wb-gamification' ); ?></p>
 				</div>
 			</header>
 
@@ -152,7 +152,7 @@ final class PointTypesPage {
 													data-wb-gam-rest-confirm="
 													<?php
 													/* translators: %s: candidate point-type label about to be promoted to default. */
-													echo esc_attr( sprintf( __( 'Make %s the default currency? Actions without an explicit currency will start awarding this type going forward. Existing balances are NOT migrated — every row keeps its original ledger.', 'wb-gamification' ), (string) $type['label'] ) );
+													echo esc_attr( sprintf( __( 'Make %s the default currency? Actions without an explicit currency will start awarding this type going forward. Existing balances are NOT migrated - every row keeps its original ledger.', 'wb-gamification' ), (string) $type['label'] ) );
 													?>
 													"
 													data-wb-gam-rest-success-toast="<?php esc_attr_e( 'Default point type updated.', 'wb-gamification' ); ?>"
@@ -175,7 +175,7 @@ final class PointTypesPage {
 													<?php esc_html_e( 'Delete', 'wb-gamification' ); ?>
 												</button>
 											<?php else : ?>
-												<span class="description"><?php esc_html_e( 'Default — protected', 'wb-gamification' ); ?></span>
+												<span class="description"><?php esc_html_e( 'Default - protected', 'wb-gamification' ); ?></span>
 											<?php endif; ?>
 										</td>
 									</tr>

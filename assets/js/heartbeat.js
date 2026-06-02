@@ -50,22 +50,65 @@
 	function init() {
 		var $ = jQuery;
 
-		// Tunable interval (seconds). Heartbeat accepts 'fast' (5s) for
-		// short bursts, 'standard' (15s) for the default. We use 'fast'
-		// because the gamification surface is realtime-feel by design —
-		// points / badges / level-up toasts that appear ~5 seconds after
-		// the user did something feel like "the system noticed" instead
-		// of "I'll see it later." 15s lag was the dominant complaint on
-		// Basecamp #9925151443 ("toasts only appear on page reload or
-		// tab switch"). Members CAN opt to slow it back down via the
-		// `wb_gam_realtime_interval` JS filter if their host can't take
-		// the extra ticks. WP slows the tick when the tab is hidden —
-		// we don't override that.
-		var DEFAULT_INTERVAL = 'fast';
+		// Steady-state interval. We default to 'standard' (15s) rather than
+		// 'fast' (5s): at community scale, every logged-in member polling
+		// every 5s is a self-imposed request floor (10k concurrent members
+		// ≈ 2,000 admin-ajax hits/sec, each a full WP bootstrap). 'standard'
+		// cuts that ~3x while still feeling live — because we BURST to
+		// 'fast' for a short window right after the member does something
+		// (see burst()), which is exactly when realtime feedback matters.
+		// The earlier 'fast' default (Basecamp #9925151443) is preserved as
+		// the post-action burst speed. Hosts can override the steady-state
+		// value via window.wbGamRealtimeInterval.
+		var DEFAULT_INTERVAL = 'standard';
 		if ( window.wbGamRealtimeInterval ) {
 			DEFAULT_INTERVAL = String( window.wbGamRealtimeInterval );
 		}
+		var FAST_INTERVAL   = 'fast'; // 5s — burst speed right after an action.
+		var BURST_MS        = 30000;  // hold fast this long, then ease back.
+		var HIDDEN_INTERVAL = 120;    // seconds — near-suspend while backgrounded.
+		var burstTimer      = null;
+
 		wp.heartbeat.interval( DEFAULT_INTERVAL );
+
+		// Near-suspend when the tab is backgrounded — a member who switched
+		// away shouldn't generate ticks. WP core already slows heartbeat on
+		// blur; we make it explicit and restore (with a catch-up tick) on
+		// return.
+		document.addEventListener( 'visibilitychange', function () {
+			if ( document.visibilityState === 'hidden' ) {
+				if ( burstTimer ) {
+					clearTimeout( burstTimer );
+					burstTimer = null;
+				}
+				wp.heartbeat.interval( HIDDEN_INTERVAL );
+			} else {
+				wp.heartbeat.interval( DEFAULT_INTERVAL );
+				if ( typeof wp.heartbeat.connectNow === 'function' ) {
+					wp.heartbeat.connectNow();
+				}
+			}
+		} );
+
+		// Burst to fast polling for BURST_MS, then ease back to the
+		// steady-state interval (unless the tab went hidden meanwhile).
+		// Called after a user action so the resulting points / badge toast
+		// arrives within ~5s instead of waiting up to a full standard tick.
+		function burst() {
+			wp.heartbeat.interval( FAST_INTERVAL );
+			if ( typeof wp.heartbeat.connectNow === 'function' ) {
+				wp.heartbeat.connectNow();
+			}
+			if ( burstTimer ) {
+				clearTimeout( burstTimer );
+			}
+			burstTimer = setTimeout( function () {
+				burstTimer = null;
+				if ( document.visibilityState !== 'hidden' ) {
+					wp.heartbeat.interval( DEFAULT_INTERVAL );
+				}
+			}, BURST_MS );
+		}
 
 		var subscribers = {
 			user:         new Set(),
@@ -153,14 +196,23 @@
 				boards.delete( sig );
 			},
 			/**
-			 * Force a tick. Heartbeat throttles aggressive callers — this is
-			 * appropriate after a user action that the server may have
-			 * already processed (form submit, kudos sent).
+			 * Force a tick now AND burst to fast polling for ~30s. Call
+			 * after a user action the server may have just processed (form
+			 * submit, kudos sent) so the resulting toast arrives quickly,
+			 * then polling eases back to the steady-state interval on its
+			 * own. Heartbeat throttles aggressive callers, so this is safe.
 			 */
 			ping: function () {
-				if ( wp.heartbeat && typeof wp.heartbeat.connectNow === 'function' ) {
-					wp.heartbeat.connectNow();
-				}
+				burst();
+			},
+			/**
+			 * Explicit alias for ping() — burst to fast polling for ~30s
+			 * after a member action, then ease back. Named for intent at
+			 * call sites that want realtime feedback without committing the
+			 * whole session to 5s polling.
+			 */
+			burst: function () {
+				burst();
 			},
 			/**
 			 * Read the most recent payload synchronously (e.g. for SSR-replay

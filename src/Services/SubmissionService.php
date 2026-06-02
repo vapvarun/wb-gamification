@@ -148,7 +148,7 @@ final class SubmissionService {
 				);
 				return new WP_Error(
 					'wb_gam_award_failed',
-					__( 'Could not award points for this submission. It remains pending — please retry.', 'wb-gamification' ),
+					__( 'Could not award points for this submission. It remains pending - please retry.', 'wb-gamification' ),
 					array( 'status' => 500 )
 				);
 			}

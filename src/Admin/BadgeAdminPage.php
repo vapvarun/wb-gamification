@@ -477,7 +477,7 @@ final class BadgeAdminPage {
 														array(
 															'name'              => 'user_id',
 															'id'                => 'wb-gam-badge-award-user',
-															'show_option_none'  => __( '— Select a user —', 'wb-gamification' ),
+															'show_option_none'  => __( '- Select a user -', 'wb-gamification' ),
 															'option_none_value' => '0',
 														)
 													);

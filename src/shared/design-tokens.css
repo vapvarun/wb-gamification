@@ -46,47 +46,65 @@
 	--wb-gam-leading-normal: 1.5;
 	--wb-gam-leading-relaxed: 1.75;
 
-	/* Colors — neutral palette (tuned to match assets/css/hub.css `--gam-*` family) */
-	--wb-gam-color-white: #ffffff;
-	--wb-gam-color-text: #1a1a2e;
-	--wb-gam-color-text-muted: #555770;
-	--wb-gam-color-text-light: #8b8da3;
-	--wb-gam-color-border: #e2e3ed;
-	--wb-gam-color-border-hover: #c8c9d9;
-	--wb-gam-color-surface: #ffffff;
-	--wb-gam-color-surface-hover: #f7f7fb;
-	--wb-gam-color-surface-alt: #f1f5f9;
-	--wb-gam-color-page: #f8fafc;
+	/* Colors — neutral palette. Mapped to the host theme's color tokens so
+	 * the plugin follows the theme's light/dark mode automatically. BuddyX
+	 * and BuddyX Pro expose `--bx-color-*` and flip them under
+	 * :root[data-bx-mode="dark"] (and prefers-color-scheme); consuming those
+	 * here means cards/text/borders go dark with the theme. Any theme that
+	 * doesn't define `--bx-color-*` falls back to the original light values,
+	 * so behaviour is unchanged off the BuddyX family. Only NEUTRALS map to
+	 * the theme — brand/semantic colors (accent, success, fire, medals) stay
+	 * constant across modes. Muted/light text use color-mix so they keep a
+	 * readable contrast against whichever surface the theme provides. */
+	--wb-gam-color-white: var(--bx-color-bg-elevated, #ffffff);
+	--wb-gam-color-text: var(--bx-color-fg, #1a1a2e);
+	--wb-gam-color-text-muted: color-mix(in srgb, var(--bx-color-fg, #1a1a2e) 70%, var(--bx-color-bg-elevated, #ffffff));
+	--wb-gam-color-text-light: color-mix(in srgb, var(--bx-color-fg, #1a1a2e) 50%, var(--bx-color-bg-elevated, #ffffff));
+	--wb-gam-color-border: var(--bx-color-border, #e2e3ed);
+	--wb-gam-color-border-hover: var(--bx-color-border, #c8c9d9);
+	--wb-gam-color-surface: var(--bx-color-bg-elevated, #ffffff);
+	--wb-gam-color-surface-hover: var(--bx-color-bg-muted, #f7f7fb);
+	--wb-gam-color-surface-alt: var(--bx-color-bg-muted, #f1f5f9);
+	--wb-gam-color-page: var(--bx-color-bg-page, #f8fafc);
 	/* Accent — defaults match `--gam-accent` from assets/css/hub.css so
 	   new standard blocks visually align with the existing hub UI.
 	   Themes may override via `--wbcom-link-color`. */
 	--wb-gam-color-accent: var(--wbcom-link-color, #5b4cdb);
 	--wb-gam-color-accent-hover: var(--wbcom-link-hover-color, #4338b2);
-	--wb-gam-color-accent-light: #ededfc;
-	--wb-gam-color-accent-text: #4338b2;
+	/* Tint backgrounds (icon chips, accent pills) are mixed OVER the theme
+	 * surface so they're a faint light tint in light mode and a faint dark
+	 * tint in dark mode — no opaque light blob on a dark card. */
+	--wb-gam-color-accent-light: color-mix(in srgb, var(--wb-gam-color-accent) 14%, var(--wb-gam-color-surface));
+	/* Accent label text blends toward the foreground so it stays readable on
+	 * the tinted chip in either mode. */
+	--wb-gam-color-accent-text: color-mix(in srgb, var(--wb-gam-color-accent) 65%, var(--wb-gam-color-text));
 	--wb-gam-color-accent-ring: rgba(91, 76, 219, 0.2);
 
-	/* Colors — semantic (matched to assets/css/hub.css) */
+	/* Colors — semantic. The solid hue stays constant; the `-bg` tint is
+	 * mixed over the theme surface so status chips / podium rows / pills
+	 * adapt to dark mode instead of showing an opaque light blob. (The
+	 * `-soft` rgba variants were already surface-agnostic.) */
 	--wb-gam-color-success: #0d9f6e;
-	--wb-gam-color-success-bg: #ecfdf3;
+	--wb-gam-color-success-bg: color-mix(in srgb, var(--wb-gam-color-success) 12%, var(--wb-gam-color-surface));
 	--wb-gam-color-success-strong: #047857;
 	--wb-gam-color-success-soft: rgba(13, 159, 110, 0.12);
 	--wb-gam-color-warning: #c2770e;
-	--wb-gam-color-warning-bg: #fef7ec;
+	--wb-gam-color-warning-bg: color-mix(in srgb, var(--wb-gam-color-warning) 12%, var(--wb-gam-color-surface));
 	--wb-gam-color-warning-strong: #b45309;
 	--wb-gam-color-warning-soft: rgba(245, 158, 11, 0.15);
 	--wb-gam-color-danger: #ef4444;
-	--wb-gam-color-danger-bg: #fef2f2;
+	--wb-gam-color-danger-bg: color-mix(in srgb, var(--wb-gam-color-danger) 12%, var(--wb-gam-color-surface));
 	--wb-gam-color-danger-strong: #b91c1c;
 	--wb-gam-color-danger-soft: rgba(185, 28, 28, 0.10);
 	--wb-gam-color-info: #2563eb;
-	--wb-gam-color-info-bg: #eff4ff;
+	--wb-gam-color-info-bg: color-mix(in srgb, var(--wb-gam-color-info) 12%, var(--wb-gam-color-surface));
 	--wb-gam-color-info-soft: rgba(37, 99, 235, 0.10);
 
 	/* Extra neutrals — surface-muted is the "card lifted off a panel"
-	 * shade. Border-strong is the focus / hover stroke. */
-	--wb-gam-color-surface-muted: #f9fafb;
-	--wb-gam-color-border-strong: #d1d5db;
+	 * shade. Border-strong is the focus / hover stroke. Theme-mapped (see
+	 * the neutral palette note above). */
+	--wb-gam-color-surface-muted: var(--bx-color-bg-muted, #f9fafb);
+	--wb-gam-color-border-strong: var(--bx-color-border, #d1d5db);
 	--wb-gam-color-locked-soft: rgba(156, 163, 175, 0.16);
 	--wb-gam-color-primary-soft: rgba(91, 76, 219, 0.10);
 
@@ -160,4 +178,24 @@
 	--wb-gam-bronze: var(--wb-gam-color-bronze);
 	--wb-gam-fill: var(--wb-gam-color-accent);
 	--wb-gam-recap-accent: var(--wb-gam-color-accent);
+}
+
+/* ── Dark-mode accent ───────────────────────────────────────────────────────
+ * Keep the gamification brand purple, but lighten it on dark surfaces so
+ * glyphs, links, the level progress bar, and accent pills keep their punch
+ * and contrast. Light mode uses the pure hue defined in :root above. Scoped
+ * to the same dark selectors BuddyX / BuddyX Pro use: the data-bx-mode
+ * attribute, the prefers-color-scheme auto path, and the legacy
+ * .buddyx-dark-theme body class. accent-light / accent-text cascade from
+ * --wb-gam-color-accent, so they lighten with it automatically. */
+:root[data-bx-mode="dark"],
+body.buddyx-dark-theme {
+	--wb-gam-color-accent: color-mix(in srgb, #5b4cdb 60%, #ffffff);
+	--wb-gam-color-accent-hover: color-mix(in srgb, #5b4cdb 45%, #ffffff);
+}
+@media (prefers-color-scheme: dark) {
+	:root[data-bx-mode="auto"] {
+		--wb-gam-color-accent: color-mix(in srgb, #5b4cdb 60%, #ffffff);
+		--wb-gam-color-accent-hover: color-mix(in srgb, #5b4cdb 45%, #ffffff);
+	}
 }

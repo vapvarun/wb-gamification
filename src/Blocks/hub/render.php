@@ -265,6 +265,15 @@ $wb_gam_cards = array(
 	),
 );
 
+// On a Jetonomy site the reputation leaderboard is the single ranking
+// (wb-gam points mirror reputation 1:1), so DisplayDefer suppresses the
+// leaderboard block. Drop the hub card too — otherwise its tile would open
+// an empty panel. Badges + everything else stay; only the duplicate ranking
+// is removed.
+if ( \WBGam\Integrations\Jetonomy\DisplayDefer::defers_leaderboard() ) {
+	unset( $wb_gam_cards['leaderboard'] );
+}
+
 // Challenges card is only meaningful when there's something to enter. An
 // empty "0 active challenges" tile pointing at a panel that also says
 // "no active challenges" is two layers of empty state for the same fact —

@@ -225,7 +225,7 @@ final class SetupWizard {
 		printf(
 			'<div class="notice notice-info wb-gam-notice is-dismissible"><p><strong>%1$s</strong> %2$s <a href="%3$s" class="button button-primary wb-gam-notice__cta">%4$s</a></p></div>',
 			esc_html__( 'Welcome to WB Gamification!', 'wb-gamification' ),
-			esc_html__( 'Pick a starter template to pre-configure points for your use case — takes 30 seconds.', 'wb-gamification' ),
+			esc_html__( 'Pick a starter template to pre-configure points for your use case - takes 30 seconds.', 'wb-gamification' ),
 			esc_url( $wizard_url ),
 			esc_html__( 'Run the setup wizard', 'wb-gamification' )
 		);
@@ -366,7 +366,7 @@ final class SetupWizard {
 			),
 			'community' => array(
 				'label'       => __( 'Community Engagement', 'wb-gamification' ),
-				'description' => __( 'Balanced — rewards posting, reactions, and social connection. Requires BuddyPress.', 'wb-gamification' ),
+				'description' => __( 'Balanced - rewards posting, reactions, and social connection. Requires BuddyPress.', 'wb-gamification' ),
 				'leaderboard' => 'weekly',
 				'requires'    => array(
 					'callback' => static function (): bool {
@@ -385,7 +385,7 @@ final class SetupWizard {
 			),
 			'course'    => array(
 				'label'       => __( 'Online Course', 'wb-gamification' ),
-				'description' => __( 'Course completion heavy — progress and credential badges. Requires LearnDash.', 'wb-gamification' ),
+				'description' => __( 'Course completion heavy - progress and credential badges. Requires LearnDash.', 'wb-gamification' ),
 				'leaderboard' => 'cohort',
 				'requires'    => array(
 					'callback' => static function (): bool {
@@ -401,7 +401,7 @@ final class SetupWizard {
 			),
 			'coaching'  => array(
 				'label'       => __( 'Coaching Platform', 'wb-gamification' ),
-				'description' => __( 'Private leaderboard by default — progress vs personal baseline, not peer comparison.', 'wb-gamification' ),
+				'description' => __( 'Private leaderboard by default - progress vs personal baseline, not peer comparison.', 'wb-gamification' ),
 				'leaderboard' => 'private',
 				'points'      => array(
 					'check_in'      => 15,
@@ -411,7 +411,7 @@ final class SetupWizard {
 			),
 			'nonprofit' => array(
 				'label'       => __( 'Nonprofit / Mission', 'wb-gamification' ),
-				'description' => __( 'Mission-aligned language. Team leaderboards only — impact over individual competition. Requires BuddyPress.', 'wb-gamification' ),
+				'description' => __( 'Mission-aligned language. Team leaderboards only - impact over individual competition. Requires BuddyPress.', 'wb-gamification' ),
 				'leaderboard' => 'team-only',
 				'requires'    => array(
 					'callback' => static function (): bool {
@@ -622,7 +622,7 @@ final class SetupWizard {
 				<footer class="wb-gam-wizard-footer">
 					<div class="wb-gam-wizard-footer__copy">
 						<strong><?php esc_html_e( 'Prefer to start from scratch?', 'wb-gamification' ); ?></strong>
-						<span><?php esc_html_e( 'Skip leaves engine defaults in place — every email off, public profiles off. Configure everything yourself in Settings.', 'wb-gamification' ); ?></span>
+						<span><?php esc_html_e( 'Skip leaves engine defaults in place - every email off, public profiles off. Configure everything yourself in Settings.', 'wb-gamification' ); ?></span>
 					</div>
 					<button
 						type="submit"

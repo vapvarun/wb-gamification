@@ -4,7 +4,7 @@ Tags: gamification, points, badges, leaderboard, buddypress
 Requires at least: 6.4
 Tested up to: 6.9
 Requires PHP: 8.0
-Stable tag: 1.5.1
+Stable tag: 1.5.2
 License: GPL-2.0+
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -40,7 +40,7 @@ The engine awards points automatically when members perform actions on your site
 * **Toast Notifications** — Real-time bottom-right popups when members earn points, badges, or level up. 6 notification types with auto-dismiss. Promise-based confirm modals replace native browser dialogs (a11y-friendly).
 * **Analytics Dashboard** — 6 KPI cards, top actions, top earners, daily points sparkline. Period selector (7/30/90 days).
 * **WP-CLI Commands** — `points award`, `member status`, `actions list`, `logs prune`, `export user`, `qa seed_pages`, `doctor` readiness check, plus a release-zip builder.
-* **Developer Hooks** — 58 action hooks and 60 filter hooks for extending every write path. Every REST endpoint fires `before_*` filters (return WP_Error to abort) and `after_*` actions.
+* **Developer Hooks** — 58 action hooks and 66 filter hooks for extending every write path. Every REST endpoint fires `before_*` filters (return WP_Error to abort) and `after_*` actions.
 * **Cohort Leagues** — Duolingo-style weekly competitions with promotion/demotion percentages and per-cohort leaderboards.
 * **Community Challenges** — Team goals with global progress (Pokemon GO model). Members contribute to a shared counter; everyone earns when the target is hit.
 * **Redemption Store** — Members spend points on rewards. Built-in support for custom rewards (your hook), WooCommerce coupons, and Wbcom Credits SDK.
@@ -132,6 +132,32 @@ Yes. WB Gamification integrates with WordPress privacy tools. Members can reques
 All data is preserved in the database. Reactivating the plugin restores everything. If you delete the plugin via the Plugins screen, the `uninstall.php` file removes all 23 tables, options, cron jobs, and transients — a clean uninstall.
 
 == Changelog ==
+
+= 1.5.2 - June 2026 =
+
+Performance and notification-quality release. Built to stay fast on large, live communities.
+
+* New      - BuddyPress profile "Achievements" tab with Overview, Badges, Points, and Streak sub-tabs. Renders the displayed member's points, level progress, streak, badges, and points history by reusing the existing blocks - viewable on your own profile and other members'.
+* New      - WooCommerce My Account "Achievements" endpoint (/my-account/achievements/) for stores running WooCommerce without BuddyPress. Renders the member's full gamification dashboard by reusing the Hub block, with a link to the mapped Hub page. Loads only when WooCommerce is active.
+* New      - Optional LearnDash profile "My Achievements" link to the gamification dashboard (the mapped Hub page). OFF by default; enable with add_filter( 'wb_gam_learndash_profile_link', '__return_true' ).
+* Dev      - Member achievements surfaces share one renderer (WBGam\Engine\MemberSurface) with a wb_gam_member_surface_html filter, so the BuddyPress, WooCommerce, and LearnDash integrations reuse the same blocks and mapped-hub link with no duplicated display logic.
+* New      - Admin setting for notification placement (Settings > Realtime): bottom-right default, plus bottom-left, top-right, and top-center, with corner-aware slide-in.
+* New      - Filter wb_gam_sse_allowed to opt into SSE streaming on hosts provisioned for long-lived connections.
+* New      - Reusable batch cache-prime APIs PointsEngine::prime_totals() and BadgeEngine::prime_earned_badges() for per-row listing surfaces.
+* New      - On Jetonomy sites the leaderboard defers to Jetonomy's reputation ranking, since wb-gam already mirrors reputation 1:1 into points and the two rankings are identical. The wb-gam leaderboard and top-members blocks, shortcodes, and Hub card are hidden so members see one leaderboard. Badges are unaffected (both badge sets are kept). Filter wb_gam_defer_leaderboard_to_jetonomy to override.
+* Compat   - Jetonomy badges and reputation continue to award wb-gam points (Jetonomy badge earned, reputation change, space join, polls, messages); wb-gam adds the levels, streaks, challenges, and redemption layer on top.
+* Improve  - Realtime now defaults to WP Heartbeat instead of SSE, removing a long-poll that pinned a PHP worker per logged-in page; SSE is opt-in.
+* Improve  - Heartbeat polls every 15 seconds at rest (was 5), bursts to 5 seconds for 30 seconds after a member action, and nearly suspends on backgrounded tabs.
+* Improve  - Member directory, leaderboard, and top-members no longer run per-row queries; query count is now constant regardless of community size.
+* Improve  - Reward toasts always state what the points were for, using the action label or the admin-entered reason.
+* Improve  - Frontend surfaces (Hub, blocks, member profile) map their neutral colors to the active theme's tokens, so they follow BuddyX and BuddyX Pro light and dark mode automatically; themes without those tokens keep the original light palette.
+* Improve  - My Badges flyout shows two columns so each badge's art, title, and description are readable instead of cramped three-up.
+* Fix      - Toast stack no longer overlaps the theme header or navigation.
+* Fix      - Duplicate toasts when both SSE and Heartbeat delivered the same event.
+* Fix      - Points toast showed a contextless "+N Points (M actions)" count instead of naming the action.
+* Fix      - Member profile pages at /u/{username} returned 404 for everyone because public visibility required an opt-in that no screen ever set; public profiles are now on by default, and the owner and admins can always view a profile.
+* Fix      - Removed em-dashes from all user-facing labels and descriptions (frontend blocks, member profile, admin settings) per house style; hyphens only. Existing seeded badge descriptions were migrated in the database too.
+
 
 = 1.5.1 - June 2026 =
 

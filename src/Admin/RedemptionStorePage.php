@@ -251,31 +251,31 @@ final class RedemptionStorePage {
 										</option>
 										<?php if ( $woo_active ) : ?>
 											<option value="discount_pct" <?php selected( $edit_data['reward_type'] ?? '', 'discount_pct' ); ?>>
-												<?php esc_html_e( 'WooCommerce — Percentage Discount', 'wb-gamification' ); ?>
+												<?php esc_html_e( 'WooCommerce - Percentage Discount', 'wb-gamification' ); ?>
 											</option>
 											<option value="discount_fixed" <?php selected( $edit_data['reward_type'] ?? '', 'discount_fixed' ); ?>>
-												<?php esc_html_e( 'WooCommerce — Fixed Discount', 'wb-gamification' ); ?>
+												<?php esc_html_e( 'WooCommerce - Fixed Discount', 'wb-gamification' ); ?>
 											</option>
 											<option value="free_shipping" <?php selected( $edit_data['reward_type'] ?? '', 'free_shipping' ); ?>>
-												<?php esc_html_e( 'WooCommerce — Free Shipping', 'wb-gamification' ); ?>
+												<?php esc_html_e( 'WooCommerce - Free Shipping', 'wb-gamification' ); ?>
 											</option>
 											<option value="free_product" <?php selected( $edit_data['reward_type'] ?? '', 'free_product' ); ?>>
-												<?php esc_html_e( 'WooCommerce — Free Product', 'wb-gamification' ); ?>
+												<?php esc_html_e( 'WooCommerce - Free Product', 'wb-gamification' ); ?>
 											</option>
 										<?php endif; ?>
 										<?php if ( $credits_active ) : ?>
 											<option value="wbcom_credits" <?php selected( $edit_data['reward_type'] ?? '', 'wbcom_credits' ); ?>>
-												<?php esc_html_e( 'Wbcom Credits — Top up balance', 'wb-gamification' ); ?>
+												<?php esc_html_e( 'Wbcom Credits - Top up balance', 'wb-gamification' ); ?>
 											</option>
 										<?php endif; ?>
 									</select>
 									<p class="description">
 										<?php esc_html_e( 'Custom rewards fire wb_gam_points_redeemed for your code to listen on. WooCommerce rewards auto-generate a coupon. Wbcom Credits adds to a registered SDK ledger.', 'wb-gamification' ); ?>
 										<?php if ( ! $woo_active ) : ?>
-											<br><em><?php esc_html_e( 'WooCommerce is not active — coupon-based rewards are hidden.', 'wb-gamification' ); ?></em>
+											<br><em><?php esc_html_e( 'WooCommerce is not active - coupon-based rewards are hidden.', 'wb-gamification' ); ?></em>
 										<?php endif; ?>
 										<?php if ( ! $credits_active ) : ?>
-											<br><em><?php esc_html_e( 'Wbcom Credits SDK is not loaded by any active plugin — credit topup is hidden.', 'wb-gamification' ); ?></em>
+											<br><em><?php esc_html_e( 'Wbcom Credits SDK is not loaded by any active plugin - credit topup is hidden.', 'wb-gamification' ); ?></em>
 										<?php endif; ?>
 									</p>
 								</td>
@@ -516,7 +516,7 @@ final class RedemptionStorePage {
 								<tr>
 									<td><?php echo esc_html( $txn_when ? date_i18n( 'M j, Y · H:i', strtotime( $txn_when ) ) : '—' ); ?></td>
 									<td><?php echo esc_html( $txn_user_name ); ?></td>
-									<td><?php echo esc_html( (string) ( $txn['reward_title'] ?? __( '— deleted reward —', 'wb-gamification' ) ) ); ?></td>
+									<td><?php echo esc_html( (string) ( $txn['reward_title'] ?? __( '- deleted reward -', 'wb-gamification' ) ) ); ?></td>
 									<td><strong><?php echo esc_html( number_format_i18n( (int) $txn['points_cost'] ) ); ?></strong></td>
 									<td>
 										<?php if ( ! empty( $txn['coupon_code'] ) ) : ?>
@@ -537,7 +537,7 @@ final class RedemptionStorePage {
 				</div>
 				<?php else : ?>
 				<div class="wbgam-card-body">
-					<p class="wbgam-text-muted"><?php esc_html_e( 'No redemptions yet — when members spend points, their transactions appear here.', 'wb-gamification' ); ?></p>
+					<p class="wbgam-text-muted"><?php esc_html_e( 'No redemptions yet - when members spend points, their transactions appear here.', 'wb-gamification' ); ?></p>
 				</div>
 				<?php endif; ?>
 			</div>
