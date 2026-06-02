@@ -285,7 +285,7 @@ final class NotificationBridge {
 				// toasts instead of a meaningless "+N points (M actions)".
 				'action'  => $event->action_id,
 				'message' => sprintf(
-					/* translators: 1: signed integer (e.g. "+5"), 2: currency label ("points", "XP", "Coins"). */
+					/* translators: 1: signed point delta, 2: currency label. */
 					__( '+%1$d %2$s', 'wb-gamification' ),
 					$points,
 					$label
@@ -353,7 +353,7 @@ final class NotificationBridge {
 
 		$level_name = (string) ( $new_level['name'] ?? '' );
 		$message    = '' !== $level_name
-			/* translators: %s: new level name (e.g. "Champion"). */
+			/* translators: %s: new level name. */
 			? sprintf( __( 'You reached %s!', 'wb-gamification' ), $level_name )
 			: __( 'You leveled up!', 'wb-gamification' );
 
@@ -379,7 +379,7 @@ final class NotificationBridge {
 			$user_id,
 			array(
 				'type'    => 'streak_milestone',
-				/* translators: %d: number of consecutive days. */
+				/* translators: %d: streak day count. */
 				'message' => sprintf( _n( '%d-day streak!', '%d-day streak!', $streak_days, 'wb-gamification' ), $streak_days ),
 				'days'    => $streak_days,
 			)

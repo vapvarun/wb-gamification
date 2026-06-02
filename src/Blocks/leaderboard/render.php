@@ -203,7 +203,7 @@ BlockHooks::before( 'leaderboard', $wb_gam_attrs );
 						<span class="wb-gam-leaderboard__points-number">
 							<?php
 							printf(
-								/* translators: 1: formatted points number, 2: currency label (e.g. "Points", "Coins"). */
+								/* translators: 1: formatted amount, 2: currency label. */
 								esc_html__( '%1$s %2$s', 'wb-gamification' ),
 								esc_html( number_format_i18n( (int) ( $wb_gam_row['points'] ?? 0 ) ) ),
 								esc_html( $wb_gam_points_label )
@@ -227,7 +227,7 @@ BlockHooks::before( 'leaderboard', $wb_gam_attrs );
 					$wb_gam_badge_count = (int) \WBGam\Engine\BadgeEngine::count_user_badges( (int) ( $wb_gam_row['user_id'] ?? 0 ) );
 					?>
 					<span class="wb-gam-leaderboard__badges" aria-label="<?php
-						/* translators: %d: badges earned count. */
+						/* translators: %d: number of badges earned. */
 						echo esc_attr( sprintf( _n( '%d badge', '%d badges', max( 1, $wb_gam_badge_count ), 'wb-gamification' ), $wb_gam_badge_count ) );
 					?>" <?php echo $wb_gam_badge_count > 0 ? '' : 'hidden'; ?>>
 						<?php
@@ -267,7 +267,7 @@ BlockHooks::before( 'leaderboard', $wb_gam_attrs );
 					<span class="wb-gam-leaderboard__my-rank-points">
 						<?php
 						printf(
-							/* translators: 1: formatted points total, 2: currency label. */
+							/* translators: 1: formatted amount, 2: currency label. */
 							esc_html__( '%1$s %2$s', 'wb-gamification' ),
 							esc_html( number_format_i18n( (int) ( $wb_gam_my_rank['points'] ?? 0 ) ) ),
 							esc_html( $wb_gam_points_label )

@@ -560,7 +560,7 @@ BlockHooks::before( 'hub', $wb_gam_attrs );
 									$wb_gam_to_label = isset( $wb_gam_rule['to']['label'] ) ? (string) $wb_gam_rule['to']['label'] : (string) $wb_gam_rule['to_type'];
 									$wb_gam_fr_label = isset( $wb_gam_rule['from']['label'] ) ? (string) $wb_gam_rule['from']['label'] : (string) $wb_gam_rule['from_type'];
 									printf(
-										/* translators: 1: source amount, 2: source label, 3: destination amount, 4: destination label */
+										/* translators: 1: source amount, 2: source label, 3: destination amount, 4: destination label. */
 										esc_html__( '%1$d %2$s = %3$d %4$s', 'wb-gamification' ),
 										(int) $wb_gam_rule['from_amount'],
 										esc_html( $wb_gam_fr_label ),

@@ -1423,7 +1423,7 @@ final class SettingsPage {
 				__( 'Badges Earned', 'wb-gamification' ),
 				number_format_i18n( $stats['badges_earned'] ),
 				sprintf(
-					/* translators: %s = badge earner percentage */
+					/* translators: %s: percentage of active members. */
 					__( '%s%% of active members', 'wb-gamification' ),
 					$stats['badge_earner_pct']
 				),
@@ -1433,7 +1433,7 @@ final class SettingsPage {
 				__( 'Challenges Completed', 'wb-gamification' ),
 				number_format_i18n( $stats['challenges_completed'] ),
 				sprintf(
-					/* translators: %s = completion rate percentage */
+					/* translators: %s: completion rate percentage. */
 					__( '%s%% completion rate', 'wb-gamification' ),
 					$stats['challenge_completion_pct']
 				),
@@ -1443,7 +1443,7 @@ final class SettingsPage {
 				__( 'Active Streaks', 'wb-gamification' ),
 				number_format_i18n( $stats['active_streaks'] ),
 				sprintf(
-					/* translators: %s = streak health percentage */
+					/* translators: %s: streak health percentage. */
 					__( '%s%% streak health', 'wb-gamification' ),
 					$stats['streak_health_pct']
 				),
@@ -1584,7 +1584,7 @@ final class SettingsPage {
 								<span class="wbgam-kudos-feed__time">
 									<?php
 									printf(
-										/* translators: %s: human-readable time difference, e.g. "3 hours" */
+										/* translators: %s: human-readable time difference. */
 										esc_html__( '%s ago', 'wb-gamification' ),
 										esc_html( human_time_diff( strtotime( (string) $kudo['created_at'] ), current_time( 'timestamp' ) ) )
 									);

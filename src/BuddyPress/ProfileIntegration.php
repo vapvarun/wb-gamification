@@ -195,7 +195,7 @@ final class ProfileIntegration {
 			<span class="wb-gam-points-count">
 				<?php
 				printf(
-					/* translators: 1: amount, 2: currency label. */
+					/* translators: 1: formatted amount, 2: currency label. */
 					esc_html__( '%1$s %2$s', 'wb-gamification' ),
 					esc_html( number_format_i18n( $points ) ),
 					esc_html( $points_label )

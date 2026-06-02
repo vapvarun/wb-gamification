@@ -132,14 +132,14 @@ $wb_gam_format_deadline = static function ( string $iso ): string {
 	}
 	if ( $delta < DAY_IN_SECONDS ) {
 		return sprintf(
-			/* translators: %s: human-readable time difference (e.g. "5 hours") */
+			/* translators: %s: human-readable time difference. */
 			__( 'Ends in %s', 'wb-gamification' ),
 			human_time_diff( time(), $ts )
 		);
 	}
 	if ( $delta < WEEK_IN_SECONDS ) {
 		return sprintf(
-			/* translators: %s: human-readable time difference (e.g. "3 days") */
+			/* translators: %s: human-readable time difference. */
 			__( 'Ends in %s', 'wb-gamification' ),
 			human_time_diff( time(), $ts )
 		);
@@ -217,7 +217,7 @@ BlockHooks::before( 'challenges', $wb_gam_attrs );
 						<span class="wb-gam-challenges__progress-text">
 							<?php
 							printf(
-								/* translators: 1: current progress, 2: target */
+								/* translators: 1: current count, 2: total count. */
 								esc_html__( '%1$d / %2$d', 'wb-gamification' ),
 								(int) $wb_gam_progress,
 								(int) $wb_gam_target
@@ -228,7 +228,7 @@ BlockHooks::before( 'challenges', $wb_gam_attrs );
 							<span class="wb-gam-challenges__bonus">
 								<?php echo \WBGam\Admin\Icon::svg( 'sparkles', array( 'size' => 12 ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 								<?php
-								/* translators: %d: bonus points */
+								/* translators: %d: bonus points. */
 								printf( esc_html__( '+%d pts', 'wb-gamification' ), (int) $wb_gam_ch['bonus_points'] );
 								?>
 							</span>

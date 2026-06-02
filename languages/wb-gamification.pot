@@ -2,22 +2,22 @@
 # This file is distributed under the GPL-2.0+.
 msgid ""
 msgstr ""
-"Project-Id-Version: WB Gamification 1.5.2\n"
+"Project-Id-Version: WB Gamification 1.5.3\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/wb-gamification\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-06-01T18:48:19+00:00\n"
+"POT-Creation-Date: 2026-06-02T09:34:08+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: wb-gamification\n"
 
 #. Plugin Name of the plugin
 #: wb-gamification.php
-#: src/Admin/SettingsPage.php:63
-#: src/Admin/SettingsPage.php:703
+#: src/Admin/SettingsPage.php:64
+#: src/Admin/SettingsPage.php:769
 #: src/Engine/Privacy.php:135
 #: src/Engine/Privacy.php:149
 msgid "WB Gamification"
@@ -193,7 +193,7 @@ msgid "90 days"
 msgstr ""
 
 #: src/Admin/AnalyticsDashboard.php:150
-#: src/Admin/SettingsPage.php:1285
+#: src/Admin/SettingsPage.php:1407
 msgid "Points Awarded"
 msgstr ""
 
@@ -205,59 +205,56 @@ msgid "Last %d days"
 msgstr ""
 
 #: src/Admin/AnalyticsDashboard.php:160
-#: src/Admin/SettingsPage.php:1291
+#: src/Admin/SettingsPage.php:1413
 msgid "Active Members"
 msgstr ""
 
 #. translators: %d = total member count
 #: src/Admin/AnalyticsDashboard.php:164
-#: src/Admin/SettingsPage.php:1295
+#: src/Admin/SettingsPage.php:1417
 #, php-format
 msgid "%d total members"
 msgstr ""
 
 #: src/Admin/AnalyticsDashboard.php:170
-#: src/Admin/SettingsPage.php:1301
+#: src/Admin/SettingsPage.php:1423
 #: src/Blocks/hub/render.php:426
 msgid "Badges Earned"
 msgstr ""
 
-#. translators: %s = % of members who have earned any badge
-#. translators: %s = badge earner percentage
+#. translators: %s: percentage of active members.
 #: src/Admin/AnalyticsDashboard.php:174
-#: src/Admin/SettingsPage.php:1305
+#: src/Admin/SettingsPage.php:1427
 #, php-format
 msgid "%s%% of active members"
 msgstr ""
 
 #: src/Admin/AnalyticsDashboard.php:180
-#: src/Admin/SettingsPage.php:1311
+#: src/Admin/SettingsPage.php:1433
 msgid "Challenges Completed"
 msgstr ""
 
-#. translators: %s = % completion rate
-#. translators: %s = completion rate percentage
+#. translators: %s: completion rate percentage.
 #: src/Admin/AnalyticsDashboard.php:184
-#: src/Admin/SettingsPage.php:1315
+#: src/Admin/SettingsPage.php:1437
 #, php-format
 msgid "%s%% completion rate"
 msgstr ""
 
 #: src/Admin/AnalyticsDashboard.php:190
-#: src/Admin/SettingsPage.php:1321
+#: src/Admin/SettingsPage.php:1443
 msgid "Active Streaks"
 msgstr ""
 
-#. translators: %s = % of members with active streak
-#. translators: %s = streak health percentage
+#. translators: %s: streak health percentage.
 #: src/Admin/AnalyticsDashboard.php:194
-#: src/Admin/SettingsPage.php:1325
+#: src/Admin/SettingsPage.php:1447
 #, php-format
 msgid "%s%% streak health"
 msgstr ""
 
 #: src/Admin/AnalyticsDashboard.php:200
-#: src/Admin/SettingsPage.php:1331
+#: src/Admin/SettingsPage.php:1453
 msgid "Kudos Given"
 msgstr ""
 
@@ -277,12 +274,12 @@ msgstr ""
 #: src/Admin/ChallengeManagerPage.php:286
 #: src/Admin/CommunityChallengesPage.php:251
 #: src/Admin/CommunityChallengesPage.php:322
-#: src/Admin/SettingsPage.php:966
-#: src/Admin/SettingsPage.php:1634
+#: src/Admin/SettingsPage.php:1059
+#: src/Admin/SettingsPage.php:1756
 #: src/Admin/SubmissionsPage.php:141
 #: src/Engine/Privacy.php:218
-#: src/Engine/Privacy.php:387
-#: src/Engine/Privacy.php:440
+#: src/Engine/Privacy.php:388
+#: src/Engine/Privacy.php:441
 msgid "Action"
 msgstr ""
 
@@ -304,16 +301,17 @@ msgid "Top Earners - Last %d Days"
 msgstr ""
 
 #: src/Admin/AnalyticsDashboard.php:266
-#: src/Admin/SettingsPage.php:742
-#: src/Admin/SettingsPage.php:895
+#: src/Admin/MembersPage.php:92
+#: src/Admin/SettingsPage.php:808
+#: src/Admin/SettingsPage.php:988
 #: src/Blocks/daily-bonus/render.php:93
 #: src/Blocks/member-points/render.php:120
 #: src/BuddyPress/ProfileIntegration.php:75
 #: src/CLI/EmailCommand.php:64
 #: src/CLI/MemberCommand.php:66
 #: src/Engine/Privacy.php:222
-#: src/Engine/ProfilePage.php:120
-#: src/Engine/ProfilePage.php:257
+#: src/Engine/ProfilePage.php:124
+#: src/Engine/ProfilePage.php:261
 #: src/Engine/TransactionalEmailEngine.php:168
 #: src/Engine/TransactionalEmailEngine.php:270
 #: src/Engine/WeeklyEmailEngine.php:292
@@ -323,6 +321,7 @@ msgstr ""
 #: src/Admin/AnalyticsDashboard.php:271
 #: src/Admin/AnalyticsDashboard.php:594
 #: src/Admin/AnalyticsDashboard.php:641
+#: src/Admin/MembersPage.php:91
 #: src/Admin/RedemptionStorePage.php:488
 #: src/Admin/SubmissionsPage.php:140
 #: src/CLI/EmailCommand.php:84
@@ -409,11 +408,9 @@ msgstr ""
 msgid "Did you mean?"
 msgstr ""
 
-#. translators: %s: human-readable time difference
-#. translators: %s: human-readable time difference, e.g. "3 hours"
-#. translators: %s: human time difference (e.g. "5 minutes")
+#. translators: %s: human-readable time difference.
 #: src/Admin/AnalyticsDashboard.php:722
-#: src/Admin/SettingsPage.php:1466
+#: src/Admin/SettingsPage.php:1588
 #: src/Blocks/badge-showcase/render.php:177
 #: src/Blocks/points-history/render.php:231
 #, php-format
@@ -436,7 +433,7 @@ msgstr ""
 #: src/Admin/ApiKeysPage.php:239
 #: src/Admin/RedemptionStorePage.php:334
 #: src/Admin/RedemptionStorePage.php:419
-#: src/Admin/SettingsPage.php:2047
+#: src/Admin/SettingsPage.php:2426
 #: src/Admin/WebhooksAdminPage.php:258
 #: src/Admin/WebhooksAdminPage.php:277
 msgid "Active"
@@ -459,9 +456,9 @@ msgstr ""
 #: src/Admin/PointTypeConversionsPage.php:218
 #: src/Admin/PointTypesPage.php:175
 #: src/Admin/RedemptionStorePage.php:438
-#: src/Admin/SettingsPage.php:503
-#: src/Admin/SettingsPage.php:1540
-#: src/Admin/SettingsPage.php:1666
+#: src/Admin/SettingsPage.php:519
+#: src/Admin/SettingsPage.php:1662
+#: src/Admin/SettingsPage.php:1788
 #: src/Admin/WebhooksAdminPage.php:295
 msgid "Delete"
 msgstr ""
@@ -509,7 +506,7 @@ msgstr ""
 #: src/Admin/ApiKeysPage.php:105
 #: src/Admin/ApiKeysPage.php:106
 #: src/Admin/ApiKeysPage.php:125
-#: src/Admin/SettingsPage.php:789
+#: src/Admin/SettingsPage.php:855
 msgid "API Keys"
 msgstr ""
 
@@ -573,8 +570,8 @@ msgid "Copy it now - it will not be shown again."
 msgstr ""
 
 #: src/Admin/ApiKeysPage.php:175
-#: src/Admin/SettingsPage.php:1187
-#: src/Admin/SettingsPage.php:1257
+#: src/Admin/SettingsPage.php:1309
+#: src/Admin/SettingsPage.php:1379
 #: src/Blocks/redemption-store/render.php:335
 msgid "Dismiss"
 msgstr ""
@@ -596,7 +593,7 @@ msgstr ""
 
 #: src/Admin/ApiKeysPage.php:196
 #: src/Admin/ApiKeysPage.php:218
-#: src/Engine/Privacy.php:456
+#: src/Engine/Privacy.php:457
 msgid "Site ID"
 msgstr ""
 
@@ -628,17 +625,19 @@ msgstr ""
 #: src/Admin/ApiKeysPage.php:222
 #: src/Admin/ChallengeManagerPage.php:289
 #: src/Admin/CommunityChallengesPage.php:325
+#: src/Admin/MembersPage.php:95
 #: src/Admin/RedemptionStorePage.php:330
 #: src/Admin/RedemptionStorePage.php:373
 #: src/Admin/RedemptionStorePage.php:492
-#: src/Admin/SettingsPage.php:2037
-#: src/Engine/Privacy.php:399
+#: src/Admin/SettingsPage.php:2416
+#: src/Engine/Privacy.php:400
 msgid "Status"
 msgstr ""
 
 #: src/Admin/ApiKeysPage.php:223
 #: src/Admin/ChallengeManagerPage.php:291
 #: src/Admin/CommunityChallengesPage.php:327
+#: src/Admin/MembersPage.php:96
 #: src/Admin/PointTypeConversionsPage.php:164
 #: src/Admin/PointTypesPage.php:128
 #: src/Admin/RedemptionStorePage.php:374
@@ -680,7 +679,8 @@ msgid "Badge Library"
 msgstr ""
 
 #: src/Admin/BadgeAdminPage.php:114
-#: src/Admin/SettingsPage.php:759
+#: src/Admin/MembersPage.php:94
+#: src/Admin/SettingsPage.php:825
 #: src/Blocks/year-recap/render.php:206
 #: src/BuddyPress/ProfileIntegration.php:74
 #: src/Blocks/user-status-bar/edit.js:79
@@ -745,7 +745,7 @@ msgstr ""
 #: src/Admin/PointTypesPage.php:125
 #: src/Admin/PointTypesPage.php:219
 #: src/Admin/RedemptionStorePage.php:222
-#: src/Admin/SettingsPage.php:2038
+#: src/Admin/SettingsPage.php:2417
 #: src/Engine/Privacy.php:260
 msgid "Description"
 msgstr ""
@@ -871,8 +871,8 @@ msgid "Create Badge"
 msgstr ""
 
 #: src/Admin/BadgeAdminPage.php:411
-#: src/Admin/SettingsPage.php:1111
-#: src/Admin/SettingsPage.php:1801
+#: src/Admin/SettingsPage.php:1233
+#: src/Admin/SettingsPage.php:1923
 msgid "Save Changes"
 msgstr ""
 
@@ -910,7 +910,7 @@ msgstr ""
 
 #: src/Admin/BadgeAdminPage.php:472
 #: src/Admin/ManualAwardPage.php:199
-#: src/Admin/ManualAwardPage.php:314
+#: src/Admin/ManualAwardPage.php:358
 msgid "User"
 msgstr ""
 
@@ -966,9 +966,10 @@ msgstr ""
 
 #: src/Admin/ChallengeManagerPage.php:106
 #: src/Admin/ChallengeManagerPage.php:107
-#: src/Admin/SettingsPage.php:755
+#: src/Admin/SettingsPage.php:821
 #: src/Blocks/hub/render.php:326
 #: src/Blocks/year-recap/render.php:202
+#: src/Engine/ModuleToggles.php:89
 msgid "Challenges"
 msgstr ""
 
@@ -1127,7 +1128,7 @@ msgid "Failed to save cohort settings."
 msgstr ""
 
 #: src/Admin/CohortSettingsPage.php:152
-#: src/Admin/SettingsPage.php:767
+#: src/Admin/SettingsPage.php:833
 msgid "Cohort Leagues"
 msgstr ""
 
@@ -1377,12 +1378,13 @@ msgstr ""
 #: src/Admin/ManualAwardPage.php:96
 #: src/Admin/ManualAwardPage.php:139
 #: src/Admin/ManualAwardPage.php:299
-#: src/Admin/SettingsPage.php:1346
+#: src/Admin/SettingsPage.php:1468
 msgid "Award Points"
 msgstr ""
 
 #: src/Admin/ManualAwardPage.php:112
-#: src/Admin/SettingsPage.php:680
+#: src/Admin/MembersPage.php:125
+#: src/Admin/SettingsPage.php:746
 #: src/Admin/SetupWizard.php:435
 msgid "You do not have permission to access this page."
 msgstr ""
@@ -1434,8 +1436,8 @@ msgid "Select the member who will receive (or lose) points."
 msgstr ""
 
 #: src/Admin/ManualAwardPage.php:217
-#: src/Admin/ManualAwardPage.php:315
-#: src/Admin/SettingsPage.php:967
+#: src/Admin/ManualAwardPage.php:359
+#: src/Admin/SettingsPage.php:1060
 msgid "Amount"
 msgstr ""
 
@@ -1446,10 +1448,10 @@ msgid "Positive to award, negative to deduct. Max ±%d per action."
 msgstr ""
 
 #: src/Admin/ManualAwardPage.php:243
-#: src/Admin/ManualAwardPage.php:316
-#: src/Admin/SettingsPage.php:969
+#: src/Admin/ManualAwardPage.php:360
+#: src/Admin/SettingsPage.php:1062
 #: src/Engine/Privacy.php:226
-#: src/Engine/Privacy.php:452
+#: src/Engine/Privacy.php:453
 msgid "Currency"
 msgstr ""
 
@@ -1475,26 +1477,151 @@ msgstr ""
 msgid "Optional. Visible in the award history below and stored as user meta."
 msgstr ""
 
+#: src/Admin/ManualAwardPage.php:307
+msgid "Bulk Award"
+msgstr ""
+
 #: src/Admin/ManualAwardPage.php:308
+msgid "Award the same points to every member of a role, or to all members at once. Accounts excluded in Settings > Access are skipped automatically. For very large communities, prefer WP-CLI."
+msgstr ""
+
+#: src/Admin/ManualAwardPage.php:315
+msgid "Bulk award queued."
+msgstr ""
+
+#: src/Admin/ManualAwardPage.php:316
+msgid "Bulk award failed."
+msgstr ""
+
+#: src/Admin/ManualAwardPage.php:322
+msgid "Award to"
+msgstr ""
+
+#: src/Admin/ManualAwardPage.php:326
+msgid "All members"
+msgstr ""
+
+#: src/Admin/ManualAwardPage.php:335
+msgid "Points each"
+msgstr ""
+
+#: src/Admin/ManualAwardPage.php:339
+msgid "Positive only. Bulk deduction is not supported here - use the single award above for negative adjustments."
+msgstr ""
+
+#: src/Admin/ManualAwardPage.php:343
+msgid "Bulk Award Points"
+msgstr ""
+
+#: src/Admin/ManualAwardPage.php:352
 msgid "Recent Manual Awards"
 msgstr ""
 
-#: src/Admin/ManualAwardPage.php:317
+#: src/Admin/ManualAwardPage.php:361
 msgid "Note"
 msgstr ""
 
-#: src/Admin/ManualAwardPage.php:318
+#: src/Admin/ManualAwardPage.php:362
 #: src/Engine/Privacy.php:230
-#: src/Engine/Privacy.php:460
+#: src/Engine/Privacy.php:461
 msgid "Date"
 msgstr ""
 
-#: src/Admin/ManualAwardPage.php:356
+#: src/Admin/ManualAwardPage.php:400
 msgid "No manual awards yet"
 msgstr ""
 
-#: src/Admin/ManualAwardPage.php:357
+#: src/Admin/ManualAwardPage.php:401
 msgid "Use the form above to grant or deduct points from any member."
+msgstr ""
+
+#: src/Admin/MembersPage.php:43
+#: src/Admin/MembersPage.php:44
+#: src/Admin/MembersPage.php:132
+msgid "Members"
+msgstr ""
+
+#: src/Admin/MembersPage.php:90
+msgid "Search members by name, username, or email"
+msgstr ""
+
+#: src/Admin/MembersPage.php:93
+#: src/Blocks/user-status-bar/edit.js:74
+msgid "Level"
+msgstr ""
+
+#: src/Admin/MembersPage.php:97
+msgid "Earning"
+msgstr ""
+
+#: src/Admin/MembersPage.php:98
+msgid "Excluded"
+msgstr ""
+
+#: src/Admin/MembersPage.php:99
+msgid "Exclude"
+msgstr ""
+
+#: src/Admin/MembersPage.php:100
+msgid "Include"
+msgstr ""
+
+#: src/Admin/MembersPage.php:101
+msgid "Reset points"
+msgstr ""
+
+#: src/Admin/MembersPage.php:102
+msgid "Award"
+msgstr ""
+
+#: src/Admin/MembersPage.php:103
+msgid "Reset this member's points to zero? Their ledger keeps a full audit trail."
+msgstr ""
+
+#: src/Admin/MembersPage.php:104
+msgid "Loading members..."
+msgstr ""
+
+#: src/Admin/MembersPage.php:105
+msgid "No members found."
+msgstr ""
+
+#: src/Admin/MembersPage.php:106
+msgid "Could not load members."
+msgstr ""
+
+#: src/Admin/MembersPage.php:107
+msgid "Previous"
+msgstr ""
+
+#: src/Admin/MembersPage.php:108
+msgid "Next"
+msgstr ""
+
+#. translators: 1: current page, 2: total pages
+#: src/Admin/MembersPage.php:110
+#, php-format
+msgid "Page %1$d of %2$d"
+msgstr ""
+
+#: src/Admin/MembersPage.php:111
+msgid "Member excluded from earning."
+msgstr ""
+
+#: src/Admin/MembersPage.php:112
+msgid "Member can earn again."
+msgstr ""
+
+#: src/Admin/MembersPage.php:113
+msgid "Points reset."
+msgstr ""
+
+#: src/Admin/MembersPage.php:114
+msgid "Action failed."
+msgstr ""
+
+#: src/Admin/MembersPage.php:133
+msgid "Find any member to see their points, level, and badges, and to award, reset, or exclude them from earning. For points ranking, see the Leaderboard."
 msgstr ""
 
 #: src/Admin/PointTypeConversionsPage.php:72
@@ -1556,12 +1683,11 @@ msgstr ""
 
 #: src/Admin/PointTypeConversionsPage.php:163
 #: src/Admin/PointTypeConversionsPage.php:283
-#: src/Admin/SettingsPage.php:973
+#: src/Admin/SettingsPage.php:1066
 msgid "Daily cap"
 msgstr ""
 
 #. translators: 1: source amount, 2: source label, 3: destination amount, 4: destination label.
-#. translators: 1: source amount, 2: source label, 3: destination amount, 4: destination label
 #: src/Admin/PointTypeConversionsPage.php:179
 #: src/Blocks/hub/render.php:564
 #, php-format
@@ -1651,7 +1777,7 @@ msgid "Max conversions per user per day for this pair. 0 = unlimited (recommende
 msgstr ""
 
 #: src/Admin/PointTypeConversionsPage.php:292
-#: src/Admin/SettingsPage.php:1745
+#: src/Admin/SettingsPage.php:1867
 msgid "Add Rule"
 msgstr ""
 
@@ -1918,7 +2044,7 @@ msgstr ""
 
 #: src/Admin/RedemptionStorePage.php:337
 #: src/Admin/RedemptionStorePage.php:419
-#: src/Admin/SettingsPage.php:2049
+#: src/Admin/SettingsPage.php:2428
 msgid "Inactive"
 msgstr ""
 
@@ -2040,771 +2166,963 @@ msgstr ""
 msgid "No redemptions yet - when members spend points, their transactions appear here."
 msgstr ""
 
-#: src/Admin/SettingsPage.php:64
+#: src/Admin/SettingsPage.php:65
 #: src/Engine/Installer.php:586
 msgid "Gamification"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:205
+#: src/Admin/SettingsPage.php:212
 msgid "Run the Setup Wizard"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:206
+#: src/Admin/SettingsPage.php:213
 msgid "Pick a starter template so points + leaderboard are pre-configured for your community."
 msgstr ""
 
-#: src/Admin/SettingsPage.php:209
+#: src/Admin/SettingsPage.php:216
 msgid "Run wizard"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:212
+#: src/Admin/SettingsPage.php:219
 msgid "Define your levels"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:213
+#: src/Admin/SettingsPage.php:220
 msgid "Levels turn point thresholds into named milestones (e.g. Newcomer → Regular → Expert)."
 msgstr ""
 
-#: src/Admin/SettingsPage.php:216
+#: src/Admin/SettingsPage.php:223
 msgid "Add levels"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:219
+#: src/Admin/SettingsPage.php:226
 msgid "Build your badge library"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:220
+#: src/Admin/SettingsPage.php:227
 msgid "Badges are the visible rewards - earned on milestones, streaks, or specific actions."
 msgstr ""
 
-#: src/Admin/SettingsPage.php:223
+#: src/Admin/SettingsPage.php:230
 msgid "Add badges"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:226
+#: src/Admin/SettingsPage.php:233
 msgid "Place the Hub block on a page"
 msgstr ""
 
 #. translators: %s: relative URL to the hub page
-#: src/Admin/SettingsPage.php:230
+#: src/Admin/SettingsPage.php:237
 #, php-format
 msgid "Auto-created at %s. Edit the page to customize the layout."
 msgstr ""
 
-#: src/Admin/SettingsPage.php:233
+#: src/Admin/SettingsPage.php:240
 msgid "Auto-creates on activation; if you deleted the page, place [wb_gam_hub] on any page."
 msgstr ""
 
-#: src/Admin/SettingsPage.php:236
-#: src/Admin/SettingsPage.php:1164
+#: src/Admin/SettingsPage.php:243
+#: src/Admin/SettingsPage.php:1286
 msgid "Edit Hub page"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:236
+#: src/Admin/SettingsPage.php:243
 msgid "Create page"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:239
+#: src/Admin/SettingsPage.php:246
 msgid "See points flow end-to-end"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:240
+#: src/Admin/SettingsPage.php:247
 msgid "Click \"Send a test event\" above (or do a real action like publishing a post) to confirm the engine fires."
 msgstr ""
 
-#: src/Admin/SettingsPage.php:243
-#: src/Admin/SettingsPage.php:618
+#: src/Admin/SettingsPage.php:250
+#: src/Admin/SettingsPage.php:684
 msgid "Open Hub"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:329
-#: src/Admin/SettingsPage.php:572
-#: src/Admin/SettingsPage.php:808
+#: src/Admin/SettingsPage.php:345
+#: src/Admin/SettingsPage.php:638
+#: src/Admin/SettingsPage.php:886
 msgid "Settings saved."
 msgstr ""
 
-#: src/Admin/SettingsPage.php:361
+#: src/Admin/SettingsPage.php:377
 msgid "Realtime settings saved."
 msgstr ""
 
-#: src/Admin/SettingsPage.php:377
+#: src/Admin/SettingsPage.php:393
 msgid "Kudos settings saved."
 msgstr ""
 
-#: src/Admin/SettingsPage.php:499
-#: src/Admin/SettingsPage.php:1517
+#: src/Admin/SettingsPage.php:515
+#: src/Admin/SettingsPage.php:1639
 msgid "Level name"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:500
-#: src/Admin/SettingsPage.php:1526
+#: src/Admin/SettingsPage.php:516
+#: src/Admin/SettingsPage.php:1648
 msgid "Level minimum points"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:501
-#: src/Admin/SettingsPage.php:1530
+#: src/Admin/SettingsPage.php:517
+#: src/Admin/SettingsPage.php:1652
 msgid "Starting level is always 0"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:502
-#: src/Admin/SettingsPage.php:1543
+#: src/Admin/SettingsPage.php:518
+#: src/Admin/SettingsPage.php:1665
 msgid "Starting level"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:504
+#: src/Admin/SettingsPage.php:520
 msgid "Levels saved."
 msgstr ""
 
-#: src/Admin/SettingsPage.php:505
+#: src/Admin/SettingsPage.php:521
 msgid "Some levels failed to save."
 msgstr ""
 
-#: src/Admin/SettingsPage.php:506
+#: src/Admin/SettingsPage.php:522
 msgid "Level added."
 msgstr ""
 
-#: src/Admin/SettingsPage.php:507
+#: src/Admin/SettingsPage.php:523
 msgid "Failed to add level."
 msgstr ""
 
-#: src/Admin/SettingsPage.php:508
+#: src/Admin/SettingsPage.php:524
 msgid "Provide a name and points value."
 msgstr ""
 
-#: src/Admin/SettingsPage.php:509
+#: src/Admin/SettingsPage.php:525
 msgid "Level deleted."
 msgstr ""
 
-#: src/Admin/SettingsPage.php:510
+#: src/Admin/SettingsPage.php:526
 msgid "Failed to delete level."
 msgstr ""
 
-#: src/Admin/SettingsPage.php:511
+#: src/Admin/SettingsPage.php:527
 msgid "Delete this level?"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:512
+#: src/Admin/SettingsPage.php:528
 msgid "Failed to load levels."
 msgstr ""
 
+#: src/Admin/SettingsPage.php:564
+msgid "Preparing export..."
+msgstr ""
+
+#: src/Admin/SettingsPage.php:565
+msgid "Export failed."
+msgstr ""
+
+#: src/Admin/SettingsPage.php:566
+msgid "Import failed. Check that the file is a WB Gamification settings export."
+msgstr ""
+
+#: src/Admin/SettingsPage.php:567
+msgid "Import these settings? This overwrites the matching settings on this site."
+msgstr ""
+
+#. translators: 1: applied count, 2: skipped count
+#: src/Admin/SettingsPage.php:569
+#, php-format
+msgid "Imported %1$d settings (%2$d skipped). Reloading..."
+msgstr ""
+
+#: src/Admin/SettingsPage.php:570
+msgid "Choose an export file first."
+msgstr ""
+
+#: src/Admin/SettingsPage.php:571
+msgid "Rebuilding leaderboard..."
+msgstr ""
+
+#: src/Admin/SettingsPage.php:572
+msgid "Leaderboard rebuilt."
+msgstr ""
+
 #: src/Admin/SettingsPage.php:573
+msgid "Could not rebuild the leaderboard."
+msgstr ""
+
+#: src/Admin/SettingsPage.php:574
+msgid "Permanently delete ALL member progress (points, badges, streaks, kudos, leaderboards)? Configuration is kept. This cannot be undone."
+msgstr ""
+
+#: src/Admin/SettingsPage.php:575
+msgid "Resetting member progress..."
+msgstr ""
+
+#. translators: %d: number of data tables cleared
+#: src/Admin/SettingsPage.php:577
+#, php-format
+msgid "Member progress reset (%d tables cleared). Reloading..."
+msgstr ""
+
+#: src/Admin/SettingsPage.php:578
+msgid "Could not reset member progress."
+msgstr ""
+
+#: src/Admin/SettingsPage.php:639
 msgid "Failed to save settings."
 msgstr ""
 
-#: src/Admin/SettingsPage.php:616
+#: src/Admin/SettingsPage.php:682
 msgid "Awarding…"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:617
+#: src/Admin/SettingsPage.php:683
 msgid "Test event sent. Visit your Hub to see the welcome toast."
 msgstr ""
 
-#: src/Admin/SettingsPage.php:619
+#: src/Admin/SettingsPage.php:685
 msgid "Could not send test event. Check the error log."
 msgstr ""
 
-#: src/Admin/SettingsPage.php:707
+#: src/Admin/SettingsPage.php:773
 msgid "Points, badges, levels, leaderboards, challenges and streaks - configure your community gamification engine."
 msgstr ""
 
-#: src/Admin/SettingsPage.php:723
+#: src/Admin/SettingsPage.php:789
 msgid "Run Setup Wizard"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:735
+#: src/Admin/SettingsPage.php:801
 msgid "Core"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:738
+#: src/Admin/SettingsPage.php:804
 msgid "Dashboard"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:746
+#: src/Admin/SettingsPage.php:812
 msgid "Levels"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:752
+#: src/Admin/SettingsPage.php:818
 msgid "Engagement"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:763
+#: src/Admin/SettingsPage.php:829
 #: src/Blocks/hub/render.php:246
 #: src/Blocks/kudos-feed/render.php:98
 #: src/BuddyPress/Stream/ActivityCard.php:54
+#: src/Engine/ModuleToggles.php:87
 msgid "Kudos"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:773
+#: src/Admin/SettingsPage.php:839
 msgid "Automation"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:776
+#: src/Admin/SettingsPage.php:842
 msgid "Rules"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:780
+#: src/Admin/SettingsPage.php:846
 msgid "Emails"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:786
+#: src/Admin/SettingsPage.php:852
 msgid "Advanced"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:793
+#: src/Admin/SettingsPage.php:859
+msgid "Access"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:863
 msgid "Realtime"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:797
+#: src/Admin/SettingsPage.php:867
 msgid "Integrations"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:880
+#: src/Admin/SettingsPage.php:871
+msgid "Modules"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:875
+msgid "Tools"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:973
 msgid "WordPress"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:881
+#: src/Admin/SettingsPage.php:974
 #: src/Admin/SetupWizard.php:374
 #: src/Admin/SetupWizard.php:419
 msgid "BuddyPress"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:882
+#: src/Admin/SettingsPage.php:975
 msgid "Commerce"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:883
+#: src/Admin/SettingsPage.php:976
 msgid "Learning"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:884
+#: src/Admin/SettingsPage.php:977
 msgid "Social"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:885
+#: src/Admin/SettingsPage.php:978
 msgid "General"
 msgstr ""
 
 #. translators: %s: default currency label (e.g. Points / XP).
-#: src/Admin/SettingsPage.php:914
+#: src/Admin/SettingsPage.php:1007
 #, php-format
 msgid "Configure %s values for each action."
 msgstr ""
 
-#: src/Admin/SettingsPage.php:921
+#: src/Admin/SettingsPage.php:1014
 msgid "No gamification actions are registered yet. Triggers load automatically once BuddyPress or other integrations are active."
 msgstr ""
 
 #. translators: %d = number of actions in category
-#: src/Admin/SettingsPage.php:953
+#: src/Admin/SettingsPage.php:1046
 #, php-format
 msgid "%d actions in this category."
 msgstr ""
 
-#: src/Admin/SettingsPage.php:965
+#: src/Admin/SettingsPage.php:1058
 msgid "On"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:971
+#: src/Admin/SettingsPage.php:1064
 msgid "Repeat"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:972
+#: src/Admin/SettingsPage.php:1065
 msgid "Cooldown (s)"
 msgstr ""
 
 #. translators: %s: gamification action label
-#: src/Admin/SettingsPage.php:996
+#: src/Admin/SettingsPage.php:1089
 #, php-format
 msgid "Enable %s"
 msgstr ""
 
 #. translators: %s: gamification action label
-#: src/Admin/SettingsPage.php:1014
+#: src/Admin/SettingsPage.php:1107
 #, php-format
 msgid "Amount for %s"
 msgstr ""
 
 #. translators: %s: gamification action label
-#: src/Admin/SettingsPage.php:1026
+#: src/Admin/SettingsPage.php:1119
 #, php-format
 msgid "Currency for %s"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:1038
+#: src/Admin/SettingsPage.php:1131
 #: src/Engine/Privacy.php:319
 #: src/Engine/Privacy.php:323
 msgid "Yes"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:1040
+#: src/Admin/SettingsPage.php:1133
 msgid "Once"
 msgstr ""
 
 #. translators: %s: action label
-#: src/Admin/SettingsPage.php:1054
+#: src/Admin/SettingsPage.php:1147
 #, php-format
 msgid "Cooldown in seconds for %s"
 msgstr ""
 
 #. translators: %s: action label
-#: src/Admin/SettingsPage.php:1067
+#: src/Admin/SettingsPage.php:1160
 #, php-format
 msgid "Daily cap for %s (0 = unlimited)"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:1083
+#: src/Admin/SettingsPage.php:1176
 msgid "LOG RETENTION"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:1084
+#: src/Admin/SettingsPage.php:1177
 msgid "Control how long points history is stored."
 msgstr ""
 
-#: src/Admin/SettingsPage.php:1089
+#: src/Admin/SettingsPage.php:1182
 msgid "Keep points history for"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:1100
+#: src/Admin/SettingsPage.php:1193
 msgid "months"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:1102
+#: src/Admin/SettingsPage.php:1195
 msgid "Older rows are pruned daily by WP-Cron. Events table is never pruned (source of truth)."
 msgstr ""
 
-#: src/Admin/SettingsPage.php:1140
+#: src/Admin/SettingsPage.php:1205
+msgid "Point expiry"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:1206
+msgid "Optionally decay the balance of members who stop earning, to nudge re-engagement. Off by default. When on, a daily job reduces the primary-currency balance of any member with no points activity for the chosen number of days - applied once per inactive streak, then they must earn again."
+msgstr ""
+
+#: src/Admin/SettingsPage.php:1211
+msgid "Enable point expiry"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:1215
+msgid "Inactive for"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:1218
+#: src/Engine/NotificationBridge.php:505
+msgid "days"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:1222
+msgid "Decay amount"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:1225
+msgid "% of balance (100 = expire fully)"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:1262
 msgid "Setup complete - your Gamification Hub is ready"
 msgstr ""
 
 #. translators: %s: hub page URL.
-#: src/Admin/SettingsPage.php:1149
+#: src/Admin/SettingsPage.php:1271
 #, php-format
 msgid "A page was auto-created at <code>%s</code> with the full member hub. Share this link with your community - they can see their points, badges, level progress, leaderboard, and challenges all in one place."
 msgstr ""
 
-#: src/Admin/SettingsPage.php:1159
+#: src/Admin/SettingsPage.php:1281
 msgid "View Hub page"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:1184
+#: src/Admin/SettingsPage.php:1306
 msgid "Getting Started"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:1186
+#: src/Admin/SettingsPage.php:1308
 msgid "Re-run the Setup Wizard to pick a different starter template or change defaults."
 msgstr ""
 
-#: src/Admin/SettingsPage.php:1186
+#: src/Admin/SettingsPage.php:1308
 msgid "Re-run wizard"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:1191
+#: src/Admin/SettingsPage.php:1313
 msgid "Your gamification system is active! Points, badges, and levels will appear here as members interact with your site. Here are some next steps:"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:1200
+#: src/Admin/SettingsPage.php:1322
 msgid "Send a test event (award yourself 10 points)"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:1208
+#: src/Admin/SettingsPage.php:1330
 msgid "Visit your Hub (preview as member)"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:1213
+#: src/Admin/SettingsPage.php:1335
 msgid "Configure point values"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:1217
+#: src/Admin/SettingsPage.php:1339
 msgid "Add a currency (XP, Coins…)"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:1221
+#: src/Admin/SettingsPage.php:1343
 msgid "Create a challenge"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:1225
+#: src/Admin/SettingsPage.php:1347
 msgid "View badge library"
 msgstr ""
 
 #. translators: 1: completed step count, 2: total step count
-#: src/Admin/SettingsPage.php:1250
+#: src/Admin/SettingsPage.php:1372
 #, php-format
 msgid "Setup checklist (%1$d / %2$d)"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:1287
-#: src/Admin/SettingsPage.php:1333
+#: src/Admin/SettingsPage.php:1409
+#: src/Admin/SettingsPage.php:1455
 msgid "Last 30 days"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:1342
+#: src/Admin/SettingsPage.php:1464
 msgid "Full Analytics"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:1350
+#: src/Admin/SettingsPage.php:1472
 msgid "Configure Points"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:1371
+#: src/Admin/SettingsPage.php:1493
 msgid "Top members - last 30 days"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:1374
+#: src/Admin/SettingsPage.php:1496
 msgid "View all"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:1379
+#: src/Admin/SettingsPage.php:1501
 msgid "No earnings yet - points will appear here as members engage."
 msgstr ""
 
-#: src/Admin/SettingsPage.php:1408
+#: src/Admin/SettingsPage.php:1530
 msgid "Top actions - last 30 days"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:1411
+#: src/Admin/SettingsPage.php:1533
 msgid "Configure"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:1416
+#: src/Admin/SettingsPage.php:1538
 msgid "No actions logged yet."
 msgstr ""
 
-#: src/Admin/SettingsPage.php:1446
+#: src/Admin/SettingsPage.php:1568
 msgid "Recent kudos"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:1449
+#: src/Admin/SettingsPage.php:1571
 msgid "Manage kudos"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:1497
+#: src/Admin/SettingsPage.php:1619
 msgid "LEVELS"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:1498
+#: src/Admin/SettingsPage.php:1620
 msgid "Edit level names and minimum point thresholds. Members move up automatically when they cross a threshold."
 msgstr ""
 
-#: src/Admin/SettingsPage.php:1505
-#: src/Admin/SettingsPage.php:1569
+#: src/Admin/SettingsPage.php:1627
+#: src/Admin/SettingsPage.php:1691
 msgid "Level Name"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:1506
-#: src/Admin/SettingsPage.php:1573
+#: src/Admin/SettingsPage.php:1628
+#: src/Admin/SettingsPage.php:1695
 msgid "Min Points Required"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:1553
+#: src/Admin/SettingsPage.php:1675
 msgid "Save Levels"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:1562
+#: src/Admin/SettingsPage.php:1684
 msgid "ADD NEW LEVEL"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:1563
+#: src/Admin/SettingsPage.php:1685
 msgid "Create a new level threshold."
 msgstr ""
 
-#: src/Admin/SettingsPage.php:1570
+#: src/Admin/SettingsPage.php:1692
 msgid "e.g. Gold"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:1575
+#: src/Admin/SettingsPage.php:1697
 msgid "Members reach this level when their cumulative points cross this threshold."
 msgstr ""
 
-#: src/Admin/SettingsPage.php:1581
+#: src/Admin/SettingsPage.php:1703
 msgid "Add Level"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:1616
+#: src/Admin/SettingsPage.php:1738
 msgid "Add to BuddyPress group"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:1617
+#: src/Admin/SettingsPage.php:1739
 msgid "Send BuddyPress message"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:1618
+#: src/Admin/SettingsPage.php:1740
 msgid "Add WordPress role"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:1625
+#: src/Admin/SettingsPage.php:1747
 msgid "RANK AUTOMATION RULES"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:1626
+#: src/Admin/SettingsPage.php:1748
 msgid "Automatically trigger actions when a member reaches a level. One action per rule."
 msgstr ""
 
-#: src/Admin/SettingsPage.php:1633
+#: src/Admin/SettingsPage.php:1755
 msgid "When member reaches"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:1635
+#: src/Admin/SettingsPage.php:1757
 msgid "Parameters"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:1661
+#: src/Admin/SettingsPage.php:1783
 msgid "Delete this rule?"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:1676
+#: src/Admin/SettingsPage.php:1798
 msgid "No automation rules configured yet."
 msgstr ""
 
-#: src/Admin/SettingsPage.php:1683
+#: src/Admin/SettingsPage.php:1805
 msgid "ADD NEW RULE"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:1684
+#: src/Admin/SettingsPage.php:1806
 msgid "Add multiple rules for the same level to stack actions."
 msgstr ""
 
-#: src/Admin/SettingsPage.php:1693
+#: src/Admin/SettingsPage.php:1815
 msgid "When member reaches level"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:1696
+#: src/Admin/SettingsPage.php:1818
 msgid "-- select level --"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:1704
+#: src/Admin/SettingsPage.php:1826
 msgid "Perform action"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:1715
+#: src/Admin/SettingsPage.php:1837
 msgid "BuddyPress Group ID"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:1718
+#: src/Admin/SettingsPage.php:1840
 msgid "The numeric ID of the BP group to add the member to."
 msgstr ""
 
-#: src/Admin/SettingsPage.php:1722
+#: src/Admin/SettingsPage.php:1844
 msgid "Role slug"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:1725
+#: src/Admin/SettingsPage.php:1847
 msgid "WordPress role slug to add, e.g. \"contributor\" or \"editor\"."
 msgstr ""
 
-#: src/Admin/SettingsPage.php:1729
+#: src/Admin/SettingsPage.php:1851
 msgid "Message sender user ID"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:1732
+#: src/Admin/SettingsPage.php:1854
 msgid "User ID of the sender (usually the site admin, ID 1)."
 msgstr ""
 
-#: src/Admin/SettingsPage.php:1735
+#: src/Admin/SettingsPage.php:1857
 msgid "Message subject"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:1739
+#: src/Admin/SettingsPage.php:1861
 msgid "Message content"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:1770
+#: src/Admin/SettingsPage.php:1892
 msgid "KUDOS"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:1771
+#: src/Admin/SettingsPage.php:1893
 msgid "Configure peer-to-peer kudos recognition settings."
 msgstr ""
 
-#: src/Admin/SettingsPage.php:1776
+#: src/Admin/SettingsPage.php:1898
 msgid "Max kudos per day"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:1779
+#: src/Admin/SettingsPage.php:1901
 msgid "Maximum number of kudos a member can send per day. Prevents spam."
 msgstr ""
 
-#: src/Admin/SettingsPage.php:1783
+#: src/Admin/SettingsPage.php:1905
 msgid "Points per kudos received"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:1786
+#: src/Admin/SettingsPage.php:1908
 msgid "Points awarded to the member who receives kudos."
 msgstr ""
 
-#: src/Admin/SettingsPage.php:1790
+#: src/Admin/SettingsPage.php:1912
 msgid "Points per kudos given"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:1793
+#: src/Admin/SettingsPage.php:1915
 msgid "Points awarded to the member who sends kudos. Encourages giving recognition."
 msgstr ""
 
-#: src/Admin/SettingsPage.php:1824
+#: src/Admin/SettingsPage.php:2010
+msgid "Exclude from earning"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:2013
+msgid "Stop chosen roles or accounts from earning points, badges, levels, and streaks - useful for administrators, staff, support agents, and bots. Excluded members keep any points they already earned but stop accruing new ones and are hidden from leaderboards."
+msgstr ""
+
+#: src/Admin/SettingsPage.php:2017
+msgid "Excluded roles"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:2029
+msgid "Most communities exclude Administrator and any staff role so internal testing does not skew the leaderboard."
+msgstr ""
+
+#: src/Admin/SettingsPage.php:2038
+msgid "Excluded accounts"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:2041
+msgid "Exclude specific accounts regardless of role. Enter usernames, emails, or user IDs separated by commas or new lines."
+msgstr ""
+
+#: src/Admin/SettingsPage.php:2046
+msgid "Usernames, emails, or IDs"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:2052
+msgid "e.g. supportbot, qa@example.com, 42"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:2054
+msgid "Unrecognized entries are dropped on save. The saved list shows the resolved usernames."
+msgstr ""
+
+#: src/Admin/SettingsPage.php:2060
+msgid "Save Access Settings"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:2100
+msgid "Optional modules"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:2103
+msgid "Turn off engagement modules your community does not use. A disabled module is hidden from members (its blocks and shortcodes render nothing) and its admin page is removed. Nothing is deleted - re-enabling a module restores it exactly as it was. Points, badges, levels, and leaderboards are always on."
+msgstr ""
+
+#: src/Admin/SettingsPage.php:2121
+msgid "Save Modules"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:2136
+#: src/Admin/SettingsPage.php:2143
+msgid "Export settings"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:2139
+msgid "Download this site's gamification configuration as a JSON file - points values, enabled actions, currencies, levels config, kudos, automation rules, realtime, access exclusions, and the hub page mapping. Runtime data (caches, schema versions, snapshots) is excluded so the file is safe to import elsewhere."
+msgstr ""
+
+#: src/Admin/SettingsPage.php:2151
+#: src/Admin/SettingsPage.php:2161
+msgid "Import settings"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:2154
+msgid "Apply a settings file exported from another WB Gamification site. Matching settings are overwritten; your content (badges, members, point ledgers) is never touched."
+msgstr ""
+
+#: src/Admin/SettingsPage.php:2169
+msgid "Maintenance"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:2172
+msgid "Rebuild the leaderboard snapshot and clear its caches. Use this if the leaderboard looks stale after a manual award or import - it normally refreshes on a 5-minute cron."
+msgstr ""
+
+#: src/Admin/SettingsPage.php:2176
+msgid "Rebuild leaderboard"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:2184
+msgid "Reset member progress"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:2187
+msgid "Permanently delete all accumulated member progress - points, the event log, earned badges, streaks, kudos, league membership, challenge logs, redemptions, and submissions - so the community starts fresh. Your configuration is kept: badge definitions, levels, rules, challenges, point types, rewards, member privacy settings, webhooks, and all settings survive. This cannot be undone."
+msgstr ""
+
+#: src/Admin/SettingsPage.php:2191
+msgid "Reset all member progress"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:2203
 msgid "Bottom right (recommended)"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:1825
+#: src/Admin/SettingsPage.php:2204
 #: src/Blocks/user-status-bar/edit.js:54
 msgid "Bottom left"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:1826
+#: src/Admin/SettingsPage.php:2205
 #: src/Blocks/user-status-bar/edit.js:51
 msgid "Top right"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:1827
+#: src/Admin/SettingsPage.php:2206
 msgid "Top center"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:1832
+#: src/Admin/SettingsPage.php:2211
 msgid "Heartbeat (recommended)"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:1833
+#: src/Admin/SettingsPage.php:2212
 msgid "Shared WP Heartbeat polling. Polls every 15 seconds at rest and briefly speeds up to ~5 seconds right after the member does something, then eases back. Backgrounded tabs nearly suspend. Works everywhere and scales to large communities - no held server connections."
 msgstr ""
 
-#: src/Admin/SettingsPage.php:1836
+#: src/Admin/SettingsPage.php:2215
 msgid "Auto (SSE where allowed)"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:1837
+#: src/Admin/SettingsPage.php:2216
 msgid "Use Server-Sent Events if SSE is permitted on this host, otherwise Heartbeat. SSE stays OFF until you enable it (see SSE below) because it holds a PHP worker per connection."
 msgstr ""
 
-#: src/Admin/SettingsPage.php:1840
+#: src/Admin/SettingsPage.php:2219
 msgid "Server-Sent Events"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:1841
+#: src/Admin/SettingsPage.php:2220
 msgid "Sub-second streaming, but each connection pins a PHP worker for its lifetime - this does NOT scale on a standard PHP-FPM pool. Off by default: SSE only activates when a developer returns true from the wb_gam_sse_allowed filter on infrastructure built for long-lived streaming. Without that filter this falls back to Heartbeat."
 msgstr ""
 
-#: src/Admin/SettingsPage.php:1852
+#: src/Admin/SettingsPage.php:2231
 msgid "Realtime Transport"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:1855
+#: src/Admin/SettingsPage.php:2234
 msgid "Choose how members receive realtime notifications (kudos toasts, badge celebrations, leaderboard updates)."
 msgstr ""
 
 #. translators: %s: link to the realtime-transport doc
-#: src/Admin/SettingsPage.php:1877
+#: src/Admin/SettingsPage.php:2256
 #, php-format
 msgid "Host requirements + verification tips: %s"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:1878
+#: src/Admin/SettingsPage.php:2257
 msgid "Realtime Transport guide"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:1889
+#: src/Admin/SettingsPage.php:2268
 msgid "Notification placement"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:1892
+#: src/Admin/SettingsPage.php:2271
 msgid "Where reward toasts (points, badges, kudos) appear on screen. Bottom-right is recommended - it never overlaps your theme header or navigation. Choose a top position only if a chat or support widget already sits in the bottom corner."
 msgstr ""
 
-#: src/Admin/SettingsPage.php:1897
+#: src/Admin/SettingsPage.php:2276
 msgid "Toast position"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:1910
+#: src/Admin/SettingsPage.php:2289
 msgid "Save Realtime Settings"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:1928
+#: src/Admin/SettingsPage.php:2307
 #: src/BuddyPress/Stream/ActivityCard.php:53
 msgid "Level up"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:1929
+#: src/Admin/SettingsPage.php:2308
 msgid "Sent when a member reaches a new level."
 msgstr ""
 
-#: src/Admin/SettingsPage.php:1932
+#: src/Admin/SettingsPage.php:2311
 #: src/BuddyPress/Stream/ActivityCard.php:52
 msgid "Badge earned"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:1933
+#: src/Admin/SettingsPage.php:2312
 msgid "Sent when a member earns a badge."
 msgstr ""
 
-#: src/Admin/SettingsPage.php:1936
+#: src/Admin/SettingsPage.php:2315
 #: src/BuddyPress/Stream/ActivityCard.php:55
 msgid "Challenge completed"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:1937
+#: src/Admin/SettingsPage.php:2316
 msgid "Sent when a member finishes a challenge."
 msgstr ""
 
-#: src/Admin/SettingsPage.php:1940
+#: src/Admin/SettingsPage.php:2319
 msgid "Redemption confirmation"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:1941
+#: src/Admin/SettingsPage.php:2320
 msgid "Sent when a member redeems a reward - includes the points spent, remaining balance, and the generated coupon code (if any)."
 msgstr ""
 
-#: src/Admin/SettingsPage.php:1947
+#: src/Admin/SettingsPage.php:2326
 msgid "Transactional emails"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:1948
+#: src/Admin/SettingsPage.php:2327
 msgid "Toggle which gamification events trigger an email to the member. All emails respect each member's notification preference and use the theme template at YOUR-THEME/wb-gamification/emails/{slug}.php when present."
 msgstr ""
 
-#: src/Admin/SettingsPage.php:1954
+#: src/Admin/SettingsPage.php:2333
 msgid "Email settings saved."
 msgstr ""
 
-#: src/Admin/SettingsPage.php:1955
+#: src/Admin/SettingsPage.php:2334
 msgid "Could not save email settings."
 msgstr ""
 
-#: src/Admin/SettingsPage.php:1976
+#: src/Admin/SettingsPage.php:2355
 msgid "Save email settings"
 msgstr ""
 
 #. translators: %s: WP-CLI command
-#: src/Admin/SettingsPage.php:1983
+#: src/Admin/SettingsPage.php:2362
 #, php-format
 msgid "Test any template before enabling: %s"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:2003
+#: src/Admin/SettingsPage.php:2382
 msgid "Social points, badge notifications, profile display, and activity triggers."
 msgstr ""
 
-#: src/Admin/SettingsPage.php:2008
+#: src/Admin/SettingsPage.php:2387
 msgid "Points for purchases, reviews, and product interactions."
 msgstr ""
 
-#: src/Admin/SettingsPage.php:2013
+#: src/Admin/SettingsPage.php:2392
 msgid "Points for course completion, lesson progress, and quiz scores."
 msgstr ""
 
-#: src/Admin/SettingsPage.php:2018
+#: src/Admin/SettingsPage.php:2397
 msgid "Points for forum topics, replies, and helpful answers."
 msgstr ""
 
-#: src/Admin/SettingsPage.php:2023
+#: src/Admin/SettingsPage.php:2402
 msgid "Gamification widgets for Elementor page builder."
 msgstr ""
 
-#: src/Admin/SettingsPage.php:2029
+#: src/Admin/SettingsPage.php:2408
 msgid "INTEGRATION STATUS"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:2030
+#: src/Admin/SettingsPage.php:2409
 msgid "Integrations are auto-detected. Install and activate a plugin to enable its triggers."
 msgstr ""
 
-#: src/Admin/SettingsPage.php:2036
+#: src/Admin/SettingsPage.php:2415
 msgid "Plugin"
 msgstr ""
 
@@ -3084,12 +3402,12 @@ msgid "The text + optional URL the member submitted as proof."
 msgstr ""
 
 #: src/Admin/SubmissionsPage.php:142
-#: src/Engine/Privacy.php:391
+#: src/Engine/Privacy.php:392
 msgid "Evidence"
 msgstr ""
 
 #: src/Admin/SubmissionsPage.php:143
-#: src/Engine/Privacy.php:407
+#: src/Engine/Privacy.php:408
 msgid "Submitted"
 msgstr ""
 
@@ -3420,15 +3738,17 @@ msgstr ""
 
 #: src/API/BadgeShareController.php:235
 #: src/API/CredentialController.php:219
-#: src/API/MembersController.php:259
-#: src/API/MembersController.php:287
-#: src/API/MembersController.php:331
-#: src/API/MembersController.php:388
-#: src/API/MembersController.php:496
-#: src/API/MembersController.php:538
-#: src/API/MembersController.php:588
-#: src/API/MembersController.php:648
-#: src/API/PointsController.php:195
+#: src/API/MembersController.php:422
+#: src/API/MembersController.php:452
+#: src/API/MembersController.php:497
+#: src/API/MembersController.php:525
+#: src/API/MembersController.php:569
+#: src/API/MembersController.php:626
+#: src/API/MembersController.php:734
+#: src/API/MembersController.php:776
+#: src/API/MembersController.php:826
+#: src/API/MembersController.php:886
+#: src/API/PointsController.php:229
 #: src/API/RecapController.php:161
 #: src/API/RecapController.php:192
 msgid "Member not found."
@@ -3594,19 +3914,27 @@ msgstr ""
 msgid "Could not delete level."
 msgstr ""
 
-#: src/API/MembersController.php:265
+#: src/API/MembersController.php:333
+msgid "You do not have permission to manage members."
+msgstr ""
+
+#: src/API/MembersController.php:462
+msgid "Failed to reset points."
+msgstr ""
+
+#: src/API/MembersController.php:503
 msgid "This member's profile is not public."
 msgstr ""
 
-#: src/API/MembersController.php:293
+#: src/API/MembersController.php:531
 msgid "You do not have permission to view this member's activity history."
 msgstr ""
 
-#: src/API/MembersController.php:311
+#: src/API/MembersController.php:549
 msgid "You must be logged in to view toasts."
 msgstr ""
 
-#: src/API/MembersController.php:707
+#: src/API/MembersController.php:945
 #: src/Engine/HeartbeatChannel.php:196
 #: src/Engine/NotificationBridge.php:275
 #: src/Engine/TransactionalEmailEngine.php:331
@@ -3614,22 +3942,20 @@ msgid "points"
 msgstr ""
 
 #. translators: 1: signed point delta, 2: currency label.
-#. translators: 1: signed integer (e.g. "+5"), 2: currency label ("points", "XP", "Coins").
-#: src/API/MembersController.php:710
+#: src/API/MembersController.php:948
 #: src/Engine/NotificationBridge.php:289
 #, php-format
 msgid "+%1$d %2$s"
 msgstr ""
 
 #. translators: %s: new level name
-#: src/API/MembersController.php:731
+#: src/API/MembersController.php:969
 #, php-format
 msgid "Level up: %s"
 msgstr ""
 
-#. translators: %d: streak day count
-#. translators: %d: number of consecutive days.
-#: src/API/MembersController.php:739
+#. translators: %d: streak day count.
+#: src/API/MembersController.php:977
 #: src/Engine/NotificationBridge.php:383
 #, php-format
 msgid "%d-day streak!"
@@ -3637,34 +3963,42 @@ msgid_plural "%d-day streak!"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/API/PointsController.php:200
+#: src/API/PointsController.php:234
 msgid "Points must be non-zero (positive to award, negative to debit)."
 msgstr ""
 
 #. translators: %s: unknown point type slug submitted by the admin
-#: src/API/PointsController.php:220
+#: src/API/PointsController.php:254
 #, php-format
 msgid "Unknown point type \"%s\". Register the currency in Point Types before awarding."
 msgstr ""
 
-#: src/API/PointsController.php:237
+#: src/API/PointsController.php:271
 msgid "User does not have enough points to debit."
 msgstr ""
 
-#: src/API/PointsController.php:238
+#: src/API/PointsController.php:272
 msgid "Failed to debit points."
 msgstr ""
 
-#: src/API/PointsController.php:315
+#: src/API/PointsController.php:349
 msgid "Points row not found."
 msgstr ""
 
-#: src/API/PointsController.php:335
-#: src/API/PointsController.php:346
+#: src/API/PointsController.php:369
+#: src/API/PointsController.php:380
 msgid "Could not revoke points."
 msgstr ""
 
-#: src/API/PointsController.php:391
+#: src/API/PointsController.php:424
+msgid "Bulk award points must be positive."
+msgstr ""
+
+#: src/API/PointsController.php:431
+msgid "Unknown target role."
+msgstr ""
+
+#: src/API/PointsController.php:476
 msgid "You do not have permission to manage points."
 msgstr ""
 
@@ -3838,6 +4172,22 @@ msgstr ""
 msgid "You do not have permission to manage rules."
 msgstr ""
 
+#: src/API/ToolsController.php:117
+msgid "You do not have permission to manage settings."
+msgstr ""
+
+#: src/API/ToolsController.php:151
+msgid "Resetting member progress must be explicitly confirmed."
+msgstr ""
+
+#: src/API/ToolsController.php:177
+msgid "Import file is not a valid settings export."
+msgstr ""
+
+#: src/API/ToolsController.php:182
+msgid "Import file is not a valid WB Gamification settings export."
+msgstr ""
+
 #: src/API/WebhooksController.php:206
 #: src/API/WebhooksController.php:256
 #: src/API/WebhooksController.php:295
@@ -3862,8 +4212,7 @@ msgstr ""
 msgid "No badges to show yet - keep going!"
 msgstr ""
 
-#. translators: 1: earned count, 2: total count
-#. translators: 1: current progress, 2: target
+#. translators: 1: current count, 2: total count.
 #: src/Blocks/badge-showcase/render.php:200
 #: src/Blocks/challenges/render.php:221
 #, php-format
@@ -3899,8 +4248,7 @@ msgstr ""
 msgid "Ended"
 msgstr ""
 
-#. translators: %s: human-readable time difference (e.g. "5 hours")
-#. translators: %s: human-readable time difference (e.g. "3 days")
+#. translators: %s: human-readable time difference.
 #: src/Blocks/challenges/render.php:136
 #: src/Blocks/challenges/render.php:143
 #, php-format
@@ -3944,8 +4292,7 @@ msgstr[1] ""
 msgid "Progress: %1$d of %2$d"
 msgstr ""
 
-#. translators: %d: bonus points
-#. translators: %d = bonus points awarded on completion
+#. translators: %d: bonus points.
 #: src/Blocks/challenges/render.php:232
 #: src/Blocks/community-challenges/render.php:138
 #, php-format
@@ -3986,11 +4333,7 @@ msgstr ""
 msgid "No standings available yet - your cohort will populate as members earn points this week."
 msgstr ""
 
-#. translators: 1: amount earned, 2: currency label.
-#. translators: 1: formatted points number, 2: currency label (e.g. "Points", "Coins").
-#. translators: 1: formatted points total, 2: currency label.
-#. translators: 1: signed integer with sign, 2: currency label.
-#. translators: 1: amount, 2: currency label.
+#. translators: 1: formatted amount, 2: currency label.
 #: src/Blocks/cohort-rank/render.php:192
 #: src/Blocks/leaderboard/render.php:207
 #: src/Blocks/leaderboard/render.php:271
@@ -4125,8 +4468,8 @@ msgstr ""
 #: src/Blocks/user-status-bar/render.php:125
 #: src/BuddyPress/ProfileIntegration.php:170
 #: src/CLI/EmailCommand.php:83
-#: src/Engine/ProfilePage.php:141
-#: src/Engine/ProfilePage.php:280
+#: src/Engine/ProfilePage.php:145
+#: src/Engine/ProfilePage.php:284
 msgid "Newcomer"
 msgstr ""
 
@@ -4326,7 +4669,6 @@ msgstr ""
 msgid "Rank"
 msgstr ""
 
-#. translators: %d: badges earned count.
 #. translators: %d: number of badges earned.
 #: src/Blocks/leaderboard/render.php:231
 #: src/Blocks/leaderboard/render.php:240
@@ -4700,8 +5042,7 @@ msgstr ""
 msgid "%1$s earned the <strong>%2$s</strong> badge"
 msgstr ""
 
-#. translators: %d: points required
-#. translators: %d: points required for this level
+#. translators: %d: points required for this level.
 #: src/BuddyPress/Stream/Backfiller.php:160
 #: src/BuddyPress/Stream/LevelStream.php:71
 #, php-format
@@ -4891,11 +5232,13 @@ msgstr ""
 msgid "You're #1 on the leaderboard this week with %d points. Keep it up!"
 msgstr ""
 
+#. translators: 1: rank, 2: points this week, 3: points needed for next rank.
 #: src/Engine/LeaderboardNudge.php:318
 #, php-format
 msgid "You're #%1$d this week with %2$d points. Just %3$d more points to move up!"
 msgstr ""
 
+#. translators: 1: rank, 2: points this week.
 #: src/Engine/LeaderboardNudge.php:327
 #, php-format
 msgid "You're #%1$d this week with %2$d points."
@@ -4909,6 +5252,22 @@ msgstr ""
 
 #: src/Engine/MemberSurface.php:78
 msgid "View full dashboard"
+msgstr ""
+
+#: src/Engine/ModuleToggles.php:88
+msgid "Streaks"
+msgstr ""
+
+#: src/Engine/ModuleToggles.php:90
+msgid "Community challenges"
+msgstr ""
+
+#: src/Engine/ModuleToggles.php:91
+msgid "Cohort leagues"
+msgstr ""
+
+#: src/Engine/ModuleToggles.php:92
+msgid "Redemption store"
 msgstr ""
 
 #: src/Engine/NotificationBridge.php:189
@@ -4943,8 +5302,7 @@ msgstr ""
 msgid "Badge earned: %s"
 msgstr ""
 
-#. translators: %s: new level name (e.g. "Champion").
-#. translators: %s: new level name
+#. translators: %s: new level name.
 #: src/Engine/NotificationBridge.php:357
 #: src/Engine/TransactionalEmailEngine.php:193
 #, php-format
@@ -4977,10 +5335,6 @@ msgstr ""
 #: src/Engine/NotificationBridge.php:499
 #: src/Engine/NotificationBridge.php:502
 msgid "Streak milestone!"
-msgstr ""
-
-#: src/Engine/NotificationBridge.php:505
-msgid "days"
 msgstr ""
 
 #: src/Engine/NotificationBridge.php:507
@@ -5137,58 +5491,62 @@ msgstr ""
 msgid "Cohort league tier"
 msgstr ""
 
-#: src/Engine/Privacy.php:362
+#: src/Engine/Privacy.php:347
+msgid "Excluded from earning (sandboxed)"
+msgstr ""
+
+#: src/Engine/Privacy.php:363
 msgid "Gamification Personal Settings"
 msgstr ""
 
-#: src/Engine/Privacy.php:383
+#: src/Engine/Privacy.php:384
 msgid "Achievement Submissions"
 msgstr ""
 
-#: src/Engine/Privacy.php:395
+#: src/Engine/Privacy.php:396
 msgid "Evidence URL"
 msgstr ""
 
-#: src/Engine/Privacy.php:403
+#: src/Engine/Privacy.php:404
 msgid "Reviewer notes"
 msgstr ""
 
-#: src/Engine/Privacy.php:411
+#: src/Engine/Privacy.php:412
 msgid "Reviewed"
 msgstr ""
 
-#: src/Engine/Privacy.php:436
+#: src/Engine/Privacy.php:437
 msgid "Activity Event Log"
 msgstr ""
 
-#: src/Engine/Privacy.php:444
+#: src/Engine/Privacy.php:445
 msgid "Object ID"
 msgstr ""
 
-#: src/Engine/Privacy.php:448
+#: src/Engine/Privacy.php:449
 msgid "Metadata"
 msgstr ""
 
 #. translators: %d = number of database rows removed
-#: src/Engine/Privacy.php:614
+#: src/Engine/Privacy.php:616
 #, php-format
 msgid "Gamification data removed (%d rows)."
 msgstr ""
 
 #. translators: 1: display name, 2: site name
-#: src/Engine/ProfilePage.php:130
+#: src/Engine/ProfilePage.php:134
 #, php-format
 msgid "%1$s - %2$s"
 msgstr ""
 
 #. translators: 1: display name, 2: amount, 3: currency label, 4: badge count, 5: level name
-#: src/Engine/ProfilePage.php:136
+#: src/Engine/ProfilePage.php:140
 #, php-format
 msgid "%1$s has earned %2$d %3$s, %4$d badges, and reached %5$s."
 msgstr ""
 
 #. translators: 1: amount, 2: currency, 3: badges, 4: level
-#: src/Engine/ProfilePage.php:276
+#: src/Engine/ProfilePage.php:280
 #, php-format
 msgid "%1$d %2$s · %3$d badges · %4$s"
 msgstr ""
@@ -5973,10 +6331,6 @@ msgstr ""
 
 #: src/Blocks/user-status-bar/edit.js:72
 msgid "Show"
-msgstr ""
-
-#: src/Blocks/user-status-bar/edit.js:74
-msgid "Level"
 msgstr ""
 
 #: src/Blocks/user-status-bar/edit.js:89

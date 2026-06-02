@@ -134,7 +134,7 @@ BlockHooks::before( 'community-challenges', $wb_gam_attrs, array( 'count' => cou
 						</span>
 						<span class="wb-gam-community-challenges__bonus">
 							<?php
-							/* translators: %d = bonus points awarded on completion */
+							/* translators: %d: bonus points. */
 							printf( esc_html__( '+%d pts', 'wb-gamification' ), (int) $wb_gam_bonus );
 							?>
 						</span>

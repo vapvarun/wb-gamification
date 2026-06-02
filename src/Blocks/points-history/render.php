@@ -227,7 +227,7 @@ BlockHooks::before( 'points-history', $wb_gam_attrs );
 								<?php endif; ?>
 								<time class="wb-gam-points-history__time" datetime="<?php echo esc_attr( (string) ( $wb_gam_row['created_at'] ?? '' ) ); ?>">
 									<?php
-									/* translators: %s: human time difference (e.g. "5 minutes") */
+									/* translators: %s: human-readable time difference. */
 									printf( esc_html__( '%s ago', 'wb-gamification' ), esc_html( $wb_gam_time_label ) );
 									?>
 									<?php
@@ -244,7 +244,7 @@ BlockHooks::before( 'points-history', $wb_gam_attrs );
 							<span class="wb-gam-points-history__points">
 								<?php
 								printf(
-									/* translators: 1: signed integer with sign, 2: currency label. */
+									/* translators: 1: formatted amount, 2: currency label. */
 									esc_html__( '%1$s %2$s', 'wb-gamification' ),
 									esc_html( ( $wb_gam_pts >= 0 ? '+' : '' ) . number_format_i18n( $wb_gam_pts ) ),
 									esc_html( $wb_gam_row_label )

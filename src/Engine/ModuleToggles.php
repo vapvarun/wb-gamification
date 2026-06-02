@@ -33,49 +33,79 @@ final class ModuleToggles {
 	private const OPTION = 'wb_gam_modules';
 
 	/**
-	 * Toggleable modules and where each one surfaces.
+	 * Label-free module map: where each toggleable module surfaces. Contains NO
+	 * __() so it is safe to call early (init() runs on plugins_loaded, before
+	 * the init hook - translating here triggers _load_textdomain_just_in_time
+	 * on WP 6.7+). Labels are added by modules(), which only runs at admin
+	 * render time (after init).
 	 *
-	 * @return array<string,array{label:string,blocks:string[],shortcodes:string[],admin_slugs:string[]}>
+	 * @return array<string,array{blocks:string[],shortcodes:string[],admin_slugs:string[]}>
 	 */
-	public static function modules(): array {
+	public static function map(): array {
 		return array(
 			'kudos'                => array(
-				'label'       => __( 'Kudos', 'wb-gamification' ),
 				'blocks'      => array( 'kudos-feed', 'give-kudos' ),
 				'shortcodes'  => array( 'wb_gam_kudos_feed', 'wb_gam_give_kudos' ),
 				'admin_slugs' => array(),
 			),
 			'streaks'              => array(
-				'label'       => __( 'Streaks', 'wb-gamification' ),
 				'blocks'      => array( 'streak' ),
 				'shortcodes'  => array( 'wb_gam_streak' ),
 				'admin_slugs' => array(),
 			),
 			'challenges'           => array(
-				'label'       => __( 'Challenges', 'wb-gamification' ),
 				'blocks'      => array( 'challenges' ),
 				'shortcodes'  => array( 'wb_gam_challenges' ),
 				'admin_slugs' => array( 'wb-gam-challenges' ),
 			),
 			'community_challenges' => array(
-				'label'       => __( 'Community challenges', 'wb-gamification' ),
 				'blocks'      => array( 'community-challenges' ),
 				'shortcodes'  => array( 'wb_gam_community_challenges' ),
 				'admin_slugs' => array( 'wb-gam-community-challenges' ),
 			),
 			'cohort_leagues'       => array(
-				'label'       => __( 'Cohort leagues', 'wb-gamification' ),
 				'blocks'      => array( 'cohort-rank' ),
 				'shortcodes'  => array( 'wb_gam_cohort_rank' ),
 				'admin_slugs' => array(),
 			),
 			'redemption'           => array(
-				'label'       => __( 'Redemption store', 'wb-gamification' ),
 				'blocks'      => array( 'redemption-store' ),
 				'shortcodes'  => array( 'wb_gam_redemption_store', 'wb_gam_my_rewards' ),
 				'admin_slugs' => array( 'wb-gam-redemption' ),
 			),
 		);
+	}
+
+	/**
+	 * Translated module labels, keyed by slug. Call only at render time (admin,
+	 * after init) - it runs __().
+	 *
+	 * @return array<string,string>
+	 */
+	private static function labels(): array {
+		return array(
+			'kudos'                => __( 'Kudos', 'wb-gamification' ),
+			'streaks'              => __( 'Streaks', 'wb-gamification' ),
+			'challenges'           => __( 'Challenges', 'wb-gamification' ),
+			'community_challenges' => __( 'Community challenges', 'wb-gamification' ),
+			'cohort_leagues'       => __( 'Cohort leagues', 'wb-gamification' ),
+			'redemption'           => __( 'Redemption store', 'wb-gamification' ),
+		);
+	}
+
+	/**
+	 * Toggleable modules with translated labels, for the admin UI. Composes
+	 * map() + labels(). Do NOT call before the init hook (it translates).
+	 *
+	 * @return array<string,array{label:string,blocks:string[],shortcodes:string[],admin_slugs:string[]}>
+	 */
+	public static function modules(): array {
+		$labels = self::labels();
+		$out    = array();
+		foreach ( self::map() as $slug => $module ) {
+			$out[ $slug ] = array( 'label' => $labels[ $slug ] ?? $slug ) + $module;
+		}
+		return $out;
 	}
 
 	/**
@@ -125,7 +155,10 @@ final class ModuleToggles {
 	 * Wire suppression for any disabled module.
 	 */
 	public static function init(): void {
-		foreach ( self::modules() as $slug => $module ) {
+		// Use the label-free map() here - init() runs on plugins_loaded, before
+		// the init hook, so it must not translate (would trigger
+		// _load_textdomain_just_in_time on WP 6.7+).
+		foreach ( self::map() as $slug => $module ) {
 			if ( self::enabled( $slug ) ) {
 				continue;
 			}

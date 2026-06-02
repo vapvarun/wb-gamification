@@ -231,7 +231,7 @@ BlockHooks::before( 'year-recap', $wb_gam_attrs );
 			<span class="wb-gam-recap__peak-week-pts">
 				<?php
 				printf(
-					/* translators: 1: amount, 2: currency label. */
+					/* translators: 1: formatted amount, 2: currency label. */
 					esc_html__( '%1$s %2$s', 'wb-gamification' ),
 					esc_html( $wb_gam_fmt_num( (int) ( $wb_gam_recap['peak_week']['points'] ?? 0 ) ) ),
 					esc_html( $wb_gam_points_label )

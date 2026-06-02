@@ -156,7 +156,7 @@ final class Backfiller {
 			$min_points = (int) ( $level['min_points'] ?? 0 );
 			$desc       = $min_points > 0
 				? sprintf(
-					/* translators: %d: points required */
+					/* translators: %d: points required for this level. */
 					_n( 'Awarded for reaching %d point.', 'Awarded for reaching %d points.', $min_points, 'wb-gamification' ),
 					$min_points
 				)

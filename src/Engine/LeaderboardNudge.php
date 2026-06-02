@@ -313,8 +313,8 @@ final class LeaderboardNudge {
 		}
 
 		if ( null !== $points_to_next ) {
-			/* translators: 1: rank, 2: points this week, 3: points needed for next rank */
 			return sprintf(
+				/* translators: 1: rank, 2: points this week, 3: points needed for next rank. */
 				__( "You're #%1\$d this week with %2\$d points. Just %3\$d more points to move up!", 'wb-gamification' ),
 				$rank,
 				$points,
@@ -322,8 +322,8 @@ final class LeaderboardNudge {
 			);
 		}
 
-		/* translators: 1: rank, 2: points this week */
 		return sprintf(
+			/* translators: 1: rank, 2: points this week. */
 			__( "You're #%1\$d this week with %2\$d points.", 'wb-gamification' ),
 			$rank,
 			$points

@@ -173,7 +173,7 @@ $wb_gam_format_date = static function ( string $iso ): string {
 	}
 	$age = time() - $ts;
 	if ( $age >= 0 && $age < DAY_IN_SECONDS * 30 ) {
-		/* translators: %s: human-readable time difference */
+		/* translators: %s: human-readable time difference. */
 		return sprintf( esc_html__( '%s ago', 'wb-gamification' ), human_time_diff( $ts ) );
 	}
 	return date_i18n( get_option( 'date_format' ) ?: 'M j, Y', $ts );
@@ -196,7 +196,7 @@ BlockHooks::before( 'badge-showcase', $wb_gam_attrs );
 				<span class="wb-gam-badge-showcase__count-num">
 					<?php
 					printf(
-						/* translators: 1: earned count, 2: total count */
+						/* translators: 1: current count, 2: total count. */
 						esc_html__( '%1$d / %2$d', 'wb-gamification' ),
 						(int) $wb_gam_earned_count,
 						(int) $wb_gam_total_count
