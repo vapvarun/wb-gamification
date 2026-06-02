@@ -3,30 +3,30 @@
   "plugin": {
     "slug": "wb-gamification",
     "name": "WB Gamification",
-    "version": "1.5.2",
+    "version": "1.5.3",
     "namespace": "WBGam\\",
     "main_file": "wb-gamification.php",
     "extends": null,
     "extension_hook_fired": "wb_gam_free_loaded"
   },
   "counts": {
-    "rest_endpoints": 56,
-    "rest_endpoint_method_rows": 65,
+    "rest_endpoints": 63,
+    "rest_endpoint_method_rows": 72,
     "ajax_handlers": 0,
-    "admin_pages": 13,
+    "admin_pages": 14,
     "shortcodes": 17,
     "blocks": 19,
     "tables": 23,
     "capabilities_declared": 10,
-    "services": 45,
+    "services": 46,
     "hooks_fired_actions": 58,
-    "hooks_fired_filters": 66,
-    "hooks_fired_total": 124,
+    "hooks_fired_filters": 67,
+    "hooks_fired_total": 125,
     "cron_hooks_distinct": 10,
     "wp_cli_commands": 10,
     "admin_post_handlers": 0,
-    "frontend_css_files": 40,
-    "frontend_js_files": 42,
+    "frontend_css_files": 41,
+    "frontend_js_files": 44,
     "php_file_count": 173,
     "integrations": 14,
     "integration_triggers_total": 76,
@@ -76,10 +76,10 @@
     "frontend_js": "78.9% drift \u2014 manifest = 4; ground truth = 19 non-min JS files."
   },
   "generated": {
-    "at": "2026-06-02T03:06:07Z",
+    "at": "2026-06-02T06:49:42Z",
     "schema_version": "v2.2",
-    "last_pr_merged": "v1.5.2 released 2026-06-02 (tag v1.5.2) - performance + realtime scale + member surfaces + Jetonomy leaderboard deferral",
-    "since_last_refresh": "1.5.1 + 1.5.2 releases. 1.5.2: realtime rescale (Heartbeat default, SSE opt-in via wb_gam_sse_allowed), N+1 elimination (PointsEngine::prime_totals + BadgeEngine::prime_earned_badges), shared MemberSurface powering BuddyPress Achievements tab + WooCommerce /my-account/achievements/ endpoint + opt-in LearnDash hub link, BuddyX dark-mode token mapping, toast placement setting, /u/{username} public-profiles default-on, em-dash sweep, and Jetonomy DisplayDefer (leaderboard deferred to Jetonomy, badges kept). New filters: wb_gam_defer_leaderboard_to_jetonomy, wb_gam_learndash_profile_link, wb_gam_member_surface_html, wb_gam_sse_allowed, wb_gam_toast_position, wb_gam_profile_publicly_visible."
+    "last_pr_merged": "v1.5.3 - site-owner controls (exclusion, members roster, bulk award, settings import/export, rebuild-leaderboard)",
+    "since_last_refresh": "1.5.3 site-owner controls: Settings>Access earning exclusion (PointsEngine::user_can_earn + wb_gam_user_can_earn filter), Members roster admin page (MembersPage + GET/POST members endpoints), bulk award (POST points/bulk), Settings>Tools import/export + rebuild-leaderboard (WBGam\\\\Engine\\\\SettingsIO + ToolsController). +7 REST endpoints, +1 admin page (Members), +1 service (SettingsIO), +1 filter (wb_gam_user_can_earn)."
   },
   "release_verdict": {
     "wppqa_failed_targeted_checks": 0,

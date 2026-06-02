@@ -3,7 +3,7 @@
  * Plugin Name: WB Gamification
  * Plugin URI:  https://wbcomdesigns.com/
  * Description: Complete gamification plugin for BuddyPress and WordPress. Part of the Reign Stack. Points, badges, levels, leaderboards, challenges, and streaks — zero config, works out of the box.
- * Version:     1.5.2
+ * Version:     1.5.3
  * Author:      Wbcom Designs
  * Author URI:  https://wbcomdesigns.com/
  * License:     GPL-2.0+
@@ -24,7 +24,7 @@ defined( 'ABSPATH' ) || exit;
 // Plugin Check's internal phpcs invocation.
 // phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 
-define( 'WB_GAM_VERSION', '1.5.2' );
+define( 'WB_GAM_VERSION', '1.5.3' );
 define( 'WB_GAM_FILE', __FILE__ );
 define( 'WB_GAM_PATH', plugin_dir_path( __FILE__ ) );
 define( 'WB_GAM_URL', plugin_dir_url( __FILE__ ) );

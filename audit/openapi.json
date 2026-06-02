@@ -3,7 +3,7 @@
     "info": {
         "title": "WB Gamification API",
         "description": "Gamification engine REST API for points, badges, levels, leaderboards, challenges, kudos, and more.",
-        "version": "1.5.2",
+        "version": "1.5.3",
         "contact": {
             "name": "Wbcom Designs",
             "url": "https://wbcomdesigns.com"
@@ -155,6 +155,100 @@
                 }
             }
         },
+        "/members": {
+            "get": {
+                "summary": "Get members",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                }
+            }
+        },
+        "/members/{id}/exclude": {
+            "post": {
+                "summary": "Create members",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "id": {
+                                        "type": "integer",
+                                        "description": ""
+                                    },
+                                    "excluded": {
+                                        "type": "boolean",
+                                        "description": ""
+                                    }
+                                },
+                                "required": [
+                                    "id"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ]
+            }
+        },
+        "/members/{id}/reset-points": {
+            "post": {
+                "summary": "Create members",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "id": {
+                                        "type": "integer",
+                                        "description": ""
+                                    },
+                                    "type": {
+                                        "type": "string",
+                                        "description": ""
+                                    }
+                                },
+                                "required": [
+                                    "id"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ]
+            }
+        },
         "/points/award": {
             "post": {
                 "summary": "Create points",
@@ -192,6 +286,43 @@
                                 },
                                 "required": [
                                     "user_id",
+                                    "points"
+                                ]
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/points/bulk": {
+            "post": {
+                "summary": "Create points",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "target": {
+                                        "type": "string",
+                                        "description": "\"all\" for every member, or a role slug."
+                                    },
+                                    "points": {
+                                        "type": "integer",
+                                        "description": ""
+                                    },
+                                    "point_type": {
+                                        "type": "string",
+                                        "description": ""
+                                    }
+                                },
+                                "required": [
+                                    "target",
                                     "points"
                                 ]
                             }
@@ -3375,6 +3506,54 @@
                 "responses": {
                     "200": {
                         "description": "Successful response"
+                    }
+                }
+            }
+        },
+        "/tools/export-settings": {
+            "get": {
+                "summary": "Get tools",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                }
+            }
+        },
+        "/tools/recompute-leaderboard": {
+            "post": {
+                "summary": "Create tools",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                }
+            }
+        },
+        "/tools/import-settings": {
+            "post": {
+                "summary": "Create tools",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "document": {
+                                        "type": "object",
+                                        "description": "A document produced by export-settings."
+                                    }
+                                },
+                                "required": [
+                                    "document"
+                                ]
+                            }
+                        }
                     }
                 }
             }

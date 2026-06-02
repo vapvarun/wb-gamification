@@ -4,7 +4,7 @@ Tags: gamification, points, badges, leaderboard, buddypress
 Requires at least: 6.4
 Tested up to: 6.9
 Requires PHP: 8.0
-Stable tag: 1.5.2
+Stable tag: 1.5.3
 License: GPL-2.0+
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -21,7 +21,7 @@ The engine awards points automatically when members perform actions on your site
 * **Zero config** — 5 starter templates pre-configure everything. Pick one and go.
 * **Universal** — Works with plain WordPress, BuddyPress, WooCommerce, LearnDash, bbPress, and 5 more plugins. Auto-detects what you have installed.
 * **Scalable** — Async award pipeline, snapshot-cached leaderboards, object caching everywhere. Built for 100K+ members.
-* **API-first** — 56 REST endpoints, outbound webhooks, WP Abilities API. Mobile apps, headless frontends, and AI agents are first-class consumers. Admin UI is REST-driven internally — what the admin saves is what the API exposes (no parallel form-post surface).
+* **API-first** — 63 REST endpoints, outbound webhooks, WP Abilities API. Mobile apps, headless frontends, and AI agents are first-class consumers. Admin UI is REST-driven internally — what the admin saves is what the API exposes (no parallel form-post surface).
 * **No add-on model** — Every integration, every advanced engagement mechanic, every admin surface ships free. No paid extensions for BuddyPress support, cohort leagues, redemption store, or webhooks.
 
 = Core Features (Free) =
@@ -35,12 +35,12 @@ The engine awards points automatically when members perform actions on your site
 * **Peer Kudos** — Members recognize each other with kudos. Configurable daily limits and point awards for both sender and receiver.
 * **19 Gutenberg Blocks** — Leaderboard, member points, badge showcase, level progress, challenges, streak, top members, kudos feed, year recap, points history, earning guide, hub, redemption store, community challenges, cohort rank, daily bonus, give kudos, submit achievement, user status bar. Every block follows the Wbcom Block Quality Standard (apiVersion 3, per-side spacing × 3 breakpoints, hover/focus states, design tokens, per-instance scoped CSS).
 * **17 Shortcodes** — Every customer-facing block is also available as a shortcode for classic editor and page builders (Elementor, Beaver Builder, Bricks).
-* **REST API** — 56 endpoints across 26 controllers. Full CRUD for all resources. API key authentication for cross-site setups. Admin UI consumes the same REST API as 3rd-party integrations.
+* **REST API** — 63 endpoints across 27 controllers. Full CRUD for all resources. API key authentication for cross-site setups. Admin UI consumes the same REST API as 3rd-party integrations.
 * **BuddyPress Integration** — Profile rank display, activity feed events, member directory badges, notification bridge.
 * **Toast Notifications** — Real-time bottom-right popups when members earn points, badges, or level up. 6 notification types with auto-dismiss. Promise-based confirm modals replace native browser dialogs (a11y-friendly).
 * **Analytics Dashboard** — 6 KPI cards, top actions, top earners, daily points sparkline. Period selector (7/30/90 days).
 * **WP-CLI Commands** — `points award`, `member status`, `actions list`, `logs prune`, `export user`, `qa seed_pages`, `doctor` readiness check, plus a release-zip builder.
-* **Developer Hooks** — 58 action hooks and 66 filter hooks for extending every write path. Every REST endpoint fires `before_*` filters (return WP_Error to abort) and `after_*` actions.
+* **Developer Hooks** — 58 action hooks and 67 filter hooks for extending every write path. Every REST endpoint fires `before_*` filters (return WP_Error to abort) and `after_*` actions.
 * **Cohort Leagues** — Duolingo-style weekly competitions with promotion/demotion percentages and per-cohort leaderboards.
 * **Community Challenges** — Team goals with global progress (Pokemon GO model). Members contribute to a shared counter; everyone earns when the target is hit.
 * **Redemption Store** — Members spend points on rewards. Built-in support for custom rewards (your hook), WooCommerce coupons, and Wbcom Credits SDK.
@@ -132,6 +132,18 @@ Yes. WB Gamification integrates with WordPress privacy tools. Members can reques
 All data is preserved in the database. Reactivating the plugin restores everything. If you delete the plugin via the Plugins screen, the `uninstall.php` file removes all 23 tables, options, cron jobs, and transients — a clean uninstall.
 
 == Changelog ==
+
+= 1.5.3 - June 2026 =
+
+Site-owner control release. The admin controls communities expect for managing who earns and bulk operations.
+
+* New      - Settings > Access: exclude roles or specific accounts from earning points, badges, levels, and streaks (administrators, staff, support agents, bots). Excluded members keep existing points but stop accruing and are hidden from leaderboards. Enforced on every award path; filter wb_gam_user_can_earn for code-level control.
+* New      - Members admin page (Gamification > Members): searchable, paginated roster of every member with points, level, and badges, plus per-member award, exclude/include, and reset-points actions.
+* New      - Bulk award: grant the same points to every member of a role, or to all members at once, from the Award Points page. Excluded accounts are skipped automatically.
+* New      - Settings > Tools: export the plugin configuration to a JSON file and import it on another site. Runtime and schema state are excluded so a config move never corrupts the target site.
+* New      - Settings > Tools: a Rebuild leaderboard button that recomputes the snapshot and clears its caches, for when the leaderboard looks stale after a manual award or import.
+* Dev      - New admin REST endpoints under wb-gamification/v1 (members collection, member exclude/reset, points bulk, tools export/import/recompute), all admin-gated and namespaced so they never collide with WordPress core or BuddyPress routes.
+
 
 = 1.5.2 - June 2026 =
 

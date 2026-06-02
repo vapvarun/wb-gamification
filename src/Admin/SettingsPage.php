@@ -549,15 +549,15 @@ final class SettingsPage {
 				'restUrl' => esc_url_raw( rest_url( 'wb-gamification/v1' ) ),
 				'nonce'   => wp_create_nonce( 'wp_rest' ),
 				'i18n'    => array(
-					'exporting'     => __( 'Preparing export...', 'wb-gamification' ),
-					'exportError'   => __( 'Export failed.', 'wb-gamification' ),
-					'importError'   => __( 'Import failed. Check that the file is a WB Gamification settings export.', 'wb-gamification' ),
-					'importConfirm' => __( 'Import these settings? This overwrites the matching settings on this site.', 'wb-gamification' ),
+					'exporting'      => __( 'Preparing export...', 'wb-gamification' ),
+					'exportError'    => __( 'Export failed.', 'wb-gamification' ),
+					'importError'    => __( 'Import failed. Check that the file is a WB Gamification settings export.', 'wb-gamification' ),
+					'importConfirm'  => __( 'Import these settings? This overwrites the matching settings on this site.', 'wb-gamification' ),
 					/* translators: 1: applied count, 2: skipped count */
-					'imported'      => __( 'Imported %1$d settings (%2$d skipped). Reloading...', 'wb-gamification' ),
-					'noFile'        => __( 'Choose an export file first.', 'wb-gamification' ),
-					'recomputing'   => __( 'Rebuilding leaderboard...', 'wb-gamification' ),
-					'recomputed'    => __( 'Leaderboard rebuilt.', 'wb-gamification' ),
+					'imported'       => __( 'Imported %1$d settings (%2$d skipped). Reloading...', 'wb-gamification' ),
+					'noFile'         => __( 'Choose an export file first.', 'wb-gamification' ),
+					'recomputing'    => __( 'Rebuilding leaderboard...', 'wb-gamification' ),
+					'recomputed'     => __( 'Leaderboard rebuilt.', 'wb-gamification' ),
 					'recomputeError' => __( 'Could not rebuild the leaderboard.', 'wb-gamification' ),
 				),
 			)
