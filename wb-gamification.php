@@ -148,6 +148,7 @@ use WBGam\Engine\StatusRetentionEngine;
 use WBGam\Admin\BadgeAdminPage;
 use WBGam\Admin\ChallengeManagerPage;
 use WBGam\Admin\ManualAwardPage;
+use WBGam\Admin\MembersPage;
 use WBGam\Admin\ApiKeysPage;
 use WBGam\Admin\RedemptionStorePage;
 use WBGam\Admin\CommunityChallengesPage;
@@ -323,6 +324,7 @@ final class WB_Gamification {
 			BadgeAdminPage::init();
 			ChallengeManagerPage::init();
 			ManualAwardPage::init();
+			MembersPage::init();
 			ApiKeysPage::init();
 			RedemptionStorePage::init();
 			CommunityChallengesPage::init();
