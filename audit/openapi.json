@@ -3530,6 +3530,34 @@
                 }
             }
         },
+        "/tools/reset-progress": {
+            "post": {
+                "summary": "Create tools",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "confirm": {
+                                        "type": "boolean",
+                                        "description": ""
+                                    }
+                                },
+                                "required": [
+                                    "confirm"
+                                ]
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/tools/import-settings": {
             "post": {
                 "summary": "Create tools",

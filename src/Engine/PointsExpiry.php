@@ -42,7 +42,14 @@ final class PointsExpiry {
 	 * Register the cron handler + ensure the daily event is scheduled.
 	 */
 	public static function init(): void {
-		add_action( self::CRON_HOOK, array( __CLASS__, 'run' ) );
+		// Void wrapper: run() returns a count for CLI/tests, but an action
+		// callback must not return anything.
+		add_action(
+			self::CRON_HOOK,
+			static function (): void {
+				self::run();
+			}
+		);
 		if ( ! wp_next_scheduled( self::CRON_HOOK ) ) {
 			wp_schedule_event( time(), self::CRON_RECUR, self::CRON_HOOK );
 		}
