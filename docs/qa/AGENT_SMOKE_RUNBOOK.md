@@ -250,6 +250,31 @@ Each step is a contract — exercise it from the UI AND confirm the server-side 
 **Customer contract:** a member with sufficient points can redeem a configured reward; their balance debits exactly once; the redemption shows on `/redemptions/me`; insufficient balance produces a clean error, not a fatal.
 **Acceptance:** POST `/redemptions` with sufficient balance returns 201; balance decrements by `points_cost`; insufficient-balance attempt returns 400 with code `wb_gam_redemption_insufficient`.
 
+### C.member.bp-achievements-tab
+**Customer contract:** with BuddyPress active, a logged-in member's profile shows an "Achievements" tab (nav slug `achievements`) with four sub-tabs - Overview, Badges, Points, Streak. Each sub-tab renders the matching member surface (Overview = points + streak summary, Badges = earned + locked badges, Points = points history, Streak = streak block) reusing existing blocks through `WBGam\Engine\MemberSurface`, with no duplicated display logic.
+**Why it matters:** this is the primary member-facing surface on BuddyPress sites; broken means members can't see their own progress.
+**Acceptance:** visit a member's BP profile - the Achievements tab is present with `item_css_id` `wb-gam-achievements`; navigating to `/members/<user>/achievements/badges/`, `/points/`, `/streak/` each renders its surface without a PHP Notice/Warning/Fatal; the default sub-action is `overview`. Confirm the rendered HTML passes through the `wb_gam_member_surface_html` filter (the same markup appears on the mapped Hub page surface).
+
+### C.member.wc-account-achievements
+**Customer contract:** with WooCommerce active, a logged-in customer sees an "Achievements" item in the My Account nav that resolves at `/my-account/achievements/` and renders the self-scoped Hub surface plus a link to the mapped Hub page. The endpoint exists ONLY when WooCommerce is active.
+**Why it matters:** stores running WooCommerce without BuddyPress still need a member-facing gamification surface.
+**Acceptance:** with WooCommerce active and permalinks flushed, `/my-account/achievements/` returns 200 for the logged-in account owner and renders the member surface; the "Achievements" menu item appears in the My Account nav; with WooCommerce deactivated the endpoint is absent (no `achievements` query var registered, the URL 404s) and no fatal fires anywhere.
+
+### C.member.learndash-profile-link
+**Customer contract:** the LearnDash profile "My Achievements" hub link is OFF by default - it only appears when a site returns true from the `wb_gam_learndash_profile_link` filter. When enabled it links to the mapped Hub page.
+**Why it matters:** the opt-in default prevents an unwanted nav item on every LearnDash install; the contract is "silent unless asked for".
+**Acceptance:** with LearnDash active and no filter override, the LearnDash profile shows NO "My Achievements" link. After `add_filter( 'wb_gam_learndash_profile_link', '__return_true' )`, the link appears on the LearnDash profile and points at the Hub page. No fatal in either state.
+
+### C.member.public-profile-default-on
+**Customer contract:** a member's public profile at `/u/{username}` is viewable by default - it returns the profile page (200), NOT a 404. A member opts OUT by setting the per-user privacy flag to `'0'`; only that explicit value makes the profile private. The `wb_gam_profile_publicly_visible` filter can override per user.
+**Why it matters:** before 1.5.2 every `/u/` profile 404'd because the gate required a flag nobody ever wrote (`D.public-profile-default-on`); the share/recap/OG surfaces all depend on this page resolving.
+**Acceptance:** `/u/<existing_user_login>` returns 200 anonymously and renders the member profile with OG + Schema.org JSON-LD; setting that user's privacy pref to `'0'` makes `/u/<user>` 404 for anonymous visitors while the owner viewing their own page still gets 200; an unset/empty pref resolves to visible.
+
+### C.member.toast-placement
+**Customer contract:** toast notifications appear in the corner configured by the admin in Settings > Realtime (option `wb_gam_toast_position`, default `bottom-right`); the slide-in direction is corner-aware; the toast names what the points were for and never overlaps the theme header.
+**Why it matters:** a toast pinned under a sticky header is invisible feedback; the placement setting lets each site avoid its own chrome.
+**Acceptance:** Settings > Realtime exposes a placement selector with the four documented positions (`top-right`, `top-center`, `bottom-right`, `bottom-left`); changing it persists `wb_gam_toast_position`; triggering a points award renders the toast in the selected corner with award context text and no overlap of the theme's top nav/sticky header (verify at the top-* positions specifically). The `wb_gam_toast_position` filter overrides the saved option.
+
 ### C.editor.granular-cap
 **Customer contract:** an editor with `wb_gam_manage_badges` granted can create/list badges via REST, but is gated out of every other admin endpoint (rules, webhooks, manual award, redemption-store admin).
 **Reference:** `plan/QA-MANUAL-TEST-PLAN.md` § Persona 3.
@@ -287,6 +312,11 @@ Each step is a contract — exercise it from the UI AND confirm the server-side 
 **Customer contract:** after activation, every expected cron / Action Scheduler event is registered; orphaned events are absent after deactivation; cron actually executes when triggered manually.
 **Acceptance:** `wp cron event list | grep wb_gam_` returns the expected schedules; `wp action-scheduler run` processes any pending async events without fataling.
 
+### C.realtime-transport-default
+**Customer contract:** the shipped realtime transport is WP Heartbeat, NOT the SSE long-poll. Heartbeat ticks at 15s steady-state, bursts to 5s for ~30s right after an action, and near-suspends (120s) while the tab is backgrounded. SSE is opt-in only - it activates solely when a site returns true from the `wb_gam_sse_allowed` filter (default false).
+**Why it matters:** the SSE long-poll pinned a PHP-FPM worker per logged-in page and did not scale to 100k users; the Heartbeat default is the scale fix for 1.5.2 (`D.heartbeat-default-not-SSE`).
+**Acceptance:** on a logged-in front-end page, the realtime layer loads `assets/js/heartbeat.js` and the network trace shows Heartbeat admin-ajax ticks (no persistent `text/event-stream` SSE connection); `SSEController` permission resolves to false by default (`wb_gam_sse_allowed` returns false). After an award, ticks accelerate to ~5s briefly then settle back to 15s; backgrounding the tab drops the tick rate. Returning true from `wb_gam_sse_allowed` is the only way the SSE stream opens.
+
 ---
 
 ## D — Known-regression guards
@@ -323,6 +353,10 @@ Each row repros a past bug that caused customer pain. These rows stay specific o
 | D.level-changed-listener-int-sig | After fixing `D.level-changed-double-fire` (engine side), the `TransactionalEmailEngine::on_level_up` and `NotificationBridge::on_level_changed` listeners still expected `int $old_level_id, int $new_level_id` — the legacy signature. Every level-up event triggered `TypeError: Argument #2 must be of type int, array given` in those listeners | Both listeners now accept `?array $new_level, ?array $old_level` matching the engine's canonical fire. Award enough points to cross a level threshold; expect zero PHP fatal in `wp-content/debug.log` from any of the three downstream listeners (WebhookDispatcher, TransactionalEmailEngine, NotificationBridge) |
 | D.kudos-cooldown-bypass | Two parallel POST `/kudos` requests with the same `(giver, receiver)` pair both passed the `has_recent_kudos_to_receiver` read-check before either had written its row, then both INSERTed — bypassing the per-receiver cooldown gate via TOCTOU race | KudosEngine acquires an atomic `wp_cache_add()` lock keyed `kudos_lock_<giver>_<receiver>` for the cooldown window before the INSERT. Object cache `add` is atomic on Redis/Memcached; second concurrent caller gets `false` from `wp_cache_add` and returns the cooldown error. Test: send two parallel POSTs to `/kudos` (same giver+receiver); exactly one returns 201, the other 429 with code `wb_gam_kudos_cooldown` |
 | C.member.redemption-error-code | All redemption failures returned the generic `redemption_failed` error code — runbook contract specifies `wb_gam_redemption_insufficient` for insufficient-balance, `wb_gam_redemption_out_of_stock` for stock-zero, etc. Functional behavior was correct; the API contract was not | `RedemptionController::redeem()` now maps the engine's `result['reason']` (or matched substring of `result['error']`) to specific codes: `wb_gam_redemption_insufficient`, `wb_gam_redemption_out_of_stock`, `wb_gam_redemption_inactive`. Unknown reasons keep `redemption_failed` so future engine errors don't surprise clients |
+| D.public-profile-default-on (v1.5.2) | Public profiles at `/u/{username}` 404'd for everyone - the visibility gate required a per-user flag that nothing ever wrote, so every member profile returned not-found | `ProfilePage::is_publicly_visible()` defaults ON: only an explicit `'0'` privacy pref makes a profile private. Test: `/u/<existing_user_login>` returns 200 (not 404) anonymously; setting the user's pref to `'0'` makes it 404 for anonymous while the owner still gets 200; unset/empty pref resolves to visible. Filter `wb_gam_profile_publicly_visible` can override per user |
+| D.jetonomy-leaderboard-defer (v1.5.2) | On a Jetonomy site wb-gam's leaderboard is a duplicate ranking (wb-gam mirrors Jetonomy reputation 1:1 into points), so two competing leaderboards showed the same members in the same order | With `JETONOMY_VERSION` defined, `DisplayDefer` suppresses the `wb-gamification/leaderboard` + `wb-gamification/top-members` blocks and the `wb_gam_leaderboard` + `wb_gam_top_members` shortcodes (both render blank), AND the Hub block drops its `leaderboard` card (`render.php` `unset($wb_gam_cards['leaderboard'])`). Badges are NOT deferred - the badge-showcase block and badge surfaces still render. Override via `wb_gam_defer_leaderboard_to_jetonomy`. Test: with Jetonomy active, a page with the leaderboard block renders blank where the leaderboard was, the Hub has no Leaderboard card, but badge blocks/surfaces still render |
+| D.toast-no-header-overlap (v1.5.2) | Toast notifications overlapped the theme's sticky header / top nav, hiding the points feedback | Admin-set placement via Settings > Realtime (option `wb_gam_toast_position`, default `bottom-right`, corner-aware slide-in, filter same name). Test: set placement to a top-* corner; trigger a points award; the toast renders in that corner, names what the points were for, and does NOT overlap the theme's top nav / sticky header |
+| D.heartbeat-default-not-SSE (v1.5.2) | The SSE long-poll was the default realtime transport - each connection pinned a PHP-FPM worker for its lifetime, which does not scale on a standard pool (100k-user sites exhausted workers) | Default transport is WP Heartbeat (`assets/js/heartbeat.js`): 15s steady, 5s burst for ~30s after an action, 120s near-suspend on hidden tabs. SSE is opt-in only - `SSEController` permission resolves to false unless `wb_gam_sse_allowed` returns true (default false). Test: on a logged-in front-end page the network trace shows Heartbeat admin-ajax ticks and NO persistent `text/event-stream` connection; SSE stream opens only after the filter returns true |
 
 Every customer-visible fix ships a matching D row in the same PR. After 2 clean releases of a D row, promote it into the main C/E flow.
 
@@ -365,8 +399,13 @@ WB Gamification ships eight integrations. Each must satisfy two contracts: **(1)
 **What to verify:** if ACF is active, the gamification rule editor offers ACF field options; absent ACF, the rule editor renders the same surface without field options and without errors.
 **Acceptance:** with ACF active, the rule editor's "field" select lists ACF keys; without ACF, the select renders a "no fields detected" message.
 
+### E.jetonomy.leaderboard-defer-and-mirror
+**What to verify:** with Jetonomy active (`JETONOMY_VERSION` defined), wb-gam mirrors every Jetonomy reputation delta 1:1 into its points ledger (`JetonomyIntegration` on `jetonomy_reputation_changed`), AND defers its own leaderboard display to Jetonomy's reputation ranking - `DisplayDefer` blanks the `leaderboard` + `top-members` blocks/shortcodes and drops the Hub Leaderboard card. Badges are deliberately KEPT (the two badge sets are complementary). Jetonomy Pro's `jetonomy_pro_badge_earned` action awards wb-gam points via the manifest in `integrations/jetonomy-pro.php`.
+**Why it matters:** showing two identical leaderboards confuses members; the deferral keeps a single source of truth while preserving wb-gam's broader badge system.
+**Acceptance:** with Jetonomy active, a page with the `wb-gamification/leaderboard` block renders blank, the `[wb_gam_leaderboard]` shortcode renders blank, and the Hub block shows no Leaderboard card; badge blocks (`badge-showcase`) and badge surfaces still render; a Jetonomy reputation delta produces a matching wb-gam points ledger row. Returning false from `wb_gam_defer_leaderboard_to_jetonomy` re-enables the wb-gam leaderboard even when Jetonomy is active. With Jetonomy absent, the leaderboard renders normally and no fatal fires.
+
 ### E.graceful-degradation
-**Customer contract:** deactivating ANY of the eight integrations leaves the plugin functional with no fatals on any admin or front-end page.
+**Customer contract:** deactivating ANY of the integrations leaves the plugin functional with no fatals on any admin or front-end page.
 **Journey:** `audit/journeys/release/06-integration-graceful-degradation.md`
 **Acceptance:** journey passes for each of the eight host plugins independently.
 

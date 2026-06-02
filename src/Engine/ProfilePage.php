@@ -6,12 +6,16 @@
  * gamification showcase. Reuses the existing member-points,
  * badge-showcase, and points-history blocks under one wrapper template.
  *
- * Privacy model:
+ * Privacy model (opt-OUT, default public since 1.5.2):
  *   - Site-wide toggle: `wb_gam_profile_public_enabled` (default on)
- *   - Per-user toggle:  user_meta `wb_gam_profile_public` (default 0 → opt-in)
+ *   - Per-user toggle:  user_meta `wb_gam_profile_public` (only an explicit
+ *     '0' makes a profile private; unset/empty means public)
+ *   - Filter `wb_gam_profile_publicly_visible` can override per request
  *
- * Without both flags set, the URL returns 404 — opt-in by default so
- * existing members aren't suddenly indexed.
+ * The owner and admins can always view a profile regardless of the flags.
+ * Profiles are public by default so members are showcased without an opt-in
+ * step (pre-1.5.2 this required an opt-in that no screen ever set, so every
+ * /u/{user_login} returned 404).
  *
  * @package WB_Gamification
  * @since   1.0.0

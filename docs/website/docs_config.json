@@ -313,6 +313,12 @@
           "title": "Privacy",
           "slug": "privacy-wbgam",
           "order": 22
+        },
+        {
+          "file": "23-member-achievement-surfaces.md",
+          "title": "Member Achievement Surfaces",
+          "slug": "23-member-achievement-surfaces-wbgam",
+          "order": 23
         }
       ]
     },
@@ -370,6 +376,12 @@
           "title": "API Keys",
           "slug": "api-keys-wbgam",
           "order": 8
+        },
+        {
+          "file": "09-realtime-notifications.md",
+          "title": "Realtime and Notification Settings",
+          "slug": "09-realtime-notifications-wbgam",
+          "order": 9
         }
       ]
     },
@@ -445,6 +457,12 @@
           "title": "WordPress Core Integration",
           "slug": "wordpress-wbgam",
           "order": 11
+        },
+        {
+          "file": "12-jetonomy.md",
+          "title": "Jetonomy Integration",
+          "slug": "12-jetonomy-wbgam",
+          "order": 12
         }
       ]
     },
@@ -472,6 +490,12 @@
           "title": "BuddyPress Profile Display",
           "slug": "profile-display-wbgam",
           "order": 3
+        },
+        {
+          "file": "04-achievements-tab.md",
+          "title": "BuddyPress Achievements Tab",
+          "slug": "04-achievements-tab-wbgam",
+          "order": 4
         }
       ]
     },

@@ -83,3 +83,7 @@ Content-Type: application/json
 ## No Configuration Needed
 
 `ProfileIntegration::init()` is called on the `bp_loaded` action. It performs a `function_exists('buddypress')` guard before registering any hooks. If BuddyPress is deactivated, the block silently does nothing.
+
+## See Also
+
+- **[BuddyPress Achievements Tab](04-achievements-tab.md)** - the dedicated profile tab (Overview / Badges / Points / Streak) added by the same integration, separate from this header rank display.

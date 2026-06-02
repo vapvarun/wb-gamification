@@ -1,8 +1,15 @@
-# Realtime transport — Heartbeat vs Server-Sent Events
+# Realtime transport - Heartbeat (default) vs Server-Sent Events
 
 WB Gamification ships two realtime transports for toast notifications,
-live leaderboards, and other "push" events. The transport is chosen by
-the `wb_gam_realtime_transport` site option.
+live leaderboards, and other "push" events. **WP Heartbeat is the
+shipped default and the only transport most sites should use.** Server-Sent
+Events is an opt-in optimisation gated behind a filter (see below) because
+the SSE long-poll pins one PHP-FPM worker per connected member, which does
+not scale on a standard pool.
+
+The transport is selected by the `wb_gam_realtime_transport` site option,
+but SSE only actually runs when the `wb_gam_sse_allowed` filter also
+returns `true`.
 
 ```bash
 wp option get wb_gam_realtime_transport      # default: heartbeat
@@ -11,23 +18,59 @@ wp option update wb_gam_realtime_transport auto
 
 | Value | What happens |
 |---|---|
-| `heartbeat` | WP Heartbeat poll at 5-second intervals. Works everywhere. Default. |
-| `sse` | Server-Sent Events stream. Sub-second receiver-side latency. Requires host support (see below). |
-| `auto` | Client tries SSE first; falls back to heartbeat on connection error. Best of both when SSE works. |
+| `heartbeat` | WP Heartbeat poll. Works everywhere. **Default.** |
+| `sse` | Server-Sent Events stream. Sub-second receiver-side latency. Only runs when `wb_gam_sse_allowed` returns `true` and the host supports it (see below); otherwise falls back to heartbeat. |
+| `auto` | Client tries SSE first (when `wb_gam_sse_allowed` permits it), falls back to heartbeat on connection error. |
+
+## Heartbeat intervals
+
+The Heartbeat transport (`assets/js/heartbeat.js`) adapts its polling rate
+so it feels live without flooding `admin-ajax.php`:
+
+| State | Interval | Why |
+|---|---|---|
+| Steady | 15s (`standard`) | One shared, throttled tick. Realtime feedback rarely matters between actions. |
+| Burst | 5s (`fast`) for ~30s | Triggered right after the member takes a point-earning action, then eases back to steady. |
+| Hidden tab | 120s | Near-suspend when the tab is backgrounded so a left-open tab stops costing ticks. |
+
+Override the steady-state interval client-side by setting
+`window.wbGamRealtimeInterval` to a Heartbeat speed string (`'standard'`,
+`'fast'`, or a number of seconds) before `heartbeat.js` runs:
+
+```html
+<script>window.wbGamRealtimeInterval = 'standard';</script>
+```
+
+## Enabling SSE
+
+SSE is **off by default**. To turn it on you need BOTH:
+
+1. The transport option set to `sse` or `auto`, AND
+2. The `wb_gam_sse_allowed` filter returning `true`:
+
+```php
+// Only enable on infrastructure provisioned for long-lived streaming
+// (dedicated worker pool, no proxy buffering).
+add_filter( 'wb_gam_sse_allowed', '__return_true' );
+```
+
+When `wb_gam_sse_allowed` is `false` (the default), the stream endpoint
+declines and clients run on WP Heartbeat instead.
 
 ## When to enable SSE / auto
 
 - **Cross-user notifications matter** — e.g. "Alice gave Bob kudos"
-  should show on Bob's screen in <1 second, not <5 seconds.
+  should show on Bob's screen in <1 second, not on the next heartbeat tick.
 - **Your host supports long-polling PHP** — shared cPanel without
   PHP-FPM tuning usually doesn't. Managed WordPress hosts (Kinsta,
-  WP Engine, Pressable) typically do.
+  WP Engine, Pressable) with a dedicated worker pool typically do.
 - **No layer-7 proxy is buffering responses** — see "Host requirements"
   below.
 
 For most installs `heartbeat` is the right choice. SSE is an
-optimisation for community-heavy sites where the sub-second receiver
-toast measurably improves engagement.
+optimisation for community-heavy sites on infrastructure built for
+long-lived connections, where the sub-second receiver toast measurably
+improves engagement.
 
 ## Host requirements (when using `sse` or `auto`)
 
@@ -108,9 +151,15 @@ proxy wstunnel, sticky sessions) that SSE doesn't.
 ## Filters
 
 ```php
-// Override the heartbeat polling interval (default 'fast' = 5s).
-// Use 'standard' (15s) to reduce server tick load on busy installs.
-add_filter( 'wb_gam_realtime_interval', static function () {
-    return 'standard';
-} );
+// Gate the SSE long-poll transport (default false). SSE only runs when
+// this returns true AND the transport option is 'sse' or 'auto'.
+add_filter( 'wb_gam_sse_allowed', '__return_true' );
 ```
+
+The steady-state Heartbeat polling interval is **not** a PHP filter - set
+the `window.wbGamRealtimeInterval` JavaScript global (see "Heartbeat
+intervals" above) to change it. The default is `'standard'` (15s) with an
+automatic 5s burst for ~30s after each member action.
+
+See the [Filters reference](14-filters-reference.md) for `wb_gam_sse_allowed`
+and the related toast-placement filter `wb_gam_toast_position`.

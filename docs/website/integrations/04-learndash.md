@@ -25,6 +25,10 @@ The manifest loads automatically when LearnDash is active.
 
 The default values reward depth of engagement. A learner who completes an entire course earns 100 points for the course itself plus 15 per lesson and 5 per topic along the way. Adjust point values to reflect how much depth matters in your learning community.
 
+## Member Surface (opt-in)
+
+WB Gamification can add a single "My Achievements" link to the top of the LearnDash profile, pointing to the mapped Hub page. It is **off by default** - opt in with the `wb_gam_learndash_profile_link` filter. See [Member Achievement Surfaces](../features/23-member-achievement-surfaces.md).
+
 ## Requirements
 
 - LearnDash active

@@ -21,6 +21,10 @@ The WooCommerce integration rewards purchasing behavior and product engagement. 
 
 The WooCommerce manifest's review action explicitly checks `post_type === 'product'`. The WordPress Core manifest's comment action targets non-product post types. The two actions do not overlap.
 
+## Member Surface
+
+WB Gamification adds an **Achievements** item to the WooCommerce My Account menu and an endpoint at `/my-account/achievements/` that renders the member's full Hub dashboard. This gives stores running WooCommerce without BuddyPress a member-facing gamification surface. See [Member Achievement Surfaces](../features/23-member-achievement-surfaces.md). If the endpoint 404s on an existing install, re-save **Settings > Permalinks** to flush rewrite rules.
+
 ## Requirements
 
 - WooCommerce active

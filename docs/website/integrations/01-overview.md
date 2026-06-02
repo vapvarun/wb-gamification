@@ -21,9 +21,11 @@ Each integration is a PHP file that returns an array of trigger definitions. Whe
 | MemberPress | 3 | `integrations/contrib/memberpress.php` |
 | GiveWP | 4 | `integrations/contrib/givewp.php` |
 | The Events Calendar | 3 | `integrations/contrib/the-events-calendar.php` |
+| Jetonomy | 4 | `integrations/jetonomy.php` |
+| Jetonomy Pro | 7 | `integrations/jetonomy-pro.php` |
 | WPMediaVerse Pro | 17 | `wpmediaverse-pro/wb-gamification.php` |
 
-**Total: 62 gamification actions across 10 integrations.**
+In addition to the manifest actions above, Jetonomy reputation deltas are mirrored 1:1 into the points ledger (see [Jetonomy integration](12-jetonomy.md)), and WB Gamification defers its own leaderboard display to Jetonomy's reputation ranking when Jetonomy is active.
 
 ## Zero Configuration
 

@@ -1,5 +1,5 @@
 ---
-journey: tier-3-frontend-15-blocks
+journey: tier-3-frontend-19-blocks
 plugin: wb-gamification
 priority: critical
 roles: [visitor, member]
@@ -10,7 +10,9 @@ prerequisites:
 estimated_runtime_minutes: 15
 ---
 
-# Tier 3 — Frontend Surface (15 blocks × 1280 + 390)
+# Tier 3 — Frontend Surface (19 blocks × 1280 + 390)
+
+> Filename is legacy (`03-frontend-15-blocks.md`) — kept as-is to avoid breaking references. The plugin now ships **19 blocks**.
 
 Every QA page must serve a 200, render the block (no PHP fatals, no JS errors), produce no horizontal scrolling on mobile, and pass hover/focus/visited checks on every `<a>` (theme-conflict gate). Block markup must include `wp-block-wb-gamification-<slug>` so the auto-card surface lands.
 
@@ -18,13 +20,13 @@ Every QA page must serve a 200, render the block (no PHP fatals, no JS errors), 
 
 - Site: `$SITE_URL = http://wb-gamification.local`
 - Visitor user: anonymous (no autologin)
-- Fixtures: 15 seeded QA pages (`wb-gamification-qa-<slug>`)
+- Fixtures: 19 seeded QA pages (`wb-gamification-qa-<slug>`). The 19 slugs: leaderboard, member-points, badge-showcase, level-progress, challenges, streak, top-members, kudos-feed, year-recap, points-history, earning-guide, hub, redemption-store, community-challenges, cohort-rank, daily-bonus, give-kudos, submit-achievement, user-status-bar.
 
 ## Steps
 
 ### 1. HTTP + fatal sweep at desktop
 - **Action**: per slug, `curl -sk -L -o /dev/null -w "%{http_code}" http://wb-gamification.local/wb-gamification-qa/wb-gamification-qa-<slug>/`
-- **Expect**: HTTP 200 for all 15
+- **Expect**: HTTP 200 for all 19
 - **Action**: `curl -sk` body, grep -cE "Fatal error|Parse error|Uncaught"
 - **Expect**: 0 matches per page
 - **Action**: grep -cE "wp-block-wb-gamification-<slug>"
@@ -59,8 +61,8 @@ For one block that handles zero data well (`leaderboard`):
 ## Pass criteria
 
 ALL of the following hold:
-1. 15/15 pages return 200, 0 fatals, ≥1 block markup hit
-2. 15/15 pages have no horizontal scroll at 390px
+1. 19/19 pages return 200, 0 fatals, ≥1 block markup hit
+2. 19/19 pages have no horizontal scroll at 390px
 3. Sample anchor doesn't get its color hijacked by theme link styles
 4. Sample empty state renders cleanly
 5. 0 JS console errors

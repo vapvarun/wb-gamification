@@ -1,6 +1,6 @@
 # WB Gamification — CLAUDE.md
 
-> **READ FIRST:** [`audit/manifest.json`](audit/manifest.json) is the canonical inventory — **56 REST endpoints**, **23 tables**, **19 blocks**, 17 shortcodes, ~10 cron hooks, **10 WP-CLI commands**, **13 admin pages**, **44 services**, **0 admin_post_* handlers** (Tier 0 REST migration intact), **0 wp_ajax_* handlers**. Quick index: [`audit/manifest.summary.json`](audit/manifest.summary.json) (≤3 KB). Refresh via `/wp-plugin-onboard --refresh` after non-trivial changes. Stability gates: [`audit/STABILITY-2026-05-27.md`](audit/STABILITY-2026-05-27.md). v1.4.0 release gates: WPCS clean, PHPStan level 9 clean, WP Plugin Check 0 errors, PHPUnit 109 tests green, all 14 local-CI stages green.
+> **READ FIRST:** [`audit/manifest.json`](audit/manifest.json) is the canonical inventory — **56 REST endpoints**, **23 tables**, **19 blocks**, 17 shortcodes, ~10 cron hooks, **10 WP-CLI commands**, **13 admin pages**, **45 services**, **0 admin_post_* handlers** (Tier 0 REST migration intact), **0 wp_ajax_* handlers**. Quick index: [`audit/manifest.summary.json`](audit/manifest.summary.json) (≤3 KB). Refresh via `/wp-plugin-onboard --refresh` after non-trivial changes. Stability gates: [`audit/STABILITY-2026-05-27.md`](audit/STABILITY-2026-05-27.md). Release gates (v1.5.2): WPCS clean, PHPStan level 9 clean, WP Plugin Check 0 errors, PHPUnit 145 tests green, all 16 local-CI stages green.
 >
 > **Folder map:**
 > - [`audit/`](audit/) — machine-generated inventory + reports + journeys. Hand-edits get overwritten on refresh. See [`audit/README.md`](audit/README.md). Key: [`manifest.json`](audit/manifest.json), [`FEATURE_AUDIT.md`](audit/FEATURE_AUDIT.md), [`CODE_FLOWS.md`](audit/CODE_FLOWS.md), [`ROLE_MATRIX.md`](audit/ROLE_MATRIX.md), [`graph.html`](audit/graph.html).
@@ -20,7 +20,7 @@
 | Field | Value |
 |---|---|
 | **Name** | WB Gamification |
-| **Version** | 1.0.0 (pre-launch) |
+| **Version** | 1.5.2 (released 2026-06-02) |
 | **Path** | `wp-content/plugins/wb-gamification/` |
 | **Namespace** | `WBGam\` (PSR-4, maps to `src/`) |
 | **PHP** | 8.1+ required |
@@ -247,7 +247,7 @@ bp_loaded   → ProfileIntegration, DirectoryIntegration, BPActivity
 ### Key Constants
 
 ```php
-WB_GAM_VERSION   // '1.0.0'
+WB_GAM_VERSION   // '1.5.2'
 WB_GAM_FILE      // absolute path to wb-gamification.php
 WB_GAM_PATH      // plugin dir path (trailing slash)
 WB_GAM_URL       // plugin dir URL (trailing slash)
@@ -327,7 +327,7 @@ WB_GAM_BASENAME  // 'wb-gamification/wb-gamification.php'
 
 ## 🟡 Next Up
 
-[`plan/MASTER-CHECKLIST.md`](plan/MASTER-CHECKLIST.md) is the single source of truth — read it for the current shipped-vs-pending view. As of 2026-05-28 the foundation + v2 wave is complete; the only explicitly-deferred item is the toast wrapper duplication refactor (multi-commit, no functional impact today). Items historically listed here (scale-benchmark, SSE, hooks_fired re-enum, frontend_assets re-enum, capabilities manifest, GraphQL, AI intelligence, JS SDK, ActivityPub) all shipped — see the checklist for commit pointers.
+[`plan/MASTER-CHECKLIST.md`](plan/MASTER-CHECKLIST.md) is the single source of truth — read it for the current shipped-vs-pending view. As of 2026-05-28 the foundation + v2 wave is complete; the only explicitly-deferred item is the toast wrapper duplication refactor (multi-commit, no functional impact today). Items historically listed here (scale-benchmark, SSE, hooks_fired re-enum, frontend_assets re-enum, capabilities manifest, GraphQL, AI intelligence, JS SDK, ActivityPub) all shipped — see the checklist for commit pointers. `src/Integrations/GraphQL.php` and `src/Integrations/ActivityPub.php` are present in the tree; SSE shipped via `src/API/SSEController.php` but is opt-in (`wb_gam_sse_allowed`, default false) with WP Heartbeat as the shipped default (see `assets/js/heartbeat.js`).
 
 > **No Pro tier.** wb-gamification is shipped as a single free plugin — every engine boots in this codebase. Any historical references to a "Pro plugin", "Pro engines", `WB_GAM_PRO_VERSION`, or `wb-gamification-pro` left in `plan/`, `audit/`, or older docs are stale.
 
@@ -335,7 +335,7 @@ WB_GAM_BASENAME  // 'wb-gamification/wb-gamification.php'
 
 - **React Native SDK** — `@wbcom/wb-gamification-rn-sdk`. No customer ask yet; would consume the same OpenAPI spec the JS SDK does.
 - **PHPStan in GitHub Actions** — `composer phpstan` works locally (level 9 clean) but PHPStan silently no-ops in the Local-by-Flywheel PHP build. CI wiring needs the GitHub Action runner to confirm output.
-- **WebSocket transport** — SSE shipped (stage 4 verified, default `'auto'`). WS would only matter if we needed bidirectional client→server streaming, which we don't today.
+- **WebSocket transport** — SSE shipped, but in 1.5.2 the realtime default flipped to WP Heartbeat (15s steady / 5s post-action burst / near-suspend on hidden tabs); SSE is now opt-in behind the `wb_gam_sse_allowed` filter because the PHP long-poll pins an FPM worker per connection and does not scale on a standard pool. WS would only matter if we needed bidirectional client→server streaming, which we don't today.
 
 ---
 
@@ -419,7 +419,7 @@ Controllers registered in `WB_Gamification::register_routes()`:
 
 ## Registered Blocks
 
-`leaderboard`, `member-points`, `badge-showcase`, `level-progress`, `challenges`, `streak`, `top-members`, `kudos-feed`, `year-recap`, `points-history`, `earning-guide`, `redemption-store`, `community-challenges`, `cohort-rank`, `hub` — **15 blocks**, all Wbcom Block Quality Standard compliant (apiVersion 3, standard attribute schema, `--wb-gam-*` design tokens, per-instance scoped CSS).
+`leaderboard`, `member-points`, `badge-showcase`, `level-progress`, `challenges`, `streak`, `top-members`, `kudos-feed`, `year-recap`, `points-history`, `earning-guide`, `redemption-store`, `community-challenges`, `cohort-rank`, `hub`, `daily-bonus`, `give-kudos`, `submit-achievement`, `user-status-bar` — **19 blocks**, all Wbcom Block Quality Standard compliant (apiVersion 3, standard attribute schema, `--wb-gam-*` design tokens, per-instance scoped CSS).
 
 Source: `src/Blocks/<slug>/{block.json, index.js, edit.js, render.php, editor.css}` (plus `view.js` + `style.css` for IA-driven blocks).
 

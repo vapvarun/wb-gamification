@@ -1,0 +1,70 @@
+{
+  "slug": "wb-gamification",
+  "name": "WB Gamification",
+  "version_constant": "WB_GAM_VERSION",
+  "main_file": "wb-gamification.php",
+  "base_url": "http://wb-gamification.local",
+  "wp_path": "/Users/varundubey/Local Sites/wb-gamification/app/public",
+  "autologin_param": "autologin",
+  "rest_namespace": "wb-gamification/v1",
+  "front_routes": [
+    "/gamification/",
+    "/u/{username}/",
+    "/my-account/achievements/"
+  ],
+  "pair": {
+    "pro_slug": null,
+    "lockstep": false
+  },
+  "basecamp": {
+    "project_id": "47162271",
+    "bugs_column_id": "9860020654",
+    "ready_for_testing_column_id": "9860021091"
+  },
+  "modes": ["single"],
+  "report_path": "docs/qa/.last-smoke-pass.json",
+  "supplements_path": null,
+
+  "_extension_note": "Fields below are NOT part of the wp-plugin-smoke v1 schema. They are operationally-useful data carried over from the legacy docs/qa/qa.config.json so the runbook, fixture cleanup, debug-log diff, and build pipeline keep working. Safe to ignore for schema-strict consumers.",
+
+  "db_version_option": "wb_gam_db_version",
+  "text_domain": "wb-gamification",
+  "table_prefix": "wb_gam",
+  "cron_prefix": "wb_gam_",
+
+  "personas": {
+    "admin":     "qa_admin",
+    "editor":    "qa_editor",
+    "moderator": null,
+    "member":    "qa_member"
+  },
+
+  "integrations": [
+    "buddypress",
+    "woocommerce",
+    "learndash",
+    "bbpress",
+    "advanced-custom-fields",
+    "jetonomy"
+  ],
+
+  "fixture_cleanup_sql": [
+    "DELETE FROM {prefix}wb_gam_events WHERE metadata LIKE '%journey_smoke_test%' OR metadata LIKE '%agent_runbook%'",
+    "DELETE FROM {prefix}wb_gam_points WHERE reason LIKE '%journey_smoke%' OR reason LIKE '%agent_runbook%' OR reason = 'tier4_test'",
+    "DELETE FROM {prefix}wb_gam_kudos WHERE message LIKE '%smoke-%'",
+    "DELETE FROM {prefix}options WHERE option_name = 'wb_gam_action_overrides'"
+  ],
+
+  "debug_log_whitelist": [
+    "PHP Notice.*BuddyPress.*",
+    "PHP Deprecated.*Twenty Twenty-Five.*",
+    "Action Scheduler.*was unable to be triggered.*"
+  ],
+
+  "outputs": {
+    "smoke_report":      "docs/qa/.last-smoke-pass.json",
+    "journey_runs_dir":  "audit/journey-runs",
+    "screenshots_dir":   "audit/journey-runs/{run_id}/screenshots",
+    "debug_log_archive": "docs/qa/.debug-log-{version}-{ran_at}.txt"
+  }
+}

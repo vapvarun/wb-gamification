@@ -278,3 +278,15 @@ Append a section below per release with the specific extra checks added that cyc
 
 ### v1.0.0 release
 - (initial baseline; row-by-row history begins with v1.0.1)
+
+### v1.5.2 release (performance + realtime-scale + member-surface + integration)
+- [ ] Member surfaces (`WBGam\Engine\MemberSurface` + `wb_gam_member_surface_html` filter): BuddyPress "Achievements" profile tab, WooCommerce My Account `/my-account/achievements/` endpoint, opt-in LearnDash "My Achievements" link all render and reuse existing blocks (no duplicated display logic)
+- [ ] WooCommerce account endpoint is gated on WooCommerce active - absent (404) when WooCommerce is deactivated
+- [ ] Public profiles `/u/{username}` default-on: returns 200 (not 404) for the default privacy state; opt-out via per-user `'0'` flag; `wb_gam_profile_publicly_visible` filter honored
+- [ ] Jetonomy deferral: with Jetonomy active, `DisplayDefer` suppresses leaderboard + top-members blocks/shortcodes AND the Hub Leaderboard card; badges kept; reputation mirrored 1:1 into points; `wb_gam_defer_leaderboard_to_jetonomy` filter override works
+- [ ] Toast placement: Settings > Realtime selector persists `wb_gam_toast_position` (default `bottom-right`), corner-aware, no theme-header overlap; filter `wb_gam_toast_position` overrides
+- [ ] Realtime transport default is WP Heartbeat (15s / 5s burst / 120s hidden), SSE opt-in behind `wb_gam_sse_allowed` (default false) - confirm no persistent SSE connection on a default install
+- [ ] N+1 primers in the read paths: `PointsEngine::prime_totals()` + `BadgeEngine::prime_earned_badges()` are called before list rendering (member directory, leaderboard badges, top-members levels)
+- [ ] Dark mode: frontend `--wb-gam-color-*` / `--gam-*` tokens map to host theme `--bx-color-*` (BuddyX / BuddyX Pro); themes without those tokens fall back to the light palette
+- [ ] 4 new filters present in `audit/manifest.json` (hooks_fired_filters 62 -> 66): `wb_gam_defer_leaderboard_to_jetonomy`, `wb_gam_learndash_profile_link`, `wb_gam_member_surface_html`, `wb_gam_profile_publicly_visible`; openapi.json + SDK types regenerated
+- [ ] AGENT_SMOKE_RUNBOOK.md Section D carries the 4 new 1.5.2 regression rows (`D.public-profile-default-on`, `D.jetonomy-leaderboard-defer`, `D.toast-no-header-overlap`, `D.heartbeat-default-not-SSE`)

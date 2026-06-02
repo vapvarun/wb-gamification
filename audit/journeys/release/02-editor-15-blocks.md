@@ -1,5 +1,5 @@
 ---
-journey: tier-2-editor-15-blocks
+journey: tier-2-editor-19-blocks
 plugin: wb-gamification
 priority: critical
 roles: [editor]
@@ -10,7 +10,9 @@ prerequisites:
 estimated_runtime_minutes: 12
 ---
 
-# Tier 2 — Editor Surface (15 blocks × inserter + sidebar)
+# Tier 2 — Editor Surface (19 blocks × inserter + sidebar)
+
+> Filename is legacy (`02-editor-15-blocks.md`) — kept as-is to avoid breaking references. The plugin now ships **19 blocks**.
 
 Every block must (a) register an editor script, (b) register a render callback, (c) appear in the inserter, (d) insert without showing "Your site doesn't include support" message, (e) configure correctly via the standard Inspector panels (Layout / Style / Visibility / Hover), (f) persist settings on reload.
 
@@ -18,14 +20,14 @@ Every block must (a) register an editor script, (b) register a render callback, 
 
 - Site: `$SITE_URL = http://wb-gamification.local`
 - Test user: admin (`?autologin=1`)
-- Fixtures: 15 QA pages already seeded (see `wp wb-gamification qa list_pages`)
+- Fixtures: 19 QA pages already seeded (see `wp wb-gamification qa list_pages`)
 
 ## Steps
 
-### 1. Verify editor + render handles for all 15 blocks
+### 1. Verify editor + render handles for all 19 blocks
 - **Action**: `wp eval` with the snippet:
   ```php
-  $slugs = ['leaderboard','member-points','badge-showcase','level-progress','challenges','streak','top-members','kudos-feed','year-recap','points-history','earning-guide','hub','redemption-store','community-challenges','cohort-rank'];
+  $slugs = ['leaderboard','member-points','badge-showcase','level-progress','challenges','streak','top-members','kudos-feed','year-recap','points-history','earning-guide','hub','redemption-store','community-challenges','cohort-rank','daily-bonus','give-kudos','submit-achievement','user-status-bar'];
   foreach ($slugs as $s) {
     $bt = WP_Block_Type_Registry::get_instance()->get_registered("wb-gamification/$s");
     echo $s . ': editor=' . count($bt->editor_script_handles) . ' render=' . ($bt->render_callback ? 'set' : 'null') . PHP_EOL;
@@ -49,7 +51,7 @@ For `hub`, `community-challenges`, `cohort-rank` (the 3 blocks Phase G.4 fixed):
 
 ### 3. Inserter discovery
 - **Action**: in a new post, click `+` inserter, type "wb-gam" or block name
-- **Expect**: each of 15 blocks appears in the result list
+- **Expect**: each of 19 blocks appears in the result list
 
 ### 4. Inspector panels
 For one representative block (`leaderboard`):
@@ -62,7 +64,7 @@ For one representative block (`leaderboard`):
 ## Pass criteria
 
 ALL of the following hold:
-1. 15/15 blocks return `editor=1 render=set` from the registry probe
+1. 19/19 blocks return `editor=1 render=set` from the registry probe
 2. None of the 3 previously-broken blocks show "doesn't include support"
 3. Every standard Inspector panel renders for the sampled block
 4. Settings persist across save+reload

@@ -33,10 +33,14 @@ final class SSEController {
 	/**
 	 * Option that controls the realtime transport. Single switch:
 	 *
-	 *   'heartbeat'  Default. WP Heartbeat polling at 5s (existing).
-	 *   'sse'        Server-Sent Events stream (this controller).
+	 *   'heartbeat'  Default. WP Heartbeat polling (15s steady, 5s burst
+	 *                for 30s after an action, near-suspend on hidden tabs).
+	 *   'sse'        Server-Sent Events stream (this controller). Opt-in
+	 *                only, gated behind the `wb_gam_sse_allowed` filter
+	 *                (default false) because the long-poll pins a PHP-FPM
+	 *                worker per connection.
 	 *   'auto'       Client tries SSE first, falls back to heartbeat on
-	 *                connection error. Set after stages 2-4 ship.
+	 *                connection error (only effective where SSE is allowed).
 	 */
 	public const TRANSPORT_OPTION = 'wb_gam_realtime_transport';
 

@@ -21,15 +21,17 @@ Hidden by default:
 
 ## Privacy Controls
 
-Public profiles are **opt-in per member**. Three layers:
+As of 1.5.2 public profiles are **on by default (opt-out)**. Three layers:
 
-1. **Site-wide setting** — admin can disable public profiles entirely (Settings → Privacy)
-2. **Member preference** — each member can flip `wb_gam_profile_public` in their user preferences
+1. **Site-wide setting** — admin can disable public profiles entirely (Settings → Privacy). This kill switch always wins.
+2. **Member preference** — each member can opt out by setting the per-user `wb_gam_profile_public` flag to `0`. An unset/empty value means public.
 3. **Per-section toggles** — a member can show their badges but hide their streak, etc.
 
-By default after the setup wizard, public profiles are **enabled site-wide** but **off per-member** until each member opts in. The setup wizard's "Enable public profile pages" checkbox sets the site-wide default.
+By default, when public profiles are enabled site-wide, each member's profile is **visible** until they explicitly opt out. (Before 1.5.2 the per-user flag was opt-IN, but no member-facing UI ever wrote it, so every `/u/` profile returned 404 - that is fixed in 1.5.2.) The owner of a profile and administrators (`manage_options`) can always view it regardless of the flag.
 
-A profile that is opted out returns a 404 instead of a partial page — search engines and visitors see no information.
+The `wb_gam_profile_publicly_visible` filter (`bool $visible, int $user_id`) lets a site override visibility per member - see the [Filters reference](../developer-guide/14-filters-reference.md).
+
+A profile that is opted out (per-user flag `0`) returns a 404 instead of a partial page - search engines and visitors see no information.
 
 ## URL Structure
 
@@ -67,7 +69,7 @@ Settings → Privacy → Public Profiles.
 | Setting | Default |
 |---|---|
 | Enabled site-wide | On |
-| Default per-member opt-in | Off (members must enable explicitly) |
+| Default per-member visibility | On (members opt out explicitly; owner + admins always view) |
 | Show badges | On (when profile is public) |
 | Show streak | On |
 | Show challenges | On |

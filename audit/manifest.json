@@ -1416,19 +1416,9 @@
   ],
   "services": [
     {
-      "key": "Engine",
-      "class": "WBGam\\Engine\\Engine",
-      "purpose": "Central event processor. Listeners write events; engine evaluates rules and dispatches outputs."
-    },
-    {
-      "key": "Registry",
-      "class": "WBGam\\Engine\\Registry",
-      "purpose": "Auto-registers actions discovered by ManifestLoader."
-    },
-    {
-      "key": "ManifestLoader",
-      "class": "WBGam\\Engine\\ManifestLoader",
-      "purpose": "Scans integration files for action manifests at plugins_loaded@5."
+      "key": "AsyncEvaluator",
+      "class": "WBGam\\Engine\\AsyncEvaluator",
+      "purpose": "Action-Scheduler async event processing."
     },
     {
       "key": "BadgeEngine",
@@ -1436,19 +1426,9 @@
       "purpose": "Rule-based badge evaluation triggered by events."
     },
     {
-      "key": "PointsEngine",
-      "class": "WBGam\\Engine\\PointsEngine",
-      "purpose": "Append-only points ledger with action-scheduler async processing."
-    },
-    {
-      "key": "LevelEngine",
-      "class": "WBGam\\Engine\\LevelEngine",
-      "purpose": "Computes user level from points totals against level thresholds."
-    },
-    {
-      "key": "LeaderboardEngine",
-      "class": "WBGam\\Engine\\LeaderboardEngine",
-      "purpose": "Daily/weekly/monthly/all-time leaderboards with scopes; cached via cron."
+      "key": "BadgeSharePage",
+      "class": "WBGam\\Engine\\BadgeSharePage",
+      "purpose": "Public OG-ready badge share URL handler."
     },
     {
       "key": "ChallengeEngine",
@@ -1456,29 +1436,14 @@
       "purpose": "Individual challenge progress + completion."
     },
     {
+      "key": "CohortEngine",
+      "class": "WBGam\\Engine\\CohortEngine",
+      "purpose": "Cohort-based leaderboard leagues."
+    },
+    {
       "key": "CommunityChallengeEngine",
       "class": "WBGam\\Engine\\CommunityChallengeEngine",
       "purpose": "Group/community challenge progress aggregation."
-    },
-    {
-      "key": "KudosEngine",
-      "class": "WBGam\\Engine\\KudosEngine",
-      "purpose": "Peer kudos with cooldown + daily budget."
-    },
-    {
-      "key": "StreakEngine",
-      "class": "WBGam\\Engine\\StreakEngine",
-      "purpose": "Daily/weekly streak tracking per user."
-    },
-    {
-      "key": "RecapEngine",
-      "class": "WBGam\\Engine\\RecapEngine",
-      "purpose": "Year-in-review recap generator."
-    },
-    {
-      "key": "RedemptionEngine",
-      "class": "WBGam\\Engine\\RedemptionEngine",
-      "purpose": "Points \u2192 reward redemption transactions."
     },
     {
       "key": "CosmeticEngine",
@@ -1486,24 +1451,101 @@
       "purpose": "Cosmetic frames/decorations grant + equip."
     },
     {
-      "key": "CohortEngine",
-      "class": "WBGam\\Engine\\CohortEngine",
-      "purpose": "Cohort-based leaderboard leagues."
+      "key": "CredentialExpiryEngine",
+      "class": "WBGam\\Engine\\CredentialExpiryEngine",
+      "purpose": "Expires badge credentials based on validity_days."
     },
     {
-      "key": "TenureBadgeEngine",
-      "class": "WBGam\\Engine\\TenureBadgeEngine",
-      "purpose": "Anniversary/tenure badges based on registration date."
+      "key": "DbUpgrader",
+      "class": "WBGam\\Engine\\DbUpgrader",
+      "purpose": "Schema migrations gated by wb_gam_db_version option."
     },
     {
-      "key": "SiteFirstBadgeEngine",
-      "class": "WBGam\\Engine\\SiteFirstBadgeEngine",
-      "purpose": "Awards 'first ever' badges to the first user to perform a tracked action."
+      "key": "Engine",
+      "class": "WBGam\\Engine\\Engine",
+      "purpose": "Central event processor. Listeners write events; engine evaluates rules and dispatches outputs."
     },
     {
-      "key": "RuleEngine",
-      "class": "WBGam\\Engine\\RuleEngine",
-      "purpose": "Generic rule evaluation pipeline."
+      "key": "Event",
+      "class": "WBGam\\Engine\\Event",
+      "purpose": "Value object for normalized events."
+    },
+    {
+      "key": "FeatureFlags",
+      "class": "WBGam\\Engine\\FeatureFlags",
+      "purpose": "Per-feature kill switches read from wb_gam_enabled_* options."
+    },
+    {
+      "key": "Installer",
+      "class": "WBGam\\Engine\\Installer",
+      "purpose": "Activation hook \u2014 creates all tables + seeds defaults."
+    },
+    {
+      "key": "KudosEngine",
+      "class": "WBGam\\Engine\\KudosEngine",
+      "purpose": "Peer kudos with cooldown + daily budget."
+    },
+    {
+      "key": "LeaderboardEngine",
+      "class": "WBGam\\Engine\\LeaderboardEngine",
+      "purpose": "Daily/weekly/monthly/all-time leaderboards with scopes; cached via cron."
+    },
+    {
+      "key": "LeaderboardNudge",
+      "class": "WBGam\\Engine\\LeaderboardNudge",
+      "purpose": "Weekly nudge email about leaderboard standing."
+    },
+    {
+      "key": "LevelEngine",
+      "class": "WBGam\\Engine\\LevelEngine",
+      "purpose": "Computes user level from points totals against level thresholds."
+    },
+    {
+      "key": "LogPruner",
+      "class": "WBGam\\Engine\\LogPruner",
+      "purpose": "Daily cleanup of old log rows."
+    },
+    {
+      "key": "ManifestLoader",
+      "class": "WBGam\\Engine\\ManifestLoader",
+      "purpose": "Scans integration files for action manifests at plugins_loaded@5."
+    },
+    {
+      "key": "MemberSurface",
+      "class": "WBGam\\Engine\\MemberSurface",
+      "added": "1.5.2",
+      "purpose": "Shared renderer for the member achievements surface mounted by integration adapters (BuddyPress profile tab, WooCommerce My Account endpoint, opt-in LearnDash link). Owns asset enqueue, member-scoped block rendering, the mapped hub link, and the wrapper. Filter: wb_gam_member_surface_html."
+    },
+    {
+      "key": "MemberUploadCap",
+      "class": "WBGam\\Engine\\MemberUploadCap",
+      "added": "1.5.0",
+      "purpose": "Bridges WP upload_files cap to logged-in members so the achievement editor Add Media button works for subscribers / contributors. Opt-out filter: wb_gam_grant_member_uploads."
+    },
+    {
+      "key": "NotificationBridge",
+      "class": "WBGam\\Engine\\NotificationBridge",
+      "purpose": "Bridges plugin events to BuddyPress notifications."
+    },
+    {
+      "key": "NudgeEngine",
+      "class": "WBGam\\Engine\\NudgeEngine",
+      "purpose": "Generic nudge dispatcher (re-engagement)."
+    },
+    {
+      "key": "PersonalRecordEngine",
+      "class": "WBGam\\Engine\\PersonalRecordEngine",
+      "purpose": "Tracks personal-best metrics."
+    },
+    {
+      "key": "PointsEngine",
+      "class": "WBGam\\Engine\\PointsEngine",
+      "purpose": "Append-only points ledger with action-scheduler async processing."
+    },
+    {
+      "key": "Privacy",
+      "class": "WBGam\\Engine\\Privacy",
+      "purpose": "GDPR-style export/erase handlers."
     },
     {
       "key": "RankAutomation",
@@ -1516,9 +1558,49 @@
       "purpose": "Per-action daily caps."
     },
     {
-      "key": "AsyncEvaluator",
-      "class": "WBGam\\Engine\\AsyncEvaluator",
-      "purpose": "Action-Scheduler async event processing."
+      "key": "RecapEngine",
+      "class": "WBGam\\Engine\\RecapEngine",
+      "purpose": "Year-in-review recap generator."
+    },
+    {
+      "key": "RedemptionEngine",
+      "class": "WBGam\\Engine\\RedemptionEngine",
+      "purpose": "Points \u2192 reward redemption transactions."
+    },
+    {
+      "key": "Registry",
+      "class": "WBGam\\Engine\\Registry",
+      "purpose": "Auto-registers actions discovered by ManifestLoader."
+    },
+    {
+      "key": "RuleEngine",
+      "class": "WBGam\\Engine\\RuleEngine",
+      "purpose": "Generic rule evaluation pipeline."
+    },
+    {
+      "key": "ShortcodeHandler",
+      "class": "WBGam\\Engine\\ShortcodeHandler",
+      "purpose": "Registers all 12 shortcodes."
+    },
+    {
+      "key": "SiteFirstBadgeEngine",
+      "class": "WBGam\\Engine\\SiteFirstBadgeEngine",
+      "purpose": "Awards 'first ever' badges to the first user to perform a tracked action."
+    },
+    {
+      "key": "StatusRetentionEngine",
+      "class": "WBGam\\Engine\\StatusRetentionEngine",
+      "purpose": "Retains/expires status-based rewards."
+    },
+    {
+      "key": "StreakEngine",
+      "class": "WBGam\\Engine\\StreakEngine",
+      "purpose": "Daily/weekly streak tracking per user."
+    },
+    {
+      "key": "TenureBadgeEngine",
+      "class": "WBGam\\Engine\\TenureBadgeEngine",
+      "purpose": "Anniversary/tenure badges based on registration date."
     },
     {
       "key": "WebhookDispatcher",
@@ -1531,86 +1613,10 @@
       "purpose": "Weekly recap email to opted-in users."
     },
     {
-      "key": "LeaderboardNudge",
-      "class": "WBGam\\Engine\\LeaderboardNudge",
-      "purpose": "Weekly nudge email about leaderboard standing."
-    },
-    {
-      "key": "NudgeEngine",
-      "class": "WBGam\\Engine\\NudgeEngine",
-      "purpose": "Generic nudge dispatcher (re-engagement)."
-    },
-    {
-      "key": "NotificationBridge",
-      "class": "WBGam\\Engine\\NotificationBridge",
-      "purpose": "Bridges plugin events to BuddyPress notifications."
-    },
-    {
-      "key": "PersonalRecordEngine",
-      "class": "WBGam\\Engine\\PersonalRecordEngine",
-      "purpose": "Tracks personal-best metrics."
-    },
-    {
-      "key": "StatusRetentionEngine",
-      "class": "WBGam\\Engine\\StatusRetentionEngine",
-      "purpose": "Retains/expires status-based rewards."
-    },
-    {
-      "key": "CredentialExpiryEngine",
-      "class": "WBGam\\Engine\\CredentialExpiryEngine",
-      "purpose": "Expires badge credentials based on validity_days."
-    },
-    {
-      "key": "LogPruner",
-      "class": "WBGam\\Engine\\LogPruner",
-      "purpose": "Daily cleanup of old log rows."
-    },
-    {
-      "key": "DbUpgrader",
-      "class": "WBGam\\Engine\\DbUpgrader",
-      "purpose": "Schema migrations gated by wb_gam_db_version option."
-    },
-    {
-      "key": "Installer",
-      "class": "WBGam\\Engine\\Installer",
-      "purpose": "Activation hook \u2014 creates all tables + seeds defaults."
-    },
-    {
-      "key": "FeatureFlags",
-      "class": "WBGam\\Engine\\FeatureFlags",
-      "purpose": "Per-feature kill switches read from wb_gam_enabled_* options."
-    },
-    {
-      "key": "Privacy",
-      "class": "WBGam\\Engine\\Privacy",
-      "purpose": "GDPR-style export/erase handlers."
-    },
-    {
-      "key": "Event",
-      "class": "WBGam\\Engine\\Event",
-      "purpose": "Value object for normalized events."
-    },
-    {
-      "key": "BadgeSharePage",
-      "class": "WBGam\\Engine\\BadgeSharePage",
-      "purpose": "Public OG-ready badge share URL handler."
-    },
-    {
-      "key": "ShortcodeHandler",
-      "class": "WBGam\\Engine\\ShortcodeHandler",
-      "purpose": "Registers all 12 shortcodes."
-    },
-    {
-      "key": "PointTypeService",
-      "class": "WBGam\\Services\\PointTypeService",
+      "key": "PointTypeConversionRepository",
+      "class": "WBGam\\Repository\\PointTypeConversionRepository",
       "added": "1.0.0",
-      "purpose": "Currency catalogue + canonical resolve($input):slug helper."
-    },
-    {
-      "key": "PointTypeConversionService",
-      "class": "WBGam\\Services\\PointTypeConversionService",
-      "added": "1.0.0",
-      "purpose": "Atomic convert flow with FOR-UPDATE locking + shared event_id."
+      "purpose": "SQL repo for wb_gam_point_type_conversions; active-only filter."
     },
     {
       "key": "PointTypeRepository",
@@ -1619,28 +1625,28 @@
       "purpose": "SQL repo for wb_gam_point_types with cache wrapper + slug normalisation."
     },
     {
-      "key": "PointTypeConversionRepository",
-      "class": "WBGam\\Repository\\PointTypeConversionRepository",
-      "added": "1.0.0",
-      "purpose": "SQL repo for wb_gam_point_type_conversions; active-only filter."
-    },
-    {
-      "key": "SubmissionService",
-      "class": "WBGam\\Services\\SubmissionService",
-      "added": "1.0.0",
-      "purpose": "Submission lifecycle \u2014 submit/approve/reject + rate-limit + approval awards."
-    },
-    {
       "key": "SubmissionRepository",
       "class": "WBGam\\Repository\\SubmissionRepository",
       "added": "1.0.0",
       "purpose": "SQL repo for wb_gam_submissions."
     },
     {
-      "key": "MemberUploadCap",
-      "class": "WBGam\\Engine\\MemberUploadCap",
-      "added": "1.5.0",
-      "purpose": "Bridges WP upload_files cap to logged-in members so the achievement editor Add Media button works for subscribers / contributors. Opt-out filter: wb_gam_grant_member_uploads."
+      "key": "PointTypeConversionService",
+      "class": "WBGam\\Services\\PointTypeConversionService",
+      "added": "1.0.0",
+      "purpose": "Atomic convert flow with FOR-UPDATE locking + shared event_id."
+    },
+    {
+      "key": "PointTypeService",
+      "class": "WBGam\\Services\\PointTypeService",
+      "added": "1.0.0",
+      "purpose": "Currency catalogue + canonical resolve($input):slug helper."
+    },
+    {
+      "key": "SubmissionService",
+      "class": "WBGam\\Services\\SubmissionService",
+      "added": "1.0.0",
+      "purpose": "Submission lifecycle \u2014 submit/approve/reject + rate-limit + approval awards."
     }
   ],
   "hooks_fired": [
@@ -2684,7 +2690,7 @@
       "type": "filter",
       "purpose": "",
       "fired_at": [
-        "src/Engine/ProfilePage.php:236"
+        "src/Engine/ProfilePage.php:240"
       ],
       "consumed_by": []
     },
@@ -2742,7 +2748,7 @@
       "type": "filter",
       "purpose": "",
       "fired_at": [
-        "src/API/SSEController.php:206"
+        "src/API/SSEController.php:210"
       ],
       "consumed_by": []
     },
@@ -3409,7 +3415,7 @@
     ]
   },
   "generated": {
-    "at": "2026-05-28T01:44:38Z",
+    "at": "2026-06-02T03:06:07Z",
     "from": "wp-plugin-onboard --refresh \u2014 v1.4.0 post-release sweep. Ground-truth re-scan against today diff: 99 plugin hooks (53 actions + 46 filters), 23 tables, 19 blocks, 17 shortcodes, 10 distinct cron hooks, 10 WP-CLI commands, 13 admin pages, 10 declared caps, 24 frontend CSS files + 19 frontend JS files. Sub-arrays (.hooks_fired[], .services[], .frontend_assets) carry over from 2026-05-06 by reference; coverage gate documents the gap. v2.2 schema preserved. See audit/wppqa-baseline-2026-05-27/SUMMARY.md and audit/ISSUES-2026-05-27.yaml.",
     "branch": "main",
     "schema_version": "v2.2",
@@ -3499,8 +3505,8 @@
         "note": "Tier-0 admin REST migration added admin-rest-utils.js, admin-rest-form.js, admin-action-overrides.js, admin-cohort.js, admin-api-keys.js, admin-levels.js, admin-submissions.js, admin-test-event.js, admin-reward-type-toggle.js, admin-rule-action-toggle.js, give-kudos.js, heartbeat.js, hub-convert.js, plus 2 interactivity stores (hub.js, notifications.js). Major drift \u2014 re-enumeration deferred."
       }
     },
-    "last_pr_merged": "v1.4.0 bug-sweep session 2026-05-27 \u2192 2026-05-28 \u2014 21 Basecamp cards closed + 2 new local-CI gates",
-    "since_last_refresh": "19 commits \u2014 boot-guard regression fix + 8 PR-quality bug fixes + 12 feature/UX fixes. New gates: bin/check-boot-invariants.php (stage 2.13), bin/check-badge-condition-contract.php (stage 2.14). New engine: WBGam\\Engine\\MemberUploadCap (grants upload_files to logged-in members). Behaviour changes: WC purchase events now hook woocommerce_payment_complete (was status_completed); first_comment + first_post + prolific_writer + content_creator + engaged_reader badges now use action_count (was point_milestone); redemption email whitelist accepts the slug; cohort tier names + 5th-tier admin input wired through engine + REST + JS; CommunityChallengeEngine::award_community_bonus listener installed (the dead-letter that pre-fix never granted bonuses); heartbeat interval set to fast (5s) for realtime toasts; toast.js dedupes by _id across 3 cursors. UI: user-status-bar chevron toggle + theme top-offset CSS var; cohort-rank tier-coloured accent dot; community-challenges completed-state visual treatment + per-block style.css now compiles; earning-guide card layout (label below icon+pts so long labels read horizontally); manual badge-award form on Badge edit page; Hub Challenges card unites personal + community."
+    "last_pr_merged": "v1.5.2 released 2026-06-02 (tag v1.5.2) - performance + realtime scale + member surfaces + Jetonomy leaderboard deferral",
+    "since_last_refresh": "1.5.1 + 1.5.2 releases. 1.5.2: realtime rescale (Heartbeat default, SSE opt-in via wb_gam_sse_allowed), N+1 elimination (PointsEngine::prime_totals + BadgeEngine::prime_earned_badges), shared MemberSurface powering BuddyPress Achievements tab + WooCommerce /my-account/achievements/ endpoint + opt-in LearnDash hub link, BuddyX dark-mode token mapping, toast placement setting, /u/{username} public-profiles default-on, em-dash sweep, and Jetonomy DisplayDefer (leaderboard deferred to Jetonomy, badges kept). New filters: wb_gam_defer_leaderboard_to_jetonomy, wb_gam_learndash_profile_link, wb_gam_member_surface_html, wb_gam_sse_allowed, wb_gam_toast_position, wb_gam_profile_publicly_visible."
   },
   "wp_cli_commands": [
     {

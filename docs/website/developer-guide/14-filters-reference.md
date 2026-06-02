@@ -64,6 +64,22 @@ See [Hooks and Filters Overview](12-hooks-overview.md) for how to add a listener
 | `wb_gam_wpmediaverse_free_triggers` | The WPMediaVerse free trigger definitions. | `array $free_triggers` | `array` triggers |
 | `wb_gam_wpmediaverse_pro_triggers` | The WPMediaVerse Pro trigger definitions (only when WPMediaVerse Pro is active). | `array $pro_triggers` | `array` triggers |
 | `wb_gam_wpmediaverse_triggers` | The combined WPMediaVerse trigger definitions. | `array $triggers`, `bool $pro_active` | `array` triggers |
+| `wb_gam_defer_leaderboard_to_jetonomy` | Whether wb-gam suppresses its own leaderboard + top-members blocks/shortcodes (and the Hub leaderboard card) so Jetonomy's reputation ranking is the single leaderboard. Default `true` when `JETONOMY_VERSION` is defined, otherwise `false`. Added in 1.5.2. | `bool $defer` | `bool` whether to defer |
+| `wb_gam_learndash_profile_link` | Whether to add the opt-in "My Achievements" link to the LearnDash profile (links to the mapped Hub page). Default `false` - return `true` to enable. Added in 1.5.2. | `bool $enabled` | `bool` whether to show the link |
+| `wb_gam_member_surface_html` | The wrapped member achievements surface markup (BuddyPress Achievements tab, WooCommerce My Account endpoint, etc.) before output, so a host can wrap or augment the surface without duplicating the renderer. Added in 1.5.2. | `string $html`, `int $user_id` | `string` surface markup |
+
+## Realtime and notifications
+
+| Filter | What it filters | Parameters | Return |
+|--------|-----------------|------------|--------|
+| `wb_gam_sse_allowed` | Whether the Server-Sent Events long-poll transport may run on this host. Default `false` - SSE pins a PHP-FPM worker per connection, so it stays off unless the host is provisioned for long-lived streaming. When `false`, realtime falls back to WP Heartbeat. Added in 1.5.2. | `bool $allowed` | `bool` whether SSE is permitted |
+| `wb_gam_toast_position` | The on-screen corner reward toasts slide in from. Filters the stored `wb_gam_toast_position` option (Settings > Realtime). One of `bottom-right` (default), `bottom-left`, `top-right`, `top-center`. Added in 1.5.2. | `string $position` | `string` toast position |
+
+## Public profiles
+
+| Filter | What it filters | Parameters | Return |
+|--------|-----------------|------------|--------|
+| `wb_gam_profile_publicly_visible` | Whether a member's `/u/{user_login}` profile page is publicly visible. Default ON (opt-out model): a member is visible unless they set the per-user flag to `0`, and the site-wide kill switch still wins. Added in 1.5.2. | `bool $visible`, `int $user_id` | `bool` whether the profile is public |
 
 ## Admin CRUD (REST)
 
@@ -119,3 +135,46 @@ These fire on every block, not just one slug.
 | `wb_gam_template_path` | The resolved template path before a plugin-shipped template is loaded. Return your own path to override a template entirely. | `string $path`, `string $relative`, `array $ctx` | `string` template path |
 | `wb_gam_manifest_paths` | The directories scanned for `*.php` action manifest files. Add a path to register custom action manifests. | `string[] $paths` | `array` directory paths |
 | `wb_gam_block_manifests` | The absolute paths to `block.json` files discovered during block registration. | `array $manifests` | `array` manifest paths |
+
+## Usage examples (1.5.2 filters)
+
+```php
+// Force-show wb-gam's own leaderboard even when Jetonomy is active
+// (default is to defer to Jetonomy's reputation ranking).
+add_filter( 'wb_gam_defer_leaderboard_to_jetonomy', '__return_false' );
+
+// Opt the LearnDash profile "My Achievements" link in (default off).
+add_filter( 'wb_gam_learndash_profile_link', '__return_true' );
+
+// Add a heading above every member achievements surface.
+add_filter(
+	'wb_gam_member_surface_html',
+	static function ( string $html, int $user_id ): string {
+		return '<h2>' . esc_html__( 'Your progress', 'my-textdomain' ) . '</h2>' . $html;
+	},
+	10,
+	2
+);
+
+// Enable the SSE long-poll transport (only on a host built for it).
+add_filter( 'wb_gam_sse_allowed', '__return_true' );
+
+// Move reward toasts to the top-right corner for everyone, ignoring the
+// admin Settings > Realtime selection.
+add_filter(
+	'wb_gam_toast_position',
+	static function (): string {
+		return 'top-right';
+	}
+);
+
+// Hide a specific member's public /u/ profile regardless of their flag.
+add_filter(
+	'wb_gam_profile_publicly_visible',
+	static function ( bool $visible, int $user_id ): bool {
+		return 42 === $user_id ? false : $visible;
+	},
+	10,
+	2
+);
+```

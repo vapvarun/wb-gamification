@@ -57,6 +57,12 @@
 - [ ] Trigger a tracked action (publish a comment) → ledger increments by the action's configured points within 5s; Hub page reflects on next reload
 - [ ] First-badge unlock: a member's first qualifying action unlocks the configured badge within 60s; toast fires; badge appears on profile + share URL
 - [ ] Give kudos to another member → 201; second kudos within cooldown returns 429
+- [ ] Member surfaces (v1.5.2): BuddyPress profile "Achievements" tab renders with Overview / Badges / Points / Streak sub-tabs (slug `achievements`); each sub-tab renders its block surface via `WBGam\Engine\MemberSurface` with no PHP notice
+- [ ] Member surfaces (v1.5.2): WooCommerce My Account `/my-account/achievements/` returns 200 for the account owner with an "Achievements" menu item; endpoint absent (URL 404s) when WooCommerce is deactivated
+- [ ] Member surfaces (v1.5.2): LearnDash profile "My Achievements" link is ABSENT by default; appears only after `add_filter('wb_gam_learndash_profile_link','__return_true')`
+- [ ] Public profile (v1.5.2): `/u/{username}` returns 200 (not 404) by default; setting the user's privacy pref to `'0'` makes it 404 for anonymous while the owner still gets 200
+- [ ] Toast placement (v1.5.2): Settings > Realtime placement selector (default `bottom-right`) persists `wb_gam_toast_position`; triggering an award shows the toast in the chosen corner, names what the points were for, and does not overlap the theme header (check a top-* position)
+- [ ] Realtime transport (v1.5.2): network trace shows WP Heartbeat ticks (15s steady, ~5s burst after an action) and NO persistent `text/event-stream` SSE connection (SSE is opt-in behind `wb_gam_sse_allowed`, default false)
 - [ ] Mobile 390px: Hub page tabs all reachable, no horizontal overflow, leaderboard period switcher tappable
 
 ### C3 — Editor with granular cap
@@ -98,6 +104,10 @@ Each row is a permanent fixture against a past customer-pain bug. Walk every one
 - [ ] **D.nudge-dedup** (v1.4.0) — run `LeaderboardNudge::dispatch_batch()` twice in a row; pending AS jobs in `wp_actionscheduler_actions WHERE hook='wb_gam_nudge_single_user'` does NOT double — `as_has_scheduled_action` guard prevents duplicates
 - [ ] **D.as-retention** (v1.4.0) — manually call `ActionSchedulerCleaner::cleanup()` on a site with >7d old rows; complete/failed/pending counts older than 7 days drop to 0; rows ≤7d untouched
 - [ ] **D.datetime-utc-hydration** (v1.4.0) — open Challenges admin in a non-UTC browser timezone; `data-wb-gam-utc` inputs display UTC values converted to local; save round-trip preserves the displayed time
+- [ ] **D.public-profile-default-on** (v1.5.2) - `/u/{username}` returns 200 (not 404) by default; pref `'0'` makes it 404 for anonymous, owner still 200
+- [ ] **D.jetonomy-leaderboard-defer** (v1.5.2) - with Jetonomy active: leaderboard + top-members blocks/shortcodes blank, Hub Leaderboard card absent, badges still render
+- [ ] **D.toast-no-header-overlap** (v1.5.2) - set a top-* toast placement; award fires a toast in that corner that does not overlap the theme header
+- [ ] **D.heartbeat-default-not-SSE** (v1.5.2) - logged-in front-end page shows Heartbeat ticks, NO `text/event-stream` connection; SSE opens only when `wb_gam_sse_allowed` returns true
 
 **Rule:** every customer-visible fix that ships after this document adds a new row here AND a new fixture in `AGENT_SMOKE_RUNBOOK.md` Section D in the same PR.
 
@@ -110,6 +120,7 @@ For each host plugin, check the integration adds value when present AND is silen
 - [ ] **LearnDash** — completing a lesson fires the configured action; daily cap (if set) enforced
 - [ ] **bbPress** — creating a topic / reply lands an event with correct `action_id`
 - [ ] **ACF** — rule editor lists ACF field keys when ACF active; renders "no fields detected" when absent
+- [ ] **Jetonomy (v1.5.2)** - with Jetonomy active, the leaderboard + top-members blocks/shortcodes render blank and the Hub has no Leaderboard card (deferred to Jetonomy); badge blocks/surfaces still render; a Jetonomy reputation delta mirrors 1:1 into the wb-gam points ledger; `wb_gam_defer_leaderboard_to_jetonomy` filter re-enables the wb-gam leaderboard
 - [ ] **Graceful degradation** — deactivate ANY of the integrations; no fatal on any admin or front-end page
 
 ## F — Cross-browser quick pass (10 min)
@@ -155,3 +166,11 @@ Append a section below per release with the specific regression guards added tha
 - New cron to smoke: `wb_gam_as_cleanup` (daily, retention default 7 days, filter `wb_gam_as_retention_days`).
 - New block to smoke: `wb-gamification/give-kudos` + `[wb_gam_give_kudos]` shortcode.
 - Elementor removed from Section E integrations list (was a decorative toggle with no shipped code; deactivated as of this release).
+
+### v1.5.2 release (performance + realtime-scale + member-surface + integration)
+- Member surfaces unified through `WBGam\Engine\MemberSurface` (+ `wb_gam_member_surface_html` filter): BuddyPress profile "Achievements" tab (Overview/Badges/Points/Streak sub-tabs), WooCommerce My Account `/my-account/achievements/` endpoint (gated on WooCommerce active), opt-in LearnDash "My Achievements" link (`wb_gam_learndash_profile_link`, default off).
+- Realtime transport default flipped from SSE long-poll to WP Heartbeat (15s steady / 5s post-action burst / 120s near-suspend on hidden tabs); SSE now opt-in behind `wb_gam_sse_allowed` (default false). New front route to smoke: `/my-account/achievements/`; existing `/u/{username}/` now default-on.
+- Toast placement admin setting added (Settings > Realtime; option + filter `wb_gam_toast_position`, default `bottom-right`, corner-aware, no header overlap).
+- Jetonomy wiring: `WBGam\Integrations\Jetonomy\DisplayDefer` defers ONLY the leaderboard (leaderboard + top-members blocks/shortcodes + Hub leaderboard card suppressed when `JETONOMY_VERSION` defined; filter `wb_gam_defer_leaderboard_to_jetonomy`); badges kept; reputation mirrored 1:1 into points.
+- 5 new Section D regression rows added: `D.public-profile-default-on`, `D.jetonomy-leaderboard-defer`, `D.toast-no-header-overlap`, `D.heartbeat-default-not-SSE` (full fixtures in `AGENT_SMOKE_RUNBOOK.md` Section D).
+- New filters to smoke: `wb_gam_defer_leaderboard_to_jetonomy`, `wb_gam_learndash_profile_link`, `wb_gam_member_surface_html`, `wb_gam_profile_publicly_visible` (hooks_fired_filters 62 -> 66).

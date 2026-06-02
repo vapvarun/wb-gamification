@@ -18,7 +18,7 @@
     "blocks": 19,
     "tables": 23,
     "capabilities_declared": 10,
-    "services": 44,
+    "services": 45,
     "hooks_fired_actions": 58,
     "hooks_fired_filters": 66,
     "hooks_fired_total": 124,
@@ -62,21 +62,21 @@
     "phpcs_ignore_inline_count": 442
   },
   "coverage_gate_violations": {
-    "actions_fired": "18.9% drift \u2014 manifest array reflects 43 entries; ground truth = 53 wb_gam_ do_action sites. Re-enumeration deferred.",
-    "filters_fired": "73.9% drift \u2014 manifest array reflects 12 entries; ground truth = 46 wb_gam_ apply_filters sites. Re-enumeration deferred.",
-    "blocks": "RESOLVED (WBG-009) \u2014 manifest .blocks[] = 19 entries; matches src/Blocks/ ground truth.",
-    "shortcodes": "RESOLVED (WBG-009) \u2014 manifest .shortcodes[] = 17; matches add_shortcode ground truth.",
-    "cron": "RESOLVED (WBG-009) \u2014 manifest .cron[] = 10; matches distinct CRON_HOOK constants.",
-    "capabilities": "RESOLVED (WBG-009) \u2014 manifest .capabilities[] = 11 (10 plugin caps + manage_options); matches Capabilities::CAPS.",
-    "services": "20.4% drift \u2014 manifest .services[] = 43; src/Engine/+Services/+Repository/ = 54 service-like classes.",
-    "frontend_css": "75.0% drift \u2014 manifest = 6; ground truth = 24 non-min, non-RTL CSS files.",
-    "frontend_js": "78.9% drift \u2014 manifest = 4; ground truth = 19 non-min JS files."
+    "actions_fired": "18.9% drift — manifest array reflects 43 entries; ground truth = 53 wb_gam_ do_action sites. Re-enumeration deferred.",
+    "filters_fired": "73.9% drift — manifest array reflects 12 entries; ground truth = 46 wb_gam_ apply_filters sites. Re-enumeration deferred.",
+    "blocks": "RESOLVED (WBG-009) — manifest .blocks[] = 19 entries; matches src/Blocks/ ground truth.",
+    "shortcodes": "RESOLVED (WBG-009) — manifest .shortcodes[] = 17; matches add_shortcode ground truth.",
+    "cron": "RESOLVED (WBG-009) — manifest .cron[] = 10; matches distinct CRON_HOOK constants.",
+    "capabilities": "RESOLVED (WBG-009) — manifest .capabilities[] = 11 (10 plugin caps + manage_options); matches Capabilities::CAPS.",
+    "services": "20.4% drift — manifest .services[] = 43; src/Engine/+Services/+Repository/ = 54 service-like classes.",
+    "frontend_css": "75.0% drift — manifest = 6; ground truth = 24 non-min, non-RTL CSS files.",
+    "frontend_js": "78.9% drift — manifest = 4; ground truth = 19 non-min JS files."
   },
   "generated": {
-    "at": "2026-05-28T01:44:49Z",
+    "at": "2026-06-02T03:06:07Z",
     "schema_version": "v2.2",
-    "last_pr_merged": "v1.4.0 bug-sweep session 2026-05-27 \u2192 2026-05-28 \u2014 21 Basecamp cards closed + 2 new local-CI gates",
-    "since_last_refresh": "19 commits \u2014 boot-guard regression fix + 8 PR-quality bug fixes + 12 feature/UX fixes. New gates: bin/check-boot-invariants.php (stage 2.13), bin/check-badge-condition-contract.php (stage 2.14). New engine: WBGam\\Engine\\MemberUploadCap."
+    "last_pr_merged": "v1.5.2 released 2026-06-02 (tag v1.5.2) - performance + realtime scale + member surfaces + Jetonomy leaderboard deferral",
+    "since_last_refresh": "1.5.1 + 1.5.2 releases. 1.5.2: realtime rescale (Heartbeat default, SSE opt-in via wb_gam_sse_allowed), N+1 elimination (PointsEngine::prime_totals + BadgeEngine::prime_earned_badges), shared MemberSurface powering BuddyPress Achievements tab + WooCommerce /my-account/achievements/ endpoint + opt-in LearnDash hub link, BuddyX dark-mode token mapping, toast placement setting, /u/{username} public-profiles default-on, em-dash sweep, and Jetonomy DisplayDefer (leaderboard deferred to Jetonomy, badges kept). New filters: wb_gam_defer_leaderboard_to_jetonomy, wb_gam_learndash_profile_link, wb_gam_member_surface_html, wb_gam_sse_allowed, wb_gam_toast_position, wb_gam_profile_publicly_visible."
   },
   "release_verdict": {
     "wppqa_failed_targeted_checks": 0,
