@@ -228,3 +228,144 @@ curl https://example.com/wp-json/wb-gamification/v1/events/stream \
   -H "X-WP-Nonce: YOUR_NONCE" \
   --cookie "wordpress_logged_in_xxx=..."
 ```
+
+## Members roster
+
+Site-owner member management (Gamification > Members). Added in 1.5.3. All admin-only.
+
+| Method | Endpoint | Permission |
+|--------|----------|------------|
+| `GET` | `/members` | `manage_options` |
+| `POST` | `/members/{id}/exclude` | `manage_options` |
+| `POST` | `/members/{id}/reset-points` | `manage_options` |
+
+### GET /members
+
+A paginated, searchable roster of every member with their points, level, and badges. The query primes points and badges per page so the listing stays N+1-free. Each row reports whether the member is currently excluded from earning.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `page` | int | Page number. Default `1` |
+| `per_page` | int | Rows per page. Default `20`, max `100` |
+| `search` | string | Match against username, display name, email, and nicename |
+
+```bash
+curl "https://example.com/wp-json/wb-gamification/v1/members?search=jane&per_page=20" \
+  -H "X-WP-Nonce: YOUR_NONCE" \
+  --cookie "wordpress_logged_in_xxx=..."
+```
+
+### POST /members/{id}/exclude
+
+Toggle the per-user earning veto (`wb_gam_sandboxed` meta). An excluded member keeps their points but stops earning and is hidden from leaderboards.
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `excluded` | boolean | No | `true` to exclude (default), `false` to include |
+
+```bash
+curl -X POST https://example.com/wp-json/wb-gamification/v1/members/42/exclude \
+  -H "Content-Type: application/json" \
+  -H "X-WP-Nonce: YOUR_NONCE" \
+  --cookie "wordpress_logged_in_xxx=..." \
+  -d '{ "excluded": true }'
+```
+
+### POST /members/{id}/reset-points
+
+Zero a member's balance. The reset is recorded as a balancing debit so the points ledger keeps a full audit trail.
+
+```bash
+curl -X POST https://example.com/wp-json/wb-gamification/v1/members/42/reset-points \
+  -H "X-WP-Nonce: YOUR_NONCE" \
+  --cookie "wordpress_logged_in_xxx=..."
+```
+
+```json
+{ "user_id": 42, "reset_from": 1200, "new_balance": 0 }
+```
+
+## Bulk award
+
+Award the same points to a whole role or to all members at once. Added in 1.5.3.
+
+| Method | Endpoint | Permission |
+|--------|----------|------------|
+| `POST` | `/points/bulk` | `manage_options` |
+
+### POST /points/bulk
+
+Routes through the exclusion-aware batch award, so accounts excluded in Settings > Access are skipped automatically. Points must be positive.
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `target` | string | Yes | `all` for every member, or a role slug |
+| `points` | int | Yes | Points to grant each member (`1` to `100000`) |
+| `point_type` | string | No | Currency slug. Defaults to the primary currency |
+
+```bash
+curl -X POST https://example.com/wp-json/wb-gamification/v1/points/bulk \
+  -H "Content-Type: application/json" \
+  -H "X-WP-Nonce: YOUR_NONCE" \
+  --cookie "wordpress_logged_in_xxx=..." \
+  -d '{ "target": "all", "points": 50 }'
+```
+
+```json
+{ "awarded": 318, "target": "all", "points": 50 }
+```
+
+## Tools
+
+Settings portability and maintenance (Settings > Tools). Added in 1.5.3. All admin-only.
+
+| Method | Endpoint | Permission |
+|--------|----------|------------|
+| `GET` | `/tools/export-settings` | `manage_options` |
+| `POST` | `/tools/import-settings` | `manage_options` |
+| `POST` | `/tools/recompute-leaderboard` | `manage_options` |
+| `POST` | `/tools/reset-progress` | `manage_options` |
+
+### GET /tools/export-settings
+
+Download the plugin configuration as a JSON document of every `wb_gam_*` configuration option. Runtime, derived, and schema state (database version, feature schema gates, caches, snapshots, flush markers, wizard flags) is deliberately excluded so an import never corrupts the target site.
+
+```bash
+curl https://example.com/wp-json/wb-gamification/v1/tools/export-settings \
+  -H "X-WP-Nonce: YOUR_NONCE" \
+  --cookie "wordpress_logged_in_xxx=..."
+```
+
+### POST /tools/import-settings
+
+Apply a document produced by `export-settings`. Only keys that start with `wb_gam_` and are not on the exclusion list are written.
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `document` | object | Yes | A document produced by export-settings |
+
+### POST /tools/recompute-leaderboard
+
+Rebuild the leaderboard snapshot and clear its caches. This is the admin equivalent of `wp wb-gamification doctor --recompute-leaderboard`.
+
+```bash
+curl -X POST https://example.com/wp-json/wb-gamification/v1/tools/recompute-leaderboard \
+  -H "X-WP-Nonce: YOUR_NONCE" \
+  --cookie "wordpress_logged_in_xxx=..."
+```
+
+### POST /tools/reset-progress
+
+Permanently clear all member progress (points, events, totals, earned badges, streaks, kudos, leaderboard cache, challenge logs, cohort membership, community-challenge contributions, redemptions, submissions, and per-user progress meta) while keeping every configuration and definition. Requires `confirm: true` on top of the admin capability check; the call is rejected without it.
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `confirm` | boolean | Yes | Must be `true`. The reset is rejected otherwise |
+
+```bash
+curl -X POST https://example.com/wp-json/wb-gamification/v1/tools/reset-progress \
+  -H "Content-Type: application/json" \
+  -H "X-WP-Nonce: YOUR_NONCE" \
+  --cookie "wordpress_logged_in_xxx=..." \
+  -d '{ "confirm": true }'
+```

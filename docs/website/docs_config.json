@@ -319,6 +319,18 @@
           "title": "Member Achievement Surfaces",
           "slug": "23-member-achievement-surfaces-wbgam",
           "order": 23
+        },
+        {
+          "file": "24-member-management.md",
+          "title": "Member Management",
+          "slug": "24-member-management-wbgam",
+          "order": 24
+        },
+        {
+          "file": "25-point-expiry.md",
+          "title": "Point Expiry",
+          "slug": "25-point-expiry-wbgam",
+          "order": 25
         }
       ]
     },
@@ -382,6 +394,24 @@
           "title": "Realtime and Notification Settings",
           "slug": "09-realtime-notifications-wbgam",
           "order": 9
+        },
+        {
+          "file": "10-member-access.md",
+          "title": "Member Access (Earning Exclusion)",
+          "slug": "10-member-access-wbgam",
+          "order": 10
+        },
+        {
+          "file": "11-modules.md",
+          "title": "Modules",
+          "slug": "11-modules-wbgam",
+          "order": 11
+        },
+        {
+          "file": "12-tools.md",
+          "title": "Admin Tools",
+          "slug": "12-tools-wbgam",
+          "order": 12
         }
       ]
     },

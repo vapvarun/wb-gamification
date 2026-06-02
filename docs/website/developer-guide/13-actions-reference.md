@@ -15,6 +15,7 @@ See [Hooks and Filters Overview](12-hooks-overview.md) for how to add a listener
 | `wb_gam_points_redeemed` | When a member redeems points for a reward in the redemption store. | `int $redemption_id`, `int $user_id`, `array $item`, `?string $coupon` |
 | `wb_gam_point_type_converted` | After a member converts one point currency into another. Debit and credit ledger rows share an `event_id`. | `int $user_id`, `string $from`, `string $to`, `int $debit_amount`, `int $credit_amount`, `array $rule` |
 | `wb_gam_award_skipped` | When the engine intentionally skips an award (cooldown, cap reached, self-action, veto). Use it to surface a contextual hint so silent skips do not feel broken. | `int $user_id`, `string $action_id`, `string $reason`, `array $context` |
+| `wb_gam_points_decayed` | After each daily inactivity point-decay sweep (Settings > Points > Point expiry; off by default). `$count` is the number of members decayed this run. Added in 1.5.3. | `int $count` |
 
 ### `wb_gam_award_skipped` reason taxonomy (closed set)
 
@@ -111,6 +112,14 @@ These fire from the REST controllers behind the admin CRUD screens. Each carries
 | `wb_gam_manifests_loaded` | After all action manifests are auto-discovered. `$loaded_actions` is the full registry of discovered actions. | `array $loaded_actions` |
 | `wb_gam_as_cleaned` | After the Action Scheduler cleaner sweeps completed/failed rows. | `array $results`, `string $cutoff`, `bool $panic_mode` |
 | `wb_gam_as_runaway_detected` | When the Action Scheduler cleaner detects a runaway queue and enters panic mode. | `array $payload` |
+
+## Site-owner controls
+
+Added in 1.5.3 (Settings > Tools).
+
+| Hook | When it fires | Parameters |
+|------|---------------|------------|
+| `wb_gam_progress_reset` | After an admin resets all member progress (Settings > Tools danger zone). The progress tables and per-user progress meta are wiped while all configuration and definitions are kept. Adapters can clear their own derived state (transients, etc.) here. Added in 1.5.3. | (none) |
 
 ## Lifecycle
 

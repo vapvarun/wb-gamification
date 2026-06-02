@@ -75,6 +75,17 @@ See [Hooks and Filters Overview](12-hooks-overview.md) for how to add a listener
 | `wb_gam_sse_allowed` | Whether the Server-Sent Events long-poll transport may run on this host. Default `false` - SSE pins a PHP-FPM worker per connection, so it stays off unless the host is provisioned for long-lived streaming. When `false`, realtime falls back to WP Heartbeat. Added in 1.5.2. | `bool $allowed` | `bool` whether SSE is permitted |
 | `wb_gam_toast_position` | The on-screen corner reward toasts slide in from. Filters the stored `wb_gam_toast_position` option (Settings > Realtime). One of `bottom-right` (default), `bottom-left`, `top-right`, `top-center`. Added in 1.5.2. | `string $position` | `string` toast position |
 
+## Access and modules
+
+Site-owner controls added in 1.5.3 (Settings > Access and Settings > Modules).
+
+| Filter | What it filters | Parameters | Return |
+|--------|-----------------|------------|--------|
+| `wb_gam_user_can_earn` | Whether a user may earn points at all. Fires after the admin earning-exclusion settings (excluded roles, excluded accounts, and the per-user `wb_gam_sandboxed` veto) are applied, so code can extend or override the owner's choices. Enforced at the single award choke point, so it covers both the sync and async award paths. Added in 1.5.3. | `bool $can`, `int $user_id` | `bool` whether the user may earn |
+| `wb_gam_module_enabled` | Whether an optional module is enabled. Modules: `kudos`, `streaks`, `challenges`, `community_challenges`, `cohort_leagues`, `redemption`. Default ON; only an explicit `'0'` in the `wb_gam_modules` option disables one. A disabled module's blocks and shortcodes render nothing and its admin page is removed (data is preserved). Added in 1.5.3. | `bool $enabled`, `string $slug` | `bool` whether the module is on |
+
+> **Two related event hooks are actions, not filters.** `wb_gam_progress_reset` (fires after a member-progress reset wipes the progress tables, keeping config) and `wb_gam_points_decayed` (fires after each inactivity point-decay sweep, with the number of members decayed) are documented in the [Actions reference](13-actions-reference.md). Listen with `add_action()`, not `add_filter()`.
+
 ## Public profiles
 
 | Filter | What it filters | Parameters | Return |
