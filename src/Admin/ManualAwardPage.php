@@ -301,6 +301,50 @@ final class ManualAwardPage {
 				</div>
 			</div>
 
+			<!-- Bulk Award Card -->
+			<div class="wbgam-card wbgam-stack-block">
+				<div class="wbgam-card-header">
+					<h3 class="wbgam-card-title"><?php esc_html_e( 'Bulk Award', 'wb-gamification' ); ?></h3>
+					<p class="wbgam-card-desc"><?php esc_html_e( 'Award the same points to every member of a role, or to all members at once. Accounts excluded in Settings > Access are skipped automatically. For very large communities, prefer WP-CLI.', 'wb-gamification' ); ?></p>
+				</div>
+				<div class="wbgam-card-body">
+					<form
+						data-wb-gam-rest-form="wbGamManualAwardSettings"
+						data-wb-gam-rest-method="POST"
+						data-wb-gam-rest-path="/points/bulk"
+						data-wb-gam-rest-success-toast="<?php esc_attr_e( 'Bulk award queued.', 'wb-gamification' ); ?>"
+						data-wb-gam-rest-error-toast="<?php esc_attr_e( 'Bulk award failed.', 'wb-gamification' ); ?>"
+						data-wb-gam-rest-after="reload"
+					>
+						<table class="form-table" role="presentation">
+							<tr>
+								<th scope="row">
+									<label for="wb_gam_bulk_target"><?php esc_html_e( 'Award to', 'wb-gamification' ); ?></label>
+								</th>
+								<td>
+									<select id="wb_gam_bulk_target" name="target" class="wbgam-select">
+										<option value="all"><?php esc_html_e( 'All members', 'wb-gamification' ); ?></option>
+										<?php foreach ( wp_roles()->get_names() as $role_slug => $role_name ) : ?>
+											<option value="<?php echo esc_attr( $role_slug ); ?>"><?php echo esc_html( translate_user_role( $role_name ) ); ?></option>
+										<?php endforeach; ?>
+									</select>
+								</td>
+							</tr>
+							<tr>
+								<th scope="row">
+									<label for="wb_gam_bulk_points"><?php esc_html_e( 'Points each', 'wb-gamification' ); ?></label>
+								</th>
+								<td>
+									<input type="number" id="wb_gam_bulk_points" name="points" class="wbgam-input" min="1" max="100000" step="1" />
+									<p class="description"><?php esc_html_e( 'Positive only. Bulk deduction is not supported here - use the single award above for negative adjustments.', 'wb-gamification' ); ?></p>
+								</td>
+							</tr>
+						</table>
+						<p><button type="submit" class="wbgam-btn"><?php esc_html_e( 'Bulk Award Points', 'wb-gamification' ); ?></button></p>
+					</form>
+				</div>
+			</div>
+
 			<!-- Recent Awards History -->
 			<?php if ( ! empty( $recent ) ) : ?>
 			<div class="wbgam-card">

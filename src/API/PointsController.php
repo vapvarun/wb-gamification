@@ -115,6 +115,40 @@ class PointsController extends WP_REST_Controller {
 			)
 		);
 
+		// POST /points/bulk — award the same points to every member of a role
+		// (or all members). Routes through PointsEngine::award_batch, which
+		// respects the Settings > Access exclusions (force = false).
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/bulk',
+			array(
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'bulk_award' ),
+					'permission_callback' => array( $this, 'admin_permission_check' ),
+					'args'                => array(
+						'target'     => array(
+							'required'          => true,
+							'type'              => 'string',
+							'description'       => '"all" for every member, or a role slug.',
+							'sanitize_callback' => 'sanitize_text_field',
+						),
+						'points'     => array(
+							'required' => true,
+							'type'     => 'integer',
+							'minimum'  => 1,
+							'maximum'  => 100000,
+						),
+						'point_type' => array(
+							'type'              => 'string',
+							'default'           => '',
+							'sanitize_callback' => 'sanitize_key',
+						),
+					),
+				),
+			)
+		);
+
 		// DELETE /points/{id}.
 		register_rest_route(
 			$this->namespace,
@@ -366,6 +400,57 @@ class PointsController extends WP_REST_Controller {
 				'id'      => $row_id,
 				'user_id' => (int) $row['user_id'],
 				'points'  => (int) $row['points'],
+			),
+			200
+		);
+	}
+
+	/**
+	 * POST /points/bulk — award the same points to a whole role, or to every
+	 * member. Uses PointsEngine::award_batch (chunked, single round-trip per
+	 * chunk) and respects Settings > Access exclusions (force = false), so
+	 * excluded staff / bots are skipped even in a bulk grant.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function bulk_award( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+		$target = (string) $request['target'];
+		$points = (int) $request['points'];
+		$type   = (string) $request['point_type'];
+		$type   = '' !== $type ? $type : null;
+
+		if ( $points <= 0 ) {
+			return new WP_Error( 'rest_points_invalid', __( 'Bulk award points must be positive.', 'wb-gamification' ), array( 'status' => 400 ) );
+		}
+
+		$query_args = array( 'fields' => 'ID' );
+		if ( 'all' !== $target ) {
+			$valid_roles = array_keys( wp_roles()->get_names() );
+			if ( ! in_array( $target, $valid_roles, true ) ) {
+				return new WP_Error( 'rest_invalid_target', __( 'Unknown target role.', 'wb-gamification' ), array( 'status' => 400 ) );
+			}
+			$query_args['role'] = $target;
+		}
+
+		$user_ids = array_map( 'intval', get_users( $query_args ) );
+		if ( empty( $user_ids ) ) {
+			return new WP_REST_Response(
+				array(
+					'awarded' => 0,
+					'target'  => $target,
+				),
+				200
+			);
+		}
+
+		$awarded = \WBGam\Engine\PointsEngine::award_batch( $user_ids, 'manual_bulk_award', $points, $type );
+
+		return new WP_REST_Response(
+			array(
+				'awarded' => $awarded,
+				'target'  => $target,
+				'points'  => $points,
 			),
 			200
 		);
