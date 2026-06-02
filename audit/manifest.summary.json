@@ -27,7 +27,10 @@
     "admin_post_handlers": 0,
     "frontend_css_files": 40,
     "frontend_js_files": 42,
-    "php_file_count": 173
+    "php_file_count": 173,
+    "integrations": 14,
+    "integration_triggers_total": 76,
+    "integration_adapter_classes": 8
   },
   "namespaces": {
     "rest": "wb-gamification/v1"
@@ -62,15 +65,15 @@
     "phpcs_ignore_inline_count": 442
   },
   "coverage_gate_violations": {
-    "actions_fired": "18.9% drift — manifest array reflects 43 entries; ground truth = 53 wb_gam_ do_action sites. Re-enumeration deferred.",
-    "filters_fired": "73.9% drift — manifest array reflects 12 entries; ground truth = 46 wb_gam_ apply_filters sites. Re-enumeration deferred.",
-    "blocks": "RESOLVED (WBG-009) — manifest .blocks[] = 19 entries; matches src/Blocks/ ground truth.",
-    "shortcodes": "RESOLVED (WBG-009) — manifest .shortcodes[] = 17; matches add_shortcode ground truth.",
-    "cron": "RESOLVED (WBG-009) — manifest .cron[] = 10; matches distinct CRON_HOOK constants.",
-    "capabilities": "RESOLVED (WBG-009) — manifest .capabilities[] = 11 (10 plugin caps + manage_options); matches Capabilities::CAPS.",
-    "services": "20.4% drift — manifest .services[] = 43; src/Engine/+Services/+Repository/ = 54 service-like classes.",
-    "frontend_css": "75.0% drift — manifest = 6; ground truth = 24 non-min, non-RTL CSS files.",
-    "frontend_js": "78.9% drift — manifest = 4; ground truth = 19 non-min JS files."
+    "actions_fired": "18.9% drift \u2014 manifest array reflects 43 entries; ground truth = 53 wb_gam_ do_action sites. Re-enumeration deferred.",
+    "filters_fired": "73.9% drift \u2014 manifest array reflects 12 entries; ground truth = 46 wb_gam_ apply_filters sites. Re-enumeration deferred.",
+    "blocks": "RESOLVED (WBG-009) \u2014 manifest .blocks[] = 19 entries; matches src/Blocks/ ground truth.",
+    "shortcodes": "RESOLVED (WBG-009) \u2014 manifest .shortcodes[] = 17; matches add_shortcode ground truth.",
+    "cron": "RESOLVED (WBG-009) \u2014 manifest .cron[] = 10; matches distinct CRON_HOOK constants.",
+    "capabilities": "RESOLVED (WBG-009) \u2014 manifest .capabilities[] = 11 (10 plugin caps + manage_options); matches Capabilities::CAPS.",
+    "services": "20.4% drift \u2014 manifest .services[] = 43; src/Engine/+Services/+Repository/ = 54 service-like classes.",
+    "frontend_css": "75.0% drift \u2014 manifest = 6; ground truth = 24 non-min, non-RTL CSS files.",
+    "frontend_js": "78.9% drift \u2014 manifest = 4; ground truth = 19 non-min JS files."
   },
   "generated": {
     "at": "2026-06-02T03:06:07Z",

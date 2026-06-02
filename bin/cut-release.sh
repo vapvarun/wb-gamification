@@ -179,6 +179,25 @@ else
     echo "  WARN: bin/build-frontend-assets.php not present yet — skipping"
 fi
 
+# Integrations — manifest.integrations[] rebuilt from the integration manifest
+# files (integrations/*.php + contrib/) and adapter classes (src/Integrations/).
+# Keeps the integration surface legible as the plugin adds more integrations.
+if [ -f bin/build-integrations.php ]; then
+    PRE_MANIFEST_HASH="$(shasum -a 256 audit/manifest.json | awk '{print $1}')"
+    PRE_SUMMARY_HASH="$(shasum -a 256 audit/manifest.summary.json | awk '{print $1}')"
+    php bin/build-integrations.php >/dev/null 2>&1 || { echo "ERROR: bin/build-integrations.php failed" >&2; exit 2; }
+    POST_MANIFEST_HASH="$(shasum -a 256 audit/manifest.json | awk '{print $1}')"
+    POST_SUMMARY_HASH="$(shasum -a 256 audit/manifest.summary.json | awk '{print $1}')"
+    if [ "${CHECK_MODE}" -eq 1 ] && { [ "${PRE_MANIFEST_HASH}" != "${POST_MANIFEST_HASH}" ] || [ "${PRE_SUMMARY_HASH}" != "${POST_SUMMARY_HASH}" ]; }; then
+        echo "  ✗  integrations drift detected (integration manifests or adapter classes changed)" >&2
+        echo "       Run 'php bin/build-integrations.php' to refresh, then commit." >&2
+        exit 3
+    fi
+    echo "  ✓  audit/manifest.integrations in sync with disk"
+else
+    echo "  WARN: bin/build-integrations.php not present yet — skipping"
+fi
+
 # OpenAPI spec — requires WP-CLI because it walks the REST_Server's
 # registered routes. Skip the step (with a clear note) when wp isn't on
 # PATH so this script still runs in CI containers that may not have it.

@@ -3666,5 +3666,175 @@
       "baseline": 19,
       "gap_pct": 0
     }
-  }
+  },
+  "integrations": [
+    {
+      "slug": "bbpress",
+      "name": "bbPress",
+      "tier": "first-party",
+      "manifest_file": "integrations/bbpress.php",
+      "manifest_version": "1.0.0",
+      "detect": "function_exists('bbpress')",
+      "trigger_count": 3,
+      "adapter_classes": [],
+      "purpose": ""
+    },
+    {
+      "slug": "buddypress",
+      "name": "BuddyPress",
+      "tier": "first-party",
+      "manifest_file": "integrations/buddypress.php",
+      "manifest_version": "1.0.0",
+      "detect": "",
+      "trigger_count": 14,
+      "adapter_classes": [],
+      "purpose": ""
+    },
+    {
+      "slug": "jetonomy",
+      "name": "Jetonomy",
+      "tier": "first-party",
+      "manifest_file": "integrations/jetonomy.php",
+      "manifest_version": "1.0.0",
+      "detect": "defined('JETONOMY_VERSION') || class_exists('\\\\Jetonomy\\\\Plugin')",
+      "trigger_count": 4,
+      "adapter_classes": [
+        "WBGam\\Integrations\\Jetonomy\\DisplayDefer",
+        "WBGam\\Integrations\\Jetonomy\\JetonomyIntegration"
+      ],
+      "purpose": ""
+    },
+    {
+      "slug": "jetonomy-pro",
+      "name": "Jetonomy Pro",
+      "tier": "first-party",
+      "manifest_file": "integrations/jetonomy-pro.php",
+      "manifest_version": "1.0.0",
+      "detect": "defined('JETONOMY_PRO_VERSION')",
+      "trigger_count": 7,
+      "adapter_classes": [],
+      "purpose": ""
+    },
+    {
+      "slug": "learndash",
+      "name": "LearnDash",
+      "tier": "first-party",
+      "manifest_file": "integrations/learndash.php",
+      "manifest_version": "1.0.0",
+      "detect": "function_exists('learndash_get_course_id')",
+      "trigger_count": 5,
+      "adapter_classes": [
+        "WBGam\\Integrations\\LearnDash\\ProfileIntegration"
+      ],
+      "purpose": ""
+    },
+    {
+      "slug": "woocommerce",
+      "name": "WooCommerce",
+      "tier": "first-party",
+      "manifest_file": "integrations/woocommerce.php",
+      "manifest_version": "1.0.0",
+      "detect": "class_exists('WooCommerce')",
+      "trigger_count": 5,
+      "adapter_classes": [
+        "WBGam\\Integrations\\WooCommerce\\AccountIntegration",
+        "WBGam\\Integrations\\WooCommerce\\RefundHandler"
+      ],
+      "purpose": ""
+    },
+    {
+      "slug": "wordpress",
+      "name": "WordPress",
+      "tier": "first-party",
+      "manifest_file": "integrations/wordpress.php",
+      "manifest_version": "1.0.0",
+      "detect": "",
+      "trigger_count": 8,
+      "adapter_classes": [
+        "WBGam\\Integrations\\WordPress\\HooksIntegration"
+      ],
+      "purpose": ""
+    },
+    {
+      "slug": "wpmediaverse",
+      "name": "WPMediaVerse",
+      "tier": "first-party",
+      "manifest_file": "integrations/wpmediaverse.php",
+      "manifest_version": "1.0.0",
+      "detect": "defined('MVS_VERSION') || defined('MVS_PRO_VERSION') || function_exists('wb_gam_mvs_media_author') || class_exists('\\WPMediaVerse\\Core\\Plugin')",
+      "trigger_count": 15,
+      "adapter_classes": [],
+      "purpose": ""
+    },
+    {
+      "slug": "givewp",
+      "name": "GiveWP",
+      "tier": "contrib",
+      "manifest_file": "integrations/contrib/givewp.php",
+      "manifest_version": "1.0.0",
+      "detect": "function_exists('give')",
+      "trigger_count": 4,
+      "adapter_classes": [],
+      "purpose": ""
+    },
+    {
+      "slug": "lifterlms",
+      "name": "LifterLMS",
+      "tier": "contrib",
+      "manifest_file": "integrations/contrib/lifterlms.php",
+      "manifest_version": "1.0.0",
+      "detect": "class_exists('LLMS_Student')",
+      "trigger_count": 5,
+      "adapter_classes": [],
+      "purpose": ""
+    },
+    {
+      "slug": "memberpress",
+      "name": "MemberPress",
+      "tier": "contrib",
+      "manifest_file": "integrations/contrib/memberpress.php",
+      "manifest_version": "1.0.0",
+      "detect": "class_exists('MeprUser')",
+      "trigger_count": 3,
+      "adapter_classes": [],
+      "purpose": ""
+    },
+    {
+      "slug": "the-events-calendar",
+      "name": "The Events Calendar",
+      "tier": "contrib",
+      "manifest_file": "integrations/contrib/the-events-calendar.php",
+      "manifest_version": "1.0.0",
+      "detect": "class_exists('Tribe__Events__Main')",
+      "trigger_count": 3,
+      "adapter_classes": [],
+      "purpose": ""
+    },
+    {
+      "slug": "activitypub",
+      "name": "ActivityPub",
+      "tier": "platform",
+      "manifest_file": null,
+      "manifest_version": null,
+      "detect": "",
+      "trigger_count": 0,
+      "adapter_classes": [
+        "WBGam\\Integrations\\ActivityPub"
+      ],
+      "purpose": ""
+    },
+    {
+      "slug": "graphql",
+      "name": "GraphQL",
+      "tier": "platform",
+      "manifest_file": null,
+      "manifest_version": null,
+      "detect": "",
+      "trigger_count": 0,
+      "adapter_classes": [
+        "WBGam\\Integrations\\GraphQL"
+      ],
+      "purpose": ""
+    }
+  ]
 }
