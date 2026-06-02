@@ -255,6 +255,9 @@ final class WB_Gamification {
 		BootOrder::register( 'jetonomy_display_defer', BootOrder::SLOT_INTEGRATIONS, array( 'engine' ) );
 		add_action( 'plugins_loaded', array( JetonomyDisplayDefer::class, 'init' ), BootOrder::SLOT_INTEGRATIONS );
 
+		BootOrder::register( 'module_toggles', BootOrder::SLOT_INTEGRATIONS, array( 'engine' ) );
+		add_action( 'plugins_loaded', array( \WBGam\Engine\ModuleToggles::class, 'init' ), BootOrder::SLOT_INTEGRATIONS );
+
 		// Leaderboard snapshot cron + object cache layer.
 		BootOrder::register( 'leaderboard_engine', BootOrder::SLOT_INTEGRATIONS, array( 'engine' ) );
 		add_action( 'plugins_loaded', array( LeaderboardEngine::class, 'init' ), BootOrder::SLOT_INTEGRATIONS );
@@ -703,6 +706,7 @@ register_activation_hook(
 			update_option( 'wb_gam_pending_setup_redirect', '1' );
 		}
 		LogPruner::activate();
+		\WBGam\Engine\PointsExpiry::activate();
 		ActionSchedulerCleaner::activate();
 		LeaderboardNudge::activate();
 		LeaderboardEngine::activate();
@@ -719,6 +723,7 @@ register_deactivation_hook(
 	__FILE__,
 	function () {
 		LogPruner::deactivate();
+		\WBGam\Engine\PointsExpiry::deactivate();
 		ActionSchedulerCleaner::deactivate();
 		LeaderboardNudge::deactivate();
 		LeaderboardEngine::deactivate();

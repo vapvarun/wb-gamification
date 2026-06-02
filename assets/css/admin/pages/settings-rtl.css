@@ -952,3 +952,25 @@
 .wbgam-checkbox-option input[type="checkbox"] {
 	flex-shrink: 0;
 }
+
+/* Tools > Danger zone (reset member progress). */
+.wb-gam-danger-zone {
+	border-color: var(--wbgam-color-error, #d63638);
+}
+
+.wb-gam-danger-zone .wbgam-card-title {
+	color: var(--wbgam-color-error, #d63638);
+}
+
+.wb-gam-btn-danger {
+	background: var(--wbgam-color-error, #d63638);
+	border-color: var(--wbgam-color-error, #d63638);
+	color: #fff;
+}
+
+.wb-gam-btn-danger:hover,
+.wb-gam-btn-danger:focus {
+	background: var(--wbgam-color-error-hover, #b32d2e);
+	border-color: var(--wbgam-color-error-hover, #b32d2e);
+	color: #fff;
+}

@@ -19,6 +19,7 @@
 	var importBtn = document.getElementById( 'wb-gam-import-settings' );
 	var fileInput = document.getElementById( 'wb-gam-import-file' );
 	var recomputeBtn = document.getElementById( 'wb-gam-recompute-leaderboard' );
+	var resetBtn = document.getElementById( 'wb-gam-reset-progress' );
 
 	function toast( msg, tone ) {
 		if ( rest.toast ) {
@@ -60,6 +61,31 @@
 			var res = await rest.apiFetch( 'POST', '/tools/recompute-leaderboard', {}, cfg );
 			recomputeBtn.disabled = false;
 			toast( res && res.ok ? i18n.recomputed : i18n.recomputeError, res && res.ok ? 'success' : 'error' );
+		} );
+	}
+
+	if ( resetBtn ) {
+		resetBtn.addEventListener( 'click', async function () {
+			// Destructive: require the modal confirm helper; abort if unavailable.
+			if ( ! rest.confirmAction ) {
+				return;
+			}
+			var ok = await rest.confirmAction( i18n.resetConfirm );
+			if ( ! ok ) {
+				return;
+			}
+			resetBtn.disabled = true;
+			toast( i18n.resetting, 'info' );
+			var res = await rest.apiFetch( 'POST', '/tools/reset-progress', { confirm: true }, cfg );
+			resetBtn.disabled = false;
+			if ( res && res.ok && res.data ) {
+				toast( String( i18n.resetDone ).replace( '%d', res.data.tables || 0 ), 'success' );
+				window.setTimeout( function () {
+					window.location.reload();
+				}, 1500 );
+			} else {
+				toast( i18n.resetError, 'error' );
+			}
 		} );
 	}
 

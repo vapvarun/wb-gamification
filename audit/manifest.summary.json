@@ -10,19 +10,19 @@
     "extension_hook_fired": "wb_gam_free_loaded"
   },
   "counts": {
-    "rest_endpoints": 63,
-    "rest_endpoint_method_rows": 72,
+    "rest_endpoints": 64,
+    "rest_endpoint_method_rows": 73,
     "ajax_handlers": 0,
     "admin_pages": 14,
     "shortcodes": 17,
     "blocks": 19,
     "tables": 23,
     "capabilities_declared": 10,
-    "services": 46,
-    "hooks_fired_actions": 58,
-    "hooks_fired_filters": 67,
-    "hooks_fired_total": 125,
-    "cron_hooks_distinct": 10,
+    "services": 49,
+    "hooks_fired_actions": 60,
+    "hooks_fired_filters": 68,
+    "hooks_fired_total": 128,
+    "cron_hooks_distinct": 11,
     "wp_cli_commands": 10,
     "admin_post_handlers": 0,
     "frontend_css_files": 41,
@@ -76,10 +76,10 @@
     "frontend_js": "78.9% drift \u2014 manifest = 4; ground truth = 19 non-min JS files."
   },
   "generated": {
-    "at": "2026-06-02T06:49:42Z",
+    "at": "2026-06-02T07:30:19Z",
     "schema_version": "v2.2",
     "last_pr_merged": "v1.5.3 - site-owner controls (exclusion, members roster, bulk award, settings import/export, rebuild-leaderboard)",
-    "since_last_refresh": "1.5.3 site-owner controls: Settings>Access earning exclusion (PointsEngine::user_can_earn + wb_gam_user_can_earn filter), Members roster admin page (MembersPage + GET/POST members endpoints), bulk award (POST points/bulk), Settings>Tools import/export + rebuild-leaderboard (WBGam\\\\Engine\\\\SettingsIO + ToolsController). +7 REST endpoints, +1 admin page (Members), +1 service (SettingsIO), +1 filter (wb_gam_user_can_earn)."
+    "since_last_refresh": "1.5.3 complete: all 8 site-owner controls. p2 adds Modules toggles (ModuleToggles), point expiry/decay (PointsExpiry, daily cron wb_gam_points_decay), and reset-all-member-progress (ProgressReset + POST tools/reset-progress). +1 REST endpoint, +3 services, +1 cron hook, +1 filter (wb_gam_module_enabled), +2 actions (wb_gam_progress_reset, wb_gam_points_decayed)."
   },
   "release_verdict": {
     "wppqa_failed_targeted_checks": 0,

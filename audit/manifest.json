@@ -746,6 +746,16 @@
         "permission": "manage_options",
         "purpose": "Rebuild the leaderboard snapshot and clear its caches.",
         "where": "src/API/ToolsController.php"
+      },
+      {
+        "route": "/wb-gamification/v1/tools/reset-progress",
+        "methods": [
+          "POST"
+        ],
+        "handler": "ToolsController::reset_progress",
+        "permission": "manage_options",
+        "purpose": "Wipe member progress tables (keeps config); requires explicit confirm.",
+        "where": "src/API/ToolsController.php"
       }
     ],
     "notes": "39 register_rest_route() calls. Some routes registered as a single call covering multiple methods (e.g., GET+POST on the same path); manifest expands those for clarity. No AJAX layer \u2014 all interactive UI talks to REST."
@@ -1604,6 +1614,12 @@
       "purpose": "Bridges WP upload_files cap to logged-in members so the achievement editor Add Media button works for subscribers / contributors. Opt-out filter: wb_gam_grant_member_uploads."
     },
     {
+      "key": "ModuleToggles",
+      "class": "WBGam\\Engine\\ModuleToggles",
+      "added": "1.5.3",
+      "purpose": "Optional-module on/off toggles - suppresses disabled modules blocks/shortcodes and removes their admin pages."
+    },
+    {
       "key": "NotificationBridge",
       "class": "WBGam\\Engine\\NotificationBridge",
       "purpose": "Bridges plugin events to BuddyPress notifications."
@@ -1624,9 +1640,21 @@
       "purpose": "Append-only points ledger with action-scheduler async processing."
     },
     {
+      "key": "PointsExpiry",
+      "class": "WBGam\\Engine\\PointsExpiry",
+      "added": "1.5.3",
+      "purpose": "Opt-in daily inactivity point decay (wb_gam_points_decay cron)."
+    },
+    {
       "key": "Privacy",
       "class": "WBGam\\Engine\\Privacy",
       "purpose": "GDPR-style export/erase handlers."
+    },
+    {
+      "key": "ProgressReset",
+      "class": "WBGam\\Engine\\ProgressReset",
+      "added": "1.5.3",
+      "purpose": "Reset all member progress - truncates progress/derived tables, keeps config/definitions."
     },
     {
       "key": "RankAutomation",
@@ -2037,7 +2065,7 @@
       "type": "action",
       "purpose": "All engines have been instantiated and wired to plugins_loaded.",
       "fired_at": [
-        "src/Engine/FeatureFlags.php:214"
+        "src/Engine/FeatureFlags.php:215"
       ],
       "consumed_by": []
     },
@@ -2167,6 +2195,15 @@
       ]
     },
     {
+      "name": "wb_gam_points_decayed",
+      "type": "action",
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/PointsExpiry.php:146"
+      ],
+      "consumed_by": []
+    },
+    {
       "name": "wb_gam_points_redeemed",
       "type": "action",
       "purpose": "",
@@ -2184,6 +2221,15 @@
       "purpose": "",
       "fired_at": [
         "src/API/PointsController.php:395"
+      ],
+      "consumed_by": []
+    },
+    {
+      "name": "wb_gam_progress_reset",
+      "type": "action",
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/ProgressReset.php:123"
       ],
       "consumed_by": []
     },
@@ -2751,6 +2797,15 @@
       "purpose": "",
       "fired_at": [
         "src/Engine/MemberSurface.php:107"
+      ],
+      "consumed_by": []
+    },
+    {
+      "name": "wb_gam_module_enabled",
+      "type": "filter",
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/ModuleToggles.php:100"
       ],
       "consumed_by": []
     },
@@ -3349,6 +3404,12 @@
       "interval": "daily",
       "handler": "ActionSchedulerCleaner::cleanup",
       "where": "src/Engine/ActionSchedulerCleaner.php:50"
+    },
+    {
+      "hook": "wb_gam_points_decay",
+      "recurrence": "daily",
+      "handler": "PointsExpiry::run",
+      "purpose": "Inactivity point decay (opt-in)."
     }
   ],
   "wp_cli": [
@@ -3516,7 +3577,7 @@
     ]
   },
   "generated": {
-    "at": "2026-06-02T06:49:42Z",
+    "at": "2026-06-02T07:30:19Z",
     "from": "wp-plugin-onboard --refresh \u2014 v1.4.0 post-release sweep. Ground-truth re-scan against today diff: 99 plugin hooks (53 actions + 46 filters), 23 tables, 19 blocks, 17 shortcodes, 10 distinct cron hooks, 10 WP-CLI commands, 13 admin pages, 10 declared caps, 24 frontend CSS files + 19 frontend JS files. Sub-arrays (.hooks_fired[], .services[], .frontend_assets) carry over from 2026-05-06 by reference; coverage gate documents the gap. v2.2 schema preserved. See audit/wppqa-baseline-2026-05-27/SUMMARY.md and audit/ISSUES-2026-05-27.yaml.",
     "branch": "main",
     "schema_version": "v2.2",
@@ -3607,7 +3668,7 @@
       }
     },
     "last_pr_merged": "v1.5.3 - site-owner controls (exclusion, members roster, bulk award, settings import/export, rebuild-leaderboard)",
-    "since_last_refresh": "1.5.3 site-owner controls: Settings>Access earning exclusion (PointsEngine::user_can_earn + wb_gam_user_can_earn filter), Members roster admin page (MembersPage + GET/POST members endpoints), bulk award (POST points/bulk), Settings>Tools import/export + rebuild-leaderboard (WBGam\\\\Engine\\\\SettingsIO + ToolsController). +7 REST endpoints, +1 admin page (Members), +1 service (SettingsIO), +1 filter (wb_gam_user_can_earn)."
+    "since_last_refresh": "1.5.3 complete: all 8 site-owner controls. p2 adds Modules toggles (ModuleToggles), point expiry/decay (PointsExpiry, daily cron wb_gam_points_decay), and reset-all-member-progress (ProgressReset + POST tools/reset-progress). +1 REST endpoint, +3 services, +1 cron hook, +1 filter (wb_gam_module_enabled), +2 actions (wb_gam_progress_reset, wb_gam_points_decayed)."
   },
   "wp_cli_commands": [
     {
@@ -3939,9 +4000,10 @@
     }
   ],
   "counts": {
-    "rest_endpoints": 63,
-    "rest_endpoint_method_rows": 72,
+    "rest_endpoints": 64,
+    "rest_endpoint_method_rows": 73,
     "admin_pages": 14,
-    "services": 46
+    "services": 49,
+    "cron_hooks_distinct": 11
   }
 }

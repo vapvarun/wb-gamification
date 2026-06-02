@@ -98,6 +98,8 @@ final class SettingsPage {
 			self::save_realtime_settings();
 		} elseif ( 'access' === $tab ) {
 			self::save_access_settings();
+		} elseif ( 'modules' === $tab ) {
+			self::save_modules_settings();
 		}
 
 		// Preserve the active sidebar section after save (Basecamp 9925119779).
@@ -114,6 +116,7 @@ final class SettingsPage {
 			'automation' => 'rules',
 			'realtime'   => 'realtime',
 			'access'     => 'access',
+			'modules'    => 'modules',
 		);
 		$fallback    = admin_url( 'admin.php?page=wb-gamification' );
 		if ( isset( $tab_to_hash[ $tab ] ) ) {
@@ -327,6 +330,15 @@ final class SettingsPage {
 		if ( isset( $_POST['wb_gam_log_retention_months'] ) ) {
 			$months = max( 1, min( 24, absint( wp_unslash( $_POST['wb_gam_log_retention_months'] ) ) ) );
 			update_option( 'wb_gam_log_retention_months', $months );
+		}
+
+		// Point expiry / inactivity decay (opt-in).
+		update_option( 'wb_gam_points_decay_enabled', isset( $_POST['wb_gam_points_decay_enabled'] ) ? 1 : 0 );
+		if ( isset( $_POST['wb_gam_points_decay_days'] ) ) {
+			update_option( 'wb_gam_points_decay_days', max( 1, min( 3650, absint( wp_unslash( $_POST['wb_gam_points_decay_days'] ) ) ) ) );
+		}
+		if ( isset( $_POST['wb_gam_points_decay_percent'] ) ) {
+			update_option( 'wb_gam_points_decay_percent', max( 1, min( 100, absint( wp_unslash( $_POST['wb_gam_points_decay_percent'] ) ) ) ) );
 		}
 		// phpcs:enable WordPress.Security.NonceVerification.Missing
 
@@ -559,6 +571,11 @@ final class SettingsPage {
 					'recomputing'    => __( 'Rebuilding leaderboard...', 'wb-gamification' ),
 					'recomputed'     => __( 'Leaderboard rebuilt.', 'wb-gamification' ),
 					'recomputeError' => __( 'Could not rebuild the leaderboard.', 'wb-gamification' ),
+					'resetConfirm'   => __( 'Permanently delete ALL member progress (points, badges, streaks, kudos, leaderboards)? Configuration is kept. This cannot be undone.', 'wb-gamification' ),
+					'resetting'      => __( 'Resetting member progress...', 'wb-gamification' ),
+					/* translators: %d: number of data tables cleared */
+					'resetDone'      => __( 'Member progress reset (%d tables cleared). Reloading...', 'wb-gamification' ),
+					'resetError'     => __( 'Could not reset member progress.', 'wb-gamification' ),
 				),
 			)
 		);
@@ -849,6 +866,10 @@ final class SettingsPage {
 						<span class="icon-link"></span>
 						<?php esc_html_e( 'Integrations', 'wb-gamification' ); ?>
 					</a>
+					<a class="wbgam-settings-nav-item" href="#modules" data-section="modules">
+						<span class="icon-sliders"></span>
+						<?php esc_html_e( 'Modules', 'wb-gamification' ); ?>
+					</a>
 					<a class="wbgam-settings-nav-item" href="#tools" data-section="tools">
 						<span class="icon-wrench"></span>
 						<?php esc_html_e( 'Tools', 'wb-gamification' ); ?>
@@ -917,6 +938,11 @@ final class SettingsPage {
 				<!-- Integrations section -->
 				<div class="wbgam-settings-section" id="section-integrations">
 					<?php self::render_integrations_section( $bp_active ); ?>
+				</div>
+
+				<!-- Modules section -->
+				<div class="wbgam-settings-section" id="section-modules">
+					<?php self::render_modules_section(); ?>
 				</div>
 
 				<!-- Tools section -->
@@ -1168,6 +1194,35 @@ final class SettingsPage {
 									<p class="description">
 										<?php esc_html_e( 'Older rows are pruned daily by WP-Cron. Events table is never pruned (source of truth).', 'wb-gamification' ); ?>
 									</p>
+								</td>
+							</tr>
+						</table>
+					</div>
+				</div>
+
+				<div class="wbgam-card wbgam-stack-block">
+					<div class="wbgam-card-header">
+						<h3 class="wbgam-card-title"><?php esc_html_e( 'Point expiry', 'wb-gamification' ); ?></h3>
+						<p class="wbgam-card-desc"><?php esc_html_e( 'Optionally decay the balance of members who stop earning, to nudge re-engagement. Off by default. When on, a daily job reduces the primary-currency balance of any member with no points activity for the chosen number of days - applied once per inactive streak, then they must earn again.', 'wb-gamification' ); ?></p>
+					</div>
+					<div class="wbgam-card-body">
+						<label class="wbgam-checkbox-option wbgam-stack-block">
+							<input type="checkbox" name="wb_gam_points_decay_enabled" value="1" <?php checked( (bool) (int) get_option( 'wb_gam_points_decay_enabled', 0 ) ); ?> />
+							<span><?php esc_html_e( 'Enable point expiry', 'wb-gamification' ); ?></span>
+						</label>
+						<table class="form-table" role="presentation">
+							<tr>
+								<th scope="row"><label for="wb_gam_points_decay_days"><?php esc_html_e( 'Inactive for', 'wb-gamification' ); ?></label></th>
+								<td>
+									<input type="number" name="wb_gam_points_decay_days" id="wb_gam_points_decay_days" class="wb-gam-input-narrow" min="1" max="3650" value="<?php echo esc_attr( (string) (int) get_option( 'wb_gam_points_decay_days', 90 ) ); ?>" />
+									<?php esc_html_e( 'days', 'wb-gamification' ); ?>
+								</td>
+							</tr>
+							<tr>
+								<th scope="row"><label for="wb_gam_points_decay_percent"><?php esc_html_e( 'Decay amount', 'wb-gamification' ); ?></label></th>
+								<td>
+									<input type="number" name="wb_gam_points_decay_percent" id="wb_gam_points_decay_percent" class="wb-gam-input-narrow" min="1" max="100" value="<?php echo esc_attr( (string) (int) get_option( 'wb_gam_points_decay_percent', 100 ) ); ?>" />
+									<?php esc_html_e( '% of balance (100 = expire fully)', 'wb-gamification' ); ?>
 								</td>
 							</tr>
 						</table>
@@ -2009,6 +2064,67 @@ final class SettingsPage {
 	}
 
 	/**
+	 * Persist the optional-module on/off toggles (Settings > Modules).
+	 *
+	 * Nonce is verified by check_admin_referer() in handle_save().
+	 */
+	private static function save_modules_settings(): void {
+		// phpcs:disable WordPress.Security.NonceVerification.Missing -- Nonce verified by check_admin_referer() in handle_save().
+		$posted = array();
+		if ( isset( $_POST['wb_gam_modules'] ) && is_array( $_POST['wb_gam_modules'] ) ) {
+			$posted = array_map( 'sanitize_key', wp_unslash( (array) $_POST['wb_gam_modules'] ) );
+		}
+		// Checkbox semantics: present = enabled ('1'), absent = disabled ('0').
+		$map = array();
+		foreach ( array_keys( \WBGam\Engine\ModuleToggles::modules() ) as $slug ) {
+			$map[ $slug ] = in_array( $slug, $posted, true ) ? '1' : '0';
+		}
+		update_option( 'wb_gam_modules', $map );
+		// phpcs:enable WordPress.Security.NonceVerification.Missing
+	}
+
+	/**
+	 * Render the Modules section: turn optional engagement modules on or off.
+	 * A disabled module's blocks/shortcodes render nothing and its admin page
+	 * is hidden, but its data is preserved (re-enabling restores it).
+	 */
+	private static function render_modules_section(): void {
+		?>
+		<form method="post" action="<?php echo esc_url( admin_url( 'admin.php?page=wb-gamification&tab=modules' ) ); ?>">
+			<?php wp_nonce_field( 'wb_gam_save_settings', 'wb_gam_settings_nonce' ); ?>
+
+			<div class="wbgam-card wbgam-stack-block">
+				<div class="wbgam-card-header">
+					<h2 class="wbgam-card-title">
+						<span class="icon-sliders" aria-hidden="true"></span>
+						<?php esc_html_e( 'Optional modules', 'wb-gamification' ); ?>
+					</h2>
+					<p class="wbgam-card-desc">
+						<?php esc_html_e( 'Turn off engagement modules your community does not use. A disabled module is hidden from members (its blocks and shortcodes render nothing) and its admin page is removed. Nothing is deleted - re-enabling a module restores it exactly as it was. Points, badges, levels, and leaderboards are always on.', 'wb-gamification' ); ?>
+					</p>
+				</div>
+				<div class="wbgam-card-body">
+					<?php foreach ( \WBGam\Engine\ModuleToggles::modules() as $slug => $module ) : ?>
+						<label class="wbgam-checkbox-option wbgam-stack-block">
+							<input type="checkbox"
+								name="wb_gam_modules[]"
+								value="<?php echo esc_attr( $slug ); ?>"
+								<?php checked( \WBGam\Engine\ModuleToggles::enabled( $slug ) ); ?>
+							/>
+							<span><?php echo esc_html( $module['label'] ); ?></span>
+						</label>
+					<?php endforeach; ?>
+				</div>
+			</div>
+
+			<div class="wbgam-settings-section__footer">
+				<?php submit_button( __( 'Save Modules', 'wb-gamification' ), 'primary', 'submit', false ); ?>
+			</div>
+		</form>
+		<?php
+	}
+
+	/**
 	 * Render the Tools section: settings import / export (config portability).
 	 */
 	private static function render_tools_section(): void {
@@ -2058,6 +2174,21 @@ final class SettingsPage {
 			</div>
 			<div class="wbgam-card-body">
 				<button type="button" id="wb-gam-recompute-leaderboard" class="wbgam-btn"><?php esc_html_e( 'Rebuild leaderboard', 'wb-gamification' ); ?></button>
+			</div>
+		</div>
+
+		<div class="wbgam-card wbgam-stack-block wb-gam-danger-zone">
+			<div class="wbgam-card-header">
+				<h2 class="wbgam-card-title">
+					<span class="icon-triangle-alert" aria-hidden="true"></span>
+					<?php esc_html_e( 'Reset member progress', 'wb-gamification' ); ?>
+				</h2>
+				<p class="wbgam-card-desc">
+					<?php esc_html_e( 'Permanently delete all accumulated member progress - points, the event log, earned badges, streaks, kudos, league membership, challenge logs, redemptions, and submissions - so the community starts fresh. Your configuration is kept: badge definitions, levels, rules, challenges, point types, rewards, member privacy settings, webhooks, and all settings survive. This cannot be undone.', 'wb-gamification' ); ?>
+				</p>
+			</div>
+			<div class="wbgam-card-body">
+				<button type="button" id="wb-gam-reset-progress" class="wbgam-btn wb-gam-btn-danger"><?php esc_html_e( 'Reset all member progress', 'wb-gamification' ); ?></button>
 			</div>
 		</div>
 		<?php
