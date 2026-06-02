@@ -6,6 +6,27 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 
 ## [Unreleased]
 
+## [1.5.3] - 2026-06-02
+
+Site-owner control release: the admin controls communities expect for managing who earns, plus bulk operations and config portability. All new REST endpoints live under `wb-gamification/v1` (admin-gated, namespaced - no WordPress core or BuddyPress conflict).
+
+### Added
+
+- Settings > Access: exclude roles or specific accounts from earning. `PointsEngine::user_can_earn()` enforces it at every award path - the registered-action rate-limit gate AND directly in `award()` / `award_batch()` (which login bonus, community-challenge bonus, and approved submissions call directly). Manual admin REST award + CLI `points award` override via `force`. Excluded users are also hidden from leaderboards. New filter `wb_gam_user_can_earn`. `wb_gam_sandboxed` meta added to GDPR export + erase.
+- Members admin page (Gamification > Members): searchable, paginated roster of every member with points / level / badges, primed N+1-safe, plus per-member award (links to Award Points), exclude/include, and reset-points. New `GET wb-gamification/v1/members`, `POST .../{id}/exclude`, `POST .../{id}/reset-points`.
+- Bulk award: `POST wb-gamification/v1/points/bulk` awards the same points to a whole role or all members via `PointsEngine::award_batch` (exclusion-aware). Bulk Award card on the Award Points page.
+- Settings > Tools: import/export the plugin configuration as JSON (`WBGam\Engine\SettingsIO` + `ToolsController`: `GET .../tools/export-settings`, `POST .../tools/import-settings`). Runtime/derived/schema options (db version, feature schema gates, caches, snapshots, flush markers) are excluded so an import never corrupts the target site.
+- Settings > Tools: Rebuild leaderboard maintenance button (`POST .../tools/recompute-leaderboard`) - the admin equivalent of `wp wb-gamification doctor --recompute-leaderboard`.
+
+### Changed
+
+- `PointsEngine::award()` / `award_batch()` gained a `force` parameter (default false) so deliberate admin/CLI grants can override earning exclusion while automatic awards respect it.
+
+### Fixed
+
+- Earning exclusion had no admin UI before this release - the `wb_gam_sandboxed` veto was only honored by the Jetonomy adapter, so native point awards (login bonus, submissions, manifest actions) could not be excluded without code.
+
+
 ## [1.5.2] - 2026-06-01
 
 Performance and notification-quality release. Built to stay fast on large, live communities.

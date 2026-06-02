@@ -3,7 +3,7 @@
  * Plugin Name: WB Gamification
  * Plugin URI:  https://wbcomdesigns.com/
  * Description: Complete gamification plugin for BuddyPress and WordPress. Part of the Reign Stack. Points, badges, levels, leaderboards, challenges, and streaks — zero config, works out of the box.
- * Version:     1.5.2
+ * Version:     1.5.3
  * Author:      Wbcom Designs
  * Author URI:  https://wbcomdesigns.com/
  * License:     GPL-2.0+
@@ -24,7 +24,7 @@ defined( 'ABSPATH' ) || exit;
 // Plugin Check's internal phpcs invocation.
 // phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 
-define( 'WB_GAM_VERSION', '1.5.2' );
+define( 'WB_GAM_VERSION', '1.5.3' );
 define( 'WB_GAM_FILE', __FILE__ );
 define( 'WB_GAM_PATH', plugin_dir_path( __FILE__ ) );
 define( 'WB_GAM_URL', plugin_dir_url( __FILE__ ) );
@@ -148,6 +148,7 @@ use WBGam\Engine\StatusRetentionEngine;
 use WBGam\Admin\BadgeAdminPage;
 use WBGam\Admin\ChallengeManagerPage;
 use WBGam\Admin\ManualAwardPage;
+use WBGam\Admin\MembersPage;
 use WBGam\Admin\ApiKeysPage;
 use WBGam\Admin\RedemptionStorePage;
 use WBGam\Admin\CommunityChallengesPage;
@@ -169,6 +170,7 @@ use WBGam\API\ApiKeysController;
 use WBGam\API\CohortSettingsController;
 use WBGam\API\CommunityChallengesController;
 use WBGam\API\EmailSettingsController;
+use WBGam\API\ToolsController;
 use WBGam\API\SubmissionsController;
 use WBGam\Engine\CredentialExpiryEngine;
 use WBGam\Engine\LeaderboardEngine;
@@ -323,6 +325,7 @@ final class WB_Gamification {
 			BadgeAdminPage::init();
 			ChallengeManagerPage::init();
 			ManualAwardPage::init();
+			MembersPage::init();
 			ApiKeysPage::init();
 			RedemptionStorePage::init();
 			CommunityChallengesPage::init();
@@ -397,6 +400,7 @@ final class WB_Gamification {
 		( new CohortSettingsController() )->register_routes();
 		( new CommunityChallengesController() )->register_routes();
 		( new EmailSettingsController() )->register_routes();
+		( new ToolsController() )->register_routes();
 		( new SubmissionsController() )->register_routes();
 	}
 

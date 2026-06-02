@@ -62,6 +62,101 @@ final class PointsEngine {
 		return $service->resolve( $type );
 	}
 
+	/**
+	 * Whether a user is allowed to earn points at all.
+	 *
+	 * Site owners exclude staff, bots, or specific accounts from gamification
+	 * without writing code via Settings > Access:
+	 *   - `wb_gam_excluded_roles` (array of role slugs) - any user with one of
+	 *     these roles cannot earn.
+	 *   - `wb_gam_excluded_users` (array of user IDs) - these accounts cannot earn.
+	 *   - `wb_gam_sandboxed` user meta (truthy) - per-user veto (also used by
+	 *     adapters to neutralise trial / abusive accounts).
+	 *
+	 * Enforced once, at the single award choke point (passes_rate_limits), so it
+	 * covers the sync AND async award paths and every caller. Logged-out users
+	 * (id <= 0) never earn.
+	 *
+	 * @param int $user_id User to test.
+	 * @return bool True if the user may earn points.
+	 */
+	public static function user_can_earn( int $user_id ): bool {
+		$can = true;
+
+		if ( $user_id <= 0 ) {
+			$can = false;
+		} elseif ( in_array( $user_id, self::excluded_user_ids(), true ) ) {
+			$can = false;
+		} elseif ( get_user_meta( $user_id, 'wb_gam_sandboxed', true ) ) {
+			$can = false;
+		} else {
+			$excluded_roles = (array) get_option( 'wb_gam_excluded_roles', array() );
+			if ( ! empty( $excluded_roles ) ) {
+				$user = get_userdata( $user_id );
+				if ( $user && array_intersect( (array) $user->roles, $excluded_roles ) ) {
+					$can = false;
+				}
+			}
+		}
+
+		/**
+		 * Filter whether a user can earn points.
+		 *
+		 * Fires after the admin exclusion settings (roles / users / sandbox)
+		 * are applied, so code can extend or override the owner's choices.
+		 *
+		 * @since 1.5.3
+		 *
+		 * @param bool $can     Whether the user may earn.
+		 * @param int  $user_id User being tested.
+		 */
+		return (bool) apply_filters( 'wb_gam_user_can_earn', $can, $user_id );
+	}
+
+	/**
+	 * Per-request cache of resolved excluded user IDs. Null until first resolve.
+	 *
+	 * @var int[]|null
+	 */
+	private static $excluded_ids_cache = null;
+
+	/**
+	 * Resolve the configured excluded user IDs, including users who hold an
+	 * excluded role. Cached per-request because it can run on every award.
+	 *
+	 * @return int[] User IDs that must never earn.
+	 */
+	public static function excluded_user_ids(): array {
+		if ( null !== self::$excluded_ids_cache ) {
+			return self::$excluded_ids_cache;
+		}
+
+		$ids = array_map( 'absint', (array) get_option( 'wb_gam_excluded_users', array() ) );
+
+		$roles = (array) get_option( 'wb_gam_excluded_roles', array() );
+		if ( ! empty( $roles ) ) {
+			$by_role = get_users(
+				array(
+					'role__in' => $roles,
+					'fields'   => 'ID',
+				)
+			);
+			$ids     = array_merge( $ids, array_map( 'absint', $by_role ) );
+		}
+
+		self::$excluded_ids_cache = array_values( array_unique( array_filter( $ids ) ) );
+		return self::$excluded_ids_cache;
+	}
+
+	/**
+	 * Reset the excluded-IDs request cache. Called after the admin saves the
+	 * Access settings so a later read in the same request reflects the change,
+	 * and used by the test suite to isolate cases.
+	 */
+	public static function flush_exclusion_cache(): void {
+		self::$excluded_ids_cache = null;
+	}
+
 	// ── Internal methods called by Engine ─────────────────────────────────────
 
 	/**
@@ -75,6 +170,16 @@ final class PointsEngine {
 	 * @return bool             True if the award is allowed to proceed.
 	 */
 	public static function passes_rate_limits( int $user_id, string $action_id, array $action ): bool {
+		// Earning exclusion (admins / staff / bots / specific accounts). This is
+		// the single gate both the sync (Engine::process) and async
+		// (Engine::process_async) paths pass through, so excluded users never
+		// earn regardless of how the event arrived.
+		if ( ! self::user_can_earn( $user_id ) ) {
+			/** This filter is documented in src/Engine/PointsEngine.php — see wb_gam_award_skipped. */
+			do_action( 'wb_gam_award_skipped', $user_id, $action_id, 'excluded', array() );
+			return false;
+		}
+
 		// Resolve the currency this action awards — must match the resolution
 		// used by the award path (Registry::register_action closure) so the
 		// daily/weekly cap counts the SAME ledger the action will actually
@@ -505,14 +610,29 @@ final class PointsEngine {
 	 * Carries the points value in metadata so Engine can read it when the
 	 * action_id is not in the Registry.
 	 *
-	 * @param int    $user_id   User to award.
-	 * @param string $action_id Action context (use 'manual' for admin awards).
-	 * @param int    $points    Points to award.
-	 * @param int    $object_id Optional context object.
+	 * @param int         $user_id   User to award.
+	 * @param string      $action_id Action context (use 'manual' for admin awards).
+	 * @param int         $points    Points to award.
+	 * @param int         $object_id Optional context object.
+	 * @param string|null $type   Optional currency slug. Defaults to primary.
+	 * @param bool        $force     Skip the earning-exclusion gate. True only for
+	 *                               deliberate admin / CLI grants where an operator
+	 *                               explicitly chose the recipient.
 	 * @return bool
 	 */
-	public static function award( int $user_id, string $action_id, int $points, int $object_id = 0, ?string $type = null ): bool {
+	public static function award( int $user_id, string $action_id, int $points, int $object_id = 0, ?string $type = null, bool $force = false ): bool {
 		if ( $points <= 0 || $user_id <= 0 ) {
+			return false;
+		}
+
+		// Earning exclusion. award() is the direct entry point for automatic
+		// rewards (login bonus, community-challenge bonus, approved submissions)
+		// that don't pass through Engine::process's rate-limit gate, so the
+		// exclusion is enforced here too. Deliberate admin/CLI grants pass
+		// $force = true to override.
+		if ( ! $force && ! self::user_can_earn( $user_id ) ) {
+			/** This filter is documented in src/Engine/PointsEngine.php — see wb_gam_award_skipped. */
+			do_action( 'wb_gam_award_skipped', $user_id, $action_id, 'excluded', array() );
 			return false;
 		}
 
@@ -552,13 +672,27 @@ final class PointsEngine {
 	 * @param string      $action_id Action context label (e.g. 'csv_import').
 	 * @param int         $points    Points awarded to each user.
 	 * @param string|null $type      Optional currency slug. Defaults to primary.
+	 * @param bool        $force     Skip the earning-exclusion filter. True only
+	 *                               for deliberate admin / CLI bulk grants.
 	 * @return int                   Number of ledger rows inserted (0 on failure).
 	 */
-	public static function award_batch( array $user_ids, string $action_id, int $points, ?string $type = null ): int {
+	public static function award_batch( array $user_ids, string $action_id, int $points, ?string $type = null, bool $force = false ): int {
 		if ( empty( $user_ids ) || $points <= 0 ) {
 			return 0;
 		}
 		$user_ids = array_values( array_filter( $user_ids, static fn( $u ) => (int) $u > 0 ) );
+
+		// Drop owner-excluded accounts (roles / explicit users) unless this is a
+		// deliberate admin grant. Per-user sandbox meta is not checked here to
+		// keep the batch a single round-trip; option-based exclusion covers the
+		// admin Access settings.
+		if ( ! $force ) {
+			$excluded = self::excluded_user_ids();
+			if ( ! empty( $excluded ) ) {
+				$user_ids = array_values( array_diff( $user_ids, $excluded ) );
+			}
+		}
+
 		if ( empty( $user_ids ) ) {
 			return 0;
 		}

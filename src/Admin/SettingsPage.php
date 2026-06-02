@@ -50,6 +50,7 @@ final class SettingsPage {
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_settings_toggles' ) );
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_test_event' ) );
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_emails_form' ) );
+		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_tools_assets' ) );
 		// admin_post_wb_gam_save_levels + admin_post_wb_gam_delete_level removed in 1.0.0:
 		// the Levels tab now consumes /wb-gamification/v1/levels (POST/PATCH/DELETE)
 		// directly via assets/js/admin-levels.js. See Tier 0.C migration.
@@ -95,6 +96,8 @@ final class SettingsPage {
 			self::save_automation_settings();
 		} elseif ( 'realtime' === $tab ) {
 			self::save_realtime_settings();
+		} elseif ( 'access' === $tab ) {
+			self::save_access_settings();
 		}
 
 		// Preserve the active sidebar section after save (Basecamp 9925119779).
@@ -110,6 +113,7 @@ final class SettingsPage {
 			'kudos'      => 'kudos',
 			'automation' => 'rules',
 			'realtime'   => 'realtime',
+			'access'     => 'access',
 		);
 		$fallback    = admin_url( 'admin.php?page=wb-gamification' );
 		if ( isset( $tab_to_hash[ $tab ] ) ) {
@@ -516,6 +520,51 @@ final class SettingsPage {
 	}
 
 	/**
+	 * Enqueue the settings import/export script for the Tools section.
+	 *
+	 * @param string $hook_suffix Current admin page hook.
+	 */
+	public static function enqueue_tools_assets( string $hook_suffix ): void {
+		if ( 'toplevel_page_wb-gamification' !== $hook_suffix ) {
+			return;
+		}
+		wp_enqueue_script(
+			'wb-gam-admin-rest-utils',
+			plugins_url( 'assets/js/admin-rest-utils.js', WB_GAM_FILE ),
+			array(),
+			WB_GAM_VERSION,
+			true
+		);
+		wp_enqueue_script(
+			'wb-gam-admin-tools',
+			plugins_url( 'assets/js/admin-tools.js', WB_GAM_FILE ),
+			array( 'wb-gam-admin-rest-utils' ),
+			WB_GAM_VERSION,
+			true
+		);
+		wp_localize_script(
+			'wb-gam-admin-tools',
+			'wbGamTools',
+			array(
+				'restUrl' => esc_url_raw( rest_url( 'wb-gamification/v1' ) ),
+				'nonce'   => wp_create_nonce( 'wp_rest' ),
+				'i18n'    => array(
+					'exporting'      => __( 'Preparing export...', 'wb-gamification' ),
+					'exportError'    => __( 'Export failed.', 'wb-gamification' ),
+					'importError'    => __( 'Import failed. Check that the file is a WB Gamification settings export.', 'wb-gamification' ),
+					'importConfirm'  => __( 'Import these settings? This overwrites the matching settings on this site.', 'wb-gamification' ),
+					/* translators: 1: applied count, 2: skipped count */
+					'imported'       => __( 'Imported %1$d settings (%2$d skipped). Reloading...', 'wb-gamification' ),
+					'noFile'         => __( 'Choose an export file first.', 'wb-gamification' ),
+					'recomputing'    => __( 'Rebuilding leaderboard...', 'wb-gamification' ),
+					'recomputed'     => __( 'Leaderboard rebuilt.', 'wb-gamification' ),
+					'recomputeError' => __( 'Could not rebuild the leaderboard.', 'wb-gamification' ),
+				),
+			)
+		);
+	}
+
+	/**
 	 * Enqueue the rule-action toggle script on the Automation tab.
 	 *
 	 * Replaces the legacy inline <script> that lived in render_automation_section()
@@ -788,6 +837,10 @@ final class SettingsPage {
 						<span class="icon-network"></span>
 						<?php esc_html_e( 'API Keys', 'wb-gamification' ); ?>
 					</a>
+					<a class="wbgam-settings-nav-item" href="#access" data-section="access">
+						<span class="icon-user-x"></span>
+						<?php esc_html_e( 'Access', 'wb-gamification' ); ?>
+					</a>
 					<a class="wbgam-settings-nav-item" href="#realtime" data-section="realtime">
 						<span class="icon-zap"></span>
 						<?php esc_html_e( 'Realtime', 'wb-gamification' ); ?>
@@ -795,6 +848,10 @@ final class SettingsPage {
 					<a class="wbgam-settings-nav-item" href="#integrations" data-section="integrations">
 						<span class="icon-link"></span>
 						<?php esc_html_e( 'Integrations', 'wb-gamification' ); ?>
+					</a>
+					<a class="wbgam-settings-nav-item" href="#tools" data-section="tools">
+						<span class="icon-wrench"></span>
+						<?php esc_html_e( 'Tools', 'wb-gamification' ); ?>
 					</a>
 				</div>
 			</div>
@@ -847,6 +904,11 @@ final class SettingsPage {
 					<?php self::render_emails_section(); ?>
 				</div>
 
+				<!-- Access section -->
+				<div class="wbgam-settings-section" id="section-access">
+					<?php self::render_access_section(); ?>
+				</div>
+
 				<!-- Realtime section -->
 				<div class="wbgam-settings-section" id="section-realtime">
 					<?php self::render_realtime_section(); ?>
@@ -855,6 +917,11 @@ final class SettingsPage {
 				<!-- Integrations section -->
 				<div class="wbgam-settings-section" id="section-integrations">
 					<?php self::render_integrations_section( $bp_active ); ?>
+				</div>
+
+				<!-- Tools section -->
+				<div class="wbgam-settings-section" id="section-tools">
+					<?php self::render_tools_section(); ?>
 				</div>
 			</div>
 
@@ -1815,6 +1882,187 @@ final class SettingsPage {
 	 * sse (sub-second when host supports it), auto (SSE-first with
 	 * heartbeat fallback — the new default).
 	 */
+	/**
+	 * Persist the earning-exclusion settings (Settings > Access).
+	 *
+	 * Nonce is verified by check_admin_referer() in handle_save().
+	 */
+	private static function save_access_settings(): void {
+		// phpcs:disable WordPress.Security.NonceVerification.Missing -- Nonce verified by check_admin_referer() in handle_save().
+		$roles = array();
+		if ( isset( $_POST['wb_gam_excluded_roles'] ) && is_array( $_POST['wb_gam_excluded_roles'] ) ) {
+			$valid  = array_keys( wp_roles()->get_names() );
+			$posted = array_map( 'sanitize_key', wp_unslash( (array) $_POST['wb_gam_excluded_roles'] ) );
+			foreach ( $posted as $role ) {
+				if ( in_array( $role, $valid, true ) ) {
+					$roles[] = $role;
+				}
+			}
+		}
+		update_option( 'wb_gam_excluded_roles', array_values( array_unique( $roles ) ) );
+
+		$user_ids = array();
+		if ( isset( $_POST['wb_gam_excluded_users'] ) ) {
+			$raw    = sanitize_textarea_field( wp_unslash( $_POST['wb_gam_excluded_users'] ) );
+			$tokens = preg_split( '/[\s,]+/', $raw ) ?: array();
+			foreach ( $tokens as $token ) {
+				$token = trim( $token );
+				if ( '' === $token ) {
+					continue;
+				}
+				$user = is_numeric( $token )
+					? get_user_by( 'id', (int) $token )
+					: ( get_user_by( 'login', $token ) ?: get_user_by( 'email', $token ) );
+				if ( $user ) {
+					$user_ids[] = (int) $user->ID;
+				}
+			}
+		}
+		update_option( 'wb_gam_excluded_users', array_values( array_unique( $user_ids ) ) );
+
+		// Drop the per-request resolve cache so a read later in this request
+		// reflects the new exclusions.
+		\WBGam\Engine\PointsEngine::flush_exclusion_cache();
+		// phpcs:enable WordPress.Security.NonceVerification.Missing
+	}
+
+	/**
+	 * Render the Access section: exclude roles or specific accounts from
+	 * earning points. Excluded users keep any points they already have but stop
+	 * earning and are hidden from leaderboards (PointsEngine::user_can_earn).
+	 */
+	private static function render_access_section(): void {
+		$excluded_roles = (array) get_option( 'wb_gam_excluded_roles', array() );
+		$all_roles      = wp_roles()->get_names();
+
+		$excluded_users = array_map( 'absint', (array) get_option( 'wb_gam_excluded_users', array() ) );
+		$user_tokens    = array();
+		foreach ( $excluded_users as $uid ) {
+			$user = get_userdata( $uid );
+			if ( $user ) {
+				$user_tokens[] = $user->user_login;
+			}
+		}
+		$users_value = implode( ', ', $user_tokens );
+		?>
+		<form method="post" action="<?php echo esc_url( admin_url( 'admin.php?page=wb-gamification&tab=access' ) ); ?>">
+			<?php wp_nonce_field( 'wb_gam_save_settings', 'wb_gam_settings_nonce' ); ?>
+
+			<div class="wbgam-card wbgam-stack-block">
+				<div class="wbgam-card-header">
+					<h2 class="wbgam-card-title">
+						<span class="icon-user-x" aria-hidden="true"></span>
+						<?php esc_html_e( 'Exclude from earning', 'wb-gamification' ); ?>
+					</h2>
+					<p class="wbgam-card-desc">
+						<?php esc_html_e( 'Stop chosen roles or accounts from earning points, badges, levels, and streaks - useful for administrators, staff, support agents, and bots. Excluded members keep any points they already earned but stop accruing new ones and are hidden from leaderboards.', 'wb-gamification' ); ?>
+					</p>
+				</div>
+				<div class="wbgam-card-body">
+					<label class="wbgam-field-label"><?php esc_html_e( 'Excluded roles', 'wb-gamification' ); ?></label>
+					<?php foreach ( $all_roles as $slug => $name ) : ?>
+						<label class="wbgam-checkbox-option wbgam-stack-block">
+							<input type="checkbox"
+								name="wb_gam_excluded_roles[]"
+								value="<?php echo esc_attr( $slug ); ?>"
+								<?php checked( in_array( $slug, $excluded_roles, true ) ); ?>
+							/>
+							<span><?php echo esc_html( translate_user_role( $name ) ); ?></span>
+						</label>
+					<?php endforeach; ?>
+					<p class="description wbgam-stack-block">
+						<?php esc_html_e( 'Most communities exclude Administrator and any staff role so internal testing does not skew the leaderboard.', 'wb-gamification' ); ?>
+					</p>
+				</div>
+			</div>
+
+			<div class="wbgam-card wbgam-stack-block">
+				<div class="wbgam-card-header">
+					<h2 class="wbgam-card-title">
+						<span class="icon-ban" aria-hidden="true"></span>
+						<?php esc_html_e( 'Excluded accounts', 'wb-gamification' ); ?>
+					</h2>
+					<p class="wbgam-card-desc">
+						<?php esc_html_e( 'Exclude specific accounts regardless of role. Enter usernames, emails, or user IDs separated by commas or new lines.', 'wb-gamification' ); ?>
+					</p>
+				</div>
+				<div class="wbgam-card-body">
+					<label class="wbgam-field-label" for="wb_gam_excluded_users">
+						<?php esc_html_e( 'Usernames, emails, or IDs', 'wb-gamification' ); ?>
+					</label>
+					<textarea id="wb_gam_excluded_users"
+						name="wb_gam_excluded_users"
+						class="wbgam-textarea"
+						rows="3"
+						placeholder="<?php echo esc_attr__( 'e.g. supportbot, qa@example.com, 42', 'wb-gamification' ); ?>"><?php echo esc_textarea( $users_value ); ?></textarea>
+					<p class="description wbgam-stack-block">
+						<?php esc_html_e( 'Unrecognized entries are dropped on save. The saved list shows the resolved usernames.', 'wb-gamification' ); ?>
+					</p>
+				</div>
+			</div>
+
+			<div class="wbgam-settings-section__footer">
+				<?php submit_button( __( 'Save Access Settings', 'wb-gamification' ), 'primary', 'submit', false ); ?>
+			</div>
+		</form>
+		<?php
+	}
+
+	/**
+	 * Render the Tools section: settings import / export (config portability).
+	 */
+	private static function render_tools_section(): void {
+		?>
+		<div class="wbgam-card wbgam-stack-block">
+			<div class="wbgam-card-header">
+				<h2 class="wbgam-card-title">
+					<span class="icon-download" aria-hidden="true"></span>
+					<?php esc_html_e( 'Export settings', 'wb-gamification' ); ?>
+				</h2>
+				<p class="wbgam-card-desc">
+					<?php esc_html_e( 'Download this site\'s gamification configuration as a JSON file - points values, enabled actions, currencies, levels config, kudos, automation rules, realtime, access exclusions, and the hub page mapping. Runtime data (caches, schema versions, snapshots) is excluded so the file is safe to import elsewhere.', 'wb-gamification' ); ?>
+				</p>
+			</div>
+			<div class="wbgam-card-body">
+				<button type="button" id="wb-gam-export-settings" class="wbgam-btn"><?php esc_html_e( 'Export settings', 'wb-gamification' ); ?></button>
+			</div>
+		</div>
+
+		<div class="wbgam-card wbgam-stack-block">
+			<div class="wbgam-card-header">
+				<h2 class="wbgam-card-title">
+					<span class="icon-upload" aria-hidden="true"></span>
+					<?php esc_html_e( 'Import settings', 'wb-gamification' ); ?>
+				</h2>
+				<p class="wbgam-card-desc">
+					<?php esc_html_e( 'Apply a settings file exported from another WB Gamification site. Matching settings are overwritten; your content (badges, members, point ledgers) is never touched.', 'wb-gamification' ); ?>
+				</p>
+			</div>
+			<div class="wbgam-card-body">
+				<p>
+					<input type="file" id="wb-gam-import-file" accept="application/json,.json" />
+				</p>
+				<button type="button" id="wb-gam-import-settings" class="wbgam-btn"><?php esc_html_e( 'Import settings', 'wb-gamification' ); ?></button>
+			</div>
+		</div>
+
+		<div class="wbgam-card wbgam-stack-block">
+			<div class="wbgam-card-header">
+				<h2 class="wbgam-card-title">
+					<span class="icon-refresh-cw" aria-hidden="true"></span>
+					<?php esc_html_e( 'Maintenance', 'wb-gamification' ); ?>
+				</h2>
+				<p class="wbgam-card-desc">
+					<?php esc_html_e( 'Rebuild the leaderboard snapshot and clear its caches. Use this if the leaderboard looks stale after a manual award or import - it normally refreshes on a 5-minute cron.', 'wb-gamification' ); ?>
+				</p>
+			</div>
+			<div class="wbgam-card-body">
+				<button type="button" id="wb-gam-recompute-leaderboard" class="wbgam-btn"><?php esc_html_e( 'Rebuild leaderboard', 'wb-gamification' ); ?></button>
+			</div>
+		</div>
+		<?php
+	}
+
 	private static function render_realtime_section(): void {
 		$current = \WBGam\API\SSEController::get_transport();
 		$saved   = (bool) ( isset( $_GET['saved'] ) && 'realtime' === sanitize_key( wp_unslash( $_GET['tab'] ?? '' ) ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended

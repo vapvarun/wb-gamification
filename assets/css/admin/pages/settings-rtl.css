@@ -924,3 +924,31 @@
 	color: var(--wbgam-text-muted, var(--wbgam-text-secondary));
 	line-height: 1.5;
 }
+
+/* Checkbox option rows (Access section: excluded roles). */
+.wbgam-checkbox-option {
+	display: flex;
+	align-items: center;
+	gap: 0.625rem;
+	padding: 0.625rem 0.875rem;
+	border: 1px solid var(--wbgam-border, var(--wbgam-border));
+	border-radius: var(--wbgam-radius, 8px);
+	cursor: pointer;
+	font-size: 0.9375rem;
+	color: var(--wbgam-text, var(--wbgam-text-strong));
+	transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.wbgam-checkbox-option:hover {
+	border-color: var(--wbgam-primary, var(--wbgam-primary-hover));
+	background-color: var(--wbgam-color-info-bg, var(--wbgam-primary-light));
+}
+
+.wbgam-checkbox-option:has(input[type="checkbox"]:checked) {
+	border-color: var(--wbgam-primary, var(--wbgam-primary-hover));
+	background-color: var(--wbgam-color-info-bg, var(--wbgam-primary-light));
+}
+
+.wbgam-checkbox-option input[type="checkbox"] {
+	flex-shrink: 0;
+}

@@ -22,6 +22,7 @@ namespace WBGam\API;
 
 use WBGam\Engine\PointsEngine;
 use WBGam\Engine\LevelEngine;
+use WBGam\Engine\BadgeEngine;
 use WBGam\Engine\StreakEngine;
 use WBGam\Engine\NotificationBridge;
 use WBGam\Engine\Privacy;
@@ -232,6 +233,243 @@ class MembersController extends WP_REST_Controller {
 					'permission_callback' => array( $this, 'get_toasts_permissions_check' ),
 				),
 			)
+		);
+
+		// GET /members — admin roster: searchable, paginated list of members
+		// with their gamification stats. Lives under this plugin's own
+		// namespace (wb-gamification/v1), so it never collides with WP core's
+		// /wp/v2/users or BuddyPress's /buddypress/v1/members.
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base,
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'list_members' ),
+					'permission_callback' => array( $this, 'admin_permissions_check' ),
+					'args'                => array(
+						'page'     => array(
+							'type'              => 'integer',
+							'default'           => 1,
+							'minimum'           => 1,
+							'sanitize_callback' => 'absint',
+						),
+						'per_page' => array(
+							'type'              => 'integer',
+							'default'           => 20,
+							'minimum'           => 1,
+							'maximum'           => 100,
+							'sanitize_callback' => 'absint',
+						),
+						'search'   => array(
+							'type'              => 'string',
+							'default'           => '',
+							'sanitize_callback' => 'sanitize_text_field',
+						),
+					),
+				),
+			)
+		);
+
+		// POST /members/{id}/exclude — toggle the per-user earning veto
+		// (wb_gam_sandboxed). Admin-only. Ties into Settings > Access.
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/(?P<id>[\d]+)/exclude',
+			array(
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'set_excluded' ),
+					'permission_callback' => array( $this, 'admin_permissions_check' ),
+					'args'                => array_merge(
+						$this->get_member_id_args(),
+						array(
+							'excluded' => array(
+								'type'    => 'boolean',
+								'default' => true,
+							),
+						)
+					),
+				),
+			)
+		);
+
+		// POST /members/{id}/reset-points — zero a member's balance via a
+		// balancing debit (audit-preserving). Admin-only.
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/(?P<id>[\d]+)/reset-points',
+			array(
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'reset_points' ),
+					'permission_callback' => array( $this, 'admin_permissions_check' ),
+					'args'                => array_merge(
+						$this->get_member_id_args(),
+						array(
+							'type' => array(
+								'type'              => 'string',
+								'default'           => '',
+								'sanitize_callback' => 'sanitize_key',
+							),
+						)
+					),
+				),
+			)
+		);
+	}
+
+	/**
+	 * Admin-only gate for the roster + member-management actions. Listing every
+	 * member's data and adjusting/excluding accounts is a site-management
+	 * capability, so it requires manage_options (not the self+admin T1/T2 gate).
+	 *
+	 * @return true|WP_Error
+	 */
+	public function admin_permissions_check(): bool|WP_Error {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return new WP_Error(
+				'rest_forbidden',
+				__( 'You do not have permission to manage members.', 'wb-gamification' ),
+				array( 'status' => is_user_logged_in() ? 403 : 401 )
+			);
+		}
+		return true;
+	}
+
+	/**
+	 * GET /members — paginated, searchable roster with gamification stats.
+	 *
+	 * Uses WP_User_Query so it lists every member (search by name/login/email)
+	 * and primes points + badges for the page in a fixed number of queries
+	 * (no N+1). For ranking by points use the Leaderboard; this roster is for
+	 * finding and managing individual members.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response
+	 */
+	public function list_members( WP_REST_Request $request ): WP_REST_Response {
+		$page   = max( 1, (int) $request['page'] );
+		$per    = min( 100, max( 1, (int) $request['per_page'] ) );
+		$search = trim( (string) $request['search'] );
+
+		$args = array(
+			'number'      => $per,
+			'paged'       => $page,
+			'orderby'     => 'display_name',
+			'order'       => 'ASC',
+			'fields'      => array( 'ID', 'display_name', 'user_login' ),
+			'count_total' => true,
+		);
+		if ( '' !== $search ) {
+			$args['search']         = '*' . $search . '*';
+			$args['search_columns'] = array( 'user_login', 'display_name', 'user_email', 'user_nicename' );
+		}
+
+		$query = new \WP_User_Query( $args );
+		$users = $query->get_results();
+		$total = (int) $query->get_total();
+
+		$ids = array_map( static fn( $u ) => (int) $u->ID, $users );
+
+		// Prime per-page caches so the row loop is N+1-free.
+		if ( ! empty( $ids ) ) {
+			PointsEngine::prime_totals( $ids );
+			BadgeEngine::prime_earned_badges( $ids );
+		}
+
+		$excluded = PointsEngine::excluded_user_ids();
+
+		$items = array();
+		foreach ( $users as $user ) {
+			$uid     = (int) $user->ID;
+			$level   = LevelEngine::get_level_for_user( $uid );
+			$items[] = array(
+				'id'          => $uid,
+				'name'        => $user->display_name,
+				'login'       => $user->user_login,
+				'avatar'      => get_avatar_url( $uid, array( 'size' => 48 ) ),
+				'points'      => PointsEngine::get_total( $uid ),
+				'level'       => $level ? (string) $level['name'] : '',
+				'badges'      => count( BadgeEngine::get_user_badges( $uid ) ),
+				'excluded'    => in_array( $uid, $excluded, true ) || (bool) get_user_meta( $uid, 'wb_gam_sandboxed', true ),
+				'profile_url' => (string) get_edit_user_link( $uid ),
+			);
+		}
+
+		$pages = $per > 0 ? (int) ceil( $total / $per ) : 1;
+
+		return new WP_REST_Response(
+			array(
+				'items'    => $items,
+				'total'    => $total,
+				'pages'    => $pages,
+				'has_more' => ( $page * $per ) < $total,
+			),
+			200
+		);
+	}
+
+	/**
+	 * POST /members/{id}/exclude — toggle the per-user earning veto.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function set_excluded( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+		$id = (int) $request['id'];
+		if ( ! get_userdata( $id ) ) {
+			return new WP_Error( 'rest_user_invalid', __( 'Member not found.', 'wb-gamification' ), array( 'status' => 404 ) );
+		}
+
+		$excluded = (bool) $request['excluded'];
+		if ( $excluded ) {
+			update_user_meta( $id, 'wb_gam_sandboxed', 1 );
+		} else {
+			delete_user_meta( $id, 'wb_gam_sandboxed' );
+		}
+		PointsEngine::flush_exclusion_cache();
+
+		return new WP_REST_Response(
+			array(
+				'user_id'  => $id,
+				'excluded' => $excluded,
+			),
+			200
+		);
+	}
+
+	/**
+	 * POST /members/{id}/reset-points — zero a member's balance via a balancing
+	 * debit so the ledger keeps a full audit trail.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function reset_points( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+		$id = (int) $request['id'];
+		if ( ! get_userdata( $id ) ) {
+			return new WP_Error( 'rest_user_invalid', __( 'Member not found.', 'wb-gamification' ), array( 'status' => 404 ) );
+		}
+
+		$type    = (string) $request['type'];
+		$type    = '' !== $type ? $type : null;
+		$balance = PointsEngine::get_total( $id, $type );
+
+		if ( $balance > 0 ) {
+			$result = PointsEngine::debit( $id, $balance, 'manual_admin_reset', '', $type );
+			if ( empty( $result['success'] ) ) {
+				return new WP_Error( 'rest_reset_failed', __( 'Failed to reset points.', 'wb-gamification' ), array( 'status' => 500 ) );
+			}
+		}
+
+		return new WP_REST_Response(
+			array(
+				'user_id'     => $id,
+				'reset_from'  => $balance,
+				'new_balance' => 0,
+			),
+			200
 		);
 	}
 

@@ -3,7 +3,7 @@
   "plugin": {
     "slug": "wb-gamification",
     "name": "WB Gamification",
-    "version": "1.5.2",
+    "version": "1.5.3",
     "namespace": "WBGam\\",
     "main_file": "wb-gamification.php",
     "text_domain": "wb-gamification",
@@ -676,6 +676,76 @@
         "handler": "EmailSettingsController",
         "permission": "manage_options",
         "purpose": "Per-event transactional email toggles."
+      },
+      {
+        "route": "/wb-gamification/v1/members",
+        "methods": [
+          "GET"
+        ],
+        "handler": "MembersController::list_members",
+        "permission": "manage_options",
+        "purpose": "Admin roster - paginated, searchable member list with points/level/badges.",
+        "where": "src/API/MembersController.php"
+      },
+      {
+        "route": "/wb-gamification/v1/members/{id}/exclude",
+        "methods": [
+          "POST"
+        ],
+        "handler": "MembersController::set_excluded",
+        "permission": "manage_options",
+        "purpose": "Toggle the per-user earning veto (wb_gam_sandboxed).",
+        "where": "src/API/MembersController.php"
+      },
+      {
+        "route": "/wb-gamification/v1/members/{id}/reset-points",
+        "methods": [
+          "POST"
+        ],
+        "handler": "MembersController::reset_points",
+        "permission": "manage_options",
+        "purpose": "Zero a member balance via a balancing debit (audit-preserving).",
+        "where": "src/API/MembersController.php"
+      },
+      {
+        "route": "/wb-gamification/v1/points/bulk",
+        "methods": [
+          "POST"
+        ],
+        "handler": "PointsController::bulk_award",
+        "permission": "wb_gam_award_manual",
+        "purpose": "Bulk award the same points to a role or all members (exclusion-aware).",
+        "where": "src/API/PointsController.php"
+      },
+      {
+        "route": "/wb-gamification/v1/tools/export-settings",
+        "methods": [
+          "GET"
+        ],
+        "handler": "ToolsController::export_settings",
+        "permission": "manage_options",
+        "purpose": "Export plugin configuration options as a JSON document.",
+        "where": "src/API/ToolsController.php"
+      },
+      {
+        "route": "/wb-gamification/v1/tools/import-settings",
+        "methods": [
+          "POST"
+        ],
+        "handler": "ToolsController::import_settings",
+        "permission": "manage_options",
+        "purpose": "Apply a settings export document to this site.",
+        "where": "src/API/ToolsController.php"
+      },
+      {
+        "route": "/wb-gamification/v1/tools/recompute-leaderboard",
+        "methods": [
+          "POST"
+        ],
+        "handler": "ToolsController::recompute_leaderboard",
+        "permission": "manage_options",
+        "purpose": "Rebuild the leaderboard snapshot and clear its caches.",
+        "where": "src/API/ToolsController.php"
       }
     ],
     "notes": "39 register_rest_route() calls. Some routes registered as a single call covering multiple methods (e.g., GET+POST on the same path); manifest expands those for clarity. No AJAX layer \u2014 all interactive UI talks to REST."
@@ -683,44 +753,13 @@
   "ajax": [],
   "admin_pages": [
     {
-      "title": "WB Gamification",
-      "menu_title": "Gamification",
-      "slug": "wb-gamification",
-      "parent": null,
-      "capability": "manage_options",
-      "icon": "dashicons-awards",
-      "position": 56,
-      "render": "SettingsPage::render",
-      "source": "src/Admin/SettingsPage.php:48"
-    },
-    {
-      "title": "Award Points",
-      "menu_title": "Award Points",
-      "slug": "wb-gamification-award",
+      "title": "API Keys",
+      "menu_title": "API Keys",
+      "slug": "wb-gam-api-keys",
       "parent": "wb-gamification",
       "capability": "manage_options",
-      "render": "ManualAwardPage::render_page",
-      "source": "src/Admin/ManualAwardPage.php:49"
-    },
-    {
-      "title": "Redemption Store",
-      "menu_title": "Redemption Store",
-      "slug": "wb-gam-redemption",
-      "parent": "wb-gamification",
-      "capability": "manage_options",
-      "render": "RedemptionStorePage::render_page",
-      "source": "src/Admin/RedemptionStorePage.php:41"
-    },
-    {
-      "title": "Gamification Setup",
-      "menu_title": "(hidden)",
-      "slug": "wb-gamification-setup",
-      "parent": null,
-      "capability": "manage_options",
-      "render": "SetupWizard::render",
-      "source": "src/Admin/SetupWizard.php:40",
-      "hidden": true,
-      "purpose": "First-run setup wizard, parent slug intentionally null so it does not appear in the menu."
+      "render": "ApiKeysPage::render_page",
+      "source": "src/Admin/ApiKeysPage.php:43"
     },
     {
       "title": "Challenges",
@@ -741,40 +780,15 @@
       "source": "src/Admin/CommunityChallengesPage.php:43"
     },
     {
-      "title": "Analytics",
-      "menu_title": "Analytics",
-      "slug": "wb-gamification-analytics",
+      "title": "Conversions",
+      "menu_title": "Conversions",
+      "slug": "wb-gam-point-type-conversions",
       "parent": "wb-gamification",
       "capability": "manage_options",
-      "render": "AnalyticsDashboard::render_page",
-      "source": "src/Admin/AnalyticsDashboard.php:52"
-    },
-    {
-      "title": "API Keys",
-      "menu_title": "API Keys",
-      "slug": "wb-gam-api-keys",
-      "parent": "wb-gamification",
-      "capability": "manage_options",
-      "render": "ApiKeysPage::render_page",
-      "source": "src/Admin/ApiKeysPage.php:43"
-    },
-    {
-      "title": "Badge Library",
-      "menu_title": "Badges",
-      "slug": "wb-gamification-badges",
-      "parent": "wb-gamification",
-      "capability": "manage_options",
-      "render": "BadgeAdminPage::render_page",
-      "source": "src/Admin/BadgeAdminPage.php:70"
-    },
-    {
-      "title": "Webhooks",
-      "menu_title": "Webhooks",
-      "slug": "wb-gam-webhooks",
-      "parent": "wb-gamification",
-      "capability": "manage_options",
-      "render": "WebhooksAdminPage::render_page",
-      "source": "src/Admin/WebhooksAdminPage.php:87"
+      "render": "PointTypeConversionsPage::render_page",
+      "source": "src/Admin/PointTypeConversionsPage.php:76",
+      "added": "1.0.0",
+      "purpose": "Admin-defined exchange rates between currencies; toggleable, with optional cooldown + daily-cap."
     },
     {
       "title": "Point Types",
@@ -788,15 +802,13 @@
       "purpose": "CRUD for currencies. Marks default. Lists per-type balance aggregates."
     },
     {
-      "title": "Conversions",
-      "menu_title": "Conversions",
-      "slug": "wb-gam-point-type-conversions",
+      "title": "Redemption Store",
+      "menu_title": "Redemption Store",
+      "slug": "wb-gam-redemption",
       "parent": "wb-gamification",
       "capability": "manage_options",
-      "render": "PointTypeConversionsPage::render_page",
-      "source": "src/Admin/PointTypeConversionsPage.php:76",
-      "added": "1.0.0",
-      "purpose": "Admin-defined exchange rates between currencies; toggleable, with optional cooldown + daily-cap."
+      "render": "RedemptionStorePage::render_page",
+      "source": "src/Admin/RedemptionStorePage.php:41"
     },
     {
       "title": "Submissions",
@@ -808,6 +820,75 @@
       "source": "src/Admin/SubmissionsPage.php",
       "added": "1.0.0",
       "purpose": "Approve / reject pending member achievement submissions; approval fires the matching action through the standard earning pipeline."
+    },
+    {
+      "title": "Webhooks",
+      "menu_title": "Webhooks",
+      "slug": "wb-gam-webhooks",
+      "parent": "wb-gamification",
+      "capability": "manage_options",
+      "render": "WebhooksAdminPage::render_page",
+      "source": "src/Admin/WebhooksAdminPage.php:87"
+    },
+    {
+      "title": "WB Gamification",
+      "menu_title": "Gamification",
+      "slug": "wb-gamification",
+      "parent": null,
+      "capability": "manage_options",
+      "icon": "dashicons-awards",
+      "position": 56,
+      "render": "SettingsPage::render",
+      "source": "src/Admin/SettingsPage.php:48"
+    },
+    {
+      "title": "Analytics",
+      "menu_title": "Analytics",
+      "slug": "wb-gamification-analytics",
+      "parent": "wb-gamification",
+      "capability": "manage_options",
+      "render": "AnalyticsDashboard::render_page",
+      "source": "src/Admin/AnalyticsDashboard.php:52"
+    },
+    {
+      "title": "Award Points",
+      "menu_title": "Award Points",
+      "slug": "wb-gamification-award",
+      "parent": "wb-gamification",
+      "capability": "manage_options",
+      "render": "ManualAwardPage::render_page",
+      "source": "src/Admin/ManualAwardPage.php:49"
+    },
+    {
+      "title": "Badge Library",
+      "menu_title": "Badges",
+      "slug": "wb-gamification-badges",
+      "parent": "wb-gamification",
+      "capability": "manage_options",
+      "render": "BadgeAdminPage::render_page",
+      "source": "src/Admin/BadgeAdminPage.php:70"
+    },
+    {
+      "title": "Members",
+      "menu_title": "Members",
+      "slug": "wb-gamification-members",
+      "parent": "wb-gamification",
+      "capability": "manage_options",
+      "icon": null,
+      "position": null,
+      "render": "MembersPage::render_page",
+      "source": "src/Admin/MembersPage.php"
+    },
+    {
+      "title": "Gamification Setup",
+      "menu_title": "(hidden)",
+      "slug": "wb-gamification-setup",
+      "parent": null,
+      "capability": "manage_options",
+      "render": "SetupWizard::render",
+      "source": "src/Admin/SetupWizard.php:40",
+      "hidden": true,
+      "purpose": "First-run setup wizard, parent slug intentionally null so it does not appear in the menu."
     }
   ],
   "settings": [
@@ -1578,6 +1659,12 @@
       "purpose": "Generic rule evaluation pipeline."
     },
     {
+      "key": "SettingsIO",
+      "class": "WBGam\\Engine\\SettingsIO",
+      "added": "1.5.3",
+      "purpose": "Settings import/export - serialises wb_gam_* config options to JSON and applies one back, excluding runtime/derived/schema state."
+    },
+    {
       "key": "ShortcodeHandler",
       "class": "WBGam\\Engine\\ShortcodeHandler",
       "purpose": "Registers all 12 shortcodes."
@@ -1790,10 +1877,12 @@
       "type": "action",
       "purpose": "",
       "fired_at": [
-        "src/Engine/PointsEngine.php:105",
-        "src/Engine/PointsEngine.php:121",
-        "src/Engine/PointsEngine.php:178",
-        "src/Engine/PointsEngine.php:89",
+        "src/Engine/PointsEngine.php:179",
+        "src/Engine/PointsEngine.php:194",
+        "src/Engine/PointsEngine.php:210",
+        "src/Engine/PointsEngine.php:226",
+        "src/Engine/PointsEngine.php:283",
+        "src/Engine/PointsEngine.php:635",
         "src/Engine/Registry.php:159",
         "src/Integrations/Jetonomy/JetonomyIntegration.php:106"
       ],
@@ -2071,7 +2160,7 @@
       "type": "action",
       "purpose": "",
       "fired_at": [
-        "src/Engine/PointsEngine.php:719"
+        "src/Engine/PointsEngine.php:853"
       ],
       "consumed_by": [
         "src/Engine/LeaderboardEngine.php:76 array( __CLASS__"
@@ -2094,7 +2183,7 @@
       "type": "action",
       "purpose": "",
       "fired_at": [
-        "src/API/PointsController.php:361"
+        "src/API/PointsController.php:395"
       ],
       "consumed_by": []
     },
@@ -2189,7 +2278,7 @@
       "type": "action",
       "purpose": "",
       "fired_at": [
-        "src/Engine/Privacy.php:605"
+        "src/Engine/Privacy.php:607"
       ],
       "consumed_by": []
     },
@@ -2798,6 +2887,15 @@
       "consumed_by": []
     },
     {
+      "name": "wb_gam_user_can_earn",
+      "type": "filter",
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/PointsEngine.php:113"
+      ],
+      "consumed_by": []
+    },
+    {
       "name": "wb_gam_weekly_email_body",
       "type": "filter",
       "purpose": "",
@@ -3108,6 +3206,7 @@
         "assets/css/admin/pages/challenges.css",
         "assets/css/admin/pages/cohort.css",
         "assets/css/admin/pages/community-challenges.css",
+        "assets/css/admin/pages/members.css",
         "assets/css/admin/pages/point-type-conversions.css",
         "assets/css/admin/pages/point-types.css",
         "assets/css/admin/pages/redemption-store.css",
@@ -3146,6 +3245,7 @@
         "assets/js/admin-badge.js",
         "assets/js/admin-cohort.js",
         "assets/js/admin-levels.js",
+        "assets/js/admin-members.js",
         "assets/js/admin-rest-form.js",
         "assets/js/admin-rest-utils.js",
         "assets/js/admin-reward-type-toggle.js",
@@ -3153,6 +3253,7 @@
         "assets/js/admin-settings.js",
         "assets/js/admin-submissions.js",
         "assets/js/admin-test-event.js",
+        "assets/js/admin-tools.js",
         "assets/js/give-kudos.js",
         "assets/js/heartbeat.js",
         "assets/js/hub-convert.js",
@@ -3415,7 +3516,7 @@
     ]
   },
   "generated": {
-    "at": "2026-06-02T03:06:07Z",
+    "at": "2026-06-02T06:49:42Z",
     "from": "wp-plugin-onboard --refresh \u2014 v1.4.0 post-release sweep. Ground-truth re-scan against today diff: 99 plugin hooks (53 actions + 46 filters), 23 tables, 19 blocks, 17 shortcodes, 10 distinct cron hooks, 10 WP-CLI commands, 13 admin pages, 10 declared caps, 24 frontend CSS files + 19 frontend JS files. Sub-arrays (.hooks_fired[], .services[], .frontend_assets) carry over from 2026-05-06 by reference; coverage gate documents the gap. v2.2 schema preserved. See audit/wppqa-baseline-2026-05-27/SUMMARY.md and audit/ISSUES-2026-05-27.yaml.",
     "branch": "main",
     "schema_version": "v2.2",
@@ -3505,8 +3606,8 @@
         "note": "Tier-0 admin REST migration added admin-rest-utils.js, admin-rest-form.js, admin-action-overrides.js, admin-cohort.js, admin-api-keys.js, admin-levels.js, admin-submissions.js, admin-test-event.js, admin-reward-type-toggle.js, admin-rule-action-toggle.js, give-kudos.js, heartbeat.js, hub-convert.js, plus 2 interactivity stores (hub.js, notifications.js). Major drift \u2014 re-enumeration deferred."
       }
     },
-    "last_pr_merged": "v1.5.2 released 2026-06-02 (tag v1.5.2) - performance + realtime scale + member surfaces + Jetonomy leaderboard deferral",
-    "since_last_refresh": "1.5.1 + 1.5.2 releases. 1.5.2: realtime rescale (Heartbeat default, SSE opt-in via wb_gam_sse_allowed), N+1 elimination (PointsEngine::prime_totals + BadgeEngine::prime_earned_badges), shared MemberSurface powering BuddyPress Achievements tab + WooCommerce /my-account/achievements/ endpoint + opt-in LearnDash hub link, BuddyX dark-mode token mapping, toast placement setting, /u/{username} public-profiles default-on, em-dash sweep, and Jetonomy DisplayDefer (leaderboard deferred to Jetonomy, badges kept). New filters: wb_gam_defer_leaderboard_to_jetonomy, wb_gam_learndash_profile_link, wb_gam_member_surface_html, wb_gam_sse_allowed, wb_gam_toast_position, wb_gam_profile_publicly_visible."
+    "last_pr_merged": "v1.5.3 - site-owner controls (exclusion, members roster, bulk award, settings import/export, rebuild-leaderboard)",
+    "since_last_refresh": "1.5.3 site-owner controls: Settings>Access earning exclusion (PointsEngine::user_can_earn + wb_gam_user_can_earn filter), Members roster admin page (MembersPage + GET/POST members endpoints), bulk award (POST points/bulk), Settings>Tools import/export + rebuild-leaderboard (WBGam\\\\Engine\\\\SettingsIO + ToolsController). +7 REST endpoints, +1 admin page (Members), +1 service (SettingsIO), +1 filter (wb_gam_user_can_earn)."
   },
   "wp_cli_commands": [
     {
@@ -3836,5 +3937,11 @@
       ],
       "purpose": ""
     }
-  ]
+  ],
+  "counts": {
+    "rest_endpoints": 63,
+    "rest_endpoint_method_rows": 72,
+    "admin_pages": 14,
+    "services": 46
+  }
 }
