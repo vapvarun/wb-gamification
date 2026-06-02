@@ -331,6 +331,15 @@ final class SettingsPage {
 			$months = max( 1, min( 24, absint( wp_unslash( $_POST['wb_gam_log_retention_months'] ) ) ) );
 			update_option( 'wb_gam_log_retention_months', $months );
 		}
+
+		// Point expiry / inactivity decay (opt-in).
+		update_option( 'wb_gam_points_decay_enabled', isset( $_POST['wb_gam_points_decay_enabled'] ) ? 1 : 0 );
+		if ( isset( $_POST['wb_gam_points_decay_days'] ) ) {
+			update_option( 'wb_gam_points_decay_days', max( 1, min( 3650, absint( wp_unslash( $_POST['wb_gam_points_decay_days'] ) ) ) ) );
+		}
+		if ( isset( $_POST['wb_gam_points_decay_percent'] ) ) {
+			update_option( 'wb_gam_points_decay_percent', max( 1, min( 100, absint( wp_unslash( $_POST['wb_gam_points_decay_percent'] ) ) ) ) );
+		}
 		// phpcs:enable WordPress.Security.NonceVerification.Missing
 
 		add_settings_error( 'wb_gamification', 'saved', __( 'Settings saved.', 'wb-gamification' ), 'success' );
@@ -1185,6 +1194,35 @@ final class SettingsPage {
 									<p class="description">
 										<?php esc_html_e( 'Older rows are pruned daily by WP-Cron. Events table is never pruned (source of truth).', 'wb-gamification' ); ?>
 									</p>
+								</td>
+							</tr>
+						</table>
+					</div>
+				</div>
+
+				<div class="wbgam-card wbgam-stack-block">
+					<div class="wbgam-card-header">
+						<h3 class="wbgam-card-title"><?php esc_html_e( 'Point expiry', 'wb-gamification' ); ?></h3>
+						<p class="wbgam-card-desc"><?php esc_html_e( 'Optionally decay the balance of members who stop earning, to nudge re-engagement. Off by default. When on, a daily job reduces the primary-currency balance of any member with no points activity for the chosen number of days - applied once per inactive streak, then they must earn again.', 'wb-gamification' ); ?></p>
+					</div>
+					<div class="wbgam-card-body">
+						<label class="wbgam-checkbox-option wbgam-stack-block">
+							<input type="checkbox" name="wb_gam_points_decay_enabled" value="1" <?php checked( (bool) (int) get_option( 'wb_gam_points_decay_enabled', 0 ) ); ?> />
+							<span><?php esc_html_e( 'Enable point expiry', 'wb-gamification' ); ?></span>
+						</label>
+						<table class="form-table" role="presentation">
+							<tr>
+								<th scope="row"><label for="wb_gam_points_decay_days"><?php esc_html_e( 'Inactive for', 'wb-gamification' ); ?></label></th>
+								<td>
+									<input type="number" name="wb_gam_points_decay_days" id="wb_gam_points_decay_days" class="wb-gam-input-narrow" min="1" max="3650" value="<?php echo esc_attr( (string) (int) get_option( 'wb_gam_points_decay_days', 90 ) ); ?>" />
+									<?php esc_html_e( 'days', 'wb-gamification' ); ?>
+								</td>
+							</tr>
+							<tr>
+								<th scope="row"><label for="wb_gam_points_decay_percent"><?php esc_html_e( 'Decay amount', 'wb-gamification' ); ?></label></th>
+								<td>
+									<input type="number" name="wb_gam_points_decay_percent" id="wb_gam_points_decay_percent" class="wb-gam-input-narrow" min="1" max="100" value="<?php echo esc_attr( (string) (int) get_option( 'wb_gam_points_decay_percent', 100 ) ); ?>" />
+									<?php esc_html_e( '% of balance (100 = expire fully)', 'wb-gamification' ); ?>
 								</td>
 							</tr>
 						</table>
