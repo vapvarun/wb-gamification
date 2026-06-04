@@ -4,7 +4,7 @@ Tags: gamification, points, badges, leaderboard, buddypress
 Requires at least: 6.4
 Tested up to: 6.9
 Requires PHP: 8.0
-Stable tag: 1.5.3
+Stable tag: 1.5.4
 License: GPL-2.0+
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -132,6 +132,16 @@ Yes. WB Gamification integrates with WordPress privacy tools. Members can reques
 All data is preserved in the database. Reactivating the plugin restores everything. If you delete the plugin via the Plugins screen, the `uninstall.php` file removes all 23 tables, options, cron jobs, and transients — a clean uninstall.
 
 == Changelog ==
+
+= 1.5.4 - June 2026 =
+
+WPMediaVerse competition rewards now match the per-competition XP a site owner configures.
+
+* New      - WPMediaVerse Pro competitions award the XP configured per competition (challenge placing and participation, tournament round win, and champion) instead of a flat default. The integration manifest carries each competition's id in event metadata so Pro resolves the configured amount through the wb_gam_points_for_action filter.
+* Fix      - Stop the early-textdomain notice triggered by translated labels in the WPMediaVerse integration manifest.
+* Dev      - Removed the dead points_callback from the challenge-winner and streak triggers; the engine never consumed it, so awards already fell through to default_points.
+* Compat   - Pairs with WPMediaVerse Pro 1.6.0. Install both updates together for per-competition XP to take effect.
+
 
 = 1.5.3 - June 2026 =
 
