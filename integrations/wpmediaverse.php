@@ -315,19 +315,29 @@ if ( $pro_active ) {
 			'id'             => 'mvs_challenge_participate',
 			'label'          => 'Enter a photo challenge',
 			'description'    => 'Awarded when a member submits an entry to a photo challenge.',
-			'hook'           => 'mvs_challenge_entry_submitted',
-			'user_callback'  => function ( int $challenge_id, int $user_id, int $media_id ): int {
+			'hook'              => 'mvs_challenge_entry_submitted',
+			'user_callback'     => function ( int $challenge_id, int $user_id, int $media_id ): int {
 				return $user_id;
 			},
-			'default_points' => 10,
-			'category'       => 'competition',
-			'icon'           => 'dashicons-megaphone',
-			'repeatable'     => true,
+			// Carry the challenge id so MVS Pro's wb_gam_points_for_action
+			// bridge can award the challenge's configured participation XP.
+			'metadata_callback' => function ( int $challenge_id, int $user_id, int $media_id ): array {
+				return array(
+					'challenge_id' => $challenge_id,
+				);
+			},
+			'default_points'    => 10,
+			'category'          => 'competition',
+			'icon'              => 'dashicons-megaphone',
+			'repeatable'        => true,
 		),
 
-		// Single per-rank trigger replaces the previous 1st/2nd/3rd hard-coded
-		// triggers. Uses MVS Pro 1.2.3+ `mvs_challenge_winner_named` action
-		// fired once per top-3 rank. Points scale with rank via points_callback.
+		// Single per-rank trigger fired once per top-3 rank via the MVS Pro
+		// `mvs_challenge_winner_named` action. NOTE: the engine does not consume
+		// points_callback - the per-rank and per-challenge amounts are resolved
+		// by MVS Pro's wb_gam_points_for_action filter (CompetePointsBridge),
+		// which reads challenge_id + rank from the metadata below. default_points
+		// (200) is only the fallback when MVS Pro is inactive.
 		array(
 			'id'                => 'mvs_challenge_winner',
 			'label'             => 'Place in a photo challenge',
@@ -335,14 +345,6 @@ if ( $pro_active ) {
 			'hook'              => 'mvs_challenge_winner_named',
 			'user_callback'     => function ( int $challenge_id, int $user_id, int $rank ): int {
 				return $user_id;
-			},
-			'points_callback'   => function ( int $challenge_id, int $user_id, int $rank ): int {
-				$scale = array(
-					1 => 200,
-					2 => 100,
-					3 => 50,
-				);
-				return $scale[ $rank ] ?? 0;
 			},
 			'metadata_callback' => function ( int $challenge_id, int $user_id, int $rank ): array {
 				return array(
@@ -360,28 +362,42 @@ if ( $pro_active ) {
 			'id'             => 'mvs_tournament_round_win',
 			'label'          => 'Win a tournament round',
 			'description'    => 'Awarded for winning a round in a photo tournament.',
-			'hook'           => 'mvs_tournament_match_resolved',
-			'user_callback'  => function ( int $match_id, int $winner_id ): int {
+			'hook'              => 'mvs_tournament_match_resolved',
+			'user_callback'     => function ( int $match_id, int $winner_id ): int {
 				return $winner_id;
 			},
-			'default_points' => 150,
-			'category'       => 'competition',
-			'icon'           => 'dashicons-shield',
-			'repeatable'     => true,
+			// Carry the match id so MVS Pro's bridge can resolve the parent
+			// tournament and award its configured round-win XP.
+			'metadata_callback' => function ( int $match_id, int $winner_id ): array {
+				return array(
+					'match_id' => $match_id,
+				);
+			},
+			'default_points'    => 150,
+			'category'          => 'competition',
+			'icon'              => 'dashicons-shield',
+			'repeatable'        => true,
 		),
 
 		array(
 			'id'             => 'mvs_tournament_win',
 			'label'          => 'Win a tournament',
 			'description'    => 'Awarded to the grand champion of a photo tournament.',
-			'hook'           => 'mvs_tournament_finalized',
-			'user_callback'  => function ( int $tournament_id, int $winner_id ): int {
+			'hook'              => 'mvs_tournament_finalized',
+			'user_callback'     => function ( int $tournament_id, int $winner_id ): int {
 				return $winner_id;
 			},
-			'default_points' => 500,
-			'category'       => 'competition',
-			'icon'           => 'dashicons-star-filled',
-			'repeatable'     => true,
+			// Carry the tournament id so MVS Pro's bridge can award the
+			// tournament's configured champion XP.
+			'metadata_callback' => function ( int $tournament_id, int $winner_id ): array {
+				return array(
+					'tournament_id' => $tournament_id,
+				);
+			},
+			'default_points'    => 500,
+			'category'          => 'competition',
+			'icon'              => 'dashicons-star-filled',
+			'repeatable'        => true,
 		),
 
 		/*
@@ -397,9 +413,6 @@ if ( $pro_active ) {
 			'hook'              => 'mvs_streak_milestone',
 			'user_callback'     => function ( int $user_id, int $days, int $xp ): int {
 				return $user_id;
-			},
-			'points_callback'   => function ( int $user_id, int $days, int $xp ): int {
-				return $xp;
 			},
 			'metadata_callback' => function ( int $user_id, int $days, int $xp ): array {
 				return array(
