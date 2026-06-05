@@ -134,9 +134,23 @@ final class SettingsPage {
 			}
 		}
 		// settings_errors stash so the success notice survives the redirect.
+		// The save handlers above add their messages via add_settings_error()
+		// (unchanged); we read them back out of WP's registry here and stash
+		// them in the transient so the render pass can surface them as a
+		// wbGamAdminRest.toast() instead of a WP-core .notice banner.
+		$stashed_errors = array();
+		foreach ( get_settings_errors( 'wb_gamification' ) as $err ) {
+			$stashed_errors[] = array(
+				'message' => (string) ( $err['message'] ?? '' ),
+				'type'    => (string) ( $err['type'] ?? 'success' ),
+			);
+		}
 		set_transient(
 			'wb_gam_settings_saved_' . get_current_user_id(),
-			array( 'tab' => $tab ),
+			array(
+				'tab'    => $tab,
+				'errors' => $stashed_errors,
+			),
 			60
 		);
 		wp_safe_redirect( $target_url );
@@ -640,6 +654,34 @@ final class SettingsPage {
 				),
 			)
 		);
+
+		// Post-redirect save feedback as a toast (replaces the WP-core notice
+		// banner that settings_errors() used to emit). The messages were stashed
+		// by handle_save() from add_settings_error(); read once, then delete so
+		// the toast does not replay on the next page load. admin-rest-utils.js
+		// reads window.wbGamSettingsToast on DOMContentLoaded and feeds each
+		// entry to wbGamAdminRest.toast(). No inline <script> (F2 gate).
+		$stash = get_transient( 'wb_gam_settings_saved_' . get_current_user_id() );
+		if ( is_array( $stash ) && ! empty( $stash['errors'] ) ) {
+			delete_transient( 'wb_gam_settings_saved_' . get_current_user_id() );
+			$toasts = array();
+			foreach ( (array) $stash['errors'] as $err ) {
+				$message = (string) ( $err['message'] ?? '' );
+				if ( '' === $message ) {
+					continue;
+				}
+				$tone     = (string) ( $err['type'] ?? 'success' );
+				$toasts[] = array(
+					'message' => $message,
+					// add_settings_error() type "error" maps to the error tone;
+					// everything else ("success"/"updated"/"info") shows success.
+					'tone'    => 'error' === $tone ? 'error' : 'success',
+				);
+			}
+			if ( ! empty( $toasts ) ) {
+				wp_localize_script( 'wb-gam-admin-rest-utils', 'wbGamSettingsToast', $toasts );
+			}
+		}
 	}
 
 	public static function enqueue_test_event( string $hook_suffix ): void {
@@ -887,8 +929,12 @@ final class SettingsPage {
 					</div>
 				<?php endif; ?>
 				<?php // The richer post-Setup-Wizard banner with Hub URL + View/Edit buttons is rendered by render_dashboard_tab(). ?>
-
-				<?php settings_errors( 'wb_gamification' ); ?>
+				<?php
+				// Settings-save feedback now surfaces as a wbGamAdminRest.toast()
+				// (see enqueue_emails_form() + admin-rest-utils.js bootstrap), so the
+				// WP-core settings_errors() .notice output is intentionally not
+				// rendered here — one feedback system per screen (journey step 13).
+				?>
 
 				<!-- Dashboard section -->
 				<div class="wbgam-settings-section" id="section-dashboard">

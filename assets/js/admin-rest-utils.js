@@ -237,4 +237,34 @@
 		clearChildren: clearChildren,
 		confirmAction: confirmAction,
 	};
+
+	/**
+	 * Settings-save toast bootstrap.
+	 *
+	 * SettingsPage::enqueue_emails_form() localizes any post-redirect save
+	 * messages (originally added via add_settings_error) onto
+	 * window.wbGamSettingsToast. We surface them as toasts here instead of the
+	 * WP-core .notice banner, so Settings saves and the page's REST saves share
+	 * one feedback system. Localization happens on a per-load basis (the PHP
+	 * side deletes the transient after reading), so this only fires right after
+	 * a save redirect.
+	 */
+	function bootstrapSettingsToasts() {
+		var queue = window.wbGamSettingsToast;
+		if ( ! queue || ! queue.length ) {
+			return;
+		}
+		queue.forEach( function ( entry ) {
+			if ( entry && entry.message ) {
+				toast( entry.message, entry.tone || 'success' );
+			}
+		} );
+		window.wbGamSettingsToast = [];
+	}
+
+	if ( 'loading' === document.readyState ) {
+		document.addEventListener( 'DOMContentLoaded', bootstrapSettingsToasts );
+	} else {
+		bootstrapSettingsToasts();
+	}
 } )();

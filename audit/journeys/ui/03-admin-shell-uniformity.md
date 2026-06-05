@@ -3,7 +3,7 @@ journey: admin-shell-uniformity
 plugin: wb-gamification
 priority: high
 roles: [administrator]
-covers: [admin-shell-uniformity, canonical-page-shell, settings-card-dialect, analytics-rebuild, button-vocabulary]
+covers: [admin-shell-uniformity, canonical-page-shell, settings-card-dialect, analytics-rebuild, button-vocabulary, column-priority-tables, rich-empty-states, reduced-motion, settings-toast]
 prerequisites:
   - "Site reachable at $SITE_URL"
   - "Logged in as administrator (autologin via ?autologin=1)"
@@ -75,6 +75,31 @@ This journey is the structural regression lock. It is mostly grep-able (source a
 - **Expect**: `nav.wbgam-tabs.nav-tab-wrapper` with `a.nav-tab` children, the active period carrying `nav-tab-active` + `aria-current="page"`. No `class="button"` period links.
 - **On fail**: `src/Admin/AnalyticsDashboard.php` — restore the `wbgam-tabs nav-tab-wrapper` markup.
 
+### 9. Column-priority mechanism is present and breakpoint-disciplined
+- **Action**: `grep -rn "wbgam-col--optional" src/Admin/ assets/js/admin-members.js`; then confirm the CSS rule lives inside a 640px block: `grep -n "wbgam-col--optional" assets/css/admin/components.css` and verify it is within a `@media (max-width: 640px)` block; then confirm the breakpoint set is still exactly {640, 782, 1024}: `grep -rhoE "max-width: [0-9]+px|min-width: [0-9]+px" assets/css/admin/components.css assets/css/admin/utilities.css | sort -u`.
+- **Expect**: `.wbgam-col--optional` present on the tagged pages (PointTypes, ApiKeys, Submissions, Webhooks, RedemptionStore, Challenges, CommunityChallenges) + `admin-members.js`; the hide rule sits inside a 640px media block; no breakpoint outside {640, 782, 1024} introduced.
+- **On fail**: the offending file — a `<th>`/`<td>` pair lost its `wbgam-col--optional` class, or a new breakpoint was added. Re-tag the cell or fold the breakpoint back to the canonical three.
+
+### 10. Tagged tables show <=5 columns AND no horizontal scroll at 390px (live DOM)
+- **Action**: for each tagged page, `playwright_navigate` at a 390px viewport, then for the priority table read `table.querySelectorAll('thead th:not(.wbgam-col--optional)').length` (or count visible `th` via `getComputedStyle(th).display !== 'none'`) and assert `table.scrollWidth <= table.clientWidth`. Repeat at 1280px and assert the optional columns are visible again.
+- **Expect**: at 390px each tagged table renders <=5 visible columns and does not horizontally scroll; at 1280px the optional columns return.
+- **On fail**: the page's table — either too many columns remain non-optional (tag more), or `.wbgam-table--priority` is missing so the 640px min-width floor still forces scroll.
+
+### 11. Rich empty states on every upgraded listing
+- **Action**: visit each upgraded surface (PointTypes, PointTypeConversions, Webhooks, RedemptionStore txns, Settings recent-earnings + actions-log, Analytics top-actions + top-earners, Members no-results, Submissions) with the listing empty and confirm the `.wbgam-empty` component (`.wbgam-empty-icon` + `.wbgam-empty-title` + `<p>`) renders; then `grep -rnE '<p[^>]*>No .* yet' src/Admin/ | grep -v 'wbgam-empty-row'`.
+- **Expect**: the rich component renders on each surface; the grep returns 0 (no bare "No ... yet" paragraphs, excluding the in-table `.wbgam-empty-row`).
+- **On fail**: the offending file — a bare `<p>No ... yet</p>` was reintroduced. Swap to the `.wbgam-empty` component (icon-font glyph from `assets/fonts/lucide.css` + `.wbgam-empty-title` + body).
+
+### 12. Reduced-motion guard present and effective
+- **Action**: `grep -n "prefers-reduced-motion" assets/css/admin/utilities.css`; then live with Playwright `emulateMedia({ reducedMotion: 'reduce' })`, trigger a toast (or load the Members roster) and read `getComputedStyle(node).animationDuration` / `transitionDuration`.
+- **Expect**: the universal `@media (prefers-reduced-motion: reduce)` guard is present in `utilities.css`; under reduced-motion emulation the toast/skeleton animation-duration is ~0 (0.01ms).
+- **On fail**: `assets/css/admin/utilities.css` — the guard was removed or scoped under `.wrap` (the toast container lives outside `.wrap`, so the guard must stay universal).
+
+### 13. Settings save surfaces as a toast, not a WP-core notice (live DOM)
+- **Action**: on `wb-gamification`, change a setting (e.g. Kudos daily limit) and submit a non-REST settings form; after the redirect read the DOM for `.wb-gam-toast` and for any `settings_errors()`-emitted `.notice`. Also `grep -n "settings_errors( 'wb_gamification' )" src/Admin/SettingsPage.php`.
+- **Expect**: the save success renders as a `.wb-gam-toast` (fed from `window.wbGamSettingsToast` via `admin-rest-utils.js`); zero `settings_errors`-emitted `.notice` divs in the DOM; the grep for a `settings_errors( 'wb_gamification' )` render call returns 0 (the `get_settings_errors()` stash read in `handle_save()` is expected and is not a render call).
+- **On fail**: `src/Admin/SettingsPage.php` — the `settings_errors()` render call was reintroduced, or `enqueue_emails_form()` stopped localizing `wbGamSettingsToast`, or the bootstrap in `assets/js/admin-rest-utils.js` was removed.
+
 ## Pass criteria
 
 ALL of the following hold:
@@ -85,6 +110,11 @@ ALL of the following hold:
 5. `assets/css/admin-analytics.css` does not exist and is referenced nowhere.
 6. Every audited admin `.wrap` carries `wbgam-wrap`; the analytics wrapper has no `wb-gam-analytics` modifier.
 7. Settings header + Analytics period picker render the canonical vocabulary in the live DOM.
+8. `.wbgam-col--optional` present on the 7 tagged pages + `admin-members.js`; its hide rule sits inside a 640px block; breakpoint set still exactly {640, 782, 1024}.
+9. Each tagged table renders <=5 visible columns AND `scrollWidth <= clientWidth` at 390px; optional columns return at 1280px.
+10. The rich `.wbgam-empty` component renders on every upgraded listing; `grep -rnE '<p[^>]*>No .* yet' src/Admin/` (excl. `.wbgam-empty-row`) → 0.
+11. The `@media (prefers-reduced-motion: reduce)` guard is present in `utilities.css`; toast/skeleton animation-duration ~0 under reduced-motion emulation.
+12. Settings save renders as a `.wb-gam-toast`; zero `settings_errors`-emitted `.notice` in the DOM; no `settings_errors( 'wb_gamification' )` render call in source.
 
 ## Fail diagnostics
 
@@ -97,3 +127,9 @@ ALL of the following hold:
 | `admin-analytics.css` present | Legacy stylesheet not retired | `src/Admin/AnalyticsDashboard.php::enqueue`, `audit/manifest.json` |
 | Settings header shows `wbgam-settings-topbar__brand` | Topbar BEM tree reintroduced | `src/Admin/SettingsPage.php` header |
 | Period picker renders `class="button"` | Period picker not migrated to tab nav | `src/Admin/AnalyticsDashboard.php` |
+| Tagged table horizontally scrolls at 390px | `.wbgam-table--priority` missing (640px min-width floor still applies) | the offending `src/Admin/*.php` table + `assets/css/admin/components.css` |
+| Tagged table shows >5 columns at 390px | a `<th>`/`<td>` lost its `wbgam-col--optional` class | the offending `src/Admin/*.php` (or `admin-members.js` for Members) |
+| `<p>No ... yet</p>` grep hit | bare empty-state text reintroduced | the offending `src/Admin/*.php` — swap to `.wbgam-empty` |
+| Toast/skeleton still animates under reduced-motion | reduced-motion guard removed or scoped under `.wrap` | `assets/css/admin/utilities.css` |
+| Settings save shows a WP-core `.notice` | `settings_errors()` render call reintroduced, or toast localization/bootstrap removed | `src/Admin/SettingsPage.php`, `assets/js/admin-rest-utils.js` |
+| Members roster renders `widefat striped` | last shell holdout regressed | `assets/js/admin-members.js` render() |
