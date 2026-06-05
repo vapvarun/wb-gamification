@@ -16,7 +16,7 @@
     "admin_pages": 14,
     "shortcodes": 17,
     "blocks": 19,
-    "tables": 23,
+    "tables": 26,
     "capabilities_declared": 10,
     "services": 49,
     "hooks_fired_actions": 60,
@@ -67,6 +67,7 @@
   "coverage_gate_violations": {
     "actions_fired": "18.9% drift \u2014 manifest array reflects 43 entries; ground truth = 53 wb_gam_ do_action sites. Re-enumeration deferred.",
     "filters_fired": "73.9% drift \u2014 manifest array reflects 12 entries; ground truth = 46 wb_gam_ apply_filters sites. Re-enumeration deferred.",
+    "tables": "RESOLVED (direction 2.1, 2026-06-05) \u2014 manifest .tables[] = 26; matches ground truth (23 CREATE TABLE in Installer + 3 in DbUpgrader: wb_gam_user_intelligence, wb_gam_notifications_queue, wb_gam_side_effect_failures). Each new entry carries a three_entry_point annotation: user_intelligence + notifications_queue = satisfied; side_effect_failures = intentional_exception (internal reconciliation plumbing).",
     "blocks": "RESOLVED (WBG-009) \u2014 manifest .blocks[] = 19 entries; matches src/Blocks/ ground truth.",
     "shortcodes": "RESOLVED (WBG-009) \u2014 manifest .shortcodes[] = 17; matches add_shortcode ground truth.",
     "cron": "RESOLVED (WBG-009) \u2014 manifest .cron[] = 10; matches distinct CRON_HOOK constants.",
