@@ -108,4 +108,21 @@
 	.wb-gam-members__actions {
 		flex-direction: column;
 	}
+
+	/* Dense-roster mobile fit: hide the @login subtitle and compact the cell
+	   padding so Member / Points / Actions fill 390px without horizontal
+	   scroll (Status, Level and Badges are wbgam-col--optional). */
+	.wb-gam-members__login {
+		display: none;
+	}
+
+	.wb-gam-members__grid th,
+	.wb-gam-members__grid td {
+		padding-inline: 0.5rem;
+	}
+
+	.wb-gam-members__avatar {
+		width: 24px;
+		height: 24px;
+	}
 }

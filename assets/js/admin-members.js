@@ -87,7 +87,7 @@
 		scroll.setAttribute( 'aria-hidden', 'true' );
 		var table = el( 'table', 'wbgam-table wbgam-table--priority wb-gam-members__grid' );
 		var tbody = el( 'tbody' );
-		var optional = { 2: true, 3: true };
+		var optional = { 2: true, 3: true, 4: true };
 		var i;
 		var c;
 		for ( i = 0; i < 5; i++ ) {
@@ -122,14 +122,17 @@
 		var table = el( 'table', 'wbgam-table wbgam-table--priority wb-gam-members__grid' );
 		var thead = el( 'thead' );
 		var hr = el( 'tr' );
-		// Column priority: Level + Badges are the low-value metadata columns,
-		// dropped at <=640px so Member/Points/Status/Actions fill 390px.
+		// Column priority: Level, Badges and Status are dropped at <=640px so
+		// Member/Points/Actions fill 390px with no horizontal scroll (measured:
+		// keeping Status left a 447px row in a 311px viewport). Exclusion state
+		// stays reachable via the row's Exclude/Include button and the badge at
+		// >640px.
 		[
 			{ label: i18n.member, optional: false },
 			{ label: i18n.points, optional: false },
 			{ label: i18n.level, optional: true },
 			{ label: i18n.badges, optional: true },
-			{ label: i18n.status, optional: false },
+			{ label: i18n.status, optional: true },
 			{ label: i18n.actions, optional: false },
 		].forEach( function ( col ) {
 			hr.appendChild( el( 'th', col.optional ? 'wbgam-col--optional' : null, col.label ) );
@@ -174,7 +177,7 @@
 		tr.appendChild( el( 'td', 'wbgam-col--optional', m.level || '-' ) );
 		tr.appendChild( el( 'td', 'wbgam-col--optional', m.badges || 0 ) );
 
-		var statusTd = el( 'td' );
+		var statusTd = el( 'td', 'wbgam-col--optional' );
 		statusTd.appendChild(
 			el(
 				'span',
@@ -187,18 +190,18 @@
 		// Actions.
 		var actTd = el( 'td', 'wb-gam-members__actions' );
 
-		var awardLink = el( 'a', 'button button-small', i18n.award );
+		var awardLink = el( 'a', 'wbgam-btn wbgam-btn--sm wbgam-btn--secondary', i18n.award );
 		awardLink.href = cfg.awardUrl;
 		actTd.appendChild( awardLink );
 
-		var toggleBtn = el( 'button', 'button button-small', m.excluded ? i18n.include : i18n.exclude );
+		var toggleBtn = el( 'button', 'wbgam-btn wbgam-btn--sm wbgam-btn--secondary', m.excluded ? i18n.include : i18n.exclude );
 		toggleBtn.type = 'button';
 		toggleBtn.addEventListener( 'click', function () {
 			toggleExclude( m, toggleBtn );
 		} );
 		actTd.appendChild( toggleBtn );
 
-		var resetBtn = el( 'button', 'button button-small button-link-delete', i18n.reset );
+		var resetBtn = el( 'button', 'wbgam-btn wbgam-btn--sm wbgam-btn--danger', i18n.reset );
 		resetBtn.type = 'button';
 		resetBtn.addEventListener( 'click', function () {
 			resetPoints( m, resetBtn );
