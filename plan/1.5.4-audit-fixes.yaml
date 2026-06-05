@@ -1,0 +1,262 @@
+# ─────────────────────────────────────────────────────────────────────────
+# AutoVAP v2 — Migration Manifest
+# Target: wb-gamification  ·  "1.5.4 audit-fix wave"
+# Source: AUDIT-VERDICT.md (2026-06-05) — 5 findings to root-cause + fix.
+# Acceptance: next audit SHIPPABLE; release/04, release/07, release/15 green;
+#             all manifest drift (tables, cron) closed.
+#
+# This file declares WHAT and IN WHAT ORDER. HOW lives in the referenced
+# skills (standards.* / direction.skills). Validate before running:
+#   node ~/autovap-agent/scripts/validate-plan.mjs plan/1.5.4-audit-fixes.yaml
+# ─────────────────────────────────────────────────────────────────────────
+version: 1
+
+target:
+  type: plugin
+  slug: wb-gamification
+  path: /Users/varundubey/Local Sites/wb-gamification/app/public/wp-content/plugins/wb-gamification
+  repo: vapvarun/wb-gamification
+  local_wp_site: wb-gamification
+  site_url: http://wb-gamification.local
+  basecamp_project_id: "47162271"
+
+goal: >
+  Root-cause, fix, and journey-verify all 5 findings from AUDIT-VERDICT.md
+  (2026-06-05): (1) badge auto-award broken on BuddyPress sites, (2) three live
+  DB tables undocumented in the manifest, (3) three cron hooks missing from the
+  manifest, (4) three WCAG violations (alt text, focus rings, input labels),
+  (5) the /my-account/achievements/ WooCommerce endpoint returning 404. Close all
+  manifest drift and re-run the three failed audit journeys (release/04, /07, /15)
+  green as the acceptance gate, all landing via PR (protected main).
+
+# ── CONTRACTS ──────────────────────────────────────────────────────────────
+# Public surface auto-discovered from the scan. The verifier diffs live state
+# against this at every wave's functional tier. Any change without a matching
+# `migrations:` entry = HARD HALT.
+#
+# CRITICAL for this wave: the badge fix (direction 1.1) must NOT mutate any
+# public action ID below. `wp_publish_post` / `wp_leave_comment` are part of the
+# documented action registry; the fix changes their loading condition, not their
+# IDs. No migrations entry is present, so a rename would correctly halt.
+contracts:
+  rest_routes:
+    - namespace: "wb-gamification/v1"
+      routes:
+        - "/members"
+        - "/members/(?P<id>\\d+)"
+        - "/members/(?P<id>\\d+)/points"
+        - "/members/(?P<id>\\d+)/badges"
+        - "/members/(?P<id>\\d+)/events"
+        - "/members/(?P<id>\\d+)/streak"
+        - "/points/award"
+        - "/points/bulk"
+        - "/badges"
+        - "/leaderboard"
+        - "/leaderboard/me"
+        - "/kudos"
+        - "/challenges"
+        - "/community-challenges"
+        - "/events"
+        - "/webhooks"
+        - "/rules"
+        - "/levels"
+        - "/redemptions"
+        - "/redemptions/me"
+        - "/redemptions/items"
+        - "/point-types"
+        - "/point-type-conversions"
+        - "/submissions"
+        - "/api-keys"
+        - "/capabilities"
+        - "/tools/reset-progress"
+  hooks:
+    actions:
+      - "wp_publish_post"
+      - "wp_first_post"
+      - "wp_leave_comment"
+      - "wb_gam_points_decayed"
+      - "wb_gam_progress_reset"
+      - "wb_gam_reconcile_side_effects"
+      - "wb_gam_compute_intelligence"
+      - "wb_gam_notifications_queue_prune"
+    filters:
+      - "wb_gam_user_can_earn"
+      - "wb_gam_member_surface_html"
+      - "wb_gam_defer_leaderboard_to_jetonomy"
+      - "wb_gam_learndash_profile_link"
+      - "wb_gam_grant_member_uploads"
+  options:
+    - "wb_gam_db_version"
+    - "wb_gam_wc_account_endpoint_v1"
+    - "wb_gam_feature_user_intelligence_v1"
+    - "wb_gam_points_decay_enabled"
+  db_schema:
+    - { table: "wb_gam_notifications_queue", columns: ["id", "user_id", "event_type", "payload_json", "created_at"] }
+    - { table: "wb_gam_side_effect_failures", columns: ["id", "event_id", "user_id", "side_effect", "points", "event_payload", "error_message", "retry_count", "status", "last_attempt_at", "created_at"] }
+    - { table: "wb_gam_user_intelligence", columns: ["user_id", "engagement_score", "action_diversity", "recency_days", "events_30d", "churn_risk", "anomaly_flag", "computed_at"] }
+  cli_commands:
+    - "wb-gamification doctor"
+    - "wb-gamification points award"
+    - "wb-gamification member status"
+    - "wb-gamification actions list"
+
+# Allow-list of sanctioned contract changes.
+# This wave documents + tests existing surface; it does NOT rename public IDs.
+# The badge fix changes a LOADING flag (standalone_only) in the integration
+# manifest, not the action ID, so no migration is needed. Left empty on purpose:
+# any contract diff the verifier sees is unintended and must HARD HALT to the
+# owner (project rule: never re-plan around a contract breach).
+migrations: []
+
+# ── STANDARDS ────────────────────────────────────────────────────────────────
+# REFERENCES to skills/MCP — never definitions.
+# NOTE: phpstan_level 9 is the project standard, but PHPStan silently exits 0 in
+# Local-by-Flywheel PHP (memory: reference_phpstan_broken_locally). The
+# authoritative PHPStan gate is GitHub CI on the PR, not the local static gate.
+standards:
+  build_skills:  [bug-fix, ux-foundation, wp-plugin-development]
+  audit_skills:  [action-audit, ux-audit, wp-debugging]
+  phpstan_level: 9
+  wpcs_standard: WordPress-Extra
+
+# ── GATES ──────────────────────────────────────────────────────────────────
+# IDs resolve in ~/autovap-agent/config/gates.yaml.
+gates:
+  default_static:     [php-lint, wpcs, phpstan]
+  default_functional: [browser-smoke, qa-suite]
+
+# ── JOURNEYS ─────────────────────────────────────────────────────────────────
+# These mirror the three FAILED audit journeys (release/04, /07, /15). Re-running
+# them green is the acceptance criterion. Each gets a regression journey under
+# audit/journeys/release/ per the plugin's journey-per-fix rule.
+journeys:
+  - id: earning-journey-bp-badges
+    role: admin
+    steps:
+      - "The fix is two-part and both parts must be on the branch: 9e19966 (Installer seed + ManifestLoader supersede for new installs) AND remediation commit bad7c68 (DbUpgrader back-fill migrating stale badge_condition rows on EXISTING installs — the before-state warning is recorded in the 2026-06-05 journey-run artifacts, do not require demonstrating it live)"
+      - "Verify the live DB: no badge_condition row in wb_gam_rules references an unregistered action (the blog_publisher row migrated bp_publish_post → wp_publish_post)"
+      - "Publish a post as a member and leave a comment as a member"
+      - "first_post and first_comment badges auto-award (visible on the member's badge surface)"
+      - "Run `wp wb-gamification doctor` — the 'Badge conditions reference unregistered actions' warning is gone"
+      - "Confirm public action IDs wp_publish_post / wp_leave_comment are unchanged in the manifest"
+  - id: a11y-admin-and-mobile
+    role: admin
+    steps:
+      - "Open Badges admin, Submissions admin, and Point Type Conversions admin pages"
+      - "Every <img> has a non-empty alt (or alt='' if decorative); every form input has an associated label"
+      - "Keyboard-tab through interactive controls — a visible focus ring appears on each (no outline:none without :focus-visible replacement)"
+      - "wppqa_check_a11y reports 0 actionable high findings (remediation commit b4000fd labelled MembersPage + SettingsPage inputs and added a visible :focus-visible ring to .gam-stat__convert in hub.css + derived rtl/min files; SubmissionsPage img-alt flags are confirmed false positives — alt is generated via $wb_gam_img_alt); verify at 390px and 1280px, no console errors"
+  - id: member-surface-wc-achievements
+    role: subscriber
+    steps:
+      - "As a logged-in customer with WooCommerce active, visit /my-account/achievements/"
+      - "The Achievements endpoint renders the member's surface (no 404)"
+      - "Deactivate + reactivate the plugin (simulating an upgrade) — the endpoint still resolves (guard is version-aware / self-healing)"
+      - "no JS console errors; correct at 390px and 1280px"
+  - id: manifest-drift-closed
+    role: admin
+    steps:
+      - "Regenerate the manifest; confirm wb_gam_notifications_queue, wb_gam_side_effect_failures, wb_gam_user_intelligence appear in db_schema with three-entry-point notes (or a documented intentional exception)"
+      - "Confirm wb_gam_reconcile_side_effects, wb_gam_compute_intelligence, wb_gam_notifications_queue_prune appear in the manifest cron[] list"
+      - "audit/qa-coverage.json cron count matches the manifest cron count; each new cron has at least smoke-level coverage"
+
+# ── WAVES ────────────────────────────────────────────────────────────────────
+# Directions inside a wave run in PARALLEL (worktree-isolated, disjoint scope).
+# A wave starts only when every wave in its depends_on is green.
+waves:
+
+  # Wave 1 — the three independent code fixes. No shared scope, no inter-deps.
+  # Each is a `fix` journey (minimal change, in-scope only) routed to the
+  # implementer, verified by the autovap-verifier.
+  - id: wave-1-code-fixes
+    depends_on: []
+    functional_gates: [browser-smoke, qa-suite]
+    journeys: [earning-journey-bp-badges, a11y-admin-and-mobile, member-surface-wc-achievements]
+    directions:
+      - id: "1.1"
+        title: "Badge auto-award fires on BuddyPress sites (standalone_only design fix)"
+        journey: fix
+        scope:
+          - "integrations/wordpress.php"
+          - "src/Engine/Installer.php"
+          - "src/Engine/ManifestLoader.php"
+          - "src/CLI/DoctorCommand.php"
+          - "audit/journeys/release/04-earning-journey.md"
+        skills: [bug-fix, action-audit]
+        static_gates: [php-lint, wpcs, phpstan, wiring]
+        depends_on: []
+      - id: "1.2"
+        title: "Resolve 3 WCAG violations: img alt, focus-visible rings, input labels"
+        journey: fix
+        scope:
+          - "src/Admin/BadgeAdminPage.php"
+          - "src/Admin/SubmissionsPage.php"
+          - "src/Admin/PointTypeConversionsPage.php"
+          - "templates/emails/badge-earned.php"
+          - "assets/css/admin.css"
+          - "assets/css/admin/**"
+          - "assets/css/frontend.css"
+          - "src/Blocks/submit-achievement/style.css"
+          - "audit/journeys/release/07-a11y-and-mobile.md"
+        skills: [ux-foundation, ux-audit]
+        static_gates: [php-lint, wpcs, ux-audit]
+        depends_on: []
+      - id: "1.3"
+        title: "Self-healing WooCommerce /my-account/achievements/ endpoint flush"
+        journey: fix
+        scope:
+          - "src/Integrations/WooCommerce/AccountIntegration.php"
+          - "audit/journeys/release/15-member-surfaces.md"
+        skills: [bug-fix, wp-debugging]
+        static_gates: [php-lint, wpcs, phpstan]
+        depends_on: []
+
+  # Wave 2 — manifest drift closure (tables + cron). Investigate the generator
+  # gap FIRST (single root cause shared by #2 and #3), then document the tables
+  # with three-entry-point coverage, register the crons, and add smoke coverage.
+  # Runs after Wave 1 so the manifest regeneration captures the badge/endpoint
+  # fixes too. Scopes are disjoint (manifest+entry-point docs vs cron coverage).
+  - id: wave-2-manifest-drift
+    depends_on: [wave-1-code-fixes]
+    functional_gates: [browser-smoke, qa-suite]
+    journeys: [manifest-drift-closed]
+    directions:
+      - id: "2.1"
+        title: "Document 3 live tables in manifest + satisfy/annotate three-entry-point rule"
+        journey: fix
+        scope:
+          - "audit/manifest.json"
+          - "audit/manifest.summary.json"
+          - "src/Engine/DbUpgrader.php"
+          - "src/API/SSEController.php"
+          - "src/API/IntelligenceController.php"
+          - "src/Admin/AnalyticsDashboard.php"
+        skills: [wp-plugin-development, action-audit]
+        static_gates: [php-lint, wpcs, phpstan]
+        depends_on: []
+      - id: "2.2"
+        title: "Register 3 missing cron hooks in manifest + add smoke-level cron coverage"
+        journey: fix
+        scope:
+          - "audit/qa-coverage.json"
+          - "src/Engine/SideEffectDispatcher.php"
+          - "src/Engine/IntelligenceProjector.php"
+          - "src/Engine/NotificationBridge.php"
+          - "tests/**"
+          - "audit/journeys/release/01-tier-1-foundations.md"
+        skills: [wp-plugin-development, testing]
+        static_gates: [php-lint, wpcs, phpstan]
+        depends_on: []
+
+  # Wave 3 — closing audit. Re-walk the three failed journeys + drift checks and
+  # produce the SHIPPABLE verdict. Read-only auditor (exempt from scope-overlap).
+  - id: wave-3-audit-close
+    depends_on: [wave-1-code-fixes, wave-2-manifest-drift]
+    functional_gates: [qa-suite, browser-smoke]
+    journeys: [earning-journey-bp-badges, a11y-admin-and-mobile, member-surface-wc-achievements, manifest-drift-closed]
+    directions:
+      - id: "3.1"
+        title: "Re-audit: re-run release/04 + /07 + /15 + drift checks; verdict SHIPPABLE"
+        journey: audit
+        scope: ["**"]
+        depends_on: []
