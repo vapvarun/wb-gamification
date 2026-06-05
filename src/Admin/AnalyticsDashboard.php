@@ -213,7 +213,11 @@ final class AnalyticsDashboard {
 					</div>
 					<div class="wbgam-card-body">
 					<?php if ( empty( $stats['top_actions'] ) ) : ?>
-						<p class="description"><?php esc_html_e( 'No data yet.', 'wb-gamification' ); ?></p>
+						<div class="wbgam-empty">
+							<div class="wbgam-empty-icon"><span class="icon-chart-bar wbgam-icon-xl wbgam-icon-xl--muted"></span></div>
+							<div class="wbgam-empty-title"><?php esc_html_e( 'No data yet', 'wb-gamification' ); ?></div>
+							<p><?php esc_html_e( 'Top earning actions will appear here once members start earning.', 'wb-gamification' ); ?></p>
+						</div>
 					<?php else : ?>
 						<table class="wbgam-table">
 							<thead>
@@ -258,7 +262,11 @@ final class AnalyticsDashboard {
 					</div>
 					<div class="wbgam-card-body">
 					<?php if ( empty( $stats['top_earners'] ) ) : ?>
-						<p class="description"><?php esc_html_e( 'No data yet.', 'wb-gamification' ); ?></p>
+						<div class="wbgam-empty">
+							<div class="wbgam-empty-icon"><span class="icon-trophy wbgam-icon-xl wbgam-icon-xl--muted"></span></div>
+							<div class="wbgam-empty-title"><?php esc_html_e( 'No data yet', 'wb-gamification' ); ?></div>
+							<p><?php esc_html_e( 'Your top earners will appear here once members start earning.', 'wb-gamification' ); ?></p>
+						</div>
 					<?php else : ?>
 						<?php
 						// Resolve the default currency label so the analytics

@@ -541,7 +541,11 @@ final class RedemptionStorePage {
 				</div>
 				<?php else : ?>
 				<div class="wbgam-card-body">
-					<p class="wbgam-text-muted"><?php esc_html_e( 'No redemptions yet - when members spend points, their transactions appear here.', 'wb-gamification' ); ?></p>
+					<div class="wbgam-empty">
+						<div class="wbgam-empty-icon"><span class="icon-shopping-cart wbgam-icon-xl wbgam-icon-xl--muted"></span></div>
+						<div class="wbgam-empty-title"><?php esc_html_e( 'No redemptions yet', 'wb-gamification' ); ?></div>
+						<p><?php esc_html_e( 'When members spend points on rewards, their transactions appear here.', 'wb-gamification' ); ?></p>
+					</div>
 				</div>
 				<?php endif; ?>
 			</div>

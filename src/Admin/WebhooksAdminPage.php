@@ -247,7 +247,11 @@ final class WebhooksAdminPage {
 				</div>
 				<div class="wbgam-card-body">
 					<?php if ( empty( $webhooks ) ) : ?>
-						<p class="wbgam-text-muted"><?php esc_html_e( 'No webhooks configured yet. Add one above.', 'wb-gamification' ); ?></p>
+						<div class="wbgam-empty">
+							<div class="wbgam-empty-icon"><span class="icon-network wbgam-icon-xl wbgam-icon-xl--muted"></span></div>
+							<div class="wbgam-empty-title"><?php esc_html_e( 'No webhooks yet', 'wb-gamification' ); ?></div>
+							<p><?php esc_html_e( 'Add a webhook above to push earning events to Zapier, Make, n8n, or your own endpoint.', 'wb-gamification' ); ?></p>
+						</div>
 					<?php else : ?>
 						<div class="wbgam-table-scroll">
 							<table class="wbgam-table wbgam-table--priority">

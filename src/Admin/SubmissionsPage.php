@@ -125,7 +125,7 @@ final class SubmissionsPage {
 					<?php if ( empty( $pending ) ) : ?>
 						<div class="wbgam-empty">
 							<div class="wbgam-empty-icon"><span class="icon-circle-check wbgam-icon-xl"></span></div>
-							<h3><?php esc_html_e( 'No pending submissions.', 'wb-gamification' ); ?></h3>
+							<div class="wbgam-empty-title"><?php esc_html_e( 'No pending submissions', 'wb-gamification' ); ?></div>
 							<p>
 								<?php esc_html_e( 'When members submit achievements that require approval, they\'ll appear here.', 'wb-gamification' ); ?>
 							</p>

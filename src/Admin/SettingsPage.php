@@ -1498,7 +1498,11 @@ final class SettingsPage {
 				</div>
 				<div class="wbgam-card-body">
 					<?php if ( ! $has_top_earners ) : ?>
-						<p class="wbgam-empty"><?php esc_html_e( 'No earnings yet - points will appear here as members engage.', 'wb-gamification' ); ?></p>
+						<div class="wbgam-empty">
+							<div class="wbgam-empty-icon"><span class="icon-star wbgam-icon-xl wbgam-icon-xl--muted"></span></div>
+							<div class="wbgam-empty-title"><?php esc_html_e( 'No earnings yet', 'wb-gamification' ); ?></div>
+							<p><?php esc_html_e( 'Points will appear here as members start engaging.', 'wb-gamification' ); ?></p>
+						</div>
 					<?php else : ?>
 						<ol class="wbgam-rank-list" role="list">
 							<?php
@@ -1535,7 +1539,11 @@ final class SettingsPage {
 				</div>
 				<div class="wbgam-card-body">
 					<?php if ( ! $has_top_actions ) : ?>
-						<p class="wbgam-empty"><?php esc_html_e( 'No actions logged yet.', 'wb-gamification' ); ?></p>
+						<div class="wbgam-empty">
+							<div class="wbgam-empty-icon"><span class="icon-list-ordered wbgam-icon-xl wbgam-icon-xl--muted"></span></div>
+							<div class="wbgam-empty-title"><?php esc_html_e( 'No activity yet', 'wb-gamification' ); ?></div>
+							<p><?php esc_html_e( 'Earning actions from the last 30 days will appear here.', 'wb-gamification' ); ?></p>
+						</div>
 					<?php else : ?>
 						<ul class="wbgam-action-list" role="list">
 							<?php foreach ( array_slice( (array) $stats['top_actions'], 0, 6 ) as $row ) : ?>
