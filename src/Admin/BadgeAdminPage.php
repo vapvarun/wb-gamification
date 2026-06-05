@@ -224,14 +224,13 @@ final class BadgeAdminPage {
 
 			<?php if ( $show_form ) : ?>
 			<!-- Inline Create/Edit Form -->
-			<div class="wbgam-badge-form-panel">
-				<div class="wbgam-card">
-					<div class="wbgam-card-header">
-						<h3 class="wbgam-card-title">
-							<?php echo $is_new ? esc_html__( 'Create New Badge', 'wb-gamification' ) : esc_html__( 'Edit Badge', 'wb-gamification' ); ?>
-						</h3>
-					</div>
-					<div class="wbgam-card-body">
+			<div class="wbgam-card wbgam-stack-block wbgam-badge-form-card">
+				<div class="wbgam-card-header">
+					<h3 class="wbgam-card-title">
+						<?php echo $is_new ? esc_html__( 'Create New Badge', 'wb-gamification' ) : esc_html__( 'Edit Badge', 'wb-gamification' ); ?>
+					</h3>
+				</div>
+				<div class="wbgam-card-body">
 						<?php
 						// Build the REST endpoint path: POST /badges (create) or POST /badges/{id} (update).
 						$rest_path = $is_new ? '/badges' : '/badges/' . rawurlencode( $editing );
@@ -497,7 +496,6 @@ final class BadgeAdminPage {
 						<?php endif; ?>
 					</div>
 				</div>
-			</div>
 			<?php endif; ?>
 
 			<!-- Badge Grid -->

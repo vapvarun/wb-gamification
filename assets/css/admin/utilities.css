@@ -309,3 +309,24 @@
 		display: none;
 	}
 }
+
+/* ==========================================================================
+   8. Reduced Motion
+   ========================================================================== */
+
+/* Universal guard — honours the OS "reduce motion" preference across the whole
+   admin surface. Scoped universally (not under .wrap) on purpose: the toast
+   container is appended to <body> outside .wrap, and this is an admin-only sheet.
+   Freezes wbgam-shimmer / wbgam-spin / wbgam-slide-in / wbgam-slide-out /
+   wbgam-fade-in / wbgam-zoom-in plus every CSS transition. */
+@media (prefers-reduced-motion: reduce) {
+
+	*,
+	*::before,
+	*::after {
+		animation-duration: 0.01ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 0.01ms !important;
+		scroll-behavior: auto !important;
+	}
+}

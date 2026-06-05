@@ -71,7 +71,7 @@
 			if ( level.min_points > 0 ) {
 				const btn = document.createElement( 'button' );
 				btn.type = 'button';
-				btn.className = 'button button-small button-link-delete';
+				btn.className = 'wbgam-btn wbgam-btn--sm wbgam-btn--danger';
 				btn.textContent = i18n.delete || 'Delete';
 				btn.dataset.wbGamLevelDelete = String( level.id );
 				tdActions.appendChild( btn );

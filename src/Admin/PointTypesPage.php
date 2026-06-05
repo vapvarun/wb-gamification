@@ -114,17 +114,21 @@ final class PointTypesPage {
 				</div>
 				<div class="wbgam-card-body">
 					<?php if ( empty( $types ) ) : ?>
-						<p><?php esc_html_e( 'No point types yet.', 'wb-gamification' ); ?></p>
+						<div class="wbgam-empty">
+							<div class="wbgam-empty-icon"><span class="icon-coins wbgam-icon-xl wbgam-icon-xl--muted"></span></div>
+							<div class="wbgam-empty-title"><?php esc_html_e( 'No point types yet', 'wb-gamification' ); ?></div>
+							<p><?php esc_html_e( 'Add your first point type above to define a currency members can earn.', 'wb-gamification' ); ?></p>
+						</div>
 					<?php else : ?>
 						<div class="wbgam-table-scroll">
-						<table class="wbgam-table">
+						<table class="wbgam-table wbgam-table--priority">
 							<thead>
 								<tr>
 									<th scope="col"><?php esc_html_e( 'Slug', 'wb-gamification' ); ?></th>
 									<th scope="col"><?php esc_html_e( 'Label', 'wb-gamification' ); ?></th>
-									<th scope="col"><?php esc_html_e( 'Description', 'wb-gamification' ); ?></th>
-									<th scope="col"><?php esc_html_e( 'Default', 'wb-gamification' ); ?></th>
-									<th scope="col"><?php esc_html_e( 'Position', 'wb-gamification' ); ?></th>
+									<th scope="col" class="wbgam-col--optional"><?php esc_html_e( 'Description', 'wb-gamification' ); ?></th>
+									<th scope="col" class="wbgam-col--optional"><?php esc_html_e( 'Default', 'wb-gamification' ); ?></th>
+									<th scope="col" class="wbgam-col--optional"><?php esc_html_e( 'Position', 'wb-gamification' ); ?></th>
 									<th scope="col"><?php esc_html_e( 'Actions', 'wb-gamification' ); ?></th>
 								</tr>
 							</thead>
@@ -138,13 +142,13 @@ final class PointTypesPage {
 									<tr>
 										<td><code><?php echo esc_html( $slug ); ?></code></td>
 										<td><?php echo esc_html( (string) $type['label'] ); ?></td>
-										<td><?php echo esc_html( (string) ( $type['description'] ?? '' ) ); ?></td>
-										<td>
+										<td class="wbgam-col--optional"><?php echo esc_html( (string) ( $type['description'] ?? '' ) ); ?></td>
+										<td class="wbgam-col--optional">
 											<?php if ( $is_default ) : ?>
 												<span class="wbgam-badge wbgam-badge--success"><?php esc_html_e( 'Default', 'wb-gamification' ); ?></span>
 											<?php else : ?>
 												<button type="button"
-													class="button button-link"
+													class="wbgam-btn wbgam-btn--sm wbgam-btn--secondary"
 													data-wb-gam-rest-action="wbGamPointTypesSettings"
 													data-wb-gam-rest-method="PUT"
 													data-wb-gam-rest-path="/point-types/<?php echo esc_attr( $slug ); ?>"
@@ -161,11 +165,11 @@ final class PointTypesPage {
 												</button>
 											<?php endif; ?>
 										</td>
-										<td><?php echo (int) $type['position']; ?></td>
+										<td class="wbgam-col--optional"><?php echo (int) $type['position']; ?></td>
 										<td>
 											<?php if ( ! $is_default ) : ?>
 												<button type="button"
-													class="button button-small button-link-delete"
+													class="wbgam-btn wbgam-btn--sm wbgam-btn--danger"
 													data-wb-gam-rest-action="wbGamPointTypesSettings"
 													data-wb-gam-rest-method="DELETE"
 													data-wb-gam-rest-path="<?php echo esc_attr( $delete_path ); ?>"
@@ -256,7 +260,7 @@ final class PointTypesPage {
 						</table>
 
 						<p class="submit">
-							<button type="submit" class="button button-primary"><?php esc_html_e( 'Create Point Type', 'wb-gamification' ); ?></button>
+							<button type="submit" class="wbgam-btn"><?php esc_html_e( 'Create Point Type', 'wb-gamification' ); ?></button>
 						</p>
 					</form>
 				</div>

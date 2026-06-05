@@ -96,15 +96,14 @@
    2. Badge Form Panel
    ========================================================================== */
 
-.wbgam-badge-form-panel {
-	margin-bottom: 1.5rem;
-}
-
-.wbgam-badge-form-panel .wbgam-card {
+/* Inline create/edit form card. The card sits directly under the wrap
+   (canonical shell — no extra panel wrapper); wbgam-stack-block supplies the
+   bottom margin, this modifier only adds the focus-within affordance. */
+.wbgam-badge-form-card {
 	transition: box-shadow 0.2s;
 }
 
-.wbgam-badge-form-panel .wbgam-card:focus-within {
+.wbgam-badge-form-card:focus-within {
 	box-shadow: 0 2px 12px rgba(108, 99, 255, 0.08);
 }
 

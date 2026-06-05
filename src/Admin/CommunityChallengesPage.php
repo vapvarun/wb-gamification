@@ -315,15 +315,16 @@ final class CommunityChallengesPage {
 					<h3 class="wbgam-card-title"><?php esc_html_e( 'All Community Challenges', 'wb-gamification' ); ?></h3>
 				</div>
 				<div class="wbgam-card-body wbgam-card-body--flush">
-					<table class="wbgam-table">
+					<div class="wbgam-table-scroll">
+						<table class="wbgam-table wbgam-table--priority">
 						<thead>
 							<tr>
 								<th><?php esc_html_e( 'Title', 'wb-gamification' ); ?></th>
-								<th><?php esc_html_e( 'Action', 'wb-gamification' ); ?></th>
+								<th class="wbgam-col--optional"><?php esc_html_e( 'Action', 'wb-gamification' ); ?></th>
 								<th><?php esc_html_e( 'Progress', 'wb-gamification' ); ?></th>
-								<th><?php esc_html_e( 'Bonus', 'wb-gamification' ); ?></th>
+								<th class="wbgam-col--optional"><?php esc_html_e( 'Bonus', 'wb-gamification' ); ?></th>
 								<th><?php esc_html_e( 'Status', 'wb-gamification' ); ?></th>
-								<th><?php esc_html_e( 'Dates', 'wb-gamification' ); ?></th>
+								<th class="wbgam-col--optional"><?php esc_html_e( 'Dates', 'wb-gamification' ); ?></th>
 								<th><?php esc_html_e( 'Actions', 'wb-gamification' ); ?></th>
 							</tr>
 						</thead>
@@ -346,7 +347,7 @@ final class CommunityChallengesPage {
 										<br><small class="wbgam-text-muted"><?php echo esc_html( wp_trim_words( $c['description'], 10 ) ); ?></small>
 									<?php endif; ?>
 								</td>
-								<td><code><?php echo esc_html( $action_label ); ?></code></td>
+								<td class="wbgam-col--optional"><code><?php echo esc_html( $action_label ); ?></code></td>
 								<td class="wbgam-cell--minw">
 									<div class="wbgam-flex-row">
 										<div class="wbgam-progress">
@@ -355,13 +356,13 @@ final class CommunityChallengesPage {
 										<span class="wbgam-text-meta"><?php echo esc_html( number_format_i18n( $progress ) . ' / ' . number_format_i18n( $target ) ); ?></span>
 									</div>
 								</td>
-								<td><?php echo esc_html( $c['bonus_points'] ); ?></td>
+								<td class="wbgam-col--optional"><?php echo esc_html( $c['bonus_points'] ); ?></td>
 								<td>
 									<span class="wbgam-pill wbgam-pill--<?php echo esc_attr( $status_class ); ?>">
 										<?php echo esc_html( ucfirst( $c['status'] ) ); ?>
 									</span>
 								</td>
-								<td>
+								<td class="wbgam-col--optional">
 									<?php
 									$start = ! empty( $c['starts_at'] ) ? substr( $c['starts_at'], 0, 10 ) : '—';
 									$end   = ! empty( $c['ends_at'] ) ? substr( $c['ends_at'], 0, 10 ) : '—';
@@ -391,6 +392,7 @@ final class CommunityChallengesPage {
 						<?php endforeach; ?>
 						</tbody>
 					</table>
+					</div>
 				</div>
 			</div>
 			<?php else : ?>

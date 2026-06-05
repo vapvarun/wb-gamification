@@ -211,29 +211,30 @@ final class ApiKeysPage {
 					<h3 class="wbgam-card-title"><?php esc_html_e( 'Active Keys', 'wb-gamification' ); ?></h3>
 				</div>
 				<div class="wbgam-card-body wbgam-card-body--flush">
-					<table class="wbgam-table">
-						<thead>
-							<tr>
-								<th><?php esc_html_e( 'Label', 'wb-gamification' ); ?></th>
-								<th><?php esc_html_e( 'Site ID', 'wb-gamification' ); ?></th>
-								<th><?php esc_html_e( 'Key (prefix)', 'wb-gamification' ); ?></th>
-								<th><?php esc_html_e( 'Created', 'wb-gamification' ); ?></th>
-								<th><?php esc_html_e( 'Last Used', 'wb-gamification' ); ?></th>
-								<th><?php esc_html_e( 'Status', 'wb-gamification' ); ?></th>
-								<th><?php esc_html_e( 'Actions', 'wb-gamification' ); ?></th>
-							</tr>
-						</thead>
-						<tbody data-wb-gam-api-keys-tbody>
-							<?php
-							foreach ( $keys as $row ) :
-								$preview = $row['key_prefix'] . '…' . $row['key_suffix'];
-								?>
+					<div class="wbgam-table-scroll">
+						<table class="wbgam-table wbgam-table--priority">
+							<thead>
+								<tr>
+									<th><?php esc_html_e( 'Label', 'wb-gamification' ); ?></th>
+									<th class="wbgam-col--optional"><?php esc_html_e( 'Site ID', 'wb-gamification' ); ?></th>
+									<th><?php esc_html_e( 'Key (prefix)', 'wb-gamification' ); ?></th>
+									<th class="wbgam-col--optional"><?php esc_html_e( 'Created', 'wb-gamification' ); ?></th>
+									<th class="wbgam-col--optional"><?php esc_html_e( 'Last Used', 'wb-gamification' ); ?></th>
+									<th><?php esc_html_e( 'Status', 'wb-gamification' ); ?></th>
+									<th><?php esc_html_e( 'Actions', 'wb-gamification' ); ?></th>
+								</tr>
+							</thead>
+							<tbody data-wb-gam-api-keys-tbody>
+								<?php
+								foreach ( $keys as $row ) :
+									$preview = $row['key_prefix'] . '…' . $row['key_suffix'];
+									?>
 								<tr data-key-preview="<?php echo esc_attr( $preview ); ?>" data-key-id="<?php echo esc_attr( (string) $row['id'] ); ?>">
 									<td><strong><?php echo esc_html( $row['label'] ); ?></strong></td>
-									<td><code><?php echo esc_html( '' !== $row['site_id'] ? $row['site_id'] : '—' ); ?></code></td>
+									<td class="wbgam-col--optional"><code><?php echo esc_html( '' !== $row['site_id'] ? $row['site_id'] : '—' ); ?></code></td>
 									<td><code><?php echo esc_html( $preview ); ?></code></td>
-									<td><?php echo esc_html( $row['created_at'] ); ?></td>
-									<td><?php echo esc_html( $row['last_used'] ?: '—' ); ?></td>
+									<td class="wbgam-col--optional"><?php echo esc_html( $row['created_at'] ); ?></td>
+									<td class="wbgam-col--optional"><?php echo esc_html( $row['last_used'] ?: '—' ); ?></td>
 									<td>
 										<?php if ( 1 === (int) $row['is_active'] ) : ?>
 											<span class="wbgam-pill wbgam-pill--active"><?php esc_html_e( 'Active', 'wb-gamification' ); ?></span>
@@ -249,8 +250,9 @@ final class ApiKeysPage {
 									</td>
 								</tr>
 							<?php endforeach; ?>
-						</tbody>
-					</table>
+							</tbody>
+						</table>
+					</div>
 				</div>
 			</div>
 

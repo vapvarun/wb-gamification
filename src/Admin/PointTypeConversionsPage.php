@@ -151,7 +151,11 @@ final class PointTypeConversionsPage {
 				</div>
 				<div class="wbgam-card-body">
 					<?php if ( empty( $rules ) ) : ?>
-						<p class="wbgam-text-muted"><?php esc_html_e( 'No conversion rules yet. Add one below.', 'wb-gamification' ); ?></p>
+						<div class="wbgam-empty">
+							<div class="wbgam-empty-icon"><span class="icon-arrow-right wbgam-icon-xl wbgam-icon-xl--muted"></span></div>
+							<div class="wbgam-empty-title"><?php esc_html_e( 'No conversion rules yet', 'wb-gamification' ); ?></div>
+							<p><?php esc_html_e( 'Add a rule below to let members convert one point type into another.', 'wb-gamification' ); ?></p>
+						</div>
 					<?php else : ?>
 						<div class="wbgam-table-scroll">
 							<table class="wbgam-table">

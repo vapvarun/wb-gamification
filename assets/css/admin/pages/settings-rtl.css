@@ -161,51 +161,22 @@
 	width: 100%;
 }
 
-/* Section cards */
-.wbgam-settings-card {
-	background: var(--wbgam-card-bg);
-	border: 1px solid var(--wbgam-slate-200);
-	border-radius: var(--wbgam-card-radius);
-	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
-	margin-bottom: 16px;
-	overflow: hidden;
-}
-
-.wbgam-settings-card__head {
-	padding: 14px 20px 12px;
-	border-bottom: 1px solid var(--wbgam-slate-200);
-	background: var(--wbgam-surface-soft);
-}
-
-.wbgam-settings-card__title {
-	font-size: var(--wbgam-fs-sm);
-	font-weight: 600;
-	text-transform: uppercase;
-	letter-spacing: 0.04em;
-	color: var(--wbgam-text);
-	margin: 0 0 2px;
-}
-
-.wbgam-settings-card__desc {
-	font-size: var(--wbgam-fs-sm);
-	color: var(--wbgam-wp-text-light);
-	margin: 0;
-}
-
-.wbgam-settings-card__body {
+/* Section cards — Settings subtabs use the canonical .wbgam-card vocabulary.
+   These rules are page-specific tweaks only. A Settings form renders a
+   full-bleed form-table whose cells carry their own padding, so when a card
+   body directly wraps such a form-table we zero the body padding to avoid
+   double inset. Prose / toggle-row bodies keep the canonical 1.25rem padding. */
+.wbgam-settings-content .wbgam-card-body:has(> .form-table),
+.wbgam-settings-content .wbgam-card-body:has(> form > .form-table) {
 	padding: 0;
 }
 
-.wbgam-settings-card__body--cozy {
-	padding: 1.5rem 1.25rem;
-}
-
-.wbgam-settings-card .form-table th {
+.wbgam-settings-content .wbgam-card .form-table th {
 	padding: 16px 20px;
 	width: 200px;
 }
 
-.wbgam-settings-card .form-table td {
+.wbgam-settings-content .wbgam-card .form-table td {
 	padding: 16px 20px;
 }
 
@@ -252,13 +223,13 @@
 		padding: 16px;
 	}
 
-	.wbgam-settings-card .form-table th {
+	.wbgam-settings-content .wbgam-card .form-table th {
 		width: auto;
 		display: block;
 		padding: 12px 16px 0;
 	}
 
-	.wbgam-settings-card .form-table td {
+	.wbgam-settings-content .wbgam-card .form-table td {
 		display: block;
 		padding: 4px 16px 12px;
 	}

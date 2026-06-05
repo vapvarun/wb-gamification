@@ -807,7 +807,7 @@
       "parent": "wb-gamification",
       "capability": "manage_options",
       "render": "PointTypesPage::render_page",
-      "source": "src/Admin/PointTypesPage.php:77",
+      "source": "src/Admin/PointTypesPage.php:84",
       "added": "1.0.0",
       "purpose": "CRUD for currencies. Marks default. Lists per-type balance aggregates."
     },
@@ -849,7 +849,7 @@
       "icon": "dashicons-awards",
       "position": 56,
       "render": "SettingsPage::render",
-      "source": "src/Admin/SettingsPage.php:48"
+      "source": "src/Admin/SettingsPage.php:63"
     },
     {
       "title": "Analytics",
@@ -858,7 +858,7 @@
       "parent": "wb-gamification",
       "capability": "manage_options",
       "render": "AnalyticsDashboard::render_page",
-      "source": "src/Admin/AnalyticsDashboard.php:52"
+      "source": "src/Admin/AnalyticsDashboard.php:58"
     },
     {
       "title": "Award Points",
@@ -3295,7 +3295,6 @@
   "frontend_assets": {
     "css": {
       "global": [
-        "assets/css/admin-analytics.css",
         "assets/css/admin-menu-icon.css",
         "assets/css/frontend.css",
         "assets/css/give-kudos.css",
@@ -3539,7 +3538,7 @@
     "nonces": [
       {
         "name": "wb_gam_dismiss_welcome",
-        "where": "src/Admin/SettingsPage.php:93",
+        "where": "src/Admin/SettingsPage.php:168",
         "purpose": "Dismiss first-run welcome banner."
       },
       {

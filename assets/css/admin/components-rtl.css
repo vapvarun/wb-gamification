@@ -132,27 +132,22 @@
 
 /* ==========================================================================
    3. Settings Topbar (Settings page brand header)
+
+   Additive modifier on the canonical .wbgam-page-header. It only carries the
+   Settings-specific brand chrome (the gradient logo tile, the brand text
+   wrapper, the version pill sizing). Layout, border, padding and the
+   __main / __title / __desc / __actions children come from .wbgam-page-header.
    ========================================================================== */
 
-.wbgam-settings-topbar {
-	display: flex;
+.wbgam-settings-topbar.wbgam-page-header {
 	align-items: center;
-	justify-content: space-between;
-	gap: 1.5rem;
-	flex-wrap: wrap;
-	background: var(--wbgam-card-bg);
-	border: 1px solid var(--wb-gam-border, var(--wbgam-border));
-	border-radius: var(--wb-gam-radius, 8px);
-	padding: 1.25rem 1.5rem;
-	margin: 1.25rem 0 1.5rem 1.5rem;
+	margin-inline-end: 1.5rem;
 }
 
-.wbgam-settings-topbar__brand {
+.wbgam-settings-topbar .wbgam-page-header__main {
 	display: flex;
 	align-items: center;
 	gap: var(--wbgam-gap-sm);
-	flex: 1 1 auto;
-	min-width: 0;
 }
 
 .wbgam-settings-topbar__logo {
@@ -173,12 +168,8 @@
 	min-width: 0;
 }
 
-.wbgam-settings-topbar__title {
-	margin: 0;
+.wbgam-settings-topbar .wbgam-page-header__title {
 	font-size: var(--wbgam-fs-2xl);
-	font-weight: 600;
-	line-height: 1.2;
-	color: var(--wb-gam-text, var(--wbgam-text));
 	display: flex;
 	align-items: center;
 	gap: 0.625rem;
@@ -187,40 +178,17 @@
 
 .wbgam-settings-topbar__version {
 	font-size: var(--wbgam-fs-xs);
-	font-weight: 600;
-	color: var(--wb-gam-text-muted, var(--wbgam-text-secondary));
-	background: var(--wbgam-surface-muted);
-	padding: 0.125rem 0.5rem;
-	border-radius: var(--wbgam-radius-pill);
 	letter-spacing: 0.02em;
-}
-
-.wbgam-settings-topbar__desc {
-	margin: 0.375rem 0 0;
-	color: var(--wb-gam-text-muted, var(--wbgam-text-secondary));
-	font-size: var(--wbgam-fs-base);
-	line-height: 1.5;
-}
-
-.wbgam-settings-topbar__actions {
-	display: flex;
-	gap: var(--wbgam-gap-xs);
-	flex-wrap: wrap;
-	flex-shrink: 0;
 }
 
 @media (max-width: 782px) {
 
-	.wbgam-settings-topbar {
+	.wbgam-settings-topbar.wbgam-page-header {
 		margin-inline-end: 0;
 	}
 }
 
 @media (max-width: 640px) {
-
-	.wbgam-settings-topbar {
-		padding: 1rem;
-	}
 
 	.wbgam-settings-topbar__logo {
 		width: 2.5rem;
@@ -228,7 +196,7 @@
 		font-size: var(--wbgam-fs-2xl);
 	}
 
-	.wbgam-settings-topbar__title {
+	.wbgam-settings-topbar .wbgam-page-header__title {
 		font-size: var(--wbgam-fs-xl);
 	}
 }
@@ -860,6 +828,28 @@
 	width: 80px;
 }
 
+/* Column-priority system — explicit class-per-cell (grep-able, survives column
+   reordering, no :nth-child brittleness). One tier only; the 640px floor of the
+   shared 640/782/1024 discipline. Tag a <th> + its matching <td>s with
+   .wbgam-col--optional; they drop out at <=640px so the high-value columns fill
+   a 390px viewport with no horizontal scroll. */
+.wbgam-col--optional {
+	/* No base styling — visible by default; hidden only at the narrow tier. */
+}
+
+@media (max-width: 640px) {
+
+	.wbgam-col--optional {
+		display: none;
+	}
+}
+
+/* Priority tables drop the 640px min-width floor so the remaining (non-optional)
+   columns reflow to fill the viewport instead of forcing the scroll fallback. */
+.wbgam-table-scroll > .wbgam-table.wbgam-table--priority {
+	min-width: 0;
+}
+
 /* ==========================================================================
    12. Empty State (premium variant)
    ========================================================================== */
@@ -899,6 +889,43 @@
 	padding: 16px 0;
 	text-align: center;
 	border: none;
+}
+
+/* ==========================================================================
+   12b. Skeleton loading placeholders
+   ========================================================================== */
+
+/* Shimmering placeholder shown while a post-paint render (e.g. the Members
+   roster fetched from REST) is in flight. The reduced-motion guard in
+   utilities.css freezes the shimmer for users who request reduced motion. */
+.wbgam-skeleton {
+	background: linear-gradient(
+		-90deg,
+		var(--wbgam-slate-100, #eef1f5) 25%,
+		var(--wbgam-slate-50, #f6f8fa) 37%,
+		var(--wbgam-slate-100, #eef1f5) 63%
+	);
+	background-size: 400% 100%;
+	animation: wbgam-shimmer 1.4s ease infinite;
+	border-radius: var(--wb-gam-radius, 8px);
+}
+
+/* Text-line skeleton — one greyed bar standing in for a cell value. */
+.wbgam-skeleton--text {
+	display: block;
+	height: 0.75rem;
+	width: 100%;
+}
+
+@keyframes wbgam-shimmer {
+
+	0% {
+		background-position: 0% 50%;
+	}
+
+	100% {
+		background-position: 100% 50%;
+	}
 }
 
 /* ==========================================================================
@@ -1180,6 +1207,76 @@
 .wb-gam-rest-error-toast {
 	/* Marker classes — actual visuals are applied by the toast container above.
 	   These selectors exist so PHP/JS can target without inline styling. */
+}
+
+/* ==========================================================================
+   17b. Admin REST toast (admin-rest-utils.js) — aliased to the member toast look
+   ==========================================================================
+   admin-rest-utils.js builds a `.wb-gam-toasts` container appended to <body>
+   and individual `.wb-gam-toast .wb-gam-toast--{tone}` nodes toggled visible via
+   `.is-visible`. No admin CSS existed for these until now (the member realtime
+   toast used the parallel `.wbgam-toast` namespace) so admin REST feedback was
+   unstyled. This block matches admin + member toasts to one look. */
+.wb-gam-toasts {
+	position: fixed;
+	bottom: 24px;
+	inset-inline-end: 24px;
+	z-index: 999999;
+	display: flex;
+	flex-direction: column;
+	gap: var(--wbgam-gap-xs);
+	pointer-events: none;
+}
+
+.wb-gam-toast {
+	background: var(--wbgam-text);
+	color: var(--wbgam-card-bg);
+	padding: 12px 20px;
+	border-radius: var(--wbgam-card-radius);
+	font-size: var(--wbgam-fs-base);
+	font-family: var(--wbgam-font);
+	line-height: 1.5;
+	box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+	pointer-events: auto;
+	display: flex;
+	align-items: center;
+	gap: var(--wbgam-gap-md);
+	max-width: 400px;
+	opacity: 0;
+	transform: translateX(-100%);
+	transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.wb-gam-toast.is-visible {
+	opacity: 1;
+	transform: translateX(0);
+}
+
+/* Tone accents — a leading colour bar so success / error / info read at a glance
+   without leaving the shared dark surface. */
+.wb-gam-toast--success {
+	border-inline-start: 4px solid var(--wbgam-success, #16a34a);
+}
+
+.wb-gam-toast--error {
+	border-inline-start: 4px solid var(--wbgam-danger, #dc2626);
+}
+
+.wb-gam-toast--info {
+	border-inline-start: 4px solid var(--wbgam-primary, #6366f1);
+}
+
+@media (max-width: 640px) {
+
+	.wb-gam-toasts {
+		inset-inline-start: 16px;
+		inset-inline-end: 16px;
+		bottom: 16px;
+	}
+
+	.wb-gam-toast {
+		max-width: 100%;
+	}
 }
 
 /* ==========================================================================

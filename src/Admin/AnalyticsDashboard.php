@@ -81,12 +81,6 @@ final class AnalyticsDashboard {
 			array( 'wb-gam-admin-utilities' ),
 			WB_GAM_VERSION
 		);
-		wp_enqueue_style(
-			'wb-gam-admin-analytics',
-			WB_GAM_URL . 'assets/css/admin-analytics.css',
-			array( 'wb-gam-page-analytics' ),
-			WB_GAM_VERSION
-		);
 	}
 
 	// ── Page render ─────────────────────────────────────────────────────────────
@@ -118,7 +112,7 @@ final class AnalyticsDashboard {
 
 		$stats = self::get_stats( $period );
 		?>
-		<div class="wrap wbgam-wrap wb-gam-analytics">
+		<div class="wrap wbgam-wrap">
 			<hr class="wp-header-end" />
 			<header class="wbgam-page-header">
 				<div class="wbgam-page-header__main">
@@ -127,8 +121,8 @@ final class AnalyticsDashboard {
 				</div>
 			</header>
 
-			<!-- Period selector -->
-			<div class="wb-gam-analytics__period-bar wbgam-stack-block">
+			<!-- Period selector — switches the analytics view, so it is a tab nav. -->
+			<nav class="wbgam-tabs nav-tab-wrapper wbgam-stack-block" aria-label="<?php esc_attr_e( 'Analytics period', 'wb-gamification' ); ?>">
 				<?php
 				foreach ( array(
 					7  => __( '7 days', 'wb-gamification' ),
@@ -138,10 +132,11 @@ final class AnalyticsDashboard {
 					?>
 					<a
 						href="<?php echo esc_url( add_query_arg( 'period', $d ) ); ?>"
-						class="button<?php echo $d === $period ? ' button-primary' : ''; ?>"
+						class="nav-tab<?php echo $d === $period ? ' nav-tab-active' : ''; ?>"
+						<?php echo $d === $period ? 'aria-current="page"' : ''; ?>
 					><?php echo esc_html( $label ); ?></a>
 				<?php endforeach; ?>
-			</div>
+			</nav>
 
 			<!-- KPI cards -->
 			<div class="wb-gam-analytics__kpi-grid">
@@ -212,12 +207,19 @@ final class AnalyticsDashboard {
 			<div class="wb-gam-analytics__two-col">
 
 				<!-- Top actions -->
-				<div class="wb-gam-analytics__panel">
-					<h2><?php esc_html_e( 'Top Actions by Points', 'wb-gamification' ); ?></h2>
+				<div class="wbgam-card wbgam-stack-block">
+					<div class="wbgam-card-header">
+						<h3 class="wbgam-card-title"><?php esc_html_e( 'Top Actions by Points', 'wb-gamification' ); ?></h3>
+					</div>
+					<div class="wbgam-card-body">
 					<?php if ( empty( $stats['top_actions'] ) ) : ?>
-						<p class="description"><?php esc_html_e( 'No data yet.', 'wb-gamification' ); ?></p>
+						<div class="wbgam-empty">
+							<div class="wbgam-empty-icon"><span class="icon-chart-bar wbgam-icon-xl wbgam-icon-xl--muted"></span></div>
+							<div class="wbgam-empty-title"><?php esc_html_e( 'No data yet', 'wb-gamification' ); ?></div>
+							<p><?php esc_html_e( 'Top earning actions will appear here once members start earning.', 'wb-gamification' ); ?></p>
+						</div>
 					<?php else : ?>
-						<table class="widefat striped">
+						<table class="wbgam-table">
 							<thead>
 								<tr>
 									<th><?php esc_html_e( 'Action', 'wb-gamification' ); ?></th>
@@ -240,23 +242,31 @@ final class AnalyticsDashboard {
 							</tbody>
 						</table>
 					<?php endif; ?>
+					</div>
 				</div>
 
 				<!-- Top earners -->
-				<div class="wb-gam-analytics__panel">
-					<h2>
-						<?php
-						echo esc_html(
-							sprintf(
-								/* translators: %d = number of days */
-								__( 'Top Earners - Last %d Days', 'wb-gamification' ),
-								$period
-							)
-						);
-						?>
-					</h2>
+				<div class="wbgam-card wbgam-stack-block">
+					<div class="wbgam-card-header">
+						<h3 class="wbgam-card-title">
+							<?php
+							echo esc_html(
+								sprintf(
+									/* translators: %d = number of days */
+									__( 'Top Earners - Last %d Days', 'wb-gamification' ),
+									$period
+								)
+							);
+							?>
+						</h3>
+					</div>
+					<div class="wbgam-card-body">
 					<?php if ( empty( $stats['top_earners'] ) ) : ?>
-						<p class="description"><?php esc_html_e( 'No data yet.', 'wb-gamification' ); ?></p>
+						<div class="wbgam-empty">
+							<div class="wbgam-empty-icon"><span class="icon-trophy wbgam-icon-xl wbgam-icon-xl--muted"></span></div>
+							<div class="wbgam-empty-title"><?php esc_html_e( 'No data yet', 'wb-gamification' ); ?></div>
+							<p><?php esc_html_e( 'Your top earners will appear here once members start earning.', 'wb-gamification' ); ?></p>
+						</div>
 					<?php else : ?>
 						<?php
 						// Resolve the default currency label so the analytics
@@ -265,7 +275,7 @@ final class AnalyticsDashboard {
 						$pt_record_analytics = $pt_service->get( $pt_service->default_slug() );
 						$points_label_admin  = (string) ( $pt_record_analytics['label'] ?? __( 'Points', 'wb-gamification' ) );
 						?>
-						<table class="widefat striped">
+						<table class="wbgam-table">
 							<thead>
 								<tr>
 									<th><?php esc_html_e( 'Member', 'wb-gamification' ); ?></th>
@@ -291,14 +301,19 @@ final class AnalyticsDashboard {
 							</tbody>
 						</table>
 					<?php endif; ?>
+					</div>
 				</div>
 
 			</div><!-- .wb-gam-analytics__two-col -->
 
 			<!-- Daily points sparkline (simple bar chart via inline SVG) -->
-			<div class="wb-gam-analytics__panel">
-				<h2><?php esc_html_e( 'Daily Points Trend', 'wb-gamification' ); ?></h2>
-				<?php self::render_sparkline( $stats['daily_points'], $period ); ?>
+			<div class="wbgam-card wbgam-stack-block">
+				<div class="wbgam-card-header">
+					<h3 class="wbgam-card-title"><?php esc_html_e( 'Daily Points Trend', 'wb-gamification' ); ?></h3>
+				</div>
+				<div class="wbgam-card-body">
+					<?php self::render_sparkline( $stats['daily_points'], $period ); ?>
+				</div>
 			</div>
 
 			<!-- Behavioural intelligence (v2.5 / AI v1 projection) -->
@@ -482,11 +497,11 @@ final class AnalyticsDashboard {
 	 */
 	public static function kpi_card( string $title, string $value, string $sub, string $icon ): void {
 		?>
-		<div class="wb-gam-analytics__kpi-card wb-gam-admin-kpi-card">
-			<span class="wb-gam-analytics__kpi-icon wb-gam-admin-kpi-icon <?php echo esc_attr( $icon ); ?>" aria-hidden="true"></span>
-			<span class="wb-gam-analytics__kpi-value wb-gam-admin-kpi-value"><?php echo esc_html( $value ); ?></span>
-			<span class="wb-gam-analytics__kpi-title wb-gam-admin-kpi-title"><?php echo esc_html( $title ); ?></span>
-			<span class="wb-gam-analytics__kpi-sub wb-gam-admin-kpi-sub"><?php echo esc_html( $sub ); ?></span>
+		<div class="wb-gam-admin-kpi-card">
+			<span class="wb-gam-admin-kpi-icon <?php echo esc_attr( $icon ); ?>" aria-hidden="true"></span>
+			<span class="wb-gam-admin-kpi-value"><?php echo esc_html( $value ); ?></span>
+			<span class="wb-gam-admin-kpi-title"><?php echo esc_html( $title ); ?></span>
+			<span class="wb-gam-admin-kpi-sub"><?php echo esc_html( $sub ); ?></span>
 		</div>
 		<?php
 	}
@@ -577,18 +592,21 @@ final class AnalyticsDashboard {
 		);
 		?>
 		<div class="wb-gam-analytics__two-col wbgam-mt-md">
-			<div class="wb-gam-analytics__panel">
-				<h2 class="wbgam-flex-row">
-					<span class="icon-trending-down" aria-hidden="true"></span>
-					<?php esc_html_e( 'Members at churn risk', 'wb-gamification' ); ?>
-				</h2>
+			<div class="wbgam-card wbgam-stack-block">
+				<div class="wbgam-card-header">
+					<h3 class="wbgam-card-title wbgam-flex-row">
+						<span class="icon-trending-down" aria-hidden="true"></span>
+						<?php esc_html_e( 'Members at churn risk', 'wb-gamification' ); ?>
+					</h3>
+				</div>
+				<div class="wbgam-card-body">
 				<p class="description">
 					<?php esc_html_e( 'Members whose engagement score has fallen far enough that they\'re likely to drift away. Re-engage with a personalised nudge.', 'wb-gamification' ); ?>
 				</p>
 				<?php if ( empty( $at_risk ) ) : ?>
 					<p class="description"><?php esc_html_e( 'No members above the high-risk threshold (0.7). Either your community is exceptionally engaged or the projection cron hasn\'t finished its first pass - check back tomorrow.', 'wb-gamification' ); ?></p>
 				<?php else : ?>
-					<table class="widefat striped">
+					<table class="wbgam-table">
 						<thead>
 							<tr>
 								<th><?php esc_html_e( 'Member', 'wb-gamification' ); ?></th>
@@ -622,20 +640,24 @@ final class AnalyticsDashboard {
 						</tbody>
 					</table>
 				<?php endif; ?>
+				</div>
 			</div>
 
-			<div class="wb-gam-analytics__panel">
-				<h2 class="wbgam-flex-row">
-					<span class="icon-alert-triangle" aria-hidden="true"></span>
-					<?php esc_html_e( 'Possible gaming activity', 'wb-gamification' ); ?>
-				</h2>
+			<div class="wbgam-card wbgam-stack-block">
+				<div class="wbgam-card-header">
+					<h3 class="wbgam-card-title wbgam-flex-row">
+						<span class="icon-alert-triangle" aria-hidden="true"></span>
+						<?php esc_html_e( 'Possible gaming activity', 'wb-gamification' ); ?>
+					</h3>
+				</div>
+				<div class="wbgam-card-body">
 				<p class="description">
 					<?php esc_html_e( 'High event volume with very low action diversity - the "bot grinding one action" pattern. Review before assuming abuse: some legitimate members really do only do one thing.', 'wb-gamification' ); ?>
 				</p>
 				<?php if ( empty( $anomalies ) ) : ?>
 					<p class="description"><?php esc_html_e( 'No members flagged. Anomaly detection requires >500 events in 30 days AND <3 distinct actions; communities below those volumes simply won\'t trip the heuristic.', 'wb-gamification' ); ?></p>
 				<?php else : ?>
-					<table class="widefat striped">
+					<table class="wbgam-table">
 						<thead>
 							<tr>
 								<th><?php esc_html_e( 'Member', 'wb-gamification' ); ?></th>
@@ -654,6 +676,7 @@ final class AnalyticsDashboard {
 						</tbody>
 					</table>
 				<?php endif; ?>
+				</div>
 			</div>
 		</div>
 
@@ -690,15 +713,18 @@ final class AnalyticsDashboard {
 			return;
 		}
 		?>
-		<div class="wb-gam-analytics__panel wbgam-mt-md">
-			<h2 class="wbgam-flex-row">
-				<span class="icon-alert-triangle" aria-hidden="true"></span>
-				<?php esc_html_e( 'Unknown action IDs fired (last 24h)', 'wb-gamification' ); ?>
-			</h2>
+		<div class="wbgam-card wbgam-stack-block wbgam-mt-md">
+			<div class="wbgam-card-header">
+				<h3 class="wbgam-card-title wbgam-flex-row">
+					<span class="icon-alert-triangle" aria-hidden="true"></span>
+					<?php esc_html_e( 'Unknown action IDs fired (last 24h)', 'wb-gamification' ); ?>
+				</h3>
+			</div>
+			<div class="wbgam-card-body">
 			<p class="description">
 				<?php esc_html_e( 'These events were rejected because the action_id was not registered with the engine. Usually means a typo in custom code, a deactivated integration plugin, or a manifest that did not load. Each row aggregates all firings of that ID.', 'wb-gamification' ); ?>
 			</p>
-			<table class="widefat striped">
+			<table class="wbgam-table">
 				<thead>
 					<tr>
 						<th><?php esc_html_e( 'Action ID', 'wb-gamification' ); ?></th>
@@ -749,6 +775,7 @@ final class AnalyticsDashboard {
 			<p class="description wbgam-mt-sm">
 				<?php esc_html_e( 'Rows auto-expire after 24 hours. If a suggestion looks right, update the calling code to use that exact ID. If there is no suggestion, the owning integration plugin is probably not active or its manifest did not load.', 'wb-gamification' ); ?>
 			</p>
+			</div>
 		</div>
 		<?php
 	}

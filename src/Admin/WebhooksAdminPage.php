@@ -247,16 +247,20 @@ final class WebhooksAdminPage {
 				</div>
 				<div class="wbgam-card-body">
 					<?php if ( empty( $webhooks ) ) : ?>
-						<p class="wbgam-text-muted"><?php esc_html_e( 'No webhooks configured yet. Add one above.', 'wb-gamification' ); ?></p>
+						<div class="wbgam-empty">
+							<div class="wbgam-empty-icon"><span class="icon-network wbgam-icon-xl wbgam-icon-xl--muted"></span></div>
+							<div class="wbgam-empty-title"><?php esc_html_e( 'No webhooks yet', 'wb-gamification' ); ?></div>
+							<p><?php esc_html_e( 'Add a webhook above to push earning events to Zapier, Make, n8n, or your own endpoint.', 'wb-gamification' ); ?></p>
+						</div>
 					<?php else : ?>
 						<div class="wbgam-table-scroll">
-							<table class="wbgam-table">
+							<table class="wbgam-table wbgam-table--priority">
 								<thead>
 									<tr>
 										<th><?php esc_html_e( 'URL', 'wb-gamification' ); ?></th>
 										<th><?php esc_html_e( 'Events', 'wb-gamification' ); ?></th>
 										<th><?php esc_html_e( 'Active', 'wb-gamification' ); ?></th>
-										<th><?php esc_html_e( 'Created', 'wb-gamification' ); ?></th>
+										<th class="wbgam-col--optional"><?php esc_html_e( 'Created', 'wb-gamification' ); ?></th>
 										<th><?php esc_html_e( 'Actions', 'wb-gamification' ); ?></th>
 									</tr>
 								</thead>
@@ -279,7 +283,7 @@ final class WebhooksAdminPage {
 													<span class="wbgam-pill wbgam-pill--inactive"><?php esc_html_e( 'Paused', 'wb-gamification' ); ?></span>
 												<?php endif; ?>
 											</td>
-											<td><?php echo esc_html( $hook['created_at'] ); ?></td>
+											<td class="wbgam-col--optional"><?php echo esc_html( $hook['created_at'] ); ?></td>
 											<td>
 												<button
 													type="button"
