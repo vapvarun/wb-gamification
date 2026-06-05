@@ -17,6 +17,15 @@
  */
 
 defined( 'ABSPATH' ) || exit;
+
+// Double-load guard. On Windows, include_once can be defeated by
+// path-spelling differences (drive-letter case, slash direction), causing
+// the same file to be parsed twice in one request and fataling on the
+// class declaration below. If our version constant already exists, a
+// first parse completed — bail out of the second one.
+if ( defined( 'WB_GAM_VERSION' ) ) {
+	return;
+}
 // Silencing convention-driven false positives so Plugin Check signal stays clean:
 // - WordPress.DB.DirectDatabaseQuery.DirectQuery + .NoCaching + .SchemaChange:
 // this file performs custom-table work. .phpcs.xml already excludes these

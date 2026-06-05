@@ -195,6 +195,8 @@ cat > "${EXCLUDES_FILE}" <<'EXCLUDES_EOF'
 
 # Build tooling — kept out of the customer zip
 bin/
+# TypeScript sources ship via npm, not in the customer zip.
+sdk/
 tests/
 node_modules/
 package.json
@@ -243,7 +245,7 @@ build/coverage/
 EXCLUDES_EOF
 
 # What stays in the zip:
-#   • src/ build/ assets/ languages/ templates/ includes/ sdk/ integrations/
+#   • src/ build/ assets/ languages/ templates/ includes/ integrations/
 #   • vendor/ wholesale (composer prod deps + EDD SL SDK, no per-file excludes)
 #   • wb-gamification.php uninstall.php readme.txt
 #

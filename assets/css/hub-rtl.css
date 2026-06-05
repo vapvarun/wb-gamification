@@ -774,6 +774,10 @@
   color: #fff;
   border-color: var(--wb-gam-color-accent, #2563eb);
 }
+.gam-stat__convert:focus-visible {
+  outline: 2px solid var(--wb-gam-color-accent, #2563eb);
+  outline-offset: 2px;
+}
 .gam-stat__convert:focus:not(:focus-visible) { outline: none; }
 
 .wbgam-convert-dialog {

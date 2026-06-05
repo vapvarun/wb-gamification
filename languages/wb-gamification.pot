@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-06-02T09:34:08+00:00\n"
+"POT-Creation-Date: 2026-06-04T10:29:01+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: wb-gamification\n"
@@ -5939,11 +5939,11 @@ msgstr ""
 msgid "Unsubscribe from weekly emails"
 msgstr ""
 
-#: wb-gamification.php:47
+#: wb-gamification.php:56
 msgid "WB Gamification could not start: Composer dependencies are missing."
 msgstr ""
 
-#: wb-gamification.php:49
+#: wb-gamification.php:58
 msgid "Run `composer install` in the plugin directory, or install the official release zip from store.wbcomdesigns.com which ships dependencies pre-built."
 msgstr ""
 

@@ -187,15 +187,21 @@ final class SubmissionsPage {
 												<?php endif; ?>
 												<?php if ( ! empty( $wb_gam_img_urls ) ) : ?>
 													<div class="wb-gam-submission-thumbs" role="list">
-														<?php foreach ( $wb_gam_img_urls as $wb_gam_img_url ) : ?>
+														<?php foreach ( $wb_gam_img_urls as $wb_gam_img_index => $wb_gam_img_url ) : ?>
+															<?php
+															$wb_gam_img_alt = sprintf(
+																/* translators: %d: attachment number within the submission. */
+																__( 'Submission attachment %d (opens in a new tab)', 'wb-gamification' ),
+																(int) $wb_gam_img_index + 1
+															);
+															?>
 															<a href="<?php echo esc_url( $wb_gam_img_url ); ?>"
 																target="_blank"
 																rel="noopener"
 																role="listitem"
-																class="wb-gam-submission-thumb"
-																aria-label="<?php esc_attr_e( 'Open attachment in a new tab', 'wb-gamification' ); ?>">
+																class="wb-gam-submission-thumb">
 																<img src="<?php echo esc_url( $wb_gam_img_url ); ?>"
-																	alt=""
+																	alt="<?php echo esc_attr( $wb_gam_img_alt ); ?>"
 																	loading="lazy"
 																	decoding="async">
 															</a>

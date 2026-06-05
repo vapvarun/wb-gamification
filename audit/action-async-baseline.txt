@@ -3,21 +3,21 @@
 # line is '<file>:<line> <action_id>'. New entries fail the gate; legitimate
 # fixes (explicit 'async' => true|false added) should DELETE the line in the
 # same commit.
-# Generated: 2026-05-30T03:45:23Z
+# Generated: 2026-06-05T12:11:00Z
 
-integrations/bbpress.php:1643 jetonomy_pro_reaction_added
-integrations/bbpress.php:1700 bbp_new_topic
-integrations/bbpress.php:1715 bbp_new_reply
-integrations/bbpress.php:1730 bbp_topic_closed
-integrations/buddypress.php:1823 bp_friends_accepted
-integrations/buddypress.php:1840 bp_groups_join
-integrations/buddypress.php:1853 bp_groups_create
-integrations/buddypress.php:1882 bp_reactions_received
-integrations/buddypress.php:1911 bp_polls_created
-integrations/buddypress.php:1924 bp_publish_post
-integrations/buddypress.php:1948 bp_media_upload
-integrations/buddypress.php:1996 bp_group_cover_upload
-integrations/buddypress.php:2018 bp_message_sent
+integrations/bbpress.php:1669 jetonomy_pro_reaction_added
+integrations/bbpress.php:1726 bbp_new_topic
+integrations/bbpress.php:1741 bbp_new_reply
+integrations/bbpress.php:1756 bbp_topic_closed
+integrations/buddypress.php:1849 bp_friends_accepted
+integrations/buddypress.php:1866 bp_groups_join
+integrations/buddypress.php:1879 bp_groups_create
+integrations/buddypress.php:1908 bp_reactions_received
+integrations/buddypress.php:1937 bp_polls_created
+integrations/buddypress.php:1950 bp_publish_post
+integrations/buddypress.php:1974 bp_media_upload
+integrations/buddypress.php:2022 bp_group_cover_upload
+integrations/buddypress.php:2044 bp_message_sent
 integrations/contrib/givewp.php:807 give_donation_completed
 integrations/contrib/givewp.php:849 give_recurring_donation
 integrations/contrib/givewp.php:864 give_campaign_goal_reached
@@ -31,16 +31,16 @@ integrations/contrib/memberpress.php:926 mp_membership_renewed
 integrations/contrib/the-events-calendar.php:1011 tec_ticket_purchased
 integrations/contrib/the-events-calendar.php:1026 tec_event_checked_in
 integrations/contrib/the-events-calendar.php:991 tec_rsvp_registered
-integrations/jetonomy-pro.php:1451 jetonomy_membership_activated
-integrations/jetonomy-pro.php:1502 jetonomy_pro_poll_created
-integrations/jetonomy-pro.php:1524 jetonomy_pro_poll_voted
-integrations/jetonomy-pro.php:1546 jetonomy_pro_message_sent
-integrations/jetonomy-pro.php:1569 jetonomy_pro_conversation_created
-integrations/jetonomy-pro.php:1591 jetonomy_pro_badge_earned
-integrations/jetonomy-pro.php:1618 jetonomy_pro_dm_received
-integrations/jetonomy.php:1382 jetonomy_space_joined
-integrations/jetonomy.php:1405 jetonomy_join_request_approved
-integrations/jetonomy.php:1427 jetonomy_trust_level_up
+integrations/jetonomy-pro.php:1477 jetonomy_membership_activated
+integrations/jetonomy-pro.php:1528 jetonomy_pro_poll_created
+integrations/jetonomy-pro.php:1550 jetonomy_pro_poll_voted
+integrations/jetonomy-pro.php:1572 jetonomy_pro_message_sent
+integrations/jetonomy-pro.php:1595 jetonomy_pro_conversation_created
+integrations/jetonomy-pro.php:1617 jetonomy_pro_badge_earned
+integrations/jetonomy-pro.php:1644 jetonomy_pro_dm_received
+integrations/jetonomy.php:1408 jetonomy_space_joined
+integrations/jetonomy.php:1431 jetonomy_join_request_approved
+integrations/jetonomy.php:1453 jetonomy_trust_level_up
 integrations/learndash.php:394 mvs_streak_milestone
 integrations/learndash.php:480 ld_course_completed
 integrations/learndash.php:495 ld_lesson_completed
@@ -49,10 +49,10 @@ integrations/learndash.php:525 ld_quiz_passed
 integrations/learndash.php:557 ld_assignment_approved
 integrations/woocommerce.php:739 wc_wishlist_add
 integrations/woocommerce.php:754 wc_add_to_cart
-integrations/wordpress.php:1205 wp_post_receives_comment
-integrations/wordpress.php:1242 wp_publish_post
-integrations/wordpress.php:1300 wp_leave_comment
-integrations/wordpress.php:1328 wp_comment_approved
+integrations/wordpress.php:1221 wp_post_receives_comment
+integrations/wordpress.php:1264 wp_publish_post
+integrations/wordpress.php:1326 wp_leave_comment
+integrations/wordpress.php:1354 wp_comment_approved
 integrations/wpmediaverse.php:112 mvs_create_album
 integrations/wpmediaverse.php:182 mvs_receive_follow
 integrations/wpmediaverse.php:226 mvs_give_comment
