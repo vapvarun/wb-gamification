@@ -91,7 +91,7 @@ For each sub-tab slug in [overview, badges, points, streak]:
   };
   ```
 - **Expect**: `menuHasAchievements: true`, `hasSurface: true`, `hasHubBlock: true` - the endpoint renders the full Hub dashboard for the current customer.
-- **On fail**: `src/Integrations/WooCommerce/AccountIntegration.php` - `add_rewrite_endpoint`, the `woocommerce_get_query_vars` filter, the `woocommerce_account_menu_items` item, or the `woocommerce_account_achievements_endpoint` render action. If the page 404s, the rewrite endpoint was not flushed (`wb_gam_wc_account_endpoint_v1` option).
+- **On fail**: `src/Integrations/WooCommerce/AccountIntegration.php` - `add_rewrite_endpoint`, the `woocommerce_get_query_vars` filter, the `woocommerce_account_menu_items` item, or the `woocommerce_account_achievements_endpoint` render action. If the page 404s, the rewrite endpoint is missing from the stored rules; `add_endpoint()` self-heals by probing `rewrite_rules` for the `achievements` pattern via `endpoint_rule_missing()` and flushing when absent (no longer gated solely by the one-time `wb_gam_wc_account_endpoint_v1` option). A persistent 404 means the probe never matched - confirm pretty permalinks are on and `get_option('rewrite_rules')` is populated.
 
 ### B2. The "View full dashboard" link points at the MAPPED hub page
 - **Action**: on the same My Account endpoint page, `playwright_evaluate`:
@@ -141,7 +141,7 @@ ALL of the following hold:
 | BP tab missing entirely | `setup_nav()` not hooked, or `ProfileIntegration::init()` not on `bp_loaded` | `src/BuddyPress/ProfileIntegration.php` + `wb-gamification.php` `add_action('bp_loaded', ...)` |
 | A BP sub-tab missing | one `bp_core_new_subnav_item` call dropped from the `$subtabs` loop | `src/BuddyPress/ProfileIntegration.php` `setup_nav()` |
 | BP sub-tab empty | wrong block tags for the active sub-tab | `ProfileIntegration::screen_content()` switch on `bp_current_action()` |
-| Woo endpoint 404s | rewrite endpoint never flushed on upgrade | `AccountIntegration::add_endpoint()` + `wb_gam_wc_account_endpoint_v1` option |
+| Woo endpoint 404s | endpoint rule absent from stored `rewrite_rules`; self-heal probe never matched | `AccountIntegration::add_endpoint()` / `endpoint_rule_missing()` (probes `rewrite_rules`, flushes when the `achievements` pattern is missing) |
 | Woo menu item missing | `woocommerce_account_menu_items` filter not added | `AccountIntegration::add_menu_item()` |
 | "View full dashboard" wrong/missing | `hub_link()` reads wrong option or no hub page mapped | `src/Engine/MemberSurface.php` `hub_link()` |
 | LearnDash link shows by default | filter default flipped, or `init()` adds action unconditionally | `src/Integrations/LearnDash/ProfileIntegration.php` `init()` |

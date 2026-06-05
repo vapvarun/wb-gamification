@@ -47,21 +47,73 @@ final class AccountIntegration {
 	}
 
 	/**
-	 * Register the rewrite endpoint. Rewrite rules are flushed on plugin
-	 * activation; an already-active install gains the endpoint after the
-	 * next flush.
+	 * Register the rewrite endpoint and self-heal the stored rewrite rules
+	 * when the endpoint is missing from them.
+	 *
+	 * Rewrite rules are normally flushed on plugin activation. A one-time
+	 * option guard is not enough on its own: the option can survive while the
+	 * actual `rewrite_rules` option does not contain the endpoint rule — site
+	 * restores / migration clones that keep the options table but lose
+	 * regenerated rules, another plugin flushing rules after WooCommerce has
+	 * already built its query-var rules, or the upgrade flush firing before the
+	 * WC endpoint rules were assembled. Once the guard option is set, the old
+	 * code could never recover and the endpoint 404s forever.
+	 *
+	 * Instead, probe the stored rewrite rules for the registered endpoint and
+	 * flush only when it is actually absent. This mirrors the Installer's
+	 * SHOW TABLES self-heal: cheap probe, fix the real broken state, no-op on
+	 * healthy sites. The probe runs on `init` after WooCommerce has registered
+	 * its own account rules, so a present rule means the endpoint resolves.
 	 */
 	public static function add_endpoint(): void {
 		add_rewrite_endpoint( self::ENDPOINT, EP_ROOT | EP_PAGES );
 
-		// One-time flush so the endpoint resolves on an existing install that
-		// upgraded into this version (a fresh endpoint isn't in the stored
-		// rewrite rules yet). Guarded by an option so it runs exactly once,
-		// not on every request.
-		if ( ! get_option( 'wb_gam_wc_account_endpoint_v1' ) ) {
+		if ( self::endpoint_rule_missing() ) {
 			flush_rewrite_rules( false );
-			update_option( 'wb_gam_wc_account_endpoint_v1', 1, false );
+
+			// Keep the legacy guard option in sync for back-compat with sites
+			// that already set it; the probe is now the source of truth.
+			if ( ! get_option( 'wb_gam_wc_account_endpoint_v1' ) ) {
+				update_option( 'wb_gam_wc_account_endpoint_v1', 1, false );
+			}
 		}
+	}
+
+	/**
+	 * Whether the achievements endpoint is absent from the stored rewrite
+	 * rules and therefore needs a flush to start resolving.
+	 *
+	 * Reads the persisted `rewrite_rules` option directly rather than the
+	 * runtime rules so the probe reflects what the front-end router will
+	 * actually match on the next request.
+	 *
+	 * Important: when NO rules are stored at all (pretty permalinks disabled,
+	 * or rules genuinely never generated) this returns false. WooCommerce
+	 * account endpoints rely on the rewrite system, and forcing a flush on
+	 * every request when permalinks are off would be a per-request flush storm
+	 * that fixes nothing. The self-heal only fires when rules exist but ours is
+	 * missing — the genuine "rules regenerated without our endpoint" case.
+	 *
+	 * @return bool True when stored rules exist but lack the endpoint rule.
+	 */
+	private static function endpoint_rule_missing(): bool {
+		$rules = get_option( 'rewrite_rules' );
+
+		// No stored rules: permalinks are likely plain. Nothing to self-heal
+		// here, and flushing every request would be a no-win loop. The legacy
+		// activation flush still covers the first transition to pretty links.
+		if ( empty( $rules ) || ! is_array( $rules ) ) {
+			return false;
+		}
+
+		$needle = '/' . self::ENDPOINT . '(/(.*))?/?$';
+		foreach ( array_keys( $rules ) as $pattern ) {
+			if ( is_string( $pattern ) && false !== strpos( $pattern, $needle ) ) {
+				return false;
+			}
+		}
+
+		return true;
 	}
 
 	/**
