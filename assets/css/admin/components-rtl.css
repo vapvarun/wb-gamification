@@ -892,6 +892,43 @@
 }
 
 /* ==========================================================================
+   12b. Skeleton loading placeholders
+   ========================================================================== */
+
+/* Shimmering placeholder shown while a post-paint render (e.g. the Members
+   roster fetched from REST) is in flight. The reduced-motion guard in
+   utilities.css freezes the shimmer for users who request reduced motion. */
+.wbgam-skeleton {
+	background: linear-gradient(
+		-90deg,
+		var(--wbgam-slate-100, #eef1f5) 25%,
+		var(--wbgam-slate-50, #f6f8fa) 37%,
+		var(--wbgam-slate-100, #eef1f5) 63%
+	);
+	background-size: 400% 100%;
+	animation: wbgam-shimmer 1.4s ease infinite;
+	border-radius: var(--wb-gam-radius, 8px);
+}
+
+/* Text-line skeleton — one greyed bar standing in for a cell value. */
+.wbgam-skeleton--text {
+	display: block;
+	height: 0.75rem;
+	width: 100%;
+}
+
+@keyframes wbgam-shimmer {
+
+	0% {
+		background-position: 0% 50%;
+	}
+
+	100% {
+		background-position: 100% 50%;
+	}
+}
+
+/* ==========================================================================
    13. Help Panel (collapsible <details>)
    ========================================================================== */
 
