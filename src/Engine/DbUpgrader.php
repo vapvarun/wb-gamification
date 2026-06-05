@@ -97,6 +97,88 @@ final class DbUpgrader {
 		self::ensure_side_effect_failures_table();
 		self::ensure_notifications_queue_table();
 		self::ensure_user_intelligence_table();
+		self::ensure_superseded_badge_condition_action_ids();
+	}
+
+	/**
+	 * Rewrite stale badge-condition `action_id`s that a canonical trigger has
+	 * superseded, so existing installs match the post-1.5.4 registered action set.
+	 *
+	 * Background: 1.5.4 (commit 9e19966) made the core WP content triggers
+	 * always-on and declared `wp_publish_post` `supersedes: [bp_publish_post]`
+	 * in `integrations/wordpress.php`. ManifestLoader::flush_buffer() now drops
+	 * every superseded id before registration, so `bp_publish_post` is never a
+	 * registered action. `Installer::seed_default_badges()` was updated so NEW
+	 * installs seed `blog_publisher` against the canonical `wp_publish_post`,
+	 * but EXISTING installs keep the seeded row pointing at the superseded
+	 * `bp_publish_post`. That strands `blog_publisher` un-earnable and makes
+	 * `wp wb-gamification doctor` warn "Badge conditions reference unregistered
+	 * actions". This migration walks every `badge_condition` rule and rewrites
+	 * any superseded `action_id` to its canonical replacement, fixing the DATA
+	 * (doctor then reports clean because the rows are valid, not because the
+	 * warning was suppressed).
+	 *
+	 * The supersede map mirrors the `supersedes` directives shipped in
+	 * `integrations/wordpress.php`; extend it here if a future trigger declares
+	 * a new supersession that also needs a back-fill on existing rows.
+	 *
+	 * Idempotent — feature-flag gated; decodes/re-encodes the JSON the same way
+	 * the rest of the codebase reads `rule_config` rather than string-replacing.
+	 *
+	 * @since 1.5.4
+	 */
+	private static function ensure_superseded_badge_condition_action_ids(): void {
+		$flag_key = 'wb_gam_feature_superseded_badge_action_ids_v1';
+		if ( get_option( $flag_key ) ) {
+			return;
+		}
+
+		// old (superseded) action_id => new (canonical) action_id.
+		// Keep in sync with the `supersedes` directives in integrations/wordpress.php.
+		$supersede_map = array(
+			'bp_publish_post' => 'wp_publish_post',
+		);
+
+		global $wpdb;
+		$table = $wpdb->prefix . 'wb_gam_rules';
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- bootstrapped table name; selecting all badge conditions to rewrite stale JSON.
+		$rules = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT id, rule_config FROM {$wpdb->prefix}wb_gam_rules WHERE rule_type = %s",
+				'badge_condition'
+			),
+			ARRAY_A
+		);
+
+		if ( ! is_array( $rules ) || empty( $rules ) ) {
+			update_option( $flag_key, '1' );
+			return;
+		}
+
+		foreach ( $rules as $rule ) {
+			$config = json_decode( (string) $rule['rule_config'], true );
+			if ( ! is_array( $config ) || empty( $config['action_id'] ) ) {
+				continue;
+			}
+
+			$current = (string) $config['action_id'];
+			if ( ! isset( $supersede_map[ $current ] ) ) {
+				continue;
+			}
+
+			$config['action_id'] = $supersede_map[ $current ];
+
+			$wpdb->update(
+				$table,
+				array( 'rule_config' => wp_json_encode( $config ) ),
+				array( 'id' => (int) $rule['id'] ),
+				array( '%s' ),
+				array( '%d' )
+			);
+		}
+
+		update_option( $flag_key, '1' );
 	}
 
 	/**
@@ -650,7 +732,50 @@ final class DbUpgrader {
 			'1.1.0' => 'upgrade_to_1_1_0',
 			'1.2.0' => 'upgrade_to_1_2_0',
 			'1.4.0' => 'upgrade_to_1_4_0',
+			'1.5.4' => 'upgrade_to_1_5_4',
 		);
+	}
+
+	/**
+	 * 1.5.4 — force a rewrite-rule flush so the WooCommerce My Account
+	 * "Achievements" endpoint (/my-account/achievements/) resolves on existing
+	 * installs.
+	 *
+	 * Why this is keyed to a version migration rather than only the runtime
+	 * self-heal in {@see \WBGam\Integrations\WooCommerce\AccountIntegration}:
+	 * finding #5 of AUDIT-VERDICT.md (2026-06-05) was a one-shot
+	 * `flush_rewrite_rules` guarded by the `wb_gam_wc_account_endpoint_v1`
+	 * option. On installs that set that option in a build *before* the endpoint
+	 * existed (or before WooCommerce's account router knew the query var), the
+	 * guard was already "spent," so the flush never re-ran and the endpoint
+	 * 404'd forever. AccountIntegration now probes the stored `rewrite_rules`
+	 * and self-heals on `init`, but that probe is a no-op on sites whose
+	 * permalinks are plain and only fires once WooCommerce has assembled its
+	 * account rules. This migration gives upgrading sites a single deterministic
+	 * flush at the upgrade boundary so the endpoint starts resolving on the next
+	 * request, independent of the runtime probe's preconditions.
+	 *
+	 * Idempotent: `flush_rewrite_rules` is safe to call repeatedly, and the
+	 * version gate in {@see run()} means this fires once per upgrade to 1.5.4.
+	 * Drops the spent legacy guard so AccountIntegration's probe re-asserts the
+	 * option as the source of truth on the next boot.
+	 *
+	 * @since 1.5.4
+	 */
+	private static function upgrade_to_1_5_4(): void {
+		// Drop the spent one-shot guard so AccountIntegration::add_endpoint()
+		// (which runs on `init`, after WooCommerce registers its account query
+		// vars) re-evaluates the stored rewrite rules and re-asserts the option.
+		delete_option( 'wb_gam_wc_account_endpoint_v1' );
+
+		// Deterministic upgrade-boundary flush. The achievements endpoint is
+		// registered on `init`; when WordPress rebuilds the rules after this
+		// flush the rewrite is present, so the next request resolves it. Soft
+		// flush (no .htaccess rewrite) — the endpoint lives in the pretty-
+		// permalink rewrite table, which a soft flush regenerates.
+		if ( function_exists( 'flush_rewrite_rules' ) ) {
+			flush_rewrite_rules( false );
+		}
 	}
 
 	/**

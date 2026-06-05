@@ -94,8 +94,21 @@ Publishing a blog post and commenting on a post are core WordPress events with N
 - **Action**: as a member with no prior posts on a BuddyPress site, publish their first `post`
 - **Expect**: a `first_post` badge row appears in `wb_gam_user_badges`. Likewise a member's first approved comment earns `first_comment`.
 
+### 9d. Existing-install upgrade rewrites superseded badge-condition action_ids (perpetual gate)
+Making `wp_publish_post` supersede `bp_publish_post` fixed NEW installs (Installer seeds `blog_publisher` against `wp_publish_post`), but EXISTING installs kept the seeded `badge_condition` row pointing at the now-unregistered `bp_publish_post`, leaving `blog_publisher` un-earnable and making doctor warn. `DbUpgrader::ensure_superseded_badge_condition_action_ids()` (flag `wb_gam_feature_superseded_badge_action_ids_v1`) rewrites every superseded `action_id` to its canonical replacement on existing installs.
+- **Action**: on an upgraded site, `wp wb-gamification doctor`
+- **Expect**: the "Default Badges" section does NOT emit "Badge conditions reference unregistered actions". A warning here means the supersede back-fill migration was dropped or its `$supersede_map` drifted from `integrations/wordpress.php`'s `supersedes` directives.
+- **Action**: inspect the `blog_publisher` rule:
+  ```php
+  global $wpdb;
+  $row = $wpdb->get_row( "SELECT rule_config FROM {$wpdb->prefix}wb_gam_rules WHERE rule_type='badge_condition' AND target_id='blog_publisher'", ARRAY_A );
+  echo $row['rule_config'];
+  ```
+- **Expect**: `action_id` is `wp_publish_post`, NOT `bp_publish_post`. No `badge_condition` row references any action absent from `wp wb-gamification actions list`.
+
 ## Pass criteria (additions)
 
 6. On a BuddyPress site, `wp_publish_post` and `wp_leave_comment` are registered (doctor "Core WordPress Triggers" = PASS).
 7. Publishing one post awards exactly once across `wp_publish_post` + `bp_publish_post` (supersession holds — no double-award).
 8. The core WordPress badges (first_post, prolific_writer, content_creator, first_comment, engaged_reader) can be earned on a BuddyPress site.
+9. On an upgraded install, no `badge_condition` row references a superseded/unregistered action (doctor "Default Badges" emits no unregistered-actions warning); `blog_publisher` resolves to `wp_publish_post`.
