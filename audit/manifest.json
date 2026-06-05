@@ -3459,6 +3459,24 @@
       "recurrence": "daily",
       "handler": "PointsExpiry::run",
       "purpose": "Inactivity point decay (opt-in)."
+    },
+    {
+      "hook": "wb_gam_reconcile_side_effects",
+      "interval": "hourly",
+      "handler": "SideEffectDispatcher::reconcile",
+      "where": "src/Engine/SideEffectDispatcher.php:59"
+    },
+    {
+      "hook": "wb_gam_compute_intelligence",
+      "interval": "daily",
+      "handler": "IntelligenceProjector::compute_batch",
+      "where": "src/Engine/IntelligenceProjector.php:70"
+    },
+    {
+      "hook": "wb_gam_notifications_queue_prune",
+      "interval": "daily",
+      "handler": "NotificationBridge::prune_queue",
+      "where": "src/Engine/NotificationBridge.php:146"
     }
   ],
   "wp_cli": [
@@ -4053,6 +4071,6 @@
     "rest_endpoint_method_rows": 73,
     "admin_pages": 14,
     "services": 49,
-    "cron_hooks_distinct": 11
+    "cron_hooks_distinct": 14
   }
 }
