@@ -1209,6 +1209,76 @@
 }
 
 /* ==========================================================================
+   17b. Admin REST toast (admin-rest-utils.js) — aliased to the member toast look
+   ==========================================================================
+   admin-rest-utils.js builds a `.wb-gam-toasts` container appended to <body>
+   and individual `.wb-gam-toast .wb-gam-toast--{tone}` nodes toggled visible via
+   `.is-visible`. No admin CSS existed for these until now (the member realtime
+   toast used the parallel `.wbgam-toast` namespace) so admin REST feedback was
+   unstyled. This block matches admin + member toasts to one look. */
+.wb-gam-toasts {
+	position: fixed;
+	bottom: 24px;
+	inset-inline-end: 24px;
+	z-index: 999999;
+	display: flex;
+	flex-direction: column;
+	gap: var(--wbgam-gap-xs);
+	pointer-events: none;
+}
+
+.wb-gam-toast {
+	background: var(--wbgam-text);
+	color: var(--wbgam-card-bg);
+	padding: 12px 20px;
+	border-radius: var(--wbgam-card-radius);
+	font-size: var(--wbgam-fs-base);
+	font-family: var(--wbgam-font);
+	line-height: 1.5;
+	box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+	pointer-events: auto;
+	display: flex;
+	align-items: center;
+	gap: var(--wbgam-gap-md);
+	max-width: 400px;
+	opacity: 0;
+	transform: translateX(100%);
+	transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.wb-gam-toast.is-visible {
+	opacity: 1;
+	transform: translateX(0);
+}
+
+/* Tone accents — a leading colour bar so success / error / info read at a glance
+   without leaving the shared dark surface. */
+.wb-gam-toast--success {
+	border-inline-start: 4px solid var(--wbgam-success, #16a34a);
+}
+
+.wb-gam-toast--error {
+	border-inline-start: 4px solid var(--wbgam-danger, #dc2626);
+}
+
+.wb-gam-toast--info {
+	border-inline-start: 4px solid var(--wbgam-primary, #6366f1);
+}
+
+@media (max-width: 640px) {
+
+	.wb-gam-toasts {
+		inset-inline-start: 16px;
+		inset-inline-end: 16px;
+		bottom: 16px;
+	}
+
+	.wb-gam-toast {
+		max-width: 100%;
+	}
+}
+
+/* ==========================================================================
    18. Confirm Modal (admin-rest-utils.js)
    ========================================================================== */
 
