@@ -312,9 +312,9 @@ if ( $pro_active ) {
 		),
 
 		array(
-			'id'             => 'mvs_challenge_participate',
-			'label'          => 'Enter a photo challenge',
-			'description'    => 'Awarded when a member submits an entry to a photo challenge.',
+			'id'                => 'mvs_challenge_participate',
+			'label'             => 'Enter a photo challenge',
+			'description'       => 'Awarded when a member submits an entry to a photo challenge.',
 			'hook'              => 'mvs_challenge_entry_submitted',
 			'user_callback'     => function ( int $challenge_id, int $user_id, int $media_id ): int {
 				return $user_id;
@@ -356,12 +356,15 @@ if ( $pro_active ) {
 			'category'          => 'competition',
 			'icon'              => 'dashicons-trophy',
 			'repeatable'        => true,
+			// Winners expect the award the moment the result is announced —
+			// low-frequency, finalization-driven: award in-request, not queued.
+			'async'             => false,
 		),
 
 		array(
-			'id'             => 'mvs_tournament_round_win',
-			'label'          => 'Win a tournament round',
-			'description'    => 'Awarded for winning a round in a photo tournament.',
+			'id'                => 'mvs_tournament_round_win',
+			'label'             => 'Win a tournament round',
+			'description'       => 'Awarded for winning a round in a photo tournament.',
 			'hook'              => 'mvs_tournament_match_resolved',
 			'user_callback'     => function ( int $match_id, int $winner_id ): int {
 				return $winner_id;
@@ -377,12 +380,15 @@ if ( $pro_active ) {
 			'category'          => 'competition',
 			'icon'              => 'dashicons-shield',
 			'repeatable'        => true,
+			// Winners expect the award the moment the result is announced —
+			// low-frequency, finalization-driven: award in-request, not queued.
+			'async'             => false,
 		),
 
 		array(
-			'id'             => 'mvs_tournament_win',
-			'label'          => 'Win a tournament',
-			'description'    => 'Awarded to the grand champion of a photo tournament.',
+			'id'                => 'mvs_tournament_win',
+			'label'             => 'Win a tournament',
+			'description'       => 'Awarded to the grand champion of a photo tournament.',
 			'hook'              => 'mvs_tournament_finalized',
 			'user_callback'     => function ( int $tournament_id, int $winner_id ): int {
 				return $winner_id;
@@ -398,6 +404,9 @@ if ( $pro_active ) {
 			'category'          => 'competition',
 			'icon'              => 'dashicons-star-filled',
 			'repeatable'        => true,
+			// Winners expect the award the moment the result is announced —
+			// low-frequency, finalization-driven: award in-request, not queued.
+			'async'             => false,
 		),
 
 		/*
