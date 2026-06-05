@@ -61,6 +61,12 @@ Static + unit-level gates that must be green before any browser verification run
 - **Action**: `bash bin/check-block-standard.sh`
 - **Expect**: "Wbcom Block Quality Standard check — green (15 block(s) compliant)"
 
+### 9. Cron registration smoke (manifest drift guard)
+- **Action**: `php -d auto_prepend_file=tests/prepend.php vendor/bin/phpunit --testsuite Unit --filter CronRegistrationTest`
+- **Expect**: `OK` — every Engine cron hook in `audit/qa-coverage.json#/categories/cron/covered_items` is wired via `add_action()` and self-scheduled at the right recurrence
+- **Why**: `wb_gam_compute_intelligence`, `wb_gam_reconcile_side_effects`, and `wb_gam_notifications_queue_prune` previously had zero coverage and were absent from `qa-coverage.json`; a dropped `add_action`/schedule guard would have shipped silently
+- **On fail**: the Engine class whose boot stopped wiring/scheduling its hook is the regression site — cross-reference the constant (`IntelligenceProjector::COMPUTE_CRON`, `SideEffectDispatcher::RECONCILE_CRON`, `NotificationBridge::PRUNE_CRON`)
+
 ## Pass criteria
 
 ALL of the following hold:
@@ -69,6 +75,7 @@ ALL of the following hold:
 3. PHPUnit reports 0 failures + 0 errors
 4. Every block's JS+CSS bundle is under budget
 5. WPCS edits introduce zero new violations on this PR
+6. Every cron hook listed under `qa-coverage.json` `covered_items` stays wired + scheduled (step 9)
 
 ## Fail diagnostics
 
