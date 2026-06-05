@@ -250,13 +250,13 @@ final class WebhooksAdminPage {
 						<p class="wbgam-text-muted"><?php esc_html_e( 'No webhooks configured yet. Add one above.', 'wb-gamification' ); ?></p>
 					<?php else : ?>
 						<div class="wbgam-table-scroll">
-							<table class="wbgam-table">
+							<table class="wbgam-table wbgam-table--priority">
 								<thead>
 									<tr>
 										<th><?php esc_html_e( 'URL', 'wb-gamification' ); ?></th>
 										<th><?php esc_html_e( 'Events', 'wb-gamification' ); ?></th>
 										<th><?php esc_html_e( 'Active', 'wb-gamification' ); ?></th>
-										<th><?php esc_html_e( 'Created', 'wb-gamification' ); ?></th>
+										<th class="wbgam-col--optional"><?php esc_html_e( 'Created', 'wb-gamification' ); ?></th>
 										<th><?php esc_html_e( 'Actions', 'wb-gamification' ); ?></th>
 									</tr>
 								</thead>
@@ -279,7 +279,7 @@ final class WebhooksAdminPage {
 													<span class="wbgam-pill wbgam-pill--inactive"><?php esc_html_e( 'Paused', 'wb-gamification' ); ?></span>
 												<?php endif; ?>
 											</td>
-											<td><?php echo esc_html( $hook['created_at'] ); ?></td>
+											<td class="wbgam-col--optional"><?php echo esc_html( $hook['created_at'] ); ?></td>
 											<td>
 												<button
 													type="button"

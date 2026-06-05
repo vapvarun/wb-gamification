@@ -117,14 +117,14 @@ final class PointTypesPage {
 						<p><?php esc_html_e( 'No point types yet.', 'wb-gamification' ); ?></p>
 					<?php else : ?>
 						<div class="wbgam-table-scroll">
-						<table class="wbgam-table">
+						<table class="wbgam-table wbgam-table--priority">
 							<thead>
 								<tr>
 									<th scope="col"><?php esc_html_e( 'Slug', 'wb-gamification' ); ?></th>
 									<th scope="col"><?php esc_html_e( 'Label', 'wb-gamification' ); ?></th>
-									<th scope="col"><?php esc_html_e( 'Description', 'wb-gamification' ); ?></th>
-									<th scope="col"><?php esc_html_e( 'Default', 'wb-gamification' ); ?></th>
-									<th scope="col"><?php esc_html_e( 'Position', 'wb-gamification' ); ?></th>
+									<th scope="col" class="wbgam-col--optional"><?php esc_html_e( 'Description', 'wb-gamification' ); ?></th>
+									<th scope="col" class="wbgam-col--optional"><?php esc_html_e( 'Default', 'wb-gamification' ); ?></th>
+									<th scope="col" class="wbgam-col--optional"><?php esc_html_e( 'Position', 'wb-gamification' ); ?></th>
 									<th scope="col"><?php esc_html_e( 'Actions', 'wb-gamification' ); ?></th>
 								</tr>
 							</thead>
@@ -138,8 +138,8 @@ final class PointTypesPage {
 									<tr>
 										<td><code><?php echo esc_html( $slug ); ?></code></td>
 										<td><?php echo esc_html( (string) $type['label'] ); ?></td>
-										<td><?php echo esc_html( (string) ( $type['description'] ?? '' ) ); ?></td>
-										<td>
+										<td class="wbgam-col--optional"><?php echo esc_html( (string) ( $type['description'] ?? '' ) ); ?></td>
+										<td class="wbgam-col--optional">
 											<?php if ( $is_default ) : ?>
 												<span class="wbgam-badge wbgam-badge--success"><?php esc_html_e( 'Default', 'wb-gamification' ); ?></span>
 											<?php else : ?>
@@ -161,7 +161,7 @@ final class PointTypesPage {
 												</button>
 											<?php endif; ?>
 										</td>
-										<td><?php echo (int) $type['position']; ?></td>
+										<td class="wbgam-col--optional"><?php echo (int) $type['position']; ?></td>
 										<td>
 											<?php if ( ! $is_default ) : ?>
 												<button type="button"

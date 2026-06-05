@@ -279,15 +279,16 @@ final class ChallengeManagerPage {
 					<h3 class="wbgam-card-title"><?php esc_html_e( 'All Challenges', 'wb-gamification' ); ?></h3>
 				</div>
 				<div class="wbgam-card-body wbgam-card-body--flush">
-					<table class="wbgam-table">
+					<div class="wbgam-table-scroll">
+						<table class="wbgam-table wbgam-table--priority">
 						<thead>
 							<tr>
 								<th><?php esc_html_e( 'Title', 'wb-gamification' ); ?></th>
-								<th><?php esc_html_e( 'Action', 'wb-gamification' ); ?></th>
-								<th><?php esc_html_e( 'Target', 'wb-gamification' ); ?></th>
-								<th><?php esc_html_e( 'Bonus', 'wb-gamification' ); ?></th>
+								<th class="wbgam-col--optional"><?php esc_html_e( 'Action', 'wb-gamification' ); ?></th>
+								<th class="wbgam-col--optional"><?php esc_html_e( 'Target', 'wb-gamification' ); ?></th>
+								<th class="wbgam-col--optional"><?php esc_html_e( 'Bonus', 'wb-gamification' ); ?></th>
 								<th><?php esc_html_e( 'Status', 'wb-gamification' ); ?></th>
-								<th><?php esc_html_e( 'Dates', 'wb-gamification' ); ?></th>
+								<th class="wbgam-col--optional"><?php esc_html_e( 'Dates', 'wb-gamification' ); ?></th>
 								<th><?php esc_html_e( 'Actions', 'wb-gamification' ); ?></th>
 							</tr>
 						</thead>
@@ -302,15 +303,15 @@ final class ChallengeManagerPage {
 							?>
 							<tr>
 								<td><strong><?php echo esc_html( $c['title'] ); ?></strong></td>
-								<td><code><?php echo esc_html( $action_label ); ?></code></td>
-								<td><?php echo esc_html( $c['target'] ); ?></td>
-								<td><?php echo esc_html( $c['bonus_points'] ); ?></td>
+								<td class="wbgam-col--optional"><code><?php echo esc_html( $action_label ); ?></code></td>
+								<td class="wbgam-col--optional"><?php echo esc_html( $c['target'] ); ?></td>
+								<td class="wbgam-col--optional"><?php echo esc_html( $c['bonus_points'] ); ?></td>
 								<td>
 									<span class="wbgam-pill wbgam-pill--<?php echo esc_attr( $status_class ); ?>">
 										<?php echo esc_html( ucfirst( $c['status'] ) ); ?>
 									</span>
 								</td>
-								<td>
+								<td class="wbgam-col--optional">
 									<?php
 									$start = ! empty( $c['starts_at'] ) ? substr( $c['starts_at'], 0, 10 ) : '—';
 									$end   = ! empty( $c['ends_at'] ) ? substr( $c['ends_at'], 0, 10 ) : '—';
@@ -340,6 +341,7 @@ final class ChallengeManagerPage {
 						<?php endforeach; ?>
 						</tbody>
 					</table>
+					</div>
 				</div>
 			</div>
 			<?php else : ?>

@@ -352,7 +352,8 @@ final class ManualAwardPage {
 					<h3 class="wbgam-card-title"><?php esc_html_e( 'Recent Manual Awards', 'wb-gamification' ); ?></h3>
 				</div>
 				<div class="wbgam-card-body wbgam-card-body--flush">
-					<table class="wbgam-table">
+					<div class="wbgam-table-scroll">
+						<table class="wbgam-table">
 						<thead>
 							<tr>
 								<th><?php esc_html_e( 'User', 'wb-gamification' ); ?></th>
@@ -392,6 +393,7 @@ final class ManualAwardPage {
 							<?php endforeach; ?>
 						</tbody>
 					</table>
+					</div>
 				</div>
 			</div>
 			<?php else : ?>

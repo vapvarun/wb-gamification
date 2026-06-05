@@ -134,13 +134,14 @@ final class SubmissionsPage {
 							</p>
 						</div>
 					<?php else : ?>
-						<table class="wbgam-table">
+						<div class="wbgam-table-scroll">
+							<table class="wbgam-table wbgam-table--priority">
 							<thead>
 								<tr>
 									<th title="<?php esc_attr_e( 'The member who submitted the achievement.', 'wb-gamification' ); ?>"><?php esc_html_e( 'Member', 'wb-gamification' ); ?></th>
 									<th title="<?php esc_attr_e( 'Which earnable action the member is claiming. Must match a registered action ID.', 'wb-gamification' ); ?>"><?php esc_html_e( 'Action', 'wb-gamification' ); ?></th>
 									<th title="<?php esc_attr_e( 'The text + optional URL the member submitted as proof.', 'wb-gamification' ); ?>"><?php esc_html_e( 'Evidence', 'wb-gamification' ); ?></th>
-									<th><?php esc_html_e( 'Submitted', 'wb-gamification' ); ?></th>
+									<th class="wbgam-col--optional"><?php esc_html_e( 'Submitted', 'wb-gamification' ); ?></th>
 									<th title="<?php esc_attr_e( 'Approve fires the standard earning event (points + badges + level). Reject lets you write a short reason.', 'wb-gamification' ); ?>"><?php esc_html_e( 'Decision', 'wb-gamification' ); ?></th>
 								</tr>
 							</thead>
@@ -228,7 +229,7 @@ final class SubmissionsPage {
 												</a>
 											<?php endif; ?>
 										</td>
-										<td><?php echo esc_html( date_i18n( get_option( 'date_format' ), strtotime( (string) $row['created_at'] ) ) ); ?></td>
+										<td class="wbgam-col--optional"><?php echo esc_html( date_i18n( get_option( 'date_format' ), strtotime( (string) $row['created_at'] ) ) ); ?></td>
 										<td>
 											<button type="button" class="wbgam-btn wbgam-btn--sm" data-wb-gam-submission-approve>
 												<?php esc_html_e( 'Approve', 'wb-gamification' ); ?>
@@ -241,6 +242,7 @@ final class SubmissionsPage {
 								<?php endforeach; ?>
 							</tbody>
 						</table>
+					</div>
 					<?php endif; ?>
 				</div>
 			</div>

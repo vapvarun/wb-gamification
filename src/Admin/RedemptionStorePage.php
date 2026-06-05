@@ -363,13 +363,14 @@ final class RedemptionStorePage {
 					<h3 class="wbgam-card-title"><?php esc_html_e( 'All Rewards', 'wb-gamification' ); ?></h3>
 				</div>
 				<div class="wbgam-card-body wbgam-card-body--flush">
-					<table class="wbgam-table">
+					<div class="wbgam-table-scroll">
+						<table class="wbgam-table wbgam-table--priority">
 						<thead>
 							<tr>
 								<th><?php esc_html_e( 'Name', 'wb-gamification' ); ?></th>
 								<th><?php esc_html_e( 'Point Cost', 'wb-gamification' ); ?></th>
-								<th><?php esc_html_e( 'Type', 'wb-gamification' ); ?></th>
-								<th><?php esc_html_e( 'Stock', 'wb-gamification' ); ?></th>
+								<th class="wbgam-col--optional"><?php esc_html_e( 'Type', 'wb-gamification' ); ?></th>
+								<th class="wbgam-col--optional"><?php esc_html_e( 'Stock', 'wb-gamification' ); ?></th>
 								<th><?php esc_html_e( 'Status', 'wb-gamification' ); ?></th>
 								<th><?php esc_html_e( 'Actions', 'wb-gamification' ); ?></th>
 							</tr>
@@ -412,8 +413,8 @@ final class RedemptionStorePage {
 								$item_label = $pt_label_map[ $item_slug ] ?? $item_slug;
 								?>
 								<td><strong><?php echo esc_html( number_format_i18n( $item['points_cost'] ) ); ?></strong> <?php echo esc_html( $item_label ); ?></td>
-								<td><code><?php echo esc_html( $type_label ); ?></code></td>
-								<td><?php echo esc_html( $stock_label ); ?></td>
+								<td class="wbgam-col--optional"><code><?php echo esc_html( $type_label ); ?></code></td>
+								<td class="wbgam-col--optional"><?php echo esc_html( $stock_label ); ?></td>
 								<td>
 									<span class="wbgam-pill wbgam-pill--<?php echo esc_attr( $status_class ); ?>">
 										<?php echo $item['is_active'] ? esc_html__( 'Active', 'wb-gamification' ) : esc_html__( 'Inactive', 'wb-gamification' ); ?>
@@ -442,6 +443,7 @@ final class RedemptionStorePage {
 						<?php endforeach; ?>
 						</tbody>
 					</table>
+					</div>
 				</div>
 			</div>
 			<?php else : ?>
@@ -481,14 +483,15 @@ final class RedemptionStorePage {
 				</div>
 				<?php if ( ! empty( $transactions ) ) : ?>
 				<div class="wbgam-card-body wbgam-card-body--flush">
-					<table class="wbgam-table">
+					<div class="wbgam-table-scroll">
+						<table class="wbgam-table wbgam-table--priority">
 						<thead>
 							<tr>
-								<th><?php esc_html_e( 'When', 'wb-gamification' ); ?></th>
+								<th class="wbgam-col--optional"><?php esc_html_e( 'When', 'wb-gamification' ); ?></th>
 								<th><?php esc_html_e( 'Member', 'wb-gamification' ); ?></th>
 								<th><?php esc_html_e( 'Reward', 'wb-gamification' ); ?></th>
 								<th><?php esc_html_e( 'Points spent', 'wb-gamification' ); ?></th>
-								<th><?php esc_html_e( 'Coupon', 'wb-gamification' ); ?></th>
+								<th class="wbgam-col--optional"><?php esc_html_e( 'Coupon', 'wb-gamification' ); ?></th>
 								<th><?php esc_html_e( 'Status', 'wb-gamification' ); ?></th>
 							</tr>
 						</thead>
@@ -514,11 +517,11 @@ final class RedemptionStorePage {
 								$txn_status     = $status_meta[ $txn_status_key ] ?? array( 'info', ucfirst( str_replace( '_', ' ', $txn_status_key ) ) );
 								?>
 								<tr>
-									<td><?php echo esc_html( $txn_when ? date_i18n( 'M j, Y · H:i', strtotime( $txn_when ) ) : '—' ); ?></td>
+									<td class="wbgam-col--optional"><?php echo esc_html( $txn_when ? date_i18n( 'M j, Y · H:i', strtotime( $txn_when ) ) : '—' ); ?></td>
 									<td><?php echo esc_html( $txn_user_name ); ?></td>
 									<td><?php echo esc_html( (string) ( $txn['reward_title'] ?? __( '- deleted reward -', 'wb-gamification' ) ) ); ?></td>
 									<td><strong><?php echo esc_html( number_format_i18n( (int) $txn['points_cost'] ) ); ?></strong></td>
-									<td>
+									<td class="wbgam-col--optional">
 										<?php if ( ! empty( $txn['coupon_code'] ) ) : ?>
 											<code><?php echo esc_html( (string) $txn['coupon_code'] ); ?></code>
 										<?php else : ?>
@@ -534,6 +537,7 @@ final class RedemptionStorePage {
 							<?php endforeach; ?>
 						</tbody>
 					</table>
+					</div>
 				</div>
 				<?php else : ?>
 				<div class="wbgam-card-body">

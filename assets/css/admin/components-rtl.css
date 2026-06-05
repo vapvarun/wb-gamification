@@ -828,6 +828,28 @@
 	width: 80px;
 }
 
+/* Column-priority system — explicit class-per-cell (grep-able, survives column
+   reordering, no :nth-child brittleness). One tier only; the 640px floor of the
+   shared 640/782/1024 discipline. Tag a <th> + its matching <td>s with
+   .wbgam-col--optional; they drop out at <=640px so the high-value columns fill
+   a 390px viewport with no horizontal scroll. */
+.wbgam-col--optional {
+	/* No base styling — visible by default; hidden only at the narrow tier. */
+}
+
+@media (max-width: 640px) {
+
+	.wbgam-col--optional {
+		display: none;
+	}
+}
+
+/* Priority tables drop the 640px min-width floor so the remaining (non-optional)
+   columns reflow to fill the viewport instead of forcing the scroll fallback. */
+.wbgam-table-scroll > .wbgam-table.wbgam-table--priority {
+	min-width: 0;
+}
+
 /* ==========================================================================
    12. Empty State (premium variant)
    ========================================================================== */
