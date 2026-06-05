@@ -3295,7 +3295,6 @@
   "frontend_assets": {
     "css": {
       "global": [
-        "assets/css/admin-analytics.css",
         "assets/css/admin-menu-icon.css",
         "assets/css/frontend.css",
         "assets/css/give-kudos.css",

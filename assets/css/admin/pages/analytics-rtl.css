@@ -5,22 +5,124 @@
  * Per-page styles for `WBGam\Admin\AnalyticsDashboard` (menu slug:
  * `wb-gamification-analytics`).
  *
- * NOTE: The bulk of analytics styling lives in the dedicated
- * `assets/css/admin-analytics.css` sheet (enqueued by
- * `AnalyticsDashboard::enqueue`). This per-page sheet is intentionally
- * thin — it only adds the page wrapper marker so the JSON usage map
- * accounts for the `wb-gam-admin-analytics` and `wb-gam-admin` root
- * classes.
- *
- * Cascade position: loads FIFTH (after suppression). Loads BEFORE
- * `admin-analytics.css` because the dedicated analytics sheet has its
- * own selectors (`.wb-gam-analytics__*`) that don't conflict.
+ * The Analytics page renders on the canonical admin shell: the wrapper is
+ * `.wrap.wbgam-wrap`, sections are `.wbgam-card`, the period picker is a
+ * `.wbgam-tabs.nav-tab-wrapper`, and data listings are `.wbgam-table` — all
+ * styled by the shared layers (tokens / utilities / components). This sheet
+ * only carries the analytics-specific LAYOUT helpers (KPI grid + cards, the
+ * two-column panel grid, the sparkline). The previous standalone
+ * `assets/css/admin-analytics.css` sheet was folded in here and retired.
  *
  * @package WB_Gamification
  */
 
-.wb-gam-admin,
-.wb-gam-admin-analytics {
-	/* Wrapper markers — visuals from .wbgam-wrap +
-	   admin-analytics.css for the period bar / KPI grid / panels. */
+/* ==========================================================================
+   KPI grid + cards
+
+   The KPI card markup is produced by the shared AnalyticsDashboard::kpi_card()
+   helper, which is ALSO consumed by the Settings dashboard tab. Settings styles
+   these same `.wb-gam-admin-kpi-*` classes from its own page sheet; the rules
+   are duplicated here so the Analytics page (which does not enqueue settings.css)
+   renders the cards correctly.
+   ========================================================================== */
+
+.wb-gam-analytics__kpi-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+	gap: 1rem;
+	margin-block-end: 1.5rem;
+}
+
+.wb-gam-admin-kpi-card {
+	background: var(--wbgam-card-bg);
+	border: 1px solid var(--wb-gam-border);
+	border-radius: var(--wb-gam-radius);
+	padding: 1.25rem 1rem;
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+	transition: box-shadow 0.15s;
+}
+
+.wb-gam-admin-kpi-card:hover {
+	box-shadow: 0 2px 8px rgba(108, 99, 255, 0.1);
+}
+
+.wb-gam-admin-kpi-icon {
+	font-size: var(--wbgam-fs-xl);
+	line-height: 1;
+}
+
+.wb-gam-admin-kpi-value {
+	font-size: var(--wbgam-fs-2xl);
+	font-weight: 800;
+	line-height: 1.1;
+	color: var(--wbgam-text-strong);
+}
+
+.wb-gam-admin-kpi-title {
+	font-size: var(--wbgam-fs-sm);
+	font-weight: 600;
+	color: var(--wbgam-gray-700);
+}
+
+.wb-gam-admin-kpi-sub {
+	font-size: var(--wbgam-fs-xs);
+	color: var(--wb-gam-silver);
+}
+
+/* ==========================================================================
+   Two-column panel grid
+
+   Wraps two canonical `.wbgam-card` panels side by side; collapses to a
+   single column under 1024px (canonical breakpoint).
+   ========================================================================== */
+
+.wb-gam-analytics__two-col {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 1.5rem;
+	margin-block-end: 1.5rem;
+}
+
+@media (max-width: 1024px) {
+
+	.wb-gam-analytics__two-col {
+		grid-template-columns: 1fr;
+	}
+}
+
+/* Avatars inside the top-earners / panel tables. */
+.wb-gam-analytics__two-col td img,
+.wbgam-table td img {
+	vertical-align: middle;
+	border-radius: 50%;
+	margin-inline-end: 0.375rem;
+}
+
+/* ==========================================================================
+   Sparkline (daily points trend bar chart)
+   ========================================================================== */
+
+.wb-gam-analytics__sparkline {
+	display: flex;
+	align-items: flex-end;
+	height: 80px;
+	gap: 2px;
+	padding: 0.5rem 0 0;
+}
+
+.wb-gam-analytics__spark-bar {
+	flex: 1;
+	min-width: 2px;
+	height: var(--bar-h, 0%);
+	width: var(--bar-w, 100%);
+	background: var(--wb-gam-primary);
+	border-radius: 2px 2px 0 0;
+	opacity: 0.75;
+	transition: opacity 0.15s;
+}
+
+.wb-gam-analytics__spark-bar:hover {
+	opacity: 1;
 }
