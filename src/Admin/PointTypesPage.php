@@ -144,7 +144,7 @@ final class PointTypesPage {
 												<span class="wbgam-badge wbgam-badge--success"><?php esc_html_e( 'Default', 'wb-gamification' ); ?></span>
 											<?php else : ?>
 												<button type="button"
-													class="button button-link"
+													class="wbgam-btn wbgam-btn--sm wbgam-btn--secondary"
 													data-wb-gam-rest-action="wbGamPointTypesSettings"
 													data-wb-gam-rest-method="PUT"
 													data-wb-gam-rest-path="/point-types/<?php echo esc_attr( $slug ); ?>"
@@ -165,7 +165,7 @@ final class PointTypesPage {
 										<td>
 											<?php if ( ! $is_default ) : ?>
 												<button type="button"
-													class="button button-small button-link-delete"
+													class="wbgam-btn wbgam-btn--sm wbgam-btn--danger"
 													data-wb-gam-rest-action="wbGamPointTypesSettings"
 													data-wb-gam-rest-method="DELETE"
 													data-wb-gam-rest-path="<?php echo esc_attr( $delete_path ); ?>"
@@ -256,7 +256,7 @@ final class PointTypesPage {
 						</table>
 
 						<p class="submit">
-							<button type="submit" class="button button-primary"><?php esc_html_e( 'Create Point Type', 'wb-gamification' ); ?></button>
+							<button type="submit" class="wbgam-btn"><?php esc_html_e( 'Create Point Type', 'wb-gamification' ); ?></button>
 						</p>
 					</form>
 				</div>
