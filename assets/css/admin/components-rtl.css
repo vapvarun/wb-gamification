@@ -132,27 +132,22 @@
 
 /* ==========================================================================
    3. Settings Topbar (Settings page brand header)
+
+   Additive modifier on the canonical .wbgam-page-header. It only carries the
+   Settings-specific brand chrome (the gradient logo tile, the brand text
+   wrapper, the version pill sizing). Layout, border, padding and the
+   __main / __title / __desc / __actions children come from .wbgam-page-header.
    ========================================================================== */
 
-.wbgam-settings-topbar {
-	display: flex;
+.wbgam-settings-topbar.wbgam-page-header {
 	align-items: center;
-	justify-content: space-between;
-	gap: 1.5rem;
-	flex-wrap: wrap;
-	background: var(--wbgam-card-bg);
-	border: 1px solid var(--wb-gam-border, var(--wbgam-border));
-	border-radius: var(--wb-gam-radius, 8px);
-	padding: 1.25rem 1.5rem;
-	margin: 1.25rem 0 1.5rem 1.5rem;
+	margin-inline-end: 1.5rem;
 }
 
-.wbgam-settings-topbar__brand {
+.wbgam-settings-topbar .wbgam-page-header__main {
 	display: flex;
 	align-items: center;
 	gap: var(--wbgam-gap-sm);
-	flex: 1 1 auto;
-	min-width: 0;
 }
 
 .wbgam-settings-topbar__logo {
@@ -173,12 +168,8 @@
 	min-width: 0;
 }
 
-.wbgam-settings-topbar__title {
-	margin: 0;
+.wbgam-settings-topbar .wbgam-page-header__title {
 	font-size: var(--wbgam-fs-2xl);
-	font-weight: 600;
-	line-height: 1.2;
-	color: var(--wb-gam-text, var(--wbgam-text));
 	display: flex;
 	align-items: center;
 	gap: 0.625rem;
@@ -187,40 +178,17 @@
 
 .wbgam-settings-topbar__version {
 	font-size: var(--wbgam-fs-xs);
-	font-weight: 600;
-	color: var(--wb-gam-text-muted, var(--wbgam-text-secondary));
-	background: var(--wbgam-surface-muted);
-	padding: 0.125rem 0.5rem;
-	border-radius: var(--wbgam-radius-pill);
 	letter-spacing: 0.02em;
-}
-
-.wbgam-settings-topbar__desc {
-	margin: 0.375rem 0 0;
-	color: var(--wb-gam-text-muted, var(--wbgam-text-secondary));
-	font-size: var(--wbgam-fs-base);
-	line-height: 1.5;
-}
-
-.wbgam-settings-topbar__actions {
-	display: flex;
-	gap: var(--wbgam-gap-xs);
-	flex-wrap: wrap;
-	flex-shrink: 0;
 }
 
 @media (max-width: 782px) {
 
-	.wbgam-settings-topbar {
+	.wbgam-settings-topbar.wbgam-page-header {
 		margin-inline-end: 0;
 	}
 }
 
 @media (max-width: 640px) {
-
-	.wbgam-settings-topbar {
-		padding: 1rem;
-	}
 
 	.wbgam-settings-topbar__logo {
 		width: 2.5rem;
@@ -228,7 +196,7 @@
 		font-size: var(--wbgam-fs-2xl);
 	}
 
-	.wbgam-settings-topbar__title {
+	.wbgam-settings-topbar .wbgam-page-header__title {
 		font-size: var(--wbgam-fs-xl);
 	}
 }
