@@ -593,11 +593,24 @@
       "_note": "Tracks only hooks with non-empty consumed_by. Skipped hooks are pure extensibility surface."
     },
     "cron": {
-      "total": 11,
-      "covered": 0,
+      "total": 14,
+      "covered": 3,
       "uncovered": 11,
       "skipped": 0,
-      "covered_items": [],
+      "covered_items": [
+        {
+          "hook": "wb_gam_compute_intelligence",
+          "covered_by": "tests/Unit/Engine/CronRegistrationTest.php"
+        },
+        {
+          "hook": "wb_gam_reconcile_side_effects",
+          "covered_by": "tests/Unit/Engine/CronRegistrationTest.php"
+        },
+        {
+          "hook": "wb_gam_notifications_queue_prune",
+          "covered_by": "tests/Unit/Engine/CronRegistrationTest.php"
+        }
+      ],
       "uncovered_items": [
         {
           "hook": "wb_gam_leaderboard_snapshot",
@@ -681,11 +694,11 @@
   },
   "summary": {
     "categories_checked": 5,
-    "items_total": 128,
-    "items_covered": 0,
+    "items_total": 131,
+    "items_covered": 3,
     "items_uncovered": 128,
     "items_skipped": 113,
-    "coverage_percent": 0
+    "coverage_percent": 2
   },
   "drift": {
     "previous_uncovered": 103,
