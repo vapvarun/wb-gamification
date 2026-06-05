@@ -703,9 +703,12 @@ final class Installer {
 			),
 			// WordPress action badges. Every badge's condition mirrors the literal
 			// action its name and description promise — "Published 10 posts" means
-			// 10 posts, not "250 points worth of activity." Both wp_publish_post and
-			// wp_leave_comment are unconditionally registered by
-			// integrations/wordpress.php, no BuddyPress required.
+			// 10 posts, not "250 points worth of activity." wp_publish_post and
+			// wp_leave_comment are always-on triggers in integrations/wordpress.php
+			// (standalone_only: false), so these conditions resolve on BuddyPress
+			// sites too. Do NOT re-flag those triggers standalone_only — doing so
+			// strands first_post / prolific_writer / content_creator / first_comment
+			// / engaged_reader as un-earnable badges on every BuddyPress install.
 			'first_post'           => array(
 				'condition_type' => 'action_count',
 				'action_id'      => 'wp_publish_post',
@@ -788,9 +791,16 @@ final class Installer {
 				'action_id'      => 'bp_polls_created',
 				'count'          => 1,
 			),
+			// Counts wp_publish_post (not bp_publish_post): publishing a post is
+			// the canonical always-on trigger, and on BuddyPress sites the BP
+			// Member Blog publish is superseded into wp_publish_post (see
+			// integrations/wordpress.php supersedes + ManifestLoader::flush_buffer),
+			// so a BP member-blog post is logged as wp_publish_post. Pointing the
+			// condition at bp_publish_post would leave this badge un-earnable on
+			// BuddyPress sites after that supersession.
 			'blog_publisher'       => array(
 				'condition_type' => 'action_count',
-				'action_id'      => 'bp_publish_post',
+				'action_id'      => 'wp_publish_post',
 				'count'          => 1,
 			),
 

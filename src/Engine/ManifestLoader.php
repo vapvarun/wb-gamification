@@ -52,17 +52,47 @@ final class ManifestLoader {
 	private static array $loaded_actions = array();
 
 	/**
+	 * Triggers buffered during the scan, keyed by action id, awaiting the
+	 * supersession pass before they are handed to the Registry.
+	 *
+	 * Buffering (rather than registering inline) makes supersession resolution
+	 * independent of manifest load order: `integrations/buddypress.php` is
+	 * globbed before `integrations/wordpress.php`, yet `wp_publish_post` must
+	 * still be able to supersede `bp_publish_post`.
+	 *
+	 * @var array<string, array>
+	 */
+	private static array $buffered = array();
+
+	/**
+	 * Action ids that a buffered trigger has declared it supersedes.
+	 *
+	 * Any id in this set is dropped from the buffer before registration so the
+	 * same real-world event is never awarded twice (e.g. BP Member Blog's
+	 * `bp_publish_post` yields to the always-on core `wp_publish_post`).
+	 *
+	 * @var array<string, true>
+	 */
+	private static array $superseded = array();
+
+	/**
 	 * Scan all manifest locations and register discovered triggers.
 	 *
 	 * Runs at plugins_loaded priority 5, before Registry::init() at 6.
 	 */
 	public static function scan(): void {
 		self::$loaded_actions = array();
+		self::$buffered       = array();
+		self::$superseded     = array();
 
 		$bp_active = function_exists( 'buddypress' );
 
 		self::load_first_party( $bp_active );
 		self::load_from_plugins( $bp_active );
+
+		// Resolve supersession across every buffered trigger (order-independent),
+		// then register what survives.
+		self::flush_buffer();
 
 		/**
 		 * Fires after all manifest files have been loaded and validated.
@@ -75,6 +105,34 @@ final class ManifestLoader {
 		 * @param array $actions All loaded action definitions.
 		 */
 		do_action( 'wb_gam_manifests_loaded', self::$loaded_actions );
+	}
+
+	/**
+	 * Register every buffered trigger except those a sibling trigger superseded.
+	 *
+	 * Supersession lets a canonical trigger claim a real-world event that an
+	 * otherwise-redundant trigger also listens for, guaranteeing a single award
+	 * per event regardless of which manifest loaded first. The superseded
+	 * trigger is dropped entirely (never registered, never hooked), so there is
+	 * no closure left behind to double-fire.
+	 */
+	private static function flush_buffer(): void {
+		foreach ( self::$buffered as $id => $trigger ) {
+			if ( isset( self::$superseded[ $id ] ) ) {
+				Log::warning(
+					'ManifestLoader: trigger superseded by a canonical sibling — skipped.',
+					array( 'action_id' => $id )
+				);
+				continue;
+			}
+
+			// `supersedes` is a manifest-only directive; strip it before the
+			// Registry sees the action.
+			unset( $trigger['supersedes'] );
+
+			self::$loaded_actions[] = $trigger;
+			wb_gam_register_action( $trigger );
+		}
 	}
 
 	/**
@@ -234,6 +292,12 @@ final class ManifestLoader {
 	 * Trigger flags:
 	 *   standalone_only: true     — skip when BuddyPress is active (BP covers the same event).
 	 *   requires_buddypress: true — skip when BuddyPress is NOT active.
+	 *   supersedes: [id, ...]     — once this trigger survives validation, drop the
+	 *                               listed action ids from the registration set so
+	 *                               the same event is never awarded twice.
+	 *
+	 * Triggers are buffered here and registered later by flush_buffer() so that
+	 * supersession resolves regardless of manifest load order.
 	 *
 	 * @param array  $manifest  Manifest data with optional 'plugin', 'version', and 'triggers' keys.
 	 * @param string $file      Absolute path to the manifest file (used in debug messages).
@@ -276,7 +340,9 @@ final class ManifestLoader {
 				continue;
 			}
 
-			// Remove manifest-only flags before passing to the Registry.
+			// Remove the BP-gating flags before passing to the Registry. The
+			// `supersedes` directive is kept on the buffered trigger and resolved
+			// in flush_buffer(); it is stripped there before registration.
 			unset( $trigger['standalone_only'], $trigger['requires_buddypress'] );
 
 			// Inject the manifest's top-level plugin key so the Registry
@@ -285,21 +351,32 @@ final class ManifestLoader {
 				$trigger['plugin'] = $manifest['plugin'];
 			}
 
+			$action_id = (string) $trigger['id'];
+
 			// Third-party manifests defer to first-party on collision. The
 			// in-tree manifest in this plugin is the canonical source for any
 			// integration we ship for; third-party bundled manifests (e.g.
 			// WPMediaVerse Pro <= 1.1.3 still ships its own wb-gamification.php)
 			// silently yield on duplicate ids so the in-tree definition wins.
 			// First-party-vs-first-party collisions still trip Registry's
-			// _doing_it_wrong path because they signal a genuine bug.
-			if ( self::$loading_third_party && null !== Registry::get_action( (string) $trigger['id'] ) ) {
+			// _doing_it_wrong path because they signal a genuine bug. The buffer
+			// (not the live Registry) is the duplicate source of truth now that
+			// registration is deferred to flush_buffer().
+			if ( self::$loading_third_party && isset( self::$buffered[ $action_id ] ) ) {
 				continue;
 			}
 
-			// Track the validated action for the wb_gam_manifests_loaded hook.
-			self::$loaded_actions[] = $trigger;
+			// Record any ids this trigger supersedes so flush_buffer() can drop
+			// them. A superseded id is removed even if it was buffered earlier
+			// (load order independent).
+			if ( ! empty( $trigger['supersedes'] ) ) {
+				foreach ( (array) $trigger['supersedes'] as $superseded_id ) {
+					self::$superseded[ (string) $superseded_id ] = true;
+				}
+			}
 
-			wb_gam_register_action( $trigger );
+			// Buffer the validated trigger; flush_buffer() registers survivors.
+			self::$buffered[ $action_id ] = $trigger;
 		}
 	}
 }

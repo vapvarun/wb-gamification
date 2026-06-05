@@ -4,9 +4,25 @@
  *
  * Auto-loaded by ManifestLoader. No dependency on WB Gamification at load time.
  *
- * Trigger groups:
- *   standalone_only: false — always active regardless of BuddyPress
- *   standalone_only: true  — skipped when BuddyPress is active (BP covers the same event)
+ * Trigger flags:
+ *   standalone_only: false — always active regardless of BuddyPress.
+ *   standalone_only: true  — skipped when BuddyPress is active (BP covers the same event).
+ *   supersedes: [id, ...]  — when this trigger is registered, the listed trigger
+ *                            ids are dropped from the registry so the same
+ *                            real-world event isn't awarded twice. Resolved by
+ *                            ManifestLoader regardless of manifest load order.
+ *
+ * Design note (badge auto-award on BuddyPress sites):
+ *   Publishing a blog post and commenting on a post are CORE WordPress events.
+ *   BuddyPress activity-stream updates/comments (`bp_activity_update`,
+ *   `bp_activity_comment`) are a DIFFERENT event class and do NOT cover them.
+ *   Marking these triggers `standalone_only: true` left the default badges that
+ *   count `wp_publish_post` / `wp_leave_comment` (first_post, prolific_writer,
+ *   content_creator, first_comment, engaged_reader) permanently dead on every
+ *   BuddyPress site, because the actions they count were never registered.
+ *   These triggers are therefore always-on. The only genuine overlap is BP
+ *   Member Blog's `bp_publish_post` (also on a published `post`), resolved via
+ *   `wp_publish_post`'s `supersedes` so there is no double-award.
  *
  * @package WB_Gamification
  */
@@ -96,7 +112,13 @@ return [
 			'standalone_only' => false,
 		],
 
-		// ── Standalone-only triggers (Standalone mode — no BuddyPress) ──────
+		// ── Core WordPress content triggers (always-on) ─────────────────────
+		//
+		// Core WordPress events with no BuddyPress equivalent (BP covers
+		// activity-stream updates/comments, not blog posts or post comments),
+		// so they register on BuddyPress sites too — otherwise the default
+		// badges that count them (first_post, prolific_writer, content_creator,
+		// first_comment, engaged_reader) are permanently dead on BP sites.
 
 		[
 			'id'              => 'wp_publish_post',
@@ -122,7 +144,11 @@ return [
 			'category'        => 'wordpress',
 			'icon'            => 'icon-file-text',
 			'repeatable'      => true,
-			'standalone_only' => true,
+			'standalone_only' => false,
+			// BP Member Blog's `bp_publish_post` awards on the same published
+			// `post`. This canonical core trigger supersedes it so a publish
+			// on a BuddyPress site awards once, not twice.
+			'supersedes'      => array( 'bp_publish_post' ),
 		],
 
 		[
@@ -153,7 +179,7 @@ return [
 			'category'        => 'wordpress',
 			'icon'            => 'icon-star',
 			'repeatable'      => false,
-			'standalone_only' => true,
+			'standalone_only' => false,
 		],
 
 		[
@@ -181,7 +207,7 @@ return [
 			'icon'            => 'icon-message-square',
 			'repeatable'      => true,
 			'cooldown'        => 60,
-			'standalone_only' => true,
+			'standalone_only' => false,
 		],
 
 		[
@@ -204,7 +230,7 @@ return [
 			'category'        => 'wordpress',
 			'icon'            => 'icon-circle-check',
 			'repeatable'      => true,
-			'standalone_only' => true,
+			'standalone_only' => false,
 		],
 
 	],
