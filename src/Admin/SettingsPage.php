@@ -2156,7 +2156,8 @@ final class SettingsPage {
 			</div>
 			<div class="wbgam-card-body">
 				<p>
-					<input type="file" id="wb-gam-import-file" accept="application/json,.json" />
+					<label for="wb-gam-import-file" class="screen-reader-text"><?php esc_html_e( 'Choose a settings file to import', 'wb-gamification' ); ?></label>
+					<input type="file" id="wb-gam-import-file" accept="application/json,.json" aria-label="<?php esc_attr_e( 'Choose a settings file to import', 'wb-gamification' ); ?>" />
 				</p>
 				<button type="button" id="wb-gam-import-settings" class="wbgam-btn"><?php esc_html_e( 'Import settings', 'wb-gamification' ); ?></button>
 			</div>

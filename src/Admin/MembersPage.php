@@ -138,7 +138,8 @@ final class MembersPage {
 				<div class="wbgam-card-body">
 					<div id="wb-gam-members-app" class="wb-gam-members">
 						<div class="wb-gam-members__toolbar">
-							<input type="search" id="wb-gam-members-search" class="wbgam-input wb-gam-members__search" />
+							<label for="wb-gam-members-search" class="screen-reader-text"><?php esc_html_e( 'Search members', 'wb-gamification' ); ?></label>
+								<input type="search" id="wb-gam-members-search" class="wbgam-input wb-gam-members__search" placeholder="<?php esc_attr_e( 'Search members…', 'wb-gamification' ); ?>" aria-label="<?php esc_attr_e( 'Search members', 'wb-gamification' ); ?>" />
 						</div>
 						<div id="wb-gam-members-table" class="wb-gam-members__table" aria-live="polite"></div>
 						<div id="wb-gam-members-pager" class="wb-gam-members__pager"></div>
