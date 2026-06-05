@@ -278,11 +278,11 @@ final class BadgeAdminPage {
 									</td>
 								</tr>
 								<tr>
-									<th><label><?php esc_html_e( 'Icon', 'wb-gamification' ); ?></label></th>
+									<th><label for="wb-gam-choose-icon"><?php esc_html_e( 'Icon', 'wb-gamification' ); ?></label></th>
 									<td>
 										<div class="wbgam-badge-icon-preview" id="wb-gam-icon-preview">
 											<?php if ( ! empty( $badge['image_url'] ) ) : ?>
-												<img src="<?php echo esc_url( $badge['image_url'] ); ?>" alt="">
+												<img src="<?php echo esc_url( $badge['image_url'] ); ?>" alt="<?php echo esc_attr( sprintf( /* translators: %s: badge name. */ __( '%s icon', 'wb-gamification' ), ( $badge['name'] ?? '' ) !== '' ? $badge['name'] : __( 'Badge', 'wb-gamification' ) ) ); ?>">
 											<?php else : ?>
 												<span class="icon-award"></span>
 											<?php endif; ?>
