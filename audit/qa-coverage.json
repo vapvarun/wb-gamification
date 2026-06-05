@@ -2,18 +2,18 @@
   "schema_version": "v1",
   "plugin": {
     "slug": "wb-gamification",
-    "version": "1.0.0"
+    "version": "1.5.3"
   },
   "generated": {
-    "at": "2026-05-27T08:47:09.404Z",
-    "manifest_at": "2026-05-27T20:30:00Z",
+    "at": "2026-06-05T10:44:41.356Z",
+    "manifest_at": "2026-06-02T07:30:19Z",
     "manifest_branch": "main"
   },
   "categories": {
     "rest": {
-      "total": 88,
+      "total": 96,
       "covered": 0,
-      "uncovered": 88,
+      "uncovered": 96,
       "skipped": 0,
       "covered_items": [],
       "uncovered_items": [
@@ -456,6 +456,46 @@
           "method": "POST",
           "route": "/wb-gamification/v1/settings/emails",
           "stub_command": "bin/qa-stub-gen.php rest POST \"/wb-gamification/v1/settings/emails\""
+        },
+        {
+          "method": "GET",
+          "route": "/wb-gamification/v1/members",
+          "stub_command": "bin/qa-stub-gen.php rest GET \"/wb-gamification/v1/members\""
+        },
+        {
+          "method": "POST",
+          "route": "/wb-gamification/v1/members/{id}/exclude",
+          "stub_command": "bin/qa-stub-gen.php rest POST \"/wb-gamification/v1/members/{id}/exclude\""
+        },
+        {
+          "method": "POST",
+          "route": "/wb-gamification/v1/members/{id}/reset-points",
+          "stub_command": "bin/qa-stub-gen.php rest POST \"/wb-gamification/v1/members/{id}/reset-points\""
+        },
+        {
+          "method": "POST",
+          "route": "/wb-gamification/v1/points/bulk",
+          "stub_command": "bin/qa-stub-gen.php rest POST \"/wb-gamification/v1/points/bulk\""
+        },
+        {
+          "method": "GET",
+          "route": "/wb-gamification/v1/tools/export-settings",
+          "stub_command": "bin/qa-stub-gen.php rest GET \"/wb-gamification/v1/tools/export-settings\""
+        },
+        {
+          "method": "POST",
+          "route": "/wb-gamification/v1/tools/import-settings",
+          "stub_command": "bin/qa-stub-gen.php rest POST \"/wb-gamification/v1/tools/import-settings\""
+        },
+        {
+          "method": "POST",
+          "route": "/wb-gamification/v1/tools/recompute-leaderboard",
+          "stub_command": "bin/qa-stub-gen.php rest POST \"/wb-gamification/v1/tools/recompute-leaderboard\""
+        },
+        {
+          "method": "POST",
+          "route": "/wb-gamification/v1/tools/reset-progress",
+          "stub_command": "bin/qa-stub-gen.php rest POST \"/wb-gamification/v1/tools/reset-progress\""
         }
       ]
     },
@@ -468,18 +508,94 @@
       "uncovered_items": []
     },
     "hooks_fired": {
-      "total": 0,
+      "total": 15,
       "covered": 0,
-      "uncovered": 0,
-      "skipped": 55,
+      "uncovered": 15,
+      "skipped": 113,
       "covered_items": [],
-      "uncovered_items": [],
+      "uncovered_items": [
+        {
+          "name": "wb_gam_award_skipped",
+          "consumer_count": 1,
+          "stub_command": "bin/qa-stub-gen.php hook wb_gam_award_skipped"
+        },
+        {
+          "name": "wb_gam_badge_awarded",
+          "consumer_count": 4,
+          "stub_command": "bin/qa-stub-gen.php hook wb_gam_badge_awarded"
+        },
+        {
+          "name": "wb_gam_challenge_completed",
+          "consumer_count": 5,
+          "stub_command": "bin/qa-stub-gen.php hook wb_gam_challenge_completed"
+        },
+        {
+          "name": "wb_gam_kudos_given",
+          "consumer_count": 3,
+          "stub_command": "bin/qa-stub-gen.php hook wb_gam_kudos_given"
+        },
+        {
+          "name": "wb_gam_level_assigned",
+          "consumer_count": 1,
+          "stub_command": "bin/qa-stub-gen.php hook wb_gam_level_assigned"
+        },
+        {
+          "name": "wb_gam_level_changed",
+          "consumer_count": 7,
+          "stub_command": "bin/qa-stub-gen.php hook wb_gam_level_changed"
+        },
+        {
+          "name": "wb_gam_points_awarded",
+          "consumer_count": 6,
+          "stub_command": "bin/qa-stub-gen.php hook wb_gam_points_awarded"
+        },
+        {
+          "name": "wb_gam_points_awarded_batch",
+          "consumer_count": 1,
+          "stub_command": "bin/qa-stub-gen.php hook wb_gam_points_awarded_batch"
+        },
+        {
+          "name": "wb_gam_points_redeemed",
+          "consumer_count": 2,
+          "stub_command": "bin/qa-stub-gen.php hook wb_gam_points_redeemed"
+        },
+        {
+          "name": "wb_gam_streak_milestone",
+          "consumer_count": 3,
+          "stub_command": "bin/qa-stub-gen.php hook wb_gam_streak_milestone"
+        },
+        {
+          "name": "wb_gam_event_metadata",
+          "consumer_count": 1,
+          "stub_command": "bin/qa-stub-gen.php hook wb_gam_event_metadata"
+        },
+        {
+          "name": "wb_gam_learndash_profile_link",
+          "consumer_count": 1,
+          "stub_command": "bin/qa-stub-gen.php hook wb_gam_learndash_profile_link"
+        },
+        {
+          "name": "wb_gam_points_for_action",
+          "consumer_count": 1,
+          "stub_command": "bin/qa-stub-gen.php hook wb_gam_points_for_action"
+        },
+        {
+          "name": "wb_gam_rank_automation_rules",
+          "consumer_count": 1,
+          "stub_command": "bin/qa-stub-gen.php hook wb_gam_rank_automation_rules"
+        },
+        {
+          "name": "wb_gam_should_award_badge",
+          "consumer_count": 1,
+          "stub_command": "bin/qa-stub-gen.php hook wb_gam_should_award_badge"
+        }
+      ],
       "_note": "Tracks only hooks with non-empty consumed_by. Skipped hooks are pure extensibility surface."
     },
     "cron": {
-      "total": 9,
+      "total": 11,
       "covered": 0,
-      "uncovered": 9,
+      "uncovered": 11,
       "skipped": 0,
       "covered_items": [],
       "uncovered_items": [
@@ -518,6 +634,14 @@
         {
           "hook": "wb_gam_prune_logs",
           "stub_command": "bin/qa-stub-gen.php cron wb_gam_prune_logs"
+        },
+        {
+          "hook": "wb_gam_as_cleanup",
+          "stub_command": "bin/qa-stub-gen.php cron wb_gam_as_cleanup"
+        },
+        {
+          "hook": "wb_gam_points_decay",
+          "stub_command": "bin/qa-stub-gen.php cron wb_gam_points_decay"
         }
       ]
     },
@@ -557,15 +681,15 @@
   },
   "summary": {
     "categories_checked": 5,
-    "items_total": 103,
+    "items_total": 128,
     "items_covered": 0,
-    "items_uncovered": 103,
-    "items_skipped": 55,
+    "items_uncovered": 128,
+    "items_skipped": 113,
     "coverage_percent": 0
   },
   "drift": {
-    "previous_uncovered": null,
-    "current_uncovered": 103,
-    "delta": null
+    "previous_uncovered": 103,
+    "current_uncovered": 128,
+    "delta": 25
   }
 }
