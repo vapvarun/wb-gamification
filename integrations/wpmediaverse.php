@@ -86,8 +86,8 @@ $free_triggers = array(
 
 	array(
 		'id'                => 'mvs_upload_photo',
-		'label'             => __( 'Upload a photo', 'wb-gamification' ),
-		'description'       => __( 'Awarded when a member uploads a photo or video.', 'wb-gamification' ),
+		'label'             => 'Upload a photo',
+		'description'       => 'Awarded when a member uploads a photo or video.',
 		'hook'              => 'mvs_media_uploaded',
 		// Signature (MVS 1.2.3+): ($media_id, $file_data, $user_id, $media_type).
 		'user_callback'     => function ( int $media_id, array $file_data, int $user_id = 0, string $media_type = '' ): int {
@@ -110,8 +110,8 @@ $free_triggers = array(
 
 	array(
 		'id'             => 'mvs_create_album',
-		'label'          => __( 'Add items to an album', 'wb-gamification' ),
-		'description'    => __( 'Awarded when a member adds media to an album (rewards the actor, not just the album owner).', 'wb-gamification' ),
+		'label'          => 'Add items to an album',
+		'description'    => 'Awarded when a member adds media to an album (rewards the actor, not just the album owner).',
 		'hook'           => 'mvs_album_items_added',
 		// Signature (MVS 1.2.3+): ($album_id, $actor_id, $media_ids, $added).
 		'user_callback'  => function ( int $album_id, int $actor_id, array $media_ids, int $added ): int {
@@ -132,8 +132,8 @@ $free_triggers = array(
 
 	array(
 		'id'                => 'mvs_receive_like',
-		'label'             => __( 'Receive a like on photo', 'wb-gamification' ),
-		'description'       => __( 'Awarded to the media owner when someone likes their photo.', 'wb-gamification' ),
+		'label'             => 'Receive a like on photo',
+		'description'       => 'Awarded to the media owner when someone likes their photo.',
 		'hook'              => 'mvs_reaction_added',
 		'user_callback'     => function ( int $media_id, int $user_id, string $type ): int {
 			$author = wb_gam_mvs_media_author( $media_id );
@@ -156,8 +156,8 @@ $free_triggers = array(
 
 	array(
 		'id'                => 'mvs_receive_comment',
-		'label'             => __( 'Receive a comment on photo', 'wb-gamification' ),
-		'description'       => __( 'Awarded to the media owner when someone comments on their photo.', 'wb-gamification' ),
+		'label'             => 'Receive a comment on photo',
+		'description'       => 'Awarded to the media owner when someone comments on their photo.',
 		'hook'              => 'mvs_comment_created',
 		'user_callback'     => function ( int $media_id, int $user_id, int $comment_id, string $content ): int {
 			$author = wb_gam_mvs_media_author( $media_id );
@@ -180,8 +180,8 @@ $free_triggers = array(
 
 	array(
 		'id'                => 'mvs_receive_follow',
-		'label'             => __( 'Gain a new follower', 'wb-gamification' ),
-		'description'       => __( 'Awarded when another member follows you.', 'wb-gamification' ),
+		'label'             => 'Gain a new follower',
+		'description'       => 'Awarded when another member follows you.',
 		'hook'              => 'mvs_user_followed',
 		'user_callback'     => function ( int $follower_id, int $following_id ): int {
 			return $following_id;
@@ -199,8 +199,8 @@ $free_triggers = array(
 
 	array(
 		'id'             => 'mvs_receive_favorite',
-		'label'          => __( 'Photo bookmarked by someone', 'wb-gamification' ),
-		'description'    => __( 'Awarded to the media owner when someone bookmarks their photo.', 'wb-gamification' ),
+		'label'          => 'Photo bookmarked by someone',
+		'description'    => 'Awarded to the media owner when someone bookmarks their photo.',
 		'hook'           => 'mvs_favorite_toggled',
 		'user_callback'  => function ( int $media_id, int $user_id, string $action ): int {
 			if ( 'added' !== $action ) {
@@ -224,8 +224,8 @@ $free_triggers = array(
 
 	array(
 		'id'             => 'mvs_give_comment',
-		'label'          => __( 'Write a meaningful comment', 'wb-gamification' ),
-		'description'    => __( 'Awarded when a member leaves a comment of 20+ characters.', 'wb-gamification' ),
+		'label'          => 'Write a meaningful comment',
+		'description'    => 'Awarded when a member leaves a comment of 20+ characters.',
 		'hook'           => 'mvs_comment_created',
 		'user_callback'  => function ( int $media_id, int $user_id, int $comment_id, string $content ): int {
 			// Only award for meaningful comments (20+ chars).
@@ -241,8 +241,8 @@ $free_triggers = array(
 
 	array(
 		'id'             => 'mvs_give_follow',
-		'label'          => __( 'Follow another member', 'wb-gamification' ),
-		'description'    => __( 'Awarded when a member follows another user.', 'wb-gamification' ),
+		'label'          => 'Follow another member',
+		'description'    => 'Awarded when a member follows another user.',
 		'hook'           => 'mvs_user_followed',
 		'user_callback'  => function ( int $follower_id, int $following_id ): int {
 			return $follower_id;
@@ -256,8 +256,8 @@ $free_triggers = array(
 
 	array(
 		'id'             => 'mvs_bookmark_photo',
-		'label'          => __( 'Bookmark a photo', 'wb-gamification' ),
-		'description'    => __( 'Awarded when a member saves a photo to favorites.', 'wb-gamification' ),
+		'label'          => 'Bookmark a photo',
+		'description'    => 'Awarded when a member saves a photo to favorites.',
 		'hook'           => 'mvs_favorite_toggled',
 		'user_callback'  => function ( int $media_id, int $user_id, string $action ): int {
 			return 'added' === $action ? $user_id : 0;
@@ -293,8 +293,8 @@ if ( $pro_active ) {
 
 		array(
 			'id'                => 'mvs_battle_win',
-			'label'             => __( 'Win a photo battle', 'wb-gamification' ),
-			'description'       => __( 'Awarded to the winner of a 1v1 photo battle.', 'wb-gamification' ),
+			'label'             => 'Win a photo battle',
+			'description'       => 'Awarded to the winner of a 1v1 photo battle.',
 			'hook'              => 'mvs_battle_resolved',
 			'user_callback'     => function ( int $battle_id, int $winner_id, int $loser_id ): int {
 				return $winner_id;
@@ -312,37 +312,39 @@ if ( $pro_active ) {
 		),
 
 		array(
-			'id'             => 'mvs_challenge_participate',
-			'label'          => __( 'Enter a photo challenge', 'wb-gamification' ),
-			'description'    => __( 'Awarded when a member submits an entry to a photo challenge.', 'wb-gamification' ),
-			'hook'           => 'mvs_challenge_entry_submitted',
-			'user_callback'  => function ( int $challenge_id, int $user_id, int $media_id ): int {
+			'id'                => 'mvs_challenge_participate',
+			'label'             => 'Enter a photo challenge',
+			'description'       => 'Awarded when a member submits an entry to a photo challenge.',
+			'hook'              => 'mvs_challenge_entry_submitted',
+			'user_callback'     => function ( int $challenge_id, int $user_id, int $media_id ): int {
 				return $user_id;
 			},
-			'default_points' => 10,
-			'category'       => 'competition',
-			'icon'           => 'dashicons-megaphone',
-			'repeatable'     => true,
+			// Carry the challenge id so MVS Pro's wb_gam_points_for_action
+			// bridge can award the challenge's configured participation XP.
+			'metadata_callback' => function ( int $challenge_id, int $user_id, int $media_id ): array {
+				return array(
+					'challenge_id' => $challenge_id,
+				);
+			},
+			'default_points'    => 10,
+			'category'          => 'competition',
+			'icon'              => 'dashicons-megaphone',
+			'repeatable'        => true,
 		),
 
-		// Single per-rank trigger replaces the previous 1st/2nd/3rd hard-coded
-		// triggers. Uses MVS Pro 1.2.3+ `mvs_challenge_winner_named` action
-		// fired once per top-3 rank. Points scale with rank via points_callback.
+		// Single per-rank trigger fired once per top-3 rank via the MVS Pro
+		// `mvs_challenge_winner_named` action. NOTE: the engine does not consume
+		// points_callback - the per-rank and per-challenge amounts are resolved
+		// by MVS Pro's wb_gam_points_for_action filter (CompetePointsBridge),
+		// which reads challenge_id + rank from the metadata below. default_points
+		// (200) is only the fallback when MVS Pro is inactive.
 		array(
 			'id'                => 'mvs_challenge_winner',
-			'label'             => __( 'Place in a photo challenge', 'wb-gamification' ),
-			'description'       => __( 'Awarded to the top-3 finishers of a photo challenge (200/100/50 points for 1st/2nd/3rd).', 'wb-gamification' ),
+			'label'             => 'Place in a photo challenge',
+			'description'       => 'Awarded to the top-3 finishers of a photo challenge (200/100/50 points for 1st/2nd/3rd).',
 			'hook'              => 'mvs_challenge_winner_named',
 			'user_callback'     => function ( int $challenge_id, int $user_id, int $rank ): int {
 				return $user_id;
-			},
-			'points_callback'   => function ( int $challenge_id, int $user_id, int $rank ): int {
-				$scale = array(
-					1 => 200,
-					2 => 100,
-					3 => 50,
-				);
-				return $scale[ $rank ] ?? 0;
 			},
 			'metadata_callback' => function ( int $challenge_id, int $user_id, int $rank ): array {
 				return array(
@@ -354,34 +356,57 @@ if ( $pro_active ) {
 			'category'          => 'competition',
 			'icon'              => 'dashicons-trophy',
 			'repeatable'        => true,
+			// Winners expect the award the moment the result is announced —
+			// low-frequency, finalization-driven: award in-request, not queued.
+			'async'             => false,
 		),
 
 		array(
-			'id'             => 'mvs_tournament_round_win',
-			'label'          => __( 'Win a tournament round', 'wb-gamification' ),
-			'description'    => __( 'Awarded for winning a round in a photo tournament.', 'wb-gamification' ),
-			'hook'           => 'mvs_tournament_match_resolved',
-			'user_callback'  => function ( int $match_id, int $winner_id ): int {
+			'id'                => 'mvs_tournament_round_win',
+			'label'             => 'Win a tournament round',
+			'description'       => 'Awarded for winning a round in a photo tournament.',
+			'hook'              => 'mvs_tournament_match_resolved',
+			'user_callback'     => function ( int $match_id, int $winner_id ): int {
 				return $winner_id;
 			},
-			'default_points' => 150,
-			'category'       => 'competition',
-			'icon'           => 'dashicons-shield',
-			'repeatable'     => true,
+			// Carry the match id so MVS Pro's bridge can resolve the parent
+			// tournament and award its configured round-win XP.
+			'metadata_callback' => function ( int $match_id, int $winner_id ): array {
+				return array(
+					'match_id' => $match_id,
+				);
+			},
+			'default_points'    => 150,
+			'category'          => 'competition',
+			'icon'              => 'dashicons-shield',
+			'repeatable'        => true,
+			// Winners expect the award the moment the result is announced —
+			// low-frequency, finalization-driven: award in-request, not queued.
+			'async'             => false,
 		),
 
 		array(
-			'id'             => 'mvs_tournament_win',
-			'label'          => __( 'Win a tournament', 'wb-gamification' ),
-			'description'    => __( 'Awarded to the grand champion of a photo tournament.', 'wb-gamification' ),
-			'hook'           => 'mvs_tournament_finalized',
-			'user_callback'  => function ( int $tournament_id, int $winner_id ): int {
+			'id'                => 'mvs_tournament_win',
+			'label'             => 'Win a tournament',
+			'description'       => 'Awarded to the grand champion of a photo tournament.',
+			'hook'              => 'mvs_tournament_finalized',
+			'user_callback'     => function ( int $tournament_id, int $winner_id ): int {
 				return $winner_id;
 			},
-			'default_points' => 500,
-			'category'       => 'competition',
-			'icon'           => 'dashicons-star-filled',
-			'repeatable'     => true,
+			// Carry the tournament id so MVS Pro's bridge can award the
+			// tournament's configured champion XP.
+			'metadata_callback' => function ( int $tournament_id, int $winner_id ): array {
+				return array(
+					'tournament_id' => $tournament_id,
+				);
+			},
+			'default_points'    => 500,
+			'category'          => 'competition',
+			'icon'              => 'dashicons-star-filled',
+			'repeatable'        => true,
+			// Winners expect the award the moment the result is announced —
+			// low-frequency, finalization-driven: award in-request, not queued.
+			'async'             => false,
 		),
 
 		/*
@@ -392,14 +417,11 @@ if ( $pro_active ) {
 
 		array(
 			'id'                => 'mvs_streak_milestone',
-			'label'             => __( 'Hit an upload streak milestone', 'wb-gamification' ),
-			'description'       => __( 'Awarded when a member hits 7, 30, 100, or 365 consecutive upload days.', 'wb-gamification' ),
+			'label'             => 'Hit an upload streak milestone',
+			'description'       => 'Awarded when a member hits 7, 30, 100, or 365 consecutive upload days.',
 			'hook'              => 'mvs_streak_milestone',
 			'user_callback'     => function ( int $user_id, int $days, int $xp ): int {
 				return $user_id;
-			},
-			'points_callback'   => function ( int $user_id, int $days, int $xp ): int {
-				return $xp;
 			},
 			'metadata_callback' => function ( int $user_id, int $days, int $xp ): array {
 				return array(

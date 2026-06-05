@@ -65,7 +65,7 @@ find_implicit_async() {
         sub(/^[^\x27"]*[\x27"]id[\x27"][[:space:]]*=>[[:space:]]*[\x27"]/, "", s)
         sub(/[\x27"].*/, "", s)
         id = s
-        id_line = NR
+        id_line = FNR
         in_trigger = 1
         next
       }

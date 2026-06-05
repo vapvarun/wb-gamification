@@ -77,3 +77,38 @@ ALL of the following hold:
 | Ledger doesn't update | Engine::process not firing the points side-effect | `src/Engine/Engine.php` + `src/Engine/PointsEngine.php` |
 | 500 on POST | Member resolution or rate-limit guard fatal | check `wp-content/debug.log` |
 | Leaderboard stale | Object cache holding old snapshot — incrementor pattern not bumped on award | `src/Engine/LeaderboardEngine.php` `wp_cache_set_last_changed` call on `wb_gam_leaderboard` group |
+
+## Step 9 — Core WordPress badges fire on a BuddyPress site (perpetual gate)
+
+Publishing a blog post and commenting on a post are core WordPress events with NO BuddyPress equivalent (`bp_activity_update` / `bp_activity_comment` are activity-stream events, a different class). The triggers `wp_publish_post` and `wp_leave_comment` are therefore always-on (`standalone_only: false`); the default badges `first_post`, `prolific_writer`, `content_creator`, `first_comment`, `engaged_reader` count them. A prior `standalone_only: true` on those triggers left every one of those badges un-earnable on every BuddyPress site.
+
+### 9a. Triggers registered with BuddyPress active
+- **Action**: with BuddyPress active, `wp wb-gamification doctor`
+- **Expect**: the "Core WordPress Triggers" section reports PASS — `wp_publish_post` and `wp_leave_comment` are registered. A FAIL here means they were re-flagged `standalone_only` and the WP badges are dead.
+
+### 9b. Publish a post → exactly one publish award (no double-award)
+- **Action**: on a BuddyPress site, publish a new `post` as a member, then COUNT rows in `wb_gam_points` for that user across `action_id IN ('wp_publish_post','bp_publish_post')`
+- **Expect**: exactly ONE new row. `bp_publish_post` is superseded by the canonical `wp_publish_post` (see `integrations/wordpress.php` `supersedes` + `ManifestLoader::flush_buffer()`), so the same publish never awards twice.
+
+### 9c. First post / first comment badges auto-award
+- **Action**: as a member with no prior posts on a BuddyPress site, publish their first `post`
+- **Expect**: a `first_post` badge row appears in `wb_gam_user_badges`. Likewise a member's first approved comment earns `first_comment`.
+
+### 9d. Existing-install upgrade rewrites superseded badge-condition action_ids (perpetual gate)
+Making `wp_publish_post` supersede `bp_publish_post` fixed NEW installs (Installer seeds `blog_publisher` against `wp_publish_post`), but EXISTING installs kept the seeded `badge_condition` row pointing at the now-unregistered `bp_publish_post`, leaving `blog_publisher` un-earnable and making doctor warn. `DbUpgrader::ensure_superseded_badge_condition_action_ids()` (flag `wb_gam_feature_superseded_badge_action_ids_v1`) rewrites every superseded `action_id` to its canonical replacement on existing installs.
+- **Action**: on an upgraded site, `wp wb-gamification doctor`
+- **Expect**: the "Default Badges" section does NOT emit "Badge conditions reference unregistered actions". A warning here means the supersede back-fill migration was dropped or its `$supersede_map` drifted from `integrations/wordpress.php`'s `supersedes` directives.
+- **Action**: inspect the `blog_publisher` rule:
+  ```php
+  global $wpdb;
+  $row = $wpdb->get_row( "SELECT rule_config FROM {$wpdb->prefix}wb_gam_rules WHERE rule_type='badge_condition' AND target_id='blog_publisher'", ARRAY_A );
+  echo $row['rule_config'];
+  ```
+- **Expect**: `action_id` is `wp_publish_post`, NOT `bp_publish_post`. No `badge_condition` row references any action absent from `wp wb-gamification actions list`.
+
+## Pass criteria (additions)
+
+6. On a BuddyPress site, `wp_publish_post` and `wp_leave_comment` are registered (doctor "Core WordPress Triggers" = PASS).
+7. Publishing one post awards exactly once across `wp_publish_post` + `bp_publish_post` (supersession holds — no double-award).
+8. The core WordPress badges (first_post, prolific_writer, content_creator, first_comment, engaged_reader) can be earned on a BuddyPress site.
+9. On an upgraded install, no `badge_condition` row references a superseded/unregistered action (doctor "Default Badges" emits no unregistered-actions warning); `blog_publisher` resolves to `wp_publish_post`.

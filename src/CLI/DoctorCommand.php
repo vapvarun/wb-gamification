@@ -131,6 +131,7 @@ class DoctorCommand {
 		$this->check_default_levels();
 		$this->check_default_badges();
 		$this->check_actions();
+		$this->check_core_wp_actions();
 		$this->check_duplicate_hooks();
 		$this->check_settings();
 		$this->check_kudos_options();
@@ -378,6 +379,49 @@ class DoctorCommand {
 		);
 	}
 
+	// ── Core WordPress Triggers ───────────────────────────────────────────────────
+
+	/**
+	 * Verify the always-on core WordPress content triggers are registered.
+	 *
+	 * Publishing a blog post and commenting on a post are core WordPress
+	 * events with no BuddyPress equivalent. If they get re-flagged
+	 * `standalone_only` (so they vanish whenever BuddyPress is active), the
+	 * default badges that count them — first_post, prolific_writer,
+	 * content_creator, first_comment, engaged_reader — become permanently
+	 * un-earnable on every BuddyPress site. This guard catches that
+	 * regression on a doctor run instead of in production.
+	 */
+	private function check_core_wp_actions(): void {
+		$this->section( 'Core WordPress Triggers' );
+
+		$actions  = Registry::get_actions();
+		$required = [
+			'wp_publish_post'  => 'first_post / prolific_writer / content_creator',
+			'wp_leave_comment' => 'first_comment / engaged_reader',
+		];
+
+		$missing = [];
+		foreach ( $required as $action_id => $badges ) {
+			if ( ! isset( $actions[ $action_id ] ) ) {
+				$missing[] = $action_id . ' (badges: ' . $badges . ')';
+			}
+		}
+
+		$bp_active = function_exists( 'buddypress' );
+
+		if ( empty( $missing ) ) {
+			$this->pass( 'Core WP content triggers registered (BuddyPress ' . ( $bp_active ? 'active' : 'inactive' ) . ')' );
+		} else {
+			$this->fail(
+				'Core WP content triggers NOT registered: ' . implode( '; ', $missing )
+				. ( $bp_active
+					? ' — likely re-flagged standalone_only; those badges cannot be earned on this BuddyPress site.'
+					: '.' )
+			);
+		}
+	}
+
 	// ── Duplicate Hooks ─────────────────────────────────────────────────────────
 
 	/**
@@ -411,7 +455,7 @@ class DoctorCommand {
 				'woocommerce_order_status_completed' => 'first-time bonus',
 				'mepr-event-signup-completed'        => 'first-time bonus',
 				'give_complete_purchase'             => 'first-time bonus',
-				'publish_post'                       => 'standalone/BP split or first-post bonus',
+				'publish_post'                       => 'BP Member Blog publish (superseded by core wp_publish_post when both present)',
 				'comment_post'                       => 'author/commenter split or product review',
 				'mvs_comment_created'                => 'give/receive pattern (different users)',
 				'mvs_user_followed'                  => 'give/receive pattern (different users)',

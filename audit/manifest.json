@@ -1332,6 +1332,55 @@
         "idx_active"
       ],
       "introduced": "1.2.0 (admin REST migration; replaced legacy wb_gam_api_keys option)"
+    },
+    {
+      "name": "{prefix}wb_gam_user_intelligence",
+      "purpose": "Read-side projection of per-user behavioural signals (engagement_score, action_diversity, recency_days, events_30d, churn_risk, anomaly_flag) computed daily by IntelligenceProjector from wb_gam_events. NOT a source of truth — every row is recomputable from the event log. One row per user, denormalised so the read path is a single PK lookup.",
+      "primary_key": "user_id",
+      "indexes": [
+        "idx_churn_risk",
+        "idx_anomaly"
+      ],
+      "introduced": "1.5.0 (v2.5 / AI v1; created on existing installs by DbUpgrader::ensure_user_intelligence_table, feature-flag gated on wb_gam_feature_user_intelligence_v1)",
+      "three_entry_point": {
+        "status": "satisfied",
+        "api": "WBGam\\API\\IntelligenceController — GET /wb-gamification/v1/members/{id}/intelligence (admins read any user; members read their own).",
+        "backend": "WBGam\\Admin\\AnalyticsDashboard::render_intelligence_panels — churn-risk + anomaly panels on the Analytics dashboard.",
+        "frontend": "Member-facing via the self-read path of the REST endpoint (a logged-in member can read their own intelligence row)."
+      }
+    },
+    {
+      "name": "{prefix}wb_gam_notifications_queue",
+      "purpose": "Durable, globally-monotonic per-user notification queue (id, user_id, event_type, payload_json, created_at). Replaced the transient-based queue that was lost on wp_cache_flush and stranded per-consumer cursors. Drained by SSEController (SSE long-poll) or WP Heartbeat; pruned daily by cron.",
+      "primary_key": "id",
+      "indexes": [
+        "idx_user_id",
+        "idx_created_at"
+      ],
+      "introduced": "1.5.0 (v2.2 durability + SSE-readiness; created on existing installs by DbUpgrader::ensure_notifications_queue_table, feature-flag gated on wb_gam_feature_notifications_queue_v1)",
+      "three_entry_point": {
+        "status": "satisfied",
+        "api": "WBGam\\API\\SSEController — GET /wb-gamification/v1/stream (SSE) plus the WP Heartbeat cursor read; both call fetch_pending against this table.",
+        "backend": "WBGam\\Engine\\NotificationBridge enqueues rows; admin realtime placement/transport controlled via Settings > Realtime.",
+        "frontend": "Member-facing realtime toasts — drained client-side via SSE/Heartbeat and rendered as notifications to the logged-in member."
+      }
+    },
+    {
+      "name": "{prefix}wb_gam_side_effect_failures",
+      "purpose": "Dead-letter / reconciliation table for SideEffectDispatcher (v2.1 decoupled side effects). Holds failed level-up / streak / webhook handlers (event_id, user_id, side_effect, status, retry_count) for cron-driven retry via wb_gam_reconcile_side_effects. Internal durability plumbing — not a member or owner data feature.",
+      "primary_key": "id",
+      "indexes": [
+        "idx_status_attempt",
+        "idx_event_id"
+      ],
+      "introduced": "1.5.0 (v2.1 decoupled side effects; created on existing installs by DbUpgrader::ensure_side_effect_failures_table, feature-flag gated on wb_gam_feature_side_effect_failures_v1)",
+      "three_entry_point": {
+        "status": "intentional_exception",
+        "reason": "Internal reconciliation plumbing, not a data feature exposed to members or site owners. Written by SideEffectDispatcher on handler failure and drained by the wb_gam_reconcile_side_effects cron. There is deliberately no member frontend, admin CRUD, or public REST surface — exposing a dead-letter queue to those entry points would invite manual edits to a self-healing retry log. Operators inspect it via wp db query / Query Monitor when debugging.",
+        "api": null,
+        "backend": null,
+        "frontend": null
+      }
     }
   ],
   "capabilities": [
@@ -3410,6 +3459,24 @@
       "recurrence": "daily",
       "handler": "PointsExpiry::run",
       "purpose": "Inactivity point decay (opt-in)."
+    },
+    {
+      "hook": "wb_gam_reconcile_side_effects",
+      "interval": "hourly",
+      "handler": "SideEffectDispatcher::reconcile",
+      "where": "src/Engine/SideEffectDispatcher.php:59"
+    },
+    {
+      "hook": "wb_gam_compute_intelligence",
+      "interval": "daily",
+      "handler": "IntelligenceProjector::compute_batch",
+      "where": "src/Engine/IntelligenceProjector.php:70"
+    },
+    {
+      "hook": "wb_gam_notifications_queue_prune",
+      "interval": "daily",
+      "handler": "NotificationBridge::prune_queue",
+      "where": "src/Engine/NotificationBridge.php:146"
     }
   ],
   "wp_cli": [
@@ -3609,10 +3676,10 @@
         "note": "Manifest .hooks_fired[] holds 12 filter entries; ground-truth scan finds 46 unique wb_gam_ apply_filters sites. Massive growth from per-block data filters (14 wb_gam_block_*_data filters added in block standard migration). Major drift \u2014 re-enumeration deferred."
       },
       "tables": {
-        "manifest": 22,
-        "baseline": 23,
-        "gap_pct": 4.2999999999999998,
-        "note": "Manifest .tables[] is missing {prefix}wb_gam_api_keys (added in v1.2.0 Tier-0 admin REST migration but not back-filled)."
+        "manifest": 26,
+        "baseline": 26,
+        "gap_pct": 0,
+        "note": "Manifest .tables[] = 26; matches ground truth (23 CREATE TABLE in src/Engine/Installer.php + 3 in src/Engine/DbUpgrader.php: wb_gam_user_intelligence, wb_gam_notifications_queue, wb_gam_side_effect_failures). The 3 DbUpgrader tables back-filled 2026-06-05 (direction 2.1) with three-entry-point annotations."
       },
       "blocks": {
         "manifest": 17,
@@ -3789,7 +3856,7 @@
       "gap_pct": 0
     },
     "tables": {
-      "baseline": 23,
+      "baseline": 26,
       "gap_pct": 0
     },
     "admin_pages": {
@@ -4004,6 +4071,6 @@
     "rest_endpoint_method_rows": 73,
     "admin_pages": 14,
     "services": 49,
-    "cron_hooks_distinct": 11
+    "cron_hooks_distinct": 14
   }
 }
