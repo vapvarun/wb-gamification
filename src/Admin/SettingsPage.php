@@ -340,6 +340,16 @@ final class SettingsPage {
 		if ( isset( $_POST['wb_gam_points_decay_percent'] ) ) {
 			update_option( 'wb_gam_points_decay_percent', max( 1, min( 100, absint( wp_unslash( $_POST['wb_gam_points_decay_percent'] ) ) ) ) );
 		}
+
+		// Appearance: member-facing accent color. The reset checkbox clears the
+		// override (back to theme default); otherwise store the sanitized hex.
+		// Appearance::set_accent() sanitizes via sanitize_hex_color and deletes
+		// the option on an empty/invalid value.
+		if ( isset( $_POST['wb_gam_accent_color_field'] ) ) {
+			$reset = ! empty( $_POST['wb_gam_accent_color_reset'] );
+			$value = $reset ? '' : sanitize_hex_color( wp_unslash( (string) $_POST['wb_gam_accent_color_field'] ) );
+			\WBGam\Engine\Appearance::set_accent( (string) $value );
+		}
 		// phpcs:enable WordPress.Security.NonceVerification.Missing
 
 		add_settings_error( 'wb_gamification', 'saved', __( 'Settings saved.', 'wb-gamification' ), 'success' );
@@ -870,6 +880,10 @@ final class SettingsPage {
 						<span class="icon-sliders"></span>
 						<?php esc_html_e( 'Modules', 'wb-gamification' ); ?>
 					</a>
+					<a class="wbgam-settings-nav-item" href="#appearance" data-section="appearance">
+						<span class="icon-palette"></span>
+						<?php esc_html_e( 'Appearance', 'wb-gamification' ); ?>
+					</a>
 					<a class="wbgam-settings-nav-item" href="#tools" data-section="tools">
 						<span class="icon-wrench"></span>
 						<?php esc_html_e( 'Tools', 'wb-gamification' ); ?>
@@ -943,6 +957,11 @@ final class SettingsPage {
 				<!-- Modules section -->
 				<div class="wbgam-settings-section" id="section-modules">
 					<?php self::render_modules_section(); ?>
+				</div>
+
+				<!-- Appearance section -->
+				<div class="wbgam-settings-section" id="section-appearance">
+					<?php self::render_appearance_section(); ?>
 				</div>
 
 				<!-- Tools section -->
@@ -2192,6 +2211,79 @@ final class SettingsPage {
 				<button type="button" id="wb-gam-reset-progress" class="wbgam-btn wb-gam-btn-danger"><?php esc_html_e( 'Reset all member progress', 'wb-gamification' ); ?></button>
 			</div>
 		</div>
+		<?php
+	}
+
+	/**
+	 * Appearance — member-facing accent color picker.
+	 *
+	 * Lets the site owner override the frontend gamification accent. When the
+	 * reset box is ticked the override is cleared and the theme/default color
+	 * returns. Nonce verified by check_admin_referer() in handle_save().
+	 *
+	 * @return void
+	 */
+	private static function render_appearance_section(): void {
+		$accent     = \WBGam\Engine\Appearance::get_accent();
+		$has_custom = '' !== $accent;
+		$picker_val = $has_custom ? $accent : '#5b4cdb';
+		$presets    = \WBGam\Engine\Appearance::presets();
+		?>
+		<form method="post" action="<?php echo esc_url( admin_url( 'admin.php?page=wb-gamification&tab=appearance' ) ); ?>">
+			<?php wp_nonce_field( 'wb_gam_save_settings', 'wb_gam_settings_nonce' ); ?>
+
+			<div class="wbgam-card wbgam-stack-block">
+				<div class="wbgam-card-header">
+					<h2 class="wbgam-card-title">
+						<span class="icon-palette" aria-hidden="true"></span>
+						<?php esc_html_e( 'Accent Color', 'wb-gamification' ); ?>
+					</h2>
+					<p class="wbgam-card-desc">
+						<?php esc_html_e( 'Set the accent color for the member-facing gamification UI - badges, the hub, progress bars, buttons, and toasts. Leave it on your theme default, or pick a color that matches your brand. The whole gamification surface re-tints from this one choice.', 'wb-gamification' ); ?>
+					</p>
+				</div>
+				<div class="wbgam-card-body">
+					<p class="wbgam-stack-block">
+						<label for="wb-gam-accent-color">
+							<strong><?php esc_html_e( 'Custom accent', 'wb-gamification' ); ?></strong>
+						</label><br />
+						<input type="color"
+							id="wb-gam-accent-color"
+							name="wb_gam_accent_color_field"
+							value="<?php echo esc_attr( $picker_val ); ?>"
+						/>
+						<code class="wbgam-ms-sm"><?php echo esc_html( $picker_val ); ?></code>
+					</p>
+
+					<?php if ( ! empty( $presets ) ) : ?>
+						<p class="description wbgam-stack-block">
+							<?php esc_html_e( 'Common choices to type or pick in the color box above:', 'wb-gamification' ); ?>
+							<?php echo esc_html( implode( ' · ', array_map( static fn( $l, $h ) => $l . ' ' . $h, array_keys( $presets ), array_values( $presets ) ) ) ); ?>
+						</p>
+					<?php endif; ?>
+
+					<p class="wbgam-stack-block">
+						<label>
+							<input type="checkbox" name="wb_gam_accent_color_reset" value="1" <?php checked( ! $has_custom ); ?> />
+							<?php esc_html_e( 'Use my theme default color instead (clears the custom accent above).', 'wb-gamification' ); ?>
+						</label>
+					</p>
+
+					<p class="description">
+						<?php
+						echo $has_custom
+							? esc_html__( 'Currently using a custom accent. Untick the box and save to keep it, or tick it to revert to your theme.', 'wb-gamification' )
+							: esc_html__( 'Currently inheriting your theme color (default indigo when the theme sets none).', 'wb-gamification' );
+						?>
+					</p>
+				</div>
+				<div class="wbgam-card-footer">
+					<button type="submit" class="button button-primary">
+						<?php esc_html_e( 'Save Appearance', 'wb-gamification' ); ?>
+					</button>
+				</div>
+			</div>
+		</form>
 		<?php
 	}
 
