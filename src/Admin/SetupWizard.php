@@ -115,11 +115,18 @@ final class SetupWizard {
 	 * Register the wizard URL as a hidden submenu page.
 	 *
 	 * Always registered so admins can re-run the wizard after completion
-	 * (`?page=wb-gamification-setup`). Hidden from the menu (parent = null)
-	 * to avoid clutter.
+	 * (`?page=wb-gamification-setup`). Hidden from the menu (empty parent)
+	 * to avoid clutter. Because the page never lands in the `$submenu`
+	 * lookup, `get_admin_page_title()` would return null and
+	 * admin-header.php would emit a `strip_tags(): Passing null`
+	 * deprecation on every visit — so the `load-{hook}` callback pre-sets
+	 * the `$title` global, which `get_admin_page_title()` short-circuits
+	 * on. (Registering under the real parent and calling
+	 * `remove_submenu_page()` is NOT an option: WP then 403s the page via
+	 * `user_can_access_admin_page()`.)
 	 */
 	public static function register_page(): void {
-		add_submenu_page(
+		$hook = add_submenu_page(
 			'', // No parent — page accessible only by URL (hidden submenu).
 			__( 'Gamification Setup', 'wb-gamification' ),
 			'',
@@ -127,6 +134,18 @@ final class SetupWizard {
 			self::PAGE_SLUG,
 			array( __CLASS__, 'render' )
 		);
+		if ( $hook ) {
+			add_action(
+				'load-' . $hook,
+				static function (): void {
+					global $title;
+					if ( empty( $title ) ) {
+						// phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- Pre-seeding the admin page title for a hidden submenu; get_admin_page_title() returns this verbatim.
+						$title = __( 'Gamification Setup', 'wb-gamification' );
+					}
+				}
+			);
+		}
 	}
 
 	/**

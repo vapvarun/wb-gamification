@@ -252,17 +252,35 @@ final class BadgeEngine {
 		// the loser silently no-ops (rows=0) and we return false so the
 		// awarded-hook only fires once. See PERF-004
 		// (audit/PERF-DIAG-2026-05-27.yaml) for the original incident.
+		// NULL must be a literal: $wpdb->prepare() coerces a PHP null bound to
+		// %s into '' — which non-strict MySQL stores as the zero-date
+		// 0000-00-00 00:00:00 in a DATETIME column. Zero-dates fail the
+		// `expires_at IS NULL OR expires_at > now` visibility filter, making
+		// every awarded badge invisible on all display surfaces (Basecamp
+		// 9985131435; shipped broken in 1.5.0–1.5.3 via ef8fb69).
 		$badges_table = $wpdb->prefix . 'wb_gam_user_badges';
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from $wpdb->prefix + literal.
-		$inserted = (int) $wpdb->query(
-			$wpdb->prepare(
-				"INSERT IGNORE INTO `{$badges_table}` (user_id, badge_id, earned_at, expires_at) VALUES (%d, %s, %s, %s)",
-				$user_id,
-				$badge_id,
-				current_time( 'mysql' ),
-				$expires_at
-			)
-		);
+		if ( null === $expires_at ) {
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from $wpdb->prefix + literal.
+			$inserted = (int) $wpdb->query(
+				$wpdb->prepare(
+					"INSERT IGNORE INTO `{$badges_table}` (user_id, badge_id, earned_at, expires_at) VALUES (%d, %s, %s, NULL)",
+					$user_id,
+					$badge_id,
+					current_time( 'mysql' )
+				)
+			);
+		} else {
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from $wpdb->prefix + literal.
+			$inserted = (int) $wpdb->query(
+				$wpdb->prepare(
+					"INSERT IGNORE INTO `{$badges_table}` (user_id, badge_id, earned_at, expires_at) VALUES (%d, %s, %s, %s)",
+					$user_id,
+					$badge_id,
+					current_time( 'mysql' ),
+					$expires_at
+				)
+			);
+		}
 
 		if ( $inserted < 1 ) {
 			// Two paths land here:
@@ -470,6 +488,59 @@ final class BadgeEngine {
 			},
 			$rows ?: array()
 		);
+	}
+
+	/**
+	 * Repair earned-badge rows whose expires_at holds a zero-date.
+	 *
+	 * 1.5.0–1.5.3 wrote `0000-00-00 00:00:00` instead of SQL NULL for
+	 * never-expiring badges (null passed through $wpdb->prepare() %s — see
+	 * the note in award_badge()). Zero-dates fail the visibility filter, so
+	 * the badges exist but never display. This restores NULL, or
+	 * `earned_at + validity_days` when the badge definition declares a
+	 * validity window, then busts the per-user earned-badges caches.
+	 *
+	 * Idempotent — matching rows only exist while the data is broken. Called
+	 * from DbUpgrader::upgrade_to_1_5_4() and `wp wb-gamification doctor --fix`.
+	 *
+	 * @since 1.5.4
+	 *
+	 * @return int Number of rows repaired.
+	 */
+	public static function repair_zero_date_expiry(): int {
+		global $wpdb;
+
+		$badges_table = $wpdb->prefix . 'wb_gam_user_badges';
+		$defs_table   = $wpdb->prefix . 'wb_gam_badge_defs';
+
+		// Zero-dates sort below any real DATETIME, so `< '1971-01-01'`
+		// matches them without a zero-date literal (which servers running
+		// NO_ZERO_DATE reject).
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- one-shot repair; table names from $wpdb->prefix + literal.
+		$user_ids = $wpdb->get_col(
+			"SELECT DISTINCT user_id FROM `{$badges_table}` WHERE expires_at IS NOT NULL AND expires_at < '1971-01-01'"
+		);
+		if ( empty( $user_ids ) ) {
+			return 0;
+		}
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- one-shot repair; table names from $wpdb->prefix + literal.
+		$repaired = (int) $wpdb->query(
+			"UPDATE `{$badges_table}` ub
+			   LEFT JOIN `{$defs_table}` bd ON bd.id = ub.badge_id
+			    SET ub.expires_at = CASE
+			        WHEN bd.validity_days IS NOT NULL AND bd.validity_days > 0
+			            THEN DATE_ADD(ub.earned_at, INTERVAL bd.validity_days DAY)
+			        ELSE NULL
+			    END
+			  WHERE ub.expires_at IS NOT NULL AND ub.expires_at < '1971-01-01'"
+		);
+
+		foreach ( $user_ids as $uid ) {
+			wp_cache_delete( 'wb_gam_earned_badges_' . (int) $uid, self::CACHE_GROUP );
+		}
+
+		return $repaired;
 	}
 
 	/**

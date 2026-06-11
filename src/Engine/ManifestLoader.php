@@ -234,8 +234,18 @@ final class ManifestLoader {
 			}
 		}
 
+		$own_path = realpath( WB_GAM_PATH );
+
 		foreach ( $files as $file ) {
-			// Skip our own plugin directory to avoid loading the main plugin file.
+			// Skip our own plugin directory to avoid re-including the main plugin
+			// file (which would redeclare WB_Gamification). Compare resolved real
+			// paths: under a symlinked plugin dir (common in local dev) WB_GAM_PATH
+			// resolves to the link target while glob() returns the symlink path, so
+			// a raw strpos() would miss the match and re-include the main file.
+			$real_file = realpath( $file );
+			if ( false !== $real_file && false !== $own_path && 0 === strpos( $real_file, $own_path ) ) {
+				continue;
+			}
 			if ( 0 === strpos( $file, WB_GAM_PATH ) ) {
 				continue;
 			}
