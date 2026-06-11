@@ -331,6 +331,9 @@ final class SettingsPage {
 			$months = max( 1, min( 24, absint( wp_unslash( $_POST['wb_gam_log_retention_months'] ) ) ) );
 			update_option( 'wb_gam_log_retention_months', $months );
 		}
+		if ( isset( $_POST['wb_gam_events_retention_months'] ) ) {
+			update_option( 'wb_gam_events_retention_months', max( 1, min( 60, absint( wp_unslash( $_POST['wb_gam_events_retention_months'] ) ) ) ) );
+		}
 
 		// Point expiry / inactivity decay (opt-in).
 		update_option( 'wb_gam_points_decay_enabled', isset( $_POST['wb_gam_points_decay_enabled'] ) ? 1 : 0 );
@@ -1192,7 +1195,25 @@ final class SettingsPage {
 									>
 									<?php esc_html_e( 'months', 'wb-gamification' ); ?>
 									<p class="description">
-										<?php esc_html_e( 'Older rows are pruned daily by WP-Cron. Events table is never pruned (source of truth).', 'wb-gamification' ); ?>
+										<?php esc_html_e( 'Older points-history rows are pruned daily by WP-Cron.', 'wb-gamification' ); ?>
+									</p>
+								</td>
+							</tr>
+							<tr>
+								<th scope="row"><label for="wb-gam-events-retention-months"><?php esc_html_e( 'Keep event log for', 'wb-gamification' ); ?></label></th>
+								<td>
+									<input
+										type="number"
+										name="wb_gam_events_retention_months"
+										id="wb-gam-events-retention-months"
+										value="<?php echo esc_attr( (string) (int) get_option( 'wb_gam_events_retention_months', 12 ) ); ?>"
+										min="1"
+										max="60"
+										class="wb-gam-input-narrow"
+									>
+									<?php esc_html_e( 'months', 'wb-gamification' ); ?>
+									<p class="description">
+										<?php esc_html_e( 'The immutable event log is the source of truth points, badges, and levels are derived from. Events older than this horizon are pruned daily so the table cannot grow without bound; current balances are unaffected (they are materialised separately). Default 12 months.', 'wb-gamification' ); ?>
 									</p>
 								</td>
 							</tr>

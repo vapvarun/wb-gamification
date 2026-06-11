@@ -362,7 +362,14 @@ final class SetupWizard {
 			update_option( 'wb_gam_points_' . $action_id, (int) $points );
 		}
 		update_option( 'wb_gam_template', $template );
-		update_option( 'wb_gam_leaderboard_mode', $configs[ $template ]['leaderboard'] );
+
+		// Note: the per-template 'leaderboard' preference is NOT persisted as an
+		// option. Nothing reads wb_gam_leaderboard_mode (the leaderboard block /
+		// shortcode / hub resolve their period + scope from their own
+		// attributes), so writing it was dead data flagged by the contract
+		// audit. The value still lives in the template config above, so if a
+		// global "default leaderboard view" is wired up later it can read the
+		// chosen template's 'leaderboard' directly.
 	}
 
 	/**
