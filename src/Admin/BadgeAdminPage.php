@@ -413,8 +413,7 @@ final class BadgeAdminPage {
 								<?php if ( ! $is_new ) : ?>
 									<button
 										type="button"
-										class="wbgam-btn wbgam-btn--danger"
-										class="wbgam-ms-sm"
+										class="wbgam-btn wbgam-btn--danger wbgam-ms-sm"
 										data-wb-gam-rest-action="wbGamBadgesSettings"
 										data-wb-gam-rest-method="DELETE"
 										data-wb-gam-rest-path="/badges/<?php echo esc_attr( rawurlencode( $editing ) ); ?>"

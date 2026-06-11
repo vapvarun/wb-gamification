@@ -425,8 +425,7 @@ final class RedemptionStorePage {
 									</a>
 									<button
 										type="button"
-										class="wbgam-btn wbgam-btn--sm wbgam-btn--danger"
-										class="wbgam-ms-xs"
+										class="wbgam-btn wbgam-btn--sm wbgam-btn--danger wbgam-ms-xs"
 										data-wb-gam-rest-action="wbGamRedemptionSettings"
 										data-wb-gam-rest-method="DELETE"
 										data-wb-gam-rest-path="/redemptions/items/<?php echo (int) $item['id']; ?>"

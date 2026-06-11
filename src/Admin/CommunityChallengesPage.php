@@ -374,8 +374,7 @@ final class CommunityChallengesPage {
 									</a>
 									<button
 										type="button"
-										class="wbgam-btn wbgam-btn--sm wbgam-btn--danger"
-										class="wbgam-ms-xs"
+										class="wbgam-btn wbgam-btn--sm wbgam-btn--danger wbgam-ms-xs"
 										data-wb-gam-rest-action="wbGamCommunityChallengesSettings"
 										data-wb-gam-rest-method="DELETE"
 										data-wb-gam-rest-path="/community-challenges/<?php echo (int) $c['id']; ?>"
