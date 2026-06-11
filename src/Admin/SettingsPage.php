@@ -100,6 +100,8 @@ final class SettingsPage {
 			self::save_access_settings();
 		} elseif ( 'modules' === $tab ) {
 			self::save_modules_settings();
+		} elseif ( 'engagement' === $tab ) {
+			self::save_engagement_settings();
 		}
 
 		// Preserve the active sidebar section after save (Basecamp 9925119779).
@@ -117,6 +119,7 @@ final class SettingsPage {
 			'realtime'   => 'realtime',
 			'access'     => 'access',
 			'modules'    => 'modules',
+			'engagement' => 'engagement',
 		);
 		$fallback    = admin_url( 'admin.php?page=wb-gamification' );
 		if ( isset( $tab_to_hash[ $tab ] ) ) {
@@ -343,6 +346,262 @@ final class SettingsPage {
 		// phpcs:enable WordPress.Security.NonceVerification.Missing
 
 		add_settings_error( 'wb_gamification', 'saved', __( 'Settings saved.', 'wb-gamification' ), 'success' );
+	}
+
+	/**
+	 * Persist Engagement-tab settings (login bonus, streaks, weekly email,
+	 * leaderboard nudge, BuddyPress activity stream, public-profile slug).
+	 *
+	 * Every toggle is written unconditionally so an unchecked box correctly
+	 * saves as 0. This runs only when handle_save() routes tab=engagement, so
+	 * it never clobbers another section's options. Nonce verified by
+	 * check_admin_referer() in handle_save().
+	 *
+	 * @return void
+	 */
+	private static function save_engagement_settings(): void {
+		// phpcs:disable WordPress.Security.NonceVerification.Missing -- Nonce verified by check_admin_referer() in handle_save().
+		// Daily login bonus.
+		update_option( 'wb_gam_login_bonus_enabled', isset( $_POST['wb_gam_login_bonus_enabled'] ) ? 1 : 0 );
+		if ( isset( $_POST['wb_gam_login_bonus_tiers'] ) ) {
+			$tiers = self::parse_login_bonus_tiers( sanitize_textarea_field( wp_unslash( $_POST['wb_gam_login_bonus_tiers'] ) ) );
+			if ( ! empty( $tiers ) ) {
+				update_option( 'wb_gam_login_bonus_tiers', (string) wp_json_encode( $tiers ) );
+			} else {
+				delete_option( 'wb_gam_login_bonus_tiers' );
+			}
+		}
+
+		// Streaks.
+		if ( isset( $_POST['wb_gam_streak_grace_days'] ) ) {
+			update_option( 'wb_gam_streak_grace_days', max( 0, min( 30, absint( wp_unslash( $_POST['wb_gam_streak_grace_days'] ) ) ) ) );
+		}
+		if ( isset( $_POST['wb_gam_streak_milestone_bonus'] ) ) {
+			update_option( 'wb_gam_streak_milestone_bonus', max( 0, min( 100000, absint( wp_unslash( $_POST['wb_gam_streak_milestone_bonus'] ) ) ) ) );
+		}
+
+		// Weekly recap email.
+		update_option( 'wb_gam_weekly_email_enabled', isset( $_POST['wb_gam_weekly_email_enabled'] ) ? 1 : 0 );
+		if ( isset( $_POST['wb_gam_weekly_email_subject'] ) ) {
+			$subject = sanitize_text_field( wp_unslash( $_POST['wb_gam_weekly_email_subject'] ) );
+			if ( '' !== $subject ) {
+				update_option( 'wb_gam_weekly_email_subject', $subject );
+			} else {
+				delete_option( 'wb_gam_weekly_email_subject' );
+			}
+		}
+
+		// Leaderboard nudge email.
+		update_option( 'wb_gam_nudge_email', isset( $_POST['wb_gam_nudge_email'] ) ? 1 : 0 );
+
+		// BuddyPress activity-stream event toggles.
+		update_option( 'wb_gam_bp_stream_badge_earned', isset( $_POST['wb_gam_bp_stream_badge_earned'] ) ? 1 : 0 );
+		update_option( 'wb_gam_bp_stream_challenge_completed', isset( $_POST['wb_gam_bp_stream_challenge_completed'] ) ? 1 : 0 );
+		update_option( 'wb_gam_bp_stream_kudos_given', isset( $_POST['wb_gam_bp_stream_kudos_given'] ) ? 1 : 0 );
+		update_option( 'wb_gam_bp_stream_level_changed', isset( $_POST['wb_gam_bp_stream_level_changed'] ) ? 1 : 0 );
+
+		// Public-profile URL slug base (e.g. /u/{login}). sanitize_title keeps it
+		// URL-safe; an empty result leaves the existing/default 'u' untouched.
+		if ( isset( $_POST['wb_gam_profile_slug_base'] ) ) {
+			$slug = sanitize_title( wp_unslash( $_POST['wb_gam_profile_slug_base'] ) );
+			if ( '' !== $slug ) {
+				update_option( 'wb_gam_profile_slug_base', $slug );
+			}
+		}
+		// phpcs:enable WordPress.Security.NonceVerification.Missing
+
+		add_settings_error( 'wb_gamification', 'saved', __( 'Engagement settings saved.', 'wb-gamification' ), 'success' );
+	}
+
+	/**
+	 * Parse the login-bonus tier textarea ("day:points" per line) into a
+	 * normalised day => points map matching LoginBonusEngine::get_tiers().
+	 *
+	 * Invalid / non-positive lines are skipped; the map is sorted by day so the
+	 * ladder reads naturally. Returns an empty array when nothing valid is
+	 * found, which the caller treats as "reset to defaults".
+	 *
+	 * @param string $raw Raw textarea value.
+	 * @return array<int,int> day => points
+	 */
+	private static function parse_login_bonus_tiers( string $raw ): array {
+		$tiers = array();
+		foreach ( preg_split( '/\r\n|\r|\n/', $raw ) as $line ) {
+			$line = trim( (string) $line );
+			if ( '' === $line || false === strpos( $line, ':' ) ) {
+				continue;
+			}
+			list( $day, $points ) = array_map( 'trim', explode( ':', $line, 2 ) );
+			$day                  = absint( $day );
+			$points               = absint( $points );
+			if ( $day > 0 && $points > 0 ) {
+				$tiers[ $day ] = $points;
+			}
+		}
+		ksort( $tiers );
+		return $tiers;
+	}
+
+	/**
+	 * Render the Engagement settings section — the controls for features that
+	 * previously had sensible defaults but no admin UI: daily login bonus,
+	 * streaks, weekly recap email, leaderboard nudge email, BuddyPress
+	 * activity-stream event toggles, and the public-profile URL slug.
+	 *
+	 * One form, posted to tab=engagement so save_engagement_settings() handles
+	 * it in isolation. Nonce verified by check_admin_referer() in handle_save().
+	 *
+	 * @return void
+	 */
+	private static function render_engagement_section(): void {
+		$login_enabled = (bool) get_option( 'wb_gam_login_bonus_enabled', true );
+		$tiers         = \WBGam\Engine\LoginBonusEngine::get_tiers();
+		$tier_lines    = array();
+		foreach ( $tiers as $day => $points ) {
+			$tier_lines[] = (int) $day . ':' . (int) $points;
+		}
+		$tiers_text = implode( "\n", $tier_lines );
+
+		$grace_days     = (int) get_option( 'wb_gam_streak_grace_days', 1 );
+		$milestone_pts  = (int) get_option( 'wb_gam_streak_milestone_bonus', 10 );
+		$weekly_enabled = (bool) (int) get_option( 'wb_gam_weekly_email_enabled', 1 );
+		/* translators: %s = site name */
+		$weekly_default = sprintf( __( 'Your week in %s', 'wb-gamification' ), get_bloginfo( 'name' ) );
+		$weekly_subject = (string) get_option( 'wb_gam_weekly_email_subject', $weekly_default );
+		$nudge_email    = (bool) (int) get_option( 'wb_gam_nudge_email', 0 );
+		$slug_base      = (string) get_option( 'wb_gam_profile_slug_base', 'u' );
+
+		$bp_streams = array(
+			'wb_gam_bp_stream_badge_earned'        => __( 'Badge earned', 'wb-gamification' ),
+			'wb_gam_bp_stream_challenge_completed' => __( 'Challenge completed', 'wb-gamification' ),
+			'wb_gam_bp_stream_kudos_given'         => __( 'Kudos given', 'wb-gamification' ),
+			'wb_gam_bp_stream_level_changed'       => __( 'Level changed', 'wb-gamification' ),
+		);
+		?>
+		<form method="post" action="<?php echo esc_url( admin_url( 'admin.php?page=wb-gamification&tab=engagement' ) ); ?>">
+			<?php wp_nonce_field( 'wb_gam_save_settings', 'wb_gam_settings_nonce' ); ?>
+
+			<div class="wbgam-card wbgam-stack-block">
+				<div class="wbgam-card-header">
+					<h2 class="wbgam-card-title">
+						<span class="icon-gift" aria-hidden="true"></span>
+						<?php esc_html_e( 'Daily Login Bonus', 'wb-gamification' ); ?>
+					</h2>
+					<p class="wbgam-card-desc"><?php esc_html_e( 'Reward members for logging in on consecutive days. The tier ladder lists day thresholds and the points awarded when a member reaches each one.', 'wb-gamification' ); ?></p>
+				</div>
+				<div class="wbgam-card-body">
+					<label class="wbgam-checkbox-option wbgam-stack-block">
+						<input type="checkbox" name="wb_gam_login_bonus_enabled" value="1" <?php checked( $login_enabled ); ?> />
+						<span><?php esc_html_e( 'Award a daily login bonus', 'wb-gamification' ); ?></span>
+					</label>
+					<p>
+						<label for="wb-gam-login-bonus-tiers"><strong><?php esc_html_e( 'Tier ladder', 'wb-gamification' ); ?></strong></label><br />
+						<textarea id="wb-gam-login-bonus-tiers" name="wb_gam_login_bonus_tiers" rows="6" class="large-text code" placeholder="1:10&#10;3:20&#10;7:50"><?php echo esc_textarea( $tiers_text ); ?></textarea>
+						<span class="description"><?php esc_html_e( 'One tier per line as day:points (e.g. 7:50 = 50 points on a 7-day streak). Leave blank to restore the default ladder.', 'wb-gamification' ); ?></span>
+					</p>
+				</div>
+			</div>
+
+			<div class="wbgam-card wbgam-stack-block">
+				<div class="wbgam-card-header">
+					<h2 class="wbgam-card-title">
+						<span class="icon-flame" aria-hidden="true"></span>
+						<?php esc_html_e( 'Streaks', 'wb-gamification' ); ?>
+					</h2>
+					<p class="wbgam-card-desc"><?php esc_html_e( 'Tune how forgiving streaks are and what a milestone is worth.', 'wb-gamification' ); ?></p>
+				</div>
+				<div class="wbgam-card-body">
+					<p>
+						<label for="wb-gam-streak-grace-days"><strong><?php esc_html_e( 'Grace days', 'wb-gamification' ); ?></strong></label><br />
+						<input type="number" id="wb-gam-streak-grace-days" name="wb_gam_streak_grace_days" class="wb-gam-input-narrow" min="0" max="30" value="<?php echo esc_attr( (string) $grace_days ); ?>" />
+						<span class="description"><?php esc_html_e( 'Missed days a member can skip before a streak breaks. 0 means the streak must be unbroken.', 'wb-gamification' ); ?></span>
+					</p>
+					<p>
+						<label for="wb-gam-streak-milestone-bonus"><strong><?php esc_html_e( 'Milestone bonus points', 'wb-gamification' ); ?></strong></label><br />
+						<input type="number" id="wb-gam-streak-milestone-bonus" name="wb_gam_streak_milestone_bonus" class="wb-gam-input-narrow" min="0" max="100000" value="<?php echo esc_attr( (string) $milestone_pts ); ?>" />
+						<span class="description"><?php esc_html_e( 'Points awarded when a member reaches a streak milestone (7, 30, 100, 365 days).', 'wb-gamification' ); ?></span>
+					</p>
+				</div>
+			</div>
+
+			<div class="wbgam-card wbgam-stack-block">
+				<div class="wbgam-card-header">
+					<h2 class="wbgam-card-title">
+						<span class="icon-mail" aria-hidden="true"></span>
+						<?php esc_html_e( 'Weekly Recap Email', 'wb-gamification' ); ?>
+					</h2>
+					<p class="wbgam-card-desc"><?php esc_html_e( 'An automated weekly summary of each member\'s points, badges, and streak. Members can opt out individually.', 'wb-gamification' ); ?></p>
+				</div>
+				<div class="wbgam-card-body">
+					<label class="wbgam-checkbox-option wbgam-stack-block">
+						<input type="checkbox" name="wb_gam_weekly_email_enabled" value="1" <?php checked( $weekly_enabled ); ?> />
+						<span><?php esc_html_e( 'Send the weekly recap email', 'wb-gamification' ); ?></span>
+					</label>
+					<p>
+						<label for="wb-gam-weekly-subject"><strong><?php esc_html_e( 'Subject line', 'wb-gamification' ); ?></strong></label><br />
+						<input type="text" id="wb-gam-weekly-subject" name="wb_gam_weekly_email_subject" class="regular-text" value="<?php echo esc_attr( $weekly_subject ); ?>" />
+					</p>
+				</div>
+			</div>
+
+			<div class="wbgam-card wbgam-stack-block">
+				<div class="wbgam-card-header">
+					<h2 class="wbgam-card-title">
+						<span class="icon-trending-up" aria-hidden="true"></span>
+						<?php esc_html_e( 'Leaderboard Nudge', 'wb-gamification' ); ?>
+					</h2>
+					<p class="wbgam-card-desc"><?php esc_html_e( 'When a member is close to overtaking a rival on the leaderboard, nudge them. The in-app notification is always sent; this controls the email copy.', 'wb-gamification' ); ?></p>
+				</div>
+				<div class="wbgam-card-body">
+					<label class="wbgam-checkbox-option">
+						<input type="checkbox" name="wb_gam_nudge_email" value="1" <?php checked( $nudge_email ); ?> />
+						<span><?php esc_html_e( 'Also send the nudge by email', 'wb-gamification' ); ?></span>
+					</label>
+				</div>
+			</div>
+
+			<div class="wbgam-card wbgam-stack-block">
+				<div class="wbgam-card-header">
+					<h2 class="wbgam-card-title">
+						<span class="icon-activity" aria-hidden="true"></span>
+						<?php esc_html_e( 'BuddyPress Activity Stream', 'wb-gamification' ); ?>
+					</h2>
+					<p class="wbgam-card-desc"><?php esc_html_e( 'Choose which gamification events post to the BuddyPress activity feed. Applies only when BuddyPress is active.', 'wb-gamification' ); ?></p>
+				</div>
+				<div class="wbgam-card-body">
+					<?php foreach ( $bp_streams as $option_name => $label ) : ?>
+						<label class="wbgam-checkbox-option wbgam-stack-block">
+							<input type="checkbox" name="<?php echo esc_attr( $option_name ); ?>" value="1" <?php checked( (bool) get_option( $option_name, 1 ) ); ?> />
+							<span><?php echo esc_html( $label ); ?></span>
+						</label>
+					<?php endforeach; ?>
+				</div>
+			</div>
+
+			<div class="wbgam-card wbgam-stack-block">
+				<div class="wbgam-card-header">
+					<h2 class="wbgam-card-title">
+						<span class="icon-user" aria-hidden="true"></span>
+						<?php esc_html_e( 'Public Profile URL', 'wb-gamification' ); ?>
+					</h2>
+					<p class="wbgam-card-desc"><?php esc_html_e( 'The base segment for public member profiles. Default is "u", giving URLs like /u/jane.', 'wb-gamification' ); ?></p>
+				</div>
+				<div class="wbgam-card-body">
+					<p>
+						<label for="wb-gam-profile-slug"><strong><?php esc_html_e( 'Slug base', 'wb-gamification' ); ?></strong></label><br />
+						<code>/</code>
+						<input type="text" id="wb-gam-profile-slug" name="wb_gam_profile_slug_base" class="wb-gam-input-narrow" value="<?php echo esc_attr( $slug_base ); ?>" />
+						<code>/{member}</code>
+						<span class="description"><?php esc_html_e( 'After changing this, re-save Permalinks (Settings > Permalinks) so the new URL takes effect.', 'wb-gamification' ); ?></span>
+					</p>
+				</div>
+			</div>
+
+			<div class="wbgam-card-footer">
+				<button type="submit" class="button button-primary"><?php esc_html_e( 'Save Engagement Settings', 'wb-gamification' ); ?></button>
+			</div>
+		</form>
+		<?php
 	}
 
 	/**
@@ -870,6 +1129,10 @@ final class SettingsPage {
 						<span class="icon-sliders"></span>
 						<?php esc_html_e( 'Modules', 'wb-gamification' ); ?>
 					</a>
+					<a class="wbgam-settings-nav-item" href="#engagement" data-section="engagement">
+						<span class="icon-sparkles"></span>
+						<?php esc_html_e( 'Engagement', 'wb-gamification' ); ?>
+					</a>
 					<a class="wbgam-settings-nav-item" href="#tools" data-section="tools">
 						<span class="icon-wrench"></span>
 						<?php esc_html_e( 'Tools', 'wb-gamification' ); ?>
@@ -943,6 +1206,11 @@ final class SettingsPage {
 				<!-- Modules section -->
 				<div class="wbgam-settings-section" id="section-modules">
 					<?php self::render_modules_section(); ?>
+				</div>
+
+				<!-- Engagement section -->
+				<div class="wbgam-settings-section" id="section-engagement">
+					<?php self::render_engagement_section(); ?>
 				</div>
 
 				<!-- Tools section -->
