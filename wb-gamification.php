@@ -243,6 +243,10 @@ final class WB_Gamification {
 		BootOrder::register( 'engine', BootOrder::SLOT_CORE, array( 'registry', 'db_upgrader' ) );
 		add_action( 'plugins_loaded', array( Engine::class, 'init' ), BootOrder::SLOT_CORE );
 
+		// Member-facing accent color override (Settings > Appearance). Only
+		// registers a wp_enqueue_scripts hook, so it has no boot-order deps.
+		\WBGam\Engine\Appearance::init();
+
 		BootOrder::register( 'wp_hooks', BootOrder::SLOT_CORE, array( 'registry' ) );
 		add_action( 'plugins_loaded', array( WPHooks::class, 'init' ), BootOrder::SLOT_CORE );
 
