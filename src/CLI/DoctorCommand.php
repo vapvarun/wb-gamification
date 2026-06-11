@@ -130,6 +130,7 @@ class DoctorCommand {
 		$this->check_database();
 		$this->check_default_levels();
 		$this->check_default_badges();
+		$this->check_badge_expiry_integrity();
 		$this->check_actions();
 		$this->check_core_wp_actions();
 		$this->check_duplicate_hooks();
@@ -313,6 +314,41 @@ class DoctorCommand {
 
 		if ( ! empty( $orphaned ) ) {
 			$this->warn( 'Badge conditions reference unregistered actions: ' . implode( ', ', $orphaned ) );
+		}
+	}
+
+	// ── Earned-Badge Expiry Integrity ───────────────────────────────────────────
+
+	/**
+	 * Detect zero-date expires_at rows on earned badges.
+	 *
+	 * 1.5.0–1.5.3 stored `0000-00-00 00:00:00` instead of NULL for
+	 * never-expiring badges (Basecamp 9985131435). Such rows fail the
+	 * `expires_at IS NULL OR expires_at > now` visibility filter, so the
+	 * badges exist in wb_gam_user_badges but show as 0 on every surface —
+	 * the exact "badges awarded but not displaying" support symptom.
+	 */
+	private function check_badge_expiry_integrity(): void {
+		$this->section( 'Earned-Badge Expiry Integrity' );
+
+		global $wpdb;
+		// Zero-dates sort below any real DATETIME; comparing against
+		// '1971-01-01' avoids a zero-date literal (rejected by NO_ZERO_DATE).
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching
+		$broken = (int) $wpdb->get_var(
+			"SELECT COUNT(*) FROM {$wpdb->prefix}wb_gam_user_badges WHERE expires_at IS NOT NULL AND expires_at < '1971-01-01'"
+		);
+
+		if ( 0 === $broken ) {
+			$this->pass( 'No zero-date expires_at rows on earned badges' );
+			return;
+		}
+
+		$this->fail( $broken . ' earned-badge rows have a zero-date expires_at — badges exist but display as 0 everywhere (profiles, Members page, blocks)' );
+		if ( $this->fix ) {
+			WP_CLI::line( '  → Repairing expires_at (NULL, or earned_at + validity_days where the badge defines a window)...' );
+			$repaired = \WBGam\Engine\BadgeEngine::repair_zero_date_expiry();
+			WP_CLI::success( '  ' . $repaired . ' rows repaired; earned-badge caches flushed.' );
 		}
 	}
 

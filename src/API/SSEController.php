@@ -345,11 +345,19 @@ final class SSEController {
 				}
 
 				// SSE wire format: `id`, `event`, `data`. Each terminated
-				// by \n; record terminated by extra \n.
+				// by \n; record terminated by extra \n. This is a
+				// text/event-stream response, not HTML, so esc_html()/esc_attr()
+				// would corrupt the protocol AND the JSON payload — the correct
+				// "escaping" here is preventing a stray CR/LF from injecting an
+				// extra SSE field. $last_id is an int; $data is wp_json_encode
+				// output (newlines already \u-escaped); event_type is the only
+				// free-ish value, so strip CR/LF defensively.
+				$event_name = str_replace( array( "\r", "\n" ), '', (string) $row['event_type'] );
+				// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- SSE stream (not HTML); values are an int, a CRLF-stripped token, and JSON. See note above.
 				printf(
 					"id: %d\nevent: %s\ndata: %s\n\n",
 					$last_id,
-					(string) $row['event_type'],
+					$event_name,
 					$data
 				);
 			}

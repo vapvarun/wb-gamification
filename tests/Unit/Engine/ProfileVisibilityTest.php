@@ -77,4 +77,83 @@ class ProfileVisibilityTest extends TestCase {
 		);
 		$this->assertFalse( ProfilePage::is_publicly_visible( 42 ) );
 	}
+
+	// ── Write path (1.5.5) — the member-facing surface for wb_gam_profile_public.
+	//
+	// Before 1.5.5 the meta was read everywhere but written nowhere, so a
+	// member could not make their own profile private (Basecamp 9985172423).
+	// These lock the write helper + its read companion.
+
+	/**
+	 * @test
+	 * @covers ::member_opted_private
+	 */
+	public function member_opted_private_reads_only_explicit_zero(): void {
+		Functions\when( 'get_user_meta' )->justReturn( '0' );
+		$this->assertTrue( ProfilePage::member_opted_private( 42 ) );
+	}
+
+	/**
+	 * @test
+	 * @covers ::member_opted_private
+	 */
+	public function member_opted_private_is_false_when_unset_or_public(): void {
+		Functions\when( 'get_user_meta' )->justReturn( '' );
+		$this->assertFalse( ProfilePage::member_opted_private( 42 ) );
+
+		Functions\when( 'get_user_meta' )->justReturn( '1' );
+		$this->assertFalse( ProfilePage::member_opted_private( 42 ) );
+	}
+
+	/**
+	 * @test
+	 * @covers ::set_member_visibility
+	 */
+	public function set_member_visibility_writes_zero_for_private(): void {
+		$written = array();
+		Functions\when( 'update_user_meta' )->alias(
+			static function ( $uid, $key, $value ) use ( &$written ) {
+				$written = array( $uid, $key, $value );
+				return true;
+			}
+		);
+		Functions\when( 'do_action' )->justReturn( null );
+
+		ProfilePage::set_member_visibility( 42, false );
+		$this->assertSame( array( 42, 'wb_gam_profile_public', '0' ), $written );
+	}
+
+	/**
+	 * @test
+	 * @covers ::set_member_visibility
+	 */
+	public function set_member_visibility_writes_one_for_public(): void {
+		$written = array();
+		Functions\when( 'update_user_meta' )->alias(
+			static function ( $uid, $key, $value ) use ( &$written ) {
+				$written = array( $uid, $key, $value );
+				return true;
+			}
+		);
+		Functions\when( 'do_action' )->justReturn( null );
+
+		ProfilePage::set_member_visibility( 42, true );
+		$this->assertSame( array( 42, 'wb_gam_profile_public', '1' ), $written );
+	}
+
+	/**
+	 * @test
+	 * @covers ::set_member_visibility
+	 */
+	public function set_member_visibility_ignores_invalid_user(): void {
+		Functions\when( 'update_user_meta' )->alias(
+			static function () {
+				throw new \RuntimeException( 'update_user_meta must not run for an invalid user id' );
+			}
+		);
+		Functions\when( 'do_action' )->justReturn( null );
+
+		ProfilePage::set_member_visibility( 0, false );
+		$this->assertTrue( true ); // Reached here = no write attempted.
+	}
 }

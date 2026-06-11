@@ -1,0 +1,51 @@
+{
+    "generated": "2026-06-11",
+    "note": "Every entry is a VERIFIED-INTENTIONAL exception, not a suppressed bug. The genuinely fixable findings were fixed (cron/CSS tool false positives resolved upstream in the audit tool; events_retention_months + leaderboard_mode in PR #64; 12 engagement settings given admin UIs in PR #65). What remains is deferred-feature options and dynamic-key writes a static scanner provably cannot follow. Re-verify each before extending.",
+    "suppressions": [
+        {
+            "id": "option-read-never-written:wb_gam_activitypub_publish",
+            "reason": "Deferred feature. ActivityPub federation is not shipped yet (src/Integrations/ActivityPub.php is gated/inactive). The option is read default-off; it gains a write path + admin UI when AP ships. Intentional code-only until then.",
+            "severity": "error"
+        },
+        {
+            "id": "user_meta-read-never-written:wb_gam_federate_events",
+            "reason": "Deferred feature. Per-user ActivityPub opt-in meta, read default-off; no write/UI until ActivityPub federation ships. Pairs with wb_gam_activitypub_publish.",
+            "severity": "error"
+        },
+        {
+            "id": "option-read-never-written:wb_gam_feature_notifications_queue_v1",
+            "reason": "Feature kill-switch read with a functional default. FeatureFlags persists combined state under one option (FeatureFlags.php:156, OPTION_KEY); this individual key is code/filter-overridable by design, no per-key admin write intended.",
+            "severity": "warning"
+        },
+        {
+            "id": "option-read-never-written:wb_gam_feature_user_intelligence_v1",
+            "reason": "Feature kill-switch read with a functional default. Same FeatureFlags combined-option design as wb_gam_feature_notifications_queue_v1; code/filter-overridable, no per-key admin write intended.",
+            "severity": "warning"
+        },
+        {
+            "id": "option-read-never-written:wb_gam_profile_public_enabled",
+            "reason": "False positive. Written by SetupWizard via update_option($option_key) iterating a label=>key map (SetupWizard.php:341); the static scanner cannot resolve the variable key. The write site exists.",
+            "severity": "warning"
+        },
+        {
+            "id": "user_meta-read-never-written:wb_gam_pr_best_week",
+            "reason": "False positive. Written by PersonalRecordEngine via the dynamic key 'wb_gam_pr_best_' . $period (PersonalRecordEngine.php:115); the static scanner cannot match the concatenation. The write site exists.",
+            "severity": "warning"
+        },
+        {
+            "id": "user_meta-possible-dual-key:wb_gam_level_name <> wb_gam_level_id",
+            "reason": "Distinct data, not a dual key. Level display name vs numeric level id are different fields. Heuristic token-overlap false positive.",
+            "severity": "info"
+        },
+        {
+            "id": "user_meta-possible-dual-key:wb_gam_login_streak <> wb_gam_login_streak_max",
+            "reason": "Distinct data, not a dual key. Current login streak vs all-time max streak are intentionally separate counters. Heuristic false positive.",
+            "severity": "info"
+        },
+        {
+            "id": "option-possible-dual-key:wb_gam_db_version <> wb_gam_caps_version",
+            "reason": "Distinct data, not a dual key. Schema migration version vs capabilities/abilities version are independent counters. Heuristic false positive.",
+            "severity": "info"
+        }
+    ]
+}

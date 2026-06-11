@@ -1,0 +1,69 @@
+# .distignore — files and folders that are NOT part of the distributed plugin.
+#
+# This is the single canonical "distribution scope" manifest for wb-gamification.
+# Anything listed here is development-only and must be excluded from:
+#   - the customer zip (bin/build-release.sh reads this list),
+#   - QA / code audits (wppqa, Plugin Check, contract-audit), so audits only
+#     ever scan shipped code and don't waste time flagging dev tooling.
+#
+# Distribution-ready code lives in: wb-gamification.php, uninstall.php, src/,
+# integrations/, build/, assets/, languages/, readme.txt, and the block CSS.
+
+# ── Version control / CI ──────────────────────────────────────────────
+.git
+.github
+.gitignore
+.gitattributes
+.distignore
+
+# ── Dev dependencies ──────────────────────────────────────────────────
+vendor
+node_modules
+composer.json
+composer.lock
+package.json
+package-lock.json
+
+# ── Build tooling & dev scripts (NOT shipped, NOT audited) ────────────
+bin
+src/shared
+src/sdk
+Gruntfile.js
+webpack.config.js
+*.dist
+
+# ── Linter / static-analysis configs ──────────────────────────────────
+.phpcs.xml
+.phpcs.xml.dist
+phpcs.xml
+phpcs.xml.dist
+phpstan.neon
+phpstan.neon.dist
+phpunit.xml
+phpunit.xml.dist
+.eslintrc*
+.stylelintrc*
+.editorconfig
+
+# ── Tests ─────────────────────────────────────────────────────────────
+tests
+
+# ── Internal docs, audits, plans (dev-only, never shipped/audited) ────
+audit
+plan
+docs
+examples
+.contract-audit-baseline.json
+CLAUDE.md
+README.md
+*.md
+
+# ── Build output / packaging ──────────────────────────────────────────
+dist
+.wordpress-org
+
+# ── Editor / OS cruft ─────────────────────────────────────────────────
+.DS_Store
+.idea
+.vscode
+*.log

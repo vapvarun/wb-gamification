@@ -79,6 +79,33 @@ else
 fi
 # ─── End static gate ─────────────────────────────────────────────────────────
 
+# ─── Contract-audit gate (cross-surface contract drift) ──────────────────────
+# Static scan for the "writes key A, reads key B" bug class. Runs --strict so
+# warnings block too. Exits 0 only when every finding is either resolved or
+# baselined in .contract-audit-baseline.json with a real reason. The script
+# lives in the shared wp-contract-audit skill; if it is not installed (CI
+# runner, fresh clone) the gate is skipped with a warning rather than failing
+# the build. Folded into release prep on 2026-06-11 (QA-accuracy 0/0 push).
+CONTRACT_AUDIT="${HOME}/.claude/skills/wp-contract-audit/scripts/contract-audit.php"
+if [ "${SKIP_STATIC_GATES}" -eq 1 ]; then
+    echo "  WARN: contract-audit gate skipped (--skip-static-gates)."
+elif [ ! -f "${CONTRACT_AUDIT}" ]; then
+    echo "  WARN: contract-audit script not found at ${CONTRACT_AUDIT} - gate skipped."
+else
+    echo "→ Running contract audit (--strict) ..."
+    if ! php "${CONTRACT_AUDIT}" "${ROOT_DIR}" --strict > /tmp/release-contract-audit-$$.log 2>&1; then
+        echo "ERROR: contract audit found unbaselined drift. Release blocked." >&2
+        echo "       Fix the finding, or baseline it with a real reason in" >&2
+        echo "       .contract-audit-baseline.json, then re-run." >&2
+        tail -30 /tmp/release-contract-audit-$$.log >&2
+        rm -f /tmp/release-contract-audit-$$.log
+        exit 25
+    fi
+    rm -f /tmp/release-contract-audit-$$.log
+    echo "  contract audit clean (0/0, baselined exceptions only)"
+fi
+# ─── End contract-audit gate ─────────────────────────────────────────────────
+
 # ─── Agent-smoke gate ───────────────────────────────────────────────────────
 # Refuses to package unless docs/qa/.last-smoke-pass.json:
 #   - exists

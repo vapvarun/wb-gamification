@@ -776,6 +776,13 @@ final class DbUpgrader {
 		if ( function_exists( 'flush_rewrite_rules' ) ) {
 			flush_rewrite_rules( false );
 		}
+
+		// Repair zero-date expires_at rows written by 1.5.0–1.5.3 (Basecamp
+		// 9985131435): award_badge() passed null through $wpdb->prepare() %s,
+		// storing '' → 0000-00-00, which hides every earned badge from the
+		// `expires_at IS NULL OR expires_at > now` visibility filter. Restores
+		// NULL (or earned_at + validity_days) and busts earned-badge caches.
+		\WBGam\Engine\BadgeEngine::repair_zero_date_expiry();
 	}
 
 	/**

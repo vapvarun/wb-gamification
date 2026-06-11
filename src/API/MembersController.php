@@ -235,6 +235,36 @@ class MembersController extends WP_REST_Controller {
 			)
 		);
 
+		// GET/POST /members/me/profile-visibility — the member's own
+		// profile-privacy choice (writes wb_gam_profile_public). Self-only:
+		// always operates on the current user, never an arbitrary id, so the
+		// permission gate is simply "logged in". This is the member-facing
+		// write surface the read gates (Privacy::can_view_public_profile,
+		// ProfilePage::is_publicly_visible) have always consumed.
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/me/profile-visibility',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_profile_visibility' ),
+					'permission_callback' => array( $this, 'logged_in_permissions_check' ),
+				),
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'set_profile_visibility' ),
+					'permission_callback' => array( $this, 'logged_in_permissions_check' ),
+					'args'                => array(
+						'public' => array(
+							'type'        => 'boolean',
+							'required'    => true,
+							'description' => 'Whether the member wants their profile publicly visible.',
+						),
+					),
+				),
+			)
+		);
+
 		// GET /members — admin roster: searchable, paginated list of members
 		// with their gamification stats. Lives under this plugin's own
 		// namespace (wb-gamification/v1), so it never collides with WP core's
@@ -551,6 +581,63 @@ class MembersController extends WP_REST_Controller {
 			);
 		}
 		return true;
+	}
+
+	/**
+	 * Self-service gate: any logged-in member may read/write their OWN data.
+	 *
+	 * Used by the `/me/*` routes that act exclusively on the current user, so
+	 * there is no target id to authorise against — being logged in is the whole
+	 * check.
+	 *
+	 * @return true|WP_Error
+	 */
+	public function logged_in_permissions_check(): bool|WP_Error {
+		if ( ! is_user_logged_in() ) {
+			return new WP_Error(
+				'rest_not_logged_in',
+				__( 'You must be logged in.', 'wb-gamification' ),
+				array( 'status' => 401 )
+			);
+		}
+		return true;
+	}
+
+	/**
+	 * GET /members/me/profile-visibility — the current member's own choice.
+	 *
+	 * @return WP_REST_Response { public: bool, site_enabled: bool }
+	 */
+	public function get_profile_visibility(): WP_REST_Response {
+		$user_id = get_current_user_id();
+		return new WP_REST_Response(
+			array(
+				'public'       => ! \WBGam\Engine\ProfilePage::member_opted_private( $user_id ),
+				'site_enabled' => (bool) get_option( 'wb_gam_profile_public_enabled', '1' ),
+			),
+			200
+		);
+	}
+
+	/**
+	 * POST /members/me/profile-visibility — set the current member's choice.
+	 *
+	 * @param WP_REST_Request $request Request carrying the boolean `public` flag.
+	 * @return WP_REST_Response { public: bool, site_enabled: bool }
+	 */
+	public function set_profile_visibility( $request ): WP_REST_Response {
+		$user_id = get_current_user_id();
+		$public  = (bool) $request->get_param( 'public' );
+
+		\WBGam\Engine\ProfilePage::set_member_visibility( $user_id, $public );
+
+		return new WP_REST_Response(
+			array(
+				'public'       => $public,
+				'site_enabled' => (bool) get_option( 'wb_gam_profile_public_enabled', '1' ),
+			),
+			200
+		);
 	}
 
 	// ── Endpoint callbacks ────────────────────────────────────────────────────
