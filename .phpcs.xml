@@ -114,12 +114,26 @@
 		</properties>
 	</rule>
 
+	<!-- Distribution scope: only shipped code is scanned. The <file> allowlist
+	     above scopes the local gate; these exclude-patterns additionally keep
+	     any whole-tree scan (wppqa, Plugin Check, an IDE phpcs run) off the
+	     dev-only folders so audits don't waste time flagging build scripts and
+	     internal docs. Mirrors .distignore (the canonical dist-scope manifest)
+	     and bin/build-release.sh's packaging excludes. -->
 	<exclude-pattern>vendor/*</exclude-pattern>
 	<exclude-pattern>node_modules/*</exclude-pattern>
 	<exclude-pattern>assets/*</exclude-pattern>
 	<exclude-pattern>blocks/*</exclude-pattern>
 	<exclude-pattern>dist/*</exclude-pattern>
 	<exclude-pattern>tests/*</exclude-pattern>
+	<!-- Dev tooling & internal docs — never shipped, never audited. -->
+	<exclude-pattern>bin/*</exclude-pattern>
+	<exclude-pattern>audit/*</exclude-pattern>
+	<exclude-pattern>plan/*</exclude-pattern>
+	<exclude-pattern>docs/*</exclude-pattern>
+	<exclude-pattern>examples/*</exclude-pattern>
+	<exclude-pattern>.github/*</exclude-pattern>
+	<exclude-pattern>*.dist</exclude-pattern>
 	<!-- integrations/contrib/* SHIPS in the customer zip (build-release.sh does
 	     not exclude it), so it is linted like the rest of the distribution. -->
 
