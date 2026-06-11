@@ -241,6 +241,56 @@ final class ProfilePage {
 	}
 
 	/**
+	 * Has the member explicitly opted their own profile private?
+	 *
+	 * Reads ONLY the per-user choice (`wb_gam_profile_public` === '0'),
+	 * independent of the site-wide kill switch and the visibility filter.
+	 * Used by the member-facing toggle to reflect the owner's own setting,
+	 * not the net computed visibility.
+	 *
+	 * @since 1.5.5
+	 * @param int $user_id User ID.
+	 * @return bool True when the member has chosen to hide their profile.
+	 */
+	public static function member_opted_private( int $user_id ): bool {
+		return '0' === (string) get_user_meta( $user_id, self::META_PUBLIC, true );
+	}
+
+	/**
+	 * Set a member's own profile visibility choice — the write path for the
+	 * `wb_gam_profile_public` user-meta the read gates have always consumed.
+	 *
+	 * Before 1.5.5 this meta was read by {@see Privacy::can_view_public_profile()}
+	 * and {@see is_publicly_visible()} and registered in the GDPR export/erase
+	 * model, but nothing ever wrote it — so a member could not make their own
+	 * profile private. This is that missing surface.
+	 *
+	 * Stores an explicit '1' (public) or '0' (private) so the choice round-trips
+	 * through the privacy exporter; the read side treats anything other than '0'
+	 * as public, so unset members stay public by default.
+	 *
+	 * @since 1.5.5
+	 * @param int  $user_id User whose choice to set.
+	 * @param bool $public  True to make the profile public, false to hide it.
+	 * @return void
+	 */
+	public static function set_member_visibility( int $user_id, bool $public ): void {
+		if ( $user_id <= 0 ) {
+			return;
+		}
+		update_user_meta( $user_id, self::META_PUBLIC, $public ? '1' : '0' );
+
+		/**
+		 * Fires after a member changes their own profile visibility.
+		 *
+		 * @since 1.5.5
+		 * @param int  $user_id Member who changed the setting.
+		 * @param bool $public  New visibility (true = public).
+		 */
+		do_action( 'wb_gam_profile_visibility_set', $user_id, $public );
+	}
+
+	/**
 	 * Profile slug base (default 'u'). Filterable so themes can use
 	 * `/profile/`, `/member/`, etc.
 	 */
@@ -287,6 +337,13 @@ final class ProfilePage {
 		);
 		echo '</div></header>';
 
+		// Owner-only privacy control — the member-facing write surface for
+		// wb_gam_profile_public. Only the profile owner sees it (admins
+		// viewing another member must not flip that member's choice here).
+		if ( get_current_user_id() === (int) $user->ID ) {
+			self::render_owner_visibility_control( (int) $user->ID );
+		}
+
 		echo '<section class="wb-gam-profile-page__section">';
 		echo do_shortcode( '[wb_gam_badge_showcase user_id="' . (int) $user->ID . '"]' );
 		echo '</section>';
@@ -298,6 +355,77 @@ final class ProfilePage {
 		echo '</div>';
 
 		get_footer();
+	}
+
+	/**
+	 * Render the owner's profile-visibility toggle.
+	 *
+	 * A button that POSTs to `wb-gamification/v1/members/me/profile-visibility`
+	 * (self-only, nonce-guarded) to flip `wb_gam_profile_public`. Self-contained
+	 * via data attributes (REST root + nonce), matching the give-kudos pattern,
+	 * so no separate wp_localize_script is needed.
+	 *
+	 * @since 1.5.5
+	 * @param int $user_id Profile owner (always the current user here).
+	 * @return void
+	 */
+	private static function render_owner_visibility_control( int $user_id ): void {
+		wp_enqueue_script(
+			'wb-gam-profile-visibility',
+			WB_GAM_URL . 'assets/js/profile-visibility.js',
+			array(),
+			WB_GAM_VERSION,
+			true
+		);
+		wp_enqueue_style( 'wb-gamification' );
+
+		$is_private    = self::member_opted_private( $user_id );
+		$site_disabled = ! get_option( self::OPT_ENABLED, '1' );
+
+		$copy_public  = __( 'This profile is visible to anyone with the link.', 'wb-gamification' );
+		$copy_private = __( 'Only you and site admins can see this profile.', 'wb-gamification' );
+		$make_public  = __( 'Make profile public', 'wb-gamification' );
+		$make_private = __( 'Make profile private', 'wb-gamification' );
+
+		printf(
+			'<section class="wb-gam-profile-page__section wb-gam-profile-privacy" data-rest-url="%s" data-rest-nonce="%s" data-error="%s">',
+			esc_url_raw( rest_url( 'wb-gamification/v1/members/me/profile-visibility' ) ),
+			esc_attr( wp_create_nonce( 'wp_rest' ) ),
+			esc_attr__( 'Could not save. Please try again.', 'wb-gamification' )
+		);
+
+		echo '<div class="wb-gam-profile-privacy__row">';
+
+		echo '<div class="wb-gam-profile-privacy__copy">';
+		echo '<span class="wb-gam-profile-privacy__label">' . esc_html__( 'Profile visibility', 'wb-gamification' ) . '</span>';
+		printf(
+			'<span class="wb-gam-profile-privacy__state" data-public="%s" data-public-copy="%s" data-private-copy="%s">%s</span>',
+			$is_private ? '0' : '1',
+			esc_attr( $copy_public ),
+			esc_attr( $copy_private ),
+			esc_html( $is_private ? $copy_private : $copy_public )
+		);
+		echo '</div>';
+
+		printf(
+			'<button type="button" class="wb-gam-profile-privacy__toggle" aria-pressed="%s" data-make-public="%s" data-make-private="%s" data-saving="%s">%s</button>',
+			$is_private ? 'true' : 'false',
+			esc_attr( $make_public ),
+			esc_attr( $make_private ),
+			esc_attr__( 'Saving…', 'wb-gamification' ),
+			esc_html( $is_private ? $make_public : $make_private )
+		);
+
+		echo '</div>';
+
+		if ( $site_disabled ) {
+			echo '<p class="wb-gam-profile-privacy__note">'
+				. esc_html__( 'Note: public profiles are currently turned off site-wide by the administrator, so your profile is hidden regardless of this setting.', 'wb-gamification' )
+				. '</p>';
+		}
+
+		echo '<p class="wb-gam-profile-privacy__status" role="status" aria-live="polite"></p>';
+		echo '</section>';
 	}
 
 	/**
