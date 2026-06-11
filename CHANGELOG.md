@@ -6,6 +6,34 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 
 ## [Unreleased]
 
+## [1.5.5] - 2026-06-11
+
+Member-facing polish: an admin accent control, a restrained on-brand activity stream, and faster realtime feedback.
+
+### Added
+
+- Settings > Appearance accent-color control applied across member-facing surfaces, so gamification matches the community brand.
+
+### Changed
+
+- Redesigned the BuddyPress activity cards (badge, level, kudos, challenge) to a single theme accent with a flat surface and a subtle edge, replacing the per-type rainbow and heavy top strip.
+- Activity headlines now read as a short generic verb ("earned a badge") so they no longer repeat the card beneath them.
+- Admin-screen consistency sweep: unified buttons, replaced blank navigation icons, tokenized colors for dark mode, responsive tables, accessible tap targets.
+
+### Fixed
+
+- Realtime points/badge toasts arrive in ~15s instead of up to a minute (heartbeat interval was falling back to the WordPress default).
+- Badge artwork stays legible in dark mode via a light medallion plate on profiles and in the activity stream.
+- Legacy activity items convert to the modern card automatically on update across all four event types, with no manual step.
+- Public profiles show "1 badge" (singular) correctly.
+- Accessible names on the email-notification toggles and the submission reject-reason field.
+- i18n: aligned the "%d badge" translator comment across surfaces (make-pot warning-free).
+
+### Dev
+
+- Regression journey + unit test covering the activity card and generic-headline contract.
+
+
 ## [1.5.3] - 2026-06-02
 
 Site-owner control release: the admin controls communities expect for managing who earns, plus bulk operations and config portability. All new REST endpoints live under `wb-gamification/v1` (admin-gated, namespaced - no WordPress core or BuddyPress conflict).

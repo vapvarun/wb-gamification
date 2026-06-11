@@ -3,7 +3,7 @@
     "info": {
         "title": "WB Gamification API",
         "description": "Gamification engine REST API for points, badges, levels, leaderboards, challenges, kudos, and more.",
-        "version": "1.5.3",
+        "version": "1.5.5",
         "contact": {
             "name": "Wbcom Designs",
             "url": "https://wbcomdesigns.com"
@@ -151,6 +151,42 @@
                 "responses": {
                     "200": {
                         "description": "Successful response"
+                    }
+                }
+            }
+        },
+        "/members/me/profile-visibility": {
+            "get": {
+                "summary": "Get members",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                }
+            },
+            "post": {
+                "summary": "Create members",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "public": {
+                                        "type": "boolean",
+                                        "description": "Whether the member wants their profile publicly visible."
+                                    }
+                                },
+                                "required": [
+                                    "public"
+                                ]
+                            }
+                        }
                     }
                 }
             }

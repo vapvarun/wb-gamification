@@ -4,7 +4,7 @@ Tags: gamification, points, badges, leaderboard, buddypress
 Requires at least: 6.5
 Tested up to: 7.0
 Requires PHP: 8.0
-Stable tag: 1.5.4
+Stable tag: 1.5.5
 License: GPL-2.0+
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -40,7 +40,7 @@ The engine awards points automatically when members perform actions on your site
 * **Toast Notifications** — Real-time bottom-right popups when members earn points, badges, or level up. 6 notification types with auto-dismiss. Promise-based confirm modals replace native browser dialogs (a11y-friendly).
 * **Analytics Dashboard** — 6 KPI cards, top actions, top earners, daily points sparkline. Period selector (7/30/90 days).
 * **WP-CLI Commands** — `points award`, `member status`, `actions list`, `logs prune`, `export user`, `qa seed_pages`, `doctor` readiness check, plus a release-zip builder.
-* **Developer Hooks** — 60 action hooks and 68 filter hooks for extending every write path. Every REST endpoint fires `before_*` filters (return WP_Error to abort) and `after_*` actions.
+* **Developer Hooks** — 61 action hooks and 68 filter hooks for extending every write path. Every REST endpoint fires `before_*` filters (return WP_Error to abort) and `after_*` actions.
 * **Cohort Leagues** — Duolingo-style weekly competitions with promotion/demotion percentages and per-cohort leaderboards.
 * **Community Challenges** — Team goals with global progress (Pokemon GO model). Members contribute to a shared counter; everyone earns when the target is hit.
 * **Redemption Store** — Members spend points on rewards. Built-in support for custom rewards (your hook), WooCommerce coupons, and Wbcom Credits SDK.
@@ -121,7 +121,7 @@ Yes. Any plugin can drop a `wb-gamification.php` manifest file in its directory.
 
 = How do I check if everything is working? =
 
-Run `wp wb-gamification doctor` from WP-CLI. It validates all 23 database tables, registered actions, badge conditions, REST API routes, cron jobs, integration detection, and market readiness. Use `--verbose` for full detail or `--fix` to auto-repair issues.
+Run `wp wb-gamification doctor` from WP-CLI. It validates all 26 database tables, registered actions, badge conditions, REST API routes, cron jobs, integration detection, and market readiness. Use `--verbose` for full detail or `--fix` to auto-repair issues.
 
 = Is this GDPR compliant? =
 
@@ -129,9 +129,25 @@ Yes. WB Gamification integrates with WordPress privacy tools. Members can reques
 
 = What happens if I deactivate the plugin? =
 
-All data is preserved in the database. Reactivating the plugin restores everything. If you delete the plugin via the Plugins screen, the `uninstall.php` file removes all 23 tables, options, cron jobs, and transients — a clean uninstall.
+All data is preserved in the database. Reactivating the plugin restores everything. If you delete the plugin via the Plugins screen, the `uninstall.php` file removes all 26 tables, options, cron jobs, and transients — a clean uninstall.
 
 == Changelog ==
+
+= 1.5.5 - June 2026 =
+
+Member-facing polish: an admin accent control, a restrained on-brand activity stream, and faster realtime feedback.
+
+* New      - Settings > Appearance lets site owners set the accent color used across member-facing surfaces, so gamification matches the community brand instead of a fixed default.
+* Improve  - Redesigned the BuddyPress activity cards (badge, level, kudos, challenge) to a single theme accent with a flat surface and a subtle edge, replacing the per-type rainbow and heavy top strip so they fit the theme.
+* Improve  - Gamification activity headlines now read as a short generic verb ("earned a badge") so they no longer repeat the card beneath them.
+* Improve  - Swept every admin screen for consistency: unified button styling, replaced blank navigation icons, tokenized colors for dark mode, responsive tables, and accessible tap targets.
+* Fix      - Realtime points and badge toasts now arrive in about 15 seconds instead of up to a minute; the heartbeat interval was silently falling back to the WordPress default.
+* Fix      - Badge artwork stays legible in dark mode; the medallion now sits on a light plate on profiles and in the activity stream.
+* Fix      - Legacy activity items created before the card redesign convert to the modern card automatically on update, across all four event types, with no manual step.
+* Fix      - Public profiles show "1 badge" (singular) correctly.
+* Fix      - Accessible names added to the email-notification toggles and the submission reject-reason field.
+* Dev      - Added a regression journey and unit test covering the activity card and generic-headline contract.
+
 
 = 1.5.4 - June 2026 =
 
