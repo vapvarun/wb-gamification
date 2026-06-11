@@ -1129,11 +1129,11 @@ final class SettingsPage {
 						<?php esc_html_e( 'Integrations', 'wb-gamification' ); ?>
 					</a>
 					<a class="wbgam-settings-nav-item" href="#modules" data-section="modules">
-						<span class="icon-sliders"></span>
+						<span class="icon-sliders-horizontal"></span>
 						<?php esc_html_e( 'Modules', 'wb-gamification' ); ?>
 					</a>
 					<a class="wbgam-settings-nav-item" href="#engagement" data-section="engagement">
-						<span class="icon-sparkles"></span>
+						<span class="icon-rocket"></span>
 						<?php esc_html_e( 'Engagement', 'wb-gamification' ); ?>
 					</a>
 					<a class="wbgam-settings-nav-item" href="#tools" data-section="tools">
@@ -2385,7 +2385,7 @@ final class SettingsPage {
 			<div class="wbgam-card wbgam-stack-block">
 				<div class="wbgam-card-header">
 					<h2 class="wbgam-card-title">
-						<span class="icon-sliders" aria-hidden="true"></span>
+						<span class="icon-sliders-horizontal" aria-hidden="true"></span>
 						<?php esc_html_e( 'Optional modules', 'wb-gamification' ); ?>
 					</h2>
 					<p class="wbgam-card-desc">
