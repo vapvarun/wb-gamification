@@ -206,7 +206,7 @@ final class ApiKeysPage {
 			</div>
 
 			<!-- Active Keys List (server-rendered for first paint; JS rerenders on every mutation) -->
-			<div class="wbgam-card" data-wb-gam-api-keys-card<?php echo empty( $keys ) ? ' class="wbgam-is-hidden"' : ''; ?>>
+			<div class="wbgam-card<?php echo empty( $keys ) ? ' wbgam-is-hidden' : ''; ?>" data-wb-gam-api-keys-card>
 				<div class="wbgam-card-header">
 					<h3 class="wbgam-card-title"><?php esc_html_e( 'Active Keys', 'wb-gamification' ); ?></h3>
 				</div>
@@ -254,7 +254,7 @@ final class ApiKeysPage {
 				</div>
 			</div>
 
-			<div class="wbgam-empty" data-wb-gam-api-keys-empty<?php echo empty( $keys ) ? '' : ' class="wbgam-is-hidden"'; ?>>
+			<div class="wbgam-empty<?php echo empty( $keys ) ? '' : ' wbgam-is-hidden'; ?>" data-wb-gam-api-keys-empty>
 				<div class="wbgam-empty-icon"><span class="icon-network wbgam-icon-xl wbgam-icon-xl--muted"></span></div>
 				<div class="wbgam-empty-title"><?php esc_html_e( 'No API keys yet', 'wb-gamification' ); ?></div>
 				<p><?php esc_html_e( 'Generate your first API key above to connect remote sites.', 'wb-gamification' ); ?></p>

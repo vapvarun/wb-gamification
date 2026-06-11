@@ -45,15 +45,9 @@ final class KudosStream {
 		}
 
 		$giver_link    = ActivityCard::user_link( $giver_id );
-		$receiver_link = ActivityCard::user_link( $receiver_id );
 		$receiver_name = ActivityCard::user_display_name( $receiver_id );
 
-		$action = sprintf(
-			/* translators: 1: giver display name link, 2: receiver display name link */
-			__( '%1$s gave kudos to %2$s', 'wb-gamification' ),
-			$giver_link,
-			$receiver_link
-		);
+		$action = ActivityCard::action_line( $giver_link, 'kudos' );
 
 		$avatar = self::receiver_avatar_url( $receiver_id );
 

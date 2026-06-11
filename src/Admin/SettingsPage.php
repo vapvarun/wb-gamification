@@ -102,6 +102,8 @@ final class SettingsPage {
 			self::save_modules_settings();
 		} elseif ( 'engagement' === $tab ) {
 			self::save_engagement_settings();
+		} elseif ( 'appearance' === $tab ) {
+			self::save_appearance_settings();
 		}
 
 		// Preserve the active sidebar section after save (Basecamp 9925119779).
@@ -120,6 +122,7 @@ final class SettingsPage {
 			'access'     => 'access',
 			'modules'    => 'modules',
 			'engagement' => 'engagement',
+			'appearance' => 'appearance',
 		);
 		$fallback    = admin_url( 'admin.php?page=wb-gamification' );
 		if ( isset( $tab_to_hash[ $tab ] ) ) {
@@ -349,6 +352,29 @@ final class SettingsPage {
 		// phpcs:enable WordPress.Security.NonceVerification.Missing
 
 		add_settings_error( 'wb_gamification', 'saved', __( 'Settings saved.', 'wb-gamification' ), 'success' );
+	}
+
+	/**
+	 * Persist Appearance-tab settings (member-facing accent color).
+	 *
+	 * The reset checkbox clears the override (back to theme default); otherwise
+	 * store the sanitized hex. Appearance::set_accent() sanitizes via
+	 * sanitize_hex_color and deletes the option on an empty/invalid value. Runs
+	 * only when handle_save() routes tab=appearance. Nonce verified by
+	 * check_admin_referer() in handle_save().
+	 *
+	 * @return void
+	 */
+	private static function save_appearance_settings(): void {
+		// phpcs:disable WordPress.Security.NonceVerification.Missing -- Nonce verified by check_admin_referer() in handle_save().
+		if ( isset( $_POST['wb_gam_accent_color_field'] ) ) {
+			$reset = ! empty( $_POST['wb_gam_accent_color_reset'] );
+			$value = $reset ? '' : sanitize_hex_color( wp_unslash( (string) $_POST['wb_gam_accent_color_field'] ) );
+			\WBGam\Engine\Appearance::set_accent( (string) $value );
+		}
+		// phpcs:enable WordPress.Security.NonceVerification.Missing
+
+		add_settings_error( 'wb_gamification', 'saved', __( 'Appearance settings saved.', 'wb-gamification' ), 'success' );
 	}
 
 	/**
@@ -601,7 +627,7 @@ final class SettingsPage {
 			</div>
 
 			<div class="wbgam-card-footer">
-				<button type="submit" class="button button-primary"><?php esc_html_e( 'Save Engagement Settings', 'wb-gamification' ); ?></button>
+				<button type="submit" class="wbgam-btn wbgam-btn--primary"><?php esc_html_e( 'Save Engagement Settings', 'wb-gamification' ); ?></button>
 			</div>
 		</form>
 		<?php
@@ -1129,12 +1155,16 @@ final class SettingsPage {
 						<?php esc_html_e( 'Integrations', 'wb-gamification' ); ?>
 					</a>
 					<a class="wbgam-settings-nav-item" href="#modules" data-section="modules">
-						<span class="icon-sliders"></span>
+						<span class="icon-sliders-horizontal"></span>
 						<?php esc_html_e( 'Modules', 'wb-gamification' ); ?>
 					</a>
 					<a class="wbgam-settings-nav-item" href="#engagement" data-section="engagement">
-						<span class="icon-sparkles"></span>
+						<span class="icon-rocket"></span>
 						<?php esc_html_e( 'Engagement', 'wb-gamification' ); ?>
+					</a>
+					<a class="wbgam-settings-nav-item" href="#appearance" data-section="appearance">
+						<span class="icon-palette"></span>
+						<?php esc_html_e( 'Appearance', 'wb-gamification' ); ?>
 					</a>
 					<a class="wbgam-settings-nav-item" href="#tools" data-section="tools">
 						<span class="icon-wrench"></span>
@@ -1214,6 +1244,11 @@ final class SettingsPage {
 				<!-- Engagement section -->
 				<div class="wbgam-settings-section" id="section-engagement">
 					<?php self::render_engagement_section(); ?>
+				</div>
+
+				<!-- Appearance section -->
+				<div class="wbgam-settings-section" id="section-appearance">
+					<?php self::render_appearance_section(); ?>
 				</div>
 
 				<!-- Tools section -->
@@ -1519,7 +1554,7 @@ final class SettingsPage {
 				</div>
 
 				<div class="wbgam-settings-section__footer">
-					<?php submit_button( __( 'Save Changes', 'wb-gamification' ), 'primary', 'submit', false ); ?>
+					<button type="submit" name="submit" class="wbgam-btn wbgam-btn--primary"><?php esc_html_e( 'Save Changes', 'wb-gamification' ); ?></button>
 				</div>
 			<?php endif; ?>
 		</form>
@@ -1749,15 +1784,15 @@ final class SettingsPage {
 
 		<div class="wb-gam-admin-quick-links">
 			<a href="<?php echo esc_url( admin_url( 'admin.php?page=wb-gamification-analytics' ) ); ?>"
-				class="button button-primary">
+				class="wbgam-btn wbgam-btn--primary">
 				<?php esc_html_e( 'Full Analytics', 'wb-gamification' ); ?>
 			</a>
 			<a href="<?php echo esc_url( admin_url( 'admin.php?page=wb-gamification-award' ) ); ?>"
-				class="button">
+				class="wbgam-btn wbgam-btn--secondary">
 				<?php esc_html_e( 'Award Points', 'wb-gamification' ); ?>
 			</a>
 			<a href="<?php echo esc_url( admin_url( 'admin.php?page=wb-gamification#points' ) ); ?>"
-				class="button">
+				class="wbgam-btn wbgam-btn--secondary">
 				<?php esc_html_e( 'Configure Points', 'wb-gamification' ); ?>
 			</a>
 		</div>
@@ -1945,7 +1980,7 @@ final class SettingsPage {
 									<?php if ( (int) $level['min_points'] > 0 ) : ?>
 										<button
 											type="button"
-											class="button button-small button-link-delete"
+											class="wbgam-btn wbgam-btn--sm wbgam-btn--danger"
 											data-wb-gam-level-delete="<?php echo (int) $level['id']; ?>"
 										>
 											<?php esc_html_e( 'Delete', 'wb-gamification' ); ?>
@@ -1960,7 +1995,7 @@ final class SettingsPage {
 					</table>
 
 					<div class="wbgam-settings-section__footer wbgam-section__footer--flat">
-						<button type="submit" class="button button-primary" data-wb-gam-levels-save>
+						<button type="submit" class="wbgam-btn wbgam-btn--primary" data-wb-gam-levels-save>
 							<?php esc_html_e( 'Save Levels', 'wb-gamification' ); ?>
 						</button>
 					</div>
@@ -1988,7 +2023,7 @@ final class SettingsPage {
 					</table>
 
 					<div class="wbgam-settings-section__footer wbgam-section__footer--flat">
-						<button type="submit" class="button button-secondary" data-wb-gam-levels-add>
+						<button type="submit" class="wbgam-btn wbgam-btn--secondary" data-wb-gam-levels-add>
 							<?php esc_html_e( 'Add Level', 'wb-gamification' ); ?>
 						</button>
 					</div>
@@ -2073,7 +2108,7 @@ final class SettingsPage {
 											<?php wp_nonce_field( 'wb_gam_save_settings', 'wb_gam_settings_nonce' ); ?>
 											<input type="hidden" name="wb_gam_automation_action" value="delete" />
 											<input type="hidden" name="wb_gam_rule_index" value="<?php echo esc_attr( $i ); ?>" />
-											<button type="submit" class="button button-small button-link-delete">
+											<button type="submit" class="wbgam-btn wbgam-btn--sm wbgam-btn--danger">
 												<?php esc_html_e( 'Delete', 'wb-gamification' ); ?>
 											</button>
 										</form>
@@ -2153,7 +2188,7 @@ final class SettingsPage {
 					</table>
 
 					<div class="wbgam-settings-section__footer wbgam-section__footer--flat">
-						<?php submit_button( __( 'Add Rule', 'wb-gamification' ), 'primary', 'submit', false ); ?>
+						<button type="submit" name="submit" class="wbgam-btn wbgam-btn--primary"><?php esc_html_e( 'Add Rule', 'wb-gamification' ); ?></button>
 					</div>
 				</form>
 			</div>
@@ -2209,7 +2244,7 @@ final class SettingsPage {
 			</div>
 
 			<div class="wbgam-settings-section__footer">
-				<?php submit_button( __( 'Save Changes', 'wb-gamification' ), 'primary', 'submit', false ); ?>
+				<button type="submit" name="submit" class="wbgam-btn wbgam-btn--primary"><?php esc_html_e( 'Save Changes', 'wb-gamification' ); ?></button>
 			</div>
 		</form>
 		<?php
@@ -2346,7 +2381,7 @@ final class SettingsPage {
 			</div>
 
 			<div class="wbgam-settings-section__footer">
-				<?php submit_button( __( 'Save Access Settings', 'wb-gamification' ), 'primary', 'submit', false ); ?>
+				<button type="submit" name="submit" class="wbgam-btn wbgam-btn--primary"><?php esc_html_e( 'Save Access Settings', 'wb-gamification' ); ?></button>
 			</div>
 		</form>
 		<?php
@@ -2385,7 +2420,7 @@ final class SettingsPage {
 			<div class="wbgam-card wbgam-stack-block">
 				<div class="wbgam-card-header">
 					<h2 class="wbgam-card-title">
-						<span class="icon-sliders" aria-hidden="true"></span>
+						<span class="icon-sliders-horizontal" aria-hidden="true"></span>
 						<?php esc_html_e( 'Optional modules', 'wb-gamification' ); ?>
 					</h2>
 					<p class="wbgam-card-desc">
@@ -2407,7 +2442,7 @@ final class SettingsPage {
 			</div>
 
 			<div class="wbgam-settings-section__footer">
-				<?php submit_button( __( 'Save Modules', 'wb-gamification' ), 'primary', 'submit', false ); ?>
+				<button type="submit" name="submit" class="wbgam-btn wbgam-btn--primary"><?php esc_html_e( 'Save Modules', 'wb-gamification' ); ?></button>
 			</div>
 		</form>
 		<?php
@@ -2481,6 +2516,79 @@ final class SettingsPage {
 				<button type="button" id="wb-gam-reset-progress" class="wbgam-btn wb-gam-btn-danger"><?php esc_html_e( 'Reset all member progress', 'wb-gamification' ); ?></button>
 			</div>
 		</div>
+		<?php
+	}
+
+	/**
+	 * Appearance — member-facing accent color picker.
+	 *
+	 * Lets the site owner override the frontend gamification accent. When the
+	 * reset box is ticked the override is cleared and the theme/default color
+	 * returns. Nonce verified by check_admin_referer() in handle_save().
+	 *
+	 * @return void
+	 */
+	private static function render_appearance_section(): void {
+		$accent     = \WBGam\Engine\Appearance::get_accent();
+		$has_custom = '' !== $accent;
+		$picker_val = $has_custom ? $accent : '#5b4cdb';
+		$presets    = \WBGam\Engine\Appearance::presets();
+		?>
+		<form method="post" action="<?php echo esc_url( admin_url( 'admin.php?page=wb-gamification&tab=appearance' ) ); ?>">
+			<?php wp_nonce_field( 'wb_gam_save_settings', 'wb_gam_settings_nonce' ); ?>
+
+			<div class="wbgam-card wbgam-stack-block">
+				<div class="wbgam-card-header">
+					<h2 class="wbgam-card-title">
+						<span class="icon-palette" aria-hidden="true"></span>
+						<?php esc_html_e( 'Accent Color', 'wb-gamification' ); ?>
+					</h2>
+					<p class="wbgam-card-desc">
+						<?php esc_html_e( 'Set the accent color for the member-facing gamification UI - badges, the hub, progress bars, buttons, and toasts. Leave it on your theme default, or pick a color that matches your brand. The whole gamification surface re-tints from this one choice.', 'wb-gamification' ); ?>
+					</p>
+				</div>
+				<div class="wbgam-card-body">
+					<p class="wbgam-stack-block">
+						<label for="wb-gam-accent-color">
+							<strong><?php esc_html_e( 'Custom accent', 'wb-gamification' ); ?></strong>
+						</label><br />
+						<input type="color"
+							id="wb-gam-accent-color"
+							name="wb_gam_accent_color_field"
+							value="<?php echo esc_attr( $picker_val ); ?>"
+						/>
+						<code class="wbgam-ms-sm"><?php echo esc_html( $picker_val ); ?></code>
+					</p>
+
+					<?php if ( ! empty( $presets ) ) : ?>
+						<p class="description wbgam-stack-block">
+							<?php esc_html_e( 'Common choices to type or pick in the color box above:', 'wb-gamification' ); ?>
+							<?php echo esc_html( implode( ' · ', array_map( static fn( $l, $h ) => $l . ' ' . $h, array_keys( $presets ), array_values( $presets ) ) ) ); ?>
+						</p>
+					<?php endif; ?>
+
+					<p class="wbgam-stack-block">
+						<label>
+							<input type="checkbox" name="wb_gam_accent_color_reset" value="1" <?php checked( ! $has_custom ); ?> />
+							<?php esc_html_e( 'Use my theme default color instead (clears the custom accent above).', 'wb-gamification' ); ?>
+						</label>
+					</p>
+
+					<p class="description">
+						<?php
+						echo $has_custom
+							? esc_html__( 'Currently using a custom accent. Untick the box and save to keep it, or tick it to revert to your theme.', 'wb-gamification' )
+							: esc_html__( 'Currently inheriting your theme color (default indigo when the theme sets none).', 'wb-gamification' );
+						?>
+					</p>
+				</div>
+				<div class="wbgam-card-footer">
+					<button type="submit" class="button button-primary">
+						<?php esc_html_e( 'Save Appearance', 'wb-gamification' ); ?>
+					</button>
+				</div>
+			</div>
+		</form>
 		<?php
 	}
 
@@ -2576,7 +2684,7 @@ final class SettingsPage {
 			</div>
 
 			<div class="wbgam-settings-section__footer">
-				<?php submit_button( __( 'Save Realtime Settings', 'wb-gamification' ), 'primary', 'submit', false ); ?>
+				<button type="submit" name="submit" class="wbgam-btn wbgam-btn--primary"><?php esc_html_e( 'Save Realtime Settings', 'wb-gamification' ); ?></button>
 			</div>
 		</form>
 		<?php
@@ -2631,6 +2739,7 @@ final class SettingsPage {
 									id="wb_gam_email_<?php echo esc_attr( $slug ); ?>"
 									name="<?php echo esc_attr( $slug ); ?>"
 									value="1"
+									aria-label="<?php /* translators: %s: email notification name */ echo esc_attr( sprintf( __( 'Enable %s email', 'wb-gamification' ), $meta['label'] ) ); ?>"
 									<?php checked( $enabled ); ?>
 								>
 								<span class="wbgam-switch__track" aria-hidden="true"></span>

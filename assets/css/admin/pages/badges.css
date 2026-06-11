@@ -50,7 +50,7 @@
 
 .wbgam-badge-card:hover {
 	border-color: var(--wb-gam-primary);
-	box-shadow: 0 2px 12px rgba(108, 99, 255, 0.12);
+	box-shadow: 0 2px 12px color-mix(in srgb, var(--wbgam-purple) 12%, transparent);
 }
 
 .wbgam-badge-card__icon {
@@ -105,7 +105,7 @@
 }
 
 .wbgam-badge-form-panel .wbgam-card:focus-within {
-	box-shadow: 0 2px 12px rgba(108, 99, 255, 0.08);
+	box-shadow: 0 2px 12px color-mix(in srgb, var(--wbgam-purple) 8%, transparent);
 }
 
 /* Badge icon preview (inside form panel). */

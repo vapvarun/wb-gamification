@@ -9,6 +9,7 @@
 /* Period bar */
 .wb-gam-analytics__period-bar {
 	display: flex;
+	flex-wrap: wrap;
 	gap: 0.5rem;
 	margin: 1rem 0 1.5rem;
 }
@@ -22,7 +23,7 @@
 }
 
 .wb-gam-analytics__kpi-card {
-	background: #fff;
+	background: var(--wbgam-card-bg);
 	border: 1px solid var(--wb-gam-border);
 	border-radius: var(--wb-gam-radius);
 	padding: 1.25rem 1rem;
@@ -37,13 +38,13 @@
 	font-size: 1.75rem;
 	font-weight: 800;
 	line-height: 1.1;
-	color: #1d2939;
+	color: var(--wb-gam-text);
 }
 
 .wb-gam-analytics__kpi-title {
 	font-size: 0.8125rem;
 	font-weight: 600;
-	color: #374151;
+	color: var(--wbgam-gray-700);
 }
 
 .wb-gam-analytics__kpi-sub {
@@ -64,7 +65,7 @@
 }
 
 .wb-gam-analytics__panel {
-	background: #fff;
+	background: var(--wbgam-card-bg);
 	border: 1px solid var(--wb-gam-border);
 	border-radius: var(--wb-gam-radius);
 	padding: 1.25rem;

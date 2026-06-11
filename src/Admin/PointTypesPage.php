@@ -114,7 +114,11 @@ final class PointTypesPage {
 				</div>
 				<div class="wbgam-card-body">
 					<?php if ( empty( $types ) ) : ?>
-						<p><?php esc_html_e( 'No point types yet.', 'wb-gamification' ); ?></p>
+						<div class="wbgam-empty">
+							<div class="wbgam-empty-icon"><span class="icon-coins wbgam-icon-xl wbgam-icon-xl--muted"></span></div>
+							<div class="wbgam-empty-title"><?php esc_html_e( 'No point types yet', 'wb-gamification' ); ?></div>
+							<p><?php esc_html_e( 'Add your first point type above to run multiple currencies (e.g. coins and gems).', 'wb-gamification' ); ?></p>
+						</div>
 					<?php else : ?>
 						<div class="wbgam-table-scroll">
 						<table class="wbgam-table">

@@ -80,12 +80,7 @@ final class LevelStream {
 				'user_id'       => $user_id,
 				'component'     => self::COMPONENT,
 				'type'          => self::TYPE,
-				'action'        => sprintf(
-					/* translators: 1: user display name link, 2: level name */
-					__( '%1$s reached the <strong>%2$s</strong> level', 'wb-gamification' ),
-					$user_link,
-					esc_html( $level_name )
-				),
+				'action'        => ActivityCard::action_line( $user_link, 'level' ),
 				'content'       => ActivityCard::render( 'level', $level_image, $level_name, $description ),
 				'item_id'       => $new_level_id,
 				'hide_sitewide' => false,

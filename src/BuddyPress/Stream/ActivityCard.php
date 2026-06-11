@@ -74,6 +74,41 @@ final class ActivityCard {
 	}
 
 	/**
+	 * Build the generic, non-duplicating activity action headline.
+	 *
+	 * The content card ({@see render()}) already names the specific badge /
+	 * level / challenge / kudos recipient, so the BuddyPress action headline
+	 * stays a short generic verb ("earned a badge") instead of repeating the
+	 * specific name — otherwise every gamification activity states the same
+	 * thing twice (the duplication QA flagged 2026-06).
+	 *
+	 * @param string $user_link HTML profile link for the actor (from user_link()).
+	 * @param string $type      One of: badge, level, kudos, challenge.
+	 */
+	public static function action_line( string $user_link, string $type ): string {
+		switch ( $type ) {
+			case 'level':
+				/* translators: %s: user display name link */
+				$template = __( '%s reached a new level', 'wb-gamification' );
+				break;
+			case 'kudos':
+				/* translators: %s: user display name link */
+				$template = __( '%s gave kudos', 'wb-gamification' );
+				break;
+			case 'challenge':
+				/* translators: %s: user display name link */
+				$template = __( '%s completed a challenge', 'wb-gamification' );
+				break;
+			case 'badge':
+			default:
+				/* translators: %s: user display name link */
+				$template = __( '%s earned a badge', 'wb-gamification' );
+				break;
+		}
+		return sprintf( $template, $user_link );
+	}
+
+	/**
 	 * Look up a badge definition row by slug.
 	 *
 	 * @param string $badge_id Badge slug (matches wb_gam_badge_defs.id).

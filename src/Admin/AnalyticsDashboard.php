@@ -626,7 +626,7 @@ final class AnalyticsDashboard {
 
 			<div class="wb-gam-analytics__panel">
 				<h2 class="wbgam-flex-row">
-					<span class="icon-alert-triangle" aria-hidden="true"></span>
+					<span class="icon-triangle-alert" aria-hidden="true"></span>
 					<?php esc_html_e( 'Possible gaming activity', 'wb-gamification' ); ?>
 				</h2>
 				<p class="description">
@@ -692,7 +692,7 @@ final class AnalyticsDashboard {
 		?>
 		<div class="wb-gam-analytics__panel wbgam-mt-md">
 			<h2 class="wbgam-flex-row">
-				<span class="icon-alert-triangle" aria-hidden="true"></span>
+				<span class="icon-triangle-alert" aria-hidden="true"></span>
 				<?php esc_html_e( 'Unknown action IDs fired (last 24h)', 'wb-gamification' ); ?>
 			</h2>
 			<p class="description">

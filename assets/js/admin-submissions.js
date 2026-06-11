@@ -77,6 +77,7 @@
 					const input = document.createElement( 'input' );
 					input.type = 'text';
 					input.placeholder = i18n.reason || 'Reason';
+					input.setAttribute( 'aria-label', i18n.reason || 'Reason' );
 					input.className = 'wb-gam-submission-reject-input__field';
 
 					const confirm = document.createElement( 'button' );

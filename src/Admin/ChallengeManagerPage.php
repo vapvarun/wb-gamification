@@ -323,8 +323,7 @@ final class ChallengeManagerPage {
 									</a>
 									<button
 										type="button"
-										class="wbgam-btn wbgam-btn--sm wbgam-btn--danger"
-										class="wbgam-ms-xs"
+										class="wbgam-btn wbgam-btn--sm wbgam-btn--danger wbgam-ms-xs"
 										data-wb-gam-rest-action="wbGamChallengesSettings"
 										data-wb-gam-rest-method="DELETE"
 										data-wb-gam-rest-path="/challenges/<?php echo (int) $c['id']; ?>"

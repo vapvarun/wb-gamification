@@ -315,6 +315,7 @@ final class CommunityChallengesPage {
 					<h3 class="wbgam-card-title"><?php esc_html_e( 'All Community Challenges', 'wb-gamification' ); ?></h3>
 				</div>
 				<div class="wbgam-card-body wbgam-card-body--flush">
+					<div class="wbgam-table-scroll">
 					<table class="wbgam-table">
 						<thead>
 							<tr>
@@ -374,8 +375,7 @@ final class CommunityChallengesPage {
 									</a>
 									<button
 										type="button"
-										class="wbgam-btn wbgam-btn--sm wbgam-btn--danger"
-										class="wbgam-ms-xs"
+										class="wbgam-btn wbgam-btn--sm wbgam-btn--danger wbgam-ms-xs"
 										data-wb-gam-rest-action="wbGamCommunityChallengesSettings"
 										data-wb-gam-rest-method="DELETE"
 										data-wb-gam-rest-path="/community-challenges/<?php echo (int) $c['id']; ?>"
@@ -391,6 +391,7 @@ final class CommunityChallengesPage {
 						<?php endforeach; ?>
 						</tbody>
 					</table>
+					</div>
 				</div>
 			</div>
 			<?php else : ?>

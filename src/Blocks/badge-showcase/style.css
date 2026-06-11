@@ -392,3 +392,30 @@
 		transform: none;
 	}
 }
+
+/* ── Dark mode ─────────────────────────────────────────────────────────
+ * Badge artwork loads via <img>: the bundled assets/badges/*.svg use
+ * stroke="currentColor", which resolves to BLACK inside an <img> (the page's
+ * colour context does not cross the <img> boundary), and custom-uploaded
+ * badges keep their own colours. On the dark card that dark line-art became
+ * invisible, so give the medallion a light plate in dark mode — any artwork
+ * (mono line-art, colour SVG, uploaded image) stays legible against it.
+ * Scoped to the same dark selectors BuddyX / BuddyX Pro use. */
+:root[data-bx-mode="dark"] .wb-gam-badge-showcase__badge--earned .wb-gam-badge-showcase__icon-wrap,
+body.buddyx-dark-theme .wb-gam-badge-showcase__badge--earned .wb-gam-badge-showcase__icon-wrap {
+	background: color-mix( in srgb, var( --wb-gam-color-success ) 16%, white );
+}
+
+:root[data-bx-mode="dark"] .wb-gam-badge-showcase__badge--locked .wb-gam-badge-showcase__icon-wrap,
+body.buddyx-dark-theme .wb-gam-badge-showcase__badge--locked .wb-gam-badge-showcase__icon-wrap {
+	background: color-mix( in srgb, var( --wb-gam-color-text-muted ) 14%, white );
+}
+
+@media ( prefers-color-scheme: dark ) {
+	:root[data-bx-mode="auto"] .wb-gam-badge-showcase__badge--earned .wb-gam-badge-showcase__icon-wrap {
+		background: color-mix( in srgb, var( --wb-gam-color-success ) 16%, white );
+	}
+	:root[data-bx-mode="auto"] .wb-gam-badge-showcase__badge--locked .wb-gam-badge-showcase__icon-wrap {
+		background: color-mix( in srgb, var( --wb-gam-color-text-muted ) 14%, white );
+	}
+}

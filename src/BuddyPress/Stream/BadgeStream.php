@@ -60,12 +60,7 @@ final class BadgeStream {
 				'user_id'       => $user_id,
 				'component'     => self::COMPONENT,
 				'type'          => self::TYPE,
-				'action'        => sprintf(
-					/* translators: 1: user display name link, 2: badge name */
-					__( '%1$s earned the <strong>%2$s</strong> badge', 'wb-gamification' ),
-					$user_link,
-					esc_html( $badge_name )
-				),
+				'action'        => ActivityCard::action_line( $user_link, 'badge' ),
 				'content'       => ActivityCard::render( 'badge', $badge_image, $badge_name, $badge_description ),
 				'item_id'       => 0,
 				'hide_sitewide' => false,

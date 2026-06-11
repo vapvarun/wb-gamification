@@ -733,7 +733,34 @@ final class DbUpgrader {
 			'1.2.0' => 'upgrade_to_1_2_0',
 			'1.4.0' => 'upgrade_to_1_4_0',
 			'1.5.4' => 'upgrade_to_1_5_4',
+			'1.5.5' => 'upgrade_to_1_5_5',
 		);
+	}
+
+	/**
+	 * 1.5.5 — migrate legacy BuddyPress activity rows to the unified content
+	 * card.
+	 *
+	 * The 1.4.0 activity redesign introduced {@see \WBGam\BuddyPress\Stream\ActivityCard}
+	 * and a {@see \WBGam\BuddyPress\Stream\Backfiller} to convert pre-redesign
+	 * rows (a bare `<img>` + plain `<strong>` text) to the card markup — but the
+	 * Backfiller was never wired into any boot/upgrade path, so on every existing
+	 * install the old rows stayed in the legacy format. The result was a mixed
+	 * activity stream: new events rendered as cards, historical ones as plain
+	 * run-together text. This migration runs the Backfiller once at the upgrade
+	 * boundary so the whole stream is consistent.
+	 *
+	 * Idempotent: the Backfiller only rewrites rows still missing the card markup
+	 * and skips any whose source record (badge def / level / kudos) no longer
+	 * exists, so re-running is a no-op. Guarded on BuddyPress being available.
+	 *
+	 * @since 1.5.5
+	 */
+	private static function upgrade_to_1_5_5(): void {
+		if ( ! function_exists( 'bp_activity_add' ) || ! class_exists( '\WBGam\BuddyPress\Stream\Backfiller' ) ) {
+			return;
+		}
+		\WBGam\BuddyPress\Stream\Backfiller::run();
 	}
 
 	/**

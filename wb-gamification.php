@@ -3,7 +3,7 @@
  * Plugin Name: WB Gamification
  * Plugin URI:  https://wbcomdesigns.com/
  * Description: Complete gamification plugin for BuddyPress and WordPress. Part of the Reign Stack. Points, badges, levels, leaderboards, challenges, and streaks — zero config, works out of the box.
- * Version:     1.5.4
+ * Version:     1.5.5
  * Author:      Wbcom Designs
  * Author URI:  https://wbcomdesigns.com/
  * License:     GPL-2.0+
@@ -33,7 +33,7 @@ if ( defined( 'WB_GAM_VERSION' ) ) {
 // Plugin Check's internal phpcs invocation.
 // phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 
-define( 'WB_GAM_VERSION', '1.5.4' );
+define( 'WB_GAM_VERSION', '1.5.5' );
 define( 'WB_GAM_FILE', __FILE__ );
 define( 'WB_GAM_PATH', plugin_dir_path( __FILE__ ) );
 define( 'WB_GAM_URL', plugin_dir_url( __FILE__ ) );
@@ -242,6 +242,10 @@ final class WB_Gamification {
 
 		BootOrder::register( 'engine', BootOrder::SLOT_CORE, array( 'registry', 'db_upgrader' ) );
 		add_action( 'plugins_loaded', array( Engine::class, 'init' ), BootOrder::SLOT_CORE );
+
+		// Member-facing accent color override (Settings > Appearance). Only
+		// registers a wp_enqueue_scripts hook, so it has no boot-order deps.
+		\WBGam\Engine\Appearance::init();
 
 		BootOrder::register( 'wp_hooks', BootOrder::SLOT_CORE, array( 'registry' ) );
 		add_action( 'plugins_loaded', array( WPHooks::class, 'init' ), BootOrder::SLOT_CORE );

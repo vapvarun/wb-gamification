@@ -520,6 +520,7 @@
 }
 
 .wbgam-btn--sm {
+	min-height: 34px; /* density floor for compact admin list rows (ux-foundation tap-target exception) */
 	padding: 0.25rem 0.625rem;
 	font-size: var(--wbgam-fs-xs);
 }
@@ -1162,6 +1163,11 @@
 }
 
 @media (max-width: 640px) {
+
+	/* Full 40px tap target on touch viewports (admin pages are managed on phones too). */
+	.wbgam-btn--sm {
+		min-height: 40px;
+	}
 
 	.wbgam-toast-container {
 		inset-inline-start: 16px;
