@@ -1,8 +1,8 @@
 === WB Gamification ===
 Contributors: vapvarun, wbcomdesigns
 Tags: gamification, points, badges, leaderboard, buddypress
-Requires at least: 6.4
-Tested up to: 6.9
+Requires at least: 6.5
+Tested up to: 7.0
 Requires PHP: 8.0
 Stable tag: 1.5.4
 License: GPL-2.0+
@@ -138,8 +138,11 @@ All data is preserved in the database. Reactivating the plugin restores everythi
 WPMediaVerse competition rewards now match the per-competition XP a site owner configures.
 
 * New      - WPMediaVerse Pro competitions award the XP configured per competition (challenge placing and participation, tournament round win, and champion) instead of a flat default. The integration manifest carries each competition's id in event metadata so Pro resolves the configured amount through the wb_gam_points_for_action filter.
+* New      - Members can set their own profile public or private. A toggle on the public profile page writes the per-user visibility choice through a new self-service REST endpoint; the read paths and GDPR export/erase already honored the setting, this adds the missing member-facing control.
+* Improve  - Declared WordPress 6.5 as the minimum (the hub block's script modules require it) and marked Tested up to 7.0 so the plugin surfaces correctly in WordPress.org search.
 * Fix      - Earned badges display again. Badges awarded on 1.5.0 to 1.5.3 were stored with a broken expiry date that hid them from profiles, the Members page, and badge counts while the data stayed intact. Awards now store the expiry correctly, upgrading repairs every affected row automatically, and wp wb-gamification doctor --fix repairs it on demand.
 * Fix      - Stop the early-textdomain notice triggered by translated labels in the WPMediaVerse integration manifest.
+* Security - Hardened the realtime SSE stream against event-field injection by stripping CR/LF from the event name before each event-stream record is written.
 * Dev      - Removed the dead points_callback from the challenge-winner and streak triggers; the engine never consumed it, so awards already fell through to default_points.
 * Compat   - Pairs with WPMediaVerse Pro 1.6.0. Install both updates together for per-competition XP to take effect.
 
