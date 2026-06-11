@@ -243,4 +243,121 @@ class BadgeEngineTest extends TestCase {
 
 		$this->assertFalse( BadgeEngine::award_badge( 7, 'first_post' ) );
 	}
+
+	// ── award_badge() — expires_at NULL contract ─────────────────────────────
+	//
+	// 1.5.4 regression lock (Basecamp 9985131435): $wpdb->prepare() coerces a
+	// PHP null bound to %s into '', which non-strict MySQL stores as the
+	// zero-date 0000-00-00 in the DATETIME expires_at column. Zero-dates fail
+	// the `expires_at IS NULL OR expires_at > now` visibility filter, so every
+	// badge awarded on 1.5.0–1.5.3 existed in the table but displayed as 0
+	// everywhere. Never-expiring awards MUST emit a literal SQL NULL.
+
+	/**
+	 * @test
+	 * @covers ::award_badge
+	 */
+	public function award_without_validity_emits_sql_null_for_expires_at(): void {
+		$this->setup_award_environment();
+
+		global $wpdb;
+		$wpdb         = Mockery::mock();
+		$wpdb->prefix = 'wp_';
+		$wpdb->shouldReceive( 'prepare' )->andReturnUsing( static fn ( $q ) => $q );
+		$wpdb->shouldReceive( 'get_col' )->andReturn( array() );
+		$wpdb->shouldReceive( 'get_row' )->andReturn(
+			array( 'id' => 'first_post', 'closes_at' => null, 'max_earners' => null, 'validity_days' => 0 )
+		);
+		$wpdb->shouldReceive( 'query' )
+			->once()
+			->with(
+				Mockery::on(
+					static fn ( $sql ) => false !== strpos( $sql, 'INSERT IGNORE INTO `wp_wb_gam_user_badges`' )
+						&& false !== strpos( $sql, ', NULL)' )
+				)
+			)
+			->andReturn( 1 );
+		$wpdb->shouldReceive( 'get_results' )->andReturn( array() );
+
+		$this->assertTrue( BadgeEngine::award_badge( 7, 'first_post' ) );
+	}
+
+	/**
+	 * @test
+	 * @covers ::award_badge
+	 */
+	public function award_with_validity_window_binds_expires_at_placeholder(): void {
+		$this->setup_award_environment();
+
+		global $wpdb;
+		$wpdb         = Mockery::mock();
+		$wpdb->prefix = 'wp_';
+		$wpdb->shouldReceive( 'prepare' )->andReturnUsing( static fn ( $q ) => $q );
+		$wpdb->shouldReceive( 'get_col' )->andReturn( array() );
+		$wpdb->shouldReceive( 'get_row' )->andReturn(
+			array( 'id' => 'cert_30d', 'closes_at' => null, 'max_earners' => null, 'validity_days' => 30 )
+		);
+		$wpdb->shouldReceive( 'query' )
+			->once()
+			->with(
+				Mockery::on(
+					static fn ( $sql ) => false !== strpos( $sql, 'INSERT IGNORE INTO `wp_wb_gam_user_badges`' )
+						&& false !== strpos( $sql, '(%d, %s, %s, %s)' )
+				)
+			)
+			->andReturn( 1 );
+		$wpdb->shouldReceive( 'get_results' )->andReturn( array() );
+
+		$this->assertTrue( BadgeEngine::award_badge( 7, 'cert_30d' ) );
+	}
+
+	/**
+	 * @test
+	 * @covers ::repair_zero_date_expiry
+	 */
+	public function repair_fixes_zero_date_rows_and_busts_affected_user_caches(): void {
+		Functions\when( 'wp_cache_set' )->justReturn( true );
+		$deleted = array();
+		Functions\when( 'wp_cache_delete' )->alias(
+			static function ( $key ) use ( &$deleted ) {
+				$deleted[] = $key;
+				return true;
+			}
+		);
+
+		global $wpdb;
+		$wpdb         = Mockery::mock();
+		$wpdb->prefix = 'wp_';
+		$wpdb->shouldReceive( 'get_col' )
+			->once()
+			->with( Mockery::on( static fn ( $sql ) => false !== strpos( $sql, "expires_at < '1971-01-01'" ) ) )
+			->andReturn( array( '5', '9' ) );
+		$wpdb->shouldReceive( 'query' )
+			->once()
+			->with(
+				Mockery::on(
+					static fn ( $sql ) => false !== strpos( $sql, 'UPDATE `wp_wb_gam_user_badges`' )
+						&& false !== strpos( $sql, 'validity_days' )
+						&& false !== strpos( $sql, "expires_at < '1971-01-01'" )
+				)
+			)
+			->andReturn( 3 );
+
+		$this->assertSame( 3, BadgeEngine::repair_zero_date_expiry() );
+		$this->assertSame( array( 'wb_gam_earned_badges_5', 'wb_gam_earned_badges_9' ), $deleted );
+	}
+
+	/**
+	 * @test
+	 * @covers ::repair_zero_date_expiry
+	 */
+	public function repair_is_a_noop_when_no_zero_date_rows_exist(): void {
+		global $wpdb;
+		$wpdb         = Mockery::mock();
+		$wpdb->prefix = 'wp_';
+		$wpdb->shouldReceive( 'get_col' )->once()->andReturn( array() );
+		$wpdb->shouldNotReceive( 'query' );
+
+		$this->assertSame( 0, BadgeEngine::repair_zero_date_expiry() );
+	}
 }
