@@ -142,7 +142,7 @@ final class ProfilePage {
 			$points,
 			$points_label,
 			sprintf(
-				/* translators: %d: number of badges */
+				/* translators: %d: number of badges earned. */
 				_n( '%d badge', '%d badges', $badge_count, 'wb-gamification' ),
 				$badge_count
 			),
@@ -335,7 +335,7 @@ final class ProfilePage {
 					$points,
 					$points_label,
 					sprintf(
-						/* translators: %d: number of badges */
+						/* translators: %d: number of badges earned. */
 						_n( '%d badge', '%d badges', $badge_count, 'wb-gamification' ),
 						$badge_count
 					),
