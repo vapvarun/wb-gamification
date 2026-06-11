@@ -39,16 +39,65 @@ defined( 'ABSPATH' ) || exit;
 final class Backfiller {
 
 	/**
-	 * Backfill all gamification activity rows missing content cards.
+	 * Backfill all gamification activity rows missing content cards, then
+	 * collapse every action headline to the generic, non-duplicating form.
 	 *
-	 * @return array{badge_earned:int,level_changed:int,kudos_given:int} Counts updated.
+	 * @return array{badge_earned:int,level_changed:int,kudos_given:int,actions_genericized:int} Counts updated.
 	 */
 	public static function run(): array {
 		return array(
-			'badge_earned'  => self::fix_badge_rows(),
-			'level_changed' => self::fix_level_rows(),
-			'kudos_given'   => self::fix_kudos_rows(),
+			'badge_earned'        => self::fix_badge_rows(),
+			'level_changed'       => self::fix_level_rows(),
+			'kudos_given'         => self::fix_kudos_rows(),
+			'actions_genericized' => self::genericize_actions(),
 		);
+	}
+
+	/**
+	 * Collapse gamification action headlines to the generic verb form.
+	 *
+	 * Touches the `action` column only (never `content`), so it cannot trigger
+	 * the lossy badge-by-time-proximity reconstruction the fix_* methods use —
+	 * already-correct cards keep their content untouched. The content card
+	 * already names the specific badge / level / challenge / recipient, so the
+	 * headline becomes "X earned a badge" instead of repeating the name. Runs
+	 * for every gamification activity and is idempotent (skips rows already
+	 * generic). Closes the duplicate-headline regression QA flagged 2026-06.
+	 *
+	 * @return int Rows whose action was rewritten.
+	 */
+	private static function genericize_actions(): int {
+		global $wpdb;
+		$bp_activity = $wpdb->prefix . 'bp_activity';
+		$type_map    = array(
+			'badge_earned'        => 'badge',
+			'level_changed'       => 'level',
+			'kudos_given'         => 'kudos',
+			'challenge_completed' => 'challenge',
+		);
+
+		$updated = 0;
+		foreach ( $type_map as $activity_type => $card_type ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			$rows = $wpdb->get_results(
+				$wpdb->prepare(
+					"SELECT id, user_id, action FROM {$bp_activity}
+					 WHERE component = 'wb_gamification' AND type = %s",
+					$activity_type
+				)
+			);
+			foreach ( $rows as $row ) {
+				$generic = ActivityCard::action_line( ActivityCard::user_link( (int) $row->user_id ), $card_type );
+				if ( $generic === (string) $row->action ) {
+					continue;
+				}
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery
+				$wpdb->update( $bp_activity, array( 'action' => $generic ), array( 'id' => (int) $row->id ) );
+				++$updated;
+			}
+		}
+
+		return $updated;
 	}
 
 	/**
@@ -101,12 +150,7 @@ final class Backfiller {
 			$badge_img  = ! empty( $def['image_url'] ) ? $def['image_url'] : ActivityCard::default_badge_image();
 			$user_link  = ActivityCard::user_link( (int) $row->user_id );
 
-			$new_action = sprintf(
-				/* translators: 1: user display name link, 2: badge name */
-				__( '%1$s earned the <strong>%2$s</strong> badge', 'wb-gamification' ),
-				$user_link,
-				esc_html( $badge_name )
-			);
+			$new_action  = ActivityCard::action_line( $user_link, 'badge' );
 			$new_content = ActivityCard::render( 'badge', $badge_img, $badge_name, $badge_desc );
 
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery
