@@ -315,6 +315,7 @@ final class CommunityChallengesPage {
 					<h3 class="wbgam-card-title"><?php esc_html_e( 'All Community Challenges', 'wb-gamification' ); ?></h3>
 				</div>
 				<div class="wbgam-card-body wbgam-card-body--flush">
+					<div class="wbgam-table-scroll">
 					<table class="wbgam-table">
 						<thead>
 							<tr>
@@ -390,6 +391,7 @@ final class CommunityChallengesPage {
 						<?php endforeach; ?>
 						</tbody>
 					</table>
+					</div>
 				</div>
 			</div>
 			<?php else : ?>

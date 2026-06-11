@@ -134,6 +134,7 @@ final class SubmissionsPage {
 							</p>
 						</div>
 					<?php else : ?>
+						<div class="wbgam-table-scroll">
 						<table class="wbgam-table">
 							<thead>
 								<tr>
@@ -241,6 +242,7 @@ final class SubmissionsPage {
 								<?php endforeach; ?>
 							</tbody>
 						</table>
+						</div>
 					<?php endif; ?>
 				</div>
 			</div>

@@ -10,6 +10,7 @@
 /* Period bar */
 .wb-gam-analytics__period-bar {
 	display: flex;
+	flex-wrap: wrap;
 	gap: 0.5rem;
 	margin: 1rem 0 1.5rem;
 }
