@@ -136,12 +136,16 @@ final class ProfilePage {
 			$site_name
 		);
 		$desc = sprintf(
-			/* translators: 1: display name, 2: amount, 3: currency label, 4: badge count, 5: level name */
-			__( '%1$s has earned %2$d %3$s, %4$d badges, and reached %5$s.', 'wb-gamification' ),
+			/* translators: 1: display name, 2: amount, 3: currency label, 4: badge count with label, 5: level name */
+			__( '%1$s has earned %2$d %3$s, %4$s, and reached %5$s.', 'wb-gamification' ),
 			$user->display_name,
 			$points,
 			$points_label,
-			$badge_count,
+			sprintf(
+				/* translators: %d: number of badges */
+				_n( '%d badge', '%d badges', $badge_count, 'wb-gamification' ),
+				$badge_count
+			),
 			$level['name'] ?? __( 'Newcomer', 'wb-gamification' )
 		);
 
@@ -326,11 +330,15 @@ final class ProfilePage {
 			'<p class="wb-gam-profile-page__stats">%s</p>',
 			esc_html(
 				sprintf(
-					/* translators: 1: amount, 2: currency, 3: badges, 4: level */
-					__( '%1$d %2$s · %3$d badges · %4$s', 'wb-gamification' ),
+					/* translators: 1: amount, 2: currency, 3: badge count with label, 4: level */
+					__( '%1$d %2$s · %3$s · %4$s', 'wb-gamification' ),
 					$points,
 					$points_label,
-					$badge_count,
+					sprintf(
+						/* translators: %d: number of badges */
+						_n( '%d badge', '%d badges', $badge_count, 'wb-gamification' ),
+						$badge_count
+					),
 					$level['name'] ?? __( 'Newcomer', 'wb-gamification' )
 				)
 			)
