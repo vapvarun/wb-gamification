@@ -1335,7 +1335,7 @@
     },
     {
       "name": "{prefix}wb_gam_user_intelligence",
-      "purpose": "Read-side projection of per-user behavioural signals (engagement_score, action_diversity, recency_days, events_30d, churn_risk, anomaly_flag) computed daily by IntelligenceProjector from wb_gam_events. NOT a source of truth — every row is recomputable from the event log. One row per user, denormalised so the read path is a single PK lookup.",
+      "purpose": "Read-side projection of per-user behavioural signals (engagement_score, action_diversity, recency_days, events_30d, churn_risk, anomaly_flag) computed daily by IntelligenceProjector from wb_gam_events. NOT a source of truth \u2014 every row is recomputable from the event log. One row per user, denormalised so the read path is a single PK lookup.",
       "primary_key": "user_id",
       "indexes": [
         "idx_churn_risk",
@@ -1344,8 +1344,8 @@
       "introduced": "1.5.0 (v2.5 / AI v1; created on existing installs by DbUpgrader::ensure_user_intelligence_table, feature-flag gated on wb_gam_feature_user_intelligence_v1)",
       "three_entry_point": {
         "status": "satisfied",
-        "api": "WBGam\\API\\IntelligenceController — GET /wb-gamification/v1/members/{id}/intelligence (admins read any user; members read their own).",
-        "backend": "WBGam\\Admin\\AnalyticsDashboard::render_intelligence_panels — churn-risk + anomaly panels on the Analytics dashboard.",
+        "api": "WBGam\\API\\IntelligenceController \u2014 GET /wb-gamification/v1/members/{id}/intelligence (admins read any user; members read their own).",
+        "backend": "WBGam\\Admin\\AnalyticsDashboard::render_intelligence_panels \u2014 churn-risk + anomaly panels on the Analytics dashboard.",
         "frontend": "Member-facing via the self-read path of the REST endpoint (a logged-in member can read their own intelligence row)."
       }
     },
@@ -1360,14 +1360,14 @@
       "introduced": "1.5.0 (v2.2 durability + SSE-readiness; created on existing installs by DbUpgrader::ensure_notifications_queue_table, feature-flag gated on wb_gam_feature_notifications_queue_v1)",
       "three_entry_point": {
         "status": "satisfied",
-        "api": "WBGam\\API\\SSEController — GET /wb-gamification/v1/stream (SSE) plus the WP Heartbeat cursor read; both call fetch_pending against this table.",
+        "api": "WBGam\\API\\SSEController \u2014 GET /wb-gamification/v1/stream (SSE) plus the WP Heartbeat cursor read; both call fetch_pending against this table.",
         "backend": "WBGam\\Engine\\NotificationBridge enqueues rows; admin realtime placement/transport controlled via Settings > Realtime.",
-        "frontend": "Member-facing realtime toasts — drained client-side via SSE/Heartbeat and rendered as notifications to the logged-in member."
+        "frontend": "Member-facing realtime toasts \u2014 drained client-side via SSE/Heartbeat and rendered as notifications to the logged-in member."
       }
     },
     {
       "name": "{prefix}wb_gam_side_effect_failures",
-      "purpose": "Dead-letter / reconciliation table for SideEffectDispatcher (v2.1 decoupled side effects). Holds failed level-up / streak / webhook handlers (event_id, user_id, side_effect, status, retry_count) for cron-driven retry via wb_gam_reconcile_side_effects. Internal durability plumbing — not a member or owner data feature.",
+      "purpose": "Dead-letter / reconciliation table for SideEffectDispatcher (v2.1 decoupled side effects). Holds failed level-up / streak / webhook handlers (event_id, user_id, side_effect, status, retry_count) for cron-driven retry via wb_gam_reconcile_side_effects. Internal durability plumbing \u2014 not a member or owner data feature.",
       "primary_key": "id",
       "indexes": [
         "idx_status_attempt",
@@ -1376,7 +1376,7 @@
       "introduced": "1.5.0 (v2.1 decoupled side effects; created on existing installs by DbUpgrader::ensure_side_effect_failures_table, feature-flag gated on wb_gam_feature_side_effect_failures_v1)",
       "three_entry_point": {
         "status": "intentional_exception",
-        "reason": "Internal reconciliation plumbing, not a data feature exposed to members or site owners. Written by SideEffectDispatcher on handler failure and drained by the wb_gam_reconcile_side_effects cron. There is deliberately no member frontend, admin CRUD, or public REST surface — exposing a dead-letter queue to those entry points would invite manual edits to a self-healing retry log. Operators inspect it via wp db query / Query Monitor when debugging.",
+        "reason": "Internal reconciliation plumbing, not a data feature exposed to members or site owners. Written by SideEffectDispatcher on handler failure and drained by the wb_gam_reconcile_side_effects cron. There is deliberately no member frontend, admin CRUD, or public REST surface \u2014 exposing a dead-letter queue to those entry points would invite manual edits to a self-healing retry log. Operators inspect it via wp db query / Query Monitor when debugging.",
         "api": null,
         "backend": null,
         "frontend": null
@@ -2194,7 +2194,7 @@
       "type": "action",
       "purpose": "ManifestLoader has finished scanning action manifests; Registry is populated.",
       "fired_at": [
-        "src/Engine/ManifestLoader.php:77"
+        "src/Engine/ManifestLoader.php:107"
       ],
       "consumed_by": []
     },
@@ -2400,7 +2400,7 @@
       "type": "action",
       "purpose": "",
       "fired_at": [
-        "src/Admin/SetupWizard.php:295"
+        "src/Admin/SetupWizard.php:314"
       ],
       "consumed_by": []
     },
@@ -2409,7 +2409,7 @@
       "type": "action",
       "purpose": "",
       "fired_at": [
-        "src/Admin/SetupWizard.php:279"
+        "src/Admin/SetupWizard.php:298"
       ],
       "consumed_by": []
     },
@@ -2836,7 +2836,7 @@
       "type": "filter",
       "purpose": "Filter the list of manifest file paths scanned by ManifestLoader. Use to add custom integration manifests.",
       "fired_at": [
-        "src/Engine/ManifestLoader.php:120"
+        "src/Engine/ManifestLoader.php:178"
       ],
       "consumed_by": []
     },
@@ -3022,7 +3022,7 @@
       "type": "filter",
       "purpose": "",
       "fired_at": [
-        "integrations/wpmediaverse.php:426"
+        "integrations/wpmediaverse.php:448"
       ],
       "consumed_by": []
     },
@@ -3031,7 +3031,7 @@
       "type": "filter",
       "purpose": "",
       "fired_at": [
-        "integrations/wpmediaverse.php:442"
+        "integrations/wpmediaverse.php:464"
       ],
       "consumed_by": []
     }

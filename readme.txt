@@ -121,7 +121,7 @@ Yes. Any plugin can drop a `wb-gamification.php` manifest file in its directory.
 
 = How do I check if everything is working? =
 
-Run `wp wb-gamification doctor` from WP-CLI. It validates all 23 database tables, registered actions, badge conditions, REST API routes, cron jobs, integration detection, and market readiness. Use `--verbose` for full detail or `--fix` to auto-repair issues.
+Run `wp wb-gamification doctor` from WP-CLI. It validates all 26 database tables, registered actions, badge conditions, REST API routes, cron jobs, integration detection, and market readiness. Use `--verbose` for full detail or `--fix` to auto-repair issues.
 
 = Is this GDPR compliant? =
 
@@ -129,7 +129,7 @@ Yes. WB Gamification integrates with WordPress privacy tools. Members can reques
 
 = What happens if I deactivate the plugin? =
 
-All data is preserved in the database. Reactivating the plugin restores everything. If you delete the plugin via the Plugins screen, the `uninstall.php` file removes all 23 tables, options, cron jobs, and transients — a clean uninstall.
+All data is preserved in the database. Reactivating the plugin restores everything. If you delete the plugin via the Plugins screen, the `uninstall.php` file removes all 26 tables, options, cron jobs, and transients — a clean uninstall.
 
 == Changelog ==
 
