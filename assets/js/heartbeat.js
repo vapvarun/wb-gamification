@@ -50,17 +50,24 @@
 	function init() {
 		var $ = jQuery;
 
-		// Steady-state interval. We default to 'standard' (15s) rather than
+		// Steady-state interval, in SECONDS. We default to 15s rather than
 		// 'fast' (5s): at community scale, every logged-in member polling
 		// every 5s is a self-imposed request floor (10k concurrent members
-		// ≈ 2,000 admin-ajax hits/sec, each a full WP bootstrap). 'standard'
-		// cuts that ~3x while still feeling live — because we BURST to
-		// 'fast' for a short window right after the member does something
-		// (see burst()), which is exactly when realtime feedback matters.
-		// The earlier 'fast' default (Basecamp #9925151443) is preserved as
-		// the post-action burst speed. Hosts can override the steady-state
-		// value via window.wbGamRealtimeInterval.
-		var DEFAULT_INTERVAL = 'standard';
+		// ≈ 2,000 admin-ajax hits/sec, each a full WP bootstrap). 15s cuts
+		// that ~3x while still feeling live — because we BURST to 'fast' for
+		// a short window right after the member does something (see burst()),
+		// which is exactly when realtime feedback matters. The earlier 'fast'
+		// default (Basecamp #9925151443) is preserved as the post-action
+		// burst speed. Hosts can override the steady-state value via
+		// window.wbGamRealtimeInterval.
+		//
+		// IMPORTANT: this must be the integer 15, NOT the string 'standard'.
+		// WP's wp.heartbeat.interval() only accepts 'fast' / 'slow' /
+		// 'long-polling' or an integer 1-3600; an unrecognized string like
+		// 'standard' silently falls back to the frontend default of 60s —
+		// which made the steady-state poll 60s instead of 15s, delaying every
+		// points/badge toast by up to a minute.
+		var DEFAULT_INTERVAL = 15;
 		if ( window.wbGamRealtimeInterval ) {
 			DEFAULT_INTERVAL = String( window.wbGamRealtimeInterval );
 		}
