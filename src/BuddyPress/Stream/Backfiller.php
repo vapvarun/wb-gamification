@@ -42,15 +42,78 @@ final class Backfiller {
 	 * Backfill all gamification activity rows missing content cards, then
 	 * collapse every action headline to the generic, non-duplicating form.
 	 *
-	 * @return array{badge_earned:int,level_changed:int,kudos_given:int,actions_genericized:int} Counts updated.
+	 * @return array{badge_earned:int,level_changed:int,kudos_given:int,challenge_completed:int,actions_genericized:int} Counts updated.
 	 */
 	public static function run(): array {
 		return array(
 			'badge_earned'        => self::fix_badge_rows(),
 			'level_changed'       => self::fix_level_rows(),
 			'kudos_given'         => self::fix_kudos_rows(),
+			'challenge_completed' => self::fix_challenge_rows(),
 			'actions_genericized' => self::genericize_actions(),
 		);
+	}
+
+	/**
+	 * Repair challenge_completed rows missing a content card.
+	 *
+	 * Reconstructs from the challenge row referenced by the activity's item_id
+	 * (challenges carry no image/description columns, so the icon falls back to
+	 * the default and the description is rebuilt from bonus_points, mirroring
+	 * {@see \WBGam\BuddyPress\Stream\ChallengeStream::post()}). Skips rows whose
+	 * challenge has since been deleted.
+	 *
+	 * @return int Rows updated.
+	 */
+	private static function fix_challenge_rows(): int {
+		global $wpdb;
+		$bp_activity = $wpdb->prefix . 'bp_activity';
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$rows = $wpdb->get_results(
+			"SELECT id, item_id, content FROM {$bp_activity}
+			 WHERE component = 'wb_gamification' AND type = 'challenge_completed'"
+		);
+
+		$updated = 0;
+		foreach ( $rows as $row ) {
+			$needs_update = empty( $row->content )
+				|| false === strpos( (string) $row->content, 'wb-gam-activity-card__icon' );
+			if ( ! $needs_update ) {
+				continue;
+			}
+
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			$challenge = $wpdb->get_row(
+				$wpdb->prepare(
+					"SELECT title, bonus_points FROM {$wpdb->prefix}wb_gam_challenges WHERE id = %d",
+					(int) $row->item_id
+				),
+				ARRAY_A
+			);
+			if ( ! $challenge ) {
+				continue;
+			}
+
+			$title = ! empty( $challenge['title'] ) ? $challenge['title'] : __( 'a challenge', 'wb-gamification' );
+			$bonus = isset( $challenge['bonus_points'] ) ? (int) $challenge['bonus_points'] : 0;
+
+			$description = $bonus > 0
+				? sprintf(
+					/* translators: %d: bonus points awarded */
+					_n( 'Earned a %d-point bonus on completion.', 'Earned a %d-point bonus on completion.', $bonus, 'wb-gamification' ),
+					$bonus
+				)
+				: __( 'Challenge complete!', 'wb-gamification' );
+
+			$content = ActivityCard::render( 'challenge', ActivityCard::default_challenge_image(), $title, $description );
+
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			$wpdb->update( $bp_activity, array( 'content' => $content ), array( 'id' => (int) $row->id ) );
+			++$updated;
+		}
+
+		return $updated;
 	}
 
 	/**
