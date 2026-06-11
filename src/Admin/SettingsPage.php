@@ -2739,6 +2739,7 @@ final class SettingsPage {
 									id="wb_gam_email_<?php echo esc_attr( $slug ); ?>"
 									name="<?php echo esc_attr( $slug ); ?>"
 									value="1"
+									aria-label="<?php /* translators: %s: email notification name */ echo esc_attr( sprintf( __( 'Enable %s email', 'wb-gamification' ), $meta['label'] ) ); ?>"
 									<?php checked( $enabled ); ?>
 								>
 								<span class="wbgam-switch__track" aria-hidden="true"></span>
