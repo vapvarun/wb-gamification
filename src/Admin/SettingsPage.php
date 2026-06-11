@@ -601,7 +601,7 @@ final class SettingsPage {
 			</div>
 
 			<div class="wbgam-card-footer">
-				<button type="submit" class="button button-primary"><?php esc_html_e( 'Save Engagement Settings', 'wb-gamification' ); ?></button>
+				<button type="submit" class="wbgam-btn wbgam-btn--primary"><?php esc_html_e( 'Save Engagement Settings', 'wb-gamification' ); ?></button>
 			</div>
 		</form>
 		<?php
@@ -1519,7 +1519,7 @@ final class SettingsPage {
 				</div>
 
 				<div class="wbgam-settings-section__footer">
-					<?php submit_button( __( 'Save Changes', 'wb-gamification' ), 'primary', 'submit', false ); ?>
+					<button type="submit" name="submit" class="wbgam-btn wbgam-btn--primary"><?php esc_html_e( 'Save Changes', 'wb-gamification' ); ?></button>
 				</div>
 			<?php endif; ?>
 		</form>
@@ -1749,15 +1749,15 @@ final class SettingsPage {
 
 		<div class="wb-gam-admin-quick-links">
 			<a href="<?php echo esc_url( admin_url( 'admin.php?page=wb-gamification-analytics' ) ); ?>"
-				class="button button-primary">
+				class="wbgam-btn wbgam-btn--primary">
 				<?php esc_html_e( 'Full Analytics', 'wb-gamification' ); ?>
 			</a>
 			<a href="<?php echo esc_url( admin_url( 'admin.php?page=wb-gamification-award' ) ); ?>"
-				class="button">
+				class="wbgam-btn wbgam-btn--secondary">
 				<?php esc_html_e( 'Award Points', 'wb-gamification' ); ?>
 			</a>
 			<a href="<?php echo esc_url( admin_url( 'admin.php?page=wb-gamification#points' ) ); ?>"
-				class="button">
+				class="wbgam-btn wbgam-btn--secondary">
 				<?php esc_html_e( 'Configure Points', 'wb-gamification' ); ?>
 			</a>
 		</div>
@@ -1945,7 +1945,7 @@ final class SettingsPage {
 									<?php if ( (int) $level['min_points'] > 0 ) : ?>
 										<button
 											type="button"
-											class="button button-small button-link-delete"
+											class="wbgam-btn wbgam-btn--sm wbgam-btn--danger"
 											data-wb-gam-level-delete="<?php echo (int) $level['id']; ?>"
 										>
 											<?php esc_html_e( 'Delete', 'wb-gamification' ); ?>
@@ -1960,7 +1960,7 @@ final class SettingsPage {
 					</table>
 
 					<div class="wbgam-settings-section__footer wbgam-section__footer--flat">
-						<button type="submit" class="button button-primary" data-wb-gam-levels-save>
+						<button type="submit" class="wbgam-btn wbgam-btn--primary" data-wb-gam-levels-save>
 							<?php esc_html_e( 'Save Levels', 'wb-gamification' ); ?>
 						</button>
 					</div>
@@ -1988,7 +1988,7 @@ final class SettingsPage {
 					</table>
 
 					<div class="wbgam-settings-section__footer wbgam-section__footer--flat">
-						<button type="submit" class="button button-secondary" data-wb-gam-levels-add>
+						<button type="submit" class="wbgam-btn wbgam-btn--secondary" data-wb-gam-levels-add>
 							<?php esc_html_e( 'Add Level', 'wb-gamification' ); ?>
 						</button>
 					</div>
@@ -2073,7 +2073,7 @@ final class SettingsPage {
 											<?php wp_nonce_field( 'wb_gam_save_settings', 'wb_gam_settings_nonce' ); ?>
 											<input type="hidden" name="wb_gam_automation_action" value="delete" />
 											<input type="hidden" name="wb_gam_rule_index" value="<?php echo esc_attr( $i ); ?>" />
-											<button type="submit" class="button button-small button-link-delete">
+											<button type="submit" class="wbgam-btn wbgam-btn--sm wbgam-btn--danger">
 												<?php esc_html_e( 'Delete', 'wb-gamification' ); ?>
 											</button>
 										</form>
@@ -2153,7 +2153,7 @@ final class SettingsPage {
 					</table>
 
 					<div class="wbgam-settings-section__footer wbgam-section__footer--flat">
-						<?php submit_button( __( 'Add Rule', 'wb-gamification' ), 'primary', 'submit', false ); ?>
+						<button type="submit" name="submit" class="wbgam-btn wbgam-btn--primary"><?php esc_html_e( 'Add Rule', 'wb-gamification' ); ?></button>
 					</div>
 				</form>
 			</div>
@@ -2209,7 +2209,7 @@ final class SettingsPage {
 			</div>
 
 			<div class="wbgam-settings-section__footer">
-				<?php submit_button( __( 'Save Changes', 'wb-gamification' ), 'primary', 'submit', false ); ?>
+				<button type="submit" name="submit" class="wbgam-btn wbgam-btn--primary"><?php esc_html_e( 'Save Changes', 'wb-gamification' ); ?></button>
 			</div>
 		</form>
 		<?php
@@ -2346,7 +2346,7 @@ final class SettingsPage {
 			</div>
 
 			<div class="wbgam-settings-section__footer">
-				<?php submit_button( __( 'Save Access Settings', 'wb-gamification' ), 'primary', 'submit', false ); ?>
+				<button type="submit" name="submit" class="wbgam-btn wbgam-btn--primary"><?php esc_html_e( 'Save Access Settings', 'wb-gamification' ); ?></button>
 			</div>
 		</form>
 		<?php
@@ -2407,7 +2407,7 @@ final class SettingsPage {
 			</div>
 
 			<div class="wbgam-settings-section__footer">
-				<?php submit_button( __( 'Save Modules', 'wb-gamification' ), 'primary', 'submit', false ); ?>
+				<button type="submit" name="submit" class="wbgam-btn wbgam-btn--primary"><?php esc_html_e( 'Save Modules', 'wb-gamification' ); ?></button>
 			</div>
 		</form>
 		<?php
@@ -2576,7 +2576,7 @@ final class SettingsPage {
 			</div>
 
 			<div class="wbgam-settings-section__footer">
-				<?php submit_button( __( 'Save Realtime Settings', 'wb-gamification' ), 'primary', 'submit', false ); ?>
+				<button type="submit" name="submit" class="wbgam-btn wbgam-btn--primary"><?php esc_html_e( 'Save Realtime Settings', 'wb-gamification' ); ?></button>
 			</div>
 		</form>
 		<?php
