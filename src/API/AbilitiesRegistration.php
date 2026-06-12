@@ -41,8 +41,11 @@ final class AbilitiesRegistration {
 		// WP 6.9+ Abilities API. Registration MUST happen on
 		// `wp_abilities_api_init` per core's contract — using the generic
 		// `init` hook triggers a `_doing_it_wrong` notice on every page
-		// load and the abilities silently fail to register.
+		// load and the abilities silently fail to register. The category
+		// must be registered first, on its own earlier hook, or every
+		// ability referencing it triggers the same notice and is dropped.
 		if ( function_exists( 'wp_register_ability' ) ) {
+			add_action( 'wp_abilities_api_categories_init', array( __CLASS__, 'register_category' ) );
 			add_action( 'wp_abilities_api_init', array( __CLASS__, 'register_abilities' ) );
 		}
 
@@ -51,13 +54,180 @@ final class AbilitiesRegistration {
 	}
 
 	/**
+	 * Register the "gamification" ability category.
+	 *
+	 * Both `label` and `description` are required — omitting either makes
+	 * `wp_register_ability_category()` silently return null.
+	 *
+	 * @return void
+	 */
+	public static function register_category(): void {
+		wp_register_ability_category(
+			'gamification',
+			array(
+				'label'       => __( 'Gamification', 'wb-gamification' ),
+				'description' => __( 'Points, badges, levels, leaderboards, challenges, and streaks provided by WB Gamification.', 'wb-gamification' ),
+			)
+		);
+	}
+
+	/**
 	 * Register each gamification ability with the WP Abilities API.
+	 *
+	 * The discovery metadata from get_abilities() is mapped onto the args
+	 * core actually validates: `execute_callback` and `permission_callback`
+	 * are REQUIRED — without them WP_Ability::prepare_properties() throws,
+	 * the registry emits `_doing_it_wrong`, and the ability is dropped.
+	 * Execution proxies to the documented REST route, so the controller's
+	 * own permission_callback, validation, and sanitization still apply.
 	 *
 	 * @return void
 	 */
 	public static function register_abilities(): void {
 		foreach ( self::get_abilities() as $id => $ability ) {
-			wp_register_ability( $id, $ability );
+			wp_register_ability(
+				$id,
+				array(
+					'label'               => $ability['label'],
+					'description'         => $ability['description'],
+					'category'            => $ability['category'],
+					'execute_callback'    => self::make_execute_callback( $ability ),
+					'permission_callback' => self::make_permission_callback( $ability['auth'] ),
+					'input_schema'        => self::make_input_schema( $ability ),
+					'meta'                => array(
+						'annotations'  => array(
+							'readonly'    => array( 'GET' ) === $ability['methods'],
+							'destructive' => in_array( 'DELETE', $ability['methods'], true ),
+							'idempotent'  => array( 'GET' ) === $ability['methods'],
+						),
+						'show_in_rest' => true,
+					),
+				)
+			);
+		}
+	}
+
+	/**
+	 * Derive the ability's JSON input schema from its parameter metadata.
+	 *
+	 * Core refuses to execute an ability with input unless an input schema
+	 * exists, so every ability gets at least an empty object schema. The
+	 * per-parameter `required` booleans collapse into the object-level
+	 * `required` array JSON Schema expects.
+	 *
+	 * @param array<string, mixed> $ability Ability definition from get_abilities().
+	 * @return array<string, mixed>
+	 */
+	private static function make_input_schema( array $ability ): array {
+		$properties = array();
+		$required   = array();
+
+		foreach ( (array) ( $ability['parameters'] ?? array() ) as $key => $param ) {
+			if ( ! empty( $param['required'] ) ) {
+				$required[] = $key;
+			}
+			unset( $param['required'] );
+			$properties[ $key ] = $param;
+		}
+
+		if ( count( $ability['methods'] ) > 1 ) {
+			$properties['method'] = array(
+				'type'    => 'string',
+				'enum'    => $ability['methods'],
+				'default' => $ability['methods'][0],
+			);
+		}
+
+		$schema = array(
+			'type'       => 'object',
+			'properties' => $properties,
+		);
+		if ( array() !== $required ) {
+			$schema['required'] = $required;
+		}
+
+		return $schema;
+	}
+
+	/**
+	 * Build the execute callback that proxies an ability to its REST route.
+	 *
+	 * @param array<string, mixed> $ability Ability definition from get_abilities().
+	 * @return callable
+	 */
+	private static function make_execute_callback( array $ability ): callable {
+		return static function ( $input = array() ) use ( $ability ) {
+			$input  = is_array( $input ) ? $input : array();
+			$suffix = substr( (string) $ability['endpoint'], strlen( rest_url( self::NAMESPACE ) ) );
+			$route  = '/' . self::NAMESPACE . $suffix;
+
+			// Fill path placeholders like {id} from the input.
+			$route = preg_replace_callback(
+				'/\{([a-z_]+)\}/',
+				static function ( array $matches ) use ( &$input ): string {
+					$value = $input[ $matches[1] ] ?? '';
+					unset( $input[ $matches[1] ] );
+					return rawurlencode( (string) $value );
+				},
+				$route
+			);
+
+			// Multi-method abilities (e.g. manage-badges) pick via input.method.
+			$method = strtoupper( (string) ( $input['method'] ?? $ability['methods'][0] ) );
+			unset( $input['method'] );
+			if ( ! in_array( $method, $ability['methods'], true ) ) {
+				return new \WP_Error(
+					'wb_gam_ability_method_not_allowed',
+					sprintf(
+						/* translators: 1: HTTP method, 2: comma-separated list of allowed methods. */
+						__( 'Method %1$s is not supported by this ability. Allowed: %2$s.', 'wb-gamification' ),
+						$method,
+						implode( ', ', $ability['methods'] )
+					)
+				);
+			}
+
+			$request = new \WP_REST_Request( $method, $route );
+			if ( 'GET' === $method ) {
+				$request->set_query_params( $input );
+			} else {
+				$request->set_body_params( $input );
+			}
+
+			$response = rest_do_request( $request );
+			if ( $response->is_error() ) {
+				return $response->as_error();
+			}
+
+			return $response->get_data();
+		};
+	}
+
+	/**
+	 * Map an ability's documented auth level to a permission callback.
+	 *
+	 * The REST controller behind each ability enforces its own permissions
+	 * on execution; this gate mirrors the documented auth level so clients
+	 * get an upfront answer from the Abilities API.
+	 *
+	 * @param string $auth Auth level: 'none', 'optional', 'required', or 'admin'.
+	 * @return callable
+	 */
+	private static function make_permission_callback( string $auth ): callable {
+		switch ( $auth ) {
+			case 'admin':
+				return static function (): bool {
+					return current_user_can( 'manage_options' );
+				};
+			case 'required':
+				return static function (): bool {
+					return is_user_logged_in();
+				};
+			default:
+				// 'none' / 'optional' — the proxied endpoint is public.
+				return static function (): bool {
+					return true;
+				};
 		}
 	}
 

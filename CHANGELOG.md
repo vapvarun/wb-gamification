@@ -28,9 +28,11 @@ Member-facing polish: an admin accent control, a restrained on-brand activity st
 - Public profiles show "1 badge" (singular) correctly.
 - Accessible names on the email-notification toggles and the submission reject-reason field.
 - i18n: aligned the "%d badge" translator comment across surfaces (make-pot warning-free).
+- Admin screens on WordPress 6.9+ no longer show repeated "ability category not registered" notices and the "headers already sent" warnings they caused after install.
 
 ### Dev
 
+- Gamification abilities now register correctly with the WP Abilities API: category registration, executable callbacks proxied to the documented REST routes, permission gates per auth level, and input schemas.
 - Regression journey + unit test covering the activity card and generic-headline contract.
 
 
