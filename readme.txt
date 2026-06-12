@@ -146,6 +146,8 @@ Member-facing polish: an admin accent control, a restrained on-brand activity st
 * Fix      - Legacy activity items created before the card redesign convert to the modern card automatically on update, across all four event types, with no manual step.
 * Fix      - Public profiles show "1 badge" (singular) correctly.
 * Fix      - Accessible names added to the email-notification toggles and the submission reject-reason field.
+* Fix      - Admin screens on WordPress 6.9+ no longer show repeated "ability category not registered" notices and the "headers already sent" warnings they caused after install.
+* Dev      - Gamification abilities now register correctly with the WP Abilities API: category registration, executable callbacks proxied to the documented REST routes, permission gates per auth level, and input schemas.
 * Dev      - Added a regression journey and unit test covering the activity card and generic-headline contract.
 
 
