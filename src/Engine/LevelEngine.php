@@ -41,8 +41,20 @@ defined( 'ABSPATH' ) || exit;
 final class LevelEngine {
 
 	/**
+	 * Object-cache group + key for the full level list. The key carries a
+	 * structure version (`_v2` added the `sort_order` field) so a post-deploy
+	 * site never serves a stale older array from a persistent object cache.
+	 * This is the ONLY place level rows are cached — kept as a constant so the
+	 * read, write, and invalidation paths can never drift to different keys.
+	 */
+	private const CACHE_GROUP = 'wb_gamification';
+	private const CACHE_KEY   = 'wb_gam_levels_all_v2';
+
+	/**
 	 * Static cache of all level rows for the current request.
-	 * Avoids repeated object-cache lookups within a single page load.
+	 * Avoids repeated object-cache lookups within a single page load. This is
+	 * the per-request tier of the same single cache as {@see CACHE_KEY} — not a
+	 * second cache; {@see invalidate_cache()} clears both tiers together.
 	 *
 	 * @var array<int, array{id: int, name: string, min_points: int, sort_order: int, icon_url: string|null}>|null
 	 */
@@ -69,10 +81,7 @@ final class LevelEngine {
 			return self::$levels_cache;
 		}
 
-		// Cache key carries a structure version. v2 added the `sort_order` field
-		// to every row; bumping the key guarantees a post-deploy site never
-		// serves a stale v1 array (no sort_order) from a persistent object cache.
-		$cached = wp_cache_get( 'wb_gam_levels_all_v2', 'wb_gamification' );
+		$cached = wp_cache_get( self::CACHE_KEY, self::CACHE_GROUP );
 		if ( false !== $cached ) {
 			self::$levels_cache = (array) $cached;
 			return self::$levels_cache;
@@ -97,9 +106,25 @@ final class LevelEngine {
 			$rows
 		);
 
-		wp_cache_set( 'wb_gam_levels_all_v2', self::$levels_cache, 'wb_gamification', 3600 ); // 1 hr TTL.
+		wp_cache_set( self::CACHE_KEY, self::$levels_cache, self::CACHE_GROUP, 3600 ); // 1 hr TTL.
 
 		return self::$levels_cache;
+	}
+
+	/**
+	 * Drop the cached level list after a write (create / update / delete / seed).
+	 *
+	 * Clears BOTH tiers of the single level cache: the per-request static array
+	 * and the cross-request object-cache entry. Without this an admin editing a
+	 * level threshold would not see it reflected — in members' level displays,
+	 * nudges, or progress bars — until the 1-hour TTL expired (longer on sites
+	 * with a persistent object cache). Call from every path that mutates the
+	 * `wb_gam_levels` table; reads always go through {@see get_all_levels()}, so
+	 * this is the only invalidation needed (no second cache exists).
+	 */
+	public static function invalidate_cache(): void {
+		self::$levels_cache = null;
+		wp_cache_delete( self::CACHE_KEY, self::CACHE_GROUP );
 	}
 
 	/**

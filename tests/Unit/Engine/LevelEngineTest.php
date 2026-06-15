@@ -8,6 +8,7 @@
 namespace WBGam\Tests\Unit\Engine;
 
 use Brain\Monkey;
+use Brain\Monkey\Functions;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
@@ -158,6 +159,32 @@ class LevelEngineTest extends TestCase {
 		$this->seed_cache( $this->scrambled_levels() );
 
 		$this->assertSame( 'Member', LevelEngine::get_level_for_points( 800 )['name'] );
+	}
+
+	/**
+	 * invalidate_cache() clears BOTH tiers of the single level cache: it deletes
+	 * the object-cache entry and resets the per-request static array, so an admin
+	 * editing a level threshold sees it reflected immediately rather than after
+	 * the 1-hour TTL. There is only one level cache, so this is the only
+	 * invalidation needed (regression guard for the no-invalidation gap).
+	 *
+	 * @test
+	 * @covers ::invalidate_cache
+	 */
+	public function invalidate_cache_clears_static_and_object_tiers(): void {
+		Functions\expect( 'wp_cache_delete' )
+			->once()
+			->with( 'wb_gam_levels_all_v2', 'wb_gamification' )
+			->andReturn( true );
+
+		// Seed the per-request (static) tier, then invalidate it.
+		$this->seed_cache( $this->default_levels() );
+		LevelEngine::invalidate_cache();
+
+		$reflection = new ReflectionClass( LevelEngine::class );
+		$cache_prop = $reflection->getProperty( 'levels_cache' );
+		$cache_prop->setAccessible( true );
+		$this->assertNull( $cache_prop->getValue(), 'Static tier must be reset to null.' );
 	}
 
 	/**
