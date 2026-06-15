@@ -69,4 +69,4 @@ ALL of the following hold:
 |---|---|---|
 | `Next: Member` after scramble | `get_next_level` walks min_points, not sort_order | `src/Engine/LevelEngine.php` (`get_next_level_for_points`) |
 | Current level wrong at high totals | `get_level_for_points` still breaks early | `src/Engine/LevelEngine.php` (`get_level_for_points`) |
-| Edits to levels don't take effect for ~1h | `wb_gam_levels_all_v2` object cache not invalidated on write | `src/API/LevelsController.php` (no cache delete — known gap) |
+| Edits to levels don't take effect immediately | Write path didn't call `LevelEngine::invalidate_cache()` | `src/API/LevelsController.php` (`create_item` / `update_item` / `delete_item`) |
