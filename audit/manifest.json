@@ -3,7 +3,7 @@
   "plugin": {
     "slug": "wb-gamification",
     "name": "WB Gamification",
-    "version": "1.5.5",
+    "version": "1.5.6",
     "namespace": "WBGam\\",
     "main_file": "wb-gamification.php",
     "text_domain": "wb-gamification",
@@ -1855,7 +1855,7 @@
       "type": "action",
       "purpose": "",
       "fired_at": [
-        "src/API/LevelsController.php:249"
+        "src/API/LevelsController.php:251"
       ],
       "consumed_by": []
     },
@@ -1882,7 +1882,7 @@
       "type": "action",
       "purpose": "",
       "fired_at": [
-        "src/API/LevelsController.php:361"
+        "src/API/LevelsController.php:366"
       ],
       "consumed_by": []
     },
@@ -1909,7 +1909,7 @@
       "type": "action",
       "purpose": "",
       "fired_at": [
-        "src/API/BadgesController.php:616"
+        "src/API/BadgesController.php:617"
       ],
       "consumed_by": []
     },
@@ -1927,7 +1927,7 @@
       "type": "action",
       "purpose": "",
       "fired_at": [
-        "src/API/LevelsController.php:318"
+        "src/API/LevelsController.php:321"
       ],
       "consumed_by": []
     },
@@ -1998,7 +1998,7 @@
       "type": "action",
       "purpose": "",
       "fired_at": [
-        "src/API/LevelsController.php:352"
+        "src/API/LevelsController.php:355"
       ],
       "consumed_by": []
     },
@@ -2155,7 +2155,7 @@
       "type": "action",
       "purpose": "",
       "fired_at": [
-        "src/Engine/LevelEngine.php:166"
+        "src/Engine/LevelEngine.php:204"
       ],
       "consumed_by": [
         "src/Engine/RankAutomation.php:84 array( __CLASS__"
@@ -2167,7 +2167,7 @@
       "purpose": "Level changed (legacy alias).",
       "fired_at": [
         "src/BuddyPress/Stream/LevelStream.php:6",
-        "src/Engine/LevelEngine.php:146",
+        "src/Engine/LevelEngine.php:184",
         "src/Engine/NotificationBridge.php:326"
       ],
       "consumed_by": [
@@ -2499,7 +2499,7 @@
       "type": "filter",
       "purpose": "",
       "fired_at": [
-        "src/API/LevelsController.php:214"
+        "src/API/LevelsController.php:215"
       ],
       "consumed_by": []
     },
@@ -2535,7 +2535,7 @@
       "type": "filter",
       "purpose": "",
       "fired_at": [
-        "src/API/BadgesController.php:583"
+        "src/API/BadgesController.php:584"
       ],
       "consumed_by": []
     },
@@ -2553,7 +2553,7 @@
       "type": "filter",
       "purpose": "",
       "fired_at": [
-        "src/API/LevelsController.php:297"
+        "src/API/LevelsController.php:299"
       ],
       "consumed_by": []
     },

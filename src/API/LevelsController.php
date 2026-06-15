@@ -19,6 +19,7 @@ use WP_REST_Response;
 use WP_REST_Request;
 use WP_REST_Server;
 use WBGam\Engine\Capabilities;
+use WBGam\Engine\LevelEngine;
 
 defined( 'ABSPATH' ) || exit;
 // Silencing convention-driven false positives so Plugin Check signal stays clean:
@@ -243,7 +244,8 @@ final class LevelsController extends WP_REST_Controller {
 			);
 		}
 
-		$id  = (int) $wpdb->insert_id;
+		$id = (int) $wpdb->insert_id;
+		LevelEngine::invalidate_cache(); // New level changes the ladder — drop the cached list.
 		$row = $this->fetch_one( $id );
 
 		do_action( 'wb_gam_after_create_level', $row, $request );
@@ -313,6 +315,7 @@ final class LevelsController extends WP_REST_Controller {
 			return new WP_Error( 'rest_update_failed', __( 'Could not update level.', 'wb-gamification' ), array( 'status' => 500 ) );
 		}
 
+		LevelEngine::invalidate_cache(); // Threshold/name/icon changed — drop the cached list.
 		$fresh = $this->fetch_one( $id );
 
 		do_action( 'wb_gam_after_update_level', $fresh, $current, $request );
@@ -357,6 +360,8 @@ final class LevelsController extends WP_REST_Controller {
 		if ( false === $deleted ) {
 			return new WP_Error( 'rest_delete_failed', __( 'Could not delete level.', 'wb-gamification' ), array( 'status' => 500 ) );
 		}
+
+		LevelEngine::invalidate_cache(); // Removed a level — drop the cached list.
 
 		do_action( 'wb_gam_after_delete_level', $current, $request );
 

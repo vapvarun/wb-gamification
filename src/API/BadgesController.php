@@ -552,7 +552,8 @@ class BadgesController extends WP_REST_Controller {
 		$created = BadgeEngine::get_badge_def( $badge_id );
 		do_action( 'wb_gam_after_create_badge', $created, $request );
 
-		return rest_ensure_response( $created );
+		// 201 Created — match the REST convention + the sibling LevelsController.
+		return new WP_REST_Response( $created, 201 );
 	}
 
 	public function update_item( $request ): WP_REST_Response|WP_Error {

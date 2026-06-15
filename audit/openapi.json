@@ -3,7 +3,7 @@
     "info": {
         "title": "WB Gamification API",
         "description": "Gamification engine REST API for points, badges, levels, leaderboards, challenges, kudos, and more.",
-        "version": "1.5.5",
+        "version": "1.5.6",
         "contact": {
             "name": "Wbcom Designs",
             "url": "https://wbcomdesigns.com"

@@ -1,6 +1,6 @@
 {
-    "generated": "2026-06-11",
-    "note": "Every entry is a VERIFIED-INTENTIONAL exception, not a suppressed bug. The genuinely fixable findings were fixed (cron/CSS tool false positives resolved upstream in the audit tool; events_retention_months + leaderboard_mode in PR #64; 12 engagement settings given admin UIs in PR #65). What remains is deferred-feature options and dynamic-key writes a static scanner provably cannot follow. Re-verify each before extending.",
+    "generated": "2026-06-15",
+    "note": "Every entry is a VERIFIED-INTENTIONAL exception, not a suppressed bug. The genuinely fixable findings were fixed (CSS tool false positives resolved upstream in the audit tool; events_retention_months + leaderboard_mode in PR #64; 12 engagement settings given admin UIs in PR #65). What remains is deferred-feature options, dynamic-key writes a static scanner provably cannot follow, and Action-Scheduler/WP-Cron hooks whose action name is a class constant the scanner resolves on the add_action (consume) side but not on the as_enqueue_async_action/as_schedule_*/wp_schedule_event (fire) side. Each cron/AS entry was confirmed 2026-06-15 to have a real firing call referencing the same constant in the same class. Re-verify each before extending. Better long-term fix: teach contract-audit to resolve constants passed to the as_*/wp_schedule_* family.",
     "suppressions": [
         {
             "id": "option-read-never-written:wb_gam_activitypub_publish",
@@ -46,6 +46,116 @@
             "id": "option-possible-dual-key:wb_gam_db_version <> wb_gam_caps_version",
             "reason": "Distinct data, not a dual key. Schema migration version vs capabilities/abilities version are independent counters. Heuristic false positive.",
             "severity": "info"
+        },
+        {
+            "id": "hook-consumed-never-fired:wb_gam_as_cleanup",
+            "reason": "False positive (cron/AS). Fired via wp_schedule_event/as_* referencing self::CRON_HOOK='wb_gam_as_cleanup'; scanner resolves the constant on add_action but not on the firing call. Verified 2026-06-15.",
+            "severity": "error"
+        },
+        {
+            "id": "hook-consumed-never-fired:wb_gam_async_evaluate",
+            "reason": "False positive (Action Scheduler). Fired via as_enqueue_async_action(self::HOOK, ...) in AsyncEvaluator.php:130, HOOK='wb_gam_async_evaluate'. Verified 2026-06-15.",
+            "severity": "error"
+        },
+        {
+            "id": "hook-consumed-never-fired:wb_gam_compute_intelligence",
+            "reason": "False positive (cron). Fired via wp_schedule_event(..., 'daily', self::COMPUTE_CRON), COMPUTE_CRON='wb_gam_compute_intelligence'. Verified 2026-06-15.",
+            "severity": "error"
+        },
+        {
+            "id": "hook-consumed-never-fired:wb_gam_notifications_queue_prune",
+            "reason": "False positive (cron). Fired via wp_schedule_event(..., 'daily', self::PRUNE_CRON), PRUNE_CRON='wb_gam_notifications_queue_prune'. Verified 2026-06-15.",
+            "severity": "error"
+        },
+        {
+            "id": "hook-consumed-never-fired:wb_gam_nudge_single_user",
+            "reason": "False positive (Action Scheduler). Single-user nudge scheduled via as_* with self::AS_SINGLE_HOOK='wb_gam_nudge_single_user' (LeaderboardNudge, group wb-gamification-nudge). Verified 2026-06-15.",
+            "severity": "error"
+        },
+        {
+            "id": "hook-consumed-never-fired:wb_gam_points_decay",
+            "reason": "False positive (cron). Fired via wp_schedule_event(time(), self::CRON_RECUR, self::CRON_HOOK) in PointsExpiry.php:54, CRON_HOOK='wb_gam_points_decay'. Verified 2026-06-15.",
+            "severity": "error"
+        },
+        {
+            "id": "hook-consumed-never-fired:wb_gam_reconcile_side_effects",
+            "reason": "False positive (cron). Fired via wp_schedule_event(..., 'hourly', self::RECONCILE_CRON), RECONCILE_CRON='wb_gam_reconcile_side_effects'. Verified 2026-06-15.",
+            "severity": "error"
+        },
+        {
+            "id": "hook-consumed-never-fired:wb_gam_send_transactional_email",
+            "reason": "False positive (Action Scheduler). Fired via as_enqueue_async_action(self::AS_HOOK, array($payload), self::AS_GROUP) in TransactionalEmailEngine.php:486, AS_HOOK='wb_gam_send_transactional_email'. Verified 2026-06-15.",
+            "severity": "error"
+        },
+        {
+            "id": "hook-consumed-never-fired:wb_gam_send_webhook",
+            "reason": "False positive (Action Scheduler). Fired via as_enqueue_async_action(self::AS_ACTION, ...) in WebhookDispatcher.php:261, AS_ACTION='wb_gam_send_webhook'. Verified 2026-06-15.",
+            "severity": "error"
+        },
+        {
+            "id": "hook-consumed-never-fired:wb_gam_webhook_retry",
+            "reason": "False positive (Action Scheduler). Retry scheduled via as_* with self::AS_RETRY_ACTION='wb_gam_webhook_retry' in WebhookDispatcher.php:492. Verified 2026-06-15.",
+            "severity": "error"
+        },
+        {
+            "id": "hook-consumed-never-fired:wb_gam_weekly_email_user",
+            "reason": "False positive (Action Scheduler). Fired via as_enqueue_async_action(self::AS_HOOK, ...) in WeeklyEmailEngine.php:125, AS_HOOK='wb_gam_weekly_email_user'. Verified 2026-06-15.",
+            "severity": "error"
+        },
+        {
+            "id": "hook-consumed-never-fired:wb_gam_cohort_assign",
+            "reason": "False positive (cron). Fired via wp_schedule_event($next_monday, 'weekly', self::CRON_ASSIGN) in CohortEngine, CRON_ASSIGN='wb_gam_cohort_assign'. Verified 2026-06-15.",
+            "severity": "info"
+        },
+        {
+            "id": "hook-consumed-never-fired:wb_gam_cohort_process",
+            "reason": "False positive (cron). Fired via wp_schedule_event($next_sunday, 'weekly', self::CRON_PROCESS) in CohortEngine:110, CRON_PROCESS='wb_gam_cohort_process'. Verified 2026-06-15.",
+            "severity": "info"
+        },
+        {
+            "id": "hook-consumed-never-fired:wb_gam_credential_expiry_check",
+            "reason": "False positive (cron). Fired via wp_schedule_event($next, 'weekly', self::CRON_HOOK) in CredentialExpiryEngine:64, CRON_HOOK='wb_gam_credential_expiry_check'. Verified 2026-06-15.",
+            "severity": "info"
+        },
+        {
+            "id": "hook-consumed-never-fired:wb_gam_prune_logs",
+            "reason": "False positive (cron). Fired via wp_schedule_event(time(), self::CRON_RECUR, self::CRON_HOOK) in LogPruner:55, CRON_HOOK='wb_gam_prune_logs'. Verified 2026-06-15.",
+            "severity": "info"
+        },
+        {
+            "id": "hook-consumed-never-fired:wb_gam_status_retention_check",
+            "reason": "False positive (cron). Fired via wp_schedule_event($next, 'weekly', self::CRON_HOOK) in StatusRetentionEngine:63, CRON_HOOK='wb_gam_status_retention_check'. Verified 2026-06-15.",
+            "severity": "info"
+        },
+        {
+            "id": "hook-consumed-never-fired:wb_gam_tenure_check",
+            "reason": "False positive (cron). Fired via wp_schedule_event($next, 'daily', self::CRON_HOOK) in TenureBadgeEngine:103, CRON_HOOK='wb_gam_tenure_check'. Verified 2026-06-15.",
+            "severity": "info"
+        },
+        {
+            "id": "hook-consumed-never-fired:wb_gam_weekly_email",
+            "reason": "False positive (cron). Fired via wp_schedule_event($next, 'weekly', self::CRON_HOOK) in WeeklyEmailEngine:79, CRON_HOOK='wb_gam_weekly_email' (the recurring scheduler that fans out per-user wb_gam_weekly_email_user jobs). Verified 2026-06-15.",
+            "severity": "info"
+        },
+        {
+            "id": "hook-consumed-never-fired:wb_gam_weekly_nudge",
+            "reason": "False positive (cron). Fired via wp_schedule_event($next_monday, self::CRON_RECUR, self::CRON_HOOK) in LeaderboardNudge:66, CRON_HOOK='wb_gam_weekly_nudge'. Verified 2026-06-15.",
+            "severity": "info"
+        },
+        {
+            "id": "css-hide-missing-class:wb-gam-hide-desktop",
+            "reason": "False positive. The wb-gam-hide-desktop class is emitted centrally by WBGam\\Blocks\\CSS::* (src/Blocks/CSS.php:173) for every block when the device-visibility flag is set, not hardcoded in redemption-store markup. Covered by CSSTest::test_visibility_classes_emit_when_flags_set. The scanner scopes per-block and misses the central emission. Verified 2026-06-15.",
+            "severity": "warning"
+        },
+        {
+            "id": "css-hide-missing-class:wb-gam-hide-tablet",
+            "reason": "False positive. wb-gam-hide-tablet is emitted by WBGam\\Blocks\\CSS (src/Blocks/CSS.php:176) when the tablet-visibility flag is set; covered by CSSTest::test_visibility_classes_emit_when_flags_set. Scanner per-block scope misses the central emission. Verified 2026-06-15.",
+            "severity": "warning"
+        },
+        {
+            "id": "css-hide-missing-class:wb-gam-hide-mobile",
+            "reason": "False positive. wb-gam-hide-mobile is emitted by WBGam\\Blocks\\CSS (src/Blocks/CSS.php:179) when the mobile-visibility flag is set; covered by CSSTest::test_visibility_classes_emit_when_flags_set. Scanner per-block scope misses the central emission. Verified 2026-06-15.",
+            "severity": "warning"
         }
     ]
 }
