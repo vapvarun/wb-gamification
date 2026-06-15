@@ -44,7 +44,7 @@ final class LevelEngine {
 	 * Static cache of all level rows for the current request.
 	 * Avoids repeated object-cache lookups within a single page load.
 	 *
-	 * @var array<int, array{id: int, name: string, min_points: int, icon_url: string|null}>|null
+	 * @var array<int, array{id: int, name: string, min_points: int, sort_order: int, icon_url: string|null}>|null
 	 */
 	private static ?array $levels_cache = null;
 
@@ -53,14 +53,26 @@ final class LevelEngine {
 	 *
 	 * Levels are admin-only data that almost never changes, so a 1-hour TTL is safe.
 	 *
-	 * @return array<int, array{id: int, name: string, min_points: int, icon_url: string|null}>
+	 * Rows are ordered by `sort_order ASC` — the admin-defined level hierarchy —
+	 * not by `min_points`. The two usually agree, but an admin can edit thresholds
+	 * such that a numerically lower level ends up with a higher `min_points` than
+	 * a level above it. `sort_order` is the single source of truth for "which level
+	 * comes next"; `min_points` only decides "which level the user has reached".
+	 * Sorting by `min_points` here was the cause of the nudge widget naming the
+	 * wrong next level (Basecamp 9995220498). `min_points ASC, id ASC` are kept as
+	 * deterministic tie-breakers so the order is stable when sort_order collides.
+	 *
+	 * @return array<int, array{id: int, name: string, min_points: int, sort_order: int, icon_url: string|null}>
 	 */
 	private static function get_all_levels(): array {
 		if ( null !== self::$levels_cache ) {
 			return self::$levels_cache;
 		}
 
-		$cached = wp_cache_get( 'wb_gam_levels_all', 'wb_gamification' );
+		// Cache key carries a structure version. v2 added the `sort_order` field
+		// to every row; bumping the key guarantees a post-deploy site never
+		// serves a stale v1 array (no sort_order) from a persistent object cache.
+		$cached = wp_cache_get( 'wb_gam_levels_all_v2', 'wb_gamification' );
 		if ( false !== $cached ) {
 			self::$levels_cache = (array) $cached;
 			return self::$levels_cache;
@@ -68,7 +80,7 @@ final class LevelEngine {
 
 		global $wpdb;
 		$rows = $wpdb->get_results(
-			"SELECT id, name, min_points, icon_url FROM {$wpdb->prefix}wb_gam_levels ORDER BY min_points ASC",
+			"SELECT id, name, min_points, sort_order, icon_url FROM {$wpdb->prefix}wb_gam_levels ORDER BY sort_order ASC, min_points ASC, id ASC",
 			ARRAY_A
 		) ?: array();
 
@@ -78,13 +90,14 @@ final class LevelEngine {
 					'id'         => (int) $row['id'],
 					'name'       => $row['name'],
 					'min_points' => (int) $row['min_points'],
+					'sort_order' => (int) ( $row['sort_order'] ?? 0 ),
 					'icon_url'   => $row['icon_url'] ?: null,
 				);
 			},
 			$rows
 		);
 
-		wp_cache_set( 'wb_gam_levels_all', self::$levels_cache, 'wb_gamification', 3600 ); // 1 hr TTL.
+		wp_cache_set( 'wb_gam_levels_all_v2', self::$levels_cache, 'wb_gamification', 3600 ); // 1 hr TTL.
 
 		return self::$levels_cache;
 	}
@@ -171,7 +184,7 @@ final class LevelEngine {
 	 * Return the current level for a user based on their total points.
 	 *
 	 * @param int $user_id User to look up.
-	 * @return array{ id: int, name: string, min_points: int, icon_url: string|null }|null
+	 * @return array{ id: int, name: string, min_points: int, sort_order: int, icon_url: string|null }|null
 	 *         Null only if no levels are configured (fresh install before seeding).
 	 */
 	public static function get_level_for_user( int $user_id ): ?array {
@@ -206,19 +219,21 @@ final class LevelEngine {
 	 * Return the level that corresponds to a given points total.
 	 *
 	 * @param int $points Points total.
-	 * @return array{ id: int, name: string, min_points: int, icon_url: string|null }|null
+	 * @return array{ id: int, name: string, min_points: int, sort_order: int, icon_url: string|null }|null
 	 */
 	public static function get_level_for_points( int $points ): ?array {
 		$levels = self::get_all_levels();
 		$match  = null;
 
-		// Levels are sorted by min_points ASC, so walk forward and keep the
-		// last one whose threshold the user has reached.
+		// Levels are now ordered by sort_order (not min_points), so we cannot
+		// break early — the highest reachable threshold may sit anywhere in the
+		// list. Walk every level and keep the one with the greatest min_points
+		// the user has actually reached. `>=` keeps the later (higher sort_order)
+		// level when two share a threshold.
 		foreach ( $levels as $level ) {
-			if ( $level['min_points'] <= $points ) {
+			if ( $level['min_points'] <= $points
+				&& ( null === $match || $level['min_points'] >= $match['min_points'] ) ) {
 				$match = $level;
-			} else {
-				break; // Sorted ASC — no further matches possible.
 			}
 		}
 
@@ -228,21 +243,47 @@ final class LevelEngine {
 	/**
 	 * Return the next level above a user's current level, or null if max level.
 	 *
+	 * The next level is the one immediately above the user's CURRENT level in the
+	 * admin-defined hierarchy (`sort_order`), not the first level whose `min_points`
+	 * exceeds the user's total. Those two only diverge when an admin edits
+	 * thresholds so they no longer line up with the level order, but when they do
+	 * the threshold-based answer is wrong: it would name a numerically-higher level
+	 * that actually sits below the user in the ladder (Basecamp 9995220498 — a
+	 * Contributor was told they were "15 points from Member").
+	 *
 	 * @param int $user_id User to look up.
-	 * @return array{ id: int, name: string, min_points: int, icon_url: string|null }|null
+	 * @return array{ id: int, name: string, min_points: int, sort_order: int, icon_url: string|null }|null
 	 */
 	public static function get_next_level( int $user_id ): ?array {
-		$points = PointsEngine::get_total( $user_id );
-		$levels = self::get_all_levels();
+		return self::get_next_level_for_points( PointsEngine::get_total( $user_id ) );
+	}
 
-		// Levels are sorted by min_points ASC — return the first one above the user's total.
+	/**
+	 * Return the next level above a given points total, or null if at the top.
+	 *
+	 * Pure counterpart to {@see get_next_level()} — takes a raw points total so
+	 * it can be reasoned about (and tested) without resolving a user's ledger.
+	 *
+	 * @param int $points Points total.
+	 * @return array{ id: int, name: string, min_points: int, sort_order: int, icon_url: string|null }|null
+	 */
+	public static function get_next_level_for_points( int $points ): ?array {
+		$levels  = self::get_all_levels();
+		$current = self::get_level_for_points( $points );
+
+		// No level reached yet (no zero-threshold starter level): the next target
+		// is the very first rung of the ladder. Otherwise it's the first rung
+		// whose sort_order is strictly above the current level's. Rows are already
+		// ordered by sort_order ASC, so the first qualifying row is the answer.
+		$current_sort = ( null !== $current ) ? $current['sort_order'] : null;
+
 		foreach ( $levels as $level ) {
-			if ( $level['min_points'] > $points ) {
+			if ( null === $current_sort || $level['sort_order'] > $current_sort ) {
 				return $level;
 			}
 		}
 
-		return null; // Already at max level.
+		return null; // Already at the top of the ladder.
 	}
 
 	/**
@@ -282,7 +323,7 @@ final class LevelEngine {
 	public static function get_progress_percent( int $user_id ): int {
 		$points  = PointsEngine::get_total( $user_id );
 		$current = self::get_level_for_points( $points );
-		$next    = self::get_next_level( $user_id );
+		$next    = self::get_next_level_for_points( $points );
 
 		if ( ! $current ) {
 			return 0;
