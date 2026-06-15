@@ -4,7 +4,7 @@ Tags: gamification, points, badges, leaderboard, buddypress
 Requires at least: 6.5
 Tested up to: 7.0
 Requires PHP: 8.0
-Stable tag: 1.5.5
+Stable tag: 1.5.6
 License: GPL-2.0+
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -132,6 +132,16 @@ Yes. WB Gamification integrates with WordPress privacy tools. Members can reques
 All data is preserved in the database. Reactivating the plugin restores everything. If you delete the plugin via the Plugins screen, the `uninstall.php` file removes all 26 tables, options, cron jobs, and transients — a clean uninstall.
 
 == Changelog ==
+
+= 1.5.6 - June 2026 =
+
+Bug-fix release: correct level progression, instant admin level edits, and a hardened release build.
+
+* Fix      - The dashboard nudge and level progress now name the next level by the configured level order, so an out-of-order points threshold no longer points members at the wrong level.
+* Fix      - Editing a level in the admin now takes effect immediately instead of waiting for the cache to expire.
+* Fix      - Creating a badge through the REST API now returns the correct 201 Created status.
+* Dev      - The release build fails fast when its bundled dependencies are incomplete, so a packaged zip can never ship without Action Scheduler.
+
 
 = 1.5.5 - June 2026 =
 

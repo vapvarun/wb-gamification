@@ -101,6 +101,61 @@
             "id": "hook-consumed-never-fired:wb_gam_weekly_email_user",
             "reason": "False positive (Action Scheduler). Fired via as_enqueue_async_action(self::AS_HOOK, ...) in WeeklyEmailEngine.php:125, AS_HOOK='wb_gam_weekly_email_user'. Verified 2026-06-15.",
             "severity": "error"
+        },
+        {
+            "id": "hook-consumed-never-fired:wb_gam_cohort_assign",
+            "reason": "False positive (cron). Fired via wp_schedule_event($next_monday, 'weekly', self::CRON_ASSIGN) in CohortEngine, CRON_ASSIGN='wb_gam_cohort_assign'. Verified 2026-06-15.",
+            "severity": "info"
+        },
+        {
+            "id": "hook-consumed-never-fired:wb_gam_cohort_process",
+            "reason": "False positive (cron). Fired via wp_schedule_event($next_sunday, 'weekly', self::CRON_PROCESS) in CohortEngine:110, CRON_PROCESS='wb_gam_cohort_process'. Verified 2026-06-15.",
+            "severity": "info"
+        },
+        {
+            "id": "hook-consumed-never-fired:wb_gam_credential_expiry_check",
+            "reason": "False positive (cron). Fired via wp_schedule_event($next, 'weekly', self::CRON_HOOK) in CredentialExpiryEngine:64, CRON_HOOK='wb_gam_credential_expiry_check'. Verified 2026-06-15.",
+            "severity": "info"
+        },
+        {
+            "id": "hook-consumed-never-fired:wb_gam_prune_logs",
+            "reason": "False positive (cron). Fired via wp_schedule_event(time(), self::CRON_RECUR, self::CRON_HOOK) in LogPruner:55, CRON_HOOK='wb_gam_prune_logs'. Verified 2026-06-15.",
+            "severity": "info"
+        },
+        {
+            "id": "hook-consumed-never-fired:wb_gam_status_retention_check",
+            "reason": "False positive (cron). Fired via wp_schedule_event($next, 'weekly', self::CRON_HOOK) in StatusRetentionEngine:63, CRON_HOOK='wb_gam_status_retention_check'. Verified 2026-06-15.",
+            "severity": "info"
+        },
+        {
+            "id": "hook-consumed-never-fired:wb_gam_tenure_check",
+            "reason": "False positive (cron). Fired via wp_schedule_event($next, 'daily', self::CRON_HOOK) in TenureBadgeEngine:103, CRON_HOOK='wb_gam_tenure_check'. Verified 2026-06-15.",
+            "severity": "info"
+        },
+        {
+            "id": "hook-consumed-never-fired:wb_gam_weekly_email",
+            "reason": "False positive (cron). Fired via wp_schedule_event($next, 'weekly', self::CRON_HOOK) in WeeklyEmailEngine:79, CRON_HOOK='wb_gam_weekly_email' (the recurring scheduler that fans out per-user wb_gam_weekly_email_user jobs). Verified 2026-06-15.",
+            "severity": "info"
+        },
+        {
+            "id": "hook-consumed-never-fired:wb_gam_weekly_nudge",
+            "reason": "False positive (cron). Fired via wp_schedule_event($next_monday, self::CRON_RECUR, self::CRON_HOOK) in LeaderboardNudge:66, CRON_HOOK='wb_gam_weekly_nudge'. Verified 2026-06-15.",
+            "severity": "info"
+        },
+        {
+            "id": "css-hide-missing-class:wb-gam-hide-desktop",
+            "reason": "False positive. The wb-gam-hide-desktop class is emitted centrally by WBGam\\Blocks\\CSS::* (src/Blocks/CSS.php:173) for every block when the device-visibility flag is set, not hardcoded in redemption-store markup. Covered by CSSTest::test_visibility_classes_emit_when_flags_set. The scanner scopes per-block and misses the central emission. Verified 2026-06-15.",
+            "severity": "warning"
+        },
+        {
+            "id": "css-hide-missing-class:wb-gam-hide-tablet",
+            "reason": "False positive. wb-gam-hide-tablet is emitted by WBGam\\Blocks\\CSS (src/Blocks/CSS.php:176) when the tablet-visibility flag is set; covered by CSSTest::test_visibility_classes_emit_when_flags_set. Scanner per-block scope misses the central emission. Verified 2026-06-15.",
+            "severity": "warning"
+        },
+        {
+            "id": "css-hide-missing-class:wb-gam-hide-mobile",
+            "reason": "False positive. wb-gam-hide-mobile is emitted by WBGam\\Blocks\\CSS (src/Blocks/CSS.php:179) when the mobile-visibility flag is set; covered by CSSTest::test_visibility_classes_emit_when_flags_set. Scanner per-block scope misses the central emission. Verified 2026-06-15.",
+            "severity": "warning"
         }
     ]
 }

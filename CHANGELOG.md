@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 
 ## [Unreleased]
 
+## [1.5.6] - 2026-06-15
+
+Bug-fix release: correct level progression, instant admin level edits, and a hardened release build.
+
+### Changed
+
+- Release build (`bin/build-release.sh`) now hard-fails if `vendor/` is incomplete after `composer install` (missing autoloader or Action Scheduler), so a deps-less zip can never be packaged (Basecamp 9993571511).
+
+### Fixed
+
+- Level progression now follows the configured level order (`sort_order`) instead of the raw points threshold, so the dashboard nudge and level-progress card name the correct next level when thresholds are edited out of order (Basecamp 9995220498).
+- Editing a level in the admin now invalidates the level cache immediately, so changes reflect without waiting for the cache TTL.
+- Badge creation via the REST API now returns HTTP 201 Created (was 200), matching the levels controller and REST convention.
+
+
 ## [1.5.5] - 2026-06-11
 
 Member-facing polish: an admin accent control, a restrained on-brand activity stream, and faster realtime feedback.

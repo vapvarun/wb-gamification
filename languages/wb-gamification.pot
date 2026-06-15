@@ -2,14 +2,14 @@
 # This file is distributed under the GPL-2.0+.
 msgid ""
 msgstr ""
-"Project-Id-Version: WB Gamification 1.5.5\n"
+"Project-Id-Version: WB Gamification 1.5.6\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/wb-gamification\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-06-12T06:26:57+00:00\n"
+"POT-Creation-Date: 2026-06-15T11:13:00+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: wb-gamification\n"
@@ -3787,9 +3787,9 @@ msgid "You do not have permission to award badges."
 msgstr ""
 
 #: src/API/BadgesController.php:270
-#: src/API/BadgesController.php:567
-#: src/API/BadgesController.php:641
-#: src/API/BadgesController.php:697
+#: src/API/BadgesController.php:568
+#: src/API/BadgesController.php:642
+#: src/API/BadgesController.php:698
 #: src/API/BadgeShareController.php:270
 #: src/API/CredentialController.php:204
 msgid "Badge not found."
@@ -3811,30 +3811,30 @@ msgstr ""
 msgid "Badge created but its award condition could not be saved. Edit the badge and re-save its condition."
 msgstr ""
 
-#: src/API/BadgesController.php:602
+#: src/API/BadgesController.php:603
 msgid "Could not update badge."
 msgstr ""
 
-#: src/API/BadgesController.php:610
+#: src/API/BadgesController.php:611
 msgid "Badge updated but its award condition could not be saved. Re-save the condition."
 msgstr ""
 
-#: src/API/BadgesController.php:671
+#: src/API/BadgesController.php:672
 msgid "Could not delete badge."
 msgstr ""
 
-#: src/API/BadgesController.php:705
+#: src/API/BadgesController.php:706
 msgid "User not found."
 msgstr ""
 
 #. translators: %s: badge name
-#: src/API/BadgesController.php:719
+#: src/API/BadgesController.php:720
 #, php-format
 msgid "Badge \"%s\" awarded successfully."
 msgstr ""
 
 #. translators: %s: badge name
-#: src/API/BadgesController.php:721
+#: src/API/BadgesController.php:722
 #, php-format
 msgid "User already holds badge \"%s\"."
 msgstr ""
@@ -3993,28 +3993,28 @@ msgstr ""
 msgid "Group not found."
 msgstr ""
 
-#: src/API/LevelsController.php:176
+#: src/API/LevelsController.php:177
 msgid "You do not have permission to manage levels."
 msgstr ""
 
-#: src/API/LevelsController.php:241
+#: src/API/LevelsController.php:242
 msgid "Failed to create level."
 msgstr ""
 
-#: src/API/LevelsController.php:266
-#: src/API/LevelsController.php:339
+#: src/API/LevelsController.php:268
+#: src/API/LevelsController.php:342
 msgid "Level not found."
 msgstr ""
 
-#: src/API/LevelsController.php:313
+#: src/API/LevelsController.php:315
 msgid "Could not update level."
 msgstr ""
 
-#: src/API/LevelsController.php:347
+#: src/API/LevelsController.php:350
 msgid "The starting level (min_points = 0) cannot be deleted."
 msgstr ""
 
-#: src/API/LevelsController.php:358
+#: src/API/LevelsController.php:361
 msgid "Could not delete level."
 msgstr ""
 
