@@ -282,7 +282,25 @@ rsync -a --delete --exclude-from="${EXCLUDES_FILE}" "${ROOT_DIR}/" "${STAGE}/"
 
 if [ -f "${STAGE}/composer.json" ]; then
     pushd "${STAGE}" > /dev/null
-    composer install --no-dev --optimize-autoloader --quiet
+    if ! composer install --no-dev --optimize-autoloader --quiet; then
+        echo "✗ Release aborted: 'composer install' failed in staging — refusing to package an incomplete vendor/." >&2
+        exit 1
+    fi
+    # Release-integrity gate (Basecamp 9993571511). composer can exit 0 with an
+    # incomplete vendor/ — e.g. a mid-download timeout on action-scheduler still
+    # regenerates autoload files. Shipping that zip blocks 100% of installs:
+    # wb-gamification.php require_once's the AS bootstrap on boot, so a missing
+    # action-scheduler.php means the plugin never starts. Assert the critical
+    # paths exist before zipping; never package a deps-less build.
+    for required in \
+        "vendor/autoload.php" \
+        "vendor/woocommerce/action-scheduler/action-scheduler.php"; do
+        if [ ! -f "${required}" ]; then
+            echo "✗ Release aborted: ${required} missing after composer install." >&2
+            echo "  vendor/ is incomplete (likely a flaky network mid-install) — the zip would not boot. Re-run on a stable connection." >&2
+            exit 1
+        fi
+    done
     # Drop both manifests now that vendor/ is built — customers don't need them.
     rm -f composer.json composer.lock
     popd > /dev/null
