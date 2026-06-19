@@ -33,7 +33,7 @@ function registry(): array {
 				'is_engine'  => true,
 			),
 			'wb-gamification' => array(
-				'name'       => 'Gamification',
+				'name'       => 'WB Gamification',
 				'tagline'    => 'Points, badges and levels that reward real engagement.',
 				'icon'       => 'trophy',
 				'category'   => 'engagement',
@@ -81,7 +81,7 @@ function registry(): array {
 				'is_engine'  => false,
 			),
 			'wp-career-board' => array(
-				'name'       => 'Career Board',
+				'name'       => 'WP Career Board',
 				'tagline'    => 'A jobs board with applications inside the community.',
 				'icon'       => 'briefcase',
 				'category'   => 'careers',
