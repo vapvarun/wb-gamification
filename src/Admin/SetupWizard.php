@@ -392,37 +392,36 @@ final class SetupWizard {
 			),
 			'community' => array(
 				'label'       => __( 'Community Engagement', 'wb-gamification' ),
-				'description' => __( 'Balanced - rewards posting, reactions, and social connection. Requires BuddyPress.', 'wb-gamification' ),
+				'description' => __( 'Balanced - rewards posting, reactions, and social connection. Works with BuddyNext.', 'wb-gamification' ),
 				'leaderboard' => 'weekly',
 				'requires'    => array(
 					'callback' => static function (): bool {
-						return function_exists( 'buddypress' ); },
-					'plugin'   => __( 'BuddyPress', 'wb-gamification' ),
+						return defined( 'BUDDYNEXT_VERSION' ) || class_exists( '\\BuddyNext\\Plugin' ); },
+					'plugin'   => __( 'BuddyNext', 'wb-gamification' ),
 				),
 				'points'      => array(
-					'bp_activity_update'    => 10,
-					'bp_activity_comment'   => 5,
-					'friends_accepted'      => 8,
-					'groups_join'           => 8,
-					'bp_reactions_received' => 3,
-					'bp_give_kudos'         => 2,
-					'bp_receive_kudos'      => 5,
+					'bn_post_created'      => 10,
+					'bn_comment_created'   => 5,
+					'bn_connected'         => 8,
+					'bn_space_joined'      => 8,
+					'bn_reaction_received' => 3,
+					'bn_profile_completed' => 25,
 				),
 			),
 			'course'    => array(
 				'label'       => __( 'Online Course', 'wb-gamification' ),
-				'description' => __( 'Course completion heavy - progress and credential badges. Requires LearnDash.', 'wb-gamification' ),
+				'description' => __( 'Course completion heavy - progress and credential badges. Works with Learnomy.', 'wb-gamification' ),
 				'leaderboard' => 'cohort',
 				'requires'    => array(
 					'callback' => static function (): bool {
-						return defined( 'LEARNDASH_VERSION' ); },
-					'plugin'   => __( 'LearnDash LMS', 'wb-gamification' ),
+						return defined( 'LEARNOMY_VERSION' ) || class_exists( '\\Learnomy\\Plugin' ); },
+					'plugin'   => __( 'Learnomy', 'wb-gamification' ),
 				),
 				'points'      => array(
-					'lesson_complete' => 20,
-					'course_complete' => 100,
-					'quiz_pass'       => 30,
-					'wp_first_post'   => 10,
+					'learnomy_lesson_completed'   => 20,
+					'learnomy_course_completed'   => 100,
+					'learnomy_certificate_issued' => 50,
+					'learnomy_student_enrolled'   => 5,
 				),
 			),
 			'coaching'  => array(
@@ -437,17 +436,17 @@ final class SetupWizard {
 			),
 			'nonprofit' => array(
 				'label'       => __( 'Nonprofit / Mission', 'wb-gamification' ),
-				'description' => __( 'Mission-aligned language. Team leaderboards only - impact over individual competition. Requires BuddyPress.', 'wb-gamification' ),
+				'description' => __( 'Mission-aligned language. Team leaderboards only - impact over individual competition. Works with BuddyNext.', 'wb-gamification' ),
 				'leaderboard' => 'team-only',
 				'requires'    => array(
 					'callback' => static function (): bool {
-						return function_exists( 'buddypress' ); },
-					'plugin'   => __( 'BuddyPress', 'wb-gamification' ),
+						return defined( 'BUDDYNEXT_VERSION' ) || class_exists( '\\BuddyNext\\Plugin' ); },
+					'plugin'   => __( 'BuddyNext', 'wb-gamification' ),
 				),
 				'points'      => array(
-					'volunteer_hours'    => 30,
-					'bp_activity_update' => 5,
-					'groups_join'        => 10,
+					'volunteer_hours' => 30,
+					'bn_post_created' => 5,
+					'bn_space_joined' => 10,
 				),
 			),
 		);
