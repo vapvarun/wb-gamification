@@ -336,6 +336,7 @@ final class WB_Gamification {
 			// the root cause of the chronic Setup Wizard reopen — fragile
 			// timing when WP_Filter::do_action is already mid-iteration.
 			SettingsPage::init();
+			\WBGam\Admin\IntegrationsTab::init();
 			SetupWizard::init();
 			AnalyticsDashboard::init();
 			BadgeAdminPage::init();

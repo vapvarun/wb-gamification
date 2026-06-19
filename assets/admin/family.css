@@ -1,0 +1,11 @@
+.wbcom-family__outcomes { display: grid; gap: 12px; }
+.wbcom-family__outcome { display: flex; align-items: center; gap: 16px; padding: 16px; border: 1px solid var(--bn-border, #e2e4e7); border-radius: 10px; background: var(--bn-surface, #fff); }
+.wbcom-family__body { flex: 1; }
+.wbcom-family__body h3 { margin: 0 0 4px; font-size: 14px; }
+.wbcom-family__body p { margin: 0; color: var(--bn-text-muted, #646970); }
+.wbcom-family__action { white-space: nowrap; }
+.wbcom-family__outcome[data-state="active"] .wbcom-family__action { opacity: .8; }
+.wbcom-family__start { margin: 16px 0; }
+.wbcom-family__thirdparty { margin-top: 24px; color: var(--bn-text-muted, #646970); }
+.wbcom-family__thirdparty summary { cursor: pointer; }
+@media (max-width: 1024px) { .wbcom-family__outcome { flex-wrap: wrap; } }

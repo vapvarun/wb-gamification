@@ -2774,6 +2774,10 @@ final class SettingsPage {
 	 * @param bool $bp_active Whether BuddyPress is active.
 	 */
 	private static function render_integrations_section( bool $bp_active ): void {
+		// Family Kit guide: install/activate Wbcom suite plugins from one place.
+		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Kit::render() returns pre-escaped HTML.
+		echo \WBGam\Admin\IntegrationsTab::render();
+
 		$integrations = array(
 			array(
 				'name'   => 'BuddyPress',
