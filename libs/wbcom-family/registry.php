@@ -19,18 +19,22 @@ defined( 'ABSPATH' ) || exit;
  */
 function registry(): array {
 	return array(
+		// learn_url = the live wbcomdesigns.com download/get page (verified against the store).
+		// pro_url   = the Pro / "view more info" page (null when there is no separate Pro page).
+		// coming_soon = true for members not yet listed on the store (no live download link).
 		'members'     => array(
 			'buddynext'       => array(
-				'name'       => 'BuddyNext',
-				'tagline'    => 'The community engine — profiles, activity feeds and spaces.',
-				'icon'       => 'users',
-				'category'   => 'engine',
-				'slug_free'  => 'buddynext/buddynext.php',
-				'slug_pro'   => 'buddynext-pro/buddynext-pro.php',
-				'wporg_slug' => null,
-				'learn_url'  => 'https://wbcomdesigns.com/downloads/buddynext/',
-				'pro_url'    => 'https://wbcomdesigns.com/downloads/buddynext/',
-				'is_engine'  => true,
+				'name'        => 'BuddyNext',
+				'tagline'     => 'The community engine — profiles, activity feeds and spaces.',
+				'icon'        => 'users',
+				'category'    => 'engine',
+				'slug_free'   => 'buddynext/buddynext.php',
+				'slug_pro'    => 'buddynext-pro/buddynext-pro.php',
+				'wporg_slug'  => null,
+				'learn_url'   => 'https://wbcomdesigns.com/',
+				'pro_url'     => null,
+				'coming_soon' => true,
+				'is_engine'   => true,
 			),
 			'wb-gamification' => array(
 				'name'       => 'WB Gamification',
@@ -40,7 +44,7 @@ function registry(): array {
 				'slug_free'  => 'wb-gamification/wb-gamification.php',
 				'slug_pro'   => null,
 				'wporg_slug' => null,
-				'learn_url'  => 'https://wbcomdesigns.com/downloads/wb-gamification/',
+				'learn_url'  => 'https://wbcomdesigns.com/downloads/wordpress-gamification-plugin/',
 				'pro_url'    => null,
 				'is_engine'  => false,
 			),
@@ -53,7 +57,7 @@ function registry(): array {
 				'slug_pro'   => 'learnomy-pro/learnomy-pro.php',
 				'wporg_slug' => null,
 				'learn_url'  => 'https://wbcomdesigns.com/downloads/learnomy/',
-				'pro_url'    => 'https://wbcomdesigns.com/downloads/learnomy/',
+				'pro_url'    => 'https://wbcomdesigns.com/downloads/learnomy-pro/',
 				'is_engine'  => false,
 			),
 			'wpmediaverse'    => array(
@@ -64,8 +68,8 @@ function registry(): array {
 				'slug_free'  => 'wpmediaverse/wpmediaverse.php',
 				'slug_pro'   => 'wpmediaverse-pro/wpmediaverse-pro.php',
 				'wporg_slug' => null,
-				'learn_url'  => 'https://wbcomdesigns.com/downloads/wpmediaverse/',
-				'pro_url'    => 'https://wbcomdesigns.com/downloads/wpmediaverse/',
+				'learn_url'  => 'https://wbcomdesigns.com/downloads/mediaverse/',
+				'pro_url'    => 'https://wbcomdesigns.com/downloads/mediaverse-pro/',
 				'is_engine'  => false,
 			),
 			'jetonomy'        => array(
@@ -77,7 +81,7 @@ function registry(): array {
 				'slug_pro'   => 'jetonomy-pro/jetonomy-pro.php',
 				'wporg_slug' => null,
 				'learn_url'  => 'https://wbcomdesigns.com/downloads/jetonomy/',
-				'pro_url'    => 'https://wbcomdesigns.com/downloads/jetonomy/',
+				'pro_url'    => 'https://wbcomdesigns.com/downloads/jetonomy-pro/',
 				'is_engine'  => false,
 			),
 			'wp-career-board' => array(
@@ -89,7 +93,7 @@ function registry(): array {
 				'slug_pro'   => 'wp-career-board-pro/wp-career-board-pro.php',
 				'wporg_slug' => null,
 				'learn_url'  => 'https://wbcomdesigns.com/downloads/wp-career-board/',
-				'pro_url'    => 'https://wbcomdesigns.com/downloads/wp-career-board/',
+				'pro_url'    => 'https://wbcomdesigns.com/downloads/wp-career-board-pro/',
 				'is_engine'  => false,
 			),
 			'wb-listora'      => array(
@@ -100,8 +104,8 @@ function registry(): array {
 				'slug_free'  => 'wb-listora/wb-listora.php',
 				'slug_pro'   => 'wb-listora-pro/wb-listora-pro.php',
 				'wporg_slug' => null,
-				'learn_url'  => 'https://wbcomdesigns.com/downloads/wb-listora/',
-				'pro_url'    => 'https://wbcomdesigns.com/downloads/wb-listora/',
+				'learn_url'  => 'https://wbcomdesigns.com/downloads/listora/',
+				'pro_url'    => 'https://wbcomdesigns.com/downloads/listora-pro/',
 				'is_engine'  => false,
 			),
 		),

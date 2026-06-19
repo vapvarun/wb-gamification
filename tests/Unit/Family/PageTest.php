@@ -28,8 +28,8 @@ class PageTest extends TestCase {
 		$this->assertDoesNotMatchRegularExpression( '/class="[^"]*(promo|upsell|advert|\bad\b)[^"]*"/i', $html );
 		// Active host outcome shows a configure/"you have this" path, not an install button.
 		$this->assertStringContainsString( 'reward_engagement', $html );
-		// A not-installed member with null wporg_slug shows learn-more, never install.
-		$this->assertStringContainsString( 'data-action="learn"', $html );
+		// A not-installed premium member (null wporg_slug) shows a "Get" action, never install.
+		$this->assertStringContainsString( 'data-action="get"', $html );
 		$this->assertStringNotContainsString( 'data-action="install" data-slug="learnomy"', $html );
 		// Onboarding nav + tertiary 3rd-party region present and ordered last.
 		$this->assertStringContainsString( 'admin.php?page=wb-gamification-setup', $html );
@@ -53,5 +53,21 @@ class PageTest extends TestCase {
 		$posOutcomes = strpos( $html, 'data-region="outcomes"' );
 		$posThird    = strpos( $html, 'data-region="thirdparty"' );
 		$this->assertGreaterThan( $posOutcomes, $posThird, '3rd-party must come after outcomes even without onboarding' );
+	}
+
+	/** @test */
+	public function brands_as_wbcom_family_and_names_each_product(): void {
+		$html = \Wbcom\Family\Page::render( array( 'host' => 'wb-gamification', 'onboarding_url' => null, 'nonce' => 'n' ) );
+		// Brand header present — establishes "Wbcom Family" (new in domain).
+		$this->assertStringContainsString( 'data-region="brand"', $html );
+		$this->assertStringContainsString( 'Wbcom Family', $html );
+		// Each outcome names the product that powers it (users do not know icons).
+		$this->assertStringContainsString( 'wbcom-family__member', $html );
+		$this->assertStringContainsString( 'Learnomy', $html );
+		// Premium, not installed → "Get" action plus a "View details" link to the Pro page.
+		$this->assertStringContainsString( 'data-action="get" data-slug="learnomy"', $html );
+		$this->assertStringContainsString( 'wbcom-family__details', $html );
+		// BuddyNext is not on the store yet → honest "coming soon", no broken link.
+		$this->assertStringContainsString( 'data-action="soon"', $html );
 	}
 }
