@@ -17,6 +17,7 @@ class PageTest extends TestCase {
 		Functions\when( '__' )->returnArg();
 		Functions\when( 'get_plugins' )->justReturn( array( 'wb-gamification/wb-gamification.php' => array() ) );
 		Functions\when( 'is_plugin_active' )->alias( static fn( $p ) => 'wb-gamification/wb-gamification.php' === $p );
+		Functions\when( 'admin_url' )->alias( static fn( $p ) => 'http://x/wp-admin/' . $p );
 	}
 	protected function tearDown(): void { Monkey\tearDown(); parent::tearDown(); }
 
@@ -36,5 +37,21 @@ class PageTest extends TestCase {
 		$posThird    = strpos( $html, 'data-region="thirdparty"' );
 		$this->assertNotFalse( $posThird );
 		$this->assertGreaterThan( $posOutcomes, $posThird, '3rd-party must come after outcomes' );
+		// Active host renders configure action, never install.
+		$this->assertStringContainsString( 'data-action="configure" data-slug="wb-gamification"', $html );
+		$this->assertStringNotContainsString( 'data-action="install" data-slug="wb-gamification"', $html );
+	}
+
+	/** @test */
+	public function renders_without_getstarted_when_onboarding_url_is_null(): void {
+		$html = \Wbcom\Family\Page::render( array( 'host' => 'wb-gamification', 'onboarding_url' => null, 'nonce' => 'n' ) );
+		// getstarted region must be absent when no onboarding URL.
+		$this->assertStringNotContainsString( 'data-region="getstarted"', $html );
+		// outcomes and thirdparty still present and ordered correctly.
+		$this->assertStringContainsString( 'data-region="outcomes"', $html );
+		$this->assertStringContainsString( 'data-region="thirdparty"', $html );
+		$posOutcomes = strpos( $html, 'data-region="outcomes"' );
+		$posThird    = strpos( $html, 'data-region="thirdparty"' );
+		$this->assertGreaterThan( $posOutcomes, $posThird, '3rd-party must come after outcomes even without onboarding' );
 	}
 }

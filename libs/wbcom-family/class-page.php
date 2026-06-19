@@ -51,7 +51,7 @@ class Page {
 		if ( $slug === $host || 'active' === $state ) {
 			$action = 'configure';
 			$label  = __( 'Set it up', 'wb-gamification' );
-			$href   = $member['learn_url'] ?? '#';
+			$href   = admin_url( 'admin.php?page=' . $slug );
 		} elseif ( 'installed_inactive' === $state ) {
 			$action = 'activate';
 			$label  = __( 'Activate', 'wb-gamification' );
@@ -80,8 +80,9 @@ class Page {
 	 * SVG is a trusted bundled asset — inlined to stay portable (no URL).
 	 */
 	private static function logo_html( string $slug, array $member ): string {
-		$svg = WBCOM_FAMILY_KIT_DIR . '/logos/' . $slug . '.svg';
-		if ( '' !== $slug && is_readable( $svg ) ) {
+		$safe = preg_replace( '/[^a-z0-9\-]/', '', strtolower( (string) $slug ) );
+		$svg  = WBCOM_FAMILY_KIT_DIR . '/logos/' . $safe . '.svg';
+		if ( '' !== $safe && is_readable( $svg ) ) {
 			return '<div class="wbcom-family__logo">' . file_get_contents( $svg ) . '</div>'; // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- trusted bundled SVG, not remote.
 		}
 		return '<div class="wbcom-family__icon" data-icon="' . esc_attr( $member['icon'] ?? 'circle' ) . '"></div>';
