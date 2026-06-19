@@ -29,11 +29,32 @@ class StateTest extends TestCase {
 
 	/** @test */
 	public function outcome_available_only_when_all_requires_active(): void {
-		Functions\when( 'get_plugins' )->justReturn( array( 'wb-gamification/wb-gamification.php' => array() ) );
-		Functions\when( 'is_plugin_active' )->justReturn( true );
-		$registry = \Wbcom\Family\registry();
-		$this->assertTrue( \Wbcom\Family\State::outcome_available( $registry, 'reward_engagement' ) );
-		Functions\when( 'is_plugin_active' )->justReturn( false );
-		$this->assertFalse( \Wbcom\Family\State::outcome_available( $registry, 'reward_engagement' ) );
+		$reg = array(
+			'members'  => array(
+				'a' => array( 'slug_free' => 'a/a.php' ),
+				'b' => array( 'slug_free' => 'b/b.php' ),
+			),
+			'outcomes' => array(
+				'both'  => array( 'requires' => array( 'a', 'b' ) ),
+				'empty' => array( 'requires' => array() ),
+			),
+		);
+
+		Functions\when( 'get_plugins' )->justReturn( array( 'a/a.php' => array(), 'b/b.php' => array() ) );
+
+		$active = array( 'a/a.php' );
+		Functions\when( 'is_plugin_active' )->alias( static function ( $p ) use ( &$active ) {
+			return in_array( $p, $active, true );
+		} );
+
+		// Only a active — both requires a+b, so false.
+		$this->assertFalse( \Wbcom\Family\State::outcome_available( $reg, 'both' ) );
+
+		// Now b active too — both satisfied, so true.
+		$active[] = 'b/b.php';
+		$this->assertTrue( \Wbcom\Family\State::outcome_available( $reg, 'both' ) );
+
+		// Empty requires always returns false.
+		$this->assertFalse( \Wbcom\Family\State::outcome_available( $reg, 'empty' ) );
 	}
 }
