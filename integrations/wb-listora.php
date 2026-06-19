@@ -1,9 +1,9 @@
 <?php
 /**
- * WB Gamification — Listora (Free) Integration Manifest
+ * WB Gamification - Listora (Free) Integration Manifest
  *
  * Auto-loaded by ManifestLoader when Listora (wb-listora) free is active. Pure
- * manifest, same pattern as Jetonomy/WPMediaVerse — triggers surface in
+ * manifest, same pattern as Jetonomy/WPMediaVerse - triggers surface in
  * Settings + the Setup Wizard automatically.
  *
  * Hook signatures verified against wb-listora 1.2.x. Listing hooks do not carry
@@ -28,7 +28,7 @@ return array(
 			'id'                => 'listora_listing_submitted',
 			'label'             => 'Submit a listing',
 			'description'       => 'Awarded to the owner when a listing is submitted. Cooldown prevents bulk-submit farming.',
-			// Fires: do_action( 'wb_listora_listing_submitted', int $post_id, string $status, $request, $context ). No user id — owner is post_author.
+			// Fires: do_action( 'wb_listora_listing_submitted', int $post_id, string $status, $request, $context ). No user id - owner is post_author.
 			'hook'              => 'wb_listora_listing_submitted',
 			'user_callback'     => function ( int $post_id, $status = '', $request = null, $context = null ): int {
 				return (int) get_post_field( 'post_author', $post_id );
@@ -47,7 +47,7 @@ return array(
 			'id'                => 'listora_listing_published',
 			'label'             => 'Listing approved',
 			'description'       => 'Awarded to the owner when their listing is approved and goes live.',
-			// Fires: do_action( 'wb_listora_after_approve_listing', int $post_id ). No user id — owner is post_author.
+			// Fires: do_action( 'wb_listora_after_approve_listing', int $post_id ). No user id - owner is post_author.
 			'hook'              => 'wb_listora_after_approve_listing',
 			'user_callback'     => function ( int $post_id ): int {
 				return (int) get_post_field( 'post_author', $post_id );
@@ -121,7 +121,7 @@ return array(
 			'id'                => 'listora_listing_renewed',
 			'label'             => 'Renew a listing',
 			'description'       => 'Awarded to the owner when they renew an expiring or expired listing.',
-			// Fires: do_action( 'wb_listora_listing_renewed', int $post_id ). No user id — owner is post_author.
+			// Fires: do_action( 'wb_listora_listing_renewed', int $post_id ). No user id - owner is post_author.
 			'hook'              => 'wb_listora_listing_renewed',
 			'user_callback'     => function ( int $post_id ): int {
 				return (int) get_post_field( 'post_author', $post_id );

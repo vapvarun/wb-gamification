@@ -3,13 +3,13 @@ namespace Wbcom\Family;
 
 defined( 'ABSPATH' ) || exit;
 
-// This Kit uses its own 'wbcom-family' text domain — host-agnostic and portable across any Wbcom plugin.
+// This Kit uses its own 'wbcom-family' text domain - host-agnostic and portable across any Wbcom plugin.
 
 /**
  * Renders the outcome-first family guide under a "Wbcom Family" brand header:
  * a brand strip, then outcome rows (each naming the product that enables it
  * with one clear action), then get-started and also-works-with regions.
- * Guide tone — one primary action per outcome, no promo chrome.
+ * Guide tone - one primary action per outcome, no promo chrome.
  */
 class Page {
 
@@ -21,12 +21,12 @@ class Page {
 
 		$out  = '<div class="wbcom-family">';
 
-		// Brand header — establishes "Wbcom Family" with the Wbcom logo.
+		// Brand header - establishes "Wbcom Family" with the Wbcom logo.
 		$out .= '<div class="wbcom-family__header" data-region="brand">'
 			. '<div class="wbcom-family__brand">' . self::brand_mark() . '</div>'
 			. '<div class="wbcom-family__brandtext">'
 			. '<h2>' . esc_html__( 'Wbcom Family', 'wbcom-family' ) . '</h2>'
-			. '<p>' . esc_html__( 'One connected suite for your community. Pick what you want to do — we point you to the plugin that does it.', 'wbcom-family' ) . '</p>'
+			. '<p>' . esc_html__( 'One connected suite for your community. Pick what you want to do - we point you to the plugin that does it.', 'wbcom-family' ) . '</p>'
 			. '</div></div>';
 
 		// Region 1: outcomes (primary).
@@ -36,7 +36,7 @@ class Page {
 		}
 		$out .= '</div>';
 
-		// Region 2: get-started (secondary) — link to existing onboarding.
+		// Region 2: get-started (secondary) - link to existing onboarding.
 		if ( $onboard ) {
 			$out .= '<div class="wbcom-family__start" data-region="getstarted">'
 				. '<a class="wbcom-family__link" href="' . esc_url( $onboard ) . '">'
@@ -47,7 +47,7 @@ class Page {
 		$out .= '<details class="wbcom-family__thirdparty" data-region="thirdparty"><summary>'
 			. esc_html__( 'Also works with', 'wbcom-family' ) . '</summary><ul>';
 		foreach ( $registry['third_party'] as $tp ) {
-			$out .= '<li><strong>' . esc_html( $tp['name'] ) . '</strong> — ' . esc_html( $tp['note'] ) . '</li>';
+			$out .= '<li><strong>' . esc_html( $tp['name'] ) . '</strong> - ' . esc_html( $tp['note'] ) . '</li>';
 		}
 		$out .= '</ul></details></div>';
 
@@ -78,23 +78,23 @@ class Page {
 	 * link for not-installed premium members), decided from live state.
 	 */
 	private static function actions_html( string $slug, string $name, array $member, string $state, string $host, string $nonce ): string {
-		// Already here — configure it.
+		// Already here - configure it.
 		if ( $slug === $host || 'active' === $state ) {
 			return self::action_link( 'configure', $slug, $nonce, admin_url( 'admin.php?page=' . $slug ), __( 'Set it up', 'wbcom-family' ), false );
 		}
-		// Installed but inactive — one-click activate (handled in JS).
+		// Installed but inactive - one-click activate (handled in JS).
 		if ( 'installed_inactive' === $state ) {
 			return self::action_link( 'activate', $slug, $nonce, '#', __( 'Activate', 'wbcom-family' ), false );
 		}
-		// Free on wp.org — one-click install + activate (handled in JS).
+		// Free on wp.org - one-click install + activate (handled in JS).
 		if ( ! empty( $member['wporg_slug'] ) ) {
 			return self::action_link( 'install', $slug, $nonce, '#', __( 'Install & activate', 'wbcom-family' ), false );
 		}
-		// Not yet on the store — honest "coming soon", no broken link.
+		// Not yet on the store - honest "coming soon", no broken link.
 		if ( ! empty( $member['coming_soon'] ) ) {
 			return '<span class="wbcom-family__action wbcom-family__action--soon" data-action="soon">' . esc_html__( 'Coming soon', 'wbcom-family' ) . '</span>';
 		}
-		// Premium member — primary "Get <name>" (live download page) + optional "View details".
+		// Premium member - primary "Get <name>" (live download page) + optional "View details".
 		/* translators: %s: product name. */
 		$get_label = sprintf( __( 'Get %s', 'wbcom-family' ), $name );
 		$out       = self::action_link( 'get', $slug, $nonce, $member['learn_url'] ?? '#', $get_label, true );
@@ -124,7 +124,7 @@ class Page {
 
 	/**
 	 * Real bundled brand mark when present, else the Lucide icon fallback.
-	 * SVG is a trusted bundled asset — inlined to stay portable (no URL).
+	 * SVG is a trusted bundled asset - inlined to stay portable (no URL).
 	 */
 	private static function logo_html( string $slug, array $member ): string {
 		$safe = preg_replace( '/[^a-z0-9\-]/', '', strtolower( (string) $slug ) );

@@ -1,6 +1,6 @@
 <?php
 /**
- * WB Gamification — Learnomy Pro Integration Manifest
+ * WB Gamification - Learnomy Pro Integration Manifest
  *
  * Auto-loaded by ManifestLoader when Learnomy Pro is active. Covers the Pro-only
  * achievements (learning paths, assignments, cohorts/spaces, gifts) that the

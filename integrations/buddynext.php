@@ -1,6 +1,6 @@
 <?php
 /**
- * WB Gamification — BuddyNext (Free) Integration Manifest
+ * WB Gamification - BuddyNext (Free) Integration Manifest
  *
  * Auto-loaded by ManifestLoader when BuddyNext free is active.
  * No dependency on WB Gamification at load time.
@@ -150,7 +150,7 @@ return array(
 			'id'                => 'bn_post_bookmarked',
 			'label'             => 'Post bookmarked',
 			'description'       => 'Awarded the first time a member bookmarks a post. Daily cap limits farming.',
-			// Fires: do_action( 'buddynext_post_bookmarked', int $post_id, int $user_id ) — only on first bookmark per post/user pair.
+			// Fires: do_action( 'buddynext_post_bookmarked', int $post_id, int $user_id ) - only on first bookmark per post/user pair.
 			'hook'              => 'buddynext_post_bookmarked',
 			'user_callback'     => function ( int $post_id, int $user_id ): int {
 				return $user_id;

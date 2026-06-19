@@ -1,6 +1,6 @@
 <?php
 /**
- * WB Gamification — Listora Pro Integration Manifest
+ * WB Gamification - Listora Pro Integration Manifest
  *
  * Auto-loaded by ManifestLoader when Listora Pro is active. Covers the Pro-only
  * "needs" (reverse-listing) achievements. Hook signatures verified against
@@ -25,7 +25,7 @@ return array(
 			'id'                => 'listora_need_submitted',
 			'label'             => 'Post a need',
 			'description'       => 'Awarded to the member who posts a need (a reverse listing / request).',
-			// Pro fires: do_action( 'wb_listora_pro_need_submitted', int $need_id, $request ). No user id — author is the poster.
+			// Pro fires: do_action( 'wb_listora_pro_need_submitted', int $need_id, $request ). No user id - author is the poster.
 			'hook'              => 'wb_listora_pro_need_submitted',
 			'user_callback'     => function ( int $need_id, $request = null ): int {
 				return (int) get_post_field( 'post_author', $need_id );
@@ -44,7 +44,7 @@ return array(
 			'id'                => 'listora_need_published',
 			'label'             => 'Need approved',
 			'description'       => 'Awarded to the member when their need is approved and goes live.',
-			// Pro fires: do_action( 'wb_listora_pro_need_published', int $need_id ). No user id — author is the poster.
+			// Pro fires: do_action( 'wb_listora_pro_need_published', int $need_id ). No user id - author is the poster.
 			'hook'              => 'wb_listora_pro_need_published',
 			'user_callback'     => function ( int $need_id ): int {
 				return (int) get_post_field( 'post_author', $need_id );

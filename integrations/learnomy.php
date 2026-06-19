@@ -1,6 +1,6 @@
 <?php
 /**
- * WB Gamification — Learnomy (Free) Integration Manifest
+ * WB Gamification - Learnomy (Free) Integration Manifest
  *
  * Auto-loaded by ManifestLoader when Learnomy free is active. No dependency on
  * WB Gamification at load time. Mirrors the Jetonomy/WPMediaVerse pattern:

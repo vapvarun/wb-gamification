@@ -1,6 +1,6 @@
 <?php
 /**
- * Wbcom Family Kit — bundled registry (no network).
+ * Wbcom Family Kit - bundled registry (no network).
  *
  * `wporg_slug` is non-null ONLY for members genuinely installable from
  * wordpress.org; null members (premium / pre-release) render a learn-more
@@ -25,7 +25,7 @@ function registry(): array {
 		'members'     => array(
 			'buddynext'       => array(
 				'name'        => 'BuddyNext',
-				'tagline'     => 'The community engine — profiles, activity feeds and spaces.',
+				'tagline'     => 'The community engine - profiles, activity feeds and spaces.',
 				'icon'        => 'users',
 				'category'    => 'engine',
 				'slug_free'   => 'buddynext/buddynext.php',
@@ -117,7 +117,7 @@ function registry(): array {
 			),
 			'build_community'   => array(
 				'title'       => 'Build the community',
-				'description' => 'Profiles, activity feeds and spaces — the foundation everything rewards.',
+				'description' => 'Profiles, activity feeds and spaces - the foundation everything rewards.',
 				'requires'    => array( 'buddynext' ),
 			),
 			'run_courses'       => array(

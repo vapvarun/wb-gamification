@@ -1,6 +1,6 @@
 <?php
 /**
- * WB Gamification — WP Career Board Pro Integration Manifest
+ * WB Gamification - WP Career Board Pro Integration Manifest
  *
  * Auto-loaded by ManifestLoader when WP Career Board Pro is active. Covers the
  * Pro-only candidate achievement (publishing a resume). Hook signatures
@@ -25,7 +25,7 @@ return array(
 			'id'                => 'wcbp_resume_published',
 			'label'             => 'Publish your resume',
 			'description'       => 'Awarded to the candidate when their resume is published and discoverable by employers.',
-			// Pro fires: do_action( 'wcbp_resume_published', int $post_id, WP_Post $post ). No user id — author is the candidate.
+			// Pro fires: do_action( 'wcbp_resume_published', int $post_id, WP_Post $post ). No user id - author is the candidate.
 			'hook'              => 'wcbp_resume_published',
 			'user_callback'     => function ( int $post_id, $post = null ): int {
 				return (int) get_post_field( 'post_author', $post_id );

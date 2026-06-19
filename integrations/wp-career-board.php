@@ -1,9 +1,9 @@
 <?php
 /**
- * WB Gamification — WP Career Board (Free) Integration Manifest
+ * WB Gamification - WP Career Board (Free) Integration Manifest
  *
  * Auto-loaded by ManifestLoader when WP Career Board free is active. Pure
- * manifest, same pattern as Jetonomy/WPMediaVerse — triggers surface in
+ * manifest, same pattern as Jetonomy/WPMediaVerse - triggers surface in
  * Settings + the Setup Wizard automatically.
  *
  * Hook signatures verified against WP Career Board 1.4.x. Job/listing hooks do
@@ -28,7 +28,7 @@ return array(
 			'id'                => 'wcb_job_posted',
 			'label'             => 'Post a job',
 			'description'       => 'Awarded to the employer when a new job listing is created.',
-			// Fires: do_action( 'wcb_job_created', int $job_id, WP_REST_Request $request ). No user id — author is the poster.
+			// Fires: do_action( 'wcb_job_created', int $job_id, WP_REST_Request $request ). No user id - author is the poster.
 			'hook'              => 'wcb_job_created',
 			'user_callback'     => function ( int $job_id, $request = null ): int {
 				return (int) get_post_field( 'post_author', $job_id );
@@ -47,7 +47,7 @@ return array(
 			'id'                => 'wcb_job_approved',
 			'label'             => 'Job approved',
 			'description'       => 'Awarded to the employer when their job listing is approved and published.',
-			// Fires: do_action( 'wcb_job_approved', int $job_id ). No user id — author is the poster.
+			// Fires: do_action( 'wcb_job_approved', int $job_id ). No user id - author is the poster.
 			'hook'              => 'wcb_job_approved',
 			'user_callback'     => function ( int $job_id ): int {
 				return (int) get_post_field( 'post_author', $job_id );
