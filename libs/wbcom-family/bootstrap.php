@@ -16,11 +16,7 @@ defined( 'ABSPATH' ) || exit;
 $wbcom_family_version = '1.0.0';
 
 if ( defined( 'WBCOM_FAMILY_KIT_VERSION' ) ) {
-	// First-loaded version wins; higher version cannot replace already-defined classes.
-	if ( version_compare( WBCOM_FAMILY_KIT_VERSION, $wbcom_family_version, '>=' ) ) {
-		return;
-	}
-	// This is a higher version, but earlier version already loaded classes — cannot redefine them.
+	// First-loaded version wins; classes are already defined — bail to avoid redeclare fatal.
 	return;
 }
 

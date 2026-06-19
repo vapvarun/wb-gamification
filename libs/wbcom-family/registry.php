@@ -57,7 +57,7 @@ function registry(): array {
 				'is_engine'  => false,
 			),
 			'wpmediaverse'    => array(
-				'name'       => 'WPMediaVerse',
+				'name'       => 'MediaVerse',
 				'tagline'    => 'Direct messages and a media library for members.',
 				'icon'       => 'image',
 				'category'   => 'media',

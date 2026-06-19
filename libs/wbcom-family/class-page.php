@@ -3,6 +3,8 @@ namespace Wbcom\Family;
 
 defined( 'ABSPATH' ) || exit;
 
+// This Kit uses its own 'wbcom-family' text domain — host-agnostic and portable across any Wbcom plugin.
+
 /**
  * Renders the outcome-first family guide: 3 regions (outcomes, get-started,
  * also-works-with). Guide tone — one action per outcome, no promo chrome.
@@ -27,12 +29,12 @@ class Page {
 		if ( $onboard ) {
 			$out .= '<div class="wbcom-family__start" data-region="getstarted">'
 				. '<a class="wbcom-family__link" href="' . esc_url( $onboard ) . '">'
-				. esc_html__( 'New here? Run the setup guide', 'wb-gamification' ) . '</a></div>';
+				. esc_html__( 'New here? Run the setup guide', 'wbcom-family' ) . '</a></div>';
 		}
 
 		// Region 3: also-works-with (tertiary, de-emphasized).
 		$out .= '<details class="wbcom-family__thirdparty" data-region="thirdparty"><summary>'
-			. esc_html__( 'Also works with', 'wb-gamification' ) . '</summary><ul>';
+			. esc_html__( 'Also works with', 'wbcom-family' ) . '</summary><ul>';
 		foreach ( $registry['third_party'] as $tp ) {
 			$out .= '<li><strong>' . esc_html( $tp['name'] ) . '</strong> — ' . esc_html( $tp['note'] ) . '</li>';
 		}
@@ -50,19 +52,19 @@ class Page {
 		// Decide the single action.
 		if ( $slug === $host || 'active' === $state ) {
 			$action = 'configure';
-			$label  = __( 'Set it up', 'wb-gamification' );
+			$label  = __( 'Set it up', 'wbcom-family' );
 			$href   = admin_url( 'admin.php?page=' . $slug );
 		} elseif ( 'installed_inactive' === $state ) {
 			$action = 'activate';
-			$label  = __( 'Activate', 'wb-gamification' );
+			$label  = __( 'Activate', 'wbcom-family' );
 			$href   = '#';
 		} elseif ( ! empty( $member['wporg_slug'] ) ) {
 			$action = 'install';
-			$label  = __( 'Install & activate', 'wb-gamification' );
+			$label  = __( 'Install & activate', 'wbcom-family' );
 			$href   = '#';
 		} else {
 			$action = 'learn';
-			$label  = __( 'See how it works', 'wb-gamification' );
+			$label  = __( 'See how it works', 'wbcom-family' );
 			$href   = $member['learn_url'] ?? '#';
 		}
 
