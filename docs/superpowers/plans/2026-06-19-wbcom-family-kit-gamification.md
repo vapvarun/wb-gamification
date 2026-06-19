@@ -273,11 +273,25 @@ function registry(): array {
 Run: `composer test -- --filter RegistryTest`
 Expected: PASS (both tests). (Note: `class-state.php` etc. are required by bootstrap; create empty stubs `<?php namespace Wbcom\Family; defined('ABSPATH')||exit;` for the not-yet-built files so the require chain loads — they are fleshed out in Tasks 2–5.)
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 6: Bundle the available brand marks**
+
+Real brand marks live in `~/Documents/brand logos/<plugin>/logo/<plugin>-mark.svg`. Copy the four that exist into the Kit so it shows real logos (not generic icons):
 
 ```bash
-git add libs/wbcom-family/bootstrap.php libs/wbcom-family/registry.php tests/Unit/Family/RegistryTest.php libs/wbcom-family/class-*.php
-git commit -m "feat(family): portable Kit bootstrap + bundled family registry"
+mkdir -p libs/wbcom-family/logos
+for p in buddynext learnomy jetonomy wpmediaverse; do
+  src="$HOME/Documents/brand logos/$p/logo/$p-mark.svg"
+  [ -f "$src" ] && cp "$src" "libs/wbcom-family/logos/$p.svg"
+done
+ls libs/wbcom-family/logos
+```
+The renderer (Task 4) uses `logos/{slug}.svg` when present, else falls back to the member's `icon`. **wb-gamification, wp-career-board, wb-listora have no mark yet** → they render the icon fallback until a brand kit is created (see "Brand kit" note below).
+
+- [ ] **Step 7: Commit**
+
+```bash
+git add libs/wbcom-family/bootstrap.php libs/wbcom-family/registry.php libs/wbcom-family/logos tests/Unit/Family/RegistryTest.php libs/wbcom-family/class-*.php
+git commit -m "feat(family): portable Kit bootstrap + bundled family registry + brand marks"
 ```
 
 ---
@@ -670,12 +684,24 @@ class Page {
 		}
 
 		return '<div class="wbcom-family__outcome" data-outcome="' . esc_attr( $key ) . '" data-state="' . esc_attr( $state ) . '">'
-			. '<div class="wbcom-family__icon" data-icon="' . esc_attr( $member['icon'] ?? 'circle' ) . '"></div>'
+			. self::logo_html( $slug, $member )
 			. '<div class="wbcom-family__body"><h3>' . esc_html( $outcome['title'] ) . '</h3>'
 			. '<p>' . esc_html( $outcome['description'] ) . '</p></div>'
 			. '<a class="wbcom-family__action" data-action="' . esc_attr( $action ) . '" data-slug="' . esc_attr( $slug ) . '" '
 			. 'data-nonce="' . esc_attr( $nonce ) . '" href="' . esc_url( $href ) . '">' . esc_html( $label ) . '</a>'
 			. '</div>';
+	}
+
+	/**
+	 * Real bundled brand mark when present, else the Lucide icon fallback.
+	 * SVG is a trusted bundled asset — inlined to stay portable (no URL).
+	 */
+	private static function logo_html( string $slug, array $member ): string {
+		$svg = WBCOM_FAMILY_KIT_DIR . '/logos/' . $slug . '.svg';
+		if ( '' !== $slug && is_readable( $svg ) ) {
+			return '<div class="wbcom-family__logo">' . file_get_contents( $svg ) . '</div>'; // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- trusted bundled SVG, not remote.
+		}
+		return '<div class="wbcom-family__icon" data-icon="' . esc_attr( $member['icon'] ?? 'circle' ) . '"></div>';
 	}
 }
 ```
@@ -982,5 +1008,7 @@ Note the verification (pass/fail per check) in the task report. No commit (verif
 **Placeholder scan:** No TBD/TODO; every code step has complete code. Task 6 Step 6 references "the existing tab-rendering pattern in that file" — the implementer must match SettingsPage's actual tab mechanism; flagged, not a placeholder for logic.
 
 **Type consistency:** `registry()`, `State::member_state`/`outcome_available`, `Installer::ACTION`/`register`/`handle`, `Page::render($config)`, `Kit::boot`/`render`, `IntegrationsTab::init`/`render` are consistent across tasks. Page `$config` keys (`host`,`onboarding_url`,`nonce`) match what Kit passes. AJAX action string `wbcom_family_install` consistent (Installer + JS).
+
+**Brand kit (separate effort):** real brand marks exist for buddynext, learnomy, jetonomy, wpmediaverse (`~/Documents/brand logos/<plugin>/logo/`, pattern: mark/wordmark/horizontal/mono/favicon SVG + BRAND.md + social OG, generated from `_render-src/`). **wb-gamification, wp-career-board, wb-listora have no brand kit yet** — the renderer falls back to a Lucide icon for them. Creating those three brand kits (following the existing pattern/pipeline) is its own design effort, tracked separately; the Family Kit works with or without them and auto-upgrades to a real mark the moment `logos/{slug}.svg` is added.
 
 **Known data caveat (not a placeholder):** all `wporg_slug` are `null` in the registry (premium/pre-release members) → every member currently renders learn-more, not install. The installer MECHANISM is fully built + tested; enabling one-click install for any member is a one-field data change once that member is confirmed live on wp.org. Task 7 verifies the learn/configure/activate paths; the install path is unit-tested in Task 3.
