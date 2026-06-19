@@ -32,6 +32,7 @@ class RegistryTest extends TestCase {
 	public function bootstrap_loads_once_and_keeps_highest_version(): void {
 		$this->assertTrue( defined( 'WBCOM_FAMILY_KIT_VERSION' ) );
 		require dirname( __DIR__, 3 ) . '/libs/wbcom-family/bootstrap.php'; // second include must not fatal
-		$this->assertTrue( class_exists( '\Wbcom\Family\State' ) || true );
+		$this->assertTrue( defined( 'WBCOM_FAMILY_KIT_DIR' ) );
+		$this->assertTrue( function_exists( 'Wbcom\Family\registry' ) );
 	}
 }

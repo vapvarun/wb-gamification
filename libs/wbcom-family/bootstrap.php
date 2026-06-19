@@ -5,7 +5,8 @@
  * Self-contained: own namespace (Wbcom\Family), own requires. NOT registered
  * in any host plugin's composer autoloader, so the directory drops into any
  * plugin unchanged. If two plugins bundle different Kit versions on one site,
- * the highest version wins (load-once-highest guard).
+ * the first-loaded version wins — a later-loaded bundle cannot replace
+ * already-defined classes, so we bail to avoid redeclare fatals.
  *
  * @package Wbcom\Family
  */
@@ -15,11 +16,11 @@ defined( 'ABSPATH' ) || exit;
 $wbcom_family_version = '1.0.0';
 
 if ( defined( 'WBCOM_FAMILY_KIT_VERSION' ) ) {
-	// Already loaded by this or a higher version — do nothing.
+	// First-loaded version wins; higher version cannot replace already-defined classes.
 	if ( version_compare( WBCOM_FAMILY_KIT_VERSION, $wbcom_family_version, '>=' ) ) {
 		return;
 	}
-	// A lower version loaded first cannot be un-declared; bail to avoid redeclare fatals.
+	// This is a higher version, but earlier version already loaded classes — cannot redefine them.
 	return;
 }
 

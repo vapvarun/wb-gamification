@@ -136,6 +136,11 @@ function registry(): array {
 				'description' => 'Reward hiring milestones and applications with points.',
 				'requires'    => array( 'wp-career-board' ),
 			),
+			'listings'          => array(
+				'title'       => 'Add listings & a directory',
+				'description' => 'Member-submitted listings and directories your community can browse.',
+				'requires'    => array( 'wb-listora' ),
+			),
 		),
 		'third_party' => array(
 			array( 'name' => 'BuddyPress', 'note' => 'Activity and member events can feed rewards if you already run BuddyPress.' ),
