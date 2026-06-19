@@ -1269,20 +1269,21 @@ final class SettingsPage {
 	 */
 	private static function render_points_tab(): void {
 		$actions = Registry::get_actions();
-		$by_cat  = array();
+		// Group point actions by their SOURCE PLUGIN (the integration that
+		// registered them) so admins reason per-integration — "what does
+		// BuddyNext / Learnomy / Listora reward?" — instead of by abstract
+		// category. ManifestLoader stamps the plugin name on every trigger.
+		$by_plugin = array();
 		foreach ( $actions as $action ) {
-			$by_cat[ $action['category'] ?? 'general' ][] = $action;
+			$plugin = trim( (string) ( $action['plugin'] ?? '' ) );
+			if ( '' === $plugin ) {
+				$plugin = __( 'Other', 'wb-gamification' );
+			} elseif ( 'WPMediaVerse' === $plugin ) {
+				$plugin = 'MediaVerse'; // Present without the internal "WP" prefix (brand rule).
+			}
+			$by_plugin[ $plugin ][] = $action;
 		}
-		ksort( $by_cat );
-
-		$cat_labels = array(
-			'wordpress'  => __( 'WordPress', 'wb-gamification' ),
-			'buddypress' => __( 'BuddyPress', 'wb-gamification' ),
-			'commerce'   => __( 'Commerce', 'wb-gamification' ),
-			'learning'   => __( 'Learning', 'wb-gamification' ),
-			'social'     => __( 'Social', 'wb-gamification' ),
-			'general'    => __( 'General', 'wb-gamification' ),
-		);
+		ksort( $by_plugin );
 
 		// Resolve the default currency label once — used for the section title +
 		// table column header so the UI never hard-codes "Points" when the site
@@ -1326,7 +1327,7 @@ final class SettingsPage {
 				// Sort so 'WordPress' renders first (and is open by default), other
 				// integrations follow alphabetically.
 				uksort(
-					$by_cat,
+					$by_plugin,
 					static function ( $a, $b ) {
 						if ( 'WordPress' === $a ) {
 							return -1;
@@ -1339,18 +1340,18 @@ final class SettingsPage {
 				);
 				?>
 
-				<?php foreach ( $by_cat as $cat => $cat_actions ) : ?>
-					<details class="wbgam-settings-card wbgam-stack-block wbgam-accordion"<?php echo 'WordPress' === $cat ? ' open' : ''; ?>>
+				<?php foreach ( $by_plugin as $plugin => $plugin_actions ) : ?>
+					<details class="wbgam-settings-card wbgam-stack-block wbgam-accordion"<?php echo 'WordPress' === $plugin ? ' open' : ''; ?>>
 						<summary class="wbgam-settings-card__head wbgam-accordion__head">
 							<span class="wbgam-accordion__chevron icon-chevron-right" aria-hidden="true"></span>
 							<span class="wbgam-accordion__head-text">
-								<span class="wbgam-settings-card__title"><?php echo esc_html( strtoupper( $cat_labels[ $cat ] ?? ucfirst( $cat ) ) ); ?></span>
+								<span class="wbgam-settings-card__title"><?php echo esc_html( strtoupper( $plugin ) ); ?></span>
 								<span class="wbgam-settings-card__desc">
 									<?php
 									printf(
-										/* translators: %d = number of actions in category */
-										esc_html__( '%d actions in this category.', 'wb-gamification' ),
-										count( $cat_actions )
+										/* translators: %d = number of actions for this integration */
+										esc_html__( '%d actions from this integration.', 'wb-gamification' ),
+										count( $plugin_actions )
 									);
 									?>
 								</span>
@@ -1374,7 +1375,7 @@ final class SettingsPage {
 									</thead>
 									<tbody>
 									<?php
-									foreach ( $cat_actions as $action ) :
+									foreach ( $plugin_actions as $action ) :
 										$action_id  = $action['id'];
 										$pts        = (int) get_option( 'wb_gam_points_' . $action_id, $action['default_points'] );
 										$enabled    = (bool) get_option( 'wb_gam_enabled_' . $action_id, true );
