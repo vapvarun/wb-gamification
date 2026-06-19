@@ -17,6 +17,7 @@ class Kit {
 	public static function boot( array $config ): void {
 		self::$config = $config;
 		if ( self::$booted ) {
+			// Config is always updated above; hook registration is one-time only.
 			return;
 		}
 		self::$booted = true;
