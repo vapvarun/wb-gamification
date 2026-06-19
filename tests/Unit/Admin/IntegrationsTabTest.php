@@ -40,4 +40,21 @@ class IntegrationsTabTest extends TestCase {
 		$this->assertStringContainsString( 'data-region="outcomes"', $html );
 		$this->assertStringContainsString( 'page=wb-gamification-setup', $html );
 	}
+
+	/** @test */
+	public function enqueue_does_not_load_assets_on_non_gamification_hook(): void {
+		Functions\expect( 'wp_enqueue_style' )->never();
+		Functions\expect( 'wp_enqueue_script' )->never();
+		IntegrationsTab::enqueue( 'edit.php' );
+		$this->addToAssertionCount( 1 );
+	}
+
+	/** @test */
+	public function enqueue_loads_assets_on_gamification_hook(): void {
+		Functions\expect( 'wp_enqueue_style' )->atLeast()->once();
+		Functions\expect( 'wp_enqueue_script' )->atLeast()->once();
+		Functions\expect( 'wp_localize_script' )->atLeast()->once();
+		IntegrationsTab::enqueue( 'toplevel_page_wb-gamification' );
+		$this->addToAssertionCount( 1 );
+	}
 }
