@@ -18,6 +18,8 @@ This is delivered as a portable, bundled **Wbcom Family Kit** that renders an ou
 - **Works standalone.** Each plugin installs separately; when only one is present the page is pure guidance ("to do X, add Y"), never a hard dependency on BuddyNext or any sibling.
 - **Family-first, 3rd-party demoted.** 3rd-party compatibility (BuddyPress/LearnDash/WooCommerce) appears only as a secondary "also works with…" line, never as the required path.
 - **Follow ux-foundation.** Wbcom admin tokens, Lucide icons, desktop+iPad responsive (admin screens are occasional-use; the 390px rule does not apply).
+- **Brand-aware & re-parentable.** The page never hardcodes a brand string in chrome; it registers via a host-supplied hook so it can later be re-parented under a unified family settings menu (that consolidation is a separate effort — see Out of scope). The Kit must not assume its menu location.
+- **3rd-party present but secondary.** 3rd-party compatibility gets its own section, deliberately NOT primary — below the family/outcome content (a collapsed/secondary "Also works with…" block). Present for honesty, never front-and-center.
 
 ## Ownership & portability
 
@@ -51,6 +53,11 @@ Renders the outcome-first guide from the registry + live state. For each outcome
 - **Not installed** → one calm factual line ("To {outcome}, {host} works with {member} — here's how it works") + a single "Install & activate" (free) or "Learn more" (pro) action.
 The host plugin itself is shown as "active / configured"; BuddyNext is surfaced as the Community Engine when relevant. Built with ux-foundation tokens; no promo chrome.
 
+The page is composed of three stacked regions, in priority order:
+1. **Outcomes (primary)** — the "what do you want to do" guidance above.
+2. **Get started (secondary)** — a small section linking to (re)launch the host plugin's onboarding wizard ("New here? Run the setup guide"). Pure navigation in v1 — it links to the existing wizard; it does NOT rewrite wizard content (that is Phase 2).
+3. **Also works with (tertiary, de-emphasized)** — a collapsed/below-the-fold section listing 3rd-party compatibility (BuddyPress, LearnDash, WooCommerce, …) as factual "works with" lines. Never primary; no install actions for 3rd-party.
+
 ### 5. Host adapter (per plugin)
 A ~10-line glue file the host plugin provides: declares its own slug + which outcomes it owns/enables, registers the page (see below), and boots the Kit. Everything else is in the Kit.
 
@@ -67,7 +74,8 @@ A ~10-line glue file the host plugin provides: declares its own slug + which out
 
 ## Out of scope (v1)
 - Cloud/central registry (explicitly rejected — plugin level only).
-- Onboarding-wizard reorientation (Phase 2).
+- **Unified family settings menu / brand consolidation** — a separate cross-plugin effort (re-parenting every family plugin's settings under one shared menu). The Kit is built brand-aware and re-parentable to slot into it, but v1 does NOT build the consolidation. Its own spec.
+- Onboarding-wizard content reorientation (Phase 2) — v1 only *links* to the existing wizard.
 - Auto-installing Pro plugins (paid; link out only).
 - Front-end surfaces (admin only).
 
