@@ -216,6 +216,12 @@ final class WB_Gamification {
 		( new \WBGam\Blocks\Registrar( WB_GAM_PATH . 'build' ) )->init();
 		add_action( 'init', array( ShortcodeHandler::class, 'init' ) );
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_assets' ) );
+		// The editor canvas is an iframe: styles enqueued via
+		// enqueue_block_editor_assets land in the OUTER admin document, not the
+		// canvas. Block previews live inside the iframe, so the shared design
+		// tokens + card surface + preview-card CSS must be injected through
+		// block_editor_settings_all, which WP copies into the canvas iframe.
+		add_filter( 'block_editor_settings_all', array( $this, 'inject_editor_canvas_styles' ) );
 
 		// DB schema upgrades run first.
 		// Boot sequence uses the SLOT_* constants from BootOrder so the
@@ -577,6 +583,54 @@ final class WB_Gamification {
 				)
 			);
 		}
+	}
+
+	/**
+	 * Inject shared block styles into the editor canvas iframe.
+	 *
+	 * The block editor renders block previews inside an `<iframe>`. Styles
+	 * registered through `enqueue_block_editor_assets` land in the OUTER admin
+	 * document, NOT the iframe, so block previews there render unstyled. Block
+	 * `style`/`editorStyle` from block.json ARE copied into the canvas, but
+	 * shared cross-block CSS (design tokens, the canonical card surface, the
+	 * BlockPreviewCard used by Interactivity-API blocks) is not declared per
+	 * block. `block_editor_settings_all` is the supported seam: every entry in
+	 * `$settings['styles']` is injected into the canvas iframe.
+	 *
+	 * Without this, every wb-gamification block preview renders with undefined
+	 * `--wb-gam-*` variables and no card chrome — and IA blocks (which use a
+	 * static BlockPreviewCard instead of ServerSideRender) show as raw text.
+	 *
+	 * @param array<string, mixed> $settings Block editor settings.
+	 * @return array<string, mixed> Settings with the shared canvas styles added.
+	 */
+	public function inject_editor_canvas_styles( array $settings ): array {
+		$files = array(
+			WB_GAM_PATH . 'src/shared/design-tokens.css',
+			WB_GAM_PATH . 'src/shared/block-card.css',
+			WB_GAM_PATH . 'src/shared/block-preview-card.css',
+			// give-kudos renders its form via ServerSideRender and styles it
+			// from assets/css/ (shared with the shortcode) rather than a
+			// block.json `style`, so its CSS isn't auto-copied into the canvas.
+			WB_GAM_PATH . 'assets/css/give-kudos.css',
+		);
+
+		if ( ! isset( $settings['styles'] ) || ! is_array( $settings['styles'] ) ) {
+			$settings['styles'] = array();
+		}
+
+		foreach ( $files as $file ) {
+			if ( ! is_readable( $file ) ) {
+				continue;
+			}
+			$css = file_get_contents( $file ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
+			if ( false === $css || '' === $css ) {
+				continue;
+			}
+			$settings['styles'][] = array( 'css' => $css );
+		}
+
+		return $settings;
 	}
 
 	/**

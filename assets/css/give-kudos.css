@@ -1,32 +1,70 @@
 /**
- * Give Kudos block — frontend layout.
+ * Give Kudos block — premium, token-driven form.
  *
- * Stacks labels above inputs (overrides loose theme defaults), constrains
- * the form width on wide viewports, and on screens ≤640px makes the submit
- * button span the full row so it stays tappable on mobile.
+ * Renders on the canonical card surface every wb-gamification block shares
+ * (white surface, soft shadow, accent submit). Consumes the `--wb-gam-*`
+ * design tokens (with hex fallbacks so it stays presentable if the token
+ * stylesheet is absent). Used by the block render, the shortcode, and the
+ * editor canvas (injected via block_editor_settings_all).
  */
+
 .wb-gam-give-kudos {
 	display: flex;
 	flex-direction: column;
-	gap: 0.5rem;
+	gap: var( --wb-gam-space-md, 16px );
 	max-width: 32rem;
+	margin: 0;
+	padding: var( --wb-gam-space-lg, 20px );
+	background: var( --wb-gam-color-surface, #ffffff );
+	border: 1px solid var( --wb-gam-color-border, #e3e6ec );
+	border-radius: var( --wb-gam-radius-card, 12px );
+	box-shadow: var( --wb-gam-shadow-sm, 0 1px 3px rgba( 0, 0, 0, 0.06 ) );
+	font-family: inherit;
+}
+
+.wb-gam-give-kudos__field {
+	display: flex;
+	flex-direction: column;
+	gap: var( --wb-gam-space-xs, 6px );
 }
 
 .wb-gam-give-kudos__label {
 	display: block;
 	font-weight: 600;
-	font-size: 0.875rem;
+	font-size: var( --wb-gam-font-sm, 14px );
+	color: var( --wb-gam-color-text, #1a1a1a );
+}
+
+.wb-gam-give-kudos__recipient {
+	margin: 0;
+	font-size: var( --wb-gam-font-sm, 14px );
+	color: var( --wb-gam-color-text, #1a1a1a );
 }
 
 .wb-gam-give-kudos__input,
 .wb-gam-give-kudos__textarea {
 	width: 100%;
 	box-sizing: border-box;
-	padding: 0.5rem 0.75rem;
-	border: 1px solid #d1d5db;
-	border-radius: 0.375rem;
-	font-size: 1rem;
+	padding: 10px 12px;
+	font-size: var( --wb-gam-font-md, 15px );
 	font-family: inherit;
+	color: var( --wb-gam-color-text, #1a1a1a );
+	background: var( --wb-gam-color-surface, #ffffff );
+	border: 1px solid var( --wb-gam-color-border-strong, #cbd2dc );
+	border-radius: var( --wb-gam-radius-md, 10px );
+	transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.wb-gam-give-kudos__input::placeholder,
+.wb-gam-give-kudos__textarea::placeholder {
+	color: var( --wb-gam-color-text-light, #9aa3b2 );
+}
+
+.wb-gam-give-kudos__input:focus,
+.wb-gam-give-kudos__textarea:focus {
+	outline: none;
+	border-color: var( --wb-gam-color-accent, #3b82f6 );
+	box-shadow: 0 0 0 3px var( --wb-gam-color-accent-ring, rgba( 59, 130, 246, 0.2 ) );
 }
 
 .wb-gam-give-kudos__textarea {
@@ -36,9 +74,30 @@
 
 .wb-gam-give-kudos__submit {
 	align-self: flex-start;
-	padding: 0.5rem 1rem;
-	border-radius: 0.375rem;
+	min-height: 40px;
+	padding: 10px 20px;
+	font-size: var( --wb-gam-font-sm, 14px );
+	font-weight: 600;
+	font-family: inherit;
+	color: var( --wb-gam-color-white, #ffffff );
+	background: var( --wb-gam-color-accent, #3b82f6 );
+	border: none;
+	border-radius: var( --wb-gam-radius-full, 999px );
 	cursor: pointer;
+	transition: background-color 0.15s ease, transform 0.05s ease;
+}
+
+.wb-gam-give-kudos__submit:hover {
+	background: var( --wb-gam-color-accent-hover, #2563eb );
+}
+
+.wb-gam-give-kudos__submit:active {
+	transform: translateY( 1px );
+}
+
+.wb-gam-give-kudos__submit:focus-visible {
+	outline: none;
+	box-shadow: 0 0 0 3px var( --wb-gam-color-accent-ring, rgba( 59, 130, 246, 0.35 ) );
 }
 
 .wb-gam-give-kudos__submit[disabled] {
@@ -48,14 +107,17 @@
 
 .wb-gam-give-kudos__status {
 	margin: 0;
-	font-size: 0.875rem;
+	font-size: var( --wb-gam-font-sm, 14px );
 	min-height: 1.25rem;
+	color: var( --wb-gam-color-text-light, #6b7280 );
+}
+
+.wb-gam-give-kudos--guest p {
+	margin: 0;
+	color: var( --wb-gam-color-text-light, #6b7280 );
 }
 
 @media ( max-width: 640px ) {
-	.wb-gam-give-kudos {
-		gap: 0.75rem;
-	}
 	.wb-gam-give-kudos__submit {
 		width: 100%;
 		align-self: stretch;

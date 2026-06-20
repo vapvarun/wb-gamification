@@ -10,7 +10,7 @@
  * @see plans/WBCOM-BLOCK-STANDARD-MIGRATION.md Phase C.3
  */
 
-import { __ } from '@wordpress/i18n';
+import { __, _n, sprintf } from '@wordpress/i18n';
 import { useBlockProps, InspectorControls } from '@wordpress/block-editor';
 import {
 	PanelBody,
@@ -22,7 +22,7 @@ import {
 	__experimentalToggleGroupControlOption as ToggleGroupControlOption, // eslint-disable-line @wordpress/no-unsafe-wp-apis
 } from '@wordpress/components';
 import { useState } from '@wordpress/element';
-import ServerSideRender from '@wordpress/server-side-render';
+import { store } from '@wordpress/icons';
 
 import {
 	ResponsiveControl,
@@ -33,6 +33,7 @@ import {
 	ColorHoverControl,
 	DeviceVisibility,
 	useUniqueId,
+	BlockPreviewCard,
 } from '../../shared';
 
 const Edit = ( { attributes, setAttributes, clientId } ) => {
@@ -305,18 +306,33 @@ const Edit = ( { attributes, setAttributes, clientId } ) => {
 			</InspectorControls>
 
 			<div { ...blockProps }>
-				<ServerSideRender
-					block={ 'wb-gamification/redemption-store' }
-					attributes={ attributes }
-					EmptyResponsePlaceholder={ () => (
-						<p className="wb-gam-redemption__empty">
-							{ emptyMessage ||
-								__(
-									'No rewards available yet. Check back soon!',
-									'wb-gamification'
-								) }
-						</p>
+				<BlockPreviewCard
+					icon={ store }
+					title={ __( 'Redemption Store', 'wb-gamification' ) }
+					description={ __(
+						'Member-facing rewards catalog — active redemption items with point cost and a Redeem button.',
+						'wb-gamification'
 					) }
+					status={
+						limit > 0
+							? sprintf(
+									/* translators: %d: number of items shown. */
+									_n(
+										'Showing up to %d reward in %s columns',
+										'Showing up to %d rewards in %s columns',
+										limit,
+										'wb-gamification'
+									),
+									limit,
+									columns
+							  )
+							: sprintf(
+									/* translators: %s: number of columns. */
+									__( 'Showing all active rewards in %s columns', 'wb-gamification' ),
+									columns
+							  )
+					}
+					statusType="configured"
 				/>
 			</div>
 		</>
