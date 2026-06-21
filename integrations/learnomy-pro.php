@@ -37,6 +37,7 @@ return array(
 			'category'          => 'learning',
 			'icon'              => 'icon-route',
 			'repeatable'        => true,
+			'async'             => false,
 		),
 
 		array(
@@ -58,6 +59,7 @@ return array(
 			'category'          => 'learning',
 			'icon'              => 'icon-log-in',
 			'repeatable'        => true,
+			'async'             => false,
 			'daily_cap'         => 5,
 		),
 
@@ -77,6 +79,7 @@ return array(
 			'category'          => 'learning',
 			'icon'              => 'icon-clipboard-check',
 			'repeatable'        => true,
+			'async'             => false,
 			'cooldown'          => 60,
 		),
 
@@ -96,21 +99,23 @@ return array(
 			'category'          => 'learning',
 			'icon'              => 'icon-users',
 			'repeatable'        => true,
+			'async'             => false,
 		),
 
 		array(
-			'id'                => 'learnomy_pro_gift_redeemed',
-			'label'             => 'Redeem a course gift',
-			'description'       => 'Awarded when a member redeems a gifted course or membership code.',
+			'id'             => 'learnomy_pro_gift_redeemed',
+			'label'          => 'Redeem a course gift',
+			'description'    => 'Awarded when a member redeems a gifted course or membership code.',
 			// Pro fires: do_action( 'learnomy_pro_gift_redeemed', string $code, int $user_id, int $sub_id ).
-			'hook'              => 'learnomy_pro_gift_redeemed',
-			'user_callback'     => function ( string $code, int $user_id, int $sub_id ): int {
+			'hook'           => 'learnomy_pro_gift_redeemed',
+			'user_callback'  => function ( string $code, int $user_id, int $sub_id ): int {
 				return $user_id;
 			},
-			'default_points'    => 5,
-			'category'          => 'learning',
-			'icon'              => 'icon-gift',
-			'repeatable'        => true,
+			'default_points' => 5,
+			'category'       => 'learning',
+			'icon'           => 'icon-gift',
+			'repeatable'     => true,
+			'async'          => false,
 		),
 
 	),

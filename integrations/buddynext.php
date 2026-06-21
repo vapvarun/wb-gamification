@@ -51,6 +51,7 @@ return array(
 			'category'          => 'content',
 			'icon'              => 'icon-file-text',
 			'repeatable'        => true,
+			'async'             => false,
 			'cooldown'          => 30,
 			'daily_cap'         => 20,
 		),
@@ -74,6 +75,7 @@ return array(
 			'category'          => 'content',
 			'icon'              => 'icon-share-2',
 			'repeatable'        => true,
+			'async'             => false,
 			'daily_cap'         => 10,
 		),
 
@@ -97,6 +99,7 @@ return array(
 			'category'          => 'content',
 			'icon'              => 'icon-message-square',
 			'repeatable'        => true,
+			'async'             => false,
 			'cooldown'          => 30,
 		),
 
@@ -121,6 +124,7 @@ return array(
 			'category'          => 'content',
 			'icon'              => 'icon-heart',
 			'repeatable'        => true,
+			'async'             => false,
 			'daily_cap'         => 20,
 		),
 
@@ -143,6 +147,7 @@ return array(
 			'category'          => 'content',
 			'icon'              => 'icon-bar-chart-2',
 			'repeatable'        => true,
+			'async'             => false,
 			'daily_cap'         => 5,
 		),
 
@@ -162,6 +167,7 @@ return array(
 			'category'          => 'content',
 			'icon'              => 'icon-bookmark',
 			'repeatable'        => true,
+			'async'             => false,
 			'daily_cap'         => 5,
 		),
 
@@ -186,6 +192,7 @@ return array(
 			'category'          => 'social',
 			'icon'              => 'icon-user-plus',
 			'repeatable'        => true,
+			'async'             => false,
 			'daily_cap'         => 10,
 		),
 
@@ -224,6 +231,7 @@ return array(
 			'category'          => 'social',
 			'icon'              => 'icon-link',
 			'repeatable'        => true,
+			'async'             => false,
 		),
 
 		array(
@@ -245,6 +253,7 @@ return array(
 			'category'          => 'social',
 			'icon'              => 'icon-send',
 			'repeatable'        => true,
+			'async'             => false,
 			'daily_cap'         => 5,
 		),
 
@@ -267,6 +276,7 @@ return array(
 			'category'          => 'social',
 			'icon'              => 'icon-mail',
 			'repeatable'        => true,
+			'async'             => false,
 			'daily_cap'         => 10,
 		),
 
@@ -293,6 +303,7 @@ return array(
 			'category'          => 'community',
 			'icon'              => 'icon-users',
 			'repeatable'        => true,
+			'async'             => false,
 			'daily_cap'         => 5,
 		),
 
@@ -312,6 +323,7 @@ return array(
 			'category'          => 'community',
 			'icon'              => 'icon-layout',
 			'repeatable'        => true,
+			'async'             => false,
 		),
 
 		// -----------------------------------------------------------------------
@@ -335,6 +347,7 @@ return array(
 			'category'          => 'community',
 			'icon'              => 'icon-user',
 			'repeatable'        => true,
+			'async'             => false,
 			'cooldown'          => 300,
 		),
 

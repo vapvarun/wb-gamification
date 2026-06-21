@@ -37,6 +37,7 @@ return array(
 			'category'          => 'listings',
 			'icon'              => 'icon-megaphone',
 			'repeatable'        => true,
+			'async'             => false,
 			'cooldown'          => 60,
 		),
 
@@ -56,6 +57,7 @@ return array(
 			'category'          => 'listings',
 			'icon'              => 'icon-check-circle',
 			'repeatable'        => true,
+			'async'             => false,
 		),
 
 		array(
@@ -77,6 +79,7 @@ return array(
 			'category'          => 'listings',
 			'icon'              => 'icon-reply',
 			'repeatable'        => true,
+			'async'             => false,
 			'daily_cap'         => 10,
 		),
 

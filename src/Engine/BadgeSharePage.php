@@ -135,7 +135,7 @@ final class BadgeSharePage {
 
 		// Dynamic, raster OG card so social platforms render a rich preview.
 		// Falls back to the badge artwork URL when GD/font is unavailable.
-		$og_image = BadgeOgImage::ensure( $badge, $user, $issued_dt );
+		$og_image   = BadgeOgImage::ensure( $badge, $user, $issued_dt );
 		$og_is_card = '' !== $og_image;
 		if ( '' === $og_image ) {
 			$og_image = $badge['image_url'] ?: '';

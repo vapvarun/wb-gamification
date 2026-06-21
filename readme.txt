@@ -4,7 +4,7 @@ Tags: gamification, points, badges, leaderboard, buddypress
 Requires at least: 6.5
 Tested up to: 7.0
 Requires PHP: 8.0
-Stable tag: 1.5.6
+Stable tag: 1.6.0
 License: GPL-2.0+
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -40,7 +40,7 @@ The engine awards points automatically when members perform actions on your site
 * **Toast Notifications** — Real-time bottom-right popups when members earn points, badges, or level up. 6 notification types with auto-dismiss. Promise-based confirm modals replace native browser dialogs (a11y-friendly).
 * **Analytics Dashboard** — 6 KPI cards, top actions, top earners, daily points sparkline. Period selector (7/30/90 days).
 * **WP-CLI Commands** — `points award`, `member status`, `actions list`, `logs prune`, `export user`, `qa seed_pages`, `doctor` readiness check, plus a release-zip builder.
-* **Developer Hooks** — 61 action hooks and 68 filter hooks for extending every write path. Every REST endpoint fires `before_*` filters (return WP_Error to abort) and `after_*` actions.
+* **Developer Hooks** — 61 action hooks and 69 filter hooks for extending every write path. Every REST endpoint fires `before_*` filters (return WP_Error to abort) and `after_*` actions.
 * **Cohort Leagues** — Duolingo-style weekly competitions with promotion/demotion percentages and per-cohort leaderboards.
 * **Community Challenges** — Team goals with global progress (Pokemon GO model). Members contribute to a shared counter; everyone earns when the target is hit.
 * **Redemption Store** — Members spend points on rewards. Built-in support for custom rewards (your hook), WooCommerce coupons, and Wbcom Credits SDK.
@@ -132,6 +132,20 @@ Yes. WB Gamification integrates with WordPress privacy tools. Members can reques
 All data is preserved in the database. Reactivating the plugin restores everything. If you delete the plugin via the Plugins screen, the `uninstall.php` file removes all 26 tables, options, cron jobs, and transients — a clean uninstall.
 
 == Changelog ==
+
+= 1.6.0 - June 2026 =
+
+Adds the Wbcom Family Kit integrations guide, share-ready badge pages with social images, and fully styled block editor previews.
+
+* New      - Wbcom Family Kit: a new Integrations tab that guides you to related Wbcom products (WPMediaVerse, Jetonomy, BuddyNext, Learnomy, WP Career Board, WB Listora) with one-click install and activate for the free members.
+* New      - Badge share pages now generate a dynamic 1200x630 social share image per badge and earner, with Open Graph and Twitter card meta for rich link previews.
+* New      - Block editor previews now render every block styled inside the editor canvas, and the Give Kudos block gained full editing controls and a styled preview.
+* Improve  - Points settings are now grouped by the source plugin instead of by category, so each integration's points are easier to find.
+* Improve  - The setup wizard is reoriented around the Wbcom family of products.
+* Improve  - The badge share page is rebuilt as a polished card with copy-link and X, Facebook, and LinkedIn share actions, replacing the old browser prompt popup.
+* Improve  - Family product logos in the Integrations tab render at a consistent size.
+* Dev      - New wb_gam_og_accent_color filter to customize the badge share image accent color.
+
 
 = 1.5.6 - June 2026 =
 

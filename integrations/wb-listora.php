@@ -40,6 +40,7 @@ return array(
 			'category'          => 'listings',
 			'icon'              => 'icon-list',
 			'repeatable'        => true,
+			'async'             => false,
 			'cooldown'          => 60,
 		),
 
@@ -59,6 +60,7 @@ return array(
 			'category'          => 'listings',
 			'icon'              => 'icon-check-circle',
 			'repeatable'        => true,
+			'async'             => false,
 		),
 
 		array(
@@ -77,6 +79,7 @@ return array(
 			'category'          => 'listings',
 			'icon'              => 'icon-star',
 			'repeatable'        => true,
+			'async'             => false,
 			'cooldown'          => 300,
 		),
 
@@ -96,6 +99,7 @@ return array(
 			'category'          => 'listings',
 			'icon'              => 'icon-heart',
 			'repeatable'        => true,
+			'async'             => false,
 			'daily_cap'         => 10,
 		),
 
@@ -115,6 +119,7 @@ return array(
 			'category'          => 'listings',
 			'icon'              => 'icon-shield-check',
 			'repeatable'        => true,
+			'async'             => false,
 		),
 
 		array(
@@ -133,6 +138,7 @@ return array(
 			'category'          => 'listings',
 			'icon'              => 'icon-refresh-cw',
 			'repeatable'        => true,
+			'async'             => false,
 		),
 
 	),

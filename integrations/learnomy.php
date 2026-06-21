@@ -42,6 +42,7 @@ return array(
 			'category'          => 'learning',
 			'icon'              => 'icon-book-open',
 			'repeatable'        => true,
+			'async'             => false,
 			'cooldown'          => 30,
 		),
 
@@ -64,6 +65,7 @@ return array(
 			'category'          => 'learning',
 			'icon'              => 'icon-award',
 			'repeatable'        => true,
+			'async'             => false,
 		),
 
 		array(
@@ -85,6 +87,7 @@ return array(
 			'category'          => 'learning',
 			'icon'              => 'icon-log-in',
 			'repeatable'        => true,
+			'async'             => false,
 			'daily_cap'         => 5,
 		),
 
@@ -107,6 +110,7 @@ return array(
 			'category'          => 'learning',
 			'icon'              => 'icon-file-badge',
 			'repeatable'        => true,
+			'async'             => false,
 		),
 
 		array(
@@ -125,6 +129,7 @@ return array(
 			'category'          => 'learning',
 			'icon'              => 'icon-star',
 			'repeatable'        => true,
+			'async'             => false,
 			'cooldown'          => 300,
 		),
 

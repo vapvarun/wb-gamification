@@ -143,6 +143,11 @@
 	fill: none;
 }
 
+.wb-gam-share-card__action-label {
+	line-height: 1;
+	white-space: nowrap;
+}
+
 .wb-gam-share-card__action:hover {
 	border-color: var( --wb-gam-color-accent, #3b82f6 );
 	color: var( --wb-gam-color-accent, #3b82f6 );

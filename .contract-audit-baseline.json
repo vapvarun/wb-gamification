@@ -156,6 +156,16 @@
             "id": "css-hide-missing-class:wb-gam-hide-mobile",
             "reason": "False positive. wb-gam-hide-mobile is emitted by WBGam\\Blocks\\CSS (src/Blocks/CSS.php:179) when the mobile-visibility flag is set; covered by CSSTest::test_visibility_classes_emit_when_flags_set. Scanner per-block scope misses the central emission. Verified 2026-06-15.",
             "severity": "warning"
+        },
+        {
+            "id": "dom-action-no-handler:soon",
+            "reason": "Verified-intentional. data-action=\"soon\" is on a NON-interactive <span> 'Coming soon' status label (class-page.php actions_html, coming_soon branch), not a clickable control - it deliberately has no JS handler so a not-yet-released family member shows an honest label instead of a broken link. The dom-action-no-handler heuristic cannot distinguish a label span from a button/anchor. The 'coming soon' state is the design contract, enshrined by PageTest::brands_as_wbcom_family_and_names_each_product. Verified 2026-06-21.",
+            "severity": "error"
+        },
+        {
+            "id": "dom-action-unreferenced:install",
+            "reason": "False positive. The markup DOES emit data-action=\"install\" but dynamically via class-page.php action_link('install', ...), which builds data-action from a variable the static scanner cannot resolve. The JS handler (assets/admin/family.js) and its AJAX handler (libs/wbcom-family/class-installer.php, ACTION='wbcom_family_install') both exist and are correctly wired. Verified 2026-06-21.",
+            "severity": "warning"
         }
     ]
 }

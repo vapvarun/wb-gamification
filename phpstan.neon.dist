@@ -25,6 +25,7 @@ parameters:
         - src
         - wb-gamification.php
         - integrations
+        - libs/wbcom-family
         - uninstall.php
     excludePaths:
         - tests

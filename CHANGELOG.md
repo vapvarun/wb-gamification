@@ -6,6 +6,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 
 ## [Unreleased]
 
+## [1.6.0] - 2026-06-21
+
+Adds the Wbcom Family Kit integrations guide, share-ready badge pages with social images, and fully styled block editor previews.
+
+### Added
+
+- Wbcom Family Kit: a new Integrations tab that guides you to related Wbcom products (WPMediaVerse, Jetonomy, BuddyNext, Learnomy, WP Career Board, WB Listora) with one-click install and activate for the free members.
+- Badge share pages now generate a dynamic 1200x630 social share image per badge and earner, with Open Graph and Twitter card meta for rich link previews.
+- Block editor previews now render every block styled inside the editor canvas, and the Give Kudos block gained full editing controls and a styled preview.
+- New `wb_gam_og_accent_color` filter to customize the badge share image accent color.
+
+### Changed
+
+- Points settings are now grouped by the source plugin instead of by category, so each integration's points are easier to find.
+- The setup wizard is reoriented around the Wbcom family of products.
+- The badge share page is rebuilt as a polished card with copy-link and X, Facebook, and LinkedIn share actions, replacing the old browser prompt popup.
+- Family product logos in the Integrations tab render at a consistent size.
+
+
 ## [1.5.6] - 2026-06-15
 
 Bug-fix release: correct level progression, instant admin level edits, and a hardened release build.

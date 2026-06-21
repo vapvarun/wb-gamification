@@ -40,6 +40,7 @@ return array(
 			'category'          => 'careers',
 			'icon'              => 'icon-briefcase',
 			'repeatable'        => true,
+			'async'             => false,
 			'cooldown'          => 60,
 		),
 
@@ -59,6 +60,7 @@ return array(
 			'category'          => 'careers',
 			'icon'              => 'icon-check-circle',
 			'repeatable'        => true,
+			'async'             => false,
 		),
 
 		array(
@@ -80,6 +82,7 @@ return array(
 			'category'          => 'careers',
 			'icon'              => 'icon-send',
 			'repeatable'        => true,
+			'async'             => false,
 			'daily_cap'         => 10,
 		),
 
@@ -103,6 +106,7 @@ return array(
 			'category'          => 'careers',
 			'icon'              => 'icon-trophy',
 			'repeatable'        => true,
+			'async'             => false,
 		),
 
 		array(

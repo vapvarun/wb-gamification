@@ -49,7 +49,7 @@ final class BadgeOgImage {
 		$issued_label = $issued_dt
 			? date_i18n( get_option( 'date_format' ), $issued_dt->getTimestamp() )
 			: '';
-		$accent = self::accent_color();
+		$accent       = self::accent_color();
 
 		$signature = implode(
 			'|',
@@ -63,7 +63,7 @@ final class BadgeOgImage {
 				'v1',
 			)
 		);
-		$hash = substr( md5( $signature ), 0, 10 );
+		$hash      = substr( md5( $signature ), 0, 10 );
 
 		$uploads = wp_upload_dir();
 		if ( ! empty( $uploads['error'] ) ) {
@@ -220,8 +220,8 @@ final class BadgeOgImage {
 		$points = array();
 		$inner  = $r * 0.42;
 		for ( $i = 0; $i < 10; $i++ ) {
-			$radius = ( 0 === $i % 2 ) ? $r : $inner;
-			$angle  = ( M_PI / 5 ) * $i - ( M_PI / 2 );
+			$radius   = ( 0 === $i % 2 ) ? $r : $inner;
+			$angle    = ( M_PI / 5 ) * $i - ( M_PI / 2 );
 			$points[] = (int) round( $cx + $radius * cos( $angle ) );
 			$points[] = (int) round( $cy + $radius * sin( $angle ) );
 		}
