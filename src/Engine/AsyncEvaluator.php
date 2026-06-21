@@ -127,10 +127,53 @@ final class AsyncEvaluator {
 		}
 
 		if ( function_exists( 'as_enqueue_async_action' ) ) {
-			as_enqueue_async_action( self::HOOK, [ self::$queue ], 'wb_gamification' );
+			// Action Scheduler indexes the args column and rejects any payload
+			// whose JSON encoding exceeds 8000 characters. A busy request (such
+			// as a demo seed) can accumulate far more events than fit in one job,
+			// so split the queue into size-bounded chunks and enqueue one job per
+			// chunk. process_batch() already iterates a batch, so several smaller
+			// batches are handled identically to one large batch.
+			foreach ( self::chunk_queue( self::$queue ) as $chunk ) {
+				as_enqueue_async_action( self::HOOK, [ $chunk ], 'wb_gamification' );
+			}
 		}
 
 		self::$queue = [];
+	}
+
+	/**
+	 * Split the event queue into chunks whose JSON-encoded Action Scheduler args
+	 * stay under Action Scheduler's 8000-character column limit (with headroom).
+	 *
+	 * Each chunk is measured exactly as flush_queue() enqueues it ( [ $chunk ] ).
+	 * A single event whose own JSON already exceeds the budget is placed in its
+	 * own chunk so it never drags other events down with it.
+	 *
+	 * @param array<int, array<string, mixed>> $queue Accumulated events.
+	 * @return array<int, array<int, array<string, mixed>>> List of event chunks.
+	 */
+	private static function chunk_queue( array $queue ): array {
+		$max_bytes = 7000; // Headroom under AS's 8000-char limit for its wrapper.
+		$chunks    = [];
+		$current   = [];
+
+		foreach ( $queue as $item ) {
+			$candidate = $current;
+			$candidate[] = $item;
+
+			if ( ! empty( $current ) && strlen( (string) wp_json_encode( [ $candidate ] ) ) > $max_bytes ) {
+				$chunks[]  = $current;
+				$current   = [ $item ];
+			} else {
+				$current = $candidate;
+			}
+		}
+
+		if ( ! empty( $current ) ) {
+			$chunks[] = $current;
+		}
+
+		return $chunks;
 	}
 
 	/**

@@ -4,7 +4,7 @@ Tags: gamification, points, badges, leaderboard, buddypress
 Requires at least: 6.5
 Tested up to: 7.0
 Requires PHP: 8.0
-Stable tag: 1.6.0
+Stable tag: 1.6.1
 License: GPL-2.0+
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -132,6 +132,10 @@ Yes. WB Gamification integrates with WordPress privacy tools. Members can reques
 All data is preserved in the database. Reactivating the plugin restores everything. If you delete the plugin via the Plugins screen, the `uninstall.php` file removes all 26 tables, options, cron jobs, and transients — a clean uninstall.
 
 == Changelog ==
+
+= 1.6.1 - June 2026 =
+
+* Fix      - Async points evaluation no longer fails on busy requests. The per-request event queue is split into size-bounded Action Scheduler jobs so it never exceeds the 8000-character args limit, which previously dropped batches when many events fired at once (for example while seeding demo data).
 
 = 1.6.0 - June 2026 =
 
