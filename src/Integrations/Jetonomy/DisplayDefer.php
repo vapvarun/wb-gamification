@@ -70,13 +70,18 @@ final class DisplayDefer {
 	/**
 	 * Blank a deferred block's output.
 	 *
+	 * Visitors see nothing (Jetonomy owns the ranking). Site editors get a
+	 * notice instead of a silent blank, so a deferred block on a dedicated page
+	 * isn't a mystery — the previous behaviour returned '' for everyone, which
+	 * looked like a broken block.
+	 *
 	 * @param string $content Rendered block HTML.
 	 * @param array  $block   Parsed block.
 	 * @return string
 	 */
 	public static function maybe_suppress_block( $content, $block ) {
 		if ( isset( $block['blockName'] ) && in_array( $block['blockName'], self::BLOCKS, true ) ) {
-			return '';
+			return self::deferred_replacement( $block['blockName'] );
 		}
 		return $content;
 	}
@@ -91,8 +96,39 @@ final class DisplayDefer {
 	 */
 	public static function maybe_suppress_shortcode( $output, $tag ) {
 		if ( in_array( $tag, self::SHORTCODES, true ) ) {
-			return '';
+			$is_top = false !== strpos( (string) $tag, 'top_members' );
+			return self::deferred_replacement( $is_top ? 'wb-gamification/top-members' : 'wb-gamification/leaderboard' );
 		}
 		return $output;
+	}
+
+	/**
+	 * What a deferred leaderboard/top-members block renders in place of its
+	 * (duplicate) ranking: nothing for visitors, an explanatory notice for
+	 * users who can edit content, so the deferral is discoverable instead of a
+	 * silently blank block.
+	 *
+	 * @param string $block_name Suppressed block name.
+	 * @return string
+	 */
+	private static function deferred_replacement( string $block_name ): string {
+		if ( ! current_user_can( 'edit_posts' ) ) {
+			return '';
+		}
+
+		$label = ( 'wb-gamification/top-members' === $block_name )
+			? __( 'Top Members', 'wb-gamification' )
+			: __( 'Leaderboard', 'wb-gamification' );
+
+		$message = sprintf(
+			/* translators: %s: block label (Leaderboard or Top Members). */
+			__( 'The %s block is hidden because Jetonomy is active and owns the community ranking, which this block would duplicate. Only people who can edit content see this notice; visitors see nothing. To show this block anyway, add the filter wb_gam_defer_leaderboard_to_jetonomy and return false.', 'wb-gamification' ),
+			$label
+		);
+
+		return sprintf(
+			'<div class="wb-gam-deferred-notice" role="note" style="border:1px dashed #d0d5dd;border-radius:8px;padding:12px 16px;margin:8px 0;color:#667085;font-size:14px;line-height:1.5;">%s</div>',
+			esc_html( $message )
+		);
 	}
 }

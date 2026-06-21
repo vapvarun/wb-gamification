@@ -136,6 +136,7 @@ All data is preserved in the database. Reactivating the plugin restores everythi
 = 1.6.1 - June 2026 =
 
 * Fix      - Async points evaluation no longer fails on busy requests. The per-request event queue is split into size-bounded Action Scheduler jobs so it never exceeds the 8000-character args limit, which previously dropped batches when many events fired at once (for example while seeding demo data).
+* Fix      - Leaderboard and Top Members blocks no longer render as a silently blank block when their display is deferred to Jetonomy. Site editors now see a notice explaining the deferral and how to override it with the wb_gam_defer_leaderboard_to_jetonomy filter; visitors still see nothing.
 
 = 1.6.0 - June 2026 =
 
