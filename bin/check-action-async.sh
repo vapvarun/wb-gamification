@@ -71,8 +71,12 @@ find_implicit_async() {
       }
       in_trigger && /[\x27"]repeatable[\x27"][[:space:]]*=>[[:space:]]*true/ { rep = 1 }
       in_trigger && /[\x27"]async[\x27"][[:space:]]*=>/                       { async = 1 }
-      # Closing of a trigger block: `],` on its own (or near-on-own) line.
-      in_trigger && /^[[:space:]]*\],?[[:space:]]*$/ { flush() }
+      # Closing of a trigger block: `],` or `),` on its own (or near-on-own)
+      # line. Trigger entries in these manifests are `array( ... ),`, so the
+      # close marker is `),`; matching only `],` let the last trigger of each
+      # file stay open and bleed across the file boundary (single awk over the
+      # xargs file list), mis-attributing it to the next file. Accept both.
+      in_trigger && /^[[:space:]]*[])],?[[:space:]]*$/ { flush() }
       END { flush() }
     ' \
     | sort -u

@@ -1,12 +1,13 @@
 import { __ } from '@wordpress/i18n';
 import { useBlockProps, InspectorControls } from '@wordpress/block-editor';
 import { useState } from '@wordpress/element';
-import ServerSideRender from '@wordpress/server-side-render';
+import { starFilled } from '@wordpress/icons';
 
 import {
 	useUniqueId,
 	StandardLayoutPanel,
 	StandardStylePanel,
+	BlockPreviewCard,
 } from '../../shared';
 
 const Edit = ( { attributes, setAttributes, clientId } ) => {
@@ -41,7 +42,19 @@ const Edit = ( { attributes, setAttributes, clientId } ) => {
 			</InspectorControls>
 
 			<div { ...blockProps }>
-				<ServerSideRender block="wb-gamification/hub" attributes={ attributes } />
+				<BlockPreviewCard
+					icon={ starFilled }
+					title={ __( 'Gamification Hub', 'wb-gamification' ) }
+					description={ __(
+						'Member dashboard — points, level, badges, challenges, leaderboard, and kudos in a connected card layout.',
+						'wb-gamification'
+					) }
+					status={ __(
+						'Live data renders on the front end for the logged-in member.',
+						'wb-gamification'
+					) }
+					statusType="configured"
+				/>
 			</div>
 		</>
 	);

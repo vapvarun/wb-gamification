@@ -1,13 +1,14 @@
-import { __ } from '@wordpress/i18n';
+import { __, sprintf } from '@wordpress/i18n';
 import { useBlockProps, InspectorControls } from '@wordpress/block-editor';
 import { PanelBody, ToggleControl, TextControl } from '@wordpress/components';
 import { useState } from '@wordpress/element';
-import ServerSideRender from '@wordpress/server-side-render';
+import { calendar } from '@wordpress/icons';
 
 import {
 	useUniqueId,
 	StandardLayoutPanel,
 	StandardStylePanel,
+	BlockPreviewCard,
 } from '../../shared';
 
 const Edit = ( { attributes, setAttributes, clientId } ) => {
@@ -83,7 +84,24 @@ const Edit = ( { attributes, setAttributes, clientId } ) => {
 			</InspectorControls>
 
 			<div { ...blockProps }>
-				<ServerSideRender block="wb-gamification/year-recap" attributes={ attributes } />
+				<BlockPreviewCard
+					icon={ calendar }
+					title={ __( 'Year in Community Recap', 'wb-gamification' ) }
+					description={ __(
+						'A shareable Spotify-Wrapped-style recap card of a member’s highlights for the year.',
+						'wb-gamification'
+					) }
+					status={
+						year > 0
+							? sprintf(
+									/* translators: %d: recap year. */
+									__( 'Recap for %d', 'wb-gamification' ),
+									year
+							  )
+							: __( 'Recap for the previous year', 'wb-gamification' )
+					}
+					statusType="configured"
+				/>
 			</div>
 		</>
 	);

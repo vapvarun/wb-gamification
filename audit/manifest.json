@@ -3,7 +3,7 @@
   "plugin": {
     "slug": "wb-gamification",
     "name": "WB Gamification",
-    "version": "1.5.6",
+    "version": "1.6.0",
     "namespace": "WBGam\\",
     "main_file": "wb-gamification.php",
     "text_domain": "wb-gamification",
@@ -2877,6 +2877,15 @@
       "consumed_by": []
     },
     {
+      "name": "wb_gam_og_accent_color",
+      "type": "filter",
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/BadgeOgImage.php:119"
+      ],
+      "consumed_by": []
+    },
+    {
       "name": "wb_gam_points_for_action",
       "type": "filter",
       "purpose": "",
@@ -3372,6 +3381,7 @@
         "assets/js/hub-convert.js",
         "assets/js/profile-visibility.js",
         "assets/js/settings-nav.js",
+        "assets/js/share-page.js",
         "assets/js/sse.js",
         "assets/js/toast.js"
       ],
@@ -3383,6 +3393,7 @@
         "src/Blocks/community-challenges/index.js",
         "src/Blocks/daily-bonus/index.js",
         "src/Blocks/earning-guide/index.js",
+        "src/Blocks/give-kudos/index.js",
         "src/Blocks/hub/index.js",
         "src/Blocks/kudos-feed/index.js",
         "src/Blocks/leaderboard/index.js",
@@ -3919,6 +3930,17 @@
       "purpose": ""
     },
     {
+      "slug": "buddynext",
+      "name": "BuddyNext",
+      "tier": "first-party",
+      "manifest_file": "integrations/buddynext.php",
+      "manifest_version": "1.0.0",
+      "detect": "defined('BUDDYNEXT_VERSION') || class_exists('\\\\BuddyNext\\\\Plugin')",
+      "trigger_count": 16,
+      "adapter_classes": [],
+      "purpose": ""
+    },
+    {
       "slug": "buddypress",
       "name": "BuddyPress",
       "tier": "first-party",
@@ -3968,6 +3990,50 @@
       "purpose": ""
     },
     {
+      "slug": "learnomy",
+      "name": "Learnomy",
+      "tier": "first-party",
+      "manifest_file": "integrations/learnomy.php",
+      "manifest_version": "1.0.0",
+      "detect": "defined('LEARNOMY_VERSION') || class_exists('\\\\Learnomy\\\\Plugin')",
+      "trigger_count": 6,
+      "adapter_classes": [],
+      "purpose": ""
+    },
+    {
+      "slug": "learnomy-pro",
+      "name": "Learnomy Pro",
+      "tier": "first-party",
+      "manifest_file": "integrations/learnomy-pro.php",
+      "manifest_version": "1.0.0",
+      "detect": "defined('LEARNOMY_PRO_VERSION')",
+      "trigger_count": 5,
+      "adapter_classes": [],
+      "purpose": ""
+    },
+    {
+      "slug": "wb-listora",
+      "name": "Listora",
+      "tier": "first-party",
+      "manifest_file": "integrations/wb-listora.php",
+      "manifest_version": "1.0.0",
+      "detect": "defined('WB_LISTORA_VERSION')",
+      "trigger_count": 6,
+      "adapter_classes": [],
+      "purpose": ""
+    },
+    {
+      "slug": "wb-listora-pro",
+      "name": "Listora Pro",
+      "tier": "first-party",
+      "manifest_file": "integrations/wb-listora-pro.php",
+      "manifest_version": "1.0.0",
+      "detect": "defined('WB_LISTORA_PRO_VERSION')",
+      "trigger_count": 3,
+      "adapter_classes": [],
+      "purpose": ""
+    },
+    {
       "slug": "woocommerce",
       "name": "WooCommerce",
       "tier": "first-party",
@@ -3992,6 +4058,28 @@
       "adapter_classes": [
         "WBGam\\Integrations\\WordPress\\HooksIntegration"
       ],
+      "purpose": ""
+    },
+    {
+      "slug": "wp-career-board",
+      "name": "WP Career Board",
+      "tier": "first-party",
+      "manifest_file": "integrations/wp-career-board.php",
+      "manifest_version": "1.0.0",
+      "detect": "defined('WCB_VERSION')",
+      "trigger_count": 6,
+      "adapter_classes": [],
+      "purpose": ""
+    },
+    {
+      "slug": "wp-career-board-pro",
+      "name": "WP Career Board Pro",
+      "tier": "first-party",
+      "manifest_file": "integrations/wp-career-board-pro.php",
+      "manifest_version": "1.0.0",
+      "detect": "defined('WCBP_VERSION')",
+      "trigger_count": 1,
+      "adapter_classes": [],
       "purpose": ""
     },
     {

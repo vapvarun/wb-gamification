@@ -1,0 +1,78 @@
+/**
+ * BlockPreviewCard — editor-only styled preview for Interactivity-API blocks.
+ *
+ * Loaded via `enqueue_block_editor_assets` (see wb-gamification.php). Consumes
+ * the shared `--wb-gam-*` design tokens so the preview matches the canonical
+ * card surface every frontend block uses. Fallbacks keep it presentable even
+ * if the token stylesheet fails to load.
+ *
+ * @see src/shared/components/BlockPreviewCard.js
+ */
+
+.wb-gam-block-preview {
+	display: flex;
+	gap: var( --wb-gam-space-md, 16px );
+	align-items: flex-start;
+	padding: var( --wb-gam-space-lg, 20px );
+	background: var( --wb-gam-color-surface, #ffffff );
+	border: 1px solid var( --wb-gam-color-border, #e3e6ec );
+	border-radius: var( --wb-gam-radius-card, 12px );
+	box-shadow: var( --wb-gam-shadow-sm, 0 1px 3px rgba( 0, 0, 0, 0.06 ) );
+	font-family: inherit;
+}
+
+.wb-gam-block-preview__icon {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex: 0 0 auto;
+	width: 48px;
+	height: 48px;
+	border-radius: var( --wb-gam-radius-md, 10px );
+	background: var( --wb-gam-color-accent-light, rgba( 59, 130, 246, 0.12 ) );
+	color: var( --wb-gam-color-accent, #3b82f6 );
+}
+
+.wb-gam-block-preview__icon svg {
+	width: 28px;
+	height: 28px;
+	fill: currentColor;
+}
+
+.wb-gam-block-preview__body {
+	min-width: 0;
+}
+
+.wb-gam-block-preview__title {
+	margin: 0 0 var( --wb-gam-space-xs, 6px );
+	font-size: var( --wb-gam-font-lg, 18px );
+	font-weight: 600;
+	line-height: 1.3;
+	color: var( --wb-gam-color-text, #1a1a1a );
+}
+
+.wb-gam-block-preview__desc {
+	margin: 0 0 var( --wb-gam-space-sm, 10px );
+	font-size: var( --wb-gam-font-sm, 14px );
+	line-height: 1.5;
+	color: var( --wb-gam-color-text-light, #6b7280 );
+}
+
+.wb-gam-block-preview__status {
+	display: inline-block;
+	margin: 0;
+	padding: var( --wb-gam-space-xs, 4px ) var( --wb-gam-space-sm, 10px );
+	font-size: var( --wb-gam-font-xs, 12px );
+	font-weight: 500;
+	border-radius: var( --wb-gam-radius-full, 999px );
+}
+
+.wb-gam-block-preview__status--configured {
+	color: var( --wb-gam-color-success-strong, #15803d );
+	background: var( --wb-gam-color-success-soft, rgba( 34, 197, 94, 0.14 ) );
+}
+
+.wb-gam-block-preview__status--unconfigured {
+	color: var( --wb-gam-color-text-light, #6b7280 );
+	background: var( --wb-gam-color-surface-muted, #f3f4f6 );
+}

@@ -1,52 +1,255 @@
 /**
  * WB Gamification — Badge Share Page
  *
- * Public-facing shareable credential page styles.
+ * Public, shareable credential card. Premium + uniform: consumes the shared
+ * `--wb-gam-*` design tokens (with hex fallbacks) on the canonical card
+ * surface, with real share actions (copy link + social) and clear CTAs so a
+ * visitor who lands here can actually do something.
  *
  * @since 0.5.0
  */
 
 .wb-gam-share-page {
-	max-width: 600px;
-	margin: 40px auto;
-	padding: 0 16px;
-	font-family: sans-serif;
+	display: flex;
+	justify-content: center;
+	padding: clamp( 24px, 6vw, 64px ) 16px;
+	font-family: inherit;
+}
+
+.wb-gam-share-card {
+	width: 100%;
+	max-width: 440px;
+	box-sizing: border-box;
+	padding: var( --wb-gam-space-xl, 32px );
 	text-align: center;
+	background: var( --wb-gam-color-surface, #ffffff );
+	border: 1px solid var( --wb-gam-color-border, #e3e6ec );
+	border-radius: var( --wb-gam-radius-xl, 16px );
+	box-shadow: var( --wb-gam-shadow-md, 0 8px 24px rgba( 0, 0, 0, 0.08 ) );
 }
 
-.wb-gam-share-page__badge-img {
+/* Badge artwork in a tinted ring. */
+.wb-gam-share-card__badge {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 112px;
+	height: 112px;
+	margin: 0 auto var( --wb-gam-space-lg, 20px );
 	border-radius: 50%;
-	margin-bottom: 24px;
+	background: var( --wb-gam-color-accent-light, rgba( 59, 130, 246, 0.12 ) );
 }
 
-.wb-gam-share-page__title {
-	font-size: 1.8em;
-	margin: 0 0 8px;
+.wb-gam-share-card__badge-img {
+	width: 80px;
+	height: 80px;
+	object-fit: contain;
+	border-radius: 50%;
 }
 
-.wb-gam-share-page__desc {
-	color: #555;
-	margin: 0 0 16px;
+.wb-gam-share-card__badge-fallback {
+	width: 56px;
+	height: 56px;
+	fill: var( --wb-gam-color-accent, #3b82f6 );
 }
 
-.wb-gam-share-page__earned-by {
-	font-size: 0.95em;
-	color: #777;
-	margin: 0 0 24px;
+.wb-gam-share-card__title {
+	margin: 0 0 var( --wb-gam-space-xs, 6px );
+	font-size: var( --wb-gam-font-2xl, 26px );
+	font-weight: 700;
+	line-height: 1.2;
+	color: var( --wb-gam-color-text, #1a1a1a );
 }
 
-.wb-gam-share-page__linkedin-btn {
-	display: inline-block;
-	background: #0a66c2;
-	color: #fff;
-	padding: 12px 24px;
-	border-radius: 6px;
-	text-decoration: none;
+.wb-gam-share-card__desc {
+	margin: 0 0 var( --wb-gam-space-lg, 20px );
+	font-size: var( --wb-gam-font-md, 15px );
+	line-height: 1.5;
+	color: var( --wb-gam-color-text-secondary, #555 );
+}
+
+/* Earner identity. */
+.wb-gam-share-card__earner {
+	display: inline-flex;
+	align-items: center;
+	gap: var( --wb-gam-space-sm, 10px );
+	margin: 0 0 var( --wb-gam-space-lg, 20px );
+	padding: var( --wb-gam-space-xs, 6px ) var( --wb-gam-space-md, 14px );
+	background: var( --wb-gam-color-surface-muted, #f3f4f6 );
+	border-radius: var( --wb-gam-radius-full, 999px );
+}
+
+.wb-gam-share-card__avatar {
+	width: 28px;
+	height: 28px;
+	border-radius: 50%;
+	object-fit: cover;
+}
+
+.wb-gam-share-card__earner-text {
+	font-size: var( --wb-gam-font-sm, 14px );
+	color: var( --wb-gam-color-text-light, #6b7280 );
+}
+
+.wb-gam-share-card__earner-text strong {
+	color: var( --wb-gam-color-text, #1a1a1a );
+}
+
+/* Share actions. */
+.wb-gam-share-card__actions {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: center;
+	gap: var( --wb-gam-space-sm, 10px );
+	margin-bottom: var( --wb-gam-space-sm, 8px );
+}
+
+.wb-gam-share-card__action {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	min-height: 40px;
+	box-sizing: border-box;
+	font-size: var( --wb-gam-font-sm, 14px );
 	font-weight: 600;
-	margin-bottom: 16px;
+	font-family: inherit;
+	color: var( --wb-gam-color-text, #1a1a1a );
+	text-decoration: none;
+	background: var( --wb-gam-color-surface, #ffffff );
+	border: 1px solid var( --wb-gam-color-border-strong, #cbd2dc );
+	border-radius: var( --wb-gam-radius-full, 999px );
+	cursor: pointer;
+	transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease;
 }
 
-.wb-gam-share-page__credential-link {
-	font-size: 0.85em;
-	color: #666;
+.wb-gam-share-card__action--copy {
+	padding: 0 18px;
+}
+
+.wb-gam-share-card__action--icon {
+	width: 40px;
+	padding: 0;
+}
+
+.wb-gam-share-card__action svg {
+	width: 18px;
+	height: 18px;
+	fill: currentColor;
+}
+
+.wb-gam-share-card__action--copy svg {
+	fill: none;
+}
+
+.wb-gam-share-card__action-label {
+	line-height: 1;
+	white-space: nowrap;
+}
+
+.wb-gam-share-card__action:hover {
+	border-color: var( --wb-gam-color-accent, #3b82f6 );
+	color: var( --wb-gam-color-accent, #3b82f6 );
+	background: var( --wb-gam-color-accent-light, rgba( 59, 130, 246, 0.1 ) );
+}
+
+.wb-gam-share-card__action--copy.is-copied {
+	border-color: var( --wb-gam-color-success, #22a06b );
+	color: var( --wb-gam-color-success-strong, #15803d );
+	background: var( --wb-gam-color-success-soft, rgba( 34, 197, 94, 0.14 ) );
+}
+
+.wb-gam-share-card__action:focus-visible {
+	outline: none;
+	box-shadow: 0 0 0 3px var( --wb-gam-color-accent-ring, rgba( 59, 130, 246, 0.3 ) );
+}
+
+.wb-gam-share-card__copy-status {
+	min-height: 1.1em;
+	margin: 0 0 var( --wb-gam-space-md, 16px );
+	font-size: var( --wb-gam-font-xs, 12px );
+	color: var( --wb-gam-color-success-strong, #15803d );
+}
+
+/* Credential extras. */
+.wb-gam-share-card__credential {
+	display: flex;
+	flex-direction: column;
+	gap: var( --wb-gam-space-sm, 10px );
+	align-items: center;
+	margin-bottom: var( --wb-gam-space-lg, 20px );
+	padding-top: var( --wb-gam-space-md, 16px );
+	border-top: 1px solid var( --wb-gam-color-border, #e3e6ec );
+}
+
+.wb-gam-share-card__cred-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 40px;
+	padding: 0 20px;
+	font-size: var( --wb-gam-font-sm, 14px );
+	font-weight: 600;
+	color: var( --wb-gam-color-white, #ffffff );
+	text-decoration: none;
+	background: #0a66c2; /* LinkedIn brand — intentional, not a token. */
+	border-radius: var( --wb-gam-radius-full, 999px );
+}
+
+.wb-gam-share-card__cred-btn:hover {
+	background: #084e96;
+}
+
+.wb-gam-share-card__cred-link {
+	font-size: var( --wb-gam-font-xs, 12px );
+	color: var( --wb-gam-color-text-light, #6b7280 );
+}
+
+/* CTAs. */
+.wb-gam-share-card__cta {
+	display: flex;
+	flex-direction: column;
+	gap: var( --wb-gam-space-sm, 10px );
+	padding-top: var( --wb-gam-space-lg, 20px );
+	border-top: 1px solid var( --wb-gam-color-border, #e3e6ec );
+}
+
+.wb-gam-share-card__cta-primary {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 44px;
+	padding: 0 24px;
+	font-size: var( --wb-gam-font-sm, 14px );
+	font-weight: 600;
+	color: var( --wb-gam-color-white, #ffffff );
+	text-decoration: none;
+	background: var( --wb-gam-color-accent, #3b82f6 );
+	border-radius: var( --wb-gam-radius-full, 999px );
+	transition: background-color 0.15s ease;
+}
+
+.wb-gam-share-card__cta-primary:hover {
+	background: var( --wb-gam-color-accent-hover, #2563eb );
+}
+
+.wb-gam-share-card__cta-secondary {
+	font-size: var( --wb-gam-font-sm, 14px );
+	font-weight: 500;
+	color: var( --wb-gam-color-accent, #3b82f6 );
+	text-decoration: none;
+}
+
+.wb-gam-share-card__cta-secondary:hover {
+	text-decoration: underline;
+}
+
+@media ( max-width: 480px ) {
+	.wb-gam-share-card {
+		padding: var( --wb-gam-space-lg, 20px );
+	}
+	.wb-gam-share-card__action--copy {
+		flex: 1 1 auto;
+	}
 }

@@ -340,19 +340,24 @@ final class ShortcodeHandler {
 					?>
 				</p>
 			<?php else : ?>
-				<label class="wb-gam-give-kudos__label" for="<?php echo esc_attr( $uid ); ?>-to">
-					<?php esc_html_e( 'Recipient (username)', 'wb-gamification' ); ?>
-				</label>
-				<input type="text" id="<?php echo esc_attr( $uid ); ?>-to" name="recipient_login" required
-					autocomplete="off" class="wb-gam-give-kudos__input" />
+				<div class="wb-gam-give-kudos__field">
+					<label class="wb-gam-give-kudos__label" for="<?php echo esc_attr( $uid ); ?>-to">
+						<?php esc_html_e( 'Recipient (username)', 'wb-gamification' ); ?>
+					</label>
+					<input type="text" id="<?php echo esc_attr( $uid ); ?>-to" name="recipient_login" required
+						autocomplete="off" class="wb-gam-give-kudos__input"
+						placeholder="<?php esc_attr_e( 'Enter a username', 'wb-gamification' ); ?>" />
+				</div>
 			<?php endif; ?>
 
-			<label class="wb-gam-give-kudos__label" for="<?php echo esc_attr( $uid ); ?>-msg">
-				<?php esc_html_e( 'Message (optional)', 'wb-gamification' ); ?>
-			</label>
-			<textarea id="<?php echo esc_attr( $uid ); ?>-msg" name="message" rows="2" maxlength="255"
-				class="wb-gam-give-kudos__textarea"
-				placeholder="<?php esc_attr_e( 'Say something nice (max 255 chars)', 'wb-gamification' ); ?>"></textarea>
+			<div class="wb-gam-give-kudos__field">
+				<label class="wb-gam-give-kudos__label" for="<?php echo esc_attr( $uid ); ?>-msg">
+					<?php esc_html_e( 'Message (optional)', 'wb-gamification' ); ?>
+				</label>
+				<textarea id="<?php echo esc_attr( $uid ); ?>-msg" name="message" rows="3" maxlength="255"
+					class="wb-gam-give-kudos__textarea"
+					placeholder="<?php esc_attr_e( 'Say something nice (max 255 chars)', 'wb-gamification' ); ?>"></textarea>
+			</div>
 
 			<button type="submit" class="wb-gam-give-kudos__submit">
 				<?php echo esc_html( $atts['label'] ); ?>
@@ -382,7 +387,9 @@ final class ShortcodeHandler {
 		wp_enqueue_style(
 			$handle,
 			plugins_url( 'assets/css/give-kudos.css', WB_GAM_FILE ),
-			array(),
+			// Depend on the shared design tokens so the form's --wb-gam-*
+			// custom properties resolve (otherwise the hex fallbacks apply).
+			array( 'wb-gam-tokens' ),
 			WB_GAM_VERSION
 		);
 		wp_enqueue_script(

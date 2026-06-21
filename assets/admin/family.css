@@ -1,0 +1,40 @@
+/* Wbcom Family Kit — admin guide page. Desktop + iPad (occasional-use admin screen). */
+
+/* Brand header — "Wbcom Family" + Wbcom logo. */
+.wbcom-family__header { display: flex; align-items: center; gap: 16px; padding: 4px 0 20px; margin-bottom: 20px; border-bottom: 1px solid var(--bn-border, #e2e4e7); }
+.wbcom-family__brand { flex: 0 0 auto; }
+.wbcom-family__brand svg, .wbcom-family__brand img { height: 44px; width: auto; display: block; }
+.wbcom-family__brandtext h2 { margin: 0 0 2px; font-size: 18px; line-height: 1.2; }
+.wbcom-family__brandtext p { margin: 0; color: var(--bn-text-muted, #646970); max-width: 60ch; }
+
+.wbcom-family__outcomes { display: grid; gap: 12px; }
+.wbcom-family__outcome { display: flex; align-items: center; gap: 16px; padding: 16px; border: 1px solid var(--bn-border, #e2e4e7); border-radius: 10px; background: var(--bn-surface, #fff); }
+.wbcom-family__logo,
+.wbcom-family__icon { flex: 0 0 auto; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 8px; overflow: hidden; }
+.wbcom-family__logo svg,
+.wbcom-family__logo img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.wbcom-family__icon { background: var(--bn-surface-2, #f0f0f1); }
+
+.wbcom-family__body { flex: 1; min-width: 0; }
+.wbcom-family__titlerow { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 0 0 4px; }
+.wbcom-family__body h3 { margin: 0; font-size: 14px; }
+/* Product name pill — so users know which plugin powers each outcome. */
+.wbcom-family__member { font-size: 11px; font-weight: 600; line-height: 1; padding: 4px 8px; border-radius: 999px; background: var(--bn-surface-2, #f0f0f1); color: var(--bn-text-muted, #50575e); white-space: nowrap; }
+.wbcom-family__body p { margin: 0; color: var(--bn-text-muted, #646970); }
+
+.wbcom-family__actions { flex: 0 0 auto; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+.wbcom-family__action { white-space: nowrap; }
+.wbcom-family__action--soon { color: var(--bn-text-muted, #646970); font-size: 12px; font-style: italic; cursor: default; }
+.wbcom-family__details { font-size: 12px; color: var(--bn-text-muted, #646970); text-decoration: none; }
+.wbcom-family__details:hover { text-decoration: underline; }
+.wbcom-family__outcome[data-state="active"] .wbcom-family__action { opacity: .8; }
+
+.wbcom-family__start { margin: 16px 0; }
+.wbcom-family__thirdparty { margin-top: 24px; color: var(--bn-text-muted, #646970); }
+.wbcom-family__thirdparty summary { cursor: pointer; }
+
+@media (max-width: 1024px) {
+	.wbcom-family__header { flex-wrap: wrap; gap: 12px; }
+	.wbcom-family__outcome { flex-wrap: wrap; }
+	.wbcom-family__actions { align-items: flex-start; flex-direction: row; }
+}

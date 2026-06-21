@@ -5,6 +5,7 @@ export { default as BoxShadowControl } from './BoxShadowControl';
 export { default as BorderRadiusControl } from './BorderRadiusControl';
 export { default as ColorHoverControl } from './ColorHoverControl';
 export { default as DeviceVisibility } from './DeviceVisibility';
+export { default as BlockPreviewCard } from './BlockPreviewCard';
 export {
 	StandardLayoutPanel,
 	StandardStylePanel,
