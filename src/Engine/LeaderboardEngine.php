@@ -89,7 +89,14 @@ final class LeaderboardEngine {
 		if ( ! isset( $schedules['five_minutes'] ) ) {
 			$schedules['five_minutes'] = array(
 				'interval' => 300,
-				'display'  => esc_html__( 'Every 5 Minutes', 'wb-gamification' ),
+				// The cron_schedules filter fires before init whenever cron is
+				// scheduled (plugin bootstrap, WP-CLI, core wp-cron). Translating
+				// before init trips WP 6.7+'s _load_textdomain_just_in_time notice.
+				// The display is an admin-only diagnostic label, so translate it
+				// only once init has run; the raw string is used pre-init.
+				'display'  => did_action( 'init' )
+					? esc_html__( 'Every 5 Minutes', 'wb-gamification' )
+					: 'Every 5 Minutes',
 			);
 		}
 		return $schedules;
