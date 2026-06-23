@@ -135,6 +135,7 @@ All data is preserved in the database. Reactivating the plugin restores everythi
 
 = 1.6.1 - June 2026 =
 
+* New      - Public points-spend API: wb_gam_spend_points() and wb_gam_can_afford() let other Wbcom plugins redeem points for external purchases (such as BuddyNext membership tiers) through one audited, atomic debit, firing a wb_gam_points_spent action on success.
 * Fix      - Async points evaluation no longer fails on busy requests. The per-request event queue is split into size-bounded Action Scheduler jobs so it never exceeds the 8000-character args limit, which previously dropped batches when many events fired at once (for example while seeding demo data).
 * Fix      - Leaderboard and Top Members blocks no longer render as a silently blank block when their display is deferred to Jetonomy. Site editors now see a notice explaining the deferral and how to override it with the wb_gam_defer_leaderboard_to_jetonomy filter; visitors still see nothing.
 
