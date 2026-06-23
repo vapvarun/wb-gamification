@@ -69,6 +69,23 @@ final class IntelligenceProjector {
 	public static function boot(): void {
 		add_action( self::COMPUTE_CRON, array( __CLASS__, 'compute_batch' ) );
 
+		// Arm the daily tick on init, never at plugins_loaded: wp_schedule_event
+		// resolves schedules via wp_get_schedules(), which fires the
+		// cron_schedules filter — that must not run before init on WP 6.7+.
+		if ( did_action( 'init' ) ) {
+			self::maybe_schedule();
+		} else {
+			add_action( 'init', array( __CLASS__, 'maybe_schedule' ) );
+		}
+	}
+
+	/**
+	 * Arm the daily intelligence-projection tick if not already scheduled.
+	 * Idempotent — safe to call on every init.
+	 *
+	 * @return void
+	 */
+	public static function maybe_schedule(): void {
 		if ( ! wp_next_scheduled( self::COMPUTE_CRON ) ) {
 			wp_schedule_event( time() + HOUR_IN_SECONDS, 'daily', self::COMPUTE_CRON );
 		}

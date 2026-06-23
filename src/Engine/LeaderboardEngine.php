@@ -53,21 +53,21 @@ defined( 'ABSPATH' ) || exit;
 final class LeaderboardEngine {
 
 	/**
-	 * Initialize cron hooks and custom schedule interval.
+	 * Action Scheduler group for the recurring snapshot. The wb_gam_ prefix
+	 * keeps it isolated from any host plugin's AS group on a shared install.
+	 *
+	 * @var string
+	 */
+	public const AS_GROUP = 'wb_gam_leaderboard';
+
+	/**
+	 * Initialize cron hooks and arm the recurring snapshot.
 	 *
 	 * Called from plugins_loaded via FeatureFlags or directly.
 	 *
 	 * @return void
 	 */
 	public static function init(): void {
-		// Register the custom five-minute cron interval.
-		add_filter( 'cron_schedules', array( __CLASS__, 'add_cron_schedules' ) );
-
-		// Schedule the snapshot cron if not already scheduled.
-		if ( ! wp_next_scheduled( 'wb_gam_leaderboard_snapshot' ) ) {
-			wp_schedule_event( time(), 'five_minutes', 'wb_gam_leaderboard_snapshot' );
-		}
-
 		// Cache invalidation — bump the wb_gamification group's last-changed
 		// stamp on every points-awarded event so leaderboard cache keys (which
 		// embed the stamp) auto-orphan instead of serving stale data for up
@@ -75,57 +75,60 @@ final class LeaderboardEngine {
 		add_action( 'wb_gam_points_awarded', array( __CLASS__, 'invalidate_cache' ), 5, 0 );
 		add_action( 'wb_gam_points_awarded_batch', array( __CLASS__, 'invalidate_cache' ), 5, 0 );
 
-		// Hook the snapshot writer to the cron event.
+		// Hook the snapshot writer to the recurring event.
 		add_action( 'wb_gam_leaderboard_snapshot', array( __CLASS__, 'write_snapshot' ) );
-	}
 
-	/**
-	 * Register the five-minute cron interval.
-	 *
-	 * @param array<string, array{interval: int, display: string}> $schedules Existing cron schedules.
-	 * @return array<string, array{interval: int, display: string}>
-	 */
-	public static function add_cron_schedules( array $schedules ): array {
-		if ( ! isset( $schedules['five_minutes'] ) ) {
-			$schedules['five_minutes'] = array(
-				'interval' => 300,
-				// The cron_schedules filter fires before init whenever cron is
-				// scheduled (plugin bootstrap, WP-CLI, core wp-cron). Translating
-				// before init trips WP 6.7+'s _load_textdomain_just_in_time notice.
-				// The display is an admin-only diagnostic label, so translate it
-				// only once init has run; the raw string is used pre-init.
-				'display'  => did_action( 'init' )
-					? esc_html__( 'Every 5 Minutes', 'wb-gamification' )
-					: 'Every 5 Minutes',
-			);
+		// Arm the recurring snapshot on Action Scheduler. AS owns the cadence,
+		// so there is no custom WP-Cron interval to register (which previously
+		// tripped WP 6.7+'s _load_textdomain_just_in_time notice). AS is not
+		// initialised until init, so defer arming to it.
+		if ( did_action( 'init' ) ) {
+			self::maybe_schedule();
+		} else {
+			add_action( 'init', array( __CLASS__, 'maybe_schedule' ) );
 		}
-		return $schedules;
 	}
 
 	/**
-	 * Activation hook — schedule the leaderboard snapshot cron.
+	 * Arm the recurring snapshot (every 5 minutes) on Action Scheduler and
+	 * remove any legacy WP-Cron event so the snapshot can't double-fire.
+	 * Idempotent — safe to call on every init.
+	 *
+	 * @return void
+	 */
+	public static function maybe_schedule(): void {
+		// Legacy WP-Cron event from versions <= 1.6.1.
+		wp_clear_scheduled_hook( 'wb_gam_leaderboard_snapshot' );
+
+		if ( ! function_exists( 'as_schedule_recurring_action' ) || ! function_exists( 'as_next_scheduled_action' ) ) {
+			return;
+		}
+
+		if ( false === as_next_scheduled_action( 'wb_gam_leaderboard_snapshot', array(), self::AS_GROUP ) ) {
+			as_schedule_recurring_action( time(), 300, 'wb_gam_leaderboard_snapshot', array(), self::AS_GROUP );
+		}
+	}
+
+	/**
+	 * Activation hook — arm the leaderboard snapshot.
 	 *
 	 * @return void
 	 */
 	public static function activate(): void {
-		// Register the schedule first so wp_schedule_event can find it.
-		add_filter( 'cron_schedules', array( __CLASS__, 'add_cron_schedules' ) );
-
-		if ( ! wp_next_scheduled( 'wb_gam_leaderboard_snapshot' ) ) {
-			wp_schedule_event( time(), 'five_minutes', 'wb_gam_leaderboard_snapshot' );
-		}
+		self::maybe_schedule();
 	}
 
 	/**
-	 * Deactivation hook — clear the leaderboard snapshot cron.
+	 * Deactivation hook — clear the leaderboard snapshot schedule.
 	 *
 	 * @return void
 	 */
 	public static function deactivate(): void {
-		$timestamp = wp_next_scheduled( 'wb_gam_leaderboard_snapshot' );
-		if ( $timestamp ) {
-			wp_unschedule_event( $timestamp, 'wb_gam_leaderboard_snapshot' );
+		if ( function_exists( 'as_unschedule_all_actions' ) ) {
+			as_unschedule_all_actions( 'wb_gam_leaderboard_snapshot', array(), self::AS_GROUP );
 		}
+		// Legacy WP-Cron event from versions <= 1.6.1.
+		wp_clear_scheduled_hook( 'wb_gam_leaderboard_snapshot' );
 	}
 
 	/**
