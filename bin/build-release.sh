@@ -228,7 +228,11 @@ tests/
 node_modules/
 package.json
 package-lock.json
+composer.json
 composer.lock
+# Composer vendor/ is dev tooling only (PHPUnit/PHPStan/WPCS). Runtime deps
+# ship committed under libs/, so vendor/ never travels in the customer zip.
+vendor/
 webpack.config.js
 phpcs.xml
 phpcs.xml.dist
@@ -273,38 +277,27 @@ EXCLUDES_EOF
 
 # What stays in the zip:
 #   • src/ build/ assets/ languages/ templates/ includes/ integrations/
-#   • vendor/ wholesale (composer prod deps + EDD SL SDK, no per-file excludes)
+#   • libs/ wholesale (committed runtime deps: Action Scheduler + EDD SL SDK)
 #   • wb-gamification.php uninstall.php readme.txt
 #
-# composer.json IS included — needed for the staging composer install
-# below; deleted after vendor/ regenerates so customers don't see it.
+# No Composer step runs here: runtime deps are committed under libs/ and the
+# plugin uses a hand-written PSR-4 autoloader, so the zip is deps-complete
+# straight from the working tree. vendor/ + composer.* are excluded above.
 rsync -a --delete --exclude-from="${EXCLUDES_FILE}" "${ROOT_DIR}/" "${STAGE}/"
 
-if [ -f "${STAGE}/composer.json" ]; then
-    pushd "${STAGE}" > /dev/null
-    if ! composer install --no-dev --optimize-autoloader --quiet; then
-        echo "✗ Release aborted: 'composer install' failed in staging — refusing to package an incomplete vendor/." >&2
+# Release-integrity gate (Basecamp 9993571511). The plugin require_once's both
+# bundled entrypoints on boot, so a missing file means it never starts. These
+# live in committed libs/ now, but assert them before zipping so a botched
+# checkout or stray .gitignore rule can never ship a non-booting build.
+for required in \
+    "libs/woocommerce/action-scheduler/action-scheduler.php" \
+    "libs/easy-digital-downloads/edd-sl-sdk/edd-sl-sdk.php"; do
+    if [ ! -f "${STAGE}/${required}" ]; then
+        echo "✗ Release aborted: ${required} missing from staged build — the zip would not boot." >&2
+        echo "  Bundled runtime deps live in committed libs/; verify they are present and tracked in git." >&2
         exit 1
     fi
-    # Release-integrity gate (Basecamp 9993571511). composer can exit 0 with an
-    # incomplete vendor/ — e.g. a mid-download timeout on action-scheduler still
-    # regenerates autoload files. Shipping that zip blocks 100% of installs:
-    # wb-gamification.php require_once's the AS bootstrap on boot, so a missing
-    # action-scheduler.php means the plugin never starts. Assert the critical
-    # paths exist before zipping; never package a deps-less build.
-    for required in \
-        "vendor/autoload.php" \
-        "vendor/woocommerce/action-scheduler/action-scheduler.php"; do
-        if [ ! -f "${required}" ]; then
-            echo "✗ Release aborted: ${required} missing after composer install." >&2
-            echo "  vendor/ is incomplete (likely a flaky network mid-install) — the zip would not boot. Re-run on a stable connection." >&2
-            exit 1
-        fi
-    done
-    # Drop both manifests now that vendor/ is built — customers don't need them.
-    rm -f composer.json composer.lock
-    popd > /dev/null
-fi
+done
 
 ( cd "${DIST_DIR}" && zip -qr "${SLUG}-${VERSION}.zip" "${SLUG}" )
 ZIP_PATH="${DIST_DIR}/${SLUG}-${VERSION}.zip"

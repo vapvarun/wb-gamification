@@ -18,9 +18,9 @@ use WBGam\Engine\PointsEngine;
 use WBGam\Engine\LevelEngine;
 use WBGam\Engine\ChallengeEngine;
 
-// Direct-web-access guard. This file is loaded via Composer's `files`
-// autoload (composer.json), so it is required by `vendor/autoload.php`
-// — which CLI tooling (PHPStan, PHPUnit, phpcs) bootstraps WITHOUT
+// Direct-web-access guard. At runtime this file is required directly by the
+// main plugin bootstrap; under CLI tooling (PHPStan, PHPUnit, phpcs) it is
+// pulled in via Composer's `files` autoload, which bootstraps WITHOUT
 // defining ABSPATH. A bare `defined( 'ABSPATH' ) || exit;` therefore
 // silently terminated every CLI run, turning the static-analysis and
 // test gates into no-ops. Allow CLI (incl. WP-CLI) so the gates run;
