@@ -4,8 +4,13 @@
 # Generated: 2026-05-30T02:49:41Z
 
 wb-gam-daily-bonus__head-text
-wb-gam-give-kudos__recipient
-wb-gam-give-kudos--guest
+
+# Intentionally inline-styled marker, not a CSS-driven class: DisplayDefer.php
+# renders the deferred-leaderboard editor notice with a style="" attribute so it
+# never depends on a CSS enqueue in the block-render context. The element is
+# always styled (never invisible), so there is no PHP->CSS drift here.
+wb-gam-deferred-notice
+
 wb-gam-kudos-feed__header
 wb-gam-leaderboard__badges-count
 wb-gam-leaderboard__my-rank

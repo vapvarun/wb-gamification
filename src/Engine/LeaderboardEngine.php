@@ -100,11 +100,14 @@ final class LeaderboardEngine {
 		// Legacy WP-Cron event from versions <= 1.6.1.
 		wp_clear_scheduled_hook( 'wb_gam_leaderboard_snapshot' );
 
-		if ( ! function_exists( 'as_schedule_recurring_action' ) || ! function_exists( 'as_next_scheduled_action' ) ) {
+		if ( ! function_exists( 'as_schedule_recurring_action' ) || ! function_exists( 'as_has_scheduled_action' ) ) {
 			return;
 		}
 
-		if ( false === as_next_scheduled_action( 'wb_gam_leaderboard_snapshot', array(), self::AS_GROUP ) ) {
+		// Guarded with as_has_scheduled_action() per the AS-schedule guard
+		// contract (bin/check-as-schedule-guard.php) so re-arming on every init
+		// never stacks duplicate recurring actions.
+		if ( ! as_has_scheduled_action( 'wb_gam_leaderboard_snapshot', array(), self::AS_GROUP ) ) {
 			as_schedule_recurring_action( time(), 300, 'wb_gam_leaderboard_snapshot', array(), self::AS_GROUP );
 		}
 	}
