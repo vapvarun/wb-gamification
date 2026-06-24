@@ -135,21 +135,21 @@ All data is preserved in the database. Reactivating the plugin restores everythi
 
 = 1.6.1 - June 2026 =
 
+Wbcom Family Kit integrations, share-ready badge pages, a public points-spend API, and reliability fixes. This release also includes the 1.6.0 work, which was not separately released.
+
 * New      - Public points-spend API: wb_gam_spend_points() and wb_gam_can_afford() let other Wbcom plugins redeem points for external purchases (such as BuddyNext membership tiers) through one audited, atomic debit, firing a wb_gam_points_spent action on success.
-* Fix      - Async points evaluation no longer fails on busy requests. The per-request event queue is split into size-bounded Action Scheduler jobs so it never exceeds the 8000-character args limit, which previously dropped batches when many events fired at once (for example while seeding demo data).
-* Fix      - Leaderboard and Top Members blocks no longer render as a silently blank block when their display is deferred to Jetonomy. Site editors now see a notice explaining the deferral and how to override it with the wb_gam_defer_leaderboard_to_jetonomy filter; visitors still see nothing.
-
-= 1.6.0 - June 2026 =
-
-Adds the Wbcom Family Kit integrations guide, share-ready badge pages with social images, and fully styled block editor previews.
-
-* New      - Wbcom Family Kit: a new Integrations tab that guides you to related Wbcom products (WPMediaVerse, Jetonomy, BuddyNext, Learnomy, WP Career Board, WB Listora) with one-click install and activate for the free members.
+* New      - Wbcom Family Kit: a new Integrations tab that guides you to related Wbcom products (WPMediaVerse, Jetonomy, BuddyNext, Learnomy, WP Career Board, WB Listora) with one-click install and activate for free members.
 * New      - Badge share pages now generate a dynamic 1200x630 social share image per badge and earner, with Open Graph and Twitter card meta for rich link previews.
 * New      - Block editor previews now render every block styled inside the editor canvas, and the Give Kudos block gained full editing controls and a styled preview.
 * Improve  - Points settings are now grouped by the source plugin instead of by category, so each integration's points are easier to find.
 * Improve  - The setup wizard is reoriented around the Wbcom family of products.
 * Improve  - The badge share page is rebuilt as a polished card with copy-link and X, Facebook, and LinkedIn share actions, replacing the old browser prompt popup.
 * Improve  - Family product logos in the Integrations tab render at a consistent size.
+* Fix      - Async points evaluation no longer fails on busy requests. The per-request event queue is split into size-bounded Action Scheduler jobs so it never exceeds the 8000-character args limit, which previously dropped batches when many events fired at once (for example while seeding demo data).
+* Fix      - Leaderboard and Top Members blocks no longer render as a silently blank block when their display is deferred to Jetonomy. Site editors now see a notice explaining the deferral and how to override it with the wb_gam_defer_leaderboard_to_jetonomy filter; visitors still see nothing.
+* Fix      - Resolved a WordPress 6.7+ "textdomain loaded too early" notice from the cron schedule label.
+* Dev      - Recurring jobs moved to Action Scheduler, dropping the custom WP-Cron interval.
+* Dev      - Composer is no longer required at runtime; runtime dependencies ship bundled in libs/.
 * Dev      - New wb_gam_og_accent_color filter to customize the badge share image accent color.
 
 
