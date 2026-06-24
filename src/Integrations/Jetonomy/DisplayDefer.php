@@ -52,7 +52,13 @@ final class DisplayDefer {
 	 * "Jetonomy is active" (it ships the reputation leaderboard wb-gam mirrors).
 	 */
 	public static function defers_leaderboard(): bool {
-		return (bool) apply_filters( 'wb_gam_defer_leaderboard_to_jetonomy', defined( 'JETONOMY_VERSION' ) );
+		// Admin setting is authoritative (Settings > Appearance > Community
+		// Leaderboard). 'gamification' (default) = WB-Gam owns the unified
+		// ranking and never defers; 'jetonomy' = defer to Jetonomy's reputation
+		// board when Jetonomy is active. The filter still overrides both.
+		$authority = (string) get_option( 'wb_gam_leaderboard_authority', 'gamification' );
+		$default   = ( 'jetonomy' === $authority ) && defined( 'JETONOMY_VERSION' );
+		return (bool) apply_filters( 'wb_gam_defer_leaderboard_to_jetonomy', $default );
 	}
 
 	/**

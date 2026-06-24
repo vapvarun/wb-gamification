@@ -372,6 +372,10 @@ final class SettingsPage {
 			$value = $reset ? '' : sanitize_hex_color( wp_unslash( (string) $_POST['wb_gam_accent_color_field'] ) );
 			\WBGam\Engine\Appearance::set_accent( (string) $value );
 		}
+		if ( isset( $_POST['wb_gam_leaderboard_authority'] ) ) {
+			$authority = ( 'jetonomy' === sanitize_key( wp_unslash( (string) $_POST['wb_gam_leaderboard_authority'] ) ) ) ? 'jetonomy' : 'gamification';
+			update_option( 'wb_gam_leaderboard_authority', $authority );
+		}
 		// phpcs:enable WordPress.Security.NonceVerification.Missing
 
 		add_settings_error( 'wb_gamification', 'saved', __( 'Appearance settings saved.', 'wb-gamification' ), 'success' );
@@ -2586,6 +2590,36 @@ final class SettingsPage {
 				<div class="wbgam-card-footer">
 					<button type="submit" class="button button-primary">
 						<?php esc_html_e( 'Save Appearance', 'wb-gamification' ); ?>
+					</button>
+				</div>
+			</div>
+
+			<?php $authority = (string) get_option( 'wb_gam_leaderboard_authority', 'gamification' ); ?>
+			<div class="wbgam-card wbgam-stack-block">
+				<div class="wbgam-card-header">
+					<h2 class="wbgam-card-title">
+						<span class="icon-trophy" aria-hidden="true"></span>
+						<?php esc_html_e( 'Community Leaderboard', 'wb-gamification' ); ?>
+					</h2>
+					<p class="wbgam-card-desc">
+						<?php esc_html_e( 'Choose which leaderboard owns the public community ranking. Gamification aggregates every points source - forum reputation, tutorials, media, and activity - into one board. Defer to Jetonomy only if you want its forum reputation board to be the single ranking when Jetonomy is active.', 'wb-gamification' ); ?>
+					</p>
+				</div>
+				<div class="wbgam-card-body">
+					<p class="wbgam-stack-block">
+						<label>
+							<input type="radio" name="wb_gam_leaderboard_authority" value="gamification" <?php checked( 'jetonomy' !== $authority ); ?> />
+							<?php esc_html_e( 'Gamification owns the ranking (recommended) - show the unified Gamification leaderboard.', 'wb-gamification' ); ?>
+						</label><br />
+						<label>
+							<input type="radio" name="wb_gam_leaderboard_authority" value="jetonomy" <?php checked( 'jetonomy' === $authority ); ?> />
+							<?php esc_html_e( 'Defer to Jetonomy when active - hide the Gamification leaderboard block in favor of Jetonomy.', 'wb-gamification' ); ?>
+						</label>
+					</p>
+				</div>
+				<div class="wbgam-card-footer">
+					<button type="submit" class="button button-primary">
+						<?php esc_html_e( 'Save Leaderboard', 'wb-gamification' ); ?>
 					</button>
 				</div>
 			</div>
