@@ -158,12 +158,12 @@ final class AsyncEvaluator {
 		$current   = [];
 
 		foreach ( $queue as $item ) {
-			$candidate = $current;
+			$candidate   = $current;
 			$candidate[] = $item;
 
 			if ( ! empty( $current ) && strlen( (string) wp_json_encode( [ $candidate ] ) ) > $max_bytes ) {
-				$chunks[]  = $current;
-				$current   = [ $item ];
+				$chunks[] = $current;
+				$current  = [ $item ];
 			} else {
 				$current = $candidate;
 			}
