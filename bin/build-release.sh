@@ -230,9 +230,12 @@ package.json
 package-lock.json
 composer.json
 composer.lock
-# Composer vendor/ is dev tooling only (PHPUnit/PHPStan/WPCS). Runtime deps
-# ship committed under libs/, so vendor/ never travels in the customer zip.
-vendor/
+# Top-level Composer vendor/ is dev tooling only (PHPUnit/PHPStan/WPCS).
+# Anchor with a leading slash so it strips ONLY the repo-root vendor/. An
+# unanchored "vendor/" also deletes the EDD SL SDK's committed runtime
+# autoloader at libs/easy-digital-downloads/edd-sl-sdk/vendor/, which the SDK
+# require_once's on boot — stripping it ships a white-screen-fatal zip.
+/vendor/
 webpack.config.js
 phpcs.xml
 phpcs.xml.dist
@@ -291,7 +294,8 @@ rsync -a --delete --exclude-from="${EXCLUDES_FILE}" "${ROOT_DIR}/" "${STAGE}/"
 # checkout or stray .gitignore rule can never ship a non-booting build.
 for required in \
     "libs/woocommerce/action-scheduler/action-scheduler.php" \
-    "libs/easy-digital-downloads/edd-sl-sdk/edd-sl-sdk.php"; do
+    "libs/easy-digital-downloads/edd-sl-sdk/edd-sl-sdk.php" \
+    "libs/easy-digital-downloads/edd-sl-sdk/vendor/autoload.php"; do
     if [ ! -f "${STAGE}/${required}" ]; then
         echo "✗ Release aborted: ${required} missing from staged build — the zip would not boot." >&2
         echo "  Bundled runtime deps live in committed libs/; verify they are present and tracked in git." >&2

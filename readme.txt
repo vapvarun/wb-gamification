@@ -147,6 +147,8 @@ Wbcom Family Kit integrations, share-ready badge pages, a public points-spend AP
 * Improve  - Family product logos in the Integrations tab render at a consistent size.
 * Fix      - Async points evaluation no longer fails on busy requests. The per-request event queue is split into size-bounded Action Scheduler jobs so it never exceeds the 8000-character args limit, which previously dropped batches when many events fired at once (for example while seeding demo data).
 * Fix      - Leaderboard and Top Members blocks no longer render as a silently blank block when their display is deferred to Jetonomy. Site editors now see a notice explaining the deferral and how to override it with the wb_gam_defer_leaderboard_to_jetonomy filter; visitors still see nothing.
+* Fix      - The distributed zip no longer ships without the EDD Software Licensing SDK's autoloader. The release build's vendor exclude was unanchored and stripped the SDK's bundled libs/easy-digital-downloads/edd-sl-sdk/vendor/ as well, causing a fatal error on boot for sites where no other plugin loaded the SDK first.
+* Fix      - The "you're N points from <level>" hub nudge no longer shows a stale count after points change. The per-user nudge cache is now cleared on every points-awarded event instead of lingering for up to five minutes.
 * Fix      - Resolved a WordPress 6.7+ "textdomain loaded too early" notice from the cron schedule label.
 * Dev      - Recurring jobs moved to Action Scheduler, dropping the custom WP-Cron interval.
 * Dev      - Composer is no longer required at runtime; runtime dependencies ship bundled in libs/.

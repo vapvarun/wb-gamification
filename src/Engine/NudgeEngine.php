@@ -39,6 +39,92 @@ final class NudgeEngine {
 	private const CACHE_TTL = 300;
 
 	/**
+	 * Transient key prefix for the per-user cached nudge.
+	 *
+	 * @since 1.6.1
+	 */
+	private const CACHE_PREFIX = 'wb_gam_nudge_';
+
+	/**
+	 * Register cache-invalidation listeners.
+	 *
+	 * The nudge is cached per user for CACHE_TTL. Several rules (close to
+	 * level-up, points-earned fallback) are derived from the live point
+	 * total, so a cached nudge can lag the real balance until the transient
+	 * expires — the "You're N points from <level>" banner showing a stale
+	 * count for up to 5 minutes after an award. Drop the cache the moment a
+	 * user's points change. Mirrors LeaderboardEngine's award-hook cache
+	 * invalidation so both surfaces refresh on the same signal.
+	 *
+	 * @since 1.6.1
+	 *
+	 * @return void
+	 */
+	public static function init(): void {
+		add_action( 'wb_gam_points_awarded', array( __CLASS__, 'invalidate_for_award' ), 5, 1 );
+		add_action( 'wb_gam_points_awarded_batch', array( __CLASS__, 'invalidate_for_batch' ), 5, 1 );
+	}
+
+	/**
+	 * Transient key for a user's cached nudge. Single source of truth so the
+	 * read, write, and invalidation sites can never drift apart.
+	 *
+	 * @since 1.6.1
+	 *
+	 * @param int $user_id User ID.
+	 * @return string
+	 */
+	private static function cache_key( int $user_id ): string {
+		return self::CACHE_PREFIX . $user_id;
+	}
+
+	/**
+	 * Drop the cached nudge for a single user so the next render recomputes
+	 * against the live point total.
+	 *
+	 * @since 1.6.1
+	 *
+	 * @param int $user_id User whose cached nudge should be cleared.
+	 * @return void
+	 */
+	public static function invalidate( int $user_id ): void {
+		if ( $user_id > 0 ) {
+			delete_transient( self::cache_key( $user_id ) );
+		}
+	}
+
+	/**
+	 * Invalidate on a single points-awarded event.
+	 *
+	 * Hooked to wb_gam_points_awarded, whose first argument is the user ID.
+	 *
+	 * @since 1.6.1
+	 *
+	 * @param int $user_id User who was awarded points.
+	 * @return void
+	 */
+	public static function invalidate_for_award( int $user_id ): void {
+		self::invalidate( (int) $user_id );
+	}
+
+	/**
+	 * Invalidate for every user touched by a batch award.
+	 *
+	 * Hooked to wb_gam_points_awarded_batch, whose first argument is the list
+	 * of awarded user IDs.
+	 *
+	 * @since 1.6.1
+	 *
+	 * @param int[] $user_ids Users who were awarded points.
+	 * @return void
+	 */
+	public static function invalidate_for_batch( array $user_ids ): void {
+		foreach ( $user_ids as $user_id ) {
+			self::invalidate( (int) $user_id );
+		}
+	}
+
+	/**
 	 * Get the highest-priority nudge for a user.
 	 *
 	 * Returns a cached result when available. Otherwise evaluates all 7
@@ -50,7 +136,7 @@ final class NudgeEngine {
 	 * @return array{ message: string, panel: string, icon: string }
 	 */
 	public static function get_nudge( int $user_id ): array {
-		$transient_key = 'wb_gam_nudge_' . $user_id;
+		$transient_key = self::cache_key( $user_id );
 		$cached        = get_transient( $transient_key );
 
 		if ( false !== $cached && is_array( $cached ) ) {

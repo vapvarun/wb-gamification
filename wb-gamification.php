@@ -280,6 +280,11 @@ final class WB_Gamification {
 		BootOrder::register( 'leaderboard_engine', BootOrder::SLOT_INTEGRATIONS, array( 'engine' ) );
 		add_action( 'plugins_loaded', array( LeaderboardEngine::class, 'init' ), BootOrder::SLOT_INTEGRATIONS );
 
+		// Hub nudge — drop the per-user nudge cache on points change so the
+		// "N points from <level>" banner never lags the live total.
+		BootOrder::register( 'nudge_engine', BootOrder::SLOT_INTEGRATIONS, array( 'engine' ) );
+		add_action( 'plugins_loaded', array( \WBGam\Engine\NudgeEngine::class, 'init' ), BootOrder::SLOT_INTEGRATIONS );
+
 		// v2.5 + AI v1 — read-side projection. Daily cron computes
 		// engagement / churn / diversity signals from the event log.
 		BootOrder::register( 'intelligence_projector', BootOrder::SLOT_INTEGRATIONS, array( 'engine' ) );
