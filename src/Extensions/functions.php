@@ -18,9 +18,9 @@ use WBGam\Engine\PointsEngine;
 use WBGam\Engine\LevelEngine;
 use WBGam\Engine\ChallengeEngine;
 
-// Direct-web-access guard. This file is loaded via Composer's `files`
-// autoload (composer.json), so it is required by `vendor/autoload.php`
-// — which CLI tooling (PHPStan, PHPUnit, phpcs) bootstraps WITHOUT
+// Direct-web-access guard. At runtime this file is required directly by the
+// main plugin bootstrap; under CLI tooling (PHPStan, PHPUnit, phpcs) it is
+// pulled in via Composer's `files` autoload, which bootstraps WITHOUT
 // defining ABSPATH. A bare `defined( 'ABSPATH' ) || exit;` therefore
 // silently terminated every CLI run, turning the static-analysis and
 // test gates into no-ops. Allow CLI (incl. WP-CLI) so the gates run;
@@ -175,6 +175,100 @@ function wb_gam_award_points( int $user_id, int $points, string $action_id = 'ma
 			)
 		)
 	);
+}
+
+/**
+ * Whether a user can afford a points cost.
+ *
+ * A cheap pre-check before {@see wb_gam_spend_points()} so callers can show a
+ * "not enough points" state without attempting (and rolling back) a debit.
+ *
+ * @since 1.6.1
+ *
+ * @param int         $user_id WordPress user ID.
+ * @param int         $amount  Points cost (positive integer).
+ * @param string|null $type    Optional point-type slug. Null = primary type.
+ * @return bool True when the user's balance covers the cost.
+ */
+function wb_gam_can_afford( int $user_id, int $amount, ?string $type = null ): bool {
+	if ( $user_id <= 0 || $amount <= 0 ) {
+		return false;
+	}
+
+	return PointsEngine::get_total( $user_id, $type ) >= $amount;
+}
+
+/**
+ * Spend (debit) points from a user's balance for an external redemption — e.g.
+ * redeeming a BuddyNext membership tier or a marketplace purchase.
+ *
+ * A stable public seam over the audited, atomic {@see PointsEngine::debit()} so
+ * consumers (BuddyNext, etc.) depend on this signature rather than the engine
+ * internals. Every spend writes a matching wb_gam_events + wb_gam_points row
+ * inside one locked transaction (SELECT … FOR UPDATE), so concurrent spends can
+ * never overdraw the balance. Mirrors the debit composition that
+ * RedemptionEngine::redeem() uses for store items.
+ *
+ * On success, fires `wb_gam_points_spent` so other features can react.
+ *
+ * @since 1.6.1
+ *
+ * @param int                 $user_id WordPress user ID.
+ * @param int                 $amount  Points to spend (positive integer).
+ * @param string              $context Short action label for the audit log
+ *                                     (e.g. 'bn_membership'). Defaults to 'redemption'.
+ * @param array<string,mixed> $meta    Optional metadata stored on the event
+ *                                     (e.g. ['item_id' => 12, 'item_label' => 'Gold']).
+ * @param string|null         $type    Optional point-type slug. Null = primary type.
+ * @return array{success: bool, reason?: string, event_id?: string, new_balance?: int}
+ *               On failure, `reason` is one of: 'invalid_args' | 'insufficient_balance'
+ *               | 'event_persist_failed' | 'ledger_write_failed'.
+ */
+function wb_gam_spend_points( int $user_id, int $amount, string $context = 'redemption', array $meta = array(), ?string $type = null ): array {
+	if ( $user_id <= 0 || $amount <= 0 ) {
+		return array(
+			'success' => false,
+			'reason'  => 'invalid_args',
+		);
+	}
+
+	$context       = '' !== $context ? sanitize_key( $context ) : 'redemption';
+	$resolved_type = PointsEngine::resolve_type( $type );
+
+	// Build the canonical spend event so debit() audit-logs it (every
+	// wb_gam_points row gets a matching wb_gam_events row), mirroring
+	// RedemptionEngine::redeem().
+	$event = new Event(
+		array(
+			'action_id' => $context,
+			'user_id'   => $user_id,
+			'metadata'  => array_merge(
+				$meta,
+				array(
+					'points_cost' => -abs( $amount ),
+					'point_type'  => $resolved_type,
+				)
+			),
+		)
+	);
+
+	$result = PointsEngine::debit( $user_id, $amount, $context, $event, $resolved_type );
+
+	if ( ! empty( $result['success'] ) ) {
+		/**
+		 * Fires after points are successfully spent via wb_gam_spend_points().
+		 *
+		 * @since 1.6.1
+		 *
+		 * @param int                 $user_id WordPress user ID.
+		 * @param int                 $amount  Points spent (positive integer).
+		 * @param string              $context Action label passed by the caller.
+		 * @param array<string,mixed> $result  Debit result (event_id, new_balance).
+		 */
+		do_action( 'wb_gam_points_spent', $user_id, $amount, $context, $result );
+	}
+
+	return $result;
 }
 
 /**

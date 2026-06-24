@@ -202,6 +202,7 @@ final class BadgeOgImage {
 		imagettftext( $img, 26, 0, $tx, $y + 18, $accent, $font, $earned );
 
 		$ok = imagepng( $img, $path, 6 );
+		// phpcs:ignore Generic.PHP.DeprecatedFunctions.Deprecated -- imagedestroy() is not deprecated; the sniff list is stale. It is a no-op on PHP 8.0+ but still frees the GD handle on older builds, so the explicit release is intentional.
 		imagedestroy( $img );
 		return (bool) $ok;
 	}

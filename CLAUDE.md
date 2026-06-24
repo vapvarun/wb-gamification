@@ -204,6 +204,11 @@ Journey runs land in `audit/journey-runs/{run-id}/` (gitignored — they are per
 ## Key Commands
 
 ```bash
+# FIRST-TIME SETUP after a fresh clone or branch checkout (REQUIRED — see "Registered Blocks").
+# build/ is gitignored; without this step the block registrar finds nothing and registers 0 blocks.
+npm install && npm run build      # compiles src/Blocks/<slug>/ -> build/Blocks/<slug>/
+composer install                  # PHP deps + dev tooling (phpunit, etc.)
+
 # Run all tests
 cd /Users/varundubey/Local\ Sites/wb-gamification/app/public/wp-content/plugins/wb-gamification
 php -d auto_prepend_file=tests/prepend.php vendor/bin/phpunit --configuration phpunit.xml.dist
@@ -418,6 +423,9 @@ Controllers registered in `WB_Gamification::register_routes()`:
 ---
 
 ## Registered Blocks
+
+> ⚠️ **AFTER EVERY CLONE / BRANCH CHECKOUT: run `npm install && npm run build` or NO blocks register.**
+> `build/` is gitignored (`.gitignore:7`), so a fresh checkout has only `src/Blocks/` — never the compiled `build/Blocks/`. The registrar (`src/Blocks/Registrar.php`) scans **`build/Blocks/*/block.json`** on `init@20`; with no `build/` dir its `is_dir()` guard bails **silently** and registers zero blocks (no error, no notice). This bit us on the 1.6.1 dev-branch install (2026-06-23) — block editor showed none of our blocks until the build ran. The released **dist zip** does NOT have this problem (`bin/build-release.sh` runs the build before packaging). So: dev-branch checkout = build required; dist zip = ready to use. Do NOT "fix" this by committing `build/` — that creates a stale-artifact trap where QA tests compiled output that no longer matches `src/`.
 
 `leaderboard`, `member-points`, `badge-showcase`, `level-progress`, `challenges`, `streak`, `top-members`, `kudos-feed`, `year-recap`, `points-history`, `earning-guide`, `redemption-store`, `community-challenges`, `cohort-rank`, `hub`, `daily-bonus`, `give-kudos`, `submit-achievement`, `user-status-bar` — **19 blocks**, all Wbcom Block Quality Standard compliant (apiVersion 3, standard attribute schema, `--wb-gam-*` design tokens, per-instance scoped CSS).
 

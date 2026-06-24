@@ -10,10 +10,10 @@
     }
   ],
   "require": {
-    "php": ">=8.0",
-    "woocommerce/action-scheduler": "^3.8"
+    "php": ">=8.0"
   },
   "require-dev": {
+    "woocommerce/action-scheduler": "^3.8",
     "phpstan/phpstan": "^1.0",
     "szepeviktor/phpstan-wordpress": "^1.0",
     "phpunit/phpunit": "^11.0",

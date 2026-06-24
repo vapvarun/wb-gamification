@@ -163,6 +163,11 @@ class CronRegistrationTest extends TestCase {
 		// Not yet scheduled → boot must schedule it.
 		Functions\when( 'wp_next_scheduled' )->justReturn( false );
 
+		// Engines that arm their cron on the `init` hook (e.g. IntelligenceProjector)
+		// schedule directly when init has already fired; simulate that so the
+		// wp_schedule_event call happens synchronously within this assertion.
+		Functions\when( 'did_action' )->justReturn( 1 );
+
 		$scheduled = null;
 		Functions\when( 'wp_schedule_event' )->alias(
 			static function ( $timestamp, $rec, $tag ) use ( $hook, &$scheduled ) {

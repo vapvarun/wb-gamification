@@ -2,14 +2,14 @@
 # This file is distributed under the GPL-2.0+.
 msgid ""
 msgstr ""
-"Project-Id-Version: WB Gamification 1.6.0\n"
+"Project-Id-Version: WB Gamification 1.6.1\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/wb-gamification\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-06-21T06:45:48+00:00\n"
+"POT-Creation-Date: 2026-06-23T19:32:54+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: wb-gamification\n"
@@ -4573,6 +4573,7 @@ msgstr ""
 
 #: src/Blocks/hub/render.php:218
 #: src/Blocks/leaderboard/render.php:135
+#: src/Integrations/Jetonomy/DisplayDefer.php:121
 msgid "Leaderboard"
 msgstr ""
 
@@ -5383,10 +5384,6 @@ msgstr ""
 msgid "Could not record kudos. Please try again."
 msgstr ""
 
-#: src/Engine/LeaderboardEngine.php:92
-msgid "Every 5 Minutes"
-msgstr ""
-
 #. translators: %d: points earned this week
 #: src/Engine/LeaderboardNudge.php:310
 #, php-format
@@ -5923,6 +5920,16 @@ msgstr ""
 msgid "Completed the \"%1$s\" challenge - earned %2$d bonus points."
 msgstr ""
 
+#: src/Integrations/Jetonomy/DisplayDefer.php:120
+msgid "Top Members"
+msgstr ""
+
+#. translators: %s: block label (Leaderboard or Top Members).
+#: src/Integrations/Jetonomy/DisplayDefer.php:125
+#, php-format
+msgid "The %s block is hidden because Jetonomy is active and owns the community ranking, which this block would duplicate. Only people who can edit content see this notice; visitors see nothing. To show this block anyway, add the filter wb_gam_defer_leaderboard_to_jetonomy and return false."
+msgstr ""
+
 #: src/Integrations/LearnDash/ProfileIntegration.php:75
 msgid "My Achievements"
 msgstr ""
@@ -6120,14 +6127,6 @@ msgstr ""
 
 #: templates/emails/weekly-recap.php:168
 msgid "Unsubscribe from weekly emails"
-msgstr ""
-
-#: wb-gamification.php:56
-msgid "WB Gamification could not start: Composer dependencies are missing."
-msgstr ""
-
-#: wb-gamification.php:58
-msgid "Run `composer install` in the plugin directory, or install the official release zip from store.wbcomdesigns.com which ships dependencies pre-built."
 msgstr ""
 
 #. translators: %d minimum convert amount

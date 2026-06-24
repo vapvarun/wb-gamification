@@ -3,7 +3,7 @@
  * Plugin Name: WB Gamification
  * Plugin URI:  https://wbcomdesigns.com/
  * Description: Complete gamification plugin for BuddyPress and WordPress. Part of the Reign Stack. Points, badges, levels, leaderboards, challenges, and streaks — zero config, works out of the box.
- * Version:     1.6.0
+ * Version:     1.6.1
  * Author:      Wbcom Designs
  * Author URI:  https://wbcomdesigns.com/
  * License:     GPL-2.0+
@@ -33,7 +33,7 @@ if ( defined( 'WB_GAM_VERSION' ) ) {
 // Plugin Check's internal phpcs invocation.
 // phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 
-define( 'WB_GAM_VERSION', '1.6.0' );
+define( 'WB_GAM_VERSION', '1.6.1' );
 define( 'WB_GAM_FILE', __FILE__ );
 define( 'WB_GAM_PATH', plugin_dir_path( __FILE__ ) );
 define( 'WB_GAM_URL', plugin_dir_url( __FILE__ ) );
@@ -41,31 +41,30 @@ define( 'WB_GAM_BASENAME', plugin_basename( __FILE__ ) );
 
 // Autoloader — PSR-4 for all WBGam\ classes + functions.php.
 //
-// Production zips ship vendor/ pre-built (see bin/build-release.sh). A bare
-// git clone has no vendor/ until `composer install` runs, so guard the
-// require to fail gracefully with an admin notice instead of a fatal that
-// locks the user out of wp-admin.
-if ( ! file_exists( WB_GAM_PATH . 'vendor/autoload.php' ) ) {
-	add_action(
-		'admin_notices',
-		static function (): void {
-			if ( ! current_user_can( 'activate_plugins' ) ) {
-				return;
-			}
-			echo '<div class="notice notice-error"><p><strong>' .
-				esc_html__( 'WB Gamification could not start: Composer dependencies are missing.', 'wb-gamification' ) .
-				'</strong></p><p>' .
-				esc_html__( 'Run `composer install` in the plugin directory, or install the official release zip from store.wbcomdesigns.com which ships dependencies pre-built.', 'wb-gamification' ) .
-				'</p></div>';
+// Runtime is fully self-contained: the plugin's own classes load through a
+// hand-written PSR-4 autoloader (no Composer at runtime), and bundled
+// third-party code ships committed under libs/ (Action Scheduler, EDD SL
+// SDK). Composer's vendor/ is dev tooling only (PHPUnit/PHPStan/WPCS); it is
+// gitignored and never travels in the release zip. Clients run nothing.
+spl_autoload_register(
+	static function ( string $class ): void {
+		$prefix = 'WBGam\\';
+		$len    = strlen( $prefix );
+		if ( strncmp( $prefix, $class, $len ) !== 0 ) {
+			return;
 		}
-	);
-	return;
-}
+		$file = WB_GAM_PATH . 'src/' . str_replace( '\\', '/', substr( $class, $len ) ) . '.php';
+		if ( is_readable( $file ) ) {
+			require $file;
+		}
+	}
+);
 
-require_once WB_GAM_PATH . 'vendor/autoload.php';
+// Non-namespaced helper functions (formerly the Composer `files` autoload entry).
+require_once WB_GAM_PATH . 'src/Extensions/functions.php';
 
-// Action Scheduler — must be loaded after autoloader, before plugins_loaded.
-require_once WB_GAM_PATH . 'vendor/woocommerce/action-scheduler/action-scheduler.php';
+// Action Scheduler — bundled under libs/, loaded before plugins_loaded.
+require_once WB_GAM_PATH . 'libs/woocommerce/action-scheduler/action-scheduler.php';
 
 // EDD Software Licensing SDK — free plugin auto-updates with preset key.
 //
@@ -97,8 +96,8 @@ add_action(
 	}
 );
 
-if ( file_exists( WB_GAM_PATH . 'vendor/easy-digital-downloads/edd-sl-sdk/edd-sl-sdk.php' ) ) {
-	require_once WB_GAM_PATH . 'vendor/easy-digital-downloads/edd-sl-sdk/edd-sl-sdk.php';
+if ( file_exists( WB_GAM_PATH . 'libs/easy-digital-downloads/edd-sl-sdk/edd-sl-sdk.php' ) ) {
+	require_once WB_GAM_PATH . 'libs/easy-digital-downloads/edd-sl-sdk/edd-sl-sdk.php';
 }
 
 // Preactivate the bundled preset license so EDD update checks
