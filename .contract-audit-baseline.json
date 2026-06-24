@@ -166,6 +166,16 @@
             "id": "dom-action-unreferenced:install",
             "reason": "False positive. The markup DOES emit data-action=\"install\" but dynamically via class-page.php action_link('install', ...), which builds data-action from a variable the static scanner cannot resolve. The JS handler (assets/admin/family.js) and its AJAX handler (libs/wbcom-family/class-installer.php, ACTION='wbcom_family_install') both exist and are correctly wired. Verified 2026-06-21.",
             "severity": "warning"
+        },
+        {
+            "id": "hook-consumed-never-fired:action_scheduler/migration_hook",
+            "reason": "Internal hook of the bundled third-party Action Scheduler library (libs/woocommerce/action-scheduler/classes/migration/Scheduler.php:26). AS fires it via its own migration runner / WP-Cron, not a literal do_action() the scanner can match. Not this plugin's contract surface. False positive (surfaced only because AS now ships under committed libs/ instead of gitignored vendor/).",
+            "severity": "error"
+        },
+        {
+            "id": "hook-consumed-never-fired:action_scheduler_run_recurring_actions_schedule_hook",
+            "reason": "Internal hook of the bundled third-party Action Scheduler library (libs/woocommerce/action-scheduler/classes/ActionScheduler_RecurringActionScheduler.php:26). Fired dynamically by AS's recurring-action runner, not a literal do_action(). Not this plugin's contract surface. False positive (surfaced only because AS now ships under committed libs/ instead of gitignored vendor/).",
+            "severity": "error"
         }
     ]
 }
