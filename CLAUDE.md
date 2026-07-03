@@ -71,6 +71,25 @@ Plan item → Implement → Browser verify → Fix gaps → THEN mark done
 - If an agent produces code that doesn't match the spec, fix or reject — don't ship it
 - Parallel agents work on independent tasks only — never two agents editing the same file
 
+### Contract-first development (owner directive, 2026-07-03)
+
+**No code is written for any task until its Basecamp card carries a complete
+micro-level contract.** The card table has a "Ready for Development" column that
+enforces this: a card may only enter it with ALL five sections filled in.
+
+| Contract section | Must answer |
+|---|---|
+| **Expectation** | Owner/member-visible outcome, phrased as what they can DO |
+| **Code/data flow** | Files, classes, endpoints, tables, hooks touched; event-sourced writes only (compensating events, never silent mutation); manifest + openapi + SDK updated in the same PR |
+| **Scale contract** | Query budgets at 100k members / 1M+ event rows; LIMIT+COUNT pagination; index proof against schema KEYs; no N+1; no unbounded scans. Target reality is ~10,000 sites, not this dev install |
+| **Combination contract** | Behavior with/without BuddyPress, WooCommerce, LMS, membership plugins — any plugin mix a real owner may run; module-toggle behavior |
+| **Acceptance criteria** | Browser-verifiable (incl. 390px, dark, keyboard), API-verifiable, DB-verifiable; journey added |
+
+Epics without a complete contract stay in "Figuring it out" with an explicit
+list of contract questions; answering them is the work that promotes the card.
+Every card also states **Out of scope / no-dup** referencing adjacent cards so
+two cards never claim the same change.
+
 ---
 
 ## Journey-per-fix rule (mandatory before close-out)
