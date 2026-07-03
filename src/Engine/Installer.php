@@ -238,7 +238,9 @@ final class Installer {
 			timezone       VARCHAR(50)     DEFAULT 'UTC',
 			grace_used     TINYINT(1)      DEFAULT 0,
 			updated_at     DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-			PRIMARY KEY (user_id)
+			PRIMARY KEY (user_id),
+			KEY idx_current_streak (current_streak),
+			KEY idx_longest_streak (longest_streak)
 		) $charset;"
 		);
 

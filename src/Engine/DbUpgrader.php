@@ -98,6 +98,42 @@ final class DbUpgrader {
 		self::ensure_notifications_queue_table();
 		self::ensure_user_intelligence_table();
 		self::ensure_superseded_badge_condition_action_ids();
+		self::ensure_streak_sort_indexes();
+	}
+
+	/**
+	 * 1.6.2 — add sort indexes to wb_gam_streaks for the admin roster.
+	 *
+	 * The Streaks moderation page (src/Admin/StreaksPage.php) lets owners sort
+	 * a 100k-member table by current or longest streak. The table's only key
+	 * was PRIMARY(user_id), so ORDER BY current_streak / longest_streak was a
+	 * filesort at scale. Add a single-column KEY for each sortable column.
+	 * Idempotent + option-gated so it runs exactly once per site.
+	 *
+	 * @since 1.6.2
+	 */
+	private static function ensure_streak_sort_indexes(): void {
+		$flag_key = 'wb_gam_feature_streak_sort_idx_v1';
+		if ( get_option( $flag_key ) ) {
+			return;
+		}
+
+		global $wpdb;
+		$table = $wpdb->prefix . 'wb_gam_streaks';
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$existing = (array) $wpdb->get_col( "SHOW INDEX FROM `{$table}`", 2 );
+
+		if ( ! in_array( 'idx_current_streak', $existing, true ) ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$wpdb->query( "ALTER TABLE `{$table}` ADD KEY `idx_current_streak` (current_streak)" );
+		}
+		if ( ! in_array( 'idx_longest_streak', $existing, true ) ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$wpdb->query( "ALTER TABLE `{$table}` ADD KEY `idx_longest_streak` (longest_streak)" );
+		}
+
+		update_option( $flag_key, '1' );
 	}
 
 	/**

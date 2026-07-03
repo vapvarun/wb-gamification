@@ -192,6 +192,140 @@ final class StreakEngine {
 		return $map;
 	}
 
+	// ── Admin write API ──────────────────────────────────────────────────────────
+
+	/**
+	 * Administratively set a member's streak values (support/moderation).
+	 *
+	 * Unlike record_activity(), this bypasses the day-progression logic and
+	 * writes the given values verbatim — for fixing a member's broken streak
+	 * from wp-admin or the REST API. NEVER a silent mutation: it persists a
+	 * `streak_adjusted` row to the immutable wb_gam_events log (surfaced by
+	 * GET /members/{id}/events) carrying the before/after values, the reason,
+	 * and the acting admin, then fires `wb_gam_streak_adjusted` so listeners
+	 * (BuddyPress bridge, Compete bridge) react exactly as they do to an
+	 * organic change.
+	 *
+	 * @param int      $user_id  Member whose streak to set.
+	 * @param int|null $current  New current streak (null = leave unchanged).
+	 * @param int|null $longest  New longest streak (null = derive as max(current, existing)).
+	 * @param string   $reason   Free-text audit reason.
+	 * @param int      $admin_id Acting admin user ID (0 = system/CLI).
+	 * @return array{ current_streak: int, longest_streak: int, last_active: string|null, timezone: string, grace_used: bool } The row after the write.
+	 */
+	public static function admin_set( int $user_id, ?int $current, ?int $longest, string $reason, int $admin_id = 0 ): array {
+		$before = self::get_row( $user_id );
+
+		$new_current = null !== $current ? max( 0, $current ) : $before['current_streak'];
+		$new_longest = null !== $longest ? max( 0, $longest ) : max( $before['longest_streak'], $new_current );
+		// Longest can never be below the current streak — keep the invariant.
+		$new_longest = max( $new_longest, $new_current );
+
+		self::upsert_row(
+			$user_id,
+			$new_current,
+			$new_longest,
+			(string) $before['last_active'],
+			$before['timezone'],
+			$before['grace_used'] ? 1 : 0
+		);
+		wp_cache_delete( "wb_gam_streak_{$user_id}", self::CACHE_GROUP );
+
+		$after = self::get_row( $user_id );
+		self::record_admin_event( $user_id, 'streak_adjusted', $before, $after, $reason, $admin_id );
+
+		/**
+		 * Fires after an admin sets a member's streak values.
+		 *
+		 * @since 1.6.2
+		 * @param int    $user_id  Member whose streak changed.
+		 * @param array  $after    The streak row after the change.
+		 * @param array  $before   The streak row before the change.
+		 * @param string $reason   Audit reason supplied by the admin.
+		 * @param int    $admin_id Acting admin user ID.
+		 */
+		do_action( 'wb_gam_streak_adjusted', $user_id, $after, $before, $reason, $admin_id );
+
+		return $after;
+	}
+
+	/**
+	 * Administratively reset a member's current streak to zero.
+	 *
+	 * Clears current_streak, last_active and the grace flag so the next
+	 * activity starts a fresh streak at 1. longest_streak is PRESERVED — it is
+	 * an all-time record, not part of the active run. Audited identically to
+	 * admin_set() via a `streak_reset` event + `wb_gam_streak_reset` action.
+	 *
+	 * @param int    $user_id  Member whose streak to reset.
+	 * @param string $reason   Free-text audit reason.
+	 * @param int    $admin_id Acting admin user ID (0 = system/CLI).
+	 * @return array{ current_streak: int, longest_streak: int, last_active: string|null, timezone: string, grace_used: bool } The row after the reset.
+	 */
+	public static function admin_reset( int $user_id, string $reason, int $admin_id = 0 ): array {
+		$before = self::get_row( $user_id );
+
+		self::upsert_row( $user_id, 0, $before['longest_streak'], '', $before['timezone'], 0 );
+		wp_cache_delete( "wb_gam_streak_{$user_id}", self::CACHE_GROUP );
+
+		$after = self::get_row( $user_id );
+		self::record_admin_event( $user_id, 'streak_reset', $before, $after, $reason, $admin_id );
+
+		/**
+		 * Fires after an admin resets a member's current streak.
+		 *
+		 * @since 1.6.2
+		 * @param int    $user_id  Member whose streak was reset.
+		 * @param array  $after    The streak row after the reset.
+		 * @param array  $before   The streak row before the reset.
+		 * @param string $reason   Audit reason supplied by the admin.
+		 * @param int    $admin_id Acting admin user ID.
+		 */
+		do_action( 'wb_gam_streak_reset', $user_id, $after, $before, $reason, $admin_id );
+
+		return $after;
+	}
+
+	/**
+	 * Persist an admin streak mutation to the immutable event log.
+	 *
+	 * Writes a points-free row to wb_gam_events (no wb_gam_points row) so the
+	 * change is auditable via GET /members/{id}/events without touching the
+	 * points ledger. `upsert_row` already handles last_active as an empty
+	 * string; here we only record what changed.
+	 *
+	 * @param int    $user_id   Member the mutation applies to.
+	 * @param string $action_id Event action id (`streak_adjusted` | `streak_reset`).
+	 * @param array  $before    Streak row before the change.
+	 * @param array  $after     Streak row after the change.
+	 * @param string $reason    Audit reason.
+	 * @param int    $admin_id  Acting admin user ID.
+	 */
+	private static function record_admin_event( int $user_id, string $action_id, array $before, array $after, string $reason, int $admin_id ): void {
+		Engine::persist_event(
+			new Event(
+				array(
+					'action_id' => $action_id,
+					'user_id'   => $user_id,
+					'object_id' => (int) $after['current_streak'],
+					'metadata'  => array(
+						'reason'   => sanitize_text_field( $reason ),
+						'admin_id' => $admin_id,
+						'before'   => array(
+							'current_streak' => (int) $before['current_streak'],
+							'longest_streak' => (int) $before['longest_streak'],
+						),
+						'after'    => array(
+							'current_streak' => (int) $after['current_streak'],
+							'longest_streak' => (int) $after['longest_streak'],
+						),
+						'_site_id' => (string) get_current_blog_id(),
+					),
+				)
+			)
+		);
+	}
+
 	// ── Milestone ───────────────────────────────────────────────────────────────
 
 	/**

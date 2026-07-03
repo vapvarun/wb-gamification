@@ -219,6 +219,56 @@ class MembersController extends WP_REST_Controller {
 						)
 					),
 				),
+				// POST /members/{id}/streak — admin adjust (support/moderation).
+				// Audited to wb_gam_events; never a silent mutation.
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'set_streak' ),
+					'permission_callback' => array( $this, 'admin_permissions_check' ),
+					'args'                => array_merge(
+						$this->get_member_id_args(),
+						array(
+							'current_streak' => array(
+								'type'              => 'integer',
+								'required'          => false,
+								'minimum'           => 0,
+								'sanitize_callback' => 'absint',
+								'description'       => 'New current streak. Omit to leave unchanged.',
+							),
+							'longest_streak' => array(
+								'type'              => 'integer',
+								'required'          => false,
+								'minimum'           => 0,
+								'sanitize_callback' => 'absint',
+								'description'       => 'New longest streak. Omit to derive as max(current, existing).',
+							),
+							'reason'         => array(
+								'type'              => 'string',
+								'default'           => '',
+								'sanitize_callback' => 'sanitize_text_field',
+								'description'       => 'Audit reason recorded on the event.',
+							),
+						)
+					),
+				),
+				// DELETE /members/{id}/streak — admin reset current streak to 0
+				// (longest preserved). Audited to wb_gam_events.
+				array(
+					'methods'             => WP_REST_Server::DELETABLE,
+					'callback'            => array( $this, 'reset_streak' ),
+					'permission_callback' => array( $this, 'admin_permissions_check' ),
+					'args'                => array_merge(
+						$this->get_member_id_args(),
+						array(
+							'reason' => array(
+								'type'              => 'string',
+								'default'           => '',
+								'sanitize_callback' => 'sanitize_text_field',
+								'description'       => 'Audit reason recorded on the event.',
+							),
+						)
+					),
+				),
 			)
 		);
 
@@ -498,6 +548,70 @@ class MembersController extends WP_REST_Controller {
 				'user_id'     => $id,
 				'reset_from'  => $balance,
 				'new_balance' => 0,
+			),
+			200
+		);
+	}
+
+	/**
+	 * POST /members/{id}/streak — admin adjust a member's streak values.
+	 *
+	 * Support/moderation surface for fixing a member's broken or wrong streak.
+	 * Delegates to StreakEngine::admin_set(), which audits the change to
+	 * wb_gam_events and fires wb_gam_streak_adjusted. Omitting current_streak
+	 * or longest_streak leaves that value unchanged.
+	 *
+	 * @param WP_REST_Request $request REST request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function set_streak( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+		$id = (int) $request['id'];
+		if ( ! get_userdata( $id ) ) {
+			return new WP_Error( 'rest_user_invalid', __( 'Member not found.', 'wb-gamification' ), array( 'status' => 404 ) );
+		}
+
+		// null (not provided) leaves the value unchanged; a provided 0 is a real set.
+		$current = null !== $request->get_param( 'current_streak' ) ? (int) $request['current_streak'] : null;
+		$longest = null !== $request->get_param( 'longest_streak' ) ? (int) $request['longest_streak'] : null;
+		$reason  = (string) $request->get_param( 'reason' );
+
+		$after = StreakEngine::admin_set( $id, $current, $longest, $reason, get_current_user_id() );
+
+		return new WP_REST_Response(
+			array(
+				'user_id'        => $id,
+				'current_streak' => $after['current_streak'],
+				'longest_streak' => $after['longest_streak'],
+				'last_active'    => $after['last_active'],
+			),
+			200
+		);
+	}
+
+	/**
+	 * DELETE /members/{id}/streak — admin reset a member's current streak to 0.
+	 *
+	 * The longest_streak is preserved (all-time record). Delegates to
+	 * StreakEngine::admin_reset(), which audits to wb_gam_events and fires
+	 * wb_gam_streak_reset.
+	 *
+	 * @param WP_REST_Request $request REST request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function reset_streak( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+		$id = (int) $request['id'];
+		if ( ! get_userdata( $id ) ) {
+			return new WP_Error( 'rest_user_invalid', __( 'Member not found.', 'wb-gamification' ), array( 'status' => 404 ) );
+		}
+
+		$reason = (string) $request->get_param( 'reason' );
+		$after  = StreakEngine::admin_reset( $id, $reason, get_current_user_id() );
+
+		return new WP_REST_Response(
+			array(
+				'user_id'        => $id,
+				'current_streak' => $after['current_streak'],
+				'longest_streak' => $after['longest_streak'],
 			),
 			200
 		);
