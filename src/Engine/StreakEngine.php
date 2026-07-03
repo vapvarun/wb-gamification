@@ -192,6 +192,80 @@ final class StreakEngine {
 		return $map;
 	}
 
+	// ── Admin read API (roster) ──────────────────────────────────────────────────
+
+	/**
+	 * Columns the admin roster may sort by (whitelist — guards the ORDER BY).
+	 *
+	 * @var array<int, string>
+	 */
+	private const SORTABLE = array( 'current_streak', 'longest_streak', 'last_active', 'updated_at' );
+
+	/**
+	 * Total number of members with a streak row (for pagination).
+	 *
+	 * @return int
+	 */
+	public static function admin_count(): int {
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		return (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}wb_gam_streaks" );
+	}
+
+	/**
+	 * Fetch a page of streak rows for the admin roster, sorted at the DB.
+	 *
+	 * Uses LIMIT/OFFSET + an indexed ORDER BY (idx_current_streak /
+	 * idx_longest_streak, added in 1.6.2) so it stays fast at 100k members.
+	 * Callers batch-fetch display names to avoid N+1.
+	 *
+	 * @param int    $per_page Rows per page (1–200).
+	 * @param int    $offset   Row offset.
+	 * @param string $orderby  One of SORTABLE (falls back to current_streak).
+	 * @param string $order    'asc' or 'desc' (falls back to desc).
+	 * @return array<int, array{ user_id: int, current_streak: int, longest_streak: int, last_active: string|null, grace_used: bool }>
+	 */
+	public static function admin_list( int $per_page = 20, int $offset = 0, string $orderby = 'current_streak', string $order = 'desc' ): array {
+		global $wpdb;
+
+		$orderby  = in_array( $orderby, self::SORTABLE, true ) ? $orderby : 'current_streak';
+		$order    = strtolower( $order ) === 'asc' ? 'ASC' : 'DESC';
+		$per_page = max( 1, min( 200, $per_page ) );
+		$offset   = max( 0, $offset );
+
+		// $orderby is whitelisted above; $order is a literal ASC|DESC — neither is
+		// user input by the time it reaches the query. LIMIT/OFFSET are prepared.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$rows = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT user_id, current_streak, longest_streak, last_active, grace_used
+				   FROM {$wpdb->prefix}wb_gam_streaks
+				  ORDER BY {$orderby} {$order}
+				  LIMIT %d OFFSET %d",
+				$per_page,
+				$offset
+			),
+			ARRAY_A
+		);
+
+		if ( ! $rows ) {
+			return array();
+		}
+
+		return array_map(
+			static function ( array $r ): array {
+				return array(
+					'user_id'        => (int) $r['user_id'],
+					'current_streak' => (int) $r['current_streak'],
+					'longest_streak' => (int) $r['longest_streak'],
+					'last_active'    => $r['last_active'] ?: null,
+					'grace_used'     => (bool) $r['grace_used'],
+				);
+			},
+			$rows
+		);
+	}
+
 	// ── Admin write API ──────────────────────────────────────────────────────────
 
 	/**

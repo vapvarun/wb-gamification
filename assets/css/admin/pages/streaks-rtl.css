@@ -1,0 +1,105 @@
+/*! streaks-rtl.css — auto-generated from streaks.css by bin/build-rtl.js. Do not edit by hand. */
+/**
+ * WB Gamification - Streaks moderation page.
+ * Styles the server-rendered streak roster (src/Admin/StreaksPage.php) +
+ * per-row actions (admin-streaks.js). Token-driven; inherits admin dark mode.
+ */
+
+.wb-gam-streaks-table {
+	margin-top: var(--wb-gam-space-md, 16px);
+}
+
+.wb-gam-streaks-table th.sortable a,
+.wb-gam-streaks-table th.sorted a {
+	text-decoration: none;
+	white-space: nowrap;
+}
+
+.wb-gam-streaks-table__member {
+	display: flex;
+	align-items: center;
+	gap: var(--wb-gam-space-sm, 8px);
+}
+
+.wb-gam-streaks-table__member img {
+	border-radius: var(--wb-gam-radius-full, 9999px);
+	flex-shrink: 0;
+}
+
+.wb-gam-streaks-table__current,
+.wb-gam-streaks-table__longest {
+	font-variant-numeric: tabular-nums;
+	font-weight: var(--wb-gam-weight-semibold, 600);
+}
+
+.wb-gam-streaks-table__name {
+	font-weight: var(--wb-gam-weight-medium, 500);
+}
+
+.wb-gam-streaks-table__last {
+	font-variant-numeric: tabular-nums;
+	color: var(--wb-gam-color-text-muted, #6b7280);
+}
+
+.wb-gam-streaks-table__grace {
+	white-space: nowrap;
+}
+
+.wb-gam-streaks-table__actions {
+	display: flex;
+	gap: var(--wb-gam-space-xs, 4px);
+	flex-wrap: wrap;
+}
+
+.wb-gam-streak-adjust,
+.wb-gam-streak-reset {
+	white-space: nowrap;
+}
+
+/* Inline editor (admin-streaks.js) — replaces the action buttons in-row so no
+ * native prompt/confirm is used. */
+.wb-gam-streak-editor {
+	display: flex;
+	align-items: center;
+	gap: var(--wb-gam-space-xs, 4px);
+	flex-wrap: wrap;
+}
+
+.wb-gam-streak-editor__field {
+	max-width: 160px;
+}
+
+.wb-gam-streak-editor__note {
+	font-size: var(--wb-gam-font-sm, 14px);
+	color: var(--wb-gam-color-text-muted, #6b7280);
+}
+
+/* Warning-toned badge (grace used) — mirrors wbgam-badge--success shape. */
+.wbgam-badge--warning {
+	background: var(--wb-gam-color-warning-bg, #fdf6ec);
+	color: var(--wb-gam-color-warning-strong, #b45309);
+}
+
+/* Prev/next pager shared by admin list pages. */
+.wbgam-pager {
+	display: flex;
+	align-items: center;
+	gap: var(--wb-gam-space-md, 16px);
+	margin-top: var(--wb-gam-space-lg, 24px);
+}
+
+.wbgam-pager__status {
+	color: var(--wb-gam-color-text-muted, #6b7280);
+	font-size: var(--wb-gam-font-sm, 14px);
+}
+
+@media (max-width: 640px) {
+	.wb-gam-streaks-table__actions {
+		flex-direction: column;
+	}
+
+	.wbgam-pager {
+		flex-wrap: wrap;
+		gap: var(--wb-gam-space-sm, 8px);
+	}
+}
