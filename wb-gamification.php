@@ -349,6 +349,7 @@ final class WB_Gamification {
 			ManualAwardPage::init();
 			MembersPage::init();
 			\WBGam\Admin\StreaksPage::init();
+			\WBGam\Admin\KudosModerationPage::init();
 			ApiKeysPage::init();
 			RedemptionStorePage::init();
 			CommunityChallengesPage::init();

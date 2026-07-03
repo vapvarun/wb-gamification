@@ -1,0 +1,93 @@
+/**
+ * WB Gamification - Kudos moderation page.
+ * Server-rendered roster (src/Admin/KudosModerationPage.php) + inline revoke
+ * editor (admin-kudos.js). Token-driven; inherits admin dark mode.
+ */
+
+.wb-gam-kudos-filter {
+	display: flex;
+	gap: var(--wb-gam-space-xs, 4px);
+	margin-bottom: var(--wb-gam-space-md, 16px);
+	flex-wrap: wrap;
+}
+
+.wb-gam-kudos-filter__tab {
+	padding: var(--wb-gam-space-xs, 4px) var(--wb-gam-space-md, 16px);
+	border-radius: var(--wb-gam-radius-full, 9999px);
+	text-decoration: none;
+	color: var(--wb-gam-color-text-muted, #6b7280);
+	border: 1px solid var(--wb-gam-color-border, #e2e3ed);
+}
+
+.wb-gam-kudos-filter__tab.is-active {
+	background: var(--wb-gam-color-accent, #5b4cdb);
+	color: #fff;
+	border-color: var(--wb-gam-color-accent, #5b4cdb);
+}
+
+.wb-gam-kudos-table {
+	margin-top: var(--wb-gam-space-sm, 8px);
+}
+
+.wb-gam-kudos-table__message {
+	color: var(--wb-gam-color-text-muted, #6b7280);
+}
+
+.wb-gam-kudos-table__date {
+	font-variant-numeric: tabular-nums;
+	white-space: nowrap;
+}
+
+.wb-gam-kudos-table__status {
+	white-space: nowrap;
+}
+
+.wb-gam-kudos-table__muted {
+	color: var(--wb-gam-color-text-light, #9ca3af);
+}
+
+.wb-gam-kudos-table__actions {
+	display: flex;
+	gap: var(--wb-gam-space-xs, 4px);
+	flex-wrap: wrap;
+}
+
+.wb-gam-kudos-revoke {
+	white-space: nowrap;
+}
+
+.wb-gam-kudos-table__flagged {
+	background: var(--wb-gam-color-warning-bg, #fdf6ec);
+}
+
+.wbgam-badge--danger {
+	background: var(--wb-gam-color-danger-bg, #fdecec);
+	color: var(--wb-gam-color-danger-strong, #b91c1c);
+}
+
+.wb-gam-kudos-editor {
+	display: flex;
+	align-items: center;
+	gap: var(--wb-gam-space-xs, 4px);
+	flex-wrap: wrap;
+}
+
+.wb-gam-kudos-editor__note {
+	font-size: var(--wb-gam-font-sm, 14px);
+	color: var(--wb-gam-color-text-muted, #6b7280);
+}
+
+.wb-gam-kudos-editor__reason {
+	max-width: 220px;
+}
+
+@media (max-width: 640px) {
+	.wb-gam-kudos-table__message {
+		display: none;
+	}
+
+	.wb-gam-kudos-editor {
+		flex-direction: column;
+		align-items: stretch;
+	}
+}
