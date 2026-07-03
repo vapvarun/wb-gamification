@@ -99,6 +99,44 @@ final class DbUpgrader {
 		self::ensure_user_intelligence_table();
 		self::ensure_superseded_badge_condition_action_ids();
 		self::ensure_streak_sort_indexes();
+		self::ensure_kudos_moderation_schema();
+	}
+
+	/**
+	 * 1.6.2 — kudos moderation schema.
+	 *   - wb_gam_kudos.revoked_at DATETIME NULL — soft-revoke marker (row kept
+	 *     for the audit trail; NULL = active).
+	 *   - KEY idx_receiver_date (receiver_id, created_at) — the moderation
+	 *     roster filters/sorts by receiver + time; the table only had a
+	 *     standalone receiver_id key, so receiver-scoped time queries filesort.
+	 * Idempotent + option-gated.
+	 *
+	 * @since 1.6.2
+	 */
+	private static function ensure_kudos_moderation_schema(): void {
+		$flag_key = 'wb_gam_feature_kudos_moderation_v1';
+		if ( get_option( $flag_key ) ) {
+			return;
+		}
+
+		global $wpdb;
+		$table = $wpdb->prefix . 'wb_gam_kudos';
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$cols = (array) $wpdb->get_col( "SHOW COLUMNS FROM `{$table}`", 0 );
+		if ( ! in_array( 'revoked_at', $cols, true ) ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$wpdb->query( "ALTER TABLE `{$table}` ADD COLUMN `revoked_at` DATETIME DEFAULT NULL AFTER `created_at`" );
+		}
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$idx = (array) $wpdb->get_col( "SHOW INDEX FROM `{$table}`", 2 );
+		if ( ! in_array( 'idx_receiver_date', $idx, true ) ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$wpdb->query( "ALTER TABLE `{$table}` ADD KEY `idx_receiver_date` (receiver_id, created_at)" );
+		}
+
+		update_option( $flag_key, '1' );
 	}
 
 	/**

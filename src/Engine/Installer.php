@@ -288,9 +288,11 @@ final class Installer {
 			receiver_id BIGINT UNSIGNED NOT NULL,
 			message     VARCHAR(255)    DEFAULT NULL,
 			created_at  DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			revoked_at  DATETIME        DEFAULT NULL,
 			PRIMARY KEY (id),
 			KEY giver_date (giver_id, created_at),
-			KEY receiver_id (receiver_id)
+			KEY receiver_id (receiver_id),
+			KEY idx_receiver_date (receiver_id, created_at)
 		) $charset;"
 		);
 

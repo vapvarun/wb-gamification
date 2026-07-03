@@ -303,6 +303,7 @@ final class KudosEngine {
 				   FROM {$wpdb->prefix}wb_gam_kudos k
 				   JOIN {$wpdb->users} g ON g.ID = k.giver_id
 				   JOIN {$wpdb->users} r ON r.ID = k.receiver_id
+				  WHERE k.revoked_at IS NULL
 				  ORDER BY k.created_at DESC
 				  LIMIT %d",
 				$limit
@@ -328,5 +329,200 @@ final class KudosEngine {
 			},
 			$rows
 		);
+	}
+
+	// ── Admin moderation API ──────────────────────────────────────────────────────
+
+	/**
+	 * Revoke a kudos: reverse BOTH point awards and soft-mark the row.
+	 *
+	 * A compound reversal — the giver and receiver each received points at send
+	 * time, so revoking debits BOTH by the EXACT amount they were awarded for
+	 * this kudos (looked up from wb_gam_points by object_id, not the current
+	 * option value, which may have changed). The row is kept (revoked_at set)
+	 * for the audit trail. Each debit is audited via PointsEngine::debit
+	 * (wb_gam_events), and wb_gam_kudos_revoked fires so the notification bridge
+	 * / webhooks can react. Idempotent: a second revoke is rejected.
+	 *
+	 * @param int    $kudos_id Kudos row ID.
+	 * @param string $reason   Free-text audit reason.
+	 * @param int    $admin_id Acting admin user ID (0 = system/CLI).
+	 * @return array{ kudos_id:int, giver_id:int, receiver_id:int, giver_debited:int, receiver_debited:int }|WP_Error
+	 */
+	public static function revoke( int $kudos_id, string $reason, int $admin_id = 0 ): array|WP_Error {
+		global $wpdb;
+		$table = $wpdb->prefix . 'wb_gam_kudos';
+
+		$row = $wpdb->get_row(
+			$wpdb->prepare( "SELECT id, giver_id, receiver_id, revoked_at FROM {$table} WHERE id = %d", $kudos_id ),
+			ARRAY_A
+		);
+		if ( ! $row ) {
+			return new WP_Error( 'wb_gam_kudos_not_found', __( 'Kudos not found.', 'wb-gamification' ), array( 'status' => 404 ) );
+		}
+		if ( ! empty( $row['revoked_at'] ) ) {
+			return new WP_Error( 'wb_gam_kudos_already_revoked', __( 'This kudos is already revoked.', 'wb-gamification' ), array( 'status' => 409 ) );
+		}
+
+		$giver_id    = (int) $row['giver_id'];
+		$receiver_id = (int) $row['receiver_id'];
+
+		// Exact amounts awarded FOR THIS KUDOS (object_id = kudos_id).
+		$giver_pts = (int) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COALESCE(SUM(points),0) FROM {$wpdb->prefix}wb_gam_points WHERE object_id = %d AND action_id = 'give_kudos' AND user_id = %d",
+				$kudos_id,
+				$giver_id
+			)
+		);
+		$recv_pts  = (int) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COALESCE(SUM(points),0) FROM {$wpdb->prefix}wb_gam_points WHERE object_id = %d AND action_id = 'receive_kudos' AND user_id = %d",
+				$kudos_id,
+				$receiver_id
+			)
+		);
+
+		// Soft-revoke the row (kept for audit).
+		$wpdb->update( $table, array( 'revoked_at' => current_time( 'mysql' ) ), array( 'id' => $kudos_id ), array( '%s' ), array( '%d' ) );
+
+		// Compensating debits — each audited to wb_gam_events with the reason.
+		if ( $recv_pts > 0 ) {
+			PointsEngine::debit( $receiver_id, $recv_pts, 'kudos_revoked', self::revoke_event( 'kudos_revoked', $receiver_id, $kudos_id, $reason, $admin_id, 'receiver', $recv_pts ) );
+		}
+		if ( $giver_pts > 0 ) {
+			PointsEngine::debit( $giver_id, $giver_pts, 'kudos_revoked', self::revoke_event( 'kudos_revoked', $giver_id, $kudos_id, $reason, $admin_id, 'giver', $giver_pts ) );
+		}
+
+		/**
+		 * Fires after an admin revokes a kudos.
+		 *
+		 * @since 1.6.2
+		 * @param int    $kudos_id    Revoked kudos row ID.
+		 * @param int    $giver_id    User who gave the kudos.
+		 * @param int    $receiver_id User who received the kudos.
+		 * @param string $reason      Audit reason.
+		 * @param int    $admin_id    Acting admin user ID.
+		 */
+		do_action( 'wb_gam_kudos_revoked', $kudos_id, $giver_id, $receiver_id, $reason, $admin_id );
+
+		return array(
+			'kudos_id'         => $kudos_id,
+			'giver_id'         => $giver_id,
+			'receiver_id'      => $receiver_id,
+			'giver_debited'    => $giver_pts,
+			'receiver_debited' => $recv_pts,
+		);
+	}
+
+	/**
+	 * Build the audit Event for one side of a revoke debit.
+	 *
+	 * @param string $action_id Event action id.
+	 * @param int    $user_id   User being debited.
+	 * @param int    $kudos_id  Kudos row ID (object_id).
+	 * @param string $reason    Audit reason.
+	 * @param int    $admin_id  Acting admin.
+	 * @param string $role      'giver' | 'receiver'.
+	 * @param int    $amount    Points reversed.
+	 * @return Event
+	 */
+	private static function revoke_event( string $action_id, int $user_id, int $kudos_id, string $reason, int $admin_id, string $role, int $amount ): Event {
+		return new Event(
+			array(
+				'action_id' => $action_id,
+				'user_id'   => $user_id,
+				'object_id' => $kudos_id,
+				'metadata'  => array(
+					'reason'      => sanitize_text_field( $reason ),
+					'admin_id'    => $admin_id,
+					'role'        => $role,
+					'points_cost' => -$amount,
+				),
+			)
+		);
+	}
+
+	/**
+	 * Total kudos rows matching an optional status filter (for pagination).
+	 *
+	 * @param string $status 'all' | 'active' | 'revoked'.
+	 * @return int
+	 */
+	public static function admin_count( string $status = 'all' ): int {
+		global $wpdb;
+		$where = self::status_where( $status );
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		return (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}wb_gam_kudos {$where}" );
+	}
+
+	/**
+	 * Fetch a page of kudos for the moderation roster (with display names).
+	 *
+	 * @param int    $per_page Rows per page (1–200).
+	 * @param int    $offset   Row offset.
+	 * @param string $status   'all' | 'active' | 'revoked'.
+	 * @return array<int, array{ id:int, giver_id:int, giver_name:string, receiver_id:int, receiver_name:string, message:string|null, created_at:string, revoked:bool }>
+	 */
+	public static function admin_list( int $per_page = 20, int $offset = 0, string $status = 'all' ): array {
+		global $wpdb;
+		$per_page = max( 1, min( 200, $per_page ) );
+		$offset   = max( 0, $offset );
+		$where    = self::status_where( $status );
+
+		// $where is built from a whitelist below; LIMIT/OFFSET are prepared.
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$rows = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT k.id, k.giver_id, g.display_name AS giver_name,
+				        k.receiver_id, r.display_name AS receiver_name,
+				        k.message, k.created_at, k.revoked_at
+				   FROM {$wpdb->prefix}wb_gam_kudos k
+				   LEFT JOIN {$wpdb->users} g ON g.ID = k.giver_id
+				   LEFT JOIN {$wpdb->users} r ON r.ID = k.receiver_id
+				   {$where}
+				  ORDER BY k.created_at DESC
+				  LIMIT %d OFFSET %d",
+				$per_page,
+				$offset
+			),
+			ARRAY_A
+		);
+
+		if ( ! $rows ) {
+			return array();
+		}
+
+		return array_map(
+			static function ( array $row ): array {
+				return array(
+					'id'            => (int) $row['id'],
+					'giver_id'      => (int) $row['giver_id'],
+					'giver_name'    => $row['giver_name'] ?: '',
+					'receiver_id'   => (int) $row['receiver_id'],
+					'receiver_name' => $row['receiver_name'] ?: '',
+					'message'       => $row['message'] ?: null,
+					'created_at'    => $row['created_at'],
+					'revoked'       => ! empty( $row['revoked_at'] ),
+				);
+			},
+			$rows
+		);
+	}
+
+	/**
+	 * Map a status filter to a safe WHERE clause (no user input interpolated).
+	 *
+	 * @param string $status 'all' | 'active' | 'revoked'.
+	 * @return string
+	 */
+	private static function status_where( string $status ): string {
+		if ( 'active' === $status ) {
+			return 'WHERE k.revoked_at IS NULL';
+		}
+		if ( 'revoked' === $status ) {
+			return 'WHERE k.revoked_at IS NOT NULL';
+		}
+		return '';
 	}
 }
