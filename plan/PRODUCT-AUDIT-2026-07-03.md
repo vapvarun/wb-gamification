@@ -157,3 +157,53 @@ comparison landing pages (vs GamiPress / vs myCred / BadgeOS refugees).
 *Full evaluator dumps: wppqa audit tool-result 2026-07-03; site-owner inventory and
 market research agent reports archived in session. Re-run `wppqa_audit_plugin` after
 each wave; keep findings filtered to non-`libs/` paths.*
+
+---
+
+## ADDENDUM — Verification pass (same day, 3 adversarial agents vs code)
+
+Every factual claim in the derived Basecamp cards was cross-examined against the
+1.6.2 tree. Corrections to THIS document's findings:
+
+**Section 4.3 (polish debt) — significant wppqa false-positive rate:**
+- "~40 silent empty states" → REFUTED. All sampled blocks already render explicit
+  empty states (16 `__empty` BEM classes; shared CSS `.wb-gam-card--empty` in
+  src/shared/block-card.css:83). Real gaps: loading skeletons (0 exist), error
+  states on client-fetch blocks, and consolidation into one shared PHP partial.
+- "18 a11y findings" → mostly REFUTED. The `outline:none` flags sit next to correct
+  `:focus-visible` replacements (proper pattern); the block view.js click handlers
+  target native `<button>` elements. Real gap: 4 hand-rolled overlay surfaces
+  (hub-convert native <dialog>, redemption confirm panel, celebration overlay,
+  toast stack) with no shared utility.
+- "19 fetch() without catch" → REFUTED. 10 bare fetch sites, ALL with error
+  handling; shared admin wrapper `wbGamAdminRest.apiFetch` already serves ~9 pages.
+  Real gap: zero timeouts anywhere (incl. sdk/src/client.ts request<T>).
+- "17 direct $_POST→update_option + 11 no-nonce" → false positives for SettingsPage:
+  central `handle_save()` dispatcher verifies nonce+cap upstream
+  (SettingsPage.php:79-107, with phpcs:disable annotations). Triage scope = other
+  admin pages' save paths.
+- Email templates: 6 files not 5 (leaderboard-nudge.php); theme-override hierarchy
+  ALREADY ships (Email::locate() 4-tier). Real gap: zero subject/recipient filters,
+  no transactional body filter.
+
+**Section 2/4.2 factual fixes:** 10 granular caps not 11 (Capabilities.php:41-71);
+`Capabilities::user_can()` already includes the manage_options fallback (:191);
+15 REST controllers hardcode manage_options with no granular cap (incl. Members
+roster, PointTypes, Tools) — caps-delegation card scope extended accordingly.
+RedemptionEngine has 6 reward types (coupon_code is a result field). Atomic
+conversion lives in src/Services/PointTypeConversionService.php.
+
+**Confirmed intact:** streaks/kudos 3-entry-point gaps (incl. exact stores:
+wb_gam_streaks PK user_id + grace_used col; wb_gam_kudos receiver index lacks
+created_at), import-mode API gaps (+ metadata LONGTEXT unindexable → idempotency
+needs new source_key column + UNIQUE), SideEffectDispatcher as the suppression
+chokepoint, no season/reset primitive, RuleEngine's `wb_gam_rule_condition` filter
+as the role-based-earning extension point, scale CLI with 6 budgeted hot paths.
+
+**Meta-lesson (tool-side):** wppqa's evaluators don't recognize (a) the central
+save-dispatcher pattern, (b) focus-visible-adjacent outline:none, (c) delegation
+onto native buttons, (d) per-block empty-state BEM classes. File these as scanner
+calibration improvements so the next audit is cleaner.
+
+All 9 Ready-for-Development cards + 2 epics were corrected in Basecamp same day —
+the cards, not this document, are the working contracts.
