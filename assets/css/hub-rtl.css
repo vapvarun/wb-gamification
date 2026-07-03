@@ -23,7 +23,13 @@
   --gam-surface-hover: var(--bx-color-bg-muted, #f7f7fb);
   --gam-border: var(--bx-color-border, #e2e3ed);
   --gam-border-hover: var(--bx-color-border, #c8c9d9);
-  --gam-accent: #5b4cdb;
+  /* Accent bridges to the standard --wb-gam-color-accent token so the
+   * site owner's Settings > Appearance accent (WBGam\Engine\Appearance)
+   * re-tints the Hub too. Falls back to the brand purple when unset, which
+   * is the previous hardcoded value — so default behaviour is unchanged.
+   * accent-light / accent-text derive from --gam-accent below, so they
+   * follow automatically. See BC card 10060536808. */
+  --gam-accent: var(--wb-gam-color-accent, #5b4cdb);
   /* Tints mixed over --gam-surface so icon chips / status pills adapt to
    * dark mode (faint dark tint) instead of staying opaque light. */
   --gam-accent-light: color-mix(in srgb, var(--gam-accent) 14%, var(--gam-surface));
@@ -871,15 +877,17 @@
   .wbgam-convert-form__actions { padding-right: 16px; padding-left: 16px; }
 }
 
-/* Dark-mode accent — keep the brand purple, lighten on dark surfaces.
- * Mirrors src/shared/design-tokens.css; --gam-accent-light / --gam-accent-text
- * cascade from --gam-accent so they lighten automatically. */
+/* Dark-mode accent — bridges to --wb-gam-color-accent, which the Appearance
+ * engine already lightens under dark mode (color-mix 60% over #fff). Falls
+ * back to the lightened brand purple when no custom accent is set, matching
+ * the previous hardcoded value. --gam-accent-light / --gam-accent-text
+ * cascade from --gam-accent so they lighten automatically. BC 10060536808. */
 :root[data-bx-mode="dark"] .gam-page,
 body.buddyx-dark-theme .gam-page {
-  --gam-accent: color-mix(in srgb, #5b4cdb 60%, #ffffff);
+  --gam-accent: var(--wb-gam-color-accent, color-mix(in srgb, #5b4cdb 60%, #ffffff));
 }
 @media (prefers-color-scheme: dark) {
   :root[data-bx-mode="auto"] .gam-page {
-    --gam-accent: color-mix(in srgb, #5b4cdb 60%, #ffffff);
+    --gam-accent: var(--wb-gam-color-accent, color-mix(in srgb, #5b4cdb 60%, #ffffff));
   }
 }

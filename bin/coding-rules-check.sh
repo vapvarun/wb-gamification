@@ -263,6 +263,29 @@ check_as_schedule_guard() {
     fi
 }
 
+# Rule 13: the Hub's legacy --gam-accent token must bridge to the standard
+# --wb-gam-color-accent token, never a hardcoded hex. hub.css forked its own
+# --gam-* family; a hardcoded --gam-accent means the site owner's
+# Settings > Appearance accent silently does not apply to the Hub (the
+# 10060536808 bug). Every --gam-accent DEFINITION in the source stylesheet
+# must reference var(--wb-gam-color-accent, ...). Only the source hub.css is
+# checked; hub-rtl.css / *.min.css are generated from it. (Matches the exact
+# token only — --gam-accent-light / --gam-accent-text are derived usages.)
+check_hub_accent_bridged_to_standard_token() {
+    local src="$PLUGIN_DIR/assets/css/hub.css"
+    [ -f "$src" ] || { ok "Rule 13 — hub.css absent, skipped"; return; }
+    local hits
+    hits=$(grep -nE -- '--gam-accent:' "$src" 2>/dev/null \
+            | grep -v 'var(--wb-gam-color-accent' \
+            || true)
+    if [ -n "$hits" ]; then
+        violation "Rule 13 — --gam-accent defined without bridging to --wb-gam-color-accent (owner accent won't reach the Hub — see BC 10060536808):"
+        echo "$hits" | sed 's/^/    /'
+    else
+        ok "Rule 13 — Hub --gam-accent bridges to --wb-gam-color-accent"
+    fi
+}
+
 check_no_native_cap_check_for_plugin_abilities
 check_unauthenticated_rest_allowlist
 check_no_inline_styles_in_admin_php
@@ -270,6 +293,7 @@ check_no_inline_scripts_in_php
 check_no_inline_style_blocks_in_php
 check_privacy_coverage_for_user_scoped_surfaces
 check_as_schedule_guard
+check_hub_accent_bridged_to_standard_token
 
 echo ""
 COUNT=$(violations_count)
