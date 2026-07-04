@@ -66,6 +66,22 @@ const { state, actions } = store( NS, {
 			// re-open an overlay the user just dismissed.
 			const seenOverlayIds = new Set();
 
+			// Move focus to an overlay's dismiss button once it renders, per
+			// the WAI-ARIA alertdialog pattern, so keyboard users land inside
+			// the dialog (they can also press Escape — see below). The overlay
+			// unhides reactively, so wait one frame for the DOM.
+			const focusOverlayDismiss = ( modifier ) => {
+				if ( typeof requestAnimationFrame !== 'function' ) {
+					return;
+				}
+				requestAnimationFrame( () => {
+					const btn = document.querySelector( '.' + modifier + ' .wb-gam-overlay__dismiss' );
+					if ( btn && typeof btn.focus === 'function' ) {
+						btn.focus();
+					}
+				} );
+			};
+
 			/**
 			 * Open the matching overlay for one event. Returns true if
 			 * the event was an overlay type and was rendered (or skipped
@@ -105,6 +121,7 @@ const { state, actions } = store( NS, {
 						// NOTIFICATIONS-2026-05-27.md §G10.
 						levelName: event.levelName || event.message || event.detail || 'Level up!',
 					};
+						focusOverlayDismiss( 'wb-gam-overlay--level-up' );
 				} else {
 					const days =
 						event.days
@@ -116,6 +133,7 @@ const { state, actions } = store( NS, {
 						active: true,
 						days:   String( days ),
 					};
+						focusOverlayDismiss( 'wb-gam-overlay--streak' );
 				}
 				return true;
 			}

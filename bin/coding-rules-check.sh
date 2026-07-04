@@ -354,6 +354,27 @@ check_fetch_has_timeout() {
     fi
 }
 
+# Rule 17: any authored CSS that defines a keyframe animation must also carry
+# a prefers-reduced-motion guard (WCAG 2.3.3 — vestibular safety). Applies to
+# source CSS only (skips generated -rtl / .min variants, which inherit it).
+check_animations_respect_reduced_motion() {
+    local missing="" f
+    while IFS= read -r f; do
+        [ -f "$f" ] || continue
+        case "$f" in
+            *.min.css|*-rtl.css|*-rtl.min.css ) continue ;;
+        esac
+        if grep -qE "@keyframes|animation:" "$f" 2>/dev/null && ! grep -q "prefers-reduced-motion" "$f" 2>/dev/null; then
+            missing="${missing} ${f#"$PLUGIN_DIR"/}"
+        fi
+    done < <(find "$PLUGIN_DIR/assets/css" "$PLUGIN_DIR/src" -name '*.css' 2>/dev/null)
+    if [ -n "$missing" ]; then
+        violation "Rule 17 — CSS defines animation without a prefers-reduced-motion guard (WCAG 2.3.3):$missing"
+    else
+        ok "Rule 17 — every animated CSS file guards prefers-reduced-motion"
+    fi
+}
+
 check_no_native_cap_check_for_plugin_abilities
 check_unauthenticated_rest_allowlist
 check_no_inline_styles_in_admin_php
@@ -365,6 +386,7 @@ check_hub_accent_bridged_to_standard_token
 check_no_raw_post_to_update_option
 check_blocks_have_empty_state
 check_fetch_has_timeout
+check_animations_respect_reduced_motion
 
 echo ""
 COUNT=$(violations_count)
