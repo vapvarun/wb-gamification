@@ -154,11 +154,12 @@ final class GamiPressImporter {
 	}
 
 	/**
-	 * Sum a user's GamiPress balance across all its points types.
+	 * A user's GamiPress balance, summed across every points type.
 	 *
-	 * Reads the EXACT balance key `_gamipress_{slug}_points` per points-type —
-	 * a LIKE match would wrongly fold in GamiPress's `_new_points` (unseen
-	 * counter) and `_points_awarded` (lifetime) meta.
+	 * Uses GamiPress's OWN getter (`gamipress_get_user_points`) as the
+	 * authority so reconciliation is independent of how we read the source —
+	 * exactly the cross-check that caught an earlier raw-meta miscount. Falls
+	 * back to the exact per-slug balance meta only if the getter is absent.
 	 *
 	 * @param int $user_id User ID.
 	 * @return int
@@ -166,7 +167,11 @@ final class GamiPressImporter {
 	private static function gamipress_balance( int $user_id ): int {
 		$total = 0;
 		foreach ( self::points_type_slugs() as $slug ) {
-			$total += (int) get_user_meta( $user_id, '_gamipress_' . $slug . '_points', true );
+			if ( function_exists( 'gamipress_get_user_points' ) ) {
+				$total += (int) gamipress_get_user_points( $user_id, $slug );
+			} else {
+				$total += (int) get_user_meta( $user_id, '_gamipress_' . $slug . '_points', true );
+			}
 		}
 		return $total;
 	}

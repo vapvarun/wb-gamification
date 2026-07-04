@@ -160,7 +160,13 @@ final class MyCredImporter {
 	private static function mycred_balance( int $user_id ): int {
 		$total = 0.0;
 		foreach ( self::ctypes() as $ctype ) {
-			$total += (float) get_user_meta( $user_id, $ctype, true );
+			// Use myCred's OWN balance getter as the reconciliation authority;
+			// fall back to the raw meta key only if the function is missing.
+			if ( function_exists( 'mycred_get_users_balance' ) ) {
+				$total += (float) mycred_get_users_balance( $user_id, $ctype );
+			} else {
+				$total += (float) get_user_meta( $user_id, $ctype, true );
+			}
 		}
 		return (int) round( $total );
 	}
