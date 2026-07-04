@@ -358,6 +358,7 @@ final class WB_Gamification {
 			PointTypesPage::init();
 			PointTypeConversionsPage::init();
 			SubmissionsPage::init();
+			\WBGam\Admin\DeactivationFeedback::init();
 		}
 	}
 
