@@ -9,6 +9,7 @@
 namespace WBGam\CLI;
 
 use WBGam\Integrations\Importers\GamiPressImporter;
+use WBGam\Integrations\Importers\MyCredImporter;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -39,35 +40,49 @@ class ImportCommand {
 	 * @param array $assoc_args Flags.
 	 * @return void
 	 */
+	private const IMPORTERS = array(
+		'gamipress' => GamiPressImporter::class,
+		'mycred'    => MyCredImporter::class,
+	);
+
 	public function __invoke( array $args, array $assoc_args ): void {
 		$source  = strtolower( (string) ( $args[0] ?? '' ) );
 		$dry_run = isset( $assoc_args['dry-run'] );
 
-		if ( 'gamipress' !== $source ) {
-			\WP_CLI::error( "Unsupported source: {$source}. Supported: gamipress." );
+		if ( ! isset( self::IMPORTERS[ $source ] ) ) {
+			\WP_CLI::error( "Unsupported source: {$source}. Supported: " . implode( ', ', array_keys( self::IMPORTERS ) ) . '.' );
 		}
-		if ( ! GamiPressImporter::is_available() ) {
-			\WP_CLI::error( 'GamiPress data not found (no wp_gamipress_logs table).' );
+		$importer = self::IMPORTERS[ $source ];
+		if ( ! $importer::is_available() ) {
+			\WP_CLI::error( "No {$source} data found to import." );
 		}
 
-		$result = GamiPressImporter::run( $dry_run );
+		$result = $importer::run( $dry_run );
 		\WP_CLI::log( sprintf( '%s %d source row(s).', $dry_run ? 'Previewed' : 'Imported', $result['rows'] ) );
 
+		// The reconciliation carries a source-specific balance key
+		// (gamipress_balance / mycred_balance); render it generically.
+		$balance_key = '';
+		foreach ( (array) reset( $result['reconciliation'] ) as $k => $v ) {
+			if ( str_ends_with( $k, '_balance' ) ) {
+				$balance_key = $k;
+			}
+		}
 		$mismatch = 0;
 		$table    = array();
 		foreach ( $result['reconciliation'] as $uid => $rec ) {
 			$table[] = array(
-				'user_id'           => $uid,
-				'imported_sum'      => $rec['imported_sum'],
-				'gamipress_balance' => $rec['gamipress_balance'],
-				'match'             => $rec['match'] ? 'yes' : 'NO',
+				'user_id'        => $uid,
+				'imported_sum'   => $rec['imported_sum'],
+				'source_balance' => '' !== $balance_key ? $rec[ $balance_key ] : '',
+				'match'          => $rec['match'] ? 'yes' : 'NO',
 			);
 			if ( ! $rec['match'] ) {
 				++$mismatch;
 			}
 		}
 		if ( ! empty( $table ) ) {
-			\WP_CLI\Utils\format_items( 'table', $table, array( 'user_id', 'imported_sum', 'gamipress_balance', 'match' ) );
+			\WP_CLI\Utils\format_items( 'table', $table, array( 'user_id', 'imported_sum', 'source_balance', 'match' ) );
 		}
 
 		if ( ! $dry_run && isset( $result['ingest'] ) ) {
@@ -86,7 +101,7 @@ class ImportCommand {
 		if ( $mismatch > 0 ) {
 			\WP_CLI::warning( "{$mismatch} user(s) did not reconcile — investigate before trusting the import." );
 		} else {
-			\WP_CLI::success( 'All users reconciled against GamiPress balances.' );
+			\WP_CLI::success( "All users reconciled against {$source} balances." );
 		}
 	}
 }
