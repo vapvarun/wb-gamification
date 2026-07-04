@@ -8,6 +8,7 @@
 
 namespace WBGam\CLI;
 
+use WBGam\Integrations\Importers\BadgeOSImporter;
 use WBGam\Integrations\Importers\GamiPressImporter;
 use WBGam\Integrations\Importers\MyCredImporter;
 
@@ -43,6 +44,7 @@ class ImportCommand {
 	private const IMPORTERS = array(
 		'gamipress' => GamiPressImporter::class,
 		'mycred'    => MyCredImporter::class,
+		'badgeos'   => BadgeOSImporter::class,
 	);
 
 	public function __invoke( array $args, array $assoc_args ): void {
