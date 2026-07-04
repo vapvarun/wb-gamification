@@ -86,28 +86,39 @@ class ImportCommand {
 			\WP_CLI\Utils\format_items( 'table', $table, array( 'user_id', 'imported_sum', 'source_balance', 'match' ) );
 		}
 
-		// Achievement reconciliation, when the importer reports it.
-		if ( ! empty( $result['achievement_reconciliation'] ) ) {
-			$ach_table = array();
-			foreach ( $result['achievement_reconciliation'] as $uid => $rec ) {
-				$src = 0;
+		// Achievements/badges reconciliation, when the importer reports it
+		// (achievement_reconciliation for GamiPress, badge_reconciliation for
+		// myCred). Rendered generically: imported count vs source count.
+		foreach ( array(
+			'achievement_reconciliation' => 'Achievements',
+			'badge_reconciliation'       => 'Badges',
+		) as $key => $label ) {
+			if ( empty( $result[ $key ] ) ) {
+				continue;
+			}
+			$rows_out = array();
+			foreach ( $result[ $key ] as $uid => $rec ) {
+				$imported  = 0;
+				$src_count = 0;
 				foreach ( $rec as $k => $v ) {
-					if ( str_ends_with( (string) $k, '_achievements' ) && 'imported_achievements' !== $k ) {
-						$src = $v;
+					if ( is_int( $v ) && str_starts_with( (string) $k, 'imported_' ) ) {
+						$imported = $v;
+					} elseif ( is_int( $v ) ) {
+						$src_count = $v;
 					}
 				}
-				$ach_table[] = array(
+				$rows_out[] = array(
 					'user_id'  => $uid,
-					'imported' => $rec['imported_achievements'] ?? 0,
-					'source'   => $src,
+					'imported' => $imported,
+					'source'   => $src_count,
 					'match'    => ! empty( $rec['match'] ) ? 'yes' : 'NO',
 				);
 				if ( empty( $rec['match'] ) ) {
 					++$mismatch;
 				}
 			}
-			\WP_CLI::log( 'Achievements:' );
-			\WP_CLI\Utils\format_items( 'table', $ach_table, array( 'user_id', 'imported', 'source', 'match' ) );
+			\WP_CLI::log( $label . ':' );
+			\WP_CLI\Utils\format_items( 'table', $rows_out, array( 'user_id', 'imported', 'source', 'match' ) );
 		}
 
 		// Rank reconciliation (source rank vs the WB level a member's imported
@@ -118,10 +129,16 @@ class ImportCommand {
 		if ( ! empty( $result['rank_reconciliation'] ) ) {
 			$rank_table = array();
 			foreach ( $result['rank_reconciliation'] as $uid => $rec ) {
+				$src_rank = '';
+				foreach ( $rec as $k => $v ) {
+					if ( 'our_level' !== $k && 'match' !== $k && is_string( $v ) ) {
+						$src_rank = $v;
+					}
+				}
 				$rank_table[] = array(
 					'user_id'     => $uid,
 					'our_level'   => $rec['our_level'] ?? '',
-					'source_rank' => $rec['gamipress_rank'] ?? '',
+					'source_rank' => $src_rank,
 					'match'       => ! empty( $rec['match'] ) ? 'yes' : 'NO',
 				);
 				if ( empty( $rec['match'] ) ) {

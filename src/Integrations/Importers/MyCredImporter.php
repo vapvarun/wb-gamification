@@ -117,18 +117,178 @@ final class MyCredImporter {
 	}
 
 	/**
+	 * Build myCred badge-award records from user meta.
+	 *
+	 * Each earned badge is stored by myCred as user_meta `mycred_badge{post_id}`
+	 * = level (verified against mycred_get_users_badges), with the earned time
+	 * in `mycred_badge{post_id}_issued_on`. We match the exact key shape and
+	 * skip the `_ids` / `_issued_on` / `_requirement_` siblings.
+	 *
+	 * @return array<int, array{user_id:int, badge_id:string, name:string, image:string, earned_at:string, post_id:int}>
+	 */
+	public static function build_badges(): array {
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$rows = $wpdb->get_results(
+			"SELECT user_id, meta_key FROM {$wpdb->usermeta}
+			  WHERE meta_key REGEXP '^mycred_badge[0-9]+$'",
+			ARRAY_A
+		);
+
+		$out = array();
+		foreach ( (array) $rows as $r ) {
+			$post_id = (int) str_replace( 'mycred_badge', '', $r['meta_key'] );
+			if ( $post_id <= 0 || 'mycred_badge' !== get_post_type( $post_id ) ) {
+				continue;
+			}
+			$issued = (int) get_user_meta( (int) $r['user_id'], 'mycred_badge' . $post_id . '_issued_on', true );
+			$out[]  = array(
+				'user_id'   => (int) $r['user_id'],
+				'badge_id'  => 'mycred-badge-' . $post_id,
+				'name'      => (string) get_the_title( $post_id ),
+				'image'     => (string) get_the_post_thumbnail_url( $post_id, 'full' ),
+				'earned_at' => $issued > 0 ? gmdate( 'Y-m-d H:i:s', $issued ) : gmdate( 'Y-m-d H:i:s' ),
+				'post_id'   => $post_id,
+			);
+		}
+		return $out;
+	}
+
+	/**
+	 * Build rank tiers (as WB level defs) from myCred `mycred_rank` posts.
+	 *
+	 * Ranks in myCred are point-based (`mycred_rank_min`), which maps directly
+	 * to our point-threshold levels.
+	 *
+	 * @return array<int, array{id:int, name:string, min_points:int, order:int}>
+	 */
+	public static function build_ranks(): array {
+		$ranks = get_posts(
+			array(
+				'post_type'   => 'mycred_rank',
+				'numberposts' => -1,
+				'post_status' => 'publish',
+				'meta_key'    => 'mycred_rank_min',
+				'orderby'     => 'meta_value_num',
+				'order'       => 'ASC',
+			)
+		);
+		$out   = array();
+		foreach ( $ranks as $i => $rank ) {
+			$out[] = array(
+				'id'         => (int) $rank->ID,
+				'name'       => (string) $rank->post_title,
+				'min_points' => (int) get_post_meta( $rank->ID, 'mycred_rank_min', true ),
+				'order'      => (int) $i,
+			);
+		}
+		return $out;
+	}
+
+	/**
+	 * A user's current myCred rank name (from the `mycred_rank` meta), read
+	 * from myCred's authoritative store since its getter isn't loadable here.
+	 *
+	 * @param int $user_id User.
+	 * @return string
+	 */
+	private static function mycred_user_rank_name( int $user_id ): string {
+		$rank_id = (int) get_user_meta( $user_id, 'mycred_rank', true );
+		return $rank_id > 0 ? (string) get_the_title( $rank_id ) : '';
+	}
+
+	/**
+	 * Count of a user's earned myCred badges (its authoritative meta store).
+	 *
+	 * @param int $user_id User.
+	 * @return int
+	 */
+	private static function mycred_badge_count( int $user_id ): int {
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		return (int) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM {$wpdb->usermeta}
+				  WHERE user_id = %d AND meta_key REGEXP '^mycred_badge[0-9]+$'",
+				$user_id
+			)
+		);
+	}
+
+	/**
+	 * Count of imported myCred badges a user actually holds in WB.
+	 *
+	 * @param int $user_id User.
+	 * @return int
+	 */
+	private static function our_imported_badge_count( int $user_id ): int {
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		return (int) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM {$wpdb->prefix}wb_gam_user_badges
+				  WHERE user_id = %d AND badge_id LIKE %s",
+				$user_id,
+				'mycred-badge-%'
+			)
+		);
+	}
+
+	/**
+	 * The tier name a point total maps to (dry-run preview).
+	 *
+	 * @param array<int, array{name:string, min_points:int}> $ranks  Tiers.
+	 * @param int                                            $points Total.
+	 * @return string
+	 */
+	private static function tier_name_for_points( array $ranks, int $points ): string {
+		$name = '';
+		$best = -1;
+		foreach ( $ranks as $r ) {
+			if ( $points >= (int) $r['min_points'] && (int) $r['min_points'] >= $best ) {
+				$best = (int) $r['min_points'];
+				$name = (string) $r['name'];
+			}
+		}
+		return $name;
+	}
+
+	/**
 	 * Run (or preview) the import with per-user reconciliation.
 	 *
 	 * @param bool $dry_run Preview only.
 	 * @return array<string, mixed>
 	 */
 	public static function run( bool $dry_run = false ): array {
-		$rows = self::build_rows();
+		$rows   = self::build_rows();
+		$badges = self::build_badges();
+		$ranks  = self::build_ranks();
 
 		// Write FIRST so reconciliation compares what ACTUALLY landed.
-		$ingest = null;
+		$ingest        = null;
+		$badge_awarded = 0;
+		$levels_made   = 0;
 		if ( ! $dry_run ) {
 			$ingest = ImportService::ingest( $rows );
+			foreach ( $badges as $b ) {
+				\WBGam\Engine\BadgeEngine::upsert_def(
+					array(
+						'id'        => $b['badge_id'],
+						'name'      => $b['name'],
+						'image_url' => $b['image'],
+						'category'  => 'imported',
+					)
+				);
+				$earned_at = gmdate( 'Y-m-d H:i:s', strtotime( $b['earned_at'] ) ?: time() );
+				if ( \WBGam\Engine\BadgeEngine::award_badge( $b['user_id'], $b['badge_id'], $earned_at ) ) {
+					++$badge_awarded;
+				}
+			}
+			foreach ( $ranks as $r ) {
+				if ( \WBGam\Engine\LevelEngine::upsert_level( $r['name'], $r['min_points'], $r['order'] ) > 0 ) {
+					++$levels_made;
+				}
+			}
 		}
 
 		$user_ids  = array_values( array_unique( array_map( static fn ( $r ) => (int) $r['user_id'], $rows ) ) );
@@ -145,13 +305,52 @@ final class MyCredImporter {
 			);
 		}
 
+		// BADGE reconciliation: our imported count vs myCred's earned-badge meta.
+		$badge_reconcile = array();
+		foreach ( array_values( array_unique( array_map( static fn ( $b ) => (int) $b['user_id'], $badges ) ) ) as $uid ) {
+			$ours                    = $dry_run
+				? count( array_filter( $badges, static fn ( $b ) => (int) $b['user_id'] === $uid ) )
+				: self::our_imported_badge_count( $uid );
+			$badge_reconcile[ $uid ] = array(
+				'imported_badges' => (int) $ours,
+				'mycred_badges'   => self::mycred_badge_count( $uid ),
+				'match'           => (int) $ours === self::mycred_badge_count( $uid ),
+			);
+		}
+
+		// RANK reconciliation: derived level (from imported points) vs myCred rank.
+		$rank_reconcile = array();
+		if ( ! empty( $ranks ) ) {
+			foreach ( $user_ids as $uid ) {
+				$gp = self::mycred_user_rank_name( $uid );
+				if ( '' === $gp ) {
+					continue;
+				}
+				$points                 = $dry_run ? self::expected_points( $rows, $uid ) : self::our_imported_points( $uid );
+				$our_level              = $dry_run
+					? self::tier_name_for_points( $ranks, $points )
+					: ( \WBGam\Engine\LevelEngine::get_level_for_points( $points )['name'] ?? '' );
+				$rank_reconcile[ $uid ] = array(
+					'our_level'   => (string) $our_level,
+					'mycred_rank' => $gp,
+					'match'       => (string) $our_level === $gp,
+				);
+			}
+		}
+
 		$result = array(
-			'rows'           => count( $rows ),
-			'dry_run'        => $dry_run,
-			'reconciliation' => $reconcile,
+			'rows'                 => count( $rows ),
+			'badges'               => count( $badges ),
+			'ranks'                => count( $ranks ),
+			'dry_run'              => $dry_run,
+			'reconciliation'       => $reconcile,
+			'badge_reconciliation' => $badge_reconcile,
+			'rank_reconciliation'  => $rank_reconcile,
 		);
 		if ( ! $dry_run ) {
-			$result['ingest'] = $ingest;
+			$result['ingest']         = $ingest;
+			$result['badges_awarded'] = $badge_awarded;
+			$result['levels_created'] = $levels_made;
 		}
 		return $result;
 	}
