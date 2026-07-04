@@ -100,6 +100,7 @@ final class DbUpgrader {
 		self::ensure_superseded_badge_condition_action_ids();
 		self::ensure_streak_sort_indexes();
 		self::ensure_kudos_moderation_schema();
+		self::ensure_events_source_key();
 	}
 
 	/**
@@ -169,6 +170,45 @@ final class DbUpgrader {
 		if ( ! in_array( 'idx_longest_streak', $existing, true ) ) {
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 			$wpdb->query( "ALTER TABLE `{$table}` ADD KEY `idx_longest_streak` (longest_streak)" );
+		}
+
+		update_option( $flag_key, '1' );
+	}
+
+	/**
+	 * Add the `source_key` idempotency column + UNIQUE index to wb_gam_events.
+	 *
+	 * Import-mode ingestion (competitor migrations, backfills) stamps each
+	 * imported event with a stable `source_key` — e.g. "gamipress:log:12345".
+	 * The UNIQUE index makes re-running an import a no-op instead of doubling
+	 * every user's points: `Engine::process()` skips any event whose
+	 * source_key already exists. NULL source_keys (every organic event) are
+	 * exempt — MySQL treats multiple NULLs as distinct in a UNIQUE index, so
+	 * the constraint only binds imported rows.
+	 *
+	 * @since 1.6.2
+	 */
+	private static function ensure_events_source_key(): void {
+		$flag_key = 'wb_gam_feature_events_source_key_v1';
+		if ( get_option( $flag_key ) ) {
+			return;
+		}
+
+		global $wpdb;
+		$table = $wpdb->prefix . 'wb_gam_events';
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$columns = (array) $wpdb->get_col( "SHOW COLUMNS FROM `{$table}`", 0 );
+		if ( ! in_array( 'source_key', $columns, true ) ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$wpdb->query( "ALTER TABLE `{$table}` ADD COLUMN `source_key` VARCHAR(191) DEFAULT NULL" );
+		}
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$indexes = (array) $wpdb->get_col( "SHOW INDEX FROM `{$table}`", 2 );
+		if ( ! in_array( 'uniq_source_key', $indexes, true ) ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$wpdb->query( "ALTER TABLE `{$table}` ADD UNIQUE KEY `uniq_source_key` (source_key)" );
 		}
 
 		update_option( $flag_key, '1' );

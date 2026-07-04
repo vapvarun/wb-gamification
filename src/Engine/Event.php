@@ -87,6 +87,19 @@ final class Event {
 	public ?string $point_type;
 
 	/**
+	 * Stable de-duplication key for imported events (e.g. "gamipress:log:42").
+	 *
+	 * NULL for every organically-generated event. When set, the UNIQUE index
+	 * on wb_gam_events.source_key makes a repeated import idempotent —
+	 * {@see \WBGam\Engine\Engine::process()} skips any event whose source_key
+	 * already exists rather than double-awarding.
+	 *
+	 * @since 1.6.2
+	 * @var string|null
+	 */
+	public ?string $source_key;
+
+	/**
 	 * Construct a new Event value object.
 	 *
 	 * Accepted keys: action_id (string), user_id (int), object_id (int, optional),
@@ -109,6 +122,9 @@ final class Event {
 			: self::generate_uuid();
 		$this->point_type = isset( $args['point_type'] ) && '' !== (string) $args['point_type']
 			? (string) $args['point_type']
+			: null;
+		$this->source_key = isset( $args['source_key'] ) && '' !== (string) $args['source_key']
+			? (string) $args['source_key']
 			: null;
 	}
 
@@ -136,6 +152,7 @@ final class Event {
 				'created_at' => $this->created_at,
 				'event_id'   => $this->event_id,
 				'point_type' => $point_type,
+				'source_key' => $this->source_key,
 			)
 		);
 	}

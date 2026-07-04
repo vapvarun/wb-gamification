@@ -450,6 +450,21 @@ final class Engine {
 			return false;
 		}
 
+		// Import mode: a bulk backfill / competitor migration. Historical events
+		// carry their own occurred-at (persisted verbatim), skip rate limits
+		// (the windows are meaningless for years-old rows), and skip per-event
+		// side-effects (badges/levels/emails/notifications/webhooks) — the
+		// caller recomputes derived state ONCE at the end instead of firing
+		// 100k notifications. The raw ledger (events + points) is still written,
+		// because it is the source of truth everything else replays from.
+		$is_import = ! empty( $event->metadata['_import'] );
+
+		// Import idempotency: re-running the same import is a no-op, not a
+		// double award. Guarded by the UNIQUE index on wb_gam_events.source_key.
+		if ( null !== $event->source_key && self::source_key_exists( $event->source_key ) ) {
+			return true;
+		}
+
 		$action = Registry::get_action( $event->action_id );
 
 		// Unknown action_id + no manual points → typo or missing manifest.
@@ -487,12 +502,13 @@ final class Engine {
 		// reads. Closes audit/DATA-FLOW-AWARD-2026-05-27.md §G5/G6/G14.
 		$event = $event->with_point_type( $resolved_type );
 
-		// Registered-action checks: enabled + rate limits.
+		// Registered-action checks: enabled + rate limits. Rate limits are
+		// skipped for imports (a year of history would trip every daily cap).
 		if ( null !== $action ) {
 			if ( ! self::is_action_enabled( $event->action_id ) ) {
 				return false;
 			}
-			if ( ! PointsEngine::passes_rate_limits( $event->user_id, $event->action_id, $action ) ) {
+			if ( ! $is_import && ! PointsEngine::passes_rate_limits( $event->user_id, $event->action_id, $action ) ) {
 				return false;
 			}
 		}
@@ -558,17 +574,23 @@ final class Engine {
 		// Determine base points BEFORE the transaction so the early return
 		// for $points <= 0 doesn't leave the transaction open.
 		if ( null !== $action ) {
-			// Dynamic points (computed by the manifest's points_callback from
-			// the hook args at fire time) override the per-action admin option
-			// and the default. This is how rank-based winners + streak-day
-			// scaling pass varying point totals through the engine — the
-			// callback runs in Registry::register_action()'s listener BEFORE
-			// the event is queued, so the value survives the Action Scheduler
-			// round-trip via metadata. The admin's per-action option
-			// (wb_gam_points_<id>) is intentionally bypassed when a dynamic
-			// value is set; site owners controlling rank-scaling override the
-			// callback at the manifest layer, not the option.
-			if ( isset( $event->metadata['_dynamic_points'] ) ) {
+			// Import mode preserves the source's own point value verbatim — a
+			// migrated "published a post = 25 pts" row must keep 25 even if
+			// this site now awards 10 for that action. No data gaps: the ledger
+			// mirrors history, not the current config.
+			if ( $is_import && isset( $event->metadata['points'] ) ) {
+				$points = (int) $event->metadata['points'];
+			} elseif ( isset( $event->metadata['_dynamic_points'] ) ) {
+				// Dynamic points (computed by the manifest's points_callback from
+				// the hook args at fire time) override the per-action admin option
+				// and the default. This is how rank-based winners + streak-day
+				// scaling pass varying point totals through the engine — the
+				// callback runs in Registry::register_action()'s listener BEFORE
+				// the event is queued, so the value survives the Action Scheduler
+				// round-trip via metadata. The admin's per-action option
+				// (wb_gam_points_<id>) is intentionally bypassed when a dynamic
+				// value is set; site owners controlling rank-scaling override the
+				// callback at the manifest layer, not the option.
 				$points = (int) $event->metadata['_dynamic_points'];
 			} else {
 				$points = (int) get_option( 'wb_gam_points_' . $event->action_id, $action['default_points'] );
@@ -627,7 +649,7 @@ final class Engine {
 		// window between this check and the insert. For absolute caps
 		// (e.g. anti-fraud) callers should add a UNIQUE constraint on
 		// the relevant key shape — see plan/v1.1-rate-limit-hardening.
-		if ( null !== $action && ! PointsEngine::passes_rate_limits( $event->user_id, $event->action_id, $action ) ) {
+		if ( null !== $action && ! $is_import && ! PointsEngine::passes_rate_limits( $event->user_id, $event->action_id, $action ) ) {
 			$wpdb->query( 'ROLLBACK' );
 			return false;
 		}
@@ -655,6 +677,15 @@ final class Engine {
 		}
 
 		$wpdb->query( 'COMMIT' );
+
+		// Import mode stops here: the raw ledger row is committed, but every
+		// per-event side-effect (points-awarded listeners, the SideEffect
+		// dispatcher's badge/level/email/notification/webhook handlers, and the
+		// event-processed hook) is suppressed. Derived state is rebuilt once,
+		// for all imported users, after the batch (Engine::recompute_users()).
+		if ( $is_import ) {
+			return true;
+		}
 
 		/**
 		 * Fires after points are awarded.
@@ -730,9 +761,12 @@ final class Engine {
 				'metadata'   => ! empty( $event->metadata ) ? wp_json_encode( $event->metadata ) : null,
 				'point_type' => $point_type,
 				'site_id'    => $event->metadata['_site_id'] ?? '',
-				'created_at' => gmdate( 'Y-m-d H:i:s' ),
+				'source_key' => $event->source_key,
+				// Backdate to the event's own timestamp so imported history keeps
+				// its real occurred-at; organic events carry "now" already.
+				'created_at' => self::event_created_at_mysql( $event ),
 			),
-			array( '%s', '%d', '%s', '%d', '%s', '%s', '%s', '%s' )
+			array( '%s', '%d', '%s', '%d', '%s', '%s', '%s', '%s', '%s' )
 		);
 
 		// Replay protection — if the same event_id is submitted twice (network
@@ -741,5 +775,99 @@ final class Engine {
 		// transaction to prevent an orphan points row from being committed
 		// against the FIRST events row's id.
 		return false !== $inserted;
+	}
+
+	/**
+	 * Convert an Event's ISO-8601 `created_at` to a UTC MySQL datetime.
+	 *
+	 * Organic events default `created_at` to now (UTC), so this is a no-op for
+	 * them; imported events carry their historical occurred-at, which this
+	 * preserves in the ledger. Falls back to now on an unparseable value.
+	 *
+	 * @param Event $event The event.
+	 * @return string `Y-m-d H:i:s` in UTC.
+	 */
+	private static function event_created_at_mysql( Event $event ): string {
+		$ts = strtotime( (string) $event->created_at );
+		return false !== $ts ? gmdate( 'Y-m-d H:i:s', $ts ) : gmdate( 'Y-m-d H:i:s' );
+	}
+
+	/**
+	 * Whether an event with this source_key has already been ingested.
+	 *
+	 * Backs import idempotency: a repeated import of the same source row is a
+	 * no-op instead of a double award. Only meaningful for imported events
+	 * (organic events have a NULL source_key and never call this).
+	 *
+	 * @param string $source_key Stable import key.
+	 * @return bool
+	 */
+	public static function source_key_exists( string $source_key ): bool {
+		if ( '' === $source_key ) {
+			return false;
+		}
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- idempotency probe on a UNIQUE-indexed column.
+		$found = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT id FROM {$wpdb->prefix}wb_gam_events WHERE source_key = %s LIMIT 1",
+				$source_key
+			)
+		);
+		return null !== $found;
+	}
+
+	/**
+	 * Rebuild derived badge state for users whose ledger changed under import
+	 * mode (which suppressed per-event evaluation).
+	 *
+	 * Levels need no rebuild — {@see LevelEngine::get_level_for_user()} derives
+	 * the level from the (now higher) points total on read. Only badges carry
+	 * persisted earned-state, so we re-run the badge evaluator once per user
+	 * across their distinct action_ids (plus a synthetic pass so
+	 * point-milestone badges that don't pin an action still fire). Mirrors the
+	 * `wp wb-gamification replay` walk, so an import and a replay converge on
+	 * the same result.
+	 *
+	 * @param int[] $user_ids Users to recompute (deduplicated internally).
+	 * @return int Total new badges awarded across all users.
+	 */
+	public static function recompute_users( array $user_ids ): int {
+		global $wpdb;
+		$awarded = 0;
+
+		foreach ( array_unique( array_map( 'intval', $user_ids ) ) as $user_id ) {
+			if ( $user_id <= 0 ) {
+				continue;
+			}
+			$before = BadgeEngine::get_user_earned_badge_ids( $user_id );
+
+			$action_ids   = (array) $wpdb->get_col(
+				$wpdb->prepare(
+					"SELECT DISTINCT action_id FROM {$wpdb->prefix}wb_gam_events WHERE user_id = %d AND action_id != ''",
+					$user_id
+				)
+			);
+			$action_ids[] = '__replay__';
+
+			foreach ( $action_ids as $aid ) {
+				BadgeEngine::evaluate_on_award(
+					$user_id,
+					new Event(
+						array(
+							'action_id' => (string) $aid,
+							'user_id'   => $user_id,
+							'metadata'  => array( '__replay__' => true ),
+						)
+					),
+					0
+				);
+			}
+
+			$after    = BadgeEngine::get_user_earned_badge_ids( $user_id );
+			$awarded += count( array_diff( $after, $before ) );
+		}
+
+		return $awarded;
 	}
 }

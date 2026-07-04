@@ -106,6 +106,34 @@ class EventsController extends WP_REST_Controller {
 				),
 			)
 		);
+
+		$this->register_import_route();
+	}
+
+	/**
+	 * Register the bulk import route (called from register_routes()).
+	 *
+	 * @return void
+	 */
+	public function register_import_route(): void {
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/import',
+			array(
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'import_items' ),
+					'permission_callback' => array( $this, 'import_permissions_check' ),
+					'args'                => array(
+						'events' => array(
+							'required'    => true,
+							'type'        => 'array',
+							'description' => 'Up to 500 historical events to import.',
+						),
+					),
+				),
+			)
+		);
 	}
 
 	/**
@@ -228,6 +256,112 @@ class EventsController extends WP_REST_Controller {
 			);
 		}
 		return true;
+	}
+
+	/**
+	 * Bulk-import historical events (competitor migration / backfill).
+	 *
+	 * Each row may carry: action_id (required), user_id (required), object_id,
+	 * points (explicit value for actions not in the Registry), point_type,
+	 * occurred_at (ISO-8601 — preserved as the ledger timestamp), source_key
+	 * (stable de-dup key), metadata. Rows are processed in import mode:
+	 * side-effects are suppressed and derived badge state is rebuilt once at
+	 * the end. Re-running the same batch is idempotent via source_key.
+	 *
+	 * @param WP_REST_Request $request Request with an `events` array.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function import_items( $request ): WP_REST_Response|WP_Error {
+		$rows = $request['events'];
+		if ( ! is_array( $rows ) || empty( $rows ) ) {
+			return new WP_Error( 'rest_no_events', __( 'No events supplied.', 'wb-gamification' ), array( 'status' => 400 ) );
+		}
+		if ( count( $rows ) > 500 ) {
+			return new WP_Error( 'rest_too_many', __( 'Import at most 500 events per request.', 'wb-gamification' ), array( 'status' => 400 ) );
+		}
+
+		$imported = 0;
+		$skipped  = 0;
+		$failed   = 0;
+		$users    = array();
+
+		foreach ( $rows as $row ) {
+			$row       = (array) $row;
+			$user_id   = absint( $row['user_id'] ?? 0 );
+			$action_id = isset( $row['action_id'] ) ? sanitize_key( (string) $row['action_id'] ) : '';
+			if ( $user_id <= 0 || '' === $action_id ) {
+				++$failed;
+				continue;
+			}
+
+			$source_key = isset( $row['source_key'] ) ? substr( sanitize_text_field( (string) $row['source_key'] ), 0, 191 ) : '';
+			// Fast-path idempotency: skip rows already ingested (also caught by
+			// the UNIQUE index + Engine::process, this just avoids the work).
+			if ( '' !== $source_key && Engine::source_key_exists( $source_key ) ) {
+				++$skipped;
+				continue;
+			}
+
+			$metadata            = isset( $row['metadata'] ) && is_array( $row['metadata'] ) ? $this->sanitize_metadata( $row['metadata'] ) : array();
+			$metadata['_import'] = true;
+			if ( isset( $row['points'] ) ) {
+				$metadata['points'] = (int) $row['points'];
+			}
+			if ( isset( $row['point_type'] ) ) {
+				$metadata['point_type'] = sanitize_key( (string) $row['point_type'] );
+			}
+
+			$occurred   = isset( $row['occurred_at'] ) ? strtotime( (string) $row['occurred_at'] ) : false;
+			$created_at = false !== $occurred ? gmdate( 'Y-m-d\TH:i:s\Z', $occurred ) : gmdate( 'Y-m-d\TH:i:s\Z' );
+
+			$event = new Event(
+				array(
+					'action_id'  => $action_id,
+					'user_id'    => $user_id,
+					'object_id'  => absint( $row['object_id'] ?? 0 ) ?: null,
+					'metadata'   => $metadata,
+					'created_at' => $created_at,
+					'source_key' => '' !== $source_key ? $source_key : null,
+				)
+			);
+
+			if ( Engine::process( $event ) ) {
+				++$imported;
+				$users[ $user_id ] = true;
+			} else {
+				++$failed;
+			}
+		}
+
+		$badges = ! empty( $users ) ? Engine::recompute_users( array_keys( $users ) ) : 0;
+
+		return new WP_REST_Response(
+			array(
+				'received'          => count( $rows ),
+				'imported'          => $imported,
+				'skipped_duplicate' => $skipped,
+				'failed'            => $failed,
+				'badges_awarded'    => $badges,
+			),
+			200
+		);
+	}
+
+	/**
+	 * Only site managers may bulk-import events.
+	 *
+	 * @param WP_REST_Request $request Full request.
+	 * @return true|WP_Error
+	 */
+	public function import_permissions_check( $request ): bool|WP_Error {
+		if ( \WBGam\Engine\Capabilities::user_can( 'wb_gam_manage_members' ) ) {
+			return true;
+		}
+		return new WP_Error(
+			'rest_forbidden',
+			__( 'You are not allowed to import gamification events.', 'wb-gamification' ),
+			array( 'status' => is_user_logged_in() ? 403 : 401 )
+		);
 	}
 
 	// ── Helpers ─────────────────────────────────────────────────────────────────
