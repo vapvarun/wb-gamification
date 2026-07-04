@@ -2307,6 +2307,59 @@ final class SettingsPage {
 		// Drop the per-request resolve cache so a read later in this request
 		// reflects the new exclusions.
 		\WBGam\Engine\PointsEngine::flush_exclusion_cache();
+
+		// Staff permissions matrix. Only processed when the caps card was part
+		// of the submitted form (marker field), so an unrelated Access save can
+		// never wipe granted caps.
+		if ( isset( $_POST['wb_gam_caps_form'] ) ) {
+			self::save_staff_permissions();
+		}
+		// phpcs:enable WordPress.Security.NonceVerification.Missing
+	}
+
+	/**
+	 * Apply the Staff permissions matrix: grant/revoke each plugin cap per
+	 * editable role via WP_Role::add_cap/remove_cap. Administrator is never
+	 * touched (always holds every cap). A "reset to defaults" checkbox strips
+	 * all plugin caps from every non-admin role.
+	 *
+	 * Nonce + manage_options are verified upstream in handle_save().
+	 */
+	private static function save_staff_permissions(): void {
+		// phpcs:disable WordPress.Security.NonceVerification.Missing -- Nonce verified by check_admin_referer() in handle_save().
+		$cap_list = \WBGam\Engine\Capabilities::all();
+		$reset    = isset( $_POST['wb_gam_caps_reset'] );
+
+		$posted = array();
+		if ( ! $reset && isset( $_POST['wb_gam_role_caps'] ) && is_array( $_POST['wb_gam_role_caps'] ) ) {
+			// Shape: [ role_slug => [ cap, cap, ... ] ]. Both key and values are
+			// sanitized with sanitize_key() inside the loop below.
+			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+			foreach ( wp_unslash( (array) $_POST['wb_gam_role_caps'] ) as $role_slug => $caps ) {
+				$role_slug            = sanitize_key( $role_slug );
+				$posted[ $role_slug ] = is_array( $caps ) ? array_map( 'sanitize_key', $caps ) : array();
+			}
+		}
+
+		foreach ( wp_roles()->get_names() as $role_slug => $_name ) {
+			if ( 'administrator' === $role_slug ) {
+				continue;
+			}
+			$role = get_role( $role_slug );
+			if ( ! $role ) {
+				continue;
+			}
+			$wanted = $posted[ $role_slug ] ?? array();
+			foreach ( $cap_list as $cap ) {
+				$should_have = in_array( $cap, $wanted, true );
+				$has         = $role->has_cap( $cap );
+				if ( $should_have && ! $has ) {
+					$role->add_cap( $cap );
+				} elseif ( ! $should_have && $has ) {
+					$role->remove_cap( $cap );
+				}
+			}
+		}
 		// phpcs:enable WordPress.Security.NonceVerification.Missing
 	}
 
@@ -2385,10 +2438,95 @@ final class SettingsPage {
 				</div>
 			</div>
 
+			<?php self::render_staff_permissions_card(); ?>
+
 			<div class="wbgam-settings-section__footer">
 				<button type="submit" name="submit" class="wbgam-btn wbgam-btn--primary"><?php esc_html_e( 'Save Access Settings', 'wb-gamification' ); ?></button>
 			</div>
 		</form>
+		<?php
+	}
+
+	/**
+	 * Render the Staff permissions matrix: which non-admin roles hold each
+	 * plugin capability. Lets a site owner delegate plugin operation without a
+	 * separate role-editor plugin. Administrator always holds every cap and is
+	 * shown locked. Rows are every editable role; columns are the plugin caps
+	 * (rendered from Capabilities::labels() so a new cap appears automatically).
+	 */
+	private static function render_staff_permissions_card(): void {
+		$caps       = \WBGam\Engine\Capabilities::labels();
+		$all_roles  = wp_roles();
+		$admin_role = get_role( 'administrator' );
+		$admin_caps = $admin_role ? $admin_role->capabilities : array();
+		?>
+		<div class="wbgam-card wbgam-stack-block">
+			<div class="wbgam-card-header">
+				<h2 class="wbgam-card-title">
+					<span class="icon-shield-check" aria-hidden="true"></span>
+					<?php esc_html_e( 'Staff permissions', 'wb-gamification' ); ?>
+				</h2>
+				<p class="wbgam-card-desc">
+					<?php esc_html_e( 'Let a non-admin role manage part of gamification without full admin. Tick a capability for a role to grant it. Administrator always has every capability. Changes save with this form.', 'wb-gamification' ); ?>
+				</p>
+			</div>
+			<div class="wbgam-card-body">
+				<input type="hidden" name="wb_gam_caps_form" value="1" />
+				<div class="wb-gam-caps-matrix__scroll">
+					<table class="wp-list-table widefat fixed striped wb-gam-caps-matrix">
+						<thead>
+							<tr>
+								<th scope="col"><?php esc_html_e( 'Capability', 'wb-gamification' ); ?></th>
+								<th scope="col" class="wb-gam-caps-matrix__admin"><?php esc_html_e( 'Administrator', 'wb-gamification' ); ?></th>
+								<?php foreach ( $all_roles->get_names() as $slug => $name ) : ?>
+									<?php
+									if ( 'administrator' === $slug ) {
+										continue; }
+									?>
+									<th scope="col"><?php echo esc_html( translate_user_role( $name ) ); ?></th>
+								<?php endforeach; ?>
+							</tr>
+						</thead>
+						<tbody>
+							<?php foreach ( $caps as $cap => $meta ) : ?>
+								<tr>
+									<th scope="row">
+										<span class="wb-gam-caps-matrix__label"><?php echo esc_html( $meta['label'] ); ?></span>
+										<span class="wb-gam-caps-matrix__desc"><?php echo esc_html( $meta['desc'] ); ?></span>
+									</th>
+									<td class="wb-gam-caps-matrix__admin">
+										<input type="checkbox" checked disabled aria-label="<?php echo esc_attr( sprintf( /* translators: %s: capability label */ __( '%s (Administrator, always on)', 'wb-gamification' ), $meta['label'] ) ); ?>" />
+									</td>
+									<?php foreach ( $all_roles->get_names() as $slug => $name ) : ?>
+										<?php
+										if ( 'administrator' === $slug ) {
+											continue;
+										}
+										$role     = get_role( $slug );
+										$has      = $role && $role->has_cap( $cap );
+										$field_id = 'wbgamcap_' . $slug . '_' . $cap;
+										?>
+										<td>
+											<input type="checkbox"
+												id="<?php echo esc_attr( $field_id ); ?>"
+												name="wb_gam_role_caps[<?php echo esc_attr( $slug ); ?>][]"
+												value="<?php echo esc_attr( $cap ); ?>"
+												<?php checked( $has ); ?>
+												aria-label="<?php echo esc_attr( sprintf( /* translators: 1: capability, 2: role */ __( '%1$s for %2$s', 'wb-gamification' ), $meta['label'], translate_user_role( $name ) ) ); ?>"
+											/>
+										</td>
+									<?php endforeach; ?>
+								</tr>
+							<?php endforeach; ?>
+						</tbody>
+					</table>
+				</div>
+				<label class="wbgam-checkbox-option wbgam-stack-block">
+					<input type="checkbox" name="wb_gam_caps_reset" value="1" />
+					<span><?php esc_html_e( 'Reset to defaults (remove all plugin capabilities from non-admin roles)', 'wb-gamification' ); ?></span>
+				</label>
+			</div>
+		</div>
 		<?php
 	}
 

@@ -68,6 +68,12 @@ final class Capabilities {
 		'wb_gam_manage_email_settings' => array( 'administrator' ),
 		// Analytics dashboard view (AnalyticsDashboard).
 		'wb_gam_view_analytics'        => array( 'administrator' ),
+		// Member roster + moderation: the Members roster, Streaks moderation,
+		// and Kudos moderation pages + their admin REST. Added in 1.6.2 so a
+		// delegated community manager can look up and moderate members without
+		// full admin. Previously these hardcoded manage_options, so granting
+		// the other caps left a manager unable to open the member roster.
+		'wb_gam_manage_members'        => array( 'administrator' ),
 	);
 
 	/**
@@ -86,7 +92,64 @@ final class Capabilities {
 	 *
 	 * @var string
 	 */
-	public const CAPS_VERSION = '1.4';
+	public const CAPS_VERSION = '1.5';
+
+	/**
+	 * Human-readable label + description for each cap, for the delegation UI.
+	 *
+	 * Keyed by cap. Any cap NOT listed falls back to its raw slug. Kept next
+	 * to CAPS so a new cap surfaces in the matrix as soon as it's added.
+	 *
+	 * @return array<string, array{label:string, desc:string}>
+	 */
+	public static function labels(): array {
+		return array(
+			'wb_gam_award_manual'          => array(
+				'label' => __( 'Award & revoke points', 'wb-gamification' ),
+				'desc'  => __( 'Manually give or remove members\' points.', 'wb-gamification' ),
+			),
+			'wb_gam_manage_members'        => array(
+				'label' => __( 'Manage members', 'wb-gamification' ),
+				'desc'  => __( 'Open the member roster and moderate streaks and kudos.', 'wb-gamification' ),
+			),
+			'wb_gam_manage_badges'         => array(
+				'label' => __( 'Manage badges', 'wb-gamification' ),
+				'desc'  => __( 'Create, edit, and award badges.', 'wb-gamification' ),
+			),
+			'wb_gam_manage_levels'         => array(
+				'label' => __( 'Manage levels', 'wb-gamification' ),
+				'desc'  => __( 'Edit the level ladder.', 'wb-gamification' ),
+			),
+			'wb_gam_manage_rules'          => array(
+				'label' => __( 'Manage rules', 'wb-gamification' ),
+				'desc'  => __( 'Edit point rules and multipliers.', 'wb-gamification' ),
+			),
+			'wb_gam_manage_challenges'     => array(
+				'label' => __( 'Manage challenges', 'wb-gamification' ),
+				'desc'  => __( 'Create and edit individual and community challenges.', 'wb-gamification' ),
+			),
+			'wb_gam_manage_rewards'        => array(
+				'label' => __( 'Manage redemption store', 'wb-gamification' ),
+				'desc'  => __( 'Edit the reward catalog.', 'wb-gamification' ),
+			),
+			'wb_gam_manage_submissions'    => array(
+				'label' => __( 'Moderate submissions', 'wb-gamification' ),
+				'desc'  => __( 'Approve or reject member-submitted achievements.', 'wb-gamification' ),
+			),
+			'wb_gam_manage_webhooks'       => array(
+				'label' => __( 'Manage webhooks', 'wb-gamification' ),
+				'desc'  => __( 'Configure outbound webhooks.', 'wb-gamification' ),
+			),
+			'wb_gam_manage_email_settings' => array(
+				'label' => __( 'Manage emails', 'wb-gamification' ),
+				'desc'  => __( 'Toggle transactional and digest emails.', 'wb-gamification' ),
+			),
+			'wb_gam_view_analytics'        => array(
+				'label' => __( 'View analytics', 'wb-gamification' ),
+				'desc'  => __( 'See the analytics dashboard.', 'wb-gamification' ),
+			),
+		);
+	}
 
 	/**
 	 * Grant every plugin cap to its default roles.

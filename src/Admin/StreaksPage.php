@@ -51,7 +51,7 @@ final class StreaksPage {
 			'wb-gamification',
 			__( 'Streaks', 'wb-gamification' ),
 			__( 'Streaks', 'wb-gamification' ),
-			'manage_options',
+			'wb_gam_manage_members',
 			self::PAGE_SLUG,
 			array( __CLASS__, 'render_page' )
 		);
@@ -119,7 +119,7 @@ final class StreaksPage {
 	 * Render the streak roster (server-side, sortable, paginated).
 	 */
 	public static function render_page(): void {
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! \WBGam\Engine\Capabilities::user_can( 'wb_gam_manage_members' ) ) {
 			wp_die( esc_html__( 'You do not have permission to access this page.', 'wb-gamification' ) );
 		}
 

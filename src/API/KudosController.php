@@ -150,7 +150,7 @@ class KudosController extends WP_REST_Controller {
 	 * @return true|WP_Error
 	 */
 	public function admin_permissions_check(): bool|WP_Error {
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! \WBGam\Engine\Capabilities::user_can( 'wb_gam_manage_members' ) ) {
 			return new WP_Error(
 				'rest_forbidden',
 				__( 'You do not have permission to moderate kudos.', 'wb-gamification' ),

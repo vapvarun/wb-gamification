@@ -974,3 +974,35 @@
 	border-color: var(--wbgam-color-error-hover, #b32d2e);
 	color: #fff;
 }
+
+/* Staff permissions matrix (Access tab — caps delegation, 1.6.2). */
+.wb-gam-caps-matrix__scroll {
+	overflow-x: auto;
+	margin-bottom: var(--wb-gam-space-md, 16px);
+}
+
+.wb-gam-caps-matrix th[scope="row"] {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+
+.wb-gam-caps-matrix__label {
+	font-weight: var(--wb-gam-weight-semibold, 600);
+}
+
+.wb-gam-caps-matrix__desc {
+	font-size: var(--wb-gam-font-xs, 12px);
+	color: var(--wb-gam-color-text-muted, #6b7280);
+	font-weight: var(--wb-gam-weight-normal, 400);
+}
+
+.wb-gam-caps-matrix__admin {
+	color: var(--wb-gam-color-text-muted, #6b7280);
+	text-align: center;
+}
+
+.wb-gam-caps-matrix td {
+	text-align: center;
+	vertical-align: middle;
+}

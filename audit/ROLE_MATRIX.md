@@ -23,6 +23,36 @@ All new admin pages (Point Types, Conversions, Submissions) use `manage_options`
 
 ---
 
+## v1.6.2 additions — caps delegation UI + Manage members
+
+**In-plugin delegation UI shipped.** Settings › Access now has a **Staff
+permissions** matrix (roles × plugin caps). Site owners can grant/revoke any
+plugin cap to a non-admin role via checkboxes — no role-editor plugin required.
+Administrator is always on (locked). A "Reset to defaults" option strips every
+plugin cap from non-admin roles. Saves through the SettingsPage `handle_save`
+dispatcher (nonce + `manage_options`) → `WP_Role::add_cap/remove_cap`.
+
+**New cap `wb_gam_manage_members`** (CAPS_VERSION → 1.5) covers the member
+roster + moderation cluster, which previously hardcoded `manage_options`:
+
+| Surface | Now gated by | Was |
+|---|---|---|
+| Members roster page + `GET /members`, `POST /members/{id}/exclude`, `/reset-points` | `wb_gam_manage_members` (menu cap + `Capabilities::user_can`) | `manage_options` |
+| Streaks moderation page + `POST`/`DELETE /members/{id}/streak` | `wb_gam_manage_members` | `manage_options` (new in 1.6.2) |
+| Kudos moderation page + `DELETE /kudos/{id}` | `wb_gam_manage_members` | `manage_options` (new in 1.6.2) |
+
+Verified: an Editor granted `wb_gam_manage_members` + `wb_gam_manage_badges`
+sees only Members / Streaks / Kudos Moderation / Badges in the Gamification
+menu and is denied API Keys (WP capability error).
+
+**Still intentionally `manage_options`-only** (sensitive config / not member
+management — documented as a deliberate choice, delegation deferred): API Keys,
+Tools (data reset), Point Types + Conversions, Events ingestion, Capabilities
+controller, Abilities registration, Intelligence, Recap, Actions list, and the
+main Settings page itself.
+
+---
+
 ## Plugin custom capabilities
 
 All caps are granted to `administrator` on plugin activation (and on `plugins_loaded` for existing installs via `Capabilities::sync()`). Removed from every role on uninstall.
