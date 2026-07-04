@@ -310,6 +310,30 @@ check_no_raw_post_to_update_option() {
     fi
 }
 
+# Rule 15: every block render.php that loops over a collection must also
+# render an empty state. The "silent empty state" bug class (wppqa) is a
+# frontend list that renders nothing when the collection is empty — a blank
+# block on a fresh site. Every current block guards this (empty()/count()/an
+# `__empty` element); this gate keeps a NEW block from shipping a bare loop.
+check_blocks_have_empty_state() {
+    local missing=""
+    local f base
+    for f in "$PLUGIN_DIR"/src/Blocks/*/render.php; do
+        [ -f "$f" ] || continue
+        if grep -q "foreach" "$f" 2>/dev/null; then
+            if ! grep -qE "empty\(|__empty|count\(|--empty|EmptyState" "$f" 2>/dev/null; then
+                base=$(basename "$(dirname "$f")")
+                missing="${missing} ${base}"
+            fi
+        fi
+    done
+    if [ -n "$missing" ]; then
+        violation "Rule 15 — block(s) loop over a collection with no empty state (silent-blank on empty data):$missing"
+    else
+        ok "Rule 15 — every looping block renders an empty state"
+    fi
+}
+
 check_no_native_cap_check_for_plugin_abilities
 check_unauthenticated_rest_allowlist
 check_no_inline_styles_in_admin_php
@@ -319,6 +343,7 @@ check_privacy_coverage_for_user_scoped_surfaces
 check_as_schedule_guard
 check_hub_accent_bridged_to_standard_token
 check_no_raw_post_to_update_option
+check_blocks_have_empty_state
 
 echo ""
 COUNT=$(violations_count)
