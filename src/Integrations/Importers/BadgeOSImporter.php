@@ -173,6 +173,92 @@ final class BadgeOSImporter {
 	}
 
 	/**
+	 * BadgeOS rank-type slugs — read from the `badgeos_ranks.rank_type` column
+	 * (BadgeOS's authoritative record) rather than the generic `rank-type` CPT,
+	 * which on a multi-plugin site also holds another plugin's rank types.
+	 *
+	 * @return string[]
+	 */
+	private static function rank_type_slugs(): array {
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$types = (array) $wpdb->get_col( "SELECT DISTINCT rank_type FROM {$wpdb->prefix}badgeos_ranks WHERE rank_type <> ''" );
+		return array_values( array_filter( array_map( 'strval', $types ) ) );
+	}
+
+	/**
+	 * Build rank tiers (as WB level defs) from BadgeOS rank posts.
+	 *
+	 * A rank's points threshold is post meta `_ranks_points`; rank order is
+	 * `menu_order`.
+	 *
+	 * @return array<int, array{id:int, name:string, min_points:int, order:int}>
+	 */
+	public static function build_ranks(): array {
+		$types = self::rank_type_slugs();
+		if ( empty( $types ) ) {
+			return array();
+		}
+		$ranks = get_posts(
+			array(
+				'post_type'   => $types,
+				'numberposts' => -1,
+				'post_status' => 'publish',
+				'orderby'     => 'menu_order',
+				'order'       => 'ASC',
+			)
+		);
+		$out   = array();
+		foreach ( $ranks as $i => $rank ) {
+			$out[] = array(
+				'id'         => (int) $rank->ID,
+				'name'       => (string) $rank->post_title,
+				'min_points' => (int) get_post_meta( $rank->ID, '_ranks_points', true ),
+				'order'      => (int) $i,
+			);
+		}
+		return $out;
+	}
+
+	/**
+	 * A user's current BadgeOS rank name — the highest-priority earned row in
+	 * `badgeos_ranks` (badgeos_get_user_rank is unreliable on this install).
+	 *
+	 * @param int $user_id User.
+	 * @return string
+	 */
+	private static function badgeos_user_rank_name( int $user_id ): string {
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		return (string) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT rank_title FROM {$wpdb->prefix}badgeos_ranks
+				  WHERE user_id = %d ORDER BY priority DESC, id DESC LIMIT 1",
+				$user_id
+			)
+		);
+	}
+
+	/**
+	 * The tier name a point total maps to (dry-run preview).
+	 *
+	 * @param array<int, array{name:string, min_points:int}> $ranks  Tiers.
+	 * @param int                                            $points Total.
+	 * @return string
+	 */
+	private static function tier_name_for_points( array $ranks, int $points ): string {
+		$name = '';
+		$best = -1;
+		foreach ( $ranks as $r ) {
+			if ( $points >= (int) $r['min_points'] && (int) $r['min_points'] >= $best ) {
+				$best = (int) $r['min_points'];
+				$name = (string) $r['name'];
+			}
+		}
+		return $name;
+	}
+
+	/**
 	 * Run (or preview) the import with reconciliation against BadgeOS.
 	 *
 	 * @param bool $dry_run Preview only.
@@ -181,9 +267,11 @@ final class BadgeOSImporter {
 	public static function run( bool $dry_run = false ): array {
 		$rows         = self::build_rows();
 		$achievements = self::build_achievements();
+		$ranks        = self::build_ranks();
 
 		$ingest       = null;
 		$ach_imported = 0;
+		$levels_made  = 0;
 		if ( ! $dry_run ) {
 			$ingest = ImportService::ingest( $rows );
 			foreach ( $achievements as $a ) {
@@ -198,6 +286,11 @@ final class BadgeOSImporter {
 				$earned_at = gmdate( 'Y-m-d H:i:s', strtotime( $a['earned_at'] ) ?: time() );
 				if ( \WBGam\Engine\BadgeEngine::award_badge( $a['user_id'], $a['badge_id'], $earned_at ) ) {
 					++$ach_imported;
+				}
+			}
+			foreach ( $ranks as $r ) {
+				if ( \WBGam\Engine\LevelEngine::upsert_level( $r['name'], $r['min_points'], $r['order'] ) > 0 ) {
+					++$levels_made;
 				}
 			}
 		}
@@ -228,16 +321,40 @@ final class BadgeOSImporter {
 			);
 		}
 
+		// RANK reconciliation — level derived from imported points vs the
+		// user's current BadgeOS rank (highest-priority earned row).
+		$rank_reconcile = array();
+		if ( ! empty( $ranks ) ) {
+			foreach ( self::user_ids( $rows ) as $uid ) {
+				$bo = self::badgeos_user_rank_name( $uid );
+				if ( '' === $bo ) {
+					continue;
+				}
+				$points                 = $dry_run ? self::expected_points( $rows, $uid ) : self::our_imported_points( $uid );
+				$our_level              = $dry_run
+					? self::tier_name_for_points( $ranks, $points )
+					: ( \WBGam\Engine\LevelEngine::get_level_for_points( $points )['name'] ?? '' );
+				$rank_reconcile[ $uid ] = array(
+					'our_level'    => (string) $our_level,
+					'badgeos_rank' => $bo,
+					'match'        => (string) $our_level === $bo,
+				);
+			}
+		}
+
 		$result = array(
 			'rows'                       => count( $rows ),
 			'achievements'               => count( $achievements ),
+			'ranks'                      => count( $ranks ),
 			'dry_run'                    => $dry_run,
 			'reconciliation'             => $reconcile,
 			'achievement_reconciliation' => $ach_reconcile,
+			'rank_reconciliation'        => $rank_reconcile,
 		);
 		if ( ! $dry_run ) {
 			$result['ingest']               = $ingest;
 			$result['achievements_awarded'] = $ach_imported;
+			$result['levels_created']       = $levels_made;
 		}
 		return $result;
 	}
