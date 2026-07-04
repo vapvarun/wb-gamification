@@ -61,5 +61,17 @@ defined( 'ABSPATH' ) || exit;
 			</td>
 		</tr>
 	</table>
+				<?php
+				/**
+				 * Fires just before the end of a gamification email body, for
+				 * appending footer content (unsubscribe line, agency branding).
+				 * The template's variables are available via the second arg.
+				 *
+				 * @since 1.6.2
+				 * @param string $wb_gam_email_slug Template slug.
+				 * @param array  $wb_gam_email_vars Template variables in scope.
+				 */
+				do_action( 'wb_gam_email_footer', basename( __FILE__, '.php' ), get_defined_vars() );
+				?>
 </body>
 </html>
