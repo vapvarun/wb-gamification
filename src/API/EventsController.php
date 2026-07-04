@@ -280,71 +280,24 @@ class EventsController extends WP_REST_Controller {
 			return new WP_Error( 'rest_too_many', __( 'Import at most 500 events per request.', 'wb-gamification' ), array( 'status' => 400 ) );
 		}
 
-		$imported = 0;
-		$skipped  = 0;
-		$failed   = 0;
-		$users    = array();
-
+		// Sanitize untrusted REST input into normalized rows, then hand off to
+		// the shared ingestion service (same path the competitor importers use).
+		$normalized = array();
 		foreach ( $rows as $row ) {
-			$row       = (array) $row;
-			$user_id   = absint( $row['user_id'] ?? 0 );
-			$action_id = isset( $row['action_id'] ) ? sanitize_key( (string) $row['action_id'] ) : '';
-			if ( $user_id <= 0 || '' === $action_id ) {
-				++$failed;
-				continue;
-			}
-
-			$source_key = isset( $row['source_key'] ) ? substr( sanitize_text_field( (string) $row['source_key'] ), 0, 191 ) : '';
-			// Fast-path idempotency: skip rows already ingested (also caught by
-			// the UNIQUE index + Engine::process, this just avoids the work).
-			if ( '' !== $source_key && Engine::source_key_exists( $source_key ) ) {
-				++$skipped;
-				continue;
-			}
-
-			$metadata            = isset( $row['metadata'] ) && is_array( $row['metadata'] ) ? $this->sanitize_metadata( $row['metadata'] ) : array();
-			$metadata['_import'] = true;
-			if ( isset( $row['points'] ) ) {
-				$metadata['points'] = (int) $row['points'];
-			}
-			if ( isset( $row['point_type'] ) ) {
-				$metadata['point_type'] = sanitize_key( (string) $row['point_type'] );
-			}
-
-			$occurred   = isset( $row['occurred_at'] ) ? strtotime( (string) $row['occurred_at'] ) : false;
-			$created_at = false !== $occurred ? gmdate( 'Y-m-d\TH:i:s\Z', $occurred ) : gmdate( 'Y-m-d\TH:i:s\Z' );
-
-			$event = new Event(
-				array(
-					'action_id'  => $action_id,
-					'user_id'    => $user_id,
-					'object_id'  => absint( $row['object_id'] ?? 0 ) ?: null,
-					'metadata'   => $metadata,
-					'created_at' => $created_at,
-					'source_key' => '' !== $source_key ? $source_key : null,
-				)
+			$row          = (array) $row;
+			$normalized[] = array(
+				'action_id'   => isset( $row['action_id'] ) ? sanitize_key( (string) $row['action_id'] ) : '',
+				'user_id'     => absint( $row['user_id'] ?? 0 ),
+				'object_id'   => absint( $row['object_id'] ?? 0 ),
+				'points'      => isset( $row['points'] ) ? (int) $row['points'] : null,
+				'point_type'  => isset( $row['point_type'] ) ? sanitize_key( (string) $row['point_type'] ) : null,
+				'occurred_at' => isset( $row['occurred_at'] ) ? sanitize_text_field( (string) $row['occurred_at'] ) : null,
+				'source_key'  => isset( $row['source_key'] ) ? sanitize_text_field( (string) $row['source_key'] ) : null,
+				'metadata'    => isset( $row['metadata'] ) && is_array( $row['metadata'] ) ? $this->sanitize_metadata( $row['metadata'] ) : array(),
 			);
-
-			if ( Engine::process( $event ) ) {
-				++$imported;
-				$users[ $user_id ] = true;
-			} else {
-				++$failed;
-			}
 		}
 
-		$badges = ! empty( $users ) ? Engine::recompute_users( array_keys( $users ) ) : 0;
-
-		return new WP_REST_Response(
-			array(
-				'received'          => count( $rows ),
-				'imported'          => $imported,
-				'skipped_duplicate' => $skipped,
-				'failed'            => $failed,
-				'badges_awarded'    => $badges,
-			),
-			200
-		);
+		return new WP_REST_Response( \WBGam\Engine\ImportService::ingest( $normalized ), 200 );
 	}
 
 	/**

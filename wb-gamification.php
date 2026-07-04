@@ -855,6 +855,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			WP_CLI::add_command( 'wb-gamification qa', WBGam\CLI\QASeedCommand::class );
 			WP_CLI::add_command( 'wb-gamification scale', WBGam\CLI\ScaleCommand::class );
 			WP_CLI::add_command( 'wb-gamification openapi', WBGam\CLI\OpenApiCommand::class );
+			WP_CLI::add_command( 'wb-gamification import', WBGam\CLI\ImportCommand::class );
 			WP_CLI::add_command( 'wb-gamification email-test', array( WBGam\CLI\EmailCommand::class, 'test' ) );
 		}
 	);
