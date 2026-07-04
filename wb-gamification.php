@@ -359,6 +359,7 @@ final class WB_Gamification {
 			PointTypeConversionsPage::init();
 			SubmissionsPage::init();
 			\WBGam\Admin\DeactivationFeedback::init();
+			\WBGam\Admin\ImportPage::init();
 		}
 	}
 
@@ -411,6 +412,7 @@ final class WB_Gamification {
 		( new BadgeShareController() )->register_routes();
 		( new ChallengesController() )->register_routes();
 		( new EventsController() )->register_routes();
+		( new \WBGam\API\ImportController() )->register_routes();
 		( new WebhooksController() )->register_routes();
 		( new RulesController() )->register_routes();
 		( new RecapController() )->register_routes();
