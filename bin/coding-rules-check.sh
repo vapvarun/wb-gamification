@@ -286,6 +286,30 @@ check_hub_accent_bridged_to_standard_token() {
     fi
 }
 
+# Rule 14: never pass raw $_POST straight into update_option() in admin code.
+# Admin saves must read $_POST into a sanitized variable first (the whole
+# admin surface either routes through SettingsPage::handle_save — nonce + cap
+# verified once, then per-section sanitize — or gates its own handler with
+# check_admin_referer). A literal `update_option( 'key', $_POST[...] )` skips
+# sanitization AND is the shape wppqa's "direct $_POST to update_option" flag
+# looks for; banning it keeps that class of finding at zero and forces the
+# established sanitize-then-save pattern.
+check_no_raw_post_to_update_option() {
+    # A safe line wraps $_POST in a sanitizer/guard on the same statement
+    # (absint / sanitize_* / intval / (int) / (bool) / isset()-ternary). Only
+    # a raw $_POST with NONE of those is a real violation.
+    local hits
+    hits=$(grep -rEn "update_option\([^)]*\\\$_(POST|REQUEST)" "$PLUGIN_DIR/src/" 2>/dev/null \
+            | grep -v "/tests/" \
+            | grep -vE "absint|sanitize_|intval|\(int\)|\(bool\)|isset\(" || true)
+    if [ -n "$hits" ]; then
+        violation "Rule 14 — raw \$_POST/\$_REQUEST passed into update_option() (sanitize on the same statement):"
+        echo "$hits" | sed 's/^/    /'
+    else
+        ok "Rule 14 — no raw \$_POST piped into update_option()"
+    fi
+}
+
 check_no_native_cap_check_for_plugin_abilities
 check_unauthenticated_rest_allowlist
 check_no_inline_styles_in_admin_php
@@ -294,6 +318,7 @@ check_no_inline_style_blocks_in_php
 check_privacy_coverage_for_user_scoped_surfaces
 check_as_schedule_guard
 check_hub_accent_bridged_to_standard_token
+check_no_raw_post_to_update_option
 
 echo ""
 COUNT=$(violations_count)
