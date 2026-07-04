@@ -116,41 +116,210 @@ final class GamiPressImporter {
 	}
 
 	/**
+	 * Registered GamiPress achievement-type slugs (the `achievement-type` CPT
+	 * post names) — these are the `user_earnings.post_type` values that mean
+	 * "earned an achievement" (as opposed to a step / points-award / rank row).
+	 *
+	 * @return string[]
+	 */
+	private static function achievement_type_slugs(): array {
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		return (array) $wpdb->get_col(
+			$wpdb->prepare(
+				"SELECT post_name FROM {$wpdb->posts} WHERE post_type = %s AND post_status = 'publish'",
+				'achievement-type'
+			)
+		);
+	}
+
+	/**
+	 * Build achievement-award records from `gamipress_user_earnings`.
+	 *
+	 * One record per earned achievement: a stable WB badge id
+	 * (`gamipress-achievement-{post_id}`), the achievement title + featured
+	 * image, and the earned date (for a backdated award).
+	 *
+	 * @return array<int, array{user_id:int, badge_id:string, name:string, image:string, earned_at:string, post_id:int}>
+	 */
+	public static function build_achievements(): array {
+		$types = self::achievement_type_slugs();
+		if ( empty( $types ) ) {
+			return array();
+		}
+
+		global $wpdb;
+		$placeholders = implode( ',', array_fill( 0, count( $types ), '%s' ) );
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$rows = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT user_earning_id, title, user_id, post_id, date
+				   FROM {$wpdb->prefix}gamipress_user_earnings
+				  WHERE user_id > 0 AND post_type IN ($placeholders)
+				  ORDER BY user_earning_id ASC",
+				...$types
+			),
+			ARRAY_A
+		);
+
+		$out = array();
+		foreach ( (array) $rows as $r ) {
+			$post_id = (int) $r['post_id'];
+			$out[]   = array(
+				'user_id'   => (int) $r['user_id'],
+				'badge_id'  => 'gamipress-achievement-' . $post_id,
+				'name'      => (string) $r['title'],
+				'image'     => (string) get_the_post_thumbnail_url( $post_id, 'full' ),
+				'earned_at' => (string) $r['date'],
+				'post_id'   => $post_id,
+			);
+		}
+		return $out;
+	}
+
+	/**
 	 * Run the import (or preview it).
 	 *
 	 * @param bool $dry_run When true, build + reconcile but do not write.
 	 * @return array<string, mixed> Ingestion counts plus a per-user reconciliation.
 	 */
 	public static function run( bool $dry_run = false ): array {
-		$rows = self::build_rows();
+		$rows         = self::build_rows();
+		$achievements = self::build_achievements();
 
-		// Expected per-user imported delta, and GamiPress's own stored balance.
-		$expected = array();
-		foreach ( $rows as $row ) {
-			$expected[ $row['user_id'] ] = ( $expected[ $row['user_id'] ] ?? 0 ) + (int) $row['points'];
+		// Write FIRST (real run) so reconciliation can compare what actually
+		// landed, not what we hoped would land.
+		$ingest       = null;
+		$ach_imported = 0;
+		if ( ! $dry_run ) {
+			$ingest = ImportService::ingest( $rows );
+			foreach ( $achievements as $a ) {
+				\WBGam\Engine\BadgeEngine::upsert_def(
+					array(
+						'id'        => $a['badge_id'],
+						'name'      => $a['name'],
+						'image_url' => $a['image'],
+						'category'  => 'imported',
+					)
+				);
+				$earned_at = gmdate( 'Y-m-d H:i:s', strtotime( $a['earned_at'] ) ?: time() );
+				if ( \WBGam\Engine\BadgeEngine::award_badge( $a['user_id'], $a['badge_id'], $earned_at ) ) {
+					++$ach_imported;
+				}
+			}
 		}
 
+		// POINTS reconciliation. Real run compares the sum that ACTUALLY landed
+		// in our ledger (keyed by source_key) against GamiPress's own balance,
+		// so a rejected/dropped row surfaces as a mismatch instead of hiding
+		// behind an optimistic expected-sum. Dry run previews the expected sum.
 		$reconcile = array();
-		foreach ( $expected as $uid => $sum ) {
-			$gp_balance              = self::gamipress_balance( (int) $uid );
-			$reconcile[ (int) $uid ] = array(
-				'imported_sum'      => (int) $sum,
-				'gamipress_balance' => $gp_balance,
-				'match'             => (int) $sum === $gp_balance,
+		foreach ( self::user_ids( $rows ) as $uid ) {
+			$ours              = $dry_run ? self::expected_points( $rows, $uid ) : self::our_imported_points( $uid );
+			$source            = self::gamipress_balance( $uid );
+			$reconcile[ $uid ] = array(
+				'imported_sum'      => $ours,
+				'gamipress_balance' => $source,
+				'match'             => $ours === $source,
+			);
+		}
+
+		// ACHIEVEMENT reconciliation: our imported badge count vs GamiPress's
+		// own achievement count.
+		$ach_reconcile = array();
+		foreach ( self::user_ids( $achievements ) as $uid ) {
+			$ours                  = $dry_run
+				? count( array_filter( $achievements, static fn ( $a ) => (int) $a['user_id'] === $uid ) )
+				: self::our_imported_badge_count( $uid );
+			$own                   = function_exists( 'gamipress_get_user_achievements' )
+				? count( (array) gamipress_get_user_achievements( array( 'user_id' => $uid ) ) )
+				: $ours;
+			$ach_reconcile[ $uid ] = array(
+				'imported_achievements'  => (int) $ours,
+				'gamipress_achievements' => (int) $own,
+				'match'                  => (int) $ours === (int) $own,
 			);
 		}
 
 		$result = array(
-			'rows'           => count( $rows ),
-			'dry_run'        => $dry_run,
-			'reconciliation' => $reconcile,
+			'rows'                       => count( $rows ),
+			'achievements'               => count( $achievements ),
+			'dry_run'                    => $dry_run,
+			'reconciliation'             => $reconcile,
+			'achievement_reconciliation' => $ach_reconcile,
 		);
-
 		if ( ! $dry_run ) {
-			$result['ingest'] = ImportService::ingest( $rows );
+			$result['ingest']               = $ingest;
+			$result['achievements_awarded'] = $ach_imported;
 		}
-
 		return $result;
+	}
+
+	/**
+	 * Distinct user ids present in a set of rows.
+	 *
+	 * @param array<int, array<string, mixed>> $rows Rows with a user_id key.
+	 * @return int[]
+	 */
+	private static function user_ids( array $rows ): array {
+		return array_values( array_unique( array_map( static fn ( $r ) => (int) $r['user_id'], $rows ) ) );
+	}
+
+	/**
+	 * Expected point sum for a user from the built rows (dry-run preview).
+	 *
+	 * @param array<int, array<string, mixed>> $rows    Point rows.
+	 * @param int                              $user_id User.
+	 * @return int
+	 */
+	private static function expected_points( array $rows, int $user_id ): int {
+		$sum = 0;
+		foreach ( $rows as $r ) {
+			if ( (int) $r['user_id'] === $user_id ) {
+				$sum += (int) $r['points'];
+			}
+		}
+		return $sum;
+	}
+
+	/**
+	 * Sum of points that ACTUALLY landed in our ledger from a GamiPress import.
+	 *
+	 * @param int $user_id User.
+	 * @return int
+	 */
+	private static function our_imported_points( int $user_id ): int {
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		return (int) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COALESCE(SUM(p.points),0)
+				   FROM {$wpdb->prefix}wb_gam_points p
+				   JOIN {$wpdb->prefix}wb_gam_events e ON e.id = p.event_id
+				  WHERE p.user_id = %d AND e.source_key LIKE %s",
+				$user_id,
+				'gamipress:log:%'
+			)
+		);
+	}
+
+	/**
+	 * Count of imported GamiPress achievement badges a user actually holds.
+	 *
+	 * @param int $user_id User.
+	 * @return int
+	 */
+	private static function our_imported_badge_count( int $user_id ): int {
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		return (int) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM {$wpdb->prefix}wb_gam_user_badges
+				  WHERE user_id = %d AND badge_id LIKE %s",
+				$user_id,
+				'gamipress-achievement-%'
+			)
+		);
 	}
 
 	/**

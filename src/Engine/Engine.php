@@ -616,7 +616,11 @@ final class Engine {
 		// Apply any stored rule multipliers (day-of-week, order-total, etc.).
 		$points = RuleEngine::apply_multipliers( $points, $event );
 
-		if ( $points <= 0 ) {
+		// Organic awards must be positive (a 0/negative award is a no-op or a
+		// bug). Import mode is the exception: a migrated deduction/revoke is a
+		// legitimate negative ledger row, so only a literal 0 (nothing to
+		// record) is rejected.
+		if ( $is_import ? ( 0 === $points ) : ( $points <= 0 ) ) {
 			return false;
 		}
 

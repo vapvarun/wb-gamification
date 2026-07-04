@@ -125,18 +125,23 @@ final class MyCredImporter {
 	public static function run( bool $dry_run = false ): array {
 		$rows = self::build_rows();
 
-		$expected = array();
-		foreach ( $rows as $row ) {
-			$expected[ $row['user_id'] ] = ( $expected[ $row['user_id'] ] ?? 0 ) + (int) $row['points'];
+		// Write FIRST so reconciliation compares what ACTUALLY landed.
+		$ingest = null;
+		if ( ! $dry_run ) {
+			$ingest = ImportService::ingest( $rows );
 		}
 
+		$user_ids  = array_values( array_unique( array_map( static fn ( $r ) => (int) $r['user_id'], $rows ) ) );
 		$reconcile = array();
-		foreach ( $expected as $uid => $sum ) {
-			$balance                 = self::mycred_balance( (int) $uid );
-			$reconcile[ (int) $uid ] = array(
-				'imported_sum'   => (int) $sum,
+		foreach ( $user_ids as $uid ) {
+			// Real run: the sum that actually landed in our ledger (a dropped
+			// row can't hide). Dry run: the expected sum.
+			$ours              = $dry_run ? self::expected_points( $rows, $uid ) : self::our_imported_points( $uid );
+			$balance           = self::mycred_balance( $uid );
+			$reconcile[ $uid ] = array(
+				'imported_sum'   => $ours,
 				'mycred_balance' => $balance,
-				'match'          => (int) $sum === $balance,
+				'match'          => $ours === $balance,
 			);
 		}
 
@@ -146,9 +151,47 @@ final class MyCredImporter {
 			'reconciliation' => $reconcile,
 		);
 		if ( ! $dry_run ) {
-			$result['ingest'] = ImportService::ingest( $rows );
+			$result['ingest'] = $ingest;
 		}
 		return $result;
+	}
+
+	/**
+	 * Expected point sum for a user from the built rows (dry-run preview).
+	 *
+	 * @param array<int, array<string, mixed>> $rows    Rows.
+	 * @param int                              $user_id User.
+	 * @return int
+	 */
+	private static function expected_points( array $rows, int $user_id ): int {
+		$sum = 0;
+		foreach ( $rows as $r ) {
+			if ( (int) $r['user_id'] === $user_id ) {
+				$sum += (int) $r['points'];
+			}
+		}
+		return $sum;
+	}
+
+	/**
+	 * Sum of points that ACTUALLY landed in our ledger from a myCred import.
+	 *
+	 * @param int $user_id User.
+	 * @return int
+	 */
+	private static function our_imported_points( int $user_id ): int {
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		return (int) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COALESCE(SUM(p.points),0)
+				   FROM {$wpdb->prefix}wb_gam_points p
+				   JOIN {$wpdb->prefix}wb_gam_events e ON e.id = p.event_id
+				  WHERE p.user_id = %d AND e.source_key LIKE %s",
+				$user_id,
+				'mycred:log:%'
+			)
+		);
 	}
 
 	/**

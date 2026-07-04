@@ -82,7 +82,32 @@ class ImportCommand {
 			}
 		}
 		if ( ! empty( $table ) ) {
+			\WP_CLI::log( 'Points:' );
 			\WP_CLI\Utils\format_items( 'table', $table, array( 'user_id', 'imported_sum', 'source_balance', 'match' ) );
+		}
+
+		// Achievement reconciliation, when the importer reports it.
+		if ( ! empty( $result['achievement_reconciliation'] ) ) {
+			$ach_table = array();
+			foreach ( $result['achievement_reconciliation'] as $uid => $rec ) {
+				$src = 0;
+				foreach ( $rec as $k => $v ) {
+					if ( str_ends_with( (string) $k, '_achievements' ) && 'imported_achievements' !== $k ) {
+						$src = $v;
+					}
+				}
+				$ach_table[] = array(
+					'user_id'  => $uid,
+					'imported' => $rec['imported_achievements'] ?? 0,
+					'source'   => $src,
+					'match'    => ! empty( $rec['match'] ) ? 'yes' : 'NO',
+				);
+				if ( empty( $rec['match'] ) ) {
+					++$mismatch;
+				}
+			}
+			\WP_CLI::log( 'Achievements:' );
+			\WP_CLI\Utils\format_items( 'table', $ach_table, array( 'user_id', 'imported', 'source', 'match' ) );
 		}
 
 		if ( ! $dry_run && isset( $result['ingest'] ) ) {
