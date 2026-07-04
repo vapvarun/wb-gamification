@@ -65,6 +65,7 @@
 			};
 
 			fetch( restUrl + '/submissions', {
+				signal: ( typeof AbortSignal !== 'undefined' && AbortSignal.timeout ) ? AbortSignal.timeout( 15000 ) : undefined,
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',

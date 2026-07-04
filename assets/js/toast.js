@@ -314,6 +314,7 @@
 	 */
 	function firstPaintFallback() {
 		fetch( wbGamToast.restUrl + 'members/me/toasts', {
+			signal: ( typeof AbortSignal !== 'undefined' && AbortSignal.timeout ) ? AbortSignal.timeout( 15000 ) : undefined,
 			headers: { 'X-WP-Nonce': wbGamToast.nonce },
 			credentials: 'same-origin'
 		} )

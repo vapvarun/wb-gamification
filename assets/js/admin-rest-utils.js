@@ -83,16 +83,23 @@
 		if ( body ) {
 			init.body = JSON.stringify( body );
 		}
+		// Abort a hung request so a slow/dead host can never freeze the UI.
+		// Default 15s; a page may override via settings.timeoutMs.
+		const timeoutMs = ( settings.timeoutMs && settings.timeoutMs > 0 ) ? settings.timeoutMs : 15000;
+		if ( typeof AbortSignal !== 'undefined' && AbortSignal.timeout ) {
+			init.signal = AbortSignal.timeout( timeoutMs );
+		}
 		let response;
 		try {
 			response = await fetch( url, init );
 		} catch ( e ) {
-			// Network failure (offline, ad-blocker, aborted). Surface as a
-			// structured result so callers don't have to special-case rejection.
+			// Network failure (offline, ad-blocker) OR a timeout abort. Surface
+			// as a structured result so callers don't special-case rejection.
+			const timedOut = e && ( e.name === 'TimeoutError' || e.name === 'AbortError' );
 			return {
 				ok: false,
 				status: 0,
-				data: { message: ( e && e.message ) || 'Network error.' },
+				data: { message: timedOut ? 'Request timed out. Please try again.' : ( ( e && e.message ) || 'Network error.' ) },
 			};
 		}
 		let data = null;

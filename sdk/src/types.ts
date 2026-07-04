@@ -18,6 +18,8 @@ export interface WBGamificationConfig {
   baseUrl: string;
   apiKey?: string;
   nonce?: string;
+  /** Per-request timeout in ms (default 15000). A hung host aborts instead of hanging. */
+  timeoutMs?: number;
 }
 
 export interface Member {

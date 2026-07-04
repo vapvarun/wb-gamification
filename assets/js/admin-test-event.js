@@ -48,6 +48,7 @@
 		status.className = 'wbgam-test-event-status wbgam-test-event-status--pending';
 
 		fetch( cfg.restUrl + 'points/award', {
+			signal: ( typeof AbortSignal !== 'undefined' && AbortSignal.timeout ) ? AbortSignal.timeout( 15000 ) : undefined,
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json',

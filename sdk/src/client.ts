@@ -38,11 +38,15 @@ import type {
 export class WBGamification {
   private baseUrl: string;
   private headers: Record<string, string>;
+  private timeoutMs: number;
 
   constructor(config: WBGamificationConfig) {
     this.baseUrl =
       config.baseUrl.replace(/\/$/, '') + '/wp-json/wb-gamification/v1';
     this.headers = { 'Content-Type': 'application/json' };
+    // Abort a hung request so a slow/dead host can't hang a caller forever.
+    this.timeoutMs =
+      config.timeoutMs && config.timeoutMs > 0 ? config.timeoutMs : 15000;
 
     if (config.apiKey) {
       this.headers['X-WB-Gam-Key'] = config.apiKey;
@@ -64,10 +68,28 @@ export class WBGamification {
    */
   async request<T>(path: string, options: RequestInit = {}): Promise<T> {
     const url = `${this.baseUrl}${path}`;
-    const response = await fetch(url, {
-      ...options,
-      headers: { ...this.headers, ...options.headers },
-    });
+    // Respect a caller-supplied signal; otherwise apply the default timeout.
+    const signal =
+      options.signal ??
+      (typeof AbortSignal !== 'undefined' && AbortSignal.timeout
+        ? AbortSignal.timeout(this.timeoutMs)
+        : undefined);
+    let response: Response;
+    try {
+      response = await fetch(url, {
+        ...options,
+        signal,
+        headers: { ...this.headers, ...options.headers },
+      });
+    } catch (e) {
+      const err = e as { name?: string };
+      if (err && (err.name === 'TimeoutError' || err.name === 'AbortError')) {
+        throw new Error(
+          `WB Gamification API request timed out after ${this.timeoutMs}ms`
+        );
+      }
+      throw e;
+    }
 
     if (!response.ok) {
       const error = await response

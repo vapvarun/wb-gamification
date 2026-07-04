@@ -44,6 +44,7 @@
 			status.textContent = i18n.sending || '';
 
 			fetch( form.dataset.restUrl, {
+				signal: ( typeof AbortSignal !== 'undefined' && AbortSignal.timeout ) ? AbortSignal.timeout( 15000 ) : undefined,
 				method:      'POST',
 				credentials: 'same-origin',
 				headers:     {

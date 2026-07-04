@@ -334,6 +334,26 @@ check_blocks_have_empty_state() {
     fi
 }
 
+# Rule 16: any plugin JS that calls fetch() must apply an AbortSignal timeout,
+# so a slow or dead host can never freeze the UI. The two shared wrappers
+# (admin-rest-utils.js apiFetch, sdk client) and every raw frontend fetch use
+# AbortSignal.timeout(); this gate keeps a NEW fetch from shipping without one.
+# Scans plugin-authored JS only (skips minified + the bundled wbcom-family lib).
+check_fetch_has_timeout() {
+    local missing="" f
+    while IFS= read -r f; do
+        [ -f "$f" ] || continue
+        if grep -q "fetch(" "$f" 2>/dev/null && ! grep -q "AbortSignal" "$f" 2>/dev/null; then
+            missing="${missing} ${f#"$PLUGIN_DIR"/}"
+        fi
+    done < <(find "$PLUGIN_DIR/assets/js" "$PLUGIN_DIR/src/Blocks" -name '*.js' ! -name '*.min.js' 2>/dev/null)
+    if [ -n "$missing" ]; then
+        violation "Rule 16 — fetch() without an AbortSignal timeout (a hung host freezes the UI):$missing"
+    else
+        ok "Rule 16 — every fetch() applies an AbortSignal timeout"
+    fi
+}
+
 check_no_native_cap_check_for_plugin_abilities
 check_unauthenticated_rest_allowlist
 check_no_inline_styles_in_admin_php
@@ -344,6 +364,7 @@ check_as_schedule_guard
 check_hub_accent_bridged_to_standard_token
 check_no_raw_post_to_update_option
 check_blocks_have_empty_state
+check_fetch_has_timeout
 
 echo ""
 COUNT=$(violations_count)
