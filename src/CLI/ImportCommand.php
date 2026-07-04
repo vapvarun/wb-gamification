@@ -110,6 +110,28 @@ class ImportCommand {
 			\WP_CLI\Utils\format_items( 'table', $ach_table, array( 'user_id', 'imported', 'source', 'match' ) );
 		}
 
+		// Rank reconciliation (source rank vs the WB level a member's imported
+		// points map to). A mismatch here usually means the target site already
+		// has its own levels that collide with the imported tiers — surfaced as
+		// a separate warning, not a hard failure.
+		$rank_mismatch = 0;
+		if ( ! empty( $result['rank_reconciliation'] ) ) {
+			$rank_table = array();
+			foreach ( $result['rank_reconciliation'] as $uid => $rec ) {
+				$rank_table[] = array(
+					'user_id'     => $uid,
+					'our_level'   => $rec['our_level'] ?? '',
+					'source_rank' => $rec['gamipress_rank'] ?? '',
+					'match'       => ! empty( $rec['match'] ) ? 'yes' : 'NO',
+				);
+				if ( empty( $rec['match'] ) ) {
+					++$rank_mismatch;
+				}
+			}
+			\WP_CLI::log( 'Ranks -> Levels:' );
+			\WP_CLI\Utils\format_items( 'table', $rank_table, array( 'user_id', 'our_level', 'source_rank', 'match' ) );
+		}
+
 		if ( ! $dry_run && isset( $result['ingest'] ) ) {
 			$i = $result['ingest'];
 			\WP_CLI::log(
@@ -123,10 +145,14 @@ class ImportCommand {
 			);
 		}
 
+		if ( $rank_mismatch > 0 ) {
+			\WP_CLI::warning( "{$rank_mismatch} user(s) rank does not match their derived level — usually because this site already has levels that collide with the imported tiers. Review the target site's levels; a fresh migration reconciles cleanly." );
+		}
+
 		if ( $mismatch > 0 ) {
-			\WP_CLI::warning( "{$mismatch} user(s) did not reconcile — investigate before trusting the import." );
+			\WP_CLI::warning( "{$mismatch} user(s) did not reconcile on points/achievements — investigate before trusting the import." );
 		} else {
-			\WP_CLI::success( "All users reconciled against {$source} balances." );
+			\WP_CLI::success( "Points & achievements reconciled against {$source}." );
 		}
 	}
 }

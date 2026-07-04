@@ -178,6 +178,85 @@ final class GamiPressImporter {
 	}
 
 	/**
+	 * Registered GamiPress rank-type slugs (the `rank-type` CPT post names).
+	 *
+	 * @return string[]
+	 */
+	private static function rank_type_slugs(): array {
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		return (array) $wpdb->get_col(
+			$wpdb->prepare(
+				"SELECT post_name FROM {$wpdb->posts} WHERE post_type = %s AND post_status = 'publish'",
+				'rank-type'
+			)
+		);
+	}
+
+	/**
+	 * Points required to REACH a GamiPress rank.
+	 *
+	 * GamiPress stores a rank's "reach minimum points" threshold on its
+	 * `rank-requirement` child posts (`_gamipress_points_required`); some
+	 * setups also stamp it on the rank itself. Read both and take the max so
+	 * the WB level threshold matches whatever the source used. The base rank
+	 * has no requirement → 0.
+	 *
+	 * @param int $rank_id Rank post ID.
+	 * @return int
+	 */
+	private static function rank_min_points( int $rank_id ): int {
+		$points = (int) get_post_meta( $rank_id, '_gamipress_points_required', true );
+
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$req_ids = (array) $wpdb->get_col(
+			$wpdb->prepare(
+				"SELECT ID FROM {$wpdb->posts}
+				  WHERE post_type = 'rank-requirement' AND post_status = 'publish' AND post_parent = %d",
+				$rank_id
+			)
+		);
+		foreach ( $req_ids as $rid ) {
+			$points = max( $points, (int) get_post_meta( (int) $rid, '_gamipress_points_required', true ) );
+		}
+		return max( 0, $points );
+	}
+
+	/**
+	 * Build rank tiers (as WB level definitions) from GamiPress rank posts.
+	 *
+	 * @return array<int, array{id:int, name:string, min_points:int, order:int, type:string}>
+	 */
+	public static function build_ranks(): array {
+		$types = self::rank_type_slugs();
+		if ( empty( $types ) ) {
+			return array();
+		}
+		$ranks = get_posts(
+			array(
+				'post_type'   => $types,
+				'numberposts' => -1,
+				'post_status' => 'publish',
+				'orderby'     => 'menu_order',
+				'order'       => 'ASC',
+			)
+		);
+
+		$out = array();
+		foreach ( $ranks as $i => $rank ) {
+			$out[] = array(
+				'id'         => (int) $rank->ID,
+				'name'       => (string) $rank->post_title,
+				'min_points' => self::rank_min_points( (int) $rank->ID ),
+				'order'      => (int) $i,
+				'type'       => (string) $rank->post_type,
+			);
+		}
+		return $out;
+	}
+
+	/**
 	 * Run the import (or preview it).
 	 *
 	 * @param bool $dry_run When true, build + reconcile but do not write.
@@ -186,11 +265,13 @@ final class GamiPressImporter {
 	public static function run( bool $dry_run = false ): array {
 		$rows         = self::build_rows();
 		$achievements = self::build_achievements();
+		$ranks        = self::build_ranks();
 
 		// Write FIRST (real run) so reconciliation can compare what actually
 		// landed, not what we hoped would land.
 		$ingest       = null;
 		$ach_imported = 0;
+		$levels_made  = 0;
 		if ( ! $dry_run ) {
 			$ingest = ImportService::ingest( $rows );
 			foreach ( $achievements as $a ) {
@@ -205,6 +286,14 @@ final class GamiPressImporter {
 				$earned_at = gmdate( 'Y-m-d H:i:s', strtotime( $a['earned_at'] ) ?: time() );
 				if ( \WBGam\Engine\BadgeEngine::award_badge( $a['user_id'], $a['badge_id'], $earned_at ) ) {
 					++$ach_imported;
+				}
+			}
+			// Ranks → WB levels: recreate each tier (name + threshold). Members
+			// then land at the matching level from their imported points, since
+			// our levels are point-derived on read.
+			foreach ( $ranks as $r ) {
+				if ( \WBGam\Engine\LevelEngine::upsert_level( $r['name'], $r['min_points'], $r['order'] ) > 0 ) {
+					++$levels_made;
 				}
 			}
 		}
@@ -228,11 +317,21 @@ final class GamiPressImporter {
 		// own achievement count.
 		$ach_reconcile = array();
 		foreach ( self::user_ids( $achievements ) as $uid ) {
-			$ours                  = $dry_run
+			$ours = $dry_run
 				? count( array_filter( $achievements, static fn ( $a ) => (int) $a['user_id'] === $uid ) )
 				: self::our_imported_badge_count( $uid );
+			// Filter GamiPress's getter to achievement types ONLY — unfiltered
+			// it also counts rank earnings, which we migrate as levels, not
+			// badges (that inflated the source count and hid a false match).
 			$own                   = function_exists( 'gamipress_get_user_achievements' )
-				? count( (array) gamipress_get_user_achievements( array( 'user_id' => $uid ) ) )
+				? count(
+					(array) gamipress_get_user_achievements(
+						array(
+							'user_id'          => $uid,
+							'achievement_type' => self::achievement_type_slugs(),
+						)
+					)
+				)
 				: $ours;
 			$ach_reconcile[ $uid ] = array(
 				'imported_achievements'  => (int) $ours,
@@ -241,16 +340,41 @@ final class GamiPressImporter {
 			);
 		}
 
+		// RANK reconciliation. For each user who holds a GamiPress rank, the WB
+		// level derived from their IMPORTED points (isolating any pre-existing
+		// WB points on the target) must equal their GamiPress rank name.
+		$rank_reconcile = array();
+		if ( ! empty( $ranks ) ) {
+			foreach ( self::user_ids( $rows ) as $uid ) {
+				$gp_rank = self::gamipress_user_rank_name( $uid );
+				if ( '' === $gp_rank ) {
+					continue;
+				}
+				$points                 = $dry_run ? self::expected_points( $rows, $uid ) : self::our_imported_points( $uid );
+				$our_level              = $dry_run
+					? self::tier_name_for_points( $ranks, $points )
+					: ( \WBGam\Engine\LevelEngine::get_level_for_points( $points )['name'] ?? '' );
+				$rank_reconcile[ $uid ] = array(
+					'our_level'      => (string) $our_level,
+					'gamipress_rank' => $gp_rank,
+					'match'          => (string) $our_level === $gp_rank,
+				);
+			}
+		}
+
 		$result = array(
 			'rows'                       => count( $rows ),
 			'achievements'               => count( $achievements ),
+			'ranks'                      => count( $ranks ),
 			'dry_run'                    => $dry_run,
 			'reconciliation'             => $reconcile,
 			'achievement_reconciliation' => $ach_reconcile,
+			'rank_reconciliation'        => $rank_reconcile,
 		);
 		if ( ! $dry_run ) {
 			$result['ingest']               = $ingest;
 			$result['achievements_awarded'] = $ach_imported;
+			$result['levels_created']       = $levels_made;
 		}
 		return $result;
 	}
@@ -320,6 +444,45 @@ final class GamiPressImporter {
 				'gamipress-achievement-%'
 			)
 		);
+	}
+
+	/**
+	 * A user's current GamiPress rank name (highest across rank types).
+	 *
+	 * @param int $user_id User.
+	 * @return string Rank title, or '' if none.
+	 */
+	private static function gamipress_user_rank_name( int $user_id ): string {
+		if ( ! function_exists( 'gamipress_get_user_rank' ) ) {
+			return '';
+		}
+		$name = '';
+		foreach ( self::rank_type_slugs() as $type ) {
+			$rank = gamipress_get_user_rank( $user_id, $type );
+			if ( $rank instanceof \WP_Post && '' !== $rank->post_title ) {
+				$name = $rank->post_title;
+			}
+		}
+		return $name;
+	}
+
+	/**
+	 * The tier name a point total maps to (dry-run preview of the derived level).
+	 *
+	 * @param array<int, array{name:string, min_points:int}> $ranks  Tiers.
+	 * @param int                                            $points Point total.
+	 * @return string
+	 */
+	private static function tier_name_for_points( array $ranks, int $points ): string {
+		$name = '';
+		$best = -1;
+		foreach ( $ranks as $r ) {
+			if ( $points >= (int) $r['min_points'] && (int) $r['min_points'] >= $best ) {
+				$best = (int) $r['min_points'];
+				$name = (string) $r['name'];
+			}
+		}
+		return $name;
 	}
 
 	/**
