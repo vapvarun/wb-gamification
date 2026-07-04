@@ -199,6 +199,32 @@ All `wp wb-gamification` subcommands run as the OS user that invoked `wp`. There
 
 Treat shell access as equivalent to admin.
 
+`wp wb-gamification import <gamipress|mycred|badgeos> [--dry-run]` (v1.6.2) also
+runs on shell access (no in-CLI cap), same as the rest.
+
+---
+
+## Competitor import (v1.6.2)
+
+Migration from GamiPress / myCred / BadgeOS. All three surfaces are gated by the
+`wb_gam_manage_members` capability (which includes the `manage_options` admin
+fallback), so a delegated community manager can run imports without full admin.
+
+| Surface | Gate |
+|---|---|
+| REST `GET /import/sources` | `wb_gam_manage_members` (`ImportController::permissions`) |
+| REST `POST /import/{source}` (run / dry-run) | `wb_gam_manage_members` |
+| REST `POST /events/import` (bulk ingestion) | `wb_gam_manage_members` (`EventsController::import_permissions_check`) |
+| Admin **WB Gamification → Import** page | `wb_gam_manage_members` (submenu cap + `render_page` re-check) |
+| `wp wb-gamification import <source>` | Shell access (WP-CLI) |
+
+Imports READ the source plugin's own tables/meta and WRITE only through the
+engine's import path (`ImportService` → `Engine::process` import mode). They are
+idempotent (`wb_gam_events.source_key` UNIQUE) and reconcile against each
+source's own getters. Source plugins may stay active during import (read-only);
+deactivate afterward. See `src/Integrations/Importers/*` and the per-source
+data maps in `plan/importers/`.
+
 ---
 
 ## Recommendations
