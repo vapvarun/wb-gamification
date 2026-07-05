@@ -331,6 +331,64 @@ final class KudosEngine {
 		);
 	}
 
+	/**
+	 * Recent kudos RECEIVED by a specific member, newest first.
+	 *
+	 * Mirrors get_recent() but scoped to one receiver, so a profile can show the
+	 * kudos a member has been given without pulling the global feed. Revoked rows
+	 * are excluded.
+	 *
+	 * @param int $user_id Receiver user ID.
+	 * @param int $limit   Max rows (1-50). Default 20.
+	 * @return array<int,array{id:int,giver_id:int,giver_name:string,receiver_id:int,receiver_name:string,message:?string,created_at:string}>
+	 */
+	public static function get_received( int $user_id, int $limit = 20 ): array {
+		global $wpdb;
+
+		$user_id = max( 0, $user_id );
+		if ( 0 === $user_id ) {
+			return array();
+		}
+		$limit = max( 1, min( 50, $limit ) );
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$rows = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT k.id, k.giver_id, g.display_name AS giver_name,
+				        k.receiver_id, r.display_name AS receiver_name,
+				        k.message, k.created_at
+				   FROM {$wpdb->prefix}wb_gam_kudos k
+				   JOIN {$wpdb->users} g ON g.ID = k.giver_id
+				   JOIN {$wpdb->users} r ON r.ID = k.receiver_id
+				  WHERE k.revoked_at IS NULL AND k.receiver_id = %d
+				  ORDER BY k.created_at DESC
+				  LIMIT %d",
+				$user_id,
+				$limit
+			),
+			ARRAY_A
+		);
+
+		if ( ! $rows ) {
+			return array();
+		}
+
+		return array_map(
+			static function ( array $row ): array {
+				return array(
+					'id'            => (int) $row['id'],
+					'giver_id'      => (int) $row['giver_id'],
+					'giver_name'    => $row['giver_name'],
+					'receiver_id'   => (int) $row['receiver_id'],
+					'receiver_name' => $row['receiver_name'],
+					'message'       => $row['message'] ?: null,
+					'created_at'    => $row['created_at'],
+				);
+			},
+			$rows
+		);
+	}
+
 	// ── Admin moderation API ──────────────────────────────────────────────────────
 
 	/**
