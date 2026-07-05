@@ -448,6 +448,19 @@ final class NotificationBridge {
 		// streak / level-up overlays start hidden, not stuck-visible.
 		wp_enqueue_script_module( 'wb-gamification-notifications' );
 
+		// Enqueue the toast STACK renderer here, not only in enqueue_assets(): a host
+		// that isolates foreign assets on its own front-end routes (e.g. BuddyNext's
+		// AssetIsolation, which dequeues non-core/non-theme handles at
+		// wp_enqueue_scripts priority 9999) strips toast.js there, leaving the seeded
+		// earn with nothing to render it. render() runs on wp_footer — AFTER any such
+		// late dequeue — so re-enqueueing the registered handles here makes the on-earn
+		// toast appear wherever the notification surface does, on every host/theme.
+		// (No-ops when the handles were never registered, e.g. logged-out.)
+		if ( wp_script_is( 'wb-gamification-toast', 'registered' ) ) {
+			wp_enqueue_script( 'wb-gamification-realtime' );
+			wp_enqueue_script( 'wb-gamification-toast' );
+		}
+
 		// Always output the markup shell (JS needs the DOM nodes).
 		// Seed script only if there are events.
 		?>
