@@ -4,7 +4,7 @@ Tags: gamification, points, badges, leaderboard, buddypress
 Requires at least: 6.5
 Tested up to: 7.0
 Requires PHP: 8.0
-Stable tag: 1.6.1
+Stable tag: 1.6.2
 License: GPL-2.0+
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -132,6 +132,26 @@ Yes. WB Gamification integrates with WordPress privacy tools. Members can reques
 All data is preserved in the database. Reactivating the plugin restores everything. If you delete the plugin via the Plugins screen, the `uninstall.php` file removes all 26 tables, options, cron jobs, and transients — a clean uninstall.
 
 == Changelog ==
+
+= 1.6.2 - July 2026 =
+
+Migrate members from GamiPress, myCred, and BadgeOS, moderate kudos and streaks, and delegate management to trusted staff.
+
+* New      - Import screen migrates existing points, achievements/badges, and ranks/levels from GamiPress, myCred, and BadgeOS, with source detection, a preview, and reconciliation against each plugin's own balances. The same import runs from WP-CLI.
+* New      - Kudos moderation admin page to review and revoke kudos, backed by a REST endpoint.
+* New      - Streaks moderation admin page and write API to adjust member streaks, backed by a REST endpoint.
+* New      - Staff delegation: grant trusted members the new wb_gam_manage_members capability to manage gamification without a full administrator role.
+* New      - Optional deactivation feedback survey.
+* Improve  - Leaderboard trend arrows now reflect real rank movement by retaining each member's previous rank between refreshes.
+* Improve  - Overlays respect the prefers-reduced-motion setting and move focus on open for better keyboard and screen-reader accessibility.
+* Improve  - Network requests now time out cleanly instead of hanging, using an AbortSignal on every fetch.
+* Fix      - Toast notifications enqueue their renderer at render time so they survive host themes that isolate plugin assets.
+* Fix      - The gamification hub block now adopts the site owner's configured accent color.
+* Security - Hardened nonce and capability checks across the admin form handlers.
+* Dev      - New wb_gam email filters for subject, recipient, and body, plus a template footer hook, for customizing transactional emails.
+* Dev      - New KudosEngine::get_received() getter for per-member kudos feeds.
+* Dev      - Import-mode ingestion supports occurred_at timestamps, event suppression, and idempotency.
+
 
 = 1.6.1 - June 2026 =
 
