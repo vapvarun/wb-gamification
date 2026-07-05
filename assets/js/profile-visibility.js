@@ -54,6 +54,7 @@
 		}
 
 		fetch( root.getAttribute( 'data-rest-url' ), {
+			signal: ( typeof AbortSignal !== 'undefined' && AbortSignal.timeout ) ? AbortSignal.timeout( 15000 ) : undefined,
 			method:      'POST',
 			credentials: 'same-origin',
 			headers:     {

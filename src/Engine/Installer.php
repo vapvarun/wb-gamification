@@ -110,8 +110,10 @@ final class Installer {
 			metadata   LONGTEXT,
 			point_type VARCHAR(60)     NOT NULL DEFAULT 'points',
 			site_id    VARCHAR(100)    NOT NULL DEFAULT '',
+			source_key VARCHAR(191)    DEFAULT NULL,
 			created_at DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			PRIMARY KEY (id),
+			UNIQUE KEY uniq_source_key (source_key),
 			KEY idx_user_action (user_id, action_id),
 			KEY idx_user_created (user_id, created_at),
 			KEY idx_user_type_created (user_id, point_type, created_at),
@@ -238,7 +240,9 @@ final class Installer {
 			timezone       VARCHAR(50)     DEFAULT 'UTC',
 			grace_used     TINYINT(1)      DEFAULT 0,
 			updated_at     DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-			PRIMARY KEY (user_id)
+			PRIMARY KEY (user_id),
+			KEY idx_current_streak (current_streak),
+			KEY idx_longest_streak (longest_streak)
 		) $charset;"
 		);
 
@@ -286,9 +290,11 @@ final class Installer {
 			receiver_id BIGINT UNSIGNED NOT NULL,
 			message     VARCHAR(255)    DEFAULT NULL,
 			created_at  DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			revoked_at  DATETIME        DEFAULT NULL,
 			PRIMARY KEY (id),
 			KEY giver_date (giver_id, created_at),
-			KEY receiver_id (receiver_id)
+			KEY receiver_id (receiver_id),
+			KEY idx_receiver_date (receiver_id, created_at)
 		) $charset;"
 		);
 
@@ -462,6 +468,7 @@ final class Installer {
 			point_type   VARCHAR(60)     NOT NULL DEFAULT 'points',
 			total_points BIGINT          NOT NULL DEFAULT 0,
 			`rank`       INT UNSIGNED    NOT NULL DEFAULT 0,
+			prev_rank    INT UNSIGNED    NOT NULL DEFAULT 0,
 			updated_at   DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			PRIMARY KEY (id),
 			UNIQUE KEY uniq_user_period_type (user_id, period, point_type),

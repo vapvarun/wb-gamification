@@ -23,6 +23,36 @@ All new admin pages (Point Types, Conversions, Submissions) use `manage_options`
 
 ---
 
+## v1.6.2 additions — caps delegation UI + Manage members
+
+**In-plugin delegation UI shipped.** Settings › Access now has a **Staff
+permissions** matrix (roles × plugin caps). Site owners can grant/revoke any
+plugin cap to a non-admin role via checkboxes — no role-editor plugin required.
+Administrator is always on (locked). A "Reset to defaults" option strips every
+plugin cap from non-admin roles. Saves through the SettingsPage `handle_save`
+dispatcher (nonce + `manage_options`) → `WP_Role::add_cap/remove_cap`.
+
+**New cap `wb_gam_manage_members`** (CAPS_VERSION → 1.5) covers the member
+roster + moderation cluster, which previously hardcoded `manage_options`:
+
+| Surface | Now gated by | Was |
+|---|---|---|
+| Members roster page + `GET /members`, `POST /members/{id}/exclude`, `/reset-points` | `wb_gam_manage_members` (menu cap + `Capabilities::user_can`) | `manage_options` |
+| Streaks moderation page + `POST`/`DELETE /members/{id}/streak` | `wb_gam_manage_members` | `manage_options` (new in 1.6.2) |
+| Kudos moderation page + `DELETE /kudos/{id}` | `wb_gam_manage_members` | `manage_options` (new in 1.6.2) |
+
+Verified: an Editor granted `wb_gam_manage_members` + `wb_gam_manage_badges`
+sees only Members / Streaks / Kudos Moderation / Badges in the Gamification
+menu and is denied API Keys (WP capability error).
+
+**Still intentionally `manage_options`-only** (sensitive config / not member
+management — documented as a deliberate choice, delegation deferred): API Keys,
+Tools (data reset), Point Types + Conversions, Events ingestion, Capabilities
+controller, Abilities registration, Intelligence, Recap, Actions list, and the
+main Settings page itself.
+
+---
+
 ## Plugin custom capabilities
 
 All caps are granted to `administrator` on plugin activation (and on `plugins_loaded` for existing installs via `Capabilities::sync()`). Removed from every role on uninstall.
@@ -168,6 +198,32 @@ All `wp wb-gamification` subcommands run as the OS user that invoked `wp`. There
 | `wp wb-gamification doctor` | Diagnostic check (read). |
 
 Treat shell access as equivalent to admin.
+
+`wp wb-gamification import <gamipress|mycred|badgeos> [--dry-run]` (v1.6.2) also
+runs on shell access (no in-CLI cap), same as the rest.
+
+---
+
+## Competitor import (v1.6.2)
+
+Migration from GamiPress / myCred / BadgeOS. All three surfaces are gated by the
+`wb_gam_manage_members` capability (which includes the `manage_options` admin
+fallback), so a delegated community manager can run imports without full admin.
+
+| Surface | Gate |
+|---|---|
+| REST `GET /import/sources` | `wb_gam_manage_members` (`ImportController::permissions`) |
+| REST `POST /import/{source}` (run / dry-run) | `wb_gam_manage_members` |
+| REST `POST /events/import` (bulk ingestion) | `wb_gam_manage_members` (`EventsController::import_permissions_check`) |
+| Admin **WB Gamification → Import** page | `wb_gam_manage_members` (submenu cap + `render_page` re-check) |
+| `wp wb-gamification import <source>` | Shell access (WP-CLI) |
+
+Imports READ the source plugin's own tables/meta and WRITE only through the
+engine's import path (`ImportService` → `Engine::process` import mode). They are
+idempotent (`wb_gam_events.source_key` UNIQUE) and reconcile against each
+source's own getters. Source plugins may stay active during import (read-only);
+deactivate afterward. See `src/Integrations/Importers/*` and the per-source
+data maps in `plan/importers/`.
 
 ---
 

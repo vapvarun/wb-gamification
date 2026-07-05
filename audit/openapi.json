@@ -3,7 +3,7 @@
     "info": {
         "title": "WB Gamification API",
         "description": "Gamification engine REST API for points, badges, levels, leaderboards, challenges, kudos, and more.",
-        "version": "1.6.0",
+        "version": "1.6.1",
         "contact": {
             "name": "Wbcom Designs",
             "url": "https://wbcomdesigns.com"
@@ -128,6 +128,72 @@
         "/members/{id}/streak": {
             "get": {
                 "summary": "Get members",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ]
+            },
+            "post": {
+                "summary": "Create members",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "id": {
+                                        "type": "integer",
+                                        "description": ""
+                                    },
+                                    "current_streak": {
+                                        "type": "integer",
+                                        "description": "New current streak. Omit to leave unchanged."
+                                    },
+                                    "longest_streak": {
+                                        "type": "integer",
+                                        "description": "New longest streak. Omit to derive as max(current, existing)."
+                                    },
+                                    "reason": {
+                                        "type": "string",
+                                        "description": "Audit reason recorded on the event."
+                                    }
+                                },
+                                "required": [
+                                    "id"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ]
+            },
+            "delete": {
+                "summary": "Delete members",
                 "responses": {
                     "200": {
                         "description": "Successful response"
@@ -1537,6 +1603,26 @@
                         "description": "Successful response"
                     }
                 }
+            }
+        },
+        "/kudos/{id}": {
+            "delete": {
+                "summary": "Delete kudos",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ]
             }
         },
         "/badges/{badge_id}/share/{user_id}": {

@@ -773,3 +773,15 @@ body.admin-bar .wb-gam-toasts--top-right {
 		width: 100%;
 	}
 }
+
+/* Vestibular safety — honor prefers-reduced-motion on the celebration overlay
+ * and toast entrance animations (WCAG 2.3.3). The overlays still appear and
+ * are dismissible; only the motion is removed. */
+@media (prefers-reduced-motion: reduce) {
+	.wb-gam-overlay,
+	.wb-gam-overlay__card,
+	.wb-gam-toast {
+		animation: none !important;
+		transition: none !important;
+	}
+}

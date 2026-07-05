@@ -94,6 +94,7 @@ store( NS, {
 
 			try {
 				const response = yield fetch( endpoint, {
+					signal: ( typeof AbortSignal !== 'undefined' && AbortSignal.timeout ) ? AbortSignal.timeout( 15000 ) : undefined,
 					method: 'POST',
 					credentials: 'same-origin',
 					headers: {

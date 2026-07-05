@@ -319,6 +319,16 @@ final class PointsEngine {
 			$type = self::resolve_type( $event->metadata['point_type'] ?? null );
 		}
 
+		// Imported ledger rows keep their historical occurred-at (UTC) so
+		// "points this month" and streak windows reflect the real timeline;
+		// organic awards keep the site-local "now" they have always used.
+		if ( ! empty( $event->metadata['_import'] ) ) {
+			$ts         = strtotime( (string) $event->created_at );
+			$created_at = false !== $ts ? gmdate( 'Y-m-d H:i:s', $ts ) : gmdate( 'Y-m-d H:i:s' );
+		} else {
+			$created_at = current_time( 'mysql' );
+		}
+
 		$inserted = $wpdb->insert(
 			$wpdb->prefix . 'wb_gam_points',
 			array(
@@ -328,7 +338,7 @@ final class PointsEngine {
 				'points'     => $points,
 				'point_type' => $type,
 				'object_id'  => $event->object_id ?: null,
-				'created_at' => current_time( 'mysql' ),
+				'created_at' => $created_at,
 			),
 			array( '%s', '%d', '%s', '%d', '%s', '%d', '%s' )
 		);

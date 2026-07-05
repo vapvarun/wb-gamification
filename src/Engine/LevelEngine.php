@@ -128,6 +128,57 @@ final class LevelEngine {
 	}
 
 	/**
+	 * Insert a level definition if one with the same name does not exist.
+	 *
+	 * Used by importers to recreate a source plugin's rank tiers as WB levels
+	 * (our levels are point-threshold + derived on read, so once the tiers and
+	 * the points are imported a member lands at the matching level). Deduped by
+	 * name because levels use an auto-increment id, so a re-run never doubles a
+	 * tier. Returns the level id (existing or new), or 0 on failure.
+	 *
+	 * @param string   $name       Level name.
+	 * @param int      $min_points Points threshold.
+	 * @param int|null $sort_order Optional explicit order (defaults to append).
+	 * @param string   $icon_url   Optional icon URL.
+	 * @return int
+	 */
+	public static function upsert_level( string $name, int $min_points, ?int $sort_order = null, string $icon_url = '' ): int {
+		$name = trim( $name );
+		if ( '' === $name ) {
+			return 0;
+		}
+
+		global $wpdb;
+		$table = $wpdb->prefix . 'wb_gam_levels';
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$existing = (int) $wpdb->get_var( $wpdb->prepare( "SELECT id FROM {$table} WHERE name = %s", $name ) );
+		if ( $existing > 0 ) {
+			return $existing;
+		}
+
+		if ( null === $sort_order ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$sort_order = (int) $wpdb->get_var( "SELECT COALESCE(MAX(sort_order),0) FROM {$table}" ) + 1;
+		}
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$inserted = $wpdb->insert(
+			$table,
+			array(
+				'name'       => $name,
+				'min_points' => max( 0, $min_points ),
+				'icon_url'   => '' !== $icon_url ? $icon_url : null,
+				'sort_order' => $sort_order,
+			),
+			array( '%s', '%d', '%s', '%d' )
+		);
+
+		self::invalidate_cache();
+		return false !== $inserted ? (int) $wpdb->insert_id : 0;
+	}
+
+	/**
 	 * Check whether a user's points put them in a new level, and promote if so.
 	 *
 	 * Called by Engine::process() after every successful point award.

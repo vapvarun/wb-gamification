@@ -447,6 +447,47 @@ final class TransactionalEmailEngine {
 	 *               burst cap above bounds the path independent of recursion.
 	 */
 	private static function send( string $to, string $subject, string $body, string $slug = '', int $user_id = 0 ): bool {
+		/**
+		 * Filter a transactional email's recipient(s) before send.
+		 *
+		 * Lets a site owner BCC an address, re-route, or add recipients per
+		 * event without overriding the template file. Applied once here so it
+		 * covers every transactional email (level-up, badge, challenge,
+		 * redemption). Return an empty string to suppress the send.
+		 *
+		 * @since 1.6.2
+		 * @param string $to      Recipient email address.
+		 * @param string $slug    Email slug (e.g. 'level_up', 'badge_earned').
+		 * @param int    $user_id The member the email is about (0 if none).
+		 */
+		$to = (string) apply_filters( 'wb_gam_email_recipients', $to, $slug, $user_id );
+		if ( '' === $to ) {
+			return false;
+		}
+
+		/**
+		 * Filter a transactional email's subject line.
+		 *
+		 * @since 1.6.2
+		 * @param string $subject The subject.
+		 * @param string $slug    Email slug.
+		 * @param int    $user_id The member the email is about.
+		 */
+		$subject = (string) apply_filters( 'wb_gam_email_subject', $subject, $slug, $user_id );
+
+		/**
+		 * Filter a transactional email's rendered HTML body.
+		 *
+		 * Runs after Email::render() (theme override + template hooks), so a
+		 * site owner can wrap/append content without touching templates.
+		 *
+		 * @since 1.6.2
+		 * @param string $body    The rendered HTML body.
+		 * @param string $slug    Email slug.
+		 * @param int    $user_id The member the email is about.
+		 */
+		$body = (string) apply_filters( 'wb_gam_email_body', $body, $slug, $user_id );
+
 		// Per-user / per-slug burst cap. Backfills + bulk awards can
 		// trigger dozens of emails for one user in seconds (50 badges
 		// from `wp wb-gamification replay`, mass manual award). SMTP

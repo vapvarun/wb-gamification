@@ -1326,3 +1326,12 @@
 	/* Marker wrapper classes — no specific visuals here; child elements
 	   inherit cards/tables/buttons from the components above. */
 }
+
+/* Vestibular safety — disable plugin keyframe motion under prefers-reduced-motion
+ * (WCAG 2.3.3). Spinners/toasts/popovers still appear; only the motion stops. */
+@media (prefers-reduced-motion: reduce) {
+	[class*="wbgam-"],
+	[class*="wb-gam-"] {
+		animation: none !important;
+	}
+}

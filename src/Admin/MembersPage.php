@@ -42,7 +42,7 @@ final class MembersPage {
 			'wb-gamification',
 			__( 'Members', 'wb-gamification' ),
 			__( 'Members', 'wb-gamification' ),
-			'manage_options',
+			'wb_gam_manage_members',
 			self::PAGE_SLUG,
 			array( __CLASS__, 'render_page' )
 		);
@@ -121,7 +121,7 @@ final class MembersPage {
 	 * Render the page shell. The table itself is built by admin-members.js.
 	 */
 	public static function render_page(): void {
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! \WBGam\Engine\Capabilities::user_can( 'wb_gam_manage_members' ) ) {
 			wp_die( esc_html__( 'You do not have permission to access this page.', 'wb-gamification' ) );
 		}
 		?>

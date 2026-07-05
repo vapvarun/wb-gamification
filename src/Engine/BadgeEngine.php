@@ -190,14 +190,20 @@ final class BadgeEngine {
 	 * Idempotent — returns false if the user already holds the badge.
 	 * When the badge_def has `validity_days > 0`, sets `expires_at` automatically.
 	 *
-	 * @param int    $user_id  User to award.
-	 * @param string $badge_id Badge ID (matches wb_gam_badge_defs.id).
-	 * @return bool            True if the badge was newly awarded.
+	 * @param int         $user_id   User to award.
+	 * @param string      $badge_id  Badge ID (matches wb_gam_badge_defs.id).
+	 * @param string|null $earned_at Optional UTC 'Y-m-d H:i:s' earned date for
+	 *                               imports; defaults to now.
+	 * @return bool                  True if the badge was newly awarded.
 	 */
-	public static function award_badge( int $user_id, string $badge_id ): bool {
+	public static function award_badge( int $user_id, string $badge_id, ?string $earned_at = null ): bool {
 		if ( self::has_badge( $user_id, $badge_id ) ) {
 			return false;
 		}
+		// Importers pass the source's earned date (UTC 'Y-m-d H:i:s') to keep
+		// migrated achievements on their real timeline; organic awards default
+		// to now.
+		$earned_at = ( null !== $earned_at && '' !== $earned_at ) ? $earned_at : current_time( 'mysql' );
 
 		global $wpdb;
 
@@ -266,7 +272,7 @@ final class BadgeEngine {
 					"INSERT IGNORE INTO `{$badges_table}` (user_id, badge_id, earned_at, expires_at) VALUES (%d, %s, %s, NULL)",
 					$user_id,
 					$badge_id,
-					current_time( 'mysql' )
+					$earned_at
 				)
 			);
 		} else {
@@ -276,7 +282,7 @@ final class BadgeEngine {
 					"INSERT IGNORE INTO `{$badges_table}` (user_id, badge_id, earned_at, expires_at) VALUES (%d, %s, %s, %s)",
 					$user_id,
 					$badge_id,
-					current_time( 'mysql' ),
+					$earned_at,
 					$expires_at
 				)
 			);
@@ -601,6 +607,41 @@ final class BadgeEngine {
 			'max_earners'   => isset( $row['max_earners'] ) ? (int) $row['max_earners'] : null,
 			'category'      => $row['category'],
 		);
+	}
+
+	/**
+	 * Insert a badge definition if it does not already exist.
+	 *
+	 * Used by importers to materialize a WB badge for each source achievement
+	 * before awarding it. Idempotent on `id` — an existing def is left as-is
+	 * (a re-run never clobbers admin edits).
+	 *
+	 * @param array{id:string, name:string, description?:string, image_url?:string, category?:string} $def Definition.
+	 * @return bool True if a new def was created.
+	 */
+	public static function upsert_def( array $def ): bool {
+		$id = isset( $def['id'] ) ? (string) $def['id'] : '';
+		if ( '' === $id ) {
+			return false;
+		}
+		if ( null !== self::get_badge_def( $id ) ) {
+			return false;
+		}
+
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$inserted = $wpdb->insert(
+			$wpdb->prefix . 'wb_gam_badge_defs',
+			array(
+				'id'          => $id,
+				'name'        => isset( $def['name'] ) ? (string) $def['name'] : $id,
+				'description' => isset( $def['description'] ) ? (string) $def['description'] : '',
+				'image_url'   => isset( $def['image_url'] ) ? (string) $def['image_url'] : null,
+				'category'    => isset( $def['category'] ) ? (string) $def['category'] : 'imported',
+			),
+			array( '%s', '%s', '%s', '%s', '%s' )
+		);
+		return false !== $inserted;
 	}
 
 	/**

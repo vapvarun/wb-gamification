@@ -465,6 +465,7 @@ final class LeaderboardEngine {
 					  ORDER BY total_points DESC
 					  LIMIT 500
 					ON DUPLICATE KEY UPDATE
+					   prev_rank    = `rank`,
 					   total_points = VALUES(total_points),
 					   `rank`       = VALUES(`rank`),
 					   updated_at   = VALUES(updated_at)",
@@ -549,7 +550,7 @@ final class LeaderboardEngine {
 		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT c.user_id, c.total_points, u.display_name
+				"SELECT c.user_id, c.total_points, u.display_name, c.`rank` AS snapshot_rank, c.prev_rank
 				   FROM {$cache_table} c
 				   JOIN {$wpdb->users} u ON u.ID = c.user_id
 				  WHERE c.period = %s AND c.point_type = %s {$opt_out_clause}
@@ -586,13 +587,23 @@ final class LeaderboardEngine {
 
 		$result = array();
 		foreach ( $rows as $rank_zero => $row ) {
-			$user_id  = (int) $row['user_id'];
+			$user_id = (int) $row['user_id'];
+
+			// Rank-change trend: only the snapshot path carries the stored current +
+			// previous rank; the live-query fallback has no history, so both stay 0
+			// (no arrow). prev_rank 0 = brand-new to the board this snapshot.
+			$snapshot_rank = isset( $row['snapshot_rank'] ) ? (int) $row['snapshot_rank'] : 0;
+			$prev_rank     = isset( $row['prev_rank'] ) ? (int) $row['prev_rank'] : 0;
+			$rank_change   = ( $snapshot_rank > 0 && $prev_rank > 0 ) ? ( $prev_rank - $snapshot_rank ) : 0;
+
 			$result[] = array(
 				'rank'         => $rank_zero + 1,
 				'user_id'      => $user_id,
 				'display_name' => $row['display_name'],
 				'avatar_url'   => get_avatar_url( $user_id, array( 'size' => 48 ) ),
 				'points'       => (int) $row['total_points'],
+				'rank_change'  => $rank_change,
+				'is_new'       => ( $snapshot_rank > 0 && 0 === $prev_rank ),
 			);
 		}
 

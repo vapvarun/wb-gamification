@@ -115,6 +115,67 @@ class KudosController extends WP_REST_Controller {
 				),
 			)
 		);
+
+		// DELETE /kudos/{id} — admin revoke (reverses both point awards,
+		// soft-marks the row, audited). Admin-only.
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/(?P<id>[\d]+)',
+			array(
+				array(
+					'methods'             => WP_REST_Server::DELETABLE,
+					'callback'            => array( $this, 'revoke_item' ),
+					'permission_callback' => array( $this, 'admin_permissions_check' ),
+					'args'                => array(
+						'id'     => array(
+							'type'              => 'integer',
+							'required'          => true,
+							'sanitize_callback' => 'absint',
+						),
+						'reason' => array(
+							'type'              => 'string',
+							'default'           => '',
+							'sanitize_callback' => 'sanitize_text_field',
+							'description'       => 'Audit reason recorded on the reversal events.',
+						),
+					),
+				),
+			)
+		);
+	}
+
+	/**
+	 * Gate: only admins may moderate (revoke) kudos.
+	 *
+	 * @return true|WP_Error
+	 */
+	public function admin_permissions_check(): bool|WP_Error {
+		if ( ! \WBGam\Engine\Capabilities::user_can( 'wb_gam_manage_members' ) ) {
+			return new WP_Error(
+				'rest_forbidden',
+				__( 'You do not have permission to moderate kudos.', 'wb-gamification' ),
+				array( 'status' => is_user_logged_in() ? 403 : 401 )
+			);
+		}
+		return true;
+	}
+
+	/**
+	 * DELETE /kudos/{id} — revoke a kudos.
+	 *
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function revoke_item( $request ): WP_REST_Response|WP_Error {
+		$id     = (int) $request['id'];
+		$reason = (string) $request->get_param( 'reason' );
+		$result = KudosEngine::revoke( $id, $reason, get_current_user_id() );
+
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
+
+		return new WP_REST_Response( $result, 200 );
 	}
 
 	// ── Permission checks ──────────────────────────────────────────────────────

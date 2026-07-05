@@ -87,13 +87,15 @@ hr { border:none; border-top:1px solid #f3f4f6; margin:1rem 0; }
 
 		<!-- Points (or whatever the site's default currency is). -->
 		<div class="stat">
-			<p class="stat-label"><?php
+			<p class="stat-label">
+			<?php
 				printf(
 					/* translators: %s: currency label (e.g. "Points", "Coins"). */
 					esc_html__( '%s this week', 'wb-gamification' ),
 					esc_html( $points_label )
 				);
-			?></p>
+				?>
+			</p>
 			<p class="stat-value"><?php echo wp_kses_post( $points_line ); ?></p>
 		</div>
 
@@ -169,5 +171,17 @@ hr { border:none; border-top:1px solid #f3f4f6; margin:1rem 0; }
 		</p>
 	</div>
 </div>
+				<?php
+				/**
+				 * Fires just before the end of a gamification email body, for
+				 * appending footer content (unsubscribe line, agency branding).
+				 * The template's variables are available via the second arg.
+				 *
+				 * @since 1.6.2
+				 * @param string $wb_gam_email_slug Template slug.
+				 * @param array  $wb_gam_email_vars Template variables in scope.
+				 */
+				do_action( 'wb_gam_email_footer', basename( __FILE__, '.php' ), get_defined_vars() );
+				?>
 </body>
 </html>

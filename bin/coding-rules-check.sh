@@ -263,6 +263,118 @@ check_as_schedule_guard() {
     fi
 }
 
+# Rule 13: the Hub's legacy --gam-accent token must bridge to the standard
+# --wb-gam-color-accent token, never a hardcoded hex. hub.css forked its own
+# --gam-* family; a hardcoded --gam-accent means the site owner's
+# Settings > Appearance accent silently does not apply to the Hub (the
+# 10060536808 bug). Every --gam-accent DEFINITION in the source stylesheet
+# must reference var(--wb-gam-color-accent, ...). Only the source hub.css is
+# checked; hub-rtl.css / *.min.css are generated from it. (Matches the exact
+# token only — --gam-accent-light / --gam-accent-text are derived usages.)
+check_hub_accent_bridged_to_standard_token() {
+    local src="$PLUGIN_DIR/assets/css/hub.css"
+    [ -f "$src" ] || { ok "Rule 13 — hub.css absent, skipped"; return; }
+    local hits
+    hits=$(grep -nE -- '--gam-accent:' "$src" 2>/dev/null \
+            | grep -v 'var(--wb-gam-color-accent' \
+            || true)
+    if [ -n "$hits" ]; then
+        violation "Rule 13 — --gam-accent defined without bridging to --wb-gam-color-accent (owner accent won't reach the Hub — see BC 10060536808):"
+        echo "$hits" | sed 's/^/    /'
+    else
+        ok "Rule 13 — Hub --gam-accent bridges to --wb-gam-color-accent"
+    fi
+}
+
+# Rule 14: never pass raw $_POST straight into update_option() in admin code.
+# Admin saves must read $_POST into a sanitized variable first (the whole
+# admin surface either routes through SettingsPage::handle_save — nonce + cap
+# verified once, then per-section sanitize — or gates its own handler with
+# check_admin_referer). A literal `update_option( 'key', $_POST[...] )` skips
+# sanitization AND is the shape wppqa's "direct $_POST to update_option" flag
+# looks for; banning it keeps that class of finding at zero and forces the
+# established sanitize-then-save pattern.
+check_no_raw_post_to_update_option() {
+    # A safe line wraps $_POST in a sanitizer/guard on the same statement
+    # (absint / sanitize_* / intval / (int) / (bool) / isset()-ternary). Only
+    # a raw $_POST with NONE of those is a real violation.
+    local hits
+    hits=$(grep -rEn "update_option\([^)]*\\\$_(POST|REQUEST)" "$PLUGIN_DIR/src/" 2>/dev/null \
+            | grep -v "/tests/" \
+            | grep -vE "absint|sanitize_|intval|\(int\)|\(bool\)|isset\(" || true)
+    if [ -n "$hits" ]; then
+        violation "Rule 14 — raw \$_POST/\$_REQUEST passed into update_option() (sanitize on the same statement):"
+        echo "$hits" | sed 's/^/    /'
+    else
+        ok "Rule 14 — no raw \$_POST piped into update_option()"
+    fi
+}
+
+# Rule 15: every block render.php that loops over a collection must also
+# render an empty state. The "silent empty state" bug class (wppqa) is a
+# frontend list that renders nothing when the collection is empty — a blank
+# block on a fresh site. Every current block guards this (empty()/count()/an
+# `__empty` element); this gate keeps a NEW block from shipping a bare loop.
+check_blocks_have_empty_state() {
+    local missing=""
+    local f base
+    for f in "$PLUGIN_DIR"/src/Blocks/*/render.php; do
+        [ -f "$f" ] || continue
+        if grep -q "foreach" "$f" 2>/dev/null; then
+            if ! grep -qE "empty\(|__empty|count\(|--empty|EmptyState" "$f" 2>/dev/null; then
+                base=$(basename "$(dirname "$f")")
+                missing="${missing} ${base}"
+            fi
+        fi
+    done
+    if [ -n "$missing" ]; then
+        violation "Rule 15 — block(s) loop over a collection with no empty state (silent-blank on empty data):$missing"
+    else
+        ok "Rule 15 — every looping block renders an empty state"
+    fi
+}
+
+# Rule 16: any plugin JS that calls fetch() must apply an AbortSignal timeout,
+# so a slow or dead host can never freeze the UI. The two shared wrappers
+# (admin-rest-utils.js apiFetch, sdk client) and every raw frontend fetch use
+# AbortSignal.timeout(); this gate keeps a NEW fetch from shipping without one.
+# Scans plugin-authored JS only (skips minified + the bundled wbcom-family lib).
+check_fetch_has_timeout() {
+    local missing="" f
+    while IFS= read -r f; do
+        [ -f "$f" ] || continue
+        if grep -q "fetch(" "$f" 2>/dev/null && ! grep -q "AbortSignal" "$f" 2>/dev/null; then
+            missing="${missing} ${f#"$PLUGIN_DIR"/}"
+        fi
+    done < <(find "$PLUGIN_DIR/assets/js" "$PLUGIN_DIR/src/Blocks" -name '*.js' ! -name '*.min.js' 2>/dev/null)
+    if [ -n "$missing" ]; then
+        violation "Rule 16 — fetch() without an AbortSignal timeout (a hung host freezes the UI):$missing"
+    else
+        ok "Rule 16 — every fetch() applies an AbortSignal timeout"
+    fi
+}
+
+# Rule 17: any authored CSS that defines a keyframe animation must also carry
+# a prefers-reduced-motion guard (WCAG 2.3.3 — vestibular safety). Applies to
+# source CSS only (skips generated -rtl / .min variants, which inherit it).
+check_animations_respect_reduced_motion() {
+    local missing="" f
+    while IFS= read -r f; do
+        [ -f "$f" ] || continue
+        case "$f" in
+            *.min.css|*-rtl.css|*-rtl.min.css ) continue ;;
+        esac
+        if grep -qE "@keyframes|animation:" "$f" 2>/dev/null && ! grep -q "prefers-reduced-motion" "$f" 2>/dev/null; then
+            missing="${missing} ${f#"$PLUGIN_DIR"/}"
+        fi
+    done < <(find "$PLUGIN_DIR/assets/css" "$PLUGIN_DIR/src" -name '*.css' 2>/dev/null)
+    if [ -n "$missing" ]; then
+        violation "Rule 17 — CSS defines animation without a prefers-reduced-motion guard (WCAG 2.3.3):$missing"
+    else
+        ok "Rule 17 — every animated CSS file guards prefers-reduced-motion"
+    fi
+}
+
 check_no_native_cap_check_for_plugin_abilities
 check_unauthenticated_rest_allowlist
 check_no_inline_styles_in_admin_php
@@ -270,6 +382,11 @@ check_no_inline_scripts_in_php
 check_no_inline_style_blocks_in_php
 check_privacy_coverage_for_user_scoped_surfaces
 check_as_schedule_guard
+check_hub_accent_bridged_to_standard_token
+check_no_raw_post_to_update_option
+check_blocks_have_empty_state
+check_fetch_has_timeout
+check_animations_respect_reduced_motion
 
 echo ""
 COUNT=$(violations_count)

@@ -90,6 +90,7 @@ final class DbUpgrader {
 		self::ensure_redemption_point_type_column();
 		self::ensure_point_type_conversions_table();
 		self::ensure_leaderboard_cache_point_type_column();
+		self::ensure_leaderboard_cache_prev_rank_column();
 		self::ensure_user_totals_table();
 		self::ensure_leaderboard_cache_unique_key();
 		self::ensure_submissions_table();
@@ -98,6 +99,120 @@ final class DbUpgrader {
 		self::ensure_notifications_queue_table();
 		self::ensure_user_intelligence_table();
 		self::ensure_superseded_badge_condition_action_ids();
+		self::ensure_streak_sort_indexes();
+		self::ensure_kudos_moderation_schema();
+		self::ensure_events_source_key();
+	}
+
+	/**
+	 * 1.6.2 — kudos moderation schema.
+	 *   - wb_gam_kudos.revoked_at DATETIME NULL — soft-revoke marker (row kept
+	 *     for the audit trail; NULL = active).
+	 *   - KEY idx_receiver_date (receiver_id, created_at) — the moderation
+	 *     roster filters/sorts by receiver + time; the table only had a
+	 *     standalone receiver_id key, so receiver-scoped time queries filesort.
+	 * Idempotent + option-gated.
+	 *
+	 * @since 1.6.2
+	 */
+	private static function ensure_kudos_moderation_schema(): void {
+		$flag_key = 'wb_gam_feature_kudos_moderation_v1';
+		if ( get_option( $flag_key ) ) {
+			return;
+		}
+
+		global $wpdb;
+		$table = $wpdb->prefix . 'wb_gam_kudos';
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$cols = (array) $wpdb->get_col( "SHOW COLUMNS FROM `{$table}`", 0 );
+		if ( ! in_array( 'revoked_at', $cols, true ) ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$wpdb->query( "ALTER TABLE `{$table}` ADD COLUMN `revoked_at` DATETIME DEFAULT NULL AFTER `created_at`" );
+		}
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$idx = (array) $wpdb->get_col( "SHOW INDEX FROM `{$table}`", 2 );
+		if ( ! in_array( 'idx_receiver_date', $idx, true ) ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$wpdb->query( "ALTER TABLE `{$table}` ADD KEY `idx_receiver_date` (receiver_id, created_at)" );
+		}
+
+		update_option( $flag_key, '1' );
+	}
+
+	/**
+	 * 1.6.2 — add sort indexes to wb_gam_streaks for the admin roster.
+	 *
+	 * The Streaks moderation page (src/Admin/StreaksPage.php) lets owners sort
+	 * a 100k-member table by current or longest streak. The table's only key
+	 * was PRIMARY(user_id), so ORDER BY current_streak / longest_streak was a
+	 * filesort at scale. Add a single-column KEY for each sortable column.
+	 * Idempotent + option-gated so it runs exactly once per site.
+	 *
+	 * @since 1.6.2
+	 */
+	private static function ensure_streak_sort_indexes(): void {
+		$flag_key = 'wb_gam_feature_streak_sort_idx_v1';
+		if ( get_option( $flag_key ) ) {
+			return;
+		}
+
+		global $wpdb;
+		$table = $wpdb->prefix . 'wb_gam_streaks';
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$existing = (array) $wpdb->get_col( "SHOW INDEX FROM `{$table}`", 2 );
+
+		if ( ! in_array( 'idx_current_streak', $existing, true ) ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$wpdb->query( "ALTER TABLE `{$table}` ADD KEY `idx_current_streak` (current_streak)" );
+		}
+		if ( ! in_array( 'idx_longest_streak', $existing, true ) ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$wpdb->query( "ALTER TABLE `{$table}` ADD KEY `idx_longest_streak` (longest_streak)" );
+		}
+
+		update_option( $flag_key, '1' );
+	}
+
+	/**
+	 * Add the `source_key` idempotency column + UNIQUE index to wb_gam_events.
+	 *
+	 * Import-mode ingestion (competitor migrations, backfills) stamps each
+	 * imported event with a stable `source_key` — e.g. "gamipress:log:12345".
+	 * The UNIQUE index makes re-running an import a no-op instead of doubling
+	 * every user's points: `Engine::process()` skips any event whose
+	 * source_key already exists. NULL source_keys (every organic event) are
+	 * exempt — MySQL treats multiple NULLs as distinct in a UNIQUE index, so
+	 * the constraint only binds imported rows.
+	 *
+	 * @since 1.6.2
+	 */
+	private static function ensure_events_source_key(): void {
+		$flag_key = 'wb_gam_feature_events_source_key_v1';
+		if ( get_option( $flag_key ) ) {
+			return;
+		}
+
+		global $wpdb;
+		$table = $wpdb->prefix . 'wb_gam_events';
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$columns = (array) $wpdb->get_col( "SHOW COLUMNS FROM `{$table}`", 0 );
+		if ( ! in_array( 'source_key', $columns, true ) ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$wpdb->query( "ALTER TABLE `{$table}` ADD COLUMN `source_key` VARCHAR(191) DEFAULT NULL" );
+		}
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$indexes = (array) $wpdb->get_col( "SHOW INDEX FROM `{$table}`", 2 );
+		if ( ! in_array( 'uniq_source_key', $indexes, true ) ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$wpdb->query( "ALTER TABLE `{$table}` ADD UNIQUE KEY `uniq_source_key` (source_key)" );
+		}
+
+		update_option( $flag_key, '1' );
 	}
 
 	/**
@@ -532,6 +647,34 @@ final class DbUpgrader {
 			// fall through to the live SUM until the next 5-minute cron tick.
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 			$wpdb->query( "TRUNCATE TABLE $table" );
+		}
+
+		update_option( $flag_key, '1' );
+	}
+
+	/**
+	 * Add the `prev_rank` column so the leaderboard can show real rank-change
+	 * trend arrows. The snapshot writer captures the previous tick's rank here on
+	 * every UPSERT; without the column every row would report a flat 0 delta.
+	 * Idempotent — guarded by a SHOW COLUMNS check and a one-time flag.
+	 *
+	 * @since 1.0.0
+	 */
+	private static function ensure_leaderboard_cache_prev_rank_column(): void {
+		$flag_key = 'wb_gam_feature_leaderboard_cache_prev_rank_v1';
+		if ( get_option( $flag_key ) ) {
+			return;
+		}
+
+		global $wpdb;
+		$table = $wpdb->prefix . 'wb_gam_leaderboard_cache';
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- bootstrapped table name.
+		$exists = $wpdb->get_var( $wpdb->prepare( "SHOW COLUMNS FROM $table LIKE %s", 'prev_rank' ) );
+
+		if ( ! $exists ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- bootstrap-time DDL.
+			$wpdb->query( "ALTER TABLE $table ADD COLUMN prev_rank INT UNSIGNED NOT NULL DEFAULT 0 AFTER `rank`" );
 		}
 
 		update_option( $flag_key, '1' );

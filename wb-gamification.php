@@ -3,7 +3,7 @@
  * Plugin Name: WB Gamification
  * Plugin URI:  https://wbcomdesigns.com/
  * Description: Complete gamification plugin for BuddyPress and WordPress. Part of the Reign Stack. Points, badges, levels, leaderboards, challenges, and streaks — zero config, works out of the box.
- * Version:     1.6.1
+ * Version:     1.6.2
  * Author:      Wbcom Designs
  * Author URI:  https://wbcomdesigns.com/
  * License:     GPL-2.0+
@@ -33,7 +33,7 @@ if ( defined( 'WB_GAM_VERSION' ) ) {
 // Plugin Check's internal phpcs invocation.
 // phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 
-define( 'WB_GAM_VERSION', '1.6.1' );
+define( 'WB_GAM_VERSION', '1.6.2' );
 define( 'WB_GAM_FILE', __FILE__ );
 define( 'WB_GAM_PATH', plugin_dir_path( __FILE__ ) );
 define( 'WB_GAM_URL', plugin_dir_url( __FILE__ ) );
@@ -348,6 +348,8 @@ final class WB_Gamification {
 			ChallengeManagerPage::init();
 			ManualAwardPage::init();
 			MembersPage::init();
+			\WBGam\Admin\StreaksPage::init();
+			\WBGam\Admin\KudosModerationPage::init();
 			ApiKeysPage::init();
 			RedemptionStorePage::init();
 			CommunityChallengesPage::init();
@@ -356,6 +358,8 @@ final class WB_Gamification {
 			PointTypesPage::init();
 			PointTypeConversionsPage::init();
 			SubmissionsPage::init();
+			\WBGam\Admin\DeactivationFeedback::init();
+			\WBGam\Admin\ImportPage::init();
 		}
 	}
 
@@ -408,6 +412,7 @@ final class WB_Gamification {
 		( new BadgeShareController() )->register_routes();
 		( new ChallengesController() )->register_routes();
 		( new EventsController() )->register_routes();
+		( new \WBGam\API\ImportController() )->register_routes();
 		( new WebhooksController() )->register_routes();
 		( new RulesController() )->register_routes();
 		( new RecapController() )->register_routes();
@@ -852,6 +857,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			WP_CLI::add_command( 'wb-gamification qa', WBGam\CLI\QASeedCommand::class );
 			WP_CLI::add_command( 'wb-gamification scale', WBGam\CLI\ScaleCommand::class );
 			WP_CLI::add_command( 'wb-gamification openapi', WBGam\CLI\OpenApiCommand::class );
+			WP_CLI::add_command( 'wb-gamification import', WBGam\CLI\ImportCommand::class );
 			WP_CLI::add_command( 'wb-gamification email-test', array( WBGam\CLI\EmailCommand::class, 'test' ) );
 		}
 	);

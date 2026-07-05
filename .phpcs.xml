@@ -104,6 +104,7 @@
 				<element value="wb_gam_manage_challenges"/>
 				<element value="wb_gam_manage_email_settings"/>
 				<element value="wb_gam_manage_levels"/>
+				<element value="wb_gam_manage_members"/>
 				<element value="wb_gam_manage_rewards"/>
 				<element value="wb_gam_manage_rules"/>
 				<element value="wb_gam_manage_submissions"/>
