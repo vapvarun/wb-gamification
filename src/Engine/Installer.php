@@ -468,6 +468,7 @@ final class Installer {
 			point_type   VARCHAR(60)     NOT NULL DEFAULT 'points',
 			total_points BIGINT          NOT NULL DEFAULT 0,
 			`rank`       INT UNSIGNED    NOT NULL DEFAULT 0,
+			prev_rank    INT UNSIGNED    NOT NULL DEFAULT 0,
 			updated_at   DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			PRIMARY KEY (id),
 			UNIQUE KEY uniq_user_period_type (user_id, period, point_type),

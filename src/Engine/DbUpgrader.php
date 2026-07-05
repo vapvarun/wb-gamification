@@ -90,6 +90,7 @@ final class DbUpgrader {
 		self::ensure_redemption_point_type_column();
 		self::ensure_point_type_conversions_table();
 		self::ensure_leaderboard_cache_point_type_column();
+		self::ensure_leaderboard_cache_prev_rank_column();
 		self::ensure_user_totals_table();
 		self::ensure_leaderboard_cache_unique_key();
 		self::ensure_submissions_table();
@@ -646,6 +647,34 @@ final class DbUpgrader {
 			// fall through to the live SUM until the next 5-minute cron tick.
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 			$wpdb->query( "TRUNCATE TABLE $table" );
+		}
+
+		update_option( $flag_key, '1' );
+	}
+
+	/**
+	 * Add the `prev_rank` column so the leaderboard can show real rank-change
+	 * trend arrows. The snapshot writer captures the previous tick's rank here on
+	 * every UPSERT; without the column every row would report a flat 0 delta.
+	 * Idempotent — guarded by a SHOW COLUMNS check and a one-time flag.
+	 *
+	 * @since 1.0.0
+	 */
+	private static function ensure_leaderboard_cache_prev_rank_column(): void {
+		$flag_key = 'wb_gam_feature_leaderboard_cache_prev_rank_v1';
+		if ( get_option( $flag_key ) ) {
+			return;
+		}
+
+		global $wpdb;
+		$table = $wpdb->prefix . 'wb_gam_leaderboard_cache';
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- bootstrapped table name.
+		$exists = $wpdb->get_var( $wpdb->prepare( "SHOW COLUMNS FROM $table LIKE %s", 'prev_rank' ) );
+
+		if ( ! $exists ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- bootstrap-time DDL.
+			$wpdb->query( "ALTER TABLE $table ADD COLUMN prev_rank INT UNSIGNED NOT NULL DEFAULT 0 AFTER `rank`" );
 		}
 
 		update_option( $flag_key, '1' );
