@@ -96,7 +96,13 @@ add_action(
 	}
 );
 
-if ( file_exists( WB_GAM_PATH . 'libs/easy-digital-downloads/edd-sl-sdk/edd-sl-sdk.php' ) ) {
+// Load the bundled EDD SL SDK only when BOTH its entrypoint AND its own
+// autoloader are present. The SDK self-requires __DIR__/vendor/autoload.php;
+// if a build ever strips that nested vendor/ (an unanchored exclude did once),
+// requiring the entrypoint would hard-fatal on install. Guarding both paths
+// degrades gracefully (license/update checks disabled) instead.
+if ( file_exists( WB_GAM_PATH . 'libs/easy-digital-downloads/edd-sl-sdk/edd-sl-sdk.php' )
+	&& file_exists( WB_GAM_PATH . 'libs/easy-digital-downloads/edd-sl-sdk/vendor/autoload.php' ) ) {
 	require_once WB_GAM_PATH . 'libs/easy-digital-downloads/edd-sl-sdk/edd-sl-sdk.php';
 }
 

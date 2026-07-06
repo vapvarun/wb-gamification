@@ -17,7 +17,10 @@
 .distignore
 
 # ── Dev dependencies ──────────────────────────────────────────────────
-vendor
+# Anchor to the plugin ROOT only. A bare "vendor" matched at every depth and
+# stripped the bundled SDK's own libs/.../edd-sl-sdk/vendor/ autoloader in
+# 1.6.2, causing a fatal on install. Leading slash = top-level dev vendor only.
+/vendor
 node_modules
 composer.json
 composer.lock
