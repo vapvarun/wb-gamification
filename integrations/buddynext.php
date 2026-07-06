@@ -359,7 +359,7 @@ return array(
 			'label'          => 'Profile completed',
 			'description'    => 'Awarded once when a member completes every task on their Profile Strength checklist.',
 			// Fires: do_action( 'buddynext_profile_strength_changed', int $user_id, int $percent ).
-			// Strength (BuddyNext 1.0.7+) is the curated checklist the member
+			// Strength (BuddyNext 1.0.5+) is the curated checklist the member
 			// actually sees on the Profile Strength ring — the old
 			// completion_changed hook scores EVERY schema field, so its 100%
 			// could stay unreachable while the member's widget said "All set"
