@@ -4,7 +4,7 @@ Tags: gamification, points, badges, leaderboard, buddypress
 Requires at least: 6.5
 Tested up to: 7.0
 Requires PHP: 8.0
-Stable tag: 1.6.2
+Stable tag: 1.6.3
 License: GPL-2.0+
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -132,6 +132,12 @@ Yes. WB Gamification integrates with WordPress privacy tools. Members can reques
 All data is preserved in the database. Reactivating the plugin restores everything. If you delete the plugin via the Plugins screen, the `uninstall.php` file removes all 26 tables, options, cron jobs, and transients — a clean uninstall.
 
 == Changelog ==
+
+= 1.6.3 - July 2026 =
+
+* Improve  - The BuddyNext "Profile completed" award follows the Profile Strength checklist members actually see, so it fires exactly when their widget reads "All set".
+* Fix      - BuddyNext profile-update points award on any completion change; the old under-100 percent exclusion could skip legitimate edits.
+* Compat   - Pairs with BuddyNext 1.0.5. On older BuddyNext the new trigger stays dormant and nothing breaks.
 
 = 1.6.2 - July 2026 =
 
