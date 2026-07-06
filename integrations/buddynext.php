@@ -333,12 +333,15 @@ return array(
 		array(
 			'id'                => 'bn_profile_updated',
 			'label'             => 'Profile updated',
-			'description'       => 'Awarded when a member updates their profile completion percentage (but not on the 100% milestone, which is the separate bn_profile_completed trigger).',
+			'description'       => 'Awarded when a member changes their profile completion percentage.',
 			// Fires: do_action( 'buddynext_profile_completion_changed', int $user_id, int $percent ).
+			// BuddyNext fires this only on an actual percentage change (1.0.6+),
+			// so every fire is a real profile edit. The old "< 100" exclusion
+			// existed to avoid double-awarding with bn_profile_completed on the
+			// same hook; that milestone now listens to the strength hook instead.
 			'hook'              => 'buddynext_profile_completion_changed',
 			'user_callback'     => function ( int $user_id, int $percent ): int {
-				// The 100% case is handled by bn_profile_completed below.
-				return (int) $percent < 100 ? $user_id : 0;
+				return $user_id;
 			},
 			'metadata_callback' => function ( int $user_id, int $percent ): array {
 				return array( 'percent' => $percent );
@@ -354,9 +357,14 @@ return array(
 		array(
 			'id'             => 'bn_profile_completed',
 			'label'          => 'Profile completed',
-			'description'    => 'Awarded once when a member reaches 100% profile completion.',
-			// Fires: do_action( 'buddynext_profile_completion_changed', int $user_id, int $percent ).
-			'hook'           => 'buddynext_profile_completion_changed',
+			'description'    => 'Awarded once when a member completes every task on their Profile Strength checklist.',
+			// Fires: do_action( 'buddynext_profile_strength_changed', int $user_id, int $percent ).
+			// Strength (BuddyNext 1.0.7+) is the curated checklist the member
+			// actually sees on the Profile Strength ring — the old
+			// completion_changed hook scores EVERY schema field, so its 100%
+			// could stay unreachable while the member's widget said "All set"
+			// and this award silently never fired.
+			'hook'           => 'buddynext_profile_strength_changed',
 			'user_callback'  => function ( int $user_id, int $percent ): int {
 				return 100 === (int) $percent ? $user_id : 0;
 			},
