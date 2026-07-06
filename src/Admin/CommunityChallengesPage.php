@@ -125,7 +125,13 @@ final class CommunityChallengesPage {
 		// bookmarks / docs / dashboard links don't 404, but the page is
 		// reached via the "Community" tab on the unified Challenges admin
 		// page (b9 merge — `?page=wb-gam-challenges&tab=community`).
-		add_submenu_page(
+		//
+		// Because a parentless page never lands in the `$submenu` lookup,
+		// `get_admin_page_title()` returns null and admin-header.php emits a
+		// `strip_tags(): Passing null` deprecation on every visit (PHP 8.1+).
+		// Pre-seed the `$title` global on `load-{hook}` — the same fix used by
+		// SetupPage for its hidden wizard route.
+		$hook = add_submenu_page(
 			'',
 			__( 'Community Challenges', 'wb-gamification' ),
 			__( 'Community Challenges', 'wb-gamification' ),
@@ -133,6 +139,18 @@ final class CommunityChallengesPage {
 			'wb-gam-community-challenges',
 			array( __CLASS__, 'render_page' )
 		);
+		if ( $hook ) {
+			add_action(
+				'load-' . $hook,
+				static function (): void {
+					global $title;
+					if ( empty( $title ) ) {
+						// phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- Pre-seeding the admin page title for a hidden submenu; get_admin_page_title() returns this verbatim.
+						$title = __( 'Community Challenges', 'wb-gamification' );
+					}
+				}
+			);
+		}
 	}
 
 	/**
