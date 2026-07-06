@@ -142,9 +142,12 @@ Migrate members from GamiPress, myCred, and BadgeOS, moderate kudos and streaks,
 * New      - Streaks moderation admin page and write API to adjust member streaks, backed by a REST endpoint.
 * New      - Staff delegation: grant trusted members the new wb_gam_manage_members capability to manage gamification without a full administrator role.
 * New      - Optional deactivation feedback survey.
+* Improve  - The BuddyNext "Profile completed" award follows the Profile Strength checklist members actually see, so it fires exactly when their widget reads "All set" (pairs with BuddyNext 1.0.5; dormant on older BuddyNext).
 * Improve  - Leaderboard trend arrows now reflect real rank movement by retaining each member's previous rank between refreshes.
 * Improve  - Overlays respect the prefers-reduced-motion setting and move focus on open for better keyboard and screen-reader accessibility.
 * Improve  - Network requests now time out cleanly instead of hanging, using an AbortSignal on every fetch.
+* Fix      - Fresh installs no longer fatal when the bundled licensing SDK loader is missing from the package.
+* Fix      - BuddyNext profile-update points award on any completion change; the old under-100 percent exclusion could skip legitimate edits.
 * Fix      - Toast notifications enqueue their renderer at render time so they survive host themes that isolate plugin assets.
 * Fix      - The gamification hub block now adopts the site owner's configured accent color.
 * Fix      - The hidden Community Challenges admin page no longer emits a PHP 8.1+ deprecation notice or renders an empty browser tab title.
