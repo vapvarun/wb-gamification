@@ -462,15 +462,25 @@ final class RedemptionEngine {
 	public static function get_user_redemptions( int $user_id, int $limit = 20 ): array {
 		global $wpdb;
 
+		// LEFT JOIN (not INNER): a redemption is a transaction record, so a
+		// member keeps seeing what they redeemed even after the site owner
+		// retires/deletes that reward from the catalog. INNER JOIN silently
+		// dropped the row the moment the item was deleted, losing the member's
+		// history while the raw wb_gam_redemptions row stayed intact. The admin
+		// transaction log (RedemptionStorePage) already uses LEFT JOIN for the
+		// same reason (Basecamp #9860090437); this mirrors it for the member
+		// surfaces (/redemptions/me + the history shortcode). COALESCE keeps the
+		// title/type non-null so REST + templates never hit esc_html( null ).
 		return $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT r.id, r.points_cost, r.status, r.coupon_code, r.created_at,
-				        i.title, i.reward_type
+				        COALESCE(i.title, %s) AS title, COALESCE(i.reward_type, '') AS reward_type
 				   FROM {$wpdb->prefix}wb_gam_redemptions r
-				   JOIN {$wpdb->prefix}wb_gam_redemption_items i ON i.id = r.item_id
+				   LEFT JOIN {$wpdb->prefix}wb_gam_redemption_items i ON i.id = r.item_id
 				  WHERE r.user_id = %d
 				  ORDER BY r.created_at DESC
 				  LIMIT %d",
+				__( 'Removed reward', 'wb-gamification' ),
 				$user_id,
 				$limit
 			),

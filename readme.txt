@@ -148,6 +148,8 @@ Migrate members from GamiPress, myCred, and BadgeOS, moderate kudos and streaks,
 * Fix      - Toast notifications enqueue their renderer at render time so they survive host themes that isolate plugin assets.
 * Fix      - The gamification hub block now adopts the site owner's configured accent color.
 * Fix      - The hidden Community Challenges admin page no longer emits a PHP 8.1+ deprecation notice or renders an empty browser tab title.
+* Fix      - Members keep their redemption history after the site owner removes a reward from the catalog, instead of the entry silently disappearing.
+* Fix      - The member gamification Hub now renders in dark mode on themes beyond BuddyX (Reign and other themes that signal dark mode without BuddyX color tokens), instead of showing white cards.
 * Security - Hardened nonce and capability checks across the admin form handlers.
 * Dev      - New wb_gam email filters for subject, recipient, and body, plus a template footer hook, for customizing transactional emails.
 * Dev      - New KudosEngine::get_received() getter for per-member kudos feeds.

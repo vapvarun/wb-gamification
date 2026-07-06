@@ -877,17 +877,35 @@
   .wbgam-convert-form__actions { padding-right: 16px; padding-left: 16px; }
 }
 
-/* Dark-mode accent — bridges to --wb-gam-color-accent, which the Appearance
- * engine already lightens under dark mode (color-mix 60% over #fff). Falls
- * back to the lightened brand purple when no custom accent is set, matching
- * the previous hardcoded value. --gam-accent-light / --gam-accent-text
- * cascade from --gam-accent so they lighten automatically. BC 10060536808. */
+/* Dark-mode tokens. The :root defaults derive the neutrals from BuddyX's
+ * --bx-color-* with LIGHT fallbacks — fine on BuddyX (those props flip under
+ * dark) but wrong on themes that signal dark WITHOUT defining --bx-color-*
+ * (Reign, Twenty Twenty-Five, Astra), which left the Hub cards solid white in
+ * dark mode. Re-declare the neutrals here with DARK fallbacks: BuddyX still
+ * resolves its own --bx-color-* (unchanged), every other theme now gets a dark
+ * surface. Accent bridges to --wb-gam-color-accent, which the Appearance engine
+ * already lightens under dark mode. BC 10060536808. */
 :root[data-bx-mode="dark"] .gam-page,
+:root[data-theme="dark"] .gam-page,
 body.buddyx-dark-theme .gam-page {
+  --gam-text: var(--bx-color-fg, #e8e8f0);
+  --gam-text-secondary: color-mix(in srgb, var(--bx-color-fg, #e8e8f0) 75%, var(--bx-color-bg-elevated, #262a34));
+  --gam-text-muted: color-mix(in srgb, var(--bx-color-fg, #e8e8f0) 55%, var(--bx-color-bg-elevated, #262a34));
+  --gam-surface: var(--bx-color-bg-elevated, #262a34);
+  --gam-surface-hover: var(--bx-color-bg-muted, #2f343f);
+  --gam-border: var(--bx-color-border, #363b47);
+  --gam-border-hover: var(--bx-color-border, #454b59);
   --gam-accent: var(--wb-gam-color-accent, color-mix(in srgb, #5b4cdb 60%, #ffffff));
 }
 @media (prefers-color-scheme: dark) {
   :root[data-bx-mode="auto"] .gam-page {
+    --gam-text: var(--bx-color-fg, #e8e8f0);
+    --gam-text-secondary: color-mix(in srgb, var(--bx-color-fg, #e8e8f0) 75%, var(--bx-color-bg-elevated, #262a34));
+    --gam-text-muted: color-mix(in srgb, var(--bx-color-fg, #e8e8f0) 55%, var(--bx-color-bg-elevated, #262a34));
+    --gam-surface: var(--bx-color-bg-elevated, #262a34);
+    --gam-surface-hover: var(--bx-color-bg-muted, #2f343f);
+    --gam-border: var(--bx-color-border, #363b47);
+    --gam-border-hover: var(--bx-color-border, #454b59);
     --gam-accent: var(--wb-gam-color-accent, color-mix(in srgb, #5b4cdb 60%, #ffffff));
   }
 }

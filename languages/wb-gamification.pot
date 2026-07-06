@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-07-05T17:12:43+00:00\n"
+"POT-Creation-Date: 2026-07-06T01:25:13+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: wb-gamification\n"
@@ -152,8 +152,8 @@ msgstr ""
 #: src/Admin/BadgeAdminPage.php:385
 #: src/Admin/ChallengeManagerPage.php:210
 #: src/Admin/ChallengeManagerPage.php:286
-#: src/Admin/CommunityChallengesPage.php:251
-#: src/Admin/CommunityChallengesPage.php:323
+#: src/Admin/CommunityChallengesPage.php:269
+#: src/Admin/CommunityChallengesPage.php:341
 #: src/Admin/SettingsPage.php:1370
 #: src/Admin/SettingsPage.php:2085
 #: src/Admin/SubmissionsPage.php:142
@@ -339,7 +339,7 @@ msgstr ""
 #: src/Admin/ApiKeysPage.php:81
 #: src/Admin/ApiKeysPage.php:248
 #: src/Admin/ChallengeManagerPage.php:335
-#: src/Admin/CommunityChallengesPage.php:387
+#: src/Admin/CommunityChallengesPage.php:405
 #: src/Admin/PointTypeConversionsPage.php:218
 #: src/Admin/PointTypesPage.php:179
 #: src/Admin/RedemptionStorePage.php:437
@@ -511,7 +511,7 @@ msgstr ""
 
 #: src/Admin/ApiKeysPage.php:222
 #: src/Admin/ChallengeManagerPage.php:289
-#: src/Admin/CommunityChallengesPage.php:326
+#: src/Admin/CommunityChallengesPage.php:344
 #: src/Admin/KudosModerationPage.php:187
 #: src/Admin/MembersPage.php:95
 #: src/Admin/RedemptionStorePage.php:330
@@ -524,7 +524,7 @@ msgstr ""
 
 #: src/Admin/ApiKeysPage.php:223
 #: src/Admin/ChallengeManagerPage.php:291
-#: src/Admin/CommunityChallengesPage.php:328
+#: src/Admin/CommunityChallengesPage.php:346
 #: src/Admin/KudosModerationPage.php:188
 #: src/Admin/MembersPage.php:96
 #: src/Admin/PointTypeConversionsPage.php:164
@@ -585,7 +585,7 @@ msgstr ""
 #: src/Admin/BadgeAdminPage.php:139
 #: src/Admin/ChallengeManagerPage.php:154
 #: src/Admin/CohortSettingsPage.php:178
-#: src/Admin/CommunityChallengesPage.php:178
+#: src/Admin/CommunityChallengesPage.php:196
 #: src/Admin/RedemptionStorePage.php:174
 msgid "Something went wrong. Please try again."
 msgstr ""
@@ -631,7 +631,7 @@ msgid "Display name shown to members when they earn this badge."
 msgstr ""
 
 #: src/Admin/BadgeAdminPage.php:274
-#: src/Admin/CommunityChallengesPage.php:235
+#: src/Admin/CommunityChallengesPage.php:253
 #: src/Admin/PointTypesPage.php:129
 #: src/Admin/PointTypesPage.php:223
 #: src/Admin/RedemptionStorePage.php:222
@@ -750,7 +750,7 @@ msgstr ""
 
 #: src/Admin/BadgeAdminPage.php:394
 #: src/Admin/ChallengeManagerPage.php:219
-#: src/Admin/CommunityChallengesPage.php:263
+#: src/Admin/CommunityChallengesPage.php:281
 msgid "No actions registered"
 msgstr ""
 
@@ -760,7 +760,7 @@ msgstr ""
 
 #: src/Admin/BadgeAdminPage.php:401
 #: src/Admin/ChallengeManagerPage.php:226
-#: src/Admin/CommunityChallengesPage.php:243
+#: src/Admin/CommunityChallengesPage.php:261
 msgid "Target Count"
 msgstr ""
 
@@ -882,7 +882,7 @@ msgid "Challenge deleted."
 msgstr ""
 
 #: src/Admin/ChallengeManagerPage.php:162
-#: src/Admin/CommunityChallengesPage.php:186
+#: src/Admin/CommunityChallengesPage.php:204
 msgid "Challenge Manager"
 msgstr ""
 
@@ -891,19 +891,20 @@ msgid "Create challenges to engage your community. Set an action, target, and bo
 msgstr ""
 
 #: src/Admin/ChallengeManagerPage.php:167
-#: src/Admin/CommunityChallengesPage.php:191
+#: src/Admin/CommunityChallengesPage.php:209
 msgid "Challenge type"
 msgstr ""
 
 #: src/Admin/ChallengeManagerPage.php:169
-#: src/Admin/CommunityChallengesPage.php:193
+#: src/Admin/CommunityChallengesPage.php:211
 msgid "Individual Challenges"
 msgstr ""
 
 #: src/Admin/ChallengeManagerPage.php:172
-#: src/Admin/CommunityChallengesPage.php:130
-#: src/Admin/CommunityChallengesPage.php:131
-#: src/Admin/CommunityChallengesPage.php:196
+#: src/Admin/CommunityChallengesPage.php:136
+#: src/Admin/CommunityChallengesPage.php:137
+#: src/Admin/CommunityChallengesPage.php:149
+#: src/Admin/CommunityChallengesPage.php:214
 #: src/Blocks/community-challenges/render.php:98
 msgid "Community Challenges"
 msgstr ""
@@ -914,14 +915,14 @@ msgstr ""
 
 #: src/Admin/ChallengeManagerPage.php:184
 #: src/Admin/ChallengeManagerPage.php:263
-#: src/Admin/CommunityChallengesPage.php:299
+#: src/Admin/CommunityChallengesPage.php:317
 msgid "Create Challenge"
 msgstr ""
 
 #: src/Admin/ChallengeManagerPage.php:201
 #: src/Admin/ChallengeManagerPage.php:285
-#: src/Admin/CommunityChallengesPage.php:226
-#: src/Admin/CommunityChallengesPage.php:322
+#: src/Admin/CommunityChallengesPage.php:244
+#: src/Admin/CommunityChallengesPage.php:340
 msgid "Title"
 msgstr ""
 
@@ -942,7 +943,7 @@ msgid "How many times the member must perform the action to complete the challen
 msgstr ""
 
 #: src/Admin/ChallengeManagerPage.php:234
-#: src/Admin/CommunityChallengesPage.php:288
+#: src/Admin/CommunityChallengesPage.php:306
 msgid "Bonus Points"
 msgstr ""
 
@@ -951,7 +952,7 @@ msgid "Extra points awarded when the challenge is completed. Set to 0 for no bon
 msgstr ""
 
 #: src/Admin/ChallengeManagerPage.php:242
-#: src/Admin/CommunityChallengesPage.php:270
+#: src/Admin/CommunityChallengesPage.php:288
 msgid "Start Date"
 msgstr ""
 
@@ -960,7 +961,7 @@ msgid "When this challenge becomes available to members. Actions before this dat
 msgstr ""
 
 #: src/Admin/ChallengeManagerPage.php:251
-#: src/Admin/CommunityChallengesPage.php:279
+#: src/Admin/CommunityChallengesPage.php:297
 msgid "End Date"
 msgstr ""
 
@@ -969,12 +970,12 @@ msgid "Deadline for the challenge. Members must reach the target before this dat
 msgstr ""
 
 #: src/Admin/ChallengeManagerPage.php:263
-#: src/Admin/CommunityChallengesPage.php:299
+#: src/Admin/CommunityChallengesPage.php:317
 msgid "Update Challenge"
 msgstr ""
 
 #: src/Admin/ChallengeManagerPage.php:267
-#: src/Admin/CommunityChallengesPage.php:303
+#: src/Admin/CommunityChallengesPage.php:321
 #: src/Admin/KudosModerationPage.php:111
 #: src/Admin/RedemptionStorePage.php:351
 #: src/Blocks/hub/render.php:582
@@ -991,17 +992,17 @@ msgid "Target"
 msgstr ""
 
 #: src/Admin/ChallengeManagerPage.php:288
-#: src/Admin/CommunityChallengesPage.php:325
+#: src/Admin/CommunityChallengesPage.php:343
 msgid "Bonus"
 msgstr ""
 
 #: src/Admin/ChallengeManagerPage.php:290
-#: src/Admin/CommunityChallengesPage.php:327
+#: src/Admin/CommunityChallengesPage.php:345
 msgid "Dates"
 msgstr ""
 
 #: src/Admin/ChallengeManagerPage.php:322
-#: src/Admin/CommunityChallengesPage.php:374
+#: src/Admin/CommunityChallengesPage.php:392
 #: src/Admin/RedemptionStorePage.php:424
 msgid "Edit"
 msgstr ""
@@ -1176,95 +1177,95 @@ msgid "Tiers are displayed on member profiles and the leaderboard."
 msgstr ""
 
 #: src/Admin/CommunityChallengesPage.php:111
-#: src/Admin/CommunityChallengesPage.php:176
-#: src/Admin/CommunityChallengesPage.php:219
+#: src/Admin/CommunityChallengesPage.php:194
+#: src/Admin/CommunityChallengesPage.php:237
 msgid "Community challenge saved."
 msgstr ""
 
 #: src/Admin/CommunityChallengesPage.php:112
-#: src/Admin/CommunityChallengesPage.php:220
+#: src/Admin/CommunityChallengesPage.php:238
 msgid "Failed to save the community challenge."
 msgstr ""
 
-#: src/Admin/CommunityChallengesPage.php:177
-#: src/Admin/CommunityChallengesPage.php:383
+#: src/Admin/CommunityChallengesPage.php:195
+#: src/Admin/CommunityChallengesPage.php:401
 msgid "Community challenge deleted."
 msgstr ""
 
-#: src/Admin/CommunityChallengesPage.php:187
+#: src/Admin/CommunityChallengesPage.php:205
 msgid "Create group goals where the whole community works together toward a shared target."
 msgstr ""
 
-#: src/Admin/CommunityChallengesPage.php:208
+#: src/Admin/CommunityChallengesPage.php:226
 msgid "Edit Community Challenge"
 msgstr ""
 
-#: src/Admin/CommunityChallengesPage.php:208
+#: src/Admin/CommunityChallengesPage.php:226
 msgid "Create Community Challenge"
 msgstr ""
 
-#: src/Admin/CommunityChallengesPage.php:230
+#: src/Admin/CommunityChallengesPage.php:248
 msgid "e.g. Community Sprint: 1,000 Posts"
 msgstr ""
 
-#: src/Admin/CommunityChallengesPage.php:231
+#: src/Admin/CommunityChallengesPage.php:249
 msgid "A motivating name for the community-wide challenge."
 msgstr ""
 
-#: src/Admin/CommunityChallengesPage.php:238
+#: src/Admin/CommunityChallengesPage.php:256
 msgid "Describe the goal and what happens when the community reaches it."
 msgstr ""
 
-#: src/Admin/CommunityChallengesPage.php:239
+#: src/Admin/CommunityChallengesPage.php:257
 msgid "Optional description shown alongside the progress bar."
 msgstr ""
 
-#: src/Admin/CommunityChallengesPage.php:247
+#: src/Admin/CommunityChallengesPage.php:265
 msgid "Total number of actions the community must collectively reach."
 msgstr ""
 
-#: src/Admin/CommunityChallengesPage.php:255
-#: src/Admin/CommunityChallengesPage.php:334
+#: src/Admin/CommunityChallengesPage.php:273
+#: src/Admin/CommunityChallengesPage.php:352
 msgid "Any action"
 msgstr ""
 
-#: src/Admin/CommunityChallengesPage.php:266
+#: src/Admin/CommunityChallengesPage.php:284
 msgid "Which user action counts toward this challenge. Choose \"Any action\" to count everything."
 msgstr ""
 
-#: src/Admin/CommunityChallengesPage.php:275
+#: src/Admin/CommunityChallengesPage.php:293
 msgid "When this community challenge becomes active. Actions before this date will not count."
 msgstr ""
 
-#: src/Admin/CommunityChallengesPage.php:284
+#: src/Admin/CommunityChallengesPage.php:302
 msgid "Deadline for the challenge. Defaults to 14 days from now."
 msgstr ""
 
-#: src/Admin/CommunityChallengesPage.php:292
+#: src/Admin/CommunityChallengesPage.php:310
 msgid "Points awarded to every contributor when the challenge is completed. Set to 0 for no bonus."
 msgstr ""
 
-#: src/Admin/CommunityChallengesPage.php:315
+#: src/Admin/CommunityChallengesPage.php:333
 msgid "All Community Challenges"
 msgstr ""
 
-#: src/Admin/CommunityChallengesPage.php:324
+#: src/Admin/CommunityChallengesPage.php:342
 msgid "Progress"
 msgstr ""
 
-#: src/Admin/CommunityChallengesPage.php:382
+#: src/Admin/CommunityChallengesPage.php:400
 msgid "Delete this community challenge?"
 msgstr ""
 
-#: src/Admin/CommunityChallengesPage.php:384
+#: src/Admin/CommunityChallengesPage.php:402
 msgid "Failed to delete community challenge."
 msgstr ""
 
-#: src/Admin/CommunityChallengesPage.php:400
+#: src/Admin/CommunityChallengesPage.php:418
 msgid "No community challenges yet"
 msgstr ""
 
-#: src/Admin/CommunityChallengesPage.php:401
+#: src/Admin/CommunityChallengesPage.php:419
 msgid "Create your first community challenge above to rally your members around a shared goal."
 msgstr ""
 
