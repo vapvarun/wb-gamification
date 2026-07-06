@@ -85,11 +85,13 @@ class FamilyManifestTest extends TestCase {
 		$this->assertSame( 88, $triggers['listora_review_written']( 1, 2, 88 ) );         // arg3 reviewer
 		$this->assertSame( 55, $triggers['bn_post_created']( 10, 55, 'text' ) );          // arg2 author
 
-		// BuddyNext profile-completion gate: award only at 100%.
+		// bn_profile_completed (strength hook): awards only at exactly 100%.
 		$this->assertSame( 55, $triggers['bn_profile_completed']( 55, 100 ) );
 		$this->assertSame( 0, $triggers['bn_profile_completed']( 55, 80 ) );
-		// bn_profile_updated is the inverse (skips the 100% case handled above).
-		$this->assertSame( 0, $triggers['bn_profile_updated']( 55, 100 ) );
+		// bn_profile_updated awards on every completion change: since the 100%
+		// milestone moved to the strength hook, the old "< 100" exclusion is
+		// gone — BuddyNext fires completion_changed only on real changes.
+		$this->assertSame( 55, $triggers['bn_profile_updated']( 55, 100 ) );
 		$this->assertSame( 55, $triggers['bn_profile_updated']( 55, 60 ) );
 	}
 
