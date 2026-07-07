@@ -147,9 +147,10 @@ final class NotificationBridge {
 		if ( ! wp_next_scheduled( self::PRUNE_CRON ) ) {
 			wp_schedule_event( time() + HOUR_IN_SECONDS, 'daily', self::PRUNE_CRON );
 		}
-		// Skip toasts — surface "you hit the daily cap / cooldown" to the
-		// member so they understand why no points appeared. Pre-1.4.1 the
-		// engine fired `wb_gam_award_skipped` in 6 places (PointsEngine +
+		// Skip toasts — surface a real, resetting limit ("you hit your daily
+		// limit") to the member so they understand why no points appeared. A
+		// transient cooldown is silent by default (see on_award_skipped). Pre-1.4.1
+		// the engine fired `wb_gam_award_skipped` in 6 places (PointsEngine +
 		// Registry + Jetonomy) with no internal listener — pure dead-letter.
 		// Closes audit/DATA-FLOW-AWARD-2026-05-27.md §G17.
 		add_action( 'wb_gam_award_skipped', array( __CLASS__, 'on_award_skipped' ), 99, 4 );
@@ -160,11 +161,16 @@ final class NotificationBridge {
 
 	/**
 	 * Push a "skip toast" — informs the member why an action they just
-	 * performed did NOT award points. Only fires for reasons the member
-	 * can act on (cap hit, cooldown active). Silent for engine-internal
-	 * reasons (self-action, sandboxed) where a toast would be confusing.
+	 * performed did NOT award points. Fires only for a real, resetting limit
+	 * the member benefits from understanding (daily / weekly cap). Silent for
+	 * a transient cooldown (see below) and for engine-internal vetoes
+	 * (self-action, sandboxed) where a toast would only confuse.
 	 *
 	 * @since 1.4.1
+	 * @since 1.6.3 Cooldown skips are silent by default — a per-action cooldown
+	 *              is a transient anti-burst window, and "you're on cooldown, try
+	 *              again in a bit" reads as an error that scolds normal activity.
+	 *              Re-add it via the `wb_gam_award_skip_toast_reasons` filter.
 	 *
 	 * @param int    $user_id   User who would have been awarded.
 	 * @param string $action_id Action that was skipped.
@@ -176,9 +182,26 @@ final class NotificationBridge {
 			return;
 		}
 
-		// Only the member-facing reasons get a toast — internal vetoes
-		// (sandboxed, self_action, pre_change_veto) confuse the user.
-		$user_facing_reasons = array( 'cooldown', 'daily_cap', 'weekly_cap' );
+		/**
+		 * Filter which award-skip reasons are surfaced to the member as a toast.
+		 *
+		 * Defaults to the resetting caps only. A cooldown is deliberately excluded:
+		 * it is a transient anti-burst limit, and telling a member "you're on
+		 * cooldown - try again in a bit" scolds them for normal activity and reads
+		 * as an error rather than the silent no-op it should be. Engine-internal
+		 * vetoes (sandboxed, self_action, pre_change_veto) are never eligible.
+		 *
+		 * @since 1.6.3
+		 * @param string[] $reasons   Skip reasons that get a member toast.
+		 * @param int      $user_id   Member who would see the toast.
+		 * @param string   $action_id Action that was skipped.
+		 */
+		$user_facing_reasons = (array) apply_filters(
+			'wb_gam_award_skip_toast_reasons',
+			array( 'daily_cap', 'weekly_cap' ),
+			$user_id,
+			$action_id
+		);
 		if ( ! in_array( $reason, $user_facing_reasons, true ) ) {
 			return;
 		}

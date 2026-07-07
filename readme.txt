@@ -4,7 +4,7 @@ Tags: gamification, points, badges, leaderboard, buddypress
 Requires at least: 6.5
 Tested up to: 7.0
 Requires PHP: 8.0
-Stable tag: 1.6.2
+Stable tag: 1.6.3
 License: GPL-2.0+
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -132,6 +132,10 @@ Yes. WB Gamification integrates with WordPress privacy tools. Members can reques
 All data is preserved in the database. Reactivating the plugin restores everything. If you delete the plugin via the Plugins screen, the `uninstall.php` file removes all 26 tables, options, cron jobs, and transients — a clean uninstall.
 
 == Changelog ==
+
+= 1.6.3 - July 2026 =
+
+* Fix      - A per-action cooldown no longer shows the member a "You're on cooldown for this action" toast; the award is skipped silently as it was before the notice existed. Daily and weekly cap notices are unchanged. Use the wb_gam_award_skip_toast_reasons filter to customise which skips notify.
 
 = 1.6.2 - July 2026 =
 
