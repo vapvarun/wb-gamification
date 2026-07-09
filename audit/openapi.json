@@ -11,7 +11,7 @@
     },
     "servers": [
         {
-            "url": "http://buddynext.local/wp-json/wb-gamification/v1"
+            "url": "http://wb-gamification.local/wp-json/wb-gamification/v1"
         }
     ],
     "paths": {

@@ -661,6 +661,12 @@
           "title": "Webhook Events Reference",
           "slug": "webhook-events-reference-wbgam",
           "order": 21
+        },
+        {
+          "file": "email-customization.md",
+          "title": "Customizing gamification emails",
+          "slug": "email-customization-wbgam",
+          "order": 22
         }
       ]
     }

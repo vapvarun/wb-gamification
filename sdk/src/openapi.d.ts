@@ -1128,6 +1128,8 @@ export interface paths {
                         image_url?: string;
                         category?: string;
                         is_credential?: boolean;
+                        /** @description Days a badge stays valid after it is earned. 0 or null = never expires. */
+                        validity_days?: number | null;
                         /** @description UTC timestamp (Y-m-d H:i:s) after which the badge stops awarding. Empty string clears the cutoff. */
                         closes_at?: string;
                         /** @description Cap on how many members may earn this badge. Null = unlimited. */
@@ -1200,6 +1202,8 @@ export interface paths {
                         image_url?: string;
                         category?: string;
                         is_credential?: boolean;
+                        /** @description Days a badge stays valid after it is earned. 0 or null = never expires. */
+                        validity_days?: number | null;
                         /** @description UTC timestamp (Y-m-d H:i:s) after which the badge stops awarding. Empty string clears the cutoff. */
                         closes_at?: string;
                         /** @description Cap on how many members may earn this badge. Null = unlimited. */
@@ -1238,6 +1242,8 @@ export interface paths {
                         image_url?: string;
                         category?: string;
                         is_credential?: boolean;
+                        /** @description Days a badge stays valid after it is earned. 0 or null = never expires. */
+                        validity_days?: number | null;
                         /** @description UTC timestamp (Y-m-d H:i:s) after which the badge stops awarding. Empty string clears the cutoff. */
                         closes_at?: string;
                         /** @description Cap on how many members may earn this badge. Null = unlimited. */
@@ -1299,6 +1305,8 @@ export interface paths {
                         image_url?: string;
                         category?: string;
                         is_credential?: boolean;
+                        /** @description Days a badge stays valid after it is earned. 0 or null = never expires. */
+                        validity_days?: number | null;
                         /** @description UTC timestamp (Y-m-d H:i:s) after which the badge stops awarding. Empty string clears the cutoff. */
                         closes_at?: string;
                         /** @description Cap on how many members may earn this badge. Null = unlimited. */
@@ -2088,6 +2096,124 @@ export interface paths {
                         object_id?: number;
                         /** @description Arbitrary key/value context data. */
                         metadata?: Record<string, never>;
+                    };
+                };
+            };
+            responses: {
+                /** @description Successful response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/events/import": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create events */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        /** @description Up to 500 historical events to import. */
+                        events: unknown[];
+                    };
+                };
+            };
+            responses: {
+                /** @description Successful response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/import/sources": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get import */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Successful response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/import/{source}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create import */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    source: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        source: string;
+                        dry_run?: boolean;
                     };
                 };
             };
