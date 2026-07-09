@@ -152,6 +152,7 @@ use WBGam\Integrations\WordPress\HooksIntegration as WPHooks;
 use WBGam\Integrations\WooCommerce\RefundHandler as WCRefundHandler;
 use WBGam\Integrations\WooCommerce\AccountIntegration as WCAccountIntegration;
 use WBGam\Integrations\LearnDash\ProfileIntegration as LearnDashProfile;
+use WBGam\Integrations\Learnomy\ProfileIntegration as LearnomyProfile;
 use WBGam\Integrations\Jetonomy\JetonomyIntegration as JetonomyHooks;
 use WBGam\Integrations\Jetonomy\DisplayDefer as JetonomyDisplayDefer;
 use WBGam\Admin\SettingsPage;
@@ -272,6 +273,9 @@ final class WB_Gamification {
 
 		BootOrder::register( 'learndash_profile', BootOrder::SLOT_INTEGRATIONS, array( 'engine' ) );
 		add_action( 'plugins_loaded', array( LearnDashProfile::class, 'init' ), BootOrder::SLOT_INTEGRATIONS );
+
+		BootOrder::register( 'learnomy_profile', BootOrder::SLOT_INTEGRATIONS, array( 'engine' ) );
+		add_action( 'plugins_loaded', array( LearnomyProfile::class, 'init' ), BootOrder::SLOT_INTEGRATIONS );
 
 		BootOrder::register( 'jetonomy_hooks', BootOrder::SLOT_INTEGRATIONS, array( 'engine' ) );
 		add_action( 'plugins_loaded', array( JetonomyHooks::class, 'init' ), BootOrder::SLOT_INTEGRATIONS );

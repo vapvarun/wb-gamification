@@ -47,6 +47,29 @@ return array(
 		),
 
 		array(
+			'id'                => 'learnomy_quiz_passed',
+			'label'             => 'Pass a quiz',
+			'description'       => 'Awarded when a member passes a quiz. Fires only on a passing attempt (failed attempts award nothing); cooldown limits retake farming.',
+			// Free fires: do_action( 'learnomy_quiz_passed', int $attempt_id, int $user_id, int $quiz_id, int $score ).
+			'hook'              => 'learnomy_quiz_passed',
+			'user_callback'     => function ( int $attempt_id, int $user_id, int $quiz_id, int $score = 0 ): int {
+				return $user_id;
+			},
+			'metadata_callback' => function ( int $attempt_id, int $user_id, int $quiz_id, int $score = 0 ): array {
+				return array(
+					'quiz_id' => $quiz_id,
+					'score'   => $score,
+				);
+			},
+			'default_points'    => 25,
+			'category'          => 'learning',
+			'icon'              => 'icon-check-circle',
+			'repeatable'        => true,
+			'async'             => false,
+			'cooldown'          => 30,
+		),
+
+		array(
 			'id'                => 'learnomy_course_completed',
 			'label'             => 'Complete a course',
 			'description'       => 'Awarded when a member finishes every lesson and quiz in a course.',
