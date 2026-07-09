@@ -115,11 +115,11 @@ const Edit = ( { attributes, setAttributes, clientId } ) => {
 					<div className="wb-gam-status-bar__body">
 						<span className="wb-gam-status-bar__stat wb-gam-status-bar__stat--points">
 							<span className="wb-gam-status-bar__value">1,205</span>
-							<span className="wb-gam-status-bar__label">Points</span>
+							<span className="wb-gam-status-bar__label">{ __( 'Points', 'wb-gamification' ) }</span>
 						</span>
 						{ showLevel && (
 							<span className="wb-gam-status-bar__stat wb-gam-status-bar__stat--level">
-								<span className="wb-gam-status-bar__value">Contributor</span>
+								<span className="wb-gam-status-bar__value">{ __( 'Contributor', 'wb-gamification' ) }</span>
 							</span>
 						) }
 						{ showBadges && (

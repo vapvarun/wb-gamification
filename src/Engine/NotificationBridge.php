@@ -479,6 +479,19 @@ final class NotificationBridge {
 		// streak / level-up overlays start hidden, not stuck-visible.
 		wp_enqueue_script_module( 'wb-gamification-notifications' );
 
+		// Interactivity script modules cannot use wp_set_script_translations, so
+		// deliver the store's translatable fallback strings through injected
+		// state. The store reads state.i18n.* only when a live event arrives
+		// without a server-resolved label.
+		wp_interactivity_state(
+			'wb-gamification',
+			array(
+				'i18n' => array(
+					'levelUp' => __( 'Level up!', 'wb-gamification' ),
+				),
+			)
+		);
+
 		// Enqueue the toast STACK renderer here, not only in enqueue_assets(): a host
 		// that isolates foreign assets on its own front-end routes (e.g. BuddyNext's
 		// AssetIsolation, which dequeues non-core/non-theme handles at

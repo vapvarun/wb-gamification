@@ -49,10 +49,17 @@
 	if ( POSITIONS.indexOf( position ) === -1 ) {
 		position = 'bottom-right';
 	}
+
+	// Resolve a server-localized string (wbGamToast.i18n.<key>), falling back to
+	// the English default so the renderer still works if the localize data is
+	// stripped by an asset-isolating host.
+	function toastI18n( key, fallback ) {
+		return ( wbGamToast.i18n && wbGamToast.i18n[ key ] ) || fallback;
+	}
 	var container = document.createElement( 'div' );
 	container.className = 'wb-gam-toasts wb-gam-toasts--' + position;
 	container.setAttribute( 'role', 'region' );
-	container.setAttribute( 'aria-label', 'Notifications' );
+	container.setAttribute( 'aria-label', toastI18n( 'region', 'Notifications' ) );
 	container.setAttribute( 'aria-live', 'polite' );
 	container.setAttribute( 'aria-relevant', 'additions' );
 	document.body.appendChild( container );
@@ -189,7 +196,7 @@
 		var msgEl = lastPointsToast.el.querySelector( '.wb-gam-toast__message' );
 		if ( msgEl ) {
 			var labelMatch = ( msgEl.textContent || '' ).match( /^\+\d+\s+(.+?)(?:\s+×\d+)?$/ );
-			var label = labelMatch ? labelMatch[1] : 'points';
+			var label = labelMatch ? labelMatch[1] : toastI18n( 'points', 'points' );
 			msgEl.textContent = '+' + lastPointsToast.points + ' ' + label;
 		}
 		// Detail line names the (same) action plus a repeat count, e.g.
@@ -257,7 +264,7 @@
 
 		var close = document.createElement( 'button' );
 		close.className = 'wb-gam-toast__close';
-		close.setAttribute( 'aria-label', 'Dismiss' );
+		close.setAttribute( 'aria-label', toastI18n( 'dismiss', 'Dismiss' ) );
 		close.textContent = '✕';
 		close.addEventListener( 'click', function () {
 			el.remove();

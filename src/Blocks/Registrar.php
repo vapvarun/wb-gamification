@@ -156,8 +156,21 @@ final class Registrar {
 			return;
 		}
 
-		register_block_type( dirname( $manifest_path ) );
+		$block_type = register_block_type( dirname( $manifest_path ) );
 		self::$registered[] = $name;
+
+		// Deliver JED translations to the block's editor script(s) so the __()
+		// calls in edit.js resolve on translated locales. Blocks auto-register
+		// their editorScript from block.json, but register_block_type() does not
+		// call wp_set_script_translations for the generated handle - without this,
+		// every editor string renders English regardless of the active locale.
+		// Interactivity view *modules* are intentionally excluded: script modules
+		// have no per-handle JED and read their strings from injected state/context.
+		if ( $block_type instanceof \WP_Block_Type ) {
+			foreach ( array_unique( array_filter( (array) $block_type->editor_script_handles ) ) as $handle ) {
+				wp_set_script_translations( (string) $handle, 'wb-gamification', WB_GAM_PATH . 'languages' );
+			}
+		}
 	}
 
 	/**

@@ -1,0 +1,41 @@
+{
+  "domain": "wb-gamification",
+  "potFile": "languages/wb-gamification.pot",
+  "languagesDir": "languages",
+  "engine": "claude",
+  "model": "haiku",
+  "batch": 400,
+  "makeJson": true,
+  "protect": [
+    "WB Gamification",
+    "Pro",
+    "WordPress",
+    "BuddyPress",
+    "WooCommerce",
+    "LearnDash",
+    "Eventonomy",
+    "Jetonomy",
+    "REST",
+    "API",
+    "URL",
+    "CSV",
+    "AI",
+    "XP",
+    "OpenBadges"
+  ],
+  "glossary": {
+    "points": "",
+    "badge": "",
+    "level": "",
+    "leaderboard": "",
+    "streak": "",
+    "kudos": ""
+  },
+  "locales": [
+    {
+      "locale": "de_DE",
+      "name": "German",
+      "register": "informal (du)"
+    }
+  ]
+}

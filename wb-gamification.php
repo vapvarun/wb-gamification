@@ -521,7 +521,7 @@ final class WB_Gamification {
 			WB_GAM_VERSION,
 			true
 		);
-		wp_set_script_translations( 'wb-gamification-hub-convert', 'wb-gamification' );
+		wp_set_script_translations( 'wb-gamification-hub-convert', 'wb-gamification', WB_GAM_PATH . 'languages' );
 
 		// Notifications IA store — drives the level-up + streak-milestone
 		// overlays and the toast stack rendered by NotificationBridge.
@@ -594,6 +594,14 @@ final class WB_Gamification {
 					'restUrl'  => rest_url( 'wb-gamification/v1/' ),
 					'nonce'    => wp_create_nonce( 'wp_rest' ),
 					'position' => \WBGam\Engine\NotificationBridge::get_toast_position(),
+					// Translated strings the renderer builds client-side (aria
+					// labels + the last-resort points-unit fallback). Seeded here
+					// because toast.js has no server-rendered markup to read.
+					'i18n'     => array(
+						'region'  => __( 'Notifications', 'wb-gamification' ),
+						'dismiss' => __( 'Dismiss', 'wb-gamification' ),
+						'points'  => __( 'points', 'wb-gamification' ),
+					),
 				)
 			);
 		}
