@@ -185,20 +185,28 @@ final class NotificationBridge {
 		/**
 		 * Filter which award-skip reasons are surfaced to the member as a toast.
 		 *
-		 * Defaults to the resetting caps only. A cooldown is deliberately excluded:
-		 * it is a transient anti-burst limit, and telling a member "you're on
-		 * cooldown - try again in a bit" scolds them for normal activity and reads
-		 * as an error rather than the silent no-op it should be. Engine-internal
-		 * vetoes (sandboxed, self_action, pre_change_veto) are never eligible.
+		 * Defaults to EMPTY — no skip reason is shown to a member. Gamification is
+		 * positive reinforcement: members should only ever see reward toasts (points
+		 * earned, badge, level up), never a "you got nothing" message. A cooldown
+		 * ("try again in a bit"), a daily cap, and a weekly cap all tell the member
+		 * they earned nothing for normal activity - they are not usable/actionable,
+		 * read as errors, and demotivate at scale (10k sites / 100k members). Every
+		 * skip is a silent no-op by default. Engine-internal vetoes (sandboxed,
+		 * self_action, pre_change_veto) are never eligible regardless of this filter.
+		 *
+		 * A site owner whose community genuinely wants cap feedback can opt specific
+		 * reasons back in:
+		 *
+		 *   add_filter( 'wb_gam_award_skip_toast_reasons', fn() => array( 'daily_cap', 'weekly_cap' ) );
 		 *
 		 * @since 1.6.3
-		 * @param string[] $reasons   Skip reasons that get a member toast.
+		 * @param string[] $reasons   Skip reasons that get a member toast. Default [].
 		 * @param int      $user_id   Member who would see the toast.
 		 * @param string   $action_id Action that was skipped.
 		 */
 		$user_facing_reasons = (array) apply_filters(
 			'wb_gam_award_skip_toast_reasons',
-			array( 'daily_cap', 'weekly_cap' ),
+			array(),
 			$user_id,
 			$action_id
 		);
