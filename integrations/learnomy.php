@@ -6,7 +6,7 @@
  * WB Gamification at load time. Mirrors the Jetonomy/WPMediaVerse pattern:
  * pure manifest, triggers surface in Settings + the Setup Wizard automatically.
  *
- * Hook signatures verified against Learnomy 1.1.1 service classes.
+ * Hook signatures verified against Learnomy 1.5.0 and 1.6.0 service classes.
  *
  * @package WB_Gamification
  * @see     https://wbcomdesigns.com/downloads/learnomy/
