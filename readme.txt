@@ -141,6 +141,7 @@ All data is preserved in the database. Reactivating the plugin restores everythi
 * Fix      - Frontend blocks, interactive surfaces (Hub, leaderboard, toasts, celebrations), and the block editor now display in the active site language; several strings previously always rendered in English. Ships German (de_DE) translations.
 * Fix      - Badge award-window start and end columns are writable and can be cleared back to empty.
 * Fix      - Reward toast and celebration overlay are readable in dark mode.
+* Dev      - Documented the manifest scan-timing constraint for third-party integrations: a wb-gamification.php manifest cannot gate its returned array on function_exists() for a plugin that defines its API inside its own plugins_loaded callback (FluentCRM, for example), or the file returns no triggers; added a late-registration example under examples/.
 
 = 1.6.2 - July 2026 =
 
