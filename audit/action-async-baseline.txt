@@ -3,7 +3,7 @@
 # line is '<file>:<line> <action_id>'. New entries fail the gate; legitimate
 # fixes (explicit 'async' => true|false added) should DELETE the line in the
 # same commit.
-# Generated: 2026-06-21T06:40:05Z
+# Generated: 2026-07-10T11:05:48Z
 
 integrations/bbpress.php:32 bbp_new_topic
 integrations/bbpress.php:47 bbp_new_reply
@@ -27,9 +27,9 @@ integrations/contrib/lifterlms.php:72 llms_achievement_earned
 integrations/contrib/lifterlms.php:85 llms_certificate_earned
 integrations/contrib/memberpress.php:30 mp_membership_activated
 integrations/contrib/memberpress.php:45 mp_membership_renewed
-integrations/contrib/the-events-calendar.php:29 tec_rsvp_registered
-integrations/contrib/the-events-calendar.php:49 tec_ticket_purchased
-integrations/contrib/the-events-calendar.php:64 tec_event_checked_in
+integrations/contrib/the-events-calendar.php:46 tec_rsvp_registered
+integrations/contrib/the-events-calendar.php:66 tec_ticket_purchased
+integrations/contrib/the-events-calendar.php:81 tec_event_checked_in
 integrations/jetonomy-pro.php:119 jetonomy_pro_badge_earned
 integrations/jetonomy-pro.php:146 jetonomy_pro_dm_received
 integrations/jetonomy-pro.php:171 jetonomy_pro_reaction_added

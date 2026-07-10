@@ -21,6 +21,7 @@ Concrete, copy-paste-ready integrations for third-party plugins, themes, and ext
 | Fulfil a redemption by unlocking a LearnDash course | [`11-redemption-learndash-course/`](11-redemption-learndash-course/) |
 | Fulfil a redemption by joining a BuddyPress group | [`12-redemption-bp-group/`](12-redemption-bp-group/) |
 | Fulfil swag / gift-card redemptions through a manual queue + email | [`13-redemption-manual-queue/`](13-redemption-manual-queue/) |
+| Integrate a plugin whose API loads on a hook (e.g. FluentCRM's `fluentCrmApi()`) | [`14-fluentcrm-hooked-api/`](14-fluentcrm-hooked-api/) |
 
 ## Quick decision guide
 
@@ -69,6 +70,24 @@ Three modes work, in order of recommended use:
 - `wb_gam_view_analytics` — analytics dashboard
 
 Use `\WBGam\Engine\Capabilities::user_can( 'wb_gam_manage_badges' )` in your own code if you want the same admin-or-granted-cap gate.
+
+### Detection timing (parse-time vs. hook-time)
+
+A drop-a-file `wb-gamification.php` manifest (Example 01) is `include()`d at
+`plugins_loaded` **priority 5**. Any check in the manifest's top-level body —
+used to decide what array to return — must be answerable that early:
+
+- `defined( … )` and `class_exists( … )` are **safe** (constants and classes
+  exist at file-parse time).
+- `function_exists( … )` for a function another plugin defines inside its own
+  `plugins_loaded` callback is **not** — e.g. FluentCRM's `fluentCrmApi()`
+  (priority 10) is still undefined at priority 5, so the guard makes the
+  manifest return `[]` on every request, silently.
+
+If you must detect a hooked-API plugin, register **late** instead of via a
+manifest — see [`14-fluentcrm-hooked-api/`](14-fluentcrm-hooked-api/). Checks
+placed *inside* a `user_callback` are always safe: callbacks run at event
+time, long after every plugin has loaded.
 
 ### Versioning
 

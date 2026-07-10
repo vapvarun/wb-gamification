@@ -84,6 +84,23 @@ See the [Manifest Files reference](04-manifest-files.md) for the full list of op
 
 WB Gamification scans every active plugin directory for a `wb-gamification.php` file at `plugins_loaded` priority 5. No registration code is needed.
 
+> **Detection timing — important if your manifest guards its return value.**
+> Because the manifest is `include()`d at `plugins_loaded` priority 5, any
+> check in the file's top-level body runs that early. Constants (`defined()`)
+> and classes (`class_exists()`) are safe — they exist at file-parse time. A
+> **function that another plugin defines inside its own `plugins_loaded`
+> callback is not** — for example FluentCRM's `fluentCrmApi()` is defined at
+> priority 10, so `function_exists( 'fluentCrmApi' )` is still `false` at
+> priority 5 and a guard on it makes the whole manifest return `[]` silently.
+> If you need to detect a plugin whose API is only available after its own
+> hook runs, register programmatically on a hook that fires after every plugin
+> has loaded (such as `init`) instead of using a drop-in manifest, or move the
+> detection into the `user_callback` (which runs at event time, long after
+> every plugin has loaded). Note the `wb_gam_register` example below fires at
+> priority 6, which is still too early to see a priority-10 API. Full worked
+> example:
+> [`examples/14-fluentcrm-hooked-api/`](../../../examples/14-fluentcrm-hooked-api/).
+
 ---
 
 ## Step 3: Verify
