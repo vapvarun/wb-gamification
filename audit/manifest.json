@@ -822,7 +822,7 @@
     {
       "title": "Conversions",
       "menu_title": "Conversions",
-      "slug": "wb-gam-point-type-conversions",
+      "slug": "wb-gam-conversions",
       "parent": "wb-gamification",
       "capability": "manage_options",
       "render": "PointTypeConversionsPage::render_page",

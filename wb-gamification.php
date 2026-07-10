@@ -805,6 +805,12 @@ register_activation_hook(
 		CohortEngine::activate();
 		StatusRetentionEngine::activate();
 		CredentialExpiryEngine::activate();
+		// ProfilePage's /u/{username} rewrite rule is registered on `init`,
+		// which does NOT fire during CLI activation (wp plugin activate). Without
+		// this line its rule is absent when the flush below runs, so every
+		// member's public profile 404s until an admin manually flushes permalinks.
+		// Register it here so the BadgeSharePage::activate() flush persists it.
+		\WBGam\Engine\ProfilePage::register_rewrite();
 		BadgeSharePage::activate();
 	}
 );
