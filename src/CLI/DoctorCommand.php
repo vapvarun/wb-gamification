@@ -715,6 +715,17 @@ class DoctorCommand {
 
 		foreach ( $expected as $hook => $label ) {
 			$next = wp_next_scheduled( $hook );
+			// Recurring jobs such as the leaderboard snapshot are scheduled through
+			// Action Scheduler, which wp_next_scheduled() cannot see; fall back to it
+			// so the check does not falsely report a scheduled job as missing.
+			if ( ! $next && function_exists( 'as_next_scheduled_action' ) ) {
+				$as_next = as_next_scheduled_action( $hook );
+				if ( is_int( $as_next ) && $as_next > 0 ) {
+					$next = $as_next;
+				} elseif ( true === $as_next ) {
+					$next = time();
+				}
+			}
 			if ( $next ) {
 				$when = human_time_diff( time(), $next );
 				$this->pass( $label . ' scheduled (next: ' . $when . ')' );
@@ -766,12 +777,12 @@ class DoctorCommand {
 		}
 
 		// Check essential frontend features.
-		$blocks_dir = WB_GAM_PATH . 'blocks/';
+		$blocks_dir = WB_GAM_PATH . 'build/Blocks/';
 		if ( is_dir( $blocks_dir ) ) {
 			$blocks = glob( $blocks_dir . '*/block.json' ) ?: [];
 			$this->pass( count( $blocks ) . ' Gutenberg blocks registered' );
 		} else {
-			$this->warn( 'No blocks/ directory — no Gutenberg blocks available' );
+			$this->warn( 'No build/Blocks/ directory — run `npm run build` to compile blocks' );
 		}
 
 		// Shortcodes check.

@@ -20,6 +20,11 @@ import { store, getContext } from '@wordpress/interactivity';
 /**
  * Human-readable titles for each panel key.
  *
+ * These English strings are the last-resort fallback only. The live titles are
+ * delivered already-translated from the server (render.php emits them, wrapped
+ * in __(), as the `data-wb-gam-panel-titles` JSON attribute on the interactive
+ * root) because Interactivity script modules cannot use script translations.
+ *
  * @type {Object<string, string>}
  */
 const PANEL_TITLES = {
@@ -32,6 +37,43 @@ const PANEL_TITLES = {
 };
 
 const VALID_PANELS = Object.keys( PANEL_TITLES );
+
+/**
+ * Server-provided, already-translated panel titles keyed by panel key.
+ *
+ * Read once from the interactive root's `data-wb-gam-panel-titles` attribute.
+ * Falls back to the English map above only if the attribute is missing or
+ * malformed.
+ *
+ * @return {Object<string, string>} Translated titles keyed by panel key.
+ */
+function getServerPanelTitles() {
+	const root = document.querySelector( '[data-wp-interactive="wb-gamification/hub"]' );
+	if ( root && root.dataset.wbGamPanelTitles ) {
+		try {
+			const parsed = JSON.parse( root.dataset.wbGamPanelTitles );
+			if ( parsed && 'object' === typeof parsed ) {
+				return parsed;
+			}
+		} catch ( e ) {
+			// Malformed JSON — fall through to the English fallback map.
+		}
+	}
+	return {};
+}
+
+const SERVER_PANEL_TITLES = getServerPanelTitles();
+
+/**
+ * Resolve the display title for a panel key, preferring the server-translated
+ * value and falling back to the English map.
+ *
+ * @param {string} key Panel key.
+ * @return {string} Translated (or fallback) panel title.
+ */
+function panelTitleFor( key ) {
+	return SERVER_PANEL_TITLES[ key ] || PANEL_TITLES[ key ] || '';
+}
 
 const { state, actions } = store( 'wb-gamification/hub', {
 	state: {
@@ -67,7 +109,7 @@ const { state, actions } = store( 'wb-gamification/hub', {
 			}
 			body.appendChild( tpl.content.cloneNode( true ) );
 
-			state.panelTitle   = PANEL_TITLES[ key ];
+			state.panelTitle   = panelTitleFor( key );
 			state._activePanel = key;
 			state.panelOpen    = true;
 
@@ -140,7 +182,7 @@ const { state, actions } = store( 'wb-gamification/hub', {
 							body.removeChild( body.firstChild );
 						}
 						body.appendChild( tpl.content.cloneNode( true ) );
-						state.panelTitle   = PANEL_TITLES[ preOpen ];
+						state.panelTitle   = panelTitleFor( preOpen );
 						state._activePanel = preOpen;
 						state.panelOpen    = true;
 						document.body.style.overflow = 'hidden';

@@ -6,7 +6,7 @@
  * WB Gamification at load time. Mirrors the Jetonomy/WPMediaVerse pattern:
  * pure manifest, triggers surface in Settings + the Setup Wizard automatically.
  *
- * Hook signatures verified against Learnomy 1.1.1 service classes.
+ * Hook signatures verified against Learnomy 1.5.0 and 1.6.0 service classes.
  *
  * @package WB_Gamification
  * @see     https://wbcomdesigns.com/downloads/learnomy/
@@ -41,6 +41,29 @@ return array(
 			'default_points'    => 10,
 			'category'          => 'learning',
 			'icon'              => 'icon-book-open',
+			'repeatable'        => true,
+			'async'             => false,
+			'cooldown'          => 30,
+		),
+
+		array(
+			'id'                => 'learnomy_quiz_passed',
+			'label'             => 'Pass a quiz',
+			'description'       => 'Awarded when a member passes a quiz. Fires only on a passing attempt (failed attempts award nothing); cooldown limits retake farming.',
+			// Free fires: do_action( 'learnomy_quiz_passed', int $attempt_id, int $user_id, int $quiz_id, int $score ).
+			'hook'              => 'learnomy_quiz_passed',
+			'user_callback'     => function ( int $attempt_id, int $user_id, int $quiz_id, int $score = 0 ): int {
+				return $user_id;
+			},
+			'metadata_callback' => function ( int $attempt_id, int $user_id, int $quiz_id, int $score = 0 ): array {
+				return array(
+					'quiz_id' => $quiz_id,
+					'score'   => $score,
+				);
+			},
+			'default_points'    => 25,
+			'category'          => 'learning',
+			'icon'              => 'icon-check-circle',
 			'repeatable'        => true,
 			'async'             => false,
 			'cooldown'          => 30,

@@ -3,7 +3,7 @@
  * Plugin Name: WB Gamification
  * Plugin URI:  https://wbcomdesigns.com/
  * Description: Complete gamification plugin for BuddyPress and WordPress. Part of the Reign Stack. Points, badges, levels, leaderboards, challenges, and streaks — zero config, works out of the box.
- * Version:     1.6.2
+ * Version:     1.6.3
  * Author:      Wbcom Designs
  * Author URI:  https://wbcomdesigns.com/
  * License:     GPL-2.0+
@@ -33,7 +33,7 @@ if ( defined( 'WB_GAM_VERSION' ) ) {
 // Plugin Check's internal phpcs invocation.
 // phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 
-define( 'WB_GAM_VERSION', '1.6.2' );
+define( 'WB_GAM_VERSION', '1.6.3' );
 define( 'WB_GAM_FILE', __FILE__ );
 define( 'WB_GAM_PATH', plugin_dir_path( __FILE__ ) );
 define( 'WB_GAM_URL', plugin_dir_url( __FILE__ ) );
@@ -152,6 +152,7 @@ use WBGam\Integrations\WordPress\HooksIntegration as WPHooks;
 use WBGam\Integrations\WooCommerce\RefundHandler as WCRefundHandler;
 use WBGam\Integrations\WooCommerce\AccountIntegration as WCAccountIntegration;
 use WBGam\Integrations\LearnDash\ProfileIntegration as LearnDashProfile;
+use WBGam\Integrations\Learnomy\ProfileIntegration as LearnomyProfile;
 use WBGam\Integrations\Jetonomy\JetonomyIntegration as JetonomyHooks;
 use WBGam\Integrations\Jetonomy\DisplayDefer as JetonomyDisplayDefer;
 use WBGam\Admin\SettingsPage;
@@ -272,6 +273,9 @@ final class WB_Gamification {
 
 		BootOrder::register( 'learndash_profile', BootOrder::SLOT_INTEGRATIONS, array( 'engine' ) );
 		add_action( 'plugins_loaded', array( LearnDashProfile::class, 'init' ), BootOrder::SLOT_INTEGRATIONS );
+
+		BootOrder::register( 'learnomy_profile', BootOrder::SLOT_INTEGRATIONS, array( 'engine' ) );
+		add_action( 'plugins_loaded', array( LearnomyProfile::class, 'init' ), BootOrder::SLOT_INTEGRATIONS );
 
 		BootOrder::register( 'jetonomy_hooks', BootOrder::SLOT_INTEGRATIONS, array( 'engine' ) );
 		add_action( 'plugins_loaded', array( JetonomyHooks::class, 'init' ), BootOrder::SLOT_INTEGRATIONS );
@@ -517,7 +521,7 @@ final class WB_Gamification {
 			WB_GAM_VERSION,
 			true
 		);
-		wp_set_script_translations( 'wb-gamification-hub-convert', 'wb-gamification' );
+		wp_set_script_translations( 'wb-gamification-hub-convert', 'wb-gamification', WB_GAM_PATH . 'languages' );
 
 		// Notifications IA store — drives the level-up + streak-milestone
 		// overlays and the toast stack rendered by NotificationBridge.
@@ -590,6 +594,14 @@ final class WB_Gamification {
 					'restUrl'  => rest_url( 'wb-gamification/v1/' ),
 					'nonce'    => wp_create_nonce( 'wp_rest' ),
 					'position' => \WBGam\Engine\NotificationBridge::get_toast_position(),
+					// Translated strings the renderer builds client-side (aria
+					// labels + the last-resort points-unit fallback). Seeded here
+					// because toast.js has no server-rendered markup to read.
+					'i18n'     => array(
+						'region'  => __( 'Notifications', 'wb-gamification' ),
+						'dismiss' => __( 'Dismiss', 'wb-gamification' ),
+						'points'  => __( 'points', 'wb-gamification' ),
+					),
 				)
 			);
 		}
@@ -793,6 +805,12 @@ register_activation_hook(
 		CohortEngine::activate();
 		StatusRetentionEngine::activate();
 		CredentialExpiryEngine::activate();
+		// ProfilePage's /u/{username} rewrite rule is registered on `init`,
+		// which does NOT fire during CLI activation (wp plugin activate). Without
+		// this line its rule is absent when the flush below runs, so every
+		// member's public profile 404s until an admin manually flushes permalinks.
+		// Register it here so the BadgeSharePage::activate() flush persists it.
+		\WBGam\Engine\ProfilePage::register_rewrite();
 		BadgeSharePage::activate();
 	}
 );

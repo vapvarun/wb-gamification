@@ -19,7 +19,7 @@ class FamilyManifestTest extends TestCase {
 	/** @var array<string,int> manifest file => expected trigger count */
 	private const MANIFESTS = array(
 		'buddynext.php'           => 16,
-		'learnomy.php'            => 6,
+		'learnomy.php'            => 7,
 		'learnomy-pro.php'        => 5,
 		'wp-career-board.php'     => 6,
 		'wp-career-board-pro.php' => 1,
@@ -81,6 +81,7 @@ class FamilyManifestTest extends TestCase {
 		// Direct user-id args (position varies per hook signature).
 		$this->assertSame( 42, $triggers['learnomy_lesson_completed']( 42, 1, 2 ) );      // arg1
 		$this->assertSame( 7, $triggers['learnomy_course_completed']( 5, 7, 9 ) );        // arg2
+		$this->assertSame( 7, $triggers['learnomy_quiz_passed']( 5, 7, 9, 88 ) );         // arg2 (attempt_id, user_id, quiz_id, score)
 		$this->assertSame( 99, $triggers['wcb_application_submitted']( 1, 2, 99 ) );      // arg3 candidate
 		$this->assertSame( 88, $triggers['listora_review_written']( 1, 2, 88 ) );         // arg3 reviewer
 		$this->assertSame( 55, $triggers['bn_post_created']( 10, 55, 'text' ) );          // arg2 author

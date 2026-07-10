@@ -271,7 +271,8 @@ final class BadgeSharePage {
 				<div class="wb-gam-share-card__actions">
 					<button type="button" class="wb-gam-share-card__action wb-gam-share-card__action--copy"
 						data-wb-gam-copy="<?php echo esc_attr( $share_url ); ?>"
-						data-copied-label="<?php esc_attr_e( 'Copied!', 'wb-gamification' ); ?>">
+						data-copied-label="<?php esc_attr_e( 'Copied!', 'wb-gamification' ); ?>"
+						data-copy-fail-label="<?php esc_attr_e( 'Press Ctrl/Cmd+C to copy', 'wb-gamification' ); ?>">
 						<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M10 13a5 5 0 0 0 7.07 0l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M14 11a5 5 0 0 0-7.07 0l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
 						<span class="wb-gam-share-card__action-label"><?php esc_html_e( 'Copy link', 'wb-gamification' ); ?></span>
 					</button>

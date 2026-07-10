@@ -41,6 +41,12 @@ const initialState = {
 		active: false,
 		days:   '',
 	},
+	// Translatable fallback strings, delivered from the server via
+	// wp_interactivity_state( 'wb-gamification', [ 'i18n' => [ ... ] ] ). Kept as
+	// English defaults so the store still works if the injection is absent.
+	i18n: {
+		levelUp: 'Level up!',
+	},
 };
 
 const { state, actions } = store( NS, {
@@ -119,7 +125,7 @@ const { state, actions } = store( NS, {
 						// rendered the localised sentence instead of the
 						// bare level name. Closes audit DATA-FLOW-
 						// NOTIFICATIONS-2026-05-27.md §G10.
-						levelName: event.levelName || event.message || event.detail || 'Level up!',
+						levelName: event.levelName || event.message || event.detail || ( state.i18n && state.i18n.levelUp ) || 'Level up!',
 					};
 						focusOverlayDismiss( 'wb-gam-overlay--level-up' );
 				} else {

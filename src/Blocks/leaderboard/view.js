@@ -240,7 +240,11 @@
 					badgesWrap.hidden = ( n <= 0 );
 				}
 				if ( badgesCount ) {
-					var badgesText = n + ' ' + ( n === 1 ? 'badge' : 'badges' );
+					var board      = li.closest( '[data-wb-gam-board="leaderboard"]' );
+				var badgeTmpl  = ( n === 1
+					? ( board && board.getAttribute( 'data-wb-gam-badges-one' ) ) || '%d badge'
+					: ( board && board.getAttribute( 'data-wb-gam-badges-other' ) ) || '%d badges' );
+				var badgesText = badgeTmpl.replace( '%d', n );
 					if ( badgesCount.textContent !== badgesText ) {
 						badgesCount.textContent = badgesText;
 					}

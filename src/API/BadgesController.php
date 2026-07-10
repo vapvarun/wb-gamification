@@ -318,6 +318,11 @@ class BadgesController extends WP_REST_Controller {
 			'is_credential' => array(
 				'type' => 'boolean',
 			),
+			'validity_days' => array(
+				'type'        => array( 'integer', 'null' ),
+				'minimum'     => 0,
+				'description' => 'Days a badge stays valid after it is earned. 0 or null = never expires.',
+			),
 			'closes_at'     => array(
 				'type'              => 'string',
 				'sanitize_callback' => 'sanitize_text_field',
@@ -380,15 +385,23 @@ class BadgesController extends WP_REST_Controller {
 			$formats[]            = '%d';
 		}
 		// closes_at: empty string clears the cutoff; non-empty stored verbatim (callers send UTC).
-		if ( null !== $request->get_param( 'closes_at' ) ) {
+		if ( $request->has_param( 'closes_at' ) ) {
 			$raw              = (string) $request->get_param( 'closes_at' );
 			$row['closes_at'] = '' === $raw ? null : $raw;
 			$formats[]        = '%s';
 		}
-		if ( null !== $request->get_param( 'max_earners' ) ) {
-			$raw                = (string) $request->get_param( 'max_earners' );
-			$row['max_earners'] = '' === $raw ? null : max( 1, (int) $raw );
-			$formats[]          = '%d';
+		// Nullable caps. Gate on has_param(), not `null !== get_param()`: a blank
+		// admin number input serialises to JSON `null`, which the old check could
+		// not tell apart from "field absent" — so clearing a cap silently kept the
+		// old value. `0`, `''` and `null` all mean "no limit" and store SQL NULL.
+		foreach ( array( 'validity_days', 'max_earners' ) as $field ) {
+			if ( ! $request->has_param( $field ) ) {
+				continue;
+			}
+			$raw           = $request->get_param( $field );
+			$n             = (int) $raw;
+			$row[ $field ] = ( null === $raw || '' === $raw || $n < 1 ) ? null : $n;
+			$formats[]     = '%d';
 		}
 		return array(
 			'row'     => $row,

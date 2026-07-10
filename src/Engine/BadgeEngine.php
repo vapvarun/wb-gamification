@@ -616,7 +616,7 @@ final class BadgeEngine {
 	 * before awarding it. Idempotent on `id` — an existing def is left as-is
 	 * (a re-run never clobbers admin edits).
 	 *
-	 * @param array{id:string, name:string, description?:string, image_url?:string, category?:string} $def Definition.
+	 * @param array{id:string, name:string, description?:string, image_url?:string, category?:string, is_credential?:bool, validity_days?:int|null, closes_at?:string|null, max_earners?:int|null} $def Definition.
 	 * @return bool True if a new def was created.
 	 */
 	public static function upsert_def( array $def ): bool {
@@ -628,19 +628,31 @@ final class BadgeEngine {
 			return false;
 		}
 
+		$row     = array(
+			'id'            => $id,
+			'name'          => isset( $def['name'] ) ? (string) $def['name'] : $id,
+			'description'   => isset( $def['description'] ) ? (string) $def['description'] : '',
+			'image_url'     => isset( $def['image_url'] ) ? (string) $def['image_url'] : null,
+			'category'      => isset( $def['category'] ) ? (string) $def['category'] : 'imported',
+			'is_credential' => empty( $def['is_credential'] ) ? 0 : 1,
+		);
+		$formats = array( '%s', '%s', '%s', '%s', '%s', '%d' );
+
+		// Award-window columns. Previously omitted entirely, so a programmatic
+		// def could never carry an expiry, cutoff or earner cap — the columns
+		// existed and every read path honoured them, but no writer set them.
+		// `null` (and `0` for the counters) means "no limit" and stores SQL NULL,
+		// which `$wpdb->insert()` emits as a literal NULL regardless of format.
+		$row['validity_days'] = empty( $def['validity_days'] ) ? null : max( 1, (int) $def['validity_days'] );
+		$formats[]            = '%d';
+		$row['closes_at']     = empty( $def['closes_at'] ) ? null : (string) $def['closes_at'];
+		$formats[]            = '%s';
+		$row['max_earners']   = empty( $def['max_earners'] ) ? null : max( 1, (int) $def['max_earners'] );
+		$formats[]            = '%d';
+
 		global $wpdb;
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$inserted = $wpdb->insert(
-			$wpdb->prefix . 'wb_gam_badge_defs',
-			array(
-				'id'          => $id,
-				'name'        => isset( $def['name'] ) ? (string) $def['name'] : $id,
-				'description' => isset( $def['description'] ) ? (string) $def['description'] : '',
-				'image_url'   => isset( $def['image_url'] ) ? (string) $def['image_url'] : null,
-				'category'    => isset( $def['category'] ) ? (string) $def['category'] : 'imported',
-			),
-			array( '%s', '%s', '%s', '%s', '%s' )
-		);
+		$inserted = $wpdb->insert( $wpdb->prefix . 'wb_gam_badge_defs', $row, $formats );
 		return false !== $inserted;
 	}
 

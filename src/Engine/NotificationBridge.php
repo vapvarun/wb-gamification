@@ -147,9 +147,10 @@ final class NotificationBridge {
 		if ( ! wp_next_scheduled( self::PRUNE_CRON ) ) {
 			wp_schedule_event( time() + HOUR_IN_SECONDS, 'daily', self::PRUNE_CRON );
 		}
-		// Skip toasts — surface "you hit the daily cap / cooldown" to the
-		// member so they understand why no points appeared. Pre-1.4.1 the
-		// engine fired `wb_gam_award_skipped` in 6 places (PointsEngine +
+		// Skip toasts — surface a real, resetting limit ("you hit your daily
+		// limit") to the member so they understand why no points appeared. A
+		// transient cooldown is silent by default (see on_award_skipped). Pre-1.4.1
+		// the engine fired `wb_gam_award_skipped` in 6 places (PointsEngine +
 		// Registry + Jetonomy) with no internal listener — pure dead-letter.
 		// Closes audit/DATA-FLOW-AWARD-2026-05-27.md §G17.
 		add_action( 'wb_gam_award_skipped', array( __CLASS__, 'on_award_skipped' ), 99, 4 );
@@ -160,11 +161,16 @@ final class NotificationBridge {
 
 	/**
 	 * Push a "skip toast" — informs the member why an action they just
-	 * performed did NOT award points. Only fires for reasons the member
-	 * can act on (cap hit, cooldown active). Silent for engine-internal
-	 * reasons (self-action, sandboxed) where a toast would be confusing.
+	 * performed did NOT award points. Fires only for a real, resetting limit
+	 * the member benefits from understanding (daily / weekly cap). Silent for
+	 * a transient cooldown (see below) and for engine-internal vetoes
+	 * (self-action, sandboxed) where a toast would only confuse.
 	 *
 	 * @since 1.4.1
+	 * @since 1.6.3 Cooldown skips are silent by default — a per-action cooldown
+	 *              is a transient anti-burst window, and "you're on cooldown, try
+	 *              again in a bit" reads as an error that scolds normal activity.
+	 *              Re-add it via the `wb_gam_award_skip_toast_reasons` filter.
 	 *
 	 * @param int    $user_id   User who would have been awarded.
 	 * @param string $action_id Action that was skipped.
@@ -176,9 +182,34 @@ final class NotificationBridge {
 			return;
 		}
 
-		// Only the member-facing reasons get a toast — internal vetoes
-		// (sandboxed, self_action, pre_change_veto) confuse the user.
-		$user_facing_reasons = array( 'cooldown', 'daily_cap', 'weekly_cap' );
+		/**
+		 * Filter which award-skip reasons are surfaced to the member as a toast.
+		 *
+		 * Defaults to EMPTY — no skip reason is shown to a member. Gamification is
+		 * positive reinforcement: members should only ever see reward toasts (points
+		 * earned, badge, level up), never a "you got nothing" message. A cooldown
+		 * ("try again in a bit"), a daily cap, and a weekly cap all tell the member
+		 * they earned nothing for normal activity - they are not usable/actionable,
+		 * read as errors, and demotivate at scale (10k sites / 100k members). Every
+		 * skip is a silent no-op by default. Engine-internal vetoes (sandboxed,
+		 * self_action, pre_change_veto) are never eligible regardless of this filter.
+		 *
+		 * A site owner whose community genuinely wants cap feedback can opt specific
+		 * reasons back in:
+		 *
+		 *   add_filter( 'wb_gam_award_skip_toast_reasons', fn() => array( 'daily_cap', 'weekly_cap' ) );
+		 *
+		 * @since 1.6.3
+		 * @param string[] $reasons   Skip reasons that get a member toast. Default [].
+		 * @param int      $user_id   Member who would see the toast.
+		 * @param string   $action_id Action that was skipped.
+		 */
+		$user_facing_reasons = (array) apply_filters(
+			'wb_gam_award_skip_toast_reasons',
+			array(),
+			$user_id,
+			$action_id
+		);
 		if ( ! in_array( $reason, $user_facing_reasons, true ) ) {
 			return;
 		}
@@ -447,6 +478,19 @@ final class NotificationBridge {
 		// data-wp-bind attributes resolve on first paint and the
 		// streak / level-up overlays start hidden, not stuck-visible.
 		wp_enqueue_script_module( 'wb-gamification-notifications' );
+
+		// Interactivity script modules cannot use wp_set_script_translations, so
+		// deliver the store's translatable fallback strings through injected
+		// state. The store reads state.i18n.* only when a live event arrives
+		// without a server-resolved label.
+		wp_interactivity_state(
+			'wb-gamification',
+			array(
+				'i18n' => array(
+					'levelUp' => __( 'Level up!', 'wb-gamification' ),
+				),
+			)
+		);
 
 		// Enqueue the toast STACK renderer here, not only in enqueue_assets(): a host
 		// that isolates foreign assets on its own front-end routes (e.g. BuddyNext's

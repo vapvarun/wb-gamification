@@ -29,7 +29,11 @@
 	display: flex;
 	flex-direction: column;
 	gap: 0.625rem;
-	width: min(420px, calc(100vw - 2rem));
+	/* `100%` (not `100vw`) — a fixed element resolves percentages against the
+	 * initial containing block, which EXCLUDES a classic scrollbar. `100vw`
+	 * includes it, so on any browser with non-overlay scrollbars the stack
+	 * overshot by the scrollbar width and bled off the inline-start edge. */
+	width: min(420px, calc(100% - 2rem));
 	pointer-events: none;
 	/* Slide direction for enter/exit — overridden per position variant
 	 * below. Bottom-anchored stacks slide up (+), top-anchored slide
@@ -91,7 +95,13 @@ body.admin-bar .wb-gam-toasts--top-right {
 	align-items: flex-start;
 	gap: 0.625rem;
 	padding: 0.75rem 1rem;
+	/* `color` MUST be set alongside `background` — both resolve from the same
+	 * theme token pair, so they flip together. Without it the text inherited
+	 * the page foreground: on a dark theme that does NOT expose
+	 * `--bx-color-*`, surface fell back to #fff while the inherited text
+	 * stayed white, and the toast rendered white-on-white. */
 	background: var(--wb-gam-color-surface, #fff);
+	color: var(--wb-gam-color-text, #1a1a2e);
 	border-radius: var(--wb-gam-radius);
 	box-shadow: 0 8px 24px rgba(0, 0, 0, 0.16);
 	border-inline-start: 4px solid var(--wb-gam-primary);
@@ -128,7 +138,7 @@ body.admin-bar .wb-gam-toasts--top-right {
 
 @media (max-width: 640px) {
 	.wb-gam-toasts {
-		width: calc(100vw - 1.5rem);
+		width: calc(100% - 1.5rem);
 	}
 	/* Hug the screen edge on mobile; keep each variant's anchor side. */
 	.wb-gam-toasts--top-right,
@@ -160,23 +170,35 @@ body.admin-bar .wb-gam-toasts--top-right {
 
 .wb-gam-toast__detail {
 	font-size: 0.8125rem;
-	color: #6b7280;
+	color: var(--wb-gam-color-text-muted, #6b7280);
 }
 
 .wb-gam-toast__detail[hidden] { display: none; }
 
 .wb-gam-toast__close {
+	/* 40px minimum touch target (ux-foundation responsive contract). The glyph
+	 * itself stays 0.75rem; the negative inline-end margin keeps it optically
+	 * on the toast's padding edge so the box doesn't visibly grow. */
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-inline-size: 40px;
+	min-block-size: 40px;
+	margin-block-start: -0.5rem;
+	margin-inline-end: -0.5rem;
 	background: none;
 	border: none;
 	cursor: pointer;
 	font-size: 0.75rem;
 	color: var(--wb-gam-silver);
-	padding: 0.125rem;
+	padding: 0;
 	flex-shrink: 0;
 	line-height: 1;
 }
 
-.wb-gam-toast__close:hover { color: #111; }
+/* Hover resolves to the toast's own foreground token, not a hardcoded near-black
+ * (#111 was invisible against the dark surface the toast now correctly renders). */
+.wb-gam-toast__close:hover { color: var(--wb-gam-color-text, #1a1a2e); }
 
 /* ── Overlays (level-up, streak milestone) ───────────────────────────────────── */
 .wb-gam-overlay {
@@ -193,7 +215,9 @@ body.admin-bar .wb-gam-toasts--top-right {
 .wb-gam-overlay[hidden] { display: none; }
 
 .wb-gam-overlay__card {
+	/* Same surface/text token pairing as .wb-gam-toast — see the note there. */
 	background: var(--wb-gam-color-surface, #fff);
+	color: var(--wb-gam-color-text, #1a1a2e);
 	border-radius: 16px;
 	padding: 2.5rem 2rem;
 	max-width: 340px;
@@ -243,7 +267,7 @@ body.admin-bar .wb-gam-toasts--top-right {
 
 .wb-gam-overlay__sub {
 	font-size: 0.9375rem;
-	color: #6b7280;
+	color: var(--wb-gam-color-text-muted, #6b7280);
 	margin: 0 0 1.5rem;
 }
 
@@ -666,14 +690,17 @@ body.admin-bar .wb-gam-toasts--top-right {
 	color: var(--wb-gam-color-accent);
 }
 
-/* LearnDash profile — single "My Achievements" hub link, aligned right so it
- * reads as a profile action rather than a floating banner. */
-.wb-gam-ld-link {
+/* LMS profile — single "My Achievements" hub link, aligned right so it reads
+ * as a profile action rather than a floating banner. Shared by the LearnDash
+ * (.wb-gam-ld-link) and Learnomy (.wb-gam-lrn-link) profile integrations. */
+.wb-gam-ld-link,
+.wb-gam-lrn-link {
 	margin: 0 0 16px;
 	text-align: left;
 }
 
-.wb-gam-ld-link__btn {
+.wb-gam-ld-link__btn,
+.wb-gam-lrn-link__btn {
 	display: inline-flex;
 	align-items: center;
 	gap: 6px;
@@ -686,7 +713,8 @@ body.admin-bar .wb-gam-toasts--top-right {
 	text-decoration: none;
 }
 
-.wb-gam-ld-link__btn:hover {
+.wb-gam-ld-link__btn:hover,
+.wb-gam-lrn-link__btn:hover {
 	background: var(--wb-gam-color-accent);
 	color: #fff;
 }

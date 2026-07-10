@@ -4,7 +4,7 @@ Tags: gamification, points, badges, leaderboard, buddypress
 Requires at least: 6.5
 Tested up to: 7.0
 Requires PHP: 8.0
-Stable tag: 1.6.2
+Stable tag: 1.6.3
 License: GPL-2.0+
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -35,12 +35,12 @@ The engine awards points automatically when members perform actions on your site
 * **Peer Kudos** — Members recognize each other with kudos. Configurable daily limits and point awards for both sender and receiver.
 * **19 Gutenberg Blocks** — Leaderboard, member points, badge showcase, level progress, challenges, streak, top members, kudos feed, year recap, points history, earning guide, hub, redemption store, community challenges, cohort rank, daily bonus, give kudos, submit achievement, user status bar. Every block follows the Wbcom Block Quality Standard (apiVersion 3, per-side spacing × 3 breakpoints, hover/focus states, design tokens, per-instance scoped CSS).
 * **17 Shortcodes** — Every customer-facing block is also available as a shortcode for classic editor and page builders (Elementor, Beaver Builder, Bricks).
-* **REST API** — 64 endpoints across 27 controllers. Full CRUD for all resources. API key authentication for cross-site setups. Admin UI consumes the same REST API as 3rd-party integrations.
+* **REST API** — 64 endpoints across 28 controllers. Full CRUD for all resources. API key authentication for cross-site setups. Admin UI consumes the same REST API as 3rd-party integrations.
 * **BuddyPress Integration** — Profile rank display, activity feed events, member directory badges, notification bridge.
 * **Toast Notifications** — Real-time bottom-right popups when members earn points, badges, or level up. 6 notification types with auto-dismiss. Promise-based confirm modals replace native browser dialogs (a11y-friendly).
 * **Analytics Dashboard** — 6 KPI cards, top actions, top earners, daily points sparkline. Period selector (7/30/90 days).
 * **WP-CLI Commands** — `points award`, `member status`, `actions list`, `logs prune`, `export user`, `qa seed_pages`, `doctor` readiness check, plus a release-zip builder.
-* **Developer Hooks** — 61 action hooks and 69 filter hooks for extending every write path. Every REST endpoint fires `before_*` filters (return WP_Error to abort) and `after_*` actions.
+* **Developer Hooks** — 65 action hooks and 77 filter hooks for extending every write path. Every REST endpoint fires `before_*` filters (return WP_Error to abort) and `after_*` actions.
 * **Cohort Leagues** — Duolingo-style weekly competitions with promotion/demotion percentages and per-cohort leaderboards.
 * **Community Challenges** — Team goals with global progress (Pokemon GO model). Members contribute to a shared counter; everyone earns when the target is hit.
 * **Redemption Store** — Members spend points on rewards. Built-in support for custom rewards (your hook), WooCommerce coupons, and Wbcom Credits SDK.
@@ -132,6 +132,15 @@ Yes. WB Gamification integrates with WordPress privacy tools. Members can reques
 All data is preserved in the database. Reactivating the plugin restores everything. If you delete the plugin via the Plugins screen, the `uninstall.php` file removes all 26 tables, options, cron jobs, and transients — a clean uninstall.
 
 == Changelog ==
+
+= 1.6.3 - July 2026 =
+
+* New      - Learnomy integration: members earn points when they pass a Learnomy quiz, and an Achievements link is added to the account page.
+* New      - Eventonomy integration: members earn points for reserving a place at an event, submitting an event, completing a ticket order, attending an event, and following an organizer.
+* Improve  - Award-skip toasts are silent to members by default for every skip reason (cooldown, daily cap, weekly cap); the award is skipped without a "you earned nothing" notice. Use the wb_gam_award_skip_toast_reasons filter to opt specific reasons back in.
+* Fix      - Frontend blocks, interactive surfaces (Hub, leaderboard, toasts, celebrations), and the block editor now display in the active site language; several strings previously always rendered in English. Ships German (de_DE) translations.
+* Fix      - Badge award-window start and end columns are writable and can be cleared back to empty.
+* Fix      - Reward toast and celebration overlay are readable in dark mode.
 
 = 1.6.2 - July 2026 =
 

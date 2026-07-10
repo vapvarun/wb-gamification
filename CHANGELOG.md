@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 
 ## [Unreleased]
 
+## [1.6.3] - 2026-07-08
+
+### Fixed
+
+- A per-action cooldown no longer surfaces a member toast ("You're on cooldown for this action - try again in a bit."). The cooldown skips the award silently, as it did before the notice was added in 1.4.1; a cooldown is a transient anti-burst limit and the notice read as an error for normal activity. Daily/weekly cap notices (a real, resetting limit) are unchanged. The surfaced set is filterable via `wb_gam_award_skip_toast_reasons`.
+
 ## [1.6.0] - 2026-06-21
 
 Adds the Wbcom Family Kit integrations guide, share-ready badge pages with social images, and fully styled block editor previews.

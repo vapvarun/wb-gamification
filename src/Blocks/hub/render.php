@@ -343,13 +343,25 @@ if ( $wb_gam_active_count > 0 ) {
 
 $wb_gam_context = wp_json_encode( array( 'preOpen' => $wb_gam_pre_open ) );
 
+// Translated panel headings, keyed by panel key, delivered to the Interactivity
+// store. Script modules cannot use wp_set_script_translations, so the store
+// reads these already-translated titles instead of a hardcoded English map -
+// covering every open path (card click, nudge, and URL pre-open).
+$wb_gam_panel_titles = array();
+foreach ( $wb_gam_cards as $wb_gam_title_key => $wb_gam_title_card ) {
+	if ( isset( $wb_gam_title_card['title'] ) ) {
+		$wb_gam_panel_titles[ (string) $wb_gam_title_key ] = (string) $wb_gam_title_card['title'];
+	}
+}
+
 $wb_gam_wrapper = get_block_wrapper_attributes(
 	array(
-		'class'               => implode( ' ', $wb_gam_classes ),
-		'style'               => '' !== $wb_gam_inline ? $wb_gam_inline : null,
-		'data-wp-interactive' => 'wb-gamification/hub',
-		'data-wp-context'     => $wb_gam_context,
-		'data-wp-init'        => 'callbacks.init',
+		'class'                    => implode( ' ', $wb_gam_classes ),
+		'style'                    => '' !== $wb_gam_inline ? $wb_gam_inline : null,
+		'data-wp-interactive'      => 'wb-gamification/hub',
+		'data-wp-context'          => $wb_gam_context,
+		'data-wp-init'             => 'callbacks.init',
+		'data-wb-gam-panel-titles' => (string) wp_json_encode( $wb_gam_panel_titles ),
 	)
 );
 

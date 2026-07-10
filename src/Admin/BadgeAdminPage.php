@@ -327,6 +327,14 @@ final class BadgeAdminPage {
 									</td>
 								</tr>
 								<tr>
+									<th><label for="wb-gam-badge-validity-days"><?php esc_html_e( 'Valid for (days)', 'wb-gamification' ); ?></label></th>
+									<td>
+										<input type="number" name="validity_days" id="wb-gam-badge-validity-days" class="small-text wbgam-input"
+											min="1" value="<?php echo esc_attr( $badge['validity_days'] ?? '' ); ?>">
+										<p class="description"><?php esc_html_e( 'Days the badge stays valid after a member earns it, then it expires and stops counting. Leave blank so it never expires.', 'wb-gamification' ); ?></p>
+									</td>
+								</tr>
+								<tr>
 									<th><label for="wb-gam-badge-closes-at"><?php esc_html_e( 'Closes at', 'wb-gamification' ); ?></label></th>
 									<td>
 										<input type="datetime-local" name="closes_at" id="wb-gam-badge-closes-at" class="wbgam-input"

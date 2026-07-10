@@ -124,6 +124,13 @@ $wb_gam_wrapper = get_block_wrapper_attributes(
 		'data-wb-gam-limit'        => (string) $wb_gam_limit,
 		'data-wb-gam-point-type'   => (string) ( $wb_gam_attrs['pointType'] ?? '' ),
 		'data-wb-gam-points-label' => $wb_gam_points_label,
+		// Singular/plural badge-count templates (with a %d placeholder) so the
+		// live heartbeat re-render shows a translated label instead of hardcoded
+		// English. Kept as two forms to match the classic script's 1-vs-many test.
+		/* translators: %d: number of badges earned. */
+		'data-wb-gam-badges-one'   => __( '%d badge', 'wb-gamification' ),
+		/* translators: %d: number of badges earned. */
+		'data-wb-gam-badges-other' => __( '%d badges', 'wb-gamification' ),
 	)
 );
 
