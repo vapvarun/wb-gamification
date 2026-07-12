@@ -127,15 +127,51 @@ done < <(find "$PLUGIN_DIR" -name '*.php' "${FIND_EXCLUDES[@]}" -print0 2>/dev/n
          | xargs -0 grep -nE 'dashicons-[a-z-]+' 2>/dev/null \
          | head -10 || true)
 
-# ── Advisory: outline:none without focus-visible nearby ──
+# ── Advisory: outline:none with NO visible focus indicator to replace it ──
+#
+# WCAG does not require :focus-visible. It requires a VISIBLE FOCUS INDICATOR. Removing the
+# browser outline and replacing it with a box-shadow ring or a border change is a correct,
+# common, and accessible pattern.
+#
+# The old rule only accepted the literal string "focus-visible", and only looked 5 lines
+# FORWARD. So it flagged every one of these as a violation:
+#
+#     .wb-gam-give-kudos__input:focus {
+#         outline: none;                                   <- flagged
+#         border-color: var( --wb-gam-color-accent );      <- the replacement it could not see
+#         box-shadow: 0 0 0 3px var( --wb-gam-accent-ring );
+#     }
+#
+# That is correct code. A journey run reported ~23 findings of this shape as a11y failures, and
+# a gate that cries wolf is one people stop reading -- which is far more dangerous than the
+# handful of real problems it might one day catch.
+#
+# So: read the whole DECLARATION BLOCK the outline sits in, and only complain when nothing in it
+# could possibly render focus.
 while IFS=: read -r file line _; do
     [ -z "$file" ] && continue
-    ctx=$(sed -n "${line},$((line+5))p" "$file" 2>/dev/null | grep -c 'focus-visible' || true)
-    if [ "${ctx:-0}" = "0" ]; then
-        snippet="$(sed -n "${line}p" "$file" 2>/dev/null | head -c 80 | tr '\n' ' ' | sed 's/|/\\|/g')"
-        violation "advisory" "Rule 14 outline-none-no-replacement" "$file" "$line" "\`$snippet\`"
-        ADVISORY_COUNT=$((ADVISORY_COUNT+1))
+
+    # The enclosing block: back to the nearest '{', forward to the nearest '}'.
+    open=$(awk -v n="$line" 'NR<=n && /\{/ {l=NR} END {print l+0}' "$file")
+    close=$(awk -v n="$line" 'NR>=n && /\}/ {print NR; exit}' "$file")
+    [ "${open:-0}" -lt 1 ] && open=$((line > 3 ? line - 3 : 1))
+    [ -z "${close:-}" ] && close=$((line + 6))
+
+    block="$(sed -n "${open},${close}p" "$file" 2>/dev/null)"
+
+    # Anything here means focus is still visible: a replacement ring, a border change, an
+    # outline that is not "none", or the :focus-visible guard itself.
+    # NOTE the character class: [^n0[:space:]]. Written as [^n0] the \s* matches ZERO spaces and
+    # the class then matches the SPACE in "outline: none" -- so the rule counted "outline: none"
+    # itself as its own replacement and went completely blind. Caught by mutation-testing it
+    # against a real violation, which is the only reason anyone would ever notice.
+    if echo "$block" | grep -qE 'focus-visible|box-shadow|border-color|border:|outline:[[:space:]]*[^n0[:space:]]'; then
+        continue
     fi
+
+    snippet="$(sed -n "${line}p" "$file" 2>/dev/null | head -c 80 | tr '\n' ' ' | sed 's/|/\\|/g')"
+    violation "advisory" "Rule 14 outline-none-no-replacement" "$file" "$line" "\`$snippet\`"
+    ADVISORY_COUNT=$((ADVISORY_COUNT+1))
 done < <(find "$PLUGIN_DIR" -name '*.css' "${FIND_EXCLUDES[@]}" -not -name '*.min.css' -print0 2>/dev/null \
          | xargs -0 grep -nE 'outline:\s*(none|0)' 2>/dev/null || true)
 
