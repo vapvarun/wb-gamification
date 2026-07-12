@@ -120,6 +120,112 @@ final class DbUpgrader {
 		self::ensure_events_source_key();
 		self::ensure_scale_indexes();
 		self::ensure_redemption_stock_null_unlimited();
+		self::ensure_badge_rule_groups();
+	}
+
+	/**
+	 * Migrate every badge rule to the grouped shape, once.
+	 *
+	 * A rule used to be a single condition and could never be more:
+	 *
+	 *     { "condition_type": "action_count", "action_id": "wp_publish_post", "count": 10 }
+	 *
+	 * It becomes:
+	 *
+	 *     { "match": "all", "conditions": [ { "type": "action_count", "action_id": ..., "count": 10 } ] }
+	 *
+	 * ONE SHAPE, ONE READER. There is deliberately no read-time normalizer -- after this runs,
+	 * exactly one shape exists in the database and exactly one reader parses it. A plugin that
+	 * tolerates two shapes forever carries two code paths forever, and the second one rots.
+	 *
+	 * Idempotent twice over: the flag stops it re-running, and BadgeRule::from_legacy() returns an
+	 * already-grouped config unchanged. So a site whose request timed out half way through simply
+	 * finishes the job next time, and a site that somehow runs it twice is unharmed.
+	 *
+	 * A row we cannot parse is SKIPPED and logged, never guessed at. Rewriting an unrecognisable
+	 * rule into something plausible-looking would produce a badge that silently awards, or
+	 * silently refuses to, on a configuration nobody chose.
+	 *
+	 * @return void
+	 */
+	private static function ensure_badge_rule_groups(): void {
+		if ( get_option( 'wb_gam_feature_badge_rule_groups_v1' ) ) {
+			return;
+		}
+
+		global $wpdb;
+
+		$table = $wpdb->prefix . 'wb_gam_rules';
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$rows = $wpdb->get_results(
+			"SELECT id, target_id, rule_config FROM {$table} WHERE rule_type = 'badge_condition'",
+			ARRAY_A
+		);
+
+		$migrated = 0;
+		$skipped  = 0;
+
+		foreach ( (array) $rows as $row ) {
+			$config = json_decode( (string) $row['rule_config'], true );
+
+			if ( ! is_array( $config ) ) {
+				Log::warning(
+					'badge-rule-migration: rule_config is not valid JSON; left untouched',
+					array(
+						'rule_id'  => (int) $row['id'],
+						'badge_id' => (string) $row['target_id'],
+					)
+				);
+				++$skipped;
+				continue;
+			}
+
+			$grouped = BadgeRule::from_legacy( $config );
+
+			if ( null === $grouped ) {
+				Log::warning(
+					'badge-rule-migration: unrecognised rule shape; left untouched rather than guessed at',
+					array(
+						'rule_id'  => (int) $row['id'],
+						'badge_id' => (string) $row['target_id'],
+					)
+				);
+				++$skipped;
+				continue;
+			}
+
+			// Already grouped: from_legacy() hands it back unchanged, so there is nothing to write.
+			if ( $grouped === $config ) {
+				continue;
+			}
+
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->update(
+				$table,
+				array( 'rule_config' => (string) wp_json_encode( $grouped ) ),
+				array( 'id' => (int) $row['id'] ),
+				array( '%s' ),
+				array( '%d' )
+			);
+
+			++$migrated;
+		}
+
+		// Log::debug, not Log::info -- there is no info(). Log has exactly error/warning/debug, and
+		// calling a method that does not exist would fatal HERE, inside a migration, on activation,
+		// on every site. That is the same class of bug as the setup wizard's Log::warning() call
+		// that resolved to a non-existent WBGam\Admin\Log: the guard crashes at the moment it fires.
+		Log::debug(
+			'badge-rule-migration: complete',
+			array(
+				'migrated' => $migrated,
+				'skipped'  => $skipped,
+				'total'    => count( (array) $rows ),
+			)
+		);
+
+		update_option( 'wb_gam_feature_badge_rule_groups_v1', 1, false );
 	}
 
 	/**
