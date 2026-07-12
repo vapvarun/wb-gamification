@@ -1390,16 +1390,16 @@
     },
     {
       "name": "{prefix}wb_gam_notifications_queue",
-      "purpose": "Durable, globally-monotonic per-user notification queue (id, user_id, event_type, payload_json, created_at). Replaced the transient-based queue that was lost on wp_cache_flush and stranded per-consumer cursors. Drained by SSEController (SSE long-poll) or WP Heartbeat; pruned daily by cron.",
+      "purpose": "THE notification store - single source of truth (id, user_id, event_type, payload_json, created_at). Until 1.6.4 every push also wrote a parallel transient with an opposite bound (transient capped at 50, table unbounded) and a resetting id scheme; 1.6.4 removed the transient, so there is now one store, one writer (NotificationBridge::push), and ONE reader (NotificationBridge::fetch_unseen) shared by every surface - footer seed, WP Heartbeat and REST poll (cursor in user_meta via read_pending) and the SSE stream (cursor from the request). Bounded per user at QUEUE_MAX_EVENTS (50) on write by trim(), so it cannot grow without limit even where WP-Cron never fires. Reads return at most BURST_MAX_EVENTS (5) NEWEST events and hand callers the head of the backlog to park their cursor on, so a backlog is skipped, never replayed. Three distinct deleters: trim (the bound), prune_queue (daily retention, batched loop), and a one-time legacy purge of type='skip' rows.",
       "primary_key": "id",
       "indexes": [
         "idx_user_id",
         "idx_created_at"
       ],
-      "introduced": "1.5.0 (v2.2 durability + SSE-readiness; created on existing installs by DbUpgrader::ensure_notifications_queue_table, feature-flag gated on wb_gam_feature_notifications_queue_v1)",
+      "introduced": "1.5.0 (v2.2 durability + SSE-readiness; created by DbUpgrader::ensure_notifications_queue_table, feature-flag gated on wb_gam_feature_notifications_queue_v1). 1.6.4 made it the ONLY store (transient dual-write, its array_slice bound, its dead read branch and the cursor-reconciliation hack all removed), added the per-user write bound, the batched prune loop, the shared newest-first burst-capped reader, and a one-time purge of legacy type='skip' rows (DbUpgrader::ensure_notifications_skip_purge, gated on wb_gam_feature_notifications_skip_purge_v1).",
       "three_entry_point": {
         "status": "satisfied",
-        "api": "WBGam\\API\\SSEController \u2014 GET /wb-gamification/v1/stream (SSE) plus the WP Heartbeat cursor read; both call fetch_pending against this table.",
+        "api": "WBGam\\API\\SSEController - GET /wb-gamification/v1/stream (SSE) plus the WP Heartbeat cursor read; both drive NotificationBridge::fetch_unseen (the single reader) - SSE with a request cursor, heartbeat/REST with a user_meta cursor.",
         "backend": "WBGam\\Engine\\NotificationBridge enqueues rows; admin realtime placement/transport controlled via Settings > Realtime.",
         "frontend": "Member-facing realtime toasts \u2014 drained client-side via SSE/Heartbeat and rendered as notifications to the logged-in member."
       }
@@ -1991,7 +1991,7 @@
     {
       "name": "wb_gam_award_skipped",
       "type": "action",
-      "purpose": "",
+      "purpose": "Fired when an award is skipped (cooldown / daily_cap / weekly_cap / not_repeatable / excluded / internal vetoes). NO member- or admin-facing notification is produced: the plugin registers no core listener and ships no skip toast. A member browsing the site did not ask why an invisible points increment did not happen, and a points cap is an anti-farming guard (the site's business, not the member's). Skip toasts shipped 1.4.1-1.6.2, were made opt-in in 1.6.3, and the mechanism plus the wb_gam_award_skip_toast_reasons filter were removed in 1.6.4. The reason IS surfaced to API callers who explicitly fired the event: POST /events captures this action for the duration of the request and returns {skipped:{reason,message,context}} alongside processed:false, with copy from PointsEngine::skip_reason_message(). Site owners can also hook it to log or count skips.",
       "fired_at": [
         "src/Engine/PointsEngine.php:179",
         "src/Engine/PointsEngine.php:194",
@@ -2003,7 +2003,7 @@
         "src/Integrations/Jetonomy/JetonomyIntegration.php:106"
       ],
       "consumed_by": [
-        "src/Engine/NotificationBridge.php:156 array( __CLASS__"
+        "src/API/EventsController.php::create_item (request-scoped, API response only)"
       ]
     },
     {
@@ -2523,17 +2523,6 @@
         "src/Engine/ActionSchedulerCleaner.php:187"
       ],
       "consumed_by": []
-    },
-    {
-      "name": "wb_gam_award_skip_toast_reasons",
-      "type": "filter",
-      "purpose": "",
-      "fired_at": [
-        "src/Engine/NotificationBridge.php:208"
-      ],
-      "consumed_by": [
-        "src/Engine/NotificationBridge.php:200 fn("
-      ]
     },
     {
       "name": "wb_gam_badge_condition",

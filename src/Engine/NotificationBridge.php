@@ -42,15 +42,51 @@ defined( 'ABSPATH' ) || exit;
  */
 final class NotificationBridge {
 
-	private const TRANSIENT_PREFIX = 'wb_gam_notif_';
-	private const TRANSIENT_TTL    = 300; // 5 minutes
 	/**
-	 * Maximum events kept per-user in the queue. Old events evict on push.
-	 * Bounded so a noisy account can't blow the option/transient size.
+	 * Maximum events retained per member in the queue. Oldest evict on write.
+	 *
+	 * Enforced by trim(), which IS the bound on the table — see its docblock.
+	 * Until 1.6.4 this capped a parallel transient while the durable table (the
+	 * primary read path) appended forever.
 	 *
 	 * @var int
 	 */
 	private const QUEUE_MAX_EVENTS = 50;
+
+	/**
+	 * Maximum toasts delivered to a member in one read.
+	 *
+	 * A toast is an ephemeral, realtime surface: it says "this just happened".
+	 * Replaying a backlog through it is never the right answer — a member
+	 * returning to 30,000 pending events wants the newest few, not 600 page loads
+	 * of catch-up. fetch_unseen() returns at most this many NEWEST events and
+	 * hands callers the head of the backlog to park their cursor on, so the
+	 * remainder is dropped rather than replayed.
+	 *
+	 * Public because the SSE transport (WBGam\API\SSEController) drives the same
+	 * reader with a request-supplied cursor: the cap is a property of the toast
+	 * surface, not of one caller.
+	 *
+	 * @since 1.6.4
+	 * @var int
+	 */
+	public const BURST_MAX_EVENTS = 5;
+
+	/**
+	 * Rows deleted per statement by `prune_queue()`, and the number of such
+	 * statements one cron tick may run (5,000 x 20 = 100,000 rows/run).
+	 *
+	 * Before 1.6.4 the prune was a single `LIMIT 5000` DELETE per day with no
+	 * loop, so any site producing more than 5,000 prunable rows/day fell
+	 * permanently behind and the table grew without limit. Batching in a loop
+	 * lets a backlog actually drain; the per-run cap keeps one tick from
+	 * locking the table (same shape as BuddyNext's LogRetentionService).
+	 *
+	 * @since 1.6.4
+	 * @var int
+	 */
+	private const PRUNE_BATCH_SIZE  = 5000;
+	private const PRUNE_MAX_BATCHES = 20;
 	/**
 	 * User-meta key prefix for per-consumer delivery cursors. Each reader
 	 * tracks the largest `_id` it has already delivered to the client, so
@@ -147,96 +183,31 @@ final class NotificationBridge {
 		if ( ! wp_next_scheduled( self::PRUNE_CRON ) ) {
 			wp_schedule_event( time() + HOUR_IN_SECONDS, 'daily', self::PRUNE_CRON );
 		}
-		// Skip toasts — surface a real, resetting limit ("you hit your daily
-		// limit") to the member so they understand why no points appeared. A
-		// transient cooldown is silent by default (see on_award_skipped). Pre-1.4.1
-		// the engine fired `wb_gam_award_skipped` in 6 places (PointsEngine +
-		// Registry + Jetonomy) with no internal listener — pure dead-letter.
-		// Closes audit/DATA-FLOW-AWARD-2026-05-27.md §G17.
-		add_action( 'wb_gam_award_skipped', array( __CLASS__, 'on_award_skipped' ), 99, 4 );
+		// NOTE: `wb_gam_award_skipped` is deliberately NOT listened to here.
+		//
+		// A member is never told they earned nothing. Their action succeeded —
+		// they posted, they reacted, they commented; the only thing that did not
+		// happen is an invisible points increment they never asked about. "You're
+		// on cooldown", "you've hit your daily limit" and "you've hit your weekly
+		// limit" all read as though the action FAILED when it did not, give the
+		// member nothing they can act on, and fire again and again precisely
+		// because a capped member keeps being active. A points cap is an
+		// anti-farming guard: the site's business, not the member's.
+		//
+		// 1.4.1 added these toasts; 1.6.3 made them opt-in via a default-empty
+		// `wb_gam_award_skip_toast_reasons` filter; 1.6.4 removes the mechanism
+		// outright. An opt-in lever is not neutral — it keeps a member-hostile
+		// surface alive, keeps writing `skip` rows into the durable queue, and
+		// invites a site owner to turn a demotivator back on. There is no
+		// configuration of this product in which a member should see one.
+		//
+		// The `wb_gam_award_skipped` action is STILL FIRED by PointsEngine and
+		// remains a supported extension point — a site owner who wants to log,
+		// count, or surface skips their own way can hook it. Gamification simply
+		// ships no member-facing toast for it.
 
 		// Output markup + seed script once, in the footer.
 		add_action( 'wp_footer', array( __CLASS__, 'render' ), 5 );
-	}
-
-	/**
-	 * Push a "skip toast" — informs the member why an action they just
-	 * performed did NOT award points. Fires only for a real, resetting limit
-	 * the member benefits from understanding (daily / weekly cap). Silent for
-	 * a transient cooldown (see below) and for engine-internal vetoes
-	 * (self-action, sandboxed) where a toast would only confuse.
-	 *
-	 * @since 1.4.1
-	 * @since 1.6.3 Cooldown skips are silent by default — a per-action cooldown
-	 *              is a transient anti-burst window, and "you're on cooldown, try
-	 *              again in a bit" reads as an error that scolds normal activity.
-	 *              Re-add it via the `wb_gam_award_skip_toast_reasons` filter.
-	 *
-	 * @param int    $user_id   User who would have been awarded.
-	 * @param string $action_id Action that was skipped.
-	 * @param string $reason    Closed-set reason from PointsEngine::passes_rate_limits.
-	 * @param array  $context   Optional context (daily_cap_used, cooldown_seconds, etc.).
-	 */
-	public static function on_award_skipped( int $user_id, string $action_id, string $reason, array $context = array() ): void {
-		if ( $user_id <= 0 ) {
-			return;
-		}
-
-		/**
-		 * Filter which award-skip reasons are surfaced to the member as a toast.
-		 *
-		 * Defaults to EMPTY — no skip reason is shown to a member. Gamification is
-		 * positive reinforcement: members should only ever see reward toasts (points
-		 * earned, badge, level up), never a "you got nothing" message. A cooldown
-		 * ("try again in a bit"), a daily cap, and a weekly cap all tell the member
-		 * they earned nothing for normal activity - they are not usable/actionable,
-		 * read as errors, and demotivate at scale (10k sites / 100k members). Every
-		 * skip is a silent no-op by default. Engine-internal vetoes (sandboxed,
-		 * self_action, pre_change_veto) are never eligible regardless of this filter.
-		 *
-		 * A site owner whose community genuinely wants cap feedback can opt specific
-		 * reasons back in:
-		 *
-		 *   add_filter( 'wb_gam_award_skip_toast_reasons', fn() => array( 'daily_cap', 'weekly_cap' ) );
-		 *
-		 * @since 1.6.3
-		 * @param string[] $reasons   Skip reasons that get a member toast. Default [].
-		 * @param int      $user_id   Member who would see the toast.
-		 * @param string   $action_id Action that was skipped.
-		 */
-		$user_facing_reasons = (array) apply_filters(
-			'wb_gam_award_skip_toast_reasons',
-			array(),
-			$user_id,
-			$action_id
-		);
-		if ( ! in_array( $reason, $user_facing_reasons, true ) ) {
-			return;
-		}
-
-		$message = '';
-		switch ( $reason ) {
-			case 'cooldown':
-				$message = __( "You're on cooldown for this action - try again in a bit.", 'wb-gamification' );
-				break;
-			case 'daily_cap':
-				$message = __( "You've hit your daily limit for this action. Resets tomorrow.", 'wb-gamification' );
-				break;
-			case 'weekly_cap':
-				$message = __( "You've hit your weekly limit for this action. Resets next week.", 'wb-gamification' );
-				break;
-		}
-
-		self::push(
-			$user_id,
-			array(
-				'type'    => 'skip',
-				'reason'  => $reason,
-				'action'  => $action_id,
-				'message' => $message,
-				'context' => $context,
-			)
-		);
 	}
 
 	// ── Event collectors ────────────────────────────────────────────────────────
@@ -577,16 +548,50 @@ final class NotificationBridge {
 		<?php
 	}
 
-	// ── Transient helpers ────────────────────────────────────────────────────────
+	// ── Queue: one store, one writer, one reader ─────────────────────────────────
+	//
+	// The durable `wb_gam_notifications_queue` table is the ONLY store. Until
+	// 1.6.4 every push also wrote a parallel transient, and the two disagreed on
+	// everything that mattered: the transient was capped at 50 by array_slice
+	// while the table appended forever; the transient's ids restarted at 1 on
+	// every cache flush while the table's auto-increment never resets. The read
+	// path had already moved to the table, so the transient was written on every
+	// award and read essentially never — and a block in push() existed purely to
+	// walk the cursor metas and drag new transient ids past a stale high-water
+	// mark, a hack whose only reason to exist was the transient's resetting ids.
+	//
+	// One store deletes all of it: the second bound, the second id scheme, the
+	// reconciliation hack, and two cache round-trips per award.
 
 	/**
-	 * Append a notification event to the user's pending queue.
+	 * Is the durable queue available? Created by DbUpgrader's feature migration,
+	 * which runs at `plugins_loaded` (BootOrder::SCHEMA) — i.e. before any award
+	 * can fire on a normal request.
+	 *
+	 * The only window where this is false is a boot so early the migration has
+	 * not run. Events pushed there are dropped, deliberately: a toast is an
+	 * ephemeral "this just happened" surface, and one that missed its moment has
+	 * no value later. That is the same reasoning behind the read burst-cap.
+	 *
+	 * @since 1.6.4
+	 */
+	private static function queue_ready(): bool {
+		return (bool) get_option( 'wb_gam_feature_notifications_queue_v1' );
+	}
+
+	/**
+	 * Queue one notification event for a member.
+	 *
+	 * The table's AUTO_INCREMENT is the event id — nothing here computes one.
+	 * Readers stamp the authoritative row id onto the payload as `_id` (the key
+	 * the client dedupes on), so an id assigned at write time would only be
+	 * overwritten at read time. `_ts` is kept for toast.js's legacy fallback key.
 	 *
 	 * @param int   $user_id User to notify.
 	 * @param array $event   Notification event data.
 	 */
 	private static function push( int $user_id, array $event ): void {
-		if ( $user_id <= 0 ) {
+		if ( $user_id <= 0 || ! self::queue_ready() ) {
 			return;
 		}
 
@@ -605,98 +610,9 @@ final class NotificationBridge {
 			return;
 		}
 
-		$key             = self::TRANSIENT_PREFIX . $user_id;
-		$events          = get_transient( $key );
-		$existing_events = is_array( $events ) ? $events : array();
-
-		// Assign a monotonic id so consumers can checkpoint reads instead
-		// of destructively flushing the queue. Use the largest existing
-		// id + 1 (not count) so removing old events doesn't recycle ids.
-		$last_id = 0;
-		foreach ( $existing_events as $existing ) {
-			if ( isset( $existing['_id'] ) && (int) $existing['_id'] > $last_id ) {
-				$last_id = (int) $existing['_id'];
-			}
-		}
-
-		// Transient-reset recovery: when the transient was wiped (TTL or
-		// `wp_cache_flush`) but per-consumer cursors in user_meta still
-		// reflect a prior queue's high-water mark, new events restart at
-		// `_id = 1` but every cursor is `>= 1000` from the old queue —
-		// every `read_pending` returns empty and the user never sees
-		// another toast for the lifetime of their account. Walk the
-		// three cursor metas and bump $last_id to their max before
-		// stamping the new event. Closes
-		// audit/DATA-FLOW-NOTIFICATIONS-2026-05-27.md §G13.
-		if ( empty( $existing_events ) ) {
-			$consumers = array( 'footer', 'heartbeat', 'rest' );
-			foreach ( $consumers as $consumer ) {
-				$cursor = (int) get_user_meta( $user_id, self::CURSOR_META_PREFIX . $consumer, true );
-				if ( $cursor > $last_id ) {
-					$last_id = $cursor;
-				}
-			}
-		}
-
-		$event['_id'] = $last_id + 1;
 		$event['_ts'] = time();
-		$events       = $existing_events;
-		$events[]     = $event;
 
-		// Bound queue size — drop oldest first.
-		if ( count( $events ) > self::QUEUE_MAX_EVENTS ) {
-			$events = array_slice( $events, -self::QUEUE_MAX_EVENTS );
-		}
-
-		set_transient( $key, $events, self::TRANSIENT_TTL );
-
-		// v2.2 — durability dual-write. The transient above is the legacy
-		// path consumers still read from; the table is the new durable
-		// store that survives wp_cache_flush and feeds the SSE writer
-		// (stage 2 of the realtime transport rollout). When this commit
-		// has run on an install for one TTL cycle, readers can switch
-		// to table-first with the transient as fallback — but that's a
-		// follow-up; this commit is risk-free additive write only.
-		self::persist_to_queue_table( $user_id, $event );
-	}
-
-	/**
-	 * Daily cron: delete rows older than RETENTION_SECONDS from the
-	 * durable queue table. Bounded query (LIMIT 5000 per run) so a
-	 * sudden 24-hour backlog doesn't lock the table.
-	 *
-	 * @as-fire-once Daily cron tick. Bounded delete; cannot recurse.
-	 */
-	public static function prune_queue(): void {
-		if ( ! get_option( 'wb_gam_feature_notifications_queue_v1' ) ) {
-			return;
-		}
 		global $wpdb;
-		$cutoff = gmdate( 'Y-m-d H:i:s', time() - self::RETENTION_SECONDS );
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$wpdb->query(
-			$wpdb->prepare(
-				"DELETE FROM {$wpdb->prefix}wb_gam_notifications_queue WHERE created_at < %s LIMIT 5000",
-				$cutoff
-			)
-		);
-	}
-
-	/**
-	 * Append one notification event to the durable queue table.
-	 *
-	 * @param int   $user_id Member id.
-	 * @param array $event   Notification payload (already stamped with _id, _ts).
-	 */
-	private static function persist_to_queue_table( int $user_id, array $event ): void {
-		global $wpdb;
-
-		// Feature-flag gated by the DbUpgrader migration. If the table
-		// doesn't exist yet (e.g. very-early-boot before the migration
-		// runs), silent skip — the transient still has the data.
-		if ( ! get_option( 'wb_gam_feature_notifications_queue_v1' ) ) {
-			return;
-		}
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$wpdb->insert(
@@ -709,96 +625,145 @@ final class NotificationBridge {
 			),
 			array( '%d', '%s', '%s', '%s' )
 		);
+
+		self::trim( $user_id );
 	}
 
 	/**
-	 * Read pending events for a user that the given consumer has not yet delivered.
+	 * Evict a member's queue rows beyond QUEUE_MAX_EVENTS, oldest first.
 	 *
-	 * Non-destructive: each consumer (footer render, heartbeat tick, REST
-	 * poll) maintains its own user-meta cursor. Same toast can be
-	 * delivered once to each independent surface without a race.
+	 * THE bound on the table. Not a safety net over the prune cron — the bound
+	 * itself. A queue that is capped on write cannot grow without limit on any
+	 * install, including the ones that need it most: `DISABLE_WP_CRON` hosts with
+	 * no real crontab, where the daily prune silently never runs. Before 1.6.4
+	 * only the transient was bounded and the table appended forever, so a load
+	 * test left one member holding 30,197 rows (Basecamp #10086171887).
 	 *
-	 * v2.2b: reads now prefer the durable wb_gam_notifications_queue table
-	 * over the transient. Transient stays as a fallback for the case
-	 * where the migration hasn't run yet (very early boot on first
-	 * activation). When the table is the source of truth, cursors in
-	 * user_meta track the table's globally-monotonic auto-increment id —
-	 * the same cursor namespace key (CURSOR_META_PREFIX + consumer) is
-	 * reused. Pre-v2.2b cursors stored transient-`_id` values which are
-	 * RESET to 1 on cache flush; table ids are never reset, so any
-	 * lingering pre-v2.2b cursor is at worst harmlessly low (sees more
-	 * events than expected once) and self-heals on first read.
+	 * Dropping oldest-first costs nothing: a read renders at most the newest
+	 * BURST_MAX_EVENTS, so rows evicted here were never going to be shown.
 	 *
-	 * @param int    $user_id  Member id.
-	 * @param string $consumer Cursor namespace (e.g. 'footer', 'heartbeat', 'rest').
-	 *                         Each consumer gets its own cursor in user_meta.
-	 * @return array[] Unseen events for this consumer.
+	 * The subquery is wrapped in a derived table because MySQL will not read from
+	 * the table it is deleting from. It resolves against `idx_user_id (user_id,
+	 * id)` — a ~51-row index scan that matches nothing on the common path where
+	 * the member is under cap.
+	 *
+	 * @since 1.6.4
+	 *
+	 * @param int $user_id Member whose queue to trim.
 	 */
-	public static function read_pending( int $user_id, string $consumer ): array {
-		if ( $user_id <= 0 ) {
-			return array();
-		}
-		$consumer = sanitize_key( $consumer );
-		if ( '' === $consumer ) {
-			return array();
-		}
-
-		// Prefer the durable table when the migration has run. Falls
-		// through to the transient path on installs that haven't seen
-		// ensure_notifications_queue_table() yet.
-		if ( get_option( 'wb_gam_feature_notifications_queue_v1' ) ) {
-			return self::read_pending_from_table( $user_id, $consumer );
-		}
-
-		$key    = self::TRANSIENT_PREFIX . $user_id;
-		$events = get_transient( $key );
-		if ( ! is_array( $events ) || empty( $events ) ) {
-			return array();
-		}
-
-		$cursor   = (int) get_user_meta( $user_id, self::CURSOR_META_PREFIX . $consumer, true );
-		$unseen   = array();
-		$max_seen = $cursor;
-		foreach ( $events as $event ) {
-			$id = (int) ( $event['_id'] ?? 0 );
-			if ( $id > $cursor ) {
-				$unseen[] = $event;
-				$max_seen = $id > $max_seen ? $id : $max_seen;
-			}
-		}
-
-		if ( ! empty( $unseen ) ) {
-			update_user_meta( $user_id, self::CURSOR_META_PREFIX . $consumer, $max_seen );
-		}
-
-		return $unseen;
-	}
-
-	/**
-	 * Table-first read path for the durable queue. Returns events with
-	 * id > cursor for this consumer, decoded into the same shape the
-	 * transient path returns (so callers don't branch on storage).
-	 *
-	 * @param int    $user_id  Member id.
-	 * @param string $consumer Cursor namespace.
-	 * @return array[] Unseen events.
-	 */
-	private static function read_pending_from_table( int $user_id, string $consumer ): array {
+	private static function trim( int $user_id ): void {
 		global $wpdb;
 
-		$cursor = (int) get_user_meta( $user_id, self::CURSOR_META_PREFIX . $consumer, true );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$wpdb->query(
+			$wpdb->prepare(
+				"DELETE FROM {$wpdb->prefix}wb_gam_notifications_queue
+				  WHERE user_id = %d
+				    AND id < (
+				        SELECT keep_from FROM (
+				            SELECT id AS keep_from
+				              FROM {$wpdb->prefix}wb_gam_notifications_queue
+				             WHERE user_id = %d
+				          ORDER BY id DESC
+				             LIMIT 1 OFFSET %d
+				        ) AS cutoff
+				    )",
+				$user_id,
+				$user_id,
+				self::QUEUE_MAX_EVENTS - 1
+			)
+		);
+	}
+
+	/**
+	 * Daily cron: delete rows past the retention window.
+	 *
+	 * Retention, NOT the bound — trim() is the bound. That distinction matters:
+	 * before 1.6.4 this cron WAS the table's only limit, it ran a single un-looped
+	 * `LIMIT 5000` DELETE per day, and so any site producing more than 5,000
+	 * prunable rows/day fell permanently behind and grew without limit. Worse, on
+	 * `DISABLE_WP_CRON` installs with no real crontab it never ran at all.
+	 *
+	 * Now it batches in a loop with a per-run cap, so a backlog actually drains —
+	 * and because the table is bounded on write, a site where this never fires is
+	 * still safe. Whatever the per-run cap leaves behind, the next tick collects.
+	 *
+	 * @since 1.6.4 Batched loop with a per-run cap. Was a single un-looped DELETE.
+	 *
+	 * @as-fire-once Daily cron tick. Bounded delete loop; cannot recurse.
+	 */
+	public static function prune_queue(): void {
+		if ( ! self::queue_ready() ) {
+			return;
+		}
+
+		global $wpdb;
+		$cutoff = gmdate( 'Y-m-d H:i:s', time() - self::RETENTION_SECONDS );
+
+		for ( $batch = 0; $batch < self::PRUNE_MAX_BATCHES; $batch++ ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$deleted = $wpdb->query(
+				$wpdb->prepare(
+					"DELETE FROM {$wpdb->prefix}wb_gam_notifications_queue WHERE created_at < %s LIMIT %d",
+					$cutoff,
+					self::PRUNE_BATCH_SIZE
+				)
+			);
+
+			// A short batch (or an error) means the backlog is drained — stop.
+			if ( ! is_int( $deleted ) || $deleted < self::PRUNE_BATCH_SIZE ) {
+				break;
+			}
+		}
+	}
+
+	/**
+	 * THE queue reader. Every surface goes through this — the footer seed, the
+	 * heartbeat tick, the REST poll (all via read_pending, cursor in user_meta)
+	 * and the SSE stream (WBGam\API\SSEController, cursor from the request).
+	 *
+	 * Returns the NEWEST unseen events, capped at $limit, ordered oldest-first
+	 * for display. The last element's id is therefore the head of the entire
+	 * backlog, not merely of the slice returned — so a caller that advances its
+	 * cursor to it skips everything older instead of queueing it for next time.
+	 * That single property is what makes a backlog impossible to replay, and it
+	 * needs no special case for small queues: the newest-5-of-3 is all 3, and the
+	 * cursor lands exactly where it would have anyway.
+	 *
+	 * A toast is an ephemeral, realtime surface. A member returning to 30,000
+	 * pending events wants the newest few, not 600 page loads of catch-up.
+	 *
+	 * Rows whose payload will not decode are still returned (with an empty
+	 * payload) so their id can advance the caller's cursor — otherwise one corrupt
+	 * row would wedge the queue forever. Callers skip empty payloads for display.
+	 *
+	 * @since 1.6.4
+	 *
+	 * @param int $user_id  Member id.
+	 * @param int $after_id Highest id already delivered to this caller.
+	 * @param int $limit    Max events to return. Defaults to the toast burst cap.
+	 * @return array<int, array{id: int, event_type: string, payload: array}> Oldest-first.
+	 */
+	public static function fetch_unseen( int $user_id, int $after_id, int $limit = self::BURST_MAX_EVENTS ): array {
+		if ( $user_id <= 0 || ! self::queue_ready() ) {
+			return array();
+		}
+
+		$limit = max( 1, $limit );
+
+		global $wpdb;
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT id, payload_json
+				"SELECT id, event_type, payload_json
 				   FROM {$wpdb->prefix}wb_gam_notifications_queue
 				  WHERE user_id = %d AND id > %d
-				  ORDER BY id ASC
+				  ORDER BY id DESC
 				  LIMIT %d",
 				$user_id,
-				$cursor,
-				self::QUEUE_MAX_EVENTS
+				$after_id,
+				$limit
 			),
 			ARRAY_A
 		);
@@ -807,27 +772,64 @@ final class NotificationBridge {
 			return array();
 		}
 
-		$unseen   = array();
-		$max_seen = $cursor;
-		foreach ( $rows as $row ) {
+		$events = array();
+		foreach ( array_reverse( $rows ) as $row ) {
 			$payload = json_decode( (string) $row['payload_json'], true );
-			if ( ! is_array( $payload ) ) {
-				continue;
-			}
-			// Overwrite _id with the table's authoritative id so callers
-			// + the toast.js dedupe key stay coherent regardless of which
-			// path produced the event.
-			$payload['_id'] = (int) $row['id'];
-			$unseen[]       = $payload;
-			$max_seen       = max( $max_seen, (int) $row['id'] );
+
+			$events[] = array(
+				'id'         => (int) $row['id'],
+				'event_type' => (string) $row['event_type'],
+				'payload'    => is_array( $payload ) ? $payload : array(),
+			);
 		}
 
-		if ( ! empty( $unseen ) ) {
-			update_user_meta( $user_id, self::CURSOR_META_PREFIX . $consumer, $max_seen );
-		}
-
-		return $unseen;
+		return $events;
 	}
+
+	/**
+	 * Read the events a given consumer has not yet delivered, and check its
+	 * cursor forward.
+	 *
+	 * Non-destructive: each consumer (footer render, heartbeat tick, REST poll)
+	 * keeps its own user-meta cursor, so the same toast reaches each independent
+	 * surface once without a race.
+	 *
+	 * @param int    $user_id  Member id.
+	 * @param string $consumer Cursor namespace ('footer', 'heartbeat', 'rest').
+	 * @return array[] Unseen event payloads, oldest-first, each stamped with `_id`.
+	 */
+	public static function read_pending( int $user_id, string $consumer ): array {
+		$consumer = sanitize_key( $consumer );
+		if ( $user_id <= 0 || '' === $consumer ) {
+			return array();
+		}
+
+		$cursor = (int) get_user_meta( $user_id, self::CURSOR_META_PREFIX . $consumer, true );
+		$rows   = self::fetch_unseen( $user_id, $cursor );
+
+		if ( empty( $rows ) ) {
+			return array();
+		}
+
+		$events = array();
+		foreach ( $rows as $row ) {
+			if ( empty( $row['payload'] ) ) {
+				continue; // Undecodable row: skipped for display, still advances the cursor below.
+			}
+			// The table id is authoritative — it is the key toast.js dedupes on.
+			$payload        = $row['payload'];
+			$payload['_id'] = $row['id'];
+			$events[]       = $payload;
+		}
+
+		// Park the cursor at the head of the backlog, not at the last event shown.
+		// This is what drops the un-shown remainder rather than replaying it.
+		$head = (int) $rows[ array_key_last( $rows ) ]['id'];
+		update_user_meta( $user_id, self::CURSOR_META_PREFIX . $consumer, $head );
+
+		return $events;
+	}
+
 
 	// ── Helpers ──────────────────────────────────────────────────────────────────
 

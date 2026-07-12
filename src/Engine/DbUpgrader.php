@@ -97,6 +97,7 @@ final class DbUpgrader {
 		self::ensure_api_keys_table();
 		self::ensure_side_effect_failures_table();
 		self::ensure_notifications_queue_table();
+		self::ensure_notifications_skip_purge();
 		self::ensure_user_intelligence_table();
 		self::ensure_superseded_badge_condition_action_ids();
 		self::ensure_streak_sort_indexes();
@@ -384,6 +385,69 @@ final class DbUpgrader {
 		);
 
 		update_option( $flag_key, '1' );
+	}
+
+	/**
+	 * One-time purge of `skip` notifications left behind by <= 1.6.2.
+	 *
+	 * 1.6.2 surfaced award-skips ("You've hit your daily limit for this action")
+	 * as member toasts and persisted every one to the durable queue. 1.6.3 fixed
+	 * the default so no NEW skip rows are written — but nothing removed the rows
+	 * already there, and the daily prune only ages them out IF WP-Cron fires,
+	 * which it silently never does on DISABLE_WP_CRON installs with no real
+	 * crontab. Those sites would keep nagging their members indefinitely after
+	 * upgrading. A QA install had 30,197 such rows for a single member.
+	 *
+	 * A skip toast is worthless the moment it is stale, so these are deleted
+	 * outright rather than aged out.
+	 *
+	 * Resumable by design: the done-flag is set ONLY when a short batch proves
+	 * the backlog is drained. If a site has more skip rows than one request
+	 * should delete, the remainder is picked up on the next request instead of
+	 * this method either blocking the page or giving up and leaving rows behind.
+	 *
+	 * @since 1.6.4
+	 */
+	private static function ensure_notifications_skip_purge(): void {
+		$flag_key = 'wb_gam_feature_notifications_skip_purge_v1';
+		if ( get_option( $flag_key ) ) {
+			return;
+		}
+
+		// Nothing to purge until the queue table itself exists.
+		if ( ! get_option( 'wb_gam_feature_notifications_queue_v1' ) ) {
+			return;
+		}
+
+		// Deliberately gentler than the cron prune: this runs on a page request,
+		// so it trades a couple of extra requests for never stalling one.
+		$batch_size  = 1000;
+		$max_batches = 5;
+
+		global $wpdb;
+
+		for ( $batch = 0; $batch < $max_batches; $batch++ ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$deleted = $wpdb->query(
+				$wpdb->prepare(
+					"DELETE FROM {$wpdb->prefix}wb_gam_notifications_queue WHERE event_type = %s LIMIT %d",
+					'skip',
+					$batch_size
+				)
+			);
+
+			if ( ! is_int( $deleted ) ) {
+				return; // Query error — leave the flag unset and retry next request.
+			}
+
+			if ( $deleted < $batch_size ) {
+				// Short batch: no skip rows remain. Done for good.
+				update_option( $flag_key, '1' );
+				return;
+			}
+		}
+
+		// Hit the per-request cap with rows still to go — resume next request.
 	}
 
 	/**

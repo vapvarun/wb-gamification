@@ -160,9 +160,58 @@ final class PointsEngine {
 	// ── Internal methods called by Engine ─────────────────────────────────────
 
 	/**
+	 * Human-readable explanation for an award-skip reason.
+	 *
+	 * FOR API RESPONSES AND LOGS ONLY. This copy must never be rendered to a
+	 * member or an admin as a notification, toast, or notice.
+	 *
+	 * The distinction is who asked. A caller that POSTs to /events has explicitly
+	 * fired an award and is entitled to know why it did not land - that is
+	 * diagnostic data it requested. A member browsing the site asked nothing:
+	 * they posted, they reacted, they commented, and their action SUCCEEDED. The
+	 * only thing that did not happen is an invisible points increment they never
+	 * asked about. Telling them "you've hit your daily limit" reads as though the
+	 * action failed, gives them nothing to act on, and fires again and again
+	 * precisely because an active member keeps being active. A points cap is an
+	 * anti-farming guard: the site's business, not the member's.
+	 *
+	 * Skip toasts shipped in 1.4.1, were made opt-in in 1.6.3, and the toast
+	 * mechanism was removed outright in 1.6.4 (see NotificationBridge::init).
+	 * These strings survive only because an API caller can use them.
+	 *
+	 * @since 1.6.4
+	 *
+	 * @param string $reason Closed-set reason as fired on `wb_gam_award_skipped`.
+	 * @return string Translated explanation, or '' for an unknown/internal reason.
+	 */
+	public static function skip_reason_message( string $reason ): string {
+		switch ( $reason ) {
+			case 'cooldown':
+				return __( "You're on cooldown for this action - try again in a bit.", 'wb-gamification' );
+			case 'daily_cap':
+				return __( "You've hit your daily limit for this action. Resets tomorrow.", 'wb-gamification' );
+			case 'weekly_cap':
+				return __( "You've hit your weekly limit for this action. Resets next week.", 'wb-gamification' );
+			case 'not_repeatable':
+				return __( 'This action only awards points once.', 'wb-gamification' );
+			case 'excluded':
+				return __( 'This account is excluded from earning points.', 'wb-gamification' );
+			default:
+				// Engine-internal vetoes (sandboxed, self_action, pre_change_veto)
+				// have no caller-facing explanation.
+				return '';
+		}
+	}
+
+	/**
 	 * Check cooldown, repeatable, daily, and weekly caps for a registered action.
 	 *
 	 * Called by Engine::process() before persisting anything.
+	 *
+	 * Skips are broadcast on `wb_gam_award_skipped` (with reason + context) rather
+	 * than returned, because this returns a bare bool. An API caller that needs the
+	 * reason captures that action for the duration of its own call - see
+	 * EventsController::create_item.
 	 *
 	 * @param int    $user_id   User to check.
 	 * @param string $action_id Action to check.

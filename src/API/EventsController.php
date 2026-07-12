@@ -27,6 +27,7 @@ namespace WBGam\API;
 
 use WBGam\Engine\Engine;
 use WBGam\Engine\Event;
+use WBGam\Engine\PointsEngine;
 use WBGam\Engine\Registry;
 use WP_REST_Controller;
 use WP_REST_Response;
@@ -226,17 +227,50 @@ class EventsController extends WP_REST_Controller {
 			)
 		);
 
-		$success = Engine::process( $event );
+		// Capture the skip reason for THIS call only.
+		//
+		// passes_rate_limits() broadcasts the reason on `wb_gam_award_skipped` and
+		// then returns a bare false, so Engine::process() hands us no way to tell
+		// "on cooldown" apart from "no such rule" apart from "already awarded" — a
+		// caller that explicitly fired an event just gets `processed: false` and is
+		// left guessing. Listening for the duration of our own call keeps the reason
+		// scoped to this request (no global state, no cross-request bleed) and adds
+		// no listener to normal page loads.
+		//
+		// This is API-only diagnostics. The same copy is deliberately NOT rendered
+		// to members or admins as a toast/notice: a caller here ASKED, whereas a
+		// member browsing the site did not (see NotificationBridge::init).
+		$skip    = null;
+		$capture = static function ( $skipped_user_id, $skipped_action_id, $reason, $context = array() ) use ( &$skip ) {
+			// First skip wins — it is the one that stopped the award.
+			if ( null === $skip ) {
+				$skip = array(
+					'reason'  => (string) $reason,
+					'context' => (array) $context,
+				);
+			}
+		};
 
-		return new WP_REST_Response(
-			array(
-				'processed' => $success,
-				'event_id'  => $event->event_id,
-				'action_id' => $action_id,
-				'user_id'   => $user_id,
-			),
-			$success ? 201 : 200
+		add_action( 'wb_gam_award_skipped', $capture, 1, 4 );
+		$success = Engine::process( $event );
+		remove_action( 'wb_gam_award_skipped', $capture, 1 );
+
+		$body = array(
+			'processed' => $success,
+			'event_id'  => $event->event_id,
+			'action_id' => $action_id,
+			'user_id'   => $user_id,
 		);
+
+		if ( ! $success && null !== $skip ) {
+			$body['skipped'] = array(
+				'reason'  => $skip['reason'],
+				'message' => PointsEngine::skip_reason_message( $skip['reason'] ),
+				'context' => $skip['context'],
+			);
+		}
+
+		return new WP_REST_Response( $body, $success ? 201 : 200 );
 	}
 
 	// ── Permissions ─────────────────────────────────────────────────────────────
