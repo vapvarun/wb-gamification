@@ -287,8 +287,23 @@ final class ScaleCommand {
 			// phpcs:enable
 		}
 
+		// Build the leaderboard snapshot over the seeded data.
+		//
+		// The benchmark has a `leaderboard_snapshot` budget, and on production the
+		// 5-minute cron keeps that snapshot fresh — so the read path being measured
+		// is the snapshot read. Without this, the seeded members are absent from the
+		// snapshot, read_from_snapshot() correctly declines to serve a stale board,
+		// and the benchmark silently measures the LIVE-AGGREGATE FALLBACK instead:
+		// 46ms against a 20ms budget, versus 2.27ms once the snapshot exists.
+		//
+		// A benchmark that measures a different code path depending on when cron last
+		// ran is not a gate, it is a coin toss. Seeding must leave the site in the
+		// state production is actually in.
+		\WBGam\Engine\LeaderboardEngine::write_snapshot();
+
 		$elapsed = round( microtime( true ) - $started, 1 );
 		\WP_CLI::success( "Seeded {$inserted} ledger rows + {$badge_rows} badge rows + {$user_count} streaks in {$elapsed}s." );
+		\WP_CLI::line( 'Leaderboard snapshot built (the benchmark measures the snapshot read path).' );
 		\WP_CLI::line( 'Cleanup: wp wb-gamification scale teardown' );
 	}
 
@@ -528,14 +543,36 @@ final class ScaleCommand {
 	}
 
 	/**
-	 * Time a closure in milliseconds.
+	 * Time a closure and return the MEDIAN of several runs, in milliseconds.
+	 *
+	 * A single-shot timing is not a measurement, it is a sample of one — and it made
+	 * this gate flaky. Benchmarking right after seeding 100k rows caught MySQL still
+	 * busy and reported `get_total_pk` at 9.06ms against a 5ms budget; the median of
+	 * seven runs of the same query was 0.08ms. A gate that fails on a cold outlier
+	 * gets ignored, and an ignored gate is worse than no gate.
+	 *
+	 * The median (not the mean) so one slow outlier cannot drag the result, and not
+	 * the minimum so we are not quoting a best case we would never see in production.
+	 * Each run still flushes the object cache inside the closure, so every sample is
+	 * a cold read.
+	 *
+	 * @since 1.6.4 Median of RUNS samples. Was a single shot.
 	 *
 	 * @param callable $op Closure to time.
-	 * @return float Milliseconds elapsed.
+	 * @return float Median milliseconds.
 	 */
 	private static function time_op( callable $op ): float {
-		$started = microtime( true );
-		$op();
-		return round( ( microtime( true ) - $started ) * 1000, 3 );
+		$runs    = 5;
+		$samples = array();
+
+		for ( $i = 0; $i < $runs; $i++ ) {
+			$started = microtime( true );
+			$op();
+			$samples[] = ( microtime( true ) - $started ) * 1000;
+		}
+
+		sort( $samples );
+
+		return round( $samples[ (int) floor( $runs / 2 ) ], 3 );
 	}
 }
