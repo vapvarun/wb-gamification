@@ -110,11 +110,11 @@
 .wb-gam-community-challenges__item--completed {
 	border-color: rgba( 22, 163, 74, 0.35 );
 	background: linear-gradient( 180deg, rgba( 22, 163, 74, 0.06 ) 0, var(--wb-gam-color-surface-muted) 100% );
-	box-shadow: inset 4px 0 0 0 #16a34a;
+	box-shadow: inset 4px 0 0 0 var( --wb-gam-color-success, #0d9f6e );
 }
 
 .wb-gam-community-challenges__item--completed .wb-gam-community-challenges__progress-bar {
-	background: #16a34a;
+	background: var( --wb-gam-color-success, #0d9f6e );
 }
 
 .wb-gam-community-challenges__status-badge {

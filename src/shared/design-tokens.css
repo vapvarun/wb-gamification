@@ -92,6 +92,17 @@
 	--wb-gam-color-success-bg: color-mix(in srgb, var(--wb-gam-color-success) 12%, var(--wb-gam-color-surface));
 	--wb-gam-color-success-strong: #047857;
 	--wb-gam-color-success-soft: rgba(13, 159, 110, 0.12);
+
+	/* League tier accents (cohort rank). These are deliberately literal -- bronze is
+	 * bronze -- but they belong here rather than hardcoded inside a block stylesheet.
+	 * As tokens the owner can rebrand a tier, and the dark-mode block below can lift
+	 * the darker medals so Bronze and Obsidian do not disappear against a dark
+	 * surface. Hardcoded in cohort-rank/style.css, they could do neither. */
+	--wb-gam-tier-bronze: #b45309;
+	--wb-gam-tier-silver: #6b7280;
+	--wb-gam-tier-gold: #d97706;
+	--wb-gam-tier-diamond: #2563eb;
+	--wb-gam-tier-obsidian: #4b5563;
 	--wb-gam-color-warning: #c2770e;
 	--wb-gam-color-warning-bg: color-mix(in srgb, var(--wb-gam-color-warning) 12%, var(--wb-gam-color-surface));
 	--wb-gam-color-warning-strong: #b45309;
@@ -214,6 +225,14 @@
 body.buddyx-dark-theme {
 	--wb-gam-color-accent: var(--wbcom-link-color, var(--bx-color-accent, var(--reign-site-button-bg-color, color-mix(in srgb, #5b4cdb 60%, #ffffff))));
 	--wb-gam-color-accent-hover: var(--wbcom-link-hover-color, var(--bx-color-accent-hover, var(--reign-site-button-bg-hover-color, color-mix(in srgb, #5b4cdb 45%, #ffffff))));
+
+	/* Lift the dark medals. Bronze (#b45309) and Obsidian (#4b5563) are dark enough to
+	 * sink into a dark surface -- the member's own league tier becomes the one thing
+	 * they cannot read. Mixing toward white keeps each medal recognisably itself while
+	 * restoring contrast. This is only expressible because the tiers are tokens. */
+	--wb-gam-tier-bronze: color-mix(in srgb, #b45309 65%, #ffffff);
+	--wb-gam-tier-silver: color-mix(in srgb, #6b7280 55%, #ffffff);
+	--wb-gam-tier-obsidian: color-mix(in srgb, #4b5563 55%, #ffffff);
 }
 @media (prefers-color-scheme: dark) {
 	:root[data-bx-mode="auto"] {
