@@ -525,6 +525,59 @@ final class SetupWizard {
 				<p class="wb-gam-wizard-hero__lede">
 					<?php esc_html_e( 'Each template seeds sensible point values for a different use case. Every value is editable later from Settings.', 'wb-gamification' ); ?>
 				</p>
+
+				<?php
+				// ORIENTATION, before configuration.
+				//
+				// The wizard used to open on "Pick a starting point" and go straight to a grid of
+				// templates. It never said what the plugin DOES, what a member would SEE, or where
+				// any of it would show up -- so the owner's first interaction with the product was
+				// a configuration choice about a thing nobody had described to them yet.
+				//
+				// This is concrete rather than aspirational: the Hub page is created at activation,
+				// so we can link the owner straight to the thing their members will look at.
+				$wb_gam_hub_page = (int) get_option( 'wb_gam_hub_page_id', 0 );
+				$wb_gam_hub_link = $wb_gam_hub_page ? get_permalink( $wb_gam_hub_page ) : '';
+				?>
+				<div class="wb-gam-wizard-orient">
+					<h2 class="wb-gam-wizard-orient__title">
+						<?php esc_html_e( 'What your members get', 'wb-gamification' ); ?>
+					</h2>
+					<ul class="wb-gam-wizard-orient__list">
+						<li>
+							<strong><?php esc_html_e( 'Points', 'wb-gamification' ); ?></strong>
+							<?php esc_html_e( 'for things they already do - posting, commenting, connecting.', 'wb-gamification' ); ?>
+						</li>
+						<li>
+							<strong><?php esc_html_e( 'Badges and levels', 'wb-gamification' ); ?></strong>
+							<?php esc_html_e( 'they earn as they go, and can show on their profile.', 'wb-gamification' ); ?>
+						</li>
+						<li>
+							<strong><?php esc_html_e( 'A leaderboard', 'wb-gamification' ); ?></strong>
+							<?php esc_html_e( 'if your community is the competitive kind. It is optional.', 'wb-gamification' ); ?>
+						</li>
+					</ul>
+					<?php if ( $wb_gam_hub_link ) : ?>
+						<p class="wb-gam-wizard-orient__where">
+							<?php
+							printf(
+								wp_kses(
+									/* translators: %s: link to the member-facing Gamification Hub page. */
+									__( 'Members see all of it on their <a href="%s" target="_blank" rel="noopener">Gamification Hub</a> - a page already created for you. Picking a template below just decides what earns what.', 'wb-gamification' ),
+									array(
+										'a' => array(
+											'href'   => array(),
+											'target' => array(),
+											'rel'    => array(),
+										),
+									)
+								),
+								esc_url( $wb_gam_hub_link )
+							);
+							?>
+						</p>
+					<?php endif; ?>
+				</div>
 				<?php if ( $is_re_run && '' !== $current_tpl ) : ?>
 					<p class="wb-gam-wizard-rerun-notice">
 						<?php
