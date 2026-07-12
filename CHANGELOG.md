@@ -26,6 +26,9 @@ Stability and scale release. Contains a fix for a bug that could delete other pl
 - The per-member kudos cooldown was never applied on sites in a timezone behind UTC, so members could send kudos to the same person repeatedly.
 - Two kudos sent to the same member at the same instant could both bypass the cooldown and record twice.
 - The weekly digest's "this week" window was offset by the site's timezone, so the email could omit recent activity or include activity from the previous week.
+- The weekly digest was also sent to the wrong people for the same reason: the recipient query used the database clock instead of the site's, so members active near the edge of the window were dropped from the send.
+- Challenges opened and closed on the database's clock rather than the site's. On a site ahead of UTC a challenge scheduled to start at 09:00 stayed shut for hours - members could not join one that was already running - and one due to close at midnight kept accepting entries.
+- The community-challenge countdown showed the wrong time remaining and could read "ended" hours before the challenge actually closed.
 - Leaderboards serve from their snapshot table instead of aggregating the full points ledger on every view. The snapshot was disabled by every points award, and a timezone mismatch emptied it at the end of each rebuild on sites ahead of UTC.
 - The all-time leaderboard reads the materialised member totals rather than summing the whole ledger.
 - Members no longer receive duplicate weekly emails; an overdue cron re-fire could start a second send while the first was still queued.

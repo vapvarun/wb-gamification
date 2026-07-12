@@ -192,17 +192,29 @@ final class WeeklyEmailEngine {
 
 		global $wpdb;
 
+		// This query decides WHO gets the weekly email, and it had the same two-clock defect
+		// as the digest's content window: p.created_at is written with current_time( 'mysql' )
+		// -- site-local -- while DATE_SUB(NOW(), ...) is the DATABASE clock. On a site behind
+		// UTC the recipient list was cut against a boundary hours away from the one the member
+		// experienced, so members active at the edge of the window were dropped from the send
+		// entirely and nobody would ever notice, because a missing email leaves no trace.
+		//
+		// Fixing the content window (see build_digest) and leaving the audience query on NOW()
+		// would have been the worst of both: a correct digest sent to the wrong people.
+		$window_start = gmdate( 'Y-m-d H:i:s', strtotime( current_time( 'mysql' ) ) - ( 7 * DAY_IN_SECONDS ) );
+
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$user_ids = $wpdb->get_col(
 			$wpdb->prepare(
 				"SELECT DISTINCT p.user_id
 				   FROM {$wpdb->prefix}wb_gam_points p
 				   LEFT JOIN {$wpdb->prefix}wb_gam_member_prefs mp ON mp.user_id = p.user_id
-				  WHERE p.created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+				  WHERE p.created_at >= %s
 				    AND p.user_id > %d
 				    AND (mp.notification_mode IS NULL OR mp.notification_mode != 'none')
 				  ORDER BY p.user_id ASC
 				  LIMIT %d",
+				$window_start,
 				$cursor,
 				self::PAGE_SIZE
 			)

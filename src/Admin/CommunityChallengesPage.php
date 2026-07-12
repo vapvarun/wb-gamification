@@ -289,7 +289,7 @@ final class CommunityChallengesPage {
 								<td>
 									<input type="datetime-local" name="starts_at" id="wb-gam-cc-starts" class="wbgam-input"
 										data-wb-gam-utc
-										value="<?php echo esc_attr( $edit_data['starts_at'] ?? gmdate( 'Y-m-d\TH:i' ) ); ?>">
+										value="<?php echo esc_attr( $edit_data['starts_at'] ?? current_time( 'Y-m-d\TH:i' ) ); ?>">
 									<p class="description"><?php esc_html_e( 'When this community challenge becomes active. Actions before this date will not count.', 'wb-gamification' ); ?></p>
 								</td>
 							</tr>
@@ -298,7 +298,7 @@ final class CommunityChallengesPage {
 								<td>
 									<input type="datetime-local" name="ends_at" id="wb-gam-cc-ends" class="wbgam-input"
 										data-wb-gam-utc
-										value="<?php echo esc_attr( $edit_data['ends_at'] ?? gmdate( 'Y-m-d\TH:i', strtotime( '+14 days' ) ) ); ?>">
+										value="<?php echo esc_attr( $edit_data['ends_at'] ?? gmdate( 'Y-m-d\TH:i', current_time( 'timestamp' ) + ( 14 * DAY_IN_SECONDS ) ) ); ?>">
 									<p class="description"><?php esc_html_e( 'Deadline for the challenge. Defaults to 14 days from now.', 'wb-gamification' ); ?></p>
 								</td>
 							</tr>

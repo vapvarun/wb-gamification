@@ -243,7 +243,7 @@ final class ChallengeManagerPage {
 								<td>
 									<input type="datetime-local" name="starts_at" id="wb-gam-challenge-starts" class="wbgam-input"
 										data-wb-gam-utc
-										value="<?php echo esc_attr( $edit_data['starts_at'] ?? gmdate( 'Y-m-d\TH:i' ) ); ?>">
+										value="<?php echo esc_attr( $edit_data['starts_at'] ?? current_time( 'Y-m-d\TH:i' ) ); ?>">
 									<p class="description"><?php esc_html_e( 'When this challenge becomes available to members. Actions before this date will not count.', 'wb-gamification' ); ?></p>
 								</td>
 							</tr>
@@ -252,7 +252,7 @@ final class ChallengeManagerPage {
 								<td>
 									<input type="datetime-local" name="ends_at" id="wb-gam-challenge-ends" class="wbgam-input"
 										data-wb-gam-utc
-										value="<?php echo esc_attr( $edit_data['ends_at'] ?? gmdate( 'Y-m-d\TH:i', strtotime( '+7 days' ) ) ); ?>">
+										value="<?php echo esc_attr( $edit_data['ends_at'] ?? gmdate( 'Y-m-d\TH:i', current_time( 'timestamp' ) + ( 7 * DAY_IN_SECONDS ) ) ); ?>">
 									<p class="description"><?php esc_html_e( 'Deadline for the challenge. Members must reach the target before this date. Defaults to 7 days from now.', 'wb-gamification' ); ?></p>
 								</td>
 							</tr>
