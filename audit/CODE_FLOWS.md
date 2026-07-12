@@ -148,9 +148,69 @@ The canonical pipeline. Every other engine extends this same pipeline.
    - `RateLimiter` may short-circuit at any point if the action's daily cap was hit.
 5. **Output side** — listeners on the canonical events:
    - `NotificationBridge` → BP notification (if BP active and user opted in).
-   - `WebhookDispatcher` → outbound webhook (async, retried).
+   - `WebhookDispatcher` → outbound webhook (async, retried via `wb_gam_webhook_retry`).
    - `BPActivity` → BuddyPress activity stream entry.
-   - Frontend toasts queued in `wb_gam_member_prefs` for next `members/me/toasts` poll.
+   - Frontend toasts queued in `{prefix}wb_gam_notifications_queue` (see below).
+   - **A skip is NOT an output.** `passes_rate_limits()` fires `wb_gam_award_skipped` (cooldown / daily_cap / weekly_cap / not_repeatable / excluded), but **nothing in the plugin listens to it** — a member is never told they earned nothing. It remains a supported extension point; the reason reaches API callers only, via `POST /events` → `{skipped:{reason,message,context}}`.
+
+---
+
+## Flow: Notification → member's screen (1.6.4)
+
+**One store, one writer, one reader.** Before 1.6.4 this flow had two stores with opposite
+bounds and three readers with drifting logic; the queue grew to 30,197 rows for one member and
+replayed 50 toasts per page load (Basecamp #10086171887).
+
+```
+award/badge/level/streak/kudos event
+        │
+        ▼
+NotificationBridge::push()                          [the ONLY writer]
+        │  apply_filters( 'wb_gam_toast_data' )     → return [] to suppress
+        │  INSERT into {prefix}wb_gam_notifications_queue
+        │  NotificationBridge::trim()               → evicts oldest beyond QUEUE_MAX_EVENTS (50)
+        │                                             THE bound. Holds even if WP-Cron never runs.
+        ▼
+{prefix}wb_gam_notifications_queue   (id AUTO_INCREMENT — the authoritative event id)
+        │
+        ▼
+NotificationBridge::fetch_unseen( $user_id, $after_id, $limit )   [the ONLY reader]
+        │  SELECT ... WHERE id > cursor ORDER BY id DESC LIMIT BURST_MAX_EVENTS (5)
+        │  returns oldest-first; the LAST row is the HEAD of the whole backlog
+        │
+        ├── read_pending( uid, 'footer' )     → wp_footer seed  ─┐
+        ├── read_pending( uid, 'heartbeat' )  → HeartbeatChannel │ cursor in user_meta,
+        ├── read_pending( uid, 'rest' )       → MembersController│ one per consumer
+        └── SSEController::stream()           → EventSource      ← cursor from the REQUEST
+                                                                   (last_event_id), not user_meta
+        ▼
+assets/js/toast.js  — dedupes by `_id` (the table row id, stamped by the reader)
+```
+
+**Why the cursor lands on the head, not on the last toast shown.** `LIMIT` applies *after*
+`ORDER BY id DESC`, so the newest row returned is the greatest pending id in the entire backlog.
+Parking the cursor there drops everything older instead of queueing it for the next page load —
+which is what makes a backlog impossible to replay. Small queues need no special case: the
+newest-5-of-3 is all 3, and the cursor lands exactly where it would have anyway.
+
+**Three deleters, all distinct:**
+
+| Path | Role |
+|---|---|
+| `NotificationBridge::trim()` | **The bound.** Per-member cap, on write. |
+| `NotificationBridge::prune_queue()` | **Retention.** Daily cron, batched loop (5k × 20). Not load-bearing — the write bound holds without it. |
+| `DbUpgrader::ensure_notifications_skip_purge()` | **One-time.** Deletes legacy `type='skip'` rows written by ≤ 1.6.2. Resumable across requests. |
+
+**Key files**
+
+| File | Role |
+|---|---|
+| `src/Engine/NotificationBridge.php` | Store, writer, reader, bound, retention |
+| `src/API/SSEController.php` | SSE transport — drives `fetch_unseen()`, owns **no** query of its own |
+| `src/Engine/HeartbeatChannel.php` | Heartbeat transport (default) |
+| `src/API/MembersController.php` | `members/me/toasts` REST poll |
+| `src/Engine/DbUpgrader.php` | Table creation + one-time skip purge |
+| `assets/js/toast.js` | Renders + dedupes by `_id` |
 
 ### Key files
 

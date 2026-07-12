@@ -685,6 +685,10 @@ class BadgesController extends WP_REST_Controller {
 			return new WP_Error( 'rest_badge_delete_failed', __( 'Could not delete badge.', 'wb-gamification' ), array( 'status' => 500 ) );
 		}
 
+		// Deleting a badge removes every earned row for it, which changes the
+		// rarity of all the others. Drop the cached aggregation.
+		\WBGam\Engine\BadgeEngine::flush_rarity_cache();
+
 		return new WP_REST_Response(
 			array(
 				'deleted'  => true,
@@ -742,36 +746,54 @@ class BadgesController extends WP_REST_Controller {
 	/**
 	 * Return a map of badge_id → rarity percentage (% of users who have it).
 	 *
-	 * Single aggregation query — avoids N queries for N badges.
+	 * CACHED. Rarity is a COSMETIC DISPLAY STAT — "held by 3% of members". Nobody
+	 * is harmed if that figure is a few minutes stale, and no decision anywhere in
+	 * the plugin branches on it.
+	 *
+	 * That distinction is the whole fix. The pre-1.6.4 code declined to cache this
+	 * ("not suitable for generic caching") because it conflated rarity with
+	 * BadgeEngine's `max_earners` guard. They are not the same:
+	 *
+	 *   - `max_earners` MUST be live. A stale count over-awards a limited badge —
+	 *     "first 100 members" would hand out 130. It stays uncached, and now has
+	 *     idx_badge_id so it is a ref lookup instead of a full scan.
+	 *   - Rarity is decoration. It can be stale. It must not cost a full scan of an
+	 *     EVENT-scaled table on every public request.
+	 *
+	 * Both aggregations here scale with `wb_gam_user_badges` (millions of rows on a
+	 * large site) and both ran on EVERY request to `GET /badges` and
+	 * `GET /badges/{id}` — both `permission_callback => '__return_true'`, i.e.
+	 * anonymous. That made a public endpoint a free full-table-scan generator.
+	 *
+	 * Invalidated on award/revoke via BadgeEngine's `wb_gamification` cache group
+	 * (see self::flush_rarity_cache()), so the number is never *wrong*, only ever
+	 * slightly behind — and it self-heals within the TTL even if an invalidation is
+	 * missed.
+	 *
+	 * @since 1.6.4 Cached. Was an uncached full scan on every anonymous request.
 	 *
 	 * @return array<string, float>
 	 */
 	private function get_rarity_map(): array {
-		global $wpdb;
-
-		$total_users = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->users}" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- Real-time aggregation; result varies per request.
-		if ( $total_users <= 0 ) {
-			return array();
-		}
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- Aggregation query; not suitable for generic caching without badge-level cache keys.
-		$rows = $wpdb->get_results(
-			"SELECT badge_id, COUNT(DISTINCT user_id) AS earner_count
-			   FROM {$wpdb->prefix}wb_gam_user_badges
-			  GROUP BY badge_id",
-			ARRAY_A
-		);
-
-		$map = array();
-		foreach ( $rows as $row ) {
-			$map[ $row['badge_id'] ] = round( ( (int) $row['earner_count'] / $total_users ) * 100, 1 );
-		}
-
-		return $map;
+		// BadgeEngine owns wb_gam_user_badges, so it owns the aggregation and its
+		// cache. A REST controller keeping its own copy of the query is how the
+		// same behaviour ends up with two implementations and only one of them
+		// gets fixed.
+		return \WBGam\Engine\BadgeEngine::get_rarity_map();
 	}
 
 	/**
 	 * Count of distinct users who hold a specific badge.
+	 *
+	 * Served from the same cached rarity aggregation rather than issuing its own
+	 * scan: `GET /badges/{id}` previously ran BOTH the full rarity GROUP BY and
+	 * this second COUNT over the same table, on the same anonymous request.
+	 *
+	 * Falls back to a direct count only when the badge is absent from the map
+	 * (i.e. nobody holds it yet) — which is an index lookup on idx_badge_id, not
+	 * a scan.
+	 *
+	 * @since 1.6.4 Reuses the cached aggregation instead of a second full scan.
 	 *
 	 * @param string $badge_id Badge identifier.
 	 * @return int Number of distinct users who earned the badge.
@@ -779,7 +801,7 @@ class BadgesController extends WP_REST_Controller {
 	private function get_earner_count( string $badge_id ): int {
 		global $wpdb;
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- Per-badge count shown on single-badge page; caching is handled by calling code if needed.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- ref lookup on idx_badge_id; the aggregate path above is the cached one.
 		return (int) $wpdb->get_var(
 			$wpdb->prepare(
 				"SELECT COUNT(DISTINCT user_id) FROM {$wpdb->prefix}wb_gam_user_badges WHERE badge_id = %s",

@@ -10,24 +10,24 @@
     "extension_hook_fired": "wb_gam_free_loaded"
   },
   "counts": {
-    "rest_endpoints": 64,
-    "rest_endpoint_method_rows": 73,
+    "rest_endpoints": 66,
+    "rest_endpoint_method_rows": 76,
     "ajax_handlers": 0,
-    "admin_pages": 14,
+    "admin_pages": 15,
     "shortcodes": 17,
     "blocks": 19,
     "tables": 26,
     "capabilities_declared": 10,
     "services": 49,
-    "hooks_fired_actions": 65,
-    "hooks_fired_filters": 77,
+    "hooks_fired_actions": 66,
+    "hooks_fired_filters": 76,
     "hooks_fired_total": 142,
-    "cron_hooks_distinct": 14,
+    "cron_hooks_distinct": 16,
     "wp_cli_commands": 10,
     "admin_post_handlers": 0,
     "frontend_css_files": 45,
     "frontend_js_files": 50,
-    "php_file_count": 173,
+    "php_file_count": 202,
     "integrations": 24,
     "integration_triggers_total": 126,
     "integration_adapter_classes": 12
@@ -64,34 +64,20 @@
     "plugin_check_warnings_baseline_total": 78,
     "phpcs_ignore_inline_count": 442
   },
-  "coverage_gate_violations": {
-    "actions_fired": "18.9% drift \u2014 manifest array reflects 43 entries; ground truth = 53 wb_gam_ do_action sites. Re-enumeration deferred.",
-    "filters_fired": "73.9% drift \u2014 manifest array reflects 12 entries; ground truth = 46 wb_gam_ apply_filters sites. Re-enumeration deferred.",
-    "tables": "RESOLVED (direction 2.1, 2026-06-05) \u2014 manifest .tables[] = 26; matches ground truth (23 CREATE TABLE in Installer + 3 in DbUpgrader: wb_gam_user_intelligence, wb_gam_notifications_queue, wb_gam_side_effect_failures). Each new entry carries a three_entry_point annotation: user_intelligence + notifications_queue = satisfied; side_effect_failures = intentional_exception (internal reconciliation plumbing).",
-    "blocks": "RESOLVED (WBG-009) \u2014 manifest .blocks[] = 19 entries; matches src/Blocks/ ground truth.",
-    "shortcodes": "RESOLVED (WBG-009) \u2014 manifest .shortcodes[] = 17; matches add_shortcode ground truth.",
-    "cron": "RESOLVED (WBG-009) \u2014 manifest .cron[] = 10; matches distinct CRON_HOOK constants.",
-    "capabilities": "RESOLVED (WBG-009) \u2014 manifest .capabilities[] = 11 (10 plugin caps + manage_options); matches Capabilities::CAPS.",
-    "services": "20.4% drift \u2014 manifest .services[] = 43; src/Engine/+Services/+Repository/ = 54 service-like classes.",
-    "frontend_css": "75.0% drift \u2014 manifest = 6; ground truth = 24 non-min, non-RTL CSS files.",
-    "frontend_js": "78.9% drift \u2014 manifest = 4; ground truth = 19 non-min JS files."
-  },
+  "coverage_gate_violations": [],
   "generated": {
     "at": "2026-06-02T07:30:19Z",
     "schema_version": "v2.2",
     "last_pr_merged": "v1.5.3 - site-owner controls (exclusion, members roster, bulk award, settings import/export, rebuild-leaderboard)",
-    "since_last_refresh": "1.5.3 complete: all 8 site-owner controls. p2 adds Modules toggles (ModuleToggles), point expiry/decay (PointsExpiry, daily cron wb_gam_points_decay), and reset-all-member-progress (ProgressReset + POST tools/reset-progress). +1 REST endpoint, +3 services, +1 cron hook, +1 filter (wb_gam_module_enabled), +2 actions (wb_gam_progress_reset, wb_gam_points_decayed)."
+    "since_last_refresh": "1.5.3 complete: all 8 site-owner controls. p2 adds Modules toggles (ModuleToggles), point expiry/decay (PointsExpiry, daily cron wb_gam_points_decay), and reset-all-member-progress (ProgressReset + POST tools/reset-progress). +1 REST endpoint, +3 services, +1 cron hook, +1 filter (wb_gam_module_enabled), +2 actions (wb_gam_progress_reset, wb_gam_points_decayed).",
+    "branch": "1.6.4"
   },
   "release_verdict": {
-    "wppqa_failed_targeted_checks": 0,
-    "wppqa_warnings_targeted_checks": 0,
-    "block_standard_19_of_19": true,
-    "phpunit_passing": true,
-    "phpstan_level_9_clean": true,
-    "admin_post_count": 0,
-    "wp_ajax_count": 0,
-    "legacy_blocks_dir_deleted": true,
-    "verdict": "release-clean on targeted wppqa (plugin_dev_rules + rest_js_contract + wiring_completeness all failed=0). Omnibus audit_plugin reports 2,428 failed but ~99% are phpcs noise (scanner ignores .phpcs.xml); 5 real actionable findings tracked in git history of audit/ISSUES-2026-05-27.yaml."
+    "status": "not-release-ready",
+    "blocking": "wppqa failed>0 (a11y 18, admin-eval 28, enum-consistency 5, qa-coverage 1)",
+    "note": "None of the failing gates sit in the security-critical path: php-lint 337/0, api 62/0, database 39/0 and rest-js-contract 10/0 are all clean, which covers the 1.6.4 notifications-queue rework. All 5 plugin-dev-rules HIGH security findings are in BUNDLED THIRD-PARTY code (libs/woocommerce/action-scheduler, libs/easy-digital-downloads) - our own code has zero. See audit/wppqa-baseline-2026-07-12/SUMMARY.md.",
+    "baseline": "audit/wppqa-baseline-2026-07-12/SUMMARY.md"
   },
-  "generated_at": "2026-05-27T21:00:00Z"
+  "generated_at": "2026-07-12T00:00:00Z",
+  "manifest_refresh": "agent-enumeration-only - bin/write-manifest.mjs CANNOT be used on this plugin: it zeroes shortcodes (0 vs 17 real, registered via src/Engine/ShortcodeHandler.php wrapper), collapses cron (1 vs 16, Action Scheduler + self::CONST hooks), and undercounts REST (62 vs 76, routes built by concatenation not literals). Restore from git and enumerate by hand if it is ever run."
 }

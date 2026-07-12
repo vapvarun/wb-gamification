@@ -294,6 +294,34 @@ if [ "$MODE" = "full" ]; then
   fi
 fi
 
+# ─── Stage 5.1 — Scale benchmark (S-02) ──────────────────────────────────────
+# The plugin claims 100k-readiness. That claim is theory until the hot-path
+# queries are timed against a production-shape table.
+#
+# This stage runs ONLY when a seeded dataset is present — benchmarking a dev
+# site's 300 rows would be a green light that means nothing, which is worse
+# than no light at all. When there is no seeded data we SKIP LOUDLY: a silent
+# pass is exactly how S-02 happened (a gate nobody ran).
+#
+# The hard gate lives in bin/build-release.sh (exit 32) and reads the
+# audit/.last-scale-pass.json that `scale benchmark` writes.
+if [ "$MODE" != "quick" ]; then
+  if command -v wp >/dev/null 2>&1; then
+    SEEDED_ROWS="$(wp eval 'global $wpdb; echo (int) $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}wb_gam_points WHERE user_id >= 1000000");' 2>/dev/null | tr -dc '0-9')"
+    SEEDED_ROWS="${SEEDED_ROWS:-0}"
+    if [ "$SEEDED_ROWS" -gt 0 ]; then
+      run_stage "5.1" "Scale benchmark (seeded: ${SEEDED_ROWS} rows)" wp wb-gamification scale benchmark
+    else
+      warn "5.1 Scale benchmark SKIPPED — no seeded dataset."
+      warn "    The 100k-readiness claim is NOT verified by this run."
+      warn "    To verify:  composer scale:seed && composer scale:bench && composer scale:teardown"
+      warn "    Release is still gated: bin/build-release.sh exits 32 without a green, seeded report."
+    fi
+  else
+    warn "5.1 Scale benchmark skipped — wp-cli not on PATH."
+  fi
+fi
+
 # ─── Summary ─────────────────────────────────────────────────────────────────
 
 echo ""

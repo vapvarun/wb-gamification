@@ -13,6 +13,7 @@
 
 namespace WBGam\Admin;
 
+use WBGam\Engine\Log;
 use WBGam\Engine\Registry;
 
 defined( 'ABSPATH' ) || exit;
@@ -359,6 +360,28 @@ final class SetupWizard {
 			return;
 		}
 		foreach ( $configs[ $template ]['points'] as $action_id => $points ) {
+			// Never persist a point value for an action that does not exist.
+			//
+			// A `wb_gam_points_{id}` option for an unregistered id is DEAD CONFIG:
+			// it shows nowhere, fires never, and gives the owner a wizard that
+			// silently did nothing. That is precisely how `check_in`,
+			// `goal_complete` and `volunteer_hours` shipped in the Coaching and
+			// Nonprofit templates — no code ever checked, so nothing ever
+			// complained.
+			//
+			// Registry::get_action() returns null for an unknown id, so this is the
+			// single choke point where a bad template id can be caught at runtime.
+			// SetupWizardTemplatesTest catches it at build time.
+			if ( null === \WBGam\Engine\Registry::get_action( (string) $action_id ) ) {
+				Log::warning(
+					'setup-wizard: template references an unregistered action; skipping',
+					array(
+						'template'  => $template,
+						'action_id' => (string) $action_id,
+					)
+				);
+				continue;
+			}
 			update_option( 'wb_gam_points_' . $action_id, (int) $points );
 		}
 		update_option( 'wb_gam_template', $template );
@@ -424,14 +447,31 @@ final class SetupWizard {
 					'learnomy_student_enrolled'   => 5,
 				),
 			),
+
+			/*
+			 * Every action_id below MUST exist in a manifest under integrations/.
+			 * Enforced by SetupWizardTemplatesTest and, at runtime, by
+			 * handle_submission() which drops unregistered ids.
+			 *
+			 * Until 1.6.4 this template seeded `check_in` (15) and `goal_complete`
+			 * (50) — action ids that exist in NO manifest and can therefore never
+			 * fire. An owner who picked "Coaching Platform" in the wizard got a
+			 * config where 2 of its 3 actions were dead on arrival: a broken first
+			 * run, on the one screen whose entire job is the first impression.
+			 * Nothing validated the ids, so it failed silently.
+			 */
 			'coaching'  => array(
 				'label'       => __( 'Coaching Platform', 'wb-gamification' ),
 				'description' => __( 'Private leaderboard by default - progress vs personal baseline, not peer comparison.', 'wb-gamification' ),
 				'leaderboard' => 'private',
 				'points'      => array(
-					'check_in'      => 15,
-					'goal_complete' => 50,
-					'wp_first_post' => 10,
+					// Standalone template — no `requires`, so it may only use
+					// WordPress-core actions, which are the only ones guaranteed
+					// to be registered on any site.
+					'wp_publish_post'     => 25,
+					'wp_leave_comment'    => 10,
+					'wp_profile_complete' => 15,
+					'wp_first_post'       => 20,
 				),
 			),
 			'nonprofit' => array(
@@ -444,9 +484,12 @@ final class SetupWizard {
 					'plugin'   => __( 'BuddyNext', 'wb-gamification' ),
 				),
 				'points'      => array(
-					'volunteer_hours' => 30,
-					'bn_post_created' => 5,
-					'bn_space_joined' => 10,
+					// `volunteer_hours` (30) was seeded here and exists in no
+					// manifest — same dead-config bug as Coaching above.
+					'bn_post_created'    => 5,
+					'bn_space_joined'    => 10,
+					'bn_connected'       => 8,
+					'bn_comment_created' => 5,
 				),
 			),
 		);

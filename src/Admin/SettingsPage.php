@@ -1375,6 +1375,7 @@ final class SettingsPage {
 										<th class="wb-gam-col-flag"><?php esc_html_e( 'Repeat', 'wb-gamification' ); ?></th>
 										<th class="wb-gam-col-flag"><?php esc_html_e( 'Cooldown (s)', 'wb-gamification' ); ?></th>
 										<th class="wb-gam-col-flag"><?php esc_html_e( 'Daily cap', 'wb-gamification' ); ?></th>
+										<th class="wb-gam-col-flag"><?php esc_html_e( 'Weekly cap', 'wb-gamification' ); ?></th>
 									</tr>
 									</thead>
 									<tbody>
@@ -1385,6 +1386,14 @@ final class SettingsPage {
 										$enabled    = (bool) get_option( 'wb_gam_enabled_' . $action_id, true );
 										$repeatable = (bool) ( $action['repeatable'] ?? true );
 										$daily_cap  = (int) ( $action['daily_cap'] ?? 0 );
+										// The engine has ENFORCED a weekly cap since the rate-limit
+										// gate was written (PointsEngine::passes_rate_limits), the
+										// Registry defaults it, and the REST override endpoint accepts
+										// it — but this table never rendered a field for it, so no
+										// owner could ever set one. Engine-enforced, admin-invisible:
+										// the capability existed on paper only, and CAPABILITIES.md
+										// listed it as shipped.
+										$weekly_cap = (int) ( $action['weekly_cap'] ?? 0 );
 										// Resolve current currency: admin override > manifest > primary.
 										$action_type = \WBGam\Engine\Registry::resolve_action_point_type( $action );
 										if ( '' === $action_type ) {
@@ -1469,6 +1478,19 @@ final class SettingsPage {
 													step="1"
 													class="wbgam-input wbgam-input--xs"
 													aria-label="<?php /* translators: %s: action label */ echo esc_attr( sprintf( __( 'Daily cap for %s (0 = unlimited)', 'wb-gamification' ), $action['label'] ?? $action_id ) ); ?>"
+												>
+											</td>
+											<td>
+												<input
+													type="number"
+													data-wb-gam-action-override="weekly_cap"
+													data-wb-gam-action-id="<?php echo esc_attr( $action_id ); ?>"
+													value="<?php echo esc_attr( (string) $weekly_cap ); ?>"
+													min="0"
+													max="99999"
+													step="1"
+													class="wbgam-input wbgam-input--xs"
+													aria-label="<?php /* translators: %s: action label */ echo esc_attr( sprintf( __( 'Weekly cap for %s (0 = unlimited)', 'wb-gamification' ), $action['label'] ?? $action_id ) ); ?>"
 												>
 											</td>
 										</tr>

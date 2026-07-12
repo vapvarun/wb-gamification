@@ -52,6 +52,19 @@ defined( 'ABSPATH' ) || exit;
 final class Privacy {
 
 	/**
+	 * Items per export page.
+	 *
+	 * WordPress's privacy framework calls an exporter repeatedly with an
+	 * incrementing `$page` for as long as it returns `done => false`, precisely so
+	 * that no exporter ever has to hold a member's entire history in memory. 500 is
+	 * the convention core itself uses.
+	 *
+	 * @since 1.6.4
+	 * @var int
+	 */
+	private const EXPORT_PAGE_SIZE = 500;
+
+	/**
 	 * Register GDPR exporter and eraser callbacks with WordPress.
 	 */
 	public static function init(): void {
@@ -171,7 +184,33 @@ final class Privacy {
 		}
 
 		$user_id = (int) $user->ID;
+		$page    = max( 1, $page );
+		$offset  = ( $page - 1 ) * self::EXPORT_PAGE_SIZE;
 		global $wpdb;
+
+		// The two unbounded sets — a member's points ledger and their event log —
+		// are streamed across pages. Everything else (balances, badges, streak,
+		// preferences, submissions) is bounded per member and ships on page 1.
+		//
+		// Until 1.6.4 this method ACCEPTED $page and never referenced it: every
+		// call selected the member's ENTIRE history with no LIMIT and returned
+		// `done => true`. WordPress's privacy framework is built around ~500 items
+		// per page precisely so an exporter never has to hold a whole dataset in
+		// memory — this one opted out of that contract and then paid for it.
+		//
+		// The rows are not the expensive part; the expansion is. Each ledger row
+		// becomes a data_group carrying four name/value pairs, and each event row
+		// six — including its metadata JSON blob. That is roughly 1.5-2 KB of PHP
+		// heap per row, so a member with 50,000 ledger rows (and members typically
+		// have MORE event rows than ledger rows, since events are logged even when
+		// no points are awarded) exhausts a 256 MB limit and fatals. A GDPR request
+		// from your most engaged member was the one guaranteed to fail.
+		$points_total = (int) $wpdb->get_var(
+			$wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->prefix}wb_gam_points WHERE user_id = %d", $user_id )
+		);
+		$events_total = (int) $wpdb->get_var(
+			$wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->prefix}wb_gam_events WHERE user_id = %d", $user_id )
+		);
 
 		$data_groups = array();
 
@@ -192,27 +231,52 @@ final class Privacy {
 				'value' => (string) $total,
 			);
 		}
-		$data_groups[] = array(
-			'group_id'    => 'wb-gam-points',
-			'group_label' => __( 'Gamification Points', 'wb-gamification' ),
-			'item_id'     => 'wb-gam-points-' . $user_id,
-			'data'        => $summary_rows,
-		);
+		// Page 1 only — like the other bounded groups. Its item_id is derived from
+		// the user id, so emitting it on every page would collide with itself.
+		if ( 1 === $page ) {
+			$data_groups[] = array(
+				'group_id'    => 'wb-gam-points',
+				'group_label' => __( 'Gamification Points', 'wb-gamification' ),
+				'item_id'     => 'wb-gam-points-' . $user_id,
+				'data'        => $summary_rows,
+			);
+		}
 
-		// Points history (all currencies).
-		$history = $wpdb->get_results(
-			$wpdb->prepare(
-				"SELECT action_id, points, point_type, created_at FROM {$wpdb->prefix}wb_gam_points WHERE user_id = %d ORDER BY created_at DESC",
-				$user_id
-			),
-			ARRAY_A
-		) ?: array();
+		// Points history — the first of the two streamed sets.
+		//
+		// Slice of the ledger for THIS page only. `$offset` walks the combined
+		// (ledger, then events) stream, so once the ledger is exhausted the
+		// remainder of the page is filled from the event log below.
+		$hist_offset = min( $offset, $points_total );
+		$hist_limit  = max( 0, min( self::EXPORT_PAGE_SIZE, $points_total - $hist_offset ) );
+
+		$history = array();
+		if ( $hist_limit > 0 ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- paginated personal-data export.
+			$history = $wpdb->get_results(
+				$wpdb->prepare(
+					"SELECT action_id, points, point_type, created_at
+					   FROM {$wpdb->prefix}wb_gam_points
+					  WHERE user_id = %d
+					  ORDER BY created_at DESC, id DESC
+					  LIMIT %d OFFSET %d",
+					$user_id,
+					$hist_limit,
+					$hist_offset
+				),
+				ARRAY_A
+			) ?: array();
+		}
 
 		foreach ( $history as $i => $row ) {
+			// item_id must be unique across the WHOLE export, not within a page.
+			// A per-page loop index would make page 2's first row collide with
+			// page 1's and silently overwrite it in the exported archive.
+			$item_index    = $hist_offset + $i;
 			$data_groups[] = array(
 				'group_id'    => 'wb-gam-points-history',
 				'group_label' => __( 'Points History', 'wb-gamification' ),
-				'item_id'     => 'wb-gam-ph-' . $i,
+				'item_id'     => 'wb-gam-ph-' . $item_index,
 				'data'        => array(
 					array(
 						'name'  => __( 'Action', 'wb-gamification' ),
@@ -234,208 +298,228 @@ final class Privacy {
 			);
 		}
 
-		// Badges.
-		$badges = $wpdb->get_results(
-			$wpdb->prepare(
-				"SELECT b.name, b.description, ub.earned_at
-				   FROM {$wpdb->prefix}wb_gam_user_badges ub
-				   JOIN {$wpdb->prefix}wb_gam_badge_defs b ON b.id = ub.badge_id
-				  WHERE ub.user_id = %d ORDER BY ub.earned_at DESC",
-				$user_id
-			),
-			ARRAY_A
-		) ?: array();
-
-		foreach ( $badges as $i => $row ) {
-			$data_groups[] = array(
-				'group_id'    => 'wb-gam-badges',
-				'group_label' => __( 'Earned Badges', 'wb-gamification' ),
-				'item_id'     => 'wb-gam-badge-' . $i,
-				'data'        => array(
-					array(
-						'name'  => __( 'Badge', 'wb-gamification' ),
-						'value' => $row['name'],
-					),
-					array(
-						'name'  => __( 'Description', 'wb-gamification' ),
-						'value' => $row['description'],
-					),
-					array(
-						'name'  => __( 'Earned At', 'wb-gamification' ),
-						'value' => $row['earned_at'],
-					),
+		// Bounded per-member groups — badges, streak, preferences, meta,
+		// submissions. These ship ONCE, on page 1. Emitting them on every page of
+		// a paginated export would repeat a member's badges on all 40 pages.
+		if ( 1 === $page ) {
+			// Badges.
+			$badges = $wpdb->get_results(
+				$wpdb->prepare(
+					"SELECT b.name, b.description, ub.earned_at
+					   FROM {$wpdb->prefix}wb_gam_user_badges ub
+					   JOIN {$wpdb->prefix}wb_gam_badge_defs b ON b.id = ub.badge_id
+					  WHERE ub.user_id = %d ORDER BY ub.earned_at DESC",
+					$user_id
 				),
-			);
-		}
+				ARRAY_A
+			) ?: array();
 
-		// Streak.
-		$streak = $wpdb->get_row(
-			$wpdb->prepare(
-				"SELECT current_streak, longest_streak, last_active FROM {$wpdb->prefix}wb_gam_streaks WHERE user_id = %d",
-				$user_id
-			),
-			ARRAY_A
-		);
-
-		if ( $streak ) {
-			$data_groups[] = array(
-				'group_id'    => 'wb-gam-streak',
-				'group_label' => __( 'Activity Streak', 'wb-gamification' ),
-				'item_id'     => 'wb-gam-streak-' . $user_id,
-				'data'        => array(
-					array(
-						'name'  => __( 'Current Streak', 'wb-gamification' ),
-						'value' => $streak['current_streak'],
+			foreach ( $badges as $i => $row ) {
+				$data_groups[] = array(
+					'group_id'    => 'wb-gam-badges',
+					'group_label' => __( 'Earned Badges', 'wb-gamification' ),
+					'item_id'     => 'wb-gam-badge-' . $i,
+					'data'        => array(
+						array(
+							'name'  => __( 'Badge', 'wb-gamification' ),
+							'value' => $row['name'],
+						),
+						array(
+							'name'  => __( 'Description', 'wb-gamification' ),
+							'value' => $row['description'],
+						),
+						array(
+							'name'  => __( 'Earned At', 'wb-gamification' ),
+							'value' => $row['earned_at'],
+						),
 					),
-					array(
-						'name'  => __( 'Longest Streak', 'wb-gamification' ),
-						'value' => $streak['longest_streak'],
-					),
-					array(
-						'name'  => __( 'Last Active', 'wb-gamification' ),
-						'value' => $streak['last_active'],
-					),
-				),
-			);
-		}
-
-		// Member preferences.
-		$prefs = $wpdb->get_row(
-			$wpdb->prepare(
-				"SELECT leaderboard_opt_out, show_rank, notification_mode FROM {$wpdb->prefix}wb_gam_member_prefs WHERE user_id = %d",
-				$user_id
-			),
-			ARRAY_A
-		);
-
-		if ( $prefs ) {
-			$data_groups[] = array(
-				'group_id'    => 'wb-gam-prefs',
-				'group_label' => __( 'Gamification Preferences', 'wb-gamification' ),
-				'item_id'     => 'wb-gam-prefs-' . $user_id,
-				'data'        => array(
-					array(
-						'name'  => __( 'Leaderboard Opt-Out', 'wb-gamification' ),
-						'value' => $prefs['leaderboard_opt_out'] ? __( 'Yes', 'wb-gamification' ) : __( 'No', 'wb-gamification' ),
-					),
-					array(
-						'name'  => __( 'Show Rank', 'wb-gamification' ),
-						'value' => $prefs['show_rank'] ? __( 'Yes', 'wb-gamification' ) : __( 'No', 'wb-gamification' ),
-					),
-					array(
-						'name'  => __( 'Notification Mode', 'wb-gamification' ),
-						'value' => $prefs['notification_mode'],
-					),
-				),
-			);
-		}
-
-		// Per-user toggles + derived caches stored in user_meta. Each is T2
-		// personal data and belongs in the export under data portability.
-		$meta_groups = array(
-			'wb_gam_profile_public'        => __( 'Public profile enabled (per-user)', 'wb-gamification' ),
-			'wb_gam_login_streak'          => __( 'Login bonus streak (current)', 'wb-gamification' ),
-			'wb_gam_login_streak_max'      => __( 'Login bonus streak (best)', 'wb-gamification' ),
-			'wb_gam_login_last_award'      => __( 'Login bonus last awarded', 'wb-gamification' ),
-			'wb_gam_seen_first_earn_toast' => __( 'Seen first-earn welcome toast', 'wb-gamification' ),
-			'wb_gam_dismissed_welcome'     => __( 'Dismissed admin welcome card', 'wb-gamification' ),
-			'wb_gam_dismissed_checklist'   => __( 'Dismissed admin setup checklist', 'wb-gamification' ),
-			'wb_gam_setup_seen'            => __( 'Seen the setup wizard', 'wb-gamification' ),
-			'wb_gam_level_id'              => __( 'Current level ID (cached)', 'wb-gamification' ),
-			'wb_gam_level_name'            => __( 'Current level name (cached)', 'wb-gamification' ),
-			'wb_gam_league_tier'           => __( 'Cohort league tier', 'wb-gamification' ),
-			'wb_gam_sandboxed'             => __( 'Excluded from earning (sandboxed)', 'wb-gamification' ),
-		);
-		$meta_rows   = array();
-		foreach ( $meta_groups as $key => $label ) {
-			$value = get_user_meta( $user_id, $key, true );
-			if ( '' === $value || null === $value ) {
-				continue;
+				);
 			}
-			$meta_rows[] = array(
-				'name'  => $label,
-				'value' => is_scalar( $value ) ? (string) $value : wp_json_encode( $value ),
-			);
-		}
-		if ( $meta_rows ) {
-			$data_groups[] = array(
-				'group_id'    => 'wb-gam-user-meta',
-				'group_label' => __( 'Gamification Personal Settings', 'wb-gamification' ),
-				'item_id'     => 'wb-gam-user-meta-' . $user_id,
-				'data'        => $meta_rows,
-			);
-		}
 
-		// UGC submissions (v1.0 sprint).
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- one-shot personal-data export query.
-		$submissions = $wpdb->get_results(
-			$wpdb->prepare(
-				"SELECT action_id, evidence, evidence_url, status, notes, created_at, reviewed_at
-				   FROM {$wpdb->prefix}wb_gam_submissions
-				  WHERE user_id = %d
-				  ORDER BY created_at DESC",
-				$user_id
-			),
-			ARRAY_A
-		) ?: array();
-		foreach ( $submissions as $i => $row ) {
-			$data_groups[] = array(
-				'group_id'    => 'wb-gam-submissions',
-				'group_label' => __( 'Achievement Submissions', 'wb-gamification' ),
-				'item_id'     => 'wb-gam-submission-' . $i,
-				'data'        => array(
-					array(
-						'name'  => __( 'Action', 'wb-gamification' ),
-						'value' => $row['action_id'],
-					),
-					array(
-						'name'  => __( 'Evidence', 'wb-gamification' ),
-						'value' => (string) $row['evidence'],
-					),
-					array(
-						'name'  => __( 'Evidence URL', 'wb-gamification' ),
-						'value' => (string) $row['evidence_url'],
-					),
-					array(
-						'name'  => __( 'Status', 'wb-gamification' ),
-						'value' => $row['status'],
-					),
-					array(
-						'name'  => __( 'Reviewer notes', 'wb-gamification' ),
-						'value' => (string) $row['notes'],
-					),
-					array(
-						'name'  => __( 'Submitted', 'wb-gamification' ),
-						'value' => $row['created_at'],
-					),
-					array(
-						'name'  => __( 'Reviewed', 'wb-gamification' ),
-						'value' => (string) ( $row['reviewed_at'] ?? '' ),
-					),
+			// Streak.
+			$streak = $wpdb->get_row(
+				$wpdb->prepare(
+					"SELECT current_streak, longest_streak, last_active FROM {$wpdb->prefix}wb_gam_streaks WHERE user_id = %d",
+					$user_id
 				),
+				ARRAY_A
 			);
+
+			if ( $streak ) {
+				$data_groups[] = array(
+					'group_id'    => 'wb-gam-streak',
+					'group_label' => __( 'Activity Streak', 'wb-gamification' ),
+					'item_id'     => 'wb-gam-streak-' . $user_id,
+					'data'        => array(
+						array(
+							'name'  => __( 'Current Streak', 'wb-gamification' ),
+							'value' => $streak['current_streak'],
+						),
+						array(
+							'name'  => __( 'Longest Streak', 'wb-gamification' ),
+							'value' => $streak['longest_streak'],
+						),
+						array(
+							'name'  => __( 'Last Active', 'wb-gamification' ),
+							'value' => $streak['last_active'],
+						),
+					),
+				);
+			}
+
+			// Member preferences.
+			$prefs = $wpdb->get_row(
+				$wpdb->prepare(
+					"SELECT leaderboard_opt_out, show_rank, notification_mode FROM {$wpdb->prefix}wb_gam_member_prefs WHERE user_id = %d",
+					$user_id
+				),
+				ARRAY_A
+			);
+
+			if ( $prefs ) {
+				$data_groups[] = array(
+					'group_id'    => 'wb-gam-prefs',
+					'group_label' => __( 'Gamification Preferences', 'wb-gamification' ),
+					'item_id'     => 'wb-gam-prefs-' . $user_id,
+					'data'        => array(
+						array(
+							'name'  => __( 'Leaderboard Opt-Out', 'wb-gamification' ),
+							'value' => $prefs['leaderboard_opt_out'] ? __( 'Yes', 'wb-gamification' ) : __( 'No', 'wb-gamification' ),
+						),
+						array(
+							'name'  => __( 'Show Rank', 'wb-gamification' ),
+							'value' => $prefs['show_rank'] ? __( 'Yes', 'wb-gamification' ) : __( 'No', 'wb-gamification' ),
+						),
+						array(
+							'name'  => __( 'Notification Mode', 'wb-gamification' ),
+							'value' => $prefs['notification_mode'],
+						),
+					),
+				);
+			}
+
+			// Per-user toggles + derived caches stored in user_meta. Each is T2
+			// personal data and belongs in the export under data portability.
+			$meta_groups = array(
+				'wb_gam_profile_public'        => __( 'Public profile enabled (per-user)', 'wb-gamification' ),
+				'wb_gam_login_streak'          => __( 'Login bonus streak (current)', 'wb-gamification' ),
+				'wb_gam_login_streak_max'      => __( 'Login bonus streak (best)', 'wb-gamification' ),
+				'wb_gam_login_last_award'      => __( 'Login bonus last awarded', 'wb-gamification' ),
+				'wb_gam_seen_first_earn_toast' => __( 'Seen first-earn welcome toast', 'wb-gamification' ),
+				'wb_gam_dismissed_welcome'     => __( 'Dismissed admin welcome card', 'wb-gamification' ),
+				'wb_gam_dismissed_checklist'   => __( 'Dismissed admin setup checklist', 'wb-gamification' ),
+				'wb_gam_setup_seen'            => __( 'Seen the setup wizard', 'wb-gamification' ),
+				'wb_gam_level_id'              => __( 'Current level ID (cached)', 'wb-gamification' ),
+				'wb_gam_level_name'            => __( 'Current level name (cached)', 'wb-gamification' ),
+				'wb_gam_league_tier'           => __( 'Cohort league tier', 'wb-gamification' ),
+				'wb_gam_sandboxed'             => __( 'Excluded from earning (sandboxed)', 'wb-gamification' ),
+			);
+			$meta_rows   = array();
+			foreach ( $meta_groups as $key => $label ) {
+				$value = get_user_meta( $user_id, $key, true );
+				if ( '' === $value || null === $value ) {
+					continue;
+				}
+				$meta_rows[] = array(
+					'name'  => $label,
+					'value' => is_scalar( $value ) ? (string) $value : wp_json_encode( $value ),
+				);
+			}
+			if ( $meta_rows ) {
+				$data_groups[] = array(
+					'group_id'    => 'wb-gam-user-meta',
+					'group_label' => __( 'Gamification Personal Settings', 'wb-gamification' ),
+					'item_id'     => 'wb-gam-user-meta-' . $user_id,
+					'data'        => $meta_rows,
+				);
+			}
+
+			// UGC submissions (v1.0 sprint).
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- one-shot personal-data export query.
+			$submissions = $wpdb->get_results(
+				$wpdb->prepare(
+					"SELECT action_id, evidence, evidence_url, status, notes, created_at, reviewed_at
+					   FROM {$wpdb->prefix}wb_gam_submissions
+					  WHERE user_id = %d
+					  ORDER BY created_at DESC",
+					$user_id
+				),
+				ARRAY_A
+			) ?: array();
+			foreach ( $submissions as $i => $row ) {
+				$data_groups[] = array(
+					'group_id'    => 'wb-gam-submissions',
+					'group_label' => __( 'Achievement Submissions', 'wb-gamification' ),
+					'item_id'     => 'wb-gam-submission-' . $i,
+					'data'        => array(
+						array(
+							'name'  => __( 'Action', 'wb-gamification' ),
+							'value' => $row['action_id'],
+						),
+						array(
+							'name'  => __( 'Evidence', 'wb-gamification' ),
+							'value' => (string) $row['evidence'],
+						),
+						array(
+							'name'  => __( 'Evidence URL', 'wb-gamification' ),
+							'value' => (string) $row['evidence_url'],
+						),
+						array(
+							'name'  => __( 'Status', 'wb-gamification' ),
+							'value' => $row['status'],
+						),
+						array(
+							'name'  => __( 'Reviewer notes', 'wb-gamification' ),
+							'value' => (string) $row['notes'],
+						),
+						array(
+							'name'  => __( 'Submitted', 'wb-gamification' ),
+							'value' => $row['created_at'],
+						),
+						array(
+							'name'  => __( 'Reviewed', 'wb-gamification' ),
+							'value' => (string) ( $row['reviewed_at'] ?? '' ),
+						),
+					),
+				);
+			}
+
+			// Full event log (immutable T2 record). Belongs in the export under
+			// data portability — it's the authoritative log of what the user did
+			// on the site (with metadata context). Distinct from points-history,
+			// which is the derived ledger.
 		}
 
-		// Full event log (immutable T2 record). Belongs in the export under
-		// data portability — it's the authoritative log of what the user did
-		// on the site (with metadata context). Distinct from points-history,
-		// which is the derived ledger.
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- one-shot personal-data export query.
-		$events = $wpdb->get_results(
-			$wpdb->prepare(
-				"SELECT action_id, object_id, metadata, point_type, site_id, created_at
-				   FROM {$wpdb->prefix}wb_gam_events
-				  WHERE user_id = %d
-				  ORDER BY created_at DESC",
-				$user_id
-			),
-			ARRAY_A
-		) ?: array();
+		// Event log — the second streamed set. It picks up wherever the ledger
+		// stream ran out, so a page is always full until the export is done.
+		$consumed_by_history = count( $history );
+		$ev_room             = max( 0, self::EXPORT_PAGE_SIZE - $consumed_by_history );
+		$ev_offset           = max( 0, $offset - $points_total );
+		$ev_limit            = max( 0, min( $ev_room, $events_total - $ev_offset ) );
+
+		$events = array();
+		if ( $ev_limit > 0 ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- paginated personal-data export.
+			$events = $wpdb->get_results(
+				$wpdb->prepare(
+					"SELECT action_id, object_id, metadata, point_type, site_id, created_at
+					   FROM {$wpdb->prefix}wb_gam_events
+					  WHERE user_id = %d
+					  ORDER BY created_at DESC, id DESC
+					  LIMIT %d OFFSET %d",
+					$user_id,
+					$ev_limit,
+					$ev_offset
+				),
+				ARRAY_A
+			) ?: array();
+		}
 		foreach ( $events as $i => $row ) {
+			$item_index    = $ev_offset + $i;
 			$data_groups[] = array(
 				'group_id'    => 'wb-gam-events',
 				'group_label' => __( 'Activity Event Log', 'wb-gamification' ),
-				'item_id'     => 'wb-gam-event-' . $i,
+				'item_id'     => 'wb-gam-event-' . $item_index,
 				'data'        => array(
 					array(
 						'name'  => __( 'Action', 'wb-gamification' ),
@@ -465,9 +549,15 @@ final class Privacy {
 			);
 		}
 
+		// Done only when the combined (ledger + events) stream is exhausted.
+		// Returning done=true early is how the pre-1.6.4 code got away with
+		// ignoring $page -- and how a large member's export silently truncated
+		// if it did not fatal first.
+		$done = ( $offset + self::EXPORT_PAGE_SIZE ) >= ( $points_total + $events_total );
+
 		return array(
 			'data' => $data_groups,
-			'done' => true,
+			'done' => $done,
 		);
 	}
 
@@ -529,6 +619,9 @@ final class Privacy {
 
 		// Earned badges.
 		$removed += (int) $wpdb->delete( $wpdb->prefix . 'wb_gam_user_badges', array( 'user_id' => $user_id ), array( '%d' ) );
+		// Removing a member's badges changes every badge's rarity — drop the
+		// cached aggregation (BadgeEngine owns the table and the cache).
+		BadgeEngine::flush_rarity_cache();
 
 		// Streak.
 		$removed += (int) $wpdb->delete( $wpdb->prefix . 'wb_gam_streaks', array( 'user_id' => $user_id ), array( '%d' ) );

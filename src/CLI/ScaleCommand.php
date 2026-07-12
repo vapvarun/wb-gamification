@@ -56,12 +56,48 @@ final class ScaleCommand {
 	 * @var array<string,float>
 	 */
 	private const BUDGETS_MS = array(
-		'get_total_pk'           => 5.0,
-		'get_totals_by_type_pk'  => 5.0,
-		'leaderboard_snapshot'   => 20.0,
-		'points_history_user'    => 30.0,
-		'rate_limit_today_count' => 15.0,
-		'convert_balance_lookup' => 5.0,
+		// ── Award hot path (measured since 2026-05-28) ───────────────────────
+		'get_total_pk'               => 5.0,
+		'get_totals_by_type_pk'      => 5.0,
+		'leaderboard_snapshot'       => 20.0,
+		'points_history_user'        => 30.0,
+		'rate_limit_today_count'     => 15.0,
+		'convert_balance_lookup'     => 5.0,
+
+		// ── Added 1.6.4 (S-03). The budgets above only ever covered the paths
+		// we already knew were fast. Everything below is a path the scale
+		// register flagged as unmeasured — which is precisely where a large
+		// site breaks. A budget here is not a guess: it is the ceiling above
+		// which the surface is unusable at 100k members.
+		//
+		// TWO OF THESE ARE EXPECTED TO FAIL ON A SEEDED DATASET TODAY. That is
+		// the point — a gate that only measures what already passes proves
+		// nothing. They turn green when S-01 and the idx_badge_id ALTER land.
+
+		// S-01: badge rarity aggregation. COUNT(DISTINCT user_id) GROUP BY over
+		// wb_gam_user_badges + COUNT(*) over wp_users, uncached, on EVERY
+		// request that renders a badge. Big scan, small result: a LIMIT cannot
+		// help it — only caching or materialisation can.
+		'badge_rarity_map'           => 50.0,
+
+		// max_earners guard. COUNT(*) ... WHERE badge_id = %s, on the AWARD hot
+		// path, and wb_gam_user_badges has NO index leading with badge_id
+		// (PK(id), UNIQUE(user_id,badge_id), idx_expires_at) -- a composite
+		// UNIQUE cannot serve a badge_id-only predicate. Full table scan of an
+		// EVENT-scaled table. Fixed by adding idx_badge_id.
+		'badge_max_earners_count'    => 20.0,
+
+		// 1.6.4 notifications queue: the single reader every surface goes
+		// through (footer, heartbeat, REST, SSE). Regression here is a toast
+		// flood, which is what #10086171887 was.
+		'notifications_fetch_unseen' => 10.0,
+
+		// Member's earned-badge list -- read on every profile/hub render.
+		'earned_badges_user'         => 15.0,
+
+		// Streak read: PK lookup on a MEMBER-scaled table. Should be trivially
+		// fast; budgeted so a regression to a scan is caught.
+		'streak_read_user'           => 5.0,
 	);
 
 	/**
@@ -152,8 +188,123 @@ final class ScaleCommand {
 			 ON DUPLICATE KEY UPDATE total = VALUES(total)"
 		);
 
+		// ── Seed the OTHER tables the budgets measure ────────────────────────
+		//
+		// Until 1.6.4 the seed populated wb_gam_points (and user_totals) and nothing
+		// else. So every budget touching wb_gam_user_badges, wb_gam_streaks or
+		// wb_gam_notifications_queue was timed against a table holding a few hundred
+		// rows and passed in well under a millisecond — a green light that measured
+		// nothing. A benchmark that only seeds the tables it already knows are fast
+		// is not a gate, it is a formality.
+		//
+		// badge rows are what make badge_rarity_map and badge_max_earners_count real:
+		// both aggregate over wb_gam_user_badges, and the idx_badge_id fix is
+		// meaningless to measure on 370 rows.
+		$badge_ids = (array) $wpdb->get_col( "SELECT id FROM {$wpdb->prefix}wb_gam_badge_defs LIMIT 20" );
+		if ( empty( $badge_ids ) ) {
+			$badge_ids = array( 'scale_seed_badge' );
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->insert(
+				$wpdb->prefix . 'wb_gam_badge_defs',
+				array(
+					'id'          => 'scale_seed_badge',
+					'name'        => 'Scale Seed Badge',
+					'description' => 'Synthetic badge for the scale benchmark.',
+				),
+				array( '%s', '%s', '%s' )
+			);
+		}
+
+		$badge_rows = 0;
+		for ( $u = 0; $u < $user_count; $u += $batch_size ) {
+			$values = array();
+			$args   = array();
+			$slice  = min( $batch_size, $user_count - $u );
+			for ( $i = 0; $i < $slice; $i++ ) {
+				$uid = $base_uid + $u + $i;
+				// A few badges each, so COUNT(DISTINCT user_id) GROUP BY badge_id has
+				// real cardinality on both axes.
+				foreach ( array_slice( $badge_ids, 0, 3 ) as $bid ) {
+					$values[] = '(%d, %s, %s)';
+					array_push( $args, $uid, (string) $bid, gmdate( 'Y-m-d H:i:s' ) );
+				}
+			}
+			if ( ! empty( $values ) ) {
+				// phpcs:disable WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+				$wpdb->query(
+					$wpdb->prepare(
+						"INSERT IGNORE INTO {$wpdb->prefix}wb_gam_user_badges (user_id, badge_id, earned_at) VALUES " . implode( ',', $values ),
+						...$args
+					)
+				);
+				// phpcs:enable
+				$badge_rows += count( $values );
+			}
+		}
+
+		// Streaks: one row per member (MEMBER-scaled), so streak_read_user is a PK
+		// lookup against a real 10k-row table rather than a 298-row one.
+		for ( $u = 0; $u < $user_count; $u += $batch_size ) {
+			$values = array();
+			$args   = array();
+			$slice  = min( $batch_size, $user_count - $u );
+			for ( $i = 0; $i < $slice; $i++ ) {
+				$uid      = $base_uid + $u + $i;
+				$values[] = '(%d, %d, %d, %s)';
+				array_push( $args, $uid, wp_rand( 1, 40 ), wp_rand( 1, 90 ), gmdate( 'Y-m-d' ) );
+			}
+			// phpcs:disable WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->query(
+				$wpdb->prepare(
+					"INSERT IGNORE INTO {$wpdb->prefix}wb_gam_streaks (user_id, current_streak, longest_streak, last_active) VALUES " . implode( ',', $values ),
+					...$args
+				)
+			);
+			// phpcs:enable
+		}
+
+		// Notifications queue: EVENT-scaled. notifications_fetch_unseen must be timed
+		// against a table with real depth, since a toast flood (Basecamp #10086171887)
+		// is exactly what happens when this read path degrades.
+		$notif_users = min( $user_count, 2000 );
+		for ( $u = 0; $u < $notif_users; $u += $batch_size ) {
+			$values = array();
+			$args   = array();
+			$slice  = min( $batch_size, $notif_users - $u );
+			for ( $i = 0; $i < $slice; $i++ ) {
+				$uid = $base_uid + $u + $i;
+				for ( $e = 0; $e < 5; $e++ ) {
+					$values[] = '(%d, %s, %s, %s)';
+					array_push( $args, $uid, 'points', '{"type":"points","message":"seed"}', gmdate( 'Y-m-d H:i:s' ) );
+				}
+			}
+			// phpcs:disable WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->query(
+				$wpdb->prepare(
+					"INSERT INTO {$wpdb->prefix}wb_gam_notifications_queue (user_id, event_type, payload_json, created_at) VALUES " . implode( ',', $values ),
+					...$args
+				)
+			);
+			// phpcs:enable
+		}
+
+		// Build the leaderboard snapshot over the seeded data.
+		//
+		// The benchmark has a `leaderboard_snapshot` budget, and on production the
+		// 5-minute cron keeps that snapshot fresh — so the read path being measured
+		// is the snapshot read. Without this, the seeded members are absent from the
+		// snapshot, read_from_snapshot() correctly declines to serve a stale board,
+		// and the benchmark silently measures the LIVE-AGGREGATE FALLBACK instead:
+		// 46ms against a 20ms budget, versus 2.27ms once the snapshot exists.
+		//
+		// A benchmark that measures a different code path depending on when cron last
+		// ran is not a gate, it is a coin toss. Seeding must leave the site in the
+		// state production is actually in.
+		\WBGam\Engine\LeaderboardEngine::write_snapshot();
+
 		$elapsed = round( microtime( true ) - $started, 1 );
-		\WP_CLI::success( "Seeded {$inserted} ledger rows in {$elapsed}s." );
+		\WP_CLI::success( "Seeded {$inserted} ledger rows + {$badge_rows} badge rows + {$user_count} streaks in {$elapsed}s." );
+		\WP_CLI::line( 'Leaderboard snapshot built (the benchmark measures the snapshot read path).' );
 		\WP_CLI::line( 'Cleanup: wp wb-gamification scale teardown' );
 	}
 
@@ -177,7 +328,17 @@ final class ScaleCommand {
 		$d3 = (int) $wpdb->query( "DELETE FROM {$wpdb->prefix}wb_gam_user_totals WHERE user_id >= 1000000" );
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$d4 = (int) $wpdb->query( "DELETE FROM {$wpdb->prefix}wb_gam_leaderboard_cache WHERE user_id >= 1000000" );
-		\WP_CLI::success( "Removed: points={$d1}, events={$d2}, user_totals={$d3}, leaderboard_cache={$d4}" );
+		// Tables added to the seed in 1.6.4 — teardown MUST track the seed, or a
+		// benchmark run leaves synthetic badges and streaks on the site forever.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$d5 = (int) $wpdb->query( "DELETE FROM {$wpdb->prefix}wb_gam_user_badges WHERE user_id >= 1000000" );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$d6 = (int) $wpdb->query( "DELETE FROM {$wpdb->prefix}wb_gam_streaks WHERE user_id >= 1000000" );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$d7 = (int) $wpdb->query( "DELETE FROM {$wpdb->prefix}wb_gam_notifications_queue WHERE user_id >= 1000000" );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$wpdb->query( "DELETE FROM {$wpdb->prefix}wb_gam_badge_defs WHERE id = 'scale_seed_badge'" );
+		\WP_CLI::success( "Removed: points={$d1}, events={$d2}, user_totals={$d3}, leaderboard_cache={$d4}, user_badges={$d5}, streaks={$d6}, notifications={$d7}" );
 	}
 
 	/**
@@ -273,43 +434,146 @@ final class ScaleCommand {
 			}
 		);
 
+		// ── Added 1.6.4 (S-03): the surfaces the register flagged as unmeasured ──
+
+		// S-01. Mirrors BadgesController::get_rarity_map() (private). Big scan,
+		// small result: the cost is the GROUP BY over an EVENT-scaled table plus
+		// a COUNT(*) over wp_users, on every request that renders a badge.
+		$results['badge_rarity_map'] = self::time_op(
+			function () use ( $wpdb ) {
+				wp_cache_flush();
+				$wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->users}" );
+				return $wpdb->get_results(
+					"SELECT badge_id, COUNT(DISTINCT user_id) AS earner_count
+					   FROM {$wpdb->prefix}wb_gam_user_badges
+					  GROUP BY badge_id",
+					ARRAY_A
+				);
+			}
+		);
+
+		// max_earners guard on the AWARD hot path. wb_gam_user_badges has no
+		// index leading with badge_id, so this is a full table scan today.
+		$results['badge_max_earners_count'] = self::time_op(
+			function () use ( $wpdb ) {
+				wp_cache_flush();
+				$badge = (string) $wpdb->get_var( "SELECT badge_id FROM {$wpdb->prefix}wb_gam_user_badges LIMIT 1" );
+				return (int) $wpdb->get_var(
+					$wpdb->prepare(
+						"SELECT COUNT(*) FROM {$wpdb->prefix}wb_gam_user_badges WHERE badge_id = %s",
+						$badge
+					)
+				);
+			}
+		);
+
+		// 1.6.4 notifications reader — every toast surface goes through this.
+		$results['notifications_fetch_unseen'] = self::time_op(
+			function () use ( $uid ) {
+				wp_cache_flush();
+				return \WBGam\Engine\NotificationBridge::fetch_unseen( $uid, 0 );
+			}
+		);
+
+		$results['earned_badges_user'] = self::time_op(
+			function () use ( $uid ) {
+				wp_cache_flush();
+				return \WBGam\Engine\BadgeEngine::get_user_earned_badge_ids( $uid );
+			}
+		);
+
+		$results['streak_read_user'] = self::time_op(
+			function () use ( $uid, $wpdb ) {
+				wp_cache_flush();
+				return $wpdb->get_row(
+					$wpdb->prepare( "SELECT * FROM {$wpdb->prefix}wb_gam_streaks WHERE user_id = %d", $uid ),
+					ARRAY_A
+				);
+			}
+		);
+
 		// Render.
 		$failures = 0;
-		\WP_CLI::line( str_pad( 'Query', 28 ) . str_pad( 'Time', 12 ) . str_pad( 'Budget', 12 ) . 'Status' );
-		\WP_CLI::line( str_repeat( '─', 70 ) );
+		$failed   = array();
+		\WP_CLI::line( str_pad( 'Query', 30 ) . str_pad( 'Time', 12 ) . str_pad( 'Budget', 12 ) . 'Status' );
+		\WP_CLI::line( str_repeat( '─', 72 ) );
 		foreach ( $results as $key => $ms ) {
 			$budget = self::BUDGETS_MS[ $key ];
 			$pass   = $ms <= $budget;
 			if ( ! $pass ) {
 				++$failures;
+				$failed[] = $key;
 			}
 			\WP_CLI::line(
 				sprintf(
 					'%s%s%s%s',
-					str_pad( $key, 28 ),
+					str_pad( $key, 30 ),
 					str_pad( number_format( $ms, 2 ) . 'ms', 12 ),
 					str_pad( number_format( $budget, 1 ) . 'ms', 12 ),
 					$pass ? "\033[32mPASS\033[0m" : "\033[31mFAIL (over by " . number_format( $ms - $budget, 2 ) . "ms)\033[0m"
 				)
 			);
 		}
-		\WP_CLI::line( str_repeat( '─', 70 ) );
+		\WP_CLI::line( str_repeat( '─', 72 ) );
+
+		// S-02: write the machine-readable result the release gate reads. Without
+		// this the benchmark only runs when a human remembers to type it, which
+		// means the 100k claim is re-verified never.
+		$report = array(
+			'version'      => defined( 'WB_GAM_VERSION' ) ? WB_GAM_VERSION : 'unknown',
+			'generated_at' => gmdate( 'c' ),
+			'dataset'      => array(
+				'ledger_rows' => $ledger_rows,
+				'users'       => $user_rows,
+				'seeded'      => $uid >= 1000000,
+			),
+			'results_ms'   => $results,
+			'budgets_ms'   => self::BUDGETS_MS,
+			'failed'       => $failed,
+			'pass'         => 0 === $failures,
+		);
+		$path   = WB_GAM_PATH . 'audit/.last-scale-pass.json';
+		file_put_contents( $path, wp_json_encode( $report, JSON_PRETTY_PRINT ) . "\n" ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
+		\WP_CLI::line( 'Wrote audit/.last-scale-pass.json (read by the release gate).' );
+
 		if ( 0 === $failures ) {
 			\WP_CLI::success( 'All queries within budget — 100k-ready against this dataset.' );
 		} else {
-			\WP_CLI::error( "{$failures} query(s) over budget — investigate before shipping to a large site." );
+			\WP_CLI::error( "{$failures} query(s) over budget (" . implode( ', ', $failed ) . ') — investigate before shipping to a large site.' );
 		}
 	}
 
 	/**
-	 * Time a closure in milliseconds.
+	 * Time a closure and return the MEDIAN of several runs, in milliseconds.
+	 *
+	 * A single-shot timing is not a measurement, it is a sample of one — and it made
+	 * this gate flaky. Benchmarking right after seeding 100k rows caught MySQL still
+	 * busy and reported `get_total_pk` at 9.06ms against a 5ms budget; the median of
+	 * seven runs of the same query was 0.08ms. A gate that fails on a cold outlier
+	 * gets ignored, and an ignored gate is worse than no gate.
+	 *
+	 * The median (not the mean) so one slow outlier cannot drag the result, and not
+	 * the minimum so we are not quoting a best case we would never see in production.
+	 * Each run still flushes the object cache inside the closure, so every sample is
+	 * a cold read.
+	 *
+	 * @since 1.6.4 Median of RUNS samples. Was a single shot.
 	 *
 	 * @param callable $op Closure to time.
-	 * @return float Milliseconds elapsed.
+	 * @return float Median milliseconds.
 	 */
 	private static function time_op( callable $op ): float {
-		$started = microtime( true );
-		$op();
-		return round( ( microtime( true ) - $started ) * 1000, 3 );
+		$runs    = 5;
+		$samples = array();
+
+		for ( $i = 0; $i < $runs; $i++ ) {
+			$started = microtime( true );
+			$op();
+			$samples[] = ( microtime( true ) - $started ) * 1000;
+		}
+
+		sort( $samples );
+
+		return round( $samples[ (int) floor( $runs / 2 ) ], 3 );
 	}
 }

@@ -1390,16 +1390,16 @@
     },
     {
       "name": "{prefix}wb_gam_notifications_queue",
-      "purpose": "Durable, globally-monotonic per-user notification queue (id, user_id, event_type, payload_json, created_at). Replaced the transient-based queue that was lost on wp_cache_flush and stranded per-consumer cursors. Drained by SSEController (SSE long-poll) or WP Heartbeat; pruned daily by cron.",
+      "purpose": "THE notification store - single source of truth (id, user_id, event_type, payload_json, created_at). Until 1.6.4 every push also wrote a parallel transient with an opposite bound (transient capped at 50, table unbounded) and a resetting id scheme; 1.6.4 removed the transient, so there is now one store, one writer (NotificationBridge::push), and ONE reader (NotificationBridge::fetch_unseen) shared by every surface - footer seed, WP Heartbeat and REST poll (cursor in user_meta via read_pending) and the SSE stream (cursor from the request). Bounded per user at QUEUE_MAX_EVENTS (50) on write by trim(), so it cannot grow without limit even where WP-Cron never fires. Reads return at most BURST_MAX_EVENTS (5) NEWEST events and hand callers the head of the backlog to park their cursor on, so a backlog is skipped, never replayed. Three distinct deleters: trim (the bound), prune_queue (daily retention, batched loop), and a one-time legacy purge of type='skip' rows.",
       "primary_key": "id",
       "indexes": [
         "idx_user_id",
         "idx_created_at"
       ],
-      "introduced": "1.5.0 (v2.2 durability + SSE-readiness; created on existing installs by DbUpgrader::ensure_notifications_queue_table, feature-flag gated on wb_gam_feature_notifications_queue_v1)",
+      "introduced": "1.5.0 (v2.2 durability + SSE-readiness; created by DbUpgrader::ensure_notifications_queue_table, feature-flag gated on wb_gam_feature_notifications_queue_v1). 1.6.4 made it the ONLY store (transient dual-write, its array_slice bound, its dead read branch and the cursor-reconciliation hack all removed), added the per-user write bound, the batched prune loop, the shared newest-first burst-capped reader, and a one-time purge of legacy type='skip' rows (DbUpgrader::ensure_notifications_skip_purge, gated on wb_gam_feature_notifications_skip_purge_v1).",
       "three_entry_point": {
         "status": "satisfied",
-        "api": "WBGam\\API\\SSEController \u2014 GET /wb-gamification/v1/stream (SSE) plus the WP Heartbeat cursor read; both call fetch_pending against this table.",
+        "api": "WBGam\\API\\SSEController - GET /wb-gamification/v1/stream (SSE) plus the WP Heartbeat cursor read; both drive NotificationBridge::fetch_unseen (the single reader) - SSE with a request cursor, heartbeat/REST with a user_meta cursor.",
         "backend": "WBGam\\Engine\\NotificationBridge enqueues rows; admin realtime placement/transport controlled via Settings > Realtime.",
         "frontend": "Member-facing realtime toasts \u2014 drained client-side via SSE/Heartbeat and rendered as notifications to the logged-in member."
       }
@@ -1991,7 +1991,7 @@
     {
       "name": "wb_gam_award_skipped",
       "type": "action",
-      "purpose": "",
+      "purpose": "Fired when an award is skipped (cooldown / daily_cap / weekly_cap / not_repeatable / excluded / internal vetoes). NO member- or admin-facing notification is produced: the plugin registers no core listener and ships no skip toast. A member browsing the site did not ask why an invisible points increment did not happen, and a points cap is an anti-farming guard (the site's business, not the member's). Skip toasts shipped 1.4.1-1.6.2, were made opt-in in 1.6.3, and the mechanism plus the wb_gam_award_skip_toast_reasons filter were removed in 1.6.4. The reason IS surfaced to API callers who explicitly fired the event: POST /events captures this action for the duration of the request and returns {skipped:{reason,message,context}} alongside processed:false, with copy from PointsEngine::skip_reason_message(). Site owners can also hook it to log or count skips.",
       "fired_at": [
         "src/Engine/PointsEngine.php:179",
         "src/Engine/PointsEngine.php:194",
@@ -2003,7 +2003,7 @@
         "src/Integrations/Jetonomy/JetonomyIntegration.php:106"
       ],
       "consumed_by": [
-        "src/Engine/NotificationBridge.php:156 array( __CLASS__"
+        "src/API/EventsController.php::create_item (request-scoped, API response only)"
       ]
     },
     {
@@ -2523,17 +2523,6 @@
         "src/Engine/ActionSchedulerCleaner.php:187"
       ],
       "consumed_by": []
-    },
-    {
-      "name": "wb_gam_award_skip_toast_reasons",
-      "type": "filter",
-      "purpose": "",
-      "fired_at": [
-        "src/Engine/NotificationBridge.php:208"
-      ],
-      "consumed_by": [
-        "src/Engine/NotificationBridge.php:200 fn("
-      ]
     },
     {
       "name": "wb_gam_badge_condition",
@@ -3205,6 +3194,21 @@
         "integrations/wpmediaverse.php:464"
       ],
       "consumed_by": []
+    },
+    {
+      "name": "wb_gam_email_footer",
+      "type": "action",
+      "purpose": "Fired at the foot of every transactional email template. Receives the template basename and its defined vars, so a site owner can append content (unsubscribe copy, branding, legal) to any gamification email without overriding the template.",
+      "fired_at": [
+        "templates/emails/redemption-confirmed.php:117",
+        "templates/emails/leaderboard-nudge.php:74"
+      ],
+      "args_count": 2,
+      "args_signature": [
+        "string $template_basename",
+        "array $vars"
+      ],
+      "consumed_by": []
     }
   ],
   "interactivity": [],
@@ -3658,6 +3662,20 @@
       "interval": "daily",
       "handler": "NotificationBridge::prune_queue",
       "where": "src/Engine/NotificationBridge.php:146"
+    },
+    {
+      "hook": "wb_gam_nudge_single_user",
+      "schedule": "single (Action Scheduler)",
+      "handler": "src/Engine/LeaderboardNudge.php:51 (AS_SINGLE_HOOK)",
+      "purpose": "Action Scheduler SINGLE action - one queued job per member for the weekly leaderboard nudge, so a 100k-member fan-out is spread across the queue instead of one cron tick.",
+      "scheduler": "action_scheduler"
+    },
+    {
+      "hook": "wb_gam_webhook_retry",
+      "schedule": "single (Action Scheduler)",
+      "handler": "src/Engine/WebhookDispatcher.php:35 (AS_RETRY_ACTION)",
+      "purpose": "Action Scheduler SINGLE action - retries one failed outbound webhook with backoff. Scheduled by WebhookDispatcher on delivery failure.",
+      "scheduler": "action_scheduler"
     }
   ],
   "wp_cli": [
@@ -3825,11 +3843,11 @@
     ]
   },
   "generated": {
-    "at": "2026-06-02T07:30:19Z",
+    "at": "2026-07-12T00:00:00Z",
     "from": "wp-plugin-onboard --refresh \u2014 v1.4.0 post-release sweep. Ground-truth re-scan against today diff: 99 plugin hooks (53 actions + 46 filters), 23 tables, 19 blocks, 17 shortcodes, 10 distinct cron hooks, 10 WP-CLI commands, 13 admin pages, 10 declared caps, 24 frontend CSS files + 19 frontend JS files. Sub-arrays (.hooks_fired[], .services[], .frontend_assets) carry over from 2026-05-06 by reference; coverage gate documents the gap. v2.2 schema preserved. See audit/wppqa-baseline-2026-05-27/SUMMARY.md and audit/ISSUES-2026-05-27.yaml.",
-    "branch": "main",
+    "branch": "1.6.4",
     "schema_version": "v2.2",
-    "scan_scope": "gruntfile",
+    "scan_scope": "src/ + templates/ + integrations/ (202 PHP files); libs/, vendor/, dist/, build/ excluded",
     "scan_path": ".",
     "php_file_count": 111,
     "coverage": {
@@ -3845,16 +3863,16 @@
         "gap_pct": 0
       },
       "actions_fired": {
-        "manifest": 43,
-        "baseline": 53,
-        "gap_pct": 18.899999999999999,
-        "note": "Manifest .hooks_fired[] holds 43 action entries; ground-truth scan finds 53 unique wb_gam_ do_action sites. +10 new since 2026-05-06: wb_gam_login_bonus_claimed, wb_gam_submission_approved, wb_gam_submission_created, wb_gam_submission_rejected, wb_gam_point_type_converted, wb_gam_as_cleaned, wb_gam_after_save_cohort_settings, wb_gam_cohort_settings_saved, wb_gam_cohort_outcome, wb_gam_credential_expired. Drift > 5% \u2014 re-enumeration deferred to next dedicated refresh."
+        "manifest": 66,
+        "baseline": 66,
+        "gap_pct": 0,
+        "note": "Re-verified 2026-07-12 with a comment-stripped, multi-line-aware, per-file-const-resolving scan across src/ + templates/ + integrations/: ZERO stale, ZERO missing. The previous 'drift > 5%' note was a scan artefact (naive single-line grep, missing the integrations/ dir, and a global const table that collapsed every class's CRON_HOOK to one value)."
       },
       "filters_fired": {
-        "manifest": 12,
-        "baseline": 46,
-        "gap_pct": 73.900000000000006,
-        "note": "Manifest .hooks_fired[] holds 12 filter entries; ground-truth scan finds 46 unique wb_gam_ apply_filters sites. Massive growth from per-block data filters (14 wb_gam_block_*_data filters added in block standard migration). Major drift \u2014 re-enumeration deferred."
+        "manifest": 76,
+        "baseline": 76,
+        "gap_pct": 0,
+        "note": "Re-verified 2026-07-12 with a comment-stripped, multi-line-aware, per-file-const-resolving scan across src/ + templates/ + integrations/: ZERO stale, ZERO missing. The previous 'drift > 5%' note was a scan artefact (naive single-line grep, missing the integrations/ dir, and a global const table that collapsed every class's CRON_HOOK to one value)."
       },
       "tables": {
         "manifest": 26,
@@ -3875,10 +3893,10 @@
         "note": "Manifest has 15; ShortcodeHandler registers 17 add_shortcode call sites. +2 since 2026-05-06: give_kudos, my_rewards."
       },
       "cron": {
-        "manifest": 9,
-        "baseline": 10,
-        "gap_pct": 10,
-        "note": "Manifest .cron[] has 9; ground truth = 10 distinct CRON_HOOK constants (wb_gam_weekly_nudge, wb_gam_weekly_email, wb_gam_as_cleanup, wb_gam_prune_logs, wb_gam_status_retention_check, wb_gam_credential_expiry_check, wb_gam_tenure_check, wb_gam_cohort_assign, wb_gam_cohort_process, wb_gam_leaderboard_snapshot). Missing: wb_gam_as_cleanup (ActionSchedulerCleaner, v1.4.0)."
+        "manifest": 16,
+        "baseline": 16,
+        "gap_pct": 0,
+        "note": "Re-verified 2026-07-12. Includes Action Scheduler hooks (as_schedule_recurring_action / as_schedule_single_action), which a wp_schedule_event-only grep misses entirely."
       },
       "wp_cli": {
         "manifest": 10,
@@ -3916,7 +3934,8 @@
       }
     },
     "last_pr_merged": "v1.5.3 - site-owner controls (exclusion, members roster, bulk award, settings import/export, rebuild-leaderboard)",
-    "since_last_refresh": "1.5.3 complete: all 8 site-owner controls. p2 adds Modules toggles (ModuleToggles), point expiry/decay (PointsExpiry, daily cron wb_gam_points_decay), and reset-all-member-progress (ProgressReset + POST tools/reset-progress). +1 REST endpoint, +3 services, +1 cron hook, +1 filter (wb_gam_module_enabled), +2 actions (wb_gam_progress_reset, wb_gam_points_decayed)."
+    "since_last_refresh": "1.5.3 complete: all 8 site-owner controls. p2 adds Modules toggles (ModuleToggles), point expiry/decay (PointsExpiry, daily cron wb_gam_points_decay), and reset-all-member-progress (ProgressReset + POST tools/reset-progress). +1 REST endpoint, +3 services, +1 cron hook, +1 filter (wb_gam_module_enabled), +2 actions (wb_gam_progress_reset, wb_gam_points_decayed).",
+    "manifest_refresh": "agent-enumeration-only - bin/write-manifest.mjs CANNOT be used on this plugin: it zeroes shortcodes (0 vs 17 real, registered via src/Engine/ShortcodeHandler.php wrapper), collapses cron (1 vs 16, Action Scheduler + self::CONST hooks), and undercounts REST (62 vs 76, routes built by concatenation not literals). Restore from git and enumerate by hand if it is ever run."
   },
   "wp_cli_commands": [
     {
@@ -4049,16 +4068,22 @@
       "gap_pct": 0
     },
     "actions_fired": {
-      "baseline": 53,
-      "gap_pct": 0
+      "baseline": 66,
+      "gap_pct": 0,
+      "manifest": 66,
+      "note": "Re-verified 2026-07-12 with a comment-stripped, multi-line-aware, per-file-const-resolving scan across src/ + templates/ + integrations/: ZERO stale, ZERO missing. The previous 'drift > 5%' note was a scan artefact (naive single-line grep, missing the integrations/ dir, and a global const table that collapsed every class's CRON_HOOK to one value)."
     },
     "filters_fired": {
-      "baseline": 46,
-      "gap_pct": 0
+      "baseline": 76,
+      "gap_pct": 0,
+      "manifest": 76,
+      "note": "Re-verified 2026-07-12 with a comment-stripped, multi-line-aware, per-file-const-resolving scan across src/ + templates/ + integrations/: ZERO stale, ZERO missing. The previous 'drift > 5%' note was a scan artefact (naive single-line grep, missing the integrations/ dir, and a global const table that collapsed every class's CRON_HOOK to one value)."
     },
     "cron": {
-      "baseline": 10,
-      "gap_pct": 0
+      "baseline": 16,
+      "gap_pct": 0,
+      "manifest": 16,
+      "note": "Re-verified 2026-07-12. Includes Action Scheduler hooks (as_schedule_recurring_action / as_schedule_single_action), which a wp_schedule_event-only grep misses entirely."
     },
     "capabilities": {
       "baseline": 10,

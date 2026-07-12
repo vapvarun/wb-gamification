@@ -82,6 +82,32 @@ final class ManualAwardPage {
 				),
 			)
 		);
+
+		// Searchable member picker. Replaces wp_dropdown_users(), which rendered
+		// one <option> per member and made this page fatal on a large site.
+		wp_enqueue_script(
+			'wb-gam-admin-user-picker',
+			plugins_url( 'assets/js/admin-user-picker.js', WB_GAM_FILE ),
+			array( 'wb-gam-admin-rest-utils' ),
+			WB_GAM_VERSION,
+			true
+		);
+		wp_localize_script(
+			'wb-gam-admin-user-picker',
+			'wbGamManualAward',
+			array(
+				'restUrl' => esc_url_raw( rest_url( 'wb-gamification/v1' ) ),
+				'nonce'   => wp_create_nonce( 'wp_rest' ),
+				'i18n'    => array(
+					'typeToSearch' => __( 'Type at least 2 characters to search', 'wb-gamification' ),
+					'searching'    => __( 'Searching…', 'wb-gamification' ),
+					'noResults'    => __( 'No members found', 'wb-gamification' ),
+					'selectUser'   => __( '- Select a user -', 'wb-gamification' ),
+					/* translators: %d: number of matching members found. */
+					'resultsFound' => __( '%d members found', 'wb-gamification' ),
+				),
+			)
+		);
 	}
 
 	/**
@@ -200,15 +226,40 @@ final class ManualAwardPage {
 								</th>
 								<td>
 									<?php
-									wp_dropdown_users(
-										array(
-											'name' => 'user_id',
-											'id'   => 'wb_gam_award_user',
-											'show_option_none' => __( '- Select a user -', 'wb-gamification' ),
-											'option_none_value' => '0',
-										)
-									);
+									/*
+										 * Searchable picker, NOT wp_dropdown_users().
+										 *
+										 * wp_dropdown_users() takes no `number` in its default form: it
+										 * loads EVERY user on the site and renders one <option> each. On a
+										 * 100k-member community that is a full scan of wp_users and a
+										 * multi-megabyte <select> - the page does not return. And it is
+										 * unusable long before it is fatal: nobody finds a person by
+										 * scrolling 100,000 options.
+										 *
+										 * assets/js/admin-user-picker.js queries the already-paginated
+										 * GET /members?search=&per_page=20 as the admin types, so the cost
+										 * is bounded by what was asked for, not by how many members exist.
+										 *
+										 * The <select> still carries the `user_id` the form submits, so with
+										 * JS unavailable the field is an empty control that blocks submission
+										 * - it cannot silently award points to the wrong member.
+										 */
 									?>
+										<input
+											type="search"
+											id="wb_gam_award_user_search"
+											class="regular-text"
+											autocomplete="off"
+											placeholder="<?php esc_attr_e( 'Search by name, username or email...', 'wb-gamification' ); ?>"
+											aria-describedby="wb_gam_award_user_status"
+										/>
+										<label for="wb_gam_award_user" class="screen-reader-text">
+											<?php esc_html_e( 'Matching members', 'wb-gamification' ); ?>
+										</label>
+										<select name="user_id" id="wb_gam_award_user">
+											<option value="0"><?php esc_html_e( 'Type at least 2 characters to search', 'wb-gamification' ); ?></option>
+										</select>
+										<p id="wb_gam_award_user_status" class="description" aria-live="polite"></p>
 									<p class="description"><?php esc_html_e( 'Select the member who will receive (or lose) points.', 'wb-gamification' ); ?></p>
 								</td>
 							</tr>

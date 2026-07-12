@@ -26,6 +26,8 @@
 
 namespace WBGam\API;
 
+use WBGam\Engine\NotificationBridge;
+
 defined( 'ABSPATH' ) || exit;
 
 final class SSEController {
@@ -323,25 +325,31 @@ final class SSEController {
 				break;
 			}
 
-			$rows = self::fetch_pending( $user_id, $last_id );
+			// THE queue reader — the same one the footer seed, the heartbeat tick
+			// and the REST poll use. SSE differs only in where its cursor lives
+			// (this request's `last_event_id`, not user_meta), so it passes one in
+			// rather than owning a second copy of the query. Returns the NEWEST
+			// unseen events, capped at the toast burst; advancing $last_id to the
+			// final row therefore parks us at the head of the backlog, so a member
+			// who reconnects to 30,000 pending events is caught up in one poll
+			// instead of being streamed 50 stale toasts every 2 seconds.
+			$rows = NotificationBridge::fetch_unseen( $user_id, $last_id );
 
 			foreach ( $rows as $row ) {
 				$last_id       = (int) $row['id'];
 				$last_event_at = time();
 
-				// Normalize the payload `_id` to the durable table row id
-				// before emitting. The footer seed + heartbeat both stamp
-				// the table id (NotificationBridge::read_pending_from_table),
-				// and the client dedupes toasts by `_id`. Streaming the raw
-				// payload_json here would send the original push `_id`, so
-				// the SAME event would arrive over SSE and over the footer/
-				// heartbeat path with two different keys — and render twice.
-				$payload = json_decode( (string) $row['payload_json'], true );
-				if ( is_array( $payload ) ) {
+				// The client dedupes toasts by `_id`, and every reader stamps the
+				// authoritative table row id — so the same event arriving over SSE
+				// and over the footer/heartbeat path carries one key and renders once.
+				$payload = $row['payload'];
+				if ( ! empty( $payload ) ) {
 					$payload['_id'] = $last_id;
 					$data           = (string) wp_json_encode( $payload );
 				} else {
-					$data = (string) $row['payload_json'];
+					// Undecodable row: emit an empty object rather than nothing, so
+					// the id still advances the client's cursor past it.
+					$data = '{}';
 				}
 
 				// SSE wire format: `id`, `event`, `data`. Each terminated
@@ -388,29 +396,10 @@ final class SSEController {
 		exit;
 	}
 
-	/**
-	 * Pull queued notifications for a user, ordered by id ascending.
-	 *
-	 * Bounded by LIMIT so a sudden 1000-event backlog can't ship in
-	 * a single SSE write. Subsequent loop iterations pick up the rest.
-	 *
-	 * @return array<int, array{id: int, event_type: string, payload_json: string}>
-	 */
-	private static function fetch_pending( int $user_id, int $last_id ): array {
-		global $wpdb;
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$rows = $wpdb->get_results(
-			$wpdb->prepare(
-				"SELECT id, event_type, payload_json
-				   FROM {$wpdb->prefix}wb_gam_notifications_queue
-				  WHERE user_id = %d AND id > %d
-				  ORDER BY id ASC
-				  LIMIT 50",
-				$user_id,
-				$last_id
-			),
-			ARRAY_A
-		);
-		return is_array( $rows ) ? $rows : array();
-	}
+	// The queue is read through NotificationBridge::fetch_unseen() — this
+	// controller owns no query of its own. It previously kept a private
+	// fetch_pending() with its own `ORDER BY id ASC LIMIT 50`, which is exactly
+	// how the backlog-replay bug survived on this surface while the footer path
+	// was being fixed: one behaviour, two implementations, and only one of them
+	// got the fix.
 }

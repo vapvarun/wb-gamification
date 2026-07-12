@@ -91,15 +91,56 @@ Also emit a Basecamp draft for every failure using the template in the **Failure
 
 Delete leftover test data from prior runs. Exact WP-CLI eval is permitted here because this is infrastructure, not a feature check.
 
+Cleanup is keyed on the **fixture users**, not on a marker string in the row.
+
+`wb_gam_points` is `(id, event_id, user_id, action_id, points, point_type, object_id,
+created_at)` — it has no `reason` and no `metadata` column, so there is nothing in a
+ledger row to pattern-match on. (Until 1.6.4 this block tried to `DELETE ... WHERE reason
+LIKE '%journey_smoke%'`, which matched nothing, cleaned nothing, and logged a
+`Unknown column 'reason'` database error on every single run.)
+
+Do NOT "fix" that by deleting ledger rows whose `event_id` no longer resolves. Event
+retention prunes `wb_gam_events` on a live site while the points stay — orphan-deleting
+would destroy real member balances.
+
 ```bash
-WP_PATH="/Users/varundubey/Local Sites/wb-gamification/app/public"
+# Set WP_PATH to whichever site the plugin is installed in on THIS machine.
+WP_PATH="/Users/vapvarun/Local Sites/buddynext-dev/app/public"
 wp --path="$WP_PATH" eval '
 global $wpdb;
-$wpdb->query("DELETE FROM {$wpdb->prefix}wb_gam_events WHERE metadata LIKE \"%journey_smoke_test%\" OR metadata LIKE \"%agent_runbook%\"");
-$wpdb->query("DELETE FROM {$wpdb->prefix}wb_gam_points WHERE reason LIKE \"%journey_smoke%\" OR reason LIKE \"%agent_runbook%\" OR reason = \"tier4_test\"");
-$wpdb->query("DELETE FROM {$wpdb->prefix}wb_gam_kudos WHERE message LIKE \"%smoke-%\"");
+
+// Every table this walk writes to is user-scoped, so the fixture users are the key.
+$logins = array( "qa_admin", "qa_editor", "qa_member", "qa_member2", "qa_external" );
+$ids    = array();
+foreach ( $logins as $login ) {
+    $u = get_user_by( "login", $login );
+    if ( $u ) {
+        $ids[] = (int) $u->ID;
+    }
+}
+
+if ( $ids ) {
+    $in = implode( ",", array_map( "intval", $ids ) );
+
+    // These are all keyed on user_id.
+    $tables = array(
+        "wb_gam_points",
+        "wb_gam_events",
+        "wb_gam_user_totals",
+        "wb_gam_user_badges",
+        "wb_gam_streaks",
+        "wb_gam_notifications_queue",
+    );
+    foreach ( $tables as $t ) {
+        $wpdb->query( "DELETE FROM {$wpdb->prefix}{$t} WHERE user_id IN ({$in})" );
+    }
+
+    // Kudos is NOT keyed on user_id — it is (giver_id, receiver_id). Clean both sides.
+    $wpdb->query( "DELETE FROM {$wpdb->prefix}wb_gam_kudos WHERE giver_id IN ({$in}) OR receiver_id IN ({$in})" );
+}
+
 wp_cache_flush();
-echo "fixtures cleaned\n";
+echo "fixtures cleaned for " . count( $ids ) . " user(s)\n";
 '
 ```
 
@@ -345,11 +386,11 @@ Each row repros a past bug that caused customer pain. These rows stay specific o
 | D.wizard-skip-applies-toggles | Old wizard's "Skip & configure manually" button still wrote the email + privacy toggle options, surprising admins who expected skip to mean "leave defaults alone" | Click Skip with all toggles unchecked; verify `wb_gam_email_level_up`, `wb_gam_email_badge_earned`, `wb_gam_email_challenge_completed`, `wb_gam_profile_public_enabled` options remain unset (engine ship-defaults stay in force) |
 | D.wizard-rerun-blocked | Once `wb_gam_wizard_complete` was true, the wizard submenu was never registered, so visiting `?page=wb-gamification-setup` 404'd — no way to switch templates without a WP-CLI option-delete dance | After completing the wizard, visit `/wp-admin/admin.php?page=wb-gamification-setup`. Page renders with the "you've already completed setup" notice; current template is highlighted with a "Current" badge; submitting overwrites `wb_gam_template` to the new choice. |
 | D.kudos-double-fire-fatal | `KudosEngine::send()` fired `wb_gam_kudos_given` twice — once with 4 args, once with 3 args. `NotificationBridge::on_kudos_given` registered `accepted_args=4`; the 3-arg fire triggered `TypeError: missing $kudos_id` on every kudos send | Send a kudos via `KudosEngine::send( $giver, $receiver, 'msg' )`. Expect single `do_action('wb_gam_kudos_given', ...)` call with all 4 params, no PHP fatal in `wp-content/debug.log` |
-| D.leaderboard-cache-stale | `PointsEngine::award` did not invalidate `LeaderboardEngine` cache; readers served stale leaderboard for up to 120s after a points award. `--recompute-leaderboard` flag also missing from `wp wb-gamification doctor` | Award points via REST; immediately re-fetch `/leaderboard` — new total reflected (incrementor-pattern key invalidation per skill Part 2.7). `wp wb-gamification doctor --recompute-leaderboard` rebuilds snapshot + bumps `wp_cache_set_last_changed('wb_gamification')` |
+| D.leaderboard-is-eventually-consistent (rewritten 1.6.4) | **This row asserted the OPPOSITE contract until 1.6.4, and asserting it again would reintroduce the bug.** The old model bumped a `wb_gam_leaderboard_invalidated_at` option on every award, and `read_from_snapshot()` bailed to a live aggregate whenever the snapshot was older than that option. On any site with steady traffic the option was *always* newer than the snapshot, so the materialised leaderboard was bypassed on essentially every request — the plugin advertised a snapshot and shipped a full live `GROUP BY` over the ledger. That is a 100k-member outage, not a cache miss. The option and both its call sites were deleted in 1.6.4. | The board is **deliberately eventually-consistent**: it is served from the `wb_gam_leaderboard_cache` snapshot, rebuilt on a 5-minute recurring Action Scheduler job (`wb_gam_leaderboard_snapshot`). Award points via REST, then immediately GET `/leaderboard` — the ranking is **expected NOT to move yet**, and that is a pass, not a failure. Then run `wp wb-gamification doctor --recompute-leaderboard` and re-fetch: the new total is reflected. Per-user rank (`/leaderboard/me`) is computed live and DOES update instantly — check that it does. Assert the option `wb_gam_leaderboard_invalidated_at` **does not exist**: `wp option get wb_gam_leaderboard_invalidated_at` must return nothing. If a future change makes the whole board update instantly on award, that is a regression to investigate, not a fix. |
 | D.kudos-cooldown-status | Kudos cooldown errors returned HTTP 422 with code `wb_gam_kudos_limit`; per-receiver cooldown was never implemented (giver could spam-kudos one receiver) | POST `/kudos` past the daily limit → expect HTTP 429 + code `wb_gam_kudos_cooldown` (not 422 / `wb_gam_kudos_limit`). Send a kudos to receiver A; immediately try again to A → expect HTTP 429 + code `wb_gam_kudos_cooldown` (per-receiver gate, default 1-hour window via filter `wb_gam_kudos_per_receiver_cooldown_seconds`) |
 | D.leaderboard-mobile-overflow | `.wb-gam-leaderboard__name` was a flex child without `min-width: 0`, so a long display-name pushed the row past 390px viewport — horizontal scroll on mobile | At 390px viewport on a page with the leaderboard block, every row stays inside the container (no horizontal scroll) even when names exceed 20 characters; `.wb-gam-leaderboard__name` has `min-width: 0` and `text-overflow: ellipsis` resolves correctly. The `@media (max-width: 640px)` block in `src/Blocks/leaderboard/style.css` tightens the row spacing and font-size |
 | D.level-changed-double-fire | `LevelEngine::on_user_level_changed()` fired `wb_gam_level_changed` twice — once with `(user_id, int, int)`, once with `(user_id, ?array, ?array)`. Listeners typed for the array signature (`WebhookDispatcher::on_level_changed`, `TransactionalEmailEngine::on_level_up`, `NotificationBridge::on_level_changed`) crashed with `TypeError: Argument #2 must be of type ?array, int given` on every level-up | Award enough points to a user to cross a level threshold. Expect single `do_action('wb_gam_level_changed', $uid, ?array $new, ?array $old)`; no PHP fatal in `wp-content/debug.log` |
-| D.leaderboard-snapshot-stale-after-invalidate | First cut of the cache invalidation only bumped `wp_cache_set_last_changed('wb_gamification')` — the object-cache layer. But `read_from_snapshot()` reads the `wb_gam_leaderboard_cache` **SQL table** with its own 10-minute freshness check, completely bypassing object cache. Result: GET `/leaderboard` served stale data for up to 10 minutes after every award even with object cache busted | After `LeaderboardEngine::invalidate_cache()` runs, the `wb_gam_leaderboard_invalidated_at` option holds `time()`. `read_from_snapshot()` bails (returns `null`, falls through to live query) when the snapshot's `MAX(updated_at)` is older than the option. Test: award points to a user; immediately GET `/leaderboard` — new total reflected without the 10-minute lag |
+| D.leaderboard-snapshot-survives-rebuild (rewritten 1.6.4) | `write_snapshot()` stamped its rows with `current_time('mysql')` (site-local) and then deleted rows older than a `NOW()`-based cutoff (database UTC). On any site whose timezone is **ahead of UTC**, every row it had just written looked "old" and was deleted immediately — the rebuild wiped the snapshot it had just built, leaving the board permanently empty and every request falling through to a live aggregate. | Set the site to a timezone ahead of UTC (`wp option update timezone_string Asia/Kolkata`), run `wp wb-gamification doctor --recompute-leaderboard`, then assert `SELECT COUNT(*) FROM wp_wb_gam_leaderboard_cache` is **> 0** and `[wb_gam_leaderboard]` renders populated. Both the write stamp and the retention cutoff must come from the same clock (`SELECT NOW()`), never from `current_time()`. Restore the original timezone afterwards. |
 | D.level-changed-listener-int-sig | After fixing `D.level-changed-double-fire` (engine side), the `TransactionalEmailEngine::on_level_up` and `NotificationBridge::on_level_changed` listeners still expected `int $old_level_id, int $new_level_id` — the legacy signature. Every level-up event triggered `TypeError: Argument #2 must be of type int, array given` in those listeners | Both listeners now accept `?array $new_level, ?array $old_level` matching the engine's canonical fire. Award enough points to cross a level threshold; expect zero PHP fatal in `wp-content/debug.log` from any of the three downstream listeners (WebhookDispatcher, TransactionalEmailEngine, NotificationBridge) |
 | D.kudos-cooldown-bypass | Two parallel POST `/kudos` requests with the same `(giver, receiver)` pair both passed the `has_recent_kudos_to_receiver` read-check before either had written its row, then both INSERTed — bypassing the per-receiver cooldown gate via TOCTOU race | KudosEngine acquires an atomic `wp_cache_add()` lock keyed `kudos_lock_<giver>_<receiver>` for the cooldown window before the INSERT. Object cache `add` is atomic on Redis/Memcached; second concurrent caller gets `false` from `wp_cache_add` and returns the cooldown error. Test: send two parallel POSTs to `/kudos` (same giver+receiver); exactly one returns 201, the other 429 with code `wb_gam_kudos_cooldown` |
 | C.member.redemption-error-code | All redemption failures returned the generic `redemption_failed` error code — runbook contract specifies `wb_gam_redemption_insufficient` for insufficient-balance, `wb_gam_redemption_out_of_stock` for stock-zero, etc. Functional behavior was correct; the API contract was not | `RedemptionController::redeem()` now maps the engine's `result['reason']` (or matched substring of `result['error']`) to specific codes: `wb_gam_redemption_insufficient`, `wb_gam_redemption_out_of_stock`, `wb_gam_redemption_inactive`. Unknown reasons keep `redemption_failed` so future engine errors don't surprise clients |

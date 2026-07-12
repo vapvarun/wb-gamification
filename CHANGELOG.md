@@ -6,6 +6,46 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 
 ## [Unreleased]
 
+## [1.6.4] - 2026-07-12
+
+Stability and scale release. Contains a fix for a bug that could delete other plugins' queued background jobs, including WooCommerce orders and subscription renewals. Upgrading is strongly recommended for every site.
+
+### Added
+
+- Weekly cap is now settable per action in Settings > Points. The limit was already enforced, but there was no field to set it.
+- `wp wb-gamification scale benchmark` covers the badge, notification, and streak read paths. A green run against a seeded 100k dataset is now required before a release can be packaged.
+
+### Changed
+
+- Points, badges, levels, and the Hub follow the active theme's colours in both light and dark mode on BuddyX, BuddyX Pro, and Reign.
+- Rate-limit feedback ("on cooldown", "daily limit reached") is API-only. It is no longer shown to members, who did not ask for the award and should not be told it was declined.
+
+### Fixed
+
+- A reward with limited stock became unlimited the moment it sold out, and could then be redeemed without limit. Stock now has three distinct states: empty means unlimited, `0` means sold out, and any positive number is the quantity remaining. Rewards currently running with a stock of `0` stay unlimited and are migrated on upgrade.
+- The per-member kudos cooldown was never applied on sites in a timezone behind UTC, so members could send kudos to the same person repeatedly.
+- Two kudos sent to the same member at the same instant could both bypass the cooldown and record twice.
+- The weekly digest's "this week" window was offset by the site's timezone, so the email could omit recent activity or include activity from the previous week.
+- The weekly digest was also sent to the wrong people for the same reason: the recipient query used the database clock instead of the site's, so members active near the edge of the window were dropped from the send.
+- Challenges opened and closed on the database's clock rather than the site's. On a site ahead of UTC a challenge scheduled to start at 09:00 stayed shut for hours - members could not join one that was already running - and one due to close at midnight kept accepting entries.
+- The community-challenge countdown showed the wrong time remaining and could read "ended" hours before the challenge actually closed.
+- Leaderboards serve from their snapshot table instead of aggregating the full points ledger on every view. The snapshot was disabled by every points award, and a timezone mismatch emptied it at the end of each rebuild on sites ahead of UTC.
+- The all-time leaderboard reads the materialised member totals rather than summing the whole ledger.
+- Members no longer receive duplicate weekly emails; an overdue cron re-fire could start a second send while the first was still queued.
+- The notification queue is bounded per member and no longer replays a backlog of stale toasts on every page load.
+- Weekly digest, cohort assignment, and status-retention jobs process members in batches instead of attempting the whole site in one run.
+- Personal-data export is paginated, so an export for a member with a long history no longer exhausts memory.
+- Award Points uses a searchable member picker instead of rendering every member on the site into a dropdown.
+- Toasts set to a top position rendered behind the theme's header; they now sit below it, and below any other bar pinned to the top of the page.
+- Added database indexes for badge, kudos, submission, redemption, and member-intelligence queries that previously scanned the full table.
+- Badge rarity is cached, so public badge pages no longer aggregate the badge table on every request.
+- The setup wizard's Coaching Platform and Nonprofit templates no longer seed actions that cannot fire; the wizard refuses to save an action it does not recognise.
+- Licence assets no longer 404 on hosts where the plugin directory is a symlink.
+
+### Security
+
+- Action Scheduler cleanup no longer deletes other plugins' queued work. It previously removed every pending job older than the retention window with no ownership check, which could destroy WooCommerce orders and subscription renewals on any site. Cleanup is now fenced to this plugin's own jobs, and queued work is never aged out as routine housekeeping.
+
 ## [1.6.3] - 2026-07-08
 
 ### Fixed

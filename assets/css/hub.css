@@ -12,23 +12,28 @@
 /* === THEME-INDEPENDENT COLOR SYSTEM === */
 :root {
   /* Neutrals mapped to the host theme's tokens so the Hub follows the
-   * theme's light/dark mode. BuddyX / BuddyX Pro expose --bx-color-* and
-   * flip them under :root[data-bx-mode="dark"]; themes without them fall
-   * back to the original light values. Brand colors below stay constant. */
-  --gam-text: var(--bx-color-fg, #1a1a2e);
-  --gam-text-secondary: color-mix(in srgb, var(--bx-color-fg, #1a1a2e) 70%, var(--bx-color-bg-elevated, #ffffff));
-  --gam-text-muted: color-mix(in srgb, var(--bx-color-fg, #1a1a2e) 50%, var(--bx-color-bg-elevated, #ffffff));
-  --gam-surface: var(--bx-color-bg-elevated, #ffffff);
-  --gam-surface-hover: var(--bx-color-bg-muted, #f7f7fb);
-  --gam-border: var(--bx-color-border, #e2e3ed);
-  --gam-border-hover: var(--bx-color-border, #c8c9d9);
+   * theme's light/dark mode. Fallback CHAIN, in order:
+   *   BuddyX / BuddyX Pro  --bx-color-*        (72 tokens, flip on [data-bx-mode="dark"])
+   *   Reign                --reign-site-*      (its own family; publishes NO --bx-color-*)
+   *   literal              the original light/dark values
+   * Reign uses the SAME [data-bx-mode="dark"] selector but a different token
+   * family, so before 1.6.4 every lookup fell through to the literal and the
+   * plugin painted its own palette on top of the theme instead of following it.
+   * Brand colors below stay constant. */
+  --gam-text: var(--bx-color-fg, var(--reign-site-body-text-color, #1a1a2e));
+  --gam-text-secondary: color-mix(in srgb, var(--bx-color-fg, var(--reign-site-body-text-color, #1a1a2e)) 70%, var(--bx-color-bg-elevated, var(--reign-site-sections-bg-color, #ffffff)));
+  --gam-text-muted: color-mix(in srgb, var(--bx-color-fg, var(--reign-site-body-text-color, #1a1a2e)) 50%, var(--bx-color-bg-elevated, var(--reign-site-sections-bg-color, #ffffff)));
+  --gam-surface: var(--bx-color-bg-elevated, var(--reign-site-sections-bg-color, #ffffff));
+  --gam-surface-hover: var(--bx-color-bg-muted, var(--reign-site-secondary-bg-color, #f7f7fb));
+  --gam-border: var(--bx-color-border, var(--reign-site-border-color, #e2e3ed));
+  --gam-border-hover: var(--bx-color-border, var(--reign-site-border-color, #c8c9d9));
   /* Accent bridges to the standard --wb-gam-color-accent token so the
    * site owner's Settings > Appearance accent (WBGam\Engine\Appearance)
    * re-tints the Hub too. Falls back to the brand purple when unset, which
    * is the previous hardcoded value — so default behaviour is unchanged.
    * accent-light / accent-text derive from --gam-accent below, so they
    * follow automatically. See BC card 10060536808. */
-  --gam-accent: var(--wb-gam-color-accent, #5b4cdb);
+  --gam-accent: var(--wb-gam-color-accent, var(--bx-color-accent, var(--reign-site-button-bg-color, #5b4cdb)));
   /* Tints mixed over --gam-surface so icon chips / status pills adapt to
    * dark mode (faint dark tint) instead of staying opaque light. */
   --gam-accent-light: color-mix(in srgb, var(--gam-accent) 14%, var(--gam-surface));
@@ -887,24 +892,24 @@
 :root[data-bx-mode="dark"] .gam-page,
 :root[data-theme="dark"] .gam-page,
 body.buddyx-dark-theme .gam-page {
-  --gam-text: var(--bx-color-fg, #e8e8f0);
-  --gam-text-secondary: color-mix(in srgb, var(--bx-color-fg, #e8e8f0) 75%, var(--bx-color-bg-elevated, #262a34));
-  --gam-text-muted: color-mix(in srgb, var(--bx-color-fg, #e8e8f0) 55%, var(--bx-color-bg-elevated, #262a34));
-  --gam-surface: var(--bx-color-bg-elevated, #262a34);
-  --gam-surface-hover: var(--bx-color-bg-muted, #2f343f);
-  --gam-border: var(--bx-color-border, #363b47);
-  --gam-border-hover: var(--bx-color-border, #454b59);
-  --gam-accent: var(--wb-gam-color-accent, color-mix(in srgb, #5b4cdb 60%, #ffffff));
+  --gam-text: var(--bx-color-fg, var(--reign-site-body-text-color, #e8e8f0));
+  --gam-text-secondary: color-mix(in srgb, var(--bx-color-fg, var(--reign-site-body-text-color, #e8e8f0)) 75%, var(--bx-color-bg-elevated, var(--reign-site-sections-bg-color, #262a34)));
+  --gam-text-muted: color-mix(in srgb, var(--bx-color-fg, var(--reign-site-body-text-color, #e8e8f0)) 55%, var(--bx-color-bg-elevated, var(--reign-site-sections-bg-color, #262a34)));
+  --gam-surface: var(--bx-color-bg-elevated, var(--reign-site-sections-bg-color, #262a34));
+  --gam-surface-hover: var(--bx-color-bg-muted, var(--reign-site-secondary-bg-color, #2f343f));
+  --gam-border: var(--bx-color-border, var(--reign-site-border-color, #363b47));
+  --gam-border-hover: var(--bx-color-border, var(--reign-site-border-color, #454b59));
+  --gam-accent: var(--wb-gam-color-accent, var(--bx-color-accent, var(--reign-site-button-bg-color, color-mix(in srgb, #5b4cdb 60%, #ffffff))));
 }
 @media (prefers-color-scheme: dark) {
   :root[data-bx-mode="auto"] .gam-page {
-    --gam-text: var(--bx-color-fg, #e8e8f0);
-    --gam-text-secondary: color-mix(in srgb, var(--bx-color-fg, #e8e8f0) 75%, var(--bx-color-bg-elevated, #262a34));
-    --gam-text-muted: color-mix(in srgb, var(--bx-color-fg, #e8e8f0) 55%, var(--bx-color-bg-elevated, #262a34));
-    --gam-surface: var(--bx-color-bg-elevated, #262a34);
-    --gam-surface-hover: var(--bx-color-bg-muted, #2f343f);
-    --gam-border: var(--bx-color-border, #363b47);
-    --gam-border-hover: var(--bx-color-border, #454b59);
-    --gam-accent: var(--wb-gam-color-accent, color-mix(in srgb, #5b4cdb 60%, #ffffff));
+    --gam-text: var(--bx-color-fg, var(--reign-site-body-text-color, #e8e8f0));
+    --gam-text-secondary: color-mix(in srgb, var(--bx-color-fg, var(--reign-site-body-text-color, #e8e8f0)) 75%, var(--bx-color-bg-elevated, var(--reign-site-sections-bg-color, #262a34)));
+    --gam-text-muted: color-mix(in srgb, var(--bx-color-fg, var(--reign-site-body-text-color, #e8e8f0)) 55%, var(--bx-color-bg-elevated, var(--reign-site-sections-bg-color, #262a34)));
+    --gam-surface: var(--bx-color-bg-elevated, var(--reign-site-sections-bg-color, #262a34));
+    --gam-surface-hover: var(--bx-color-bg-muted, var(--reign-site-secondary-bg-color, #2f343f));
+    --gam-border: var(--bx-color-border, var(--reign-site-border-color, #363b47));
+    --gam-border-hover: var(--bx-color-border, var(--reign-site-border-color, #454b59));
+    --gam-accent: var(--wb-gam-color-accent, var(--bx-color-accent, var(--reign-site-button-bg-color, color-mix(in srgb, #5b4cdb 60%, #ffffff))));
   }
 }

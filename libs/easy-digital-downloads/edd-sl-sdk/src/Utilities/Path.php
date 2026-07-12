@@ -49,16 +49,37 @@ class Path {
 		self::$sdk_dir     = dirname( $file );
 		self::$sdk_version = $version;
 
-		// Calculate the URL based on the file path.
-		$is_https = ( ! empty( $_SERVER['HTTPS'] ) && 'off' !== $_SERVER['HTTPS'] ) ||
-			( isset( $_SERVER['HTTP_X_FORWARDED_PROTO'] ) && 'https' === $_SERVER['HTTP_X_FORWARDED_PROTO'] );
-
-		$protocol      = $is_https ? 'https' : 'http';
-		$relative_path = str_replace( realpath( $_SERVER['DOCUMENT_ROOT'] ), '', self::$sdk_dir );
-		$relative_path = ltrim( str_replace( '\\', '/', $relative_path ), '/' );
-
-		$host          = $_SERVER['HTTP_HOST'] ?? 'localhost';
-		self::$sdk_url = trailingslashit( "$protocol://$host/$relative_path" );
+		/*
+		 * WBCOM PATCH (Basecamp #10081934029) — derive the URL with plugins_url()
+		 * instead of hand-building it from $_SERVER['DOCUMENT_ROOT'].
+		 *
+		 * Upstream did:
+		 *
+		 *   $relative_path = str_replace( realpath( $_SERVER['DOCUMENT_ROOT'] ), '', self::$sdk_dir );
+		 *   self::$sdk_url = trailingslashit( "$protocol://$host/$relative_path" );
+		 *
+		 * That assumes DOCUMENT_ROOT is a string prefix of the SDK's real path. It
+		 * is not, on any host where the plugin directory is a symlink (PHP's
+		 * __FILE__ resolves symlinks, so sdk_dir is the link TARGET) or where the
+		 * document root simply doesn't prefix-match the plugin path — LocalWP,
+		 * tastewp, and many live hosts. The str_replace then matches nothing,
+		 * NOTHING is stripped, and the full filesystem path is pasted into the
+		 * URL, e.g.
+		 *
+		 *   http://example.test/Users/me/dev/repos/wb-gamification/libs/.../
+		 *
+		 * so edd-sl-sdk.js and style-edd-sl-sdk.css 404 and the licence UI breaks.
+		 *
+		 * plugins_url() is symlink-safe: WordPress records the realpath→plugin-dir
+		 * mapping in wp_register_plugin_realpath(), so it returns the correct URL
+		 * whether it is handed the symlinked path or the resolved one. It also
+		 * honours WP_PLUGIN_URL / content-dir relocation and gets the scheme right
+		 * without sniffing $_SERVER.
+		 *
+		 * Keep this patch when re-vendoring the SDK until upstream fixes it.
+		 * Same fix shipped in BuddyNext 1.0.7 (commit 40effc78).
+		 */
+		self::$sdk_url = trailingslashit( plugins_url( '', $file ) );
 	}
 
 	/**

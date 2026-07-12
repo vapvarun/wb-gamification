@@ -238,8 +238,9 @@ final class RedemptionStorePage {
 								<th><label for="wb-gam-reward-stock"><?php esc_html_e( 'Stock', 'wb-gamification' ); ?></label></th>
 								<td>
 									<input type="number" name="stock" id="wb-gam-reward-stock" class="small-text wbgam-input"
-										value="<?php echo esc_attr( $edit_data['stock'] ?? '0' ); ?>" min="0">
-									<p class="description"><?php esc_html_e( 'Number of available redemptions. Leave 0 (or empty) for unlimited stock; any positive value is decremented atomically on each redemption.', 'wb-gamification' ); ?></p>
+										value="<?php echo esc_attr( $edit_data['stock'] ?? '' ); ?>" min="0"
+										placeholder="<?php esc_attr_e( 'Unlimited', 'wb-gamification' ); ?>">
+									<p class="description"><?php esc_html_e( 'Number of available redemptions, decremented atomically on each one. Leave empty for unlimited stock. 0 means sold out - members can no longer redeem it.', 'wb-gamification' ); ?></p>
 								</td>
 							</tr>
 							<tr>
@@ -396,9 +397,16 @@ final class RedemptionStorePage {
 							);
 							$type_label   = $type_labels[ $item['reward_type'] ] ?? $item['reward_type'];
 							$status_class = $item['is_active'] ? 'active' : 'info';
-							$stock_label  = ( null === $item['stock'] || 0 === (int) $item['stock'] )
-								? __( 'Unlimited', 'wb-gamification' )
-								: (int) $item['stock'];
+							// NULL = unlimited, 0 = sold out. The owner has to tell those apart
+							// at a glance -- reading "Unlimited" next to a reward that has in
+							// fact sold out is how you find out too late.
+							if ( null === $item['stock'] ) {
+								$stock_label = __( 'Unlimited', 'wb-gamification' );
+							} elseif ( 0 === (int) $item['stock'] ) {
+								$stock_label = __( 'Sold out', 'wb-gamification' );
+							} else {
+								$stock_label = (int) $item['stock'];
+							}
 							?>
 							<tr>
 								<td>

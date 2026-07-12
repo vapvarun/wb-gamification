@@ -56,21 +56,25 @@
 	 * the theme — brand/semantic colors (accent, success, fire, medals) stay
 	 * constant across modes. Muted/light text use color-mix so they keep a
 	 * readable contrast against whichever surface the theme provides. */
-	--wb-gam-color-white: var(--bx-color-bg-elevated, #ffffff);
-	--wb-gam-color-text: var(--bx-color-fg, #1a1a2e);
-	--wb-gam-color-text-muted: color-mix(in srgb, var(--bx-color-fg, #1a1a2e) 70%, var(--bx-color-bg-elevated, #ffffff));
-	--wb-gam-color-text-light: color-mix(in srgb, var(--bx-color-fg, #1a1a2e) 50%, var(--bx-color-bg-elevated, #ffffff));
-	--wb-gam-color-border: var(--bx-color-border, #e2e3ed);
-	--wb-gam-color-border-hover: var(--bx-color-border, #c8c9d9);
-	--wb-gam-color-surface: var(--bx-color-bg-elevated, #ffffff);
-	--wb-gam-color-surface-hover: var(--bx-color-bg-muted, #f7f7fb);
-	--wb-gam-color-surface-alt: var(--bx-color-bg-muted, #f1f5f9);
-	--wb-gam-color-page: var(--bx-color-bg-page, #f8fafc);
-	/* Accent — defaults match `--gam-accent` from assets/css/hub.css so
-	   new standard blocks visually align with the existing hub UI.
-	   Themes may override via `--wbcom-link-color`. */
-	--wb-gam-color-accent: var(--wbcom-link-color, #5b4cdb);
-	--wb-gam-color-accent-hover: var(--wbcom-link-hover-color, #4338b2);
+	--wb-gam-color-white: var(--bx-color-bg-elevated, var(--reign-site-sections-bg-color, #ffffff));
+	--wb-gam-color-text: var(--bx-color-fg, var(--reign-site-body-text-color, #1a1a2e));
+	--wb-gam-color-text-muted: color-mix(in srgb, var(--bx-color-fg, var(--reign-site-body-text-color, #1a1a2e)) 70%, var(--bx-color-bg-elevated, var(--reign-site-sections-bg-color, #ffffff)));
+	--wb-gam-color-text-light: color-mix(in srgb, var(--bx-color-fg, var(--reign-site-body-text-color, #1a1a2e)) 50%, var(--bx-color-bg-elevated, var(--reign-site-sections-bg-color, #ffffff)));
+	--wb-gam-color-border: var(--bx-color-border, var(--reign-site-border-color, #e2e3ed));
+	--wb-gam-color-border-hover: var(--bx-color-border, var(--reign-site-border-color, #c8c9d9));
+	--wb-gam-color-surface: var(--bx-color-bg-elevated, var(--reign-site-sections-bg-color, #ffffff));
+	--wb-gam-color-surface-hover: var(--bx-color-bg-muted, var(--reign-site-secondary-bg-color, #f7f7fb));
+	--wb-gam-color-surface-alt: var(--bx-color-bg-muted, var(--reign-site-secondary-bg-color, #f1f5f9));
+	--wb-gam-color-page: var(--bx-color-bg-page, var(--reign-site-secondary-bg-color, #f8fafc));
+	/* Accent — follows the HOST THEME's link/accent colour before the brand purple.
+	   Chain: site-owner override (--wbcom-link-color, from Settings > Appearance)
+	   -> BuddyX (--bx-color-accent) -> Reign (--reign-site-button-bg-color) -> brand.
+	   Until 1.6.4 the chain stopped at --wbcom-link-color, so on Reign every accent
+	   in the plugin (buttons, icon chips, links) rendered brand purple while the
+	   rest of the page used Reign's blue — the plugin looked bolted on rather than
+	   part of the theme. */
+	--wb-gam-color-accent: var(--wbcom-link-color, var(--bx-color-accent, var(--reign-site-button-bg-color, #5b4cdb)));
+	--wb-gam-color-accent-hover: var(--wbcom-link-hover-color, var(--bx-color-accent-hover, var(--reign-site-button-bg-hover-color, #4338b2)));
 	/* Tint backgrounds (icon chips, accent pills) are mixed OVER the theme
 	 * surface so they're a faint light tint in light mode and a faint dark
 	 * tint in dark mode — no opaque light blob on a dark card. */
@@ -88,6 +92,17 @@
 	--wb-gam-color-success-bg: color-mix(in srgb, var(--wb-gam-color-success) 12%, var(--wb-gam-color-surface));
 	--wb-gam-color-success-strong: #047857;
 	--wb-gam-color-success-soft: rgba(13, 159, 110, 0.12);
+
+	/* League tier accents (cohort rank). These are deliberately literal -- bronze is
+	 * bronze -- but they belong here rather than hardcoded inside a block stylesheet.
+	 * As tokens the owner can rebrand a tier, and the dark-mode block below can lift
+	 * the darker medals so Bronze and Obsidian do not disappear against a dark
+	 * surface. Hardcoded in cohort-rank/style.css, they could do neither. */
+	--wb-gam-tier-bronze: #b45309;
+	--wb-gam-tier-silver: #6b7280;
+	--wb-gam-tier-gold: #d97706;
+	--wb-gam-tier-diamond: #2563eb;
+	--wb-gam-tier-obsidian: #4b5563;
 	--wb-gam-color-warning: #c2770e;
 	--wb-gam-color-warning-bg: color-mix(in srgb, var(--wb-gam-color-warning) 12%, var(--wb-gam-color-surface));
 	--wb-gam-color-warning-strong: #b45309;
@@ -103,8 +118,8 @@
 	/* Extra neutrals — surface-muted is the "card lifted off a panel"
 	 * shade. Border-strong is the focus / hover stroke. Theme-mapped (see
 	 * the neutral palette note above). */
-	--wb-gam-color-surface-muted: var(--bx-color-bg-muted, #f9fafb);
-	--wb-gam-color-border-strong: var(--bx-color-border, #d1d5db);
+	--wb-gam-color-surface-muted: var(--bx-color-bg-muted, var(--reign-site-secondary-bg-color, #f9fafb));
+	--wb-gam-color-border-strong: var(--bx-color-border, var(--reign-site-border-color, #d1d5db));
 	--wb-gam-color-locked-soft: rgba(156, 163, 175, 0.16);
 	--wb-gam-color-primary-soft: rgba(91, 76, 219, 0.10);
 
@@ -181,21 +196,47 @@
 }
 
 /* ── Dark-mode accent ───────────────────────────────────────────────────────
- * Keep the gamification brand purple, but lighten it on dark surfaces so
- * glyphs, links, the level progress bar, and accent pills keep their punch
- * and contrast. Light mode uses the pure hue defined in :root above. Scoped
- * to the same dark selectors BuddyX / BuddyX Pro use: the data-bx-mode
- * attribute, the prefers-color-scheme auto path, and the legacy
- * .buddyx-dark-theme body class. accent-light / accent-text cascade from
- * --wb-gam-color-accent, so they lighten with it automatically. */
+ * The THEME's accent still wins here. Only the final fallback changes: on a
+ * dark surface the brand purple is lightened so glyphs, links, the level
+ * progress bar and accent pills keep their punch and contrast.
+ *
+ * Until 1.6.4 this block set the lightened purple UNCONDITIONALLY — a per-mode
+ * internal literal that overrode the whole theme chain. The result: on any dark
+ * theme, every accent in the plugin painted brand purple regardless of what the
+ * theme's accent was. On Reign (accent #97c0ee, a blue) the plugin's buttons and
+ * icon chips came out purple against a blue-accented page, so it read as bolted
+ * on rather than part of the theme. A theme-mapped token that a per-mode literal
+ * later overwrites is not theme-mapped at all.
+ *
+ * Chain, unchanged from :root — only the tail differs:
+ *   --wbcom-link-color            site-owner override (Settings > Appearance)
+ *   --bx-color-accent            BuddyX / BuddyX Pro
+ *   --reign-site-button-bg-color Reign (its ACCENT; --reign-site-link-color is
+ *                                #ffffff in dark — that is link TEXT, not a brand
+ *                                colour, and would give white-on-white buttons)
+ *   lightened brand purple       themes exposing no accent token
+ *
+ * Scoped to the dark selectors the whole Wbcom theme family uses: data-bx-mode
+ * (BuddyX, BuddyX Pro AND Reign 8.x all set it), the prefers-color-scheme auto
+ * path, and the legacy .buddyx-dark-theme body class. accent-light / accent-text
+ * cascade from --wb-gam-color-accent, so they follow automatically. */
 :root[data-bx-mode="dark"],
+:root[data-theme="dark"],
 body.buddyx-dark-theme {
-	--wb-gam-color-accent: color-mix(in srgb, #5b4cdb 60%, #ffffff);
-	--wb-gam-color-accent-hover: color-mix(in srgb, #5b4cdb 45%, #ffffff);
+	--wb-gam-color-accent: var(--wbcom-link-color, var(--bx-color-accent, var(--reign-site-button-bg-color, color-mix(in srgb, #5b4cdb 60%, #ffffff))));
+	--wb-gam-color-accent-hover: var(--wbcom-link-hover-color, var(--bx-color-accent-hover, var(--reign-site-button-bg-hover-color, color-mix(in srgb, #5b4cdb 45%, #ffffff))));
+
+	/* Lift the dark medals. Bronze (#b45309) and Obsidian (#4b5563) are dark enough to
+	 * sink into a dark surface -- the member's own league tier becomes the one thing
+	 * they cannot read. Mixing toward white keeps each medal recognisably itself while
+	 * restoring contrast. This is only expressible because the tiers are tokens. */
+	--wb-gam-tier-bronze: color-mix(in srgb, #b45309 65%, #ffffff);
+	--wb-gam-tier-silver: color-mix(in srgb, #6b7280 55%, #ffffff);
+	--wb-gam-tier-obsidian: color-mix(in srgb, #4b5563 55%, #ffffff);
 }
 @media (prefers-color-scheme: dark) {
 	:root[data-bx-mode="auto"] {
-		--wb-gam-color-accent: color-mix(in srgb, #5b4cdb 60%, #ffffff);
-		--wb-gam-color-accent-hover: color-mix(in srgb, #5b4cdb 45%, #ffffff);
+		--wb-gam-color-accent: var(--wbcom-link-color, var(--bx-color-accent, var(--reign-site-button-bg-color, color-mix(in srgb, #5b4cdb 60%, #ffffff))));
+		--wb-gam-color-accent-hover: var(--wbcom-link-hover-color, var(--bx-color-accent-hover, var(--reign-site-button-bg-hover-color, color-mix(in srgb, #5b4cdb 45%, #ffffff))));
 	}
 }

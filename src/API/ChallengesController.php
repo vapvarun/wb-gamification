@@ -496,13 +496,24 @@ class ChallengesController extends WP_REST_Controller {
 		$user_id      = get_current_user_id();
 
 		// Verify challenge exists and is active.
+		// starts_at / ends_at are stored exactly as the owner entered them (see the
+		// sanitize_text_field() on the write path) -- i.e. in the site's own timezone, which is
+		// the clock the owner was thinking in when they typed "09:00". Comparing them against
+		// NOW() measured them against the DATABASE clock instead, so on a site 5.5 hours ahead
+		// of UTC a challenge scheduled to open at 09:00 stayed shut until 14:30, and one due to
+		// close at midnight kept accepting entries. The owner sets a local time; the window has
+		// to open at that local time.
+		$now_local = current_time( 'mysql' );
+
 		$challenge = $wpdb->get_row( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Live status check.
 			$wpdb->prepare(
 				"SELECT * FROM {$wpdb->prefix}wb_gam_challenges
 				  WHERE id = %d AND status = 'active'
-				    AND (starts_at IS NULL OR starts_at <= NOW())
-				    AND (ends_at IS NULL OR ends_at >= NOW())",
-				$challenge_id
+				    AND (starts_at IS NULL OR starts_at <= %s)
+				    AND (ends_at IS NULL OR ends_at >= %s)",
+				$challenge_id,
+				$now_local,
+				$now_local
 			),
 			ARRAY_A
 		);

@@ -65,6 +65,133 @@
 	document.body.appendChild( container );
 
 	/**
+	 * Push a top-anchored toast stack below whatever is pinned to the top of the
+	 * viewport.
+	 *
+	 * The CSS could only ever offset the WP admin bar, whose height is a known
+	 * constant. It knew nothing about the active theme's own sticky header, so on
+	 * BuddyX (header ~69px tall) a top-right toast rendered INSIDE the header band.
+	 * Every theme's header is a different height, so the only honest answer is to
+	 * measure the one actually on the page.
+	 *
+	 * Finds the bottom edge of the lowest fixed/sticky element anchored at the top of
+	 * the viewport and parks the stack below it. Owners who want a different offset can
+	 * simply set --wb-gam-toast-offset-top in their own CSS; this only sets the property
+	 * when it finds something to clear.
+	 */
+	var TOAST_GAP = 16;      // Matches the 1rem breathing room in the CSS fallback.
+	var TOP_STRIP = 120;     // How far down the viewport still counts as "chrome at the top".
+
+	/**
+	 * Bottom edge, in viewport pixels, of whatever is currently occupying the top of the
+	 * screen — the WP admin bar, the theme's header, or any pinned bar.
+	 *
+	 * The test is deliberately "what is in the way RIGHT NOW", not "what is sticky".
+	 * BuddyX's header is position:static: it is not pinned, it simply sits at the top of
+	 * the document, and at scroll 0 it occupies y=37..106. A pinned-elements-only check
+	 * finds nothing there and happily renders the toast at 48px — straight through the
+	 * site nav. Whether the obstruction is fixed or in normal flow makes no difference to
+	 * the member looking at it.
+	 *
+	 * @return {number} Bottom edge of the topmost obstruction, or 0 if the top is clear.
+	 */
+	function topObstructionBottom() {
+		var candidates = [];
+		var adminBar   = document.getElementById( 'wpadminbar' );
+
+		if ( adminBar ) {
+			candidates.push( adminBar );
+		}
+
+		// Theme header, however it is positioned.
+		Array.prototype.push.apply(
+			candidates,
+			document.querySelectorAll( 'header, .site-header, #masthead' )
+		);
+
+		// Anything else pinned across the top (cookie bars, promo bars, sticky navs).
+		Array.prototype.forEach.call( document.body.children, function ( el ) {
+			var pos = window.getComputedStyle( el ).position;
+			if ( pos === 'fixed' || pos === 'sticky' ) {
+				candidates.push( el );
+			}
+		} );
+
+		var lowest = 0;
+
+		candidates.forEach( function ( el ) {
+			if ( el === container || container.contains( el ) || el.contains( container ) ) {
+				return;
+			}
+
+			var style = window.getComputedStyle( el );
+			if ( style.display === 'none' || style.visibility === 'hidden' ) {
+				return;
+			}
+
+			var rect = el.getBoundingClientRect();
+
+			// Scrolled away, zero-height, not in the top strip, or too narrow to be a bar.
+			if ( rect.height === 0 || rect.bottom <= 0 ) {
+				return;
+			}
+			if ( rect.top > TOP_STRIP ) {
+				return;
+			}
+			if ( rect.width < window.innerWidth * 0.5 ) {
+				return;
+			}
+
+			if ( rect.bottom > lowest ) {
+				lowest = rect.bottom;
+			}
+		} );
+
+		return lowest;
+	}
+
+	/**
+	 * Park a top-anchored toast stack below whatever is currently in the way.
+	 *
+	 * Only sets the property when it finds an obstruction, so an owner who overrides
+	 * --wb-gam-toast-offset-top in their own CSS keeps control on a clear page.
+	 */
+	function applyTopOffset() {
+		if ( position.indexOf( 'top' ) !== 0 ) {
+			return; // Bottom-anchored stacks clear the header by construction.
+		}
+
+		var lowest = topObstructionBottom();
+
+		if ( lowest > 0 ) {
+			container.style.setProperty( '--wb-gam-toast-offset-top', lowest + TOAST_GAP + 'px' );
+		} else {
+			// Top is clear (e.g. an in-flow header has scrolled off) — hand it back to
+			// the stylesheet, which still knows about the admin bar.
+			container.style.removeProperty( '--wb-gam-toast-offset-top' );
+		}
+	}
+
+	applyTopOffset();
+
+	// An in-flow header scrolls away and a sticky one changes height, so the offset is not
+	// a constant. Re-measure on scroll and resize, rAF-throttled so this never runs hot.
+	var offsetQueued = false;
+	function queueTopOffset() {
+		if ( offsetQueued ) {
+			return;
+		}
+		offsetQueued = true;
+		window.requestAnimationFrame( function () {
+			offsetQueued = false;
+			applyTopOffset();
+		} );
+	}
+
+	window.addEventListener( 'resize', queueTopOffset );
+	window.addEventListener( 'scroll', queueTopOffset, { passive: true } );
+
+	/**
 	 * Lucide icon class map for toast types. The toast lucide-icons
 	 * stylesheet must be enqueued on the page for these to render.
 	 */

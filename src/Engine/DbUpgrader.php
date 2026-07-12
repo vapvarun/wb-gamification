@@ -97,11 +97,51 @@ final class DbUpgrader {
 		self::ensure_api_keys_table();
 		self::ensure_side_effect_failures_table();
 		self::ensure_notifications_queue_table();
+		self::ensure_notifications_skip_purge();
 		self::ensure_user_intelligence_table();
 		self::ensure_superseded_badge_condition_action_ids();
 		self::ensure_streak_sort_indexes();
 		self::ensure_kudos_moderation_schema();
 		self::ensure_events_source_key();
+		self::ensure_scale_indexes();
+		self::ensure_redemption_stock_null_unlimited();
+	}
+
+	/**
+	 * Migrate "unlimited stock" from 0 to NULL on redemption items.
+	 *
+	 * Stock used to mean: NULL or 0 = unlimited, positive = finite. That collided with
+	 * the atomic decrement, which walks finite stock down to exactly 0 -- so the moment
+	 * a reward sold its last unit it became indistinguishable from "unlimited" and could
+	 * be redeemed forever. A site owner offering one laptop gave away laptops without
+	 * limit.
+	 *
+	 * 1.6.4 splits the two states: NULL = unlimited, 0 = SOLD OUT.
+	 *
+	 * That reinterprets every existing `stock = 0` row. Under the old rules those rows
+	 * were unlimited and owners have been running them that way; under the new rules
+	 * they would read as sold out and stop redeeming overnight. So they are migrated to
+	 * NULL, which preserves exactly the behaviour the owner sees today. Only stock that
+	 * reaches 0 by *decrement* from now on means sold out.
+	 *
+	 * Idempotent: once the flag is set this never runs again, so a reward that genuinely
+	 * sells out later is not resurrected on the next upgrade.
+	 *
+	 * @return void
+	 */
+	private static function ensure_redemption_stock_null_unlimited(): void {
+		if ( get_option( 'wb_gam_migrated_stock_null_unlimited' ) ) {
+			return;
+		}
+
+		global $wpdb;
+
+		$table = $wpdb->prefix . 'wb_gam_redemption_items';
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$wpdb->query( "UPDATE {$table} SET stock = NULL WHERE stock = 0" );
+
+		update_option( 'wb_gam_migrated_stock_null_unlimited', 1, false );
 	}
 
 	/**
@@ -171,6 +211,98 @@ final class DbUpgrader {
 		if ( ! in_array( 'idx_longest_streak', $existing, true ) ) {
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 			$wpdb->query( "ALTER TABLE `{$table}` ADD KEY `idx_longest_streak` (longest_streak)" );
+		}
+
+		update_option( $flag_key, '1' );
+	}
+
+	/**
+	 * Scale indexes — every hot query below currently runs as a FULL TABLE SCAN
+	 * of an EVENT-scaled table (millions of rows on a large site).
+	 *
+	 * These were missed because the tables *look* indexed: `wb_gam_user_badges`
+	 * has a PK, a UNIQUE and a secondary key. But an index only helps a query
+	 * whose predicate matches its LEADING column, and a composite
+	 * `UNIQUE (user_id, badge_id)` cannot serve a `badge_id`-only predicate.
+	 * Checking "does the table have indexes" says yes; checking "is this query's
+	 * WHERE column indexed" says no. Only the second question matters.
+	 *
+	 * 1. wb_gam_user_badges (badge_id) — the expensive one.
+	 *      COUNT(*) WHERE badge_id = %s   (BadgeEngine max_earners guard)
+	 *        -> runs on the AWARD HOT PATH for any badge with a max_earners cap,
+	 *           and is deliberately uncached (a stale count over-awards).
+	 *      COUNT(DISTINCT user_id) GROUP BY badge_id   (badge rarity map)
+	 *        -> runs on EVERY public request that renders a badge, uncached.
+	 *      correlated COUNT(*) per badge   (Badges admin page)
+	 *        -> 50 badges = 50 full scans in one page load.
+	 *
+	 * 2. wb_gam_kudos (revoked_at, created_at)
+	 *      WHERE revoked_at IS NULL ORDER BY created_at DESC LIMIT n
+	 *        -> the PUBLIC kudos feed + admin moderation list. No existing index
+	 *           leads with created_at, so MySQL full-scans and filesorts to
+	 *           return 20 rows.
+	 *
+	 * 3. wb_gam_submissions (created_at)
+	 *      ORDER BY created_at DESC with no status filter -> idx_status_created
+	 *      can't be used (wrong leading column).
+	 *
+	 * 4. wb_gam_redemptions (user_id, created_at)
+	 *      per-member history: currently `user_id` then filesort.
+	 *
+	 * 5. wb_gam_user_intelligence (computed_at)
+	 *      ORDER BY computed_at DESC LIMIT 1 on the Analytics dashboard = a
+	 *      100k-row scan to fetch one row.
+	 *
+	 * Adding an index to a large table takes a metadata lock. These run once,
+	 * flag-gated, on a normal admin request — acceptable for tables of this size
+	 * (InnoDB builds secondary indexes online since 5.6). If a site is enormous
+	 * enough for that to bite, the flag lets an admin pre-apply them by hand.
+	 *
+	 * @since 1.6.4
+	 */
+	private static function ensure_scale_indexes(): void {
+		$flag_key = 'wb_gam_feature_scale_indexes_v1';
+		if ( get_option( $flag_key ) ) {
+			return;
+		}
+
+		global $wpdb;
+
+		$wanted = array(
+			'wb_gam_user_badges'       => array( 'idx_badge_id' => '(badge_id)' ),
+			'wb_gam_kudos'             => array( 'idx_revoked_created' => '(revoked_at, created_at)' ),
+			'wb_gam_submissions'       => array( 'idx_created' => '(created_at)' ),
+			'wb_gam_redemptions'       => array( 'idx_user_created' => '(user_id, created_at)' ),
+			'wb_gam_user_intelligence' => array( 'idx_computed_at' => '(computed_at)' ),
+		);
+
+		// Drop the orphaned leaderboard-invalidation option (1.6.4).
+		//
+		// `wb_gam_leaderboard_invalidated_at` was written on every points award and
+		// gated read_from_snapshot(), which is why the materialised leaderboard was
+		// never actually readable on a busy site. Nothing writes or reads it now;
+		// remove the row rather than leave a dead option on every install to
+		// confuse the next person who greps for it.
+		delete_option( 'wb_gam_leaderboard_invalidated_at' );
+
+		foreach ( $wanted as $suffix => $indexes ) {
+			$table = $wpdb->prefix . $suffix;
+
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			if ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) ) !== $table ) {
+				continue;
+			}
+
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$existing = (array) $wpdb->get_col( "SHOW INDEX FROM `{$table}`", 2 );
+
+			foreach ( $indexes as $name => $cols ) {
+				if ( in_array( $name, $existing, true ) ) {
+					continue;
+				}
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				$wpdb->query( "ALTER TABLE `{$table}` ADD KEY `{$name}` {$cols}" );
+			}
 		}
 
 		update_option( $flag_key, '1' );
@@ -384,6 +516,69 @@ final class DbUpgrader {
 		);
 
 		update_option( $flag_key, '1' );
+	}
+
+	/**
+	 * One-time purge of `skip` notifications left behind by <= 1.6.2.
+	 *
+	 * 1.6.2 surfaced award-skips ("You've hit your daily limit for this action")
+	 * as member toasts and persisted every one to the durable queue. 1.6.3 fixed
+	 * the default so no NEW skip rows are written — but nothing removed the rows
+	 * already there, and the daily prune only ages them out IF WP-Cron fires,
+	 * which it silently never does on DISABLE_WP_CRON installs with no real
+	 * crontab. Those sites would keep nagging their members indefinitely after
+	 * upgrading. A QA install had 30,197 such rows for a single member.
+	 *
+	 * A skip toast is worthless the moment it is stale, so these are deleted
+	 * outright rather than aged out.
+	 *
+	 * Resumable by design: the done-flag is set ONLY when a short batch proves
+	 * the backlog is drained. If a site has more skip rows than one request
+	 * should delete, the remainder is picked up on the next request instead of
+	 * this method either blocking the page or giving up and leaving rows behind.
+	 *
+	 * @since 1.6.4
+	 */
+	private static function ensure_notifications_skip_purge(): void {
+		$flag_key = 'wb_gam_feature_notifications_skip_purge_v1';
+		if ( get_option( $flag_key ) ) {
+			return;
+		}
+
+		// Nothing to purge until the queue table itself exists.
+		if ( ! get_option( 'wb_gam_feature_notifications_queue_v1' ) ) {
+			return;
+		}
+
+		// Deliberately gentler than the cron prune: this runs on a page request,
+		// so it trades a couple of extra requests for never stalling one.
+		$batch_size  = 1000;
+		$max_batches = 5;
+
+		global $wpdb;
+
+		for ( $batch = 0; $batch < $max_batches; $batch++ ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$deleted = $wpdb->query(
+				$wpdb->prepare(
+					"DELETE FROM {$wpdb->prefix}wb_gam_notifications_queue WHERE event_type = %s LIMIT %d",
+					'skip',
+					$batch_size
+				)
+			);
+
+			if ( ! is_int( $deleted ) ) {
+				return; // Query error — leave the flag unset and retry next request.
+			}
+
+			if ( $deleted < $batch_size ) {
+				// Short batch: no skip rows remain. Done for good.
+				update_option( $flag_key, '1' );
+				return;
+			}
+		}
+
+		// Hit the per-request cap with rows still to go — resume next request.
 	}
 
 	/**

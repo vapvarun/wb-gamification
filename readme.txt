@@ -4,7 +4,7 @@ Tags: gamification, points, badges, leaderboard, buddypress
 Requires at least: 6.5
 Tested up to: 7.0
 Requires PHP: 8.0
-Stable tag: 1.6.3
+Stable tag: 1.6.4
 License: GPL-2.0+
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -132,6 +132,34 @@ Yes. WB Gamification integrates with WordPress privacy tools. Members can reques
 All data is preserved in the database. Reactivating the plugin restores everything. If you delete the plugin via the Plugins screen, the `uninstall.php` file removes all 26 tables, options, cron jobs, and transients — a clean uninstall.
 
 == Changelog ==
+
+= 1.6.4 - July 2026 =
+
+Stability and scale release. Contains a fix for a bug that could delete other plugins' queued background jobs, including WooCommerce orders and subscription renewals. Upgrading is strongly recommended for every site.
+
+* New      - Weekly cap is now settable per action in Settings > Points. The limit was already enforced, but there was no field to set it.
+* Improve  - Points, badges, levels, and the Hub follow the active theme's colours in both light and dark mode on BuddyX, BuddyX Pro, and Reign.
+* Fix      - A reward with limited stock became unlimited the moment it sold out, and could then be redeemed without limit. Stock now has three distinct states: empty means unlimited, 0 means sold out, and any positive number is the quantity remaining. Rewards you currently run with a stock of 0 stay unlimited; they are migrated on upgrade.
+* Fix      - The per-member kudos cooldown was never applied on sites in a timezone behind UTC, so members could send kudos to the same person repeatedly. The cooldown is now enforced in every timezone.
+* Fix      - The weekly digest's "this week" window was offset by the site's timezone, so the email could omit recent activity or include activity from the previous week. It now covers the correct seven days on any site.
+* Fix      - The weekly digest was also sent to the wrong people for the same reason: the query that selects recipients used the database clock instead of the site's, so members active near the edge of the window were dropped from the send.
+* Fix      - Challenges opened and closed on the database's clock rather than the site's. On a site ahead of UTC, a challenge scheduled to start at 09:00 stayed shut for hours and members could not join one that was already running; one due to close at midnight kept accepting entries. Start and end times now mean what the clock on the wall says.
+* Fix      - The community-challenge countdown showed the wrong time remaining, and could read "ended" hours before the challenge actually closed.
+* Fix      - Two kudos sent to the same member at the same instant could both bypass the cooldown and record twice. Only one is now recorded.
+* Fix      - Toasts set to a top position rendered behind the theme's header. They now sit below it, and below any other bar pinned to the top of the page.
+* Fix      - Leaderboards now serve from their snapshot table instead of aggregating the full points ledger on every view. The snapshot was disabled by every points award, and a timezone mismatch emptied it at the end of each rebuild on sites ahead of UTC, so leaderboard views fell back to a full-table query.
+* Fix      - The all-time leaderboard reads the materialised member totals rather than summing the whole ledger.
+* Fix      - Members no longer receive duplicate weekly emails. An overdue cron re-fire could start a second send while the first was still queued.
+* Fix      - Notification queue is bounded per member and no longer replays a backlog of stale toasts on every page load.
+* Fix      - Weekly digest, cohort assignment, and status-retention jobs now process members in batches instead of attempting the whole site in a single run.
+* Fix      - Personal-data export is paginated, so an export for a member with a long history no longer exhausts memory.
+* Fix      - Award Points now uses a searchable member picker instead of rendering every member on the site into a dropdown.
+* Fix      - Added database indexes for badge, kudos, submission, redemption, and member-intelligence queries that previously scanned the full table.
+* Fix      - Badge rarity is cached, so public badge pages no longer aggregate the badge table on every request.
+* Fix      - Setup wizard's Coaching Platform and Nonprofit templates no longer seed actions that cannot fire; the wizard now refuses to save an action it does not recognise.
+* Fix      - Licence assets no longer 404 on hosts where the plugin directory is a symlink or the document root does not prefix-match the plugin path.
+* Security - The Action Scheduler cleanup no longer deletes other plugins' queued work. It previously removed every pending Action Scheduler job older than the retention window, with no ownership check, which could destroy WooCommerce orders and subscription renewals on any site. Cleanup is now fenced to this plugin's own jobs, and queued work is never aged out as routine housekeeping.
+* Dev      - `wp wb-gamification scale benchmark` now covers the badge, notification, and streak read paths, and a green run against a seeded dataset is required before a release can be packaged.
 
 = 1.6.3 - July 2026 =
 

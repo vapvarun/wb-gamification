@@ -110,11 +110,20 @@ BlockHooks::before( 'community-challenges', $wb_gam_attrs, array( 'count' => cou
 				$wb_gam_target        = max( 1, (int) ( $wb_gam_challenge['target_count'] ?? 1 ) );
 				$wb_gam_pct           = min( 100, (int) round( ( $wb_gam_progress / $wb_gam_target ) * 100 ) );
 				$wb_gam_bonus         = (int) ( $wb_gam_challenge['bonus_points'] ?? 0 );
+				// ends_at is a local wall-clock string (the admin field is <input
+				// type="datetime-local">, which carries no timezone). strtotime() parses it in
+				// PHP's default zone, which WordPress pins to UTC -- so the result is the local
+				// wall clock expressed as if it were UTC. Comparing that against time() (real
+				// UTC) mixed the two frames and skewed the countdown by the site's offset: on a
+				// site 5.5 hours ahead, a challenge read "ended" five and a half hours before it
+				// actually did. current_time( 'timestamp' ) is the local wall clock in the SAME
+				// frame, so both sides now agree.
+				$wb_gam_now_ts        = (int) current_time( 'timestamp' ); // phpcs:ignore WordPress.DateTime.CurrentTimeTimestamp.Requested -- deliberate: matches the frame strtotime() puts the local ends_at string in.
 				$wb_gam_ends_ts       = (int) strtotime( (string) ( $wb_gam_challenge['ends_at'] ?? 'now' ) );
 				$wb_gam_status        = (string) ( $wb_gam_challenge['status'] ?? 'active' );
 				$wb_gam_is_completed  = ( 'completed' === $wb_gam_status );
-				$wb_gam_time_left     = $wb_gam_ends_ts > time()
-					? human_time_diff( time(), $wb_gam_ends_ts )
+				$wb_gam_time_left     = $wb_gam_ends_ts > $wb_gam_now_ts
+					? human_time_diff( $wb_gam_now_ts, $wb_gam_ends_ts )
 					: __( 'ended', 'wb-gamification' );
 				$wb_gam_item_classes  = 'wb-gam-community-challenges__item';
 				if ( $wb_gam_is_completed ) {

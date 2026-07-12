@@ -201,7 +201,9 @@ BlockHooks::before(
 				$wb_gam_cost           = (int) ( $wb_gam_item['points_cost'] ?? 0 );
 				$wb_gam_stock          = $wb_gam_item['stock'] ?? null;
 				// Stock semantics (matches RedemptionEngine + admin UI): NULL or 0 = unlimited; positive int = finite.
-				$wb_gam_is_unlimited   = ( null === $wb_gam_stock || 0 === (int) $wb_gam_stock );
+				// NULL = unlimited, 0 = sold out. Treating 0 as unlimited here is what
+				// let a sold-out reward keep advertising itself as available.
+				$wb_gam_is_unlimited   = ( null === $wb_gam_stock );
 				$wb_gam_out_of_stock   = ( ! $wb_gam_is_unlimited && (int) $wb_gam_stock <= 0 );
 				$wb_gam_insufficient   = $wb_gam_user_id && $wb_gam_balance_pts < $wb_gam_cost;
 				$wb_gam_missing_points = max( 0, $wb_gam_cost - $wb_gam_balance_pts );

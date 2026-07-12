@@ -151,21 +151,30 @@ final class LeaderboardEngine {
 	 * Settings rescue button) can call it explicitly.
 	 */
 	public static function invalidate_cache(): void {
-		// Tier 1 — bump the object-cache last-changed stamp. Every cache key
-		// in get_leaderboard() / get_user_rank() embeds this stamp, so all
-		// prior keys become unreachable in one operation.
+		// Bump the object-cache last-changed stamp. Every cache key in
+		// get_leaderboard() / get_user_rank() embeds this stamp, so all prior
+		// keys become unreachable in one operation. This is an in-memory /
+		// Redis write — cheap enough for the award hot path.
 		wp_cache_set_last_changed( 'wb_gamification' );
 
-		// Tier 2 — record the invalidation time. read_from_snapshot() (which
-		// reads the wb_gam_leaderboard_cache SQL TABLE — separate cache layer
-		// with its own 10-minute freshness check) compares the snapshot's
-		// MAX(updated_at) against this option and bails if the option is
-		// newer. Without this, the snapshot serves stale data for up to
-		// 10 minutes after a points award even with the object cache busted.
-		// The cron rebuild every 5 minutes (wb_gam_leaderboard_snapshot)
-		// closes the gap; in the worst case readers fall through to the
-		// live SUM query, which is correct (just slower).
-		update_option( 'wb_gam_leaderboard_invalidated_at', time(), false );
+		// NOTE: this deliberately no longer writes
+		// `wb_gam_leaderboard_invalidated_at`.
+		//
+		// That option did two damaging things, on every single award:
+		//
+		// 1. It disabled the snapshot. read_from_snapshot() refused to serve any
+		// snapshot older than the option, so the first award after each
+		// rebuild sent every subsequent read to a full-table SUM. See
+		// read_from_snapshot() — the materialised leaderboard was never
+		// actually allowed to be read on a busy site.
+		//
+		// 2. It made ONE wp_options ROW a write-serialisation point across every
+		// award on the site. An UPDATE on a single row, per award, at 100k
+		// members, is a lock convoy on the hottest path in the plugin.
+		//
+		// A materialised leaderboard is eventually consistent BY DESIGN, bounded
+		// by the rebuild interval (5 min) — see the `wb_gam_leaderboard_max_snapshot_age`
+		// filter. Invalidating it on every write is a contradiction in terms.
 
 		/**
 		 * Fires after the leaderboard cache is invalidated.
@@ -273,21 +282,81 @@ final class LeaderboardEngine {
 		// WHERE keyword is always emitted.
 		$where_clause = 'WHERE ' . implode( ' AND ', $where_parts );
 
-		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$query = "
-			SELECT p.user_id,
-			       SUM(p.points) AS total_points,
-			       u.display_name
-			  FROM {$wpdb->prefix}wb_gam_points p
-			  JOIN {$wpdb->users} u ON u.ID = p.user_id
-			  {$where_clause}
-			  {$opt_out_clause}
-			  {$scope_clause}
-			 GROUP BY p.user_id
-			 ORDER BY total_points DESC
-			 LIMIT %d
-		";
-		// phpcs:enable
+		// period='all' reads the MATERIALISED TOTALS, not the ledger.
+		//
+		// wb_gam_user_totals already holds every member's running total per
+		// currency. It is maintained transactionally on every award
+		// (PointsEngine::bump_user_total) and carries KEY idx_type_total
+		// (point_type, total) — an index that could not be more precisely shaped
+		// for "top N by total for this currency".
+		//
+		// The leaderboard never read it. For the all-time board — the DEFAULT
+		// period, and by far the most-rendered — it instead ran SUM(points)
+		// GROUP BY user_id over the entire ledger: a full-table aggregate, a temp
+		// table, and a filesort over every member, to produce the same numbers
+		// that were already sitting in an indexed table one row per member.
+		//
+		// Period boards (day/week/month) genuinely need the ledger — a total does
+		// not carry a date — so those keep the SUM, bounded by idx_created.
+		if ( ! $period_start ) {
+			// The top-N is selected from the totals table ALONE, in a derived
+			// table, BEFORE the users join.
+			//
+			// Joining wp_users up front lets the optimiser drive from wp_users
+			// (eq_ref into totals) — which scans the whole user table and forces
+			// a temporary + filesort, because ORDER BY t.total cannot then use
+			// idx_type_total. Verified with EXPLAIN: the naive JOIN form gives
+			// `u: type=index ... Using temporary; Using filesort`. Correct result,
+			// wrong plan, and the wrong plan is O(members).
+			//
+			// Selecting the 500-odd candidate rows from the indexed totals table
+			// first, then joining names onto that handful, keeps the range scan on
+			// idx_type_total (point_type, total) and the LIMIT where it belongs.
+			// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$query = "
+				SELECT t.user_id,
+				       t.total_points,
+				       u.display_name
+				  FROM (
+				        SELECT user_id, total AS total_points
+				          FROM {$wpdb->prefix}wb_gam_user_totals
+				         WHERE point_type = %s
+				           AND total > 0
+				          " . str_replace( 'p.user_id', 'user_id', $opt_out_clause ) . '
+				          ' . str_replace( 'p.user_id', 'user_id', $scope_clause ) . "
+				      ORDER BY total DESC
+				         LIMIT %d
+				       ) t
+				  JOIN {$wpdb->users} u ON u.ID = t.user_id
+				 ORDER BY t.total_points DESC
+			";
+			// phpcs:enable
+
+			// Rebuild the value list: the totals path has no created_at bind.
+			$where_values = array( $resolved_type );
+			if ( ! empty( $opt_out_ids ) ) {
+				$where_values = array_merge( $where_values, $opt_out_ids );
+			}
+			if ( ! empty( $scope_ids ) ) {
+				$where_values = array_merge( $where_values, $scope_ids );
+			}
+		} else {
+			// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$query = "
+				SELECT p.user_id,
+				       SUM(p.points) AS total_points,
+				       u.display_name
+				  FROM {$wpdb->prefix}wb_gam_points p
+				  JOIN {$wpdb->users} u ON u.ID = p.user_id
+				  {$where_clause}
+				  {$opt_out_clause}
+				  {$scope_clause}
+				 GROUP BY p.user_id
+				 ORDER BY total_points DESC
+				 LIMIT %d
+			";
+			// phpcs:enable
+		}
 
 		$where_values[] = $limit;
 
@@ -418,12 +487,29 @@ final class LeaderboardEngine {
 
 		// Snapshot start time — every row written this tick will have
 		// updated_at >= $started. After all (period × currency) inserts
-		// finish, anything older than $started is a stragger from the
+		// finish, anything older than $started is a straggler from the
 		// previous snapshot whose user dropped out of the top-500 — purge
 		// in one DELETE at the end. Reads during the rebuild always see
 		// SOME valid data (old or new), eliminating the read-through
 		// window that the legacy TRUNCATE pattern had on every cron tick.
-		$started = current_time( 'mysql' );
+		//
+		// READ FROM THE DATABASE'S OWN CLOCK. The rows below are stamped by
+		// MySQL's NOW(); the straggler DELETE compares against $started. If the
+		// two come from different clocks the comparison is meaningless.
+		//
+		// Until 1.6.4 this was current_time('mysql') — WordPress SITE-LOCAL time —
+		// while the rows were stamped NOW(), which on virtually every host is UTC.
+		// On any site ahead of UTC (IST +5:30, CET, all of Asia and Australia)
+		// $started was HOURS AHEAD of the rows it had just written, so the final
+		// DELETE matched every one of them: the snapshot table was emptied at the
+		// end of every single rebuild, and every read fell through to the live
+		// full-table SUM. Forever, silently.
+		//
+		// It survived because it is invisible on a UTC dev box (gmt_offset = 0),
+		// where the two clocks happen to agree. Taking both stamps from the DB
+		// removes the class of bug, not just this instance.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$started = (string) $wpdb->get_var( 'SELECT NOW()' );
 
 		$periods = array(
 			'all'   => null,
@@ -522,14 +608,29 @@ final class LeaderboardEngine {
 		}
 		$snapshot_built_at = (int) $snapshot_built_at;
 
-		if ( ( time() - $snapshot_built_at ) >= 600 ) { // 10 min hard cap
-			return null;
-		}
-
-		$invalidated_at = (int) get_option( 'wb_gam_leaderboard_invalidated_at', 0 );
-		if ( $invalidated_at > $snapshot_built_at ) {
-			// Snapshot is older than the most recent invalidation — fall
-			// through to the live query path, which is always correct.
+		// Bounded staleness is the ONLY freshness rule. A leaderboard is a
+		// materialised view: it is allowed to be up to one rebuild-interval
+		// behind. That is not a compromise, it is the entire reason it exists.
+		//
+		// Until 1.6.4 there was a SECOND gate here: read_from_snapshot() also
+		// bailed whenever `wb_gam_leaderboard_invalidated_at` was newer than the
+		// snapshot — and that option was written on EVERY points award. So the
+		// first award after each rebuild disabled the snapshot, and on a busy site
+		// awards land many times per second. The snapshot was readable for
+		// milliseconds per five-minute cycle; ~100% of reads fell through to a
+		// full-table SUM over wb_gam_points. The cron built a cache that nothing
+		// was ever allowed to read.
+		//
+		// The old comment called the live fallback "correct (just slower)". At
+		// 100k members it is not slower, it is the difference between an indexed
+		// read of a 500-row table and a GROUP BY over millions of rows — on a
+		// route (GET /leaderboard) whose permission_callback is __return_true, so
+		// any anonymous visitor could trigger it in a loop.
+		//
+		// Staleness window is filterable for owners who want a tighter or looser
+		// trade than the 5-minute rebuild interval.
+		$max_age = (int) apply_filters( 'wb_gam_leaderboard_max_snapshot_age', 600 );
+		if ( ( time() - $snapshot_built_at ) >= max( 60, $max_age ) ) {
 			return null;
 		}
 

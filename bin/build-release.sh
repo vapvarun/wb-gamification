@@ -24,6 +24,7 @@
 #   1   missing Version header
 #   25  static gates failed (composer ci:no-journeys)
 #   30  agent-smoke gate failed (missing/stale/mismatched/with from-failures)
+#   32  scale-benchmark gate failed (missing/unseeded/over-budget/version mismatch)
 
 set -euo pipefail
 
@@ -33,10 +34,12 @@ SLUG="wb-gamification"
 DIST_DIR="${ROOT_DIR}/dist"
 
 SKIP_BROWSER_SMOKE=0
+SKIP_SCALE_BENCH=0
 SKIP_STATIC_GATES=0
 while [ $# -gt 0 ]; do
     case "$1" in
         --skip-browser-smoke) SKIP_BROWSER_SMOKE=1; shift ;;
+        --skip-scale-bench)   SKIP_SCALE_BENCH=1;   shift ;;
         --skip-static-gates)  SKIP_STATIC_GATES=1; shift ;;
         *) echo "Unknown flag: $1" >&2; exit 2 ;;
     esac
@@ -105,6 +108,70 @@ else
     echo "  contract audit clean (0/0, baselined exceptions only)"
 fi
 # ─── End contract-audit gate ─────────────────────────────────────────────────
+
+# ─── Scale-benchmark gate (S-02) ────────────────────────────────────────────
+# The plugin claims 100k-readiness. Before 1.6.4 that claim was only ever
+# re-verified when a human remembered to type `composer scale:bench` — so a
+# performance regression could ship silently. It cannot now.
+#
+# Refuses to package unless audit/.last-scale-pass.json:
+#   - exists
+#   - .version matches the current VERSION
+#   - .pass is true (every hot-path query inside its budget)
+#   - .dataset.seeded is true (a benchmark against 300 real rows proves nothing)
+#
+# Regenerate with:
+#   composer scale:seed && composer scale:bench && composer scale:teardown
+#
+# Emergency bypass: --skip-scale-bench (warns; not for customer releases).
+SCALE_REPORT="${ROOT_DIR}/audit/.last-scale-pass.json"
+if [ "${SKIP_SCALE_BENCH:-0}" -eq 1 ]; then
+    echo "  WARN: scale-benchmark gate skipped (--skip-scale-bench). Not for customer releases."
+elif [ ! -f "${SCALE_REPORT}" ]; then
+    echo "ERROR: no scale-benchmark report at ${SCALE_REPORT#${ROOT_DIR}/}" >&2
+    echo "       The 100k-readiness claim is unverified for this build." >&2
+    echo "         composer scale:seed && composer scale:bench && composer scale:teardown" >&2
+    echo "       Emergency only: rerun with --skip-scale-bench." >&2
+    exit 32
+elif command -v python3 >/dev/null 2>&1; then
+    SCALE_CHECK="$(python3 - <<PY
+import json, sys
+try:
+    d = json.load(open("${SCALE_REPORT}"))
+except Exception as e:
+    print("PARSE_FAIL " + str(e)); sys.exit(0)
+print("VERSION=" + str(d.get("version", "")))
+print("PASS=" + ("1" if d.get("pass") else "0"))
+print("SEEDED=" + ("1" if (d.get("dataset") or {}).get("seeded") else "0"))
+print("FAILED=" + ",".join(d.get("failed") or []))
+PY
+)"
+    if echo "${SCALE_CHECK}" | grep -q "^PARSE_FAIL"; then
+        echo "ERROR: ${SCALE_REPORT#${ROOT_DIR}/} is not valid JSON." >&2
+        exit 32
+    fi
+    SCALE_VERSION="$(echo "${SCALE_CHECK}" | sed -n 's/^VERSION=//p')"
+    SCALE_PASS="$(echo "${SCALE_CHECK}" | sed -n 's/^PASS=//p')"
+    SCALE_SEEDED="$(echo "${SCALE_CHECK}" | sed -n 's/^SEEDED=//p')"
+    SCALE_FAILED="$(echo "${SCALE_CHECK}" | sed -n 's/^FAILED=//p')"
+    if [ "${SCALE_VERSION}" != "${VERSION}" ]; then
+        echo "ERROR: scale report version (${SCALE_VERSION}) ≠ release version (${VERSION})" >&2
+        echo "       Re-run: composer scale:seed && composer scale:bench" >&2
+        exit 32
+    fi
+    if [ "${SCALE_SEEDED}" != "1" ]; then
+        echo "ERROR: scale report was NOT run against a seeded dataset." >&2
+        echo "       Benchmarking a near-empty table proves nothing. Run: composer scale:seed" >&2
+        exit 32
+    fi
+    if [ "${SCALE_PASS}" != "1" ]; then
+        echo "ERROR: scale benchmark FAILED — over budget: ${SCALE_FAILED}" >&2
+        echo "       These queries will not hold up on a large site. Fix before shipping." >&2
+        exit 32
+    fi
+    echo "  scale benchmark green (seeded dataset, all queries within budget)"
+fi
+# ─── End scale-benchmark gate ───────────────────────────────────────────────
 
 # ─── Agent-smoke gate ───────────────────────────────────────────────────────
 # Refuses to package unless docs/qa/.last-smoke-pass.json:
