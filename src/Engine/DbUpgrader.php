@@ -121,6 +121,170 @@ final class DbUpgrader {
 		self::ensure_scale_indexes();
 		self::ensure_redemption_stock_null_unlimited();
 		self::ensure_badge_rule_groups();
+		self::ensure_engine_badges_become_rules();
+	}
+
+	/**
+	 * Turn the seven engine-owned badges into ordinary, editable rules.
+	 *
+	 * THIS IS THE POINT OF THE WHOLE FEATURE, so it is worth being precise about what was wrong.
+	 *
+	 * Four tenure badges (TenureBadgeEngine, a hardcoded TIERS list) and three site-first badges
+	 * (SiteFirstBadgeEngine, a hardcoded list) had NO RULE ROW AT ALL. The Badge Library derives its
+	 * chip from the rule, found none, and printed "MANUAL" -- telling the owner *you must grant this
+	 * by hand*. They were auto-awarded by a cron. The UI told the owner the opposite of the truth,
+	 * showed no condition, and offered nothing to change. An owner who wanted "2-Year Member" to mean
+	 * eighteen months had exactly one option: edit PHP.
+	 *
+	 * They become rules like everything else:
+	 *
+	 *     tenure_1yr           tenure_days 365          (2yr / 5yr / 10yr likewise)
+	 *     first_champion       level_reached <Champion>  + max_earners 1
+	 *     first_10k_points     point_milestone 10000     + max_earners 1
+	 *     first_100_day_streak streak_days 100           + max_earners 1
+	 *
+	 * TWO THINGS THAT WOULD HAVE BEEN BUGS:
+	 *
+	 * 1. Level ids are SITE-SPECIFIC. "Champion" is id 5 here and could be anything anywhere, so the
+	 *    level is resolved BY NAME at migration time, falling back to the highest level on the site.
+	 *    Hardcoding 5 would have pointed the badge at whatever level happened to be fifth.
+	 *
+	 * 2. The `tenure_badges` and `site_first_badges` feature flags could be OFF, in which case those
+	 *    badges do not currently award at all. Seeding active rules would have started awarding them
+	 *    on a site whose owner had deliberately switched them off. The rule inherits `is_active` from
+	 *    the flag, so behaviour is preserved exactly -- and now the owner can SEE the switch instead
+	 *    of hunting for a flag.
+	 *
+	 * @return void
+	 */
+	private static function ensure_engine_badges_become_rules(): void {
+		if ( get_option( 'wb_gam_feature_engine_badges_are_rules_v1' ) ) {
+			return;
+		}
+
+		global $wpdb;
+
+		// Champion by NAME, never by id. Falls back to the highest level the site has.
+		$champion_id = (int) $wpdb->get_var(
+			$wpdb->prepare( "SELECT id FROM {$wpdb->prefix}wb_gam_levels WHERE name = %s LIMIT 1", 'Champion' )
+		);
+		if ( ! $champion_id ) {
+			$champion_id = (int) $wpdb->get_var( "SELECT id FROM {$wpdb->prefix}wb_gam_levels ORDER BY min_points DESC LIMIT 1" );
+		}
+
+		$tenure_on     = FeatureFlags::is_enabled( 'tenure_badges' ) ? 1 : 0;
+		$site_first_on = FeatureFlags::is_enabled( 'site_first_badges' ) ? 1 : 0;
+
+		$seed = array(
+			'tenure_1yr'           => array(
+				$tenure_on,
+				array(
+					'type' => 'tenure_days',
+					'days' => 365,
+				),
+				null,
+			),
+			'tenure_2yr'           => array(
+				$tenure_on,
+				array(
+					'type' => 'tenure_days',
+					'days' => 730,
+				),
+				null,
+			),
+			'tenure_5yr'           => array(
+				$tenure_on,
+				array(
+					'type' => 'tenure_days',
+					'days' => 1825,
+				),
+				null,
+			),
+			'tenure_10yr'          => array(
+				$tenure_on,
+				array(
+					'type' => 'tenure_days',
+					'days' => 3650,
+				),
+				null,
+			),
+			'first_champion'       => array(
+				$site_first_on,
+				array(
+					'type'     => 'level_reached',
+					'level_id' => $champion_id,
+				),
+				1,
+			),
+			'first_10k_points'     => array(
+				$site_first_on,
+				array(
+					'type'   => 'point_milestone',
+					'points' => 10000,
+				),
+				1,
+			),
+			'first_100_day_streak' => array(
+				$site_first_on,
+				array(
+					'type' => 'streak_days',
+					'days' => 100,
+				),
+				1,
+			),
+		);
+
+		foreach ( $seed as $badge_id => $spec ) {
+			list( $active, $condition, $max_earners ) = $spec;
+
+			// The badge must exist. If an owner deleted it, do not resurrect it.
+			$exists = $wpdb->get_var( $wpdb->prepare( "SELECT id FROM {$wpdb->prefix}wb_gam_badge_defs WHERE id = %s", $badge_id ) );
+			if ( ! $exists ) {
+				continue;
+			}
+
+			// Never clobber a rule an owner already has. If one exists, this badge is already
+			// theirs and we have no business rewriting it.
+			$has_rule = $wpdb->get_var(
+				$wpdb->prepare(
+					"SELECT id FROM {$wpdb->prefix}wb_gam_rules WHERE rule_type = 'badge_condition' AND target_id = %s",
+					$badge_id
+				)
+			);
+			if ( $has_rule ) {
+				continue;
+			}
+
+			$wpdb->insert(
+				$wpdb->prefix . 'wb_gam_rules',
+				array(
+					'rule_type'   => 'badge_condition',
+					'target_id'   => $badge_id,
+					'is_active'   => $active,
+					'rule_config' => (string) wp_json_encode(
+						array(
+							'match'      => BadgeRule::MATCH_ALL,
+							'conditions' => array( $condition ),
+						)
+					),
+				),
+				array( '%s', '%s', '%d', '%s' )
+			);
+
+			// Site-first badges are scarce by definition: only one member can ever be first.
+			if ( null !== $max_earners ) {
+				$wpdb->update(
+					$wpdb->prefix . 'wb_gam_badge_defs',
+					array( 'max_earners' => (int) $max_earners ),
+					array( 'id' => $badge_id ),
+					array( '%d' ),
+					array( '%s' )
+				);
+			}
+		}
+
+		wp_cache_delete( 'wb_gam_badge_rules', 'wb_gamification' );
+		update_option( 'wb_gam_feature_engine_badges_are_rules_v1', 1, false );
 	}
 
 	/**

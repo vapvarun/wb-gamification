@@ -50,7 +50,168 @@ defined( 'ABSPATH' ) || exit;
 final class BadgeEngine {
 
 	private const CACHE_GROUP = 'wb_gamification';
-	private const CACHE_TTL   = 60; // Seconds.
+
+	/**
+	 * Daily pass for conditions no award can change (tenure).
+	 */
+	public const CRON_PASS = 'wb_gam_badge_cron_pass';
+
+	/**
+	 * Members evaluated per cron tick. Keyset-paged: no single tick carries the site.
+	 */
+	private const CRON_PAGE_SIZE = 500;
+
+	/**
+	 * Forget the cached rules list.
+	 *
+	 * The award path caches active rules for five minutes. Anything that writes a rule MUST call
+	 * this, or the owner saves a badge, tests it, sees nothing happen, and concludes the plugin is
+	 * broken -- for five minutes. (I lost twenty minutes to exactly that while building this: a
+	 * functional test reported FAIL and the feature was fine.)
+	 *
+	 * @return void
+	 */
+	/**
+	 * Arm the daily badge pass, and retire the engine cron it replaces.
+	 *
+	 * @return void
+	 */
+	public static function maybe_schedule_cron_pass(): void {
+		// TenureBadgeEngine's cron is gone with the engine. Clear it, or it stays scheduled forever
+		// on every existing site, firing a hook nothing listens to.
+		wp_clear_scheduled_hook( 'wb_gam_tenure_check' );
+
+		if ( ! function_exists( 'as_schedule_recurring_action' ) || ! function_exists( 'as_has_scheduled_action' ) ) {
+			return;
+		}
+
+		// Guarded, per the AS-schedule contract: re-arming on every init must never stack duplicates.
+		if ( ! as_has_scheduled_action( self::CRON_PASS, array(), 'wb-gamification' ) ) {
+			as_schedule_recurring_action( time() + HOUR_IN_SECONDS, DAY_IN_SECONDS, self::CRON_PASS, array(), 'wb-gamification' );
+		}
+	}
+
+	/**
+	 * Forget the cached rules list.
+	 *
+	 * The award path caches active rules for five minutes. Anything that writes a rule MUST call
+	 * this, or the owner saves a badge, tests it, sees nothing happen, and concludes the plugin is
+	 * broken -- for five minutes. I lost time to exactly that while building this: a functional test
+	 * reported FAIL and the feature was fine.
+	 *
+	 * @return void
+	 */
+	public static function flush_rules_cache(): void {
+		wp_cache_delete( 'wb_gam_badge_rules', self::CACHE_GROUP );
+	}
+
+	/**
+	 * Every active badge rule, object-cached.
+	 *
+	 * Extracted from evaluate_on_award() because the daily cron pass needs exactly the same list,
+	 * and a second copy of this query would be a second place to forget the cache.
+	 *
+	 * @return array<int,array{badge_id:string,rule_config:string}>
+	 */
+	public static function get_active_rules(): array {
+		global $wpdb;
+
+		$rules = wp_cache_get( 'wb_gam_badge_rules', self::CACHE_GROUP );
+
+		if ( false === $rules ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$rules = $wpdb->get_results(
+				"SELECT target_id AS badge_id, rule_config
+				   FROM {$wpdb->prefix}wb_gam_rules
+				  WHERE rule_type = 'badge_condition' AND is_active = 1",
+				ARRAY_A
+			) ?: array();
+
+			wp_cache_set( 'wb_gam_badge_rules', $rules, self::CACHE_GROUP, 300 ); // 5 min TTL.
+		}
+
+		return (array) $rules;
+	}
+
+	/**
+	 * Daily pass: evaluate the badges that only the calendar can complete.
+	 *
+	 * Keyset-paged over members, one Action Scheduler job per page, each scheduling its successor.
+	 * TenureBadgeEngine walked every user on the site in a single cron tick; at 100k members that is
+	 * the fan-out this branch has spent the day removing everywhere else.
+	 *
+	 * @param int $cursor Last user id processed.
+	 * @return void
+	 */
+	public static function run_cron_pass( int $cursor = 0 ): void {
+		global $wpdb;
+
+		// Only rules that answer to `cron` at all -- which today means tenure. If an owner has no
+		// tenure badges, this costs one query and stops.
+		$rules = array_filter(
+			self::get_active_rules(),
+			static function ( $rule ) {
+				$config = json_decode( (string) $rule['rule_config'], true );
+				return is_array( $config ) && BadgeRule::is_relevant( $config, array( 'cron' ) );
+			}
+		);
+
+		if ( ! $rules ) {
+			return;
+		}
+
+		$user_ids = $wpdb->get_col(
+			$wpdb->prepare(
+				"SELECT ID FROM {$wpdb->users} WHERE ID > %d ORDER BY ID ASC LIMIT %d",
+				$cursor,
+				self::CRON_PAGE_SIZE
+			)
+		);
+
+		if ( ! $user_ids ) {
+			return;
+		}
+
+		foreach ( $user_ids as $user_id ) {
+			$user_id = (int) $user_id;
+			$earned  = self::get_user_earned_badge_ids( $user_id );
+			$total   = PointsEngine::get_total( $user_id, null );
+
+			self::evaluate_for_signals( $user_id, array( 'cron' ), null, $rules, $earned, $total );
+		}
+
+		if ( count( $user_ids ) < self::CRON_PAGE_SIZE ) {
+			return; // Short page: done.
+		}
+
+		self::schedule_cron_page( (int) end( $user_ids ) );
+	}
+
+	/**
+	 * Queue the next page of the daily pass.
+	 *
+	 * Guarded: the handler schedules its own successor, so without a dedupe check an overlapping run
+	 * would queue the same cursor twice.
+	 *
+	 * @param int $cursor Last user id processed.
+	 * @return void
+	 */
+	private static function schedule_cron_page( int $cursor ): void {
+		if ( ! function_exists( 'as_enqueue_async_action' ) ) {
+			self::run_cron_pass( $cursor );
+			return;
+		}
+
+		$args = array( 'cursor' => $cursor );
+
+		if ( function_exists( 'as_has_scheduled_action' )
+			&& as_has_scheduled_action( self::CRON_PASS, $args, 'wb-gamification' ) ) {
+			return;
+		}
+
+		as_enqueue_async_action( self::CRON_PASS, $args, 'wb-gamification' );
+	}
+	private const CACHE_TTL = 60; // Seconds.
 
 	/**
 	 * Object-cache key + TTL for the badge rarity map.
@@ -65,6 +226,20 @@ final class BadgeEngine {
 	 */
 	public static function init(): void {
 		add_action( 'wb_gam_points_awarded', array( __CLASS__, 'evaluate_on_award' ), 10, 3 );
+
+		// Conditions that no award can ever change still have to be evaluated by SOMETHING.
+		// tenure_days is the only one today: it moves with the calendar, not with anything a member
+		// does. This daily pass is what TenureBadgeEngine's cron used to be -- except it now
+		// evaluates whatever tenure rules the OWNER has configured, instead of a hardcoded list of
+		// four the owner could not see.
+		add_action( self::CRON_PASS, array( __CLASS__, 'run_cron_pass' ), 10, 1 );
+
+		// Arm the daily pass. AS is not up until init.
+		if ( did_action( 'init' ) ) {
+			self::maybe_schedule_cron_pass();
+		} else {
+			add_action( 'init', array( __CLASS__, 'maybe_schedule_cron_pass' ) );
+		}
 
 		// Awarding a badge changes every badge's rarity denominator-share, so the
 		// cached map is dropped on award. Priority 5 = before the display-side
@@ -165,23 +340,7 @@ final class BadgeEngine {
 	 * @param int   $points  Points awarded.
 	 */
 	public static function evaluate_on_award( int $user_id, Event $event, int $points ): void {
-		global $wpdb;
-
-		// Load all active badge conditions — typically ~30 rows.
-		// Object-cached to avoid hitting the DB on every single point award.
-		$cache_key = 'wb_gam_badge_rules';
-		$rules     = wp_cache_get( $cache_key, self::CACHE_GROUP );
-
-		if ( false === $rules ) {
-			$rules = $wpdb->get_results(
-				"SELECT target_id AS badge_id, rule_config
-				   FROM {$wpdb->prefix}wb_gam_rules
-				  WHERE rule_type = 'badge_condition' AND is_active = 1",
-				ARRAY_A
-			) ?: array();
-
-			wp_cache_set( $cache_key, $rules, self::CACHE_GROUP, 300 ); // 5 min TTL.
-		}
+		$rules = self::get_active_rules();
 
 		if ( empty( $rules ) ) {
 			return;

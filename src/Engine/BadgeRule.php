@@ -185,10 +185,18 @@ final class BadgeRule {
 				return array( 'badge:' . (string) ( $condition['badge_id'] ?? '' ) );
 
 			case 'tenure_days':
-				// Tenure changes with the calendar, not with anything a member does. Evaluating a
-				// tenure badge on the award path would put it on EVERY award on the site, forever,
-				// to answer a question that can only change at midnight.
+				// Tenure changes with the CALENDAR, not with anything a member does. It is never
+				// relevant to an award -- evaluating it there would put it on every award on the
+				// site, forever, to answer a question that can only change at midnight.
+				//
+				// But it still has to be evaluated by SOMETHING, or the badge never awards at all.
+				// That was TenureBadgeEngine's whole job, and deleting that engine without giving
+				// tenure a signal would have silently killed four badges. The daily badge pass
+				// emits `cron`, and this is the only condition type that answers to it.
+				return array( 'cron' );
+
 			case 'admin_awarded':
+				// Never auto-evaluates. Not on an award, not on a cron, not ever.
 				return array();
 
 			default:

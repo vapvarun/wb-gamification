@@ -88,8 +88,6 @@ final class FeatureFlags {
 		'leaderboard_nudge'    => 'LeaderboardNudge',
 		'status_retention'     => 'StatusRetentionEngine',
 		'community_challenges' => 'CommunityChallengeEngine',
-		'site_first_badges'    => 'SiteFirstBadgeEngine',
-		'tenure_badges'        => 'TenureBadgeEngine',
 		'badge_share'          => 'BadgeSharePage',
 	];
 

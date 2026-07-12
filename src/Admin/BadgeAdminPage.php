@@ -73,6 +73,16 @@ final class BadgeAdminPage {
 			)
 		);
 
+		// The condition repeater. No jQuery dependency: it is plain DOM, and it clones a
+		// server-rendered <template> rather than building markup in JavaScript.
+		wp_enqueue_script(
+			'wb-gam-admin-badge-conditions',
+			WB_GAM_URL . 'assets/js/admin-badge-conditions.js',
+			array(),
+			WB_GAM_VERSION,
+			true
+		);
+
 		// REST-form driver dependencies (Tier 0.C).
 		wp_enqueue_script(
 			'wb-gam-admin-rest-utils',
@@ -119,6 +129,132 @@ final class BadgeAdminPage {
 	}
 
 	// ── Page render ─────────────────────────────────────────────────────────
+
+	/**
+	 * Render ONE condition row.
+	 *
+	 * Progressive disclosure: each type shows only its own fields, so a single-condition badge looks
+	 * almost exactly as it did before this feature. The complex case became possible; the simple case
+	 * did not get heavier.
+	 *
+	 * @param int    $index       Row index (posted as condition[conditions][i][...]).
+	 * @param string $type        Condition type.
+	 * @param array  $condition   Current values.
+	 * @param array  $actions     Registered actions.
+	 * @param array  $levels      Site levels (id, name).
+	 * @param array  $badges      Badge choices (id, name).
+	 * @param bool   $is_template True when rendering the clone template.
+	 * @return string
+	 */
+	private static function render_condition_row( int $index, string $type, array $condition, array $actions, array $levels, array $badges, bool $is_template = false ): string {
+		$i    = $is_template ? '__INDEX__' : (string) $index;
+		$name = 'condition[conditions][' . $i . ']';
+
+		$types = array(
+			'admin_awarded'    => __( 'Admin awarded only (manual)', 'wb-gamification' ),
+			'point_milestone'  => __( 'Reaches a point total', 'wb-gamification' ),
+			'action_count'     => __( 'Performs an action N times', 'wb-gamification' ),
+			'level_reached'    => __( 'Reaches a level', 'wb-gamification' ),
+			'badge_earned'     => __( 'Has earned another badge', 'wb-gamification' ),
+			'streak_days'      => __( 'Keeps a daily streak of N days', 'wb-gamification' ),
+			'tenure_days'      => __( 'Has been a member for N days', 'wb-gamification' ),
+			'points_in_period' => __( 'Earns N points in a period', 'wb-gamification' ),
+		);
+
+		$periods = array(
+			'day'   => __( 'day', 'wb-gamification' ),
+			'week'  => __( 'week', 'wb-gamification' ),
+			'month' => __( 'month', 'wb-gamification' ),
+		);
+
+		ob_start();
+		?>
+		<div class="wb-gam-condition-row" data-index="<?php echo esc_attr( $i ); ?>">
+			<select name="<?php echo esc_attr( $name . '[type]' ); ?>" class="wbgam-select wb-gam-condition-type">
+				<?php foreach ( $types as $wb_gam_value => $wb_gam_label ) : ?>
+					<option value="<?php echo esc_attr( $wb_gam_value ); ?>" <?php selected( $type, $wb_gam_value ); ?>>
+						<?php echo esc_html( $wb_gam_label ); ?>
+					</option>
+				<?php endforeach; ?>
+			</select>
+
+			<span class="wb-gam-condition-fields" data-for="point_milestone">
+				<input type="number" min="1" class="small-text wbgam-input"
+					name="<?php echo esc_attr( $name . '[points]' ); ?>"
+					value="<?php echo esc_attr( (string) ( $condition['points'] ?? 100 ) ); ?>">
+				<span class="wb-gam-condition-unit"><?php esc_html_e( 'points', 'wb-gamification' ); ?></span>
+			</span>
+
+			<span class="wb-gam-condition-fields" data-for="action_count">
+				<select name="<?php echo esc_attr( $name . '[action_id]' ); ?>" class="wbgam-select">
+					<?php foreach ( $actions as $wb_gam_action ) : ?>
+						<option value="<?php echo esc_attr( (string) $wb_gam_action['id'] ); ?>" <?php selected( (string) ( $condition['action_id'] ?? '' ), (string) $wb_gam_action['id'] ); ?>>
+							<?php echo esc_html( (string) ( $wb_gam_action['label'] ?? $wb_gam_action['id'] ) ); ?>
+						</option>
+					<?php endforeach; ?>
+				</select>
+				<input type="number" min="1" class="small-text wbgam-input"
+					name="<?php echo esc_attr( $name . '[count]' ); ?>"
+					value="<?php echo esc_attr( (string) ( $condition['count'] ?? 1 ) ); ?>">
+				<span class="wb-gam-condition-unit"><?php esc_html_e( 'times', 'wb-gamification' ); ?></span>
+			</span>
+
+			<span class="wb-gam-condition-fields" data-for="level_reached">
+				<select name="<?php echo esc_attr( $name . '[level_id]' ); ?>" class="wbgam-select">
+					<?php foreach ( $levels as $wb_gam_level ) : ?>
+						<option value="<?php echo esc_attr( (string) $wb_gam_level['id'] ); ?>" <?php selected( (int) ( $condition['level_id'] ?? 0 ), (int) $wb_gam_level['id'] ); ?>>
+							<?php echo esc_html( (string) $wb_gam_level['name'] ); ?>
+						</option>
+					<?php endforeach; ?>
+				</select>
+			</span>
+
+			<span class="wb-gam-condition-fields" data-for="badge_earned">
+				<select name="<?php echo esc_attr( $name . '[badge_id]' ); ?>" class="wbgam-select">
+					<?php foreach ( $badges as $wb_gam_badge ) : ?>
+						<option value="<?php echo esc_attr( (string) $wb_gam_badge['id'] ); ?>" <?php selected( (string) ( $condition['badge_id'] ?? '' ), (string) $wb_gam_badge['id'] ); ?>>
+							<?php echo esc_html( (string) $wb_gam_badge['name'] ); ?>
+						</option>
+					<?php endforeach; ?>
+				</select>
+			</span>
+
+			<span class="wb-gam-condition-fields" data-for="streak_days">
+				<input type="number" min="1" class="small-text wbgam-input"
+					name="<?php echo esc_attr( $name . '[days]' ); ?>"
+					value="<?php echo esc_attr( (string) ( $condition['days'] ?? 7 ) ); ?>">
+				<span class="wb-gam-condition-unit"><?php esc_html_e( 'days in a row', 'wb-gamification' ); ?></span>
+			</span>
+
+			<span class="wb-gam-condition-fields" data-for="tenure_days">
+				<input type="number" min="1" class="small-text wbgam-input"
+					name="<?php echo esc_attr( $name . '[days]' ); ?>"
+					value="<?php echo esc_attr( (string) ( $condition['days'] ?? 365 ) ); ?>">
+				<span class="wb-gam-condition-unit"><?php esc_html_e( 'days since joining', 'wb-gamification' ); ?></span>
+			</span>
+
+			<span class="wb-gam-condition-fields" data-for="points_in_period">
+				<input type="number" min="1" class="small-text wbgam-input"
+					name="<?php echo esc_attr( $name . '[points]' ); ?>"
+					value="<?php echo esc_attr( (string) ( $condition['points'] ?? 50 ) ); ?>">
+				<span class="wb-gam-condition-unit"><?php esc_html_e( 'points in a', 'wb-gamification' ); ?></span>
+				<select name="<?php echo esc_attr( $name . '[period]' ); ?>" class="wbgam-select">
+					<?php foreach ( $periods as $wb_gam_p => $wb_gam_plabel ) : ?>
+						<option value="<?php echo esc_attr( $wb_gam_p ); ?>" <?php selected( (string) ( $condition['period'] ?? 'week' ), $wb_gam_p ); ?>>
+							<?php echo esc_html( $wb_gam_plabel ); ?>
+						</option>
+					<?php endforeach; ?>
+				</select>
+			</span>
+
+			<button type="button" class="wb-gam-condition-remove" aria-label="<?php esc_attr_e( 'Remove this condition', 'wb-gamification' ); ?>">
+				<span aria-hidden="true">&times;</span>
+			</button>
+		</div>
+		<?php
+		return (string) ob_get_clean();
+	}
+
 
 	/**
 	 * Render the badge library page with premium grid layout and inline form.
@@ -192,6 +328,14 @@ final class BadgeAdminPage {
 		$show_form = ! empty( $editing ) || 'new' === $wb_gam_action_param;
 
 		$actions = \WBGam\Engine\Registry::get_actions();
+
+		// Levels and badges for the level_reached / badge_earned conditions. Read from the database,
+		// because level ids are SITE-SPECIFIC -- "Champion" is id 5 here and could be anything
+		// anywhere. A hardcoded list in JavaScript would point at whatever level happened to be
+		// fifth on someone else's site.
+		global $wpdb;
+		$levels        = $wpdb->get_results( "SELECT id, name FROM {$wpdb->prefix}wb_gam_levels ORDER BY min_points ASC", ARRAY_A ) ?: array();
+		$badge_choices = $wpdb->get_results( "SELECT id, name FROM {$wpdb->prefix}wb_gam_badge_defs ORDER BY name ASC", ARRAY_A ) ?: array();
 
 		?>
 		<div class="wrap wbgam-wrap">
@@ -369,50 +513,77 @@ final class BadgeAdminPage {
 								</tr>
 							</table>
 
-							<h3><?php esc_html_e( 'Auto-Award Condition', 'wb-gamification' ); ?></h3>
-							<table class="form-table">
-								<tr>
-									<th><label for="wb-gam-condition-type"><?php esc_html_e( 'When user...', 'wb-gamification' ); ?></label></th>
-									<td>
-										<select name="condition[type]" id="wb-gam-condition-type" class="wbgam-select" onchange="wbGamToggleConditionFields(this.value)">
-											<option value="admin_awarded" <?php selected( $condition['condition_type'], 'admin_awarded' ); ?>><?php esc_html_e( 'Admin awarded only (manual)', 'wb-gamification' ); ?></option>
-											<option value="point_milestone" <?php selected( $condition['condition_type'], 'point_milestone' ); ?>><?php esc_html_e( 'Reaches a point milestone', 'wb-gamification' ); ?></option>
-											<option value="action_count" <?php selected( $condition['condition_type'], 'action_count' ); ?>><?php esc_html_e( 'Performs an action N times', 'wb-gamification' ); ?></option>
-										</select>
-										<p class="description"><?php esc_html_e( 'Choose how this badge is awarded. "Manual" means only admins can grant it. Other options award automatically when conditions are met.', 'wb-gamification' ); ?></p>
-									</td>
-								</tr>
-								<tr id="wb-gam-field-points" <?php echo 'point_milestone' !== $condition['condition_type'] ? 'class="wb-gam-hidden"' : ''; ?>>
-									<th><label for="wb-gam-condition-points"><?php esc_html_e( 'Balance Threshold', 'wb-gamification' ); ?></label></th>
-									<td>
-										<input type="number" name="condition[points]" id="wb-gam-condition-points" class="small-text wbgam-input" min="1" value="<?php echo esc_attr( $condition['points'] ?? 100 ); ?>">
-										<p class="description"><?php esc_html_e( 'The badge is awarded when the member\'s balance for the triggering currency reaches or exceeds this value. The currency is whichever point type the awarding action is configured to grant.', 'wb-gamification' ); ?></p>
-									</td>
-								</tr>
-								<tr id="wb-gam-field-action" <?php echo 'action_count' !== $condition['condition_type'] ? 'class="wb-gam-hidden"' : ''; ?>>
-									<th><label for="wb-gam-condition-action-id"><?php esc_html_e( 'Action', 'wb-gamification' ); ?></label></th>
-									<td>
-										<select name="condition[action_id]" id="wb-gam-condition-action-id" class="wbgam-select">
-											<?php foreach ( $actions as $action_id => $action_data ) : ?>
-												<option value="<?php echo esc_attr( $action_id ); ?>" <?php selected( $condition['action_id'] ?? '', $action_id ); ?>>
-													<?php echo esc_html( $action_data['label'] ?? $action_id ); ?>
-												</option>
-											<?php endforeach; ?>
-											<?php if ( empty( $actions ) ) : ?>
-												<option value=""><?php esc_html_e( 'No actions registered', 'wb-gamification' ); ?></option>
-											<?php endif; ?>
-										</select>
-										<p class="description"><?php esc_html_e( 'Which action the member must perform (e.g. publish post, complete course, upload media).', 'wb-gamification' ); ?></p>
-									</td>
-								</tr>
-								<tr id="wb-gam-field-count" <?php echo 'action_count' !== $condition['condition_type'] ? 'class="wb-gam-hidden"' : ''; ?>>
-									<th><label for="wb-gam-condition-count"><?php esc_html_e( 'Target Count', 'wb-gamification' ); ?></label></th>
-									<td>
-										<input type="number" name="condition[count]" id="wb-gam-condition-count" class="small-text wbgam-input" min="1" value="<?php echo esc_attr( $condition['count'] ?? 1 ); ?>">
-										<p class="description"><?php esc_html_e( 'How many times the action must be performed to earn this badge.', 'wb-gamification' ); ?></p>
-									</td>
-								</tr>
-							</table>
+							<h3><?php esc_html_e( 'Auto-Award Conditions', 'wb-gamification' ); ?></h3>
+
+							<?php
+							// THE REPEATER.
+							//
+							// A badge used to have exactly ONE condition. Worse, four tenure badges and three
+							// site-first badges had no rule at all -- they were awarded by hardcoded engines,
+							// the library chipped them "MANUAL", and the owner could not see or change what
+							// they required. The only way to make "2-Year Member" mean eighteen months was to
+							// edit PHP.
+							//
+							// Now every badge is one editable rule, and a rule can hold as many conditions as
+							// the owner needs.
+							$wb_gam_conditions = \WBGam\Engine\BadgeRule::conditions( $condition );
+							$wb_gam_match      = \WBGam\Engine\BadgeRule::match_mode( $condition );
+							$wb_gam_is_manual  = empty( $wb_gam_conditions );
+
+							// A manual badge is a badge with no conditions. That is now the ONLY thing that
+							// makes one, which is what lets the library's chip finally tell the truth.
+							if ( $wb_gam_is_manual ) {
+								$wb_gam_conditions = array( array( 'type' => 'admin_awarded' ) );
+							}
+							?>
+
+							<div class="wb-gam-conditions" data-match="<?php echo esc_attr( $wb_gam_match ); ?>">
+
+								<p class="wb-gam-conditions__match">
+									<span class="wb-gam-conditions__match-label">
+										<?php esc_html_e( 'Award this badge when the member matches', 'wb-gamification' ); ?>
+									</span>
+									<label>
+										<input type="radio" name="condition[match]" value="all" <?php checked( $wb_gam_match, 'all' ); ?>>
+										<?php esc_html_e( 'ALL of these', 'wb-gamification' ); ?>
+									</label>
+									<label>
+										<input type="radio" name="condition[match]" value="any" <?php checked( $wb_gam_match, 'any' ); ?>>
+										<?php esc_html_e( 'ANY of these', 'wb-gamification' ); ?>
+									</label>
+								</p>
+
+								<div class="wb-gam-conditions__rows" id="wb-gam-condition-rows">
+									<?php foreach ( $wb_gam_conditions as $wb_gam_i => $wb_gam_c ) : ?>
+										<?php
+										$wb_gam_type = (string) ( $wb_gam_c['type'] ?? 'admin_awarded' );
+										// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- render_condition_row escapes internally.
+										echo self::render_condition_row( (int) $wb_gam_i, $wb_gam_type, (array) $wb_gam_c, $actions, $levels, $badge_choices );
+										?>
+									<?php endforeach; ?>
+								</div>
+
+								<p class="wb-gam-conditions__actions">
+									<button type="button" class="wbgam-btn wbgam-btn--secondary" id="wb-gam-add-condition">
+										<?php esc_html_e( '+ Add condition', 'wb-gamification' ); ?>
+									</button>
+									<span class="description wb-gam-conditions__hint">
+										<?php esc_html_e( 'Choose "Admin awarded" for a badge you grant by hand. Any other condition awards it automatically.', 'wb-gamification' ); ?>
+									</span>
+								</p>
+							</div>
+
+							<?php
+							// The row template the JS clones. Kept in PHP so every label is translatable and
+							// the option lists come from the real registry, not a hardcoded copy in JavaScript
+							// that drifts the first time someone adds an action.
+							?>
+							<template id="wb-gam-condition-row-template">
+								<?php
+								// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- render_condition_row escapes internally.
+								echo self::render_condition_row( 0, 'point_milestone', array(), $actions, $levels, $badge_choices, true );
+								?>
+							</template>
 
 							<p>
 								<button type="submit" class="wbgam-btn">

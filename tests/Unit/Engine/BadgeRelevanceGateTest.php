@@ -69,7 +69,16 @@ class BadgeRelevanceGateTest extends TestCase {
 	 * @return void
 	 */
 	public function test_tenure_and_manual_conditions_have_no_award_signal(): void {
-		$this->assertSame( array(), BadgeRule::condition_signals( array( 'type' => 'tenure_days' ) ) );
+		// Tenure answers to `cron`, and to nothing else. It has no AWARD signal -- which is the
+		// property that matters, and G3 below proves it.
+		//
+		// It cannot have NO signal at all, though: TenureBadgeEngine used to evaluate these badges
+		// on a daily cron, and deleting that engine without giving tenure something to answer to
+		// would have silently killed four badges -- they would sit in the library, look configured,
+		// and never award. A condition nothing evaluates is a condition that is always false.
+		$this->assertSame( array( 'cron' ), BadgeRule::condition_signals( array( 'type' => 'tenure_days' ) ) );
+
+		// Manual really does answer to nothing. Not an award, not a cron, not ever.
 		$this->assertSame( array(), BadgeRule::condition_signals( array( 'type' => 'admin_awarded' ) ) );
 	}
 
