@@ -238,6 +238,15 @@ final class DbUpgrader {
 			'wb_gam_user_intelligence' => array( 'idx_computed_at' => '(computed_at)' ),
 		);
 
+		// Drop the orphaned leaderboard-invalidation option (1.6.4).
+		//
+		// `wb_gam_leaderboard_invalidated_at` was written on every points award and
+		// gated read_from_snapshot(), which is why the materialised leaderboard was
+		// never actually readable on a busy site. Nothing writes or reads it now;
+		// remove the row rather than leave a dead option on every install to
+		// confuse the next person who greps for it.
+		delete_option( 'wb_gam_leaderboard_invalidated_at' );
+
 		foreach ( $wanted as $suffix => $indexes ) {
 			$table = $wpdb->prefix . $suffix;
 
