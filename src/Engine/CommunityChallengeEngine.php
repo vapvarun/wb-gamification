@@ -58,7 +58,21 @@ final class CommunityChallengeEngine {
 		// listener — every community challenge "completed" without ever
 		// awarding the bonus (Basecamp #9933021972).
 		add_action( 'wb_gam_community_bonus_award', array( __CLASS__, 'award_community_bonus' ), 10, 3 );
+
+		// Paged bonus fan-out. The per-contributor hook above is KEPT so any job already sitting
+		// on the queue from before this upgrade still pays out.
+		add_action( self::AS_PAGE_HOOK, array( __CLASS__, 'award_bonus_page' ), 10, 3 );
 	}
+
+	/**
+	 * Action Scheduler hook for one page of the bonus fan-out.
+	 */
+	private const AS_PAGE_HOOK = 'wb_gam_community_bonus_page';
+
+	/**
+	 * Contributors paid per page. Bounded so no single tick carries the whole site.
+	 */
+	private const BONUS_PAGE_SIZE = 500;
 
 	/**
 	 * Action Scheduler callback — awards the community-challenge bonus to one contributor.
@@ -207,25 +221,26 @@ final class CommunityChallengeEngine {
 			return; // Already completed by another request.
 		}
 
-		// Award bonus to all contributors via async AS jobs.
-		$contributors = $wpdb->get_col(
+		// Hand the bonus fan-out to ONE paged job, and get out of the member's request.
+		//
+		// This used to SELECT every contributor and enqueue one Action Scheduler job each, right
+		// here. complete_challenge() is reached from the `wb_gam_points_awarded` hook -- so this
+		// ran inside the HTTP request of whichever member's award happened to cross the target.
+		// At 1,200 contributors that measured 1,200 inserts in 357ms; at 100,000 it is 100,000
+		// inserts and roughly half a minute, in a page load. It times out, and because it times
+		// out PART WAY, some members get the bonus and some never do.
+		//
+		// The member's request now schedules exactly one job and returns. Everything else happens
+		// on the queue, a page at a time. Same keyset fan-out as WeeklyEmailEngine and
+		// StatusRetentionEngine.
+		$contributor_count = (int) $wpdb->get_var(
 			$wpdb->prepare(
-				"SELECT user_id FROM {$wpdb->prefix}wb_gam_community_challenge_contributions WHERE challenge_id = %d",
+				"SELECT COUNT(*) FROM {$wpdb->prefix}wb_gam_community_challenge_contributions WHERE challenge_id = %d",
 				$challenge_id
 			)
 		);
 
-		foreach ( $contributors as $user_id ) {
-			as_enqueue_async_action(
-				'wb_gam_community_bonus_award',
-				array(
-					'user_id'      => (int) $user_id,
-					'challenge_id' => $challenge_id,
-					'points'       => $bonus_points,
-				),
-				'wb-gamification'
-			);
-		}
+		self::schedule_bonus_page( $challenge_id, $bonus_points, 0 );
 
 		/**
 		 * Fires when a community challenge is completed.
@@ -234,7 +249,89 @@ final class CommunityChallengeEngine {
 		 * @param int $bonus_points  Bonus points awarded to contributors.
 		 * @param int $contributors  Number of contributing users.
 		 */
-		do_action( 'wb_gam_community_challenge_completed', $challenge_id, $bonus_points, count( $contributors ) );
+		do_action( 'wb_gam_community_challenge_completed', $challenge_id, $bonus_points, $contributor_count );
+	}
+
+	/**
+	 * Queue one page of the bonus fan-out.
+	 *
+	 * Guarded: the page handler schedules its own successor, so without a dedupe check an
+	 * overlapping run would queue the same cursor twice and pay every contributor on that page
+	 * twice.
+	 *
+	 * @param int $challenge_id Challenge being paid out.
+	 * @param int $bonus_points Bonus per contributor.
+	 * @param int $cursor       Last user_id already paid; 0 to start.
+	 * @return void
+	 */
+	private static function schedule_bonus_page( int $challenge_id, int $bonus_points, int $cursor ): void {
+		if ( ! function_exists( 'as_enqueue_async_action' ) ) {
+			// No Action Scheduler: fall back to walking inline, still one bounded page at a time.
+			self::award_bonus_page( $challenge_id, $bonus_points, $cursor );
+			return;
+		}
+
+		$args = array(
+			'challenge_id' => $challenge_id,
+			'bonus_points' => $bonus_points,
+			'cursor'       => $cursor,
+		);
+
+		if ( function_exists( 'as_has_scheduled_action' )
+			&& as_has_scheduled_action( self::AS_PAGE_HOOK, $args, 'wb-gamification' ) ) {
+			return;
+		}
+
+		as_enqueue_async_action( self::AS_PAGE_HOOK, $args, 'wb-gamification' );
+	}
+
+	/**
+	 * Action Scheduler callback — pay one page of contributors, then queue the next.
+	 *
+	 * Keyset, not OFFSET: `user_id > $cursor ORDER BY user_id LIMIT n`. A deep OFFSET scans
+	 * everything it skips, so page 200 of a large payout would cost more than page 1.
+	 *
+	 * @param int $challenge_id Challenge being paid out.
+	 * @param int $bonus_points Bonus per contributor.
+	 * @param int $cursor       Last user_id already paid; 0 to start.
+	 * @return void
+	 */
+	public static function award_bonus_page( int $challenge_id, int $bonus_points, int $cursor = 0 ): void {
+		global $wpdb;
+
+		if ( $challenge_id <= 0 || $bonus_points <= 0 ) {
+			return;
+		}
+
+		$user_ids = $wpdb->get_col(
+			$wpdb->prepare(
+				"SELECT user_id
+				   FROM {$wpdb->prefix}wb_gam_community_challenge_contributions
+				  WHERE challenge_id = %d AND user_id > %d
+				  ORDER BY user_id ASC
+				  LIMIT %d",
+				$challenge_id,
+				$cursor,
+				self::BONUS_PAGE_SIZE
+			)
+		);
+
+		if ( ! $user_ids ) {
+			return;
+		}
+
+		foreach ( $user_ids as $user_id ) {
+			// award_community_bonus() is idempotent per (user, challenge) -- it is the same
+			// handler the per-contributor jobs used, so a page that runs twice cannot double-pay.
+			self::award_community_bonus( (int) $user_id, $challenge_id, $bonus_points );
+		}
+
+		// A short page means the keyset is exhausted.
+		if ( count( $user_ids ) < self::BONUS_PAGE_SIZE ) {
+			return;
+		}
+
+		self::schedule_bonus_page( $challenge_id, $bonus_points, (int) end( $user_ids ) );
 	}
 
 	// ── Public API ───────────────────────────────────────────────────────────
