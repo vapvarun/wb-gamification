@@ -47,18 +47,21 @@ final class SiteFirstBadgeEngine {
 			'description' => 'The first member of this community to reach Champion rank.',
 			'category'    => 'special',
 			'trigger'     => 'level_changed',
+			'max_earners' => 1,
 		),
 		'first_10k_points'     => array(
 			'name'        => 'First to 10,000',
 			'description' => 'The first member to earn 10,000 total points in this community.',
 			'category'    => 'special',
 			'trigger'     => 'points_awarded',
+			'max_earners' => 1,
 		),
 		'first_100_day_streak' => array(
 			'name'        => 'Century Streak Pioneer',
 			'description' => 'The first member to reach a 100-day activity streak.',
 			'category'    => 'special',
 			'trigger'     => 'streak_milestone',
+			'max_earners' => 1,
 		),
 	);
 
@@ -130,40 +133,25 @@ final class SiteFirstBadgeEngine {
 	 * @param int    $user_id  User to award the badge to if still unclaimed.
 	 */
 	private static function maybe_award( string $badge_id, int $user_id ): void {
-		global $wpdb;
-
-		// Check if the badge has already been awarded to anyone.
-		$already_awarded = (int) $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT COUNT(*) FROM {$wpdb->prefix}wb_gam_user_badges WHERE badge_id = %s",
-				$badge_id
-			)
-		);
-
-		if ( $already_awarded > 0 ) {
-			return; // Already claimed — site-first is gone.
-		}
-
-		// Race-safe: use a transient lock before awarding.
-		$lock_key = 'wb_gam_site_first_' . $badge_id;
-		if ( get_transient( $lock_key ) ) {
-			return;
-		}
-		set_transient( $lock_key, 1, 10 );
-
-		// Double-check inside lock.
-		$already_awarded = (int) $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT COUNT(*) FROM {$wpdb->prefix}wb_gam_user_badges WHERE badge_id = %s",
-				$badge_id
-			)
-		);
-
-		if ( 0 === $already_awarded ) {
-			BadgeEngine::award_badge( $user_id, $badge_id );
-		}
-
-		delete_transient( $lock_key );
+		// Scarcity is not this engine's job, and it never should have been.
+		//
+		// This method used to enforce "only one member may ever hold this" itself, with three
+		// stacked guards, and not one of them was atomic:
+		//
+		// 1. SELECT COUNT(*) ... then decide          -- two operations
+		// 2. get_transient( $lock ) then set_transient -- two operations. Its own comment
+		// called this "Race-safe". It was not: both racers see nothing and both set it.
+		// 3. a "double-check inside lock" that was another COUNT-then-decide -- two operations
+		//
+		// Three layers, each of which a second worker walks straight through. Proven on a live
+		// site: two concurrent awards, and BOTH members ended up holding "First Champion". The
+		// UNIQUE(user_id, badge_id) index does not help -- it stops one member holding a badge
+		// twice, and says nothing about two members both being "the first".
+		//
+		// "Only N members may ever hold this badge" is exactly what max_earners means, and
+		// BadgeEngine enforces it under a real database lock. These badges declare max_earners=1
+		// (see SITE_FIRST_BADGES), so there is nothing left to do here but ask.
+		BadgeEngine::award_badge( $user_id, $badge_id );
 	}
 
 	// ── Badge seeding ────────────────────────────────────────────────────────
@@ -188,8 +176,25 @@ final class SiteFirstBadgeEngine {
 						'description'   => $def['description'],
 						'category'      => $def['category'],
 						'is_credential' => 1,
+						'max_earners'   => (int) $def['max_earners'],
 					),
-					array( '%s', '%s', '%s', '%s', '%d' )
+					array( '%s', '%s', '%s', '%s', '%d', '%d' )
+				);
+				continue;
+			}
+
+			// Existing installs seeded these badges BEFORE max_earners meant anything here --
+			// scarcity was hand-rolled in maybe_award() instead, and it did not work. The rows
+			// are already there with max_earners NULL, so seeding alone would leave every
+			// upgraded site with an unguarded "first to reach Champion" that two members can
+			// still win. Backfill it.
+			if ( null === $wpdb->get_var( $wpdb->prepare( "SELECT max_earners FROM {$wpdb->prefix}wb_gam_badge_defs WHERE id = %s", $id ) ) ) {
+				$wpdb->update(
+					$wpdb->prefix . 'wb_gam_badge_defs',
+					array( 'max_earners' => (int) $def['max_earners'] ),
+					array( 'id' => $id ),
+					array( '%d' ),
+					array( '%s' )
 				);
 			}
 		}

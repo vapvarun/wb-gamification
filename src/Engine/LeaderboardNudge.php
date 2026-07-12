@@ -109,10 +109,33 @@ final class LeaderboardNudge {
 		// per week; anything more is a sign of hook collision or duplicate
 		// scheduling. A short transient is cheaper than re-running the
 		// (possibly large) SELECT below and enqueueing redundant AS jobs.
-		if ( get_transient( self::DISPATCH_LOCK_KEY ) ) {
+		// Two different jobs here, and the old code did neither properly.
+		//
+		// 1. ATOMICITY  -- two crons firing at the same instant must not both dispatch.
+		// 2. A WINDOW   -- an overdue cron re-firing an hour later must not dispatch again.
+		//
+		// It used get_transient() then set_transient(), which is check-then-act: both racers see
+		// nothing and both proceed, so it did not provide (1) at all. The transient DID provide
+		// (2), so it cannot simply be swapped for a lock -- Lock::run() releases as soon as the
+		// callback returns, and the window would vanish with it.
+		//
+		// So: the database lock makes the check-and-set atomic, and the transient still carries
+		// the TTL window inside it.
+		$started = Lock::run(
+			self::DISPATCH_LOCK_KEY,
+			static function () {
+				if ( get_transient( self::DISPATCH_LOCK_KEY ) ) {
+					return false;
+				}
+				set_transient( self::DISPATCH_LOCK_KEY, 1, self::DISPATCH_LOCK_TTL );
+				return true;
+			},
+			false
+		);
+
+		if ( ! $started ) {
 			return;
 		}
-		set_transient( self::DISPATCH_LOCK_KEY, 1, self::DISPATCH_LOCK_TTL );
 
 		// Users who earned at least 1 point this week, not opted out.
 		$week_start = gmdate( 'Y-m-d', strtotime( 'monday this week' ) ) . ' 00:00:00';

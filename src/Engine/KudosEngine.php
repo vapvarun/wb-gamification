@@ -106,50 +106,41 @@ final class KudosEngine {
 			);
 		}
 
-		// Race-condition guard — serialize concurrent sends for this exact
-		// (giver, receiver) pair.
+		// Serialize concurrent sends for this exact (giver, receiver) pair.
 		//
 		// This was a wp_cache_add() lock, justified in its own comment as "atomic across
-		// Redis/Memcached". True — but only where a persistent object cache exists. On a
-		// default WordPress install there is none, wp_cache_add() is a process-local
-		// array, and the lock gave exactly zero exclusion between two concurrent PHP
-		// workers. The guard was missing on the single most common configuration there
-		// is, and the race it was written to close reproduced there every time.
+		// Redis/Memcached". True -- and irrelevant without a persistent object cache, which the
+		// default WordPress install does not have. There, wp_cache_add() is a process-local array
+		// giving zero exclusion between workers, and the race it was written to close reproduced
+		// every time on the most common configuration there is.
 		//
-		// A MySQL named lock is shared by every worker whether or not an object cache is
-		// installed, because the database is the one thing they all talk to. Timeout 0:
-		// if another request is mid-send for this pair right now, that IS the race, so
-		// reject it rather than queue behind it.
-		global $wpdb;
+		// It grew its own inline GET_LOCK in 1.6.4. That was right, and it was also the second
+		// lock implementation in the plugin; it now uses the one shared primitive, so there is a
+		// single place where "how do we lock?" is answered.
+		//
+		// Timeout 0: if another request is mid-send for this pair right now, that IS the race, so
+		// reject rather than queue behind it.
+		return Lock::run(
+			sprintf( 'kudos_%d_%d', $giver_id, $receiver_id ),
+			function () use ( $giver_id, $receiver_id, $message, $receiver_cooldown ) {
+				// Re-check the cooldown INSIDE the lock. The check above ran unserialized, so
+				// both racers can have passed it -- but only one of them is in here. This is the
+				// check that actually enforces the cooldown.
+				if ( $receiver_cooldown > 0 && self::has_recent_kudos_to_receiver( $giver_id, $receiver_id, $receiver_cooldown ) ) {
+					return new WP_Error(
+						'wb_gam_kudos_cooldown',
+						__( 'You recently gave kudos to this member. Try again later.', 'wb-gamification' )
+					);
+				}
 
-		$lock_name = sprintf( 'wb_gam_kudos_%d_%d', $giver_id, $receiver_id );
-		$acquired  = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, %d)', $lock_name, 0 ) );
-
-		if ( 1 !== $acquired ) {
-			return new WP_Error(
+				return self::record_kudos( $giver_id, $receiver_id, $message );
+			},
+			// Lock declined: someone else is mid-send for this exact pair.
+			new WP_Error(
 				'wb_gam_kudos_cooldown',
 				__( 'You recently gave kudos to this member. Try again later.', 'wb-gamification' )
-			);
-		}
-
-		try {
-			// Re-check the cooldown INSIDE the lock. The check above ran unserialized,
-			// so both racers can have passed it — but only one of them is in here.
-			// This is the check that actually enforces the cooldown.
-			if ( $receiver_cooldown > 0 && self::has_recent_kudos_to_receiver( $giver_id, $receiver_id, $receiver_cooldown ) ) {
-				return new WP_Error(
-					'wb_gam_kudos_cooldown',
-					__( 'You recently gave kudos to this member. Try again later.', 'wb-gamification' )
-				);
-			}
-
-			return self::record_kudos( $giver_id, $receiver_id, $message );
-		} finally {
-			// Released on every path, including the WP_Error returns and any exception
-			// thrown by a listener. A leaked named lock would block this pair until the
-			// DB connection closed.
-			$wpdb->query( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $lock_name ) );
-		}
+			)
+		);
 	}
 
 	/**

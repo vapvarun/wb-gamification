@@ -309,18 +309,66 @@ final class BadgeEngine {
 		}
 
 		// Eligibility gate: max_earners — stop awarding once N members hold it.
+		//
+		// This has to be ATOMIC and it was not: a bare COUNT-then-INSERT. Two workers both read
+		// $earner_count = 0 for a max_earners=1 badge, and both awarded it. UNIQUE(user_id,
+		// badge_id) does not save this -- that index stops ONE member holding a badge twice, and
+		// says nothing at all about TWO members both being "the first".
+		//
+		// Proven on a live site: two concurrent awards, and both members ended up holding "First
+		// Champion". Serialised on the badge now, so exactly one worker can be inside the
+		// count-then-award window at a time.
+		//
+		// This is the plugin's ONLY scarcity mechanism. SiteFirstBadgeEngine used to hand-roll a
+		// second one out of transients and COUNT(*)s -- three stacked guards, none atomic -- and
+		// it is gone.
 		if ( $def && ! empty( $def['max_earners'] ) ) {
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- live count needed; caching here would cause over-awarding.
-			$earner_count = (int) $wpdb->get_var(
-				$wpdb->prepare(
-					"SELECT COUNT(*) FROM {$wpdb->prefix}wb_gam_user_badges WHERE badge_id = %s",
-					$badge_id
-				)
+			return Lock::run(
+				'badge_scarcity_' . $badge_id,
+				static function () use ( $user_id, $badge_id, $earned_at, $def ) {
+					global $wpdb;
+
+					// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- live count needed; caching here would cause over-awarding.
+					$earner_count = (int) $wpdb->get_var(
+						$wpdb->prepare(
+							"SELECT COUNT(*) FROM {$wpdb->prefix}wb_gam_user_badges WHERE badge_id = %s",
+							$badge_id
+						)
+					);
+
+					if ( $earner_count >= (int) $def['max_earners'] ) {
+						return false;
+					}
+
+					return self::award_badge_unguarded( $user_id, $badge_id, $earned_at, $def );
+				},
+				// Lock declined means another worker is deciding this scarce slot right now.
+				// Do not award.
+				false
 			);
-			if ( $earner_count >= (int) $def['max_earners'] ) {
-				return false;
-			}
 		}
+
+		// Not a scarce badge: there is no slot to contend for, so there is nothing to serialise.
+		return self::award_badge_unguarded( $user_id, $badge_id, $earned_at, $def );
+	}
+
+	/**
+	 * Award the badge, having already passed every eligibility gate.
+	 *
+	 * Split out of award_badge() so the scarcity lock wraps EXACTLY the window that needs
+	 * serialising -- count the holders, then award -- and nothing more. Locking the whole method
+	 * would put every badge award on the site in a single queue; locking less than this window is
+	 * precisely what let two members both become "the first".
+	 *
+	 * @param int        $user_id   Member being awarded.
+	 * @param string     $badge_id  Badge to award.
+	 * @param string     $earned_at MySQL datetime the badge was earned.
+	 * @param array|null $def       Badge definition, already resolved by the caller.
+	 * @return bool True if this call is the one that awarded it.
+	 */
+	private static function award_badge_unguarded( int $user_id, string $badge_id, string $earned_at, ?array $def ): bool {
+		global $wpdb;
+
 		/**
 		 * Filter whether a specific badge should be awarded.
 		 *

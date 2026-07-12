@@ -147,10 +147,33 @@ final class WeeklyEmailEngine {
 		// is a duplicate weekly email to every member who was already queued. The
 		// lock is what stops the duplicate, and the per-user dedupe below is the
 		// belt to its braces.
-		if ( get_transient( self::DISPATCH_LOCK_KEY ) ) {
+		// Two different jobs here, and the old code did neither properly.
+		//
+		// 1. ATOMICITY  -- two crons firing at the same instant must not both dispatch.
+		// 2. A WINDOW   -- an overdue cron re-firing an hour later must not dispatch again.
+		//
+		// It used get_transient() then set_transient(), which is check-then-act: both racers see
+		// nothing and both proceed, so it did not provide (1) at all. The transient DID provide
+		// (2), so it cannot simply be swapped for a lock -- Lock::run() releases as soon as the
+		// callback returns, and the window would vanish with it.
+		//
+		// So: the database lock makes the check-and-set atomic, and the transient still carries
+		// the TTL window inside it.
+		$started = Lock::run(
+			self::DISPATCH_LOCK_KEY,
+			static function () {
+				if ( get_transient( self::DISPATCH_LOCK_KEY ) ) {
+					return false;
+				}
+				set_transient( self::DISPATCH_LOCK_KEY, 1, self::DISPATCH_LOCK_TTL );
+				return true;
+			},
+			false
+		);
+
+		if ( ! $started ) {
 			return;
 		}
-		set_transient( self::DISPATCH_LOCK_KEY, 1, self::DISPATCH_LOCK_TTL );
 
 		// Start a fresh weekly run from the top of the keyset.
 		self::dispatch_page( 0 );

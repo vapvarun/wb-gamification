@@ -61,8 +61,23 @@ final class DbUpgrader {
 
 		if ( version_compare( $current, WB_GAM_VERSION, '<' ) ) {
 			// Prevent concurrent upgrade runs (e.g. two simultaneous requests on activation).
-			if ( ! get_transient( self::LOCK_KEY ) ) {
-				set_transient( self::LOCK_KEY, 1, self::LOCK_TTL );
+			// Was check-then-act, so two simultaneous requests on activation could both enter
+			// and run every migration twice. dbDelta is idempotent, which is why this never
+			// visibly broke -- but the ensure_* migrations that are NOT pure dbDelta had no such
+			// protection. Atomic now.
+			$claimed = Lock::run(
+				self::LOCK_KEY,
+				static function () {
+					if ( get_transient( self::LOCK_KEY ) ) {
+						return false;
+					}
+					set_transient( self::LOCK_KEY, 1, self::LOCK_TTL );
+					return true;
+				},
+				false
+			);
+
+			if ( $claimed ) {
 
 				self::run( $current );
 
