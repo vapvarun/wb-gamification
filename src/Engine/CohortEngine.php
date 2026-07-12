@@ -44,8 +44,20 @@ defined( 'ABSPATH' ) || exit;
  */
 final class CohortEngine {
 
-	public const TIERS         = array( 'Bronze', 'Silver', 'Gold', 'Diamond', 'Obsidian' );
-	public const COHORT_SIZE   = 30;
+	public const TIERS       = array( 'Bronze', 'Silver', 'Gold', 'Diamond', 'Obsidian' );
+	public const COHORT_SIZE = 30;
+
+	/**
+	 * Rows per multi-row upsert when persisting cohort membership.
+	 *
+	 * Was one $wpdb->replace() per member — 100,000 individual write queries in a
+	 * single weekly cron request, which times out long before it finishes and
+	 * leaves the cohort table half-populated with no resume.
+	 *
+	 * @since 1.6.4
+	 * @var int
+	 */
+	private const WRITE_BATCH  = 500;
 	public const PROMOTE_PCT   = 0.33;
 	public const DEMOTE_PCT    = 0.33;
 	private const CRON_ASSIGN  = 'wb_gam_cohort_assign';
@@ -133,84 +145,114 @@ final class CohortEngine {
 
 		global $wpdb;
 
-		$week = gmdate( 'Y-W' );
+		$week       = gmdate( 'Y-W' );
+		$week_start = gmdate( 'Y-m-d', strtotime( 'monday this week' ) ) . ' 00:00:00';
+		$active_of  = gmdate( 'Y-m-d H:i:s', strtotime( '-4 weeks' ) );
 
-		// Get all active users (earned points in last 4 weeks).
-		$user_ids = $wpdb->get_col(
+		// ONE query: active members, their tier, and their points this week.
+		//
+		// Cohort assignment needs a GLOBAL ranking — every active member sorted
+		// within their tier — so it cannot be keyset-paginated the way the weekly
+		// email can. What it CAN stop doing is the three things that made it fatal:
+		//
+		// 1. `update_meta_cache( 'user', $ids )` on every active member. That issues
+		// SELECT * FROM wp_usermeta WHERE user_id IN (...100k ids...) and loads
+		// EVERY meta row for EVERY active member into PHP — ~25 rows each, so
+		// ~2.5M rows resident. That alone is the OOM. The tier is ONE meta key;
+		// we LEFT JOIN it here instead and never touch the meta cache.
+		//
+		// 2. A `WHERE user_id IN ($placeholders)` clause built from one %d per
+		// member. At 100k members that is a ~700 KB prepared statement with
+		// 100,000 bind args — it blows max_allowed_packet before MySQL even
+		// plans it. The aggregate below needs no id list at all: the same
+		// `created_at` predicate that defines "active" also defines the rows.
+		//
+		// 3. One `REPLACE` per member (100k individual writes). See the batched
+		// multi-row upsert below.
+		//
+		// What remains resident is one small row per active member (id, pts, tier) —
+		// a few MB at 100k, which the global sort genuinely requires.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$rows = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT DISTINCT user_id FROM {$wpdb->prefix}wb_gam_points
-				  WHERE created_at >= %s",
-				gmdate( 'Y-m-d H:i:s', strtotime( '-4 weeks' ) )
-			)
-		);
-
-		if ( empty( $user_ids ) ) {
-			return;
-		}
-
-		$ids_ints = array_map( 'intval', $user_ids );
-
-		// Prime the object cache for all users' tier meta in one round-trip.
-		update_meta_cache( 'user', $ids_ints );
-
-		// Get current tiers — all meta cache hits after the bulk prime above.
-		$tier_map = array();
-		foreach ( $ids_ints as $uid ) {
-			$tier_map[ $uid ] = self::get_user_tier( $uid );
-		}
-
-		// Batch-fetch weekly points for all users in one query.
-		$week_start   = gmdate( 'Y-m-d', strtotime( 'monday this week' ) ) . ' 00:00:00';
-		$placeholders = implode( ',', array_fill( 0, count( $ids_ints ), '%d' ) );
-		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $placeholders is implode(',', array_fill(..., '%d')), safe.
-		$pts_rows = $wpdb->get_results(
-			$wpdb->prepare(
-				"SELECT user_id, COALESCE(SUM(points), 0) AS pts
-				   FROM {$wpdb->prefix}wb_gam_points
-				  WHERE user_id IN ($placeholders) AND created_at >= %s
-				 GROUP BY user_id",
-				array_merge( $ids_ints, array( $week_start ) )
+				"SELECT p.user_id,
+				        COALESCE( SUM( CASE WHEN p.created_at >= %s THEN p.points ELSE 0 END ), 0 ) AS pts,
+				        COALESCE( um.meta_value, 0 ) AS tier
+				   FROM {$wpdb->prefix}wb_gam_points p
+				   LEFT JOIN {$wpdb->usermeta} um
+				          ON um.user_id = p.user_id
+				         AND um.meta_key = 'wb_gam_league_tier'
+				  WHERE p.created_at >= %s
+				  GROUP BY p.user_id, um.meta_value",
+				$week_start,
+				$active_of
 			),
 			ARRAY_A
 		);
-		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$week_pts = array_fill_keys( $ids_ints, 0 );
-		foreach ( $pts_rows as $row ) {
-			$week_pts[ (int) $row['user_id'] ] = (int) $row['pts'];
+
+		if ( empty( $rows ) ) {
+			return;
 		}
 
-		// Group users by tier.
-		$by_tier = array_fill( 0, count( self::TIERS ), array() );
-		foreach ( $ids_ints as $uid ) {
-			$by_tier[ $tier_map[ $uid ] ][] = $uid;
+		$week_pts = array();
+		$by_tier  = array_fill( 0, count( self::TIERS ), array() );
+		foreach ( $rows as $row ) {
+			$uid  = (int) $row['user_id'];
+			$tier = max( 0, min( count( self::TIERS ) - 1, (int) $row['tier'] ) );
+
+			$week_pts[ $uid ]   = (int) $row['pts'];
+			$by_tier[ $tier ][] = $uid;
 		}
+		unset( $rows );
 
 		// Sort within each tier by weekly points desc.
 		foreach ( $by_tier as $tier => &$members ) {
-			usort( $members, fn( $a, $b ) => $week_pts[ $b ] <=> $week_pts[ $a ] );
+			usort( $members, static fn( $a, $b ) => $week_pts[ $b ] <=> $week_pts[ $a ] );
 		}
 		unset( $members );
 
-		// Split into cohorts of COHORT_SIZE and persist.
+		// Split into cohorts and persist with BATCHED multi-row upserts.
+		//
+		// Was one $wpdb->replace() per member: 100,000 individual write queries in a
+		// single cron request. Now one statement per WRITE_BATCH members, inside a
+		// transaction, using the (user_id, week) PRIMARY KEY for the upsert.
+		$table   = $wpdb->prefix . 'wb_gam_cohort_members';
+		$pending = array();
+
+		$flush = static function () use ( &$pending, $wpdb, $table ) {
+			if ( empty( $pending ) ) {
+				return;
+			}
+			$values = array();
+			$args   = array();
+			foreach ( $pending as $r ) {
+				$values[] = '(%d, %s, %d, %s, %d)';
+				array_push( $args, $r[0], $r[1], $r[2], $r[3], $r[4] );
+			}
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$wpdb->query(
+				$wpdb->prepare(
+					"INSERT INTO {$table} (user_id, cohort_id, tier, week, pts_start) VALUES "
+					. implode( ',', $values )
+					. ' ON DUPLICATE KEY UPDATE cohort_id = VALUES(cohort_id), tier = VALUES(tier), pts_start = VALUES(pts_start)',
+					$args
+				)
+			);
+			$pending = array();
+		};
+
 		foreach ( $by_tier as $tier => $members ) {
-			$chunks = array_chunk( $members, self::COHORT_SIZE );
-			foreach ( $chunks as $cohort_idx => $chunk ) {
+			foreach ( array_chunk( $members, self::COHORT_SIZE ) as $cohort_idx => $chunk ) {
 				$cohort_id = "{$week}-t{$tier}-{$cohort_idx}";
 				foreach ( $chunk as $uid ) {
-					$wpdb->replace(
-						$wpdb->prefix . 'wb_gam_cohort_members',
-						array(
-							'user_id'   => $uid,
-							'cohort_id' => $cohort_id,
-							'tier'      => $tier,
-							'week'      => $week,
-							'pts_start' => $week_pts[ $uid ],
-						),
-						array( '%d', '%s', '%d', '%s', '%d' )
-					);
+					$pending[] = array( $uid, $cohort_id, $tier, $week, $week_pts[ $uid ] );
+					if ( count( $pending ) >= self::WRITE_BATCH ) {
+						$flush();
+					}
 				}
 			}
 		}
+		$flush();
 	}
 
 	// ── Promotion processing ─────────────────────────────────────────────────

@@ -59,6 +59,36 @@ final class WeeklyEmailEngine {
 	private const AS_GROUP    = 'wb_gam_email';
 	private const OPT_ENABLED = 'wb_gam_weekly_email_enabled';
 
+	/**
+	 * Action Scheduler hook that carries the dispatch cursor from page to page.
+	 *
+	 * @since 1.6.4
+	 * @var string
+	 */
+	private const AS_PAGE_HOOK = 'wb_gam_weekly_email_page';
+
+	/**
+	 * Members dispatched per page. Bounds the work a single tick performs.
+	 *
+	 * @since 1.6.4
+	 * @var int
+	 */
+	private const PAGE_SIZE = 500;
+
+	/**
+	 * Dispatch lock. WP-Cron re-fires an overdue event on the next page load, so
+	 * without this a tick that timed out mid-dispatch starts a SECOND full run and
+	 * every already-queued member gets a duplicate weekly email.
+	 *
+	 * TTL comfortably outlives a full paged run; it is refreshed on every page and
+	 * released when the keyset is exhausted.
+	 *
+	 * @since 1.6.4
+	 * @var string
+	 */
+	private const DISPATCH_LOCK_KEY = 'wb_gam_weekly_email_dispatching';
+	private const DISPATCH_LOCK_TTL = 3600;
+
 	// ── Boot ────────────────────────────────────────────────────────────────────
 
 	/**
@@ -67,6 +97,8 @@ final class WeeklyEmailEngine {
 	public static function init(): void {
 		add_action( self::CRON_HOOK, array( __CLASS__, 'dispatch_batch' ) );
 		add_action( self::AS_HOOK, array( __CLASS__, 'send_to_user' ) );
+		// Paged continuation — each page schedules the next until the keyset drains.
+		add_action( self::AS_PAGE_HOOK, array( __CLASS__, 'dispatch_page' ) );
 	}
 
 	/**
@@ -108,30 +140,128 @@ final class WeeklyEmailEngine {
 			return;
 		}
 
+		// Guard against overlapping dispatch. WP-Cron re-fires an overdue event on
+		// the next page load, so a tick that timed out part-way through would
+		// previously start a SECOND full dispatch — enqueueing a second job per
+		// member. send_to_user() has no "already emailed this week" check, so that
+		// is a duplicate weekly email to every member who was already queued. The
+		// lock is what stops the duplicate, and the per-user dedupe below is the
+		// belt to its braces.
+		if ( get_transient( self::DISPATCH_LOCK_KEY ) ) {
+			return;
+		}
+		set_transient( self::DISPATCH_LOCK_KEY, 1, self::DISPATCH_LOCK_TTL );
+
+		// Start a fresh weekly run from the top of the keyset.
+		self::dispatch_page( 0 );
+	}
+
+	/**
+	 * Dispatch ONE page of the weekly send, then schedule the next.
+	 *
+	 * Before 1.6.4 dispatch_batch() ran an unbounded `SELECT DISTINCT user_id`
+	 * over the whole ledger, pulled every active member into one PHP array, and
+	 * enqueued one Action Scheduler job per member — all inside a single 60-second
+	 * WP-Cron tick. At 100k members that is 100,000 INSERTs into
+	 * actionscheduler_actions in one request. It times out part-way, leaves the AS
+	 * queue flooded, and the un-enqueued remainder is simply lost until next week.
+	 * (This plugin has already been bitten by an AS blow-up once — see
+	 * ActionSchedulerCleaner's PERF-002 note, 3.6M rows in 40 hours.)
+	 *
+	 * Now it walks a KEYSET cursor: each page selects the next PAGE_SIZE members
+	 * with `user_id > $cursor ORDER BY user_id`, enqueues their sends, and schedules
+	 * the next page as its own Action Scheduler job. Work per tick is bounded, the
+	 * run resumes across ticks instead of restarting, and a failure loses one page
+	 * rather than the whole week.
+	 *
+	 * Keyset, not OFFSET: an OFFSET of 90,000 makes MySQL walk and discard 90,000
+	 * rows to reach the page. `user_id > $cursor` is a range scan on idx_user_created
+	 * and costs the same on page 200 as on page 1.
+	 *
+	 * @since 1.6.4
+	 *
+	 * @param int $cursor Highest user_id already dispatched. 0 starts a fresh run.
+	 *
+	 * @as-fire-once One page per invocation. Schedules its own successor only while
+	 *               a full page came back, so the chain terminates when drained.
+	 */
+	public static function dispatch_page( int $cursor = 0 ): void {
+		if ( ! FeatureFlags::is_enabled( 'weekly_emails' ) || ! (int) get_option( self::OPT_ENABLED, 1 ) ) {
+			return;
+		}
+
 		global $wpdb;
 
-		// Fetch users who earned at least 1 point in the last 7 days
-		// AND have not opted out of all notifications.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$user_ids = $wpdb->get_col(
-			"SELECT DISTINCT p.user_id
-			   FROM {$wpdb->prefix}wb_gam_points p
-			   LEFT JOIN {$wpdb->prefix}wb_gam_member_prefs mp ON mp.user_id = p.user_id
-			  WHERE p.created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
-			    AND (mp.notification_mode IS NULL OR mp.notification_mode != 'none')"
+			$wpdb->prepare(
+				"SELECT DISTINCT p.user_id
+				   FROM {$wpdb->prefix}wb_gam_points p
+				   LEFT JOIN {$wpdb->prefix}wb_gam_member_prefs mp ON mp.user_id = p.user_id
+				  WHERE p.created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+				    AND p.user_id > %d
+				    AND (mp.notification_mode IS NULL OR mp.notification_mode != 'none')
+				  ORDER BY p.user_id ASC
+				  LIMIT %d",
+				$cursor,
+				self::PAGE_SIZE
+			)
 		);
 
-		foreach ( $user_ids as $user_id ) {
-			if ( function_exists( 'as_enqueue_async_action' ) ) {
-				as_enqueue_async_action(
-					self::AS_HOOK,
-					array( 'user_id' => (int) $user_id ),
-					self::AS_GROUP
-				);
-			} else {
-				// Fallback: run inline (fine for small sites).
-				self::send_to_user( (int) $user_id );
-			}
+		if ( empty( $user_ids ) ) {
+			delete_transient( self::DISPATCH_LOCK_KEY );
+			return;
 		}
+
+		$last = $cursor;
+		foreach ( $user_ids as $user_id ) {
+			$uid  = (int) $user_id;
+			$last = max( $last, $uid );
+
+			if ( ! function_exists( 'as_enqueue_async_action' ) ) {
+				// No Action Scheduler — send inline. Fine for a small site; a large
+				// one always has AS (it ships with this plugin).
+				self::send_to_user( $uid );
+				continue;
+			}
+
+			// Don't stack a second send on a member who already has one pending.
+			if (
+				function_exists( 'as_has_scheduled_action' )
+				&& as_has_scheduled_action( self::AS_HOOK, array( 'user_id' => $uid ), self::AS_GROUP )
+			) {
+				continue;
+			}
+
+			as_enqueue_async_action(
+				self::AS_HOOK,
+				array( 'user_id' => $uid ),
+				self::AS_GROUP
+			);
+		}
+
+		// A short page means the keyset is exhausted — the run is done.
+		if ( count( $user_ids ) < self::PAGE_SIZE ) {
+			delete_transient( self::DISPATCH_LOCK_KEY );
+			return;
+		}
+
+		// More to go. Hand the next page to Action Scheduler rather than looping
+		// here, so no single request carries the whole site.
+		if ( function_exists( 'as_schedule_single_action' ) ) {
+			as_schedule_single_action(
+				time() + 60,
+				self::AS_PAGE_HOOK,
+				array( 'cursor' => $last ),
+				self::AS_GROUP
+			);
+			// Keep the lock alive across the chain.
+			set_transient( self::DISPATCH_LOCK_KEY, 1, self::DISPATCH_LOCK_TTL );
+			return;
+		}
+
+		// No AS: continue inline. Bounded by PAGE_SIZE per iteration.
+		self::dispatch_page( $last );
 	}
 
 	// ── Per-user send ────────────────────────────────────────────────────────────
