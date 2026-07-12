@@ -835,12 +835,25 @@ final class Installer {
 				array( '%s', '%s', '%s', '%s', '%d', '%s' )
 			);
 
+			// The seed table above is authored one condition per badge, because that is how these
+			// badges read. What goes in the DATABASE is the grouped shape -- normalised through the
+			// same pure migrator that rewrites existing sites, so a fresh install and an upgraded
+			// install end up byte-identical instead of quietly disagreeing about the shape.
+			//
+			// Every badge in that table has a condition (PHPStan enforces it from the literal shape),
+			// so the only way this is null is a condition the migrator does not recognise -- which it
+			// must never guess at, and which must certainly never be written as the string "null".
+			$group = BadgeRule::from_legacy( $conditions[ $id ] );
+			if ( null === $group ) {
+				continue;
+			}
+
 			$wpdb->insert(
 				$rules_table,
 				array(
 					'rule_type'   => 'badge_condition',
 					'target_id'   => $id,
-					'rule_config' => wp_json_encode( $conditions[ $id ] ),
+					'rule_config' => wp_json_encode( $group ),
 					'is_active'   => 1,
 				),
 				array( '%s', '%s', '%s', '%d' )

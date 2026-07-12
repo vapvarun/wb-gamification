@@ -128,7 +128,6 @@ use WBGam\Engine\LeaderboardNudge;
 use WBGam\Engine\Installer;
 use WBGam\Engine\BadgeSharePage;
 use WBGam\Engine\DbUpgrader;
-use WBGam\Engine\TenureBadgeEngine;
 use WBGam\Engine\WeeklyEmailEngine;
 use WBGam\API\MembersController;
 use WBGam\API\PointsController;
@@ -800,7 +799,6 @@ register_activation_hook(
 		ActionSchedulerCleaner::activate();
 		LeaderboardNudge::activate();
 		LeaderboardEngine::activate();
-		TenureBadgeEngine::activate();
 		WeeklyEmailEngine::activate();
 		CohortEngine::activate();
 		StatusRetentionEngine::activate();
@@ -823,7 +821,6 @@ register_deactivation_hook(
 		ActionSchedulerCleaner::deactivate();
 		LeaderboardNudge::deactivate();
 		LeaderboardEngine::deactivate();
-		TenureBadgeEngine::deactivate();
 		WeeklyEmailEngine::deactivate();
 		CohortEngine::deactivate();
 		StatusRetentionEngine::deactivate();

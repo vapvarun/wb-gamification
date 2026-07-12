@@ -14,10 +14,14 @@
  *
  * Rule types:
  *   badge_condition  — conditions evaluated by BadgeEngine after point awards
- *     Config examples:
+ *     A rule is a GROUP: a match mode over a list of conditions.
+ *       { "match": "all", "conditions": [
+ *           { "type": "action_count", "action_id": "wp_publish_post", "count": 10 },
+ *           { "type": "level_reached", "level_id": 4 }
+ *       ] }
+ *     The pre-1.6.4 single-condition form is still accepted and is wrapped into a one-condition
+ *     group on the way in, so integrators calling it keep working and the database keeps one shape:
  *       { "condition_type": "point_milestone", "points": 500 }
- *       { "condition_type": "action_count", "action_id": "wp_publish_post", "count": 10 }
- *       { "condition_type": "admin_awarded" }
  *
  *   points_multiplier — temporary or permanent per-action point multipliers
  *     Config examples:
@@ -30,6 +34,7 @@
 
 namespace WBGam\API;
 
+use WBGam\Engine\BadgeRule;
 use WP_REST_Controller;
 use WP_REST_Response;
 use WP_REST_Request;
@@ -86,11 +91,22 @@ class RulesController extends WP_REST_Controller {
 	private const VALID_RULE_TYPES = array( 'badge_condition', 'points_multiplier' );
 
 	/**
-	 * Allowed condition types for badge_condition rules.
+	 * Condition types a badge rule may use.
+	 *
+	 * Used for the error message only -- BadgeRule::sanitize_condition() is what actually decides
+	 * what is accepted, and this list exists to tell a caller what they got wrong. Keep them in step.
 	 *
 	 * @var string[]
 	 */
-	private const VALID_CONDITION_TYPES = array( 'point_milestone', 'action_count', 'admin_awarded' );
+	private const VALID_CONDITION_TYPES = array(
+		'point_milestone',
+		'points_in_period',
+		'action_count',
+		'level_reached',
+		'badge_earned',
+		'streak_days',
+		'tenure_days',
+	);
 
 	/**
 	 * Register REST API routes.
@@ -231,11 +247,13 @@ class RulesController extends WP_REST_Controller {
 
 		$rule_config = $request['rule_config'];
 
-		// For badge_condition rules, validate condition structure.
+		// Badge conditions are normalised to the one grouped shape before they are written. What the
+		// caller posted is NOT what we store -- storing the raw payload is what would put a second
+		// shape back in the database.
 		if ( 'badge_condition' === $request['rule_type'] ) {
-			$validation = $this->validate_badge_condition_config( $rule_config );
-			if ( is_wp_error( $validation ) ) {
-				return $validation;
+			$rule_config = $this->normalize_badge_condition_config( $rule_config );
+			if ( is_wp_error( $rule_config ) ) {
+				return $rule_config;
 			}
 		}
 
@@ -288,9 +306,9 @@ class RulesController extends WP_REST_Controller {
 			$config    = $request['rule_config'];
 			$rule_type = $data['rule_type'] ?? $row['rule_type'];
 			if ( 'badge_condition' === $rule_type ) {
-				$validation = $this->validate_badge_condition_config( $config );
-				if ( is_wp_error( $validation ) ) {
-					return $validation;
+				$config = $this->normalize_badge_condition_config( $config );
+				if ( is_wp_error( $config ) ) {
+					return $config;
 				}
 			}
 			$data['rule_config'] = wp_json_encode( $config );
@@ -383,43 +401,37 @@ class RulesController extends WP_REST_Controller {
 	}
 
 	/**
-	 * Validate the rule_config object for badge_condition rules.
+	 * Normalise a badge_condition rule_config, or reject it.
 	 *
-	 * @param array $config The rule_config array to validate.
-	 * @return true|WP_Error True on success, WP_Error if the config is invalid.
+	 * This used to be a validator with its OWN list of three condition types, written before the
+	 * badges controller grew a sanitizer that knows all eight. Two validators for one shape is how
+	 * the shape drifts: by 1.6.4 this one would reject `level_reached` as invalid and accept only the
+	 * pre-1.6.4 `condition_type` vocabulary -- so the documented rules API could no longer create a
+	 * rule the engine could actually evaluate.
+	 *
+	 * There is now one sanitizer, in BadgeRule, and both controllers call it. It still accepts the
+	 * `condition_type` form this endpoint documents, and it returns the grouped shape that is the
+	 * only thing we write.
+	 *
+	 * @param array $config The rule_config array from the request.
+	 * @return array|WP_Error The grouped config to persist, or WP_Error if nothing valid was posted.
 	 */
-	private function validate_badge_condition_config( array $config ): bool|WP_Error {
-		$type = $config['condition_type'] ?? '';
+	private function normalize_badge_condition_config( array $config ): array|WP_Error {
+		$group = BadgeRule::from_request( $config );
 
-		if ( ! in_array( $type, self::VALID_CONDITION_TYPES, true ) ) {
+		if ( null === $group ) {
 			return new WP_Error(
-				'invalid_condition_type',
+				'invalid_condition',
 				sprintf(
-					/* translators: %s = invalid condition_type value */
-					__( 'Invalid condition_type: %s. Must be one of: point_milestone, action_count, admin_awarded.', 'wb-gamification' ),
-					esc_html( $type )
+					/* translators: %s = comma-separated list of valid condition types */
+					__( 'A badge_condition rule needs at least one condition. Valid types: %s.', 'wb-gamification' ),
+					implode( ', ', self::VALID_CONDITION_TYPES )
 				),
 				array( 'status' => 400 )
 			);
 		}
 
-		if ( 'point_milestone' === $type && empty( $config['points'] ) ) {
-			return new WP_Error(
-				'missing_points',
-				__( 'point_milestone condition requires a "points" value.', 'wb-gamification' ),
-				array( 'status' => 400 )
-			);
-		}
-
-		if ( 'action_count' === $type && ( empty( $config['action_id'] ) || empty( $config['count'] ) ) ) {
-			return new WP_Error(
-				'missing_action_count_fields',
-				__( 'action_count condition requires "action_id" and "count" values.', 'wb-gamification' ),
-				array( 'status' => 400 )
-			);
-		}
-
-		return true;
+		return $group;
 	}
 
 	/**

@@ -571,6 +571,44 @@ final class BadgeAdminPage {
 										<?php esc_html_e( 'Choose "Admin awarded" for a badge you grant by hand. Any other condition awards it automatically.', 'wb-gamification' ); ?>
 									</span>
 								</p>
+
+								<?php
+								// THE OWNER'S CHOICE, and it is theirs alone.
+								//
+								// Changing a condition does NOT retroactively award the badge. Awarding it to
+								// everyone who already qualifies is a decision about someone's community --
+								// plenty of owners launch a badge deliberately "from today onwards", and a
+								// surprise flood of notifications to ten thousand members is not a feature.
+								//
+								// So: unchecked by default, and it says plainly what it will do.
+								$wb_gam_backfill = $is_new ? null : \WBGam\Engine\BadgeEngine::backfill_progress( (string) ( $badge['id'] ?? '' ) );
+								?>
+								<div class="wb-gam-conditions__backfill">
+									<label>
+										<input type="checkbox" name="backfill" value="1">
+										<strong><?php esc_html_e( 'Also award this badge to members who already qualify', 'wb-gamification' ); ?></strong>
+									</label>
+									<p class="description">
+										<?php esc_html_e( 'Off by default. Leave it off and the badge is earned from now on. Turn it on and every member who already meets these conditions is awarded it in the background - which on a large community can be a lot of people, and a lot of notifications.', 'wb-gamification' ); ?>
+									</p>
+
+									<?php if ( is_array( $wb_gam_backfill ) ) : ?>
+										<p class="wb-gam-backfill-status">
+											<?php
+											printf(
+												/* translators: 1: members checked, 2: total members, 3: badges awarded */
+												esc_html__( 'Last retroactive award: checked %1$s of %2$s members, awarded %3$s.', 'wb-gamification' ),
+												esc_html( number_format_i18n( (int) ( $wb_gam_backfill['checked'] ?? 0 ) ) ),
+												esc_html( number_format_i18n( (int) ( $wb_gam_backfill['total'] ?? 0 ) ) ),
+												esc_html( number_format_i18n( (int) ( $wb_gam_backfill['awarded'] ?? 0 ) ) )
+											);
+											?>
+											<?php if ( empty( $wb_gam_backfill['done'] ) ) : ?>
+												<em><?php esc_html_e( 'Still running.', 'wb-gamification' ); ?></em>
+											<?php endif; ?>
+										</p>
+									<?php endif; ?>
+								</div>
 							</div>
 
 							<?php
@@ -611,14 +649,15 @@ final class BadgeAdminPage {
 							<?php
 							// Manual-award panel — POSTs to /badges/{id}/award via the
 							// shared admin-rest-form pipeline. The endpoint accepts the
-							// award regardless of condition_type (admin_awarded badges
-							// have no auto rule, so this is the ONLY way they ever land
-							// on a member; auto-award badges still accept manual grants
-							// for one-off "give them this badge anyway" admin actions).
+							// award whatever the rule says (a manual badge has no auto
+							// rule, so this is the ONLY way it ever lands on a member;
+							// an auto-award badge still accepts manual grants for one-off
+							// "give them this badge anyway" admin actions).
 							// Mirrors the wp_dropdown_users pattern already used by
 							// ManualAwardPage for the points-award form so admins see
 							// the same control across both surfaces. Closes Basecamp
 							// #9933208551.
+							$wb_gam_awards_itself = \WBGam\Engine\BadgeRule::is_auto_award( $condition );
 							?>
 							<div class="wbgam-card wbgam-stack-block wbgam-mt-md">
 								<div class="wbgam-card-header">
@@ -629,10 +668,10 @@ final class BadgeAdminPage {
 								<div class="wbgam-card-body">
 									<p class="wbgam-card-desc">
 										<?php
-										if ( 'admin_awarded' === $condition['condition_type'] ) {
-											esc_html_e( 'This badge is admin-awarded only. Use the form below to grant it to a specific member.', 'wb-gamification' );
-										} else {
+										if ( $wb_gam_awards_itself ) {
 											esc_html_e( 'Manually grant this badge to a specific member. Useful for one-off recognition outside the auto-award rule.', 'wb-gamification' );
+										} else {
+											esc_html_e( 'This badge is admin-awarded only. Use the form below to grant it to a specific member.', 'wb-gamification' );
 										}
 										?>
 									</p>
@@ -683,10 +722,9 @@ final class BadgeAdminPage {
 			<div class="wbgam-grid-4">
 				<?php foreach ( $badges as $b ) : ?>
 					<?php
-					$config    = json_decode( $b['condition'] ?? '{}', true ) ?: array();
-					$cond_type = $config['condition_type'] ?? 'admin_awarded';
-					$has_rule  = 'admin_awarded' !== $cond_type;
-					$edit_url  = admin_url( 'admin.php?page=wb-gamification-badges&badge=' . rawurlencode( $b['id'] ) );
+					$config   = json_decode( $b['condition'] ?? '{}', true ) ?: array();
+					$has_rule = \WBGam\Engine\BadgeRule::is_auto_award( $config );
+					$edit_url = admin_url( 'admin.php?page=wb-gamification-badges&badge=' . rawurlencode( $b['id'] ) );
 					?>
 					<a href="<?php echo esc_url( $edit_url ); ?>" class="wbgam-badge-card wbgam-is-link-clean">
 						<div class="wbgam-badge-card__icon">

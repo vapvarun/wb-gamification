@@ -151,4 +151,47 @@ class BadgeRuleShapeTest extends TestCase {
 		$this->assertSame( 'any', BadgeRule::match_mode( array( 'match' => 'any', 'conditions' => array() ) ) );
 		$this->assertSame( 'all', BadgeRule::match_mode( array( 'match' => 'ALL', 'conditions' => array() ) ) );
 	}
+
+	/**
+	 * The library chip asks the rule ONE question: does this badge award itself?
+	 *
+	 * It used to answer that question by reading `condition_type` off the raw config -- a SECOND
+	 * reader of the rule shape, living in the template. The moment the migration grouped every rule,
+	 * that key stopped existing, the reader silently fell through to its `admin_awarded` default, and
+	 * the library chipped MANUAL on all 42 badges -- including ones with ten thousand earners.
+	 *
+	 * That is the exact failure this feature was built to end (seven badges lying MANUAL), inverted
+	 * onto the whole library. So the answer lives HERE, with the shape, where there is one reader and
+	 * a test -- not in a template that a future migration will forget about again.
+	 *
+	 * @return void
+	 */
+	public function test_a_rule_knows_whether_it_awards_itself(): void {
+		$this->assertTrue(
+			BadgeRule::is_auto_award(
+				array( 'match' => 'all', 'conditions' => array( array( 'type' => 'tenure_days', 'days' => 365 ) ) )
+			),
+			'A badge with a real condition awards itself. The chip must say so.'
+		);
+
+		// Manual means one thing and one thing only: nothing the member can do will earn it.
+		$this->assertFalse(
+			BadgeRule::is_auto_award(
+				array( 'match' => 'all', 'conditions' => array( array( 'type' => 'admin_awarded' ) ) )
+			)
+		);
+		$this->assertFalse( BadgeRule::is_auto_award( array( 'match' => 'all', 'conditions' => array() ) ) );
+		$this->assertFalse( BadgeRule::is_auto_award( array() ), 'No rule row at all: manual.' );
+
+		// An UNMIGRATED rule reads as manual -- and that is the correct answer, not a shrug.
+		//
+		// The evaluator reads the same row through the same class and finds no conditions, so it will
+		// never award it either. The chip agreeing with the evaluator is the property that matters: a
+		// badge the engine cannot award must not be advertised as auto-awarding. The migration is what
+		// guarantees no such row survives; this pins what happens if one ever does.
+		$this->assertFalse(
+			BadgeRule::is_auto_award( array( 'condition_type' => 'action_count', 'action_id' => 'wp_publish_post' ) ),
+			'The chip must always say what the evaluator will actually do with this row.'
+		);
+	}
 }

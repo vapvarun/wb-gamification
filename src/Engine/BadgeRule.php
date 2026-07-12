@@ -27,8 +27,10 @@
  * after that exactly one shape exists in the database. A plugin that tolerates two shapes forever
  * carries two code paths forever, and the second one silently rots until someone trusts it.
  *
- * This class holds NO WordPress. The migration runs once, over live rules, and if the transform is
- * wrong it is wrong permanently -- so it is pure, and it was tested before it was written.
+ * The migration and the shape logic are PURE -- no database, no globals, no state. They run once,
+ * over live rules, and if the transform is wrong it is wrong permanently, so they were tested before
+ * they were written. (The sanitizer reaches for `sanitize_key`, and the signal map for
+ * `apply_filters`; both are stateless, and neither is on the migration path.)
  *
  * @package WB_Gamification
  * @since   1.6.4
@@ -98,6 +100,124 @@ final class BadgeRule {
 	}
 
 	/**
+	 * Build a rule from whatever a caller posted.
+	 *
+	 * This is the ONE door into the database. Three vocabularies arrive here, and all three leave as
+	 * the same grouped shape:
+	 *
+	 *   - `{ match, conditions: [...] }`  -- the admin repeater.
+	 *   - `{ type, ... }`                 -- one condition, the badges REST contract.
+	 *   - `{ condition_type, ... }`       -- one condition, the RULES REST contract (documented, and
+	 *                                        the shape every rule written before 1.6.4 used).
+	 *
+	 * Tolerating three input shapes at the boundary is not the same as reading three shapes: they are
+	 * normalised HERE, once, and only the grouped shape is ever written or read back. That is the
+	 * difference between a compatible API and two code paths that rot.
+	 *
+	 * @param array|null $payload Raw condition payload from a request.
+	 * @return array|null The grouped rule, or null when nothing valid was posted (a manual badge).
+	 */
+	public static function from_request( ?array $payload ): ?array {
+		if ( ! is_array( $payload ) ) {
+			return null;
+		}
+
+		if ( isset( $payload['conditions'] ) && is_array( $payload['conditions'] ) ) {
+			$conditions = array();
+
+			foreach ( $payload['conditions'] as $raw ) {
+				$clean = self::sanitize_condition( is_array( $raw ) ? $raw : array() );
+				if ( null !== $clean ) {
+					$conditions[] = $clean;
+				}
+			}
+
+			if ( ! $conditions ) {
+				return null; // Every row was manual or junk: the badge is manual.
+			}
+
+			return array(
+				'match'      => self::MATCH_ANY === ( $payload['match'] ?? self::MATCH_ALL ) ? self::MATCH_ANY : self::MATCH_ALL,
+				'conditions' => $conditions,
+			);
+		}
+
+		// A single condition, in either vocabulary.
+		if ( isset( $payload['condition_type'] ) && ! isset( $payload['type'] ) ) {
+			$payload['type'] = $payload['condition_type'];
+		}
+
+		$single = self::sanitize_condition( $payload );
+
+		return null === $single
+			? null
+			: array(
+				'match'      => self::MATCH_ALL,
+				'conditions' => array( $single ),
+			);
+	}
+
+	/**
+	 * Sanitize ONE condition, and drop anything we do not recognise.
+	 *
+	 * Returns null for `admin_awarded` and for unknown types: a manual badge is a badge with no rule,
+	 * and an unknown type must never be written -- it would sit in the database evaluating to
+	 * whatever a filter happened to say, on a configuration nobody chose.
+	 *
+	 * @param array $raw Raw condition from a request.
+	 * @return array|null
+	 */
+	public static function sanitize_condition( array $raw ): ?array {
+		$type = sanitize_key( (string) ( $raw['type'] ?? '' ) );
+
+		switch ( $type ) {
+			case 'point_milestone':
+				return array(
+					'type'   => $type,
+					'points' => max( 1, (int) ( $raw['points'] ?? 100 ) ),
+				);
+
+			case 'action_count':
+				return array(
+					'type'      => $type,
+					'action_id' => sanitize_key( (string) ( $raw['action_id'] ?? '' ) ),
+					'count'     => max( 1, (int) ( $raw['count'] ?? 1 ) ),
+				);
+
+			case 'level_reached':
+				return array(
+					'type'     => $type,
+					'level_id' => max( 1, (int) ( $raw['level_id'] ?? 1 ) ),
+				);
+
+			case 'badge_earned':
+				return array(
+					'type'     => $type,
+					'badge_id' => sanitize_key( (string) ( $raw['badge_id'] ?? '' ) ),
+				);
+
+			case 'streak_days':
+			case 'tenure_days':
+				return array(
+					'type' => $type,
+					'days' => max( 1, (int) ( $raw['days'] ?? 1 ) ),
+				);
+
+			case 'points_in_period':
+				$period = (string) ( $raw['period'] ?? 'week' );
+				return array(
+					'type'   => $type,
+					'points' => max( 1, (int) ( $raw['points'] ?? 50 ) ),
+					'period' => in_array( $period, array( 'day', 'week', 'month' ), true ) ? $period : 'week',
+				);
+
+			case 'admin_awarded':
+			default:
+				return null;
+		}
+	}
+
+	/**
 	 * Is this a rule we can actually evaluate?
 	 *
 	 * An empty condition list is INVALID and must never award.
@@ -148,6 +268,35 @@ final class BadgeRule {
 	 */
 	public static function conditions( array $config ): array {
 		return self::is_group( $config ) ? array_values( $config['conditions'] ) : array();
+	}
+
+	/**
+	 * Does this badge award itself?
+	 *
+	 * The Badge Library prints one of two chips on every card -- AUTO-AWARD or MANUAL -- and that
+	 * chip is the owner's only at-a-glance answer to "do I have to hand this out myself?"
+	 *
+	 * The question is about the RULE, so it is answered here, once. The library used to answer it
+	 * inside the template by reading `condition_type` off the raw config, which made the template a
+	 * second reader of the shape. The migration grouped every rule, that key stopped existing, the
+	 * template fell through to its `admin_awarded` default, and the library chipped MANUAL on all 42
+	 * badges -- including ones with ten thousand earners. It was the precise lie this feature exists
+	 * to end, told about every badge instead of seven.
+	 *
+	 * A badge is MANUAL when nothing a member does can earn it: no conditions, or the single
+	 * `admin_awarded` condition. Everything else awards itself.
+	 *
+	 * @param array $config Decoded rule_config. An empty array (no rule row at all) is manual.
+	 * @return bool
+	 */
+	public static function is_auto_award( array $config ): bool {
+		foreach ( self::conditions( $config ) as $condition ) {
+			if ( 'admin_awarded' !== (string) ( $condition['type'] ?? '' ) ) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	/**

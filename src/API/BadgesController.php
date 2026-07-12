@@ -21,6 +21,7 @@
 namespace WBGam\API;
 
 use WBGam\Engine\BadgeEngine;
+use WBGam\Engine\BadgeRule;
 use WBGam\Engine\Transaction;
 use WBGam\Engine\Log;
 use WP_REST_Controller;
@@ -333,6 +334,14 @@ class BadgesController extends WP_REST_Controller {
 				'minimum'     => 1,
 				'description' => 'Cap on how many members may earn this badge. Null = unlimited.',
 			),
+			'backfill'      => array(
+				'type'        => 'boolean',
+				'default'     => false,
+				'description' => 'Award this badge to members who ALREADY qualify. Default false, and'
+					. ' deliberately so: retroactively awarding a badge to thousands of members is a'
+					. ' decision the site owner makes, not something the plugin does to their'
+					. ' community on its own.',
+			),
 			'condition'     => array(
 				'type'        => 'object',
 				'description' => 'Auto-award rule.'
@@ -430,109 +439,6 @@ class BadgesController extends WP_REST_Controller {
 	 *              leave the badge with NO award condition, silently disabling
 	 *              auto-award).
 	 */
-	/**
-	 * Build the grouped rule config from either payload shape.
-	 *
-	 * @param array|null $payload `{ match, conditions: [...] }` or a single legacy condition.
-	 * @return array|null Grouped config, or null when the badge is manual (no rule row).
-	 */
-	private static function build_condition_group( ?array $payload ): ?array {
-		if ( ! is_array( $payload ) ) {
-			return null;
-		}
-
-		// Multi-condition form (the admin repeater).
-		if ( isset( $payload['conditions'] ) && is_array( $payload['conditions'] ) ) {
-			$conditions = array();
-
-			foreach ( $payload['conditions'] as $raw ) {
-				$clean = self::sanitize_condition( is_array( $raw ) ? $raw : array() );
-				if ( null !== $clean ) {
-					$conditions[] = $clean;
-				}
-			}
-
-			if ( ! $conditions ) {
-				return null; // Every row was manual or junk: the badge is manual.
-			}
-
-			return array(
-				'match'      => 'any' === ( $payload['match'] ?? 'all' ) ? 'any' : 'all',
-				'conditions' => $conditions,
-			);
-		}
-
-		// Legacy single-condition form. Wrapped, so only one shape reaches the database.
-		$single = self::sanitize_condition( $payload );
-
-		return null === $single
-			? null
-			: array(
-				'match'      => 'all',
-				'conditions' => array( $single ),
-			);
-	}
-
-	/**
-	 * Sanitize ONE condition, and drop anything we do not recognise.
-	 *
-	 * Returns null for `admin_awarded` and for unknown types: a manual badge is a badge with no
-	 * rule, and an unknown type must never be written -- it would sit in the database evaluating to
-	 * whatever a filter happened to say, on a configuration nobody chose.
-	 *
-	 * @param array $raw Raw condition from the request.
-	 * @return array|null
-	 */
-	private static function sanitize_condition( array $raw ): ?array {
-		$type = sanitize_key( (string) ( $raw['type'] ?? '' ) );
-
-		switch ( $type ) {
-			case 'point_milestone':
-				return array(
-					'type'   => $type,
-					'points' => max( 1, (int) ( $raw['points'] ?? 100 ) ),
-				);
-
-			case 'action_count':
-				return array(
-					'type'      => $type,
-					'action_id' => sanitize_key( (string) ( $raw['action_id'] ?? '' ) ),
-					'count'     => max( 1, (int) ( $raw['count'] ?? 1 ) ),
-				);
-
-			case 'level_reached':
-				return array(
-					'type'     => $type,
-					'level_id' => max( 1, (int) ( $raw['level_id'] ?? 1 ) ),
-				);
-
-			case 'badge_earned':
-				return array(
-					'type'     => $type,
-					'badge_id' => sanitize_key( (string) ( $raw['badge_id'] ?? '' ) ),
-				);
-
-			case 'streak_days':
-			case 'tenure_days':
-				return array(
-					'type' => $type,
-					'days' => max( 1, (int) ( $raw['days'] ?? 1 ) ),
-				);
-
-			case 'points_in_period':
-				$period = (string) ( $raw['period'] ?? 'week' );
-				return array(
-					'type'   => $type,
-					'points' => max( 1, (int) ( $raw['points'] ?? 50 ) ),
-					'period' => in_array( $period, array( 'day', 'week', 'month' ), true ) ? $period : 'week',
-				);
-
-			case 'admin_awarded':
-			default:
-				return null;
-		}
-	}
-
 	private function persist_condition( string $badge_id, ?array $condition ): bool {
 		global $wpdb;
 
@@ -544,7 +450,7 @@ class BadgesController extends WP_REST_Controller {
 		// public REST contract that integrators already call. It is
 		// wrapped into a one-condition group here, so there is still
 		// exactly ONE shape in the database.
-		$group = self::build_condition_group( $condition );
+		$group = BadgeRule::from_request( $condition );
 
 		// DELETE-then-INSERT replace, atomically. Previously these two writes were unchecked and
 		// unwrapped: a committed DELETE followed by a failed INSERT left the badge with NO condition
@@ -678,6 +584,12 @@ class BadgesController extends WP_REST_Controller {
 			);
 		}
 
+		// AFTER the rule is saved, never before -- a backfill started first would evaluate the OLD
+		// condition and award the wrong members. Only when the owner explicitly asked.
+		if ( $request->get_param( 'backfill' ) ) {
+			BadgeEngine::start_backfill( $badge_id );
+		}
+
 		$created = BadgeEngine::get_badge_def( $badge_id );
 		do_action( 'wb_gam_after_create_badge', $created, $request );
 
@@ -741,6 +653,12 @@ class BadgesController extends WP_REST_Controller {
 					array( 'status' => 500 )
 				);
 			}
+		}
+
+		// AFTER the rule is saved, never before -- a backfill started first would evaluate the OLD
+		// condition and award the wrong members. Only when the owner explicitly asked.
+		if ( $request->get_param( 'backfill' ) ) {
+			BadgeEngine::start_backfill( $badge_id );
 		}
 
 		do_action( 'wb_gam_after_update_badge', $badge_id, $data, $request );

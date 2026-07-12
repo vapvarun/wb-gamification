@@ -259,3 +259,30 @@
 	display: inline-block;
 	margin-inline-start: 10px;
 }
+
+/* The owner's retroactive-award choice. Set apart from the conditions above it, because it is a
+ * decision about their community, not another field. */
+.wb-gam-conditions__backfill {
+	margin: 14px 0 0;
+	padding: 12px 14px;
+	border: 1px solid var(--wbgam-border, #e5e7eb);
+	border-radius: 6px;
+	background: var(--wbgam-card-bg, #fff);
+}
+
+.wb-gam-conditions__backfill label {
+	display: inline-flex;
+	align-items: center;
+	gap: 7px;
+	color: var(--wbgam-text-strong, #1d2939);
+}
+
+.wb-gam-conditions__backfill .description {
+	margin: 6px 0 0 24px;
+}
+
+.wb-gam-backfill-status {
+	margin: 8px 0 0 24px;
+	font-size: var(--wbgam-fs-xs, 0.75rem);
+	color: var(--wbgam-wp-text, #50575e);
+}

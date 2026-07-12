@@ -16,6 +16,7 @@
 
 namespace WBGam\CLI;
 
+use WBGam\Engine\BadgeRule;
 use WBGam\Engine\Registry;
 use WBGam\Engine\FeatureFlags;
 use WP_CLI;
@@ -295,14 +296,26 @@ class DoctorCommand {
 				continue;
 			}
 
-			if ( 'action_count' === ( $config['condition_type'] ?? '' ) ) {
-				++$auto_count;
-				$action_id = $config['action_id'] ?? '';
+			// Read the rule through BadgeRule, not by hand. A rule is a GROUP of conditions now, and a
+			// doctor that still reached for `condition_type` would match nothing at all -- then cheerfully
+			// report "no auto-award badge conditions" on a site with thirty-five working ones.
+			if ( ! BadgeRule::is_auto_award( $config ) ) {
+				continue;
+			}
+
+			++$auto_count;
+
+			// An orphaned action is one a rule points at that no integration registers -- the badge can
+			// never be earned. Every action_count condition in the group is checked, not just the first.
+			foreach ( BadgeRule::conditions( $config ) as $condition ) {
+				if ( 'action_count' !== ( $condition['type'] ?? '' ) ) {
+					continue;
+				}
+
+				$action_id = $condition['action_id'] ?? '';
 				if ( $action_id && ! isset( $actions[ $action_id ] ) ) {
 					$orphaned[] = $rule['target_id'] . ' → ' . $action_id;
 				}
-			} elseif ( 'point_milestone' === ( $config['condition_type'] ?? '' ) ) {
-				++$auto_count;
 			}
 		}
 

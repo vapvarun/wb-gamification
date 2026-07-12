@@ -57,6 +57,16 @@ final class BadgeEngine {
 	public const CRON_PASS = 'wb_gam_badge_cron_pass';
 
 	/**
+	 * Retroactive backfill for one badge.
+	 */
+	public const BACKFILL_HOOK = 'wb_gam_badge_backfill_page';
+
+	/**
+	 * Members evaluated per backfill tick.
+	 */
+	private const BACKFILL_PAGE_SIZE = 500;
+
+	/**
 	 * Members evaluated per cron tick. Keyset-paged: no single tick carries the site.
 	 */
 	private const CRON_PAGE_SIZE = 500;
@@ -100,6 +110,187 @@ final class BadgeEngine {
 	 * reported FAIL and the feature was fine.
 	 *
 	 * @return void
+	 */
+	/**
+	 * Start a retroactive backfill -- ONLY when the owner asked for one.
+	 *
+	 * This is never automatic. Awarding a badge to ten thousand members who qualified years ago is
+	 * a product decision the SITE OWNER makes, not something the plugin does to their community
+	 * behind their back. Plenty of owners launch a badge deliberately "from today onwards", and
+	 * a surprise flood of notifications is not a feature.
+	 *
+	 * @param string $badge_id Badge to backfill.
+	 * @return void
+	 */
+	public static function start_backfill( string $badge_id ): void {
+		if ( '' === $badge_id ) {
+			return;
+		}
+
+		global $wpdb;
+
+		// Reset progress. The owner will watch this number, so it has to start honest.
+		update_option(
+			'wb_gam_backfill_' . $badge_id,
+			array(
+				'checked'    => 0,
+				'awarded'    => 0,
+				'total'      => (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->users}" ),
+				'started_at' => current_time( 'mysql' ),
+				'done'       => false,
+			),
+			false
+		);
+
+		self::schedule_backfill_page( $badge_id, 0 );
+	}
+
+	/**
+	 * Award one page of members who already qualify.
+	 *
+	 * DRIVEN FROM wp_users, NOT wb_gam_user_totals.
+	 *
+	 * The design spec said to drive this from wb_gam_user_totals, on the reasoning that "a member
+	 * with no points cannot satisfy any auto-condition". That is FALSE, and it took a tenure badge
+	 * to see it: a member with zero points absolutely satisfies "has been a member for 365 days" --
+	 * they joined a year ago and never did anything. On the live site that would have silently
+	 * skipped 18 members, and on a real community it is every lurker who has been around for years.
+	 * The bounded-looking driving set was the wrong one.
+	 *
+	 * @param string $badge_id Badge being backfilled.
+	 * @param int    $cursor   Last user id processed.
+	 * @return void
+	 */
+	public static function backfill_page( string $badge_id, int $cursor = 0 ): void {
+		global $wpdb;
+
+		$rule = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT rule_config FROM {$wpdb->prefix}wb_gam_rules
+				  WHERE rule_type = 'badge_condition' AND target_id = %s AND is_active = 1",
+				$badge_id
+			)
+		);
+
+		$config = json_decode( (string) $rule, true );
+
+		if ( ! is_array( $config ) || ! BadgeRule::is_valid( $config ) ) {
+			self::finish_backfill( $badge_id );
+			return;
+		}
+
+		$user_ids = $wpdb->get_col(
+			$wpdb->prepare(
+				"SELECT ID FROM {$wpdb->users} WHERE ID > %d ORDER BY ID ASC LIMIT %d",
+				$cursor,
+				self::BACKFILL_PAGE_SIZE
+			)
+		);
+
+		if ( ! $user_ids ) {
+			self::finish_backfill( $badge_id );
+			return;
+		}
+
+		$progress = (array) get_option( 'wb_gam_backfill_' . $badge_id, array() );
+		$awarded  = (int) ( $progress['awarded'] ?? 0 );
+		$checked  = (int) ( $progress['checked'] ?? 0 );
+
+		foreach ( $user_ids as $user_id ) {
+			$user_id = (int) $user_id;
+			++$checked;
+
+			if ( self::has_badge( $user_id, $badge_id ) ) {
+				continue;
+			}
+
+			$state = array(
+				'total'  => PointsEngine::get_total( $user_id, null ),
+				'earned' => self::get_user_earned_badge_ids( $user_id ),
+				'streak' => null,
+			);
+
+			// No $event. The rule is evaluated against the member's STATE -- which is exactly why
+			// the evaluator never lets condition logic touch the event.
+			if ( ! self::evaluate_rule( $user_id, $config, null, $state ) ) {
+				continue;
+			}
+
+			// Through award_badge(), so max_earners still holds. A backfill of a "first to reach
+			// Champion" badge over ten thousand qualifying members must still produce exactly one
+			// winner -- and it does, because scarcity is enforced under a lock in one place.
+			if ( self::award_badge( $user_id, $badge_id ) ) {
+				++$awarded;
+			}
+		}
+
+		$progress['checked'] = $checked;
+		$progress['awarded'] = $awarded;
+		update_option( 'wb_gam_backfill_' . $badge_id, $progress, false );
+
+		if ( count( $user_ids ) < self::BACKFILL_PAGE_SIZE ) {
+			self::finish_backfill( $badge_id );
+			return;
+		}
+
+		self::schedule_backfill_page( $badge_id, (int) end( $user_ids ) );
+	}
+
+	/**
+	 * Mark a backfill complete.
+	 *
+	 * @param string $badge_id Badge.
+	 * @return void
+	 */
+	private static function finish_backfill( string $badge_id ): void {
+		$progress         = (array) get_option( 'wb_gam_backfill_' . $badge_id, array() );
+		$progress['done'] = true;
+		update_option( 'wb_gam_backfill_' . $badge_id, $progress, false );
+	}
+
+	/**
+	 * Queue the next backfill page.
+	 *
+	 * @param string $badge_id Badge.
+	 * @param int    $cursor   Last user id processed.
+	 * @return void
+	 */
+	private static function schedule_backfill_page( string $badge_id, int $cursor ): void {
+		if ( ! function_exists( 'as_enqueue_async_action' ) ) {
+			self::backfill_page( $badge_id, $cursor );
+			return;
+		}
+
+		$args = array(
+			'badge_id' => $badge_id,
+			'cursor'   => $cursor,
+		);
+
+		// The handler schedules its own successor, so guard it -- an overlapping run would walk the
+		// same page twice. Awarding is idempotent, but the progress counter would double-count and
+		// the owner would watch a number that lies.
+		if ( function_exists( 'as_has_scheduled_action' )
+			&& as_has_scheduled_action( self::BACKFILL_HOOK, $args, 'wb-gamification' ) ) {
+			return;
+		}
+
+		as_enqueue_async_action( self::BACKFILL_HOOK, $args, 'wb-gamification' );
+	}
+
+	/**
+	 * Backfill progress for the admin screen.
+	 *
+	 * @param string $badge_id Badge.
+	 * @return array{checked:int,awarded:int,total:int,done:bool}|null
+	 */
+	public static function backfill_progress( string $badge_id ): ?array {
+		$progress = get_option( 'wb_gam_backfill_' . $badge_id );
+
+		return is_array( $progress ) ? $progress : null;
+	}
+
+	/**
+	 * Forget the cached rules list.
 	 */
 	public static function flush_rules_cache(): void {
 		wp_cache_delete( 'wb_gam_badge_rules', self::CACHE_GROUP );
@@ -233,6 +424,7 @@ final class BadgeEngine {
 		// evaluates whatever tenure rules the OWNER has configured, instead of a hardcoded list of
 		// four the owner could not see.
 		add_action( self::CRON_PASS, array( __CLASS__, 'run_cron_pass' ), 10, 1 );
+		add_action( self::BACKFILL_HOOK, array( __CLASS__, 'backfill_page' ), 10, 2 );
 
 		// Arm the daily pass. AS is not up until init.
 		if ( did_action( 'init' ) ) {
