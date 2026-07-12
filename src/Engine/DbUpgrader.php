@@ -103,6 +103,7 @@ final class DbUpgrader {
 		self::ensure_streak_sort_indexes();
 		self::ensure_kudos_moderation_schema();
 		self::ensure_events_source_key();
+		self::ensure_scale_indexes();
 	}
 
 	/**
@@ -172,6 +173,89 @@ final class DbUpgrader {
 		if ( ! in_array( 'idx_longest_streak', $existing, true ) ) {
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 			$wpdb->query( "ALTER TABLE `{$table}` ADD KEY `idx_longest_streak` (longest_streak)" );
+		}
+
+		update_option( $flag_key, '1' );
+	}
+
+	/**
+	 * Scale indexes — every hot query below currently runs as a FULL TABLE SCAN
+	 * of an EVENT-scaled table (millions of rows on a large site).
+	 *
+	 * These were missed because the tables *look* indexed: `wb_gam_user_badges`
+	 * has a PK, a UNIQUE and a secondary key. But an index only helps a query
+	 * whose predicate matches its LEADING column, and a composite
+	 * `UNIQUE (user_id, badge_id)` cannot serve a `badge_id`-only predicate.
+	 * Checking "does the table have indexes" says yes; checking "is this query's
+	 * WHERE column indexed" says no. Only the second question matters.
+	 *
+	 * 1. wb_gam_user_badges (badge_id) — the expensive one.
+	 *      COUNT(*) WHERE badge_id = %s   (BadgeEngine max_earners guard)
+	 *        -> runs on the AWARD HOT PATH for any badge with a max_earners cap,
+	 *           and is deliberately uncached (a stale count over-awards).
+	 *      COUNT(DISTINCT user_id) GROUP BY badge_id   (badge rarity map)
+	 *        -> runs on EVERY public request that renders a badge, uncached.
+	 *      correlated COUNT(*) per badge   (Badges admin page)
+	 *        -> 50 badges = 50 full scans in one page load.
+	 *
+	 * 2. wb_gam_kudos (revoked_at, created_at)
+	 *      WHERE revoked_at IS NULL ORDER BY created_at DESC LIMIT n
+	 *        -> the PUBLIC kudos feed + admin moderation list. No existing index
+	 *           leads with created_at, so MySQL full-scans and filesorts to
+	 *           return 20 rows.
+	 *
+	 * 3. wb_gam_submissions (created_at)
+	 *      ORDER BY created_at DESC with no status filter -> idx_status_created
+	 *      can't be used (wrong leading column).
+	 *
+	 * 4. wb_gam_redemptions (user_id, created_at)
+	 *      per-member history: currently `user_id` then filesort.
+	 *
+	 * 5. wb_gam_user_intelligence (computed_at)
+	 *      ORDER BY computed_at DESC LIMIT 1 on the Analytics dashboard = a
+	 *      100k-row scan to fetch one row.
+	 *
+	 * Adding an index to a large table takes a metadata lock. These run once,
+	 * flag-gated, on a normal admin request — acceptable for tables of this size
+	 * (InnoDB builds secondary indexes online since 5.6). If a site is enormous
+	 * enough for that to bite, the flag lets an admin pre-apply them by hand.
+	 *
+	 * @since 1.6.4
+	 */
+	private static function ensure_scale_indexes(): void {
+		$flag_key = 'wb_gam_feature_scale_indexes_v1';
+		if ( get_option( $flag_key ) ) {
+			return;
+		}
+
+		global $wpdb;
+
+		$wanted = array(
+			'wb_gam_user_badges'       => array( 'idx_badge_id' => '(badge_id)' ),
+			'wb_gam_kudos'             => array( 'idx_revoked_created' => '(revoked_at, created_at)' ),
+			'wb_gam_submissions'       => array( 'idx_created' => '(created_at)' ),
+			'wb_gam_redemptions'       => array( 'idx_user_created' => '(user_id, created_at)' ),
+			'wb_gam_user_intelligence' => array( 'idx_computed_at' => '(computed_at)' ),
+		);
+
+		foreach ( $wanted as $suffix => $indexes ) {
+			$table = $wpdb->prefix . $suffix;
+
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			if ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) ) !== $table ) {
+				continue;
+			}
+
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$existing = (array) $wpdb->get_col( "SHOW INDEX FROM `{$table}`", 2 );
+
+			foreach ( $indexes as $name => $cols ) {
+				if ( in_array( $name, $existing, true ) ) {
+					continue;
+				}
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				$wpdb->query( "ALTER TABLE `{$table}` ADD KEY `{$name}` {$cols}" );
+			}
 		}
 
 		update_option( $flag_key, '1' );
