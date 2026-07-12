@@ -51,11 +51,13 @@ final class ActionSchedulerCleaner {
 	const CRON_RECUR = 'daily';
 
 	/**
-	 * Default retention horizon in days. Anything older — regardless of
-	 * status — gets removed.
+	 * Default retention horizon in days for OUR OWN completed/failed rows.
 	 *
 	 * 7 days: enough to debug a job that failed yesterday, not enough to
 	 * grow the table past a few hundred thousand rows on a busy site.
+	 *
+	 * Applies to `complete` and `failed` only. Pending work is never aged out
+	 * as routine housekeeping — see cleanup() and self::HOOK_PREFIX.
 	 */
 	const DEFAULT_RETENTION_DAYS = 7;
 
@@ -97,6 +99,29 @@ final class ActionSchedulerCleaner {
 	 * we left off rather than colliding.
 	 */
 	private const MAX_RUNTIME_SECONDS = 50;
+
+	/**
+	 * Ownership fence. This cleaner may ONLY ever delete rows whose hook
+	 * carries this prefix.
+	 *
+	 * Action Scheduler is SHARED INFRASTRUCTURE. Its tables hold WooCommerce
+	 * orders, Subscriptions renewals, Jetpack sync jobs, and every other
+	 * plugin's queued work alongside ours. Until 1.6.4 this class deleted by
+	 * `status` + `scheduled_date_gmt` with NO ownership filter at all — so a
+	 * plugin whose job is to award points was, every single day, deleting
+	 * WooCommerce's queue. On a busy store "pending and past-due by >7 days"
+	 * is exactly what a backed-up queue looks like, and our response to a
+	 * backed-up queue was to destroy the backlog.
+	 *
+	 * We fence on the HOOK prefix rather than the AS group because our own
+	 * group slugs are historically inconsistent (`wb_gam_email`,
+	 * `wb-gamification-emails`, `wb_gamification`, `wb-gamification-nudge`),
+	 * whereas every hook we enqueue is `wb_gam_*` without exception. A hook
+	 * prefix cannot drift silently the way a group slug can.
+	 *
+	 * @since 1.6.4
+	 */
+	private const HOOK_PREFIX = 'wb_gam_';
 
 	/**
 	 * Register the cron schedule and hook.
@@ -179,8 +204,9 @@ final class ActionSchedulerCleaner {
 			/**
 			 * Filter the AS retention horizon in days.
 			 *
-			 * Anything older than this — regardless of status (complete,
-			 * failed, pending) — gets removed on the daily cleanup tick.
+			 * Applies to this plugin's own `complete` and `failed` rows (hook
+			 * prefixed `wb_gam_`). Other plugins' rows are never touched, and
+			 * pending work is never aged out by routine housekeeping.
 			 *
 			 * @param int $days Retention horizon. Default 7. Minimum 1.
 			 */
@@ -191,10 +217,28 @@ final class ActionSchedulerCleaner {
 
 		$started    = microtime( true );
 		$batch_size = $panic_mode ? self::PANIC_BATCH_SIZE : self::BATCH_SIZE;
-		$results    = array(
+
+		// `complete` and `failed` are HISTORY — deleting them is housekeeping.
+		// `pending` is QUEUED WORK — deleting it is destroying it.
+		//
+		// Until 1.6.4 we pruned `pending` unconditionally, every day. That is
+		// not retention, it is data loss: a job sitting pending is a weekly
+		// email that has not been sent, a webhook that has not been delivered,
+		// a nudge nobody has received. Retention horizons apply to records of
+		// what happened, never to instructions for what is still to happen.
+		//
+		// The one case where dropping our own pending rows is right is the
+		// PERF-002 shape: one of OUR hooks recursively self-enqueueing until
+		// the table is unusable. Then dropping that backlog is the recovery,
+		// not the damage. So pending is pruned only when the circuit breaker
+		// has tripped AND the dominant runaway hook is ours — never as routine
+		// housekeeping, and never for another plugin's work.
+		$results = array(
 			'complete' => self::prune_status( 'complete', $cutoff, $started, $batch_size ),
 			'failed'   => self::prune_status( 'failed', $cutoff, $started, $batch_size ),
-			'pending'  => self::prune_status( 'pending', $cutoff, $started, $batch_size ),
+			'pending'  => ( $panic_mode && self::runaway_hook_is_ours() )
+				? self::prune_status( 'pending', $cutoff, $started, $batch_size )
+				: 0,
 		);
 
 		/**
@@ -274,7 +318,33 @@ final class ActionSchedulerCleaner {
 	}
 
 	/**
-	 * Batched DELETE loop for one AS status.
+	 * Is the hook currently flooding the AS table one of OURS?
+	 *
+	 * Gates the panic-mode `pending` prune. A runaway caused by another plugin
+	 * is that plugin's incident — we alert on it (the row-count threshold is a
+	 * whole-table health signal, deliberately), but we do not get to delete
+	 * anyone else's queue to recover from it.
+	 *
+	 * @since 1.6.4
+	 *
+	 * @return bool True when the dominant hook is prefixed wb_gam_.
+	 */
+	private static function runaway_hook_is_ours(): bool {
+		$state = self::get_runaway_state();
+		if ( ! is_array( $state ) ) {
+			return false;
+		}
+		return 0 === strpos( (string) ( $state['top_hook'] ?? '' ), self::HOOK_PREFIX );
+	}
+
+	/**
+	 * Batched DELETE loop for one AS status, fenced to this plugin's own hooks.
+	 *
+	 * Every DELETE issued here carries `AND hook LIKE 'wb_gam_%'`. Action
+	 * Scheduler is shared infrastructure; the tables are not ours to prune.
+	 * See self::HOOK_PREFIX for what happened without that fence.
+	 *
+	 * @since 1.6.4 Ownership fence added. Previously deleted ANY plugin's rows.
 	 *
 	 * @param string $status     AS status: complete, failed, pending.
 	 * @param string $cutoff     ISO datetime; rows older than this are removed.
@@ -288,17 +358,24 @@ final class ActionSchedulerCleaner {
 		$actions_table = $wpdb->prefix . 'actionscheduler_actions';
 		$logs_table    = $wpdb->prefix . 'actionscheduler_logs';
 		$total         = 0;
+		$hook_like     = $wpdb->esc_like( self::HOOK_PREFIX ) . '%';
 
 		do {
 			// Find a batch of doomed action_ids first so the logs delete
 			// below can target them without a sub-query the optimiser will
 			// choose to rewrite into a slow join.
+			//
+			// `AND hook LIKE 'wb_gam_%'` is the ownership fence. Do not remove
+			// it: without it this statement selects WooCommerce's rows too.
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 			$ids = $wpdb->get_col(
 				$wpdb->prepare(
-					"SELECT action_id FROM `{$actions_table}` WHERE status = %s AND scheduled_date_gmt < %s LIMIT %d",
+					"SELECT action_id FROM `{$actions_table}`
+					  WHERE status = %s AND scheduled_date_gmt < %s AND hook LIKE %s
+					  LIMIT %d",
 					$status,
 					$cutoff,
+					$hook_like,
 					$batch_size
 				)
 			);
