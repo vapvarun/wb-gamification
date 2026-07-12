@@ -2328,7 +2328,6 @@ final class SettingsPage {
 
 		// Drop the per-request resolve cache so a read later in this request
 		// reflects the new exclusions.
-		\WBGam\Engine\PointsEngine::flush_exclusion_cache();
 
 		// Staff permissions matrix. Only processed when the caps card was part
 		// of the submitted form (marker field), so an unrelated Access save can

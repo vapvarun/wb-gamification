@@ -458,8 +458,6 @@ class MembersController extends WP_REST_Controller {
 			BadgeEngine::prime_earned_badges( $ids );
 		}
 
-		$excluded = PointsEngine::excluded_user_ids();
-
 		$items = array();
 		foreach ( $users as $user ) {
 			$uid     = (int) $user->ID;
@@ -472,7 +470,7 @@ class MembersController extends WP_REST_Controller {
 				'points'      => PointsEngine::get_total( $uid ),
 				'level'       => $level ? (string) $level['name'] : '',
 				'badges'      => count( BadgeEngine::get_user_badges( $uid ) ),
-				'excluded'    => in_array( $uid, $excluded, true ) || (bool) get_user_meta( $uid, 'wb_gam_sandboxed', true ),
+				'excluded'    => PointsEngine::is_excluded_user( $uid ) || (bool) get_user_meta( $uid, 'wb_gam_sandboxed', true ),
 				'profile_url' => (string) get_edit_user_link( $uid ),
 			);
 		}
@@ -508,7 +506,6 @@ class MembersController extends WP_REST_Controller {
 		} else {
 			delete_user_meta( $id, 'wb_gam_sandboxed' );
 		}
-		PointsEngine::flush_exclusion_cache();
 
 		return new WP_REST_Response(
 			array(

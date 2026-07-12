@@ -130,7 +130,6 @@ final class SettingsIO {
 		}
 
 		// Access exclusions may have changed; drop the per-request resolve cache.
-		PointsEngine::flush_exclusion_cache();
 
 		return array(
 			'ok'      => true,

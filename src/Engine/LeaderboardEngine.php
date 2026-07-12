@@ -243,9 +243,9 @@ final class LeaderboardEngine {
 		}
 
 		// ── Full query fallback ───────────────────────────────────────────────
-		$period_start = self::get_period_start( $period );
-		$opt_out_ids  = self::get_opted_out_ids();
-		$scope_ids    = self::resolve_scope( $scope_type, $scope_id );
+		$period_start                        = self::get_period_start( $period );
+		[ $opt_out_clause, $opt_out_values ] = self::exclusion_sql( 'p' );
+		$scope_ids                           = self::resolve_scope( $scope_type, $scope_id );
 
 		// Build WHERE clause.
 		$where_parts  = array();
@@ -261,14 +261,12 @@ final class LeaderboardEngine {
 			$where_values[] = $period_start;
 		}
 
-		if ( ! empty( $opt_out_ids ) ) {
-			$placeholders = implode( ',', array_fill( 0, count( $opt_out_ids ), '%d' ) );
-			$where_values = array_merge( $where_values, $opt_out_ids );
-			// phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
-			$opt_out_clause = "AND p.user_id NOT IN ($placeholders)";
-		} else {
-			$opt_out_clause = '';
-		}
+		// The exclusion fragment carries its own binds, and its placeholder count is a function
+		// of what the ADMIN configured -- never of how many members the site has. That is the
+		// whole fix: excluding "subscriber" on a 100k-member site used to build a NOT IN() with
+		// a hundred thousand placeholders, blow past max_allowed_packet, and take the leaderboard
+		// down completely.
+		$where_values = array_merge( $where_values, $opt_out_values );
 
 		if ( ! empty( $scope_ids ) ) {
 			$placeholders = implode( ',', array_fill( 0, count( $scope_ids ), '%d' ) );
@@ -334,9 +332,7 @@ final class LeaderboardEngine {
 
 			// Rebuild the value list: the totals path has no created_at bind.
 			$where_values = array( $resolved_type );
-			if ( ! empty( $opt_out_ids ) ) {
-				$where_values = array_merge( $where_values, $opt_out_ids );
-			}
+			$where_values = array_merge( $where_values, $opt_out_values );
 			if ( ! empty( $scope_ids ) ) {
 				$where_values = array_merge( $where_values, $scope_ids );
 			}
@@ -426,10 +422,12 @@ final class LeaderboardEngine {
 		}
 
 		$period_start = self::get_period_start( $period );
-		$opt_out_ids  = self::get_opted_out_ids();
-		// Remove the current user from opt-outs so we can count them too.
-		$opt_out_ids = array_filter( $opt_out_ids, fn( $id ) => $id !== $user_id );
-		$scope_ids   = self::resolve_scope( $scope_type, $scope_id );
+		// Both consumers below count members STRICTLY above this member's total (HAVING total >
+		// %d), and nobody's total exceeds itself -- so the old "remove the current user from the
+		// opt-out list so we can count them too" filter could never change an answer. Dropped
+		// rather than ported.
+		[ $excl_sql, $excl_values ] = self::exclusion_sql( 'p' );
+		$scope_ids                  = self::resolve_scope( $scope_type, $scope_id );
 
 		// Get user's own total for the period — scoped by currency so the
 		// rank computation matches what the public leaderboard sees.
@@ -452,10 +450,10 @@ final class LeaderboardEngine {
 		$user_total = (int) $wpdb->get_var( $user_total_sql ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 
 		// Count users with strictly more points (their count + 1 = our rank).
-		$above_rank = self::count_users_above( $user_total, $period_start, $opt_out_ids, $scope_ids, $resolved_type );
+		$above_rank = self::count_users_above( $user_total, $period_start, $excl_sql, $excl_values, $scope_ids, $resolved_type );
 
 		// Find the lowest total above ours to calculate gap.
-		$next_total = self::get_next_threshold( $user_total, $period_start, $opt_out_ids, $scope_ids, $resolved_type );
+		$next_total = self::get_next_threshold( $user_total, $period_start, $excl_sql, $excl_values, $scope_ids, $resolved_type );
 
 		$result = array(
 			'rank'           => $above_rank + 1,
@@ -592,8 +590,8 @@ final class LeaderboardEngine {
 	private static function read_from_snapshot( string $period, int $limit, string $point_type = 'points' ): ?array {
 		global $wpdb;
 
-		$cache_table = $wpdb->prefix . 'wb_gam_leaderboard_cache';
-		$opt_out_ids = self::get_opted_out_ids();
+		$cache_table                = $wpdb->prefix . 'wb_gam_leaderboard_cache';
+		[ $excl_sql, $excl_values ] = self::exclusion_sql( 'c' );
 
 		// Check snapshot freshness — must be less than 10 minutes old AND
 		// not older than the most recent cache invalidation. The latter
@@ -640,10 +638,9 @@ final class LeaderboardEngine {
 		$opt_out_clause = '';
 		$query_values   = array( $period_key, $point_type );
 
-		if ( ! empty( $opt_out_ids ) ) {
-			$placeholders   = implode( ',', array_fill( 0, count( $opt_out_ids ), '%d' ) );
-			$opt_out_clause = "AND c.user_id NOT IN ($placeholders)";
-			$query_values   = array_merge( $query_values, $opt_out_ids );
+		if ( '' !== $excl_sql ) {
+			$opt_out_clause = $excl_sql;
+			$query_values   = array_merge( $query_values, $excl_values );
 		}
 
 		$query_values[] = $limit;
@@ -772,24 +769,31 @@ final class LeaderboardEngine {
 	}
 
 	/**
-	 * Return all user IDs hidden from the public leaderboard: members who opted
-	 * out via their preferences PLUS accounts the site owner excluded from
-	 * gamification (Settings > Access). Excluded users can't earn, so they must
-	 * not appear in any ranking either.
+	 * SQL that hides everyone who must not appear in a ranking: members who opted out via their
+	 * preferences, plus accounts the owner excluded in Settings > Access. Excluded members cannot
+	 * earn, so they must not rank either.
 	 *
-	 * @return int[]
+	 * This used to return the IDS -- `get_opted_out_ids()` -- and every caller imploded them into
+	 * a NOT IN(). That is fine for a handful of opt-outs and fatal for an excluded ROLE, which on
+	 * a large site is most of the membership. It returns a PREDICATE now, so the query is the same
+	 * size whether five members are hidden or fifty thousand.
+	 *
+	 * @param string $alias SQL alias of the table whose `user_id` is being filtered.
+	 * @return array{0:string,1:array<int,mixed>} [ SQL fragment, ordered bind values ].
 	 */
-	private static function get_opted_out_ids(): array {
+	private static function exclusion_sql( string $alias ): array {
 		global $wpdb;
-		$ids = $wpdb->get_col(
-			"SELECT user_id FROM {$wpdb->prefix}wb_gam_member_prefs WHERE leaderboard_opt_out = 1"
-		);
-		$ids = array_map( 'intval', $ids ?: array() );
 
-		// Owner-excluded accounts (roles / users / sandboxed) never rank.
-		$ids = array_merge( $ids, PointsEngine::excluded_user_ids() );
+		// Members who opted out. An anti-join, not a list: whether there are five opt-outs or
+		// fifty thousand, this fragment is the same length.
+		$sql = ' AND NOT EXISTS ( SELECT 1 FROM ' . $wpdb->prefix . 'wb_gam_member_prefs mp'
+			. ' WHERE mp.user_id = ' . $alias . '.user_id AND mp.leaderboard_opt_out = 1 )';
 
-		return array_values( array_unique( $ids ) );
+		// Owner-excluded accounts (Settings > Access): explicit ids stay a short IN(), and
+		// excluded ROLES become a predicate rather than an expanded id list.
+		[ $owner_sql, $values ] = PointsEngine::exclusion_sql( $alias );
+
+		return array( $sql . $owner_sql, $values );
 	}
 
 	/**
@@ -797,14 +801,16 @@ final class LeaderboardEngine {
 	 *
 	 * @param int         $threshold    Points total to compare against.
 	 * @param string|null $period_start MySQL datetime for period start, or null for all-time.
-	 * @param int[]       $opt_out_ids  User IDs excluded from the leaderboard.
+	 * @param string      $excl_sql     Exclusion SQL fragment (bounded placeholders).
+	 * @param array       $excl_values  Values bound by that fragment, in order.
 	 * @param int[]       $scope_ids    User IDs to restrict to (empty = all users).
 	 * @return int Number of users ranked above the threshold.
 	 */
 	private static function count_users_above(
 		int $threshold,
 		?string $period_start,
-		array $opt_out_ids,
+		string $excl_sql,
+		array $excl_values,
 		array $scope_ids,
 		string $point_type = 'points'
 	): int {
@@ -819,11 +825,9 @@ final class LeaderboardEngine {
 			$where   .= ' AND p.created_at >= %s';
 			$values[] = $period_start;
 		}
-		if ( ! empty( $opt_out_ids ) ) {
-			$ph = implode( ',', array_fill( 0, count( $opt_out_ids ), '%d' ) );
-			// phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
-			$where .= " AND p.user_id NOT IN ($ph)";
-			$values = array_merge( $values, $opt_out_ids );
+		if ( '' !== $excl_sql ) {
+			$where .= $excl_sql;
+			$values = array_merge( $values, $excl_values );
 		}
 		if ( ! empty( $scope_ids ) ) {
 			$ph = implode( ',', array_fill( 0, count( $scope_ids ), '%d' ) );
@@ -852,14 +856,16 @@ final class LeaderboardEngine {
 	 *
 	 * @param int         $threshold    Points total to compare against.
 	 * @param string|null $period_start MySQL datetime for period start, or null for all-time.
-	 * @param int[]       $opt_out_ids  User IDs excluded from the leaderboard.
+	 * @param string      $excl_sql     Exclusion SQL fragment (bounded placeholders).
+	 * @param array       $excl_values  Values bound by that fragment, in order.
 	 * @param int[]       $scope_ids    User IDs to restrict to (empty = all users).
 	 * @return int|null The next threshold, or null if already at the top.
 	 */
 	private static function get_next_threshold(
 		int $threshold,
 		?string $period_start,
-		array $opt_out_ids,
+		string $excl_sql,
+		array $excl_values,
 		array $scope_ids,
 		string $point_type = 'points'
 	): ?int {
@@ -872,11 +878,9 @@ final class LeaderboardEngine {
 			$where   .= ' AND p.created_at >= %s';
 			$values[] = $period_start;
 		}
-		if ( ! empty( $opt_out_ids ) ) {
-			$ph = implode( ',', array_fill( 0, count( $opt_out_ids ), '%d' ) );
-			// phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
-			$where .= " AND p.user_id NOT IN ($ph)";
-			$values = array_merge( $values, $opt_out_ids );
+		if ( '' !== $excl_sql ) {
+			$where .= $excl_sql;
+			$values = array_merge( $values, $excl_values );
 		}
 		if ( ! empty( $scope_ids ) ) {
 			$ph = implode( ',', array_fill( 0, count( $scope_ids ), '%d' ) );
