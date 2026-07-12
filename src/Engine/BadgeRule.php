@@ -149,4 +149,127 @@ final class BadgeRule {
 	public static function conditions( array $config ): array {
 		return self::is_group( $config ) ? array_values( $config['conditions'] ) : array();
 	}
+
+	/**
+	 * Which signals can change this condition's truth?
+	 *
+	 * THIS IS THE CONTRACT A NEW CONDITION TYPE IMPLEMENTS, and it is the whole reason the award
+	 * path stays cheap as the vocabulary grows. A type that declares no signals is never evaluated
+	 * on an award -- which is exactly right for tenure (changes on a cron) and for admin_awarded
+	 * (never auto-evaluates at all).
+	 *
+	 * @param array $condition One condition.
+	 * @return string[] Signal names. Empty means "no award can ever change this".
+	 */
+	public static function condition_signals( array $condition ): array {
+		$type = isset( $condition['type'] ) ? (string) $condition['type'] : '';
+
+		switch ( $type ) {
+			case 'action_count':
+				// Only THIS action matters. A publish-10-posts badge does not care that someone
+				// reacted to a comment -- and today it pays a COUNT(*) to find that out.
+				return array( 'action:' . (string) ( $condition['action_id'] ?? '' ) );
+
+			case 'point_milestone':
+			case 'points_in_period':
+				// Every award changes the total, so these are relevant to all of them.
+				return array( 'points' );
+
+			case 'level_reached':
+				return array( 'level' );
+
+			case 'streak_days':
+				return array( 'streak' );
+
+			case 'badge_earned':
+				return array( 'badge:' . (string) ( $condition['badge_id'] ?? '' ) );
+
+			case 'tenure_days':
+				// Tenure changes with the calendar, not with anything a member does. Evaluating a
+				// tenure badge on the award path would put it on EVERY award on the site, forever,
+				// to answer a question that can only change at midnight.
+			case 'admin_awarded':
+				return array();
+
+			default:
+				/**
+				 * Signals for a third-party condition type.
+				 *
+				 * Return an empty array (the default) and the type is never evaluated on the award
+				 * path -- safe, but it will only ever be reached by a cron or a backfill. Declare
+				 * your signals to be evaluated when they fire.
+				 *
+				 * @since 1.6.4
+				 *
+				 * @param string[] $signals   Signal names.
+				 * @param string   $type      Condition type.
+				 * @param array    $condition Full condition config.
+				 */
+				return (array) apply_filters( 'wb_gam_badge_condition_signals', array(), $type, $condition );
+		}
+	}
+
+	/**
+	 * Is this badge worth evaluating for the signals that just fired?
+	 *
+	 * ANY ONE relevant condition is enough -- for BOTH `all` and `any`, and that is the subtle half.
+	 *
+	 * Under `all`, a badge requiring "10 posts AND Champion" must still be evaluated when a post is
+	 * published: that award may be the one that completes it. Requiring every condition to have
+	 * received a signal would mean the badge never awards at all, because no single event ever
+	 * touches all of them at once. Getting this backwards produces a badge that is impossible to
+	 * earn and no error anywhere.
+	 *
+	 * @param array    $rule    Grouped rule config.
+	 * @param string[] $signals Signals emitted by whatever just happened.
+	 * @return bool
+	 */
+	public static function is_relevant( array $rule, array $signals ): bool {
+		foreach ( self::conditions( $rule ) as $condition ) {
+			foreach ( self::condition_signals( (array) $condition ) as $needed ) {
+				if ( in_array( $needed, $signals, true ) ) {
+					return true;
+				}
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * Cheapest first.
+	 *
+	 * Conditions that cost ZERO queries are evaluated before any that hit the database, so a badge
+	 * whose in-memory condition already fails never runs SQL at all. With `all` short-circuiting on
+	 * the first false, ordering is not cosmetic -- it is most of the saving.
+	 *
+	 * @param array $conditions Conditions.
+	 * @return array Same conditions, cheap ones first.
+	 */
+	public static function by_cost( array $conditions ): array {
+		$cost = array(
+			// Free: answered from state already primed for this pass.
+			'point_milestone'  => 0,
+			'level_reached'    => 0,
+			'badge_earned'     => 0,
+			'tenure_days'      => 0,
+			'admin_awarded'    => 0,
+			// One indexed lookup.
+			'streak_days'      => 1,
+			// One indexed COUNT / range scan.
+			'action_count'     => 2,
+			'points_in_period' => 2,
+		);
+
+		usort(
+			$conditions,
+			static function ( $a, $b ) use ( $cost ) {
+				$ca = $cost[ (string) ( $a['type'] ?? '' ) ] ?? 3;
+				$cb = $cost[ (string) ( $b['type'] ?? '' ) ] ?? 3;
+				return $ca <=> $cb;
+			}
+		);
+
+		return $conditions;
+	}
 }

@@ -203,76 +203,243 @@ final class BadgeEngine {
 			?? ( isset( $event->metadata['point_type'] ) ? (string) $event->metadata['point_type'] : '' );
 		$total      = PointsEngine::get_total( $user_id, '' !== $event_type ? $event_type : null );
 
+		// The signals this award actually emitted.
+		//
+		// THIS IS WHAT MAKES THE AWARD PATH CHEAPER THAN IT WAS. Before, a "publish 10 posts" badge
+		// ran a COUNT(*) every time a member reacted to a comment, because evaluate_condition()
+		// short-circuited only when the required count was exactly 1. With 35 rules on the live
+		// site, 12 of them action_count with count > 1, that is twelve pointless COUNT queries on
+		// every single award. The gate deletes them.
+		$signals = array( 'points', 'action:' . (string) $event->action_id );
+
+		self::evaluate_for_signals( $user_id, $signals, $event, $rules, $earned, $total );
+	}
+
+	/**
+	 * Evaluate every rule that COULD have been changed by these signals.
+	 *
+	 * Split out of evaluate_on_award() because the award path is not the only thing that can move a
+	 * badge: a level change, a streak milestone, and the awarding of another badge each emit their
+	 * own signals, and each can complete a rule that an award cannot.
+	 *
+	 * @param int        $user_id User being evaluated.
+	 * @param string[]   $signals Signals that just fired.
+	 * @param Event|null $event   The triggering event, or null (backfill/cron have none).
+	 * @param array      $rules   Active badge rules.
+	 * @param string[]   $earned  Badge ids this member already holds (mutated as new ones land).
+	 * @param int        $total   Primed point total.
+	 * @return void
+	 */
+	private static function evaluate_for_signals( int $user_id, array $signals, ?Event $event, array $rules, array &$earned, int $total ): void {
+		// Shared state, primed once per pass. Six of the eight condition types answer from this and
+		// cost zero queries.
+		$state = array(
+			'total'  => $total,
+			'earned' => $earned,
+			'streak' => null, // lazily read, only if a streak_days condition survives the gate
+		);
+
+		$newly_awarded = array();
+
 		foreach ( $rules as $rule ) {
 			if ( in_array( $rule['badge_id'], $earned, true ) ) {
-				continue; // Already earned — skip.
+				continue; // Already earned.
 			}
 
-			$config = json_decode( $rule['rule_config'], true );
-			if ( ! is_array( $config ) ) {
+			$config = json_decode( (string) $rule['rule_config'], true );
+			if ( ! is_array( $config ) || ! BadgeRule::is_valid( $config ) ) {
 				continue;
 			}
 
-			if ( self::evaluate_condition( $config, $user_id, $event, $total ) ) {
-				if ( self::award_badge( $user_id, $rule['badge_id'] ) ) {
-					// Add to in-memory list to prevent re-awarding if the same
-					// badge_id appears in more than one rule row.
-					$earned[] = $rule['badge_id'];
-				}
+			// THE GATE. If nothing that just happened could have changed this badge's answer, do
+			// not ask the question -- and do not pay for the SQL that answering it would cost.
+			if ( ! BadgeRule::is_relevant( $config, $signals ) ) {
+				continue;
 			}
+
+			if ( ! self::evaluate_rule( $user_id, $config, $event, $state ) ) {
+				continue;
+			}
+
+			if ( self::award_badge( $user_id, $rule['badge_id'] ) ) {
+				$earned[]          = $rule['badge_id'];
+				$state['earned'][] = $rule['badge_id'];
+				$newly_awarded[]   = $rule['badge_id'];
+			}
+		}
+
+		// A badge can be a condition of another badge. Awarding one emits `badge:{id}`, which may
+		// complete a rule that nothing else could -- so cascade, but only over the badges that
+		// actually landed. Bounded: each pass can only award badges not yet held, and the set of
+		// badges is finite, so this terminates.
+		if ( $newly_awarded ) {
+			$cascade = array();
+			foreach ( $newly_awarded as $badge_id ) {
+				$cascade[] = 'badge:' . $badge_id;
+			}
+			self::evaluate_for_signals( $user_id, $cascade, $event, $rules, $earned, $total );
 		}
 	}
 
 	/**
-	 * Evaluate a single badge condition.
+	 * Evaluate one grouped rule.
 	 *
-	 * @param array $config  Decoded condition config.
-	 * @param int   $user_id User being evaluated.
-	 * @param Event $event   Current event.
-	 * @param int   $total   User's current point total (pre-fetched to avoid N+1).
-	 * @return bool           True if the condition is met.
+	 * `$event` is used ONLY by the relevance gate, never by the condition logic -- so this works
+	 * with `$event = null`, which is exactly what the retroactive backfill needs: it evaluates a
+	 * member's state, not an event that happened to them.
+	 *
+	 * @param int        $user_id User being evaluated.
+	 * @param array      $rule    Grouped rule config.
+	 * @param Event|null $event   Unused by conditions; present for filters.
+	 * @param array      $state   Primed shared state (total, earned, streak).
+	 * @return bool True if the badge should be awarded.
 	 */
-	private static function evaluate_condition( array $config, int $user_id, Event $event, int $total ): bool {
-		$type = $config['condition_type'] ?? '';
+	public static function evaluate_rule( int $user_id, array $rule, ?Event $event, array &$state ): bool {
+		if ( ! BadgeRule::is_valid( $rule ) ) {
+			return false; // An empty rule never awards. An empty ALL is vacuously true, and would
+							// otherwise hand the badge to every member on the site.
+		}
+
+		$mode = BadgeRule::match_mode( $rule );
+
+		// Cheapest first, so a failing in-memory condition kills the badge before any SQL runs.
+		// With `all` short-circuiting on the first false, ordering is most of the saving.
+		foreach ( BadgeRule::by_cost( BadgeRule::conditions( $rule ) ) as $condition ) {
+			$met = self::evaluate_one( (array) $condition, $user_id, $event, $state );
+
+			if ( BadgeRule::MATCH_ALL === $mode && ! $met ) {
+				return false; // short-circuit
+			}
+			if ( BadgeRule::MATCH_ANY === $mode && $met ) {
+				return true;  // short-circuit
+			}
+		}
+
+		return BadgeRule::MATCH_ALL === $mode;
+	}
+
+	/**
+	 * Evaluate ONE condition.
+	 *
+	 * Eight types. SIX OF THEM COST ZERO QUERIES once $state is primed -- which is the only reason
+	 * multi-condition badges are affordable at all. Naively, 35 badges x 4 conditions, several of
+	 * them query-backed, is 120 evaluations per award. That does not survive 100k members.
+	 *
+	 * @param array      $condition One condition.
+	 * @param int        $user_id   User being evaluated.
+	 * @param Event|null $event     Triggering event, or null (backfill has none).
+	 * @param array      $state     Primed shared state, by reference (streak is read lazily).
+	 * @return bool
+	 */
+	private static function evaluate_one( array $condition, int $user_id, ?Event $event, array &$state ): bool {
+		$type = isset( $condition['type'] ) ? (string) $condition['type'] : '';
 
 		switch ( $type ) {
 
+			// ── Free: answered from state already primed for this pass ──────────────────────
 			case 'point_milestone':
-				return $total >= (int) ( $config['points'] ?? 0 );
+				return (int) $state['total'] >= (int) ( $condition['points'] ?? 0 );
 
-			case 'action_count':
-				$action_id = $config['action_id'] ?? '';
-				$required  = max( 1, (int) ( $config['count'] ?? 1 ) );
-				// Fast path: first-time badges only trigger on the matching action.
-				if ( 1 === $required && $event->action_id !== $action_id ) {
+			case 'level_reached':
+				// get_level_for_points() is PURE. (get_level_for_user() is not -- it performs up to
+				// two update_user_meta() WRITES on what looks like a read, which is why the award
+				// path does not touch it.)
+				$level = LevelEngine::get_level_for_points( (int) $state['total'] );
+				return $level && (int) ( $level['id'] ?? 0 ) >= (int) ( $condition['level_id'] ?? 0 );
+
+			case 'badge_earned':
+				return in_array( (string) ( $condition['badge_id'] ?? '' ), (array) $state['earned'], true );
+
+			case 'tenure_days':
+				$user = get_userdata( $user_id );
+				if ( ! $user ) {
 					return false;
 				}
-				return PointsEngine::get_action_count( $user_id, $action_id ) >= $required;
+				// user_registered is written by WordPress core in GMT. Compared against the same
+				// clock. Mixing this with site-local time is the bug this branch fixed five times.
+				$registered = strtotime( (string) $user->user_registered . ' UTC' );
+				if ( ! $registered ) {
+					return false;
+				}
+				return (int) floor( ( time() - $registered ) / DAY_IN_SECONDS ) >= (int) ( $condition['days'] ?? 0 );
 
 			case 'admin_awarded':
-				return false; // Manual grants only; never auto-evaluates.
+				return false; // Manual grants only. Never auto-evaluates.
+
+			// ── One indexed lookup, and only when this condition survived the gate ──────────
+			case 'streak_days':
+				if ( null === $state['streak'] ) {
+					// get_streak(), not get_row() -- get_row() is PRIVATE. The seam check that
+					// approved this in the plan grepped for the function NAME and never looked at
+					// its visibility, which is exactly the kind of half-verification that produces
+					// a plan everyone trusts and nobody can build.
+					$state['streak'] = (int) ( StreakEngine::get_streak( $user_id )['current_streak'] ?? 0 );
+				}
+				return (int) $state['streak'] >= (int) ( $condition['days'] ?? 0 );
+
+			// ── One indexed COUNT / range scan ──────────────────────────────────────────────
+			case 'action_count':
+				$action_id = (string) ( $condition['action_id'] ?? '' );
+				$required  = max( 1, (int) ( $condition['count'] ?? 1 ) );
+				// No `count === 1` fast path any more. The relevance gate replaced it and does the
+				// job properly: this is only reached when the action it names actually fired --
+				// whatever the required count is. That fast path is why a "publish 10 posts" badge
+				// used to run a COUNT(*) every time someone reacted to a comment.
+				return PointsEngine::get_action_count( $user_id, $action_id ) >= $required;
+
+			case 'points_in_period':
+				return self::points_in_period( $user_id, (string) ( $condition['period'] ?? 'week' ) )
+					>= (int) ( $condition['points'] ?? 0 );
 
 			default:
 				/**
 				 * Allow extensions to handle custom badge condition types.
 				 *
-				 * @param bool   $result  Whether the condition is met. Default false.
-				 * @param string $type    Condition type string.
-				 * @param array  $config  Full condition config.
-				 * @param int    $user_id User being evaluated.
-				 * @param Event  $event   Current event.
-				 * @param int    $total   Current point total.
+				 * @since 1.0.0
+				 *
+				 * @param bool       $result    Whether the condition is met. Default false.
+				 * @param string     $type      Condition type string.
+				 * @param array      $condition Full condition config.
+				 * @param int        $user_id   User being evaluated.
+				 * @param Event|null $event     Triggering event, or null.
 				 */
-				return (bool) apply_filters(
-					'wb_gam_badge_condition',
-					false,
-					$type,
-					$config,
-					$user_id,
-					$event,
-					$total
-				);
+				return (bool) apply_filters( 'wb_gam_evaluate_badge_condition', false, $type, $condition, $user_id, $event );
 		}
+	}
+
+	/**
+	 * Points a member earned inside a rolling window.
+	 *
+	 * CLOCK: wb_gam_points.created_at is written with current_time( 'mysql' ) -- SITE-LOCAL -- so
+	 * the window boundary is computed in that same clock. Using gmdate() or NOW() here would
+	 * reintroduce, in brand-new code, the exact defect this branch fixed FIVE times: on a site
+	 * behind UTC the window silently drops recent activity; ahead of UTC it pulls in activity from
+	 * before the window opened. CI stage 2.15 fails the build for an unannotated NOW().
+	 *
+	 * @param int    $user_id User.
+	 * @param string $period  day | week | month.
+	 * @return int
+	 */
+	private static function points_in_period( int $user_id, string $period ): int {
+		global $wpdb;
+
+		$windows = array(
+			'day'   => DAY_IN_SECONDS,
+			'week'  => 7 * DAY_IN_SECONDS,
+			'month' => 30 * DAY_IN_SECONDS,
+		);
+		$window  = $windows[ $period ] ?? ( 7 * DAY_IN_SECONDS );
+		$since   = gmdate( 'Y-m-d H:i:s', strtotime( current_time( 'mysql' ) ) - $window );
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		return (int) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COALESCE(SUM(points), 0) FROM {$wpdb->prefix}wb_gam_points
+				  WHERE user_id = %d AND created_at >= %s",
+				$user_id,
+				$since
+			)
+		);
 	}
 
 	// ── Public award / read API ────────────────────────────────────────────────
