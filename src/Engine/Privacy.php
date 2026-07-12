@@ -529,6 +529,9 @@ final class Privacy {
 
 		// Earned badges.
 		$removed += (int) $wpdb->delete( $wpdb->prefix . 'wb_gam_user_badges', array( 'user_id' => $user_id ), array( '%d' ) );
+		// Removing a member's badges changes every badge's rarity — drop the
+		// cached aggregation (BadgeEngine owns the table and the cache).
+		BadgeEngine::flush_rarity_cache();
 
 		// Streak.
 		$removed += (int) $wpdb->delete( $wpdb->prefix . 'wb_gam_streaks', array( 'user_id' => $user_id ), array( '%d' ) );

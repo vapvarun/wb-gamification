@@ -53,10 +53,103 @@ final class BadgeEngine {
 	private const CACHE_TTL   = 60; // Seconds.
 
 	/**
+	 * Object-cache key + TTL for the badge rarity map.
+	 *
+	 * @since 1.6.4
+	 */
+	private const RARITY_CACHE_KEY = 'wb_gam_badge_rarity_map';
+	private const RARITY_CACHE_TTL = 900; // 15 minutes.
+
+	/**
 	 * Boot — hook into the points-awarded action to evaluate conditions.
 	 */
 	public static function init(): void {
 		add_action( 'wb_gam_points_awarded', array( __CLASS__, 'evaluate_on_award' ), 10, 3 );
+
+		// Awarding a badge changes every badge's rarity denominator-share, so the
+		// cached map is dropped on award. Priority 5 = before the display-side
+		// listeners, so anything rendering in the same request recomputes fresh.
+		add_action( 'wb_gam_badge_awarded', array( __CLASS__, 'flush_rarity_cache' ), 5, 0 );
+	}
+
+	/**
+	 * Map of badge_id → rarity percentage (% of members holding it).
+	 *
+	 * CACHED, because rarity is a COSMETIC DISPLAY STAT. "Held by 3% of members"
+	 * being a few minutes stale harms nobody, and nothing in the plugin branches
+	 * on it.
+	 *
+	 * That distinction is the entire fix. The pre-1.6.4 code refused to cache this
+	 * — its comment said "not suitable for generic caching" — because it conflated
+	 * rarity with the `max_earners` guard below. They are not the same thing:
+	 *
+	 *   - `max_earners` MUST be live. A stale count over-awards a limited badge:
+	 *     "first 100 members" would hand out 130. It stays uncached (see
+	 *     award_badge()), and idx_badge_id now makes it a ref lookup rather than
+	 *     a full scan.
+	 *   - Rarity is decoration. It may be stale. It must not cost a full scan of
+	 *     an EVENT-scaled table on every request.
+	 *
+	 * And it WAS every request: `GET /badges` and `GET /badges/{id}` are both
+	 * `permission_callback => '__return_true'`, so any anonymous visitor — or bot —
+	 * could trigger a `COUNT(DISTINCT user_id) GROUP BY badge_id` over millions of
+	 * rows, plus a `COUNT(*)` over wp_users, as often as they liked.
+	 *
+	 * Correctness is preserved two ways: the cache is dropped on every badge award
+	 * (see init()) and on the delete paths, and the TTL means even a missed
+	 * invalidation self-heals within 15 minutes.
+	 *
+	 * @since 1.6.4
+	 *
+	 * @return array<string, float> badge_id => percentage of members holding it.
+	 */
+	public static function get_rarity_map(): array {
+		$cached = wp_cache_get( self::RARITY_CACHE_KEY, 'wb_gamification' );
+		if ( is_array( $cached ) ) {
+			return $cached;
+		}
+
+		global $wpdb;
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- cached immediately below.
+		$total_users = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->users}" );
+		if ( $total_users <= 0 ) {
+			return array();
+		}
+
+		// GROUP BY badge_id is served directly by idx_badge_id (no temp table, no
+		// filesort). It is still an index scan — an aggregate has to touch every
+		// row — which is precisely why the RESULT is cached instead of recomputed.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- cached immediately below.
+		$rows = $wpdb->get_results(
+			"SELECT badge_id, COUNT(DISTINCT user_id) AS earner_count
+			   FROM {$wpdb->prefix}wb_gam_user_badges
+			  GROUP BY badge_id",
+			ARRAY_A
+		);
+
+		$map = array();
+		foreach ( (array) $rows as $row ) {
+			$map[ (string) $row['badge_id'] ] = round( ( (int) $row['earner_count'] / $total_users ) * 100, 1 );
+		}
+
+		wp_cache_set( self::RARITY_CACHE_KEY, $map, 'wb_gamification', self::RARITY_CACHE_TTL );
+
+		return $map;
+	}
+
+	/**
+	 * Drop the cached rarity map.
+	 *
+	 * Must be called from every path that inserts into or deletes from
+	 * wb_gam_user_badges — award (hooked in init()), an admin deleting a badge
+	 * definition, and a GDPR erase. A cache whose invalidation misses a write path
+	 * is just a slower way to serve wrong data.
+	 *
+	 * @since 1.6.4
+	 */
+	public static function flush_rarity_cache(): void {
+		wp_cache_delete( self::RARITY_CACHE_KEY, 'wb_gamification' );
 	}
 
 	// ── Award pipeline ─────────────────────────────────────────────────────────
