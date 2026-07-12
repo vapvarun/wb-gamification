@@ -182,11 +182,30 @@ final class RedemptionEngine {
 		$cost = (int) $item['points_cost'];
 		$type = ( new \WBGam\Services\PointTypeService() )->resolve( (string) ( $item['point_type'] ?? '' ) );
 
-		// Stock semantics — NULL or 0 means unlimited stock (the admin form
-		// description has always said "Set to 0 for unlimited stock"; the
-		// engine now honours that contract). Only positive finite stock is
-		// enforced. See Basecamp #9925383280.
-		$enforced_stock = is_null( $item['stock'] ?? null ) ? null : (int) $item['stock'];
+		// Stock semantics — NULL means unlimited. 0 means SOLD OUT. Any positive
+		// value is finite stock, decremented atomically on each redemption.
+		//
+		// This used to read "NULL *or 0* means unlimited", and that collided with
+		// the decrement below, which walks finite stock down to exactly 0. So a
+		// reward with stock=1 sold its one unit, landed on 0, and from that moment
+		// was indistinguishable from "unlimited" — it could be redeemed forever. An
+		// owner offering a single laptop gave away laptops without limit. The two
+		// states genuinely are different and now have different representations.
+		//
+		// Existing rows that meant "unlimited" as 0 are migrated to NULL by
+		// DbUpgrader::ensure_redemption_stock_null_unlimited(), so nothing an owner
+		// currently sees as unlimited stops working.
+		$enforced_stock = isset( $item['stock'] ) && null !== $item['stock'] ? (int) $item['stock'] : null;
+
+		if ( null !== $enforced_stock && $enforced_stock <= 0 ) {
+			return array(
+				'success'       => false,
+				'reason'        => 'out_of_stock',
+				'error'         => self::error_message_for( 'out_of_stock', $cost, null ),
+				'redemption_id' => null,
+				'coupon_code'   => null,
+			);
+		}
 
 		// Build the canonical redemption event up-front so PointsEngine::debit
 		// can audit-log it, and the redemption record can later reference the
@@ -228,9 +247,15 @@ final class RedemptionEngine {
 					return false;
 				}
 
-				// Step 2 — atomic stock decrement when finite stock is enforced.
-				// NULL or 0 stock means unlimited.
-				if ( null !== $enforced_stock && $enforced_stock > 0 ) {
+				// Step 2 — atomic stock decrement when stock is finite (NULL = unlimited).
+				//
+				// The `stock > 0` predicate is what makes this safe under concurrency:
+				// the check above ran outside this transaction, so two members can both
+				// pass it for the last remaining unit. Only one UPDATE can match, the
+				// loser gets 0 affected rows and rolls the whole redemption back — the
+				// debit included. Stock cannot go negative and points are never burned
+				// on a failed redemption.
+				if ( null !== $enforced_stock ) {
 					$decremented = $wpdb->query(
 						$wpdb->prepare(
 							"UPDATE {$wpdb->prefix}wb_gam_redemption_items SET stock = stock - 1 WHERE id = %d AND stock > 0",

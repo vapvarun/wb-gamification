@@ -228,7 +228,12 @@ class RedemptionController extends WP_REST_Controller {
 				'point_type'    => $point_type,
 				'reward_type'   => $request['reward_type'],
 				'reward_config' => wp_json_encode( $request['reward_config'] ?? array() ),
-				'stock'         => isset( $request['stock'] ) ? absint( $request['stock'] ) : null,
+				// NULL = unlimited, 0 = sold out. An omitted or explicitly-null stock
+				// is unlimited; absint() must not be allowed to turn that into 0,
+				// which now means the opposite thing.
+				'stock'         => isset( $request['stock'] ) && null !== $request['stock']
+					? absint( $request['stock'] )
+					: null,
 				'is_active'     => 1,
 			),
 			array( '%s', '%s', '%d', '%s', '%s', '%s', '%d', '%d' )
@@ -274,8 +279,9 @@ class RedemptionController extends WP_REST_Controller {
 			$data['reward_type'] = $request['reward_type']; }
 		if ( isset( $request['reward_config'] ) ) {
 			$data['reward_config'] = wp_json_encode( $request['reward_config'] ); }
-		if ( isset( $request['stock'] ) ) {
-			$data['stock'] = absint( $request['stock'] ); }
+		// An explicit null clears stock back to unlimited; 0 marks it sold out.
+		if ( $request->has_param( 'stock' ) ) {
+			$data['stock'] = null !== $request['stock'] ? absint( $request['stock'] ) : null; }
 		if ( isset( $request['is_active'] ) ) {
 			$data['is_active'] = (int) $request['is_active']; }
 
@@ -469,8 +475,9 @@ class RedemptionController extends WP_REST_Controller {
 				'default' => array(),
 			),
 			'stock'         => array(
-				'type'    => 'integer',
-				'minimum' => 0,
+				'type'        => array( 'integer', 'null' ),
+				'minimum'     => 0,
+				'description' => __( 'Remaining stock. Null means unlimited; 0 means sold out.', 'wb-gamification' ),
 			),
 			'is_active'     => array(
 				'type'    => 'boolean',

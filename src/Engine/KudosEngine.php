@@ -106,22 +106,64 @@ final class KudosEngine {
 			);
 		}
 
-		// Race-condition guard — atomic distributed lock via the object cache.
-		// Two parallel POST /kudos with the same giver+receiver both pass the
-		// has_recent_kudos_to_receiver check before either writes a row, so
-		// both INSERTs succeed and bypass the cooldown. wp_cache_add() is
-		// atomic across Redis/Memcached and returns false if the key exists.
-		// Hold the lock for the cooldown window so concurrent attempts within
-		// it are rejected at the lock layer, not the DB layer.
-		$lock_key = sprintf( 'kudos_lock_%d_%d', $giver_id, $receiver_id );
-		$lock_ttl = max( 60, $receiver_cooldown ); // Floor 60s for safety.
-		if ( ! wp_cache_add( $lock_key, time(), 'wb_gamification', $lock_ttl ) ) {
+		// Race-condition guard — serialize concurrent sends for this exact
+		// (giver, receiver) pair.
+		//
+		// This was a wp_cache_add() lock, justified in its own comment as "atomic across
+		// Redis/Memcached". True — but only where a persistent object cache exists. On a
+		// default WordPress install there is none, wp_cache_add() is a process-local
+		// array, and the lock gave exactly zero exclusion between two concurrent PHP
+		// workers. The guard was missing on the single most common configuration there
+		// is, and the race it was written to close reproduced there every time.
+		//
+		// A MySQL named lock is shared by every worker whether or not an object cache is
+		// installed, because the database is the one thing they all talk to. Timeout 0:
+		// if another request is mid-send for this pair right now, that IS the race, so
+		// reject it rather than queue behind it.
+		global $wpdb;
+
+		$lock_name = sprintf( 'wb_gam_kudos_%d_%d', $giver_id, $receiver_id );
+		$acquired  = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, %d)', $lock_name, 0 ) );
+
+		if ( 1 !== $acquired ) {
 			return new WP_Error(
 				'wb_gam_kudos_cooldown',
 				__( 'You recently gave kudos to this member. Try again later.', 'wb-gamification' )
 			);
 		}
 
+		try {
+			// Re-check the cooldown INSIDE the lock. The check above ran unserialized,
+			// so both racers can have passed it — but only one of them is in here.
+			// This is the check that actually enforces the cooldown.
+			if ( $receiver_cooldown > 0 && self::has_recent_kudos_to_receiver( $giver_id, $receiver_id, $receiver_cooldown ) ) {
+				return new WP_Error(
+					'wb_gam_kudos_cooldown',
+					__( 'You recently gave kudos to this member. Try again later.', 'wb-gamification' )
+				);
+			}
+
+			return self::record_kudos( $giver_id, $receiver_id, $message );
+		} finally {
+			// Released on every path, including the WP_Error returns and any exception
+			// thrown by a listener. A leaked named lock would block this pair until the
+			// DB connection closed.
+			$wpdb->query( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $lock_name ) );
+		}
+	}
+
+	/**
+	 * Write the kudos row and fan out its side effects.
+	 *
+	 * Split out of send() so the per-pair lock has a single, obvious scope. The caller
+	 * MUST hold that lock: this method does no cooldown checking of its own.
+	 *
+	 * @param int    $giver_id    User sending kudos.
+	 * @param int    $receiver_id User receiving kudos.
+	 * @param string $message     Optional kudos message.
+	 * @return true|WP_Error True on success, WP_Error if a gate rejected it or the write failed.
+	 */
+	private static function record_kudos( int $giver_id, int $receiver_id, string $message ) {
 		/**
 		 * Filter whether kudos should be allowed.
 		 *
@@ -261,7 +303,14 @@ final class KudosEngine {
 				    AND created_at >= %s",
 				$giver_id,
 				$receiver_id,
-				gmdate( 'Y-m-d H:i:s', time() - $cooldown_seconds )
+				// The boundary MUST be expressed in the same clock the column is written
+				// in. `created_at` is stored with current_time( 'mysql' ) — site-local.
+				// This compared it against gmdate() — UTC. On any site BEHIND UTC (every
+				// US site), a kudos sent seconds ago is stamped hours "before" the UTC
+				// boundary, the COUNT comes back 0, and the per-receiver cooldown never
+				// fired at all — no concurrency required to reproduce it. Same two-clock
+				// bug that emptied the leaderboard snapshot; same fix, one clock.
+				gmdate( 'Y-m-d H:i:s', strtotime( current_time( 'mysql' ) ) - $cooldown_seconds )
 			)
 		);
 		return $count > 0;

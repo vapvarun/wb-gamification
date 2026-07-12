@@ -104,6 +104,44 @@ final class DbUpgrader {
 		self::ensure_kudos_moderation_schema();
 		self::ensure_events_source_key();
 		self::ensure_scale_indexes();
+		self::ensure_redemption_stock_null_unlimited();
+	}
+
+	/**
+	 * Migrate "unlimited stock" from 0 to NULL on redemption items.
+	 *
+	 * Stock used to mean: NULL or 0 = unlimited, positive = finite. That collided with
+	 * the atomic decrement, which walks finite stock down to exactly 0 -- so the moment
+	 * a reward sold its last unit it became indistinguishable from "unlimited" and could
+	 * be redeemed forever. A site owner offering one laptop gave away laptops without
+	 * limit.
+	 *
+	 * 1.6.4 splits the two states: NULL = unlimited, 0 = SOLD OUT.
+	 *
+	 * That reinterprets every existing `stock = 0` row. Under the old rules those rows
+	 * were unlimited and owners have been running them that way; under the new rules
+	 * they would read as sold out and stop redeeming overnight. So they are migrated to
+	 * NULL, which preserves exactly the behaviour the owner sees today. Only stock that
+	 * reaches 0 by *decrement* from now on means sold out.
+	 *
+	 * Idempotent: once the flag is set this never runs again, so a reward that genuinely
+	 * sells out later is not resurrected on the next upgrade.
+	 *
+	 * @return void
+	 */
+	private static function ensure_redemption_stock_null_unlimited(): void {
+		if ( get_option( 'wb_gam_migrated_stock_null_unlimited' ) ) {
+			return;
+		}
+
+		global $wpdb;
+
+		$table = $wpdb->prefix . 'wb_gam_redemption_items';
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$wpdb->query( "UPDATE {$table} SET stock = NULL WHERE stock = 0" );
+
+		update_option( 'wb_gam_migrated_stock_null_unlimited', 1, false );
 	}
 
 	/**
