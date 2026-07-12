@@ -188,8 +188,107 @@ final class ScaleCommand {
 			 ON DUPLICATE KEY UPDATE total = VALUES(total)"
 		);
 
+		// ── Seed the OTHER tables the budgets measure ────────────────────────
+		//
+		// Until 1.6.4 the seed populated wb_gam_points (and user_totals) and nothing
+		// else. So every budget touching wb_gam_user_badges, wb_gam_streaks or
+		// wb_gam_notifications_queue was timed against a table holding a few hundred
+		// rows and passed in well under a millisecond — a green light that measured
+		// nothing. A benchmark that only seeds the tables it already knows are fast
+		// is not a gate, it is a formality.
+		//
+		// badge rows are what make badge_rarity_map and badge_max_earners_count real:
+		// both aggregate over wb_gam_user_badges, and the idx_badge_id fix is
+		// meaningless to measure on 370 rows.
+		$badge_ids = (array) $wpdb->get_col( "SELECT id FROM {$wpdb->prefix}wb_gam_badge_defs LIMIT 20" );
+		if ( empty( $badge_ids ) ) {
+			$badge_ids = array( 'scale_seed_badge' );
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->insert(
+				$wpdb->prefix . 'wb_gam_badge_defs',
+				array(
+					'id'          => 'scale_seed_badge',
+					'name'        => 'Scale Seed Badge',
+					'description' => 'Synthetic badge for the scale benchmark.',
+				),
+				array( '%s', '%s', '%s' )
+			);
+		}
+
+		$badge_rows = 0;
+		for ( $u = 0; $u < $user_count; $u += $batch_size ) {
+			$values = array();
+			$args   = array();
+			$slice  = min( $batch_size, $user_count - $u );
+			for ( $i = 0; $i < $slice; $i++ ) {
+				$uid = $base_uid + $u + $i;
+				// A few badges each, so COUNT(DISTINCT user_id) GROUP BY badge_id has
+				// real cardinality on both axes.
+				foreach ( array_slice( $badge_ids, 0, 3 ) as $bid ) {
+					$values[] = '(%d, %s, %s)';
+					array_push( $args, $uid, (string) $bid, gmdate( 'Y-m-d H:i:s' ) );
+				}
+			}
+			if ( ! empty( $values ) ) {
+				// phpcs:disable WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+				$wpdb->query(
+					$wpdb->prepare(
+						"INSERT IGNORE INTO {$wpdb->prefix}wb_gam_user_badges (user_id, badge_id, earned_at) VALUES " . implode( ',', $values ),
+						...$args
+					)
+				);
+				// phpcs:enable
+				$badge_rows += count( $values );
+			}
+		}
+
+		// Streaks: one row per member (MEMBER-scaled), so streak_read_user is a PK
+		// lookup against a real 10k-row table rather than a 298-row one.
+		for ( $u = 0; $u < $user_count; $u += $batch_size ) {
+			$values = array();
+			$args   = array();
+			$slice  = min( $batch_size, $user_count - $u );
+			for ( $i = 0; $i < $slice; $i++ ) {
+				$uid      = $base_uid + $u + $i;
+				$values[] = '(%d, %d, %d, %s)';
+				array_push( $args, $uid, wp_rand( 1, 40 ), wp_rand( 1, 90 ), gmdate( 'Y-m-d' ) );
+			}
+			// phpcs:disable WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->query(
+				$wpdb->prepare(
+					"INSERT IGNORE INTO {$wpdb->prefix}wb_gam_streaks (user_id, current_streak, longest_streak, last_active) VALUES " . implode( ',', $values ),
+					...$args
+				)
+			);
+			// phpcs:enable
+		}
+
+		// Notifications queue: EVENT-scaled. notifications_fetch_unseen must be timed
+		// against a table with real depth, since a toast flood (Basecamp #10086171887)
+		// is exactly what happens when this read path degrades.
+		for ( $u = 0; $u < min( $user_count, 2000 ); $u += $batch_size ) {
+			$values = array();
+			$args   = array();
+			$slice  = min( $batch_size, min( $user_count, 2000 ) - $u );
+			for ( $i = 0; $i < $slice; $i++ ) {
+				$uid = $base_uid + $u + $i;
+				for ( $e = 0; $e < 5; $e++ ) {
+					$values[] = '(%d, %s, %s, %s)';
+					array_push( $args, $uid, 'points', '{"type":"points","message":"seed"}', gmdate( 'Y-m-d H:i:s' ) );
+				}
+			}
+			// phpcs:disable WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->query(
+				$wpdb->prepare(
+					"INSERT INTO {$wpdb->prefix}wb_gam_notifications_queue (user_id, event_type, payload_json, created_at) VALUES " . implode( ',', $values ),
+					...$args
+				)
+			);
+			// phpcs:enable
+		}
+
 		$elapsed = round( microtime( true ) - $started, 1 );
-		\WP_CLI::success( "Seeded {$inserted} ledger rows in {$elapsed}s." );
+		\WP_CLI::success( "Seeded {$inserted} ledger rows + {$badge_rows} badge rows + {$user_count} streaks in {$elapsed}s." );
 		\WP_CLI::line( 'Cleanup: wp wb-gamification scale teardown' );
 	}
 
@@ -213,7 +312,17 @@ final class ScaleCommand {
 		$d3 = (int) $wpdb->query( "DELETE FROM {$wpdb->prefix}wb_gam_user_totals WHERE user_id >= 1000000" );
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$d4 = (int) $wpdb->query( "DELETE FROM {$wpdb->prefix}wb_gam_leaderboard_cache WHERE user_id >= 1000000" );
-		\WP_CLI::success( "Removed: points={$d1}, events={$d2}, user_totals={$d3}, leaderboard_cache={$d4}" );
+		// Tables added to the seed in 1.6.4 — teardown MUST track the seed, or a
+		// benchmark run leaves synthetic badges and streaks on the site forever.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$d5 = (int) $wpdb->query( "DELETE FROM {$wpdb->prefix}wb_gam_user_badges WHERE user_id >= 1000000" );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$d6 = (int) $wpdb->query( "DELETE FROM {$wpdb->prefix}wb_gam_streaks WHERE user_id >= 1000000" );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$d7 = (int) $wpdb->query( "DELETE FROM {$wpdb->prefix}wb_gam_notifications_queue WHERE user_id >= 1000000" );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$wpdb->query( "DELETE FROM {$wpdb->prefix}wb_gam_badge_defs WHERE id = 'scale_seed_badge'" );
+		\WP_CLI::success( "Removed: points={$d1}, events={$d2}, user_totals={$d3}, leaderboard_cache={$d4}, user_badges={$d5}, streaks={$d6}, notifications={$d7}" );
 	}
 
 	/**
