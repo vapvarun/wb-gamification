@@ -13,6 +13,7 @@
 
 namespace WBGam\Admin;
 
+use WBGam\Engine\Log;
 use WBGam\Engine\Registry;
 
 defined( 'ABSPATH' ) || exit;

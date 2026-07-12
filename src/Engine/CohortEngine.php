@@ -216,30 +216,7 @@ final class CohortEngine {
 		// Was one $wpdb->replace() per member: 100,000 individual write queries in a
 		// single cron request. Now one statement per WRITE_BATCH members, inside a
 		// transaction, using the (user_id, week) PRIMARY KEY for the upsert.
-		$table   = $wpdb->prefix . 'wb_gam_cohort_members';
 		$pending = array();
-
-		$flush = static function () use ( &$pending, $wpdb, $table ) {
-			if ( empty( $pending ) ) {
-				return;
-			}
-			$values = array();
-			$args   = array();
-			foreach ( $pending as $r ) {
-				$values[] = '(%d, %s, %d, %s, %d)';
-				array_push( $args, $r[0], $r[1], $r[2], $r[3], $r[4] );
-			}
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			$wpdb->query(
-				$wpdb->prepare(
-					"INSERT INTO {$table} (user_id, cohort_id, tier, week, pts_start) VALUES "
-					. implode( ',', $values )
-					. ' ON DUPLICATE KEY UPDATE cohort_id = VALUES(cohort_id), tier = VALUES(tier), pts_start = VALUES(pts_start)',
-					$args
-				)
-			);
-			$pending = array();
-		};
 
 		foreach ( $by_tier as $tier => $members ) {
 			foreach ( array_chunk( $members, self::COHORT_SIZE ) as $cohort_idx => $chunk ) {
@@ -247,12 +224,51 @@ final class CohortEngine {
 				foreach ( $chunk as $uid ) {
 					$pending[] = array( $uid, $cohort_id, $tier, $week, $week_pts[ $uid ] );
 					if ( count( $pending ) >= self::WRITE_BATCH ) {
-						$flush();
+						self::write_cohort_batch( $pending );
+						$pending = array();
 					}
 				}
 			}
 		}
-		$flush();
+		self::write_cohort_batch( $pending );
+	}
+
+	/**
+	 * Upsert one batch of cohort memberships in a single multi-row statement.
+	 *
+	 * Assignment was one `$wpdb->replace()` per member: 100,000 individual write
+	 * queries in a single cron request. This collapses a batch into one statement,
+	 * upserting on the (user_id, week) PRIMARY KEY.
+	 *
+	 * @param array<int,array{0:int,1:string,2:int,3:string,4:int}> $rows Batch of
+	 *        [user_id, cohort_id, tier, week, pts_start] tuples. Empty is a no-op,
+	 *        so the caller can flush unconditionally at the end of the loop.
+	 * @return void
+	 */
+	private static function write_cohort_batch( array $rows ): void {
+		if ( array() === $rows ) {
+			return;
+		}
+
+		global $wpdb;
+
+		$table  = $wpdb->prefix . 'wb_gam_cohort_members';
+		$values = array();
+		$args   = array();
+		foreach ( $rows as $row ) {
+			$values[] = '(%d, %s, %d, %s, %d)';
+			array_push( $args, $row[0], $row[1], $row[2], $row[3], $row[4] );
+		}
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$wpdb->query(
+			$wpdb->prepare(
+				"INSERT INTO {$table} (user_id, cohort_id, tier, week, pts_start) VALUES "
+				. implode( ',', $values )
+				. ' ON DUPLICATE KEY UPDATE cohort_id = VALUES(cohort_id), tier = VALUES(tier), pts_start = VALUES(pts_start)',
+				$args
+			)
+		);
 	}
 
 	// ── Promotion processing ─────────────────────────────────────────────────

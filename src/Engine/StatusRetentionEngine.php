@@ -224,13 +224,25 @@ final class StatusRetentionEngine {
 
 		// More members to go — hand the next page to Action Scheduler rather than
 		// looping here, so no single tick carries the whole site.
+		//
+		// GUARDED, because AS_PAGE_HOOK routes straight back into run(): this method
+		// re-enters itself once per page. If the weekly cron fires while a paged run
+		// is still walking the site, both would queue the same cursor and every
+		// member on that page would be nudged twice. Same hook + same cursor = the
+		// page is already queued, so this is a no-op rather than a duplicate.
 		if ( function_exists( 'as_schedule_single_action' ) ) {
-			as_schedule_single_action(
-				time() + 60,
-				self::AS_PAGE_HOOK,
-				array( 'cursor' => $last ),
-				'wb_gam_retention'
-			);
+			$page_args = array( 'cursor' => $last );
+			$queued    = function_exists( 'as_has_scheduled_action' )
+				&& as_has_scheduled_action( self::AS_PAGE_HOOK, $page_args, 'wb_gam_retention' );
+
+			if ( ! $queued ) {
+				as_schedule_single_action(
+					time() + 60,
+					self::AS_PAGE_HOOK,
+					$page_args,
+					'wb_gam_retention'
+				);
+			}
 			return;
 		}
 

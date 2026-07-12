@@ -266,10 +266,11 @@ final class ScaleCommand {
 		// Notifications queue: EVENT-scaled. notifications_fetch_unseen must be timed
 		// against a table with real depth, since a toast flood (Basecamp #10086171887)
 		// is exactly what happens when this read path degrades.
-		for ( $u = 0; $u < min( $user_count, 2000 ); $u += $batch_size ) {
+		$notif_users = min( $user_count, 2000 );
+		for ( $u = 0; $u < $notif_users; $u += $batch_size ) {
 			$values = array();
 			$args   = array();
-			$slice  = min( $batch_size, min( $user_count, 2000 ) - $u );
+			$slice  = min( $batch_size, $notif_users - $u );
 			for ( $i = 0; $i < $slice; $i++ ) {
 				$uid = $base_uid + $u + $i;
 				for ( $e = 0; $e < 5; $e++ ) {
