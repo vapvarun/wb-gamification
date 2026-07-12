@@ -4,7 +4,7 @@ Tags: gamification, points, badges, leaderboard, buddypress
 Requires at least: 6.5
 Tested up to: 7.0
 Requires PHP: 8.0
-Stable tag: 1.6.3
+Stable tag: 1.6.4
 License: GPL-2.0+
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -132,6 +132,26 @@ Yes. WB Gamification integrates with WordPress privacy tools. Members can reques
 All data is preserved in the database. Reactivating the plugin restores everything. If you delete the plugin via the Plugins screen, the `uninstall.php` file removes all 26 tables, options, cron jobs, and transients — a clean uninstall.
 
 == Changelog ==
+
+= 1.6.4 - July 2026 =
+
+Stability and scale release. Contains a fix for a bug that could delete other plugins' queued background jobs, including WooCommerce orders and subscription renewals. Upgrading is strongly recommended for every site.
+
+* New      - Weekly cap is now settable per action in Settings > Points. The limit was already enforced, but there was no field to set it.
+* Improve  - Points, badges, levels, and the Hub follow the active theme's colours in both light and dark mode on BuddyX, BuddyX Pro, and Reign.
+* Fix      - Leaderboards now serve from their snapshot table instead of aggregating the full points ledger on every view. The snapshot was disabled by every points award, and a timezone mismatch emptied it at the end of each rebuild on sites ahead of UTC, so leaderboard views fell back to a full-table query.
+* Fix      - The all-time leaderboard reads the materialised member totals rather than summing the whole ledger.
+* Fix      - Members no longer receive duplicate weekly emails. An overdue cron re-fire could start a second send while the first was still queued.
+* Fix      - Notification queue is bounded per member and no longer replays a backlog of stale toasts on every page load.
+* Fix      - Weekly digest, cohort assignment, and status-retention jobs now process members in batches instead of attempting the whole site in a single run.
+* Fix      - Personal-data export is paginated, so an export for a member with a long history no longer exhausts memory.
+* Fix      - Award Points now uses a searchable member picker instead of rendering every member on the site into a dropdown.
+* Fix      - Added database indexes for badge, kudos, submission, redemption, and member-intelligence queries that previously scanned the full table.
+* Fix      - Badge rarity is cached, so public badge pages no longer aggregate the badge table on every request.
+* Fix      - Setup wizard's Coaching Platform and Nonprofit templates no longer seed actions that cannot fire; the wizard now refuses to save an action it does not recognise.
+* Fix      - Licence assets no longer 404 on hosts where the plugin directory is a symlink or the document root does not prefix-match the plugin path.
+* Security - The Action Scheduler cleanup no longer deletes other plugins' queued work. It previously removed every pending Action Scheduler job older than the retention window, with no ownership check, which could destroy WooCommerce orders and subscription renewals on any site. Cleanup is now fenced to this plugin's own jobs, and queued work is never aged out as routine housekeeping.
+* Dev      - `wp wb-gamification scale benchmark` now covers the badge, notification, and streak read paths, and a green run against a seeded dataset is required before a release can be packaged.
 
 = 1.6.3 - July 2026 =
 
