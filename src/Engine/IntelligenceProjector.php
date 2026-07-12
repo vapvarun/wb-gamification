@@ -106,10 +106,21 @@ final class IntelligenceProjector {
 
 		global $wpdb;
 
-		// Pick users to recompute: those with at least one event AND
-		// whose intelligence row is either missing or oldest.
-		$cutoff = gmdate( 'Y-m-d H:i:s', time() - 86400 );
-
+		// Pick users to recompute: those with at least one event AND whose intelligence row is
+		// either missing or oldest.
+		//
+		// computed_at is stamped by the DATABASE (NOW(), see the UPSERT below), and this compared
+		// it against gmdate() -- UTC. On any host whose database is not in UTC those disagree, and
+		// the disagreement is silent: rows look NEWER than they are, the 24-hour cutoff never
+		// matches them, and those members' intelligence quietly goes stale forever.
+		//
+		// I annotated this column @clock-ok earlier in this branch, asserting it was "never
+		// compared against a PHP-side timestamp". That was simply wrong -- it is compared right
+		// here -- and the static scanner caught the lie. Both sides now come from the database's
+		// clock, which is the clock every existing row was written in.
+		//
+		// @clock-ok: computed_at is stamped NOW() and compared against DATE_SUB(NOW(), ...). One
+		// clock, the database's, on both sides.
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$user_ids = $wpdb->get_col(
 			$wpdb->prepare(
@@ -117,10 +128,9 @@ final class IntelligenceProjector {
 				   FROM (SELECT DISTINCT user_id FROM {$wpdb->prefix}wb_gam_events) e
 				   LEFT JOIN {$wpdb->prefix}wb_gam_user_intelligence i
 				     ON i.user_id = e.user_id
-				  WHERE i.user_id IS NULL OR i.computed_at < %s
+				  WHERE i.user_id IS NULL OR i.computed_at < DATE_SUB(NOW(), INTERVAL 1 DAY)
 				  ORDER BY (i.computed_at IS NULL) DESC, i.computed_at ASC
 				  LIMIT %d",
-				$cutoff,
 				self::BATCH_SIZE
 			)
 		);
@@ -207,8 +217,10 @@ final class IntelligenceProjector {
 
 		// UPSERT. Single PK on user_id makes ON DUPLICATE KEY clean.
 		//
-		// @clock-ok: computed_at is stamped by the DB clock and only ever displayed or ordered by
-		// -- it is never compared against a PHP-side timestamp, so it speaks exactly one clock.
+		// @clock-ok: computed_at is stamped by the DATABASE clock here, and the only place it is
+		// compared (compute_batch, above) now uses DATE_SUB(NOW(), ...) -- the same clock. An
+		// earlier version of this comment claimed the column was never compared at all. It was,
+		// and that claim would have hidden a live bug behind an annotation.
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$wpdb->query(
 			$wpdb->prepare(
