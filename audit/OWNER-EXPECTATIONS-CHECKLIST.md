@@ -6,6 +6,27 @@ plugin, and an honest HAVE / PARTIAL / MISSING against our code. Re-runnable eve
 **Bar:** table stakes + parity with the market leaders. **Scope: the FREE plugin only** — Pro does
 not exist yet, so a gap is a gap.
 
+---
+
+## ⚠️ PRODUCT DECISION (2026-07-12) — read this before using the tiers below
+
+**wb-gamification is the gamification LAYER FOR THE WBCOM SUITE.** It is not trying to beat
+GamiPress on the open market. That decision re-scores this document:
+
+| Finding | Under "standalone plugin" | Under "suite layer" (the actual decision) |
+|---|---|---|
+| **8 triggers on vanilla WordPress** | Existential | **BY DESIGN. Not a defect.** The owner runs BuddyNext / Learnomy / Jetonomy — that is who the 126 triggers are for. |
+| **Ecosystem connectors** (EDD, Tutor, Sensei, PMPro, Gravity Forms, AffiliateWP) — §2.2, P-11, P-15 | Roadmap | **NOT the roadmap.** Chasing GamiPress's ~150 connectors is the wrong war. Deprioritised. |
+| **Commerce loop** (P-01 points-per-$, P-02 pay-with-points, P-07 buyCRED) | Table stakes | **Only matters if suite owners run WooCommerce.** Real, but not urgent. |
+| **Badge conditions (T-21), CSV export (T-40), editable emails (T-36), weekly cap (T-09), broken wizard (T-50)** | Table stakes | **STILL TABLE STAKES.** A Wbcom suite owner expects every one of these. The identity decision does not excuse them. |
+| **Trust levels / rank-gated permissions** (§5 item 15) | "Nice differentiator" | **THE ROADMAP.** Uncontested in WordPress, and it is exactly what a community suite needs. |
+
+**So the honest bar is:** close the table-stakes items that any owner expects (Tier 1), skip the
+connector-parity war entirely, and spend the differentiation budget on suite depth + trust levels.
+
+Sections 2.2 and parts of Part 2 below are kept for the record but are **deliberately deprioritised**
+under this decision. Do not read them as a to-do list.
+
 **Benchmarked against:** GamiPress (10k+ installs, 4.9★), myCred (10k+, 4.6★, 38× 1-star),
 BadgeOS (**dead** — WP.org listing closed June 2023, 7 unpatched vulns; both leaders ship free
 BadgeOS importers to harvest its refugees).
@@ -58,7 +79,7 @@ An owner assumes these exist. Missing one is a lost evaluation, not a feature re
 | T-06 | **Bulk deduct** | **MISSING** | explicitly refused, `ManualAwardPage.php:390`. GamiPress + myCred both do it |
 | T-07 | Stop farming: per-action cooldown | **HAVE** | `SettingsPage.php:1448` — **and it's PAID in both rivals** |
 | T-08 | Daily cap | **HAVE** | `SettingsPage.php:1462` |
-| T-09 | **Weekly cap** | **PARTIAL — engine only** | `PointsEngine.php` enforces it (9 refs); `SettingsPage.php` exposes it (**0 refs**). Owner cannot set it. **`CAPABILITIES.md` claims it — we are overclaiming in our own docs.** |
+| T-09 | **Weekly cap** | **HAVE (fixed 1.6.4)** | Was engine-only: enforced by `PointsEngine`, invisible in admin, and overclaimed in `CAPABILITIES.md`. A Weekly-cap column now ships in Settings ▸ Points and posts to the existing `/actions/{id}/overrides` route. Verified end to end: owner sets 2 → engine awards exactly 2 of 5. |
 | T-10 | Exclude staff/bots from earning | **HAVE** | Settings ▸ Access, `SettingsPage.php:2403` |
 | T-11 | Transaction log / audit trail | **HAVE** | `wb_gam_events` + `wb_gam_points` |
 | T-12 | **Edit or correct a log entry after the fact** | **MISSING** | myCred has admin-editable log entries |
@@ -122,7 +143,7 @@ An owner assumes these exist. Missing one is a lost evaluation, not a feature re
 |---|---|---|---|
 | T-48 | Sensible defaults; points flow immediately | **HAVE** | 5 levels + 30 badges + default currency seeded (`Installer.php:640,893,945`) |
 | T-49 | Setup wizard | **HAVE** | `SetupWizard.php` — **neither GamiPress nor myCred has one** |
-| T-50 | **Starter templates that actually work** | **BROKEN** | Coaching Platform seeds `check_in`, `goal_complete`; Nonprofit seeds `volunteer_hours` — **none of these action IDs exist in any manifest.** Pick "Coaching Platform" and 2 of 3 configured actions can never fire. `SetupWizard.php:429-450` |
+| T-50 | **Starter templates that actually work** | **HAVE (fixed 1.6.4)** | Coaching seeded `check_in`/`goal_complete`, Nonprofit seeded `volunteer_hours` — ids in NO manifest, so 2 of 3 actions were dead on arrival. Replaced with real ids; `apply_template()` now refuses to persist an unregistered id; `SetupWizardTemplatesTest` fails the build if a template ever references one again (mutation-tested). |
 
 ---
 
