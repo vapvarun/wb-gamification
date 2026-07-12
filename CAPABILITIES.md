@@ -51,6 +51,7 @@ Status: `YES` shipped & code-verified · `PARTIAL` works with a named limit · `
 | Can it… | Status | How |
 |---|---|---|
 | Run a redemption store? | YES | Redemption Store admin; `wb_gam_redemptions`, `wb_gam_redemption_items` |
+| Offer a reward with limited stock and trust the limit? | YES | **1.6.4.** Stock has three states: empty = unlimited, `0` = sold out, positive = quantity left. Before 1.6.4 a sold-out reward silently became unlimited (0 was read as "unlimited"), so a one-of-a-kind reward could be redeemed without limit. Decrement is atomic, so two members cannot both take the last unit |
 | Show a member what they've redeemed? | YES | `[wb_gam_my_rewards]` — history survives item deletion (fixed 1.6.2) |
 | Let members submit things for reward? | YES | Submissions page; `wb_gam_submissions` |
 | Let members give each other kudos? | YES | `[wb_gam_give_kudos]`, `[wb_gam_kudos_feed]`; `wb_gam_kudos` (moderatable) |

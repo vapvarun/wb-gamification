@@ -139,6 +139,10 @@ Stability and scale release. Contains a fix for a bug that could delete other pl
 
 * New      - Weekly cap is now settable per action in Settings > Points. The limit was already enforced, but there was no field to set it.
 * Improve  - Points, badges, levels, and the Hub follow the active theme's colours in both light and dark mode on BuddyX, BuddyX Pro, and Reign.
+* Fix      - A reward with limited stock became unlimited the moment it sold out, and could then be redeemed without limit. Stock now has three distinct states: empty means unlimited, 0 means sold out, and any positive number is the quantity remaining. Rewards you currently run with a stock of 0 stay unlimited; they are migrated on upgrade.
+* Fix      - The per-member kudos cooldown was never applied on sites in a timezone behind UTC, so members could send kudos to the same person repeatedly. The cooldown is now enforced in every timezone.
+* Fix      - Two kudos sent to the same member at the same instant could both bypass the cooldown and record twice. Only one is now recorded.
+* Fix      - Toasts set to a top position rendered behind the theme's header. They now sit below it, and below any other bar pinned to the top of the page.
 * Fix      - Leaderboards now serve from their snapshot table instead of aggregating the full points ledger on every view. The snapshot was disabled by every points award, and a timezone mismatch emptied it at the end of each rebuild on sites ahead of UTC, so leaderboard views fell back to a full-table query.
 * Fix      - The all-time leaderboard reads the materialised member totals rather than summing the whole ledger.
 * Fix      - Members no longer receive duplicate weekly emails. An overdue cron re-fire could start a second send while the first was still queued.
