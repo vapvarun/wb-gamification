@@ -3194,6 +3194,21 @@
         "integrations/wpmediaverse.php:464"
       ],
       "consumed_by": []
+    },
+    {
+      "name": "wb_gam_email_footer",
+      "type": "action",
+      "purpose": "Fired at the foot of every transactional email template. Receives the template basename and its defined vars, so a site owner can append content (unsubscribe copy, branding, legal) to any gamification email without overriding the template.",
+      "fired_at": [
+        "templates/emails/redemption-confirmed.php:117",
+        "templates/emails/leaderboard-nudge.php:74"
+      ],
+      "args_count": 2,
+      "args_signature": [
+        "string $template_basename",
+        "array $vars"
+      ],
+      "consumed_by": []
     }
   ],
   "interactivity": [],
@@ -3647,6 +3662,20 @@
       "interval": "daily",
       "handler": "NotificationBridge::prune_queue",
       "where": "src/Engine/NotificationBridge.php:146"
+    },
+    {
+      "hook": "wb_gam_nudge_single_user",
+      "schedule": "single (Action Scheduler)",
+      "handler": "src/Engine/LeaderboardNudge.php:51 (AS_SINGLE_HOOK)",
+      "purpose": "Action Scheduler SINGLE action - one queued job per member for the weekly leaderboard nudge, so a 100k-member fan-out is spread across the queue instead of one cron tick.",
+      "scheduler": "action_scheduler"
+    },
+    {
+      "hook": "wb_gam_webhook_retry",
+      "schedule": "single (Action Scheduler)",
+      "handler": "src/Engine/WebhookDispatcher.php:35 (AS_RETRY_ACTION)",
+      "purpose": "Action Scheduler SINGLE action - retries one failed outbound webhook with backoff. Scheduled by WebhookDispatcher on delivery failure.",
+      "scheduler": "action_scheduler"
     }
   ],
   "wp_cli": [
@@ -3814,11 +3843,11 @@
     ]
   },
   "generated": {
-    "at": "2026-06-02T07:30:19Z",
+    "at": "2026-07-12T00:00:00Z",
     "from": "wp-plugin-onboard --refresh \u2014 v1.4.0 post-release sweep. Ground-truth re-scan against today diff: 99 plugin hooks (53 actions + 46 filters), 23 tables, 19 blocks, 17 shortcodes, 10 distinct cron hooks, 10 WP-CLI commands, 13 admin pages, 10 declared caps, 24 frontend CSS files + 19 frontend JS files. Sub-arrays (.hooks_fired[], .services[], .frontend_assets) carry over from 2026-05-06 by reference; coverage gate documents the gap. v2.2 schema preserved. See audit/wppqa-baseline-2026-05-27/SUMMARY.md and audit/ISSUES-2026-05-27.yaml.",
-    "branch": "main",
+    "branch": "1.6.4",
     "schema_version": "v2.2",
-    "scan_scope": "gruntfile",
+    "scan_scope": "src/ + templates/ + integrations/ (202 PHP files); libs/, vendor/, dist/, build/ excluded",
     "scan_path": ".",
     "php_file_count": 111,
     "coverage": {
@@ -3834,16 +3863,16 @@
         "gap_pct": 0
       },
       "actions_fired": {
-        "manifest": 43,
-        "baseline": 53,
-        "gap_pct": 18.899999999999999,
-        "note": "Manifest .hooks_fired[] holds 43 action entries; ground-truth scan finds 53 unique wb_gam_ do_action sites. +10 new since 2026-05-06: wb_gam_login_bonus_claimed, wb_gam_submission_approved, wb_gam_submission_created, wb_gam_submission_rejected, wb_gam_point_type_converted, wb_gam_as_cleaned, wb_gam_after_save_cohort_settings, wb_gam_cohort_settings_saved, wb_gam_cohort_outcome, wb_gam_credential_expired. Drift > 5% \u2014 re-enumeration deferred to next dedicated refresh."
+        "manifest": 66,
+        "baseline": 66,
+        "gap_pct": 0,
+        "note": "Re-verified 2026-07-12 with a comment-stripped, multi-line-aware, per-file-const-resolving scan across src/ + templates/ + integrations/: ZERO stale, ZERO missing. The previous 'drift > 5%' note was a scan artefact (naive single-line grep, missing the integrations/ dir, and a global const table that collapsed every class's CRON_HOOK to one value)."
       },
       "filters_fired": {
-        "manifest": 12,
-        "baseline": 46,
-        "gap_pct": 73.900000000000006,
-        "note": "Manifest .hooks_fired[] holds 12 filter entries; ground-truth scan finds 46 unique wb_gam_ apply_filters sites. Massive growth from per-block data filters (14 wb_gam_block_*_data filters added in block standard migration). Major drift \u2014 re-enumeration deferred."
+        "manifest": 76,
+        "baseline": 76,
+        "gap_pct": 0,
+        "note": "Re-verified 2026-07-12 with a comment-stripped, multi-line-aware, per-file-const-resolving scan across src/ + templates/ + integrations/: ZERO stale, ZERO missing. The previous 'drift > 5%' note was a scan artefact (naive single-line grep, missing the integrations/ dir, and a global const table that collapsed every class's CRON_HOOK to one value)."
       },
       "tables": {
         "manifest": 26,
@@ -3864,10 +3893,10 @@
         "note": "Manifest has 15; ShortcodeHandler registers 17 add_shortcode call sites. +2 since 2026-05-06: give_kudos, my_rewards."
       },
       "cron": {
-        "manifest": 9,
-        "baseline": 10,
-        "gap_pct": 10,
-        "note": "Manifest .cron[] has 9; ground truth = 10 distinct CRON_HOOK constants (wb_gam_weekly_nudge, wb_gam_weekly_email, wb_gam_as_cleanup, wb_gam_prune_logs, wb_gam_status_retention_check, wb_gam_credential_expiry_check, wb_gam_tenure_check, wb_gam_cohort_assign, wb_gam_cohort_process, wb_gam_leaderboard_snapshot). Missing: wb_gam_as_cleanup (ActionSchedulerCleaner, v1.4.0)."
+        "manifest": 16,
+        "baseline": 16,
+        "gap_pct": 0,
+        "note": "Re-verified 2026-07-12. Includes Action Scheduler hooks (as_schedule_recurring_action / as_schedule_single_action), which a wp_schedule_event-only grep misses entirely."
       },
       "wp_cli": {
         "manifest": 10,
@@ -3905,7 +3934,8 @@
       }
     },
     "last_pr_merged": "v1.5.3 - site-owner controls (exclusion, members roster, bulk award, settings import/export, rebuild-leaderboard)",
-    "since_last_refresh": "1.5.3 complete: all 8 site-owner controls. p2 adds Modules toggles (ModuleToggles), point expiry/decay (PointsExpiry, daily cron wb_gam_points_decay), and reset-all-member-progress (ProgressReset + POST tools/reset-progress). +1 REST endpoint, +3 services, +1 cron hook, +1 filter (wb_gam_module_enabled), +2 actions (wb_gam_progress_reset, wb_gam_points_decayed)."
+    "since_last_refresh": "1.5.3 complete: all 8 site-owner controls. p2 adds Modules toggles (ModuleToggles), point expiry/decay (PointsExpiry, daily cron wb_gam_points_decay), and reset-all-member-progress (ProgressReset + POST tools/reset-progress). +1 REST endpoint, +3 services, +1 cron hook, +1 filter (wb_gam_module_enabled), +2 actions (wb_gam_progress_reset, wb_gam_points_decayed).",
+    "manifest_refresh": "agent-enumeration-only - bin/write-manifest.mjs CANNOT be used on this plugin: it zeroes shortcodes (0 vs 17 real, registered via src/Engine/ShortcodeHandler.php wrapper), collapses cron (1 vs 16, Action Scheduler + self::CONST hooks), and undercounts REST (62 vs 76, routes built by concatenation not literals). Restore from git and enumerate by hand if it is ever run."
   },
   "wp_cli_commands": [
     {
@@ -4038,16 +4068,22 @@
       "gap_pct": 0
     },
     "actions_fired": {
-      "baseline": 53,
-      "gap_pct": 0
+      "baseline": 66,
+      "gap_pct": 0,
+      "manifest": 66,
+      "note": "Re-verified 2026-07-12 with a comment-stripped, multi-line-aware, per-file-const-resolving scan across src/ + templates/ + integrations/: ZERO stale, ZERO missing. The previous 'drift > 5%' note was a scan artefact (naive single-line grep, missing the integrations/ dir, and a global const table that collapsed every class's CRON_HOOK to one value)."
     },
     "filters_fired": {
-      "baseline": 46,
-      "gap_pct": 0
+      "baseline": 76,
+      "gap_pct": 0,
+      "manifest": 76,
+      "note": "Re-verified 2026-07-12 with a comment-stripped, multi-line-aware, per-file-const-resolving scan across src/ + templates/ + integrations/: ZERO stale, ZERO missing. The previous 'drift > 5%' note was a scan artefact (naive single-line grep, missing the integrations/ dir, and a global const table that collapsed every class's CRON_HOOK to one value)."
     },
     "cron": {
-      "baseline": 10,
-      "gap_pct": 0
+      "baseline": 16,
+      "gap_pct": 0,
+      "manifest": 16,
+      "note": "Re-verified 2026-07-12. Includes Action Scheduler hooks (as_schedule_recurring_action / as_schedule_single_action), which a wp_schedule_event-only grep misses entirely."
     },
     "capabilities": {
       "baseline": 10,

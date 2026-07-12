@@ -177,10 +177,41 @@ Block-level JS lives under each block's directory in `blocks/{slug}/` (typical b
 | `wb_gam_credential_expiry_check` | weekly | `CredentialExpiryEngine::check_expirations` | CredentialExpiryEngine |
 | `wb_gam_prune_logs` | daily | `LogPruner::run` | LogPruner |
 
-In addition the plugin runs **async** work via Action Scheduler (bundled in `vendor/woocommerce/action-scheduler/`):
+In addition the plugin runs **async** work via Action Scheduler (bundled in `libs/woocommerce/action-scheduler/`):
 - `wb_gam_process_event_async` — async per-event evaluation (`Engine::handle_async`).
-- Webhook delivery (`WebhookDispatcher` enqueues async + scheduled-single actions).
+- Webhook delivery (`WebhookDispatcher` enqueues async + `wb_gam_webhook_retry` single actions).
+- `wb_gam_leaderboard_snapshot` — 5-minute recurring materialised leaderboard.
+- `wb_gam_nudge_single_user` — one queued job per member for the weekly nudge, so a 100k-member fan-out doesn't land in one cron tick.
 - Community challenge contribution accumulation.
+
+> A `wp_schedule_event`-only grep **will not see these** and will report cron as ~6 hooks
+> instead of 16. Any cron enumeration must include `as_schedule_recurring_action` /
+> `as_schedule_single_action` and resolve `self::CONST` hook names **per file** (many classes
+> each define their own `CRON_HOOK`).
+
+## 10a. Notifications (member toasts) — rebuilt in 1.6.4
+
+**One store, one writer, one reader, one bound.** Full trace in
+[`CODE_FLOWS.md`](CODE_FLOWS.md#flow-notification--members-screen-164).
+
+| Piece | Where | Role |
+|---|---|---|
+| Store | `{prefix}wb_gam_notifications_queue` | **The only store.** The parallel transient (opposite bound, resetting ids) was removed in 1.6.4. |
+| Writer | `NotificationBridge::push()` | Applies `wb_gam_toast_data` (return `[]` to suppress), inserts, then trims. |
+| Bound | `NotificationBridge::trim()` | Per-member cap at `QUEUE_MAX_EVENTS` (50), enforced **on write** — holds even where WP-Cron never runs. |
+| Reader | `NotificationBridge::fetch_unseen()` | **The only query.** Newest-first, burst-capped at `BURST_MAX_EVENTS` (5); the last row returned is the head of the whole backlog, so a caller that parks its cursor there **skips** the backlog rather than replaying it. |
+| Consumers | footer seed · `HeartbeatChannel` · `MembersController` (`members/me/toasts`) · `SSEController` | The first three carry a cursor in `user_meta`; SSE carries one in the request (`last_event_id`). All four drive the same reader. |
+| Retention | `NotificationBridge::prune_queue()` | Daily cron, batched loop (5,000 × 20). **Retention, not the bound.** |
+| Legacy cleanup | `DbUpgrader::ensure_notifications_skip_purge()` | One-time, resumable purge of `type='skip'` rows written by ≤ 1.6.2. |
+
+**Award-skips are deliberately not a notification.** `wb_gam_award_skipped` is fired by
+`PointsEngine::passes_rate_limits()` but has **no core listener**. A member is never told they
+earned nothing — their action succeeded; a points cap is the site's anti-farming guard, not the
+member's business. The reason is surfaced to **API callers only**
+(`POST /events` → `{skipped:{reason,message,context}}`, copy from
+`PointsEngine::skip_reason_message()`). Regression-locked by
+`tests/Unit/Engine/AwardSkipToastTest.php`, which fails if a listener, the producer, the removed
+`wb_gam_award_skip_toast_reasons` filter, or the member-facing copy is reintroduced.
 
 ## 11. Integrations
 
