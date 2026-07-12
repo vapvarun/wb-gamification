@@ -355,7 +355,19 @@ final class WeeklyEmailEngine {
 	 */
 	private static function gather_data( int $user_id ): array {
 		global $wpdb;
-		$since = gmdate( 'Y-m-d H:i:s', strtotime( '-7 days' ) );
+		// The digest window MUST be expressed in the clock its columns are stored in.
+		//
+		// $since feeds three queries below -- points.created_at, user_badges.earned_at and
+		// challenge_log.completed_at -- and all three are written with current_time( 'mysql' ),
+		// i.e. SITE-LOCAL. This boundary was gmdate(), i.e. UTC. So the "last 7 days" window was
+		// skewed by the site's UTC offset in every digest: a US site silently dropped the most
+		// recent hours of activity from the email, and a site ahead of UTC included hours that
+		// belonged to the previous week.
+		//
+		// Third instance of this class in this plugin (after the leaderboard snapshot and the
+		// kudos cooldown), which is why it is now a portfolio-wide static rule rather than a
+		// thing we keep rediscovering by hand.
+		$since = gmdate( 'Y-m-d H:i:s', strtotime( current_time( 'mysql' ) ) - ( 7 * DAY_IN_SECONDS ) );
 
 		// Points this week.
 		$points_this_week = (int) $wpdb->get_var(
