@@ -170,13 +170,29 @@ final class TenureBadgeEngine {
 		$offset     = 0;
 		$batch_size = 200;
 
+		// "Today" means today in the OWNER's calendar, not the database server's.
+		//
+		// This compared against MONTH(NOW()) / DAY(NOW()) -- the database server's clock, which is
+		// a third clock nobody chose and nobody can see. Bound from the site's own date instead,
+		// so an anniversary lands on the day the owner would circle on a wall calendar.
+		//
+		// Residual, and deliberately left: user_registered is written by WordPress core in GMT, so
+		// a member who signed up at 02:00 site-local on a site ahead of UTC has a user_registered
+		// DATE of the previous day, and their anniversary follows that date. Core owns that column
+		// and we do not get to restate it; what we can do is stop adding a third clock on top.
+		$today       = current_time( 'Y-m-d' );
+		$today_month = (int) gmdate( 'n', (int) strtotime( $today ) );
+		$today_day   = (int) gmdate( 'j', (int) strtotime( $today ) );
+
 		do {
 			$users = $wpdb->get_col(
 				$wpdb->prepare(
 					"SELECT ID FROM {$wpdb->users}
-					  WHERE MONTH(user_registered) = MONTH(NOW())
-					    AND DAY(user_registered)   = DAY(NOW())
+					  WHERE MONTH(user_registered) = %d
+					    AND DAY(user_registered)   = %d
 					  LIMIT %d OFFSET %d",
+					$today_month,
+					$today_day,
 					$batch_size,
 					$offset
 				)

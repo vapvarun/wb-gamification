@@ -260,6 +260,14 @@ if [ -x bin/check-badge-condition-contract.sh ]; then
   run_stage "2.14" "Badge condition contract (seed-vs-name)" bash bin/check-badge-condition-contract.sh
 fi
 
+# 2.15 — Clock contract. Five of the seven bugs in the 1.6.4 cycle were one defect:
+# a column written from PHP (site-local, or UTC) and compared against SQL NOW()
+# (the DATABASE SERVER's clock -- a third clock nobody chose). Invisible on a UTC
+# box, which is exactly why it kept shipping.
+if [ -x bin/check-clock-contract.sh ]; then
+  run_stage "2.15" "Clock contract (no unannotated NOW())" bash bin/check-clock-contract.sh
+fi
+
 # ─── 3.x — Manifest freshness ────────────────────────────────────────────────
 
 if [ "$MODE" != "quick" ]; then

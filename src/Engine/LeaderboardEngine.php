@@ -507,6 +507,10 @@ final class LeaderboardEngine {
 		// where the two clocks happen to agree. Taking both stamps from the DB
 		// removes the class of bug, not just this instance.
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		// @clock-ok: both sides are the DATABASE clock. The snapshot rows are stamped NOW() (see
+		// the INSERT below) and the straggler DELETE prunes against this same value, so the two
+		// never disagree. Stamping with current_time() and pruning with NOW() is exactly what made
+		// the rebuild delete the rows it had just written on every site ahead of UTC.
 		$started = (string) $wpdb->get_var( 'SELECT NOW()' );
 
 		$periods = array(
@@ -536,6 +540,12 @@ final class LeaderboardEngine {
 				// The UNIQUE KEY (user_id, period, point_type) on the cache
 				// table is what makes ON DUPLICATE KEY UPDATE work; it was
 				// added by DbUpgrader::ensure_leaderboard_cache_unique_key.
+				//
+				// @clock-ok: updated_at is stamped NOW() (the DATABASE clock) and the straggler
+				// DELETE below prunes against $started, which came from the same SELECT NOW(). Both
+				// sides of that comparison are the database's clock, so they cannot disagree.
+				// Stamping with current_time() and pruning with NOW() is precisely what made the
+				// rebuild delete the rows it had just written on every site ahead of UTC.
 				// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 				$wpdb->query(
 					$wpdb->prepare(

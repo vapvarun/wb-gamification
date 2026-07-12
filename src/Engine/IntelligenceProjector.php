@@ -152,17 +152,36 @@ final class IntelligenceProjector {
 		// Three aggregates from wb_gam_events.
 		$events_table = $wpdb->prefix . 'wb_gam_events';
 
+		// wb_gam_events.created_at is written with current_time( 'mysql' ) -- the SITE's clock.
+		// This measured it against NOW(), which is the DATABASE SERVER's clock, and on any host
+		// where those differ (the normal case: a UTC database under a non-UTC site) recency_days
+		// came out shifted by the offset. At a day boundary that is a whole day of error, and
+		// recency_days feeds churn_risk directly -- so members were being scored as more or less
+		// at-risk than they are.
+		//
+		// Both bounds are now computed in the clock the column is written in and bound as values,
+		// so the database server's own timezone stops being a variable we do not control.
+		//
+		// Worth recording HOW this survived: the static scanner never saw it. Its rule requires a
+		// current_time() write in the same file, and this file only READS. A file that compares a
+		// local column against NOW() without writing one is invisible to that check -- which is
+		// why the timestamp columns were finally audited by hand.
+		$now_local = current_time( 'mysql' );
+		$since     = gmdate( 'Y-m-d H:i:s', strtotime( $now_local ) - ( 30 * DAY_IN_SECONDS ) );
+
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$row = $wpdb->get_row(
 			$wpdb->prepare(
 				"SELECT
 					COUNT(*) AS events_30d,
 					COUNT(DISTINCT action_id) AS action_diversity,
-					COALESCE(DATEDIFF(NOW(), MAX(created_at)), 999) AS recency_days
+					COALESCE(DATEDIFF(%s, MAX(created_at)), 999) AS recency_days
 				   FROM {$events_table}
 				  WHERE user_id = %d
-				    AND created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)",
-				$user_id
+				    AND created_at >= %s",
+				$now_local,
+				$user_id,
+				$since
 			),
 			ARRAY_A
 		);
@@ -187,6 +206,9 @@ final class IntelligenceProjector {
 		$anomaly = ( $events_30d > 500 && $action_diversity < 3 ) ? 1 : 0;
 
 		// UPSERT. Single PK on user_id makes ON DUPLICATE KEY clean.
+		//
+		// @clock-ok: computed_at is stamped by the DB clock and only ever displayed or ordered by
+		// -- it is never compared against a PHP-side timestamp, so it speaks exactly one clock.
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$wpdb->query(
 			$wpdb->prepare(
