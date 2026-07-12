@@ -50,15 +50,22 @@
  * direction is corner-aware so a toast never flies across the viewport.
  * The modifier class is set by assets/js/toast.js from the localized
  * wbGamToast.position value. */
+/* Top-anchored stacks are positioned from --wb-gam-toast-offset-top, NOT a literal.
+ * The offset has to clear whatever is pinned to the top of the viewport, and a plugin
+ * cannot know that in CSS: the WP admin bar is a known 32/46px, but the active theme's
+ * own sticky header is not (BuddyX's is ~69px, Reign's differs, a custom theme is
+ * anyone's guess). assets/js/toast.js measures the real thing at runtime and sets this
+ * property; the declarations below are the no-JS fallback. Owners can override it in
+ * their own CSS. */
 .wb-gam-toasts--top-center {
-	top: 1rem;
+	top: var(--wb-gam-toast-offset-top, 1rem);
 	right: 50%;
 	transform: translateX(50%);
 	align-items: center;
 	--wb-gam-toast-slide: -12px;
 }
 .wb-gam-toasts--top-right {
-	top: 1rem;
+	top: var(--wb-gam-toast-offset-top, 1rem);
 	left: 1rem;
 	align-items: flex-end;
 	--wb-gam-toast-slide: -12px;
@@ -74,19 +81,25 @@
 	align-items: flex-start;
 }
 
-/* Admin-bar offset — WP emits body.admin-bar for logged-in users; the
- * bar is 32px tall on desktop and grows to 46px on the mobile
- * breakpoint (≤782px) per WP core's own CSS. Only TOP-anchored stacks
- * need pushing below the bar; bottom-anchored stacks clear it already. */
+/* Admin-bar offset — WP emits body.admin-bar for logged-in users; the bar is 32px tall
+ * on desktop and grows to 46px on the mobile breakpoint (≤782px) per WP core's own CSS.
+ * Only TOP-anchored stacks need pushing below the bar; bottom-anchored stacks clear it
+ * already.
+ *
+ * These set the OFFSET VARIABLE rather than `top` directly. toast.js measures the real
+ * pinned chrome (admin bar AND the theme's sticky header) and sets the same property
+ * inline, which wins over any stylesheet rule — so it can correct this value rather than
+ * fight a more-specific `top` declaration. Without JS, this is still the right answer for
+ * the admin bar alone. */
 body.admin-bar .wb-gam-toasts--top-center,
 body.admin-bar .wb-gam-toasts--top-right {
-	top: calc(32px + 1rem);
+	--wb-gam-toast-offset-top: calc(32px + 1rem);
 }
 
 @media (max-width: 782px) {
 	body.admin-bar .wb-gam-toasts--top-center,
 	body.admin-bar .wb-gam-toasts--top-right {
-		top: calc(46px + 0.75rem);
+		--wb-gam-toast-offset-top: calc(46px + 0.75rem);
 	}
 }
 
