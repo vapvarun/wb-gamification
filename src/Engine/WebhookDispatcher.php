@@ -380,18 +380,27 @@ final class WebhookDispatcher {
 			return;
 		}
 
-		// Re-fetch current url + secret. If the subscription was deleted
-		// or disabled in between, drop the retry silently.
+		// Re-fetch current url + secret. If the subscription was deleted or disabled in between, drop
+		// the retry.
+		//
+		// This selected a `status` column. There is no such column -- the table has `is_active`. MySQL
+		// answered "Unknown column 'status' in 'field list'", $wpdb swallowed it, get_row() returned
+		// NULL, and the guard below read that as "the subscription is gone" and returned.
+		//
+		// So EVERY webhook retry, on every site, was silently discarded. Not some. Every one. And it
+		// looked exactly like a working system: the first delivery attempt still fired, the retry was
+		// still scheduled, the job still ran -- and then quietly did nothing. The only symptom was a
+		// customer's endpoint never receiving the delivery that failed the first time.
 		global $wpdb;
 		$row = $wpdb->get_row(
 			$wpdb->prepare(
-				"SELECT url, secret, status FROM {$wpdb->prefix}wb_gam_webhooks WHERE id = %d",
+				"SELECT url, secret, is_active FROM {$wpdb->prefix}wb_gam_webhooks WHERE id = %d",
 				$webhook_id
 			),
 			ARRAY_A
 		);
 
-		if ( ! $row || 'active' !== ( $row['status'] ?? 'active' ) ) {
+		if ( ! $row || empty( $row['is_active'] ) ) {
 			return;
 		}
 
