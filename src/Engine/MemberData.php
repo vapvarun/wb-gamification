@@ -64,9 +64,19 @@ final class MemberData {
 	/**
 	 * Usermeta keys this plugin writes.
 	 *
-	 * These are not schema-discoverable (WordPress owns the table), so they are the one list here --
-	 * and they are covered by the same test, which greps the source for `wb_gam_*` meta keys and fails
-	 * if one is missing.
+	 * WordPress owns `wp_usermeta`, so unlike our own tables this half cannot be discovered from the
+	 * schema -- there is no `SHOW COLUMNS` that tells you which meta keys are ours. It has to be a
+	 * list, and a list drifts. Rule 11 in `bin/coding-rules-check.sh` exists to catch that drift.
+	 *
+	 * It did not. For most of this cycle Rule 11 reported "every meta key is covered" while FIVE keys
+	 * below were covered by nothing -- not this list, not the export, not uninstall -- because the
+	 * gate looked for a bare `'wb_gam_...'` string as the second argument of the call. Every one of
+	 * the five is written as `self::SOME_CONST` (and one carries a leading underscore), so the gate
+	 * simply could not see them and passed with confidence.
+	 *
+	 * That is the same failure this class was written to end, one layer down: the check was textual
+	 * where it needed to be semantic. Rule 11 now resolves `self::CONST` back to its literal before
+	 * comparing, so a key added that way can no longer hide from it.
 	 *
 	 * @var string[]
 	 */
@@ -87,7 +97,68 @@ final class MemberData {
 		'wb_gam_level_id',
 		'wb_gam_level_name',
 		'wb_gam_league_tier',
+		// The five the gate could not see. All are written against a MEMBER (verified at each write
+		// site), so all are member data and all must go when the member does.
+		'_wb_gam_last_award_note',      // PointsController, ManualAwardPage — staff's note about an award, stored on the member.
+		'wb_gam_decayed_at',            // PointsExpiry::META_LAST.
+		'wb_gam_last_retention_nudge',  // StatusRetentionEngine::NUDGE_META.
+		'wb_gam_dismissed_wizard_notice', // SetupWizard::NOTICE_DISMISSED_META.
+		// Nothing in this plugin WRITES this one -- ActivityPub only reads it, so the opt-in is set by
+		// a filter or by hand. It is still our namespaced key on the member's account, and a member
+		// who erases their data should not be left federating events to the fediverse afterwards.
+		'wb_gam_federate_events',       // ActivityPub::USER_OPT_IN.
 	);
+
+	/**
+	 * Usermeta key PREFIXES this plugin writes.
+	 *
+	 * Some keys are not a key at all until runtime: NotificationBridge stores a read-cursor per
+	 * delivery channel as `CURSOR_META_PREFIX . $channel`, so the actual rows on a member's account
+	 * are `wb_gam_notif_cursor_footer`, `..._heartbeat`, `..._rest`.
+	 *
+	 * A key that only exists once you concatenate it cannot be caught by a list of literals, and it
+	 * was not: the erase and the export both missed the whole family. (`ProgressReset` hand-listed the
+	 * three channels that existed when it was written -- which is the same list, kept in a second
+	 * place, and therefore the same drift waiting to happen. It now derives from here.)
+	 *
+	 * Anything matching one of these prefixes is ours and goes when the member goes. Adding a fourth
+	 * channel tomorrow needs no edit here, which is the entire point.
+	 *
+	 * @var string[]
+	 */
+	private const USER_META_PREFIXES = array(
+		'wb_gam_notif_cursor_', // NotificationBridge::CURSOR_META_PREFIX.
+	);
+
+	/**
+	 * Every usermeta key this member actually has, literals plus prefix families.
+	 *
+	 * Resolved against the database rather than assumed, so a channel nobody remembered still gets
+	 * found.
+	 *
+	 * @param int $user_id Member.
+	 * @return string[] Meta keys present on this member's account.
+	 */
+	public static function user_meta_keys( int $user_id ): array {
+		global $wpdb;
+
+		$keys = self::USER_META_KEYS;
+
+		foreach ( self::USER_META_PREFIXES as $prefix ) {
+			$found = $wpdb->get_col(
+				$wpdb->prepare(
+					// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- usermeta key discovery; there is no core API for "keys matching a prefix".
+					"SELECT DISTINCT meta_key FROM {$wpdb->usermeta} WHERE user_id = %d AND meta_key LIKE %s",
+					$user_id,
+					$wpdb->esc_like( $prefix ) . '%'
+				)
+			);
+
+			$keys = array_merge( $keys, array_map( 'strval', (array) $found ) );
+		}
+
+		return array_values( array_unique( $keys ) );
+	}
 
 	/**
 	 * Register the hooks that close the second door.
@@ -188,7 +259,9 @@ final class MemberData {
 			}
 		}
 
-		foreach ( self::USER_META_KEYS as $meta_key ) {
+		// Literals AND the prefix families, resolved against this member's actual rows -- a cursor for
+		// a channel added after this line was written is still theirs, and still goes.
+		foreach ( self::user_meta_keys( $user_id ) as $meta_key ) {
 			delete_user_meta( $user_id, $meta_key );
 		}
 

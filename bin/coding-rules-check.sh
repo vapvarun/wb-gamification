@@ -290,16 +290,50 @@ check_privacy_coverage_for_user_scoped_surfaces() {
         : # covered by MemberData::member_tables(); nothing to hand-check.
     done
 
-    # User-meta keys — every literal 'wb_gam_*' meta_key passed to
-    # update_user_meta() / get_user_meta() / delete_user_meta() in src/
+    # User-meta keys — every meta_key passed to update_/get_/add_/delete_user_meta() in src/
     # (excluding Privacy.php itself, which is the consumer side).
-    local meta_keys
-    meta_keys=$(grep -rEho "(update|get|add|delete)_user_meta\(\s*[^,]+,\s*['\"]wb_gam_[a-z_]+['\"]" \
+    #
+    # This used to match ONLY a bare `'wb_gam_...'` string in the second argument, and that is how it
+    # spent an entire cycle printing "every meta key is covered" while five keys were covered by
+    # nothing at all -- not the erase, not the export, not uninstall. All five are passed as
+    # `self::SOME_CONST`, and one of them (`_wb_gam_last_award_note`) also carries a leading
+    # underscore the pattern did not allow. The gate could not see them, so it certified them.
+    #
+    # A check that only understands one spelling of a thing is a check that grades the spelling. So
+    # this now does two passes and unions them:
+    #   1. literal keys, with the leading underscore permitted;
+    #   2. `self::CONST` / `Klass::CONST` references, resolved back to their literal by finding the
+    #      `const NAME = '...'` declaration.
+    # If a sixth spelling shows up, this rule should learn it rather than quietly ignore it.
+    local meta_keys_literal meta_const_names meta_keys_resolved
+
+    meta_keys_literal=$(grep -rEho "(update|get|add|delete)_user_meta\(\s*[^,]+,\s*['\"]_?wb_gam_[a-z_]+['\"]" \
                     "$PLUGIN_DIR/src/" --include="*.php" 2>/dev/null \
                 | grep -vE "Privacy\.php" \
-                | sed -E "s/.*['\"]( *wb_gam_[a-z_]+ *)['\"].*/\1/" \
-                | tr -d ' ' \
+                | sed -E "s/.*['\"] *(_?wb_gam_[a-z_]+) *['\"].*/\1/" \
                 | sort -u)
+
+    # Constant NAMES used as the meta_key argument.
+    meta_const_names=$(grep -rEho "(update|get|add|delete)_user_meta\(\s*[^,]+,\s*(self|static|[A-Za-z_\\\\]+)::[A-Z0-9_]+" \
+                    "$PLUGIN_DIR/src/" --include="*.php" 2>/dev/null \
+                | grep -vE "Privacy\.php" \
+                | sed -E "s/.*::([A-Z0-9_]+).*/\1/" \
+                | sort -u)
+
+    # Resolve each constant NAME to the literal it is declared as. A constant whose value is not a
+    # wb_gam_* key resolves to nothing and drops out -- that is correct, it is not one of ours.
+    meta_keys_resolved=""
+    for const_name in $meta_const_names; do
+        local const_value
+        const_value=$(grep -rhoE "const +${const_name} +=[^;]*['\"]_?wb_gam_[a-z_]+['\"]" \
+                        "$PLUGIN_DIR/src/" --include="*.php" 2>/dev/null \
+                    | sed -E "s/.*['\"](_?wb_gam_[a-z_]+)['\"].*/\1/" \
+                    | head -1)
+        [ -n "$const_value" ] && meta_keys_resolved="${meta_keys_resolved}${const_value}\n"
+    done
+
+    local meta_keys
+    meta_keys=$(printf "%s\n%b" "$meta_keys_literal" "$meta_keys_resolved" | grep -vE '^$' | sort -u)
 
     # User meta is NOT schema-discoverable (WordPress owns that table), so it is the one place a list
     # is unavoidable — which makes it the one place this rule still has to do real work. The keys live
