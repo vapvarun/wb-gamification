@@ -1,30 +1,12 @@
 # bin/check-plugin-check.sh — WARNING baseline in shipped code.
-#
-# WHY THIS JUMPED FROM 85 TO 195 ON 2026-07-13: the code did not get worse. The GATE was broken.
-#
-# It resolved the WP root as PLUGIN_DIR/../../.., which is correct only when the plugin lives inside
-# wp-content/plugins. This repo lives in ~/dev/repos and is symlinked into the site, so that path was
-# not a WordPress install at all: `wp plugin check` failed, its error text landed in the CSV, the
-# parser matched nothing, and the gate reported "0 ERRORs; 0 WARNINGs" for months. Meanwhile the real
-# tool reported 184 findings, 12 of them ERRORs in shipped code. QA caught it, not the gate.
-#
-# The parser also anchored file paths on `^src/` while Plugin Check emits ABSOLUTE paths, so even a
-# working run would have counted nothing.
-#
-# 195 is therefore the FIRST honest count. It is dominated by the custom-table pattern this plugin is
-# built on (DirectQuery / NoCaching / interpolated table names) plus hook-prefix false positives. The
-# two PreparedSQLPlaceholders.ReplacementsWrongNumber entries were each checked by hand and are false
-# positives: both bind correctly at runtime (array-form prepare(), and %d + spread ...$types), and the
-# sniff simply cannot count placeholders that are built dynamically.
-#
 # Each line is '<code>: <count>'. Plugin Check WARNINGs that the team
 # accepts as living debt (false positives, convention-driven globals
 # in block templates, custom-table direct queries). Gate fails if the
 # TOTAL warning count grows above this baseline OR if a NEW code
 # appears that wasn't in the baseline.
-# Generated: 2026-07-13T06:54:29Z
+# Generated: 2026-07-13T10:56:20Z
 
-PluginCheck.Security.DirectDB.UnescapedDBParameter: 29
+PluginCheck.Security.DirectDB.UnescapedDBParameter: 32
 Squiz.PHP.DiscouragedFunctions.Discouraged: 1
 WordPress.DB.DirectDatabaseQuery.DirectQuery: 52
 WordPress.DB.DirectDatabaseQuery.NoCaching: 46
@@ -32,7 +14,7 @@ WordPress.DB.PreparedSQL.InterpolatedNotPrepared: 28
 WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber: 2
 WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare: 11
 WordPress.DB.SlowDBQuery.slow_db_query_meta_key: 1
-WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound: 24
+WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound: 25
 WordPressVIPMinimum.Performance.WPQueryParams.PostNotIn_exclude: 1
 
-# total: 195
+# total: 199

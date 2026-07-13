@@ -122,6 +122,7 @@ use WBGam\Engine\BootOrder;
 use WBGam\Engine\ManifestLoader;
 use WBGam\Engine\FeatureFlags;
 use WBGam\Engine\AsyncEvaluator;
+use WBGam\Engine\MemberData;
 use WBGam\Engine\LogPruner;
 use WBGam\Engine\ActionSchedulerCleaner;
 use WBGam\Engine\LeaderboardNudge;
@@ -250,6 +251,12 @@ final class WB_Gamification {
 
 		BootOrder::register( 'async_evaluator', BootOrder::SLOT_CORE, array( 'registry' ) );
 		add_action( 'plugins_loaded', array( AsyncEvaluator::class, 'init' ), BootOrder::SLOT_CORE );
+
+		// Deleting a member has to take their gamification data with it. Nothing listened for that,
+		// so every points row, streak, badge and queued notification of every deleted member stayed
+		// in the database for ever — and quietly corrupted every aggregate built on those tables.
+		BootOrder::register( 'member_data', BootOrder::SLOT_CORE );
+		add_action( 'plugins_loaded', array( MemberData::class, 'init' ), BootOrder::SLOT_CORE );
 
 		BootOrder::register( 'engine', BootOrder::SLOT_CORE, array( 'registry', 'db_upgrader' ) );
 		add_action( 'plugins_loaded', array( Engine::class, 'init' ), BootOrder::SLOT_CORE );

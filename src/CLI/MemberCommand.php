@@ -8,6 +8,7 @@
 
 namespace WBGam\CLI;
 
+use WBGam\Engine\MemberData;
 use WBGam\Engine\PointsEngine;
 use WBGam\Engine\LevelEngine;
 use WBGam\Engine\BadgeEngine;
@@ -121,5 +122,61 @@ class MemberCommand {
 		}
 
 		return $user ?: null;
+	}
+
+	/**
+	 * Remove gamification rows belonging to members who no longer exist.
+	 *
+	 * Nothing listened for `deleted_user` before 1.6.4, so every site that has ever deleted a member
+	 * is carrying their points, streaks, badges, cohort rows and queued notifications for ever. Those
+	 * rows also corrupt the Analytics dashboard: the percentages divide ghost rows by live members,
+	 * which is how "6822.5% streak health" happens.
+	 *
+	 * This is a COMMAND, not an upgrade migration. Silently deleting a site owner's data because they
+	 * installed a patch is not something a plugin gets to do. Run --dry-run first; it shows exactly
+	 * what would go.
+	 *
+	 * ## OPTIONS
+	 *
+	 * [--dry-run]
+	 * : Report what would be removed without removing it.
+	 *
+	 * ## EXAMPLES
+	 *
+	 *     wp wb-gamification member purge-orphans --dry-run
+	 *     wp wb-gamification member purge-orphans
+	 *
+	 * @subcommand purge-orphans
+	 *
+	 * @param array $args       Positional args (unused).
+	 * @param array $assoc_args Named args.
+	 * @return void
+	 */
+	public function purge_orphans( array $args, array $assoc_args ): void {
+		$dry_run = isset( $assoc_args['dry-run'] );
+
+		$orphans = MemberData::count_orphans();
+
+		if ( ! $orphans ) {
+			\WP_CLI::success( 'No orphaned rows — every gamification row belongs to a member who exists.' );
+			return;
+		}
+
+		$total = array_sum( $orphans );
+
+		\WP_CLI::log( 'Rows belonging to members who no longer exist:' );
+		foreach ( $orphans as $table => $count ) {
+			\WP_CLI::log( sprintf( '  %-46s %d', $table, $count ) );
+		}
+		\WP_CLI::log( sprintf( '  %-46s %d', 'TOTAL', $total ) );
+
+		if ( $dry_run ) {
+			\WP_CLI::success( sprintf( 'Dry run — %d row(s) would be removed. Re-run without --dry-run to remove them.', $total ) );
+			return;
+		}
+
+		$removed = MemberData::purge_orphans();
+
+		\WP_CLI::success( sprintf( '%d orphaned row(s) removed.', array_sum( $removed ) ) );
 	}
 }

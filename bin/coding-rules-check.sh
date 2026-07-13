@@ -172,15 +172,22 @@ echo "=== WB Gamification coding-rules check ==="
 echo "Plugin: $PLUGIN_DIR"
 echo ""
 
-# Rule 11: every user-scoped surface (wb_gam_* table with user_id column,
-# every wb_gam_* user_meta key) MUST be referenced in src/Engine/Privacy.php
-# so it lands in both export_user_data and erase_user_data.
+# Rule 11: every user-scoped surface must be covered by BOTH the export and the erase.
 #
-# Why: shipping a new user-scoped surface without updating Privacy.php
-# leaves ghost data after a GDPR erase request and an incomplete export.
-# This rule prevents the v1.0 sprint pattern (6 user_meta keys + 1 table
-# shipped without Privacy.php updates — fixed in commit fc1675a) from
-# recurring. See plan/PRIVACY-MODEL.md § Cross-cutting principles #6.
+# THIS RULE WAS GREEN WHILE THE ERASER LEAKED, and the reason is worth keeping.
+#
+# It used to check that a table name appeared ANYWHERE in Privacy.php. But that file holds two
+# separate functions, and a table listed in the EXPORT satisfied the grep while the ERASE never
+# deleted it. wb_gam_cohort_members, notifications_queue, user_intelligence, redemptions,
+# community_challenge_contributions and api_keys were all "referenced in Privacy.php" and all
+# survived a GDPR erasure request. The export was missing a different seven, including the member's
+# kudos. Mere textual presence is not coverage.
+#
+# Both paths are now derived from the SCHEMA (MemberData::member_tables()), so a table cannot be
+# forgotten — it is covered on the day it is created. This rule now verifies that the derivation is
+# still in place, rather than trying to re-derive it here and drift in its own way.
+#
+# See plan/PRIVACY-MODEL.md § Cross-cutting principles #6.
 check_privacy_coverage_for_user_scoped_surfaces() {
     local privacy_file="$PLUGIN_DIR/src/Engine/Privacy.php"
     if [ ! -f "$privacy_file" ]; then
@@ -207,10 +214,31 @@ check_privacy_coverage_for_user_scoped_surfaces() {
         }
     ' "$PLUGIN_DIR/src/Engine/Installer.php" 2>/dev/null | sort -u)
 
+    local member_data="$PLUGIN_DIR/src/Engine/MemberData.php"
+
+    if [ ! -f "$member_data" ]; then
+        violation "Rule 11 — src/Engine/MemberData.php missing: nothing derives the privacy surface from the schema"
+        return
+    fi
+
+    # The erase path must go through the schema-driven purge, not a hand-list.
+    if ! grep -q 'MemberData::purge( $user_id )' "$privacy_file"; then
+        missing="${missing}    erase_user_data() must call MemberData::purge() — a hand-listed set of tables is what leaked.\n"
+    fi
+
+    # The export must have the schema-driven catch-all, so it cannot omit a table either.
+    if ! grep -q 'MemberData::export_rows( $user_id )' "$privacy_file"; then
+        missing="${missing}    export_user_data() must append MemberData::export_rows() — the curated groups omitted 7 tables.\n"
+    fi
+
+    # And the derivation itself must still read the schema.
+    if ! grep -q 'SHOW COLUMNS FROM' "$member_data"; then
+        missing="${missing}    MemberData must derive its tables from the SCHEMA (SHOW COLUMNS). A hardcoded list drifts.\n"
+    fi
+
+    # Tables are schema-derived, so they cannot be missed — but the count is worth reporting.
     for tbl in $table_names; do
-        if ! grep -q "$tbl" "$privacy_file"; then
-            missing="${missing}    Table $tbl — has user_id column but not referenced in Privacy.php\n"
-        fi
+        : # covered by MemberData::member_tables(); nothing to hand-check.
     done
 
     # User-meta keys — every literal 'wb_gam_*' meta_key passed to
@@ -224,19 +252,25 @@ check_privacy_coverage_for_user_scoped_surfaces() {
                 | tr -d ' ' \
                 | sort -u)
 
+    # User meta is NOT schema-discoverable (WordPress owns that table), so it is the one place a list
+    # is unavoidable — which makes it the one place this rule still has to do real work. The keys live
+    # in MemberData::USER_META_KEYS (erase) and must also appear in Privacy.php (export).
     for key in $meta_keys; do
+        if ! grep -q "['\"]$key['\"]" "$member_data"; then
+            missing="${missing}    User meta '$key' — not in MemberData::USER_META_KEYS, so a GDPR erase leaves it behind\n"
+        fi
         if ! grep -q "['\"]$key['\"]" "$privacy_file"; then
-            missing="${missing}    User meta '$key' — used elsewhere but not referenced in Privacy.php\n"
+            missing="${missing}    User meta '$key' — not in Privacy.php, so the data export omits it\n"
         fi
     done
 
     if [ -n "$missing" ]; then
         violation "Rule 11 — user-scoped surfaces missing from Privacy::export_user_data + erase_user_data:"
         printf "%b" "$missing"
-        echo "    Fix: add the table/meta to BOTH export_user_data and erase_user_data."
+        echo "    Fix: meta keys go in MemberData::USER_META_KEYS (erase) AND Privacy.php (export)."
         echo "         See plan/PRIVACY-MODEL.md § Cross-cutting principles #6."
     else
-        ok "Rule 11 — every user-scoped table + meta key is wired into Privacy.php"
+        ok "Rule 11 — export + erase are both derived from the schema; every meta key is covered"
     fi
 }
 

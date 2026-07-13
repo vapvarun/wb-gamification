@@ -412,6 +412,9 @@ final class Privacy {
 				'wb_gam_level_id'              => __( 'Current level ID (cached)', 'wb-gamification' ),
 				'wb_gam_level_name'            => __( 'Current level name (cached)', 'wb-gamification' ),
 				'wb_gam_league_tier'           => __( 'Cohort league tier', 'wb-gamification' ),
+				// Erased since 1.4.1, never exported until now. The member's own personal record is
+				// their data; "we delete it but will not show it to you" is the wrong way round.
+				'wb_gam_pr_best_week'          => __( 'Personal record — best week', 'wb-gamification' ),
 				'wb_gam_sandboxed'             => __( 'Excluded from earning (sandboxed)', 'wb-gamification' ),
 			);
 			$meta_rows   = array();
@@ -555,6 +558,46 @@ final class Privacy {
 		// if it did not fatal first.
 		$done = ( $offset + self::EXPORT_PAGE_SIZE ) >= ( $points_total + $events_total );
 
+		// CATCH-ALL: anything the curated groups above do not cover.
+		//
+		// The groups above are hand-written, and they are worth keeping -- an export a human cannot
+		// read is a poor answer to "what do you hold on me?". But hand-written is also how they came
+		// to omit the member's KUDOS, their cohort history, their redemptions, their challenge log,
+		// their queued notifications and their intelligence profile. Seven tables in, ten tables out.
+		//
+		// So the curated groups stay, and everything they missed is appended here, straight from the
+		// schema. A table added next month is in the export the day it is created, whether or not
+		// anyone remembers this file exists.
+		$covered = array( 'wb_gam_points', 'wb_gam_events', 'wb_gam_streaks', 'wb_gam_user_badges', 'wb_gam_submissions', 'wb_gam_member_prefs' );
+
+		foreach ( MemberData::export_rows( $user_id ) as $table => $rows ) {
+			if ( in_array( $table, $covered, true ) || ! $rows ) {
+				continue;
+			}
+
+			foreach ( $rows as $i => $row ) {
+				$items = array();
+
+				foreach ( $row as $column => $value ) {
+					$items[] = array(
+						'name'  => (string) $column,
+						'value' => is_scalar( $value ) ? (string) $value : (string) wp_json_encode( $value ),
+					);
+				}
+
+				$data_groups[] = array(
+					'group_id'    => 'wb-gam-' . str_replace( '_', '-', $table ),
+					'group_label' => sprintf(
+						/* translators: %s: database table holding the member's data. */
+						__( 'Gamification — %s', 'wb-gamification' ),
+						str_replace( 'wb_gam_', '', $table )
+					),
+					'item_id'     => $table . '-' . $i,
+					'data'        => $items,
+				);
+			}
+		}
+
 		return array(
 			'data' => $data_groups,
 			'done' => $done,
@@ -597,106 +640,24 @@ final class Privacy {
 			'point_type'
 		);
 
-		$removed = 0;
+		// ONE purge path, shared with `deleted_user`.
+		//
+		// This used to hand-list the tables it deleted from, and that list was written once and then
+		// drifted: notifications_queue (23k rows on the dev site), cohort_members (11k), user_intelligence,
+		// redemptions, community-challenge contributions and api_keys were all added AFTER it and were
+		// never added TO it. So a member who exercised their right to erasure was not, in fact, erased.
+		//
+		// The list was the bug. MemberData asks the schema which tables reference a member, so a table
+		// added tomorrow is covered on the day it is created rather than the day someone remembers.
+		$purged  = MemberData::purge( $user_id );
+		$removed = array_sum( $purged );
 
-		// Atomic erase — every delete must succeed or none. Without the
-		// transaction, an interruption between deletes leaves an inconsistent
-		// half-erased state (e.g. ledger gone but user_totals intact, which
-		// would let get_total() keep returning the stale balance).
-		$wpdb->query( 'START TRANSACTION' );
-
-		// Events log.
-		$removed += (int) $wpdb->delete( $wpdb->prefix . 'wb_gam_events', array( 'user_id' => $user_id ), array( '%d' ) );
-
-		// Points ledger.
-		$removed += (int) $wpdb->delete( $wpdb->prefix . 'wb_gam_points', array( 'user_id' => $user_id ), array( '%d' ) );
-
-		// Materialised user-totals — must mirror the ledger delete, otherwise
-		// the user's row keeps a non-zero balance after GDPR erase. Same
-		// applies to the leaderboard cache (snapshot retains the user's rank).
-		$removed += (int) $wpdb->delete( $wpdb->prefix . 'wb_gam_user_totals', array( 'user_id' => $user_id ), array( '%d' ) );
-		$removed += (int) $wpdb->delete( $wpdb->prefix . 'wb_gam_leaderboard_cache', array( 'user_id' => $user_id ), array( '%d' ) );
-
-		// Earned badges.
-		$removed += (int) $wpdb->delete( $wpdb->prefix . 'wb_gam_user_badges', array( 'user_id' => $user_id ), array( '%d' ) );
-		// Removing a member's badges changes every badge's rarity — drop the
-		// cached aggregation (BadgeEngine owns the table and the cache).
-		BadgeEngine::flush_rarity_cache();
-
-		// Streak.
-		$removed += (int) $wpdb->delete( $wpdb->prefix . 'wb_gam_streaks', array( 'user_id' => $user_id ), array( '%d' ) );
-
-		// Challenge log.
-		$removed += (int) $wpdb->delete( $wpdb->prefix . 'wb_gam_challenge_log', array( 'user_id' => $user_id ), array( '%d' ) );
-
-		// Kudos — as giver.
-		$removed += (int) $wpdb->delete( $wpdb->prefix . 'wb_gam_kudos', array( 'giver_id' => $user_id ), array( '%d' ) );
-
-		// Kudos — as receiver.
-		$removed += (int) $wpdb->delete( $wpdb->prefix . 'wb_gam_kudos', array( 'receiver_id' => $user_id ), array( '%d' ) );
-
-		// Member preferences.
-		$removed += (int) $wpdb->delete( $wpdb->prefix . 'wb_gam_member_prefs', array( 'user_id' => $user_id ), array( '%d' ) );
-
-		// UGC submissions (v1.0 sprint). The user's own submissions are deleted
-		// outright. Submissions where the erased user was the *reviewer* (admin
-		// action) are anonymized — reviewer_id zeroed but the row retained, so
-		// the audit trail of what was approved/rejected isn't lost when an
-		// admin departs.
-		$removed += (int) $wpdb->delete( $wpdb->prefix . 'wb_gam_submissions', array( 'user_id' => $user_id ), array( '%d' ) );
-		$wpdb->update(
-			$wpdb->prefix . 'wb_gam_submissions',
-			array( 'reviewer_id' => 0 ),
-			array( 'reviewer_id' => $user_id ),
-			array( '%d' ),
-			array( '%d' )
-		);
-
-		// User meta — personal-record keys + v1.0 sprint additions + derived
-		// caches. All of these are user-scoped data and must be removed under
-		// GDPR Art. 17. The list mirrors the export side above; bin/coding-
-		// rules-check.sh Rule 11 enforces both lists stay in sync as new
-		// surfaces are added.
-		$user_meta_keys = array(
-			'wb_gam_pr_best_week',         // personal-record best week.
-			'wb_gam_login_streak',         // login bonus engine — current streak.
-			'wb_gam_login_streak_max',     // login bonus engine — best streak.
-			'wb_gam_login_last_award',     // login bonus engine — last award timestamp.
-			'wb_gam_seen_first_earn_toast', // notification bridge — one-time flag.
-			'wb_gam_dismissed_welcome',    // settings page — admin welcome dismissal.
-			'wb_gam_dismissed_checklist',  // settings page — admin setup-checklist dismissal.
-			'wb_gam_setup_seen',           // SetupWizard — admin wizard dismissal flag.
-			'wb_gam_profile_public',       // member's own privacy choice.
-			'wb_gam_level_id',             // LevelEngine — denormalized current level (cache).
-			'wb_gam_level_name',           // LevelEngine — denormalized level name (cache).
-			'wb_gam_league_tier',          // CohortEngine — current cohort league tier.
-			'wb_gam_sandboxed',            // Access settings — per-user earning veto.
-			// Notification consumer cursors — NotificationBridge writes one
-			// per consumer (footer/heartbeat/rest). Pre-1.4.1 these three
-			// integers survived GDPR erase as orphan rows keyed on the
-			// deleted user's id (audit/DATA-FLOW-NOTIFICATIONS-2026-05-27.md §G8).
-			'wb_gam_notif_cursor_footer',
-			'wb_gam_notif_cursor_heartbeat',
-			'wb_gam_notif_cursor_rest',
-		);
-		foreach ( $user_meta_keys as $meta_key ) {
-			delete_user_meta( $user_id, $meta_key );
-		}
-
-		$wpdb->query( 'COMMIT' );
-
-		// Bust the per-type object-cache key matching what get_total reads.
-		// Without this loop, get_total returns the cached pre-erase balance
-		// for up to the cache TTL after the user's data is gone.
+		// Bust the per-type object-cache key matching what get_total reads. Without this, get_total
+		// returns the cached pre-erase balance for up to the cache TTL after the user's data is gone.
 		foreach ( $pt_slugs as $slug ) {
-			wp_cache_delete( PointsEngine::cache_key_total( $user_id, (string) $slug ), 'wb_gamification' );
+			wp_cache_delete( 'wb_gam_total_' . $user_id . '_' . $slug, 'wb_gamification' );
 		}
 
-		/**
-		 * Fires after a user's gamification data has been erased.
-		 *
-		 * @param int $user_id The user ID whose data was erased.
-		 */
 		do_action( 'wb_gam_user_data_erased', $user_id );
 
 		return array(

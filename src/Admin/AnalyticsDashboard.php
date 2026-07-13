@@ -338,9 +338,21 @@ final class AnalyticsDashboard {
 		);
 
 		// Active members (at least 1 point in period).
+		//
+		// EVERY member count on this dashboard joins wp_users, and that is not defensive noise.
+		//
+		// Nothing cleaned up after a deleted member before 1.6.4, so these tables are full of rows
+		// belonging to people who no longer exist -- 11,378 orphaned streak rows against 152 real ones
+		// on the dev site. Counting those rows against a denominator of LIVE members is what produced
+		// "6822.5% streak health" and "125.8% of active members" on a screen an owner is supposed to
+		// make decisions from. The purge (MemberData) stops new orphans; this makes the dashboard
+		// truthful on the sites that already have them, today, without deleting anything.
 		$active_members = (int) $wpdb->get_var(
 			$wpdb->prepare(
-				"SELECT COUNT(DISTINCT user_id) FROM {$wpdb->prefix}wb_gam_points WHERE created_at >= %s",
+				"SELECT COUNT(DISTINCT p.user_id)
+				   FROM {$wpdb->prefix}wb_gam_points p
+				   JOIN {$wpdb->users} u ON u.ID = p.user_id
+				  WHERE p.created_at >= %s",
 				$since
 			)
 		);
@@ -356,10 +368,24 @@ final class AnalyticsDashboard {
 			)
 		);
 
-		// Badge earner pct (unique users who earned any badge in period vs active members).
+		// Badge earners, as a share of active members.
+		//
+		// The label says "% of active members", so the numerator has to BE a subset of active members
+		// -- otherwise the figure is not a percentage of anything. It was counting every member who
+		// earned a badge in the window (including ghosts, and including members who earned a tenure
+		// badge without being active at all) over a denominator of active members, so it could sail
+		// past 100% and did: 125.8%.
 		$badge_earners    = (int) $wpdb->get_var(
 			$wpdb->prepare(
-				"SELECT COUNT(DISTINCT user_id) FROM {$wpdb->prefix}wb_gam_user_badges WHERE earned_at >= %s",
+				"SELECT COUNT(DISTINCT b.user_id)
+				   FROM {$wpdb->prefix}wb_gam_user_badges b
+				   JOIN {$wpdb->users} u ON u.ID = b.user_id
+				  WHERE b.earned_at >= %s
+				    AND EXISTS (
+				        SELECT 1 FROM {$wpdb->prefix}wb_gam_points p
+				         WHERE p.user_id = b.user_id AND p.created_at >= %s
+				    )",
+				$since,
 				$since
 			)
 		);
@@ -386,9 +412,15 @@ final class AnalyticsDashboard {
 			? round( ( $challenges_completed / $challenges_started ) * 100, 1 )
 			: 0;
 
-		// Active streaks (current_streak > 0).
+		// Active streaks (current_streak > 0), counting only members who still exist.
+		//
+		// This is the one that printed 6822.5%: 11,530 streak rows over 169 live members, because
+		// 11,378 of those rows belonged to members who had been deleted.
 		$active_streaks    = (int) $wpdb->get_var(
-			"SELECT COUNT(*) FROM {$wpdb->prefix}wb_gam_streaks WHERE current_streak > 0"
+			"SELECT COUNT(DISTINCT s.user_id)
+			   FROM {$wpdb->prefix}wb_gam_streaks s
+			   JOIN {$wpdb->users} u ON u.ID = s.user_id
+			  WHERE s.current_streak > 0"
 		);
 		$streak_health_pct = $total_members > 0
 			? round( ( $active_streaks / $total_members ) * 100, 1 )
