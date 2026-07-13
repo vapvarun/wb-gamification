@@ -58,7 +58,7 @@ final class ScaleCommand {
 	/**
 	 * First user ID the seeder claims for synthetic members.
 	 *
-	 * seed() and teardown() used to write this number out twice, separately. Two copies of the one
+	 * Seed() and teardown() used to write this number out twice, separately. Two copies of the one
 	 * fact that decides which rows get DELETED is not a place to save a constant.
 	 *
 	 * The ID alone does not identify a seeded member -- see teardown(), which also requires the
