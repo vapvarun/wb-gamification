@@ -138,7 +138,26 @@ All data is preserved in the database. Reactivating the plugin restores everythi
 Stability and scale release. Contains a fix for a bug that could delete other plugins' queued background jobs, including WooCommerce orders and subscription renewals. Upgrading is strongly recommended for every site.
 
 * New      - Weekly cap is now settable per action in Settings > Points. The limit was already enforced, but there was no field to set it.
+* New      - A badge can now require more than one condition. Build a rule from any of eight condition types (points, points in a period, action count, level reached, badge earned, streak, tenure, admin awarded) and require all of them or any of them.
+* New      - The four tenure badges and the three site-first badges are now ordinary editable rules. They were awarded by hardcoded engines and the library told you they were manual, so the only way to change what "2-Year Member" meant was to edit PHP.
+* New      - When you save a badge rule you can choose to award it to members who already qualify. It is off by default: leave it off and the badge is earned from now on.
+* New      - Kudos Moderation can be filtered by giver, by receiver, and by date range, and kudo-trading pairs are now detected across the whole table rather than only the page you are looking at.
 * Improve  - Points, badges, levels, and the Hub follow the active theme's colours in both light and dark mode on BuddyX, BuddyX Pro, and Reign.
+* Improve  - Awarding points costs fewer database queries. A badge is only evaluated when something that could actually change its answer has happened, so a "publish 10 posts" badge no longer runs a count every time a member reacts to a comment.
+* Improve  - The Daily Points Trend chart on Analytics has an axis, labels and a baseline, and a quiet day is now visible instead of rounding away to nothing.
+* Improve  - Empty blocks tell a logged-out visitor how to log in instead of only telling them to.
+* Fix      - Deleting a member left all of their gamification data behind for ever: their points, streaks, badges, cohort rows and queued notifications stayed in the database. Those rows also broke the Analytics dashboard, which could report figures such as "6822% streak health" because it counted rows belonging to members who no longer existed. Deleting a member now removes their data, the dashboard is correct on sites that already have orphaned rows, and `wp wb-gamification member purge-orphans` cleans up the rows an earlier version left behind.
+* Fix      - Failed webhook deliveries were never retried. The retry looked up a column that does not exist, the database refused the query, and the job quietly did nothing. Retries now fire, and a subscription you have switched off is still respected.
+* Fix      - The leaderboard could show two different point totals for the same member on the same page: the board row and the "your standing" strip below it read from different places. They now agree.
+* Fix      - Challenges opened and closed on the site's clock on the page but on the database's clock in the engine that awards progress. On a site ahead of UTC a challenge could appear open and award nothing for hours; on a site behind UTC it kept awarding after it had visibly closed.
+* Fix      - The Daily Points Trend chart drew an empty column for days that had points on any site not set to UTC.
+* Fix      - The user status bar rendered on top of the theme's header. It now measures whatever is actually at the top of the page, at any screen size.
+* Fix      - Revoking kudos took back the points but still congratulated the receiver with a "you got kudos" notification for a kudos that no longer existed.
+* Fix      - The welcome notice could not be dismissed. Clicking its X hid it for one page view and it returned on the next, on every plugin page, until you ran the setup wizard. There is now a "No thanks" that means it.
+* Fix      - The redemption confirmation was announced to screen readers as a modal while trapping nothing, and pressing Redeem never moved keyboard focus into it. It is a real dialog now: focus moves in, Escape closes it, and focus returns to the button you pressed.
+* Fix      - Level-up and streak celebrations were announced as modal dialogs a member could not escape. They are announcements, and they are announced as such.
+* Fix      - Granting a staff role the "manage rules" or "view analytics" capability had no effect on the actions and recap endpoints, which still demanded full administrator rights.
+* Fix      - Importing from GamiPress reported success and imported nothing on sites running a version older than 6.9.4, where its points are stored differently. The import now reads whichever shape the site actually has.
 * Fix      - A reward with limited stock became unlimited the moment it sold out, and could then be redeemed without limit. Stock now has three distinct states: empty means unlimited, 0 means sold out, and any positive number is the quantity remaining. Rewards you currently run with a stock of 0 stay unlimited; they are migrated on upgrade.
 * Fix      - The per-member kudos cooldown was never applied on sites in a timezone behind UTC, so members could send kudos to the same person repeatedly. The cooldown is now enforced in every timezone.
 * Fix      - The weekly digest's "this week" window was offset by the site's timezone, so the email could omit recent activity or include activity from the previous week. It now covers the correct seven days on any site.
@@ -158,7 +177,10 @@ Stability and scale release. Contains a fix for a bug that could delete other pl
 * Fix      - Badge rarity is cached, so public badge pages no longer aggregate the badge table on every request.
 * Fix      - Setup wizard's Coaching Platform and Nonprofit templates no longer seed actions that cannot fire; the wizard now refuses to save an action it does not recognise.
 * Fix      - Licence assets no longer 404 on hosts where the plugin directory is a symlink or the document root does not prefix-match the plugin path.
+* Security - A member exercising their right to erasure was not fully erased. The eraser removed data from the tables it knew about, and it did not know about six of them, including queued notifications, cohort membership and redemptions. The personal-data export omitted a member's kudos, cohort history, redemptions and challenge log. Both now cover every table that holds a member's data, and cannot fall behind when a new one is added.
 * Security - The Action Scheduler cleanup no longer deletes other plugins' queued work. It previously removed every pending Action Scheduler job older than the retention window, with no ownership check, which could destroy WooCommerce orders and subscription renewals on any site. Cleanup is now fenced to this plugin's own jobs, and queued work is never aged out as routine housekeeping.
+* Dev      - Staff permissions can be read and set over REST at `GET|PUT /wb-gamification/v1/settings/capabilities` (administrator only).
+* Dev      - New filter `wb_gam_empty_state_{block}` to change what a block says when it has nothing to show.
 * Dev      - `wp wb-gamification scale benchmark` now covers the badge, notification, and streak read paths, and a green run against a seeded dataset is required before a release can be packaged.
 
 = 1.6.3 - July 2026 =
