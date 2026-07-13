@@ -4,10 +4,12 @@
  * Phase C of the Wbcom Block Quality Standard migration replaces the
  * pre-existing inline `<script>` + raw `fetch` + `window.confirm`
  * pattern with the Interactivity API: every interactive element uses
- * `data-wp-on--*` directives, the redeem call is a plain `fetch` POST
- * (the `@wordpress/api-fetch` package is not yet exposed as an ES
- * module by core), and the confirmation dialog is in-DOM markup
- * toggled via `data-wp-bind--hidden`.
+ * `data-wp-on--*` directives, the redeem call goes through the shared
+ * `window.wbGam.rest()` client (assets/js/rest.js) rather than
+ * `@wordpress/api-fetch` (that package is not yet exposed as an ES
+ * module by core, and wbGam.rest() is what every other frontend
+ * surface in this plugin already uses), and the confirmation dialog
+ * is in-DOM markup toggled via `data-wp-bind--hidden`.
  *
  * Each block instance carries its own per-instance context (item id,
  * balance, fetch state) via `data-wp-context`. The endpoint URL +
@@ -140,22 +142,17 @@ store( NS, {
 			}
 
 			try {
-				const response = yield fetch( endpoint, {
-					signal: ( typeof AbortSignal !== 'undefined' && AbortSignal.timeout ) ? AbortSignal.timeout( 15000 ) : undefined,
+				const result = yield window.wbGam.rest( endpoint, {
 					method: 'POST',
-					credentials: 'same-origin',
-					headers: {
-						'Content-Type': 'application/json',
-						'X-WP-Nonce': nonce,
-					},
-					body: JSON.stringify( { item_id: ctx.itemId } ),
+					body: { item_id: ctx.itemId },
+					nonce,
 				} );
 
-				const body = yield response.json();
+				const body = result.data;
 
 				ctx.loading = false;
 
-				if ( ! response.ok ) {
+				if ( ! result.ok ) {
 					ctx.errorMessage =
 						( body && body.message ) ||
 						root?.dataset?.i18nFailed ||

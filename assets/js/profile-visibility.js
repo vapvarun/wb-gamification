@@ -74,24 +74,11 @@
 				status.textContent = strings.saving;
 			}
 
-			fetch( root.getAttribute( 'data-rest-url' ), {
-				signal:
-					typeof AbortSignal !== 'undefined' && AbortSignal.timeout
-						? AbortSignal.timeout( 15000 )
-						: undefined,
+			window.wbGam.rest( root.getAttribute( 'data-rest-url' ), {
 				method: 'POST',
-				credentials: 'same-origin',
-				headers: {
-					'Content-Type': 'application/json',
-					'X-WP-Nonce': root.getAttribute( 'data-rest-nonce' ),
-				},
-				body: JSON.stringify( { public: nextPublic } ),
+				body: { public: nextPublic },
+				nonce: root.getAttribute( 'data-rest-nonce' ),
 			} )
-				.then( function ( r ) {
-					return r.json().then( function ( d ) {
-						return { ok: r.ok, data: d };
-					} );
-				} )
 				.then( function ( result ) {
 					if (
 						result.ok &&

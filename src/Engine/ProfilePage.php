@@ -381,7 +381,7 @@ final class ProfilePage {
 		wp_enqueue_script(
 			'wb-gam-profile-visibility',
 			WB_GAM_URL . 'assets/js/profile-visibility.js',
-			array( 'wb-gam-mount' ),
+			array( 'wb-gam-mount', 'wb-gam-rest' ),
 			WB_GAM_VERSION,
 			true
 		);

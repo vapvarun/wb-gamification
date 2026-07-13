@@ -393,11 +393,12 @@ final class ShortcodeHandler {
 			WB_GAM_VERSION
 		);
 		// wb-gam-mount defines wbGam.onMount(), which this script calls at parse time -- so it is a
-		// hard dependency, not a nicety. Without it the kudos form binds nothing.
+		// hard dependency, not a nicety. Without it the kudos form binds nothing. wb-gam-rest defines
+		// wbGam.rest(), used for the POST itself (shared fetch + expired-nonce retry).
 		wp_enqueue_script(
 			$handle,
 			plugins_url( 'assets/js/give-kudos.js', WB_GAM_FILE ),
-			array( 'wb-gam-mount' ),
+			array( 'wb-gam-mount', 'wb-gam-rest' ),
 			WB_GAM_VERSION,
 			true
 		);

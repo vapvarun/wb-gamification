@@ -179,15 +179,25 @@ final class Registrar {
 			// before it renders anything.
 			//
 			// Declaring the dependency here, once, is what makes the ordering a fact rather than a
-			// coincidence. It is added to EVERY view script rather than to a list of the four that
-			// currently use onMount -- a list is not a mechanism, and the fifth block to need it would
-			// be debugged the hard way. mount.js is small, and it only loads on pages that render one
-			// of our blocks.
+			// coincidence. It is added to EVERY view script rather than to a list of the ones that
+			// currently use onMount / rest -- a list is not a mechanism, and the next block to need
+			// one would be debugged the hard way. Both utilities are small, and only load on pages
+			// that render one of our blocks.
+			//
+			// wb-gam-rest (wbGam.rest()) is the shared fetch + X-WP-Nonce client with the expired-
+			// nonce retry path; any view script that talks to our REST API needs it for the same
+			// reason it needs wb-gam-mount.
 			foreach ( array_unique( array_filter( (array) $block_type->view_script_handles ) ) as $handle ) {
 				$script = wp_scripts()->query( (string) $handle, 'registered' );
 
-				if ( $script && ! in_array( 'wb-gam-mount', $script->deps, true ) ) {
-					$script->deps[] = 'wb-gam-mount';
+				if ( ! $script ) {
+					continue;
+				}
+
+				foreach ( array( 'wb-gam-mount', 'wb-gam-rest' ) as $shared_dep ) {
+					if ( ! in_array( $shared_dep, $script->deps, true ) ) {
+						$script->deps[] = $shared_dep;
+					}
 				}
 			}
 		}

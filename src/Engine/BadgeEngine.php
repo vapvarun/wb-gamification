@@ -607,9 +607,25 @@ final class BadgeEngine {
 		// Shared state, primed once per pass. Six of the eight condition types answer from this and
 		// cost zero queries.
 		$state = array(
-			'total'  => $total,
-			'earned' => $earned,
-			'streak' => null, // lazily read, only if a streak_days condition survives the gate
+			'total'         => $total,
+			'earned'        => $earned,
+			'streak'        => null, // lazily read, only if a streak_days condition survives the gate
+			// Per-action counts, memoized as they are asked for.
+			//
+			// `action_count` was the one condition type that went to the database EVERY time it was
+			// evaluated, and tiered badges are the normal way people use it: Bronze at 5 comments,
+			// Silver at 25, Gold at 100 -- three badges, one action, one member. Every one of them is
+			// relevant when that action fires (correctly: the gate cannot know which tier is close),
+			// so every one of them ran its own COUNT(*).
+			//
+			// Measured on the dev site: a steady-state award cost 11 queries. With 20 tiered badges on
+			// the same action it cost 31 -- twenty byte-identical COUNT(*) queries, in a row, all
+			// asking exactly the same question about exactly the same member, inside a single award.
+			// The count cannot change between them: nothing writes to the ledger in the middle of an
+			// evaluation pass. Twenty round trips to learn one number.
+			//
+			// Keyed by action_id, because a member can hold badges on several actions.
+			'action_counts' => array(),
 		);
 
 		$newly_awarded = array();
@@ -758,7 +774,17 @@ final class BadgeEngine {
 				// job properly: this is only reached when the action it names actually fired --
 				// whatever the required count is. That fast path is why a "publish 10 posts" badge
 				// used to run a COUNT(*) every time someone reacted to a comment.
-				return PointsEngine::get_action_count( $user_id, $action_id ) >= $required;
+				//
+				// Answered from the pass memo. Tiered badges (Bronze 5 / Silver 25 / Gold 100 on one
+				// action) are the ordinary way this condition is used, and every tier is relevant when
+				// that action fires -- so each tier used to run its own COUNT(*) for the same member
+				// and the same action, in the same pass, and get the same answer. It cannot differ:
+				// nothing writes to the ledger between two conditions of one evaluation.
+				if ( ! isset( $state['action_counts'][ $action_id ] ) ) {
+					$state['action_counts'][ $action_id ] = PointsEngine::get_action_count( $user_id, $action_id );
+				}
+
+				return (int) $state['action_counts'][ $action_id ] >= $required;
 
 			case 'points_in_period':
 				return self::points_in_period( $user_id, (string) ( $condition['period'] ?? 'week' ) )

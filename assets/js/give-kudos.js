@@ -43,21 +43,11 @@
 			submit.disabled    = true;
 			status.textContent = i18n.sending || '';
 
-			fetch( form.dataset.restUrl, {
-				signal: ( typeof AbortSignal !== 'undefined' && AbortSignal.timeout ) ? AbortSignal.timeout( 15000 ) : undefined,
-				method:      'POST',
-				credentials: 'same-origin',
-				headers:     {
-					'Content-Type': 'application/json',
-					'X-WP-Nonce':   form.dataset.restNonce,
-				},
-				body: JSON.stringify( body ),
+			window.wbGam.rest( form.dataset.restUrl, {
+				method: 'POST',
+				body:   body,
+				nonce:  form.dataset.restNonce,
 			} )
-				.then( function ( r ) {
-					return r.json().then( function ( d ) {
-						return { ok: r.ok, data: d };
-					} );
-				} )
 				.then( function ( result ) {
 					if ( result && result.ok ) {
 						status.textContent = i18n.success || '';

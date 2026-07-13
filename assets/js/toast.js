@@ -402,12 +402,10 @@
 	 * this endpoint again.
 	 */
 	function firstPaintFallback() {
-		fetch( wbGamToast.restUrl + 'members/me/toasts', {
-			signal: ( typeof AbortSignal !== 'undefined' && AbortSignal.timeout ) ? AbortSignal.timeout( 15000 ) : undefined,
-			headers: { 'X-WP-Nonce': wbGamToast.nonce },
-			credentials: 'same-origin'
+		window.wbGam.rest( wbGamToast.restUrl + 'members/me/toasts', {
+			nonce: wbGamToast.nonce,
 		} )
-			.then( function ( r ) { return r.ok ? r.json() : []; } )
+			.then( function ( result ) { return result.ok ? result.data : []; } )
 			.then( renderToasts )
 			.catch( function () { /* silent — broker will catch up */ } );
 	}

@@ -1,9 +1,10 @@
 /**
  * Submit Achievement — view-side handler.
  *
- * Listens for form submit, POSTs to /submissions, shows inline success
- * or error. No external nonce middleware — the rest_url + nonce + every
- * user-facing string are passed via data-attrs on the wrapper. PHP
+ * Listens for form submit, POSTs to /submissions via the shared
+ * `window.wbGam.rest()` client (assets/js/rest.js — handles the expired-
+ * nonce retry), and shows inline success or error. The rest_url + nonce +
+ * every user-facing string are passed via data-attrs on the wrapper. PHP
  * renders those through `__('…', 'wb-gamification')` so the view.js
  * stays locale-agnostic.
  */
@@ -64,17 +65,11 @@
 				evidence_url: fd.get( 'evidence_url' ) || '',
 			};
 
-			fetch( restUrl + '/submissions', {
-				signal: ( typeof AbortSignal !== 'undefined' && AbortSignal.timeout ) ? AbortSignal.timeout( 15000 ) : undefined,
+			window.wbGam.rest( restUrl + '/submissions', {
 				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-					'X-WP-Nonce': nonce,
-				},
-				credentials: 'same-origin',
-				body: JSON.stringify( body ),
+				body,
+				nonce,
 			} )
-				.then( ( r ) => r.json().then( ( data ) => ( { ok: r.ok, data } ) ) )
 				.then( ( { ok, data } ) => {
 					if ( ! ok || ( data && data.code ) ) {
 						setStatus( ( data && data.message ) || i18nFailed, 'error' );

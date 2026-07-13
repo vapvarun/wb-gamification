@@ -751,6 +751,7 @@ class MembersController extends WP_REST_Controller {
 		);
 	}
 
+
 	// ── Endpoint callbacks ────────────────────────────────────────────────────
 
 	/**

@@ -68,6 +68,22 @@ final class ScaleCommand {
 	 */
 	private const SEED_UID_BASE = 1000000;
 
+	/**
+	 * Most database queries one steady-state award may cost.
+	 *
+	 * Measured at 10 on the dev site after the 1.6.4 hot-path pass. The ceiling is deliberately not
+	 * 10: a little headroom keeps the gate from failing on an unrelated one-query change, while still
+	 * catching the failure that actually happens, which is never subtle. The badge N+1 this exists to
+	 * catch took a steady-state award from 11 queries to 31 on a site with twenty tiered badges.
+	 *
+	 * Every OTHER budget in this benchmark is a latency ceiling, and not one of them could see that:
+	 * twenty COUNT(*) queries at half a millisecond each pass every latency budget ever written.
+	 * Count the round trips, not just the time they took.
+	 *
+	 * @var int
+	 */
+	private const AWARD_QUERY_CEILING = 15;
+
 	private const BUDGETS_MS = array(
 		// ── Award hot path (measured since 2026-05-28) ───────────────────────
 		'get_total_pk'               => 5.0,
@@ -638,6 +654,28 @@ final class ScaleCommand {
 			}
 		);
 
+		// The award WRITE path, counted in QUERIES rather than milliseconds.
+		//
+		// Every budget above is a latency ceiling on a single read, and none of them can see the bug
+		// this gate exists for. A badge N+1 is twenty COUNT(*) queries that are each half a
+		// millisecond: every latency budget stays green while one award quietly costs twenty round
+		// trips. It happened -- tiered badges (Bronze/Silver/Gold on one action) each ran their own
+		// identical COUNT for the same member in the same pass, and a steady-state award went from 11
+		// queries to 31 on a site with twenty of them. Nothing in this benchmark noticed, because it
+		// only ever measured reads.
+		//
+		// So: count the queries in one award. The number is the thing that regresses.
+		//
+		// Counted with $wpdb->num_queries, which WordPress increments on every query no matter what.
+		// The first version of this gate asked for SAVEQUERIES first -- and SAVEQUERIES only controls
+		// the query LOG, not the counter, and WP-CLI has no flag to define it anyway. So the gate
+		// skipped itself on every run and printed a tidy yellow SKIPPED that nobody would read twice.
+		// A gate that cannot fail is not a gate; this one had that defect for about four minutes.
+		PointsEngine::award( $uid, 'wp_leave_comment', 5, 0, null, true ); // Warm caches; the first award of a request pays for everyone.
+		$before = $wpdb->num_queries;
+		PointsEngine::award( $uid, 'wp_leave_comment', 5, 0, null, true );
+		$award_queries = $wpdb->num_queries - $before;
+
 		// Render.
 		$failures = 0;
 		$failed   = array();
@@ -660,6 +698,24 @@ final class ScaleCommand {
 				)
 			);
 		}
+
+		$award_pass = $award_queries <= self::AWARD_QUERY_CEILING;
+
+		if ( ! $award_pass ) {
+			++$failures;
+			$failed[] = 'award_query_count';
+		}
+
+		\WP_CLI::line(
+			sprintf(
+				'%s%s%s%s',
+				str_pad( 'award_query_count', 30 ),
+				str_pad( $award_queries . ' q', 12 ),
+				str_pad( self::AWARD_QUERY_CEILING . ' q', 12 ),
+				$award_pass ? "\033[32mPASS\033[0m" : "\033[31mFAIL (over by " . ( $award_queries - self::AWARD_QUERY_CEILING ) . " queries)\033[0m"
+			)
+		);
+
 		\WP_CLI::line( str_repeat( '─', 72 ) );
 
 		// S-02: write the machine-readable result the release gate reads. Without

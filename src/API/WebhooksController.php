@@ -233,6 +233,9 @@ class WebhooksController extends WP_REST_Controller {
 			return new WP_Error( 'rest_insert_failed', __( 'Could not create webhook.', 'wb-gamification' ), array( 'status' => 500 ) );
 		}
 
+		// A brand-new subscription must start receiving deliveries now, not whenever a cache decides.
+		\WBGam\Engine\WebhookDispatcher::flush_cache();
+
 		$row = $this->fetch_row( $wpdb->insert_id );
 		// Return secret only on creation — not exposed in subsequent GET requests.
 		$data           = $this->prepare_item( $row );
@@ -277,6 +280,11 @@ class WebhooksController extends WP_REST_Controller {
 			return new WP_Error( 'rest_update_failed', __( 'Could not update webhook.', 'wb-gamification' ), array( 'status' => 500 ) );
 		}
 
+		// The dispatcher caches the active-subscription list (it used to re-read it on every award).
+		// Editing a webhook -- its URL, its events, or switching it off -- is exactly the moment that
+		// cache becomes a lie.
+		\WBGam\Engine\WebhookDispatcher::flush_cache();
+
 		return rest_ensure_response( $this->prepare_item( $this->fetch_row( $id ) ) );
 	}
 
@@ -300,6 +308,9 @@ class WebhooksController extends WP_REST_Controller {
 		if ( false === $deleted ) {
 			return new WP_Error( 'rest_delete_failed', __( 'Could not delete webhook.', 'wb-gamification' ), array( 'status' => 500 ) );
 		}
+
+		// A deleted webhook that keeps receiving deliveries is worse than one that never existed.
+		\WBGam\Engine\WebhookDispatcher::flush_cache();
 
 		// Clean up delivery log when a webhook is deleted.
 		WebhookDispatcher::clear_delivery_log( $id );

@@ -605,6 +605,31 @@ final class WB_Gamification {
 			true
 		);
 
+		// The one REST client. Give-kudos, profile-visibility, toast, submit-achievement and
+		// redemption-store each hand-rolled fetch + X-WP-Nonce and, with it, the same bug: a nonce
+		// baked into the page at render time expires (~24h) and nothing ever refreshed it. wbGam.rest()
+		// is the shared client with a retry-once-on-expired-nonce path. See assets/js/rest.js.
+		wp_register_script(
+			'wb-gam-rest',
+			WB_GAM_URL . 'assets/js/rest.js',
+			array(),
+			WB_GAM_VERSION,
+			true
+		);
+
+		// Core's OWN nonce endpoint, and deliberately not a route of ours.
+		//
+		// A refresh route under /wp-json/ cannot do this job: core decides who you are from the nonce
+		// BEFORE any route runs, so an endpoint that mints nonces would have to be shown a valid nonce
+		// first -- it can only help you when you did not need help. admin-ajax authenticates from the
+		// session cookie, which is the credential that is still good when the nonce has died. This is
+		// the same endpoint wp.apiFetch uses, for the same reason.
+		wp_localize_script(
+			'wb-gam-rest',
+			'wbGamRest',
+			array( 'nonceUrl' => admin_url( 'admin-ajax.php?action=rest-nonce' ) )
+		);
+
 		wp_register_script(
 			'wb-gamification-top-offset',
 			WB_GAM_URL . 'assets/js/top-offset.js',
@@ -621,7 +646,7 @@ final class WB_Gamification {
 			wp_enqueue_script(
 				'wb-gamification-toast',
 				WB_GAM_URL . 'assets/js/toast.js',
-				array( 'wb-gamification-realtime', 'wb-gamification-top-offset' ),
+				array( 'wb-gamification-realtime', 'wb-gamification-top-offset', 'wb-gam-rest' ),
 				WB_GAM_VERSION,
 				true
 			);

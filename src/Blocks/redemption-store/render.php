@@ -171,6 +171,13 @@ wp_enqueue_style( 'wb-gam-tokens' );
 // <dialog> now, so the browser gives us ESC, the focus trap and the inert background.
 wp_enqueue_script( 'wb-gam-dialog' );
 
+// The shared REST client: same fetch + X-WP-Nonce shape this file's view.js used to hand-roll, plus
+// the retry-once-on-expired-nonce path it didn't have. A viewScriptModule can't express this as a
+// script-module import (window.wbGam.rest is a runtime global, not an ES import) so, same as
+// wb-gam-dialog above, it is enqueued here explicitly rather than through Registrar's classic
+// view_script_handles dependency injection.
+wp_enqueue_script( 'wb-gam-rest' );
+
 BlockHooks::before(
 	'redemption-store',
 	$wb_gam_attrs,

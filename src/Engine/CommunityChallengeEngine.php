@@ -75,6 +75,20 @@ final class CommunityChallengeEngine {
 	private const BONUS_PAGE_SIZE = 500;
 
 	/**
+	 * Object-cache group. The plugin's one group -- shared with every other engine.
+	 */
+	private const CACHE_GROUP = 'wb_gamification';
+
+	/**
+	 * Seconds the "which challenges are running?" answer may be stale.
+	 *
+	 * Same 60s ChallengeEngine uses for the same question. A community challenge runs for days; a
+	 * minute at either end of it is not a thing anyone can perceive, and it is the difference between
+	 * asking the database once a minute and asking it on every award the site takes.
+	 */
+	private const CACHE_TTL = 60;
+
+	/**
 	 * Action Scheduler callback — awards the community-challenge bonus to one contributor.
 	 *
 	 * Each job carries its own (user_id, challenge_id, points) tuple,
@@ -114,29 +128,61 @@ final class CommunityChallengeEngine {
 	 * @param int   $points  Points awarded (unused but required by hook signature).
 	 */
 	public static function on_points_awarded( int $user_id, Event $event, int $points ): void {
+		// Find active community challenges that match this action.
+		//
+		// This ran on EVERY award, uncached -- a query against a table an admin edits perhaps a few
+		// times a year, asked thousands of times an hour, almost always to be told "nothing is
+		// running". Its sibling, ChallengeEngine::get_active_challenges_for_action(), answers the
+		// identical question about the identical kind of table and caches it for 60 seconds; this one
+		// simply never got the same treatment.
+		//
+		// 60s of staleness means a challenge the owner just switched on can take up to a minute to
+		// start counting contributions. That is the same trade the sibling already makes, and nobody
+		// has ever noticed, because a community challenge runs for days.
+		foreach ( self::active_challenges_for_action( (string) $event->action_id ) as $challenge ) {
+			self::record_contribution( (int) $challenge['id'], $user_id, $event );
+		}
+	}
+
+	/**
+	 * Active community challenges matching an action, cached per action.
+	 *
+	 * @param string $action_id Action that just fired.
+	 * @return array<int,array<string,mixed>> Rows: id, target_action, target_count, bonus_points.
+	 */
+	private static function active_challenges_for_action( string $action_id ): array {
 		global $wpdb;
+
+		$cache_key = 'wb_gam_cc_active_' . md5( $action_id );
+		$cached    = wp_cache_get( $cache_key, self::CACHE_GROUP );
+
+		if ( false !== $cached ) {
+			return (array) $cached;
+		}
 
 		$now = current_time( 'mysql' );
 
-		// Find active community challenges that match this action.
-		$challenges = $wpdb->get_results(
+		$rows = $wpdb->get_results(
 			$wpdb->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from $wpdb->prefix.
 				"SELECT id, target_action, target_count, bonus_points
 				   FROM {$wpdb->prefix}wb_gam_community_challenges
 				  WHERE status = 'active'
 				    AND (target_action = %s OR target_action = '*')
 				    AND starts_at <= %s
 				    AND ends_at >= %s",
-				$event->action_id,
+				$action_id,
 				$now,
 				$now
 			),
 			ARRAY_A
 		);
 
-		foreach ( $challenges as $challenge ) {
-			self::record_contribution( (int) $challenge['id'], $user_id, $event );
-		}
+		$data = $rows ?: array();
+
+		wp_cache_set( $cache_key, $data, self::CACHE_GROUP, self::CACHE_TTL );
+
+		return $data;
 	}
 
 	// ── Contribution recording ───────────────────────────────────────────────

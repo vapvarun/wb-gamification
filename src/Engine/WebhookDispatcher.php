@@ -37,6 +37,61 @@ final class WebhookDispatcher {
 	private const LOG_MAX_ENTRIES = 50;
 
 	/**
+	 * Object-cache group + key for the active-subscription list.
+	 */
+	private const CACHE_GROUP = 'wb_gamification';
+	private const CACHE_KEY   = 'wb_gam_active_webhooks';
+
+	/**
+	 * The active webhook subscriptions.
+	 *
+	 * This list used to be re-read from the database on EVERY award -- and twice in the same award
+	 * when that award also earned a badge, because the badge dispatch and the points dispatch each
+	 * fetched it independently. It describes a handful of Zapier/Make endpoints that change when an
+	 * admin adds or removes one, which is to say approximately never.
+	 *
+	 * Cached with no expiry and invalidated explicitly on write (see flush_cache()), because unlike a
+	 * time-windowed challenge there is no clock here: the answer is only ever wrong if somebody
+	 * CHANGES it, and when they do we are the ones changing it. A TTL would be a slower way of being
+	 * correct less often.
+	 *
+	 * @return array<int,array<string,mixed>> Rows: id, url, secret, events.
+	 */
+	private static function active_webhooks(): array {
+		$cached = wp_cache_get( self::CACHE_KEY, self::CACHE_GROUP );
+
+		if ( false !== $cached ) {
+			return (array) $cached;
+		}
+
+		global $wpdb;
+
+		$rows = $wpdb->get_results(
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from $wpdb->prefix; no user input.
+			"SELECT id, url, secret, events FROM {$wpdb->prefix}wb_gam_webhooks WHERE is_active = 1",
+			ARRAY_A
+		);
+
+		$data = $rows ?: array();
+
+		wp_cache_set( self::CACHE_KEY, $data, self::CACHE_GROUP );
+
+		return $data;
+	}
+
+	/**
+	 * Drop the cached subscription list.
+	 *
+	 * Must be called by every path that creates, edits, activates, deactivates or deletes a webhook.
+	 * A cache nobody invalidates is a bug with a delay on it.
+	 *
+	 * @return void
+	 */
+	public static function flush_cache(): void {
+		wp_cache_delete( self::CACHE_KEY, self::CACHE_GROUP );
+	}
+
+	/**
 	 * Register Action Scheduler delivery and retry hooks,
 	 * plus WordPress action listeners for all supported event types.
 	 *
@@ -204,12 +259,7 @@ final class WebhookDispatcher {
 		int $points = 0,
 		array $extra_data = array()
 	): void {
-		global $wpdb;
-
-		$webhooks = $wpdb->get_results(
-			"SELECT id, url, secret, events FROM {$wpdb->prefix}wb_gam_webhooks WHERE is_active = 1",
-			ARRAY_A
-		);
+		$webhooks = self::active_webhooks();
 
 		if ( empty( $webhooks ) ) {
 			return;
