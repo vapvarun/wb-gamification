@@ -139,6 +139,51 @@ final class ScaleCommand {
 		// with real users. Cleanup target: WHERE user_id >= 1000000.
 		$base_uid = 1000000;
 
+		// THE MEMBERS HAVE TO ACTUALLY EXIST, and until now they did not.
+		//
+		// This seeded 100,000 ledger rows for 10,000 members and never created a single one of them in
+		// wp_users. Every query that JOINs the users table -- the leaderboard, the analytics dashboard,
+		// the rank strip -- therefore threw all of them away and measured a result set of about 150
+		// rows. The benchmark then reported "100k-ready" against a board that never had 100k people on
+		// it. A benchmark that measures the wrong thing is worse than no benchmark, because it is
+		// believed.
+		//
+		// Inserted directly, in batches: wp_insert_user() fires hooks (including OUR OWN award hooks)
+		// and would take minutes and pollute the very ledger we are seeding.
+		$user_rows = array();
+		$user_ph   = array();
+		$user_args = array();
+
+		for ( $u = 0; $u < $user_count; $u++ ) {
+			$uid         = $base_uid + $u;
+			$user_ph[]   = '(%d, %s, %s, %s, %s, %s)';
+			$user_args[] = $uid;
+			$user_args[] = 'scaleuser' . $uid;
+			$user_args[] = 'scaleuser' . $uid;
+			$user_args[] = 'scaleuser' . $uid . '@scale.test';
+			$user_args[] = $now;
+			$user_args[] = 'Scale User ' . $uid;
+
+			if ( count( $user_ph ) >= 500 || $u === $user_count - 1 ) {
+				// The placeholders are literal '(%d, %s, ...)' groups built above; every value binds through
+				// $user_args. disable/enable, not ignore -- the sniff reports on the interpolated line
+				// INSIDE the call, which an ignore above it does not cover.
+				// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared
+				$wpdb->query(
+					$wpdb->prepare(
+						"INSERT IGNORE INTO {$wpdb->users} (ID, user_login, user_nicename, user_email, user_registered, display_name) VALUES "
+						. implode( ',', $user_ph ),
+						$user_args
+					)
+				);
+				// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared
+				$user_ph   = array();
+				$user_args = array();
+			}
+		}
+
+		\WP_CLI::log( sprintf( 'Created %s members in wp_users (the ledger rows need someone to belong to).', number_format_i18n( $user_count ) ) );
+
 		for ( $u = 0; $u < $user_count; $u += $batch_size ) {
 			$rows         = array();
 			$placeholders = array();
@@ -321,6 +366,14 @@ final class ScaleCommand {
 	public function teardown( array $args, array $assoc_args ): void {
 		global $wpdb;
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		// The synthetic members themselves. They are created by seed() so the leaderboard's JOIN against
+		// wp_users has someone to find; they must leave with their data.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$du = (int) $wpdb->query( "DELETE FROM {$wpdb->users} WHERE ID >= 1000000" );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$wpdb->query( "DELETE FROM {$wpdb->usermeta} WHERE user_id >= 1000000" );
+		\WP_CLI::log( sprintf( 'Removed %s synthetic members.', number_format_i18n( $du ) ) );
+
 		$d1 = (int) $wpdb->query( "DELETE FROM {$wpdb->prefix}wb_gam_points WHERE user_id >= 1000000" );
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$d2 = (int) $wpdb->query( "DELETE FROM {$wpdb->prefix}wb_gam_events WHERE user_id >= 1000000" );
