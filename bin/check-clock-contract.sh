@@ -63,7 +63,7 @@ while IFS= read -r hit; do
 
   if [ "$fail" -eq 0 ]; then
     echo ""
-    echo "✗ SQL NOW() compared against a PHP-written timestamp column."
+    echo "✗ A DATABASE clock function (NOW/UTC_TIMESTAMP/CURDATE/CURTIME/CURRENT_TIMESTAMP) compared against a PHP-written column."
     echo ""
     echo "  NOW() is the DATABASE SERVER's clock. Every timestamp in this plugin is written from"
     echo "  PHP, so this mixes two clocks and breaks on every site whose database is not in the"
@@ -77,7 +77,22 @@ while IFS= read -r hit; do
   echo "    ${file}:${line}"
   echo "        ${code}"
   fail=1
-done < <(grep -rn 'NOW()' src/ --include='*.php' 2>/dev/null | grep -vi 'wp_users\|@clock-ok')
+# EVERY spelling of "ask the DATABASE what time it is" -- not just NOW().
+#
+# This gate was written on this branch to stop the two-clock bug class, and it shipped ANOTHER ONE:
+# ChallengeEngine compared starts_at/ends_at against UTC_TIMESTAMP(), so on a site 5.5 hours ahead of
+# UTC a challenge scheduled 09:00-17:00 appeared open while the engine refused to award anything
+# against it. The gate never saw it, because it only ever looked for NOW().
+#
+# A guard that catches one spelling of a mistake teaches people the other spellings. So it now catches
+# all of them.
+#
+# DEFAULT CURRENT_TIMESTAMP in a CREATE TABLE is a column default, not a comparison -- the database
+# stamping a row it is inserting is not mixing clocks with anything. Installer/DbUpgrader are excluded
+# for exactly that reason, and only for that reason.
+done < <(grep -rnE 'NOW\(\)|UTC_TIMESTAMP\(\)|CURDATE\(\)|CURTIME\(\)|CURRENT_TIMESTAMP' src/ --include='*.php' 2>/dev/null \
+  | grep -vi 'wp_users\|@clock-ok' \
+  | grep -viE 'src/Engine/(Installer|DbUpgrader)\.php.*(DEFAULT CURRENT_TIMESTAMP|CURRENT_TIMESTAMP,)')
 
 if [ "$fail" -eq 1 ]; then
   echo ""
