@@ -401,31 +401,31 @@ final class Privacy {
 			// Per-user toggles + derived caches stored in user_meta. Each is T2
 			// personal data and belongs in the export under data portability.
 			$meta_groups = array(
-				'wb_gam_profile_public'        => __( 'Public profile enabled (per-user)', 'wb-gamification' ),
-				'wb_gam_login_streak'          => __( 'Login bonus streak (current)', 'wb-gamification' ),
-				'wb_gam_login_streak_max'      => __( 'Login bonus streak (best)', 'wb-gamification' ),
-				'wb_gam_login_last_award'      => __( 'Login bonus last awarded', 'wb-gamification' ),
-				'wb_gam_seen_first_earn_toast' => __( 'Seen first-earn welcome toast', 'wb-gamification' ),
-				'wb_gam_dismissed_welcome'     => __( 'Dismissed admin welcome card', 'wb-gamification' ),
-				'wb_gam_dismissed_checklist'   => __( 'Dismissed admin setup checklist', 'wb-gamification' ),
-				'wb_gam_setup_seen'            => __( 'Seen the setup wizard', 'wb-gamification' ),
-				'wb_gam_level_id'              => __( 'Current level ID (cached)', 'wb-gamification' ),
-				'wb_gam_level_name'            => __( 'Current level name (cached)', 'wb-gamification' ),
-				'wb_gam_league_tier'           => __( 'Cohort league tier', 'wb-gamification' ),
+				'wb_gam_profile_public'          => __( 'Public profile enabled (per-user)', 'wb-gamification' ),
+				'wb_gam_login_streak'            => __( 'Login bonus streak (current)', 'wb-gamification' ),
+				'wb_gam_login_streak_max'        => __( 'Login bonus streak (best)', 'wb-gamification' ),
+				'wb_gam_login_last_award'        => __( 'Login bonus last awarded', 'wb-gamification' ),
+				'wb_gam_seen_first_earn_toast'   => __( 'Seen first-earn welcome toast', 'wb-gamification' ),
+				'wb_gam_dismissed_welcome'       => __( 'Dismissed admin welcome card', 'wb-gamification' ),
+				'wb_gam_dismissed_checklist'     => __( 'Dismissed admin setup checklist', 'wb-gamification' ),
+				'wb_gam_setup_seen'              => __( 'Seen the setup wizard', 'wb-gamification' ),
+				'wb_gam_level_id'                => __( 'Current level ID (cached)', 'wb-gamification' ),
+				'wb_gam_level_name'              => __( 'Current level name (cached)', 'wb-gamification' ),
+				'wb_gam_league_tier'             => __( 'Cohort league tier', 'wb-gamification' ),
 				// Erased since 1.4.1, never exported until now. The member's own personal record is
 				// their data; "we delete it but will not show it to you" is the wrong way round.
-				'wb_gam_pr_best_week'          => __( 'Personal record — best week', 'wb-gamification' ),
-				'wb_gam_sandboxed'             => __( 'Excluded from earning (sandboxed)', 'wb-gamification' ),
+				'wb_gam_pr_best_week'            => __( 'Personal record — best week', 'wb-gamification' ),
+				'wb_gam_sandboxed'               => __( 'Excluded from earning (sandboxed)', 'wb-gamification' ),
 				// Written as `self::SOME_CONST` at their call sites, which is why Rule 11's grep never
 				// saw them and this list went on looking complete. The award note is the one that
 				// matters most: it is a staff member's written remark ABOUT this person, held on their
 				// account, and it is exactly the kind of thing a subject-access request exists to
 				// surface.
-				'_wb_gam_last_award_note'      => __( 'Staff note on the most recent manual award', 'wb-gamification' ),
-				'wb_gam_decayed_at'            => __( 'Points last decayed at', 'wb-gamification' ),
-				'wb_gam_last_retention_nudge'  => __( 'Re-engagement nudge last sent', 'wb-gamification' ),
+				'_wb_gam_last_award_note'        => __( 'Staff note on the most recent manual award', 'wb-gamification' ),
+				'wb_gam_decayed_at'              => __( 'Points last decayed at', 'wb-gamification' ),
+				'wb_gam_last_retention_nudge'    => __( 'Re-engagement nudge last sent', 'wb-gamification' ),
 				'wb_gam_dismissed_wizard_notice' => __( 'Dismissed the setup-wizard notice', 'wb-gamification' ),
-				'wb_gam_federate_events'       => __( 'Federate achievements to the fediverse (opt-in)', 'wb-gamification' ),
+				'wb_gam_federate_events'         => __( 'Federate achievements to the fediverse (opt-in)', 'wb-gamification' ),
 			);
 			// Prefix families (`wb_gam_notif_cursor_<channel>`) are not knowable as literals — the
 			// channel is part of the key. Ask MemberData which ones this member actually has, so the
@@ -441,7 +441,7 @@ final class Privacy {
 				}
 			}
 
-			$meta_rows   = array();
+			$meta_rows = array();
 			foreach ( $meta_groups as $key => $label ) {
 				$value = get_user_meta( $user_id, $key, true );
 				if ( '' === $value || null === $value ) {

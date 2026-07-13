@@ -58,6 +58,50 @@ Every bug / feature / scope item flows through this kanban (matches the canonica
 
 ---
 
+## The standards shelf (READ THE STANDARD BEFORE YOU TOUCH THE AREA IT GOVERNS)
+
+The portfolio's written standards live in the **private Pro repo**, by policy — developer guidelines
+stay in Pro. Entry point (the only one; do not maintain a second list):
+
+    buddynext-pro/free-internal/docs/standards/INDEX.md
+
+They are portable by design and that index names **WB Gamification** as a consumer. Do not re-derive
+these rules, and do not copy them here — read them there. Which ones govern this plugin:
+
+| Touching… | Read | Enforced here by |
+|---|---|---|
+| A list, a query, a table at scale | `DATA-AT-SCALE.md` | `wp wb-gamification scale benchmark` (CI 5.1) |
+| A cached read, or adding a cache | `CACHING.md` | *(no gate — over-caching is a finding too)* |
+| Deleting data, retention, GDPR, uninstall | `DATA-LIFECYCLE.md` | `coding-rules-check.sh` Rule 11 |
+| A REST endpoint | `REST-API-BOUNDARY.md` | `coding-rules-check.sh` Rules 2 + **2b** |
+| A cron job or background task | `BACKGROUND-JOBS.md` | `coding-rules-check.sh` Rule 12 |
+| A member-facing control (toggle, setting, button) | `public-surface-integrity.md` | `check-wiring`/`wppqa` (partial) |
+| User-facing strings | `i18n.md` | *(no gate)* |
+| Frontend JS, client-side nav | `frontend-interactivity.md` | *(no gate)* |
+| A wp-admin screen | `admin-ui-uniformity.md` · `admin-settings-registry.md` | `ux-audit.sh` (principle only — this plugin has its own design system, NOT BuddyNext's tokens) |
+
+**Not applicable:** `FREE-PRO-SEAM.md` (no Pro pair). `MONEY.md` governs real currency; this plugin
+spends a points balance, so only its ledger rules apply.
+
+**The rule that outranks the rest: nothing becomes a task until someone has tried to REFUTE it.** In
+the 2026-07-13 audit, two findings that looked obviously right were wrong, and implementing either
+would have SHIPPED A BUG:
+
+- "Add a nightly reconcile for `wb_gam_user_totals`" — a reconcile recomputing `total = SUM(ledger)`
+  would re-introduce the legacy bug where every `LogPruner` run silently shrank members' balances.
+  The pruner deliberately does not decrement totals.
+- "Page the GDPR eraser, it will OOM like the exporter did" — measured: 50,001-row member purges in
+  261 ms with zero PHP memory growth. A DELETE streams nothing into PHP. Paging it would trade real
+  atomicity for an imaginary problem.
+
+**And the one this plugin keeps relearning: a check that cannot fail is not a check.** Five separate
+times we shipped a green gate over a real bug — Rule 11 grepping for string literals while five meta
+keys were spelled `self::CONST`; Rule 2 allowlisting a *file* as "public catalog" while its
+`?user_id=` parameter leaked private progress to anonymous callers; a CI stage guarded by `if [ -x ]`
+pointing at a script that never existed. When you write a gate, **mutation-test it**: break the thing
+it guards and watch it fail by name. `bin/local-ci.sh` asserts its own gate manifest (stage 0.1) for
+this reason.
+
 ## Execution Rules (Non-Negotiable)
 
 **Every task follows this loop:**
