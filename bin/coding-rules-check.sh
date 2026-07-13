@@ -102,6 +102,55 @@ check_unauthenticated_rest_allowlist() {
     fi
 }
 
+# Rule 2b: a PUBLIC route that reads a CALLER-SUPPLIED user_id must consult Privacy.
+#
+# Rule 2 above allowlists whole FILES, and that granularity is exactly how we shipped an
+# unauthenticated IDOR: ChallengesController was allowlisted as "public catalog", which is true --
+# the catalogue IS public. But the same routes also accept `?user_id=`, and that parameter enriched
+# the response with that member's challenge progress. So the file-level reason was correct and the
+# route was still leaking: an anonymous caller with no cookie walked ?user_id=1,2,3... and harvested
+# progress for members who had opted OUT of a public profile. Rule 2 was green throughout.
+#
+# A reason that is true about a file can be false about a parameter. This rule closes that gap: if a
+# controller ships __return_true AND reads user_id from the request, it must either consult Privacy,
+# or carry an explicit annotation saying why that member data is public to strangers.
+#
+# The annotation is deliberately awkward to write. It is a place to state a decision, not a snooze
+# button -- an allowlist you can join without saying anything is how the last one lied to us.
+check_public_routes_gate_user_data() {
+    local offenders=()
+
+    for file in "$PLUGIN_DIR"/src/API/*.php; do
+        [ -f "$file" ] || continue
+
+        grep -q "__return_true" "$file" || continue
+
+        # Caller-supplied only: $request['user_id'] / get_param('user_id'). A 'user_id' key in a
+        # RESPONSE schema is not an input and must not trip this rule (Leaderboard, Kudos,
+        # Redemption and Capabilities all publish that field while reading get_current_user_id()).
+        grep -qE "\\\$request\[ *'user_id' *\]|get_param\( *'user_id' *\)" "$file" || continue
+
+        grep -q "Privacy::" "$file" && continue
+        grep -q "@public-member-data" "$file" && continue
+
+        offenders+=( "$(basename "$file")" )
+    done
+
+    if [ ${#offenders[@]} -gt 0 ]; then
+        violation "Rule 2b — public route reads a caller-supplied user_id without a Privacy check:"
+        printf '    %s\n' "${offenders[@]}"
+        echo "    Any stranger can iterate user_id and harvest that member's data."
+        echo "    Fix: gate on \\WBGam\\Engine\\Privacy::can_view_public_profile( \$user_id ) and"
+        echo "         degrade to a non-personal read when it fails (see ChallengesController"
+        echo "         ::resolve_user_id or BadgesController::get_items),"
+        echo "         OR annotate the file with '@public-member-data <why this is public>' if the"
+        echo "         exposure is deliberate (a verifiable credential, a share card the member"
+        echo "         published themselves)."
+    else
+        ok "Rule 2b — every public route that takes a user_id gates it or documents why not"
+    fi
+}
+
 # Rule 3: no inline `style="..."` attributes in admin PHP.
 # Per plan/ARCHITECTURE.md "no inline JS or CSS" — admin pages must use the
 # wbgam-* utility classes in assets/css/admin.css, never inline styles.
@@ -411,6 +460,7 @@ check_animations_respect_reduced_motion() {
 
 check_no_native_cap_check_for_plugin_abilities
 check_unauthenticated_rest_allowlist
+check_public_routes_gate_user_data
 check_no_inline_styles_in_admin_php
 check_no_inline_scripts_in_php
 check_no_inline_style_blocks_in_php

@@ -11,6 +11,18 @@
  *   - Open Graph / LinkedIn meta tag population
  *   - External verification of a credential badge
  *
+ * @public-member-data The whole point of a share card is that the member posts the link somewhere we
+ * do not control -- LinkedIn's crawler, a Slack unfurl, a tweet -- and none of those arrive with a
+ * cookie. Requiring Privacy::can_view_public_profile() here would mean the member shares a link that
+ * renders blank for everyone they shared it with, so the route is deliberately open.
+ *
+ * The cost, stated so it stays visible: `badge_id` + `user_id` are enumerable, so a stranger can ask
+ * "does member N hold badge X" and read the earn date -- including for a member whose profile is
+ * private. Sharing is gated by the `badge_share` feature flag, not by the member's own consent for a
+ * SPECIFIC badge, which is the real gap. The honest fix is a share opt-in (or a signed URL the
+ * member mints when they choose to share), NOT a privacy check that would break the sharing this
+ * endpoint exists to do.
+ *
  * This is the "Phase 2 share URL" layer. Phase 4 upgrades it with full
  * OpenBadges 3.0 JSON-LD and a verification endpoint.
  *

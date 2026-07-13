@@ -13,6 +13,17 @@
  * The URL itself acts as the verifiable evidence link that can be
  * submitted to LinkedIn's "Add Certification" flow or any OB3-aware wallet.
  *
+ * @public-member-data A credential nobody can verify without logging in is not a credential. An
+ * employer handed this URL must be able to resolve it cold, so the route is deliberately open and
+ * does NOT consult Privacy::can_view_public_profile().
+ *
+ * Stated plainly, because it is the cost of that decision: the URL is not signed, so `badge_id` +
+ * `user_id` can be enumerated to ask "does member N hold badge X" — including for a member whose
+ * profile is private. That is narrower than it sounds (it confirms only badges, and only ones that
+ * exist), but it is a real exposure and it should be a decision, not an accident. If we want to
+ * close it, the honest fix is a per-credential opt-in or a signed URL, NOT a privacy check that
+ * would break the verification the feature exists for.
+ *
  * Content-Type: application/ld+json (also served as application/json)
  *
  * @see https://www.imsglobal.org/spec/ob/v3p0
