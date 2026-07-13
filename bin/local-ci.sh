@@ -279,8 +279,16 @@ fi
 # that explicitly opt into coverage (composer test:coverage) chain the
 # floor check after the report is written. Audit baseline at level 9
 # PHPStan + 109 PHPUnit / 3.79% lines / 5.60% methods (2026-05-27).
-if [ -x bin/check-coverage-floor.sh ] && [ -f build/coverage/coverage.txt ] && [ "$MODE" != "quick" ]; then
-  run_stage "2.11" "PHPUnit coverage floor" bash bin/check-coverage-floor.sh
+if [ -x bin/check-coverage-floor.sh ] && [ "$MODE" != "quick" ]; then
+  if [ -f build/coverage/coverage.txt ]; then
+    run_stage "2.11" "PHPUnit coverage floor" bash bin/check-coverage-floor.sh
+  else
+    # Say so. This stage skipped in silence, which reads exactly like a stage that passed -- the same
+    # way stage 2.2 pointed at a script that never existed and nobody noticed for months. The skip is
+    # legitimate (no coverage report unless you asked for one); the silence was not.
+    step "2.11" "PHPUnit coverage floor"
+    warn "SKIPPED — no build/coverage/coverage.txt. Run 'composer test:coverage' to include it."
+  fi
 fi
 
 # 2.12 — WordPress.org Plugin Check. The submission bar: 0 ERRORs in

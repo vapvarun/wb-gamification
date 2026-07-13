@@ -135,17 +135,28 @@ All data is preserved in the database. Reactivating the plugin restores everythi
 
 = 1.6.4 - July 2026 =
 
-Stability and scale release. Contains a fix for a bug that could delete other plugins' queued background jobs, including WooCommerce orders and subscription renewals. Upgrading is strongly recommended for every site.
+Stability, privacy and scale release. Contains a fix for a bug that could delete other plugins' queued background jobs, including WooCommerce orders and subscription renewals, and closes three ways an anonymous visitor could read members' private data. Upgrading is strongly recommended for every site.
+
+Please read before upgrading: badges are now private until a member shares them. Every existing badge starts private, so a badge share link or credential link a member has already posted somewhere will stop working until they press Share again. If you deliberately ran an open community and would rather not break those links, `wp wb-gamification share grandfather` publishes them all in one command.
 
 * New      - Weekly cap is now settable per action in Settings > Points. The limit was already enforced, but there was no field to set it.
 * New      - A badge can now require more than one condition. Build a rule from any of eight condition types (points, points in a period, action count, level reached, badge earned, streak, tenure, admin awarded) and require all of them or any of them.
 * New      - The four tenure badges and the three site-first badges are now ordinary editable rules. They were awarded by hardcoded engines and the library told you they were manual, so the only way to change what "2-Year Member" meant was to edit PHP.
 * New      - When you save a badge rule you can choose to award it to members who already qualify. It is off by default: leave it off and the badge is earned from now on.
 * New      - Kudos Moderation can be filtered by giver, by receiver, and by date range, and kudo-trading pairs are now detected across the whole table rather than only the page you are looking at.
+* New      - Members decide which of their badges are public. Every earned badge on your own badge board has a Share button, and a badge you have not shared is not visible to anyone else.
+* New      - Settings > Modules has a Background features section: the weekly recap email, leaderboard nudges, status retention, community challenges, tenure badges, site-first badges, badge sharing and cohort leagues can each be switched off. Seven of the eight were already enforced in code and had no screen to set them.
+* New      - Webhooks can subscribe to the redemption event. The engine fired it and the API accepted it, but the page never rendered a checkbox for it.
+* New      - `wp wb-gamification share grandfather` publishes every existing badge in one pass, for owners who deliberately ran an open community, and `wp wb-gamification share reset` makes them private again.
 * Improve  - Points, badges, levels, and the Hub follow the active theme's colours in both light and dark mode on BuddyX, BuddyX Pro, and Reign.
 * Improve  - Awarding points costs fewer database queries. A badge is only evaluated when something that could actually change its answer has happened, so a "publish 10 posts" badge no longer runs a count every time a member reacts to a comment.
 * Improve  - The Daily Points Trend chart on Analytics has an axis, labels and a baseline, and a quiet day is now visible instead of rounding away to nothing.
 * Improve  - Empty blocks tell a logged-out visitor how to log in instead of only telling them to.
+* Improve  - A member who leaves a page open overnight can still give kudos, redeem a reward or submit an achievement. The security token in the page expires after about a day; it is now refreshed and the action retried once, instead of failing with an error that retrying could not fix.
+* Improve  - Awarding points costs fewer queries on sites with tiered badges. Bronze at 5 comments, Silver at 25 and Gold at 100 each asked the database the same question about the same member on every award; they now ask once.
+* Improve  - Point decay no longer aggregates every member on the site in order to decay a few hundred of them.
+* Improve  - Kudos Moderation's abuse detection is indexed. It scanned every kudos ever given on the site each time a moderator opened the page.
+* Improve  - Community challenges and webhook subscriptions are no longer re-read from the database on every single points award.
 * Fix      - Deleting a member left all of their gamification data behind for ever: their points, streaks, badges, cohort rows and queued notifications stayed in the database. Those rows also broke the Analytics dashboard, which could report figures such as "6822% streak health" because it counted rows belonging to members who no longer existed. Deleting a member now removes their data, the dashboard is correct on sites that already have orphaned rows, and `wp wb-gamification member purge-orphans` cleans up the rows an earlier version left behind.
 * Fix      - Failed webhook deliveries were never retried. The retry looked up a column that does not exist, the database refused the query, and the job quietly did nothing. Retries now fire, and a subscription you have switched off is still respected.
 * Fix      - The leaderboard could show two different point totals for the same member on the same page: the board row and the "your standing" strip below it read from different places. They now agree.
@@ -177,11 +188,29 @@ Stability and scale release. Contains a fix for a bug that could delete other pl
 * Fix      - Badge rarity is cached, so public badge pages no longer aggregate the badge table on every request.
 * Fix      - Setup wizard's Coaching Platform and Nonprofit templates no longer seed actions that cannot fire; the wizard now refuses to save an action it does not recognise.
 * Fix      - Licence assets no longer 404 on hosts where the plugin directory is a symlink or the document root does not prefix-match the plugin path.
+* Fix      - Blocks stopped working on themes that navigate without a full page reload. It was worse than nothing on the two forms: pressing Give kudos or Submit achievement made the browser submit the old way and navigate the member off the page, with what they wrote in the address bar.
+* Fix      - A member's own profile visibility toggle, the control that decides whether strangers can see their profile, did nothing at all on those themes.
+* Fix      - A leaderboard that arrived through a client-side navigation showed its figures once and then never updated again.
+* Fix      - The redemption confirmation panel sat on top of the Redeem button and swallowed the click, so the button could not be pressed.
+* Fix      - Deactivating the plugin left a recurring badge job and a half-finished retention job scheduled for ever, firing on a site where the plugin was switched off.
+* Fix      - Uninstalling now removes everything the plugin created: roughly fifty options including the stored licence key, scheduled jobs in all seven of the plugin's job groups rather than only one, and every one of its user meta keys.
+* Fix      - Scheduling the plugin's background jobs no longer trips WordPress's "translation loading was triggered too early" notice.
+* Fix      - Confirm and Cancel in the admin's confirmation dialogs were always in English on a translated site, including the dialog that permanently deletes all member progress.
+* Fix      - Save, Confirm reset and Cancel on the Streaks page were always in English on a translated site.
+* Fix      - `wp wb-gamification scale teardown` deleted real members whose user ID happened to be 1,000,000 or above. It now removes only the members it created, and reports any real accounts it found in that range instead of touching them.
+* Security - Anyone could read any member's challenge progress. The public challenges endpoint took a member id and returned that member's progress for it, with nothing checked, so a visitor with no account could walk through the ids and collect it, including for members who had switched their public profile off.
+* Security - Anyone could read any member's badges. The badge share card, the OpenBadges credential and the public badge page were each addressed by a badge id and a member id, both of which are guessable, so a visitor could enumerate them and, for a credential badge, have the site issue a signed verifiable credential about a person who had never shared it. Badges are now private until the member shares them.
+* Security - Unpublished community challenges could be fetched by id, so the titles of drafts and retired challenges were readable by anyone, even though the list they belong to already hid them.
 * Security - A member exercising their right to erasure was not fully erased. The eraser removed data from the tables it knew about, and it did not know about six of them, including queued notifications, cohort membership and redemptions. The personal-data export omitted a member's kudos, cohort history, redemptions and challenge log. Both now cover every table that holds a member's data, and cannot fall behind when a new one is added.
 * Security - The Action Scheduler cleanup no longer deletes other plugins' queued work. It previously removed every pending Action Scheduler job older than the retention window, with no ownership check, which could destroy WooCommerce orders and subscription renewals on any site. Cleanup is now fenced to this plugin's own jobs, and queued work is never aged out as routine housekeeping.
+* Security - Six of a member's stored settings survived a GDPR erasure, were missing from the data export, and were left behind by uninstall. One of them is a staff member's written note about that person.
 * Dev      - Staff permissions can be read and set over REST at `GET|PUT /wb-gamification/v1/settings/capabilities` (administrator only).
 * Dev      - New filter `wb_gam_empty_state_{block}` to change what a block says when it has nothing to show.
 * Dev      - `wp wb-gamification scale benchmark` now covers the badge, notification, and streak read paths, and a green run against a seeded dataset is required before a release can be packaged.
+* Dev      - A member publishes or withdraws their own badge over REST at `POST|DELETE /wb-gamification/v1/badges/{badge_id}/share`. There is deliberately no member id in that route: nobody can publish somebody else's badge.
+* Dev      - New actions `wb_gam_badge_shared` and `wb_gam_badge_unshared` fire when a member publishes or withdraws a badge.
+* Dev      - `wb_gam_user_badges` gains a `shared_at` column, added on upgrade.
+* Dev      - `wp wb-gamification scale benchmark` also counts the database queries one points award costs and fails if that number climbs. Every other budget it checks is a timing budget, and a badge asking the same question twenty times is twenty fast queries that no timing budget can see.
 
 = 1.6.3 - July 2026 =
 
@@ -455,6 +484,9 @@ Distribution pipeline and admin polish ahead of the integration release.
 10. **Redemption Store** — Admin catalog UI to define rewards (custom or WooCommerce-backed) with point cost, stock, and active/inactive status.
 
 == Upgrade Notice ==
+
+= 1.6.4 =
+Security and stability release. Fixes a bug that could delete other plugins' queued background jobs (including WooCommerce orders and subscription renewals) and closes three ways an anonymous visitor could read members' private data. Behaviour change: badges are now private until a member shares them, so a badge or credential link a member has already posted will stop working until they press Share again. Run `wp wb-gamification share grandfather` to publish existing badges and keep those links alive. Adds a column to wb_gam_user_badges and an index to wb_gam_kudos on upgrade.
 
 = 1.5.1 =
 PHP compatibility hotfix: fixes a fatal error on PHP 8.0/8.1 (broken `true` return type) and restores PHP 8.0 support. Strongly recommended for any site on PHP 8.1 or below. No schema changes.
