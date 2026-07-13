@@ -50,6 +50,54 @@ pass() { printf "${GREEN}✓${RESET}  %s\n" "$*"; }
 fail() { printf "${RED}✗${RESET}  %s\n" "$*"; FAILED+=("$1"); }
 warn() { printf "${YELLOW}!${RESET}  %s\n" "$*"; }
 
+# Every gate this CI is supposed to run. A gate is a promise; this list is where the promise is
+# recorded, so that losing one is LOUD.
+#
+# The stages below are each wrapped in `if [ -x bin/foo.sh ]`. That guard is what let stage 2.2
+# ("architecture invariants") sit in this file for months pointing at a script that does not exist
+# and never has: the guard was false, the stage silently skipped, and the run still printed a clean
+# green summary. A CI whose coverage shrinks without saying so is the same bug we keep shipping in
+# the product -- a check that cannot fail is not a check.
+#
+# So the guard stays (it is what makes a single missing gate survivable), but it is no longer the
+# whole story: this list is asserted first, and a gate that is declared here and missing on disk is
+# a hard failure, not a shrug.
+EXPECTED_GATES=(
+  bin/coding-rules-check.sh
+  bin/check-block-standard.sh
+  bin/ux-audit.sh
+  bin/plugin-dev-rules-check.sh
+  bin/wppqa-baseline-check.sh
+  bin/check-enum-drift.sh
+  bin/check-css-orphans.sh
+  bin/check-action-async.sh
+  bin/check-event-wiring.sh
+  bin/check-coverage-floor.sh
+  bin/check-plugin-check.sh
+  bin/check-boot-invariants.sh
+  bin/check-badge-condition-contract.sh
+  bin/check-clock-contract.sh
+  bin/run-journeys.sh
+)
+
+assert_gates_present() {
+  step "0.1" "Gate manifest (every declared gate exists and is executable)"
+  local missing=()
+  for gate in "${EXPECTED_GATES[@]}"; do
+    [ -x "$gate" ] || missing+=("$gate")
+  done
+
+  if [ ${#missing[@]} -gt 0 ]; then
+    fail "0.1 Gate manifest — ${#missing[@]} declared gate(s) missing or not executable"
+    printf '    %s\n' "${missing[@]}"
+    echo "    A gate in EXPECTED_GATES that is not on disk means this run is checking LESS than it"
+    echo "    claims. Restore the script, or remove it from EXPECTED_GATES with a reason."
+    return 1
+  fi
+
+  pass "Gate manifest (${#EXPECTED_GATES[@]} gates present)"
+}
+
 run_stage() {
   local tag="$1"; local label="$2"; shift 2
   step "$tag" "$label"
@@ -65,6 +113,10 @@ run_stage() {
 echo "=== WB Gamification local-CI ==="
 echo "Mode: $MODE  ·  Site: $SITE_URL"
 echo ""
+
+# ─── 0.x — Is this CI still the CI it says it is? ────────────────────────────
+
+assert_gates_present || true
 
 # ─── 1.x — Static checks (fast, no runtime needed) ───────────────────────────
 
@@ -145,9 +197,10 @@ if [ -x bin/coding-rules-check.sh ]; then
   run_stage "2.1" "Coding-rules check" bash bin/coding-rules-check.sh
 fi
 
-if [ -x bin/architecture-checks.sh ]; then
-  run_stage "2.2" "Architecture invariants (Free/Pro contract)" bash bin/architecture-checks.sh
-fi
+# 2.2 was "Architecture invariants (Free/Pro contract)" -- a stage inherited from a plugin that HAS
+# a Pro pair. wb-gamification does not, so the Free/Pro seam standard has nothing to enforce here and
+# the script it called was never written. Removed rather than left guarded-and-dead: a stage number
+# that never runs reads, in a green summary, exactly like one that passed.
 
 if [ -x bin/check-block-standard.sh ]; then
   run_stage "2.3" "Wbcom Block Quality Standard" bash bin/check-block-standard.sh
