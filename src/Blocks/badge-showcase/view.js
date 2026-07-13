@@ -51,6 +51,43 @@
 				other.setAttribute( 'aria-selected', active ? 'true' : 'false' );
 			} );
 		} );
+
+		// The share toggle. A badge is private until its owner publishes it -- the share card, the
+		// OpenBadges credential and the public share page all refuse to render one that has not been --
+		// so this button is the only door through that gate, and it is only rendered on your own board.
+		root.addEventListener( 'click', function ( event ) {
+			var button = event.target.closest( '[data-wb-gam-share]' );
+			if ( ! button || ! root.contains( button ) || button.disabled ) {
+				return;
+			}
+
+			var shared = '1' === button.getAttribute( 'data-shared' );
+
+			button.disabled = true;
+
+			window.wbGam.rest( button.getAttribute( 'data-rest-url' ), {
+				// Publishing is a POST; withdrawing is a DELETE. Withdrawing has to work exactly as well
+				// as publishing, or the consent was never real.
+				method: shared ? 'DELETE' : 'POST',
+				nonce: button.getAttribute( 'data-rest-nonce' ),
+			} )
+				.then( function ( result ) {
+					if ( ! result.ok ) {
+						return; // Leave the button as it was; the server did not change anything.
+					}
+
+					var nowShared = !! ( result.data && result.data.shared );
+
+					button.setAttribute( 'data-shared', nowShared ? '1' : '0' );
+					button.setAttribute( 'aria-pressed', nowShared ? 'true' : 'false' );
+					button.textContent = nowShared
+						? button.getAttribute( 'data-label-shared' )
+						: button.getAttribute( 'data-label-share' );
+				} )
+				.finally( function () {
+					button.disabled = false;
+				} );
+		} );
 	}
 
 	// This block got the answer right before anyone else did -- it already watched for late-mounted

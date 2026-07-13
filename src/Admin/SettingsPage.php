@@ -638,10 +638,6 @@ final class SettingsPage {
 	}
 
 	/**
-	 * Persist kudos engine settings.
-	 * Nonce is verified by check_admin_referer() in handle_save().
-	 */
-	/**
 	 * Persist the Realtime transport selection.
 	 *
 	 * Nonce is verified by check_admin_referer() in handle_save().
@@ -886,23 +882,6 @@ final class SettingsPage {
 		);
 	}
 
-	/**
-	 * Enqueue the rule-action toggle script on the Automation tab.
-	 *
-	 * Replaces the legacy inline <script> that lived in render_automation_section()
-	 * — keeps Settings page free of inline JS per coding-rules-check.sh Rule 4.
-	 *
-	 * @param string $hook_suffix Current admin page hook.
-	 */
-	/**
-	 * Enqueue the "Send a test event" button script on the Dashboard tab.
-	 *
-	 * Only fires when the first-run welcome card is actually rendered (no
-	 * points awarded yet AND admin hasn't dismissed it) — avoids loading the
-	 * script on every Settings page view forever.
-	 *
-	 * @param string $hook_suffix Current admin page hook.
-	 */
 	/**
 	 * Enqueue the generic REST form driver + wbGamSettings localisation for
 	 * the Emails section toggles.
@@ -2292,15 +2271,6 @@ final class SettingsPage {
 
 	// ── Realtime section ──────────────────────────────────────────────────────
 
-	/**
-	 * Render the Realtime transport selector.
-	 *
-	 * Closes the "site owners must use wp-cli to flip transport" friction
-	 * we surfaced after the SSE rollout. Three radio options matching the
-	 * wb_gam_realtime_transport contract: heartbeat (universal, 5s),
-	 * sse (sub-second when host supports it), auto (SSE-first with
-	 * heartbeat fallback — the new default).
-	 */
 	/**
 	 * Persist the earning-exclusion settings (Settings > Access).
 	 *

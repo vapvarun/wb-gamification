@@ -834,19 +834,6 @@ final class LeaderboardEngine {
 	}
 
 	/**
-	 * SQL that hides everyone who must not appear in a ranking: members who opted out via their
-	 * preferences, plus accounts the owner excluded in Settings > Access. Excluded members cannot
-	 * earn, so they must not rank either.
-	 *
-	 * This used to return the IDS -- `get_opted_out_ids()` -- and every caller imploded them into
-	 * a NOT IN(). That is fine for a handful of opt-outs and fatal for an excluded ROLE, which on
-	 * a large site is most of the membership. It returns a PREDICATE now, so the query is the same
-	 * size whether five members are hidden or fifty thousand.
-	 *
-	 * @param string $alias SQL alias of the table whose `user_id` is being filtered.
-	 * @return array{0:string,1:array<int,mixed>} [ SQL fragment, ordered bind values ].
-	 */
-	/**
 	 * The member's standing AS THE BOARD SEES IT — or null if the board is not serving the snapshot.
 	 *
 	 * This is what keeps the two halves of the leaderboard block telling the same story. It answers

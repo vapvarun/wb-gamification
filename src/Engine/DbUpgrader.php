@@ -911,13 +911,6 @@ final class DbUpgrader {
 	}
 
 	/**
-	 * Create wb_gam_submissions on existing installs.
-	 *
-	 * Idempotent — feature-flag gated.
-	 *
-	 * @since 1.0.0
-	 */
-	/**
 	 * Migrate API keys from the legacy plaintext wp_options blob to the new
 	 * dedicated wb_gam_api_keys table with hashed storage.
 	 *
@@ -1381,21 +1374,45 @@ final class DbUpgrader {
 	private static function upgrade_to_1_6_4(): void {
 		global $wpdb;
 
-		$table = $wpdb->prefix . 'wb_gam_kudos';
+		$kudos = $wpdb->prefix . 'wb_gam_kudos';
 
-		if ( $table !== $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) ) ) {
+		if ( $kudos === $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $kudos ) ) ) {
+			$has_index = $wpdb->get_results(
+				$wpdb->prepare( "SHOW INDEX FROM `{$kudos}` WHERE Key_name = %s", 'idx_abuse_pairs' ) // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from $wpdb->prefix.
+			);
+
+			if ( empty( $has_index ) ) {
+				$wpdb->query( "ALTER TABLE `{$kudos}` ADD KEY `idx_abuse_pairs` (`revoked_at`, `giver_id`, `receiver_id`)" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- DDL.
+			}
+		}
+
+		// Badge sharing becomes a member's decision instead of a guessable URL.
+		//
+		// The share card, the OpenBadges credential and the public share page all keyed on
+		// (badge_id, user_id) and asked nobody's permission, so anyone could walk those two numbers and
+		// read which badges a member holds -- including a member with a private profile. `shared_at`
+		// records the member's own choice to publish, and all three surfaces now refuse to serve a
+		// badge that has not been published.
+		//
+		// Existing badges start NULL: private. This WILL break a share link a member has already posted
+		// somewhere, and that is the intended trade -- the alternative is to keep publishing, with no
+		// consent, the achievements of every member who never asked for it. An owner who knowingly
+		// relied on the old behaviour restores it with `wp wb-gamification share grandfather`.
+		$badges = $wpdb->prefix . 'wb_gam_user_badges';
+
+		if ( $badges !== $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $badges ) ) ) {
 			return;
 		}
 
-		$exists = $wpdb->get_results(
-			$wpdb->prepare( "SHOW INDEX FROM `{$table}` WHERE Key_name = %s", 'idx_abuse_pairs' ) // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from $wpdb->prefix.
+		$has_column = $wpdb->get_results(
+			$wpdb->prepare( "SHOW COLUMNS FROM `{$badges}` LIKE %s", 'shared_at' ) // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from $wpdb->prefix.
 		);
 
-		if ( ! empty( $exists ) ) {
+		if ( ! empty( $has_column ) ) {
 			return;
 		}
 
-		$wpdb->query( "ALTER TABLE `{$table}` ADD KEY `idx_abuse_pairs` (`revoked_at`, `giver_id`, `receiver_id`)" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- DDL; table name from $wpdb->prefix.
+		$wpdb->query( "ALTER TABLE `{$badges}` ADD COLUMN `shared_at` DATETIME DEFAULT NULL AFTER `expires_at`" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- DDL.
 	}
 
 	/**

@@ -286,12 +286,6 @@ class BadgesController extends WP_REST_Controller {
 	}
 
 	/**
-	 * Update a badge definition (admin only).
-	 *
-	 * @param WP_REST_Request $request Full details about the request.
-	 * @return WP_REST_Response|WP_Error Response on success, WP_Error on failure.
-	 */
-	/**
 	 * Build the args schema for badge create + update.
 	 *
 	 * @param bool $on_create Whether `id` and `name` are required (true on create).

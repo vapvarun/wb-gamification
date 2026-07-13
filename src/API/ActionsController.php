@@ -237,12 +237,6 @@ class ActionsController extends WP_REST_Controller {
 	}
 
 	/**
-	 * Shape a raw action definition into the REST response format.
-	 *
-	 * @param array $action Raw action definition from the Registry.
-	 * @return array Formatted action data for the REST response.
-	 */
-	/**
 	 * Retrieve the JSON schema for an action item.
 	 *
 	 * @return array JSON schema definition.

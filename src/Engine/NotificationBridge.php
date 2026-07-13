@@ -153,9 +153,6 @@ final class NotificationBridge {
 	// ── Boot ────────────────────────────────────────────────────────────────────
 
 	/**
-	 * Register action hooks for event collection and footer rendering.
-	 */
-	/**
 	 * Daily prune cron hook. Removes notifications older than the retention
 	 * window from the durable queue table. Transients still expire via TTL
 	 * and don't need an explicit prune.

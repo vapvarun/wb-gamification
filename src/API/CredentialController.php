@@ -12,23 +12,6 @@
  *
  * The URL itself acts as the verifiable evidence link that can be
  * submitted to LinkedIn's "Add Certification" flow or any OB3-aware wallet.
- *
- * @public-member-data A credential nobody can verify without logging in is not a credential. An
- * employer handed this URL must be able to resolve it cold, so the route is deliberately open and
- * does NOT consult Privacy::can_view_public_profile().
- *
- * Stated plainly, because it is the cost of that decision: the URL is not signed, so `badge_id` +
- * `user_id` can be enumerated to ask "does member N hold badge X" — including for a member whose
- * profile is private. That is narrower than it sounds (it confirms only badges, and only ones that
- * exist), but it is a real exposure and it should be a decision, not an accident. If we want to
- * close it, the honest fix is a per-credential opt-in or a signed URL, NOT a privacy check that
- * would break the verification the feature exists for.
- *
- * Content-Type: application/ld+json (also served as application/json)
- *
- * @see https://www.imsglobal.org/spec/ob/v3p0
- * @package WB_Gamification
- * @since   0.1.0
  */
 
 namespace WBGam\API;
@@ -222,6 +205,15 @@ class CredentialController extends WP_REST_Controller {
 				__( 'This badge is not a shareable credential.', 'wb-gamification' ),
 				array( 'status' => 403 )
 			);
+		}
+
+		// And the member must have ISSUED it. A verifiable credential has to resolve for an employer
+		// with no login -- that is the whole point of it, and why this route is public. It does not
+		// follow that anyone may MINT one by guessing a badge_id and a user_id, which is what this
+		// route allowed: a signed, verifiable assertion about a person's achievements, generated on
+		// demand for a stranger who was never given the link. The member publishes; then it verifies.
+		if ( ! \WBGam\Engine\BadgeShare::can_view_public( $user_id, $badge_id ) ) {
+			return new WP_Error( 'rest_not_found', __( 'Badge not found.', 'wb-gamification' ), array( 'status' => 404 ) );
 		}
 
 		// Validate user exists and has earned this badge.

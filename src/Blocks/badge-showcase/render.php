@@ -67,6 +67,12 @@ if ( $wb_gam_user_id > 0 && ! Privacy::can_view_public_profile( $wb_gam_user_id 
 	$wb_gam_user_id = 0;
 }
 
+// Is the member looking at their OWN badges? Only then do they get the share control -- publishing is
+// a decision about yourself, and there is no version of that button that makes sense pointed at
+// somebody else's achievement. Resolved AFTER the privacy gate, so it cannot be true for a board the
+// viewer was not allowed to see in the first place.
+$wb_gam_is_own_board = $wb_gam_user_id > 0 && get_current_user_id() === $wb_gam_user_id;
+
 if ( $wb_gam_user_id <= 0 && ! $wb_gam_show_locked ) {
 	return '';
 }
@@ -287,6 +293,38 @@ BlockHooks::before( 'badge-showcase', $wb_gam_attrs );
 							);
 							?>
 						</span>
+					<?php endif; ?>
+
+					<?php
+					// The share control, and ONLY on your own earned badges.
+					//
+					// A badge is private until the member publishes it -- the share card, the credential
+					// and the public share page all refuse to render one that has not been. That gate is
+					// worth nothing if the member has no way to open it, so this is the way: their own
+					// board, their own badge, one button.
+					//
+					// Not rendered for anyone else's board. There is no version of this button that makes
+					// sense pointed at somebody else's achievement.
+					if ( $wb_gam_is_earned && $wb_gam_is_own_board ) :
+						$wb_gam_shared = \WBGam\Engine\BadgeShare::is_shared( $wb_gam_user_id, (string) $wb_gam_badge['id'] );
+						?>
+						<button type="button"
+							class="wb-gam-badge-showcase__share"
+							data-wb-gam-share="<?php echo esc_attr( (string) $wb_gam_badge['id'] ); ?>"
+							data-rest-url="<?php echo esc_url( rest_url( 'wb-gamification/v1/badges/' . $wb_gam_badge['id'] . '/share' ) ); ?>"
+							data-rest-nonce="<?php echo esc_attr( wp_create_nonce( 'wp_rest' ) ); ?>"
+							data-shared="<?php echo $wb_gam_shared ? '1' : '0'; ?>"
+							data-label-share="<?php esc_attr_e( 'Share', 'wb-gamification' ); ?>"
+							data-label-shared="<?php esc_attr_e( 'Shared - click to make private', 'wb-gamification' ); ?>"
+							aria-pressed="<?php echo $wb_gam_shared ? 'true' : 'false'; ?>">
+							<?php
+							echo esc_html(
+								$wb_gam_shared
+									? __( 'Shared - click to make private', 'wb-gamification' )
+									: __( 'Share', 'wb-gamification' )
+							);
+							?>
+						</button>
 					<?php endif; ?>
 				</li>
 			<?php endforeach; ?>

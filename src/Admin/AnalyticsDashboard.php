@@ -524,13 +524,6 @@ final class AnalyticsDashboard {
 	}
 
 	/**
-	 * Render an inline SVG-style bar sparkline for daily points data.
-	 *
-	 * @param array<string, int> $daily_points Map of Y-m-d date strings to point totals.
-	 * @param int                $period       Number of days the sparkline covers.
-	 * @return void
-	 */
-	/**
 	 * Return a human-readable label for action IDs not in the Registry
 	 * (e.g., BuddyPress integration IDs loaded via manifests).
 	 *

@@ -229,13 +229,6 @@ final class Capabilities {
 	}
 
 	/**
-	 * The list of caps owned by this plugin.
-	 *
-	 * Useful for diagnostics, the Doctor CLI command, and tests.
-	 *
-	 * @return string[]
-	 */
-	/**
 	 * The delegation map: which non-admin roles hold which plugin capabilities.
 	 *
 	 * @return array<string, array{name:string, caps:string[]}> Role slug => name + granted caps.

@@ -193,6 +193,12 @@ final class Installer {
 			badge_id   VARCHAR(100)    NOT NULL,
 			earned_at  DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			expires_at DATETIME        DEFAULT NULL,
+			-- When the MEMBER chose to publish this badge. NULL = private, and private is the default.
+			-- The share card, the OpenBadges credential and the public share page all refuse to render
+			-- a badge with a NULL here to anyone but its owner (and admins). Before this column, all
+			-- three served any badge to anyone who could guess a badge_id and a user_id -- which is to
+			-- say, to anyone -- and the member was never asked.
+			shared_at  DATETIME        DEFAULT NULL,
 			PRIMARY KEY (id),
 			UNIQUE KEY user_badge (user_id, badge_id),
 			KEY idx_expires_at (expires_at)

@@ -47,15 +47,6 @@ defined( 'ABSPATH' ) || exit;
 final class ScaleCommand {
 
 	/**
-	 * Per-query timing budgets (milliseconds). A query exceeding its budget
-	 * fails the benchmark gate.
-	 *
-	 * Numbers chosen for a typical Local-by-Flywheel MySQL 8 box; tighten
-	 * for production hosts with dedicated MySQL.
-	 *
-	 * @var array<string,float>
-	 */
-	/**
 	 * First user ID the seeder claims for synthetic members.
 	 *
 	 * Seed() and teardown() used to write this number out twice, separately. Two copies of the one
@@ -84,6 +75,14 @@ final class ScaleCommand {
 	 */
 	private const AWARD_QUERY_CEILING = 15;
 
+	/**
+	 * Per-query timing budgets (milliseconds). A query exceeding its budget fails the benchmark gate.
+	 *
+	 * Numbers chosen for a typical Local-by-Flywheel MySQL 8 box; tighten for production hosts with
+	 * dedicated MySQL.
+	 *
+	 * @var array<string,float>
+	 */
 	private const BUDGETS_MS = array(
 		// ── Award hot path (measured since 2026-05-28) ───────────────────────
 		'get_total_pk'               => 5.0,

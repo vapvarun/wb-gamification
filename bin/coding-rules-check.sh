@@ -130,7 +130,13 @@ check_public_routes_gate_user_data() {
         # Redemption and Capabilities all publish that field while reading get_current_user_id()).
         grep -qE "\\\$request\[ *'user_id' *\]|get_param\( *'user_id' *\)" "$file" || continue
 
+        # Two gates count as gating member data, and they answer different questions:
+        #   Privacy::         -- "may this VIEWER see this member?"   (profile visibility)
+        #   BadgeShare::      -- "did this MEMBER publish this thing?" (consent)
+        # A share card has to render for LinkedIn's crawler, which arrives with no cookie, so gating it
+        # on the viewer is useless -- what it needs is the member's own decision. Both are real gates.
         grep -q "Privacy::" "$file" && continue
+        grep -q "BadgeShare::" "$file" && continue
         grep -q "@public-member-data" "$file" && continue
 
         offenders+=( "$(basename "$file")" )

@@ -10,27 +10,6 @@
  *   - Rendering a standalone badge card page (via page template + REST fetch)
  *   - Open Graph / LinkedIn meta tag population
  *   - External verification of a credential badge
- *
- * @public-member-data The whole point of a share card is that the member posts the link somewhere we
- * do not control -- LinkedIn's crawler, a Slack unfurl, a tweet -- and none of those arrive with a
- * cookie. Requiring Privacy::can_view_public_profile() here would mean the member shares a link that
- * renders blank for everyone they shared it with, so the route is deliberately open.
- *
- * The cost, stated so it stays visible: `badge_id` + `user_id` are enumerable, so a stranger can ask
- * "does member N hold badge X" and read the earn date -- including for a member whose profile is
- * private. Sharing is gated by the `badge_share` feature flag, not by the member's own consent for a
- * SPECIFIC badge, which is the real gap. The honest fix is a share opt-in (or a signed URL the
- * member mints when they choose to share), NOT a privacy check that would break the sharing this
- * endpoint exists to do.
- *
- * This is the "Phase 2 share URL" layer. Phase 4 upgrades it with full
- * OpenBadges 3.0 JSON-LD and a verification endpoint.
- *
- * Access: public (no auth required). Opt-out users' share pages still work
- * for their own badges — they opted out of the leaderboard, not credential sharing.
- *
- * @package WB_Gamification
- * @since   0.1.0
  */
 
 namespace WBGam\API;
@@ -105,6 +84,85 @@ class BadgeShareController extends WP_REST_Controller {
 				),
 			)
 		);
+
+		// POST|DELETE /badges/{badge_id}/share — the member publishes, or unpublishes, their OWN badge.
+		//
+		// No user_id in this route, deliberately. Consent is not a parameter: the only person who can
+		// publish a member's badge is that member. An admin who could pass ?user_id= would be able to
+		// publish somebody else's achievements on their behalf, which is the opposite of what the
+		// column means.
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/(?P<badge_id>[a-z0-9_-]+)/share',
+			array(
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'share_badge' ),
+					'permission_callback' => 'is_user_logged_in',
+					'args'                => array(
+						'badge_id' => array(
+							'required'          => true,
+							'type'              => 'string',
+							'sanitize_callback' => 'sanitize_key',
+						),
+					),
+				),
+				array(
+					'methods'             => WP_REST_Server::DELETABLE,
+					'callback'            => array( $this, 'unshare_badge' ),
+					'permission_callback' => 'is_user_logged_in',
+					'args'                => array(
+						'badge_id' => array(
+							'required'          => true,
+							'type'              => 'string',
+							'sanitize_callback' => 'sanitize_key',
+						),
+					),
+				),
+			)
+		);
+	}
+
+	/**
+	 * Publish the current member's badge.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function share_badge( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+		$badge_id = sanitize_key( $request['badge_id'] );
+		$user_id  = get_current_user_id();
+
+		if ( ! \WBGam\Engine\BadgeShare::share( $user_id, $badge_id ) ) {
+			// share() refuses a badge the member does not hold -- publishing one you never earned would
+			// mint a credential asserting something untrue.
+			return new WP_Error(
+				'rest_badge_not_earned',
+				__( 'You have not earned this badge.', 'wb-gamification' ),
+				array( 'status' => 403 )
+			);
+		}
+
+		return rest_ensure_response(
+			array(
+				'shared'    => true,
+				'share_url' => \WBGam\Engine\BadgeSharePage::get_share_url( $badge_id, $user_id ),
+			)
+		);
+	}
+
+	/**
+	 * Unpublish the current member's badge.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function unshare_badge( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+		$badge_id = sanitize_key( $request['badge_id'] );
+
+		\WBGam\Engine\BadgeShare::unshare( get_current_user_id(), $badge_id );
+
+		return rest_ensure_response( array( 'shared' => false ) );
 	}
 
 	/**
@@ -245,6 +303,21 @@ class BadgeShareController extends WP_REST_Controller {
 			return new WP_Error(
 				'rest_user_invalid',
 				__( 'Member not found.', 'wb-gamification' ),
+				array( 'status' => 404 )
+			);
+		}
+
+		// The member has to have PUBLISHED this badge. Both halves of this URL are guessable, so
+		// without that check the route hands any stranger a list of which badges any member holds --
+		// which is what it used to do. Self and admins pass, so a member can preview their own card
+		// before deciding to publish it.
+		//
+		// Same 404 as a badge that does not exist. "It exists but is not yours to see" is itself the
+		// leak: it answers the question the enumeration was asking.
+		if ( ! \WBGam\Engine\BadgeShare::can_view_public( $user_id, $badge_id ) ) {
+			return new WP_Error(
+				'rest_badge_not_shared',
+				__( 'Badge not found.', 'wb-gamification' ),
 				array( 'status' => 404 )
 			);
 		}

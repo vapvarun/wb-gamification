@@ -102,6 +102,17 @@ final class BadgeSharePage {
 			return;
 		}
 
+		// The page is the third surface keyed on a guessable (badge_id, user_id) -- the two REST routes
+		// got all the attention, and this one renders the member's name, avatar and earn date as an
+		// actual HTML page that a search engine will happily index. It needs the same consent gate, and
+		// it is the same gate: the member publishes, or nobody sees it.
+		if ( ! BadgeShare::can_view_public( $user_id, $badge_id ) ) {
+			global $wp_query;
+			$wp_query->set_404();
+			status_header( 404 );
+			return;
+		}
+
 		$share_url   = self::get_share_url( $badge_id, $user_id );
 		$cred_url    = rest_url( 'wb-gamification/v1/badges/' . $badge_id . '/credential/' . $user_id );
 		$earned_at   = BadgeEngine::get_badge_row( $user_id, $badge_id )['earned_at'] ?? '';

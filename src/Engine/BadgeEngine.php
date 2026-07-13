@@ -72,16 +72,6 @@ final class BadgeEngine {
 	private const CRON_PAGE_SIZE = 500;
 
 	/**
-	 * Forget the cached rules list.
-	 *
-	 * The award path caches active rules for five minutes. Anything that writes a rule MUST call
-	 * this, or the owner saves a badge, tests it, sees nothing happen, and concludes the plugin is
-	 * broken -- for five minutes. (I lost twenty minutes to exactly that while building this: a
-	 * functional test reported FAIL and the feature was fine.)
-	 *
-	 * @return void
-	 */
-	/**
 	 * Arm the daily badge pass, and retire the engine cron it replaces.
 	 *
 	 * @return void
@@ -123,16 +113,6 @@ final class BadgeEngine {
 		wp_clear_scheduled_hook( 'wb_gam_tenure_check' );
 	}
 
-	/**
-	 * Forget the cached rules list.
-	 *
-	 * The award path caches active rules for five minutes. Anything that writes a rule MUST call
-	 * this, or the owner saves a badge, tests it, sees nothing happen, and concludes the plugin is
-	 * broken -- for five minutes. I lost time to exactly that while building this: a functional test
-	 * reported FAIL and the feature was fine.
-	 *
-	 * @return void
-	 */
 	/**
 	 * Start a retroactive backfill -- ONLY when the owner asked for one.
 	 *

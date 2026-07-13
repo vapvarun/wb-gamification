@@ -877,14 +877,14 @@ class DoctorCommand {
 			$this->warn( 'No readme.txt — required for WordPress.org submission' );
 		}
 
-		// Min assets.
-		$css_min = WB_GAM_PATH . 'assets/css/admin-premium.min.css';
-		$js_min  = WB_GAM_PATH . 'assets/js/settings-nav.min.js';
-		if ( file_exists( $css_min ) && file_exists( $js_min ) ) {
-			$this->pass( 'Minified assets present' );
-		} else {
-			$this->warn( 'Missing minified assets — run `grunt build` before release' );
-		}
+		// The "minified assets" check used to live here, and every part of it was fiction. It looked
+		// for assets/css/admin-premium.min.css, which does not exist and never has. It looked for
+		// assets/js/settings-nav.min.js, which existed but was enqueued by nothing -- WordPress loads
+		// the unminified settings-nav.js. And when it failed, which was always, it told you to run
+		// `grunt build`, in a repo with no grunt, no Gruntfile and no reference to grunt anywhere in
+		// package.json. So it warned on every doctor run about a requirement that does not exist and
+		// prescribed a command that cannot be run. A check that is always wrong teaches people to
+		// ignore the checks that are not. Both dead .min.js files went with it.
 
 		// Check essential frontend features.
 		$blocks_dir = WB_GAM_PATH . 'build/Blocks/';
