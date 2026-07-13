@@ -68,6 +68,24 @@ final class GamiPressImporter {
 	}
 
 	/**
+	 * Does this site's `gamipress_logs` carry the points columns (6.9.4+), or the legacy meta rows?
+	 *
+	 * Asked of the SCHEMA, not of a version string: a plugin version tells you what the code is, not
+	 * what the database survived. Sites get upgraded, downgraded, restored from old dumps and migrated
+	 * between hosts, and the table is the only thing that knows the truth.
+	 *
+	 * @return bool True when `points` exists as a column.
+	 */
+	private static function logs_have_points_column(): bool {
+		global $wpdb;
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$columns = (array) $wpdb->get_col( "SHOW COLUMNS FROM {$wpdb->prefix}gamipress_logs" );
+
+		return in_array( 'points', $columns, true );
+	}
+
+	/**
 	 * Build normalized import rows from the GamiPress point ledger.
 	 *
 	 * @return array<int, array<string, mixed>>
@@ -76,13 +94,32 @@ final class GamiPressImporter {
 		global $wpdb;
 		$rows = array();
 
+		// GamiPress moved `points` and `points_type` from the log META table into COLUMNS on the logs
+		// table in 6.9.4. Both shapes are alive in the wild, and a site still on the old one is exactly
+		// the kind of stale install that wants to migrate away.
+		//
+		// Reading the columns unconditionally did not fail loudly on an older site: MySQL rejected the
+		// query, $wpdb swallowed the error, get_results() returned null, and the import reported
+		// `rows: 0` with HTTP 200. The owner was told their migration had SUCCEEDED and imported
+		// nothing -- their entire points history skipped, with nothing to explain why.
+		//
+		// So ask the schema which shape this site has, and read that one.
+		$modern = self::logs_have_points_column();
+
+		$select = $modern
+			? 'l.points AS points, l.points_type AS points_type'
+			: "( SELECT m.meta_value FROM {$wpdb->prefix}gamipress_logs_meta m
+			      WHERE m.log_id = l.log_id AND m.meta_key = '_gamipress_points' LIMIT 1 ) AS points,
+			   ( SELECT m2.meta_value FROM {$wpdb->prefix}gamipress_logs_meta m2
+			      WHERE m2.log_id = l.log_id AND m2.meta_key = '_gamipress_points_type' LIMIT 1 ) AS points_type";
+
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$logs = $wpdb->get_results(
-			"SELECT log_id, user_id, type, trigger_type, points, points_type, date
-			   FROM {$wpdb->prefix}gamipress_logs
-			  WHERE type IN ('points_earn','points_award','points_deduct','points_revoke')
-			    AND user_id > 0
-			  ORDER BY log_id ASC",
+			"SELECT l.log_id, l.user_id, l.type, l.trigger_type, {$select}, l.date
+			   FROM {$wpdb->prefix}gamipress_logs l
+			  WHERE l.type IN ('points_earn','points_award','points_deduct','points_revoke')
+			    AND l.user_id > 0
+			  ORDER BY l.log_id ASC",
 			ARRAY_A
 		);
 
