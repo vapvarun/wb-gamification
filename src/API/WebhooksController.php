@@ -72,7 +72,7 @@ class WebhooksController extends WP_REST_Controller {
 	 *
 	 * @var string[]
 	 */
-	private const VALID_EVENTS = array(
+	public const VALID_EVENTS = array(
 		'points_awarded',
 		'badge_earned',
 		'level_changed',

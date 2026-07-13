@@ -72,6 +72,16 @@ final class MembersPage {
 			WB_GAM_VERSION,
 			true
 		);
+		// Shared confirm/cancel modal button labels — confirmAction() falls back
+		// to these when a caller doesn't pass its own confirmText/cancelText.
+		wp_localize_script(
+			'wb-gam-admin-rest-utils',
+			'wbGamAdminRestI18n',
+			array(
+				'confirm' => __( 'Confirm', 'wb-gamification' ),
+				'cancel'  => __( 'Cancel', 'wb-gamification' ),
+			)
+		);
 		wp_enqueue_script(
 			'wb-gam-admin-members',
 			plugins_url( 'assets/js/admin-members.js', WB_GAM_FILE ),

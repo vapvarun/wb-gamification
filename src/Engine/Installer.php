@@ -294,7 +294,13 @@ final class Installer {
 			PRIMARY KEY (id),
 			KEY giver_date (giver_id, created_at),
 			KEY receiver_id (receiver_id),
-			KEY idx_receiver_date (receiver_id, created_at)
+			KEY idx_receiver_date (receiver_id, created_at),
+			-- Abuse detection groups live kudos by (giver, receiver) to find pairs trading kudos back
+			-- and forth. With no index leading on revoked_at, MySQL built a temp table for that GROUP
+			-- BY -- fine at 1 row, a full scan of every kudos ever given on a site that has been
+			-- running for a year. Leading column is the WHERE (revoked_at IS NULL), then the two
+			-- grouped columns, so the grouping can be read straight off the index.
+			KEY idx_abuse_pairs (revoked_at, giver_id, receiver_id)
 		) $charset;"
 		);
 

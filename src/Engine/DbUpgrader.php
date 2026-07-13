@@ -1357,7 +1357,45 @@ final class DbUpgrader {
 			'1.4.0' => 'upgrade_to_1_4_0',
 			'1.5.4' => 'upgrade_to_1_5_4',
 			'1.5.5' => 'upgrade_to_1_5_5',
+			'1.6.4' => 'upgrade_to_1_6_4',
 		);
+	}
+
+	/**
+	 * 1.6.4 — index the kudos abuse-detection GROUP BY.
+	 *
+	 * The moderation page groups live kudos by (giver_id, receiver_id) to surface pairs trading kudos
+	 * back and forth. No index led on `revoked_at`, so MySQL had to build a temp table and scan every
+	 * kudos row on the site to answer it -- EXPLAIN said `Using temporary`, every time a moderator
+	 * opened the page. Invisible on a young site; a full scan of a table that only ever grows on an
+	 * old one (nothing prunes kudos, and nothing should -- they are member-authored content).
+	 *
+	 * Fresh installs get this from the CREATE TABLE in Installer. This is the same index for sites
+	 * that already exist.
+	 *
+	 * Idempotent: checks SHOW INDEX first, so re-running does nothing. Adding an index does not touch
+	 * a single row of data.
+	 *
+	 * @since 1.6.4
+	 */
+	private static function upgrade_to_1_6_4(): void {
+		global $wpdb;
+
+		$table = $wpdb->prefix . 'wb_gam_kudos';
+
+		if ( $table !== $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) ) ) {
+			return;
+		}
+
+		$exists = $wpdb->get_results(
+			$wpdb->prepare( "SHOW INDEX FROM `{$table}` WHERE Key_name = %s", 'idx_abuse_pairs' ) // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from $wpdb->prefix.
+		);
+
+		if ( ! empty( $exists ) ) {
+			return;
+		}
+
+		$wpdb->query( "ALTER TABLE `{$table}` ADD KEY `idx_abuse_pairs` (`revoked_at`, `giver_id`, `receiver_id`)" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- DDL; table name from $wpdb->prefix.
 	}
 
 	/**

@@ -851,6 +851,7 @@ register_deactivation_hook(
 		StatusRetentionEngine::deactivate();
 		CredentialExpiryEngine::deactivate();
 		BadgeSharePage::deactivate();
+		\WBGam\Engine\BadgeEngine::deactivate();
 
 		// v2.x engines (SideEffectDispatcher, IntelligenceProjector,
 		// NotificationBridge) schedule wp-cron hooks but predate the per-engine

@@ -94,8 +94,14 @@ final class FeatureFlags {
 	/**
 	 * Default state for every feature flag.
 	 *
-	 * All features enabled by default. Admins can toggle individual
-	 * features off in Settings → Features.
+	 * All features on by default: a community that does not want the weekly email is rarer than one
+	 * that does, and an owner who never opens this screen should get the whole product.
+	 *
+	 * Toggled in Settings > Modules, under "Background features". For most of this plugin's life that
+	 * sentence was a lie -- this docblock promised a "Settings > Features" screen, boot_engines()
+	 * enforced these flags for real, and NOTHING could write them: seven of the eight had no UI, no
+	 * REST route, no anything. An owner who wanted the nudge email off had to reach for
+	 * `wp option update`. The screen now exists; keep it in step with this list.
 	 *
 	 * @var array<string, bool>
 	 */

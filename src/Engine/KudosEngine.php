@@ -603,6 +603,17 @@ final class KudosEngine {
 	 * A ring spread over a week -- the only kind there is -- was invisible. The point of the feature is
 	 * to find abuse the moderator has NOT already spotted, so it has to ask the table, not the page.
 	 *
+	 * Asking the table needs an index to be affordable, and there wasn't one: nothing led on
+	 * `revoked_at`, so this GROUP BY built a temp table and scanned every kudos row on the site, every
+	 * time a moderator opened the page. `idx_abuse_pairs (revoked_at, giver_id, receiver_id)` (1.6.4)
+	 * turns it into a covering index read -- EXPLAIN went from `Using temporary` to `Using index`.
+	 * Nothing prunes this table and nothing should (kudos are member-authored content), so it only
+	 * ever grows, and an unindexed scan of it was a bill that arrived years late.
+	 *
+	 * Deliberately NOT cached. It is an admin-only page, read once per load, and now index-covered --
+	 * a cache here would buy nothing and cost an invalidation path to get wrong. Over-caching is a
+	 * finding too.
+	 *
 	 * @param int $threshold Pair count at or above which a pair is flagged.
 	 * @return array<string,int> "giverId-receiverId" => count.
 	 */

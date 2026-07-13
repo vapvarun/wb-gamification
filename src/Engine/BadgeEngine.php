@@ -102,6 +102,28 @@ final class BadgeEngine {
 	}
 
 	/**
+	 * Deactivation hook — clear the recurring daily badge cron pass.
+	 *
+	 * Mirrors LeaderboardEngine::deactivate(). Without this, the RECURRING
+	 * Action Scheduler action armed by maybe_schedule_cron_pass() keeps
+	 * rescheduling itself forever after the plugin is deactivated — AS
+	 * actions are not tied to plugin lifecycle the way WP-Cron events
+	 * cleared via register_deactivation_hook are, so nothing stops it
+	 * unless we explicitly unschedule it here.
+	 *
+	 * @return void
+	 */
+	public static function deactivate(): void {
+		if ( function_exists( 'as_unschedule_all_actions' ) ) {
+			as_unschedule_all_actions( self::CRON_PASS, array(), 'wb-gamification' );
+		}
+		// Legacy WP-Cron event predating the Action Scheduler migration (see
+		// maybe_schedule_cron_pass()) — cleared here too in case a site is
+		// deactivating before ever reaching init on this version.
+		wp_clear_scheduled_hook( 'wb_gam_tenure_check' );
+	}
+
+	/**
 	 * Forget the cached rules list.
 	 *
 	 * The award path caches active rules for five minutes. Anything that writes a rule MUST call

@@ -48,10 +48,33 @@ final class CredentialExpiryEngine {
 	private const OPT_LAST  = 'wb_gam_credential_expiry_last_run';
 
 	/**
-	 * Register the credential expiry cron action callback.
+	 * Action Scheduler hook carrying the keyset cursor + fixed window bounds
+	 * from page to page.
+	 *
+	 * @since 1.6.4
+	 * @var string
+	 */
+	private const AS_PAGE_HOOK = 'wb_gam_credential_expiry_page';
+
+	/**
+	 * Credentials processed per tick. Bounds the notification loop and the
+	 * BuddyPress-notification write it performs per row — previously sized
+	 * by however many credentials expired in the window, which is unbounded
+	 * on any site with a large credentialed population. Same shape as
+	 * StatusRetentionEngine::PAGE_SIZE.
+	 *
+	 * @since 1.6.4
+	 * @var int
+	 */
+	private const PAGE_SIZE = 500;
+
+	/**
+	 * Register the credential expiry cron action callbacks.
 	 */
 	public static function init(): void {
 		add_action( self::CRON_HOOK, array( __CLASS__, 'run' ) );
+		// Paged continuation — each page schedules the next until the window drains.
+		add_action( self::AS_PAGE_HOOK, array( __CLASS__, 'run_page' ), 10, 3 );
 	}
 
 	/**
@@ -75,39 +98,74 @@ final class CredentialExpiryEngine {
 	// ── Cron handler ─────────────────────────────────────────────────────────
 
 	/**
-	 * Find credentials that expired since the last run and notify holders.
-	 *
-	 * Uses a stored last-run timestamp so notifications fire exactly once per
-	 * expiry event, no matter when the cron actually runs.
+	 * Weekly cron entry point. Resolves the (last_run, now] window once and
+	 * walks it in bounded pages via Action Scheduler — same shape as
+	 * StatusRetentionEngine::run(). The window bounds are fixed for the
+	 * whole run and threaded through every page so a mid-window continuation
+	 * never drifts onto a different slice of time than the one it started.
 	 */
 	public static function run(): void {
-		global $wpdb;
-
 		// Default: look back 8 days so the first-ever run is not a no-op.
-		$last_run = get_option( self::OPT_LAST, gmdate( 'Y-m-d H:i:s', strtotime( '-8 days' ) ) );
+		$last_run = (string) get_option( self::OPT_LAST, gmdate( 'Y-m-d H:i:s', strtotime( '-8 days' ) ) );
 		$now      = gmdate( 'Y-m-d H:i:s' );
 
-		// Credentials that expired in the window (last_run, now].
+		self::run_page( 0, $last_run, $now );
+	}
+
+	/**
+	 * Process one PAGE_SIZE page of the (window_start, window_end] range,
+	 * keyset-paged by `id`, and hand the next page to Action Scheduler when
+	 * the page comes back full.
+	 *
+	 * Before 1.6.4 run() issued a single unbounded SELECT over every
+	 * credential that expired in the window and then looped every row —
+	 * including a BuddyPress notification insert per row — in one cron
+	 * tick. Fine at the handful of expiries a small community sees in a
+	 * week; unbounded on a site with a large credentialed population, the
+	 * same class of bug every other engine in this file already paid down
+	 * (see StatusRetentionEngine::run()).
+	 *
+	 * OPT_LAST is only advanced once the window is fully drained (the short
+	 * final page) — a mid-window continuation or an overlapping run must
+	 * never move the watermark past credentials this run hasn't reached
+	 * yet, or the next weekly tick would silently skip them.
+	 *
+	 * @param int    $cursor       Last wb_gam_user_badges.id processed. 0 to start.
+	 * @param string $window_start Fixed window start for this run (exclusive, MySQL datetime).
+	 * @param string $window_end   Fixed window end for this run (inclusive, MySQL datetime).
+	 */
+	public static function run_page( int $cursor = 0, string $window_start = '', string $window_end = '' ): void {
+		if ( '' === $window_start || '' === $window_end ) {
+			return; // Malformed continuation args — nothing safe to process.
+		}
+
+		global $wpdb;
+
+		// Credentials that expired in the fixed window, keyset-paged past
+		// the cursor. `id` is the table's AUTO_INCREMENT PK, so ordering by
+		// it is a stable, gapless cursor regardless of how many badges any
+		// one member holds.
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT user_id, badge_id, expires_at
+				"SELECT id, user_id, badge_id, expires_at
 				   FROM {$wpdb->prefix}wb_gam_user_badges
-				  WHERE expires_at > %s AND expires_at <= %s",
-				$last_run,
-				$now
+				  WHERE expires_at > %s AND expires_at <= %s AND id > %d
+				  ORDER BY id ASC
+				  LIMIT %d",
+				$window_start,
+				$window_end,
+				$cursor,
+				self::PAGE_SIZE
 			),
 			ARRAY_A
 		);
 
-		update_option( self::OPT_LAST, $now );
+		$last = $cursor;
 
-		if ( empty( $rows ) ) {
-			return;
-		}
-
-		foreach ( $rows as $row ) {
+		foreach ( (array) $rows as $row ) {
 			$user_id  = (int) $row['user_id'];
 			$badge_id = (string) $row['badge_id'];
+			$last     = (int) $row['id'];
 
 			// Add a BP notification for the expired credential.
 			if ( function_exists( 'bp_notifications_add_notification' ) ) {
@@ -135,6 +193,37 @@ final class CredentialExpiryEngine {
 			 */
 			do_action( 'wb_gam_credential_expired', $user_id, $badge_id, $row['expires_at'] );
 		}
+
+		// Short page: the window is drained. Advance the watermark now — not
+		// before the sweep started — so a run that dies partway through
+		// resumes from the true last-processed point on its next tick
+		// instead of silently skipping the remainder of the window.
+		if ( count( (array) $rows ) < self::PAGE_SIZE ) {
+			update_option( self::OPT_LAST, $window_end );
+			return;
+		}
+
+		// More rows in this window — hand the next page to Action Scheduler
+		// rather than looping here, so no single tick carries a large
+		// backlog of expiries (e.g. a badge with validity_days set on a
+		// large cohort that all expire in the same week).
+		if ( function_exists( 'as_schedule_single_action' ) ) {
+			$page_args = array( $last, $window_start, $window_end );
+
+			// Guarded: without this, a cron overlap (or a retry of this same
+			// tick) would queue the same page twice and double-notify every
+			// member on it.
+			$queued = function_exists( 'as_has_scheduled_action' )
+				&& as_has_scheduled_action( self::AS_PAGE_HOOK, $page_args, 'wb_gam_credential_expiry' );
+
+			if ( ! $queued ) {
+				as_schedule_single_action( time() + 60, self::AS_PAGE_HOOK, $page_args, 'wb_gam_credential_expiry' );
+			}
+			return;
+		}
+
+		// No Action Scheduler — continue inline, still bounded per iteration.
+		self::run_page( $last, $window_start, $window_end );
 	}
 
 	// ── Public helpers ────────────────────────────────────────────────────────

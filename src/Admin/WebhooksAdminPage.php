@@ -70,6 +70,16 @@ final class WebhooksAdminPage {
 			WB_GAM_VERSION,
 			true
 		);
+		// Shared confirm/cancel modal button labels — confirmAction() falls back
+		// to these when a caller doesn't pass its own confirmText/cancelText.
+		wp_localize_script(
+			'wb-gam-admin-rest-utils',
+			'wbGamAdminRestI18n',
+			array(
+				'confirm' => __( 'Confirm', 'wb-gamification' ),
+				'cancel'  => __( 'Cancel', 'wb-gamification' ),
+			)
+		);
 		wp_enqueue_script(
 			'wb-gam-admin-rest-form',
 			plugins_url( 'assets/js/admin-rest-form.js', WB_GAM_FILE ),
@@ -320,17 +330,32 @@ final class WebhooksAdminPage {
 	 * @return array<string,string> Event name → human description.
 	 */
 	private static function available_events(): array {
-		// Must match WebhooksController::ALLOWED_EVENTS — the REST schema is
-		// the canonical source of truth (admin UI + 3rd-party clients agree
-		// on the same enum).
-		return array(
+		// This used to be a hand-kept copy of WebhooksController's enum, under a comment insisting it
+		// "must match". It did not. `redemption` was added to the enum in 1.4.1, the dispatcher fires
+		// it, the REST API accepts a subscription to it -- and no checkbox for it was ever rendered,
+		// so the only way an owner could subscribe was to bypass this page with a raw REST call. A
+		// comment is not a mechanism.
+		//
+		// So the enum is now READ, not copied. Labels are looked up per event; an event with no label
+		// still renders, under its own slug, because a subscribable event missing from this list is
+		// exactly the bug we are fixing -- better an ugly label than an invisible feature.
+		$labels = array(
 			'points_awarded'      => __( 'Points awarded to a member', 'wb-gamification' ),
 			'badge_earned'        => __( 'Member earned a badge', 'wb-gamification' ),
 			'level_changed'       => __( 'Member crossed a level threshold', 'wb-gamification' ),
 			'streak_milestone'    => __( 'Streak milestone reached', 'wb-gamification' ),
 			'challenge_completed' => __( 'Individual challenge completed', 'wb-gamification' ),
 			'kudos_given'         => __( 'Peer kudos transaction', 'wb-gamification' ),
+			'redemption'          => __( 'Member redeemed points for a reward', 'wb-gamification' ),
 		);
+
+		$events = array();
+
+		foreach ( \WBGam\API\WebhooksController::VALID_EVENTS as $event ) {
+			$events[ $event ] = $labels[ $event ] ?? $event;
+		}
+
+		return $events;
 	}
 
 	/**
@@ -354,6 +379,8 @@ final class WebhooksAdminPage {
 				return __( 'Fires when a member completes an individual challenge. Payload: user_id, challenge_id, challenge_slug, completed_at.', 'wb-gamification' );
 			case 'kudos_given':
 				return __( 'Fires for every peer-to-peer kudos. Payload: giver_id, receiver_id, kudos_id, message (truncated to 200 chars).', 'wb-gamification' );
+			case 'redemption':
+				return __( 'Fires when a member spends points on a reward. Payload: user_id, item_id, item_name, points_spent, redemption_id.', 'wb-gamification' );
 			default:
 				return '';
 		}

@@ -184,8 +184,14 @@ final class NotificationBridge {
 
 		// v2.2 — daily prune of the durable queue table.
 		add_action( self::PRUNE_CRON, array( __CLASS__, 'prune_queue' ) );
-		if ( ! wp_next_scheduled( self::PRUNE_CRON ) ) {
-			wp_schedule_event( time() + HOUR_IN_SECONDS, 'daily', self::PRUNE_CRON );
+
+		// Arm the recurring event on init, never at plugins_loaded: wp_schedule_event
+		// resolves schedules via wp_get_schedules(), which fires the
+		// cron_schedules filter — that must not run before init on WP 6.7+.
+		if ( did_action( 'init' ) ) {
+			self::maybe_schedule();
+		} else {
+			add_action( 'init', array( __CLASS__, 'maybe_schedule' ) );
 		}
 		// Skip toasts: OFF for every member, on every site, unless the owner asks for them.
 		//
@@ -208,6 +214,16 @@ final class NotificationBridge {
 
 		// Output markup + seed script once, in the footer.
 		add_action( 'wp_footer', array( __CLASS__, 'render' ), 5 );
+	}
+
+	/**
+	 * Arm the daily queue-prune event if not already scheduled. Idempotent —
+	 * safe to call on every init.
+	 */
+	public static function maybe_schedule(): void {
+		if ( ! wp_next_scheduled( self::PRUNE_CRON ) ) {
+			wp_schedule_event( time() + HOUR_IN_SECONDS, 'daily', self::PRUNE_CRON );
+		}
 	}
 
 	/**

@@ -14,6 +14,11 @@
  * declare a `wbGamXSettings` localized object containing { restUrl, nonce, i18n }
  * and call wbGamAdminRest.apiFetch( method, path, body, settings ).
  *
+ * confirmAction()'s default button labels are translated via the optional
+ * `window.wbGamAdminRestI18n` global ({ confirm, cancel }), localized by PHP
+ * onto the 'wb-gam-admin-rest-utils' handle on any page whose JS can call
+ * confirmAction() without passing its own confirmText/cancelText.
+ *
  * @package WB_Gamification
  * @since   1.0.0
  */
@@ -137,12 +142,17 @@
 	 * @returns {Promise<boolean>}
 	 */
 	function confirmAction( prompt ) {
-		const opts = typeof prompt === 'string' ? { message: prompt } : ( prompt || {} );
-		const title       = opts.title || '';
-		const message     = opts.message || 'Are you sure?';
-		const confirmText = opts.confirmText || 'Confirm';
-		const cancelText  = opts.cancelText || 'Cancel';
-		const tone        = opts.tone === 'primary' ? 'primary' : 'danger';
+		const opts   = typeof prompt === 'string' ? { message: prompt } : ( prompt || {} );
+		// PHP-localized fallback labels (window.wbGamAdminRestI18n), shared by
+		// every admin page that enqueues this script — see the wp_localize_script()
+		// call attached to the 'wb-gam-admin-rest-utils' handle. Falls back to the
+		// English literal only if a page hasn't localized it (or JS ran pre-DOM).
+		const g            = window.wbGamAdminRestI18n || {};
+		const title        = opts.title || '';
+		const message      = opts.message || 'Are you sure?';
+		const confirmText  = opts.confirmText || g.confirm || 'Confirm';
+		const cancelText   = opts.cancelText || g.cancel || 'Cancel';
+		const tone         = opts.tone === 'primary' ? 'primary' : 'danger';
 
 		return new Promise( function ( resolve ) {
 			const overlay = document.createElement( 'div' );

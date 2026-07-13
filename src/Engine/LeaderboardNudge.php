@@ -60,6 +60,21 @@ final class LeaderboardNudge {
 		add_action( self::CRON_HOOK, array( __CLASS__, 'dispatch_batch' ) );
 		add_action( self::AS_SINGLE_HOOK, array( __CLASS__, 'send_nudge' ) );
 
+		// Arm the recurring event on init, never at plugins_loaded: wp_schedule_event
+		// resolves schedules via wp_get_schedules(), which fires the
+		// cron_schedules filter — that must not run before init on WP 6.7+.
+		if ( did_action( 'init' ) ) {
+			self::maybe_schedule();
+		} else {
+			add_action( 'init', array( __CLASS__, 'maybe_schedule' ) );
+		}
+	}
+
+	/**
+	 * Arm the weekly nudge cron if not already scheduled. Idempotent — safe
+	 * to call on every init.
+	 */
+	public static function maybe_schedule(): void {
 		if ( ! wp_next_scheduled( self::CRON_HOOK ) ) {
 			// Schedule for next Monday at 08:00 UTC.
 			$next_monday = strtotime( 'next monday 08:00 UTC' );
