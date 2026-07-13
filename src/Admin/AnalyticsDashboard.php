@@ -792,24 +792,69 @@ final class AnalyticsDashboard {
 		}
 
 		// Fill gaps so every day in range has a value.
+		//
+		// The day keys are built in the SITE's clock, because that is the clock they are grouped by:
+		// created_at is written with current_time('mysql'), so DATE(created_at) is a site-local day.
+		// This loop used gmdate() — a UTC day — so on any site not on UTC the two sets of keys did not
+		// line up, and a day that HAD points rendered as an empty column. The chart was not just ugly,
+		// it was wrong.
 		$end_ts   = time();
 		$start_ts = strtotime( "-{$period} days", $end_ts );
 		$filled   = array();
 		for ( $ts = $start_ts; $ts <= $end_ts; $ts += DAY_IN_SECONDS ) {
-			$day            = gmdate( 'Y-m-d', $ts );
+			$day            = wp_date( 'Y-m-d', $ts );
 			$filled[ $day ] = $daily_points[ $day ] ?? 0;
 		}
 
-		$max = max( $filled ) ?: 1;
-		$w   = 100 / count( $filled ); // % width per bar
+		$max   = max( $filled ) ?: 1;
+		$total = array_sum( $filled );
+		$days  = array_keys( $filled );
+		$first = (string) reset( $days );
+		$last  = (string) end( $days );
 
-		echo '<div class="wb-gam-analytics__sparkline" aria-hidden="true">';
+		// A chart with no scale is a picture of some rectangles.
+		//
+		// It rendered as bare bars: no axis, no labels, no baseline. And because one busy day sets the
+		// maximum, every other day was drawn at ~1% of 80px — a row of 1px stubs that read as broken
+		// rather than as "quiet days". The scale is now stated, so a tall bar next to flat ones is
+		// legible as what it is instead of looking like a rendering fault.
+		$summary = sprintf(
+			/* translators: 1: number of points on the busiest day, 2: total points, 3: start date, 4: end date. */
+			__( 'Daily points. Busiest day: %1$s points. Total: %2$s points, %3$s to %4$s.', 'wb-gamification' ),
+			number_format_i18n( $max ),
+			number_format_i18n( $total ),
+			$first,
+			$last
+		);
+
+		echo '<div class="wb-gam-analytics__chart">';
+
+		// role=img + a label, rather than aria-hidden. The chart WAS hidden from assistive tech
+		// entirely, which means the only trend on the page did not exist for a screen-reader user.
+		echo '<div class="wb-gam-analytics__sparkline" role="img" aria-label="' . esc_attr( $summary ) . '">';
+
+		$w = 100 / max( 1, count( $filled ) ); // % width per bar.
+
 		foreach ( $filled as $day => $pts ) {
-			$h         = (int) round( ( $pts / $max ) * 100 );
-			$bar_title = esc_attr( $day . ': ' . number_format_i18n( $pts ) . ' pts' );
+			// A day with points must be VISIBLE. Rounded against a large max, a quiet day floors to 0%
+			// and disappears, so "a few points" and "no points at all" looked identical.
+			$h = $pts > 0 ? max( 2, (int) round( ( $pts / $max ) * 100 ) ) : 0;
+
+			$bar_title = esc_attr( $day . ': ' . number_format_i18n( $pts ) . ' ' . __( 'pts', 'wb-gamification' ) );
 			$bar_width = esc_attr( number_format( $w, 4 ) );
-			echo '<div class="wb-gam-analytics__spark-bar" style="--bar-h:' . $h . '%;--bar-w:' . $bar_width . '%" title="' . $bar_title . '"></div>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- $h is int, $bar_width and $bar_title are esc_attr()-escaped.
+
+			echo '<div class="wb-gam-analytics__spark-bar' . ( 0 === $h ? ' is-empty' : '' ) . '" style="--bar-h:' . (int) $h . '%;--bar-w:' . $bar_width . '%" title="' . $bar_title . '"></div>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- $h is an int; $bar_width and $bar_title are esc_attr()-escaped.
 		}
+
+		echo '</div>';
+
+		// The axis. Without the maximum printed somewhere, the tallest bar could be 10 points or 10
+		// million and the chart looks identical.
+		echo '<div class="wb-gam-analytics__chart-axis">';
+		echo '<span class="wb-gam-analytics__chart-max">' . esc_html( sprintf( /* translators: %s: highest daily points total. */ __( 'peak %s', 'wb-gamification' ), number_format_i18n( $max ) ) ) . '</span>';
+		echo '<span class="wb-gam-analytics__chart-dates"><span>' . esc_html( $first ) . '</span><span>' . esc_html( $last ) . '</span></span>';
+		echo '</div>';
+
 		echo '</div>';
 	}
 }
