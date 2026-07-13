@@ -144,11 +144,9 @@ use WBGam\API\EventsController;
 use WBGam\API\WebhooksController;
 use WBGam\API\RulesController;
 use WBGam\API\RecapController;
-use WBGam\BuddyPress\HooksIntegration as BPHooks;
 use WBGam\BuddyPress\ProfileIntegration;
 use WBGam\BuddyPress\DirectoryIntegration;
 use WBGam\BuddyPress\ActivityIntegration as BPActivity;
-use WBGam\Integrations\WordPress\HooksIntegration as WPHooks;
 use WBGam\Integrations\WooCommerce\RefundHandler as WCRefundHandler;
 use WBGam\Integrations\WooCommerce\AccountIntegration as WCAccountIntegration;
 use WBGam\Integrations\LearnDash\ProfileIntegration as LearnDashProfile;
@@ -264,12 +262,6 @@ final class WB_Gamification {
 		// Member-facing accent color override (Settings > Appearance). Only
 		// registers a wp_enqueue_scripts hook, so it has no boot-order deps.
 		\WBGam\Engine\Appearance::init();
-
-		BootOrder::register( 'wp_hooks', BootOrder::SLOT_CORE, array( 'registry' ) );
-		add_action( 'plugins_loaded', array( WPHooks::class, 'init' ), BootOrder::SLOT_CORE );
-
-		BootOrder::register( 'bp_hooks', BootOrder::SLOT_INTEGRATIONS, array( 'engine' ) );
-		add_action( 'plugins_loaded', array( BPHooks::class, 'init' ), BootOrder::SLOT_INTEGRATIONS );
 
 		BootOrder::register( 'wc_refund_handler', BootOrder::SLOT_INTEGRATIONS, array( 'engine' ) );
 		add_action( 'plugins_loaded', array( WCRefundHandler::class, 'init' ), BootOrder::SLOT_INTEGRATIONS );
