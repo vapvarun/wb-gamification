@@ -96,58 +96,13 @@
 	 * @return {number} Bottom edge of the topmost obstruction, or 0 if the top is clear.
 	 */
 	function topObstructionBottom() {
-		var candidates = [];
-		var adminBar   = document.getElementById( 'wpadminbar' );
-
-		if ( adminBar ) {
-			candidates.push( adminBar );
+		// One measurement, one file. This used to be a second copy of the same logic, and the two copies
+		// are exactly how the status bar shipped with the bug this function was written to fix.
+		if ( window.wbGam && typeof window.wbGam.topObstructionBottom === 'function' ) {
+			return window.wbGam.topObstructionBottom( container );
 		}
 
-		// Theme header, however it is positioned.
-		Array.prototype.push.apply(
-			candidates,
-			document.querySelectorAll( 'header, .site-header, #masthead' )
-		);
-
-		// Anything else pinned across the top (cookie bars, promo bars, sticky navs).
-		Array.prototype.forEach.call( document.body.children, function ( el ) {
-			var pos = window.getComputedStyle( el ).position;
-			if ( pos === 'fixed' || pos === 'sticky' ) {
-				candidates.push( el );
-			}
-		} );
-
-		var lowest = 0;
-
-		candidates.forEach( function ( el ) {
-			if ( el === container || container.contains( el ) || el.contains( container ) ) {
-				return;
-			}
-
-			var style = window.getComputedStyle( el );
-			if ( style.display === 'none' || style.visibility === 'hidden' ) {
-				return;
-			}
-
-			var rect = el.getBoundingClientRect();
-
-			// Scrolled away, zero-height, not in the top strip, or too narrow to be a bar.
-			if ( rect.height === 0 || rect.bottom <= 0 ) {
-				return;
-			}
-			if ( rect.top > TOP_STRIP ) {
-				return;
-			}
-			if ( rect.width < window.innerWidth * 0.5 ) {
-				return;
-			}
-
-			if ( rect.bottom > lowest ) {
-				lowest = rect.bottom;
-			}
-		} );
-
-		return lowest;
+		return 0;
 	}
 
 	/**

@@ -88,6 +88,12 @@ $wb_gam_wrapper = get_block_wrapper_attributes(
 
 wp_enqueue_style( 'wb-gam-tokens' );
 
+// The shared top-strip measurement. A floating bar has to be told what is already at the top of the
+// page — it used to hardcode `top: 48px` (the admin-bar height) and expose a CSS variable inviting
+// THEMES to fix our positioning for us. None do, including our own: on BuddyX the bar landed on top
+// of the site's nav. view.js now measures and sets that variable itself, and this is what it needs.
+wp_enqueue_script( 'wb-gamification-top-offset' );
+
 BlockHooks::before( 'user-status-bar', $wb_gam_attrs );
 ?>
 <div <?php echo $wb_gam_wrapper; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>

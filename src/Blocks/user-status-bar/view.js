@@ -12,6 +12,52 @@
 ( function () {
 	'use strict';
 
+	/**
+	 * Park a top-anchored bar BELOW whatever is actually at the top of the page.
+	 *
+	 * The CSS used to hardcode `top: 48px` — the WP admin-bar height — and expose a
+	 * `--wb-gam-status-bar-top-offset` variable with a comment inviting THEMES to correct it. No theme
+	 * sets it, including our own: on BuddyX the bar rendered at y=48..146 while the header occupied
+	 * y=37..106, so it sat squarely on top of the site's nav.
+	 *
+	 * Expecting every theme on earth to fix our positioning is not a default; it is a bug with a
+	 * comment. So we measure what is up there and set the variable ourselves. The variable STAYS —
+	 * a theme or an owner that wants to override the measurement still can.
+	 *
+	 * @param {Element} bar The status bar.
+	 */
+	function parkBelowTopStrip( bar ) {
+		if ( ! window.wbGam || typeof window.wbGam.topObstructionBottom !== 'function' ) {
+			return;
+		}
+
+		// Only the top-anchored variants can collide with anything.
+		if ( ! bar.classList.contains( 'wb-gam-status-bar--pos-top-right' )
+			&& ! bar.classList.contains( 'wb-gam-status-bar--pos-top-left' ) ) {
+			return;
+		}
+
+		var measure = function () {
+			var bottom = window.wbGam.topObstructionBottom( bar );
+
+			// The CSS already adds its own 1rem gap and the admin-bar allowance on top of this
+			// variable, so what we contribute is only the part it could not know about: everything
+			// below the admin bar. Subtract it back out so the two do not double-count.
+			var adminBar = document.getElementById( 'wpadminbar' );
+			var adminH   = adminBar ? adminBar.getBoundingClientRect().height : 0;
+			var offset   = Math.max( 0, bottom - adminH );
+
+			bar.style.setProperty( '--wb-gam-status-bar-top-offset', Math.round( offset ) + 'px' );
+		};
+
+		measure();
+
+		// A header can grow, shrink, unstick or disappear as the page scrolls, so this is not a
+		// one-shot measurement.
+		window.addEventListener( 'scroll', measure, { passive: true } );
+		window.addEventListener( 'resize', measure, { passive: true } );
+	}
+
 	function init() {
 		var bars = document.querySelectorAll( '[data-wb-gam-status-bar]' );
 		if ( ! bars.length ) {
@@ -22,6 +68,8 @@
 		// session so an admin who collapsed it doesn't have to do it again
 		// on every page.
 		bars.forEach( function ( bar ) {
+			parkBelowTopStrip( bar );
+
 			var toggle = bar.querySelector( '[data-wb-gam-status-bar-toggle]' );
 			if ( ! toggle ) {
 				return;

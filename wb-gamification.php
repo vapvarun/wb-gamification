@@ -573,6 +573,21 @@ final class WB_Gamification {
 			);
 		}
 
+		// Shared top-strip measurement.
+		//
+		// Anything this plugin pins to the top of the viewport has to know what is ALREADY up there —
+		// admin bar, theme header (however it is positioned), sticky nav, cookie bar. We have shipped
+		// that bug twice: toasts behind the header, and a status bar hardcoded to `top: 48px` that
+		// landed on BuddyX's nav. One measurement, one file, so the next fix cannot land in only one
+		// of two copies. Registered (not enqueued) — consumers declare it as a dependency.
+		wp_register_script(
+			'wb-gamification-top-offset',
+			WB_GAM_URL . 'assets/js/top-offset.js',
+			array(),
+			WB_GAM_VERSION,
+			true
+		);
+
 		// Toast notification renderer for logged-in users. The renderer
 		// consumes wb-gamification-realtime instead of running its own
 		// poll loop; the wbGamToast localisation is kept as a fallback
@@ -581,7 +596,7 @@ final class WB_Gamification {
 			wp_enqueue_script(
 				'wb-gamification-toast',
 				WB_GAM_URL . 'assets/js/toast.js',
-				array( 'wb-gamification-realtime' ),
+				array( 'wb-gamification-realtime', 'wb-gamification-top-offset' ),
 				WB_GAM_VERSION,
 				true
 			);

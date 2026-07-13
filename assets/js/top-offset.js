@@ -1,0 +1,125 @@
+/**
+ * How far down the page does the top strip actually go?
+ *
+ * ANY element this plugin pins to the top of the viewport has to answer this question, and it must
+ * answer it by MEASURING — not by assuming.
+ *
+ * We have now got this wrong twice, the same way:
+ *
+ *   - Toasts pinned to a top position rendered BEHIND the theme header. The first fix looked for a
+ *     header with `position: fixed` or `sticky`. BuddyX's header is `position: static`, so the fix
+ *     did nothing on the theme our customers actually run.
+ *   - The user status bar hardcoded `top: 48px` (the WP admin-bar height) and shipped a CSS variable
+ *     with a comment inviting THEMES to correct it. No theme sets it, including our own, so the bar
+ *     landed on top of the header's nav on every real site.
+ *
+ * Both are the same mistake: guessing what is at the top of somebody else's page. A page can have an
+ * admin bar, a static header, a sticky nav, a cookie bar, a promo strip — in any combination, at any
+ * height, and it can change on scroll.
+ *
+ * So this measures whatever is actually up there, whatever its position value, and returns the bottom
+ * edge of the lowest thing in the way. It lives in one file because two copies of this logic
+ * guarantees the next fix lands in only one of them.
+ *
+ * @package WB_Gamification
+ * @since   1.6.4
+ */
+( function ( window, document ) {
+	'use strict';
+
+	/**
+	 * How far into the page an element can start and still count as "pinned to the top".
+	 *
+	 * Something beginning 200px down is page content, not a bar in the way.
+	 */
+	var TOP_STRIP = 200;
+
+	/**
+	 * Taller than this and it is not a bar, it is an overlay.
+	 *
+	 * An admin bar is 32px. A theme header is 50-120px. A cookie strip is 60-150px. Stack all three
+	 * and you are still under 300. Anything taller that starts at the top of the viewport is a
+	 * full-screen panel — an off-canvas menu, a modal backdrop — and pushing content below it means
+	 * pushing content off the screen.
+	 */
+	var MAX_BAR_HEIGHT = 300;
+
+	/**
+	 * The bottom edge of the lowest thing occupying the top strip.
+	 *
+	 * @param {Element} [ignore] Element to exclude — the thing being positioned, and its ancestors.
+	 * @return {number} Bottom edge in CSS pixels, or 0 when the top of the page is clear.
+	 */
+	function topObstructionBottom( ignore ) {
+		var candidates = [];
+		var adminBar   = document.getElementById( 'wpadminbar' );
+
+		if ( adminBar ) {
+			candidates.push( adminBar );
+		}
+
+		// The theme header, HOWEVER it is positioned. This is the line the first toast fix missed.
+		Array.prototype.push.apply(
+			candidates,
+			document.querySelectorAll( 'header, .site-header, #masthead' )
+		);
+
+		// Anything else pinned across the top: cookie bars, promo strips, sticky navs.
+		Array.prototype.forEach.call( document.body.children, function ( el ) {
+			var pos = window.getComputedStyle( el ).position;
+			if ( pos === 'fixed' || pos === 'sticky' ) {
+				candidates.push( el );
+			}
+		} );
+
+		var lowest = 0;
+
+		candidates.forEach( function ( el ) {
+			if ( ignore && ( el === ignore || ignore.contains( el ) || el.contains( ignore ) ) ) {
+				return;
+			}
+
+			var style = window.getComputedStyle( el );
+			if ( style.display === 'none' || style.visibility === 'hidden' ) {
+				return;
+			}
+
+			var rect = el.getBoundingClientRect();
+
+			// Scrolled away, zero-height, not in the top strip, or too narrow to be a bar.
+			if ( rect.height === 0 || rect.bottom <= 0 ) {
+				return;
+			}
+			if ( rect.top > TOP_STRIP ) {
+				return;
+			}
+			if ( rect.width < window.innerWidth * 0.5 ) {
+				return;
+			}
+
+			// TOO TALL TO BE A BAR.
+			//
+			// A thing in the way at the top of the page is a BAR: an admin bar, a header, a cookie
+			// strip. It is short and wide. A full-height element that happens to start at y=0 is an
+			// OVERLAY — an off-canvas mobile menu, a quick-view backdrop — and it is not "in the way"
+			// of anything, it is covering everything.
+			//
+			// Without this, BuddyX's `.mobile-menu-close` and Listora's `.listora-qv-overlay` (both
+			// `position: fixed`, both 844px tall, both idle in the DOM at 390px) measured as
+			// obstructions 844px deep, and the status bar was pushed clean off the bottom of the
+			// screen. Found in the browser at 390px; it would never have shown up on a desktop check.
+			if ( rect.height > Math.min( MAX_BAR_HEIGHT, window.innerHeight * 0.3 ) ) {
+				return;
+			}
+
+			if ( rect.bottom > lowest ) {
+				lowest = rect.bottom;
+			}
+		} );
+
+		return lowest;
+	}
+
+	window.wbGam = window.wbGam || {};
+	window.wbGam.topObstructionBottom = topObstructionBottom;
+} )( window, document );
