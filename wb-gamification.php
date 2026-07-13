@@ -515,7 +515,7 @@ final class WB_Gamification {
 		wp_register_script(
 			'wb-gamification-hub-convert',
 			WB_GAM_URL . 'assets/js/hub-convert.js',
-			array( 'wp-api-fetch', 'wp-i18n' ),
+			array( 'wp-api-fetch', 'wp-i18n', 'wb-gam-dialog' ),
 			WB_GAM_VERSION,
 			true
 		);
@@ -580,6 +580,17 @@ final class WB_Gamification {
 		// that bug twice: toasts behind the header, and a status bar hardcoded to `top: 48px` that
 		// landed on BuddyX's nav. One measurement, one file, so the next fix cannot land in only one
 		// of two copies. Registered (not enqueued) — consumers declare it as a dependency.
+		// The one dialog utility. Four overlay surfaces used to answer "does ESC close it, is focus
+		// trapped, does focus come back?" four different ways; the redemption confirm claimed to be a
+		// dialog and trapped nothing. Native <dialog> does the hard parts; this adds focus return.
+		wp_register_script(
+			'wb-gam-dialog',
+			WB_GAM_URL . 'assets/js/dialog.js',
+			array(),
+			WB_GAM_VERSION,
+			true
+		);
+
 		wp_register_script(
 			'wb-gamification-top-offset',
 			WB_GAM_URL . 'assets/js/top-offset.js',

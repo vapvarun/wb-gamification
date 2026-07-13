@@ -625,8 +625,24 @@ final class NotificationBridge {
 				data-wp-bind--hidden="!state.levelUp.active"
 				data-wp-on--click="actions.dismissLevelUp"
 				hidden
-				role="alertdialog"
-				aria-modal="true"
+				<?php
+				/*
+				 * An ANNOUNCEMENT, not a dialog.
+				 *
+				 * This claimed role="alertdialog" aria-modal="true" -- which tells a screen reader that
+				 * the rest of the page is inert and that focus is trapped in here. Neither was true:
+				 * nothing trapped focus, ESC did nothing, and the overlay is dismissed by clicking it.
+				 * So an assistive-tech user was told they were in a modal they could not get out of,
+				 * about a celebration they did not need to act on.
+				 *
+				 * A level-up is something that HAPPENED. It is announced (role="status", polite, so it
+				 * waits its turn rather than cutting the member off mid-sentence) and it is never
+				 * focused. Vestibular safety is handled separately -- see the prefers-reduced-motion
+				 * block in assets/css/frontend.css.
+				 */
+				?>
+				role="status"
+				aria-live="polite"
 				aria-label="<?php esc_attr_e( 'Level up!', 'wb-gamification' ); ?>"
 			>
 				<div class="wb-gam-overlay__card">
@@ -650,8 +666,24 @@ final class NotificationBridge {
 				data-wp-bind--hidden="!state.streakMilestone.active"
 				data-wp-on--click="actions.dismissStreakMilestone"
 				hidden
-				role="alertdialog"
-				aria-modal="true"
+				<?php
+				/*
+				 * An ANNOUNCEMENT, not a dialog.
+				 *
+				 * This claimed role="alertdialog" aria-modal="true" -- which tells a screen reader that
+				 * the rest of the page is inert and that focus is trapped in here. Neither was true:
+				 * nothing trapped focus, ESC did nothing, and the overlay is dismissed by clicking it.
+				 * So an assistive-tech user was told they were in a modal they could not get out of,
+				 * about a celebration they did not need to act on.
+				 *
+				 * A level-up is something that HAPPENED. It is announced (role="status", polite, so it
+				 * waits its turn rather than cutting the member off mid-sentence) and it is never
+				 * focused. Vestibular safety is handled separately -- see the prefers-reduced-motion
+				 * block in assets/css/frontend.css.
+				 */
+				?>
+				role="status"
+				aria-live="polite"
 				aria-label="<?php esc_attr_e( 'Streak milestone!', 'wb-gamification' ); ?>"
 			>
 				<div class="wb-gam-overlay__card">

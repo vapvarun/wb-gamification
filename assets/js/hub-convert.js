@@ -123,20 +123,30 @@
 					amountInput.value = '';
 					previewEl.textContent = '';
 					filterOptions( activeFromType );
-					if ( typeof dialog.showModal === 'function' ) {
+					// Through the SHARED utility, so this dialog and the redemption confirmation behave
+					// identically: ESC, focus trapped inside, and focus RETURNED to the button that
+					// opened it. That last part is the one the platform does not do for us, and the one
+					// a keyboard user notices immediately when it is missing.
+					if ( window.wbGam && window.wbGam.dialog ) {
+						window.wbGam.dialog.bind( dialog );
+						window.wbGam.dialog.open( dialog, { opener: btn } );
+					} else if ( typeof dialog.showModal === 'function' ) {
 						dialog.showModal();
-					} else {
-						dialog.setAttribute( 'open', 'open' );
 					}
 					amountInput.focus();
 				} );
 			} );
 
-		// Close handlers — × button + Cancel.
+		// Close handlers — × button + Cancel. Routed through the shared utility so focus goes back to
+		// the button that opened the dialog rather than to the top of the document.
 		dialog.querySelectorAll( '[data-wb-gam-convert-close]' ).forEach( ( el ) => {
 			el.addEventListener( 'click', ( ev ) => {
 				ev.preventDefault();
-				dialog.close();
+				if ( window.wbGam && window.wbGam.dialog ) {
+					window.wbGam.dialog.close( dialog );
+				} else {
+					dialog.close();
+				}
 			} );
 		} );
 

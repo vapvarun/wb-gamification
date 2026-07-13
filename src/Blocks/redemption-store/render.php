@@ -167,6 +167,10 @@ $wb_gam_wrapper_attrs = get_block_wrapper_attributes(
 
 wp_enqueue_style( 'wb-gam-tokens' );
 
+// The shared dialog utility: focus return, backdrop click, close buttons. The confirmation is a real
+// <dialog> now, so the browser gives us ESC, the focus trap and the inert background.
+wp_enqueue_script( 'wb-gam-dialog' );
+
 BlockHooks::before(
 	'redemption-store',
 	$wb_gam_attrs,
@@ -287,13 +291,24 @@ BlockHooks::before(
 								<span data-wp-bind--hidden="!context.redeemed" hidden><?php esc_html_e( 'Redeemed', 'wb-gamification' ); ?></span>
 							</button>
 
-							<div class="wb-gam-redemption__confirm"
-								role="dialog"
-								aria-modal="false"
+							<?php
+							/*
+							 * A REAL dialog, not a div wearing a dialog's clothes.
+							 *
+							 * This was `role="dialog" aria-modal="false"` on a hidden <div>: it told a screen
+							 * reader it was a dialog while trapping nothing, and — the part that actually hurt —
+							 * it never moved FOCUS. A keyboard user pressed "Redeem", a confirmation appeared
+							 * somewhere below, and their focus stayed on the button they had just pressed. As far
+							 * as they could tell, nothing had happened.
+							 *
+							 * <dialog>.showModal() gives the focus trap, the ESC key and the inert background for
+							 * free. Rolling our own would be more code AND worse than what the browser ships.
+							 */
+							?>
+							<dialog class="wb-gam-redemption__confirm"
+								data-wb-gam-dialog
+								id="wb-gam-redemption-dialog-<?php echo esc_attr( (string) (int) ( $wb_gam_item['id'] ?? 0 ) ); ?>"
 								aria-labelledby="wb-gam-redemption-confirm-<?php echo esc_attr( (string) (int) ( $wb_gam_item['id'] ?? 0 ) ); ?>"
-								data-wp-bind--hidden="!context.confirming"
-								data-wp-on--keydown="actions.handleConfirmKeydown"
-								hidden
 							>
 								<p id="wb-gam-redemption-confirm-<?php echo esc_attr( (string) (int) ( $wb_gam_item['id'] ?? 0 ) ); ?>" class="wb-gam-redemption__confirm-message">
 									<?php
@@ -319,7 +334,7 @@ BlockHooks::before(
 										<?php esc_html_e( 'Cancel', 'wb-gamification' ); ?>
 									</button>
 								</div>
-							</div>
+							</dialog>
 						<?php endif; ?>
 					</div>
 
