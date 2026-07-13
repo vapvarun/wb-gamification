@@ -178,6 +178,10 @@ final class NotificationBridge {
 		add_action( 'wb_gam_challenge_completed', array( __CLASS__, 'on_challenge_completed' ), 99, 2 );
 		add_action( 'wb_gam_kudos_given', array( __CLASS__, 'on_kudos_given' ), 99, 4 );
 
+		// ...and take it back when a moderator revokes it. This action was fired and never listened to,
+		// so a revoked kudos still congratulated the receiver.
+		add_action( 'wb_gam_kudos_revoked', array( __CLASS__, 'on_kudos_revoked' ), 10, 3 );
+
 		// v2.2 — daily prune of the durable queue table.
 		add_action( self::PRUNE_CRON, array( __CLASS__, 'prune_queue' ) );
 		if ( ! wp_next_scheduled( self::PRUNE_CRON ) ) {
@@ -505,10 +509,51 @@ final class NotificationBridge {
 		self::push(
 			$receiver_id,
 			array(
-				'type'    => 'kudos',
-				'message' => __( 'Someone gave you kudos!', 'wb-gamification' ),
-				'detail'  => $message ?: null,
-				'icon'    => 'icon-heart-handshake',
+				'type'     => 'kudos',
+				// The kudos this toast is FOR. It was not recorded, which meant a moderator revoking
+				// abusive kudos had no way to find the toast it had already queued -- so the receiver
+				// was still congratulated for kudos that had been taken away as abuse.
+				'kudos_id' => $kudos_id,
+				'message'  => __( 'Someone gave you kudos!', 'wb-gamification' ),
+				'detail'   => $message ?: null,
+				'icon'     => 'icon-heart-handshake',
+			)
+		);
+	}
+
+	/**
+	 * A moderator revoked a kudos. Take back the toast as well as the points.
+	 *
+	 * `wb_gam_kudos_revoked` fired and NOTHING listened to it. So a moderator could revoke a kudos as
+	 * abuse -- reversing both members' points, correctly -- and the receiver would still be told
+	 * "Someone gave you kudos!" on their next page load, for a kudos that no longer exists.
+	 *
+	 * Half a reversal is arguably worse than none: the points quietly vanish while the congratulation
+	 * still arrives, and the member has no way to connect the two.
+	 *
+	 * @since 1.6.4
+	 *
+	 * @param int $kudos_id    Revoked kudos.
+	 * @param int $giver_id    Giver.
+	 * @param int $receiver_id Receiver.
+	 * @return void
+	 */
+	public static function on_kudos_revoked( int $kudos_id, int $giver_id, int $receiver_id ): void {
+		global $wpdb;
+
+		if ( $kudos_id <= 0 || $receiver_id <= 0 || ! self::queue_ready() ) {
+			return;
+		}
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$wpdb->query(
+			$wpdb->prepare(
+				"DELETE FROM {$wpdb->prefix}wb_gam_notifications_queue
+				  WHERE user_id = %d
+				    AND event_type = 'kudos'
+				    AND payload_json LIKE %s",
+				$receiver_id,
+				'%' . $wpdb->esc_like( '"kudos_id":' . $kudos_id ) . '%'
 			)
 		);
 	}

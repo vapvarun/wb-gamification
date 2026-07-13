@@ -94,7 +94,7 @@ final class ManualAwardPage {
 		);
 		wp_localize_script(
 			'wb-gam-admin-user-picker',
-			'wbGamManualAward',
+			'wbGamUserPicker',
 			array(
 				'restUrl' => esc_url_raw( rest_url( 'wb-gamification/v1' ) ),
 				'nonce'   => wp_create_nonce( 'wp_rest' ),
@@ -245,21 +245,24 @@ final class ManualAwardPage {
 										 * - it cannot silently award points to the wrong member.
 										 */
 									?>
+									<div data-wb-gam-user-picker>
 										<input
 											type="search"
 											id="wb_gam_award_user_search"
 											class="regular-text"
 											autocomplete="off"
+											data-picker-search
 											placeholder="<?php esc_attr_e( 'Search by name, username or email...', 'wb-gamification' ); ?>"
 											aria-describedby="wb_gam_award_user_status"
 										/>
 										<label for="wb_gam_award_user" class="screen-reader-text">
 											<?php esc_html_e( 'Matching members', 'wb-gamification' ); ?>
 										</label>
-										<select name="user_id" id="wb_gam_award_user">
+										<select name="user_id" id="wb_gam_award_user" data-picker-select>
 											<option value="0"><?php esc_html_e( 'Type at least 2 characters to search', 'wb-gamification' ); ?></option>
 										</select>
-										<p id="wb_gam_award_user_status" class="description" aria-live="polite"></p>
+										<p id="wb_gam_award_user_status" class="description" aria-live="polite" data-picker-status></p>
+									</div>
 									<p class="description"><?php esc_html_e( 'Select the member who will receive (or lose) points.', 'wb-gamification' ); ?></p>
 								</td>
 							</tr>

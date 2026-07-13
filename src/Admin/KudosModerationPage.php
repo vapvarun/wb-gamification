@@ -98,6 +98,35 @@ final class KudosModerationPage {
 			WB_GAM_VERSION,
 			true
 		);
+
+		// The SHARED searchable member picker — the same component Award Points uses.
+		//
+		// The obvious thing here was wp_dropdown_users(), and it is the wrong thing: it renders one
+		// <option> per member, which is precisely what took the Award Points page down on a large site
+		// and had to be fixed once already. Two moderator filters is not a reason to reintroduce it.
+		wp_enqueue_script(
+			'wb-gam-admin-user-picker',
+			plugins_url( 'assets/js/admin-user-picker.js', WB_GAM_FILE ),
+			array( 'wb-gam-admin-rest-utils' ),
+			WB_GAM_VERSION,
+			true
+		);
+		wp_localize_script(
+			'wb-gam-admin-user-picker',
+			'wbGamUserPicker',
+			array(
+				'restUrl' => esc_url_raw( rest_url( 'wb-gamification/v1' ) ),
+				'nonce'   => wp_create_nonce( 'wp_rest' ),
+				'i18n'    => array(
+					'typeToSearch' => __( 'Type at least 2 characters to search', 'wb-gamification' ),
+					'searching'    => __( 'Searching…', 'wb-gamification' ),
+					'noResults'    => __( 'No members found', 'wb-gamification' ),
+					'selectUser'   => __( 'Anyone', 'wb-gamification' ),
+					/* translators: %d: number of matching members found. */
+					'resultsFound' => __( '%d members found', 'wb-gamification' ),
+				),
+			)
+		);
 		wp_localize_script(
 			'wb-gam-admin-kudos',
 			'wbGamKudos',
@@ -117,6 +146,22 @@ final class KudosModerationPage {
 	}
 
 	/**
+	 * Display name for a member id, for re-rendering a chosen filter after reload.
+	 *
+	 * @param int $user_id Member.
+	 * @return string
+	 */
+	private static function member_name( int $user_id ): string {
+		$user = $user_id > 0 ? get_userdata( $user_id ) : null;
+
+		return $user ? (string) $user->display_name : sprintf(
+			/* translators: %d: user ID */
+			__( 'User #%d', 'wb-gamification' ),
+			$user_id
+		);
+	}
+
+	/**
 	 * Render the kudos moderation roster.
 	 */
 	public static function render_page(): void {
@@ -131,15 +176,38 @@ final class KudosModerationPage {
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$paged = isset( $_GET['paged'] ) ? max( 1, absint( wp_unslash( $_GET['paged'] ) ) ) : 1;
 
-		$total  = KudosEngine::admin_count( $status );
+		// A moderator's job here is to FIND something: a member being buried in kudos, a pair trading
+		// them back and forth, a specific afternoon. With only a status tab that job is "read every
+		// page", which stops being possible on the second screenful.
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended
+		$filters = array(
+			'giver_id'    => isset( $_GET['giver_id'] ) ? absint( wp_unslash( $_GET['giver_id'] ) ) : 0,
+			'receiver_id' => isset( $_GET['receiver_id'] ) ? absint( wp_unslash( $_GET['receiver_id'] ) ) : 0,
+			'date_from'   => isset( $_GET['date_from'] ) ? sanitize_text_field( wp_unslash( $_GET['date_from'] ) ) : '',
+			'date_to'     => isset( $_GET['date_to'] ) ? sanitize_text_field( wp_unslash( $_GET['date_to'] ) ) : '',
+		);
+		// phpcs:enable WordPress.Security.NonceVerification.Recommended
+
+		// A date that is not a date is not a filter.
+		foreach ( array( 'date_from', 'date_to' ) as $key ) {
+			if ( '' !== $filters[ $key ] && ! preg_match( '/^\d{4}-\d{2}-\d{2}$/', $filters[ $key ] ) ) {
+				$filters[ $key ] = '';
+			}
+		}
+
+		$total  = KudosEngine::admin_count( $status, $filters );
 		$pages  = max( 1, (int) ceil( $total / self::PER_PAGE ) );
 		$paged  = min( $paged, $pages );
 		$offset = ( $paged - 1 ) * self::PER_PAGE;
-		$rows   = KudosEngine::admin_list( self::PER_PAGE, $offset, $status );
-		$abuse  = self::pair_abuse_map( $rows );
+		$rows   = KudosEngine::admin_list( self::PER_PAGE, $offset, $status, $filters );
 
-		/** Abuse threshold — same giver->receiver pair N+ times on this page. */
+		/** Abuse threshold — same giver->receiver pair N+ times. */
 		$threshold = (int) apply_filters( 'wb_gam_kudos_abuse_pair_threshold', 2 );
+
+		// Computed across the WHOLE table, not the current page. A pair trading kudos back and forth
+		// over a week only ever landed on one screen by luck, so the flag fired for the rings you had
+		// already found and stayed silent for the ones you had not.
+		$abuse = KudosEngine::abuse_pairs( $threshold );
 		?>
 		<div class="wrap wbgam-wrap">
 			<hr class="wp-header-end" />
@@ -159,10 +227,18 @@ final class KudosModerationPage {
 							'active'  => __( 'Active', 'wb-gamification' ),
 							'revoked' => __( 'Revoked', 'wb-gamification' ),
 						) as $key => $label ) :
+							// Switching tab must KEEP the filters. Dropping them means every status change
+							// throws away the search the moderator just built.
 							$url = add_query_arg(
-								array(
-									'page'   => self::PAGE_SLUG,
-									'status' => $key,
+								array_filter(
+									array(
+										'page'        => self::PAGE_SLUG,
+										'status'      => $key,
+										'giver_id'    => $filters['giver_id'] ?: null,
+										'receiver_id' => $filters['receiver_id'] ?: null,
+										'date_from'   => $filters['date_from'] ?: null,
+										'date_to'     => $filters['date_to'] ?: null,
+									)
 								),
 								admin_url( 'admin.php' )
 							);
@@ -170,6 +246,78 @@ final class KudosModerationPage {
 							<a class="wb-gam-kudos-filter__tab<?php echo $status === $key ? ' is-active' : ''; ?>" href="<?php echo esc_url( $url ); ?>"><?php echo esc_html( $label ); ?></a>
 						<?php endforeach; ?>
 					</nav>
+
+					<form method="get" class="wb-gam-kudos-search" action="<?php echo esc_url( admin_url( 'admin.php' ) ); ?>">
+						<input type="hidden" name="page" value="<?php echo esc_attr( self::PAGE_SLUG ); ?>" />
+						<input type="hidden" name="status" value="<?php echo esc_attr( $status ); ?>" />
+
+						<label class="wb-gam-kudos-search__field">
+							<span><?php esc_html_e( 'From member', 'wb-gamification' ); ?></span>
+							<div data-wb-gam-user-picker>
+								<input type="search" class="regular-text" autocomplete="off" data-picker-search
+									placeholder="<?php esc_attr_e( 'Search by name, username or email...', 'wb-gamification' ); ?>" />
+								<select name="giver_id" data-picker-select>
+									<?php if ( $filters['giver_id'] ) : ?>
+										<option value="<?php echo esc_attr( (string) $filters['giver_id'] ); ?>" selected>
+											<?php echo esc_html( self::member_name( $filters['giver_id'] ) ); ?>
+										</option>
+									<?php else : ?>
+										<option value="0"><?php esc_html_e( 'Anyone', 'wb-gamification' ); ?></option>
+									<?php endif; ?>
+								</select>
+								<p class="description" aria-live="polite" data-picker-status></p>
+							</div>
+						</label>
+
+						<label class="wb-gam-kudos-search__field">
+							<span><?php esc_html_e( 'To member', 'wb-gamification' ); ?></span>
+							<div data-wb-gam-user-picker>
+								<input type="search" class="regular-text" autocomplete="off" data-picker-search
+									placeholder="<?php esc_attr_e( 'Search by name, username or email...', 'wb-gamification' ); ?>" />
+								<select name="receiver_id" data-picker-select>
+									<?php if ( $filters['receiver_id'] ) : ?>
+										<option value="<?php echo esc_attr( (string) $filters['receiver_id'] ); ?>" selected>
+											<?php echo esc_html( self::member_name( $filters['receiver_id'] ) ); ?>
+										</option>
+									<?php else : ?>
+										<option value="0"><?php esc_html_e( 'Anyone', 'wb-gamification' ); ?></option>
+									<?php endif; ?>
+								</select>
+								<p class="description" aria-live="polite" data-picker-status></p>
+							</div>
+						</label>
+
+						<label class="wb-gam-kudos-search__field">
+							<span><?php esc_html_e( 'From date', 'wb-gamification' ); ?></span>
+							<input type="date" name="date_from" value="<?php echo esc_attr( $filters['date_from'] ); ?>" />
+						</label>
+
+						<label class="wb-gam-kudos-search__field">
+							<span><?php esc_html_e( 'To date', 'wb-gamification' ); ?></span>
+							<input type="date" name="date_to" value="<?php echo esc_attr( $filters['date_to'] ); ?>" />
+						</label>
+
+						<div class="wb-gam-kudos-search__actions">
+							<button type="submit" class="button"><?php esc_html_e( 'Filter', 'wb-gamification' ); ?></button>
+							<?php if ( $filters['giver_id'] || $filters['receiver_id'] || $filters['date_from'] || $filters['date_to'] ) : ?>
+								<a class="button-link" href="
+								<?php
+								echo esc_url(
+									add_query_arg(
+										array(
+											'page'   => self::PAGE_SLUG,
+											'status' => $status,
+										),
+										admin_url( 'admin.php' )
+									)
+								);
+								?>
+																">
+									<?php esc_html_e( 'Clear', 'wb-gamification' ); ?>
+								</a>
+							<?php endif; ?>
+						</div>
+					</form>
 
 					<?php if ( empty( $rows ) ) : ?>
 						<div class="wbgam-empty">
@@ -229,23 +377,6 @@ final class KudosModerationPage {
 		<?php
 	}
 
-	/**
-	 * Count same giver->receiver pairs among the current page's rows.
-	 *
-	 * A cheap kudo-trading-ring signal scoped to the visible page (no
-	 * full-table scan). Deeper analysis is a future epic.
-	 *
-	 * @param array<int, array{giver_id:int, receiver_id:int}> $rows Page rows.
-	 * @return array<string, int> pair-key => count.
-	 */
-	private static function pair_abuse_map( array $rows ): array {
-		$map = array();
-		foreach ( $rows as $row ) {
-			$key         = $row['giver_id'] . '-' . $row['receiver_id'];
-			$map[ $key ] = ( $map[ $key ] ?? 0 ) + 1;
-		}
-		return $map;
-	}
 
 	/**
 	 * Render prev/next pagination.
