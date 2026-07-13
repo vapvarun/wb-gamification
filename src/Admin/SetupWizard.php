@@ -53,6 +53,16 @@ final class SetupWizard {
 	public const COMPLETED_OPTION = 'wb_gam_wizard_complete';
 
 	/**
+	 * Per-user flag: this admin has dismissed the welcome notice for good.
+	 *
+	 * Per USER, not per site: on a multi-admin site one person dismissing the prompt should not decide
+	 * for everyone else that they have seen it.
+	 *
+	 * @var string
+	 */
+	public const NOTICE_DISMISSED_META = 'wb_gam_dismissed_wizard_notice';
+
+	/**
 	 * Option set by the activation hook to request a one-time auto-redirect
 	 * to the wizard on the next admin page load. Persists indefinitely
 	 * until {@see maybe_redirect()} consumes it — survives any
@@ -85,6 +95,7 @@ final class SetupWizard {
 		add_action( 'admin_init', array( __CLASS__, 'maybe_redirect' ), 1 );
 		add_action( 'admin_init', array( __CLASS__, 'handle_submission' ) );
 		add_action( 'admin_notices', array( __CLASS__, 'maybe_show_welcome_notice' ) );
+		add_action( 'admin_init', array( __CLASS__, 'maybe_dismiss_welcome_notice' ) );
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_page_css' ) );
 	}
 
@@ -209,6 +220,43 @@ final class SetupWizard {
 	}
 
 	/**
+	 * Persist a dismissal of the welcome notice.
+	 *
+	 * WordPress's `is-dismissible` is CLIENT-SIDE ONLY: clicking the X hides the notice for that page
+	 * view, and it comes straight back on the next one. So an owner who had decided they did not want
+	 * the starter template was told about it again on every plugin page, forever, until they gave in
+	 * and ran the wizard.
+	 *
+	 * A dismissal that does not dismiss anything is worse than no X at all: it teaches the owner that
+	 * our controls do not work.
+	 *
+	 * Same shape as the welcome-card dismissal already in SettingsPage -- a nonced GET, a capability
+	 * check, a user-meta flag, and a redirect so a refresh cannot replay it.
+	 *
+	 * @return void
+	 */
+	public static function maybe_dismiss_welcome_notice(): void {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- nonce checked immediately below.
+		if ( empty( $_GET['wb_gam_dismiss_wizard_notice'] ) || empty( $_GET['_wpnonce'] ) ) {
+			return;
+		}
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- this IS the check.
+		if ( ! wp_verify_nonce( sanitize_key( wp_unslash( $_GET['_wpnonce'] ) ), 'wb_gam_dismiss_wizard_notice' ) ) {
+			return;
+		}
+
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return;
+		}
+
+		update_user_meta( get_current_user_id(), self::NOTICE_DISMISSED_META, 1 );
+
+		wp_safe_redirect( remove_query_arg( array( 'wb_gam_dismiss_wizard_notice', '_wpnonce' ) ) );
+		exit;
+	}
+
+	/**
 	 * Show a "welcome — run setup" notice on plugin admin pages until done.
 	 *
 	 * Fallback for installs where the activation auto-redirect was suppressed
@@ -218,6 +266,11 @@ final class SetupWizard {
 	 */
 	public static function maybe_show_welcome_notice(): void {
 		if ( get_option( self::COMPLETED_OPTION ) ) {
+			return;
+		}
+
+		// They already said no. Asking again on every page load is not a reminder, it is nagging.
+		if ( get_user_meta( get_current_user_id(), self::NOTICE_DISMISSED_META, true ) ) {
 			return;
 		}
 		if ( ! current_user_can( 'manage_options' ) ) {
@@ -242,12 +295,23 @@ final class SetupWizard {
 		// filter declared in assets/css/admin.css (Welcome notice section).
 		// Class `wb-gam-notice__cta` styles the CTA button spacing — see
 		// the same CSS file. No inline style attributes (coding-rule 3).
+		// A REAL dismiss link, not just the X.
+		//
+		// WordPress's `is-dismissible` X is client-side: it hides the notice for this page view and it
+		// returns on the next one. The link below actually records the decision.
+		$dismiss_url = wp_nonce_url(
+			add_query_arg( 'wb_gam_dismiss_wizard_notice', '1' ),
+			'wb_gam_dismiss_wizard_notice'
+		);
+
 		printf(
-			'<div class="notice notice-info wb-gam-notice is-dismissible"><p><strong>%1$s</strong> %2$s <a href="%3$s" class="button button-primary wb-gam-notice__cta">%4$s</a></p></div>',
+			'<div class="notice notice-info wb-gam-notice is-dismissible"><p><strong>%1$s</strong> %2$s <a href="%3$s" class="button button-primary wb-gam-notice__cta">%4$s</a> <a href="%5$s" class="wb-gam-notice__dismiss">%6$s</a></p></div>',
 			esc_html__( 'Welcome to WB Gamification!', 'wb-gamification' ),
 			esc_html__( 'Pick a starter template to pre-configure points for your use case - takes 30 seconds.', 'wb-gamification' ),
 			esc_url( $wizard_url ),
-			esc_html__( 'Run the setup wizard', 'wb-gamification' )
+			esc_html__( 'Run the setup wizard', 'wb-gamification' ),
+			esc_url( $dismiss_url ),
+			esc_html__( 'No thanks', 'wb-gamification' )
 		);
 	}
 
