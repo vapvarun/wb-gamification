@@ -88,6 +88,15 @@ final class StatusRetentionEngine {
 	 */
 	public static function deactivate(): void {
 		wp_clear_scheduled_hook( self::CRON_HOOK );
+
+		// The nightly check is only half of what this engine schedules. When a sweep does not finish in
+		// one tick it hands the next page to Action Scheduler under AS_PAGE_HOOK -- and deactivating
+		// mid-sweep left that continuation armed. Action Scheduler would then fire it on a site where
+		// this plugin is switched off: no listener, no work, just a job that runs forever because
+		// nobody told it the party was over.
+		if ( function_exists( 'as_unschedule_all_actions' ) ) {
+			as_unschedule_all_actions( self::AS_PAGE_HOOK, array(), 'wb_gam_retention' );
+		}
 	}
 
 	// ── Run ──────────────────────────────────────────────────────────────────

@@ -55,6 +55,19 @@ final class ScaleCommand {
 	 *
 	 * @var array<string,float>
 	 */
+	/**
+	 * First user ID the seeder claims for synthetic members.
+	 *
+	 * seed() and teardown() used to write this number out twice, separately. Two copies of the one
+	 * fact that decides which rows get DELETED is not a place to save a constant.
+	 *
+	 * The ID alone does not identify a seeded member -- see teardown(), which also requires the
+	 * `@scale.test` address, because a real site can and does have members up here.
+	 *
+	 * @var int
+	 */
+	private const SEED_UID_BASE = 1000000;
+
 	private const BUDGETS_MS = array(
 		// ── Award hot path (measured since 2026-05-28) ───────────────────────
 		'get_total_pk'               => 5.0,
@@ -135,9 +148,10 @@ final class ScaleCommand {
 		$started  = microtime( true );
 		$inserted = 0;
 
-		// Use synthetic user IDs starting at 1_000_000 so we don't collide
-		// with real users. Cleanup target: WHERE user_id >= 1000000.
-		$base_uid = 1000000;
+		// Synthetic user IDs start high so they are unlikely to collide with real members. "Unlikely"
+		// is the operative word, which is why teardown() identifies what it deletes by the
+		// `@scale.test` address below and not by this number.
+		$base_uid = self::SEED_UID_BASE;
 
 		// THE MEMBERS HAVE TO ACTUALLY EXIST, and until now they did not.
 		//
@@ -365,33 +379,112 @@ final class ScaleCommand {
 	 */
 	public function teardown( array $args, array $assoc_args ): void {
 		global $wpdb;
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		// The synthetic members themselves. They are created by seed() so the leaderboard's JOIN against
-		// wp_users has someone to find; they must leave with their data.
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$du = (int) $wpdb->query( "DELETE FROM {$wpdb->users} WHERE ID >= 1000000" );
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$wpdb->query( "DELETE FROM {$wpdb->usermeta} WHERE user_id >= 1000000" );
-		\WP_CLI::log( sprintf( 'Removed %s synthetic members.', number_format_i18n( $du ) ) );
 
-		$d1 = (int) $wpdb->query( "DELETE FROM {$wpdb->prefix}wb_gam_points WHERE user_id >= 1000000" );
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$d2 = (int) $wpdb->query( "DELETE FROM {$wpdb->prefix}wb_gam_events WHERE user_id >= 1000000" );
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$d3 = (int) $wpdb->query( "DELETE FROM {$wpdb->prefix}wb_gam_user_totals WHERE user_id >= 1000000" );
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$d4 = (int) $wpdb->query( "DELETE FROM {$wpdb->prefix}wb_gam_leaderboard_cache WHERE user_id >= 1000000" );
-		// Tables added to the seed in 1.6.4 — teardown MUST track the seed, or a
-		// benchmark run leaves synthetic badges and streaks on the site forever.
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$d5 = (int) $wpdb->query( "DELETE FROM {$wpdb->prefix}wb_gam_user_badges WHERE user_id >= 1000000" );
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$d6 = (int) $wpdb->query( "DELETE FROM {$wpdb->prefix}wb_gam_streaks WHERE user_id >= 1000000" );
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$d7 = (int) $wpdb->query( "DELETE FROM {$wpdb->prefix}wb_gam_notifications_queue WHERE user_id >= 1000000" );
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		// `WHERE ID >= 1000000` is an ASSUMPTION, not a guard, and this command DELETES USERS.
+		//
+		// It assumes no real member ever reaches user ID 1,000,000. That holds on a laptop and is
+		// simply false on a large site, an imported site, or one that has churned through a lot of
+		// registrations -- and the same floor was used to delete from wp_users, wp_usermeta AND every
+		// gamification table, so on such a site `scale teardown` would take real people and their real
+		// points with it. A dev-only command is still a command someone runs on staging with a copy of
+		// production in it.
+		//
+		// So: identify the members this seeder CREATED, by the two marks only it leaves -- an ID at or
+		// above the base AND the synthetic `@scale.test` address it registers them with -- and scope
+		// every delete to exactly those IDs. Anything else at ID >= 1,000,000 is somebody real, and it
+		// is now impossible for this command to touch them.
+		$seed_ids = array_map(
+			'intval',
+			(array) $wpdb->get_col(
+				$wpdb->prepare(
+					// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- CLI teardown.
+					"SELECT ID FROM {$wpdb->users} WHERE ID >= %d AND user_email LIKE %s",
+					self::SEED_UID_BASE,
+					'%@scale.test'
+				)
+			)
+		);
+
+		// Real accounts sitting in the range the old code would have deleted. Worth saying out loud:
+		// on the site where this matters, the operator should know how close the previous behaviour
+		// came to being a very bad afternoon.
+		$bystanders = (int) $wpdb->get_var(
+			$wpdb->prepare(
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- CLI teardown.
+				"SELECT COUNT(*) FROM {$wpdb->users} WHERE ID >= %d AND user_email NOT LIKE %s",
+				self::SEED_UID_BASE,
+				'%@scale.test'
+			)
+		);
+
+		if ( $bystanders > 0 ) {
+			\WP_CLI::warning(
+				sprintf(
+					'%s real account(s) sit at user ID >= %s. They are NOT seeded data and will not be touched.',
+					number_format_i18n( $bystanders ),
+					number_format_i18n( self::SEED_UID_BASE )
+				)
+			);
+		}
+
+		if ( empty( $seed_ids ) ) {
+			\WP_CLI::success( 'No seeded members found. Nothing to remove.' );
+			return;
+		}
+
+		$removed = array_fill_keys(
+			array( 'points', 'events', 'user_totals', 'leaderboard_cache', 'user_badges', 'streaks', 'notifications_queue' ),
+			0
+		);
+
+		// Chunked: a 100k-member seed makes an IN() list MySQL will not accept whole.
+		foreach ( array_chunk( $seed_ids, 1000 ) as $chunk ) {
+			$ph   = implode( ',', array_fill( 0, count( $chunk ), '%d' ) );
+			$args = $chunk;
+
+			foreach ( array_keys( $removed ) as $table ) {
+				$removed[ $table ] += (int) $wpdb->query(
+					$wpdb->prepare(
+						// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from $wpdb->prefix + a fixed key; IDs bound.
+						"DELETE FROM {$wpdb->prefix}wb_gam_{$table} WHERE user_id IN ({$ph})",
+						$args
+					)
+				);
+			}
+
+			$wpdb->query(
+				$wpdb->prepare(
+					// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- IDs bound.
+					"DELETE FROM {$wpdb->usermeta} WHERE user_id IN ({$ph})",
+					$args
+				)
+			);
+
+			$wpdb->query(
+				$wpdb->prepare(
+					// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- IDs bound.
+					"DELETE FROM {$wpdb->users} WHERE ID IN ({$ph})",
+					$args
+				)
+			);
+		}
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- fixed key.
 		$wpdb->query( "DELETE FROM {$wpdb->prefix}wb_gam_badge_defs WHERE id = 'scale_seed_badge'" );
-		\WP_CLI::success( "Removed: points={$d1}, events={$d2}, user_totals={$d3}, leaderboard_cache={$d4}, user_badges={$d5}, streaks={$d6}, notifications={$d7}" );
+
+		\WP_CLI::log( sprintf( 'Removed %s seeded members.', number_format_i18n( count( $seed_ids ) ) ) );
+		\WP_CLI::success(
+			sprintf(
+				'Removed: points=%d, events=%d, user_totals=%d, leaderboard_cache=%d, user_badges=%d, streaks=%d, notifications=%d',
+				$removed['points'],
+				$removed['events'],
+				$removed['user_totals'],
+				$removed['leaderboard_cache'],
+				$removed['user_badges'],
+				$removed['streaks'],
+				$removed['notifications_queue']
+			)
+		);
 	}
 
 	/**
