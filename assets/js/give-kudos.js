@@ -89,5 +89,11 @@
 		} );
 	}
 
-	document.querySelectorAll( '.wb-gam-give-kudos' ).forEach( bind );
+	// Not `querySelectorAll().forEach( bind )`. This block is a real <form>, so when a host theme
+	// navigates client-side and swaps fresh markup in, the submit handler is not merely absent -- the
+	// browser falls back to a NATIVE form submission and navigates the member away from the page,
+	// their kudos message in the query string. Verified in a browser before this was changed.
+	//
+	// onMount runs bind() for the forms already here AND for any that arrive later, once each.
+	window.wbGam.onMount( '.wb-gam-give-kudos', bind );
 }() );

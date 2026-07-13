@@ -113,15 +113,8 @@
 		} );
 	}
 
-	function boot() {
-		document
-			.querySelectorAll( '.wb-gam-submit-achievement' )
-			.forEach( init );
-	}
-
-	if ( document.readyState === 'loading' ) {
-		document.addEventListener( 'DOMContentLoaded', boot );
-	} else {
-		boot();
-	}
+	// Runs init() for the forms on the page now, and for any that a client-side navigation swaps in
+	// later -- once each. A submission form that quietly stopped POSTing (and, being a form, fell back
+	// to a native submit) is the failure this replaces.
+	window.wbGam.onMount( '.wb-gam-submit-achievement', init );
 } )();

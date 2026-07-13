@@ -53,21 +53,12 @@
 		} );
 	}
 
-	function bindAll() {
-		document.querySelectorAll( '[data-wb-gam-badge-showcase]' ).forEach( bindRoot );
-	}
-
-	if ( document.readyState === 'loading' ) {
-		document.addEventListener( 'DOMContentLoaded', bindAll );
-	} else {
-		bindAll();
-	}
-
-	// Catch late-mounted instances (hub flyout template clone).
-	if ( typeof MutationObserver !== 'undefined' ) {
-		var observer = new MutationObserver( function () {
-			bindAll();
-		} );
-		observer.observe( document.body, { childList: true, subtree: true } );
-	}
+	// This block got the answer right before anyone else did -- it already watched for late-mounted
+	// instances (the hub flyout clones its template), which is exactly the case four other surfaces
+	// were missing. But it re-ran a whole-document bindAll() on EVERY mutation anywhere on the page,
+	// so a keystroke in an unrelated input re-scanned every badge grid.
+	//
+	// Same guarantee, one shared observer, and bindRoot fires once per element instead of once per
+	// mutation. (bindAll() is gone with it -- nothing else called it.)
+	window.wbGam.onMount( '[data-wb-gam-badge-showcase]', bindRoot );
 }() );

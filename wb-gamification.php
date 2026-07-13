@@ -591,6 +591,20 @@ final class WB_Gamification {
 			true
 		);
 
+		// The one mount utility. Our blocks bound themselves once, at DOMContentLoaded — which is
+		// correct for a page the BROWSER loaded and wrong for a page a ROUTER loaded. Host themes
+		// navigate client-side, and markup swapped in that way carries no listeners. Verified in a
+		// browser: after a swap, the give-kudos form's submit handler is gone, so the browser performs
+		// a NATIVE submit and navigates the member away mid-kudos. onMount() runs a block's setup when
+		// its element appears, whenever that is, once per element.
+		wp_register_script(
+			'wb-gam-mount',
+			WB_GAM_URL . 'assets/js/mount.js',
+			array(),
+			WB_GAM_VERSION,
+			true
+		);
+
 		wp_register_script(
 			'wb-gamification-top-offset',
 			WB_GAM_URL . 'assets/js/top-offset.js',

@@ -392,10 +392,12 @@ final class ShortcodeHandler {
 			array( 'wb-gam-tokens' ),
 			WB_GAM_VERSION
 		);
+		// wb-gam-mount defines wbGam.onMount(), which this script calls at parse time -- so it is a
+		// hard dependency, not a nicety. Without it the kudos form binds nothing.
 		wp_enqueue_script(
 			$handle,
 			plugins_url( 'assets/js/give-kudos.js', WB_GAM_FILE ),
-			array(),
+			array( 'wb-gam-mount' ),
 			WB_GAM_VERSION,
 			true
 		);

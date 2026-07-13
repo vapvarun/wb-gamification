@@ -59,15 +59,20 @@
 	}
 
 	function init() {
-		var bars = document.querySelectorAll( '[data-wb-gam-status-bar]' );
-		if ( ! bars.length ) {
-			return;
+		// Deliberately NOT a captured NodeList. This used to be
+		// `var bars = document.querySelectorAll(...)`, resolved once, and every later read -- including
+		// the realtime payload handler below -- closed over that snapshot. A status bar that arrived
+		// after load (a host theme navigating client-side) was in nobody's list: not wired, and not
+		// updated when the member's points changed. Ask the document each time; there is at most a
+		// handful of these on a page.
+		function bars() {
+			return document.querySelectorAll( '[data-wb-gam-status-bar]' );
 		}
 
 		// Collapsible toggle — pure CSS class flip; pref persists for the
 		// session so an admin who collapsed it doesn't have to do it again
-		// on every page.
-		bars.forEach( function ( bar ) {
+		// on every page. Runs per bar, when that bar appears.
+		window.wbGam.onMount( '[data-wb-gam-status-bar]', function ( bar ) {
 			parkBelowTopStrip( bar );
 
 			var toggle = bar.querySelector( '[data-wb-gam-status-bar-toggle]' );
@@ -91,7 +96,7 @@
 			if ( ! payload || typeof payload !== 'object' ) {
 				return;
 			}
-			bars.forEach( function ( bar ) {
+			bars().forEach( function ( bar ) {
 				// Hide bar entirely for guests (when hideForGuests=true).
 				if ( ! payload.user_id ) {
 					// Keep server-rendered state — don't touch the DOM.
