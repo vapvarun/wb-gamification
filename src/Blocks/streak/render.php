@@ -38,6 +38,7 @@ defined( 'ABSPATH' ) || exit;
 
 
 use WBGam\Blocks\CSS as WB_Gam_Block_CSS;
+use WBGam\Blocks\EmptyState;
 use WBGam\Engine\BlockHooks;
 use WBGam\Engine\Privacy;
 use WBGam\Engine\StreakEngine;
@@ -94,11 +95,18 @@ if ( ! $wb_gam_user_id ) {
 		)
 	);
 	BlockHooks::before( 'streak', $wb_gam_attrs );
-	printf(
-		'<div %s><p class="wb-gam-streak__empty">%s</p></div>',
-		$wb_gam_wrapper, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-		esc_html__( 'Log in to see your streak.', 'wb-gamification' )
+		$wb_gam_empty = EmptyState::render(
+		'streak',
+		$wb_gam_wrapper,
+		__( 'Log in to see your streak.', 'wb-gamification' ),
+		// Telling a member to log in without giving them a way to do it is a dead end.
+		array(
+			'url'   => wp_login_url( get_permalink() ),
+			'label' => __( 'Log in', 'wb-gamification' ),
+		)
 	);
+	echo $wb_gam_empty; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- EmptyState escapes its message and CTA; the wrapper is get_block_wrapper_attributes() output.
+
 	BlockHooks::after( 'streak', $wb_gam_attrs );
 	return;
 }

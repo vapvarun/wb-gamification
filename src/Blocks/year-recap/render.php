@@ -37,6 +37,7 @@ defined( 'ABSPATH' ) || exit;
 
 
 use WBGam\Blocks\CSS as WB_Gam_Block_CSS;
+use WBGam\Blocks\EmptyState;
 use WBGam\Engine\BlockHooks;
 use WBGam\Engine\Privacy;
 use WBGam\Engine\RecapEngine;
@@ -90,11 +91,13 @@ if ( ! $wb_gam_user_id ) {
 			'style' => '' !== $wb_gam_inline ? $wb_gam_inline : null,
 		)
 	);
-	printf(
-		'<div %s><p class="wb-gam-year-recap__empty">%s</p></div>',
-		$wb_gam_wrapper, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-		esc_html__( 'Log in to see your year in review.', 'wb-gamification' )
+		$wb_gam_empty = EmptyState::render(
+		'year-recap',
+		$wb_gam_wrapper,
+		__( 'Log in to see your year in review.', 'wb-gamification' )
 	);
+	echo $wb_gam_empty; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- EmptyState escapes its message and CTA; the wrapper is get_block_wrapper_attributes() output.
+
 	return;
 }
 
@@ -130,11 +133,13 @@ if ( ! $wb_gam_user || empty( $wb_gam_recap['total_points'] ) ) {
 			'style' => '' !== $wb_gam_inline ? $wb_gam_inline : null,
 		)
 	);
-	printf(
-		'<div %s><p class="wb-gam-year-recap__empty">%s</p></div>',
-		$wb_gam_wrapper, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-		esc_html__( 'Your year in review will appear here once you start earning points.', 'wb-gamification' )
+		$wb_gam_empty = EmptyState::render(
+		'year-recap',
+		$wb_gam_wrapper,
+		__( 'Your year in review will appear here once you start earning points.', 'wb-gamification' )
 	);
+	echo $wb_gam_empty; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- EmptyState escapes its message and CTA; the wrapper is get_block_wrapper_attributes() output.
+
 	return;
 }
 

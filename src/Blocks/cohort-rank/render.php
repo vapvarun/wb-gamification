@@ -34,6 +34,7 @@ defined( 'ABSPATH' ) || exit;
 
 
 use WBGam\Blocks\CSS as WB_Gam_Block_CSS;
+use WBGam\Blocks\EmptyState;
 use WBGam\Engine\BlockHooks;
 use WBGam\Engine\Privacy;
 use WBGam\Engine\CohortEngine;
@@ -83,11 +84,13 @@ if ( ! $wb_gam_user_id ) {
 			'style' => '' !== $wb_gam_inline ? $wb_gam_inline : null,
 		)
 	);
-	printf(
-		'<div %s><p class="wb-gam-cohort-rank__empty">%s</p></div>',
-		$wb_gam_wrapper, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-		esc_html__( 'Log in to see your cohort league.', 'wb-gamification' )
+		$wb_gam_empty = EmptyState::render(
+		'cohort-rank',
+		$wb_gam_wrapper,
+		__( 'Log in to see your cohort league.', 'wb-gamification' )
 	);
+	echo $wb_gam_empty; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- EmptyState escapes its message and CTA; the wrapper is get_block_wrapper_attributes() output.
+
 	return;
 }
 
@@ -101,11 +104,13 @@ if ( null === $wb_gam_standing ) {
 			'style' => '' !== $wb_gam_inline ? $wb_gam_inline : null,
 		)
 	);
-	printf(
-		'<div %s><p class="wb-gam-cohort-rank__empty">%s</p></div>',
-		$wb_gam_wrapper, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-		esc_html__( 'You have not been assigned to a cohort yet. New cohorts are formed every Monday.', 'wb-gamification' )
+		$wb_gam_empty = EmptyState::render(
+		'cohort-rank',
+		$wb_gam_wrapper,
+		__( 'You have not been assigned to a cohort yet. New cohorts are formed every Monday.', 'wb-gamification' )
 	);
+	echo $wb_gam_empty; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- EmptyState escapes its message and CTA; the wrapper is get_block_wrapper_attributes() output.
+
 	return;
 }
 

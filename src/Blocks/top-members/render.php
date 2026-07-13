@@ -34,6 +34,7 @@ defined( 'ABSPATH' ) || exit;
 
 
 use WBGam\Blocks\CSS as WB_Gam_Block_CSS;
+use WBGam\Blocks\EmptyState;
 use WBGam\Engine\BlockHooks;
 use WBGam\Engine\LeaderboardEngine;
 use WBGam\Engine\LevelEngine;
@@ -113,11 +114,13 @@ if ( empty( $wb_gam_rows ) ) {
 		)
 	);
 	BlockHooks::before( 'top-members', $wb_gam_attrs );
-	printf(
-		'<div %s><p class="wb-gam-top-members__empty">%s</p></div>',
-		$wb_gam_wrapper, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-		esc_html__( 'Be the first to earn points and claim the top spot!', 'wb-gamification' )
+		$wb_gam_empty = EmptyState::render(
+		'top-members',
+		$wb_gam_wrapper,
+		__( 'Be the first to earn points and claim the top spot!', 'wb-gamification' )
 	);
+	echo $wb_gam_empty; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- EmptyState escapes its message and CTA; the wrapper is get_block_wrapper_attributes() output.
+
 	BlockHooks::after( 'top-members', $wb_gam_attrs );
 	return;
 }
