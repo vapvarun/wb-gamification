@@ -2348,39 +2348,20 @@ final class SettingsPage {
 	 */
 	private static function save_staff_permissions(): void {
 		// phpcs:disable WordPress.Security.NonceVerification.Missing -- Nonce verified by check_admin_referer() in handle_save().
-		$cap_list = \WBGam\Engine\Capabilities::all();
-		$reset    = isset( $_POST['wb_gam_caps_reset'] );
-
+		$reset  = isset( $_POST['wb_gam_caps_reset'] );
 		$posted = array();
+
 		if ( ! $reset && isset( $_POST['wb_gam_role_caps'] ) && is_array( $_POST['wb_gam_role_caps'] ) ) {
-			// Shape: [ role_slug => [ cap, cap, ... ] ]. Both key and values are
-			// sanitized with sanitize_key() inside the loop below.
+			// Shape: [ role_slug => [ cap, cap, ... ] ]. Keys and values are sanitized in set_role_caps().
 			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 			foreach ( wp_unslash( (array) $_POST['wb_gam_role_caps'] ) as $role_slug => $caps ) {
-				$role_slug            = sanitize_key( $role_slug );
-				$posted[ $role_slug ] = is_array( $caps ) ? array_map( 'sanitize_key', $caps ) : array();
+				$posted[ sanitize_key( $role_slug ) ] = is_array( $caps ) ? $caps : array();
 			}
 		}
 
-		foreach ( wp_roles()->get_names() as $role_slug => $_name ) {
-			if ( 'administrator' === $role_slug ) {
-				continue;
-			}
-			$role = get_role( $role_slug );
-			if ( ! $role ) {
-				continue;
-			}
-			$wanted = $posted[ $role_slug ] ?? array();
-			foreach ( $cap_list as $cap ) {
-				$should_have = in_array( $cap, $wanted, true );
-				$has         = $role->has_cap( $cap );
-				if ( $should_have && ! $has ) {
-					$role->add_cap( $cap );
-				} elseif ( ! $should_have && $has ) {
-					$role->remove_cap( $cap );
-				}
-			}
-		}
+		// ONE write path, shared with the REST endpoint. "Reset to defaults" is simply an empty map:
+		// every non-admin role loses every plugin capability, which IS the default.
+		\WBGam\Engine\Capabilities::set_role_caps( $posted );
 		// phpcs:enable WordPress.Security.NonceVerification.Missing
 	}
 

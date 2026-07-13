@@ -232,3 +232,51 @@ data maps in `plan/importers/`.
 1. **Register `wb_gam_award_manual` via `add_cap()`** so the secondary gate at `PointsController.php:273` is grantable. Currently dormant — see `audit/FEATURE_AUDIT.md` § 12.
 2. **Introduce 3–4 granular plugin caps** to break the `manage_options` monoculture — for example: `wb_gam_manage_badges`, `wb_gam_manage_challenges`, `wb_gam_award_points`, `wb_gam_view_analytics`. Today, a community-manager role cannot operate the plugin without being a full admin.
 3. **Document the override model** for `MembersController::get_item_permissions_check` — site owners should know they can open up cross-user reads without forking.
+
+---
+
+## Staff permissions — what an owner can delegate, and what they cannot (1.6.4)
+
+An owner delegates capabilities in **Settings → Access → Staff permissions** (a role × capability
+matrix), or over REST at `GET|PUT /wb-gamification/v1/settings/capabilities`. Both go through the one
+write path, `Capabilities::set_role_caps()` — two copies of "work out the difference and
+add_cap/remove_cap" is two chances to disagree about what the owner just asked for, and a permission
+system that disagrees with itself is the one place you really cannot afford it.
+
+`Capabilities::user_can()` is `manage_options` **OR** the granular cap, so an administrator keeps
+working with nothing reconfigured, and the Administrator row can never be edited or stripped — a UI
+that can take capabilities off the administrator is a UI that can lock the owner out of their site.
+
+### Delegable (a community manager can be given these)
+
+| Capability | Surface |
+|---|---|
+| `wb_gam_award_manual` | Award / revoke points by hand |
+| `wb_gam_manage_badges` | Badge library |
+| `wb_gam_manage_rules` | Rules, and **action point values** (`POST /actions/{id}/overrides`) |
+| `wb_gam_manage_challenges` | Challenges + community challenges |
+| `wb_gam_manage_rewards` | Redemption store |
+| `wb_gam_manage_webhooks` | Outbound webhooks |
+| `wb_gam_manage_levels` | Levels |
+| `wb_gam_manage_submissions` | Submission review queue |
+| `wb_gam_manage_members` | Members roster, kudos moderation, streaks, import |
+| `wb_gam_manage_email_settings` | Transactional email toggles |
+| `wb_gam_view_analytics` | Analytics, and **another member's year recap** (`GET /members/{id}/recap`) |
+
+### Deliberately NOT delegable — administrator only
+
+This is a **decision, not an oversight**. Each of these either hands out credentials, destroys data,
+or grants the ability to grant capabilities — none of which is a thing you delegate to the person you
+are delegating badge management to.
+
+| Surface | Why it stays `manage_options` |
+|---|---|
+| `ApiKeysController` | An API key is a bearer credential for the points + badge write surface. Anyone who can mint one has escaped the capability system entirely. |
+| `ToolsController` | Settings import/export and **reset member progress**. Destructive and irreversible. |
+| `CapabilitiesController` (`/settings/capabilities`) | The surface that grants capabilities cannot itself be a capability you can grant, or a community manager promotes themselves to everything. |
+| `EventsController` (ingestion) | Writes to the ledger with backdating and side-effect suppression. It is the importer's door; it is not a moderation tool. |
+| `PointTypesController`, `PointTypeConversionsController` | Defining currencies and their exchange rates is economy design, not day-to-day moderation. |
+| `IntelligenceController` | Per-member behavioural projections (churn risk). Owner-level data about people. |
+| `AbilitiesRegistration` | Registers AI abilities against the site. |
+
+Revisit an entry only by changing this table first — that is what makes it a choice.

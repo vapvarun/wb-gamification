@@ -134,7 +134,14 @@ class ActionsController extends WP_REST_Controller {
 	 * @return true|\WP_Error
 	 */
 	public function overrides_permissions_check( $request ): bool|\WP_Error {
-		if ( ! current_user_can( 'manage_options' ) ) {
+		// Editing which actions award points, and how many, IS rule management -- so it honours the
+		// granular cap an owner can delegate, not a bare manage_options that only an administrator can
+		// ever hold. Capabilities::user_can() is `manage_options OR the cap`, so an admin still passes.
+		//
+		// Without this, an owner could tick "Editor -> manage rules" in Staff permissions and the API
+		// would still refuse them: a delegation UI that grants a capability the code ignores is worse
+		// than no UI, because it tells the owner they have done something they have not.
+		if ( ! \WBGam\Engine\Capabilities::user_can( 'wb_gam_manage_rules' ) ) {
 			return new \WP_Error(
 				'rest_forbidden',
 				__( 'You do not have permission to edit action settings.', 'wb-gamification' ),

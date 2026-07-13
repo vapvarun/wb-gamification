@@ -235,6 +235,82 @@ final class Capabilities {
 	 *
 	 * @return string[]
 	 */
+	/**
+	 * The delegation map: which non-admin roles hold which plugin capabilities.
+	 *
+	 * @return array<string, array{name:string, caps:string[]}> Role slug => name + granted caps.
+	 */
+	public static function role_map(): array {
+		$out = array();
+
+		foreach ( wp_roles()->get_names() as $slug => $name ) {
+			$role = get_role( $slug );
+			if ( ! $role ) {
+				continue;
+			}
+
+			$granted = array();
+			foreach ( self::all() as $cap ) {
+				if ( $role->has_cap( $cap ) ) {
+					$granted[] = $cap;
+				}
+			}
+
+			$out[ $slug ] = array(
+				'name' => $name,
+				'caps' => $granted,
+			);
+		}
+
+		return $out;
+	}
+
+	/**
+	 * Apply a delegation map. THE ONLY WRITE PATH for staff permissions.
+	 *
+	 * Both the Staff-permissions matrix (Settings > Access) and the REST endpoint call this. Two copies
+	 * of "work out the difference and add_cap/remove_cap" is two chances to disagree about what an
+	 * owner just asked for -- and a permission system that disagrees with itself is the one place you
+	 * really cannot afford it.
+	 *
+	 * Administrator is never touched. It holds every capability by definition, and a UI that can strip
+	 * caps from the administrator role is a UI that can lock the owner out of their own site.
+	 *
+	 * @param array<string, string[]> $map Role slug => capabilities that role should hold. A role
+	 *                                     absent from the map, or mapped to an empty list, loses all
+	 *                                     plugin capabilities -- that is what makes `reset` work.
+	 * @return array<string, string[]> The map as actually applied, read back from the roles.
+	 */
+	public static function set_role_caps( array $map ): array {
+		$caps = self::all();
+
+		foreach ( wp_roles()->get_names() as $slug => $_name ) {
+			if ( 'administrator' === $slug ) {
+				continue;
+			}
+
+			$role = get_role( $slug );
+			if ( ! $role ) {
+				continue;
+			}
+
+			$wanted = array_map( 'sanitize_key', (array) ( $map[ $slug ] ?? array() ) );
+
+			foreach ( $caps as $cap ) {
+				$should_have = in_array( $cap, $wanted, true );
+				$has         = $role->has_cap( $cap );
+
+				if ( $should_have && ! $has ) {
+					$role->add_cap( $cap );
+				} elseif ( ! $should_have && $has ) {
+					$role->remove_cap( $cap );
+				}
+			}
+		}
+
+		return wp_list_pluck( self::role_map(), 'caps' );
+	}
+
 	public static function all(): array {
 		return array_keys( self::CAPS );
 	}
