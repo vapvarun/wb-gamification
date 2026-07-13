@@ -183,31 +183,114 @@ final class NotificationBridge {
 		if ( ! wp_next_scheduled( self::PRUNE_CRON ) ) {
 			wp_schedule_event( time() + HOUR_IN_SECONDS, 'daily', self::PRUNE_CRON );
 		}
-		// NOTE: `wb_gam_award_skipped` is deliberately NOT listened to here.
+		// Skip toasts: OFF for every member, on every site, unless the owner asks for them.
 		//
-		// A member is never told they earned nothing. Their action succeeded —
-		// they posted, they reacted, they commented; the only thing that did not
-		// happen is an invisible points increment they never asked about. "You're
-		// on cooldown", "you've hit your daily limit" and "you've hit your weekly
-		// limit" all read as though the action FAILED when it did not, give the
-		// member nothing they can act on, and fire again and again precisely
-		// because a capped member keeps being active. A points cap is an
-		// anti-farming guard: the site's business, not the member's.
+		// A member is never told they earned nothing. Their action succeeded -- they posted, they
+		// reacted, they commented; the only thing that did not happen is an invisible points
+		// increment they never asked about. "You're on cooldown" and "you've hit your daily limit"
+		// read as though the action FAILED when it did not, and fire again and again precisely
+		// because a capped member keeps being active. So the default is silence, and it stays silence.
 		//
-		// 1.4.1 added these toasts; 1.6.3 made them opt-in via a default-empty
-		// `wb_gam_award_skip_toast_reasons` filter; 1.6.4 removes the mechanism
-		// outright. An opt-in lever is not neutral — it keeps a member-hostile
-		// surface alive, keeps writing `skip` rows into the durable queue, and
-		// invites a site owner to turn a demotivator back on. There is no
-		// configuration of this product in which a member should see one.
+		// 1.6.4 briefly went further and deleted the mechanism outright, on the argument that an
+		// opt-in lever is not neutral. That was over-reach, and QA was right to bounce it: the
+		// `wb_gam_award_skip_toast_reasons` filter was RELEASED in 1.6.3 and documented in its public
+		// changelog. Deleting it one patch later does not remove the surface from a site that opted
+		// in -- it silently stops their add_filter() from doing anything, with no error and no notice.
+		// A published extension point that quietly becomes a no-op is worse than one we disagree with.
 		//
-		// The `wb_gam_award_skipped` action is STILL FIRED by PointsEngine and
-		// remains a supported extension point — a site owner who wants to log,
-		// count, or surface skips their own way can hook it. Gamification simply
-		// ships no member-facing toast for it.
+		// The default is what protects members (nobody sees a skip toast unless an owner turns one
+		// on). The filter is what keeps our word.
+		add_action( 'wb_gam_award_skipped', array( __CLASS__, 'on_award_skipped' ), 99, 4 );
 
 		// Output markup + seed script once, in the footer.
 		add_action( 'wp_footer', array( __CLASS__, 'render' ), 5 );
+	}
+
+	/**
+	 * Surface an award-skip to the member as a toast — if, and only if, the owner asked for it.
+	 *
+	 * @since 1.4.1
+	 * @since 1.6.3 Defaults to silence. No skip reason reaches a member unless an owner opts it in
+	 *              through `wb_gam_award_skip_toast_reasons`.
+	 *
+	 * @param int    $user_id   User who would have been awarded.
+	 * @param string $action_id Action that was skipped.
+	 * @param string $reason    Closed-set reason from PointsEngine::passes_rate_limits().
+	 * @param array  $context   Optional context (daily_cap_used, cooldown_seconds, etc.).
+	 * @return void
+	 */
+	public static function on_award_skipped( int $user_id, string $action_id, string $reason, array $context = array() ): void {
+		if ( $user_id <= 0 ) {
+			return;
+		}
+
+		// The ONLY reasons a member may ever be shown. An engine-internal veto (`sandboxed`,
+		// `self_action`, `pre_change_veto`, `excluded`) describes a decision the SITE made about the
+		// member -- it is not feedback, and it is not the member's business.
+		//
+		// 1.6.3 promised exactly this in its docblock ("never eligible regardless of this filter")
+		// and did not enforce it: an owner who filtered in `sandboxed` got past the in_array() check,
+		// fell through the switch with no message, and pushed a toast with an EMPTY body. The promise
+		// is now enforced where it is made.
+		$eligible = array( 'cooldown', 'daily_cap', 'weekly_cap' );
+		if ( ! in_array( $reason, $eligible, true ) ) {
+			return;
+		}
+
+		/**
+		 * Filter which award-skip reasons are surfaced to the member as a toast.
+		 *
+		 * Defaults to EMPTY -- no skip reason is shown to a member. Gamification is positive
+		 * reinforcement: members should only ever see reward toasts (points earned, badge, level up),
+		 * never a "you got nothing" message. A cooldown ("try again in a bit"), a daily cap and a
+		 * weekly cap all tell the member they earned nothing for normal activity; they are not
+		 * actionable, they read as errors, and they demotivate at scale.
+		 *
+		 * A site owner whose community genuinely wants cap feedback can opt specific reasons back in:
+		 *
+		 *   add_filter( 'wb_gam_award_skip_toast_reasons', fn() => array( 'daily_cap', 'weekly_cap' ) );
+		 *
+		 * Engine-internal vetoes are never eligible, whatever this filter returns.
+		 *
+		 * @since 1.6.3
+		 *
+		 * @param string[] $reasons   Skip reasons that get a member toast. Default [].
+		 * @param int      $user_id   Member who would see the toast.
+		 * @param string   $action_id Action that was skipped.
+		 */
+		$user_facing_reasons = (array) apply_filters(
+			'wb_gam_award_skip_toast_reasons',
+			array(),
+			$user_id,
+			$action_id
+		);
+
+		if ( ! in_array( $reason, $user_facing_reasons, true ) ) {
+			return;
+		}
+
+		switch ( $reason ) {
+			case 'cooldown':
+				$message = __( "You're on cooldown for this action - try again in a bit.", 'wb-gamification' );
+				break;
+			case 'daily_cap':
+				$message = __( "You've hit your daily limit for this action. Resets tomorrow.", 'wb-gamification' );
+				break;
+			default:
+				$message = __( "You've hit your weekly limit for this action. Resets next week.", 'wb-gamification' );
+				break;
+		}
+
+		self::push(
+			$user_id,
+			array(
+				'type'    => 'skip',
+				'reason'  => $reason,
+				'action'  => $action_id,
+				'message' => $message,
+				'context' => $context,
+			)
+		);
 	}
 
 	// ── Event collectors ────────────────────────────────────────────────────────
