@@ -274,7 +274,10 @@ final class CohortEngine {
 			array_push( $args, $row[0], $row[1], $row[2], $row[3], $row[4] );
 		}
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		// $values holds only literal '(%d, %s, %d, %s, %d)' placeholder GROUPS built in the loop above;
+		// every real value is bound through $args. The ignore has to sit on the line the sniff flags
+		// (this one) -- above the $wpdb->query() call it suppressed nothing, and the ERROR shipped.
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$wpdb->query(
 			$wpdb->prepare(
 				"INSERT INTO {$table} (user_id, cohort_id, tier, week, pts_start) VALUES "
@@ -283,6 +286,7 @@ final class CohortEngine {
 				$args
 			)
 		);
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 	}
 
 	// ── Promotion processing ─────────────────────────────────────────────────
@@ -483,7 +487,11 @@ final class CohortEngine {
 			}
 
 			// One statement per WRITE_BATCH members instead of one UPDATE each.
-			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared
+			//
+			// $cases_* and $where are built from literal placeholder fragments in the loop above;
+			// every value is bound through $args. disable/enable, not ignore: the sniff reports on the
+			// interpolated line INSIDE the call, which an ignore above the call never covered.
+			// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared
 			$wpdb->query(
 				$wpdb->prepare(
 					"UPDATE {$table}
@@ -493,6 +501,7 @@ final class CohortEngine {
 					$args
 				)
 			);
+			// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared
 		}
 	}
 
@@ -573,13 +582,15 @@ final class CohortEngine {
 			}
 
 			if ( $ins_vals ) {
-				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared
+				// $ins_vals holds literal placeholder groups only; values bind via $ins_args.
+				// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared
 				$wpdb->query(
 					$wpdb->prepare(
 						"INSERT INTO {$wpdb->usermeta} (user_id, meta_key, meta_value) VALUES " . implode( ',', $ins_vals ),
 						$ins_args
 					)
 				);
+				// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared
 			}
 
 			// A raw write does not invalidate WordPress's meta cache; without this the rest of

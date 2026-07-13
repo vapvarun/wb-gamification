@@ -1,0 +1,30 @@
+# Plugin Check ERRORs that are accepted, with the reason each one is accepted.
+#
+# This file is NOT a place to silence inconvenient findings. An entry here is a claim that the
+# finding is wrong or that the alternative is worse for site owners, and the claim has to be written
+# down and be true. Anything not listed here fails the build.
+#
+# Format: <repo-relative-file>|<check-code>
+# Every entry must be preceded by a REASON comment.
+
+# REASON: The WP Abilities API (wp_register_ability / wp_register_ability_category) landed in
+# WordPress 6.9. This plugin's floor is 6.5, and moving it to 6.9 would cut every site on 6.5-6.8
+# off from updates -- on this install base that is a large number of real people, to gain an
+# AI-assistant surface they are not using.
+#
+# The integration is progressive enhancement and it is GUARDED at runtime: registration only binds
+# when function_exists( 'wp_register_ability' ) is true (AbilitiesRegistration.php:47), and the two
+# hooks it binds to (wp_abilities_api_categories_init, wp_abilities_api_init) do not exist before
+# 6.9, so a 6.5 site never reaches the call. There is no code path on which this can fatal.
+#
+# Plugin Check's WP_Functions_Compatibility_Check is a plain token scan: it matches the function NAME
+# and compares it against the declared minimum. It cannot see a function_exists() guard and honours
+# no ignore annotation, so a correctly-guarded call is indistinguishable to it from a reckless one.
+#
+# The alternatives were considered and rejected: raising the floor to 6.9 (drops 6.5-6.8 sites),
+# dropping the integration (loses the surface for everyone), or calling the function through a
+# variable so the scanner cannot see the literal name (that is evading a linter, not fixing code --
+# it would leave the same call in place while making it harder for the next reader to find).
+#
+# Revisit when the supported floor reaches 6.9: delete both lines and this comment.
+src/API/AbilitiesRegistration.php|wp_function_not_compatible_with_requires_wp
