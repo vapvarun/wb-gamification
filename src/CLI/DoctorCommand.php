@@ -17,6 +17,7 @@
 namespace WBGam\CLI;
 
 use WBGam\Engine\BadgeRule;
+use WBGam\Engine\LeaderboardEngine;
 use WBGam\Engine\Registry;
 use WBGam\Engine\FeatureFlags;
 use WP_CLI;
@@ -141,6 +142,7 @@ class DoctorCommand {
 		$this->check_integrations();
 		$this->check_rest_api();
 		$this->check_cron();
+		$this->check_leaderboard_queries();
 		$this->check_market_readiness();
 
 		WP_CLI::line( '' );
@@ -745,6 +747,101 @@ class DoctorCommand {
 			} else {
 				$this->warn( $label . ' (' . $hook . ') not scheduled' );
 			}
+		}
+	}
+
+	// ── Leaderboard queries ─────────────────────────────────────────────────────
+
+	/**
+	 * EXECUTE every leaderboard read path and fail on any database error.
+	 *
+	 * This check exists because a green unit suite shipped a blank leaderboard.
+	 *
+	 * The exclusion fragment was tested in isolation and passed. The query it was composed INTO was
+	 * never executed by anything, so a string-rewrite that mangled `mp.user_id` into `muser_id`
+	 * reached customers: MySQL rejected the query, `get_results()` returned null, the engine read
+	 * that as "no rows", and every scoped leaderboard rendered EMPTY rather than erroring. A silent
+	 * wrong answer, on every site.
+	 *
+	 * `$wpdb` swallows the error, and an empty leaderboard looks exactly like a quiet community. So
+	 * the only way to catch this class is to run the real query against a real database and ask the
+	 * database whether it was actually valid. That is what this does.
+	 *
+	 * WHAT IT ACTUALLY COVERS, precisely -- because overclaiming here is how the next one hides:
+	 *
+	 * SCOPED boards bypass the snapshot on every call, so they always execute the composed fallback
+	 * query. They are what catch this class, and they are what caught the `muser_id` regression when
+	 * this check was written against it.
+	 *
+	 * The unscoped ALL-TIME board is served from the snapshot whenever one is warm -- so on a site
+	 * with a healthy cron it does NOT exercise the fallback, and it did not go red on the bug. It
+	 * shares the same composer (`build_totals_query()`) as the scoped path, which is what makes the
+	 * scoped coverage meaningful for it. On a fresh install or a cron-less host, where the fallback
+	 * is the only path, this check exercises it directly.
+	 */
+	private function check_leaderboard_queries(): void {
+		global $wpdb;
+
+		$this->section( 'Leaderboard Queries (executed)' );
+
+		// Bypass the object cache AND the snapshot, so the composed fallback query is the thing
+		// that actually runs. Reading a warm snapshot would prove nothing -- that is precisely how
+		// the blank-leaderboard regression stayed hidden.
+		wp_cache_flush();
+
+		// The scope MUST resolve to real members, or the scoped paths short-circuit to an empty board
+		// (correctly -- a scope with no members has no board) and never execute the query at all.
+		//
+		// This is not hypothetical: when the short-circuit was added, it silently disarmed this very
+		// check. The bug it was written to catch sailed straight through it, because on a site with
+		// no BuddyPress bridge every scope resolves to nobody. A check that cannot fail is not a
+		// check. So the scope is resolved here to members who actually exist.
+		$scope_members = $wpdb->get_col(
+			"SELECT user_id FROM {$wpdb->prefix}wb_gam_user_totals WHERE total > 0 ORDER BY total DESC LIMIT 3"
+		);
+
+		$resolve_scope = static function () use ( $scope_members ) {
+			return array_map( 'absint', (array) $scope_members );
+		};
+
+		add_filter( 'wb_gam_leaderboard_scope_user_ids', $resolve_scope, 99 );
+
+		$paths = array(
+			'all-time (materialised totals)' => array( 'all', '', 0 ),
+			'daily (ledger)'                 => array( 'day', '', 0 ),
+			'weekly (ledger)'                => array( 'week', '', 0 ),
+			'monthly (ledger)'               => array( 'month', '', 0 ),
+			'scoped: bp_group'               => array( 'all', 'bp_group', 1 ),
+			'scoped: cohort'                 => array( 'all', 'cohort', 1 ),
+		);
+
+		$failed = 0;
+
+		foreach ( $paths as $label => [ $period, $scope_type, $scope_id ] ) {
+			// Clears last_error and last_query, so what we read back belongs to THIS call.
+			$wpdb->flush();
+
+			LeaderboardEngine::get_leaderboard( $period, 10, $scope_type, $scope_id );
+
+			// An EMPTY board is legitimate (a quiet site, an empty group). A DATABASE ERROR is not,
+			// and it is the thing that renders as an empty board.
+			if ( ! empty( $wpdb->last_error ) ) {
+				$this->fail( 'Leaderboard query failed - ' . $label . ': ' . $wpdb->last_error );
+				++$failed;
+			}
+		}
+
+		remove_filter( 'wb_gam_leaderboard_scope_user_ids', $resolve_scope, 99 );
+
+		if ( empty( $scope_members ) ) {
+			// No members with points, so the scoped paths resolved to nobody and short-circuited.
+			// Say so, rather than printing a pass that means nothing.
+			$this->warn( 'Leaderboard scoped paths not executed - no members with points to scope to' );
+			return;
+		}
+
+		if ( 0 === $failed ) {
+			$this->pass( count( $paths ) . ' leaderboard query paths execute without a database error' );
 		}
 	}
 

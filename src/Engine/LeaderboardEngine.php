@@ -247,6 +247,21 @@ final class LeaderboardEngine {
 		[ $opt_out_clause, $opt_out_values ] = self::exclusion_sql( 'p' );
 		$scope_ids                           = self::resolve_scope( $scope_type, $scope_id );
 
+		// A scope that resolves to NOBODY means nobody -- it does not mean everybody.
+		//
+		// Downstream, an empty $scope_ids means "do not restrict", which is correct when no scope was
+		// asked for. But it is the same empty array a REQUESTED scope produces when it resolves to no
+		// members (an empty group, or a scope type no integration provides). Those two cases were
+		// indistinguishable, so a group leaderboard on a site without the BuddyPress bridge quietly
+		// rendered the SITE-WIDE board under the group's name.
+		//
+		// Empty is the honest answer. A global board wearing a group's name is a wrong answer that
+		// looks like a right one, which is the worse failure of the two.
+		if ( '' !== $scope_type && $scope_id > 0 && empty( $scope_ids ) ) {
+			wp_cache_set( $cache_key, array(), 'wb_gamification', 120 );
+			return array();
+		}
+
 		// Build WHERE clause.
 		$where_parts  = array();
 		$where_values = array();
@@ -310,29 +325,36 @@ final class LeaderboardEngine {
 			// Selecting the 500-odd candidate rows from the indexed totals table
 			// first, then joining names onto that handful, keeps the range scan on
 			// idx_type_total (point_type, total) and the LIMIT where it belongs.
-			// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			$query = "
-				SELECT t.user_id,
-				       t.total_points,
-				       u.display_name
-				  FROM (
-				        SELECT user_id, total AS total_points
-				          FROM {$wpdb->prefix}wb_gam_user_totals
-				         WHERE point_type = %s
-				           AND total > 0
-				          " . str_replace( 'p.user_id', 'user_id', $opt_out_clause ) . '
-				          ' . str_replace( 'p.user_id', 'user_id', $scope_clause ) . "
-				      ORDER BY total DESC
-				         LIMIT %d
-				       ) t
-				  JOIN {$wpdb->users} u ON u.ID = t.user_id
-				 ORDER BY t.total_points DESC
-			";
-			// phpcs:enable
+			// The clauses are BUILT for this table's alias. They are never string-rewritten.
+			//
+			// They used to be: the ledger's clauses were composed for alias `p`, and this branch
+			// ran str_replace( 'p.user_id', 'user_id', ... ) over them because the totals table was
+			// not aliased. That worked only while the fragment was a plain NOT IN(). The moment it
+			// became an anti-join it contained `mp.user_id = p.user_id` -- and `p.user_id` matches
+			// INSIDE `mp.user_id`, rewriting it to `muser_id`. MySQL: Unknown column 'muser_id'.
+			// The query returned nothing, so every scoped leaderboard was blank on every site, and
+			// the all-time board went blank whenever the snapshot was missing (a fresh install, and
+			// permanently on a host with WP-Cron disabled).
+			//
+			// A fragment that carries an alias must be given the alias it is composing against.
+			// Rewriting SQL with string search-and-replace is not a way to change an alias.
+			[ $totals_excl_clause, $totals_excl_values ] = self::exclusion_sql( 'ut' );
 
-			// Rebuild the value list: the totals path has no created_at bind.
+			$totals_scope_clause = empty( $scope_ids )
+				? ''
+				: 'AND ut.user_id IN (' . implode( ',', array_fill( 0, count( $scope_ids ), '%d' ) ) . ')';
+
+			$query = self::build_totals_query(
+				$wpdb->prefix . 'wb_gam_user_totals',
+				$wpdb->users,
+				$totals_excl_clause,
+				$totals_scope_clause
+			);
+
+			// Rebuild the value list: the totals path has no created_at bind, and it binds the
+			// fragment built for `ut` -- not the one built for `p`.
 			$where_values = array( $resolved_type );
-			$where_values = array_merge( $where_values, $opt_out_values );
+			$where_values = array_merge( $where_values, $totals_excl_values );
 			if ( ! empty( $scope_ids ) ) {
 				$where_values = array_merge( $where_values, $scope_ids );
 			}
@@ -428,6 +450,19 @@ final class LeaderboardEngine {
 		// rather than ported.
 		[ $excl_sql, $excl_values ] = self::exclusion_sql( 'p' );
 		$scope_ids                  = self::resolve_scope( $scope_type, $scope_id );
+
+		// Same conflation as the board above, and the same answer. A rank WITHIN a scope that has no
+		// members is not "1st on the whole site" -- it is no rank at all. Falling through here would
+		// tell a member they are 4th in a group they are not ranked in.
+		if ( '' !== $scope_type && $scope_id > 0 && empty( $scope_ids ) ) {
+			$result = array(
+				'rank'           => 0,
+				'points'         => 0,
+				'points_to_next' => null,
+			);
+			wp_cache_set( $cache_key, $result, 'wb_gamification', 120 );
+			return $result;
+		}
 
 		// Get user's own total for the period — scoped by currency so the
 		// rank computation matches what the public leaderboard sees.
@@ -791,6 +826,53 @@ final class LeaderboardEngine {
 	 * @param string $alias SQL alias of the table whose `user_id` is being filtered.
 	 * @return array{0:string,1:array<int,mixed>} [ SQL fragment, ordered bind values ].
 	 */
+	/**
+	 * Compose the all-time (materialised totals) query.
+	 *
+	 * Split out and PURE so the composed SQL can be asserted without a database. That is the whole
+	 * reason it exists: the exclusion fragment was tested in isolation -- its placeholder count was
+	 * checked, and it passed -- while the query it was composed INTO was never looked at. So a
+	 * str_replace that mangled `mp.user_id` into `muser_id` shipped behind a green test suite, and
+	 * every scoped leaderboard on every site returned nothing.
+	 *
+	 * A fragment is not the query. Test the thing you actually run.
+	 *
+	 * @internal Public only so the test can compose it without a database.
+	 *
+	 * @param string $totals_table  Fully-qualified `wb_gam_user_totals` table name.
+	 * @param string $users_table   Fully-qualified users table name.
+	 * @param string $excl_clause   Exclusion fragment, built for the `ut` alias.
+	 * @param string $scope_clause  Scope fragment, built for the `ut` alias.
+	 * @return string The SQL, with %s / %d placeholders for prepare().
+	 */
+	public static function build_totals_query(
+		string $totals_table,
+		string $users_table,
+		string $excl_clause,
+		string $scope_clause
+	): string {
+		// The top-N is selected from the totals table ALONE, in a derived table, BEFORE the users
+		// join -- joining wp_users up front makes the optimiser drive from wp_users and forces a
+		// temporary + filesort over every member.
+		return "
+			SELECT t.user_id,
+			       t.total_points,
+			       u.display_name
+			  FROM (
+			        SELECT ut.user_id, ut.total AS total_points
+			          FROM {$totals_table} ut
+			         WHERE ut.point_type = %s
+			           AND ut.total > 0
+			          {$excl_clause}
+			          {$scope_clause}
+			      ORDER BY ut.total DESC
+			         LIMIT %d
+			       ) t
+			  JOIN {$users_table} u ON u.ID = t.user_id
+			 ORDER BY t.total_points DESC
+		";
+	}
+
 	private static function exclusion_sql( string $alias ): array {
 		global $wpdb;
 
