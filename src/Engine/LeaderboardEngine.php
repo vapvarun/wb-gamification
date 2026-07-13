@@ -484,6 +484,26 @@ final class LeaderboardEngine {
 		}
 		$user_total = (int) $wpdb->get_var( $user_total_sql ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 
+		// THE PAGE MUST NOT SHOW TWO NUMBERS FOR ONE METRIC.
+		//
+		// The board rows come from the snapshot. This strip summed the LEDGER. Between rebuilds the two
+		// disagree, so the same block showed a member their row saying 660 and, directly underneath,
+		// "your points: 1160". Same member, same period, same page. QA found it; it is indefensible.
+		//
+		// When the board is serving the snapshot AND the member is in it, this reads THAT ROW -- rank
+		// and points together, from one place. A leaderboard is eventually consistent by design; that
+		// is the deal a snapshot buys. But it has to be consistently stale, not stale in one corner of
+		// the block and live in the other.
+		//
+		// A member outside the snapshot (it holds the top 500) is not on the board at all, so there is
+		// nothing to contradict: they fall through to the live figures below.
+		$from_snapshot = self::snapshot_standing( $user_id, $period, $resolved_type, $scope_type, $scope_id );
+
+		if ( null !== $from_snapshot ) {
+			wp_cache_set( $cache_key, $from_snapshot, 'wb_gamification', 120 );
+			return $from_snapshot;
+		}
+
 		// Count users with strictly more points (their count + 1 = our rank).
 		$above_rank = self::count_users_above( $user_total, $period_start, $excl_sql, $excl_values, $scope_ids, $resolved_type );
 
@@ -826,6 +846,99 @@ final class LeaderboardEngine {
 	 * @param string $alias SQL alias of the table whose `user_id` is being filtered.
 	 * @return array{0:string,1:array<int,mixed>} [ SQL fragment, ordered bind values ].
 	 */
+	/**
+	 * The member's standing AS THE BOARD SEES IT — or null if the board is not serving the snapshot.
+	 *
+	 * This is what keeps the two halves of the leaderboard block telling the same story. It answers
+	 * from the SAME snapshot row the board renders, so the "your standing" strip cannot contradict the
+	 * member's own row three lines above it.
+	 *
+	 * Returns null -- and the caller falls through to the live ledger -- in the two cases where there
+	 * is nothing to contradict:
+	 *
+	 *   - the snapshot is too stale for the board to serve it, so the board is live too;
+	 *   - the member is not IN the snapshot (it holds the top 500), so they are not on the board.
+	 *
+	 * Scoped boards bypass the snapshot entirely, so they are excluded here for the same reason.
+	 *
+	 * @param int    $user_id    Member.
+	 * @param string $period     all|day|week|month.
+	 * @param string $point_type Resolved currency.
+	 * @param string $scope_type Scope type ('' = site-wide).
+	 * @param int    $scope_id   Scope id.
+	 * @return array{rank:int,points:int,points_to_next:int|null}|null
+	 */
+	private static function snapshot_standing(
+		int $user_id,
+		string $period,
+		string $point_type,
+		string $scope_type = '',
+		int $scope_id = 0
+	): ?array {
+		global $wpdb;
+
+		// A scoped board never reads the snapshot, so its strip must not either.
+		if ( '' !== $scope_type || $scope_id > 0 ) {
+			return null;
+		}
+
+		$cache_table = $wpdb->prefix . 'wb_gam_leaderboard_cache';
+
+		// The same freshness gate the board uses. If the board would not serve the snapshot, neither
+		// does this — otherwise we would have swapped one disagreement for another.
+		$built_at = (int) $wpdb->get_var( "SELECT UNIX_TIMESTAMP(MAX(updated_at)) FROM {$cache_table}" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- @clock-ok: MAX(updated_at) is compared with time() only through the same $max_age window the board applies; both sides are epoch seconds.
+
+		if ( $built_at <= 0 ) {
+			return null;
+		}
+
+		/** This filter is documented in src/Engine/LeaderboardEngine.php — see read_from_snapshot(). */
+		$max_age = (int) apply_filters( 'wb_gam_leaderboard_max_snapshot_age', 600 );
+
+		if ( ( time() - $built_at ) >= max( 60, $max_age ) ) {
+			return null;
+		}
+
+		$period_key = in_array( $period, array( 'all', 'month', 'week', 'day' ), true ) ? $period : 'all';
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$row = $wpdb->get_row(
+			$wpdb->prepare(
+				"SELECT total_points, `rank` FROM {$cache_table}
+				  WHERE user_id = %d AND period = %s AND point_type = %s",
+				$user_id,
+				$period_key,
+				$point_type
+			),
+			ARRAY_A
+		);
+
+		if ( ! $row ) {
+			return null;
+		}
+
+		$points = (int) $row['total_points'];
+
+		// The gap to the next member up, read from the same snapshot — so "points to next" cannot
+		// disagree with the board either.
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$next = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT MIN(total_points) FROM {$cache_table}
+				  WHERE period = %s AND point_type = %s AND total_points > %d",
+				$period_key,
+				$point_type,
+				$points
+			)
+		);
+
+		return array(
+			'rank'           => (int) $row['rank'],
+			'points'         => $points,
+			'points_to_next' => null !== $next ? ( (int) $next - $points ) : null,
+		);
+	}
+
 	/**
 	 * Compose the all-time (materialised totals) query.
 	 *
