@@ -128,6 +128,45 @@ class KudosCooldownClockTest extends TestCase {
 	}
 
 	/**
+	 * The COOLDOWN boundary must also be the site's clock -- and it is not the daily limit.
+	 *
+	 * The class is named KudosCooldownClockTest, and until now it contained no cooldown test at all:
+	 * it asserted the daily-limit boundary and stopped. Reintroduce the original cooldown bug alone
+	 * and the suite stayed green, which is the same "a check that cannot fail" the daily-limit half
+	 * was already caught for. Two bugs were fixed; only one was guarded.
+	 *
+	 * has_recent_kudos_to_receiver() bounds `created_at >= now - cooldown`. created_at is site-local,
+	 * so the boundary must be too. With gmdate() it sat hours in the member's future on any site
+	 * behind UTC: the COUNT came back 0, the guard concluded no recent kudos existed, and the
+	 * per-receiver cooldown never fired across an entire hemisphere.
+	 */
+	public function test_the_cooldown_boundary_is_also_the_sites_clock(): void {
+		$cooldown = 3600;
+
+		KudosEngine::has_recent_kudos_to_receiver( 123, 456, $cooldown );
+
+		$bound = $this->last_datetime_bound();
+
+		// Site-local now, minus the cooldown. Site is UTC-7, so 06:30 UTC is 23:30 the previous day.
+		$expected = gmdate( 'Y-m-d H:i:s', ( self::$fake_utc_now + self::$fake_offset ) - $cooldown );
+
+		$this->assertSame(
+			$expected,
+			$bound,
+			'The cooldown window must be measured in the clock created_at is WRITTEN in. A UTC boundary '
+				. 'is in the future on any site behind UTC, so a kudos sent one second ago falls before '
+				. 'it, COUNT(*) returns 0, and the cooldown never fires at all.'
+		);
+
+		// And it must not be the UTC boundary -- the bug, stated directly.
+		$this->assertNotSame(
+			gmdate( 'Y-m-d H:i:s', self::$fake_utc_now - $cooldown ),
+			$bound,
+			'The bound is UTC-now minus the cooldown: the exact defect this guard exists to catch.'
+		);
+	}
+
+	/**
 	 * The engine must have bound SOMETHING date-shaped -- otherwise the assertions above are vacuous.
 	 */
 	public function test_the_engine_actually_binds_a_boundary(): void {
