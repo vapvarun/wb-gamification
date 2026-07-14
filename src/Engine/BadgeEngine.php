@@ -1099,16 +1099,22 @@ final class BadgeEngine {
 		// 2026-05-27 stability audit found it had regressed to
 		// `badge_awarded`. Canonical: `badge_earned`. Don't change without
 		// updating WebhooksController::VALID_EVENTS + an integration journey.
-		WebhookDispatcher::dispatch(
-			'badge_earned',
-			$user_id,
-			null,
-			0,
-			array(
-				'badge_id'   => $badge_id,
-				'badge_name' => $def ? $def['name'] : $badge_id,
-			)
-		);
+		// Not during a migration. An import of a real community would otherwise deliver tens of
+		// thousands of "badge_earned" webhooks to the owner's Zapier/Make endpoint in one run -- for
+		// badges earned years ago, on the owner's first afternoon with the plugin. The badge is
+		// recorded; the notification is not sent. See WBGam\Engine\ImportMode.
+		if ( ! ImportMode::is_active() ) {
+			WebhookDispatcher::dispatch(
+				'badge_earned',
+				$user_id,
+				null,
+				0,
+				array(
+					'badge_id'   => $badge_id,
+					'badge_name' => $def ? $def['name'] : $badge_id,
+				)
+			);
+		}
 
 		return true;
 	}
