@@ -112,6 +112,7 @@ final class DbUpgrader {
 		self::ensure_api_keys_table();
 		self::ensure_side_effect_failures_table();
 		self::ensure_notifications_queue_table();
+		self::ensure_notifications_queue_kudos_id();
 		self::ensure_notifications_skip_purge();
 		self::ensure_user_intelligence_table();
 		self::ensure_superseded_badge_condition_action_ids();
@@ -799,6 +800,48 @@ final class DbUpgrader {
 			KEY idx_created_at (created_at)
 			) {$charset};"
 		);
+
+		update_option( $flag_key, '1' );
+	}
+
+	/**
+	 * Give the notification queue a real `kudos_id` column.
+	 *
+	 * Retracting a revoked kudos's toasts used to be a substring match:
+	 * `payload_json LIKE '%"kudos_id":7%'`. That pattern has no right-hand boundary, so it also
+	 * matched "kudos_id":77 and "kudos_id":7001 -- revoking one kudos DELETED the member's pending
+	 * toasts for unrelated ones, unrecoverably. A delete key does not belong in a LIKE against JSON.
+	 *
+	 * Existing queued rows keep kudos_id NULL and are simply not retractable by id. That is
+	 * acceptable and deliberate: the queue is transient (rows are consumed on the member's next page
+	 * view and trimmed by QUEUE_MAX_EVENTS), so a backfill would be racing rows that are about to be
+	 * read anyway -- and the alternative, backfilling by parsing the JSON, means running exactly the
+	 * broken match this migration exists to delete.
+	 */
+	private static function ensure_notifications_queue_kudos_id(): void {
+		$flag_key = 'wb_gam_feature_notifications_queue_kudos_id_v1';
+		if ( get_option( $flag_key ) ) {
+			return;
+		}
+
+		global $wpdb;
+		$table = $wpdb->prefix . 'wb_gam_notifications_queue';
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$columns = (array) $wpdb->get_col( "SHOW COLUMNS FROM `{$table}`" );
+
+		if ( ! in_array( 'kudos_id', $columns, true ) ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$wpdb->query( "ALTER TABLE `{$table}` ADD COLUMN kudos_id BIGINT UNSIGNED NULL DEFAULT NULL" );
+		}
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$indexes = (array) $wpdb->get_col( "SHOW INDEX FROM `{$table}`", 2 );
+
+		if ( ! in_array( 'idx_kudos_id', $indexes, true ) ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$wpdb->query( "ALTER TABLE `{$table}` ADD KEY idx_kudos_id (kudos_id)" );
+		}
 
 		update_option( $flag_key, '1' );
 	}

@@ -586,13 +586,23 @@ final class NotificationBridge {
 		}
 		$placeholders = implode( ',', array_fill( 0, count( $user_ids ), '%d' ) );
 
+		// Match the kudos by its COLUMN, exactly.
+		//
+		// This was `payload_json LIKE '%"kudos_id":<id>%'`, and that pattern has no right-hand
+		// boundary: revoking kudos #7 matched "kudos_id":77 and "kudos_id":7001 as well, and deleted
+		// those members' pending toasts along with the one being retracted. The blast radius was the
+		// giver and receiver of the revoked kudos -- precisely the two people most likely to be holding
+		// other queued kudos toasts -- and DELETE does not give them back. Invisible below kudos id 10,
+		// which is why it survived the happy-path test.
+		//
+		// An exact integer comparison on an indexed column cannot prefix-match anything.
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$wpdb->query(
 			$wpdb->prepare(
 				"DELETE FROM {$wpdb->prefix}wb_gam_notifications_queue
 				  WHERE user_id IN ({$placeholders})
-				    AND payload_json LIKE %s",
-				array_merge( $user_ids, array( '%' . $wpdb->esc_like( '"kudos_id":' . $kudos_id ) . '%' ) )
+				    AND kudos_id = %d",
+				array_merge( $user_ids, array( $kudos_id ) )
 			)
 		);
 	}
@@ -813,6 +823,19 @@ final class NotificationBridge {
 
 		global $wpdb;
 
+		// kudos_id is a REAL COLUMN, not a substring of the payload. Retraction used to find a revoked
+		// kudos's toasts with `payload_json LIKE '%"kudos_id":7%'`, and that pattern is unterminated:
+		// it matches "kudos_id":77 and "kudos_id":7001 just as happily. Revoking kudos #7 deleted the
+		// member's queued toasts for #77 and #7001 too, and a DELETE does not give them back. It only
+		// bites once a site passes kudos id 10, which is why the happy-path test never saw it.
+		//
+		// Terminating the pattern with a comma would work TODAY, because _ts is appended after the
+		// wb_gam_toast_data filter runs and so lands last in the JSON. But that is an invariant held by
+		// somebody else's code: let a site filter set _ts itself and it keeps its original position,
+		// kudos_id becomes the final key, the comma never appears, and the retraction silently stops
+		// retracting. A delete key does not belong in a LIKE against JSON. It belongs in a column.
+		$kudos_id = isset( $event['kudos_id'] ) ? (int) $event['kudos_id'] : null;
+
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$wpdb->insert(
 			$wpdb->prefix . 'wb_gam_notifications_queue',
@@ -820,9 +843,10 @@ final class NotificationBridge {
 				'user_id'      => $user_id,
 				'event_type'   => (string) ( $event['type'] ?? 'unknown' ),
 				'payload_json' => (string) wp_json_encode( $event ),
+				'kudos_id'     => $kudos_id,
 				'created_at'   => gmdate( 'Y-m-d H:i:s' ),
 			),
-			array( '%d', '%s', '%s', '%s' )
+			array( '%d', '%s', '%s', '%d', '%s' )
 		);
 
 		self::trim( $user_id );
