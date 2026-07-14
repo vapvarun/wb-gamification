@@ -186,6 +186,21 @@ final class Installer {
 		);
 
 		// Earned badges.
+		//
+		// NEVER PUT AN SQL `--` COMMENT INSIDE ONE OF THESE CREATE TABLE STRINGS. dbDelta does not
+		// parse SQL; it splits the definition LINE BY LINE and treats each line as a column. A comment
+		// line becomes a column name, and dbDelta emits statements like "ALTER TABLE
+		// wp_wb_gam_user_badges ADD COLUMN <the text of your comment>",
+		// which fail with a syntax error on every install and every upgrade, on every site, for ever.
+		// MySQL creates the table correctly from the CREATE TABLE (it ignores the comments), so the
+		// feature works and the only symptom is a database error in a log nobody reads. Found by
+		// running a fresh install in a clean room, not by reading the code -- this is invisible on a
+		// site where the tables already exist.
+		//
+		// `shared_at` is the member's own decision to publish a badge (NULL = private, which is the
+		// default). The share card, the OpenBadges credential and the public share page all refuse to
+		// render a badge with a NULL here to anyone but its owner. Before it existed, all three served
+		// any badge to anyone who could guess a badge_id and a user_id, and the member was never asked.
 		dbDelta(
 			"CREATE TABLE {$wpdb->prefix}wb_gam_user_badges (
 			id         BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -193,11 +208,6 @@ final class Installer {
 			badge_id   VARCHAR(100)    NOT NULL,
 			earned_at  DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			expires_at DATETIME        DEFAULT NULL,
-			-- When the MEMBER chose to publish this badge. NULL = private, and private is the default.
-			-- The share card, the OpenBadges credential and the public share page all refuse to render
-			-- a badge with a NULL here to anyone but its owner (and admins). Before this column, all
-			-- three served any badge to anyone who could guess a badge_id and a user_id -- which is to
-			-- say, to anyone -- and the member was never asked.
 			shared_at  DATETIME        DEFAULT NULL,
 			PRIMARY KEY (id),
 			UNIQUE KEY user_badge (user_id, badge_id),
@@ -301,11 +311,6 @@ final class Installer {
 			KEY giver_date (giver_id, created_at),
 			KEY receiver_id (receiver_id),
 			KEY idx_receiver_date (receiver_id, created_at),
-			-- Abuse detection groups live kudos by (giver, receiver) to find pairs trading kudos back
-			-- and forth. With no index leading on revoked_at, MySQL built a temp table for that GROUP
-			-- BY -- fine at 1 row, a full scan of every kudos ever given on a site that has been
-			-- running for a year. Leading column is the WHERE (revoked_at IS NULL), then the two
-			-- grouped columns, so the grouping can be read straight off the index.
 			KEY idx_abuse_pairs (revoked_at, giver_id, receiver_id)
 		) $charset;"
 		);

@@ -117,6 +117,40 @@ check_unauthenticated_rest_allowlist() {
 #
 # The annotation is deliberately awkward to write. It is a place to state a decision, not a snooze
 # button -- an allowlist you can join without saying anything is how the last one lied to us.
+# Rule 2c: no SQL `--` comments inside a dbDelta CREATE TABLE string.
+#
+# dbDelta does not parse SQL. It splits the table definition LINE BY LINE and treats every line as a
+# column definition, so a comment line becomes a column NAME and dbDelta emits:
+#
+#     ALTER TABLE wp_wb_gam_user_badges ADD COLUMN -- and the member was never asked.
+#
+# which fails with a syntax error on every install and every upgrade, on every site, for ever. MySQL
+# builds the table correctly from the CREATE TABLE itself, so the feature works and the only symptom
+# is a database error in a log nobody reads.
+#
+# I did exactly this while adding the shared_at column, and no review caught it -- it took a fresh
+# install in a clean-room container to surface, because on a site where the tables already exist
+# dbDelta has nothing to diff and stays quiet. A comment in the code saying "do not do this" is what
+# was already there for other traps. This is the mechanism.
+check_no_sql_comments_in_schema() {
+    local hits
+    hits=$(awk '
+        /"CREATE TABLE/ { in_ct = 1 }
+        in_ct && /^[[:space:]]*--/ { printf "%s:%d: %s\n", FILENAME, NR, $0 }
+        in_ct && /\$charset/ { in_ct = 0 }
+    ' "$PLUGIN_DIR/src/Engine/Installer.php" "$PLUGIN_DIR/src/Engine/DbUpgrader.php" 2>/dev/null || true)
+
+    if [ -n "$hits" ]; then
+        violation "Rule 2c — SQL '--' comment inside a dbDelta CREATE TABLE:"
+        echo "$hits" | sed 's/^/    /'
+        echo "    dbDelta reads each line as a COLUMN. These become bogus ALTER TABLE statements that"
+        echo "    error on every install and upgrade. Move the explanation to a PHP comment ABOVE the"
+        echo "    dbDelta() call."
+    else
+        ok "Rule 2c — no SQL comments inside dbDelta schemas"
+    fi
+}
+
 check_public_routes_gate_user_data() {
     local offenders=()
 
@@ -501,6 +535,7 @@ check_animations_respect_reduced_motion() {
 check_no_native_cap_check_for_plugin_abilities
 check_unauthenticated_rest_allowlist
 check_public_routes_gate_user_data
+check_no_sql_comments_in_schema
 check_no_inline_styles_in_admin_php
 check_no_inline_scripts_in_php
 check_no_inline_style_blocks_in_php

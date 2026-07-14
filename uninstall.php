@@ -28,177 +28,62 @@ global $wpdb;
 // every schema-add commit. The CI manifest check counts CREATE TABLEs
 // against the `tables` section, but does not currently diff against this
 // uninstall list.
-$tables = array(
-	'wb_gam_points',
-	'wb_gam_redemption_items',
-	'wb_gam_rules',
-	'wb_gam_webhooks',
-	'wb_gam_badge_defs',
-	'wb_gam_user_badges',
-	'wb_gam_levels',
-	'wb_gam_challenge_log',
-	'wb_gam_cohort_members',
-	'wb_gam_user_cosmetics',
-	'wb_gam_community_challenges',
-	'wb_gam_member_prefs',
-	'wb_gam_challenges',
-	'wb_gam_events',
-	'wb_gam_streaks',
-	'wb_gam_kudos',
-	'wb_gam_partners',
-	'wb_gam_community_challenge_contributions',
-	'wb_gam_redemptions',
-	'wb_gam_cosmetics',
-	'wb_gam_point_types',
-	'wb_gam_point_type_conversions',
-	'wb_gam_user_totals',
-	'wb_gam_submissions',
-	'wb_gam_leaderboard_cache',
+// The hand-list that used to live here is gone, and the comment above it is the reason why: it told
+// the next developer to "crosscheck this list against Installer.php on every schema-add commit",
+// which is an instruction, not a mechanism, and it drifted anyway.
+//
+// Verified by actually running uninstall on a clean-room site rather than reading the code: FOUR
+// tables survived it -- wb_gam_api_keys, wb_gam_notifications_queue, wb_gam_side_effect_failures and
+// wb_gam_user_intelligence. Crosschecking against Installer would not even have caught three of them,
+// because they are created by DbUpgrader migrations rather than by the installer.
+//
+// So ask the database which tables are ours instead of remembering. Every table this plugin has ever
+// created lives under the one prefix; a table added five years from now is covered on the day it is
+// written, and there is nothing left to keep in step.
+$owned_prefix = $wpdb->esc_like( $wpdb->prefix . 'wb_gam_' ) . '%';
+
+$tables = (array) $wpdb->get_col(
+	$wpdb->prepare( 'SHOW TABLES LIKE %s', $owned_prefix ) // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- uninstall.
 );
 
 foreach ( $tables as $table ) {
-	$wpdb->query( "DROP TABLE IF EXISTS `{$wpdb->prefix}{$table}`" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- uninstall, no caching needed.
+	// $table came from SHOW TABLES against our own prefix -- it cannot be anything but ours.
+	$wpdb->query( "DROP TABLE IF EXISTS `{$table}`" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- uninstall; table name from SHOW TABLES on our prefix.
 }
 // phpcs:enable WordPress.DB.DirectDatabaseQuery.SchemaChange
 // phpcs:enable WordPress.DB.DirectDatabaseQuery.NoCaching
 
 // -------------------------------------------------------------------------
-// 2. Delete options — known keys.
+// 2. Delete options — the whole namespace.
 // -------------------------------------------------------------------------
-$known_options = array(
-	'wb_gam_db_version',
-	'wb_gam_leaderboard_mode',
-	'wb_gam_log_retention_months',
-	'wb_gam_rank_automation_rules',
-	'wb_gam_template',
-	'wb_gam_wizard_complete',
-	'wb_gam_pending_setup_redirect',
-	'wb_gam_leaderboard_invalidated_at',
-	'wb_gam_feature_point_types_v1',
-	'wb_gam_feature_redemption_point_type_v1',
-	'wb_gam_feature_point_type_conversions_v1',
-	// Email + privacy options added in 1.0.0 — caught by the 2026-05-27 audit.
-	'wb_gam_email_level_up',
-	'wb_gam_email_badge_earned',
-	'wb_gam_email_challenge_completed',
-	'wb_gam_email_redemption',
-	'wb_gam_profile_public_enabled',
-	// -------------------------------------------------------------------
-	// 2026-07-13 data-lifecycle audit. Root cause of the gap: most of these
-	// keys are never written as a quoted 'wb_gam_...' string — they're
-	// written via a class constant (e.g. `self::OPTION_KEY`, `self::OPT_LAST`).
-	// A plain grep for quoted literals misses that, so they silently
-	// survived every earlier uninstall pass. Verified one by one against
-	// every `update_option()` / `add_option()` call site in `src/`,
-	// resolving each constant back to its literal string. Crosscheck this
-	// block against those call sites on every commit that adds an option.
-	//
-	// wb_gam_hub_page_id points at a WP page (Installer::ensure_hub_page()).
-	// Delete ONLY the option here — the page itself is real site content a
-	// site owner may have built on; uninstall must never delete content.
-	'wb_gam_hub_page_id',
-	'wb_gam_features',                   // FeatureFlags::OPTION_KEY.
-	'wb_gam_license_key',                // LicenseActivator::KEY_OPTION.
-	'wb_gam_license_key_allow_tracking', // LicenseActivator::KEY_OPTION . '_allow_tracking'.
-	'wb_gam_preset_activated',           // LicenseActivator::ACTIVATED_OPTION.
-	'wb_gam_caps_version',               // Capabilities::CAPS_VERSION_OPTION.
-	'wb_gam_cohort_settings',            // CohortSettingsController::OPTION_KEY.
-	'wb_gam_deactivation_reasons',       // DeactivationFeedback::OPTION.
-	'wb_gam_realtime_transport',         // SSEController::TRANSPORT_OPTION.
-	'wb_gam_modules',                    // SettingsPage module enable/disable map.
-	'wb_gam_accent_color',               // Appearance::OPTION.
-	'wb_gam_toast_position',             // NotificationBridge::TOAST_POSITION_OPTION.
-	'wb_gam_credential_expiry_last_run', // CredentialExpiryEngine::OPT_LAST.
-	'wb_gam_action_overrides',           // ActionsController per-action override map.
-	'wb_gam_wc_account_endpoint_v1',     // WooCommerce AccountIntegration one-shot flag.
-	'wb_gam_events_retention_months',    // SettingsPage — distinct from wb_gam_log_retention_months above.
-	// Plain settings keys SettingsPage::save() writes directly — none of
-	// these were listed at all before this audit.
-	'wb_gam_points_decay_enabled',
-	'wb_gam_points_decay_days',
-	'wb_gam_points_decay_percent',
-	'wb_gam_leaderboard_authority',
-	'wb_gam_login_bonus_enabled',
-	'wb_gam_login_bonus_tiers',
-	'wb_gam_streak_grace_days',
-	'wb_gam_streak_milestone_bonus',
-	'wb_gam_weekly_email_enabled',
-	'wb_gam_weekly_email_subject',
-	// Never auto-created by the plugin (only ever read, via
-	// Email::from_header()'s get_option() default) — but it's a
-	// plugin-namespaced settings key a site owner or integration may have
-	// set directly, so uninstall still owns cleaning it up if present.
-	'wb_gam_weekly_email_from_name',
-	'wb_gam_nudge_email',
-	'wb_gam_bp_stream_badge_earned',
-	'wb_gam_bp_stream_challenge_completed',
-	'wb_gam_bp_stream_kudos_given',
-	'wb_gam_bp_stream_level_changed',
-	'wb_gam_profile_slug_base',
-	'wb_gam_kudos_daily_limit',
-	'wb_gam_kudos_receiver_points',
-	'wb_gam_kudos_giver_points',
-	'wb_gam_excluded_roles',
-	'wb_gam_excluded_users',
-	// DbUpgrader.php one-shot feature-migration / data-migration flags. Each
-	// is a "ran already" idempotency marker for a single ALTER TABLE /
-	// backfill, gated behind its own local `$flag_key` variable rather than
-	// a shared constant — that's why 18 of these were missing here despite
-	// 3 sibling flags (feature_point_types_v1 and friends, above) already
-	// being listed.
-	'wb_gam_feature_engine_badges_are_rules_v1',
-	'wb_gam_feature_badge_rule_groups_v1',
-	'wb_gam_migrated_stock_null_unlimited',
-	'wb_gam_feature_kudos_moderation_v1',
-	'wb_gam_feature_streak_sort_idx_v1',
-	'wb_gam_feature_scale_indexes_v1',
-	'wb_gam_feature_events_source_key_v1',
-	'wb_gam_feature_superseded_badge_action_ids_v1',
-	'wb_gam_feature_user_intelligence_v1',
-	'wb_gam_feature_notifications_queue_v1',
-	'wb_gam_feature_notifications_skip_purge_v1',
-	'wb_gam_feature_side_effect_failures_v1',
-	'wb_gam_feature_api_keys_table_v1',
-	'wb_gam_feature_submissions_v1',
-	'wb_gam_feature_leaderboard_cache_unique_key_v1',
-	'wb_gam_feature_user_totals_v1',
-	'wb_gam_feature_leaderboard_cache_point_type_v1',
-	'wb_gam_feature_leaderboard_cache_prev_rank_v1',
-);
+// This was a hand-list of about a hundred literal keys, plus five wildcard patterns for the families
+// whose names are only known at runtime. It was refreshed by an audit hours ago and it was STILL
+// incomplete: a clean-room uninstall left `wb_gam_tenure_seeded` behind. That is the third
+// hand-maintained list in this file to be wrong (tables, usermeta, options), and the third time the
+// answer is the same one.
+//
+// Every option this plugin writes is under a single prefix -- verified by grepping every
+// update_option/add_option call site, including the ones that pass a class constant rather than a
+// literal. So sweep the prefix. There is no list to forget a key, no wildcard family to enumerate,
+// and an option added years from now is covered the day it is written.
+//
+// The prefix is escaped with esc_like, so `_` is a literal underscore and not a single-character
+// wildcard. That matters: `wb_gam_%` unescaped would also match `wb_gamX...`, and an adversarial
+// `wb_gamification_lookalike` option belonging to someone else is exactly the row we must not touch.
+// Clean-room verified: ours all go, that one stays.
+$wb_gam_owned = $wpdb->esc_like( 'wb_gam_' ) . '%';
 
-foreach ( $known_options as $option ) {
-	delete_option( $option );
-}
-
-// Delete wildcard options: per-action point amount, enable flag, currency override.
-// Also covers 2 dynamic-key option families found by the 2026-07-13 audit:
-// BadgeEngine::start_backfill() writes 'wb_gam_backfill_<badge_id>' (one per
-// badge, progress state for the async backfill job) and
-// WebhookDispatcher writes 'wb_gam_webhook_log_<webhook_id>' (one per
-// webhook, rolling delivery log) — both keyed on an ID that only exists at
-// runtime, so they can't be listed as literals above.
-$wildcard_prefixes = array(
-	'wb_gam_points_%',
-	'wb_gam_enabled_%',
-	'wb_gam_point_type_%',
-	'wb_gam_backfill_%',
-	'wb_gam_webhook_log_%',
-);
-
-foreach ( $wildcard_prefixes as $like_pattern ) {
-	$option_names = $wpdb->get_col(
-		$wpdb->prepare(
-			"SELECT option_name FROM {$wpdb->options} WHERE option_name LIKE %s",
-			$like_pattern
-		)
-	); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- uninstall, one-time cleanup.
-
-	if ( ! empty( $option_names ) ) {
-		foreach ( $option_names as $option_name ) {
-			delete_option( $option_name );
-		}
-	}
-}
+$wpdb->query(
+	$wpdb->prepare(
+		"DELETE FROM {$wpdb->options}
+		  WHERE option_name LIKE %s
+		     OR option_name LIKE %s
+		     OR option_name LIKE %s",
+		$wb_gam_owned,
+		$wpdb->esc_like( '_transient_wb_gam_' ) . '%',
+		$wpdb->esc_like( '_transient_timeout_wb_gam_' ) . '%'
+	)
+); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared -- uninstall; fixed namespace prefixes, bound.
 
 // -------------------------------------------------------------------------
 // 3. Delete transients.
