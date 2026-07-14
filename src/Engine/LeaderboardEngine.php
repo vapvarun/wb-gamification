@@ -410,7 +410,7 @@ final class LeaderboardEngine {
 				  {$opt_out_clause}
 				  {$scope_clause}
 				 GROUP BY p.user_id
-				 ORDER BY total_points DESC
+				 ORDER BY total_points DESC, p.user_id DESC
 				 LIMIT %d
 			";
 			// phpcs:enable
@@ -689,7 +689,7 @@ final class LeaderboardEngine {
 					   FROM {$points_table} p
 					   {$where}
 					  GROUP BY p.user_id
-					  ORDER BY total_points DESC
+					  ORDER BY total_points DESC, p.user_id DESC
 					  LIMIT 500
 					ON DUPLICATE KEY UPDATE
 					   prev_rank    = `rank`,
@@ -796,7 +796,7 @@ final class LeaderboardEngine {
 				   FROM {$cache_table} c
 				   JOIN {$wpdb->users} u ON u.ID = c.user_id
 				  WHERE c.period = %s AND c.point_type = %s {$opt_out_clause}
-				  ORDER BY c.`rank` ASC
+				  ORDER BY c.total_points DESC, c.user_id DESC
 				  LIMIT %d",
 				$query_values
 			),
@@ -832,6 +832,21 @@ final class LeaderboardEngine {
 		}
 
 		$result = array();
+		// COMPETITION rank, not the array offset.
+		//
+		// The board printed $rank_zero + 1 -- a position in a list -- while get_user_rank() returns
+		// count-of-members-above + 1, which is a competition rank: tied members SHARE it. Eleven members
+		// hold 91 points on this database, so the board numbered them 11, 12, 13 ... and the member's
+		// own rank strip said #8 for every one of them. On the top-100 board, 79 of 100 rows showed a
+		// different number in the two places.
+		//
+		// The comment on get_user_rank() says the page must not show two numbers for one metric. This is
+		// that, for rank: the two surfaces have to compute it the same way, so the board computes it the
+		// same way -- ties share a rank, and the next distinct score skips.
+		$rank        = 0;
+		$seen        = 0;
+		$prev_points = null;
+
 		foreach ( $rows as $rank_zero => $row ) {
 			$user_id = (int) $row['user_id'];
 
@@ -842,8 +857,15 @@ final class LeaderboardEngine {
 			$prev_rank     = isset( $row['prev_rank'] ) ? (int) $row['prev_rank'] : 0;
 			$rank_change   = ( $snapshot_rank > 0 && $prev_rank > 0 ) ? ( $prev_rank - $snapshot_rank ) : 0;
 
+			++$seen;
+			$points_now = (int) $row['total_points'];
+			if ( null === $prev_points || $points_now !== $prev_points ) {
+				$rank        = $seen;
+				$prev_points = $points_now;
+			}
+
 			$result[] = array(
-				'rank'         => $rank_zero + 1,
+				'rank'         => $rank,
 				'user_id'      => $user_id,
 				'display_name' => $row['display_name'],
 				'avatar_url'   => get_avatar_url( $user_id, array( 'size' => 48 ) ),
