@@ -253,6 +253,7 @@ final class CredentialExpiryEngine {
 			return false;
 		}
 
+		// @clock-ok: expires_at is written in UTC (gmdate()), and time() is UTC. Both sides agree.
 		return strtotime( $expires_at ) <= time();
 	}
 }

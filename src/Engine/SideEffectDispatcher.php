@@ -159,6 +159,8 @@ final class SideEffectDispatcher {
 		global $wpdb;
 		$table = $wpdb->prefix . self::TABLE_SUFFIX;
 
+		// @clock-ok: last_attempt_at is written with gmdate() everywhere in this file (UTC) and the
+		// retry bound below is gmdate() too. Same clock on both sides of the comparison.
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(

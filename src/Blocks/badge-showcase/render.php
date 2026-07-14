@@ -177,10 +177,21 @@ $wb_gam_format_date = static function ( string $iso ): string {
 	if ( ! $ts ) {
 		return '';
 	}
-	$age = time() - $ts;
+
+	// earned_at is written by BadgeEngine with current_time( 'mysql' ) -- site-local -- and PHP
+	// runs on UTC under WordPress, so strtotime() reads it back as though it were UTC. Both
+	// comparisons below therefore have to be made in the site's frame, not the real one.
+	//
+	// Note human_time_diff( $ts ) with one argument defaults its second to time(), so it carried
+	// the same skew as the explicit subtraction and had to be passed the site clock too. The
+	// visible effect was direction-dependent: a site ahead of UTC produced a NEGATIVE age for a
+	// badge earned minutes ago, failing the `>= 0` guard, so a fresh badge skipped "3 days ago"
+	// entirely and rendered as a bare calendar date.
+	$now = current_time( 'timestamp' );
+	$age = $now - $ts;
 	if ( $age >= 0 && $age < DAY_IN_SECONDS * 30 ) {
 		/* translators: %s: human-readable time difference. */
-		return sprintf( esc_html__( '%s ago', 'wb-gamification' ), human_time_diff( $ts ) );
+		return sprintf( esc_html__( '%s ago', 'wb-gamification' ), human_time_diff( $ts, $now ) );
 	}
 	return date_i18n( get_option( 'date_format' ) ?: 'M j, Y', $ts );
 };

@@ -807,6 +807,9 @@ final class BadgeEngine {
 				if ( ! $registered ) {
 					return false;
 				}
+				// @clock-ok: both sides are real UTC. user_registered is stored by WP core in UTC and
+				// the strtotime() above appends an explicit ' UTC', so $registered is a true epoch --
+				// not the local-parsed-as-UTC value that makes this construct wrong elsewhere.
 				return (int) floor( ( time() - $registered ) / DAY_IN_SECONDS ) >= (int) ( $condition['days'] ?? 0 );
 
 			case 'admin_awarded':
@@ -1166,6 +1169,8 @@ final class BadgeEngine {
 
 		global $wpdb;
 		// Exclude expired credentials so has_badge() returns false for expired ones.
+		// @clock-ok: expires_at is written in UTC (gmdate(), see award_badge) and the bound below is
+		// gmdate() too. Column and bound are in the same clock.
 		$ids = $wpdb->get_col(
 			$wpdb->prepare(
 				"SELECT badge_id FROM {$wpdb->prefix}wb_gam_user_badges
@@ -1234,6 +1239,9 @@ final class BadgeEngine {
 	public static function get_user_badges( int $user_id ): array {
 		global $wpdb;
 
+		// @clock-ok: the only time-compared column here is expires_at, written in UTC (gmdate()), and
+		// the bound is gmdate(). earned_at is also selected but is never compared in SQL -- it is
+		// site-local, and callers that render it must read it with current_time( 'timestamp' ).
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT b.id, b.name, b.description, b.image_url,

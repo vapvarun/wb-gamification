@@ -234,6 +234,9 @@ class CredentialController extends WP_REST_Controller {
 		}
 
 		// Credential has expired → 410 Gone (triggers renewal re-engagement).
+		// @clock-ok: expires_at is written in UTC (BadgeEngine::award_badge uses gmdate()), PHP parses
+		// naive strings as UTC under WordPress, and time() is UTC. All three agree. Note earned_at in
+		// the SAME table is site-local -- the column, not the table, decides which clock you compare in.
 		if ( $badge_row['expires_at'] && strtotime( $badge_row['expires_at'] ) <= time() ) {
 			return new WP_Error(
 				'credential_expired',

@@ -96,8 +96,209 @@ done < <(grep -rnE 'NOW\(\)|UTC_TIMESTAMP\(\)|CURDATE\(\)|CURTIME\(\)|CURRENT_TI
 
 if [ "$fail" -eq 1 ]; then
   echo ""
+fi
+
+# ─────────────────────────────────────────────────────────────────────────────────────────────
+# PART 2 — the PHP-side half of the same bug: gmdate()/time() vs current_time()
+#
+# Part 1 only ever needed to grep for literal text, because NOW()/CURDATE()/etc. are SQL --
+# they cannot appear as valid PHP outside a string, so any hit IS the dangerous construct.
+# gmdate() and time() are real PHP functions used for a hundred unrelated, harmless things
+# (cron schedules, cache keys, nonces, log timestamps) in this codebase, so grepping for their
+# literal text would drown the two constructs that actually matter in noise -- exactly the
+# false-negative failure mode the header above describes for the abandoned table-attributing
+# parser, just approached from the other direction. So Part 2 narrows to the two SHAPES that
+# actually shipped bugs this cycle, instead of the raw keyword:
+#
+#   A) gmdate()/time() used INLINE as a bound argument to a $wpdb query call whose SQL compares
+#      a %s placeholder with <, <=, >, >=, or BETWEEN -- i.e. it is a WHERE-clause bound, not a
+#      value being written -- and current_time() does not also appear anywhere in that same
+#      call. This is exactly KudosEngine::get_daily_sent_count()'s bug: gmdate('Y-m-d') . '
+#      00:00:00' bound straight into `created_at >= %s`, no current_time() in sight, while the
+#      column three lines away is written with current_time('mysql'). Its sibling four lines
+#      down, has_recent_kudos_to_receiver(), does the equivalent comparison correctly --
+#      strtotime( current_time( 'mysql' ) ) -- and is NOT flagged, because current_time()
+#      appears in the same $wpdb->prepare() call.
+#
+#      A $cutoff variable computed on an earlier line and only referenced by name inside the
+#      call is deliberately OUT of scope here, for the same reason the abandoned parser in the
+#      header above failed: attributing an arbitrary variable to the clock it was built in is
+#      real data-flow analysis, not a grep. This catches the INLINE shape, which is what both
+#      of this cycle's bugs actually were.
+#
+#   B) a bare time() compared or subtracted against a value that came straight out of
+#      strtotime() -- either on the same line, or via a $var assigned `$var = strtotime(...)`
+#      earlier in the same function -- where that strtotime() call was not itself given a
+#      current_time()-sourced string. This is the challenges block's bug: $ts = strtotime(
+#      $ends_at ) reads a site-local wall-clock string as if it were UTC (PHP's default
+#      timezone, which WP never changes), producing a pseudo-timestamp in the SAME "local read
+#      as UTC" frame current_time('timestamp') produces -- then $ts - time() compared that
+#      frame against a REAL UTC epoch. `$var = time();` (e.g. a strtotime()-failed fallback) is
+#      a write, not a compare, and clears the variable's risky status -- whatever it's compared
+#      against next is two real epochs, which is correct. So is `strtotime(...) ?: time()`
+#      feeding a value that then gets written out.
+#
+# Same override as Part 1, same requirement: `// @clock-ok: <reason>` on the line, or anywhere
+# in the 16 lines above it -- even for a construct that turns out to be safe (e.g. two columns
+# that are BOTH always written with gmdate(), never current_time()). The annotation is cheap;
+# a human deciding it isn't dangerous without writing that down is how this class of bug keeps
+# reappearing four files over from the one that already got fixed.
+# ─────────────────────────────────────────────────────────────────────────────────────────────
+
+php_hits="$(perl - $(find src -name '*.php' 2>/dev/null | sort) <<'PERL'
+use strict;
+use warnings;
+
+my $any_violation = 0;
+
+for my $file (@ARGV) {
+    open( my $fh, '<', $file ) or do { warn "skip $file: $!\n"; next; };
+    my @lines = <$fh>;
+    close $fh;
+    my $n = scalar @lines;
+
+    my $is_comment = sub {
+        my ($l) = @_;
+        my $t = $l;
+        $t =~ s/^\s+//;
+        return ( $t =~ m{^//} || $t =~ m{^\*} || $t =~ m{^/\*} );
+    };
+
+    my $annotated_above = sub {
+        my ($idx) = @_;
+        my $start = $idx - 16;
+        $start = 0 if $start < 0;
+        for my $i ( $start .. $idx ) {
+            return 1 if $lines[$i] =~ /\@clock-ok/;
+        }
+        return 0;
+    };
+
+    my @violations;
+
+    # ---- Check A: gmdate()/time() used INLINE as a bound arg to a $wpdb query call ----
+    for ( my $i = 0 ; $i < $n ; $i++ ) {
+        if ( $lines[$i] =~ /\$wpdb->(?:prepare|get_var|get_results|get_col|get_row|query)\s*\(/ ) {
+            my $call_start = $i;
+            my $depth      = 0;
+            my $seen_open  = 0;
+            my $span       = '';
+            my $j          = $i;
+            for ( ; $j < $n ; $j++ ) {
+                my $l = $lines[$j];
+                $span .= $l;
+                for my $ch ( split //, $l ) {
+                    if ( $ch eq '(' ) { $depth++; $seen_open = 1; }
+                    elsif ( $ch eq ')' ) { $depth--; }
+                }
+                last if $seen_open && $depth <= 0;
+            }
+
+            if ( $span !~ /\@clock-ok/
+                && !$annotated_above->($call_start)
+                && $span !~ /current_time\s*\(/
+                && ( $span =~ /[<>]=?\s*%s/ || $span =~ /%s\s*[<>]=?/ || $span =~ /BETWEEN\s+%s/i )
+                && ( $span =~ /(?<![A-Za-z0-9_])gmdate\s*\(/ || $span =~ /(?<![A-Za-z0-9_])time\s*\(\s*\)/ ) )
+            {
+                push @violations,
+                    [ $call_start,
+                    "SQL bound built with gmdate()/time() (not current_time()) in a \$wpdb call" ];
+            }
+            $i = $j;
+        }
+    }
+
+    # ---- Check B: bare time() compared/subtracted against a strtotime()-derived value ----
+    my %risky;
+    for ( my $i = 0 ; $i < $n ; $i++ ) {
+        my $l = $lines[$i];
+
+        %risky = () if $l =~ /\bfunction\b/;
+
+        if ( $l =~ /\$(\w+)\s*=\s*strtotime\s*\(\s*(.*)$/ ) {
+            my ( $var, $rest ) = ( $1, $2 );
+            if ( $rest =~ /current_time\s*\(/ ) {
+                delete $risky{$var};
+            }
+            else {
+                $risky{$var} = $i;
+            }
+        }
+
+        # `$var = time();` -- e.g. a strtotime() parse-failure fallback ("if ( ! $ts ) { $ts =
+        # time(); }") -- REASSIGNS the variable to a real epoch. It is a write, not a compare,
+        # and it flips the variable out of the risky set: whatever compares against it next is
+        # now comparing two real epochs, which is correct.
+        if ( $l =~ /^\s*\$(\w+)\s*=\s*time\s*\(\s*\)\s*;\s*$/ ) {
+            delete $risky{$1};
+            next;
+        }
+
+        next if $is_comment->($l);
+
+        # `strtotime( $x ) ?: time()` is a parse-failure FALLBACK feeding a value that gets
+        # written out (e.g. via gmdate()), not a bound/comparison -- excluded, same as Check A
+        # excludes plain writes. Comparisons use <, <=, >, >=, -, or the 2-arg form of
+        # human_time_diff(); the elvis operator is neither.
+        next if $l =~ /\?\s*:\s*time\s*\(\s*\)/;
+
+        if ( $l =~ /(?<![A-Za-z0-9_])time\s*\(\s*\)/ && $l !~ /current_time\s*\(/ ) {
+            my $flag = 0;
+
+            if ( $l =~ /strtotime\s*\(\s*(.*)$/ ) {
+                my $arg = $1;
+                $flag = 1 unless $arg =~ /current_time\s*\(/;
+            }
+
+            for my $var ( keys %risky ) {
+                $flag = 1 if $l =~ /\$\Q$var\E\b/;
+            }
+
+            if ( $flag && !$annotated_above->($i) ) {
+                push @violations,
+                    [ $i, "bare time() compared against a strtotime()-derived value (not current_time())" ];
+            }
+        }
+    }
+
+    for my $v ( sort { $a->[0] <=> $b->[0] } @violations ) {
+        my ( $idx, $msg ) = @$v;
+        $any_violation = 1;
+        print "    ${file}:" . ( $idx + 1 ) . "\n";
+        print "        " . $lines[$idx];
+        print "        >>> $msg\n";
+    }
+}
+
+exit( $any_violation ? 1 : 0 );
+PERL
+)"
+php_rc=$?
+
+if [ -n "$php_hits" ]; then
+  echo ""
+  echo "✗ A PHP clock function (gmdate()/time()) compared against a current_time()-written value."
+  echo ""
+  echo "  gmdate() and time() are UTC/epoch. Every *_at column in this plugin that current_time()"
+  echo "  writes is site-local. Comparing one against the other mixes clocks and is invisible on"
+  echo "  a UTC box -- which is exactly why both of this cycle's PHP-side bugs shipped and passed"
+  echo "  review: KudosEngine's daily-limit boundary, and the challenges block's countdown label."
+  echo ""
+  echo "  Derive the bound from current_time(), or annotate:"
+  echo "      // @clock-ok: <reason>"
+  echo ""
+  echo "$php_hits"
+  echo ""
+  fail=1
+elif [ "$php_rc" -gt 1 ]; then
+  echo ""
+  echo "✗ Part 2 (PHP clock check) errored -- treat as a failure, don't ship past an error you didn't read."
+  fail=1
+fi
+
+if [ "$fail" -eq 1 ]; then
   exit 1
 fi
 
-echo "✓ Clock contract — no unannotated NOW() against a PHP-written column"
+echo "✓ Clock contract — no unannotated NOW()/UTC_TIMESTAMP()/gmdate()/time() against a current_time()-written value"
 exit 0
