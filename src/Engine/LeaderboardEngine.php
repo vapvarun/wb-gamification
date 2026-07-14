@@ -640,6 +640,29 @@ final class LeaderboardEngine {
 				// Stamping with current_time() and pruning with NOW() is precisely what made the
 				// rebuild delete the rows it had just written on every site ahead of UTC.
 				// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				// The existence check belongs HERE, in the WRITER -- and this is the default path.
+				//
+				// The last fix put it in the fallback and never followed it up one layer. This query has
+				// the identical bug: the top 500 is chosen from the ledger with no idea whether those
+				// members still exist, and read_from_snapshot() joins wp_users and drops the orphans
+				// afterwards -- so a board asked for 25 rendered 15. It is hidden on this site only
+				// because the snapshot holds fewer rows than the 500 cap; any site with more than 500
+				// point-earning members sits on that cap by definition.
+				//
+				// RANK() counted the ghosts too, so snapshot_standing() served a rank with more people in
+				// front of it than the community has -- the exact sentence from the last commit, still
+				// true on the path members actually hit. And because the fallback had stopped counting
+				// them, a member's rank FLIPPED every time the cron rebuilt. Two paths wrong-but-consistent
+				// was less harmful than one path right; now both are right.
+				//
+				// EXISTS is safe here, unlike inside the totals derived table where it wrecks the plan:
+				// this query already aggregates the whole ledger, and the check is eq_ref on the users
+				// primary key.
+				//
+				// @clock-ok: updated_at is stamped NOW() (the DATABASE clock) and the staleness check
+				// that reads it compares against the database clock too -- see the note above the $where.
+				// (Restating it here rather than relying on the one 30 lines up: an annotation that has
+				// drifted out of the checker's lookback window is an annotation that does not exist.)
 				$wpdb->query(
 					$wpdb->prepare(
 						"INSERT INTO {$cache_table} (user_id, period, point_type, total_points, `rank`, updated_at)
@@ -648,6 +671,7 @@ final class LeaderboardEngine {
 					        NOW() AS updated_at
 					   FROM {$points_table}
 					   {$where}
+					     AND EXISTS ( SELECT 1 FROM {$wpdb->users} wu WHERE wu.ID = {$points_table}.user_id )
 					  GROUP BY user_id
 					  ORDER BY total_points DESC
 					  LIMIT 500
@@ -1065,14 +1089,24 @@ final class LeaderboardEngine {
 		// Slice a little wider than the board so the common case (a few orphans, or none) is satisfied
 		// in one pass. This is a round-trip optimisation, NOT a correctness assumption -- unlike the
 		// cushion it replaces, being wrong about it costs a second query, not a short board.
+		//
+		// And the slice GROWS. The first version walked a fixed slice up to 20 times, which put the
+		// ceiling at (limit + 25) * 20 -- a function of $limit, so the SMALLEST boards failed first, and
+		// they failed by going BLANK rather than short: with 700 orphans ranked above everyone, a board
+		// of 5 examined 600 candidates, found nothing real, and rendered nothing at all. I had written
+		// that the loop was "correct for ANY number of orphans"; it was correct for fewer than a number
+		// I had not computed. Doubling makes the reach exponential rather than linear, so a bounded
+		// number of round trips clears any orphan count the table can actually hold, and the loop exits
+		// when the TABLE is exhausted rather than when a counter I picked runs out.
 		$slice     = $limit + self::ORPHAN_OVERFETCH;
 		$offset    = 0;
 		$survivors = array();
 		$found     = 0;
 
-		// A hard stop, so a pathological table (say every totals row orphaned) cannot spin. If we ever
-		// hit it the board is short, but the site is still up -- and the orphan purge is the answer.
-		$max_slices = 20;
+		// A hard stop so a pathological table cannot spin. It exists to bound the QUERY COUNT, not to
+		// bound how far we are willing to look: with the slice doubling each pass, 24 round trips reach
+		// past any totals table MySQL will hold, so this can only be hit by a bug, never by data.
+		$max_slices = 24;
 
 		for ( $i = 0; $i < $max_slices && $found < $limit; $i++ ) {
 			$binds = array_merge( array( $point_type ), $excl_values, $scope_ids, array( $slice, $offset ) );
@@ -1123,7 +1157,10 @@ final class LeaderboardEngine {
 				break;
 			}
 
+			// Walk on, and reach further each time. A board whose top rows are all orphans is exactly
+			// the case a fixed stride cannot escape.
 			$offset += $slice;
+			$slice   = min( $slice * 2, 5000 );
 		}
 
 		return $survivors ? self::hydrate_rows( $survivors ) : array();
