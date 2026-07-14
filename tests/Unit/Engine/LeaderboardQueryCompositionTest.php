@@ -68,7 +68,6 @@ class LeaderboardQueryCompositionTest extends TestCase {
 	public function test_the_composed_query_never_mangles_an_alias(): void {
 		$sql = LeaderboardEngine::build_totals_query(
 			'wp_wb_gam_user_totals',
-			'wp_users',
 			$this->opt_out_fragment( 'ut' ),
 			''
 		);
@@ -96,7 +95,6 @@ class LeaderboardQueryCompositionTest extends TestCase {
 	public function test_the_totals_query_filters_on_its_own_alias(): void {
 		$sql = LeaderboardEngine::build_totals_query(
 			'wp_wb_gam_user_totals',
-			'wp_users',
 			$this->opt_out_fragment( 'ut' ),
 			'AND ut.user_id IN (%d,%d)'
 		);
@@ -131,7 +129,6 @@ class LeaderboardQueryCompositionTest extends TestCase {
 
 		$sql = LeaderboardEngine::build_totals_query(
 			'wp_wb_gam_user_totals',
-			'wp_users',
 			$this->opt_out_fragment( 'ut' ) . $excl,
 			''
 		);

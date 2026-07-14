@@ -360,25 +360,42 @@ final class LeaderboardEngine {
 				? ''
 				: 'AND ut.user_id IN (' . implode( ',', array_fill( 0, count( $scope_ids ), '%d' ) ) . ')';
 
-			$query = self::build_totals_query(
+			// Orphaned totals rows -- a member deleted, their totals row left behind -- rank like
+			// anybody else, so they win slots in the top-N and then vanish when the users JOIN drops
+			// them. A board asked for 10 rendered 8.
+			//
+			// The first fix was a fixed over-fetch: take limit + 25 candidates and trim after the join.
+			// QA was right to fail it. A constant cushion cannot survive a variable it does not know:
+			// this database carries 174 orphans, so the cushion was exceeded at every size that mattered
+			// (limit=25 -> 17 rows, limit=50 -> 20, limit=100 -> 50), and the original repro only passed
+			// by luck of where the orphans happened to rank. `limit` is a public REST parameter. A fix
+			// that holds at one value of it and not the next is not a fix.
+			//
+			// So: no cushion, no guess. Take a slice of candidates from the indexed totals table, ask
+			// the users table which of them still exist, and if that leaves the board short, take the
+			// next slice. It terminates when the board is full or the totals table runs out, and it is
+			// correct for ANY number of orphans -- including a number nobody has measured yet.
+			//
+			// Why not EXISTS against wp_users inside the derived table, which would need no loop at all:
+			// EXPLAIN says it hands the optimiser the wp_users-driven plan this derived table exists to
+			// avoid (type=index on wp_users, Using temporary, Using filesort). Correct board, O(members)
+			// plan. Tried it first; reverted it.
+			//
+			// Cost in the normal case is one extra primary-key lookup: deleted_user purges a member's
+			// rows now (MemberData::on_user_deleted), so on a site with no orphan backlog the first
+			// slice fills the board and the loop runs exactly once.
+			$result = self::totals_board(
 				$wpdb->prefix . 'wb_gam_user_totals',
-				$wpdb->users,
+				$resolved_type,
 				$totals_excl_clause,
-				$totals_scope_clause
+				$totals_excl_values,
+				$totals_scope_clause,
+				$scope_ids,
+				$limit
 			);
 
-			// Rebuild the value list: the totals path has no created_at bind, and it binds the
-			// fragment built for `ut` -- not the one built for `p`.
-			$where_values = array( $resolved_type );
-			$where_values = array_merge( $where_values, $totals_excl_values );
-			if ( ! empty( $scope_ids ) ) {
-				$where_values = array_merge( $where_values, $scope_ids );
-			}
-
-			// The INNER limit: over-fetch, so orphaned totals rows (a member deleted, their totals row
-			// left behind) cannot shorten the board when the JOIN drops them. The OUTER limit is
-			// appended below, shared with the ledger path, and cuts the survivors back to $limit.
-			$where_values[] = $limit + self::ORPHAN_OVERFETCH;
+			wp_cache_set( $cache_key, $result, 'wb_gamification', 120 );
+			return $result;
 		} else {
 			// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 			$query = "
@@ -961,62 +978,147 @@ final class LeaderboardEngine {
 	 * @internal Public only so the test can compose it without a database.
 	 *
 	 * @param string $totals_table  Fully-qualified `wb_gam_user_totals` table name.
-	 * @param string $users_table   Fully-qualified users table name.
 	 * @param string $excl_clause   Exclusion fragment, built for the `ut` alias.
 	 * @param string $scope_clause  Scope fragment, built for the `ut` alias.
 	 * @return string The SQL, with %s / %d placeholders for prepare().
 	 */
 	public static function build_totals_query(
 		string $totals_table,
-		string $users_table,
 		string $excl_clause,
 		string $scope_clause
 	): string {
-		// The top-N is selected from the totals table ALONE, in a derived table, BEFORE the users
-		// join -- joining wp_users up front makes the optimiser drive from wp_users and forces a
-		// temporary + filesort over every member.
-		// TWO limits, and the difference between them is the bug this fixes.
+		// The candidates, and ONLY the candidates: the top rows of the indexed totals table, with no
+		// users join at all.
 		//
-		// The inner LIMIT lives inside the derived table, and that is the whole optimisation: take the
-		// top rows off the indexed totals table FIRST, then join wp_users, so the optimiser never
-		// drives from wp_users. Joining wp_users up front makes it drive from there and forces a
-		// temporary + filesort over every member on the site.
+		// Keeping wp_users out is the whole optimisation. Join it up front and the optimiser drives
+		// from wp_users (eq_ref into totals), scanning every member and forcing a temporary + filesort,
+		// because ORDER BY total can no longer use idx_type_total. EXPLAIN confirms it: `u: type=index
+		// ... Using temporary; Using filesort`. Correct board, O(members) plan.
 		//
-		// But the inner LIMIT picks its N before anything has checked those members still EXIST. A
-		// totals row whose member was deleted is chosen into the N, and the JOIN below silently drops
-		// it -- so a board asked for 10 renders 8, and the members who should have been 9th and 10th
-		// never appear. Orphan rows eat leaderboard slots. (Not hypothetical: this site is carrying 174
-		// orphaned totals rows right now.)
+		// It used to select the top-N in a derived table and JOIN wp_users around it, with the LIMIT
+		// inside. That put the LIMIT before anything had checked those members still exist, so an
+		// orphaned totals row (member deleted, totals row left behind) won a slot in the N and the JOIN
+		// then dropped it -- a board asked for 10 rendered 8. Over-fetching a fixed cushion of extra
+		// candidates only moved the cliff: with 174 orphans on the database, limit=100 still returned
+		// 50 rows.
 		//
-		// The obvious fix -- an EXISTS against wp_users inside the subquery -- is the one I tried first,
-		// and EXPLAIN showed it hands the optimiser exactly the wp_users-driven plan the derived table
-		// exists to avoid (type=index on wp_users, Using temporary, Using filesort). Correct board,
-		// ruined plan. Not a trade worth making at 100k members.
+		// Now the caller (totals_board) takes a slice of these candidates, asks wp_users which ones
+		// still exist, and takes another slice if the board came up short. The existence check is a
+		// primary-key lookup on a handful of ids, so it cannot drag the plan onto wp_users, and the
+		// board is right for any number of orphans rather than for fewer than some constant.
 		//
-		// So: over-fetch inside, trim outside. The inner LIMIT takes a buffer of extra candidates off
-		// the indexed table (still totals-driven, still no filesort), the JOIN drops any orphans among
-		// them, and the OUTER LIMIT cuts the survivors back to exactly what was asked for. A board of N
-		// is a board of N as long as fewer than BUFFER of the top rows are orphans -- and orphans are
-		// meant to be transient anyway (deleted_user purges them now; `wp wb-gamification member
-		// purge-orphans` clears the historical ones).
+		// The user_id tiebreaker is what makes OFFSET paging safe: without it, two members on equal
+		// totals have no defined order between one slice and the next, so a member can be served twice
+		// or skipped entirely. It is DESC, matching total, on purpose -- the primary key is
+		// (user_id, point_type), so user_id rides along inside idx_type_total and a same-direction sort
+		// is a backward index scan. Mixing directions (total DESC, user_id ASC) costs a filesort over
+		// the whole index instead: EXPLAIN goes from `Backward index scan; Using index` to
+		// `Using filesort`, which at 100k members is the very plan this query is shaped to avoid.
 		return "
-			SELECT t.user_id,
-			       t.total_points,
-			       u.display_name
-			  FROM (
-			        SELECT ut.user_id, ut.total AS total_points
-			          FROM {$totals_table} ut
-			         WHERE ut.point_type = %s
-			           AND ut.total > 0
-			          {$excl_clause}
-			          {$scope_clause}
-			      ORDER BY ut.total DESC
-			         LIMIT %d
-			       ) t
-			  JOIN {$users_table} u ON u.ID = t.user_id
-			 ORDER BY t.total_points DESC
-			 LIMIT %d
+			SELECT ut.user_id, ut.total AS total_points
+			  FROM {$totals_table} ut
+			 WHERE ut.point_type = %s
+			   AND ut.total > 0
+			  {$excl_clause}
+			  {$scope_clause}
+		  ORDER BY ut.total DESC, ut.user_id DESC
+			 LIMIT %d OFFSET %d
 		";
+	}
+
+	/**
+	 * The all-time board: candidates from the totals table, topped up until it is full.
+	 *
+	 * Loops only when orphaned totals rows ate slots. With no orphan backlog -- the normal state, since
+	 * deleted_user purges a member's rows -- the first slice fills the board and this runs once.
+	 *
+	 * @param string            $totals_table Fully-qualified totals table.
+	 * @param string            $point_type   Resolved currency slug.
+	 * @param string            $excl_clause  Exclusion fragment, built for the `ut` alias.
+	 * @param array<int, mixed> $excl_values  Binds for the exclusion fragment.
+	 * @param string            $scope_clause Scope fragment, built for the `ut` alias.
+	 * @param array<int, int>   $scope_ids    Binds for the scope fragment.
+	 * @param int               $limit        Rows the caller asked for.
+	 * @return array<int, array<string, mixed>> Hydrated board rows.
+	 */
+	private static function totals_board(
+		string $totals_table,
+		string $point_type,
+		string $excl_clause,
+		array $excl_values,
+		string $scope_clause,
+		array $scope_ids,
+		int $limit
+	): array {
+		global $wpdb;
+
+		$sql = self::build_totals_query( $totals_table, $excl_clause, $scope_clause );
+
+		// Slice a little wider than the board so the common case (a few orphans, or none) is satisfied
+		// in one pass. This is a round-trip optimisation, NOT a correctness assumption -- unlike the
+		// cushion it replaces, being wrong about it costs a second query, not a short board.
+		$slice     = $limit + self::ORPHAN_OVERFETCH;
+		$offset    = 0;
+		$survivors = array();
+		$found     = 0;
+
+		// A hard stop, so a pathological table (say every totals row orphaned) cannot spin. If we ever
+		// hit it the board is short, but the site is still up -- and the orphan purge is the answer.
+		$max_slices = 20;
+
+		for ( $i = 0; $i < $max_slices && $found < $limit; $i++ ) {
+			$binds = array_merge( array( $point_type ), $excl_values, $scope_ids, array( $slice, $offset ) );
+
+			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+			$candidates = $wpdb->get_results( $wpdb->prepare( $sql, $binds ), ARRAY_A );
+			if ( ! $candidates ) {
+				break;
+			}
+
+			$ids = array_map( 'intval', wp_list_pluck( $candidates, 'user_id' ) );
+
+			// Which of them still exist? A primary-key IN() over at most $slice ids -- eq_ref, no scan.
+			$placeholders = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
+			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$real = $wpdb->get_results(
+				$wpdb->prepare(
+					"SELECT ID, display_name FROM {$wpdb->users} WHERE ID IN ({$placeholders})", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+					$ids
+				),
+				ARRAY_A
+			);
+
+			$names = array();
+			foreach ( (array) $real as $u ) {
+				$names[ (int) $u['ID'] ] = (string) $u['display_name'];
+			}
+
+			// Rebuild in the candidates' order -- the totals table decided the ranking, not wp_users.
+			foreach ( $candidates as $c ) {
+				$uid = (int) $c['user_id'];
+				if ( ! isset( $names[ $uid ] ) ) {
+					continue; // Orphan: a totals row whose member is gone.
+				}
+				$survivors[] = array(
+					'user_id'      => $uid,
+					'total_points' => $c['total_points'],
+					'display_name' => $names[ $uid ],
+				);
+				++$found;
+				if ( $found >= $limit ) {
+					break;
+				}
+			}
+
+			// The totals table is exhausted; there is no next slice to take.
+			if ( count( $candidates ) < $slice ) {
+				break;
+			}
+
+			$offset += $slice;
+		}
+
+		return $survivors ? self::hydrate_rows( $survivors ) : array();
 	}
 
 	private static function exclusion_sql( string $alias ): array {
@@ -1075,11 +1177,23 @@ final class LeaderboardEngine {
 		}
 		$values[] = $threshold;
 
+		// Count only members who still EXIST. Without this, every member the site ever deleted still
+		// stands ahead of you: the ledger keeps their rows, they group like anyone else, and they are
+		// counted. On this database that meant a member was told "Your rank #215" on a board with 161
+		// ranked members -- a rank with more people in front of it than the community has.
+		//
+		// Unlike the top-N board, an EXISTS here costs nothing to fear: that query is a LIMITed range
+		// scan whose plan an EXISTS would wreck, but this one already aggregates the whole ledger, and
+		// the check is eq_ref against the users primary key on each grouped row.
+		//
+		// (deleted_user purges a member's rows now, so no NEW ghosts appear -- but every site that
+		// deleted a member before 1.6.4 is still carrying them, and their ranks are still wrong.)
 		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$sql = "SELECT COUNT(*) FROM (
 			SELECT user_id, SUM(points) AS total
 			  FROM {$wpdb->prefix}wb_gam_points p
 			 WHERE 1=1 {$where}
+			   AND EXISTS ( SELECT 1 FROM {$wpdb->users} u WHERE u.ID = p.user_id )
 			 GROUP BY p.user_id
 			HAVING total > %d
 		) ranked";
@@ -1129,10 +1243,14 @@ final class LeaderboardEngine {
 		$values[] = $threshold;
 
 		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		// Same existence check as count_users_above(), for the same reason: "3 points from the next
+		// rank" must be 3 points from a rank held by somebody who is still here. Chasing a score set by
+		// a member who was deleted is a target that never moves and never explains itself.
 		$sql = "SELECT MIN(total) FROM (
 			SELECT user_id, SUM(points) AS total
 			  FROM {$wpdb->prefix}wb_gam_points p
 			 WHERE 1=1 {$where}
+			   AND EXISTS ( SELECT 1 FROM {$wpdb->users} u WHERE u.ID = p.user_id )
 			 GROUP BY p.user_id
 			HAVING total > %d
 		) ranked";
