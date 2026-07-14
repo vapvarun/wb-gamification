@@ -121,9 +121,11 @@ final class StatusRetentionEngine {
 			return; // Need at least two levels for threshold logic.
 		}
 
-		$week_start    = gmdate( 'Y-m-d', strtotime( 'monday this week' ) ) . ' 00:00:00';
-		$four_wk_start = gmdate( 'Y-m-d H:i:s', strtotime( '-4 weeks' ) );
-		$cutoff        = gmdate( 'Y-m-d H:i:s', strtotime( '-7 days' ) );
+		// Site clock: every one of these bounds wb_gam_points.created_at, written with
+		// current_time( 'mysql' ). See WBGam\Engine\Clock.
+		$week_start    = Clock::site_cutoff( 'monday this week' );
+		$four_wk_start = Clock::site_cutoff( '-4 weeks' );
+		$cutoff        = Clock::site_cutoff( '-7 days' );
 
 		// ONE PAGE of active members, walked by keyset cursor.
 		//

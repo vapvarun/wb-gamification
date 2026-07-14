@@ -568,7 +568,9 @@ final class ScaleCommand {
 		// 5. Rate-limit today count — hot on every action that fires.
 		$results['rate_limit_today_count'] = self::time_op(
 			function () use ( $uid, $wpdb ) {
-				$today = gmdate( 'Y-m-d 00:00:00' );
+				// The site's midnight, not UTC's: wb_gam_points.created_at is site-local, and a benchmark
+				// that measures a query the product does not run is not measuring anything.
+				$today = \WBGam\Engine\Clock::site_day_start( 'today' );
 				return (int) $wpdb->get_var(
 					$wpdb->prepare(
 						"SELECT COUNT(*) FROM {$wpdb->prefix}wb_gam_points

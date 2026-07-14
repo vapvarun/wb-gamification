@@ -1,156 +1,195 @@
 <?php
 /**
- * The kudos cooldown must be measured in ONE clock.
+ * The kudos clock guards must run against KudosEngine, not against a copy of its arithmetic.
  *
- * `wb_gam_kudos.created_at` is written with current_time( 'mysql' ) — the site's LOCAL
- * time. The cooldown window was computed with gmdate() — UTC. Two clocks, compared to
- * each other, and nobody noticed because the developer's site ran UTC.
+ * `wb_gam_kudos.created_at` is written with current_time( 'mysql' ) -- the SITE's local time. The
+ * daily-limit boundary and the per-receiver cooldown were both computed with gmdate() -- UTC. On any
+ * site behind UTC a kudos sent one second ago is stamped hours BEFORE the UTC boundary, the COUNT(*)
+ * comes back 0, and neither guard fires at all: the spam protection was simply absent across a whole
+ * hemisphere.
  *
- * On any site BEHIND UTC — which is every site in the Americas — a kudos sent one second
- * ago is stamped hours *before* the UTC boundary. The COUNT(*) comes back 0, the guard
- * concludes no recent kudos exists, and the per-receiver cooldown never fires at all. No
- * concurrency needed: the spam protection was simply absent across a whole hemisphere.
+ * The first version of this test re-implemented that boundary arithmetic as private helpers and
+ * asserted against its own copy. It never mentioned KudosEngine -- `grep -c KudosEngine` returned
+ * zero -- so both production bugs could be reintroduced and it stayed green. It could not fail. A
+ * test that restates the rule instead of exercising the code is a comment with a green tick on it.
  *
- * This is the same two-clock defect that silently emptied the leaderboard snapshot
- * (write stamped with current_time(), retention pruned with NOW()). Different subsystem,
- * identical root cause — which is why it gets a test that states the rule rather than a
- * one-line patch.
+ * This version calls the real method. `current_time()` is stubbed with Brain Monkey (the idiom the
+ * rest of the suite uses) and $wpdb is a fake that captures what the engine actually binds -- so the
+ * assertion is about the SQL the plugin would really run.
+ *
+ * It is stubbed with Brain Monkey and NOT by declaring a WBGam\Engine\current_time() function, which
+ * was the first thing I tried: a namespaced function shadows the global for EVERY class in that
+ * namespace, so it silently hijacked current_time() in two unrelated PointsEngine tests and broke
+ * them. A test helper that reaches outside its own test is not a helper.
  *
  * @package WB_Gamification
  */
 
 namespace WBGam\Tests\Unit\Engine;
 
+use Brain\Monkey;
+use Brain\Monkey\Functions;
 use PHPUnit\Framework\TestCase;
+use WBGam\Engine\KudosEngine;
 
 /**
- * Boundary arithmetic for the per-receiver kudos cooldown.
+ * The kudos clock guards, exercised through KudosEngine itself.
  */
 class KudosCooldownClockTest extends TestCase {
 
-	private const COOLDOWN = 3600; // One hour, the shipped default.
+	/**
+	 * UTC "now" that the stubbed current_time() is anchored to.
+	 *
+	 * @var int
+	 */
+	public static $fake_utc_now = 0;
 
 	/**
-	 * The BROKEN boundary: window computed in UTC, compared against a local-time column.
+	 * Site offset in seconds (negative = behind UTC).
 	 *
-	 * @param int $utc_now      Current UTC timestamp.
-	 * @param int $site_offset  Site's UTC offset in seconds (negative = behind UTC).
-	 * @return string
+	 * @var int
 	 */
-	private function boundary_utc( int $utc_now, int $site_offset ): string {
-		unset( $site_offset ); // The bug: the site's offset is never considered.
-
-		return gmdate( 'Y-m-d H:i:s', $utc_now - self::COOLDOWN );
-	}
+	public static $fake_offset = 0;
 
 	/**
-	 * The FIXED boundary: window computed in the same local clock the column is stored in.
+	 * The args the engine bound into its last query.
 	 *
-	 * @param int $utc_now     Current UTC timestamp.
-	 * @param int $site_offset Site's UTC offset in seconds.
-	 * @return string
+	 * @var array<int, mixed>
 	 */
-	private function boundary_local( int $utc_now, int $site_offset ): string {
-		$local_now = $utc_now + $site_offset; // What current_time( 'mysql' ) yields.
-
-		return gmdate( 'Y-m-d H:i:s', $local_now - self::COOLDOWN );
-	}
+	public static $captured = array();
 
 	/**
-	 * How a row is actually stamped: current_time( 'mysql' ), i.e. local.
-	 *
-	 * @param int $utc_now     UTC timestamp of the write.
-	 * @param int $site_offset Site's UTC offset in seconds.
-	 * @return string
+	 * Anchor the clock in the band where the two boundaries disagree.
 	 */
-	private function created_at( int $utc_now, int $site_offset ): string {
-		return gmdate( 'Y-m-d H:i:s', $utc_now + $site_offset );
-	}
+	protected function setUp(): void {
+		parent::setUp();
+		Monkey\setUp();
 
-	/**
-	 * New York (UTC-5): the cooldown did not fire AT ALL.
-	 *
-	 * A kudos sent 60 seconds ago sits 5 hours "before" a UTC boundary, so the query that
-	 * asks "any kudos since the boundary?" answers no, and the member can spam freely.
-	 *
-	 * @return void
-	 */
-	public function test_site_behind_utc_lost_the_cooldown_entirely(): void {
-		$utc_now = 1752307200;   // Fixed instant; no wall-clock dependency.
-		$offset  = -5 * 3600;    // America/New_York.
+		// 2026-07-14 06:30 UTC. In Los Angeles (-7) that is 2026-07-13 23:30 -- still YESTERDAY
+		// locally. This is exactly the band where a UTC day boundary sits in the member's future, and
+		// where the shipped bug let every kudos through.
+		self::$fake_utc_now = strtotime( '2026-07-14 06:30:00 UTC' );
+		self::$fake_offset  = -7 * 3600;
+		self::$captured     = array();
 
-		$just_sent = $this->created_at( $utc_now - 60, $offset );
-
-		$this->assertLessThan(
-			$this->boundary_utc( $utc_now, $offset ),
-			$just_sent,
-			'THE BUG: a kudos sent a minute ago falls outside a UTC window, so the cooldown never fired on any US site.'
+		Functions\when( 'current_time' )->alias(
+			static function ( $type ) {
+				$now = self::$fake_utc_now + self::$fake_offset;
+				return 'timestamp' === $type ? $now : gmdate( 'Y-m-d H:i:s', $now );
+			}
 		);
 
-		$this->assertGreaterThanOrEqual(
-			$this->boundary_local( $utc_now, $offset ),
-			$just_sent,
-			'FIXED: measured in the clock the column is written in, the kudos is correctly inside the cooldown window.'
-		);
+		$GLOBALS['wpdb'] = new FakeWpdb();
+	}
+
+	protected function tearDown(): void {
+		Monkey\tearDown();
+		parent::tearDown();
 	}
 
 	/**
-	 * Kolkata (UTC+5:30): the mirror-image failure — the cooldown over-fired.
+	 * The daily-limit window must start at the SITE's midnight, not UTC's.
 	 *
-	 * A kudos sent 90 minutes ago (past a 60-minute cooldown, so it should be allowed
-	 * again) still looked "recent" against a UTC boundary, and the member was blocked.
-	 *
-	 * @return void
+	 * Mutation-checked: put `gmdate( 'Y-m-d' )` back into KudosEngine::get_daily_sent_count() and this
+	 * fails -- the bound becomes 2026-07-14 00:00:00 (UTC's midnight, which is in the member's future)
+	 * instead of 2026-07-13 00:00:00.
 	 */
-	public function test_site_ahead_of_utc_kept_blocking_after_the_cooldown_expired(): void {
-		$utc_now = 1752307200;
-		$offset  = 5 * 3600 + 1800; // Asia/Kolkata.
-
-		$expired = $this->created_at( $utc_now - 5400, $offset ); // 90 min ago > 60 min cooldown.
-
-		$this->assertGreaterThanOrEqual(
-			$this->boundary_utc( $utc_now, $offset ),
-			$expired,
-			'THE BUG: an expired cooldown still looked recent against a UTC window, so the member stayed blocked.'
-		);
-
-		$this->assertLessThan(
-			$this->boundary_local( $utc_now, $offset ),
-			$expired,
-			'FIXED: in one clock, a 90-minute-old kudos is correctly outside a 60-minute cooldown.'
-		);
-	}
-
-	/**
-	 * UTC itself: both forms agree. This is why the bug survived — the box it was written
-	 * on could never reproduce it.
-	 *
-	 * @return void
-	 */
-	public function test_on_a_utc_site_both_clocks_agree(): void {
-		$utc_now = 1752307200;
+	public function test_the_daily_limit_boundary_is_the_sites_midnight(): void {
+		KudosEngine::get_daily_sent_count( 123 );
 
 		$this->assertSame(
-			$this->boundary_utc( $utc_now, 0 ),
-			$this->boundary_local( $utc_now, 0 ),
-			'At offset 0 the broken and fixed boundaries are identical — which is exactly why nobody caught this locally.'
+			'2026-07-13 00:00:00',
+			$this->last_datetime_bound(),
+			"The daily-limit window must start at the SITE's midnight. A UTC boundary is in the "
+				. 'members future on any site behind UTC, so every kudos sent today falls before it, '
+				. 'COUNT(*) returns 0, and the limit never fires at all.'
 		);
 	}
 
 	/**
-	 * The rule, stated once: a fresh kudos is inside the window at EVERY offset.
+	 * The bound must be a value the column could actually contain.
 	 *
-	 * @return void
+	 * created_at is written with current_time( 'mysql' ), so the boundary has to be in that frame.
+	 * Comparing it against the real UTC clock IS the bug, stated as an assertion.
 	 */
-	public function test_fresh_kudos_is_inside_the_window_at_every_offset(): void {
-		$utc_now = 1752307200;
+	public function test_the_boundary_is_in_the_same_clock_the_column_is_written_in(): void {
+		KudosEngine::get_daily_sent_count( 123 );
 
-		foreach ( array( -12 * 3600, -5 * 3600, 0, 5 * 3600 + 1800, 14 * 3600 ) as $offset ) {
-			$this->assertGreaterThanOrEqual(
-				$this->boundary_local( $utc_now, $offset ),
-				$this->created_at( $utc_now - 60, $offset ),
-				sprintf( 'A kudos sent a minute ago must be inside the cooldown window at UTC offset %d.', $offset )
-			);
+		$bound    = $this->last_datetime_bound();
+		$site_now = current_time( 'mysql' );
+		$utc_now  = gmdate( 'Y-m-d H:i:s', self::$fake_utc_now );
+
+		$this->assertLessThanOrEqual( $site_now, $bound, 'The window cannot start in the future.' );
+		$this->assertNotSame(
+			substr( $utc_now, 0, 10 ) . ' 00:00:00',
+			$bound,
+			'The bound is UTC midnight -- the exact defect this guard exists to catch.'
+		);
+	}
+
+	/**
+	 * The engine must have bound SOMETHING date-shaped -- otherwise the assertions above are vacuous.
+	 */
+	public function test_the_engine_actually_binds_a_boundary(): void {
+		KudosEngine::get_daily_sent_count( 123 );
+
+		$this->assertNotSame(
+			'',
+			$this->last_datetime_bound(),
+			'KudosEngine bound no datetime at all, so this test is asserting against nothing.'
+		);
+	}
+
+	/**
+	 * The last datetime-shaped argument the engine bound.
+	 *
+	 * @return string
+	 */
+	private function last_datetime_bound(): string {
+		foreach ( array_reverse( self::$captured ) as $arg ) {
+			if ( is_string( $arg ) && preg_match( '/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/', $arg ) ) {
+				return $arg;
+			}
 		}
+		return '';
+	}
+}
+
+/**
+ * A $wpdb that records what the engine binds and answers nothing.
+ */
+class FakeWpdb {
+
+	/**
+	 * Table prefix.
+	 *
+	 * @var string
+	 */
+	public $prefix = 'wp_';
+
+	/**
+	 * Capture the bound args.
+	 *
+	 * @param string $query   Query with placeholders.
+	 * @param mixed  ...$args Bound values.
+	 * @return string
+	 */
+	public function prepare( $query, ...$args ) {
+		if ( 1 === count( $args ) && is_array( $args[0] ) ) {
+			$args = $args[0];
+		}
+		KudosCooldownClockTest::$captured = $args;
+		return $query;
+	}
+
+	/**
+	 * Answer nothing; this test is about the bound, not the count.
+	 *
+	 * @param string $query Query.
+	 * @return int
+	 */
+	public function get_var( $query ) {
+		unset( $query );
+		return 0;
 	}
 }

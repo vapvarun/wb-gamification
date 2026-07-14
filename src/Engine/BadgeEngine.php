@@ -1249,6 +1249,8 @@ final class BadgeEngine {
 		$now          = gmdate( 'Y-m-d H:i:s' );
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $placeholders is built from an int count; all values pass through prepare().
+		// @clock-ok: expires_at is written in UTC (gmdate(), see award_badge) and the bound is gmdate().
+		// earned_at in the same table is site-local -- the COLUMN decides the clock, not the table.
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT user_id, badge_id FROM {$wpdb->prefix}wb_gam_user_badges

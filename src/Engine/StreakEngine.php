@@ -165,7 +165,8 @@ final class StreakEngine {
 	public static function get_contribution_data( int $user_id, int $days = 365 ): array {
 		global $wpdb;
 
-		$since = gmdate( 'Y-m-d', strtotime( "-{$days} days" ) ) . ' 00:00:00';
+		// Midnight, N days ago, in the SITE's clock -- wb_gam_points.created_at is site-local.
+		$since = Clock::site_day_start( "-{$days} days" );
 
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(

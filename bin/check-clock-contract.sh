@@ -164,6 +164,29 @@ for my $file (@ARGV) {
         return ( $t =~ m{^//} || $t =~ m{^\*} || $t =~ m{^/\*} );
     };
 
+    # Code with the comments taken out.
+    #
+    # This exists because of the single best bug anyone found in this gate: the suppression scan
+    # below reads the span of a wpdb call and treats the presence of current_time as proof the call
+    # is in the right clock. The span was the RAW text, comments and all -- so a COMMENT mentioning
+    # current_time suppressed the check for that call, permanently.
+    #
+    # Which is precisely what happened. The comment written in KudosEngine to explain the daily-limit
+    # fix mentions that created_at is stored with current_time, and it sits INSIDE the prepare span.
+    # That sentence disarmed the gate guarding the very bug it was describing: reintroduce the bug and
+    # the gate stayed green, because the explanation was still sitting there. Strip the comment out
+    # and the same gate fails by name.
+    #
+    # The documentation of a fix must never be able to satisfy the check for the fix. Any gate that
+    # greps a span for a looks-safe token has this hole; this is where we close it.
+    my $strip_comments = sub {
+        my ($l) = @_;
+        return '' if $is_comment->($l);      # whole-line comment
+        $l =~ s{/\*.*?\*/}{}g;               # inline /* ... */
+        $l =~ s{(^|\s)//.*$}{$1};            # trailing // -- leading \s keeps a URL in a string safe
+        return $l;
+    };
+
     my $annotated_above = sub {
         my ($idx) = @_;
         my $start = $idx - 16;
@@ -184,9 +207,11 @@ for my $file (@ARGV) {
             my $seen_open  = 0;
             my $span       = '';
             my $j          = $i;
+            my $code       = '';
             for ( ; $j < $n ; $j++ ) {
                 my $l = $lines[$j];
                 $span .= $l;
+                $code .= $strip_comments->($l);
                 for my $ch ( split //, $l ) {
                     if ( $ch eq '(' ) { $depth++; $seen_open = 1; }
                     elsif ( $ch eq ')' ) { $depth--; }
@@ -194,11 +219,15 @@ for my $file (@ARGV) {
                 last if $seen_open && $depth <= 0;
             }
 
+            # @clock-ok is read from the RAW span (an annotation IS a comment, by definition).
+            # Everything that decides whether the code is WRONG is read from $code, with the comments
+            # taken out -- so no amount of prose about current_time() can vouch for a call that does
+            # not use it.
             if ( $span !~ /\@clock-ok/
                 && !$annotated_above->($call_start)
-                && $span !~ /current_time\s*\(/
-                && ( $span =~ /[<>]=?\s*%s/ || $span =~ /%s\s*[<>]=?/ || $span =~ /BETWEEN\s+%s/i )
-                && ( $span =~ /(?<![A-Za-z0-9_])gmdate\s*\(/ || $span =~ /(?<![A-Za-z0-9_])time\s*\(\s*\)/ ) )
+                && $code !~ /current_time\s*\(/
+                && ( $code =~ /[<>]=?\s*%s/ || $code =~ /%s\s*[<>]=?/ || $code =~ /BETWEEN\s+%s/i )
+                && ( $code =~ /(?<![A-Za-z0-9_])gmdate\s*\(/ || $code =~ /(?<![A-Za-z0-9_])time\s*\(\s*\)/ ) )
             {
                 push @violations,
                     [ $call_start,
@@ -259,6 +288,103 @@ for my $file (@ARGV) {
                     [ $i, "bare time() compared against a strtotime()-derived value (not current_time())" ];
             }
         }
+    }
+
+    # ---- Check C: a UTC $cutoff built on an EARLIER line, then used as a SQL bound ----
+    #
+    # Check A only ever caught the INLINE shape -- gmdate written inside the wpdb call itself -- and
+    # the header above declares the earlier-line shape deliberately out of scope, on the grounds that
+    # attributing an arbitrary variable to the clock it was built in is real data-flow analysis and
+    # not a grep.
+    #
+    # That reasoning was wrong, and expensively so: every one of the four clock bugs still live in
+    # src is exactly this shape. In AnalyticsDashboard a since-bound built with gmdate is compared
+    # against a site-local created_at, which makes the 7-day window seven hours short -- a day with
+    # 777 points renders as an empty column. The gate reported green over all four.
+    #
+    # And it does not need data-flow analysis. It needs the same thing Check B already does for
+    # strtotime(): remember which variables were assigned from a UTC-frame builder in this function,
+    # and flag the ones that end up as a bound in a datetime comparison. A variable assigned from
+    # current_time() is not in the set; an @clock-ok annotation takes anything out of it. That is a
+    # grep with a memory, which is all Check B ever was.
+    my %utc_var;
+    my %local_var;
+    for ( my $i = 0 ; $i < $n ; $i++ ) {
+        my $raw  = $lines[$i];
+        my $code = $strip_comments->($raw);
+
+        if ( $code =~ /\bfunction\b/ ) {
+            %utc_var   = ();
+            %local_var = ();
+        }
+
+        # $x = current_time(...) -- a value already in the SITE frame. Anything built FROM it is too.
+        if ( $code =~ /\$(\w+)\s*=\s*current_time\s*\(/ ) {
+            $local_var{$1} = 1;
+            delete $utc_var{$1};
+        }
+
+        # $x = gmdate(...) / date(...) -- a value in the UTC frame, UNLESS it was fed by current_time()
+        # (directly, or through a variable that was). gmdate() applied to a current_time('timestamp')
+        # or a strtotime( current_time('mysql') ) is the SITE wall clock, which is the one construction
+        # that legitimately looks like this -- and is what Clock::site_cutoff() does.
+        if ( $code =~ /\$(\w+)\s*=\s*(?:gmdate|date)\s*\(\s*(.*)$/ ) {
+            my ( $var, $rest ) = ( $1, $2 );
+            my $site_sourced = ( $rest =~ /current_time\s*\(/ ) ? 1 : 0;
+            for my $lv ( keys %local_var ) {
+                $site_sourced = 1 if $rest =~ /\$\Q$lv\E\b/;
+            }
+            if ($site_sourced) {
+                $local_var{$var} = 1;
+                delete $utc_var{$var};
+            }
+            else {
+                $utc_var{$var} = $i;
+            }
+        }
+
+        next unless %utc_var;
+        next unless $code =~ /\$wpdb->(?:prepare|get_var|get_results|get_col|get_row|query)\s*\(/;
+
+        # Collect the call span (raw for @clock-ok, stripped for the decision).
+        my $depth = 0;
+        my $seen  = 0;
+        my $j_end;
+        my ( $span, $cspan ) = ( '', '' );
+        for ( my $j = $i ; $j < $n ; $j++ ) {
+            my $l = $lines[$j];
+            $span  .= $l;
+            $cspan .= $strip_comments->($l);
+            for my $ch ( split //, $l ) {
+                if    ( $ch eq '(' ) { $depth++; $seen = 1; }
+                elsif ( $ch eq ')' ) { $depth--; }
+            }
+            $j_end = $j;
+            last if $seen && $depth <= 0;
+        }
+
+        next if $span =~ /\@clock-ok/;
+        next if $annotated_above->($i);
+        next if $cspan =~ /current_time\s*\(/;
+
+        # Is a datetime column actually being COMPARED here (not just selected)?
+        next unless ( $cspan =~ /[<>]=?\s*%s/ || $cspan =~ /%s\s*[<>]=?/ || $cspan =~ /BETWEEN\s+%s/i );
+
+        for my $var ( sort keys %utc_var ) {
+            if ( $cspan =~ /\$\Q$var\E\b/ ) {
+                push @violations,
+                    [ $i,
+                    "SQL bound \$$var was built with gmdate()/date() (UTC) on line "
+                        . ( $utc_var{$var} + 1 )
+                        . " and is compared against a datetime column here" ];
+                last;
+            }
+        }
+
+        # One report per CALL, not per line of it. A multi-line $wpdb->prepare() re-enters this loop
+        # on each of its own lines and would otherwise report the same bound two or three times --
+        # and a gate that says everything twice is one people learn to skim.
+        $i = $j_end if defined $j_end && $j_end > $i;
     }
 
     for my $v ( sort { $a->[0] <=> $b->[0] } @violations ) {

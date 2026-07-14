@@ -164,6 +164,8 @@ final class LogPruner {
 		$total  = 0;
 
 		do {
+			// @clock-ok: this prunes the event/log tables, whose created_at is written in UTC, with a
+			// gmdate() cutoff. Same clock on both sides.
 			$batch  = (int) $wpdb->query(
 				$wpdb->prepare(
 					"DELETE FROM `{$table}` WHERE created_at < %s LIMIT %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table from $wpdb->prefix.

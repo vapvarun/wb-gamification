@@ -167,9 +167,12 @@ final class PersonalRecordEngine {
 	private static function period_totals( int $user_id ): array {
 		global $wpdb;
 
-		$day_start   = gmdate( 'Y-m-d' ) . ' 00:00:00';
-		$week_start  = gmdate( 'Y-m-d', strtotime( 'monday this week' ) ) . ' 00:00:00';
-		$month_start = gmdate( 'Y-m-01' ) . ' 00:00:00';
+		// All three bound wb_gam_points.created_at, which is written site-local. A UTC day boundary
+		// means a member's "today" record starts at the wrong hour -- in Los Angeles, at 5pm the day
+		// before. See WBGam\Engine\Clock.
+		$day_start   = Clock::site_day_start( 'today' );
+		$week_start  = Clock::site_cutoff( 'monday this week' );
+		$month_start = Clock::site_day_start( 'first day of this month' );
 
 		$row = $wpdb->get_row(
 			$wpdb->prepare(

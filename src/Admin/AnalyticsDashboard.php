@@ -19,6 +19,8 @@
 
 namespace WBGam\Admin;
 
+use WBGam\Engine\Clock;
+
 defined( 'ABSPATH' ) || exit;
 // Silencing convention-driven false positives so Plugin Check signal stays clean:
 // - WordPress.DB.DirectDatabaseQuery.DirectQuery + .NoCaching + .SchemaChange:
@@ -327,7 +329,12 @@ final class AnalyticsDashboard {
 		}
 
 		global $wpdb;
-		$since = gmdate( 'Y-m-d H:i:s', strtotime( "-{$period} days" ) );
+		// The window must be in the clock the columns are WRITTEN in. wb_gam_points.created_at,
+		// wb_gam_kudos.created_at and wb_gam_user_badges.earned_at are all current_time( 'mysql' ) --
+		// site-local -- and this bound was gmdate(), i.e. UTC. In Los Angeles that made every window on
+		// this dashboard seven hours short: a day holding 777 points rendered as an EMPTY COLUMN, and
+		// the chart disagreed with the stat tiles beside it. Invisible on a UTC box.
+		$since = Clock::site_cutoff( "-{$period} days" );
 
 		// Points total.
 		$points_total = (int) $wpdb->get_var(

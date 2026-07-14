@@ -159,9 +159,13 @@ final class CohortEngine {
 
 		global $wpdb;
 
-		$week       = gmdate( 'Y-W' );
-		$week_start = gmdate( 'Y-m-d', strtotime( 'monday this week' ) ) . ' 00:00:00';
-		$active_of  = gmdate( 'Y-m-d H:i:s', strtotime( '-4 weeks' ) );
+		$week       = Clock::site_week();
+		// Site clock, not UTC: these bound wb_gam_points.created_at, which is written site-local. And
+		// 'monday this week' is worse than an offset -- strtotime() resolves the WEEKDAY against PHP's
+		// UTC, so near a Monday boundary (Auckland Mon 03:30 = UTC Sun 15:30) it picks the PREVIOUS
+		// Monday and the whole week is off by seven days.
+		$week_start = Clock::site_cutoff( 'monday this week' );
+		$active_of  = Clock::site_cutoff( '-4 weeks' );
 
 		// ONE query: active members, their tier, and their points this week.
 		//
@@ -301,8 +305,8 @@ final class CohortEngine {
 
 		global $wpdb;
 
-		$week       = gmdate( 'Y-W' );
-		$week_start = gmdate( 'Y-m-d', strtotime( 'monday this week' ) ) . ' 00:00:00';
+		$week       = Clock::site_week();
+		$week_start = Clock::site_cutoff( 'monday this week' );
 		$table      = $wpdb->prefix . 'wb_gam_cohort_members';
 
 		// ONE page of cohorts, keyset-walked. The old version processed EVERY cohort in a single
@@ -623,7 +627,7 @@ final class CohortEngine {
 	public static function get_user_standing( int $user_id ): ?array {
 		global $wpdb;
 
-		$week = gmdate( 'Y-W' );
+		$week = Clock::site_week();
 		$row  = $wpdb->get_row(
 			$wpdb->prepare(
 				"SELECT cohort_id, tier FROM {$wpdb->prefix}wb_gam_cohort_members
@@ -638,7 +642,7 @@ final class CohortEngine {
 			return null;
 		}
 
-		$week_start = gmdate( 'Y-m-d', strtotime( 'monday this week' ) ) . ' 00:00:00';
+		$week_start = Clock::site_cutoff( 'monday this week' );
 
 		// Get all cohort members with their week pts.
 		$members = $wpdb->get_results(

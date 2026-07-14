@@ -153,7 +153,10 @@ final class LeaderboardNudge {
 		}
 
 		// Users who earned at least 1 point this week, not opted out.
-		$week_start = gmdate( 'Y-m-d', strtotime( 'monday this week' ) ) . ' 00:00:00';
+		// strtotime( 'monday this week' ) resolves the weekday against PHP's UTC, not the site's. At a
+		// Monday boundary (Auckland Mon 03:30 = UTC Sun 15:30) it returns the PREVIOUS Monday, so the
+		// week window is off by a full seven days -- and the column it bounds is site-local anyway.
+		$week_start = Clock::site_cutoff( 'monday this week' );
 
 		$user_ids = $wpdb->get_col(
 			$wpdb->prepare(

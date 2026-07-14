@@ -72,6 +72,8 @@ class LogsCommand {
 
 		global $wpdb;
 
+		// @clock-ok: wb_gam_events.created_at is written in UTC (Engine converts the event's ISO-8601
+		// timestamp to a UTC MySQL datetime before insert), and the cutoff below is gmdate(). Same clock.
 		$count = (int) $wpdb->get_var(
 			$wpdb->prepare(
 				"SELECT COUNT(*) FROM {$wpdb->prefix}wb_gam_events WHERE created_at < %s",
@@ -90,6 +92,7 @@ class LogsCommand {
 		}
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		// @clock-ok: wb_gam_events.created_at is UTC (see above); the prune cutoff is gmdate(). Same clock.
 		$wpdb->query(
 			$wpdb->prepare(
 				"DELETE FROM {$wpdb->prefix}wb_gam_events WHERE created_at < %s",

@@ -925,6 +925,8 @@ final class NotificationBridge {
 
 		for ( $batch = 0; $batch < self::PRUNE_MAX_BATCHES; $batch++ ) {
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			// @clock-ok: the queue's created_at is written with gmdate() in push() -- UTC -- and this
+			// retention cutoff is gmdate() too.
 			$deleted = $wpdb->query(
 				$wpdb->prepare(
 					"DELETE FROM {$wpdb->prefix}wb_gam_notifications_queue WHERE created_at < %s LIMIT %d",

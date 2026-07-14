@@ -828,14 +828,22 @@ final class LeaderboardEngine {
 	 * @return string|null MySQL datetime string, or null for 'all'.
 	 */
 	private static function get_period_start( string $period ): ?string {
+		// The SITE's day, week and month -- not UTC's.
+		//
+		// These bound wb_gam_points.created_at, which is written with current_time( 'mysql' ), and all
+		// three were built with gmdate(). So the daily board did not start at the site's midnight, it
+		// started at UTC's: in Los Angeles "today" began at 5pm yesterday, and points a member earned
+		// in the evening landed on the wrong day's board. The weekly board had it worse -- strtotime(
+		// 'monday this week' ) resolves the WEEKDAY against UTC too, so near a Monday boundary it
+		// picked the previous Monday and the board was a week out.
 		switch ( $period ) {
 			case 'day':
-				return gmdate( 'Y-m-d' ) . ' 00:00:00';
+				return Clock::site_day_start( 'today' );
 			case 'week':
-				// Monday of the current ISO week.
-				return gmdate( 'Y-m-d', strtotime( 'monday this week' ) ) . ' 00:00:00';
+				// Monday of the current ISO week, in the site's timezone.
+				return Clock::site_cutoff( 'monday this week' );
 			case 'month':
-				return gmdate( 'Y-m-01' ) . ' 00:00:00';
+				return Clock::site_day_start( 'first day of this month' );
 			default:
 				return null; // 'all'
 		}
