@@ -259,7 +259,10 @@ BlockHooks::before( 'points-history', $wb_gam_attrs );
 									?>
 									<?php
 									// Append an exact time on hover/long-press via title attr.
-									$wb_gam_exact = date_i18n(
+									// wp_date(), not date_i18n(): _ts is a true epoch (see the day-header note above).
+									// With date_i18n() the screen-reader time was off by the whole site offset on
+									// EVERY row -- the one surface where nobody would ever notice.
+									$wb_gam_exact = wp_date(
 										get_option( 'date_format' ) . ' ' . get_option( 'time_format' ),
 										(int) $wb_gam_row['_ts']
 									);

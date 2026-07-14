@@ -341,7 +341,9 @@ final class BadgeOSImporter {
 						'category'  => 'imported',
 					)
 				);
-				$earned_at = gmdate( 'Y-m-d H:i:s', strtotime( $a['earned_at'] ) ?: time() );
+				// Round trip preserves the source's wall clock (see MyCredImporter). The fallback must be
+				// the SITE's now, not UTC's -- earned_at is a site-local column.
+				$earned_at = $a['earned_at'] ? gmdate( 'Y-m-d H:i:s', strtotime( (string) $a['earned_at'] ) ) : current_time( 'mysql' );
 				if ( \WBGam\Engine\BadgeEngine::award_badge( $a['user_id'], $a['badge_id'], $earned_at ) ) {
 					++$ach_imported;
 				}

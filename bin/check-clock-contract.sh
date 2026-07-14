@@ -90,7 +90,7 @@ while IFS= read -r hit; do
 # DEFAULT CURRENT_TIMESTAMP in a CREATE TABLE is a column default, not a comparison -- the database
 # stamping a row it is inserting is not mixing clocks with anything. Installer/DbUpgrader are excluded
 # for exactly that reason, and only for that reason.
-done < <(grep -rnE 'NOW\(\)|UTC_TIMESTAMP\(\)|CURDATE\(\)|CURTIME\(\)|CURRENT_TIMESTAMP' src/ integrations/ wb-gamification.php --include='*.php' 2>/dev/null \
+done < <(grep -rnE 'NOW\(\)|UTC_TIMESTAMP\(\)|CURDATE\(\)|CURTIME\(\)|CURRENT_TIMESTAMP' src/ integrations/ templates/ wb-gamification.php --include='*.php' 2>/dev/null \
   | grep -vi 'wp_users\|@clock-ok' \
   | grep -viE 'src/Engine/(Installer|DbUpgrader)\.php.*(DEFAULT CURRENT_TIMESTAMP|CURRENT_TIMESTAMP,)')
 
@@ -150,7 +150,7 @@ fi
 # So a whole shipped directory was outside the gate: plant the identical clock bug in
 # integrations/buddypress.php and it passed green. A checker whose scope is narrower than the
 # thing it certifies is not checking the thing it certifies.
-SCAN_FILES="$(find src integrations -name '*.php' 2>/dev/null | sort) wb-gamification.php"
+SCAN_FILES="$(find src integrations templates -name '*.php' 2>/dev/null | sort) wb-gamification.php"
 php_hits="$(perl - $SCAN_FILES <<'PERL'
 use strict;
 use warnings;
@@ -409,6 +409,38 @@ for my $file (@ARGV) {
         if ( $code =~ /\$(\w+)\s*=\s*current_time\s*\(/ ) {
             $local_var{$1} = 1;
             delete $utc_var{$1};
+        }
+
+        # $x = wp_date( fmt, strtotime( <literal> ) ) -- the shape that made every weekly cap
+        # over-permissive by a day.
+        #
+        # wp_date() takes a TRUE epoch and renders it in the site timezone. A weekday modifier does
+        # not produce one: strtotime resolves it against the PHP UTC frame. wp_date() then
+        # re-frames that instant into the site zone, which can roll it back across a day boundary --
+        # measured on Los Angeles on a Tuesday, the bound came out on a SUNDAY. The formatting was in
+        # the right clock and the INSTANT was not, which is why it reads as correct and is not.
+        #
+        # Check C tracked gmdate and date and never wp_date, so it was green over a live shipping bug
+        # for three rounds. The right base is the site clock -- Clock::site_cutoff().
+        # Only CALENDAR-FRAME modifiers, not arithmetic.
+        #
+        # wp_date( fmt, strtotime( '+1 day' ) ) is fine: adding 24 hours to an instant is
+        # frame-independent, and wp_date renders the result in the site zone correctly. Measured in
+        # Auckland (where the UTC day and the site day differ) it agrees with the site clock exactly.
+        #
+        # What is NOT fine is a modifier whose MEANING depends on which calendar you are standing in --
+        # a weekday, a day name, the start of a period. strtotime() answers those against the PHP UTC
+        # frame, and wp_date() then re-frames the instant, so the answer can land on the wrong day.
+        # That is the shipping bug (a weekly cap that began on a Sunday), and it is the only shape this
+        # flags. Flagging the arithmetic form too would make the gate cry wolf, and a gate that cries
+        # wolf gets switched off.
+        if ( $code =~ /\$(\w+)\s*=\s*wp_date\s*\(.*strtotime\s*\(\s*(?:\x27|\x22)\s*(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday|today|tomorrow|yesterday|midnight|noon|first\s+day|last\s+day|this\s+|next\s+|last\s+)/i
+            && $code !~ /current_time\s*\(/
+            && !$annotated_above->($i) )
+        {
+            push @violations,
+                [ $i,
+                "wp_date() over a strtotime() modifier: strtotime resolves in UTC and wp_date re-frames it, so the weekday/day can roll. Use Clock::site_cutoff()" ];
         }
 
         # $x = gmdate(...) / date(...) -- a value in the UTC frame, UNLESS it was fed by current_time()

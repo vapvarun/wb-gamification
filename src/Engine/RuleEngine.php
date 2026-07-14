@@ -130,9 +130,19 @@ final class RuleEngine {
 		switch ( $type ) {
 
 			case 'day_of_week':
-				// 'days' array uses PHP gmdate 'w' values: 0 = Sunday, 6 = Saturday.
+				// The SITE's day of the week, not UTC's.
+				//
+				// An owner who configures a rule for "Saturdays" means their community's Saturday. This
+				// evaluated UTC's: on a UTC-7 site the rule switched on at 17:00 Friday local and off at
+				// 17:00 Saturday local. The owner's schedule, running on somebody else's clock.
+				//
+				// No column is compared here, so no gate can catch this one -- it is a pure PHP
+				// evaluation. That is exactly why it survived a sweep that looked for SQL bounds.
+				//
+				// 'days' array uses PHP 'w' values: 0 = Sunday, 6 = Saturday.
 				$days = (array) ( $condition['days'] ?? array() );
-				return in_array( (int) gmdate( 'w' ), $days, true );
+				// phpcs:ignore WordPress.DateTime.CurrentTimeTimestamp.Requested -- deliberate: the site's wall-clock weekday is the thing being asked for.
+				return in_array( (int) gmdate( 'w', (int) current_time( 'timestamp' ) ), $days, true );
 
 			case 'action_id_match':
 				return ( $condition['action_id'] ?? '' ) === $event->action_id;

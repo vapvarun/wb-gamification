@@ -147,7 +147,12 @@ final class MyCredImporter {
 				'badge_id'  => 'mycred-badge-' . $post_id,
 				'name'      => (string) get_the_title( $post_id ),
 				'image'     => (string) get_the_post_thumbnail_url( $post_id, 'full' ),
-				'earned_at' => $issued > 0 ? gmdate( 'Y-m-d H:i:s', $issued ) : gmdate( 'Y-m-d H:i:s' ),
+				// earned_at is a SITE-LOCAL column (BadgeEngine::award_badge writes it with
+				// current_time('mysql')), and $issued is a real Unix epoch -- so it has to be formatted in
+				// the site's timezone, not UTC. gmdate() here wrote a UTC wall clock into a local column:
+				// one column, two clocks, and badge-showcase then reported an imported badge as earned
+				// hours off -- in the future, on any site ahead of UTC.
+				'earned_at' => $issued > 0 ? wp_date( 'Y-m-d H:i:s', $issued ) : current_time( 'mysql' ),
 				'post_id'   => $post_id,
 			);
 		}
@@ -279,7 +284,11 @@ final class MyCredImporter {
 						'category'  => 'imported',
 					)
 				);
-				$earned_at = gmdate( 'Y-m-d H:i:s', strtotime( $b['earned_at'] ) ?: time() );
+				// The strtotime()/gmdate() round trip PRESERVES the source's wall clock (parse-as-UTC then
+				// format-as-UTC is an identity), which is what we want: the source stored a local time and
+				// we keep it. But the FALLBACK was time() -- a real epoch -- which gmdate() then renders as
+				// a UTC wall clock into a site-local column. current_time('mysql') is the site's now.
+				$earned_at = $b['earned_at'] ? gmdate( 'Y-m-d H:i:s', strtotime( (string) $b['earned_at'] ) ) : current_time( 'mysql' );
 				if ( \WBGam\Engine\BadgeEngine::award_badge( $b['user_id'], $b['badge_id'], $earned_at ) ) {
 					++$badge_awarded;
 				}
