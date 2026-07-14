@@ -182,9 +182,9 @@ final class WeeklyEmailEngine {
 		// 1-hour window was destroyed on essentially every run, and an overdue cron re-firing found
 		// nothing in its way and dispatched the whole send again.
 		//
-		// Two questions, two keys:
-		//   DISPATCH_LOCK_KEY  -- "is a chain running right now?"   Released when it finishes.
-		//   SENT_WINDOW_KEY    -- "did we already send this week?"  Left to EXPIRE. Never deleted.
+		// Two questions, two keys. DISPATCH_LOCK_KEY answers "is a chain running right now?" and is
+		// released when it finishes. SENT_WINDOW_KEY answers "did we already send this week?" and is
+		// left to EXPIRE -- it is never deleted.
 		//
 		// The database lock still makes the check-and-set atomic, so two crons firing on the same
 		// instant cannot both pass it.

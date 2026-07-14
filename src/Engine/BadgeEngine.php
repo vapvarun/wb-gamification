@@ -425,14 +425,15 @@ final class BadgeEngine {
 		// evaluate_for_signals()'s own docblock says "a level change, a streak milestone, and the
 		// awarding of another badge each emit their own signals" -- the machinery was built for exactly
 		// this and then never wired up. BadgeEngine::init() hooked wb_gam_points_awarded and nothing
-		// else, so:
+		// else, so two things were broken at once.
 		//
-		//   1. `level_reached` and `streak_days` -- two of the eight condition types shipped in the
-		//      multi-condition badge builder -- could never fire. A badge whose ONLY condition was
-		//      "reach level 5" was unwinnable. It sat in the library looking configured.
-		//   2. Deleting SiteFirstBadgeEngine (422e606) removed the only thing that HAD hooked
-		//      wb_gam_level_changed and wb_gam_streak_milestone, so the badges that depended on those
-		//      events lost their award path with it. That was a regression dressed as a cleanup.
+		// First: `level_reached` and `streak_days` -- two of the eight condition types shipped in the
+		// multi-condition badge builder -- could never fire. A badge whose ONLY condition was "reach
+		// level 5" was unwinnable. It sat in the library looking configured.
+		//
+		// Second: deleting SiteFirstBadgeEngine (422e606) removed the only thing that HAD hooked
+		// wb_gam_level_changed and wb_gam_streak_milestone, so the badges that depended on those events
+		// lost their award path with it. That was a regression dressed as a cleanup.
 		//
 		// Both events are genuinely fired (LevelEngine:235, StreakEngine:429). They just had no
 		// listener. The relevance gate means these evaluate only the rules whose conditions actually
