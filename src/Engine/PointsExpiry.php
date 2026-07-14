@@ -139,8 +139,17 @@ final class PointsExpiry {
 		$percent = min( 100, max( 1, (int) get_option( self::OPT_PERCENT, 100 ) ) );
 
 		global $wpdb;
-		$type    = PointsEngine::resolve_type( null );
-		$cutoff  = gmdate( 'Y-m-d H:i:s', time() - ( $days * DAY_IN_SECONDS ) );
+		$type = PointsEngine::resolve_type( null );
+
+		// The cutoff is compared against MAX(created_at) further down -- in PHP, not in SQL -- and
+		// created_at is written with current_time( 'mysql' ), so it is the SITE's clock. This was
+		// gmdate(), i.e. UTC, so the inactivity window was wrong by the site's offset in whichever
+		// direction the site sits: on a site behind UTC a member's last activity looked older than it
+		// was and their points decayed hours early.
+		//
+		// It survived every previous sweep because the comparison happens in PHP after the rows come
+		// back, and the gate only inspected $wpdb calls. It does not any more (Check D).
+		$cutoff  = Clock::site_cutoff( "-{$days} days" );
 		$started = microtime( true );
 
 		// This used to be ONE query: join the ledger to the totals table, GROUP BY member, take

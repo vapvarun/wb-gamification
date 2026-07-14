@@ -131,12 +131,27 @@ $wb_gam_today    = ( new DateTimeImmutable( 'now', $wb_gam_tz ) )->format( 'Y-m-
 $wb_gam_yest     = ( new DateTimeImmutable( '-1 day', $wb_gam_tz ) )->format( 'Y-m-d' );
 $wb_gam_grouped  = array();
 foreach ( $wb_gam_rows as $wb_gam_row ) {
-	$wb_gam_ts = strtotime( (string) ( $wb_gam_row['created_at'] ?? '' ) );
-	if ( ! $wb_gam_ts ) {
-		$wb_gam_ts = time();
+	// The day key, in the SITE's clock, with the offset applied exactly ONCE.
+	//
+	// created_at is a naive site-local string (current_time('mysql')). This used to strtotime() it --
+	// which, because PHP runs on UTC under WordPress, already yields a pseudo-epoch with the offset
+	// baked in -- and then hand that to DateTimeImmutable('@...')->setTimezone(), which applied the
+	// site offset a SECOND time. $wb_gam_today above is the true local date, so the two disagreed: on
+	// Los Angeles a point earned at 02:00 today was keyed to yesterday and rendered under the
+	// "Yesterday" heading.
+	//
+	// Reading the string in the site's timezone in the first place is the whole fix -- no epoch round
+	// trip, no second offset.
+	$wb_gam_raw = (string) ( $wb_gam_row['created_at'] ?? '' );
+
+	try {
+		$wb_gam_local = new DateTimeImmutable( '' !== $wb_gam_raw ? $wb_gam_raw : 'now', $wb_gam_tz );
+	} catch ( \Exception $wb_gam_e ) {
+		$wb_gam_local = new DateTimeImmutable( 'now', $wb_gam_tz );
 	}
-	$wb_gam_local = ( new DateTimeImmutable( '@' . $wb_gam_ts ) )->setTimezone( $wb_gam_tz );
-	$wb_gam_day   = $wb_gam_local->format( 'Y-m-d' );
+
+	$wb_gam_ts  = $wb_gam_local->getTimestamp();
+	$wb_gam_day = $wb_gam_local->format( 'Y-m-d' );
 	if ( ! isset( $wb_gam_grouped[ $wb_gam_day ] ) ) {
 		$wb_gam_grouped[ $wb_gam_day ] = array(
 			'rows'     => array(),

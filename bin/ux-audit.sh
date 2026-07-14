@@ -169,9 +169,23 @@ while IFS=: read -r file line _; do
         continue
     fi
 
+    # BLOCK, not advisory.
+    #
+    # Removing the focus ring and putting nothing in its place makes the plugin unusable by keyboard:
+    # the member cannot see where they are. That is a WCAG 2.4.7 failure, and it is not a matter of
+    # taste to be tidied "in the next PR".
+    #
+    # It was advisory, so it could not fail a build -- QA planted an outline:none with no replacement
+    # in frontend.css and the gate reported GREEN. A check that reports and cannot fail is a comment
+    # with a table around it.
+    #
+    # It is safe to give it teeth today because the rule is PRECISE: it reads the whole declaration
+    # block and accepts any real replacement (a box-shadow ring, a border change, a non-none outline,
+    # or the :focus-visible guard), so the codebase currently reports ZERO of these. It fires only on
+    # a genuine regression, which is the only condition under which a gate deserves to block.
     snippet="$(sed -n "${line}p" "$file" 2>/dev/null | head -c 80 | tr '\n' ' ' | sed 's/|/\\|/g')"
-    violation "advisory" "Rule 14 outline-none-no-replacement" "$file" "$line" "\`$snippet\`"
-    ADVISORY_COUNT=$((ADVISORY_COUNT+1))
+    violation "block" "Rule 14 outline-none-no-replacement" "$file" "$line" "\`$snippet\`"
+    BLOCK_COUNT=$((BLOCK_COUNT+1))
 done < <(find "$PLUGIN_DIR" -name '*.css' "${FIND_EXCLUDES[@]}" -not -name '*.min.css' -print0 2>/dev/null \
          | xargs -0 grep -nE 'outline:\s*(none|0)' 2>/dev/null || true)
 

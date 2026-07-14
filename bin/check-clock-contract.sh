@@ -90,7 +90,7 @@ while IFS= read -r hit; do
 # DEFAULT CURRENT_TIMESTAMP in a CREATE TABLE is a column default, not a comparison -- the database
 # stamping a row it is inserting is not mixing clocks with anything. Installer/DbUpgrader are excluded
 # for exactly that reason, and only for that reason.
-done < <(grep -rnE 'NOW\(\)|UTC_TIMESTAMP\(\)|CURDATE\(\)|CURTIME\(\)|CURRENT_TIMESTAMP' src/ --include='*.php' 2>/dev/null \
+done < <(grep -rnE 'NOW\(\)|UTC_TIMESTAMP\(\)|CURDATE\(\)|CURTIME\(\)|CURRENT_TIMESTAMP' src/ integrations/ wb-gamification.php --include='*.php' 2>/dev/null \
   | grep -vi 'wp_users\|@clock-ok' \
   | grep -viE 'src/Engine/(Installer|DbUpgrader)\.php.*(DEFAULT CURRENT_TIMESTAMP|CURRENT_TIMESTAMP,)')
 
@@ -145,7 +145,13 @@ fi
 # reappearing four files over from the one that already got fixed.
 # ─────────────────────────────────────────────────────────────────────────────────────────────
 
-php_hits="$(perl - $(find src -name '*.php' 2>/dev/null | sort) <<'PERL'
+# Everything that SHIPS, not just src/. The gate scanned src/ alone, while the code that reaches a
+# site is src/ + integrations/ + the root plugin file -- the same set Plugin Check calls "shipped".
+# So a whole shipped directory was outside the gate: plant the identical clock bug in
+# integrations/buddypress.php and it passed green. A checker whose scope is narrower than the
+# thing it certifies is not checking the thing it certifies.
+SCAN_FILES="$(find src integrations -name '*.php' 2>/dev/null | sort) wb-gamification.php"
+php_hits="$(perl - $SCAN_FILES <<'PERL'
 use strict;
 use warnings;
 
@@ -239,18 +245,50 @@ for my $file (@ARGV) {
 
     # ---- Check B: bare time() compared/subtracted against a strtotime()-derived value ----
     my %risky;
+    my %utc_epoch;
+
+    # Vars that were EVER parsed out of a naive string with strtotime(). Unlike %risky this is not
+    # cleared by the `$ts = time();` parse-failure fallback -- that fallback makes the FAILURE path
+    # safe, it does not make the variable safe, and Check E cares about the normal path where the
+    # string parsed fine and the offset is already baked in.
+    my %parsed;
     for ( my $i = 0 ; $i < $n ; $i++ ) {
         my $l = $lines[$i];
 
-        %risky = () if $l =~ /\bfunction\b/;
+        if ( $l =~ /\bfunction\b/ ) {
+            %risky     = ();
+            %utc_epoch = ();
+            %parsed    = ();
+        }
 
         if ( $l =~ /\$(\w+)\s*=\s*strtotime\s*\(\s*(.*)$/ ) {
             my ( $var, $rest ) = ( $1, $2 );
-            if ( $rest =~ /current_time\s*\(/ ) {
+
+            # What makes a strtotime() result dangerous is PARSING A NAIVE STRING that came out of a
+            # column: strtotime over a created_at value reads a site-local wall clock as though it were
+            # UTC, and comparing that to a real epoch is the bug.
+            #
+            # strtotime() with a LITERAL first argument is not that. A relative modifier (minus seven
+            # days, offset from a base) is arithmetic on an epoch and returns a true epoch; so does a
+            # literal date. Treating those as risky is how this check flagged the analytics chart, whose
+            # gap-fill loop is correct (it hands a real epoch to wp_date(), which applies the site
+            # timezone). A gate that cries wolf is a gate someone switches off, so it must be able to
+            # tell the two apart.
+            # \x27 = single quote, \x22 = double quote. Written as hex because a literal quote here
+            # unbalances the quote count of the heredoc this perl script lives in, and bash 3.2 then
+            # fails to find the closing paren of the command substitution -- which kills the script,
+            # and a gate that dies exits 0 and passes everything.
+            if ( $rest =~ /^\s*(?:\x27|\x22)/ ) {
                 delete $risky{$var};
+                delete $parsed{$var};
+            }
+            elsif ( $rest =~ /current_time\s*\(/ ) {
+                delete $risky{$var};
+                delete $parsed{$var};
             }
             else {
-                $risky{$var} = $i;
+                $risky{$var}  = $i;
+                $parsed{$var} = $i;
             }
         }
 
@@ -259,7 +297,22 @@ for my $file (@ARGV) {
         # and it flips the variable out of the risky set: whatever compares against it next is
         # now comparing two real epochs, which is correct.
         if ( $l =~ /^\s*\$(\w+)\s*=\s*time\s*\(\s*\)\s*;\s*$/ ) {
-            delete $risky{$1};
+            my $v = $1;
+
+            # `$ts = time();` where $ts was ALREADY risky is a strtotime()-failure FALLBACK: it
+            # overwrites the suspect value with a real epoch, so whatever compares against it next is
+            # comparing two real epochs. That is a write, not a compare, and it clears the flag.
+            if ( exists $risky{$v} ) {
+                delete $risky{$v};
+                next;
+            }
+
+            # But a bare time() assigned to a FRESH variable is the bug wearing a coat. QA planted
+            # exactly this: hoist the challenges-block comparison into an intermediate variable, and the
+            # gate went green, because the comparison line no longer contains the token time().
+            # A checker that can be defeated by assigning to a variable first is checking the spelling,
+            # not the code -- the same lesson as the comment that disarmed Check A.
+            $utc_epoch{$v} = $i;
             next;
         }
 
@@ -270,6 +323,40 @@ for my $file (@ARGV) {
         # excludes plain writes. Comparisons use <, <=, >, >=, -, or the 2-arg form of
         # human_time_diff(); the elvis operator is neither.
         next if $l =~ /\?\s*:\s*time\s*\(\s*\)/;
+
+        # The hoisted shape: a risky (strtotime-derived) value compared or subtracted against a
+        # variable that was assigned a bare time(). No time() token on this line at all.
+        if ( %utc_epoch && %risky && $l !~ /current_time\s*\(/ && $l =~ /[-<>=]/ ) {
+            my $hit_epoch = 0;
+            my $hit_risky = 0;
+            for my $v ( keys %utc_epoch ) { $hit_epoch = 1 if $l =~ /\$\Q$v\E\b/; }
+            for my $v ( keys %risky )     { $hit_risky = 1 if $l =~ /\$\Q$v\E\b/; }
+
+            if ( $hit_epoch && $hit_risky && !$annotated_above->($i) ) {
+                push @violations,
+                    [ $i, "a strtotime()-derived value compared against a variable holding a bare time() (hoisted)" ];
+            }
+        }
+
+        # ---- Check E: the offset applied TWICE ----
+        #
+        # strtotime() on a naive site-local column string already yields a pseudo-epoch in the
+        # local-read-as-UTC frame -- the offset is baked in. Feeding that to DateTimeImmutable( '@'... )
+        # and then calling setTimezone() applies the site offset AGAIN.
+        #
+        # points-history did this to build its day keys, so a point earned at 02:00 local landed under
+        # the previous date and rendered under the Yesterday heading. Neither Check B nor Check C can
+        # see it: there is no time() on the line and no SQL bound anywhere near it.
+        if ( $l =~ /DateTimeImmutable\s*\(\s*.@/ && $l =~ /setTimezone/ && !$annotated_above->($i) ) {
+            for my $v ( sort keys %parsed ) {
+                if ( $l =~ /\$\Q$v\E\b/ ) {
+                    push @violations,
+                        [ $i,
+                        "\$$v came from strtotime() on a site-local string (offset already applied) and setTimezone() applies it a second time" ];
+                    last;
+                }
+            }
+        }
 
         if ( $l =~ /(?<![A-Za-z0-9_])time\s*\(\s*\)/ && $l !~ /current_time\s*\(/ ) {
             my $flag = 0;
@@ -340,6 +427,40 @@ for my $file (@ARGV) {
             }
             else {
                 $utc_var{$var} = $i;
+            }
+        }
+
+        # ---- Check D: a UTC value compared against a datetime of UNKNOWN clock, in PHP ----
+        #
+        # Check C only ever looks inside $wpdb calls, so it cannot see a comparison made in PHP after
+        # the rows come back. PointsExpiry does exactly that: it SELECTs MAX(created_at) (site-local),
+        # then compares it with >= against a $cutoff built from gmdate() (UTC). No SQL bound anywhere,
+        # so the gate reported green over a decay window wrong by the site offset -- members decayed
+        # hours early on any site behind UTC.
+        #
+        # The rule: a value known to be UTC, compared with < <= > >= against a variable whose NAME says
+        # it holds a datetime and whose clock we cannot vouch for. Restricted to datetime-looking names
+        # so this stays a check and not a noise generator; the annotation is the escape hatch when the
+        # other side really is UTC.
+        if ( %utc_var && $code =~ /[<>]=?/ && !$annotated_above->($i) && $code !~ /current_time\s*\(/ ) {
+            my $utc_hit = '';
+            for my $v ( sort keys %utc_var ) {
+                $utc_hit = $v if $code =~ /\$\Q$v\E\b/;
+            }
+
+            if ( $utc_hit ne '' ) {
+                while ( $code =~ /\$(\w*(?:_at|_time|_date|activity|created|earned|expires|when|last)\w*)\b/gi ) {
+                    my $other = $1;
+                    next if $other eq $utc_hit;
+                    next if exists $utc_var{$other};
+                    next if exists $local_var{$other};
+
+                    push @violations,
+                        [ $i,
+                        "UTC value \$$utc_hit compared against \$$other, whose clock is not established (built from gmdate() on line "
+                            . ( $utc_var{$utc_hit} + 1 ) . ")" ];
+                    last;
+                }
             }
         }
 
