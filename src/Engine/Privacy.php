@@ -596,9 +596,35 @@ final class Privacy {
 
 		// Pass $covered IN, rather than filtering the result. The list is the same either way; the
 		// difference is whether we read 50,000 ledger rows into memory before discarding them.
-		foreach ( MemberData::export_rows( $user_id, $covered ) as $table => $rows ) {
+		//
+		// And PAGE it, on the same $offset as the ledger. Two things were wrong here at once.
+		//
+		// It ran on EVERY page, outside the `1 === $page` guard that the curated groups sit inside. A
+		// member with a 40-page export got their kudos, redemptions and queued notifications repeated
+		// on all 40 pages -- measured: 850 queue rows exported 4250 times, 3404 colliding item_ids --
+		// and paid the full memory cost of reading them 40 times.
+		//
+		// And the rows themselves were unbounded. Skipping the ledger fixed the two tables I had
+		// actually looked at and left every other member table reading with no LIMIT, which is the same
+		// defect wearing a shorter list. wb_gam_notifications_queue grows with every notification a
+		// member is ever sent; "what is left after the skip is small" was an assumption I wrote down and
+		// never measured.
+		//
+		// Each table now yields the same slice of rows the ledger does, so memory is bounded by the
+		// page size, and the export is still COMPLETE: `$done` stays false while any table has more.
+		$catch_all = MemberData::export_rows( $user_id, $covered, self::EXPORT_PAGE_SIZE, $offset );
+
+		foreach ( $catch_all as $table => $rows ) {
 			if ( ! $rows ) {
 				continue;
+			}
+
+			// A full slice means there may be another one behind it. The ledger's own done-check
+			// cannot see these tables, so a member whose queue is longer than their ledger would
+			// otherwise have the tail of it silently cut off -- an export that looks complete and is
+			// not, which is the worst thing this function can produce.
+			if ( count( $rows ) >= self::EXPORT_PAGE_SIZE ) {
+				$done = false;
 			}
 
 			foreach ( $rows as $i => $row ) {
@@ -618,7 +644,10 @@ final class Privacy {
 						__( 'Gamification — %s', 'wb-gamification' ),
 						str_replace( 'wb_gam_', '', $table )
 					),
-					'item_id'     => $table . '-' . $i,
+					// ABSOLUTE row index, not the per-page one. item_id must be unique across the whole
+					// export: with a per-page index, page 2's first kudos row carries the same id as
+					// page 1's and overwrites it in the archive. The ledger above already learned this.
+					'item_id'     => $table . '-' . ( $offset + $i ),
 					'data'        => $items,
 				);
 			}

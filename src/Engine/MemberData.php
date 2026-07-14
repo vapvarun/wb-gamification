@@ -310,10 +310,13 @@ final class MemberData {
 	 * they are readable, and a data export a human cannot read is a poor answer to the question -- but
 	 * anything they miss is caught here rather than silently dropped.
 	 *
-	 * @param int $user_id Member.
+	 * @param int      $user_id Member.
+	 * @param string[] $skip    Unprefixed table names the caller exports itself.
+	 * @param int      $limit   Rows per table, per call. 0 = no limit (erasure/counting callers).
+	 * @param int      $offset  Rows to skip per table. Paired with $limit.
 	 * @return array<string, array<int, array<string,mixed>>> Table (unprefixed) => rows.
 	 */
-	public static function export_rows( int $user_id, array $skip = array() ): array {
+	public static function export_rows( int $user_id, array $skip = array(), int $limit = 0, int $offset = 0 ): array {
 		global $wpdb;
 
 		if ( $user_id <= 0 ) {
@@ -344,11 +347,34 @@ final class MemberData {
 				continue;
 			}
 
+			// PAGED, because "what is left after the skip is small" was an assumption, not a
+			// measurement -- and it was mine. wb_gam_notifications_queue is a per-member table that
+			// grows with every notification a member is ever sent; on an active member it is thousands
+			// of rows, and this read had no LIMIT on it at all. Skipping the ledger fixed the two
+			// tables I had looked at and left every other table exactly as unbounded as before.
+			//
+			// A deterministic ORDER BY is not decoration here: OFFSET without one lets MySQL return
+			// rows in a different order between pages, which silently drops some rows from the export
+			// and duplicates others. An incomplete GDPR export that looks complete is the worst
+			// possible outcome of this function.
+			$order = self::order_column( $table, $cols );
+
 			foreach ( $cols['owned'] as $column ) {
-				$rows = (array) $wpdb->get_results(
-					$wpdb->prepare( "SELECT * FROM `{$table}` WHERE `{$column}` = %d", $user_id ),
-					ARRAY_A
-				);
+				if ( $limit > 0 ) {
+					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+					$sql = $wpdb->prepare(
+						"SELECT * FROM `{$table}` WHERE `{$column}` = %d ORDER BY `{$order}` ASC LIMIT %d OFFSET %d",
+						$user_id,
+						$limit,
+						$offset
+					);
+				} else {
+					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+					$sql = $wpdb->prepare( "SELECT * FROM `{$table}` WHERE `{$column}` = %d ORDER BY `{$order}` ASC", $user_id );
+				}
+
+				// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+				$rows = (array) $wpdb->get_results( $sql, ARRAY_A );
 
 				if ( $rows ) {
 					$out[ $short ] = array_merge( $out[ $short ] ?? array(), $rows );
@@ -357,6 +383,29 @@ final class MemberData {
 		}
 
 		return $out;
+	}
+
+	/**
+	 * A column that gives this table a stable order for OFFSET paging.
+	 *
+	 * `id` where the table has one, otherwise the column that ties the row to the member -- which
+	 * every table in this map has by definition, since that is how it got into the map.
+	 *
+	 * @param string                                 $table Fully-qualified table name.
+	 * @param array{owned: string[], refs: string[]} $cols  Owned / referencing columns.
+	 * @return string Column name, safe to interpolate (it came from SHOW COLUMNS, not from input).
+	 */
+	private static function order_column( string $table, array $cols ): string {
+		global $wpdb;
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$columns = (array) $wpdb->get_col( "SHOW COLUMNS FROM `{$table}`" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+
+		if ( in_array( 'id', $columns, true ) ) {
+			return 'id';
+		}
+
+		return (string) ( $cols['owned'][0] ?? 'user_id' );
 	}
 
 	/**
