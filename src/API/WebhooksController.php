@@ -216,7 +216,30 @@ class WebhooksController extends WP_REST_Controller {
 		global $wpdb;
 
 		$events_json = wp_json_encode( $request['events'] );
-		$secret      = wp_generate_password( 32, false );
+
+		// Honour a secret the owner supplied, and generate one when they did not.
+		//
+		// This route used to generate one UNCONDITIONALLY and never look at `secret` at all -- while
+		// the admin page rendered a Secret field, marked it `required`, and told the owner underneath
+		// it that "if you leave this blank, a 32-byte random secret is generated for you". Three
+		// contradictions in one control: it demanded a value, it said the value was optional, and it
+		// threw the value away. An owner pointing this at an existing receiver typed the secret that
+		// receiver already verifies against, and every delivery then failed its signature check for a
+		// reason nothing on screen could explain.
+		//
+		// A supplied secret has to be long enough to be worth signing with; below that we would be
+		// letting someone weaken their own HMAC by accident.
+		$supplied = trim( (string) $request->get_param( 'secret' ) );
+
+		if ( '' !== $supplied && strlen( $supplied ) < 16 ) {
+			return new WP_Error(
+				'rest_secret_too_short',
+				__( 'The signing secret must be at least 16 characters. Leave it blank to have one generated.', 'wb-gamification' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		$secret = '' !== $supplied ? $supplied : wp_generate_password( 32, false );
 
 		$inserted = $wpdb->insert(
 			$wpdb->prefix . 'wb_gam_webhooks',
@@ -434,6 +457,15 @@ class WebhooksController extends WP_REST_Controller {
 					'enum' => self::VALID_EVENTS,
 				),
 				'description' => 'Event types to subscribe to.',
+			),
+			// Optional. Blank means "generate one for me", which is what the admin page has always
+			// promised and what this route never actually allowed -- it was not even a registered
+			// argument, so a supplied secret could not reach the handler even if it wanted to.
+			'secret'    => array(
+				'required'          => false,
+				'type'              => 'string',
+				'sanitize_callback' => 'sanitize_text_field',
+				'description'       => 'Signing secret for the HMAC-SHA256 payload signature. At least 16 characters. Leave blank to generate one.',
 			),
 			'is_active' => array(
 				'type'    => 'boolean',

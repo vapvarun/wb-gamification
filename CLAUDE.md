@@ -58,6 +58,36 @@ Every bug / feature / scope item flows through this kanban (matches the canonica
 
 ---
 
+## A Basecamp card is a HYPOTHESIS, not a work order
+
+**Every card is a half-cooked idea until you have proved otherwise against the code and the browser.**
+QA's job is to surface a symptom. Their reading of the symptom is an input, not a verdict, and a
+meaningful share of cards are wrong: the bug is somewhere else, the bug is in another plugin, the
+behaviour is correct and the expectation was not, or the thing they are looking at is stale test data.
+
+Before a card becomes work:
+
+1. **Reproduce it.** Same URL, same theme, same viewport, same role. If you cannot make it happen, you
+   do not know what it is.
+2. **Find the mechanism, not the symptom.** "The activity card looks wrong" turned out to be "the card
+   is never rendered at all on this stack, because it is emitted only from the BuddyPress stream
+   integration and BuddyPress is not active here". Those are different problems with different fixes,
+   and three rounds of CSS were shipped against the wrong one.
+3. **Ask whether it is even ours.** A real defect in a different repo is not a bug in this one. Say so
+   on the card and move it; do not fix someone else's plugin from inside this one.
+4. **Then decide.** Real and ours and worth doing now -> fix it. Real but not ours, or not now -> say
+   what you found, with evidence, and move the card out of Bugs. Not real -> comment with what you
+   actually observed and close it. **A card that is closed with evidence is worth more than a card
+   that is quietly fixed.**
+
+What a comment must contain: what you ran, what you saw, and the file:line that explains it. "Fixed"
+is not a comment. "Cannot reproduce" is not a comment either -- say what you tried.
+
+**And check the card against what we JUST shipped.** Chasing card #9914967346 is how we discovered that
+making badges private broke every badge announcement in BuddyNext's activity feed -- the card said
+nothing about that, and no gate caught it. The card was a lead, and the lead was worth more than the
+complaint.
+
 ## The standards shelf (READ THE STANDARD BEFORE YOU TOUCH THE AREA IT GOVERNS)
 
 The portfolio's written standards live in the **private Pro repo**, by policy — developer guidelines

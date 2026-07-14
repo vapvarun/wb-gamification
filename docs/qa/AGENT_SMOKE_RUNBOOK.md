@@ -228,10 +228,22 @@ Persona ladder: **Anonymous → Member → Editor (granular cap) → Admin**. Pi
 Each step is a contract — exercise it from the UI AND confirm the server-side effect. Where a journey is listed, run it first.
 
 ### C.anon.hub-renders
-**Customer contract:** the Member Hub page is publicly viewable, lists the configured tiles (leaderboard preview, recent badges, top members), and offers a clear login path for un-authed visitors.
-**Why it matters:** first-impression surface; broken means no signup conversion.
-**Reference:** `plan/QA-MANUAL-TEST-PLAN.md` § Persona 4.1.
-**Acceptance:** hub URL returns 200 anonymously, hub page renders top-3 leaderboard preview, login CTA visible.
+**Customer contract:** the Member Hub page is publicly viewable and shows a logged-out visitor a clear
+invitation to log in. The hub is a member's personal dashboard -- points, streak, nudges, their own
+badges -- so there is nothing in it to render for someone who is not a member. It deliberately returns
+a single "Join the community" card with a login link, and nothing else.
+**Why it matters:** a 200 with a working login path. A fatal or a blank page here is the failure.
+**Acceptance:** hub URL returns 200 anonymously; the guest card renders (`.gam-page--guest`,
+`.gam-nudge`) with a login link pointing back to the hub. NO leaderboard/badge tiles are expected.
+
+> This contract previously claimed the anonymous hub renders "leaderboard preview, recent badges, top
+> members" tiles. It never did -- the guest early-return has been there since the hub block shipped
+> (c2de2af). Two smoke runs dutifully reported the mismatch as a bug against code that was doing
+> exactly what it was written to do. **The doc was the defect.**
+>
+> Whether the anonymous hub *should* show a public preview (a leaderboard top-3 is public data anyway,
+> and an empty "log in" page is a wasted acquisition surface) is a fair product question -- but it is a
+> feature, and it belongs on a card, not in an acceptance criterion that fails every release.
 
 ### C.anon.leaderboard-block
 **Customer contract:** the leaderboard block renders for logged-out visitors, shows real ranks, and the period selector switches the dataset without page reload.

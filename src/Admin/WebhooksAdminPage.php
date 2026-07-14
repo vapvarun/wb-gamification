@@ -218,7 +218,13 @@ final class WebhooksAdminPage {
 									<label for="wb-gam-webhook-secret"><?php esc_html_e( 'Secret', 'wb-gamification' ); ?></label>
 								</th>
 								<td>
-									<input type="text" id="wb-gam-webhook-secret" name="secret" class="regular-text wbgam-input" required placeholder="<?php esc_attr_e( 'auto-generated if blank', 'wb-gamification' ); ?>" />
+									<?php
+								// NOT `required`. It used to be -- on a field whose own placeholder and description
+								// both said "leave this blank and one is generated for you". The browser then blocked
+								// the form on a field the copy told the owner they could skip, and the value they
+								// typed to get past it was discarded by the REST route anyway.
+								?>
+								<input type="text" id="wb-gam-webhook-secret" name="secret" class="regular-text wbgam-input" placeholder="<?php esc_attr_e( 'auto-generated if blank', 'wb-gamification' ); ?>" />
 									<p class="description">
 										<?php esc_html_e( 'Used to sign every payload via HMAC-SHA256. The receiver computes the same HMAC over the raw request body and compares against the X-WB-Gam-Signature header. If you leave this blank, a 32-byte random secret is generated for you.', 'wb-gamification' ); ?>
 									</p>
