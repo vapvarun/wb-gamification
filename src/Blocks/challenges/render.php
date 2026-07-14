@@ -126,7 +126,19 @@ $wb_gam_format_deadline = static function ( string $iso ): string {
 	if ( ! $ts ) {
 		return '';
 	}
-	$delta = $ts - time();
+	// ends_at is a site-local wall-clock string (see ChallengeEngine, which reads it back
+	// with current_time( 'mysql' ), never NOW()/UTC). strtotime() on a naive string parses
+	// it in PHP's default timezone (UTC, since WP never changes it), so $ts is the site-local
+	// wall clock read AS IF it were UTC — the same "local-as-UTC" frame current_time('timestamp')
+	// produces. Comparing that against real time() mixed two clocks: on America/Los_Angeles a
+	// challenge closing in 1 hour rendered "Ended" (the fake $ts already looked 7 hours in the
+	// past) while ChallengeEngine::get_active_challenges() — which compares the same ends_at
+	// string against current_time('mysql') — was still awarding progress against it. Using
+	// current_time('timestamp') here instead of time() puts both sides of every comparison
+	// below back in the same local-as-UTC frame, so the label agrees with the engine. Same
+	// pattern already used by the community-challenges block for this identical field.
+	$wb_gam_now_ts = (int) current_time( 'timestamp' ); // phpcs:ignore WordPress.DateTime.CurrentTimeTimestamp.Requested -- deliberate: matches the frame strtotime() puts the local ends_at string in.
+	$delta         = $ts - $wb_gam_now_ts;
 	if ( $delta <= 0 ) {
 		return __( 'Ended', 'wb-gamification' );
 	}
@@ -134,14 +146,14 @@ $wb_gam_format_deadline = static function ( string $iso ): string {
 		return sprintf(
 			/* translators: %s: human-readable time difference. */
 			__( 'Ends in %s', 'wb-gamification' ),
-			human_time_diff( time(), $ts )
+			human_time_diff( $wb_gam_now_ts, $ts )
 		);
 	}
 	if ( $delta < WEEK_IN_SECONDS ) {
 		return sprintf(
 			/* translators: %s: human-readable time difference. */
 			__( 'Ends in %s', 'wb-gamification' ),
-			human_time_diff( time(), $ts )
+			human_time_diff( $wb_gam_now_ts, $ts )
 		);
 	}
 	return sprintf(

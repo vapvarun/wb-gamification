@@ -564,6 +564,13 @@ final class NotificationBridge {
 	 * Half a reversal is arguably worse than none: the points quietly vanish while the congratulation
 	 * still arrives, and the member has no way to connect the two.
 	 *
+	 * `send()` (via `record_kudos()`) queues THREE rows for one kudos: the receiver's
+	 * points toast, the giver's points toast, and this method's own "Someone gave you
+	 * kudos!" toast -- all three now carry `kudos_id` in their payload (the points
+	 * toasts get it from on_points_awarded() above; this toast already had it). A
+	 * revoke must retract all three, for both users, or the points quietly reverse
+	 * while the toasts that announced them keep lying.
+	 *
 	 * @since 1.6.4
 	 *
 	 * @param int $kudos_id    Revoked kudos.
@@ -578,15 +585,22 @@ final class NotificationBridge {
 			return;
 		}
 
+		// Both users can have a queued row for this kudos_id (receiver: points + kudos
+		// toast; giver: points toast only) -- giver_id is filtered out below if unset
+		// so this still degrades gracefully to receiver-only deletion.
+		$user_ids = array_values( array_unique( array_filter( array( $receiver_id, $giver_id ) ) ) );
+		if ( empty( $user_ids ) ) {
+			return;
+		}
+		$placeholders = implode( ',', array_fill( 0, count( $user_ids ), '%d' ) );
+
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$wpdb->query(
 			$wpdb->prepare(
 				"DELETE FROM {$wpdb->prefix}wb_gam_notifications_queue
-				  WHERE user_id = %d
-				    AND event_type = 'kudos'
+				  WHERE user_id IN ({$placeholders})
 				    AND payload_json LIKE %s",
-				$receiver_id,
-				'%' . $wpdb->esc_like( '"kudos_id":' . $kudos_id ) . '%'
+				array_merge( $user_ids, array( '%' . $wpdb->esc_like( '"kudos_id":' . $kudos_id ) . '%' ) )
 			)
 		);
 	}

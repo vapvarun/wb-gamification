@@ -95,9 +95,10 @@ final class BadgeOSImporter {
 			// earned" from "the data existed but is now unreachable" — that
 			// ambiguity is exactly what let achievements disappear silently
 			// before, so surface it as a hard failure instead of a quiet [].
-			throw new \RuntimeException(
-				"BadgeOS achievements table ({$table}) not found — achievement types cannot be determined, achievements were NOT imported."
-			);
+			// An exception message is a developer/log-facing error, not browser output; $table is our
+			// own prefix + a literal, never user input.
+			// phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+			throw new \RuntimeException( "BadgeOS achievements table ({$table}) not found — achievement types cannot be determined, achievements were NOT imported." );
 		}
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared

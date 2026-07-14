@@ -19,7 +19,11 @@
 		return;
 	}
 	var i18n = cfg.i18n || {};
-	var settings = { restUrl: cfg.restUrl, nonce: cfg.nonce };
+	// timeoutMs comes from PHP. Without it the shared client aborts the import at 15s -- while the
+	// server carries on importing, so the screen reports a failure that is not one.
+	// Number(), because wp_localize_script stringifies everything -- cfg.timeoutMs arrives as
+	// "600000", and AbortSignal.timeout() wants a number, not a string that happens to look like one.
+	var settings = { restUrl: cfg.restUrl, nonce: cfg.nonce, timeoutMs: Number( cfg.timeoutMs ) || 0 };
 
 	function el( tag, cls, text ) {
 		var n = document.createElement( tag );

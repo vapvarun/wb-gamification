@@ -120,6 +120,36 @@ final class BadgeAdminPage {
 				),
 			)
 		);
+
+		// The SHARED searchable member picker — same component ManualAwardPage and
+		// KudosModerationPage use. This page used to reach for wp_dropdown_users()
+		// for the "Award this badge to a user" panel, which loads and renders every
+		// user on the site with no `number` cap: on a 100k-member community that is
+		// a full wp_users scan and a multi-megabyte <select>. This queries the
+		// already-paginated GET /members?search=&per_page=20 as the admin types.
+		wp_enqueue_script(
+			'wb-gam-admin-user-picker',
+			plugins_url( 'assets/js/admin-user-picker.js', WB_GAM_FILE ),
+			array( 'wb-gam-admin-rest-utils' ),
+			WB_GAM_VERSION,
+			true
+		);
+		wp_localize_script(
+			'wb-gam-admin-user-picker',
+			'wbGamUserPicker',
+			array(
+				'restUrl' => esc_url_raw( rest_url( 'wb-gamification/v1' ) ),
+				'nonce'   => wp_create_nonce( 'wp_rest' ),
+				'i18n'    => array(
+					'typeToSearch' => __( 'Type at least 2 characters to search', 'wb-gamification' ),
+					'searching'    => __( 'Searching…', 'wb-gamification' ),
+					'noResults'    => __( 'No members found', 'wb-gamification' ),
+					'selectUser'   => __( '- Select a user -', 'wb-gamification' ),
+					/* translators: %d: number of matching members found. */
+					'resultsFound' => __( '%d members found', 'wb-gamification' ),
+				),
+			)
+		);
 	}
 
 	/**
@@ -663,10 +693,11 @@ final class BadgeAdminPage {
 							// rule, so this is the ONLY way it ever lands on a member;
 							// an auto-award badge still accepts manual grants for one-off
 							// "give them this badge anyway" admin actions).
-							// Mirrors the wp_dropdown_users pattern already used by
-							// ManualAwardPage for the points-award form so admins see
-							// the same control across both surfaces. Closes Basecamp
-							// #9933208551.
+							// Uses the same searchable data-wb-gam-user-picker component as
+							// ManualAwardPage and KudosModerationPage so admins see one
+							// consistent control across all three surfaces -- see the
+							// enqueue_assets() comment above for why wp_dropdown_users()
+							// isn't it. Closes Basecamp #9933208551.
 							$wb_gam_awards_itself = \WBGam\Engine\BadgeRule::is_auto_award( $condition );
 							?>
 							<div class="wbgam-card wbgam-stack-block wbgam-mt-md">
@@ -699,16 +730,24 @@ final class BadgeAdminPage {
 													<label for="wb-gam-badge-award-user"><?php esc_html_e( 'User', 'wb-gamification' ); ?></label>
 												</th>
 												<td>
-													<?php
-													wp_dropdown_users(
-														array(
-															'name'              => 'user_id',
-															'id'                => 'wb-gam-badge-award-user',
-															'show_option_none'  => __( '- Select a user -', 'wb-gamification' ),
-															'option_none_value' => '0',
-														)
-													);
-													?>
+													<div data-wb-gam-user-picker>
+														<input
+															type="search"
+															id="wb-gam-badge-award-user-search"
+															class="regular-text"
+															autocomplete="off"
+															data-picker-search
+															placeholder="<?php esc_attr_e( 'Search by name, username or email...', 'wb-gamification' ); ?>"
+															aria-describedby="wb-gam-badge-award-user-status"
+														/>
+														<label for="wb-gam-badge-award-user" class="screen-reader-text">
+															<?php esc_html_e( 'Matching members', 'wb-gamification' ); ?>
+														</label>
+														<select name="user_id" id="wb-gam-badge-award-user" data-picker-select>
+															<option value="0"><?php esc_html_e( 'Type at least 2 characters to search', 'wb-gamification' ); ?></option>
+														</select>
+														<p id="wb-gam-badge-award-user-status" class="description" aria-live="polite" data-picker-status></p>
+													</div>
 													<p class="description"><?php esc_html_e( 'Member who will receive the badge.', 'wb-gamification' ); ?></p>
 												</td>
 											</tr>

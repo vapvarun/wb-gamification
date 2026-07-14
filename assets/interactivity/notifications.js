@@ -72,21 +72,17 @@ const { state, actions } = store( NS, {
 			// re-open an overlay the user just dismissed.
 			const seenOverlayIds = new Set();
 
-			// Move focus to an overlay's dismiss button once it renders, per
-			// the WAI-ARIA alertdialog pattern, so keyboard users land inside
-			// the dialog (they can also press Escape — see below). The overlay
-			// unhides reactively, so wait one frame for the DOM.
-			const focusOverlayDismiss = ( modifier ) => {
-				if ( typeof requestAnimationFrame !== 'function' ) {
-					return;
-				}
-				requestAnimationFrame( () => {
-					const btn = document.querySelector( '.' + modifier + ' .wb-gam-overlay__dismiss' );
-					if ( btn && typeof btn.focus === 'function' ) {
-						btn.focus();
-					}
-				} );
-			};
+			// NOTE: there used to be a focusOverlayDismiss() here that moved focus into
+			// the overlay's dismiss button on open, "per the WAI-ARIA alertdialog
+			// pattern". That pattern stopped applying the moment NotificationBridge::
+			// render() switched this overlay's markup from role="alertdialog"
+			// aria-modal="true" to role="status" aria-live="polite" (see the comment
+			// there) -- a level-up is an ANNOUNCEMENT, not a dialog, and is never
+			// focused. This function survived that markup change as dead code and kept
+			// yanking keyboard focus into an aria-live region on every level-up/streak
+			// toast, which is exactly the trap the markup change was written to remove.
+			// Removed rather than fixed forward: there is nothing left for this store to
+			// do on open besides flip `active` to true.
 
 			/**
 			 * Open the matching overlay for one event. Returns true if
@@ -127,7 +123,6 @@ const { state, actions } = store( NS, {
 						// NOTIFICATIONS-2026-05-27.md §G10.
 						levelName: event.levelName || event.message || event.detail || ( state.i18n && state.i18n.levelUp ) || 'Level up!',
 					};
-						focusOverlayDismiss( 'wb-gam-overlay--level-up' );
 				} else {
 					const days =
 						event.days
@@ -139,7 +134,6 @@ const { state, actions } = store( NS, {
 						active: true,
 						days:   String( days ),
 					};
-						focusOverlayDismiss( 'wb-gam-overlay--streak' );
 				}
 				return true;
 			}

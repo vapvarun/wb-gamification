@@ -365,7 +365,7 @@ final class GamiPressImporter {
 			// $ours`, a check that could never fail. Proven: 2 seeded
 			// achievements, one award blocked, reconciliation still reported
 			// clean. A DB read survives deactivation; the PHP API does not.
-			$own                    = self::gamipress_achievement_count_from_db( $uid );
+			$own                   = self::gamipress_achievement_count_from_db( $uid );
 			$ach_reconcile[ $uid ] = array(
 				'imported_achievements'  => (int) $ours,
 				// Never fabricate agreement: when the source truth genuinely
