@@ -594,8 +594,10 @@ final class Privacy {
 		// anyone remembers this file exists.
 		$covered = array( 'wb_gam_points', 'wb_gam_events', 'wb_gam_streaks', 'wb_gam_user_badges', 'wb_gam_submissions', 'wb_gam_member_prefs' );
 
-		foreach ( MemberData::export_rows( $user_id ) as $table => $rows ) {
-			if ( in_array( $table, $covered, true ) || ! $rows ) {
+		// Pass $covered IN, rather than filtering the result. The list is the same either way; the
+		// difference is whether we read 50,000 ledger rows into memory before discarding them.
+		foreach ( MemberData::export_rows( $user_id, $covered ) as $table => $rows ) {
+			if ( ! $rows ) {
 				continue;
 			}
 

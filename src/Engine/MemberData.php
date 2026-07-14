@@ -313,7 +313,7 @@ final class MemberData {
 	 * @param int $user_id Member.
 	 * @return array<string, array<int, array<string,mixed>>> Table (unprefixed) => rows.
 	 */
-	public static function export_rows( int $user_id ): array {
+	public static function export_rows( int $user_id, array $skip = array() ): array {
 		global $wpdb;
 
 		if ( $user_id <= 0 ) {
@@ -324,6 +324,25 @@ final class MemberData {
 
 		foreach ( self::member_tables() as $table => $cols ) {
 			$short = str_replace( $wpdb->prefix, '', $table );
+
+			// Tables the CALLER already exports itself, paged.
+			//
+			// This is the whole fix, and the bug it closes is one I wrote. Privacy::export_user_data()
+			// pages wb_gam_points and wb_gam_events deliberately -- a member with 50k ledger rows will
+			// exhaust the memory limit if you read them in one go, which is exactly why the exporter
+			// was given a $page in the first place. Then it called this catch-all, which SELECTed every
+			// member table including those two, unbounded... and threw the result away afterwards
+			// because its own $covered list said they were already handled.
+			//
+			// So the paging was real and the memory blow-up was real at the same time: we loaded all
+			// 50,000 rows into PHP on every single export page, purely to discard them. The skip has to
+			// happen at the QUERY, not at the array.
+			//
+			// What is left after the skip is per-member small (kudos, redemptions, submissions, cohort
+			// membership, the capped notification queue) -- hundreds of rows, not tens of thousands.
+			if ( in_array( $short, $skip, true ) ) {
+				continue;
+			}
 
 			foreach ( $cols['owned'] as $column ) {
 				$rows = (array) $wpdb->get_results(

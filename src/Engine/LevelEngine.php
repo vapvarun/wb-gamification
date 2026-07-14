@@ -186,12 +186,30 @@ final class LevelEngine {
 	 * @param int $user_id User to check.
 	 */
 	public static function maybe_level_up( int $user_id ): void {
+		// READ THE OLD LEVEL FIRST. The order of these two lines is the whole function.
+		//
+		// get_level_for_user() does not just compute a level -- it SELF-HEALS the user_meta cache as a
+		// side effect, writing the freshly computed level into `wb_gam_level_id` whenever it finds a
+		// mismatch (see the long comment there; it was added so a level read is always right even when
+		// points arrived by a non-engine path).
+		//
+		// This function used to call it first and read the meta second. So the "old" level it compared
+		// against had already been overwritten with the NEW one, the comparison below was always true,
+		// and it always returned early.
+		//
+		// `wb_gam_level_changed` therefore could not fire. For anyone. Ever. And with it went every
+		// listener downstream: the level-up toast, the level-up email, the level_changed webhook, the
+		// `level_reached` badge condition, and the site-first badges that hung off it. A member could
+		// climb from Newcomer to Expert and the plugin would say nothing, because the thing that
+		// detects the climb had already quietly agreed they were always there.
+		//
+		// The self-heal is right and stays. It just cannot run before we have looked.
+		$current_level_id = (int) get_user_meta( $user_id, 'wb_gam_level_id', true );
+
 		$new_level = self::get_level_for_user( $user_id );
 		if ( ! $new_level ) {
 			return;
 		}
-
-		$current_level_id = (int) get_user_meta( $user_id, 'wb_gam_level_id', true );
 
 		if ( $new_level['id'] === $current_level_id ) {
 			return; // No change.

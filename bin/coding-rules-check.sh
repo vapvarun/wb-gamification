@@ -311,12 +311,17 @@ check_privacy_coverage_for_user_scoped_surfaces() {
     fi
 
     # The erase path must go through the schema-driven purge, not a hand-list.
-    if ! grep -q 'MemberData::purge( $user_id )' "$privacy_file"; then
+    # Match the CALL, not one exact spelling of its arguments. The first version of this rule
+    # grepped for the literal 'MemberData::export_rows( $user_id )', so the moment the catch-all
+    # grew a second argument (the skip list, which is what stopped it reading 50k ledger rows into
+    # memory) the gate failed a change that made the thing it guards STRICTLY better. A gate that
+    # fires on an argument is checking the spelling, not the wiring.
+    if ! grep -qE 'MemberData::purge\( *\$user_id' "$privacy_file"; then
         missing="${missing}    erase_user_data() must call MemberData::purge() — a hand-listed set of tables is what leaked.\n"
     fi
 
     # The export must have the schema-driven catch-all, so it cannot omit a table either.
-    if ! grep -q 'MemberData::export_rows( $user_id )' "$privacy_file"; then
+    if ! grep -qE 'MemberData::export_rows\( *\$user_id' "$privacy_file"; then
         missing="${missing}    export_user_data() must append MemberData::export_rows() — the curated groups omitted 7 tables.\n"
     fi
 

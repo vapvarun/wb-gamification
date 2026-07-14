@@ -61,6 +61,22 @@ final class LeaderboardEngine {
 	public const AS_GROUP = 'wb_gam_leaderboard';
 
 	/**
+	 * Extra candidate rows fetched inside the derived table, so orphans cannot shorten a board.
+	 *
+	 * A totals row whose member has been deleted is still picked by the inner LIMIT and then dropped
+	 * by the JOIN to wp_users -- so without this, a board asked for 10 quietly renders 8, and the
+	 * members who should have been 9th and 10th never appear.
+	 *
+	 * 25 is chosen against the real failure: orphans are transient (deleted_user purges a member's
+	 * totals now, and `wp wb-gamification member purge-orphans` clears the historical ones), so the
+	 * buffer only has to absorb the handful that can accumulate between a deletion and a cleanup. It
+	 * is not a substitute for having no orphans; it is what stops a board lying while some exist.
+	 *
+	 * @var int
+	 */
+	private const ORPHAN_OVERFETCH = 25;
+
+	/**
 	 * Initialize cron hooks and arm the recurring snapshot.
 	 *
 	 * Called from plugins_loaded via FeatureFlags or directly.
@@ -358,6 +374,11 @@ final class LeaderboardEngine {
 			if ( ! empty( $scope_ids ) ) {
 				$where_values = array_merge( $where_values, $scope_ids );
 			}
+
+			// The INNER limit: over-fetch, so orphaned totals rows (a member deleted, their totals row
+			// left behind) cannot shorten the board when the JOIN drops them. The OUTER limit is
+			// appended below, shared with the ledger path, and cuts the survivors back to $limit.
+			$where_values[] = $limit + self::ORPHAN_OVERFETCH;
 		} else {
 			// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 			$query = "
@@ -954,6 +975,30 @@ final class LeaderboardEngine {
 		// The top-N is selected from the totals table ALONE, in a derived table, BEFORE the users
 		// join -- joining wp_users up front makes the optimiser drive from wp_users and forces a
 		// temporary + filesort over every member.
+		// TWO limits, and the difference between them is the bug this fixes.
+		//
+		// The inner LIMIT lives inside the derived table, and that is the whole optimisation: take the
+		// top rows off the indexed totals table FIRST, then join wp_users, so the optimiser never
+		// drives from wp_users. Joining wp_users up front makes it drive from there and forces a
+		// temporary + filesort over every member on the site.
+		//
+		// But the inner LIMIT picks its N before anything has checked those members still EXIST. A
+		// totals row whose member was deleted is chosen into the N, and the JOIN below silently drops
+		// it -- so a board asked for 10 renders 8, and the members who should have been 9th and 10th
+		// never appear. Orphan rows eat leaderboard slots. (Not hypothetical: this site is carrying 174
+		// orphaned totals rows right now.)
+		//
+		// The obvious fix -- an EXISTS against wp_users inside the subquery -- is the one I tried first,
+		// and EXPLAIN showed it hands the optimiser exactly the wp_users-driven plan the derived table
+		// exists to avoid (type=index on wp_users, Using temporary, Using filesort). Correct board,
+		// ruined plan. Not a trade worth making at 100k members.
+		//
+		// So: over-fetch inside, trim outside. The inner LIMIT takes a buffer of extra candidates off
+		// the indexed table (still totals-driven, still no filesort), the JOIN drops any orphans among
+		// them, and the OUTER LIMIT cuts the survivors back to exactly what was asked for. A board of N
+		// is a board of N as long as fewer than BUFFER of the top rows are orphans -- and orphans are
+		// meant to be transient anyway (deleted_user purges them now; `wp wb-gamification member
+		// purge-orphans` clears the historical ones).
 		return "
 			SELECT t.user_id,
 			       t.total_points,
@@ -970,6 +1015,7 @@ final class LeaderboardEngine {
 			       ) t
 			  JOIN {$users_table} u ON u.ID = t.user_id
 			 ORDER BY t.total_points DESC
+			 LIMIT %d
 		";
 	}
 
