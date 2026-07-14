@@ -142,7 +142,17 @@ final class LevelEngine {
 	 * @param string   $icon_url   Optional icon URL.
 	 * @return int
 	 */
-	public static function upsert_level( string $name, int $min_points, ?int $sort_order = null, string $icon_url = '' ): int {
+	public static function upsert_level( string $name, int $min_points, ?int $sort_order = null, string $icon_url = '', ?bool &$created = null ): int {
+		// $created tells the caller which half of "upsert" actually happened, and it exists because a
+		// caller could not tell.
+		//
+		// This returns an id > 0 whether it INSERTED a level or merely FOUND one with the same name.
+		// The importers counted any id > 0 as "created", so re-running an import reported
+		// `levels_created: 1` while the database gained nothing -- the owner was told their migration
+		// had built something it had not. A number in an import report is a promise about the state of
+		// their data; it has to be true on the second run as well as the first.
+		$created = false;
+
 		$name = trim( $name );
 		if ( '' === $name ) {
 			return 0;
@@ -156,6 +166,8 @@ final class LevelEngine {
 		if ( $existing > 0 ) {
 			return $existing;
 		}
+
+		$created = true;
 
 		if ( null === $sort_order ) {
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared

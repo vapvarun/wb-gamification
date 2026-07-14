@@ -322,7 +322,12 @@ final class BadgeOSImporter {
 				}
 			}
 			foreach ( $ranks as $r ) {
-				if ( \WBGam\Engine\LevelEngine::upsert_level( $r['name'], $r['min_points'], $r['order'] ) > 0 ) {
+				// Count what was CREATED, not what was found. upsert_level() returns an id either way, so
+				// counting `> 0` reported levels the import had not built -- on a re-run it claimed
+				// `levels_created: 1` while the database gained nothing.
+				$level_created = false;
+				\WBGam\Engine\LevelEngine::upsert_level( $r['name'], $r['min_points'], $r['order'], '', $level_created );
+				if ( $level_created ) {
 					++$levels_made;
 				}
 			}
