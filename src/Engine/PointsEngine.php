@@ -444,12 +444,26 @@ final class PointsEngine {
 			$type = self::resolve_type( $event->metadata['point_type'] ?? null );
 		}
 
-		// Imported ledger rows keep their historical occurred-at (UTC) so
-		// "points this month" and streak windows reflect the real timeline;
-		// organic awards keep the site-local "now" they have always used.
+		// ONE CLOCK for this column, whoever writes it.
+		//
+		// An imported row keeps its historical occurred-at -- that part was right, and it is why
+		// "points this month" and streak windows reflect the real timeline rather than the import date.
+		// But it was written in UTC while an organic award is written with current_time('mysql'), which
+		// is site-local. One column, two clocks, in the core ledger -- the same defect just fixed for
+		// earned_at in the badge importers, left standing here.
+		//
+		// EVERY reader bounds this column in the site's clock (Clock::site_cutoff, site_day_start), so a
+		// UTC stamp lands in the wrong day. Measured on Los Angeles: a point imported for site-local
+		// 18:30 Tuesday was stored as 2026-07-15 01:30 -- a DIFFERENT DAY. It escaped that day's cap,
+		// fell into the wrong ISO week for get_week_count(), and rendered under a future date. On a site
+		// ahead of UTC it lands in the past instead.
+		//
+		// $event->created_at is ISO-8601 (Engine converts it), so strtotime() yields a TRUE epoch, and
+		// wp_date() renders a true epoch in the site's zone -- exactly once. Same fix as
+		// MyCredImporter. The gate cannot see this one: it is a WRITE, not a comparison.
 		if ( ! empty( $event->metadata['_import'] ) ) {
 			$ts         = strtotime( (string) $event->created_at );
-			$created_at = false !== $ts ? gmdate( 'Y-m-d H:i:s', $ts ) : gmdate( 'Y-m-d H:i:s' );
+			$created_at = false !== $ts ? wp_date( 'Y-m-d H:i:s', $ts ) : current_time( 'mysql' );
 		} else {
 			$created_at = current_time( 'mysql' );
 		}

@@ -168,7 +168,7 @@ foreach ( $wb_gam_rows as $wb_gam_row ) {
  * Format a day key into the displayed header label.
  *
  * @param string             $day_key YYYY-MM-DD.
- * @param DateTimeImmutable  $dt      Sample timestamp inside the day (for date_i18n).
+ * @param DateTimeImmutable  $dt      Sample timestamp inside the day (its epoch feeds wp_date()).
  * @return string
  */
 $wb_gam_day_label = static function ( string $day_key, DateTimeImmutable $dt ) use ( $wb_gam_today, $wb_gam_yest ): string {
@@ -179,11 +179,21 @@ $wb_gam_day_label = static function ( string $day_key, DateTimeImmutable $dt ) u
 		return __( 'Yesterday', 'wb-gamification' );
 	}
 	$age_days = (int) ( ( time() - $dt->getTimestamp() ) / DAY_IN_SECONDS );
+
+	// wp_date(), NOT date_i18n(), because $dt->getTimestamp() is a TRUE epoch.
+	//
+	// The two are not interchangeable. date_i18n() expects a timestamp that ALREADY has the site offset
+	// baked in (the pseudo-epoch strtotime() makes from a naive local string) and applies the offset
+	// AGAIN to whatever it is handed. wp_date() takes a true epoch and applies the zone exactly once.
+	//
+	// Fixing the day KEY to use a real epoch therefore broke the day HEADER: on a UTC-7 site every row
+	// after 17:00 local was headed with the NEXT day, so the header contradicted the group it was
+	// heading. A row at 2026-07-14 20:00 local, grouped under 2026-07-14, was headed "Wednesday, Jul 15".
 	if ( $age_days < 7 ) {
 		// Show weekday + date for recent: "Sat, May 24".
-		return date_i18n( __( 'l, M j', 'wb-gamification' ), $dt->getTimestamp() );
+		return wp_date( __( 'l, M j', 'wb-gamification' ), $dt->getTimestamp() );
 	}
-	return date_i18n( get_option( 'date_format' ) ?: 'M j, Y', $dt->getTimestamp() );
+	return wp_date( get_option( 'date_format' ) ?: 'M j, Y', $dt->getTimestamp() );
 };
 
 $wb_gam_wrapper = get_block_wrapper_attributes(

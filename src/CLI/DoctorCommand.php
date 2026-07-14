@@ -859,15 +859,22 @@ class DoctorCommand {
 			$got      = count( (array) $rows );
 
 			if ( $got !== $expected ) {
+				// The message has to describe what actually happened. The first version said "SHORT" in
+				// both directions, so when the board returned one row MORE than the oracle expected it
+				// sent the operator hunting orphans that did not exist. A gate that misdescribes its own
+				// finding is a gate people learn to distrust.
 				$this->fail(
 					sprintf(
-						'Leaderboard SHORT - %s: %d rows for a board of %d, but %d members are eligible (expected %d). '
-							. 'Orphaned rows, an opted-out member, or an excluded role is eating slots.',
+						'Leaderboard %s - %s: %d rows for a board of %d, but %d members are eligible (expected %d). %s',
+						$got < $expected ? 'SHORT' : 'OVER-FULL',
 						$label,
 						$got,
 						$limit,
 						$eligible,
-						$expected
+						$expected,
+						$got < $expected
+							? 'Orphaned rows, an opted-out member, or an excluded role is eating slots.'
+							: 'The board is ranking members the eligibility rules say it should not.'
 					)
 				);
 				++$failed;

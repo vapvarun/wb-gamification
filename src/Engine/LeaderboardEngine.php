@@ -262,7 +262,10 @@ final class LeaderboardEngine {
 		$period_start = self::get_period_start( $period );
 		// true = existence is enforced by this query's own JOIN to wp_users.
 		[ $opt_out_clause, $opt_out_values ] = self::exclusion_sql( 'p', true );
-		$scope_ids                           = self::resolve_scope( $scope_type, $scope_id );
+
+		// The FOURTH predicate. Every path that ranks members must ask it, and ask it the same way.
+		$balance_sum = self::positive_balance_sql( 'SUM(p.points)' );
+		$scope_ids   = self::resolve_scope( $scope_type, $scope_id );
 
 		// A scope that resolves to NOBODY means nobody -- it does not mean everybody.
 		//
@@ -410,6 +413,7 @@ final class LeaderboardEngine {
 				  {$opt_out_clause}
 				  {$scope_clause}
 				 GROUP BY p.user_id
+				HAVING {$balance_sum}
 				 ORDER BY total_points DESC, p.user_id DESC
 				 LIMIT %d
 			";
@@ -641,7 +645,12 @@ final class LeaderboardEngine {
 				// that knows what "eligible" means. No second argument: this query has no JOIN to
 				// wp_users, so it wants the existence check too.
 				[ $snap_excl_sql, $snap_excl_values ] = self::exclusion_sql( 'p' );
-				$where                               .= $snap_excl_values
+
+				// The FOURTH predicate -- the one the last fix left behind. Without it the writer stored
+				// zero-balance members (rank 155, 0 points) that totals_board drops, so a member who spent
+				// their points in the rewards store was ON the warm board and OFF the stale one.
+				$balance_sum = self::positive_balance_sql( 'SUM(p.points)' );
+				$where      .= $snap_excl_values
 					? $wpdb->prepare( $snap_excl_sql, $snap_excl_values ) // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 					: $snap_excl_sql;
 
@@ -689,6 +698,7 @@ final class LeaderboardEngine {
 					   FROM {$points_table} p
 					   {$where}
 					  GROUP BY p.user_id
+					 HAVING {$balance_sum}
 					  ORDER BY total_points DESC, p.user_id DESC
 					  LIMIT 500
 					ON DUPLICATE KEY UPDATE
@@ -796,7 +806,20 @@ final class LeaderboardEngine {
 				   FROM {$cache_table} c
 				   JOIN {$wpdb->users} u ON u.ID = c.user_id
 				  WHERE c.period = %s AND c.point_type = %s {$opt_out_clause}
-				  ORDER BY c.total_points DESC, c.user_id DESC
+				  -- Deterministic, and that costs a filesort. Measured: ORDER BY `rank` alone is
+				  -- index-ordered (idx_type_period_rank, no filesort), and ANY tiebreaker introduces one,
+				  -- because user_id is not in that index. But RANK() gives tied members the SAME rank, so
+				  -- ordering by rank alone leaves LIMIT n to pick arbitrarily among the eleven members who
+				  -- all hold 91 points -- while the fallback breaks the tie deterministically. That is the
+				  -- membership flip this card is about, and no plan is worth reintroducing it.
+				  --
+				  -- The sort is over the snapshot, which the writer caps at 500 rows (295 here). A filesort
+				  -- over a few hundred cached rows is not a scale hazard; a board whose membership changes
+				  -- when the cron runs is.
+				  --
+				  -- `rank` ASC is the same ordering as total_points DESC (RANK() is derived from it), so
+				  -- this matches the fallback exactly while keeping the index leading.
+				  ORDER BY c.`rank` ASC, c.user_id DESC
 				  LIMIT %d",
 				$query_values
 			),
@@ -1062,6 +1085,8 @@ final class LeaderboardEngine {
 		string $excl_clause,
 		string $scope_clause
 	): string {
+		$balance = self::positive_balance_sql( 'ut.total' );
+
 		// The candidates, and ONLY the candidates: the top rows of the indexed totals table, with no
 		// users join at all.
 		//
@@ -1093,7 +1118,7 @@ final class LeaderboardEngine {
 			SELECT ut.user_id, ut.total AS total_points
 			  FROM {$totals_table} ut
 			 WHERE ut.point_type = %s
-			   AND ut.total > 0
+			   AND {$balance}
 			  {$excl_clause}
 			  {$scope_clause}
 		  ORDER BY ut.total DESC, ut.user_id DESC
@@ -1207,6 +1232,38 @@ final class LeaderboardEngine {
 		}
 
 		return $survivors ? self::hydrate_rows( $survivors ) : array();
+	}
+
+	/**
+	 * The FOURTH eligibility predicate: a member needs a positive balance to be on a board.
+	 *
+	 * Three predicates were unified into exclusion_sql() -- exists, not opted out, not owner-excluded --
+	 * and this one was left behind, answered differently by every path that asked:
+	 *
+	 *   totals_board          AND ut.total > 0
+	 *   ledger board          (nothing)
+	 *   write_snapshot()      (nothing)
+	 *   the doctor's oracle   HAVING SUM(p.points) > 0
+	 *
+	 * So a member who spends their points to zero in the rewards store -- an ordinary, supported thing
+	 * to do -- was ON the warm board (the snapshot writer had no filter, so it stored them at 0 points)
+	 * and OFF the stale one (totals_board drops them). Membership flipped on the cron tick, which is the
+	 * bug this card was filed for, arriving through the one predicate the last fix did not unify. It
+	 * also turned the doctor RED on a healthy site, because the oracle asked the question two of the
+	 * three read paths were not asking.
+	 *
+	 * The answer is yes, a board is for people who have points: zero-balance members are not ranked.
+	 * What matters far more than which answer is that there is only ONE, and it lives here.
+	 *
+	 * It cannot go in exclusion_sql() because it is an AGGREGATE, and each path aggregates differently
+	 * (a materialised column, or a SUM). So this returns the comparison for whatever expression the
+	 * caller aggregates with, and every caller uses it.
+	 *
+	 * @param string $expr The path's balance expression, e.g. `ut.total` or `SUM(p.points)`.
+	 * @return string SQL fragment, e.g. `ut.total > 0`.
+	 */
+	private static function positive_balance_sql( string $expr ): string {
+		return $expr . ' > 0';
 	}
 
 	private static function exclusion_sql( string $alias, bool $existence_enforced_elsewhere = false ): array {
