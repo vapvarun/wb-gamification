@@ -259,8 +259,9 @@ final class LeaderboardEngine {
 		}
 
 		// ── Full query fallback ───────────────────────────────────────────────
-		$period_start                        = self::get_period_start( $period );
-		[ $opt_out_clause, $opt_out_values ] = self::exclusion_sql( 'p' );
+		$period_start = self::get_period_start( $period );
+		// true = existence is enforced by this query's own JOIN to wp_users.
+		[ $opt_out_clause, $opt_out_values ] = self::exclusion_sql( 'p', true );
 		$scope_ids                           = self::resolve_scope( $scope_type, $scope_id );
 
 		// A scope that resolves to NOBODY means nobody -- it does not mean everybody.
@@ -354,7 +355,8 @@ final class LeaderboardEngine {
 			//
 			// A fragment that carries an alias must be given the alias it is composing against.
 			// Rewriting SQL with string search-and-replace is not a way to change an alias.
-			[ $totals_excl_clause, $totals_excl_values ] = self::exclusion_sql( 'ut' );
+			// true = existence is checked in PHP by totals_board(); an EXISTS here wrecks the plan.
+			[ $totals_excl_clause, $totals_excl_values ] = self::exclusion_sql( 'ut', true );
 
 			$totals_scope_clause = empty( $scope_ids )
 				? ''
@@ -624,10 +626,24 @@ final class LeaderboardEngine {
 
 		foreach ( $currencies as $slug ) {
 			foreach ( $periods as $period_key => $period_start ) {
-				$where = $wpdb->prepare( 'WHERE point_type = %s', $slug );
+				// The table is aliased `p` so it can take the SAME eligibility fragment every other
+				// path takes. It could not before, which is how it ended up with the existence half and
+				// not the exclusion half: a member who had opted out was still written into the
+				// snapshot, and RANK() still counted them, so snapshot_standing() served a rank the
+				// fallback disagreed with. One opt-out was enough to make the two paths differ for 153
+				// of 154 members.
+				$where = $wpdb->prepare( 'WHERE p.point_type = %s', $slug );
 				if ( null !== $period_start ) {
-					$where .= $wpdb->prepare( ' AND created_at >= %s', $period_start );
+					$where .= $wpdb->prepare( ' AND p.created_at >= %s', $period_start );
 				}
+
+				// Existence + opt-out + owner-excluded users/roles, in one fragment, from the one place
+				// that knows what "eligible" means. No second argument: this query has no JOIN to
+				// wp_users, so it wants the existence check too.
+				[ $snap_excl_sql, $snap_excl_values ] = self::exclusion_sql( 'p' );
+				$where                               .= $snap_excl_values
+					? $wpdb->prepare( $snap_excl_sql, $snap_excl_values ) // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+					: $snap_excl_sql;
 
 				// UPSERT — insert new rows, update existing rows in place.
 				// The UNIQUE KEY (user_id, period, point_type) on the cache
@@ -655,9 +671,10 @@ final class LeaderboardEngine {
 				// them, a member's rank FLIPPED every time the cron rebuilt. Two paths wrong-but-consistent
 				// was less harmful than one path right; now both are right.
 				//
-				// EXISTS is safe here, unlike inside the totals derived table where it wrecks the plan:
-				// this query already aggregates the whole ledger, and the check is eq_ref on the users
-				// primary key.
+				// The eligibility fragment is in $where (see above) and carries all three predicates. It
+				// is safe in this query -- unlike inside the totals derived table, where an EXISTS wrecks
+				// the plan -- because this one already aggregates the whole ledger and the checks are
+				// eq_ref on primary keys.
 				//
 				// @clock-ok: updated_at is stamped NOW() (the DATABASE clock) and the staleness check
 				// that reads it compares against the database clock too -- see the note above the $where.
@@ -666,13 +683,12 @@ final class LeaderboardEngine {
 				$wpdb->query(
 					$wpdb->prepare(
 						"INSERT INTO {$cache_table} (user_id, period, point_type, total_points, `rank`, updated_at)
-					 SELECT user_id, %s AS period, %s AS point_type, SUM(points) AS total_points,
-					        RANK() OVER (ORDER BY SUM(points) DESC) AS `rank`,
+					 SELECT p.user_id, %s AS period, %s AS point_type, SUM(p.points) AS total_points,
+					        RANK() OVER (ORDER BY SUM(p.points) DESC) AS `rank`,
 					        NOW() AS updated_at
-					   FROM {$points_table}
+					   FROM {$points_table} p
 					   {$where}
-					     AND EXISTS ( SELECT 1 FROM {$wpdb->users} wu WHERE wu.ID = {$points_table}.user_id )
-					  GROUP BY user_id
+					  GROUP BY p.user_id
 					  ORDER BY total_points DESC
 					  LIMIT 500
 					ON DUPLICATE KEY UPDATE
@@ -717,8 +733,9 @@ final class LeaderboardEngine {
 	private static function read_from_snapshot( string $period, int $limit, string $point_type = 'points' ): ?array {
 		global $wpdb;
 
-		$cache_table                = $wpdb->prefix . 'wb_gam_leaderboard_cache';
-		[ $excl_sql, $excl_values ] = self::exclusion_sql( 'c' );
+		$cache_table = $wpdb->prefix . 'wb_gam_leaderboard_cache';
+		// true = existence is enforced by this query's own JOIN to wp_users.
+		[ $excl_sql, $excl_values ] = self::exclusion_sql( 'c', true );
 
 		// Check snapshot freshness — must be less than 10 minutes old AND
 		// not older than the most recent cache invalidation. The latter
@@ -1170,19 +1187,55 @@ final class LeaderboardEngine {
 		return $survivors ? self::hydrate_rows( $survivors ) : array();
 	}
 
-	private static function exclusion_sql( string $alias ): array {
+	private static function exclusion_sql( string $alias, bool $existence_enforced_elsewhere = false ): array {
 		global $wpdb;
+
+		$with_existence = ! $existence_enforced_elsewhere;
+
+		// WHO IS ELIGIBLE FOR A BOARD is one question, and it now has one answer.
+		//
+		// It used to have three, handed out separately: a member must EXIST, must not have OPTED OUT,
+		// and must not be an owner-EXCLUDED user or role. Every path that serves a board or a rank
+		// needs all three -- and each path collected them from a different place, so each path was free
+		// to have two of the three.
+		//
+		// That is the entire reason this bug has been fixed five times. Every round I added the
+		// predicate the last bounce named to the path the last bounce named, and the next round found
+		// the next path missing the next predicate. Most recently write_snapshot() got the existence
+		// check and never got the exclusion check -- so its RANK() column was computed over members the
+		// rest of the system excludes, snapshot_standing() served that rank verbatim, and one member
+		// opting out made the warm and stale paths disagree for 153 of 154 members.
+		//
+		// A caller can no longer take one and forget the other, because there is only one to take.
+		//
+		// It is safe BY DEFAULT: say nothing and you get all three. $existence_enforced_elsewhere is an
+		// opt-OUT, and a caller may only set it when its own query already guarantees the member exists:
+		//
+		// The ledger board and read_from_snapshot both JOIN wp_users, which enforces it. totals_board()
+		// checks it in PHP, because an EXISTS inside that derived table hands the optimiser a
+		// wp_users-driven filesort and destroys the plan the derived table exists to create
+		// (EXPLAIN-verified, twice).
+		//
+		// Anything else -- including any path written next year -- gets the existence check whether its
+		// author thought about it or not. That is the property that matters: the default is correct, and
+		// being wrong requires an explicit argument.
+		$sql    = '';
+		$values = array();
+
+		if ( $with_existence ) {
+			$sql .= ' AND EXISTS ( SELECT 1 FROM ' . $wpdb->users . ' wu WHERE wu.ID = ' . $alias . '.user_id )';
+		}
 
 		// Members who opted out. An anti-join, not a list: whether there are five opt-outs or
 		// fifty thousand, this fragment is the same length.
-		$sql = ' AND NOT EXISTS ( SELECT 1 FROM ' . $wpdb->prefix . 'wb_gam_member_prefs mp'
+		$sql .= ' AND NOT EXISTS ( SELECT 1 FROM ' . $wpdb->prefix . 'wb_gam_member_prefs mp'
 			. ' WHERE mp.user_id = ' . $alias . '.user_id AND mp.leaderboard_opt_out = 1 )';
 
 		// Owner-excluded accounts (Settings > Access): explicit ids stay a short IN(), and
 		// excluded ROLES become a predicate rather than an expanded id list.
-		[ $owner_sql, $values ] = PointsEngine::exclusion_sql( $alias );
+		[ $owner_sql, $owner_values ] = PointsEngine::exclusion_sql( $alias );
 
-		return array( $sql . $owner_sql, $values );
+		return array( $sql . $owner_sql, array_merge( $values, $owner_values ) );
 	}
 
 	/**
@@ -1242,7 +1295,6 @@ final class LeaderboardEngine {
 			SELECT user_id, SUM(points) AS total
 			  FROM {$wpdb->prefix}wb_gam_points p
 			 WHERE 1=1 {$where}
-			   AND EXISTS ( SELECT 1 FROM {$wpdb->users} u WHERE u.ID = p.user_id )
 			 GROUP BY p.user_id
 			HAVING total > %d
 		) ranked";
@@ -1299,7 +1351,6 @@ final class LeaderboardEngine {
 			SELECT user_id, SUM(points) AS total
 			  FROM {$wpdb->prefix}wb_gam_points p
 			 WHERE 1=1 {$where}
-			   AND EXISTS ( SELECT 1 FROM {$wpdb->users} u WHERE u.ID = p.user_id )
 			 GROUP BY p.user_id
 			HAVING total > %d
 		) ranked";
