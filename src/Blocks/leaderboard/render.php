@@ -147,9 +147,9 @@ BlockHooks::before( 'leaderboard', $wb_gam_attrs );
 	</div>
 
 	<?php if ( empty( $wb_gam_rows ) ) : ?>
-		<p class="wb-gam-leaderboard__empty">
-			<?php esc_html_e( 'No members on the leaderboard yet.', 'wb-gamification' ); ?>
-		</p>
+		<?php
+		echo \WBGam\Blocks\EmptyState::body( 'leaderboard', __( 'No members on the leaderboard yet.', 'wb-gamification' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped in EmptyState.
+		?>
 	<?php else : ?>
 		<ol class="wb-gam-leaderboard__list">
 			<?php

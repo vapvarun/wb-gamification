@@ -105,7 +105,9 @@ BlockHooks::before( 'kudos-feed', $wb_gam_attrs );
 	endif; ?>
 
 	<?php if ( empty( $wb_gam_kudos ) ) : ?>
-		<p class="wb-gam-kudos-feed__empty"><?php esc_html_e( 'No kudos given yet - be the first!', 'wb-gamification' ); ?></p>
+		<?php
+		echo \WBGam\Blocks\EmptyState::body( 'kudos-feed', __( 'No kudos given yet - be the first!', 'wb-gamification' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped in EmptyState.
+		?>
 	<?php else : ?>
 		<ul class="wb-gam-kudos-feed__list" role="list">
 			<?php foreach ( $wb_gam_kudos as $wb_gam_item ) :

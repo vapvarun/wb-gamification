@@ -204,7 +204,9 @@ BlockHooks::before(
 	</div>
 
 	<?php if ( empty( $wb_gam_items ) ) : ?>
-		<p class="wb-gam-redemption__empty"><?php echo esc_html( $wb_gam_empty ); ?></p>
+		<?php
+		echo \WBGam\Blocks\EmptyState::body( 'redemption', $wb_gam_empty ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped in EmptyState.
+		?>
 	<?php else : ?>
 		<ul class="wb-gam-redemption__grid" role="list">
 			<?php

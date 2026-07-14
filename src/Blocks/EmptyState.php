@@ -39,6 +39,44 @@ final class EmptyState {
 	 * @param array  $cta     Optional. `url` + `label` for a call to action.
 	 * @return string The empty-state HTML.
 	 */
+	public static function body( string $block, string $message, string $icon = '' ): string {
+		// The empty state WITHOUT a wrapper, because half the blocks cannot use the wrappered one.
+		//
+		// render() below emits its own <div {wrapper}> and is right for a block whose empty state is
+		// the WHOLE output -- an early return. But six blocks (leaderboard, badge-showcase, kudos-feed,
+		// challenges, community-challenges, redemption-store) render a header first and then the empty
+		// state INSIDE that wrapper, so render() could not be used and they kept hand-rolling it.
+		//
+		// The result was that the shared partial went into the seven blocks that did not really need it
+		// and skipped the six the card was about -- the duplication it existed to kill survived exactly
+		// where it lived. A shared partial that does not fit the shape of the thing it is meant to
+		// share is not shared; it is a ninth copy.
+		//
+		// Markup is byte-identical to what each of the six emitted, icon included, so no CSS moves.
+		$class = 'wb-gam-' . $block . '__empty';
+
+		$inner = '' !== $icon
+			? $icon . '<span>' . esc_html( $message ) . '</span>'
+			: esc_html( $message );
+
+		$html = '<p class="' . esc_attr( $class ) . '">' . $inner . '</p>';
+
+		/** This filter is documented in src/Blocks/EmptyState.php -- see render(). */
+		return (string) apply_filters( "wb_gam_empty_state_{$block}", $html, $block, $message );
+	}
+
+	/**
+	 * Render the empty state for a block, wrapper and all.
+	 *
+	 * For a block whose empty state IS the whole output (an early return). If the block renders a
+	 * header first and then an empty body inside its own wrapper, use body() instead.
+	 *
+	 * @param string $block   Block slug, e.g. `points-history`.
+	 * @param string $wrapper The block wrapper attributes (already escaped).
+	 * @param string $message The message. Plain text; escaped here.
+	 * @param array  $cta     Optional. `url` + `label` for a call to action.
+	 * @return string The empty-state HTML.
+	 */
 	public static function render( string $block, string $wrapper, string $message, array $cta = array() ): string {
 		$class = 'wb-gam-' . $block . '__empty';
 
