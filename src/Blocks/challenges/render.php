@@ -167,10 +167,13 @@ BlockHooks::before( 'challenges', $wb_gam_attrs );
 ?>
 <div <?php echo $wb_gam_wrapper; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>>
 	<?php if ( empty( $wb_gam_challenges ) ) : ?>
-		<div class="wb-gam-challenges__empty">
-			<?php echo \WBGam\Admin\Icon::svg( 'flag', array( 'size' => 28, 'class' => 'wb-gam-challenges__empty-icon' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
-			<p><?php esc_html_e( 'No active challenges right now. New ones appear when admins schedule them.', 'wb-gamification' ); ?></p>
-		</div>
+		<?php
+		echo \WBGam\Blocks\EmptyState::stacked( // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped in EmptyState.
+			'challenges',
+			__( 'No active challenges right now. New ones appear when admins schedule them.', 'wb-gamification' ),
+			\WBGam\Admin\Icon::svg( 'flag', array( 'size' => 28, 'class' => 'wb-gam-challenges__empty-icon' ) )
+		);
+		?>
 	<?php else : ?>
 		<ul class="wb-gam-challenges__list">
 			<?php foreach ( $wb_gam_challenges as $wb_gam_ch ) :

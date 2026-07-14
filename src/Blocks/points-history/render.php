@@ -182,10 +182,13 @@ BlockHooks::before( 'points-history', $wb_gam_attrs );
 ?>
 <div <?php echo $wb_gam_wrapper; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>>
 	<?php if ( empty( $wb_gam_rows ) ) : ?>
-		<div class="wb-gam-points-history__empty">
-			<?php echo \WBGam\Admin\Icon::svg( 'sparkles', array( 'size' => 28, 'class' => 'wb-gam-points-history__empty-icon' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
-			<p><?php esc_html_e( 'No point activity yet - earn your first points by participating in the community.', 'wb-gamification' ); ?></p>
-		</div>
+		<?php
+		echo \WBGam\Blocks\EmptyState::stacked( // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped in EmptyState.
+			'points-history',
+			__( 'No point activity yet - earn your first points by participating in the community.', 'wb-gamification' ),
+			\WBGam\Admin\Icon::svg( 'sparkles', array( 'size' => 28, 'class' => 'wb-gam-points-history__empty-icon' ) )
+		);
+		?>
 	<?php else : ?>
 		<?php foreach ( $wb_gam_grouped as $wb_gam_day => $wb_gam_group ) :
 			$wb_gam_total_parts = array();

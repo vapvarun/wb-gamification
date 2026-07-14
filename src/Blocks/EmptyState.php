@@ -66,6 +66,35 @@ final class EmptyState {
 	}
 
 	/**
+	 * The empty state as a STACKED card: icon above centred text, inside its own div.
+	 *
+	 * The third and last shape. `challenges` and `points-history` both render this -- icon on top, text
+	 * beneath, the whole thing a padded panel -- which is a different design from the inline row that
+	 * body() emits, and the reason I left them hand-rolled last time. That was the wrong call: two
+	 * blocks sharing a shape is not a special case, it is a shape, and leaving them out meant
+	 * `wb_gam_empty_state_challenges` and `wb_gam_empty_state_points-history` were filters that could
+	 * never fire. A filter nobody can use is worse than no filter -- it is a documented lie.
+	 *
+	 * Markup is byte-identical to what both blocks emitted, so no CSS moves.
+	 *
+	 * @param string $block   Block slug.
+	 * @param string $message The message. Plain text; escaped here.
+	 * @param string $icon    Pre-rendered icon SVG (already escaped by Icon::svg).
+	 * @return string The empty-state HTML, no block wrapper.
+	 */
+	public static function stacked( string $block, string $message, string $icon = '' ): string {
+		$class = 'wb-gam-' . $block . '__empty';
+
+		$html = '<div class="' . esc_attr( $class ) . '">'
+			. $icon
+			. '<p>' . esc_html( $message ) . '</p>'
+			. '</div>';
+
+		/** This filter is documented in src/Blocks/EmptyState.php -- see render(). */
+		return (string) apply_filters( "wb_gam_empty_state_{$block}", $html, $block, $message );
+	}
+
+	/**
 	 * Render the empty state for a block, wrapper and all.
 	 *
 	 * For a block whose empty state IS the whole output (an early return). If the block renders a

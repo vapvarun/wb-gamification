@@ -179,9 +179,9 @@ BlockHooks::before(
 	</div>
 
 	<?php if ( empty( $wb_gam_standings ) ) : ?>
-		<p class="wb-gam-cohort-rank__empty">
-			<?php esc_html_e( 'No standings available yet - your cohort will populate as members earn points this week.', 'wb-gamification' ); ?>
-		</p>
+		<?php
+		echo \WBGam\Blocks\EmptyState::body( 'cohort-rank', __( 'No standings available yet - your cohort will populate as members earn points this week.', 'wb-gamification' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped in EmptyState.
+		?>
 	<?php else : ?>
 		<ol class="wb-gam-cohort-rank__list" role="list">
 			<?php foreach ( $wb_gam_standings as $wb_gam_entry ) :
