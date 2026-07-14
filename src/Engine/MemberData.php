@@ -363,14 +363,14 @@ final class MemberData {
 				if ( $limit > 0 ) {
 					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 					$sql = $wpdb->prepare(
-						"SELECT * FROM `{$table}` WHERE `{$column}` = %d ORDER BY `{$order}` ASC LIMIT %d OFFSET %d",
+						"SELECT * FROM `{$table}` WHERE `{$column}` = %d ORDER BY {$order} ASC LIMIT %d OFFSET %d",
 						$user_id,
 						$limit,
 						$offset
 					);
 				} else {
 					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-					$sql = $wpdb->prepare( "SELECT * FROM `{$table}` WHERE `{$column}` = %d ORDER BY `{$order}` ASC", $user_id );
+					$sql = $wpdb->prepare( "SELECT * FROM `{$table}` WHERE `{$column}` = %d ORDER BY {$order} ASC", $user_id );
 				}
 
 				// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
@@ -386,26 +386,39 @@ final class MemberData {
 	}
 
 	/**
-	 * A column that gives this table a stable order for OFFSET paging.
+	 * An ORDER BY that gives this table a TOTAL order for OFFSET paging.
 	 *
-	 * `id` where the table has one, otherwise the column that ties the row to the member -- which
-	 * every table in this map has by definition, since that is how it got into the map.
+	 * `id` where the table has one. Where it does not, EVERY column -- not the owning column, which
+	 * was the first thing I reached for and is exactly wrong: in a single-member export `user_id` is a
+	 * constant, so `ORDER BY user_id` is no order at all. MySQL is then free to hand back the rows in a
+	 * different sequence on page 2 than it did on page 1, which drops some rows from the export and
+	 * repeats others -- the precise non-determinism the ORDER BY was added to prevent. A sort key that
+	 * is the same for every row you are sorting does not sort anything.
+	 *
+	 * Ordering by all columns is a total order over distinct rows, and two byte-identical rows are
+	 * interchangeable. Harmless here: the id-less tables hold a handful of rows per member.
 	 *
 	 * @param string                                 $table Fully-qualified table name.
 	 * @param array{owned: string[], refs: string[]} $cols  Owned / referencing columns.
-	 * @return string Column name, safe to interpolate (it came from SHOW COLUMNS, not from input).
+	 * @return string ORDER BY column list, safe to interpolate (it came from SHOW COLUMNS, not input).
 	 */
 	private static function order_column( string $table, array $cols ): string {
 		global $wpdb;
+
+		unset( $cols );
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$columns = (array) $wpdb->get_col( "SHOW COLUMNS FROM `{$table}`" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
 		if ( in_array( 'id', $columns, true ) ) {
-			return 'id';
+			return '`id`';
 		}
 
-		return (string) ( $cols['owned'][0] ?? 'user_id' );
+		if ( ! $columns ) {
+			return '1';
+		}
+
+		return '`' . implode( '`, `', array_map( 'strval', $columns ) ) . '`';
 	}
 
 	/**

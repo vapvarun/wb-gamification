@@ -644,10 +644,29 @@ final class Privacy {
 						__( 'Gamification — %s', 'wb-gamification' ),
 						str_replace( 'wb_gam_', '', $table )
 					),
-					// ABSOLUTE row index, not the per-page one. item_id must be unique across the whole
-					// export: with a per-page index, page 2's first kudos row carries the same id as
-					// page 1's and overwrites it in the archive. The ledger above already learned this.
-					'item_id'     => $table . '-' . ( $offset + $i ),
+					// Keyed on the ROW, not on a counter.
+					//
+					// item_id must be unique across the whole export -- WordPress keys archive entries by
+					// (group_id, item_id), so a repeated id does not duplicate a row, it OVERWRITES one.
+					// A GDPR export that silently omits data is the precise failure this card exists to
+					// prevent.
+					//
+					// A positional counter cannot deliver that, and my last attempt at one is the proof.
+					// `$offset + $i` is only the absolute row index if the table has ONE owning column.
+					// wb_gam_kudos is owned by two (giver_id AND receiver_id), and export_rows() merges
+					// the two result sets, so $i runs past the first column's rows into the second's --
+					// and the next page's giver rows then re-use the ids the previous page's receiver
+					// rows already emitted. Measured: a member with 600 given and 10 received kudos had
+					// ten of her received kudos overwritten by given ones in the ZIP.
+					//
+					// The row's own primary key has none of these problems: it is unique by definition,
+					// it does not care which column matched or which page it arrived on, and it survives
+					// any future change to the paging. Tables with no `id` fall back to a hash of the row
+					// itself -- stable across pages, and two byte-identical rows are interchangeable
+					// anyway.
+					'item_id'     => isset( $row['id'] )
+						? $table . '-' . (int) $row['id']
+						: $table . '-' . md5( (string) wp_json_encode( $row ) ),
 					'data'        => $items,
 				);
 			}
