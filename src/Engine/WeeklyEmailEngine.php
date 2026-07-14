@@ -89,6 +89,21 @@ final class WeeklyEmailEngine {
 	private const DISPATCH_LOCK_KEY = 'wb_gam_weekly_email_dispatching';
 	private const DISPATCH_LOCK_TTL = 3600;
 
+	/**
+	 * "Did we already send this week?" -- the window, and NOT the in-flight lock.
+	 *
+	 * Deliberately a different key from DISPATCH_LOCK_KEY, because the two have opposite lifetimes:
+	 * the lock must be released as soon as the chain drains, and this must survive exactly that. When
+	 * one key served both, dispatch_page() released it on the common path (an empty or short page --
+	 * i.e. every site under 500 members) and the window went with it, so an overdue cron re-fired the
+	 * whole send and members were emailed twice.
+	 *
+	 * Never deleted. It expires.
+	 *
+	 * @var string
+	 */
+	private const SENT_WINDOW_KEY = 'wb_gam_weekly_email_sent_window';
+
 	// ── Boot ────────────────────────────────────────────────────────────────────
 
 	/**
@@ -157,15 +172,39 @@ final class WeeklyEmailEngine {
 		// (2), so it cannot simply be swapped for a lock -- Lock::run() releases as soon as the
 		// callback returns, and the window would vanish with it.
 		//
-		// So: the database lock makes the check-and-set atomic, and the transient still carries
-		// the TTL window inside it.
+		// The line that used to be here said "the transient still carries the TTL window inside it".
+		// It did not, and members were emailed twice.
+		//
+		// ONE key was doing BOTH jobs, and the two have opposite lifetimes. As an in-flight lock it
+		// must be released the moment the chain drains -- and dispatch_page() duly deletes it when a
+		// page comes back empty or short. But "the chain drained" is the common path: it is EVERY site
+		// with fewer than 500 eligible members, and every large site at the end of its chain. So the
+		// 1-hour window was destroyed on essentially every run, and an overdue cron re-firing found
+		// nothing in its way and dispatched the whole send again.
+		//
+		// Two questions, two keys:
+		//   DISPATCH_LOCK_KEY  -- "is a chain running right now?"   Released when it finishes.
+		//   SENT_WINDOW_KEY    -- "did we already send this week?"  Left to EXPIRE. Never deleted.
+		//
+		// The database lock still makes the check-and-set atomic, so two crons firing on the same
+		// instant cannot both pass it.
 		$started = Lock::run(
 			self::DISPATCH_LOCK_KEY,
 			static function () {
+				// Already sent within the window -- an overdue cron, a manual re-run, a second
+				// scheduler. This is the guard that actually stops the duplicate email.
+				if ( get_transient( self::SENT_WINDOW_KEY ) ) {
+					return false;
+				}
+
+				// A chain is already in flight.
 				if ( get_transient( self::DISPATCH_LOCK_KEY ) ) {
 					return false;
 				}
+
+				set_transient( self::SENT_WINDOW_KEY, 1, self::DISPATCH_LOCK_TTL );
 				set_transient( self::DISPATCH_LOCK_KEY, 1, self::DISPATCH_LOCK_TTL );
+
 				return true;
 			},
 			false

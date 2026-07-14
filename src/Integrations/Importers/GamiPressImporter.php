@@ -357,23 +357,22 @@ final class GamiPressImporter {
 			$ours = $dry_run
 				? count( array_filter( $achievements, static fn ( $a ) => (int) $a['user_id'] === $uid ) )
 				: self::our_imported_badge_count( $uid );
-			// Filter GamiPress's getter to achievement types ONLY — unfiltered
-			// it also counts rank earnings, which we migrate as levels, not
-			// badges (that inflated the source count and hid a false match).
-			$own                   = function_exists( 'gamipress_get_user_achievements' )
-				? count(
-					(array) gamipress_get_user_achievements(
-						array(
-							'user_id'          => $uid,
-							'achievement_type' => self::achievement_type_slugs(),
-						)
-					)
-				)
-				: $ours;
+			// Read GamiPress's OWN table (`gamipress_user_earnings`) directly
+			// instead of `gamipress_get_user_achievements()`. The real migration
+			// scenario is the owner DEACTIVATING GamiPress before importing, so
+			// "the API is unavailable" is the NORMAL case, not an edge case --
+			// and falling back to `$ours` here made the comparison `$ours ===
+			// $ours`, a check that could never fail. Proven: 2 seeded
+			// achievements, one award blocked, reconciliation still reported
+			// clean. A DB read survives deactivation; the PHP API does not.
+			$own                    = self::gamipress_achievement_count_from_db( $uid );
 			$ach_reconcile[ $uid ] = array(
 				'imported_achievements'  => (int) $ours,
-				'gamipress_achievements' => (int) $own,
-				'match'                  => (int) $ours === (int) $own,
+				// Never fabricate agreement: when the source truth genuinely
+				// cannot be read (table gone / no achievement types registered
+				// at all), say so instead of guessing a number.
+				'gamipress_achievements' => null === $own ? 'unknown' : $own,
+				'match'                  => null !== $own && (int) $ours === $own,
 			);
 		}
 
@@ -481,6 +480,53 @@ final class GamiPressImporter {
 				'gamipress-achievement-%'
 			)
 		);
+	}
+
+	/**
+	 * A user's GamiPress achievement count, read directly from GamiPress's own
+	 * `gamipress_user_earnings` table rather than its PHP API.
+	 *
+	 * `gamipress_get_user_achievements()` is only callable while GamiPress is
+	 * active, but the whole point of this importer is migrating AWAY from
+	 * GamiPress -- the normal sequence is deactivate-then-import, not the other
+	 * way round. A source-of-truth that depends on the plugin being active
+	 * cannot do its job in the case it exists for. The table survives
+	 * deactivation, so read that instead.
+	 *
+	 * @param int $user_id User.
+	 * @return int|null Achievement count, or null when it genuinely cannot be
+	 *                   determined (table gone, or no achievement types
+	 *                   registered to filter by) -- callers must treat that as
+	 *                   UNKNOWN, never as a match.
+	 */
+	private static function gamipress_achievement_count_from_db( int $user_id ): ?int {
+		global $wpdb;
+
+		$table = $wpdb->prefix . 'gamipress_user_earnings';
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$exists = (bool) $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) );
+		if ( ! $exists ) {
+			return null;
+		}
+
+		// Filter to achievement types ONLY — unfiltered this table also holds
+		// rank earnings, which we migrate as levels, not badges (that would
+		// inflate the source count and hide a real mismatch).
+		$types = self::achievement_type_slugs();
+		if ( empty( $types ) ) {
+			return null;
+		}
+
+		$placeholders = implode( ',', array_fill( 0, count( $types ), '%s' ) );
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$count = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM {$table} WHERE user_id = %d AND post_type IN ($placeholders)",
+				$user_id,
+				...$types
+			)
+		);
+		return null === $count ? null : (int) $count;
 	}
 
 	/**

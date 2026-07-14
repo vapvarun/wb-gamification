@@ -251,7 +251,7 @@ final class KudosEngine {
 	}
 
 	/**
-	 * Count kudos sent by a user today (UTC day).
+	 * Count kudos sent by a user today (site-local day).
 	 *
 	 * @param int $giver_id User to check.
 	 * @return int
@@ -265,7 +265,14 @@ final class KudosEngine {
 				  WHERE giver_id = %d
 				    AND created_at >= %s",
 				$giver_id,
-				gmdate( 'Y-m-d' ) . ' 00:00:00'
+				// The boundary MUST be expressed in the same clock the column is written
+				// in. `created_at` is stored with current_time( 'mysql' ) — site-local.
+				// This compared it against gmdate( 'Y-m-d' ) — a UTC day boundary. On a
+				// site BEHIND UTC (e.g. America/Los_Angeles at 23:39 local), "today" in
+				// UTC is already tomorrow, so every kudos sent today landed before that
+				// boundary and the COUNT came back 0 — the daily limit was never
+				// enforced. Sibling bug to has_recent_kudos_to_receiver() below; same fix.
+				gmdate( 'Y-m-d', strtotime( current_time( 'mysql' ) ) ) . ' 00:00:00'
 			)
 		);
 	}

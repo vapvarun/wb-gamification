@@ -60,17 +60,49 @@ final class BadgeOSImporter {
 	}
 
 	/**
-	 * Achievement-type slugs (excludes the structural `step` type).
+	 * Achievement-type slugs (excludes the structural `step` type), read from
+	 * BadgeOS's own `badgeos_achievements` table rather than
+	 * `badgeos_get_achievement_types_slugs()`.
+	 *
+	 * The real migration scenario is the owner DEACTIVATING BadgeOS before
+	 * running the import, so the PHP API being unavailable is the NORMAL case,
+	 * not an edge case. The old code returned `[]` whenever the function was
+	 * missing, `build_achievements()` bailed on an empty list, and every
+	 * earned achievement was dropped SILENTLY while the import still reported
+	 * success. Proven: 2 seeded points rows + 2 seeded earned achievements,
+	 * BadgeOS not installed -> import returned success, points landed,
+	 * achievements vanished with nothing to explain why.
+	 *
+	 * `DISTINCT post_type` on the achievements table needs no plugin code at
+	 * all, so it works identically whether BadgeOS is active, deactivated, or
+	 * fully removed (as long as its tables are still there — see the loud
+	 * failure below for when they are not).
 	 *
 	 * @return string[]
+	 * @throws \RuntimeException When the achievements table itself is missing,
+	 *                            so the caller cannot mistake "genuinely no
+	 *                            achievement types" for "data unreadable".
 	 */
 	private static function achievement_type_slugs(): array {
-		if ( function_exists( 'badgeos_get_achievement_types_slugs' ) ) {
-			$slugs = (array) badgeos_get_achievement_types_slugs();
-		} else {
-			$slugs = array();
+		global $wpdb;
+
+		$table = $wpdb->prefix . 'badgeos_achievements';
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$exists = (bool) $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) );
+		if ( ! $exists ) {
+			// The table itself is gone (e.g. BadgeOS fully uninstalled with its
+			// tables dropped). We cannot tell "no achievements were ever
+			// earned" from "the data existed but is now unreachable" — that
+			// ambiguity is exactly what let achievements disappear silently
+			// before, so surface it as a hard failure instead of a quiet [].
+			throw new \RuntimeException(
+				"BadgeOS achievements table ({$table}) not found — achievement types cannot be determined, achievements were NOT imported."
+			);
 		}
-		return array_values( array_filter( $slugs, static fn ( $s ) => 'step' !== $s ) );
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$types = (array) $wpdb->get_col( "SELECT DISTINCT post_type FROM {$table} WHERE post_type <> '' AND post_type <> 'step'" );
+		return array_values( array_filter( array_map( 'strval', $types ) ) );
 	}
 
 	/**

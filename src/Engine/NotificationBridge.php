@@ -376,25 +376,37 @@ final class NotificationBridge {
 		$pt_record  = $pt_service->get( $wb_gam_point_type ) ?: $pt_service->get( $pt_service->default_slug() );
 		$label      = (string) ( $pt_record['label'] ?? __( 'points', 'wb-gamification' ) );
 
-		self::push(
-			$user_id,
-			array(
-				'type'    => 'points',
-				'points'  => $points,
-				// action_id travels to the client so toast.js only merges
-				// repeats of the SAME action (e.g. "Leave a comment x2") and
-				// keeps distinct actions as separate, individually-labeled
-				// toasts instead of a meaningless "+N points (M actions)".
-				'action'  => $event->action_id,
-				'message' => sprintf(
-					/* translators: 1: signed point delta, 2: currency label. */
-					__( '+%1$d %2$s', 'wb-gamification' ),
-					$points,
-					$label
-				),
-				'detail'  => self::resolve_award_detail( $event ),
-			)
+		$payload = array(
+			'type'    => 'points',
+			'points'  => $points,
+			// action_id travels to the client so toast.js only merges
+			// repeats of the SAME action (e.g. "Leave a comment x2") and
+			// keeps distinct actions as separate, individually-labeled
+			// toasts instead of a meaningless "+N points (M actions)".
+			'action'  => $event->action_id,
+			'message' => sprintf(
+				/* translators: 1: signed point delta, 2: currency label. */
+				__( '+%1$d %2$s', 'wb-gamification' ),
+				$points,
+				$label
+			),
+			'detail'  => self::resolve_award_detail( $event ),
 		);
+
+		// A kudos exchange queues THREE toasts for one kudos: this points toast (for
+		// both the giver and the receiver -- KudosEngine::record_kudos() fires
+		// wb_gam_points_awarded twice, once per side) plus the "Someone gave you
+		// kudos!" toast from on_kudos_given() below. KudosEngine stamps the kudos row
+		// id onto object_id for both award events, so stamp it onto the payload too --
+		// otherwise a moderator's revoke can only find and retract the kudos toast
+		// (matched by its own kudos_id) and these two points toasts are stranded,
+		// telling the giver/receiver they still have points that were just clawed
+		// back. See on_kudos_revoked().
+		if ( in_array( $event->action_id, array( 'give_kudos', 'receive_kudos' ), true ) && $event->object_id > 0 ) {
+			$payload['kudos_id'] = $event->object_id;
+		}
+
+		self::push( $user_id, $payload );
 	}
 
 	/**
