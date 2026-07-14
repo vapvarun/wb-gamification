@@ -98,6 +98,15 @@
 	function renderResult( container, result ) {
 		clear( container );
 
+		// Warnings go FIRST and stay visible. An import can succeed at what it could reach and still
+		// have missed half the source (BadgeOS uninstalled and dropped its achievements table, say).
+		// The whole point of the server saying so is that the owner reads it before they believe the
+		// migration is done, so it cannot sit below three reconciliation tables.
+		var warnings = result.warnings || [];
+		for ( var w = 0; w < warnings.length; w++ ) {
+			container.appendChild( el( 'p', 'wb-gam-import__warning', warnings[ w ] ) );
+		}
+
 		var points = recTable( i18n.points || 'Points', result.reconciliation, [
 			{ key: 'imported_sum', label: i18n.imported || 'Imported', fn: function ( r ) { return r.imported_sum; } },
 			{ label: i18n.source || 'Source', fn: sourceValue },

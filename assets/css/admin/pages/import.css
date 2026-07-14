@@ -95,6 +95,22 @@
 	color: var(--wb-gam-color-text, #1d2327);
 }
 
+/*
+ * An import that could not reach half its source still reports success for the half it did reach.
+ * This is the sentence that stops the owner believing the migration is complete, so it is styled to
+ * be read -- not as the muted 13px the sibling result lines use, which is how a warning gets skimmed.
+ * margin-inline + border-inline-start so it mirrors correctly in RTL.
+ */
+.wb-gam-import__warning {
+	margin: var(--wb-gam-space-sm, 8px) 0 var(--wb-gam-space-md, 12px);
+	padding: var(--wb-gam-space-sm, 8px) var(--wb-gam-space-md, 12px);
+	border-inline-start: 4px solid var(--wb-gam-color-warning, #dba617);
+	background: var(--wb-gam-color-warning-bg, #fcf9e8);
+	color: var(--wb-gam-color-text, #1d2327);
+	font-size: 13px;
+	line-height: 1.6;
+}
+
 @media (max-width: 480px) {
 	.wb-gam-import__card-head {
 		flex-direction: column;

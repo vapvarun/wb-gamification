@@ -262,7 +262,26 @@ final class LevelEngine {
 			 * @param array|null $new_level New level data (id, name, min_points) or null.
 			 * @param array|null $old_level Previous level data or null.
 			 */
-			do_action( 'wb_gam_level_changed', $user_id, $new_level, $old_level_data );
+			// Same reasoning as the badge hook in BadgeEngine::award_badge(): wb_gam_level_changed is
+			// public and third parties (BuddyNext) listen to it to notify the member. Replaying a
+			// member's history must not congratulate them for reaching a level they reached in 2021,
+			// so an import fires the imported-variant and nothing that announces hears it.
+			if ( ImportMode::is_active() ) {
+				/**
+				 * Fires when a level change is written by an import, replaying history.
+				 *
+				 * For syncing an imported level outward. Never for announcing it to the member.
+				 *
+				 * @since 1.6.4
+				 *
+				 * @param int        $user_id   User whose level was imported.
+				 * @param array|null $new_level New level data (id, name, min_points) or null.
+				 * @param array|null $old_level Previous level data or null.
+				 */
+				do_action( 'wb_gam_level_imported', $user_id, $new_level, $old_level_data );
+			} else {
+				do_action( 'wb_gam_level_changed', $user_id, $new_level, $old_level_data );
+			}
 		} else {
 			/**
 			 * Fires when a member is assigned their very first level — usually

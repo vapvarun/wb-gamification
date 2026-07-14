@@ -441,6 +441,11 @@ final class BadgeEngine {
 		add_action( 'wb_gam_level_changed', array( __CLASS__, 'evaluate_on_level_changed' ), 10, 1 );
 		add_action( 'wb_gam_streak_milestone', array( __CLASS__, 'evaluate_on_streak_milestone' ), 10, 1 );
 
+		// Deriving a level_reached badge is DATA, not an announcement, so it must still happen when an
+		// import replays a member's history -- otherwise the migrated member ends up on the right level
+		// holding none of the badges that level was supposed to earn them.
+		add_action( 'wb_gam_level_imported', array( __CLASS__, 'evaluate_on_level_changed' ), 10, 1 );
+
 		// Conditions that no award can ever change still have to be evaluated by SOMETHING.
 		// tenure_days is the only one today: it moves with the calendar, not with anything a member
 		// does. This daily pass is what TenureBadgeEngine's cron used to be -- except it now
@@ -460,6 +465,10 @@ final class BadgeEngine {
 		// cached map is dropped on award. Priority 5 = before the display-side
 		// listeners, so anything rendering in the same request recomputes fresh.
 		add_action( 'wb_gam_badge_awarded', array( __CLASS__, 'flush_rarity_cache' ), 5, 0 );
+		// Cache integrity, not an announcement: an import writes thousands of badges and every one of
+		// them moves rarity. If only the awarded hook flushed, rarity would be wrong until something
+		// else happened to award a badge.
+		add_action( 'wb_gam_badge_imported', array( __CLASS__, 'flush_rarity_cache' ), 5, 0 );
 	}
 
 	/**
@@ -1077,24 +1086,52 @@ final class BadgeEngine {
 		// Bust earned-badges cache.
 		wp_cache_delete( "wb_gam_earned_badges_{$user_id}", self::CACHE_GROUP );
 
-		/**
-		 * Fires when a member earns a badge.
-		 *
-		 * @param int        $user_id  User who earned the badge.
-		 * @param array|null $def      Badge definition row, or null if not found.
-		 * @param string     $badge_id Badge identifier.
-		 */
-		do_action( 'wb_gam_badge_awarded', $user_id, $def ?? array(), $badge_id );
+		// The guard has to be HERE, at the do_action, and not in our listeners.
+		//
+		// We suppressed our own announcers (email, toast, activity, fediverse, webhook) and that was
+		// not enough, because wb_gam_badge_awarded is a PUBLIC hook and other plugins listen to it.
+		// BuddyNext alone attaches two listeners. During a migration they heard "member earned a badge"
+		// and told the member so -- a badge she actually earned in 2021. A migration tool cannot be
+		// built on third parties opting in to a flag they have never heard of; the only guard that
+		// covers a listener we do not own is not firing the hook it listens to.
+		//
+		// So an import fires wb_gam_badge_imported instead. Same arguments, different sentence: not
+		// "congratulate this member", but "history was replayed". An integration that wants to sync
+		// imported badges can listen for it; nothing that announces will ever hear it by accident.
+		if ( ImportMode::is_active() ) {
+			/**
+			 * Fires when a badge is written by an import, replaying history.
+			 *
+			 * The member is NOT to be notified -- they earned this long ago, on another plugin. Use
+			 * this to sync an imported badge outward (a CRM, a search index). Never to announce it.
+			 *
+			 * @since 1.6.4
+			 *
+			 * @param int        $user_id  User the badge was imported for.
+			 * @param array|null $def      Badge definition row, or null if not found.
+			 * @param string     $badge_id Badge identifier.
+			 */
+			do_action( 'wb_gam_badge_imported', $user_id, $def ?? array(), $badge_id );
+		} else {
+			/**
+			 * Fires when a member earns a badge.
+			 *
+			 * @param int        $user_id  User who earned the badge.
+			 * @param array|null $def      Badge definition row, or null if not found.
+			 * @param string     $badge_id Badge identifier.
+			 */
+			do_action( 'wb_gam_badge_awarded', $user_id, $def ?? array(), $badge_id );
 
-		/**
-		 * Fires after a badge is awarded to a user.
-		 *
-		 * @since 1.0.0
-		 *
-		 * @param int    $user_id  User who earned the badge.
-		 * @param string $badge_id Badge identifier.
-		 */
-		do_action( 'wb_gam_after_badge_award', $user_id, $badge_id );
+			/**
+			 * Fires after a badge is awarded to a user.
+			 *
+			 * @since 1.0.0
+			 *
+			 * @param int    $user_id  User who earned the badge.
+			 * @param string $badge_id Badge identifier.
+			 */
+			do_action( 'wb_gam_after_badge_award', $user_id, $badge_id );
+		}
 
 		// Dispatch outbound webhook. Event name MUST match the
 		// WebhooksController::VALID_EVENTS allowlist (`'badge_earned'`).

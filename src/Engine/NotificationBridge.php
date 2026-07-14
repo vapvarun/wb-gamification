@@ -419,14 +419,6 @@ final class NotificationBridge {
 	 * @param string $badge_id Badge slug (matches $badge['id']).
 	 */
 	public static function on_badge_awarded( int $user_id, array $badge, string $badge_id = '' ): void {
-		// A migration replays history; it is not news. Without this, importing a member's three-year-old
-		// badge tells them they just earned it -- QA proved a member who had not logged in for a year got
-		// a congratulations email because an admin ran a migration. The badge still lands; only the
-		// announcement stands down. See WBGam\Engine\ImportMode.
-		if ( \WBGam\Engine\ImportMode::is_active() ) {
-			return;
-		}
-
 		self::push(
 			$user_id,
 			array(
