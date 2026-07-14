@@ -159,7 +159,7 @@ final class CohortEngine {
 
 		global $wpdb;
 
-		$week       = Clock::site_week();
+		$week = Clock::site_week();
 		// Site clock, not UTC: these bound wb_gam_points.created_at, which is written site-local. And
 		// 'monday this week' is worse than an offset -- strtotime() resolves the WEEKDAY against PHP's
 		// UTC, so near a Monday boundary (Auckland Mon 03:30 = UTC Sun 15:30) it picks the PREVIOUS

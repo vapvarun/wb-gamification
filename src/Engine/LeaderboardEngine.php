@@ -800,7 +800,11 @@ final class LeaderboardEngine {
 	 * Adds rank, avatar_url, and properly types all fields. Uses cache_users()
 	 * to eliminate N+1 avatar/user-meta queries.
 	 *
-	 * @param array<int, array{user_id: string, total_points: string, display_name: string}> $rows Raw DB rows.
+	 * @param array<int, array{user_id: int|string, total_points: int|string|float, display_name: string}> $rows
+	 *                    Rows to hydrate. The ledger path hands over raw DB rows (everything a string);
+	 *                    totals_board() builds them itself and its ids are already int. Both are fine --
+	 *                    this method casts what it needs -- but the docblock claimed only the first shape,
+	 *                    which is how it described one caller instead of the contract.
 	 * @return array<int, array{rank: int, user_id: int, display_name: string, avatar_url: string, points: int}>
 	 */
 	private static function hydrate_rows( array $rows ): array {

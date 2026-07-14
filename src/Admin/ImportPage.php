@@ -82,8 +82,8 @@ final class ImportPage {
 			'wb-gam-admin-import',
 			'wbGamImport',
 			array(
-				'restUrl' => esc_url_raw( rest_url( 'wb-gamification/v1' ) ),
-				'nonce'   => wp_create_nonce( 'wp_rest' ),
+				'restUrl'   => esc_url_raw( rest_url( 'wb-gamification/v1' ) ),
+				'nonce'     => wp_create_nonce( 'wp_rest' ),
 				// The shared REST client aborts at 15 seconds by default, and an import is the one call on
 				// this admin that legitimately takes longer than that. Worse, aborting the BROWSER request
 				// does not stop the SERVER: the import kept running and kept writing, while the screen told
@@ -95,7 +95,7 @@ final class ImportPage {
 				// good. What it buys is that a real import now COMPLETES and reports honestly instead of
 				// being declared dead at fifteen seconds while it carries on behind the owner's back.
 				'timeoutMs' => (int) apply_filters( 'wb_gam_import_timeout_ms', 10 * MINUTE_IN_SECONDS * 1000 ),
-				'i18n'    => array(
+				'i18n'      => array(
 					'loading'     => __( 'Detecting sources...', 'wb-gamification' ),
 					'noSources'   => __( 'No supported source plugin (GamiPress, myCred, BadgeOS) has data to import.', 'wb-gamification' ),
 					'available'   => __( 'Data found', 'wb-gamification' ),

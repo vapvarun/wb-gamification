@@ -31,12 +31,11 @@ defined( 'ABSPATH' ) || exit;
 final class EmptyState {
 
 	/**
-	 * Render the empty state for a block.
+	 * The empty state as an inline row: message, optionally preceded by an icon. No block wrapper.
 	 *
-	 * @param string $block   Block slug, e.g. `points-history`. Used for the BEM class and the filter.
-	 * @param string $wrapper The block wrapper attributes (already escaped by get_block_wrapper_attributes()).
+	 * @param string $block   Block slug, e.g. `leaderboard`. Used for the BEM class and the filter.
 	 * @param string $message The message. Plain text; escaped here.
-	 * @param array  $cta     Optional. `url` + `label` for a call to action.
+	 * @param string $icon    Optional. Pre-rendered icon SVG (already escaped by Icon::svg).
 	 * @return string The empty-state HTML.
 	 */
 	public static function body( string $block, string $message, string $icon = '' ): string {
