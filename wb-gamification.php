@@ -220,6 +220,9 @@ final class WB_Gamification {
 		( new \WBGam\Blocks\Registrar( WB_GAM_PATH . 'build' ) )->init();
 		add_action( 'init', array( ShortcodeHandler::class, 'init' ) );
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_assets' ) );
+		// The dialog utility is needed in the ADMIN too (the deactivation-feedback modal on
+		// plugins.php). Priority 1 so the handle exists before any admin screen declares it.
+		add_action( 'admin_enqueue_scripts', array( $this, 'register_dialog_script' ), 1 );
 		// The editor canvas is an iframe: styles enqueued via
 		// enqueue_block_editor_assets land in the OUTER admin document, not the
 		// canvas. Block previews live inside the iframe, so the shared design
@@ -447,6 +450,31 @@ final class WB_Gamification {
 		// the migrated build/ output (silent editor "no support" failures).
 	}
 
+	/**
+	 * Register the one dialog utility.
+	 *
+	 * Four overlay surfaces used to answer "does ESC close it, is focus trapped, does focus come
+	 * back?" four different ways; the redemption confirm claimed to be a dialog and trapped nothing.
+	 * Native <dialog> does the hard parts; this adds focus return.
+	 *
+	 * Registered on BOTH the front-end and the admin. It used to be registered only on
+	 * wp_enqueue_scripts, which meant the deactivation-feedback modal on plugins.php could not have
+	 * consumed it even if it had declared the dependency -- the handle did not exist in admin, so
+	 * wp_enqueue_script would have silently dropped it. That is why that surface stayed a fifth
+	 * hand-rolled dialog: the shared utility was not merely unused there, it was unreachable.
+	 *
+	 * Registration is idempotent; wp_register_script no-ops on a handle that already exists.
+	 */
+	public function register_dialog_script(): void {
+		wp_register_script(
+			'wb-gam-dialog',
+			WB_GAM_URL . 'assets/js/dialog.js',
+			array(),
+			WB_GAM_VERSION,
+			true
+		);
+	}
+
 	public function enqueue_assets(): void {
 		// Wbcom Block Quality Standard — design tokens that every standardised
 		// block consumes. Registered standalone so blocks can declare it as a
@@ -580,16 +608,7 @@ final class WB_Gamification {
 		// that bug twice: toasts behind the header, and a status bar hardcoded to `top: 48px` that
 		// landed on BuddyX's nav. One measurement, one file, so the next fix cannot land in only one
 		// of two copies. Registered (not enqueued) — consumers declare it as a dependency.
-		// The one dialog utility. Four overlay surfaces used to answer "does ESC close it, is focus
-		// trapped, does focus come back?" four different ways; the redemption confirm claimed to be a
-		// dialog and trapped nothing. Native <dialog> does the hard parts; this adds focus return.
-		wp_register_script(
-			'wb-gam-dialog',
-			WB_GAM_URL . 'assets/js/dialog.js',
-			array(),
-			WB_GAM_VERSION,
-			true
-		);
+		$this->register_dialog_script();
 
 		// The one mount utility. Our blocks bound themselves once, at DOMContentLoaded — which is
 		// correct for a page the BROWSER loaded and wrong for a page a ROUTER loaded. Host themes

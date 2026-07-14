@@ -104,29 +104,63 @@
 		e.preventDefault();
 		deactivateUrl = a.getAttribute( 'href' );
 
+		// The fifth overlay surface, routed through the ONE dialog utility like the other four.
+		//
+		// This screen kept its own showModal() + first.focus() and returned focus nowhere when it
+		// closed, so a keyboard user who cancelled the deactivation was dropped at the top of the
+		// document, nowhere near the Deactivate link they had just pressed.
+		//
+		// It could not have used the shared utility before, even if it had asked: wb-gam-dialog was
+		// registered on wp_enqueue_scripts only, so the handle did not exist on plugins.php and the
+		// dependency would have been silently dropped. The wiring had to change, not just this file.
+		//
+		// bind() gives ESC / backdrop / close-event handling; open({ opener }) is what puts focus back
+		// on the link afterwards. initialFocus preserves the behaviour this screen already had -- focus
+		// lands on the first reason radio, not on whatever the utility would otherwise pick.
+		var shared =
+			window.wbGam && window.wbGam.dialog ? window.wbGam.dialog : null;
+
 		if ( ! dialog.dataset.wbGamWired ) {
 			dialog.dataset.wbGamWired = '1';
+			if ( shared ) {
+				shared.bind( dialog );
+			}
 			var submit = dialog.querySelector( '.wb-gam-deactivate__submit' );
 			var skip = dialog.querySelector( '.wb-gam-deactivate__skip' );
 			if ( submit ) {
 				submit.addEventListener( 'click', function () {
-					dialog.close();
+					if ( shared ) {
+						shared.close( dialog );
+					} else {
+						dialog.close();
+					}
 					sendThenProceed( dialog, false );
 				} );
 			}
 			if ( skip ) {
 				skip.addEventListener( 'click', function () {
-					dialog.close();
+					if ( shared ) {
+						shared.close( dialog );
+					} else {
+						dialog.close();
+					}
 					sendThenProceed( dialog, true );
 				} );
 			}
 			// Closing via Esc / backdrop cancels deactivation entirely (no send).
 		}
 
-		dialog.showModal();
-		var first = dialog.querySelector( 'input[name="wb_gam_reason"]' );
-		if ( first ) {
-			first.focus();
+		if ( shared ) {
+			shared.open( dialog, {
+				opener: a,
+				initialFocus: 'input[name="wb_gam_reason"]',
+			} );
+		} else {
+			dialog.showModal();
+			var first = dialog.querySelector( 'input[name="wb_gam_reason"]' );
+			if ( first ) {
+				first.focus();
+			}
 		}
 	} );
 }() );
