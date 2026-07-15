@@ -55,7 +55,7 @@ spl_autoload_register(
 		}
 		$file = WB_GAM_PATH . 'src/' . str_replace( '\\', '/', substr( $class, $len ) ) . '.php';
 		if ( is_readable( $file ) ) {
-			require $file;
+			require_once $file;
 		}
 	}
 );
