@@ -100,6 +100,25 @@ if ( 0 === $wb_gam_user_id ) {
 			'style' => '' !== $wb_gam_inline ? $wb_gam_inline : null,
 		)
 	);
+
+	// A top-3 leaderboard preview for anonymous visitors -- social proof that turns "log in to climb
+	// the leaderboard" from a claim into something they can see. get_leaderboard() already applies the
+	// eligibility rules (existence, opt-out, owner-excluded, positive balance), so a member who opted
+	// out never appears here; the preview cannot leak anyone who chose to be hidden.
+	//
+	// Owner control, default ON: right for a PUBLIC community (the common case for a gamified hub), and
+	// an owner running a private community turns it off in one place -- or a site gates it per-request
+	// through the filter. One option, one filter, no maze.
+	$wb_gam_show_anon_board = (bool) get_option( 'wb_gam_hub_anon_leaderboard', true );
+	/**
+	 * Filter whether the hub shows anonymous visitors a top-3 leaderboard preview.
+	 *
+	 * @since 1.6.4
+	 * @param bool $show Whether to render the preview (default: the wb_gam_hub_anon_leaderboard option).
+	 */
+	$wb_gam_show_anon_board = (bool) apply_filters( 'wb_gam_hub_anon_leaderboard', $wb_gam_show_anon_board );
+
+	$wb_gam_anon_top = $wb_gam_show_anon_board ? LeaderboardEngine::get_leaderboard( 'all', 3 ) : array();
 	?>
 	<div <?php echo $wb_gam_wrapper; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>>
 		<div class="gam-nudge">
@@ -112,6 +131,28 @@ if ( 0 === $wb_gam_user_id ) {
 				<?php esc_html_e( 'Log in', 'wb-gamification' ); ?>
 			</a>
 		</div>
+		<?php if ( $wb_gam_anon_top ) : ?>
+			<div class="gam-anon-board" aria-label="<?php esc_attr_e( 'Top members', 'wb-gamification' ); ?>">
+				<h3 class="gam-anon-board__title"><?php esc_html_e( 'Top members', 'wb-gamification' ); ?></h3>
+				<ol class="gam-anon-board__list">
+					<?php foreach ( $wb_gam_anon_top as $wb_gam_lb_row ) : ?>
+						<li class="gam-anon-board__row gam-anon-board__row--<?php echo (int) $wb_gam_lb_row['rank']; ?>">
+							<span class="gam-anon-board__rank"><?php echo esc_html( number_format_i18n( (int) $wb_gam_lb_row['rank'] ) ); ?></span>
+							<?php if ( ! empty( $wb_gam_lb_row['avatar_url'] ) ) : ?>
+								<img class="gam-anon-board__avatar" src="<?php echo esc_url( (string) $wb_gam_lb_row['avatar_url'] ); ?>" alt="" width="32" height="32" loading="lazy" />
+							<?php endif; ?>
+							<span class="gam-anon-board__name"><?php echo esc_html( (string) $wb_gam_lb_row['display_name'] ); ?></span>
+							<span class="gam-anon-board__points">
+								<?php
+								/* translators: %s: formatted point total. */
+								printf( esc_html__( '%s pts', 'wb-gamification' ), esc_html( number_format_i18n( (int) $wb_gam_lb_row['points'] ) ) );
+								?>
+							</span>
+						</li>
+					<?php endforeach; ?>
+				</ol>
+			</div>
+		<?php endif; ?>
 	</div>
 	<?php
 	return;

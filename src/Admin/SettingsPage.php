@@ -394,6 +394,9 @@ final class SettingsPage {
 	 */
 	private static function save_engagement_settings(): void {
 		// phpcs:disable WordPress.Security.NonceVerification.Missing -- Nonce verified by check_admin_referer() in handle_save().
+		// Show anonymous visitors a top-3 leaderboard preview on the hub.
+		update_option( 'wb_gam_hub_anon_leaderboard', isset( $_POST['wb_gam_hub_anon_leaderboard'] ) ? 1 : 0 );
+
 		// Daily login bonus.
 		update_option( 'wb_gam_login_bonus_enabled', isset( $_POST['wb_gam_login_bonus_enabled'] ) ? 1 : 0 );
 		if ( isset( $_POST['wb_gam_login_bonus_tiers'] ) ) {
@@ -523,6 +526,11 @@ final class SettingsPage {
 					<p class="wbgam-card-desc"><?php esc_html_e( 'Reward members for logging in on consecutive days. The tier ladder lists day thresholds and the points awarded when a member reaches each one.', 'wb-gamification' ); ?></p>
 				</div>
 				<div class="wbgam-card-body">
+					<label class="wbgam-checkbox-option wbgam-stack-block">
+						<input type="checkbox" name="wb_gam_hub_anon_leaderboard" value="1" <?php checked( (bool) get_option( 'wb_gam_hub_anon_leaderboard', true ) ); ?> />
+						<span><?php esc_html_e( 'Show logged-out visitors a top-3 leaderboard on the hub', 'wb-gamification' ); ?></span>
+						<span class="description"><?php esc_html_e( 'Social proof that invites visitors to join. Members who opt out of the leaderboard never appear. Turn off for a private community.', 'wb-gamification' ); ?></span>
+					</label>
 					<label class="wbgam-checkbox-option wbgam-stack-block">
 						<input type="checkbox" name="wb_gam_login_bonus_enabled" value="1" <?php checked( $login_enabled ); ?> />
 						<span><?php esc_html_e( 'Award a daily login bonus', 'wb-gamification' ); ?></span>
