@@ -92,3 +92,42 @@
 		align-items: stretch;
 	}
 }
+
+/* ── Moderator filters ───────────────────────────────────────────────────────
+   A moderator's job on this screen is to FIND something: a member being buried
+   in kudos, a pair trading them back and forth, a particular afternoon. With a
+   status tab and nothing else that job is "read every page", which stops being
+   possible on the second screenful. */
+.wb-gam-kudos-search {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-end;
+	gap: var( --wbgam-space-md, 12px );
+	margin: var( --wbgam-space-md, 12px ) 0;
+	padding: var( --wbgam-space-md, 12px );
+	background: var( --wbgam-surface-muted, #f6f7f7 );
+	border: 1px solid var( --wbgam-border, #dcdcde );
+	border-radius: var( --wbgam-radius, 6px );
+}
+
+.wb-gam-kudos-search__field {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	font-size: 12px;
+	font-weight: 600;
+}
+
+.wb-gam-kudos-search__actions {
+	display: flex;
+	align-items: center;
+	gap: var( --wbgam-space-sm, 8px );
+}
+
+/* The filter bar stacks rather than scrolling sideways on a narrow admin view. */
+@media ( max-width: 782px ) {
+	.wb-gam-kudos-search {
+		flex-direction: column;
+		align-items: stretch;
+	}
+}

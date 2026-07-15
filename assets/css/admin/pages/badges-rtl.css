@@ -171,3 +171,119 @@
 .wb-gam-field-points {
 	/* Condition-row marker fields. */
 }
+
+/* ── Condition repeater ──────────────────────────────────────────────────────────────────
+ * One badge, one rule, as many conditions as the owner needs. Before this, a badge had
+ * exactly one condition -- and seven badges had none the owner could see at all.
+ *
+ * The simple case must not get heavier. One condition renders as one row, and reads almost
+ * exactly as the old single-condition form did.
+ */
+.wb-gam-conditions__match {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 14px;
+	margin: 0 0 12px;
+}
+
+.wb-gam-conditions__match-label {
+	font-weight: 600;
+	color: var(--wbgam-text-strong, #1d2939);
+}
+
+.wb-gam-conditions__match label {
+	display: inline-flex;
+	align-items: center;
+	gap: 5px;
+	color: var(--wbgam-wp-text, #50575e);
+}
+
+.wb-gam-conditions__rows {
+	display: grid;
+	gap: 8px;
+	margin: 0 0 12px;
+}
+
+.wb-gam-condition-row {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 8px;
+	padding: 10px 12px;
+	border: 1px solid var(--wbgam-border, #e5e7eb);
+	border-radius: 6px;
+	background: var(--wbgam-card-bg, #fff);
+}
+
+.wb-gam-condition-fields {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+}
+
+.wb-gam-condition-fields[hidden] {
+	display: none;
+}
+
+.wb-gam-condition-unit {
+	color: var(--wbgam-wp-text, #50575e);
+	font-size: var(--wbgam-fs-xs, 0.75rem);
+}
+
+.wb-gam-condition-remove {
+	margin-inline-start: auto;
+	border: 0;
+	background: transparent;
+	cursor: pointer;
+	font-size: 18px;
+	line-height: 1;
+	padding: 4px 6px;
+	border-radius: 4px;
+	color: var(--wbgam-wp-text, #50575e);
+}
+
+.wb-gam-condition-remove:hover,
+.wb-gam-condition-remove:focus-visible {
+	background: var(--wbgam-danger-bg, #fef2f2);
+	color: var(--wbgam-danger, #b42318);
+}
+
+/* Manual badge: there is nothing to match, so the ALL/ANY choice is meaningless. Hide it
+ * rather than leave a control that does nothing. */
+.wb-gam-conditions.is-manual .wb-gam-conditions__match,
+.wb-gam-conditions.is-manual .wb-gam-conditions__actions .wbgam-btn {
+	display: none;
+}
+
+.wb-gam-conditions__hint {
+	display: inline-block;
+	margin-inline-start: 10px;
+}
+
+/* The owner's retroactive-award choice. Set apart from the conditions above it, because it is a
+ * decision about their community, not another field. */
+.wb-gam-conditions__backfill {
+	margin: 14px 0 0;
+	padding: 12px 14px;
+	border: 1px solid var(--wbgam-border, #e5e7eb);
+	border-radius: 6px;
+	background: var(--wbgam-card-bg, #fff);
+}
+
+.wb-gam-conditions__backfill label {
+	display: inline-flex;
+	align-items: center;
+	gap: 7px;
+	color: var(--wbgam-text-strong, #1d2939);
+}
+
+.wb-gam-conditions__backfill .description {
+	margin: 6px 24px 0 0;
+}
+
+.wb-gam-backfill-status {
+	margin: 8px 24px 0 0;
+	font-size: var(--wbgam-fs-xs, 0.75rem);
+	color: var(--wbgam-wp-text, #50575e);
+}
