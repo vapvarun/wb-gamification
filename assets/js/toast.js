@@ -111,9 +111,36 @@
 	 * Only sets the property when it finds an obstruction, so an owner who overrides
 	 * --wb-gam-toast-offset-top in their own CSS keeps control on a clear page.
 	 */
+	/**
+	 * Park a bottom-anchored stack above whatever is pinned to the bottom.
+	 *
+	 * The mirror of applyTopOffset(), and the half that was missing: a bottom stack cleared the
+	 * HEADER by construction but nothing cleared a bottom bar, so on BuddyNext's mobile layout the
+	 * toast covered the fixed bottom nav after nearly every rewarded action (comment, follow,
+	 * reaction) — the primary navigation, unusable for the life of the toast.
+	 *
+	 * Only sets the property when it finds an obstruction, so an owner overriding
+	 * --wb-gam-toast-offset-bottom in their own CSS keeps control on a clear page.
+	 */
+	function applyBottomOffset() {
+		if ( position.indexOf( 'bottom' ) !== 0 ) {
+			return;
+		}
+
+		var occupied = ( window.wbGam && typeof window.wbGam.bottomObstructionHeight === 'function' )
+			? window.wbGam.bottomObstructionHeight( container )
+			: 0;
+
+		if ( occupied > 0 ) {
+			container.style.setProperty( '--wb-gam-toast-offset-bottom', occupied + TOAST_GAP + 'px' );
+		} else {
+			container.style.removeProperty( '--wb-gam-toast-offset-bottom' );
+		}
+	}
+
 	function applyTopOffset() {
 		if ( position.indexOf( 'top' ) !== 0 ) {
-			return; // Bottom-anchored stacks clear the header by construction.
+			return; // Bottom-anchored stacks are handled by applyBottomOffset().
 		}
 
 		var lowest = topObstructionBottom();
@@ -128,11 +155,14 @@
 	}
 
 	applyTopOffset();
+	applyBottomOffset();
 
 	// An in-flow header scrolls away and a sticky one changes height, so the offset is not
 	// a constant. Re-measure on scroll and resize, rAF-throttled so this never runs hot.
+	// Both edges re-measure: a bottom bar can appear, hide on scroll, or change height at a
+	// breakpoint exactly like a header does.
 	var offsetQueued = false;
-	function queueTopOffset() {
+	function queueOffsets() {
 		if ( offsetQueued ) {
 			return;
 		}
@@ -140,11 +170,12 @@
 		window.requestAnimationFrame( function () {
 			offsetQueued = false;
 			applyTopOffset();
+			applyBottomOffset();
 		} );
 	}
 
-	window.addEventListener( 'resize', queueTopOffset );
-	window.addEventListener( 'scroll', queueTopOffset, { passive: true } );
+	window.addEventListener( 'resize', queueOffsets );
+	window.addEventListener( 'scroll', queueOffsets, { passive: true } );
 
 	/**
 	 * Lucide icon class map for toast types. The toast lucide-icons

@@ -70,13 +70,19 @@
 	align-items: flex-end;
 	--wb-gam-toast-slide: -12px;
 }
+/* Bottom-anchored stacks are positioned from --wb-gam-toast-offset-bottom for the same
+ * reason as the top ones: a plugin cannot know in CSS what is pinned to the bottom of the
+ * viewport. BuddyNext ships a fixed mobile nav (~60px) and themes ship live-chat widgets,
+ * so a literal `1rem` put the toast on top of the site's primary navigation.
+ * assets/js/toast.js measures the real obstruction at runtime and sets this property; the
+ * literal below is the no-JS fallback, and an owner can still override it. */
 .wb-gam-toasts--bottom-right {
-	bottom: 1rem;
+	bottom: var(--wb-gam-toast-offset-bottom, 1rem);
 	left: 1rem;
 	align-items: flex-end;
 }
 .wb-gam-toasts--bottom-left {
-	bottom: 1rem;
+	bottom: var(--wb-gam-toast-offset-bottom, 1rem);
 	right: 1rem;
 	align-items: flex-start;
 }

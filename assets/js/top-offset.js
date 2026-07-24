@@ -120,6 +120,89 @@
 		return lowest;
 	}
 
+	/**
+	 * How many pixels of the BOTTOM of the viewport are currently covered by a pinned bar.
+	 *
+	 * The mirror of topObstructionBottom(), and it exists for the same reason: the CSS can only
+	 * offset constants it knows about, and a bottom bar belongs to whatever else is on the page.
+	 * A bottom-anchored toast stack sat at `bottom: 1rem` regardless, so on BuddyNext's mobile
+	 * layout the "+3 Points" toast landed squarely on the fixed bottom nav — obscuring the primary
+	 * navigation for a few seconds after almost every rewarded action.
+	 *
+	 * WHY THIS DOES NOT REUSE THE TOP SCAN. The top scan walks `document.body.children`, which is
+	 * enough for an admin bar or a theme header — they are body-level. Bottom bars are not:
+	 * BuddyNext's `.bn-mobile-nav` is `position: fixed` but sits SIX levels deep
+	 * (nav > .bn-app > .wb-grid > .container > main.site-content > …), so a body-children scan
+	 * misses it completely. Measured in the browser at 390px.
+	 *
+	 * So this asks the honest question the same way the top scan does — "what is in the way RIGHT
+	 * NOW" — but by hit-testing the bottom edge of the viewport instead of guessing at the DOM
+	 * shape. elementsFromPoint() is O(1), sees through nesting, and finds whatever actually paints
+	 * there: our nav, a theme's live-chat widget, a cookie bar. Three probes (centre and both
+	 * corners) so a bar that hugs one side is still found.
+	 *
+	 * @param {Element} [ignore] Element to exclude — the thing being positioned, and its ancestors.
+	 * @return {number} Pixels occupied at the bottom, or 0 when the bottom of the page is clear.
+	 */
+	function bottomObstructionHeight( ignore ) {
+		if ( typeof document.elementsFromPoint !== 'function' ) {
+			return 0;
+		}
+
+		var vh     = window.innerHeight;
+		var vw     = window.innerWidth;
+		var probeY = vh - 2;
+		var seen   = [];
+
+		[ Math.round( vw / 2 ), 24, vw - 24 ].forEach( function ( x ) {
+			Array.prototype.forEach.call( document.elementsFromPoint( x, probeY ), function ( el ) {
+				if ( seen.indexOf( el ) === -1 ) {
+					seen.push( el );
+				}
+			} );
+		} );
+
+		var highestTop = 0;
+
+		seen.forEach( function ( el ) {
+			if ( el === document.body || el === document.documentElement ) {
+				return;
+			}
+			if ( ignore && ( el === ignore || ignore.contains( el ) || el.contains( ignore ) ) ) {
+				return;
+			}
+
+			var style = window.getComputedStyle( el );
+			if ( style.position !== 'fixed' && style.position !== 'sticky' ) {
+				return; // In-flow content at the bottom scrolls away; it is not in the way.
+			}
+			if ( style.display === 'none' || style.visibility === 'hidden' ) {
+				return;
+			}
+
+			var rect = el.getBoundingClientRect();
+			if ( rect.height === 0 || rect.top >= vh ) {
+				return;
+			}
+			if ( rect.width < vw * 0.5 ) {
+				return; // A corner bubble is not a bar; the stack can sit beside it.
+			}
+
+			// Too tall to be a bar — same reasoning as the top scan: a full-height fixed element
+			// is an overlay covering everything, not a strip in the way of anything.
+			if ( rect.height > Math.min( MAX_BAR_HEIGHT, vh * 0.3 ) ) {
+				return;
+			}
+
+			if ( highestTop === 0 || rect.top < highestTop ) {
+				highestTop = rect.top;
+			}
+		} );
+
+		return highestTop > 0 ? Math.max( 0, vh - highestTop ) : 0;
+	}
+
 	window.wbGam = window.wbGam || {};
-	window.wbGam.topObstructionBottom = topObstructionBottom;
+	window.wbGam.topObstructionBottom  = topObstructionBottom;
+	window.wbGam.bottomObstructionHeight = bottomObstructionHeight;
 } )( window, document );
