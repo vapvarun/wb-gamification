@@ -224,7 +224,7 @@ class BadgeShareController extends WP_REST_Controller {
 						),
 						'profile_url'  => array(
 							'type'        => 'string',
-							'description' => 'Profile page URL.',
+							'description' => 'Profile page URL, or an empty string when the member has no publicly reachable profile.',
 						),
 					),
 				),
@@ -379,10 +379,7 @@ class BadgeShareController extends WP_REST_Controller {
 
 		$site_name   = get_bloginfo( 'name' );
 		$site_url    = home_url();
-		$profile_url = \WBGam\BuddyPress\UserUrl::resolve( (int) $user_id );
-		if ( '' === $profile_url ) {
-			$profile_url = get_author_posts_url( $user_id );
-		}
+		$profile_url = \WBGam\Engine\MemberUrl::resolve( (int) $user_id );
 
 		// LinkedIn share URL — pre-filled with badge name and site.
 		$linkedin_url = add_query_arg(

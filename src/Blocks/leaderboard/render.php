@@ -157,6 +157,8 @@ BlockHooks::before( 'leaderboard', $wb_gam_attrs );
 			// per-row count_user_badges() below are cache hits — avoids an
 			// N+1 that would grow with the board size.
 			\WBGam\Engine\BadgeEngine::prime_earned_badges( array_column( $wb_gam_rows, 'user_id' ) );
+			// Same reason, for the user record + privacy meta MemberUrl::resolve() reads.
+			\WBGam\Engine\MemberUrl::prime( array_column( $wb_gam_rows, 'user_id' ) );
 			foreach ( $wb_gam_rows as $wb_gam_row ) :
 				$wb_gam_rank_num   = (int) ( $wb_gam_row['rank'] ?? 0 );
 				$wb_gam_rank_label = '';
@@ -189,16 +191,11 @@ BlockHooks::before( 'leaderboard', $wb_gam_attrs );
 						<?php
 						$wb_gam_uid     = (int) ( $wb_gam_row['user_id'] ?? 0 );
 						$wb_gam_dn      = (string) ( $wb_gam_row['display_name'] ?? '' );
-						$wb_gam_bp_link = \WBGam\BuddyPress\UserUrl::resolve( $wb_gam_uid );
-						if ( '' !== $wb_gam_bp_link ) {
-							printf(
-								'<a href="%1$s">%2$s</a>',
-								esc_url( $wb_gam_bp_link ),
-								esc_html( $wb_gam_dn )
-							);
-						} else {
-							echo esc_html( $wb_gam_dn );
-						}
+						// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- MemberUrl::wrap() escapes the URL; the name is esc_html'd here.
+						echo \WBGam\Engine\MemberUrl::wrap(
+							\WBGam\Engine\MemberUrl::resolve( $wb_gam_uid ),
+							esc_html( $wb_gam_dn )
+						);
 						?>
 					</span>
 

@@ -234,10 +234,7 @@ final class BadgeSharePage {
 
 		$site_name   = get_bloginfo( 'name' );
 		$avatar_url  = get_avatar_url( $user->ID, array( 'size' => 96 ) );
-		$profile_url = \WBGam\BuddyPress\UserUrl::resolve( (int) $user->ID );
-		if ( '' === $profile_url ) {
-			$profile_url = get_author_posts_url( $user->ID );
-		}
+		$profile_url = MemberUrl::resolve( (int) $user->ID );
 
 		$share_text = sprintf(
 			/* translators: 1: badge name, 2: site name */
@@ -338,15 +335,17 @@ final class BadgeSharePage {
 				<?php endif; ?>
 
 				<div class="wb-gam-share-card__cta">
-					<a class="wb-gam-share-card__cta-primary" href="<?php echo esc_url( $profile_url ); ?>">
-						<?php
-						printf(
-							/* translators: %s: member display name. */
-							esc_html__( "View %s's achievements", 'wb-gamification' ),
-							esc_html( $user->display_name )
-						);
-						?>
-					</a>
+					<?php if ( '' !== $profile_url ) : ?>
+						<a class="wb-gam-share-card__cta-primary" href="<?php echo esc_url( $profile_url ); ?>">
+							<?php
+							printf(
+								/* translators: %s: member display name. */
+								esc_html__( "View %s's achievements", 'wb-gamification' ),
+								esc_html( $user->display_name )
+							);
+							?>
+						</a>
+					<?php endif; ?>
 					<a class="wb-gam-share-card__cta-secondary" href="<?php echo esc_url( home_url( '/' ) ); ?>">
 						<?php
 						printf(

@@ -38,6 +38,7 @@ use WBGam\Blocks\EmptyState;
 use WBGam\Engine\BlockHooks;
 use WBGam\Engine\LeaderboardEngine;
 use WBGam\Engine\LevelEngine;
+use WBGam\Engine\MemberUrl;
 use WBGam\Engine\PointsEngine;
 
 $wb_gam_attrs   = is_array( $attributes ) ? $attributes : array();
@@ -127,6 +128,11 @@ if ( empty( $wb_gam_rows ) ) {
 
 $wb_gam_user_ids        = array_column( $wb_gam_rows, 'user_id' );
 $wb_gam_badge_count_map = array();
+
+// Prime the user records + meta the profile-link resolver reads, so the
+// per-row MemberUrl::resolve() calls below are cache hits rather than two
+// queries each.
+MemberUrl::prime( $wb_gam_user_ids );
 if ( $wb_gam_show_badges && ! empty( $wb_gam_user_ids ) ) {
 	global $wpdb;
 	$wb_gam_placeholders = implode( ',', array_fill( 0, count( $wb_gam_user_ids ), '%d' ) );
@@ -184,24 +190,31 @@ BlockHooks::before( 'top-members', $wb_gam_attrs );
 				$wb_gam_row  = $wb_gam_entry['row'];
 				$wb_gam_rank = (int) $wb_gam_entry['rank'];
 				$wb_gam_uid  = (int) ( $wb_gam_row['user_id'] ?? 0 );
-				$wb_gam_url  = \WBGam\BuddyPress\UserUrl::resolve( $wb_gam_uid );
-				if ( '' === $wb_gam_url ) {
-					$wb_gam_url = get_author_posts_url( $wb_gam_uid );
-				}
+				$wb_gam_url  = MemberUrl::resolve( $wb_gam_uid );
 				?>
 				<div class="wb-gam-top-members__podium-slot wb-gam-top-members__podium-slot--<?php echo (int) $wb_gam_rank; ?>">
 					<div class="wb-gam-top-members__podium-crown">
 						<?php if ( 1 === $wb_gam_rank ) : ?><span aria-hidden="true">&#x1F451;</span><?php endif; ?>
 					</div>
-					<a href="<?php echo esc_url( (string) $wb_gam_url ); ?>" class="wb-gam-top-members__avatar-link">
-						<?php echo get_avatar( $wb_gam_uid, 72, '', esc_attr( (string) ( $wb_gam_row['display_name'] ?? '' ) ) ); ?>
-					</a>
+					<?php
+					// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- MemberUrl::wrap() escapes the URL and class; get_avatar() output is escaped by core.
+					echo MemberUrl::wrap(
+						$wb_gam_url,
+						get_avatar( $wb_gam_uid, 72, '', esc_attr( (string) ( $wb_gam_row['display_name'] ?? '' ) ) ),
+						'wb-gam-top-members__avatar-link'
+					);
+					?>
 					<span class="wb-gam-top-members__rank-badge wb-gam-top-members__rank-badge--<?php echo (int) $wb_gam_rank; ?>">
 						<?php echo esc_html( '#' . $wb_gam_rank ); ?>
 					</span>
-					<a href="<?php echo esc_url( (string) $wb_gam_url ); ?>" class="wb-gam-top-members__name">
-						<?php echo esc_html( (string) ( $wb_gam_row['display_name'] ?? '' ) ); ?>
-					</a>
+					<?php
+					// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- MemberUrl::wrap() escapes the URL and class; the name is esc_html'd here.
+					echo MemberUrl::wrap(
+						$wb_gam_url,
+						esc_html( (string) ( $wb_gam_row['display_name'] ?? '' ) ),
+						'wb-gam-top-members__name'
+					);
+					?>
 					<span class="wb-gam-top-members__points">
 						<?php echo esc_html( number_format_i18n( (int) ( $wb_gam_row['points'] ?? 0 ) ) ); ?>
 						<span class="wb-gam-top-members__pts-label"><?php echo esc_html( $wb_gam_points_label ); ?></span>
@@ -221,17 +234,19 @@ BlockHooks::before( 'top-members', $wb_gam_attrs );
 				<?php foreach ( array_slice( $wb_gam_rows, 3 ) as $wb_gam_i => $wb_gam_row ) :
 					$wb_gam_uid  = (int) ( $wb_gam_row['user_id'] ?? 0 );
 					$wb_gam_rank = (int) $wb_gam_i + 4;
-					$wb_gam_url  = \WBGam\BuddyPress\UserUrl::resolve( $wb_gam_uid );
-					if ( '' === $wb_gam_url ) {
-						$wb_gam_url = get_author_posts_url( $wb_gam_uid );
-					}
+					$wb_gam_url  = MemberUrl::resolve( $wb_gam_uid );
 					?>
 					<li class="wb-gam-top-members__rest-item">
 						<span class="wb-gam-top-members__rest-rank"><?php echo esc_html( '#' . $wb_gam_rank ); ?></span>
 						<?php echo get_avatar( $wb_gam_uid, 32, '', esc_attr( (string) ( $wb_gam_row['display_name'] ?? '' ) ) ); ?>
-						<a href="<?php echo esc_url( (string) $wb_gam_url ); ?>" class="wb-gam-top-members__rest-name">
-							<?php echo esc_html( (string) ( $wb_gam_row['display_name'] ?? '' ) ); ?>
-						</a>
+						<?php
+						// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- MemberUrl::wrap() escapes the URL and class; the name is esc_html'd here.
+						echo MemberUrl::wrap(
+							$wb_gam_url,
+							esc_html( (string) ( $wb_gam_row['display_name'] ?? '' ) ),
+							'wb-gam-top-members__rest-name'
+						);
+						?>
 						<span class="wb-gam-top-members__rest-points"><?php echo esc_html( number_format_i18n( (int) ( $wb_gam_row['points'] ?? 0 ) ) ); ?></span>
 					</li>
 				<?php endforeach; ?>
@@ -243,18 +258,23 @@ BlockHooks::before( 'top-members', $wb_gam_attrs );
 			<?php foreach ( $wb_gam_rows as $wb_gam_rank_0 => $wb_gam_row ) :
 				$wb_gam_uid  = (int) ( $wb_gam_row['user_id'] ?? 0 );
 				$wb_gam_rank = (int) $wb_gam_rank_0 + 1;
-				$wb_gam_url  = \WBGam\BuddyPress\UserUrl::resolve( $wb_gam_uid );
-				if ( '' === $wb_gam_url ) {
-					$wb_gam_url = get_author_posts_url( $wb_gam_uid );
-				}
+				$wb_gam_url  = MemberUrl::resolve( $wb_gam_uid );
 				?>
 				<li class="wb-gam-top-members__list-item">
 					<span class="wb-gam-top-members__list-rank"><?php echo esc_html( '#' . $wb_gam_rank ); ?></span>
-					<a href="<?php echo esc_url( (string) $wb_gam_url ); ?>"><?php echo get_avatar( $wb_gam_uid, 40 ); ?></a>
+					<?php
+					// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- MemberUrl::wrap() escapes the URL; get_avatar() output is escaped by core.
+					echo MemberUrl::wrap( $wb_gam_url, get_avatar( $wb_gam_uid, 40 ) );
+					?>
 					<div class="wb-gam-top-members__list-info">
-						<a href="<?php echo esc_url( (string) $wb_gam_url ); ?>" class="wb-gam-top-members__list-name">
-							<?php echo esc_html( (string) ( $wb_gam_row['display_name'] ?? '' ) ); ?>
-						</a>
+						<?php
+						// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- MemberUrl::wrap() escapes the URL and class; the name is esc_html'd here.
+						echo MemberUrl::wrap(
+							$wb_gam_url,
+							esc_html( (string) ( $wb_gam_row['display_name'] ?? '' ) ),
+							'wb-gam-top-members__list-name'
+						);
+						?>
 						<?php if ( $wb_gam_show_level && isset( $wb_gam_level_map[ $wb_gam_uid ] ) ) : ?>
 							<span class="wb-gam-top-members__list-level"><?php echo esc_html( $wb_gam_level_map[ $wb_gam_uid ] ); ?></span>
 						<?php endif; ?>

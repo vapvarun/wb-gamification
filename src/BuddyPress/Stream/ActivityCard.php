@@ -153,7 +153,8 @@ final class ActivityCard {
 	}
 
 	/**
-	 * Build an HTML link to a user's BP profile, or their display name if BP is unavailable.
+	 * Build an HTML link to a member's profile, or their display name when
+	 * they have no publicly reachable profile to link to.
 	 *
 	 * @param int $user_id WordPress user ID.
 	 */
@@ -163,15 +164,10 @@ final class ActivityCard {
 			return '';
 		}
 
-		$name        = esc_html( $user->display_name );
-		$profile_url = \WBGam\BuddyPress\UserUrl::resolve( (int) $user_id );
-
-		if ( '' !== $profile_url ) {
-			$url = esc_url( $profile_url );
-			return "<a href=\"{$url}\">{$name}</a>";
-		}
-
-		return $name;
+		return \WBGam\Engine\MemberUrl::wrap(
+			\WBGam\Engine\MemberUrl::resolve( (int) $user_id ),
+			esc_html( $user->display_name )
+		);
 	}
 
 	/**

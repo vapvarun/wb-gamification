@@ -110,29 +110,42 @@ BlockHooks::before( 'kudos-feed', $wb_gam_attrs );
 		?>
 	<?php else : ?>
 		<ul class="wb-gam-kudos-feed__list" role="list">
-			<?php foreach ( $wb_gam_kudos as $wb_gam_item ) :
-				$wb_gam_giver_url    = \WBGam\BuddyPress\UserUrl::resolve( (int) ( $wb_gam_item['giver_id'] ?? 0 ) );
-				$wb_gam_receiver_url = \WBGam\BuddyPress\UserUrl::resolve( (int) ( $wb_gam_item['receiver_id'] ?? 0 ) );
+			<?php
+			// One cache warm for both sides of every kudo, so the per-row
+			// MemberUrl::resolve() calls below don't each hit the database.
+			\WBGam\Engine\MemberUrl::prime(
+				array_merge(
+					array_column( $wb_gam_kudos, 'giver_id' ),
+					array_column( $wb_gam_kudos, 'receiver_id' )
+				)
+			);
+			foreach ( $wb_gam_kudos as $wb_gam_item ) :
+				$wb_gam_giver_url    = \WBGam\Engine\MemberUrl::resolve( (int) ( $wb_gam_item['giver_id'] ?? 0 ) );
+				$wb_gam_receiver_url = \WBGam\Engine\MemberUrl::resolve( (int) ( $wb_gam_item['receiver_id'] ?? 0 ) );
 				?>
 				<li class="wb-gam-kudos-feed__item">
 					<span class="wb-gam-kudos-feed__giver">
 						<?php echo get_avatar( (int) ( $wb_gam_item['giver_id'] ?? 0 ), 32 ); ?>
-						<?php if ( $wb_gam_giver_url ) : ?>
-							<a href="<?php echo esc_url( $wb_gam_giver_url ); ?>"><?php echo esc_html( (string) ( $wb_gam_item['giver_name'] ?? '' ) ); ?></a>
-						<?php else : ?>
-							<?php echo esc_html( (string) ( $wb_gam_item['giver_name'] ?? '' ) ); ?>
-						<?php endif; ?>
+						<?php
+						// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- MemberUrl::wrap() escapes the URL; the name is esc_html'd here.
+						echo \WBGam\Engine\MemberUrl::wrap(
+							$wb_gam_giver_url,
+							esc_html( (string) ( $wb_gam_item['giver_name'] ?? '' ) )
+						);
+						?>
 					</span>
 
 					<span class="wb-gam-kudos-feed__arrow" aria-hidden="true">→</span>
 
 					<span class="wb-gam-kudos-feed__receiver">
 						<?php echo get_avatar( (int) ( $wb_gam_item['receiver_id'] ?? 0 ), 32 ); ?>
-						<?php if ( $wb_gam_receiver_url ) : ?>
-							<a href="<?php echo esc_url( $wb_gam_receiver_url ); ?>"><?php echo esc_html( (string) ( $wb_gam_item['receiver_name'] ?? '' ) ); ?></a>
-						<?php else : ?>
-							<?php echo esc_html( (string) ( $wb_gam_item['receiver_name'] ?? '' ) ); ?>
-						<?php endif; ?>
+						<?php
+						// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- MemberUrl::wrap() escapes the URL; the name is esc_html'd here.
+						echo \WBGam\Engine\MemberUrl::wrap(
+							$wb_gam_receiver_url,
+							esc_html( (string) ( $wb_gam_item['receiver_name'] ?? '' ) )
+						);
+						?>
 					</span>
 
 					<?php if ( $wb_gam_show_messages && ! empty( $wb_gam_item['message'] ) ) : ?>

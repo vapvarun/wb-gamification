@@ -69,7 +69,7 @@
 	display: block;
 }
 
-.wb-gam-top-members__name:hover { text-decoration: underline; }
+a.wb-gam-top-members__name:hover { text-decoration: underline; }
 
 .wb-gam-top-members__points {
 	font-size: 1rem;
@@ -127,7 +127,7 @@
 	line-height: 1.3;
 }
 
-.wb-gam-top-members__rest-name:hover { text-decoration: underline; }
+a.wb-gam-top-members__rest-name:hover { text-decoration: underline; }
 
 .wb-gam-top-members__rest-points {
 	font-size: 0.8125rem;
@@ -182,7 +182,7 @@
 	line-height: 1.3;
 }
 
-.wb-gam-top-members__list-name:hover { text-decoration: underline; }
+a.wb-gam-top-members__list-name:hover { text-decoration: underline; }
 
 .wb-gam-top-members__list-level {
 	font-size: 0.75rem;
