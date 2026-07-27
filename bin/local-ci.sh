@@ -374,11 +374,36 @@ fi
 #
 # The hard gate lives in bin/build-release.sh (exit 32) and reads the
 # audit/.last-scale-pass.json that `scale benchmark` writes.
+#
+# Three distinct outcomes, and the probe must be able to tell them apart:
+# no wp-cli, no reachable WP install (the usual case — this script runs from
+# the repo root, which is not a WordPress install), and an install with or
+# without seeded rows. Piping `wp eval` straight through `tr -dc '0-9'` could
+# not: on a failed eval it scraped the digits out of the ERROR TEXT and
+# concatenated them into one enormous token, which then blew up the numeric
+# comparison. One digit of luck the other way and it would have parsed as a
+# positive integer and benchmarked an empty database into a green result —
+# the exact S-02 failure this stage exists to prevent.
 if [ "$MODE" != "quick" ]; then
-  if command -v wp >/dev/null 2>&1; then
-    SEEDED_ROWS="$(wp eval 'global $wpdb; echo (int) $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}wb_gam_points WHERE user_id >= 1000000");' 2>/dev/null | tr -dc '0-9')"
-    SEEDED_ROWS="${SEEDED_ROWS:-0}"
-    if [ "$SEEDED_ROWS" -gt 0 ]; then
+  if ! command -v wp >/dev/null 2>&1; then
+    warn "5.1 Scale benchmark SKIPPED — wp-cli not on PATH."
+    warn "    The 100k-readiness claim is NOT verified by this run."
+  elif ! wp core is-installed >/dev/null 2>&1; then
+    warn "5.1 Scale benchmark SKIPPED — no reachable WordPress install from $(pwd)."
+    warn "    The 100k-readiness claim is NOT verified by this run."
+    warn "    Run from the site root, or:  wp --path=/path/to/site ..."
+  else
+    SEEDED_ROWS="$(wp eval 'global $wpdb; echo (int) $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}wb_gam_points WHERE user_id >= 1000000");' 2>/dev/null)"
+    # Accept ONLY a bare integer. Anything else (empty, warnings, a stack
+    # trace) means the probe did not get an answer — which is a skip, never
+    # a licence to benchmark.
+    case "$SEEDED_ROWS" in
+      ''|*[!0-9]*) SEEDED_ROWS="" ;;
+    esac
+    if [ -z "$SEEDED_ROWS" ]; then
+      warn "5.1 Scale benchmark SKIPPED — could not read the seeded-row count."
+      warn "    The 100k-readiness claim is NOT verified by this run."
+    elif [ "$SEEDED_ROWS" -gt 0 ]; then
       run_stage "5.1" "Scale benchmark (seeded: ${SEEDED_ROWS} rows)" wp wb-gamification scale benchmark
     else
       warn "5.1 Scale benchmark SKIPPED — no seeded dataset."
@@ -386,8 +411,6 @@ if [ "$MODE" != "quick" ]; then
       warn "    To verify:  composer scale:seed && composer scale:bench && composer scale:teardown"
       warn "    Release is still gated: bin/build-release.sh exits 32 without a green, seeded report."
     fi
-  else
-    warn "5.1 Scale benchmark skipped — wp-cli not on PATH."
   fi
 fi
 
