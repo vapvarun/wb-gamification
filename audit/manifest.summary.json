@@ -3,7 +3,7 @@
   "plugin": {
     "slug": "wb-gamification",
     "name": "WB Gamification",
-    "version": "1.6.0",
+    "version": "1.6.4",
     "namespace": "WBGam\\",
     "main_file": "wb-gamification.php",
     "extends": null,

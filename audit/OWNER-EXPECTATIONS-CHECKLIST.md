@@ -18,7 +18,7 @@ GamiPress on the open market. That decision re-scores this document:
 | **8 triggers on vanilla WordPress** | Existential | **BY DESIGN. Not a defect.** The owner runs BuddyNext / Learnomy / Jetonomy — that is who the 126 triggers are for. |
 | **Ecosystem connectors** (EDD, Tutor, Sensei, PMPro, Gravity Forms, AffiliateWP) — §2.2, P-11, P-15 | Roadmap | **NOT the roadmap.** Chasing GamiPress's ~150 connectors is the wrong war. Deprioritised. |
 | **Commerce loop** (P-01 points-per-$, P-02 pay-with-points, P-07 buyCRED) | Table stakes | **Only matters if suite owners run WooCommerce.** Real, but not urgent. |
-| **Badge conditions (T-21), CSV export (T-40), editable emails (T-36), weekly cap (T-09), broken wizard (T-50)** | Table stakes | **STILL TABLE STAKES.** A Wbcom suite owner expects every one of these. The identity decision does not excuse them. |
+| **CSV export (T-40), editable emails (T-36)** | Table stakes | **STILL TABLE STAKES.** A Wbcom suite owner expects both. The identity decision does not excuse them. *(Badge conditions T-21, weekly cap T-09 and the broken wizard T-50 shipped in 1.6.4 and are struck from this row.)* |
 | **Trust levels / rank-gated permissions** (§5 item 15) | "Nice differentiator" | **THE ROADMAP.** Uncontested in WordPress, and it is exactly what a community suite needs. |
 
 **So the honest bar is:** close the table-stakes items that any owner expects (Tier 1), skip the
@@ -54,7 +54,7 @@ Read the two lists below together and the strategy writes itself:
 | Earn points per $ spent (the #1 WooCommerce loyalty behaviour) | **MISSING** |
 | Pay with points at checkout | **MISSING** |
 | Export anything to CSV | **MISSING** |
-| Rich badge conditions (multi-condition, AND/OR, steps) | **3 conditions, single-condition only** |
+| Rich badge conditions (multi-condition, AND/OR) | **SHIPPED 1.6.4** — eight condition types combined with AND/OR. Sequential *steps* within one achievement (T-26) remain missing. |
 | Broad trigger surface (GamiPress: ~150 free connectors) | **8 triggers on a vanilla WP site** |
 | Edit email copy without touching PHP | **MISSING** |
 
@@ -226,32 +226,32 @@ Walk this every release. Any **NO** in stage 1–2 is a release blocker.
 - [ ] **T-40** Can they get their data back out? (CSV export) — **currently NO**
 
 ### Stage 2 — Set up ("activation → first point")
-- [ ] Points flow within 5 minutes of activation, with zero config — **YES**
-- [ ] Wizard completes without dead options — **NO (T-50, broken templates)**
-- [ ] Existing members are not left at zero — **YES (T-45, backfill)**
+- [x] Points flow within 5 minutes of activation, with zero config — **YES**
+- [x] Wizard completes without dead options — **YES (T-50 fixed 1.6.4)** — templates seed only registered action ids; `apply_template()` refuses unregistered ids and a test fails the build if one reappears
+- [x] Existing members are not left at zero — **YES (T-45, backfill)**
 - [ ] Default badges exist for the owner's stack — **NO** (30 seeded badges are WP/BP only; a WooCommerce or LearnDash site gets **zero** default badges)
 
 ### Stage 3 — Configure ("tune it without code")
-- [ ] Per-action points, cooldown, daily cap — **YES**
-- [ ] **Weekly cap — NO (T-09)**
-- [ ] Build the badges the community actually needs — **NO (T-21: single-condition only)**
+- [x] Per-action points, cooldown, daily cap — **YES**
+- [x] **Weekly cap — YES (T-09 fixed 1.6.4)** — settable per action in Settings > Points; engine already enforced it
+- [x] Build the badges the community actually needs — **YES (T-21 shipped 1.6.4)** — any number of conditions from eight types, combined with AND/OR
 - [ ] Give members something worth earning, without WooCommerce — **NO (P-05)**
 - [ ] Edit what the emails say — **NO (T-36)**
 
 ### Stage 4 — Operate ("see it, fix it, stop abuse")
-- [ ] See who's earning and what — **YES**
+- [x] See who's earning and what — **YES**
 - [ ] Undo a mistake (revoke one award from the UI) — **NO (T-13)**
 - [ ] Correct a bad log entry — **NO (T-12)**
-- [ ] Stop a farmer — **YES** (cooldowns, caps, exclude, sandbox)
+- [x] Stop a farmer — **YES** (cooldowns, caps, exclude, sandbox)
 - [ ] Act on detected cheating — **NO (T-44: read-only panel)**
 - [ ] Export for reporting — **NO (T-40)**
-- [ ] Delegate to a community manager — **YES**
+- [x] Delegate to a community manager — **YES**
 
 ### Stage 5 — Grow ("does it change behaviour, can I prove it?")
-- [ ] Prove impact (retention, churn risk) — **YES** (churn-risk panel)
+- [x] Prove impact (retention, churn risk) — **YES** (churn-risk panel)
 - [ ] Close the earn→spend loop — **PARTIAL** (Woo only)
 - [ ] Reward referrals / invites — **NO (P-10)**
-- [ ] Survive success (100k members) — **YES** (the one thing the market cannot do)
+- [x] Survive success (100k members) — **YES** (the one thing the market cannot do)
 
 ---
 
@@ -260,12 +260,11 @@ Walk this every release. Any **NO** in stage 1–2 is a release blocker.
 Ordered by *"would this alone lose us the owner?"*
 
 **Tier 1 — credibility. Ship before positioning this as a general WP gamification plugin.**
-1. **T-21** Multi-condition badges (AND/OR; level-reached; badge-earned; streak; tenure). The #1 comparison axis; we have 3 single conditions.
-2. **T-40** CSV export (members, points ledger, leaderboard, redemptions). Disqualifying for many owners on its own.
-3. **P-01** Earn points per $ spent. The expected WooCommerce loyalty behaviour; we only do flat-rate.
-4. **T-50** Fix the broken starter templates — a first-run bug on the first-impression screen.
-5. **T-36** Owner-editable email copy.
-6. **T-09** Expose the weekly cap (engine already enforces it) **and fix `CAPABILITIES.md`, which currently overclaims it**.
+*T-21 (multi-condition badges), T-50 (starter templates) and T-09 (weekly cap) shipped in 1.6.4 and have been removed from this queue.*
+
+1. **T-40** CSV export (members, points ledger, leaderboard, redemptions). Disqualifying for many owners on its own.
+2. **P-01** Earn points per $ spent. The expected WooCommerce loyalty behaviour; we only do flat-rate.
+3. **T-36** Owner-editable email copy.
 
 **Tier 2 — parity.**
 7. **P-05** Rewards without WooCommerce (role grant, download, content unlock, manual-fulfilment queue) + **P-06** fix the dead `pending_fulfillment` status.
