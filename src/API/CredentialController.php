@@ -12,12 +12,6 @@
  *
  * The URL itself acts as the verifiable evidence link that can be
  * submitted to LinkedIn's "Add Certification" flow or any OB3-aware wallet.
- *
- * Content-Type: application/ld+json (also served as application/json)
- *
- * @see https://www.imsglobal.org/spec/ob/v3p0
- * @package WB_Gamification
- * @since   0.1.0
  */
 
 namespace WBGam\API;
@@ -213,6 +207,15 @@ class CredentialController extends WP_REST_Controller {
 			);
 		}
 
+		// And the member must have ISSUED it. A verifiable credential has to resolve for an employer
+		// with no login -- that is the whole point of it, and why this route is public. It does not
+		// follow that anyone may MINT one by guessing a badge_id and a user_id, which is what this
+		// route allowed: a signed, verifiable assertion about a person's achievements, generated on
+		// demand for a stranger who was never given the link. The member publishes; then it verifies.
+		if ( ! \WBGam\Engine\BadgeShare::can_view_public( $user_id, $badge_id ) ) {
+			return new WP_Error( 'rest_not_found', __( 'Badge not found.', 'wb-gamification' ), array( 'status' => 404 ) );
+		}
+
 		// Validate user exists and has earned this badge.
 		$user = get_userdata( $user_id );
 		if ( ! $user ) {
@@ -231,6 +234,9 @@ class CredentialController extends WP_REST_Controller {
 		}
 
 		// Credential has expired → 410 Gone (triggers renewal re-engagement).
+		// @clock-ok: expires_at is written in UTC (BadgeEngine::award_badge uses gmdate()), PHP parses
+		// naive strings as UTC under WordPress, and time() is UTC. All three agree. Note earned_at in
+		// the SAME table is site-local -- the column, not the table, decides which clock you compare in.
 		if ( $badge_row['expires_at'] && strtotime( $badge_row['expires_at'] ) <= time() ) {
 			return new WP_Error(
 				'credential_expired',

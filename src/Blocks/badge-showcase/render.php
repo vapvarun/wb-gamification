@@ -67,6 +67,12 @@ if ( $wb_gam_user_id > 0 && ! Privacy::can_view_public_profile( $wb_gam_user_id 
 	$wb_gam_user_id = 0;
 }
 
+// Is the member looking at their OWN badges? Only then do they get the share control -- publishing is
+// a decision about yourself, and there is no version of that button that makes sense pointed at
+// somebody else's achievement. Resolved AFTER the privacy gate, so it cannot be true for a board the
+// viewer was not allowed to see in the first place.
+$wb_gam_is_own_board = $wb_gam_user_id > 0 && get_current_user_id() === $wb_gam_user_id;
+
 if ( $wb_gam_user_id <= 0 && ! $wb_gam_show_locked ) {
 	return '';
 }
@@ -171,10 +177,21 @@ $wb_gam_format_date = static function ( string $iso ): string {
 	if ( ! $ts ) {
 		return '';
 	}
-	$age = time() - $ts;
+
+	// earned_at is written by BadgeEngine with current_time( 'mysql' ) -- site-local -- and PHP
+	// runs on UTC under WordPress, so strtotime() reads it back as though it were UTC. Both
+	// comparisons below therefore have to be made in the site's frame, not the real one.
+	//
+	// Note human_time_diff( $ts ) with one argument defaults its second to time(), so it carried
+	// the same skew as the explicit subtraction and had to be passed the site clock too. The
+	// visible effect was direction-dependent: a site ahead of UTC produced a NEGATIVE age for a
+	// badge earned minutes ago, failing the `>= 0` guard, so a fresh badge skipped "3 days ago"
+	// entirely and rendered as a bare calendar date.
+	$now = current_time( 'timestamp' );
+	$age = $now - $ts;
 	if ( $age >= 0 && $age < DAY_IN_SECONDS * 30 ) {
 		/* translators: %s: human-readable time difference. */
-		return sprintf( esc_html__( '%s ago', 'wb-gamification' ), human_time_diff( $ts ) );
+		return sprintf( esc_html__( '%s ago', 'wb-gamification' ), human_time_diff( $ts, $now ) );
 	}
 	return date_i18n( get_option( 'date_format' ) ?: 'M j, Y', $ts );
 };
@@ -186,10 +203,14 @@ BlockHooks::before( 'badge-showcase', $wb_gam_attrs );
 	data-filter="all">
 
 	<?php if ( empty( $wb_gam_badges ) ) : ?>
-		<p class="wb-gam-badge-showcase__empty">
-			<?php echo \WBGam\Admin\Icon::svg( 'medal', array( 'size' => 28, 'class' => 'wb-gam-badge-showcase__empty-icon' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
-			<span><?php esc_html_e( 'No badges to show yet - keep going!', 'wb-gamification' ); ?></span>
-		</p>
+		<?php
+		$wb_gam_empty = \WBGam\Blocks\EmptyState::body(
+			'badge-showcase',
+			__( 'No badges to show yet - keep going!', 'wb-gamification' ),
+			\WBGam\Admin\Icon::svg( 'medal', array( 'size' => 28, 'class' => 'wb-gam-badge-showcase__empty-icon' ) )
+		);
+		echo $wb_gam_empty; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped in EmptyState.
+		?>
 	<?php else : ?>
 		<header class="wb-gam-badge-showcase__header">
 			<div class="wb-gam-badge-showcase__counter">
@@ -287,6 +308,38 @@ BlockHooks::before( 'badge-showcase', $wb_gam_attrs );
 							);
 							?>
 						</span>
+					<?php endif; ?>
+
+					<?php
+					// The share control, and ONLY on your own earned badges.
+					//
+					// A badge is private until the member publishes it -- the share card, the credential
+					// and the public share page all refuse to render one that has not been. That gate is
+					// worth nothing if the member has no way to open it, so this is the way: their own
+					// board, their own badge, one button.
+					//
+					// Not rendered for anyone else's board. There is no version of this button that makes
+					// sense pointed at somebody else's achievement.
+					if ( $wb_gam_is_earned && $wb_gam_is_own_board ) :
+						$wb_gam_shared = \WBGam\Engine\BadgeShare::is_shared( $wb_gam_user_id, (string) $wb_gam_badge['id'] );
+						?>
+						<button type="button"
+							class="wb-gam-badge-showcase__share"
+							data-wb-gam-share="<?php echo esc_attr( (string) $wb_gam_badge['id'] ); ?>"
+							data-rest-url="<?php echo esc_url( rest_url( 'wb-gamification/v1/badges/' . $wb_gam_badge['id'] . '/share' ) ); ?>"
+							data-rest-nonce="<?php echo esc_attr( wp_create_nonce( 'wp_rest' ) ); ?>"
+							data-shared="<?php echo $wb_gam_shared ? '1' : '0'; ?>"
+							data-label-share="<?php esc_attr_e( 'Share', 'wb-gamification' ); ?>"
+							data-label-shared="<?php esc_attr_e( 'Shared - click to make private', 'wb-gamification' ); ?>"
+							aria-pressed="<?php echo $wb_gam_shared ? 'true' : 'false'; ?>">
+							<?php
+							echo esc_html(
+								$wb_gam_shared
+									? __( 'Shared - click to make private', 'wb-gamification' )
+									: __( 'Share', 'wb-gamification' )
+							);
+							?>
+						</button>
 					<?php endif; ?>
 				</li>
 			<?php endforeach; ?>

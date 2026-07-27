@@ -54,6 +54,14 @@ final class ProgressReset {
 	/**
 	 * Per-user progress meta keys cleared on reset (caches + streak state).
 	 *
+	 * This is DELIBERATELY a subset of `MemberData::USER_META_KEYS`, and it must stay one. A reset is
+	 * not an erasure: the owner is zeroing everybody's score, not deleting people. So a member's
+	 * privacy choice (`wb_gam_profile_public`), their exclusion from earning (`wb_gam_sandboxed`) and
+	 * the admin's dismissed notices survive it -- taking those away would silently republish a member
+	 * who had opted out, which is a far worse outcome than a stale streak.
+	 *
+	 * Do not "fix" the difference by unioning this with USER_META_KEYS. The difference is the feature.
+	 *
 	 * @var string[]
 	 */
 	private const PROGRESS_META = array(
@@ -65,9 +73,24 @@ final class ProgressReset {
 		'wb_gam_league_tier',
 		'wb_gam_pr_best_week',
 		'wb_gam_seen_first_earn_toast',
-		'wb_gam_notif_cursor_footer',
-		'wb_gam_notif_cursor_heartbeat',
-		'wb_gam_notif_cursor_rest',
+		// Both are downstream of the ledger this reset truncates: the note describes an award that no
+		// longer exists, and the decay marker dates a balance that is now zero. Leaving them behind
+		// left the next decay run reasoning from a timestamp for points nobody has.
+		'_wb_gam_last_award_note',
+		'wb_gam_decayed_at',
+	);
+
+	/**
+	 * Per-user progress meta key PREFIXES cleared on reset.
+	 *
+	 * The three notification cursors used to be spelled out here as literals -- `..._footer`,
+	 * `..._heartbeat`, `..._rest` -- which meant this list quietly stopped being complete the moment
+	 * anyone added a fourth channel. The channel is part of the key; match on the prefix instead.
+	 *
+	 * @var string[]
+	 */
+	private const PROGRESS_META_PREFIXES = array(
+		'wb_gam_notif_cursor_', // NotificationBridge::CURSOR_META_PREFIX.
 	);
 
 	/**
@@ -108,6 +131,16 @@ final class ProgressReset {
 				self::PROGRESS_META
 			)
 		);
+
+		// And the prefix families, which have no literal to match on.
+		foreach ( self::PROGRESS_META_PREFIXES as $prefix ) {
+			$meta_rows += (int) $wpdb->query(
+				$wpdb->prepare(
+					"DELETE FROM {$wpdb->usermeta} WHERE meta_key LIKE %s", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from $wpdb, value bound below.
+					$wpdb->esc_like( $prefix ) . '%'
+				)
+			);
+		}
 
 		// Drop the leaderboard snapshot caches so reads reflect the empty state.
 		if ( class_exists( '\WBGam\Engine\LeaderboardEngine' ) ) {

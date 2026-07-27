@@ -61,6 +61,9 @@ class RedemptionStoreRenderTest extends TestCase {
 				'get_permalink'       => static fn () => 'https://example.test/redeem/',
 				'number_format_i18n'  => static fn ( $value ) => number_format( (float) $value ),
 				'wp_enqueue_style'    => static fn () => null,
+				// The confirmation is a real <dialog> now, so the block pulls in the shared dialog
+				// utility (focus return, backdrop close). See assets/js/dialog.js.
+				'wp_enqueue_script'   => static fn () => null,
 				'add_action'          => static fn () => true,
 				'apply_filters'       => static function ( $hook, $value ) {
 					return $value;
@@ -156,13 +159,33 @@ class RedemptionStoreRenderTest extends TestCase {
 		$this->assertStringContainsString( 'data-i18n-network=', $output );
 	}
 
-	public function test_render_emits_styled_confirm_panel_replacing_window_confirm(): void {
+	/**
+	 * The confirmation is a REAL dialog, not a div wearing a dialog's clothes.
+	 *
+	 * It used to be `role="dialog" aria-modal="false"` on a hidden <div>: it told a screen reader it
+	 * was a modal while trapping nothing, and it never moved FOCUS -- a member pressed Redeem, a panel
+	 * appeared somewhere below, and their focus stayed on the button they had just pressed. As far as a
+	 * keyboard user could tell, nothing had happened.
+	 *
+	 * <dialog>.showModal() gives the focus trap, ESC, and the inert background for free. This test pins
+	 * that we use it, and that the fake-modal lie does not come back.
+	 *
+	 * @return void
+	 */
+	public function test_render_emits_a_real_dialog_for_the_confirmation(): void {
 		$output = $this->render( array( 'uniqueId' => 'pilot03' ) );
 
-		$this->assertStringContainsString( 'wb-gam-redemption__confirm', $output );
-		$this->assertStringContainsString( 'data-wp-bind--hidden="!context.confirming"', $output );
+		$this->assertStringContainsString( '<dialog class="wb-gam-redemption__confirm"', $output );
+		$this->assertStringContainsString( 'data-wb-gam-dialog', $output );
 		$this->assertStringContainsString( 'data-wp-on--click="actions.confirmRedeem"', $output );
 		$this->assertStringContainsString( 'data-wp-on--click="actions.cancelRedeem"', $output );
+
+		$this->assertStringNotContainsString(
+			'aria-modal="false"',
+			$output,
+			'aria-modal="false" on a role="dialog" tells assistive tech it is a modal while trapping '
+			. 'nothing. If this comes back, the confirmation has stopped being a real dialog again.'
+		);
 	}
 
 	public function test_render_registers_per_instance_css_via_block_css_helper(): void {

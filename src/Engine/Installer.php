@@ -186,6 +186,21 @@ final class Installer {
 		);
 
 		// Earned badges.
+		//
+		// NEVER PUT AN SQL `--` COMMENT INSIDE ONE OF THESE CREATE TABLE STRINGS. dbDelta does not
+		// parse SQL; it splits the definition LINE BY LINE and treats each line as a column. A comment
+		// line becomes a column name, and dbDelta emits statements like "ALTER TABLE
+		// wp_wb_gam_user_badges ADD COLUMN <the text of your comment>",
+		// which fail with a syntax error on every install and every upgrade, on every site, for ever.
+		// MySQL creates the table correctly from the CREATE TABLE (it ignores the comments), so the
+		// feature works and the only symptom is a database error in a log nobody reads. Found by
+		// running a fresh install in a clean room, not by reading the code -- this is invisible on a
+		// site where the tables already exist.
+		//
+		// `shared_at` is the member's own decision to publish a badge (NULL = private, which is the
+		// default). The share card, the OpenBadges credential and the public share page all refuse to
+		// render a badge with a NULL here to anyone but its owner. Before it existed, all three served
+		// any badge to anyone who could guess a badge_id and a user_id, and the member was never asked.
 		dbDelta(
 			"CREATE TABLE {$wpdb->prefix}wb_gam_user_badges (
 			id         BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -193,6 +208,7 @@ final class Installer {
 			badge_id   VARCHAR(100)    NOT NULL,
 			earned_at  DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			expires_at DATETIME        DEFAULT NULL,
+			shared_at  DATETIME        DEFAULT NULL,
 			PRIMARY KEY (id),
 			UNIQUE KEY user_badge (user_id, badge_id),
 			KEY idx_expires_at (expires_at)
@@ -294,7 +310,8 @@ final class Installer {
 			PRIMARY KEY (id),
 			KEY giver_date (giver_id, created_at),
 			KEY receiver_id (receiver_id),
-			KEY idx_receiver_date (receiver_id, created_at)
+			KEY idx_receiver_date (receiver_id, created_at),
+			KEY idx_abuse_pairs (revoked_at, giver_id, receiver_id)
 		) $charset;"
 		);
 
@@ -497,6 +514,68 @@ final class Installer {
 			UNIQUE KEY idx_key_hash (key_hash),
 			KEY idx_active (is_active),
 			KEY idx_user_id (user_id)
+		) $charset;"
+		);
+
+		// ── Tables that existed only in DbUpgrader ────────────────────────────────
+		//
+		// These three arrived as upgrade steps and were never added here, so
+		// install() built 23 of the 26 tables and the upgrader supplied the rest.
+		// That works exactly once. uninstall.php drops every table but leaves
+		// `wb_gam_db_version` behind, so a REINSTALL came up with the version
+		// pointer already at the current release: install() created its 23,
+		// DbUpgrader correctly concluded there was nothing to migrate, and these
+		// three never came back. No fatal and no notice -- notification writes just
+		// returned false and members silently stopped receiving anything.
+		//
+		// Schema belongs to the installer. dbDelta is idempotent, so the upgrader
+		// keeps its own copies for sites mid-migration; this is what guarantees a
+		// COMPLETE schema on every activation, not just the first one.
+		dbDelta(
+			"CREATE TABLE {$wpdb->prefix}wb_gam_notifications_queue (
+			id           BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+			user_id      BIGINT UNSIGNED NOT NULL,
+			event_type   VARCHAR(64)     NOT NULL,
+			payload_json TEXT            NOT NULL,
+			created_at   DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			PRIMARY KEY (id),
+			KEY idx_user_id (user_id, id),
+			KEY idx_created_at (created_at)
+		) $charset;"
+		);
+
+		dbDelta(
+			"CREATE TABLE {$wpdb->prefix}wb_gam_side_effect_failures (
+			id              BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+			event_id        VARCHAR(64)     NOT NULL,
+			user_id         BIGINT UNSIGNED NOT NULL,
+			side_effect     VARCHAR(64)     NOT NULL,
+			points          INT             NOT NULL DEFAULT 0,
+			event_payload   TEXT            NOT NULL,
+			error_message   VARCHAR(500)    NOT NULL DEFAULT '',
+			retry_count     TINYINT UNSIGNED NOT NULL DEFAULT 0,
+			status          VARCHAR(20)     NOT NULL DEFAULT 'pending',
+			last_attempt_at DATETIME        NULL,
+			created_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			PRIMARY KEY (id),
+			KEY idx_status_attempt (status, last_attempt_at),
+			KEY idx_event_id       (event_id)
+		) $charset;"
+		);
+
+		dbDelta(
+			"CREATE TABLE {$wpdb->prefix}wb_gam_user_intelligence (
+			user_id              BIGINT UNSIGNED NOT NULL,
+			engagement_score     DECIMAL(8,4)    NOT NULL DEFAULT 0,
+			action_diversity     SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+			recency_days         SMALLINT UNSIGNED NOT NULL DEFAULT 999,
+			events_30d           INT UNSIGNED    NOT NULL DEFAULT 0,
+			churn_risk           DECIMAL(4,3)    NOT NULL DEFAULT 0,
+			anomaly_flag         TINYINT UNSIGNED NOT NULL DEFAULT 0,
+			computed_at          DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			PRIMARY KEY (user_id),
+			KEY idx_churn_risk (churn_risk),
+			KEY idx_anomaly    (anomaly_flag, computed_at)
 		) $charset;"
 		);
 
@@ -835,12 +914,25 @@ final class Installer {
 				array( '%s', '%s', '%s', '%s', '%d', '%s' )
 			);
 
+			// The seed table above is authored one condition per badge, because that is how these
+			// badges read. What goes in the DATABASE is the grouped shape -- normalised through the
+			// same pure migrator that rewrites existing sites, so a fresh install and an upgraded
+			// install end up byte-identical instead of quietly disagreeing about the shape.
+			//
+			// Every badge in that table has a condition (PHPStan enforces it from the literal shape),
+			// so the only way this is null is a condition the migrator does not recognise -- which it
+			// must never guess at, and which must certainly never be written as the string "null".
+			$group = BadgeRule::from_legacy( $conditions[ $id ] );
+			if ( null === $group ) {
+				continue;
+			}
+
 			$wpdb->insert(
 				$rules_table,
 				array(
 					'rule_type'   => 'badge_condition',
 					'target_id'   => $id,
-					'rule_config' => wp_json_encode( $conditions[ $id ] ),
+					'rule_config' => wp_json_encode( $group ),
 					'is_active'   => 1,
 				),
 				array( '%s', '%s', '%s', '%d' )

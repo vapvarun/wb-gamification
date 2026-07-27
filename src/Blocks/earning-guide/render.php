@@ -38,6 +38,7 @@ defined( 'ABSPATH' ) || exit;
 
 
 use WBGam\Blocks\CSS as WB_Gam_Block_CSS;
+use WBGam\Blocks\EmptyState;
 use WBGam\Engine\BlockHooks;
 use WBGam\Engine\Registry;
 
@@ -124,11 +125,13 @@ $wb_gam_wrapper = get_block_wrapper_attributes(
 
 if ( empty( $wb_gam_grouped ) ) {
 	BlockHooks::before( 'earning-guide', $wb_gam_attrs );
-	printf(
-		'<div %s><p class="wb-gam-earning-guide__empty">%s</p></div>',
-		$wb_gam_wrapper, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-		esc_html__( 'No earning opportunities available yet.', 'wb-gamification' )
+		$wb_gam_empty = EmptyState::render(
+		'earning-guide',
+		$wb_gam_wrapper,
+		__( 'No earning opportunities available yet.', 'wb-gamification' )
 	);
+	echo $wb_gam_empty; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- EmptyState escapes its message and CTA; the wrapper is get_block_wrapper_attributes() output.
+
 	BlockHooks::after( 'earning-guide', $wb_gam_attrs );
 	return;
 }

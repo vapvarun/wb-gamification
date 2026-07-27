@@ -47,11 +47,39 @@ defined( 'ABSPATH' ) || exit;
 final class ScaleCommand {
 
 	/**
-	 * Per-query timing budgets (milliseconds). A query exceeding its budget
-	 * fails the benchmark gate.
+	 * First user ID the seeder claims for synthetic members.
 	 *
-	 * Numbers chosen for a typical Local-by-Flywheel MySQL 8 box; tighten
-	 * for production hosts with dedicated MySQL.
+	 * Seed() and teardown() used to write this number out twice, separately. Two copies of the one
+	 * fact that decides which rows get DELETED is not a place to save a constant.
+	 *
+	 * The ID alone does not identify a seeded member -- see teardown(), which also requires the
+	 * `@scale.test` address, because a real site can and does have members up here.
+	 *
+	 * @var int
+	 */
+	private const SEED_UID_BASE = 1000000;
+
+	/**
+	 * Most database queries one steady-state award may cost.
+	 *
+	 * Measured at 10 on the dev site after the 1.6.4 hot-path pass. The ceiling is deliberately not
+	 * 10: a little headroom keeps the gate from failing on an unrelated one-query change, while still
+	 * catching the failure that actually happens, which is never subtle. The badge N+1 this exists to
+	 * catch took a steady-state award from 11 queries to 31 on a site with twenty tiered badges.
+	 *
+	 * Every OTHER budget in this benchmark is a latency ceiling, and not one of them could see that:
+	 * twenty COUNT(*) queries at half a millisecond each pass every latency budget ever written.
+	 * Count the round trips, not just the time they took.
+	 *
+	 * @var int
+	 */
+	private const AWARD_QUERY_CEILING = 15;
+
+	/**
+	 * Per-query timing budgets (milliseconds). A query exceeding its budget fails the benchmark gate.
+	 *
+	 * Numbers chosen for a typical Local-by-Flywheel MySQL 8 box; tighten for production hosts with
+	 * dedicated MySQL.
 	 *
 	 * @var array<string,float>
 	 */
@@ -135,9 +163,55 @@ final class ScaleCommand {
 		$started  = microtime( true );
 		$inserted = 0;
 
-		// Use synthetic user IDs starting at 1_000_000 so we don't collide
-		// with real users. Cleanup target: WHERE user_id >= 1000000.
-		$base_uid = 1000000;
+		// Synthetic user IDs start high so they are unlikely to collide with real members. "Unlikely"
+		// is the operative word, which is why teardown() identifies what it deletes by the
+		// `@scale.test` address below and not by this number.
+		$base_uid = self::SEED_UID_BASE;
+
+		// THE MEMBERS HAVE TO ACTUALLY EXIST, and until now they did not.
+		//
+		// This seeded 100,000 ledger rows for 10,000 members and never created a single one of them in
+		// wp_users. Every query that JOINs the users table -- the leaderboard, the analytics dashboard,
+		// the rank strip -- therefore threw all of them away and measured a result set of about 150
+		// rows. The benchmark then reported "100k-ready" against a board that never had 100k people on
+		// it. A benchmark that measures the wrong thing is worse than no benchmark, because it is
+		// believed.
+		//
+		// Inserted directly, in batches: wp_insert_user() fires hooks (including OUR OWN award hooks)
+		// and would take minutes and pollute the very ledger we are seeding.
+		$user_rows = array();
+		$user_ph   = array();
+		$user_args = array();
+
+		for ( $u = 0; $u < $user_count; $u++ ) {
+			$uid         = $base_uid + $u;
+			$user_ph[]   = '(%d, %s, %s, %s, %s, %s)';
+			$user_args[] = $uid;
+			$user_args[] = 'scaleuser' . $uid;
+			$user_args[] = 'scaleuser' . $uid;
+			$user_args[] = 'scaleuser' . $uid . '@scale.test';
+			$user_args[] = $now;
+			$user_args[] = 'Scale User ' . $uid;
+
+			if ( count( $user_ph ) >= 500 || $u === $user_count - 1 ) {
+				// The placeholders are literal '(%d, %s, ...)' groups built above; every value binds through
+				// $user_args. disable/enable, not ignore -- the sniff reports on the interpolated line
+				// INSIDE the call, which an ignore above it does not cover.
+				// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared
+				$wpdb->query(
+					$wpdb->prepare(
+						"INSERT IGNORE INTO {$wpdb->users} (ID, user_login, user_nicename, user_email, user_registered, display_name) VALUES "
+						. implode( ',', $user_ph ),
+						$user_args
+					)
+				);
+				// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared
+				$user_ph   = array();
+				$user_args = array();
+			}
+		}
+
+		\WP_CLI::log( sprintf( 'Created %s members in wp_users (the ledger rows need someone to belong to).', number_format_i18n( $user_count ) ) );
 
 		for ( $u = 0; $u < $user_count; $u += $batch_size ) {
 			$rows         = array();
@@ -320,25 +394,112 @@ final class ScaleCommand {
 	 */
 	public function teardown( array $args, array $assoc_args ): void {
 		global $wpdb;
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$d1 = (int) $wpdb->query( "DELETE FROM {$wpdb->prefix}wb_gam_points WHERE user_id >= 1000000" );
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$d2 = (int) $wpdb->query( "DELETE FROM {$wpdb->prefix}wb_gam_events WHERE user_id >= 1000000" );
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$d3 = (int) $wpdb->query( "DELETE FROM {$wpdb->prefix}wb_gam_user_totals WHERE user_id >= 1000000" );
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$d4 = (int) $wpdb->query( "DELETE FROM {$wpdb->prefix}wb_gam_leaderboard_cache WHERE user_id >= 1000000" );
-		// Tables added to the seed in 1.6.4 — teardown MUST track the seed, or a
-		// benchmark run leaves synthetic badges and streaks on the site forever.
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$d5 = (int) $wpdb->query( "DELETE FROM {$wpdb->prefix}wb_gam_user_badges WHERE user_id >= 1000000" );
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$d6 = (int) $wpdb->query( "DELETE FROM {$wpdb->prefix}wb_gam_streaks WHERE user_id >= 1000000" );
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$d7 = (int) $wpdb->query( "DELETE FROM {$wpdb->prefix}wb_gam_notifications_queue WHERE user_id >= 1000000" );
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+
+		// `WHERE ID >= 1000000` is an ASSUMPTION, not a guard, and this command DELETES USERS.
+		//
+		// It assumes no real member ever reaches user ID 1,000,000. That holds on a laptop and is
+		// simply false on a large site, an imported site, or one that has churned through a lot of
+		// registrations -- and the same floor was used to delete from wp_users, wp_usermeta AND every
+		// gamification table, so on such a site `scale teardown` would take real people and their real
+		// points with it. A dev-only command is still a command someone runs on staging with a copy of
+		// production in it.
+		//
+		// So: identify the members this seeder CREATED, by the two marks only it leaves -- an ID at or
+		// above the base AND the synthetic `@scale.test` address it registers them with -- and scope
+		// every delete to exactly those IDs. Anything else at ID >= 1,000,000 is somebody real, and it
+		// is now impossible for this command to touch them.
+		$seed_ids = array_map(
+			'intval',
+			(array) $wpdb->get_col(
+				$wpdb->prepare(
+					// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- CLI teardown.
+					"SELECT ID FROM {$wpdb->users} WHERE ID >= %d AND user_email LIKE %s",
+					self::SEED_UID_BASE,
+					'%@scale.test'
+				)
+			)
+		);
+
+		// Real accounts sitting in the range the old code would have deleted. Worth saying out loud:
+		// on the site where this matters, the operator should know how close the previous behaviour
+		// came to being a very bad afternoon.
+		$bystanders = (int) $wpdb->get_var(
+			$wpdb->prepare(
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- CLI teardown.
+				"SELECT COUNT(*) FROM {$wpdb->users} WHERE ID >= %d AND user_email NOT LIKE %s",
+				self::SEED_UID_BASE,
+				'%@scale.test'
+			)
+		);
+
+		if ( $bystanders > 0 ) {
+			\WP_CLI::warning(
+				sprintf(
+					'%s real account(s) sit at user ID >= %s. They are NOT seeded data and will not be touched.',
+					number_format_i18n( $bystanders ),
+					number_format_i18n( self::SEED_UID_BASE )
+				)
+			);
+		}
+
+		if ( empty( $seed_ids ) ) {
+			\WP_CLI::success( 'No seeded members found. Nothing to remove.' );
+			return;
+		}
+
+		$removed = array_fill_keys(
+			array( 'points', 'events', 'user_totals', 'leaderboard_cache', 'user_badges', 'streaks', 'notifications_queue' ),
+			0
+		);
+
+		// Chunked: a 100k-member seed makes an IN() list MySQL will not accept whole.
+		foreach ( array_chunk( $seed_ids, 1000 ) as $chunk ) {
+			$ph   = implode( ',', array_fill( 0, count( $chunk ), '%d' ) );
+			$args = $chunk;
+
+			foreach ( array_keys( $removed ) as $table ) {
+				$removed[ $table ] += (int) $wpdb->query(
+					$wpdb->prepare(
+						// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from $wpdb->prefix + a fixed key; IDs bound.
+						"DELETE FROM {$wpdb->prefix}wb_gam_{$table} WHERE user_id IN ({$ph})",
+						$args
+					)
+				);
+			}
+
+			$wpdb->query(
+				$wpdb->prepare(
+					// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- IDs bound.
+					"DELETE FROM {$wpdb->usermeta} WHERE user_id IN ({$ph})",
+					$args
+				)
+			);
+
+			$wpdb->query(
+				$wpdb->prepare(
+					// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- IDs bound.
+					"DELETE FROM {$wpdb->users} WHERE ID IN ({$ph})",
+					$args
+				)
+			);
+		}
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- fixed key.
 		$wpdb->query( "DELETE FROM {$wpdb->prefix}wb_gam_badge_defs WHERE id = 'scale_seed_badge'" );
-		\WP_CLI::success( "Removed: points={$d1}, events={$d2}, user_totals={$d3}, leaderboard_cache={$d4}, user_badges={$d5}, streaks={$d6}, notifications={$d7}" );
+
+		\WP_CLI::log( sprintf( 'Removed %s seeded members.', number_format_i18n( count( $seed_ids ) ) ) );
+		\WP_CLI::success(
+			sprintf(
+				'Removed: points=%d, events=%d, user_totals=%d, leaderboard_cache=%d, user_badges=%d, streaks=%d, notifications=%d',
+				$removed['points'],
+				$removed['events'],
+				$removed['user_totals'],
+				$removed['leaderboard_cache'],
+				$removed['user_badges'],
+				$removed['streaks'],
+				$removed['notifications_queue']
+			)
+		);
 	}
 
 	/**
@@ -407,7 +568,9 @@ final class ScaleCommand {
 		// 5. Rate-limit today count — hot on every action that fires.
 		$results['rate_limit_today_count'] = self::time_op(
 			function () use ( $uid, $wpdb ) {
-				$today = gmdate( 'Y-m-d 00:00:00' );
+				// The site's midnight, not UTC's: wb_gam_points.created_at is site-local, and a benchmark
+				// that measures a query the product does not run is not measuring anything.
+				$today = \WBGam\Engine\Clock::site_day_start( 'today' );
 				return (int) $wpdb->get_var(
 					$wpdb->prepare(
 						"SELECT COUNT(*) FROM {$wpdb->prefix}wb_gam_points
@@ -492,6 +655,28 @@ final class ScaleCommand {
 			}
 		);
 
+		// The award WRITE path, counted in QUERIES rather than milliseconds.
+		//
+		// Every budget above is a latency ceiling on a single read, and none of them can see the bug
+		// this gate exists for. A badge N+1 is twenty COUNT(*) queries that are each half a
+		// millisecond: every latency budget stays green while one award quietly costs twenty round
+		// trips. It happened -- tiered badges (Bronze/Silver/Gold on one action) each ran their own
+		// identical COUNT for the same member in the same pass, and a steady-state award went from 11
+		// queries to 31 on a site with twenty of them. Nothing in this benchmark noticed, because it
+		// only ever measured reads.
+		//
+		// So: count the queries in one award. The number is the thing that regresses.
+		//
+		// Counted with $wpdb->num_queries, which WordPress increments on every query no matter what.
+		// The first version of this gate asked for SAVEQUERIES first -- and SAVEQUERIES only controls
+		// the query LOG, not the counter, and WP-CLI has no flag to define it anyway. So the gate
+		// skipped itself on every run and printed a tidy yellow SKIPPED that nobody would read twice.
+		// A gate that cannot fail is not a gate; this one had that defect for about four minutes.
+		PointsEngine::award( $uid, 'wp_leave_comment', 5, 0, null, true ); // Warm caches; the first award of a request pays for everyone.
+		$before = $wpdb->num_queries;
+		PointsEngine::award( $uid, 'wp_leave_comment', 5, 0, null, true );
+		$award_queries = $wpdb->num_queries - $before;
+
 		// Render.
 		$failures = 0;
 		$failed   = array();
@@ -514,6 +699,24 @@ final class ScaleCommand {
 				)
 			);
 		}
+
+		$award_pass = $award_queries <= self::AWARD_QUERY_CEILING;
+
+		if ( ! $award_pass ) {
+			++$failures;
+			$failed[] = 'award_query_count';
+		}
+
+		\WP_CLI::line(
+			sprintf(
+				'%s%s%s%s',
+				str_pad( 'award_query_count', 30 ),
+				str_pad( $award_queries . ' q', 12 ),
+				str_pad( self::AWARD_QUERY_CEILING . ' q', 12 ),
+				$award_pass ? "\033[32mPASS\033[0m" : "\033[31mFAIL (over by " . ( $award_queries - self::AWARD_QUERY_CEILING ) . " queries)\033[0m"
+			)
+		);
+
 		\WP_CLI::line( str_repeat( '─', 72 ) );
 
 		// S-02: write the machine-readable result the release gate reads. Without

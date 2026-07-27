@@ -102,6 +102,95 @@ check_unauthenticated_rest_allowlist() {
     fi
 }
 
+# Rule 2b: a PUBLIC route that reads a CALLER-SUPPLIED user_id must consult Privacy.
+#
+# Rule 2 above allowlists whole FILES, and that granularity is exactly how we shipped an
+# unauthenticated IDOR: ChallengesController was allowlisted as "public catalog", which is true --
+# the catalogue IS public. But the same routes also accept `?user_id=`, and that parameter enriched
+# the response with that member's challenge progress. So the file-level reason was correct and the
+# route was still leaking: an anonymous caller with no cookie walked ?user_id=1,2,3... and harvested
+# progress for members who had opted OUT of a public profile. Rule 2 was green throughout.
+#
+# A reason that is true about a file can be false about a parameter. This rule closes that gap: if a
+# controller ships __return_true AND reads user_id from the request, it must either consult Privacy,
+# or carry an explicit annotation saying why that member data is public to strangers.
+#
+# The annotation is deliberately awkward to write. It is a place to state a decision, not a snooze
+# button -- an allowlist you can join without saying anything is how the last one lied to us.
+# Rule 2c: no SQL `--` comments inside a dbDelta CREATE TABLE string.
+#
+# dbDelta does not parse SQL. It splits the table definition LINE BY LINE and treats every line as a
+# column definition, so a comment line becomes a column NAME and dbDelta emits:
+#
+#     ALTER TABLE wp_wb_gam_user_badges ADD COLUMN -- and the member was never asked.
+#
+# which fails with a syntax error on every install and every upgrade, on every site, for ever. MySQL
+# builds the table correctly from the CREATE TABLE itself, so the feature works and the only symptom
+# is a database error in a log nobody reads.
+#
+# I did exactly this while adding the shared_at column, and no review caught it -- it took a fresh
+# install in a clean-room container to surface, because on a site where the tables already exist
+# dbDelta has nothing to diff and stays quiet. A comment in the code saying "do not do this" is what
+# was already there for other traps. This is the mechanism.
+check_no_sql_comments_in_schema() {
+    local hits
+    hits=$(awk '
+        /"CREATE TABLE/ { in_ct = 1 }
+        in_ct && /^[[:space:]]*--/ { printf "%s:%d: %s\n", FILENAME, NR, $0 }
+        in_ct && /\$charset/ { in_ct = 0 }
+    ' "$PLUGIN_DIR/src/Engine/Installer.php" "$PLUGIN_DIR/src/Engine/DbUpgrader.php" 2>/dev/null || true)
+
+    if [ -n "$hits" ]; then
+        violation "Rule 2c — SQL '--' comment inside a dbDelta CREATE TABLE:"
+        echo "$hits" | sed 's/^/    /'
+        echo "    dbDelta reads each line as a COLUMN. These become bogus ALTER TABLE statements that"
+        echo "    error on every install and upgrade. Move the explanation to a PHP comment ABOVE the"
+        echo "    dbDelta() call."
+    else
+        ok "Rule 2c — no SQL comments inside dbDelta schemas"
+    fi
+}
+
+check_public_routes_gate_user_data() {
+    local offenders=()
+
+    for file in "$PLUGIN_DIR"/src/API/*.php; do
+        [ -f "$file" ] || continue
+
+        grep -q "__return_true" "$file" || continue
+
+        # Caller-supplied only: $request['user_id'] / get_param('user_id'). A 'user_id' key in a
+        # RESPONSE schema is not an input and must not trip this rule (Leaderboard, Kudos,
+        # Redemption and Capabilities all publish that field while reading get_current_user_id()).
+        grep -qE "\\\$request\[ *'user_id' *\]|get_param\( *'user_id' *\)" "$file" || continue
+
+        # Two gates count as gating member data, and they answer different questions:
+        #   Privacy::         -- "may this VIEWER see this member?"   (profile visibility)
+        #   BadgeShare::      -- "did this MEMBER publish this thing?" (consent)
+        # A share card has to render for LinkedIn's crawler, which arrives with no cookie, so gating it
+        # on the viewer is useless -- what it needs is the member's own decision. Both are real gates.
+        grep -q "Privacy::" "$file" && continue
+        grep -q "BadgeShare::" "$file" && continue
+        grep -q "@public-member-data" "$file" && continue
+
+        offenders+=( "$(basename "$file")" )
+    done
+
+    if [ ${#offenders[@]} -gt 0 ]; then
+        violation "Rule 2b — public route reads a caller-supplied user_id without a Privacy check:"
+        printf '    %s\n' "${offenders[@]}"
+        echo "    Any stranger can iterate user_id and harvest that member's data."
+        echo "    Fix: gate on \\WBGam\\Engine\\Privacy::can_view_public_profile( \$user_id ) and"
+        echo "         degrade to a non-personal read when it fails (see ChallengesController"
+        echo "         ::resolve_user_id or BadgesController::get_items),"
+        echo "         OR annotate the file with '@public-member-data <why this is public>' if the"
+        echo "         exposure is deliberate (a verifiable credential, a share card the member"
+        echo "         published themselves)."
+    else
+        ok "Rule 2b — every public route that takes a user_id gates it or documents why not"
+    fi
+}
+
 # Rule 3: no inline `style="..."` attributes in admin PHP.
 # Per plan/ARCHITECTURE.md "no inline JS or CSS" — admin pages must use the
 # wbgam-* utility classes in assets/css/admin.css, never inline styles.
@@ -172,15 +261,22 @@ echo "=== WB Gamification coding-rules check ==="
 echo "Plugin: $PLUGIN_DIR"
 echo ""
 
-# Rule 11: every user-scoped surface (wb_gam_* table with user_id column,
-# every wb_gam_* user_meta key) MUST be referenced in src/Engine/Privacy.php
-# so it lands in both export_user_data and erase_user_data.
+# Rule 11: every user-scoped surface must be covered by BOTH the export and the erase.
 #
-# Why: shipping a new user-scoped surface without updating Privacy.php
-# leaves ghost data after a GDPR erase request and an incomplete export.
-# This rule prevents the v1.0 sprint pattern (6 user_meta keys + 1 table
-# shipped without Privacy.php updates — fixed in commit fc1675a) from
-# recurring. See plan/PRIVACY-MODEL.md § Cross-cutting principles #6.
+# THIS RULE WAS GREEN WHILE THE ERASER LEAKED, and the reason is worth keeping.
+#
+# It used to check that a table name appeared ANYWHERE in Privacy.php. But that file holds two
+# separate functions, and a table listed in the EXPORT satisfied the grep while the ERASE never
+# deleted it. wb_gam_cohort_members, notifications_queue, user_intelligence, redemptions,
+# community_challenge_contributions and api_keys were all "referenced in Privacy.php" and all
+# survived a GDPR erasure request. The export was missing a different seven, including the member's
+# kudos. Mere textual presence is not coverage.
+#
+# Both paths are now derived from the SCHEMA (MemberData::member_tables()), so a table cannot be
+# forgotten — it is covered on the day it is created. This rule now verifies that the derivation is
+# still in place, rather than trying to re-derive it here and drift in its own way.
+#
+# See plan/PRIVACY-MODEL.md § Cross-cutting principles #6.
 check_privacy_coverage_for_user_scoped_surfaces() {
     local privacy_file="$PLUGIN_DIR/src/Engine/Privacy.php"
     if [ ! -f "$privacy_file" ]; then
@@ -207,36 +303,102 @@ check_privacy_coverage_for_user_scoped_surfaces() {
         }
     ' "$PLUGIN_DIR/src/Engine/Installer.php" 2>/dev/null | sort -u)
 
+    local member_data="$PLUGIN_DIR/src/Engine/MemberData.php"
+
+    if [ ! -f "$member_data" ]; then
+        violation "Rule 11 — src/Engine/MemberData.php missing: nothing derives the privacy surface from the schema"
+        return
+    fi
+
+    # The erase path must go through the schema-driven purge, not a hand-list.
+    # Match the CALL, not one exact spelling of its arguments. The first version of this rule
+    # grepped for the literal 'MemberData::export_rows( $user_id )', so the moment the catch-all
+    # grew a second argument (the skip list, which is what stopped it reading 50k ledger rows into
+    # memory) the gate failed a change that made the thing it guards STRICTLY better. A gate that
+    # fires on an argument is checking the spelling, not the wiring.
+    if ! grep -qE 'MemberData::purge\( *\$user_id' "$privacy_file"; then
+        missing="${missing}    erase_user_data() must call MemberData::purge() — a hand-listed set of tables is what leaked.\n"
+    fi
+
+    # The export must have the schema-driven catch-all, so it cannot omit a table either.
+    if ! grep -qE 'MemberData::export_rows\( *\$user_id' "$privacy_file"; then
+        missing="${missing}    export_user_data() must append MemberData::export_rows() — the curated groups omitted 7 tables.\n"
+    fi
+
+    # And the derivation itself must still read the schema.
+    if ! grep -q 'SHOW COLUMNS FROM' "$member_data"; then
+        missing="${missing}    MemberData must derive its tables from the SCHEMA (SHOW COLUMNS). A hardcoded list drifts.\n"
+    fi
+
+    # Tables are schema-derived, so they cannot be missed — but the count is worth reporting.
     for tbl in $table_names; do
-        if ! grep -q "$tbl" "$privacy_file"; then
-            missing="${missing}    Table $tbl — has user_id column but not referenced in Privacy.php\n"
-        fi
+        : # covered by MemberData::member_tables(); nothing to hand-check.
     done
 
-    # User-meta keys — every literal 'wb_gam_*' meta_key passed to
-    # update_user_meta() / get_user_meta() / delete_user_meta() in src/
+    # User-meta keys — every meta_key passed to update_/get_/add_/delete_user_meta() in src/
     # (excluding Privacy.php itself, which is the consumer side).
-    local meta_keys
-    meta_keys=$(grep -rEho "(update|get|add|delete)_user_meta\(\s*[^,]+,\s*['\"]wb_gam_[a-z_]+['\"]" \
+    #
+    # This used to match ONLY a bare `'wb_gam_...'` string in the second argument, and that is how it
+    # spent an entire cycle printing "every meta key is covered" while five keys were covered by
+    # nothing at all -- not the erase, not the export, not uninstall. All five are passed as
+    # `self::SOME_CONST`, and one of them (`_wb_gam_last_award_note`) also carries a leading
+    # underscore the pattern did not allow. The gate could not see them, so it certified them.
+    #
+    # A check that only understands one spelling of a thing is a check that grades the spelling. So
+    # this now does two passes and unions them:
+    #   1. literal keys, with the leading underscore permitted;
+    #   2. `self::CONST` / `Klass::CONST` references, resolved back to their literal by finding the
+    #      `const NAME = '...'` declaration.
+    # If a sixth spelling shows up, this rule should learn it rather than quietly ignore it.
+    local meta_keys_literal meta_const_names meta_keys_resolved
+
+    meta_keys_literal=$(grep -rEho "(update|get|add|delete)_user_meta\(\s*[^,]+,\s*['\"]_?wb_gam_[a-z_]+['\"]" \
                     "$PLUGIN_DIR/src/" --include="*.php" 2>/dev/null \
                 | grep -vE "Privacy\.php" \
-                | sed -E "s/.*['\"]( *wb_gam_[a-z_]+ *)['\"].*/\1/" \
-                | tr -d ' ' \
+                | sed -E "s/.*['\"] *(_?wb_gam_[a-z_]+) *['\"].*/\1/" \
                 | sort -u)
 
+    # Constant NAMES used as the meta_key argument.
+    meta_const_names=$(grep -rEho "(update|get|add|delete)_user_meta\(\s*[^,]+,\s*(self|static|[A-Za-z_\\\\]+)::[A-Z0-9_]+" \
+                    "$PLUGIN_DIR/src/" --include="*.php" 2>/dev/null \
+                | grep -vE "Privacy\.php" \
+                | sed -E "s/.*::([A-Z0-9_]+).*/\1/" \
+                | sort -u)
+
+    # Resolve each constant NAME to the literal it is declared as. A constant whose value is not a
+    # wb_gam_* key resolves to nothing and drops out -- that is correct, it is not one of ours.
+    meta_keys_resolved=""
+    for const_name in $meta_const_names; do
+        local const_value
+        const_value=$(grep -rhoE "const +${const_name} +=[^;]*['\"]_?wb_gam_[a-z_]+['\"]" \
+                        "$PLUGIN_DIR/src/" --include="*.php" 2>/dev/null \
+                    | sed -E "s/.*['\"](_?wb_gam_[a-z_]+)['\"].*/\1/" \
+                    | head -1)
+        [ -n "$const_value" ] && meta_keys_resolved="${meta_keys_resolved}${const_value}\n"
+    done
+
+    local meta_keys
+    meta_keys=$(printf "%s\n%b" "$meta_keys_literal" "$meta_keys_resolved" | grep -vE '^$' | sort -u)
+
+    # User meta is NOT schema-discoverable (WordPress owns that table), so it is the one place a list
+    # is unavoidable — which makes it the one place this rule still has to do real work. The keys live
+    # in MemberData::USER_META_KEYS (erase) and must also appear in Privacy.php (export).
     for key in $meta_keys; do
+        if ! grep -q "['\"]$key['\"]" "$member_data"; then
+            missing="${missing}    User meta '$key' — not in MemberData::USER_META_KEYS, so a GDPR erase leaves it behind\n"
+        fi
         if ! grep -q "['\"]$key['\"]" "$privacy_file"; then
-            missing="${missing}    User meta '$key' — used elsewhere but not referenced in Privacy.php\n"
+            missing="${missing}    User meta '$key' — not in Privacy.php, so the data export omits it\n"
         fi
     done
 
     if [ -n "$missing" ]; then
         violation "Rule 11 — user-scoped surfaces missing from Privacy::export_user_data + erase_user_data:"
         printf "%b" "$missing"
-        echo "    Fix: add the table/meta to BOTH export_user_data and erase_user_data."
+        echo "    Fix: meta keys go in MemberData::USER_META_KEYS (erase) AND Privacy.php (export)."
         echo "         See plan/PRIVACY-MODEL.md § Cross-cutting principles #6."
     else
-        ok "Rule 11 — every user-scoped table + meta key is wired into Privacy.php"
+        ok "Rule 11 — export + erase are both derived from the schema; every meta key is covered"
     fi
 }
 
@@ -377,6 +539,8 @@ check_animations_respect_reduced_motion() {
 
 check_no_native_cap_check_for_plugin_abilities
 check_unauthenticated_rest_allowlist
+check_public_routes_gate_user_data
+check_no_sql_comments_in_schema
 check_no_inline_styles_in_admin_php
 check_no_inline_scripts_in_php
 check_no_inline_style_blocks_in_php

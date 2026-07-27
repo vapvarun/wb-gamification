@@ -205,8 +205,10 @@ class RecapController extends WP_REST_Controller {
 			return true;
 		}
 
-		// Admins can view any recap.
-		if ( current_user_can( 'manage_options' ) ) {
+		// Viewing ANOTHER member's recap is an analytics read, so it honours the delegable cap rather
+		// than requiring full site administration. Capabilities::user_can() is `manage_options OR the
+		// cap`, so an administrator still passes.
+		if ( \WBGam\Engine\Capabilities::user_can( 'wb_gam_view_analytics' ) ) {
 			return true;
 		}
 

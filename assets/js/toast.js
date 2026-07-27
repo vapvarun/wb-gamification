@@ -96,58 +96,13 @@
 	 * @return {number} Bottom edge of the topmost obstruction, or 0 if the top is clear.
 	 */
 	function topObstructionBottom() {
-		var candidates = [];
-		var adminBar   = document.getElementById( 'wpadminbar' );
-
-		if ( adminBar ) {
-			candidates.push( adminBar );
+		// One measurement, one file. This used to be a second copy of the same logic, and the two copies
+		// are exactly how the status bar shipped with the bug this function was written to fix.
+		if ( window.wbGam && typeof window.wbGam.topObstructionBottom === 'function' ) {
+			return window.wbGam.topObstructionBottom( container );
 		}
 
-		// Theme header, however it is positioned.
-		Array.prototype.push.apply(
-			candidates,
-			document.querySelectorAll( 'header, .site-header, #masthead' )
-		);
-
-		// Anything else pinned across the top (cookie bars, promo bars, sticky navs).
-		Array.prototype.forEach.call( document.body.children, function ( el ) {
-			var pos = window.getComputedStyle( el ).position;
-			if ( pos === 'fixed' || pos === 'sticky' ) {
-				candidates.push( el );
-			}
-		} );
-
-		var lowest = 0;
-
-		candidates.forEach( function ( el ) {
-			if ( el === container || container.contains( el ) || el.contains( container ) ) {
-				return;
-			}
-
-			var style = window.getComputedStyle( el );
-			if ( style.display === 'none' || style.visibility === 'hidden' ) {
-				return;
-			}
-
-			var rect = el.getBoundingClientRect();
-
-			// Scrolled away, zero-height, not in the top strip, or too narrow to be a bar.
-			if ( rect.height === 0 || rect.bottom <= 0 ) {
-				return;
-			}
-			if ( rect.top > TOP_STRIP ) {
-				return;
-			}
-			if ( rect.width < window.innerWidth * 0.5 ) {
-				return;
-			}
-
-			if ( rect.bottom > lowest ) {
-				lowest = rect.bottom;
-			}
-		} );
-
-		return lowest;
+		return 0;
 	}
 
 	/**
@@ -156,9 +111,36 @@
 	 * Only sets the property when it finds an obstruction, so an owner who overrides
 	 * --wb-gam-toast-offset-top in their own CSS keeps control on a clear page.
 	 */
+	/**
+	 * Park a bottom-anchored stack above whatever is pinned to the bottom.
+	 *
+	 * The mirror of applyTopOffset(), and the half that was missing: a bottom stack cleared the
+	 * HEADER by construction but nothing cleared a bottom bar, so on BuddyNext's mobile layout the
+	 * toast covered the fixed bottom nav after nearly every rewarded action (comment, follow,
+	 * reaction) — the primary navigation, unusable for the life of the toast.
+	 *
+	 * Only sets the property when it finds an obstruction, so an owner overriding
+	 * --wb-gam-toast-offset-bottom in their own CSS keeps control on a clear page.
+	 */
+	function applyBottomOffset() {
+		if ( position.indexOf( 'bottom' ) !== 0 ) {
+			return;
+		}
+
+		var occupied = ( window.wbGam && typeof window.wbGam.bottomObstructionHeight === 'function' )
+			? window.wbGam.bottomObstructionHeight( container )
+			: 0;
+
+		if ( occupied > 0 ) {
+			container.style.setProperty( '--wb-gam-toast-offset-bottom', occupied + TOAST_GAP + 'px' );
+		} else {
+			container.style.removeProperty( '--wb-gam-toast-offset-bottom' );
+		}
+	}
+
 	function applyTopOffset() {
 		if ( position.indexOf( 'top' ) !== 0 ) {
-			return; // Bottom-anchored stacks clear the header by construction.
+			return; // Bottom-anchored stacks are handled by applyBottomOffset().
 		}
 
 		var lowest = topObstructionBottom();
@@ -173,11 +155,14 @@
 	}
 
 	applyTopOffset();
+	applyBottomOffset();
 
 	// An in-flow header scrolls away and a sticky one changes height, so the offset is not
 	// a constant. Re-measure on scroll and resize, rAF-throttled so this never runs hot.
+	// Both edges re-measure: a bottom bar can appear, hide on scroll, or change height at a
+	// breakpoint exactly like a header does.
 	var offsetQueued = false;
-	function queueTopOffset() {
+	function queueOffsets() {
 		if ( offsetQueued ) {
 			return;
 		}
@@ -185,11 +170,12 @@
 		window.requestAnimationFrame( function () {
 			offsetQueued = false;
 			applyTopOffset();
+			applyBottomOffset();
 		} );
 	}
 
-	window.addEventListener( 'resize', queueTopOffset );
-	window.addEventListener( 'scroll', queueTopOffset, { passive: true } );
+	window.addEventListener( 'resize', queueOffsets );
+	window.addEventListener( 'scroll', queueOffsets, { passive: true } );
 
 	/**
 	 * Lucide icon class map for toast types. The toast lucide-icons
@@ -447,12 +433,10 @@
 	 * this endpoint again.
 	 */
 	function firstPaintFallback() {
-		fetch( wbGamToast.restUrl + 'members/me/toasts', {
-			signal: ( typeof AbortSignal !== 'undefined' && AbortSignal.timeout ) ? AbortSignal.timeout( 15000 ) : undefined,
-			headers: { 'X-WP-Nonce': wbGamToast.nonce },
-			credentials: 'same-origin'
+		window.wbGam.rest( wbGamToast.restUrl + 'members/me/toasts', {
+			nonce: wbGamToast.nonce,
 		} )
-			.then( function ( r ) { return r.ok ? r.json() : []; } )
+			.then( function ( result ) { return result.ok ? result.data : []; } )
 			.then( renderToasts )
 			.catch( function () { /* silent — broker will catch up */ } );
 	}

@@ -130,6 +130,21 @@ final class ActionSchedulerCleaner {
 	public static function init(): void {
 		add_action( self::CRON_HOOK, array( __CLASS__, 'run_cron' ) );
 
+		// Arm the recurring event on init, never at plugins_loaded: wp_schedule_event
+		// resolves schedules via wp_get_schedules(), which fires the
+		// cron_schedules filter — that must not run before init on WP 6.7+.
+		if ( did_action( 'init' ) ) {
+			self::maybe_schedule();
+		} else {
+			add_action( 'init', array( __CLASS__, 'maybe_schedule' ) );
+		}
+	}
+
+	/**
+	 * Arm the recurring event if not already scheduled. Idempotent — safe to
+	 * call on every init.
+	 */
+	public static function maybe_schedule(): void {
 		if ( ! wp_next_scheduled( self::CRON_HOOK ) ) {
 			wp_schedule_event( time() + HOUR_IN_SECONDS, self::CRON_RECUR, self::CRON_HOOK );
 		}

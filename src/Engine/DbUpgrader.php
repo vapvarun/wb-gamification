@@ -61,8 +61,23 @@ final class DbUpgrader {
 
 		if ( version_compare( $current, WB_GAM_VERSION, '<' ) ) {
 			// Prevent concurrent upgrade runs (e.g. two simultaneous requests on activation).
-			if ( ! get_transient( self::LOCK_KEY ) ) {
-				set_transient( self::LOCK_KEY, 1, self::LOCK_TTL );
+			// Was check-then-act, so two simultaneous requests on activation could both enter
+			// and run every migration twice. dbDelta is idempotent, which is why this never
+			// visibly broke -- but the ensure_* migrations that are NOT pure dbDelta had no such
+			// protection. Atomic now.
+			$claimed = Lock::run(
+				self::LOCK_KEY,
+				static function () {
+					if ( get_transient( self::LOCK_KEY ) ) {
+						return false;
+					}
+					set_transient( self::LOCK_KEY, 1, self::LOCK_TTL );
+					return true;
+				},
+				false
+			);
+
+			if ( $claimed ) {
 
 				self::run( $current );
 
@@ -97,6 +112,7 @@ final class DbUpgrader {
 		self::ensure_api_keys_table();
 		self::ensure_side_effect_failures_table();
 		self::ensure_notifications_queue_table();
+		self::ensure_notifications_queue_kudos_id();
 		self::ensure_notifications_skip_purge();
 		self::ensure_user_intelligence_table();
 		self::ensure_superseded_badge_condition_action_ids();
@@ -105,6 +121,276 @@ final class DbUpgrader {
 		self::ensure_events_source_key();
 		self::ensure_scale_indexes();
 		self::ensure_redemption_stock_null_unlimited();
+		self::ensure_badge_rule_groups();
+		self::ensure_engine_badges_become_rules();
+	}
+
+	/**
+	 * Turn the seven engine-owned badges into ordinary, editable rules.
+	 *
+	 * THIS IS THE POINT OF THE WHOLE FEATURE, so it is worth being precise about what was wrong.
+	 *
+	 * Four tenure badges (TenureBadgeEngine, a hardcoded TIERS list) and three site-first badges
+	 * (SiteFirstBadgeEngine, a hardcoded list) had NO RULE ROW AT ALL. The Badge Library derives its
+	 * chip from the rule, found none, and printed "MANUAL" -- telling the owner *you must grant this
+	 * by hand*. They were auto-awarded by a cron. The UI told the owner the opposite of the truth,
+	 * showed no condition, and offered nothing to change. An owner who wanted "2-Year Member" to mean
+	 * eighteen months had exactly one option: edit PHP.
+	 *
+	 * They become rules like everything else:
+	 *
+	 *     tenure_1yr           tenure_days 365          (2yr / 5yr / 10yr likewise)
+	 *     first_champion       level_reached <Champion>  + max_earners 1
+	 *     first_10k_points     point_milestone 10000     + max_earners 1
+	 *     first_100_day_streak streak_days 100           + max_earners 1
+	 *
+	 * TWO THINGS THAT WOULD HAVE BEEN BUGS:
+	 *
+	 * 1. Level ids are SITE-SPECIFIC. "Champion" is id 5 here and could be anything anywhere, so the
+	 *    level is resolved BY NAME at migration time, falling back to the highest level on the site.
+	 *    Hardcoding 5 would have pointed the badge at whatever level happened to be fifth.
+	 *
+	 * 2. The `tenure_badges` and `site_first_badges` feature flags could be OFF, in which case those
+	 *    badges do not currently award at all. Seeding active rules would have started awarding them
+	 *    on a site whose owner had deliberately switched them off. The rule inherits `is_active` from
+	 *    the flag, so behaviour is preserved exactly -- and now the owner can SEE the switch instead
+	 *    of hunting for a flag.
+	 *
+	 * @return void
+	 */
+	private static function ensure_engine_badges_become_rules(): void {
+		if ( get_option( 'wb_gam_feature_engine_badges_are_rules_v1' ) ) {
+			return;
+		}
+
+		global $wpdb;
+
+		// Champion by NAME, never by id. Falls back to the highest level the site has.
+		$champion_id = (int) $wpdb->get_var(
+			$wpdb->prepare( "SELECT id FROM {$wpdb->prefix}wb_gam_levels WHERE name = %s LIMIT 1", 'Champion' )
+		);
+		if ( ! $champion_id ) {
+			$champion_id = (int) $wpdb->get_var( "SELECT id FROM {$wpdb->prefix}wb_gam_levels ORDER BY min_points DESC LIMIT 1" );
+		}
+
+		$tenure_on     = FeatureFlags::is_enabled( 'tenure_badges' ) ? 1 : 0;
+		$site_first_on = FeatureFlags::is_enabled( 'site_first_badges' ) ? 1 : 0;
+
+		$seed = array(
+			'tenure_1yr'           => array(
+				$tenure_on,
+				array(
+					'type' => 'tenure_days',
+					'days' => 365,
+				),
+				null,
+			),
+			'tenure_2yr'           => array(
+				$tenure_on,
+				array(
+					'type' => 'tenure_days',
+					'days' => 730,
+				),
+				null,
+			),
+			'tenure_5yr'           => array(
+				$tenure_on,
+				array(
+					'type' => 'tenure_days',
+					'days' => 1825,
+				),
+				null,
+			),
+			'tenure_10yr'          => array(
+				$tenure_on,
+				array(
+					'type' => 'tenure_days',
+					'days' => 3650,
+				),
+				null,
+			),
+			'first_champion'       => array(
+				$site_first_on,
+				array(
+					'type'     => 'level_reached',
+					'level_id' => $champion_id,
+				),
+				1,
+			),
+			'first_10k_points'     => array(
+				$site_first_on,
+				array(
+					'type'   => 'point_milestone',
+					'points' => 10000,
+				),
+				1,
+			),
+			'first_100_day_streak' => array(
+				$site_first_on,
+				array(
+					'type' => 'streak_days',
+					'days' => 100,
+				),
+				1,
+			),
+		);
+
+		foreach ( $seed as $badge_id => $spec ) {
+			list( $active, $condition, $max_earners ) = $spec;
+
+			// The badge must exist. If an owner deleted it, do not resurrect it.
+			$exists = $wpdb->get_var( $wpdb->prepare( "SELECT id FROM {$wpdb->prefix}wb_gam_badge_defs WHERE id = %s", $badge_id ) );
+			if ( ! $exists ) {
+				continue;
+			}
+
+			// Never clobber a rule an owner already has. If one exists, this badge is already
+			// theirs and we have no business rewriting it.
+			$has_rule = $wpdb->get_var(
+				$wpdb->prepare(
+					"SELECT id FROM {$wpdb->prefix}wb_gam_rules WHERE rule_type = 'badge_condition' AND target_id = %s",
+					$badge_id
+				)
+			);
+			if ( $has_rule ) {
+				continue;
+			}
+
+			$wpdb->insert(
+				$wpdb->prefix . 'wb_gam_rules',
+				array(
+					'rule_type'   => 'badge_condition',
+					'target_id'   => $badge_id,
+					'is_active'   => $active,
+					'rule_config' => (string) wp_json_encode(
+						array(
+							'match'      => BadgeRule::MATCH_ALL,
+							'conditions' => array( $condition ),
+						)
+					),
+				),
+				array( '%s', '%s', '%d', '%s' )
+			);
+
+			// Site-first badges are scarce by definition: only one member can ever be first.
+			if ( null !== $max_earners ) {
+				$wpdb->update(
+					$wpdb->prefix . 'wb_gam_badge_defs',
+					array( 'max_earners' => (int) $max_earners ),
+					array( 'id' => $badge_id ),
+					array( '%d' ),
+					array( '%s' )
+				);
+			}
+		}
+
+		wp_cache_delete( 'wb_gam_badge_rules', 'wb_gamification' );
+		update_option( 'wb_gam_feature_engine_badges_are_rules_v1', 1, false );
+	}
+
+	/**
+	 * Migrate every badge rule to the grouped shape, once.
+	 *
+	 * A rule used to be a single condition and could never be more:
+	 *
+	 *     { "condition_type": "action_count", "action_id": "wp_publish_post", "count": 10 }
+	 *
+	 * It becomes:
+	 *
+	 *     { "match": "all", "conditions": [ { "type": "action_count", "action_id": ..., "count": 10 } ] }
+	 *
+	 * ONE SHAPE, ONE READER. There is deliberately no read-time normalizer -- after this runs,
+	 * exactly one shape exists in the database and exactly one reader parses it. A plugin that
+	 * tolerates two shapes forever carries two code paths forever, and the second one rots.
+	 *
+	 * Idempotent twice over: the flag stops it re-running, and BadgeRule::from_legacy() returns an
+	 * already-grouped config unchanged. So a site whose request timed out half way through simply
+	 * finishes the job next time, and a site that somehow runs it twice is unharmed.
+	 *
+	 * A row we cannot parse is SKIPPED and logged, never guessed at. Rewriting an unrecognisable
+	 * rule into something plausible-looking would produce a badge that silently awards, or
+	 * silently refuses to, on a configuration nobody chose.
+	 *
+	 * @return void
+	 */
+	private static function ensure_badge_rule_groups(): void {
+		if ( get_option( 'wb_gam_feature_badge_rule_groups_v1' ) ) {
+			return;
+		}
+
+		global $wpdb;
+
+		$table = $wpdb->prefix . 'wb_gam_rules';
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$rows = $wpdb->get_results(
+			"SELECT id, target_id, rule_config FROM {$table} WHERE rule_type = 'badge_condition'",
+			ARRAY_A
+		);
+
+		$migrated = 0;
+		$skipped  = 0;
+
+		foreach ( (array) $rows as $row ) {
+			$config = json_decode( (string) $row['rule_config'], true );
+
+			if ( ! is_array( $config ) ) {
+				Log::warning(
+					'badge-rule-migration: rule_config is not valid JSON; left untouched',
+					array(
+						'rule_id'  => (int) $row['id'],
+						'badge_id' => (string) $row['target_id'],
+					)
+				);
+				++$skipped;
+				continue;
+			}
+
+			$grouped = BadgeRule::from_legacy( $config );
+
+			if ( null === $grouped ) {
+				Log::warning(
+					'badge-rule-migration: unrecognised rule shape; left untouched rather than guessed at',
+					array(
+						'rule_id'  => (int) $row['id'],
+						'badge_id' => (string) $row['target_id'],
+					)
+				);
+				++$skipped;
+				continue;
+			}
+
+			// Already grouped: from_legacy() hands it back unchanged, so there is nothing to write.
+			if ( $grouped === $config ) {
+				continue;
+			}
+
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->update(
+				$table,
+				array( 'rule_config' => (string) wp_json_encode( $grouped ) ),
+				array( 'id' => (int) $row['id'] ),
+				array( '%s' ),
+				array( '%d' )
+			);
+
+			++$migrated;
+		}
+
+		// Log::debug, not Log::info -- there is no info(). Log has exactly error/warning/debug, and
+		// calling a method that does not exist would fatal HERE, inside a migration, on activation,
+		// on every site. That is the same class of bug as the setup wizard's Log::warning() call
+		// that resolved to a non-existent WBGam\Admin\Log: the guard crashes at the moment it fires.
+		Log::debug(
+			'badge-rule-migration: complete',
+			array(
+				'migrated' => $migrated,
+				'skipped'  => $skipped,
+				'total'    => count( (array) $rows ),
+			)
+		);
+
+		update_option( 'wb_gam_feature_badge_rule_groups_v1', 1, false );
 	}
 
 	/**
@@ -519,6 +805,48 @@ final class DbUpgrader {
 	}
 
 	/**
+	 * Give the notification queue a real `kudos_id` column.
+	 *
+	 * Retracting a revoked kudos's toasts used to be a substring match:
+	 * `payload_json LIKE '%"kudos_id":7%'`. That pattern has no right-hand boundary, so it also
+	 * matched "kudos_id":77 and "kudos_id":7001 -- revoking one kudos DELETED the member's pending
+	 * toasts for unrelated ones, unrecoverably. A delete key does not belong in a LIKE against JSON.
+	 *
+	 * Existing queued rows keep kudos_id NULL and are simply not retractable by id. That is
+	 * acceptable and deliberate: the queue is transient (rows are consumed on the member's next page
+	 * view and trimmed by QUEUE_MAX_EVENTS), so a backfill would be racing rows that are about to be
+	 * read anyway -- and the alternative, backfilling by parsing the JSON, means running exactly the
+	 * broken match this migration exists to delete.
+	 */
+	private static function ensure_notifications_queue_kudos_id(): void {
+		$flag_key = 'wb_gam_feature_notifications_queue_kudos_id_v1';
+		if ( get_option( $flag_key ) ) {
+			return;
+		}
+
+		global $wpdb;
+		$table = $wpdb->prefix . 'wb_gam_notifications_queue';
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$columns = (array) $wpdb->get_col( "SHOW COLUMNS FROM `{$table}`" );
+
+		if ( ! in_array( 'kudos_id', $columns, true ) ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$wpdb->query( "ALTER TABLE `{$table}` ADD COLUMN kudos_id BIGINT UNSIGNED NULL DEFAULT NULL" );
+		}
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$indexes = (array) $wpdb->get_col( "SHOW INDEX FROM `{$table}`", 2 );
+
+		if ( ! in_array( 'idx_kudos_id', $indexes, true ) ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$wpdb->query( "ALTER TABLE `{$table}` ADD KEY idx_kudos_id (kudos_id)" );
+		}
+
+		update_option( $flag_key, '1' );
+	}
+
+	/**
 	 * One-time purge of `skip` notifications left behind by <= 1.6.2.
 	 *
 	 * 1.6.2 surfaced award-skips ("You've hit your daily limit for this action")
@@ -625,13 +953,6 @@ final class DbUpgrader {
 		update_option( $flag_key, '1' );
 	}
 
-	/**
-	 * Create wb_gam_submissions on existing installs.
-	 *
-	 * Idempotent — feature-flag gated.
-	 *
-	 * @since 1.0.0
-	 */
 	/**
 	 * Migrate API keys from the legacy plaintext wp_options blob to the new
 	 * dedicated wb_gam_api_keys table with hashed storage.
@@ -1072,7 +1393,69 @@ final class DbUpgrader {
 			'1.4.0' => 'upgrade_to_1_4_0',
 			'1.5.4' => 'upgrade_to_1_5_4',
 			'1.5.5' => 'upgrade_to_1_5_5',
+			'1.6.4' => 'upgrade_to_1_6_4',
 		);
+	}
+
+	/**
+	 * 1.6.4 — index the kudos abuse-detection GROUP BY.
+	 *
+	 * The moderation page groups live kudos by (giver_id, receiver_id) to surface pairs trading kudos
+	 * back and forth. No index led on `revoked_at`, so MySQL had to build a temp table and scan every
+	 * kudos row on the site to answer it -- EXPLAIN said `Using temporary`, every time a moderator
+	 * opened the page. Invisible on a young site; a full scan of a table that only ever grows on an
+	 * old one (nothing prunes kudos, and nothing should -- they are member-authored content).
+	 *
+	 * Fresh installs get this from the CREATE TABLE in Installer. This is the same index for sites
+	 * that already exist.
+	 *
+	 * Idempotent: checks SHOW INDEX first, so re-running does nothing. Adding an index does not touch
+	 * a single row of data.
+	 *
+	 * @since 1.6.4
+	 */
+	private static function upgrade_to_1_6_4(): void {
+		global $wpdb;
+
+		$kudos = $wpdb->prefix . 'wb_gam_kudos';
+
+		if ( $kudos === $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $kudos ) ) ) {
+			$has_index = $wpdb->get_results(
+				$wpdb->prepare( "SHOW INDEX FROM `{$kudos}` WHERE Key_name = %s", 'idx_abuse_pairs' ) // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from $wpdb->prefix.
+			);
+
+			if ( empty( $has_index ) ) {
+				$wpdb->query( "ALTER TABLE `{$kudos}` ADD KEY `idx_abuse_pairs` (`revoked_at`, `giver_id`, `receiver_id`)" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- DDL.
+			}
+		}
+
+		// Badge sharing becomes a member's decision instead of a guessable URL.
+		//
+		// The share card, the OpenBadges credential and the public share page all keyed on
+		// (badge_id, user_id) and asked nobody's permission, so anyone could walk those two numbers and
+		// read which badges a member holds -- including a member with a private profile. `shared_at`
+		// records the member's own choice to publish, and all three surfaces now refuse to serve a
+		// badge that has not been published.
+		//
+		// Existing badges start NULL: private. This WILL break a share link a member has already posted
+		// somewhere, and that is the intended trade -- the alternative is to keep publishing, with no
+		// consent, the achievements of every member who never asked for it. An owner who knowingly
+		// relied on the old behaviour restores it with `wp wb-gamification share grandfather`.
+		$badges = $wpdb->prefix . 'wb_gam_user_badges';
+
+		if ( $badges !== $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $badges ) ) ) {
+			return;
+		}
+
+		$has_column = $wpdb->get_results(
+			$wpdb->prepare( "SHOW COLUMNS FROM `{$badges}` LIKE %s", 'shared_at' ) // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from $wpdb->prefix.
+		);
+
+		if ( ! empty( $has_column ) ) {
+			return;
+		}
+
+		$wpdb->query( "ALTER TABLE `{$badges}` ADD COLUMN `shared_at` DATETIME DEFAULT NULL AFTER `expires_at`" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- DDL.
 	}
 
 	/**

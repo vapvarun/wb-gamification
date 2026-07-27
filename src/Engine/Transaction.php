@@ -2,15 +2,28 @@
 /**
  * Transaction — re-entrant atomic-write wrapper for the points engine.
  *
- * Every multi-table mutation in the plugin (award/debit/redeem/etc.) must
- * be atomic: the ledger row, the events row, the materialised totals row,
- * and any feature-specific row (redemption record, conversion record) all
- * commit together or roll back together. MySQL doesn't support nested
- * transactions, so this class implements a depth-counter pattern: the
- * outermost call to {@see run()} opens the transaction; inner calls
- * participate without opening a new one. The transaction commits only
- * when the outermost closure returns a truthy value AND its own depth
- * unwinds to zero.
+ * The detail lives on the class below, deliberately. The WP.org Plugin Check reads only the FIRST
+ * 50 LINES of a file when it looks for the direct-access guard, and this file's explanation used to
+ * run to 53 lines -- so the guard sat at line 57, outside the window, and the plugin failed the
+ * submission bar with "PHP file should prevent direct access" on a file that was guarded all along.
+ *
+ * @package WB_Gamification
+ * @since   1.4.1
+ */
+
+namespace WBGam\Engine;
+
+defined( 'ABSPATH' ) || exit;
+
+/**
+ * Re-entrant atomic-write wrapper.
+ *
+ * Every multi-table mutation in the plugin (award/debit/redeem/etc.) must be atomic: the ledger row,
+ * the events row, the materialised totals row, and any feature-specific row (redemption record,
+ * conversion record) all commit together or roll back together. MySQL doesn't support nested
+ * transactions, so this class implements a depth-counter pattern: the outermost call to {@see run()}
+ * opens the transaction; inner calls participate without opening a new one. The transaction commits
+ * only when the outermost closure returns a truthy value AND its own depth unwinds to zero.
  *
  * Usage — single-table:
  *
@@ -35,29 +48,16 @@
  *
  * Why explicit `return false` for rollback:
  *
- *   PHP exceptions also trigger rollback (and re-throw) — use those when
- *   the failure is genuinely exceptional. `return false` is the soft path
- *   for "validation failed, no points have been moved, this is a normal
- *   business-rule outcome." Both paths correctly unwind the depth counter.
+ *   PHP exceptions also trigger rollback (and re-throw) — use those when the failure is genuinely
+ *   exceptional. `return false` is the soft path for "validation failed, no points have been moved,
+ *   this is a normal business-rule outcome." Both paths correctly unwind the depth counter.
  *
  * Why re-entrant rather than per-call:
  *
- *   PointsEngine::debit needs its own transaction when called standalone
- *   (e.g. from Jetonomy integration), but must NOT issue START/COMMIT
- *   when nested inside RedemptionEngine::redeem (which already opened a
- *   transaction for the broader flow). The depth counter ensures the
- *   outer scope owns the transaction lifecycle; inner scopes participate.
- *
- * @package WB_Gamification
- * @since   1.4.1
- */
-
-namespace WBGam\Engine;
-
-defined( 'ABSPATH' ) || exit;
-
-/**
- * Re-entrant transaction wrapper.
+ *   PointsEngine::debit needs its own transaction when called standalone (e.g. from the Jetonomy
+ *   integration), but must NOT issue START/COMMIT when nested inside RedemptionEngine::redeem (which
+ *   already opened a transaction for the broader flow). The depth counter ensures the outer scope
+ *   owns the transaction lifecycle; inner scopes participate.
  *
  * @package WB_Gamification
  * @since   1.4.1

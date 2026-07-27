@@ -1,0 +1,8 @@
+
+/* "No thanks" on the welcome notice. WordPress's is-dismissible X is client-side only — it hides the
+   notice for one page view and it returns on the next. This link records the decision. */
+.wb-gam-notice__dismiss {
+	margin-inline-start: 8px;
+	font-size: 13px;
+	text-decoration: underline;
+}

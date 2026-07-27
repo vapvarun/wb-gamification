@@ -213,7 +213,16 @@
 	background: var( --wb-gam-color-accent-light );
 }
 
-.wb-gam-redemption__confirm {
+/* The confirmation is a native <dialog>, which the browser hides until showModal() opens it.
+ *
+ * This rule used to set `display: flex` UNCONDITIONALLY, which overrode that: the dialog was
+ * permanently on screen, and in a narrow card it sat on top of the Redeem button and swallowed the
+ * click. It only became a bug when the panel became a real <dialog> — as a hidden <div> it was gated
+ * by an attribute, and the display rule was harmless. The smoke walk caught it; my own keyboard test
+ * did not, because I drove the dialog through JS instead of clicking the button like a member does.
+ *
+ * `[open]` is what the browser sets when the dialog is open. Gate on it, or do not touch display. */
+.wb-gam-redemption__confirm[open] {
 	background: var( --wb-gam-redemption-card-bg );
 	border: 1px solid var( --wb-gam-redemption-card-border );
 	border-radius: var( --wb-gam-radius-md );

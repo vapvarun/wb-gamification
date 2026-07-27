@@ -72,6 +72,16 @@ final class MembersPage {
 			WB_GAM_VERSION,
 			true
 		);
+		// Shared confirm/cancel modal button labels — confirmAction() falls back
+		// to these when a caller doesn't pass its own confirmText/cancelText.
+		wp_localize_script(
+			'wb-gam-admin-rest-utils',
+			'wbGamAdminRestI18n',
+			array(
+				'confirm' => __( 'Confirm', 'wb-gamification' ),
+				'cancel'  => __( 'Cancel', 'wb-gamification' ),
+			)
+		);
 		wp_enqueue_script(
 			'wb-gam-admin-members',
 			plugins_url( 'assets/js/admin-members.js', WB_GAM_FILE ),
@@ -139,7 +149,7 @@ final class MembersPage {
 					<div id="wb-gam-members-app" class="wb-gam-members">
 						<div class="wb-gam-members__toolbar">
 							<label for="wb-gam-members-search" class="screen-reader-text"><?php esc_html_e( 'Search members', 'wb-gamification' ); ?></label>
-								<input type="search" id="wb-gam-members-search" class="wbgam-input wb-gam-members__search" placeholder="<?php esc_attr_e( 'Search members…', 'wb-gamification' ); ?>" aria-label="<?php esc_attr_e( 'Search members', 'wb-gamification' ); ?>" />
+								<input type="search" id="wb-gam-members-search" class="wbgam-input wb-gam-members__search" autocomplete="off" placeholder="<?php esc_attr_e( 'Search members…', 'wb-gamification' ); ?>" aria-label="<?php esc_attr_e( 'Search members', 'wb-gamification' ); ?>" />
 						</div>
 						<div id="wb-gam-members-table" class="wb-gam-members__table" aria-live="polite"></div>
 						<div id="wb-gam-members-pager" class="wb-gam-members__pager"></div>

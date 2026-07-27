@@ -37,8 +37,23 @@ final class BadgeOSImporter {
 	 * @return bool
 	 */
 	public static function is_available(): bool {
+		// "Is there BadgeOS data to import?" -- either table on its own is a yes. Checking only
+		// badgeos_points told a site with achievements but no points ledger that there was nothing to
+		// import, and (worse) told a site with points but no achievements table that everything was
+		// fine, right before the run died on the missing table. A partial uninstall leaves exactly that
+		// state and is perfectly normal.
+		return self::has_table( 'badgeos_points' ) || self::has_table( 'badgeos_achievements' );
+	}
+
+	/**
+	 * Does one of BadgeOS's tables exist?
+	 *
+	 * @param string $suffix Table name without the WP prefix.
+	 * @return bool
+	 */
+	private static function has_table( string $suffix ): bool {
 		global $wpdb;
-		$table = $wpdb->prefix . 'badgeos_points';
+		$table = $wpdb->prefix . $suffix;
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		return (bool) $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) );
 	}
@@ -60,17 +75,50 @@ final class BadgeOSImporter {
 	}
 
 	/**
-	 * Achievement-type slugs (excludes the structural `step` type).
+	 * Achievement-type slugs (excludes the structural `step` type), read from
+	 * BadgeOS's own `badgeos_achievements` table rather than
+	 * `badgeos_get_achievement_types_slugs()`.
+	 *
+	 * The real migration scenario is the owner DEACTIVATING BadgeOS before
+	 * running the import, so the PHP API being unavailable is the NORMAL case,
+	 * not an edge case. The old code returned `[]` whenever the function was
+	 * missing, `build_achievements()` bailed on an empty list, and every
+	 * earned achievement was dropped SILENTLY while the import still reported
+	 * success. Proven: 2 seeded points rows + 2 seeded earned achievements,
+	 * BadgeOS not installed -> import returned success, points landed,
+	 * achievements vanished with nothing to explain why.
+	 *
+	 * `DISTINCT post_type` on the achievements table needs no plugin code at
+	 * all, so it works identically whether BadgeOS is active, deactivated, or
+	 * fully removed (as long as its tables are still there — see the loud
+	 * failure below for when they are not).
 	 *
 	 * @return string[]
+	 * @throws \RuntimeException When the achievements table itself is missing,
+	 *                            so the caller cannot mistake "genuinely no
+	 *                            achievement types" for "data unreadable".
 	 */
 	private static function achievement_type_slugs(): array {
-		if ( function_exists( 'badgeos_get_achievement_types_slugs' ) ) {
-			$slugs = (array) badgeos_get_achievement_types_slugs();
-		} else {
-			$slugs = array();
+		global $wpdb;
+
+		// A missing table used to throw. The instinct was right -- we cannot tell "no achievements were
+		// ever earned" from "the data is unreachable", and quietly returning [] is how achievements
+		// disappeared silently in the first place. But an uncaught RuntimeException is not "loud", it is
+		// a white screen: nothing catches it -- not run(), not ImportController, not ImportMode::run()
+		// (its finally re-raises) -- so the owner got a 500 and, because this runs BEFORE ingest(), not
+		// even the points imported. A partial BadgeOS uninstall (points table kept, achievements table
+		// dropped) is a normal state, and it lost the whole migration.
+		//
+		// Loud now means a warning the owner can read, carried out in the result payload by run(). The
+		// caller decides; this function just answers the question it was asked.
+		if ( ! self::has_table( 'badgeos_achievements' ) ) {
+			return array();
 		}
-		return array_values( array_filter( $slugs, static fn ( $s ) => 'step' !== $s ) );
+
+		$table = $wpdb->prefix . 'badgeos_achievements';
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$types = (array) $wpdb->get_col( "SELECT DISTINCT post_type FROM {$table} WHERE post_type <> '' AND post_type <> 'step'" );
+		return array_values( array_filter( array_map( 'strval', $types ) ) );
 	}
 
 	/**
@@ -110,9 +158,19 @@ final class BadgeOSImporter {
 
 		$rows = array();
 		foreach ( (array) $logs as $log ) {
-			// `credit` is absolute; the enum type carries the sign.
+			// `credit` is absolute; the enum type carries the sign. Mirror BadgeOS's own arithmetic
+			// exactly (Award adds, Deduct/Utilized subtract, ANYTHING ELSE is ignored) -- treating an
+			// unrecognised type as a deduction would make us disagree with the balance we reconcile
+			// against, and report a mismatch on an import that was fine.
 			$amount = abs( (int) $log['credit'] );
-			$delta  = ( 'Award' === $log['type'] ) ? $amount : -$amount; // Deduct + Utilized reduce.
+			$type   = (string) $log['type'];
+			if ( 'Award' === $type ) {
+				$delta = $amount;
+			} elseif ( 'Deduct' === $type || 'Utilized' === $type ) {
+				$delta = -$amount;
+			} else {
+				continue;
+			}
 			if ( 0 === $delta ) {
 				continue;
 			}
@@ -283,13 +341,20 @@ final class BadgeOSImporter {
 						'category'  => 'imported',
 					)
 				);
-				$earned_at = gmdate( 'Y-m-d H:i:s', strtotime( $a['earned_at'] ) ?: time() );
+				// Round trip preserves the source's wall clock (see MyCredImporter). The fallback must be
+				// the SITE's now, not UTC's -- earned_at is a site-local column.
+				$earned_at = $a['earned_at'] ? gmdate( 'Y-m-d H:i:s', strtotime( (string) $a['earned_at'] ) ) : current_time( 'mysql' );
 				if ( \WBGam\Engine\BadgeEngine::award_badge( $a['user_id'], $a['badge_id'], $earned_at ) ) {
 					++$ach_imported;
 				}
 			}
 			foreach ( $ranks as $r ) {
-				if ( \WBGam\Engine\LevelEngine::upsert_level( $r['name'], $r['min_points'], $r['order'] ) > 0 ) {
+				// Count what was CREATED, not what was found. upsert_level() returns an id either way, so
+				// counting `> 0` reported levels the import had not built -- on a re-run it claimed
+				// `levels_created: 1` while the database gained nothing.
+				$level_created = false;
+				\WBGam\Engine\LevelEngine::upsert_level( $r['name'], $r['min_points'], $r['order'], '', $level_created );
+				if ( $level_created ) {
 					++$levels_made;
 				}
 			}
@@ -342,11 +407,23 @@ final class BadgeOSImporter {
 			}
 		}
 
+		// Loud, but survivable. If the achievements table is gone we still import the points -- losing
+		// the whole migration because half the source is missing helps nobody -- and we say plainly what
+		// did not come across, so the owner is never left believing they got everything.
+		$warnings = array();
+		if ( ! self::has_table( 'badgeos_achievements' ) ) {
+			// Tense matters here: the same run() answers a Preview, where nothing has been written yet.
+			// "no badges were imported" is a false statement on a dry run, and a warning the owner can
+			// catch lying to them is a warning they stop reading.
+			$warnings[] = __( 'The BadgeOS achievements table was not found, so no badges can be imported — only points. This usually means BadgeOS was uninstalled and dropped its tables. If you still have a database backup, restore that table and import again.', 'wb-gamification' );
+		}
+
 		$result = array(
 			'rows'                       => count( $rows ),
 			'achievements'               => count( $achievements ),
 			'ranks'                      => count( $ranks ),
 			'dry_run'                    => $dry_run,
+			'warnings'                   => $warnings,
 			'reconciliation'             => $reconcile,
 			'achievement_reconciliation' => $ach_reconcile,
 			'rank_reconciliation'        => $rank_reconcile,
@@ -369,13 +446,48 @@ final class BadgeOSImporter {
 	 * @return int
 	 */
 	private static function badgeos_balance( int $user_id ): int {
-		$total = 0;
+		global $wpdb;
+
+		// This returned 0 whenever BadgeOS was not loaded, so a perfectly correct import (+100 / -30 =
+		// 70) reconciled against 0 and was reported to the owner as a MISMATCH. A false alarm on a good
+		// migration is worse than no check: it teaches the owner to ignore the one number that would
+		// have told them a real import went wrong. And BadgeOS is normally deactivated when you migrate
+		// off it, so 0 was the case that mattered.
+		//
+		// It failed twice over. function_exists() was only half of it -- point_type_ids() calls
+		// get_posts( 'point_type' ), and with BadgeOS inactive that post type is not registered, so the
+		// loop had nothing to iterate and could not have summed anything even if the getter existed.
+		//
+		// The sibling importers fall back to their plugin's balance META. BadgeOS has none: its own
+		// badgeos_get_points_by_type() (verified in 3.7.1.6, includes/points/point-rules-engine.php)
+		// reads the badgeos_points LEDGER, summing `credit` with the sign carried by `type` -- Award
+		// adds, Deduct and Utilized subtract, anything else is ignored. So the honest fallback is that
+		// same aggregation in SQL, which needs neither the plugin nor its post types. It stays a real
+		// check: it is the source's own arithmetic, and it still catches us mis-signing the conversion.
 		if ( function_exists( 'badgeos_get_points_by_type' ) ) {
+			$total = 0;
 			foreach ( self::point_type_ids() as $pt ) {
 				$total += (int) badgeos_get_points_by_type( $pt, $user_id );
 			}
+			return $total;
 		}
-		return $total;
+
+		if ( ! self::has_table( 'badgeos_points' ) ) {
+			return 0;
+		}
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$total = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COALESCE( SUM( CASE WHEN type = 'Award' THEN ABS( credit ) ELSE -ABS( credit ) END ), 0 )
+				   FROM {$wpdb->prefix}badgeos_points
+				  WHERE user_id = %d
+				    AND type IN ( 'Award', 'Deduct', 'Utilized' )",
+				$user_id
+			)
+		);
+
+		return (int) $total;
 	}
 
 	/**

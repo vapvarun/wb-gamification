@@ -58,7 +58,35 @@ final class CommunityChallengeEngine {
 		// listener — every community challenge "completed" without ever
 		// awarding the bonus (Basecamp #9933021972).
 		add_action( 'wb_gam_community_bonus_award', array( __CLASS__, 'award_community_bonus' ), 10, 3 );
+
+		// Paged bonus fan-out. The per-contributor hook above is KEPT so any job already sitting
+		// on the queue from before this upgrade still pays out.
+		add_action( self::AS_PAGE_HOOK, array( __CLASS__, 'award_bonus_page' ), 10, 3 );
 	}
+
+	/**
+	 * Action Scheduler hook for one page of the bonus fan-out.
+	 */
+	private const AS_PAGE_HOOK = 'wb_gam_community_bonus_page';
+
+	/**
+	 * Contributors paid per page. Bounded so no single tick carries the whole site.
+	 */
+	private const BONUS_PAGE_SIZE = 500;
+
+	/**
+	 * Object-cache group. The plugin's one group -- shared with every other engine.
+	 */
+	private const CACHE_GROUP = 'wb_gamification';
+
+	/**
+	 * Seconds the "which challenges are running?" answer may be stale.
+	 *
+	 * Same 60s ChallengeEngine uses for the same question. A community challenge runs for days; a
+	 * minute at either end of it is not a thing anyone can perceive, and it is the difference between
+	 * asking the database once a minute and asking it on every award the site takes.
+	 */
+	private const CACHE_TTL = 60;
 
 	/**
 	 * Action Scheduler callback — awards the community-challenge bonus to one contributor.
@@ -100,29 +128,61 @@ final class CommunityChallengeEngine {
 	 * @param int   $points  Points awarded (unused but required by hook signature).
 	 */
 	public static function on_points_awarded( int $user_id, Event $event, int $points ): void {
+		// Find active community challenges that match this action.
+		//
+		// This ran on EVERY award, uncached -- a query against a table an admin edits perhaps a few
+		// times a year, asked thousands of times an hour, almost always to be told "nothing is
+		// running". Its sibling, ChallengeEngine::get_active_challenges_for_action(), answers the
+		// identical question about the identical kind of table and caches it for 60 seconds; this one
+		// simply never got the same treatment.
+		//
+		// 60s of staleness means a challenge the owner just switched on can take up to a minute to
+		// start counting contributions. That is the same trade the sibling already makes, and nobody
+		// has ever noticed, because a community challenge runs for days.
+		foreach ( self::active_challenges_for_action( (string) $event->action_id ) as $challenge ) {
+			self::record_contribution( (int) $challenge['id'], $user_id, $event );
+		}
+	}
+
+	/**
+	 * Active community challenges matching an action, cached per action.
+	 *
+	 * @param string $action_id Action that just fired.
+	 * @return array<int,array<string,mixed>> Rows: id, target_action, target_count, bonus_points.
+	 */
+	private static function active_challenges_for_action( string $action_id ): array {
 		global $wpdb;
+
+		$cache_key = 'wb_gam_cc_active_' . md5( $action_id );
+		$cached    = wp_cache_get( $cache_key, self::CACHE_GROUP );
+
+		if ( false !== $cached ) {
+			return (array) $cached;
+		}
 
 		$now = current_time( 'mysql' );
 
-		// Find active community challenges that match this action.
-		$challenges = $wpdb->get_results(
+		$rows = $wpdb->get_results(
 			$wpdb->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from $wpdb->prefix.
 				"SELECT id, target_action, target_count, bonus_points
 				   FROM {$wpdb->prefix}wb_gam_community_challenges
 				  WHERE status = 'active'
 				    AND (target_action = %s OR target_action = '*')
 				    AND starts_at <= %s
 				    AND ends_at >= %s",
-				$event->action_id,
+				$action_id,
 				$now,
 				$now
 			),
 			ARRAY_A
 		);
 
-		foreach ( $challenges as $challenge ) {
-			self::record_contribution( (int) $challenge['id'], $user_id, $event );
-		}
+		$data = $rows ?: array();
+
+		wp_cache_set( $cache_key, $data, self::CACHE_GROUP, self::CACHE_TTL );
+
+		return $data;
 	}
 
 	// ── Contribution recording ───────────────────────────────────────────────
@@ -207,25 +267,26 @@ final class CommunityChallengeEngine {
 			return; // Already completed by another request.
 		}
 
-		// Award bonus to all contributors via async AS jobs.
-		$contributors = $wpdb->get_col(
+		// Hand the bonus fan-out to ONE paged job, and get out of the member's request.
+		//
+		// This used to SELECT every contributor and enqueue one Action Scheduler job each, right
+		// here. complete_challenge() is reached from the `wb_gam_points_awarded` hook -- so this
+		// ran inside the HTTP request of whichever member's award happened to cross the target.
+		// At 1,200 contributors that measured 1,200 inserts in 357ms; at 100,000 it is 100,000
+		// inserts and roughly half a minute, in a page load. It times out, and because it times
+		// out PART WAY, some members get the bonus and some never do.
+		//
+		// The member's request now schedules exactly one job and returns. Everything else happens
+		// on the queue, a page at a time. Same keyset fan-out as WeeklyEmailEngine and
+		// StatusRetentionEngine.
+		$contributor_count = (int) $wpdb->get_var(
 			$wpdb->prepare(
-				"SELECT user_id FROM {$wpdb->prefix}wb_gam_community_challenge_contributions WHERE challenge_id = %d",
+				"SELECT COUNT(*) FROM {$wpdb->prefix}wb_gam_community_challenge_contributions WHERE challenge_id = %d",
 				$challenge_id
 			)
 		);
 
-		foreach ( $contributors as $user_id ) {
-			as_enqueue_async_action(
-				'wb_gam_community_bonus_award',
-				array(
-					'user_id'      => (int) $user_id,
-					'challenge_id' => $challenge_id,
-					'points'       => $bonus_points,
-				),
-				'wb-gamification'
-			);
-		}
+		self::schedule_bonus_page( $challenge_id, $bonus_points, 0 );
 
 		/**
 		 * Fires when a community challenge is completed.
@@ -234,7 +295,89 @@ final class CommunityChallengeEngine {
 		 * @param int $bonus_points  Bonus points awarded to contributors.
 		 * @param int $contributors  Number of contributing users.
 		 */
-		do_action( 'wb_gam_community_challenge_completed', $challenge_id, $bonus_points, count( $contributors ) );
+		do_action( 'wb_gam_community_challenge_completed', $challenge_id, $bonus_points, $contributor_count );
+	}
+
+	/**
+	 * Queue one page of the bonus fan-out.
+	 *
+	 * Guarded: the page handler schedules its own successor, so without a dedupe check an
+	 * overlapping run would queue the same cursor twice and pay every contributor on that page
+	 * twice.
+	 *
+	 * @param int $challenge_id Challenge being paid out.
+	 * @param int $bonus_points Bonus per contributor.
+	 * @param int $cursor       Last user_id already paid; 0 to start.
+	 * @return void
+	 */
+	private static function schedule_bonus_page( int $challenge_id, int $bonus_points, int $cursor ): void {
+		if ( ! function_exists( 'as_enqueue_async_action' ) ) {
+			// No Action Scheduler: fall back to walking inline, still one bounded page at a time.
+			self::award_bonus_page( $challenge_id, $bonus_points, $cursor );
+			return;
+		}
+
+		$args = array(
+			'challenge_id' => $challenge_id,
+			'bonus_points' => $bonus_points,
+			'cursor'       => $cursor,
+		);
+
+		if ( function_exists( 'as_has_scheduled_action' )
+			&& as_has_scheduled_action( self::AS_PAGE_HOOK, $args, 'wb-gamification' ) ) {
+			return;
+		}
+
+		as_enqueue_async_action( self::AS_PAGE_HOOK, $args, 'wb-gamification' );
+	}
+
+	/**
+	 * Action Scheduler callback — pay one page of contributors, then queue the next.
+	 *
+	 * Keyset, not OFFSET: `user_id > $cursor ORDER BY user_id LIMIT n`. A deep OFFSET scans
+	 * everything it skips, so page 200 of a large payout would cost more than page 1.
+	 *
+	 * @param int $challenge_id Challenge being paid out.
+	 * @param int $bonus_points Bonus per contributor.
+	 * @param int $cursor       Last user_id already paid; 0 to start.
+	 * @return void
+	 */
+	public static function award_bonus_page( int $challenge_id, int $bonus_points, int $cursor = 0 ): void {
+		global $wpdb;
+
+		if ( $challenge_id <= 0 || $bonus_points <= 0 ) {
+			return;
+		}
+
+		$user_ids = $wpdb->get_col(
+			$wpdb->prepare(
+				"SELECT user_id
+				   FROM {$wpdb->prefix}wb_gam_community_challenge_contributions
+				  WHERE challenge_id = %d AND user_id > %d
+				  ORDER BY user_id ASC
+				  LIMIT %d",
+				$challenge_id,
+				$cursor,
+				self::BONUS_PAGE_SIZE
+			)
+		);
+
+		if ( ! $user_ids ) {
+			return;
+		}
+
+		foreach ( $user_ids as $user_id ) {
+			// award_community_bonus() is idempotent per (user, challenge) -- it is the same
+			// handler the per-contributor jobs used, so a page that runs twice cannot double-pay.
+			self::award_community_bonus( (int) $user_id, $challenge_id, $bonus_points );
+		}
+
+		// A short page means the keyset is exhausted.
+		if ( count( $user_ids ) < self::BONUS_PAGE_SIZE ) {
+			return;
+		}
+
+		self::schedule_bonus_page( $challenge_id, $bonus_points, (int) end( $user_ids ) );
 	}
 
 	// ── Public API ───────────────────────────────────────────────────────────

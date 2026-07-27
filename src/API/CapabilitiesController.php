@@ -16,6 +16,7 @@ namespace WBGam\API;
 
 use WBGam\Engine\FeatureFlags;
 use WP_REST_Controller;
+use WP_Error;
 use WP_REST_Response;
 use WP_REST_Request;
 use WP_REST_Server;
@@ -45,6 +46,40 @@ final class CapabilitiesController extends WP_REST_Controller {
 	 * @return void
 	 */
 	public function register_routes(): void {
+		// STAFF PERMISSIONS: the delegation matrix, over REST.
+		//
+		// The Settings > Access matrix was the ONLY way to delegate a capability. Our own architecture
+		// rule says every data store gets three entry points -- member-facing, owner-facing, and API --
+		// and a store that only one surface can reach is half a feature. An owner scripting a fleet of
+		// sites, or a support engineer fixing a locked-out install, had no way in but the browser.
+		//
+		// Admin-gated (manage_options), NOT the granular caps: the surface that grants capabilities can
+		// never be one of the capabilities you can grant. A community manager who could edit this could
+		// promote themselves to everything.
+		register_rest_route(
+			$this->namespace,
+			'/settings/capabilities',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_role_caps' ),
+					'permission_callback' => array( $this, 'admin_check' ),
+				),
+				array(
+					'methods'             => WP_REST_Server::EDITABLE,
+					'callback'            => array( $this, 'update_role_caps' ),
+					'permission_callback' => array( $this, 'admin_check' ),
+					'args'                => array(
+						'roles' => array(
+							'type'        => 'object',
+							'required'    => true,
+							'description' => 'Role slug => array of wb_gam_* capabilities that role should hold. A role mapped to an empty list loses all plugin capabilities.',
+						),
+					),
+				),
+			)
+		);
+
 		register_rest_route(
 			$this->namespace,
 			'/capabilities',
@@ -154,6 +189,62 @@ final class CapabilitiesController extends WP_REST_Controller {
 					'description' => 'Map of endpoint names to their full REST URLs.',
 				),
 			),
+		);
+	}
+
+	/**
+	 * Only a site administrator may read or change who holds which capability.
+	 *
+	 * @return true|WP_Error
+	 */
+	public function admin_check(): bool|WP_Error {
+		return current_user_can( 'manage_options' )
+			? true
+			: new WP_Error(
+				'rest_forbidden',
+				__( 'You do not have permission to manage staff permissions.', 'wb-gamification' ),
+				array( 'status' => 403 )
+			);
+	}
+
+	/**
+	 * The delegation matrix: which roles hold which plugin capabilities.
+	 *
+	 * @return WP_REST_Response
+	 */
+	public function get_role_caps(): WP_REST_Response {
+		return new WP_REST_Response(
+			array(
+				'capabilities' => \WBGam\Engine\Capabilities::all(),
+				'roles'        => \WBGam\Engine\Capabilities::role_map(),
+			),
+			200
+		);
+	}
+
+	/**
+	 * Set the delegation matrix.
+	 *
+	 * Goes through the SAME write path as the Settings > Access matrix
+	 * ({@see \WBGam\Engine\Capabilities::set_role_caps()}). Two copies of "work out the difference and
+	 * add_cap/remove_cap" is two chances to disagree about what the owner asked for, and a permission
+	 * system that disagrees with itself is the one place you really cannot afford it.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response
+	 */
+	public function update_role_caps( $request ): WP_REST_Response {
+		$map = (array) $request->get_param( 'roles' );
+
+		$applied = \WBGam\Engine\Capabilities::set_role_caps( $map );
+
+		return new WP_REST_Response(
+			array(
+				'capabilities' => \WBGam\Engine\Capabilities::all(),
+				'roles'        => \WBGam\Engine\Capabilities::role_map(),
+				'applied'      => $applied,
+			),
+			200
 		);
 	}
 }

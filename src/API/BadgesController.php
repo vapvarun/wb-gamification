@@ -21,6 +21,7 @@
 namespace WBGam\API;
 
 use WBGam\Engine\BadgeEngine;
+use WBGam\Engine\BadgeRule;
 use WBGam\Engine\Transaction;
 use WBGam\Engine\Log;
 use WP_REST_Controller;
@@ -285,12 +286,6 @@ class BadgesController extends WP_REST_Controller {
 	}
 
 	/**
-	 * Update a badge definition (admin only).
-	 *
-	 * @param WP_REST_Request $request Full details about the request.
-	 * @return WP_REST_Response|WP_Error Response on success, WP_Error on failure.
-	 */
-	/**
 	 * Build the args schema for badge create + update.
 	 *
 	 * @param bool $on_create Whether `id` and `name` are required (true on create).
@@ -333,9 +328,24 @@ class BadgesController extends WP_REST_Controller {
 				'minimum'     => 1,
 				'description' => 'Cap on how many members may earn this badge. Null = unlimited.',
 			),
+			'backfill'      => array(
+				'type'        => 'boolean',
+				'default'     => false,
+				'description' => 'Award this badge to members who ALREADY qualify. Default false, and'
+					. ' deliberately so: retroactively awarding a badge to thousands of members is a'
+					. ' decision the site owner makes, not something the plugin does to their'
+					. ' community on its own.',
+			),
 			'condition'     => array(
 				'type'        => 'object',
-				'description' => 'Auto-award rule. Shape: { type: "admin_awarded"|"point_milestone"|"action_count", points?: int, action_id?: string, count?: int }.',
+				'description' => 'Auto-award rule.'
+					. ' MULTI-CONDITION (preferred): { match: "all"|"any", conditions: [ { type, ... }, ... ] }.'
+					. ' Condition types: point_milestone (points), action_count (action_id, count),'
+					. ' level_reached (level_id), badge_earned (badge_id), streak_days (days),'
+					. ' tenure_days (days), points_in_period (points, period: day|week|month),'
+					. ' admin_awarded (no rule row -- the badge becomes manual).'
+					. ' SINGLE-CONDITION (legacy, still supported): { type, ... } -- wrapped into a'
+					. ' one-condition group on write, so only one shape ever reaches the database.',
 			),
 		);
 		if ( $on_create ) {
@@ -426,16 +436,22 @@ class BadgesController extends WP_REST_Controller {
 	private function persist_condition( string $badge_id, ?array $condition ): bool {
 		global $wpdb;
 
-		$type = is_array( $condition )
-			? sanitize_key( (string) ( $condition['type'] ?? 'admin_awarded' ) )
-			: '';
+		// The rule shape is a GROUP now: { match: all|any, conditions: [ ... ] }.
+		//
+		// Two payloads are accepted, deliberately:
+		// - `conditions` (+ `match`)  -- the multi-condition form the admin repeater posts.
+		// - `condition`               -- the single-condition form, kept working because it is a
+		// public REST contract that integrators already call. It is
+		// wrapped into a one-condition group here, so there is still
+		// exactly ONE shape in the database.
+		$group = BadgeRule::from_request( $condition );
 
-		// DELETE-then-INSERT replace, atomically. Previously these two writes
-		// were unchecked and unwrapped: a committed DELETE followed by a failed
-		// INSERT left the badge with no condition row (it stopped auto-awarding
-		// for every user) while the REST handler still returned success.
+		// DELETE-then-INSERT replace, atomically. Previously these two writes were unchecked and
+		// unwrapped: a committed DELETE followed by a failed INSERT left the badge with NO condition
+		// row -- it silently stopped auto-awarding for every member -- while the REST handler still
+		// returned success.
 		$ok = Transaction::run(
-			function () use ( $wpdb, $badge_id, $condition, $type ) {
+			function () use ( $wpdb, $badge_id, $group ) {
 				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- DELETE-then-INSERT for rule replacement.
 				$deleted = $wpdb->delete(
 					$wpdb->prefix . 'wb_gam_rules',
@@ -449,17 +465,11 @@ class BadgesController extends WP_REST_Controller {
 					return false;
 				}
 
-				// No condition payload, or admin-awarded only → no rule row.
-				if ( ! is_array( $condition ) || 'admin_awarded' === $type || '' === $type ) {
+				// No conditions, or manual-only: no rule row. A badge with no rule IS a manual badge,
+				// and now that is the ONLY thing that makes one -- which is what finally lets the
+				// library's "MANUAL" chip tell the truth.
+				if ( null === $group ) {
 					return true;
-				}
-
-				$config = array( 'condition_type' => $type );
-				if ( 'point_milestone' === $type ) {
-					$config['points'] = max( 1, (int) ( $condition['points'] ?? 100 ) );
-				} elseif ( 'action_count' === $type ) {
-					$config['action_id'] = sanitize_key( (string) ( $condition['action_id'] ?? '' ) );
-					$config['count']     = max( 1, (int) ( $condition['count'] ?? 1 ) );
 				}
 
 				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- INSERT.
@@ -468,7 +478,7 @@ class BadgesController extends WP_REST_Controller {
 					array(
 						'rule_type'   => 'badge_condition',
 						'target_id'   => $badge_id,
-						'rule_config' => wp_json_encode( $config ),
+						'rule_config' => (string) wp_json_encode( $group ),
 						'is_active'   => 1,
 					),
 					array( '%s', '%s', '%s', '%d' )
@@ -477,13 +487,19 @@ class BadgesController extends WP_REST_Controller {
 			}
 		);
 
+		// THE RULES LIST IS CACHED FOR FIVE MINUTES. Without this the owner saves a badge, tests it,
+		// sees nothing happen, and concludes the plugin is broken -- for five minutes. This was
+		// missing before, so every condition edit had a five-minute lag nobody documented.
+		BadgeEngine::flush_rules_cache();
+
 		if ( true !== $ok ) {
 			Log::error(
 				'BadgesController::persist_condition — badge condition replace failed',
 				array(
-					'badge_id' => $badge_id,
-					'type'     => $type,
-					'db_error' => $wpdb->last_error,
+					'badge_id'   => $badge_id,
+					'conditions' => null === $group ? 'manual (no rule)' : count( $group['conditions'] ),
+					'match'      => null === $group ? null : $group['match'],
+					'db_error'   => $wpdb->last_error,
 				)
 			);
 			return false;
@@ -562,6 +578,12 @@ class BadgesController extends WP_REST_Controller {
 			);
 		}
 
+		// AFTER the rule is saved, never before -- a backfill started first would evaluate the OLD
+		// condition and award the wrong members. Only when the owner explicitly asked.
+		if ( $request->get_param( 'backfill' ) ) {
+			BadgeEngine::start_backfill( $badge_id );
+		}
+
 		$created = BadgeEngine::get_badge_def( $badge_id );
 		do_action( 'wb_gam_after_create_badge', $created, $request );
 
@@ -625,6 +647,12 @@ class BadgesController extends WP_REST_Controller {
 					array( 'status' => 500 )
 				);
 			}
+		}
+
+		// AFTER the rule is saved, never before -- a backfill started first would evaluate the OLD
+		// condition and award the wrong members. Only when the owner explicitly asked.
+		if ( $request->get_param( 'backfill' ) ) {
+			BadgeEngine::start_backfill( $badge_id );
 		}
 
 		do_action( 'wb_gam_after_update_badge', $badge_id, $data, $request );

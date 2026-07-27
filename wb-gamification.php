@@ -55,7 +55,7 @@ spl_autoload_register(
 		}
 		$file = WB_GAM_PATH . 'src/' . str_replace( '\\', '/', substr( $class, $len ) ) . '.php';
 		if ( is_readable( $file ) ) {
-			require $file;
+			require_once $file;
 		}
 	}
 );
@@ -122,13 +122,13 @@ use WBGam\Engine\BootOrder;
 use WBGam\Engine\ManifestLoader;
 use WBGam\Engine\FeatureFlags;
 use WBGam\Engine\AsyncEvaluator;
+use WBGam\Engine\MemberData;
 use WBGam\Engine\LogPruner;
 use WBGam\Engine\ActionSchedulerCleaner;
 use WBGam\Engine\LeaderboardNudge;
 use WBGam\Engine\Installer;
 use WBGam\Engine\BadgeSharePage;
 use WBGam\Engine\DbUpgrader;
-use WBGam\Engine\TenureBadgeEngine;
 use WBGam\Engine\WeeklyEmailEngine;
 use WBGam\API\MembersController;
 use WBGam\API\PointsController;
@@ -144,11 +144,9 @@ use WBGam\API\EventsController;
 use WBGam\API\WebhooksController;
 use WBGam\API\RulesController;
 use WBGam\API\RecapController;
-use WBGam\BuddyPress\HooksIntegration as BPHooks;
 use WBGam\BuddyPress\ProfileIntegration;
 use WBGam\BuddyPress\DirectoryIntegration;
 use WBGam\BuddyPress\ActivityIntegration as BPActivity;
-use WBGam\Integrations\WordPress\HooksIntegration as WPHooks;
 use WBGam\Integrations\WooCommerce\RefundHandler as WCRefundHandler;
 use WBGam\Integrations\WooCommerce\AccountIntegration as WCAccountIntegration;
 use WBGam\Integrations\LearnDash\ProfileIntegration as LearnDashProfile;
@@ -222,6 +220,9 @@ final class WB_Gamification {
 		( new \WBGam\Blocks\Registrar( WB_GAM_PATH . 'build' ) )->init();
 		add_action( 'init', array( ShortcodeHandler::class, 'init' ) );
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_assets' ) );
+		// The dialog utility is needed in the ADMIN too (the deactivation-feedback modal on
+		// plugins.php). Priority 1 so the handle exists before any admin screen declares it.
+		add_action( 'admin_enqueue_scripts', array( $this, 'register_dialog_script' ), 1 );
 		// The editor canvas is an iframe: styles enqueued via
 		// enqueue_block_editor_assets land in the OUTER admin document, not the
 		// canvas. Block previews live inside the iframe, so the shared design
@@ -252,18 +253,18 @@ final class WB_Gamification {
 		BootOrder::register( 'async_evaluator', BootOrder::SLOT_CORE, array( 'registry' ) );
 		add_action( 'plugins_loaded', array( AsyncEvaluator::class, 'init' ), BootOrder::SLOT_CORE );
 
+		// Deleting a member has to take their gamification data with it. Nothing listened for that,
+		// so every points row, streak, badge and queued notification of every deleted member stayed
+		// in the database for ever — and quietly corrupted every aggregate built on those tables.
+		BootOrder::register( 'member_data', BootOrder::SLOT_CORE );
+		add_action( 'plugins_loaded', array( MemberData::class, 'init' ), BootOrder::SLOT_CORE );
+
 		BootOrder::register( 'engine', BootOrder::SLOT_CORE, array( 'registry', 'db_upgrader' ) );
 		add_action( 'plugins_loaded', array( Engine::class, 'init' ), BootOrder::SLOT_CORE );
 
 		// Member-facing accent color override (Settings > Appearance). Only
 		// registers a wp_enqueue_scripts hook, so it has no boot-order deps.
 		\WBGam\Engine\Appearance::init();
-
-		BootOrder::register( 'wp_hooks', BootOrder::SLOT_CORE, array( 'registry' ) );
-		add_action( 'plugins_loaded', array( WPHooks::class, 'init' ), BootOrder::SLOT_CORE );
-
-		BootOrder::register( 'bp_hooks', BootOrder::SLOT_INTEGRATIONS, array( 'engine' ) );
-		add_action( 'plugins_loaded', array( BPHooks::class, 'init' ), BootOrder::SLOT_INTEGRATIONS );
 
 		BootOrder::register( 'wc_refund_handler', BootOrder::SLOT_INTEGRATIONS, array( 'engine' ) );
 		add_action( 'plugins_loaded', array( WCRefundHandler::class, 'init' ), BootOrder::SLOT_INTEGRATIONS );
@@ -449,6 +450,31 @@ final class WB_Gamification {
 		// the migrated build/ output (silent editor "no support" failures).
 	}
 
+	/**
+	 * Register the one dialog utility.
+	 *
+	 * Four overlay surfaces used to answer "does ESC close it, is focus trapped, does focus come
+	 * back?" four different ways; the redemption confirm claimed to be a dialog and trapped nothing.
+	 * Native <dialog> does the hard parts; this adds focus return.
+	 *
+	 * Registered on BOTH the front-end and the admin. It used to be registered only on
+	 * wp_enqueue_scripts, which meant the deactivation-feedback modal on plugins.php could not have
+	 * consumed it even if it had declared the dependency -- the handle did not exist in admin, so
+	 * wp_enqueue_script would have silently dropped it. That is why that surface stayed a fifth
+	 * hand-rolled dialog: the shared utility was not merely unused there, it was unreachable.
+	 *
+	 * Registration is idempotent; wp_register_script no-ops on a handle that already exists.
+	 */
+	public function register_dialog_script(): void {
+		wp_register_script(
+			'wb-gam-dialog',
+			WB_GAM_URL . 'assets/js/dialog.js',
+			array(),
+			WB_GAM_VERSION,
+			true
+		);
+	}
+
 	public function enqueue_assets(): void {
 		// Wbcom Block Quality Standard — design tokens that every standardised
 		// block consumes. Registered standalone so blocks can declare it as a
@@ -517,7 +543,7 @@ final class WB_Gamification {
 		wp_register_script(
 			'wb-gamification-hub-convert',
 			WB_GAM_URL . 'assets/js/hub-convert.js',
-			array( 'wp-api-fetch', 'wp-i18n' ),
+			array( 'wp-api-fetch', 'wp-i18n', 'wb-gam-dialog' ),
 			WB_GAM_VERSION,
 			true
 		);
@@ -575,6 +601,62 @@ final class WB_Gamification {
 			);
 		}
 
+		// Shared top-strip measurement.
+		//
+		// Anything this plugin pins to the top of the viewport has to know what is ALREADY up there —
+		// admin bar, theme header (however it is positioned), sticky nav, cookie bar. We have shipped
+		// that bug twice: toasts behind the header, and a status bar hardcoded to `top: 48px` that
+		// landed on BuddyX's nav. One measurement, one file, so the next fix cannot land in only one
+		// of two copies. Registered (not enqueued) — consumers declare it as a dependency.
+		$this->register_dialog_script();
+
+		// The one mount utility. Our blocks bound themselves once, at DOMContentLoaded — which is
+		// correct for a page the BROWSER loaded and wrong for a page a ROUTER loaded. Host themes
+		// navigate client-side, and markup swapped in that way carries no listeners. Verified in a
+		// browser: after a swap, the give-kudos form's submit handler is gone, so the browser performs
+		// a NATIVE submit and navigates the member away mid-kudos. onMount() runs a block's setup when
+		// its element appears, whenever that is, once per element.
+		wp_register_script(
+			'wb-gam-mount',
+			WB_GAM_URL . 'assets/js/mount.js',
+			array(),
+			WB_GAM_VERSION,
+			true
+		);
+
+		// The one REST client. Give-kudos, profile-visibility, toast, submit-achievement and
+		// redemption-store each hand-rolled fetch + X-WP-Nonce and, with it, the same bug: a nonce
+		// baked into the page at render time expires (~24h) and nothing ever refreshed it. wbGam.rest()
+		// is the shared client with a retry-once-on-expired-nonce path. See assets/js/rest.js.
+		wp_register_script(
+			'wb-gam-rest',
+			WB_GAM_URL . 'assets/js/rest.js',
+			array(),
+			WB_GAM_VERSION,
+			true
+		);
+
+		// Core's OWN nonce endpoint, and deliberately not a route of ours.
+		//
+		// A refresh route under /wp-json/ cannot do this job: core decides who you are from the nonce
+		// BEFORE any route runs, so an endpoint that mints nonces would have to be shown a valid nonce
+		// first -- it can only help you when you did not need help. admin-ajax authenticates from the
+		// session cookie, which is the credential that is still good when the nonce has died. This is
+		// the same endpoint wp.apiFetch uses, for the same reason.
+		wp_localize_script(
+			'wb-gam-rest',
+			'wbGamRest',
+			array( 'nonceUrl' => admin_url( 'admin-ajax.php?action=rest-nonce' ) )
+		);
+
+		wp_register_script(
+			'wb-gamification-top-offset',
+			WB_GAM_URL . 'assets/js/top-offset.js',
+			array(),
+			WB_GAM_VERSION,
+			true
+		);
+
 		// Toast notification renderer for logged-in users. The renderer
 		// consumes wb-gamification-realtime instead of running its own
 		// poll loop; the wbGamToast localisation is kept as a fallback
@@ -583,7 +665,7 @@ final class WB_Gamification {
 			wp_enqueue_script(
 				'wb-gamification-toast',
 				WB_GAM_URL . 'assets/js/toast.js',
-				array( 'wb-gamification-realtime' ),
+				array( 'wb-gamification-realtime', 'wb-gamification-top-offset', 'wb-gam-rest' ),
 				WB_GAM_VERSION,
 				true
 			);
@@ -800,7 +882,6 @@ register_activation_hook(
 		ActionSchedulerCleaner::activate();
 		LeaderboardNudge::activate();
 		LeaderboardEngine::activate();
-		TenureBadgeEngine::activate();
 		WeeklyEmailEngine::activate();
 		CohortEngine::activate();
 		StatusRetentionEngine::activate();
@@ -823,12 +904,12 @@ register_deactivation_hook(
 		ActionSchedulerCleaner::deactivate();
 		LeaderboardNudge::deactivate();
 		LeaderboardEngine::deactivate();
-		TenureBadgeEngine::deactivate();
 		WeeklyEmailEngine::deactivate();
 		CohortEngine::deactivate();
 		StatusRetentionEngine::deactivate();
 		CredentialExpiryEngine::deactivate();
 		BadgeSharePage::deactivate();
+		\WBGam\Engine\BadgeEngine::deactivate();
 
 		// v2.x engines (SideEffectDispatcher, IntelligenceProjector,
 		// NotificationBridge) schedule wp-cron hooks but predate the per-engine
@@ -880,6 +961,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			WP_CLI::add_command( 'wb-gamification replay', WBGam\CLI\ReplayCommand::class );
 			WP_CLI::add_command( 'wb-gamification qa', WBGam\CLI\QASeedCommand::class );
 			WP_CLI::add_command( 'wb-gamification scale', WBGam\CLI\ScaleCommand::class );
+			WP_CLI::add_command( 'wb-gamification share', WBGam\CLI\ShareCommand::class );
 			WP_CLI::add_command( 'wb-gamification openapi', WBGam\CLI\OpenApiCommand::class );
 			WP_CLI::add_command( 'wb-gamification import', WBGam\CLI\ImportCommand::class );
 			WP_CLI::add_command( 'wb-gamification email-test', array( WBGam\CLI\EmailCommand::class, 'test' ) );

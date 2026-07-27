@@ -78,12 +78,47 @@
 }
 
 /* Sparkline */
+.wb-gam-analytics__chart {
+	display: flex;
+	flex-direction: column;
+	gap: 0.35rem;
+}
+
 .wb-gam-analytics__sparkline {
 	display: flex;
 	align-items: flex-end;
-	height: 80px;
+	height: 96px;
 	gap: 2px;
 	padding: 0.5rem 0 0;
+	/* A baseline. Without it the bars float in space, which is exactly how it looked. */
+	border-bottom: 1px solid var(--wb-gam-border, #dcdcde);
+}
+
+/* The axis. A chart with no scale is a picture of some rectangles: the tallest bar could be ten
+   points or ten million and it would look the same. */
+.wb-gam-analytics__chart-axis {
+	display: flex;
+	justify-content: space-between;
+	align-items: baseline;
+	gap: 1rem;
+	font-size: 11px;
+	color: var(--wb-gam-text-muted, #646970);
+}
+
+.wb-gam-analytics__chart-dates {
+	display: flex;
+	justify-content: space-between;
+	flex: 1;
+}
+
+.wb-gam-analytics__chart-max {
+	font-variant-numeric: tabular-nums;
+	white-space: nowrap;
+}
+
+/* A day with no points is not a bar. It keeps its column so the dates stay aligned. */
+.wb-gam-analytics__spark-bar.is-empty {
+	background: transparent;
 }
 
 .wb-gam-analytics__spark-bar {

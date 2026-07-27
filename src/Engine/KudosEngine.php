@@ -106,50 +106,41 @@ final class KudosEngine {
 			);
 		}
 
-		// Race-condition guard — serialize concurrent sends for this exact
-		// (giver, receiver) pair.
+		// Serialize concurrent sends for this exact (giver, receiver) pair.
 		//
 		// This was a wp_cache_add() lock, justified in its own comment as "atomic across
-		// Redis/Memcached". True — but only where a persistent object cache exists. On a
-		// default WordPress install there is none, wp_cache_add() is a process-local
-		// array, and the lock gave exactly zero exclusion between two concurrent PHP
-		// workers. The guard was missing on the single most common configuration there
-		// is, and the race it was written to close reproduced there every time.
+		// Redis/Memcached". True -- and irrelevant without a persistent object cache, which the
+		// default WordPress install does not have. There, wp_cache_add() is a process-local array
+		// giving zero exclusion between workers, and the race it was written to close reproduced
+		// every time on the most common configuration there is.
 		//
-		// A MySQL named lock is shared by every worker whether or not an object cache is
-		// installed, because the database is the one thing they all talk to. Timeout 0:
-		// if another request is mid-send for this pair right now, that IS the race, so
-		// reject it rather than queue behind it.
-		global $wpdb;
+		// It grew its own inline GET_LOCK in 1.6.4. That was right, and it was also the second
+		// lock implementation in the plugin; it now uses the one shared primitive, so there is a
+		// single place where "how do we lock?" is answered.
+		//
+		// Timeout 0: if another request is mid-send for this pair right now, that IS the race, so
+		// reject rather than queue behind it.
+		return Lock::run(
+			sprintf( 'kudos_%d_%d', $giver_id, $receiver_id ),
+			function () use ( $giver_id, $receiver_id, $message, $receiver_cooldown ) {
+				// Re-check the cooldown INSIDE the lock. The check above ran unserialized, so
+				// both racers can have passed it -- but only one of them is in here. This is the
+				// check that actually enforces the cooldown.
+				if ( $receiver_cooldown > 0 && self::has_recent_kudos_to_receiver( $giver_id, $receiver_id, $receiver_cooldown ) ) {
+					return new WP_Error(
+						'wb_gam_kudos_cooldown',
+						__( 'You recently gave kudos to this member. Try again later.', 'wb-gamification' )
+					);
+				}
 
-		$lock_name = sprintf( 'wb_gam_kudos_%d_%d', $giver_id, $receiver_id );
-		$acquired  = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, %d)', $lock_name, 0 ) );
-
-		if ( 1 !== $acquired ) {
-			return new WP_Error(
+				return self::record_kudos( $giver_id, $receiver_id, $message );
+			},
+			// Lock declined: someone else is mid-send for this exact pair.
+			new WP_Error(
 				'wb_gam_kudos_cooldown',
 				__( 'You recently gave kudos to this member. Try again later.', 'wb-gamification' )
-			);
-		}
-
-		try {
-			// Re-check the cooldown INSIDE the lock. The check above ran unserialized,
-			// so both racers can have passed it — but only one of them is in here.
-			// This is the check that actually enforces the cooldown.
-			if ( $receiver_cooldown > 0 && self::has_recent_kudos_to_receiver( $giver_id, $receiver_id, $receiver_cooldown ) ) {
-				return new WP_Error(
-					'wb_gam_kudos_cooldown',
-					__( 'You recently gave kudos to this member. Try again later.', 'wb-gamification' )
-				);
-			}
-
-			return self::record_kudos( $giver_id, $receiver_id, $message );
-		} finally {
-			// Released on every path, including the WP_Error returns and any exception
-			// thrown by a listener. A leaked named lock would block this pair until the
-			// DB connection closed.
-			$wpdb->query( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $lock_name ) );
-		}
+			)
+		);
 	}
 
 	/**
@@ -260,7 +251,7 @@ final class KudosEngine {
 	}
 
 	/**
-	 * Count kudos sent by a user today (UTC day).
+	 * Count kudos sent by a user today (site-local day).
 	 *
 	 * @param int $giver_id User to check.
 	 * @return int
@@ -274,7 +265,14 @@ final class KudosEngine {
 				  WHERE giver_id = %d
 				    AND created_at >= %s",
 				$giver_id,
-				gmdate( 'Y-m-d' ) . ' 00:00:00'
+				// The boundary MUST be expressed in the same clock the column is written
+				// in. `created_at` is stored with current_time( 'mysql' ) — site-local.
+				// This compared it against gmdate( 'Y-m-d' ) — a UTC day boundary. On a
+				// site BEHIND UTC (e.g. America/Los_Angeles at 23:39 local), "today" in
+				// UTC is already tomorrow, so every kudos sent today landed before that
+				// boundary and the COUNT came back 0 — the daily limit was never
+				// enforced. Sibling bug to has_recent_kudos_to_receiver() below; same fix.
+				gmdate( 'Y-m-d', strtotime( current_time( 'mysql' ) ) ) . ' 00:00:00'
 			)
 		);
 	}
@@ -551,16 +549,123 @@ final class KudosEngine {
 	}
 
 	/**
+	 * Build the WHERE clause for the moderation roster from the owner's filters.
+	 *
+	 * A moderator's job on this screen is to FIND something -- a member being harassed with kudos, a
+	 * pair trading them back and forth, a bad afternoon. With a status tab and nothing else, that job
+	 * is "read every page", which stops being possible somewhere around the second screenful. Our own
+	 * large-site rule says a list without a filter is unusable at 2,000 rows; this one had no way to
+	 * ask about a giver, a receiver, or a date.
+	 *
+	 * Values are bound; only the column names are interpolated, and they come from this method.
+	 *
+	 * @param array $filters status|giver_id|receiver_id|date_from|date_to.
+	 * @return array{0:string,1:array<int,mixed>} [ WHERE clause, ordered bind values ].
+	 */
+	private static function admin_where( array $filters ): array {
+		$status = (string) ( $filters['status'] ?? 'all' );
+		$parts  = array();
+		$values = array();
+
+		if ( 'active' === $status ) {
+			$parts[] = 'k.revoked_at IS NULL';
+		} elseif ( 'revoked' === $status ) {
+			$parts[] = 'k.revoked_at IS NOT NULL';
+		}
+
+		$giver = (int) ( $filters['giver_id'] ?? 0 );
+		if ( $giver > 0 ) {
+			$parts[]  = 'k.giver_id = %d';
+			$values[] = $giver;
+		}
+
+		$receiver = (int) ( $filters['receiver_id'] ?? 0 );
+		if ( $receiver > 0 ) {
+			$parts[]  = 'k.receiver_id = %d';
+			$values[] = $receiver;
+		}
+
+		// Dates are the site's, because that is the clock created_at is written in and the clock the
+		// moderator is reading their screen in.
+		$from = (string) ( $filters['date_from'] ?? '' );
+		if ( '' !== $from ) {
+			$parts[]  = 'k.created_at >= %s';
+			$values[] = $from . ' 00:00:00';
+		}
+
+		$to = (string) ( $filters['date_to'] ?? '' );
+		if ( '' !== $to ) {
+			$parts[]  = 'k.created_at <= %s';
+			$values[] = $to . ' 23:59:59';
+		}
+
+		return array( $parts ? 'WHERE ' . implode( ' AND ', $parts ) : '', $values );
+	}
+
+	/**
+	 * Giver->receiver pairs that appear suspiciously often, ACROSS THE WHOLE TABLE.
+	 *
+	 * This used to be computed from the rows on the CURRENT PAGE, which means a pair trading kudos
+	 * back and forth was flagged only if their exchanges happened to land on the same 20-row screen.
+	 * A ring spread over a week -- the only kind there is -- was invisible. The point of the feature is
+	 * to find abuse the moderator has NOT already spotted, so it has to ask the table, not the page.
+	 *
+	 * Asking the table needs an index to be affordable, and there wasn't one: nothing led on
+	 * `revoked_at`, so this GROUP BY built a temp table and scanned every kudos row on the site, every
+	 * time a moderator opened the page. `idx_abuse_pairs (revoked_at, giver_id, receiver_id)` (1.6.4)
+	 * turns it into a covering index read -- EXPLAIN went from `Using temporary` to `Using index`.
+	 * Nothing prunes this table and nothing should (kudos are member-authored content), so it only
+	 * ever grows, and an unindexed scan of it was a bill that arrived years late.
+	 *
+	 * Deliberately NOT cached. It is an admin-only page, read once per load, and now index-covered --
+	 * a cache here would buy nothing and cost an invalidation path to get wrong. Over-caching is a
+	 * finding too.
+	 *
+	 * @param int $threshold Pair count at or above which a pair is flagged.
+	 * @return array<string,int> "giverId-receiverId" => count.
+	 */
+	public static function abuse_pairs( int $threshold = 2 ): array {
+		global $wpdb;
+
+		$threshold = max( 2, $threshold );
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$rows = (array) $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT giver_id, receiver_id, COUNT(*) AS n
+				   FROM {$wpdb->prefix}wb_gam_kudos
+				  WHERE revoked_at IS NULL
+				  GROUP BY giver_id, receiver_id
+				 HAVING n >= %d",
+				$threshold
+			),
+			ARRAY_A
+		);
+
+		$map = array();
+		foreach ( $rows as $row ) {
+			$map[ $row['giver_id'] . '-' . $row['receiver_id'] ] = (int) $row['n'];
+		}
+
+		return $map;
+	}
+
+	/**
 	 * Total kudos rows matching an optional status filter (for pagination).
 	 *
 	 * @param string $status 'all' | 'active' | 'revoked'.
 	 * @return int
 	 */
-	public static function admin_count( string $status = 'all' ): int {
+	public static function admin_count( string $status = 'all', array $filters = array() ): int {
 		global $wpdb;
-		$where = self::status_where( $status );
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		return (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}wb_gam_kudos {$where}" );
+
+		$filters['status']  = $status;
+		[ $where, $values ] = self::admin_where( $filters );
+
+		$sql = "SELECT COUNT(*) FROM {$wpdb->prefix}wb_gam_kudos k {$where}";
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared
+		return (int) ( $values ? $wpdb->get_var( $wpdb->prepare( $sql, $values ) ) : $wpdb->get_var( $sql ) );
 	}
 
 	/**
@@ -571,11 +676,16 @@ final class KudosEngine {
 	 * @param string $status   'all' | 'active' | 'revoked'.
 	 * @return array<int, array{ id:int, giver_id:int, giver_name:string, receiver_id:int, receiver_name:string, message:string|null, created_at:string, revoked:bool }>
 	 */
-	public static function admin_list( int $per_page = 20, int $offset = 0, string $status = 'all' ): array {
+	public static function admin_list( int $per_page = 20, int $offset = 0, string $status = 'all', array $filters = array() ): array {
 		global $wpdb;
 		$per_page = max( 1, min( 200, $per_page ) );
 		$offset   = max( 0, $offset );
-		$where    = self::status_where( $status );
+
+		$filters['status']  = $status;
+		[ $where, $values ] = self::admin_where( $filters );
+
+		$values[] = $per_page;
+		$values[] = $offset;
 
 		// $where is built from a whitelist below; LIMIT/OFFSET are prepared.
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
@@ -590,8 +700,7 @@ final class KudosEngine {
 				   {$where}
 				  ORDER BY k.created_at DESC
 				  LIMIT %d OFFSET %d",
-				$per_page,
-				$offset
+				$values
 			),
 			ARRAY_A
 		);
@@ -615,21 +724,5 @@ final class KudosEngine {
 			},
 			$rows
 		);
-	}
-
-	/**
-	 * Map a status filter to a safe WHERE clause (no user input interpolated).
-	 *
-	 * @param string $status 'all' | 'active' | 'revoked'.
-	 * @return string
-	 */
-	private static function status_where( string $status ): string {
-		if ( 'active' === $status ) {
-			return 'WHERE k.revoked_at IS NULL';
-		}
-		if ( 'revoked' === $status ) {
-			return 'WHERE k.revoked_at IS NOT NULL';
-		}
-		return '';
 	}
 }

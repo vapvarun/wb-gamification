@@ -35,7 +35,6 @@ class PointsEngineTest extends TestCase {
 		Functions\when( 'get_user_meta' )->justReturn( '' );
 		Functions\when( 'get_users' )->justReturn( array() );
 		Functions\when( 'apply_filters' )->returnArg( 2 );
-		\WBGam\Engine\PointsEngine::flush_exclusion_cache();
 	}
 
 	protected function tearDown(): void {

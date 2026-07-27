@@ -270,6 +270,17 @@ final class RedemptionEngine {
 
 				// Step 3 — record the redemption inside the same transaction.
 				// Rolled back together with the debit if the record write fails.
+				//
+				// created_at is written explicitly, in UTC, and NOT left to the column's
+				// DEFAULT CURRENT_TIMESTAMP. The default is filled by MySQL, which stamps it
+				// in the DATABASE SERVER's timezone -- a third clock, owned by neither the
+				// site nor PHP, that no WordPress setting can influence. Every reader here
+				// (the my-rewards shortcode, the REST payload, the admin log) parses the value
+				// in PHP's UTC frame, so on any host whose MySQL is not on UTC the whole column
+				// was skewed by that host's offset. Measured on a MySQL running IST: a reward
+				// redeemed one second ago was shown to the member as "6 hours ago" (+19800s),
+				// on a site whose own timezone was set to UTC. The site's timezone was never
+				// the variable, which is why it survived a release.
 				$inserted = $wpdb->insert(
 					$wpdb->prefix . 'wb_gam_redemptions',
 					array(
@@ -277,8 +288,9 @@ final class RedemptionEngine {
 						'item_id'     => $item_id,
 						'points_cost' => $cost,
 						'status'      => 'pending',
+						'created_at'  => current_time( 'mysql', true ),
 					),
-					array( '%d', '%d', '%d', '%s' )
+					array( '%d', '%d', '%d', '%s', '%s' )
 				);
 				if ( ! $inserted ) {
 					self::$last_failure_reason = 'record_write_failed';

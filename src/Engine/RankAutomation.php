@@ -76,6 +76,9 @@ final class RankAutomation {
 	 */
 	public static function init(): void {
 		add_action( 'wb_gam_level_changed', array( __CLASS__, 'on_level_changed' ), 20, 3 );
+		// A WP role is data the member keeps, not a message they receive, so an import has to assign it
+		// too -- a migrated member must land on the site with the role their level entitles them to.
+		add_action( 'wb_gam_level_imported', array( __CLASS__, 'on_level_changed' ), 20, 3 );
 		// Also handle the very first level assignment (Newcomer / 0 pts) —
 		// the canonical "level changed" hook deliberately skips that case so
 		// brand-new users don't get a level-up toast. But rank-automation

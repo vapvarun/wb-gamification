@@ -51,23 +51,51 @@
 				other.setAttribute( 'aria-selected', active ? 'true' : 'false' );
 			} );
 		} );
-	}
 
-	function bindAll() {
-		document.querySelectorAll( '[data-wb-gam-badge-showcase]' ).forEach( bindRoot );
-	}
+		// The share toggle. A badge is private until its owner publishes it -- the share card, the
+		// OpenBadges credential and the public share page all refuse to render one that has not been --
+		// so this button is the only door through that gate, and it is only rendered on your own board.
+		root.addEventListener( 'click', function ( event ) {
+			var button = event.target.closest( '[data-wb-gam-share]' );
+			if ( ! button || ! root.contains( button ) || button.disabled ) {
+				return;
+			}
 
-	if ( document.readyState === 'loading' ) {
-		document.addEventListener( 'DOMContentLoaded', bindAll );
-	} else {
-		bindAll();
-	}
+			var shared = '1' === button.getAttribute( 'data-shared' );
 
-	// Catch late-mounted instances (hub flyout template clone).
-	if ( typeof MutationObserver !== 'undefined' ) {
-		var observer = new MutationObserver( function () {
-			bindAll();
+			button.disabled = true;
+
+			window.wbGam.rest( button.getAttribute( 'data-rest-url' ), {
+				// Publishing is a POST; withdrawing is a DELETE. Withdrawing has to work exactly as well
+				// as publishing, or the consent was never real.
+				method: shared ? 'DELETE' : 'POST',
+				nonce: button.getAttribute( 'data-rest-nonce' ),
+			} )
+				.then( function ( result ) {
+					if ( ! result.ok ) {
+						return; // Leave the button as it was; the server did not change anything.
+					}
+
+					var nowShared = !! ( result.data && result.data.shared );
+
+					button.setAttribute( 'data-shared', nowShared ? '1' : '0' );
+					button.setAttribute( 'aria-pressed', nowShared ? 'true' : 'false' );
+					button.textContent = nowShared
+						? button.getAttribute( 'data-label-shared' )
+						: button.getAttribute( 'data-label-share' );
+				} )
+				.finally( function () {
+					button.disabled = false;
+				} );
 		} );
-		observer.observe( document.body, { childList: true, subtree: true } );
 	}
+
+	// This block got the answer right before anyone else did -- it already watched for late-mounted
+	// instances (the hub flyout clones its template), which is exactly the case four other surfaces
+	// were missing. But it re-ran a whole-document bindAll() on EVERY mutation anywhere on the page,
+	// so a keystroke in an unrelated input re-scanned every badge grid.
+	//
+	// Same guarantee, one shared observer, and bindRoot fires once per element instead of once per
+	// mutation. (bindAll() is gone with it -- nothing else called it.)
+	window.wbGam.onMount( '[data-wb-gam-badge-showcase]', bindRoot );
 }() );

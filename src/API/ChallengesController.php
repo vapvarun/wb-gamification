@@ -628,16 +628,44 @@ class ChallengesController extends WP_REST_Controller {
 	// ── Helpers ────────────────────────────────────────────────────────────────
 
 	/**
-	 * Resolve the effective user ID from the request parameter.
+	 * Resolve the effective user ID from the request parameter, honouring profile privacy.
+	 *
+	 * The two read routes on this controller are deliberately public: the challenge CATALOGUE is
+	 * public information, and the site's own blocks render it to logged-out visitors.
+	 *
+	 * The `?user_id=` parameter is not. It enriches each challenge with that member's `progress` and
+	 * `completed` — and this method used to hand back whatever ID it was asked for, so an anonymous
+	 * caller with no cookie and no nonce could walk `?user_id=1,2,3…` and harvest every member's
+	 * progress, including members who opted OUT of a public profile. Verified against a live site
+	 * before this fix: an unauthenticated GET returned the admin's real 3/5.
+	 *
+	 * The privacy gate belongs HERE, at the single point both read routes resolve through, rather
+	 * than copied into each callback -- two copies of a security check is one copy that will be
+	 * forgotten. Failing the gate degrades to a catalogue read (user 0: no progress, no completion),
+	 * which is the exact shape an anonymous client gets when it omits `?user_id` — so the response
+	 * stays well-formed and tells the caller nothing about whether the member exists.
+	 *
+	 * `BadgesController::get_items()` already defends the identical parameter this way; Challenges
+	 * was simply never given the same treatment.
 	 *
 	 * @param int $requested User ID from the request, 0 to use the current user.
-	 * @return int Resolved user ID.
+	 * @return int Resolved user ID, or 0 when the caller may not see that member's progress.
 	 */
 	private function resolve_user_id( int $requested ): int {
-		if ( $requested > 0 ) {
+		if ( $requested <= 0 ) {
+			return is_user_logged_in() ? get_current_user_id() : 0;
+		}
+
+		// A member always sees their own progress.
+		if ( $requested === get_current_user_id() ) {
 			return $requested;
 		}
-		return is_user_logged_in() ? get_current_user_id() : 0;
+
+		if ( ! \WBGam\Engine\Privacy::can_view_public_profile( $requested ) ) {
+			return 0;
+		}
+
+		return $requested;
 	}
 
 	/**

@@ -135,6 +135,25 @@ final class StreakEngine {
 		// Bust cache.
 		wp_cache_delete( "wb_gam_streak_{$user_id}", self::CACHE_GROUP );
 
+		/**
+		 * Fires whenever a member's streak count changes — EVERY day, not only at a milestone.
+		 *
+		 * `wb_gam_streak_milestone` fires at 7, 14, 30, 60, 100, 180 and 365 only, because those
+		 * are the tiers that earn a celebration and a bonus. That is the right list for a
+		 * celebration and the wrong one for a question: once an owner could build a badge that
+		 * asks "has this member kept a 5-day streak?", the only event that could answer it fired
+		 * on day 7. The badge awarded two days late and looked broken.
+		 *
+		 * A streak changes at most once per member per day — record_activity() returns early when
+		 * today is already recorded — so this is a bounded signal, not a hot path.
+		 *
+		 * @since 1.6.4
+		 * @param int $user_id    Member whose streak changed.
+		 * @param int $new_streak The streak count after this activity.
+		 * @param int $old_streak The streak count before it.
+		 */
+		do_action( 'wb_gam_streak_changed', $user_id, $new_streak, (int) $data['current_streak'] );
+
 		// Check for milestone.
 		if ( in_array( $new_streak, self::MILESTONES, true ) ) {
 			self::fire_milestone( $user_id, $new_streak );
@@ -165,7 +184,8 @@ final class StreakEngine {
 	public static function get_contribution_data( int $user_id, int $days = 365 ): array {
 		global $wpdb;
 
-		$since = gmdate( 'Y-m-d', strtotime( "-{$days} days" ) ) . ' 00:00:00';
+		// Midnight, N days ago, in the SITE's clock -- wb_gam_points.created_at is site-local.
+		$since = Clock::site_day_start( "-{$days} days" );
 
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(

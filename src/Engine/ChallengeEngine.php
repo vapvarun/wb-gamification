@@ -27,8 +27,12 @@
  *
  * Time-limited challenges:
  *   starts_at / ends_at are checked before incrementing. Challenges with
- *   status = 'active' AND (starts_at IS NULL OR starts_at <= UTC_TIMESTAMP())
- *   AND (ends_at IS NULL OR ends_at >= UTC_TIMESTAMP()) are considered active.
+ *   status = 'active' AND (starts_at IS NULL OR starts_at <= current_time('mysql'))
+ *   AND (ends_at IS NULL OR ends_at >= current_time('mysql')) are considered active.
+ *
+ *   The window is the SITE's clock, because that is the clock the owner typed it in. It used to be
+ *   the DATABASE's (UTC_TIMESTAMP()), which meant a challenge scheduled 09:00-17:00 on a site ahead
+ *   of UTC appeared open while the engine refused to award anything against it.
  *
  * @package WB_Gamification
  * @since   0.1.0
@@ -108,14 +112,29 @@ final class ChallengeEngine {
 	public static function get_active_challenges( int $user_id ): array {
 		global $wpdb;
 
+		// The window is measured on the SITE's clock, because that is the clock the owner typed it in.
+		//
+		// This asked the DATABASE for the time (UTC_TIMESTAMP()) while ChallengesController asked the
+		// SITE (current_time('mysql')) -- two clocks, same two columns. On a site 5.5 hours ahead of
+		// UTC, a challenge scheduled 09:00-17:00 was ACTIVE to the controller (so it appeared open and
+		// members could join) and NOT ACTIVE to the engine (so nothing they did awarded any progress)
+		// until 14:30. On a site behind UTC it kept awarding after it had visibly closed.
+		//
+		// The 1.6.4 changelog already claimed this was fixed. It was fixed in the controller only.
+		$now_local = current_time( 'mysql' );
+
 		$challenges = $wpdb->get_results(
-			"SELECT id, title, type, team_group_id, action_id, target, bonus_points,
-			        period, starts_at, ends_at
-			   FROM {$wpdb->prefix}wb_gam_challenges
-			  WHERE status = 'active'
-			    AND (starts_at IS NULL OR starts_at <= UTC_TIMESTAMP())
-			    AND (ends_at IS NULL OR ends_at >= UTC_TIMESTAMP())
-			  ORDER BY id ASC",
+			$wpdb->prepare(
+				"SELECT id, title, type, team_group_id, action_id, target, bonus_points,
+				        period, starts_at, ends_at
+				   FROM {$wpdb->prefix}wb_gam_challenges
+				  WHERE status = 'active'
+				    AND (starts_at IS NULL OR starts_at <= %s)
+				    AND (ends_at IS NULL OR ends_at >= %s)
+				  ORDER BY id ASC",
+				$now_local,
+				$now_local
+			),
 			ARRAY_A
 		);
 
@@ -311,15 +330,20 @@ final class ChallengeEngine {
 
 		global $wpdb;
 
+		// Site clock, not database clock. See the note on active_challenges() above.
+		$now_local = current_time( 'mysql' );
+
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT id, title, type, team_group_id, action_id, target, bonus_points, period
 				   FROM {$wpdb->prefix}wb_gam_challenges
 				  WHERE status = 'active'
 				    AND action_id = %s
-				    AND (starts_at IS NULL OR starts_at <= UTC_TIMESTAMP())
-				    AND (ends_at IS NULL OR ends_at >= UTC_TIMESTAMP())",
-				$action_id
+				    AND (starts_at IS NULL OR starts_at <= %s)
+				    AND (ends_at IS NULL OR ends_at >= %s)",
+				$action_id,
+				$now_local,
+				$now_local
 			),
 			ARRAY_A
 		);

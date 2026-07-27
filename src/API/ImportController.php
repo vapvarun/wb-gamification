@@ -129,7 +129,13 @@ final class ImportController {
 			return new WP_Error( 'wb_gam_source_unavailable', __( 'No data found for this source.', 'wb-gamification' ), array( 'status' => 400 ) );
 		}
 
-		return new WP_REST_Response( $class::run( $dry_run ), 200 );
+		// An import replays HISTORY. Suppress the announcements for the length of the run, or every
+		// migrated badge mails the member a "Congratulations!" for something they did three years ago.
+		$result = \WBGam\Engine\ImportMode::run(
+			static fn() => $class::run( $dry_run )
+		);
+
+		return new WP_REST_Response( $result, 200 );
 	}
 
 	/**

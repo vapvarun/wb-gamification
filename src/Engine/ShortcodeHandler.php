@@ -392,10 +392,13 @@ final class ShortcodeHandler {
 			array( 'wb-gam-tokens' ),
 			WB_GAM_VERSION
 		);
+		// wb-gam-mount defines wbGam.onMount(), which this script calls at parse time -- so it is a
+		// hard dependency, not a nicety. Without it the kudos form binds nothing. wb-gam-rest defines
+		// wbGam.rest(), used for the POST itself (shared fetch + expired-nonce retry).
 		wp_enqueue_script(
 			$handle,
 			plugins_url( 'assets/js/give-kudos.js', WB_GAM_FILE ),
-			array(),
+			array( 'wb-gam-mount', 'wb-gam-rest' ),
 			WB_GAM_VERSION,
 			true
 		);
@@ -647,7 +650,16 @@ final class ShortcodeHandler {
 							</span>
 							<?php if ( $row_when ) : ?>
 								<span class="wb-gam-my-rewards__when">
-									<?php echo esc_html( human_time_diff( strtotime( $row_when ), time() ) . ' ' . __( 'ago', 'wb-gamification' ) ); ?>
+									<?php
+									// @clock-ok: redemptions.created_at is now written explicitly in UTC by
+									// RedemptionEngine::redeem(), so strtotime() (UTC under WP) and time() (UTC)
+									// agree. It previously came from the column's DEFAULT CURRENT_TIMESTAMP, i.e.
+									// the DATABASE SERVER's timezone, and this line was what made that visible:
+									// on a MySQL running IST it told the member a reward they had just redeemed
+									// was claimed "6 hours ago". Rows written before that fix still carry the old
+									// host's offset; new ones are correct.
+									echo esc_html( human_time_diff( strtotime( $row_when ), time() ) . ' ' . __( 'ago', 'wb-gamification' ) );
+									?>
 								</span>
 							<?php endif; ?>
 						</div>

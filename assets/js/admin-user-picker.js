@@ -21,12 +21,34 @@
 	var DEBOUNCE_MS = 250;
 	var PER_PAGE = 20;
 
+	/**
+	 * Bind every picker on the page, not one hardcoded set of element ids.
+	 *
+	 * This used to look up `wb_gam_award_user_search` / `_user` / `_status` by id, which made it a
+	 * component that could only ever exist once. The Kudos Moderation screen needs TWO (a giver and a
+	 * receiver), and the alternative to generalising this was `wp_dropdown_users()` -- which is the
+	 * exact thing this file was written to replace, because it renders one <option> per member and
+	 * takes the page down on a large site.
+	 *
+	 * A picker is now any element carrying `data-wb-gam-user-picker`, containing a search input, a
+	 * select, and (optionally) a status node.
+	 */
 	function init() {
-		var search = document.getElementById( 'wb_gam_award_user_search' );
-		var select = document.getElementById( 'wb_gam_award_user' );
-		var status = document.getElementById( 'wb_gam_award_user_status' );
+		var pickers = document.querySelectorAll( '[data-wb-gam-user-picker]' );
 
-		if ( ! search || ! select || ! window.wbGamAdminRest || ! window.wbGamManualAward ) {
+		if ( ! window.wbGamAdminRest || ! window.wbGamUserPicker ) {
+			return;
+		}
+
+		Array.prototype.forEach.call( pickers, bind );
+	}
+
+	function bind( root ) {
+		var search = root.querySelector( '[data-picker-search]' );
+		var select = root.querySelector( '[data-picker-select]' );
+		var status = root.querySelector( '[data-picker-status]' );
+
+		if ( ! search || ! select ) {
 			return;
 		}
 
@@ -62,19 +84,19 @@
 
 		function run( term ) {
 			if ( term.length < 2 ) {
-				reset( window.wbGamManualAward.i18n.typeToSearch );
+				reset( window.wbGamUserPicker.i18n.typeToSearch );
 				setStatus( '' );
 				return;
 			}
 
-			setStatus( window.wbGamManualAward.i18n.searching );
+			setStatus( window.wbGamUserPicker.i18n.searching );
 
 			window.wbGamAdminRest
 				.apiFetch(
 					'GET',
 					'/members?per_page=' + PER_PAGE + '&search=' + encodeURIComponent( term ),
 					null,
-					window.wbGamManualAward
+					window.wbGamUserPicker
 				)
 				.then( function ( res ) {
 					// A slower earlier request must not overwrite a newer one.
@@ -83,22 +105,22 @@
 					}
 
 					if ( ! res || ! res.ok || ! res.data || ! res.data.items ) {
-						reset( window.wbGamManualAward.i18n.noResults );
+						reset( window.wbGamUserPicker.i18n.noResults );
 						setStatus( '' );
 						return;
 					}
 
 					var items = res.data.items;
 					if ( ! items.length ) {
-						reset( window.wbGamManualAward.i18n.noResults );
-						setStatus( window.wbGamManualAward.i18n.noResults );
+						reset( window.wbGamUserPicker.i18n.noResults );
+						setStatus( window.wbGamUserPicker.i18n.noResults );
 						return;
 					}
 
 					clear( select );
 					var head = document.createElement( 'option' );
 					head.value = '0';
-					head.textContent = window.wbGamManualAward.i18n.selectUser;
+					head.textContent = window.wbGamUserPicker.i18n.selectUser;
 					select.appendChild( head );
 
 					items.forEach( function ( item ) {
@@ -116,11 +138,11 @@
 					}
 
 					setStatus(
-						window.wbGamManualAward.i18n.resultsFound.replace( '%d', String( items.length ) )
+						window.wbGamUserPicker.i18n.resultsFound.replace( '%d', String( items.length ) )
 					);
 				} )
 				.catch( function () {
-					reset( window.wbGamManualAward.i18n.noResults );
+					reset( window.wbGamUserPicker.i18n.noResults );
 					setStatus( '' );
 				} );
 		}
@@ -141,7 +163,7 @@
 			}
 		} );
 
-		reset( window.wbGamManualAward.i18n.typeToSearch );
+		reset( window.wbGamUserPicker.i18n.typeToSearch );
 	}
 
 	if ( 'loading' === document.readyState ) {

@@ -61,6 +61,22 @@ final class LeaderboardEngine {
 	public const AS_GROUP = 'wb_gam_leaderboard';
 
 	/**
+	 * Extra candidate rows fetched inside the derived table, so orphans cannot shorten a board.
+	 *
+	 * A totals row whose member has been deleted is still picked by the inner LIMIT and then dropped
+	 * by the JOIN to wp_users -- so without this, a board asked for 10 quietly renders 8, and the
+	 * members who should have been 9th and 10th never appear.
+	 *
+	 * 25 is chosen against the real failure: orphans are transient (deleted_user purges a member's
+	 * totals now, and `wp wb-gamification member purge-orphans` clears the historical ones), so the
+	 * buffer only has to absorb the handful that can accumulate between a deletion and a cleanup. It
+	 * is not a substitute for having no orphans; it is what stops a board lying while some exist.
+	 *
+	 * @var int
+	 */
+	private const ORPHAN_OVERFETCH = 25;
+
+	/**
 	 * Initialize cron hooks and arm the recurring snapshot.
 	 *
 	 * Called from plugins_loaded via FeatureFlags or directly.
@@ -244,8 +260,27 @@ final class LeaderboardEngine {
 
 		// ── Full query fallback ───────────────────────────────────────────────
 		$period_start = self::get_period_start( $period );
-		$opt_out_ids  = self::get_opted_out_ids();
-		$scope_ids    = self::resolve_scope( $scope_type, $scope_id );
+		// true = existence is enforced by this query's own JOIN to wp_users.
+		[ $opt_out_clause, $opt_out_values ] = self::exclusion_sql( 'p', true );
+
+		// The FOURTH predicate. Every path that ranks members must ask it, and ask it the same way.
+		$balance_sum = self::positive_balance_sql( 'SUM(p.points)' );
+		$scope_ids   = self::resolve_scope( $scope_type, $scope_id );
+
+		// A scope that resolves to NOBODY means nobody -- it does not mean everybody.
+		//
+		// Downstream, an empty $scope_ids means "do not restrict", which is correct when no scope was
+		// asked for. But it is the same empty array a REQUESTED scope produces when it resolves to no
+		// members (an empty group, or a scope type no integration provides). Those two cases were
+		// indistinguishable, so a group leaderboard on a site without the BuddyPress bridge quietly
+		// rendered the SITE-WIDE board under the group's name.
+		//
+		// Empty is the honest answer. A global board wearing a group's name is a wrong answer that
+		// looks like a right one, which is the worse failure of the two.
+		if ( '' !== $scope_type && $scope_id > 0 && empty( $scope_ids ) ) {
+			wp_cache_set( $cache_key, array(), 'wb_gamification', 120 );
+			return array();
+		}
 
 		// Build WHERE clause.
 		$where_parts  = array();
@@ -261,14 +296,12 @@ final class LeaderboardEngine {
 			$where_values[] = $period_start;
 		}
 
-		if ( ! empty( $opt_out_ids ) ) {
-			$placeholders = implode( ',', array_fill( 0, count( $opt_out_ids ), '%d' ) );
-			$where_values = array_merge( $where_values, $opt_out_ids );
-			// phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
-			$opt_out_clause = "AND p.user_id NOT IN ($placeholders)";
-		} else {
-			$opt_out_clause = '';
-		}
+		// The exclusion fragment carries its own binds, and its placeholder count is a function
+		// of what the ADMIN configured -- never of how many members the site has. That is the
+		// whole fix: excluding "subscriber" on a 100k-member site used to build a NOT IN() with
+		// a hundred thousand placeholders, blow past max_allowed_packet, and take the leaderboard
+		// down completely.
+		$where_values = array_merge( $where_values, $opt_out_values );
 
 		if ( ! empty( $scope_ids ) ) {
 			$placeholders = implode( ',', array_fill( 0, count( $scope_ids ), '%d' ) );
@@ -312,34 +345,62 @@ final class LeaderboardEngine {
 			// Selecting the 500-odd candidate rows from the indexed totals table
 			// first, then joining names onto that handful, keeps the range scan on
 			// idx_type_total (point_type, total) and the LIMIT where it belongs.
-			// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			$query = "
-				SELECT t.user_id,
-				       t.total_points,
-				       u.display_name
-				  FROM (
-				        SELECT user_id, total AS total_points
-				          FROM {$wpdb->prefix}wb_gam_user_totals
-				         WHERE point_type = %s
-				           AND total > 0
-				          " . str_replace( 'p.user_id', 'user_id', $opt_out_clause ) . '
-				          ' . str_replace( 'p.user_id', 'user_id', $scope_clause ) . "
-				      ORDER BY total DESC
-				         LIMIT %d
-				       ) t
-				  JOIN {$wpdb->users} u ON u.ID = t.user_id
-				 ORDER BY t.total_points DESC
-			";
-			// phpcs:enable
+			// The clauses are BUILT for this table's alias. They are never string-rewritten.
+			//
+			// They used to be: the ledger's clauses were composed for alias `p`, and this branch
+			// ran str_replace( 'p.user_id', 'user_id', ... ) over them because the totals table was
+			// not aliased. That worked only while the fragment was a plain NOT IN(). The moment it
+			// became an anti-join it contained `mp.user_id = p.user_id` -- and `p.user_id` matches
+			// INSIDE `mp.user_id`, rewriting it to `muser_id`. MySQL: Unknown column 'muser_id'.
+			// The query returned nothing, so every scoped leaderboard was blank on every site, and
+			// the all-time board went blank whenever the snapshot was missing (a fresh install, and
+			// permanently on a host with WP-Cron disabled).
+			//
+			// A fragment that carries an alias must be given the alias it is composing against.
+			// Rewriting SQL with string search-and-replace is not a way to change an alias.
+			// true = existence is checked in PHP by totals_board(); an EXISTS here wrecks the plan.
+			[ $totals_excl_clause, $totals_excl_values ] = self::exclusion_sql( 'ut', true );
 
-			// Rebuild the value list: the totals path has no created_at bind.
-			$where_values = array( $resolved_type );
-			if ( ! empty( $opt_out_ids ) ) {
-				$where_values = array_merge( $where_values, $opt_out_ids );
-			}
-			if ( ! empty( $scope_ids ) ) {
-				$where_values = array_merge( $where_values, $scope_ids );
-			}
+			$totals_scope_clause = empty( $scope_ids )
+				? ''
+				: 'AND ut.user_id IN (' . implode( ',', array_fill( 0, count( $scope_ids ), '%d' ) ) . ')';
+
+			// Orphaned totals rows -- a member deleted, their totals row left behind -- rank like
+			// anybody else, so they win slots in the top-N and then vanish when the users JOIN drops
+			// them. A board asked for 10 rendered 8.
+			//
+			// The first fix was a fixed over-fetch: take limit + 25 candidates and trim after the join.
+			// QA was right to fail it. A constant cushion cannot survive a variable it does not know:
+			// this database carries 174 orphans, so the cushion was exceeded at every size that mattered
+			// (limit=25 -> 17 rows, limit=50 -> 20, limit=100 -> 50), and the original repro only passed
+			// by luck of where the orphans happened to rank. `limit` is a public REST parameter. A fix
+			// that holds at one value of it and not the next is not a fix.
+			//
+			// So: no cushion, no guess. Take a slice of candidates from the indexed totals table, ask
+			// the users table which of them still exist, and if that leaves the board short, take the
+			// next slice. It terminates when the board is full or the totals table runs out, and it is
+			// correct for ANY number of orphans -- including a number nobody has measured yet.
+			//
+			// Why not EXISTS against wp_users inside the derived table, which would need no loop at all:
+			// EXPLAIN says it hands the optimiser the wp_users-driven plan this derived table exists to
+			// avoid (type=index on wp_users, Using temporary, Using filesort). Correct board, O(members)
+			// plan. Tried it first; reverted it.
+			//
+			// Cost in the normal case is one extra primary-key lookup: deleted_user purges a member's
+			// rows now (MemberData::on_user_deleted), so on a site with no orphan backlog the first
+			// slice fills the board and the loop runs exactly once.
+			$result = self::totals_board(
+				$wpdb->prefix . 'wb_gam_user_totals',
+				$resolved_type,
+				$totals_excl_clause,
+				$totals_excl_values,
+				$totals_scope_clause,
+				$scope_ids,
+				$limit
+			);
+
+			wp_cache_set( $cache_key, $result, 'wb_gamification', 120 );
+			return $result;
 		} else {
 			// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 			$query = "
@@ -352,7 +413,8 @@ final class LeaderboardEngine {
 				  {$opt_out_clause}
 				  {$scope_clause}
 				 GROUP BY p.user_id
-				 ORDER BY total_points DESC
+				HAVING {$balance_sum}
+				 ORDER BY total_points DESC, p.user_id DESC
 				 LIMIT %d
 			";
 			// phpcs:enable
@@ -426,10 +488,25 @@ final class LeaderboardEngine {
 		}
 
 		$period_start = self::get_period_start( $period );
-		$opt_out_ids  = self::get_opted_out_ids();
-		// Remove the current user from opt-outs so we can count them too.
-		$opt_out_ids = array_filter( $opt_out_ids, fn( $id ) => $id !== $user_id );
-		$scope_ids   = self::resolve_scope( $scope_type, $scope_id );
+		// Both consumers below count members STRICTLY above this member's total (HAVING total >
+		// %d), and nobody's total exceeds itself -- so the old "remove the current user from the
+		// opt-out list so we can count them too" filter could never change an answer. Dropped
+		// rather than ported.
+		[ $excl_sql, $excl_values ] = self::exclusion_sql( 'p' );
+		$scope_ids                  = self::resolve_scope( $scope_type, $scope_id );
+
+		// Same conflation as the board above, and the same answer. A rank WITHIN a scope that has no
+		// members is not "1st on the whole site" -- it is no rank at all. Falling through here would
+		// tell a member they are 4th in a group they are not ranked in.
+		if ( '' !== $scope_type && $scope_id > 0 && empty( $scope_ids ) ) {
+			$result = array(
+				'rank'           => 0,
+				'points'         => 0,
+				'points_to_next' => null,
+			);
+			wp_cache_set( $cache_key, $result, 'wb_gamification', 120 );
+			return $result;
+		}
 
 		// Get user's own total for the period — scoped by currency so the
 		// rank computation matches what the public leaderboard sees.
@@ -451,11 +528,31 @@ final class LeaderboardEngine {
 		}
 		$user_total = (int) $wpdb->get_var( $user_total_sql ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 
+		// THE PAGE MUST NOT SHOW TWO NUMBERS FOR ONE METRIC.
+		//
+		// The board rows come from the snapshot. This strip summed the LEDGER. Between rebuilds the two
+		// disagree, so the same block showed a member their row saying 660 and, directly underneath,
+		// "your points: 1160". Same member, same period, same page. QA found it; it is indefensible.
+		//
+		// When the board is serving the snapshot AND the member is in it, this reads THAT ROW -- rank
+		// and points together, from one place. A leaderboard is eventually consistent by design; that
+		// is the deal a snapshot buys. But it has to be consistently stale, not stale in one corner of
+		// the block and live in the other.
+		//
+		// A member outside the snapshot (it holds the top 500) is not on the board at all, so there is
+		// nothing to contradict: they fall through to the live figures below.
+		$from_snapshot = self::snapshot_standing( $user_id, $period, $resolved_type, $scope_type, $scope_id );
+
+		if ( null !== $from_snapshot ) {
+			wp_cache_set( $cache_key, $from_snapshot, 'wb_gamification', 120 );
+			return $from_snapshot;
+		}
+
 		// Count users with strictly more points (their count + 1 = our rank).
-		$above_rank = self::count_users_above( $user_total, $period_start, $opt_out_ids, $scope_ids, $resolved_type );
+		$above_rank = self::count_users_above( $user_total, $period_start, $excl_sql, $excl_values, $scope_ids, $resolved_type );
 
 		// Find the lowest total above ours to calculate gap.
-		$next_total = self::get_next_threshold( $user_total, $period_start, $opt_out_ids, $scope_ids, $resolved_type );
+		$next_total = self::get_next_threshold( $user_total, $period_start, $excl_sql, $excl_values, $scope_ids, $resolved_type );
 
 		$result = array(
 			'rank'           => $above_rank + 1,
@@ -509,6 +606,10 @@ final class LeaderboardEngine {
 		// where the two clocks happen to agree. Taking both stamps from the DB
 		// removes the class of bug, not just this instance.
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		// @clock-ok: both sides are the DATABASE clock. The snapshot rows are stamped NOW() (see
+		// the INSERT below) and the straggler DELETE prunes against this same value, so the two
+		// never disagree. Stamping with current_time() and pruning with NOW() is exactly what made
+		// the rebuild delete the rows it had just written on every site ahead of UTC.
 		$started = (string) $wpdb->get_var( 'SELECT NOW()' );
 
 		$periods = array(
@@ -529,26 +630,76 @@ final class LeaderboardEngine {
 
 		foreach ( $currencies as $slug ) {
 			foreach ( $periods as $period_key => $period_start ) {
-				$where = $wpdb->prepare( 'WHERE point_type = %s', $slug );
+				// The table is aliased `p` so it can take the SAME eligibility fragment every other
+				// path takes. It could not before, which is how it ended up with the existence half and
+				// not the exclusion half: a member who had opted out was still written into the
+				// snapshot, and RANK() still counted them, so snapshot_standing() served a rank the
+				// fallback disagreed with. One opt-out was enough to make the two paths differ for 153
+				// of 154 members.
+				$where = $wpdb->prepare( 'WHERE p.point_type = %s', $slug );
 				if ( null !== $period_start ) {
-					$where .= $wpdb->prepare( ' AND created_at >= %s', $period_start );
+					$where .= $wpdb->prepare( ' AND p.created_at >= %s', $period_start );
 				}
+
+				// Existence + opt-out + owner-excluded users/roles, in one fragment, from the one place
+				// that knows what "eligible" means. No second argument: this query has no JOIN to
+				// wp_users, so it wants the existence check too.
+				[ $snap_excl_sql, $snap_excl_values ] = self::exclusion_sql( 'p' );
+
+				// The FOURTH predicate -- the one the last fix left behind. Without it the writer stored
+				// zero-balance members (rank 155, 0 points) that totals_board drops, so a member who spent
+				// their points in the rewards store was ON the warm board and OFF the stale one.
+				$balance_sum = self::positive_balance_sql( 'SUM(p.points)' );
+				$where      .= $snap_excl_values
+					? $wpdb->prepare( $snap_excl_sql, $snap_excl_values ) // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+					: $snap_excl_sql;
 
 				// UPSERT — insert new rows, update existing rows in place.
 				// The UNIQUE KEY (user_id, period, point_type) on the cache
 				// table is what makes ON DUPLICATE KEY UPDATE work; it was
 				// added by DbUpgrader::ensure_leaderboard_cache_unique_key.
+				//
+				// @clock-ok: updated_at is stamped NOW() (the DATABASE clock) and the straggler
+				// DELETE below prunes against $started, which came from the same SELECT NOW(). Both
+				// sides of that comparison are the database's clock, so they cannot disagree.
+				// Stamping with current_time() and pruning with NOW() is precisely what made the
+				// rebuild delete the rows it had just written on every site ahead of UTC.
 				// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				// The existence check belongs HERE, in the WRITER -- and this is the default path.
+				//
+				// The last fix put it in the fallback and never followed it up one layer. This query has
+				// the identical bug: the top 500 is chosen from the ledger with no idea whether those
+				// members still exist, and read_from_snapshot() joins wp_users and drops the orphans
+				// afterwards -- so a board asked for 25 rendered 15. It is hidden on this site only
+				// because the snapshot holds fewer rows than the 500 cap; any site with more than 500
+				// point-earning members sits on that cap by definition.
+				//
+				// RANK() counted the ghosts too, so snapshot_standing() served a rank with more people in
+				// front of it than the community has -- the exact sentence from the last commit, still
+				// true on the path members actually hit. And because the fallback had stopped counting
+				// them, a member's rank FLIPPED every time the cron rebuilt. Two paths wrong-but-consistent
+				// was less harmful than one path right; now both are right.
+				//
+				// The eligibility fragment is in $where (see above) and carries all three predicates. It
+				// is safe in this query -- unlike inside the totals derived table, where an EXISTS wrecks
+				// the plan -- because this one already aggregates the whole ledger and the checks are
+				// eq_ref on primary keys.
+				//
+				// @clock-ok: updated_at is stamped NOW() (the DATABASE clock) and the staleness check
+				// that reads it compares against the database clock too -- see the note above the $where.
+				// (Restating it here rather than relying on the one 30 lines up: an annotation that has
+				// drifted out of the checker's lookback window is an annotation that does not exist.)
 				$wpdb->query(
 					$wpdb->prepare(
 						"INSERT INTO {$cache_table} (user_id, period, point_type, total_points, `rank`, updated_at)
-					 SELECT user_id, %s AS period, %s AS point_type, SUM(points) AS total_points,
-					        RANK() OVER (ORDER BY SUM(points) DESC) AS `rank`,
+					 SELECT p.user_id, %s AS period, %s AS point_type, SUM(p.points) AS total_points,
+					        RANK() OVER (ORDER BY SUM(p.points) DESC) AS `rank`,
 					        NOW() AS updated_at
-					   FROM {$points_table}
+					   FROM {$points_table} p
 					   {$where}
-					  GROUP BY user_id
-					  ORDER BY total_points DESC
+					  GROUP BY p.user_id
+					 HAVING {$balance_sum}
+					  ORDER BY total_points DESC, p.user_id DESC
 					  LIMIT 500
 					ON DUPLICATE KEY UPDATE
 					   prev_rank    = `rank`,
@@ -593,7 +744,8 @@ final class LeaderboardEngine {
 		global $wpdb;
 
 		$cache_table = $wpdb->prefix . 'wb_gam_leaderboard_cache';
-		$opt_out_ids = self::get_opted_out_ids();
+		// true = existence is enforced by this query's own JOIN to wp_users.
+		[ $excl_sql, $excl_values ] = self::exclusion_sql( 'c', true );
 
 		// Check snapshot freshness — must be less than 10 minutes old AND
 		// not older than the most recent cache invalidation. The latter
@@ -640,10 +792,9 @@ final class LeaderboardEngine {
 		$opt_out_clause = '';
 		$query_values   = array( $period_key, $point_type );
 
-		if ( ! empty( $opt_out_ids ) ) {
-			$placeholders   = implode( ',', array_fill( 0, count( $opt_out_ids ), '%d' ) );
-			$opt_out_clause = "AND c.user_id NOT IN ($placeholders)";
-			$query_values   = array_merge( $query_values, $opt_out_ids );
+		if ( '' !== $excl_sql ) {
+			$opt_out_clause = $excl_sql;
+			$query_values   = array_merge( $query_values, $excl_values );
 		}
 
 		$query_values[] = $limit;
@@ -655,7 +806,20 @@ final class LeaderboardEngine {
 				   FROM {$cache_table} c
 				   JOIN {$wpdb->users} u ON u.ID = c.user_id
 				  WHERE c.period = %s AND c.point_type = %s {$opt_out_clause}
-				  ORDER BY c.`rank` ASC
+				  -- Deterministic, and that costs a filesort. Measured: ORDER BY `rank` alone is
+				  -- index-ordered (idx_type_period_rank, no filesort), and ANY tiebreaker introduces one,
+				  -- because user_id is not in that index. But RANK() gives tied members the SAME rank, so
+				  -- ordering by rank alone leaves LIMIT n to pick arbitrarily among the eleven members who
+				  -- all hold 91 points -- while the fallback breaks the tie deterministically. That is the
+				  -- membership flip this card is about, and no plan is worth reintroducing it.
+				  --
+				  -- The sort is over the snapshot, which the writer caps at 500 rows (295 here). A filesort
+				  -- over a few hundred cached rows is not a scale hazard; a board whose membership changes
+				  -- when the cron runs is.
+				  --
+				  -- `rank` ASC is the same ordering as total_points DESC (RANK() is derived from it), so
+				  -- this matches the fallback exactly while keeping the index leading.
+				  ORDER BY c.`rank` ASC, c.user_id DESC
 				  LIMIT %d",
 				$query_values
 			),
@@ -676,7 +840,11 @@ final class LeaderboardEngine {
 	 * Adds rank, avatar_url, and properly types all fields. Uses cache_users()
 	 * to eliminate N+1 avatar/user-meta queries.
 	 *
-	 * @param array<int, array{user_id: string, total_points: string, display_name: string}> $rows Raw DB rows.
+	 * @param array<int, array{user_id: int|string, total_points: int|string|float, display_name: string}> $rows
+	 *                    Rows to hydrate. The ledger path hands over raw DB rows (everything a string);
+	 *                    totals_board() builds them itself and its ids are already int. Both are fine --
+	 *                    this method casts what it needs -- but the docblock claimed only the first shape,
+	 *                    which is how it described one caller instead of the contract.
 	 * @return array<int, array{rank: int, user_id: int, display_name: string, avatar_url: string, points: int}>
 	 */
 	private static function hydrate_rows( array $rows ): array {
@@ -687,6 +855,21 @@ final class LeaderboardEngine {
 		}
 
 		$result = array();
+		// COMPETITION rank, not the array offset.
+		//
+		// The board printed $rank_zero + 1 -- a position in a list -- while get_user_rank() returns
+		// count-of-members-above + 1, which is a competition rank: tied members SHARE it. Eleven members
+		// hold 91 points on this database, so the board numbered them 11, 12, 13 ... and the member's
+		// own rank strip said #8 for every one of them. On the top-100 board, 79 of 100 rows showed a
+		// different number in the two places.
+		//
+		// The comment on get_user_rank() says the page must not show two numbers for one metric. This is
+		// that, for rank: the two surfaces have to compute it the same way, so the board computes it the
+		// same way -- ties share a rank, and the next distinct score skips.
+		$rank        = 0;
+		$seen        = 0;
+		$prev_points = null;
+
 		foreach ( $rows as $rank_zero => $row ) {
 			$user_id = (int) $row['user_id'];
 
@@ -697,8 +880,15 @@ final class LeaderboardEngine {
 			$prev_rank     = isset( $row['prev_rank'] ) ? (int) $row['prev_rank'] : 0;
 			$rank_change   = ( $snapshot_rank > 0 && $prev_rank > 0 ) ? ( $prev_rank - $snapshot_rank ) : 0;
 
+			++$seen;
+			$points_now = (int) $row['total_points'];
+			if ( null === $prev_points || $points_now !== $prev_points ) {
+				$rank        = $seen;
+				$prev_points = $points_now;
+			}
+
 			$result[] = array(
-				'rank'         => $rank_zero + 1,
+				'rank'         => $rank,
 				'user_id'      => $user_id,
 				'display_name' => $row['display_name'],
 				'avatar_url'   => get_avatar_url( $user_id, array( 'size' => 48 ) ),
@@ -728,14 +918,22 @@ final class LeaderboardEngine {
 	 * @return string|null MySQL datetime string, or null for 'all'.
 	 */
 	private static function get_period_start( string $period ): ?string {
+		// The SITE's day, week and month -- not UTC's.
+		//
+		// These bound wb_gam_points.created_at, which is written with current_time( 'mysql' ), and all
+		// three were built with gmdate(). So the daily board did not start at the site's midnight, it
+		// started at UTC's: in Los Angeles "today" began at 5pm yesterday, and points a member earned
+		// in the evening landed on the wrong day's board. The weekly board had it worse -- strtotime(
+		// 'monday this week' ) resolves the WEEKDAY against UTC too, so near a Monday boundary it
+		// picked the previous Monday and the board was a week out.
 		switch ( $period ) {
 			case 'day':
-				return gmdate( 'Y-m-d' ) . ' 00:00:00';
+				return Clock::site_day_start( 'today' );
 			case 'week':
-				// Monday of the current ISO week.
-				return gmdate( 'Y-m-d', strtotime( 'monday this week' ) ) . ' 00:00:00';
+				// Monday of the current ISO week, in the site's timezone.
+				return Clock::site_cutoff( 'monday this week' );
 			case 'month':
-				return gmdate( 'Y-m-01' ) . ' 00:00:00';
+				return Clock::site_day_start( 'first day of this month' );
 			default:
 				return null; // 'all'
 		}
@@ -772,24 +970,351 @@ final class LeaderboardEngine {
 	}
 
 	/**
-	 * Return all user IDs hidden from the public leaderboard: members who opted
-	 * out via their preferences PLUS accounts the site owner excluded from
-	 * gamification (Settings > Access). Excluded users can't earn, so they must
-	 * not appear in any ranking either.
+	 * The member's standing AS THE BOARD SEES IT — or null if the board is not serving the snapshot.
 	 *
-	 * @return int[]
+	 * This is what keeps the two halves of the leaderboard block telling the same story. It answers
+	 * from the SAME snapshot row the board renders, so the "your standing" strip cannot contradict the
+	 * member's own row three lines above it.
+	 *
+	 * Returns null -- and the caller falls through to the live ledger -- in the two cases where there
+	 * is nothing to contradict:
+	 *
+	 *   - the snapshot is too stale for the board to serve it, so the board is live too;
+	 *   - the member is not IN the snapshot (it holds the top 500), so they are not on the board.
+	 *
+	 * Scoped boards bypass the snapshot entirely, so they are excluded here for the same reason.
+	 *
+	 * @param int    $user_id    Member.
+	 * @param string $period     all|day|week|month.
+	 * @param string $point_type Resolved currency.
+	 * @param string $scope_type Scope type ('' = site-wide).
+	 * @param int    $scope_id   Scope id.
+	 * @return array{rank:int,points:int,points_to_next:int|null}|null
 	 */
-	private static function get_opted_out_ids(): array {
+	private static function snapshot_standing(
+		int $user_id,
+		string $period,
+		string $point_type,
+		string $scope_type = '',
+		int $scope_id = 0
+	): ?array {
 		global $wpdb;
-		$ids = $wpdb->get_col(
-			"SELECT user_id FROM {$wpdb->prefix}wb_gam_member_prefs WHERE leaderboard_opt_out = 1"
+
+		// A scoped board never reads the snapshot, so its strip must not either.
+		if ( '' !== $scope_type || $scope_id > 0 ) {
+			return null;
+		}
+
+		$cache_table = $wpdb->prefix . 'wb_gam_leaderboard_cache';
+
+		// The same freshness gate the board uses. If the board would not serve the snapshot, neither
+		// does this — otherwise we would have swapped one disagreement for another.
+		$built_at = (int) $wpdb->get_var( "SELECT UNIX_TIMESTAMP(MAX(updated_at)) FROM {$cache_table}" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- @clock-ok: MAX(updated_at) is compared with time() only through the same $max_age window the board applies; both sides are epoch seconds.
+
+		if ( $built_at <= 0 ) {
+			return null;
+		}
+
+		/** This filter is documented in src/Engine/LeaderboardEngine.php — see read_from_snapshot(). */
+		$max_age = (int) apply_filters( 'wb_gam_leaderboard_max_snapshot_age', 600 );
+
+		if ( ( time() - $built_at ) >= max( 60, $max_age ) ) {
+			return null;
+		}
+
+		$period_key = in_array( $period, array( 'all', 'month', 'week', 'day' ), true ) ? $period : 'all';
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$row = $wpdb->get_row(
+			$wpdb->prepare(
+				"SELECT total_points, `rank` FROM {$cache_table}
+				  WHERE user_id = %d AND period = %s AND point_type = %s",
+				$user_id,
+				$period_key,
+				$point_type
+			),
+			ARRAY_A
 		);
-		$ids = array_map( 'intval', $ids ?: array() );
 
-		// Owner-excluded accounts (roles / users / sandboxed) never rank.
-		$ids = array_merge( $ids, PointsEngine::excluded_user_ids() );
+		if ( ! $row ) {
+			return null;
+		}
 
-		return array_values( array_unique( $ids ) );
+		$points = (int) $row['total_points'];
+
+		// The gap to the next member up, read from the same snapshot — so "points to next" cannot
+		// disagree with the board either.
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$next = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT MIN(total_points) FROM {$cache_table}
+				  WHERE period = %s AND point_type = %s AND total_points > %d",
+				$period_key,
+				$point_type,
+				$points
+			)
+		);
+
+		return array(
+			'rank'           => (int) $row['rank'],
+			'points'         => $points,
+			'points_to_next' => null !== $next ? ( (int) $next - $points ) : null,
+		);
+	}
+
+	/**
+	 * Compose the all-time (materialised totals) query.
+	 *
+	 * Split out and PURE so the composed SQL can be asserted without a database. That is the whole
+	 * reason it exists: the exclusion fragment was tested in isolation -- its placeholder count was
+	 * checked, and it passed -- while the query it was composed INTO was never looked at. So a
+	 * str_replace that mangled `mp.user_id` into `muser_id` shipped behind a green test suite, and
+	 * every scoped leaderboard on every site returned nothing.
+	 *
+	 * A fragment is not the query. Test the thing you actually run.
+	 *
+	 * @internal Public only so the test can compose it without a database.
+	 *
+	 * @param string $totals_table  Fully-qualified `wb_gam_user_totals` table name.
+	 * @param string $excl_clause   Exclusion fragment, built for the `ut` alias.
+	 * @param string $scope_clause  Scope fragment, built for the `ut` alias.
+	 * @return string The SQL, with %s / %d placeholders for prepare().
+	 */
+	public static function build_totals_query(
+		string $totals_table,
+		string $excl_clause,
+		string $scope_clause
+	): string {
+		$balance = self::positive_balance_sql( 'ut.total' );
+
+		// The candidates, and ONLY the candidates: the top rows of the indexed totals table, with no
+		// users join at all.
+		//
+		// Keeping wp_users out is the whole optimisation. Join it up front and the optimiser drives
+		// from wp_users (eq_ref into totals), scanning every member and forcing a temporary + filesort,
+		// because ORDER BY total can no longer use idx_type_total. EXPLAIN confirms it: `u: type=index
+		// ... Using temporary; Using filesort`. Correct board, O(members) plan.
+		//
+		// It used to select the top-N in a derived table and JOIN wp_users around it, with the LIMIT
+		// inside. That put the LIMIT before anything had checked those members still exist, so an
+		// orphaned totals row (member deleted, totals row left behind) won a slot in the N and the JOIN
+		// then dropped it -- a board asked for 10 rendered 8. Over-fetching a fixed cushion of extra
+		// candidates only moved the cliff: with 174 orphans on the database, limit=100 still returned
+		// 50 rows.
+		//
+		// Now the caller (totals_board) takes a slice of these candidates, asks wp_users which ones
+		// still exist, and takes another slice if the board came up short. The existence check is a
+		// primary-key lookup on a handful of ids, so it cannot drag the plan onto wp_users, and the
+		// board is right for any number of orphans rather than for fewer than some constant.
+		//
+		// The user_id tiebreaker is what makes OFFSET paging safe: without it, two members on equal
+		// totals have no defined order between one slice and the next, so a member can be served twice
+		// or skipped entirely. It is DESC, matching total, on purpose -- the primary key is
+		// (user_id, point_type), so user_id rides along inside idx_type_total and a same-direction sort
+		// is a backward index scan. Mixing directions (total DESC, user_id ASC) costs a filesort over
+		// the whole index instead: EXPLAIN goes from `Backward index scan; Using index` to
+		// `Using filesort`, which at 100k members is the very plan this query is shaped to avoid.
+		return "
+			SELECT ut.user_id, ut.total AS total_points
+			  FROM {$totals_table} ut
+			 WHERE ut.point_type = %s
+			   AND {$balance}
+			  {$excl_clause}
+			  {$scope_clause}
+		  ORDER BY ut.total DESC, ut.user_id DESC
+			 LIMIT %d OFFSET %d
+		";
+	}
+
+	/**
+	 * The all-time board: candidates from the totals table, topped up until it is full.
+	 *
+	 * Loops only when orphaned totals rows ate slots. With no orphan backlog -- the normal state, since
+	 * deleted_user purges a member's rows -- the first slice fills the board and this runs once.
+	 *
+	 * @param string            $totals_table Fully-qualified totals table.
+	 * @param string            $point_type   Resolved currency slug.
+	 * @param string            $excl_clause  Exclusion fragment, built for the `ut` alias.
+	 * @param array<int, mixed> $excl_values  Binds for the exclusion fragment.
+	 * @param string            $scope_clause Scope fragment, built for the `ut` alias.
+	 * @param array<int, int>   $scope_ids    Binds for the scope fragment.
+	 * @param int               $limit        Rows the caller asked for.
+	 * @return array<int, array<string, mixed>> Hydrated board rows.
+	 */
+	private static function totals_board(
+		string $totals_table,
+		string $point_type,
+		string $excl_clause,
+		array $excl_values,
+		string $scope_clause,
+		array $scope_ids,
+		int $limit
+	): array {
+		global $wpdb;
+
+		$sql = self::build_totals_query( $totals_table, $excl_clause, $scope_clause );
+
+		// Slice a little wider than the board so the common case (a few orphans, or none) is satisfied
+		// in one pass. This is a round-trip optimisation, NOT a correctness assumption -- unlike the
+		// cushion it replaces, being wrong about it costs a second query, not a short board.
+		//
+		// And the slice GROWS. The first version walked a fixed slice up to 20 times, which put the
+		// ceiling at (limit + 25) * 20 -- a function of $limit, so the SMALLEST boards failed first, and
+		// they failed by going BLANK rather than short: with 700 orphans ranked above everyone, a board
+		// of 5 examined 600 candidates, found nothing real, and rendered nothing at all. I had written
+		// that the loop was "correct for ANY number of orphans"; it was correct for fewer than a number
+		// I had not computed. Doubling makes the reach exponential rather than linear, so a bounded
+		// number of round trips clears any orphan count the table can actually hold, and the loop exits
+		// when the TABLE is exhausted rather than when a counter I picked runs out.
+		$slice     = $limit + self::ORPHAN_OVERFETCH;
+		$offset    = 0;
+		$survivors = array();
+		$found     = 0;
+
+		// A hard stop so a pathological table cannot spin. It exists to bound the QUERY COUNT, not to
+		// bound how far we are willing to look: with the slice doubling each pass, 24 round trips reach
+		// past any totals table MySQL will hold, so this can only be hit by a bug, never by data.
+		$max_slices = 24;
+
+		for ( $i = 0; $i < $max_slices && $found < $limit; $i++ ) {
+			$binds = array_merge( array( $point_type ), $excl_values, $scope_ids, array( $slice, $offset ) );
+
+			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+			$candidates = $wpdb->get_results( $wpdb->prepare( $sql, $binds ), ARRAY_A );
+			if ( ! $candidates ) {
+				break;
+			}
+
+			$ids = array_map( 'intval', wp_list_pluck( $candidates, 'user_id' ) );
+
+			// Which of them still exist? A primary-key IN() over at most $slice ids -- eq_ref, no scan.
+			$placeholders = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
+			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$real = $wpdb->get_results(
+				$wpdb->prepare(
+					"SELECT ID, display_name FROM {$wpdb->users} WHERE ID IN ({$placeholders})", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+					$ids
+				),
+				ARRAY_A
+			);
+
+			$names = array();
+			foreach ( (array) $real as $u ) {
+				$names[ (int) $u['ID'] ] = (string) $u['display_name'];
+			}
+
+			// Rebuild in the candidates' order -- the totals table decided the ranking, not wp_users.
+			foreach ( $candidates as $c ) {
+				$uid = (int) $c['user_id'];
+				if ( ! isset( $names[ $uid ] ) ) {
+					continue; // Orphan: a totals row whose member is gone.
+				}
+				$survivors[] = array(
+					'user_id'      => $uid,
+					'total_points' => $c['total_points'],
+					'display_name' => $names[ $uid ],
+				);
+				++$found;
+				if ( $found >= $limit ) {
+					break;
+				}
+			}
+
+			// The totals table is exhausted; there is no next slice to take.
+			if ( count( $candidates ) < $slice ) {
+				break;
+			}
+
+			// Walk on, and reach further each time. A board whose top rows are all orphans is exactly
+			// the case a fixed stride cannot escape.
+			$offset += $slice;
+			$slice   = min( $slice * 2, 5000 );
+		}
+
+		return $survivors ? self::hydrate_rows( $survivors ) : array();
+	}
+
+	/**
+	 * The FOURTH eligibility predicate: a member needs a positive balance to be on a board.
+	 *
+	 * Three predicates were unified into exclusion_sql() -- exists, not opted out, not owner-excluded --
+	 * and this one was left behind, answered differently by every path that asked:
+	 *
+	 *   totals_board          AND ut.total > 0
+	 *   ledger board          (nothing)
+	 *   write_snapshot()      (nothing)
+	 *   the doctor's oracle   HAVING SUM(p.points) > 0
+	 *
+	 * So a member who spends their points to zero in the rewards store -- an ordinary, supported thing
+	 * to do -- was ON the warm board (the snapshot writer had no filter, so it stored them at 0 points)
+	 * and OFF the stale one (totals_board drops them). Membership flipped on the cron tick, which is the
+	 * bug this card was filed for, arriving through the one predicate the last fix did not unify. It
+	 * also turned the doctor RED on a healthy site, because the oracle asked the question two of the
+	 * three read paths were not asking.
+	 *
+	 * The answer is yes, a board is for people who have points: zero-balance members are not ranked.
+	 * What matters far more than which answer is that there is only ONE, and it lives here.
+	 *
+	 * It cannot go in exclusion_sql() because it is an AGGREGATE, and each path aggregates differently
+	 * (a materialised column, or a SUM). So this returns the comparison for whatever expression the
+	 * caller aggregates with, and every caller uses it.
+	 *
+	 * @param string $expr The path's balance expression, e.g. `ut.total` or `SUM(p.points)`.
+	 * @return string SQL fragment, e.g. `ut.total > 0`.
+	 */
+	private static function positive_balance_sql( string $expr ): string {
+		return $expr . ' > 0';
+	}
+
+	private static function exclusion_sql( string $alias, bool $existence_enforced_elsewhere = false ): array {
+		global $wpdb;
+
+		$with_existence = ! $existence_enforced_elsewhere;
+
+		// WHO IS ELIGIBLE FOR A BOARD is one question, and it now has one answer.
+		//
+		// It used to have three, handed out separately: a member must EXIST, must not have OPTED OUT,
+		// and must not be an owner-EXCLUDED user or role. Every path that serves a board or a rank
+		// needs all three -- and each path collected them from a different place, so each path was free
+		// to have two of the three.
+		//
+		// That is the entire reason this bug has been fixed five times. Every round I added the
+		// predicate the last bounce named to the path the last bounce named, and the next round found
+		// the next path missing the next predicate. Most recently write_snapshot() got the existence
+		// check and never got the exclusion check -- so its RANK() column was computed over members the
+		// rest of the system excludes, snapshot_standing() served that rank verbatim, and one member
+		// opting out made the warm and stale paths disagree for 153 of 154 members.
+		//
+		// A caller can no longer take one and forget the other, because there is only one to take.
+		//
+		// It is safe BY DEFAULT: say nothing and you get all three. $existence_enforced_elsewhere is an
+		// opt-OUT, and a caller may only set it when its own query already guarantees the member exists:
+		//
+		// The ledger board and read_from_snapshot both JOIN wp_users, which enforces it. totals_board()
+		// checks it in PHP, because an EXISTS inside that derived table hands the optimiser a
+		// wp_users-driven filesort and destroys the plan the derived table exists to create
+		// (EXPLAIN-verified, twice).
+		//
+		// Anything else -- including any path written next year -- gets the existence check whether its
+		// author thought about it or not. That is the property that matters: the default is correct, and
+		// being wrong requires an explicit argument.
+		$sql    = '';
+		$values = array();
+
+		if ( $with_existence ) {
+			$sql .= ' AND EXISTS ( SELECT 1 FROM ' . $wpdb->users . ' wu WHERE wu.ID = ' . $alias . '.user_id )';
+		}
+
+		// Members who opted out. An anti-join, not a list: whether there are five opt-outs or
+		// fifty thousand, this fragment is the same length.
+		$sql .= ' AND NOT EXISTS ( SELECT 1 FROM ' . $wpdb->prefix . 'wb_gam_member_prefs mp'
+			. ' WHERE mp.user_id = ' . $alias . '.user_id AND mp.leaderboard_opt_out = 1 )';
+
+		// Owner-excluded accounts (Settings > Access): explicit ids stay a short IN(), and
+		// excluded ROLES become a predicate rather than an expanded id list.
+		[ $owner_sql, $owner_values ] = PointsEngine::exclusion_sql( $alias );
+
+		return array( $sql . $owner_sql, array_merge( $values, $owner_values ) );
 	}
 
 	/**
@@ -797,14 +1322,16 @@ final class LeaderboardEngine {
 	 *
 	 * @param int         $threshold    Points total to compare against.
 	 * @param string|null $period_start MySQL datetime for period start, or null for all-time.
-	 * @param int[]       $opt_out_ids  User IDs excluded from the leaderboard.
+	 * @param string      $excl_sql     Exclusion SQL fragment (bounded placeholders).
+	 * @param array       $excl_values  Values bound by that fragment, in order.
 	 * @param int[]       $scope_ids    User IDs to restrict to (empty = all users).
 	 * @return int Number of users ranked above the threshold.
 	 */
 	private static function count_users_above(
 		int $threshold,
 		?string $period_start,
-		array $opt_out_ids,
+		string $excl_sql,
+		array $excl_values,
 		array $scope_ids,
 		string $point_type = 'points'
 	): int {
@@ -819,11 +1346,9 @@ final class LeaderboardEngine {
 			$where   .= ' AND p.created_at >= %s';
 			$values[] = $period_start;
 		}
-		if ( ! empty( $opt_out_ids ) ) {
-			$ph = implode( ',', array_fill( 0, count( $opt_out_ids ), '%d' ) );
-			// phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
-			$where .= " AND p.user_id NOT IN ($ph)";
-			$values = array_merge( $values, $opt_out_ids );
+		if ( '' !== $excl_sql ) {
+			$where .= $excl_sql;
+			$values = array_merge( $values, $excl_values );
 		}
 		if ( ! empty( $scope_ids ) ) {
 			$ph = implode( ',', array_fill( 0, count( $scope_ids ), '%d' ) );
@@ -833,6 +1358,17 @@ final class LeaderboardEngine {
 		}
 		$values[] = $threshold;
 
+		// Count only members who still EXIST. Without this, every member the site ever deleted still
+		// stands ahead of you: the ledger keeps their rows, they group like anyone else, and they are
+		// counted. On this database that meant a member was told "Your rank #215" on a board with 161
+		// ranked members -- a rank with more people in front of it than the community has.
+		//
+		// Unlike the top-N board, an EXISTS here costs nothing to fear: that query is a LIMITed range
+		// scan whose plan an EXISTS would wreck, but this one already aggregates the whole ledger, and
+		// the check is eq_ref against the users primary key on each grouped row.
+		//
+		// (deleted_user purges a member's rows now, so no NEW ghosts appear -- but every site that
+		// deleted a member before 1.6.4 is still carrying them, and their ranks are still wrong.)
 		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$sql = "SELECT COUNT(*) FROM (
 			SELECT user_id, SUM(points) AS total
@@ -852,14 +1388,16 @@ final class LeaderboardEngine {
 	 *
 	 * @param int         $threshold    Points total to compare against.
 	 * @param string|null $period_start MySQL datetime for period start, or null for all-time.
-	 * @param int[]       $opt_out_ids  User IDs excluded from the leaderboard.
+	 * @param string      $excl_sql     Exclusion SQL fragment (bounded placeholders).
+	 * @param array       $excl_values  Values bound by that fragment, in order.
 	 * @param int[]       $scope_ids    User IDs to restrict to (empty = all users).
 	 * @return int|null The next threshold, or null if already at the top.
 	 */
 	private static function get_next_threshold(
 		int $threshold,
 		?string $period_start,
-		array $opt_out_ids,
+		string $excl_sql,
+		array $excl_values,
 		array $scope_ids,
 		string $point_type = 'points'
 	): ?int {
@@ -872,11 +1410,9 @@ final class LeaderboardEngine {
 			$where   .= ' AND p.created_at >= %s';
 			$values[] = $period_start;
 		}
-		if ( ! empty( $opt_out_ids ) ) {
-			$ph = implode( ',', array_fill( 0, count( $opt_out_ids ), '%d' ) );
-			// phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
-			$where .= " AND p.user_id NOT IN ($ph)";
-			$values = array_merge( $values, $opt_out_ids );
+		if ( '' !== $excl_sql ) {
+			$where .= $excl_sql;
+			$values = array_merge( $values, $excl_values );
 		}
 		if ( ! empty( $scope_ids ) ) {
 			$ph = implode( ',', array_fill( 0, count( $scope_ids ), '%d' ) );
@@ -887,6 +1423,9 @@ final class LeaderboardEngine {
 		$values[] = $threshold;
 
 		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		// Same existence check as count_users_above(), for the same reason: "3 points from the next
+		// rank" must be 3 points from a rank held by somebody who is still here. Chasing a score set by
+		// a member who was deleted is a target that never moves and never explains itself.
 		$sql = "SELECT MIN(total) FROM (
 			SELECT user_id, SUM(points) AS total
 			  FROM {$wpdb->prefix}wb_gam_points p

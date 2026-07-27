@@ -16,6 +16,10 @@
 
 namespace WBGam\CLI;
 
+use WBGam\Engine\BadgeRule;
+use WBGam\Engine\Clock;
+use WBGam\Engine\LeaderboardEngine;
+use WBGam\Engine\PointsEngine;
 use WBGam\Engine\Registry;
 use WBGam\Engine\FeatureFlags;
 use WP_CLI;
@@ -140,6 +144,8 @@ class DoctorCommand {
 		$this->check_integrations();
 		$this->check_rest_api();
 		$this->check_cron();
+		$this->check_leaderboard_queries();
+		$this->check_totals_match_ledger();
 		$this->check_market_readiness();
 
 		WP_CLI::line( '' );
@@ -295,14 +301,26 @@ class DoctorCommand {
 				continue;
 			}
 
-			if ( 'action_count' === ( $config['condition_type'] ?? '' ) ) {
-				++$auto_count;
-				$action_id = $config['action_id'] ?? '';
+			// Read the rule through BadgeRule, not by hand. A rule is a GROUP of conditions now, and a
+			// doctor that still reached for `condition_type` would match nothing at all -- then cheerfully
+			// report "no auto-award badge conditions" on a site with thirty-five working ones.
+			if ( ! BadgeRule::is_auto_award( $config ) ) {
+				continue;
+			}
+
+			++$auto_count;
+
+			// An orphaned action is one a rule points at that no integration registers -- the badge can
+			// never be earned. Every action_count condition in the group is checked, not just the first.
+			foreach ( BadgeRule::conditions( $config ) as $condition ) {
+				if ( 'action_count' !== ( $condition['type'] ?? '' ) ) {
+					continue;
+				}
+
+				$action_id = $condition['action_id'] ?? '';
 				if ( $action_id && ! isset( $actions[ $action_id ] ) ) {
 					$orphaned[] = $rule['target_id'] . ' → ' . $action_id;
 				}
-			} elseif ( 'point_milestone' === ( $config['condition_type'] ?? '' ) ) {
-				++$auto_count;
 			}
 		}
 
@@ -735,6 +753,309 @@ class DoctorCommand {
 		}
 	}
 
+	// ── Leaderboard queries ─────────────────────────────────────────────────────
+
+	/**
+	 * EXECUTE every leaderboard read path and fail on any database error.
+	 *
+	 * This check exists because a green unit suite shipped a blank leaderboard.
+	 *
+	 * The exclusion fragment was tested in isolation and passed. The query it was composed INTO was
+	 * never executed by anything, so a string-rewrite that mangled `mp.user_id` into `muser_id`
+	 * reached customers: MySQL rejected the query, `get_results()` returned null, the engine read
+	 * that as "no rows", and every scoped leaderboard rendered EMPTY rather than erroring. A silent
+	 * wrong answer, on every site.
+	 *
+	 * `$wpdb` swallows the error, and an empty leaderboard looks exactly like a quiet community. So
+	 * the only way to catch this class is to run the real query against a real database and ask the
+	 * database whether it was actually valid. That is what this does.
+	 *
+	 * WHAT IT ACTUALLY COVERS, precisely -- because overclaiming here is how the next one hides:
+	 *
+	 * SCOPED boards bypass the snapshot on every call, so they always execute the composed fallback
+	 * query. They are what catch this class, and they are what caught the `muser_id` regression when
+	 * this check was written against it.
+	 *
+	 * The unscoped ALL-TIME board is served from the snapshot whenever one is warm -- so on a site
+	 * with a healthy cron it does NOT exercise the fallback, and it did not go red on the bug. It
+	 * shares the same composer (`build_totals_query()`) as the scoped path, which is what makes the
+	 * scoped coverage meaningful for it. On a fresh install or a cron-less host, where the fallback
+	 * is the only path, this check exercises it directly.
+	 */
+	private function check_leaderboard_queries(): void {
+		global $wpdb;
+
+		$this->section( 'Leaderboard Queries (executed)' );
+
+		// Bypass the object cache AND the snapshot, so the composed fallback query is the thing
+		// that actually runs. Reading a warm snapshot would prove nothing -- that is precisely how
+		// the blank-leaderboard regression stayed hidden.
+		wp_cache_flush();
+
+		// The scope MUST resolve to real members, or the scoped paths short-circuit to an empty board
+		// (correctly -- a scope with no members has no board) and never execute the query at all.
+		//
+		// This is not hypothetical: when the short-circuit was added, it silently disarmed this very
+		// check. The bug it was written to catch sailed straight through it, because on a site with
+		// no BuddyPress bridge every scope resolves to nobody. A check that cannot fail is not a
+		// check. So the scope is resolved here to members who actually exist.
+		$scope_members = $wpdb->get_col(
+			"SELECT user_id FROM {$wpdb->prefix}wb_gam_user_totals WHERE total > 0 ORDER BY total DESC LIMIT 3"
+		);
+
+		$resolve_scope = static function () use ( $scope_members ) {
+			return array_map( 'absint', (array) $scope_members );
+		};
+
+		add_filter( 'wb_gam_leaderboard_scope_user_ids', $resolve_scope, 99 );
+
+		$paths = array(
+			'all-time (materialised totals)' => array( 'all', '', 0 ),
+			'daily (ledger)'                 => array( 'day', '', 0 ),
+			'weekly (ledger)'                => array( 'week', '', 0 ),
+			'monthly (ledger)'               => array( 'month', '', 0 ),
+			'scoped: bp_group'               => array( 'all', 'bp_group', 1 ),
+			'scoped: cohort'                 => array( 'all', 'cohort', 1 ),
+		);
+
+		$failed = 0;
+
+		// COUNT THE ROWS. The check that was supposed to catch every round of this bug could not fail.
+		//
+		// It called get_leaderboard(), THREW THE RESULT AWAY, and asserted only that $wpdb->last_error
+		// was empty. So it passed on a totally blank leaderboard -- byte-identical output, 33 pass / 0
+		// fail, with every board returning zero rows. Six rounds of "the board is short" went past a
+		// health check whose only opinion was that MySQL had not raised an error.
+		//
+		// And `count > 0` would not have been enough either: it would still have passed 8-of-10,
+		// 17-of-25 and 15-of-100. The only assertion that catches a SHORT board is the one that knows
+		// how long the board should be -- so it is measured against an independent COUNT(*) oracle of
+		// who is actually eligible, computed here rather than asked of the engine under test.
+		$limit = 10;
+
+		foreach ( $paths as $label => [ $period, $scope_type, $scope_id ] ) {
+			// Clears last_error and last_query, so what we read back belongs to THIS call.
+			$wpdb->flush();
+
+			$rows = LeaderboardEngine::get_leaderboard( $period, $limit, $scope_type, $scope_id );
+
+			// An EMPTY board is legitimate (a quiet site, an empty group). A DATABASE ERROR is not,
+			// and it is the thing that renders as an empty board.
+			if ( ! empty( $wpdb->last_error ) ) {
+				$this->fail( 'Leaderboard query failed - ' . $label . ': ' . $wpdb->last_error );
+				++$failed;
+				continue;
+			}
+
+			// Only the global boards get the length assertion: a scoped board's eligible set depends on
+			// whatever resolved the scope (a BuddyPress group, a filter), and recomputing that here
+			// would just be asking the engine the same question twice and calling the answer an oracle.
+			if ( '' !== (string) $scope_type ) {
+				continue;
+			}
+
+			$eligible = self::count_eligible_members( $period );
+			$expected = min( $limit, $eligible );
+			$got      = count( (array) $rows );
+
+			if ( $got !== $expected ) {
+				// The message has to describe what actually happened. The first version said "SHORT" in
+				// both directions, so when the board returned one row MORE than the oracle expected it
+				// sent the operator hunting orphans that did not exist. A gate that misdescribes its own
+				// finding is a gate people learn to distrust.
+				$this->fail(
+					sprintf(
+						'Leaderboard %s - %s: %d rows for a board of %d, but %d members are eligible (expected %d). %s',
+						$got < $expected ? 'SHORT' : 'OVER-FULL',
+						$label,
+						$got,
+						$limit,
+						$eligible,
+						$expected,
+						$got < $expected
+							? 'Orphaned rows, an opted-out member, or an excluded role is eating slots.'
+							: 'The board is ranking members the eligibility rules say it should not.'
+					)
+				);
+				++$failed;
+			}
+		}
+
+		remove_filter( 'wb_gam_leaderboard_scope_user_ids', $resolve_scope, 99 );
+
+		if ( empty( $scope_members ) ) {
+			// No members with points, so the scoped paths resolved to nobody and short-circuited.
+			// Say so, rather than printing a pass that means nothing.
+			$this->warn( 'Leaderboard scoped paths not executed - no members with points to scope to' );
+			return;
+		}
+
+		if ( 0 === $failed ) {
+			$this->pass( count( $paths ) . ' leaderboard query paths execute without a database error' );
+		}
+	}
+
+	/**
+	 * The materialised totals must agree with the ledger they summarise.
+	 *
+	 * TWO SOURCES OF TRUTH FOR ONE NUMBER, AND NOTHING CHECKED THEM.
+	 *
+	 * The snapshot writer SUMs the wb_gam_points ledger. totals_board() -- the live fallback -- reads
+	 * the materialised wb_gam_user_totals. They are supposed to be the same number, and the write path
+	 * keeps them so: PointsEngine inserts the ledger row and upserts the total inside one transaction,
+	 * so neither can commit without the other.
+	 *
+	 * But nothing verified it afterwards, and anything that touches the ledger from OUTSIDE the engine
+	 * breaks the tie silently -- a bad import, a crashed transaction, a support engineer running SQL, a
+	 * bug in a version since fixed. When it breaks, the warm board and the stale board serve DIFFERENT
+	 * MEMBERS with DIFFERENT POINTS, and the only symptom is that the leaderboard changes when the cron
+	 * runs. That is exactly what QA saw, and there was no way to diagnose it.
+	 *
+	 * Found by chasing precisely that: nine members on the QA database had a totals row that did not
+	 * match their ledger, one by 515 points, and the two boards disagreed about who was even on them.
+	 *
+	 * --fix recomputes the drifted rows from the ledger, which is the authority: the ledger is the
+	 * append-only record of what happened; the total is a cache of it.
+	 */
+	private function check_totals_match_ledger(): void {
+		$this->section( 'Points totals vs ledger' );
+
+		global $wpdb;
+
+		$points = $wpdb->prefix . 'wb_gam_points';
+		$totals = $wpdb->prefix . 'wb_gam_user_totals';
+
+		// Both directions. Walking only the ledger misses a totals row with no ledger behind it at all,
+		// and that is the row that put a member on one board and not the other.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$drifted = $wpdb->get_results(
+			"SELECT t.user_id, t.point_type, t.total AS totals_says, COALESCE( l.led, 0 ) AS ledger_says
+			   FROM {$totals} t
+			   LEFT JOIN ( SELECT user_id, point_type, SUM(points) led FROM {$points} GROUP BY user_id, point_type ) l
+			          ON l.user_id = t.user_id AND l.point_type = t.point_type
+			  WHERE t.total <> COALESCE( l.led, 0 )
+			  ORDER BY ABS( t.total - COALESCE( l.led, 0 ) ) DESC",
+			ARRAY_A
+		);
+
+		if ( ! $drifted ) {
+			$this->pass( 'Every wb_gam_user_totals row matches the ledger' );
+			return;
+		}
+
+		$this->fail(
+			sprintf(
+				'%d member total(s) disagree with the ledger. The snapshot board sums the LEDGER and the '
+					. 'live board reads these TOTALS, so the two boards will serve different members.',
+				count( $drifted )
+			)
+		);
+
+		foreach ( array_slice( $drifted, 0, 5 ) as $row ) {
+			WP_CLI::line(
+				sprintf(
+					'    user %d (%s): totals says %d, ledger says %d  (%+d)',
+					(int) $row['user_id'],
+					(string) $row['point_type'],
+					(int) $row['totals_says'],
+					(int) $row['ledger_says'],
+					(int) $row['totals_says'] - (int) $row['ledger_says']
+				)
+			);
+		}
+		if ( count( $drifted ) > 5 ) {
+			WP_CLI::line( sprintf( '    ... and %d more', count( $drifted ) - 5 ) );
+		}
+
+		if ( ! $this->fix ) {
+			WP_CLI::line( '    → run with --fix to recompute these from the ledger.' );
+			return;
+		}
+
+		foreach ( $drifted as $row ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->update(
+				$totals,
+				array( 'total' => (int) $row['ledger_says'] ),
+				array(
+					'user_id'    => (int) $row['user_id'],
+					'point_type' => (string) $row['point_type'],
+				),
+				array( '%d' ),
+				array( '%d', '%s' )
+			);
+		}
+
+		LeaderboardEngine::write_snapshot();
+		LeaderboardEngine::invalidate_cache();
+
+		WP_CLI::success( sprintf( '  Recomputed %d total(s) from the ledger and rebuilt the snapshot.', count( $drifted ) ) );
+	}
+
+	/**
+	 * How many members SHOULD be on a board of this period. An independent COUNT(*), not the engine.
+	 *
+	 * The point of an oracle is that it does not share a bug with the thing it is checking. Asking
+	 * LeaderboardEngine how many members it thinks are eligible and then checking that it returned
+	 * that many would pass on every board it has ever got wrong.
+	 *
+	 * So this counts them the long way, from the ledger, applying the same three predicates the
+	 * product applies -- the member EXISTS, has not OPTED OUT, and is not owner-EXCLUDED -- in SQL
+	 * written here, on purpose.
+	 *
+	 * @param string $period 'all' | 'month' | 'week' | 'day'.
+	 * @return int Members eligible for that board.
+	 */
+	private static function count_eligible_members( string $period ): int {
+		global $wpdb;
+
+		$starts = array(
+			'day'   => Clock::site_day_start( 'today' ),
+			'week'  => Clock::site_cutoff( 'monday this week' ),
+			'month' => Clock::site_day_start( 'first day of this month' ),
+		);
+
+		$since = $starts[ $period ] ?? null;
+		$where = '';
+		$binds = array( PointsEngine::resolve_type( null ) );
+
+		if ( null !== $since ) {
+			$where   = ' AND p.created_at >= %s';
+			$binds[] = $since;
+		}
+
+		$excluded_users = array_map( 'absint', (array) get_option( 'wb_gam_excluded_users', array() ) );
+		$excluded_roles = array_map( 'sanitize_key', (array) get_option( 'wb_gam_excluded_roles', array() ) );
+
+		$excl = '';
+		if ( $excluded_users ) {
+			$excl .= ' AND p.user_id NOT IN ( ' . implode( ',', array_fill( 0, count( $excluded_users ), '%d' ) ) . ' )';
+			$binds = array_merge( $binds, $excluded_users );
+		}
+		foreach ( $excluded_roles as $role ) {
+			$excl   .= " AND NOT EXISTS ( SELECT 1 FROM {$wpdb->usermeta} rm WHERE rm.user_id = p.user_id"
+				. " AND rm.meta_key = '{$wpdb->get_blog_prefix()}capabilities' AND rm.meta_value LIKE %s )";
+			$binds[] = '%' . $wpdb->esc_like( '"' . $role . '"' ) . '%';
+		}
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		return (int) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM (
+					SELECT p.user_id
+					  FROM {$wpdb->prefix}wb_gam_points p
+					  JOIN {$wpdb->users} u ON u.ID = p.user_id
+					 WHERE p.point_type = %s {$where} {$excl}
+					   AND NOT EXISTS ( SELECT 1 FROM {$wpdb->prefix}wb_gam_member_prefs mp
+					                     WHERE mp.user_id = p.user_id AND mp.leaderboard_opt_out = 1 )
+					 GROUP BY p.user_id
+					HAVING SUM(p.points) > 0
+				) eligible",
+				$binds
+			)
+		);
+	}
+
 	// ── Market Readiness ────────────────────────────────────────────────────────
 
 	/**
@@ -767,14 +1088,14 @@ class DoctorCommand {
 			$this->warn( 'No readme.txt — required for WordPress.org submission' );
 		}
 
-		// Min assets.
-		$css_min = WB_GAM_PATH . 'assets/css/admin-premium.min.css';
-		$js_min  = WB_GAM_PATH . 'assets/js/settings-nav.min.js';
-		if ( file_exists( $css_min ) && file_exists( $js_min ) ) {
-			$this->pass( 'Minified assets present' );
-		} else {
-			$this->warn( 'Missing minified assets — run `grunt build` before release' );
-		}
+		// The "minified assets" check used to live here, and every part of it was fiction. It looked
+		// for assets/css/admin-premium.min.css, which does not exist and never has. It looked for
+		// assets/js/settings-nav.min.js, which existed but was enqueued by nothing -- WordPress loads
+		// the unminified settings-nav.js. And when it failed, which was always, it told you to run
+		// `grunt build`, in a repo with no grunt, no Gruntfile and no reference to grunt anywhere in
+		// package.json. So it warned on every doctor run about a requirement that does not exist and
+		// prescribed a command that cannot be run. A check that is always wrong teaches people to
+		// ignore the checks that are not. Both dead .min.js files went with it.
 
 		// Check essential frontend features.
 		$blocks_dir = WB_GAM_PATH . 'build/Blocks/';

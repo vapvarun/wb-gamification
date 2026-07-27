@@ -68,6 +68,24 @@ final class GamiPressImporter {
 	}
 
 	/**
+	 * Does this site's `gamipress_logs` carry the points columns (6.9.4+), or the legacy meta rows?
+	 *
+	 * Asked of the SCHEMA, not of a version string: a plugin version tells you what the code is, not
+	 * what the database survived. Sites get upgraded, downgraded, restored from old dumps and migrated
+	 * between hosts, and the table is the only thing that knows the truth.
+	 *
+	 * @return bool True when `points` exists as a column.
+	 */
+	private static function logs_have_points_column(): bool {
+		global $wpdb;
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$columns = (array) $wpdb->get_col( "SHOW COLUMNS FROM {$wpdb->prefix}gamipress_logs" );
+
+		return in_array( 'points', $columns, true );
+	}
+
+	/**
 	 * Build normalized import rows from the GamiPress point ledger.
 	 *
 	 * @return array<int, array<string, mixed>>
@@ -76,13 +94,32 @@ final class GamiPressImporter {
 		global $wpdb;
 		$rows = array();
 
+		// GamiPress moved `points` and `points_type` from the log META table into COLUMNS on the logs
+		// table in 6.9.4. Both shapes are alive in the wild, and a site still on the old one is exactly
+		// the kind of stale install that wants to migrate away.
+		//
+		// Reading the columns unconditionally did not fail loudly on an older site: MySQL rejected the
+		// query, $wpdb swallowed the error, get_results() returned null, and the import reported
+		// `rows: 0` with HTTP 200. The owner was told their migration had SUCCEEDED and imported
+		// nothing -- their entire points history skipped, with nothing to explain why.
+		//
+		// So ask the schema which shape this site has, and read that one.
+		$modern = self::logs_have_points_column();
+
+		$select = $modern
+			? 'l.points AS points, l.points_type AS points_type'
+			: "( SELECT m.meta_value FROM {$wpdb->prefix}gamipress_logs_meta m
+			      WHERE m.log_id = l.log_id AND m.meta_key = '_gamipress_points' LIMIT 1 ) AS points,
+			   ( SELECT m2.meta_value FROM {$wpdb->prefix}gamipress_logs_meta m2
+			      WHERE m2.log_id = l.log_id AND m2.meta_key = '_gamipress_points_type' LIMIT 1 ) AS points_type";
+
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$logs = $wpdb->get_results(
-			"SELECT log_id, user_id, type, trigger_type, points, points_type, date
-			   FROM {$wpdb->prefix}gamipress_logs
-			  WHERE type IN ('points_earn','points_award','points_deduct','points_revoke')
-			    AND user_id > 0
-			  ORDER BY log_id ASC",
+			"SELECT l.log_id, l.user_id, l.type, l.trigger_type, {$select}, l.date
+			   FROM {$wpdb->prefix}gamipress_logs l
+			  WHERE l.type IN ('points_earn','points_award','points_deduct','points_revoke')
+			    AND l.user_id > 0
+			  ORDER BY l.log_id ASC",
 			ARRAY_A
 		);
 
@@ -283,7 +320,9 @@ final class GamiPressImporter {
 						'category'  => 'imported',
 					)
 				);
-				$earned_at = gmdate( 'Y-m-d H:i:s', strtotime( $a['earned_at'] ) ?: time() );
+				// Round trip preserves the source's wall clock (see MyCredImporter). The fallback must be
+				// the SITE's now, not UTC's -- earned_at is a site-local column.
+				$earned_at = $a['earned_at'] ? gmdate( 'Y-m-d H:i:s', strtotime( (string) $a['earned_at'] ) ) : current_time( 'mysql' );
 				if ( \WBGam\Engine\BadgeEngine::award_badge( $a['user_id'], $a['badge_id'], $earned_at ) ) {
 					++$ach_imported;
 				}
@@ -292,7 +331,12 @@ final class GamiPressImporter {
 			// then land at the matching level from their imported points, since
 			// our levels are point-derived on read.
 			foreach ( $ranks as $r ) {
-				if ( \WBGam\Engine\LevelEngine::upsert_level( $r['name'], $r['min_points'], $r['order'] ) > 0 ) {
+				// Count what was CREATED, not what was found. upsert_level() returns an id either way, so
+				// counting `> 0` reported levels the import had not built -- on a re-run it claimed
+				// `levels_created: 1` while the database gained nothing.
+				$level_created = false;
+				\WBGam\Engine\LevelEngine::upsert_level( $r['name'], $r['min_points'], $r['order'], '', $level_created );
+				if ( $level_created ) {
 					++$levels_made;
 				}
 			}
@@ -320,23 +364,22 @@ final class GamiPressImporter {
 			$ours = $dry_run
 				? count( array_filter( $achievements, static fn ( $a ) => (int) $a['user_id'] === $uid ) )
 				: self::our_imported_badge_count( $uid );
-			// Filter GamiPress's getter to achievement types ONLY — unfiltered
-			// it also counts rank earnings, which we migrate as levels, not
-			// badges (that inflated the source count and hid a false match).
-			$own                   = function_exists( 'gamipress_get_user_achievements' )
-				? count(
-					(array) gamipress_get_user_achievements(
-						array(
-							'user_id'          => $uid,
-							'achievement_type' => self::achievement_type_slugs(),
-						)
-					)
-				)
-				: $ours;
+			// Read GamiPress's OWN table (`gamipress_user_earnings`) directly
+			// instead of `gamipress_get_user_achievements()`. The real migration
+			// scenario is the owner DEACTIVATING GamiPress before importing, so
+			// "the API is unavailable" is the NORMAL case, not an edge case --
+			// and falling back to `$ours` here made the comparison `$ours ===
+			// $ours`, a check that could never fail. Proven: 2 seeded
+			// achievements, one award blocked, reconciliation still reported
+			// clean. A DB read survives deactivation; the PHP API does not.
+			$own                   = self::gamipress_achievement_count_from_db( $uid );
 			$ach_reconcile[ $uid ] = array(
 				'imported_achievements'  => (int) $ours,
-				'gamipress_achievements' => (int) $own,
-				'match'                  => (int) $ours === (int) $own,
+				// Never fabricate agreement: when the source truth genuinely
+				// cannot be read (table gone / no achievement types registered
+				// at all), say so instead of guessing a number.
+				'gamipress_achievements' => null === $own ? 'unknown' : $own,
+				'match'                  => null !== $own && (int) $ours === $own,
 			);
 		}
 
@@ -444,6 +487,53 @@ final class GamiPressImporter {
 				'gamipress-achievement-%'
 			)
 		);
+	}
+
+	/**
+	 * A user's GamiPress achievement count, read directly from GamiPress's own
+	 * `gamipress_user_earnings` table rather than its PHP API.
+	 *
+	 * `gamipress_get_user_achievements()` is only callable while GamiPress is
+	 * active, but the whole point of this importer is migrating AWAY from
+	 * GamiPress -- the normal sequence is deactivate-then-import, not the other
+	 * way round. A source-of-truth that depends on the plugin being active
+	 * cannot do its job in the case it exists for. The table survives
+	 * deactivation, so read that instead.
+	 *
+	 * @param int $user_id User.
+	 * @return int|null Achievement count, or null when it genuinely cannot be
+	 *                   determined (table gone, or no achievement types
+	 *                   registered to filter by) -- callers must treat that as
+	 *                   UNKNOWN, never as a match.
+	 */
+	private static function gamipress_achievement_count_from_db( int $user_id ): ?int {
+		global $wpdb;
+
+		$table = $wpdb->prefix . 'gamipress_user_earnings';
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$exists = (bool) $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) );
+		if ( ! $exists ) {
+			return null;
+		}
+
+		// Filter to achievement types ONLY — unfiltered this table also holds
+		// rank earnings, which we migrate as levels, not badges (that would
+		// inflate the source count and hide a real mismatch).
+		$types = self::achievement_type_slugs();
+		if ( empty( $types ) ) {
+			return null;
+		}
+
+		$placeholders = implode( ',', array_fill( 0, count( $types ), '%s' ) );
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$count = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM {$table} WHERE user_id = %d AND post_type IN ($placeholders)",
+				$user_id,
+				...$types
+			)
+		);
+		return null === $count ? null : (int) $count;
 	}
 
 	/**

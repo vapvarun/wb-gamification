@@ -16,7 +16,7 @@ Status: `YES` shipped & code-verified · `PARTIAL` works with a named limit · `
 
 | Can it… | Status | How |
 |---|---|---|
-| Award points for activity automatically? | YES | Rules engine over 126 integration triggers; `wb_gam_points`, `wb_gam_events` |
+| Award points for activity automatically? | YES | Rules engine over the triggers the installed stack exposes — **8 vanilla, ~50 with WooCommerce + LearnDash + BuddyPress, 126 on the full Wbcom suite**. Never quote 126 flat; see the stack table below. `wb_gam_points`, `wb_gam_events` |
 | Support more than one currency (XP, Coins, Credits)? | YES | Point Types admin page; `wb_gam_point_types`, `wb_gam_user_totals` |
 | Convert one currency into another? | YES | Conversions page; `wb_gam_point_type_conversions` |
 | Stop members farming points? | YES | Per-action cooldown, daily cap, **weekly cap**, earning exclusions (`PointsEngine::passes_rate_limits`). All four settable per action in Settings ▸ Points. (Caps are a PAID add-on in both GamiPress and myCred.) |
@@ -29,7 +29,8 @@ Status: `YES` shipped & code-verified · `PARTIAL` works with a named limit · `
 | Can it… | Status | How |
 |---|---|---|
 | Issue badges on conditions? | YES | Badge Library; `wb_gam_badge_defs`, `wb_gam_user_badges` |
-| Award badges for tenure (time on site)? | YES | `TenureBadgeEngine`, `wb_gam_tenure_check` cron |
+| Award badges for tenure (time on site)? | YES | `tenure_days` badge condition, evaluated by the daily badge cron pass (`BadgeEngine::run_cron_pass`). The old `TenureBadgeEngine` and its `wb_gam_tenure_check` cron are removed — tenure badges are ordinary editable rules |
+| Combine conditions on one badge (AND / OR)? | YES (1.6.4) | `BadgeRule` group shape; eight condition types; `match: all\|any` |
 | Run levels with thresholds? | YES | `wb_gam_levels`, `LevelEngine` |
 | Track daily streaks + milestones? | YES | `wb_gam_streaks`, `[wb_gam_streak]` |
 | Expire a credential/status if unearned? | YES | `CredentialExpiryEngine`, `StatusRetentionEngine` |

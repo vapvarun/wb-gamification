@@ -141,6 +141,83 @@
   font-size: 14px;
 }
 
+/* ANONYMOUS TOP-3 PREVIEW
+ * Shown to logged-out visitors under the login nudge -- the top members they
+ * could be competing with. Uses the same tokens as the rest of the hub, so it
+ * follows the owner's accent and adapts to dark mode; logical properties keep
+ * it correct in RTL without depending on the build-time flip. */
+.gam-anon-board {
+  background: var(--gam-surface);
+  border: 1px solid var(--gam-border);
+  border-radius: var(--gam-radius);
+  padding: 14px 18px;
+  margin-bottom: 20px;
+  box-shadow: var(--gam-shadow);
+}
+
+.gam-anon-board__title {
+  margin: 0 0 10px;
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--gam-text-muted, var(--gam-text));
+}
+
+.gam-anon-board__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.gam-anon-board__row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.gam-anon-board__rank {
+  flex-shrink: 0;
+  width: 22px;
+  text-align: center;
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--gam-text-muted, var(--gam-text));
+}
+
+/* Medal tints for the podium, from the existing hub tokens. */
+.gam-anon-board__row--1 .gam-anon-board__rank { color: var(--gam-gold); }
+.gam-anon-board__row--2 .gam-anon-board__rank { color: var(--gam-silver); }
+.gam-anon-board__row--3 .gam-anon-board__rank { color: var(--gam-bronze); }
+
+.gam-anon-board__avatar {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.gam-anon-board__name {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14px;
+  color: var(--gam-text);
+}
+
+.gam-anon-board__points {
+  flex-shrink: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--gam-accent-text);
+}
+
 /* STATS ROW */
 .gam-stats {
   display: grid;

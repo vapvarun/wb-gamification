@@ -267,3 +267,15 @@
 		transition: none;
 	}
 }
+
+/* ── Empty-state CTA ──────────────────────────────────────────────────────────
+   The empty state used to be a sentence and a full stop. "Log in to see your
+   points history" with no way to log in is a dead end. */
+[class$="__empty-cta"] {
+	margin-block-start: var( --wb-gam-space-sm, 8px );
+	font-size: 0.9em;
+}
+
+[class$="__empty-cta"] a {
+	text-decoration: underline;
+}

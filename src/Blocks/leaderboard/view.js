@@ -14,19 +14,32 @@
 	'use strict';
 
 	function init() {
-		var boards = document.querySelectorAll( '[data-wb-gam-board="leaderboard"][data-wb-gam-board-sig]' );
-		if ( ! boards.length ) {
-			return;
-		}
-
 		var perBoard = new Map();
 
-		boards.forEach( function ( root ) {
-			var sig = root.getAttribute( 'data-wb-gam-board-sig' );
-			if ( sig ) {
+		// This file already knew about client-side navigation -- the observer further down unregisters
+		// boards that get REMOVED, with a comment saying "e.g. SPA navigation". It only ever handled
+		// half of it: a board that ARRIVES that way was never registered with the realtime broker, so
+		// it rendered its server-side snapshot and then sat there, frozen, while every other board on
+		// the site ticked. Half a lifecycle is not a lifecycle.
+		window.wbGam.onMount(
+			'[data-wb-gam-board="leaderboard"][data-wb-gam-board-sig]',
+			function ( root ) {
+				var sig = root.getAttribute( 'data-wb-gam-board-sig' );
+				if ( ! sig ) {
+					return;
+				}
+
 				perBoard.set( sig, root );
+
+				// Late arrival: the broker is already up, so register this one board now. On first
+				// load ensureRegistered() below sweeps whatever is in the map.
+				if ( window.wbGamRealtime ) {
+					ensureRegistered();
+				}
 			}
-		} );
+		);
+
+		var subscribed = false;
 
 		function ensureRegistered() {
 			if ( ! window.wbGamRealtime ) {
@@ -42,7 +55,15 @@
 					point_type: root.getAttribute( 'data-wb-gam-point-type' ) || '',
 				} );
 			} );
-			window.wbGamRealtime.subscribe( 'leaderboards', applyPayload );
+
+			// registerBoard is keyed by sig and is safe to repeat. subscribe() is NOT -- it appends a
+			// handler, so calling it once per late-mounting board would apply every realtime payload
+			// two, three, four times over. Register as often as boards appear; subscribe exactly once.
+			if ( ! subscribed ) {
+				window.wbGamRealtime.subscribe( 'leaderboards', applyPayload );
+				subscribed = true;
+			}
+
 			return true;
 		}
 

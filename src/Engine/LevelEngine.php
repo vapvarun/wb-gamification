@@ -142,7 +142,17 @@ final class LevelEngine {
 	 * @param string   $icon_url   Optional icon URL.
 	 * @return int
 	 */
-	public static function upsert_level( string $name, int $min_points, ?int $sort_order = null, string $icon_url = '' ): int {
+	public static function upsert_level( string $name, int $min_points, ?int $sort_order = null, string $icon_url = '', ?bool &$created = null ): int {
+		// $created tells the caller which half of "upsert" actually happened, and it exists because a
+		// caller could not tell.
+		//
+		// This returns an id > 0 whether it INSERTED a level or merely FOUND one with the same name.
+		// The importers counted any id > 0 as "created", so re-running an import reported
+		// `levels_created: 1` while the database gained nothing -- the owner was told their migration
+		// had built something it had not. A number in an import report is a promise about the state of
+		// their data; it has to be true on the second run as well as the first.
+		$created = false;
+
 		$name = trim( $name );
 		if ( '' === $name ) {
 			return 0;
@@ -156,6 +166,8 @@ final class LevelEngine {
 		if ( $existing > 0 ) {
 			return $existing;
 		}
+
+		$created = true;
 
 		if ( null === $sort_order ) {
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
@@ -186,12 +198,30 @@ final class LevelEngine {
 	 * @param int $user_id User to check.
 	 */
 	public static function maybe_level_up( int $user_id ): void {
+		// READ THE OLD LEVEL FIRST. The order of these two lines is the whole function.
+		//
+		// get_level_for_user() does not just compute a level -- it SELF-HEALS the user_meta cache as a
+		// side effect, writing the freshly computed level into `wb_gam_level_id` whenever it finds a
+		// mismatch (see the long comment there; it was added so a level read is always right even when
+		// points arrived by a non-engine path).
+		//
+		// This function used to call it first and read the meta second. So the "old" level it compared
+		// against had already been overwritten with the NEW one, the comparison below was always true,
+		// and it always returned early.
+		//
+		// `wb_gam_level_changed` therefore could not fire. For anyone. Ever. And with it went every
+		// listener downstream: the level-up toast, the level-up email, the level_changed webhook, the
+		// `level_reached` badge condition, and the site-first badges that hung off it. A member could
+		// climb from Newcomer to Expert and the plugin would say nothing, because the thing that
+		// detects the climb had already quietly agreed they were always there.
+		//
+		// The self-heal is right and stays. It just cannot run before we have looked.
+		$current_level_id = (int) get_user_meta( $user_id, 'wb_gam_level_id', true );
+
 		$new_level = self::get_level_for_user( $user_id );
 		if ( ! $new_level ) {
 			return;
 		}
-
-		$current_level_id = (int) get_user_meta( $user_id, 'wb_gam_level_id', true );
 
 		if ( $new_level['id'] === $current_level_id ) {
 			return; // No change.
@@ -232,7 +262,26 @@ final class LevelEngine {
 			 * @param array|null $new_level New level data (id, name, min_points) or null.
 			 * @param array|null $old_level Previous level data or null.
 			 */
-			do_action( 'wb_gam_level_changed', $user_id, $new_level, $old_level_data );
+			// Same reasoning as the badge hook in BadgeEngine::award_badge(): wb_gam_level_changed is
+			// public and third parties (BuddyNext) listen to it to notify the member. Replaying a
+			// member's history must not congratulate them for reaching a level they reached in 2021,
+			// so an import fires the imported-variant and nothing that announces hears it.
+			if ( ImportMode::is_active() ) {
+				/**
+				 * Fires when a level change is written by an import, replaying history.
+				 *
+				 * For syncing an imported level outward. Never for announcing it to the member.
+				 *
+				 * @since 1.6.4
+				 *
+				 * @param int        $user_id   User whose level was imported.
+				 * @param array|null $new_level New level data (id, name, min_points) or null.
+				 * @param array|null $old_level Previous level data or null.
+				 */
+				do_action( 'wb_gam_level_imported', $user_id, $new_level, $old_level_data );
+			} else {
+				do_action( 'wb_gam_level_changed', $user_id, $new_level, $old_level_data );
+			}
 		} else {
 			/**
 			 * Fires when a member is assigned their very first level — usually

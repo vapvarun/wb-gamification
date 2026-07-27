@@ -100,9 +100,9 @@ BlockHooks::before( 'community-challenges', $wb_gam_attrs, array( 'count' => cou
 	</div>
 
 	<?php if ( empty( $wb_gam_challenges ) ) : ?>
-		<p class="wb-gam-community-challenges__empty">
-			<?php esc_html_e( 'No active community challenges right now. Check back soon!', 'wb-gamification' ); ?>
-		</p>
+		<?php
+		echo \WBGam\Blocks\EmptyState::body( 'community-challenges', __( 'No active community challenges right now. Check back soon!', 'wb-gamification' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped in EmptyState.
+		?>
 	<?php else : ?>
 		<ul class="wb-gam-community-challenges__list" role="list">
 			<?php foreach ( $wb_gam_challenges as $wb_gam_challenge ) :

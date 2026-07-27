@@ -177,6 +177,33 @@ class EventsController extends WP_REST_Controller {
 	 * @return WP_REST_Response|WP_Error Response on success, WP_Error on failure.
 	 */
 	public function create_item( $request ): WP_REST_Response|WP_Error {
+		// occurred_at / source_key / points are import-only, and this route was SILENTLY DROPPING them:
+		// send occurred_at=2019-01-02 and you got a 201 and an event stamped today, with nothing to tell
+		// you the date had been thrown away. That silence is the bug, and it is fixed by saying no.
+		//
+		// It is NOT fixed by accepting them. This route is open to any logged-in member (see
+		// create_item_permissions_check -- it checks is_user_logged_in() and nothing else), so honouring
+		// a caller-supplied occurred_at would hand every member a backdating primitive: forge a streak
+		// they never ran, drop events into last week's leaderboard window, backdate around a daily cap.
+		// Honouring points would be worse -- self-award any score.
+		//
+		// Backdating is a real requirement, and it already has a home: POST /events/import, which is
+		// gated on wb_gam_manage_members and takes all three. An owner migrating a community can use it;
+		// a member cannot.
+		foreach ( array( 'occurred_at', 'source_key', 'points', 'point_type' ) as $wb_gam_import_only ) {
+			if ( null !== $request->get_param( $wb_gam_import_only ) ) {
+				return new WP_Error(
+					'wb_gam_import_only_param',
+					sprintf(
+						/* translators: %s: the rejected parameter name. */
+						__( '"%s" cannot be set on a live event. Use POST /events/import to backdate or replay history — it requires the capability to manage members.', 'wb-gamification' ),
+						$wb_gam_import_only
+					),
+					array( 'status' => 400 )
+				);
+			}
+		}
+
 		$action_id = (string) $request['action_id'];
 		$user_id   = (int) $request['user_id'];
 		$object_id = (int) $request['object_id'];
@@ -331,7 +358,24 @@ class EventsController extends WP_REST_Controller {
 			);
 		}
 
-		return new WP_REST_Response( \WBGam\Engine\ImportService::ingest( $normalized ), 200 );
+		// This route's own docblock has always promised "rows are processed in import mode: side-effects
+		// are suppressed", and it never was. Points were suppressed, because ImportService sets
+		// metadata['_import'] and Engine::process() honours it -- but ingest() ends by calling
+		// Engine::recompute_users(), and the badges DERIVED there were awarded with import mode off.
+		// QA posted 150 backdated points crossing a milestone and a real member got a real email about a
+		// badge for something that happened years ago.
+		//
+		// The other two import entry points (ImportController, ImportCommand) were wrapped; this one was
+		// missed because a per-event flag LOOKED like it covered it. It could not: recompute_users()
+		// awards badges outside any event.
+		return new WP_REST_Response(
+			\WBGam\Engine\ImportMode::run(
+				static function () use ( $normalized ) {
+					return \WBGam\Engine\ImportService::ingest( $normalized );
+				}
+			),
+			200
+		);
 	}
 
 	/**

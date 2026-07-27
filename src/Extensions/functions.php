@@ -18,14 +18,22 @@ use WBGam\Engine\PointsEngine;
 use WBGam\Engine\LevelEngine;
 use WBGam\Engine\ChallengeEngine;
 
-// Direct-web-access guard. At runtime this file is required directly by the
-// main plugin bootstrap; under CLI tooling (PHPStan, PHPUnit, phpcs) it is
-// pulled in via Composer's `files` autoload, which bootstraps WITHOUT
-// defining ABSPATH. A bare `defined( 'ABSPATH' ) || exit;` therefore
-// silently terminated every CLI run, turning the static-analysis and
-// test gates into no-ops. Allow CLI (incl. WP-CLI) so the gates run;
-// still block direct web access where SAPI is web and ABSPATH is unset.
-defined( 'ABSPATH' ) || 'cli' === PHP_SAPI || defined( 'WP_CLI' ) || exit;
+// The canonical guard, and nothing clever.
+//
+// It used to read `defined( 'ABSPATH' ) || 'cli' === PHP_SAPI || defined( 'WP_CLI' ) || exit;`,
+// because Composer's `files` autoload EXECUTED this file under PHPStan and PHPUnit -- where ABSPATH
+// is not defined -- so a bare guard terminated the run and turned those gates into no-ops. The
+// escape hatch was a real fix for a real problem.
+//
+// But it is not a form the WP.org Plugin Check recognises (it accepts exactly two shapes), so the
+// plugin failed the submission bar with "PHP file should prevent direct access" on a file that was,
+// in fact, guarded.
+//
+// The cause was the `files` entry, not the guard: wb-gamification.php already require_once's this
+// file at boot, so that entry was redundant at runtime and existed only to make CLI tooling execute
+// it. It has been removed. Nothing autoloads this file now, the hatch is unnecessary, and the guard
+// is the one every other file uses.
+defined( 'ABSPATH' ) || exit;
 // Silencing convention-driven false positives so Plugin Check signal stays clean:
 // - PrefixAllGlobals.NonPrefixedHooknameFound — plugin uses `wb_gam_*` as its
 // established hook prefix (documented in CLAUDE.md, declared in .phpcs.xml).

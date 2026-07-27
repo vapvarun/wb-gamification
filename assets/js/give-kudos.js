@@ -43,21 +43,11 @@
 			submit.disabled    = true;
 			status.textContent = i18n.sending || '';
 
-			fetch( form.dataset.restUrl, {
-				signal: ( typeof AbortSignal !== 'undefined' && AbortSignal.timeout ) ? AbortSignal.timeout( 15000 ) : undefined,
-				method:      'POST',
-				credentials: 'same-origin',
-				headers:     {
-					'Content-Type': 'application/json',
-					'X-WP-Nonce':   form.dataset.restNonce,
-				},
-				body: JSON.stringify( body ),
+			window.wbGam.rest( form.dataset.restUrl, {
+				method: 'POST',
+				body:   body,
+				nonce:  form.dataset.restNonce,
 			} )
-				.then( function ( r ) {
-					return r.json().then( function ( d ) {
-						return { ok: r.ok, data: d };
-					} );
-				} )
 				.then( function ( result ) {
 					if ( result && result.ok ) {
 						status.textContent = i18n.success || '';
@@ -89,5 +79,11 @@
 		} );
 	}
 
-	document.querySelectorAll( '.wb-gam-give-kudos' ).forEach( bind );
+	// Not `querySelectorAll().forEach( bind )`. This block is a real <form>, so when a host theme
+	// navigates client-side and swaps fresh markup in, the submit handler is not merely absent -- the
+	// browser falls back to a NATIVE form submission and navigates the member away from the page,
+	// their kudos message in the query string. Verified in a browser before this was changed.
+	//
+	// onMount runs bind() for the forms already here AND for any that arrive later, once each.
+	window.wbGam.onMount( '.wb-gam-give-kudos', bind );
 }() );

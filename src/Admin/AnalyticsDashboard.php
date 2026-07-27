@@ -19,6 +19,8 @@
 
 namespace WBGam\Admin;
 
+use WBGam\Engine\Clock;
+
 defined( 'ABSPATH' ) || exit;
 // Silencing convention-driven false positives so Plugin Check signal stays clean:
 // - WordPress.DB.DirectDatabaseQuery.DirectQuery + .NoCaching + .SchemaChange:
@@ -327,7 +329,12 @@ final class AnalyticsDashboard {
 		}
 
 		global $wpdb;
-		$since = gmdate( 'Y-m-d H:i:s', strtotime( "-{$period} days" ) );
+		// The window must be in the clock the columns are WRITTEN in. wb_gam_points.created_at,
+		// wb_gam_kudos.created_at and wb_gam_user_badges.earned_at are all current_time( 'mysql' ) --
+		// site-local -- and this bound was gmdate(), i.e. UTC. In Los Angeles that made every window on
+		// this dashboard seven hours short: a day holding 777 points rendered as an EMPTY COLUMN, and
+		// the chart disagreed with the stat tiles beside it. Invisible on a UTC box.
+		$since = Clock::site_cutoff( "-{$period} days" );
 
 		// Points total.
 		$points_total = (int) $wpdb->get_var(
@@ -338,9 +345,21 @@ final class AnalyticsDashboard {
 		);
 
 		// Active members (at least 1 point in period).
+		//
+		// EVERY member count on this dashboard joins wp_users, and that is not defensive noise.
+		//
+		// Nothing cleaned up after a deleted member before 1.6.4, so these tables are full of rows
+		// belonging to people who no longer exist -- 11,378 orphaned streak rows against 152 real ones
+		// on the dev site. Counting those rows against a denominator of LIVE members is what produced
+		// "6822.5% streak health" and "125.8% of active members" on a screen an owner is supposed to
+		// make decisions from. The purge (MemberData) stops new orphans; this makes the dashboard
+		// truthful on the sites that already have them, today, without deleting anything.
 		$active_members = (int) $wpdb->get_var(
 			$wpdb->prepare(
-				"SELECT COUNT(DISTINCT user_id) FROM {$wpdb->prefix}wb_gam_points WHERE created_at >= %s",
+				"SELECT COUNT(DISTINCT p.user_id)
+				   FROM {$wpdb->prefix}wb_gam_points p
+				   JOIN {$wpdb->users} u ON u.ID = p.user_id
+				  WHERE p.created_at >= %s",
 				$since
 			)
 		);
@@ -356,10 +375,24 @@ final class AnalyticsDashboard {
 			)
 		);
 
-		// Badge earner pct (unique users who earned any badge in period vs active members).
+		// Badge earners, as a share of active members.
+		//
+		// The label says "% of active members", so the numerator has to BE a subset of active members
+		// -- otherwise the figure is not a percentage of anything. It was counting every member who
+		// earned a badge in the window (including ghosts, and including members who earned a tenure
+		// badge without being active at all) over a denominator of active members, so it could sail
+		// past 100% and did: 125.8%.
 		$badge_earners    = (int) $wpdb->get_var(
 			$wpdb->prepare(
-				"SELECT COUNT(DISTINCT user_id) FROM {$wpdb->prefix}wb_gam_user_badges WHERE earned_at >= %s",
+				"SELECT COUNT(DISTINCT b.user_id)
+				   FROM {$wpdb->prefix}wb_gam_user_badges b
+				   JOIN {$wpdb->users} u ON u.ID = b.user_id
+				  WHERE b.earned_at >= %s
+				    AND EXISTS (
+				        SELECT 1 FROM {$wpdb->prefix}wb_gam_points p
+				         WHERE p.user_id = b.user_id AND p.created_at >= %s
+				    )",
+				$since,
 				$since
 			)
 		);
@@ -386,9 +419,15 @@ final class AnalyticsDashboard {
 			? round( ( $challenges_completed / $challenges_started ) * 100, 1 )
 			: 0;
 
-		// Active streaks (current_streak > 0).
+		// Active streaks (current_streak > 0), counting only members who still exist.
+		//
+		// This is the one that printed 6822.5%: 11,530 streak rows over 169 live members, because
+		// 11,378 of those rows belonged to members who had been deleted.
 		$active_streaks    = (int) $wpdb->get_var(
-			"SELECT COUNT(*) FROM {$wpdb->prefix}wb_gam_streaks WHERE current_streak > 0"
+			"SELECT COUNT(DISTINCT s.user_id)
+			   FROM {$wpdb->prefix}wb_gam_streaks s
+			   JOIN {$wpdb->users} u ON u.ID = s.user_id
+			  WHERE s.current_streak > 0"
 		);
 		$streak_health_pct = $total_members > 0
 			? round( ( $active_streaks / $total_members ) * 100, 1 )
@@ -491,13 +530,6 @@ final class AnalyticsDashboard {
 		<?php
 	}
 
-	/**
-	 * Render an inline SVG-style bar sparkline for daily points data.
-	 *
-	 * @param array<string, int> $daily_points Map of Y-m-d date strings to point totals.
-	 * @param int                $period       Number of days the sparkline covers.
-	 * @return void
-	 */
 	/**
 	 * Return a human-readable label for action IDs not in the Registry
 	 * (e.g., BuddyPress integration IDs loaded via manifests).
@@ -760,24 +792,69 @@ final class AnalyticsDashboard {
 		}
 
 		// Fill gaps so every day in range has a value.
+		//
+		// The day keys are built in the SITE's clock, because that is the clock they are grouped by:
+		// created_at is written with current_time('mysql'), so DATE(created_at) is a site-local day.
+		// This loop used gmdate() — a UTC day — so on any site not on UTC the two sets of keys did not
+		// line up, and a day that HAD points rendered as an empty column. The chart was not just ugly,
+		// it was wrong.
 		$end_ts   = time();
 		$start_ts = strtotime( "-{$period} days", $end_ts );
 		$filled   = array();
 		for ( $ts = $start_ts; $ts <= $end_ts; $ts += DAY_IN_SECONDS ) {
-			$day            = gmdate( 'Y-m-d', $ts );
+			$day            = wp_date( 'Y-m-d', $ts );
 			$filled[ $day ] = $daily_points[ $day ] ?? 0;
 		}
 
-		$max = max( $filled ) ?: 1;
-		$w   = 100 / count( $filled ); // % width per bar
+		$max   = max( $filled ) ?: 1;
+		$total = array_sum( $filled );
+		$days  = array_keys( $filled );
+		$first = (string) reset( $days );
+		$last  = (string) end( $days );
 
-		echo '<div class="wb-gam-analytics__sparkline" aria-hidden="true">';
+		// A chart with no scale is a picture of some rectangles.
+		//
+		// It rendered as bare bars: no axis, no labels, no baseline. And because one busy day sets the
+		// maximum, every other day was drawn at ~1% of 80px — a row of 1px stubs that read as broken
+		// rather than as "quiet days". The scale is now stated, so a tall bar next to flat ones is
+		// legible as what it is instead of looking like a rendering fault.
+		$summary = sprintf(
+			/* translators: 1: number of points on the busiest day, 2: total points, 3: start date, 4: end date. */
+			__( 'Daily points. Busiest day: %1$s points. Total: %2$s points, %3$s to %4$s.', 'wb-gamification' ),
+			number_format_i18n( $max ),
+			number_format_i18n( $total ),
+			$first,
+			$last
+		);
+
+		echo '<div class="wb-gam-analytics__chart">';
+
+		// role=img + a label, rather than aria-hidden. The chart WAS hidden from assistive tech
+		// entirely, which means the only trend on the page did not exist for a screen-reader user.
+		echo '<div class="wb-gam-analytics__sparkline" role="img" aria-label="' . esc_attr( $summary ) . '">';
+
+		$w = 100 / max( 1, count( $filled ) ); // % width per bar.
+
 		foreach ( $filled as $day => $pts ) {
-			$h         = (int) round( ( $pts / $max ) * 100 );
-			$bar_title = esc_attr( $day . ': ' . number_format_i18n( $pts ) . ' pts' );
+			// A day with points must be VISIBLE. Rounded against a large max, a quiet day floors to 0%
+			// and disappears, so "a few points" and "no points at all" looked identical.
+			$h = $pts > 0 ? max( 2, (int) round( ( $pts / $max ) * 100 ) ) : 0;
+
+			$bar_title = esc_attr( $day . ': ' . number_format_i18n( $pts ) . ' ' . __( 'pts', 'wb-gamification' ) );
 			$bar_width = esc_attr( number_format( $w, 4 ) );
-			echo '<div class="wb-gam-analytics__spark-bar" style="--bar-h:' . $h . '%;--bar-w:' . $bar_width . '%" title="' . $bar_title . '"></div>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- $h is int, $bar_width and $bar_title are esc_attr()-escaped.
+
+			echo '<div class="wb-gam-analytics__spark-bar' . ( 0 === $h ? ' is-empty' : '' ) . '" style="--bar-h:' . (int) $h . '%;--bar-w:' . $bar_width . '%" title="' . $bar_title . '"></div>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- $h is an int; $bar_width and $bar_title are esc_attr()-escaped.
 		}
+
+		echo '</div>';
+
+		// The axis. Without the maximum printed somewhere, the tallest bar could be 10 points or 10
+		// million and the chart looks identical.
+		echo '<div class="wb-gam-analytics__chart-axis">';
+		echo '<span class="wb-gam-analytics__chart-max">' . esc_html( sprintf( /* translators: %s: highest daily points total. */ __( 'peak %s', 'wb-gamification' ), number_format_i18n( $max ) ) ) . '</span>';
+		echo '<span class="wb-gam-analytics__chart-dates"><span>' . esc_html( $first ) . '</span><span>' . esc_html( $last ) . '</span></span>';
+		echo '</div>';
+
 		echo '</div>';
 	}
 }

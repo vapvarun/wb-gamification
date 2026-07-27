@@ -209,7 +209,13 @@ final class ProfilePage {
 	 * @param string $user_login User login (slug).
 	 */
 	public static function profile_url( string $user_login ): string {
-		return home_url( '/' . self::slug_base() . '/' . rawurlencode( $user_login ) );
+		// Trailing slash deliberately. The rewrite rule accepts both forms, but
+		// WordPress canonical-redirects the unslashed one, so emitting it cost a
+		// 301 on every link. That was cheap to ignore while only the share page
+		// linked here; since 1.6.4 every leaderboard row, podium slot and kudos
+		// entry resolves through MemberUrl to this URL, so it is the form that
+		// should ship — and the one og:url ought to advertise.
+		return home_url( '/' . self::slug_base() . '/' . rawurlencode( $user_login ) . '/' );
 	}
 
 	/**
@@ -381,7 +387,7 @@ final class ProfilePage {
 		wp_enqueue_script(
 			'wb-gam-profile-visibility',
 			WB_GAM_URL . 'assets/js/profile-visibility.js',
-			array(),
+			array( 'wb-gam-mount', 'wb-gam-rest' ),
 			WB_GAM_VERSION,
 			true
 		);

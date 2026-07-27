@@ -210,6 +210,22 @@ final class CommunityChallengesController extends WP_REST_Controller {
 				array( 'status' => 404 )
 			);
 		}
+
+		// The LIST route already refuses to show a non-active challenge to a non-admin. This one, on the
+		// same public namespace, handed over any row you could name the ID of -- so walking 1, 2, 3...
+		// read back the titles of drafts and retired challenges the owner had not published. Two routes
+		// over the same table disagreeing about who may see what is not a policy, it is an oversight.
+		//
+		// Same answer as a challenge that does not exist: 404. Distinguishing "no such challenge" from
+		// "exists, but not for you" is itself the leak.
+		if ( 'active' !== (string) ( $row['status'] ?? '' ) && true !== $this->admin_check() ) {
+			return new WP_Error(
+				'wb_gam_community_challenge_not_found',
+				__( 'Community challenge not found.', 'wb-gamification' ),
+				array( 'status' => 404 )
+			);
+		}
+
 		return new WP_REST_Response( $row, 200 );
 	}
 

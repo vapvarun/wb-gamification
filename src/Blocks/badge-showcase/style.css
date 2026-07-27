@@ -419,3 +419,49 @@ body.buddyx-dark-theme .wb-gam-badge-showcase__badge--locked .wb-gam-badge-showc
 		background: color-mix( in srgb, var( --wb-gam-color-text-muted ) 14%, white );
 	}
 }
+
+/* ── Share toggle (own board only) ───────────────────────────────── */
+
+/* A badge is private until its owner publishes it. This button is the only way through that gate, so
+ * it has to look like a control and not like decoration -- but it must not shout over the badge it
+ * belongs to either. Quiet by default; unmistakably ON once shared. */
+.wb-gam-badge-showcase__share {
+	margin-top: 8px;
+	padding: 4px 10px;
+	border: 1px solid var( --wb-gam-badge-border );
+	border-radius: 999px;
+	background: transparent;
+	color: var( --wb-gam-badge-text-muted );
+	font-size: 0.7rem;
+	font-weight: 600;
+	line-height: 1.4;
+	cursor: pointer;
+	transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+}
+
+.wb-gam-badge-showcase__share:hover,
+.wb-gam-badge-showcase__share:focus-visible {
+	color: var( --wb-gam-badge-text );
+	border-color: var( --wb-gam-badge-text-muted );
+}
+
+/* Published. The member is looking at a badge that strangers can now see, and that should be
+ * obvious at a glance -- "did I share this?" is the question this state exists to answer. */
+.wb-gam-badge-showcase__share[data-shared="1"] {
+	color: var( --wb-gam-badge-success );
+	border-color: var( --wb-gam-badge-success );
+	background: var( --wb-gam-badge-success-soft );
+}
+
+.wb-gam-badge-showcase__share:disabled {
+	opacity: 0.6;
+	cursor: progress;
+}
+
+@media ( max-width: 480px ) {
+	.wb-gam-badge-showcase__share {
+		/* Thumb-sized on a phone: 4px padding is a target you miss. */
+		padding: 8px 12px;
+		font-size: 0.75rem;
+	}
+}

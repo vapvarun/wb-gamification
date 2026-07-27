@@ -33,11 +33,9 @@ class AccessExclusionTest extends TestCase {
 		Functions\when( 'get_user_meta' )->justReturn( '' );
 		Functions\when( 'get_users' )->justReturn( array() );
 		Functions\when( 'apply_filters' )->returnArg( 2 );
-		PointsEngine::flush_exclusion_cache();
 	}
 
 	protected function tearDown(): void {
-		PointsEngine::flush_exclusion_cache();
 		Monkey\tearDown();
 		parent::tearDown();
 	}
@@ -68,7 +66,6 @@ class AccessExclusionTest extends TestCase {
 				return 'wb_gam_excluded_users' === $name ? array( 42 ) : array();
 			}
 		);
-		PointsEngine::flush_exclusion_cache();
 		$this->assertFalse( PointsEngine::user_can_earn( 42 ) );
 		$this->assertTrue( PointsEngine::user_can_earn( 7 ) );
 	}
@@ -99,7 +96,6 @@ class AccessExclusionTest extends TestCase {
 				return 1 === $id ? $admin : $member;
 			}
 		);
-		PointsEngine::flush_exclusion_cache();
 		$this->assertFalse( PointsEngine::user_can_earn( 1 ) );
 		$this->assertTrue( PointsEngine::user_can_earn( 99 ) );
 	}

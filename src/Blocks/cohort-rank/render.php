@@ -34,6 +34,7 @@ defined( 'ABSPATH' ) || exit;
 
 
 use WBGam\Blocks\CSS as WB_Gam_Block_CSS;
+use WBGam\Blocks\EmptyState;
 use WBGam\Engine\BlockHooks;
 use WBGam\Engine\Privacy;
 use WBGam\Engine\CohortEngine;
@@ -83,11 +84,13 @@ if ( ! $wb_gam_user_id ) {
 			'style' => '' !== $wb_gam_inline ? $wb_gam_inline : null,
 		)
 	);
-	printf(
-		'<div %s><p class="wb-gam-cohort-rank__empty">%s</p></div>',
-		$wb_gam_wrapper, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-		esc_html__( 'Log in to see your cohort league.', 'wb-gamification' )
+		$wb_gam_empty = EmptyState::render(
+		'cohort-rank',
+		$wb_gam_wrapper,
+		__( 'Log in to see your cohort league.', 'wb-gamification' )
 	);
+	echo $wb_gam_empty; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- EmptyState escapes its message and CTA; the wrapper is get_block_wrapper_attributes() output.
+
 	return;
 }
 
@@ -101,11 +104,13 @@ if ( null === $wb_gam_standing ) {
 			'style' => '' !== $wb_gam_inline ? $wb_gam_inline : null,
 		)
 	);
-	printf(
-		'<div %s><p class="wb-gam-cohort-rank__empty">%s</p></div>',
-		$wb_gam_wrapper, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-		esc_html__( 'You have not been assigned to a cohort yet. New cohorts are formed every Monday.', 'wb-gamification' )
+		$wb_gam_empty = EmptyState::render(
+		'cohort-rank',
+		$wb_gam_wrapper,
+		__( 'You have not been assigned to a cohort yet. New cohorts are formed every Monday.', 'wb-gamification' )
 	);
+	echo $wb_gam_empty; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- EmptyState escapes its message and CTA; the wrapper is get_block_wrapper_attributes() output.
+
 	return;
 }
 
@@ -174,9 +179,9 @@ BlockHooks::before(
 	</div>
 
 	<?php if ( empty( $wb_gam_standings ) ) : ?>
-		<p class="wb-gam-cohort-rank__empty">
-			<?php esc_html_e( 'No standings available yet - your cohort will populate as members earn points this week.', 'wb-gamification' ); ?>
-		</p>
+		<?php
+		echo \WBGam\Blocks\EmptyState::body( 'cohort-rank', __( 'No standings available yet - your cohort will populate as members earn points this week.', 'wb-gamification' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped in EmptyState.
+		?>
 	<?php else : ?>
 		<ol class="wb-gam-cohort-rank__list" role="list">
 			<?php foreach ( $wb_gam_standings as $wb_gam_entry ) :

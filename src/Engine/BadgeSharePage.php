@@ -95,11 +95,37 @@ final class BadgeSharePage {
 		$badge = BadgeEngine::get_badge_def( $badge_id );
 		$user  = get_userdata( $user_id );
 
-		if ( ! $badge || ! $user || ! BadgeEngine::has_badge( $user_id, $badge_id ) ) {
+		// No such badge, or no such member: nothing to link to, and no member data involved.
+		if ( ! $badge || ! $user ) {
 			global $wp_query;
 			$wp_query->set_404();
 			status_header( 404 );
 			return;
+		}
+
+		// The page is the third surface keyed on a guessable (badge_id, user_id) -- the two REST routes
+		// got all the attention, and this one renders the member's name, avatar and earn date as an
+		// actual HTML page that a search engine will happily index. It needs the same consent gate as
+		// they do: the member publishes, or nobody sees this.
+		//
+		// But a bare 404 here breaks something real, and only a live BuddyNext site showed it.
+		// BuddyNext's GamificationBridge announces a badge award in the activity feed and links it to
+		// THIS URL. Making badges private by default therefore pointed every one of those announcements
+		// at a dead page: "Varun earned a badge" -> 404. The gate is right; the dead end is not.
+		//
+		// So send them to the member's public profile instead, which is where someone clicking that
+		// announcement actually wanted to go.
+		//
+		// Uniformly, for "not earned" AND "not published" alike -- and that uniformity IS the privacy
+		// property. If an unearned badge 404'd while an unpublished one redirected, the difference
+		// between the two responses would answer exactly the question the enumeration was asking:
+		// "does this member hold this badge?" Both must look the same from outside.
+		$wb_gam_visible = BadgeEngine::has_badge( $user_id, $badge_id )
+			&& BadgeShare::can_view_public( $user_id, $badge_id );
+
+		if ( ! $wb_gam_visible ) {
+			wp_safe_redirect( ProfilePage::profile_url( (string) $user->user_login ), 302 );
+			exit;
 		}
 
 		$share_url   = self::get_share_url( $badge_id, $user_id );
@@ -208,10 +234,7 @@ final class BadgeSharePage {
 
 		$site_name   = get_bloginfo( 'name' );
 		$avatar_url  = get_avatar_url( $user->ID, array( 'size' => 96 ) );
-		$profile_url = \WBGam\BuddyPress\UserUrl::resolve( (int) $user->ID );
-		if ( '' === $profile_url ) {
-			$profile_url = get_author_posts_url( $user->ID );
-		}
+		$profile_url = MemberUrl::resolve( (int) $user->ID );
 
 		$share_text = sprintf(
 			/* translators: 1: badge name, 2: site name */
@@ -312,15 +335,17 @@ final class BadgeSharePage {
 				<?php endif; ?>
 
 				<div class="wb-gam-share-card__cta">
-					<a class="wb-gam-share-card__cta-primary" href="<?php echo esc_url( $profile_url ); ?>">
-						<?php
-						printf(
-							/* translators: %s: member display name. */
-							esc_html__( "View %s's achievements", 'wb-gamification' ),
-							esc_html( $user->display_name )
-						);
-						?>
-					</a>
+					<?php if ( '' !== $profile_url ) : ?>
+						<a class="wb-gam-share-card__cta-primary" href="<?php echo esc_url( $profile_url ); ?>">
+							<?php
+							printf(
+								/* translators: %s: member display name. */
+								esc_html__( "View %s's achievements", 'wb-gamification' ),
+								esc_html( $user->display_name )
+							);
+							?>
+						</a>
+					<?php endif; ?>
 					<a class="wb-gam-share-card__cta-secondary" href="<?php echo esc_url( home_url( '/' ) ); ?>">
 						<?php
 						printf(

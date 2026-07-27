@@ -50,7 +50,361 @@ defined( 'ABSPATH' ) || exit;
 final class BadgeEngine {
 
 	private const CACHE_GROUP = 'wb_gamification';
-	private const CACHE_TTL   = 60; // Seconds.
+
+	/**
+	 * Daily pass for conditions no award can change (tenure).
+	 */
+	public const CRON_PASS = 'wb_gam_badge_cron_pass';
+
+	/**
+	 * Retroactive backfill for one badge.
+	 */
+	public const BACKFILL_HOOK = 'wb_gam_badge_backfill_page';
+
+	/**
+	 * Members evaluated per backfill tick.
+	 */
+	private const BACKFILL_PAGE_SIZE = 500;
+
+	/**
+	 * Members evaluated per cron tick. Keyset-paged: no single tick carries the site.
+	 */
+	private const CRON_PAGE_SIZE = 500;
+
+	/**
+	 * Arm the daily badge pass, and retire the engine cron it replaces.
+	 *
+	 * @return void
+	 */
+	public static function maybe_schedule_cron_pass(): void {
+		// TenureBadgeEngine's cron is gone with the engine. Clear it, or it stays scheduled forever
+		// on every existing site, firing a hook nothing listens to.
+		wp_clear_scheduled_hook( 'wb_gam_tenure_check' );
+
+		if ( ! function_exists( 'as_schedule_recurring_action' ) || ! function_exists( 'as_has_scheduled_action' ) ) {
+			return;
+		}
+
+		// Guarded, per the AS-schedule contract: re-arming on every init must never stack duplicates.
+		if ( ! as_has_scheduled_action( self::CRON_PASS, array(), 'wb-gamification' ) ) {
+			as_schedule_recurring_action( time() + HOUR_IN_SECONDS, DAY_IN_SECONDS, self::CRON_PASS, array(), 'wb-gamification' );
+		}
+	}
+
+	/**
+	 * Deactivation hook — clear the recurring daily badge cron pass.
+	 *
+	 * Mirrors LeaderboardEngine::deactivate(). Without this, the RECURRING
+	 * Action Scheduler action armed by maybe_schedule_cron_pass() keeps
+	 * rescheduling itself forever after the plugin is deactivated — AS
+	 * actions are not tied to plugin lifecycle the way WP-Cron events
+	 * cleared via register_deactivation_hook are, so nothing stops it
+	 * unless we explicitly unschedule it here.
+	 *
+	 * @return void
+	 */
+	public static function deactivate(): void {
+		if ( function_exists( 'as_unschedule_all_actions' ) ) {
+			as_unschedule_all_actions( self::CRON_PASS, array(), 'wb-gamification' );
+		}
+		// Legacy WP-Cron event predating the Action Scheduler migration (see
+		// maybe_schedule_cron_pass()) — cleared here too in case a site is
+		// deactivating before ever reaching init on this version.
+		wp_clear_scheduled_hook( 'wb_gam_tenure_check' );
+	}
+
+	/**
+	 * Start a retroactive backfill -- ONLY when the owner asked for one.
+	 *
+	 * This is never automatic. Awarding a badge to ten thousand members who qualified years ago is
+	 * a product decision the SITE OWNER makes, not something the plugin does to their community
+	 * behind their back. Plenty of owners launch a badge deliberately "from today onwards", and
+	 * a surprise flood of notifications is not a feature.
+	 *
+	 * @param string $badge_id Badge to backfill.
+	 * @return void
+	 */
+	public static function start_backfill( string $badge_id ): void {
+		if ( '' === $badge_id ) {
+			return;
+		}
+
+		global $wpdb;
+
+		// Reset progress. The owner will watch this number, so it has to start honest.
+		update_option(
+			'wb_gam_backfill_' . $badge_id,
+			array(
+				'checked'    => 0,
+				'awarded'    => 0,
+				'total'      => (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->users}" ),
+				'started_at' => current_time( 'mysql' ),
+				'done'       => false,
+			),
+			false
+		);
+
+		self::schedule_backfill_page( $badge_id, 0 );
+	}
+
+	/**
+	 * Award one page of members who already qualify.
+	 *
+	 * DRIVEN FROM wp_users, NOT wb_gam_user_totals.
+	 *
+	 * The design spec said to drive this from wb_gam_user_totals, on the reasoning that "a member
+	 * with no points cannot satisfy any auto-condition". That is FALSE, and it took a tenure badge
+	 * to see it: a member with zero points absolutely satisfies "has been a member for 365 days" --
+	 * they joined a year ago and never did anything. On the live site that would have silently
+	 * skipped 18 members, and on a real community it is every lurker who has been around for years.
+	 * The bounded-looking driving set was the wrong one.
+	 *
+	 * @param string $badge_id Badge being backfilled.
+	 * @param int    $cursor   Last user id processed.
+	 * @return void
+	 */
+	public static function backfill_page( string $badge_id, int $cursor = 0 ): void {
+		global $wpdb;
+
+		$rule = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT rule_config FROM {$wpdb->prefix}wb_gam_rules
+				  WHERE rule_type = 'badge_condition' AND target_id = %s AND is_active = 1",
+				$badge_id
+			)
+		);
+
+		$config = json_decode( (string) $rule, true );
+
+		if ( ! is_array( $config ) || ! BadgeRule::is_valid( $config ) ) {
+			self::finish_backfill( $badge_id );
+			return;
+		}
+
+		$user_ids = $wpdb->get_col(
+			$wpdb->prepare(
+				"SELECT ID FROM {$wpdb->users} WHERE ID > %d ORDER BY ID ASC LIMIT %d",
+				$cursor,
+				self::BACKFILL_PAGE_SIZE
+			)
+		);
+
+		if ( ! $user_ids ) {
+			self::finish_backfill( $badge_id );
+			return;
+		}
+
+		$progress = (array) get_option( 'wb_gam_backfill_' . $badge_id, array() );
+		$awarded  = (int) ( $progress['awarded'] ?? 0 );
+		$checked  = (int) ( $progress['checked'] ?? 0 );
+
+		foreach ( $user_ids as $user_id ) {
+			$user_id = (int) $user_id;
+			++$checked;
+
+			if ( self::has_badge( $user_id, $badge_id ) ) {
+				continue;
+			}
+
+			$state = array(
+				'total'  => PointsEngine::get_total( $user_id, null ),
+				'earned' => self::get_user_earned_badge_ids( $user_id ),
+				'streak' => null,
+			);
+
+			// No $event. The rule is evaluated against the member's STATE -- which is exactly why
+			// the evaluator never lets condition logic touch the event.
+			if ( ! self::evaluate_rule( $user_id, $config, null, $state ) ) {
+				continue;
+			}
+
+			// Through award_badge(), so max_earners still holds. A backfill of a "first to reach
+			// Champion" badge over ten thousand qualifying members must still produce exactly one
+			// winner -- and it does, because scarcity is enforced under a lock in one place.
+			if ( self::award_badge( $user_id, $badge_id ) ) {
+				++$awarded;
+			}
+		}
+
+		$progress['checked'] = $checked;
+		$progress['awarded'] = $awarded;
+		update_option( 'wb_gam_backfill_' . $badge_id, $progress, false );
+
+		if ( count( $user_ids ) < self::BACKFILL_PAGE_SIZE ) {
+			self::finish_backfill( $badge_id );
+			return;
+		}
+
+		self::schedule_backfill_page( $badge_id, (int) end( $user_ids ) );
+	}
+
+	/**
+	 * Mark a backfill complete.
+	 *
+	 * @param string $badge_id Badge.
+	 * @return void
+	 */
+	private static function finish_backfill( string $badge_id ): void {
+		$progress         = (array) get_option( 'wb_gam_backfill_' . $badge_id, array() );
+		$progress['done'] = true;
+		update_option( 'wb_gam_backfill_' . $badge_id, $progress, false );
+	}
+
+	/**
+	 * Queue the next backfill page.
+	 *
+	 * @param string $badge_id Badge.
+	 * @param int    $cursor   Last user id processed.
+	 * @return void
+	 */
+	private static function schedule_backfill_page( string $badge_id, int $cursor ): void {
+		if ( ! function_exists( 'as_enqueue_async_action' ) ) {
+			self::backfill_page( $badge_id, $cursor );
+			return;
+		}
+
+		$args = array(
+			'badge_id' => $badge_id,
+			'cursor'   => $cursor,
+		);
+
+		// The handler schedules its own successor, so guard it -- an overlapping run would walk the
+		// same page twice. Awarding is idempotent, but the progress counter would double-count and
+		// the owner would watch a number that lies.
+		if ( function_exists( 'as_has_scheduled_action' )
+			&& as_has_scheduled_action( self::BACKFILL_HOOK, $args, 'wb-gamification' ) ) {
+			return;
+		}
+
+		as_enqueue_async_action( self::BACKFILL_HOOK, $args, 'wb-gamification' );
+	}
+
+	/**
+	 * Backfill progress for the admin screen.
+	 *
+	 * @param string $badge_id Badge.
+	 * @return array{checked:int,awarded:int,total:int,done:bool}|null
+	 */
+	public static function backfill_progress( string $badge_id ): ?array {
+		$progress = get_option( 'wb_gam_backfill_' . $badge_id );
+
+		return is_array( $progress ) ? $progress : null;
+	}
+
+	/**
+	 * Forget the cached rules list.
+	 */
+	public static function flush_rules_cache(): void {
+		wp_cache_delete( 'wb_gam_badge_rules', self::CACHE_GROUP );
+	}
+
+	/**
+	 * Every active badge rule, object-cached.
+	 *
+	 * Extracted from evaluate_on_award() because the daily cron pass needs exactly the same list,
+	 * and a second copy of this query would be a second place to forget the cache.
+	 *
+	 * @return array<int,array{badge_id:string,rule_config:string}>
+	 */
+	public static function get_active_rules(): array {
+		global $wpdb;
+
+		$rules = wp_cache_get( 'wb_gam_badge_rules', self::CACHE_GROUP );
+
+		if ( false === $rules ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$rules = $wpdb->get_results(
+				"SELECT target_id AS badge_id, rule_config
+				   FROM {$wpdb->prefix}wb_gam_rules
+				  WHERE rule_type = 'badge_condition' AND is_active = 1",
+				ARRAY_A
+			) ?: array();
+
+			wp_cache_set( 'wb_gam_badge_rules', $rules, self::CACHE_GROUP, 300 ); // 5 min TTL.
+		}
+
+		return (array) $rules;
+	}
+
+	/**
+	 * Daily pass: evaluate the badges that only the calendar can complete.
+	 *
+	 * Keyset-paged over members, one Action Scheduler job per page, each scheduling its successor.
+	 * TenureBadgeEngine walked every user on the site in a single cron tick; at 100k members that is
+	 * the fan-out this branch has spent the day removing everywhere else.
+	 *
+	 * @param int $cursor Last user id processed.
+	 * @return void
+	 */
+	public static function run_cron_pass( int $cursor = 0 ): void {
+		global $wpdb;
+
+		// Only rules that answer to `cron` at all -- which today means tenure. If an owner has no
+		// tenure badges, this costs one query and stops.
+		$rules = array_filter(
+			self::get_active_rules(),
+			static function ( $rule ) {
+				$config = json_decode( (string) $rule['rule_config'], true );
+				return is_array( $config ) && BadgeRule::is_relevant( $config, array( 'cron' ) );
+			}
+		);
+
+		if ( ! $rules ) {
+			return;
+		}
+
+		$user_ids = $wpdb->get_col(
+			$wpdb->prepare(
+				"SELECT ID FROM {$wpdb->users} WHERE ID > %d ORDER BY ID ASC LIMIT %d",
+				$cursor,
+				self::CRON_PAGE_SIZE
+			)
+		);
+
+		if ( ! $user_ids ) {
+			return;
+		}
+
+		foreach ( $user_ids as $user_id ) {
+			$user_id = (int) $user_id;
+			$earned  = self::get_user_earned_badge_ids( $user_id );
+			$total   = PointsEngine::get_total( $user_id, null );
+
+			self::evaluate_for_signals( $user_id, array( 'cron' ), null, $rules, $earned, $total );
+		}
+
+		if ( count( $user_ids ) < self::CRON_PAGE_SIZE ) {
+			return; // Short page: done.
+		}
+
+		self::schedule_cron_page( (int) end( $user_ids ) );
+	}
+
+	/**
+	 * Queue the next page of the daily pass.
+	 *
+	 * Guarded: the handler schedules its own successor, so without a dedupe check an overlapping run
+	 * would queue the same cursor twice.
+	 *
+	 * @param int $cursor Last user id processed.
+	 * @return void
+	 */
+	private static function schedule_cron_page( int $cursor ): void {
+		if ( ! function_exists( 'as_enqueue_async_action' ) ) {
+			self::run_cron_pass( $cursor );
+			return;
+		}
+
+		$args = array( 'cursor' => $cursor );
+
+		if ( function_exists( 'as_has_scheduled_action' )
+			&& as_has_scheduled_action( self::CRON_PASS, $args, 'wb-gamification' ) ) {
+			return;
+		}
+
+		as_enqueue_async_action( self::CRON_PASS, $args, 'wb-gamification' );
+	}
+	private const CACHE_TTL = 60; // Seconds.
 
 	/**
 	 * Object-cache key + TTL for the badge rarity map.
@@ -66,10 +420,66 @@ final class BadgeEngine {
 	public static function init(): void {
 		add_action( 'wb_gam_points_awarded', array( __CLASS__, 'evaluate_on_award' ), 10, 3 );
 
+		// A level change and a streak milestone move badges too, and nothing was listening for either.
+		//
+		// evaluate_for_signals()'s own docblock says "a level change, a streak milestone, and the
+		// awarding of another badge each emit their own signals" -- the machinery was built for exactly
+		// this and then never wired up. BadgeEngine::init() hooked wb_gam_points_awarded and nothing
+		// else, so two things were broken at once.
+		//
+		// First: `level_reached` and `streak_days` -- two of the eight condition types shipped in the
+		// multi-condition badge builder -- could never fire. A badge whose ONLY condition was "reach
+		// level 5" was unwinnable. It sat in the library looking configured.
+		//
+		// Second: deleting SiteFirstBadgeEngine (422e606) removed the only thing that HAD hooked
+		// wb_gam_level_changed and wb_gam_streak_milestone, so the badges that depended on those events
+		// lost their award path with it. That was a regression dressed as a cleanup.
+		//
+		// Both events are genuinely fired (LevelEngine:235, StreakEngine:429). They just had no
+		// listener. The relevance gate means these evaluate only the rules whose conditions actually
+		// name a level or a streak, so this costs nothing on the awards that do not.
+		add_action( 'wb_gam_level_changed', array( __CLASS__, 'evaluate_on_level_changed' ), 10, 1 );
+
+		// `wb_gam_streak_changed`, NOT `wb_gam_streak_milestone`. The milestone list (7, 14, 30,
+		// 60, 100, 180, 365) is the right set of tiers to celebrate and the wrong set to answer a
+		// question with: an owner who built a "5-day streak" badge in the condition builder got it
+		// on day 7, because day 5 emitted no event at all. The builder accepts any number, so the
+		// signal has to arrive on any number too. A streak moves at most once per member per day,
+		// and the relevance gate still means this only evaluates rules that name a streak.
+		add_action( 'wb_gam_streak_changed', array( __CLASS__, 'evaluate_on_streak_milestone' ), 10, 1 );
+
+		// An admin correcting a streak by hand is a streak change like any other -- the badge the
+		// member now qualifies for should not wait for their next login to be noticed.
+		add_action( 'wb_gam_streak_adjusted', array( __CLASS__, 'evaluate_on_streak_milestone' ), 10, 1 );
+
+		// Deriving a level_reached badge is DATA, not an announcement, so it must still happen when an
+		// import replays a member's history -- otherwise the migrated member ends up on the right level
+		// holding none of the badges that level was supposed to earn them.
+		add_action( 'wb_gam_level_imported', array( __CLASS__, 'evaluate_on_level_changed' ), 10, 1 );
+
+		// Conditions that no award can ever change still have to be evaluated by SOMETHING.
+		// tenure_days is the only one today: it moves with the calendar, not with anything a member
+		// does. This daily pass is what TenureBadgeEngine's cron used to be -- except it now
+		// evaluates whatever tenure rules the OWNER has configured, instead of a hardcoded list of
+		// four the owner could not see.
+		add_action( self::CRON_PASS, array( __CLASS__, 'run_cron_pass' ), 10, 1 );
+		add_action( self::BACKFILL_HOOK, array( __CLASS__, 'backfill_page' ), 10, 2 );
+
+		// Arm the daily pass. AS is not up until init.
+		if ( did_action( 'init' ) ) {
+			self::maybe_schedule_cron_pass();
+		} else {
+			add_action( 'init', array( __CLASS__, 'maybe_schedule_cron_pass' ) );
+		}
+
 		// Awarding a badge changes every badge's rarity denominator-share, so the
 		// cached map is dropped on award. Priority 5 = before the display-side
 		// listeners, so anything rendering in the same request recomputes fresh.
 		add_action( 'wb_gam_badge_awarded', array( __CLASS__, 'flush_rarity_cache' ), 5, 0 );
+		// Cache integrity, not an announcement: an import writes thousands of badges and every one of
+		// them moves rarity. If only the awarded hook flushed, rarity would be wrong until something
+		// else happened to award a badge.
+		add_action( 'wb_gam_badge_imported', array( __CLASS__, 'flush_rarity_cache' ), 5, 0 );
 	}
 
 	/**
@@ -165,23 +575,7 @@ final class BadgeEngine {
 	 * @param int   $points  Points awarded.
 	 */
 	public static function evaluate_on_award( int $user_id, Event $event, int $points ): void {
-		global $wpdb;
-
-		// Load all active badge conditions — typically ~30 rows.
-		// Object-cached to avoid hitting the DB on every single point award.
-		$cache_key = 'wb_gam_badge_rules';
-		$rules     = wp_cache_get( $cache_key, self::CACHE_GROUP );
-
-		if ( false === $rules ) {
-			$rules = $wpdb->get_results(
-				"SELECT target_id AS badge_id, rule_config
-				   FROM {$wpdb->prefix}wb_gam_rules
-				  WHERE rule_type = 'badge_condition' AND is_active = 1",
-				ARRAY_A
-			) ?: array();
-
-			wp_cache_set( $cache_key, $rules, self::CACHE_GROUP, 300 ); // 5 min TTL.
-		}
+		$rules = self::get_active_rules();
 
 		if ( empty( $rules ) ) {
 			return;
@@ -203,76 +597,332 @@ final class BadgeEngine {
 			?? ( isset( $event->metadata['point_type'] ) ? (string) $event->metadata['point_type'] : '' );
 		$total      = PointsEngine::get_total( $user_id, '' !== $event_type ? $event_type : null );
 
+		// The signals this award actually emitted.
+		//
+		// THIS IS WHAT MAKES THE AWARD PATH CHEAPER THAN IT WAS. Before, a "publish 10 posts" badge
+		// ran a COUNT(*) every time a member reacted to a comment, because evaluate_condition()
+		// short-circuited only when the required count was exactly 1. With 35 rules on the live
+		// site, 12 of them action_count with count > 1, that is twelve pointless COUNT queries on
+		// every single award. The gate deletes them.
+		$signals = array( 'points', 'action:' . (string) $event->action_id );
+
+		self::evaluate_for_signals( $user_id, $signals, $event, $rules, $earned, $total );
+	}
+
+	/**
+	 * Evaluate the badges a LEVEL change could have completed.
+	 *
+	 * Fires on `wb_gam_level_changed`. Only rules whose conditions name a level survive the relevance
+	 * gate, so a site with no level-conditioned badges pays one in-memory filter and no query.
+	 *
+	 * There is no Event here, and that is correct: nothing was awarded. A `level_reached` condition
+	 * answers from the member's level, which the level change is what just moved.
+	 *
+	 * @param int $user_id Member whose level changed.
+	 * @return void
+	 */
+	public static function evaluate_on_level_changed( int $user_id ): void {
+		if ( $user_id <= 0 ) {
+			return;
+		}
+
+		$rules = self::get_active_rules();
+
+		if ( empty( $rules ) ) {
+			return;
+		}
+
+		$earned = self::get_user_earned_badge_ids( $user_id );
+		$total  = PointsEngine::get_total( $user_id );
+
+		self::evaluate_for_signals( $user_id, array( 'level' ), null, $rules, $earned, $total );
+	}
+
+	/**
+	 * Evaluate the badges a STREAK change could have completed.
+	 *
+	 * Fires on `wb_gam_streak_changed` (every day the streak moves) and on
+	 * `wb_gam_streak_adjusted` (an admin set it by hand) -- NOT on
+	 * `wb_gam_streak_milestone`, which only fires at the seven celebration tiers and so could
+	 * never award a badge configured for any other number of days.
+	 *
+	 * Same shape as the level listener: no Event, because nothing was awarded -- the member simply
+	 * kept showing up, and a `streak_days` condition answers from the streak that just moved.
+	 *
+	 * @param int $user_id Member whose streak changed.
+	 * @return void
+	 */
+	public static function evaluate_on_streak_milestone( int $user_id ): void {
+		if ( $user_id <= 0 ) {
+			return;
+		}
+
+		$rules = self::get_active_rules();
+
+		if ( empty( $rules ) ) {
+			return;
+		}
+
+		$earned = self::get_user_earned_badge_ids( $user_id );
+		$total  = PointsEngine::get_total( $user_id );
+
+		self::evaluate_for_signals( $user_id, array( 'streak' ), null, $rules, $earned, $total );
+	}
+
+	/**
+	 * Evaluate every rule that COULD have been changed by these signals.
+	 *
+	 * Split out of evaluate_on_award() because the award path is not the only thing that can move a
+	 * badge: a level change, a streak milestone, and the awarding of another badge each emit their
+	 * own signals, and each can complete a rule that an award cannot.
+	 *
+	 * @param int        $user_id User being evaluated.
+	 * @param string[]   $signals Signals that just fired.
+	 * @param Event|null $event   The triggering event, or null (backfill/cron have none).
+	 * @param array      $rules   Active badge rules.
+	 * @param string[]   $earned  Badge ids this member already holds (mutated as new ones land).
+	 * @param int        $total   Primed point total.
+	 * @return void
+	 */
+	private static function evaluate_for_signals( int $user_id, array $signals, ?Event $event, array $rules, array &$earned, int $total ): void {
+		// Shared state, primed once per pass. Six of the eight condition types answer from this and
+		// cost zero queries.
+		$state = array(
+			'total'         => $total,
+			'earned'        => $earned,
+			'streak'        => null, // lazily read, only if a streak_days condition survives the gate
+			// Per-action counts, memoized as they are asked for.
+			//
+			// `action_count` was the one condition type that went to the database EVERY time it was
+			// evaluated, and tiered badges are the normal way people use it: Bronze at 5 comments,
+			// Silver at 25, Gold at 100 -- three badges, one action, one member. Every one of them is
+			// relevant when that action fires (correctly: the gate cannot know which tier is close),
+			// so every one of them ran its own COUNT(*).
+			//
+			// Measured on the dev site: a steady-state award cost 11 queries. With 20 tiered badges on
+			// the same action it cost 31 -- twenty byte-identical COUNT(*) queries, in a row, all
+			// asking exactly the same question about exactly the same member, inside a single award.
+			// The count cannot change between them: nothing writes to the ledger in the middle of an
+			// evaluation pass. Twenty round trips to learn one number.
+			//
+			// Keyed by action_id, because a member can hold badges on several actions.
+			'action_counts' => array(),
+		);
+
+		$newly_awarded = array();
+
 		foreach ( $rules as $rule ) {
 			if ( in_array( $rule['badge_id'], $earned, true ) ) {
-				continue; // Already earned — skip.
+				continue; // Already earned.
 			}
 
-			$config = json_decode( $rule['rule_config'], true );
-			if ( ! is_array( $config ) ) {
+			$config = json_decode( (string) $rule['rule_config'], true );
+			if ( ! is_array( $config ) || ! BadgeRule::is_valid( $config ) ) {
 				continue;
 			}
 
-			if ( self::evaluate_condition( $config, $user_id, $event, $total ) ) {
-				if ( self::award_badge( $user_id, $rule['badge_id'] ) ) {
-					// Add to in-memory list to prevent re-awarding if the same
-					// badge_id appears in more than one rule row.
-					$earned[] = $rule['badge_id'];
-				}
+			// THE GATE. If nothing that just happened could have changed this badge's answer, do
+			// not ask the question -- and do not pay for the SQL that answering it would cost.
+			if ( ! BadgeRule::is_relevant( $config, $signals ) ) {
+				continue;
 			}
+
+			if ( ! self::evaluate_rule( $user_id, $config, $event, $state ) ) {
+				continue;
+			}
+
+			if ( self::award_badge( $user_id, $rule['badge_id'] ) ) {
+				$earned[]          = $rule['badge_id'];
+				$state['earned'][] = $rule['badge_id'];
+				$newly_awarded[]   = $rule['badge_id'];
+			}
+		}
+
+		// A badge can be a condition of another badge. Awarding one emits `badge:{id}`, which may
+		// complete a rule that nothing else could -- so cascade, but only over the badges that
+		// actually landed. Bounded: each pass can only award badges not yet held, and the set of
+		// badges is finite, so this terminates.
+		if ( $newly_awarded ) {
+			$cascade = array();
+			foreach ( $newly_awarded as $badge_id ) {
+				$cascade[] = 'badge:' . $badge_id;
+			}
+			self::evaluate_for_signals( $user_id, $cascade, $event, $rules, $earned, $total );
 		}
 	}
 
 	/**
-	 * Evaluate a single badge condition.
+	 * Evaluate one grouped rule.
 	 *
-	 * @param array $config  Decoded condition config.
-	 * @param int   $user_id User being evaluated.
-	 * @param Event $event   Current event.
-	 * @param int   $total   User's current point total (pre-fetched to avoid N+1).
-	 * @return bool           True if the condition is met.
+	 * `$event` is used ONLY by the relevance gate, never by the condition logic -- so this works
+	 * with `$event = null`, which is exactly what the retroactive backfill needs: it evaluates a
+	 * member's state, not an event that happened to them.
+	 *
+	 * @param int        $user_id User being evaluated.
+	 * @param array      $rule    Grouped rule config.
+	 * @param Event|null $event   Unused by conditions; present for filters.
+	 * @param array      $state   Primed shared state (total, earned, streak).
+	 * @return bool True if the badge should be awarded.
 	 */
-	private static function evaluate_condition( array $config, int $user_id, Event $event, int $total ): bool {
-		$type = $config['condition_type'] ?? '';
+	public static function evaluate_rule( int $user_id, array $rule, ?Event $event, array &$state ): bool {
+		if ( ! BadgeRule::is_valid( $rule ) ) {
+			return false; // An empty rule never awards. An empty ALL is vacuously true, and would
+							// otherwise hand the badge to every member on the site.
+		}
+
+		$mode = BadgeRule::match_mode( $rule );
+
+		// Cheapest first, so a failing in-memory condition kills the badge before any SQL runs.
+		// With `all` short-circuiting on the first false, ordering is most of the saving.
+		foreach ( BadgeRule::by_cost( BadgeRule::conditions( $rule ) ) as $condition ) {
+			$met = self::evaluate_one( (array) $condition, $user_id, $event, $state );
+
+			if ( BadgeRule::MATCH_ALL === $mode && ! $met ) {
+				return false; // short-circuit
+			}
+			if ( BadgeRule::MATCH_ANY === $mode && $met ) {
+				return true;  // short-circuit
+			}
+		}
+
+		return BadgeRule::MATCH_ALL === $mode;
+	}
+
+	/**
+	 * Evaluate ONE condition.
+	 *
+	 * Eight types. SIX OF THEM COST ZERO QUERIES once $state is primed -- which is the only reason
+	 * multi-condition badges are affordable at all. Naively, 35 badges x 4 conditions, several of
+	 * them query-backed, is 120 evaluations per award. That does not survive 100k members.
+	 *
+	 * @param array      $condition One condition.
+	 * @param int        $user_id   User being evaluated.
+	 * @param Event|null $event     Triggering event, or null (backfill has none).
+	 * @param array      $state     Primed shared state, by reference (streak is read lazily).
+	 * @return bool
+	 */
+	private static function evaluate_one( array $condition, int $user_id, ?Event $event, array &$state ): bool {
+		$type = isset( $condition['type'] ) ? (string) $condition['type'] : '';
 
 		switch ( $type ) {
 
+			// ── Free: answered from state already primed for this pass ──────────────────────
 			case 'point_milestone':
-				return $total >= (int) ( $config['points'] ?? 0 );
+				return (int) $state['total'] >= (int) ( $condition['points'] ?? 0 );
 
-			case 'action_count':
-				$action_id = $config['action_id'] ?? '';
-				$required  = max( 1, (int) ( $config['count'] ?? 1 ) );
-				// Fast path: first-time badges only trigger on the matching action.
-				if ( 1 === $required && $event->action_id !== $action_id ) {
+			case 'level_reached':
+				// get_level_for_points() is PURE. (get_level_for_user() is not -- it performs up to
+				// two update_user_meta() WRITES on what looks like a read, which is why the award
+				// path does not touch it.)
+				$level = LevelEngine::get_level_for_points( (int) $state['total'] );
+				return $level && (int) ( $level['id'] ?? 0 ) >= (int) ( $condition['level_id'] ?? 0 );
+
+			case 'badge_earned':
+				return in_array( (string) ( $condition['badge_id'] ?? '' ), (array) $state['earned'], true );
+
+			case 'tenure_days':
+				$user = get_userdata( $user_id );
+				if ( ! $user ) {
 					return false;
 				}
-				return PointsEngine::get_action_count( $user_id, $action_id ) >= $required;
+				// user_registered is written by WordPress core in GMT. Compared against the same
+				// clock. Mixing this with site-local time is the bug this branch fixed five times.
+				$registered = strtotime( (string) $user->user_registered . ' UTC' );
+				if ( ! $registered ) {
+					return false;
+				}
+				// @clock-ok: both sides are real UTC. user_registered is stored by WP core in UTC and
+				// the strtotime() above appends an explicit ' UTC', so $registered is a true epoch --
+				// not the local-parsed-as-UTC value that makes this construct wrong elsewhere.
+				return (int) floor( ( time() - $registered ) / DAY_IN_SECONDS ) >= (int) ( $condition['days'] ?? 0 );
 
 			case 'admin_awarded':
-				return false; // Manual grants only; never auto-evaluates.
+				return false; // Manual grants only. Never auto-evaluates.
+
+			// ── One indexed lookup, and only when this condition survived the gate ──────────
+			case 'streak_days':
+				if ( null === $state['streak'] ) {
+					// get_streak(), not get_row() -- get_row() is PRIVATE. The seam check that
+					// approved this in the plan grepped for the function NAME and never looked at
+					// its visibility, which is exactly the kind of half-verification that produces
+					// a plan everyone trusts and nobody can build.
+					$state['streak'] = (int) ( StreakEngine::get_streak( $user_id )['current_streak'] ?? 0 );
+				}
+				return (int) $state['streak'] >= (int) ( $condition['days'] ?? 0 );
+
+			// ── One indexed COUNT / range scan ──────────────────────────────────────────────
+			case 'action_count':
+				$action_id = (string) ( $condition['action_id'] ?? '' );
+				$required  = max( 1, (int) ( $condition['count'] ?? 1 ) );
+				// No `count === 1` fast path any more. The relevance gate replaced it and does the
+				// job properly: this is only reached when the action it names actually fired --
+				// whatever the required count is. That fast path is why a "publish 10 posts" badge
+				// used to run a COUNT(*) every time someone reacted to a comment.
+				//
+				// Answered from the pass memo. Tiered badges (Bronze 5 / Silver 25 / Gold 100 on one
+				// action) are the ordinary way this condition is used, and every tier is relevant when
+				// that action fires -- so each tier used to run its own COUNT(*) for the same member
+				// and the same action, in the same pass, and get the same answer. It cannot differ:
+				// nothing writes to the ledger between two conditions of one evaluation.
+				if ( ! isset( $state['action_counts'][ $action_id ] ) ) {
+					$state['action_counts'][ $action_id ] = PointsEngine::get_action_count( $user_id, $action_id );
+				}
+
+				return (int) $state['action_counts'][ $action_id ] >= $required;
+
+			case 'points_in_period':
+				return self::points_in_period( $user_id, (string) ( $condition['period'] ?? 'week' ) )
+					>= (int) ( $condition['points'] ?? 0 );
 
 			default:
 				/**
 				 * Allow extensions to handle custom badge condition types.
 				 *
-				 * @param bool   $result  Whether the condition is met. Default false.
-				 * @param string $type    Condition type string.
-				 * @param array  $config  Full condition config.
-				 * @param int    $user_id User being evaluated.
-				 * @param Event  $event   Current event.
-				 * @param int    $total   Current point total.
+				 * @since 1.0.0
+				 *
+				 * @param bool       $result    Whether the condition is met. Default false.
+				 * @param string     $type      Condition type string.
+				 * @param array      $condition Full condition config.
+				 * @param int        $user_id   User being evaluated.
+				 * @param Event|null $event     Triggering event, or null.
 				 */
-				return (bool) apply_filters(
-					'wb_gam_badge_condition',
-					false,
-					$type,
-					$config,
-					$user_id,
-					$event,
-					$total
-				);
+				return (bool) apply_filters( 'wb_gam_evaluate_badge_condition', false, $type, $condition, $user_id, $event );
 		}
+	}
+
+	/**
+	 * Points a member earned inside a rolling window.
+	 *
+	 * CLOCK: wb_gam_points.created_at is written with current_time( 'mysql' ) -- SITE-LOCAL -- so
+	 * the window boundary is computed in that same clock. Using gmdate() or NOW() here would
+	 * reintroduce, in brand-new code, the exact defect this branch fixed FIVE times: on a site
+	 * behind UTC the window silently drops recent activity; ahead of UTC it pulls in activity from
+	 * before the window opened. CI stage 2.15 fails the build for an unannotated NOW().
+	 *
+	 * @param int    $user_id User.
+	 * @param string $period  day | week | month.
+	 * @return int
+	 */
+	private static function points_in_period( int $user_id, string $period ): int {
+		global $wpdb;
+
+		$windows = array(
+			'day'   => DAY_IN_SECONDS,
+			'week'  => 7 * DAY_IN_SECONDS,
+			'month' => 30 * DAY_IN_SECONDS,
+		);
+		$window  = $windows[ $period ] ?? ( 7 * DAY_IN_SECONDS );
+		$since   = gmdate( 'Y-m-d H:i:s', strtotime( current_time( 'mysql' ) ) - $window );
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		return (int) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COALESCE(SUM(points), 0) FROM {$wpdb->prefix}wb_gam_points
+				  WHERE user_id = %d AND created_at >= %s",
+				$user_id,
+				$since
+			)
+		);
 	}
 
 	// ── Public award / read API ────────────────────────────────────────────────
@@ -309,18 +959,66 @@ final class BadgeEngine {
 		}
 
 		// Eligibility gate: max_earners — stop awarding once N members hold it.
+		//
+		// This has to be ATOMIC and it was not: a bare COUNT-then-INSERT. Two workers both read
+		// $earner_count = 0 for a max_earners=1 badge, and both awarded it. UNIQUE(user_id,
+		// badge_id) does not save this -- that index stops ONE member holding a badge twice, and
+		// says nothing at all about TWO members both being "the first".
+		//
+		// Proven on a live site: two concurrent awards, and both members ended up holding "First
+		// Champion". Serialised on the badge now, so exactly one worker can be inside the
+		// count-then-award window at a time.
+		//
+		// This is the plugin's ONLY scarcity mechanism. SiteFirstBadgeEngine used to hand-roll a
+		// second one out of transients and COUNT(*)s -- three stacked guards, none atomic -- and
+		// it is gone.
 		if ( $def && ! empty( $def['max_earners'] ) ) {
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- live count needed; caching here would cause over-awarding.
-			$earner_count = (int) $wpdb->get_var(
-				$wpdb->prepare(
-					"SELECT COUNT(*) FROM {$wpdb->prefix}wb_gam_user_badges WHERE badge_id = %s",
-					$badge_id
-				)
+			return Lock::run(
+				'badge_scarcity_' . $badge_id,
+				static function () use ( $user_id, $badge_id, $earned_at, $def ) {
+					global $wpdb;
+
+					// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- live count needed; caching here would cause over-awarding.
+					$earner_count = (int) $wpdb->get_var(
+						$wpdb->prepare(
+							"SELECT COUNT(*) FROM {$wpdb->prefix}wb_gam_user_badges WHERE badge_id = %s",
+							$badge_id
+						)
+					);
+
+					if ( $earner_count >= (int) $def['max_earners'] ) {
+						return false;
+					}
+
+					return self::award_badge_unguarded( $user_id, $badge_id, $earned_at, $def );
+				},
+				// Lock declined means another worker is deciding this scarce slot right now.
+				// Do not award.
+				false
 			);
-			if ( $earner_count >= (int) $def['max_earners'] ) {
-				return false;
-			}
 		}
+
+		// Not a scarce badge: there is no slot to contend for, so there is nothing to serialise.
+		return self::award_badge_unguarded( $user_id, $badge_id, $earned_at, $def );
+	}
+
+	/**
+	 * Award the badge, having already passed every eligibility gate.
+	 *
+	 * Split out of award_badge() so the scarcity lock wraps EXACTLY the window that needs
+	 * serialising -- count the holders, then award -- and nothing more. Locking the whole method
+	 * would put every badge award on the site in a single queue; locking less than this window is
+	 * precisely what let two members both become "the first".
+	 *
+	 * @param int        $user_id   Member being awarded.
+	 * @param string     $badge_id  Badge to award.
+	 * @param string     $earned_at MySQL datetime the badge was earned.
+	 * @param array|null $def       Badge definition, already resolved by the caller.
+	 * @return bool True if this call is the one that awarded it.
+	 */
+	private static function award_badge_unguarded( int $user_id, string $badge_id, string $earned_at, ?array $def ): bool {
+		global $wpdb;
+
 		/**
 		 * Filter whether a specific badge should be awarded.
 		 *
@@ -403,24 +1101,52 @@ final class BadgeEngine {
 		// Bust earned-badges cache.
 		wp_cache_delete( "wb_gam_earned_badges_{$user_id}", self::CACHE_GROUP );
 
-		/**
-		 * Fires when a member earns a badge.
-		 *
-		 * @param int        $user_id  User who earned the badge.
-		 * @param array|null $def      Badge definition row, or null if not found.
-		 * @param string     $badge_id Badge identifier.
-		 */
-		do_action( 'wb_gam_badge_awarded', $user_id, $def ?? array(), $badge_id );
+		// The guard has to be HERE, at the do_action, and not in our listeners.
+		//
+		// We suppressed our own announcers (email, toast, activity, fediverse, webhook) and that was
+		// not enough, because wb_gam_badge_awarded is a PUBLIC hook and other plugins listen to it.
+		// BuddyNext alone attaches two listeners. During a migration they heard "member earned a badge"
+		// and told the member so -- a badge she actually earned in 2021. A migration tool cannot be
+		// built on third parties opting in to a flag they have never heard of; the only guard that
+		// covers a listener we do not own is not firing the hook it listens to.
+		//
+		// So an import fires wb_gam_badge_imported instead. Same arguments, different sentence: not
+		// "congratulate this member", but "history was replayed". An integration that wants to sync
+		// imported badges can listen for it; nothing that announces will ever hear it by accident.
+		if ( ImportMode::is_active() ) {
+			/**
+			 * Fires when a badge is written by an import, replaying history.
+			 *
+			 * The member is NOT to be notified -- they earned this long ago, on another plugin. Use
+			 * this to sync an imported badge outward (a CRM, a search index). Never to announce it.
+			 *
+			 * @since 1.6.4
+			 *
+			 * @param int        $user_id  User the badge was imported for.
+			 * @param array|null $def      Badge definition row, or null if not found.
+			 * @param string     $badge_id Badge identifier.
+			 */
+			do_action( 'wb_gam_badge_imported', $user_id, $def ?? array(), $badge_id );
+		} else {
+			/**
+			 * Fires when a member earns a badge.
+			 *
+			 * @param int        $user_id  User who earned the badge.
+			 * @param array|null $def      Badge definition row, or null if not found.
+			 * @param string     $badge_id Badge identifier.
+			 */
+			do_action( 'wb_gam_badge_awarded', $user_id, $def ?? array(), $badge_id );
 
-		/**
-		 * Fires after a badge is awarded to a user.
-		 *
-		 * @since 1.0.0
-		 *
-		 * @param int    $user_id  User who earned the badge.
-		 * @param string $badge_id Badge identifier.
-		 */
-		do_action( 'wb_gam_after_badge_award', $user_id, $badge_id );
+			/**
+			 * Fires after a badge is awarded to a user.
+			 *
+			 * @since 1.0.0
+			 *
+			 * @param int    $user_id  User who earned the badge.
+			 * @param string $badge_id Badge identifier.
+			 */
+			do_action( 'wb_gam_after_badge_award', $user_id, $badge_id );
+		}
 
 		// Dispatch outbound webhook. Event name MUST match the
 		// WebhooksController::VALID_EVENTS allowlist (`'badge_earned'`).
@@ -429,16 +1155,22 @@ final class BadgeEngine {
 		// 2026-05-27 stability audit found it had regressed to
 		// `badge_awarded`. Canonical: `badge_earned`. Don't change without
 		// updating WebhooksController::VALID_EVENTS + an integration journey.
-		WebhookDispatcher::dispatch(
-			'badge_earned',
-			$user_id,
-			null,
-			0,
-			array(
-				'badge_id'   => $badge_id,
-				'badge_name' => $def ? $def['name'] : $badge_id,
-			)
-		);
+		// Not during a migration. An import of a real community would otherwise deliver tens of
+		// thousands of "badge_earned" webhooks to the owner's Zapier/Make endpoint in one run -- for
+		// badges earned years ago, on the owner's first afternoon with the plugin. The badge is
+		// recorded; the notification is not sent. See WBGam\Engine\ImportMode.
+		if ( ! ImportMode::is_active() ) {
+			WebhookDispatcher::dispatch(
+				'badge_earned',
+				$user_id,
+				null,
+				0,
+				array(
+					'badge_id'   => $badge_id,
+					'badge_name' => $def ? $def['name'] : $badge_id,
+				)
+			);
+		}
 
 		return true;
 	}
@@ -489,6 +1221,8 @@ final class BadgeEngine {
 
 		global $wpdb;
 		// Exclude expired credentials so has_badge() returns false for expired ones.
+		// @clock-ok: expires_at is written in UTC (gmdate(), see award_badge) and the bound below is
+		// gmdate() too. Column and bound are in the same clock.
 		$ids = $wpdb->get_col(
 			$wpdb->prepare(
 				"SELECT badge_id FROM {$wpdb->prefix}wb_gam_user_badges
@@ -530,6 +1264,8 @@ final class BadgeEngine {
 		$now          = gmdate( 'Y-m-d H:i:s' );
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $placeholders is built from an int count; all values pass through prepare().
+		// @clock-ok: expires_at is written in UTC (gmdate(), see award_badge) and the bound is gmdate().
+		// earned_at in the same table is site-local -- the COLUMN decides the clock, not the table.
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT user_id, badge_id FROM {$wpdb->prefix}wb_gam_user_badges
@@ -557,6 +1293,9 @@ final class BadgeEngine {
 	public static function get_user_badges( int $user_id ): array {
 		global $wpdb;
 
+		// @clock-ok: the only time-compared column here is expires_at, written in UTC (gmdate()), and
+		// the bound is gmdate(). earned_at is also selected but is never compared in SQL -- it is
+		// site-local, and callers that render it must read it with current_time( 'timestamp' ).
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT b.id, b.name, b.description, b.image_url,
@@ -703,6 +1442,59 @@ final class BadgeEngine {
 	}
 
 	/**
+	 * Order badge definitions the way a member reads them.
+	 *
+	 * `ORDER BY category, name` in SQL is deterministic and unreadable: it sorts every progression
+	 * ladder alphabetically, so "10-Year Member" lands between "1-Year" and "2-Year", and the
+	 * points ladder reads 100, 500, 5000, 10000, 1000. Both are shipped defaults, so every install
+	 * showed it. That is the "badges display out of order" report.
+	 *
+	 * The threshold a badge asks for is what orders it -- see BadgeRule::display_threshold(). Ties
+	 * and badges with no numeric condition fall back to a NATURAL name sort, so even a library of
+	 * hand-named badges gets "Level 2" before "Level 10".
+	 *
+	 * Sorting happens here rather than in SQL because the threshold lives inside the rule's JSON
+	 * config; the alternative is a generated column and a migration to maintain for a board that
+	 * is read whole anyway.
+	 *
+	 * @param array<int,array<string,mixed>> $defs Badge definition rows (each needs id, name, category).
+	 * @return array<int,array<string,mixed>> Same rows, in display order.
+	 */
+	public static function sort_for_display( array $defs ): array {
+		$thresholds = array();
+		foreach ( self::get_active_rules() as $rule ) {
+			$config = json_decode( (string) ( $rule['rule_config'] ?? '' ), true );
+			if ( is_array( $config ) ) {
+				// get_active_rules() exposes the badge as `badge_id`; the column it comes from is
+				// `target_id`. Keying on the column name here silently produced no thresholds at
+				// all, and the natural-name fallback below hid it by fixing the tenure ladder
+				// anyway -- which is why this is asserted on the POINTS ladder in the tests.
+				$thresholds[ (string) $rule['badge_id'] ] = BadgeRule::display_threshold( $config );
+			}
+		}
+
+		usort(
+			$defs,
+			static function ( array $a, array $b ) use ( $thresholds ): int {
+				$cat = strcmp( (string) ( $a['category'] ?? '' ), (string) ( $b['category'] ?? '' ) );
+				if ( 0 !== $cat ) {
+					return $cat;
+				}
+
+				$ta = $thresholds[ (string) ( $a['id'] ?? '' ) ] ?? PHP_INT_MAX;
+				$tb = $thresholds[ (string) ( $b['id'] ?? '' ) ] ?? PHP_INT_MAX;
+				if ( $ta !== $tb ) {
+					return $ta <=> $tb;
+				}
+
+				return strnatcasecmp( (string) ( $a['name'] ?? '' ), (string) ( $b['name'] ?? '' ) );
+			}
+		);
+
+		return $defs;
+	}
+
+	/**
 	 * Insert a badge definition if it does not already exist.
 	 *
 	 * Used by importers to materialize a WB badge for each source achievement
@@ -771,6 +1563,8 @@ final class BadgeEngine {
 		if ( empty( $defs ) ) {
 			return array();
 		}
+
+		$defs = self::sort_for_display( $defs );
 
 		// Build earned-at + expires_at map in one query.
 		$now        = gmdate( 'Y-m-d H:i:s' );

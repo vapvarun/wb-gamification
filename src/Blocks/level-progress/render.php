@@ -38,6 +38,7 @@ defined( 'ABSPATH' ) || exit;
 
 
 use WBGam\Blocks\CSS as WB_Gam_Block_CSS;
+use WBGam\Blocks\EmptyState;
 use WBGam\Engine\BlockHooks;
 use WBGam\Engine\Privacy;
 use WBGam\Engine\LevelEngine;
@@ -94,11 +95,13 @@ if ( ! $wb_gam_user_id ) {
 		)
 	);
 	BlockHooks::before( 'level-progress', $wb_gam_attrs );
-	printf(
-		'<div %s><p class="wb-gam-level-progress__empty">%s</p></div>',
-		$wb_gam_wrapper, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-		esc_html__( 'Log in to see your level progress.', 'wb-gamification' )
+		$wb_gam_empty = EmptyState::render(
+		'level-progress',
+		$wb_gam_wrapper,
+		__( 'Log in to see your level progress.', 'wb-gamification' )
 	);
+	echo $wb_gam_empty; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- EmptyState escapes its message and CTA; the wrapper is get_block_wrapper_attributes() output.
+
 	BlockHooks::after( 'level-progress', $wb_gam_attrs );
 	return;
 }
@@ -147,11 +150,13 @@ if ( ! $wb_gam_level ) {
 		)
 	);
 	BlockHooks::before( 'level-progress', $wb_gam_attrs );
-	printf(
-		'<div %s><p class="wb-gam-level-progress__empty">%s</p></div>',
-		$wb_gam_wrapper, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-		esc_html__( 'Keep earning points to unlock your first level!', 'wb-gamification' )
+		$wb_gam_empty = EmptyState::render(
+		'level-progress',
+		$wb_gam_wrapper,
+		__( 'Keep earning points to unlock your first level!', 'wb-gamification' )
 	);
+	echo $wb_gam_empty; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- EmptyState escapes its message and CTA; the wrapper is get_block_wrapper_attributes() output.
+
 	BlockHooks::after( 'level-progress', $wb_gam_attrs );
 	return;
 }

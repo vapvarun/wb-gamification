@@ -88,6 +88,15 @@ final class StatusRetentionEngine {
 	 */
 	public static function deactivate(): void {
 		wp_clear_scheduled_hook( self::CRON_HOOK );
+
+		// The nightly check is only half of what this engine schedules. When a sweep does not finish in
+		// one tick it hands the next page to Action Scheduler under AS_PAGE_HOOK -- and deactivating
+		// mid-sweep left that continuation armed. Action Scheduler would then fire it on a site where
+		// this plugin is switched off: no listener, no work, just a job that runs forever because
+		// nobody told it the party was over.
+		if ( function_exists( 'as_unschedule_all_actions' ) ) {
+			as_unschedule_all_actions( self::AS_PAGE_HOOK, array(), 'wb_gam_retention' );
+		}
 	}
 
 	// ── Run ──────────────────────────────────────────────────────────────────
@@ -112,9 +121,11 @@ final class StatusRetentionEngine {
 			return; // Need at least two levels for threshold logic.
 		}
 
-		$week_start    = gmdate( 'Y-m-d', strtotime( 'monday this week' ) ) . ' 00:00:00';
-		$four_wk_start = gmdate( 'Y-m-d H:i:s', strtotime( '-4 weeks' ) );
-		$cutoff        = gmdate( 'Y-m-d H:i:s', strtotime( '-7 days' ) );
+		// Site clock: every one of these bounds wb_gam_points.created_at, written with
+		// current_time( 'mysql' ). See WBGam\Engine\Clock.
+		$week_start    = Clock::site_cutoff( 'monday this week' );
+		$four_wk_start = Clock::site_cutoff( '-4 weeks' );
+		$cutoff        = Clock::site_cutoff( '-7 days' );
 
 		// ONE PAGE of active members, walked by keyset cursor.
 		//

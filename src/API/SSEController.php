@@ -310,7 +310,8 @@ final class SSEController {
 
 		// 4 KB padding comment so any proxy with a small buffer flushes
 		// the response on the first byte instead of waiting to fill.
-		echo ': ' . str_repeat( ' ', 4096 ) . "\n\n";
+		$padding = ': ' . str_repeat( ' ', 4096 ) . "\n\n";
+		echo $padding; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- SSE stream, not HTML: a literal colon and 4096 spaces. There is nothing here to escape.
 		@ob_flush(); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- some configs throw when no buffer is active.
 		flush();
 
@@ -361,13 +362,21 @@ final class SSEController {
 				// output (newlines already \u-escaped); event_type is the only
 				// free-ish value, so strip CR/LF defensively.
 				$event_name = str_replace( array( "\r", "\n" ), '', (string) $row['event_type'] );
-				// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- SSE stream (not HTML); values are an int, a CRLF-stripped token, and JSON. See note above.
-				printf(
+
+				// The record is BUILT here and echoed on one line below.
+				//
+				// It used to be a multi-line printf() with the phpcs:ignore above the `printf(` --
+				// but the sniff reports on the ARGUMENT lines, so the annotation covered nothing and
+				// four EscapeOutput ERRORs shipped. An ignore has to sit on the line the sniff
+				// actually flags, and the reliable way to guarantee that is to have exactly one.
+				$record = sprintf(
 					"id: %d\nevent: %s\ndata: %s\n\n",
 					$last_id,
 					$event_name,
 					$data
 				);
+
+				echo $record; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- SSE stream, not HTML: esc_html() would corrupt the protocol and the JSON. $last_id is %d, $event_name is CRLF-stripped, $data is wp_json_encode output. See note above.
 			}
 
 			// Keep-alive comment — proxies that idle-close after 30s of

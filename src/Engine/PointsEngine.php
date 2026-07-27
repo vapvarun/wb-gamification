@@ -85,18 +85,12 @@ final class PointsEngine {
 
 		if ( $user_id <= 0 ) {
 			$can = false;
-		} elseif ( in_array( $user_id, self::excluded_user_ids(), true ) ) {
+		} elseif ( self::is_excluded_user( $user_id ) ) {
+			// Covers BOTH excluded roles and explicitly-excluded accounts. This used to check the
+			// roles again in a trailing branch, which meant two sources of truth for one rule.
 			$can = false;
 		} elseif ( get_user_meta( $user_id, 'wb_gam_sandboxed', true ) ) {
 			$can = false;
-		} else {
-			$excluded_roles = (array) get_option( 'wb_gam_excluded_roles', array() );
-			if ( ! empty( $excluded_roles ) ) {
-				$user = get_userdata( $user_id );
-				if ( $user && array_intersect( (array) $user->roles, $excluded_roles ) ) {
-					$can = false;
-				}
-			}
 		}
 
 		/**
@@ -114,47 +108,129 @@ final class PointsEngine {
 	}
 
 	/**
-	 * Per-request cache of resolved excluded user IDs. Null until first resolve.
+	 * Is this ONE member excluded from earning?
 	 *
-	 * @var int[]|null
-	 */
-	private static $excluded_ids_cache = null;
-
-	/**
-	 * Resolve the configured excluded user IDs, including users who hold an
-	 * excluded role. Cached per-request because it can run on every award.
+	 * Replaces excluded_user_ids(), which answered a question nobody asked: it expanded every
+	 * excluded ROLE into every user id holding it -- get_users( [ 'role__in' => ... ] ) with no
+	 * limit -- and handed back the array. On a 100k-member site with "subscriber" excluded that
+	 * was a hundred thousand ids in memory, built to answer "is user 42 excluded?".
 	 *
-	 * @return int[] User IDs that must never earn.
+	 * There is no request cache here because there is nothing expensive left to cache:
+	 * get_userdata() is already cached by WordPress, and the option is autoloaded.
+	 *
+	 * @param int $user_id User to test.
+	 * @return bool True if this member may never earn.
 	 */
-	public static function excluded_user_ids(): array {
-		if ( null !== self::$excluded_ids_cache ) {
-			return self::$excluded_ids_cache;
+	public static function is_excluded_user( int $user_id ): bool {
+		if ( $user_id <= 0 ) {
+			return false;
 		}
 
+		// Explicitly-named accounts. An admin types these one at a time, so the list is bounded
+		// by human patience -- a handful, never a hundred thousand.
 		$ids = array_map( 'absint', (array) get_option( 'wb_gam_excluded_users', array() ) );
-
-		$roles = (array) get_option( 'wb_gam_excluded_roles', array() );
-		if ( ! empty( $roles ) ) {
-			$by_role = get_users(
-				array(
-					'role__in' => $roles,
-					'fields'   => 'ID',
-				)
-			);
-			$ids     = array_merge( $ids, array_map( 'absint', $by_role ) );
+		if ( in_array( $user_id, $ids, true ) ) {
+			return true;
 		}
 
-		self::$excluded_ids_cache = array_values( array_unique( array_filter( $ids ) ) );
-		return self::$excluded_ids_cache;
+		$roles = array_filter( (array) get_option( 'wb_gam_excluded_roles', array() ) );
+		if ( ! $roles ) {
+			return false;
+		}
+
+		// Ask THIS user what roles they hold -- one cached lookup. Do NOT ask the site for every
+		// user who holds an excluded role: that is the question that produced a 100k-element
+		// array, and every caller of the old excluded_user_ids() only ever wanted to know about
+		// one member anyway.
+		$user = get_userdata( $user_id );
+
+		return $user ? (bool) array_intersect( (array) $user->roles, $roles ) : false;
 	}
 
 	/**
-	 * Reset the excluded-IDs request cache. Called after the admin saves the
-	 * Access settings so a later read in the same request reflects the change,
-	 * and used by the test suite to isolate cases.
+	 * The exclusion set as a SQL fragment, for queries that must rank or count members.
+	 *
+	 * The bug this replaces: an excluded ROLE was expanded into every user id it contained and
+	 * imploded into `AND user_id NOT IN (%d, %d, ...)`. Exclude "subscriber" on a 100k-member
+	 * site -- and subscriber IS most members -- and that is a prepared statement with a hundred
+	 * thousand placeholders. It exceeds max_allowed_packet and the leaderboard dies outright.
+	 *
+	 * A role is a PREDICATE, not a list. Predicates belong in SQL, where the database can answer
+	 * them without anyone building an array first.
+	 *
+	 * @param string $alias SQL alias of the table whose `user_id` is being filtered.
+	 * @return array{0:string,1:array<int,mixed>} [ SQL fragment, values to bind, in order ].
 	 */
-	public static function flush_exclusion_cache(): void {
-		self::$excluded_ids_cache = null;
+	public static function exclusion_sql( string $alias ): array {
+		global $wpdb;
+
+		return self::build_exclusion_sql(
+			array_map( 'absint', (array) get_option( 'wb_gam_excluded_users', array() ) ),
+			array_map( 'sanitize_key', (array) get_option( 'wb_gam_excluded_roles', array() ) ),
+			$alias,
+			$wpdb->get_blog_prefix() . 'capabilities',
+			$wpdb->usermeta
+		);
+	}
+
+	/**
+	 * Build the exclusion fragment from explicit inputs.
+	 *
+	 * Split out from exclusion_sql() with no WordPress in it, so the invariant that matters can
+	 * actually be tested: **the placeholder count is a function of what the ADMIN configured,
+	 * never of how many members the site has.** See ExclusionScaleTest.
+	 *
+	 * @param int[]    $user_ids       Explicitly excluded user IDs (admin-typed, bounded).
+	 * @param string[] $roles        Excluded role slugs (a site has a handful).
+	 * @param string   $alias          SQL alias of the table being filtered.
+	 * @param string   $cap_key        The capabilities meta key (e.g. `wp_capabilities`).
+	 * @param string   $usermeta_table Fully-qualified usermeta table name.
+	 * @return array{0:string,1:array<int,mixed>} [ SQL fragment, ordered bind values ].
+	 */
+	public static function build_exclusion_sql( array $user_ids, array $roles, string $alias, string $cap_key, string $usermeta_table ): array {
+		$sql    = '';
+		$values = array();
+
+		// Deliberately no WordPress in this method -- not absint(), not $wpdb->esc_like(). It
+		// takes everything it needs as arguments so the invariant it exists to protect (the
+		// placeholder count never tracks the member count) can be tested without booting WP.
+		// A rule that can only be checked against a live site is a rule nobody checks.
+		$user_ids = array_values( array_unique( array_filter( array_map( 'intval', $user_ids ) ) ) );
+		if ( $user_ids ) {
+			// A short admin-typed list is exactly what IN() is for. This one cannot run away.
+			$sql   .= ' AND ' . $alias . '.user_id NOT IN (' . implode( ',', array_fill( 0, count( $user_ids ), '%d' ) ) . ')';
+			$values = array_merge( $values, $user_ids );
+		}
+
+		$roles = array_values( array_unique( array_filter( $roles ) ) );
+		if ( $roles ) {
+			// WordPress stores roles as a serialised map in one usermeta row, so membership of a
+			// role is a LIKE on `"role_name"` -- ugly, but it is how core models it, and it lets
+			// the database answer "is this member a subscriber?" without PHP materialising a
+			// single id.
+			$likes = array();
+			$binds = array();
+			foreach ( $roles as $role ) {
+				$likes[] = 'um.meta_value LIKE %s';
+				// Same escaping $wpdb->esc_like() performs, inlined so this method stays free of
+				// WordPress. A role slug is sanitize_key()'d by the caller, so this is belt and
+				// braces rather than the only guard.
+				$binds[] = '%"' . addcslashes( (string) $role, '_%\\' ) . '"%';
+			}
+
+			$sql .= ' AND NOT EXISTS ( SELECT 1 FROM ' . $usermeta_table . ' um'
+				. ' WHERE um.user_id = ' . $alias . '.user_id'
+				. ' AND um.meta_key = %s'
+				. ' AND ( ' . implode( ' OR ', $likes ) . ' ) )';
+
+			// Order matters: meta_key is bound BEFORE the LIKEs, because that is the order the
+			// placeholders appear in. Get this wrong and prepare() binds the capability key into
+			// a user id, silently.
+			$values[] = $cap_key;
+			$values   = array_merge( $values, $binds );
+		}
+
+		return array( $sql, $values );
 	}
 
 	// ── Internal methods called by Engine ─────────────────────────────────────
@@ -368,12 +444,26 @@ final class PointsEngine {
 			$type = self::resolve_type( $event->metadata['point_type'] ?? null );
 		}
 
-		// Imported ledger rows keep their historical occurred-at (UTC) so
-		// "points this month" and streak windows reflect the real timeline;
-		// organic awards keep the site-local "now" they have always used.
+		// ONE CLOCK for this column, whoever writes it.
+		//
+		// An imported row keeps its historical occurred-at -- that part was right, and it is why
+		// "points this month" and streak windows reflect the real timeline rather than the import date.
+		// But it was written in UTC while an organic award is written with current_time('mysql'), which
+		// is site-local. One column, two clocks, in the core ledger -- the same defect just fixed for
+		// earned_at in the badge importers, left standing here.
+		//
+		// EVERY reader bounds this column in the site's clock (Clock::site_cutoff, site_day_start), so a
+		// UTC stamp lands in the wrong day. Measured on Los Angeles: a point imported for site-local
+		// 18:30 Tuesday was stored as 2026-07-15 01:30 -- a DIFFERENT DAY. It escaped that day's cap,
+		// fell into the wrong ISO week for get_week_count(), and rendered under a future date. On a site
+		// ahead of UTC it lands in the past instead.
+		//
+		// $event->created_at is ISO-8601 (Engine converts it), so strtotime() yields a TRUE epoch, and
+		// wp_date() renders a true epoch in the site's zone -- exactly once. Same fix as
+		// MyCredImporter. The gate cannot see this one: it is a WRITE, not a comparison.
 		if ( ! empty( $event->metadata['_import'] ) ) {
 			$ts         = strtotime( (string) $event->created_at );
-			$created_at = false !== $ts ? gmdate( 'Y-m-d H:i:s', $ts ) : gmdate( 'Y-m-d H:i:s' );
+			$created_at = false !== $ts ? wp_date( 'Y-m-d H:i:s', $ts ) : current_time( 'mysql' );
 		} else {
 			$created_at = current_time( 'mysql' );
 		}
@@ -746,10 +836,15 @@ final class PointsEngine {
 		// keep the batch a single round-trip; option-based exclusion covers the
 		// admin Access settings.
 		if ( ! $force ) {
-			$excluded = self::excluded_user_ids();
-			if ( ! empty( $excluded ) ) {
-				$user_ids = array_values( array_diff( $user_ids, $excluded ) );
-			}
+			// $user_ids is one batch, not the site. Asking "is this member excluded?" per row is
+			// a cached lookup each; building the whole excluded set to diff against was what
+			// pulled 100k ids into memory.
+			$user_ids = array_values(
+				array_filter(
+					$user_ids,
+					static fn( $uid ) => ! self::is_excluded_user( (int) $uid )
+				)
+			);
 		}
 
 		if ( empty( $user_ids ) ) {
@@ -1202,9 +1297,16 @@ final class PointsEngine {
 	private static function get_today_count( int $user_id, string $action_id, string $type ): int {
 		global $wpdb;
 		// Use range comparison so MySQL can use the idx_user_type_created index.
-		// wp_date() returns times in the site timezone, matching current_time('mysql').
-		$day_start = wp_date( 'Y-m-d 00:00:00' );
-		$day_end   = wp_date( 'Y-m-d 00:00:00', strtotime( '+1 day' ) );
+		//
+		// Both bounds are the SITE's day boundaries. wp_date() formats in the site timezone, which is
+		// why this looked right -- but strtotime( '+1 day' ) hands it an instant resolved in PHP's UTC
+		// frame, and wp_date() then re-frames THAT into the site zone. Near a day boundary the two
+		// disagree and the window can come out a day wide in the wrong place, or barely wide at all.
+		// The formatting was in the right clock; the instant was not.
+		//
+		// Clock anchors strtotime() to the site's own now, so "+1 day" means the site's tomorrow.
+		$day_start = Clock::site_day_start( 'today' );
+		$day_end   = Clock::site_day_start( '+1 day' );
 		return (int) $wpdb->get_var(
 			$wpdb->prepare(
 				"SELECT COUNT(*) FROM {$wpdb->prefix}wb_gam_points
@@ -1231,8 +1333,18 @@ final class PointsEngine {
 	 */
 	private static function get_week_count( int $user_id, string $action_id, string $type ): int {
 		global $wpdb;
-		// ISO week start: Monday 00:00:00 in site timezone.
-		$week_start = wp_date( 'Y-m-d 00:00:00', strtotime( 'monday this week' ) );
+		// ISO week start: Monday 00:00:00 in the site's timezone -- and the WEEKDAY has to be resolved
+		// in the site's clock too, not just the formatting.
+		//
+		// This looked right and was not. strtotime( 'monday this week' ) resolves against PHP's UTC
+		// frame, and wp_date() then re-frames that instant into the site timezone -- which can roll it
+		// back across a day boundary. Measured on Los Angeles on a Tuesday: the bound came out
+		// 2026-07-12, a SUNDAY, when the site's Monday was the 13th. A full day out, and the wrong
+		// weekday, so the weekly cap counted an extra day and every weekly limit was over-permissive.
+		//
+		// Clock::site_cutoff() anchors strtotime() to the SITE's now, so 'monday this week' means the
+		// site's Monday.
+		$week_start = Clock::site_cutoff( 'monday this week' );
 		return (int) $wpdb->get_var(
 			$wpdb->prepare(
 				"SELECT COUNT(*) FROM {$wpdb->prefix}wb_gam_points

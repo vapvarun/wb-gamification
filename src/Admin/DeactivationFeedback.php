@@ -81,10 +81,15 @@ final class DeactivationFeedback {
 			array(),
 			WB_GAM_VERSION
 		);
+		// Depends on the shared dialog utility -- focus return, ESC, backdrop, all of it in one place.
+		// It is registered on admin_enqueue_scripts@1 (see WB_Gamification::register_dialog_script),
+		// which it was NOT before: the handle simply did not exist in the admin, so this screen could
+		// not have consumed the shared dialog even if it had asked for it. That is the real reason this
+		// modal stayed hand-rolled after the other four were migrated.
 		wp_enqueue_script(
 			'wb-gam-deactivation-feedback',
 			plugins_url( 'assets/js/admin-deactivation-feedback.js', WB_GAM_FILE ),
-			array(),
+			array( 'wb-gam-dialog' ),
 			WB_GAM_VERSION,
 			true
 		);

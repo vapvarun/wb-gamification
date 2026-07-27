@@ -170,6 +170,36 @@ final class Registrar {
 			foreach ( array_unique( array_filter( (array) $block_type->editor_script_handles ) ) as $handle ) {
 				wp_set_script_translations( (string) $handle, 'wb-gamification', WB_GAM_PATH . 'languages' );
 			}
+
+			// Every view script may call `wbGam.onMount()`, and a global is only there if the script
+			// that defines it has already run. block.json cannot express that: wp-scripts derives a
+			// block's dependencies from its `import`s, and this is a runtime global, not an import --
+			// so the generated view.asset.php declares no dependencies at all and WordPress is free to
+			// print the two scripts in either order. Get it wrong and the block dies on a TypeError
+			// before it renders anything.
+			//
+			// Declaring the dependency here, once, is what makes the ordering a fact rather than a
+			// coincidence. It is added to EVERY view script rather than to a list of the ones that
+			// currently use onMount / rest -- a list is not a mechanism, and the next block to need
+			// one would be debugged the hard way. Both utilities are small, and only load on pages
+			// that render one of our blocks.
+			//
+			// wb-gam-rest (wbGam.rest()) is the shared fetch + X-WP-Nonce client with the expired-
+			// nonce retry path; any view script that talks to our REST API needs it for the same
+			// reason it needs wb-gam-mount.
+			foreach ( array_unique( array_filter( (array) $block_type->view_script_handles ) ) as $handle ) {
+				$script = wp_scripts()->query( (string) $handle, 'registered' );
+
+				if ( ! $script ) {
+					continue;
+				}
+
+				foreach ( array( 'wb-gam-mount', 'wb-gam-rest' ) as $shared_dep ) {
+					if ( ! in_array( $shared_dep, $script->deps, true ) ) {
+						$script->deps[] = $shared_dep;
+					}
+				}
+			}
 		}
 	}
 

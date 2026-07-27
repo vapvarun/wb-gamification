@@ -159,11 +159,22 @@ const { state, actions } = store( 'wb-gamification/hub', {
 		 */
 		init() {
 			// ESC key handler.
-			document.addEventListener( 'keydown', ( event ) => {
-				if ( event.key === 'Escape' && state.panelOpen ) {
-					actions.closePanel();
-				}
-			} );
+			//
+			// `data-wp-init` re-fires every time its element MOUNTS -- including each time a router
+			// swaps the region containing the hub back in. This listener is on `document`, which
+			// outlives the element, so an unguarded addEventListener here stacks a fresh copy on every
+			// navigation: two, then three, then four handlers all racing to close the same panel.
+			// Harmless today only because closePanel() happens to be idempotent, which is a thin thing
+			// to rely on. Bind the global exactly once.
+			if ( ! window.__wbGamHubEscBound ) {
+				window.__wbGamHubEscBound = true;
+
+				document.addEventListener( 'keydown', ( event ) => {
+					if ( event.key === 'Escape' && state.panelOpen ) {
+						actions.closePanel();
+					}
+				} );
+			}
 
 			// Auto-open from URL parameter (?panel=badges, etc.).
 			const ctx = getContext();

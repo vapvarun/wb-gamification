@@ -232,7 +232,8 @@ final class NudgeEngine {
 			return null;
 		}
 
-		$seven_days_ago = gmdate( 'Y-m-d H:i:s', strtotime( '-7 days' ) );
+		// earned_at is written by BadgeEngine with current_time( 'mysql' ) -- site-local.
+		$seven_days_ago = Clock::site_cutoff( '-7 days' );
 		$recent_count   = 0;
 
 		foreach ( $badges as $badge ) {

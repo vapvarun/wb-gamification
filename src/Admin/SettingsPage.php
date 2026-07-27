@@ -394,6 +394,9 @@ final class SettingsPage {
 	 */
 	private static function save_engagement_settings(): void {
 		// phpcs:disable WordPress.Security.NonceVerification.Missing -- Nonce verified by check_admin_referer() in handle_save().
+		// Show anonymous visitors a top-3 leaderboard preview on the hub.
+		update_option( 'wb_gam_hub_anon_leaderboard', isset( $_POST['wb_gam_hub_anon_leaderboard'] ) ? 1 : 0 );
+
 		// Daily login bonus.
 		update_option( 'wb_gam_login_bonus_enabled', isset( $_POST['wb_gam_login_bonus_enabled'] ) ? 1 : 0 );
 		if ( isset( $_POST['wb_gam_login_bonus_tiers'] ) ) {
@@ -524,6 +527,11 @@ final class SettingsPage {
 				</div>
 				<div class="wbgam-card-body">
 					<label class="wbgam-checkbox-option wbgam-stack-block">
+						<input type="checkbox" name="wb_gam_hub_anon_leaderboard" value="1" <?php checked( (bool) get_option( 'wb_gam_hub_anon_leaderboard', true ) ); ?> />
+						<span><?php esc_html_e( 'Show logged-out visitors a top-3 leaderboard on the hub', 'wb-gamification' ); ?></span>
+						<span class="description"><?php esc_html_e( 'Social proof that invites visitors to join. Members who opt out of the leaderboard never appear. Turn off for a private community.', 'wb-gamification' ); ?></span>
+					</label>
+					<label class="wbgam-checkbox-option wbgam-stack-block">
 						<input type="checkbox" name="wb_gam_login_bonus_enabled" value="1" <?php checked( $login_enabled ); ?> />
 						<span><?php esc_html_e( 'Award a daily login bonus', 'wb-gamification' ); ?></span>
 					</label>
@@ -637,10 +645,6 @@ final class SettingsPage {
 		<?php
 	}
 
-	/**
-	 * Persist kudos engine settings.
-	 * Nonce is verified by check_admin_referer() in handle_save().
-	 */
 	/**
 	 * Persist the Realtime transport selection.
 	 *
@@ -839,6 +843,19 @@ final class SettingsPage {
 			WB_GAM_VERSION,
 			true
 		);
+		// Shared confirm/cancel modal button labels — confirmAction() falls back
+		// to these when a caller doesn't pass its own confirmText/cancelText.
+		// This settings page enqueues 'wb-gam-admin-rest-utils' from three
+		// separate callbacks (levels/tools/emails) that all guard on the same
+		// hook, so localizing it once here covers the whole page.
+		wp_localize_script(
+			'wb-gam-admin-rest-utils',
+			'wbGamAdminRestI18n',
+			array(
+				'confirm' => __( 'Confirm', 'wb-gamification' ),
+				'cancel'  => __( 'Cancel', 'wb-gamification' ),
+			)
+		);
 		wp_enqueue_script(
 			'wb-gam-admin-tools',
 			plugins_url( 'assets/js/admin-tools.js', WB_GAM_FILE ),
@@ -873,23 +890,6 @@ final class SettingsPage {
 		);
 	}
 
-	/**
-	 * Enqueue the rule-action toggle script on the Automation tab.
-	 *
-	 * Replaces the legacy inline <script> that lived in render_automation_section()
-	 * — keeps Settings page free of inline JS per coding-rules-check.sh Rule 4.
-	 *
-	 * @param string $hook_suffix Current admin page hook.
-	 */
-	/**
-	 * Enqueue the "Send a test event" button script on the Dashboard tab.
-	 *
-	 * Only fires when the first-run welcome card is actually rendered (no
-	 * points awarded yet AND admin hasn't dismissed it) — avoids loading the
-	 * script on every Settings page view forever.
-	 *
-	 * @param string $hook_suffix Current admin page hook.
-	 */
 	/**
 	 * Enqueue the generic REST form driver + wbGamSettings localisation for
 	 * the Emails section toggles.
@@ -2280,15 +2280,6 @@ final class SettingsPage {
 	// ── Realtime section ──────────────────────────────────────────────────────
 
 	/**
-	 * Render the Realtime transport selector.
-	 *
-	 * Closes the "site owners must use wp-cli to flip transport" friction
-	 * we surfaced after the SSE rollout. Three radio options matching the
-	 * wb_gam_realtime_transport contract: heartbeat (universal, 5s),
-	 * sse (sub-second when host supports it), auto (SSE-first with
-	 * heartbeat fallback — the new default).
-	 */
-	/**
 	 * Persist the earning-exclusion settings (Settings > Access).
 	 *
 	 * Nonce is verified by check_admin_referer() in handle_save().
@@ -2328,7 +2319,6 @@ final class SettingsPage {
 
 		// Drop the per-request resolve cache so a read later in this request
 		// reflects the new exclusions.
-		\WBGam\Engine\PointsEngine::flush_exclusion_cache();
 
 		// Staff permissions matrix. Only processed when the caps card was part
 		// of the submitted form (marker field), so an unrelated Access save can
@@ -2349,39 +2339,20 @@ final class SettingsPage {
 	 */
 	private static function save_staff_permissions(): void {
 		// phpcs:disable WordPress.Security.NonceVerification.Missing -- Nonce verified by check_admin_referer() in handle_save().
-		$cap_list = \WBGam\Engine\Capabilities::all();
-		$reset    = isset( $_POST['wb_gam_caps_reset'] );
-
+		$reset  = isset( $_POST['wb_gam_caps_reset'] );
 		$posted = array();
+
 		if ( ! $reset && isset( $_POST['wb_gam_role_caps'] ) && is_array( $_POST['wb_gam_role_caps'] ) ) {
-			// Shape: [ role_slug => [ cap, cap, ... ] ]. Both key and values are
-			// sanitized with sanitize_key() inside the loop below.
+			// Shape: [ role_slug => [ cap, cap, ... ] ]. Keys and values are sanitized in set_role_caps().
 			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 			foreach ( wp_unslash( (array) $_POST['wb_gam_role_caps'] ) as $role_slug => $caps ) {
-				$role_slug            = sanitize_key( $role_slug );
-				$posted[ $role_slug ] = is_array( $caps ) ? array_map( 'sanitize_key', $caps ) : array();
+				$posted[ sanitize_key( $role_slug ) ] = is_array( $caps ) ? $caps : array();
 			}
 		}
 
-		foreach ( wp_roles()->get_names() as $role_slug => $_name ) {
-			if ( 'administrator' === $role_slug ) {
-				continue;
-			}
-			$role = get_role( $role_slug );
-			if ( ! $role ) {
-				continue;
-			}
-			$wanted = $posted[ $role_slug ] ?? array();
-			foreach ( $cap_list as $cap ) {
-				$should_have = in_array( $cap, $wanted, true );
-				$has         = $role->has_cap( $cap );
-				if ( $should_have && ! $has ) {
-					$role->add_cap( $cap );
-				} elseif ( ! $should_have && $has ) {
-					$role->remove_cap( $cap );
-				}
-			}
-		}
+		// ONE write path, shared with the REST endpoint. "Reset to defaults" is simply an empty map:
+		// every non-admin role loses every plugin capability, which IS the default.
+		\WBGam\Engine\Capabilities::set_role_caps( $posted );
 		// phpcs:enable WordPress.Security.NonceVerification.Missing
 	}
 
@@ -2569,6 +2540,27 @@ final class SettingsPage {
 			$map[ $slug ] = in_array( $slug, $posted, true ) ? '1' : '0';
 		}
 		update_option( 'wb_gam_modules', $map );
+
+		// Background features live in a different option (wb_gam_features) and gate whole ENGINES
+		// rather than presentation, so they are saved separately -- but they are saved from the same
+		// form, because to an owner "turn the weekly email off" is one decision, not two screens.
+		//
+		// Seven of these eight flags were read and enforced by FeatureFlags::boot_engines() while
+		// nothing on earth could write them: the class docblock advertised a "Settings > Features"
+		// screen that did not exist, so the only way to turn off the weekly-email engine was
+		// `wp option update`. Read-but-never-written is the mirror of the bug we usually chase, and
+		// it is worse, because the owner cannot even see the control they are being denied.
+		$posted_features = array();
+		if ( isset( $_POST['wb_gam_features'] ) && is_array( $_POST['wb_gam_features'] ) ) {
+			$posted_features = array_map( 'sanitize_key', wp_unslash( (array) $_POST['wb_gam_features'] ) );
+		}
+
+		$features = array();
+		foreach ( array_keys( \WBGam\Engine\FeatureFlags::get_defaults() ) as $feature ) {
+			$features[ $feature ] = in_array( $feature, $posted_features, true );
+		}
+
+		\WBGam\Engine\FeatureFlags::update( $features );
 		// phpcs:enable WordPress.Security.NonceVerification.Missing
 	}
 
@@ -2606,11 +2598,65 @@ final class SettingsPage {
 				</div>
 			</div>
 
+			<div class="wbgam-card wbgam-stack-block">
+				<div class="wbgam-card-header">
+					<h2 class="wbgam-card-title">
+						<span class="icon-sliders-horizontal" aria-hidden="true"></span>
+						<?php esc_html_e( 'Background features', 'wb-gamification' ); ?>
+					</h2>
+					<p class="wbgam-card-desc">
+						<?php esc_html_e( 'These run on a schedule rather than on a page: emails, nudges, retention sweeps, and the badges awarded automatically for tenure or for being first on the site. Turning one off stops its engine loading at all - no cron, no queries, no email. Nothing is deleted.', 'wb-gamification' ); ?>
+					</p>
+				</div>
+				<div class="wbgam-card-body">
+					<?php foreach ( self::feature_labels() as $wb_gam_feature => $wb_gam_label ) : ?>
+						<label class="wbgam-checkbox-option wbgam-stack-block">
+							<input type="checkbox"
+								name="wb_gam_features[]"
+								value="<?php echo esc_attr( $wb_gam_feature ); ?>"
+								<?php checked( \WBGam\Engine\FeatureFlags::is_enabled( $wb_gam_feature ) ); ?>
+							/>
+							<span><?php echo esc_html( $wb_gam_label ); ?></span>
+						</label>
+					<?php endforeach; ?>
+				</div>
+			</div>
+
 			<div class="wbgam-settings-section__footer">
 				<button type="submit" name="submit" class="wbgam-btn wbgam-btn--primary"><?php esc_html_e( 'Save Modules', 'wb-gamification' ); ?></button>
 			</div>
 		</form>
 		<?php
+	}
+
+	/**
+	 * Human labels for the background-feature flags.
+	 *
+	 * Keyed off FeatureFlags' own defaults rather than a second hand-list. A flag added there without
+	 * a label here still renders, under its raw key -- an unlabelled checkbox is a cosmetic problem,
+	 * a missing one is the bug this screen exists to fix.
+	 *
+	 * @return array<string,string> Feature key => label.
+	 */
+	private static function feature_labels(): array {
+		$labels = array(
+			'cohort_leagues'       => __( 'Cohort leagues - weekly promotion and relegation between tiers', 'wb-gamification' ),
+			'weekly_emails'        => __( 'Weekly recap email', 'wb-gamification' ),
+			'leaderboard_nudge'    => __( 'Leaderboard nudge email - tell a member when they are close to overtaking someone', 'wb-gamification' ),
+			'status_retention'     => __( 'Status retention - warn a member before inactivity costs them their level', 'wb-gamification' ),
+			'community_challenges' => __( 'Community challenges - whole-site goals members contribute to together', 'wb-gamification' ),
+			'site_first_badges'    => __( 'Site-first badges - awarded to the first member ever to do a thing', 'wb-gamification' ),
+			'tenure_badges'        => __( 'Tenure badges - awarded for time as a member', 'wb-gamification' ),
+			'badge_share'          => __( 'Badge sharing - public share cards for LinkedIn and similar', 'wb-gamification' ),
+		);
+
+		$out = array();
+
+		foreach ( array_keys( \WBGam\Engine\FeatureFlags::get_defaults() ) as $wb_gam_feature ) {
+			$out[ $wb_gam_feature ] = $labels[ $wb_gam_feature ] ?? $wb_gam_feature;
+		}
+
+		return $out;
 	}
 
 	/**

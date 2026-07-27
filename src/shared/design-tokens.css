@@ -233,10 +233,26 @@ body.buddyx-dark-theme {
 	--wb-gam-tier-bronze: color-mix(in srgb, #b45309 65%, #ffffff);
 	--wb-gam-tier-silver: color-mix(in srgb, #6b7280 55%, #ffffff);
 	--wb-gam-tier-obsidian: color-mix(in srgb, #4b5563 55%, #ffffff);
+
+	/* The RANK medals needed exactly the same lift and never got it. The league tiers above were
+	 * fixed; the rank palette sitting right beside them -- leaderboard positions 1/2/3, the
+	 * top-members podium, year-recap -- kept its light-mode values and sank into the dark surface.
+	 * Measured against a #161616 surface: silver #6b7280 = 3.74:1, bronze #a0522d = 3.22:1, both
+	 * under the 4.5:1 WCAG AA floor. Gold clears it at 5.56:1 and is left as it is. */
+	--wb-gam-color-silver: color-mix(in srgb, #6b7280 45%, #ffffff);
+	--wb-gam-color-bronze: color-mix(in srgb, #a0522d 50%, #ffffff);
 }
 @media (prefers-color-scheme: dark) {
 	:root[data-bx-mode="auto"] {
 		--wb-gam-color-accent: var(--wbcom-link-color, var(--bx-color-accent, var(--reign-site-button-bg-color, color-mix(in srgb, #5b4cdb 60%, #ffffff))));
 		--wb-gam-color-accent-hover: var(--wbcom-link-hover-color, var(--bx-color-accent-hover, var(--reign-site-button-bg-hover-color, color-mix(in srgb, #5b4cdb 45%, #ffffff))));
+
+		/* Auto-mode is a dark surface too. Lifting the medals only on the explicit dark
+		 * selectors would leave every owner who never touched the toggle reading 3.2:1 bronze. */
+		--wb-gam-tier-bronze: color-mix(in srgb, #b45309 65%, #ffffff);
+		--wb-gam-tier-silver: color-mix(in srgb, #6b7280 55%, #ffffff);
+		--wb-gam-tier-obsidian: color-mix(in srgb, #4b5563 55%, #ffffff);
+		--wb-gam-color-silver: color-mix(in srgb, #6b7280 45%, #ffffff);
+		--wb-gam-color-bronze: color-mix(in srgb, #a0522d 50%, #ffffff);
 	}
 }

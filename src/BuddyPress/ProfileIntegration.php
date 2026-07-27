@@ -29,9 +29,6 @@ defined( 'ABSPATH' ) || exit;
 final class ProfileIntegration {
 
 	/**
-	 * Register hooks when BuddyPress is active.
-	 */
-	/**
 	 * Slug for the "Achievements" profile tab.
 	 */
 	private const NAV_SLUG = 'achievements';

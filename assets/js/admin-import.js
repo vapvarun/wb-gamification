@@ -19,7 +19,11 @@
 		return;
 	}
 	var i18n = cfg.i18n || {};
-	var settings = { restUrl: cfg.restUrl, nonce: cfg.nonce };
+	// timeoutMs comes from PHP. Without it the shared client aborts the import at 15s -- while the
+	// server carries on importing, so the screen reports a failure that is not one.
+	// Number(), because wp_localize_script stringifies everything -- cfg.timeoutMs arrives as
+	// "600000", and AbortSignal.timeout() wants a number, not a string that happens to look like one.
+	var settings = { restUrl: cfg.restUrl, nonce: cfg.nonce, timeoutMs: Number( cfg.timeoutMs ) || 0 };
 
 	function el( tag, cls, text ) {
 		var n = document.createElement( tag );
@@ -93,6 +97,15 @@
 
 	function renderResult( container, result ) {
 		clear( container );
+
+		// Warnings go FIRST and stay visible. An import can succeed at what it could reach and still
+		// have missed half the source (BadgeOS uninstalled and dropped its achievements table, say).
+		// The whole point of the server saying so is that the owner reads it before they believe the
+		// migration is done, so it cannot sit below three reconciliation tables.
+		var warnings = result.warnings || [];
+		for ( var w = 0; w < warnings.length; w++ ) {
+			container.appendChild( el( 'p', 'wb-gam-import__warning', warnings[ w ] ) );
+		}
 
 		var points = recTable( i18n.points || 'Points', result.reconciliation, [
 			{ key: 'imported_sum', label: i18n.imported || 'Imported', fn: function ( r ) { return r.imported_sum; } },

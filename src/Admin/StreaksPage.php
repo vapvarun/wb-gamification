@@ -110,6 +110,9 @@ final class StreaksPage {
 					'adjusted'     => __( 'Streak updated.', 'wb-gamification' ),
 					'reset'        => __( 'Streak reset.', 'wb-gamification' ),
 					'failed'       => __( 'Action failed.', 'wb-gamification' ),
+					'save'         => __( 'Save', 'wb-gamification' ),
+					'confirmReset' => __( 'Confirm reset', 'wb-gamification' ),
+					'cancel'       => __( 'Cancel', 'wb-gamification' ),
 				),
 			)
 		);

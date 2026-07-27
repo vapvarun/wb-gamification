@@ -60,6 +60,21 @@ final class LeaderboardNudge {
 		add_action( self::CRON_HOOK, array( __CLASS__, 'dispatch_batch' ) );
 		add_action( self::AS_SINGLE_HOOK, array( __CLASS__, 'send_nudge' ) );
 
+		// Arm the recurring event on init, never at plugins_loaded: wp_schedule_event
+		// resolves schedules via wp_get_schedules(), which fires the
+		// cron_schedules filter — that must not run before init on WP 6.7+.
+		if ( did_action( 'init' ) ) {
+			self::maybe_schedule();
+		} else {
+			add_action( 'init', array( __CLASS__, 'maybe_schedule' ) );
+		}
+	}
+
+	/**
+	 * Arm the weekly nudge cron if not already scheduled. Idempotent — safe
+	 * to call on every init.
+	 */
+	public static function maybe_schedule(): void {
 		if ( ! wp_next_scheduled( self::CRON_HOOK ) ) {
 			// Schedule for next Monday at 08:00 UTC.
 			$next_monday = strtotime( 'next monday 08:00 UTC' );
@@ -109,13 +124,39 @@ final class LeaderboardNudge {
 		// per week; anything more is a sign of hook collision or duplicate
 		// scheduling. A short transient is cheaper than re-running the
 		// (possibly large) SELECT below and enqueueing redundant AS jobs.
-		if ( get_transient( self::DISPATCH_LOCK_KEY ) ) {
+		// Two different jobs here, and the old code did neither properly.
+		//
+		// 1. ATOMICITY  -- two crons firing at the same instant must not both dispatch.
+		// 2. A WINDOW   -- an overdue cron re-firing an hour later must not dispatch again.
+		//
+		// It used get_transient() then set_transient(), which is check-then-act: both racers see
+		// nothing and both proceed, so it did not provide (1) at all. The transient DID provide
+		// (2), so it cannot simply be swapped for a lock -- Lock::run() releases as soon as the
+		// callback returns, and the window would vanish with it.
+		//
+		// So: the database lock makes the check-and-set atomic, and the transient still carries
+		// the TTL window inside it.
+		$started = Lock::run(
+			self::DISPATCH_LOCK_KEY,
+			static function () {
+				if ( get_transient( self::DISPATCH_LOCK_KEY ) ) {
+					return false;
+				}
+				set_transient( self::DISPATCH_LOCK_KEY, 1, self::DISPATCH_LOCK_TTL );
+				return true;
+			},
+			false
+		);
+
+		if ( ! $started ) {
 			return;
 		}
-		set_transient( self::DISPATCH_LOCK_KEY, 1, self::DISPATCH_LOCK_TTL );
 
 		// Users who earned at least 1 point this week, not opted out.
-		$week_start = gmdate( 'Y-m-d', strtotime( 'monday this week' ) ) . ' 00:00:00';
+		// strtotime( 'monday this week' ) resolves the weekday against PHP's UTC, not the site's. At a
+		// Monday boundary (Auckland Mon 03:30 = UTC Sun 15:30) it returns the PREVIOUS Monday, so the
+		// week window is off by a full seven days -- and the column it bounds is site-local anyway.
+		$week_start = Clock::site_cutoff( 'monday this week' );
 
 		$user_ids = $wpdb->get_col(
 			$wpdb->prepare(

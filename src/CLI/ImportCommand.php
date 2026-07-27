@@ -59,7 +59,10 @@ class ImportCommand {
 			\WP_CLI::error( "No {$source} data found to import." );
 		}
 
-		$result = $importer::run( $dry_run );
+		// Same suppression as the REST path -- a migration must not announce itself to members.
+		$result = \WBGam\Engine\ImportMode::run(
+			static fn() => $importer::run( $dry_run )
+		);
 		\WP_CLI::log( sprintf( '%s %d source row(s).', $dry_run ? 'Previewed' : 'Imported', $result['rows'] ) );
 
 		// The reconciliation carries a source-specific balance key

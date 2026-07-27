@@ -65,10 +65,19 @@ class OpenApiCommand {
 	 * @return void
 	 */
 	public function export( array $args, array $assoc_args ): void {
-		$plugin_root = defined( 'WB_GAM_PATH' ) ? rtrim( WB_GAM_PATH, '/' ) : dirname( __DIR__, 2 );
-		$rel_output  = (string) ( $assoc_args['output'] ?? 'audit/openapi.json' );
-		$abs_output  = $plugin_root . '/' . ltrim( $rel_output, '/' );
-		$check_mode  = isset( $assoc_args['check'] );
+		// Paths resolve against the WORKING DIRECTORY, not the plugin folder.
+		//
+		// This used to be `dirname( __DIR__, 2 )` and wrote into the plugin directory -- which the
+		// WP.org Plugin Check rejects outright, and rightly: plugin folders are DELETED on upgrade,
+		// so anything written there is destroyed without warning. It was also the wrong model. This
+		// is a developer command (it regenerates audit/openapi.json in the repo and CI --checks it),
+		// so "where the developer is standing" is the correct base, and a customer site never runs it.
+		$base       = (string) ( getcwd() ?: '.' );
+		$rel_output = (string) ( $assoc_args['output'] ?? 'audit/openapi.json' );
+		$abs_output = ( '' !== $rel_output && '/' === $rel_output[0] )
+			? $rel_output
+			: rtrim( $base, '/' ) . '/' . $rel_output;
+		$check_mode = isset( $assoc_args['check'] );
 
 		// Make sure the REST server has actually loaded our routes.
 		// `rest_get_server()` lazy-bootstraps; once that's done OpenApiController

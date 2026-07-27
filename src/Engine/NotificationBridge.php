@@ -153,9 +153,6 @@ final class NotificationBridge {
 	// ── Boot ────────────────────────────────────────────────────────────────────
 
 	/**
-	 * Register action hooks for event collection and footer rendering.
-	 */
-	/**
 	 * Daily prune cron hook. Removes notifications older than the retention
 	 * window from the durable queue table. Transients still expire via TTL
 	 * and don't need an explicit prune.
@@ -178,36 +175,139 @@ final class NotificationBridge {
 		add_action( 'wb_gam_challenge_completed', array( __CLASS__, 'on_challenge_completed' ), 99, 2 );
 		add_action( 'wb_gam_kudos_given', array( __CLASS__, 'on_kudos_given' ), 99, 4 );
 
+		// ...and take it back when a moderator revokes it. This action was fired and never listened to,
+		// so a revoked kudos still congratulated the receiver.
+		add_action( 'wb_gam_kudos_revoked', array( __CLASS__, 'on_kudos_revoked' ), 10, 3 );
+
 		// v2.2 — daily prune of the durable queue table.
 		add_action( self::PRUNE_CRON, array( __CLASS__, 'prune_queue' ) );
-		if ( ! wp_next_scheduled( self::PRUNE_CRON ) ) {
-			wp_schedule_event( time() + HOUR_IN_SECONDS, 'daily', self::PRUNE_CRON );
+
+		// Arm the recurring event on init, never at plugins_loaded: wp_schedule_event
+		// resolves schedules via wp_get_schedules(), which fires the
+		// cron_schedules filter — that must not run before init on WP 6.7+.
+		if ( did_action( 'init' ) ) {
+			self::maybe_schedule();
+		} else {
+			add_action( 'init', array( __CLASS__, 'maybe_schedule' ) );
 		}
-		// NOTE: `wb_gam_award_skipped` is deliberately NOT listened to here.
+		// Skip toasts: OFF for every member, on every site, unless the owner asks for them.
 		//
-		// A member is never told they earned nothing. Their action succeeded —
-		// they posted, they reacted, they commented; the only thing that did not
-		// happen is an invisible points increment they never asked about. "You're
-		// on cooldown", "you've hit your daily limit" and "you've hit your weekly
-		// limit" all read as though the action FAILED when it did not, give the
-		// member nothing they can act on, and fire again and again precisely
-		// because a capped member keeps being active. A points cap is an
-		// anti-farming guard: the site's business, not the member's.
+		// A member is never told they earned nothing. Their action succeeded -- they posted, they
+		// reacted, they commented; the only thing that did not happen is an invisible points
+		// increment they never asked about. "You're on cooldown" and "you've hit your daily limit"
+		// read as though the action FAILED when it did not, and fire again and again precisely
+		// because a capped member keeps being active. So the default is silence, and it stays silence.
 		//
-		// 1.4.1 added these toasts; 1.6.3 made them opt-in via a default-empty
-		// `wb_gam_award_skip_toast_reasons` filter; 1.6.4 removes the mechanism
-		// outright. An opt-in lever is not neutral — it keeps a member-hostile
-		// surface alive, keeps writing `skip` rows into the durable queue, and
-		// invites a site owner to turn a demotivator back on. There is no
-		// configuration of this product in which a member should see one.
+		// 1.6.4 briefly went further and deleted the mechanism outright, on the argument that an
+		// opt-in lever is not neutral. That was over-reach, and QA was right to bounce it: the
+		// `wb_gam_award_skip_toast_reasons` filter was RELEASED in 1.6.3 and documented in its public
+		// changelog. Deleting it one patch later does not remove the surface from a site that opted
+		// in -- it silently stops their add_filter() from doing anything, with no error and no notice.
+		// A published extension point that quietly becomes a no-op is worse than one we disagree with.
 		//
-		// The `wb_gam_award_skipped` action is STILL FIRED by PointsEngine and
-		// remains a supported extension point — a site owner who wants to log,
-		// count, or surface skips their own way can hook it. Gamification simply
-		// ships no member-facing toast for it.
+		// The default is what protects members (nobody sees a skip toast unless an owner turns one
+		// on). The filter is what keeps our word.
+		add_action( 'wb_gam_award_skipped', array( __CLASS__, 'on_award_skipped' ), 99, 4 );
 
 		// Output markup + seed script once, in the footer.
 		add_action( 'wp_footer', array( __CLASS__, 'render' ), 5 );
+	}
+
+	/**
+	 * Arm the daily queue-prune event if not already scheduled. Idempotent —
+	 * safe to call on every init.
+	 */
+	public static function maybe_schedule(): void {
+		if ( ! wp_next_scheduled( self::PRUNE_CRON ) ) {
+			wp_schedule_event( time() + HOUR_IN_SECONDS, 'daily', self::PRUNE_CRON );
+		}
+	}
+
+	/**
+	 * Surface an award-skip to the member as a toast — if, and only if, the owner asked for it.
+	 *
+	 * @since 1.4.1
+	 * @since 1.6.3 Defaults to silence. No skip reason reaches a member unless an owner opts it in
+	 *              through `wb_gam_award_skip_toast_reasons`.
+	 *
+	 * @param int    $user_id   User who would have been awarded.
+	 * @param string $action_id Action that was skipped.
+	 * @param string $reason    Closed-set reason from PointsEngine::passes_rate_limits().
+	 * @param array  $context   Optional context (daily_cap_used, cooldown_seconds, etc.).
+	 * @return void
+	 */
+	public static function on_award_skipped( int $user_id, string $action_id, string $reason, array $context = array() ): void {
+		if ( $user_id <= 0 ) {
+			return;
+		}
+
+		// The ONLY reasons a member may ever be shown. An engine-internal veto (`sandboxed`,
+		// `self_action`, `pre_change_veto`, `excluded`) describes a decision the SITE made about the
+		// member -- it is not feedback, and it is not the member's business.
+		//
+		// 1.6.3 promised exactly this in its docblock ("never eligible regardless of this filter")
+		// and did not enforce it: an owner who filtered in `sandboxed` got past the in_array() check,
+		// fell through the switch with no message, and pushed a toast with an EMPTY body. The promise
+		// is now enforced where it is made.
+		$eligible = array( 'cooldown', 'daily_cap', 'weekly_cap' );
+		if ( ! in_array( $reason, $eligible, true ) ) {
+			return;
+		}
+
+		/**
+		 * Filter which award-skip reasons are surfaced to the member as a toast.
+		 *
+		 * Defaults to EMPTY -- no skip reason is shown to a member. Gamification is positive
+		 * reinforcement: members should only ever see reward toasts (points earned, badge, level up),
+		 * never a "you got nothing" message. A cooldown ("try again in a bit"), a daily cap and a
+		 * weekly cap all tell the member they earned nothing for normal activity; they are not
+		 * actionable, they read as errors, and they demotivate at scale.
+		 *
+		 * A site owner whose community genuinely wants cap feedback can opt specific reasons back in:
+		 *
+		 *   add_filter( 'wb_gam_award_skip_toast_reasons', fn() => array( 'daily_cap', 'weekly_cap' ) );
+		 *
+		 * Engine-internal vetoes are never eligible, whatever this filter returns.
+		 *
+		 * @since 1.6.3
+		 *
+		 * @param string[] $reasons   Skip reasons that get a member toast. Default [].
+		 * @param int      $user_id   Member who would see the toast.
+		 * @param string   $action_id Action that was skipped.
+		 */
+		$user_facing_reasons = (array) apply_filters(
+			'wb_gam_award_skip_toast_reasons',
+			array(),
+			$user_id,
+			$action_id
+		);
+
+		if ( ! in_array( $reason, $user_facing_reasons, true ) ) {
+			return;
+		}
+
+		switch ( $reason ) {
+			case 'cooldown':
+				$message = __( "You're on cooldown for this action - try again in a bit.", 'wb-gamification' );
+				break;
+			case 'daily_cap':
+				$message = __( "You've hit your daily limit for this action. Resets tomorrow.", 'wb-gamification' );
+				break;
+			default:
+				$message = __( "You've hit your weekly limit for this action. Resets next week.", 'wb-gamification' );
+				break;
+		}
+
+		self::push(
+			$user_id,
+			array(
+				'type'    => 'skip',
+				'reason'  => $reason,
+				'action'  => $action_id,
+				'message' => $message,
+				'context' => $context,
+			)
+		);
 	}
 
 	// ── Event collectors ────────────────────────────────────────────────────────
@@ -276,25 +376,37 @@ final class NotificationBridge {
 		$pt_record  = $pt_service->get( $wb_gam_point_type ) ?: $pt_service->get( $pt_service->default_slug() );
 		$label      = (string) ( $pt_record['label'] ?? __( 'points', 'wb-gamification' ) );
 
-		self::push(
-			$user_id,
-			array(
-				'type'    => 'points',
-				'points'  => $points,
-				// action_id travels to the client so toast.js only merges
-				// repeats of the SAME action (e.g. "Leave a comment x2") and
-				// keeps distinct actions as separate, individually-labeled
-				// toasts instead of a meaningless "+N points (M actions)".
-				'action'  => $event->action_id,
-				'message' => sprintf(
-					/* translators: 1: signed point delta, 2: currency label. */
-					__( '+%1$d %2$s', 'wb-gamification' ),
-					$points,
-					$label
-				),
-				'detail'  => self::resolve_award_detail( $event ),
-			)
+		$payload = array(
+			'type'    => 'points',
+			'points'  => $points,
+			// action_id travels to the client so toast.js only merges
+			// repeats of the SAME action (e.g. "Leave a comment x2") and
+			// keeps distinct actions as separate, individually-labeled
+			// toasts instead of a meaningless "+N points (M actions)".
+			'action'  => $event->action_id,
+			'message' => sprintf(
+				/* translators: 1: signed point delta, 2: currency label. */
+				__( '+%1$d %2$s', 'wb-gamification' ),
+				$points,
+				$label
+			),
+			'detail'  => self::resolve_award_detail( $event ),
 		);
+
+		// A kudos exchange queues THREE toasts for one kudos: this points toast (for
+		// both the giver and the receiver -- KudosEngine::record_kudos() fires
+		// wb_gam_points_awarded twice, once per side) plus the "Someone gave you
+		// kudos!" toast from on_kudos_given() below. KudosEngine stamps the kudos row
+		// id onto object_id for both award events, so stamp it onto the payload too --
+		// otherwise a moderator's revoke can only find and retract the kudos toast
+		// (matched by its own kudos_id) and these two points toasts are stranded,
+		// telling the giver/receiver they still have points that were just clawed
+		// back. See on_kudos_revoked().
+		if ( in_array( $event->action_id, array( 'give_kudos', 'receive_kudos' ), true ) && $event->object_id > 0 ) {
+			$payload['kudos_id'] = $event->object_id;
+		}
+
+		self::push( $user_id, $payload );
 	}
 
 	/**
@@ -422,10 +534,75 @@ final class NotificationBridge {
 		self::push(
 			$receiver_id,
 			array(
-				'type'    => 'kudos',
-				'message' => __( 'Someone gave you kudos!', 'wb-gamification' ),
-				'detail'  => $message ?: null,
-				'icon'    => 'icon-heart-handshake',
+				'type'     => 'kudos',
+				// The kudos this toast is FOR. It was not recorded, which meant a moderator revoking
+				// abusive kudos had no way to find the toast it had already queued -- so the receiver
+				// was still congratulated for kudos that had been taken away as abuse.
+				'kudos_id' => $kudos_id,
+				'message'  => __( 'Someone gave you kudos!', 'wb-gamification' ),
+				'detail'   => $message ?: null,
+				'icon'     => 'icon-heart-handshake',
+			)
+		);
+	}
+
+	/**
+	 * A moderator revoked a kudos. Take back the toast as well as the points.
+	 *
+	 * `wb_gam_kudos_revoked` fired and NOTHING listened to it. So a moderator could revoke a kudos as
+	 * abuse -- reversing both members' points, correctly -- and the receiver would still be told
+	 * "Someone gave you kudos!" on their next page load, for a kudos that no longer exists.
+	 *
+	 * Half a reversal is arguably worse than none: the points quietly vanish while the congratulation
+	 * still arrives, and the member has no way to connect the two.
+	 *
+	 * `send()` (via `record_kudos()`) queues THREE rows for one kudos: the receiver's
+	 * points toast, the giver's points toast, and this method's own "Someone gave you
+	 * kudos!" toast -- all three now carry `kudos_id` in their payload (the points
+	 * toasts get it from on_points_awarded() above; this toast already had it). A
+	 * revoke must retract all three, for both users, or the points quietly reverse
+	 * while the toasts that announced them keep lying.
+	 *
+	 * @since 1.6.4
+	 *
+	 * @param int $kudos_id    Revoked kudos.
+	 * @param int $giver_id    Giver.
+	 * @param int $receiver_id Receiver.
+	 * @return void
+	 */
+	public static function on_kudos_revoked( int $kudos_id, int $giver_id, int $receiver_id ): void {
+		global $wpdb;
+
+		if ( $kudos_id <= 0 || $receiver_id <= 0 || ! self::queue_ready() ) {
+			return;
+		}
+
+		// Both users can have a queued row for this kudos_id (receiver: points + kudos
+		// toast; giver: points toast only) -- giver_id is filtered out below if unset
+		// so this still degrades gracefully to receiver-only deletion.
+		$user_ids = array_values( array_unique( array_filter( array( $receiver_id, $giver_id ) ) ) );
+		if ( empty( $user_ids ) ) {
+			return;
+		}
+		$placeholders = implode( ',', array_fill( 0, count( $user_ids ), '%d' ) );
+
+		// Match the kudos by its COLUMN, exactly.
+		//
+		// This was `payload_json LIKE '%"kudos_id":<id>%'`, and that pattern has no right-hand
+		// boundary: revoking kudos #7 matched "kudos_id":77 and "kudos_id":7001 as well, and deleted
+		// those members' pending toasts along with the one being retracted. The blast radius was the
+		// giver and receiver of the revoked kudos -- precisely the two people most likely to be holding
+		// other queued kudos toasts -- and DELETE does not give them back. Invisible below kudos id 10,
+		// which is why it survived the happy-path test.
+		//
+		// An exact integer comparison on an indexed column cannot prefix-match anything.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$wpdb->query(
+			$wpdb->prepare(
+				"DELETE FROM {$wpdb->prefix}wb_gam_notifications_queue
+				  WHERE user_id IN ({$placeholders})
+				    AND kudos_id = %d",
+				array_merge( $user_ids, array( $kudos_id ) )
 			)
 		);
 	}
@@ -497,8 +674,24 @@ final class NotificationBridge {
 				data-wp-bind--hidden="!state.levelUp.active"
 				data-wp-on--click="actions.dismissLevelUp"
 				hidden
-				role="alertdialog"
-				aria-modal="true"
+				<?php
+				/*
+				 * An ANNOUNCEMENT, not a dialog.
+				 *
+				 * This claimed role="alertdialog" aria-modal="true" -- which tells a screen reader that
+				 * the rest of the page is inert and that focus is trapped in here. Neither was true:
+				 * nothing trapped focus, ESC did nothing, and the overlay is dismissed by clicking it.
+				 * So an assistive-tech user was told they were in a modal they could not get out of,
+				 * about a celebration they did not need to act on.
+				 *
+				 * A level-up is something that HAPPENED. It is announced (role="status", polite, so it
+				 * waits its turn rather than cutting the member off mid-sentence) and it is never
+				 * focused. Vestibular safety is handled separately -- see the prefers-reduced-motion
+				 * block in assets/css/frontend.css.
+				 */
+				?>
+				role="status"
+				aria-live="polite"
 				aria-label="<?php esc_attr_e( 'Level up!', 'wb-gamification' ); ?>"
 			>
 				<div class="wb-gam-overlay__card">
@@ -522,8 +715,24 @@ final class NotificationBridge {
 				data-wp-bind--hidden="!state.streakMilestone.active"
 				data-wp-on--click="actions.dismissStreakMilestone"
 				hidden
-				role="alertdialog"
-				aria-modal="true"
+				<?php
+				/*
+				 * An ANNOUNCEMENT, not a dialog.
+				 *
+				 * This claimed role="alertdialog" aria-modal="true" -- which tells a screen reader that
+				 * the rest of the page is inert and that focus is trapped in here. Neither was true:
+				 * nothing trapped focus, ESC did nothing, and the overlay is dismissed by clicking it.
+				 * So an assistive-tech user was told they were in a modal they could not get out of,
+				 * about a celebration they did not need to act on.
+				 *
+				 * A level-up is something that HAPPENED. It is announced (role="status", polite, so it
+				 * waits its turn rather than cutting the member off mid-sentence) and it is never
+				 * focused. Vestibular safety is handled separately -- see the prefers-reduced-motion
+				 * block in assets/css/frontend.css.
+				 */
+				?>
+				role="status"
+				aria-live="polite"
 				aria-label="<?php esc_attr_e( 'Streak milestone!', 'wb-gamification' ); ?>"
 			>
 				<div class="wb-gam-overlay__card">
@@ -614,6 +823,19 @@ final class NotificationBridge {
 
 		global $wpdb;
 
+		// kudos_id is a REAL COLUMN, not a substring of the payload. Retraction used to find a revoked
+		// kudos's toasts with `payload_json LIKE '%"kudos_id":7%'`, and that pattern is unterminated:
+		// it matches "kudos_id":77 and "kudos_id":7001 just as happily. Revoking kudos #7 deleted the
+		// member's queued toasts for #77 and #7001 too, and a DELETE does not give them back. It only
+		// bites once a site passes kudos id 10, which is why the happy-path test never saw it.
+		//
+		// Terminating the pattern with a comma would work TODAY, because _ts is appended after the
+		// wb_gam_toast_data filter runs and so lands last in the JSON. But that is an invariant held by
+		// somebody else's code: let a site filter set _ts itself and it keeps its original position,
+		// kudos_id becomes the final key, the comma never appears, and the retraction silently stops
+		// retracting. A delete key does not belong in a LIKE against JSON. It belongs in a column.
+		$kudos_id = isset( $event['kudos_id'] ) ? (int) $event['kudos_id'] : null;
+
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$wpdb->insert(
 			$wpdb->prefix . 'wb_gam_notifications_queue',
@@ -621,9 +843,10 @@ final class NotificationBridge {
 				'user_id'      => $user_id,
 				'event_type'   => (string) ( $event['type'] ?? 'unknown' ),
 				'payload_json' => (string) wp_json_encode( $event ),
+				'kudos_id'     => $kudos_id,
 				'created_at'   => gmdate( 'Y-m-d H:i:s' ),
 			),
-			array( '%d', '%s', '%s', '%s' )
+			array( '%d', '%s', '%s', '%d', '%s' )
 		);
 
 		self::trim( $user_id );
@@ -702,6 +925,8 @@ final class NotificationBridge {
 
 		for ( $batch = 0; $batch < self::PRUNE_MAX_BATCHES; $batch++ ) {
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			// @clock-ok: the queue's created_at is written with gmdate() in push() -- UTC -- and this
+			// retention cutoff is gmdate() too.
 			$deleted = $wpdb->query(
 				$wpdb->prepare(
 					"DELETE FROM {$wpdb->prefix}wb_gam_notifications_queue WHERE created_at < %s LIMIT %d",
