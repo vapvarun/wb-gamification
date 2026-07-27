@@ -517,6 +517,68 @@ final class Installer {
 		) $charset;"
 		);
 
+		// ── Tables that existed only in DbUpgrader ────────────────────────────────
+		//
+		// These three arrived as upgrade steps and were never added here, so
+		// install() built 23 of the 26 tables and the upgrader supplied the rest.
+		// That works exactly once. uninstall.php drops every table but leaves
+		// `wb_gam_db_version` behind, so a REINSTALL came up with the version
+		// pointer already at the current release: install() created its 23,
+		// DbUpgrader correctly concluded there was nothing to migrate, and these
+		// three never came back. No fatal and no notice -- notification writes just
+		// returned false and members silently stopped receiving anything.
+		//
+		// Schema belongs to the installer. dbDelta is idempotent, so the upgrader
+		// keeps its own copies for sites mid-migration; this is what guarantees a
+		// COMPLETE schema on every activation, not just the first one.
+		dbDelta(
+			"CREATE TABLE {$wpdb->prefix}wb_gam_notifications_queue (
+			id           BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+			user_id      BIGINT UNSIGNED NOT NULL,
+			event_type   VARCHAR(64)     NOT NULL,
+			payload_json TEXT            NOT NULL,
+			created_at   DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			PRIMARY KEY (id),
+			KEY idx_user_id (user_id, id),
+			KEY idx_created_at (created_at)
+		) $charset;"
+		);
+
+		dbDelta(
+			"CREATE TABLE {$wpdb->prefix}wb_gam_side_effect_failures (
+			id              BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+			event_id        VARCHAR(64)     NOT NULL,
+			user_id         BIGINT UNSIGNED NOT NULL,
+			side_effect     VARCHAR(64)     NOT NULL,
+			points          INT             NOT NULL DEFAULT 0,
+			event_payload   TEXT            NOT NULL,
+			error_message   VARCHAR(500)    NOT NULL DEFAULT '',
+			retry_count     TINYINT UNSIGNED NOT NULL DEFAULT 0,
+			status          VARCHAR(20)     NOT NULL DEFAULT 'pending',
+			last_attempt_at DATETIME        NULL,
+			created_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			PRIMARY KEY (id),
+			KEY idx_status_attempt (status, last_attempt_at),
+			KEY idx_event_id       (event_id)
+		) $charset;"
+		);
+
+		dbDelta(
+			"CREATE TABLE {$wpdb->prefix}wb_gam_user_intelligence (
+			user_id              BIGINT UNSIGNED NOT NULL,
+			engagement_score     DECIMAL(8,4)    NOT NULL DEFAULT 0,
+			action_diversity     SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+			recency_days         SMALLINT UNSIGNED NOT NULL DEFAULT 999,
+			events_30d           INT UNSIGNED    NOT NULL DEFAULT 0,
+			churn_risk           DECIMAL(4,3)    NOT NULL DEFAULT 0,
+			anomaly_flag         TINYINT UNSIGNED NOT NULL DEFAULT 0,
+			computed_at          DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			PRIMARY KEY (user_id),
+			KEY idx_churn_risk (churn_risk),
+			KEY idx_anomaly    (anomaly_flag, computed_at)
+		) $charset;"
+		);
+
 		// Seed default levels.
 		self::seed_default_levels();
 

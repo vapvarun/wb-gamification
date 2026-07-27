@@ -19,18 +19,18 @@
     "tables": 26,
     "capabilities_declared": 10,
     "services": 49,
-    "hooks_fired_actions": 66,
-    "hooks_fired_filters": 76,
-    "hooks_fired_total": 142,
+    "hooks_fired_actions": 71,
+    "hooks_fired_filters": 83,
+    "hooks_fired_total": 154,
     "cron_hooks_distinct": 16,
     "wp_cli_commands": 10,
     "admin_post_handlers": 0,
-    "frontend_css_files": 45,
-    "frontend_js_files": 50,
+    "frontend_css_files": 46,
+    "frontend_js_files": 56,
     "php_file_count": 202,
     "integrations": 24,
     "integration_triggers_total": 126,
-    "integration_adapter_classes": 12
+    "integration_adapter_classes": 11
   },
   "namespaces": {
     "rest": "wb-gamification/v1"
