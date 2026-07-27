@@ -1,6 +1,6 @@
 {
   "header": {
-    "name": "Redemption — LearnDash course unlock",
+    "name": "Redemption \u2014 LearnDash course unlock",
     "slug": "wb-gamification",
     "version": "1.0.0",
     "textDomain": "wb-gamification",
@@ -8354,7 +8354,7 @@
       {
         "handle": "edd-sdk-notice",
         "objectName": "edd_sdk_notice",
-        "data": {},
+        "data": [],
         "file": "libs/easy-digital-downloads/edd-sl-sdk/src/Handlers/Handler.php",
         "line": 98
       },
@@ -8370,7 +8370,7 @@
       {
         "handle": "wb-gam-admin-badge",
         "objectName": "wbGamBadgeAdmin",
-        "data": {},
+        "data": [],
         "file": "src/Admin/BadgeAdminPage.php",
         "line": 67
       },
@@ -8584,7 +8584,7 @@
       {
         "handle": "wb-gamification-sse",
         "objectName": "wbGamSSEConfig",
-        "data": {},
+        "data": [],
         "file": "wb-gamification.php",
         "line": 562
       },
@@ -9353,1769 +9353,1479 @@
   ],
   "hooks_fired": [
     {
-      "hook": "yourplugin_gamification_cpts",
-      "type": "filter",
-      "file": "examples/02-programmatic-register/your-plugin.php:74"
-    },
-    {
-      "hook": "bbp_closed_topic",
-      "type": "action",
-      "file": "integrations/bbpress.php:65"
-    },
-    {
-      "hook": "buddynext_post_created",
-      "type": "action",
-      "file": "integrations/buddynext.php:39"
-    },
-    {
-      "hook": "buddynext_post_shared",
+      "name": "wb_gam_after_badge_award",
       "type": "action",
-      "file": "integrations/buddynext.php:63"
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/BadgeEngine.php:1148"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "buddynext_comment_created",
+      "name": "wb_gam_after_create_api_key",
       "type": "action",
-      "file": "integrations/buddynext.php:86"
+      "purpose": "",
+      "fired_at": [
+        "src/API/ApiKeysController.php:272"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "buddynext_post_reaction_received",
+      "name": "wb_gam_after_create_badge",
       "type": "action",
-      "file": "integrations/buddynext.php:110"
+      "purpose": "",
+      "fired_at": [
+        "src/API/BadgesController.php:588"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "buddynext_poll_voted",
+      "name": "wb_gam_after_create_community_challenge",
       "type": "action",
-      "file": "integrations/buddynext.php:135"
+      "purpose": "",
+      "fired_at": [
+        "src/API/CommunityChallengesController.php:272"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "buddynext_post_bookmarked",
+      "name": "wb_gam_after_create_level",
       "type": "action",
-      "file": "integrations/buddynext.php:158"
+      "purpose": "",
+      "fired_at": [
+        "src/API/LevelsController.php:251"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "buddynext_follower_gained",
+      "name": "wb_gam_after_delete_api_key",
       "type": "action",
-      "file": "integrations/buddynext.php:182"
+      "purpose": "",
+      "fired_at": [
+        "src/API/ApiKeysController.php:330"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "buddynext_user_followed_first_time",
+      "name": "wb_gam_after_delete_community_challenge",
       "type": "action",
-      "file": "integrations/buddynext.php:203"
+      "purpose": "",
+      "fired_at": [
+        "src/API/CommunityChallengesController.php:395"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "buddynext_connection_accepted",
+      "name": "wb_gam_after_delete_level",
       "type": "action",
-      "file": "integrations/buddynext.php:218"
+      "purpose": "",
+      "fired_at": [
+        "src/API/LevelsController.php:366"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "buddynext_connection_requested",
+      "name": "wb_gam_after_revoke_api_key",
       "type": "action",
-      "file": "integrations/buddynext.php:241"
+      "purpose": "",
+      "fired_at": [
+        "src/API/ApiKeysController.php:306"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "buddynext_dm_sent",
+      "name": "wb_gam_after_save_cohort_settings",
       "type": "action",
-      "file": "integrations/buddynext.php:264"
+      "purpose": "",
+      "fired_at": [
+        "src/API/CohortSettingsController.php:176"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "buddynext_space_member_joined",
+      "name": "wb_gam_after_update_badge",
       "type": "action",
-      "file": "integrations/buddynext.php:291"
+      "purpose": "",
+      "fired_at": [
+        "src/API/BadgesController.php:658"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "buddynext_space_created",
+      "name": "wb_gam_after_update_community_challenge",
       "type": "action",
-      "file": "integrations/buddynext.php:314"
+      "purpose": "",
+      "fired_at": [
+        "src/API/CommunityChallengesController.php:349"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "buddynext_profile_completion_changed",
+      "name": "wb_gam_after_update_level",
       "type": "action",
-      "file": "integrations/buddynext.php:337"
+      "purpose": "",
+      "fired_at": [
+        "src/API/LevelsController.php:321"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "buddynext_profile_strength_changed",
+      "name": "wb_gam_as_cleaned",
       "type": "action",
-      "file": "integrations/buddynext.php:361"
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/ActionSchedulerCleaner.php:266"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "buddynext_onboarding_completed",
+      "name": "wb_gam_as_runaway_detected",
       "type": "action",
-      "file": "integrations/buddynext.php:381"
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/ActionSchedulerCleaner.php:319"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "bp_members_avatar_uploaded",
+      "name": "wb_gam_award_skipped",
       "type": "action",
-      "file": "integrations/buddypress.php:214"
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/PointsEngine.php:304",
+        "src/Engine/PointsEngine.php:319",
+        "src/Engine/PointsEngine.php:335",
+        "src/Engine/PointsEngine.php:351",
+        "src/Engine/PointsEngine.php:408",
+        "src/Engine/PointsEngine.php:784",
+        "src/Engine/Registry.php:159",
+        "src/Integrations/Jetonomy/JetonomyIntegration.php:106"
+      ],
+      "consumed_by": [
+        "src/API/EventsController.php:281 $capture",
+        "src/Engine/NotificationBridge.php:210 array( __CLASS__"
+      ]
     },
     {
-      "hook": "members_cover_image_uploaded",
+      "name": "wb_gam_badge_awarded",
       "type": "action",
-      "file": "integrations/buddypress.php:231"
+      "purpose": "",
+      "fired_at": [
+        "src/BuddyPress/Stream/BadgeStream.php:6",
+        "src/Engine/BadgeEngine.php:1138",
+        "src/Engine/NotificationBridge.php:415",
+        "src/Integrations/ActivityPub.php:89"
+      ],
+      "consumed_by": [
+        "src/BuddyPress/Stream/BadgeStream.php:31 array( __CLASS__",
+        "src/Engine/BadgeEngine.php:478 array( __CLASS__",
+        "src/Engine/NotificationBridge.php:172 array( __CLASS__",
+        "src/Engine/TransactionalEmailEngine.php:81 array( __CLASS__",
+        "src/Integrations/ActivityPub.php:47 array( __CLASS__"
+      ]
     },
     {
-      "hook": "groups_cover_image_uploaded",
+      "name": "wb_gam_badge_imported",
       "type": "action",
-      "file": "integrations/buddypress.php:248"
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/BadgeEngine.php:1129"
+      ],
+      "consumed_by": [
+        "src/Engine/BadgeEngine.php:482 array( __CLASS__"
+      ]
     },
     {
-      "hook": "evnm_after_checkin",
+      "name": "wb_gam_badge_shared",
       "type": "action",
-      "file": "integrations/eventonomy-pro.php:36"
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/BadgeShare.php:156"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "evnm_after_update_order",
+      "name": "wb_gam_badge_unshared",
       "type": "action",
-      "file": "integrations/eventonomy-pro.php:61"
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/BadgeShare.php:195"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "evnm_after_follow",
+      "name": "wb_gam_before_delete_community_challenge",
       "type": "action",
-      "file": "integrations/eventonomy-pro.php:91"
+      "purpose": "",
+      "fired_at": [
+        "src/API/CommunityChallengesController.php:372"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "evnm_after_create_rsvp",
+      "name": "wb_gam_before_delete_level",
       "type": "action",
-      "file": "integrations/eventonomy.php:38"
+      "purpose": "",
+      "fired_at": [
+        "src/API/LevelsController.php:355"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "evnm_after_create_event",
+      "name": "wb_gam_before_points_awarded",
       "type": "action",
-      "file": "integrations/eventonomy.php:71"
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/Engine.php:638"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "evnm_after_create_order",
+      "name": "wb_gam_block_after_render",
       "type": "action",
-      "file": "integrations/eventonomy.php:97"
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/BlockHooks.php:100"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "jetonomy_pro_poll_created",
+      "name": "wb_gam_block_before_render",
       "type": "action",
-      "file": "integrations/jetonomy-pro.php:33"
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/BlockHooks.php:76"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "jetonomy_pro_poll_voted",
+      "name": "wb_gam_challenge_completed",
       "type": "action",
-      "file": "integrations/jetonomy-pro.php:55"
+      "purpose": "",
+      "fired_at": [
+        "src/API/ChallengesController.php:614",
+        "src/BuddyPress/Stream/ChallengeStream.php:6",
+        "src/Engine/ChallengeEngine.php:312"
+      ],
+      "consumed_by": [
+        "src/BuddyPress/Stream/ChallengeStream.php:31 array( __CLASS__",
+        "src/Engine/NotificationBridge.php:175 array( __CLASS__",
+        "src/Engine/TransactionalEmailEngine.php:82 array( __CLASS__",
+        "src/Engine/WebhookDispatcher.php:110 array( self::class",
+        "src/Integrations/ActivityPub.php:49 array( __CLASS__"
+      ]
     },
     {
-      "hook": "jetonomy_pro_message_sent",
+      "name": "wb_gam_cohort_outcome",
       "type": "action",
-      "file": "integrations/jetonomy-pro.php:77"
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/CohortEngine.php:433"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "jetonomy_pro_conversation_created",
+      "name": "wb_gam_cohort_settings_saved",
       "type": "action",
-      "file": "integrations/jetonomy-pro.php:100"
+      "purpose": "",
+      "fired_at": [
+        "src/API/CohortSettingsController.php:178"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "jetonomy_pro_badge_earned",
+      "name": "wb_gam_community_challenge_completed",
       "type": "action",
-      "file": "integrations/jetonomy-pro.php:122"
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/CommunityChallengeEngine.php:298"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "jetonomy_pro_dm_received",
+      "name": "wb_gam_community_challenge_created",
       "type": "action",
-      "file": "integrations/jetonomy-pro.php:149"
+      "purpose": "",
+      "fired_at": [
+        "src/API/CommunityChallengesController.php:274"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "jetonomy_pro_reaction_toggled",
+      "name": "wb_gam_community_challenge_deleted",
       "type": "action",
-      "file": "integrations/jetonomy-pro.php:174"
+      "purpose": "",
+      "fired_at": [
+        "src/API/CommunityChallengesController.php:396"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "jetonomy_user_joined_space",
+      "name": "wb_gam_community_challenge_updated",
       "type": "action",
-      "file": "integrations/jetonomy.php:34"
+      "purpose": "",
+      "fired_at": [
+        "src/API/CommunityChallengesController.php:350"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "jetonomy_join_request_approved",
+      "name": "wb_gam_credential_expired",
       "type": "action",
-      "file": "integrations/jetonomy.php:57"
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/CredentialExpiryEngine.php:194"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "jetonomy_trust_level_changed",
+      "name": "wb_gam_engines_booted",
       "type": "action",
-      "file": "integrations/jetonomy.php:79"
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/FeatureFlags.php:219"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "jetonomy_membership_activated",
+      "name": "wb_gam_event_processed",
       "type": "action",
-      "file": "integrations/jetonomy.php:103"
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/Engine.php:735"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "learndash_quiz_completed",
+      "name": "wb_gam_kudos_given",
       "type": "action",
-      "file": "integrations/learndash.php:80"
+      "purpose": "",
+      "fired_at": [
+        "src/BuddyPress/Stream/KudosStream.php:6",
+        "src/Engine/KudosEngine.php:248"
+      ],
+      "consumed_by": [
+        "src/BuddyPress/Stream/KudosStream.php:31 array( __CLASS__",
+        "src/Engine/NotificationBridge.php:176 array( __CLASS__",
+        "src/Engine/WebhookDispatcher.php:117 array( self::class"
+      ]
     },
     {
-      "hook": "learndash_assignment_approved",
+      "name": "wb_gam_kudos_revoked",
       "type": "action",
-      "file": "integrations/learndash.php:112"
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/KudosEngine.php:512"
+      ],
+      "consumed_by": [
+        "src/Engine/NotificationBridge.php:180 array( __CLASS__"
+      ]
     },
     {
-      "hook": "learnomy_pro_learning_path_completed",
+      "name": "wb_gam_leaderboard_cache_invalidated",
       "type": "action",
-      "file": "integrations/learnomy-pro.php:28"
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/LeaderboardEngine.php:204"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "learnomy_pro_learning_path_enrolled",
+      "name": "wb_gam_level_assigned",
       "type": "action",
-      "file": "integrations/learnomy-pro.php:47"
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/LevelEngine.php:304"
+      ],
+      "consumed_by": [
+        "src/Engine/RankAutomation.php:87 array( __CLASS__"
+      ]
     },
     {
-      "hook": "learnomy_pro_assignment_submitted",
+      "name": "wb_gam_level_changed",
       "type": "action",
-      "file": "integrations/learnomy-pro.php:70"
+      "purpose": "",
+      "fired_at": [
+        "src/BuddyPress/Stream/LevelStream.php:6",
+        "src/Engine/LevelEngine.php:283",
+        "src/Engine/NotificationBridge.php:440"
+      ],
+      "consumed_by": [
+        "src/BuddyPress/Stream/LevelStream.php:35 array( __CLASS__",
+        "src/Engine/BadgeEngine.php:441 array( __CLASS__",
+        "src/Engine/NotificationBridge.php:173 array( __CLASS__",
+        "src/Engine/RankAutomation.php:78 array( __CLASS__",
+        "src/Engine/TransactionalEmailEngine.php:80 array( __CLASS__",
+        "src/Engine/WebhookDispatcher.php:108 array( self::class",
+        "src/Integrations/ActivityPub.php:48 array( __CLASS__"
+      ]
     },
     {
-      "hook": "learnomy_pro_cohort_member_added",
+      "name": "wb_gam_level_imported",
       "type": "action",
-      "file": "integrations/learnomy-pro.php:90"
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/LevelEngine.php:281"
+      ],
+      "consumed_by": [
+        "src/Engine/BadgeEngine.php:458 array( __CLASS__",
+        "src/Engine/RankAutomation.php:81 array( __CLASS__"
+      ]
     },
     {
-      "hook": "learnomy_pro_gift_redeemed",
+      "name": "wb_gam_login_bonus_claimed",
       "type": "action",
-      "file": "integrations/learnomy-pro.php:109"
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/LoginBonusEngine.php:137"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "learnomy_lesson_completed",
+      "name": "wb_gam_manifests_loaded",
       "type": "action",
-      "file": "integrations/learnomy.php:30"
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/ManifestLoader.php:107"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "learnomy_quiz_passed",
+      "name": "wb_gam_member_purged",
       "type": "action",
-      "file": "integrations/learnomy.php:53"
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/MemberData.php:293"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "learnomy_course_completed",
+      "name": "wb_gam_personal_record",
       "type": "action",
-      "file": "integrations/learnomy.php:76"
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/PersonalRecordEngine.php:153"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "learnomy_student_enrolled",
+      "name": "wb_gam_point_type_converted",
       "type": "action",
-      "file": "integrations/learnomy.php:98"
+      "purpose": "",
+      "fired_at": [
+        "src/Services/PointTypeConversionService.php:444"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "learnomy_certificate_issued",
+      "name": "wb_gam_points_awarded",
       "type": "action",
-      "file": "integrations/learnomy.php:121"
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/Engine.php:706"
+      ],
+      "consumed_by": [
+        "src/Engine/BadgeEngine.php:421 array( __CLASS__",
+        "src/Engine/ChallengeEngine.php:76 array( __CLASS__",
+        "src/Engine/CommunityChallengeEngine.php:54 array( __CLASS__",
+        "src/Engine/LeaderboardEngine.php:91 array( __CLASS__",
+        "src/Engine/NotificationBridge.php:171 array( __CLASS__"
+      ]
     },
     {
-      "hook": "learnomy_review_submitted",
+      "name": "wb_gam_points_awarded_batch",
       "type": "action",
-      "file": "integrations/learnomy.php:143"
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/PointsEngine.php:1007"
+      ],
+      "consumed_by": [
+        "src/Engine/LeaderboardEngine.php:92 array( __CLASS__"
+      ]
     },
     {
-      "hook": "learnomy_instructor_application_submitted",
+      "name": "wb_gam_points_decayed",
       "type": "action",
-      "file": "integrations/learnomy.php:163"
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/PointsExpiry.php:262"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "wb_listora_pro_need_submitted",
+      "name": "wb_gam_points_redeemed",
       "type": "action",
-      "file": "integrations/wb-listora-pro.php:28"
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/RedemptionEngine.php:359"
+      ],
+      "consumed_by": [
+        "src/Engine/TransactionalEmailEngine.php:83 array( __CLASS__",
+        "src/Engine/WebhookDispatcher.php:124 array( self::class"
+      ]
     },
     {
-      "hook": "wb_listora_pro_need_published",
+      "name": "wb_gam_points_revoked",
       "type": "action",
-      "file": "integrations/wb-listora-pro.php:48"
+      "purpose": "",
+      "fired_at": [
+        "src/API/PointsController.php:395"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "wb_listora_pro_need_response_created",
+      "name": "wb_gam_points_spent",
       "type": "action",
-      "file": "integrations/wb-listora-pro.php:67"
+      "purpose": "",
+      "fired_at": [
+        "src/Extensions/functions.php:276"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "wb_listora_listing_submitted",
+      "name": "wb_gam_profile_visibility_set",
       "type": "action",
-      "file": "integrations/wb-listora.php:31"
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/ProfilePage.php:300"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "wb_listora_after_approve_listing",
+      "name": "wb_gam_progress_reset",
       "type": "action",
-      "file": "integrations/wb-listora.php:51"
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/ProgressReset.php:156"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "wb_listora_review_submitted",
+      "name": "wb_gam_rank_automation_action",
       "type": "action",
-      "file": "integrations/wb-listora.php:70"
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/RankAutomation.php:201"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "wb_listora_favorite_added",
+      "name": "wb_gam_register",
       "type": "action",
-      "file": "integrations/wb-listora.php:90"
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/Registry.php:81"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "wb_listora_claim_approved",
+      "name": "wb_gam_retention_nudge",
       "type": "action",
-      "file": "integrations/wb-listora.php:110"
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/StatusRetentionEngine.php:307"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "wb_listora_listing_renewed",
+      "name": "wb_gam_streak_adjusted",
       "type": "action",
-      "file": "integrations/wb-listora.php:129"
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/StreakEngine.php:341"
+      ],
+      "consumed_by": [
+        "src/Engine/BadgeEngine.php:453 array( __CLASS__"
+      ]
     },
     {
-      "hook": "woocommerce_add_to_cart",
+      "name": "wb_gam_streak_broken",
       "type": "action",
-      "file": "integrations/woocommerce.php:179"
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/StreakEngine.php:127"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "wcbp_resume_published",
+      "name": "wb_gam_streak_changed",
       "type": "action",
-      "file": "integrations/wp-career-board-pro.php:28"
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/StreakEngine.php:155"
+      ],
+      "consumed_by": [
+        "src/Engine/BadgeEngine.php:449 array( __CLASS__"
+      ]
     },
     {
-      "hook": "wcb_job_created",
+      "name": "wb_gam_streak_milestone",
       "type": "action",
-      "file": "integrations/wp-career-board.php:31"
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/StreakEngine.php:449"
+      ],
+      "consumed_by": [
+        "src/Engine/NotificationBridge.php:174 array( __CLASS__",
+        "src/Engine/WebhookDispatcher.php:109 array( self::class"
+      ]
     },
     {
-      "hook": "wcb_job_approved",
+      "name": "wb_gam_streak_reset",
       "type": "action",
-      "file": "integrations/wp-career-board.php:51"
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/StreakEngine.php:378"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "wcb_application_submitted",
+      "name": "wb_gam_submission_approved",
       "type": "action",
-      "file": "integrations/wp-career-board.php:70"
+      "purpose": "",
+      "fired_at": [
+        "src/Services/SubmissionService.php:168"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "wcb_application_status_changed",
+      "name": "wb_gam_submission_created",
       "type": "action",
-      "file": "integrations/wp-career-board.php:93"
+      "purpose": "",
+      "fired_at": [
+        "src/Services/SubmissionService.php:110"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "wcb_candidate_registered",
+      "name": "wb_gam_submission_rejected",
       "type": "action",
-      "file": "integrations/wp-career-board.php:116"
+      "purpose": "",
+      "fired_at": [
+        "src/Services/SubmissionService.php:203"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "wcb_employer_registered",
+      "name": "wb_gam_unknown_action",
       "type": "action",
-      "file": "integrations/wp-career-board.php:131"
-    },
-    {
-      "hook": "wb_gam_wpmediaverse_free_triggers",
-      "type": "filter",
-      "file": "integrations/wpmediaverse.php:280"
-    },
-    {
-      "hook": "wb_gam_wpmediaverse_pro_triggers",
-      "type": "filter",
-      "file": "integrations/wpmediaverse.php:448"
-    },
-    {
-      "hook": "wb_gam_wpmediaverse_triggers",
-      "type": "filter",
-      "file": "integrations/wpmediaverse.php:464"
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/Engine.php:178",
+        "src/Engine/Engine.php:241"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "edd_sl_sdk_registry",
+      "name": "wb_gam_user_data_erased",
       "type": "action",
-      "file": "libs/easy-digital-downloads/edd-sl-sdk/edd-sl-sdk.php:51"
-    },
-    {
-      "hook": "edd_sl_sdk_translate_string",
-      "type": "filter",
-      "file": "libs/easy-digital-downloads/edd-sl-sdk/src/Messenger.php:603"
-    },
-    {
-      "hook": "https_ssl_verify",
-      "type": "filter",
-      "file": "libs/easy-digital-downloads/edd-sl-sdk/src/Requests/API.php:71"
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/Privacy.php:735"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "edd_sl_sdk_templates_path",
-      "type": "filter",
-      "file": "libs/easy-digital-downloads/edd-sl-sdk/src/Templates.php:35"
-    },
-    {
-      "hook": "in_plugin_update_message-{$file}",
+      "name": "wb_gam_weekly_email_sent",
       "type": "action",
-      "file": "libs/easy-digital-downloads/edd-sl-sdk/src/Updaters/Plugin.php:180"
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/WeeklyEmailEngine.php:419"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "edd_sl_sdk_license_control_before_{$args[",
+      "name": "wb_gam_weekly_nudge_sent",
       "type": "action",
-      "file": "libs/easy-digital-downloads/edd-sl-sdk/templates/license-control.php:11"
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/LeaderboardNudge.php:333"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "edd_sl_sdk_license_control_after_{$args[",
+      "name": "wb_gamification_setup_wizard_completed",
       "type": "action",
-      "file": "libs/easy-digital-downloads/edd-sl-sdk/templates/license-control.php:47"
+      "purpose": "",
+      "fired_at": [
+        "src/Admin/SetupWizard.php:379"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "action_scheduler_pre_theme_init",
+      "name": "wb_gamification_setup_wizard_started",
       "type": "action",
-      "file": "libs/woocommerce/action-scheduler/action-scheduler.php:67"
-    },
-    {
-      "hook": "action_scheduler_stored_action_class",
-      "type": "filter",
-      "file": "libs/woocommerce/action-scheduler/classes/ActionScheduler_ActionFactory.php:41"
-    },
-    {
-      "hook": "action_scheduler_stored_action_instance",
-      "type": "filter",
-      "file": "libs/woocommerce/action-scheduler/classes/ActionScheduler_ActionFactory.php:56"
-    },
-    {
-      "hook": "action_scheduler_admin_view_class",
-      "type": "filter",
-      "file": "libs/woocommerce/action-scheduler/classes/ActionScheduler_AdminView.php:40"
-    },
-    {
-      "hook": "action_scheduler_check_pastdue_actions",
-      "type": "filter",
-      "file": "libs/woocommerce/action-scheduler/classes/ActionScheduler_AdminView.php:145"
-    },
-    {
-      "hook": "action_scheduler_pastdue_actions_seconds",
-      "type": "filter",
-      "file": "libs/woocommerce/action-scheduler/classes/ActionScheduler_AdminView.php:167"
-    },
-    {
-      "hook": "action_scheduler_pastdue_actions_min",
-      "type": "filter",
-      "file": "libs/woocommerce/action-scheduler/classes/ActionScheduler_AdminView.php:168"
-    },
-    {
-      "hook": "action_scheduler_pastdue_actions_check_pre",
-      "type": "filter",
-      "file": "libs/woocommerce/action-scheduler/classes/ActionScheduler_AdminView.php:174"
+      "purpose": "",
+      "fired_at": [
+        "src/Admin/SetupWizard.php:363"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "action_scheduler_pastdue_actions_check",
+      "name": "wb_gam_activity_context_label",
       "type": "filter",
-      "file": "libs/woocommerce/action-scheduler/classes/ActionScheduler_AdminView.php:195"
+      "purpose": "",
+      "fired_at": [
+        "src/BuddyPress/ActivityIntegration.php:132"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "action_scheduler_pastdue_actions_check_interval",
+      "name": "wb_gam_activitypub_activity",
       "type": "filter",
-      "file": "libs/woocommerce/action-scheduler/classes/ActionScheduler_AdminView.php:200"
+      "purpose": "",
+      "fired_at": [
+        "src/Integrations/ActivityPub.php:213"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "action_scheduler_pastdue_actions_extra_notices",
-      "type": "action",
-      "file": "libs/woocommerce/action-scheduler/classes/ActionScheduler_AdminView.php:240"
-    },
-    {
-      "hook": "action_scheduler_run_queue",
-      "type": "action",
-      "file": "libs/woocommerce/action-scheduler/classes/ActionScheduler_AsyncRequest_QueueRunner.php:48"
-    },
-    {
-      "hook": "action_scheduler_allow_async_request_runner",
-      "type": "filter",
-      "file": "libs/woocommerce/action-scheduler/classes/ActionScheduler_AsyncRequest_QueueRunner.php:84"
-    },
-    {
-      "hook": "action_scheduler_async_request_sleep_seconds",
+      "name": "wb_gam_as_retention_days",
       "type": "filter",
-      "file": "libs/woocommerce/action-scheduler/classes/ActionScheduler_AsyncRequest_QueueRunner.php:91"
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/ActionSchedulerCleaner.php:228"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "admin_memory_limit",
+      "name": "wb_gam_award_skip_toast_reasons",
       "type": "filter",
-      "file": "libs/woocommerce/action-scheduler/classes/ActionScheduler_Compatibility.php:61"
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/NotificationBridge.php:279"
+      ],
+      "consumed_by": [
+        "src/Engine/NotificationBridge.php:268 fn("
+      ]
     },
     {
-      "hook": "action_scheduler_migration_dependencies_met",
+      "name": "wb_gam_badge_condition_signals",
       "type": "filter",
-      "file": "libs/woocommerce/action-scheduler/classes/ActionScheduler_DataController.php:60"
-    },
-    {
-      "hook": "action_scheduler_unexpected_shutdown",
-      "type": "action",
-      "file": "libs/woocommerce/action-scheduler/classes/ActionScheduler_FatalErrorMonitor.php:91"
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/BadgeRule.php:365"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "action_scheduler_list_table_column_args",
+      "name": "wb_gam_badge_share_respects_privacy",
       "type": "filter",
-      "file": "libs/woocommerce/action-scheduler/classes/ActionScheduler_ListTable.php:279"
+      "purpose": "",
+      "fired_at": [
+        "src/API/BadgeShareController.php:341"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "action_scheduler_list_table_column_args",
+      "name": "wb_gam_before_create_api_key",
       "type": "filter",
-      "file": "libs/woocommerce/action-scheduler/classes/ActionScheduler_ListTable.php:288"
+      "purpose": "",
+      "fired_at": [
+        "src/API/ApiKeysController.php:224"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "action_scheduler_enable_recreate_data_store",
+      "name": "wb_gam_before_create_badge",
       "type": "filter",
-      "file": "libs/woocommerce/action-scheduler/classes/ActionScheduler_ListTable.php:352"
+      "purpose": "",
+      "fired_at": [
+        "src/API/BadgesController.php:548"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "action_scheduler_admin_notice_html",
+      "name": "wb_gam_before_create_community_challenge",
       "type": "filter",
-      "file": "libs/woocommerce/action-scheduler/classes/ActionScheduler_ListTable.php:440"
+      "purpose": "",
+      "fired_at": [
+        "src/API/CommunityChallengesController.php:247"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "action_scheduler_retention_period",
+      "name": "wb_gam_before_create_level",
       "type": "filter",
-      "file": "libs/woocommerce/action-scheduler/classes/ActionScheduler_QueueCleaner.php:61"
+      "purpose": "",
+      "fired_at": [
+        "src/API/LevelsController.php:215"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "action_scheduler_default_cleaner_statuses",
+      "name": "wb_gam_before_evaluate",
       "type": "filter",
-      "file": "libs/woocommerce/action-scheduler/classes/ActionScheduler_QueueCleaner.php:84"
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/Engine.php:570"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "action_scheduler_failed_{$context}_action_deletion",
-      "type": "action",
-      "file": "libs/woocommerce/action-scheduler/classes/ActionScheduler_QueueCleaner.php:158"
-    },
-    {
-      "hook": "action_scheduler_timeout_period",
+      "name": "wb_gam_before_kudos",
       "type": "filter",
-      "file": "libs/woocommerce/action-scheduler/classes/ActionScheduler_QueueCleaner.php:173"
-    },
-    {
-      "hook": "action_scheduler_reset_action",
-      "type": "action",
-      "file": "libs/woocommerce/action-scheduler/classes/ActionScheduler_QueueCleaner.php:193"
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/KudosEngine.php:170"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "action_scheduler_failure_period",
+      "name": "wb_gam_before_save_cohort_settings",
       "type": "filter",
-      "file": "libs/woocommerce/action-scheduler/classes/ActionScheduler_QueueCleaner.php:207"
-    },
-    {
-      "hook": "action_scheduler_failed_action",
-      "type": "action",
-      "file": "libs/woocommerce/action-scheduler/classes/ActionScheduler_QueueCleaner.php:226"
+      "purpose": "",
+      "fired_at": [
+        "src/API/CohortSettingsController.php:161"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "action_scheduler_cleanup_batch_size",
+      "name": "wb_gam_before_update_badge",
       "type": "filter",
-      "file": "libs/woocommerce/action-scheduler/classes/ActionScheduler_QueueCleaner.php:252"
+      "purpose": "",
+      "fired_at": [
+        "src/API/BadgesController.php:619"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "action_scheduler_queue_runner_class",
+      "name": "wb_gam_before_update_community_challenge",
       "type": "filter",
-      "file": "libs/woocommerce/action-scheduler/classes/ActionScheduler_QueueRunner.php:40"
+      "purpose": "",
+      "fired_at": [
+        "src/API/CommunityChallengesController.php:325"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "action_scheduler_run_schedule",
+      "name": "wb_gam_before_update_level",
       "type": "filter",
-      "file": "libs/woocommerce/action-scheduler/classes/ActionScheduler_QueueRunner.php:83"
-    },
-    {
-      "hook": "action_scheduler_before_process_queue",
-      "type": "action",
-      "file": "libs/woocommerce/action-scheduler/classes/ActionScheduler_QueueRunner.php:151"
+      "purpose": "",
+      "fired_at": [
+        "src/API/LevelsController.php:299"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "action_scheduler_queue_runner_batch_size",
+      "name": "wb_gam_block_badge_showcase_data",
       "type": "filter",
-      "file": "libs/woocommerce/action-scheduler/classes/ActionScheduler_QueueRunner.php:157"
+      "purpose": "",
+      "fired_at": [
+        "src/Blocks/badge-showcase/render.php:123"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "action_scheduler_after_process_queue",
-      "type": "action",
-      "file": "libs/woocommerce/action-scheduler/classes/ActionScheduler_QueueRunner.php:163"
-    },
-    {
-      "hook": "action_scheduler_queue_runner_flush_cache",
+      "name": "wb_gam_block_challenges_data",
       "type": "filter",
-      "file": "libs/woocommerce/action-scheduler/classes/ActionScheduler_QueueRunner.php:234"
-    },
-    {
-      "hook": "action_scheduler_ensure_recurring_actions",
-      "type": "action",
-      "file": "libs/woocommerce/action-scheduler/classes/ActionScheduler_RecurringActionScheduler.php:79"
-    },
-    {
-      "hook": "action_scheduler_before_process_queue",
-      "type": "action",
-      "file": "libs/woocommerce/action-scheduler/classes/WP_CLI/ActionScheduler_WPCLI_QueueRunner.php:112"
-    },
-    {
-      "hook": "action_scheduler_after_process_queue",
-      "type": "action",
-      "file": "libs/woocommerce/action-scheduler/classes/WP_CLI/ActionScheduler_WPCLI_QueueRunner.php:128"
-    },
-    {
-      "hook": "action_scheduler/progress_tick",
-      "type": "action",
-      "file": "libs/woocommerce/action-scheduler/classes/WP_CLI/ProgressBar.php:87"
-    },
-    {
-      "hook": "action_scheduler_pre_init",
-      "type": "action",
-      "file": "libs/woocommerce/action-scheduler/classes/abstracts/ActionScheduler.php:182"
-    },
-    {
-      "hook": "action_scheduler_init",
-      "type": "action",
-      "file": "libs/woocommerce/action-scheduler/classes/abstracts/ActionScheduler.php:219"
-    },
-    {
-      "hook": "action_scheduler_init",
-      "type": "action",
-      "file": "libs/woocommerce/action-scheduler/classes/abstracts/ActionScheduler.php:236"
+      "purpose": "",
+      "fired_at": [
+        "src/Blocks/challenges/render.php:96"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "action_scheduler_load_deprecated_functions",
+      "name": "wb_gam_block_cohort_rank_data",
       "type": "filter",
-      "file": "libs/woocommerce/action-scheduler/classes/abstracts/ActionScheduler.php:239"
+      "purpose": "",
+      "fired_at": [
+        "src/Blocks/cohort-rank/render.php:128"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "action_scheduler_before_execute",
-      "type": "action",
-      "file": "libs/woocommerce/action-scheduler/classes/abstracts/ActionScheduler_Abstract_QueueRunner.php:91"
-    },
-    {
-      "hook": "action_scheduler_execution_ignored",
-      "type": "action",
-      "file": "libs/woocommerce/action-scheduler/classes/abstracts/ActionScheduler_Abstract_QueueRunner.php:95"
-    },
-    {
-      "hook": "action_scheduler_begin_execute",
-      "type": "action",
-      "file": "libs/woocommerce/action-scheduler/classes/abstracts/ActionScheduler_Abstract_QueueRunner.php:99"
-    },
-    {
-      "hook": "action_scheduler_after_execute",
-      "type": "action",
-      "file": "libs/woocommerce/action-scheduler/classes/abstracts/ActionScheduler_Abstract_QueueRunner.php:104"
-    },
-    {
-      "hook": "action_scheduler_failed_execution",
-      "type": "action",
-      "file": "libs/woocommerce/action-scheduler/classes/abstracts/ActionScheduler_Abstract_QueueRunner.php:143"
-    },
-    {
-      "hook": "action_scheduler_failed_validation",
-      "type": "action",
-      "file": "libs/woocommerce/action-scheduler/classes/abstracts/ActionScheduler_Abstract_QueueRunner.php:152"
-    },
-    {
-      "hook": "action_scheduler_failed_to_schedule_next_instance",
-      "type": "action",
-      "file": "libs/woocommerce/action-scheduler/classes/abstracts/ActionScheduler_Abstract_QueueRunner.php:179"
-    },
-    {
-      "hook": "action_scheduler_recurring_action_failure_threshold",
+      "name": "wb_gam_block_community_challenges_data",
       "type": "filter",
-      "file": "libs/woocommerce/action-scheduler/classes/abstracts/ActionScheduler_Abstract_QueueRunner.php:201"
+      "purpose": "",
+      "fired_at": [
+        "src/Blocks/community-challenges/render.php:84"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "action_scheduler_recurring_action_is_consistently_failing",
+      "name": "wb_gam_block_css",
       "type": "filter",
-      "file": "libs/woocommerce/action-scheduler/classes/abstracts/ActionScheduler_Abstract_QueueRunner.php:231"
+      "purpose": "",
+      "fired_at": [
+        "src/Blocks/CSS.php:142"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "action_scheduler_queue_runner_concurrent_batches",
+      "name": "wb_gam_block_daily_bonus_data",
       "type": "filter",
-      "file": "libs/woocommerce/action-scheduler/classes/abstracts/ActionScheduler_Abstract_QueueRunner.php:251"
+      "purpose": "",
+      "fired_at": [
+        "src/Blocks/daily-bonus/render.php:105"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "action_scheduler_maximum_execution_time",
+      "name": "wb_gam_block_data",
       "type": "filter",
-      "file": "libs/woocommerce/action-scheduler/classes/abstracts/ActionScheduler_Abstract_QueueRunner.php:275"
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/BlockHooks.php:130"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "action_scheduler_queue_runner_time_limit",
+      "name": "wb_gam_block_earning_guide_data",
       "type": "filter",
-      "file": "libs/woocommerce/action-scheduler/classes/abstracts/ActionScheduler_Abstract_QueueRunner.php:278"
+      "purpose": "",
+      "fired_at": [
+        "src/Blocks/earning-guide/render.php:117"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "action_scheduler_use_cpu_execution_time",
+      "name": "wb_gam_block_hub_currencies",
       "type": "filter",
-      "file": "libs/woocommerce/action-scheduler/classes/abstracts/ActionScheduler_Abstract_QueueRunner.php:290"
+      "purpose": "",
+      "fired_at": [
+        "src/Blocks/hub/render.php:217"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "action_scheduler_maximum_execution_time_likely_to_be_exceeded",
+      "name": "wb_gam_block_kudos_feed_data",
       "type": "filter",
-      "file": "libs/woocommerce/action-scheduler/classes/abstracts/ActionScheduler_Abstract_QueueRunner.php:320"
+      "purpose": "",
+      "fired_at": [
+        "src/Blocks/kudos-feed/render.php:85"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "action_scheduler_memory_exceeded",
+      "name": "wb_gam_block_leaderboard_data",
       "type": "filter",
-      "file": "libs/woocommerce/action-scheduler/classes/abstracts/ActionScheduler_Abstract_QueueRunner.php:360"
-    },
-    {
-      "hook": "action_scheduler_before_schema_update",
-      "type": "action",
-      "file": "libs/woocommerce/action-scheduler/classes/abstracts/ActionScheduler_Abstract_Schema.php:68"
+      "purpose": "",
+      "fired_at": [
+        "src/Blocks/leaderboard/render.php:84"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "action_scheduler/created_table",
-      "type": "action",
-      "file": "libs/woocommerce/action-scheduler/classes/abstracts/ActionScheduler_Abstract_Schema.php:146"
-    },
-    {
-      "hook": "action_scheduler_lock_duration",
+      "name": "wb_gam_block_level_progress_data",
       "type": "filter",
-      "file": "libs/woocommerce/action-scheduler/classes/abstracts/ActionScheduler_Lock.php:59"
+      "purpose": "",
+      "fired_at": [
+        "src/Blocks/level-progress/render.php:129"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "action_scheduler_lock_class",
+      "name": "wb_gam_block_manifests",
       "type": "filter",
-      "file": "libs/woocommerce/action-scheduler/classes/abstracts/ActionScheduler_Lock.php:69"
+      "purpose": "",
+      "fired_at": [
+        "src/Blocks/Registrar.php:121"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "action_scheduler_logger_class",
+      "name": "wb_gam_block_member_points_data",
       "type": "filter",
-      "file": "libs/woocommerce/action-scheduler/classes/abstracts/ActionScheduler_Logger.php:24"
+      "purpose": "",
+      "fired_at": [
+        "src/Blocks/member-points/render.php:137"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "action_scheduler_extra_action_counts",
+      "name": "wb_gam_block_points_history_data",
       "type": "filter",
-      "file": "libs/woocommerce/action-scheduler/classes/abstracts/ActionScheduler_Store.php:175"
-    },
-    {
-      "hook": "action_scheduler_bulk_cancel_actions",
-      "type": "action",
-      "file": "libs/woocommerce/action-scheduler/classes/abstracts/ActionScheduler_Store.php:445"
+      "purpose": "",
+      "fired_at": [
+        "src/Blocks/points-history/render.php:118"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "action_scheduler_store_class",
+      "name": "wb_gam_block_redemption_store_data",
       "type": "filter",
-      "file": "libs/woocommerce/action-scheduler/classes/abstracts/ActionScheduler_Store.php:501"
-    },
-    {
-      "hook": "action_scheduler_stored_action",
-      "type": "action",
-      "file": "libs/woocommerce/action-scheduler/classes/data-stores/ActionScheduler_DBStore.php:133"
-    },
-    {
-      "hook": "action_scheduler_failed_fetch_action",
-      "type": "action",
-      "file": "libs/woocommerce/action-scheduler/classes/data-stores/ActionScheduler_DBStore.php:370"
-    },
-    {
-      "hook": "action_scheduler_canceled_action",
-      "type": "action",
-      "file": "libs/woocommerce/action-scheduler/classes/data-stores/ActionScheduler_DBStore.php:701"
-    },
-    {
-      "hook": "action_scheduler_bulk_cancel_actions",
-      "type": "action",
-      "file": "libs/woocommerce/action-scheduler/classes/data-stores/ActionScheduler_DBStore.php:780"
-    },
-    {
-      "hook": "action_scheduler_deleted_action",
-      "type": "action",
-      "file": "libs/woocommerce/action-scheduler/classes/data-stores/ActionScheduler_DBStore.php:803"
+      "purpose": "",
+      "fired_at": [
+        "src/Blocks/redemption-store/render.php:78"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "action_scheduler_claim_actions_order_by",
+      "name": "wb_gam_block_streak_data",
       "type": "filter",
-      "file": "libs/woocommerce/action-scheduler/classes/data-stores/ActionScheduler_DBStore.php:1000"
+      "purpose": "",
+      "fired_at": [
+        "src/Blocks/streak/render.php:131"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "action_scheduler_db_supports_skip_locked",
+      "name": "wb_gam_block_top_members_data",
       "type": "filter",
-      "file": "libs/woocommerce/action-scheduler/classes/data-stores/ActionScheduler_DBStore.php:1065"
-    },
-    {
-      "hook": "action_scheduler_completed_action",
-      "type": "action",
-      "file": "libs/woocommerce/action-scheduler/classes/data-stores/ActionScheduler_DBStore.php:1310"
+      "purpose": "",
+      "fired_at": [
+        "src/Blocks/top-members/render.php:91"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "action_scheduler_stored_action",
-      "type": "action",
-      "file": "libs/woocommerce/action-scheduler/classes/data-stores/ActionScheduler_wpPostStore.php:45"
-    },
-    {
-      "hook": "action_scheduler_failed_fetch_action",
-      "type": "action",
-      "file": "libs/woocommerce/action-scheduler/classes/data-stores/ActionScheduler_wpPostStore.php:200"
-    },
-    {
-      "hook": "action_scheduler_canceled_action",
-      "type": "action",
-      "file": "libs/woocommerce/action-scheduler/classes/data-stores/ActionScheduler_wpPostStore.php:517"
-    },
-    {
-      "hook": "action_scheduler_deleted_action",
-      "type": "action",
-      "file": "libs/woocommerce/action-scheduler/classes/data-stores/ActionScheduler_wpPostStore.php:536"
-    },
-    {
-      "hook": "action_scheduler_completed_action",
-      "type": "action",
-      "file": "libs/woocommerce/action-scheduler/classes/data-stores/ActionScheduler_wpPostStore.php:1028"
-    },
-    {
-      "hook": "action_scheduler_maximum_args_length",
+      "name": "wb_gam_block_year_recap_data",
       "type": "filter",
-      "file": "libs/woocommerce/action-scheduler/classes/data-stores/ActionScheduler_wpPostStore.php:1056"
+      "purpose": "",
+      "fired_at": [
+        "src/Blocks/year-recap/render.php:120"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "action_scheduler_post_status_args",
+      "name": "wb_gam_credential_document",
       "type": "filter",
-      "file": "libs/woocommerce/action-scheduler/classes/data-stores/ActionScheduler_wpPostStore_PostStatusRegistrar.php:31"
+      "purpose": "",
+      "fired_at": [
+        "src/API/CredentialController.php:315"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "action_scheduler_post_status_failed_labels",
+      "name": "wb_gam_deactivation_collector_url",
       "type": "filter",
-      "file": "libs/woocommerce/action-scheduler/classes/data-stores/ActionScheduler_wpPostStore_PostStatusRegistrar.php:46"
+      "purpose": "",
+      "fired_at": [
+        "src/Admin/DeactivationFeedback.php:200"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "action_scheduler_post_status_running_labels",
+      "name": "wb_gam_defer_leaderboard_to_jetonomy",
       "type": "filter",
-      "file": "libs/woocommerce/action-scheduler/classes/data-stores/ActionScheduler_wpPostStore_PostStatusRegistrar.php:61"
+      "purpose": "",
+      "fired_at": [
+        "src/Integrations/Jetonomy/DisplayDefer.php:61"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "action_scheduler_post_type_args",
+      "name": "wb_gam_email_body",
       "type": "filter",
-      "file": "libs/woocommerce/action-scheduler/classes/data-stores/ActionScheduler_wpPostStore_PostTypeRegistrar.php:50"
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/TransactionalEmailEngine.php:489"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "action_scheduler_taxonomy_args",
+      "name": "wb_gam_email_burst_cap",
       "type": "filter",
-      "file": "libs/woocommerce/action-scheduler/classes/data-stores/ActionScheduler_wpPostStore_TaxonomyRegistrar.php:30"
-    },
-    {
-      "hook": "action_scheduler/no_action_to_migrate",
-      "type": "action",
-      "file": "libs/woocommerce/action-scheduler/classes/migration/ActionMigrator.php:76"
-    },
-    {
-      "hook": "action_scheduler/migrate_action_failed",
-      "type": "action",
-      "file": "libs/woocommerce/action-scheduler/classes/migration/ActionMigrator.php:88"
-    },
-    {
-      "hook": "action_scheduler/migrated_action",
-      "type": "action",
-      "file": "libs/woocommerce/action-scheduler/classes/migration/ActionMigrator.php:111"
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/TransactionalEmailEngine.php:603"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "action_scheduler/migrate_action_incomplete",
-      "type": "action",
-      "file": "libs/woocommerce/action-scheduler/classes/migration/ActionMigrator.php:119"
-    },
-    {
-      "hook": "action_scheduler/migrated_action",
-      "type": "action",
-      "file": "libs/woocommerce/action-scheduler/classes/migration/ActionMigrator.php:120"
-    },
-    {
-      "hook": "action_scheduler/migration_config",
+      "name": "wb_gam_email_enabled",
       "type": "filter",
-      "file": "libs/woocommerce/action-scheduler/classes/migration/Controller.php:166"
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/TransactionalEmailEngine.php:425"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "action_scheduler_migrate_data_store",
+      "name": "wb_gam_email_from_header",
       "type": "filter",
-      "file": "libs/woocommerce/action-scheduler/classes/migration/Controller.php:220"
-    },
-    {
-      "hook": "action_scheduler/migrate_action_dry_run",
-      "type": "action",
-      "file": "libs/woocommerce/action-scheduler/classes/migration/DryRun_ActionMigrator.php:24"
-    },
-    {
-      "hook": "action_scheduler/migration_batch_starting",
-      "type": "action",
-      "file": "libs/woocommerce/action-scheduler/classes/migration/Runner.php:129"
-    },
-    {
-      "hook": "action_scheduler/migration_batch_complete",
-      "type": "action",
-      "file": "libs/woocommerce/action-scheduler/classes/migration/Runner.php:161"
-    },
-    {
-      "hook": "action_scheduler/migration_complete",
-      "type": "action",
-      "file": "libs/woocommerce/action-scheduler/classes/migration/Scheduler.php:57"
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/Email.php:113"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "action_scheduler/migration_interval",
+      "name": "wb_gam_email_recipients",
       "type": "filter",
-      "file": "libs/woocommerce/action-scheduler/classes/migration/Scheduler.php:105"
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/TransactionalEmailEngine.php:463"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "action_scheduler/migration_batch_size",
+      "name": "wb_gam_email_subject",
       "type": "filter",
-      "file": "libs/woocommerce/action-scheduler/classes/migration/Scheduler.php:114"
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/TransactionalEmailEngine.php:476"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "action_scheduler_maximum_execution_time",
+      "name": "wb_gam_evaluate_badge_condition",
       "type": "filter",
-      "file": "libs/woocommerce/action-scheduler/deprecated/ActionScheduler_Abstract_QueueRunner_Deprecated.php:22"
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/BadgeEngine.php:889"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "pre_as_enqueue_async_action",
+      "name": "wb_gam_event_metadata",
       "type": "filter",
-      "file": "libs/woocommerce/action-scheduler/functions.php:40"
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/Engine.php:538"
+      ],
+      "consumed_by": [
+        "src/API/ApiKeyAuth.php:52 static function ( $metadata"
+      ]
     },
     {
-      "hook": "pre_as_schedule_single_action",
+      "name": "wb_gam_grant_member_uploads",
       "type": "filter",
-      "file": "libs/woocommerce/action-scheduler/functions.php:91"
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/MemberUploadCap.php:91"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "pre_as_schedule_recurring_action",
+      "name": "wb_gam_heartbeat_payload",
       "type": "filter",
-      "file": "libs/woocommerce/action-scheduler/functions.php:165"
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/HeartbeatChannel.php:171"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "pre_as_schedule_cron_action",
+      "name": "wb_gam_hub_anon_leaderboard",
       "type": "filter",
-      "file": "libs/woocommerce/action-scheduler/functions.php:232"
+      "purpose": "",
+      "fired_at": [
+        "src/Blocks/hub/render.php:119"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "https_local_ssl_verify",
+      "name": "wb_gam_import_mode_active",
       "type": "filter",
-      "file": "libs/woocommerce/action-scheduler/lib/WP_Async_Request.php:152"
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/ImportMode.php:92"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "wb_gam_before_create_api_key",
+      "name": "wb_gam_import_point_type_map",
       "type": "filter",
-      "file": "src/API/ApiKeysController.php:223"
-    },
-    {
-      "hook": "wb_gam_after_create_api_key",
-      "type": "action",
-      "file": "src/API/ApiKeysController.php:272"
-    },
-    {
-      "hook": "wb_gam_after_revoke_api_key",
-      "type": "action",
-      "file": "src/API/ApiKeysController.php:306"
+      "purpose": "",
+      "fired_at": [
+        "src/Integrations/Importers/BadgeOSImporter.php:74",
+        "src/Integrations/Importers/GamiPressImporter.php:67",
+        "src/Integrations/Importers/MyCredImporter.php:77"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "wb_gam_after_delete_api_key",
-      "type": "action",
-      "file": "src/API/ApiKeysController.php:330"
-    },
-    {
-      "hook": "wb_gam_badge_share_respects_privacy",
+      "name": "wb_gam_import_timeout_ms",
       "type": "filter",
-      "file": "src/API/BadgeShareController.php:256"
+      "purpose": "",
+      "fired_at": [
+        "src/Admin/ImportPage.php:97"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "wb_gam_before_create_badge",
+      "name": "wb_gam_kudos_abuse_pair_threshold",
       "type": "filter",
-      "file": "src/API/BadgesController.php:554"
-    },
-    {
-      "hook": "wb_gam_after_create_badge",
-      "type": "action",
-      "file": "src/API/BadgesController.php:594"
+      "purpose": "",
+      "fired_at": [
+        "src/Admin/KudosModerationPage.php:205"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "wb_gam_before_update_badge",
+      "name": "wb_gam_kudos_per_receiver_cooldown_seconds",
       "type": "filter",
-      "file": "src/API/BadgesController.php:625"
-    },
-    {
-      "hook": "wb_gam_after_update_badge",
-      "type": "action",
-      "file": "src/API/BadgesController.php:664"
-    },
-    {
-      "hook": "wb_gam_challenge_completed",
-      "type": "action",
-      "file": "src/API/ChallengesController.php:614"
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/KudosEngine.php:97"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "wb_gam_before_save_cohort_settings",
+      "name": "wb_gam_leaderboard_max_snapshot_age",
       "type": "filter",
-      "file": "src/API/CohortSettingsController.php:161"
-    },
-    {
-      "hook": "wb_gam_after_save_cohort_settings",
-      "type": "action",
-      "file": "src/API/CohortSettingsController.php:176"
-    },
-    {
-      "hook": "wb_gam_cohort_settings_saved",
-      "type": "action",
-      "file": "src/API/CohortSettingsController.php:178"
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/LeaderboardEngine.php:1019",
+        "src/Engine/LeaderboardEngine.php:784"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "wb_gam_before_create_community_challenge",
+      "name": "wb_gam_leaderboard_results",
       "type": "filter",
-      "file": "src/API/CommunityChallengesController.php:231"
-    },
-    {
-      "hook": "wb_gam_after_create_community_challenge",
-      "type": "action",
-      "file": "src/API/CommunityChallengesController.php:256"
-    },
-    {
-      "hook": "wb_gam_community_challenge_created",
-      "type": "action",
-      "file": "src/API/CommunityChallengesController.php:258"
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/LeaderboardEngine.php:910"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "wb_gam_before_update_community_challenge",
+      "name": "wb_gam_leaderboard_scope_user_ids",
       "type": "filter",
-      "file": "src/API/CommunityChallengesController.php:309"
-    },
-    {
-      "hook": "wb_gam_after_update_community_challenge",
-      "type": "action",
-      "file": "src/API/CommunityChallengesController.php:333"
-    },
-    {
-      "hook": "wb_gam_community_challenge_updated",
-      "type": "action",
-      "file": "src/API/CommunityChallengesController.php:334"
-    },
-    {
-      "hook": "wb_gam_before_delete_community_challenge",
-      "type": "action",
-      "file": "src/API/CommunityChallengesController.php:356"
-    },
-    {
-      "hook": "wb_gam_after_delete_community_challenge",
-      "type": "action",
-      "file": "src/API/CommunityChallengesController.php:379"
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/LeaderboardEngine.php:965"
+      ],
+      "consumed_by": [
+        "src/CLI/DoctorCommand.php:810 $resolve_scope"
+      ]
     },
     {
-      "hook": "wb_gam_community_challenge_deleted",
-      "type": "action",
-      "file": "src/API/CommunityChallengesController.php:380"
-    },
-    {
-      "hook": "wb_gam_credential_document",
+      "name": "wb_gam_learndash_profile_link",
       "type": "filter",
-      "file": "src/API/CredentialController.php:309"
+      "purpose": "",
+      "fired_at": [
+        "src/Integrations/LearnDash/ProfileIntegration.php:47"
+      ],
+      "consumed_by": [
+        "src/Integrations/LearnDash/ProfileIntegration.php:41 '__return_true'"
+      ]
     },
     {
-      "hook": "wb_gam_before_create_level",
+      "name": "wb_gam_learnomy_profile_link",
       "type": "filter",
-      "file": "src/API/LevelsController.php:215"
-    },
-    {
-      "hook": "wb_gam_after_create_level",
-      "type": "action",
-      "file": "src/API/LevelsController.php:251"
+      "purpose": "",
+      "fired_at": [
+        "src/Integrations/Learnomy/ProfileIntegration.php:48"
+      ],
+      "consumed_by": [
+        "src/Integrations/Learnomy/ProfileIntegration.php:42 '__return_true'"
+      ]
     },
     {
-      "hook": "wb_gam_before_update_level",
+      "name": "wb_gam_manifest_paths",
       "type": "filter",
-      "file": "src/API/LevelsController.php:299"
-    },
-    {
-      "hook": "wb_gam_after_update_level",
-      "type": "action",
-      "file": "src/API/LevelsController.php:321"
-    },
-    {
-      "hook": "wb_gam_before_delete_level",
-      "type": "action",
-      "file": "src/API/LevelsController.php:355"
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/ManifestLoader.php:178"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "wb_gam_after_delete_level",
-      "type": "action",
-      "file": "src/API/LevelsController.php:366"
-    },
-    {
-      "hook": "wb_gam_points_revoked",
-      "type": "action",
-      "file": "src/API/PointsController.php:395"
-    },
-    {
-      "hook": "wb_gam_sse_allowed",
+      "name": "wb_gam_member_surface_html",
       "type": "filter",
-      "file": "src/API/SSEController.php:212"
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/MemberSurface.php:107"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "wb_gam_deactivation_collector_url",
+      "name": "wb_gam_member_url",
       "type": "filter",
-      "file": "src/Admin/DeactivationFeedback.php:195"
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/MemberUrl.php:95"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "wb_gam_kudos_abuse_pair_threshold",
+      "name": "wb_gam_module_enabled",
       "type": "filter",
-      "file": "src/Admin/KudosModerationPage.php:205"
-    },
-    {
-      "hook": "wb_gamification_setup_wizard_started",
-      "type": "action",
-      "file": "src/Admin/SetupWizard.php:363"
-    },
-    {
-      "hook": "wb_gamification_setup_wizard_completed",
-      "type": "action",
-      "file": "src/Admin/SetupWizard.php:379"
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/ModuleToggles.php:130"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "wb_gam_block_css",
+      "name": "wb_gam_nudge_message",
       "type": "filter",
-      "file": "src/Blocks/CSS.php:142"
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/LeaderboardNudge.php:285"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "wb_gam_empty_state_{$block}",
+      "name": "wb_gam_og_accent_color",
       "type": "filter",
-      "file": "src/Blocks/EmptyState.php:66"
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/BadgeOgImage.php:119"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "wb_gam_block_manifests",
+      "name": "wb_gam_points_for_action",
       "type": "filter",
-      "file": "src/Blocks/Registrar.php:121"
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/Engine.php:614"
+      ],
+      "consumed_by": [
+        "src/BuddyPress/ActivityIntegration.php:71 array( __CLASS__"
+      ]
     },
     {
-      "hook": "wb_gam_block_badge_showcase_data",
+      "name": "wb_gam_profile_publicly_visible",
       "type": "filter",
-      "file": "src/Blocks/badge-showcase/render.php:117"
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/ProfilePage.php:250"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "wb_gam_block_challenges_data",
+      "name": "wb_gam_rank_automation_rules",
       "type": "filter",
-      "file": "src/Blocks/challenges/render.php:96"
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/RankAutomation.php:160"
+      ],
+      "consumed_by": [
+        "src/Engine/RankAutomation.php:33 function( array $rules"
+      ]
     },
     {
-      "hook": "wb_gam_block_cohort_rank_data",
+      "name": "wb_gam_recap_data",
       "type": "filter",
-      "file": "src/Blocks/cohort-rank/render.php:128"
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/RecapEngine.php:217"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "wb_gam_block_community_challenges_data",
+      "name": "wb_gam_rule_condition",
       "type": "filter",
-      "file": "src/Blocks/community-challenges/render.php:84"
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/RuleEngine.php:165"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "wb_gam_block_daily_bonus_data",
+      "name": "wb_gam_should_award_badge",
       "type": "filter",
-      "file": "src/Blocks/daily-bonus/render.php:105"
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/BadgeEngine.php:1034"
+      ],
+      "consumed_by": [
+        "src/CLI/ReplayCommand.php:219 $capturer"
+      ]
     },
     {
-      "hook": "wb_gam_block_earning_guide_data",
+      "name": "wb_gam_should_send_weekly_nudge",
       "type": "filter",
-      "file": "src/Blocks/earning-guide/render.php:117"
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/LeaderboardNudge.php:265"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "wb_gam_block_hub_currencies",
+      "name": "wb_gam_sse_allowed",
       "type": "filter",
-      "file": "src/Blocks/hub/render.php:176"
+      "purpose": "",
+      "fired_at": [
+        "src/API/SSEController.php:212"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "wb_gam_block_kudos_feed_data",
+      "name": "wb_gam_streak_grace_days",
       "type": "filter",
-      "file": "src/Blocks/kudos-feed/render.php:85"
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/StreakEngine.php:92"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "wb_gam_block_leaderboard_data",
+      "name": "wb_gam_submission_daily_cap",
       "type": "filter",
-      "file": "src/Blocks/leaderboard/render.php:84"
+      "purpose": "",
+      "fired_at": [
+        "src/Services/SubmissionService.php:219"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "wb_gam_block_level_progress_data",
+      "name": "wb_gam_template_path",
       "type": "filter",
-      "file": "src/Blocks/level-progress/render.php:128"
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/Templates.php:84"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "wb_gam_block_member_points_data",
+      "name": "wb_gam_toast_data",
       "type": "filter",
-      "file": "src/Blocks/member-points/render.php:136"
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/NotificationBridge.php:817"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "wb_gam_block_points_history_data",
+      "name": "wb_gam_toast_position",
       "type": "filter",
-      "file": "src/Blocks/points-history/render.php:118"
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/NotificationBridge.php:148"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "wb_gam_block_redemption_store_data",
+      "name": "wb_gam_user_can_earn",
       "type": "filter",
-      "file": "src/Blocks/redemption-store/render.php:78"
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/PointsEngine.php:107"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "wb_gam_block_streak_data",
+      "name": "wb_gam_weekly_email_body",
       "type": "filter",
-      "file": "src/Blocks/streak/render.php:130"
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/WeeklyEmailEngine.php:399"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "wb_gam_block_top_members_data",
+      "name": "wb_gam_wpmediaverse_free_triggers",
       "type": "filter",
-      "file": "src/Blocks/top-members/render.php:90"
+      "purpose": "",
+      "fired_at": [
+        "integrations/wpmediaverse.php:280"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "wb_gam_block_year_recap_data",
+      "name": "wb_gam_wpmediaverse_pro_triggers",
       "type": "filter",
-      "file": "src/Blocks/year-recap/render.php:120"
+      "purpose": "",
+      "fired_at": [
+        "integrations/wpmediaverse.php:448"
+      ],
+      "consumed_by": []
     },
     {
-      "hook": "wb_gam_activity_context_label",
+      "name": "wb_gam_wpmediaverse_triggers",
       "type": "filter",
-      "file": "src/BuddyPress/ActivityIntegration.php:132"
-    },
-    {
-      "hook": "wb_gam_badge_awarded",
-      "type": "action",
-      "file": "src/BuddyPress/Stream/BadgeStream.php:6"
-    },
-    {
-      "hook": "wb_gam_challenge_completed",
-      "type": "action",
-      "file": "src/BuddyPress/Stream/ChallengeStream.php:6"
-    },
-    {
-      "hook": "wb_gam_kudos_given",
-      "type": "action",
-      "file": "src/BuddyPress/Stream/KudosStream.php:6"
-    },
-    {
-      "hook": "wb_gam_level_changed",
-      "type": "action",
-      "file": "src/BuddyPress/Stream/LevelStream.php:6"
-    },
-    {
-      "hook": "rest_api_init",
-      "type": "action",
-      "file": "src/CLI/OpenApiCommand.php:87"
-    },
-    {
-      "hook": "wb_gam_as_retention_days",
-      "type": "filter",
-      "file": "src/Engine/ActionSchedulerCleaner.php:213"
-    },
-    {
-      "hook": "wb_gam_as_cleaned",
-      "type": "action",
-      "file": "src/Engine/ActionSchedulerCleaner.php:251"
-    },
-    {
-      "hook": "wb_gam_as_runaway_detected",
-      "type": "action",
-      "file": "src/Engine/ActionSchedulerCleaner.php:304"
-    },
-    {
-      "hook": "wb_gam_evaluate_badge_condition",
-      "type": "filter",
-      "file": "src/Engine/BadgeEngine.php:757"
-    },
-    {
-      "hook": "wb_gam_should_award_badge",
-      "type": "filter",
-      "file": "src/Engine/BadgeEngine.php:902"
-    },
-    {
-      "hook": "wb_gam_badge_awarded",
-      "type": "action",
-      "file": "src/Engine/BadgeEngine.php:979"
-    },
-    {
-      "hook": "wb_gam_after_badge_award",
-      "type": "action",
-      "file": "src/Engine/BadgeEngine.php:989"
-    },
-    {
-      "hook": "wb_gam_og_accent_color",
-      "type": "filter",
-      "file": "src/Engine/BadgeOgImage.php:119"
-    },
-    {
-      "hook": "wb_gam_badge_condition_signals",
-      "type": "filter",
-      "file": "src/Engine/BadgeRule.php:365"
-    },
-    {
-      "hook": "wb_gam_block_before_render",
-      "type": "action",
-      "file": "src/Engine/BlockHooks.php:76"
-    },
-    {
-      "hook": "wb_gam_block_after_render",
-      "type": "action",
-      "file": "src/Engine/BlockHooks.php:100"
-    },
-    {
-      "hook": "wb_gam_block_data",
-      "type": "filter",
-      "file": "src/Engine/BlockHooks.php:130"
-    },
-    {
-      "hook": "wb_gam_challenge_completed",
-      "type": "action",
-      "file": "src/Engine/ChallengeEngine.php:312"
-    },
-    {
-      "hook": "wb_gam_cohort_outcome",
-      "type": "action",
-      "file": "src/Engine/CohortEngine.php:429"
-    },
-    {
-      "hook": "wb_gam_community_challenge_completed",
-      "type": "action",
-      "file": "src/Engine/CommunityChallengeEngine.php:252"
-    },
-    {
-      "hook": "wb_gam_credential_expired",
-      "type": "action",
-      "file": "src/Engine/CredentialExpiryEngine.php:136"
-    },
-    {
-      "hook": "wb_gam_email_from_header",
-      "type": "filter",
-      "file": "src/Engine/Email.php:112"
-    },
-    {
-      "hook": "wb_gam_unknown_action",
-      "type": "action",
-      "file": "src/Engine/Engine.php:178"
-    },
-    {
-      "hook": "wb_gam_unknown_action",
-      "type": "action",
-      "file": "src/Engine/Engine.php:241"
-    },
-    {
-      "hook": "wb_gam_event_metadata",
-      "type": "filter",
-      "file": "src/Engine/Engine.php:538"
-    },
-    {
-      "hook": "wb_gam_before_evaluate",
-      "type": "filter",
-      "file": "src/Engine/Engine.php:570"
-    },
-    {
-      "hook": "wb_gam_points_for_action",
-      "type": "filter",
-      "file": "src/Engine/Engine.php:614"
-    },
-    {
-      "hook": "wb_gam_before_points_awarded",
-      "type": "action",
-      "file": "src/Engine/Engine.php:638"
-    },
-    {
-      "hook": "wb_gam_points_awarded",
-      "type": "action",
-      "file": "src/Engine/Engine.php:706"
-    },
-    {
-      "hook": "wb_gam_event_processed",
-      "type": "action",
-      "file": "src/Engine/Engine.php:735"
-    },
-    {
-      "hook": "wb_gam_engines_booted",
-      "type": "action",
-      "file": "src/Engine/FeatureFlags.php:213"
-    },
-    {
-      "hook": "wb_gam_heartbeat_payload",
-      "type": "filter",
-      "file": "src/Engine/HeartbeatChannel.php:171"
-    },
-    {
-      "hook": "wb_gam_kudos_per_receiver_cooldown_seconds",
-      "type": "filter",
-      "file": "src/Engine/KudosEngine.php:96"
-    },
-    {
-      "hook": "wb_gam_before_kudos",
-      "type": "filter",
-      "file": "src/Engine/KudosEngine.php:170"
-    },
-    {
-      "hook": "wb_gam_kudos_given",
-      "type": "action",
-      "file": "src/Engine/KudosEngine.php:248"
-    },
-    {
-      "hook": "wb_gam_kudos_revoked",
-      "type": "action",
-      "file": "src/Engine/KudosEngine.php:505"
-    },
-    {
-      "hook": "wb_gam_leaderboard_cache_invalidated",
-      "type": "action",
-      "file": "src/Engine/LeaderboardEngine.php:188"
-    },
-    {
-      "hook": "wb_gam_leaderboard_max_snapshot_age",
-      "type": "filter",
-      "file": "src/Engine/LeaderboardEngine.php:695"
-    },
-    {
-      "hook": "wb_gam_leaderboard_results",
-      "type": "filter",
-      "file": "src/Engine/LeaderboardEngine.php:782"
-    },
-    {
-      "hook": "wb_gam_leaderboard_scope_user_ids",
-      "type": "filter",
-      "file": "src/Engine/LeaderboardEngine.php:828"
-    },
-    {
-      "hook": "wb_gam_leaderboard_max_snapshot_age",
-      "type": "filter",
-      "file": "src/Engine/LeaderboardEngine.php:896"
-    },
-    {
-      "hook": "wb_gam_should_send_weekly_nudge",
-      "type": "filter",
-      "file": "src/Engine/LeaderboardNudge.php:247"
-    },
-    {
-      "hook": "wb_gam_nudge_message",
-      "type": "filter",
-      "file": "src/Engine/LeaderboardNudge.php:266"
-    },
-    {
-      "hook": "wb_gam_weekly_nudge_sent",
-      "type": "action",
-      "file": "src/Engine/LeaderboardNudge.php:315"
-    },
-    {
-      "hook": "wb_gam_level_changed",
-      "type": "action",
-      "file": "src/Engine/LevelEngine.php:235"
-    },
-    {
-      "hook": "wb_gam_level_assigned",
-      "type": "action",
-      "file": "src/Engine/LevelEngine.php:255"
-    },
-    {
-      "hook": "wb_gam_login_bonus_claimed",
-      "type": "action",
-      "file": "src/Engine/LoginBonusEngine.php:137"
-    },
-    {
-      "hook": "wb_gam_manifests_loaded",
-      "type": "action",
-      "file": "src/Engine/ManifestLoader.php:107"
-    },
-    {
-      "hook": "wb_gam_manifest_paths",
-      "type": "filter",
-      "file": "src/Engine/ManifestLoader.php:178"
-    },
-    {
-      "hook": "wb_gam_member_purged",
-      "type": "action",
-      "file": "src/Engine/MemberData.php:209"
-    },
-    {
-      "hook": "wb_gam_member_surface_html",
-      "type": "filter",
-      "file": "src/Engine/MemberSurface.php:106"
-    },
-    {
-      "hook": "wb_gam_grant_member_uploads",
-      "type": "filter",
-      "file": "src/Engine/MemberUploadCap.php:91"
-    },
-    {
-      "hook": "wb_gam_module_enabled",
-      "type": "filter",
-      "file": "src/Engine/ModuleToggles.php:130"
-    },
-    {
-      "hook": "wb_gam_toast_position",
-      "type": "filter",
-      "file": "src/Engine/NotificationBridge.php:148"
-    },
-    {
-      "hook": "wb_gam_award_skip_toast_reasons",
-      "type": "filter",
-      "file": "src/Engine/NotificationBridge.php:265"
-    },
-    {
-      "hook": "wb_gam_badge_awarded",
-      "type": "action",
-      "file": "src/Engine/NotificationBridge.php:390"
-    },
-    {
-      "hook": "wb_gam_level_changed",
-      "type": "action",
-      "file": "src/Engine/NotificationBridge.php:415"
-    },
-    {
-      "hook": "wb_gam_toast_data",
-      "type": "filter",
-      "file": "src/Engine/NotificationBridge.php:768"
-    },
-    {
-      "hook": "wb_gam_personal_record",
-      "type": "action",
-      "file": "src/Engine/PersonalRecordEngine.php:153"
-    },
-    {
-      "hook": "wb_gam_user_can_earn",
-      "type": "filter",
-      "file": "src/Engine/PointsEngine.php:107"
-    },
-    {
-      "hook": "wb_gam_award_skipped",
-      "type": "action",
-      "file": "src/Engine/PointsEngine.php:304"
-    },
-    {
-      "hook": "wb_gam_award_skipped",
-      "type": "action",
-      "file": "src/Engine/PointsEngine.php:318"
-    },
-    {
-      "hook": "wb_gam_award_skipped",
-      "type": "action",
-      "file": "src/Engine/PointsEngine.php:334"
-    },
-    {
-      "hook": "wb_gam_award_skipped",
-      "type": "action",
-      "file": "src/Engine/PointsEngine.php:350"
-    },
-    {
-      "hook": "wb_gam_award_skipped",
-      "type": "action",
-      "file": "src/Engine/PointsEngine.php:407"
-    },
-    {
-      "hook": "wb_gam_award_skipped",
-      "type": "action",
-      "file": "src/Engine/PointsEngine.php:770"
-    },
-    {
-      "hook": "wb_gam_points_awarded_batch",
-      "type": "action",
-      "file": "src/Engine/PointsEngine.php:993"
-    },
-    {
-      "hook": "wb_gam_points_decayed",
-      "type": "action",
-      "file": "src/Engine/PointsExpiry.php:153"
-    },
-    {
-      "hook": "wb_gam_user_data_erased",
-      "type": "action",
-      "file": "src/Engine/Privacy.php:661"
-    },
-    {
-      "hook": "wb_gam_profile_publicly_visible",
-      "type": "filter",
-      "file": "src/Engine/ProfilePage.php:244"
-    },
-    {
-      "hook": "wb_gam_profile_visibility_set",
-      "type": "action",
-      "file": "src/Engine/ProfilePage.php:294"
-    },
-    {
-      "hook": "wb_gam_progress_reset",
-      "type": "action",
-      "file": "src/Engine/ProgressReset.php:123"
-    },
-    {
-      "hook": "wb_gam_rank_automation_rules",
-      "type": "filter",
-      "file": "src/Engine/RankAutomation.php:157"
-    },
-    {
-      "hook": "wb_gam_rank_automation_action",
-      "type": "action",
-      "file": "src/Engine/RankAutomation.php:198"
-    },
-    {
-      "hook": "wb_gam_recap_data",
-      "type": "filter",
-      "file": "src/Engine/RecapEngine.php:217"
-    },
-    {
-      "hook": "wb_gam_points_redeemed",
-      "type": "action",
-      "file": "src/Engine/RedemptionEngine.php:347"
-    },
-    {
-      "hook": "wb_gam_register",
-      "type": "action",
-      "file": "src/Engine/Registry.php:81"
-    },
-    {
-      "hook": "wb_gam_award_skipped",
-      "type": "action",
-      "file": "src/Engine/Registry.php:158"
-    },
-    {
-      "hook": "wb_gam_rule_condition",
-      "type": "filter",
-      "file": "src/Engine/RuleEngine.php:154"
-    },
-    {
-      "hook": "wb_gam_retention_nudge",
-      "type": "action",
-      "file": "src/Engine/StatusRetentionEngine.php:296"
-    },
-    {
-      "hook": "wb_gam_streak_grace_days",
-      "type": "filter",
-      "file": "src/Engine/StreakEngine.php:91"
-    },
-    {
-      "hook": "wb_gam_streak_broken",
-      "type": "action",
-      "file": "src/Engine/StreakEngine.php:127"
-    },
-    {
-      "hook": "wb_gam_streak_adjusted",
-      "type": "action",
-      "file": "src/Engine/StreakEngine.php:321"
-    },
-    {
-      "hook": "wb_gam_streak_reset",
-      "type": "action",
-      "file": "src/Engine/StreakEngine.php:358"
-    },
-    {
-      "hook": "wb_gam_streak_milestone",
-      "type": "action",
-      "file": "src/Engine/StreakEngine.php:429"
-    },
-    {
-      "hook": "wb_gam_template_path",
-      "type": "filter",
-      "file": "src/Engine/Templates.php:83"
-    },
-    {
-      "hook": "wb_gam_email_enabled",
-      "type": "filter",
-      "file": "src/Engine/TransactionalEmailEngine.php:425"
-    },
-    {
-      "hook": "wb_gam_email_recipients",
-      "type": "filter",
-      "file": "src/Engine/TransactionalEmailEngine.php:463"
-    },
-    {
-      "hook": "wb_gam_email_subject",
-      "type": "filter",
-      "file": "src/Engine/TransactionalEmailEngine.php:476"
-    },
-    {
-      "hook": "wb_gam_email_body",
-      "type": "filter",
-      "file": "src/Engine/TransactionalEmailEngine.php:489"
-    },
-    {
-      "hook": "wb_gam_email_burst_cap",
-      "type": "filter",
-      "file": "src/Engine/TransactionalEmailEngine.php:603"
-    },
-    {
-      "hook": "wb_gam_weekly_email_body",
-      "type": "filter",
-      "file": "src/Engine/WeeklyEmailEngine.php:360"
-    },
-    {
-      "hook": "wb_gam_weekly_email_sent",
-      "type": "action",
-      "file": "src/Engine/WeeklyEmailEngine.php:380"
-    },
-    {
-      "hook": "wb_gam_points_spent",
-      "type": "action",
-      "file": "src/Extensions/functions.php:276"
-    },
-    {
-      "hook": "wb_gam_badge_awarded",
-      "type": "action",
-      "file": "src/Integrations/ActivityPub.php:89"
-    },
-    {
-      "hook": "wb_gam_activitypub_activity",
-      "type": "filter",
-      "file": "src/Integrations/ActivityPub.php:213"
-    },
-    {
-      "hook": "wb_gam_import_point_type_map",
-      "type": "filter",
-      "file": "src/Integrations/Importers/BadgeOSImporter.php:59"
-    },
-    {
-      "hook": "wb_gam_import_point_type_map",
-      "type": "filter",
-      "file": "src/Integrations/Importers/GamiPressImporter.php:67"
-    },
-    {
-      "hook": "wb_gam_import_point_type_map",
-      "type": "filter",
-      "file": "src/Integrations/Importers/MyCredImporter.php:77"
-    },
-    {
-      "hook": "wb_gam_defer_leaderboard_to_jetonomy",
-      "type": "filter",
-      "file": "src/Integrations/Jetonomy/DisplayDefer.php:61"
-    },
-    {
-      "hook": "wb_gam_award_skipped",
-      "type": "action",
-      "file": "src/Integrations/Jetonomy/JetonomyIntegration.php:105"
-    },
-    {
-      "hook": "wb_gam_learndash_profile_link",
-      "type": "filter",
-      "file": "src/Integrations/LearnDash/ProfileIntegration.php:47"
-    },
-    {
-      "hook": "wb_gam_learnomy_profile_link",
-      "type": "filter",
-      "file": "src/Integrations/Learnomy/ProfileIntegration.php:48"
-    },
-    {
-      "hook": "woocommerce_order_status_refunded",
-      "type": "action",
-      "file": "src/Integrations/WooCommerce/RefundHandler.php:10"
-    },
-    {
-      "hook": "wb_gam_point_type_converted",
-      "type": "action",
-      "file": "src/Services/PointTypeConversionService.php:444"
-    },
-    {
-      "hook": "wb_gam_submission_created",
-      "type": "action",
-      "file": "src/Services/SubmissionService.php:110"
-    },
-    {
-      "hook": "wb_gam_submission_approved",
-      "type": "action",
-      "file": "src/Services/SubmissionService.php:168"
-    },
-    {
-      "hook": "wb_gam_submission_rejected",
-      "type": "action",
-      "file": "src/Services/SubmissionService.php:203"
-    },
-    {
-      "hook": "wb_gam_submission_daily_cap",
-      "type": "filter",
-      "file": "src/Services/SubmissionService.php:219"
-    },
-    {
-      "hook": "wb_gam_email_footer",
-      "type": "action",
-      "file": "templates/emails/badge-earned.php:86"
-    },
-    {
-      "hook": "wb_gam_email_footer",
-      "type": "action",
-      "file": "templates/emails/challenge-completed.php:87"
-    },
-    {
-      "hook": "wb_gam_email_footer",
-      "type": "action",
-      "file": "templates/emails/leaderboard-nudge.php:74"
-    },
-    {
-      "hook": "wb_gam_email_footer",
-      "type": "action",
-      "file": "templates/emails/level-up.php:94"
-    },
-    {
-      "hook": "wb_gam_email_footer",
-      "type": "action",
-      "file": "templates/emails/redemption-confirmed.php:117"
-    },
-    {
-      "hook": "wb_gam_email_footer",
-      "type": "action",
-      "file": "templates/emails/weekly-recap.php:184"
+      "purpose": "",
+      "fired_at": [
+        "integrations/wpmediaverse.php:464"
+      ],
+      "consumed_by": []
     }
   ],
   "cron": [
@@ -11144,7 +10854,405 @@
   ],
   "shortcodes": [],
   "frontend_assets": {
-    "js": [],
-    "css": []
-  }
+    "css": {
+      "global": [
+        "assets/css/admin-analytics.css",
+        "assets/css/admin-menu-icon.css",
+        "assets/css/admin.css",
+        "assets/css/frontend.css",
+        "assets/css/give-kudos.css",
+        "assets/css/hub.css",
+        "assets/css/share-page.css"
+      ],
+      "admin": [
+        "assets/css/admin/components.css",
+        "assets/css/admin/deactivation-feedback.css",
+        "assets/css/admin/pages/analytics.css",
+        "assets/css/admin/pages/api-keys.css",
+        "assets/css/admin/pages/badges.css",
+        "assets/css/admin/pages/challenges.css",
+        "assets/css/admin/pages/cohort.css",
+        "assets/css/admin/pages/community-challenges.css",
+        "assets/css/admin/pages/import.css",
+        "assets/css/admin/pages/kudos-moderation.css",
+        "assets/css/admin/pages/members.css",
+        "assets/css/admin/pages/point-type-conversions.css",
+        "assets/css/admin/pages/point-types.css",
+        "assets/css/admin/pages/redemption-store.css",
+        "assets/css/admin/pages/settings.css",
+        "assets/css/admin/pages/streaks.css",
+        "assets/css/admin/pages/submissions.css",
+        "assets/css/admin/pages/webhooks.css",
+        "assets/css/admin/pages/wizard.css",
+        "assets/css/admin/third-party-suppression.css",
+        "assets/css/admin/tokens.css",
+        "assets/css/admin/utilities.css"
+      ],
+      "blocks": [
+        "src/Blocks/badge-showcase/style.css",
+        "src/Blocks/challenges/style.css",
+        "src/Blocks/cohort-rank/style.css",
+        "src/Blocks/community-challenges/style.css",
+        "src/Blocks/daily-bonus/style.css",
+        "src/Blocks/earning-guide/style.css",
+        "src/Blocks/kudos-feed/style.css",
+        "src/Blocks/leaderboard/style.css",
+        "src/Blocks/level-progress/style.css",
+        "src/Blocks/member-points/style.css",
+        "src/Blocks/points-history/style.css",
+        "src/Blocks/redemption-store/style.css",
+        "src/Blocks/streak/style.css",
+        "src/Blocks/submit-achievement/style.css",
+        "src/Blocks/top-members/style.css",
+        "src/Blocks/user-status-bar/style.css",
+        "src/Blocks/year-recap/style.css"
+      ]
+    },
+    "js": {
+      "global": [
+        "assets/js/admin-action-overrides.js",
+        "assets/js/admin-api-keys.js",
+        "assets/js/admin-badge-conditions.js",
+        "assets/js/admin-badge.js",
+        "assets/js/admin-cohort.js",
+        "assets/js/admin-deactivation-feedback.js",
+        "assets/js/admin-import.js",
+        "assets/js/admin-kudos.js",
+        "assets/js/admin-levels.js",
+        "assets/js/admin-members.js",
+        "assets/js/admin-rest-form.js",
+        "assets/js/admin-rest-utils.js",
+        "assets/js/admin-reward-type-toggle.js",
+        "assets/js/admin-rule-action-toggle.js",
+        "assets/js/admin-streaks.js",
+        "assets/js/admin-submissions.js",
+        "assets/js/admin-test-event.js",
+        "assets/js/admin-tools.js",
+        "assets/js/admin-user-picker.js",
+        "assets/js/dialog.js",
+        "assets/js/give-kudos.js",
+        "assets/js/heartbeat.js",
+        "assets/js/hub-convert.js",
+        "assets/js/mount.js",
+        "assets/js/profile-visibility.js",
+        "assets/js/rest.js",
+        "assets/js/settings-nav.js",
+        "assets/js/share-page.js",
+        "assets/js/sse.js",
+        "assets/js/toast.js",
+        "assets/js/top-offset.js"
+      ],
+      "blocks": [
+        "src/Blocks/badge-showcase/index.js",
+        "src/Blocks/badge-showcase/view.js",
+        "src/Blocks/challenges/index.js",
+        "src/Blocks/cohort-rank/index.js",
+        "src/Blocks/community-challenges/index.js",
+        "src/Blocks/daily-bonus/index.js",
+        "src/Blocks/earning-guide/index.js",
+        "src/Blocks/give-kudos/index.js",
+        "src/Blocks/hub/index.js",
+        "src/Blocks/kudos-feed/index.js",
+        "src/Blocks/leaderboard/index.js",
+        "src/Blocks/leaderboard/view.js",
+        "src/Blocks/level-progress/index.js",
+        "src/Blocks/member-points/index.js",
+        "src/Blocks/points-history/index.js",
+        "src/Blocks/redemption-store/index.js",
+        "src/Blocks/redemption-store/view.js",
+        "src/Blocks/streak/index.js",
+        "src/Blocks/submit-achievement/index.js",
+        "src/Blocks/submit-achievement/view.js",
+        "src/Blocks/top-members/index.js",
+        "src/Blocks/user-status-bar/index.js",
+        "src/Blocks/user-status-bar/view.js",
+        "src/Blocks/year-recap/index.js",
+        "src/Blocks/year-recap/view.js"
+      ]
+    }
+  },
+  "integrations": [
+    {
+      "slug": "bbpress",
+      "name": "bbPress",
+      "tier": "first-party",
+      "manifest_file": "integrations/bbpress.php",
+      "manifest_version": "1.0.0",
+      "detect": "function_exists('bbpress')",
+      "trigger_count": 3,
+      "adapter_classes": [],
+      "purpose": ""
+    },
+    {
+      "slug": "buddynext",
+      "name": "BuddyNext",
+      "tier": "first-party",
+      "manifest_file": "integrations/buddynext.php",
+      "manifest_version": "1.0.0",
+      "detect": "defined('BUDDYNEXT_VERSION') || class_exists('\\\\BuddyNext\\\\Plugin')",
+      "trigger_count": 16,
+      "adapter_classes": [],
+      "purpose": ""
+    },
+    {
+      "slug": "buddypress",
+      "name": "BuddyPress",
+      "tier": "first-party",
+      "manifest_file": "integrations/buddypress.php",
+      "manifest_version": "1.0.0",
+      "detect": "",
+      "trigger_count": 14,
+      "adapter_classes": [],
+      "purpose": ""
+    },
+    {
+      "slug": "eventonomy",
+      "name": "Eventonomy",
+      "tier": "first-party",
+      "manifest_file": "integrations/eventonomy.php",
+      "manifest_version": "1.0.0",
+      "detect": "defined('EVENTONOMY_VERSION')",
+      "trigger_count": 3,
+      "adapter_classes": [],
+      "purpose": ""
+    },
+    {
+      "slug": "eventonomy-pro",
+      "name": "Eventonomy Pro",
+      "tier": "first-party",
+      "manifest_file": "integrations/eventonomy-pro.php",
+      "manifest_version": "1.0.0",
+      "detect": "defined('EVENTONOMY_PRO_VERSION')",
+      "trigger_count": 3,
+      "adapter_classes": [],
+      "purpose": ""
+    },
+    {
+      "slug": "jetonomy",
+      "name": "Jetonomy",
+      "tier": "first-party",
+      "manifest_file": "integrations/jetonomy.php",
+      "manifest_version": "1.0.0",
+      "detect": "defined('JETONOMY_VERSION') || class_exists('\\\\Jetonomy\\\\Plugin')",
+      "trigger_count": 4,
+      "adapter_classes": [
+        "WBGam\\Integrations\\Jetonomy\\DisplayDefer",
+        "WBGam\\Integrations\\Jetonomy\\JetonomyIntegration"
+      ],
+      "purpose": ""
+    },
+    {
+      "slug": "jetonomy-pro",
+      "name": "Jetonomy Pro",
+      "tier": "first-party",
+      "manifest_file": "integrations/jetonomy-pro.php",
+      "manifest_version": "1.0.0",
+      "detect": "defined('JETONOMY_PRO_VERSION')",
+      "trigger_count": 7,
+      "adapter_classes": [],
+      "purpose": ""
+    },
+    {
+      "slug": "learndash",
+      "name": "LearnDash",
+      "tier": "first-party",
+      "manifest_file": "integrations/learndash.php",
+      "manifest_version": "1.0.0",
+      "detect": "function_exists('learndash_get_course_id')",
+      "trigger_count": 5,
+      "adapter_classes": [
+        "WBGam\\Integrations\\LearnDash\\ProfileIntegration"
+      ],
+      "purpose": ""
+    },
+    {
+      "slug": "learnomy",
+      "name": "Learnomy",
+      "tier": "first-party",
+      "manifest_file": "integrations/learnomy.php",
+      "manifest_version": "1.0.0",
+      "detect": "defined('LEARNOMY_VERSION') || class_exists('\\\\Learnomy\\\\Plugin')",
+      "trigger_count": 7,
+      "adapter_classes": [
+        "WBGam\\Integrations\\Learnomy\\ProfileIntegration"
+      ],
+      "purpose": ""
+    },
+    {
+      "slug": "learnomy-pro",
+      "name": "Learnomy Pro",
+      "tier": "first-party",
+      "manifest_file": "integrations/learnomy-pro.php",
+      "manifest_version": "1.0.0",
+      "detect": "defined('LEARNOMY_PRO_VERSION')",
+      "trigger_count": 5,
+      "adapter_classes": [],
+      "purpose": ""
+    },
+    {
+      "slug": "wb-listora",
+      "name": "Listora",
+      "tier": "first-party",
+      "manifest_file": "integrations/wb-listora.php",
+      "manifest_version": "1.0.0",
+      "detect": "defined('WB_LISTORA_VERSION')",
+      "trigger_count": 6,
+      "adapter_classes": [],
+      "purpose": ""
+    },
+    {
+      "slug": "wb-listora-pro",
+      "name": "Listora Pro",
+      "tier": "first-party",
+      "manifest_file": "integrations/wb-listora-pro.php",
+      "manifest_version": "1.0.0",
+      "detect": "defined('WB_LISTORA_PRO_VERSION')",
+      "trigger_count": 3,
+      "adapter_classes": [],
+      "purpose": ""
+    },
+    {
+      "slug": "woocommerce",
+      "name": "WooCommerce",
+      "tier": "first-party",
+      "manifest_file": "integrations/woocommerce.php",
+      "manifest_version": "1.0.0",
+      "detect": "class_exists('WooCommerce')",
+      "trigger_count": 5,
+      "adapter_classes": [
+        "WBGam\\Integrations\\WooCommerce\\AccountIntegration",
+        "WBGam\\Integrations\\WooCommerce\\RefundHandler"
+      ],
+      "purpose": ""
+    },
+    {
+      "slug": "wordpress",
+      "name": "WordPress",
+      "tier": "first-party",
+      "manifest_file": "integrations/wordpress.php",
+      "manifest_version": "1.0.0",
+      "detect": "",
+      "trigger_count": 8,
+      "adapter_classes": [],
+      "purpose": ""
+    },
+    {
+      "slug": "wp-career-board",
+      "name": "WP Career Board",
+      "tier": "first-party",
+      "manifest_file": "integrations/wp-career-board.php",
+      "manifest_version": "1.0.0",
+      "detect": "defined('WCB_VERSION')",
+      "trigger_count": 6,
+      "adapter_classes": [],
+      "purpose": ""
+    },
+    {
+      "slug": "wp-career-board-pro",
+      "name": "WP Career Board Pro",
+      "tier": "first-party",
+      "manifest_file": "integrations/wp-career-board-pro.php",
+      "manifest_version": "1.0.0",
+      "detect": "defined('WCBP_VERSION')",
+      "trigger_count": 1,
+      "adapter_classes": [],
+      "purpose": ""
+    },
+    {
+      "slug": "wpmediaverse",
+      "name": "WPMediaVerse",
+      "tier": "first-party",
+      "manifest_file": "integrations/wpmediaverse.php",
+      "manifest_version": "1.0.0",
+      "detect": "defined('MVS_VERSION') || defined('MVS_PRO_VERSION') || function_exists('wb_gam_mvs_media_author') || class_exists('\\WPMediaVerse\\Core\\Plugin')",
+      "trigger_count": 15,
+      "adapter_classes": [],
+      "purpose": ""
+    },
+    {
+      "slug": "givewp",
+      "name": "GiveWP",
+      "tier": "contrib",
+      "manifest_file": "integrations/contrib/givewp.php",
+      "manifest_version": "1.0.0",
+      "detect": "function_exists('give')",
+      "trigger_count": 4,
+      "adapter_classes": [],
+      "purpose": ""
+    },
+    {
+      "slug": "lifterlms",
+      "name": "LifterLMS",
+      "tier": "contrib",
+      "manifest_file": "integrations/contrib/lifterlms.php",
+      "manifest_version": "1.0.0",
+      "detect": "class_exists('LLMS_Student')",
+      "trigger_count": 5,
+      "adapter_classes": [],
+      "purpose": ""
+    },
+    {
+      "slug": "memberpress",
+      "name": "MemberPress",
+      "tier": "contrib",
+      "manifest_file": "integrations/contrib/memberpress.php",
+      "manifest_version": "1.0.0",
+      "detect": "class_exists('MeprUser')",
+      "trigger_count": 3,
+      "adapter_classes": [],
+      "purpose": ""
+    },
+    {
+      "slug": "the-events-calendar",
+      "name": "The Events Calendar",
+      "tier": "contrib",
+      "manifest_file": "integrations/contrib/the-events-calendar.php",
+      "manifest_version": "1.0.0",
+      "detect": "class_exists('Tribe__Events__Main')",
+      "trigger_count": 3,
+      "adapter_classes": [],
+      "purpose": ""
+    },
+    {
+      "slug": "activitypub",
+      "name": "ActivityPub",
+      "tier": "platform",
+      "manifest_file": null,
+      "manifest_version": null,
+      "detect": "",
+      "trigger_count": 0,
+      "adapter_classes": [
+        "WBGam\\Integrations\\ActivityPub"
+      ],
+      "purpose": ""
+    },
+    {
+      "slug": "graphql",
+      "name": "GraphQL",
+      "tier": "platform",
+      "manifest_file": null,
+      "manifest_version": null,
+      "detect": "",
+      "trigger_count": 0,
+      "adapter_classes": [
+        "WBGam\\Integrations\\GraphQL"
+      ],
+      "purpose": ""
+    },
+    {
+      "slug": "importers",
+      "name": "BadgeOSImporter",
+      "tier": "platform",
+      "manifest_file": null,
+      "manifest_version": null,
+      "detect": "",
+      "trigger_count": 0,
+      "adapter_classes": [
+        "WBGam\\Integrations\\Importers\\BadgeOSImporter",
+        "WBGam\\Integrations\\Importers\\GamiPressImporter",
+        "WBGam\\Integrations\\Importers\\MyCredImporter"
+      ],
+      "purpose": ""
+    }
+  ]
 }
