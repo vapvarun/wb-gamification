@@ -439,7 +439,18 @@ final class BadgeEngine {
 		// listener. The relevance gate means these evaluate only the rules whose conditions actually
 		// name a level or a streak, so this costs nothing on the awards that do not.
 		add_action( 'wb_gam_level_changed', array( __CLASS__, 'evaluate_on_level_changed' ), 10, 1 );
-		add_action( 'wb_gam_streak_milestone', array( __CLASS__, 'evaluate_on_streak_milestone' ), 10, 1 );
+
+		// `wb_gam_streak_changed`, NOT `wb_gam_streak_milestone`. The milestone list (7, 14, 30,
+		// 60, 100, 180, 365) is the right set of tiers to celebrate and the wrong set to answer a
+		// question with: an owner who built a "5-day streak" badge in the condition builder got it
+		// on day 7, because day 5 emitted no event at all. The builder accepts any number, so the
+		// signal has to arrive on any number too. A streak moves at most once per member per day,
+		// and the relevance gate still means this only evaluates rules that name a streak.
+		add_action( 'wb_gam_streak_changed', array( __CLASS__, 'evaluate_on_streak_milestone' ), 10, 1 );
+
+		// An admin correcting a streak by hand is a streak change like any other -- the badge the
+		// member now qualifies for should not wait for their next login to be noticed.
+		add_action( 'wb_gam_streak_adjusted', array( __CLASS__, 'evaluate_on_streak_milestone' ), 10, 1 );
 
 		// Deriving a level_reached badge is DATA, not an announcement, so it must still happen when an
 		// import replays a member's history -- otherwise the migrated member ends up on the right level
@@ -628,13 +639,17 @@ final class BadgeEngine {
 	}
 
 	/**
-	 * Evaluate the badges a STREAK milestone could have completed.
+	 * Evaluate the badges a STREAK change could have completed.
 	 *
-	 * Fires on `wb_gam_streak_milestone`. Same shape as the level listener: no Event, because nothing
-	 * was awarded -- the member simply kept showing up, and a `streak_days` condition answers from the
-	 * streak that just moved.
+	 * Fires on `wb_gam_streak_changed` (every day the streak moves) and on
+	 * `wb_gam_streak_adjusted` (an admin set it by hand) -- NOT on
+	 * `wb_gam_streak_milestone`, which only fires at the seven celebration tiers and so could
+	 * never award a badge configured for any other number of days.
 	 *
-	 * @param int $user_id Member whose streak hit a milestone.
+	 * Same shape as the level listener: no Event, because nothing was awarded -- the member simply
+	 * kept showing up, and a `streak_days` condition answers from the streak that just moved.
+	 *
+	 * @param int $user_id Member whose streak changed.
 	 * @return void
 	 */
 	public static function evaluate_on_streak_milestone( int $user_id ): void {
@@ -1427,6 +1442,59 @@ final class BadgeEngine {
 	}
 
 	/**
+	 * Order badge definitions the way a member reads them.
+	 *
+	 * `ORDER BY category, name` in SQL is deterministic and unreadable: it sorts every progression
+	 * ladder alphabetically, so "10-Year Member" lands between "1-Year" and "2-Year", and the
+	 * points ladder reads 100, 500, 5000, 10000, 1000. Both are shipped defaults, so every install
+	 * showed it. That is the "badges display out of order" report.
+	 *
+	 * The threshold a badge asks for is what orders it -- see BadgeRule::display_threshold(). Ties
+	 * and badges with no numeric condition fall back to a NATURAL name sort, so even a library of
+	 * hand-named badges gets "Level 2" before "Level 10".
+	 *
+	 * Sorting happens here rather than in SQL because the threshold lives inside the rule's JSON
+	 * config; the alternative is a generated column and a migration to maintain for a board that
+	 * is read whole anyway.
+	 *
+	 * @param array<int,array<string,mixed>> $defs Badge definition rows (each needs id, name, category).
+	 * @return array<int,array<string,mixed>> Same rows, in display order.
+	 */
+	public static function sort_for_display( array $defs ): array {
+		$thresholds = array();
+		foreach ( self::get_active_rules() as $rule ) {
+			$config = json_decode( (string) ( $rule['rule_config'] ?? '' ), true );
+			if ( is_array( $config ) ) {
+				// get_active_rules() exposes the badge as `badge_id`; the column it comes from is
+				// `target_id`. Keying on the column name here silently produced no thresholds at
+				// all, and the natural-name fallback below hid it by fixing the tenure ladder
+				// anyway -- which is why this is asserted on the POINTS ladder in the tests.
+				$thresholds[ (string) $rule['badge_id'] ] = BadgeRule::display_threshold( $config );
+			}
+		}
+
+		usort(
+			$defs,
+			static function ( array $a, array $b ) use ( $thresholds ): int {
+				$cat = strcmp( (string) ( $a['category'] ?? '' ), (string) ( $b['category'] ?? '' ) );
+				if ( 0 !== $cat ) {
+					return $cat;
+				}
+
+				$ta = $thresholds[ (string) ( $a['id'] ?? '' ) ] ?? PHP_INT_MAX;
+				$tb = $thresholds[ (string) ( $b['id'] ?? '' ) ] ?? PHP_INT_MAX;
+				if ( $ta !== $tb ) {
+					return $ta <=> $tb;
+				}
+
+				return strnatcasecmp( (string) ( $a['name'] ?? '' ), (string) ( $b['name'] ?? '' ) );
+			}
+		);
+
+		return $defs;
+	}
+
+	/**
 	 * Insert a badge definition if it does not already exist.
 	 *
 	 * Used by importers to materialize a WB badge for each source achievement
@@ -1495,6 +1563,8 @@ final class BadgeEngine {
 		if ( empty( $defs ) ) {
 			return array();
 		}
+
+		$defs = self::sort_for_display( $defs );
 
 		// Build earned-at + expires_at map in one query.
 		$now        = gmdate( 'Y-m-d H:i:s' );

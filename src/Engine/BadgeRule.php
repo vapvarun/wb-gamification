@@ -394,6 +394,44 @@ final class BadgeRule {
 	}
 
 	/**
+	 * How hard is this badge, as one number, for ordering a badge board?
+	 *
+	 * Badge boards were ordered `category, name`. Deterministic, and wrong to read: sorting a
+	 * progression ladder by display name puts "10-Year Member" between "1-Year" and "2-Year", and
+	 * orders the points ladder 100, 500, 5000, 10000, 1000. Members reported it as badges
+	 * "displaying out of order", which is exactly what it looks like -- the order is alphabetical,
+	 * and nobody reads a ladder alphabetically.
+	 *
+	 * A badge's own threshold is the number members rank it by, and every numeric condition type
+	 * already carries one. Under `all` the hardest condition governs -- you need all of them.
+	 * Under `any` the easiest does -- one will do. Badges with nothing numeric to compare
+	 * (admin-awarded, badge-chained) sort last, by name: there is no ladder for them to be in.
+	 *
+	 * @since 1.6.4
+	 * @param array $rule Grouped rule config, or an empty array when the badge has no rule.
+	 * @return int Threshold, or PHP_INT_MAX when the badge has no numeric condition.
+	 */
+	public static function display_threshold( array $rule ): int {
+		$values = array();
+
+		foreach ( self::conditions( $rule ) as $condition ) {
+			$condition = (array) $condition;
+			foreach ( array( 'points', 'count', 'days', 'level_id' ) as $key ) {
+				if ( isset( $condition[ $key ] ) ) {
+					$values[] = (int) $condition[ $key ];
+					break;
+				}
+			}
+		}
+
+		if ( ! $values ) {
+			return PHP_INT_MAX;
+		}
+
+		return 'any' === self::match_mode( $rule ) ? min( $values ) : max( $values );
+	}
+
+	/**
 	 * Cheapest first.
 	 *
 	 * Conditions that cost ZERO queries are evaluated before any that hit the database, so a badge

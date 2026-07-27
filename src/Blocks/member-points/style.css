@@ -27,7 +27,9 @@
 
 .wb-gam-member-points__label {
 	font-size: 0.875rem;
-	color: var(--wb-gam-silver);
+	/* Muted TEXT token, not the silver medal colour. A label is not a rank, and painting it
+	 * with the medal palette is what made it unreadable in dark mode. */
+	color: var(--wb-gam-color-text-muted);
 	text-transform: uppercase;
 	letter-spacing: 0.05em;
 }

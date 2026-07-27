@@ -326,6 +326,10 @@ final class BadgeAdminPage {
 			ARRAY_A
 		) ?: array();
 
+		// Same reading order the member's board uses. The owner building a ladder and the member
+		// looking at it should not be shown two different sequences of the same badges.
+		$badges = \WBGam\Engine\BadgeEngine::sort_for_display( $badges );
+
 		// Load edit data if editing.
 		$badge     = array();
 		$condition = array( 'condition_type' => 'admin_awarded' );

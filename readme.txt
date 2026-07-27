@@ -131,6 +131,18 @@ Yes. WB Gamification integrates with WordPress privacy tools. Members can reques
 
 All data is preserved in the database. Reactivating the plugin restores everything. If you delete the plugin via the Plugins screen, the `uninstall.php` file removes all 26 tables, options, cron jobs, and transients — a clean uninstall.
 
+= How many things can award points? =
+
+It depends which plugins you run, so there is no single number. A vanilla WordPress site exposes 8 triggers. WooCommerce + LearnDash + BuddyPress brings it to roughly 50. The full Wbcom suite reaches 126, of which 76 need another Wbcom plugin installed. Settings > Points lists exactly the triggers your own site has, and that list is the only count that means anything for you.
+
+= Why did a member stop earning points without being told? =
+
+Daily caps, weekly caps and per-action cooldowns are enforced silently. A member who has hit a limit earns nothing further until the window resets, with no error and no notification. That is deliberate: an award that quietly does not happen is better than nagging your most active members. The skips are still visible to you through the REST API and the event log, so a "points stopped working" report is usually a cap doing its job — check that member's caps in Settings > Points first.
+
+= A badge share link that used to work now returns 404. Why? =
+
+Since 1.6.4 a badge is private until the member shares it, so links published before the upgrade stop resolving until the member presses Share on their badge board. That is what stops strangers enumerating badge pages by guessing IDs. If you deliberately run an open community and want the old links working again, `wp wb-gamification share grandfather` publishes every existing badge in one pass, and `wp wb-gamification share reset` makes them private again.
+
 == Changelog ==
 
 = 1.6.4 - July 2026 =

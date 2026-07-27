@@ -86,7 +86,8 @@ a.wb-gam-top-members__name:hover { text-decoration: underline; }
 .wb-gam-top-members__level,
 .wb-gam-top-members__badges {
 	font-size: 0.75rem;
-	color: var(--wb-gam-silver);
+	/* Muted TEXT token, not the silver medal colour -- see member-points__label. */
+	color: var(--wb-gam-color-text-muted);
 }
 
 /* Rest list (rank 4+) */

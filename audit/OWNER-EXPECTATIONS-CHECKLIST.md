@@ -96,17 +96,18 @@ An owner assumes these exist. Missing one is a lost evaluation, not a feature re
 | T-18 | Award on: N of an action | **HAVE** | `action_count` |
 | T-19 | Award on: reaching N points | **HAVE** | `point_milestone` |
 | T-20 | Award manually | **HAVE** | `admin_awarded` |
-| T-21 | **Multi-condition badge (AND / OR)** | **MISSING** | A badge is **one** condition, full stop. `BadgeEngine.php:238-252` |
-| T-22 | **Award on reaching a LEVEL** | **MISSING** | no level condition |
-| T-23 | **Award on earning another badge** | **MISSING** | no badge-chaining |
-| T-24 | **Award on a streak** | **MISSING from the UI** | `StreakEngine` exists but you cannot build a streak badge |
-| T-25 | **Award on tenure** | **MISSING from the UI** | `TenureBadgeEngine` is hardcoded, not a condition |
+| T-21 | **Multi-condition badge (AND / OR)** | **HAVE** (1.6.4) | `BadgeRule` group shape `{ match: all\|any, conditions: [...] }`; admin repeater with AND/OR in `BadgeAdminPage`; `DbUpgrader::ensure_badge_rule_groups()` migrates legacy single-condition rules |
+| T-22 | **Award on reaching a LEVEL** | **HAVE** (1.6.4) | `level_reached` condition; evaluated on `wb_gam_level_changed` and `wb_gam_level_imported` |
+| T-23 | **Award on earning another badge** | **HAVE** (1.6.4) | `badge_earned` condition; badge chaining supported |
+| T-24 | **Award on a streak** | **HAVE** (1.6.4) | `streak_days` condition; evaluated on `wb_gam_streak_changed` (every day the streak moves) and `wb_gam_streak_adjusted` |
+| T-25 | **Award on tenure** | **HAVE** (1.6.4) | `tenure_days` condition evaluated by the daily badge cron pass. `TenureBadgeEngine` and its hardcoded tiers are DELETED — tenure badges are now ordinary editable rules |
 | T-26 | **Sequential steps within an achievement** | **MISSING** | GamiPress core |
 | T-27 | Max earners ("first 100") | **HAVE** | `BadgeAdminPage.php:365` |
 | T-28 | Badge expiry / credential validity | **HAVE** | `BadgeAdminPage.php:332` |
 
-> **T-21 is the single most important gap in this document.** Three single conditions is below the
-> bar for any plugin claiming to be a gamification suite. Owners *start* their evaluation here.
+> **T-21 was the single most important gap in this document, and it shipped in 1.6.4.** The badge
+> builder now takes any number of conditions from eight types (points, points-in-period, action
+> count, level reached, badge earned, streak, tenure, admin awarded) combined with AND / OR.
 
 ### 1.3 Levels · Leaderboards · Notifications
 
