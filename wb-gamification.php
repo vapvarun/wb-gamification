@@ -96,14 +96,37 @@ add_action(
 	}
 );
 
-// Load the bundled EDD SL SDK only when BOTH its entrypoint AND its own
-// autoloader are present. The SDK self-requires __DIR__/vendor/autoload.php;
-// if a build ever strips that nested vendor/ (an unanchored exclude did once),
-// requiring the entrypoint would hard-fatal on install. Guarding both paths
-// degrades gracefully (license/update checks disabled) instead.
+// Load the vendored EDD SL SDK only when the package is COMPLETE — same guard
+// BuddyNext uses (buddynext.php), kept identical so the whole family degrades
+// the same way.
+//
+// The previous guard here checked the entrypoint and the nested vendor/
+// autoloader, because an unanchored exclude once stripped that vendor/ and
+// requiring the entrypoint hard-fataled on install. It was the right lesson
+// applied one path short: a build that keeps the entrypoint AND vendor/ but
+// drops src/ passes both checks, and then the SDK fatals the moment it
+// instantiates a src class. Verified on a clean install of the 1.6.4 zip —
+// hiding src/ returned 500 on the front end AND wp-admin, twice, with
+// `Uncaught Error: Class "EasyDigitalDownloads\Updater\Versions" not found`
+// thrown from edd-sl-sdk.php line 40.
+//
+// So guard on the class file the SDK actually reaches for, and degrade to
+// "updates disabled" behind a soft admin notice rather than a white screen.
+// Licensing only ever authorises update downloads here — it gates no feature —
+// so a member-facing site keeps working exactly as before.
 if ( file_exists( WB_GAM_PATH . 'libs/easy-digital-downloads/edd-sl-sdk/edd-sl-sdk.php' )
-	&& file_exists( WB_GAM_PATH . 'libs/easy-digital-downloads/edd-sl-sdk/vendor/autoload.php' ) ) {
+	&& file_exists( WB_GAM_PATH . 'libs/easy-digital-downloads/edd-sl-sdk/vendor/autoload.php' )
+	&& file_exists( WB_GAM_PATH . 'libs/easy-digital-downloads/edd-sl-sdk/src/Versions.php' ) ) {
 	require_once WB_GAM_PATH . 'libs/easy-digital-downloads/edd-sl-sdk/edd-sl-sdk.php';
+} elseif ( is_admin() ) {
+	add_action(
+		'admin_notices',
+		static function () {
+			echo '<div class="notice notice-warning"><p>'
+				. esc_html__( 'WB Gamification: the bundled licensing and update SDK is incomplete, so automatic updates are turned off. Reinstall the plugin from a complete package to restore them. Every other feature works normally.', 'wb-gamification' )
+				. '</p></div>';
+		}
+	);
 }
 
 // Preactivate the bundled preset license so EDD update checks
