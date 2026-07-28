@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-07-28T02:10:34+00:00\n"
+"POT-Creation-Date: 2026-07-28T02:34:46+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: wb-gamification\n"
@@ -204,7 +204,7 @@ msgstr ""
 #: src/Admin/AnalyticsDashboard.php:626
 #: src/Admin/AnalyticsDashboard.php:673
 #: src/Admin/MembersPage.php:101
-#: src/Admin/RedemptionStorePage.php:505
+#: src/Admin/RedemptionStorePage.php:532
 #: src/Admin/StreaksPage.php:166
 #: src/Admin/SubmissionsPage.php:141
 #: src/CLI/EmailCommand.php:84
@@ -364,7 +364,7 @@ msgstr ""
 #: src/Admin/PointTypeConversionsPage.php:65
 #: src/Admin/PointTypesPage.php:66
 #: src/Admin/RedemptionStorePage.php:82
-#: src/Admin/RedemptionStorePage.php:362
+#: src/Admin/RedemptionStorePage.php:389
 #: src/Admin/SettingsPage.php:856
 #: src/Admin/StreaksPage.php:115
 #: src/Admin/WebhooksAdminPage.php:80
@@ -377,8 +377,8 @@ msgstr ""
 #: src/Admin/ApiKeysPage.php:249
 #: src/Admin/KudosModerationPage.php:227
 #: src/Admin/KudosModerationPage.php:354
-#: src/Admin/RedemptionStorePage.php:345
-#: src/Admin/RedemptionStorePage.php:437
+#: src/Admin/RedemptionStorePage.php:372
+#: src/Admin/RedemptionStorePage.php:464
 #: src/Admin/SettingsPage.php:3070
 #: src/Admin/WebhooksAdminPage.php:274
 #: src/Admin/WebhooksAdminPage.php:293
@@ -404,7 +404,7 @@ msgstr ""
 #: src/Admin/CommunityChallengesPage.php:415
 #: src/Admin/PointTypeConversionsPage.php:228
 #: src/Admin/PointTypesPage.php:189
-#: src/Admin/RedemptionStorePage.php:455
+#: src/Admin/RedemptionStorePage.php:482
 #: src/Admin/SettingsPage.php:815
 #: src/Admin/SettingsPage.php:2013
 #: src/Admin/SettingsPage.php:2139
@@ -577,9 +577,9 @@ msgstr ""
 #: src/Admin/CommunityChallengesPage.php:354
 #: src/Admin/KudosModerationPage.php:335
 #: src/Admin/MembersPage.php:105
-#: src/Admin/RedemptionStorePage.php:341
-#: src/Admin/RedemptionStorePage.php:384
-#: src/Admin/RedemptionStorePage.php:509
+#: src/Admin/RedemptionStorePage.php:368
+#: src/Admin/RedemptionStorePage.php:411
+#: src/Admin/RedemptionStorePage.php:536
 #: src/Admin/SettingsPage.php:3060
 #: src/Engine/Privacy.php:495
 msgid "Status"
@@ -592,7 +592,7 @@ msgstr ""
 #: src/Admin/MembersPage.php:106
 #: src/Admin/PointTypeConversionsPage.php:174
 #: src/Admin/PointTypesPage.php:142
-#: src/Admin/RedemptionStorePage.php:385
+#: src/Admin/RedemptionStorePage.php:412
 #: src/Admin/StreaksPage.php:173
 #: src/Admin/WebhooksAdminPage.php:276
 #: src/Blocks/year-recap/render.php:203
@@ -791,7 +791,7 @@ msgstr ""
 
 #: src/Admin/BadgeAdminPage.php:455
 #: src/Admin/RedemptionStorePage.php:223
-#: src/Admin/RedemptionStorePage.php:380
+#: src/Admin/RedemptionStorePage.php:407
 msgid "Name"
 msgstr ""
 
@@ -1178,7 +1178,7 @@ msgstr ""
 
 #: src/Admin/ChallengeManagerPage.php:332
 #: src/Admin/CommunityChallengesPage.php:402
-#: src/Admin/RedemptionStorePage.php:442
+#: src/Admin/RedemptionStorePage.php:469
 msgid "Edit"
 msgstr ""
 
@@ -2047,8 +2047,8 @@ msgid "None"
 msgstr ""
 
 #: src/Admin/PointTypeConversionsPage.php:213
-#: src/Admin/RedemptionStorePage.php:252
-#: src/Admin/RedemptionStorePage.php:414
+#: src/Admin/RedemptionStorePage.php:266
+#: src/Admin/RedemptionStorePage.php:441
 msgid "Unlimited"
 msgstr ""
 
@@ -2277,7 +2277,7 @@ msgid "Edit Reward"
 msgstr ""
 
 #: src/Admin/RedemptionStorePage.php:205
-#: src/Admin/RedemptionStorePage.php:358
+#: src/Admin/RedemptionStorePage.php:385
 msgid "Add Reward"
 msgstr ""
 
@@ -2298,7 +2298,7 @@ msgid "Optional description displayed on the reward card."
 msgstr ""
 
 #: src/Admin/RedemptionStorePage.php:240
-#: src/Admin/RedemptionStorePage.php:381
+#: src/Admin/RedemptionStorePage.php:408
 msgid "Point Cost"
 msgstr ""
 
@@ -2307,219 +2307,228 @@ msgid "How many points a member must spend to redeem this reward."
 msgstr ""
 
 #: src/Admin/RedemptionStorePage.php:248
-#: src/Admin/RedemptionStorePage.php:383
+#: src/Admin/RedemptionStorePage.php:261
+#: src/Admin/RedemptionStorePage.php:410
 msgid "Stock"
 msgstr ""
 
-#: src/Admin/RedemptionStorePage.php:253
-msgid "Number of available redemptions, decremented atomically on each one. Leave empty for unlimited stock. 0 means sold out - members can no longer redeem it."
+#: src/Admin/RedemptionStorePage.php:272
+msgid "Limited to"
 msgstr ""
 
-#: src/Admin/RedemptionStorePage.php:257
-msgid "Reward Type"
+#: src/Admin/RedemptionStorePage.php:278
+msgid "remaining"
 msgstr ""
 
-#: src/Admin/RedemptionStorePage.php:261
-msgid "Custom Reward (fulfilled via hook)"
-msgstr ""
-
-#: src/Admin/RedemptionStorePage.php:265
-msgid "WooCommerce - Percentage Discount"
-msgstr ""
-
-#: src/Admin/RedemptionStorePage.php:268
-msgid "WooCommerce - Fixed Discount"
-msgstr ""
-
-#: src/Admin/RedemptionStorePage.php:271
-msgid "WooCommerce - Free Shipping"
-msgstr ""
-
-#: src/Admin/RedemptionStorePage.php:274
-msgid "WooCommerce - Free Product"
-msgstr ""
-
-#: src/Admin/RedemptionStorePage.php:279
-msgid "Wbcom Credits - Top up balance"
+#: src/Admin/RedemptionStorePage.php:280
+msgid "Decremented atomically on each redemption. Set the quantity to 0 to mark a reward sold out and stop further redemptions."
 msgstr ""
 
 #: src/Admin/RedemptionStorePage.php:284
-msgid "Custom rewards fire wb_gam_points_redeemed for your code to listen on. WooCommerce rewards auto-generate a coupon. Wbcom Credits adds to a registered SDK ledger."
+msgid "Reward Type"
 msgstr ""
 
-#: src/Admin/RedemptionStorePage.php:286
-msgid "WooCommerce is not active - coupon-based rewards are hidden."
+#: src/Admin/RedemptionStorePage.php:288
+msgid "Custom Reward (fulfilled via hook)"
 msgstr ""
 
-#: src/Admin/RedemptionStorePage.php:289
-msgid "Wbcom Credits SDK is not loaded by any active plugin - credit topup is hidden."
+#: src/Admin/RedemptionStorePage.php:292
+msgid "WooCommerce - Percentage Discount"
 msgstr ""
 
 #: src/Admin/RedemptionStorePage.php:295
-msgid "Discount amount"
+msgid "WooCommerce - Fixed Discount"
 msgstr ""
 
-#: src/Admin/RedemptionStorePage.php:300
-msgid "Percentage off the cart (e.g. 10 = 10%)."
+#: src/Admin/RedemptionStorePage.php:298
+msgid "WooCommerce - Free Shipping"
 msgstr ""
 
 #: src/Admin/RedemptionStorePage.php:301
-msgid "Fixed amount off the cart in store currency."
+msgid "WooCommerce - Free Product"
 msgstr ""
 
 #: src/Admin/RedemptionStorePage.php:306
-msgid "WooCommerce product ID"
+msgid "Wbcom Credits - Top up balance"
 msgstr ""
 
-#: src/Admin/RedemptionStorePage.php:310
-msgid "Numeric ID of the product to give away free. Member receives a single-use full-discount coupon scoped to this product."
+#: src/Admin/RedemptionStorePage.php:311
+msgid "Custom rewards fire wb_gam_points_redeemed for your code to listen on. WooCommerce rewards auto-generate a coupon. Wbcom Credits adds to a registered SDK ledger."
 msgstr ""
 
-#: src/Admin/RedemptionStorePage.php:314
-msgid "Credits destination"
+#: src/Admin/RedemptionStorePage.php:313
+msgid "WooCommerce is not active - coupon-based rewards are hidden."
+msgstr ""
+
+#: src/Admin/RedemptionStorePage.php:316
+msgid "Wbcom Credits SDK is not loaded by any active plugin - credit topup is hidden."
+msgstr ""
+
+#: src/Admin/RedemptionStorePage.php:322
+msgid "Discount amount"
 msgstr ""
 
 #: src/Admin/RedemptionStorePage.php:327
-msgid "plugin-slug-here"
+msgid "Percentage off the cart (e.g. 10 = 10%)."
 msgstr ""
 
-#: src/Admin/RedemptionStorePage.php:329
-msgid "Which plugin's credit ledger to top up. Each plugin that uses the Wbcom Credits SDK registers its own slug."
+#: src/Admin/RedemptionStorePage.php:328
+msgid "Fixed amount off the cart in store currency."
 msgstr ""
 
 #: src/Admin/RedemptionStorePage.php:333
-msgid "Credits to add"
+msgid "WooCommerce product ID"
 msgstr ""
 
 #: src/Admin/RedemptionStorePage.php:337
+msgid "Numeric ID of the product to give away free. Member receives a single-use full-discount coupon scoped to this product."
+msgstr ""
+
+#: src/Admin/RedemptionStorePage.php:341
+msgid "Credits destination"
+msgstr ""
+
+#: src/Admin/RedemptionStorePage.php:354
+msgid "plugin-slug-here"
+msgstr ""
+
+#: src/Admin/RedemptionStorePage.php:356
+msgid "Which plugin's credit ledger to top up. Each plugin that uses the Wbcom Credits SDK registers its own slug."
+msgstr ""
+
+#: src/Admin/RedemptionStorePage.php:360
+msgid "Credits to add"
+msgstr ""
+
+#: src/Admin/RedemptionStorePage.php:364
 msgid "How many credits to deposit into the ledger when this reward is redeemed."
 msgstr ""
 
-#: src/Admin/RedemptionStorePage.php:348
-#: src/Admin/RedemptionStorePage.php:437
+#: src/Admin/RedemptionStorePage.php:375
+#: src/Admin/RedemptionStorePage.php:464
 #: src/Admin/SettingsPage.php:3072
 msgid "Inactive"
 msgstr ""
 
-#: src/Admin/RedemptionStorePage.php:351
+#: src/Admin/RedemptionStorePage.php:378
 msgid "Inactive rewards are hidden from the store but preserved in the database."
 msgstr ""
 
-#: src/Admin/RedemptionStorePage.php:358
+#: src/Admin/RedemptionStorePage.php:385
 msgid "Update Reward"
 msgstr ""
 
-#: src/Admin/RedemptionStorePage.php:374
+#: src/Admin/RedemptionStorePage.php:401
 msgid "All Rewards"
 msgstr ""
 
-#: src/Admin/RedemptionStorePage.php:382
+#: src/Admin/RedemptionStorePage.php:409
 msgid "Type"
 msgstr ""
 
-#: src/Admin/RedemptionStorePage.php:401
+#: src/Admin/RedemptionStorePage.php:428
 msgid "Custom"
 msgstr ""
 
-#: src/Admin/RedemptionStorePage.php:402
+#: src/Admin/RedemptionStorePage.php:429
 msgid "% Discount"
 msgstr ""
 
-#: src/Admin/RedemptionStorePage.php:403
+#: src/Admin/RedemptionStorePage.php:430
 msgid "Fixed Discount"
 msgstr ""
 
-#: src/Admin/RedemptionStorePage.php:404
+#: src/Admin/RedemptionStorePage.php:431
 msgid "Free Shipping"
 msgstr ""
 
-#: src/Admin/RedemptionStorePage.php:405
+#: src/Admin/RedemptionStorePage.php:432
 msgid "Free Product"
 msgstr ""
 
-#: src/Admin/RedemptionStorePage.php:406
+#: src/Admin/RedemptionStorePage.php:433
 msgid "Wbcom Credits"
 msgstr ""
 
-#: src/Admin/RedemptionStorePage.php:416
+#: src/Admin/RedemptionStorePage.php:443
 msgid "Sold out"
 msgstr ""
 
-#: src/Admin/RedemptionStorePage.php:450
+#: src/Admin/RedemptionStorePage.php:477
 msgid "Delete this reward?"
 msgstr ""
 
-#: src/Admin/RedemptionStorePage.php:451
+#: src/Admin/RedemptionStorePage.php:478
 msgid "Reward deleted."
 msgstr ""
 
-#: src/Admin/RedemptionStorePage.php:452
+#: src/Admin/RedemptionStorePage.php:479
 msgid "Failed to delete reward."
 msgstr ""
 
-#: src/Admin/RedemptionStorePage.php:467
+#: src/Admin/RedemptionStorePage.php:494
 msgid "No rewards yet"
 msgstr ""
 
-#: src/Admin/RedemptionStorePage.php:468
+#: src/Admin/RedemptionStorePage.php:495
 msgid "Create your first reward above to open the redemption store for your members."
 msgstr ""
 
-#: src/Admin/RedemptionStorePage.php:496
+#: src/Admin/RedemptionStorePage.php:523
 msgid "Recent Redemptions"
 msgstr ""
 
-#: src/Admin/RedemptionStorePage.php:497
+#: src/Admin/RedemptionStorePage.php:524
 msgid "The last 50 redemptions across all members. Use this log to verify coupon delivery, fulfilment status, and overall store activity."
 msgstr ""
 
-#: src/Admin/RedemptionStorePage.php:504
+#: src/Admin/RedemptionStorePage.php:531
 msgid "When"
 msgstr ""
 
-#: src/Admin/RedemptionStorePage.php:506
+#: src/Admin/RedemptionStorePage.php:533
 msgid "Reward"
 msgstr ""
 
-#: src/Admin/RedemptionStorePage.php:507
+#: src/Admin/RedemptionStorePage.php:534
 msgid "Points spent"
 msgstr ""
 
-#: src/Admin/RedemptionStorePage.php:508
+#: src/Admin/RedemptionStorePage.php:535
 msgid "Coupon"
 msgstr ""
 
-#: src/Admin/RedemptionStorePage.php:518
+#: src/Admin/RedemptionStorePage.php:545
 #: src/Engine/ShortcodeHandler.php:615
 msgid "Pending"
 msgstr ""
 
-#: src/Admin/RedemptionStorePage.php:519
+#: src/Admin/RedemptionStorePage.php:546
 #: src/Engine/ShortcodeHandler.php:616
 msgid "Awaiting fulfilment"
 msgstr ""
 
-#: src/Admin/RedemptionStorePage.php:520
+#: src/Admin/RedemptionStorePage.php:547
 #: src/Engine/ShortcodeHandler.php:617
 msgid "Fulfilled"
 msgstr ""
 
-#: src/Admin/RedemptionStorePage.php:521
+#: src/Admin/RedemptionStorePage.php:548
 #: src/Engine/ShortcodeHandler.php:618
 msgid "Failed"
 msgstr ""
 
-#: src/Admin/RedemptionStorePage.php:522
+#: src/Admin/RedemptionStorePage.php:549
 #: src/Engine/ShortcodeHandler.php:619
 msgid "Refunded"
 msgstr ""
 
-#: src/Admin/RedemptionStorePage.php:536
+#: src/Admin/RedemptionStorePage.php:563
 #: src/Engine/ShortcodeHandler.php:634
 msgid "- deleted reward -"
 msgstr ""
 
-#: src/Admin/RedemptionStorePage.php:557
+#: src/Admin/RedemptionStorePage.php:584
 msgid "No redemptions yet - when members spend points, their transactions appear here."
 msgstr ""
 

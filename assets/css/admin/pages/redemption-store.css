@@ -125,3 +125,31 @@
 .wb-gam-convert-open {
 	/* Button markers — visuals from .wbgam-btn. */
 }
+
+/* Stock mode control (Unlimited / Limited to [n] remaining).
+ *
+ * The shared .wbgam-input rule sets display:block, which dropped the quantity box
+ * onto its own line and pushed "remaining" below it — the control read as three
+ * stacked fragments at desktop while looking correct at 390px. Flex the row and
+ * put the input back inline so the sentence reads as one. */
+.wb-gam-stock-modes {
+	display: flex;
+	flex-direction: column;
+	gap: var(--wbgam-gap-xs, 6px);
+	margin: 0;
+	border: 0;
+	padding: 0;
+}
+
+.wb-gam-stock-mode-row {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: var(--wbgam-gap-xs, 6px);
+}
+
+.wb-gam-stock-mode-row .wbgam-input {
+	display: inline-block;
+	width: 5.5rem;
+	margin: 0;
+}
