@@ -173,6 +173,39 @@ tail -c +$((BASELINE_SIZE + 1)) "$WP_PATH/wp-content/debug.log" 2>/dev/null \
 
 At walk end, archive the diff window to `docs/qa/.debug-log-<release_version>-<ran_at>.txt`.
 
+## Sibling-plugin masking — deactivate before any "did OUR package ship this?" check
+
+**A `class_exists()` check about a bundled library passes on a dirty site whether
+or not our copy shipped.** Other Wbcom plugins bundle the same libraries —
+`wpmediaverse` vendors the identical EDD SL SDK — and whichever loads first
+satisfies the class for everyone else.
+
+Not hypothetical: it is why **1.6.2 shipped broken**. The batch Docker test
+reported the SDK present because a sibling had already loaded
+`EasyDigitalDownloads\Updater\Versions`; on a clean single-plugin install it hard
+fatalled. During the 1.6.4 walk the same masking produced a false PASS **twice in
+one session** — once on SDK presence, once on the degrade check, which read
+200 / 200 / 0 fatals while the isolated truth was 500 / 500 / 3 fatals.
+
+For any check whose question is *"did our package ship this?"*:
+
+```bash
+# 1. Deactivate every other plugin. Masking is silent, so this is not optional.
+wp plugin deactivate $(wp plugin list --status=active --field=name \
+  | grep -v '^wb-gamification$') --allow-root
+
+# 2. Assert the file the class came FROM, not merely that it exists.
+wp eval 'echo (new ReflectionClass("\\EasyDigitalDownloads\\Updater\\Versions"))->getFileName();'
+#    must resolve under wb-gamification/, not another plugin
+
+# 3. Reactivate afterwards — the sandbox is shared.
+```
+
+Applies to bundled-SDK presence, the degrade check (hide `libs/*/src`, expect a
+soft admin notice and never a fatal), and anything asserting an autoloader or
+vendor tree. **`class_exists()` alone is never sufficient evidence** — resolve the
+defining file.
+
 ## Journey-aware execution model
 
 This runbook leverages the existing journey corpus under `audit/journeys/`. For each C / E step that lists a `**Journey:**` pointer:

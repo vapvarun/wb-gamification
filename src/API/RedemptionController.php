@@ -231,7 +231,7 @@ class RedemptionController extends WP_REST_Controller {
 				// NULL = unlimited, 0 = sold out. An omitted or explicitly-null stock
 				// is unlimited; absint() must not be allowed to turn that into 0,
 				// which now means the opposite thing.
-				'stock'         => isset( $request['stock'] ) && null !== $request['stock']
+				'stock'         => isset( $request['stock'] ) && null !== $request['stock'] && '' !== $request['stock']
 					? absint( $request['stock'] )
 					: null,
 				'is_active'     => 1,
@@ -281,7 +281,7 @@ class RedemptionController extends WP_REST_Controller {
 			$data['reward_config'] = wp_json_encode( $request['reward_config'] ); }
 		// An explicit null clears stock back to unlimited; 0 marks it sold out.
 		if ( $request->has_param( 'stock' ) ) {
-			$data['stock'] = null !== $request['stock'] ? absint( $request['stock'] ) : null; }
+			$data['stock'] = ( null !== $request['stock'] && '' !== $request['stock'] ) ? absint( $request['stock'] ) : null; }
 		if ( isset( $request['is_active'] ) ) {
 			$data['is_active'] = (int) $request['is_active']; }
 
