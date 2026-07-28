@@ -143,6 +143,14 @@
 			if ( ! name || name === '_wpnonce' || name === '_wp_http_referer' || name === 'action' ) {
 				return;
 			}
+			// A disabled control is not submitted by a native form, and this
+			// serialiser must not differ. It did: a disabled number input was still
+			// sent, as '', which absint() turns into 0 -- so the Redemption Store's
+			// "Unlimited" choice would have saved the reward as SOLD OUT, the exact
+			// confusion the explicit control was added to remove.
+			if ( input.disabled ) {
+				return;
+			}
 			// Top-level array: name="events[]"
 			if ( name.endsWith( '[]' ) && parseName( name ).length === 2 ) {
 				const key = name.slice( 0, -2 );
@@ -366,6 +374,26 @@
 		if ( button ) {
 			e.preventDefault();
 			button.click();
+		}
+	} );
+
+	// Redemption Store stock: the quantity box only exists when "Limited to" is
+	// chosen. Disabled means unsubmitted (see readForm above), so the controller
+	// receives no `stock` key at all for Unlimited and stores NULL -- which is what
+	// unlimited IS. Delegated, so it survives a re-rendered form.
+	document.addEventListener( 'change', function ( e ) {
+		const radio = e.target.closest( '[data-wb-gam-stock-mode]' );
+		if ( ! radio ) {
+			return;
+		}
+		const field = document.getElementById( 'wb-gam-reward-stock' );
+		if ( ! field ) {
+			return;
+		}
+		const limited = radio.value === 'limited' && radio.checked;
+		field.disabled = ! limited;
+		if ( limited && field.value === '' ) {
+			field.focus();
 		}
 	} );
 } )();

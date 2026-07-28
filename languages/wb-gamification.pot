@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-07-15T04:38:56+00:00\n"
+"POT-Creation-Date: 2026-07-28T02:10:34+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: wb-gamification\n"
@@ -192,7 +192,7 @@ msgstr ""
 #: src/CLI/MemberCommand.php:67
 #: src/Engine/Privacy.php:286
 #: src/Engine/ProfilePage.php:124
-#: src/Engine/ProfilePage.php:315
+#: src/Engine/ProfilePage.php:321
 #: src/Engine/TransactionalEmailEngine.php:168
 #: src/Engine/TransactionalEmailEngine.php:270
 #: src/Engine/WeeklyEmailEngine.php:508
@@ -324,7 +324,7 @@ msgstr ""
 #: src/Blocks/points-history/render.php:225
 #: src/Blocks/points-history/render.php:242
 #: src/Blocks/redemption-store/render.php:93
-#: src/Blocks/top-members/render.php:97
+#: src/Blocks/top-members/render.php:98
 #: src/Blocks/user-status-bar/render.php:65
 #: src/Blocks/year-recap/render.php:126
 #: src/BuddyPress/ProfileIntegration.php:174
@@ -522,7 +522,7 @@ msgstr ""
 #: src/Admin/SettingsPage.php:1660
 #: src/Admin/SettingsPage.php:1730
 #: src/Blocks/redemption-store/render.php:361
-#: wb-gamification.php:684
+#: wb-gamification.php:707
 msgid "Dismiss"
 msgstr ""
 
@@ -617,17 +617,17 @@ msgstr ""
 
 #: src/Admin/BadgeAdminPage.php:118
 #: src/Admin/BadgeAdminPage.php:313
-#: src/Admin/BadgeAdminPage.php:427
+#: src/Admin/BadgeAdminPage.php:431
 msgid "Badge saved."
 msgstr ""
 
 #: src/Admin/BadgeAdminPage.php:119
-#: src/Admin/BadgeAdminPage.php:428
+#: src/Admin/BadgeAdminPage.php:432
 msgid "Failed to save the badge."
 msgstr ""
 
 #: src/Admin/BadgeAdminPage.php:144
-#: src/Admin/BadgeAdminPage.php:747
+#: src/Admin/BadgeAdminPage.php:751
 #: src/Admin/KudosModerationPage.php:121
 #: src/Admin/ManualAwardPage.php:112
 #: src/Admin/ManualAwardPage.php:272
@@ -660,7 +660,7 @@ msgid "%d members found"
 msgstr ""
 
 #: src/Admin/BadgeAdminPage.php:163
-#: src/Admin/BadgeAdminPage.php:385
+#: src/Admin/BadgeAdminPage.php:389
 msgid "Badge Library"
 msgstr ""
 
@@ -722,7 +722,7 @@ msgstr ""
 #: src/Engine/HeartbeatChannel.php:196
 #: src/Engine/NotificationBridge.php:377
 #: src/Engine/TransactionalEmailEngine.php:331
-#: wb-gamification.php:685
+#: wb-gamification.php:708
 msgid "points"
 msgstr ""
 
@@ -747,7 +747,7 @@ msgid "Remove this condition"
 msgstr ""
 
 #: src/Admin/BadgeAdminPage.php:314
-#: src/Admin/BadgeAdminPage.php:678
+#: src/Admin/BadgeAdminPage.php:682
 msgid "Badge deleted."
 msgstr ""
 
@@ -759,47 +759,47 @@ msgstr ""
 msgid "Something went wrong. Please try again."
 msgstr ""
 
-#: src/Admin/BadgeAdminPage.php:386
+#: src/Admin/BadgeAdminPage.php:390
 msgid "Create and manage badges to reward your community members for milestones and achievements."
 msgstr ""
 
-#: src/Admin/BadgeAdminPage.php:399
-#: src/Admin/BadgeAdminPage.php:415
+#: src/Admin/BadgeAdminPage.php:403
+#: src/Admin/BadgeAdminPage.php:419
 msgid "Create New Badge"
 msgstr ""
 
-#: src/Admin/BadgeAdminPage.php:403
+#: src/Admin/BadgeAdminPage.php:407
 msgid "Back to Badges"
 msgstr ""
 
-#: src/Admin/BadgeAdminPage.php:415
+#: src/Admin/BadgeAdminPage.php:419
 msgid "Edit Badge"
 msgstr ""
 
-#: src/Admin/BadgeAdminPage.php:434
-#: src/Admin/BadgeAdminPage.php:443
+#: src/Admin/BadgeAdminPage.php:438
+#: src/Admin/BadgeAdminPage.php:447
 msgid "Badge ID"
 msgstr ""
 
-#: src/Admin/BadgeAdminPage.php:438
+#: src/Admin/BadgeAdminPage.php:442
 msgid "Lowercase letters, numbers, underscores only."
 msgstr ""
 
-#: src/Admin/BadgeAdminPage.php:446
+#: src/Admin/BadgeAdminPage.php:450
 msgid "ID cannot be changed after creation."
 msgstr ""
 
-#: src/Admin/BadgeAdminPage.php:451
+#: src/Admin/BadgeAdminPage.php:455
 #: src/Admin/RedemptionStorePage.php:223
 #: src/Admin/RedemptionStorePage.php:380
 msgid "Name"
 msgstr ""
 
-#: src/Admin/BadgeAdminPage.php:454
+#: src/Admin/BadgeAdminPage.php:458
 msgid "Display name shown to members when they earn this badge."
 msgstr ""
 
-#: src/Admin/BadgeAdminPage.php:458
+#: src/Admin/BadgeAdminPage.php:462
 #: src/Admin/CommunityChallengesPage.php:263
 #: src/Admin/PointTypesPage.php:139
 #: src/Admin/PointTypesPage.php:233
@@ -809,224 +809,224 @@ msgstr ""
 msgid "Description"
 msgstr ""
 
-#: src/Admin/BadgeAdminPage.php:461
+#: src/Admin/BadgeAdminPage.php:465
 msgid "Explains what this badge is for. Shown on badge cards and share pages."
 msgstr ""
 
-#: src/Admin/BadgeAdminPage.php:465
+#: src/Admin/BadgeAdminPage.php:469
 #: src/Admin/PointTypesPage.php:239
 msgid "Icon"
 msgstr ""
 
 #. translators: %s: badge name.
-#: src/Admin/BadgeAdminPage.php:469
+#: src/Admin/BadgeAdminPage.php:473
 #, php-format
 msgid "%s icon"
 msgstr ""
 
 #. translators: %s: badge name.
-#: src/Admin/BadgeAdminPage.php:469
+#: src/Admin/BadgeAdminPage.php:473
 #: src/Engine/Privacy.php:324
 msgid "Badge"
 msgstr ""
 
-#: src/Admin/BadgeAdminPage.php:476
+#: src/Admin/BadgeAdminPage.php:480
 msgid "Choose Icon"
 msgstr ""
 
-#: src/Admin/BadgeAdminPage.php:480
 #: src/Admin/BadgeAdminPage.php:484
+#: src/Admin/BadgeAdminPage.php:488
 msgid "Remove"
 msgstr ""
 
-#: src/Admin/BadgeAdminPage.php:487
+#: src/Admin/BadgeAdminPage.php:491
 msgid "Upload an image from the Media Library. Recommended: 128x128px PNG with transparent background."
 msgstr ""
 
-#: src/Admin/BadgeAdminPage.php:491
+#: src/Admin/BadgeAdminPage.php:495
 msgid "Category"
 msgstr ""
 
-#: src/Admin/BadgeAdminPage.php:500
+#: src/Admin/BadgeAdminPage.php:504
 msgid "Group badges by category for organized display in the frontend badge showcase."
 msgstr ""
 
-#: src/Admin/BadgeAdminPage.php:504
+#: src/Admin/BadgeAdminPage.php:508
 msgid "Is Credential"
 msgstr ""
 
-#: src/Admin/BadgeAdminPage.php:508
+#: src/Admin/BadgeAdminPage.php:512
 msgid "Mark as shareable credential (LinkedIn, OpenBadges)"
 msgstr ""
 
-#: src/Admin/BadgeAdminPage.php:510
+#: src/Admin/BadgeAdminPage.php:514
 msgid "Enable OpenBadges 3.0 verifiable credential issuance. Members can share a verified badge URL."
 msgstr ""
 
-#: src/Admin/BadgeAdminPage.php:514
+#: src/Admin/BadgeAdminPage.php:518
 msgid "Valid for (days)"
 msgstr ""
 
-#: src/Admin/BadgeAdminPage.php:518
+#: src/Admin/BadgeAdminPage.php:522
 msgid "Days the badge stays valid after a member earns it, then it expires and stops counting. Leave blank so it never expires."
 msgstr ""
 
-#: src/Admin/BadgeAdminPage.php:522
+#: src/Admin/BadgeAdminPage.php:526
 msgid "Closes at"
 msgstr ""
 
-#: src/Admin/BadgeAdminPage.php:535
+#: src/Admin/BadgeAdminPage.php:539
 msgid "Stop awarding this badge after this date. Leave blank for no cutoff."
 msgstr ""
 
 #. translators: %s: WordPress site timezone label
-#: src/Admin/BadgeAdminPage.php:539
+#: src/Admin/BadgeAdminPage.php:543
 #, php-format
 msgid "(Site timezone: %s)"
 msgstr ""
 
-#: src/Admin/BadgeAdminPage.php:547
+#: src/Admin/BadgeAdminPage.php:551
 msgid "Max earners"
 msgstr ""
 
-#: src/Admin/BadgeAdminPage.php:551
+#: src/Admin/BadgeAdminPage.php:555
 msgid "Stop awarding after this many members earn it. Leave blank for unlimited."
 msgstr ""
 
-#: src/Admin/BadgeAdminPage.php:556
+#: src/Admin/BadgeAdminPage.php:560
 msgid "Auto-Award Conditions"
 msgstr ""
 
-#: src/Admin/BadgeAdminPage.php:584
+#: src/Admin/BadgeAdminPage.php:588
 msgid "Award this badge when the member matches"
 msgstr ""
 
-#: src/Admin/BadgeAdminPage.php:588
+#: src/Admin/BadgeAdminPage.php:592
 msgid "ALL of these"
 msgstr ""
 
-#: src/Admin/BadgeAdminPage.php:592
+#: src/Admin/BadgeAdminPage.php:596
 msgid "ANY of these"
 msgstr ""
 
-#: src/Admin/BadgeAdminPage.php:608
+#: src/Admin/BadgeAdminPage.php:612
 msgid "+ Add condition"
 msgstr ""
 
-#: src/Admin/BadgeAdminPage.php:611
+#: src/Admin/BadgeAdminPage.php:615
 msgid "Choose \"Admin awarded\" for a badge you grant by hand. Any other condition awards it automatically."
 msgstr ""
 
-#: src/Admin/BadgeAdminPage.php:629
+#: src/Admin/BadgeAdminPage.php:633
 msgid "Also award this badge to members who already qualify"
 msgstr ""
 
-#: src/Admin/BadgeAdminPage.php:632
+#: src/Admin/BadgeAdminPage.php:636
 msgid "Off by default. Leave it off and the badge is earned from now on. Turn it on and every member who already meets these conditions is awarded it in the background - which on a large community can be a lot of people, and a lot of notifications."
 msgstr ""
 
 #. translators: 1: members checked, 2: total members, 3: badges awarded
-#: src/Admin/BadgeAdminPage.php:640
+#: src/Admin/BadgeAdminPage.php:644
 #, php-format
 msgid "Last retroactive award: checked %1$s of %2$s members, awarded %3$s."
 msgstr ""
 
-#: src/Admin/BadgeAdminPage.php:647
+#: src/Admin/BadgeAdminPage.php:651
 msgid "Still running."
 msgstr ""
 
-#: src/Admin/BadgeAdminPage.php:668
+#: src/Admin/BadgeAdminPage.php:672
 msgid "Create Badge"
 msgstr ""
 
-#: src/Admin/BadgeAdminPage.php:668
+#: src/Admin/BadgeAdminPage.php:672
 #: src/Admin/SettingsPage.php:1584
 #: src/Admin/SettingsPage.php:2274
 msgid "Save Changes"
 msgstr ""
 
-#: src/Admin/BadgeAdminPage.php:677
+#: src/Admin/BadgeAdminPage.php:681
 msgid "Delete this badge and all earned records?"
 msgstr ""
 
-#: src/Admin/BadgeAdminPage.php:679
+#: src/Admin/BadgeAdminPage.php:683
 msgid "Failed to delete badge."
 msgstr ""
 
-#: src/Admin/BadgeAdminPage.php:682
+#: src/Admin/BadgeAdminPage.php:686
 msgid "Delete Badge"
 msgstr ""
 
-#: src/Admin/BadgeAdminPage.php:706
+#: src/Admin/BadgeAdminPage.php:710
 msgid "Award this badge to a user"
 msgstr ""
 
-#: src/Admin/BadgeAdminPage.php:713
+#: src/Admin/BadgeAdminPage.php:717
 msgid "Manually grant this badge to a specific member. Useful for one-off recognition outside the auto-award rule."
 msgstr ""
 
-#: src/Admin/BadgeAdminPage.php:715
+#: src/Admin/BadgeAdminPage.php:719
 msgid "This badge is admin-awarded only. Use the form below to grant it to a specific member."
 msgstr ""
 
-#: src/Admin/BadgeAdminPage.php:723
+#: src/Admin/BadgeAdminPage.php:727
 msgid "Badge awarded."
 msgstr ""
 
-#: src/Admin/BadgeAdminPage.php:724
+#: src/Admin/BadgeAdminPage.php:728
 msgid "Failed to award badge."
 msgstr ""
 
-#: src/Admin/BadgeAdminPage.php:730
+#: src/Admin/BadgeAdminPage.php:734
 #: src/Admin/ImportPage.php:113
 #: src/Admin/ManualAwardPage.php:235
 #: src/Admin/ManualAwardPage.php:422
 msgid "User"
 msgstr ""
 
-#: src/Admin/BadgeAdminPage.php:740
+#: src/Admin/BadgeAdminPage.php:744
 #: src/Admin/KudosModerationPage.php:258
 #: src/Admin/KudosModerationPage.php:276
 #: src/Admin/ManualAwardPage.php:265
 msgid "Search by name, username or email..."
 msgstr ""
 
-#: src/Admin/BadgeAdminPage.php:744
+#: src/Admin/BadgeAdminPage.php:748
 #: src/Admin/ManualAwardPage.php:269
 msgid "Matching members"
 msgstr ""
 
-#: src/Admin/BadgeAdminPage.php:751
+#: src/Admin/BadgeAdminPage.php:755
 msgid "Member who will receive the badge."
 msgstr ""
 
-#: src/Admin/BadgeAdminPage.php:757
+#: src/Admin/BadgeAdminPage.php:761
 msgid "Award Badge"
 msgstr ""
 
 #. translators: %s: number of members who earned this badge
-#: src/Admin/BadgeAdminPage.php:791
+#: src/Admin/BadgeAdminPage.php:795
 #, php-format
 msgid "%s earned"
 msgstr ""
 
-#: src/Admin/BadgeAdminPage.php:797
+#: src/Admin/BadgeAdminPage.php:801
 msgid "Auto-award"
 msgstr ""
 
-#: src/Admin/BadgeAdminPage.php:797
+#: src/Admin/BadgeAdminPage.php:801
 msgid "Manual"
 msgstr ""
 
-#: src/Admin/BadgeAdminPage.php:805
+#: src/Admin/BadgeAdminPage.php:809
 msgid "No badges yet"
 msgstr ""
 
-#: src/Admin/BadgeAdminPage.php:806
+#: src/Admin/BadgeAdminPage.php:810
 msgid "Badges reward members for milestones, actions, and achievements. Create your first badge to get started."
 msgstr ""
 
-#: src/Admin/BadgeAdminPage.php:809
+#: src/Admin/BadgeAdminPage.php:813
 msgid "Create your first badge"
 msgstr ""
 
@@ -2525,7 +2525,7 @@ msgstr ""
 
 #: src/Admin/SettingsPage.php:65
 #: src/API/AbilitiesRegistration.php:68
-#: src/Engine/Installer.php:610
+#: src/Engine/Installer.php:672
 msgid "Gamification"
 msgstr ""
 
@@ -4536,13 +4536,13 @@ msgid "This member has not earned this badge."
 msgstr ""
 
 #. translators: 1: badge name, 2: site name
-#: src/API/BadgeShareController.php:395
+#: src/API/BadgeShareController.php:392
 #, php-format
 msgid "I earned the %1$s badge on %2$s"
 msgstr ""
 
 #. translators: 1: member name, 2: badge name, 3: site name
-#: src/API/BadgeShareController.php:434
+#: src/API/BadgeShareController.php:431
 #, php-format
 msgid "%1$s earned the %2$s badge on %3$s"
 msgstr ""
@@ -5133,8 +5133,8 @@ msgstr ""
 
 #. translators: 1: formatted amount, 2: currency label.
 #: src/Blocks/cohort-rank/render.php:197
-#: src/Blocks/leaderboard/render.php:214
-#: src/Blocks/leaderboard/render.php:278
+#: src/Blocks/leaderboard/render.php:211
+#: src/Blocks/leaderboard/render.php:275
 #: src/Blocks/points-history/render.php:288
 #: src/Blocks/year-recap/render.php:240
 #: src/BuddyPress/ProfileIntegration.php:196
@@ -5280,7 +5280,7 @@ msgstr ""
 #: src/BuddyPress/ProfileIntegration.php:167
 #: src/CLI/EmailCommand.php:83
 #: src/Engine/ProfilePage.php:149
-#: src/Engine/ProfilePage.php:342
+#: src/Engine/ProfilePage.php:348
 msgid "Newcomer"
 msgstr ""
 
@@ -5438,7 +5438,7 @@ msgstr ""
 msgid "No kudos given yet - be the first!"
 msgstr ""
 
-#: src/Blocks/kudos-feed/render.php:151
+#: src/Blocks/kudos-feed/render.php:164
 #: src/Engine/ShortcodeHandler.php:661
 msgid "ago"
 msgstr ""
@@ -5463,11 +5463,11 @@ msgstr ""
 
 #. translators: %d: number of badges earned.
 #: src/Blocks/leaderboard/render.php:131
-#: src/Blocks/leaderboard/render.php:238
-#: src/Blocks/leaderboard/render.php:247
+#: src/Blocks/leaderboard/render.php:235
+#: src/Blocks/leaderboard/render.php:244
 #: src/BuddyPress/DirectoryIntegration.php:175
 #: src/Engine/ProfilePage.php:146
-#: src/Engine/ProfilePage.php:339
+#: src/Engine/ProfilePage.php:345
 #, php-format
 msgid "%d badge"
 msgid_plural "%d badges"
@@ -5484,34 +5484,34 @@ msgstr ""
 msgid "No members on the leaderboard yet."
 msgstr ""
 
-#: src/Blocks/leaderboard/render.php:164
+#: src/Blocks/leaderboard/render.php:166
 msgid "1st place"
 msgstr ""
 
-#: src/Blocks/leaderboard/render.php:166
+#: src/Blocks/leaderboard/render.php:168
 msgid "2nd place"
 msgstr ""
 
-#: src/Blocks/leaderboard/render.php:168
+#: src/Blocks/leaderboard/render.php:170
 msgid "3rd place"
 msgstr ""
 
-#: src/Blocks/leaderboard/render.php:170
+#: src/Blocks/leaderboard/render.php:172
 msgid "Rank"
 msgstr ""
 
-#: src/Blocks/leaderboard/render.php:267
+#: src/Blocks/leaderboard/render.php:264
 msgid "Your rank"
 msgstr ""
 
 #. translators: %s = rank number
-#: src/Blocks/leaderboard/render.php:271
+#: src/Blocks/leaderboard/render.php:268
 #, php-format
 msgid "#%s"
 msgstr ""
 
 #. translators: 1: points needed to move up one rank, 2: currency label.
-#: src/Blocks/leaderboard/render.php:289
+#: src/Blocks/leaderboard/render.php:286
 #, php-format
 msgid "%1$s %2$s from the next rank"
 msgstr ""
@@ -5734,7 +5734,7 @@ msgstr ""
 msgid "Submit for review"
 msgstr ""
 
-#: src/Blocks/top-members/render.php:120
+#: src/Blocks/top-members/render.php:121
 msgid "Be the first to earn points and claim the top spot!"
 msgstr ""
 
@@ -5871,7 +5871,7 @@ msgstr ""
 msgid "%s earned a badge"
 msgstr ""
 
-#: src/BuddyPress/Stream/ActivityCard.php:194
+#: src/BuddyPress/Stream/ActivityCard.php:190
 msgid "a new badge"
 msgstr ""
 
@@ -6024,57 +6024,57 @@ msgid "%1$s - earned by %2$s"
 msgstr ""
 
 #. translators: 1: badge name, 2: site name
-#: src/Engine/BadgeSharePage.php:244
+#: src/Engine/BadgeSharePage.php:241
 #, php-format
 msgid "I earned the %1$s badge on %2$s!"
 msgstr ""
 
 #. translators: 1: display name, 2: date
-#: src/Engine/BadgeSharePage.php:288
+#: src/Engine/BadgeSharePage.php:285
 #, php-format
 msgid "Earned by %1$s%2$s"
 msgstr ""
 
-#: src/Engine/BadgeSharePage.php:300
+#: src/Engine/BadgeSharePage.php:297
 msgid "Copied!"
 msgstr ""
 
-#: src/Engine/BadgeSharePage.php:301
+#: src/Engine/BadgeSharePage.php:298
 msgid "Press Ctrl/Cmd+C to copy"
 msgstr ""
 
-#: src/Engine/BadgeSharePage.php:303
+#: src/Engine/BadgeSharePage.php:300
 msgid "Copy link"
 msgstr ""
 
-#: src/Engine/BadgeSharePage.php:307
+#: src/Engine/BadgeSharePage.php:304
 msgid "Share on X"
 msgstr ""
 
-#: src/Engine/BadgeSharePage.php:312
+#: src/Engine/BadgeSharePage.php:309
 msgid "Share on Facebook"
 msgstr ""
 
-#: src/Engine/BadgeSharePage.php:317
+#: src/Engine/BadgeSharePage.php:314
 msgid "Share on LinkedIn"
 msgstr ""
 
-#: src/Engine/BadgeSharePage.php:328
+#: src/Engine/BadgeSharePage.php:325
 msgid "Add to LinkedIn profile"
 msgstr ""
 
-#: src/Engine/BadgeSharePage.php:334
+#: src/Engine/BadgeSharePage.php:331
 msgid "View verifiable credential"
 msgstr ""
 
 #. translators: %s: member display name.
-#: src/Engine/BadgeSharePage.php:345
+#: src/Engine/BadgeSharePage.php:343
 #, php-format
 msgid "View %s's achievements"
 msgstr ""
 
 #. translators: %s: site name.
-#: src/Engine/BadgeSharePage.php:354
+#: src/Engine/BadgeSharePage.php:353
 #, php-format
 msgid "Explore %s"
 msgstr ""
@@ -6571,40 +6571,40 @@ msgid "%1$s has earned %2$d %3$s, %4$s, and reached %5$s."
 msgstr ""
 
 #. translators: 1: amount, 2: currency, 3: badge count with label, 4: level
-#: src/Engine/ProfilePage.php:334
+#: src/Engine/ProfilePage.php:340
 #, php-format
 msgid "%1$d %2$s · %3$s · %4$s"
 msgstr ""
 
-#: src/Engine/ProfilePage.php:393
+#: src/Engine/ProfilePage.php:399
 msgid "This profile is visible to anyone with the link."
 msgstr ""
 
-#: src/Engine/ProfilePage.php:394
+#: src/Engine/ProfilePage.php:400
 msgid "Only you and site admins can see this profile."
 msgstr ""
 
-#: src/Engine/ProfilePage.php:395
+#: src/Engine/ProfilePage.php:401
 msgid "Make profile public"
 msgstr ""
 
-#: src/Engine/ProfilePage.php:396
+#: src/Engine/ProfilePage.php:402
 msgid "Make profile private"
 msgstr ""
 
-#: src/Engine/ProfilePage.php:402
+#: src/Engine/ProfilePage.php:408
 msgid "Could not save. Please try again."
 msgstr ""
 
-#: src/Engine/ProfilePage.php:408
+#: src/Engine/ProfilePage.php:414
 msgid "Profile visibility"
 msgstr ""
 
-#: src/Engine/ProfilePage.php:423
+#: src/Engine/ProfilePage.php:429
 msgid "Saving…"
 msgstr ""
 
-#: src/Engine/ProfilePage.php:431
+#: src/Engine/ProfilePage.php:437
 msgid "Note: public profiles are currently turned off site-wide by the administrator, so your profile is hidden regardless of this setting."
 msgstr ""
 
@@ -7013,7 +7013,11 @@ msgstr ""
 msgid "Unsubscribe from weekly emails"
 msgstr ""
 
-#: wb-gamification.php:683
+#: wb-gamification.php:126
+msgid "WB Gamification: the bundled licensing and update SDK is incomplete, so automatic updates are turned off. Reinstall the plugin from a complete package to restore them. Every other feature works normally."
+msgstr ""
+
+#: wb-gamification.php:706
 msgid "Notifications"
 msgstr ""
 

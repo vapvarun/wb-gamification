@@ -211,6 +211,19 @@ print("VERSION=" + release)
 print("FROM_FAILURES=" + str(len(from_failures)))
 print("FROM_ISSUES=" + str(len(from_issues)))
 print("RAN_AT=" + ran_at)
+
+# Coverage. Zero from-failures is trivially satisfied by a run that walked
+# NOTHING, which is how a report with A and B entirely skipped sailed through
+# this gate twice during the 1.6.4 cycle. A section that walked nothing is not
+# a section that passed. A_fresh_install and B_upgrade are the two that must
+# have really run: A is the only proof the package installs at all, and B is
+# the only path an existing customer takes.
+sections = d.get("sections") or {}
+for key in ("A_fresh_install", "B_upgrade"):
+    sec = sections.get(key) or {}
+    if str(sec.get("status", "")).lower() == "not_applicable":
+        continue
+    print("COVER_%s=%d" % (key, int(sec.get("pass", 0) or 0)))
 PY
 )"
     if echo "${SMOKE_CHECK}" | grep -q "^PARSE_FAIL"; then
@@ -235,8 +248,46 @@ PY
         echo "ERROR: smoke report recorded ${SMOKE_FROM_ISSUES} \`from\`-origin debug.log entries during the walk. Fix before packaging." >&2
         exit 30
     fi
+    # Coverage gate. A section reporting zero passes did not run, and a run that
+    # walked nothing satisfies every other check in this gate. Absent key = not
+    # walked = blocked; opt out explicitly with "status": "not_applicable" and a
+    # reason in the report, so skipping is a decision on the record rather than a
+    # silence the gate cannot see.
+    for SMOKE_SECTION in A_fresh_install B_upgrade; do
+        # `|| true` is load-bearing: the script runs under `set -euo pipefail`, and a
+        # section marked not_applicable emits no COVER_ line, so this grep exits 1 and
+        # would kill the release silently — no error, no message, just a dead build.
+        SMOKE_COVER="$(echo "${SMOKE_CHECK}" | grep -oE "^COVER_${SMOKE_SECTION}=.*" | sed "s/^COVER_${SMOKE_SECTION}=//" || true)"
+        if [ -z "${SMOKE_COVER}" ]; then
+            continue   # marked not_applicable upstream
+        fi
+        if [ "${SMOKE_COVER}" -lt 1 ]; then
+            echo "ERROR: smoke section ${SMOKE_SECTION} recorded ${SMOKE_COVER} passing rows — it was not walked." >&2
+            echo "       Zero from-failures does not mean it passed; it means nothing ran." >&2
+            echo "       Walk it, or mark it \"status\": \"not_applicable\" in ${SMOKE_REPORT#${ROOT_DIR}/} with a reason." >&2
+            exit 30
+        fi
+    done
+
+    # Staleness. This used to warn. A report older than the code being packaged
+    # describes a different plugin, and every gate above it is then measuring the
+    # wrong thing — so it blocks.
+    SMOKE_HEAD_EPOCH="$(git -C "${ROOT_DIR}" log -1 --format=%ct 2>/dev/null || echo 0)"
+    SMOKE_RAN_EPOCH="$(python3 -c "
+import datetime, sys
+try:
+    print(int(datetime.datetime.fromisoformat('${SMOKE_RAN_AT}'.replace('Z','+00:00')).timestamp()))
+except Exception:
+    print(0)
+" 2>/dev/null || echo 0)"
+    if [ "${SMOKE_RAN_EPOCH}" -gt 0 ] && [ "${SMOKE_HEAD_EPOCH}" -gt 0 ] && [ "${SMOKE_RAN_EPOCH}" -lt "${SMOKE_HEAD_EPOCH}" ]; then
+        echo "ERROR: smoke report (${SMOKE_RAN_AT}) predates HEAD ($(git -C "${ROOT_DIR}" log -1 --format=%cI))." >&2
+        echo "       It describes code that is not what this zip contains. Re-run the smoke." >&2
+        exit 30
+    fi
+
     if [ -n "${SMOKE_RAN_AT}" ]; then
-        echo "  agent-smoke report dated ${SMOKE_RAN_AT} (matches v${VERSION}, 0 from-failures) — OK"
+        echo "  agent-smoke report dated ${SMOKE_RAN_AT} (matches v${VERSION}, 0 from-failures, A+B walked) — OK"
     fi
 else
     echo "  WARN: python3 not on PATH; cannot validate smoke report shape. Skipping deep gate (file presence only)."

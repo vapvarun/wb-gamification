@@ -245,12 +245,39 @@ final class RedemptionStorePage {
 								</td>
 							</tr>
 							<tr>
-								<th><label for="wb-gam-reward-stock"><?php esc_html_e( 'Stock', 'wb-gamification' ); ?></label></th>
+								<th><?php esc_html_e( 'Stock', 'wb-gamification' ); ?></th>
 								<td>
-									<input type="number" name="stock" id="wb-gam-reward-stock" class="small-text wbgam-input"
-										value="<?php echo esc_attr( $edit_data['stock'] ?? '' ); ?>" min="0"
-										placeholder="<?php esc_attr_e( 'Unlimited', 'wb-gamification' ); ?>">
-									<p class="description"><?php esc_html_e( 'Number of available redemptions, decremented atomically on each one. Leave empty for unlimited stock. 0 means sold out - members can no longer redeem it.', 'wb-gamification' ); ?></p>
+									<?php
+									// Three states in one number field, where EMPTY and 0 mean opposite
+									// things, is a trap: an owner types 0 meaning "none set yet" and
+									// publishes a sold-out reward. The states are now explicit and the
+									// quantity box only exists when it means something. Storage is
+									// unchanged -- NULL unlimited, 0 sold out, positive remaining --
+									// so nothing migrates; only the way the choice is expressed moves.
+									$wb_gam_stock_raw     = $edit_data['stock'] ?? null;
+									$wb_gam_stock_limited = ( null !== $wb_gam_stock_raw && '' !== $wb_gam_stock_raw );
+									?>
+									<fieldset>
+										<legend class="screen-reader-text"><?php esc_html_e( 'Stock', 'wb-gamification' ); ?></legend>
+										<label>
+											<input type="radio" name="stock_mode" value="unlimited"
+												<?php checked( ! $wb_gam_stock_limited ); ?>
+												data-wb-gam-stock-mode>
+											<?php esc_html_e( 'Unlimited', 'wb-gamification' ); ?>
+										</label><br>
+										<label>
+											<input type="radio" name="stock_mode" value="limited"
+												<?php checked( $wb_gam_stock_limited ); ?>
+												data-wb-gam-stock-mode>
+											<?php esc_html_e( 'Limited to', 'wb-gamification' ); ?>
+										</label>
+										<input type="number" name="stock" id="wb-gam-reward-stock" class="small-text wbgam-input"
+											value="<?php echo esc_attr( $wb_gam_stock_limited ? (string) $wb_gam_stock_raw : '' ); ?>"
+											min="0" step="1"
+											<?php disabled( ! $wb_gam_stock_limited ); ?>>
+										<span><?php esc_html_e( 'remaining', 'wb-gamification' ); ?></span>
+									</fieldset>
+									<p class="description"><?php esc_html_e( 'Decremented atomically on each redemption. Set the quantity to 0 to mark a reward sold out and stop further redemptions.', 'wb-gamification' ); ?></p>
 								</td>
 							</tr>
 							<tr>

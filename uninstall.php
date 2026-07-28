@@ -14,6 +14,29 @@ defined( 'WP_UNINSTALL_PLUGIN' ) || exit;
 global $wpdb;
 
 // -------------------------------------------------------------------------
+// 0. Retire the schema-version pointer FIRST.
+// -------------------------------------------------------------------------
+// Ordering, not housekeeping. WordPress runs this file inside a web request
+// when an admin clicks Delete, so it is bounded by max_execution_time. This
+// uninstall is fast — measured at 333ms with 2,755 ledger rows, dropping all 26
+// tables — so it is not expected to be interrupted. But it CAN be: a dropped
+// connection, a DB error part-way, a host with an unusually tight limit and a
+// site far larger than anything measured here.
+//
+// Whichever step it dies in, it must never leave `wb_gam_db_version` claiming a
+// schema that has been dropped. That combination is a trap: Installer::install()
+// rebuilds its own tables on the next activation, DbUpgrader reads the pointer,
+// concludes there is nothing to migrate, and any table only IT knows about is
+// gone for good. That exact state — pointer current, tables absent — cost three
+// tables and all member notifications during the 1.6.4 smoke, until the
+// installer was made to own the whole schema.
+//
+// Deleting the pointer first makes any interruption self-correcting: a
+// half-uninstalled site looks un-upgraded, so the next activation rebuilds
+// everything. One query, and a whole class of failure stops existing.
+delete_option( 'wb_gam_db_version' );
+
+// -------------------------------------------------------------------------
 // 1. Drop custom tables.
 //    phpcs:disable WordPress.DB.DirectDatabaseQuery.SchemaChange
 //    phpcs:disable WordPress.DB.DirectDatabaseQuery.NoCaching
