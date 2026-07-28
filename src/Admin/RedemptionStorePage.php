@@ -257,25 +257,27 @@ final class RedemptionStorePage {
 									$wb_gam_stock_raw     = $edit_data['stock'] ?? null;
 									$wb_gam_stock_limited = ( null !== $wb_gam_stock_raw && '' !== $wb_gam_stock_raw );
 									?>
-									<fieldset>
+									<fieldset class="wb-gam-stock-modes">
 										<legend class="screen-reader-text"><?php esc_html_e( 'Stock', 'wb-gamification' ); ?></legend>
-										<label>
+										<label class="wb-gam-stock-mode-row">
 											<input type="radio" name="stock_mode" value="unlimited"
 												<?php checked( ! $wb_gam_stock_limited ); ?>
 												data-wb-gam-stock-mode>
 											<?php esc_html_e( 'Unlimited', 'wb-gamification' ); ?>
-										</label><br>
-										<label>
-											<input type="radio" name="stock_mode" value="limited"
-												<?php checked( $wb_gam_stock_limited ); ?>
-												data-wb-gam-stock-mode>
-											<?php esc_html_e( 'Limited to', 'wb-gamification' ); ?>
 										</label>
-										<input type="number" name="stock" id="wb-gam-reward-stock" class="small-text wbgam-input"
-											value="<?php echo esc_attr( $wb_gam_stock_limited ? (string) $wb_gam_stock_raw : '' ); ?>"
-											min="0" step="1"
-											<?php disabled( ! $wb_gam_stock_limited ); ?>>
-										<span><?php esc_html_e( 'remaining', 'wb-gamification' ); ?></span>
+										<div class="wb-gam-stock-mode-row">
+											<label>
+												<input type="radio" name="stock_mode" value="limited"
+													<?php checked( $wb_gam_stock_limited ); ?>
+													data-wb-gam-stock-mode>
+												<?php esc_html_e( 'Limited to', 'wb-gamification' ); ?>
+											</label>
+											<input type="number" name="stock" id="wb-gam-reward-stock" class="small-text wbgam-input"
+												value="<?php echo esc_attr( $wb_gam_stock_limited ? (string) $wb_gam_stock_raw : '' ); ?>"
+												min="0" step="1"
+												<?php disabled( ! $wb_gam_stock_limited ); ?>>
+											<span><?php esc_html_e( 'remaining', 'wb-gamification' ); ?></span>
+										</div>
 									</fieldset>
 									<p class="description"><?php esc_html_e( 'Decremented atomically on each redemption. Set the quantity to 0 to mark a reward sold out and stop further redemptions.', 'wb-gamification' ); ?></p>
 								</td>
