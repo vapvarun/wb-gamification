@@ -105,8 +105,13 @@ final class StreakEngine {
 			// Consecutive day — extend streak, reset grace availability.
 			$new_streak = $data['current_streak'] + 1;
 			$grace_used = 0;
-		} elseif ( $gap <= $grace_days && ! $data['grace_used'] ) {
+		} elseif ( $gap <= ( $grace_days + 1 ) && ! $data['grace_used'] ) {
 			// Within grace window and grace not yet used — extend streak, burn grace.
+			// $gap is the day difference from the last active day, so a SINGLE missed
+			// day is $gap === 2. grace_days counts MISSED days the member may skip, so
+			// the allowed gap is grace_days + 1 (grace_days = 1 forgives one missed
+			// day, i.e. $gap up to 2). The old `$gap <= $grace_days` made the default
+			// grace of 1 a no-op (2 <= 1 is false).
 			$new_streak = $data['current_streak'] + 1;
 			$grace_used = 1;
 		} else {
