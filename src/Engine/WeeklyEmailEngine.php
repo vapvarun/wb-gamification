@@ -151,6 +151,24 @@ final class WeeklyEmailEngine {
 			return;
 		}
 
+		// BuddyNext is the master community product and owns member communication
+		// (its notifications are collect-only and it never lets a partner email
+		// members on its behalf). When BuddyNext is active, wb-gamification does
+		// NOT send its own weekly member digest by default — standing already
+		// surfaces inside BuddyNext (the Achievements tab + activity feed). A site
+		// owner who genuinely wants the partner email can re-enable it by
+		// returning false from this filter.
+		$wb_gam_bn_active = defined( 'BUDDYNEXT_VERSION' ) || class_exists( '\\BuddyNext\\Plugin' );
+		/**
+		 * Filter whether wb-gamification defers its weekly member email to BuddyNext.
+		 *
+		 * @param bool $defer Default: true when BuddyNext is active (suppress the
+		 *                     partner email so BuddyNext owns member comms).
+		 */
+		if ( (bool) apply_filters( 'wb_gam_defer_member_email_to_buddynext', $wb_gam_bn_active ) ) {
+			return;
+		}
+
 		if ( ! (int) get_option( self::OPT_ENABLED, 1 ) ) {
 			return;
 		}
