@@ -124,7 +124,20 @@ final class BadgeSharePage {
 			&& BadgeShare::can_view_public( $user_id, $badge_id );
 
 		if ( ! $wb_gam_visible ) {
-			wp_safe_redirect( ProfilePage::profile_url( (string) $user->user_login ), 302 );
+			$wb_gam_fallback = ProfilePage::profile_url( (string) $user->user_login );
+			/**
+			 * Filter where a badge-share URL redirects when the badge cannot be
+			 * shown (un-earned or un-published). Defaults to wb-gamification's own
+			 * profile page; BuddyNext — the master community — fills this from its
+			 * own bridge so the visitor lands on the BuddyNext profile instead of a
+			 * wb-gamification page. Return '' to fall back to the default.
+			 *
+			 * @param string $url      Default redirect URL (wb-gamification profile).
+			 * @param int    $user_id  Badge owner.
+			 * @param string $badge_id Badge slug.
+			 */
+			$wb_gam_redirect = (string) apply_filters( 'wb_gam_badge_share_redirect_url', $wb_gam_fallback, $user_id, $badge_id );
+			wp_safe_redirect( '' !== $wb_gam_redirect ? $wb_gam_redirect : $wb_gam_fallback, 302 );
 			exit;
 		}
 
