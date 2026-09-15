@@ -88,6 +88,24 @@ final class ProfilePage {
 			return;
 		}
 
+		/**
+		 * Filter a URL to redirect this standalone `/u/` profile to. BuddyNext —
+		 * the master community — owns the member profile, and the same standing,
+		 * badges and points already render on the BuddyNext profile, so its bridge
+		 * returns the BuddyNext profile URL here and the visitor lands there
+		 * (BuddyNext then applies its own profile visibility). Empty string (the
+		 * default) renders wb-gamification's own page, for standalone sites.
+		 *
+		 * @param string   $url     Redirect target. Default '' (render own page).
+		 * @param int      $user_id Profile owner.
+		 * @param \WP_User  $user    Profile owner object.
+		 */
+		$wb_gam_redirect = (string) apply_filters( 'wb_gam_profile_redirect_url', '', (int) $user->ID, $user );
+		if ( '' !== $wb_gam_redirect ) {
+			wp_safe_redirect( $wb_gam_redirect, 302 );
+			exit;
+		}
+
 		// The profile owner and admins can always view the profile, even if
 		// the member has opted out of public visibility — "where can I see my
 		// own progress" must never 404 for the owner.
