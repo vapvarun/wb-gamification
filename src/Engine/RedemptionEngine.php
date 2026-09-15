@@ -101,6 +101,8 @@ final class RedemptionEngine {
 				return __( 'Could not record the redemption. Please try again - your points have not been deducted.', 'wb-gamification' );
 			case 'record_write_failed':
 				return __( 'Redemption could not be saved. Please try again - your points have not been deducted.', 'wb-gamification' );
+			case 'fulfillment_failed':
+				return __( 'This reward could not be delivered, so your points have been refunded. Please try again later.', 'wb-gamification' );
 			default:
 				return __( 'Redemption failed. Please try again.', 'wb-gamification' );
 		}
@@ -317,14 +319,16 @@ final class RedemptionEngine {
 			);
 		}
 
-		// Fulfillment.
-		$coupon_code = null;
-		$config      = json_decode( $item['reward_config'] ?? '{}', true ) ?: array();
+		// Fulfillment (runs AFTER the debit + stock decrement have committed above).
+		$coupon_code        = null;
+		$config             = json_decode( $item['reward_config'] ?? '{}', true ) ?: array();
+		$fulfillment_failed = false;
 
 		$woo_types = array( 'discount_pct', 'discount_fixed', 'free_shipping', 'free_product' );
 
 		if ( in_array( $item['reward_type'], $woo_types, true ) ) {
-			$coupon_code = self::create_woo_coupon( $user_id, $item, $config, $redemption_id );
+			$coupon_code        = self::create_woo_coupon( $user_id, $item, $config, $redemption_id );
+			$fulfillment_failed = ! $coupon_code;
 			$wpdb->update(
 				$wpdb->prefix . 'wb_gam_redemptions',
 				array(
@@ -334,7 +338,8 @@ final class RedemptionEngine {
 				array( 'id' => $redemption_id )
 			);
 		} elseif ( 'wbcom_credits' === $item['reward_type'] ) {
-			$ok = self::topup_wbcom_credits( $user_id, $item, $config );
+			$ok                 = self::topup_wbcom_credits( $user_id, $item, $config );
+			$fulfillment_failed = ! $ok;
 			$wpdb->update(
 				$wpdb->prefix . 'wb_gam_redemptions',
 				array( 'status' => $ok ? 'fulfilled' : 'failed' ),
@@ -343,6 +348,39 @@ final class RedemptionEngine {
 		} else {
 			// Custom — fire hook for third-party fulfillment.
 			$wpdb->update( $wpdb->prefix . 'wb_gam_redemptions', array( 'status' => 'pending_fulfillment' ), array( 'id' => $redemption_id ) );
+		}
+
+		// Fulfillment failed AFTER points + stock were already committed. Reverse
+		// both so the member is never charged for a reward they did not receive,
+		// and report the failure honestly — the old code left the points spent, the
+		// stock decremented, and still returned success:true with coupon_code:null.
+		if ( $fulfillment_failed ) {
+			// Credit the points back ($force = true: a refund must bypass the
+			// earning-exclusion that award() enforces — it is a reversal, not an
+			// earning). Audit-logged under the redemption_refund action.
+			PointsEngine::award( $user_id, 'redemption_refund', $cost, $redemption_id, $type, true );
+
+			// Restore the unit if stock is finite (mirrors the decrement guard).
+			if ( null !== $enforced_stock ) {
+				$wpdb->query(
+					$wpdb->prepare(
+						"UPDATE {$wpdb->prefix}wb_gam_redemption_items SET stock = stock + 1 WHERE id = %d",
+						$item_id
+					)
+				);
+			}
+
+			// Terminal state: refunded (this is also the first code path that ever
+			// WRITES the 'refunded' status the UI already renders).
+			$wpdb->update( $wpdb->prefix . 'wb_gam_redemptions', array( 'status' => 'refunded' ), array( 'id' => $redemption_id ) );
+
+			return array(
+				'success'       => false,
+				'reason'        => 'fulfillment_failed',
+				'error'         => self::error_message_for( 'fulfillment_failed', $cost, null ),
+				'redemption_id' => $redemption_id,
+				'coupon_code'   => null,
+			);
 		}
 
 		// PointsEngine::debit (called above) already busts the per-type total
