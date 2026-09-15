@@ -312,7 +312,7 @@ final class LevelEngine {
 	 * @return array{ id: int, name: string, min_points: int, sort_order: int, icon_url: string|null }|null
 	 *         Null only if no levels are configured (fresh install before seeding).
 	 */
-	public static function get_level_for_user( int $user_id ): ?array {
+	public static function get_level_for_user( int $user_id, bool $heal = true ): ?array {
 		$level = self::get_level_for_points( PointsEngine::get_total( $user_id ) );
 
 		// Self-heal stale user_meta. Pre-1.4.0 the level_id / level_name cache
@@ -328,7 +328,12 @@ final class LevelEngine {
 		// Detecting the mismatch here and patching the meta inline keeps the
 		// engine the single source of truth without forcing a points-replay
 		// migration; every getter call self-corrects on the way out.
-		if ( $level && $user_id > 0 ) {
+		// $heal = false skips the self-heal WRITE — used by read-heavy list surfaces
+		// (the members roster) that must not fire an unbounded burst of
+		// update_user_meta() on a GET. The returned level is authoritative either
+		// way (derived from the points ledger); only the denormalised meta cache is
+		// left for the member's next engine action (or a CLI) to correct.
+		if ( $heal && $level && $user_id > 0 ) {
 			$cached_id   = (int) get_user_meta( $user_id, 'wb_gam_level_id', true );
 			$cached_name = (string) get_user_meta( $user_id, 'wb_gam_level_name', true );
 			if ( $cached_id !== $level['id'] || $cached_name !== $level['name'] ) {

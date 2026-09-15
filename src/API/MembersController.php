@@ -456,6 +456,11 @@ class MembersController extends WP_REST_Controller {
 		$badge_counts = array();
 		if ( ! empty( $ids ) ) {
 			PointsEngine::prime_totals( $ids );
+			// WP_User_Query selected only ID/display_name/user_login, so the usermeta
+			// cache is cold — prime it once for the whole page so the per-row meta
+			// reads below (sandboxed flag, exclusion) are cache hits, not ~2/user
+			// queries.
+			cache_users( $ids );
 			// One grouped COUNT for the whole page's badge tallies. The loop used to
 			// call count( get_user_badges( $uid ) ) per row — a 2-table JOIN that
 			// hydrates every earned-badge row just to count it, i.e. ~100 JOINs per
@@ -472,8 +477,11 @@ class MembersController extends WP_REST_Controller {
 
 		$items = array();
 		foreach ( $users as $user ) {
-			$uid     = (int) $user->ID;
-			$level   = LevelEngine::get_level_for_user( $uid );
+			$uid = (int) $user->ID;
+			// heal=false: never fire the level-meta self-heal WRITE from this GET
+			// roster (it would be an unbounded burst of update_user_meta on read).
+			// The returned level is still authoritative (ledger-derived).
+			$level   = LevelEngine::get_level_for_user( $uid, false );
 			$items[] = array(
 				'id'          => $uid,
 				'name'        => $user->display_name,
