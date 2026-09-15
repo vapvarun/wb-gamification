@@ -89,6 +89,43 @@ final class AnalyticsDashboard {
 			array( 'wb-gam-page-analytics' ),
 			WB_GAM_VERSION
 		);
+
+		// REST-form driver + Tools settings, for the Retry buttons on the
+		// dead-lettered side-effects panel.
+		wp_enqueue_script(
+			'wb-gam-admin-rest-utils',
+			plugins_url( 'assets/js/admin-rest-utils.js', WB_GAM_FILE ),
+			array(),
+			WB_GAM_VERSION,
+			true
+		);
+		wp_localize_script(
+			'wb-gam-admin-rest-utils',
+			'wbGamAdminRestI18n',
+			array(
+				'confirm' => __( 'Confirm', 'wb-gamification' ),
+				'cancel'  => __( 'Cancel', 'wb-gamification' ),
+			)
+		);
+		wp_enqueue_script(
+			'wb-gam-admin-rest-form',
+			plugins_url( 'assets/js/admin-rest-form.js', WB_GAM_FILE ),
+			array( 'wb-gam-admin-rest-utils' ),
+			WB_GAM_VERSION,
+			true
+		);
+		wp_localize_script(
+			'wb-gam-admin-rest-form',
+			'wbGamToolsSettings',
+			array(
+				'restUrl' => esc_url_raw( rest_url( 'wb-gamification/v1' ) ),
+				'nonce'   => wp_create_nonce( 'wp_rest' ),
+				'i18n'    => array(
+					'saved'  => __( 'Done.', 'wb-gamification' ),
+					'failed' => __( 'Action failed.', 'wb-gamification' ),
+				),
+			)
+		);
 	}
 
 	// ── Page render ─────────────────────────────────────────────────────────────
@@ -308,6 +345,9 @@ final class AnalyticsDashboard {
 
 			<!-- Integration drift (unknown action_ids fired in the last 24h) -->
 			<?php self::render_unknown_actions_panel(); ?>
+
+			<!-- Dead-lettered side effects (failed badge / notification / webhook fan-out) -->
+			<?php self::render_side_effect_failures_panel(); ?>
 
 		</div><!-- .wrap -->
 		<?php
@@ -794,6 +834,97 @@ final class AnalyticsDashboard {
 			<p class="description wbgam-mt-sm">
 				<?php esc_html_e( 'Rows auto-expire after 24 hours. If a suggestion looks right, update the calling code to use that exact ID. If there is no suggestion, the owning integration plugin is probably not active or its manifest did not load.', 'wb-gamification' ); ?>
 			</p>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Render the dead-lettered side-effects panel.
+	 *
+	 * Surfaces the wb_gam_side_effect_failures backlog -- failed badge /
+	 * notification / webhook fan-out that {@see \WBGam\Engine\SideEffectDispatcher}
+	 * queued for reconciliation. 'pending' rows are still being auto-retried by
+	 * the reconcile cron; 'exhausted' rows have hit MAX_RETRIES and need human
+	 * triage, so each gets a Retry button (POST /tools/retry-side-effect/{id})
+	 * to re-fire once the cause is fixed. An empty backlog renders nothing.
+	 *
+	 * @return void
+	 */
+	private static function render_side_effect_failures_panel(): void {
+		$counts = \WBGam\Engine\SideEffectDispatcher::get_failure_counts();
+		if ( empty( $counts ) ) {
+			return;
+		}
+		$pending   = (int) ( $counts['pending'] ?? 0 );
+		$exhausted = (int) ( $counts['exhausted'] ?? 0 );
+		$rows      = \WBGam\Engine\SideEffectDispatcher::get_recent_failures( 20 );
+		?>
+		<div class="wb-gam-analytics__panel wbgam-mt-md">
+			<h2 class="wbgam-flex-row">
+				<span class="icon-triangle-alert" aria-hidden="true"></span>
+				<?php esc_html_e( 'Side effects that failed to run', 'wb-gamification' ); ?>
+			</h2>
+			<p class="description">
+				<?php
+				echo esc_html(
+					sprintf(
+						/* translators: 1: count still retrying, 2: count exhausted. */
+						__( 'A badge award, notification, or webhook could not be delivered. Still retrying automatically: %1$d. Given up and need attention: %2$d. Fix the cause, then Retry.', 'wb-gamification' ),
+						$pending,
+						$exhausted
+					)
+				);
+				?>
+			</p>
+			<table class="widefat striped">
+				<thead>
+					<tr>
+						<th><?php esc_html_e( 'Side effect', 'wb-gamification' ); ?></th>
+						<th><?php esc_html_e( 'Member', 'wb-gamification' ); ?></th>
+						<th><?php esc_html_e( 'Error', 'wb-gamification' ); ?></th>
+						<th><?php esc_html_e( 'Tries', 'wb-gamification' ); ?></th>
+						<th><?php esc_html_e( 'Status', 'wb-gamification' ); ?></th>
+						<th><?php esc_html_e( 'Last attempt', 'wb-gamification' ); ?></th>
+						<th><?php esc_html_e( 'Actions', 'wb-gamification' ); ?></th>
+					</tr>
+				</thead>
+				<tbody>
+					<?php
+					foreach ( $rows as $row ) :
+						$fid     = (int) $row['id'];
+						$status  = (string) ( $row['status'] ?? 'pending' );
+						$is_dead = 'exhausted' === $status;
+						$user    = get_userdata( (int) $row['user_id'] );
+						$last    = (string) ( $row['last_attempt_at'] ?? '' );
+						?>
+						<tr>
+							<td><code><?php echo esc_html( (string) $row['side_effect'] ); ?></code></td>
+							<td><?php echo esc_html( $user ? $user->display_name : sprintf( '#%d', (int) $row['user_id'] ) ); ?></td>
+							<td><span class="description"><?php echo esc_html( (string) ( $row['error_message'] ?? '' ) ); ?></span></td>
+							<td><?php echo (int) $row['retry_count']; ?></td>
+							<td>
+								<span class="wbgam-pill wbgam-pill--<?php echo $is_dead ? 'error' : 'info'; ?>">
+									<?php echo $is_dead ? esc_html__( 'Needs attention', 'wb-gamification' ) : esc_html__( 'Retrying', 'wb-gamification' ); ?>
+								</span>
+							</td>
+							<td><?php echo esc_html( $last ? human_time_diff( (int) strtotime( $last . ' UTC' ) ) . ' ' . __( 'ago', 'wb-gamification' ) : '—' ); ?></td>
+							<td>
+								<button
+									type="button"
+									class="wbgam-btn wbgam-btn--sm wbgam-btn--secondary"
+									data-wb-gam-rest-action="wbGamToolsSettings"
+									data-wb-gam-rest-method="POST"
+									data-wb-gam-rest-path="/tools/retry-side-effect/<?php echo $fid; ?>"
+									data-wb-gam-rest-after="reload"
+									data-wb-gam-rest-success-toast="<?php esc_attr_e( 'Side effect re-ran successfully.', 'wb-gamification' ); ?>"
+									data-wb-gam-rest-error-toast="<?php esc_attr_e( 'Still failing. Check the cause and try again.', 'wb-gamification' ); ?>">
+									<?php esc_html_e( 'Retry', 'wb-gamification' ); ?>
+								</button>
+							</td>
+						</tr>
+					<?php endforeach; ?>
+				</tbody>
+			</table>
 		</div>
 		<?php
 	}
