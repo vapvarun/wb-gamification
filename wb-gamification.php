@@ -391,6 +391,7 @@ final class WB_Gamification {
 			WebhooksAdminPage::init();
 			PointTypesPage::init();
 			PointTypeConversionsPage::init();
+			\WBGam\Admin\MultipliersPage::init();
 			SubmissionsPage::init();
 			\WBGam\Admin\DeactivationFeedback::init();
 			\WBGam\Admin\ImportPage::init();

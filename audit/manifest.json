@@ -1453,6 +1453,15 @@
         "line": 112
       },
       {
+        "slug": "wb-gam-multipliers",
+        "title": "Point Multipliers",
+        "capability": "wb_gam_manage_rules",
+        "callback": "",
+        "parentSlug": "wb-gamification",
+        "file": "src/Admin/MultipliersPage.php",
+        "line": 58
+      },
+      {
         "slug": "wb-gamification",
         "title": "WB Gamification",
         "capability": "manage_options",
@@ -9299,6 +9308,13 @@
       "capability": "wb_gam_manage_rewards",
       "title": "Redemption Store",
       "file": "src/Admin/RedemptionStorePage.php:112"
+    },
+    {
+      "page": "wb-gam-multipliers",
+      "type": "submenu",
+      "capability": "wb_gam_manage_rules",
+      "title": "Point Multipliers",
+      "file": "src/Admin/MultipliersPage.php:58"
     },
     {
       "page": "wb-gamification",
