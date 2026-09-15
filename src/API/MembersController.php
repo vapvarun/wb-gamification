@@ -453,9 +453,21 @@ class MembersController extends WP_REST_Controller {
 		$ids = array_map( static fn( $u ) => (int) $u->ID, $users );
 
 		// Prime per-page caches so the row loop is N+1-free.
+		$badge_counts = array();
 		if ( ! empty( $ids ) ) {
 			PointsEngine::prime_totals( $ids );
-			BadgeEngine::prime_earned_badges( $ids );
+			// One grouped COUNT for the whole page's badge tallies. The loop used to
+			// call count( get_user_badges( $uid ) ) per row — a 2-table JOIN that
+			// hydrates every earned-badge row just to count it, i.e. ~100 JOINs per
+			// roster page. (prime_earned_badges() primed a cache get_user_badges()
+			// does not read for the count, so it was pure overhead here.)
+			global $wpdb;
+			$bn_in = implode( ',', array_map( 'intval', $ids ) );
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- integer id list; single per-page aggregate.
+			$bn_rows = $wpdb->get_results( "SELECT user_id, COUNT(*) AS c FROM {$wpdb->prefix}wb_gam_user_badges WHERE user_id IN ($bn_in) GROUP BY user_id", ARRAY_A );
+			foreach ( (array) $bn_rows as $bn_r ) {
+				$badge_counts[ (int) $bn_r['user_id'] ] = (int) $bn_r['c'];
+			}
 		}
 
 		$items = array();
@@ -469,7 +481,7 @@ class MembersController extends WP_REST_Controller {
 				'avatar'      => get_avatar_url( $uid, array( 'size' => 48 ) ),
 				'points'      => PointsEngine::get_total( $uid ),
 				'level'       => $level ? (string) $level['name'] : '',
-				'badges'      => count( BadgeEngine::get_user_badges( $uid ) ),
+				'badges'      => $badge_counts[ $uid ] ?? 0,
 				'excluded'    => PointsEngine::is_excluded_user( $uid ) || (bool) get_user_meta( $uid, 'wb_gam_sandboxed', true ),
 				'profile_url' => (string) get_edit_user_link( $uid ),
 			);
