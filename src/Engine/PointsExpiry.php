@@ -246,7 +246,12 @@ final class PointsExpiry {
 
 				$result = PointsEngine::debit( $user_id, $amount, 'points_decay', '', $type );
 				if ( ! empty( $result['success'] ) ) {
-					update_user_meta( $user_id, self::META_LAST, gmdate( 'Y-m-d H:i:s' ) );
+					// Same clock as $last_activity (MAX(created_at), site-local via
+					// current_time). Writing this UTC while comparing it against a
+					// site-local timestamp skewed the "already decayed since last
+					// activity" guard by the site's offset -- the same clock-seam
+					// the cutoff at the top of this method already fixed.
+					update_user_meta( $user_id, self::META_LAST, current_time( 'mysql' ) );
 					++$decayed;
 				}
 			}

@@ -349,6 +349,8 @@ class ChallengesController extends WP_REST_Controller {
 			);
 		}
 
+		\WBGam\Engine\ChallengeEngine::bust_action_cache();
+
 		$row = $wpdb->get_row( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Read-after-write for response.
 			$wpdb->prepare(
 				"SELECT * FROM {$wpdb->prefix}wb_gam_challenges WHERE id = %d",
@@ -417,6 +419,8 @@ class ChallengesController extends WP_REST_Controller {
 			}
 		}
 
+		\WBGam\Engine\ChallengeEngine::bust_action_cache();
+
 		$updated = $wpdb->get_row( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Read-after-write for response.
 			$wpdb->prepare(
 				"SELECT * FROM {$wpdb->prefix}wb_gam_challenges WHERE id = %d",
@@ -470,6 +474,8 @@ class ChallengesController extends WP_REST_Controller {
 		if ( true !== $deleted ) {
 			return new WP_Error( 'rest_delete_failed', __( 'Could not delete challenge.', 'wb-gamification' ), array( 'status' => 500 ) );
 		}
+
+		\WBGam\Engine\ChallengeEngine::bust_action_cache();
 
 		return new WP_REST_Response(
 			array(

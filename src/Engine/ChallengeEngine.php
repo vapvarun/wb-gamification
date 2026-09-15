@@ -315,13 +315,52 @@ final class ChallengeEngine {
 	// ── DB helpers ───────────────────────────────────────────────────────────────
 
 	/**
+	 * Option holding the per-action challenge-cache salt.
+	 *
+	 * @var string
+	 */
+	private const CACHE_SALT_OPTION = 'wb_gam_challenge_cache_ver';
+
+	/**
+	 * Current salt mixed into the per-action challenge cache keys.
+	 *
+	 * Autoloaded, so this read costs no query on the per-event hot path.
+	 *
+	 * @return string
+	 */
+	private static function action_cache_salt(): string {
+		return (string) get_option( self::CACHE_SALT_OPTION, '1' );
+	}
+
+	/**
+	 * Invalidate every per-action challenge cache entry.
+	 *
+	 * Called on any challenge create / edit / delete so a change is reflected
+	 * immediately instead of after the 60s TTL. Bumping the salt orphans the
+	 * old md5 keys without having to enumerate them.
+	 *
+	 * @return void
+	 */
+	public static function bust_action_cache(): void {
+		// Monotonic counter, not time(): two writes in the same second must each
+		// change the salt, or a challenge edited in the same second a cache entry
+		// was built would not invalidate it.
+		$next = (int) get_option( self::CACHE_SALT_OPTION, '1' ) + 1;
+		update_option( self::CACHE_SALT_OPTION, (string) $next, true );
+	}
+
+	/**
 	 * Get active challenges matching a specific action_id (cached).
 	 *
 	 * @param string $action_id The action identifier to match.
 	 * @return array[]
 	 */
 	private static function get_active_challenges_for_action( string $action_id ): array {
-		$cache_key = 'wb_gam_challenges_' . md5( $action_id );
+		// The salt lets a challenge write invalidate every per-action key at once
+		// (the keys are per-action md5, so they can't be enumerated to delete).
+		// Only matters with a persistent object cache; without one wp_cache is
+		// per-request and already re-queries. See bust_action_cache().
+		$cache_key = 'wb_gam_challenges_' . self::action_cache_salt() . '_' . md5( $action_id );
 		$cached    = wp_cache_get( $cache_key, self::CACHE_GROUP );
 
 		if ( false !== $cached ) {
