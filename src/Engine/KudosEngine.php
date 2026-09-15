@@ -106,7 +106,8 @@ final class KudosEngine {
 			);
 		}
 
-		// Serialize concurrent sends for this exact (giver, receiver) pair.
+		// Serialize concurrent sends for this GIVER (all receivers), not just the
+		// (giver, receiver) pair.
 		//
 		// This was a wp_cache_add() lock, justified in its own comment as "atomic across
 		// Redis/Memcached". True -- and irrelevant without a persistent object cache, which the
@@ -118,14 +119,31 @@ final class KudosEngine {
 		// lock implementation in the plugin; it now uses the one shared primitive, so there is a
 		// single place where "how do we lock?" is answered.
 		//
-		// Timeout 0: if another request is mid-send for this pair right now, that IS the race, so
+		// The lock is GIVER-scoped (kudos_giver_{id}), not per-pair: the per-pair lock let N
+		// parallel sends to N DIFFERENT receivers each take a different lock and all pass the
+		// per-giver DAILY CAP check above, awarding points N times — a points-inflation bypass.
+		// A giver-scoped lock serializes all of a giver's in-flight sends so the daily-cap
+		// re-check inside is authoritative. Legit sequential sends release the lock between them
+		// and proceed; only truly-concurrent sends (the race) are rejected.
+		//
+		// Timeout 0: if another request is mid-send for this giver right now, that IS the race, so
 		// reject rather than queue behind it.
 		return Lock::run(
-			sprintf( 'kudos_%d_%d', $giver_id, $receiver_id ),
-			function () use ( $giver_id, $receiver_id, $message, $receiver_cooldown ) {
-				// Re-check the cooldown INSIDE the lock. The check above ran unserialized, so
-				// both racers can have passed it -- but only one of them is in here. This is the
-				// check that actually enforces the cooldown.
+			sprintf( 'kudos_giver_%d', $giver_id ),
+			function () use ( $giver_id, $receiver_id, $message, $receiver_cooldown, $daily_limit ) {
+				// Re-check BOTH gates INSIDE the lock. The checks above ran unserialized, so
+				// parallel sends can all have passed them; only one request is in here at a time,
+				// so these are the checks that actually enforce the cap + cooldown.
+				if ( self::get_daily_sent_count( $giver_id ) >= $daily_limit ) {
+					return new WP_Error(
+						'wb_gam_kudos_cooldown',
+						sprintf(
+							/* translators: %d: daily kudos limit */
+							__( 'You have reached your daily kudos limit (%d).', 'wb-gamification' ),
+							$daily_limit
+						)
+					);
+				}
 				if ( $receiver_cooldown > 0 && self::has_recent_kudos_to_receiver( $giver_id, $receiver_id, $receiver_cooldown ) ) {
 					return new WP_Error(
 						'wb_gam_kudos_cooldown',
@@ -135,10 +153,10 @@ final class KudosEngine {
 
 				return self::record_kudos( $giver_id, $receiver_id, $message );
 			},
-			// Lock declined: someone else is mid-send for this exact pair.
+			// Lock declined: another send for this giver is in flight right now.
 			new WP_Error(
 				'wb_gam_kudos_cooldown',
-				__( 'You recently gave kudos to this member. Try again later.', 'wb-gamification' )
+				__( 'You are sending kudos too quickly. Please try again in a moment.', 'wb-gamification' )
 			)
 		);
 	}
