@@ -323,9 +323,21 @@ final class AnalyticsDashboard {
 	 */
 	public static function get_stats( int $period ): array {
 		$cache_key = "wb_gam_analytics_{$period}";
-		$cached    = wp_cache_get( $cache_key, self::CACHE_GROUP );
+
+		// Two layers: wp_cache memoises within the request; the transient carries
+		// the result ACROSS requests. Without a persistent object cache (Redis),
+		// wp_cache is per-request only, so every dashboard load re-ran three
+		// full-window GROUP BY scans over wb_gam_points. The transient lands in
+		// the options table on such installs and holds for CACHE_TTL. The data is
+		// time-windowed and tolerates that staleness (no invalidation on award).
+		$cached = wp_cache_get( $cache_key, self::CACHE_GROUP );
 		if ( false !== $cached ) {
 			return (array) $cached;
+		}
+		$persisted = get_transient( $cache_key );
+		if ( false !== $persisted ) {
+			wp_cache_set( $cache_key, $persisted, self::CACHE_GROUP, self::CACHE_TTL );
+			return (array) $persisted;
 		}
 
 		global $wpdb;
@@ -504,6 +516,7 @@ final class AnalyticsDashboard {
 		);
 
 		wp_cache_set( $cache_key, $data, self::CACHE_GROUP, self::CACHE_TTL );
+		set_transient( $cache_key, $data, self::CACHE_TTL );
 
 		return $data;
 	}
