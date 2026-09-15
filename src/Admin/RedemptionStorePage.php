@@ -536,6 +536,7 @@ final class RedemptionStorePage {
 								<th><?php esc_html_e( 'Points spent', 'wb-gamification' ); ?></th>
 								<th><?php esc_html_e( 'Coupon', 'wb-gamification' ); ?></th>
 								<th><?php esc_html_e( 'Status', 'wb-gamification' ); ?></th>
+								<th><?php esc_html_e( 'Actions', 'wb-gamification' ); ?></th>
 							</tr>
 						</thead>
 						<tbody>
@@ -575,6 +576,44 @@ final class RedemptionStorePage {
 										<span class="wbgam-pill wbgam-pill--<?php echo esc_attr( $txn_status[0] ); ?>">
 											<?php echo esc_html( $txn_status[1] ); ?>
 										</span>
+									</td>
+									<td>
+										<?php
+										// Fulfil is only meaningful while the reward is still
+										// awaiting hand-off; refund credits points back and stays
+										// available until the row is already refunded/failed.
+										$txn_id      = (int) $txn['id'];
+										$can_fulfill = in_array( $txn_status_key, array( 'pending', 'pending_fulfillment' ), true );
+										$can_refund  = ! in_array( $txn_status_key, array( 'refunded', 'failed' ), true );
+										?>
+										<?php if ( $can_fulfill ) : ?>
+											<button
+												type="button"
+												class="wbgam-btn wbgam-btn--sm wbgam-btn--secondary"
+												data-wb-gam-rest-action="wbGamRedemptionSettings"
+												data-wb-gam-rest-method="POST"
+												data-wb-gam-rest-path="/redemptions/<?php echo $txn_id; ?>/fulfill"
+												data-wb-gam-rest-after="reload"
+												data-wb-gam-rest-success-toast="<?php esc_attr_e( 'Redemption marked fulfilled.', 'wb-gamification' ); ?>">
+												<?php esc_html_e( 'Mark fulfilled', 'wb-gamification' ); ?>
+											</button>
+										<?php endif; ?>
+										<?php if ( $can_refund ) : ?>
+											<button
+												type="button"
+												class="wbgam-btn wbgam-btn--sm wbgam-btn--danger wbgam-ms-xs"
+												data-wb-gam-rest-action="wbGamRedemptionSettings"
+												data-wb-gam-rest-method="POST"
+												data-wb-gam-rest-path="/redemptions/<?php echo $txn_id; ?>/refund"
+												data-wb-gam-rest-confirm="<?php esc_attr_e( 'Refund this redemption? Points are credited back and stock restored.', 'wb-gamification' ); ?>"
+												data-wb-gam-rest-after="reload"
+												data-wb-gam-rest-success-toast="<?php esc_attr_e( 'Redemption refunded.', 'wb-gamification' ); ?>">
+												<?php esc_html_e( 'Refund', 'wb-gamification' ); ?>
+											</button>
+										<?php endif; ?>
+										<?php if ( ! $can_fulfill && ! $can_refund ) : ?>
+											<span class="wbgam-text-muted">—</span>
+										<?php endif; ?>
 									</td>
 								</tr>
 							<?php endforeach; ?>

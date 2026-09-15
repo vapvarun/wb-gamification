@@ -9865,6 +9865,24 @@
       ]
     },
     {
+      "name": "wb_gam_redemption_refunded",
+      "type": "action",
+      "purpose": "Fires after a redemption is refunded: points credited back and finite stock restored. Integrators reverse any external fulfilment side-effect here.",
+      "fired_at": [
+        "src/Engine/RedemptionEngine.php:459"
+      ],
+      "consumed_by": []
+    },
+    {
+      "name": "wb_gam_redemption_fulfilled",
+      "type": "action",
+      "purpose": "Fires after an owner marks a custom/physical redemption fulfilled. Integrators trigger delivery/notification here.",
+      "fired_at": [
+        "src/Engine/RedemptionEngine.php:510"
+      ],
+      "consumed_by": []
+    },
+    {
       "name": "wb_gam_points_revoked",
       "type": "action",
       "purpose": "",

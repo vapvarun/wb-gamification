@@ -165,6 +165,44 @@ class RedemptionController extends WP_REST_Controller {
 				),
 			)
 		);
+
+		// Lifecycle transitions (admin): mark a redemption fulfilled or refund it.
+		$lifecycle_args = array(
+			'id' => array(
+				'type'    => 'integer',
+				'minimum' => 1,
+			),
+		);
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/(?P<id>[\d]+)/fulfill',
+			array(
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'fulfill' ),
+					'permission_callback' => array( $this, 'admin_check' ),
+					'args'                => $lifecycle_args,
+				),
+			)
+		);
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/(?P<id>[\d]+)/refund',
+			array(
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'refund' ),
+					'permission_callback' => array( $this, 'admin_check' ),
+					'args'                => $lifecycle_args + array(
+						'note' => array(
+							'type'              => 'string',
+							'default'           => '',
+							'sanitize_callback' => 'sanitize_text_field',
+						),
+					),
+				),
+			)
+		);
 	}
 
 	// ── Callbacks ────────────────────────────────────────────────────────────
@@ -364,6 +402,43 @@ class RedemptionController extends WP_REST_Controller {
 	 */
 	public function get_my_history( $request ): WP_REST_Response {
 		return rest_ensure_response( RedemptionEngine::get_user_redemptions( get_current_user_id() ) );
+	}
+
+	/**
+	 * Mark a redemption fulfilled (admin) — the reward has been delivered.
+	 *
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return WP_REST_Response|WP_Error Response on success, WP_Error on failure.
+	 */
+	public function fulfill( $request ): WP_REST_Response|WP_Error {
+		$result = RedemptionEngine::fulfill( (int) $request['id'] );
+		if ( ! $result['success'] ) {
+			$status = 'not_found' === ( $result['reason'] ?? '' ) ? 404 : 409;
+			return new WP_Error(
+				'wb_gam_redemption_' . ( $result['reason'] ?? 'fulfill_failed' ),
+				__( 'This redemption cannot be fulfilled.', 'wb-gamification' ),
+				array( 'status' => $status )
+			);
+		}
+		return rest_ensure_response( $result );
+	}
+
+	/**
+	 * Refund a redemption (admin) — credit points back and restore stock.
+	 *
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return WP_REST_Response|WP_Error Response on success, WP_Error on failure.
+	 */
+	public function refund( $request ): WP_REST_Response|WP_Error {
+		$result = RedemptionEngine::refund( (int) $request['id'], (string) ( $request['note'] ?? '' ) );
+		if ( ! $result['success'] ) {
+			return new WP_Error(
+				'wb_gam_redemption_' . ( $result['reason'] ?? 'refund_failed' ),
+				__( 'This redemption cannot be refunded.', 'wb-gamification' ),
+				array( 'status' => 'not_found' === ( $result['reason'] ?? '' ) ? 404 : 409 )
+			);
+		}
+		return rest_ensure_response( $result );
 	}
 
 	// ── Helpers ──────────────────────────────────────────────────────────────
