@@ -139,12 +139,10 @@ final class SettingsPage {
 				$target_url = $candidate;
 			}
 		}
-		// settings_errors stash so the success notice survives the redirect.
-		set_transient(
-			'wb_gam_settings_saved_' . get_current_user_id(),
-			array( 'tab' => $tab ),
-			60
-		);
+		// The save handlers queued their notices ('Engagement settings saved.', validation
+		// errors) with add_settings_error(); a redirect drops them. Stash them for this user and
+		// render() replays them, so the owner sees the result of every save.
+		set_transient( 'wb_gam_settings_saved_' . get_current_user_id(), get_settings_errors( 'wb_gamification' ), 60 );
 		wp_safe_redirect( $target_url );
 		exit;
 	}
@@ -1179,16 +1177,30 @@ final class SettingsPage {
 
 			<!-- Content -->
 			<div class="wbgam-settings-content">
-				<?php // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- display-only flag set by our own redirect. ?>
-				<?php if ( isset( $_GET['saved'] ) ) : ?>
-					<div class="wbgam-banner wbgam-banner--success wbgam-stack-block" role="status" aria-live="polite">
-						<span class="wbgam-banner__icon icon-circle-check" aria-hidden="true"></span>
-						<div class="wbgam-banner__body"><p class="wbgam-banner__desc"><?php esc_html_e( 'Settings saved.', 'wb-gamification' ); ?></p></div>
-					</div>
-				<?php endif; ?>
 				<?php // The richer post-Setup-Wizard banner with Hub URL + View/Edit buttons is rendered by render_dashboard_tab(). ?>
 
-				<?php settings_errors( 'wb_gamification' ); ?>
+				<?php
+				// Replay the notices stashed before the post-save redirect (see handle_save()).
+				$wb_gam_stashed = get_transient( 'wb_gam_settings_saved_' . get_current_user_id() );
+				if ( is_array( $wb_gam_stashed ) ) {
+					delete_transient( 'wb_gam_settings_saved_' . get_current_user_id() );
+					foreach ( $wb_gam_stashed as $wb_gam_notice ) {
+						add_settings_error( 'wb_gamification', (string) $wb_gam_notice['code'], (string) $wb_gam_notice['message'], (string) $wb_gam_notice['type'] );
+					}
+				}
+				// Printed here rather than with settings_errors(): core's markup lacks .wb-gam-notice, and
+				// this screen hides every notice without it (third-party-suppression.css), so the save
+				// confirmations were rendered and then hidden.
+				foreach ( get_settings_errors( 'wb_gamification' ) as $wb_gam_notice ) {
+					$wb_gam_type = in_array( $wb_gam_notice['type'], array( 'success', 'error', 'warning', 'info' ), true ) ? $wb_gam_notice['type'] : ( 'updated' === $wb_gam_notice['type'] ? 'success' : 'error' );
+					printf(
+						'<div class="notice notice-%1$s wb-gam-notice is-dismissible" role="%2$s"><p>%3$s</p></div>',
+						esc_attr( $wb_gam_type ),
+						'error' === $wb_gam_type ? 'alert' : 'status',
+						esc_html( (string) $wb_gam_notice['message'] )
+					);
+				}
+				?>
 
 				<!-- Dashboard section -->
 				<div class="wbgam-settings-section" id="section-dashboard">
@@ -2835,7 +2847,6 @@ final class SettingsPage {
 
 	private static function render_realtime_section(): void {
 		$current = \WBGam\API\SSEController::get_transport();
-		$saved   = (bool) ( isset( $_GET['saved'] ) && 'realtime' === sanitize_key( wp_unslash( $_GET['tab'] ?? '' ) ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 
 		$current_position = \WBGam\Engine\NotificationBridge::get_toast_position();
 		$positions        = array(
