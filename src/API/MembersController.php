@@ -1084,7 +1084,7 @@ class MembersController extends WP_REST_Controller {
 	}
 
 	/**
-	 * Retrieve all badges earned by a member.
+	 * Retrieve all badges earned by a member, in display (ladder) order, expired ones excluded.
 	 *
 	 * @param WP_REST_Request $request Full details about the request.
 	 * @return WP_REST_Response|WP_Error Response on success, WP_Error on failure.
@@ -1096,36 +1096,8 @@ class MembersController extends WP_REST_Controller {
 			return new WP_Error( 'rest_user_invalid', __( 'Member not found.', 'wb-gamification' ), array( 'status' => 404 ) );
 		}
 
-		global $wpdb;
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- Per-user badge list; not suitable for a shared cache.
-		$rows = $wpdb->get_results(
-			$wpdb->prepare(
-				"SELECT b.id, b.name, b.description, b.image_url, b.is_credential, b.category,
-				        ub.earned_at
-				   FROM {$wpdb->prefix}wb_gam_user_badges ub
-				   JOIN {$wpdb->prefix}wb_gam_badge_defs b ON b.id = ub.badge_id
-				  WHERE ub.user_id = %d
-				  ORDER BY ub.earned_at DESC",
-				$user_id
-			),
-			ARRAY_A
-		);
-
-		$badges = array_map(
-			static function ( array $row ): array {
-				return array(
-					'id'            => $row['id'],
-					'name'          => $row['name'],
-					'description'   => $row['description'],
-					'image_url'     => $row['image_url'],
-					'is_credential' => (bool) $row['is_credential'],
-					'category'      => $row['category'],
-					'earned_at'     => $row['earned_at'],
-				);
-			},
-			$rows ?: array()
-		);
+		// Same list, order (ladder) and expiry rule as every other badge surface.
+		$badges = BadgeEngine::get_user_badges( $user_id );
 
 		return rest_ensure_response( $badges );
 	}

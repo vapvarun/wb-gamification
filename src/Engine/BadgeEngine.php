@@ -1285,7 +1285,14 @@ final class BadgeEngine {
 	}
 
 	/**
-	 * Get earned badges with full definition data for a user.
+	 * Get earned badges with full definition data for a user, in display order.
+	 *
+	 * Display order is the ladder (category, then threshold; see sort_for_display()),
+	 * the same order as the admin badge list and the Badge Showcase block, so every
+	 * surface that lists a member's badges (profile, REST, apps) agrees. A caller that
+	 * wants the most recent badges sorts by `earned_at` itself.
+	 *
+	 * @since 1.6.5 Returns display order; it was earned_at DESC.
 	 *
 	 * @param int $user_id User to look up.
 	 * @return array<int, array{id: string, name: string, description: string, image_url: string|null, is_credential: bool, category: string, earned_at: string, expires_at: string|null}>
@@ -1311,20 +1318,22 @@ final class BadgeEngine {
 			ARRAY_A
 		);
 
-		return array_map(
-			static function ( array $row ): array {
-				return array(
-					'id'            => $row['id'],
-					'name'          => $row['name'],
-					'description'   => $row['description'],
-					'image_url'     => $row['image_url'] ?: null,
-					'is_credential' => (bool) $row['is_credential'],
-					'category'      => $row['category'],
-					'earned_at'     => $row['earned_at'],
-					'expires_at'    => $row['expires_at'] ?: null,
-				);
-			},
-			$rows ?: array()
+		return self::sort_for_display(
+			array_map(
+				static function ( array $row ): array {
+					return array(
+						'id'            => $row['id'],
+						'name'          => $row['name'],
+						'description'   => $row['description'],
+						'image_url'     => $row['image_url'] ?: null,
+						'is_credential' => (bool) $row['is_credential'],
+						'category'      => $row['category'],
+						'earned_at'     => $row['earned_at'],
+						'expires_at'    => $row['expires_at'] ?: null,
+					);
+				},
+				$rows ?: array()
+			)
 		);
 	}
 

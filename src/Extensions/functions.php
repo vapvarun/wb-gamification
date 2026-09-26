@@ -293,9 +293,11 @@ function wb_gam_has_badge( int $user_id, string $badge_id ): bool {
 }
 
 /**
- * Get all badges earned by a user.
+ * Get all badges earned by a user, in display (ladder) order.
  *
  * @since 1.0.0
+ * @since 1.6.5 Returns display order (category, then threshold), matching the admin
+ *              badge list; it was most-recent first. Sort by `earned_at` for recency.
  *
  * @param int $user_id WordPress user ID.
  * @return array List of earned badge data.

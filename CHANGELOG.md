@@ -8,12 +8,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 
 ### Added
 
-- Give Kudos suggests recipients as the member types. `GET /members` takes `context=view` for a public-fields member lookup (id, name, slug, avatar) available to any logged-in member.
+- Give Kudos suggests recipients as the member types: a keyboard-accessible list with avatar, name and @handle. `GET /members` takes `context=view` for a public-fields member lookup (id, name, slug, avatar) available to any logged-in member.
 
 ### Fixed
 
 - A lapsed streak showed as current until the member next earned points. Every reader (streak and hub blocks, status bar, REST, the admin Streaks roster and the Analytics active-streaks count) now reports it as 0.
 - The Badge Showcase block sorted badges by name, so 10-Year Member appeared before 2-Year Member. It now uses the same ladder order as the admin badge list.
+- `wb_gam_get_user_badges()` and `GET /members/{id}/badges` return earned badges in ladder order (category, then threshold) instead of most-recent first, so member profiles and apps show the same order. The REST endpoint now also leaves out expired badges.
+- A merged toast ("+4 Points x2") never auto-dismissed and stayed on screen until closed.
 - How to Earn cards showed blank icons for WPMediaVerse actions and for several other integrations. A third-party manifest that sends a Dashicons class now renders too.
 - The Community Challenges and Redemption Store admin lists loaded every row. Both are paged 20 at a time, and the Kudos Moderation pager is styled again.
 - Toasts: at most three are on screen at once.

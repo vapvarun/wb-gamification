@@ -99,7 +99,7 @@ Current level and full level ladder with progress.
 
 ### GET /members/{id}/badges
 
-All badges earned by the member, ordered by `earned_at` descending.
+All badges earned by the member, in display order: by category, then by threshold (1-Year before 2-Year, 100 points before 500). Expired badges are left out. Sort by `earned_at` yourself for most-recent first. Before 1.6.5 this was most-recent first.
 
 ### GET /members/{id}/events
 
