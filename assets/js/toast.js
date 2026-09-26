@@ -331,10 +331,13 @@
 		if ( lastPointsToast.dismissTimer ) {
 			clearTimeout( lastPointsToast.dismissTimer );
 		}
+		// Capture the element now: lastPointsToast is cleared after
+		// AGGREGATE_WINDOW_MS, long before this fires, and reading it here
+		// left every merged toast on screen for good.
+		var el = lastPointsToast.el;
 		lastPointsToast.dismissTimer = setTimeout( function () {
-			if ( lastPointsToast && lastPointsToast.el && lastPointsToast.el.parentNode ) {
-				lastPointsToast.el.classList.add( 'wb-gam-toast--exit' );
-				var el = lastPointsToast.el;
+			if ( el.parentNode ) {
+				el.classList.add( 'wb-gam-toast--exit' );
 				setTimeout( function () {
 					if ( el.parentNode ) { el.remove(); }
 				}, 320 );
