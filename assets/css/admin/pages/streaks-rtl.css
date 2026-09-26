@@ -80,26 +80,8 @@
 	color: var(--wb-gam-color-warning-strong, #b45309);
 }
 
-/* Prev/next pager shared by admin list pages. */
-.wbgam-pager {
-	display: flex;
-	align-items: center;
-	gap: var(--wb-gam-space-md, 16px);
-	margin-top: var(--wb-gam-space-lg, 24px);
-}
-
-.wbgam-pager__status {
-	color: var(--wb-gam-color-text-muted, #6b7280);
-	font-size: var(--wb-gam-font-sm, 14px);
-}
-
 @media (max-width: 640px) {
 	.wb-gam-streaks-table__actions {
 		flex-direction: column;
-	}
-
-	.wbgam-pager {
-		flex-wrap: wrap;
-		gap: var(--wb-gam-space-sm, 8px);
 	}
 }

@@ -1335,3 +1335,31 @@
 		animation: none !important;
 	}
 }
+
+/* Prev/next pager under admin lists (WBGam\Admin\Pager). */
+.wbgam-pager {
+	display: flex;
+	align-items: center;
+	gap: var(--wb-gam-space-md, 16px);
+	margin-top: var(--wb-gam-space-lg, 24px);
+}
+
+.wbgam-pager__status {
+	color: var(--wb-gam-color-text-muted, #6b7280);
+	font-size: var(--wb-gam-font-sm, 14px);
+}
+
+/* Under a flush (edge-to-edge) table the pager needs its own inset and divider. */
+.wbgam-card > .wbgam-pager,
+.wbgam-card-body--flush > .wbgam-pager {
+	margin: 0;
+	padding: var(--wbgam-gap-sm) var(--wbgam-gap-md);
+	border-block-start: 1px solid var(--wbgam-border);
+}
+
+@media (max-width: 640px) {
+	.wbgam-pager {
+		flex-wrap: wrap;
+		gap: var(--wb-gam-space-sm, 8px);
+	}
+}

@@ -140,10 +140,21 @@ final class RedemptionStorePage {
 
 		$table = $wpdb->prefix . 'wb_gam_redemption_items';
 
+		// Paged: a large store/challenge list must not load every row.
+		$per_page = 20;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Admin list; table name is a prefixed constant.
+		$total = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$table}" );
+		$pages = (int) ceil( $total / $per_page );
+		$paged = Pager::current( $pages );
+
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- Admin list view, infrequent.
 		$items = $wpdb->get_results(
-			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name is prefixed constant.
-			"SELECT * FROM {$table} ORDER BY id DESC",
+			$wpdb->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name is prefixed constant.
+				"SELECT * FROM {$table} ORDER BY id DESC LIMIT %d OFFSET %d",
+				$per_page,
+				( $paged - 1 ) * $per_page
+			),
 			ARRAY_A
 		) ?: array();
 
@@ -489,6 +500,16 @@ final class RedemptionStorePage {
 						</tbody>
 					</table>
 				</div>
+					<?php
+					Pager::render(
+						$paged,
+						$pages,
+						array( 'page' => 'wb-gam-redemption' ),
+						__( 'Reward pages', 'wb-gamification' ),
+						/* translators: 1: current page, 2: total pages, 3: total rewards */
+						sprintf( __( 'Page %1$d of %2$d (%3$d rewards)', 'wb-gamification' ), $paged, $pages, $total )
+					);
+					?>
 			</div>
 			<?php else : ?>
 			<div class="wbgam-empty">

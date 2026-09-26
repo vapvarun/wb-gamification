@@ -369,58 +369,23 @@ final class KudosModerationPage {
 							</tbody>
 						</table>
 
-						<?php self::render_pager( $paged, $pages, $status, $total ); ?>
+						<?php
+						Pager::render(
+							$paged,
+							$pages,
+							array(
+								'page'   => self::PAGE_SLUG,
+								'status' => $status,
+							),
+							__( 'Kudos pages', 'wb-gamification' ),
+							/* translators: 1: current page, 2: total pages, 3: total kudos */
+							sprintf( __( 'Page %1$d of %2$d (%3$d kudos)', 'wb-gamification' ), $paged, $pages, $total )
+						);
+						?>
 					<?php endif; ?>
 				</div>
 			</div>
 		</div>
 		<?php
-	}
-
-
-	/**
-	 * Render prev/next pagination.
-	 *
-	 * @param int    $paged  Current page.
-	 * @param int    $pages  Total pages.
-	 * @param string $status Active status filter.
-	 * @param int    $total  Total row count.
-	 */
-	private static function render_pager( int $paged, int $pages, string $status, int $total ): void {
-		if ( $pages <= 1 ) {
-			return;
-		}
-		$base = array(
-			'page'   => self::PAGE_SLUG,
-			'status' => $status,
-		);
-		echo '<nav class="wbgam-pager" aria-label="' . esc_attr__( 'Kudos pages', 'wb-gamification' ) . '">';
-		if ( $paged > 1 ) {
-			printf(
-				'<a class="button" href="%s">%s</a> ',
-				esc_url( add_query_arg( array_merge( $base, array( 'paged' => $paged - 1 ) ), admin_url( 'admin.php' ) ) ),
-				esc_html__( 'Previous', 'wb-gamification' )
-			);
-		}
-		printf(
-			'<span class="wbgam-pager__status">%s</span> ',
-			esc_html(
-				sprintf(
-					/* translators: 1: current page, 2: total pages, 3: total kudos */
-					__( 'Page %1$d of %2$d (%3$d kudos)', 'wb-gamification' ),
-					$paged,
-					$pages,
-					$total
-				)
-			)
-		);
-		if ( $paged < $pages ) {
-			printf(
-				'<a class="button" href="%s">%s</a>',
-				esc_url( add_query_arg( array_merge( $base, array( 'paged' => $paged + 1 ) ), admin_url( 'admin.php' ) ) ),
-				esc_html__( 'Next', 'wb-gamification' )
-			);
-		}
-		echo '</nav>';
 	}
 }

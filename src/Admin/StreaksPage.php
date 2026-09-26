@@ -203,7 +203,20 @@ final class StreaksPage {
 							</tbody>
 						</table>
 
-						<?php self::render_pager( $paged, $pages, $orderby, $order, $total ); ?>
+						<?php
+						Pager::render(
+							$paged,
+							$pages,
+							array(
+								'page'    => self::PAGE_SLUG,
+								'orderby' => $orderby,
+								'order'   => $order,
+							),
+							__( 'Streak roster pages', 'wb-gamification' ),
+							/* translators: 1: current page, 2: total pages, 3: total members */
+							sprintf( __( 'Page %1$d of %2$d (%3$d members)', 'wb-gamification' ), $paged, $pages, $total )
+						);
+						?>
 					<?php endif; ?>
 				</div>
 			</div>
@@ -262,53 +275,5 @@ final class StreaksPage {
 			esc_html( $label ),
 			esc_html( $indicator )
 		);
-	}
-
-	/**
-	 * Render prev/next pagination.
-	 *
-	 * @param int    $paged   Current page.
-	 * @param int    $pages   Total pages.
-	 * @param string $orderby Active sort key.
-	 * @param string $order   Active direction.
-	 * @param int    $total   Total row count.
-	 */
-	private static function render_pager( int $paged, int $pages, string $orderby, string $order, int $total ): void {
-		if ( $pages <= 1 ) {
-			return;
-		}
-		$base = array(
-			'page'    => self::PAGE_SLUG,
-			'orderby' => $orderby,
-			'order'   => $order,
-		);
-		echo '<nav class="wbgam-pager" aria-label="' . esc_attr__( 'Streak roster pages', 'wb-gamification' ) . '">';
-		if ( $paged > 1 ) {
-			printf(
-				'<a class="button" href="%s">%s</a> ',
-				esc_url( add_query_arg( array_merge( $base, array( 'paged' => $paged - 1 ) ), admin_url( 'admin.php' ) ) ),
-				esc_html__( 'Previous', 'wb-gamification' )
-			);
-		}
-		printf(
-			'<span class="wbgam-pager__status">%s</span> ',
-			esc_html(
-				sprintf(
-					/* translators: 1: current page, 2: total pages, 3: total members */
-					__( 'Page %1$d of %2$d (%3$d members)', 'wb-gamification' ),
-					$paged,
-					$pages,
-					$total
-				)
-			)
-		);
-		if ( $paged < $pages ) {
-			printf(
-				'<a class="button" href="%s">%s</a>',
-				esc_url( add_query_arg( array_merge( $base, array( 'paged' => $paged + 1 ) ), admin_url( 'admin.php' ) ) ),
-				esc_html__( 'Next', 'wb-gamification' )
-			);
-		}
-		echo '</nav>';
 	}
 }
