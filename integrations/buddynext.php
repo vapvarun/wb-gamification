@@ -39,6 +39,18 @@ return array(
 			// Fires: do_action( 'buddynext_post_created', int $post_id, int $user_id, string $type ).
 			'hook'              => 'buddynext_post_created',
 			'user_callback'     => function ( int $post_id, int $user_id, string $type ): int {
+				// Only what the member wrote. BuddyNext also creates feed cards for content
+				// another plugin already rewarded (blog post, listing, job, course, event,
+				// badge share) - those go through IntegrationActivity - and a share fires
+				// buddynext_post_shared, which bn_post_shared pays. Paying here too doubled
+				// every cross-posted award.
+				if ( 'share' === $type ) {
+					return 0;
+				}
+				if ( is_callable( array( '\\BuddyNext\\Feed\\IntegrationActivity', 'is_system_publish' ) )
+					&& \BuddyNext\Feed\IntegrationActivity::is_system_publish() ) {
+					return 0;
+				}
 				return $user_id;
 			},
 			'metadata_callback' => function ( int $post_id, int $user_id, string $type ): array {
@@ -86,6 +98,12 @@ return array(
 			// Fires: do_action( 'buddynext_comment_created', int $comment_id, string $object_type, int $object_id, int $user_id ).
 			'hook'              => 'buddynext_comment_created',
 			'user_callback'     => function ( int $comment_id, string $object_type, int $object_id, int $user_id ): int {
+				// BuddyNext mirrors a WordPress blog comment onto the post's feed card from inside
+				// wp_insert_comment. The commenter was already paid for that comment
+				// (wp_leave_comment), so the mirror earns nothing.
+				if ( doing_action( 'wp_insert_comment' ) ) {
+					return 0;
+				}
 				return $user_id;
 			},
 			'metadata_callback' => function ( int $comment_id, string $object_type, int $object_id, int $user_id ): array {

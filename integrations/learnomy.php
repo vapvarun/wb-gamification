@@ -50,12 +50,12 @@ return array(
 			'id'                => 'learnomy_quiz_passed',
 			'label'             => 'Pass a quiz',
 			'description'       => 'Awarded when a member passes a quiz. Fires only on a passing attempt (failed attempts award nothing); cooldown limits retake farming.',
-			// Free fires: do_action( 'learnomy_quiz_passed', int $attempt_id, int $user_id, int $quiz_id, int $score ).
+			// Free fires: do_action( 'learnomy_quiz_passed', int $attempt_id, int $user_id, int $quiz_id, float $score ) - score is a percentage.
 			'hook'              => 'learnomy_quiz_passed',
-			'user_callback'     => function ( int $attempt_id, int $user_id, int $quiz_id, int $score = 0 ): int {
+			'user_callback'     => function ( int $attempt_id, int $user_id, int $quiz_id, float $score = 0 ): int {
 				return $user_id;
 			},
-			'metadata_callback' => function ( int $attempt_id, int $user_id, int $quiz_id, int $score = 0 ): array {
+			'metadata_callback' => function ( int $attempt_id, int $user_id, int $quiz_id, float $score = 0 ): array {
 				return array(
 					'quiz_id' => $quiz_id,
 					'score'   => $score,
@@ -121,7 +121,9 @@ return array(
 			// Free fires: do_action( 'learnomy_certificate_issued', int $certificate_id, int $user_id, int $course_id ).
 			'hook'              => 'learnomy_certificate_issued',
 			'user_callback'     => function ( int $certificate_id, int $user_id, int $course_id ): int {
-				return $user_id;
+				// A learning-path certificate is issued with course 0; learnomy_pro_path_completed
+				// already pays for finishing the path.
+				return $course_id > 0 ? $user_id : 0;
 			},
 			'metadata_callback' => function ( int $certificate_id, int $user_id, int $course_id ): array {
 				return array(

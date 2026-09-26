@@ -94,8 +94,9 @@ return array(
 			// (arg order normalised across all call sites). Candidate resolved from the application's _wcb_candidate_id meta.
 			'hook'              => 'wcb_application_status_changed',
 			'user_callback'     => function ( int $app_id, string $old_status = '', string $new_status = '' ): int {
-				if ( 'hired' !== $new_status ) {
-					return 0; // Only the transition INTO hired earns; Engine drops 0.
+				// Only the transition INTO hired earns (a hired -> hired bulk re-save does not); Engine drops 0.
+				if ( 'hired' !== $new_status || 'hired' === $old_status ) {
+					return 0;
 				}
 				return (int) get_post_meta( $app_id, '_wcb_candidate_id', true );
 			},

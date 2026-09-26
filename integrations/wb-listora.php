@@ -31,6 +31,11 @@ return array(
 			// Fires: do_action( 'wb_listora_listing_submitted', int $post_id, string $status, $request, $context ). No user id - owner is post_author.
 			'hook'              => 'wb_listora_listing_submitted',
 			'user_callback'     => function ( int $post_id, $status = '', $request = null, $context = null ): int {
+				// Migrators fire this with source 'migration'; importing a site's listings is not
+				// its members submitting them.
+				if ( is_array( $context ) && 'migration' === ( $context['source'] ?? '' ) ) {
+					return 0;
+				}
 				return (int) get_post_field( 'post_author', $post_id );
 			},
 			'metadata_callback' => function ( int $post_id, $status = '', $request = null, $context = null ): array {

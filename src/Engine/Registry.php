@@ -152,72 +152,97 @@ final class Registry {
 		add_action(
 			$action['hook'],
 			static function ( ...$params ) use ( $action ) {
-				$user_id = (int) call_user_func_array( $action['user_callback'], $params );
-				if ( $user_id <= 0 ) {
-					/** This filter is documented in src/Engine/PointsEngine.php — see wb_gam_award_skipped. */
-					do_action(
-						'wb_gam_award_skipped',
-						$user_id,
-						(string) $action['id'],
-						'self_action',
-						array()
+				// A trigger runs inside another plugin's request (their do_action). If its
+				// callback throws - a partner changed an argument type - log it and move on;
+				// failing to award points must never fail the partner's save.
+				try {
+					self::fire( $action, $params );
+				} catch ( \Throwable $e ) {
+					Log::error(
+						'Gamification trigger failed; no points awarded.',
+						array(
+							'action_id' => (string) $action['id'],
+							'hook'      => (string) $action['hook'],
+							'error'     => $e->getMessage(),
+						)
 					);
-					return;
-				}
-
-				// Optionally extract metadata from hook args via metadata_callback.
-				$metadata = isset( $action['metadata_callback'] ) && is_callable( $action['metadata_callback'] )
-					? (array) call_user_func_array( $action['metadata_callback'], $params )
-					: array();
-
-				// Dynamic point scaling — when the manifest declares a
-				// points_callback, invoke it with the hook args so the action
-				// can scale points by rank, streak length, order total, etc.
-				// Result is stashed in metadata['_dynamic_points'] and picked
-				// up by Engine::process() in place of default_points. The
-				// metadata field travels through Action Scheduler intact, so
-				// the value computed here is still authoritative when the
-				// async job runs later. Returning 0 or a negative value falls
-				// back to default_points (Engine::process drops awards at 0
-				// regardless).
-				if ( isset( $action['points_callback'] ) && is_callable( $action['points_callback'] ) ) {
-					$dynamic = (int) call_user_func_array( $action['points_callback'], $params );
-					if ( $dynamic > 0 ) {
-						$metadata['_dynamic_points'] = $dynamic;
-					}
-				}
-
-				// Resolve the currency this action awards via the canonical
-				// helper so both ledger-write AND rate-limit checks see the
-				// same value. PointsEngine::insert_point_row() and
-				// Engine::persist_event() read metadata['point_type'] when set.
-				if ( ! isset( $metadata['point_type'] ) ) {
-					$resolved = self::resolve_action_point_type( $action );
-					if ( '' !== $resolved ) {
-						$metadata['point_type'] = $resolved;
-					}
-				}
-
-				$event = new Event(
-					array(
-						'action_id' => $action['id'],
-						'user_id'   => $user_id,
-						'metadata'  => $metadata,
-					)
-				);
-
-				// Repeatable actions run async by default — high-volume and must not
-				// block the request path. Non-repeatable once-only actions run sync
-				// so callers get immediate confirmation. $action['async'] overrides.
-				if ( $action['async'] ?? $action['repeatable'] ) {
-					Engine::process_async( $event );
-				} else {
-					Engine::process( $event );
 				}
 			},
 			10,
 			10
 		);
+	}
+
+	/**
+	 * Run one registered trigger for a fired hook: resolve the member, build the event, award.
+	 *
+	 * @param array $action Registered action.
+	 * @param array $params Arguments the hook was fired with.
+	 * @return void
+	 */
+	private static function fire( array $action, array $params ): void {
+		$user_id = (int) call_user_func_array( $action['user_callback'], $params );
+		if ( $user_id <= 0 ) {
+			/** This filter is documented in src/Engine/PointsEngine.php — see wb_gam_award_skipped. */
+			do_action(
+				'wb_gam_award_skipped',
+				$user_id,
+				(string) $action['id'],
+				'self_action',
+				array()
+			);
+			return;
+		}
+
+		// Optionally extract metadata from hook args via metadata_callback.
+		$metadata = isset( $action['metadata_callback'] ) && is_callable( $action['metadata_callback'] )
+			? (array) call_user_func_array( $action['metadata_callback'], $params )
+			: array();
+
+		// Dynamic point scaling — when the manifest declares a
+		// points_callback, invoke it with the hook args so the action
+		// can scale points by rank, streak length, order total, etc.
+		// Result is stashed in metadata['_dynamic_points'] and picked
+		// up by Engine::process() in place of default_points. The
+		// metadata field travels through Action Scheduler intact, so
+		// the value computed here is still authoritative when the
+		// async job runs later. Returning 0 or a negative value falls
+		// back to default_points (Engine::process drops awards at 0
+		// regardless).
+		if ( isset( $action['points_callback'] ) && is_callable( $action['points_callback'] ) ) {
+			$dynamic = (int) call_user_func_array( $action['points_callback'], $params );
+			if ( $dynamic > 0 ) {
+				$metadata['_dynamic_points'] = $dynamic;
+			}
+		}
+
+		// Resolve the currency this action awards via the canonical
+		// helper so both ledger-write AND rate-limit checks see the
+		// same value. PointsEngine::insert_point_row() and
+		// Engine::persist_event() read metadata['point_type'] when set.
+		if ( ! isset( $metadata['point_type'] ) ) {
+			$resolved = self::resolve_action_point_type( $action );
+			if ( '' !== $resolved ) {
+				$metadata['point_type'] = $resolved;
+			}
+		}
+
+		$event = new Event(
+			array(
+				'action_id' => $action['id'],
+				'user_id'   => $user_id,
+				'metadata'  => $metadata,
+			)
+		);
+
+		// Repeatable actions run async by default — high-volume and must not
+		// block the request path. Non-repeatable once-only actions run sync
+		// so callers get immediate confirmation. $action['async'] overrides.
+		if ( $action['async'] ?? $action['repeatable'] ) {
+			Engine::process_async( $event );
+		} else {
+			Engine::process( $event );
+		}
 	}
 
 	/**

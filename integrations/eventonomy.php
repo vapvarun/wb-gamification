@@ -45,6 +45,10 @@ return array(
 				if ( 'going' !== (string) ( $full['status'] ?? '' ) ) {
 					return 0;
 				}
+				// Attendee rows written for a paid order carry order_id; the ticket award pays those.
+				if ( ! empty( $full['order_id'] ) ) {
+					return 0;
+				}
 				return (int) ( $full['user_id'] ?? 0 );
 			},
 			'metadata_callback' => function ( $full, array $context ): array {
