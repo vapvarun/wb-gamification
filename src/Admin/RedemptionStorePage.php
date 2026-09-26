@@ -613,7 +613,7 @@ final class RedemptionStorePage {
 												class="wbgam-btn wbgam-btn--sm wbgam-btn--secondary"
 												data-wb-gam-rest-action="wbGamRedemptionSettings"
 												data-wb-gam-rest-method="POST"
-												data-wb-gam-rest-path="/redemptions/<?php echo $txn_id; ?>/fulfill"
+												data-wb-gam-rest-path="/redemptions/<?php echo (int) $txn_id; ?>/fulfill"
 												data-wb-gam-rest-after="reload"
 												data-wb-gam-rest-success-toast="<?php esc_attr_e( 'Redemption marked fulfilled.', 'wb-gamification' ); ?>">
 												<?php esc_html_e( 'Mark fulfilled', 'wb-gamification' ); ?>
@@ -625,7 +625,7 @@ final class RedemptionStorePage {
 												class="wbgam-btn wbgam-btn--sm wbgam-btn--danger wbgam-ms-xs"
 												data-wb-gam-rest-action="wbGamRedemptionSettings"
 												data-wb-gam-rest-method="POST"
-												data-wb-gam-rest-path="/redemptions/<?php echo $txn_id; ?>/refund"
+												data-wb-gam-rest-path="/redemptions/<?php echo (int) $txn_id; ?>/refund"
 												data-wb-gam-rest-confirm="<?php esc_attr_e( 'Refund this redemption? Points are credited back and stock restored.', 'wb-gamification' ); ?>"
 												data-wb-gam-rest-after="reload"
 												data-wb-gam-rest-success-toast="<?php esc_attr_e( 'Redemption refunded.', 'wb-gamification' ); ?>">

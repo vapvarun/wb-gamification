@@ -322,8 +322,9 @@ final class StreakEngine {
 		$offset   = max( 0, $offset );
 
 		// $orderby is whitelisted above; $order is a literal ASC|DESC — neither is
-		// user input by the time it reaches the query. LIMIT/OFFSET are prepared.
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		// user input by the time it reaches the query. LIMIT/OFFSET are prepared, and
+		// live_sql() returns a fragment already run through $wpdb->prepare().
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
 				// A lapsed row reads 0 here, as it does through get_streak(); ORDER BY resolves
@@ -338,6 +339,7 @@ final class StreakEngine {
 			),
 			ARRAY_A
 		);
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared
 
 		if ( ! $rows ) {
 			return array();

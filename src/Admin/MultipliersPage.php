@@ -258,7 +258,7 @@ final class MultipliersPage {
 											class="wbgam-btn wbgam-btn--sm wbgam-btn--secondary wbgam-ms-xs"
 											data-wb-gam-rest-action="wbGamMultiplierSettings"
 											data-wb-gam-rest-method="PATCH"
-											data-wb-gam-rest-path="/rules/<?php echo $rid; ?>"
+											data-wb-gam-rest-path="/rules/<?php echo (int) $rid; ?>"
 											data-wb-gam-rest-body='{"is_active":<?php echo $active ? '0' : '1'; ?>}'
 											data-wb-gam-rest-after="reload"
 											data-wb-gam-rest-success-toast="<?php echo $active ? esc_attr__( 'Multiplier deactivated.', 'wb-gamification' ) : esc_attr__( 'Multiplier activated.', 'wb-gamification' ); ?>">
@@ -269,7 +269,7 @@ final class MultipliersPage {
 											class="wbgam-btn wbgam-btn--sm wbgam-btn--danger wbgam-ms-xs"
 											data-wb-gam-rest-action="wbGamMultiplierSettings"
 											data-wb-gam-rest-method="DELETE"
-											data-wb-gam-rest-path="/rules/<?php echo $rid; ?>"
+											data-wb-gam-rest-path="/rules/<?php echo (int) $rid; ?>"
 											data-wb-gam-rest-confirm="<?php esc_attr_e( 'Delete this multiplier?', 'wb-gamification' ); ?>"
 											data-wb-gam-rest-after="reload"
 											data-wb-gam-rest-success-toast="<?php esc_attr_e( 'Multiplier deleted.', 'wb-gamification' ); ?>">

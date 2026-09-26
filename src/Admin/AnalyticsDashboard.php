@@ -476,12 +476,15 @@ final class AnalyticsDashboard {
 		//
 		// This is the one that printed 6822.5%: 11,530 streak rows over 169 live members, because
 		// 11,378 of those rows belonged to members who had been deleted.
-		$active_streaks    = (int) $wpdb->get_var(
+		// live_sql() returns a fragment already run through $wpdb->prepare().
+		// phpcs:disable WordPress.DB.PreparedSQL.NotPrepared
+		$active_streaks = (int) $wpdb->get_var(
 			"SELECT COUNT(DISTINCT s.user_id)
 			   FROM {$wpdb->prefix}wb_gam_streaks s
 			   JOIN {$wpdb->users} u ON u.ID = s.user_id
 			  WHERE s.current_streak > 0 AND " . StreakEngine::live_sql( 's.' )
 		);
+		// phpcs:enable WordPress.DB.PreparedSQL.NotPrepared
 		$streak_health_pct = $total_members > 0
 			? round( ( $active_streaks / $total_members ) * 100, 1 )
 			: 0;
@@ -915,7 +918,7 @@ final class AnalyticsDashboard {
 									class="wbgam-btn wbgam-btn--sm wbgam-btn--secondary"
 									data-wb-gam-rest-action="wbGamToolsSettings"
 									data-wb-gam-rest-method="POST"
-									data-wb-gam-rest-path="/tools/retry-side-effect/<?php echo $fid; ?>"
+									data-wb-gam-rest-path="/tools/retry-side-effect/<?php echo (int) $fid; ?>"
 									data-wb-gam-rest-after="reload"
 									data-wb-gam-rest-success-toast="<?php esc_attr_e( 'Side effect re-ran successfully.', 'wb-gamification' ); ?>"
 									data-wb-gam-rest-error-toast="<?php esc_attr_e( 'Still failing. Check the cause and try again.', 'wb-gamification' ); ?>">
