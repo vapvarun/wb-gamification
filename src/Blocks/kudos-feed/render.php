@@ -72,7 +72,7 @@ $wb_gam_classes = array_filter( array( 'wb-gam-kudos-feed', 'wb-gam-block-' . $w
 
 wp_enqueue_style( 'wb-gam-tokens' );
 
-$wb_gam_kudos = KudosEngine::get_recent( $wb_gam_limit );
+$wb_gam_kudos = KudosEngine::get_recent_visible( $wb_gam_limit );
 
 /**
  * Filter the kudos-feed entries before render.

@@ -224,7 +224,7 @@ class KudosController extends WP_REST_Controller {
 	 */
 	public function get_items( $request ): WP_REST_Response {
 		$limit = (int) $request->get_param( 'limit' );
-		$feed  = KudosEngine::get_recent( $limit );
+		$feed  = KudosEngine::get_recent_visible( $limit ); // Public route: honour each member's profile privacy.
 
 		return rest_ensure_response( $feed );
 	}

@@ -101,14 +101,38 @@ final class Privacy {
 			return true;
 		}
 
-		// Site-level kill switch.
-		if ( ! (bool) get_option( 'wb_gam_profile_public_enabled', true ) ) {
-			return false;
-		}
-
-		// Member-level toggle — opt-OUT model (default ON, see
+		// Site-level switch, then the member-level toggle — opt-OUT model (default ON, see
 		// ProfilePage::is_publicly_visible). Only an explicit '0' is private.
-		return '0' !== (string) get_user_meta( $target_id, 'wb_gam_profile_public', true );
+		$allowed = (bool) get_option( 'wb_gam_profile_public_enabled', true )
+			&& '0' !== (string) get_user_meta( $target_id, 'wb_gam_profile_public', true );
+
+		/**
+		 * Filter whether a viewer may see a member's gamification profile data.
+		 *
+		 * A host community that owns member profiles (BuddyNext) answers this with its own
+		 * profile-privacy check, so one privacy setting governs points, badges and rank there.
+		 * Self and administrators are decided before this filter and always allowed.
+		 *
+		 * @since 1.6.5
+		 * @param bool $allowed   Gamification's own answer (site switch + member toggle).
+		 * @param int  $target_id Member whose data would be shown.
+		 * @param int  $viewer_id Viewer (0 for a visitor).
+		 */
+		return (bool) apply_filters( 'wb_gam_can_view_public_profile', $allowed, $target_id, (int) $viewer_id );
+	}
+
+	/**
+	 * Whether a community plugin decides profile visibility (see wb_gam_can_view_public_profile).
+	 *
+	 * When one does, gamification's own public-profile switches do nothing, so the admin and
+	 * the setup wizard say so instead of offering them.
+	 *
+	 * @since 1.6.5
+	 *
+	 * @return bool
+	 */
+	public static function host_decides(): bool {
+		return has_filter( 'wb_gam_can_view_public_profile' ) !== false;
 	}
 
 	/**

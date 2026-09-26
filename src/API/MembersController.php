@@ -569,14 +569,22 @@ class MembersController extends WP_REST_Controller {
 			)
 		);
 
-		$items = array_map(
-			static fn( $u ): array => array(
-				'id'     => (int) $u->ID,
-				'name'   => $u->display_name,
-				'slug'   => $u->user_nicename,
-				'avatar' => get_avatar_url( (int) $u->ID, array( 'size' => 48 ) ),
-			),
-			$query->get_results()
+		// The meta_query drops members who opted out here; the privacy check also applies a host
+		// community's profile privacy (wb_gam_can_view_public_profile) on top.
+		$visible = array_filter(
+			$query->get_results(),
+			static fn( $u ): bool => Privacy::can_view_public_profile( (int) $u->ID )
+		);
+		$items   = array_values(
+			array_map(
+				static fn( $u ): array => array(
+					'id'     => (int) $u->ID,
+					'name'   => $u->display_name,
+					'slug'   => $u->user_nicename,
+					'avatar' => get_avatar_url( (int) $u->ID, array( 'size' => 48 ) ),
+				),
+				$visible
+			)
 		);
 
 		return new WP_REST_Response(

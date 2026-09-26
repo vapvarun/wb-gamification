@@ -228,7 +228,11 @@ BlockHooks::before( 'leaderboard', $wb_gam_attrs );
 					 * mid-session. The `hidden` attribute keeps it visually
 					 * absent for zero-badge members until JS reveals it.
 					 */
-					$wb_gam_badge_count = (int) \WBGam\Engine\BadgeEngine::count_user_badges( (int) ( $wb_gam_row['user_id'] ?? 0 ) );
+					// Badge count is profile data: a member whose profile this viewer cannot see shows none.
+					$wb_gam_badge_uid   = (int) ( $wb_gam_row['user_id'] ?? 0 );
+					$wb_gam_badge_count = \WBGam\Engine\Privacy::can_view_public_profile( $wb_gam_badge_uid )
+						? (int) \WBGam\Engine\BadgeEngine::count_user_badges( $wb_gam_badge_uid )
+						: 0;
 					?>
 					<span class="wb-gam-leaderboard__badges" aria-label="<?php
 						/* translators: %d: number of badges earned. */

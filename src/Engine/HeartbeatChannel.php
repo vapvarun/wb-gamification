@@ -323,7 +323,8 @@ final class HeartbeatChannel {
 						'display_name' => (string) $row['display_name'],
 						'points'       => (int) $row['points'],
 						'rank'         => (int) $row['rank'],
-						'badge_count'  => $uid > 0 ? (int) BadgeEngine::count_user_badges( $uid ) : 0,
+						// Profile data: none for a member whose profile this viewer cannot see.
+						'badge_count'  => $uid > 0 && Privacy::can_view_public_profile( $uid ) ? (int) BadgeEngine::count_user_badges( $uid ) : 0,
 					);
 				},
 				(array) $rows

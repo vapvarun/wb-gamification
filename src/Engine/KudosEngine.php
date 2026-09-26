@@ -421,6 +421,26 @@ final class KudosEngine {
 	 * @param int $limit Maximum rows (1–50).
 	 * @return array<int, array{id: int, giver_id: int, giver_name: string, receiver_id: int, receiver_name: string, message: string|null, created_at: string}>
 	 */
+	/**
+	 * Recent kudos the current viewer may see: entries naming a member whose profile the
+	 * viewer cannot see (Privacy::can_view_public_profile) are left out.
+	 *
+	 * @since 1.6.5
+	 *
+	 * @param int $limit Max entries (1-50).
+	 * @return array
+	 */
+	public static function get_recent_visible( int $limit = 20 ): array {
+		$limit = max( 1, min( 50, $limit ) );
+		// Over-fetch so hidden entries do not leave the feed short.
+		$rows = array_filter(
+			self::get_recent( min( 50, $limit * 2 ) ),
+			static fn( array $k ): bool => Privacy::can_view_public_profile( (int) $k['giver_id'] )
+				&& Privacy::can_view_public_profile( (int) $k['receiver_id'] )
+		);
+		return array_slice( array_values( $rows ), 0, $limit );
+	}
+
 	public static function get_recent( int $limit = 20 ): array {
 		global $wpdb;
 
