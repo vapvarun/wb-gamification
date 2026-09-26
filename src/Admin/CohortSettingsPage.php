@@ -4,8 +4,8 @@
  *
  * Adds "Cohort Leagues" submenu under WB Gamification.
  * Lets admins configure Duolingo-style weekly league settings:
- * enable/disable, tier names, promotion/demotion percentages,
- * and league duration.
+ * enable/disable, tier names and promotion/demotion percentages
+ * (promotions and demotions run weekly).
  *
  * @package WB_Gamification
  * @since   1.0.0
@@ -264,20 +264,6 @@ final class CohortSettingsPage {
 										value="<?php echo esc_attr( $settings['demote_pct'] ); ?>" min="1" max="50">
 									<span>%</span>
 									<p class="description"><?php esc_html_e( 'Bottom percentage of members in each cohort who get demoted to a lower tier each cycle.', 'wb-gamification' ); ?></p>
-								</td>
-							</tr>
-							<tr>
-								<th><label for="wb-gam-duration"><?php esc_html_e( 'League Duration', 'wb-gamification' ); ?></label></th>
-								<td>
-									<select name="duration" id="wb-gam-duration" class="wbgam-select">
-										<option value="weekly" <?php selected( $settings['duration'], 'weekly' ); ?>>
-											<?php esc_html_e( 'Weekly', 'wb-gamification' ); ?>
-										</option>
-										<option value="monthly" <?php selected( $settings['duration'], 'monthly' ); ?>>
-											<?php esc_html_e( 'Monthly', 'wb-gamification' ); ?>
-										</option>
-									</select>
-									<p class="description"><?php esc_html_e( 'How often league standings reset and promotions/demotions are processed.', 'wb-gamification' ); ?></p>
 								</td>
 							</tr>
 						</table>

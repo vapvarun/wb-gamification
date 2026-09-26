@@ -69,8 +69,6 @@ final class CohortEngine {
 	 * Action Scheduler hook for one page of end-of-week promotions.
 	 */
 	private const AS_PROMOTION_HOOK = 'wb_gam_cohort_promotion_page';
-	public const PROMOTE_PCT        = 0.33;
-	public const DEMOTE_PCT         = 0.33;
 	private const CRON_ASSIGN       = 'wb_gam_cohort_assign';
 	private const CRON_PROCESS      = 'wb_gam_cohort_process';
 
@@ -85,6 +83,32 @@ final class CohortEngine {
 	 * @var string
 	 */
 	public const SETTINGS_OPTION = 'wb_gam_cohort_settings';
+
+	/**
+	 * Default promote/demote share (percent) - the value the League settings form shows.
+	 */
+	private const DEFAULT_SHARE_PCT = 20;
+
+	/**
+	 * Share of each cohort promoted and demoted per cycle, from the owner's League settings.
+	 *
+	 * The admin form saved these (default 20%) but the engine used fixed 0.33 constants, so
+	 * the screen said 20% while members moved 33%. Clamped to the form's 1-50% range.
+	 *
+	 * @since 1.6.5
+	 *
+	 * @return array{promote: float, demote: float} Fractions (0.2 = 20%).
+	 */
+	public static function promotion_shares(): array {
+		$settings = get_option( self::SETTINGS_OPTION );
+		$settings = is_array( $settings ) ? $settings : array();
+		$pct      = static fn( string $key ): float => max( 1, min( 50, (int) ( $settings[ $key ] ?? self::DEFAULT_SHARE_PCT ) ) ) / 100;
+
+		return array(
+			'promote' => $pct( 'promote_pct' ),
+			'demote'  => $pct( 'demote_pct' ),
+		);
+	}
 
 	/**
 	 * Resolve the display name for a given tier index.
@@ -388,12 +412,14 @@ final class CohortEngine {
 		$outcomes = array();
 		$max_tier = count( self::TIERS ) - 1;
 
+		$shares = self::promotion_shares();
+
 		foreach ( $by_cohort as $cohort_id => $ranked ) {
 			usort( $ranked, static fn( $a, $b ) => $b['pts'] <=> $a['pts'] );
 
 			$count     = count( $ranked );
-			$promote_n = (int) floor( $count * self::PROMOTE_PCT );
-			$demote_n  = (int) floor( $count * self::DEMOTE_PCT );
+			$promote_n = (int) floor( $count * $shares['promote'] );
+			$demote_n  = (int) floor( $count * $shares['demote'] );
 
 			foreach ( $ranked as $i => $entry ) {
 				$uid      = $entry['user_id'];

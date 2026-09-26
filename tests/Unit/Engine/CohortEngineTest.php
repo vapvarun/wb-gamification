@@ -38,8 +38,14 @@ class CohortEngineTest extends TestCase {
 		$this->assertSame( 30, CohortEngine::COHORT_SIZE );
 	}
 
-	public function test_promote_pct_and_demote_pct_sum_to_less_than_1(): void {
-		$this->assertLessThan( 1.0, CohortEngine::PROMOTE_PCT + CohortEngine::DEMOTE_PCT );
+	public function test_promotion_shares_default_to_what_the_settings_form_shows(): void {
+		Functions\when( 'get_option' )->justReturn( false );
+		$this->assertSame( array( 'promote' => 0.2, 'demote' => 0.2 ), CohortEngine::promotion_shares() );
+	}
+
+	public function test_promotion_shares_follow_the_owner_settings_and_clamp(): void {
+		Functions\when( 'get_option' )->justReturn( array( 'promote_pct' => 30, 'demote_pct' => 90 ) );
+		$this->assertSame( array( 'promote' => 0.3, 'demote' => 0.5 ), CohortEngine::promotion_shares() );
 	}
 
 	// ── get_user_tier() ──────────────────────────────────────────────────────
@@ -70,38 +76,16 @@ class CohortEngineTest extends TestCase {
 
 	// ── Promotion math (unit-level) ──────────────────────────────────────────
 
-	public function test_promote_n_floors_correctly(): void {
-		// 30 members × 0.33 = 9.9 → floor → 9
+	public function test_default_shares_split_a_cohort_of_30(): void {
+		// 30 members x 20% = 6 promoted, 6 demoted, 18 stay.
+		Functions\when( 'get_option' )->justReturn( false );
+		$shares    = CohortEngine::promotion_shares();
 		$count     = 30;
-		$promote_n = (int) floor( $count * CohortEngine::PROMOTE_PCT );
-		$this->assertSame( 9, $promote_n );
-	}
+		$promote_n = (int) floor( $count * $shares['promote'] );
+		$demote_n  = (int) floor( $count * $shares['demote'] );
 
-	public function test_demote_n_floors_correctly(): void {
-		$count    = 30;
-		$demote_n = (int) floor( $count * CohortEngine::DEMOTE_PCT );
-		$this->assertSame( 9, $demote_n );
-	}
-
-	public function test_middle_band_members_stay(): void {
-		// Members at index 9..20 (out of 30) should stay.
-		$count     = 30;
-		$promote_n = (int) floor( $count * CohortEngine::PROMOTE_PCT );
-		$demote_n  = (int) floor( $count * CohortEngine::DEMOTE_PCT );
-
-		$outcomes = [];
-		for ( $i = 0; $i < $count; $i++ ) {
-			if ( $i < $promote_n ) {
-				$outcomes[] = 'promoted';
-			} elseif ( $i >= $count - $demote_n ) {
-				$outcomes[] = 'demoted';
-			} else {
-				$outcomes[] = 'stayed';
-			}
-		}
-
-		$this->assertSame( 9, count( array_filter( $outcomes, fn( $o ) => 'promoted' === $o ) ) );
-		$this->assertSame( 9, count( array_filter( $outcomes, fn( $o ) => 'demoted' === $o ) ) );
-		$this->assertSame( 12, count( array_filter( $outcomes, fn( $o ) => 'stayed' === $o ) ) );
+		$this->assertSame( 6, $promote_n );
+		$this->assertSame( 6, $demote_n );
+		$this->assertSame( 18, $count - $promote_n - $demote_n );
 	}
 }
