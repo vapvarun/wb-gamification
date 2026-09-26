@@ -63,7 +63,7 @@ return array(
 			},
 			'default_points'    => 25,
 			'category'          => 'learning',
-			'icon'              => 'icon-check-circle',
+			'icon'              => 'icon-circle-check',
 			'repeatable'        => true,
 			'async'             => false,
 			'cooldown'          => 30,

@@ -58,7 +58,7 @@ return array(
 			},
 			'default_points'    => 10,
 			'category'          => 'listings',
-			'icon'              => 'icon-check-circle',
+			'icon'              => 'icon-circle-check',
 			'repeatable'        => true,
 			'async'             => false,
 		),

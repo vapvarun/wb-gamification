@@ -73,6 +73,7 @@ if ( ! empty( $wb_gam_attrs['cardBorderColor'] ) ) {
 }
 
 wp_enqueue_style( 'wb-gam-tokens' );
+wp_enqueue_style( 'lucide-icons' );
 
 $wb_gam_actions = Registry::get_actions();
 
@@ -91,9 +92,18 @@ if ( ! empty( $wb_gam_actions ) ) {
 			continue;
 		}
 
+		// Manifest icons are Lucide (icon-*). A third-party manifest may still send a Dashicons
+		// class; the frontend never loads that font and the class needs its `dashicons` base,
+		// so load it and add the base only for those cards.
+		$wb_gam_icon = (string) ( $wb_gam_action['icon'] ?? 'icon-star' );
+		if ( str_starts_with( $wb_gam_icon, 'dashicons-' ) ) {
+			wp_enqueue_style( 'dashicons' );
+			$wb_gam_icon = 'dashicons ' . $wb_gam_icon;
+		}
+
 		$wb_gam_grouped[ $wb_gam_category ][] = array(
 			'label'     => (string) ( $wb_gam_action['label'] ?? $wb_gam_id ),
-			'icon'      => (string) ( $wb_gam_action['icon'] ?? 'icon-star' ),
+			'icon'      => $wb_gam_icon,
 			'points'    => $wb_gam_pts,
 			// Registry::get_actions() resolves admin overrides; manifest
 			// defaults to 0 ("unlimited") for both keys. Surface them in

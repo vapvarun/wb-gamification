@@ -67,7 +67,7 @@ return array(
 			},
 			'default_points'    => 10,
 			'category'          => 'community',
-			'icon'              => 'icon-check-circle',
+			'icon'              => 'icon-circle-check',
 			'repeatable'        => true,
 			'cooldown'          => 300,
 		),
