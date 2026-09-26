@@ -251,15 +251,16 @@ final class ProfilePage {
 	 * @param int $user_id User ID.
 	 */
 	public static function is_publicly_visible( int $user_id ): bool {
-		if ( ! get_option( self::OPT_ENABLED, '1' ) ) {
-			return false;
-		}
-		// Default ON: only an explicit '0' makes the profile private.
-		$pref    = get_user_meta( $user_id, self::META_PUBLIC, true );
-		$visible = ( '0' !== (string) $pref );
+		// The guest view of the one privacy rule (site switch, member toggle, and a host
+		// community's own profile privacy via wb_gam_can_view_public_profile) - so the /u/ page
+		// and member links agree with every block and REST route.
+		$visible = Privacy::can_view_public_profile( $user_id, 0 );
 
 		/**
 		 * Filter whether a member's profile page is publicly visible.
+		 *
+		 * Prefer wb_gam_can_view_public_profile (viewer-aware, applies everywhere); this one
+		 * still runs after it for the /u/ page and member links.
 		 *
 		 * @since 1.5.2
 		 * @param bool $visible Whether the profile is public (default ON).
