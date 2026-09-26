@@ -92,6 +92,12 @@ final class JetonomyIntegration {
 			return;
 		}
 
+		// BuddyNext mirrors a feed comment into a Jetonomy reply (and back); the reputation that
+		// copy earns is for an action the member was already paid for as a feed comment.
+		if ( \WBGam\Engine\HostActivity::is_copy() ) {
+			return;
+		}
+
 		$action_id = self::ACTION_PREFIX . preg_replace( '/[^a-z0-9_]/i', '', (string) $action );
 		if ( self::ACTION_PREFIX === $action_id ) {
 			return; // Malformed action key — refuse to ledger junk rows.

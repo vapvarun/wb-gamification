@@ -160,6 +160,10 @@ $free_triggers = array(
 		'description'       => 'Awarded to the media owner when someone comments on their photo.',
 		'hook'              => 'mvs_comment_created',
 		'user_callback'     => function ( int $media_id, int $user_id, int $comment_id, string $content ): int {
+				// BuddyNext copy of a follow/comment another plugin already paid for.
+			if ( \WBGam\Engine\HostActivity::is_copy() ) {
+				return 0;
+			}
 			$author = wb_gam_mvs_media_author( $media_id );
 			return ( $author && $author !== $user_id ) ? $author : 0;
 		},
@@ -184,6 +188,10 @@ $free_triggers = array(
 		'description'       => 'Awarded when another member follows you.',
 		'hook'              => 'mvs_user_followed',
 		'user_callback'     => function ( int $follower_id, int $following_id ): int {
+				// BuddyNext copy of a follow/comment another plugin already paid for.
+			if ( \WBGam\Engine\HostActivity::is_copy() ) {
+				return 0;
+			}
 			return $following_id;
 		},
 		'metadata_callback' => function ( int $follower_id, int $following_id ): array {
@@ -228,6 +236,10 @@ $free_triggers = array(
 		'description'    => 'Awarded when a member leaves a comment of 20+ characters.',
 		'hook'           => 'mvs_comment_created',
 		'user_callback'  => function ( int $media_id, int $user_id, int $comment_id, string $content ): int {
+				// BuddyNext copy of a follow/comment another plugin already paid for.
+			if ( \WBGam\Engine\HostActivity::is_copy() ) {
+				return 0;
+			}
 			// Only award for meaningful comments (20+ chars).
 			return strlen( $content ) >= 20 ? $user_id : 0;
 		},
@@ -245,6 +257,10 @@ $free_triggers = array(
 		'description'    => 'Awarded when a member follows another user.',
 		'hook'           => 'mvs_user_followed',
 		'user_callback'  => function ( int $follower_id, int $following_id ): int {
+				// BuddyNext copy of a follow/comment another plugin already paid for.
+			if ( \WBGam\Engine\HostActivity::is_copy() ) {
+				return 0;
+			}
 			return $follower_id;
 		},
 		'default_points' => 1,

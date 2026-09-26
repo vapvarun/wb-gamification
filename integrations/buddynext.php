@@ -47,8 +47,7 @@ return array(
 				if ( 'share' === $type ) {
 					return 0;
 				}
-				if ( is_callable( array( '\\BuddyNext\\Feed\\IntegrationActivity', 'is_system_publish' ) )
-					&& \BuddyNext\Feed\IntegrationActivity::is_system_publish() ) {
+				if ( \WBGam\Engine\HostActivity::is_copy() ) {
 					return 0;
 				}
 				return $user_id;
@@ -102,6 +101,11 @@ return array(
 				// wp_insert_comment. The commenter was already paid for that comment
 				// (wp_leave_comment), so the mirror earns nothing.
 				if ( doing_action( 'wp_insert_comment' ) ) {
+					return 0;
+				}
+				// A MediaVerse lightbox comment or a Jetonomy reply copied onto a feed card was
+				// already paid in its own plugin.
+				if ( \WBGam\Engine\HostActivity::is_copy() ) {
 					return 0;
 				}
 				return $user_id;
@@ -201,6 +205,10 @@ return array(
 			// The recipient is the member who GAINED the follower ($following_id = arg1).
 			'hook'              => 'buddynext_follower_gained',
 			'user_callback'     => function ( int $following_id, int $follower_id ): int {
+				// BuddyNext copy of a follow/comment another plugin already paid for.
+				if ( \WBGam\Engine\HostActivity::is_copy() ) {
+					return 0;
+				}
 				return $following_id;
 			},
 			'metadata_callback' => function ( int $following_id, int $follower_id ): array {
@@ -221,6 +229,10 @@ return array(
 			// Fires: do_action( 'buddynext_user_followed_first_time', int $follower_id, int $following_id ).
 			'hook'           => 'buddynext_user_followed_first_time',
 			'user_callback'  => function ( int $follower_id, int $following_id ): int {
+				// BuddyNext copy of a follow/comment another plugin already paid for.
+				if ( \WBGam\Engine\HostActivity::is_copy() ) {
+					return 0;
+				}
 				return $follower_id;
 			},
 			'default_points' => 5,
