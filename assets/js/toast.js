@@ -380,6 +380,16 @@
 		}
 		body.appendChild( detail );
 
+		// Optional call to action. Same-site paths only: the payload is ours, but a toast
+		// must never become an off-site link.
+		if ( toast.url && /^\/(?!\/)/.test( toast.url ) ) {
+			var link = document.createElement( 'a' );
+			link.className   = 'wb-gam-toast__link';
+			link.href        = toast.url;
+			link.textContent = toast.url_label || toastI18n( 'view', 'View' );
+			body.appendChild( link );
+		}
+
 		el.appendChild( body );
 
 		var close = document.createElement( 'button' );

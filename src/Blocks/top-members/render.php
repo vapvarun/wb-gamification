@@ -134,19 +134,8 @@ $wb_gam_badge_count_map = array();
 // queries each.
 MemberUrl::prime( $wb_gam_user_ids );
 if ( $wb_gam_show_badges && ! empty( $wb_gam_user_ids ) ) {
-	global $wpdb;
-	$wb_gam_placeholders = implode( ',', array_fill( 0, count( $wb_gam_user_ids ), '%d' ) );
-	$wb_gam_badge_rows   = $wpdb->get_results(
-		$wpdb->prepare(
-			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			"SELECT user_id, COUNT(*) AS cnt FROM {$wpdb->prefix}wb_gam_user_badges WHERE user_id IN ($wb_gam_placeholders) GROUP BY user_id",
-			...$wb_gam_user_ids
-		),
-		ARRAY_A
-	);
-	foreach ( $wb_gam_badge_rows ?: array() as $wb_gam_br ) {
-		$wb_gam_badge_count_map[ (int) $wb_gam_br['user_id'] ] = (int) $wb_gam_br['cnt'];
-	}
+	// Engine count: expired badges excluded, same as every other surface.
+	$wb_gam_badge_count_map = \WBGam\Engine\BadgeEngine::count_for_users( $wb_gam_user_ids );
 }
 
 $wb_gam_level_map = array();

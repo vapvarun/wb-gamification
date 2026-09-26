@@ -513,7 +513,9 @@ final class WeeklyEmailEngine {
 		);
 		$rank    = null;
 		if ( ! $opt_out ) {
-			$rank = LeaderboardEngine::get_user_rank( $user_id );
+			// get_user_rank() returns an array; printing it with %d made every member '#1 overall'.
+			$rank = (int) ( LeaderboardEngine::get_user_rank( $user_id )['rank'] ?? 0 );
+			$rank = $rank > 0 ? $rank : null; // Unranked (no points yet): no rank line.
 		}
 
 		// Total points.

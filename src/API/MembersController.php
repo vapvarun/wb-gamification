@@ -480,13 +480,7 @@ class MembersController extends WP_REST_Controller {
 			// hydrates every earned-badge row just to count it, i.e. ~100 JOINs per
 			// roster page. (prime_earned_badges() primed a cache get_user_badges()
 			// does not read for the count, so it was pure overhead here.)
-			global $wpdb;
-			$bn_in = implode( ',', array_map( 'intval', $ids ) );
-			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- integer id list; single per-page aggregate.
-			$bn_rows = $wpdb->get_results( "SELECT user_id, COUNT(*) AS c FROM {$wpdb->prefix}wb_gam_user_badges WHERE user_id IN ($bn_in) GROUP BY user_id", ARRAY_A );
-			foreach ( (array) $bn_rows as $bn_r ) {
-				$badge_counts[ (int) $bn_r['user_id'] ] = (int) $bn_r['c'];
-			}
+			$badge_counts = BadgeEngine::count_for_users( $ids ); // Expired badges excluded.
 		}
 
 		$items = array();
@@ -1323,14 +1317,7 @@ class MembersController extends WP_REST_Controller {
 	 * @return int Number of badges earned.
 	 */
 	private function get_badge_count( int $user_id ): int {
-		global $wpdb;
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- Badge count; user-specific aggregation.
-		return (int) $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT COUNT(*) FROM {$wpdb->prefix}wb_gam_user_badges WHERE user_id = %d",
-				$user_id
-			)
-		);
+		return BadgeEngine::count_user_badges( $user_id ); // Expired badges excluded, like every surface.
 	}
 
 	/**

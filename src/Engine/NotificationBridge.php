@@ -334,24 +334,29 @@ final class NotificationBridge {
 		if ( ! get_user_meta( $user_id, 'wb_gam_seen_first_earn_toast', true ) ) {
 			update_user_meta( $user_id, 'wb_gam_seen_first_earn_toast', 1 );
 
-			$hub_page_id = (int) get_option( 'wb_gam_hub_page_id', 0 );
-			$hub_url     = $hub_page_id ? get_permalink( $hub_page_id ) : '';
+			// Where this member sees their progress: the host community's profile when one
+			// owns profiles (BuddyNext hooks this filter), else the plugin's own hub page.
+			/** This filter is documented in src/Engine/ProfilePage.php */
+			$hub_url = (string) apply_filters( 'wb_gam_profile_redirect_url', '', $user_id, get_userdata( $user_id ) );
+			if ( '' === $hub_url ) {
+				$hub_page_id = (int) get_option( 'wb_gam_hub_page_id', 0 );
+				$hub_url     = $hub_page_id ? (string) get_permalink( $hub_page_id ) : '';
+			}
 
 			$detail = $hub_url
-				? sprintf(
-					/* translators: %s: URL to the Gamification Hub page. */
-					__( 'See your full progress - points, badges, levels, leaderboard - at %s', 'wb-gamification' ),
-					wp_make_link_relative( $hub_url )
-				)
+				? __( 'See your full progress: points, badges, levels and leaderboard.', 'wb-gamification' )
 				: __( 'Earn more points by being active on the site - every action counts.', 'wb-gamification' );
 
 			self::push(
 				$user_id,
 				array(
-					'type'    => 'welcome',
-					'message' => __( 'Welcome - you just earned your first points!', 'wb-gamification' ),
-					'detail'  => $detail,
-					'icon'    => 'icon-sparkles',
+					'type'      => 'welcome',
+					'message'   => __( 'Welcome - you just earned your first points!', 'wb-gamification' ),
+					// A real link (toast.js renders it); a URL inside the sentence was not clickable.
+					'url'       => $hub_url ? wp_make_link_relative( $hub_url ) : '',
+					'url_label' => __( 'See my progress', 'wb-gamification' ),
+					'detail'    => $detail,
+					'icon'      => 'icon-sparkles',
 				)
 			);
 		}

@@ -301,9 +301,13 @@ final class ShortcodeHandler {
 		}
 
 		if ( ! is_user_logged_in() ) {
+			// Telling a visitor to sign in without a way to do it is a dead end (same as the streak block).
+			self::enqueue_give_kudos_style();
 			return '<div class="wb-gam-give-kudos wb-gam-give-kudos--guest"><p>'
 				. esc_html__( 'Sign in to send kudos to other members.', 'wb-gamification' )
-				. '</p></div>';
+				. ' <a class="wb-gam-give-kudos__login" href="' . esc_url( wp_login_url( (string) get_permalink() ) ) . '">'
+				. esc_html__( 'Log in', 'wb-gamification' )
+				. '</a></p></div>';
 		}
 
 		$recipient_id    = 0;
@@ -384,7 +388,23 @@ final class ShortcodeHandler {
 	}
 
 	/**
-	 * Enqueue the give-kudos block's CSS + JS bundle.
+	 * Enqueue the give-kudos stylesheet (the guest box needs it too, not only the form).
+	 *
+	 * @return void
+	 */
+	private static function enqueue_give_kudos_style(): void {
+		wp_enqueue_style(
+			'wb-gam-give-kudos',
+			plugins_url( 'assets/css/give-kudos.css', WB_GAM_FILE ),
+			// Depend on the shared design tokens so the form's --wb-gam-*
+			// custom properties resolve (otherwise the hex fallbacks apply).
+			array( 'wb-gam-tokens' ),
+			WB_GAM_VERSION
+		);
+	}
+
+	/**
+	 * Enqueue the give-kudos block's CSS + JS bundle (logged-in form).
 	 *
 	 * Called by `give_kudos_html()` on render so the assets are only loaded
 	 * on pages that actually use the block / shortcode. Idempotent —
@@ -398,14 +418,7 @@ final class ShortcodeHandler {
 			return;
 		}
 
-		wp_enqueue_style(
-			$handle,
-			plugins_url( 'assets/css/give-kudos.css', WB_GAM_FILE ),
-			// Depend on the shared design tokens so the form's --wb-gam-*
-			// custom properties resolve (otherwise the hex fallbacks apply).
-			array( 'wb-gam-tokens' ),
-			WB_GAM_VERSION
-		);
+		self::enqueue_give_kudos_style();
 		// wb-gam-mount defines wbGam.onMount(), which this script calls at parse time -- so it is a
 		// hard dependency, not a nicety. Without it the kudos form binds nothing. wb-gam-rest defines
 		// wbGam.rest(), used for the POST itself (shared fetch + expired-nonce retry).

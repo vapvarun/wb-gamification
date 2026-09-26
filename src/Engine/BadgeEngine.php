@@ -1206,6 +1206,44 @@ final class BadgeEngine {
 	}
 
 	/**
+	 * Badge counts for many members in one query, expired badges excluded.
+	 *
+	 * The batch form of count_user_badges() for lists (Top Members, the admin roster), so a
+	 * page of members costs one grouped query and every surface counts the same way.
+	 *
+	 * @since 1.6.5
+	 *
+	 * @param int[] $user_ids Members.
+	 * @return array<int, int> user_id => earned, unexpired badge count (members with none omitted).
+	 */
+	public static function count_for_users( array $user_ids ): array {
+		$user_ids = array_values( array_filter( array_map( 'intval', $user_ids ) ) );
+		if ( empty( $user_ids ) ) {
+			return array();
+		}
+
+		global $wpdb;
+		$in = implode( ',', array_fill( 0, count( $user_ids ), '%d' ) );
+		// @clock-ok: expires_at is UTC (gmdate()), bound is gmdate() - same as get_user_earned_badge_ids().
+		$rows = $wpdb->get_results(
+			$wpdb->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $in is a list of %d placeholders.
+				"SELECT user_id, COUNT(*) AS c FROM {$wpdb->prefix}wb_gam_user_badges
+				  WHERE user_id IN ($in) AND (expires_at IS NULL OR expires_at > %s)
+				  GROUP BY user_id",
+				...array_merge( $user_ids, array( gmdate( 'Y-m-d H:i:s' ) ) )
+			),
+			ARRAY_A
+		);
+
+		$counts = array();
+		foreach ( (array) $rows as $row ) {
+			$counts[ (int) $row['user_id'] ] = (int) $row['c'];
+		}
+		return $counts;
+	}
+
+	/**
 	 * Get all earned badge IDs for a user (single query, object-cache backed).
 	 *
 	 * @param int $user_id User to look up.

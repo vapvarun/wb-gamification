@@ -197,3 +197,16 @@
 	font-size: var( --wb-gam-font-xs, 12px );
 	color: var( --wb-gam-color-text-muted, #6b7280 );
 }
+
+/* Guest: a way in. */
+.wb-gam-give-kudos__login {
+	font-weight: 600;
+	color: var( --wb-gam-color-accent, #3b82f6 );
+	text-decoration: underline;
+	text-underline-offset: 2px;
+}
+
+.wb-gam-give-kudos__login:hover,
+.wb-gam-give-kudos__login:focus-visible {
+	text-decoration: none;
+}

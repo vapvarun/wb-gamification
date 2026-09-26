@@ -193,6 +193,20 @@ body.admin-bar .wb-gam-toasts--top-right {
 
 .wb-gam-toast__detail[hidden] { display: none; }
 
+.wb-gam-toast__link {
+	align-self: flex-start;
+	font-size: 0.8125rem;
+	font-weight: 600;
+	color: var(--wb-gam-color-accent, #3b82f6);
+	text-decoration: underline;
+	text-underline-offset: 2px;
+}
+
+.wb-gam-toast__link:hover,
+.wb-gam-toast__link:focus-visible {
+	text-decoration: none;
+}
+
 .wb-gam-toast__close {
 	/* 40px minimum touch target (ux-foundation responsive contract). The glyph
 	 * itself stays 0.75rem; the negative inline-end margin keeps it optically
