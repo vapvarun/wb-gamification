@@ -18,7 +18,48 @@
 
 	const i18n = wbGamGiveKudos.i18n || {};
 
+	// Recipient suggestions: GET /members?context=view fills the input's <datalist>.
+	// Each option reads "Display Name (@slug)"; submit sends the slug.
+	const SUGGEST_DELAY_MS = 200;
+
+	function suggestMembers( form ) {
+		const input = form.querySelector( 'input[name="recipient_login"]' );
+		const list  = input && input.list;
+		if ( ! list || ! form.dataset.membersUrl ) {
+			return;
+		}
+		let timer = null;
+		let seq   = 0;
+
+		input.addEventListener( 'input', function () {
+			clearTimeout( timer );
+			const term = input.value.trim().replace( /^@/, '' );
+			if ( term.length < 2 || /\(@[^)]+\)$/.test( term ) ) {
+				return;
+			}
+			timer = setTimeout( function () {
+				const mine = ++seq;
+				const url  = form.dataset.membersUrl
+					+ ( form.dataset.membersUrl.indexOf( '?' ) === -1 ? '?' : '&' )
+					+ 'context=view&per_page=8&search=' + encodeURIComponent( term );
+				window.wbGam.rest( url, { nonce: form.dataset.restNonce } )
+					.then( function ( result ) {
+						if ( mine !== seq || ! result || ! result.ok ) {
+							return; // A newer keystroke owns the list.
+						}
+						list.replaceChildren( ...( result.data.items || [] ).map( function ( m ) {
+							const opt = document.createElement( 'option' );
+							opt.value = m.name + ' (@' + m.slug + ')';
+							return opt;
+						} ) );
+					} )
+					.catch( function () { /* Suggestions are a convenience; typing a username still works. */ } );
+			}, SUGGEST_DELAY_MS );
+		} );
+	}
+
 	function bind( form ) {
+		suggestMembers( form );
 		form.addEventListener( 'submit', function ( e ) {
 			e.preventDefault();
 
@@ -32,7 +73,9 @@
 			if ( idField && idField.value ) {
 				body.receiver_id = parseInt( idField.value, 10 );
 			} else if ( loginEl ) {
-				const slug = ( loginEl.value || '' ).trim();
+				const typed = ( loginEl.value || '' ).trim();
+				const pick  = typed.match( /\(@([^)]+)\)$/ );
+				const slug  = pick ? pick[ 1 ] : typed.replace( /^@/, '' );
 				if ( ! slug ) {
 					status.textContent = i18n.missingRecipient || '';
 					return;

@@ -327,6 +327,7 @@ final class ShortcodeHandler {
 		?>
 		<form class="wb-gam-give-kudos" data-wb-gam-give-kudos="<?php echo esc_attr( $uid ); ?>"
 			data-rest-url="<?php echo esc_attr( $rest_url ); ?>"
+			data-members-url="<?php echo esc_attr( esc_url( rest_url( 'wb-gamification/v1/members' ) ) ); ?>"
 			data-rest-nonce="<?php echo esc_attr( $nonce ); ?>">
 			<?php if ( $recipient_id > 0 ) : ?>
 				<input type="hidden" name="receiver_id" value="<?php echo (int) $recipient_id; ?>" />
@@ -342,11 +343,14 @@ final class ShortcodeHandler {
 			<?php else : ?>
 				<div class="wb-gam-give-kudos__field">
 					<label class="wb-gam-give-kudos__label" for="<?php echo esc_attr( $uid ); ?>-to">
-						<?php esc_html_e( 'Recipient (username)', 'wb-gamification' ); ?>
+						<?php esc_html_e( 'Recipient', 'wb-gamification' ); ?>
 					</label>
+					<?php // Suggestions come from GET /members?context=view as the member types (give-kudos.js). ?>
 					<input type="text" id="<?php echo esc_attr( $uid ); ?>-to" name="recipient_login" required
 						autocomplete="off" class="wb-gam-give-kudos__input"
-						placeholder="<?php esc_attr_e( 'Enter a username', 'wb-gamification' ); ?>" />
+						list="<?php echo esc_attr( $uid ); ?>-members"
+						placeholder="<?php esc_attr_e( 'Start typing a name', 'wb-gamification' ); ?>" />
+					<datalist id="<?php echo esc_attr( $uid ); ?>-members"></datalist>
 				</div>
 			<?php endif; ?>
 

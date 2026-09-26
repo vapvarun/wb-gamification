@@ -315,10 +315,15 @@ class MembersController extends WP_REST_Controller {
 			)
 		);
 
-		// GET /members — admin roster: searchable, paginated list of members
-		// with their gamification stats. Lives under this plugin's own
-		// namespace (wb-gamification/v1), so it never collides with WP core's
-		// /wp/v2/users or BuddyPress's /buddypress/v1/members.
+		// GET /members — searchable, paginated list of members. Lives under this
+		// plugin's own namespace (wb-gamification/v1), so it never collides with
+		// WP core's /wp/v2/users or BuddyPress's /buddypress/v1/members.
+		//
+		// Two shapes, as WP core does with `context`:
+		// - edit (default): the admin roster with gamification stats; needs
+		// wb_gam_manage_members.
+		// - view: a member lookup for any logged-in member (the give-kudos
+		// recipient suggestions): id, name, slug, avatar only.
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base,
@@ -326,8 +331,13 @@ class MembersController extends WP_REST_Controller {
 				array(
 					'methods'             => WP_REST_Server::READABLE,
 					'callback'            => array( $this, 'list_members' ),
-					'permission_callback' => array( $this, 'admin_permissions_check' ),
+					'permission_callback' => array( $this, 'list_permissions_check' ),
 					'args'                => array(
+						'context'  => array(
+							'type'    => 'string',
+							'enum'    => array( 'view', 'edit' ),
+							'default' => 'edit',
+						),
 						'page'     => array(
 							'type'              => 'integer',
 							'default'           => 1,
@@ -429,6 +439,10 @@ class MembersController extends WP_REST_Controller {
 	 * @return WP_REST_Response
 	 */
 	public function list_members( WP_REST_Request $request ): WP_REST_Response {
+		if ( 'view' === $request['context'] ) {
+			return $this->lookup_members( $request );
+		}
+
 		$page   = max( 1, (int) $request['page'] );
 		$per    = min( 100, max( 1, (int) $request['per_page'] ) );
 		$search = trim( (string) $request['search'] );
@@ -506,6 +520,93 @@ class MembersController extends WP_REST_Controller {
 			),
 			200
 		);
+	}
+
+	/**
+	 * GET /members?context=view — member lookup for logged-in members.
+	 *
+	 * Backs the give-kudos recipient suggestions. Returns public fields only
+	 * (id, display name, nicename slug, avatar) and searches display name and
+	 * nicename, never email or login. Leaves out the caller and anyone who
+	 * turned off their public profile. Needs 2+ characters; at most 10 rows.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response
+	 */
+	private function lookup_members( WP_REST_Request $request ): WP_REST_Response {
+		$search = ltrim( trim( (string) $request['search'] ), '@' );
+		$per    = min( 10, max( 1, (int) $request['per_page'] ) );
+
+		if ( mb_strlen( $search ) < 2 ) {
+			return new WP_REST_Response(
+				array(
+					'items'    => array(),
+					'total'    => 0,
+					'pages'    => 0,
+					'has_more' => false,
+				),
+				200
+			);
+		}
+
+		$query = new \WP_User_Query(
+			array(
+				'number'         => $per,
+				'orderby'        => 'display_name',
+				'order'          => 'ASC',
+				'fields'         => array( 'ID', 'display_name', 'user_nicename' ),
+				'search'         => '*' . $search . '*',
+				'search_columns' => array( 'display_name', 'user_nicename' ),
+				'exclude'        => array( get_current_user_id() ),
+				'count_total'    => false,
+				// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- one NOT EXISTS/!= pair on a LIMIT 10 lookup.
+				'meta_query'     => array(
+					'relation' => 'OR',
+					array(
+						'key'     => 'wb_gam_profile_public',
+						'compare' => 'NOT EXISTS',
+					),
+					array(
+						'key'     => 'wb_gam_profile_public',
+						'value'   => '0',
+						'compare' => '!=',
+					),
+				),
+			)
+		);
+
+		$items = array_map(
+			static fn( $u ): array => array(
+				'id'     => (int) $u->ID,
+				'name'   => $u->display_name,
+				'slug'   => $u->user_nicename,
+				'avatar' => get_avatar_url( (int) $u->ID, array( 'size' => 48 ) ),
+			),
+			$query->get_results()
+		);
+
+		return new WP_REST_Response(
+			array(
+				'items'    => $items,
+				'total'    => count( $items ),
+				'pages'    => 1,
+				'has_more' => false,
+			),
+			200
+		);
+	}
+
+	/**
+	 * Permission for GET /members: context=view needs a logged-in member,
+	 * the default edit context needs the admin capability.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return bool|WP_Error
+	 */
+	public function list_permissions_check( WP_REST_Request $request ): bool|WP_Error {
+		return 'view' === $request['context']
+			? $this->logged_in_permissions_check()
+			: $this->admin_permissions_check();
 	}
 
 	/**
