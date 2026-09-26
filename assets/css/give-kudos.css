@@ -124,3 +124,76 @@
 		text-align: center;
 	}
 }
+
+/* Recipient combobox: suggestions list under the input. */
+.wb-gam-give-kudos__combo {
+	position: relative;
+}
+
+.wb-gam-give-kudos__suggest {
+	position: absolute;
+	inset-inline: 0;
+	top: calc( 100% + 4px );
+	z-index: 20;
+	max-height: 16rem;
+	margin: 0;
+	padding: var( --wb-gam-space-xs, 6px ) 0;
+	overflow-y: auto;
+	list-style: none;
+	background: var( --wb-gam-color-surface, #ffffff );
+	border: 1px solid var( --wb-gam-color-border-strong, #cbd2dc );
+	border-radius: var( --wb-gam-radius-md, 10px );
+	box-shadow: var( --wb-gam-shadow-md, 0 4px 12px rgba( 0, 0, 0, 0.12 ) );
+}
+
+.wb-gam-give-kudos__suggest[hidden] {
+	display: none;
+}
+
+.wb-gam-give-kudos__option {
+	display: flex;
+	align-items: center;
+	gap: var( --wb-gam-space-sm, 8px );
+	min-height: 40px;
+	padding: var( --wb-gam-space-xs, 6px ) var( --wb-gam-space-md, 12px );
+	cursor: pointer;
+	color: var( --wb-gam-color-text, #1a1a1a );
+}
+
+.wb-gam-give-kudos__option:hover,
+.wb-gam-give-kudos__option[aria-selected="true"] {
+	background: var( --wb-gam-color-info-bg, #eef4ff );
+}
+
+.wb-gam-give-kudos__option-avatar {
+	flex-shrink: 0;
+	width: 28px;
+	height: 28px;
+	border-radius: 50%;
+	object-fit: cover;
+}
+
+/* Name above @handle, each truncating on its own, so neither squeezes the other. */
+.wb-gam-give-kudos__option-text {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+	line-height: 1.25;
+}
+
+.wb-gam-give-kudos__option-name,
+.wb-gam-give-kudos__option-handle {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.wb-gam-give-kudos__option-name {
+	font-weight: 600;
+	font-size: var( --wb-gam-font-sm, 14px );
+}
+
+.wb-gam-give-kudos__option-handle {
+	font-size: var( --wb-gam-font-xs, 12px );
+	color: var( --wb-gam-color-text-muted, #6b7280 );
+}

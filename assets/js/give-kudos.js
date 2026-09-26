@@ -18,23 +18,92 @@
 
 	const i18n = wbGamGiveKudos.i18n || {};
 
-	// Recipient suggestions: GET /members?context=view fills the input's <datalist>.
-	// Each option reads "Display Name (@slug)"; submit sends the slug.
+	// Recipient suggestions: an ARIA combobox (WAI-ARIA 1.2 list autocomplete) filled
+	// from GET /members?context=view. Picking a member writes "Name (@slug)" into the
+	// input; submit sends the slug. Typing a username without picking still works.
 	const SUGGEST_DELAY_MS = 200;
 
 	function suggestMembers( form ) {
-		const input = form.querySelector( 'input[name="recipient_login"]' );
-		const list  = input && input.list;
+		const input = form.querySelector( 'input[name="recipient_login"][role="combobox"]' );
+		const list  = input && document.getElementById( input.getAttribute( 'aria-controls' ) );
 		if ( ! list || ! form.dataset.membersUrl ) {
 			return;
 		}
-		let timer = null;
-		let seq   = 0;
+		let timer  = null;
+		let seq    = 0;
+		let active = -1;
+
+		function options() {
+			return list.querySelectorAll( '[role="option"]' );
+		}
+
+		function close() {
+			list.hidden = true;
+			input.setAttribute( 'aria-expanded', 'false' );
+			input.removeAttribute( 'aria-activedescendant' );
+			active = -1;
+		}
+
+		function highlight( i ) {
+			const opts = options();
+			if ( ! opts.length ) {
+				return;
+			}
+			active = ( i + opts.length ) % opts.length;
+			opts.forEach( function ( o, n ) {
+				o.setAttribute( 'aria-selected', n === active ? 'true' : 'false' );
+			} );
+			input.setAttribute( 'aria-activedescendant', opts[ active ].id );
+			opts[ active ].scrollIntoView( { block: 'nearest' } );
+		}
+
+		function pick( opt ) {
+			input.value = opt.dataset.value;
+			close();
+		}
+
+		function render( items ) {
+			list.replaceChildren( ...items.map( function ( m, n ) {
+				const li  = document.createElement( 'li' );
+				li.id     = list.id + '-' + n;
+				li.setAttribute( 'role', 'option' );
+				li.setAttribute( 'aria-selected', 'false' );
+				li.className     = 'wb-gam-give-kudos__option';
+				li.dataset.value = m.name + ' (@' + m.slug + ')';
+
+				const img = document.createElement( 'img' );
+				img.src = m.avatar;
+				img.alt = '';
+				img.className = 'wb-gam-give-kudos__option-avatar';
+				img.width = img.height = 28;
+
+				const name = document.createElement( 'span' );
+				name.className   = 'wb-gam-give-kudos__option-name';
+				name.textContent = m.name;
+
+				const handle = document.createElement( 'span' );
+				handle.className   = 'wb-gam-give-kudos__option-handle';
+				handle.textContent = '@' + m.slug;
+
+				const text = document.createElement( 'span' );
+				text.className = 'wb-gam-give-kudos__option-text';
+				text.append( name, handle );
+
+				li.append( img, text );
+				return li;
+			} ) );
+			active = -1;
+			input.removeAttribute( 'aria-activedescendant' );
+			list.hidden = ! items.length;
+			input.setAttribute( 'aria-expanded', items.length ? 'true' : 'false' );
+		}
 
 		input.addEventListener( 'input', function () {
 			clearTimeout( timer );
 			const term = input.value.trim().replace( /^@/, '' );
 			if ( term.length < 2 || /\(@[^)]+\)$/.test( term ) ) {
+				++seq;
+				close();
 				return;
 			}
 			timer = setTimeout( function () {
@@ -44,18 +113,39 @@
 					+ 'context=view&per_page=8&search=' + encodeURIComponent( term );
 				window.wbGam.rest( url, { nonce: form.dataset.restNonce } )
 					.then( function ( result ) {
-						if ( mine !== seq || ! result || ! result.ok ) {
-							return; // A newer keystroke owns the list.
+						if ( mine === seq && result && result.ok ) {
+							render( result.data.items || [] ); // Older responses lose to a newer keystroke.
 						}
-						list.replaceChildren( ...( result.data.items || [] ).map( function ( m ) {
-							const opt = document.createElement( 'option' );
-							opt.value = m.name + ' (@' + m.slug + ')';
-							return opt;
-						} ) );
 					} )
 					.catch( function () { /* Suggestions are a convenience; typing a username still works. */ } );
 			}, SUGGEST_DELAY_MS );
 		} );
+
+		input.addEventListener( 'keydown', function ( e ) {
+			if ( list.hidden ) {
+				return;
+			}
+			if ( 'ArrowDown' === e.key || 'ArrowUp' === e.key ) {
+				e.preventDefault();
+				highlight( active + ( 'ArrowDown' === e.key ? 1 : -1 ) );
+			} else if ( 'Enter' === e.key && active >= 0 ) {
+				e.preventDefault(); // Pick, do not submit.
+				pick( options()[ active ] );
+			} else if ( 'Escape' === e.key ) {
+				e.preventDefault();
+				close();
+			}
+		} );
+
+		// mousedown, not click: it fires before the input's blur closes the list.
+		list.addEventListener( 'mousedown', function ( e ) {
+			const opt = e.target.closest( '[role="option"]' );
+			if ( opt ) {
+				e.preventDefault();
+				pick( opt );
+			}
+		} );
+		input.addEventListener( 'blur', close );
 	}
 
 	function bind( form ) {

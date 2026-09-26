@@ -345,12 +345,16 @@ final class ShortcodeHandler {
 					<label class="wb-gam-give-kudos__label" for="<?php echo esc_attr( $uid ); ?>-to">
 						<?php esc_html_e( 'Recipient', 'wb-gamification' ); ?>
 					</label>
-					<?php // Suggestions come from GET /members?context=view as the member types (give-kudos.js). ?>
-					<input type="text" id="<?php echo esc_attr( $uid ); ?>-to" name="recipient_login" required
-						autocomplete="off" class="wb-gam-give-kudos__input"
-						list="<?php echo esc_attr( $uid ); ?>-members"
-						placeholder="<?php esc_attr_e( 'Start typing a name', 'wb-gamification' ); ?>" />
-					<datalist id="<?php echo esc_attr( $uid ); ?>-members"></datalist>
+					<?php // Combobox: give-kudos.js fills the listbox from GET /members?context=view as the member types. ?>
+					<div class="wb-gam-give-kudos__combo">
+						<input type="text" id="<?php echo esc_attr( $uid ); ?>-to" name="recipient_login" required
+							autocomplete="off" class="wb-gam-give-kudos__input"
+							role="combobox" aria-autocomplete="list" aria-expanded="false"
+							aria-controls="<?php echo esc_attr( $uid ); ?>-members"
+							placeholder="<?php esc_attr_e( 'Start typing a name', 'wb-gamification' ); ?>" />
+						<ul id="<?php echo esc_attr( $uid ); ?>-members" class="wb-gam-give-kudos__suggest" role="listbox"
+							aria-label="<?php esc_attr_e( 'Member suggestions', 'wb-gamification' ); ?>" hidden></ul>
+					</div>
 				</div>
 			<?php endif; ?>
 
