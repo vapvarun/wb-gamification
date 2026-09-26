@@ -174,6 +174,7 @@ final class ChallengeManagerPage {
 				</div>
 			</header>
 
+			<?php if ( \WBGam\Engine\ModuleToggles::enabled( 'community_challenges' ) ) : // One tab is no tab strip. ?>
 			<nav class="wbgam-tabs nav-tab-wrapper" aria-label="<?php esc_attr_e( 'Challenge type', 'wb-gamification' ); ?>">
 				<a href="<?php echo esc_url( admin_url( 'admin.php?page=wb-gam-challenges' ) ); ?>" class="nav-tab nav-tab-active">
 					<?php esc_html_e( 'Individual Challenges', 'wb-gamification' ); ?>
@@ -182,6 +183,7 @@ final class ChallengeManagerPage {
 					<?php esc_html_e( 'Community Challenges', 'wb-gamification' ); ?>
 				</a>
 			</nav>
+			<?php endif; ?>
 
 			<?php if ( isset( $notice_map[ $notice ] ) ) : ?>
 				<div class="wbgam-banner wbgam-banner--<?php echo esc_attr( $notice_map[ $notice ][0] ); ?> wbgam-stack-block" role="status" aria-live="polite"><span class="wbgam-banner__icon icon-circle-check" aria-hidden="true"></span><div class="wbgam-banner__body"><p class="wbgam-banner__desc"><?php echo esc_html( $notice_map[ $notice ][1] ); ?></p></div></div>

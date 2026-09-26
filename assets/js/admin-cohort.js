@@ -28,7 +28,7 @@
 	async function onSubmit( event ) {
 		event.preventDefault();
 
-		const enabledField = form.querySelector( '[name="cohort_enabled"]' );
+		// On/off lives in Settings > Modules (the one switch), so this form never sends it.
 		const payload = {
 			tier_1:      ( form.querySelector( '[name="tier_1"]' ) || {} ).value || 'Bronze',
 			tier_2:      ( form.querySelector( '[name="tier_2"]' ) || {} ).value || 'Silver',
@@ -38,7 +38,6 @@
 			promote_pct: parseInt( ( form.querySelector( '[name="promote_pct"]' ) || {} ).value, 10 ) || 20,
 			demote_pct:  parseInt( ( form.querySelector( '[name="demote_pct"]' ) || {} ).value, 10 ) || 20,
 			duration:    ( form.querySelector( '[name="duration"]' ) || {} ).value || 'weekly',
-			enabled:     enabledField ? enabledField.value === '1' : true,
 		};
 
 		const button = event.submitter || form.querySelector( '[data-wb-gam-cohort-save]' );

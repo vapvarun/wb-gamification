@@ -131,6 +131,12 @@ final class CommunityChallengesPage {
 	 * @return void
 	 */
 	public static function register_page(): void {
+		// Parentless, so ModuleToggles' submenu removal cannot reach it: switched off, it is simply
+		// not registered (and the Challenges page drops its tab).
+		if ( ! \WBGam\Engine\ModuleToggles::enabled( 'community_challenges' ) ) {
+			return;
+		}
+
 		// Hidden submenu (empty parent slug) — keeps the URL routable so existing
 		// bookmarks / docs / dashboard links don't 404, but the page is
 		// reached via the "Community" tab on the unified Challenges admin

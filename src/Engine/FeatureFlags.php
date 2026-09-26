@@ -131,7 +131,12 @@ final class FeatureFlags {
 	 */
 	public static function is_enabled( string $feature ): bool {
 		$features = self::get_all();
-		return ! empty( $features[ $feature ] );
+		if ( empty( $features[ $feature ] ) ) {
+			return false;
+		}
+		// Engines that are also a visible module follow that module's switch as well.
+		$module = array_search( $feature, ModuleToggles::ENGINE_FLAGS, true );
+		return false === $module || ModuleToggles::option_enabled( (string) $module );
 	}
 
 	/**
