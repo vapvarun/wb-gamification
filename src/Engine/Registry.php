@@ -265,6 +265,50 @@ final class Registry {
 	}
 
 	/**
+	 * Human, translatable label for an action category slug.
+	 *
+	 * Categories are slugs chosen by each manifest ('member-blog', 'careers'). Members see
+	 * them as group headings, so a raw slug read as leaked code ("MEMBER-BLOG"). Known family
+	 * categories get a translatable label; anything else reads as words ("my-plugin" becomes
+	 * "My Plugin") and can be relabelled with the filter.
+	 *
+	 * @since 1.6.5
+	 *
+	 * @param string $slug Category slug.
+	 * @return string
+	 */
+	public static function category_label( string $slug ): string {
+		$labels = array(
+			'general'     => __( 'General', 'wb-gamification' ),
+			'wordpress'   => __( 'WordPress', 'wb-gamification' ),
+			'social'      => __( 'Social', 'wb-gamification' ),
+			'community'   => __( 'Community', 'wb-gamification' ),
+			'content'     => __( 'Content', 'wb-gamification' ),
+			'engagement'  => __( 'Engagement', 'wb-gamification' ),
+			'media'       => __( 'Media', 'wb-gamification' ),
+			'learning'    => __( 'Learning', 'wb-gamification' ),
+			'listings'    => __( 'Listings', 'wb-gamification' ),
+			'careers'     => __( 'Careers', 'wb-gamification' ),
+			'commerce'    => __( 'Commerce', 'wb-gamification' ),
+			'events'      => __( 'Events', 'wb-gamification' ),
+			'competition' => __( 'Competition', 'wb-gamification' ),
+			'member-blog' => __( 'Member Blog', 'wb-gamification' ),
+			'buddypress'  => __( 'BuddyPress', 'wb-gamification' ),
+		);
+
+		$label = $labels[ $slug ] ?? ucwords( str_replace( array( '-', '_' ), ' ', $slug ) );
+
+		/**
+		 * Filter the label shown for an action category (How to Earn group headings, REST).
+		 *
+		 * @since 1.6.5
+		 * @param string $label Label.
+		 * @param string $slug  Category slug from the manifest.
+		 */
+		return (string) apply_filters( 'wb_gam_category_label', $label, $slug );
+	}
+
+	/**
 	 * Get all registered actions.
 	 *
 	 * @return array<string, array>

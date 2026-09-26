@@ -153,7 +153,7 @@ BlockHooks::before( 'earning-guide', $wb_gam_attrs );
 <div <?php echo $wb_gam_wrapper; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>>
 	<?php foreach ( $wb_gam_grouped as $wb_gam_category => $wb_gam_items ) : ?>
 		<?php if ( $wb_gam_show_h ) : ?>
-			<h3 class="wb-gam-earning-guide__category"><?php echo esc_html( ucfirst( $wb_gam_category ) ); ?></h3>
+			<h3 class="wb-gam-earning-guide__category"><?php echo esc_html( Registry::category_label( (string) $wb_gam_category ) ); ?></h3>
 		<?php endif; ?>
 		<div class="wb-gam-earning-guide__grid" data-cols="<?php echo (int) $wb_gam_columns; ?>">
 			<?php foreach ( $wb_gam_items as $wb_gam_item ) : ?>
