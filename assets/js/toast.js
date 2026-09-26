@@ -231,6 +231,10 @@
 	var lastPointsToast = null; // { el, points, actionCount, dismissTimer, type }
 	var AGGREGATE_WINDOW_MS = 2000;
 
+	// At most this many toasts on screen; a new one drops the oldest so a burst
+	// of distinct awards never covers the page.
+	var MAX_VISIBLE = 3;
+
 	/**
 	 * Render a queued payload of toasts, deduping by `_id` so the same
 	 * event never paints twice.
@@ -384,6 +388,9 @@
 		} );
 		el.appendChild( close );
 
+		while ( container.children.length >= MAX_VISIBLE ) {
+			container.firstElementChild.remove();
+		}
 		container.appendChild( el );
 
 		// Animate in.
