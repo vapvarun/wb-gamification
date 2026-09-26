@@ -15,7 +15,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 - Kudos are never refused for being over a limit. The daily limit (default 5) and the one-hour repeat window now decide only whether a kudos earns points; past them the kudos is still delivered, with its notification, and no member is told they hit a limit. The setting is now labelled "Kudos per day that earn points". A spam ceiling (default 50 a day, filter `wb_gam_kudos_daily_ceiling`) is the only hard stop, and the give-kudos form is not shown once it is reached. `GET /kudos/me` and `POST /kudos` return `can_send`. The `wb_gam_kudos_cooldown` error code is replaced by `wb_gam_kudos_daily_ceiling` and `wb_gam_kudos_busy`.
 - The kudos toast names the member who gave it ("Priya Nair gave you kudos!") instead of "Someone gave you kudos!".
 
+- Privacy: a member's points, badges and rank follow one rule on every surface - the kudos feed (block and REST), leaderboard badge counts (including live updates) and the recipient lookup now respect a hidden profile. A community plugin that owns profiles decides through `wb_gam_can_view_public_profile`; otherwise Settings > Engagement > Public Profiles has the site-wide switch that was only in the setup wizard.
+- One switch per feature: cohort leagues and community challenges are switched only in Settings > Modules (which also stops their engine), and the weekly recap email only beside its subject line. A switched-off module hides its admin links and its REST routes answer 404 `wb_gam_module_disabled`.
+- Cohort leagues use the promotion and demotion percentages set in their settings (the engine used a fixed 33%). The League Duration choice is removed: leagues always run weekly.
+- Setup wizard: Coaching and Nonprofit descriptions no longer promise leaderboard modes the wizard never applied, and the Skip text states the real defaults.
+
 ### Fixed
+
+- Settings: saving any section now shows its confirmation (it was lost in the redirect and hidden by the plugin's own notice suppression).
 
 - A lapsed streak showed as current until the member next earned points. Every reader (streak and hub blocks, status bar, REST, the admin Streaks roster and the Analytics active-streaks count) now reports it as 0.
 - The Badge Showcase block sorted badges by name, so 10-Year Member appeared before 2-Year Member. It now uses the same ladder order as the admin badge list.

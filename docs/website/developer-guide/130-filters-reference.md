@@ -32,7 +32,8 @@ See [Hooks and Filters Overview](110-hooks-overview.md) for how to add a listene
 | Filter | What it filters | Parameters | Return |
 |--------|-----------------|------------|--------|
 | `wb_gam_before_kudos` | Validate or block kudos before they are recorded. Return a `WP_Error` to reject. | `mixed $result`, `int $giver_id`, `int $receiver_id`, `string $message` | `$result` unchanged, or a `WP_Error` to reject |
-| `wb_gam_kudos_per_receiver_cooldown_seconds` | Cooldown (seconds) before the same giver can send kudos to the same receiver again. Default one hour; return `0` to disable. | `int $seconds`, `int $giver_id`, `int $receiver_id` | `int` cooldown seconds |
+| `wb_gam_kudos_per_receiver_cooldown_seconds` | Window (seconds) in which a repeat kudos to the same receiver earns no points. Since 1.6.5 it never blocks the kudos itself. Default one hour; return `0` to let every repeat earn. | `int $seconds`, `int $giver_id`, `int $receiver_id` | `int` window seconds |
+| `wb_gam_kudos_daily_ceiling` | Most kudos a member can send in a day, points or not - a spam brake. The give-kudos form is not shown once it is reached. Default `50`. Added in 1.6.5. | `int $ceiling`, `int $giver_id` | `int` ceiling |
 
 ## Submissions
 
@@ -56,6 +57,7 @@ See [Hooks and Filters Overview](110-hooks-overview.md) for how to add a listene
 
 | Filter | What it filters | Parameters | Return |
 |--------|-----------------|------------|--------|
+| `wb_gam_category_label` | The label shown for an action category (How to Earn group headings, `category_label` in `GET /actions`). Family categories have translatable labels; any other slug reads as words (`my-plugin` -> `My Plugin`). Added in 1.6.5. | `string $label`, `string $slug` | `string` label |
 | `wb_gam_as_retention_days` | Number of days the daily Action Scheduler cleanup keeps `actionscheduler_actions` rows for, regardless of status. Default `7`, minimum `1`. Added in 1.4.0. | `int $days` | `int` retention days |
 | `wb_gam_activity_context_label` | The BuddyPress activity context-group label for a gamification activity type. Default is the per-type human label. Added in 1.4.0. | `string $context`, `string $key` | `string` context label |
 | `wb_gam_rank_automation_rules` | Rank automation rules before they are evaluated. | `array $rules` | `array` rules |
@@ -82,7 +84,7 @@ Site-owner controls added in 1.5.3 (Settings > Access and Settings > Modules).
 | Filter | What it filters | Parameters | Return |
 |--------|-----------------|------------|--------|
 | `wb_gam_user_can_earn` | Whether a user may earn points at all. Fires after the admin earning-exclusion settings (excluded roles, excluded accounts, and the per-user `wb_gam_sandboxed` veto) are applied, so code can extend or override the owner's choices. Enforced at the single award choke point, so it covers both the sync and async award paths. Added in 1.5.3. | `bool $can`, `int $user_id` | `bool` whether the user may earn |
-| `wb_gam_module_enabled` | Whether an optional module is enabled. Modules: `kudos`, `streaks`, `challenges`, `community_challenges`, `cohort_leagues`, `redemption`. Default ON; only an explicit `'0'` in the `wb_gam_modules` option disables one. A disabled module's blocks and shortcodes render nothing and its admin page is removed (data is preserved). Added in 1.5.3. | `bool $enabled`, `string $slug` | `bool` whether the module is on |
+| `wb_gam_module_enabled` | Whether an optional module is enabled. Modules: `kudos`, `streaks`, `challenges`, `community_challenges`, `cohort_leagues`, `redemption`. Default ON; only an explicit `'0'` in the `wb_gam_modules` option disables one. A disabled module's blocks and shortcodes render nothing, its admin page and links are removed, and (since 1.6.5) its REST routes answer 404 `wb_gam_module_disabled` (data is preserved). Cohort leagues and community challenges have one switch that also stops their background engine. Added in 1.5.3. | `bool $enabled`, `string $slug` | `bool` whether the module is on |
 
 > **Two related event hooks are actions, not filters.** `wb_gam_progress_reset` (fires after a member-progress reset wipes the progress tables, keeping config) and `wb_gam_points_decayed` (fires after each inactivity point-decay sweep, with the number of members decayed) are documented in the [Actions reference](120-actions-reference.md). Listen with `add_action()`, not `add_filter()`.
 
@@ -90,6 +92,7 @@ Site-owner controls added in 1.5.3 (Settings > Access and Settings > Modules).
 
 | Filter | What it filters | Parameters | Return |
 |--------|-----------------|------------|--------|
+| `wb_gam_can_view_public_profile` | Whether a viewer may see a member's gamification profile data (points, badges, rank, kudos entries). A community plugin that owns member profiles (BuddyNext) answers with its own profile privacy, so one setting governs both; when a callback is attached, the plugin's own public-profile switches are hidden in Settings and the setup wizard. Self and administrators are decided before this filter. Added in 1.6.5. | `bool $allowed`, `int $target_id`, `int $viewer_id` | `bool` whether the viewer may see it |
 | `wb_gam_profile_publicly_visible` | Whether a member's `/u/{user_login}` profile page is publicly visible. Default ON (opt-out model): a member is visible unless they set the per-user flag to `0`, and the site-wide kill switch still wins. Added in 1.5.2. | `bool $visible`, `int $user_id` | `bool` whether the profile is public |
 
 ## Admin CRUD (REST)
