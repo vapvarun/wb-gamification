@@ -414,8 +414,12 @@ final class SettingsPage {
 			update_option( 'wb_gam_streak_milestone_bonus', max( 0, min( 100000, absint( wp_unslash( $_POST['wb_gam_streak_milestone_bonus'] ) ) ) ) );
 		}
 
-		// Weekly recap email.
-		update_option( 'wb_gam_weekly_email_enabled', isset( $_POST['wb_gam_weekly_email_enabled'] ) ? 1 : 0 );
+		// Weekly recap email - the one switch: the send option and the engine flag together.
+		$weekly_on = isset( $_POST['wb_gam_weekly_email_enabled'] );
+		update_option( 'wb_gam_weekly_email_enabled', $weekly_on ? 1 : 0 );
+		$flags                  = \WBGam\Engine\FeatureFlags::get_all();
+		$flags['weekly_emails'] = $weekly_on;
+		\WBGam\Engine\FeatureFlags::update( $flags );
 		if ( isset( $_POST['wb_gam_weekly_email_subject'] ) ) {
 			$subject = sanitize_text_field( wp_unslash( $_POST['wb_gam_weekly_email_subject'] ) );
 			if ( '' !== $subject ) {
@@ -433,6 +437,12 @@ final class SettingsPage {
 		update_option( 'wb_gam_bp_stream_challenge_completed', isset( $_POST['wb_gam_bp_stream_challenge_completed'] ) ? 1 : 0 );
 		update_option( 'wb_gam_bp_stream_kudos_given', isset( $_POST['wb_gam_bp_stream_kudos_given'] ) ? 1 : 0 );
 		update_option( 'wb_gam_bp_stream_level_changed', isset( $_POST['wb_gam_bp_stream_level_changed'] ) ? 1 : 0 );
+
+		// Public profiles (site-wide). Only when gamification decides privacy itself; a host
+		// community's profile privacy applies otherwise and the switch is not shown.
+		if ( ! \WBGam\Engine\Privacy::host_decides() ) {
+			update_option( 'wb_gam_profile_public_enabled', isset( $_POST['wb_gam_profile_public_enabled'] ) ? 1 : 0 );
+		}
 
 		// Public-profile URL slug base (e.g. /u/{login}). sanitize_title keeps it
 		// URL-safe; an empty result leaves the existing/default 'u' untouched.
@@ -496,9 +506,11 @@ final class SettingsPage {
 		}
 		$tiers_text = implode( "\n", $tier_lines );
 
-		$grace_days     = (int) get_option( 'wb_gam_streak_grace_days', 1 );
-		$milestone_pts  = (int) get_option( 'wb_gam_streak_milestone_bonus', 10 );
-		$weekly_enabled = (bool) (int) get_option( 'wb_gam_weekly_email_enabled', 1 );
+		$grace_days    = (int) get_option( 'wb_gam_streak_grace_days', 1 );
+		$milestone_pts = (int) get_option( 'wb_gam_streak_milestone_bonus', 10 );
+		// On only when both the send option and the engine are on (a site that turned the engine off
+		// under the old Background features switch reads 'off' here, not a checkbox that lies).
+		$weekly_enabled = (bool) (int) get_option( 'wb_gam_weekly_email_enabled', 1 ) && \WBGam\Engine\FeatureFlags::is_enabled( 'weekly_emails' );
 		/* translators: %s = site name */
 		$weekly_default = sprintf( __( 'Your week in %s', 'wb-gamification' ), get_bloginfo( 'name' ) );
 		$weekly_subject = (string) get_option( 'wb_gam_weekly_email_subject', $weekly_default );
@@ -621,11 +633,20 @@ final class SettingsPage {
 				<div class="wbgam-card-header">
 					<h2 class="wbgam-card-title">
 						<span class="icon-user" aria-hidden="true"></span>
-						<?php esc_html_e( 'Public Profile URL', 'wb-gamification' ); ?>
+						<?php esc_html_e( 'Public Profiles', 'wb-gamification' ); ?>
 					</h2>
-					<p class="wbgam-card-desc"><?php esc_html_e( 'The base segment for public member profiles. Default is "u", giving URLs like /u/jane.', 'wb-gamification' ); ?></p>
+					<p class="wbgam-card-desc"><?php esc_html_e( 'Who can see a member\'s points, badges and rank, and where their public profile lives.', 'wb-gamification' ); ?></p>
 				</div>
 				<div class="wbgam-card-body">
+					<?php if ( \WBGam\Engine\Privacy::host_decides() ) : ?>
+						<p class="description"><?php esc_html_e( 'Your community plugin decides who can see a member\'s points, badges and rank: its profile privacy settings apply here too.', 'wb-gamification' ); ?></p>
+					<?php else : ?>
+						<label class="wbgam-checkbox-option wbgam-stack-block">
+							<input type="checkbox" name="wb_gam_profile_public_enabled" value="1" <?php checked( (bool) get_option( 'wb_gam_profile_public_enabled', true ) ); ?> />
+							<span><?php esc_html_e( 'Show members\' points, badges and rank to other people', 'wb-gamification' ); ?></span>
+						</label>
+						<p class="description"><?php esc_html_e( 'Each member can still hide their own. Turn this off to keep everyone\'s private; members always see their own.', 'wb-gamification' ); ?></p>
+					<?php endif; ?>
 					<p>
 						<label for="wb-gam-profile-slug"><strong><?php esc_html_e( 'Slug base', 'wb-gamification' ); ?></strong></label><br />
 						<code>/</code>
@@ -1106,10 +1127,12 @@ final class SettingsPage {
 				<!-- ENGAGEMENT -->
 				<div class="wbgam-settings-nav-group">
 					<span class="wbgam-settings-nav-group__label"><?php esc_html_e( 'Engagement', 'wb-gamification' ); ?></span>
+					<?php if ( \WBGam\Engine\ModuleToggles::enabled( 'challenges' ) ) : // Its page is removed when the module is off. ?>
 					<a class="wbgam-settings-nav-item" href="<?php echo esc_url( admin_url( 'admin.php?page=wb-gam-challenges' ) ); ?>">
 						<span class="icon-flag"></span>
 						<?php esc_html_e( 'Challenges', 'wb-gamification' ); ?>
 					</a>
+					<?php endif; ?>
 					<a class="wbgam-settings-nav-item" href="<?php echo esc_url( admin_url( 'admin.php?page=wb-gamification-badges' ) ); ?>">
 						<span class="icon-shield"></span>
 						<?php esc_html_e( 'Badges', 'wb-gamification' ); ?>
@@ -1701,10 +1724,12 @@ final class SettingsPage {
 							<span class="icon-tag"></span>
 							<?php esc_html_e( 'Add a currency (XP, Coins…)', 'wb-gamification' ); ?>
 						</a>
+						<?php if ( \WBGam\Engine\ModuleToggles::enabled( 'challenges' ) ) : ?>
 						<a href="<?php echo esc_url( admin_url( 'admin.php?page=wb-gam-challenges' ) ); ?>" class="wbgam-quick-nav__item">
 							<span class="icon-flag"></span>
 							<?php esc_html_e( 'Create a challenge', 'wb-gamification' ); ?>
 						</a>
+						<?php endif; ?>
 						<a href="<?php echo esc_url( admin_url( 'admin.php?page=wb-gamification-badges' ) ); ?>" class="wbgam-quick-nav__item">
 							<span class="icon-award"></span>
 							<?php esc_html_e( 'View badge library', 'wb-gamification' ); ?>
@@ -2567,9 +2592,14 @@ final class SettingsPage {
 			$posted_features = array_map( 'sanitize_key', wp_unslash( (array) $_POST['wb_gam_features'] ) );
 		}
 
-		$features = array();
-		foreach ( array_keys( \WBGam\Engine\FeatureFlags::get_defaults() ) as $feature ) {
+		// Only the flags this list shows. Flags that have their one switch elsewhere (a module's own
+		// checkbox above, the weekly email's checkbox beside its subject line) keep their value.
+		$features = \WBGam\Engine\FeatureFlags::get_all();
+		foreach ( array_keys( self::feature_labels() ) as $feature ) {
 			$features[ $feature ] = in_array( $feature, $posted_features, true );
+		}
+		foreach ( \WBGam\Engine\ModuleToggles::ENGINE_FLAGS as $module => $flag ) {
+			$features[ $flag ] = '1' === $map[ $module ];
 		}
 
 		\WBGam\Engine\FeatureFlags::update( $features );
@@ -2662,9 +2692,16 @@ final class SettingsPage {
 			'badge_share'          => __( 'Badge sharing - public share cards for LinkedIn and similar', 'wb-gamification' ),
 		);
 
+		// One switch per feature: cohort leagues and community challenges are switched with their
+		// module above; the weekly email beside its subject line in Engagement.
+		$elsewhere = array_merge( array_values( \WBGam\Engine\ModuleToggles::ENGINE_FLAGS ), array( 'weekly_emails' ) );
+
 		$out = array();
 
 		foreach ( array_keys( \WBGam\Engine\FeatureFlags::get_defaults() ) as $wb_gam_feature ) {
+			if ( in_array( $wb_gam_feature, $elsewhere, true ) ) {
+				continue;
+			}
 			$out[ $wb_gam_feature ] = $labels[ $wb_gam_feature ] ?? $wb_gam_feature;
 		}
 
