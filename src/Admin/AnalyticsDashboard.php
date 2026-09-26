@@ -20,6 +20,7 @@
 namespace WBGam\Admin;
 
 use WBGam\Engine\Clock;
+use WBGam\Engine\StreakEngine;
 
 defined( 'ABSPATH' ) || exit;
 // Silencing convention-driven false positives so Plugin Check signal stays clean:
@@ -471,7 +472,7 @@ final class AnalyticsDashboard {
 			? round( ( $challenges_completed / $challenges_started ) * 100, 1 )
 			: 0;
 
-		// Active streaks (current_streak > 0), counting only members who still exist.
+		// Active streaks (current_streak > 0 and not lapsed), counting only members who still exist.
 		//
 		// This is the one that printed 6822.5%: 11,530 streak rows over 169 live members, because
 		// 11,378 of those rows belonged to members who had been deleted.
@@ -479,7 +480,7 @@ final class AnalyticsDashboard {
 			"SELECT COUNT(DISTINCT s.user_id)
 			   FROM {$wpdb->prefix}wb_gam_streaks s
 			   JOIN {$wpdb->users} u ON u.ID = s.user_id
-			  WHERE s.current_streak > 0"
+			  WHERE s.current_streak > 0 AND " . StreakEngine::live_sql( 's.' )
 		);
 		$streak_health_pct = $total_members > 0
 			? round( ( $active_streaks / $total_members ) * 100, 1 )
