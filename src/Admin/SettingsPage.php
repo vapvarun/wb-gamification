@@ -292,6 +292,9 @@ final class SettingsPage {
 		if ( $rule ) {
 			$existing_rules[] = $rule;
 			update_option( 'wb_gam_rank_automation_rules', wp_json_encode( array_values( $existing_rules ) ) );
+			add_settings_error( 'wb_gamification', 'saved', __( 'Automation rule added.', 'wb-gamification' ), 'success' );
+		} else {
+			add_settings_error( 'wb_gamification', 'rule_invalid', __( 'The rule was not added. Choose a level, an action and its target.', 'wb-gamification' ) );
 		}
 	}
 
@@ -2364,6 +2367,7 @@ final class SettingsPage {
 			self::save_staff_permissions();
 		}
 		// phpcs:enable WordPress.Security.NonceVerification.Missing
+		add_settings_error( 'wb_gamification', 'saved', __( 'Access settings saved.', 'wb-gamification' ), 'success' );
 	}
 
 	/**
@@ -2604,6 +2608,7 @@ final class SettingsPage {
 
 		\WBGam\Engine\FeatureFlags::update( $features );
 		// phpcs:enable WordPress.Security.NonceVerification.Missing
+		add_settings_error( 'wb_gamification', 'saved', __( 'Modules saved.', 'wb-gamification' ), 'success' );
 	}
 
 	/**

@@ -110,4 +110,20 @@ class KudosPointsLimitTest extends TestCase {
 		$this->counts( 12 );
 		$this->assertSame( 0, KudosEngine::points_kudos_remaining( 1 ) );
 	}
+
+	/**
+	 * Off means off for every caller: BuddyNext calls the engine directly, not the REST routes
+	 * the Modules switch guards (card 10343975302).
+	 *
+	 * @test
+	 * @covers ::can_send
+	 */
+	public function kudos_module_off_refuses_every_caller(): void {
+		$this->counts( 0 );
+		Functions\when( 'get_option' )->alias(
+			fn( $name, $fallback = false ) => 'wb_gam_modules' === $name ? array( 'kudos' => '0' ) : $fallback
+		);
+
+		$this->assertFalse( KudosEngine::can_send( 1 ), 'No form may be drawn while kudos is off.' );
+	}
 }

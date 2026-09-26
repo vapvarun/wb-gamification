@@ -65,6 +65,12 @@ final class KudosEngine {
 	 * @return true|WP_Error      True on success; WP_Error describing the rejection.
 	 */
 	public static function send( int $giver_id, int $receiver_id, string $message = '' ): bool|WP_Error {
+		// Off means off for every caller: BuddyNext and other partners call this engine directly,
+		// not through the REST routes the Modules switch guards.
+		if ( ! ModuleToggles::enabled( 'kudos' ) ) {
+			return ModuleToggles::disabled_error();
+		}
+
 		if ( $giver_id === $receiver_id ) {
 			return new WP_Error(
 				'wb_gam_kudos_self',
@@ -124,7 +130,8 @@ final class KudosEngine {
 	}
 
 	/**
-	 * Whether this member can send a kudos right now (below the daily spam ceiling).
+	 * Whether this member can send a kudos right now: the Kudos module is on and the member
+	 * is below the daily spam ceiling.
 	 *
 	 * Forms call this before drawing themselves and render nothing when it is false, so
 	 * the ceiling is never a notice a member reads after writing a message.
@@ -135,7 +142,7 @@ final class KudosEngine {
 	 * @return bool
 	 */
 	public static function can_send( int $giver_id ): bool {
-		return $giver_id > 0 && self::get_daily_sent_count( $giver_id ) < self::daily_ceiling( $giver_id );
+		return $giver_id > 0 && ModuleToggles::enabled( 'kudos' ) && self::get_daily_sent_count( $giver_id ) < self::daily_ceiling( $giver_id );
 	}
 
 	/**

@@ -262,10 +262,20 @@ final class ModuleToggles {
 		$route = (string) $request->get_route();
 		foreach ( self::REST_ROUTES as $slug => $base ) {
 			if ( preg_match( '#^/wb-gamification/v1/' . preg_quote( $base, '#' ) . '(/|$)#', $route ) && ! self::enabled( $slug ) ) {
-				return new \WP_Error( 'wb_gam_module_disabled', __( 'This feature is turned off on this site.', 'wb-gamification' ), array( 'status' => 404 ) );
+				return self::disabled_error();
 			}
 		}
 		return $result;
+	}
+
+	/**
+	 * The one refusal for a switched-off module, shared by the REST gate and any engine a
+	 * partner plugin calls directly (a 404 over REST: the feature does not exist here).
+	 *
+	 * @return \WP_Error
+	 */
+	public static function disabled_error(): \WP_Error {
+		return new \WP_Error( 'wb_gam_module_disabled', __( 'This feature is turned off on this site.', 'wb-gamification' ), array( 'status' => 404 ) );
 	}
 
 	/**

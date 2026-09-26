@@ -16,13 +16,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 - The kudos toast names the member who gave it ("Priya Nair gave you kudos!") instead of "Someone gave you kudos!".
 
 - Privacy: a member's points, badges and rank follow one rule on every surface - the kudos feed (block and REST), leaderboard badge counts (including live updates) and the recipient lookup now respect a hidden profile. A community plugin that owns profiles decides through `wb_gam_can_view_public_profile`; otherwise Settings > Engagement > Public Profiles has the site-wide switch that was only in the setup wizard.
-- One switch per feature: cohort leagues and community challenges are switched only in Settings > Modules (which also stops their engine), and the weekly recap email only beside its subject line. A switched-off module hides its admin links and its REST routes answer 404 `wb_gam_module_disabled`.
+- One switch per feature: cohort leagues and community challenges are switched only in Settings > Modules (which also stops their engine), and the weekly recap email only beside its subject line. A switched-off module hides its admin links and its REST routes answer 404 `wb_gam_module_disabled`. Kudos off is enforced in the engine too, so a community plugin that calls it directly (BuddyNext profiles) shows no give-kudos form and cannot send one.
 - Cohort leagues use the promotion and demotion percentages set in their settings (the engine used a fixed 33%). The League Duration choice is removed: leagues always run weekly.
 - Setup wizard: Coaching and Nonprofit descriptions no longer promise leaderboard modes the wizard never applied, and the Skip text states the real defaults.
 
 ### Fixed
 
 - Settings: saving any section now shows its confirmation (it was lost in the redirect and hidden by the plugin's own notice suppression).
+- Settings: the Modules, Access and Automation sections also confirm a save, and an automation rule missing its target says why it was not added.
+- Gamification hub: card titles without a count sat at the right edge of the card; every title now sits beside its icon.
 
 - A lapsed streak showed as current until the member next earned points. Every reader (streak and hub blocks, status bar, REST, the admin Streaks roster and the Analytics active-streaks count) now reports it as 0.
 - The Badge Showcase block sorted badges by name, so 10-Year Member appeared before 2-Year Member. It now uses the same ladder order as the admin badge list.
@@ -32,6 +34,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 - The Community Challenges and Redemption Store admin lists loaded every row. Both are paged 20 at a time, and the Kudos Moderation pager is styled again.
 - Toasts: at most three are on screen at once.
 - The Dashboard's Manage kudos link opened the Dashboard again instead of the Kudos settings.
+- Plugin Check reports no errors: three admin screens printed record ids without escaping.
 - Developer docs: links that pointed into the source tree now point to GitHub, and manifest examples use Lucide icon names.
 
 ## [1.6.4] - 2026-07-12
