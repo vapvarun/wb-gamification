@@ -184,6 +184,12 @@
 				.then( function ( result ) {
 					if ( result && result.ok ) {
 						status.textContent = i18n.success || '';
+						// That was the last kudos allowed today: keep the confirmation, drop the
+						// fields, so the next thing the member sees is not a refusal.
+						if ( result.data && false === result.data.can_send ) {
+							form.querySelectorAll( '.wb-gam-give-kudos__field, .wb-gam-give-kudos__submit' )
+								.forEach( function ( el ) { el.remove(); } );
+						}
 						if ( msgEl ) {
 							msgEl.value = '';
 						}

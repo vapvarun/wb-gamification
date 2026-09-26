@@ -318,6 +318,12 @@ final class ShortcodeHandler {
 			}
 		}
 
+		// At the daily spam ceiling there is nothing the member can do today, so draw
+		// nothing rather than a form that would only refuse them after they type.
+		if ( ! KudosEngine::can_send( get_current_user_id() ) ) {
+			return '';
+		}
+
 		self::enqueue_give_kudos_assets();
 		$rest_url = esc_url( rest_url( 'wb-gamification/v1/kudos' ) );
 		$nonce    = wp_create_nonce( 'wp_rest' );

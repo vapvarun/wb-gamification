@@ -94,7 +94,7 @@ curl -X POST https://example.com/wp-json/wb-gamification/v1/community-challenges
 
 ## Kudos
 
-Peer-to-peer recognition with a per-user daily limit.
+Peer-to-peer recognition. Kudos always send; a per-user daily limit and a one-hour per-recipient window decide only whether a kudos earns points. A spam ceiling (default 50/day, filter `wb_gam_kudos_daily_ceiling`) is the only refusal.
 
 | Method | Endpoint | Permission |
 |--------|----------|------------|
@@ -121,7 +121,7 @@ Give kudos to another member. One of `receiver_id` or `recipient_login` is requi
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | `receiver_id` | int | conditional | User ID of recipient |
-| `recipient_login` | string | conditional | Added in 1.4.0. User login (username) or email of recipient, resolved server-side. Use this when the giver does not know the recipient's user ID (e.g. the `[wb_gam_give_kudos]` shortcode) |
+| `recipient_login` | string | conditional | Added in 1.4.0. Username or profile slug (user nicename) of the recipient, resolved server-side. Email is not accepted. Use this when the giver does not know the recipient's user ID (e.g. the `[wb_gam_give_kudos]` shortcode) |
 | `message` | string | No | Optional message (max 255 chars) |
 
 ```bash
@@ -133,14 +133,16 @@ curl -X POST https://example.com/wp-json/wb-gamification/v1/kudos \
 ```
 
 ```json
-{ "success": true, "receiver_id": 55, "daily_remaining": 4 }
+{ "success": true, "receiver_id": 55, "daily_remaining": 4, "can_send": true }
 ```
 
-Returns HTTP 201 on success.
+Returns HTTP 201 on success. `daily_remaining` is how many more kudos today will earn points; `can_send` is false once the member reaches the spam ceiling (hide your form then).
+
+Errors: `wb_gam_kudos_self` and `wb_gam_kudos_invalid_user` (422), `rest_user_invalid` (404, recipient not found), `wb_gam_kudos_daily_ceiling` (429, spam ceiling), `wb_gam_kudos_busy` (429, another send from this member is in flight). Before 1.6.5 a single `wb_gam_kudos_cooldown` code covered the daily limit, the per-recipient window and the in-flight case; none of those refuse a kudos any more except the in-flight case.
 
 ### GET /kudos/me
 
-Current user's kudos stats: `received_total`, `daily_limit`, `sent_today`, `daily_remaining`.
+Current user's kudos stats: `received_total`, `daily_limit` (kudos per day that earn points), `sent_today`, `daily_remaining` (points-earning kudos left today), and `can_send` (false only at the spam ceiling; hide the give-kudos form when false).
 
 ```bash
 curl https://example.com/wp-json/wb-gamification/v1/kudos/me \

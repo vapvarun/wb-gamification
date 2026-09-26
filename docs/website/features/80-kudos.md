@@ -15,13 +15,15 @@ Kudos lets members publicly recognize each other for helpful contributions, grea
 
 These values are configurable in **Gamification > Settings > Kudos**.
 
-## Daily Send Limit
+## Daily Points Limit
 
-Each member can give a maximum of **5 kudos per day** by default. This prevents gaming the system by members repeatedly sending kudos to the same friend. The limit resets at midnight (site timezone).
+Members can always send kudos. What is limited is the **points**: by default the first **5 kudos a member sends each day** award points to both people. After that, kudos still go through - the recipient still gets the message and the notification - they just earn no points. The count resets at midnight (site timezone).
 
-When a member reaches their daily limit, the kudos button shows an informative message telling them when the limit resets.
+A second kudos to the same member **within an hour** also earns no points. This is what stops two friends trading kudos to farm points, without ever telling a member they cannot thank someone.
 
-The daily limit is configurable. Go to **Gamification > Settings > Kudos** and change the **Daily Kudos Limit** field.
+Members are never shown a "limit reached" message. The only hard stop is a spam ceiling of **50 kudos a day**, far above normal use; once a member reaches it, the kudos form is simply not shown until the next day. Developers can change it with the `wb_gam_kudos_daily_ceiling` filter.
+
+Change the points limit in **Gamification > Settings > Kudos > Kudos per day that earn points**.
 
 ## Rules and Restrictions
 
@@ -72,9 +74,9 @@ The shortcode wraps an underlying server-side block (`wb-gamification/give-kudos
 
 - Logged-out visitors see a sign-in prompt instead of the form.
 - Logged-in members see a recipient input (or the locked recipient if `to=` is set), a message field (max 255 characters), and a Send button.
-- Submitting POSTs to `POST /wb-gamification/v1/kudos` with `recipient_login` (the server resolves the username or email to a user ID).
-- The form respects the kudos cooldown — repeat sends to the same recipient get a polite "try again later" message.
-- Status feedback appears below the submit button (success, cooldown, network error).
+- Typing two or more letters of a name shows matching members (avatar, name, @handle); pick one with the mouse or the arrow keys and Enter. Typing an exact username also works.
+- Submitting POSTs to `POST /wb-gamification/v1/kudos` with `recipient_login` (the server resolves the username or profile slug to a user ID).
+- Status feedback appears below the submit button: sent, recipient not found, or a network error. There is no "limit reached" message: past the daily points limit kudos still send, and at the spam ceiling the form is not shown.
 - Responsive: stacks vertically with a full-width submit button on screens ≤640 px.
 
 A common placement is the BuddyPress member profile page (with `to="{{member_login}}"`) so visitors can send kudos directly to the profile they are viewing.

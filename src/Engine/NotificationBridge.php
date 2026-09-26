@@ -530,7 +530,9 @@ final class NotificationBridge {
 	 * @param int    $kudos_id    Kudos record ID.
 	 */
 	public static function on_kudos_given( int $giver_id, int $receiver_id, string $message, int $kudos_id ): void {
-		// Notify the receiver (only if they're the current user on this request).
+		// Notify the receiver, by the giver's name: the kudos feed and the profile already show
+		// who gave it, and "Someone gave you kudos!" left the member guessing.
+		$giver = get_userdata( $giver_id );
 		self::push(
 			$receiver_id,
 			array(
@@ -539,7 +541,10 @@ final class NotificationBridge {
 				// abusive kudos had no way to find the toast it had already queued -- so the receiver
 				// was still congratulated for kudos that had been taken away as abuse.
 				'kudos_id' => $kudos_id,
-				'message'  => __( 'Someone gave you kudos!', 'wb-gamification' ),
+				'message'  => $giver
+					/* translators: %s: display name of the member who gave the kudos. */
+					? sprintf( __( '%s gave you kudos!', 'wb-gamification' ), $giver->display_name )
+					: __( 'Someone gave you kudos!', 'wb-gamification' ),
 				'detail'   => $message ?: null,
 				'icon'     => 'icon-heart-handshake',
 			)

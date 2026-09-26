@@ -1918,7 +1918,7 @@ final class SettingsPage {
 						<span class="icon-heart-handshake" aria-hidden="true"></span>
 						<?php esc_html_e( 'Recent kudos', 'wb-gamification' ); ?>
 					</h3>
-					<a class="wbgam-card-link" href="<?php echo esc_url( admin_url( 'admin.php?page=wb-gamification&tab=kudos' ) ); ?>">
+					<a class="wbgam-card-link" href="<?php echo esc_url( admin_url( 'admin.php?page=wb-gamification#kudos' ) ); ?>">
 						<?php esc_html_e( 'Manage kudos', 'wb-gamification' ); ?>
 					</a>
 				</div>
@@ -2246,10 +2246,10 @@ final class SettingsPage {
 				<div class="wbgam-settings-card__body">
 					<table class="form-table" role="presentation">
 						<tr>
-							<th scope="row"><label for="wb-gam-kudos-daily-limit"><?php esc_html_e( 'Max kudos per day', 'wb-gamification' ); ?></label></th>
+							<th scope="row"><label for="wb-gam-kudos-daily-limit"><?php esc_html_e( 'Kudos per day that earn points', 'wb-gamification' ); ?></label></th>
 							<td>
 								<input type="number" name="wb_gam_kudos_daily_limit" id="wb-gam-kudos-daily-limit" value="<?php echo esc_attr( (string) $daily_limit ); ?>" min="1" max="999" class="wb-gam-input-narrow">
-								<p class="description"><?php esc_html_e( 'Maximum number of kudos a member can send per day. Prevents spam.', 'wb-gamification' ); ?></p>
+								<p class="description"><?php esc_html_e( 'How many kudos a member can send each day that award points to both people. Members can keep sending kudos after that; those just earn no points. A repeat to the same member within an hour also earns no points.', 'wb-gamification' ); ?></p>
 							</td>
 						</tr>
 						<tr>

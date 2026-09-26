@@ -6,13 +6,13 @@ Kudos is a peer-recognition system. Members send kudos to each other to say "gre
 
 ## Fields
 
-### Max kudos per day
+### Kudos per day that earn points
 
 **Default: 5**
 
-The maximum number of kudos a single member can send in one calendar day. Once a member hits this limit, they cannot send more until the next day.
+How many kudos a member can send each day that award points to both people. Members can keep sending kudos after that - they are still delivered - they just earn no points. A repeat to the same member within an hour also earns no points.
 
-This prevents kudos flooding. If members are using kudos to farm points for a friend, lower this value. If you want kudos to feel free and frictionless, raise it.
+Members are never told they hit a limit. If members are trading kudos to farm points, lower this value; if you want kudos to be worth more of a member's day, raise it.
 
 **Recommended values by community size:**
 
@@ -44,6 +44,7 @@ Click **Save Changes** after adjusting any value. Changes apply to all future ku
 
 ## Notes
 
-- Kudos daily limits and point values work independently. You can have a high limit with low point values (social and lightweight) or a low limit with high point values (rare and meaningful).
+- The daily points limit and the point values work independently. You can have a high limit with low point values (social and lightweight) or a low limit with high point values (rare and meaningful).
+- A spam ceiling of 50 kudos a day (points or not) hides the kudos form for the rest of the day. It is a developer filter, `wb_gam_kudos_daily_ceiling`, not a setting, because no ordinary member reaches it.
 - The Kudos feed block (`[wb_gam_kudos_feed]` shortcode) displays recent kudos activity on the frontend.
 - If BuddyPress is active, kudos events also appear in the BuddyPress activity stream.

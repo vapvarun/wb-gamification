@@ -10,6 +10,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 
 - Give Kudos suggests recipients as the member types: a keyboard-accessible list with avatar, name and @handle. `GET /members` takes `context=view` for a public-fields member lookup (id, name, slug, avatar) available to any logged-in member.
 
+### Changed
+
+- Kudos are never refused for being over a limit. The daily limit (default 5) and the one-hour repeat window now decide only whether a kudos earns points; past them the kudos is still delivered, with its notification, and no member is told they hit a limit. The setting is now labelled "Kudos per day that earn points". A spam ceiling (default 50 a day, filter `wb_gam_kudos_daily_ceiling`) is the only hard stop, and the give-kudos form is not shown once it is reached. `GET /kudos/me` and `POST /kudos` return `can_send`. The `wb_gam_kudos_cooldown` error code is replaced by `wb_gam_kudos_daily_ceiling` and `wb_gam_kudos_busy`.
+- The kudos toast names the member who gave it ("Priya Nair gave you kudos!") instead of "Someone gave you kudos!".
+
 ### Fixed
 
 - A lapsed streak showed as current until the member next earned points. Every reader (streak and hub blocks, status bar, REST, the admin Streaks roster and the Analytics active-streaks count) now reports it as 0.
@@ -19,6 +24,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 - How to Earn cards showed blank icons for WPMediaVerse actions and for several other integrations. A third-party manifest that sends a Dashicons class now renders too.
 - The Community Challenges and Redemption Store admin lists loaded every row. Both are paged 20 at a time, and the Kudos Moderation pager is styled again.
 - Toasts: at most three are on screen at once.
+- The Dashboard's Manage kudos link opened the Dashboard again instead of the Kudos settings.
 - Developer docs: links that pointed into the source tree now point to GitHub, and manifest examples use Lucide icon names.
 
 ## [1.6.4] - 2026-07-12
