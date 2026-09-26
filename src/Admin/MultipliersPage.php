@@ -177,7 +177,7 @@ final class MultipliersPage {
 								<th><label for="wb-gam-mult-factor"><?php esc_html_e( 'Multiplier', 'wb-gamification' ); ?></label></th>
 								<td>
 									<input type="number" step="0.1" min="0.1" name="rule_config[multiplier]" id="wb-gam-mult-factor"
-										class="wbgam-input" style="max-width:8rem"
+										class="wbgam-input wbgam-input--xs"
 										value="<?php echo esc_attr( '' === $edit_mult ? '' : $edit_mult ); ?>" required>
 									<p class="description"><?php esc_html_e( 'The factor to multiply points by. 2 = double, 1.5 = 50% more, 0.5 = half.', 'wb-gamification' ); ?></p>
 								</td>
