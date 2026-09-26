@@ -40,7 +40,7 @@ return array(
             },
             'default_points' => 10,
             'category'       => 'reviews',
-            'icon'           => 'dashicons-star-half',
+            'icon'           => 'icon-star-half',
             'repeatable'     => true,
             'cooldown'       => 3600,   // One review per hour max.
             'daily_cap'      => 3,      // Up to 3 reviews per day.
@@ -99,7 +99,7 @@ WB Gamification scans every active plugin directory for a `wb-gamification.php` 
 > every plugin has loaded). Note the `wb_gam_register` example below fires at
 > priority 6, which is still too early to see a priority-10 API. Full worked
 > example:
-> [`examples/14-fluentcrm-hooked-api/`](../../../examples/14-fluentcrm-hooked-api/).
+> [`examples/14-fluentcrm-hooked-api/`](https://github.com/vapvarun/wb-gamification/tree/main/examples/14-fluentcrm-hooked-api).
 
 ---
 

@@ -33,7 +33,7 @@ For each match, the file is `include`d. If it returns an array with a `triggers`
 | `user_callback` | yes | Closure returning the user_id from the hook's args. Return 0 to skip. |
 | `default_points` | yes | Default points awarded. Site owners can override per-action. |
 | `category` | no | Grouping for the admin UI (default: `general`). |
-| `icon` | no | Dashicon class (default: `dashicons-star-filled`). |
+| `icon` | no | Lucide icon class (default: `icon-star`). A `dashicons-*` class also renders. |
 | `repeatable` | no | Award every time (`true`) or once-only (`false`). Default: `true`. |
 | `daily_cap` | no | Max awards per user per day. `0` = unlimited (default). |
 | `standalone_only` | no | Skip when BuddyPress is active (BP covers same event). |

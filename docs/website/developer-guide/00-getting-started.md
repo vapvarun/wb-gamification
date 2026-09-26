@@ -15,7 +15,7 @@ The fastest way is a **manifest file** -- a single PHP file that tells WB Gamifi
 3. WB Gamification auto-discovers it on activation
 
 [See the full manifest tutorial](20-build-first-integration.md)
-[Download the manifest template](manifest-template.php)
+[Download the manifest template](https://github.com/vapvarun/wb-gamification/blob/main/docs/website/developer-guide/manifest-template.php)
 
 **For advanced use cases**, use the PHP API directly:
 

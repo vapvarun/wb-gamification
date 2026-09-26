@@ -56,7 +56,7 @@ return array(
 			},
 			'default_points' => 10,
 			'category'       => 'your-plugin',
-			'icon'           => 'dashicons-star-filled',
+			'icon'           => 'icon-star',
 			'repeatable'     => true,
 			'cooldown'       => 0,
 			'daily_cap'      => 0,

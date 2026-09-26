@@ -143,8 +143,7 @@ Saved post content containing the pre-migration block markup will gain `deprecat
 
 ## See also
 
-- [`src/shared/utils/attributes.js`](../../../src/shared/utils/attributes.js) — JavaScript schema source
-- [`src/Blocks/CSS.php`](../../../src/Blocks/CSS.php) — PHP CSS generator
-- [`src/Blocks/Registrar.php`](../../../src/Blocks/Registrar.php) — `build/blocks/` auto-registrar
-- `plans/WBCOM-BLOCK-STANDARD-MIGRATION.md` — full migration plan
+- [`src/shared/utils/attributes.js`](https://github.com/vapvarun/wb-gamification/blob/main/src/shared/utils/attributes.js) — JavaScript schema source
+- [`src/Blocks/CSS.php`](https://github.com/vapvarun/wb-gamification/blob/main/src/Blocks/CSS.php) — PHP CSS generator
+- [`src/Blocks/Registrar.php`](https://github.com/vapvarun/wb-gamification/blob/main/src/Blocks/Registrar.php) — `build/blocks/` auto-registrar
 - [Extending Blocks](50-extending-blocks.md) — `wb_gam_block_before_render` / `_after_render` hooks

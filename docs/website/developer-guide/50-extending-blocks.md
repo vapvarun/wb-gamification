@@ -156,7 +156,7 @@ These are tracked as future-roadmap items; see `plans/INTEGRATION-GAPS-ROADMAP.m
 
 ## Worked example
 
-A complete worked example with 4 patterns lives at [`examples/10-inject-into-block-render/`](../../../../examples/10-inject-into-block-render/). Copy it into your plugin and run on a Local install — every pattern is verified.
+A complete worked example with 4 patterns lives at [`examples/10-inject-into-block-render/`](https://github.com/vapvarun/wb-gamification/tree/main/examples/10-inject-into-block-render). Copy it into your plugin and run on a Local install — every pattern is verified.
 
 ## Related
 

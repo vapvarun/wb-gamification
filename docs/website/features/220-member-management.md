@@ -26,7 +26,7 @@ All admin-only (`manage_options`), under `wb-gamification/v1`:
 
 | Method | Endpoint | Purpose |
 |---|---|---|
-| `GET` | `/members` | Paginated, searchable roster (`page`, `per_page`, `search`) |
+| `GET` | `/members` | Paginated, searchable roster (`page`, `per_page`, `search`). Members use `context=view` for a public-fields lookup instead. |
 | `POST` | `/members/{id}/exclude` | Toggle the per-user earning veto (`excluded`) |
 | `POST` | `/members/{id}/reset-points` | Zero the member's balance via a balancing debit |
 

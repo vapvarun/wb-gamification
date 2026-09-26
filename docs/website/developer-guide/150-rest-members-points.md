@@ -6,6 +6,7 @@ Endpoints for member profiles, the points ledger, point types, and currency conv
 
 | Method | Endpoint | Permission |
 |--------|----------|------------|
+| `GET` | `/members` | Admin (`context=edit`, default) or any logged-in member (`context=view`) |
 | `GET` | `/members/{id}` | Public (full private data for self or admin) |
 | `GET` | `/members/{id}/points` | Self or admin |
 | `GET` | `/members/{id}/level` | Public |
@@ -13,6 +14,17 @@ Endpoints for member profiles, the points ledger, point types, and currency conv
 | `GET` | `/members/{id}/events` | Self or admin |
 | `GET` | `/members/{id}/streak` | Public |
 | `GET` | `/members/me/toasts` | Must be logged in |
+
+### GET /members
+
+Searchable, paginated member list. `context` picks the shape, as in WP core:
+
+- `context=edit` (default) - the admin roster: points, level, badge count and earning status per member. Needs the manage-members capability.
+- `context=view` - a member lookup for any logged-in member (it backs the Give Kudos recipient suggestions). Returns only `id`, `name`, `slug` (user nicename) and `avatar`. Searches display name and nicename, never email or login. Needs 2+ characters in `search`, returns at most 10 rows, and leaves out the caller and anyone who turned off their public profile.
+
+```
+GET /wp-json/wb-gamification/v1/members?context=view&search=pri
+```
 
 ### GET /members/{id}
 

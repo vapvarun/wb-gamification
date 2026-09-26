@@ -55,7 +55,7 @@ return [
 			'category'       => 'yourplugin',
 
 			// Dashicon for the row icon in admin UI.
-			'icon'           => 'dashicons-feedback',
+			'icon'           => 'icon-message-square',
 
 			// Award once per user (for milestones), or every time?
 			'repeatable'     => true,
@@ -79,7 +79,7 @@ return [
 			},
 			'default_points' => 25,
 			'category'       => 'yourplugin',
-			'icon'           => 'dashicons-star-filled',
+			'icon'           => 'icon-star',
 			'repeatable'     => false,
 		],
 	],

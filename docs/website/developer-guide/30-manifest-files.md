@@ -38,7 +38,7 @@ return [
             'metadata_callback'   => function( $user_id, $data ) { return [ 'item_id' => $data->id ]; },
             'default_points'      => 10,
             'category'            => 'my_plugin',
-            'icon'                => 'dashicons-star-filled',
+            'icon'                => 'icon-star',
             'repeatable'          => true,
             'cooldown'            => 3600,
             'daily_cap'           => 5,
@@ -62,7 +62,7 @@ return [
 | `metadata_callback` | callable | No | Receives the hook arguments. Returns an array merged into event metadata (available in `wb_gam_points_for_action` filter) |
 | `default_points` | int | Yes | Default points awarded. Admins can override this in the settings UI |
 | `category` | string | No | Category slug for grouping in the admin UI (e.g. `buddypress`, `woocommerce`) |
-| `icon` | string | No | Dashicon class (e.g. `dashicons-heart`) for the admin UI |
+| `icon` | string | No | Lucide icon class (e.g. `icon-heart`), shown on the member-facing How to Earn cards. A `dashicons-*` class also renders. |
 | `repeatable` | bool | No | Whether the action can be awarded more than once. Default `true` |
 | `cooldown` | int | No | Minimum seconds between repeated awards for the same user. `0` = no cooldown |
 | `daily_cap` | int | No | Maximum awards per calendar day per user. `0` = unlimited |
@@ -94,7 +94,7 @@ return [
             },
             'default_points'  => 5,
             'category'        => 'forms',
-            'icon'            => 'dashicons-feedback',
+            'icon'            => 'icon-message-square',
             'repeatable'      => true,
             'cooldown'        => 0,
             'daily_cap'       => 3,

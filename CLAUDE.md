@@ -29,7 +29,7 @@
 | **Version** | 1.5.3 (in development, branch perf -> feat/site-owner-controls-1.5.3) |
 | **Path** | `wp-content/plugins/wb-gamification/` |
 | **Namespace** | `WBGam\` (PSR-4, maps to `src/`) |
-| **PHP** | 8.1+ required |
+| **PHP** | 8.0+ (matches the `Requires PHP` header and composer.json) |
 | **Architecture** | Event-sourced, manifest auto-discovery, zero-config |
 | **Part of** | Reign Stack — Wbcom's self-owned community platform |
 | **Basecamp project** | [WP Gamification](https://3.basecamp.com/5798509/buckets/47162271) — ID `47162271` |
@@ -408,7 +408,6 @@ WB_GAM_BASENAME  // 'wb-gamification/wb-gamification.php'
 ### Phase 4 — Platform + Integrations
 - OpenBadges 3.0 credential issuance (`CredentialController`)
 - `RedemptionEngine` + `RedemptionController` — rewards store
-- `CosmeticEngine` — profile cosmetics/frames
 - 8 plugin integrations (LearnDash, WooCommerce, bbPress, BP Reactions, BP Media, BP Groups, Elementor, ACF)
 - `CohortEngine` — cohort-based leaderboard leagues
 - `RateLimiter` — per-action daily caps
