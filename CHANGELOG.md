@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 
 ## [Unreleased]
 
+### Added
+
+- Give Kudos suggests recipients as the member types. `GET /members` takes `context=view` for a public-fields member lookup (id, name, slug, avatar) available to any logged-in member.
+
+### Fixed
+
+- A lapsed streak showed as current until the member next earned points. Every reader (streak and hub blocks, status bar, REST, the admin Streaks roster and the Analytics active-streaks count) now reports it as 0.
+- The Badge Showcase block sorted badges by name, so 10-Year Member appeared before 2-Year Member. It now uses the same ladder order as the admin badge list.
+- How to Earn cards showed blank icons for WPMediaVerse actions and for several other integrations. A third-party manifest that sends a Dashicons class now renders too.
+- The Community Challenges and Redemption Store admin lists loaded every row. Both are paged 20 at a time, and the Kudos Moderation pager is styled again.
+- Toasts: at most three are on screen at once.
+- Developer docs: links that pointed into the source tree now point to GitHub, and manifest examples use Lucide icon names.
+
 ## [1.6.4] - 2026-07-12
 
 Stability and scale release. Contains a fix for a bug that could delete other plugins' queued background jobs, including WooCommerce orders and subscription renewals. Upgrading is strongly recommended for every site.

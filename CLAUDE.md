@@ -26,7 +26,7 @@
 | Field | Value |
 |---|---|
 | **Name** | WB Gamification |
-| **Version** | 1.5.3 (in development, branch perf -> feat/site-owner-controls-1.5.3) |
+| **Version** | 1.6.5 (in development, branch `1.6.5`) |
 | **Path** | `wp-content/plugins/wb-gamification/` |
 | **Namespace** | `WBGam\` (PSR-4, maps to `src/`) |
 | **PHP** | 8.0+ (matches the `Requires PHP` header and composer.json) |
