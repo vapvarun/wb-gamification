@@ -154,7 +154,7 @@ final class SubmissionsPage {
 									?>
 									<tr data-submission-id="<?php echo (int) $row['id']; ?>">
 										<td><?php echo esc_html( $user ? $user->display_name : '#' . $row['user_id'] ); ?></td>
-										<td><code><?php echo esc_html( $action_label ); ?></code></td>
+										<td><span class="wbgam-pill wbgam-pill--neutral"><?php echo esc_html( $action_label ); ?></span></td>
 										<td>
 											<?php if ( ! empty( $row['evidence'] ) ) : ?>
 												<?php

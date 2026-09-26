@@ -432,6 +432,11 @@
 	gap: var(--wbgam-gap-2xs);
 }
 
+/* A tag reads as one unit; inside a table the scroll wrapper absorbs the width. */
+.wbgam-table .wbgam-pill {
+	white-space: nowrap;
+}
+
 .wbgam-pill--active {
 	background: var(--wbgam-success-bg-strong);
 	color: var(--wbgam-success-darker);

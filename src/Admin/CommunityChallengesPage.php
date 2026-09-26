@@ -386,7 +386,7 @@ final class CommunityChallengesPage {
 										<br><small class="wbgam-text-muted"><?php echo esc_html( wp_trim_words( $c['description'], 10 ) ); ?></small>
 									<?php endif; ?>
 								</td>
-								<td><code><?php echo esc_html( $action_label ); ?></code></td>
+								<td><span class="wbgam-pill wbgam-pill--neutral"><?php echo esc_html( $action_label ); ?></span></td>
 								<td class="wbgam-cell--minw">
 									<div class="wbgam-flex-row">
 										<div class="wbgam-progress">

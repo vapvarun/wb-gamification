@@ -470,7 +470,7 @@ final class RedemptionStorePage {
 								$item_label = $pt_label_map[ $item_slug ] ?? $item_slug;
 								?>
 								<td><strong><?php echo esc_html( number_format_i18n( $item['points_cost'] ) ); ?></strong> <?php echo esc_html( $item_label ); ?></td>
-								<td><code><?php echo esc_html( $type_label ); ?></code></td>
+								<td><span class="wbgam-pill wbgam-pill--neutral"><?php echo esc_html( $type_label ); ?></span></td>
 								<td><?php echo esc_html( $stock_label ); ?></td>
 								<td>
 									<span class="wbgam-pill wbgam-pill--<?php echo esc_attr( $status_class ); ?>">

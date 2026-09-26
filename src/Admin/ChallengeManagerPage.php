@@ -312,7 +312,7 @@ final class ChallengeManagerPage {
 							?>
 							<tr>
 								<td><strong><?php echo esc_html( $c['title'] ); ?></strong></td>
-								<td><code><?php echo esc_html( $action_label ); ?></code></td>
+								<td><span class="wbgam-pill wbgam-pill--neutral"><?php echo esc_html( $action_label ); ?></span></td>
 								<td><?php echo esc_html( $c['target'] ); ?></td>
 								<td><?php echo esc_html( $c['bonus_points'] ); ?></td>
 								<td>
