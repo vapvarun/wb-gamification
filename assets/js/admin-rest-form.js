@@ -189,8 +189,18 @@
 		}
 		if ( after === 'remove-row' && button ) {
 			const row = button.closest( 'tr' );
-			if ( row ) {
-				row.remove();
+			if ( ! row ) {
+				return;
+			}
+			const tbody = row.parentElement;
+			const card  = row.closest( '.wbgam-card' ) || row.closest( 'table' );
+			row.remove();
+			// Removing the row in place is only right while the rest of the page stays true.
+			// Reload when the table is now empty (the server shows the empty state, or falls
+			// back to the previous page) or when the list is paged (the "Page x of y (N ...)"
+			// count and the page boundaries are server-rendered and are now stale).
+			if ( ( tbody && ! tbody.querySelector( 'tr' ) ) || ( card && card.querySelector( '.wbgam-pager' ) ) ) {
+				window.location.reload();
 			}
 		}
 	}
