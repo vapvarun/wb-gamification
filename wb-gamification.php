@@ -243,6 +243,8 @@ final class WB_Gamification {
 		( new \WBGam\Blocks\Registrar( WB_GAM_PATH . 'build' ) )->init();
 		add_action( 'init', array( ShortcodeHandler::class, 'init' ) );
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_assets' ) );
+		// One place that serves the right-to-left stylesheet on RTL sites, for every handle.
+		add_filter( 'style_loader_src', array( $this, 'rtl_stylesheet_src' ), 10, 2 );
 		// The dialog utility is needed in the ADMIN too (the deactivation-feedback modal on
 		// plugins.php). Priority 1 so the handle exists before any admin screen declares it.
 		add_action( 'admin_enqueue_scripts', array( $this, 'register_dialog_script' ), 1 );
@@ -497,6 +499,39 @@ final class WB_Gamification {
 			WB_GAM_VERSION,
 			true
 		);
+	}
+
+	/**
+	 * On an RTL site, serve this plugin's generated -rtl twin of a stylesheet.
+	 *
+	 * The build writes a right-to-left copy next to every stylesheet (foo.css -> foo-rtl.css,
+	 * foo.min.css -> foo-rtl.min.css) but nothing registered them, so RTL sites loaded the
+	 * left-to-right CSS. Doing it here, at print time, covers every handle - including ones
+	 * registered later or enqueued late in the footer - without a wp_style_add_data() call
+	 * per registration that the next new stylesheet would forget. Block styles that core
+	 * already swapped (block.json + a -rtl file) are left alone.
+	 *
+	 * @since 1.6.5
+	 *
+	 * @param string|false $src    Stylesheet URL.
+	 * @param string       $handle Style handle (unused).
+	 * @return string|false
+	 */
+	public function rtl_stylesheet_src( $src, string $handle ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed -- filter signature.
+		if ( ! is_string( $src ) || ! is_rtl() || ! str_starts_with( $src, WB_GAM_URL ) || str_contains( $src, '-rtl.' ) ) {
+			return $src;
+		}
+
+		$parts = wp_parse_url( $src );
+		$path  = $parts['path'] ?? '';
+		$rtl   = preg_replace( '/(\.min)?\.css$/', '-rtl$1.css', $path, 1 );
+		$base  = (string) wp_parse_url( WB_GAM_URL, PHP_URL_PATH );
+
+		if ( ! is_string( $rtl ) || $rtl === $path || ! str_starts_with( $rtl, $base ) || ! file_exists( WB_GAM_PATH . substr( $rtl, strlen( $base ) ) ) ) {
+			return $src;
+		}
+
+		return str_replace( $path, $rtl, $src );
 	}
 
 	public function enqueue_assets(): void {
