@@ -122,20 +122,13 @@ if ( '' !== $wb_gam_category ) {
  */
 $wb_gam_badges = (array) apply_filters( 'wb_gam_block_badge_showcase_data', $wb_gam_badges, $wb_gam_attrs, $wb_gam_user_id );
 
-// Sort earned first, then by earned_at desc; locked at end alphabetically.
+// Ladder order comes from the engine (category, then threshold), the same order the admin
+// badge list uses. Earned-first is a stable partition on top of it (usort is stable on
+// PHP 8), never a re-sort: re-sorting by name put "10-Year" before "2-Year".
+$wb_gam_badges = BadgeEngine::sort_for_display( $wb_gam_badges );
 usort(
 	$wb_gam_badges,
-	static function ( array $a, array $b ): int {
-		$a_earned = ! empty( $a['earned'] );
-		$b_earned = ! empty( $b['earned'] );
-		if ( $a_earned !== $b_earned ) {
-			return $a_earned ? -1 : 1;
-		}
-		if ( $a_earned ) {
-			return strcmp( (string) ( $b['earned_at'] ?? '' ), (string) ( $a['earned_at'] ?? '' ) );
-		}
-		return strcasecmp( (string) ( $a['name'] ?? '' ), (string) ( $b['name'] ?? '' ) );
-	}
+	static fn( array $a, array $b ): int => (int) empty( $a['earned'] ) <=> (int) empty( $b['earned'] )
 );
 
 if ( $wb_gam_limit > 0 && count( $wb_gam_badges ) > $wb_gam_limit ) {
