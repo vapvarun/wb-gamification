@@ -316,8 +316,15 @@
 .gam-card__head {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 12px;
   margin-bottom: 12px;
+}
+
+/* The title takes the free space, so it sits beside the icon and any count pill ends the row. */
+.gam-card__head .gam-card__title {
+  flex: 1;
+  min-width: 0;
+  margin-bottom: 0;
 }
 
 .gam-card__icon {
