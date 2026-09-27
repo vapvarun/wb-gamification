@@ -548,7 +548,7 @@ final class DbUpgrader {
 	 * @since 1.6.4
 	 */
 	private static function ensure_scale_indexes(): void {
-		$flag_key = 'wb_gam_feature_scale_indexes_v1';
+		$flag_key = 'wb_gam_feature_scale_indexes_v2'; // v2 (1.6.5): redemptions by status.
 		if ( get_option( $flag_key ) ) {
 			return;
 		}
@@ -559,7 +559,10 @@ final class DbUpgrader {
 			'wb_gam_user_badges'       => array( 'idx_badge_id' => '(badge_id)' ),
 			'wb_gam_kudos'             => array( 'idx_revoked_created' => '(revoked_at, created_at)' ),
 			'wb_gam_submissions'       => array( 'idx_created' => '(created_at)' ),
-			'wb_gam_redemptions'       => array( 'idx_user_created' => '(user_id, created_at)' ),
+			'wb_gam_redemptions'       => array(
+				'idx_user_created' => '(user_id, created_at)',
+				'idx_status_id'    => '(status, id)',
+			),
 			'wb_gam_user_intelligence' => array( 'idx_computed_at' => '(computed_at)' ),
 		);
 

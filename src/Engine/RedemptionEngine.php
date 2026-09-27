@@ -639,6 +639,48 @@ final class RedemptionEngine {
 	// ── User redemption history ──────────────────────────────────────────────
 
 	/**
+	 * Every member's redemptions, newest first, one page at a time, optionally by status.
+	 *
+	 * The fulfilment queue for the admin log and for GET /redemptions (apps and integrations that
+	 * fulfil rewards). Paged on the primary key; `status` uses idx_status_id.
+	 *
+	 * @param string $status   '' for all, or pending|pending_fulfillment|fulfilled|refunded.
+	 * @param int    $page     1-based page.
+	 * @param int    $per_page Rows per page (1-100).
+	 * @return array{items: array<int, array<string, mixed>>, total: int}
+	 */
+	public static function list_redemptions( string $status = '', int $page = 1, int $per_page = 20 ): array {
+		global $wpdb;
+		$per_page = max( 1, min( 100, $per_page ) );
+		$offset   = ( max( 1, $page ) - 1 ) * $per_page;
+		$where    = '' === $status ? '1=1' : $wpdb->prepare( 'r.status = %s', $status );
+
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared -- $where is prepared above.
+		$total = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}wb_gam_redemptions r WHERE {$where}" );
+		$items = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT r.id, r.user_id, r.item_id, r.points_cost, r.status, r.coupon_code, r.created_at,
+				        COALESCE(i.title, %s) AS title, COALESCE(i.reward_type, '') AS reward_type
+				   FROM {$wpdb->prefix}wb_gam_redemptions r
+				   LEFT JOIN {$wpdb->prefix}wb_gam_redemption_items i ON i.id = r.item_id
+				  WHERE {$where}
+				  ORDER BY r.id DESC
+				  LIMIT %d OFFSET %d",
+				__( 'Removed reward', 'wb-gamification' ),
+				$per_page,
+				$offset
+			),
+			ARRAY_A
+		) ?: array();
+		// phpcs:enable
+
+		return array(
+			'items' => $items,
+			'total' => $total,
+		);
+	}
+
+	/**
 	 * Get a user's redemption history.
 	 *
 	 * @param int $user_id User ID to retrieve history for.

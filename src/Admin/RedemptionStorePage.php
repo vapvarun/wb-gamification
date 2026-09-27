@@ -526,20 +526,7 @@ final class RedemptionStorePage {
 			// but the table was only readable via direct DB query. This
 			// surfaces the last 50 redemptions inline so support staff can
 			// trace coupon codes and fulfilment status without WP-CLI.
-			$transactions_table      = $wpdb->prefix . 'wb_gam_redemptions';
-			$transaction_items_table = $wpdb->prefix . 'wb_gam_redemption_items';
-			// phpcs:disable WordPress.DB.DirectDatabaseQuery -- Admin list, infrequent, no cache invalidation needed.
-			$transactions = $wpdb->get_results(
-				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table names are prefixed constants.
-				"SELECT r.id, r.user_id, r.points_cost, r.status, r.coupon_code, r.created_at,
-				        i.title AS reward_title, i.reward_type
-				   FROM {$transactions_table} r
-				   LEFT JOIN {$transaction_items_table} i ON i.id = r.item_id
-				  ORDER BY r.created_at DESC
-				  LIMIT 50",
-				ARRAY_A
-			) ?: array();
-			// phpcs:enable WordPress.DB.DirectDatabaseQuery
+			$transactions = \WBGam\Engine\RedemptionEngine::list_redemptions( '', 1, 50 )['items'];
 			?>
 			<div class="wbgam-card wbgam-stack-block">
 				<div class="wbgam-card-header">
@@ -584,7 +571,7 @@ final class RedemptionStorePage {
 								<tr>
 									<td><?php echo esc_html( $txn_when ? wp_date( 'M j, Y · H:i', strtotime( $txn_when . ' UTC' ) ) : '—' ); ?></td>
 									<td><?php echo esc_html( $txn_user_name ); ?></td>
-									<td><?php echo esc_html( (string) ( $txn['reward_title'] ?? __( '- deleted reward -', 'wb-gamification' ) ) ); ?></td>
+									<td><?php echo esc_html( (string) $txn['title'] ); ?></td>
 									<td><strong><?php echo esc_html( number_format_i18n( (int) $txn['points_cost'] ) ); ?></strong></td>
 									<td>
 										<?php if ( ! empty( $txn['coupon_code'] ) ) : ?>

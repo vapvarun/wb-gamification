@@ -443,7 +443,8 @@ final class Installer {
 			PRIMARY KEY (id),
 			KEY user_id (user_id),
 			KEY item_id (item_id),
-			KEY created_at (created_at)
+			KEY created_at (created_at),
+			KEY idx_status_id (status, id)
 		) $charset;"
 		);
 

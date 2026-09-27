@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 
 ### Added
 
+- `GET /redemptions` lists every member's redemptions for staff and integrations (the fulfilment queue): newest first, filter by `status`, paged with `page` / `per_page` and the `X-WP-Total` headers; requires `wb_gam_manage_rewards`. The admin Recent Redemptions log uses the same query.
+
 - Give Kudos suggests recipients as the member types: a keyboard-accessible list with avatar, name and @handle. `GET /members` takes `context=view` for a public-fields member lookup (id, name, slug, avatar) available to any logged-in member.
 
 ### Changed

@@ -3,15 +3,15 @@
   "plugin": {
     "slug": "wb-gamification",
     "name": "WB Gamification",
-    "version": "1.6.4",
+    "version": "1.6.5",
     "namespace": "WBGam\\",
     "main_file": "wb-gamification.php",
     "extends": null,
     "extension_hook_fired": "wb_gam_free_loaded"
   },
   "counts": {
-    "rest_endpoints": 66,
-    "rest_endpoint_method_rows": 76,
+    "rest_endpoints": 75,
+    "rest_endpoint_method_rows": 112,
     "ajax_handlers": 0,
     "admin_pages": 15,
     "shortcodes": 17,

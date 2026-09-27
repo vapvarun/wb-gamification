@@ -137,6 +137,30 @@ class RedemptionController extends WP_REST_Controller {
 			$this->namespace,
 			'/' . $this->rest_base,
 			array(
+				// The fulfilment queue: every member's redemptions, for staff and integrations.
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'list_redemptions' ),
+					'permission_callback' => array( $this, 'admin_check' ),
+					'args'                => array(
+						'status'   => array(
+							'type'    => 'string',
+							'enum'    => array( '', 'pending', 'pending_fulfillment', 'fulfilled', 'refunded' ),
+							'default' => '',
+						),
+						'page'     => array(
+							'type'    => 'integer',
+							'minimum' => 1,
+							'default' => 1,
+						),
+						'per_page' => array(
+							'type'    => 'integer',
+							'minimum' => 1,
+							'maximum' => 100,
+							'default' => 20,
+						),
+					),
+				),
 				array(
 					'methods'             => WP_REST_Server::CREATABLE,
 					'callback'            => array( $this, 'redeem' ),
@@ -573,6 +597,21 @@ class RedemptionController extends WP_REST_Controller {
 		return \WBGam\Engine\Capabilities::user_can( 'wb_gam_manage_rewards' )
 			? true
 			: new WP_Error( 'rest_forbidden', __( 'You do not have permission to manage rewards.', 'wb-gamification' ), array( 'status' => 403 ) );
+	}
+
+	/**
+	 * GET /redemptions - every member's redemptions, newest first, paged, optionally by status.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response
+	 */
+	public function list_redemptions( WP_REST_Request $request ): WP_REST_Response {
+		$per_page = (int) $request['per_page'];
+		$result   = RedemptionEngine::list_redemptions( (string) $request['status'], (int) $request['page'], $per_page );
+		$response = rest_ensure_response( $result['items'] );
+		$response->header( 'X-WP-Total', (string) $result['total'] );
+		$response->header( 'X-WP-TotalPages', (string) max( 1, (int) ceil( $result['total'] / max( 1, $per_page ) ) ) );
+		return $response;
 	}
 
 	/**
