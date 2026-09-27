@@ -103,6 +103,42 @@ All errors use the standard WordPress REST error envelope.
 | 410 | Gone. Credential has expired |
 | 422 | Unprocessable. Business rule violation (e.g. kudos daily limit) |
 
+## Discovery
+
+Machine-readable endpoints for AI agents, SDK generators, and API explorers.
+
+| Method | Endpoint | Permission |
+|--------|----------|------------|
+| `GET` | `/abilities` | Public |
+| `GET` | `/openapi.json` | Public |
+
+### GET /abilities
+
+Lists every gamification ability the WP Abilities API (6.9+) exposes, with its label, description, endpoint, HTTP methods, parameters, and auth level. On WP versions without the Abilities API this route is the only way to discover the same catalog; each ability proxies to its documented REST route under the hood, so calling an ability enforces that route's own permission check.
+
+```bash
+curl https://example.com/wp-json/wb-gamification/v1/abilities
+```
+
+```json
+{
+  "plugin": "wb-gamification",
+  "version": "1.6.5",
+  "description": "Complete gamification engine for WordPress - points, badges, levels, leaderboards, challenges, streaks.",
+  "abilities": {
+    "wb-gamification/read-leaderboard": { "label": "Read gamification leaderboard", "endpoint": "https://example.com/wp-json/wb-gamification/v1/leaderboard", "methods": [ "GET" ], "auth": "none" }
+  }
+}
+```
+
+### GET /openapi.json
+
+Auto-generates a full OpenAPI 3.0.3 specification from every registered route on this namespace, including schemas and argument definitions. Public and unauthenticated so Swagger UI, Postman, and AI agents can import the API surface directly. See [Getting Started](00-getting-started.md) for where this fits in the SDK/tooling workflow.
+
+```bash
+curl https://example.com/wp-json/wb-gamification/v1/openapi.json
+```
+
 ## Making a Request
 
 A complete authenticated read against a member profile:

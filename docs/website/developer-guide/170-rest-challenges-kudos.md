@@ -86,6 +86,7 @@ Peer-to-peer recognition. Kudos always send; a per-user daily limit and a one-ho
 | `GET` | `/kudos` | Public |
 | `POST` | `/kudos` | Must be logged in |
 | `GET` | `/kudos/me` | Must be logged in |
+| `DELETE` | `/kudos/{id}` | `wb_gam_manage_members` |
 
 ### GET /kudos
 
@@ -133,6 +134,22 @@ Current user's kudos stats: `received_total`, `daily_limit` (kudos per day that 
 curl https://example.com/wp-json/wb-gamification/v1/kudos/me \
   -H "X-WP-Nonce: YOUR_NONCE" \
   --cookie "wordpress_logged_in_xxx=..."
+```
+
+### DELETE /kudos/{id}
+
+Revoke a kudos: reverses the point awards on both sides, soft-marks the row, and audits the reversal. Admin (or `wb_gam_manage_members`) only.
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `reason` | string | No | Audit reason recorded on the reversal events |
+
+```bash
+curl -X DELETE https://example.com/wp-json/wb-gamification/v1/kudos/99 \
+  -H "Content-Type: application/json" \
+  -H "X-WP-Nonce: YOUR_NONCE" \
+  --cookie "wordpress_logged_in_xxx=..." \
+  -d '{ "reason": "Duplicate send" }'
 ```
 
 ## Submissions
@@ -203,11 +220,50 @@ The rewards store. Members spend points on catalog items; admins manage the cata
 
 | Method | Endpoint | Permission |
 |--------|----------|------------|
+| `GET` | `/redemptions` | `wb_gam_manage_rewards` |
 | `POST` | `/redemptions` | Must be logged in |
 | `GET` | `/redemptions/items` | Public |
 | `POST` | `/redemptions/items` | `manage_options` |
 | `GET` `POST` `PUT` `PATCH` `DELETE` | `/redemptions/items/{id}` | `manage_options` (write), public (read) |
 | `GET` | `/redemptions/me` | Must be logged in |
+| `POST` | `/redemptions/{id}/fulfill` | `wb_gam_manage_rewards` |
+| `POST` | `/redemptions/{id}/refund` | `wb_gam_manage_rewards` |
+
+### GET /redemptions
+
+New in 1.6.5. Every member's redemptions, newest first, for staff and integrations - the fulfilment queue behind the store. Filterable by status and paginated.
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `status` | string | empty (all) | `''`, `pending`, `pending_fulfillment`, `fulfilled`, or `refunded` |
+| `page` | int | 1 | Page number (min 1) |
+| `per_page` | int | 20 | Rows per page (1 to 100) |
+
+Response headers: `X-WP-Total`, `X-WP-TotalPages`.
+
+```bash
+curl "https://example.com/wp-json/wb-gamification/v1/redemptions?status=pending&per_page=20" \
+  -H "X-WP-Nonce: YOUR_NONCE" \
+  --cookie "wordpress_logged_in_xxx=..."
+```
+
+```json
+[
+  {
+    "id": 7,
+    "user_id": 42,
+    "item_id": 3,
+    "points_cost": 500,
+    "status": "pending",
+    "coupon_code": "",
+    "created_at": "2026-03-18 12:00:00",
+    "title": "Sticker Pack",
+    "reward_type": "manual"
+  }
+]
+```
+
+`created_at` is UTC `Y-m-d H:i:s`. `title` and `reward_type` fall back to "Removed reward" and an empty string if the catalog item was deleted since the redemption was made.
 
 ### POST /redemptions
 
@@ -256,4 +312,30 @@ Current user's redemption history.
 curl https://example.com/wp-json/wb-gamification/v1/redemptions/me \
   -H "X-WP-Nonce: YOUR_NONCE" \
   --cookie "wordpress_logged_in_xxx=..."
+```
+
+### POST /redemptions/{id}/fulfill
+
+Mark a redemption fulfilled - the reward has been delivered. Returns 404 if the redemption does not exist, 409 if it is not in a state that can be fulfilled.
+
+```bash
+curl -X POST https://example.com/wp-json/wb-gamification/v1/redemptions/7/fulfill \
+  -H "X-WP-Nonce: YOUR_NONCE" \
+  --cookie "wordpress_logged_in_xxx=..."
+```
+
+### POST /redemptions/{id}/refund
+
+Refund a redemption: credits the points back to the member and restores stock. Returns 404 if the redemption does not exist, 409 if it is not in a state that can be refunded.
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `note` | string | No | Reason recorded on the refund |
+
+```bash
+curl -X POST https://example.com/wp-json/wb-gamification/v1/redemptions/7/refund \
+  -H "Content-Type: application/json" \
+  -H "X-WP-Nonce: YOUR_NONCE" \
+  --cookie "wordpress_logged_in_xxx=..." \
+  -d '{ "note": "Out of stock, refunding points" }'
 ```

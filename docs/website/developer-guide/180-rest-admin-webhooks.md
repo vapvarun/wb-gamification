@@ -87,6 +87,63 @@ curl https://example.com/wp-json/wb-gamification/v1/rules \
   --cookie "wordpress_logged_in_xxx=..."
 ```
 
+## Cohort Settings
+
+Cohort league tier names, promotion/demotion thresholds, and duration. Stored as a single options document plus the leagues on/off switch (Settings > Modules); the endpoint reads and writes both together.
+
+| Method | Endpoint | Permission |
+|--------|----------|------------|
+| `GET` | `/cohort-settings` | `manage_options` or `wb_gam_manage_challenges` |
+| `POST` | `/cohort-settings` | `manage_options` or `wb_gam_manage_challenges` |
+
+### GET /cohort-settings
+
+Read the current cohort settings document.
+
+```bash
+curl https://example.com/wp-json/wb-gamification/v1/cohort-settings \
+  -H "X-WP-Nonce: YOUR_NONCE" \
+  --cookie "wordpress_logged_in_xxx=..."
+```
+
+```json
+{
+  "tier_1": "Bronze",
+  "tier_2": "Silver",
+  "tier_3": "Gold",
+  "tier_4": "Diamond",
+  "tier_5": "Obsidian",
+  "promote_pct": 20,
+  "demote_pct": 20,
+  "duration": "weekly",
+  "enabled": false
+}
+```
+
+### POST /cohort-settings
+
+Save the cohort settings document.
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `tier_1` | string | Yes | Name of the lowest tier |
+| `tier_2` | string | Yes | Name of the second tier |
+| `tier_3` | string | Yes | Name of the third tier |
+| `tier_4` | string | Yes | Name of the fourth tier |
+| `tier_5` | string | No | Name of the fifth (top) tier |
+| `promote_pct` | int | Yes | Percentage promoted to the tier above each period (1 to 50) |
+| `demote_pct` | int | Yes | Percentage demoted to the tier below each period (1 to 50) |
+| `duration` | string | Yes | `weekly` or `monthly` |
+| `enabled` | boolean | No | Turns cohort leagues on or off. Since 1.6.5 the admin form no longer sends this - use Settings > Modules instead - but a client that sends it still flips the switch |
+
+```bash
+curl -X POST https://example.com/wp-json/wb-gamification/v1/cohort-settings \
+  -H "Content-Type: application/json" \
+  -H "X-WP-Nonce: YOUR_NONCE" \
+  --cookie "wordpress_logged_in_xxx=..." \
+  -d '{ "tier_1": "Bronze", "tier_2": "Silver", "tier_3": "Gold", "tier_4": "Diamond", "promote_pct": 20, "demote_pct": 20, "duration": "weekly" }'
+```
+
 ## Webhooks
 
 Outbound webhook registrations. See the [Webhooks Overview](190-webhooks-overview.md) for payload shapes, signing, and retries.
@@ -181,11 +238,54 @@ curl -X POST https://example.com/wp-json/wb-gamification/v1/api-keys/5/revoke \
 
 ## Capabilities
 
-Discovery endpoint for mobile apps and remote sites. Returns authentication status, a permissions map, feature flags, plugin version, and all endpoint URLs.
+Discovery endpoint for mobile apps and remote sites. Returns authentication status, a permissions map, feature flags, plugin version, and all endpoint URLs. Separately, the staff-permissions delegation matrix - which roles hold which `wb_gam_*` capabilities - is managed under `/settings/capabilities`.
 
 | Method | Endpoint | Permission |
 |--------|----------|------------|
 | `GET` | `/capabilities` | Public |
+| `GET` | `/settings/capabilities` | `manage_options` |
+| `POST` `PUT` `PATCH` | `/settings/capabilities` | `manage_options` |
+
+### GET /settings/capabilities
+
+Read the staff-permissions delegation matrix: every plugin capability and which roles currently hold it. Deliberately gated to `manage_options` only, never a granular cap - the surface that grants capabilities can never itself be one of the capabilities you can grant.
+
+```bash
+curl https://example.com/wp-json/wb-gamification/v1/settings/capabilities \
+  -H "X-WP-Nonce: YOUR_NONCE" \
+  --cookie "wordpress_logged_in_xxx=..."
+```
+
+```json
+{
+  "capabilities": [ "wb_gam_award_manual", "wb_gam_manage_members", "wb_gam_manage_rewards" ],
+  "roles": { "administrator": [ "wb_gam_award_manual", "wb_gam_manage_members" ], "editor": [] }
+}
+```
+
+### POST /settings/capabilities
+
+Set the delegation matrix. Goes through the same write path as the Settings > Access admin screen, so the two surfaces never disagree about who holds what.
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `roles` | object | Yes | Map of role slug to the array of `wb_gam_*` capabilities that role should hold. A role mapped to an empty list loses all plugin capabilities |
+
+```bash
+curl -X POST https://example.com/wp-json/wb-gamification/v1/settings/capabilities \
+  -H "Content-Type: application/json" \
+  -H "X-WP-Nonce: YOUR_NONCE" \
+  --cookie "wordpress_logged_in_xxx=..." \
+  -d '{ "roles": { "editor": [ "wb_gam_award_manual" ] } }'
+```
+
+```json
+{
+  "capabilities": [ "wb_gam_award_manual", "wb_gam_manage_members", "wb_gam_manage_rewards" ],
+  "roles": { "administrator": [ "wb_gam_award_manual", "wb_gam_manage_members" ], "editor": [ "wb_gam_award_manual" ] },
+  "applied": true
+}
+```
 
 ```bash
 curl https://example.com/wp-json/wb-gamification/v1/capabilities \
@@ -328,6 +428,7 @@ Settings portability and maintenance (Settings > Tools). Added in 1.5.3. All adm
 | `POST` | `/tools/import-settings` | `manage_options` |
 | `POST` | `/tools/recompute-leaderboard` | `manage_options` |
 | `POST` | `/tools/reset-progress` | `manage_options` |
+| `POST` | `/tools/retry-side-effect/{id}` | `manage_options` |
 
 ### GET /tools/export-settings
 
@@ -371,4 +472,71 @@ curl -X POST https://example.com/wp-json/wb-gamification/v1/tools/reset-progress
   -H "X-WP-Nonce: YOUR_NONCE" \
   --cookie "wordpress_logged_in_xxx=..." \
   -d '{ "confirm": true }'
+```
+
+### POST /tools/retry-side-effect/{id}
+
+Re-run one failed background side effect (an email, webhook or notification that failed after the points were already awarded), by its id from the Analytics dead-letter panel. Returns `{ "success": true, "id": 12 }`; a missing id is a 404 and a retry that cannot run is a 409 with `code` `wb_gam_side_effect_handler_unregistered`, `wb_gam_side_effect_event_payload_unparseable` or `wb_gam_side_effect_retry_failed`.
+
+```bash
+curl -X POST https://example.com/wp-json/wb-gamification/v1/tools/retry-side-effect/12 \
+  -H "X-WP-Nonce: YOUR_NONCE" \
+  --cookie "wordpress_logged_in_xxx=..."
+```
+
+## Import
+
+Migrate points, badges and ranks from another gamification plugin (Settings > Import). Requires `wb_gam_manage_members`. Imports run in import mode, so members are not sent "you earned a badge" messages for history.
+
+| Method | Endpoint | Permission |
+|--------|----------|------------|
+| `GET` | `/import/sources` | `wb_gam_manage_members` |
+| `POST` | `/import/{source}` | `wb_gam_manage_members` |
+
+### GET /import/sources
+
+List the supported sources and whether each has data on this site: `{ "sources": [ { "slug": "gamipress", "label": "GamiPress", "available": true }, ... ] }`. Sources are `gamipress`, `mycred` and `badgeos`.
+
+### POST /import/{source}
+
+Import from one source. Re-running is safe: every imported row carries a stable source key, so nothing is imported twice.
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `source` | string | Yes | `gamipress`, `mycred` or `badgeos` (in the URL) |
+| `dry_run` | boolean | No | Default `true`: report what would be imported without writing. Send `false` to import |
+
+An unknown source or a source with no data returns 400 (`wb_gam_unknown_source`, `wb_gam_source_unavailable`).
+
+```bash
+curl -X POST https://example.com/wp-json/wb-gamification/v1/import/mycred \
+  -H "Content-Type: application/json" \
+  -H "X-WP-Nonce: YOUR_NONCE" \
+  --cookie "wordpress_logged_in_xxx=..." \
+  -d '{ "dry_run": false }'
+```
+
+## Email settings
+
+Which transactional emails members receive. Requires `wb_gam_manage_email_settings` (administrators by default).
+
+| Method | Endpoint | Permission |
+|--------|----------|------------|
+| `GET` | `/settings/emails` | `wb_gam_manage_email_settings` |
+| `POST` | `/settings/emails` | `wb_gam_manage_email_settings` |
+
+### GET /settings/emails
+
+Returns one boolean per email: `{ "level_up": true, "badge_earned": true, "challenge_completed": false, "redemption": true }`.
+
+### POST /settings/emails
+
+Send only the emails you want to change; any key you leave out keeps its current value. Returns `{ "ok": true, "settings": { ... } }` with all four values.
+
+```bash
+curl -X POST https://example.com/wp-json/wb-gamification/v1/settings/emails \
+  -H "Content-Type: application/json" \
+  -H "X-WP-Nonce: YOUR_NONCE" \
+  --cookie "wordpress_logged_in_xxx=..." \
+  -d '{ "challenge_completed": true }'
 ```

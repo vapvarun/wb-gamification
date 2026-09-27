@@ -13,7 +13,12 @@ Endpoints for member profiles, the points ledger, point types, and currency conv
 | `GET` | `/members/{id}/badges` | Public |
 | `GET` | `/members/{id}/events` | Self or admin |
 | `GET` | `/members/{id}/streak` | Public |
+| `POST` | `/members/{id}/streak` | `wb_gam_manage_members` |
+| `DELETE` | `/members/{id}/streak` | `wb_gam_manage_members` |
+| `GET` | `/members/{id}/intelligence` | Self or `wb_gam_view_analytics`/admin |
 | `GET` | `/members/me/toasts` | Must be logged in |
+| `GET` | `/members/me/profile-visibility` | Must be logged in |
+| `POST` | `/members/me/profile-visibility` | Must be logged in |
 
 ### GET /members
 
@@ -119,6 +124,116 @@ Streak data with an optional contribution heatmap.
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `heatmap_days` | int | 0 | Include N days of contribution data. 0 = skip |
+
+### POST /members/{id}/streak
+
+Admin adjustment for a member's streak values. A support/moderation surface for fixing a broken or wrong streak; the change is audited to the event log and fires `wb_gam_streak_adjusted`.
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `current_streak` | int | No | New current streak. Omit to leave unchanged |
+| `longest_streak` | int | No | New longest streak. Omit to derive as max(current, existing) |
+| `reason` | string | No | Audit reason recorded on the event |
+
+```bash
+curl -X POST https://example.com/wp-json/wb-gamification/v1/members/42/streak \
+  -H "Content-Type: application/json" \
+  -H "X-WP-Nonce: YOUR_NONCE" \
+  --cookie "wordpress_logged_in_xxx=..." \
+  -d '{ "current_streak": 5, "reason": "Support fix for missed check-in" }'
+```
+
+```json
+{ "user_id": 42, "current_streak": 5, "longest_streak": 12, "last_active": "2026-03-18 12:00:00" }
+```
+
+### DELETE /members/{id}/streak
+
+Admin reset of a member's current streak to 0. The longest streak (all-time record) is preserved. Audited to the event log and fires `wb_gam_streak_reset`.
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `reason` | string | No | Audit reason recorded on the event |
+
+```bash
+curl -X DELETE https://example.com/wp-json/wb-gamification/v1/members/42/streak \
+  -H "Content-Type: application/json" \
+  -H "X-WP-Nonce: YOUR_NONCE" \
+  --cookie "wordpress_logged_in_xxx=..." \
+  -d '{ "reason": "Member requested a fresh start" }'
+```
+
+```json
+{ "user_id": 42, "current_streak": 0, "longest_streak": 12 }
+```
+
+### GET /members/{id}/intelligence
+
+Per-member behavioral intelligence signals computed by the daily projection cron: an engagement score, action diversity, recency, event volume, churn risk, and an anomaly flag for bot-like or grinding behavior. Any member can read their own row; reading another member's row needs `wb_gam_view_analytics` or `manage_options`. If no projection exists yet, the endpoint computes one on demand instead of returning a 404.
+
+```bash
+curl https://example.com/wp-json/wb-gamification/v1/members/42/intelligence \
+  -H "X-WP-Nonce: YOUR_NONCE" \
+  --cookie "wordpress_logged_in_xxx=..."
+```
+
+```json
+{
+  "user_id": 42,
+  "engagement_score": 1.8,
+  "action_diversity": 6,
+  "recency_days": 1,
+  "events_30d": 42,
+  "churn_risk": 0.15,
+  "anomaly_flag": false,
+  "computed_at": "2026-03-18 12:00:00"
+}
+```
+
+The projection may lag up to 24 hours behind ground truth on quiet installs. `computed_at` is UTC `Y-m-d H:i:s`.
+
+## Profile Visibility
+
+The member's own choice of whether their gamification profile is publicly visible. Distinct from the site-wide `wb_gam_profile_public_enabled` kill-switch: this endpoint always operates on the current user, so the permission gate is simply being logged in.
+
+| Method | Endpoint | Permission |
+|--------|----------|------------|
+| `GET` | `/members/me/profile-visibility` | Must be logged in |
+| `POST` | `/members/me/profile-visibility` | Must be logged in |
+
+### GET /members/me/profile-visibility
+
+Read the current member's visibility choice.
+
+```bash
+curl https://example.com/wp-json/wb-gamification/v1/members/me/profile-visibility \
+  -H "X-WP-Nonce: YOUR_NONCE" \
+  --cookie "wordpress_logged_in_xxx=..."
+```
+
+```json
+{ "public": true, "site_enabled": true }
+```
+
+### POST /members/me/profile-visibility
+
+Set the current member's visibility choice.
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `public` | boolean | Yes | Whether the member wants their profile publicly visible |
+
+```bash
+curl -X POST https://example.com/wp-json/wb-gamification/v1/members/me/profile-visibility \
+  -H "Content-Type: application/json" \
+  -H "X-WP-Nonce: YOUR_NONCE" \
+  --cookie "wordpress_logged_in_xxx=..." \
+  -d '{ "public": false }'
+```
+
+```json
+{ "public": false, "site_enabled": true }
+```
 
 ### GET /members/me/toasts
 
