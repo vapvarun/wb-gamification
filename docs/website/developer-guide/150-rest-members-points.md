@@ -93,6 +93,8 @@ curl "https://example.com/wp-json/wb-gamification/v1/members/42/points?per_page=
 }
 ```
 
+`created_at` (and `earned_at` on the badge endpoints) is UTC `Y-m-d H:i:s`.
+
 ### GET /members/{id}/level
 
 Current level and full level ladder with progress.

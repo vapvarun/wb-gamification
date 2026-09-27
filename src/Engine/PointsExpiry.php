@@ -141,14 +141,7 @@ final class PointsExpiry {
 		global $wpdb;
 		$type = PointsEngine::resolve_type( null );
 
-		// The cutoff is compared against MAX(created_at) further down -- in PHP, not in SQL -- and
-		// created_at is written with current_time( 'mysql' ), so it is the SITE's clock. This was
-		// gmdate(), i.e. UTC, so the inactivity window was wrong by the site's offset in whichever
-		// direction the site sits: on a site behind UTC a member's last activity looked older than it
-		// was and their points decayed hours early.
-		//
-		// It survived every previous sweep because the comparison happens in PHP after the rows come
-		// back, and the gate only inspected $wpdb calls. It does not any more (Check D).
+		// Compared in PHP against MAX(created_at) below; both are UTC Y-m-d H:i:s strings.
 		$cutoff  = Clock::site_cutoff( "-{$days} days" );
 		$started = microtime( true );
 
@@ -246,12 +239,8 @@ final class PointsExpiry {
 
 				$result = PointsEngine::debit( $user_id, $amount, 'points_decay', '', $type );
 				if ( ! empty( $result['success'] ) ) {
-					// Same clock as $last_activity (MAX(created_at), site-local via
-					// current_time). Writing this UTC while comparing it against a
-					// site-local timestamp skewed the "already decayed since last
-					// activity" guard by the site's offset -- the same clock-seam
-					// the cutoff at the top of this method already fixed.
-					update_user_meta( $user_id, self::META_LAST, current_time( 'mysql' ) );
+					// UTC, the same clock as $last_activity (MAX(created_at)).
+					update_user_meta( $user_id, self::META_LAST, current_time( 'mysql', true ) );
 					++$decayed;
 				}
 			}

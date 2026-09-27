@@ -121,8 +121,7 @@ final class StatusRetentionEngine {
 			return; // Need at least two levels for threshold logic.
 		}
 
-		// Site clock: every one of these bounds wb_gam_points.created_at, written with
-		// current_time( 'mysql' ). See WBGam\Engine\Clock.
+		// Site-calendar windows, as UTC bounds for the UTC created_at column. See WBGam\Engine\Clock.
 		$week_start    = Clock::site_cutoff( 'monday this week' );
 		$four_wk_start = Clock::site_cutoff( '-4 weeks' );
 		$cutoff        = Clock::site_cutoff( '-7 days' );
@@ -197,7 +196,7 @@ final class StatusRetentionEngine {
 		foreach ( $ids_ints as $user_id ) {
 			// Skip if nudged recently (meta primed for the page above).
 			$last_nudge = get_user_meta( $user_id, self::NUDGE_META, true );
-			if ( $last_nudge && strtotime( $last_nudge ) >= strtotime( $cutoff ) ) {
+			if ( $last_nudge && $last_nudge >= $cutoff ) { // Both UTC Y-m-d H:i:s.
 				continue;
 			}
 
@@ -293,7 +292,7 @@ final class StatusRetentionEngine {
 			);
 		}
 
-		update_user_meta( $user_id, self::NUDGE_META, current_time( 'mysql' ) );
+		update_user_meta( $user_id, self::NUDGE_META, current_time( 'mysql', true ) );
 
 		/**
 		 * Fires when a status-retention nudge is dispatched.

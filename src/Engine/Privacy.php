@@ -316,7 +316,7 @@ final class Privacy {
 					),
 					array(
 						'name'  => __( 'Date', 'wb-gamification' ),
-						'value' => $row['created_at'],
+						'value' => self::site_time( $row['created_at'] ),
 					),
 				),
 			);
@@ -354,7 +354,7 @@ final class Privacy {
 						),
 						array(
 							'name'  => __( 'Earned At', 'wb-gamification' ),
-							'value' => $row['earned_at'],
+							'value' => self::site_time( $row['earned_at'] ),
 						),
 					),
 				);
@@ -471,6 +471,9 @@ final class Privacy {
 				if ( '' === $value || null === $value ) {
 					continue;
 				}
+				if ( in_array( $key, array( 'wb_gam_decayed_at', 'wb_gam_last_retention_nudge' ), true ) ) {
+					$value = self::site_time( $value ); // Stored in UTC.
+				}
 				$meta_rows[] = array(
 					'name'  => $label,
 					'value' => is_scalar( $value ) ? (string) $value : wp_json_encode( $value ),
@@ -525,11 +528,11 @@ final class Privacy {
 						),
 						array(
 							'name'  => __( 'Submitted', 'wb-gamification' ),
-							'value' => $row['created_at'],
+							'value' => self::site_time( $row['created_at'] ),
 						),
 						array(
 							'name'  => __( 'Reviewed', 'wb-gamification' ),
-							'value' => (string) ( $row['reviewed_at'] ?? '' ),
+							'value' => self::site_time( $row['reviewed_at'] ?? '' ),
 						),
 					),
 				);
@@ -594,7 +597,7 @@ final class Privacy {
 					),
 					array(
 						'name'  => __( 'Date', 'wb-gamification' ),
-						'value' => $row['created_at'],
+						'value' => self::site_time( $row['created_at'] ),
 					),
 				),
 			);
@@ -772,5 +775,15 @@ final class Privacy {
 				: array(),
 			'done'           => true,
 		);
+	}
+
+	/**
+	 * A stored UTC datetime as site time for the export; empty stays empty.
+	 *
+	 * @param mixed $utc UTC Y-m-d H:i:s value.
+	 * @return string
+	 */
+	private static function site_time( $utc ): string {
+		return is_string( $utc ) && '' !== $utc ? get_date_from_gmt( $utc ) : '';
 	}
 }

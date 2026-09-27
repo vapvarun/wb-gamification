@@ -163,8 +163,9 @@ final class PointTypeRepository {
 				'icon'        => isset( $data['icon'] ) ? (string) $data['icon'] : null,
 				'is_default'  => ! empty( $data['is_default'] ) ? 1 : 0,
 				'position'    => isset( $data['position'] ) ? (int) $data['position'] : 0,
+				'created_at'  => current_time( 'mysql', true ),
 			),
-			array( '%s', '%s', '%s', '%s', '%d', '%d' )
+			array( '%s', '%s', '%s', '%s', '%d', '%d', '%s' )
 		);
 
 		if ( $inserted ) {

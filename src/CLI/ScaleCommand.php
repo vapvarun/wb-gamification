@@ -159,7 +159,7 @@ final class ScaleCommand {
 		\WP_CLI::line( "Seeding {$user_count} users × {$per_user} events = {$total_events} ledger rows…" );
 
 		global $wpdb;
-		$now      = current_time( 'mysql' );
+		$now      = current_time( 'mysql', true ); // UTC: user_registered and created_at are UTC columns.
 		$started  = microtime( true );
 		$inserted = 0;
 
@@ -229,7 +229,7 @@ final class ScaleCommand {
 					$args_flat[]    = ( $e % 5 === 0 ) ? 'coins' : 'points';
 					// Spread across last 12 months so period filters get hit.
 					$days_back   = wp_rand( 0, 365 );
-					$args_flat[] = gmdate( 'Y-m-d H:i:s', strtotime( $now ) - ( $days_back * 86400 ) );
+					$args_flat[] = gmdate( 'Y-m-d H:i:s', time() - ( $days_back * 86400 ) );
 				}
 			}
 
@@ -284,8 +284,9 @@ final class ScaleCommand {
 					'id'          => 'scale_seed_badge',
 					'name'        => 'Scale Seed Badge',
 					'description' => 'Synthetic badge for the scale benchmark.',
+					'created_at'  => current_time( 'mysql', true ),
 				),
-				array( '%s', '%s', '%s' )
+				array( '%s', '%s', '%s', '%s' )
 			);
 		}
 
@@ -325,7 +326,7 @@ final class ScaleCommand {
 			for ( $i = 0; $i < $slice; $i++ ) {
 				$uid      = $base_uid + $u + $i;
 				$values[] = '(%d, %d, %d, %s)';
-				array_push( $args, $uid, wp_rand( 1, 40 ), wp_rand( 1, 90 ), gmdate( 'Y-m-d' ) );
+				array_push( $args, $uid, wp_rand( 1, 40 ), wp_rand( 1, 90 ), \WBGam\Engine\Clock::site_date() );
 			}
 			// phpcs:disable WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
 			$wpdb->query(
@@ -568,8 +569,7 @@ final class ScaleCommand {
 		// 5. Rate-limit today count — hot on every action that fires.
 		$results['rate_limit_today_count'] = self::time_op(
 			function () use ( $uid, $wpdb ) {
-				// The site's midnight, not UTC's: wb_gam_points.created_at is site-local, and a benchmark
-				// that measures a query the product does not run is not measuring anything.
+				// The site's midnight as a UTC instant, the same bound the product's rate limiter uses.
 				$today = \WBGam\Engine\Clock::site_day_start( 'today' );
 				return (int) $wpdb->get_var(
 					$wpdb->prepare(

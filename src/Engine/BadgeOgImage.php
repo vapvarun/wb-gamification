@@ -34,7 +34,7 @@ final class BadgeOgImage {
 	 *
 	 * @param array          $badge     Badge definition (id, name, description).
 	 * @param \WP_User       $user      Earner.
-	 * @param \DateTime|null $issued_dt Issue date (UTC) or null.
+	 * @param \DateTime|null $issued_dt Issue moment or null.
 	 * @return string Public URL of the cached PNG, or '' on failure.
 	 */
 	public static function ensure( array $badge, \WP_User $user, ?\DateTime $issued_dt ): string {
@@ -47,7 +47,7 @@ final class BadgeOgImage {
 		}
 
 		$issued_label = $issued_dt
-			? date_i18n( get_option( 'date_format' ), $issued_dt->getTimestamp() )
+			? wp_date( get_option( 'date_format' ), $issued_dt->getTimestamp() )
 			: '';
 		$accent       = self::accent_color();
 

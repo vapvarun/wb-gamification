@@ -80,6 +80,8 @@ Example list body (points history):
 }
 ```
 
+All `*_at` values are UTC `Y-m-d H:i:s` (since 1.6.5). Convert to the viewer's or the site's time zone for display.
+
 ## Error Format
 
 All errors use the standard WordPress REST error envelope.

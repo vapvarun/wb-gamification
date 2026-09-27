@@ -1987,7 +1987,7 @@ final class SettingsPage {
 									printf(
 										/* translators: %s: human-readable time difference. */
 										esc_html__( '%s ago', 'wb-gamification' ),
-										esc_html( human_time_diff( strtotime( (string) $kudo['created_at'] ), current_time( 'timestamp' ) ) )
+										esc_html( human_time_diff( strtotime( (string) $kudo['created_at'] . ' UTC' ), time() ) )
 									);
 									?>
 								</span>

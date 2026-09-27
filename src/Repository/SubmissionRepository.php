@@ -12,6 +12,8 @@
 
 namespace WBGam\Repository;
 
+use WBGam\Engine\Clock;
+
 defined( 'ABSPATH' ) || exit;
 // Silencing convention-driven false positives so Plugin Check signal stays clean:
 // - PrefixAllGlobals.NonPrefixedHooknameFound — plugin uses `wb_gam_*` as its
@@ -50,8 +52,9 @@ final class SubmissionRepository {
 				'evidence'     => isset( $row['evidence'] ) ? (string) $row['evidence'] : null,
 				'evidence_url' => isset( $row['evidence_url'] ) ? (string) $row['evidence_url'] : null,
 				'status'       => 'pending',
+				'created_at'   => current_time( 'mysql', true ),
 			),
-			array( '%d', '%s', '%s', '%s', '%s' )
+			array( '%d', '%s', '%s', '%s', '%s', '%s' )
 		);
 		return $ok ? (int) $wpdb->insert_id : 0;
 	}
@@ -121,7 +124,7 @@ final class SubmissionRepository {
 				'status'      => $status,
 				'reviewer_id' => $reviewer_id,
 				'notes'       => $notes ?: null,
-				'reviewed_at' => current_time( 'mysql' ),
+				'reviewed_at' => current_time( 'mysql', true ),
 			),
 			array( 'id' => $id ),
 			array( '%s', '%d', '%s', '%s' ),
@@ -137,13 +140,14 @@ final class SubmissionRepository {
 	 */
 	public function count_today_for_user( int $user_id ): int {
 		global $wpdb;
-		$today = current_time( 'Y-m-d' );
+		// created_at is UTC; "today" is the site's calendar day, as a UTC range.
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		return (int) $wpdb->get_var(
 			$wpdb->prepare(
-				"SELECT COUNT(*) FROM {$wpdb->prefix}wb_gam_submissions WHERE user_id = %d AND DATE(created_at) = %s",
+				"SELECT COUNT(*) FROM {$wpdb->prefix}wb_gam_submissions WHERE user_id = %d AND created_at >= %s AND created_at < %s",
 				$user_id,
-				$today
+				Clock::site_day_start( 'today' ),
+				Clock::site_day_start( 'tomorrow' )
 			)
 		);
 	}

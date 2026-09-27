@@ -99,6 +99,16 @@ final class Installer {
 
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 
+		// A brand-new site writes UTC from its first row, so the one-time pre-1.6.5 conversion has
+		// nothing to do. (A re-activation keeps its old tables and still gets converted.)
+		$fresh = $wpdb->prefix . 'wb_gam_events' !== (string) $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->prefix . 'wb_gam_events' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		if ( $fresh ) {
+			update_option( UtcStorageMigration::DONE_OPTION, '1' );
+		}
+
+		// Every DATETIME column holds UTC, written from PHP with current_time( 'mysql', true ). The
+		// CURRENT_TIMESTAMP defaults are a safety net only (they use the database server's zone).
+
 		// Immutable event log — source of truth for all gamification state.
 		// `point_type` records which currency the resulting award affected (analytics + audit).
 		dbDelta(
@@ -910,8 +920,9 @@ final class Installer {
 					'category'      => $category,
 					'is_credential' => $is_credential,
 					'image_url'     => self::default_badge_image_url( $id ),
+					'created_at'    => current_time( 'mysql', true ),
 				),
-				array( '%s', '%s', '%s', '%s', '%d', '%s' )
+				array( '%s', '%s', '%s', '%s', '%d', '%s', '%s' )
 			);
 
 			// The seed table above is authored one condition per badge, because that is how these
@@ -934,8 +945,9 @@ final class Installer {
 					'target_id'   => $id,
 					'rule_config' => wp_json_encode( $group ),
 					'is_active'   => 1,
+					'created_at'  => current_time( 'mysql', true ),
 				),
-				array( '%s', '%s', '%s', '%d' )
+				array( '%s', '%s', '%s', '%d', '%s' )
 			);
 		}
 	}
@@ -1041,13 +1053,14 @@ final class Installer {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from $wpdb->prefix; INSERT IGNORE is the deterministic upsert path.
 		$wpdb->query(
 			$wpdb->prepare(
-				"INSERT IGNORE INTO $table (slug, label, description, icon, is_default, position) VALUES (%s, %s, %s, %s, %d, %d)",
+				"INSERT IGNORE INTO $table (slug, label, description, icon, is_default, position, created_at) VALUES (%s, %s, %s, %s, %d, %d, %s)",
 				'points',
 				'Points',
 				'Primary points currency. Renamable; the slug stays as `points` for back-compat.',
 				'star',
 				1,
-				0
+				0,
+				current_time( 'mysql', true )
 			)
 		);
 	}

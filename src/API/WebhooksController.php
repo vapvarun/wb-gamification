@@ -244,12 +244,13 @@ class WebhooksController extends WP_REST_Controller {
 		$inserted = $wpdb->insert(
 			$wpdb->prefix . 'wb_gam_webhooks',
 			array(
-				'url'       => esc_url_raw( $request['url'] ),
-				'secret'    => $secret,
-				'events'    => $events_json,
-				'is_active' => 1,
+				'url'        => esc_url_raw( $request['url'] ),
+				'secret'     => $secret,
+				'events'     => $events_json,
+				'is_active'  => 1,
+				'created_at' => current_time( 'mysql', true ),
 			),
-			array( '%s', '%s', '%s', '%d' )
+			array( '%s', '%s', '%s', '%d', '%s' )
 		);
 
 		if ( ! $inserted ) {
@@ -509,7 +510,10 @@ class WebhooksController extends WP_REST_Controller {
 					'items' => array( 'type' => 'string' ),
 				),
 				'is_active'  => array( 'type' => 'boolean' ),
-				'created_at' => array( 'type' => 'string' ),
+				'created_at' => array(
+					'type'        => 'string',
+					'description' => 'UTC, Y-m-d H:i:s.',
+				),
 			),
 		);
 	}

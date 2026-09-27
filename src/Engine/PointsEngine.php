@@ -444,28 +444,14 @@ final class PointsEngine {
 			$type = self::resolve_type( $event->metadata['point_type'] ?? null );
 		}
 
-		// ONE CLOCK for this column, whoever writes it.
-		//
-		// An imported row keeps its historical occurred-at -- that part was right, and it is why
+		// created_at is UTC for every writer. An imported row keeps its historical occurred-at, so
 		// "points this month" and streak windows reflect the real timeline rather than the import date.
-		// But it was written in UTC while an organic award is written with current_time('mysql'), which
-		// is site-local. One column, two clocks, in the core ledger -- the same defect just fixed for
-		// earned_at in the badge importers, left standing here.
-		//
-		// EVERY reader bounds this column in the site's clock (Clock::site_cutoff, site_day_start), so a
-		// UTC stamp lands in the wrong day. Measured on Los Angeles: a point imported for site-local
-		// 18:30 Tuesday was stored as 2026-07-15 01:30 -- a DIFFERENT DAY. It escaped that day's cap,
-		// fell into the wrong ISO week for get_week_count(), and rendered under a future date. On a site
-		// ahead of UTC it lands in the past instead.
-		//
-		// $event->created_at is ISO-8601 (Engine converts it), so strtotime() yields a TRUE epoch, and
-		// wp_date() renders a true epoch in the site's zone -- exactly once. Same fix as
-		// MyCredImporter. The gate cannot see this one: it is a WRITE, not a comparison.
+		// $event->created_at is ISO-8601 (Engine converts it), so strtotime() yields a true epoch.
 		if ( ! empty( $event->metadata['_import'] ) ) {
 			$ts         = strtotime( (string) $event->created_at );
-			$created_at = false !== $ts ? wp_date( 'Y-m-d H:i:s', $ts ) : current_time( 'mysql' );
+			$created_at = false !== $ts ? gmdate( 'Y-m-d H:i:s', $ts ) : current_time( 'mysql', true );
 		} else {
-			$created_at = current_time( 'mysql' );
+			$created_at = current_time( 'mysql', true );
 		}
 
 		$inserted = $wpdb->insert(
@@ -853,7 +839,6 @@ final class PointsEngine {
 
 		global $wpdb;
 		$type    = self::resolve_type( $type );
-		$now     = current_time( 'mysql' );
 		$now_utc = gmdate( 'Y-m-d H:i:s' );
 
 		// Chunk to keep packet size under MySQL's max_allowed_packet (default 64MB
@@ -899,7 +884,7 @@ final class PointsEngine {
 				$point_args[] = $points;
 				$point_args[] = $type;
 				$point_args[] = 0; // object_id
-				$point_args[] = $now;
+				$point_args[] = $now_utc;
 			}
 
 			// Atomic chunk: events + points + user_totals UPSERT all in one
@@ -1279,9 +1264,8 @@ final class PointsEngine {
 			return false;
 		}
 
-		// created_at is stored in site timezone via current_time('mysql'),
-		// so compare using current_time('timestamp') for consistency.
-		return ( current_time( 'timestamp' ) - strtotime( $last ) ) < $cooldown_seconds;
+		// created_at is UTC.
+		return ( time() - strtotime( $last . ' UTC' ) ) < $cooldown_seconds;
 	}
 
 	/**
@@ -1297,14 +1281,7 @@ final class PointsEngine {
 	private static function get_today_count( int $user_id, string $action_id, string $type ): int {
 		global $wpdb;
 		// Use range comparison so MySQL can use the idx_user_type_created index.
-		//
-		// Both bounds are the SITE's day boundaries. wp_date() formats in the site timezone, which is
-		// why this looked right -- but strtotime( '+1 day' ) hands it an instant resolved in PHP's UTC
-		// frame, and wp_date() then re-frames THAT into the site zone. Near a day boundary the two
-		// disagree and the window can come out a day wide in the wrong place, or barely wide at all.
-		// The formatting was in the right clock; the instant was not.
-		//
-		// Clock anchors strtotime() to the site's own now, so "+1 day" means the site's tomorrow.
+		// Bounds are the site's midnights as UTC instants (created_at is UTC).
 		$day_start = Clock::site_day_start( 'today' );
 		$day_end   = Clock::site_day_start( '+1 day' );
 		return (int) $wpdb->get_var(
@@ -1333,17 +1310,7 @@ final class PointsEngine {
 	 */
 	private static function get_week_count( int $user_id, string $action_id, string $type ): int {
 		global $wpdb;
-		// ISO week start: Monday 00:00:00 in the site's timezone -- and the WEEKDAY has to be resolved
-		// in the site's clock too, not just the formatting.
-		//
-		// This looked right and was not. strtotime( 'monday this week' ) resolves against PHP's UTC
-		// frame, and wp_date() then re-frames that instant into the site timezone -- which can roll it
-		// back across a day boundary. Measured on Los Angeles on a Tuesday: the bound came out
-		// 2026-07-12, a SUNDAY, when the site's Monday was the 13th. A full day out, and the wrong
-		// weekday, so the weekly cap counted an extra day and every weekly limit was over-permissive.
-		//
-		// Clock::site_cutoff() anchors strtotime() to the SITE's now, so 'monday this week' means the
-		// site's Monday.
+		// ISO week start: the site's Monday 00:00, as a UTC instant (created_at is UTC).
 		$week_start = Clock::site_cutoff( 'monday this week' );
 		return (int) $wpdb->get_var(
 			$wpdb->prepare(

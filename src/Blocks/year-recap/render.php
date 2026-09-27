@@ -280,7 +280,7 @@ BlockHooks::before( 'year-recap', $wb_gam_attrs );
 			</h3>
 			<div class="wb-gam-recap__badges-list">
 				<?php foreach ( $wb_gam_recap['badges_earned']['badges'] as $wb_gam_badge ) : ?>
-					<span class="wb-gam-recap__badge-pill" title="<?php echo esc_attr( (string) ( $wb_gam_badge['earned_at'] ?? '' ) ); ?>">
+					<span class="wb-gam-recap__badge-pill" title="<?php echo esc_attr( empty( $wb_gam_badge['earned_at'] ) ? '' : get_date_from_gmt( (string) $wb_gam_badge['earned_at'], get_option( 'date_format' ) ) ); ?>">
 						<?php echo esc_html( (string) ( $wb_gam_badge['name'] ?? '' ) ); ?>
 					</span>
 				<?php endforeach; ?>

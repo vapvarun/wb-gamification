@@ -196,8 +196,8 @@ final class StreakEngine {
 		global $wpdb;
 		return $wpdb->prepare(
 			"( {$alias}last_active >= %s OR ( {$alias}grace_used = 0 AND {$alias}last_active >= %s ) )",
-			substr( Clock::site_day_start( '-1 days' ), 0, 10 ),
-			substr( Clock::site_day_start( '-' . ( self::grace_days( 0 ) + 1 ) . ' days' ), 0, 10 )
+			Clock::site_date( '-1 days' ),
+			Clock::site_date( '-' . ( self::grace_days( 0 ) + 1 ) . ' days' )
 		);
 	}
 
@@ -251,21 +251,24 @@ final class StreakEngine {
 	public static function get_contribution_data( int $user_id, int $days = 365 ): array {
 		global $wpdb;
 
-		// Midnight, N days ago, in the SITE's clock -- wb_gam_points.created_at is site-local.
+		// Site midnight N days ago as a UTC bound; rows are grouped by SITE day, not UTC day.
 		$since = Clock::site_day_start( "-{$days} days" );
+		$local = Clock::sql_utc_to_local( 'created_at', (int) strtotime( $since . ' UTC' ), time() );
 
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $local is built by Clock from a fixed column name.
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT DATE(created_at) AS activity_date, SUM(points) AS total
+				"SELECT DATE({$local}) AS activity_date, SUM(points) AS total
 				   FROM {$wpdb->prefix}wb_gam_points
 				  WHERE user_id = %d AND created_at >= %s
-				  GROUP BY DATE(created_at)
+				  GROUP BY activity_date
 				  ORDER BY activity_date ASC",
 				$user_id,
 				$since
 			),
 			ARRAY_A
 		);
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
 		if ( ! $rows ) {
 			return array();
@@ -618,7 +621,7 @@ final class StreakEngine {
 				'last_active'    => $last_active,
 				'timezone'       => $timezone,
 				'grace_used'     => $grace_used,
-				'updated_at'     => current_time( 'mysql' ),
+				'updated_at'     => current_time( 'mysql', true ),
 			),
 			array( '%d', '%d', '%d', '%s', '%s', '%d', '%s' )
 		);

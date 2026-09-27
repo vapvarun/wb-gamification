@@ -53,7 +53,7 @@ If a category does not appear, the plugin that provides it is not active on your
 
 **Cooldown (seconds)** — *Editable in 1.4.0.* The minimum gap between two awards of the same action for the same member. Set `bp_activity_comment` to a 60-second cooldown so a member can not earn points for 50 comments posted in 30 seconds. Set to `0` to disable the cooldown.
 
-**Daily cap** — *Editable in 1.4.0.* A hard ceiling on how many times an action can earn points in one calendar day (UTC). For example, if commenting has a daily cap of 10, a member who posts 50 comments earns points for only the first 10 each day. Set to `0` to allow unlimited awards per day.
+**Daily cap** — *Editable in 1.4.0.* A hard ceiling on how many times an action can earn points in one calendar day in the site time zone (Settings > General). For example, if commenting has a daily cap of 10, a member who posts 50 comments earns points for only the first 10 each day. Set to `0` to allow unlimited awards per day.
 
 Both **Cooldown** and **Daily cap** are editable directly in the actions table. Type a new value and click outside the field — the change saves automatically (no Save button needed). A short green flash confirms the save.
 

@@ -152,17 +152,11 @@ BlockHooks::before( 'kudos-feed', $wb_gam_attrs );
 						<q class="wb-gam-kudos-feed__message"><?php echo esc_html( (string) $wb_gam_item['message'] ); ?></q>
 					<?php endif; ?>
 
+					<?php $wb_gam_kudo_ts = (int) strtotime( (string) ( $wb_gam_item['created_at'] ?? 'now' ) . ' UTC' ); // created_at is UTC. ?>
 					<time class="wb-gam-kudos-feed__time"
-						datetime="<?php echo esc_attr( (string) ( $wb_gam_item['created_at'] ?? '' ) ); ?>"
-						title="<?php echo esc_attr( (string) ( $wb_gam_item['created_at'] ?? '' ) ); ?>">
-						<?php
-						// KudosEngine writes created_at with current_time( 'mysql' ) -- site-local. PHP runs on
-						// UTC under WordPress, so strtotime() reads that naive string as if it were UTC. Compared
-						// against a real-UTC time() the result is off by the site's offset, in whichever direction
-						// the site sits from UTC. current_time( 'timestamp' ) is the same frame the value was
-						// written in, so both sides of the subtraction finally agree.
-						echo esc_html( human_time_diff( strtotime( (string) ( $wb_gam_item['created_at'] ?? 'now' ) ), current_time( 'timestamp' ) ) . ' ' . __( 'ago', 'wb-gamification' ) );
-						?>
+						datetime="<?php echo esc_attr( gmdate( 'c', $wb_gam_kudo_ts ) ); ?>"
+						title="<?php echo esc_attr( wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $wb_gam_kudo_ts ) ); ?>">
+						<?php echo esc_html( human_time_diff( $wb_gam_kudo_ts, time() ) . ' ' . __( 'ago', 'wb-gamification' ) ); ?>
 					</time>
 				</li>
 			<?php endforeach; ?>

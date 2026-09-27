@@ -183,8 +183,7 @@ final class RuleEngine {
 				//
 				// 'days' array uses PHP 'w' values: 0 = Sunday, 6 = Saturday.
 				$days = (array) ( $condition['days'] ?? array() );
-				// phpcs:ignore WordPress.DateTime.CurrentTimeTimestamp.Requested -- deliberate: the site's wall-clock weekday is the thing being asked for.
-				return in_array( (int) gmdate( 'w', (int) current_time( 'timestamp' ) ), $days, true );
+				return in_array( (int) wp_date( 'w' ), $days, true ); // The site's weekday.
 
 			case 'action_id_match':
 				return ( $condition['action_id'] ?? '' ) === $event->action_id;

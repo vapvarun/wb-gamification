@@ -12,6 +12,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 
 ### Changed
 
+- All stored times are now UTC, the WordPress standard, and every window (today, this week, last 7 days, leaderboard periods, kudos limits, streaks, recaps, the weekly email) is worked out in the site's time zone (Settings > General). Points, kudos, badge, challenge and submission times written by earlier versions are converted once in the background, newest first; sites already on UTC skip it, and `wp wb-gamification doctor --fix` finishes it on the spot. REST `*_at` values are UTC `Y-m-d H:i:s`. Code that reads the plugin's tables directly must treat these columns as UTC.
+- Also fixed by the same change: analytics day charts, the "challenges started" count, member recency, "submissions today" and yearly recap edges were off by the site or database time-zone offset; points imported from myCred were stamped with the wrong zone.
+
 - Kudos are never refused for being over a limit. The daily limit (default 5) and the one-hour repeat window now decide only whether a kudos earns points; past them the kudos is still delivered, with its notification, and no member is told they hit a limit. The setting is now labelled "Kudos per day that earn points". A spam ceiling (default 50 a day, filter `wb_gam_kudos_daily_ceiling`) is the only hard stop, and the give-kudos form is not shown once it is reached. `GET /kudos/me` and `POST /kudos` return `can_send`. The `wb_gam_kudos_cooldown` error code is replaced by `wb_gam_kudos_daily_ceiling` and `wb_gam_kudos_busy`.
 - The kudos toast names the member who gave it ("Priya Nair gave you kudos!") instead of "Someone gave you kudos!".
 

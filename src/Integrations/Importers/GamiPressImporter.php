@@ -139,7 +139,8 @@ final class GamiPressImporter {
 				'user_id'     => (int) $log['user_id'],
 				'points'      => $delta,
 				'point_type'  => self::map_point_type( (string) $log['points_type'] ),
-				'occurred_at' => (string) $log['date'],
+				// GamiPress writes `date` in site-local time; convert to UTC.
+				'occurred_at' => get_gmt_from_date( (string) $log['date'], 'Y-m-d\TH:i:s\Z' ),
 				'source_key'  => 'gamipress:log:' . (int) $log['log_id'],
 				'metadata'    => array(
 					'_source'    => 'gamipress',
@@ -320,9 +321,8 @@ final class GamiPressImporter {
 						'category'  => 'imported',
 					)
 				);
-				// Round trip preserves the source's wall clock (see MyCredImporter). The fallback must be
-				// the SITE's now, not UTC's -- earned_at is a site-local column.
-				$earned_at = $a['earned_at'] ? gmdate( 'Y-m-d H:i:s', strtotime( (string) $a['earned_at'] ) ) : current_time( 'mysql' );
+				// GamiPress stores earning dates in site-local time; earned_at is UTC.
+				$earned_at = $a['earned_at'] ? get_gmt_from_date( (string) $a['earned_at'] ) : current_time( 'mysql', true );
 				if ( \WBGam\Engine\BadgeEngine::award_badge( $a['user_id'], $a['badge_id'], $earned_at ) ) {
 					++$ach_imported;
 				}

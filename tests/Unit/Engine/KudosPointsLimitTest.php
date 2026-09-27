@@ -31,7 +31,8 @@ class KudosPointsLimitTest extends TestCase {
 		if ( ! defined( 'HOUR_IN_SECONDS' ) ) {
 			define( 'HOUR_IN_SECONDS', 3600 );
 		}
-		Functions\when( 'current_time' )->justReturn( '2026-09-26 12:00:00' );
+		Functions\when( 'current_time' )->alias( static fn( $type, $gmt = 0 ) => 'timestamp' === $type ? strtotime( '2026-09-26 12:00:00 UTC' ) : '2026-09-26 12:00:00' );
+		Functions\when( 'wp_timezone' )->justReturn( new \DateTimeZone( 'UTC' ) );
 		Functions\when( 'get_option' )->returnArg( 2 ); // Defaults: 5 points-earning kudos a day.
 		Functions\when( 'apply_filters' )->returnArg( 2 ); // Defaults: 1h window, 50/day ceiling.
 	}

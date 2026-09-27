@@ -245,7 +245,7 @@ final class PointTypeConversionService {
 		$cooldown = (int) ( $rule['cooldown_seconds'] ?? 0 );
 		if ( $cooldown > 0 ) {
 			$last = $this->repo->last_conversion_at( $user_id, $from, $to );
-			if ( $last && ( current_time( 'timestamp' ) - strtotime( $last ) ) < $cooldown ) {
+			if ( $last && ( time() - (int) strtotime( $last . ' UTC' ) ) < $cooldown ) { // events.created_at is UTC.
 				return array(
 					'ok'    => false,
 					'error' => 'cooldown',
@@ -385,7 +385,7 @@ final class PointTypeConversionService {
 						'points'     => $credit_amount,
 						'point_type' => $to,
 						'object_id'  => null,
-						'created_at' => current_time( 'mysql' ),
+						'created_at' => current_time( 'mysql', true ),
 					),
 					array( '%s', '%d', '%s', '%d', '%s', '%d', '%s' )
 				);

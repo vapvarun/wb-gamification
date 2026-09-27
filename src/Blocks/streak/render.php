@@ -230,16 +230,17 @@ BlockHooks::before( 'streak', $wb_gam_attrs );
 	<?php if ( $wb_gam_show_heatmap && ! empty( $wb_gam_heatmap ) ) : ?>
 		<div class="wb-gam-streak__heatmap" aria-label="<?php esc_attr_e( 'Contribution heatmap', 'wb-gamification' ); ?>">
 			<?php
-			$wb_gam_end_ts   = (int) current_time( 'timestamp' );
-			$wb_gam_start_ts = (int) strtotime( "-{$wb_gam_heatmap_days} days", $wb_gam_end_ts );
-			$wb_gam_max_pts  = max( $wb_gam_heatmap );
+			// Walk site-calendar days so the keys match the heatmap's site Y-m-d keys (DST-safe).
+			$wb_gam_today   = new DateTimeImmutable( 'now', wp_timezone() );
+			$wb_gam_max_pts = max( $wb_gam_heatmap );
 
-			for ( $wb_gam_ts = $wb_gam_start_ts; $wb_gam_ts <= $wb_gam_end_ts; $wb_gam_ts += DAY_IN_SECONDS ) {
-				$wb_gam_date  = gmdate( 'Y-m-d', $wb_gam_ts );
+			for ( $wb_gam_n = (int) $wb_gam_heatmap_days; $wb_gam_n >= 0; $wb_gam_n-- ) {
+				$wb_gam_day   = $wb_gam_today->modify( "-{$wb_gam_n} days" );
+				$wb_gam_date  = $wb_gam_day->format( 'Y-m-d' );
 				$wb_gam_pts   = (int) ( $wb_gam_heatmap[ $wb_gam_date ] ?? 0 );
 				$wb_gam_level = $wb_gam_pts > 0 ? (int) ceil( ( $wb_gam_pts / $wb_gam_max_pts ) * 4 ) : 0;
 
-				$wb_gam_formatted_date = date_i18n( 'M j', $wb_gam_ts );
+				$wb_gam_formatted_date = wp_date( 'M j', $wb_gam_day->getTimestamp() );
 				$wb_gam_title          = $wb_gam_pts > 0
 					? sprintf( /* translators: 1 = formatted date, 2 = points */ __( '%1$s: %2$s points', 'wb-gamification' ), $wb_gam_formatted_date, number_format_i18n( $wb_gam_pts ) )
 					: sprintf( /* translators: %s = formatted date */ __( '%s: No activity', 'wb-gamification' ), $wb_gam_formatted_date );

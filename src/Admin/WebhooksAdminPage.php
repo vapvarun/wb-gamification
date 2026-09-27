@@ -295,7 +295,7 @@ final class WebhooksAdminPage {
 													<span class="wbgam-pill wbgam-pill--inactive"><?php esc_html_e( 'Paused', 'wb-gamification' ); ?></span>
 												<?php endif; ?>
 											</td>
-											<td><?php echo esc_html( $hook['created_at'] ); ?></td>
+											<td><?php echo esc_html( get_date_from_gmt( (string) $hook['created_at'], get_option( 'date_format' ) . ' ' . get_option( 'time_format' ) ) ); ?></td>
 											<td>
 												<button
 													type="button"

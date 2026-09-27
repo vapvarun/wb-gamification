@@ -108,19 +108,7 @@ final class IntelligenceProjector {
 
 		// Pick users to recompute: those with at least one event AND whose intelligence row is
 		// either missing or oldest.
-		//
-		// computed_at is stamped by the DATABASE (NOW(), see the UPSERT below), and this compared
-		// it against gmdate() -- UTC. On any host whose database is not in UTC those disagree, and
-		// the disagreement is silent: rows look NEWER than they are, the 24-hour cutoff never
-		// matches them, and those members' intelligence quietly goes stale forever.
-		//
-		// I annotated this column @clock-ok earlier in this branch, asserting it was "never
-		// compared against a PHP-side timestamp". That was simply wrong -- it is compared right
-		// here -- and the static scanner caught the lie. Both sides now come from the database's
-		// clock, which is the clock every existing row was written in.
-		//
-		// @clock-ok: computed_at is stamped NOW() and compared against DATE_SUB(NOW(), ...). One
-		// clock, the database's, on both sides.
+		// computed_at is UTC, written from PHP by the UPSERT below.
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$user_ids = $wpdb->get_col(
 			$wpdb->prepare(
@@ -128,9 +116,10 @@ final class IntelligenceProjector {
 				   FROM (SELECT DISTINCT user_id FROM {$wpdb->prefix}wb_gam_events) e
 				   LEFT JOIN {$wpdb->prefix}wb_gam_user_intelligence i
 				     ON i.user_id = e.user_id
-				  WHERE i.user_id IS NULL OR i.computed_at < DATE_SUB(NOW(), INTERVAL 1 DAY)
+				  WHERE i.user_id IS NULL OR i.computed_at < %s
 				  ORDER BY (i.computed_at IS NULL) DESC, i.computed_at ASC
 				  LIMIT %d",
+				Clock::site_cutoff( '-1 day' ),
 				self::BATCH_SIZE
 			)
 		);
@@ -162,22 +151,11 @@ final class IntelligenceProjector {
 		// Three aggregates from wb_gam_events.
 		$events_table = $wpdb->prefix . 'wb_gam_events';
 
-		// wb_gam_events.created_at is written with current_time( 'mysql' ) -- the SITE's clock.
-		// This measured it against NOW(), which is the DATABASE SERVER's clock, and on any host
-		// where those differ (the normal case: a UTC database under a non-UTC site) recency_days
-		// came out shifted by the offset. At a day boundary that is a whole day of error, and
-		// recency_days feeds churn_risk directly -- so members were being scored as more or less
-		// at-risk than they are.
-		//
-		// Both bounds are now computed in the clock the column is written in and bound as values,
-		// so the database server's own timezone stops being a variable we do not control.
-		//
-		// Worth recording HOW this survived: the static scanner never saw it. Its rule requires a
-		// current_time() write in the same file, and this file only READS. A file that compares a
-		// local column against NOW() without writing one is invisible to that check -- which is
-		// why the timestamp columns were finally audited by hand.
-		$now_local = current_time( 'mysql' );
-		$since     = gmdate( 'Y-m-d H:i:s', strtotime( $now_local ) - ( 30 * DAY_IN_SECONDS ) );
+		// created_at is UTC and bounded by a UTC value, never the database's NOW(). recency_days
+		// counts SITE calendar days, so the last event is shifted to site time before DATEDIFF.
+		$now   = current_time( 'mysql', true );
+		$since = Clock::site_cutoff( '-30 days' );
+		$local = Clock::sql_utc_to_local( 'created_at', (int) strtotime( $since . ' UTC' ), time() );
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$row = $wpdb->get_row(
@@ -185,11 +163,11 @@ final class IntelligenceProjector {
 				"SELECT
 					COUNT(*) AS events_30d,
 					COUNT(DISTINCT action_id) AS action_diversity,
-					COALESCE(DATEDIFF(%s, MAX(created_at)), 999) AS recency_days
+					COALESCE(DATEDIFF(%s, MAX({$local})), 999) AS recency_days
 				   FROM {$events_table}
 				  WHERE user_id = %d
 				    AND created_at >= %s",
-				$now_local,
+				Clock::site_date(),
 				$user_id,
 				$since
 			),
@@ -215,18 +193,13 @@ final class IntelligenceProjector {
 		// Anomaly flag — bot pattern: high volume + low diversity.
 		$anomaly = ( $events_30d > 500 && $action_diversity < 3 ) ? 1 : 0;
 
-		// UPSERT. Single PK on user_id makes ON DUPLICATE KEY clean.
-		//
-		// @clock-ok: computed_at is stamped by the DATABASE clock here, and the only place it is
-		// compared (compute_batch, above) now uses DATE_SUB(NOW(), ...) -- the same clock. An
-		// earlier version of this comment claimed the column was never compared at all. It was,
-		// and that claim would have hidden a live bug behind an annotation.
+		// UPSERT. Single PK on user_id makes ON DUPLICATE KEY clean. computed_at is UTC.
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$wpdb->query(
 			$wpdb->prepare(
 				"INSERT INTO {$wpdb->prefix}wb_gam_user_intelligence
 					(user_id, engagement_score, action_diversity, recency_days, events_30d, churn_risk, anomaly_flag, computed_at)
-				 VALUES (%d, %f, %d, %d, %d, %f, %d, NOW())
+				 VALUES (%d, %f, %d, %d, %d, %f, %d, %s)
 				 ON DUPLICATE KEY UPDATE
 					engagement_score = VALUES(engagement_score),
 					action_diversity = VALUES(action_diversity),
@@ -241,7 +214,8 @@ final class IntelligenceProjector {
 				$recency_days,
 				$events_30d,
 				round( $churn_risk, 3 ),
-				$anomaly
+				$anomaly,
+				$now
 			)
 		);
 	}

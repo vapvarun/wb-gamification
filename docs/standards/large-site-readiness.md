@@ -32,17 +32,20 @@ This single defect produced **five** of the seven bugs in 1.6.4:
 | `WeeklyEmailEngine` recipient query | The email went to **the wrong people**. A missing email leaves no trace, so nobody reports it. |
 | `ChallengesController` window | A challenge scheduled for 09:00 opened at 09:00 **UTC**. Members could not join a challenge that was live. |
 
-**The rule:**
-1. Every timestamp column has **one** documented clock. Write it down in the schema.
-2. A comparison boundary is computed in **the same clock the column is written in**. Never `NOW()`
-   against a `current_time()` column; never `gmdate()` against a local one.
-3. Prefer binding a PHP-computed value as a prepared parameter over SQL `NOW()`, so the database
-   server's own timezone stops being a variable you don't control.
+**The rule (one convention, since 1.6.5):**
+1. Every stored moment is **UTC**. Write it from PHP with `current_time( 'mysql', true )` or
+   `gmdate( 'Y-m-d H:i:s' )`, bound as a prepared parameter. Never SQL `NOW()` or a column
+   `DEFAULT CURRENT_TIMESTAMP` - the database server's own time zone is a variable you don't control.
+2. Every window ("today", "this week", "the last 7 days") is the **site's** calendar, turned into a
+   UTC bound by `WBGam\Engine\Clock` (`site_cutoff()`, `site_day_start()`,
+   `sql_utc_to_local()` for grouping by site day). Never hand-roll a boundary.
+3. Pure calendar keys (`streaks.last_active`, cohort week) are site-calendar strings from
+   `Clock::site_date()` / `Clock::site_week()`, compared only with other keys.
+4. Display converts on the way out: `wp_date( $fmt, strtotime( $v . ' UTC' ) )` or
+   `get_date_from_gmt()`, `gmdate( 'c', $ts )` for machine attributes. Never `date_i18n()`,
+   never `current_time( 'timestamp' )`.
 
-**Current state: 24 local writes vs 3 UTC writes.** Zero cross-clock *comparisons* (all fixed in
-1.6.4) — but the mixed convention is a loaded gun. The next person who adds a `gmdate()` boundary
-against one of those 24 columns reintroduces the bug, and it will pass every test on a UTC box.
-**Converging on one convention is R1's outstanding work.**
+`bin/check-clock-contract.sh` blocks SQL clocks on `wb_gam_` tables. The 1.6.5 upgrade converted the old site-local rows once.
 
 ---
 

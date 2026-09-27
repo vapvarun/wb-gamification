@@ -271,8 +271,9 @@ class RulesController extends WP_REST_Controller {
 				'target_id'   => $request['target_id'] ?? null,
 				'rule_config' => wp_json_encode( $rule_config ),
 				'is_active'   => 1,
+				'created_at'  => current_time( 'mysql', true ),
 			),
-			array( '%s', '%s', '%s', '%d' )
+			array( '%s', '%s', '%s', '%d', '%s' )
 		);
 
 		if ( ! $inserted ) {
@@ -550,7 +551,10 @@ class RulesController extends WP_REST_Controller {
 				'target_id'   => array( 'type' => array( 'string', 'null' ) ),
 				'rule_config' => array( 'type' => 'object' ),
 				'is_active'   => array( 'type' => 'boolean' ),
-				'created_at'  => array( 'type' => 'string' ),
+				'created_at'  => array(
+					'type'        => 'string',
+					'description' => 'UTC, Y-m-d H:i:s.',
+				),
 			),
 		);
 	}

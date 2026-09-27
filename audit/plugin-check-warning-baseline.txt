@@ -4,17 +4,17 @@
 # in block templates, custom-table direct queries). Gate fails if the
 # TOTAL warning count grows above this baseline OR if a NEW code
 # appears that wasn't in the baseline.
-# Generated: 2026-09-26T18:38:33Z
+# Generated: 2026-09-27T04:24:11Z
 
-PluginCheck.Security.DirectDB.UnescapedDBParameter: 51
+PluginCheck.Security.DirectDB.UnescapedDBParameter: 58
 Squiz.PHP.DiscouragedFunctions.Discouraged: 1
-WordPress.DB.DirectDatabaseQuery.DirectQuery: 65
+WordPress.DB.DirectDatabaseQuery.DirectQuery: 64
 WordPress.DB.DirectDatabaseQuery.NoCaching: 58
-WordPress.DB.PreparedSQL.InterpolatedNotPrepared: 49
+WordPress.DB.PreparedSQL.InterpolatedNotPrepared: 50
 WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber: 4
 WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare: 15
 WordPress.DB.SlowDBQuery.slow_db_query_meta_key: 1
-WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound: 35
+WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound: 36
 WordPressVIPMinimum.Performance.WPQueryParams.PostNotIn_exclude: 2
 
-# total: 281
+# total: 289

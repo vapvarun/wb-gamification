@@ -123,6 +123,7 @@ final class DbUpgrader {
 		self::ensure_redemption_stock_null_unlimited();
 		self::ensure_badge_rule_groups();
 		self::ensure_engine_badges_become_rules();
+		UtcStorageMigration::boot();
 	}
 
 	/**

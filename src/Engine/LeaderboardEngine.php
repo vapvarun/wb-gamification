@@ -590,27 +590,9 @@ final class LeaderboardEngine {
 		// SOME valid data (old or new), eliminating the read-through
 		// window that the legacy TRUNCATE pattern had on every cron tick.
 		//
-		// READ FROM THE DATABASE'S OWN CLOCK. The rows below are stamped by
-		// MySQL's NOW(); the straggler DELETE compares against $started. If the
-		// two come from different clocks the comparison is meaningless.
-		//
-		// Until 1.6.4 this was current_time('mysql') — WordPress SITE-LOCAL time —
-		// while the rows were stamped NOW(), which on virtually every host is UTC.
-		// On any site ahead of UTC (IST +5:30, CET, all of Asia and Australia)
-		// $started was HOURS AHEAD of the rows it had just written, so the final
-		// DELETE matched every one of them: the snapshot table was emptied at the
-		// end of every single rebuild, and every read fell through to the live
-		// full-table SUM. Forever, silently.
-		//
-		// It survived because it is invisible on a UTC dev box (gmt_offset = 0),
-		// where the two clocks happen to agree. Taking both stamps from the DB
-		// removes the class of bug, not just this instance.
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		// @clock-ok: both sides are the DATABASE clock. The snapshot rows are stamped NOW() (see
-		// the INSERT below) and the straggler DELETE prunes against this same value, so the two
-		// never disagree. Stamping with current_time() and pruning with NOW() is exactly what made
-		// the rebuild delete the rows it had just written on every site ahead of UTC.
-		$started = (string) $wpdb->get_var( 'SELECT NOW()' );
+		// One UTC stamp from PHP for every row of this rebuild, bound into the INSERT and the
+		// straggler DELETE alike, so the prune can never disagree with the rows it just wrote.
+		$started = current_time( 'mysql', true );
 
 		$periods = array(
 			'all'   => null,
@@ -658,12 +640,7 @@ final class LeaderboardEngine {
 				// The UNIQUE KEY (user_id, period, point_type) on the cache
 				// table is what makes ON DUPLICATE KEY UPDATE work; it was
 				// added by DbUpgrader::ensure_leaderboard_cache_unique_key.
-				//
-				// @clock-ok: updated_at is stamped NOW() (the DATABASE clock) and the straggler
-				// DELETE below prunes against $started, which came from the same SELECT NOW(). Both
-				// sides of that comparison are the database's clock, so they cannot disagree.
-				// Stamping with current_time() and pruning with NOW() is precisely what made the
-				// rebuild delete the rows it had just written on every site ahead of UTC.
+				// updated_at is $started (UTC), the same value the straggler DELETE prunes against.
 				// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 				// The existence check belongs HERE, in the WRITER -- and this is the default path.
 				//
@@ -684,17 +661,12 @@ final class LeaderboardEngine {
 				// is safe in this query -- unlike inside the totals derived table, where an EXISTS wrecks
 				// the plan -- because this one already aggregates the whole ledger and the checks are
 				// eq_ref on primary keys.
-				//
-				// @clock-ok: updated_at is stamped NOW() (the DATABASE clock) and the staleness check
-				// that reads it compares against the database clock too -- see the note above the $where.
-				// (Restating it here rather than relying on the one 30 lines up: an annotation that has
-				// drifted out of the checker's lookback window is an annotation that does not exist.)
 				$wpdb->query(
 					$wpdb->prepare(
 						"INSERT INTO {$cache_table} (user_id, period, point_type, total_points, `rank`, updated_at)
 					 SELECT p.user_id, %s AS period, %s AS point_type, SUM(p.points) AS total_points,
 					        RANK() OVER (ORDER BY SUM(p.points) DESC) AS `rank`,
-					        NOW() AS updated_at
+					        %s AS updated_at
 					   FROM {$points_table} p
 					   {$where}
 					  GROUP BY p.user_id
@@ -707,7 +679,8 @@ final class LeaderboardEngine {
 					   `rank`       = VALUES(`rank`),
 					   updated_at   = VALUES(updated_at)",
 						$period_key,
-						$slug
+						$slug,
+						$started
 					)
 				);
 				// phpcs:enable
@@ -754,11 +727,12 @@ final class LeaderboardEngine {
 		// this check, the snapshot would still serve stale data for up
 		// to 10 minutes after every award.
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching
-		$snapshot_built_at = $wpdb->get_var( "SELECT UNIX_TIMESTAMP(MAX(updated_at)) FROM {$cache_table}" );
+		// updated_at is UTC.
+		$snapshot_built_at = $wpdb->get_var( "SELECT MAX(updated_at) FROM {$cache_table}" );
 		if ( null === $snapshot_built_at ) {
 			return null;
 		}
-		$snapshot_built_at = (int) $snapshot_built_at;
+		$snapshot_built_at = (int) strtotime( $snapshot_built_at . ' UTC' );
 
 		// Bounded staleness is the ONLY freshness rule. A leaderboard is a
 		// materialised view: it is allowed to be up to one rebuild-interval
@@ -918,14 +892,7 @@ final class LeaderboardEngine {
 	 * @return string|null MySQL datetime string, or null for 'all'.
 	 */
 	private static function get_period_start( string $period ): ?string {
-		// The SITE's day, week and month -- not UTC's.
-		//
-		// These bound wb_gam_points.created_at, which is written with current_time( 'mysql' ), and all
-		// three were built with gmdate(). So the daily board did not start at the site's midnight, it
-		// started at UTC's: in Los Angeles "today" began at 5pm yesterday, and points a member earned
-		// in the evening landed on the wrong day's board. The weekly board had it worse -- strtotime(
-		// 'monday this week' ) resolves the WEEKDAY against UTC too, so near a Monday boundary it
-		// picked the previous Monday and the board was a week out.
+		// The SITE's day, week and month, as UTC instants for the UTC created_at column.
 		switch ( $period ) {
 			case 'day':
 				return Clock::site_day_start( 'today' );
@@ -1009,7 +976,8 @@ final class LeaderboardEngine {
 
 		// The same freshness gate the board uses. If the board would not serve the snapshot, neither
 		// does this — otherwise we would have swapped one disagreement for another.
-		$built_at = (int) $wpdb->get_var( "SELECT UNIX_TIMESTAMP(MAX(updated_at)) FROM {$cache_table}" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- @clock-ok: MAX(updated_at) is compared with time() only through the same $max_age window the board applies; both sides are epoch seconds.
+		$built_at = (string) $wpdb->get_var( "SELECT MAX(updated_at) FROM {$cache_table}" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$built_at = '' === $built_at ? 0 : (int) strtotime( $built_at . ' UTC' ); // updated_at is UTC.
 
 		if ( $built_at <= 0 ) {
 			return null;

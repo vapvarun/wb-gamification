@@ -103,7 +103,8 @@ final class MyCredImporter {
 				'points'      => (int) round( (float) $log['creds'] ),
 				'point_type'  => self::map_point_type( (string) $log['ctype'] ),
 				'object_id'   => (int) $log['ref_id'],
-				'occurred_at' => gmdate( 'Y-m-d\TH:i:s\Z', (int) $log['time'] ),
+				// myCred logs `time` as a site-local wall-clock timestamp, not a real epoch.
+				'occurred_at' => get_gmt_from_date( gmdate( 'Y-m-d H:i:s', (int) $log['time'] ), 'Y-m-d\TH:i:s\Z' ),
 				'source_key'  => 'mycred:log:' . (int) $log['id'],
 				'metadata'    => array(
 					'_source'      => 'mycred',
@@ -147,12 +148,8 @@ final class MyCredImporter {
 				'badge_id'  => 'mycred-badge-' . $post_id,
 				'name'      => (string) get_the_title( $post_id ),
 				'image'     => (string) get_the_post_thumbnail_url( $post_id, 'full' ),
-				// earned_at is a SITE-LOCAL column (BadgeEngine::award_badge writes it with
-				// current_time('mysql')), and $issued is a real Unix epoch -- so it has to be formatted in
-				// the site's timezone, not UTC. gmdate() here wrote a UTC wall clock into a local column:
-				// one column, two clocks, and badge-showcase then reported an imported badge as earned
-				// hours off -- in the future, on any site ahead of UTC.
-				'earned_at' => $issued > 0 ? wp_date( 'Y-m-d H:i:s', $issued ) : current_time( 'mysql' ),
+				// myCred stamps _issued_on with time(), a real epoch; earned_at is UTC.
+				'earned_at' => $issued > 0 ? gmdate( 'Y-m-d H:i:s', $issued ) : current_time( 'mysql', true ),
 				'post_id'   => $post_id,
 			);
 		}
@@ -284,11 +281,8 @@ final class MyCredImporter {
 						'category'  => 'imported',
 					)
 				);
-				// The strtotime()/gmdate() round trip PRESERVES the source's wall clock (parse-as-UTC then
-				// format-as-UTC is an identity), which is what we want: the source stored a local time and
-				// we keep it. But the FALLBACK was time() -- a real epoch -- which gmdate() then renders as
-				// a UTC wall clock into a site-local column. current_time('mysql') is the site's now.
-				$earned_at = $b['earned_at'] ? gmdate( 'Y-m-d H:i:s', strtotime( (string) $b['earned_at'] ) ) : current_time( 'mysql' );
+				// build_badges() already returns UTC.
+				$earned_at = $b['earned_at'] ?: current_time( 'mysql', true );
 				if ( \WBGam\Engine\BadgeEngine::award_badge( $b['user_id'], $b['badge_id'], $earned_at ) ) {
 					++$badge_awarded;
 				}

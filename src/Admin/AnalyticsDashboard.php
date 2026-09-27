@@ -382,11 +382,7 @@ final class AnalyticsDashboard {
 		}
 
 		global $wpdb;
-		// The window must be in the clock the columns are WRITTEN in. wb_gam_points.created_at,
-		// wb_gam_kudos.created_at and wb_gam_user_badges.earned_at are all current_time( 'mysql' ) --
-		// site-local -- and this bound was gmdate(), i.e. UTC. In Los Angeles that made every window on
-		// this dashboard seven hours short: a day holding 777 points rendered as an EMPTY COLUMN, and
-		// the chart disagreed with the stat tiles beside it. Invisible on a UTC box.
+		// Every column bounded here is UTC; the window is the site's last N days as a UTC bound.
 		$since = Clock::site_cutoff( "-{$period} days" );
 
 		// Points total.
@@ -525,18 +521,21 @@ final class AnalyticsDashboard {
 			ARRAY_A
 		) ?: array();
 
-		// Daily points for sparkline.
+		// Daily points for sparkline, grouped by SITE day (created_at is UTC).
+		$local = Clock::sql_utc_to_local( 'created_at', (int) strtotime( $since . ' UTC' ), time() );
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $local is built by Clock from a fixed column name.
 		$daily_rows = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT DATE(created_at) AS day, SUM(points) AS pts
+				"SELECT DATE({$local}) AS day, SUM(points) AS pts
 				   FROM {$wpdb->prefix}wb_gam_points
 				  WHERE created_at >= %s
-				  GROUP BY DATE(created_at)
+				  GROUP BY day
 				  ORDER BY day ASC",
 				$since
 			),
 			ARRAY_A
 		) ?: array();
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
 		$daily_points = array();
 		foreach ( $daily_rows as $row ) {
@@ -752,7 +751,7 @@ final class AnalyticsDashboard {
 				printf(
 					/* translators: %s: timestamp */
 					esc_html__( 'Intelligence signals last computed: %s. Cron runs daily; force a refresh per-user via the REST endpoint or `wp eval` if you need fresher data.', 'wb-gamification' ),
-					'<code>' . esc_html( $last_computed ) . '</code>'
+					'<code>' . esc_html( get_date_from_gmt( $last_computed ) ) . '</code>'
 				);
 				?>
 			</p>
@@ -939,19 +938,14 @@ final class AnalyticsDashboard {
 			return;
 		}
 
-		// Fill gaps so every day in range has a value.
-		//
-		// The day keys are built in the SITE's clock, because that is the clock they are grouped by:
-		// created_at is written with current_time('mysql'), so DATE(created_at) is a site-local day.
-		// This loop used gmdate() — a UTC day — so on any site not on UTC the two sets of keys did not
-		// line up, and a day that HAD points rendered as an empty column. The chart was not just ugly,
-		// it was wrong.
-		$end_ts   = time();
-		$start_ts = strtotime( "-{$period} days", $end_ts );
-		$filled   = array();
-		for ( $ts = $start_ts; $ts <= $end_ts; $ts += DAY_IN_SECONDS ) {
-			$day            = wp_date( 'Y-m-d', $ts );
-			$filled[ $day ] = $daily_points[ $day ] ?? 0;
+		// Fill gaps so every day in range has a value. Keys are site-calendar days, matching the
+		// query's grouping; walking calendar days (not 86400s steps) stays exact across DST.
+		$first  = new \DateTimeImmutable( Clock::site_date( "-{$period} days" ) );
+		$span   = (int) $first->diff( new \DateTimeImmutable( Clock::site_date() ) )->days;
+		$filled = array();
+		for ( $i = 0; $i <= $span; $i++ ) {
+			$key            = $first->modify( "+{$i} days" )->format( 'Y-m-d' );
+			$filled[ $key ] = $daily_points[ $key ] ?? 0;
 		}
 
 		$max   = max( $filled ) ?: 1;

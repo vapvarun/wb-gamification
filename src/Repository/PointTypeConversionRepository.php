@@ -15,6 +15,8 @@
 
 namespace WBGam\Repository;
 
+use WBGam\Engine\Clock;
+
 defined( 'ABSPATH' ) || exit;
 // Silencing convention-driven false positives so Plugin Check signal stays clean:
 // - WordPress.DB.DirectDatabaseQuery.DirectQuery + .NoCaching + .SchemaChange:
@@ -120,8 +122,9 @@ final class PointTypeConversionRepository {
 				'cooldown_seconds' => max( 0, (int) ( $data['cooldown_seconds'] ?? 0 ) ),
 				'max_per_day'      => max( 0, (int) ( $data['max_per_day'] ?? 0 ) ),
 				'is_active'        => 1,
+				'created_at'       => current_time( 'mysql', true ),
 			),
-			array( '%s', '%s', '%d', '%d', '%d', '%d', '%d', '%d' )
+			array( '%s', '%s', '%d', '%d', '%d', '%d', '%d', '%d', '%s' )
 		);
 
 		if ( $inserted ) {
@@ -209,7 +212,7 @@ final class PointTypeConversionRepository {
 		global $wpdb;
 
 		$action_id = sprintf( 'convert_%s_to_%s', $from, $to );
-		$day_start = wp_date( 'Y-m-d 00:00:00' );
+		$day_start = Clock::site_day_start( 'today' ); // Site midnight as UTC; created_at is UTC.
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- single small SUM; rate-limit check.
 		return (int) $wpdb->get_var(
@@ -229,7 +232,7 @@ final class PointTypeConversionRepository {
 	 * @param int    $user_id User to check.
 	 * @param string $from    From-type slug.
 	 * @param string $to      To-type slug.
-	 * @return string|null MySQL datetime of last conversion, or null if none.
+	 * @return string|null MySQL datetime (UTC) of last conversion, or null if none.
 	 */
 	public function last_conversion_at( int $user_id, string $from, string $to ): ?string {
 		global $wpdb;

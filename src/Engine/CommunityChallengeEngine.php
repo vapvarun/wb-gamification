@@ -258,7 +258,7 @@ final class CommunityChallengeEngine {
 				"UPDATE {$wpdb->prefix}wb_gam_community_challenges
 				    SET status = 'completed', completed_at = %s
 				  WHERE id = %d AND status = 'active'",
-				current_time( 'mysql' ),
+				current_time( 'mysql', true ),
 				$challenge_id
 			)
 		);

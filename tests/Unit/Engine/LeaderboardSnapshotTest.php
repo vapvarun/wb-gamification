@@ -64,27 +64,25 @@ class LeaderboardSnapshotTest extends TestCase {
 	}
 
 	/**
-	 * Both sides of the straggler purge must come from the same clock.
+	 * Both sides of the straggler purge must come from the same clock: one PHP UTC value.
+	 *
+	 * The rows are stamped with $started and the closing DELETE keeps rows stamped >= $started. When
+	 * the stamp came from MySQL NOW() and the cutoff from PHP (or vice versa), the two clocks differed
+	 * on any host whose database is not UTC and the DELETE wiped the snapshot it had just written.
 	 *
 	 * @test
 	 */
-	public function straggler_purge_uses_the_database_clock_not_site_local_time(): void {
+	public function straggler_purge_stamps_and_bounds_with_one_utc_value(): void {
 		$src = $this->source();
 
-		// The rows are stamped by MySQL NOW(); the cutoff must come from the DB too.
-		$this->assertMatchesRegularExpression(
-			"/\\\$started\s*=\s*\(string\)\s*\\\$wpdb->get_var\(\s*'SELECT NOW\(\)'\s*\);/",
+		$this->assertStringContainsString(
+			'$started = current_time( \'mysql\', true );',
 			$src,
-			'The straggler cutoff must be read from the database clock. Using '
-			. "current_time('mysql') (site-local) against rows stamped NOW() (server/UTC) makes the "
-			. 'closing DELETE wipe the whole snapshot on any site ahead of UTC.'
+			'The snapshot run must take one UTC timestamp in PHP.'
 		);
-
-		$this->assertStringNotContainsString(
-			"$started = current_time( 'mysql' );",
-			$src,
-			"current_time('mysql') is site-local and must never be compared against NOW()-stamped rows."
-		);
+		$this->assertStringNotContainsString( 'SELECT NOW()', $src, 'No database clock: its zone varies by host.' );
+		$this->assertStringNotContainsString( 'NOW() AS updated_at', $src, 'Rows must be stamped with the bound $started, not NOW().' );
+		$this->assertStringNotContainsString( 'UNIX_TIMESTAMP(', $src, 'UNIX_TIMESTAMP() depends on the database session zone.' );
 	}
 
 	/**

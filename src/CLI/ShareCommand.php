@@ -86,7 +86,7 @@ final class ShareCommand {
 			$wpdb->prepare(
 				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from $wpdb->prefix.
 				"UPDATE {$table} SET shared_at = %s WHERE shared_at IS NULL",
-				current_time( 'mysql' )
+				current_time( 'mysql', true )
 			)
 		);
 

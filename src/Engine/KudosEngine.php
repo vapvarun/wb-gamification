@@ -269,7 +269,7 @@ final class KudosEngine {
 				'giver_id'    => $giver_id,
 				'receiver_id' => $receiver_id,
 				'message'     => mb_substr( $message, 0, 255 ),
-				'created_at'  => current_time( 'mysql' ),
+				'created_at'  => current_time( 'mysql', true ),
 			),
 			array( '%d', '%d', '%s', '%s' )
 		);
@@ -342,7 +342,7 @@ final class KudosEngine {
 	}
 
 	/**
-	 * Count kudos sent by a user today (site-local day).
+	 * Count kudos sent by a user today (the site's calendar day).
 	 *
 	 * @param int $giver_id User to check.
 	 * @return int
@@ -356,14 +356,8 @@ final class KudosEngine {
 				  WHERE giver_id = %d
 				    AND created_at >= %s",
 				$giver_id,
-				// The boundary MUST be expressed in the same clock the column is written
-				// in. `created_at` is stored with current_time( 'mysql' ) — site-local.
-				// This compared it against gmdate( 'Y-m-d' ) — a UTC day boundary. On a
-				// site BEHIND UTC (e.g. America/Los_Angeles at 23:39 local), "today" in
-				// UTC is already tomorrow, so every kudos sent today landed before that
-				// boundary and the COUNT came back 0 — the daily limit was never
-				// enforced. Sibling bug to has_recent_kudos_to_receiver() below; same fix.
-				gmdate( 'Y-m-d', strtotime( current_time( 'mysql' ) ) ) . ' 00:00:00'
+				// created_at is UTC; "today" starts at the site's midnight, as a UTC instant.
+				Clock::site_day_start( 'today' )
 			)
 		);
 	}
@@ -392,14 +386,8 @@ final class KudosEngine {
 				    AND created_at >= %s",
 				$giver_id,
 				$receiver_id,
-				// The boundary MUST be expressed in the same clock the column is written
-				// in. `created_at` is stored with current_time( 'mysql' ) — site-local.
-				// This compared it against gmdate() — UTC. On any site BEHIND UTC (every
-				// US site), a kudos sent seconds ago is stamped hours "before" the UTC
-				// boundary, the COUNT comes back 0, and the per-receiver cooldown never
-				// fired at all — no concurrency required to reproduce it. Same two-clock
-				// bug that emptied the leaderboard snapshot; same fix, one clock.
-				gmdate( 'Y-m-d H:i:s', strtotime( current_time( 'mysql' ) ) - $cooldown_seconds )
+				// created_at is UTC, so the cooldown bound is a UTC instant too.
+				Clock::site_cutoff( "-{$cooldown_seconds} seconds" )
 			)
 		);
 		return $count > 0;
@@ -600,7 +588,7 @@ final class KudosEngine {
 		);
 
 		// Soft-revoke the row (kept for audit).
-		$wpdb->update( $table, array( 'revoked_at' => current_time( 'mysql' ) ), array( 'id' => $kudos_id ), array( '%s' ), array( '%d' ) );
+		$wpdb->update( $table, array( 'revoked_at' => current_time( 'mysql', true ) ), array( 'id' => $kudos_id ), array( '%s' ), array( '%d' ) );
 
 		// Compensating debits — each audited to wb_gam_events with the reason.
 		if ( $recv_pts > 0 ) {
@@ -696,18 +684,17 @@ final class KudosEngine {
 			$values[] = $receiver;
 		}
 
-		// Dates are the site's, because that is the clock created_at is written in and the clock the
-		// moderator is reading their screen in.
+		// The moderator picks site-calendar days; created_at is UTC, so the bounds are converted.
 		$from = (string) ( $filters['date_from'] ?? '' );
 		if ( '' !== $from ) {
 			$parts[]  = 'k.created_at >= %s';
-			$values[] = $from . ' 00:00:00';
+			$values[] = get_gmt_from_date( $from . ' 00:00:00' );
 		}
 
 		$to = (string) ( $filters['date_to'] ?? '' );
 		if ( '' !== $to ) {
 			$parts[]  = 'k.created_at <= %s';
-			$values[] = $to . ' 23:59:59';
+			$values[] = get_gmt_from_date( $to . ' 23:59:59' );
 		}
 
 		return array( $parts ? 'WHERE ' . implode( ' AND ', $parts ) : '', $values );

@@ -63,7 +63,7 @@ final class RecapEngine {
 	 */
 	public static function get_recap( int $user_id, int $year = 0 ): array {
 		if ( $year <= 0 ) {
-			$year = (int) gmdate( 'Y' ) - 1;
+			$year = (int) wp_date( 'Y' ) - 1;
 		}
 
 		$cache_key = "wb_gam_recap_{$user_id}_{$year}";
@@ -72,8 +72,9 @@ final class RecapEngine {
 			return (array) $cached;
 		}
 
-		$start = "{$year}-01-01 00:00:00";
-		$end   = "{$year}-12-31 23:59:59";
+		// The site's calendar year, as UTC bounds for the UTC columns.
+		$start = get_gmt_from_date( "{$year}-01-01 00:00:00" );
+		$end   = get_gmt_from_date( "{$year}-12-31 23:59:59" );
 
 		global $wpdb;
 
@@ -233,12 +234,17 @@ final class RecapEngine {
 	private static function get_peak_week( int $user_id, int $year ): ?array {
 		global $wpdb;
 
-		$start = "{$year}-01-01 00:00:00";
-		$end   = "{$year}-12-31 23:59:59";
+		// The site's calendar year, as UTC bounds for the UTC columns.
+		$start = get_gmt_from_date( "{$year}-01-01 00:00:00" );
+		$end   = get_gmt_from_date( "{$year}-12-31 23:59:59" );
 
+		// Week of the SITE's calendar, not UTC's.
+		$local = Clock::sql_utc_to_local( 'created_at', (int) strtotime( $start . ' UTC' ), (int) strtotime( $end . ' UTC' ) );
+
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $local is built by Clock from a fixed column name.
 		$row = $wpdb->get_row(
 			$wpdb->prepare(
-				"SELECT DATE_FORMAT(created_at, '%%Y-W%%V') AS iso_week,
+				"SELECT DATE_FORMAT({$local}, '%%Y-W%%V') AS iso_week,
 				        SUM(points) AS week_points
 				   FROM {$wpdb->prefix}wb_gam_points
 				  WHERE user_id = %d AND created_at BETWEEN %s AND %s
@@ -251,6 +257,7 @@ final class RecapEngine {
 			),
 			ARRAY_A
 		);
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
 		if ( ! $row ) {
 			return null;
@@ -279,8 +286,9 @@ final class RecapEngine {
 
 		global $wpdb;
 
-		$start = "{$year}-01-01 00:00:00";
-		$end   = "{$year}-12-31 23:59:59";
+		// The site's calendar year, as UTC bounds for the UTC columns.
+		$start = get_gmt_from_date( "{$year}-01-01 00:00:00" );
+		$end   = get_gmt_from_date( "{$year}-12-31 23:59:59" );
 
 		$total_members = (int) $wpdb->get_var(
 			$wpdb->prepare(

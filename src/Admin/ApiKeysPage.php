@@ -242,8 +242,8 @@ final class ApiKeysPage {
 									<td><strong><?php echo esc_html( $row['label'] ); ?></strong></td>
 									<td><code><?php echo esc_html( '' !== $row['site_id'] ? $row['site_id'] : '—' ); ?></code></td>
 									<td><code><?php echo esc_html( $preview ); ?></code></td>
-									<td><?php echo esc_html( $row['created_at'] ); ?></td>
-									<td><?php echo esc_html( $row['last_used'] ?: '—' ); ?></td>
+									<td><?php echo esc_html( get_date_from_gmt( (string) $row['created_at'], get_option( 'date_format' ) . ' ' . get_option( 'time_format' ) ) ); ?></td>
+									<td><?php echo esc_html( $row['last_used'] ? get_date_from_gmt( (string) $row['last_used'], get_option( 'date_format' ) . ' ' . get_option( 'time_format' ) ) : '—' ); ?></td>
 									<td>
 										<?php if ( 1 === (int) $row['is_active'] ) : ?>
 											<span class="wbgam-pill wbgam-pill--active"><?php esc_html_e( 'Active', 'wb-gamification' ); ?></span>

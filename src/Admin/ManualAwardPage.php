@@ -451,7 +451,7 @@ final class ManualAwardPage {
 								</td>
 								<td><?php echo esc_html( $row_label ); ?></td>
 								<td><?php echo esc_html( (string) ( $row['note'] ?? '' ) ); ?></td>
-								<td><?php echo esc_html( date_i18n( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), strtotime( $row['created_at'] ) ) ); ?></td>
+								<td><?php echo esc_html( wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), strtotime( (string) $row['created_at'] . ' UTC' ) ) ); ?></td>
 							</tr>
 							<?php endforeach; ?>
 						</tbody>

@@ -167,9 +167,7 @@ final class PersonalRecordEngine {
 	private static function period_totals( int $user_id ): array {
 		global $wpdb;
 
-		// All three bound wb_gam_points.created_at, which is written site-local. A UTC day boundary
-		// means a member's "today" record starts at the wrong hour -- in Los Angeles, at 5pm the day
-		// before. See WBGam\Engine\Clock.
+		// Site-calendar day/week/month, as UTC bounds for the UTC created_at column.
 		$day_start   = Clock::site_day_start( 'today' );
 		$week_start  = Clock::site_cutoff( 'monday this week' );
 		$month_start = Clock::site_day_start( 'first day of this month' );

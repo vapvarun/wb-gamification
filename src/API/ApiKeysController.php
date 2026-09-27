@@ -428,14 +428,16 @@ final class ApiKeysController extends WP_REST_Controller {
 					'readonly' => true,
 				),
 				'created_at'  => array(
-					'type'     => 'string',
-					'format'   => 'date-time',
-					'readonly' => true,
+					'type'        => 'string',
+					'format'      => 'date-time',
+					'description' => 'UTC, Y-m-d H:i:s.',
+					'readonly'    => true,
 				),
 				'last_used'   => array(
-					'type'     => 'string',
-					'format'   => 'date-time',
-					'readonly' => true,
+					'type'        => 'string',
+					'format'      => 'date-time',
+					'description' => 'UTC, Y-m-d H:i:s.',
+					'readonly'    => true,
 				),
 			),
 		);

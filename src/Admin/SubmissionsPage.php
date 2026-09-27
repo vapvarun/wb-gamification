@@ -229,7 +229,7 @@ final class SubmissionsPage {
 												</a>
 											<?php endif; ?>
 										</td>
-										<td><?php echo esc_html( date_i18n( get_option( 'date_format' ), strtotime( (string) $row['created_at'] ) ) ); ?></td>
+										<td><?php echo esc_html( wp_date( get_option( 'date_format' ), strtotime( (string) $row['created_at'] . ' UTC' ) ) ); ?></td>
 										<td>
 											<button type="button" class="wbgam-btn wbgam-btn--sm" data-wb-gam-submission-approve>
 												<?php esc_html_e( 'Approve', 'wb-gamification' ); ?>

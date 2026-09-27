@@ -273,8 +273,9 @@ class RedemptionController extends WP_REST_Controller {
 					? absint( $request['stock'] )
 					: null,
 				'is_active'     => 1,
+				'created_at'    => current_time( 'mysql', true ),
 			),
-			array( '%s', '%s', '%d', '%s', '%s', '%s', '%d', '%d' )
+			array( '%s', '%s', '%d', '%s', '%s', '%s', '%d', '%d', '%s' )
 		);
 
 		if ( ! $inserted ) {
@@ -505,7 +506,7 @@ class RedemptionController extends WP_REST_Controller {
 				'redeemed_at' => array(
 					'type'        => 'string',
 					'format'      => 'date-time',
-					'description' => 'When the redemption occurred.',
+					'description' => 'When the redemption occurred (UTC).',
 				),
 			),
 		);

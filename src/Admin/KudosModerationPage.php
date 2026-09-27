@@ -346,7 +346,7 @@ final class KudosModerationPage {
 										<td><?php echo esc_html( $row['giver_name'] ? $row['giver_name'] : sprintf( /* translators: %d: user ID */ __( 'User #%d', 'wb-gamification' ), $row['giver_id'] ) ); ?></td>
 										<td><?php echo esc_html( $row['receiver_name'] ? $row['receiver_name'] : sprintf( /* translators: %d: user ID */ __( 'User #%d', 'wb-gamification' ), $row['receiver_id'] ) ); ?></td>
 										<td class="wb-gam-kudos-table__message"><?php echo esc_html( $row['message'] ? $row['message'] : '—' ); ?></td>
-										<td class="wb-gam-kudos-table__date"><?php echo esc_html( $row['created_at'] ); ?></td>
+										<td class="wb-gam-kudos-table__date"><?php echo esc_html( get_date_from_gmt( (string) $row['created_at'], get_option( 'date_format' ) . ' ' . get_option( 'time_format' ) ) ); ?></td>
 										<td class="wb-gam-kudos-table__status">
 											<?php if ( $row['revoked'] ) : ?>
 												<span class="wbgam-badge wbgam-badge--danger"><?php esc_html_e( 'Revoked', 'wb-gamification' ); ?></span>

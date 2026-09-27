@@ -201,7 +201,7 @@ final class NudgeEngine {
 			return null;
 		}
 
-		$today = current_time( 'Y-m-d' );
+		$today = Clock::site_date(); // last_active is a site-calendar DATE.
 
 		if ( $last_active === $today ) {
 			return null; // Already active today — streak is safe.
@@ -232,7 +232,7 @@ final class NudgeEngine {
 			return null;
 		}
 
-		// earned_at is written by BadgeEngine with current_time( 'mysql' ) -- site-local.
+		// earned_at is UTC; compared as strings against a UTC bound.
 		$seven_days_ago = Clock::site_cutoff( '-7 days' );
 		$recent_count   = 0;
 

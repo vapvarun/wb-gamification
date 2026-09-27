@@ -4,6 +4,8 @@ All tables use the WordPress table prefix (default `wp_`). The current schema ve
 
 Migrations live in `src/Engine/DbUpgrader.php`. Each version gets its own `upgrade_to_X_Y_Z()` method. Tables are created on activation via `src/Engine/Installer.php` using `dbDelta()`.
 
+All stored times are UTC: every `DATETIME` column (and the `wb_gam_decayed_at` / `wb_gam_last_retention_nudge` user meta) holds a UTC `Y-m-d H:i:s` value written from PHP, never SQL `NOW()`. Windows such as "today" or "the last 7 days" are resolved in the site time zone by `WBGam\Engine\Clock` and converted to UTC bounds; display converts back with `wp_date()` / `get_date_from_gmt()`. Pure calendar keys (`wb_gam_streaks.last_active`, cohort week keys) stay site-calendar values. Sites upgrading from before 1.6.5 have their existing rows converted once by the 1.6.5 upgrade.
+
 ---
 
 ## Core Tables
@@ -36,7 +38,7 @@ Points ledger. Derived from events. Each row represents one point award transact
 | `action_id` | VARCHAR(100) | Action identifier |
 | `points` | INT | Points awarded (positive integer) |
 | `object_id` | BIGINT UNSIGNED NULL | Optional related object |
-| `created_at` | DATETIME | Transaction timestamp |
+| `created_at` | DATETIME | Transaction timestamp (UTC) |
 
 **Indexes:** `idx_event (event_id)`, `idx_user_created (user_id, created_at)`, `idx_user_action_created (user_id, action_id, created_at)` (sargable for leaderboard queries), `idx_action (action_id)`, `idx_created (created_at)`
 
@@ -53,8 +55,8 @@ Earned badges. One row per member per badge. The `UNIQUE KEY user_badge (user_id
 | `id` | BIGINT UNSIGNED PK AUTO_INCREMENT | |
 | `user_id` | BIGINT UNSIGNED | WordPress user ID |
 | `badge_id` | VARCHAR(100) | Badge identifier (FK to `wb_gam_badge_defs.id`) |
-| `earned_at` | DATETIME | Award timestamp |
-| `expires_at` | DATETIME NULL | Expiry timestamp (added v0.3.0). NULL = never expires |
+| `earned_at` | DATETIME | Award timestamp (UTC) |
+| `expires_at` | DATETIME NULL | Expiry timestamp (UTC, added v0.3.0). NULL = never expires |
 
 **Indexes:** `UNIQUE user_badge (user_id, badge_id)`, `idx_expires_at (expires_at)`
 
@@ -83,10 +85,10 @@ Streak state per member. One row per user, updated on every point-earning activi
 | `user_id` | BIGINT UNSIGNED PK | WordPress user ID |
 | `current_streak` | INT UNSIGNED | Current consecutive day/week count |
 | `longest_streak` | INT UNSIGNED | All-time best streak |
-| `last_active` | DATE | Last date the member earned points |
+| `last_active` | DATE | Last day the member earned points, as a site-calendar date (Settings > General time zone), not UTC |
 | `timezone` | VARCHAR(50) | Member timezone for day boundary calculations. Default `UTC` |
 | `grace_used` | TINYINT(1) | Whether the one-time grace day has been used |
-| `updated_at` | DATETIME | Auto-updated on each write |
+| `updated_at` | DATETIME | Set on each write (UTC) |
 
 ### `wb_gam_member_prefs`
 
@@ -119,8 +121,8 @@ Individual challenge definitions.
 | `target` | INT UNSIGNED | Target count to complete the challenge |
 | `bonus_points` | INT | Bonus points awarded on completion |
 | `period` | VARCHAR(20) | `none`, `day`, `week`, `month` |
-| `starts_at` | DATETIME NULL | Challenge start time |
-| `ends_at` | DATETIME NULL | Challenge end time |
+| `starts_at` | DATETIME NULL | Challenge start time (UTC) |
+| `ends_at` | DATETIME NULL | Challenge end time (UTC) |
 | `status` | VARCHAR(20) | `active`, `inactive`, `completed` |
 
 **Indexes:** `status (status)`, `idx_status_action (status, action_id)`
@@ -135,8 +137,8 @@ Per-user challenge progress tracking.
 | `user_id` | BIGINT UNSIGNED | |
 | `challenge_id` | BIGINT UNSIGNED | |
 | `progress` | INT UNSIGNED | Current progress count |
-| `completed_at` | DATETIME NULL | When the challenge was completed |
-| `created_at` | DATETIME | |
+| `completed_at` | DATETIME NULL | When the challenge was completed (UTC) |
+| `created_at` | DATETIME | UTC |
 
 **Key:** `UNIQUE user_challenge (user_id, challenge_id)`
 
@@ -150,7 +152,7 @@ Peer kudos log. One row per kudos transaction.
 | `giver_id` | BIGINT UNSIGNED | User who gave kudos |
 | `receiver_id` | BIGINT UNSIGNED | User who received kudos |
 | `message` | VARCHAR(255) NULL | Optional message |
-| `created_at` | DATETIME | |
+| `created_at` | DATETIME | UTC |
 
 **Indexes:** `giver_date (giver_id, created_at)`, `receiver_id (receiver_id)`
 
@@ -168,9 +170,9 @@ Community-wide (Pokémon GO-style) challenges where all members contribute to a 
 | `global_progress` | BIGINT UNSIGNED | Current community-wide count |
 | `bonus_points` | INT | Points awarded to each contributor on completion |
 | `status` | VARCHAR(20) | `active`, `completed` |
-| `starts_at` | DATETIME NULL | |
-| `ends_at` | DATETIME NULL | |
-| `completed_at` | DATETIME NULL | |
+| `starts_at` | DATETIME NULL | UTC |
+| `ends_at` | DATETIME NULL | UTC |
+| `completed_at` | DATETIME NULL | UTC |
 
 ### `wb_gam_community_challenge_contributions`
 
@@ -199,7 +201,7 @@ All rule configurations: badge conditions, point multipliers, and other rule typ
 | `target_id` | VARCHAR(100) NULL | Badge ID (for `badge_condition`) or other target |
 | `rule_config` | LONGTEXT | JSON-encoded rule parameters |
 | `is_active` | TINYINT(1) | `1` = active, `0` = disabled |
-| `created_at` | DATETIME | |
+| `created_at` | DATETIME | UTC |
 
 **Indexes:** `rule_type (rule_type)`, `target_id (target_id)`
 
@@ -220,10 +222,10 @@ Badge definitions (catalog). Award conditions live in `wb_gam_rules`.
 | `image_url` | VARCHAR(500) NULL | Badge image URL |
 | `is_credential` | TINYINT(1) | `1` = issued as an OpenBadges 3.0 credential |
 | `validity_days` | INT UNSIGNED NULL | Badge expiry in days. NULL = never expires |
-| `closes_at` | DATETIME NULL | Date after which the badge can no longer be earned |
+| `closes_at` | DATETIME NULL | Date after which the badge can no longer be earned (UTC) |
 | `max_earners` | INT UNSIGNED NULL | Maximum members who can hold this badge |
 | `category` | VARCHAR(50) | `points`, `wordpress`, `buddypress`, `special` |
-| `created_at` | DATETIME | |
+| `created_at` | DATETIME | UTC |
 
 ---
 
@@ -240,7 +242,7 @@ Registered outbound webhook endpoints.
 | `secret` | VARCHAR(255) | HMAC-SHA256 signing secret |
 | `events` | TEXT | JSON array of event types to forward |
 | `is_active` | TINYINT(1) | |
-| `created_at` | DATETIME | |
+| `created_at` | DATETIME | UTC |
 
 ### `wb_gam_redemption_items`
 
@@ -256,7 +258,7 @@ Rewards catalog for the points redemption store.
 | `reward_config` | LONGTEXT NULL | JSON-encoded reward delivery config |
 | `stock` | INT UNSIGNED NULL | Available quantity. NULL = unlimited |
 | `is_active` | TINYINT(1) | |
-| `created_at` | DATETIME | |
+| `created_at` | DATETIME | UTC |
 
 ### `wb_gam_redemptions`
 
@@ -270,7 +272,7 @@ Redemption transaction log.
 | `points_cost` | INT UNSIGNED | Points deducted at time of redemption |
 | `status` | VARCHAR(30) | `pending`, `fulfilled`, `cancelled` |
 | `coupon_code` | VARCHAR(100) NULL | Generated coupon code if applicable |
-| `created_at` | DATETIME | |
+| `created_at` | DATETIME | UTC |
 
 ### `wb_gam_cohort_members`
 
@@ -299,7 +301,7 @@ Leaderboard snapshot. Written by `wb_gam_leaderboard_snapshot` cron job; read by
 | `period` | VARCHAR(20) | `all`, `month`, `week`, `day` |
 | `total_points` | BIGINT | Points total for this period |
 | `rank` | INT UNSIGNED | Position in the leaderboard |
-| `updated_at` | DATETIME | Snapshot timestamp |
+| `updated_at` | DATETIME | Snapshot timestamp (UTC) |
 
 **Indexes:** `idx_period_rank (period, rank)`, `idx_user_period (user_id, period)`
 

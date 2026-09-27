@@ -480,8 +480,9 @@ class BadgesController extends WP_REST_Controller {
 						'target_id'   => $badge_id,
 						'rule_config' => (string) wp_json_encode( $group ),
 						'is_active'   => 1,
+						'created_at'  => current_time( 'mysql', true ),
 					),
-					array( '%s', '%s', '%s', '%d' )
+					array( '%s', '%s', '%s', '%d', '%s' )
 				);
 				return false !== $inserted;
 			}
@@ -535,9 +536,11 @@ class BadgesController extends WP_REST_Controller {
 			);
 		}
 
-		$collected = $this->collect_badge_row( $request, true );
-		$row       = $collected['row'];
-		$formats   = $collected['formats'];
+		$collected         = $this->collect_badge_row( $request, true );
+		$row               = $collected['row'];
+		$formats           = $collected['formats'];
+		$row['created_at'] = current_time( 'mysql', true );
+		$formats[]         = '%s';
 
 		/**
 		 * Filter — abort badge creation by returning WP_Error.
@@ -872,7 +875,10 @@ class BadgesController extends WP_REST_Controller {
 				'is_credential' => array( 'type' => 'boolean' ),
 				'category'      => array( 'type' => 'string' ),
 				'earned'        => array( 'type' => 'boolean' ),
-				'earned_at'     => array( 'type' => array( 'string', 'null' ) ),
+				'earned_at'     => array(
+					'type'        => array( 'string', 'null' ),
+					'description' => 'When the member earned the badge. UTC, Y-m-d H:i:s.',
+				),
 				'rarity_pct'    => array( 'type' => 'number' ),
 			),
 		);

@@ -340,7 +340,10 @@ class KudosController extends WP_REST_Controller {
 				'receiver_id'   => array( 'type' => 'integer' ),
 				'receiver_name' => array( 'type' => 'string' ),
 				'message'       => array( 'type' => array( 'string', 'null' ) ),
-				'created_at'    => array( 'type' => 'string' ),
+				'created_at'    => array(
+					'type'        => 'string',
+					'description' => 'When the kudos was given. UTC, Y-m-d H:i:s.',
+				),
 			),
 		);
 	}

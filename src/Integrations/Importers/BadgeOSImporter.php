@@ -179,7 +179,8 @@ final class BadgeOSImporter {
 				'user_id'     => (int) $log['user_id'],
 				'points'      => $delta,
 				'point_type'  => self::map_point_type( (int) $log['credit_id'] ),
-				'occurred_at' => (string) $log['actual_date_earned'],
+				// BadgeOS writes its dates in site-local time; convert to UTC.
+				'occurred_at' => get_gmt_from_date( (string) $log['actual_date_earned'], 'Y-m-d\TH:i:s\Z' ),
 				'source_key'  => 'badgeos:points:' . (int) $log['id'],
 				'metadata'    => array(
 					'_source' => 'badgeos',
@@ -341,9 +342,8 @@ final class BadgeOSImporter {
 						'category'  => 'imported',
 					)
 				);
-				// Round trip preserves the source's wall clock (see MyCredImporter). The fallback must be
-				// the SITE's now, not UTC's -- earned_at is a site-local column.
-				$earned_at = $a['earned_at'] ? gmdate( 'Y-m-d H:i:s', strtotime( (string) $a['earned_at'] ) ) : current_time( 'mysql' );
+				// BadgeOS stores date_earned in site-local time; earned_at is UTC.
+				$earned_at = $a['earned_at'] ? get_gmt_from_date( (string) $a['earned_at'] ) : current_time( 'mysql', true );
 				if ( \WBGam\Engine\BadgeEngine::award_badge( $a['user_id'], $a['badge_id'], $earned_at ) ) {
 					++$ach_imported;
 				}

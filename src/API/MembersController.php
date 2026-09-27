@@ -1021,7 +1021,7 @@ class MembersController extends WP_REST_Controller {
 					'points'     => (int) $row['points'],
 					'point_type' => (string) ( $row['point_type'] ?? '' ),
 					'object_id'  => $row['object_id'] ? (int) $row['object_id'] : null,
-					'created_at' => $row['created_at'],
+					'created_at' => $row['created_at'], // UTC, Y-m-d H:i:s.
 				);
 			},
 			$rows
@@ -1153,7 +1153,7 @@ class MembersController extends WP_REST_Controller {
 					'label'      => \WBGam\Engine\Registry::label_for( (string) $row['action_id'] ),
 					'object_id'  => $row['object_id'] ? (int) $row['object_id'] : null,
 					'metadata'   => $row['metadata'] ? json_decode( $row['metadata'], true ) : null,
-					'created_at' => $row['created_at'],
+					'created_at' => $row['created_at'], // UTC, Y-m-d H:i:s.
 				);
 			},
 			$rows ?: array()

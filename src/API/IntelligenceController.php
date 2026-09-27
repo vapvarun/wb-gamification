@@ -128,7 +128,7 @@ final class IntelligenceController extends WP_REST_Controller {
 				),
 				'computed_at'      => array(
 					'type'        => 'string',
-					'description' => 'Timestamp of last projection compute. May lag up to 24 hours behind ground truth on quiet installs.',
+					'description' => 'Timestamp (UTC, Y-m-d H:i:s) of last projection compute. May lag up to 24 hours behind ground truth on quiet installs.',
 				),
 			),
 		);

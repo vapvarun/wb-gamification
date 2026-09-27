@@ -17,7 +17,7 @@
  *     { "condition_type": "admin_awarded" }
  *
  * Custom condition types can be registered via the
- * `wb_gam_badge_condition` filter.
+ * `wb_gam_evaluate_badge_condition` filter.
  *
  * @package WB_Gamification
  * @since   0.1.0
@@ -138,7 +138,7 @@ final class BadgeEngine {
 				'checked'    => 0,
 				'awarded'    => 0,
 				'total'      => (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->users}" ),
-				'started_at' => current_time( 'mysql' ),
+				'started_at' => current_time( 'mysql', true ),
 				'done'       => false,
 			),
 			false
@@ -825,15 +825,11 @@ final class BadgeEngine {
 				if ( ! $user ) {
 					return false;
 				}
-				// user_registered is written by WordPress core in GMT. Compared against the same
-				// clock. Mixing this with site-local time is the bug this branch fixed five times.
+				// user_registered is UTC (WordPress core), so it is parsed as UTC.
 				$registered = strtotime( (string) $user->user_registered . ' UTC' );
 				if ( ! $registered ) {
 					return false;
 				}
-				// @clock-ok: both sides are real UTC. user_registered is stored by WP core in UTC and
-				// the strtotime() above appends an explicit ' UTC', so $registered is a true epoch --
-				// not the local-parsed-as-UTC value that makes this construct wrong elsewhere.
 				return (int) floor( ( time() - $registered ) / DAY_IN_SECONDS ) >= (int) ( $condition['days'] ?? 0 );
 
 			case 'admin_awarded':
@@ -893,11 +889,7 @@ final class BadgeEngine {
 	/**
 	 * Points a member earned inside a rolling window.
 	 *
-	 * CLOCK: wb_gam_points.created_at is written with current_time( 'mysql' ) -- SITE-LOCAL -- so
-	 * the window boundary is computed in that same clock. Using gmdate() or NOW() here would
-	 * reintroduce, in brand-new code, the exact defect this branch fixed FIVE times: on a site
-	 * behind UTC the window silently drops recent activity; ahead of UTC it pulls in activity from
-	 * before the window opened. CI stage 2.15 fails the build for an unannotated NOW().
+	 * The wb_gam_points.created_at column is UTC, so the window bound is a UTC instant (Clock).
 	 *
 	 * @param int    $user_id User.
 	 * @param string $period  day | week | month.
@@ -912,7 +904,7 @@ final class BadgeEngine {
 			'month' => 30 * DAY_IN_SECONDS,
 		);
 		$window  = $windows[ $period ] ?? ( 7 * DAY_IN_SECONDS );
-		$since   = gmdate( 'Y-m-d H:i:s', strtotime( current_time( 'mysql' ) ) - $window );
+		$since   = Clock::site_cutoff( "-{$window} seconds" );
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		return (int) $wpdb->get_var(
@@ -946,7 +938,7 @@ final class BadgeEngine {
 		// Importers pass the source's earned date (UTC 'Y-m-d H:i:s') to keep
 		// migrated achievements on their real timeline; organic awards default
 		// to now.
-		$earned_at = ( null !== $earned_at && '' !== $earned_at ) ? $earned_at : current_time( 'mysql' );
+		$earned_at = ( null !== $earned_at && '' !== $earned_at ) ? $earned_at : current_time( 'mysql', true );
 
 		global $wpdb;
 
@@ -1223,8 +1215,7 @@ final class BadgeEngine {
 		}
 
 		global $wpdb;
-		$in = implode( ',', array_fill( 0, count( $user_ids ), '%d' ) );
-		// @clock-ok: expires_at is UTC (gmdate()), bound is gmdate() - same as get_user_earned_badge_ids().
+		$in   = implode( ',', array_fill( 0, count( $user_ids ), '%d' ) );
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
 				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $in is a list of %d placeholders.
@@ -1259,8 +1250,6 @@ final class BadgeEngine {
 
 		global $wpdb;
 		// Exclude expired credentials so has_badge() returns false for expired ones.
-		// @clock-ok: expires_at is written in UTC (gmdate(), see award_badge) and the bound below is
-		// gmdate() too. Column and bound are in the same clock.
 		$ids = $wpdb->get_col(
 			$wpdb->prepare(
 				"SELECT badge_id FROM {$wpdb->prefix}wb_gam_user_badges
@@ -1302,8 +1291,6 @@ final class BadgeEngine {
 		$now          = gmdate( 'Y-m-d H:i:s' );
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $placeholders is built from an int count; all values pass through prepare().
-		// @clock-ok: expires_at is written in UTC (gmdate(), see award_badge) and the bound is gmdate().
-		// earned_at in the same table is site-local -- the COLUMN decides the clock, not the table.
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT user_id, badge_id FROM {$wpdb->prefix}wb_gam_user_badges
@@ -1338,9 +1325,7 @@ final class BadgeEngine {
 	public static function get_user_badges( int $user_id ): array {
 		global $wpdb;
 
-		// @clock-ok: the only time-compared column here is expires_at, written in UTC (gmdate()), and
-		// the bound is gmdate(). earned_at is also selected but is never compared in SQL -- it is
-		// site-local, and callers that render it must read it with current_time( 'timestamp' ).
+		// earned_at and expires_at are UTC; renderers convert with wp_date() / get_date_from_gmt().
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT b.id, b.name, b.description, b.image_url,
@@ -1567,8 +1552,9 @@ final class BadgeEngine {
 			'image_url'     => isset( $def['image_url'] ) ? (string) $def['image_url'] : null,
 			'category'      => isset( $def['category'] ) ? (string) $def['category'] : 'imported',
 			'is_credential' => empty( $def['is_credential'] ) ? 0 : 1,
+			'created_at'    => current_time( 'mysql', true ),
 		);
-		$formats = array( '%s', '%s', '%s', '%s', '%s', '%d' );
+		$formats = array( '%s', '%s', '%s', '%s', '%s', '%d', '%s' );
 
 		// Award-window columns. Previously omitted entirely, so a programmatic
 		// def could never carry an expiry, cutoff or earner cap — the columns

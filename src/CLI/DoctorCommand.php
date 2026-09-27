@@ -135,6 +135,7 @@ class DoctorCommand {
 		$this->check_default_levels();
 		$this->check_default_badges();
 		$this->check_badge_expiry_integrity();
+		$this->check_utc_storage();
 		$this->check_actions();
 		$this->check_core_wp_actions();
 		$this->check_duplicate_hooks();
@@ -367,6 +368,33 @@ class DoctorCommand {
 			WP_CLI::line( '  → Repairing expires_at (NULL, or earned_at + validity_days where the badge defines a window)...' );
 			$repaired = \WBGam\Engine\BadgeEngine::repair_zero_date_expiry();
 			WP_CLI::success( '  ' . $repaired . ' rows repaired; earned-badge caches flushed.' );
+		}
+	}
+
+	/**
+	 * The one-time conversion of stored timestamps to UTC (1.6.5) has finished; --fix drains it now.
+	 */
+	private function check_utc_storage(): void {
+		$this->section( 'UTC Timestamp Storage' );
+
+		if ( \WBGam\Engine\UtcStorageMigration::is_done() ) {
+			$this->pass( 'All stored timestamps are UTC' );
+			return;
+		}
+
+		$left = \WBGam\Engine\UtcStorageMigration::progress();
+		$this->warn( 'Converting stored timestamps to UTC in the background: ' . array_sum( $left ) . ' rows left (' . implode( ', ', array_map( static fn( $t, $n ) => "{$t} {$n}", array_keys( $left ), $left ) ) . ')' );
+		if ( $this->fix ) {
+			WP_CLI::line( '  → Finishing the conversion now...' );
+			while ( ! \WBGam\Engine\UtcStorageMigration::is_done() ) {
+				$before = array_sum( \WBGam\Engine\UtcStorageMigration::progress() );
+				\WBGam\Engine\UtcStorageMigration::convert_batch();
+				if ( ! \WBGam\Engine\UtcStorageMigration::is_done() && array_sum( \WBGam\Engine\UtcStorageMigration::progress() ) >= $before ) {
+					$this->fail( 'A chunk failed to convert; see the plugin log. The background job retries it.' );
+					return;
+				}
+			}
+			WP_CLI::success( '  All stored timestamps are UTC.' );
 		}
 	}
 

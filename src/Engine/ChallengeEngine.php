@@ -254,7 +254,7 @@ final class ChallengeEngine {
 		// Mark complete.
 		$wpdb->update(
 			$wpdb->prefix . 'wb_gam_challenge_log',
-			array( 'completed_at' => current_time( 'mysql' ) ),
+			array( 'completed_at' => current_time( 'mysql', true ) ),
 			array(
 				'user_id'      => $user_id,
 				'challenge_id' => $challenge['id'],
