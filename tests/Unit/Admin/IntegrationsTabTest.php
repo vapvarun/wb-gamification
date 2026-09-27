@@ -26,7 +26,6 @@ class IntegrationsTabTest extends TestCase {
 		$r = new \ReflectionClass( \Wbcom\Family\Kit::class );
 		foreach ( array( 'config' => array(), 'booted' => false ) as $prop => $val ) {
 			$p = $r->getProperty( $prop );
-			$p->setAccessible( true );
 			$p->setValue( null, $val );
 		}
 		Monkey\tearDown();

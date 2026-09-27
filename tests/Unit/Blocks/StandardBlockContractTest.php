@@ -202,7 +202,6 @@ class StandardBlockContractTest extends TestCase {
 	private function reflect_styles(): array {
 		$reflection = new \ReflectionClass( CSS::class );
 		$prop       = $reflection->getProperty( 'styles' );
-		$prop->setAccessible( true );
 		return (array) $prop->getValue();
 	}
 }

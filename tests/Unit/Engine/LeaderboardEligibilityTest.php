@@ -67,7 +67,6 @@ class LeaderboardEligibilityTest extends TestCase {
 	 */
 	private function fragment( string $alias, bool $existence_enforced_elsewhere = false ): string {
 		$m = new \ReflectionMethod( LeaderboardEngine::class, 'exclusion_sql' );
-		$m->setAccessible( true );
 
 		[ $sql ] = $m->invoke( null, $alias, $existence_enforced_elsewhere );
 

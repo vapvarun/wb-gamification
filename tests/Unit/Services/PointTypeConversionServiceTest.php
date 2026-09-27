@@ -200,7 +200,6 @@ class PointTypeConversionServiceTest extends TestCase {
 	private function resetRepoStatics(): void {
 		foreach ( array( 'request_cache_all', 'request_cache_default' ) as $prop ) {
 			$ref = new \ReflectionProperty( PointTypeRepository::class, $prop );
-			$ref->setAccessible( true );
 			$ref->setValue( null, null );
 		}
 	}

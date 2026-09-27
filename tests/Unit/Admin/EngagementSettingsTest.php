@@ -42,7 +42,6 @@ class EngagementSettingsTest extends TestCase {
 	 */
 	private function parse( string $raw ): array {
 		$m = new \ReflectionMethod( SettingsPage::class, 'parse_login_bonus_tiers' );
-		$m->setAccessible( true );
 		return $m->invoke( null, $raw );
 	}
 

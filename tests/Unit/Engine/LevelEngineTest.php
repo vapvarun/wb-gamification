@@ -30,7 +30,6 @@ class LevelEngineTest extends TestCase {
 		// Reset the static cache between tests.
 		$reflection = new ReflectionClass( LevelEngine::class );
 		$cache_prop = $reflection->getProperty( 'levels_cache' );
-		$cache_prop->setAccessible( true );
 		$cache_prop->setValue( null, null );
 
 		Monkey\tearDown();
@@ -46,7 +45,6 @@ class LevelEngineTest extends TestCase {
 	private function seed_cache( array $levels ): void {
 		$reflection = new ReflectionClass( LevelEngine::class );
 		$cache_prop = $reflection->getProperty( 'levels_cache' );
-		$cache_prop->setAccessible( true );
 		$cache_prop->setValue( null, $levels );
 	}
 
@@ -183,7 +181,6 @@ class LevelEngineTest extends TestCase {
 
 		$reflection = new ReflectionClass( LevelEngine::class );
 		$cache_prop = $reflection->getProperty( 'levels_cache' );
-		$cache_prop->setAccessible( true );
 		$this->assertNull( $cache_prop->getValue(), 'Static tier must be reset to null.' );
 	}
 

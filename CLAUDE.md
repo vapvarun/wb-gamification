@@ -29,7 +29,7 @@
 | **Version** | 1.6.5 (in development, branch `1.6.5`) |
 | **Path** | `wp-content/plugins/wb-gamification/` |
 | **Namespace** | `WBGam\` (PSR-4, maps to `src/`) |
-| **PHP** | 8.0+ (matches the `Requires PHP` header and composer.json) |
+| **PHP** | 8.1+ (matches the `Requires PHP` header and composer.json) |
 | **Architecture** | Event-sourced, manifest auto-discovery, zero-config |
 | **Part of** | Reign Stack — Wbcom's self-owned community platform |
 | **Basecamp project** | [WP Gamification](https://3.basecamp.com/5798509/buckets/47162271) — ID `47162271` |

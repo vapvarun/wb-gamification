@@ -11,7 +11,7 @@
  * Text Domain: wb-gamification
  * Domain Path: /languages
  * Requires at least: 6.5
- * Requires PHP:      8.0
+ * Requires PHP:      8.1
  *
  * @package WB_Gamification
  */

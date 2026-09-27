@@ -5,7 +5,7 @@
 Before installing WB Gamification, confirm your environment meets these minimums:
 
 - WordPress 6.5 or higher
-- PHP 8.0 or higher
+- PHP 8.1 or higher
 - MySQL 8.0 or higher, or MariaDB 10.4 or higher — the leaderboard uses SQL window functions (`RANK() OVER`), so older database versions are not supported
 
 BuddyPress is **optional**. The plugin works on any standard WordPress site and automatically activates BuddyPress-specific features when BuddyPress is detected.
