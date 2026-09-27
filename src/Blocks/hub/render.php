@@ -144,8 +144,7 @@ if ( 0 === $wb_gam_user_id ) {
 							<span class="gam-anon-board__name"><?php echo esc_html( (string) $wb_gam_lb_row['display_name'] ); ?></span>
 							<span class="gam-anon-board__points">
 								<?php
-								/* translators: %s: formatted point total. */
-								printf( esc_html__( '%s pts', 'wb-gamification' ), esc_html( number_format_i18n( (int) $wb_gam_lb_row['points'] ) ) );
+								echo esc_html( wb_gam_format_points( (int) $wb_gam_lb_row['points'] ) );
 								?>
 							</span>
 						</li>

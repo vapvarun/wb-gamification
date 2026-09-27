@@ -61,9 +61,8 @@ $wb_gam_visibility = WB_Gam_Block_CSS::get_visibility_classes( $wb_gam_attrs );
 // ~15s between page paint and the first heartbeat tick.
 $wb_gam_pt_service   = new \WBGam\Services\PointTypeService();
 $wb_gam_primary_slug = (string) $wb_gam_pt_service->default_slug();
-$wb_gam_primary_rec  = $wb_gam_pt_service->get( $wb_gam_primary_slug );
-$wb_gam_primary_lab  = (string) ( $wb_gam_primary_rec['label'] ?? __( 'pts', 'wb-gamification' ) );
 $wb_gam_points_total = $wb_gam_user_id > 0 ? (int) PointsEngine::get_total( $wb_gam_user_id, $wb_gam_primary_slug ) : 0;
+$wb_gam_primary_lab  = $wb_gam_pt_service->name_for( $wb_gam_points_total, $wb_gam_primary_slug );
 $wb_gam_level        = $wb_gam_user_id > 0 ? LevelEngine::get_level_for_user( $wb_gam_user_id ) : null;
 $wb_gam_progress     = $wb_gam_user_id > 0 ? (int) LevelEngine::get_progress_percent( $wb_gam_user_id ) : 0;
 $wb_gam_badge_count  = $wb_gam_user_id > 0 ? (int) BadgeEngine::count_user_badges( $wb_gam_user_id ) : 0;

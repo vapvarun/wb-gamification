@@ -162,6 +162,7 @@ final class Installer {
 			"CREATE TABLE {$wpdb->prefix}wb_gam_point_types (
 			slug        VARCHAR(60)     NOT NULL,
 			label       VARCHAR(100)    NOT NULL,
+			label_singular VARCHAR(100) NOT NULL DEFAULT '',
 			description TEXT,
 			icon        VARCHAR(100)    DEFAULT NULL,
 			is_default  TINYINT(1)      NOT NULL DEFAULT 0,
@@ -1056,9 +1057,10 @@ final class Installer {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from $wpdb->prefix; INSERT IGNORE is the deterministic upsert path.
 		$wpdb->query(
 			$wpdb->prepare(
-				"INSERT IGNORE INTO $table (slug, label, description, icon, is_default, position, created_at) VALUES (%s, %s, %s, %s, %d, %d, %s)",
+				"INSERT IGNORE INTO $table (slug, label, label_singular, description, icon, is_default, position, created_at) VALUES (%s, %s, %s, %s, %s, %d, %d, %s)",
 				'points',
 				'Points',
+				'Point',
 				'Primary points currency. Renamable; the slug stays as `points` for back-compat.',
 				'star',
 				1,

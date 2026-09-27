@@ -119,11 +119,6 @@ $wb_gam_recap = RecapEngine::get_recap( $wb_gam_user_id, $wb_gam_year );
  */
 $wb_gam_recap = (array) apply_filters( 'wb_gam_block_year_recap_data', $wb_gam_recap, $wb_gam_attrs, $wb_gam_user_id );
 
-// Recap totals are scored in the site's primary currency — resolve
-// its label so the "peak week" line reads as the configured default.
-$wb_gam_pt_service   = new \WBGam\Services\PointTypeService();
-$wb_gam_pt_record    = $wb_gam_pt_service->get( $wb_gam_pt_service->default_slug() );
-$wb_gam_points_label = (string) ( $wb_gam_pt_record['label'] ?? __( 'pts', 'wb-gamification' ) );
 $wb_gam_user  = get_userdata( $wb_gam_user_id );
 
 if ( ! $wb_gam_user || empty( $wb_gam_recap['total_points'] ) ) {
@@ -235,12 +230,7 @@ BlockHooks::before( 'year-recap', $wb_gam_attrs );
 			<span class="wb-gam-recap__peak-week-week"><?php echo esc_html( (string) ( $wb_gam_recap['peak_week']['week'] ?? '' ) ); ?></span>
 			<span class="wb-gam-recap__peak-week-pts">
 				<?php
-				printf(
-					/* translators: 1: formatted amount, 2: currency label. */
-					esc_html__( '%1$s %2$s', 'wb-gamification' ),
-					esc_html( $wb_gam_fmt_num( (int) ( $wb_gam_recap['peak_week']['points'] ?? 0 ) ) ),
-					esc_html( $wb_gam_points_label )
-				);
+				echo esc_html( wb_gam_format_points( (int) ( $wb_gam_recap['peak_week']['points'] ?? 0 ) ) );
 				?>
 			</span>
 		</div>

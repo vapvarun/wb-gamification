@@ -669,9 +669,9 @@ final class ShortcodeHandler {
 							<span class="wb-gam-my-rewards__cost">
 								<?php
 								printf(
-									/* translators: %s: points spent */
-									esc_html__( '%s pts spent', 'wb-gamification' ),
-									esc_html( number_format_i18n( (int) ( $row['points_cost'] ?? 0 ) ) )
+									/* translators: %s: points spent, e.g. "50 Points". */
+									esc_html__( '%s spent', 'wb-gamification' ),
+									esc_html( wb_gam_format_points( (int) ( $row['points_cost'] ?? 0 ) ) )
 								);
 								?>
 							</span>

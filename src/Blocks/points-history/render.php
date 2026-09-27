@@ -117,13 +117,6 @@ $wb_gam_rows       = PointsEngine::get_history( $wb_gam_user_id, $wb_gam_limit, 
 /** This filter is documented in src/Blocks/points-history/render.php (legacy). */
 $wb_gam_rows = (array) apply_filters( 'wb_gam_block_points_history_data', $wb_gam_rows, $wb_gam_attrs, $wb_gam_user_id );
 
-// Pre-fetch currency label map once (no N+1).
-$wb_gam_pt_service = new \WBGam\Services\PointTypeService();
-$wb_gam_label_map  = array();
-foreach ( $wb_gam_pt_service->list() as $wb_gam_pt ) {
-	$wb_gam_label_map[ (string) $wb_gam_pt['slug'] ] = (string) $wb_gam_pt['label'];
-}
-
 // Group rows by local-day so we can render "Today / Yesterday / Date"
 // headers + a daily total. Keys are YYYY-MM-DD in the site's timezone.
 $wb_gam_tz       = wp_timezone();
@@ -201,11 +194,7 @@ BlockHooks::before( 'points-history', $wb_gam_attrs );
 		<?php foreach ( $wb_gam_grouped as $wb_gam_day => $wb_gam_group ) :
 			$wb_gam_total_parts = array();
 			foreach ( $wb_gam_group['totals'] as $wb_gam_slug => $wb_gam_sum ) {
-				$wb_gam_total_parts[] = sprintf(
-					'%s %s',
-					( $wb_gam_sum >= 0 ? '+' : '' ) . number_format_i18n( $wb_gam_sum ),
-					$wb_gam_label_map[ $wb_gam_slug ] ?? __( 'pts', 'wb-gamification' )
-				);
+				$wb_gam_total_parts[] = wb_gam_format_points( (int) $wb_gam_sum, (string) $wb_gam_slug, true );
 			}
 			$wb_gam_total_line = implode( ' · ', $wb_gam_total_parts );
 			?>
@@ -221,7 +210,6 @@ BlockHooks::before( 'points-history', $wb_gam_attrs );
 						$wb_gam_pts          = (int) ( $wb_gam_row['points'] ?? 0 );
 						$wb_gam_pos_neg      = $wb_gam_pts >= 0 ? 'positive' : 'negative';
 						$wb_gam_row_type     = (string) ( $wb_gam_row['point_type'] ?? '' );
-						$wb_gam_row_label    = $wb_gam_label_map[ $wb_gam_row_type ] ?? __( 'pts', 'wb-gamification' );
 						$wb_gam_row_action   = (string) ( $wb_gam_row['action_id'] ?? '' );
 						$wb_gam_action_label = Registry::label_for( $wb_gam_row_action );
 						$wb_gam_message      = (string) ( $wb_gam_row['message'] ?? '' );
@@ -263,12 +251,7 @@ BlockHooks::before( 'points-history', $wb_gam_attrs );
 
 							<span class="wb-gam-points-history__points">
 								<?php
-								printf(
-									/* translators: 1: formatted amount, 2: currency label. */
-									esc_html__( '%1$s %2$s', 'wb-gamification' ),
-									esc_html( ( $wb_gam_pts >= 0 ? '+' : '' ) . number_format_i18n( $wb_gam_pts ) ),
-									esc_html( $wb_gam_row_label )
-								);
+								echo esc_html( wb_gam_format_points( $wb_gam_pts, $wb_gam_row_type, true ) );
 								?>
 							</span>
 						</li>

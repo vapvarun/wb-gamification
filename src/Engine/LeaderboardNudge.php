@@ -345,27 +345,27 @@ final class LeaderboardNudge {
 	private static function build_message( int $user_id, int $rank, int $points, ?int $points_to_next ): string {
 		if ( 1 === $rank ) {
 			return sprintf(
-				/* translators: %d: points earned this week */
-				__( "You're #1 on the leaderboard this week with %d points. Keep it up!", 'wb-gamification' ),
-				$points
+				/* translators: %s: points earned this week, e.g. "40 Points". */
+				__( "You're #1 on the leaderboard this week with %s. Keep it up!", 'wb-gamification' ),
+				wb_gam_format_points( $points )
 			);
 		}
 
 		if ( null !== $points_to_next ) {
 			return sprintf(
-				/* translators: 1: rank, 2: points this week, 3: points needed for next rank. */
-				__( "You're #%1\$d this week with %2\$d points. Just %3\$d more points to move up!", 'wb-gamification' ),
+				/* translators: 1: rank, 2: points this week, e.g. "40 Points", 3: points needed for the next rank. */
+				__( "You're #%1\$d this week with %2\$s. Just %3\$s more to move up!", 'wb-gamification' ),
 				$rank,
-				$points,
-				$points_to_next
+				wb_gam_format_points( $points ),
+				wb_gam_format_points( $points_to_next )
 			);
 		}
 
 		return sprintf(
-			/* translators: 1: rank, 2: points this week. */
-			__( "You're #%1\$d this week with %2\$d points.", 'wb-gamification' ),
+			/* translators: 1: rank, 2: points this week, e.g. "40 Points". */
+			__( "You're #%1\$d this week with %2\$s.", 'wb-gamification' ),
 			$rank,
-			$points
+			wb_gam_format_points( $points )
 		);
 	}
 

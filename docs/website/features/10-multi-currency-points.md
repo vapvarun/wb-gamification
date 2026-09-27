@@ -16,11 +16,12 @@ Single currency (the default) covers most communities. Use multiple currencies w
 Each currency has:
 
 - **Slug** — a short identifier (`coins`, `xp`, `reputation`)
-- **Display name** — shown in member-facing UIs
+- **Display name** — shown in member-facing UIs ("250 Coins")
+- **Name for one** — optional singular ("1 Coin"); leave it blank for names that read the same at any amount, like XP or Karma
 - **Symbol** — optional prefix (`⭐`, `🪙`, `💎`)
 - **Default flag** — exactly one currency is the site default; if action manifests don't specify, this is what they award
 
-The default site has one currency: `points`. To add more, go to **Settings → Point Types** and create them.
+The default site has one currency: `points`, named Points / Point. To add more, go to **Gamification → Point Types** and create them. To rename a currency (including the default), use **Rename** on its row.
 
 Once created, you can:
 

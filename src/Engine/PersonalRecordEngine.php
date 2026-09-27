@@ -215,19 +215,19 @@ final class PersonalRecordEngine {
 
 		if ( 0 === $previous ) {
 			return sprintf(
-				/* translators: 1: points, 2: period label e.g. "this week" */
-				__( 'Personal record! You earned %1$d points %2$s - your best ever!', 'wb-gamification' ),
-				$current,
+				/* translators: 1: points, e.g. "40 Points", 2: period label e.g. "this week" */
+				__( 'Personal record! You earned %1$s %2$s - your best ever!', 'wb-gamification' ),
+				wb_gam_format_points( $current ),
 				$label
 			);
 		}
 
 		return sprintf(
-			/* translators: 1: points, 2: period label, 3: previous personal best */
-			__( 'New personal record! %1$d points %2$s - beating your previous best of %3$d!', 'wb-gamification' ),
-			$current,
+			/* translators: 1: points, e.g. "40 Points", 2: period label, 3: previous personal best, e.g. "30 Points". */
+			__( 'New personal record! %1$s %2$s - beating your previous best of %3$s!', 'wb-gamification' ),
+			wb_gam_format_points( $current ),
 			$label,
-			$previous
+			wb_gam_format_points( $previous )
 		);
 	}
 }

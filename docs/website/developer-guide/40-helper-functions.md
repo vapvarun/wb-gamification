@@ -219,6 +219,7 @@ Since 1.6.5. Use these instead of calling the engine classes (`WBGam\Engine\*`),
 |---|---|
 | `wb_gam_is_action_enabled( string $action_id ): bool` | Whether the owner has the action switched on. |
 | `wb_gam_get_action_points( string $action_id ): int` | The owner's points setting, else the action default; 0 for an unregistered id. |
+| `wb_gam_format_points( int $amount, string $slug = '', bool $signed = false ): string` | An amount with the site's name for it, singular for exactly one: "1 Point", "250 Points", "+10 Karma". Use it wherever a number of points is shown. |
 | `wb_gam_get_point_type_label( string $slug = '' ): string` | The point type's display name ("Points", "Coins"); `''` means the default type. |
 | `wb_gam_get_category_label( string $slug ): string` | A readable category heading ("member-blog" reads "Member Blog"). |
 | `wb_gam_is_module_enabled( string $slug ): bool` | Whether a module on **Settings > Modules** is on (`kudos`, `badges`, ...). |

@@ -312,9 +312,10 @@
 		// the server wrote after "+N " — typically "points" / "XP" / "Coins".
 		var msgEl = lastPointsToast.el.querySelector( '.wb-gam-toast__message' );
 		if ( msgEl ) {
-			var labelMatch = ( msgEl.textContent || '' ).match( /^\+\d+\s+(.+?)(?:\s+×\d+)?$/ );
-			var label = labelMatch ? labelMatch[1] : toastI18n( 'points', 'points' );
-			msgEl.textContent = '+' + lastPointsToast.points + ' ' + label;
+			// A merged total is always more than one, so it takes the plural name the server sent.
+			var labelMatch = ( msgEl.textContent || '' ).match( /^\+[\d,.\s]+?\s+(.+?)(?:\s+×\d+)?$/ );
+			var label = lastPointsToast.unitMany || ( labelMatch ? labelMatch[1] : toastI18n( 'points', 'points' ) );
+			msgEl.textContent = '+' + lastPointsToast.points.toLocaleString() + ' ' + label;
 		}
 		// Detail line names the (same) action plus a repeat count, e.g.
 		// "Leave a comment x2". Only same-action toasts ever merge, so the
@@ -434,6 +435,7 @@
 				type:         'points',
 				action:       toast.action || '',
 				actionLabel:  toast.detail || '',
+				unitMany:     toast.unit_many || '',
 			};
 			// Clear the reference when the toast leaves the DOM (close
 			// button click, auto-dismiss exit animation). After

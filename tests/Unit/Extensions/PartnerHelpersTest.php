@@ -26,6 +26,7 @@ class PartnerHelpersTest extends TestCase {
 		'wb_gam_is_action_enabled',
 		'wb_gam_get_action_points',
 		'wb_gam_get_point_type_label',
+		'wb_gam_format_points',
 		'wb_gam_get_category_label',
 		'wb_gam_is_module_enabled',
 		'wb_gam_get_points_history',

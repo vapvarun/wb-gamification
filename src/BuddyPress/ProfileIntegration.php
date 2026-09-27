@@ -167,12 +167,6 @@ final class ProfileIntegration {
 		$level_name = $level ? (string) $level['name'] : __( 'Newcomer', 'wb-gamification' );
 		$points     = PointsEngine::get_total( $user_id );
 
-		// Resolve the primary currency label so the BP profile shows
-		// "1,200 Coins" on a coins-default site instead of "1,200 pts".
-		$pt_service   = new \WBGam\Services\PointTypeService();
-		$pt_record    = $pt_service->get( $pt_service->default_slug() );
-		$points_label = (string) ( $pt_record['label'] ?? __( 'pts', 'wb-gamification' ) );
-
 		// Get next level threshold for progress bar.
 		$next_level_points = self::get_next_level_points( $user_id );
 		$current_level_min = self::get_current_level_min( $user_id );
@@ -181,7 +175,7 @@ final class ProfileIntegration {
 			$progress_pct = min(
 				100,
 				(int) round(
-					( ( $points - $current_level_min ) / ( $next_level_points - $current_level_min ) ) * 100
+					( ( PointsEngine::get_earned( $user_id ) - $current_level_min ) / ( $next_level_points - $current_level_min ) ) * 100
 				)
 			);
 		}
@@ -191,12 +185,7 @@ final class ProfileIntegration {
 			<span class="wb-gam-rank-badge"><?php echo esc_html( $level_name ); ?></span>
 			<span class="wb-gam-points-count">
 				<?php
-				printf(
-					/* translators: 1: formatted amount, 2: currency label. */
-					esc_html__( '%1$s %2$s', 'wb-gamification' ),
-					esc_html( number_format_i18n( $points ) ),
-					esc_html( $points_label )
-				);
+				echo esc_html( wb_gam_format_points( (int) $points ) );
 				?>
 			</span>
 			<?php if ( $next_level_points > 0 ) : ?>

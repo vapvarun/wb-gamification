@@ -108,30 +108,35 @@ class PointTypesController extends WP_REST_Controller {
 	 */
 	private function item_args( bool $is_create ): array {
 		return array(
-			'slug'        => array(
+			'slug'           => array(
 				'required'          => $is_create,
 				'type'              => 'string',
 				'description'       => 'Unique slug - lowercase, alphanumeric + dash + underscore. Immutable after creation.',
 				'sanitize_callback' => 'sanitize_key',
 			),
-			'label'       => array(
+			'label'          => array(
 				'required'          => $is_create,
 				'type'              => 'string',
 				'sanitize_callback' => 'sanitize_text_field',
 			),
-			'description' => array(
+			'label_singular' => array(
+				'type'              => 'string',
+				'description'       => 'Name for an amount of one ("Coin"). Empty = use label for every amount.',
+				'sanitize_callback' => 'sanitize_text_field',
+			),
+			'description'    => array(
 				'type'              => 'string',
 				'sanitize_callback' => 'sanitize_text_field',
 			),
-			'icon'        => array(
+			'icon'           => array(
 				'type'              => 'string',
 				'sanitize_callback' => 'sanitize_text_field',
 			),
-			'is_default'  => array(
+			'is_default'     => array(
 				'type'    => 'boolean',
 				'default' => false,
 			),
-			'position'    => array(
+			'position'       => array(
 				'type'              => 'integer',
 				'default'           => 0,
 				'sanitize_callback' => 'absint',
@@ -150,12 +155,13 @@ class PointTypesController extends WP_REST_Controller {
 		$items = array_map(
 			static function ( array $row ): array {
 				return array(
-					'slug'        => (string) $row['slug'],
-					'label'       => (string) $row['label'],
-					'description' => $row['description'] ? (string) $row['description'] : null,
-					'icon'        => $row['icon'] ? (string) $row['icon'] : null,
-					'is_default'  => (int) $row['is_default'] === 1,
-					'position'    => (int) $row['position'],
+					'slug'           => (string) $row['slug'],
+					'label'          => (string) $row['label'],
+					'label_singular' => (string) ( $row['label_singular'] ?? '' ),
+					'description'    => $row['description'] ? (string) $row['description'] : null,
+					'icon'           => $row['icon'] ? (string) $row['icon'] : null,
+					'is_default'     => (int) $row['is_default'] === 1,
+					'position'       => (int) $row['position'],
 				);
 			},
 			$rows
@@ -170,12 +176,13 @@ class PointTypesController extends WP_REST_Controller {
 	public function handle_create( WP_REST_Request $request ): WP_REST_Response|WP_Error {
 		$result = $this->service->create(
 			array(
-				'slug'        => (string) $request['slug'],
-				'label'       => (string) $request['label'],
-				'description' => isset( $request['description'] ) ? (string) $request['description'] : null,
-				'icon'        => isset( $request['icon'] ) ? (string) $request['icon'] : null,
-				'is_default'  => (bool) $request['is_default'],
-				'position'    => (int) $request['position'],
+				'slug'           => (string) $request['slug'],
+				'label'          => (string) $request['label'],
+				'label_singular' => (string) ( $request['label_singular'] ?? '' ),
+				'description'    => isset( $request['description'] ) ? (string) $request['description'] : null,
+				'icon'           => isset( $request['icon'] ) ? (string) $request['icon'] : null,
+				'is_default'     => (bool) $request['is_default'],
+				'position'       => (int) $request['position'],
 			)
 		);
 
@@ -194,7 +201,7 @@ class PointTypesController extends WP_REST_Controller {
 		$slug  = (string) $request['slug'];
 		$input = array();
 
-		foreach ( array( 'label', 'description', 'icon', 'position' ) as $key ) {
+		foreach ( array( 'label', 'label_singular', 'description', 'icon', 'position' ) as $key ) {
 			if ( $request->has_param( $key ) ) {
 				$input[ $key ] = $request[ $key ];
 			}

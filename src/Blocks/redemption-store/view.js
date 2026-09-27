@@ -174,6 +174,10 @@ store( NS, {
 				const balanceText = root?.querySelector?.( '[data-wb-gam-balance-text]' );
 				if ( balanceText ) {
 					balanceText.textContent = formatNumber( ctx.balance );
+					const unit = root?.querySelector?.( '[data-wb-gam-balance-unit]' );
+					if ( unit ) {
+						unit.textContent = 1 === ctx.balance ? unit.dataset.one : unit.dataset.many;
+					}
 				}
 
 				// Force an immediate broker tick so the redemption-confirmed

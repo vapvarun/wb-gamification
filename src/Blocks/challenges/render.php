@@ -237,8 +237,7 @@ BlockHooks::before( 'challenges', $wb_gam_attrs );
 							<span class="wb-gam-challenges__bonus">
 								<?php echo \WBGam\Admin\Icon::svg( 'sparkles', array( 'size' => 12 ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 								<?php
-								/* translators: %d: bonus points. */
-								printf( esc_html__( '+%d pts', 'wb-gamification' ), (int) $wb_gam_ch['bonus_points'] );
+								echo esc_html( wb_gam_format_points( (int) $wb_gam_ch['bonus_points'], '', true ) );
 								?>
 							</span>
 						<?php endif; ?>

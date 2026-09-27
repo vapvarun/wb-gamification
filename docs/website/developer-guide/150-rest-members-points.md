@@ -318,6 +318,7 @@ Create a point type.
 |-------|------|----------|-------------|
 | `slug` | string | Yes | Machine slug for the currency |
 | `label` | string | Yes | Display label |
+| `label_singular` | string | No | Name for an amount of one ("Coin"). Empty uses `label` for every amount. |
 | `description` | string | No | Description shown in admin |
 | `icon` | string | No | Icon identifier |
 | `is_default` | boolean | No | Mark as the site default currency |
@@ -328,8 +329,10 @@ curl -X POST https://example.com/wp-json/wb-gamification/v1/point-types \
   -H "Content-Type: application/json" \
   -H "X-WP-Nonce: YOUR_NONCE" \
   --cookie "wordpress_logged_in_xxx=..." \
-  -d '{ "slug": "coins", "label": "Coins", "is_default": false }'
+  -d '{ "slug": "coins", "label": "Coins", "label_singular": "Coin", "is_default": false }'
 ```
+
+`PUT /point-types/{slug}` takes the same fields (except `slug`) to rename a currency. `GET /point-types` returns `label_singular` on every row. To show an amount the way the plugin does, use `wb_gam_format_points()`.
 
 ### POST /point-types/{from}/convert
 

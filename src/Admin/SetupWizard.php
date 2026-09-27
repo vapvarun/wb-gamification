@@ -853,8 +853,8 @@ final class SetupWizard {
 		foreach ( $points as $action_id => $pts ) {
 			$label   = class_exists( Registry::class ) ? Registry::label_for( (string) $action_id ) : (string) $action_id;
 			$items[] = sprintf(
-				'<li><span class="wb-gam-wizard-card__points-pts">%1$d pts</span> <span class="wb-gam-wizard-card__points-label">%2$s</span></li>',
-				(int) $pts,
+				'<li><span class="wb-gam-wizard-card__points-pts">%1$s</span> <span class="wb-gam-wizard-card__points-label">%2$s</span></li>',
+				esc_html( wb_gam_format_points( (int) $pts ) ),
 				esc_html( $label )
 			);
 		}

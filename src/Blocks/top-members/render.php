@@ -94,8 +94,7 @@ $wb_gam_rows = (array) apply_filters( 'wb_gam_block_top_members_data', $wb_gam_r
 // than the primary currency (falls back to "pts" otherwise).
 $wb_gam_pt_service   = new \WBGam\Services\PointTypeService();
 $wb_gam_resolved_pt  = $wb_gam_pt_service->resolve( $wb_gam_point_type ?: null );
-$wb_gam_pt_record    = $wb_gam_pt_service->get( $wb_gam_resolved_pt );
-$wb_gam_points_label = (string) ( $wb_gam_pt_record['label'] ?? __( 'pts', 'wb-gamification' ) );
+$wb_gam_pt_slug      = $wb_gam_resolved_pt;
 
 $wb_gam_classes = array_filter(
 	array(
@@ -206,7 +205,7 @@ BlockHooks::before( 'top-members', $wb_gam_attrs );
 					?>
 					<span class="wb-gam-top-members__points">
 						<?php echo esc_html( number_format_i18n( (int) ( $wb_gam_row['points'] ?? 0 ) ) ); ?>
-						<span class="wb-gam-top-members__pts-label"><?php echo esc_html( $wb_gam_points_label ); ?></span>
+						<span class="wb-gam-top-members__pts-label"><?php echo esc_html( $wb_gam_pt_service->name_for( (int) ( $wb_gam_row['points'] ?? 0 ), $wb_gam_pt_slug ) ); ?></span>
 					</span>
 					<?php if ( $wb_gam_show_level && isset( $wb_gam_level_map[ $wb_gam_uid ] ) ) : ?>
 						<span class="wb-gam-top-members__level"><?php echo esc_html( $wb_gam_level_map[ $wb_gam_uid ] ); ?></span>
@@ -270,7 +269,7 @@ BlockHooks::before( 'top-members', $wb_gam_attrs );
 					</div>
 					<span class="wb-gam-top-members__list-points">
 						<?php echo esc_html( number_format_i18n( (int) ( $wb_gam_row['points'] ?? 0 ) ) ); ?>
-						<span class="wb-gam-top-members__pts-label"><?php echo esc_html( $wb_gam_points_label ); ?></span>
+						<span class="wb-gam-top-members__pts-label"><?php echo esc_html( $wb_gam_pt_service->name_for( (int) ( $wb_gam_row['points'] ?? 0 ), $wb_gam_pt_slug ) ); ?></span>
 					</span>
 					<?php if ( $wb_gam_show_badges && isset( $wb_gam_badge_count_map[ $wb_gam_uid ] ) ) : ?>
 						<span class="wb-gam-top-members__list-badges">&#x1F3C5; <?php echo esc_html( (string) $wb_gam_badge_count_map[ $wb_gam_uid ] ); ?></span>

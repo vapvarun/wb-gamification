@@ -109,7 +109,10 @@
 			if ( ! list ) {
 				return;
 			}
-			var pointsLabel = root.getAttribute( 'data-wb-gam-points-label' ) || '';
+			var pointsLabel = {
+				many: root.getAttribute( 'data-wb-gam-points-label' ) || '',
+				one: root.getAttribute( 'data-wb-gam-points-label-one' ) || ''
+			};
 
 			var existing = new Map();
 			Array.from( list.children ).forEach( function ( li ) {
@@ -274,8 +277,9 @@
 		}
 
 		function formatPoints( n, label ) {
-			var num = parseInt( n, 10 ) || 0;
-			return num.toLocaleString() + ( label ? ' ' + label : '' );
+			var num  = parseInt( n, 10 ) || 0;
+			var name = ( 1 === Math.abs( num ) && label.one ) ? label.one : label.many;
+			return num.toLocaleString() + ( name ? ' ' + name : '' );
 		}
 
 		function bump( el ) {

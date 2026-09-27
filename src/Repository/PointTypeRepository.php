@@ -51,7 +51,7 @@ final class PointTypeRepository {
 	 *
 	 * Resolution order: in-process static → wp_cache → SQL.
 	 *
-	 * @return array<int, array{slug:string,label:string,description:?string,icon:?string,is_default:int,position:int,created_at:string}>
+	 * @return array<int, array{slug:string,label:string,label_singular:string,description:?string,icon:?string,is_default:int,position:int,created_at:string}>
 	 */
 	public function all(): array {
 		if ( null !== self::$request_cache_all ) {
@@ -68,7 +68,7 @@ final class PointTypeRepository {
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from $wpdb->prefix; result is cached above.
 		$rows = $wpdb->get_results(
-			"SELECT slug, label, description, icon, is_default, position, created_at
+			"SELECT slug, label, label_singular, description, icon, is_default, position, created_at
 			   FROM {$wpdb->prefix}wb_gam_point_types
 			  ORDER BY position ASC, slug ASC",
 			ARRAY_A
@@ -157,15 +157,16 @@ final class PointTypeRepository {
 		$inserted = $wpdb->insert(
 			$wpdb->prefix . 'wb_gam_point_types',
 			array(
-				'slug'        => $slug,
-				'label'       => (string) $data['label'],
-				'description' => isset( $data['description'] ) ? (string) $data['description'] : null,
-				'icon'        => isset( $data['icon'] ) ? (string) $data['icon'] : null,
-				'is_default'  => ! empty( $data['is_default'] ) ? 1 : 0,
-				'position'    => isset( $data['position'] ) ? (int) $data['position'] : 0,
-				'created_at'  => current_time( 'mysql', true ),
+				'slug'           => $slug,
+				'label'          => (string) $data['label'],
+				'label_singular' => (string) ( $data['label_singular'] ?? '' ),
+				'description'    => isset( $data['description'] ) ? (string) $data['description'] : null,
+				'icon'           => isset( $data['icon'] ) ? (string) $data['icon'] : null,
+				'is_default'     => ! empty( $data['is_default'] ) ? 1 : 0,
+				'position'       => isset( $data['position'] ) ? (int) $data['position'] : 0,
+				'created_at'     => current_time( 'mysql', true ),
 			),
-			array( '%s', '%s', '%s', '%s', '%d', '%d', '%s' )
+			array( '%s', '%s', '%s', '%s', '%s', '%d', '%d', '%s' )
 		);
 
 		if ( $inserted ) {
@@ -178,8 +179,8 @@ final class PointTypeRepository {
 	/**
 	 * Update mutable fields on an existing point type. Slug is the PK and immutable.
 	 *
-	 * @param string                                                                $slug Existing slug.
-	 * @param array{label?:string,description?:?string,icon?:?string,position?:int} $data Fields to update.
+	 * @param string                                                                                       $slug Existing slug.
+	 * @param array{label?:string,label_singular?:string,description?:?string,icon?:?string,position?:int} $data Fields to update.
 	 */
 	public function update( string $slug, array $data ): bool {
 		$slug = self::normalise_slug( $slug );
@@ -193,6 +194,10 @@ final class PointTypeRepository {
 		if ( array_key_exists( 'label', $data ) ) {
 			$payload['label'] = (string) $data['label'];
 			$format[]         = '%s';
+		}
+		if ( array_key_exists( 'label_singular', $data ) ) {
+			$payload['label_singular'] = (string) $data['label_singular'];
+			$format[]                  = '%s';
 		}
 		if ( array_key_exists( 'description', $data ) ) {
 			$payload['description'] = null === $data['description'] ? null : (string) $data['description'];

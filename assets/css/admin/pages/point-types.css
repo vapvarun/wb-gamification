@@ -46,3 +46,35 @@
 	background: var(--wbgam-success-bg);
 	color: var(--wbgam-success);
 }
+
+/* ==========================================================================
+   2. Rename disclosure (per row, native <details>: no script)
+   ========================================================================== */
+
+.wb-gam-pt-actions {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-start;
+	gap: var(--wbgam-gap-xs, 6px);
+}
+
+.wb-gam-pt-rename > summary {
+	list-style: none;
+}
+
+.wb-gam-pt-rename > summary::-webkit-details-marker {
+	display: none;
+}
+
+.wb-gam-pt-rename__form {
+	display: grid;
+	gap: var(--wbgam-gap-xs, 6px);
+	margin-block-start: var(--wbgam-gap-xs, 6px);
+	min-inline-size: 14rem;
+}
+
+@media (max-width: 640px) {
+	.wb-gam-pt-rename__form {
+		min-inline-size: 0;
+	}
+}

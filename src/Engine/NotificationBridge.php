@@ -378,24 +378,20 @@ final class NotificationBridge {
 			}
 		}
 		$pt_service = new \WBGam\Services\PointTypeService();
-		$pt_record  = $pt_service->get( $wb_gam_point_type ) ?: $pt_service->get( $pt_service->default_slug() );
-		$label      = (string) ( $pt_record['label'] ?? __( 'points', 'wb-gamification' ) );
 
 		$payload = array(
-			'type'    => 'points',
-			'points'  => $points,
+			'type'      => 'points',
+			'points'    => $points,
 			// action_id travels to the client so toast.js only merges
 			// repeats of the SAME action (e.g. "Leave a comment x2") and
 			// keeps distinct actions as separate, individually-labeled
 			// toasts instead of a meaningless "+N points (M actions)".
-			'action'  => $event->action_id,
-			'message' => sprintf(
-				/* translators: 1: signed point delta, 2: currency label. */
-				__( '+%1$d %2$s', 'wb-gamification' ),
-				$points,
-				$label
-			),
-			'detail'  => self::resolve_award_detail( $event ),
+			'action'    => $event->action_id,
+			// "+1 Point", "+5 Points": the site's names, singular for exactly one.
+			'message'   => $pt_service->format( $points, $wb_gam_point_type, true ),
+			// The plural name, for toast.js when it merges repeats into one total.
+			'unit_many' => $pt_service->name_for( 2, $wb_gam_point_type ),
+			'detail'    => self::resolve_award_detail( $event ),
 		);
 
 		// A kudos exchange queues THREE toasts for one kudos: this points toast (for

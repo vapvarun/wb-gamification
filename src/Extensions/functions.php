@@ -465,6 +465,22 @@ function wb_gam_get_point_type_label( string $slug = '' ): string {
 }
 
 /**
+ * An amount with the site's name for it, singular for exactly one: "1 Point", "+10 Karma".
+ *
+ * Use this wherever a number of points is shown, so every surface follows the owner's naming.
+ *
+ * @since 1.6.5
+ *
+ * @param int    $amount Amount.
+ * @param string $slug   Point-type slug; '' for the site's default type.
+ * @param bool   $signed Prefix a positive amount with "+" (an award).
+ * @return string Plain text; escape on output.
+ */
+function wb_gam_format_points( int $amount, string $slug = '', bool $signed = false ): string {
+	return ( new \WBGam\Services\PointTypeService() )->format( $amount, $slug, $signed );
+}
+
+/**
  * The display label of an action category slug ("member-blog" reads "Member Blog").
  *
  * @since 1.6.5

@@ -99,6 +99,45 @@ final class PointTypeService {
 	}
 
 	/**
+	 * The point type's name for an amount: the singular name for exactly one, else the plural.
+	 *
+	 * @since 1.6.5
+	 *
+	 * @param int         $amount Amount the name goes with (sign ignored).
+	 * @param string|null $slug   Point type; null or '' for the primary type.
+	 * @return string Never empty.
+	 */
+	public function name_for( int $amount, ?string $slug = null ): string {
+		$record   = $this->get( $this->resolve( '' === $slug ? null : $slug ) );
+		$plural   = is_array( $record ) ? trim( (string) ( $record['label'] ?? '' ) ) : '';
+		$singular = is_array( $record ) ? trim( (string) ( $record['label_singular'] ?? '' ) ) : '';
+		if ( '' === $plural ) {
+			// No point type configured yet: the plugin's own words, pluralised by amount.
+			return _n( 'Point', 'Points', abs( $amount ), 'wb-gamification' );
+		}
+		return ( 1 === abs( $amount ) && '' !== $singular ) ? $singular : $plural;
+	}
+
+	/**
+	 * An amount with its name: "1 Point", "250 Points", "+10 Karma".
+	 *
+	 * @since 1.6.5
+	 *
+	 * @param int         $amount Amount.
+	 * @param string|null $slug   Point type; null or '' for the primary type.
+	 * @param bool        $signed Prefix a positive amount with "+" (an award).
+	 * @return string Plain text; escape on output.
+	 */
+	public function format( int $amount, ?string $slug = null, bool $signed = false ): string {
+		$number = number_format_i18n( $amount );
+		if ( $signed && $amount > 0 ) {
+			$number = '+' . $number;
+		}
+		/* translators: 1: an amount, e.g. "+10" or "250", 2: the site's name for points, e.g. "Points" or "Karma". */
+		return sprintf( __( '%1$s %2$s', 'wb-gamification' ), $number, $this->name_for( $amount, $slug ) );
+	}
+
+	/**
 	 * Create a new point type. Returns a structured result.
 	 *
 	 * @param array<string,mixed> $input Untrusted input (sanitised here).
@@ -128,12 +167,13 @@ final class PointTypeService {
 		}
 
 		$data = array(
-			'slug'        => $slug,
-			'label'       => $label,
-			'description' => isset( $input['description'] ) ? (string) $input['description'] : null,
-			'icon'        => isset( $input['icon'] ) ? (string) $input['icon'] : null,
-			'is_default'  => ! empty( $input['is_default'] ),
-			'position'    => isset( $input['position'] ) ? (int) $input['position'] : 0,
+			'slug'           => $slug,
+			'label'          => $label,
+			'label_singular' => sanitize_text_field( (string) ( $input['label_singular'] ?? '' ) ),
+			'description'    => isset( $input['description'] ) ? (string) $input['description'] : null,
+			'icon'           => isset( $input['icon'] ) ? (string) $input['icon'] : null,
+			'is_default'     => ! empty( $input['is_default'] ),
+			'position'       => isset( $input['position'] ) ? (int) $input['position'] : 0,
 		);
 
 		if ( ! $this->repo->insert( $data ) ) {
@@ -181,6 +221,9 @@ final class PointTypeService {
 				);
 			}
 			$payload['label'] = $label;
+		}
+		if ( array_key_exists( 'label_singular', $input ) ) {
+			$payload['label_singular'] = sanitize_text_field( (string) $input['label_singular'] );
 		}
 		if ( array_key_exists( 'description', $input ) ) {
 			$payload['description'] = null === $input['description'] ? null : (string) $input['description'];

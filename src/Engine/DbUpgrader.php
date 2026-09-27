@@ -108,6 +108,7 @@ final class DbUpgrader {
 		self::ensure_leaderboard_cache_prev_rank_column();
 		self::ensure_user_totals_table();
 		self::ensure_earned_points();
+		self::ensure_point_type_singular();
 		self::ensure_leaderboard_cache_unique_key();
 		self::ensure_submissions_table();
 		self::ensure_api_keys_table();
@@ -1135,6 +1136,32 @@ final class DbUpgrader {
 	}
 
 	/**
+	 * A singular name per point type (1.6.5), so an amount of one reads "+1 Point", not "+1 Points".
+	 *
+	 * Optional: blank means the plural name is used for every amount (right for names like "Karma"
+	 * or "XP"). The default type keeps its seeded pair, Points / Point.
+	 *
+	 * @since 1.6.5
+	 */
+	private static function ensure_point_type_singular(): void {
+		$flag_key = 'wb_gam_feature_point_type_singular_v1';
+		if ( get_option( $flag_key ) ) {
+			return;
+		}
+
+		global $wpdb;
+		$table = $wpdb->prefix . 'wb_gam_point_types';
+		if ( ! $wpdb->get_var( "SHOW COLUMNS FROM `{$table}` LIKE 'label_singular'" ) ) {
+			$wpdb->query( "ALTER TABLE `{$table}` ADD COLUMN `label_singular` VARCHAR(100) NOT NULL DEFAULT '' AFTER `label`" );
+		}
+		$wpdb->query( "UPDATE `{$table}` SET label_singular = 'Point' WHERE label = 'Points' AND label_singular = ''" );
+		wp_cache_delete( 'point_types_all', 'wb_gamification' );
+		wp_cache_delete( 'point_types_default', 'wb_gamification' );
+
+		update_option( $flag_key, '1' );
+	}
+
+	/**
 	 * Earned points (1.6.5): a spend flag on the ledger and an indexed `earned` total per member.
 	 *
 	 * A level and a leaderboard place follow the points a member EARNED, so spending points on a reward
@@ -1352,6 +1379,7 @@ final class DbUpgrader {
 			"CREATE TABLE {$wpdb->prefix}wb_gam_point_types (
 			slug        VARCHAR(60)     NOT NULL,
 			label       VARCHAR(100)    NOT NULL,
+			label_singular VARCHAR(100) NOT NULL DEFAULT '',
 			description TEXT,
 			icon        VARCHAR(100)    DEFAULT NULL,
 			is_default  TINYINT(1)      NOT NULL DEFAULT 0,
@@ -1372,9 +1400,10 @@ final class DbUpgrader {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- bootstrapped table name; INSERT IGNORE on PK.
 		$wpdb->query(
 			$wpdb->prepare(
-				"INSERT IGNORE INTO {$wpdb->prefix}wb_gam_point_types (slug, label, description, icon, is_default, position) VALUES (%s, %s, %s, %s, %d, %d)",
+				"INSERT IGNORE INTO {$wpdb->prefix}wb_gam_point_types (slug, label, label_singular, description, icon, is_default, position) VALUES (%s, %s, %s, %s, %s, %d, %d)",
 				'points',
 				'Points',
+				'Point',
 				'Primary points currency. Renamable; the slug stays as `points` for back-compat.',
 				'star',
 				1,

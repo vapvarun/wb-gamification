@@ -151,7 +151,17 @@ final class PointTypesPage {
 									?>
 									<tr>
 										<td><code><?php echo esc_html( $slug ); ?></code></td>
-										<td><?php echo esc_html( (string) $type['label'] ); ?></td>
+										<td>
+											<?php echo esc_html( (string) $type['label'] ); ?>
+											<?php if ( '' !== (string) ( $type['label_singular'] ?? '' ) ) : ?>
+												<span class="description">
+													<?php
+													/* translators: %s: the point type's singular name, e.g. "Point". */
+													echo esc_html( sprintf( __( '(1 %s)', 'wb-gamification' ), (string) $type['label_singular'] ) );
+													?>
+												</span>
+											<?php endif; ?>
+										</td>
 										<td><?php echo esc_html( (string) ( $type['description'] ?? '' ) ); ?></td>
 										<td>
 											<?php if ( $is_default ) : ?>
@@ -176,7 +186,23 @@ final class PointTypesPage {
 											<?php endif; ?>
 										</td>
 										<td><?php echo (int) $type['position']; ?></td>
-										<td>
+										<td class="wb-gam-pt-actions">
+											<details class="wb-gam-pt-rename">
+												<summary class="button button-small"><?php esc_html_e( 'Rename', 'wb-gamification' ); ?></summary>
+												<form class="wb-gam-pt-rename__form"
+													data-wb-gam-rest-form="wbGamPointTypesSettings"
+													data-wb-gam-rest-method="PUT"
+													data-wb-gam-rest-path="/point-types/<?php echo esc_attr( $slug ); ?>"
+													data-wb-gam-rest-success-toast="<?php esc_attr_e( 'Point type renamed.', 'wb-gamification' ); ?>"
+													data-wb-gam-rest-error-toast="<?php esc_attr_e( 'Could not rename the point type.', 'wb-gamification' ); ?>"
+													data-wb-gam-rest-after="reload">
+													<label for="wb-gam-pt-label-<?php echo esc_attr( $slug ); ?>"><?php esc_html_e( 'Label', 'wb-gamification' ); ?></label>
+													<input type="text" id="wb-gam-pt-label-<?php echo esc_attr( $slug ); ?>" name="label" class="wbgam-input" required maxlength="100" value="<?php echo esc_attr( (string) $type['label'] ); ?>">
+													<label for="wb-gam-pt-singular-<?php echo esc_attr( $slug ); ?>"><?php esc_html_e( 'Label for one', 'wb-gamification' ); ?></label>
+													<input type="text" id="wb-gam-pt-singular-<?php echo esc_attr( $slug ); ?>" name="label_singular" class="wbgam-input" maxlength="100" value="<?php echo esc_attr( (string) ( $type['label_singular'] ?? '' ) ); ?>">
+													<button type="submit" class="button button-primary button-small"><?php esc_html_e( 'Save', 'wb-gamification' ); ?></button>
+												</form>
+											</details>
 											<?php if ( ! $is_default ) : ?>
 												<button type="button"
 													class="button button-small button-link-delete"
@@ -227,6 +253,13 @@ final class PointTypesPage {
 								<td>
 									<input type="text" id="wb-gam-pt-label" name="label" class="wbgam-input regular-text" required maxlength="100" placeholder="<?php esc_attr_e( 'XP', 'wb-gamification' ); ?>">
 									<p class="description"><?php esc_html_e( 'Human-readable name shown to members.', 'wb-gamification' ); ?></p>
+								</td>
+							</tr>
+							<tr>
+								<th><label for="wb-gam-pt-label-singular"><?php esc_html_e( 'Label for one', 'wb-gamification' ); ?></label></th>
+								<td>
+									<input type="text" id="wb-gam-pt-label-singular" name="label_singular" class="wbgam-input regular-text" maxlength="100" placeholder="<?php esc_attr_e( 'Coin', 'wb-gamification' ); ?>">
+									<p class="description"><?php esc_html_e( 'Shown for an amount of one ("1 Coin"). Leave blank when the name reads the same for any amount, like XP or Karma.', 'wb-gamification' ); ?></p>
 								</td>
 							</tr>
 							<tr>

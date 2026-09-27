@@ -77,9 +77,9 @@ wp_enqueue_style( 'lucide-icons' );
 
 $wb_gam_actions = Registry::get_actions();
 
-$wb_gam_grouped   = array();
-$wb_gam_seen      = array();
-$wb_gam_pt_labels = array();
+$wb_gam_grouped    = array();
+$wb_gam_seen       = array();
+$wb_gam_pt_service = new \WBGam\Services\PointTypeService();
 if ( ! empty( $wb_gam_actions ) ) {
 	foreach ( $wb_gam_actions as $wb_gam_id => $wb_gam_action ) {
 		if ( ! \WBGam\Engine\Engine::is_action_enabled( (string) $wb_gam_id ) ) {
@@ -102,11 +102,8 @@ if ( ! empty( $wb_gam_actions ) ) {
 		}
 		$wb_gam_seen[ $wb_gam_category ][ $wb_gam_label ] = true;
 
-		// The owner's name for the currency this action pays ("Karma", "Coins"), not a fixed "pts".
+		// The owner's name for the currency this action pays ("1 Coin", "5 Coins"), not a fixed "pts".
 		$wb_gam_pt = Registry::resolve_action_point_type( $wb_gam_action + array( 'id' => (string) $wb_gam_id ) );
-		if ( ! isset( $wb_gam_pt_labels[ $wb_gam_pt ] ) ) {
-			$wb_gam_pt_labels[ $wb_gam_pt ] = wb_gam_get_point_type_label( $wb_gam_pt );
-		}
 
 		// Manifest icons are Lucide (icon-*). A third-party manifest may still send a Dashicons
 		// class; the frontend never loads that font and the class needs its `dashicons` base,
@@ -121,7 +118,7 @@ if ( ! empty( $wb_gam_actions ) ) {
 			'label'        => $wb_gam_label,
 			'icon'         => $wb_gam_icon,
 			'points'       => $wb_gam_pts,
-			'points_label' => $wb_gam_pt_labels[ $wb_gam_pt ],
+			'points_label' => $wb_gam_pt_service->name_for( $wb_gam_pts, $wb_gam_pt ),
 			// Registry::get_actions() resolves admin overrides; manifest
 			// defaults to 0 ("unlimited") for both keys. Surface them in
 			// the guide so members aren't surprised by silent caps.
@@ -135,7 +132,7 @@ if ( ! empty( $wb_gam_actions ) ) {
  * Filter the earning-guide grouped action map before render.
  *
  * Map shape: [ category => [ ['label','icon','points','points_label'], ... ] ]. points_label (1.6.5) is
- * the owner's name for the currency the action pays.
+ * the owner's name for the currency the action pays, singular when the action pays one.
  *
  * @since 1.0.0
  *
