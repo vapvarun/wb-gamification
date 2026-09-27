@@ -8,11 +8,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 
 ### Added
 
+- Public helpers for partner plugins and themes: action on/points, point-type and category labels, module on/off, points history, rank, next level, contribution heatmap data, all badges for a member, shared badges and share URL, kudos (send, can send, recent, received, count), and whether the leaderboard is handed to Jetonomy. See Developer Guide > Helper Functions.
+
 - `GET /redemptions` lists every member's redemptions for staff and integrations (the fulfilment queue): newest first, filter by `status`, paged with `page` / `per_page` and the `X-WP-Total` headers; requires `wb_gam_manage_rewards`. The admin Recent Redemptions log uses the same query.
 
 - Give Kudos suggests recipients as the member types: a keyboard-accessible list with avatar, name and @handle. `GET /members` takes `context=view` for a public-fields member lookup (id, name, slug, avatar) available to any logged-in member.
 
 ### Changed
+
+- A Jetonomy Pro custom badge pays points once: its reputation bonus, recorded as `jetonomy_badge_earned`. The separate `jetonomy_pro_badge_earned` action (15 points) is removed; it paid every badge twice. Points already paid stay.
+- `POST /members/me/profile-visibility` answers 409 `wb_gam_privacy_managed_by_host` when a community plugin decides profile privacy, instead of saving a choice nothing reads; `GET` adds `managed_by_host`. The profile page no longer shows that switch on such sites.
 
 - All stored times are now UTC, the WordPress standard, and every window (today, this week, last 7 days, leaderboard periods, kudos limits, streaks, recaps, the weekly email) is worked out in the site's time zone (Settings > General). Points, kudos, badge, challenge and submission times written by earlier versions are converted once in the background, newest first; sites already on UTC skip it, and `wp wb-gamification doctor --fix` finishes it on the spot. REST `*_at` values are UTC `Y-m-d H:i:s`. Code that reads the plugin's tables directly must treat these columns as UTC.
 - Also fixed by the same change: analytics day charts, the "challenges started" count, member recency, "submissions today" and yearly recap edges were off by the site or database time-zone offset; points imported from myCred were stamped with the wrong zone.

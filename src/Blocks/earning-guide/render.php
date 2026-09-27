@@ -80,13 +80,12 @@ $wb_gam_actions = Registry::get_actions();
 $wb_gam_grouped = array();
 if ( ! empty( $wb_gam_actions ) ) {
 	foreach ( $wb_gam_actions as $wb_gam_id => $wb_gam_action ) {
-		$wb_gam_enabled = (bool) get_option( 'wb_gam_enabled_' . $wb_gam_id, true );
-		if ( ! $wb_gam_enabled ) {
+		if ( ! \WBGam\Engine\Engine::is_action_enabled( (string) $wb_gam_id ) ) {
 			continue;
 		}
 
 		$wb_gam_category = (string) ( $wb_gam_action['category'] ?? 'general' );
-		$wb_gam_pts      = (int) get_option( 'wb_gam_points_' . $wb_gam_id, $wb_gam_action['default_points'] ?? 0 );
+		$wb_gam_pts      = Registry::action_points( (string) $wb_gam_id );
 
 		if ( $wb_gam_pts <= 0 ) {
 			continue;

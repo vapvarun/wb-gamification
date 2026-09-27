@@ -115,32 +115,9 @@ return array(
 			'cooldown'          => 120,
 		),
 
-		array(
-			'id'                => 'jetonomy_pro_badge_earned',
-			'label'             => 'Earn a Jetonomy badge',
-			'description'       => 'Awarded when a member earns a Jetonomy custom badge.',
-			// Pro fires: do_action( 'jetonomy_pro_badge_earned', $user_id, (int) $badge->id, $badge ).
-			'hook'              => 'jetonomy_pro_badge_earned',
-			'user_callback'     => function ( int $user_id, int $badge_id, $badge ): int {
-				return $user_id;
-			},
-			'metadata_callback' => function ( int $user_id, int $badge_id, $badge ): array {
-				$slug = '';
-				if ( is_object( $badge ) && isset( $badge->slug ) ) {
-					$slug = (string) $badge->slug;
-				} elseif ( is_array( $badge ) && isset( $badge['slug'] ) ) {
-					$slug = (string) $badge['slug'];
-				}
-				return array(
-					'badge_id'   => $badge_id,
-					'badge_slug' => $slug,
-				);
-			},
-			'default_points'    => 15,
-			'category'          => 'social',
-			'icon'              => 'icon-award',
-			'repeatable'        => true,
-		),
+		// No trigger for jetonomy_pro_badge_earned: the badge pays its reputation bonus through
+		// Reputation::award_custom(), which the Jetonomy mirror already records as
+		// jetonomy_badge_earned. Paying here too gave every badge twice (card 10344441524).
 
 		array(
 			'id'                => 'jetonomy_pro_dm_received',

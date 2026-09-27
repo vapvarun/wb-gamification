@@ -840,14 +840,18 @@ class MembersController extends WP_REST_Controller {
 	/**
 	 * GET /members/me/profile-visibility — the current member's own choice.
 	 *
-	 * @return WP_REST_Response { public: bool, site_enabled: bool }
+	 * `managed_by_host` is true when a community plugin decides profile privacy
+	 * (Privacy::host_decides()); the member changes it on their community profile instead.
+	 *
+	 * @return WP_REST_Response { public: bool, site_enabled: bool, managed_by_host: bool }
 	 */
 	public function get_profile_visibility(): WP_REST_Response {
 		$user_id = get_current_user_id();
 		return new WP_REST_Response(
 			array(
-				'public'       => ! \WBGam\Engine\ProfilePage::member_opted_private( $user_id ),
-				'site_enabled' => (bool) get_option( 'wb_gam_profile_public_enabled', '1' ),
+				'public'          => ! \WBGam\Engine\ProfilePage::member_opted_private( $user_id ),
+				'site_enabled'    => (bool) get_option( 'wb_gam_profile_public_enabled', '1' ),
+				'managed_by_host' => Privacy::host_decides(),
 			),
 			200
 		);
@@ -857,9 +861,20 @@ class MembersController extends WP_REST_Controller {
 	 * POST /members/me/profile-visibility — set the current member's choice.
 	 *
 	 * @param WP_REST_Request $request Request carrying the boolean `public` flag.
-	 * @return WP_REST_Response { public: bool, site_enabled: bool }
+	 * Refused (409) when a community plugin decides profile privacy: the choice saved here
+	 * would never be read, so reporting success would be a lie (card 10344441524).
+	 *
+	 * @return WP_REST_Response|WP_Error { public: bool, site_enabled: bool, managed_by_host: false }
 	 */
-	public function set_profile_visibility( $request ): WP_REST_Response {
+	public function set_profile_visibility( $request ): WP_REST_Response|WP_Error {
+		if ( Privacy::host_decides() ) {
+			return new WP_Error(
+				'wb_gam_privacy_managed_by_host',
+				__( 'Profile visibility is set on your community profile.', 'wb-gamification' ),
+				array( 'status' => 409 )
+			);
+		}
+
 		$user_id = get_current_user_id();
 		$public  = (bool) $request->get_param( 'public' );
 
@@ -867,8 +882,9 @@ class MembersController extends WP_REST_Controller {
 
 		return new WP_REST_Response(
 			array(
-				'public'       => $public,
-				'site_enabled' => (bool) get_option( 'wb_gam_profile_public_enabled', '1' ),
+				'public'          => $public,
+				'site_enabled'    => (bool) get_option( 'wb_gam_profile_public_enabled', '1' ),
+				'managed_by_host' => false,
 			),
 			200
 		);

@@ -45,6 +45,8 @@ class ActionLabelTest extends TestCase {
 		$this->assertSame( 'Replied in the forum', Registry::label_for( 'jetonomy_reply_created' ) );
 		$this->assertSame( 'Your forum post was upvoted', Registry::label_for( 'jetonomy_reply_upvoted' ) );
 		$this->assertSame( 'Your forum post was downvoted (reversed)', Registry::label_for( 'jetonomy_post_downvoted_revoked' ) );
+		$this->assertSame( 'Earned a forum badge', Registry::label_for( 'jetonomy_pro_badge_earned' ), 'Pre-1.6.5 double-award rows still read.' );
+		$this->assertSame( 'Forum badge removed', Registry::label_for( 'jetonomy_badge_revoked' ), 'A reason Jetonomy named _revoked is not read as a reversal.' );
 	}
 
 	/**

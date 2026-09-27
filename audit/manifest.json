@@ -3287,10 +3287,6 @@
         "listeners": []
       },
       {
-        "hook": "jetonomy_pro_badge_earned",
-        "listeners": []
-      },
-      {
         "hook": "jetonomy_pro_dm_received",
         "listeners": []
       },
@@ -5670,12 +5666,6 @@
           "hookName": "jetonomy_pro_conversation_created",
           "file": "integrations/jetonomy-pro.php",
           "line": 100
-        },
-        {
-          "type": "action",
-          "hookName": "jetonomy_pro_badge_earned",
-          "file": "integrations/jetonomy-pro.php",
-          "line": 122
         },
         {
           "type": "action",

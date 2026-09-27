@@ -81,12 +81,6 @@ final class JetonomyIntegration {
 			return $label;
 		}
 
-		$reason   = substr( $action_id, strlen( self::ACTION_PREFIX ) );
-		$reversed = str_ends_with( $reason, '_revoked' );
-		if ( $reversed ) {
-			$reason = substr( $reason, 0, -strlen( '_revoked' ) );
-		}
-
 		$labels = array(
 			'reply_created'     => __( 'Replied in the forum', 'wb-gamification' ),
 			'post_created'      => __( 'Started a forum topic', 'wb-gamification' ),
@@ -97,8 +91,19 @@ final class JetonomyIntegration {
 			'reply_accepted'    => __( 'Your answer was accepted', 'wb-gamification' ),
 			'post_reported'     => __( 'Forum post reported', 'wb-gamification' ),
 			'badge_earned'      => __( 'Earned a forum badge', 'wb-gamification' ),
+			// History rows from before 1.6.5, when the Pro badge hook paid a second award.
+			'pro_badge_earned'  => __( 'Earned a forum badge', 'wb-gamification' ),
+			'badge_revoked'     => __( 'Forum badge removed', 'wb-gamification' ),
 			'cli_manual_adjust' => __( 'Manual forum adjustment', 'wb-gamification' ),
 		);
+
+		// "_revoked" marks the mirror's reversal of an award, unless Jetonomy named the reason
+		// that way itself (badge_revoked is a reason of its own).
+		$reason   = substr( $action_id, strlen( self::ACTION_PREFIX ) );
+		$reversed = ! isset( $labels[ $reason ] ) && str_ends_with( $reason, '_revoked' );
+		if ( $reversed ) {
+			$reason = substr( $reason, 0, -strlen( '_revoked' ) );
+		}
 		if ( ! isset( $labels[ $reason ] ) ) {
 			return $label;
 		}

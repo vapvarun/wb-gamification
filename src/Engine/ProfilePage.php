@@ -373,7 +373,8 @@ final class ProfilePage {
 		// Owner-only privacy control — the member-facing write surface for
 		// wb_gam_profile_public. Only the profile owner sees it (admins
 		// viewing another member must not flip that member's choice here).
-		if ( get_current_user_id() === (int) $user->ID ) {
+		// Hidden when a community plugin decides privacy: the switch would do nothing there.
+		if ( get_current_user_id() === (int) $user->ID && ! Privacy::host_decides() ) {
 			self::render_owner_visibility_control( (int) $user->ID );
 		}
 

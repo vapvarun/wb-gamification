@@ -208,3 +208,37 @@ if ( wb_gam_is_feature_enabled( 'cohort_leagues' ) ) {
 ```
 
 The optional-engine feature flags are: `cohort_leagues`, `weekly_emails`, `leaderboard_nudge`, `status_retention`, `community_challenges`, and `badge_share`. Every flag defaults to on and is toggled from **Settings > Modules**.
+
+---
+
+## Partner Plugin Helpers
+
+Since 1.6.5. Use these instead of calling the engine classes (`WBGam\Engine\*`), which can change between releases. Stored times they return (`created_at`, `earned_at`) are UTC; show them with `wp_date()` or `get_date_from_gmt()`.
+
+| Function | Returns |
+|---|---|
+| `wb_gam_is_action_enabled( string $action_id ): bool` | Whether the owner has the action switched on. |
+| `wb_gam_get_action_points( string $action_id ): int` | The owner's points setting, else the action default; 0 for an unregistered id. |
+| `wb_gam_get_point_type_label( string $slug = '' ): string` | The point type's display name ("Points", "Coins"); `''` means the default type. |
+| `wb_gam_get_category_label( string $slug ): string` | A readable category heading ("member-blog" reads "Member Blog"). |
+| `wb_gam_is_module_enabled( string $slug ): bool` | Whether a module on **Settings > Modules** is on (`kudos`, `badges`, ...). |
+| `wb_gam_get_points_history( int $user_id, int $limit = 20, ?string $point_type = null ): array` | Recent transactions, newest first. |
+| `wb_gam_get_user_rank( int $user_id, string $period = 'all', string $point_type = '' ): array` | `rank`, `points`, `points_to_next`. |
+| `wb_gam_get_next_level( int $user_id ): ?array` | The next level, or `null` at the top. |
+| `wb_gam_get_contribution_data( int $user_id, int $days = 365 ): array` | Points per site-calendar day, for a heatmap. |
+| `wb_gam_get_all_badges_for_user( int $user_id = 0 ): array` | Every badge, each with `earned` and `earned_at`. |
+| `wb_gam_get_shared_badges( int $user_id ): array` | Badge ids the member shared publicly. |
+| `wb_gam_get_badge_share_url( string $badge_id, int $user_id ): string` | The badge's public share page. |
+| `wb_gam_send_kudos( int $giver_id, int $receiver_id, string $message = '' ): bool\|WP_Error` | Sends kudos with every rule the Give Kudos form applies. |
+| `wb_gam_can_send_kudos( int $giver_id ): bool` | Whether the member may send kudos now. |
+| `wb_gam_has_recent_kudos( int $giver_id, int $receiver_id, int $cooldown_seconds ): bool` | Whether the sender already gave this member kudos within the window. |
+| `wb_gam_get_kudos_received( int $user_id, int $limit = 20 ): array` | Kudos received, newest first. |
+| `wb_gam_get_kudos_received_count( int $user_id ): int` | How many kudos the member received. |
+| `wb_gam_leaderboard_deferred_to_jetonomy(): bool` | Whether the owner handed the leaderboard to Jetonomy. Hide your own leaderboard page or menu item when true, so members see one ranking. |
+
+```php
+if ( function_exists( 'wb_gam_get_user_rank' ) ) {
+    $rank = wb_gam_get_user_rank( $user_id );
+    printf( '#%d with %d %s', $rank['rank'], $rank['points'], wb_gam_get_point_type_label() );
+}
+```

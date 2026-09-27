@@ -212,8 +212,10 @@ curl https://example.com/wp-json/wb-gamification/v1/members/me/profile-visibilit
 ```
 
 ```json
-{ "public": true, "site_enabled": true }
+{ "public": true, "site_enabled": true, "managed_by_host": false }
 ```
+
+`managed_by_host` is `true` when a community plugin (such as BuddyNext) decides profile privacy through the `wb_gam_can_view_public_profile` filter. The member then changes visibility on their community profile, and `public` here has no effect.
 
 ### POST /members/me/profile-visibility
 
@@ -232,8 +234,10 @@ curl -X POST https://example.com/wp-json/wb-gamification/v1/members/me/profile-v
 ```
 
 ```json
-{ "public": false, "site_enabled": true }
+{ "public": false, "site_enabled": true, "managed_by_host": false }
 ```
+
+When a community plugin decides profile privacy, the save is refused with `409 wb_gam_privacy_managed_by_host` instead of storing a choice nothing reads.
 
 ### GET /members/me/toasts
 

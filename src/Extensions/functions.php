@@ -418,3 +418,242 @@ function wb_gam_get_actions(): array {
 function wb_gam_get_action_label( string $action_id ): string {
 	return Registry::label_for( $action_id );
 }
+
+// ── Read and act on a member's gamification data ────────────────────────────
+//
+// Partner plugins (BuddyNext, Jetonomy, themes) call these instead of the internal engine
+// classes, so a refactor inside WB Gamification never breaks them. Each is a thin, stable
+// wrapper; the engine class it names is the implementation, not the contract.
+
+/**
+ * Whether the site owner has this action switched on (Settings > Points).
+ *
+ * @since 1.6.5
+ *
+ * @param string $action_id Action identifier.
+ * @return bool
+ */
+function wb_gam_is_action_enabled( string $action_id ): bool {
+	return Engine::is_action_enabled( $action_id );
+}
+
+/**
+ * The points an action awards: the owner's setting, else the action's default.
+ *
+ * @since 1.6.5
+ *
+ * @param string $action_id Action identifier.
+ * @return int 0 for an unregistered action.
+ */
+function wb_gam_get_action_points( string $action_id ): int {
+	return Registry::action_points( $action_id );
+}
+
+/**
+ * The display name of a point type ("Points", "Coins"), as the owner named it.
+ *
+ * @since 1.6.5
+ *
+ * @param string $slug Point-type slug; '' for the site's default type.
+ * @return string Never empty.
+ */
+function wb_gam_get_point_type_label( string $slug = '' ): string {
+	$types  = new \WBGam\Services\PointTypeService();
+	$record = $types->get( $types->resolve( '' === $slug ? null : $slug ) );
+	$label  = is_array( $record ) ? trim( (string) ( $record['label'] ?? '' ) ) : '';
+	return '' !== $label ? $label : __( 'Points', 'wb-gamification' );
+}
+
+/**
+ * The display label of an action category slug ("member-blog" reads "Member Blog").
+ *
+ * @since 1.6.5
+ *
+ * @param string $slug Category slug.
+ * @return string
+ */
+function wb_gam_get_category_label( string $slug ): string {
+	return Registry::category_label( $slug );
+}
+
+/**
+ * Whether a gamification module (kudos, badges, challenges, ...) is switched on.
+ *
+ * @since 1.6.5
+ *
+ * @param string $slug Module slug, as listed on Settings > Modules.
+ * @return bool
+ */
+function wb_gam_is_module_enabled( string $slug ): bool {
+	return \WBGam\Engine\ModuleToggles::enabled( $slug );
+}
+
+/**
+ * A member's recent point transactions, newest first. `created_at` is UTC.
+ *
+ * @since 1.6.5
+ *
+ * @param int         $user_id    Member.
+ * @param int         $limit      Rows to return (1-100).
+ * @param string|null $point_type Point-type slug; null for every type.
+ * @return array<int, array{action_id: string, points: int, point_type: string, created_at: string}>
+ */
+function wb_gam_get_points_history( int $user_id, int $limit = 20, ?string $point_type = null ): array {
+	return PointsEngine::get_history( $user_id, $limit, $point_type );
+}
+
+/**
+ * A member's rank on the leaderboard.
+ *
+ * @since 1.6.5
+ *
+ * @param int    $user_id    Member.
+ * @param string $period     'all', 'month', 'week' or 'day'.
+ * @param string $point_type Point-type slug; '' for the default type.
+ * @return array{rank: int, points: int, points_to_next: int|null}
+ */
+function wb_gam_get_user_rank( int $user_id, string $period = 'all', string $point_type = '' ): array {
+	return \WBGam\Engine\LeaderboardEngine::get_user_rank( $user_id, $period, '', 0, $point_type );
+}
+
+/**
+ * The next level a member is working toward.
+ *
+ * @since 1.6.5
+ *
+ * @param int $user_id Member.
+ * @return array|null Level data, or null at the top level.
+ */
+function wb_gam_get_next_level( int $user_id ): ?array {
+	return LevelEngine::get_next_level( $user_id );
+}
+
+/**
+ * Points per site-calendar day, for a contribution heatmap.
+ *
+ * @since 1.6.5
+ *
+ * @param int $user_id Member.
+ * @param int $days    Days to look back.
+ * @return array<string, int> Site-calendar Y-m-d => points, oldest first.
+ */
+function wb_gam_get_contribution_data( int $user_id, int $days = 365 ): array {
+	return \WBGam\Engine\StreakEngine::get_contribution_data( $user_id, $days );
+}
+
+/**
+ * Every badge, each marked earned or not for this member (locked badges show what to aim for).
+ *
+ * @since 1.6.5
+ *
+ * @param int $user_id Member; 0 lists the badges without earned status.
+ * @return array<int, array{id: string, name: string, description: string, image_url: string|null, is_credential: bool, category: string, earned: bool, earned_at: string|null}> `earned_at` is UTC.
+ */
+function wb_gam_get_all_badges_for_user( int $user_id = 0 ): array {
+	return \WBGam\Engine\BadgeEngine::get_all_badges_for_user( $user_id );
+}
+
+/**
+ * The badges a member chose to share publicly.
+ *
+ * @since 1.6.5
+ *
+ * @param int $user_id Member.
+ * @return string[] Badge ids.
+ */
+function wb_gam_get_shared_badges( int $user_id ): array {
+	return \WBGam\Engine\BadgeShare::shared_badges( $user_id );
+}
+
+/**
+ * The public share page of a badge a member earned.
+ *
+ * @since 1.6.5
+ *
+ * @param string $badge_id Badge id.
+ * @param int    $user_id  Member who earned it.
+ * @return string
+ */
+function wb_gam_get_badge_share_url( string $badge_id, int $user_id ): string {
+	return \WBGam\Engine\BadgeSharePage::get_share_url( $badge_id, $user_id );
+}
+
+/**
+ * Send kudos from one member to another, with every rule the Give Kudos form applies.
+ *
+ * @since 1.6.5
+ *
+ * @param int    $giver_id    Sender.
+ * @param int    $receiver_id Recipient.
+ * @param string $message     Optional note.
+ * @return true|WP_Error WP_Error explains a refusal (module off, daily limit, self-kudos, ...).
+ */
+function wb_gam_send_kudos( int $giver_id, int $receiver_id, string $message = '' ): bool|WP_Error {
+	return \WBGam\Engine\KudosEngine::send( $giver_id, $receiver_id, $message );
+}
+
+/**
+ * Whether a member may send kudos right now (module on, daily limit not reached).
+ *
+ * @since 1.6.5
+ *
+ * @param int $giver_id Sender.
+ * @return bool
+ */
+function wb_gam_can_send_kudos( int $giver_id ): bool {
+	return \WBGam\Engine\KudosEngine::can_send( $giver_id );
+}
+
+/**
+ * Whether the sender already gave this member kudos within the cooldown.
+ *
+ * @since 1.6.5
+ *
+ * @param int $giver_id         Sender.
+ * @param int $receiver_id      Recipient.
+ * @param int $cooldown_seconds Window to look back.
+ * @return bool
+ */
+function wb_gam_has_recent_kudos( int $giver_id, int $receiver_id, int $cooldown_seconds ): bool {
+	return \WBGam\Engine\KudosEngine::has_recent_kudos_to_receiver( $giver_id, $receiver_id, $cooldown_seconds );
+}
+
+/**
+ * Kudos a member received, newest first.
+ *
+ * @since 1.6.5
+ *
+ * @param int $user_id Recipient.
+ * @param int $limit   Rows to return.
+ * @return array
+ */
+function wb_gam_get_kudos_received( int $user_id, int $limit = 20 ): array {
+	return \WBGam\Engine\KudosEngine::get_received( $user_id, $limit );
+}
+
+/**
+ * How many kudos a member has received.
+ *
+ * @since 1.6.5
+ *
+ * @param int $user_id Recipient.
+ * @return int
+ */
+function wb_gam_get_kudos_received_count( int $user_id ): int {
+	return \WBGam\Engine\KudosEngine::get_received_count( $user_id );
+}
+
+/**
+ * Whether the site owner handed the leaderboard to Jetonomy's reputation board
+ * (Settings > Appearance > Community Leaderboard, filter wb_gam_defer_leaderboard_to_jetonomy).
+ *
+ * WB Gamification then hides its own leaderboard and top-members blocks; a partner that shows
+ * a leaderboard page or menu item should hide it too, so members see one ranking, not two.
+ *
+ * @since 1.6.5
+ *
+ * @return bool
+ */
+function wb_gam_leaderboard_deferred_to_jetonomy(): bool {
+	return \WBGam\Integrations\Jetonomy\DisplayDefer::defers_leaderboard();
+}

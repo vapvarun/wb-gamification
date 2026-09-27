@@ -477,6 +477,19 @@ final class Registry {
 	}
 
 	/**
+	 * The points an action awards: the owner's setting, else the action's default.
+	 *
+	 * @since 1.6.5
+	 *
+	 * @param string $id Action ID.
+	 * @return int 0 for an unregistered action.
+	 */
+	public static function action_points( string $id ): int {
+		$action = self::get_action( $id );
+		return null === $action ? 0 : (int) get_option( 'wb_gam_points_' . $id, $action['default_points'] ?? 0 );
+	}
+
+	/**
 	 * Get a single registered action by ID.
 	 *
 	 * @param string $id Action ID to look up.
