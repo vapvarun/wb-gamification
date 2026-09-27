@@ -179,7 +179,8 @@ fi
 #   - .release_version matches the current VERSION
 #   - .failures[] (entries with origin=="from") is empty
 #   - .debug_log_issues[] (entries with origin=="from") is empty
-#   - .ran_at is within the last 24 hours (warns, doesn't block, when stale)
+#   - .ran_at is not older than the HEAD commit being packaged (blocks, exit 30)
+#   - A_fresh_install and B_upgrade each record a pass, or say "status": "not_applicable"
 # Emergency bypass: --skip-browser-smoke (warns; not for customer releases).
 SMOKE_REPORT="${ROOT_DIR}/docs/qa/.last-smoke-pass.json"
 if [ "${SKIP_BROWSER_SMOKE}" -eq 1 ]; then
