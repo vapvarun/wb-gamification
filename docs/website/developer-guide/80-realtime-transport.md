@@ -141,12 +141,12 @@ toast renderer is loaded. Look for a request to
 
 ## What about WebSockets?
 
-We don't ship a WebSocket transport. Reasons documented in
-[`plan/REAL-TIME-TRANSPORT.md`](../../../plan/REAL-TIME-TRANSPORT.md)
-§ "Why SSE, not WebSockets". TL;DR: nothing in this plugin needs
-client→server messaging that REST + ping() can't already handle,
-and WebSocket adds two layers of host compatibility friction (mod
-proxy wstunnel, sticky sessions) that SSE doesn't.
+We don't ship a WebSocket transport. Nothing in this plugin needs
+client→server messaging that REST + ping() can't already handle, and
+WebSocket adds two layers of host compatibility friction (mod_proxy_wstunnel,
+sticky sessions) that SSE doesn't need. SSE also survives Cloudflare's free
+tier and gets auto-reconnect for free via the browser's native `EventSource`,
+where a WebSocket needs both handled manually.
 
 ## Filters
 

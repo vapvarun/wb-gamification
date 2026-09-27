@@ -13,6 +13,9 @@ See [Hooks and Filters Overview](110-hooks-overview.md) for how to add a listene
 | `wb_gam_points_awarded_batch` | After a bulk award writes the same action to many users in one operation. | `array $user_ids`, `string $action_id`, `int $points`, `string $point_type`, `int $total` |
 | `wb_gam_points_revoked` | When an admin revokes (deletes) a point award via the REST API. | `int $row_id`, `array $row`, `int $admin_id` |
 | `wb_gam_points_redeemed` | When a member redeems points for a reward in the redemption store. | `int $redemption_id`, `int $user_id`, `array $item`, `?string $coupon` |
+| `wb_gam_redemption_fulfilled` | When an owner marks a custom/physical redemption as fulfilled - the reward has been delivered. Only transitions from `pending` / `pending_fulfillment`; idempotent. | `int $redemption_id`, `int $user_id` |
+| `wb_gam_redemption_refunded` | After a redemption is refunded - points credited back to the member and stock restored. | `int $redemption_id`, `int $user_id`, `int $cost`, `string $note` |
+| `wb_gam_points_spent` | After `wb_gam_spend_points()` successfully debits a member's balance for an external redemption (e.g. a BuddyNext membership tier, a marketplace purchase). Added in 1.6.1. | `int $user_id`, `int $amount`, `string $context`, `array $result` |
 | `wb_gam_point_type_converted` | After a member converts one point currency into another. Debit and credit ledger rows share an `event_id`. | `int $user_id`, `string $from`, `string $to`, `int $debit_amount`, `int $credit_amount`, `array $rule` |
 | `wb_gam_award_skipped` | When the engine intentionally skips an award (cooldown, cap reached, self-action, veto). Use it to surface a contextual hint so silent skips do not feel broken. | `int $user_id`, `string $action_id`, `string $reason`, `array $context` |
 | `wb_gam_points_decayed` | After each daily inactivity point-decay sweep (Settings > Points > Point expiry; off by default). `$count` is the number of members decayed this run. Added in 1.5.3. | `int $count` |
@@ -36,11 +39,18 @@ See [Hooks and Filters Overview](110-hooks-overview.md) for how to add a listene
 |------|---------------|------------|
 | `wb_gam_badge_awarded` | After a badge is awarded to a member. | `int $user_id`, `array $badge_def`, `string $badge_id` |
 | `wb_gam_after_badge_award` | After a badge is awarded (legacy alias, lighter signature). | `int $user_id`, `string $badge_id` |
+| `wb_gam_badge_imported` | After a badge is written by an import, replaying history. Fires instead of `wb_gam_badge_awarded` while import mode is active, so listeners that announce badges (email, toast, activity, webhook) never congratulate a member for something earned years ago on another plugin. Same arguments as `wb_gam_badge_awarded`. Added in 1.6.4. | `int $user_id`, `array\|null $badge_def`, `string $badge_id` |
+| `wb_gam_badge_shared` | When a member publishes one of their badges to the public share page. Added in 1.6.4. | `int $user_id`, `string $badge_id` |
+| `wb_gam_badge_unshared` | When a member unpublishes a previously-shared badge. Added in 1.6.4. | `int $user_id`, `string $badge_id` |
 | `wb_gam_credential_expired` | When a badge credential passes its `expires_at` date during the daily expiry check. | `int $user_id`, `string $badge_id`, `string $expires_at` |
 | `wb_gam_level_assigned` | When a member is assigned a starter level (initial assignment). Toast/level-up overlays do not listen here, so new members are not congratulated for being a Newcomer. | `int $user_id`, `array $new_level` |
 | `wb_gam_level_changed` | When a member moves to a different level (up or down). Does not fire on initial assignment. | `int $user_id`, `array\|null $new_level`, `array\|null $old_level` |
+| `wb_gam_level_imported` | When a level change is written by an import, replaying history. Fires instead of `wb_gam_level_changed` while import mode is active. Added in 1.6.4. | `int $user_id`, `array\|null $new_level`, `array\|null $old_level` |
 | `wb_gam_streak_milestone` | When a member reaches a streak milestone (7, 14, 30, 60, 100, 180, or 365 days). | `int $user_id`, `int $streak_days` |
 | `wb_gam_streak_broken` | When a member's streak is reset to 1 after exceeding the grace period. | `int $user_id`, `int $old_streak`, `int $gap_days` |
+| `wb_gam_streak_changed` | After a member's streak count changes from organic activity - at most once per member per day. Added in 1.6.4. | `int $user_id`, `int $new_streak`, `int $old_streak` |
+| `wb_gam_streak_adjusted` | After an admin administratively sets a member's streak values (support/moderation), bypassing day-progression logic. Audited to the immutable event log. | `int $user_id`, `array $after`, `array $before`, `string $reason`, `int $admin_id` |
+| `wb_gam_streak_reset` | After an admin resets a member's current streak to zero. `longest_streak` is preserved. | `int $user_id`, `array $after`, `array $before`, `string $reason`, `int $admin_id` |
 | `wb_gam_personal_record` | When a member sets a new personal points record for a period. | `int $user_id`, `string $period`, `int $current`, `int $previous`, `string $message` |
 
 ## Challenges and kudos
@@ -53,6 +63,7 @@ See [Hooks and Filters Overview](110-hooks-overview.md) for how to add a listene
 | `wb_gam_community_challenge_updated` | When an admin updates a community challenge via the REST API. | `int $id`, `array $updates` |
 | `wb_gam_community_challenge_deleted` | When an admin deletes a community challenge via the REST API. | `int $id` |
 | `wb_gam_kudos_given` | After kudos are successfully recorded. | `int $giver_id`, `int $receiver_id`, `string $message`, `int $kudos_id` |
+| `wb_gam_kudos_revoked` | After an admin revokes a kudos - reverses both point awards (looked up from the ledger by object_id, not the current option value) and soft-marks the row for the audit trail. Idempotent; a second revoke is rejected. Added in 1.6.2. | `int $kudos_id`, `int $giver_id`, `int $receiver_id`, `string $reason`, `int $admin_id` |
 
 ## Submissions
 
@@ -68,6 +79,12 @@ See [Hooks and Filters Overview](110-hooks-overview.md) for how to add a listene
 |------|---------------|------------|
 | `wb_gam_login_bonus_claimed` | After a member claims a daily login bonus for the day's streak tier. | `int $user_id`, `int $streak`, `int $bonus` |
 
+## Public profiles
+
+| Hook | When it fires | Parameters |
+|------|---------------|------------|
+| `wb_gam_profile_visibility_set` | After a member changes their own public-profile visibility setting. Added in 1.5.5. | `int $user_id`, `bool $public` |
+
 ## Integrations
 
 These optional-engine hooks fire only when their feature flag is enabled in `wb_gam_features` (defaults to `true`).
@@ -75,6 +92,7 @@ These optional-engine hooks fire only when their feature flag is enabled in `wb_
 | Hook | When it fires | Parameters |
 |------|---------------|------------|
 | `wb_gam_weekly_email_sent` | After a weekly recap email is sent. | `int $user_id`, `array $data` |
+| `wb_gam_email_footer` | Fires just before `</body>` in every gamification email template (level-up, badge, challenge, redemption, weekly recap), for appending footer content such as an unsubscribe line or agency branding. Added in 1.6.2. | `string $wb_gam_email_slug`, `array $wb_gam_email_vars` |
 | `wb_gam_weekly_nudge_sent` | When a leaderboard nudge has been delivered to a member (after the BuddyPress notification and optional email). Renamed from `wb_gam_weekly_nudge` in 1.4.1. | `int $user_id`, `int $rank`, `int $points`, `?int $points_to_next`, `string $message` |
 | `wb_gam_cohort_outcome` | When a cohort league season ends with promotion or demotion results. `$outcome` is `promoted`, `demoted`, or `stayed`. | `int $user_id`, `int $old_tier`, `int $new_tier`, `string $outcome`, `int $points` |
 | `wb_gam_retention_nudge` | When a status-retention nudge is dispatched to a member at risk of disengaging. | `int $user_id`, `array $level`, `array $next`, `int $pts_needed`, `string $message` |
@@ -132,6 +150,7 @@ Added in 1.5.3 (Settings > Tools).
 | `wb_gam_log_pruned` | After the daily points-ledger pruner runs (one fire per cron tick). | `int $deleted`, `string $cutoff` |
 | `wb_gam_events_pruned` | After the daily event-log pruner runs (one fire per cron tick). | `int $deleted`, `string $cutoff` |
 | `wb_gam_user_data_erased` | After all gamification data for a user is erased (GDPR). | `int $user_id` |
+| `wb_gam_member_purged` | After an admin/CLI purge deletes a member's gamification data (a targeted purge, distinct from the GDPR eraser). Added in 1.6.4. | `int $user_id`, `array $removed` |
 
 ## Block extension actions
 
