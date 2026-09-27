@@ -241,7 +241,7 @@ final class RedemptionEngine {
 				global $wpdb;
 
 				// Step 1 — debit (FOR UPDATE balance lock, audit-logged).
-				$debit = PointsEngine::debit( $user_id, $cost, 'redemption', $event, $type );
+				$debit = PointsEngine::debit( $user_id, $cost, 'redemption', $event, $type, true );
 				if ( ! $debit['success'] ) {
 					self::$last_failure_reason = ( 'insufficient_balance' === ( $debit['reason'] ?? '' ) )
 						? 'insufficient'
@@ -433,6 +433,8 @@ final class RedemptionEngine {
 		// earning-exclusion that award() enforces).
 		if ( $cost > 0 && $user_id > 0 ) {
 			PointsEngine::award( $user_id, 'redemption_refund', $cost, $redemption_id, $type ?: null, true );
+			// The points go back to the balance, so they are no longer "spent"; earned is unchanged.
+			PointsEngine::bump_user_spent( $user_id, PointsEngine::resolve_type( $type ?: null ), -$cost );
 		}
 
 		// Restore the unit only when the item still exists with finite stock

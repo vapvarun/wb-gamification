@@ -16,6 +16,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 
 ### Changed
 
+- Levels follow the points a member earned (balance plus points spent on rewards or currency exchanges), so redeeming a reward never costs a member their level. Deductions, decay and reversed awards still lower it, and now take effect straight away instead of on the member's next award; a points reset returns the member to the first level. Point-milestone and level-reached badges use the same earned total. `GET /members/{id}` and `GET /members/{id}/level` add `earned_points`; `PointsEngine::get_earned()` and `wb_gam_spend_points()` spends feed it.
+- Only a level climb is announced. A drop used to toast "You reached Member!" and send the level-up email and ActivityPub post; it is now applied quietly. `LevelEngine::is_climb()` lets integrations do the same (`wb_gam_level_changed` still fires both ways for rank automation and webhooks).
+- An admin award with no reason shows "Manual award" on the member's toast instead of `manual_award`.
+
 - A Jetonomy Pro custom badge pays points once: its reputation bonus, recorded as `jetonomy_badge_earned`. The separate `jetonomy_pro_badge_earned` action (15 points) is removed; it paid every badge twice. Points already paid stay.
 - `POST /members/me/profile-visibility` answers 409 `wb_gam_privacy_managed_by_host` when a community plugin decides profile privacy, instead of saving a choice nothing reads; `GET` adds `managed_by_host`. The profile page no longer shows that switch on such sites.
 

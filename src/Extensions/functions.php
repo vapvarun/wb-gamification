@@ -260,7 +260,7 @@ function wb_gam_spend_points( int $user_id, int $amount, string $context = 'rede
 		)
 	);
 
-	$result = PointsEngine::debit( $user_id, $amount, $context, $event, $resolved_type );
+	$result = PointsEngine::debit( $user_id, $amount, $context, $event, $resolved_type, true );
 
 	if ( ! empty( $result['success'] ) ) {
 		/**

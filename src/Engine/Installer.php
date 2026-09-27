@@ -480,6 +480,7 @@ final class Installer {
 			user_id    BIGINT UNSIGNED NOT NULL,
 			point_type VARCHAR(60)     NOT NULL DEFAULT 'points',
 			total      BIGINT          NOT NULL DEFAULT 0,
+			spent      BIGINT          NOT NULL DEFAULT 0,
 			updated_at DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 			PRIMARY KEY (user_id, point_type),
 			KEY idx_type_total (point_type, total)

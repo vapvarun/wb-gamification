@@ -663,6 +663,13 @@ class MembersController extends WP_REST_Controller {
 			}
 		}
 
+		// A reset starts the member over: what they spent no longer counts toward their level either.
+		$spent = PointsEngine::get_spent( $id, $type );
+		if ( $spent > 0 ) {
+			PointsEngine::bump_user_spent( $id, PointsEngine::resolve_type( $type ), -$spent );
+			LevelEngine::maybe_level_up( $id );
+		}
+
 		return new WP_REST_Response(
 			array(
 				'user_id'     => $id,
@@ -925,6 +932,8 @@ class MembersController extends WP_REST_Controller {
 					'icon_url'        => $level['icon_url'],
 					'progress_pct'    => LevelEngine::get_progress_percent( $user_id ),
 					'next_threshold'  => $next ? $next['min_points'] : null,
+					// Levels follow points earned (balance + spent on rewards), not the balance.
+					'earned_points'   => PointsEngine::get_earned( $user_id ),
 					'next_level_name' => $next ? $next['name'] : null,
 				)
 				: null,
@@ -1078,8 +1087,8 @@ class MembersController extends WP_REST_Controller {
 
 		return rest_ensure_response(
 			array(
-				'points'       => $points,
-				'current'      => $level
+				'points'        => $points,
+				'current'       => $level
 					? array(
 						'id'         => $level['id'],
 						'name'       => $level['name'],
@@ -1087,7 +1096,7 @@ class MembersController extends WP_REST_Controller {
 						'icon_url'   => $level['icon_url'],
 					)
 					: null,
-				'next'         => $next
+				'next'          => $next
 					? array(
 						'id'         => $next['id'],
 						'name'       => $next['name'],
@@ -1095,8 +1104,10 @@ class MembersController extends WP_REST_Controller {
 						'icon_url'   => $next['icon_url'],
 					)
 					: null,
-				'progress_pct' => LevelEngine::get_progress_percent( $user_id ),
-				'all_levels'   => LevelEngine::get_all_levels_for_user( $user_id ),
+				'progress_pct'  => LevelEngine::get_progress_percent( $user_id ),
+				// Levels follow points earned (balance + spent on rewards), not the balance.
+				'earned_points' => PointsEngine::get_earned( $user_id ),
+				'all_levels'    => LevelEngine::get_all_levels_for_user( $user_id ),
 			)
 		);
 	}

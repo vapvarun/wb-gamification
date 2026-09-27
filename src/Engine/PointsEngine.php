@@ -546,7 +546,7 @@ final class PointsEngine {
 	 *                                Structured result. `success=false` arrives with a `reason`:
 	 *                                `insufficient_balance` | `event_persist_failed` | `ledger_write_failed`.
 	 */
-	public static function debit( int $user_id, int $amount, string $action_id, Event|string $event = '', ?string $type = null ): array {
+	public static function debit( int $user_id, int $amount, string $action_id, Event|string $event = '', ?string $type = null, bool $spend = false ): array {
 		$resolved_type = self::resolve_type( $type );
 		$amount        = abs( $amount );
 
@@ -575,8 +575,8 @@ final class PointsEngine {
 			);
 		}
 
-		return Transaction::run(
-			function () use ( $user_id, $amount, $event, $resolved_type ) {
+		$result = Transaction::run(
+			function () use ( $user_id, $amount, $event, $resolved_type, $spend ) {
 				global $wpdb;
 
 				// Atomic balance check with row lock — prevents the TOCTOU
@@ -633,6 +633,15 @@ final class PointsEngine {
 					);
 				}
 
+				// A spend moves points from the balance to `spent`, so what the member earned (and
+				// their level) is unchanged.
+				if ( $spend && ! self::bump_user_spent( $user_id, $resolved_type, $amount ) ) {
+					return array(
+						'success' => false,
+						'reason'  => 'ledger_write_failed',
+					);
+				}
+
 				return array(
 					'success'     => true,
 					'event_id'    => $event->event_id,
@@ -640,6 +649,14 @@ final class PointsEngine {
 				);
 			}
 		);
+
+		// A removal (deduction, decay, reversal) can lower the level; apply it now rather than on the
+		// member's next award. Silent: LevelEngine announces only a climb.
+		if ( ! $spend && ! empty( $result['success'] ) ) {
+			LevelEngine::maybe_level_up( $user_id );
+		}
+
+		return $result;
 	}
 
 	/**
@@ -711,6 +728,91 @@ final class PointsEngine {
 	 */
 	public static function cache_key_total( int $user_id, string $type ): string {
 		return "wb_gam_total_{$user_id}_{$type}";
+	}
+
+	/**
+	 * Cache key for a user/type spent lookup.
+	 *
+	 * @param int    $user_id User ID.
+	 * @param string $type    Resolved point-type slug.
+	 */
+	public static function cache_key_spent( int $user_id, string $type ): string {
+		return "wb_gam_spent_{$user_id}_{$type}";
+	}
+
+	/**
+	 * Move a member's `spent` counter: + on a spend (a reward redemption), - on its refund.
+	 *
+	 * @since 1.6.5
+	 *
+	 * @param int    $user_id User ID.
+	 * @param string $type    Resolved point-type slug.
+	 * @param int    $delta   Points to add to spent (negative to take back).
+	 * @return bool False when the write failed.
+	 */
+	public static function bump_user_spent( int $user_id, string $type, int $delta ): bool {
+		if ( 0 === $delta ) {
+			return true;
+		}
+
+		global $wpdb;
+		$ok = $wpdb->query(
+			$wpdb->prepare(
+				"INSERT INTO {$wpdb->prefix}wb_gam_user_totals (user_id, point_type, total, spent)
+				 VALUES (%d, %s, 0, %d)
+				 ON DUPLICATE KEY UPDATE spent = GREATEST( 0, spent + %d )",
+				$user_id,
+				$type,
+				max( 0, $delta ),
+				$delta
+			)
+		);
+		wp_cache_delete( self::cache_key_spent( $user_id, $type ), 'wb_gamification' );
+
+		return false !== $ok;
+	}
+
+	/**
+	 * Points a member has spent on rewards (net of refunds).
+	 *
+	 * @since 1.6.5
+	 *
+	 * @param int         $user_id User ID.
+	 * @param string|null $type    Point type; null for the primary type.
+	 * @return int
+	 */
+	public static function get_spent( int $user_id, ?string $type = null ): int {
+		$type  = self::resolve_type( $type );
+		$key   = self::cache_key_spent( $user_id, $type );
+		$spent = wp_cache_get( $key, 'wb_gamification' );
+		if ( false === $spent ) {
+			global $wpdb;
+			$spent = (int) $wpdb->get_var(
+				$wpdb->prepare(
+					"SELECT spent FROM {$wpdb->prefix}wb_gam_user_totals WHERE user_id = %d AND point_type = %s",
+					$user_id,
+					$type
+				)
+			);
+			wp_cache_set( $key, $spent, 'wb_gamification', 300 );
+		}
+		return (int) $spent;
+	}
+
+	/**
+	 * Points a member has earned: the balance plus what they spent on rewards.
+	 *
+	 * Levels and point-milestone badges read this, so buying a reward never costs a member their
+	 * level. Removals (an admin deduction, decay, a reversed award) still lower it.
+	 *
+	 * @since 1.6.5
+	 *
+	 * @param int         $user_id User ID.
+	 * @param string|null $type    Point type; null for the primary type.
+	 * @return int
+	 */
+	public static function get_earned( int $user_id, ?string $type = null ): int {
+		return self::get_total( $user_id, $type ) + self::get_spent( $user_id, $type );
 	}
 
 	// ── Legacy / public API ────────────────────────────────────────────────────
@@ -1075,7 +1177,7 @@ final class PointsEngine {
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $placeholders is built from an int count; all values pass through prepare().
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT user_id, total FROM {$wpdb->prefix}wb_gam_user_totals
+				"SELECT user_id, total, spent FROM {$wpdb->prefix}wb_gam_user_totals
 				  WHERE point_type = %s AND user_id IN ( $placeholders )",
 				array_merge( array( $type ), $ids )
 			),
@@ -1084,6 +1186,7 @@ final class PointsEngine {
 
 		$missing = array();
 		foreach ( $ids as $uid ) {
+			wp_cache_set( self::cache_key_spent( $uid, $type ), isset( $rows[ $uid ] ) ? (int) $rows[ $uid ]->spent : 0, 'wb_gamification', 300 );
 			if ( isset( $rows[ $uid ] ) ) {
 				wp_cache_set( self::cache_key_total( $uid, $type ), (int) $rows[ $uid ]->total, 'wb_gamification', 300 );
 			} else {

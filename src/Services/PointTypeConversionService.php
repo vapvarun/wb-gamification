@@ -365,7 +365,8 @@ final class PointTypeConversionService {
 				// Debit the source type. Passing the Event OBJECT makes debit()
 				// persist exactly one wb_gam_events row (id = $shared_event_id)
 				// plus the debit ledger row. debit() returns array{success:bool}.
-				$debit = PointsEngine::debit( $user_id, $debit_amount, $action_debit, $debit_event, $from );
+				// A member exchanging currency is spending it: their level is unaffected.
+				$debit = PointsEngine::debit( $user_id, $debit_amount, $action_debit, $debit_event, $from, true );
 				if ( empty( $debit['success'] ) ) {
 					$fail = (string) ( $debit['reason'] ?? 'debit_failed' );
 					return false;

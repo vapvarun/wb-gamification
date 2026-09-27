@@ -453,6 +453,10 @@ final class NotificationBridge {
 	 * @param array|null $old_level Previous level data or null.
 	 */
 	public static function on_level_changed( int $user_id, ?array $new_level = null, ?array $old_level = null ): void {
+		// A drop (deduction, decay, reversal) is applied silently; only a climb is announced.
+		if ( is_array( $new_level ) && ! LevelEngine::is_climb( $new_level, is_array( $old_level ) ? $old_level : null ) ) {
+			return;
+		}
 		// Resilient to listeners receiving null — fall back to a fresh read.
 		if ( null === $new_level || empty( $new_level['id'] ) ) {
 			global $wpdb;

@@ -132,6 +132,10 @@ final class ActivityPub {
 	 * @param array|null $old_level Previous descriptor (may be null).
 	 */
 	public static function on_level_changed( int $user_id, $new_level, $old_level ): void {
+		// A drop (deduction, decay, reversal) is applied silently; only a climb is announced.
+		if ( is_array( $new_level ) && ! \WBGam\Engine\LevelEngine::is_climb( $new_level, is_array( $old_level ) ? $old_level : null ) ) {
+			return;
+		}
 		if ( ! self::is_enabled( $user_id ) ) {
 			return;
 		}

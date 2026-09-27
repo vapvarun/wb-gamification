@@ -54,7 +54,8 @@ curl https://example.com/wp-json/wb-gamification/v1/members/42 \
     "min_points": 500,
     "progress_pct": 75,
     "next_threshold": 1500,
-    "next_level_name": "Regular"
+    "next_level_name": "Regular",
+    "earned_points": 1400
   },
   "badges_count": 8,
   "preferences": {
@@ -103,6 +104,8 @@ curl "https://example.com/wp-json/wb-gamification/v1/members/42/points?per_page=
 ### GET /members/{id}/level
 
 Current level and full level ladder with progress.
+
+Levels follow `earned_points` (the balance plus points spent on rewards), not `points`, so compute "points to the next level" as `next.min_points - earned_points`. Both this route and `GET /members/{id}` return `earned_points`.
 
 ### GET /members/{id}/badges
 
@@ -264,7 +267,7 @@ Manually award points to a member. Bypasses cooldown and cap checks.
 |-------|------|----------|-------------|
 | `user_id` | int | Yes | Target user ID |
 | `points` | int | Yes | Points to award (1 to 100,000) |
-| `reason` | string | No | Action ID label. Default `manual_award` |
+| `reason` | string | No | Why the points were given, shown to the member on the toast ("Won the photo contest"). Empty (default) shows "Manual award". |
 | `note` | string | No | Admin note stored in event metadata |
 
 ```bash
@@ -272,11 +275,11 @@ curl -X POST https://example.com/wp-json/wb-gamification/v1/points/award \
   -H "Content-Type: application/json" \
   -H "X-WP-Nonce: YOUR_NONCE" \
   --cookie "wordpress_logged_in_xxx=..." \
-  -d '{ "user_id": 42, "points": 100, "reason": "manual_award" }'
+  -d '{ "user_id": 42, "points": 100, "reason": "Won the photo contest" }'
 ```
 
 ```json
-{ "awarded": true, "user_id": 42, "points": 100, "reason": "manual_award" }
+{ "awarded": true, "user_id": 42, "points": 100, "reason": "Won the photo contest" }
 ```
 
 Returns HTTP 201 on success.

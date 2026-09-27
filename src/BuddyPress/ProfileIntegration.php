@@ -216,7 +216,7 @@ final class ProfileIntegration {
 	 */
 	private static function get_next_level_points( int $user_id ): int {
 		global $wpdb;
-		$current_points = PointsEngine::get_total( $user_id );
+		$current_points = PointsEngine::get_earned( $user_id );
 		return (int) $wpdb->get_var(
 			$wpdb->prepare(
 				"SELECT min_points FROM {$wpdb->prefix}wb_gam_levels
@@ -234,7 +234,7 @@ final class ProfileIntegration {
 	 */
 	private static function get_current_level_min( int $user_id ): int {
 		global $wpdb;
-		$current_points = PointsEngine::get_total( $user_id );
+		$current_points = PointsEngine::get_earned( $user_id );
 		return (int) $wpdb->get_var(
 			$wpdb->prepare(
 				"SELECT min_points FROM {$wpdb->prefix}wb_gam_levels

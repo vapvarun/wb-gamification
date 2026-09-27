@@ -107,6 +107,7 @@ final class DbUpgrader {
 		self::ensure_leaderboard_cache_point_type_column();
 		self::ensure_leaderboard_cache_prev_rank_column();
 		self::ensure_user_totals_table();
+		self::ensure_user_totals_spent_column();
 		self::ensure_leaderboard_cache_unique_key();
 		self::ensure_submissions_table();
 		self::ensure_api_keys_table();
@@ -1127,6 +1128,40 @@ final class DbUpgrader {
 			   FROM {$wpdb->prefix}wb_gam_points
 			  GROUP BY user_id, point_type
 			 ON DUPLICATE KEY UPDATE total = VALUES(total)"
+		);
+
+		update_option( $flag_key, '1' );
+	}
+
+	/**
+	 * Add `spent` to `wb_gam_user_totals`: points a member spent on rewards (1.6.5).
+	 *
+	 * Levels read balance + spent, so buying a reward no longer costs a member their level. Backfilled
+	 * once from the ledger's redemption, redemption-refund and currency-conversion rows. Spends made before 1.6.5 through
+	 * wb_gam_spend_points() under a custom context are not identifiable and are not backfilled.
+	 *
+	 * @since 1.6.5
+	 */
+	private static function ensure_user_totals_spent_column(): void {
+		$flag_key = 'wb_gam_feature_user_totals_spent_v1';
+		if ( get_option( $flag_key ) ) {
+			return;
+		}
+
+		global $wpdb;
+		$table = $wpdb->prefix . 'wb_gam_user_totals';
+		if ( ! $wpdb->get_var( "SHOW COLUMNS FROM `{$table}` LIKE 'spent'" ) ) {
+			$wpdb->query( "ALTER TABLE `{$table}` ADD COLUMN `spent` BIGINT NOT NULL DEFAULT 0 AFTER `total`" );
+		}
+		$wpdb->query(
+			"UPDATE `{$table}` t
+			   JOIN ( SELECT user_id, point_type, -SUM(points) AS spent
+			            FROM {$wpdb->prefix}wb_gam_points
+			           WHERE action_id IN ( 'redemption', 'redemption_refund' )
+			              OR ( action_id LIKE 'convert\\_%' AND points < 0 )
+			           GROUP BY user_id, point_type ) s
+			     ON s.user_id = t.user_id AND s.point_type = t.point_type
+			    SET t.spent = GREATEST( 0, s.spent )"
 		);
 
 		update_option( $flag_key, '1' );

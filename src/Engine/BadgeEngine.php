@@ -207,7 +207,7 @@ final class BadgeEngine {
 			}
 
 			$state = array(
-				'total'  => PointsEngine::get_total( $user_id, null ),
+				'total'  => PointsEngine::get_earned( $user_id, null ),
 				'earned' => self::get_user_earned_badge_ids( $user_id ),
 				'streak' => null,
 			);
@@ -368,7 +368,7 @@ final class BadgeEngine {
 		foreach ( $user_ids as $user_id ) {
 			$user_id = (int) $user_id;
 			$earned  = self::get_user_earned_badge_ids( $user_id );
-			$total   = PointsEngine::get_total( $user_id, null );
+			$total   = PointsEngine::get_earned( $user_id, null );
 
 			self::evaluate_for_signals( $user_id, array( 'cron' ), null, $rules, $earned, $total );
 		}
@@ -595,7 +595,7 @@ final class BadgeEngine {
 		// "primary currency"). See audit/DATA-FLOW-AWARD-2026-05-27.md §G5/G6.
 		$event_type = $event->point_type
 			?? ( isset( $event->metadata['point_type'] ) ? (string) $event->metadata['point_type'] : '' );
-		$total      = PointsEngine::get_total( $user_id, '' !== $event_type ? $event_type : null );
+		$total      = PointsEngine::get_earned( $user_id, '' !== $event_type ? $event_type : null );
 
 		// The signals this award actually emitted.
 		//
@@ -633,7 +633,7 @@ final class BadgeEngine {
 		}
 
 		$earned = self::get_user_earned_badge_ids( $user_id );
-		$total  = PointsEngine::get_total( $user_id );
+		$total  = PointsEngine::get_earned( $user_id );
 
 		self::evaluate_for_signals( $user_id, array( 'level' ), null, $rules, $earned, $total );
 	}
@@ -664,7 +664,7 @@ final class BadgeEngine {
 		}
 
 		$earned = self::get_user_earned_badge_ids( $user_id );
-		$total  = PointsEngine::get_total( $user_id );
+		$total  = PointsEngine::get_earned( $user_id );
 
 		self::evaluate_for_signals( $user_id, array( 'streak' ), null, $rules, $earned, $total );
 	}
@@ -681,7 +681,7 @@ final class BadgeEngine {
 	 * @param Event|null $event   The triggering event, or null (backfill/cron have none).
 	 * @param array      $rules   Active badge rules.
 	 * @param string[]   $earned  Badge ids this member already holds (mutated as new ones land).
-	 * @param int        $total   Primed point total.
+	 * @param int        $total   Primed points earned (PointsEngine::get_earned: balance + spent).
 	 * @return void
 	 */
 	private static function evaluate_for_signals( int $user_id, array $signals, ?Event $event, array $rules, array &$earned, int $total ): void {

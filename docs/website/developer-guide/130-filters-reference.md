@@ -139,7 +139,7 @@ Every block exposes a per-block data filter that fires on the data the block is 
 | `wb_gam_block_leaderboard_data` | leaderboard | Array of `{rank, user_id, display_name, points}` rows | `array` rows |
 | `wb_gam_block_top_members_data` | top-members | Same shape as leaderboard | `array` rows |
 | `wb_gam_block_points_history_data` | points-history | Array of `{action_id, points, point_type, created_at}` rows | `array` rows |
-| `wb_gam_block_member_points_data` | member-points | `{points, label, level, next_level, progress_pct}` map | `array` map |
+| `wb_gam_block_member_points_data` | member-points | `{points, level_points, label, level, next_level, progress_pct}` map (`level_points` = points earned, which the level and "to next level" use) | `array` map |
 | `wb_gam_block_hub_currencies` | hub | Array of `{slug, label, icon, balance, is_default, convert_rules}` tiles | `array` tiles |
 | `wb_gam_block_badge_showcase_data` | badge-showcase | Array of `{id, name, icon_url, earned, ...}` badges | `array` badges |
 | `wb_gam_block_challenges_data` | challenges | Array of active challenges for the user | `array` challenges |
@@ -148,7 +148,7 @@ Every block exposes a per-block data filter that fires on the data the block is 
 | `wb_gam_block_daily_bonus_data` | daily-bonus | Login-bonus state map merged with `{today_claimed}` | `array` map |
 | `wb_gam_block_earning_guide_data` | earning-guide | Category-keyed action map `[ category => [{label,icon,points}, ...] ]` | `array` map |
 | `wb_gam_block_kudos_feed_data` | kudos-feed | Array of recent kudos rows | `array` rows |
-| `wb_gam_block_level_progress_data` | level-progress | `{points, level, next, pct}` map | `array` map |
+| `wb_gam_block_level_progress_data` | level-progress | `{points, level_points, level, next, pct}` map (`level_points` = points earned) | `array` map |
 | `wb_gam_block_redemption_store_data` | redemption-store | Array of reward items | `array` items |
 | `wb_gam_block_streak_data` | streak | `{streak, heatmap}` map | `array` map |
 | `wb_gam_block_year_recap_data` | year-recap | Yearly recap aggregates map | `array` map |
