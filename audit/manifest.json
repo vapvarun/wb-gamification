@@ -9912,6 +9912,15 @@
       "consumed_by": []
     },
     {
+      "name": "wb_gam_badge_deleted",
+      "type": "action",
+      "purpose": "",
+      "fired_at": [
+        "src/API/BadgesController.php:739"
+      ],
+      "consumed_by": []
+    },
+    {
       "name": "wb_gam_before_delete_community_challenge",
       "type": "action",
       "purpose": "",
