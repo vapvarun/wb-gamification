@@ -22,6 +22,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 
 ### Fixed
 
+- Members could give themselves points for actions they never took by calling `POST /events`, and could mark any challenge complete with `POST /challenges/{id}/complete`. Points now come only from activity the plugin observes: `POST /events` requires the `wb_gam_manage_members` capability (administrators and API keys), and the unused challenge-complete endpoint is removed.
+- Challenges opened and closed at the wrong time on sites not set to UTC: the admin saves times in UTC but the engine compared them with site time, so on a site 5.5 hours ahead a live challenge closed 5.5 hours early. Challenge windows, countdowns and the admin list now use UTC and show dates in the site time zone.
+- Point multipliers ignored their `starts_at` / `ends_at` dates, so an ended campaign kept multiplying. The window is honoured (site time zone; a bare end date covers that day), and an unreadable date is rejected with a 400.
+- Settings no longer show controls a site cannot use: without BuddyPress, the BuddyPress activity-stream toggles and automation actions are hidden (saved values are kept), and the profile slug field is replaced with a note when a community plugin hosts member profiles.
+- The webhook delivery log records times in UTC ISO 8601, like the webhook payload.
+
 - Settings: saving any section now shows its confirmation (it was lost in the redirect and hidden by the plugin's own notice suppression).
 - Settings: the Modules, Access and Automation sections also confirm a save, and an automation rule missing its target says why it was not added.
 - Gamification hub: card titles without a count sat at the right edge of the card; every title now sits beside its icon.
