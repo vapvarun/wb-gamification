@@ -29,6 +29,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 
 - The "Welcome, pick a starter template" notice no longer shows on a site where members are already earning points.
 - Admin card descriptions sit on their own line under the card title at every width; on phones they were squeezed beside it.
+- Kudos Moderation showed no message on phones, so a moderator could not read what they were revoking; the message now shows in every row.
 - The redemption REST schema named `redeemed_at` and `item_title`, which responses never carried; it now documents the real `created_at`, `title` and `reward_type`.
 
 - Members could give themselves points for actions they never took by calling `POST /events`, and could mark any challenge complete with `POST /challenges/{id}/complete`. Points now come only from activity the plugin observes: `POST /events` requires the `wb_gam_manage_members` capability (administrators and API keys), and the unused challenge-complete endpoint is removed.
