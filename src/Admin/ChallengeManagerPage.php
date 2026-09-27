@@ -255,7 +255,7 @@ final class ChallengeManagerPage {
 								<td>
 									<input type="datetime-local" name="starts_at" id="wb-gam-challenge-starts" class="wbgam-input"
 										data-wb-gam-utc
-										value="<?php echo esc_attr( $edit_data['starts_at'] ?? current_time( 'Y-m-d\TH:i' ) ); ?>">
+										value="<?php echo esc_attr( $edit_data['starts_at'] ?? gmdate( 'Y-m-d\TH:i' ) ); ?>">
 									<p class="description"><?php esc_html_e( 'When this challenge becomes available to members. Actions before this date will not count.', 'wb-gamification' ); ?></p>
 								</td>
 							</tr>
@@ -264,7 +264,7 @@ final class ChallengeManagerPage {
 								<td>
 									<input type="datetime-local" name="ends_at" id="wb-gam-challenge-ends" class="wbgam-input"
 										data-wb-gam-utc
-										value="<?php echo esc_attr( $edit_data['ends_at'] ?? gmdate( 'Y-m-d\TH:i', current_time( 'timestamp' ) + ( 7 * DAY_IN_SECONDS ) ) ); ?>">
+										value="<?php echo esc_attr( $edit_data['ends_at'] ?? gmdate( 'Y-m-d\TH:i', time() + ( 7 * DAY_IN_SECONDS ) ) ); ?>">
 									<p class="description"><?php esc_html_e( 'Deadline for the challenge. Members must reach the target before this date. Defaults to 7 days from now.', 'wb-gamification' ); ?></p>
 								</td>
 							</tr>
@@ -324,8 +324,9 @@ final class ChallengeManagerPage {
 								</td>
 								<td>
 									<?php
-									$start = ! empty( $c['starts_at'] ) ? substr( $c['starts_at'], 0, 10 ) : '—';
-									$end   = ! empty( $c['ends_at'] ) ? substr( $c['ends_at'], 0, 10 ) : '—';
+									// Stored in UTC; show the owner's site date.
+									$start = ! empty( $c['starts_at'] ) ? get_date_from_gmt( $c['starts_at'], 'Y-m-d' ) : '—';
+									$end   = ! empty( $c['ends_at'] ) ? get_date_from_gmt( $c['ends_at'], 'Y-m-d' ) : '—';
 									echo esc_html( $start . ' → ' . $end );
 									?>
 								</td>

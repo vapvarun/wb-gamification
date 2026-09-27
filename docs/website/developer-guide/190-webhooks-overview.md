@@ -184,8 +184,8 @@ curl https://example.com/wp-json/wb-gamification/v1/webhooks/1/log \
 {
   "webhook_id": 1,
   "entries": [
-    { "event": "points_awarded", "status_code": 200, "success": true, "timestamp": "2026-04-12 14:30:05" },
-    { "event": "badge_earned", "status_code": 0, "success": false, "timestamp": "2026-04-12 14:29:58" }
+    { "event": "points_awarded", "status_code": 200, "success": true, "timestamp": "2026-04-12T14:30:05Z" },
+    { "event": "badge_earned", "status_code": 0, "success": false, "timestamp": "2026-04-12T14:29:58Z" }
   ],
   "count": 2
 }

@@ -99,11 +99,6 @@
         },
         {
           "method": "POST",
-          "route": "/wb-gamification/v1/challenges/(?P<id>[\\d]+)/complete",
-          "stub_command": "bin/qa-stub-gen.php rest POST \"/wb-gamification/v1/challenges/(?P<id>[\\d]+)/complete\""
-        },
-        {
-          "method": "POST",
           "route": "/wb-gamification/v1/events",
           "stub_command": "bin/qa-stub-gen.php rest POST \"/wb-gamification/v1/events\""
         },

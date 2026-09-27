@@ -139,8 +139,7 @@ All gates evaluate `current_user_can('manage_options')`. Only `administrator` ro
 | `/capabilities` | GET | `__return_true` | Public — discovery endpoint. |
 | `/challenges` | GET / POST | `__return_true` / `admin_check` | Read public, create admin. |
 | `/challenges/{id}` | GET / PUT / DELETE | `__return_true` / `admin_check` / `admin_check` | Read public, write admin. |
-| `/challenges/{id}/complete` | POST | `require_logged_in` | Logged-in user. |
-| `/events` | POST | `create_item_permissions_check` | Logged-in user (default). |
+| `/events` | POST | `manage_members_permissions_check` | `wb_gam_manage_members` (admins by default; API keys). |
 | `/kudos` | GET / POST | `__return_true` / `create_item_permissions_check` | Read public, give logged-in. |
 | `/kudos/me` | GET | `require_logged_in` | Logged-in user. |
 | `/leaderboard` | GET | `__return_true` | Public. |
@@ -214,7 +213,7 @@ fallback), so a delegated community manager can run imports without full admin.
 |---|---|
 | REST `GET /import/sources` | `wb_gam_manage_members` (`ImportController::permissions`) |
 | REST `POST /import/{source}` (run / dry-run) | `wb_gam_manage_members` |
-| REST `POST /events/import` (bulk ingestion) | `wb_gam_manage_members` (`EventsController::import_permissions_check`) |
+| REST `POST /events/import` (bulk ingestion) | `wb_gam_manage_members` (`EventsController::manage_members_permissions_check`) |
 | Admin **WB Gamification → Import** page | `wb_gam_manage_members` (submenu cap + `render_page` re-check) |
 | `wp wb-gamification import <source>` | Shell access (WP-CLI) |
 

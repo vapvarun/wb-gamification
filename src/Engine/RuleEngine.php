@@ -99,7 +99,7 @@ final class RuleEngine {
 				continue;
 			}
 
-			if ( ! self::evaluate_condition( (array) ( $config['condition'] ?? array() ), $event ) ) {
+			if ( ! self::in_window( $config ) || ! self::evaluate_condition( (array) ( $config['condition'] ?? array() ), $event ) ) {
 				continue;
 			}
 
@@ -108,6 +108,48 @@ final class RuleEngine {
 		}
 
 		return max( 0, $points );
+	}
+
+	/**
+	 * Whether a multiplier's optional campaign window (starts_at / ends_at) is open now.
+	 *
+	 * The REST API always accepted and stored the window, but nothing read it, so a campaign that
+	 * ended kept multiplying forever (card 10344274152). No window = always on.
+	 *
+	 * @param array $config Decoded rule_config.
+	 * @return bool
+	 */
+	private static function in_window( array $config ): bool {
+		$now   = time();
+		$start = self::window_timestamp( $config['starts_at'] ?? null, false );
+		$end   = self::window_timestamp( $config['ends_at'] ?? null, true );
+		return ( null === $start || $now >= $start ) && ( null === $end || $now < $end );
+	}
+
+	/**
+	 * A window edge as a UTC timestamp, read in the site's time zone (the clock the owner means).
+	 *
+	 * A bare date ("2026-10-04") on the end edge covers that whole day. Empty or unreadable = null;
+	 * RulesController rejects unreadable values before they are stored.
+	 *
+	 * @param mixed $value  Date or datetime string.
+	 * @param bool  $is_end Whether this is the end edge.
+	 * @return int|null
+	 */
+	public static function window_timestamp( $value, bool $is_end ): ?int {
+		$value = is_string( $value ) ? trim( $value ) : '';
+		if ( '' === $value ) {
+			return null;
+		}
+		try {
+			$at = new \DateTimeImmutable( $value, wp_timezone() );
+		} catch ( \Exception $e ) {
+			return null;
+		}
+		if ( $is_end && 1 === preg_match( '/^\d{4}-\d{2}-\d{2}$/', $value ) ) {
+			$at = $at->modify( '+1 day' );
+		}
+		return $at->getTimestamp();
 	}
 
 	/**

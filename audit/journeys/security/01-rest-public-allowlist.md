@@ -50,7 +50,7 @@ For each: `curl -fsS $SITE_URL/wp-json{route}` returns 200 and parseable JSON.
 | `/wb-gamification/v1/members/me/toasts` | GET | 401 — own toasts require login |
 | `/wb-gamification/v1/redemptions` | POST | 401 — redeem requires login |
 | `/wb-gamification/v1/redemptions/me` | GET | 401 — own history requires login |
-| `/wb-gamification/v1/challenges/1/complete` | POST | 401 — complete challenge requires login |
+| `/wb-gamification/v1/challenges/1/complete` | POST | 404 — route retired in 1.6.5 (progress comes only from the engine) |
 
 For each: response status is 4xx — typically 401 (`rest_not_logged_in`) or 403 (`rest_forbidden`). For routes whose body has required params, an empty/missing-param request will return 400 (`rest_missing_callback_param`) BEFORE the permission_callback runs — that's still anonymous-rejected. Send a syntactically-valid body if you want to assert the cap-side response code specifically.
 

@@ -218,8 +218,11 @@ Site-wide raw event log with filtering.
 
 | Method | Endpoint | Permission |
 |--------|----------|------------|
-| `POST` | `/events` | `manage_options` |
+| `POST` | `/events` | `wb_gam_manage_members` (administrators by default; API keys act as the admin who created them) |
+| `POST` | `/events/import` | `wb_gam_manage_members` |
 | `GET` | `/events/stream` | `manage_options` |
+
+Members cannot fire events: every action is awarded from the hook that observes the real activity. `POST /events` is for integrations recording something on a member's behalf.
 
 The `/events/stream` endpoint is a Server-Sent Events stream of live events for admin dashboards.
 

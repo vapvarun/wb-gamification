@@ -436,10 +436,14 @@ final class SettingsPage {
 		update_option( 'wb_gam_nudge_email', isset( $_POST['wb_gam_nudge_email'] ) ? 1 : 0 );
 
 		// BuddyPress activity-stream event toggles.
-		update_option( 'wb_gam_bp_stream_badge_earned', isset( $_POST['wb_gam_bp_stream_badge_earned'] ) ? 1 : 0 );
-		update_option( 'wb_gam_bp_stream_challenge_completed', isset( $_POST['wb_gam_bp_stream_challenge_completed'] ) ? 1 : 0 );
-		update_option( 'wb_gam_bp_stream_kudos_given', isset( $_POST['wb_gam_bp_stream_kudos_given'] ) ? 1 : 0 );
-		update_option( 'wb_gam_bp_stream_level_changed', isset( $_POST['wb_gam_bp_stream_level_changed'] ) ? 1 : 0 );
+		// BuddyPress activity-stream toggles are shown, and so saved, only with BuddyPress: saving
+		// them from a form that does not show them would switch all four off.
+		if ( function_exists( 'buddypress' ) ) {
+			update_option( 'wb_gam_bp_stream_badge_earned', isset( $_POST['wb_gam_bp_stream_badge_earned'] ) ? 1 : 0 );
+			update_option( 'wb_gam_bp_stream_challenge_completed', isset( $_POST['wb_gam_bp_stream_challenge_completed'] ) ? 1 : 0 );
+			update_option( 'wb_gam_bp_stream_kudos_given', isset( $_POST['wb_gam_bp_stream_kudos_given'] ) ? 1 : 0 );
+			update_option( 'wb_gam_bp_stream_level_changed', isset( $_POST['wb_gam_bp_stream_level_changed'] ) ? 1 : 0 );
+		}
 
 		// Public profiles (site-wide). Only when gamification decides privacy itself; a host
 		// community's profile privacy applies otherwise and the switch is not shown.
@@ -614,6 +618,7 @@ final class SettingsPage {
 				</div>
 			</div>
 
+			<?php if ( function_exists( 'buddypress' ) ) : ?>
 			<div class="wbgam-card wbgam-stack-block">
 				<div class="wbgam-card-header">
 					<h2 class="wbgam-card-title">
@@ -631,6 +636,7 @@ final class SettingsPage {
 					<?php endforeach; ?>
 				</div>
 			</div>
+			<?php endif; ?>
 
 			<div class="wbgam-card wbgam-stack-block">
 				<div class="wbgam-card-header">
@@ -650,6 +656,9 @@ final class SettingsPage {
 						</label>
 						<p class="description"><?php esc_html_e( 'Each member can still hide their own. Turn this off to keep everyone\'s private; members always see their own.', 'wb-gamification' ); ?></p>
 					<?php endif; ?>
+					<?php if ( has_filter( 'wb_gam_profile_redirect_url' ) ) : ?>
+						<p class="description"><?php esc_html_e( 'Member profiles live in your community plugin; gamification profile links open there.', 'wb-gamification' ); ?></p>
+					<?php else : ?>
 					<p>
 						<label for="wb-gam-profile-slug"><strong><?php esc_html_e( 'Slug base', 'wb-gamification' ); ?></strong></label><br />
 						<code>/</code>
@@ -657,6 +666,7 @@ final class SettingsPage {
 						<code>/{member}</code>
 						<span class="description"><?php esc_html_e( 'After changing this, re-save Permalinks (Settings > Permalinks) so the new URL takes effect.', 'wb-gamification' ); ?></span>
 					</p>
+					<?php endif; ?>
 				</div>
 			</div>
 
@@ -2130,6 +2140,9 @@ final class SettingsPage {
 			'send_bp_message' => __( 'Send BuddyPress message', 'wb-gamification' ),
 			'change_wp_role'  => __( 'Add WordPress role', 'wb-gamification' ),
 		);
+		// Offer only actions this site can run: a BuddyPress action saved without BuddyPress never
+		// fires. Existing rules keep their label in the list above.
+		$offered_actions = function_exists( 'buddypress' ) ? $action_labels : array_intersect_key( $action_labels, array( 'change_wp_role' => true ) );
 
 		$form_url = admin_url( 'admin.php?page=wb-gamification&tab=automation' );
 		?>
@@ -2217,7 +2230,7 @@ final class SettingsPage {
 							<th scope="row"><label for="wb_gam_new_rule_action"><?php esc_html_e( 'Perform action', 'wb-gamification' ); ?></label></th>
 							<td>
 								<select name="wb_gam_new_rule[action_type]" id="wb_gam_new_rule_action">
-									<?php foreach ( $action_labels as $val => $label ) : ?>
+									<?php foreach ( $offered_actions as $val => $label ) : ?>
 										<option value="<?php echo esc_attr( $val ); ?>"><?php echo esc_html( $label ); ?></option>
 									<?php endforeach; ?>
 								</select>

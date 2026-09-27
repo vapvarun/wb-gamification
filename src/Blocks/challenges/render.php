@@ -126,18 +126,11 @@ $wb_gam_format_deadline = static function ( string $iso ): string {
 	if ( ! $ts ) {
 		return '';
 	}
-	// ends_at is a site-local wall-clock string (see ChallengeEngine, which reads it back
-	// with current_time( 'mysql' ), never NOW()/UTC). strtotime() on a naive string parses
-	// it in PHP's default timezone (UTC, since WP never changes it), so $ts is the site-local
-	// wall clock read AS IF it were UTC — the same "local-as-UTC" frame current_time('timestamp')
-	// produces. Comparing that against real time() mixed two clocks: on America/Los_Angeles a
-	// challenge closing in 1 hour rendered "Ended" (the fake $ts already looked 7 hours in the
-	// past) while ChallengeEngine::get_active_challenges() — which compares the same ends_at
-	// string against current_time('mysql') — was still awarding progress against it. Using
-	// current_time('timestamp') here instead of time() puts both sides of every comparison
-	// below back in the same local-as-UTC frame, so the label agrees with the engine. Same
-	// pattern already used by the community-challenges block for this identical field.
-	$wb_gam_now_ts = (int) current_time( 'timestamp' ); // phpcs:ignore WordPress.DateTime.CurrentTimeTimestamp.Requested -- deliberate: matches the frame strtotime() puts the local ends_at string in.
+	// ends_at is stored in UTC (see ChallengeEngine). WordPress pins PHP's default zone to UTC,
+	// so strtotime() on the stored string is the real moment: compare it with real time(), the
+	// same clock the engine uses, and show dates in the site zone with wp_date().
+	// @clock-ok: ends_at is written in UTC by the admin form (data-wb-gam-utc), so real time() is the matching clock.
+	$wb_gam_now_ts = time();
 	$delta         = $ts - $wb_gam_now_ts;
 	if ( $delta <= 0 ) {
 		return __( 'Ended', 'wb-gamification' );
@@ -159,7 +152,7 @@ $wb_gam_format_deadline = static function ( string $iso ): string {
 	return sprintf(
 		/* translators: %s: absolute date (e.g. "May 31") */
 		__( 'Ends %s', 'wb-gamification' ),
-		date_i18n( __( 'M j', 'wb-gamification' ), $ts )
+		wp_date( __( 'M j', 'wb-gamification' ), $ts )
 	);
 };
 

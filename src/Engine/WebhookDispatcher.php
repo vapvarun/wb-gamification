@@ -584,7 +584,7 @@ final class WebhookDispatcher {
 				'event'       => $event,
 				'status_code' => $status_code,
 				'success'     => $success,
-				'timestamp'   => current_time( 'mysql' ),
+				'timestamp'   => gmdate( 'Y-m-d\TH:i:s\Z' ), // UTC ISO 8601, like the payload's own timestamp.
 			)
 		);
 

@@ -160,7 +160,7 @@ final class CommunityChallengeEngine {
 			return (array) $cached;
 		}
 
-		$now = current_time( 'mysql' );
+		$now = current_time( 'mysql', true ); // starts_at / ends_at are stored in UTC (admin form converts; see ChallengeEngine).
 
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
@@ -390,7 +390,7 @@ final class CommunityChallengeEngine {
 	public static function get_active(): array {
 		global $wpdb;
 
-		$now = current_time( 'mysql' );
+		$now = current_time( 'mysql', true ); // starts_at / ends_at are stored in UTC (admin form converts; see ChallengeEngine).
 
 		return $wpdb->get_results(
 			$wpdb->prepare(
@@ -426,7 +426,7 @@ final class CommunityChallengeEngine {
 	public static function get_visible(): array {
 		global $wpdb;
 
-		$now = current_time( 'mysql' );
+		$now = current_time( 'mysql', true ); // starts_at / ends_at are stored in UTC (admin form converts; see ChallengeEngine).
 
 		return $wpdb->get_results(
 			$wpdb->prepare(

@@ -10,12 +10,12 @@ write route refuses a logged-out visitor. The wppqa admin-eval flags (30 on the 
 are the SettingsPage dispatcher and REST-driven forms, both false positives, annotated in
 `audit/wppqa-baseline-2026-09-27/SUMMARY.md`.
 
-Two real findings came out of this pass and are filed as their own card (10344274129), not fixed
-silently here:
+Two real findings came out of this pass and went to their own card (10344274129):
 
-- `POST /events` lets any member fire any registered action for themselves (self-award).
+- `POST /events` let any member fire any registered action for themselves (self-award). Fixed in 1.6.5.
 - `MemberUploadCap` grants `upload_files` on any `upload-attachment` AJAX call, not only the
-  submission editor's.
+  submission editor's. Kept: WordPress still requires its media nonce, and scoping it further adds a
+  token for a small risk (owner rule: no new machinery for small risks).
 
 ## 1. Classic POST / REQUEST readers (all of them)
 
@@ -62,9 +62,8 @@ Every other admin screen writes through REST (`admin-rest-form.js`, `X-WP-Nonce`
 | `/wb-gamification/v1/challenges` | POST | `ChallengesController::admin_check` | refused | refused |
 | `/wb-gamification/v1/challenges/(?P<id>[\d]+)` | POST,PUT,PATCH | `ChallengesController::admin_check` | refused | refused |
 | `/wb-gamification/v1/challenges/(?P<id>[\d]+)` | DELETE | `ChallengesController::admin_check` | refused | refused |
-| `/wb-gamification/v1/challenges/(?P<id>[\d]+)/complete` | POST | `ChallengesController::require_logged_in` | refused | ALLOWED |
-| `/wb-gamification/v1/events` | POST | `EventsController::create_item_permissions_check` | refused | ALLOWED |
-| `/wb-gamification/v1/events/import` | POST | `EventsController::import_permissions_check` | refused | refused |
+| `/wb-gamification/v1/events` | POST | `EventsController::manage_members_permissions_check` | refused | refused |
+| `/wb-gamification/v1/events/import` | POST | `EventsController::manage_members_permissions_check` | refused | refused |
 | `/wb-gamification/v1/import/(?P<source>[a-z]+)` | POST | `ImportController::permissions` | refused | refused |
 | `/wb-gamification/v1/webhooks` | POST | `WebhooksController::admin_check` | refused | refused |
 | `/wb-gamification/v1/webhooks/(?P<id>[\d]+)` | POST,PUT,PATCH | `WebhooksController::admin_check` | refused | refused |
@@ -99,9 +98,10 @@ Every other admin screen writes through REST (`admin-rest-form.js`, `X-WP-Nonce`
 | `/wb-gamification/v1/submissions/(?P<id>[\d]+)/approve` | POST | `SubmissionsController::admin_check` | refused | refused |
 | `/wb-gamification/v1/submissions/(?P<id>[\d]+)/reject` | POST | `SubmissionsController::admin_check` | refused | refused |
 
-64 write handlers: 0 allowed for guests. The 9 member-allowed rows are member self-actions
-(kudos, redemption, badge share, submissions, own profile visibility, point conversion, challenge
-progress, events). All act on the caller's own account; `/events` is too broad (finding 1).
+63 write handlers: 0 allowed for guests. The 7 member-allowed rows are member self-actions (kudos,
+redemption, badge share, submissions, own profile visibility, point conversion), all on the caller's
+own account. Fixed in 1.6.5 (card 10344274129): `POST /events` now needs `wb_gam_manage_members`,
+and `POST /challenges/{id}/complete` was retired.
 
 ## 3. The rest of the card
 

@@ -13,7 +13,6 @@ Individual, per-member challenges that track progress toward a target action.
 | `GET` | `/challenges/{id}` | Public |
 | `PUT` `PATCH` | `/challenges/{id}` | `manage_options` |
 | `DELETE` | `/challenges/{id}` | `manage_options` |
-| `POST` | `/challenges/{id}/complete` | Must be logged in |
 
 ### POST /challenges
 
@@ -41,21 +40,7 @@ curl -X POST https://example.com/wp-json/wb-gamification/v1/challenges \
 
 Update a challenge. Accepts `title`, `action_id`, `target`, `bonus_points`, `starts_at`, `ends_at`, `status`.
 
-### POST /challenges/{id}/complete
-
-Mark a challenge complete for the current user.
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `id` | int | Yes | Challenge ID |
-
-```bash
-curl -X POST https://example.com/wp-json/wb-gamification/v1/challenges/7/complete \
-  -H "Content-Type: application/json" \
-  -H "X-WP-Nonce: YOUR_NONCE" \
-  --cookie "wordpress_logged_in_xxx=..." \
-  -d '{ "id": 7 }'
-```
+Challenge progress is recorded by the engine as members perform the challenge's action; there is no endpoint to report progress by hand.
 
 ## Community Challenges
 
