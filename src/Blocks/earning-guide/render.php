@@ -77,7 +77,9 @@ wp_enqueue_style( 'lucide-icons' );
 
 $wb_gam_actions = Registry::get_actions();
 
-$wb_gam_grouped = array();
+$wb_gam_grouped   = array();
+$wb_gam_seen      = array();
+$wb_gam_pt_labels = array();
 if ( ! empty( $wb_gam_actions ) ) {
 	foreach ( $wb_gam_actions as $wb_gam_id => $wb_gam_action ) {
 		if ( ! \WBGam\Engine\Engine::is_action_enabled( (string) $wb_gam_id ) ) {
@@ -86,9 +88,24 @@ if ( ! empty( $wb_gam_actions ) ) {
 
 		$wb_gam_category = (string) ( $wb_gam_action['category'] ?? 'general' );
 		$wb_gam_pts      = Registry::action_points( (string) $wb_gam_id );
+		$wb_gam_label    = (string) ( $wb_gam_action['label'] ?? $wb_gam_id );
 
 		if ( $wb_gam_pts <= 0 ) {
 			continue;
+		}
+
+		// One member action, listed once. Some actions are registered twice so one thing is rewarded
+		// once whichever way it happens (an Eventonomy ticket order paid at once, or later through a
+		// card gateway in Pro); members see the action, not the plumbing.
+		if ( isset( $wb_gam_seen[ $wb_gam_category ][ $wb_gam_label ] ) ) {
+			continue;
+		}
+		$wb_gam_seen[ $wb_gam_category ][ $wb_gam_label ] = true;
+
+		// The owner's name for the currency this action pays ("Karma", "Coins"), not a fixed "pts".
+		$wb_gam_pt = Registry::resolve_action_point_type( $wb_gam_action + array( 'id' => (string) $wb_gam_id ) );
+		if ( ! isset( $wb_gam_pt_labels[ $wb_gam_pt ] ) ) {
+			$wb_gam_pt_labels[ $wb_gam_pt ] = wb_gam_get_point_type_label( $wb_gam_pt );
 		}
 
 		// Manifest icons are Lucide (icon-*). A third-party manifest may still send a Dashicons
@@ -101,9 +118,10 @@ if ( ! empty( $wb_gam_actions ) ) {
 		}
 
 		$wb_gam_grouped[ $wb_gam_category ][] = array(
-			'label'     => (string) ( $wb_gam_action['label'] ?? $wb_gam_id ),
-			'icon'      => $wb_gam_icon,
-			'points'    => $wb_gam_pts,
+			'label'        => $wb_gam_label,
+			'icon'         => $wb_gam_icon,
+			'points'       => $wb_gam_pts,
+			'points_label' => $wb_gam_pt_labels[ $wb_gam_pt ],
 			// Registry::get_actions() resolves admin overrides; manifest
 			// defaults to 0 ("unlimited") for both keys. Surface them in
 			// the guide so members aren't surprised by silent caps.
@@ -116,7 +134,8 @@ if ( ! empty( $wb_gam_actions ) ) {
 /**
  * Filter the earning-guide grouped action map before render.
  *
- * Map shape: [ category => [ ['label','icon','points'], ... ] ].
+ * Map shape: [ category => [ ['label','icon','points','points_label'], ... ] ]. points_label (1.6.5) is
+ * the owner's name for the currency the action pays.
  *
  * @since 1.0.0
  *
@@ -193,8 +212,12 @@ BlockHooks::before( 'earning-guide', $wb_gam_attrs );
 						<span class="wb-gam-earning-guide__icon <?php echo esc_attr( (string) $wb_gam_item['icon'] ); ?>" aria-hidden="true"></span>
 						<span class="wb-gam-earning-guide__pts">
 							<?php
-							/* translators: %s: point value */
-							printf( esc_html__( '+%s pts', 'wb-gamification' ), esc_html( number_format_i18n( (int) $wb_gam_item['points'] ) ) );
+							printf(
+								/* translators: 1: point value, 2: the site's name for the points, e.g. "Points" or "Karma". */
+								esc_html__( '+%1$s %2$s', 'wb-gamification' ),
+								esc_html( number_format_i18n( (int) $wb_gam_item['points'] ) ),
+								esc_html( (string) ( $wb_gam_item['points_label'] ?? wb_gam_get_point_type_label() ) )
+							);
 							?>
 						</span>
 					</div>

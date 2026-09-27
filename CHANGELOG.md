@@ -36,6 +36,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 
 ### Fixed
 
+- How to earn shows each amount in the site's own name for points ("+10 Karma") instead of a fixed "pts", and lists an action once when it is registered twice so one thing is rewarded once (an Eventonomy ticket order paid at once or through a card gateway). The `wb_gam_block_earning_guide_data` rows add `points_label`.
 - `wb_gam_user_totals.updated_at` is removed: nothing read it, and the database stamped it with its own clock instead of UTC.
 - Points from Jetonomy forum activity toasted as "Points awarded" and read as a raw id in the history. They now say what happened ("Replied in the forum", "Your forum post was upvoted", "(reversed)" on undo), and every surface - toasts, points history, REST, analytics - uses one label. New `wb_gam_action_label` filter and `wb_gam_get_action_label()` helper for integrations.
 
