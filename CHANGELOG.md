@@ -34,6 +34,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 - The Community Challenges and Redemption Store admin lists loaded every row. Both are paged 20 at a time, and the Kudos Moderation pager is styled again.
 - Toasts: at most three are on screen at once.
 - The Dashboard's Manage kudos link opened the Dashboard again instead of the Kudos settings.
+- Accessibility: the Give Kudos fields and button and the badge share buttons showed no focus indicator in Windows High Contrast / forced-colors mode; they now show the system focus outline.
 - Plugin Check reports no errors: three admin screens printed record ids without escaping.
 - Developer docs: links that pointed into the source tree now point to GitHub, and manifest examples use Lucide icon names.
 
