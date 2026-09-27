@@ -258,6 +258,17 @@ final class SetupWizard {
 	}
 
 	/**
+	 * Whether members are already earning points - a starter template is moot on a live site.
+	 *
+	 * @return bool
+	 */
+	private static function site_is_live(): bool {
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- one PK-indexed row, plugin admin screens only.
+		return (bool) $wpdb->get_var( "SELECT 1 FROM {$wpdb->prefix}wb_gam_points LIMIT 1" );
+	}
+
+	/**
 	 * Show a "welcome — run setup" notice on plugin admin pages until done.
 	 *
 	 * Fallback for installs where the activation auto-redirect was suppressed
@@ -288,6 +299,10 @@ final class SetupWizard {
 		}
 		// Don't double-up: the wizard page itself is the welcome experience.
 		if ( false !== strpos( (string) $screen->id, self::PAGE_SLUG ) ) {
+			return;
+		}
+		// Members are already earning points, so a starter template is moot.
+		if ( self::site_is_live() ) {
 			return;
 		}
 

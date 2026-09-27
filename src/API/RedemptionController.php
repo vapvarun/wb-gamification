@@ -511,9 +511,13 @@ class RedemptionController extends WP_REST_Controller {
 					'type'        => 'integer',
 					'description' => 'Reward item ID.',
 				),
-				'item_title'  => array(
+				'title'       => array(
 					'type'        => 'string',
-					'description' => 'Reward item name.',
+					'description' => 'Reward name ("Removed reward" once the reward is deleted).',
+				),
+				'reward_type' => array(
+					'type'        => 'string',
+					'description' => 'Reward type (empty once the reward is deleted).',
 				),
 				'points_cost' => array(
 					'type'        => 'integer',
@@ -527,10 +531,9 @@ class RedemptionController extends WP_REST_Controller {
 					'type'        => 'string',
 					'description' => 'Generated coupon code.',
 				),
-				'redeemed_at' => array(
+				'created_at'  => array(
 					'type'        => 'string',
-					'format'      => 'date-time',
-					'description' => 'When the redemption occurred (UTC).',
+					'description' => 'When the member redeemed it (UTC, Y-m-d H:i:s).',
 				),
 			),
 		);

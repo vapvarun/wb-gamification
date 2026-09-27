@@ -122,6 +122,11 @@ class BadgeEngineTest extends TestCase {
 		$wpdb->shouldReceive( 'get_row' )->andReturn(
 			array(
 				'id'        => 'expired_promo',
+				'name'          => 'Test badge',
+				'description'   => '',
+				'image_url'     => '',
+				'is_credential' => 0,
+				'category'      => 'general',
 				'closes_at' => '2020-01-01 00:00:00',
 				'is_active' => 1,
 			)
@@ -146,6 +151,11 @@ class BadgeEngineTest extends TestCase {
 		$wpdb->shouldReceive( 'get_row' )->andReturn(
 			array(
 				'id'          => 'limited_pioneer',
+				'name'          => 'Test badge',
+				'description'   => '',
+				'image_url'     => '',
+				'is_credential' => 0,
+				'category'      => 'general',
 				'max_earners' => 10,
 				'closes_at'   => null,
 				'is_active'   => 1,
@@ -170,7 +180,7 @@ class BadgeEngineTest extends TestCase {
 		$wpdb->shouldReceive( 'prepare' )->andReturnUsing( static fn ( $q ) => $q );
 		$wpdb->shouldReceive( 'get_col' )->andReturn( array() );
 		$wpdb->shouldReceive( 'get_row' )->andReturn(
-			array( 'id' => 'first_post', 'closes_at' => null, 'max_earners' => null )
+			array( 'name' => 'Test badge', 'description' => '', 'image_url' => '', 'is_credential' => 0, 'category' => 'general', 'id' => 'first_post', 'closes_at' => null, 'max_earners' => null )
 		);
 		$wpdb->shouldNotReceive( 'insert' );
 
@@ -198,6 +208,11 @@ class BadgeEngineTest extends TestCase {
 		$wpdb->shouldReceive( 'get_row' )->andReturn(
 			array(
 				'id'            => 'first_post',
+				'name'          => 'Test badge',
+				'description'   => '',
+				'image_url'     => '',
+				'is_credential' => 0,
+				'category'      => 'general',
 				'closes_at'     => null,
 				'max_earners'   => null,
 				'validity_days' => 0,
@@ -233,7 +248,7 @@ class BadgeEngineTest extends TestCase {
 		$wpdb->shouldReceive( 'prepare' )->andReturnUsing( static fn ( $q ) => $q );
 		$wpdb->shouldReceive( 'get_col' )->andReturn( array() );
 		$wpdb->shouldReceive( 'get_row' )->andReturn(
-			array( 'id' => 'first_post', 'closes_at' => null, 'max_earners' => null, 'validity_days' => 0 )
+			array( 'name' => 'Test badge', 'description' => '', 'image_url' => '', 'is_credential' => 0, 'category' => 'general', 'id' => 'first_post', 'closes_at' => null, 'max_earners' => null, 'validity_days' => 0 )
 		);
 		// 1.4.1 — INSERT IGNORE returns 0 rows on duplicate-key race (the
 		// race-loser path). $wpdb->last_error stays non-empty for a
@@ -266,7 +281,7 @@ class BadgeEngineTest extends TestCase {
 		$wpdb->shouldReceive( 'prepare' )->andReturnUsing( static fn ( $q ) => $q );
 		$wpdb->shouldReceive( 'get_col' )->andReturn( array() );
 		$wpdb->shouldReceive( 'get_row' )->andReturn(
-			array( 'id' => 'first_post', 'closes_at' => null, 'max_earners' => null, 'validity_days' => 0 )
+			array( 'name' => 'Test badge', 'description' => '', 'image_url' => '', 'is_credential' => 0, 'category' => 'general', 'id' => 'first_post', 'closes_at' => null, 'max_earners' => null, 'validity_days' => 0 )
 		);
 		$wpdb->shouldReceive( 'query' )
 			->once()
@@ -295,7 +310,7 @@ class BadgeEngineTest extends TestCase {
 		$wpdb->shouldReceive( 'prepare' )->andReturnUsing( static fn ( $q ) => $q );
 		$wpdb->shouldReceive( 'get_col' )->andReturn( array() );
 		$wpdb->shouldReceive( 'get_row' )->andReturn(
-			array( 'id' => 'cert_30d', 'closes_at' => null, 'max_earners' => null, 'validity_days' => 30 )
+			array( 'name' => 'Test badge', 'description' => '', 'image_url' => '', 'is_credential' => 0, 'category' => 'general', 'id' => 'cert_30d', 'closes_at' => null, 'max_earners' => null, 'validity_days' => 30 )
 		);
 		$wpdb->shouldReceive( 'query' )
 			->once()

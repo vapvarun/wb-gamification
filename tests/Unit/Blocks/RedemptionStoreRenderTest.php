@@ -31,6 +31,8 @@ use WBGam\Blocks\CSS;
  */
 class RedemptionStoreRenderTest extends TestCase {
 
+	use \WBGam\Tests\Unit\Support\ResetsPointTypeCache;
+
 	use MockeryPHPUnitIntegration;
 
 	private const RENDER_TEMPLATE = __DIR__ . '/../../../src/Blocks/redemption-store/render.php';
@@ -94,6 +96,16 @@ class RedemptionStoreRenderTest extends TestCase {
 		$wpdb = new class {
 			public string $prefix = 'wp_';
 			public function get_results( string $sql, $output_type = null ): array {
+				if ( str_contains( $sql, 'wb_gam_point_types' ) ) {
+					return array(
+						array(
+							'slug'       => 'points',
+							'label'      => 'Points',
+							'is_default' => 1,
+							'position'   => 0,
+						),
+					);
+				}
 				return array(
 					array(
 						'id'            => 1,
@@ -127,6 +139,7 @@ class RedemptionStoreRenderTest extends TestCase {
 	}
 
 	protected function tearDown(): void {
+		$this->resetPointTypeCache();
 		CSS::reset();
 		Monkey\tearDown();
 		parent::tearDown();

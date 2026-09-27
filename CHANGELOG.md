@@ -27,6 +27,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 
 ### Fixed
 
+- The "Welcome, pick a starter template" notice no longer shows on a site where members are already earning points.
+- Admin card descriptions sit on their own line under the card title at every width; on phones they were squeezed beside it.
+- The redemption REST schema named `redeemed_at` and `item_title`, which responses never carried; it now documents the real `created_at`, `title` and `reward_type`.
+
 - Members could give themselves points for actions they never took by calling `POST /events`, and could mark any challenge complete with `POST /challenges/{id}/complete`. Points now come only from activity the plugin observes: `POST /events` requires the `wb_gam_manage_members` capability (administrators and API keys), and the unused challenge-complete endpoint is removed.
 - Challenges opened and closed at the wrong time on sites not set to UTC: the admin saves times in UTC but the engine compared them with site time, so on a site 5.5 hours ahead a live challenge closed 5.5 hours early. Challenge windows, countdowns and the admin list now use UTC and show dates in the site time zone.
 - Point multipliers ignored their `starts_at` / `ends_at` dates, so an ended campaign kept multiplying. The window is honoured (site time zone; a bare end date covers that day), and an unreadable date is rejected with a 400.

@@ -249,9 +249,16 @@
 	border-bottom: 1px solid var(--wb-gam-border);
 	background: var(--wbgam-surface-soft);
 	display: flex;
+	flex-wrap: wrap;
 	align-items: center;
 	justify-content: space-between;
-	gap: var(--wbgam-gap-sm);
+	gap: 4px var(--wbgam-gap-sm);
+}
+
+/* A description sits on its own line under the title, at every width. */
+.wbgam-card-header > .wbgam-card-desc {
+	flex-basis: 100%;
+	margin: 0;
 }
 
 .wbgam-card-title {
