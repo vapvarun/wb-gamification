@@ -61,6 +61,52 @@ final class JetonomyIntegration {
 		}
 
 		add_action( 'jetonomy_reputation_changed', array( __CLASS__, 'on_reputation_changed' ), 20, 4 );
+		add_filter( 'wb_gam_action_label', array( __CLASS__, 'label' ), 10, 2 );
+	}
+
+	/**
+	 * Name the mirrored reputation ids, which are awarded without being registered actions.
+	 *
+	 * Without this every forum award read "Points awarded" in its toast and a title-cased id in the
+	 * history (card 10344406246). One label, shared by every surface through Registry::label_for().
+	 *
+	 * @param string $label     '' when nothing has named the id yet.
+	 * @param string $action_id Action identifier.
+	 * @return string
+	 */
+	public static function label( $label, $action_id ): string {
+		$label     = (string) $label;
+		$action_id = (string) $action_id;
+		if ( '' !== $label || ! str_starts_with( $action_id, self::ACTION_PREFIX ) ) {
+			return $label;
+		}
+
+		$reason   = substr( $action_id, strlen( self::ACTION_PREFIX ) );
+		$reversed = str_ends_with( $reason, '_revoked' );
+		if ( $reversed ) {
+			$reason = substr( $reason, 0, -strlen( '_revoked' ) );
+		}
+
+		$labels = array(
+			'reply_created'     => __( 'Replied in the forum', 'wb-gamification' ),
+			'post_created'      => __( 'Started a forum topic', 'wb-gamification' ),
+			'post_upvoted'      => __( 'Your forum post was upvoted', 'wb-gamification' ),
+			'reply_upvoted'     => __( 'Your forum post was upvoted', 'wb-gamification' ),
+			'post_downvoted'    => __( 'Your forum post was downvoted', 'wb-gamification' ),
+			'reply_downvoted'   => __( 'Your forum post was downvoted', 'wb-gamification' ),
+			'reply_accepted'    => __( 'Your answer was accepted', 'wb-gamification' ),
+			'post_reported'     => __( 'Forum post reported', 'wb-gamification' ),
+			'badge_earned'      => __( 'Earned a forum badge', 'wb-gamification' ),
+			'cli_manual_adjust' => __( 'Manual forum adjustment', 'wb-gamification' ),
+		);
+		if ( ! isset( $labels[ $reason ] ) ) {
+			return $label;
+		}
+
+		return $reversed
+			/* translators: %s: what happened in the forum, e.g. "Your forum post was upvoted". */
+			? sprintf( __( '%s (reversed)', 'wb-gamification' ), $labels[ $reason ] )
+			: $labels[ $reason ];
 	}
 
 	/**

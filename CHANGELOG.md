@@ -27,6 +27,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 
 ### Fixed
 
+- Points from Jetonomy forum activity toasted as "Points awarded" and read as a raw id in the history. They now say what happened ("Replied in the forum", "Your forum post was upvoted", "(reversed)" on undo), and every surface - toasts, points history, REST, analytics - uses one label. New `wb_gam_action_label` filter and `wb_gam_get_action_label()` helper for integrations.
+
 - The "Welcome, pick a starter template" notice no longer shows on a site where members are already earning points.
 - Admin card descriptions sit on their own line under the card title at every width; on phones they were squeezed beside it.
 - Kudos Moderation showed no message on phones, so a moderator could not read what they were revoking; the message now shows in every row.

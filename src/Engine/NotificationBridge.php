@@ -1101,9 +1101,9 @@ final class NotificationBridge {
 	 *      manifest trigger declares a `label`, so this covers WordPress core,
 	 *      BuddyPress, WooCommerce, and every contrib integration without a
 	 *      per-id map to maintain.
-	 *   2. A small fallback map for ids that are NOT registered actions
-	 *      (kudos are fired directly; manual/admin awards use 'manual' /
-	 *      'manual_award').
+	 *   2. Everything else Registry::label_for() knows: engine-emitted ids (kudos, manual
+	 *      awards) and ids an integration names through `wb_gam_action_label` - the same
+	 *      label the points history shows, so a toast and its history row always agree.
 	 *   3. A generic "Points awarded" — NEVER empty, so the toast always
 	 *      states a reason rather than showing a contextless "+N points"
 	 *      or a bare "xN" count.
@@ -1118,24 +1118,9 @@ final class NotificationBridge {
 	 * @return string Translated, human-readable, non-empty label.
 	 */
 	private static function action_label( string $action_id ): string {
-		// 1. Prefer the manifest's own label via the Registry.
-		$def = \WBGam\Engine\Registry::get_action( $action_id );
-		if ( is_array( $def ) && ! empty( $def['label'] ) ) {
-			return (string) $def['label'];
-		}
-
-		// 2. Ids that aren't registered as Registry actions.
-		$labels = array(
-			'give_kudos'    => __( 'Gave kudos', 'wb-gamification' ),
-			'receive_kudos' => __( 'Received kudos', 'wb-gamification' ),
-			'manual'        => __( 'Manual award', 'wb-gamification' ),
-			'manual_award'  => __( 'Manual award', 'wb-gamification' ),
-		);
-		if ( isset( $labels[ $action_id ] ) ) {
-			return $labels[ $action_id ];
-		}
-
-		// 3. Last-resort generic — still states that points were awarded.
-		return __( 'Points awarded', 'wb-gamification' );
+		// The one resolver every surface uses; a toast must never be empty, so fall back to a
+		// generic line that still says points were awarded.
+		$label = \WBGam\Engine\Registry::label_for( $action_id );
+		return '' !== $label ? $label : __( 'Points awarded', 'wb-gamification' );
 	}
 }

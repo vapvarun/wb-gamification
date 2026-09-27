@@ -401,3 +401,20 @@ function wb_gam_submit_event( int $user_id, string $action_id, array $meta = arr
 function wb_gam_get_actions(): array {
 	return Registry::get_actions();
 }
+
+/**
+ * The display label for an action id, as every WB Gamification surface shows it.
+ *
+ * Covers registered actions, engine ids (kudos, manual awards) and ids an integration names
+ * through the `wb_gam_action_label` filter (e.g. Jetonomy forum reputation), with a readable
+ * fallback. Use this instead of building a label map, so a partner's points history reads the
+ * same as the toast and the plugin's own history.
+ *
+ * @since 1.6.5
+ *
+ * @param string $action_id Action identifier from the points ledger.
+ * @return string Translated label; '' only for an empty id.
+ */
+function wb_gam_get_action_label( string $action_id ): string {
+	return Registry::label_for( $action_id );
+}

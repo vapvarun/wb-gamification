@@ -69,6 +69,7 @@ See [Customizing gamification emails](210-email-customization.md) for worked exa
 | Filter | What it filters | Parameters | Return |
 |--------|-----------------|------------|--------|
 | `wb_gam_category_label` | The label shown for an action category (How to Earn group headings, `category_label` in `GET /actions`). Family categories have translatable labels; any other slug reads as words (`my-plugin` -> `My Plugin`). Added in 1.6.5. | `string $label`, `string $slug` | `string` label |
+| `wb_gam_action_label` | Name an action id your integration awards without registering it as an action. Every surface (toasts, points history, REST `label`, analytics) reads it through `wb_gam_get_action_label()`. Return a translated string for your ids; return `$label` unchanged for others. Added in 1.6.5. | `string $label` ('' when nothing has named it yet), `string $action_id` | `string` label |
 | `wb_gam_as_retention_days` | Number of days the daily Action Scheduler cleanup keeps `actionscheduler_actions` rows for, regardless of status. Default `7`, minimum `1`. Added in 1.4.0. | `int $days` | `int` retention days |
 | `wb_gam_activity_context_label` | The BuddyPress activity context-group label for a gamification activity type. Default is the per-type human label. Added in 1.4.0. | `string $context`, `string $key` | `string` context label |
 | `wb_gam_rank_automation_rules` | Rank automation rules before they are evaluated. | `array $rules` | `array` rules |

@@ -268,8 +268,7 @@ final class AnalyticsDashboard {
 							<tbody>
 								<?php foreach ( $stats['top_actions'] as $row ) : ?>
 									<?php
-									$_action_def   = \WBGam\Engine\Registry::get_action( $row['action_id'] );
-									$_action_label = $_action_def ? $_action_def['label'] : self::fallback_action_label( $row['action_id'] );
+									$_action_label = \WBGam\Engine\Registry::label_for( (string) $row['action_id'] );
 									?>
 									<tr>
 										<td><?php echo esc_html( $_action_label ); ?></td>
@@ -584,37 +583,6 @@ final class AnalyticsDashboard {
 			<span class="wb-gam-analytics__kpi-sub wb-gam-admin-kpi-sub"><?php echo esc_html( $sub ); ?></span>
 		</div>
 		<?php
-	}
-
-	/**
-	 * Return a human-readable label for action IDs not in the Registry
-	 * (e.g., BuddyPress integration IDs loaded via manifests).
-	 *
-	 * @param string $action_id Raw action ID from the points ledger.
-	 * @return string           Human-readable label, or the raw ID if unknown.
-	 */
-	private static function fallback_action_label( string $action_id ): string {
-		static $map = array(
-			'bp_activity_update'       => 'Posted activity update',
-			'bp_activity_comment'      => 'Commented on activity',
-			'bp_friends_accepted'      => 'Made a new friend',
-			'bp_receive_kudos'         => 'Received kudos',
-			'bp_reactions_received'    => 'Received a reaction',
-			'bp_groups_join'           => 'Joined a group',
-			'bp_groups_create'         => 'Created a group',
-			'bp_profile_photo_updated' => 'Updated profile photo',
-			'wp_publish_post'          => 'Published a post',
-			'wp_comment_approved'      => 'Comment approved',
-			'wp_login'                 => 'Logged in',
-			'wc_order_completed'       => 'Completed an order',
-			'ld_course_completed'      => 'Completed a course',
-			'ld_lesson_completed'      => 'Completed a lesson',
-			'ld_quiz_completed'        => 'Passed a quiz',
-			'manual_award'             => 'Admin manual award',
-			'manual_admin'             => 'Admin manual award (legacy)',
-			'manual_admin_deduct'      => 'Admin manual deduction',
-		);
-		return $map[ $action_id ] ?? $action_id;
 	}
 
 	/**

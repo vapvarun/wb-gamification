@@ -63,6 +63,14 @@ Register a custom challenge type. Routes to `Registry::register_challenge_type()
 
 ---
 
+### `wb_gam_get_action_label( string $action_id ): string`
+
+The label an action id shows everywhere (toasts, points history, REST `label`, analytics): the registered action's label, engine ids such as kudos and manual awards, and ids an integration names through the `wb_gam_action_label` filter, with a readable fallback. Use it in your own points history so it reads the same as the plugin's. Added in 1.6.5.
+
+```php
+echo esc_html( wb_gam_get_action_label( 'jetonomy_reply_created' ) ); // "Replied in the forum"
+```
+
 ## Points Functions
 
 ### `wb_gam_get_user_points( int $user_id ): int`
