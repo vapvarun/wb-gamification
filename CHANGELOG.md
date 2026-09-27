@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 
 ### Added
 
-- Public helpers for partner plugins and themes: action on/points, point-type and category labels, module on/off, points history, rank, next level, contribution heatmap data, all badges for a member, shared badges and share URL, kudos (send, can send, recent, received, count), and whether the leaderboard is handed to Jetonomy. See Developer Guide > Helper Functions.
+- Public helpers for partner plugins and themes: earned points and level-climb check, action on/points, point-type and category labels, module on/off, points history, rank, next level, contribution heatmap data, all badges for a member, shared badges and share URL, kudos (send, can send, recent, received, count), and whether the leaderboard is handed to Jetonomy. See Developer Guide > Helper Functions.
 
 - `GET /redemptions` lists every member's redemptions for staff and integrations (the fulfilment queue): newest first, filter by `status`, paged with `page` / `per_page` and the `X-WP-Total` headers; requires `wb_gam_manage_rewards`. The admin Recent Redemptions log uses the same query.
 

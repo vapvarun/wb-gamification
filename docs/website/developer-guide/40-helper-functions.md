@@ -225,6 +225,8 @@ Since 1.6.5. Use these instead of calling the engine classes (`WBGam\Engine\*`),
 | `wb_gam_get_points_history( int $user_id, int $limit = 20, ?string $point_type = null ): array` | Recent transactions, newest first. |
 | `wb_gam_get_user_rank( int $user_id, string $period = 'all', string $point_type = '' ): array` | `rank`, `points`, `points_to_next`. |
 | `wb_gam_get_next_level( int $user_id ): ?array` | The next level, or `null` at the top. |
+| `wb_gam_get_earned_points( int $user_id ): int` | Points earned (balance plus points spent on rewards). Levels follow this: compute "points to the next level" from it, not the balance. |
+| `wb_gam_is_level_climb( ?array $new_level, ?array $old_level ): bool` | For a `wb_gam_level_changed` listener: true only when the member moved up. Announce climbs; apply drops quietly. |
 | `wb_gam_get_contribution_data( int $user_id, int $days = 365 ): array` | Points per site-calendar day, for a heatmap. |
 | `wb_gam_get_all_badges_for_user( int $user_id = 0 ): array` | Every badge, each with `earned` and `earned_at`. |
 | `wb_gam_get_shared_badges( int $user_id ): array` | Badge ids the member shared publicly. |

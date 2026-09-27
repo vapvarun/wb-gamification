@@ -31,6 +31,8 @@ class PartnerHelpersTest extends TestCase {
 		'wb_gam_get_points_history',
 		'wb_gam_get_user_rank',
 		'wb_gam_get_next_level',
+		'wb_gam_get_earned_points',
+		'wb_gam_is_level_climb',
 		'wb_gam_get_contribution_data',
 		'wb_gam_get_all_badges_for_user',
 		'wb_gam_get_shared_badges',

@@ -517,6 +517,33 @@ function wb_gam_get_user_rank( int $user_id, string $period = 'all', string $poi
 }
 
 /**
+ * The points a member has earned: balance plus points spent on rewards. Levels follow this, so
+ * compute "points to the next level" from it, not from the balance.
+ *
+ * @since 1.6.5
+ *
+ * @param int $user_id Member.
+ * @return int
+ */
+function wb_gam_get_earned_points( int $user_id ): int {
+	return PointsEngine::get_earned( $user_id );
+}
+
+/**
+ * Whether a wb_gam_level_changed call is a climb. The hook fires for a drop too; announce only a
+ * climb (a toast, a notification) and apply a drop quietly.
+ *
+ * @since 1.6.5
+ *
+ * @param array|null $new_level New level, as passed to wb_gam_level_changed.
+ * @param array|null $old_level Previous level, or null.
+ * @return bool
+ */
+function wb_gam_is_level_climb( ?array $new_level, ?array $old_level ): bool {
+	return LevelEngine::is_climb( $new_level, $old_level );
+}
+
+/**
  * The next level a member is working toward.
  *
  * @since 1.6.5
