@@ -145,6 +145,7 @@ final class Installer {
 			point_type VARCHAR(60)     NOT NULL DEFAULT 'points',
 			object_id  BIGINT UNSIGNED DEFAULT NULL,
 			created_at DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			is_spend   TINYINT(1)      NOT NULL DEFAULT 0,
 			PRIMARY KEY (id),
 			KEY idx_event (event_id),
 			KEY idx_user_created (user_id, created_at),
@@ -480,10 +481,10 @@ final class Installer {
 			user_id    BIGINT UNSIGNED NOT NULL,
 			point_type VARCHAR(60)     NOT NULL DEFAULT 'points',
 			total      BIGINT          NOT NULL DEFAULT 0,
-			spent      BIGINT          NOT NULL DEFAULT 0,
-			updated_at DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+			earned     BIGINT          NOT NULL DEFAULT 0,
 			PRIMARY KEY (user_id, point_type),
-			KEY idx_type_total (point_type, total)
+			KEY idx_type_total (point_type, total),
+			KEY idx_type_earned (point_type, earned)
 		) $charset;"
 		);
 

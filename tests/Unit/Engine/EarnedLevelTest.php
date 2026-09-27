@@ -2,8 +2,7 @@
 /**
  * Levels follow points EARNED, and only a climb is announced (owner decision 2026-09-27).
  *
- * Spending on a reward moves points from the balance to `spent`, so earned (balance + spent) and the
- * level hold. A removal lowers both, silently.
+ * A spend row lowers the balance but not `earned`, so the level holds. A removal lowers both, silently.
  *
  * @package WB_Gamification
  */
@@ -53,18 +52,19 @@ class EarnedLevelTest extends TestCase {
 	 * @test
 	 * @covers \WBGam\Engine\PointsEngine::get_earned
 	 */
-	public function earned_is_balance_plus_spent(): void {
+	public function earned_is_read_from_the_totals_row(): void {
 		Functions\when( 'wp_cache_get' )->alias(
 			static function ( $key ) {
 				return array(
 					'point_types_default'   => 'points',
 					'point_types_all'       => array( array( 'slug' => 'points', 'label' => 'Points', 'is_default' => 1 ) ),
-					'wb_gam_total_7_points' => 400,
-					'wb_gam_spent_7_points' => 150,
+					'wb_gam_total_7_points'  => 400,
+					'wb_gam_earned_7_points' => 550,
 				)[ $key ] ?? false;
 			}
 		);
 
 		$this->assertSame( 550, PointsEngine::get_earned( 7, 'points' ), 'A member who spent 150 of 550 earned keeps a 550 level.' );
+		$this->assertSame( 400, PointsEngine::get_total( 7, 'points' ), 'The balance is separate.' );
 	}
 }

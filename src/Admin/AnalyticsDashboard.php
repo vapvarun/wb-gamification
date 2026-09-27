@@ -387,7 +387,7 @@ final class AnalyticsDashboard {
 		// Points total.
 		$points_total = (int) $wpdb->get_var(
 			$wpdb->prepare(
-				"SELECT COALESCE(SUM(points),0) FROM {$wpdb->prefix}wb_gam_points WHERE created_at >= %s",
+				"SELECT COALESCE(SUM(points),0) FROM {$wpdb->prefix}wb_gam_points WHERE created_at >= %s AND is_spend = 0",
 				$since
 			)
 		);
@@ -497,7 +497,7 @@ final class AnalyticsDashboard {
 			$wpdb->prepare(
 				"SELECT action_id, COUNT(*) AS events, SUM(points) AS pts
 				   FROM {$wpdb->prefix}wb_gam_points
-				  WHERE created_at >= %s
+				  WHERE created_at >= %s AND is_spend = 0
 				  GROUP BY action_id
 				  ORDER BY pts DESC
 				  LIMIT 10",
@@ -511,7 +511,7 @@ final class AnalyticsDashboard {
 			$wpdb->prepare(
 				"SELECT user_id, SUM(points) AS pts
 				   FROM {$wpdb->prefix}wb_gam_points
-				  WHERE created_at >= %s
+				  WHERE created_at >= %s AND is_spend = 0
 				  GROUP BY user_id
 				  ORDER BY pts DESC
 				  LIMIT 10",
@@ -527,7 +527,7 @@ final class AnalyticsDashboard {
 			$wpdb->prepare(
 				"SELECT DATE({$local}) AS day, SUM(points) AS pts
 				   FROM {$wpdb->prefix}wb_gam_points
-				  WHERE created_at >= %s
+				  WHERE created_at >= %s AND is_spend = 0
 				  GROUP BY day
 				  ORDER BY day ASC",
 				$since

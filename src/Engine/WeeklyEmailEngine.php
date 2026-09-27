@@ -446,7 +446,7 @@ final class WeeklyEmailEngine {
 		$points_this_week = (int) $wpdb->get_var(
 			$wpdb->prepare(
 				"SELECT COALESCE(SUM(points),0) FROM {$wpdb->prefix}wb_gam_points
-				  WHERE user_id = %d AND created_at >= %s",
+				  WHERE user_id = %d AND created_at >= %s AND is_spend = 0",
 				$user_id,
 				$since
 			)

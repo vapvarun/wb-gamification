@@ -427,6 +427,10 @@ final class PointsEngine {
 	 *
 	 * Called by Engine::process() after all checks have passed.
 	 *
+	 * A row is a SPEND when the event carries `_spend` (set by debit( ..., spend: true ) and by a
+	 * spend's refund): it moves the balance but not the points the member earned, so levels and
+	 * leaderboards ignore it.
+	 *
 	 * @param Event $event  The source event (provides event_id and context).
 	 * @param int   $points Points to record.
 	 * @return bool         True on success.
@@ -464,8 +468,9 @@ final class PointsEngine {
 				'point_type' => $type,
 				'object_id'  => $event->object_id ?: null,
 				'created_at' => $created_at,
+				'is_spend'   => empty( $event->metadata['_spend'] ) ? 0 : 1,
 			),
-			array( '%s', '%d', '%s', '%d', '%s', '%d', '%s' )
+			array( '%s', '%d', '%s', '%d', '%s', '%d', '%s', '%d' )
 		);
 
 		if ( ! $inserted ) {
@@ -489,7 +494,7 @@ final class PointsEngine {
 		// the ledger insert above unwind too — without this, the ledger
 		// would commit but `wb_gam_user_totals` would stay stale forever.
 		// Closes audit §G12.
-		if ( ! self::bump_user_total( $event->user_id, $type, $points ) ) {
+		if ( ! self::bump_user_total( $event->user_id, $type, $points, ! empty( $event->metadata['_spend'] ) ) ) {
 			return false;
 		}
 
@@ -503,6 +508,7 @@ final class PointsEngine {
 		// Adding a `// AUDIT-G19` marker so the next maintainer reads this
 		// docblock when they add new transaction body steps.
 		wp_cache_delete( self::cache_key_total( $event->user_id, $type ), 'wb_gamification' );
+		wp_cache_delete( self::cache_key_earned( $event->user_id, $type ), 'wb_gamification' );
 
 		return true;
 	}
@@ -575,8 +581,13 @@ final class PointsEngine {
 			);
 		}
 
+		// A spend lowers the balance but not what the member earned (their level and rank).
+		if ( $spend ) {
+			$event->metadata['_spend'] = true;
+		}
+
 		$result = Transaction::run(
-			function () use ( $user_id, $amount, $event, $resolved_type, $spend ) {
+			function () use ( $user_id, $amount, $event, $resolved_type ) {
 				global $wpdb;
 
 				// Atomic balance check with row lock — prevents the TOCTOU
@@ -633,15 +644,6 @@ final class PointsEngine {
 					);
 				}
 
-				// A spend moves points from the balance to `spent`, so what the member earned (and
-				// their level) is unchanged.
-				if ( $spend && ! self::bump_user_spent( $user_id, $resolved_type, $amount ) ) {
-					return array(
-						'success' => false,
-						'reason'  => 'ledger_write_failed',
-					);
-				}
-
 				return array(
 					'success'     => true,
 					'event_id'    => $event->event_id,
@@ -685,7 +687,7 @@ final class PointsEngine {
 	 * @param int    $delta   Signed delta to apply (positive for award, negative for debit).
 	 * @return bool           True on success or no-op (delta=0); false when the UPSERT failed.
 	 */
-	public static function bump_user_total( int $user_id, string $type, int $delta ): bool {
+	public static function bump_user_total( int $user_id, string $type, int $delta, bool $spend = false ): bool {
 		if ( 0 === $delta ) {
 			return true;
 		}
@@ -694,12 +696,13 @@ final class PointsEngine {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- atomic UPSERT.
 		$ok = $wpdb->query(
 			$wpdb->prepare(
-				"INSERT INTO {$wpdb->prefix}wb_gam_user_totals (user_id, point_type, total)
-				 VALUES (%d, %s, %d)
-				 ON DUPLICATE KEY UPDATE total = total + VALUES(total)",
+				"INSERT INTO {$wpdb->prefix}wb_gam_user_totals (user_id, point_type, total, earned)
+				 VALUES (%d, %s, %d, %d)
+				 ON DUPLICATE KEY UPDATE total = total + VALUES(total), earned = earned + VALUES(earned)",
 				$user_id,
 				$type,
-				$delta
+				$delta,
+				$spend ? 0 : $delta // `earned` moves with every row except a spend.
 			)
 		);
 
@@ -731,79 +734,20 @@ final class PointsEngine {
 	}
 
 	/**
-	 * Cache key for a user/type spent lookup.
+	 * Cache key for a user/type earned lookup.
 	 *
 	 * @param int    $user_id User ID.
 	 * @param string $type    Resolved point-type slug.
 	 */
-	public static function cache_key_spent( int $user_id, string $type ): string {
-		return "wb_gam_spent_{$user_id}_{$type}";
+	public static function cache_key_earned( int $user_id, string $type ): string {
+		return "wb_gam_earned_{$user_id}_{$type}";
 	}
 
 	/**
-	 * Move a member's `spent` counter: + on a spend (a reward redemption), - on its refund.
+	 * Points a member has earned: every ledger row except spends.
 	 *
-	 * @since 1.6.5
-	 *
-	 * @param int    $user_id User ID.
-	 * @param string $type    Resolved point-type slug.
-	 * @param int    $delta   Points to add to spent (negative to take back).
-	 * @return bool False when the write failed.
-	 */
-	public static function bump_user_spent( int $user_id, string $type, int $delta ): bool {
-		if ( 0 === $delta ) {
-			return true;
-		}
-
-		global $wpdb;
-		$ok = $wpdb->query(
-			$wpdb->prepare(
-				"INSERT INTO {$wpdb->prefix}wb_gam_user_totals (user_id, point_type, total, spent)
-				 VALUES (%d, %s, 0, %d)
-				 ON DUPLICATE KEY UPDATE spent = GREATEST( 0, spent + %d )",
-				$user_id,
-				$type,
-				max( 0, $delta ),
-				$delta
-			)
-		);
-		wp_cache_delete( self::cache_key_spent( $user_id, $type ), 'wb_gamification' );
-
-		return false !== $ok;
-	}
-
-	/**
-	 * Points a member has spent on rewards (net of refunds).
-	 *
-	 * @since 1.6.5
-	 *
-	 * @param int         $user_id User ID.
-	 * @param string|null $type    Point type; null for the primary type.
-	 * @return int
-	 */
-	public static function get_spent( int $user_id, ?string $type = null ): int {
-		$type  = self::resolve_type( $type );
-		$key   = self::cache_key_spent( $user_id, $type );
-		$spent = wp_cache_get( $key, 'wb_gamification' );
-		if ( false === $spent ) {
-			global $wpdb;
-			$spent = (int) $wpdb->get_var(
-				$wpdb->prepare(
-					"SELECT spent FROM {$wpdb->prefix}wb_gam_user_totals WHERE user_id = %d AND point_type = %s",
-					$user_id,
-					$type
-				)
-			);
-			wp_cache_set( $key, $spent, 'wb_gamification', 300 );
-		}
-		return (int) $spent;
-	}
-
-	/**
-	 * Points a member has earned: the balance plus what they spent on rewards.
-	 *
-	 * Levels and point-milestone badges read this, so buying a reward never costs a member their
-	 * level. Removals (an admin deduction, decay, a reversed award) still lower it.
+	 * Buying a reward or exchanging currency never lowers it; an admin deduction, decay or a
+	 * reversed award does. Levels, leaderboards and point-milestone badges read this.
 	 *
 	 * @since 1.6.5
 	 *
@@ -812,7 +756,42 @@ final class PointsEngine {
 	 * @return int
 	 */
 	public static function get_earned( int $user_id, ?string $type = null ): int {
-		return self::get_total( $user_id, $type ) + self::get_spent( $user_id, $type );
+		$type   = self::resolve_type( $type );
+		$key    = self::cache_key_earned( $user_id, $type );
+		$earned = wp_cache_get( $key, 'wb_gamification' );
+		if ( false === $earned ) {
+			global $wpdb;
+			$earned = (int) $wpdb->get_var(
+				$wpdb->prepare(
+					"SELECT earned FROM {$wpdb->prefix}wb_gam_user_totals WHERE user_id = %d AND point_type = %s",
+					$user_id,
+					$type
+				)
+			);
+			wp_cache_set( $key, $earned, 'wb_gamification', 300 );
+		}
+		return (int) $earned;
+	}
+
+	/**
+	 * Start a member's earned points over (the admin "reset points" action).
+	 *
+	 * After the balancing debit, the member's past spends are all that is left between balance and
+	 * earned, so they are reclassified as ordinary history: both are zero, and `earned` still equals
+	 * the sum of the member's non-spend rows.
+	 *
+	 * @since 1.6.5
+	 *
+	 * @param int         $user_id User ID.
+	 * @param string|null $type    Point type; null for the primary type.
+	 * @return void
+	 */
+	public static function reset_earned( int $user_id, ?string $type = null ): void {
+		global $wpdb;
+		$type = self::resolve_type( $type );
+		$wpdb->query( $wpdb->prepare( "UPDATE {$wpdb->prefix}wb_gam_points SET is_spend = 0 WHERE user_id = %d AND point_type = %s AND is_spend = 1", $user_id, $type ) );
+		$wpdb->query( $wpdb->prepare( "UPDATE {$wpdb->prefix}wb_gam_user_totals SET earned = total WHERE user_id = %d AND point_type = %s", $user_id, $type ) );
+		wp_cache_delete( self::cache_key_earned( $user_id, $type ), 'wb_gamification' );
 	}
 
 	// ── Legacy / public API ────────────────────────────────────────────────────
@@ -857,7 +836,7 @@ final class PointsEngine {
 	 *                               explicitly chose the recipient.
 	 * @return bool
 	 */
-	public static function award( int $user_id, string $action_id, int $points, int $object_id = 0, ?string $type = null, bool $force = false ): bool {
+	public static function award( int $user_id, string $action_id, int $points, int $object_id = 0, ?string $type = null, bool $force = false, bool $spend = false ): bool {
 		if ( $points <= 0 || $user_id <= 0 ) {
 			return false;
 		}
@@ -879,6 +858,9 @@ final class PointsEngine {
 		);
 		if ( null !== $type && '' !== $type ) {
 			$metadata['point_type'] = self::resolve_type( $type );
+		}
+		if ( $spend ) {
+			$metadata['_spend'] = true; // A spend's refund: back to the balance, not to earned.
 		}
 
 		return Engine::process(
@@ -1041,16 +1023,17 @@ final class PointsEngine {
 			$totals_ph   = array();
 			$totals_args = array();
 			foreach ( $counts as $uid => $count ) {
-				$totals_ph[]   = '(%d, %s, %d)';
+				$totals_ph[]   = '(%d, %s, %d, %d)';
 				$totals_args[] = $uid;
 				$totals_args[] = $type;
+				$totals_args[] = $points * $count;
 				$totals_args[] = $points * $count;
 			}
 			// phpcs:disable WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- bulk UPSERT.
 			$totals_ok = $wpdb->query(
 				$wpdb->prepare(
-					"INSERT INTO {$wpdb->prefix}wb_gam_user_totals (user_id, point_type, total) VALUES " . implode( ',', $totals_ph ) .
-					' ON DUPLICATE KEY UPDATE total = total + VALUES(total)',
+					"INSERT INTO {$wpdb->prefix}wb_gam_user_totals (user_id, point_type, total, earned) VALUES " . implode( ',', $totals_ph ) .
+					' ON DUPLICATE KEY UPDATE total = total + VALUES(total), earned = earned + VALUES(earned)',
 					...$totals_args
 				)
 			);
@@ -1076,6 +1059,7 @@ final class PointsEngine {
 			// most object-cache backends.
 			foreach ( array_keys( $counts ) as $uid ) {
 				wp_cache_delete( self::cache_key_total( (int) $uid, $type ), 'wb_gamification' );
+				wp_cache_delete( self::cache_key_earned( (int) $uid, $type ), 'wb_gamification' );
 			}
 		}
 
@@ -1177,7 +1161,7 @@ final class PointsEngine {
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $placeholders is built from an int count; all values pass through prepare().
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT user_id, total, spent FROM {$wpdb->prefix}wb_gam_user_totals
+				"SELECT user_id, total, earned FROM {$wpdb->prefix}wb_gam_user_totals
 				  WHERE point_type = %s AND user_id IN ( $placeholders )",
 				array_merge( array( $type ), $ids )
 			),
@@ -1186,8 +1170,8 @@ final class PointsEngine {
 
 		$missing = array();
 		foreach ( $ids as $uid ) {
-			wp_cache_set( self::cache_key_spent( $uid, $type ), isset( $rows[ $uid ] ) ? (int) $rows[ $uid ]->spent : 0, 'wb_gamification', 300 );
 			if ( isset( $rows[ $uid ] ) ) {
+				wp_cache_set( self::cache_key_earned( $uid, $type ), (int) $rows[ $uid ]->earned, 'wb_gamification', 300 );
 				wp_cache_set( self::cache_key_total( $uid, $type ), (int) $rows[ $uid ]->total, 'wb_gamification', 300 );
 			} else {
 				$missing[] = $uid;

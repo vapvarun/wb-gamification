@@ -756,7 +756,8 @@ final class Privacy {
 		// Bust the per-type object-cache key matching what get_total reads. Without this, get_total
 		// returns the cached pre-erase balance for up to the cache TTL after the user's data is gone.
 		foreach ( $pt_slugs as $slug ) {
-			wp_cache_delete( 'wb_gam_total_' . $user_id . '_' . $slug, 'wb_gamification' );
+			wp_cache_delete( PointsEngine::cache_key_total( $user_id, $slug ), 'wb_gamification' );
+			wp_cache_delete( PointsEngine::cache_key_earned( $user_id, $slug ), 'wb_gamification' );
 		}
 
 		do_action( 'wb_gam_user_data_erased', $user_id );

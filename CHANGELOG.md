@@ -16,7 +16,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 
 ### Changed
 
-- Levels follow the points a member earned (balance plus points spent on rewards or currency exchanges), so redeeming a reward never costs a member their level. Deductions, decay and reversed awards still lower it, and now take effect straight away instead of on the member's next award; a points reset returns the member to the first level. Point-milestone and level-reached badges use the same earned total. `GET /members/{id}` and `GET /members/{id}/level` add `earned_points`; `PointsEngine::get_earned()` and `wb_gam_spend_points()` spends feed it.
+- Levels and leaderboards follow the points a member earned: every points row except spends (rewards, currency exchanges, anything paid through `wb_gam_spend_points()`), so spending never costs a member their level or their place. Weekly leagues, the weekly email, the yearly recap, the activity heatmap and analytics count earned points the same way. The ledger marks spend rows (`is_spend`) and `wb_gam_user_totals.earned` holds the indexed total; both are backfilled once on upgrade. Deductions, decay and reversed awards still lower it, and now take effect straight away instead of on the member's next award; a points reset returns the member to the first level. Point-milestone and level-reached badges use the same earned total. `GET /members/{id}` and `GET /members/{id}/level` add `earned_points`; `PointsEngine::get_earned()` reads it.
 - Only a level climb is announced. A drop used to toast "You reached Member!" and send the level-up email and ActivityPub post; it is now applied quietly. `LevelEngine::is_climb()` lets integrations do the same (`wb_gam_level_changed` still fires both ways for rank automation and webhooks).
 - An admin award with no reason shows "Manual award" on the member's toast instead of `manual_award`.
 
@@ -36,6 +36,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 
 ### Fixed
 
+- `wb_gam_user_totals.updated_at` is removed: nothing read it, and the database stamped it with its own clock instead of UTC.
 - Points from Jetonomy forum activity toasted as "Points awarded" and read as a raw id in the history. They now say what happened ("Replied in the forum", "Your forum post was upvoted", "(reversed)" on undo), and every surface - toasts, points history, REST, analytics - uses one label. New `wb_gam_action_label` filter and `wb_gam_get_action_label()` helper for integrations.
 
 - The "Welcome, pick a starter template" notice no longer shows on a site where members are already earning points.

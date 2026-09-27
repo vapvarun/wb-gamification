@@ -181,7 +181,7 @@ final class StatusRetentionEngine {
 			$wpdb->prepare(
 				"SELECT user_id, COALESCE(SUM(points), 0) / 4 AS avg_pts
 				   FROM {$wpdb->prefix}wb_gam_points
-				  WHERE user_id IN ($placeholders) AND created_at >= %s
+				  WHERE user_id IN ($placeholders) AND created_at >= %s AND is_spend = 0
 				 GROUP BY user_id",
 				array_merge( $ids_ints, array( $four_wk_start ) )
 			),

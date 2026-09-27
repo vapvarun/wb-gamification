@@ -18,7 +18,7 @@ Every member starts as a Newcomer. As they earn points, they advance through the
 
 ## How Progression Works
 
-A level is set by the points a member has **earned**: their balance plus anything they spent on rewards or currency exchanges. Spending points never costs a member their level. Points that are taken away (an admin deduction, points decay, a reversed award such as withdrawn kudos) do lower it, and resetting a member's points starts them at the first level again.
+A level is set by the points a member has **earned**: their balance plus anything they spent on rewards, currency exchanges or a membership paid in points. Spending points never costs a member their level. Points that are taken away (an admin deduction, points decay, a reversed award such as withdrawn kudos) do lower it, and resetting a member's points starts them at the first level again.
 
 After every award or removal, the plugin compares the member's earned points against the level thresholds and updates the level straight away. Members are congratulated only when they move up (toast, the optional email, and community notifications); a move down is applied quietly.
 

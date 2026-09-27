@@ -2,13 +2,15 @@
 
 The leaderboard ranks members by points earned over a selected time period. It updates automatically and can be embedded on any page.
 
+Points a member spends (on a reward, a currency exchange, or a membership paid in points) do not count against them: spending never costs a member their place. Points taken away (an admin deduction, decay, a reversed award) do.
+
 ## Time Periods
 
 The leaderboard supports four time periods:
 
 | Period | What It Shows |
 |---|---|
-| All-time | Total points since the member joined |
+| All-time | Points earned since the member joined |
 | Monthly | Points earned in the current calendar month |
 | Weekly | Points earned in the current calendar week (Monday to Sunday) |
 | Daily | Points earned today |

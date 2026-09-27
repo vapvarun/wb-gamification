@@ -663,12 +663,9 @@ class MembersController extends WP_REST_Controller {
 			}
 		}
 
-		// A reset starts the member over: what they spent no longer counts toward their level either.
-		$spent = PointsEngine::get_spent( $id, $type );
-		if ( $spent > 0 ) {
-			PointsEngine::bump_user_spent( $id, PointsEngine::resolve_type( $type ), -$spent );
-			LevelEngine::maybe_level_up( $id );
-		}
+		// A reset starts the member over: earned points (level, rank) return to zero too.
+		PointsEngine::reset_earned( $id, $type );
+		LevelEngine::maybe_level_up( $id );
 
 		return new WP_REST_Response(
 			array(

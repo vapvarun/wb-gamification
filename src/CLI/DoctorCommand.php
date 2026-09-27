@@ -957,11 +957,13 @@ class DoctorCommand {
 		// and that is the row that put a member on one board and not the other.
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$drifted = $wpdb->get_results(
-			"SELECT t.user_id, t.point_type, t.total AS totals_says, COALESCE( l.led, 0 ) AS ledger_says
+			"SELECT t.user_id, t.point_type, t.total AS totals_says, COALESCE( l.led, 0 ) AS ledger_says,
+			        t.earned AS earned_says, COALESCE( l.earned, 0 ) AS ledger_earned
 			   FROM {$totals} t
-			   LEFT JOIN ( SELECT user_id, point_type, SUM(points) led FROM {$points} GROUP BY user_id, point_type ) l
+			   LEFT JOIN ( SELECT user_id, point_type, SUM(points) led, SUM( IF( is_spend = 0, points, 0 ) ) earned
+			                 FROM {$points} GROUP BY user_id, point_type ) l
 			          ON l.user_id = t.user_id AND l.point_type = t.point_type
-			  WHERE t.total <> COALESCE( l.led, 0 )
+			  WHERE t.total <> COALESCE( l.led, 0 ) OR t.earned <> COALESCE( l.earned, 0 )
 			  ORDER BY ABS( t.total - COALESCE( l.led, 0 ) ) DESC",
 			ARRAY_A
 		);
@@ -1004,7 +1006,10 @@ class DoctorCommand {
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$wpdb->update(
 				$totals,
-				array( 'total' => (int) $row['ledger_says'] ),
+				array(
+					'total'  => (int) $row['ledger_says'],
+					'earned' => (int) $row['ledger_earned'],
+				),
 				array(
 					'user_id'    => (int) $row['user_id'],
 					'point_type' => (string) $row['point_type'],
@@ -1073,7 +1078,7 @@ class DoctorCommand {
 					SELECT p.user_id
 					  FROM {$wpdb->prefix}wb_gam_points p
 					  JOIN {$wpdb->users} u ON u.ID = p.user_id
-					 WHERE p.point_type = %s {$where} {$excl}
+					 WHERE p.point_type = %s AND p.is_spend = 0 {$where} {$excl}
 					   AND NOT EXISTS ( SELECT 1 FROM {$wpdb->prefix}wb_gam_member_prefs mp
 					                     WHERE mp.user_id = p.user_id AND mp.leaderboard_opt_out = 1 )
 					 GROUP BY p.user_id

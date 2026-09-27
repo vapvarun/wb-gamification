@@ -83,7 +83,7 @@ final class RecapEngine {
 			$wpdb->prepare(
 				"SELECT COALESCE(SUM(points), 0)
 				   FROM {$wpdb->prefix}wb_gam_points
-				  WHERE user_id = %d AND created_at BETWEEN %s AND %s",
+				  WHERE user_id = %d AND is_spend = 0 AND created_at BETWEEN %s AND %s",
 				$user_id,
 				$start,
 				$end
@@ -247,7 +247,7 @@ final class RecapEngine {
 				"SELECT DATE_FORMAT({$local}, '%%Y-W%%V') AS iso_week,
 				        SUM(points) AS week_points
 				   FROM {$wpdb->prefix}wb_gam_points
-				  WHERE user_id = %d AND created_at BETWEEN %s AND %s
+				  WHERE user_id = %d AND is_spend = 0 AND created_at BETWEEN %s AND %s
 				  GROUP BY iso_week
 				  ORDER BY week_points DESC
 				  LIMIT 1",
@@ -310,7 +310,7 @@ final class RecapEngine {
 				"SELECT COUNT(*) FROM (
 				    SELECT user_id, SUM(points) AS total
 				      FROM {$wpdb->prefix}wb_gam_points
-				     WHERE created_at BETWEEN %s AND %s
+				     WHERE is_spend = 0 AND created_at BETWEEN %s AND %s
 				     GROUP BY user_id
 				    HAVING total < %d
 				 ) AS sub",

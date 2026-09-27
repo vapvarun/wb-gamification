@@ -288,7 +288,8 @@ final class LeaderboardEngine {
 
 		// Always scope by point_type so per-currency leaderboards work even
 		// without the cache table being keyed by type yet (Phase 3b).
-		$where_parts[]  = 'p.point_type = %s';
+		// Rank by points EARNED: a spend (reward, currency exchange) never costs a member their place.
+		$where_parts[]  = 'p.point_type = %s AND p.is_spend = 0';
 		$where_values[] = $resolved_type;
 
 		if ( $period_start ) {
@@ -513,7 +514,7 @@ final class LeaderboardEngine {
 		if ( $period_start ) {
 			$user_total_sql = $wpdb->prepare(
 				"SELECT COALESCE(SUM(points),0) FROM {$wpdb->prefix}wb_gam_points
-				 WHERE user_id = %d AND point_type = %s AND created_at >= %s",
+				 WHERE user_id = %d AND point_type = %s AND is_spend = 0 AND created_at >= %s",
 				$user_id,
 				$resolved_type,
 				$period_start
@@ -521,7 +522,7 @@ final class LeaderboardEngine {
 		} else {
 			$user_total_sql = $wpdb->prepare(
 				"SELECT COALESCE(SUM(points),0) FROM {$wpdb->prefix}wb_gam_points
-				 WHERE user_id = %d AND point_type = %s",
+				 WHERE user_id = %d AND point_type = %s AND is_spend = 0",
 				$user_id,
 				$resolved_type
 			);
@@ -618,7 +619,7 @@ final class LeaderboardEngine {
 				// snapshot, and RANK() still counted them, so snapshot_standing() served a rank the
 				// fallback disagreed with. One opt-out was enough to make the two paths differ for 153
 				// of 154 members.
-				$where = $wpdb->prepare( 'WHERE p.point_type = %s', $slug );
+				$where = $wpdb->prepare( 'WHERE p.point_type = %s AND p.is_spend = 0', $slug );
 				if ( null !== $period_start ) {
 					$where .= $wpdb->prepare( ' AND p.created_at >= %s', $period_start );
 				}
@@ -1053,7 +1054,8 @@ final class LeaderboardEngine {
 		string $excl_clause,
 		string $scope_clause
 	): string {
-		$balance = self::positive_balance_sql( 'ut.total' );
+		// Ranked by points earned (1.6.5): idx_type_earned is shaped for it as idx_type_total was.
+		$balance = self::positive_balance_sql( 'ut.earned' );
 
 		// The candidates, and ONLY the candidates: the top rows of the indexed totals table, with no
 		// users join at all.
@@ -1083,13 +1085,13 @@ final class LeaderboardEngine {
 		// the whole index instead: EXPLAIN goes from `Backward index scan; Using index` to
 		// `Using filesort`, which at 100k members is the very plan this query is shaped to avoid.
 		return "
-			SELECT ut.user_id, ut.total AS total_points
+			SELECT ut.user_id, ut.earned AS total_points
 			  FROM {$totals_table} ut
 			 WHERE ut.point_type = %s
 			   AND {$balance}
 			  {$excl_clause}
 			  {$scope_clause}
-		  ORDER BY ut.total DESC, ut.user_id DESC
+		  ORDER BY ut.earned DESC, ut.user_id DESC
 			 LIMIT %d OFFSET %d
 		";
 	}
@@ -1208,7 +1210,7 @@ final class LeaderboardEngine {
 	 * Three predicates were unified into exclusion_sql() -- exists, not opted out, not owner-excluded --
 	 * and this one was left behind, answered differently by every path that asked:
 	 *
-	 *   totals_board          AND ut.total > 0
+	 *   totals_board          AND ut.earned > 0
 	 *   ledger board          (nothing)
 	 *   write_snapshot()      (nothing)
 	 *   the doctor's oracle   HAVING SUM(p.points) > 0
@@ -1227,8 +1229,8 @@ final class LeaderboardEngine {
 	 * (a materialised column, or a SUM). So this returns the comparison for whatever expression the
 	 * caller aggregates with, and every caller uses it.
 	 *
-	 * @param string $expr The path's balance expression, e.g. `ut.total` or `SUM(p.points)`.
-	 * @return string SQL fragment, e.g. `ut.total > 0`.
+	 * @param string $expr The path's balance expression, e.g. `ut.earned` or `SUM(p.points)`.
+	 * @return string SQL fragment, e.g. `ut.earned > 0`.
 	 */
 	private static function positive_balance_sql( string $expr ): string {
 		return $expr . ' > 0';
@@ -1308,7 +1310,7 @@ final class LeaderboardEngine {
 		// Always scope by point_type so multi-currency rank counts match the
 		// public leaderboard which also filters per-currency.
 		$values = array( $point_type );
-		$where  = ' AND p.point_type = %s';
+		$where  = ' AND p.point_type = %s AND p.is_spend = 0';
 
 		if ( $period_start ) {
 			$where   .= ' AND p.created_at >= %s';
@@ -1372,7 +1374,7 @@ final class LeaderboardEngine {
 		global $wpdb;
 
 		$values = array( $point_type );
-		$where  = ' AND p.point_type = %s';
+		$where  = ' AND p.point_type = %s AND p.is_spend = 0';
 
 		if ( $period_start ) {
 			$where   .= ' AND p.created_at >= %s';

@@ -101,6 +101,7 @@ class LeaderboardQueryCompositionTest extends TestCase {
 
 		$this->assertStringContainsString( 'FROM wp_wb_gam_user_totals ut', $sql );
 		$this->assertStringContainsString( 'WHERE ut.point_type = %s', $sql );
+		$this->assertStringContainsString( 'ORDER BY ut.earned DESC', $sql, 'Ranked by points earned, so a spend never costs a place (1.6.5).' );
 		$this->assertStringContainsString( 'AND ut.user_id IN (%d,%d)', $sql );
 
 		// `p` is the LEDGER's alias. It is not defined anywhere in this query, so any reference to

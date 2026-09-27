@@ -107,7 +107,7 @@ final class DbUpgrader {
 		self::ensure_leaderboard_cache_point_type_column();
 		self::ensure_leaderboard_cache_prev_rank_column();
 		self::ensure_user_totals_table();
-		self::ensure_user_totals_spent_column();
+		self::ensure_earned_points();
 		self::ensure_leaderboard_cache_unique_key();
 		self::ensure_submissions_table();
 		self::ensure_api_keys_table();
@@ -1114,9 +1114,10 @@ final class DbUpgrader {
 			user_id    BIGINT UNSIGNED NOT NULL,
 			point_type VARCHAR(60)     NOT NULL DEFAULT 'points',
 			total      BIGINT          NOT NULL DEFAULT 0,
-			updated_at DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+			earned     BIGINT          NOT NULL DEFAULT 0,
 			PRIMARY KEY (user_id, point_type),
-			KEY idx_type_total (point_type, total)
+			KEY idx_type_total (point_type, total),
+			KEY idx_type_earned (point_type, earned)
 		) $charset;"
 		);
 
@@ -1134,36 +1135,61 @@ final class DbUpgrader {
 	}
 
 	/**
-	 * Add `spent` to `wb_gam_user_totals`: points a member spent on rewards (1.6.5).
+	 * Earned points (1.6.5): a spend flag on the ledger and an indexed `earned` total per member.
 	 *
-	 * Levels read balance + spent, so buying a reward no longer costs a member their level. Backfilled
-	 * once from the ledger's redemption, redemption-refund and currency-conversion rows. Spends made before 1.6.5 through
-	 * wb_gam_spend_points() under a custom context are not identifiable and are not backfilled.
+	 * A level and a leaderboard place follow the points a member EARNED, so spending points on a reward
+	 * or a currency exchange never costs either (owner decision 2026-09-27). The ledger marks spend
+	 * rows (`is_spend`); `wb_gam_user_totals.earned` is the sum of every other row, indexed for the
+	 * all-time board the way `total` is.
+	 *
+	 * Backfill: spend rows are the redemption, redemption-refund and currency-exchange debit rows, plus
+	 * BuddyNext Pro's membership checkout (`bn_membership`), the only other spend that shipped before
+	 * the flag existed. A third-party spend through wb_gam_spend_points() before 1.6.5 cannot be told
+	 * from a deduction and stays counted as one.
+	 *
+	 * Also drops `wb_gam_user_totals.updated_at`: nothing read it, and MySQL stamped it with the
+	 * database server's clock, which broke the UTC storage rule.
 	 *
 	 * @since 1.6.5
 	 */
-	private static function ensure_user_totals_spent_column(): void {
-		$flag_key = 'wb_gam_feature_user_totals_spent_v1';
+	private static function ensure_earned_points(): void {
+		$flag_key = 'wb_gam_feature_earned_points_v1';
 		if ( get_option( $flag_key ) ) {
 			return;
 		}
 
 		global $wpdb;
-		$table = $wpdb->prefix . 'wb_gam_user_totals';
-		if ( ! $wpdb->get_var( "SHOW COLUMNS FROM `{$table}` LIKE 'spent'" ) ) {
-			$wpdb->query( "ALTER TABLE `{$table}` ADD COLUMN `spent` BIGINT NOT NULL DEFAULT 0 AFTER `total`" );
+		$points = $wpdb->prefix . 'wb_gam_points';
+		$totals = $wpdb->prefix . 'wb_gam_user_totals';
+
+		if ( ! $wpdb->get_var( "SHOW COLUMNS FROM `{$points}` LIKE 'is_spend'" ) ) {
+			$wpdb->query( "ALTER TABLE `{$points}` ADD COLUMN `is_spend` TINYINT(1) NOT NULL DEFAULT 0" );
 		}
 		$wpdb->query(
-			"UPDATE `{$table}` t
-			   JOIN ( SELECT user_id, point_type, -SUM(points) AS spent
-			            FROM {$wpdb->prefix}wb_gam_points
-			           WHERE action_id IN ( 'redemption', 'redemption_refund' )
-			              OR ( action_id LIKE 'convert\\_%' AND points < 0 )
-			           GROUP BY user_id, point_type ) s
-			     ON s.user_id = t.user_id AND s.point_type = t.point_type
-			    SET t.spent = GREATEST( 0, s.spent )"
+			"UPDATE `{$points}` SET is_spend = 1
+			  WHERE action_id IN ( 'redemption', 'redemption_refund', 'bn_membership' )
+			     OR ( action_id LIKE 'convert\\_%' AND points < 0 )"
 		);
 
+		if ( ! $wpdb->get_var( "SHOW COLUMNS FROM `{$totals}` LIKE 'earned'" ) ) {
+			$wpdb->query( "ALTER TABLE `{$totals}` ADD COLUMN `earned` BIGINT NOT NULL DEFAULT 0 AFTER `total`, ADD KEY `idx_type_earned` (`point_type`, `earned`)" );
+		}
+		foreach ( array( 'spent', 'updated_at' ) as $gone ) {
+			if ( $wpdb->get_var( $wpdb->prepare( "SHOW COLUMNS FROM `{$totals}` LIKE %s", $gone ) ) ) {
+				$wpdb->query( "ALTER TABLE `{$totals}` DROP COLUMN `{$gone}`" );
+			}
+		}
+		$wpdb->query(
+			"UPDATE `{$totals}` t
+			   JOIN ( SELECT user_id, point_type, SUM( points ) AS earned
+			            FROM `{$points}`
+			           WHERE is_spend = 0
+			           GROUP BY user_id, point_type ) e
+			     ON e.user_id = t.user_id AND e.point_type = t.point_type
+			    SET t.earned = e.earned"
+		);
+
+		delete_option( 'wb_gam_feature_user_totals_spent_v1' ); // Pre-release name of this step.
 		update_option( $flag_key, '1' );
 	}
 

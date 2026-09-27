@@ -382,7 +382,7 @@ final class CohortEngine {
 			$wpdb->prepare(
 				"SELECT user_id, COALESCE(SUM(points), 0) AS pts
 				   FROM {$wpdb->prefix}wb_gam_points
-				  WHERE user_id IN ({$pts_ph}) AND created_at >= %s
+				  WHERE user_id IN ({$pts_ph}) AND created_at >= %s AND is_spend = 0
 				 GROUP BY user_id",
 				array_merge( $member_ids, array( $week_start ) )
 			),
@@ -671,7 +671,7 @@ final class CohortEngine {
 		$members = $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT cm.user_id, u.display_name,
-				        COALESCE((SELECT SUM(p.points) FROM {$wpdb->prefix}wb_gam_points p WHERE p.user_id = cm.user_id AND p.created_at >= %s), 0) AS week_pts
+				        COALESCE((SELECT SUM(p.points) FROM {$wpdb->prefix}wb_gam_points p WHERE p.user_id = cm.user_id AND p.created_at >= %s AND p.is_spend = 0), 0) AS week_pts
 				   FROM {$wpdb->prefix}wb_gam_cohort_members cm
 				   JOIN {$wpdb->users} u ON u.ID = cm.user_id
 				  WHERE cm.cohort_id = %s

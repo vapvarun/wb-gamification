@@ -254,12 +254,12 @@ final class ScaleCommand {
 		\WP_CLI::line( 'Backfilling wb_gam_user_totals…' );
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$wpdb->query(
-			"INSERT INTO {$wpdb->prefix}wb_gam_user_totals (user_id, point_type, total)
-			 SELECT user_id, point_type, COALESCE(SUM(points), 0)
+			"INSERT INTO {$wpdb->prefix}wb_gam_user_totals (user_id, point_type, total, earned)
+			 SELECT user_id, point_type, COALESCE(SUM(points), 0), COALESCE(SUM(points), 0)
 			   FROM {$wpdb->prefix}wb_gam_points
 			  WHERE user_id >= {$base_uid}
 			  GROUP BY user_id, point_type
-			 ON DUPLICATE KEY UPDATE total = VALUES(total)"
+			 ON DUPLICATE KEY UPDATE total = VALUES(total), earned = VALUES(earned)"
 		);
 
 		// ── Seed the OTHER tables the budgets measure ────────────────────────

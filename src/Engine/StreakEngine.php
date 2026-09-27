@@ -260,7 +260,7 @@ final class StreakEngine {
 			$wpdb->prepare(
 				"SELECT DATE({$local}) AS activity_date, SUM(points) AS total
 				   FROM {$wpdb->prefix}wb_gam_points
-				  WHERE user_id = %d AND created_at >= %s
+				  WHERE user_id = %d AND created_at >= %s AND is_spend = 0
 				  GROUP BY activity_date
 				  ORDER BY activity_date ASC",
 				$user_id,

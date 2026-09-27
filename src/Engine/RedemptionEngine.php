@@ -432,9 +432,8 @@ final class RedemptionEngine {
 		// Credit the points back ($force = true: a reversal must bypass the
 		// earning-exclusion that award() enforces).
 		if ( $cost > 0 && $user_id > 0 ) {
-			PointsEngine::award( $user_id, 'redemption_refund', $cost, $redemption_id, $type ?: null, true );
-			// The points go back to the balance, so they are no longer "spent"; earned is unchanged.
-			PointsEngine::bump_user_spent( $user_id, PointsEngine::resolve_type( $type ?: null ), -$cost );
+			// A refund reverses a spend: back to the balance, while earned (level, rank) never moved.
+			PointsEngine::award( $user_id, 'redemption_refund', $cost, $redemption_id, $type ?: null, true, true );
 		}
 
 		// Restore the unit only when the item still exists with finite stock
