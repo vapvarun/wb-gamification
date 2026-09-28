@@ -34,6 +34,7 @@ timing, the family stops matching BuddyNext, and a member sees two different pro
   `--wb-gam-pop-scrim` (blurred 2px on dialogs and the Moment card, NOT on the drawer), header title 18px/600 (drawer 16px), a 40px `.wb-gam-close`, and footer
   buttons 40px tall (`.wb-gam-btn`). The toast is the inverted pill at the bottom centre.
   Banners are measured on the node that paints the words: `.wb-gam-banner__text` in a shown success and danger banner must be at least 4.5:1 against the banner background in light and dark, and must stay so after injecting `span{color:#fff} .is-success span{color:#fff} button{color:#fff}` (a host rule must not win).
+  The popup family follows BuddyNext's accent ramp: inject `:root{--bn-accent:oklch(62% .19 45);--bn-accent-500:oklch(62% .19 45);--bn-accent-400:oklch(72% .17 45);--bn-accent-600:oklch(54% .18 45)}` and the toast disc, Moment eyebrow, ring, button and confetti piece 1 all resolve to that orange; set those `--bn-*` variables to `initial` and they fall back to the theme accent (and to the plugin purple in wp-admin).
 - **On fail**: `assets/css/popups.css`; a surface carrying its own shell rules (`assets/css/hub.css`,
   `src/Blocks/redemption-store/style.css`).
 
