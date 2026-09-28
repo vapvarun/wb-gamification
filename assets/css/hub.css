@@ -409,51 +409,55 @@
 }
 
 /* PANEL */
-.gam-panel-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.3);
-  z-index: 9999;
-  opacity: 0;
-  visibility: hidden;
-  transition: opacity 0.25s ease, visibility 0.25s ease;
-}
-
-/* Account for WP admin bar when logged in */
-.admin-bar .gam-panel-backdrop {
-  top: 32px;
-}
-@media screen and (max-width: 782px) {
-  .admin-bar .gam-panel-backdrop,
-  .admin-bar .gam-panel {
-    top: 46px;
-  }
-}
-.admin-bar .gam-panel {
-  top: 32px;
-}
-
-.gam-panel-backdrop.active {
-  opacity: 1;
-  visibility: visible;
-}
-
+/* A native <dialog> drawer: the browser supplies the top layer, the focus trap, Escape and the
+ * inert page behind it, so none of that is styled or scripted here. Physical right/left on purpose,
+ * so rtlcss mirrors the drawer for RTL locales. */
 .gam-panel {
   position: fixed;
   top: 0;
   right: 0;
   bottom: 0;
+  left: auto;
+  margin: 0;
+  padding: 0;
+  border: 0;
   width: min(520px, 90vw);
+  max-width: none;
+  height: 100dvh;
+  max-height: none;
   background: var(--gam-surface);
-  z-index: 10000;
-  transform: translateX(100%);
-  transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
-  overflow-y: auto;
+  color: inherit;
   box-shadow: -4px 0 24px rgba(0,0,0,0.12);
+  overflow-y: auto;
+  transform: translateX(100%);
+  transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1), overlay 0.3s allow-discrete, display 0.3s allow-discrete;
 }
 
-.gam-panel-backdrop.active .gam-panel {
+.gam-panel[open] {
+  display: flex;
+  flex-direction: column;
   transform: translateX(0);
+}
+
+@starting-style {
+  .gam-panel[open] {
+    transform: translateX(100%);
+  }
+}
+
+.gam-panel::backdrop {
+  background: rgba(0,0,0,0.3);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gam-panel {
+    transition: none;
+  }
+}
+
+.gam-card:focus-visible {
+  outline: 2px solid var(--gam-accent);
+  outline-offset: 2px;
 }
 
 .gam-panel__header {
@@ -496,6 +500,7 @@
 }
 
 .gam-panel__body {
+  flex: 1;
   padding: 20px;
 }
 

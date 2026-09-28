@@ -5,8 +5,7 @@
  *   - apiFetch(method, path, body, settings) → { ok, status, data }
  *   - toast(message, tone)
  *   - clearChildren(node)
- *   - confirmAction(message) → boolean   (temporary native confirm — Tier 7
- *     replaces with a promise-based modal; documented exception #1)
+ *   - confirmAction(message) → Promise<boolean>   (a native <dialog> via assets/js/dialog.js)
  *
  * Per-page modules (admin-levels.js, admin-cohort.js, admin-api-keys.js,
  * admin-webhooks.js, admin-badges.js, admin-challenges.js,
@@ -155,26 +154,30 @@
 		const tone         = opts.tone === 'primary' ? 'primary' : 'danger';
 
 		return new Promise( function ( resolve ) {
-			const overlay = document.createElement( 'div' );
-			overlay.className = 'wb-gam-confirm-overlay';
-			overlay.setAttribute( 'role', 'presentation' );
-
-			const dialog = document.createElement( 'div' );
+			// A native <dialog> through the shared utility (assets/js/dialog.js, a dependency of this
+			// script): Escape, the focus trap, the inert page behind it and focus-return come from the
+			// platform and that one file, not from a second hand-rolled copy here.
+			const dialog = document.createElement( 'dialog' );
 			dialog.className = 'wb-gam-confirm-dialog';
-			dialog.setAttribute( 'role', 'dialog' );
-			dialog.setAttribute( 'aria-modal', 'true' );
+			dialog.setAttribute( 'data-wb-gam-dialog', '' );
+
+			const body = document.createElement( 'p' );
+			body.className = 'wb-gam-confirm-dialog__body';
+			body.id = 'wb-gam-confirm-body';
+			body.textContent = message;
 
 			if ( title ) {
 				const h = document.createElement( 'h2' );
 				h.className = 'wb-gam-confirm-dialog__title';
+				h.id = 'wb-gam-confirm-title';
 				h.textContent = title;
 				dialog.appendChild( h );
-				dialog.setAttribute( 'aria-labelledby', 'wb-gam-confirm-title' );
-				h.id = 'wb-gam-confirm-title';
+				dialog.setAttribute( 'aria-labelledby', h.id );
+			} else {
+				// No title: the message is the dialog's name.
+				dialog.setAttribute( 'aria-labelledby', body.id );
 			}
-			const body = document.createElement( 'p' );
-			body.className = 'wb-gam-confirm-dialog__body';
-			body.textContent = message;
+			dialog.setAttribute( 'aria-describedby', body.id );
 			dialog.appendChild( body );
 
 			const actions = document.createElement( 'div' );
@@ -190,47 +193,30 @@
 			confirmBtn.className = 'button button-primary' + ( 'danger' === tone ? ' button-link-delete' : '' );
 			confirmBtn.textContent = confirmText;
 
+			// A destructive action starts on Cancel, so a stray Enter or Space never deletes anything.
+			( 'danger' === tone ? cancelBtn : confirmBtn ).setAttribute( 'autofocus', '' );
+
 			actions.appendChild( cancelBtn );
 			actions.appendChild( confirmBtn );
 			dialog.appendChild( actions );
+			document.body.appendChild( dialog );
 
-			overlay.appendChild( dialog );
-			document.body.appendChild( overlay );
+			let result = false;
 
-			const previousFocus = document.activeElement;
-			confirmBtn.focus();
+			cancelBtn.addEventListener( 'click', function () { window.wbGam.dialog.close( dialog ); } );
+			confirmBtn.addEventListener( 'click', function () {
+				result = true;
+				window.wbGam.dialog.close( dialog );
+			} );
 
-			function close( result ) {
-				document.removeEventListener( 'keydown', onKey );
-				overlay.removeEventListener( 'click', onBackdrop );
-				overlay.remove();
-				if ( previousFocus && typeof previousFocus.focus === 'function' ) {
-					previousFocus.focus();
-				}
+			// Every way of closing (buttons, Escape, backdrop click) ends here.
+			dialog.addEventListener( 'close', function () {
+				dialog.remove();
 				resolve( result );
-			}
-			function onKey( e ) {
-				if ( e.key === 'Escape' ) {
-					e.preventDefault();
-					close( false );
-				} else if ( e.key === 'Tab' ) {
-					// Trap focus inside the dialog.
-					if ( ! dialog.contains( document.activeElement ) ) {
-						confirmBtn.focus();
-						e.preventDefault();
-					}
-				}
-			}
-			function onBackdrop( e ) {
-				if ( e.target === overlay ) {
-					close( false );
-				}
-			}
+			} );
 
-			cancelBtn.addEventListener( 'click', function () { close( false ); } );
-			confirmBtn.addEventListener( 'click', function () { close( true ); } );
-			document.addEventListener( 'keydown', onKey );
-			overlay.addEventListener( 'click', onBackdrop );
+			window.wbGam.dialog.bind( dialog );
+			window.wbGam.dialog.open( dialog, { initialFocus: '[autofocus]' } );
 		} );
 	}
 

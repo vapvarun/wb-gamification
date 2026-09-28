@@ -661,6 +661,9 @@ final class NotificationBridge {
 		if ( wp_script_is( 'wb-gamification-toast', 'registered' ) ) {
 			wp_enqueue_script( 'wb-gamification-realtime' );
 			wp_enqueue_script( 'wb-gamification-toast' );
+			// Toast icons are Lucide font classes (icon-sparkles, icon-medal...). Only a few blocks load
+			// the font, so on every other page (the BuddyNext feed included) each icon measured 0x0.
+			wp_enqueue_style( 'lucide-icons' );
 		}
 
 		// Always output the markup shell (JS needs the DOM nodes).

@@ -81,6 +81,7 @@ $wb_gam_classes = array_filter(
 
 wp_enqueue_style( 'wb-gam-tokens' );
 wp_enqueue_style( 'wb-gamification-hub' );
+wp_enqueue_script( 'wb-gam-dialog' );
 wp_enqueue_script_module( 'wb-gamification-hub' );
 
 // Conversion modal asset is registered globally; only enqueue when this hub
@@ -494,7 +495,11 @@ BlockHooks::before( 'hub', $wb_gam_attrs );
 	<div class="gam-cards">
 		<?php foreach ( $wb_gam_cards as $wb_gam_key => $wb_gam_card ) : ?>
 			<div class="gam-card"
+				role="button"
+				tabindex="0"
+				aria-haspopup="dialog"
 				data-wp-on--click="actions.openPanel"
+				data-wp-on--keydown="actions.onTileKey"
 				data-wp-context="<?php echo esc_attr( wp_json_encode( array( 'panel' => $wb_gam_key ) ) ); ?>">
 				<div class="gam-card__head">
 					<span class="gam-card__icon"><i class="icon-<?php echo esc_attr( (string) $wb_gam_card['icon'] ); ?>"></i></span>
@@ -550,24 +555,21 @@ BlockHooks::before( 'hub', $wb_gam_attrs );
 		</template>
 	<?php endforeach; ?>
 
-	<div class="gam-panel-backdrop"
-		data-wp-class--active="state.panelOpen"
-		data-wp-on--click="actions.closePanel">
-		<div class="gam-panel"
-			role="dialog"
-			aria-modal="true"
-			aria-labelledby="gam-panel-title"
-			data-wp-on--click="actions.stopPropagation">
-			<div class="gam-panel__header">
-				<button class="gam-panel__back" data-wp-on--click="actions.closePanel">
-					<i class="icon-arrow-left"></i>
-					<span class="screen-reader-text"><?php esc_html_e( 'Close panel', 'wb-gamification' ); ?></span>
-				</button>
-				<span id="gam-panel-title" class="gam-panel__title" data-wp-text="state.panelTitle"></span>
-			</div>
-			<div class="gam-panel__body" id="gam-panel-body"></div>
+	<?php
+	// A native <dialog>: showModal() gives the focus trap, Escape, the inert page behind it and the
+	// backdrop; assets/js/dialog.js adds focus-return and backdrop click. The panel used to be a div
+	// wearing role="dialog" aria-modal="true", which promised all of that and delivered none of it.
+	?>
+	<dialog class="gam-panel" data-wb-gam-dialog aria-labelledby="gam-panel-title">
+		<div class="gam-panel__header">
+			<button type="button" class="gam-panel__back" data-wp-on--click="actions.closePanel">
+				<i class="icon-arrow-left"></i>
+				<span class="screen-reader-text"><?php esc_html_e( 'Close panel', 'wb-gamification' ); ?></span>
+			</button>
+			<span id="gam-panel-title" class="gam-panel__title" data-wp-text="state.panelTitle"></span>
 		</div>
-	</div>
+		<div class="gam-panel__body" id="gam-panel-body"></div>
+	</dialog>
 
 	<?php if ( ! empty( $wb_gam_conv_rules ) ) : ?>
 		<!-- Currency-conversion modal — shared across all currency tiles.

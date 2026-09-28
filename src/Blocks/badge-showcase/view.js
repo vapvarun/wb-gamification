@@ -8,15 +8,11 @@
  * <button role="tab"> elements with keyboard parity guaranteed by the
  * browser.
  *
- * The block is sometimes rendered inside the hub block's flyout panel,
- * which uses the WordPress Interactivity API directive
- * `data-wp-on--click="actions.stopPropagation"` on its dialog wrapper
- * to keep panel-internal clicks from closing the backdrop. That kills
- * document-level delegation, so we wire listeners directly to each
- * showcase root the moment it mounts. The wrapping hub panel itself
- * IS the dialog, with its own ESC + focus management (see
- * assets/interactivity/hub.js callbacks.init); this filter-tab handler
- * does not need to duplicate that logic.
+ * The block is sometimes rendered inside the hub block's flyout panel. That panel's content is a
+ * `<template>` clone injected on open, so document-level delegation cannot be relied on and we wire
+ * listeners directly to each showcase root the moment it mounts. The wrapping hub panel itself IS
+ * the dialog (a native <dialog>, see assets/interactivity/hub.js), with its own ESC + focus
+ * management; this filter-tab handler does not need to duplicate that logic.
  *
  * MutationObserver watches the whole body so the hub panel's template
  * clone is bound the instant it lands in `.gam-panel__body`.
@@ -57,13 +53,15 @@
 		// so this button is the only door through that gate, and it is only rendered on your own board.
 		root.addEventListener( 'click', function ( event ) {
 			var button = event.target.closest( '[data-wb-gam-share]' );
-			if ( ! button || ! root.contains( button ) || button.disabled ) {
+			if ( ! button || ! root.contains( button ) || 'true' === button.getAttribute( 'aria-disabled' ) ) {
 				return;
 			}
 
 			var shared = '1' === button.getAttribute( 'data-shared' );
 
-			button.disabled = true;
+			// aria-disabled, not disabled: a disabled button that has focus loses it, and re-enabling it
+			// does not give it back, so a keyboard member was dropped at the top of the page on every toggle.
+			button.setAttribute( 'aria-disabled', 'true' );
 
 			window.wbGam.rest( button.getAttribute( 'data-rest-url' ), {
 				// Publishing is a POST; withdrawing is a DELETE. Withdrawing has to work exactly as well
@@ -85,7 +83,7 @@
 						: button.getAttribute( 'data-label-share' );
 				} )
 				.finally( function () {
-					button.disabled = false;
+					button.removeAttribute( 'aria-disabled' );
 				} );
 		} );
 	}

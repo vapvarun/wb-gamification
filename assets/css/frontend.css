@@ -168,7 +168,9 @@ body.admin-bar .wb-gam-toasts--top-right {
 	}
 }
 
-.wb-gam-toast__icon {
+/* Two classes: lucide.css loads later and sets `font-size: inherit` on every icon-*, which beat the
+ * single-class rule and shrank the toast icon to the body size. */
+.wb-gam-toast .wb-gam-toast__icon {
 	font-size: 1.25rem;
 	line-height: 1;
 	flex-shrink: 0;

@@ -821,7 +821,7 @@ final class SettingsPage {
 		wp_enqueue_script(
 			'wb-gam-admin-rest-utils',
 			plugins_url( 'assets/js/admin-rest-utils.js', WB_GAM_FILE ),
-			array(),
+			array( 'wb-gam-dialog' ),
 			WB_GAM_VERSION,
 			true
 		);
@@ -871,7 +871,7 @@ final class SettingsPage {
 		wp_enqueue_script(
 			'wb-gam-admin-rest-utils',
 			plugins_url( 'assets/js/admin-rest-utils.js', WB_GAM_FILE ),
-			array(),
+			array( 'wb-gam-dialog' ),
 			WB_GAM_VERSION,
 			true
 		);
@@ -941,7 +941,7 @@ final class SettingsPage {
 		wp_enqueue_script(
 			'wb-gam-admin-rest-utils',
 			plugins_url( 'assets/js/admin-rest-utils.js', WB_GAM_FILE ),
-			array(),
+			array( 'wb-gam-dialog' ),
 			WB_GAM_VERSION,
 			true
 		);

@@ -228,12 +228,46 @@
 	 *     3. Other surfaces (mobile SDK consumers) can implement their
 	 *        own aggregation policy; we don't lock them into ours
 	 */
-	var lastPointsToast = null; // { el, points, actionCount, dismissTimer, type }
+	var lastPointsToast = null; // { el, points, actionCount, type }
 	var AGGREGATE_WINDOW_MS = 2000;
 
 	// At most this many toasts on screen; a new one drops the oldest so a burst
 	// of distinct awards never covers the page.
 	var MAX_VISIBLE = 3;
+
+	var DISMISS_MS = 4000;
+	var RESUME_MS  = 2000;
+
+	/**
+	 * Fade a toast out and remove it.
+	 *
+	 * @param {Element} el Toast element.
+	 */
+	function dismiss( el ) {
+		if ( ! el.parentNode ) {
+			return;
+		}
+		el.classList.add( 'wb-gam-toast--exit' );
+		setTimeout( function () {
+			if ( el.parentNode ) { el.remove(); }
+		}, 320 );
+	}
+
+	/**
+	 * (Re)start a toast's auto-dismiss countdown.
+	 *
+	 * @param {Element} el Toast element.
+	 * @param {number}  ms Milliseconds until it fades.
+	 */
+	function armDismiss( el, ms ) {
+		clearTimeout( el._wbGamTimer );
+		// A merge or a late arm must not start the countdown under a pointer that is on the toast;
+		// mouseleave re-arms it.
+		if ( el.matches( ':hover' ) ) {
+			return;
+		}
+		el._wbGamTimer = setTimeout( function () { dismiss( el ); }, ms );
+	}
 
 	/**
 	 * Render a queued payload of toasts, deduping by `_id` so the same
@@ -329,21 +363,7 @@
 		}
 
 		// Reset the dismiss timer so the user has time to see the bump.
-		if ( lastPointsToast.dismissTimer ) {
-			clearTimeout( lastPointsToast.dismissTimer );
-		}
-		// Capture the element now: lastPointsToast is cleared after
-		// AGGREGATE_WINDOW_MS, long before this fires, and reading it here
-		// left every merged toast on screen for good.
-		var el = lastPointsToast.el;
-		lastPointsToast.dismissTimer = setTimeout( function () {
-			if ( el.parentNode ) {
-				el.classList.add( 'wb-gam-toast--exit' );
-				setTimeout( function () {
-					if ( el.parentNode ) { el.remove(); }
-				}, 320 );
-			}
-		}, 4000 );
+		armDismiss( lastPointsToast.el, DISMISS_MS );
 	}
 
 	/**
@@ -383,8 +403,9 @@
 
 		// Optional call to action. Same-site paths only: the payload is ours, but a toast
 		// must never become an off-site link.
+		var link = null;
 		if ( toast.url && /^\/(?!\/)/.test( toast.url ) ) {
-			var link = document.createElement( 'a' );
+			link = document.createElement( 'a' );
 			link.className   = 'wb-gam-toast__link';
 			link.href        = toast.url;
 			link.textContent = toast.url_label || toastI18n( 'view', 'View' );
@@ -412,17 +433,16 @@
 			el.classList.add( 'wb-gam-toast--enter' );
 		} );
 
-		// Auto-dismiss after 4 seconds.
-		var dismissTimer = setTimeout( function () {
-			if ( el.parentNode ) {
-				el.classList.add( 'wb-gam-toast--exit' );
-				setTimeout( function () {
-					if ( el.parentNode ) {
-						el.remove();
-					}
-				}, 320 );
-			}
-		}, 4000 );
+		// Auto-dismiss after 4 seconds, paused while the pointer or keyboard focus is on the toast. A
+		// toast with a link stays until it is dismissed: it is appended to the end of the page, so a
+		// keyboard or screen-reader member cannot reach the link inside 4 seconds (WCAG 2.2.1).
+		if ( ! link ) {
+			armDismiss( el, DISMISS_MS );
+			el.addEventListener( 'mouseenter', function () { clearTimeout( el._wbGamTimer ); } );
+			el.addEventListener( 'focusin', function () { clearTimeout( el._wbGamTimer ); } );
+			el.addEventListener( 'mouseleave', function () { armDismiss( el, RESUME_MS ); } );
+			el.addEventListener( 'focusout', function () { armDismiss( el, RESUME_MS ); } );
+		}
 
 		// Track points toasts so subsequent ones within
 		// AGGREGATE_WINDOW_MS can merge instead of stacking.
@@ -431,7 +451,6 @@
 				el:           el,
 				points:       parseInt( toast.points, 10 ) || 0,
 				actionCount:  1,
-				dismissTimer: dismissTimer,
 				type:         'points',
 				action:       toast.action || '',
 				actionLabel:  toast.detail || '',
