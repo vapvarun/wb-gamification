@@ -30,7 +30,7 @@ final class SubmissionsPage {
 			'wb-gamification',
 			__( 'Submissions', 'wb-gamification' ),
 			__( 'Submissions', 'wb-gamification' ),
-			'manage_options',
+			'wb_gam_manage_submissions',
 			'wb-gam-submissions',
 			array( __CLASS__, 'render_page' )
 		);
@@ -70,6 +70,9 @@ final class SubmissionsPage {
 	}
 
 	public static function render_page(): void {
+		if ( ! \WBGam\Engine\Capabilities::user_can( 'wb_gam_manage_submissions' ) ) {
+			wp_die( esc_html__( 'You do not have permission to access this page.', 'wb-gamification' ) );
+		}
 		$repo    = new SubmissionRepository();
 		$pending = $repo->list( 'pending', 200, 0 );
 		$total   = $repo->count_pending();

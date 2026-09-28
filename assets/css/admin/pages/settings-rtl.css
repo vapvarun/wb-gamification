@@ -766,6 +766,11 @@
 	width: 100%;
 }
 
+/* Inside the scroller a level name keeps room to be read; the table scrolls before it squeezes. */
+.wbgam-table-scroll > .wb-gam-levels-table {
+	min-width: 460px;
+}
+
 .wb-gam-levels-tbody tr {
 	border-bottom: 1px solid var(--wbgam-border);
 }

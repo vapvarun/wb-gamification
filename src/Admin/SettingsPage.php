@@ -48,14 +48,10 @@ final class SettingsPage {
 		add_action( 'admin_init', array( __CLASS__, 'handle_dismiss_welcome' ) );
 		add_action( 'admin_init', array( __CLASS__, 'handle_dismiss_checklist' ) );
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_page_css' ) );
-		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_levels_assets' ) );
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_settings_toggles' ) );
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_test_event' ) );
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_emails_form' ) );
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_tools_assets' ) );
-		// admin_post_wb_gam_save_levels + admin_post_wb_gam_delete_level removed in 1.0.0:
-		// the Levels tab now consumes /wb-gamification/v1/levels (POST/PATCH/DELETE)
-		// directly via assets/js/admin-levels.js. See Tier 0.C migration.
 	}
 
 	/**
@@ -82,6 +78,7 @@ final class SettingsPage {
 		'wb-gamification',
 		'wb-gamification-import',
 		'wb-gamification-badges',
+		'wb-gam-levels',
 		'wb-gam-challenges',
 		'wb-gam-community-challenges',
 		'wb-gam-redemption',
@@ -282,7 +279,7 @@ final class SettingsPage {
 				'title'        => __( 'Define your levels', 'wb-gamification' ),
 				'desc'         => __( 'Levels turn point thresholds into named milestones (e.g. Newcomer → Regular → Expert).', 'wb-gamification' ),
 				'done'         => $level_count > 0,
-				'action_url'   => admin_url( 'admin.php?page=wb-gamification#levels' ),
+				'action_url'   => admin_url( 'admin.php?page=wb-gam-levels' ),
 				'action_label' => __( 'Add levels', 'wb-gamification' ),
 			),
 			array(
@@ -855,70 +852,6 @@ final class SettingsPage {
 	}
 
 	/**
-	 * Enqueue the REST-driven Levels tab JS bundle on this admin page only.
-	 *
-	 * Replaces the deprecated `admin_post_wb_gam_save_levels` and
-	 * `admin_post_wb_gam_delete_level` form-post handlers (1.0.0 Tier 0.C).
-	 *
-	 * @param string $hook_suffix Current admin page hook.
-	 * @return void
-	 */
-	public static function enqueue_levels_assets( string $hook_suffix ): void {
-		// `toplevel_page_wb-gamification` is the hook for the top-level menu page
-		// registered in self::register_page().
-		if ( 'toplevel_page_wb-gamification' !== $hook_suffix ) {
-			return;
-		}
-		// Settings page navigates by URL hash (`#levels`), not `?tab=levels`,
-		// so PHP cannot tell at render time which sidebar section the admin is
-		// looking at. The old gate on $_GET['tab'] === 'levels' meant the
-		// Levels JS never loaded — Add/Save/Delete buttons just navigated to
-		// `#levels` without doing anything. Always enqueue on the settings
-		// page; the script is small (≈ 12 KB) and only binds to its own
-		// data-attrs so it is inert when the Levels section is hidden.
-
-		wp_enqueue_script(
-			'wb-gam-admin-rest-utils',
-			plugins_url( 'assets/js/admin-rest-utils.js', WB_GAM_FILE ),
-			array( 'wb-gam-dialog', 'wb-gam-toast-core' ),
-			WB_GAM_VERSION,
-			true
-		);
-		wp_enqueue_script(
-			'wb-gam-admin-levels',
-			plugins_url( 'assets/js/admin-levels.js', WB_GAM_FILE ),
-			array( 'wb-gam-admin-rest-utils' ),
-			WB_GAM_VERSION,
-			true
-		);
-
-		wp_localize_script(
-			'wb-gam-admin-levels',
-			'wbGamLevelsSettings',
-			array(
-				'restUrl' => esc_url_raw( rest_url( 'wb-gamification/v1' ) ),
-				'nonce'   => wp_create_nonce( 'wp_rest' ),
-				'i18n'    => array(
-					'aria_name'       => __( 'Level name', 'wb-gamification' ),
-					'aria_points'     => __( 'Level minimum points', 'wb-gamification' ),
-					'starting_locked' => __( 'Starting level is always 0', 'wb-gamification' ),
-					'starting_level'  => __( 'Starting level', 'wb-gamification' ),
-					'delete'          => __( 'Delete', 'wb-gamification' ),
-					'saved'           => __( 'Levels saved.', 'wb-gamification' ),
-					'save_failed'     => __( 'Some levels failed to save.', 'wb-gamification' ),
-					'added'           => __( 'Level added.', 'wb-gamification' ),
-					'add_failed'      => __( 'Failed to add level.', 'wb-gamification' ),
-					'add_invalid'     => __( 'Provide a name and points value.', 'wb-gamification' ),
-					'deleted'         => __( 'Level deleted.', 'wb-gamification' ),
-					'delete_failed'   => __( 'Failed to delete level.', 'wb-gamification' ),
-					'confirm_delete'  => __( 'Delete this level?', 'wb-gamification' ),
-					'refresh_failed'  => __( 'Failed to load levels.', 'wb-gamification' ),
-				),
-			)
-		);
-	}
-
-	/**
 	 * Enqueue the settings import/export script for the Tools section.
 	 *
 	 * @param string $hook_suffix Current admin page hook.
@@ -1190,7 +1123,7 @@ final class SettingsPage {
 						<span class="icon-star"></span>
 						<?php esc_html_e( 'Points', 'wb-gamification' ); ?>
 					</a>
-					<a class="wbgam-settings-nav-item" href="#levels" data-section="levels">
+					<a class="wbgam-settings-nav-item" href="<?php echo esc_url( admin_url( 'admin.php?page=wb-gam-levels' ) ); ?>">
 						<span class="icon-chart-bar"></span>
 						<?php esc_html_e( 'Levels', 'wb-gamification' ); ?>
 					</a>
@@ -1305,11 +1238,6 @@ final class SettingsPage {
 				<!-- Points section -->
 				<div class="wbgam-settings-section" id="section-points">
 					<?php self::render_points_tab(); ?>
-				</div>
-
-				<!-- Levels section -->
-				<div class="wbgam-settings-section" id="section-levels">
-					<?php self::render_levels_tab(); ?>
 				</div>
 
 				<!-- Kudos section -->
@@ -2056,117 +1984,6 @@ final class SettingsPage {
 				</div>
 			</div>
 		<?php endif; ?>
-		<?php
-	}
-
-	// ── Levels tab ────────────────────────────────────────────────────────────
-
-	/**
-	 * Render the Levels settings section (card layout).
-	 */
-	private static function render_levels_tab(): void {
-		global $wpdb;
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- settings page, infrequent, small table.
-		$levels = $wpdb->get_results(
-			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name is $wpdb->prefix . literal string.
-			"SELECT id, name, min_points, sort_order FROM {$wpdb->prefix}wb_gam_levels ORDER BY min_points ASC",
-			ARRAY_A
-		);
-		?>
-		<div data-wb-gam-levels-root>
-		<div class="wbgam-settings-card">
-			<div class="wbgam-settings-card__head">
-				<p class="wbgam-settings-card__title"><?php esc_html_e( 'LEVELS', 'wb-gamification' ); ?></p>
-				<p class="wbgam-settings-card__desc"><?php esc_html_e( 'Edit level names and minimum point thresholds. Members move up automatically when they cross a threshold.', 'wb-gamification' ); ?></p>
-			</div>
-			<div class="wbgam-settings-card__body">
-				<form data-wb-gam-levels-bulk-form>
-					<table class="widefat striped wb-gam-levels-table wbgam-table-reset wbgam-table-reset--full">
-						<thead>
-						<tr>
-							<th><?php esc_html_e( 'Level Name', 'wb-gamification' ); ?></th>
-							<th class="wb-gam-col-pts-min"><?php esc_html_e( 'Min Points Required', 'wb-gamification' ); ?></th>
-							<th class="wbgam-col-actions"></th>
-						</tr>
-						</thead>
-						<tbody data-wb-gam-levels-tbody>
-						<?php foreach ( $levels as $level ) : ?>
-							<tr data-id="<?php echo (int) $level['id']; ?>">
-								<td>
-									<input
-										type="text"
-										data-wb-gam-level-field="name"
-										aria-label="<?php esc_attr_e( 'Level name', 'wb-gamification' ); ?>"
-										value="<?php echo esc_attr( $level['name'] ); ?>"
-										class="wb-gam-input-full"
-									>
-								</td>
-								<td>
-									<input
-										type="number"
-										data-wb-gam-level-field="min_points"
-										aria-label="<?php esc_attr_e( 'Level minimum points', 'wb-gamification' ); ?>"
-										value="<?php echo esc_attr( $level['min_points'] ); ?>"
-										min="0"
-										class="wb-gam-input-medium"
-										<?php echo 0 === (int) $level['min_points'] ? 'readonly title="' . esc_attr__( 'Starting level is always 0', 'wb-gamification' ) . '"' : ''; ?>
-									>
-								</td>
-								<td>
-									<?php if ( (int) $level['min_points'] > 0 ) : ?>
-										<button
-											type="button"
-											class="wbgam-btn wbgam-btn--sm wbgam-btn--danger"
-											data-wb-gam-level-delete="<?php echo (int) $level['id']; ?>"
-										>
-											<?php esc_html_e( 'Delete', 'wb-gamification' ); ?>
-										</button>
-									<?php else : ?>
-										<span class="description"><?php esc_html_e( 'Starting level', 'wb-gamification' ); ?></span>
-									<?php endif; ?>
-								</td>
-							</tr>
-						<?php endforeach; ?>
-						</tbody>
-					</table>
-
-					<div class="wbgam-settings-section__footer wbgam-section__footer--flat">
-						<button type="submit" class="wbgam-btn wbgam-btn--primary" data-wb-gam-levels-save>
-							<?php esc_html_e( 'Save Levels', 'wb-gamification' ); ?>
-						</button>
-					</div>
-				</form>
-			</div>
-		</div>
-
-		<div class="wbgam-settings-card">
-			<div class="wbgam-settings-card__head">
-				<p class="wbgam-settings-card__title"><?php esc_html_e( 'ADD NEW LEVEL', 'wb-gamification' ); ?></p>
-				<p class="wbgam-settings-card__desc"><?php esc_html_e( 'Create a new level threshold.', 'wb-gamification' ); ?></p>
-			</div>
-			<div class="wbgam-settings-card__body">
-				<form data-wb-gam-levels-add-form>
-					<table class="form-table" role="presentation">
-						<tr>
-							<th scope="row"><label for="wb-gam-new-level-name"><?php esc_html_e( 'Level Name', 'wb-gamification' ); ?></label></th>
-							<td><input type="text" id="wb-gam-new-level-name" name="wb_gam_new_level_name" value="" class="regular-text" placeholder="<?php esc_attr_e( 'e.g. Gold', 'wb-gamification' ); ?>" required></td>
-						</tr>
-						<tr>
-							<th scope="row"><label for="wb-gam-new-level-points"><?php esc_html_e( 'Min Points Required', 'wb-gamification' ); ?></label></th>
-							<td><input type="number" id="wb-gam-new-level-points" name="wb_gam_new_level_points" value="" min="1" class="wb-gam-input-medium" required>
-							<p class="description"><?php esc_html_e( 'Members reach this level when their cumulative points cross this threshold.', 'wb-gamification' ); ?></p></td>
-						</tr>
-					</table>
-
-					<div class="wbgam-settings-section__footer wbgam-section__footer--flat">
-						<button type="submit" class="wbgam-btn wbgam-btn--secondary" data-wb-gam-levels-add>
-							<?php esc_html_e( 'Add Level', 'wb-gamification' ); ?>
-						</button>
-					</div>
-				</form>
-			</div>
-		</div>
-		</div>
 		<?php
 	}
 

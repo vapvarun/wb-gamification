@@ -20,7 +20,7 @@ Fill in the **Add New Rule** form at the bottom of the page.
 
 ### Step 1: Choose the trigger level
 
-Select the level from the **When member reaches level** dropdown. This list shows all levels you have configured in the Levels tab.
+Select the level from the **When member reaches level** dropdown. This list shows all levels you have configured on the Levels page.
 
 ### Step 2: Choose the action type
 

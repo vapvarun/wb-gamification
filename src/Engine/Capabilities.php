@@ -118,7 +118,7 @@ final class Capabilities {
 			),
 			'wb_gam_manage_levels'         => array(
 				'label' => __( 'Manage levels', 'wb-gamification' ),
-				'desc'  => __( 'Edit the level ladder.', 'wb-gamification' ),
+				'desc'  => __( 'Open the Levels page and edit the level ladder.', 'wb-gamification' ),
 			),
 			'wb_gam_manage_rules'          => array(
 				'label' => __( 'Manage rules', 'wb-gamification' ),
@@ -134,7 +134,7 @@ final class Capabilities {
 			),
 			'wb_gam_manage_submissions'    => array(
 				'label' => __( 'Moderate submissions', 'wb-gamification' ),
-				'desc'  => __( 'Approve or reject member-submitted achievements.', 'wb-gamification' ),
+				'desc'  => __( 'Open the Submissions page and approve or reject member-submitted achievements.', 'wb-gamification' ),
 			),
 			'wb_gam_manage_webhooks'       => array(
 				'label' => __( 'Manage webhooks', 'wb-gamification' ),
@@ -142,7 +142,7 @@ final class Capabilities {
 			),
 			'wb_gam_manage_email_settings' => array(
 				'label' => __( 'Manage emails', 'wb-gamification' ),
-				'desc'  => __( 'Toggle transactional and digest emails.', 'wb-gamification' ),
+				'desc'  => __( 'Change email settings through the REST API. The Emails screen in Settings stays administrator-only.', 'wb-gamification' ),
 			),
 			'wb_gam_view_analytics'        => array(
 				'label' => __( 'View analytics', 'wb-gamification' ),

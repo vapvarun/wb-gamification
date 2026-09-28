@@ -19,7 +19,7 @@
 | `POST /point-types/{from}/convert` | `is_user_logged_in()` | Member-facing currency conversion; `PointTypeConversionService` validates against admin-defined rules + transaction-locked. |
 | Public profile `/u/{user_login}` | Site option `wb_gam_profile_public_enabled` AND user_meta `wb_gam_profile_public` | Both required — site owner enables feature, member opts in. Returns 404 if either gate fails. |
 
-All new admin pages (Point Types, Conversions, Submissions) use `manage_options` as their menu cap, consistent with the existing matrix.
+Point Types and Conversions use `manage_options` as their menu cap. Submissions moved to `wb_gam_manage_submissions` in 1.6.5 (see below).
 
 ---
 
@@ -279,3 +279,14 @@ are delegating badge management to.
 | `AbilitiesRegistration` | Registers AI abilities against the site. |
 
 Revisit an entry only by changing this table first — that is what makes it a choice.
+
+---
+
+## v1.6.5 additions - delegated Submissions and Levels pages
+
+A staff member holding only `wb_gam_manage_submissions` now opens **Gamification > Submissions**
+(the REST queue already accepted the cap; the menu did not, so the delegation reached nothing).
+Levels moved off Settings onto **Gamification > Levels**, gated on `wb_gam_manage_levels` (the
+`/levels` REST routes already accepted it), so a level editor no longer needs the Settings screen,
+which stays `manage_options`. `wb_gam_manage_email_settings` still delegates REST access only; the
+Emails screen stays administrator-only and the matrix says so.

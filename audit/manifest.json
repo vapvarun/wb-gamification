@@ -1472,11 +1472,20 @@
       {
         "slug": "wb-gam-submissions",
         "title": "Submissions",
-        "capability": "manage_options",
+        "capability": "wb_gam_manage_submissions",
         "callback": "",
         "parentSlug": "wb-gamification",
         "file": "src/Admin/SubmissionsPage.php",
         "line": 29
+      },
+      {
+        "slug": "wb-gam-levels",
+        "title": "Levels",
+        "capability": "wb_gam_manage_levels",
+        "callback": "",
+        "parentSlug": "wb-gamification",
+        "file": "src/Admin/LevelsPage.php",
+        "line": 47
       }
     ],
     "settings": [],
@@ -9692,9 +9701,16 @@
     {
       "page": "wb-gam-submissions",
       "type": "submenu",
-      "capability": "manage_options",
+      "capability": "wb_gam_manage_submissions",
       "title": "Submissions",
       "file": "src/Admin/SubmissionsPage.php:29"
+    },
+    {
+      "page": "wb-gam-levels",
+      "type": "submenu",
+      "capability": "wb_gam_manage_levels",
+      "title": "Levels",
+      "file": "src/Admin/LevelsPage.php:47"
     }
   ],
   "tables": [
