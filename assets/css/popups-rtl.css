@@ -312,9 +312,12 @@ dialog.wb-gam-drawer {
 dialog.wb-gam-dialog::backdrop,
 dialog.wb-gam-drawer::backdrop {
 	background: var(--wb-gam-pop-scrim);
-	backdrop-filter: blur(var(--wb-gam-pop-blur));
 	opacity: 0;
 	transition: opacity var(--wb-gam-dur) var(--wb-gam-ease), overlay var(--wb-gam-dur) allow-discrete, display var(--wb-gam-dur) allow-discrete;
+}
+/* Blur is for the modal and the Moment card only; a side panel keeps the page behind it crisp. */
+dialog.wb-gam-dialog::backdrop {
+	backdrop-filter: blur(var(--wb-gam-pop-blur));
 }
 dialog.wb-gam-dialog[open]::backdrop,
 dialog.wb-gam-drawer[open]::backdrop {
