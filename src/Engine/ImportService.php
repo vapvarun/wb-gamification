@@ -33,10 +33,15 @@ final class ImportService {
 	 * (string|null), object_id (int|null), occurred_at (string ISO-8601|null),
 	 * source_key (string|null — de-dup key), metadata (array|null).
 	 *
-	 * @param array<int, array<string, mixed>> $rows Normalized rows.
+	 * @param array<int, array<string, mixed>> $rows      Normalized rows.
+	 * @param bool                             $recompute Recompute badges and levels for the members this
+	 *                                                    call touched. True for a one-shot call. A PAGED
+	 *                                                    import passes false and recomputes each member once,
+	 *                                                    at the end: recomputing per page would re-evaluate a
+	 *                                                    member on every page they appear in.
 	 * @return array{received:int, imported:int, skipped_duplicate:int, failed:int, badges_awarded:int}
 	 */
-	public static function ingest( array $rows ): array {
+	public static function ingest( array $rows, bool $recompute = true ): array {
 		$imported = 0;
 		$skipped  = 0;
 		$failed   = 0;
@@ -88,7 +93,7 @@ final class ImportService {
 			}
 		}
 
-		$badges = ! empty( $users ) ? Engine::recompute_users( array_keys( $users ) ) : 0;
+		$badges = ( $recompute && ! empty( $users ) ) ? Engine::recompute_users( array_keys( $users ) ) : 0;
 
 		return array(
 			'received'          => count( $rows ),

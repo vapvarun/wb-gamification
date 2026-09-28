@@ -1591,7 +1591,7 @@ final class SettingsPage {
 									>
 									<?php esc_html_e( 'months', 'wb-gamification' ); ?>
 									<p class="description">
-										<?php esc_html_e( 'The immutable event log is the source of truth points, badges, and levels are derived from. Events older than this horizon are pruned daily so the table cannot grow without bound; current balances are unaffected (they are materialised separately). Default 12 months.', 'wb-gamification' ); ?>
+										<?php esc_html_e( 'The immutable event log is the source of truth points, badges, and levels are derived from. Events older than this horizon are pruned daily so the table cannot grow without bound; current balances are unaffected (they are materialised separately). Events created by an import are kept until you undo that import, so a re-run cannot add the same history twice. Default 12 months.', 'wb-gamification' ); ?>
 									</p>
 								</td>
 							</tr>
