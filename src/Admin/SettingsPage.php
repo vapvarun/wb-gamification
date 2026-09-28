@@ -664,7 +664,7 @@ final class SettingsPage {
 						<span class="icon-trending-up" aria-hidden="true"></span>
 						<?php esc_html_e( 'Leaderboard Nudge', 'wb-gamification' ); ?>
 					</h2>
-					<p class="wbgam-card-desc"><?php esc_html_e( 'When a member is close to overtaking a rival on the leaderboard, nudge them. The in-app notification is always sent; this controls the email copy.', 'wb-gamification' ); ?></p>
+					<p class="wbgam-card-desc"><?php esc_html_e( 'When a member is close to overtaking a rival on the leaderboard, nudge them once a week. With BuddyPress active they get an in-app notification; turn on email to reach members on any other setup.', 'wb-gamification' ); ?></p>
 				</div>
 				<div class="wbgam-card-body">
 					<label class="wbgam-checkbox-option">

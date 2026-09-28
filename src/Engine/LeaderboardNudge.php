@@ -7,10 +7,10 @@
  * position. The message is intentionally private and positive — never
  * public shaming. Users in opt-out are skipped.
  *
- * Delivery:
+ * Delivery (the run is skipped when none of these can reach anyone):
  *   1. BuddyPress notification (if BP active)
  *   2. wp_mail email (if wb_gam_nudge_email = 1, default 0)
- *   3. Always fires `wb_gam_weekly_nudge_sent` for custom integrations.
+ *   3. `wb_gam_weekly_nudge_sent` for custom integrations (Slack, push, SMS).
  *
  * Architecture:
  *   - Weekly cron schedules one AS job per active user to avoid request timeout.
@@ -119,6 +119,11 @@ final class LeaderboardNudge {
 	public static function dispatch_batch(): void {
 		global $wpdb;
 
+		// Nothing would receive the nudge, so do not read the week's points or queue thousands of jobs.
+		if ( ! self::has_delivery_channel() ) {
+			return;
+		}
+
 		// Single-fire-per-hour gate. Two callers in the same hour are
 		// almost certainly a bug — the weekly nudge cron should fire once
 		// per week; anything more is a sign of hook collision or duplicate
@@ -200,6 +205,21 @@ final class LeaderboardNudge {
 				'wb-gamification-nudge'
 			);
 		}
+	}
+
+	/**
+	 * Whether a nudge would reach anyone: a BuddyPress notification, the email option, or a
+	 * listener on `wb_gam_weekly_nudge_sent` (Slack, push, SMS). Without one the weekly run is a
+	 * fan-out of rank queries that ends in nothing.
+	 *
+	 * @since 1.6.5
+	 *
+	 * @return bool
+	 */
+	public static function has_delivery_channel(): bool {
+		return function_exists( 'bp_notifications_add_notification' )
+			|| (bool) get_option( 'wb_gam_nudge_email', 0 )
+			|| has_action( 'wb_gam_weekly_nudge_sent' );
 	}
 
 	// ── Single-user nudge ───────────────────────────────────────────────────────
