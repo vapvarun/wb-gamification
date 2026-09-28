@@ -47,7 +47,7 @@ can delete data, and every toast loses its icon on pages without a gamification 
 
 ### 5. The admin confirm dialog starts on Cancel for a danger action
 - **Action**: on a wp-admin gamification page call `wbGamAdminRest.confirmAction({ tone: 'danger', confirmText: 'Delete' })`; press Tab twice, then Escape.
-- **Expect**: `dialog.wb-gam-confirm-dialog` is open with focus on Cancel; Tab cycles Cancel, Delete, then the browser, never the page; Escape resolves `false`, removes the dialog and returns focus to the element that opened it. A `tone: 'primary'` prompt starts on its confirm button.
+- **Expect**: `dialog.wb-gam-confirm-dialog` is open with focus on Cancel; Tab cycles Cancel, Delete, then the browser, never the page; Escape resolves `false`, removes the dialog and returns focus to the element that opened it. A `tone: 'primary'` prompt starts on its confirm button. At a 390px viewport the dialog sits inside the viewport with a 16px gutter (`right <= innerWidth - 16`).
 - **On fail**: `assets/js/admin-rest-utils.js` `confirmAction()`; the `wb-gam-dialog` dependency on the enqueue.
 
 ### 6. Badge Share keeps focus
@@ -62,7 +62,7 @@ ALL of the following hold:
 2. Link toasts persist; plain toasts fade at about 4s and pause on hover.
 3. Every hub tile opens with Enter and Space and shows a focus ring.
 4. The hub panel traps focus, closes three ways, and returns focus to its tile.
-5. A danger confirm starts on Cancel and does not leak focus to the page.
+5. A danger confirm starts on Cancel, does not leak focus to the page, and fits a 390px viewport.
 6. Badge Share never drops focus.
 
 ## Fail diagnostics
@@ -73,3 +73,4 @@ ALL of the following hold:
 | Tab from a hub tile skips it | tile lost `role`/`tabindex` | `src/Blocks/hub/render.php` (rebuild `npm run build`) |
 | Focus lands on `<body>` after closing the panel | `onClose` not passed to `wbGam.dialog.open` | `assets/interactivity/hub.js` showPanel() |
 | Enter on a danger confirm deletes | initial focus on the confirm button | `assets/js/admin-rest-utils.js` |
+| Confirm dialog wider than the viewport at 390px | `box-sizing` lost on the native dialog | `assets/css/admin/components.css` `.wb-gam-confirm-dialog` |
