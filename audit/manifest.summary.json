@@ -28,8 +28,8 @@
     "frontend_css_files": 46,
     "frontend_js_files": 56,
     "php_file_count": 202,
-    "integrations": 24,
-    "integration_triggers_total": 126,
+    "integrations": 25,
+    "integration_triggers_total": 127,
     "integration_adapter_classes": 11
   },
   "namespaces": {

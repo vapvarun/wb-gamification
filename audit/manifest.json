@@ -11589,7 +11589,7 @@
       "manifest_file": "integrations/jetonomy-pro.php",
       "manifest_version": "1.0.0",
       "detect": "defined('JETONOMY_PRO_VERSION')",
-      "trigger_count": 7,
+      "trigger_count": 6,
       "adapter_classes": [],
       "purpose": ""
     },
@@ -11696,6 +11696,17 @@
       "manifest_version": "1.0.0",
       "detect": "defined('WCBP_VERSION')",
       "trigger_count": 1,
+      "adapter_classes": [],
+      "purpose": ""
+    },
+    {
+      "slug": "wp-sell-services",
+      "name": "WP Sell Services",
+      "tier": "first-party",
+      "manifest_file": "integrations/wp-sell-services.php",
+      "manifest_version": "1.0.0",
+      "detect": "defined('WPSS_VERSION')",
+      "trigger_count": 2,
       "adapter_classes": [],
       "purpose": ""
     },

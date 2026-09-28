@@ -16,7 +16,7 @@ Status: `YES` shipped & code-verified · `PARTIAL` works with a named limit · `
 
 | Can it… | Status | How |
 |---|---|---|
-| Award points for activity automatically? | YES | Rules engine over the triggers the installed stack exposes — **8 vanilla, ~50 with WooCommerce + LearnDash + BuddyPress, 126 on the full Wbcom suite**. Never quote 126 flat; see the stack table below. `wb_gam_points`, `wb_gam_events` |
+| Award points for activity automatically? | YES | Rules engine over the triggers the installed stack exposes — **8 vanilla, ~50 with WooCommerce + LearnDash + BuddyPress, 127 on the full Wbcom suite**. Never quote 127 flat; see the stack table below. `wb_gam_points`, `wb_gam_events` |
 | Support more than one currency (XP, Coins, Credits)? | YES | Point Types admin page; `wb_gam_point_types`, `wb_gam_user_totals` |
 | Convert one currency into another? | YES | Conversions page; `wb_gam_point_type_conversions` |
 | Stop members farming points? | YES | Per-action cooldown, daily cap, **weekly cap**, earning exclusions (`PointsEngine::passes_rate_limits`). All four settable per action in Settings ▸ Points. (Caps are a PAID add-on in both GamiPress and myCred.) |
@@ -82,7 +82,7 @@ Status: `YES` shipped & code-verified · `PARTIAL` works with a named limit · `
 
 | Can it… | Status | How |
 |---|---|---|
-| Reward activity from other plugins? | YES, with an honest caveat | **21 integration manifests / 126 triggers** — but the reachable number depends on the owner's stack, and quoting 126 flat is misleading:<br>• **8** on a vanilla WordPress site<br>• **50** with WooCommerce + LearnDash + BuddyPress<br>• **126** on the full Wbcom suite (**76 of the 126 require another Wbcom plugin**)<br>Third-party: BuddyPress, bbPress, WooCommerce, LearnDash, LifterLMS, MemberPress, GiveWP, The Events Calendar. Wbcom: BuddyNext, Jetonomy, Learnomy, Listora, Eventonomy, WPMediaVerse, WP Career Board. (ActivityPub and GraphQL are adapters and award no points — they are not integrations in this sense.) |
+| Reward activity from other plugins? | YES, with an honest caveat | **22 integration manifests / 127 triggers** — but the reachable number depends on the owner's stack, and quoting 127 flat is misleading:<br>• **8** on a vanilla WordPress site<br>• **50** with WooCommerce + LearnDash + BuddyPress<br>• **127** on the full Wbcom suite (**77 of the 127 require another Wbcom plugin**)<br>Third-party: BuddyPress, bbPress, WooCommerce, LearnDash, LifterLMS, MemberPress, GiveWP, The Events Calendar. Wbcom: BuddyNext, Jetonomy, Learnomy, Listora, Eventonomy, WPMediaVerse, WP Career Board, WP Sell Services. (ActivityPub and GraphQL are adapters and award no points — they are not integrations in this sense.) |
 | Push events out to another system? | YES | Outbound webhooks with retry/backoff (`wb_gam_webhooks`, `wb_gam_webhook_retry`) |
 | Be driven from an external app? | YES | 76 REST endpoints + API keys (`wb_gam_api_keys`) + `openapi.json` export |
 | Tell an API caller *why* an award didn't land? | YES | **1.6.4.** `POST /events` returns `{skipped: {reason, message, context}}` alongside `processed: false` |
