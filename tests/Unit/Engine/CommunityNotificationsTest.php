@@ -222,38 +222,6 @@ class CommunityNotificationsTest extends TestCase {
 
 	/**
 	 * @test
-	 * @covers ::filter_visible
-	 */
-	public function kudos_hides_when_the_giver_privacy_says_no(): void {
-		Functions\when( 'apply_filters' )->alias(
-			static function ( $hook, $value, ...$rest ) {
-				return 'wb_gam_can_view_public_profile' === $hook ? false : $value;
-			}
-		);
-
-		$targets = array(
-			'k' => array(
-				'type'        => 'kudos_received',
-				'object_type' => 'kudos',
-				'object_id'   => 55,
-				'actor_id'    => 3,
-			),
-			'l' => array(
-				'type'        => 'level_up',
-				'object_type' => 'level',
-				'object_id'   => 2,
-				'actor_id'    => 0,
-			),
-		);
-
-		$visible = CommunityNotifications::filter_visible( array_fill_keys( array_keys( $targets ), true ), 7, $targets );
-
-		$this->assertFalse( $visible['k'], 'giver private to this viewer hides the kudos row' );
-		$this->assertTrue( $visible['l'], 'a type with no other party has nothing to hide behind' );
-	}
-
-	/**
-	 * @test
 	 * @covers ::on_badge_deleted
 	 */
 	public function badge_deleted_removes_by_the_same_hashed_id_used_to_notify(): void {

@@ -11259,17 +11259,6 @@
       "consumed_by": [
         "src/Engine/CommunityNotifications.php:49 array( __CLASS__"
       ]
-    },
-    {
-      "name": "wb_gam_community_notification_visible",
-      "type": "filter",
-      "purpose": "Community notification contract (1.6.5): answers, per bell page, which of a member's own rows about this plugin's content they may still see. Fired externally by the host (BuddyNext); this plugin only answers it.",
-      "fired_at": [
-        "external: buddynext/includes/Notifications/IntegrationNotificationListener.php"
-      ],
-      "consumed_by": [
-        "src/Engine/CommunityNotifications.php:50 array( __CLASS__"
-      ]
     }
   ],
   "cron": [

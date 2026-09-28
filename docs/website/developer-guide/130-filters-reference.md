@@ -102,7 +102,6 @@ Part of the same contract as `wb_gam_notification_created` (see the [Actions ref
 | Filter | What it filters | Parameters | Return |
 |--------|-----------------|------------|--------|
 | `wb_gam_community_notification_types` | The notification types this plugin offers a settings switch for (`badge_awarded`, `level_up`, `kudos_received`, `challenge_completed`, `reward_fulfilled`, `credential_expired`, `personal_record`, `streak_milestone`). Declaring on this filter is what tells a host to start reading `wb_gam_notification_created`'s payload instead of any older, undifferentiated route. Added in 1.6.5. | `array $types` (`slug => array{label, description, default_on}`) | `array` types |
-| `wb_gam_community_notification_visible` | Per bell page, which of the viewer's own rows about this plugin's content they may still see. Every type here is the recipient's own achievement; the one cross-member case is `kudos_received`, answered via `Privacy::can_view_public_profile()` for the kudos giver — the same predicate the recent-kudos feed and leaderboard already use. Added in 1.6.5. | `array $visible` (`key => bool`, every key starts `true`), `int $viewer_id`, `array $targets` (`key => array{type, object_type, object_id, actor_id}`) | `array` `key => bool` |
 
 ## Access and modules
 

@@ -27,7 +27,7 @@ final class CommunityNotifications {
 
 	/**
 	 * Register the eight event hooks that become community notifications, plus
-	 * the contract's types/visible filters.
+	 * the contract's types filter.
 	 */
 	public static function init(): void {
 		add_action( 'wb_gam_badge_awarded', array( __CLASS__, 'on_badge_awarded' ), 20, 3 );
@@ -47,7 +47,6 @@ final class CommunityNotifications {
 		add_action( 'wb_gam_badge_deleted', array( __CLASS__, 'on_badge_deleted' ), 20, 1 );
 
 		add_filter( 'wb_gam_community_notification_types', array( __CLASS__, 'filter_types' ) );
-		add_filter( 'wb_gam_community_notification_visible', array( __CLASS__, 'filter_visible' ), 10, 3 );
 	}
 
 	// ── Event handlers ──────────────────────────────────────────────────────────
@@ -456,38 +455,5 @@ final class CommunityNotifications {
 		}
 
 		return $types;
-	}
-
-	/**
-	 * Answer which of a member's own rows the viewer (always the recipient —
-	 * these are notifications about the viewer's own points, badges, levels
-	 * and streaks) may still see.
-	 *
-	 * Every type here is the recipient's OWN achievement; the plugin holds no
-	 * "trashed"/"private"/"unpublished" state for points, levels, challenges,
-	 * redemptions or streaks (there is nothing to hide behind — a level or a
-	 * streak is either current or superseded, never withdrawn). The one
-	 * cross-member case is `kudos_received`, naming the giver: reused via
-	 * `Privacy::can_view_public_profile()`, the same predicate this plugin
-	 * already uses everywhere else a member's identity is shown to someone
-	 * else (recent-kudos feed, leaderboard). A deleted badge definition is not
-	 * answered here — it is REMOVED outright by on_badge_deleted() above.
-	 *
-	 * @param array<int|string,bool>                                                                 $visible   Every key starts true.
-	 * @param int                                                                                    $viewer_id Recipient viewing their bell.
-	 * @param array<int|string,array{type?:string,object_type?:string,object_id?:int,actor_id?:int}> $targets   Rows on this page.
-	 * @return array<int|string,bool>
-	 */
-	public static function filter_visible( array $visible, int $viewer_id, array $targets ): array {
-		foreach ( $targets as $key => $target ) {
-			if ( 'kudos_received' !== (string) ( $target['type'] ?? '' ) ) {
-				continue;
-			}
-			$actor_id = (int) ( $target['actor_id'] ?? 0 );
-			if ( $actor_id > 0 && ! Privacy::can_view_public_profile( $actor_id, $viewer_id ) ) {
-				$visible[ $key ] = false;
-			}
-		}
-		return $visible;
 	}
 }
