@@ -219,4 +219,38 @@ class LeaderboardPagingTest extends TestCase {
 		$this->assertStringNotContainsString( 'LIMIT 500', $src, 'The writer hard-codes the depth again.' );
 		$this->assertStringContainsString( 'self::SNAPSHOT_DEPTH', $src );
 	}
+
+	/**
+	 * A period board's total must be read from the same generation of data as its own walk, or the
+	 * two can name a different member count (Basecamp 10304072907: walk served 15, total said 16,
+	 * because get_total() counted the live ledger on its own 300s cache while the walk read the
+	 * snapshot on its own ~10-minute freshness window — two independently-aging answers).
+	 *
+	 * @return void
+	 */
+	public function test_get_total_tries_the_snapshot_before_the_live_ledger_for_a_global_period_board(): void {
+		$src = (string) file_get_contents( dirname( __DIR__, 3 ) . '/src/Engine/LeaderboardEngine.php' );
+
+		$this->assertStringContainsString( 'self::count_from_snapshot( $period, $type )', $src );
+		$this->assertMatchesRegularExpression(
+			'/count_from_snapshot\( \$period, \$type \)\s*\n\s*: null;\s*\n\s*if \( null === \$total \) \{\s*\n\s*\[ \$excl_clause, \$excl_values \] = self::exclusion_sql\( \'p\' \);\s*\n\s*\$total\s*=\s*self::count_users_above\(/s',
+			$src,
+			'The live ledger count must run only when the snapshot count came back null.'
+		);
+	}
+
+	/**
+	 * {@see count_from_snapshot()}, {@see read_from_snapshot()} (the walk) and {@see
+	 * snapshot_standing()} (a member's own rank strip) must all judge staleness through the one
+	 * shared gate, not their own copies of the same 10-minute rule that could drift apart.
+	 *
+	 * @return void
+	 */
+	public function test_every_snapshot_reader_shares_one_freshness_gate(): void {
+		$src = (string) file_get_contents( dirname( __DIR__, 3 ) . '/src/Engine/LeaderboardEngine.php' );
+
+		$this->assertSame( 1, substr_count( $src, 'function snapshot_freshness(' ) );
+		$this->assertSame( 3, substr_count( $src, 'self::snapshot_freshness()' ), 'Every reader must call the shared gate.' );
+		$this->assertSame( 1, substr_count( $src, "SELECT MAX(updated_at) FROM {\$cache_table}" ), 'The freshness query must not be duplicated.' );
+	}
 }

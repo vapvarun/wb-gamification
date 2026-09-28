@@ -406,8 +406,22 @@ final class LeaderboardEngine {
 					)
 				);
 			} else {
-				[ $excl_clause, $excl_values ] = self::exclusion_sql( 'p' );
-				$total                         = min( self::SNAPSHOT_DEPTH, self::count_users_above( 0, $period_start, $excl_clause, $excl_values, $scope_ids, $type ) );
+				// A period board's total must come from wherever the walk's OWN first page would come
+				// from, or the two can disagree: the walk reads the snapshot (fresh for up to
+				// wb_gam_leaderboard_max_snapshot_age) while this used to count the live ledger on its
+				// own, unrelated 300s cache -- two independently-aging answers, each correct on its own
+				// terms, free to name a different number of members (Basecamp 10304072907: walk served
+				// 15, total said 16, after a snapshot rebuild and this cache fell out of step with it).
+				// Scoped boards (BP group, cohort) never read the snapshot at all -- see fetch_raw() --
+				// so this only tries it for the same global boards the walk does.
+				$total = ( '' === $scope_type && 0 === $scope_id )
+					? self::count_from_snapshot( $period, $type )
+					: null;
+				if ( null === $total ) {
+					[ $excl_clause, $excl_values ] = self::exclusion_sql( 'p' );
+					$total                         = self::count_users_above( 0, $period_start, $excl_clause, $excl_values, $scope_ids, $type );
+				}
+				$total = min( self::SNAPSHOT_DEPTH, $total );
 			}
 		}
 
@@ -1041,43 +1055,7 @@ final class LeaderboardEngine {
 		// true = existence is enforced by this query's own JOIN to wp_users.
 		[ $excl_sql, $excl_values ] = self::exclusion_sql( 'c', true );
 
-		// Check snapshot freshness — must be less than 10 minutes old AND
-		// not older than the most recent cache invalidation. The latter
-		// covers the gap between a points award (which calls
-		// invalidate_cache) and the next 5-minute snapshot cron — without
-		// this check, the snapshot would still serve stale data for up
-		// to 10 minutes after every award.
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching
-		// updated_at is UTC.
-		$snapshot_built_at = $wpdb->get_var( "SELECT MAX(updated_at) FROM {$cache_table}" );
-		if ( null === $snapshot_built_at ) {
-			return null;
-		}
-		$snapshot_built_at = (int) strtotime( $snapshot_built_at . ' UTC' );
-
-		// Bounded staleness is the ONLY freshness rule. A leaderboard is a
-		// materialised view: it is allowed to be up to one rebuild-interval
-		// behind. That is not a compromise, it is the entire reason it exists.
-		//
-		// Until 1.6.4 there was a SECOND gate here: read_from_snapshot() also
-		// bailed whenever `wb_gam_leaderboard_invalidated_at` was newer than the
-		// snapshot — and that option was written on EVERY points award. So the
-		// first award after each rebuild disabled the snapshot, and on a busy site
-		// awards land many times per second. The snapshot was readable for
-		// milliseconds per five-minute cycle; ~100% of reads fell through to a
-		// full-table SUM over wb_gam_points. The cron built a cache that nothing
-		// was ever allowed to read.
-		//
-		// The old comment called the live fallback "correct (just slower)". At
-		// 100k members it is not slower, it is the difference between an indexed
-		// read of a 500-row table and a GROUP BY over millions of rows — on a
-		// route (GET /leaderboard) whose permission_callback is __return_true, so
-		// any anonymous visitor could trigger it in a loop.
-		//
-		// Staleness window is filterable for owners who want a tighter or looser
-		// trade than the 5-minute rebuild interval.
-		$max_age = (int) apply_filters( 'wb_gam_leaderboard_max_snapshot_age', 600 );
-		if ( ( time() - $snapshot_built_at ) >= max( 60, $max_age ) ) {
+		if ( null === self::snapshot_freshness() ) {
 			return null;
 		}
 
@@ -1142,6 +1120,94 @@ final class LeaderboardEngine {
 		}
 
 		return $rows;
+	}
+
+	/**
+	 * Whether the snapshot table holds a usable (fresh enough) generation right now, and when.
+	 *
+	 * The ONE freshness rule every snapshot reader shares: {@see read_from_snapshot()} (the walk) and
+	 * {@see count_from_snapshot()} (the total) would otherwise each judge staleness on their own, and
+	 * a board whose walk reads one generation while its total reads another is exactly the class of
+	 * bug this file keeps relearning (see exclusion_sql()) — two paths, each locally correct, free to
+	 * disagree about how many members there are.
+	 *
+	 * @since 1.6.5
+	 *
+	 * @return int|null UNIX timestamp the current snapshot was built at, or null if there is none or
+	 *                   it is older than `wb_gam_leaderboard_max_snapshot_age` (default 600s, floor 60s).
+	 */
+	private static function snapshot_freshness(): ?int {
+		global $wpdb;
+
+		$cache_table = $wpdb->prefix . 'wb_gam_leaderboard_cache';
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching
+		// updated_at is UTC.
+		$built_at = $wpdb->get_var( "SELECT MAX(updated_at) FROM {$cache_table}" );
+		if ( null === $built_at ) {
+			return null;
+		}
+		$built_at = (int) strtotime( $built_at . ' UTC' );
+
+		// Bounded staleness is the ONLY freshness rule. A leaderboard is a
+		// materialised view: it is allowed to be up to one rebuild-interval
+		// behind. That is not a compromise, it is the entire reason it exists.
+		//
+		// Until 1.6.4 there was a SECOND gate here: read_from_snapshot() also
+		// bailed whenever `wb_gam_leaderboard_invalidated_at` was newer than the
+		// snapshot — and that option was written on EVERY points award. So the
+		// first award after each rebuild disabled the snapshot, and on a busy site
+		// awards land many times per second. The snapshot was readable for
+		// milliseconds per five-minute cycle; ~100% of reads fell through to a
+		// full-table SUM over wb_gam_points. The cron built a cache that nothing
+		// was ever allowed to read.
+		//
+		// The old comment called the live fallback "correct (just slower)". At
+		// 100k members it is not slower, it is the difference between an indexed
+		// read of a 500-row table and a GROUP BY over millions of rows — on a
+		// route (GET /leaderboard) whose permission_callback is __return_true, so
+		// any anonymous visitor could trigger it in a loop.
+		//
+		// Staleness window is filterable for owners who want a tighter or looser
+		// trade than the 5-minute rebuild interval.
+		$max_age = (int) apply_filters( 'wb_gam_leaderboard_max_snapshot_age', 600 );
+		return ( time() - $built_at ) < max( 60, $max_age ) ? $built_at : null;
+	}
+
+	/**
+	 * Member count for a global period board, read from the snapshot — the same generation of data
+	 * the walk's own first page would read.
+	 *
+	 * Returns null under the exact conditions {@see read_from_snapshot()} would send its caller to
+	 * the live ledger instead: no snapshot yet, or the current one is stale. A caller must fall back
+	 * to {@see count_users_above()} in that case, the same way fetch_raw() falls back for the walk.
+	 *
+	 * @since 1.6.5
+	 *
+	 * @param string $period     'week'|'month'|'day' (an 'all' caller uses the totals table instead).
+	 * @param string $point_type Resolved currency slug.
+	 * @return int|null Member count on the current snapshot, or null if it is unusable.
+	 */
+	private static function count_from_snapshot( string $period, string $point_type ): ?int {
+		if ( null === self::snapshot_freshness() ) {
+			return null;
+		}
+
+		global $wpdb;
+
+		$cache_table = $wpdb->prefix . 'wb_gam_leaderboard_cache';
+		// true = existence is enforced by this query's own JOIN to wp_users, matching read_from_snapshot().
+		[ $excl_sql, $excl_values ] = self::exclusion_sql( 'c', true );
+		$period_key                 = in_array( $period, array( 'all', 'month', 'week', 'day' ), true ) ? $period : 'all';
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		return (int) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM {$cache_table} c
+				   JOIN {$wpdb->users} u ON u.ID = c.user_id
+				  WHERE c.period = %s AND c.point_type = %s {$excl_sql}", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				array_merge( array( $period_key, $point_type ), $excl_values )
+			)
+		);
 	}
 
 	/**
@@ -1313,19 +1379,9 @@ final class LeaderboardEngine {
 
 		$cache_table = $wpdb->prefix . 'wb_gam_leaderboard_cache';
 
-		// The same freshness gate the board uses. If the board would not serve the snapshot, neither
-		// does this — otherwise we would have swapped one disagreement for another.
-		$built_at = (string) $wpdb->get_var( "SELECT MAX(updated_at) FROM {$cache_table}" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$built_at = '' === $built_at ? 0 : (int) strtotime( $built_at . ' UTC' ); // updated_at is UTC.
-
-		if ( $built_at <= 0 ) {
-			return null;
-		}
-
-		/** This filter is documented in src/Engine/LeaderboardEngine.php — see read_from_snapshot(). */
-		$max_age = (int) apply_filters( 'wb_gam_leaderboard_max_snapshot_age', 600 );
-
-		if ( ( time() - $built_at ) >= max( 60, $max_age ) ) {
+		// The one shared gate — see snapshot_freshness(). If the board would not serve the snapshot,
+		// neither does this strip; a second copy of the same check is how the two came to disagree.
+		if ( null === self::snapshot_freshness() ) {
 			return null;
 		}
 
