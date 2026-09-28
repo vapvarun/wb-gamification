@@ -95,6 +95,15 @@ See [Customizing gamification emails](210-email-customization.md) for worked exa
 | `wb_gam_sse_allowed` | Whether the Server-Sent Events long-poll transport may run on this host. Default `false` - SSE pins a PHP-FPM worker per connection, so it stays off unless the host is provisioned for long-lived streaming. When `false`, realtime falls back to WP Heartbeat. Added in 1.5.2. | `bool $allowed` | `bool` whether SSE is permitted |
 | `wb_gam_toast_position` | The on-screen corner reward toasts slide in from. Filters the stored `wb_gam_toast_position` option (Settings > Realtime). One of `bottom-right` (default), `bottom-left`, `top-right`, `top-center`. Added in 1.5.2. | `string $position` | `string` toast position |
 
+## Community notification contract
+
+Part of the same contract as `wb_gam_notification_created` (see the [Actions reference](120-actions-reference.md)). A host declares its types to start reading the payload and answers visibility per bell page.
+
+| Filter | What it filters | Parameters | Return |
+|--------|-----------------|------------|--------|
+| `wb_gam_community_notification_types` | The notification types this plugin offers a settings switch for (`badge_awarded`, `level_up`, `kudos_received`, `challenge_completed`, `reward_fulfilled`, `credential_expired`, `personal_record`, `streak_milestone`). Declaring on this filter is what tells a host to start reading `wb_gam_notification_created`'s payload instead of any older, undifferentiated route. Added in 1.6.5. | `array $types` (`slug => array{label, description, default_on}`) | `array` types |
+| `wb_gam_community_notification_visible` | Per bell page, which of the viewer's own rows about this plugin's content they may still see. Every type here is the recipient's own achievement; the one cross-member case is `kudos_received`, answered via `Privacy::can_view_public_profile()` for the kudos giver — the same predicate the recent-kudos feed and leaderboard already use. Added in 1.6.5. | `array $visible` (`key => bool`, every key starts `true`), `int $viewer_id`, `array $targets` (`key => array{type, object_type, object_id, actor_id}`) | `array` `key => bool` |
+
 ## Access and modules
 
 Site-owner controls added in 1.5.3 (Settings > Access and Settings > Modules).
