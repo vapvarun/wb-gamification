@@ -7,17 +7,11 @@ WB Gamification ships member profile pages at `/u/{user_login}` — sharable, OG
 Each public profile shows:
 
 - **Member name + avatar**
-- **Total points** + current level + level progress bar
-- **All earned badges** (with hover descriptions)
-- **Longest streak**
-- **Challenges completed**
-- **Top actions** (last 30 days)
-- **Optional**: bio text, social links (if member fills them in)
+- **A stats line**: total points, badge count, current level (e.g. "1,240 Points · 6 badges · Contributor")
+- **Their badge showcase** (the same [Badge Showcase](30-badge-sharing.md) grid you can place elsewhere)
+- **Their last 10 points-history events**
 
-Hidden by default:
-- The member's individual point events (history)
-- Their kudos feed (givens / receives)
-- Personal contact info
+That is the whole page — there is no separate streak, challenges, top-actions or kudos section, and no bio or social-links field. If you want more on a member's public page, place additional Gamification blocks on your own theme template; the plugin's own `/u/{user_login}` page renders only the sections above.
 
 ## Privacy Controls
 
@@ -35,13 +29,7 @@ A profile that is opted out (per-user flag `0`) returns a 404 instead of a parti
 
 ## URL Structure
 
-| URL | What it shows |
-|---|---|
-| `/u/{user_login}` | The member's full profile |
-| `/u/{user_login}/badges` | Just their badges (lightweight) |
-| `/u/{user_login}/recap/{year}` | Their year recap (separate privacy toggle) |
-
-The URL slug uses `user_login` (the WordPress login name). This is stable — username changes are not allowed in WordPress core, so the URL never breaks.
+There is one URL: `/u/{user_login}`. It always shows the full page above; there is no `/badges`-only or per-year variant. The slug uses `user_login` (the WordPress login name), which is stable — username changes are not allowed in WordPress core, so the URL never breaks. The `u` prefix is configurable under **WB Gamification > Settings > Habits & Profiles > Slug base**; re-save Permalinks after changing it.
 
 ## SEO + Social
 
