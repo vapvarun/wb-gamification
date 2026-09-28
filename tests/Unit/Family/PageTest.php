@@ -3,6 +3,7 @@ namespace WBGam\Tests\Unit\Family;
 
 use Brain\Monkey;
 use Brain\Monkey\Functions;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 require_once dirname( __DIR__, 3 ) . '/libs/wbcom-family/bootstrap.php';
@@ -21,7 +22,7 @@ class PageTest extends TestCase {
 	}
 	protected function tearDown(): void { Monkey\tearDown(); parent::tearDown(); }
 
-	/** @test */
+	#[Test]
 	public function renders_guide_not_ads_with_three_regions(): void {
 		$html = \Wbcom\Family\Page::render( array( 'host' => 'wb-gamification', 'onboarding_url' => 'admin.php?page=wb-gamification-setup', 'nonce' => 'n' ) );
 		// Guide tone: no ad/promo/banner markup.
@@ -42,7 +43,7 @@ class PageTest extends TestCase {
 		$this->assertStringNotContainsString( 'data-action="install" data-slug="wb-gamification"', $html );
 	}
 
-	/** @test */
+	#[Test]
 	public function renders_without_getstarted_when_onboarding_url_is_null(): void {
 		$html = \Wbcom\Family\Page::render( array( 'host' => 'wb-gamification', 'onboarding_url' => null, 'nonce' => 'n' ) );
 		// getstarted region must be absent when no onboarding URL.
@@ -55,7 +56,7 @@ class PageTest extends TestCase {
 		$this->assertGreaterThan( $posOutcomes, $posThird, '3rd-party must come after outcomes even without onboarding' );
 	}
 
-	/** @test */
+	#[Test]
 	public function brands_as_wbcom_family_and_names_each_product(): void {
 		$html = \Wbcom\Family\Page::render( array( 'host' => 'wb-gamification', 'onboarding_url' => null, 'nonce' => 'n' ) );
 		// Brand header present — establishes "Wbcom Family" (new in domain).

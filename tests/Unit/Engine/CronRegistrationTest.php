@@ -23,14 +23,14 @@ namespace WBGam\Tests\Unit\Engine;
 use Brain\Monkey;
 use Brain\Monkey\Functions;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
+use PHPUnit\Framework\Attributes\CoversNothing;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use WBGam\Engine\IntelligenceProjector;
 use WBGam\Engine\NotificationBridge;
 use WBGam\Engine\SideEffectDispatcher;
 
-/**
- * @coversNothing
- */
+#[CoversNothing]
 class CronRegistrationTest extends TestCase {
 
 	use MockeryPHPUnitIntegration;
@@ -69,9 +69,8 @@ class CronRegistrationTest extends TestCase {
 	 * Each Engine exposes its cron hook as a public class constant so the
 	 * scheduler, the handler wiring and the coverage manifest all reference
 	 * a single source of truth (no magic-string duplication).
-	 *
-	 * @dataProvider cron_hook_provider
 	 */
+	#[DataProvider( 'cron_hook_provider' )]
 	public function test_cron_hook_constant_matches_manifest( string $class, string $const_name, string $expected_hook ): void {
 		$this->assertSame( $expected_hook, constant( $class . '::' . $const_name ) );
 	}
@@ -123,9 +122,8 @@ class CronRegistrationTest extends TestCase {
 	/**
 	 * When the event is already scheduled, boot must NOT double-schedule it
 	 * (idempotency — the activation hook and the boot hook can both run).
-	 *
-	 * @dataProvider cron_hook_provider
 	 */
+	#[DataProvider( 'cron_hook_provider' )]
 	public function test_boot_does_not_reschedule_when_already_queued( string $class, string $const_name, string $hook ): void {
 		Functions\when( 'add_action' )->justReturn( true );
 		Functions\when( 'wp_next_scheduled' )->justReturn( 1893456000 ); // far-future timestamp.

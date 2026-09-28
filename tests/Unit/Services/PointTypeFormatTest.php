@@ -9,13 +9,16 @@ namespace WBGam\Tests\Unit\Services;
 
 use Brain\Monkey;
 use Brain\Monkey\Functions;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use WBGam\Services\PointTypeService;
 use WBGam\Tests\Unit\Support\ResetsPointTypeCache;
 
-/**
- * @coversDefaultClass \WBGam\Services\PointTypeService
- */
+#[CoversClass( \WBGam\Services\PointTypeService::class )]
+#[CoversMethod( \WBGam\Services\PointTypeService::class, 'format' )]
+#[CoversMethod( \WBGam\Services\PointTypeService::class, 'name_for' )]
 class PointTypeFormatTest extends TestCase {
 
 	use ResetsPointTypeCache;
@@ -43,11 +46,7 @@ class PointTypeFormatTest extends TestCase {
 		parent::tearDown();
 	}
 
-	/**
-	 * @test
-	 * @covers ::format
-	 * @covers ::name_for
-	 */
+	#[Test]
 	public function one_is_singular_everything_else_plural(): void {
 		$types = new PointTypeService();
 
@@ -58,10 +57,7 @@ class PointTypeFormatTest extends TestCase {
 		$this->assertSame( '1,200 Points', $types->format( 1200 ) );
 	}
 
-	/**
-	 * @test
-	 * @covers ::name_for
-	 */
+	#[Test]
 	public function a_blank_singular_uses_the_name_for_every_amount(): void {
 		$types = new PointTypeService();
 

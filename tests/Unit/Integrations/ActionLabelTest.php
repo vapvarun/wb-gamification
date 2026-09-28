@@ -12,13 +12,16 @@ namespace WBGam\Tests\Unit\Integrations;
 
 use Brain\Monkey;
 use Brain\Monkey\Functions;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use WBGam\Engine\Registry;
 use WBGam\Integrations\Jetonomy\JetonomyIntegration;
 
-/**
- * @coversDefaultClass \WBGam\Integrations\Jetonomy\JetonomyIntegration
- */
+#[CoversClass( \WBGam\Integrations\Jetonomy\JetonomyIntegration::class )]
+#[CoversMethod( \WBGam\Integrations\Jetonomy\JetonomyIntegration::class, 'label' )]
+#[CoversMethod( \WBGam\Engine\Registry::class, 'label_for' )]
 class ActionLabelTest extends TestCase {
 
 	protected function setUp(): void {
@@ -36,11 +39,7 @@ class ActionLabelTest extends TestCase {
 		parent::tearDown();
 	}
 
-	/**
-	 * @test
-	 * @covers ::label
-	 * @covers \WBGam\Engine\Registry::label_for
-	 */
+	#[Test]
 	public function forum_awards_read_as_what_happened(): void {
 		$this->assertSame( 'Replied in the forum', Registry::label_for( 'jetonomy_reply_created' ) );
 		$this->assertSame( 'Your forum post was upvoted', Registry::label_for( 'jetonomy_reply_upvoted' ) );
@@ -49,10 +48,7 @@ class ActionLabelTest extends TestCase {
 		$this->assertSame( 'Forum badge removed', Registry::label_for( 'jetonomy_badge_revoked' ), 'A reason Jetonomy named _revoked is not read as a reversal.' );
 	}
 
-	/**
-	 * @test
-	 * @covers ::label
-	 */
+	#[Test]
 	public function other_ids_are_left_to_the_fallback(): void {
 		$this->assertSame( '', JetonomyIntegration::label( '', 'jetonomy_something_new' ), 'Unknown forum reasons are not guessed.' );
 		$this->assertSame( '', JetonomyIntegration::label( '', 'wp_publish_post' ), 'Other plugins\' ids are not touched.' );

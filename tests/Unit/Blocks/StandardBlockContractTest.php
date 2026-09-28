@@ -24,12 +24,12 @@ namespace WBGam\Tests\Unit\Blocks;
 use Brain\Monkey;
 use Brain\Monkey\Functions;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
+use PHPUnit\Framework\Attributes\CoversNothing;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use WBGam\Blocks\CSS;
 
-/**
- * @coversNothing
- */
+#[CoversNothing]
 class StandardBlockContractTest extends TestCase {
 
 	use MockeryPHPUnitIntegration;
@@ -147,9 +147,7 @@ class StandardBlockContractTest extends TestCase {
 		);
 	}
 
-	/**
-	 * @dataProvider blockProvider
-	 */
+	#[DataProvider( 'blockProvider' )]
 	public function test_render_emits_unique_id_scoped_wrapper_and_drops_inline_assets( string $slug ): void {
 		$output = $this->render( $slug, array( 'uniqueId' => 'd1pilot' ) );
 
@@ -158,9 +156,7 @@ class StandardBlockContractTest extends TestCase {
 		$this->assertStringNotContainsString( '<style', $output, "{$slug} render still emits an inline <style>" );
 	}
 
-	/**
-	 * @dataProvider blockProvider
-	 */
+	#[DataProvider( 'blockProvider' )]
 	public function test_render_registers_per_instance_css_via_block_css_helper( string $slug ): void {
 		$attrs = array(
 			'uniqueId' => 'd1' . substr( $slug, 0, 4 ),

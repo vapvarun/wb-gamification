@@ -11,12 +11,14 @@ use Brain\Monkey;
 use Brain\Monkey\Functions;
 use Mockery;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use WBGam\Engine\StreakEngine;
 
-/**
- * @coversDefaultClass \WBGam\Engine\StreakEngine
- */
+#[CoversClass( \WBGam\Engine\StreakEngine::class )]
+#[CoversMethod( \WBGam\Engine\StreakEngine::class, 'get_streak' )]
 class StreakEngineTest extends TestCase {
 
 	use MockeryPHPUnitIntegration;
@@ -31,10 +33,7 @@ class StreakEngineTest extends TestCase {
 		parent::tearDown();
 	}
 
-	/**
-	 * @test
-	 * @covers ::get_streak
-	 */
+	#[Test]
 	public function returns_zero_streak_for_user_with_no_record(): void {
 		Functions\when( 'wp_cache_get' )->justReturn( false );
 		Functions\when( 'wp_cache_set' )->justReturn( true );
@@ -90,10 +89,7 @@ class StreakEngineTest extends TestCase {
 		);
 	}
 
-	/**
-	 * @test
-	 * @covers ::get_streak
-	 */
+	#[Test]
 	public function reads_live_streak_active_today_or_yesterday(): void {
 		$this->stub_row( $this->row( 0 ) );
 		$this->assertSame( 7, StreakEngine::get_streak( 1 )['current_streak'] );
@@ -102,19 +98,13 @@ class StreakEngineTest extends TestCase {
 		$this->assertSame( 7, StreakEngine::get_streak( 1 )['current_streak'] );
 	}
 
-	/**
-	 * @test
-	 * @covers ::get_streak
-	 */
+	#[Test]
 	public function reads_streak_inside_unused_grace_window(): void {
 		$this->stub_row( $this->row( 2 ) );
 		$this->assertSame( 7, StreakEngine::get_streak( 1 )['current_streak'] );
 	}
 
-	/**
-	 * @test
-	 * @covers ::get_streak
-	 */
+	#[Test]
 	public function reads_lapsed_streak_as_zero_but_keeps_longest(): void {
 		$this->stub_row( $this->row( 3 ) );
 		$streak = StreakEngine::get_streak( 1 );

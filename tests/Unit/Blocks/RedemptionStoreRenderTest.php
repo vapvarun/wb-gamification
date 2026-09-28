@@ -23,12 +23,11 @@ namespace WBGam\Tests\Unit\Blocks;
 use Brain\Monkey;
 use Brain\Monkey\Functions;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\TestCase;
 use WBGam\Blocks\CSS;
 
-/**
- * @coversNothing
- */
+#[CoversNothing]
 class RedemptionStoreRenderTest extends TestCase {
 
 	use \WBGam\Tests\Unit\Support\ResetsPointTypeCache;

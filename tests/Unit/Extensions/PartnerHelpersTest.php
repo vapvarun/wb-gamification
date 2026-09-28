@@ -13,13 +13,13 @@ namespace WBGam\Tests\Unit\Extensions;
 
 use Brain\Monkey;
 use Brain\Monkey\Functions;
+use PHPUnit\Framework\Attributes\CoversNothing;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 use WBGam\Engine\Registry;
 
-/**
- * @coversNothing
- */
+#[CoversNothing]
 class PartnerHelpersTest extends TestCase {
 
 	private const HELPERS = array(
@@ -70,9 +70,7 @@ class PartnerHelpersTest extends TestCase {
 		parent::tearDown();
 	}
 
-	/**
-	 * @test
-	 */
+	#[Test]
 	public function every_helper_is_public_1_6_5_api(): void {
 		foreach ( self::HELPERS as $helper ) {
 			$this->assertTrue( function_exists( $helper ), "{$helper} exists." );
@@ -81,9 +79,7 @@ class PartnerHelpersTest extends TestCase {
 		}
 	}
 
-	/**
-	 * @test
-	 */
+	#[Test]
 	public function action_points_read_the_owner_setting_then_the_default(): void {
 		$options = array();
 		Functions\when( 'get_option' )->alias(

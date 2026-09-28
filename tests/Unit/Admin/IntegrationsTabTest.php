@@ -3,6 +3,7 @@ namespace WBGam\Tests\Unit\Admin;
 
 use Brain\Monkey;
 use Brain\Monkey\Functions;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use WBGam\Admin\IntegrationsTab;
 
@@ -32,7 +33,7 @@ class IntegrationsTabTest extends TestCase {
 		parent::tearDown();
 	}
 
-	/** @test */
+	#[Test]
 	public function render_outputs_family_guide_with_gamification_onboarding_link(): void {
 		IntegrationsTab::init();
 		$html = IntegrationsTab::render();
@@ -40,7 +41,7 @@ class IntegrationsTabTest extends TestCase {
 		$this->assertStringContainsString( 'page=wb-gamification-setup', $html );
 	}
 
-	/** @test */
+	#[Test]
 	public function enqueue_does_not_load_assets_on_non_gamification_hook(): void {
 		Functions\expect( 'wp_enqueue_style' )->never();
 		Functions\expect( 'wp_enqueue_script' )->never();
@@ -48,7 +49,7 @@ class IntegrationsTabTest extends TestCase {
 		$this->addToAssertionCount( 1 );
 	}
 
-	/** @test */
+	#[Test]
 	public function enqueue_loads_assets_on_gamification_hook(): void {
 		Functions\expect( 'wp_enqueue_style' )->atLeast()->once();
 		Functions\expect( 'wp_enqueue_script' )->atLeast()->once();

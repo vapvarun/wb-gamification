@@ -10,13 +10,16 @@ namespace WBGam\Tests\Unit\Engine;
 use Brain\Monkey;
 use Brain\Monkey\Functions;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use WBGam\Engine\Event;
 use WBGam\Engine\RuleEngine;
 
-/**
- * @coversDefaultClass \WBGam\Engine\RuleEngine
- */
+#[CoversClass( \WBGam\Engine\RuleEngine::class )]
+#[CoversMethod( \WBGam\Engine\RuleEngine::class, 'apply_multipliers' )]
+#[CoversMethod( \WBGam\Engine\RuleEngine::class, 'window_timestamp' )]
 class RuleEngineTest extends TestCase {
 
 	use MockeryPHPUnitIntegration;
@@ -31,10 +34,7 @@ class RuleEngineTest extends TestCase {
 		parent::tearDown();
 	}
 
-	/**
-	 * @test
-	 * @covers ::apply_multipliers
-	 */
+	#[Test]
 	public function returns_input_when_points_are_zero_or_negative(): void {
 		$event = new Event( array( 'action_id' => 'test', 'user_id' => 1 ) );
 
@@ -42,10 +42,7 @@ class RuleEngineTest extends TestCase {
 		$this->assertSame( -10,  RuleEngine::apply_multipliers( -10,  $event ) );
 	}
 
-	/**
-	 * @test
-	 * @covers ::apply_multipliers
-	 */
+	#[Test]
 	public function returns_input_unchanged_when_no_multiplier_rules_exist(): void {
 		$event = new Event( array( 'action_id' => 'test', 'user_id' => 1 ) );
 
@@ -58,11 +55,8 @@ class RuleEngineTest extends TestCase {
 	/**
 	 * A multiplier's campaign window is honoured: before, inside and after (card 10344274152).
 	 * Before 1.6.5 the window was stored but never read, so an ended campaign kept doubling.
-	 *
-	 * @test
-	 * @covers ::apply_multipliers
-	 * @covers ::window_timestamp
 	 */
+	#[Test]
 	public function multiplier_applies_only_inside_its_campaign_window(): void {
 		Functions\when( 'wp_timezone' )->justReturn( new \DateTimeZone( 'UTC' ) );
 		Functions\when( 'wp_cache_set' )->justReturn( true );

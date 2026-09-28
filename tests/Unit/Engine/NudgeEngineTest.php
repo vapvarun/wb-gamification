@@ -12,12 +12,12 @@ use Brain\Monkey\Functions;
 use Mockery;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use PHPUnit\Framework\TestCase;
-use WBGam\Engine\NudgeEngine;
-use WBGam\Engine\ChallengeEngine;
-use WBGam\Engine\PointsEngine;
-use WBGam\Engine\LevelEngine;
-use WBGam\Engine\StreakEngine;
 use WBGam\Engine\BadgeEngine;
+use WBGam\Engine\ChallengeEngine;
+use WBGam\Engine\LevelEngine;
+use WBGam\Engine\NudgeEngine;
+use WBGam\Engine\PointsEngine;
+use WBGam\Engine\StreakEngine;
 
 /**
  * NudgeEngineTest uses `Mockery::mock( 'alias:Class' )` to stub the

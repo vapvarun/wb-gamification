@@ -15,12 +15,14 @@ use Brain\Monkey;
 use Brain\Monkey\Functions;
 use Mockery;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use WBGam\Engine\BadgeEngine;
 
-/**
- * @coversDefaultClass \WBGam\Engine\BadgeEngine
- */
+#[CoversClass( \WBGam\Engine\BadgeEngine::class )]
+#[CoversMethod( \WBGam\Engine\BadgeEngine::class, 'get_user_badges' )]
 class UserBadgesOrderTest extends TestCase {
 
 	use MockeryPHPUnitIntegration;
@@ -35,10 +37,7 @@ class UserBadgesOrderTest extends TestCase {
 		parent::tearDown();
 	}
 
-	/**
-	 * @test
-	 * @covers ::get_user_badges
-	 */
+	#[Test]
 	public function earned_badges_come_back_in_ladder_order(): void {
 		$tenure = static fn( int $days ): array => array(
 			'rule_config' => wp_json_encode_stub(

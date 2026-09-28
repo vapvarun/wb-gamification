@@ -15,12 +15,16 @@ use Brain\Monkey;
 use Brain\Monkey\Functions;
 use Mockery;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use WBGam\Engine\KudosEngine;
 
-/**
- * @coversDefaultClass \WBGam\Engine\KudosEngine
- */
+#[CoversClass( \WBGam\Engine\KudosEngine::class )]
+#[CoversMethod( \WBGam\Engine\KudosEngine::class, 'earns_points' )]
+#[CoversMethod( \WBGam\Engine\KudosEngine::class, 'can_send' )]
+#[CoversMethod( \WBGam\Engine\KudosEngine::class, 'points_kudos_remaining' )]
 class KudosPointsLimitTest extends TestCase {
 
 	use MockeryPHPUnitIntegration;
@@ -58,40 +62,27 @@ class KudosPointsLimitTest extends TestCase {
 		);
 	}
 
-	/**
-	 * @test
-	 * @covers ::earns_points
-	 */
+	#[Test]
 	public function first_five_kudos_a_day_earn_points(): void {
 		$this->counts( 4 );
 		$this->assertTrue( KudosEngine::earns_points( 1, 2 ) );
 	}
 
-	/**
-	 * @test
-	 * @covers ::earns_points
-	 * @covers ::can_send
-	 */
+	#[Test]
 	public function sixth_kudos_still_sends_but_earns_nothing(): void {
 		$this->counts( 5 );
 		$this->assertFalse( KudosEngine::earns_points( 1, 2 ) );
 		$this->assertTrue( KudosEngine::can_send( 1 ), 'Past the points limit the member must still be able to send.' );
 	}
 
-	/**
-	 * @test
-	 * @covers ::earns_points
-	 */
+	#[Test]
 	public function repeat_to_same_member_within_the_hour_earns_nothing(): void {
 		$this->counts( 1, 1 );
 		$this->assertFalse( KudosEngine::earns_points( 1, 2 ) );
 		$this->assertTrue( KudosEngine::can_send( 1 ) );
 	}
 
-	/**
-	 * @test
-	 * @covers ::can_send
-	 */
+	#[Test]
 	public function only_the_spam_ceiling_stops_sending(): void {
 		$this->counts( 49 );
 		$this->assertTrue( KudosEngine::can_send( 1 ) );
@@ -100,10 +91,7 @@ class KudosPointsLimitTest extends TestCase {
 		$this->assertFalse( KudosEngine::can_send( 1 ) );
 	}
 
-	/**
-	 * @test
-	 * @covers ::points_kudos_remaining
-	 */
+	#[Test]
 	public function remaining_counts_points_earning_kudos_and_never_goes_negative(): void {
 		$this->counts( 3 );
 		$this->assertSame( 2, KudosEngine::points_kudos_remaining( 1 ) );
@@ -115,10 +103,8 @@ class KudosPointsLimitTest extends TestCase {
 	/**
 	 * Off means off for every caller: BuddyNext calls the engine directly, not the REST routes
 	 * the Modules switch guards (card 10343975302).
-	 *
-	 * @test
-	 * @covers ::can_send
 	 */
+	#[Test]
 	public function kudos_module_off_refuses_every_caller(): void {
 		$this->counts( 0 );
 		Functions\when( 'get_option' )->alias(

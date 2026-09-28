@@ -12,12 +12,21 @@ namespace WBGam\Tests\Unit\Engine;
 use Brain\Monkey;
 use Brain\Monkey\Functions;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use WBGam\Engine\CommunityNotifications;
 
-/**
- * @coversDefaultClass \WBGam\Engine\CommunityNotifications
- */
+#[CoversClass( \WBGam\Engine\CommunityNotifications::class )]
+#[CoversMethod( \WBGam\Engine\CommunityNotifications::class, 'on_badge_awarded' )]
+#[CoversMethod( \WBGam\Engine\CommunityNotifications::class, 'on_level_changed' )]
+#[CoversMethod( \WBGam\Engine\CommunityNotifications::class, 'on_kudos_given' )]
+#[CoversMethod( \WBGam\Engine\CommunityNotifications::class, 'on_kudos_revoked' )]
+#[CoversMethod( \WBGam\Engine\CommunityNotifications::class, 'notify' )]
+#[CoversMethod( \WBGam\Engine\CommunityNotifications::class, 'on_personal_record' )]
+#[CoversMethod( \WBGam\Engine\CommunityNotifications::class, 'filter_types' )]
+#[CoversMethod( \WBGam\Engine\CommunityNotifications::class, 'on_badge_deleted' )]
 class CommunityNotificationsTest extends TestCase {
 
 	use MockeryPHPUnitIntegration;
@@ -104,10 +113,7 @@ class CommunityNotificationsTest extends TestCase {
 		return $out;
 	}
 
-	/**
-	 * @test
-	 * @covers ::on_badge_awarded
-	 */
+	#[Test]
 	public function badge_awarded_fires_the_contract_payload(): void {
 		CommunityNotifications::on_badge_awarded( 7, array( 'name' => 'First Post' ), 'first_post' );
 
@@ -122,10 +128,7 @@ class CommunityNotificationsTest extends TestCase {
 		$this->assertSame( 'badge_awarded_first_post', $payload['group_key'] );
 	}
 
-	/**
-	 * @test
-	 * @covers ::on_level_changed
-	 */
+	#[Test]
 	public function level_up_only_notifies_on_a_climb(): void {
 		$new = array(
 			'id'         => 2,
@@ -150,11 +153,7 @@ class CommunityNotificationsTest extends TestCase {
 		$this->assertNull( $this->lastPayload(), 'a level drop must not notify' );
 	}
 
-	/**
-	 * @test
-	 * @covers ::on_kudos_given
-	 * @covers ::on_kudos_revoked
-	 */
+	#[Test]
 	public function kudos_is_attributed_to_the_giver_and_removable(): void {
 		CommunityNotifications::on_kudos_given( 3, 7, 'Nice work', 55 );
 
@@ -171,19 +170,13 @@ class CommunityNotificationsTest extends TestCase {
 		$this->assertContains( array( 'kudos', 55 ), $this->removals() );
 	}
 
-	/**
-	 * @test
-	 * @covers ::notify
-	 */
+	#[Test]
 	public function never_fires_for_the_actor_notifying_themself(): void {
 		CommunityNotifications::on_kudos_given( 7, 7, 'to myself', 1 );
 		$this->assertNull( $this->lastPayload() );
 	}
 
-	/**
-	 * @test
-	 * @covers ::on_personal_record
-	 */
+	#[Test]
 	public function personal_record_groups_by_period_bucket_and_skips_trivial_daily_bests(): void {
 		CommunityNotifications::on_personal_record( 7, 'day', 5, 3, 'New daily best' );
 		$this->assertNull( $this->lastPayload(), 'a daily best is not announced by default' );
@@ -206,10 +199,7 @@ class CommunityNotificationsTest extends TestCase {
 		$this->assertFalse( $this->lastPayload()['renotify'] );
 	}
 
-	/**
-	 * @test
-	 * @covers ::filter_types
-	 */
+	#[Test]
 	public function declares_all_eight_types(): void {
 		$types = CommunityNotifications::filter_types( array() );
 
@@ -220,10 +210,7 @@ class CommunityNotificationsTest extends TestCase {
 		}
 	}
 
-	/**
-	 * @test
-	 * @covers ::on_badge_deleted
-	 */
+	#[Test]
 	public function badge_deleted_removes_by_the_same_hashed_id_used_to_notify(): void {
 		CommunityNotifications::on_badge_awarded( 7, array( 'name' => 'First Post' ), 'first_post' );
 		$awarded_id = $this->lastPayload()['object_id'];

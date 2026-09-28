@@ -18,13 +18,12 @@ use Brain\Monkey;
 use Brain\Monkey\Functions;
 use Mockery;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use WBGam\Engine\Event;
 use WBGam\Engine\SideEffectDispatcher;
 
-/**
- * @coversDefaultClass \WBGam\Engine\SideEffectDispatcher
- */
+#[CoversClass( \WBGam\Engine\SideEffectDispatcher::class )]
 class SideEffectDispatcherTest extends TestCase {
 
 	use MockeryPHPUnitIntegration;

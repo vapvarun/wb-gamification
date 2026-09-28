@@ -29,11 +29,11 @@
 
 namespace WBGam\Tests\Unit\Engine;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
-/**
- * @coversDefaultClass \WBGam\Engine\LeaderboardEngine
- */
+#[CoversClass( \WBGam\Engine\LeaderboardEngine::class )]
 class LeaderboardSnapshotTest extends TestCase {
 
 	private function source(): string {
@@ -42,9 +42,8 @@ class LeaderboardSnapshotTest extends TestCase {
 
 	/**
 	 * The snapshot must not be gated on a per-award invalidation stamp.
-	 *
-	 * @test
 	 */
+	#[Test]
 	public function snapshot_is_not_disabled_by_every_award(): void {
 		$src = $this->source();
 
@@ -69,9 +68,8 @@ class LeaderboardSnapshotTest extends TestCase {
 	 * The rows are stamped with $started and the closing DELETE keeps rows stamped >= $started. When
 	 * the stamp came from MySQL NOW() and the cutoff from PHP (or vice versa), the two clocks differed
 	 * on any host whose database is not UTC and the DELETE wiped the snapshot it had just written.
-	 *
-	 * @test
 	 */
+	#[Test]
 	public function straggler_purge_stamps_and_bounds_with_one_utc_value(): void {
 		$src = $this->source();
 
@@ -87,9 +85,8 @@ class LeaderboardSnapshotTest extends TestCase {
 
 	/**
 	 * The all-time board must read the materialised totals, not aggregate the ledger.
-	 *
-	 * @test
 	 */
+	#[Test]
 	public function all_time_board_reads_the_materialised_totals(): void {
 		$src = $this->source();
 

@@ -11,12 +11,17 @@ use Brain\Monkey;
 use Brain\Monkey\Functions;
 use Mockery;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use WBGam\Engine\BadgeEngine;
 
-/**
- * @coversDefaultClass \WBGam\Engine\BadgeEngine
- */
+#[CoversClass( \WBGam\Engine\BadgeEngine::class )]
+#[CoversMethod( \WBGam\Engine\BadgeEngine::class, 'has_badge' )]
+#[CoversMethod( \WBGam\Engine\BadgeEngine::class, 'get_user_earned_badge_ids' )]
+#[CoversMethod( \WBGam\Engine\BadgeEngine::class, 'award_badge' )]
+#[CoversMethod( \WBGam\Engine\BadgeEngine::class, 'repair_zero_date_expiry' )]
 class BadgeEngineTest extends TestCase {
 
 	use MockeryPHPUnitIntegration;
@@ -31,11 +36,7 @@ class BadgeEngineTest extends TestCase {
 		parent::tearDown();
 	}
 
-	/**
-	 * @test
-	 * @covers ::has_badge
-	 * @covers ::get_user_earned_badge_ids
-	 */
+	#[Test]
 	public function reports_badge_held_when_present_in_cached_list(): void {
 		Functions\when( 'wp_cache_get' )->alias(
 			fn( $key ) => 'wb_gam_earned_badges_42' === $key
@@ -48,11 +49,7 @@ class BadgeEngineTest extends TestCase {
 		$this->assertFalse( BadgeEngine::has_badge( 42, 'never_earned' ) );
 	}
 
-	/**
-	 * @test
-	 * @covers ::has_badge
-	 * @covers ::get_user_earned_badge_ids
-	 */
+	#[Test]
 	public function user_with_no_badges_returns_empty_set(): void {
 		Functions\when( 'wp_cache_get' )->justReturn( false );
 		Functions\when( 'wp_cache_set' )->justReturn( true );
@@ -90,10 +87,7 @@ class BadgeEngineTest extends TestCase {
 		);
 	}
 
-	/**
-	 * @test
-	 * @covers ::award_badge
-	 */
+	#[Test]
 	public function award_returns_false_when_user_already_holds_badge(): void {
 		$this->setup_award_environment(
 			array( 'wb_gam_earned_badges_7' => array( 'first_post' ) )
@@ -107,10 +101,7 @@ class BadgeEngineTest extends TestCase {
 		$this->assertFalse( BadgeEngine::award_badge( 7, 'first_post' ) );
 	}
 
-	/**
-	 * @test
-	 * @covers ::award_badge
-	 */
+	#[Test]
 	public function award_returns_false_after_closes_at_cutoff(): void {
 		$this->setup_award_environment();
 
@@ -136,10 +127,7 @@ class BadgeEngineTest extends TestCase {
 		$this->assertFalse( BadgeEngine::award_badge( 7, 'expired_promo' ) );
 	}
 
-	/**
-	 * @test
-	 * @covers ::award_badge
-	 */
+	#[Test]
 	public function award_returns_false_when_max_earners_reached(): void {
 		$this->setup_award_environment();
 
@@ -167,10 +155,7 @@ class BadgeEngineTest extends TestCase {
 		$this->assertFalse( BadgeEngine::award_badge( 7, 'limited_pioneer' ) );
 	}
 
-	/**
-	 * @test
-	 * @covers ::award_badge
-	 */
+	#[Test]
 	public function should_award_filter_can_block_award(): void {
 		$this->setup_award_environment();
 
@@ -193,10 +178,7 @@ class BadgeEngineTest extends TestCase {
 		$this->assertFalse( BadgeEngine::award_badge( 7, 'first_post' ) );
 	}
 
-	/**
-	 * @test
-	 * @covers ::award_badge
-	 */
+	#[Test]
 	public function award_inserts_when_all_gates_pass(): void {
 		$this->setup_award_environment();
 
@@ -234,10 +216,7 @@ class BadgeEngineTest extends TestCase {
 		$this->assertTrue( BadgeEngine::award_badge( 7, 'first_post' ) );
 	}
 
-	/**
-	 * @test
-	 * @covers ::award_badge
-	 */
+	#[Test]
 	public function award_returns_false_and_logs_when_insert_fails(): void {
 		$this->setup_award_environment();
 
@@ -268,10 +247,7 @@ class BadgeEngineTest extends TestCase {
 	// badge awarded on 1.5.0–1.5.3 existed in the table but displayed as 0
 	// everywhere. Never-expiring awards MUST emit a literal SQL NULL.
 
-	/**
-	 * @test
-	 * @covers ::award_badge
-	 */
+	#[Test]
 	public function award_without_validity_emits_sql_null_for_expires_at(): void {
 		$this->setup_award_environment();
 
@@ -297,10 +273,7 @@ class BadgeEngineTest extends TestCase {
 		$this->assertTrue( BadgeEngine::award_badge( 7, 'first_post' ) );
 	}
 
-	/**
-	 * @test
-	 * @covers ::award_badge
-	 */
+	#[Test]
 	public function award_with_validity_window_binds_expires_at_placeholder(): void {
 		$this->setup_award_environment();
 
@@ -326,10 +299,7 @@ class BadgeEngineTest extends TestCase {
 		$this->assertTrue( BadgeEngine::award_badge( 7, 'cert_30d' ) );
 	}
 
-	/**
-	 * @test
-	 * @covers ::repair_zero_date_expiry
-	 */
+	#[Test]
 	public function repair_fixes_zero_date_rows_and_busts_affected_user_caches(): void {
 		Functions\when( 'wp_cache_set' )->justReturn( true );
 		$deleted = array();
@@ -362,10 +332,7 @@ class BadgeEngineTest extends TestCase {
 		$this->assertSame( array( 'wb_gam_earned_badges_5', 'wb_gam_earned_badges_9' ), $deleted );
 	}
 
-	/**
-	 * @test
-	 * @covers ::repair_zero_date_expiry
-	 */
+	#[Test]
 	public function repair_is_a_noop_when_no_zero_date_rows_exist(): void {
 		global $wpdb;
 		$wpdb         = Mockery::mock();

@@ -21,12 +21,14 @@ namespace WBGam\Tests\Unit\Engine;
 use Brain\Monkey;
 use Brain\Monkey\Functions;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use WBGam\Engine\NotificationBridge;
 
-/**
- * @coversDefaultClass \WBGam\Engine\NotificationBridge
- */
+#[CoversClass( \WBGam\Engine\NotificationBridge::class )]
+#[CoversMethod( \WBGam\Engine\NotificationBridge::class, 'read_pending' )]
 class NotificationQueueBoundsTest extends TestCase {
 
 	use MockeryPHPUnitIntegration;
@@ -126,10 +128,8 @@ class NotificationQueueBoundsTest extends TestCase {
 
 	/**
 	 * A 30,197-row backlog yields at most a 5-toast burst - not 50.
-	 *
-	 * @test
-	 * @covers ::read_pending
 	 */
+	#[Test]
 	public function large_backlog_is_capped_to_a_small_burst(): void {
 		$this->stub_wpdb( 30197 );
 
@@ -142,10 +142,8 @@ class NotificationQueueBoundsTest extends TestCase {
 	/**
 	 * The events shown are the NEWEST in the backlog, and are ordered
 	 * oldest-first so the stack reads chronologically.
-	 *
-	 * @test
-	 * @covers ::read_pending
 	 */
+	#[Test]
 	public function burst_contains_the_newest_events_in_chronological_order(): void {
 		$this->stub_wpdb( 30197 );
 
@@ -159,10 +157,8 @@ class NotificationQueueBoundsTest extends TestCase {
 	 * The cursor jumps to the HEAD of the backlog, not merely to the newest
 	 * event shown. This is what drops the un-shown remainder instead of
 	 * queueing it for the next page load.
-	 *
-	 * @test
-	 * @covers ::read_pending
 	 */
+	#[Test]
 	public function cursor_fast_forwards_past_the_entire_backlog(): void {
 		$this->stub_wpdb( 30197 );
 
@@ -174,10 +170,8 @@ class NotificationQueueBoundsTest extends TestCase {
 	/**
 	 * The read must be newest-first. An ASC read is the exact shape of the
 	 * pre-1.6.4 bug (serve the oldest, replay forever), so assert against it.
-	 *
-	 * @test
-	 * @covers ::read_pending
 	 */
+	#[Test]
 	public function query_reads_newest_first(): void {
 		$this->stub_wpdb( 30197 );
 
@@ -190,10 +184,8 @@ class NotificationQueueBoundsTest extends TestCase {
 	/**
 	 * A small queue needs no special case: the newest-5-of-3 is all 3, and the
 	 * cursor lands exactly where it would have anyway.
-	 *
-	 * @test
-	 * @covers ::read_pending
 	 */
+	#[Test]
 	public function small_queue_is_delivered_whole(): void {
 		$this->stub_wpdb( 3 );
 

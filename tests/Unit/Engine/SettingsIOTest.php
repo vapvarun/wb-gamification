@@ -14,12 +14,14 @@ namespace WBGam\Tests\Unit\Engine;
 use Brain\Monkey;
 use Brain\Monkey\Functions;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use WBGam\Engine\SettingsIO;
 
-/**
- * @coversDefaultClass \WBGam\Engine\SettingsIO
- */
+#[CoversClass( \WBGam\Engine\SettingsIO::class )]
+#[CoversMethod( \WBGam\Engine\SettingsIO::class, 'import' )]
 class SettingsIOTest extends TestCase {
 
 	use MockeryPHPUnitIntegration;
@@ -51,10 +53,7 @@ class SettingsIOTest extends TestCase {
 		parent::tearDown();
 	}
 
-	/**
-	 * @test
-	 * @covers ::import
-	 */
+	#[Test]
 	public function rejects_a_foreign_document(): void {
 		$res = SettingsIO::import( array( 'plugin' => 'something-else', 'options' => array( 'wb_gam_x' => 1 ) ) );
 		$this->assertFalse( $res['ok'] );
@@ -62,19 +61,13 @@ class SettingsIOTest extends TestCase {
 		$this->assertEmpty( $this->written );
 	}
 
-	/**
-	 * @test
-	 * @covers ::import
-	 */
+	#[Test]
 	public function rejects_a_document_without_options(): void {
 		$res = SettingsIO::import( array( 'plugin' => 'wb-gamification' ) );
 		$this->assertFalse( $res['ok'] );
 	}
 
-	/**
-	 * @test
-	 * @covers ::import
-	 */
+	#[Test]
 	public function applies_wb_gam_settings_and_skips_runtime_plus_foreign_keys(): void {
 		$res = SettingsIO::import(
 			array(

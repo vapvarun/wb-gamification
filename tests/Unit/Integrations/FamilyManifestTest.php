@@ -12,6 +12,7 @@ namespace WBGam\Tests\Unit\Integrations;
 
 use Brain\Monkey;
 use Brain\Monkey\Functions;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 class FamilyManifestTest extends TestCase {
@@ -47,7 +48,7 @@ class FamilyManifestTest extends TestCase {
 		return include dirname( __DIR__, 3 ) . '/integrations/' . $file;
 	}
 
-	/** @test */
+	#[Test]
 	public function every_manifest_returns_well_formed_triggers(): void {
 		$seen = array();
 		foreach ( self::MANIFESTS as $file => $expected_count ) {
@@ -69,7 +70,7 @@ class FamilyManifestTest extends TestCase {
 		}
 	}
 
-	/** @test */
+	#[Test]
 	public function user_callbacks_resolve_the_rewarded_member(): void {
 		$triggers = array();
 		foreach ( array_keys( self::MANIFESTS ) as $file ) {
@@ -96,7 +97,7 @@ class FamilyManifestTest extends TestCase {
 		$this->assertSame( 55, $triggers['bn_profile_updated']( 55, 60 ) );
 	}
 
-	/** @test */
+	#[Test]
 	public function post_author_derived_callbacks_resolve_via_post(): void {
 		Functions\when( 'get_post_field' )->alias(
 			static function ( $field, $id ) {

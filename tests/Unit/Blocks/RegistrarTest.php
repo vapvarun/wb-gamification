@@ -10,14 +10,13 @@ namespace WBGam\Tests\Unit\Blocks;
 use Brain\Monkey;
 use Brain\Monkey\Functions;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use WBGam\Blocks\Registrar;
 
 require_once __DIR__ . '/Fixtures/WPBlockTypeRegistryStub.php';
 
-/**
- * @coversDefaultClass \WBGam\Blocks\Registrar
- */
+#[CoversClass( \WBGam\Blocks\Registrar::class )]
 class RegistrarTest extends TestCase {
 
 	use MockeryPHPUnitIntegration;

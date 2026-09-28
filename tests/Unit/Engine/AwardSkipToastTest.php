@@ -35,12 +35,13 @@ namespace WBGam\Tests\Unit\Engine;
 use Brain\Monkey;
 use Brain\Monkey\Functions;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\TestCase;
 use WBGam\Engine\NotificationBridge;
 
-/**
- * @coversDefaultClass \WBGam\Engine\NotificationBridge
- */
+#[CoversClass( \WBGam\Engine\NotificationBridge::class )]
+#[CoversMethod( \WBGam\Engine\NotificationBridge::class, 'on_award_skipped' )]
 class AwardSkipToastTest extends TestCase {
 
 	use MockeryPHPUnitIntegration;
@@ -77,7 +78,6 @@ class AwardSkipToastTest extends TestCase {
 	 * `apply_filters` returns its default (an empty list) when nothing is hooked, so every reason is
 	 * refused before anything is queued.
 	 *
-	 * @covers ::on_award_skipped
 	 * @return void
 	 */
 	public function test_by_default_no_skip_reason_reaches_a_member(): void {

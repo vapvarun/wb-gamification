@@ -16,12 +16,11 @@ namespace WBGam\Tests\Unit\Blocks;
 use Brain\Monkey;
 use Brain\Monkey\Functions;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use WBGam\Blocks\CSS;
 
-/**
- * @coversDefaultClass \WBGam\Blocks\CSS
- */
+#[CoversClass( \WBGam\Blocks\CSS::class )]
 class CSSTest extends TestCase {
 
 	use MockeryPHPUnitIntegration;

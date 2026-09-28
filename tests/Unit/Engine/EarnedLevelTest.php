@@ -11,14 +11,17 @@ namespace WBGam\Tests\Unit\Engine;
 
 use Brain\Monkey;
 use Brain\Monkey\Functions;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use WBGam\Engine\LevelEngine;
 use WBGam\Engine\PointsEngine;
 use WBGam\Tests\Unit\Support\ResetsPointTypeCache;
 
-/**
- * @coversDefaultClass \WBGam\Engine\LevelEngine
- */
+#[CoversClass( \WBGam\Engine\LevelEngine::class )]
+#[CoversMethod( \WBGam\Engine\LevelEngine::class, 'is_climb' )]
+#[CoversMethod( \WBGam\Engine\PointsEngine::class, 'get_earned' )]
 class EarnedLevelTest extends TestCase {
 
 	use ResetsPointTypeCache;
@@ -34,10 +37,7 @@ class EarnedLevelTest extends TestCase {
 		parent::tearDown();
 	}
 
-	/**
-	 * @test
-	 * @covers ::is_climb
-	 */
+	#[Test]
 	public function only_a_climb_is_announced(): void {
 		$member      = array( 'min_points' => 100 );
 		$contributor = array( 'min_points' => 500 );
@@ -48,10 +48,7 @@ class EarnedLevelTest extends TestCase {
 		$this->assertFalse( LevelEngine::is_climb( null, $member ) );
 	}
 
-	/**
-	 * @test
-	 * @covers \WBGam\Engine\PointsEngine::get_earned
-	 */
+	#[Test]
 	public function earned_is_read_from_the_totals_row(): void {
 		Functions\when( 'wp_cache_get' )->alias(
 			static function ( $key ) {

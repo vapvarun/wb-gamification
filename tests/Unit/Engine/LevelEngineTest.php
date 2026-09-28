@@ -10,13 +10,17 @@ namespace WBGam\Tests\Unit\Engine;
 use Brain\Monkey;
 use Brain\Monkey\Functions;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 use WBGam\Engine\LevelEngine;
 
-/**
- * @coversDefaultClass \WBGam\Engine\LevelEngine
- */
+#[CoversClass( \WBGam\Engine\LevelEngine::class )]
+#[CoversMethod( \WBGam\Engine\LevelEngine::class, 'get_level_for_points' )]
+#[CoversMethod( \WBGam\Engine\LevelEngine::class, 'get_next_level_for_points' )]
+#[CoversMethod( \WBGam\Engine\LevelEngine::class, 'invalidate_cache' )]
 class LevelEngineTest extends TestCase {
 
 	use MockeryPHPUnitIntegration;
@@ -48,20 +52,14 @@ class LevelEngineTest extends TestCase {
 		$cache_prop->setValue( null, $levels );
 	}
 
-	/**
-	 * @test
-	 * @covers ::get_level_for_points
-	 */
+	#[Test]
 	public function returns_null_when_no_levels_defined(): void {
 		$this->seed_cache( array() );
 
 		$this->assertNull( LevelEngine::get_level_for_points( 100 ) );
 	}
 
-	/**
-	 * @test
-	 * @covers ::get_level_for_points
-	 */
+	#[Test]
 	public function returns_the_starting_level_for_zero_points(): void {
 		$this->seed_cache( array(
 			array( 'id' => 1, 'name' => 'Newcomer',  'min_points' => 0,    'icon_url' => null ),
@@ -74,10 +72,7 @@ class LevelEngineTest extends TestCase {
 		$this->assertSame( 'Newcomer', $level['name'] );
 	}
 
-	/**
-	 * @test
-	 * @covers ::get_level_for_points
-	 */
+	#[Test]
 	public function returns_highest_threshold_user_has_reached(): void {
 		$this->seed_cache( array(
 			array( 'id' => 1, 'name' => 'Newcomer',  'min_points' => 0,    'icon_url' => null ),
@@ -92,10 +87,7 @@ class LevelEngineTest extends TestCase {
 		$this->assertSame( 'Champion', LevelEngine::get_level_for_points( 99999 )['name'] );
 	}
 
-	/**
-	 * @test
-	 * @covers ::get_level_for_points
-	 */
+	#[Test]
 	public function thresholds_must_be_inclusive(): void {
 		// Edge-case the "exactly at threshold" boundary explicitly.
 		$this->seed_cache( array(
@@ -110,10 +102,8 @@ class LevelEngineTest extends TestCase {
 	/**
 	 * Healthy default ladder — sort_order and min_points agree. The next level
 	 * is simply the threshold-successor, exactly as before the sort_order fix.
-	 *
-	 * @test
-	 * @covers ::get_next_level_for_points
 	 */
+	#[Test]
 	public function next_level_follows_the_ladder_on_a_healthy_seed(): void {
 		$this->seed_cache( $this->default_levels() );
 
@@ -128,11 +118,8 @@ class LevelEngineTest extends TestCase {
 	 * (796) than the level above it (Contributor, sort_order 3, min 500), the
 	 * "next level" must still follow sort_order. A Contributor on 781 points is
 	 * heading to Regular, not back down to Member.
-	 *
-	 * @test
-	 * @covers ::get_next_level_for_points
-	 * @covers ::get_level_for_points
 	 */
+	#[Test]
 	public function next_level_respects_sort_order_when_thresholds_cross(): void {
 		$this->seed_cache( $this->scrambled_levels() );
 
@@ -149,10 +136,8 @@ class LevelEngineTest extends TestCase {
 	 * With rows ordered by sort_order rather than min_points, get_level_for_points
 	 * must NOT break early — the highest reachable threshold can sit anywhere in
 	 * the list. At 800 points the user has cleared Member's 796 threshold.
-	 *
-	 * @test
-	 * @covers ::get_level_for_points
 	 */
+	#[Test]
 	public function level_for_points_does_not_break_early_under_sort_order(): void {
 		$this->seed_cache( $this->scrambled_levels() );
 
@@ -165,10 +150,8 @@ class LevelEngineTest extends TestCase {
 	 * editing a level threshold sees it reflected immediately rather than after
 	 * the 1-hour TTL. There is only one level cache, so this is the only
 	 * invalidation needed (regression guard for the no-invalidation gap).
-	 *
-	 * @test
-	 * @covers ::invalidate_cache
 	 */
+	#[Test]
 	public function invalidate_cache_clears_static_and_object_tiers(): void {
 		Functions\expect( 'wp_cache_delete' )
 			->once()

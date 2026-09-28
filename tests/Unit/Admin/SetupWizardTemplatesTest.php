@@ -22,11 +22,11 @@
 
 namespace WBGam\Tests\Unit\Admin;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
-/**
- * @coversDefaultClass \WBGam\Admin\SetupWizard
- */
+#[CoversClass( \WBGam\Admin\SetupWizard::class )]
 class SetupWizardTemplatesTest extends TestCase {
 
 	/**
@@ -91,9 +91,8 @@ class SetupWizardTemplatesTest extends TestCase {
 	/**
 	 * The manifests must actually yield action ids — otherwise this test is vacuous
 	 * and would pass no matter how broken the templates were.
-	 *
-	 * @test
 	 */
+	#[Test]
 	public function the_manifest_scan_finds_actions(): void {
 		$ids = $this->registered_action_ids();
 		$this->assertGreaterThan(
@@ -107,9 +106,8 @@ class SetupWizardTemplatesTest extends TestCase {
 
 	/**
 	 * No starter template may seed an action that does not exist.
-	 *
-	 * @test
 	 */
+	#[Test]
 	public function every_template_action_id_is_registered(): void {
 		$registered = $this->registered_action_ids();
 		$templates  = $this->template_action_ids();

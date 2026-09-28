@@ -14,12 +14,14 @@ namespace WBGam\Tests\Unit\Admin;
 
 use Brain\Monkey;
 use Brain\Monkey\Functions;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use WBGam\Admin\SettingsPage;
 
-/**
- * @coversDefaultClass \WBGam\Admin\SettingsPage
- */
+#[CoversClass( \WBGam\Admin\SettingsPage::class )]
+#[CoversMethod( \WBGam\Admin\SettingsPage::class, 'parse_login_bonus_tiers' )]
 class EngagementSettingsTest extends TestCase {
 
 	protected function setUp(): void {
@@ -45,10 +47,7 @@ class EngagementSettingsTest extends TestCase {
 		return $m->invoke( null, $raw );
 	}
 
-	/**
-	 * @test
-	 * @covers ::parse_login_bonus_tiers
-	 */
+	#[Test]
 	public function parses_valid_lines_into_day_points_map(): void {
 		$this->assertSame(
 			array( 1 => 10, 3 => 20, 7 => 50 ),
@@ -56,10 +55,7 @@ class EngagementSettingsTest extends TestCase {
 		);
 	}
 
-	/**
-	 * @test
-	 * @covers ::parse_login_bonus_tiers
-	 */
+	#[Test]
 	public function sorts_by_day_regardless_of_input_order(): void {
 		$this->assertSame(
 			array( 2 => 15, 5 => 40, 30 => 250 ),
@@ -67,10 +63,7 @@ class EngagementSettingsTest extends TestCase {
 		);
 	}
 
-	/**
-	 * @test
-	 * @covers ::parse_login_bonus_tiers
-	 */
+	#[Test]
 	public function drops_blank_malformed_and_non_positive_lines(): void {
 		// Blank, no-colon, zero-day and zero-points lines all drop. (absint
 		// coerces a negative day to positive — that is WP's sanitizer behaviour,
@@ -81,18 +74,12 @@ class EngagementSettingsTest extends TestCase {
 		);
 	}
 
-	/**
-	 * @test
-	 * @covers ::parse_login_bonus_tiers
-	 */
+	#[Test]
 	public function empty_input_returns_empty_array_for_default_restore(): void {
 		$this->assertSame( array(), $this->parse( "   \n\n" ) );
 	}
 
-	/**
-	 * @test
-	 * @covers ::parse_login_bonus_tiers
-	 */
+	#[Test]
 	public function tolerates_whitespace_and_crlf(): void {
 		$this->assertSame(
 			array( 1 => 10, 14 => 100 ),

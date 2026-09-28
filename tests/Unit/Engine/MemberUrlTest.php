@@ -17,12 +17,15 @@ namespace WBGam\Tests\Unit\Engine;
 use Brain\Monkey;
 use Brain\Monkey\Functions;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use WBGam\Engine\MemberUrl;
 
-/**
- * @coversDefaultClass \WBGam\Engine\MemberUrl
- */
+#[CoversClass( \WBGam\Engine\MemberUrl::class )]
+#[CoversMethod( \WBGam\Engine\MemberUrl::class, 'resolve' )]
+#[CoversMethod( \WBGam\Engine\MemberUrl::class, 'wrap' )]
 class MemberUrlTest extends TestCase {
 
 	use MockeryPHPUnitIntegration;
@@ -71,10 +74,8 @@ class MemberUrlTest extends TestCase {
 	/**
 	 * BuddyPress owns the member profile wherever it is active — a BP site must
 	 * see exactly the behaviour it saw before 1.6.4.
-	 *
-	 * @test
-	 * @covers ::resolve
 	 */
+	#[Test]
 	public function buddypress_url_wins_when_buddypress_is_active(): void {
 		Functions\when( 'bp_members_get_user_url' )->justReturn( 'https://example.test/members/member7/' );
 
@@ -84,10 +85,8 @@ class MemberUrlTest extends TestCase {
 	/**
 	 * The bug: with no BuddyPress, callers fell back to the author archive.
 	 * The public profile is the right answer, and it is the one we now give.
-	 *
-	 * @test
-	 * @covers ::resolve
 	 */
+	#[Test]
 	public function falls_back_to_the_public_profile_when_buddypress_is_absent(): void {
 		$this->assertSame( 'https://example.test/u/member7/', MemberUrl::resolve( 7 ) );
 	}
@@ -96,10 +95,8 @@ class MemberUrlTest extends TestCase {
 	 * The trap in the originally-suggested fix: /u/{login} 404s when the member
 	 * has opted their profile private, so building it unconditionally would have
 	 * traded a wrong link for a broken one.
-	 *
-	 * @test
-	 * @covers ::resolve
 	 */
+	#[Test]
 	public function returns_nothing_when_the_member_opted_their_profile_private(): void {
 		Functions\when( 'get_user_meta' )->justReturn( '0' );
 
@@ -108,20 +105,15 @@ class MemberUrlTest extends TestCase {
 
 	/**
 	 * Same, for the owner's site-wide kill switch.
-	 *
-	 * @test
-	 * @covers ::resolve
 	 */
+	#[Test]
 	public function returns_nothing_when_public_profiles_are_switched_off_site_wide(): void {
 		Functions\when( 'get_option' )->justReturn( '' );
 
 		$this->assertSame( '', MemberUrl::resolve( 7 ) );
 	}
 
-	/**
-	 * @test
-	 * @covers ::resolve
-	 */
+	#[Test]
 	public function returns_nothing_for_an_invalid_user_id(): void {
 		$this->assertSame( '', MemberUrl::resolve( 0 ) );
 		$this->assertSame( '', MemberUrl::resolve( -3 ) );
@@ -130,10 +122,8 @@ class MemberUrlTest extends TestCase {
 	/**
 	 * The guard that would have caught the original bug on every surface at once:
 	 * whatever the configuration, the resolver never hands back an author archive.
-	 *
-	 * @test
-	 * @covers ::resolve
 	 */
+	#[Test]
 	public function never_resolves_to_an_author_archive(): void {
 		Functions\when( 'get_author_posts_url' )->justReturn( 'https://example.test/author/member7/' );
 
@@ -160,10 +150,7 @@ class MemberUrlTest extends TestCase {
 		}
 	}
 
-	/**
-	 * @test
-	 * @covers ::resolve
-	 */
+	#[Test]
 	public function filter_can_point_at_a_third_party_profile_system(): void {
 		Functions\when( 'apply_filters' )->alias(
 			static function ( $hook, $value, $user_id = 0 ) {
@@ -174,10 +161,7 @@ class MemberUrlTest extends TestCase {
 		$this->assertSame( 'https://example.test/people/7', MemberUrl::resolve( 7 ) );
 	}
 
-	/**
-	 * @test
-	 * @covers ::wrap
-	 */
+	#[Test]
 	public function wrap_renders_an_anchor_when_there_is_a_destination(): void {
 		$this->assertSame(
 			'<a href="https://example.test/u/member7/" class="wb-gam-name">Member 7</a>',
@@ -188,10 +172,8 @@ class MemberUrlTest extends TestCase {
 	/**
 	 * A name with nowhere to go is not a dead anchor — but it still needs the
 	 * class the anchor was carrying, or the block loses its styling.
-	 *
-	 * @test
-	 * @covers ::wrap
 	 */
+	#[Test]
 	public function wrap_keeps_the_class_on_a_span_when_there_is_no_destination(): void {
 		$this->assertSame(
 			'<span class="wb-gam-name">Member 7</span>',
@@ -199,10 +181,7 @@ class MemberUrlTest extends TestCase {
 		);
 	}
 
-	/**
-	 * @test
-	 * @covers ::wrap
-	 */
+	#[Test]
 	public function wrap_returns_bare_content_when_there_is_no_destination_and_no_class(): void {
 		$this->assertSame( 'Member 7', MemberUrl::wrap( '', 'Member 7' ) );
 	}

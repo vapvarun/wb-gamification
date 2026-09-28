@@ -10,12 +10,11 @@ namespace WBGam\Tests\Unit\Engine;
 use Brain\Monkey;
 use Brain\Monkey\Functions;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use WBGam\Engine\BootOrder;
 
-/**
- * @coversDefaultClass \WBGam\Engine\BootOrder
- */
+#[CoversClass( \WBGam\Engine\BootOrder::class )]
 class BootOrderTest extends TestCase {
 
 	use MockeryPHPUnitIntegration;

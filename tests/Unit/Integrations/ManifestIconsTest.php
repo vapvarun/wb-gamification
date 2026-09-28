@@ -10,16 +10,14 @@
 
 namespace WBGam\Tests\Unit\Integrations;
 
+use PHPUnit\Framework\Attributes\CoversNothing;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
-/**
- * @coversNothing
- */
+#[CoversNothing]
 class ManifestIconsTest extends TestCase {
 
-	/**
-	 * @test
-	 */
+	#[Test]
 	public function every_manifest_icon_exists_in_the_lucide_font(): void {
 		$root = dirname( __DIR__, 3 );
 		$font = (string) file_get_contents( $root . '/assets/fonts/lucide.css' );

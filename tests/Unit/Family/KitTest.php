@@ -3,6 +3,7 @@ namespace WBGam\Tests\Unit\Family;
 
 use Brain\Monkey;
 use Brain\Monkey\Functions;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 require_once dirname( __DIR__, 3 ) . '/libs/wbcom-family/bootstrap.php';
@@ -19,7 +20,7 @@ class KitTest extends TestCase {
 		parent::tearDown();
 	}
 
-	/** @test */
+	#[Test]
 	public function boot_registers_installer_ajax_once(): void {
 		Functions\expect( 'add_action' )->once()->with( 'wp_ajax_wbcom_family_install', \Mockery::type( 'array' ) );
 		\Wbcom\Family\Kit::boot( array( 'host' => 'wb-gamification', 'onboarding_url' => null ) );
@@ -27,7 +28,7 @@ class KitTest extends TestCase {
 		$this->addToAssertionCount( 1 );
 	}
 
-	/** @test */
+	#[Test]
 	public function render_returns_page_html(): void {
 		Functions\when( 'add_action' )->justReturn( true );
 		Functions\when( 'wp_create_nonce' )->justReturn( 'nonce123' );
