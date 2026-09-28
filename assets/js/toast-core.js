@@ -266,14 +266,17 @@
 	 * @return {Object} { el, gone, update, dismiss }
 	 */
 	function viaBuddyNext( opts ) {
+		// Same rule as paint(): a toast with a usable link stays until dismissed. Passing
+		// persist:false would override BuddyNext's own default and time the link out.
+		var hasLink = !! ( opts.href && /^(\/(?!\/)|https?:\/\/)/.test( opts.href ) );
 		var h = window.bnToast( {
 			key: opts.key || '',
 			title: opts.title || '',
 			body: opts.body || '',
 			type: BN_TYPE[ opts.tone || 'reward' ] || 'info',
-			href: opts.href || '',
+			href: hasLink ? opts.href : '',
 			linkLabel: opts.hrefLabel || '',
-			persist: !! opts.persist,
+			persist: !! ( opts.persist || hasLink ),
 		} );
 
 		if ( ! h || ! h.el ) {

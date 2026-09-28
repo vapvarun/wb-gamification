@@ -32,7 +32,7 @@ can delete data, and every toast loses its icon on pages without a gamification 
 
 ### 2. A link toast stays; a plain toast fades and pauses on hover
 - **Action**: render a toast with `url` (the welcome toast) beside a plain one; wait 6s; hover a second plain toast for 6s, then move away.
-- **Expect**: the plain toast is gone at about 4s, the link toast is still there, the hovered toast survives the hover and fades about 2s after the pointer leaves.
+- **Expect** (run it on a BuddyNext page AND in wp-admin, where the renderer differs): the plain toast is gone at about 4s, the link toast is still there, the hovered toast survives the hover and fades about 2s after the pointer leaves.
 - **On fail**: `assets/js/toast-core.js` `arm()` / `paint()` (a toast with a link is persistent).
 
 ### 3. Hub tiles open by keyboard

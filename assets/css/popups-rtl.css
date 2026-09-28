@@ -278,6 +278,11 @@ body.admin-bar .wb-gam-toasts--top-right {
 .wb-gam-banner--success { background: var(--wb-gam-pop-success-bg); }
 .wb-gam-banner--danger { background: var(--wb-gam-pop-danger-bg); }
 .wb-gam-banner__text { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+/* Pin the colour on the nodes that paint the words. A host rule on a bare span or button (or a
+ * legacy .is-success / .is-error hook the block still carries) must not turn the text white on
+ * the pale tint. Two classes beat any single-class or element rule. */
+.wb-gam-banner .wb-gam-banner__text,
+.wb-gam-banner .wb-gam-banner__action { color: var(--wb-gam-pop-text); }
 .wb-gam-banner__action {
 	flex: none;
 	min-height: 40px;

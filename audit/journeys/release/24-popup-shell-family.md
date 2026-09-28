@@ -33,6 +33,7 @@ timing, the family stops matching BuddyNext, and a member sees two different pro
 - **Expect**: every dialog and the drawer share the surface colour, `--wb-gam-pop-shadow-lg`, a scrim of
   `--wb-gam-pop-scrim` with blur, header title 18px/600 (drawer 16px), a 40px `.wb-gam-close`, and footer
   buttons 40px tall (`.wb-gam-btn`). The toast is the inverted pill at the bottom centre.
+  Banners are measured on the node that paints the words: `.wb-gam-banner__text` in a shown success and danger banner must be at least 4.5:1 against the banner background in light and dark, and must stay so after injecting `span{color:#fff} .is-success span{color:#fff} button{color:#fff}` (a host rule must not win).
 - **On fail**: `assets/css/popups.css`; a surface carrying its own shell rules (`assets/css/hub.css`,
   `src/Blocks/redemption-store/style.css`).
 
@@ -50,6 +51,7 @@ timing, the family stops matching BuddyNext, and a member sees two different pro
   visible; the toast host is a manual popover and paints above the open `dialog`; a badge toast fires a
   small confetti burst.
   A one-line toast is vertically centred: the `.wb-gam-toast__message` box centre equals the icon disc centre (a hidden link or detail must take no space).
+  On a BuddyNext page a toast with a link (`wbGam.toast({href:'/members/'})`) is still on screen after 6s, a plain toast is gone, and a `//host/x` link is dropped.
   On a BuddyNext page the toasts render inside BuddyNext's single `.bn-toast-container` (no `.wb-gam-toasts` host is created), a BuddyNext toast fired at the same moment never overlaps them at 1440 or 390, and same-key updates repaint in place. In wp-admin (no `window.bnToast`) the plugin's own renderer is used.
 - **On fail**: `assets/js/toast.js` `pointsToast()`, `assets/js/toast-core.js` `viaBuddyNext()`, `assets/js/toast-core.js` `raise()` / `MAX_VISIBLE`.
 
