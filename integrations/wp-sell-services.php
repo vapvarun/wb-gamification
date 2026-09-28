@@ -62,7 +62,8 @@ return array(
 					return 0;
 				}
 				$review = ( new \WPSellServices\Services\ReviewService() )->get( $review_id );
-				if ( ! $review || \WPSellServices\Models\Review::STATUS_APPROVED !== $review->status ) {
+				// 'approved' is WPSellServices\Models\Review::STATUS_APPROVED, spelled out so this file needs no class from a plugin that may be absent.
+				if ( ! $review || 'approved' !== $review->status ) {
 					return 0;
 				}
 				$order = class_exists( '\WPSellServices\Services\OrderService' ) ? ( new \WPSellServices\Services\OrderService() )->get( $order_id ) : null;

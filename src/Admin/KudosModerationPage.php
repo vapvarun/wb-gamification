@@ -322,7 +322,19 @@ final class KudosModerationPage {
 					<?php if ( empty( $rows ) ) : ?>
 						<div class="wbgam-empty">
 							<p class="wbgam-empty-title"><?php esc_html_e( 'No kudos to show', 'wb-gamification' ); ?></p>
-							<p><?php esc_html_e( 'When members give each other kudos, they appear here for moderation.', 'wb-gamification' ); ?></p>
+							<?php if ( $filters['giver_id'] || $filters['receiver_id'] || $filters['date_from'] || $filters['date_to'] || 'all' !== $status ) : ?>
+								<p><?php esc_html_e( 'Nothing matches these filters. Clear a filter to see more.', 'wb-gamification' ); ?></p>
+							<?php else : ?>
+								<p>
+									<?php
+									printf(
+										/* translators: %s: link to the Kudos settings */
+										esc_html__( 'When members give each other kudos, they appear here for moderation. The daily limit and the points a kudo is worth are under %s.', 'wb-gamification' ),
+										'<a href="' . esc_url( admin_url( 'admin.php?page=wb-gamification#kudos' ) ) . '">' . esc_html__( 'Kudos settings', 'wb-gamification' ) . '</a>'
+									);
+									?>
+								</p>
+							<?php endif; ?>
 						</div>
 					<?php else : ?>
 						<div class="wbgam-table-scroll">

@@ -255,7 +255,7 @@ final class AnalyticsDashboard {
 				<div class="wb-gam-analytics__panel">
 					<h2><?php esc_html_e( 'Top Actions by Points', 'wb-gamification' ); ?></h2>
 					<?php if ( empty( $stats['top_actions'] ) ) : ?>
-						<p class="description"><?php esc_html_e( 'No data yet.', 'wb-gamification' ); ?></p>
+						<?php self::render_no_data(); ?>
 					<?php else : ?>
 						<table class="widefat striped">
 							<thead>
@@ -295,7 +295,7 @@ final class AnalyticsDashboard {
 						?>
 					</h2>
 					<?php if ( empty( $stats['top_earners'] ) ) : ?>
-						<p class="description"><?php esc_html_e( 'No data yet.', 'wb-gamification' ); ?></p>
+						<?php self::render_no_data(); ?>
 					<?php else : ?>
 						<?php
 						// Resolve the default currency label so the analytics
@@ -900,9 +900,27 @@ final class AnalyticsDashboard {
 		<?php
 	}
 
+	/**
+	 * The empty state for a panel with nothing to chart yet: say why, and where to go next.
+	 */
+	private static function render_no_data(): void {
+		?>
+		<p class="description">
+			<?php
+			printf(
+				/* translators: 1: link to the Points settings, 2: link to the Award Points page */
+				esc_html__( 'Nothing earned in this period yet. Members earn points from the actions switched on under %1$s, or you can %2$s by hand.', 'wb-gamification' ),
+				'<a href="' . esc_url( admin_url( 'admin.php?page=wb-gamification#points' ) ) . '">' . esc_html__( 'Points settings', 'wb-gamification' ) . '</a>',
+				'<a href="' . esc_url( admin_url( 'admin.php?page=wb-gamification-award' ) ) . '">' . esc_html__( 'award points', 'wb-gamification' ) . '</a>'
+			);
+			?>
+		</p>
+		<?php
+	}
+
 	private static function render_sparkline( array $daily_points, int $period ): void {
 		if ( empty( $daily_points ) ) {
-			echo '<p class="description">' . esc_html__( 'No data yet.', 'wb-gamification' ) . '</p>';
+			self::render_no_data();
 			return;
 		}
 
