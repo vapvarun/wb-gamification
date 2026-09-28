@@ -131,7 +131,7 @@ function showPanel( key, opener ) {
 	window.wbGam.dialog.bind( dialog );
 	window.wbGam.dialog.open( dialog, {
 		opener,
-		initialFocus: '.gam-panel__back',
+		initialFocus: '.wb-gam-close',
 		onClose: resetPanel,
 	} );
 }

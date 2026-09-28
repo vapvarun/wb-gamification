@@ -560,13 +560,12 @@ BlockHooks::before( 'hub', $wb_gam_attrs );
 	// backdrop; assets/js/dialog.js adds focus-return and backdrop click. The panel used to be a div
 	// wearing role="dialog" aria-modal="true", which promised all of that and delivered none of it.
 	?>
-	<dialog class="gam-panel" data-wb-gam-dialog aria-labelledby="gam-panel-title">
+	<dialog class="wb-gam-drawer gam-panel" data-wb-gam-dialog aria-labelledby="gam-panel-title">
 		<div class="gam-panel__header">
-			<button type="button" class="gam-panel__back" data-wp-on--click="actions.closePanel">
-				<i class="icon-arrow-left"></i>
-				<span class="screen-reader-text"><?php esc_html_e( 'Close panel', 'wb-gamification' ); ?></span>
-			</button>
 			<span id="gam-panel-title" class="gam-panel__title" data-wp-text="state.panelTitle"></span>
+			<button type="button" class="wb-gam-close" data-wp-on--click="actions.closePanel" aria-label="<?php esc_attr_e( 'Close panel', 'wb-gamification' ); ?>">
+				<i class="icon-x" aria-hidden="true"></i>
+			</button>
 		</div>
 		<div class="gam-panel__body" id="gam-panel-body"></div>
 	</dialog>
@@ -577,18 +576,16 @@ BlockHooks::before( 'hub', $wb_gam_attrs );
 		     ESC + focus-trap implicitly. aria-labelledby points at the visible
 		     <h2> title so screen readers announce the dialog by name. -->
 		<dialog
-			class="wbgam-convert-dialog"
+			class="wb-gam-dialog wb-gam-dialog--form"
 			data-wb-gam-convert-dialog
-			role="dialog"
-			aria-modal="true"
 			aria-labelledby="wb-gam-convert-title"
 		>
 			<form method="dialog" class="wbgam-convert-form" data-wb-gam-convert-form>
-				<header class="wbgam-convert-form__head">
-					<h2 id="wb-gam-convert-title" class="wbgam-convert-form__title"><?php esc_html_e( 'Convert balance', 'wb-gamification' ); ?></h2>
-					<button type="button" class="wbgam-convert-form__close" data-wb-gam-convert-close aria-label="<?php esc_attr_e( 'Close', 'wb-gamification' ); ?>">×</button>
+				<header class="wb-gam-dialog__header">
+					<h2 id="wb-gam-convert-title" class="wb-gam-dialog__title"><?php esc_html_e( 'Convert balance', 'wb-gamification' ); ?></h2>
+					<button type="button" class="wb-gam-close" data-wb-gam-convert-close aria-label="<?php esc_attr_e( 'Close', 'wb-gamification' ); ?>"><i class="icon-x" aria-hidden="true"></i></button>
 				</header>
-				<div class="wbgam-convert-form__body">
+				<div class="wb-gam-dialog__body">
 					<p class="wbgam-convert-form__balance">
 						<?php
 						printf(
@@ -632,9 +629,9 @@ BlockHooks::before( 'hub', $wb_gam_attrs );
 					</label>
 					<p class="wbgam-convert-form__preview" data-wb-gam-convert-preview aria-live="polite"></p>
 				</div>
-				<footer class="wbgam-convert-form__actions">
-					<button type="button" class="wbgam-btn wbgam-btn--secondary" data-wb-gam-convert-close><?php esc_html_e( 'Cancel', 'wb-gamification' ); ?></button>
-					<button type="submit" class="wbgam-btn" data-wb-gam-convert-submit><?php esc_html_e( 'Convert', 'wb-gamification' ); ?></button>
+				<footer class="wb-gam-dialog__footer">
+					<button type="button" class="wb-gam-btn wb-gam-btn--secondary" data-wb-gam-convert-close><?php esc_html_e( 'Cancel', 'wb-gamification' ); ?></button>
+					<button type="submit" class="wb-gam-btn wb-gam-btn--primary" data-wb-gam-convert-submit><?php esc_html_e( 'Convert', 'wb-gamification' ); ?></button>
 				</footer>
 			</form>
 		</dialog>

@@ -1,16 +1,10 @@
 # bin/check-css-orphans.sh baseline — PHP classes with no matching CSS rule.
 # Each line is a class name. New orphans fail the gate; legitimate fixes
 # (matching CSS added) should DELETE the line from this file in the same commit.
-# Generated: 2026-05-30T02:49:41Z
+# Generated: 2026-09-28T09:24:23Z
 
 wb-gam-daily-bonus__head-text
-
-# Intentionally inline-styled marker, not a CSS-driven class: DisplayDefer.php
-# renders the deferred-leaderboard editor notice with a style="" attribute so it
-# never depends on a CSS enqueue in the block-render context. The element is
-# always styled (never invisible), so there is no PHP->CSS drift here.
 wb-gam-deferred-notice
-
 wb-gam-kudos-feed__header
 wb-gam-leaderboard__badges-count
 wb-gam-leaderboard__my-rank
@@ -19,7 +13,6 @@ wb-gam-leaderboard__my-rank-label
 wb-gam-leaderboard__my-rank-points
 wb-gam-leaderboard__my-rank-position
 wb-gam-leaderboard__points-number
-wb-gam-level-progress__empty
 wb-gam-member-points__guest
 wb-gam-member-points__level-name
 wb-gam-my-rewards__when
@@ -38,13 +31,11 @@ wb-gam-recap__stat--events
 wb-gam-recap__stat--kudos
 wb-gam-recap__stat--percentile
 wb-gam-recap__stat--points
-wb-gam-streak__empty
 wb-gam-streak__stat--current
 wb-gam-streak__stat--longest
 wb-gam-submit-achievement__field--editor
 wb-gam-submit-achievement__hint
 wb-gam-submit-achievement__label
-wb-gam-top-members__empty
 wbgam-toggle-row
 wbgam-toggle-row__body
 wbgam-toggle-row__desc

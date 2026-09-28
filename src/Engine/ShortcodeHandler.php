@@ -362,7 +362,7 @@ final class ShortcodeHandler {
 							role="combobox" aria-autocomplete="list" aria-expanded="false"
 							aria-controls="<?php echo esc_attr( $uid ); ?>-members"
 							placeholder="<?php esc_attr_e( 'Start typing a name', 'wb-gamification' ); ?>" />
-						<ul id="<?php echo esc_attr( $uid ); ?>-members" class="wb-gam-give-kudos__suggest" role="listbox"
+						<ul id="<?php echo esc_attr( $uid ); ?>-members" class="wb-gam-menu wb-gam-give-kudos__suggest" role="listbox"
 							aria-label="<?php esc_attr_e( 'Member suggestions', 'wb-gamification' ); ?>" hidden></ul>
 					</div>
 				</div>
@@ -398,7 +398,7 @@ final class ShortcodeHandler {
 			plugins_url( 'assets/css/give-kudos.css', WB_GAM_FILE ),
 			// Depend on the shared design tokens so the form's --wb-gam-*
 			// custom properties resolve (otherwise the hex fallbacks apply).
-			array( 'wb-gam-tokens' ),
+			array( 'wb-gam-tokens', 'wb-gam-popups' ),
 			WB_GAM_VERSION
 		);
 	}

@@ -135,7 +135,7 @@
 .wb-gam-redemption__cost-unit {
 	font-weight: var( --wb-gam-weight-medium, 500 );
 	color: var( --wb-gam-redemption-muted );
-	margin-left: 4px;
+	margin-inline-start: 4px;
 	font-size: var( --wb-gam-font-xs );
 	letter-spacing: 0.02em;
 	text-transform: uppercase;
@@ -159,135 +159,27 @@
 	gap: var( --wb-gam-space-xs );
 }
 
-.wb-gam-redemption__btn {
+.wb-gam-redemption__btn,
+.wb-gam-redemption__login {
 	width: 100%;
-	padding: 12px 16px;
-	border: 0;
-	border-radius: var( --wb-gam-radius-md );
-	background: var( --wb-gam-redemption-accent );
-	color: var( --wb-gam-redemption-text-on-accent );
-	font-weight: var( --wb-gam-weight-semibold, 600 );
-	font-size: var( --wb-gam-font-sm );
-	cursor: pointer;
-	transition: background 0.15s ease, opacity 0.15s ease;
-	letter-spacing: 0.01em;
+	box-sizing: border-box;
+	text-decoration: none;
 }
 
-.wb-gam-redemption__btn:hover:not( [ disabled ] ),
-.wb-gam-redemption__btn:focus-visible:not( [ disabled ] ) {
-	background: var( --wb-gam-redemption-accent-hover );
+.wb-gam-redemption__btn.is-loading {
+	pointer-events: none;
 }
 
-.wb-gam-redemption__btn:focus-visible {
-	outline: 3px solid var( --wb-gam-color-focus );
-	outline-offset: 2px;
-}
-
-.wb-gam-redemption__btn[ disabled ] {
+.wb-gam-redemption__btn[ disabled ]:not( .is-loading ) {
 	background: var( --wb-gam-color-disabled );
 	color: var( --wb-gam-color-disabled-text );
 	cursor: not-allowed;
 }
 
-.wb-gam-redemption__btn.is-loading {
-	opacity: 0.65;
-	pointer-events: none;
-}
-
-.wb-gam-redemption__login {
-	display: inline-block;
-	padding: 10px 14px;
-	border-radius: var( --wb-gam-radius-md );
-	background: var( --wb-gam-redemption-muted-bg );
-	color: var( --wb-gam-redemption-accent );
-	text-align: center;
-	text-decoration: none;
-	font-weight: var( --wb-gam-weight-semibold, 600 );
-	width: 100%;
-	box-sizing: border-box;
-	transition: background 0.15s ease;
-}
-
-.wb-gam-redemption__login:hover,
-.wb-gam-redemption__login:focus-visible {
-	background: var( --wb-gam-color-accent-light );
-}
-
-/* The confirmation is a native <dialog>, which the browser hides until showModal() opens it.
- *
- * This rule used to set `display: flex` UNCONDITIONALLY, which overrode that: the dialog was
- * permanently on screen, and in a narrow card it sat on top of the Redeem button and swallowed the
- * click. It only became a bug when the panel became a real <dialog> — as a hidden <div> it was gated
- * by an attribute, and the display rule was harmless. The smoke walk caught it; my own keyboard test
- * did not, because I drove the dialog through JS instead of clicking the button like a member does.
- *
- * `[open]` is what the browser sets when the dialog is open. Gate on it, or do not touch display. */
-.wb-gam-redemption__confirm[open] {
-	background: var( --wb-gam-redemption-card-bg );
-	border: 1px solid var( --wb-gam-redemption-card-border );
-	border-radius: var( --wb-gam-radius-md );
-	padding: var( --wb-gam-space-sm );
-	font-size: var( --wb-gam-font-sm );
-	display: flex;
-	flex-direction: column;
-	gap: var( --wb-gam-space-xs );
-}
-
-.wb-gam-redemption__confirm-message {
-	margin: 0;
-	color: var( --wb-gam-redemption-text );
-}
-
-.wb-gam-redemption__confirm-actions {
-	display: flex;
-	gap: var( --wb-gam-space-xs );
-}
-
-.wb-gam-redemption__confirm-yes,
-.wb-gam-redemption__confirm-no {
-	flex: 1;
-	padding: 8px 12px;
-	border-radius: var( --wb-gam-radius-sm );
-	border: 1px solid var( --wb-gam-redemption-card-border );
-	background: var( --wb-gam-redemption-card-bg );
-	color: var( --wb-gam-redemption-text );
-	font-weight: var( --wb-gam-weight-semibold, 600 );
-	font-size: var( --wb-gam-font-xs );
-	cursor: pointer;
-}
-
-.wb-gam-redemption__confirm-yes {
-	background: var( --wb-gam-redemption-accent );
-	border-color: var( --wb-gam-redemption-accent );
-	color: var( --wb-gam-redemption-text-on-accent );
-}
-
-.wb-gam-redemption__confirm-yes:hover,
-.wb-gam-redemption__confirm-yes:focus-visible {
-	background: var( --wb-gam-redemption-accent-hover );
-	border-color: var( --wb-gam-redemption-accent-hover );
-}
-
-.wb-gam-redemption__confirm-no:hover,
-.wb-gam-redemption__confirm-no:focus-visible {
-	background: var( --wb-gam-redemption-muted-bg );
-}
-
+/* The confirm dialog, the result banners and the buttons are the shared popup shells in
+ * assets/css/popups.css; only the coupon code chip is specific to this block. */
 .wb-gam-redemption__result {
-	font-size: var( --wb-gam-font-sm );
-	padding: var( --wb-gam-space-xs );
-	border-radius: var( --wb-gam-radius-sm );
 	margin-top: var( --wb-gam-space-xs );
-}
-
-.wb-gam-redemption__result.is-success {
-	background: var( --wb-gam-color-success-bg );
-	color: var( --wb-gam-color-success );
-}
-
-.wb-gam-redemption__result.is-error {
-	background: var( --wb-gam-color-danger-bg );
-	color: var( --wb-gam-color-danger );
 }
 
 .wb-gam-redemption__result-code {
@@ -297,7 +189,7 @@
 	border-radius: var( --wb-gam-radius-sm );
 	font-weight: var( --wb-gam-weight-semibold, 600 );
 	user-select: all;
-	margin-left: 4px;
+	margin-inline-start: 4px;
 }
 
 .wb-gam-redemption__empty {

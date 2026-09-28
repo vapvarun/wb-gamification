@@ -7,7 +7,7 @@
     "domainPath": "/languages",
     "requiresWP": "6.5",
     "requiresPHP": "8.1",
-    "description": "Complete gamification plugin for BuddyPress and WordPress. Part of the Reign Stack. Points, badges, levels, leaderboards, challenges, and streaks \u2014 zero config, works out of the box.",
+    "description": "Complete gamification plugin for BuddyPress and WordPress. Part of the Reign Stack. Points, badges, levels, leaderboards, challenges, and streaks — zero config, works out of the box.",
     "author": "Wbcom Designs",
     "pluginURI": "https://wbcomdesigns.com/",
     "network": false
@@ -9993,7 +9993,10 @@
       "fired_at": [
         "src/Engine/CohortEngine.php:433"
       ],
-      "consumed_by": []
+      "consumed_by": [
+        "src/Engine/CommunityNotifications.php:42 array( __CLASS__",
+        "src/Engine/NotificationBridge.php:213 array( __CLASS__"
+      ]
     },
     {
       "name": "wb_gam_cohort_settings_saved",
@@ -10385,7 +10388,10 @@
       "fired_at": [
         "src/Services/SubmissionService.php:168"
       ],
-      "consumed_by": []
+      "consumed_by": [
+        "src/Engine/CommunityNotifications.php:44 array( __CLASS__",
+        "src/Engine/NotificationBridge.php:215 array( __CLASS__"
+      ]
     },
     {
       "name": "wb_gam_submission_created",
@@ -10403,7 +10409,10 @@
       "fired_at": [
         "src/Services/SubmissionService.php:203"
       ],
-      "consumed_by": []
+      "consumed_by": [
+        "src/Engine/CommunityNotifications.php:45 array( __CLASS__",
+        "src/Engine/NotificationBridge.php:216 array( __CLASS__"
+      ]
     },
     {
       "name": "wb_gam_unknown_action",
@@ -11252,13 +11261,34 @@
     {
       "name": "wb_gam_community_notification_types",
       "type": "filter",
-      "purpose": "Community notification contract (1.6.5): declares this plugin's 8 notification type slugs (label, description, default_on). Fired externally by the host (BuddyNext) collecting every plugin's declared types; this plugin only answers it.",
+      "purpose": "Community notification contract (1.6.5): declares this plugin's 11 notification type slugs (label, description, default_on). Fired externally by the host (BuddyNext) collecting every plugin's declared types; this plugin only answers it.",
       "fired_at": [
         "external: buddynext/includes/Notifications/IntegrationNotificationListener.php"
       ],
       "consumed_by": [
-        "src/Engine/CommunityNotifications.php:49 array( __CLASS__"
+        "src/Engine/CommunityNotifications.php:53 array( __CLASS__"
       ]
+    },
+    {
+      "name": "wb_gam_community_goal_reached",
+      "type": "action",
+      "purpose": "Fired once per contributor when a community challenge reaches its goal (user_id, challenge_id, bonus points). Drives the Moment card and the bell row.",
+      "fired_at": [
+        "src/Engine/CommunityChallengeEngine.php:133"
+      ],
+      "consumed_by": [
+        "src/Engine/CommunityNotifications.php:43 array( __CLASS__",
+        "src/Engine/NotificationBridge.php:214 array( __CLASS__"
+      ]
+    },
+    {
+      "name": "wb_gam_celebration_style",
+      "type": "filter",
+      "purpose": "Return 'none' to turn the confetti off for a community where it does not fit; default 'confetti'. Reduced motion is honoured separately.",
+      "fired_at": [
+        "wb-gamification.php:547"
+      ],
+      "consumed_by": []
     }
   ],
   "cron": [

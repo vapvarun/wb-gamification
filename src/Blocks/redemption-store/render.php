@@ -161,6 +161,7 @@ $wb_gam_wrapper_attrs = get_block_wrapper_attributes(
 );
 
 wp_enqueue_style( 'wb-gam-tokens' );
+wp_enqueue_style( 'wb-gam-popups' );
 
 // The shared dialog utility: focus return, backdrop click, close buttons. The confirmation is a real
 // <dialog> now, so the browser gives us ESC, the focus trap and the inert background.
@@ -264,15 +265,15 @@ BlockHooks::before(
 
 					<div class="wb-gam-redemption__action">
 						<?php if ( ! $wb_gam_user_id ) : ?>
-							<a class="wb-gam-redemption__login" href="<?php echo esc_url( wp_login_url( get_permalink() ) ); ?>">
+							<a class="wb-gam-btn wb-gam-btn--secondary wb-gam-redemption__login" href="<?php echo esc_url( wp_login_url( get_permalink() ) ); ?>">
 								<?php esc_html_e( 'Log in to redeem', 'wb-gamification' ); ?>
 							</a>
 						<?php elseif ( $wb_gam_out_of_stock ) : ?>
-							<button type="button" class="wb-gam-redemption__btn" disabled>
+							<button type="button" class="wb-gam-btn wb-gam-btn--primary wb-gam-redemption__btn" disabled>
 								<?php esc_html_e( 'Out of stock', 'wb-gamification' ); ?>
 							</button>
 						<?php elseif ( $wb_gam_insufficient ) : ?>
-							<button type="button" class="wb-gam-redemption__btn" disabled>
+							<button type="button" class="wb-gam-btn wb-gam-btn--primary wb-gam-redemption__btn" disabled>
 								<?php
 								printf(
 									/* translators: %s: the amount still needed, e.g. "5 Points". */
@@ -283,7 +284,7 @@ BlockHooks::before(
 							</button>
 						<?php else : ?>
 							<button type="button"
-								class="wb-gam-redemption__btn"
+								class="wb-gam-btn wb-gam-btn--primary wb-gam-redemption__btn"
 								data-wp-on--click="actions.requestRedeem"
 								data-wp-bind--hidden="context.confirming"
 								data-wp-bind--disabled="context.loading"
@@ -310,63 +311,83 @@ BlockHooks::before(
 							 * free. Rolling our own would be more code AND worse than what the browser ships.
 							 */
 							?>
-							<dialog class="wb-gam-redemption__confirm"
+							<dialog class="wb-gam-dialog"
 								data-wb-gam-dialog
 								id="wb-gam-redemption-dialog-<?php echo esc_attr( (string) (int) ( $wb_gam_item['id'] ?? 0 ) ); ?>"
 								aria-labelledby="wb-gam-redemption-confirm-<?php echo esc_attr( (string) (int) ( $wb_gam_item['id'] ?? 0 ) ); ?>"
+								aria-describedby="wb-gam-redemption-confirm-body-<?php echo esc_attr( (string) (int) ( $wb_gam_item['id'] ?? 0 ) ); ?>"
 							>
-								<p id="wb-gam-redemption-confirm-<?php echo esc_attr( (string) (int) ( $wb_gam_item['id'] ?? 0 ) ); ?>" class="wb-gam-redemption__confirm-message">
+								<div class="wb-gam-dialog__header">
+									<h3 id="wb-gam-redemption-confirm-<?php echo esc_attr( (string) (int) ( $wb_gam_item['id'] ?? 0 ) ); ?>" class="wb-gam-dialog__title">
+										<?php
+										printf(
+											/* translators: %s: the reward name. */
+											esc_html__( 'Redeem %s?', 'wb-gamification' ),
+											esc_html( (string) ( $wb_gam_item['title'] ?? '' ) )
+										);
+										?>
+									</h3>
+									<button type="button" class="wb-gam-close" data-wp-on--click="actions.cancelRedeem" aria-label="<?php esc_attr_e( 'Close', 'wb-gamification' ); ?>">
+										<i class="icon-x" aria-hidden="true"></i>
+									</button>
+								</div>
+								<div class="wb-gam-dialog__body" id="wb-gam-redemption-confirm-body-<?php echo esc_attr( (string) (int) ( $wb_gam_item['id'] ?? 0 ) ); ?>">
 									<?php
 									printf(
-										/* translators: %s: the cost, e.g. "50 Points". */
-										esc_html__( 'Redeem this reward? %s will be deducted.', 'wb-gamification' ),
-										esc_html( $wb_gam_pt_service->format( $wb_gam_cost, $wb_gam_item_type ) )
+										/* translators: 1: the cost, e.g. "50 Points". 2: the member's balance, e.g. "297 Points". */
+										esc_html__( '%1$s will be deducted. You have %2$s.', 'wb-gamification' ),
+										esc_html( $wb_gam_pt_service->format( $wb_gam_cost, $wb_gam_item_type ) ),
+										esc_html( $wb_gam_pt_service->format( $wb_gam_balance_pts, $wb_gam_item_type ) )
 									);
 									?>
-								</p>
-								<div class="wb-gam-redemption__confirm-actions">
+								</div>
+								<div class="wb-gam-dialog__footer">
 									<button type="button"
-										class="wb-gam-redemption__confirm-yes"
-										data-wp-on--click="actions.confirmRedeem"
-									>
-										<?php esc_html_e( 'Confirm', 'wb-gamification' ); ?>
-									</button>
-									<button type="button"
-										class="wb-gam-redemption__confirm-no"
+										class="wb-gam-btn wb-gam-btn--secondary"
 										data-wp-on--click="actions.cancelRedeem"
 									>
 										<?php esc_html_e( 'Cancel', 'wb-gamification' ); ?>
+									</button>
+									<button type="button"
+										class="wb-gam-btn wb-gam-btn--primary"
+										autofocus
+										data-wp-on--click="actions.confirmRedeem"
+									>
+										<?php esc_html_e( 'Redeem', 'wb-gamification' ); ?>
 									</button>
 								</div>
 							</dialog>
 						<?php endif; ?>
 					</div>
 
-					<div class="wb-gam-redemption__result is-error"
+					<div class="wb-gam-banner wb-gam-banner--danger wb-gam-redemption__result is-error"
 						role="alert"
 						data-wp-bind--hidden="!state.hasError"
 						hidden
 					>
-						<span data-wp-text="context.errorMessage"></span>
+						<span class="wb-gam-disc wb-gam-disc--danger wb-gam-disc--sm" aria-hidden="true"><i class="icon-circle-alert"></i></span>
+						<span class="wb-gam-banner__text" data-wp-text="context.errorMessage"></span>
 						<button type="button"
-							class="wb-gam-redemption__confirm-no"
+							class="wb-gam-banner__action"
 							data-wp-on--click="actions.dismissResult"
-							style="margin-left: 8px;"
 						>
 							<?php esc_html_e( 'Dismiss', 'wb-gamification' ); ?>
 						</button>
 					</div>
 
-					<div class="wb-gam-redemption__result is-success"
+					<div class="wb-gam-banner wb-gam-banner--success wb-gam-redemption__result is-success"
 						role="status"
 						data-wp-bind--hidden="!state.hasSuccess"
 						hidden
 					>
-						<span data-wp-bind--hidden="!context.couponCode" hidden>
-							<?php esc_html_e( 'Redeemed! Your code:', 'wb-gamification' ); ?>
-							<code class="wb-gam-redemption__result-code" data-wp-text="context.couponCode"></code>
+						<span class="wb-gam-disc wb-gam-disc--success wb-gam-disc--sm" aria-hidden="true"><i class="icon-check"></i></span>
+						<span class="wb-gam-banner__text">
+							<span data-wp-bind--hidden="!context.couponCode" hidden>
+								<?php esc_html_e( 'Redeemed! Your code:', 'wb-gamification' ); ?>
+								<code class="wb-gam-redemption__result-code" data-wp-text="context.couponCode"></code>
+							</span>
+							<span data-wp-bind--hidden="context.couponCode" data-wp-text="context.successMessage"></span>
 						</span>
-						<span data-wp-bind--hidden="context.couponCode" data-wp-text="context.successMessage"></span>
 					</div>
 				</li>
 			<?php endforeach; ?>

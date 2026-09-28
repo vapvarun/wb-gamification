@@ -98,6 +98,9 @@ store( NS, {
 					// close time, against the DOM as it actually is then.
 					opener: () => card?.querySelector( '.wb-gam-redemption__btn' ),
 
+					// The close x is first in the DOM; a member who pressed Redeem lands on the confirm button.
+					initialFocus: '[autofocus]',
+
 					// ESC closes a native dialog without telling the block, so the block's own state would
 					// still say "confirming" while nothing is on screen. Next click would then do nothing.
 					onClose: () => {

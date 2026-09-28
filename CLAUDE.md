@@ -142,6 +142,14 @@ columns only), `sql_utc_to_local()` groups by site day (DST-exact). Display with
 `get_date_from_gmt()`, never `date_i18n()`. Pre-1.6.5 rows are converted once by
 `UtcStorageMigration`. Stage 2.15 (`bin/check-clock-contract.sh`) enforces all of this.
 
+## Popups: one shell family, one motion scale (1.6.5)
+
+Every overlay is one of six shells defined in `assets/css/popups.css` (Moment card, Toast, Banner, Dialog,
+Drawer, Menu) and reads `--wb-gam-pop-*` / `--wb-gam-dur*` tokens from `src/shared/design-tokens.css`, which
+read BuddyNext's `--bn-*` first. Do not restyle a shell per surface and do not write a raw duration or
+easing in component CSS: stage 2.16 (`bin/check-motion-tokens.sh`) fails on growth. Toasts go through
+`window.wbGam.toast()` (`assets/js/toast-core.js`), confetti through `wbGam.celebrate()`.
+
 ## Execution Rules (Non-Negotiable)
 
 **Every task follows this loop:**

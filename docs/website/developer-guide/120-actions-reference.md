@@ -59,6 +59,7 @@ See [Hooks and Filters Overview](110-hooks-overview.md) for how to add a listene
 | Hook | When it fires | Parameters |
 |------|---------------|------------|
 | `wb_gam_challenge_completed` | When a member completes a challenge (reaches the target count). | `int $user_id`, `array $challenge` |
+| `wb_gam_community_goal_reached` | Once per contributor when a community challenge reaches its goal, after that contributor's bonus is awarded. Drives the goal Moment card and the bell row. Added in 1.6.5. | `int $user_id`, `int $challenge_id`, `int $points` |
 | `wb_gam_community_challenge_completed` | When a community (team) challenge reaches its global target. | `int $challenge_id`, `int $bonus_points`, `int $contributor_count` |
 | `wb_gam_community_challenge_created` | When an admin creates a community challenge via the REST API. | `int $id`, `array $data` |
 | `wb_gam_community_challenge_updated` | When an admin updates a community challenge via the REST API. | `int $id`, `array $updates` |
@@ -104,16 +105,17 @@ These optional-engine hooks fire only when their feature flag is enabled in `wb_
 A host community plugin (BuddyNext) reads these to show one bell row per event, grouped, with a
 per-type settings switch. This plugin keeps sending its own email where it already does
 (`TransactionalEmailEngine`: level-ups, badges, challenges, redemption requests) and does not gain
-a new email for the types it did not already email. Added in 1.6.5; built entirely from the eight
+a new email for the types it did not already email. Added in 1.6.5; built entirely from the
 event hooks above (`wb_gam_badge_awarded`, `wb_gam_level_changed`,
 `wb_gam_kudos_given`, `wb_gam_kudos_revoked`, `wb_gam_challenge_completed`,
 `wb_gam_redemption_fulfilled`, `wb_gam_credential_expired`, `wb_gam_personal_record`,
-`wb_gam_streak_milestone`) plus `wb_gam_badge_deleted` — nothing new needed to fire them, this
+`wb_gam_streak_milestone`, `wb_gam_cohort_outcome` (promotions only), `wb_gam_community_goal_reached`,
+`wb_gam_submission_approved`, `wb_gam_submission_rejected`) plus `wb_gam_badge_deleted` — nothing new needed to fire them, this
 plugin simply listens to its own hooks and republishes a normalized payload.
 
 | Hook | When it fires | Parameters |
 |------|---------------|------------|
-| `wb_gam_notification_created` | After this plugin decides one of its own events is worth a member-facing notification (badge earned, level up, kudos received, challenge completed, reward fulfilled, credential expired, personal record, streak milestone). Never fires for the actor notifying themself, and never during an import (`ImportMode::is_active()`). | `array $payload` — `recipient_id`, `type`, `actor_id`, `object_type`, `object_id`, `message`, `url`, `group_key` |
+| `wb_gam_notification_created` | After this plugin decides one of its own events is worth a member-facing notification (badge earned, level up, kudos received, challenge completed, reward fulfilled, credential expired, personal record, streak milestone, league promotion, community goal, submission result). Never fires for the actor notifying themself, and never during an import (`ImportMode::is_active()`). | `array $payload` — `recipient_id`, `type`, `actor_id`, `object_type`, `object_id`, `message`, `url`, `group_key` |
 | `wb_gam_community_notification_removed` | After an object a notification named is PERMANENTLY gone — a kudos revoked, or a badge definition deleted (which removes both `badge_awarded` and `credential_expired` notifications naming it). Never fires for a state change that is merely hidden, not gone. | `string $object_type`, `int $object_id` |
 
 ## Admin CRUD (REST)

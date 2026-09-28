@@ -55,6 +55,9 @@ class RedemptionStoreRenderTest extends TestCase {
 				'esc_html_e'          => static function ( $text ) {
 					echo (string) $text; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 				},
+				'esc_attr_e'          => static function ( $text ) {
+					echo (string) $text; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+				},
 				'__'                  => static fn ( $text ) => (string) $text,
 				'wp_json_encode'      => static fn ( $value ) => json_encode( $value ),
 				'wp_login_url'        => static fn ( $value = '' ) => 'https://example.test/login',
@@ -188,7 +191,7 @@ class RedemptionStoreRenderTest extends TestCase {
 	public function test_render_emits_a_real_dialog_for_the_confirmation(): void {
 		$output = $this->render( array( 'uniqueId' => 'pilot03' ) );
 
-		$this->assertStringContainsString( '<dialog class="wb-gam-redemption__confirm"', $output );
+		$this->assertStringContainsString( '<dialog class="wb-gam-dialog"', $output );
 		$this->assertStringContainsString( 'data-wb-gam-dialog', $output );
 		$this->assertStringContainsString( 'data-wp-on--click="actions.confirmRedeem"', $output );
 		$this->assertStringContainsString( 'data-wp-on--click="actions.cancelRedeem"', $output );

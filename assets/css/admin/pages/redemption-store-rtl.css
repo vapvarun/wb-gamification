@@ -75,58 +75,6 @@
 	/* JS-bound config-row inputs. */
 }
 
-/* ==========================================================================
-   3. Convert Dialog (points → store credit, hub-convert.js)
-   ========================================================================== */
-
-.wb-gam-convert-dialog {
-	max-width: 480px;
-	border-radius: 10px;
-	border: 1px solid var(--wbgam-border);
-	padding: 0;
-}
-
-.wb-gam-convert-form {
-	padding: 1.25rem;
-	display: flex;
-	flex-direction: column;
-	gap: var(--wbgam-gap-sm);
-}
-
-.wb-gam-convert-from-label {
-	font-size: var(--wbgam-fs-sm);
-	color: var(--wbgam-text-secondary);
-	margin: 0;
-}
-
-.wb-gam-convert-balance {
-	font-size: var(--wbgam-fs-md);
-	font-weight: 600;
-	color: var(--wbgam-text);
-	font-variant-numeric: tabular-nums;
-}
-
-.wb-gam-convert-to {
-	display: flex;
-	flex-direction: column;
-	gap: var(--wbgam-gap-xs);
-}
-
-.wb-gam-convert-amount {
-	width: 100%;
-}
-
-.wb-gam-convert-preview {
-	font-size: var(--wbgam-fs-sm);
-	color: var(--wbgam-text-secondary);
-}
-
-.wb-gam-convert-submit,
-.wb-gam-convert-close,
-.wb-gam-convert-open {
-	/* Button markers — visuals from .wbgam-btn. */
-}
-
 /* Stock mode control (Unlimited / Limited to [n] remaining).
  *
  * The shared .wbgam-input rule sets display:block, which dropped the quantity box

@@ -68,7 +68,7 @@
 				li.id     = list.id + '-' + n;
 				li.setAttribute( 'role', 'option' );
 				li.setAttribute( 'aria-selected', 'false' );
-				li.className     = 'wb-gam-give-kudos__option';
+				li.className     = 'wb-gam-menu__option';
 				li.dataset.value = m.name + ' (@' + m.slug + ')';
 
 				const img = document.createElement( 'img' );

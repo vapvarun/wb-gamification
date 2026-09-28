@@ -6,18 +6,23 @@ This section controls how live reward feedback reaches members - the transport t
 
 ## Toast Position
 
-**Default: Bottom right (recommended)**
+**Default: Bottom center (recommended)**
 
-Reward toasts (points, badges, kudos) slide in from the corner you pick here. The toast is corner-aware, so a bottom corner slides up and a top corner slides down.
+Reward toasts (points, badges, kudos) appear where you pick here, in the same style as BuddyNext's own toasts. A bottom position slides up and a top position slides down. Repeated points from the same action within two seconds merge into one toast, and at most three show at once.
 
 | Option | Stored value |
 |---|---|
-| Bottom right (recommended) | `bottom-right` |
+| Bottom center (recommended) | `bottom-center` |
+| Bottom right | `bottom-right` |
 | Bottom left | `bottom-left` |
 | Top right | `top-right` |
 | Top center | `top-center` |
 
-Bottom right is recommended because it never overlaps your theme header or navigation. Choose a top position only if a chat or support widget already sits in the bottom corner.
+Bottom center is recommended because it never overlaps your theme header or navigation and matches BuddyNext. Choose a top position only if a chat or support widget already sits at the bottom.
+
+## Celebrations
+
+Level-ups, streak milestones, league promotions and community goals each open one full-screen card with a small confetti burst in your community's accent colour. Badges and completed challenges add a smaller burst to their toast. Confetti is off automatically for members who prefer reduced motion. To turn it off for everyone, return `none` from the `wb_gam_celebration_style` filter - see the [Filters reference](../developer-guide/130-filters-reference.md).
 
 The selection is stored in the `wb_gam_toast_position` option. Developers can override it per request with the `wb_gam_toast_position` filter - see the [Filters reference](../developer-guide/130-filters-reference.md).
 
