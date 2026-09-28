@@ -1,20 +1,19 @@
 <?php
 /**
- * WB Gamification — myCred importer.
+ * WB Gamification: myCred importer.
  *
- * Reads myCred's ledger (`wp_myCRED_log`, verified against myCred 3.1.2) and
- * re-plays it through the shared ImportService. READ the source, WRITE only
- * via our ingestion path. Idempotent per source row (`mycred:log:{id}`).
+ * Reads myCred's ledger (`wp_myCRED_log`, verified against myCred 3.1.2) one keyset page at a time and
+ * hands normalized rows to the ImportRunner. READ the source, WRITE only via our ingestion path.
+ * Idempotent per source row (`mycred:log:{id}`).
  *
  * myCred specifics handled here:
- *   - `time` is a Unix timestamp (bigint), not a datetime.
- *   - `creds` already carries the signed delta (deductions are negative), so
- *     no sign inference is needed.
- *   - a user's balance lives in user_meta under the point-type key (`ctype`);
- *     reconciliation sums those across every myCred point type.
- *   - decimal-configured myCred sites store fractional creds; WB points are
- *     integers, so fractional values are rounded and flagged as a mismatch by
- *     reconciliation rather than silently dropped.
+ *   - `time` is a site-local wall-clock timestamp (bigint), not a real epoch.
+ *   - `creds` already carries the signed delta (deductions are negative), so no sign inference.
+ *   - a user's balance lives in user_meta under the point-type key (`ctype`); reconciliation sums
+ *     those across every myCred point type.
+ *   - decimal-configured myCred sites store fractional creds; WB points are integers, so fractional
+ *     values are rounded and flagged as a mismatch by reconciliation rather than silently dropped.
+ *   - badges are user_meta `mycred_badge{post_id}` and are paged by `umeta_id`.
  *
  * @package WB_Gamification
  * @since   1.6.2
@@ -22,16 +21,17 @@
 
 namespace WBGam\Integrations\Importers;
 
-use WBGam\Engine\ImportService;
-
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Migrates myCred ledger data into WB Gamification.
+ * Reads myCred ledger data for the ImportRunner.
  *
  * @package WB_Gamification
  */
-final class MyCredImporter {
+final class MyCredImporter implements ImportSource {
+
+	public const KEY_PREFIX   = 'mycred:log:';
+	public const BADGE_PREFIX = 'mycred-badge-';
 
 	/**
 	 * Is myCred data present?
@@ -78,24 +78,42 @@ final class MyCredImporter {
 	}
 
 	/**
-	 * Build normalized rows from the myCred ledger.
+	 * How many ledger rows will be imported (the rows the reader would return).
 	 *
-	 * @return array<int, array<string, mixed>>
+	 * @return int
 	 */
-	public static function build_rows(): array {
+	public static function count_points(): int {
 		global $wpdb;
-		$rows = array();
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		return (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}myCRED_log WHERE user_id > 0 AND creds <> 0" );
+	}
+
+	/**
+	 * One keyset page of the myCred ledger as normalized rows.
+	 *
+	 * @param int $after Ledger id to start strictly after.
+	 * @param int $limit Maximum rows.
+	 * @return array{rows: array<int, array<string, mixed>>, next: int}
+	 */
+	public static function read_points( int $after, int $limit ): array {
+		global $wpdb;
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$logs = $wpdb->get_results(
-			"SELECT id, ref, ref_id, user_id, creds, ctype, time
-			   FROM {$wpdb->prefix}myCRED_log
-			  WHERE user_id > 0 AND creds <> 0
-			  ORDER BY id ASC",
+		$logs = (array) $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT id, ref, ref_id, user_id, creds, ctype, time
+				   FROM {$wpdb->prefix}myCRED_log
+				  WHERE id > %d AND user_id > 0 AND creds <> 0
+				  ORDER BY id ASC
+				  LIMIT %d",
+				$after,
+				$limit
+			),
 			ARRAY_A
 		);
 
-		foreach ( (array) $logs as $log ) {
+		$rows = array();
+		foreach ( $logs as $log ) {
 			$rows[] = array(
 				'action_id'   => 'mycred_' . sanitize_key( (string) $log['ref'] ),
 				'user_id'     => (int) $log['user_id'],
@@ -105,7 +123,7 @@ final class MyCredImporter {
 				'object_id'   => (int) $log['ref_id'],
 				// myCred logs `time` as a site-local wall-clock timestamp, not a real epoch.
 				'occurred_at' => get_gmt_from_date( gmdate( 'Y-m-d H:i:s', (int) $log['time'] ), 'Y-m-d\TH:i:s\Z' ),
-				'source_key'  => 'mycred:log:' . (int) $log['id'],
+				'source_key'  => self::KEY_PREFIX . (int) $log['id'],
 				'metadata'    => array(
 					'_source'      => 'mycred',
 					'mycred_ref'   => (string) $log['ref'],
@@ -114,71 +132,101 @@ final class MyCredImporter {
 			);
 		}
 
-		return $rows;
+		return array(
+			'rows' => $rows,
+			'next' => count( $logs ) < $limit ? 0 : (int) end( $logs )['id'],
+		);
 	}
 
 	/**
-	 * Build myCred badge-award records from user meta.
+	 * How many badge awards myCred holds (an upper bound: rows that are not real badges are skipped on read).
 	 *
-	 * Each earned badge is stored by myCred as user_meta `mycred_badge{post_id}`
-	 * = level (verified against mycred_get_users_badges), with the earned time
-	 * in `mycred_badge{post_id}_issued_on`. We match the exact key shape and
-	 * skip the `_ids` / `_issued_on` / `_requirement_` siblings.
-	 *
-	 * @return array<int, array{user_id:int, badge_id:string, name:string, image:string, earned_at:string, post_id:int}>
+	 * @return int
 	 */
-	public static function build_badges(): array {
+	public static function count_awards(): int {
 		global $wpdb;
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$rows = $wpdb->get_results(
-			"SELECT user_id, meta_key FROM {$wpdb->usermeta}
-			  WHERE meta_key REGEXP '^mycred_badge[0-9]+$'",
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		return (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->usermeta} WHERE meta_key REGEXP '^mycred_badge[0-9]+$'" );
+	}
+
+	/**
+	 * One keyset page of earned badges, paged by `umeta_id`.
+	 *
+	 * Each earned badge is user_meta `mycred_badge{post_id}` = level (verified against
+	 * mycred_get_users_badges), with the earned time in `mycred_badge{post_id}_issued_on`. Only the
+	 * exact key shape matches: the `_ids` / `_issued_on` / `_requirement_` siblings are skipped.
+	 *
+	 * @param int $after umeta_id to start strictly after.
+	 * @param int $limit Maximum usermeta rows scanned.
+	 * @return array{rows: array<int, array<string, mixed>>, next: int}
+	 */
+	public static function read_awards( int $after, int $limit ): array {
+		global $wpdb;
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$metas = (array) $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT umeta_id, user_id, meta_key
+				   FROM {$wpdb->usermeta}
+				  WHERE umeta_id > %d AND meta_key REGEXP '^mycred_badge[0-9]+$'
+				  ORDER BY umeta_id ASC
+				  LIMIT %d",
+				$after,
+				$limit
+			),
 			ARRAY_A
 		);
 
-		$out = array();
-		foreach ( (array) $rows as $r ) {
-			$post_id = (int) str_replace( 'mycred_badge', '', $r['meta_key'] );
+		// One query for the page's members' meta instead of one per badge below.
+		update_meta_cache( 'user', array_values( array_unique( array_map( 'intval', wp_list_pluck( $metas, 'user_id' ) ) ) ) );
+
+		$rows = array();
+		foreach ( $metas as $meta ) {
+			$post_id = (int) str_replace( 'mycred_badge', '', $meta['meta_key'] );
 			if ( $post_id <= 0 || 'mycred_badge' !== get_post_type( $post_id ) ) {
 				continue;
 			}
-			$issued = (int) get_user_meta( (int) $r['user_id'], 'mycred_badge' . $post_id . '_issued_on', true );
-			$out[]  = array(
-				'user_id'   => (int) $r['user_id'],
-				'badge_id'  => 'mycred-badge-' . $post_id,
+			$issued = (int) get_user_meta( (int) $meta['user_id'], 'mycred_badge' . $post_id . '_issued_on', true );
+			$rows[] = array(
+				'user_id'   => (int) $meta['user_id'],
+				'badge_id'  => self::BADGE_PREFIX . $post_id,
 				'name'      => (string) get_the_title( $post_id ),
 				'image'     => (string) get_the_post_thumbnail_url( $post_id, 'full' ),
 				// myCred stamps _issued_on with time(), a real epoch; earned_at is UTC.
 				'earned_at' => $issued > 0 ? gmdate( 'Y-m-d H:i:s', $issued ) : current_time( 'mysql', true ),
-				'post_id'   => $post_id,
 			);
 		}
-		return $out;
+
+		return array(
+			'rows' => $rows,
+			// Filtered rows do not shorten the page: the cursor follows what was SCANNED.
+			'next' => count( $metas ) < $limit ? 0 : (int) end( $metas )['umeta_id'],
+		);
 	}
 
 	/**
-	 * Build rank tiers (as WB level defs) from myCred `mycred_rank` posts.
+	 * Rank tiers from `mycred_rank` posts, as level definitions.
 	 *
-	 * Ranks in myCred are point-based (`mycred_rank_min`), which maps directly
-	 * to our point-threshold levels.
+	 * Ranks in myCred are point-based (`mycred_rank_min`), which maps directly to our
+	 * point-threshold levels. A site has a handful, so this is not paged.
 	 *
-	 * @return array<int, array{id:int, name:string, min_points:int, order:int}>
+	 * @return array<int, array{name: string, min_points: int, order: int}>
 	 */
-	public static function build_ranks(): array {
+	public static function read_ranks(): array {
 		$ranks = get_posts(
 			array(
 				'post_type'   => 'mycred_rank',
 				'numberposts' => -1,
 				'post_status' => 'publish',
-				'meta_key'    => 'mycred_rank_min',
+				'meta_key'    => 'mycred_rank_min', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
 				'orderby'     => 'meta_value_num',
 				'order'       => 'ASC',
 			)
 		);
-		$out   = array();
+
+		$out = array();
 		foreach ( $ranks as $i => $rank ) {
 			$out[] = array(
-				'id'         => (int) $rank->ID,
 				'name'       => (string) $rank->post_title,
 				'min_points' => (int) get_post_meta( $rank->ID, 'mycred_rank_min', true ),
 				'order'      => (int) $i,
@@ -188,24 +236,32 @@ final class MyCredImporter {
 	}
 
 	/**
-	 * A user's current myCred rank name (from the `mycred_rank` meta), read
-	 * from myCred's authoritative store since its getter isn't loadable here.
+	 * A member's balance summed across all myCred point types (rounded to int).
 	 *
-	 * @param int $user_id User.
-	 * @return string
+	 * @param int $user_id Member.
+	 * @return int
 	 */
-	private static function mycred_user_rank_name( int $user_id ): string {
-		$rank_id = (int) get_user_meta( $user_id, 'mycred_rank', true );
-		return $rank_id > 0 ? (string) get_the_title( $rank_id ) : '';
+	public static function source_balance( int $user_id ): int {
+		$total = 0.0;
+		foreach ( self::ctypes() as $ctype ) {
+			// myCred's OWN balance getter is the reconciliation authority; fall back to the raw meta
+			// key only if the function is missing.
+			if ( function_exists( 'mycred_get_users_balance' ) ) {
+				$total += (float) mycred_get_users_balance( $user_id, $ctype );
+			} else {
+				$total += (float) get_user_meta( $user_id, $ctype, true );
+			}
+		}
+		return (int) round( $total );
 	}
 
 	/**
-	 * Count of a user's earned myCred badges (its authoritative meta store).
+	 * Count of a member's earned myCred badges (its authoritative meta store).
 	 *
-	 * @param int $user_id User.
+	 * @param int $user_id Member.
 	 * @return int
 	 */
-	private static function mycred_badge_count( int $user_id ): int {
+	public static function source_badge_count( int $user_id ): int {
 		global $wpdb;
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		return (int) $wpdb->get_var(
@@ -218,206 +274,15 @@ final class MyCredImporter {
 	}
 
 	/**
-	 * Count of imported myCred badges a user actually holds in WB.
+	 * A member's current myCred rank name (from the `mycred_rank` meta).
 	 *
-	 * @param int $user_id User.
-	 * @return int
-	 */
-	private static function our_imported_badge_count( int $user_id ): int {
-		global $wpdb;
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		return (int) $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT COUNT(*) FROM {$wpdb->prefix}wb_gam_user_badges
-				  WHERE user_id = %d AND badge_id LIKE %s",
-				$user_id,
-				'mycred-badge-%'
-			)
-		);
-	}
-
-	/**
-	 * The tier name a point total maps to (dry-run preview).
+	 * Read from myCred's authoritative store since its getter is not loadable here.
 	 *
-	 * @param array<int, array{name:string, min_points:int}> $ranks  Tiers.
-	 * @param int                                            $points Total.
+	 * @param int $user_id Member.
 	 * @return string
 	 */
-	private static function tier_name_for_points( array $ranks, int $points ): string {
-		$name = '';
-		$best = -1;
-		foreach ( $ranks as $r ) {
-			if ( $points >= (int) $r['min_points'] && (int) $r['min_points'] >= $best ) {
-				$best = (int) $r['min_points'];
-				$name = (string) $r['name'];
-			}
-		}
-		return $name;
-	}
-
-	/**
-	 * Run (or preview) the import with per-user reconciliation.
-	 *
-	 * @param bool $dry_run Preview only.
-	 * @return array<string, mixed>
-	 */
-	public static function run( bool $dry_run = false ): array {
-		$rows   = self::build_rows();
-		$badges = self::build_badges();
-		$ranks  = self::build_ranks();
-
-		// Write FIRST so reconciliation compares what ACTUALLY landed.
-		$ingest        = null;
-		$badge_awarded = 0;
-		$levels_made   = 0;
-		if ( ! $dry_run ) {
-			$ingest = ImportService::ingest( $rows );
-			foreach ( $badges as $b ) {
-				\WBGam\Engine\BadgeEngine::upsert_def(
-					array(
-						'id'        => $b['badge_id'],
-						'name'      => $b['name'],
-						'image_url' => $b['image'],
-						'category'  => 'imported',
-					)
-				);
-				// build_badges() already returns UTC.
-				$earned_at = $b['earned_at'] ?: current_time( 'mysql', true );
-				if ( \WBGam\Engine\BadgeEngine::award_badge( $b['user_id'], $b['badge_id'], $earned_at ) ) {
-					++$badge_awarded;
-				}
-			}
-			foreach ( $ranks as $r ) {
-				// Count what was CREATED, not what was found. upsert_level() returns an id either way, so
-				// counting `> 0` reported levels the import had not built -- on a re-run it claimed
-				// `levels_created: 1` while the database gained nothing.
-				$level_created = false;
-				\WBGam\Engine\LevelEngine::upsert_level( $r['name'], $r['min_points'], $r['order'], '', $level_created );
-				if ( $level_created ) {
-					++$levels_made;
-				}
-			}
-		}
-
-		$user_ids  = array_values( array_unique( array_map( static fn ( $r ) => (int) $r['user_id'], $rows ) ) );
-		$reconcile = array();
-		foreach ( $user_ids as $uid ) {
-			// Real run: the sum that actually landed in our ledger (a dropped
-			// row can't hide). Dry run: the expected sum.
-			$ours              = $dry_run ? self::expected_points( $rows, $uid ) : self::our_imported_points( $uid );
-			$balance           = self::mycred_balance( $uid );
-			$reconcile[ $uid ] = array(
-				'imported_sum'   => $ours,
-				'mycred_balance' => $balance,
-				'match'          => $ours === $balance,
-			);
-		}
-
-		// BADGE reconciliation: our imported count vs myCred's earned-badge meta.
-		$badge_reconcile = array();
-		foreach ( array_values( array_unique( array_map( static fn ( $b ) => (int) $b['user_id'], $badges ) ) ) as $uid ) {
-			$ours                    = $dry_run
-				? count( array_filter( $badges, static fn ( $b ) => (int) $b['user_id'] === $uid ) )
-				: self::our_imported_badge_count( $uid );
-			$badge_reconcile[ $uid ] = array(
-				'imported_badges' => (int) $ours,
-				'mycred_badges'   => self::mycred_badge_count( $uid ),
-				'match'           => (int) $ours === self::mycred_badge_count( $uid ),
-			);
-		}
-
-		// RANK reconciliation: derived level (from imported points) vs myCred rank.
-		$rank_reconcile = array();
-		if ( ! empty( $ranks ) ) {
-			foreach ( $user_ids as $uid ) {
-				$gp = self::mycred_user_rank_name( $uid );
-				if ( '' === $gp ) {
-					continue;
-				}
-				$points                 = $dry_run ? self::expected_points( $rows, $uid ) : self::our_imported_points( $uid );
-				$our_level              = $dry_run
-					? self::tier_name_for_points( $ranks, $points )
-					: ( \WBGam\Engine\LevelEngine::get_level_for_points( $points )['name'] ?? '' );
-				$rank_reconcile[ $uid ] = array(
-					'our_level'   => (string) $our_level,
-					'mycred_rank' => $gp,
-					'match'       => (string) $our_level === $gp,
-				);
-			}
-		}
-
-		$result = array(
-			'rows'                 => count( $rows ),
-			'badges'               => count( $badges ),
-			'ranks'                => count( $ranks ),
-			'dry_run'              => $dry_run,
-			'reconciliation'       => $reconcile,
-			'badge_reconciliation' => $badge_reconcile,
-			'rank_reconciliation'  => $rank_reconcile,
-		);
-		if ( ! $dry_run ) {
-			$result['ingest']         = $ingest;
-			$result['badges_awarded'] = $badge_awarded;
-			$result['levels_created'] = $levels_made;
-		}
-		return $result;
-	}
-
-	/**
-	 * Expected point sum for a user from the built rows (dry-run preview).
-	 *
-	 * @param array<int, array<string, mixed>> $rows    Rows.
-	 * @param int                              $user_id User.
-	 * @return int
-	 */
-	private static function expected_points( array $rows, int $user_id ): int {
-		$sum = 0;
-		foreach ( $rows as $r ) {
-			if ( (int) $r['user_id'] === $user_id ) {
-				$sum += (int) $r['points'];
-			}
-		}
-		return $sum;
-	}
-
-	/**
-	 * Sum of points that ACTUALLY landed in our ledger from a myCred import.
-	 *
-	 * @param int $user_id User.
-	 * @return int
-	 */
-	private static function our_imported_points( int $user_id ): int {
-		global $wpdb;
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		return (int) $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT COALESCE(SUM(p.points),0)
-				   FROM {$wpdb->prefix}wb_gam_points p
-				   JOIN {$wpdb->prefix}wb_gam_events e ON e.id = p.event_id
-				  WHERE p.user_id = %d AND e.source_key LIKE %s",
-				$user_id,
-				'mycred:log:%'
-			)
-		);
-	}
-
-	/**
-	 * A user's myCred balance summed across all point types (rounded to int).
-	 *
-	 * @param int $user_id User ID.
-	 * @return int
-	 */
-	private static function mycred_balance( int $user_id ): int {
-		$total = 0.0;
-		foreach ( self::ctypes() as $ctype ) {
-			// Use myCred's OWN balance getter as the reconciliation authority;
-			// fall back to the raw meta key only if the function is missing.
-			if ( function_exists( 'mycred_get_users_balance' ) ) {
-				$total += (float) mycred_get_users_balance( $user_id, $ctype );
-			} else {
-				$total += (float) get_user_meta( $user_id, $ctype, true );
-			}
-		}
-		return (int) round( $total );
+	public static function source_rank_name( int $user_id ): string {
+		$rank_id = (int) get_user_meta( $user_id, 'mycred_rank', true );
+		return $rank_id > 0 ? (string) get_the_title( $rank_id ) : '';
 	}
 }

@@ -30,9 +30,16 @@ final class ImportLedger {
 	 *
 	 * @param string $prefix Key prefix, e.g. `mycred:log:`.
 	 * @return string
+	 * @throws \InvalidArgumentException When the prefix is empty.
 	 */
 	public static function like( string $prefix ): string {
 		global $wpdb;
+
+		// An empty prefix would be LIKE '%': every event on the site. Undo deletes by this pattern, so
+		// a source that forgot to define its prefix must be a hard stop, never a silent match-all.
+		if ( '' === $prefix ) {
+			throw new \InvalidArgumentException( 'An import key prefix must not be empty.' );
+		}
 		return $wpdb->esc_like( $prefix ) . '%';
 	}
 

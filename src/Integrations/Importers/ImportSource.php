@@ -32,6 +32,19 @@ defined( 'ABSPATH' ) || exit;
 interface ImportSource {
 
 	/**
+	 * Prefix of every event key this source writes (`mycred:log:`). Each importer MUST override it.
+	 * It is how imported events are recognised for idempotency, reconciliation and undo, so it must
+	 * be unique to this source and must never change. An importer that forgets to override it is
+	 * refused, because an empty prefix would match every event on the site.
+	 */
+	public const KEY_PREFIX = '';
+
+	/**
+	 * Prefix of every badge id this source creates (`mycred-badge-`). Same rules as KEY_PREFIX.
+	 */
+	public const BADGE_PREFIX = '';
+
+	/**
 	 * Is this source's data present on the site?
 	 *
 	 * @return bool
@@ -53,7 +66,8 @@ interface ImportSource {
 	 *
 	 * @param int $after Row id to start strictly after (0 = the beginning).
 	 * @param int $limit Maximum rows.
-	 * @return array{rows: array<int, array<string, mixed>>, next: int} `next` is the last row id, 0 when exhausted.
+	 * @return array{rows: array<int, array<string, mixed>>, next: int} `next` is the cursor to pass next, and
+	 *         0 ONLY when the source is exhausted (a page shorter than $limit and past the last row).
 	 */
 	public static function read_points( int $after, int $limit ): array;
 
@@ -71,9 +85,12 @@ interface ImportSource {
 	 * The keyset cursor is whatever monotonic int the source offers (a row id, or a user id when the
 	 * source has no single row key); it only has to advance and never repeat.
 	 *
+	 * A page may return FEWER records than $limit and still not be the last (a source row that is not a
+	 * valid badge is skipped after the query), so exhaustion is signalled by `next` alone.
+	 *
 	 * @param int $after Cursor to start strictly after (0 = the beginning).
-	 * @param int $limit Maximum records (a page of users may hold more than one record per user).
-	 * @return array{rows: array<int, array<string, mixed>>, next: int} `next` is 0 when exhausted.
+	 * @param int $limit Maximum source rows scanned (a page of users may hold more than one record per user).
+	 * @return array{rows: array<int, array<string, mixed>>, next: int} `next` is 0 ONLY when exhausted.
 	 */
 	public static function read_awards( int $after, int $limit ): array;
 
