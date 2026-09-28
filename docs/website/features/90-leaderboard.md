@@ -32,6 +32,14 @@ Leaderboard positions are calculated from the points ledger and stored in a snap
 
 If you award points manually and need the leaderboard to update immediately, you can clear the snapshot cache from **Gamification > Settings**.
 
+## Browsing the Whole Leaderboard
+
+Themes and apps can page through a board with **Next** links instead of stopping at the top 10 or 100. The all-time board can be browsed all the way down, however large the community. The day, week and month boards go down to rank 500.
+
+Paging only moves forward, and "Page X of Y" is informational: there is no jump-to-page, because reaching page 3,000 of a large board directly would be slow for every visitor. Members tied on points share one rank, even when the tie falls across two pages.
+
+For developers: `wb_gam_get_leaderboard_page()` and `wb_gam_get_leaderboard_total()` (see the [helper functions](../developer-guide/40-helper-functions.md)), and the `cursor` parameter of the REST leaderboard route. Reading beyond the first page over REST needs a logged-in caller by default; the `wb_gam_leaderboard_anon_paging` filter opens it to visitors on sites that want that, because deep paging lets anyone read every member's name, avatar and points.
+
 ## The "Your Rank" Section
 
 When a logged-in member views the leaderboard, the block highlights their current rank below the top list even if they are not in the visible top section. This way every member can see where they stand regardless of their position.

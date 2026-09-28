@@ -332,6 +332,42 @@ function wb_gam_get_leaderboard( string $period = 'all', int $limit = 10 ): arra
 }
 
 /**
+ * Get one page of the leaderboard, to browse past the first screen.
+ *
+ * Paging is forward-only and keyset-based: pass back `next_cursor` from the previous page. There is
+ * no page number or offset input, on purpose. Ranks are absolute, so page two starts where page one
+ * ended, and members tied on points keep one rank across the break. Day, week and month boards end
+ * at 500 ranks; the all-time board does not.
+ *
+ * A cursor that is malformed or belongs to another board (a different period or currency) returns an
+ * empty page with `invalid_cursor` set, never stale data.
+ *
+ * @since 1.6.5
+ *
+ * @param string $period     'all'|'week'|'month'|'day'.
+ * @param int    $limit      Page size, 1-100.
+ * @param string $cursor     `next_cursor` from the previous page, empty for the first page.
+ * @param string $point_type Currency slug, empty for the primary currency.
+ * @return array{rows: array, has_more: bool, next_cursor: string, offset: int, total: int, invalid_cursor?: bool}
+ */
+function wb_gam_get_leaderboard_page( string $period = 'all', int $limit = 25, string $cursor = '', string $point_type = '' ): array {
+	return \WBGam\Engine\LeaderboardEngine::get_leaderboard_page( $period, $limit, '', 0, $point_type, $cursor );
+}
+
+/**
+ * How many members a leaderboard holds (cached for five minutes), for a "page X of Y" pager.
+ *
+ * @since 1.6.5
+ *
+ * @param string $period     'all'|'week'|'month'|'day'.
+ * @param string $point_type Currency slug, empty for the primary currency.
+ * @return int Members ranked on that board (at most 500 for day, week and month).
+ */
+function wb_gam_get_leaderboard_total( string $period = 'all', string $point_type = '' ): int {
+	return \WBGam\Engine\LeaderboardEngine::get_total( $period, '', 0, $point_type );
+}
+
+/**
  * Check if a feature flag is enabled.
  *
  * @since 1.0.0

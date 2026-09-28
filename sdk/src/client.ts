@@ -2,7 +2,7 @@ import type {
   WBGamificationConfig,
   Member,
   Badge,
-  LeaderboardEntry,
+  LeaderboardPage,
   Challenge,
   CommunityChallenge,
   KudosEntry,
@@ -216,23 +216,32 @@ export class WBGamification {
 
   // ── Leaderboard ──────────────────────────────────────────────────────────
 
+  /**
+   * One page of the leaderboard. Pass the previous page's `next_cursor` as `cursor` to continue
+   * (forward-only; a cursor needs a logged-in caller unless the site owner opens it).
+   *
+   * The route has always returned an object (`rows`, `total`, ...), not a bare array, and it reads
+   * `point_type`, not `type`. Both are corrected here.
+   */
   async getLeaderboard(
     period: 'all' | 'week' | 'month' | 'day' = 'all',
     limit = 10,
-    pointType?: string
-  ): Promise<LeaderboardEntry[]> {
-    return this.request<LeaderboardEntry[]>(
-      `/leaderboard${this.qs({ period, limit, type: pointType })}`
+    pointType?: string,
+    cursor?: string
+  ): Promise<LeaderboardPage> {
+    return this.request<LeaderboardPage>(
+      `/leaderboard${this.qs({ period, limit, point_type: pointType, cursor })}`
     );
   }
 
   async getGroupLeaderboard(
     groupId: number,
     period: 'all' | 'week' | 'month' | 'day' = 'all',
-    limit = 10
-  ): Promise<LeaderboardEntry[]> {
-    return this.request<LeaderboardEntry[]>(
-      `/leaderboard/group/${groupId}${this.qs({ period, limit })}`
+    limit = 10,
+    cursor?: string
+  ): Promise<LeaderboardPage> {
+    return this.request<LeaderboardPage>(
+      `/leaderboard/group/${groupId}${this.qs({ period, limit, cursor })}`
     );
   }
 

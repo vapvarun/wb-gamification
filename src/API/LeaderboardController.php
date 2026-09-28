@@ -10,6 +10,13 @@
  *   limit      = 1–100                      (default: 10, leaderboard only)
  *   scope_type = e.g. 'bp_group'            (default: '' = site-wide)
  *   scope_id   = integer                    (default: 0)
+ *   point_type = currency slug              (default: '' = primary)
+ *
+ * The leaderboard route also takes `cursor`: the `next_cursor` of the previous page. Paging is
+ * forward-only (keyset), so there is no page or offset input. The response carries `total`,
+ * `has_more`, `next_cursor` and `offset`, and the X-WP-Total / X-WP-TotalPages headers.
+ * A cursor is login-only unless the `wb_gam_leaderboard_anon_paging` filter opens it, because deep
+ * paging would otherwise let an anonymous visitor read the whole member roster.
  *
  * Authentication:
  *   - Public leaderboard is publicly readable.
@@ -141,24 +148,24 @@ class LeaderboardController extends WP_REST_Controller {
 	 * Retrieve the top-N members for a given period and scope.
 	 *
 	 * @param WP_REST_Request $request Full details about the request.
-	 * @return WP_REST_Response Response containing leaderboard rows.
+	 * @return WP_REST_Response|WP_Error Response containing one page of leaderboard rows.
 	 */
-	public function get_leaderboard( WP_REST_Request $request ): WP_REST_Response {
+	public function get_leaderboard( WP_REST_Request $request ): WP_REST_Response|WP_Error {
 		$period     = $this->validate_period( $request->get_param( 'period' ) );
-		$limit      = (int) $request->get_param( 'limit' );
 		$scope_type = sanitize_key( (string) $request->get_param( 'scope_type' ) );
 		$scope_id   = (int) $request->get_param( 'scope_id' );
 
-		$rows = LeaderboardEngine::get_leaderboard( $period, $limit, $scope_type, $scope_id );
-
-		return rest_ensure_response(
+		return $this->page_response(
+			$request,
+			$period,
+			$scope_type,
+			$scope_id,
 			array(
 				'period' => $period,
 				'scope'  => array(
 					'type' => $scope_type,
 					'id'   => $scope_id,
 				),
-				'rows'   => $rows,
 			)
 		);
 	}
@@ -175,7 +182,7 @@ class LeaderboardController extends WP_REST_Controller {
 		$scope_type = sanitize_key( (string) $request->get_param( 'scope_type' ) );
 		$scope_id   = (int) $request->get_param( 'scope_id' );
 
-		$rank = LeaderboardEngine::get_user_rank( $user_id, $period, $scope_type, $scope_id );
+		$rank = LeaderboardEngine::get_user_rank( $user_id, $period, $scope_type, $scope_id, sanitize_key( (string) $request->get_param( 'point_type' ) ) );
 
 		return rest_ensure_response(
 			array(
@@ -201,7 +208,6 @@ class LeaderboardController extends WP_REST_Controller {
 	public function get_group_leaderboard( WP_REST_Request $request ): WP_REST_Response|WP_Error {
 		$group_id = (int) $request['group_id'];
 		$period   = $this->validate_period( $request->get_param( 'period' ) );
-		$limit    = (int) $request->get_param( 'limit' );
 
 		// Resolve group name if BP is active.
 		$group_name = '';
@@ -214,19 +220,79 @@ class LeaderboardController extends WP_REST_Controller {
 			$group_name = $group->name;
 		}
 
-		$rows = LeaderboardEngine::get_leaderboard( $period, $limit, 'bp_group', $group_id );
-
-		return rest_ensure_response(
+		return $this->page_response(
+			$request,
+			$period,
+			'bp_group',
+			$group_id,
 			array(
 				'group_id'   => $group_id,
 				'group_name' => $group_name,
 				'period'     => $period,
-				'rows'       => $rows,
 			)
 		);
 	}
 
 	// ── Helpers ────────────────────────────────────────────────────────────────
+
+	/**
+	 * Build one page of a board: the shared body of the site-wide and group routes.
+	 *
+	 * @param WP_REST_Request      $request    The request (limit, cursor, point_type).
+	 * @param string               $period     Validated period.
+	 * @param string               $scope_type Scope type, empty = site-wide.
+	 * @param int                  $scope_id   Scope id.
+	 * @param array<string, mixed> $envelope   Route-specific fields that lead the response.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	private function page_response(
+		WP_REST_Request $request,
+		string $period,
+		string $scope_type,
+		int $scope_id,
+		array $envelope
+	): WP_REST_Response|WP_Error {
+		$limit      = max( 1, min( 100, (int) $request->get_param( 'limit' ) ) );
+		$point_type = sanitize_key( (string) $request->get_param( 'point_type' ) );
+		$cursor     = (string) $request->get_param( 'cursor' );
+
+		// Deep paging reads every member's name, avatar and points. The first page is public (it is
+		// the board); walking the whole roster is not, unless the site owner opens it.
+		if ( '' !== $cursor && ! is_user_logged_in() && ! apply_filters( 'wb_gam_leaderboard_anon_paging', false ) ) {
+			return new WP_Error(
+				'rest_forbidden',
+				__( 'You must be logged in to page through the leaderboard.', 'wb-gamification' ),
+				array( 'status' => 401 )
+			);
+		}
+
+		$page = LeaderboardEngine::get_leaderboard_page( $period, $limit, $scope_type, $scope_id, $point_type, $cursor );
+
+		if ( ! empty( $page['invalid_cursor'] ) ) {
+			return new WP_Error(
+				'wb_gam_invalid_cursor',
+				__( 'That page link is not valid for this leaderboard. Start again from the first page.', 'wb-gamification' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		$response = rest_ensure_response(
+			array_merge(
+				$envelope,
+				array(
+					'rows'        => $page['rows'],
+					'total'       => $page['total'],
+					'has_more'    => $page['has_more'],
+					'next_cursor' => $page['next_cursor'],
+					'offset'      => $page['offset'],
+				)
+			)
+		);
+		$response->header( 'X-WP-Total', (string) $page['total'] );
+		$response->header( 'X-WP-TotalPages', (string) max( 1, (int) ceil( $page['total'] / $limit ) ) );
+
+		return $response;
+	}
 
 	/**
 	 * Validate and normalise the period query param.
@@ -263,15 +329,28 @@ class LeaderboardController extends WP_REST_Controller {
 				'minimum'           => 0,
 				'sanitize_callback' => 'absint',
 			),
+			'point_type' => array(
+				'type'              => 'string',
+				'default'           => '',
+				'description'       => 'Currency slug. Empty is the primary currency; an unknown slug falls back to it.',
+				'sanitize_callback' => 'sanitize_key',
+			),
 		);
 
 		if ( $include_limit ) {
-			$args['limit'] = array(
+			$args['limit']  = array(
 				'type'              => 'integer',
 				'default'           => 10,
 				'minimum'           => 1,
 				'maximum'           => 100,
 				'sanitize_callback' => 'absint',
+			);
+			$args['cursor'] = array(
+				'type'              => 'string',
+				'default'           => '',
+				'maxLength'         => 200,
+				'description'       => 'The next_cursor of the previous page. Forward-only; login required unless the site owner opens it.',
+				'sanitize_callback' => 'sanitize_text_field',
 			);
 		}
 
@@ -289,15 +368,19 @@ class LeaderboardController extends WP_REST_Controller {
 			'title'      => 'wb-gamification-leaderboard',
 			'type'       => 'object',
 			'properties' => array(
-				'period' => array( 'type' => 'string' ),
-				'scope'  => array(
+				'period'      => array( 'type' => 'string' ),
+				'scope'       => array(
 					'type'       => 'object',
 					'properties' => array(
 						'type' => array( 'type' => 'string' ),
 						'id'   => array( 'type' => 'integer' ),
 					),
 				),
-				'rows'   => array(
+				'total'       => array( 'type' => 'integer' ),
+				'has_more'    => array( 'type' => 'boolean' ),
+				'next_cursor' => array( 'type' => 'string' ),
+				'offset'      => array( 'type' => 'integer' ),
+				'rows'        => array(
 					'type'  => 'array',
 					'items' => array(
 						'type'       => 'object',

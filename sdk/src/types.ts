@@ -52,6 +52,25 @@ export interface LeaderboardEntry {
   avatar_url: string;
 }
 
+/**
+ * One page of a leaderboard, as the REST route returns it. Paging is forward-only: pass
+ * `next_cursor` back as `cursor` to get the next page. Ranks are absolute across pages.
+ */
+export interface LeaderboardPage {
+  period: string;
+  rows: LeaderboardEntry[];
+  /** Members ranked on this board (day, week and month boards end at 500). */
+  total: number;
+  has_more: boolean;
+  /** Empty when there is no next page. */
+  next_cursor: string;
+  /** Members before this page. */
+  offset: number;
+  scope?: { type: string; id: number };
+  group_id?: number;
+  group_name?: string;
+}
+
 export interface Challenge {
   id: number;
   title: string;

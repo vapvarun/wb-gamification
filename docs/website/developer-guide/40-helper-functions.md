@@ -193,6 +193,40 @@ foreach ( $top_10 as $row ) {
 }
 ```
 
+### `wb_gam_get_leaderboard_page( string $period = 'all', int $limit = 25, string $cursor = '', string $point_type = '' ): array`
+
+One page of a leaderboard, for browsing past the first screen. Added in 1.6.5.
+
+Paging is forward-only and keyset-based: pass the previous page's `next_cursor` back in. There is no page number or offset, on purpose: jumping to "page 3,000" of a 100k-member board would read every row before it. A page deep in the board costs the same as the first.
+
+| Key | Type | Description |
+|-----|------|-------------|
+| `rows` | array | Same row shape as `wb_gam_get_leaderboard()`. `rank` is absolute, so page two starts where page one ended, and members tied on points keep one rank across the break. |
+| `has_more` | bool | Whether another page follows. |
+| `next_cursor` | string | Pass this as `$cursor` for the next page. Empty on the last page. |
+| `offset` | int | Members before this page. |
+| `total` | int | Members ranked on this board (cached for five minutes). |
+| `invalid_cursor` | bool | Present and `true` when the cursor is malformed or belongs to another board (a different period or currency). The page is then empty: it never returns stale data. |
+
+Day, week and month boards end at 500 ranks. The all-time board has no limit.
+
+```php
+$cursor = '';
+do {
+    $page = wb_gam_get_leaderboard_page( 'all', 50, $cursor );
+    foreach ( $page['rows'] as $row ) {
+        printf( "#%d %s\n", $row['rank'], $row['display_name'] );
+    }
+    $cursor = $page['next_cursor'];
+} while ( $page['has_more'] );
+```
+
+`wb_gam_get_leaderboard()` is unchanged and still returns only the rows.
+
+### `wb_gam_get_leaderboard_total( string $period = 'all', string $point_type = '' ): int`
+
+How many members a board holds, for a "page X of Y" line. Cached for five minutes, and counted with the same eligibility as the rows (opted-out, excluded and deleted members are not counted). Added in 1.6.5.
+
 ---
 
 ## Feature Flags

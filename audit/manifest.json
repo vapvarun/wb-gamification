@@ -11289,6 +11289,15 @@
         "wb-gamification.php:547"
       ],
       "consumed_by": []
+    },
+    {
+      "name": "wb_gam_leaderboard_anon_paging",
+      "type": "filter",
+      "purpose": "Whether an anonymous visitor may page past the first leaderboard page over REST (the cursor parameter). Default false.",
+      "fired_at": [
+        "src/API/LeaderboardController.php:261"
+      ],
+      "consumed_by": []
     }
   ],
   "cron": [
