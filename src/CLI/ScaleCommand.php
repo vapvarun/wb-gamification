@@ -92,6 +92,12 @@ final class ScaleCommand {
 		'rate_limit_today_count'     => 15.0,
 		'convert_balance_lookup'     => 5.0,
 
+		// Added with leaderboard keyset paging: a page deep in the all-time board (the totals table read
+		// by keyset, O(page) at any depth) and the pager's total (an O(members) count, cached in
+		// production, so this is the cold cost).
+		'leaderboard_page_deep'      => 20.0,
+		'leaderboard_total_cold'     => 500.0,
+
 		// ── Added 1.6.4 (S-03). The budgets above only ever covered the paths
 		// we already knew were fast. Everything below is a path the scale
 		// register flagged as unmeasured — which is precisely where a large
@@ -596,6 +602,39 @@ final class ScaleCommand {
 				);
 			}
 		);
+
+		// 7. All-time leaderboard, one page from the MIDDLE of the board by keyset. The cursor is built
+		// from the member at the midpoint, so this measures the cost of "page 3,000" without walking to it.
+		// OFFSET here would grow with depth; the keyset must not.
+		$totals_table = $wpdb->prefix . 'wb_gam_user_totals';
+		$members      = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$totals_table} WHERE point_type = 'points' AND earned > 0" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		if ( $members > 50 ) {
+			$mid = (int) floor( $members / 2 );
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared
+			$mid_row = $wpdb->get_row( $wpdb->prepare( "SELECT earned, user_id FROM {$totals_table} WHERE point_type = 'points' AND earned > 0 ORDER BY earned DESC, user_id DESC LIMIT 1 OFFSET %d", $mid ), ARRAY_A );
+			if ( $mid_row ) {
+				$deep_cursor = LeaderboardEngine::encode_cursor(
+					LeaderboardEngine::board_key( 'all', '', 0, 'points' ),
+					(int) $mid_row['earned'],
+					(int) $mid_row['user_id'],
+					$mid,
+					$mid
+				);
+				// The pager total is warmed first: in production it is cached, and its cold cost is measured below.
+				LeaderboardEngine::get_total( 'all', '', 0, 'points' );
+				$results['leaderboard_page_deep']  = self::time_op(
+					function () use ( $deep_cursor ) {
+						return LeaderboardEngine::get_leaderboard_page( 'all', 25, '', 0, 'points', $deep_cursor );
+					}
+				);
+				$results['leaderboard_total_cold'] = self::time_op(
+					function () {
+						wp_cache_flush();
+						return LeaderboardEngine::get_total( 'all', '', 0, 'points' );
+					}
+				);
+			}
+		}
 
 		// ── Added 1.6.4 (S-03): the surfaces the register flagged as unmeasured ──
 

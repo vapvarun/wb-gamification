@@ -77,6 +77,23 @@ final class LeaderboardEngine {
 	private const ORPHAN_OVERFETCH = 25;
 
 	/**
+	 * How many ranked members the snapshot keeps per period and currency, and so how deep a
+	 * day, week or month board can be paged. The writer and the pager read this one number.
+	 *
+	 * The all-time board is not bound by it: it pages the materialised totals table by keyset.
+	 *
+	 * @var int
+	 */
+	public const SNAPSHOT_DEPTH = 500;
+
+	/**
+	 * Cursor format version. A cursor with another version is rejected, never guessed at.
+	 *
+	 * @var int
+	 */
+	private const CURSOR_VERSION = 1;
+
+	/**
 	 * Initialize cron hooks and arm the recurring snapshot.
 	 *
 	 * Called from plugins_loaded via FeatureFlags or directly.
@@ -220,8 +237,6 @@ final class LeaderboardEngine {
 		int $scope_id = 0,
 		string $point_type = ''
 	): array {
-		global $wpdb;
-
 		$limit = max( 1, min( 100, $limit ) );
 
 		// Resolve the requested point type — empty string = primary, unknown
@@ -247,19 +262,324 @@ final class LeaderboardEngine {
 			return (array) $cached;
 		}
 
+		$rows   = self::fetch_raw( $period, $limit, $scope_type, $scope_id, $resolved_type, null );
+		$result = $rows ? self::hydrate_rows( $rows ) : array();
+
+		// Store in object cache with 2-minute TTL.
+		wp_cache_set( $cache_key, $result, 'wb_gamification', 120 );
+
+		return $result;
+	}
+
+	/**
+	 * One page of a board, plus what a pager needs: has_more, the cursor for the next page, how many
+	 * members precede this page, and the board's total.
+	 *
+	 * Paging is FORWARD-ONLY by keyset. There is deliberately no page number or offset input: random
+	 * access into a 100k-member board is the O(offset) read this exists to avoid. The cursor carries the
+	 * last member's points and id (where the next page starts) and the rank state (how many were served
+	 * and the last rank), so ranks stay absolute and tied members keep the same rank across a boundary.
+	 *
+	 * Day, week and month boards end at SNAPSHOT_DEPTH ranks (their aggregate is O(window) per page,
+	 * the all-time board is not bounded and reads the indexed totals table).
+	 *
+	 * A cursor that is malformed, from another version, or from another board is not guessed at: the
+	 * result is an empty page flagged `invalid_cursor`.
+	 *
+	 * @param string $period     Period: 'all' | 'month' | 'week' | 'day'.
+	 * @param int    $limit      Page size (1-100).
+	 * @param string $scope_type Scope type, empty = site-wide.
+	 * @param int    $scope_id   Scope id.
+	 * @param string $point_type Currency slug, empty = primary.
+	 * @param string $cursor     Opaque cursor from a previous page's `next_cursor`, empty = first page.
+	 * @return array{rows: array<int, array<string, mixed>>, has_more: bool, next_cursor: string, offset: int, total: int, invalid_cursor?: bool}
+	 * @since 1.6.5
+	 */
+	public static function get_leaderboard_page(
+		string $period = 'all',
+		int $limit = 25,
+		string $scope_type = '',
+		int $scope_id = 0,
+		string $point_type = '',
+		string $cursor = ''
+	): array {
+		$limit = max( 1, min( 100, $limit ) );
+		$type  = ( new \WBGam\Services\PointTypeService() )->resolve( $point_type ?: null );
+		$board = self::board_hash( $period, $scope_type, $scope_id, $type );
+		$empty = array(
+			'rows'        => array(),
+			'has_more'    => false,
+			'next_cursor' => '',
+			'offset'      => 0,
+			'total'       => self::get_total( $period, $scope_type, $scope_id, $type ),
+		);
+
+		$state = null;
+		if ( '' !== $cursor ) {
+			$state = self::decode_cursor( $cursor, $board );
+			if ( null === $state ) {
+				return array_merge( $empty, array( 'invalid_cursor' => true ) );
+			}
+		}
+
+		$served    = $limit;
+		$lookahead = true;
+		if ( null !== self::get_period_start( $period ) ) {
+			$room = self::SNAPSHOT_DEPTH - ( null !== $state ? $state['n'] : 0 );
+			if ( $room <= 0 ) {
+				return array_merge( $empty, array( 'offset' => null !== $state ? $state['n'] : 0 ) );
+			}
+			if ( $limit >= $room ) {
+				$served    = $room;
+				$lookahead = false; // The board ends at its depth: no next page to look for.
+			}
+		}
+
+		$raw      = self::fetch_raw( $period, $served + ( $lookahead ? 1 : 0 ), $scope_type, $scope_id, $type, $state, true );
+		$has_more = count( $raw ) > $served;
+		$raw      = array_slice( $raw, 0, $served );
+
+		$next = '';
+		if ( $has_more && $raw ) {
+			[ $seen, $last_points, $last_rank ] = self::rank_state( $raw, $state );
+			$last_row                           = end( $raw );
+			$next                               = self::encode_cursor( $board, (int) $last_points, (int) $last_row['user_id'], $seen, $last_rank );
+		}
+
+		return array(
+			'rows'        => $raw ? self::hydrate_rows( $raw, $state ) : array(),
+			'has_more'    => '' !== $next,
+			'next_cursor' => $next,
+			'offset'      => null !== $state ? $state['n'] : 0,
+			'total'       => $empty['total'],
+		);
+	}
+
+	/**
+	 * How many members a board holds: the same eligibility as the rows, so a pager's "page X of Y"
+	 * cannot promise a member the board would never show.
+	 *
+	 * Cached for five minutes and never invalidated per award (a count that changed on every award
+	 * would be recomputed constantly, and a pager does not need to be exact to the second).
+	 * Day, week and month boards count at most SNAPSHOT_DEPTH, the depth they can be paged to.
+	 *
+	 * @param string $period     Period: 'all' | 'month' | 'week' | 'day'.
+	 * @param string $scope_type Scope type, empty = site-wide.
+	 * @param int    $scope_id   Scope id.
+	 * @param string $point_type Currency slug, empty = primary.
+	 * @return int
+	 * @since 1.6.5
+	 */
+	public static function get_total(
+		string $period = 'all',
+		string $scope_type = '',
+		int $scope_id = 0,
+		string $point_type = ''
+	): int {
+		global $wpdb;
+
+		$type      = ( new \WBGam\Services\PointTypeService() )->resolve( $point_type ?: null );
+		$cache_key = sprintf( 'wb_gam_lbt_%s', self::board_hash( $period, $scope_type, $scope_id, $type ) );
+		$cached    = wp_cache_get( $cache_key, 'wb_gamification' );
+		if ( false !== $cached ) {
+			return (int) $cached;
+		}
+
+		$scope_ids = self::resolve_scope( $scope_type, $scope_id );
+		if ( '' !== $scope_type && $scope_id > 0 && empty( $scope_ids ) ) {
+			$total = 0; // A scope that resolves to nobody holds nobody.
+		} else {
+			$period_start = self::get_period_start( $period );
+
+			if ( null === $period_start ) {
+				[ $excl_clause, $excl_values ] = self::exclusion_sql( 'ut' );
+				$balance                       = self::positive_balance_sql( 'ut.earned' );
+				$scope_clause                  = empty( $scope_ids )
+					? ''
+					: 'AND ut.user_id IN (' . implode( ',', array_fill( 0, count( $scope_ids ), '%d' ) ) . ')';
+
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared
+				$total = (int) $wpdb->get_var(
+					$wpdb->prepare(
+						"SELECT COUNT(*) FROM {$wpdb->prefix}wb_gam_user_totals ut WHERE ut.point_type = %s AND {$balance} {$excl_clause} {$scope_clause}", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+						array_merge( array( $type ), $excl_values, $scope_ids )
+					)
+				);
+			} else {
+				[ $excl_clause, $excl_values ] = self::exclusion_sql( 'p' );
+				$total                         = min( self::SNAPSHOT_DEPTH, self::count_users_above( 0, $period_start, $excl_clause, $excl_values, $scope_ids, $type ) );
+			}
+		}
+
+		// ponytail: an O(members) count, cached 300s in the object cache and recomputed per request on
+		// a host without a persistent one (already a hosting requirement above 10k members). If that
+		// ever matters, keep the count in a transient or a maintained counter row instead.
+		wp_cache_set( $cache_key, $total, 'wb_gamification', 300 ); // Aggregate, TTL-only by design.
+		return $total;
+	}
+
+	/**
+	 * Identify a board, so a cursor can only ever be replayed on the board it came from.
+	 *
+	 * @param string $period     Period key (an unknown one is the all-time board, as everywhere else).
+	 * @param string $scope_type Scope type.
+	 * @param int    $scope_id   Scope id.
+	 * @param string $type       Resolved currency slug.
+	 * @return string Short stable hash.
+	 */
+	private static function board_hash( string $period, string $scope_type, int $scope_id, string $type ): string {
+		$period = in_array( $period, array( 'month', 'week', 'day' ), true ) ? $period : 'all';
+		return substr( md5( implode( '|', array( $period, $scope_type, $scope_id, $type ) ) ), 0, 8 );
+	}
+
+	/**
+	 * Encode the position after a page: last member's points and id, members served, last rank.
+	 *
+	 * @param string $board  Board hash.
+	 * @param int    $points Last member's points.
+	 * @param int    $user   Last member's id.
+	 * @param int    $served Members served so far, including this page.
+	 * @param int    $rank   Last member's competition rank.
+	 * @return string URL-safe opaque token.
+	 *
+	 * @internal Public so the scale benchmark can build a cursor deep in a board without walking to it.
+	 */
+	public static function encode_cursor( string $board, int $points, int $user, int $served, int $rank ): string {
+		$json = (string) wp_json_encode(
+			array(
+				'v' => self::CURSOR_VERSION,
+				'b' => $board,
+				'p' => $points,
+				'u' => $user,
+				'n' => $served,
+				'r' => $rank,
+			)
+		);
+		// An opaque URL-safe token for a page position, not obfuscation of code.
+		return rtrim( strtr( base64_encode( $json ), '+/', '-_' ), '=' ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode
+	}
+
+	/**
+	 * Decode and validate a cursor for a board.
+	 *
+	 * @internal Public so the REST layer and the unit tests can validate without a database.
+	 *
+	 * @param string $cursor Token from encode_cursor().
+	 * @param string $board  Board hash the caller is paging.
+	 * @return array{p: int, u: int, n: int, r: int}|null Null when malformed, another version, or another board.
+	 */
+	public static function decode_cursor( string $cursor, string $board ): ?array {
+		if ( '' === $cursor || strlen( $cursor ) > 200 || ! preg_match( '/^[A-Za-z0-9_-]+$/', $cursor ) ) {
+			return null;
+		}
+		$json = base64_decode( strtr( $cursor, '-_', '+/' ), true ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode -- decoding our own page token, strictly.
+		$data = false === $json ? null : json_decode( $json, true );
+		if ( ! is_array( $data ) || ( $data['v'] ?? null ) !== self::CURSOR_VERSION || ( $data['b'] ?? null ) !== $board ) {
+			return null;
+		}
+		foreach ( array( 'p', 'u', 'n', 'r' ) as $key ) {
+			if ( ! isset( $data[ $key ] ) || ! is_int( $data[ $key ] ) || $data[ $key ] < 0 ) {
+				return null;
+			}
+		}
+		if ( $data['u'] < 1 || $data['n'] < 1 || $data['r'] < 1 || $data['r'] > $data['n'] ) {
+			return null;
+		}
+		return array(
+			'p' => $data['p'],
+			'u' => $data['u'],
+			'n' => $data['n'],
+			'r' => $data['r'],
+		);
+	}
+
+	/**
+	 * Board hash for the REST layer, which has to decode a cursor before it calls the engine.
+	 *
+	 * @internal
+	 *
+	 * @param string $period     Period key.
+	 * @param string $scope_type Scope type.
+	 * @param int    $scope_id   Scope id.
+	 * @param string $point_type Currency slug, empty = primary.
+	 * @return string
+	 */
+	public static function board_key( string $period, string $scope_type, int $scope_id, string $point_type ): string {
+		$type = ( new \WBGam\Services\PointTypeService() )->resolve( $point_type ?: null );
+		return self::board_hash( $period, $scope_type, $scope_id, $type );
+	}
+
+	/**
+	 * Where the ranking stands after a run of rows: members served, the last row's points, its rank.
+	 * The same competition-rank rule as hydrate_rows(), on RAW rows, so a cursor is never built from
+	 * rows a results filter reshaped.
+	 *
+	 * @param array<int, array<string, mixed>>           $rows Raw rows.
+	 * @param array{p: int, u: int, n: int, r: int}|null $seed Where the previous page ended.
+	 * @return array{0: int, 1: int, 2: int} [ served, last points, last rank ].
+	 */
+	private static function rank_state( array $rows, ?array $seed ): array {
+		$rank = null !== $seed ? $seed['r'] : 0;
+		$seen = null !== $seed ? $seed['n'] : 0;
+		$prev = null !== $seed ? $seed['p'] : null;
+
+		foreach ( $rows as $row ) {
+			++$seen;
+			$points = (int) $row['total_points'];
+			if ( null === $prev || $points !== $prev ) {
+				$rank = $seen;
+				$prev = $points;
+			}
+		}
+
+		return array( $seen, (int) $prev, $rank );
+	}
+
+	/**
+	 * The unhydrated board rows: the one place the three read paths live.
+	 *
+	 * Every caller hydrates once, after this, so ranks, avatars and the results filter are computed
+	 * in one spot. With a cursor the page starts strictly after that member (points DESC, user_id
+	 * DESC), and NEVER through OFFSET: OFFSET is O(rows skipped) and the all-time path has to skip
+	 * orphaned members, for which a raw OFFSET is also wrong.
+	 *
+	 * @param string                                     $period        Period key.
+	 * @param int                                        $limit         Rows wanted, not clamped here.
+	 * @param string                                     $scope_type    Scope type, empty = site-wide.
+	 * @param int                                        $scope_id      Scope id.
+	 * @param string                                     $resolved_type Resolved currency slug.
+	 * @param array{p: int, u: int, n: int, r: int}|null $cursor        Decoded cursor, or null for the first page.
+	 * @param bool                                       $paged         True when the rows are one page of a paged walk.
+	 * @return array<int, array<string, mixed>> Raw rows: user_id, total_points, display_name (and snapshot ranks).
+	 */
+	private static function fetch_raw(
+		string $period,
+		int $limit,
+		string $scope_type,
+		int $scope_id,
+		string $resolved_type,
+		?array $cursor,
+		bool $paged = false
+	): array {
+		global $wpdb;
+
+		$period_start = self::get_period_start( $period );
+
 		// ── Try snapshot table for global scopes ──────────────────────────────
 		// Snapshot now covers EVERY active currency (Phase 3b) — only scoped
 		// requests (BP groups, cohorts) still fall through to the live query.
-		if ( '' === $scope_type && 0 === $scope_id ) {
-			$snapshot_result = self::read_from_snapshot( $period, $limit, $resolved_type );
-			if ( null !== $snapshot_result ) {
-				wp_cache_set( $cache_key, $snapshot_result, 'wb_gamification', 120 );
-				return $snapshot_result;
+		// A PAGED walk of the ALL-TIME board never uses it, on any page: the snapshot is only
+		// SNAPSHOT_DEPTH deep, and it ranks on the ledger sum while the totals table ranks on `earned`.
+		// If page one came from one and page two from the other, a member the two disagree about could
+		// be skipped or served twice at the boundary. One source for every page of a walk.
+		if ( '' === $scope_type && 0 === $scope_id && ( $period_start || ! $paged ) ) {
+			$snapshot_rows = self::read_from_snapshot( $period, $limit, $resolved_type, $cursor );
+			if ( null !== $snapshot_rows ) {
+				return $snapshot_rows;
 			}
 		}
 
 		// ── Full query fallback ───────────────────────────────────────────────
-		$period_start = self::get_period_start( $period );
 		// true = existence is enforced by this query's own JOIN to wp_users.
 		[ $opt_out_clause, $opt_out_values ] = self::exclusion_sql( 'p', true );
 
@@ -278,7 +598,6 @@ final class LeaderboardEngine {
 		// Empty is the honest answer. A global board wearing a group's name is a wrong answer that
 		// looks like a right one, which is the worse failure of the two.
 		if ( '' !== $scope_type && $scope_id > 0 && empty( $scope_ids ) ) {
-			wp_cache_set( $cache_key, array(), 'wb_gamification', 120 );
 			return array();
 		}
 
@@ -332,6 +651,8 @@ final class LeaderboardEngine {
 		//
 		// Period boards (day/week/month) genuinely need the ledger — a total does
 		// not carry a date — so those keep the SUM, bounded by idx_created.
+		$cursor_binds = array();
+
 		if ( ! $period_start ) {
 			// The top-N is selected from the totals table ALONE, in a derived
 			// table, BEFORE the users join.
@@ -390,19 +711,24 @@ final class LeaderboardEngine {
 			// Cost in the normal case is one extra primary-key lookup: deleted_user purges a member's
 			// rows now (MemberData::on_user_deleted), so on a site with no orphan backlog the first
 			// slice fills the board and the loop runs exactly once.
-			$result = self::totals_board(
+			return self::totals_board(
 				$wpdb->prefix . 'wb_gam_user_totals',
 				$resolved_type,
 				$totals_excl_clause,
 				$totals_excl_values,
 				$totals_scope_clause,
 				$scope_ids,
-				$limit
+				$limit,
+				$cursor
 			);
-
-			wp_cache_set( $cache_key, $result, 'wb_gamification', 120 );
-			return $result;
 		} else {
+			// The ledger board is keyset-paged the same way: strictly after (points, user_id).
+			$having_cursor = '';
+			if ( null !== $cursor ) {
+				$having_cursor = ' AND ( SUM(p.points) < %d OR ( SUM(p.points) = %d AND p.user_id < %d ) )';
+				$cursor_binds  = array( $cursor['p'], $cursor['p'], $cursor['u'] );
+			}
+
 			// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 			$query = "
 				SELECT p.user_id,
@@ -414,13 +740,15 @@ final class LeaderboardEngine {
 				  {$opt_out_clause}
 				  {$scope_clause}
 				 GROUP BY p.user_id
-				HAVING {$balance_sum}
+				HAVING {$balance_sum}{$having_cursor}
 				 ORDER BY total_points DESC, p.user_id DESC
 				 LIMIT %d
 			";
 			// phpcs:enable
 		}
 
+		// The cursor binds sit between the WHERE binds and the LIMIT, matching the SQL text.
+		$where_values   = array_merge( $where_values, $cursor_binds );
 		$where_values[] = $limit;
 
 		// $where_values always carries the point_type bind plus the LIMIT
@@ -428,18 +756,7 @@ final class LeaderboardEngine {
 		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 		$rows = $wpdb->get_results( $wpdb->prepare( $query, $where_values ), ARRAY_A );
 
-		if ( ! $rows ) {
-			$result = array();
-			wp_cache_set( $cache_key, $result, 'wb_gamification', 120 );
-			return $result;
-		}
-
-		$result = self::hydrate_rows( $rows );
-
-		// Store in object cache with 2-minute TTL.
-		wp_cache_set( $cache_key, $result, 'wb_gamification', 120 );
-
-		return $result;
+		return $rows ? $rows : array();
 	}
 
 	/**
@@ -673,7 +990,7 @@ final class LeaderboardEngine {
 					  GROUP BY p.user_id
 					 HAVING {$balance_sum}
 					  ORDER BY total_points DESC, p.user_id DESC
-					  LIMIT 500
+					  LIMIT %d
 					ON DUPLICATE KEY UPDATE
 					   prev_rank    = `rank`,
 					   total_points = VALUES(total_points),
@@ -681,7 +998,8 @@ final class LeaderboardEngine {
 					   updated_at   = VALUES(updated_at)",
 						$period_key,
 						$slug,
-						$started
+						$started,
+						self::SNAPSHOT_DEPTH
 					)
 				);
 				// phpcs:enable
@@ -710,11 +1028,13 @@ final class LeaderboardEngine {
 	 * Only used for global (unscoped) leaderboard requests since the snapshot
 	 * does not respect per-request opt-outs or scopes.
 	 *
-	 * @param string $period    Period key: 'all', 'month', 'week', 'day'.
-	 * @param int    $limit     Maximum rows to return.
-	 * @return array<int, array{rank: int, user_id: int, display_name: string, avatar_url: string, points: int}>|null
+	 * @param string                                     $period     Period key: 'all', 'month', 'week', 'day'.
+	 * @param int                                        $limit      Maximum rows to return.
+	 * @param string                                     $point_type Resolved currency slug.
+	 * @param array{p: int, u: int, n: int, r: int}|null $cursor     Start strictly after this member, or null.
+	 * @return array<int, array<string, mixed>>|null Raw rows (the caller hydrates), or null when the snapshot is stale or empty.
 	 */
-	private static function read_from_snapshot( string $period, int $limit, string $point_type = 'points' ): ?array {
+	private static function read_from_snapshot( string $period, int $limit, string $point_type = 'points', ?array $cursor = null ): ?array {
 		global $wpdb;
 
 		$cache_table = $wpdb->prefix . 'wb_gam_leaderboard_cache';
@@ -772,6 +1092,19 @@ final class LeaderboardEngine {
 			$query_values   = array_merge( $query_values, $excl_values );
 		}
 
+		// A page after the first starts strictly after (points, user_id), in the same order the board
+		// is ranked: points DESC, user_id DESC. The snapshot holds at most SNAPSHOT_DEPTH rows per
+		// partition, so ordering by points here is a small sort, not a scale hazard.
+		$cursor_clause = '';
+		$order_by      = 'c.`rank` ASC, c.user_id DESC';
+		if ( null !== $cursor ) {
+			$cursor_clause  = ' AND ( c.total_points < %d OR ( c.total_points = %d AND c.user_id < %d ) )';
+			$order_by       = 'c.total_points DESC, c.user_id DESC';
+			$query_values[] = $cursor['p'];
+			$query_values[] = $cursor['p'];
+			$query_values[] = $cursor['u'];
+		}
+
 		$query_values[] = $limit;
 
 		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
@@ -780,7 +1113,7 @@ final class LeaderboardEngine {
 				"SELECT c.user_id, c.total_points, u.display_name, c.`rank` AS snapshot_rank, c.prev_rank
 				   FROM {$cache_table} c
 				   JOIN {$wpdb->users} u ON u.ID = c.user_id
-				  WHERE c.period = %s AND c.point_type = %s {$opt_out_clause}
+				  WHERE c.period = %s AND c.point_type = %s {$opt_out_clause}{$cursor_clause}
 				  -- Deterministic, and that costs a filesort. Measured: ORDER BY `rank` alone is
 				  -- index-ordered (idx_type_period_rank, no filesort), and ANY tiebreaker introduces one,
 				  -- because user_id is not in that index. But RANK() gives tied members the SAME rank, so
@@ -794,7 +1127,7 @@ final class LeaderboardEngine {
 				  --
 				  -- `rank` ASC is the same ordering as total_points DESC (RANK() is derived from it), so
 				  -- this matches the fallback exactly while keeping the index leading.
-				  ORDER BY c.`rank` ASC, c.user_id DESC
+				  ORDER BY {$order_by}
 				  LIMIT %d",
 				$query_values
 			),
@@ -802,11 +1135,13 @@ final class LeaderboardEngine {
 		);
 		// phpcs:enable
 
+		// An empty page is a real answer for a cursor (the end of the board). Only a first-page miss
+		// means "no usable snapshot", and sends the caller to the live query.
 		if ( ! $rows ) {
-			return null;
+			return null !== $cursor ? array() : null;
 		}
 
-		return self::hydrate_rows( $rows );
+		return $rows;
 	}
 
 	/**
@@ -820,9 +1155,12 @@ final class LeaderboardEngine {
 	 *                    totals_board() builds them itself and its ids are already int. Both are fine --
 	 *                    this method casts what it needs -- but the docblock claimed only the first shape,
 	 *                    which is how it described one caller instead of the contract.
+	 * @param array{p: int, u: int, n: int, r: int}|null                                                   $seed Where a later page picks up: members served so far
+	 *                                                                      (n), the last one's points (p) and rank (r). Ranks then continue from there, so a
+	 *                                                                      page is numbered as it would be inside one long board.
 	 * @return array<int, array{rank: int, user_id: int, display_name: string, avatar_url: string, points: int}>
 	 */
-	private static function hydrate_rows( array $rows ): array {
+	private static function hydrate_rows( array $rows, ?array $seed = null ): array {
 		// Pre-cache all user objects to avoid N+1 queries in the avatar loop.
 		$user_ids = array_column( $rows, 'user_id' );
 		if ( ! empty( $user_ids ) ) {
@@ -841,9 +1179,9 @@ final class LeaderboardEngine {
 		// The comment on get_user_rank() says the page must not show two numbers for one metric. This is
 		// that, for rank: the two surfaces have to compute it the same way, so the board computes it the
 		// same way -- ties share a rank, and the next distinct score skips.
-		$rank        = 0;
-		$seen        = 0;
-		$prev_points = null;
+		$rank        = null !== $seed ? $seed['r'] : 0;
+		$seen        = null !== $seed ? $seed['n'] : 0;
+		$prev_points = null !== $seed ? $seed['p'] : null;
 
 		foreach ( $rows as $rank_zero => $row ) {
 			$user_id = (int) $row['user_id'];
@@ -1047,12 +1385,15 @@ final class LeaderboardEngine {
 	 * @param string $totals_table  Fully-qualified `wb_gam_user_totals` table name.
 	 * @param string $excl_clause   Exclusion fragment, built for the `ut` alias.
 	 * @param string $scope_clause  Scope fragment, built for the `ut` alias.
+	 * @param bool   $keyset        True to start strictly after a (earned, user_id) cursor: adds three
+	 *                              placeholders (earned, earned, user_id) after the scope binds.
 	 * @return string The SQL, with %s / %d placeholders for prepare().
 	 */
 	public static function build_totals_query(
 		string $totals_table,
 		string $excl_clause,
-		string $scope_clause
+		string $scope_clause,
+		bool $keyset = false
 	): string {
 		// Ranked by points earned (1.6.5): idx_type_earned is shaped for it as idx_type_total was.
 		$balance = self::positive_balance_sql( 'ut.earned' );
@@ -1077,13 +1418,18 @@ final class LeaderboardEngine {
 		// primary-key lookup on a handful of ids, so it cannot drag the plan onto wp_users, and the
 		// board is right for any number of orphans rather than for fewer than some constant.
 		//
-		// The user_id tiebreaker is what makes OFFSET paging safe: without it, two members on equal
+		// The user_id tiebreaker is what makes keyset paging safe: without it, two members on equal
 		// totals have no defined order between one slice and the next, so a member can be served twice
-		// or skipped entirely. It is DESC, matching total, on purpose -- the primary key is
+		// or skipped entirely. There is no OFFSET here: it is O(rows skipped), and a page deep in a
+		// 100k board would read every row before it. It is DESC, matching total, on purpose -- the primary key is
 		// (user_id, point_type), so user_id rides along inside idx_type_total and a same-direction sort
 		// is a backward index scan. Mixing directions (total DESC, user_id ASC) costs a filesort over
 		// the whole index instead: EXPLAIN goes from `Backward index scan; Using index` to
 		// `Using filesort`, which at 100k members is the very plan this query is shaped to avoid.
+		$cursor_clause = $keyset
+			? 'AND ( ut.earned < %d OR ( ut.earned = %d AND ut.user_id < %d ) )'
+			: '';
+
 		return "
 			SELECT ut.user_id, ut.earned AS total_points
 			  FROM {$totals_table} ut
@@ -1091,8 +1437,9 @@ final class LeaderboardEngine {
 			   AND {$balance}
 			  {$excl_clause}
 			  {$scope_clause}
+			  {$cursor_clause}
 		  ORDER BY ut.earned DESC, ut.user_id DESC
-			 LIMIT %d OFFSET %d
+			 LIMIT %d
 		";
 	}
 
@@ -1102,14 +1449,15 @@ final class LeaderboardEngine {
 	 * Loops only when orphaned totals rows ate slots. With no orphan backlog -- the normal state, since
 	 * deleted_user purges a member's rows -- the first slice fills the board and this runs once.
 	 *
-	 * @param string            $totals_table Fully-qualified totals table.
-	 * @param string            $point_type   Resolved currency slug.
-	 * @param string            $excl_clause  Exclusion fragment, built for the `ut` alias.
-	 * @param array<int, mixed> $excl_values  Binds for the exclusion fragment.
-	 * @param string            $scope_clause Scope fragment, built for the `ut` alias.
-	 * @param array<int, int>   $scope_ids    Binds for the scope fragment.
-	 * @param int               $limit        Rows the caller asked for.
-	 * @return array<int, array<string, mixed>> Hydrated board rows.
+	 * @param string                                     $totals_table Fully-qualified totals table.
+	 * @param string                                     $point_type   Resolved currency slug.
+	 * @param string                                     $excl_clause  Exclusion fragment, built for the `ut` alias.
+	 * @param array<int, mixed>                          $excl_values  Binds for the exclusion fragment.
+	 * @param string                                     $scope_clause Scope fragment, built for the `ut` alias.
+	 * @param array<int, int>                            $scope_ids    Binds for the scope fragment.
+	 * @param int                                        $limit        Rows the caller asked for.
+	 * @param array{p: int, u: int, n: int, r: int}|null $cursor Start strictly after this member, or null.
+	 * @return array<int, array<string, mixed>> Raw board rows (the caller hydrates).
 	 */
 	private static function totals_board(
 		string $totals_table,
@@ -1118,11 +1466,10 @@ final class LeaderboardEngine {
 		array $excl_values,
 		string $scope_clause,
 		array $scope_ids,
-		int $limit
+		int $limit,
+		?array $cursor = null
 	): array {
 		global $wpdb;
-
-		$sql = self::build_totals_query( $totals_table, $excl_clause, $scope_clause );
 
 		// Slice a little wider than the board so the common case (a few orphans, or none) is satisfied
 		// in one pass. This is a round-trip optimisation, NOT a correctness assumption -- unlike the
@@ -1137,9 +1484,11 @@ final class LeaderboardEngine {
 		// number of round trips clears any orphan count the table can actually hold, and the loop exits
 		// when the TABLE is exhausted rather than when a counter I picked runs out.
 		$slice     = $limit + self::ORPHAN_OVERFETCH;
-		$offset    = 0;
 		$survivors = array();
-		$found     = 0;
+		// The walk is a KEYSET: every slice starts strictly after the last candidate of the one before
+		// (or after the caller's cursor). OFFSET would re-read everything it skips.
+		$after = null !== $cursor ? array( $cursor['p'], $cursor['u'] ) : null;
+		$found = 0;
 
 		// A hard stop so a pathological table cannot spin. It exists to bound the QUERY COUNT, not to
 		// bound how far we are willing to look: with the slice doubling each pass, 24 round trips reach
@@ -1147,7 +1496,14 @@ final class LeaderboardEngine {
 		$max_slices = 24;
 
 		for ( $i = 0; $i < $max_slices && $found < $limit; $i++ ) {
-			$binds = array_merge( array( $point_type ), $excl_values, $scope_ids, array( $slice, $offset ) );
+			$sql   = self::build_totals_query( $totals_table, $excl_clause, $scope_clause, null !== $after );
+			$binds = array_merge(
+				array( $point_type ),
+				$excl_values,
+				$scope_ids,
+				null !== $after ? array( $after[0], $after[0], $after[1] ) : array(),
+				array( $slice )
+			);
 
 			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 			$candidates = $wpdb->get_results( $wpdb->prepare( $sql, $binds ), ARRAY_A );
@@ -1197,11 +1553,12 @@ final class LeaderboardEngine {
 
 			// Walk on, and reach further each time. A board whose top rows are all orphans is exactly
 			// the case a fixed stride cannot escape.
-			$offset += $slice;
-			$slice   = min( $slice * 2, 5000 );
+			$last  = end( $candidates );
+			$after = array( (int) $last['total_points'], (int) $last['user_id'] );
+			$slice = min( $slice * 2, 5000 );
 		}
 
-		return $survivors ? self::hydrate_rows( $survivors ) : array();
+		return $survivors;
 	}
 
 	/**

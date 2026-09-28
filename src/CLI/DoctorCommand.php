@@ -911,6 +911,8 @@ class DoctorCommand {
 
 		remove_filter( 'wb_gam_leaderboard_scope_user_ids', $resolve_scope, 99 );
 
+		$failed += $this->check_leaderboard_paging();
+
 		if ( empty( $scope_members ) ) {
 			// No members with points, so the scoped paths resolved to nobody and short-circuited.
 			// Say so, rather than printing a pass that means nothing.
@@ -921,6 +923,70 @@ class DoctorCommand {
 		if ( 0 === $failed ) {
 			$this->pass( count( $paths ) . ' leaderboard query paths execute without a database error' );
 		}
+	}
+
+	/**
+	 * Walk a board by cursor and check the walk against the independent oracle.
+	 *
+	 * Paging has three ways to be quietly wrong: a member served twice, a member skipped, and a total
+	 * that promises a page the board does not have. So the walk must hold each eligible member exactly
+	 * once, and the pager's total must equal the number of members the walk served.
+	 *
+	 * The week board is ledger-based, so it is also compared with the ledger oracle (bounded at
+	 * SNAPSHOT_DEPTH ranks by design). The all-time board reads the materialised totals, so the ledger
+	 * is NOT its oracle: when a member's total drifts from the ledger, check_totals_match_ledger()
+	 * reports it once, and this check must not report the same drift a second time as a paging bug.
+	 * It walks at most 40 pages; a board bigger than that still gets the duplicate check.
+	 *
+	 * @return int Number of failures raised.
+	 */
+	private function check_leaderboard_paging(): int {
+		$failed = 0;
+
+		foreach ( array( 'all', 'week' ) as $period ) {
+			$ids    = array();
+			$cursor = '';
+			$pages  = 0;
+
+			do {
+				$page = LeaderboardEngine::get_leaderboard_page( $period, 25, '', 0, '', $cursor );
+				if ( ! empty( $page['invalid_cursor'] ) ) {
+					$this->fail( 'Leaderboard paging - ' . $period . ': the engine rejected its own next_cursor.' );
+					++$failed;
+					break;
+				}
+				foreach ( $page['rows'] as $row ) {
+					$ids[] = (int) $row['user_id'];
+				}
+				$cursor = $page['next_cursor'];
+				++$pages;
+			} while ( $page['has_more'] && $pages < 40 );
+
+			$dupes = count( $ids ) - count( array_unique( $ids ) );
+			$total = LeaderboardEngine::get_total( $period );
+
+			if ( $dupes > 0 ) {
+				$this->fail( sprintf( 'Leaderboard paging - %s: %d member(s) were served on more than one page.', $period, $dupes ) );
+				++$failed;
+			}
+			if ( $pages < 40 && count( $ids ) !== $total ) {
+				$this->fail( sprintf( 'Leaderboard paging - %s: the walk served %d members but the pager total is %d (a member was skipped, or the total counts someone the board never shows).', $period, count( $ids ), $total ) );
+				++$failed;
+			}
+			if ( 'week' === $period ) {
+				$eligible = min( LeaderboardEngine::SNAPSHOT_DEPTH, self::count_eligible_members( 'week' ) );
+				if ( $total !== $eligible ) {
+					$this->fail( sprintf( 'Leaderboard paging - week: the pager total is %d but %d members are eligible.', $total, $eligible ) );
+					++$failed;
+				}
+			}
+		}
+
+		if ( 0 === $failed ) {
+			$this->pass( 'Leaderboard paging: the all-time and weekly walks serve every member once, and the pager total matches the walk' );
+		}
+
+		return $failed;
 	}
 
 	/**
