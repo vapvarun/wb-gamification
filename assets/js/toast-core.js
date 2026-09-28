@@ -22,6 +22,11 @@
  *   } );
  *   handle.el / handle.update( opts ) / handle.dismiss()
  *
+ * On a page where BuddyNext's window.bnToast exists the call is handed to it (one stack for every
+ * plugin, no two bottom-centre stacks over each other) and this renderer is only the fallback,
+ * used in wp-admin and on sites without BuddyNext. bnToast draws its own four status icons, so
+ * a per-event icon is ignored there.
+ *
  * Rules: three visible at most, 4s then fade, paused while the pointer or focus is on it, the
  * host is a manual popover so it sits in the top layer above any native dialog opened later.
  *
@@ -247,8 +252,49 @@
 		arm( handle, DISMISS_MS );
 	}
 
+	// BuddyNext's status set. Its disc draws only these four icons, so a per-event icon class is
+	// dropped there on purpose: one look for every plugin on a BuddyNext page.
+	var BN_TYPE = { reward: 'achievement', achievement: 'achievement', success: 'success', danger: 'error', info: 'info' };
+
+	/**
+	 * Show the toast through BuddyNext's stack (window.bnToast, same option shape) so two plugins
+	 * never draw two bottom-centre stacks over each other. The handle is adapted to ours: `gone`
+	 * follows the element, and a call BuddyNext only queued (its module has not loaded yet)
+	 * returns a dead handle, so the caller simply makes the next toast fresh.
+	 *
+	 * @param {Object} opts Same options as toast().
+	 * @return {Object} { el, gone, update, dismiss }
+	 */
+	function viaBuddyNext( opts ) {
+		var h = window.bnToast( {
+			key: opts.key || '',
+			title: opts.title || '',
+			body: opts.body || '',
+			type: BN_TYPE[ opts.tone || 'reward' ] || 'info',
+			href: opts.href || '',
+			linkLabel: opts.hrefLabel || '',
+			persist: !! opts.persist,
+		} );
+
+		if ( ! h || ! h.el ) {
+			return { el: null, gone: true, update: function () {}, dismiss: function () {} };
+		}
+		if ( typeof opts.onShow === 'function' ) {
+			window.requestAnimationFrame( function () { opts.onShow( h.el, h ); } );
+		}
+		return {
+			el: h.el,
+			get gone() { return ! h.el.isConnected; },
+			update: function ( next ) { h.update( next || {} ); },
+			dismiss: function () { h.dismiss(); },
+		};
+	}
+
 	function toast( opts ) {
 		opts = opts || {};
+		if ( typeof window.bnToast === 'function' ) {
+			return viaBuddyNext( opts );
+		}
 		var host = ensureContainer();
 
 		// Same key while alive: update in place, never stack a second copy.

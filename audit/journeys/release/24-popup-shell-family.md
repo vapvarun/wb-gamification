@@ -50,7 +50,8 @@ timing, the family stops matching BuddyNext, and a member sees two different pro
   visible; the toast host is a manual popover and paints above the open `dialog`; a badge toast fires a
   small confetti burst.
   A one-line toast is vertically centred: the `.wb-gam-toast__message` box centre equals the icon disc centre (a hidden link or detail must take no space).
-- **On fail**: `assets/js/toast.js` `pointsToast()`, `assets/js/toast-core.js` `raise()` / `MAX_VISIBLE`.
+  On a BuddyNext page the toasts render inside BuddyNext's single `.bn-toast-container` (no `.wb-gam-toasts` host is created), a BuddyNext toast fired at the same moment never overlaps them at 1440 or 390, and same-key updates repaint in place. In wp-admin (no `window.bnToast`) the plugin's own renderer is used.
+- **On fail**: `assets/js/toast.js` `pointsToast()`, `assets/js/toast-core.js` `viaBuddyNext()`, `assets/js/toast-core.js` `raise()` / `MAX_VISIBLE`.
 
 ### 4. Convert dialog, hub drawer, survey and kudos menu use the shared shells (390px)
 - **Action**: at 390px open the convert dialog (`[data-wb-gam-convert-open]`), the Kudos panel, type two
