@@ -112,17 +112,17 @@ final class NotificationBridge {
 	 *
 	 * @var string[]
 	 */
-	public const TOAST_POSITIONS = array( 'top-right', 'top-center', 'bottom-right', 'bottom-left' );
+	public const TOAST_POSITIONS = array( 'bottom-center', 'bottom-right', 'bottom-left', 'top-right', 'top-center' );
 
 	/**
-	 * Default toast position. Bottom-right is the conventional ambient-
-	 * notification corner and never overlaps a top nav / sticky header
-	 * (the previous top-center default collided with BuddyX's sticky
-	 * header — Basecamp #9932190385).
+	 * Default toast position. Bottom centre is BuddyNext's own toast position, so a
+	 * Gamification toast and a BuddyNext toast share one place on the page, and it never
+	 * overlaps a top nav / sticky header (the old top-center default collided with BuddyX's
+	 * sticky header: Basecamp #9932190385). Owners who saved another position keep it.
 	 *
 	 * @var string
 	 */
-	public const TOAST_POSITION_DEFAULT = 'bottom-right';
+	public const TOAST_POSITION_DEFAULT = 'bottom-center';
 
 	/**
 	 * Resolve the configured toast position, validated against the allowed
@@ -142,8 +142,8 @@ final class NotificationBridge {
 		 *
 		 * @since 1.5.2
 		 *
-		 * @param string $position One of 'top-right', 'top-center',
-		 *                         'bottom-right', 'bottom-left'.
+		 * @param string $position One of 'bottom-center', 'bottom-right',
+		 *                         'bottom-left', 'top-right', 'top-center'.
 		 */
 		$position = (string) apply_filters( 'wb_gam_toast_position', $position );
 
@@ -208,6 +208,12 @@ final class NotificationBridge {
 		// The default is what protects members (nobody sees a skip toast unless an owner turns one
 		// on). The filter is what keeps our word.
 		add_action( 'wb_gam_award_skipped', array( __CLASS__, 'on_award_skipped' ), 99, 4 );
+
+		// Moments and results that used to fire an event and show the member nothing.
+		add_action( 'wb_gam_cohort_outcome', array( __CLASS__, 'on_cohort_outcome' ), 99, 4 );
+		add_action( 'wb_gam_community_goal_reached', array( __CLASS__, 'on_community_goal' ), 99, 3 );
+		add_action( 'wb_gam_submission_approved', array( __CLASS__, 'on_submission_approved' ), 99, 3 );
+		add_action( 'wb_gam_submission_rejected', array( __CLASS__, 'on_submission_rejected' ), 99, 5 );
 
 		// Output markup + seed script once, in the footer.
 		add_action( 'wp_footer', array( __CLASS__, 'render' ), 5 );
@@ -476,6 +482,20 @@ final class NotificationBridge {
 			? sprintf( __( 'You reached %s!', 'wb-gamification' ), $level_name )
 			: __( 'You leveled up!', 'wb-gamification' );
 
+		// The ring on the card shows the level's image when it has one, otherwise its place on the
+		// ladder. The fallback read above selects no id, so resolve the current level for it.
+		$level_id = (int) ( $new_level['id'] ?? 0 );
+		if ( $level_id <= 0 ) {
+			$level_id = (int) ( LevelEngine::get_level_for_user( $user_id, false )['id'] ?? 0 );
+		}
+		$number = 1;
+		foreach ( array_values( LevelEngine::get_all_levels_for_user( $user_id ) ) as $i => $row ) {
+			if ( (int) $row['id'] === $level_id ) {
+				$number = $i + 1;
+				break;
+			}
+		}
+
 		self::push(
 			$user_id,
 			array(
@@ -483,6 +503,11 @@ final class NotificationBridge {
 				'message'   => $message,
 				'levelName' => $level_name,
 				'icon_url'  => $new_level['icon_url'] ?? '',
+				'eyebrow'   => __( 'Level up', 'wb-gamification' ),
+				'title'     => '' !== $level_name ? $level_name : __( 'You leveled up!', 'wb-gamification' ),
+				'sub'       => '',
+				'ring'      => (string) $number,
+				'cta'       => __( 'Awesome!', 'wb-gamification' ),
 			)
 		);
 	}
@@ -494,13 +519,142 @@ final class NotificationBridge {
 	 * @param int $streak_days Number of consecutive days.
 	 */
 	public static function on_streak_milestone( int $user_id, int $streak_days ): void {
+		/* translators: %d: streak day count. */
+		$title = sprintf( _n( '%d-day streak!', '%d-day streak!', $streak_days, 'wb-gamification' ), $streak_days );
+
 		self::push(
 			$user_id,
 			array(
 				'type'    => 'streak_milestone',
-				/* translators: %d: streak day count. */
-				'message' => sprintf( _n( '%d-day streak!', '%d-day streak!', $streak_days, 'wb-gamification' ), $streak_days ),
+				'message' => $title,
 				'days'    => $streak_days,
+				'eyebrow' => __( 'Streak milestone', 'wb-gamification' ),
+				'title'   => $title,
+				'sub'     => __( 'Keep showing up - you\'re on fire!', 'wb-gamification' ),
+				'ring'    => (string) $streak_days,
+				'cta'     => __( 'Keep it up!', 'wb-gamification' ),
+			)
+		);
+	}
+
+	/**
+	 * Queue a Moment card when a member is promoted a league. Demotion stays silent, like a level
+	 * drop: only good news is announced.
+	 *
+	 * @param int    $user_id  Member.
+	 * @param int    $old_tier Tier before the weekly processing.
+	 * @param int    $new_tier Tier after.
+	 * @param string $outcome  promoted | demoted | stayed.
+	 */
+	public static function on_cohort_outcome( int $user_id, int $old_tier, int $new_tier, string $outcome ): void {
+		if ( 'promoted' !== $outcome || $user_id <= 0 ) {
+			return;
+		}
+
+		$league = CohortEngine::get_tier_name( $new_tier );
+
+		self::push(
+			$user_id,
+			array(
+				'type'    => 'cohort_promotion',
+				/* translators: %s: league name. */
+				'message' => sprintf( __( 'You moved up to %s League', 'wb-gamification' ), $league ),
+				'eyebrow' => __( 'League up', 'wb-gamification' ),
+				/* translators: %s: league name. */
+				'title'   => sprintf( __( '%s League', 'wb-gamification' ), $league ),
+				'sub'     => __( 'You moved up this week.', 'wb-gamification' ),
+				'ring'    => (string) ( $new_tier + 1 ),
+				'cta'     => __( 'Awesome!', 'wb-gamification' ),
+			)
+		);
+	}
+
+	/**
+	 * Queue a Moment card for one contributor when their community reaches its goal.
+	 *
+	 * @param int $user_id      Contributor.
+	 * @param int $challenge_id Community challenge.
+	 * @param int $points       Bonus points the contributor received.
+	 */
+	public static function on_community_goal( int $user_id, int $challenge_id, int $points ): void {
+		global $wpdb;
+
+		if ( $user_id <= 0 ) {
+			return;
+		}
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		$title = (string) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT title FROM {$wpdb->prefix}wb_gam_community_challenges WHERE id = %d",
+				$challenge_id
+			)
+		);
+
+		self::push(
+			$user_id,
+			array(
+				'type'    => 'community_goal',
+				/* translators: %s: community challenge title. */
+				'message' => sprintf( __( 'Goal reached: %s', 'wb-gamification' ), $title ),
+				'eyebrow' => __( 'Goal reached', 'wb-gamification' ),
+				'title'   => '' !== $title ? $title : __( 'Your community did it', 'wb-gamification' ),
+				'sub'     => $points > 0
+					/* translators: %s: formatted points, e.g. "50 Points". */
+					? sprintf( __( 'You helped, and earned %s.', 'wb-gamification' ), wb_gam_format_points( $points ) )
+					: __( 'Thank you for helping.', 'wb-gamification' ),
+				'ring'    => '100%',
+				'cta'     => __( 'Awesome!', 'wb-gamification' ),
+			)
+		);
+	}
+
+	/**
+	 * Tell a member their achievement submission was approved. The points arrive as their own
+	 * "+N Points" toast from the award, so this one only states the outcome.
+	 *
+	 * @param int    $id        Submission ID.
+	 * @param int    $user_id   Submitter.
+	 * @param string $action_id Action slug.
+	 */
+	public static function on_submission_approved( int $id, int $user_id, string $action_id ): void {
+		if ( $user_id <= 0 ) {
+			return;
+		}
+		self::push(
+			$user_id,
+			array(
+				'type'    => 'submission',
+				'outcome' => 'approved',
+				/* translators: %s: action label. */
+				'message' => sprintf( __( 'Approved: %s', 'wb-gamification' ), wb_gam_get_action_label( $action_id ) ),
+				'icon'    => 'icon-check',
+			)
+		);
+	}
+
+	/**
+	 * Tell a member their submission was not approved, with the reviewer's note when there is one.
+	 *
+	 * @param int    $id          Submission ID.
+	 * @param int    $user_id     Submitter.
+	 * @param string $action_id   Action slug.
+	 * @param int    $reviewer_id Reviewer.
+	 * @param string $notes       Reviewer's note shown to the member.
+	 */
+	public static function on_submission_rejected( int $id, int $user_id, string $action_id, int $reviewer_id, string $notes ): void {
+		if ( $user_id <= 0 ) {
+			return;
+		}
+		self::push(
+			$user_id,
+			array(
+				'type'    => 'submission',
+				'outcome' => 'rejected',
+				/* translators: %s: action label. */
+				'message' => sprintf( __( 'Not approved: %s', 'wb-gamification' ), wb_gam_get_action_label( $action_id ) ),
+				'detail'  => '' !== trim( $notes ) ? wp_strip_all_tags( $notes ) : null,
+				'icon'    => 'icon-info',
 			)
 		);
 	}
@@ -661,9 +815,7 @@ final class NotificationBridge {
 		if ( wp_script_is( 'wb-gamification-toast', 'registered' ) ) {
 			wp_enqueue_script( 'wb-gamification-realtime' );
 			wp_enqueue_script( 'wb-gamification-toast' );
-			// Toast icons are Lucide font classes (icon-sparkles, icon-medal...). Only a few blocks load
-			// the font, so on every other page (the BuddyNext feed included) each icon measured 0x0.
-			wp_enqueue_style( 'lucide-icons' );
+			wp_enqueue_script( 'wb-gam-celebrate' );
 		}
 
 		// Always output the markup shell (JS needs the DOM nodes).
@@ -677,89 +829,43 @@ final class NotificationBridge {
 			<!--
 				Toast STACK is owned by assets/js/toast.js (single container,
 				lives in document.body). This element only carries the
-				celebration overlays (level-up + streak milestone) — those
-				are the IA store's surface.
+				Moment card, which is the IA store's surface.
 			-->
 
-			<!-- Level-up overlay -->
-			<div
-				class="wb-gam-overlay wb-gam-overlay--level-up"
-				data-wp-bind--hidden="!state.levelUp.active"
-				data-wp-on--click="actions.dismissLevelUp"
-				hidden
-				<?php
-				/*
-				 * An ANNOUNCEMENT, not a dialog.
-				 *
-				 * This claimed role="alertdialog" aria-modal="true" -- which tells a screen reader that
-				 * the rest of the page is inert and that focus is trapped in here. Neither was true:
-				 * nothing trapped focus, ESC did nothing, and the overlay is dismissed by clicking it.
-				 * So an assistive-tech user was told they were in a modal they could not get out of,
-				 * about a celebration they did not need to act on.
-				 *
-				 * A level-up is something that HAPPENED. It is announced (role="status", polite, so it
-				 * waits its turn rather than cutting the member off mid-sentence) and it is never
-				 * focused. Vestibular safety is handled separately -- see the prefers-reduced-motion
-				 * block in assets/css/frontend.css.
-				 */
-				?>
-				role="status"
-				aria-live="polite"
-				aria-label="<?php esc_attr_e( 'Level up!', 'wb-gamification' ); ?>"
-			>
-				<div class="wb-gam-overlay__card">
-					<p class="wb-gam-overlay__eyebrow"><?php esc_html_e( 'Level up!', 'wb-gamification' ); ?></p>
-					<img alt="" class="wb-gam-overlay__icon"
-						data-wp-bind--src="state.levelUp.iconUrl"
-						data-wp-bind--hidden="!state.levelUp.iconUrl"
-					/>
-					<p class="wb-gam-overlay__title" data-wp-text="state.levelUp.levelName"></p>
-					<button
-						class="wb-gam-overlay__dismiss"
-						aria-label="<?php esc_attr_e( 'Close', 'wb-gamification' ); ?>"
-						data-wp-on--click="actions.dismissLevelUp"
-					><?php esc_html_e( 'Awesome!', 'wb-gamification' ); ?></button>
-				</div>
-			</div>
+			<!--
+				One data-driven Moment card for every full-screen celebration (level up, streak,
+				cohort promotion, community goal). The copy arrives fully translated in the
+				event payload, so this template holds no per-type strings.
 
-			<!-- Streak milestone overlay -->
+				An ANNOUNCEMENT, not a dialog. role="status" with a polite live region: a
+				celebration is something that HAPPENED, so it waits its turn, is never focused, and
+				does not claim the page is inert. (An earlier version claimed role="alertdialog"
+				aria-modal="true" and trapped nothing.) Vestibular safety is in popups.css.
+			-->
 			<div
-				class="wb-gam-overlay wb-gam-overlay--streak"
-				data-wp-bind--hidden="!state.streakMilestone.active"
-				data-wp-on--click="actions.dismissStreakMilestone"
+				class="wb-gam-moment"
+				data-wp-bind--hidden="!state.moment.active"
+				data-wp-on--click="actions.dismissMoment"
 				hidden
-				<?php
-				/*
-				 * An ANNOUNCEMENT, not a dialog.
-				 *
-				 * This claimed role="alertdialog" aria-modal="true" -- which tells a screen reader that
-				 * the rest of the page is inert and that focus is trapped in here. Neither was true:
-				 * nothing trapped focus, ESC did nothing, and the overlay is dismissed by clicking it.
-				 * So an assistive-tech user was told they were in a modal they could not get out of,
-				 * about a celebration they did not need to act on.
-				 *
-				 * A level-up is something that HAPPENED. It is announced (role="status", polite, so it
-				 * waits its turn rather than cutting the member off mid-sentence) and it is never
-				 * focused. Vestibular safety is handled separately -- see the prefers-reduced-motion
-				 * block in assets/css/frontend.css.
-				 */
-				?>
 				role="status"
 				aria-live="polite"
-				aria-label="<?php esc_attr_e( 'Streak milestone!', 'wb-gamification' ); ?>"
+				data-wp-bind--aria-label="state.moment.eyebrow"
 			>
-				<div class="wb-gam-overlay__card">
-					<p class="wb-gam-overlay__eyebrow">&#x1F525; <?php esc_html_e( 'Streak milestone!', 'wb-gamification' ); ?></p>
-					<p class="wb-gam-overlay__streak-days">
-						<span data-wp-text="state.streakMilestone.days"></span>
-						<?php esc_html_e( 'days', 'wb-gamification' ); ?>
-					</p>
-					<p class="wb-gam-overlay__sub"><?php esc_html_e( 'Keep showing up - you\'re on fire!', 'wb-gamification' ); ?></p>
+				<div class="wb-gam-confetti" aria-hidden="true"></div>
+				<div class="wb-gam-moment__card">
+					<div class="wb-gam-moment__ring">
+						<img alt="" data-wp-bind--src="state.moment.iconUrl" data-wp-bind--hidden="!state.moment.iconUrl" />
+						<span class="wb-gam-moment__numeral" data-wp-text="state.moment.ring" data-wp-bind--hidden="state.moment.iconUrl"></span>
+					</div>
+					<p class="wb-gam-moment__eyebrow" data-wp-text="state.moment.eyebrow"></p>
+					<p class="wb-gam-moment__title" data-wp-text="state.moment.title"></p>
+					<p class="wb-gam-moment__sub" data-wp-text="state.moment.sub"></p>
 					<button
-						class="wb-gam-overlay__dismiss"
-						aria-label="<?php esc_attr_e( 'Close', 'wb-gamification' ); ?>"
-						data-wp-on--click="actions.dismissStreakMilestone"
-					><?php esc_html_e( 'Keep it up!', 'wb-gamification' ); ?></button>
+						type="button"
+						class="wb-gam-btn wb-gam-btn--primary"
+						data-wp-on--click="actions.dismissMoment"
+						data-wp-text="state.moment.cta"
+					></button>
 				</div>
 			</div>
 		</div>

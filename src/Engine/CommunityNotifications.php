@@ -26,7 +26,7 @@ defined( 'ABSPATH' ) || exit;
 final class CommunityNotifications {
 
 	/**
-	 * Register the eight event hooks that become community notifications, plus
+	 * Register the event hooks that become community notifications, plus
 	 * the contract's types filter.
 	 */
 	public static function init(): void {
@@ -39,6 +39,10 @@ final class CommunityNotifications {
 		add_action( 'wb_gam_credential_expired', array( __CLASS__, 'on_credential_expired' ), 20, 2 );
 		add_action( 'wb_gam_personal_record', array( __CLASS__, 'on_personal_record' ), 20, 5 );
 		add_action( 'wb_gam_streak_milestone', array( __CLASS__, 'on_streak_milestone' ), 20, 2 );
+		add_action( 'wb_gam_cohort_outcome', array( __CLASS__, 'on_cohort_outcome' ), 20, 4 );
+		add_action( 'wb_gam_community_goal_reached', array( __CLASS__, 'on_community_goal' ), 20, 3 );
+		add_action( 'wb_gam_submission_approved', array( __CLASS__, 'on_submission_approved' ), 20, 3 );
+		add_action( 'wb_gam_submission_rejected', array( __CLASS__, 'on_submission_rejected' ), 20, 3 );
 
 		// A deleted badge definition takes every notification that named it —
 		// both the award and any expiry notice — with it. One fire regardless
@@ -297,6 +301,115 @@ final class CommunityNotifications {
 	}
 
 	/**
+	 * CohortEngine.php fires: do_action( 'wb_gam_cohort_outcome', $user_id, $old_tier, $new_tier, $outcome, ... ).
+	 * Only a promotion is announced; demotion stays silent, like a level drop.
+	 *
+	 * @param int    $user_id  Member.
+	 * @param int    $old_tier Tier before the weekly processing.
+	 * @param int    $new_tier Tier after.
+	 * @param string $outcome  promoted | demoted | stayed.
+	 */
+	public static function on_cohort_outcome( int $user_id, int $old_tier, int $new_tier, string $outcome ): void {
+		if ( 'promoted' !== $outcome ) {
+			return;
+		}
+		self::notify(
+			$user_id,
+			'cohort_promotion',
+			'cohort',
+			$new_tier,
+			sprintf(
+				/* translators: %s: league name. */
+				__( 'You moved up to %s League.', 'wb-gamification' ),
+				CohortEngine::get_tier_name( $new_tier )
+			),
+			self::notification_url( $user_id ),
+			'cohort_promotion_' . $new_tier . '_' . gmdate( 'oW' )
+		);
+	}
+
+	/**
+	 * CommunityChallengeEngine.php fires, once per contributor:
+	 * do_action( 'wb_gam_community_goal_reached', $user_id, $challenge_id, $points ).
+	 *
+	 * @param int $user_id      Contributor.
+	 * @param int $challenge_id Community challenge id.
+	 * @param int $points       Bonus points the contributor received.
+	 */
+	public static function on_community_goal( int $user_id, int $challenge_id, int $points ): void {
+		global $wpdb;
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		$title = (string) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT title FROM {$wpdb->prefix}wb_gam_community_challenges WHERE id = %d",
+				$challenge_id
+			)
+		);
+		self::notify(
+			$user_id,
+			'community_goal',
+			// BuddyNext stores the prefixed object type in a varchar(32): keep this short.
+			'goal',
+			$challenge_id,
+			'' !== $title
+				/* translators: %s: community challenge title. */
+				? sprintf( __( 'Your community reached its goal: %s.', 'wb-gamification' ), $title )
+				: __( 'Your community reached its goal.', 'wb-gamification' ),
+			self::notification_url( $user_id ),
+			'community_goal_' . $challenge_id
+		);
+	}
+
+	/**
+	 * SubmissionService.php fires: do_action( 'wb_gam_submission_approved', $id, $user_id, $action_id, $reviewer_id ).
+	 *
+	 * @param int    $id        Submission id.
+	 * @param int    $user_id   Submitter.
+	 * @param string $action_id Action slug.
+	 */
+	public static function on_submission_approved( int $id, int $user_id, string $action_id ): void {
+		self::notify(
+			$user_id,
+			'submission_result',
+			'submission',
+			$id,
+			sprintf(
+				/* translators: %s: action label. */
+				__( 'Your submission was approved: %s.', 'wb-gamification' ),
+				wb_gam_get_action_label( $action_id )
+			),
+			self::notification_url( $user_id ),
+			'submission_' . $id
+		);
+	}
+
+	/**
+	 * SubmissionService.php fires: do_action( 'wb_gam_submission_rejected', $id, $user_id, $action_id, $reviewer_id, $notes ).
+	 * The reviewer's note is shown in the toast, not the bell, so a private note is never copied
+	 * into a row other plugins can read.
+	 *
+	 * @param int    $id        Submission id.
+	 * @param int    $user_id   Submitter.
+	 * @param string $action_id Action slug.
+	 */
+	public static function on_submission_rejected( int $id, int $user_id, string $action_id ): void {
+		self::notify(
+			$user_id,
+			'submission_result',
+			'submission',
+			$id,
+			sprintf(
+				/* translators: %s: action label. */
+				__( 'Your submission was not approved: %s.', 'wb-gamification' ),
+				wb_gam_get_action_label( $action_id )
+			),
+			self::notification_url( $user_id ),
+			'submission_' . $id
+		);
+	}
+
+	/**
 	 * A badge definition was permanently deleted — remove every notification
 	 * that named it, for every member who had one.
 	 *
@@ -443,6 +556,18 @@ final class CommunityNotifications {
 			'streak_milestone'    => array(
 				'label'       => __( 'Streak milestones', 'wb-gamification' ),
 				'description' => __( 'You reached a streak milestone.', 'wb-gamification' ),
+			),
+			'cohort_promotion'    => array(
+				'label'       => __( 'League promotions', 'wb-gamification' ),
+				'description' => __( 'You moved up a league.', 'wb-gamification' ),
+			),
+			'community_goal'      => array(
+				'label'       => __( 'Community goals', 'wb-gamification' ),
+				'description' => __( 'Your community reached a shared goal.', 'wb-gamification' ),
+			),
+			'submission_result'   => array(
+				'label'       => __( 'Submission results', 'wb-gamification' ),
+				'description' => __( 'A submission of yours was reviewed.', 'wb-gamification' ),
 			),
 		);
 
