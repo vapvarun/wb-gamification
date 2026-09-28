@@ -213,73 +213,75 @@ final class MultipliersPage {
 				</div>
 				<?php if ( $rules ) : ?>
 				<div class="wbgam-card-body wbgam-card-body--flush">
-					<table class="wbgam-table">
-						<thead>
-							<tr>
-								<th><?php esc_html_e( 'Multiplier', 'wb-gamification' ); ?></th>
-								<th><?php esc_html_e( 'Applies to', 'wb-gamification' ); ?></th>
-								<th><?php esc_html_e( 'Condition', 'wb-gamification' ); ?></th>
-								<th><?php esc_html_e( 'Status', 'wb-gamification' ); ?></th>
-								<th><?php esc_html_e( 'Actions', 'wb-gamification' ); ?></th>
-							</tr>
-						</thead>
-						<tbody>
-							<?php
-							foreach ( $rules as $rule ) :
-								$rid    = (int) $rule['id'];
-								$cfg    = (array) json_decode( $rule['rule_config'], true );
-								$factor = isset( $cfg['multiplier'] ) ? (float) $cfg['multiplier'] : 1.0;
-								$target = (string) ( $rule['target_id'] ?? '' );
-								$active = (int) $rule['is_active'] === 1;
-								// A condition authored over REST (e.g. day_of_week) is shown so
-								// it is never invisible; editing it is out of scope here.
-								$has_condition = ! empty( $cfg['condition'] ) && is_array( $cfg['condition'] );
-								$condition_lbl = $has_condition ? (string) ( $cfg['condition']['type'] ?? __( 'Custom', 'wb-gamification' ) ) : '';
-								?>
+					<div class="wbgam-table-scroll">
+						<table class="wbgam-table">
+							<thead>
 								<tr>
-									<td><strong><?php echo esc_html( number_format_i18n( $factor, 2 ) ); ?>x</strong></td>
-									<td><?php echo '' === $target ? esc_html__( 'All actions', 'wb-gamification' ) : '<code>' . esc_html( $target ) . '</code>'; ?></td>
-									<td>
-										<?php if ( $has_condition ) : ?>
-											<code><?php echo esc_html( $condition_lbl ); ?></code>
-										<?php else : ?>
-											<span class="wbgam-text-muted">&mdash;</span>
-										<?php endif; ?>
-									</td>
-									<td>
-										<span class="wbgam-pill wbgam-pill--<?php echo $active ? 'active' : 'info'; ?>">
-											<?php echo $active ? esc_html__( 'Active', 'wb-gamification' ) : esc_html__( 'Inactive', 'wb-gamification' ); ?>
-										</span>
-									</td>
-									<td>
-										<a href="<?php echo esc_url( admin_url( 'admin.php?page=' . self::SLUG . '&edit=' . $rid ) ); ?>" class="wbgam-btn wbgam-btn--sm wbgam-btn--secondary"><?php esc_html_e( 'Edit', 'wb-gamification' ); ?></a>
-										<button
-											type="button"
-											class="wbgam-btn wbgam-btn--sm wbgam-btn--secondary wbgam-ms-xs"
-											data-wb-gam-rest-action="wbGamMultiplierSettings"
-											data-wb-gam-rest-method="PATCH"
-											data-wb-gam-rest-path="/rules/<?php echo (int) $rid; ?>"
-											data-wb-gam-rest-body='{"is_active":<?php echo $active ? '0' : '1'; ?>}'
-											data-wb-gam-rest-after="reload"
-											data-wb-gam-rest-success-toast="<?php echo $active ? esc_attr__( 'Multiplier deactivated.', 'wb-gamification' ) : esc_attr__( 'Multiplier activated.', 'wb-gamification' ); ?>">
-											<?php echo $active ? esc_html__( 'Deactivate', 'wb-gamification' ) : esc_html__( 'Activate', 'wb-gamification' ); ?>
-										</button>
-										<button
-											type="button"
-											class="wbgam-btn wbgam-btn--sm wbgam-btn--danger wbgam-ms-xs"
-											data-wb-gam-rest-action="wbGamMultiplierSettings"
-											data-wb-gam-rest-method="DELETE"
-											data-wb-gam-rest-path="/rules/<?php echo (int) $rid; ?>"
-											data-wb-gam-rest-confirm="<?php esc_attr_e( 'Delete this multiplier?', 'wb-gamification' ); ?>"
-											data-wb-gam-rest-after="reload"
-											data-wb-gam-rest-success-toast="<?php esc_attr_e( 'Multiplier deleted.', 'wb-gamification' ); ?>">
-											<?php esc_html_e( 'Delete', 'wb-gamification' ); ?>
-										</button>
-									</td>
+									<th><?php esc_html_e( 'Multiplier', 'wb-gamification' ); ?></th>
+									<th><?php esc_html_e( 'Applies to', 'wb-gamification' ); ?></th>
+									<th><?php esc_html_e( 'Condition', 'wb-gamification' ); ?></th>
+									<th><?php esc_html_e( 'Status', 'wb-gamification' ); ?></th>
+									<th><?php esc_html_e( 'Actions', 'wb-gamification' ); ?></th>
 								</tr>
-							<?php endforeach; ?>
-						</tbody>
-					</table>
+							</thead>
+							<tbody>
+								<?php
+								foreach ( $rules as $rule ) :
+									$rid    = (int) $rule['id'];
+									$cfg    = (array) json_decode( $rule['rule_config'], true );
+									$factor = isset( $cfg['multiplier'] ) ? (float) $cfg['multiplier'] : 1.0;
+									$target = (string) ( $rule['target_id'] ?? '' );
+									$active = (int) $rule['is_active'] === 1;
+									// A condition authored over REST (e.g. day_of_week) is shown so
+									// it is never invisible; editing it is out of scope here.
+									$has_condition = ! empty( $cfg['condition'] ) && is_array( $cfg['condition'] );
+									$condition_lbl = $has_condition ? (string) ( $cfg['condition']['type'] ?? __( 'Custom', 'wb-gamification' ) ) : '';
+									?>
+									<tr>
+										<td><strong><?php echo esc_html( number_format_i18n( $factor, 2 ) ); ?>x</strong></td>
+										<td><?php echo '' === $target ? esc_html__( 'All actions', 'wb-gamification' ) : '<code>' . esc_html( $target ) . '</code>'; ?></td>
+										<td>
+											<?php if ( $has_condition ) : ?>
+												<code><?php echo esc_html( $condition_lbl ); ?></code>
+											<?php else : ?>
+												<span class="wbgam-text-muted">&mdash;</span>
+											<?php endif; ?>
+										</td>
+										<td>
+											<span class="wbgam-pill wbgam-pill--<?php echo $active ? 'active' : 'info'; ?>">
+												<?php echo $active ? esc_html__( 'Active', 'wb-gamification' ) : esc_html__( 'Inactive', 'wb-gamification' ); ?>
+											</span>
+										</td>
+										<td>
+											<a href="<?php echo esc_url( admin_url( 'admin.php?page=' . self::SLUG . '&edit=' . $rid ) ); ?>" class="wbgam-btn wbgam-btn--sm wbgam-btn--secondary"><?php esc_html_e( 'Edit', 'wb-gamification' ); ?></a>
+											<button
+												type="button"
+												class="wbgam-btn wbgam-btn--sm wbgam-btn--secondary wbgam-ms-xs"
+												data-wb-gam-rest-action="wbGamMultiplierSettings"
+												data-wb-gam-rest-method="PATCH"
+												data-wb-gam-rest-path="/rules/<?php echo (int) $rid; ?>"
+												data-wb-gam-rest-body='{"is_active":<?php echo $active ? '0' : '1'; ?>}'
+												data-wb-gam-rest-after="reload"
+												data-wb-gam-rest-success-toast="<?php echo $active ? esc_attr__( 'Multiplier deactivated.', 'wb-gamification' ) : esc_attr__( 'Multiplier activated.', 'wb-gamification' ); ?>">
+												<?php echo $active ? esc_html__( 'Deactivate', 'wb-gamification' ) : esc_html__( 'Activate', 'wb-gamification' ); ?>
+											</button>
+											<button
+												type="button"
+												class="wbgam-btn wbgam-btn--sm wbgam-btn--danger wbgam-ms-xs"
+												data-wb-gam-rest-action="wbGamMultiplierSettings"
+												data-wb-gam-rest-method="DELETE"
+												data-wb-gam-rest-path="/rules/<?php echo (int) $rid; ?>"
+												data-wb-gam-rest-confirm="<?php esc_attr_e( 'Delete this multiplier?', 'wb-gamification' ); ?>"
+												data-wb-gam-rest-after="reload"
+												data-wb-gam-rest-success-toast="<?php esc_attr_e( 'Multiplier deleted.', 'wb-gamification' ); ?>">
+												<?php esc_html_e( 'Delete', 'wb-gamification' ); ?>
+											</button>
+										</td>
+									</tr>
+								<?php endforeach; ?>
+							</tbody>
+						</table>
+					</div>
 				</div>
 				<?php else : ?>
 				<div class="wbgam-card-body">

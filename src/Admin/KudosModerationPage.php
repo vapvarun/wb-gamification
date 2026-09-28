@@ -325,49 +325,51 @@ final class KudosModerationPage {
 							<p><?php esc_html_e( 'When members give each other kudos, they appear here for moderation.', 'wb-gamification' ); ?></p>
 						</div>
 					<?php else : ?>
-						<table class="wp-list-table widefat fixed striped wb-gam-kudos-table">
-							<thead>
-								<tr>
-									<th scope="col"><?php esc_html_e( 'Giver', 'wb-gamification' ); ?></th>
-									<th scope="col"><?php esc_html_e( 'Receiver', 'wb-gamification' ); ?></th>
-									<th scope="col"><?php esc_html_e( 'Message', 'wb-gamification' ); ?></th>
-									<th scope="col"><?php esc_html_e( 'Date', 'wb-gamification' ); ?></th>
-									<th scope="col"><?php esc_html_e( 'Status', 'wb-gamification' ); ?></th>
-									<th scope="col"><?php esc_html_e( 'Actions', 'wb-gamification' ); ?></th>
-								</tr>
-							</thead>
-							<tbody>
-								<?php foreach ( $rows as $row ) : ?>
-									<?php
-									$pair_key = $row['giver_id'] . '-' . $row['receiver_id'];
-									$flagged  = ( ( $abuse[ $pair_key ] ?? 0 ) >= $threshold );
-									?>
-									<tr data-kudos-id="<?php echo esc_attr( (string) $row['id'] ); ?>"<?php echo $flagged ? ' class="wb-gam-kudos-table__flagged"' : ''; ?>>
-										<td><?php echo esc_html( $row['giver_name'] ? $row['giver_name'] : sprintf( /* translators: %d: user ID */ __( 'User #%d', 'wb-gamification' ), $row['giver_id'] ) ); ?></td>
-										<td><?php echo esc_html( $row['receiver_name'] ? $row['receiver_name'] : sprintf( /* translators: %d: user ID */ __( 'User #%d', 'wb-gamification' ), $row['receiver_id'] ) ); ?></td>
-										<td class="wb-gam-kudos-table__message"><?php echo esc_html( $row['message'] ? $row['message'] : '—' ); ?></td>
-										<td class="wb-gam-kudos-table__date"><?php echo esc_html( get_date_from_gmt( (string) $row['created_at'], get_option( 'date_format' ) . ' ' . get_option( 'time_format' ) ) ); ?></td>
-										<td class="wb-gam-kudos-table__status">
-											<?php if ( $row['revoked'] ) : ?>
-												<span class="wbgam-badge wbgam-badge--danger"><?php esc_html_e( 'Revoked', 'wb-gamification' ); ?></span>
-											<?php else : ?>
-												<span class="wbgam-badge"><?php esc_html_e( 'Active', 'wb-gamification' ); ?></span>
-												<?php if ( $flagged ) : ?>
-													<span class="wbgam-badge wbgam-badge--warning" title="<?php esc_attr_e( 'This giver and receiver exchange kudos repeatedly.', 'wb-gamification' ); ?>"><?php esc_html_e( 'Pair', 'wb-gamification' ); ?></span>
-												<?php endif; ?>
-											<?php endif; ?>
-										</td>
-										<td class="wb-gam-kudos-table__actions">
-											<?php if ( ! $row['revoked'] ) : ?>
-												<button type="button" class="button button-small button-link-delete wb-gam-kudos-revoke"><?php esc_html_e( 'Revoke', 'wb-gamification' ); ?></button>
-											<?php else : ?>
-												<span class="wb-gam-kudos-table__muted">—</span>
-											<?php endif; ?>
-										</td>
+						<div class="wbgam-table-scroll">
+							<table class="wbgam-table wb-gam-kudos-table">
+								<thead>
+									<tr>
+										<th scope="col"><?php esc_html_e( 'Giver', 'wb-gamification' ); ?></th>
+										<th scope="col"><?php esc_html_e( 'Receiver', 'wb-gamification' ); ?></th>
+										<th scope="col"><?php esc_html_e( 'Message', 'wb-gamification' ); ?></th>
+										<th scope="col"><?php esc_html_e( 'Date', 'wb-gamification' ); ?></th>
+										<th scope="col"><?php esc_html_e( 'Status', 'wb-gamification' ); ?></th>
+										<th scope="col"><?php esc_html_e( 'Actions', 'wb-gamification' ); ?></th>
 									</tr>
-								<?php endforeach; ?>
-							</tbody>
-						</table>
+								</thead>
+								<tbody>
+									<?php foreach ( $rows as $row ) : ?>
+										<?php
+										$pair_key = $row['giver_id'] . '-' . $row['receiver_id'];
+										$flagged  = ( ( $abuse[ $pair_key ] ?? 0 ) >= $threshold );
+										?>
+										<tr data-kudos-id="<?php echo esc_attr( (string) $row['id'] ); ?>"<?php echo $flagged ? ' class="wb-gam-kudos-table__flagged"' : ''; ?>>
+											<td><?php echo esc_html( $row['giver_name'] ? $row['giver_name'] : sprintf( /* translators: %d: user ID */ __( 'User #%d', 'wb-gamification' ), $row['giver_id'] ) ); ?></td>
+											<td><?php echo esc_html( $row['receiver_name'] ? $row['receiver_name'] : sprintf( /* translators: %d: user ID */ __( 'User #%d', 'wb-gamification' ), $row['receiver_id'] ) ); ?></td>
+											<td class="wb-gam-kudos-table__message"><?php echo esc_html( $row['message'] ? $row['message'] : '—' ); ?></td>
+											<td class="wb-gam-kudos-table__date"><?php echo esc_html( get_date_from_gmt( (string) $row['created_at'], get_option( 'date_format' ) . ' ' . get_option( 'time_format' ) ) ); ?></td>
+											<td class="wb-gam-kudos-table__status">
+												<?php if ( $row['revoked'] ) : ?>
+													<span class="wbgam-badge wbgam-badge--danger"><?php esc_html_e( 'Revoked', 'wb-gamification' ); ?></span>
+												<?php else : ?>
+													<span class="wbgam-badge"><?php esc_html_e( 'Active', 'wb-gamification' ); ?></span>
+													<?php if ( $flagged ) : ?>
+														<span class="wbgam-badge wbgam-badge--warning" title="<?php esc_attr_e( 'This giver and receiver exchange kudos repeatedly.', 'wb-gamification' ); ?>"><?php esc_html_e( 'Pair', 'wb-gamification' ); ?></span>
+													<?php endif; ?>
+												<?php endif; ?>
+											</td>
+											<td class="wb-gam-kudos-table__actions">
+												<?php if ( ! $row['revoked'] ) : ?>
+													<button type="button" class="button button-small button-link-delete wb-gam-kudos-revoke"><?php esc_html_e( 'Revoke', 'wb-gamification' ); ?></button>
+												<?php else : ?>
+													<span class="wb-gam-kudos-table__muted">—</span>
+												<?php endif; ?>
+											</td>
+										</tr>
+									<?php endforeach; ?>
+								</tbody>
+							</table>
+						</div>
 
 						<?php
 						Pager::render(

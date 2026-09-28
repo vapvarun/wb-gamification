@@ -16,14 +16,14 @@
 }
 
 .wb-gam-streaks-table__member {
-	display: flex;
-	align-items: center;
-	gap: var(--wb-gam-space-sm, 8px);
+	white-space: nowrap;
 }
 
+/* The cell stays a table cell so its row keeps one height; the avatar and name align inline. */
 .wb-gam-streaks-table__member img {
 	border-radius: var(--wb-gam-radius-full, 9999px);
-	flex-shrink: 0;
+	vertical-align: middle;
+	margin-inline-end: var(--wb-gam-space-sm, 8px);
 }
 
 .wb-gam-streaks-table__current,
@@ -46,9 +46,11 @@
 }
 
 .wb-gam-streaks-table__actions {
-	display: flex;
-	gap: var(--wb-gam-space-xs, 4px);
-	flex-wrap: wrap;
+	white-space: nowrap;
+}
+
+.wb-gam-streaks-table__actions .button + .button {
+	margin-inline-start: var(--wb-gam-space-xs, 4px);
 }
 
 .wb-gam-streak-adjust,
@@ -80,8 +82,3 @@
 	color: var(--wb-gam-color-warning-strong, #b45309);
 }
 
-@media (max-width: 640px) {
-	.wb-gam-streaks-table__actions {
-		flex-direction: column;
-	}
-}
