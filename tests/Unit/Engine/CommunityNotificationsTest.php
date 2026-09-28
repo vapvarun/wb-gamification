@@ -201,6 +201,9 @@ class CommunityNotificationsTest extends TestCase {
 		$first_key = $payload['group_key'];
 		CommunityNotifications::on_personal_record( 7, 'week', 80, 50, 'Even better' );
 		$this->assertSame( $first_key, $this->lastPayload()['group_key'] );
+		// ...and says renotify => false, so BuddyNext refreshes that row quietly
+		// instead of re-surfacing it and pushing again on every new best.
+		$this->assertFalse( $this->lastPayload()['renotify'] );
 	}
 
 	/**

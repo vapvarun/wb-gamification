@@ -217,10 +217,10 @@ final class CommunityNotifications {
 	 * on every award that lifts a running total past the previous best, so an
 	 * active member's record can fire many times a day. Rather than one bell
 	 * row per fire, every fire in the same period bucket (site-calendar day /
-	 * week / month, via Clock) shares one `group_key`; BuddyNext's contract
-	 * receiver merges same-key unread rows instead of inserting a new one, so
-	 * the member sees ONE row per bucket, current, however many times this
-	 * fires underneath it.
+	 * week / month, via Clock) shares one `group_key` and says renotify => false:
+	 * the first fire creates the member's row, every later one refreshes its text
+	 * quietly (no re-surfacing, no push), so the member sees ONE row per bucket,
+	 * current, however many times this fires underneath it.
 	 *
 	 * Matches the default the retired BuddyNext bridge applied (own decision,
 	 * now made once, here, for every host): a daily best happens most days for
@@ -269,7 +269,9 @@ final class CommunityNotifications {
 			0,
 			'' !== $message ? $message : __( 'You set a new personal best.', 'wb-gamification' ),
 			self::notification_url( $user_id ),
-			'personal_record_' . $period . '_' . $buckets[ $period ]()
+			'personal_record_' . $period . '_' . $buckets[ $period ](),
+			0,
+			false // A running notice: later bests in the bucket refresh the row quietly.
 		);
 	}
 
@@ -323,8 +325,10 @@ final class CommunityNotifications {
 	 * @param string $url         Deep link.
 	 * @param string $group_key   Merge key, per object + subtype, never per actor.
 	 * @param int    $actor_id    Acting member, or 0 for a system/engine event.
+	 * @param bool   $renotify    False for a running notice: a repeat with the same
+	 *                            group_key refreshes the member's row without alerting.
 	 */
-	private static function notify( int $user_id, string $type, string $object_type, int $object_id, string $message, string $url, string $group_key, int $actor_id = 0 ): void {
+	private static function notify( int $user_id, string $type, string $object_type, int $object_id, string $message, string $url, string $group_key, int $actor_id = 0, bool $renotify = true ): void {
 		if ( $user_id <= 0 || '' === $message || '' === $url || ImportMode::is_active() || ( $actor_id > 0 && $actor_id === $user_id ) ) {
 			return;
 		}
@@ -340,6 +344,7 @@ final class CommunityNotifications {
 				'message'      => $message,
 				'url'          => $url,
 				'group_key'    => $group_key,
+				'renotify'     => $renotify,
 			)
 		);
 	}
