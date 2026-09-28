@@ -251,6 +251,7 @@ body.admin-bar .wb-gam-toasts--top-right {
 	text-decoration: underline;
 	text-underline-offset: 2px;
 }
+.wb-gam-toast__link[hidden] { display: none; }
 .wb-gam-toast .wb-gam-close {
 	margin-block: -6px;
 }
