@@ -63,6 +63,7 @@ final class FeatureFlags {
 		'RankAutomation',
 		'PersonalRecordEngine',
 		'NotificationBridge',
+		'CommunityNotifications',
 		'Privacy',
 		'CredentialExpiryEngine',
 		'TransactionalEmailEngine',

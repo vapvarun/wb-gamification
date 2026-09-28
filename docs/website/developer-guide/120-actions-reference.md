@@ -99,6 +99,23 @@ These optional-engine hooks fire only when their feature flag is enabled in `wb_
 | `wb_gam_retention_nudge` | When a status-retention nudge is dispatched to a member at risk of disengaging. | `int $user_id`, `array $level`, `array $next`, `int $pts_needed`, `string $message` |
 | `wb_gam_rank_automation_action` | When a custom rank automation action type is executed. | `int $user_id`, `array $action`, `string $type` |
 
+## Community notification contract
+
+A host community plugin (BuddyNext) reads these to show one bell row per event, grouped, with a
+per-type settings switch. This plugin keeps sending its own email where it already does
+(`TransactionalEmailEngine`: level-ups, badges, challenges, redemption requests) and does not gain
+a new email for the types it did not already email. Added in 1.6.5; built entirely from the eight
+event hooks above (`wb_gam_badge_awarded`, `wb_gam_level_changed`,
+`wb_gam_kudos_given`, `wb_gam_kudos_revoked`, `wb_gam_challenge_completed`,
+`wb_gam_redemption_fulfilled`, `wb_gam_credential_expired`, `wb_gam_personal_record`,
+`wb_gam_streak_milestone`) plus `wb_gam_badge_deleted` — nothing new needed to fire them, this
+plugin simply listens to its own hooks and republishes a normalized payload.
+
+| Hook | When it fires | Parameters |
+|------|---------------|------------|
+| `wb_gam_notification_created` | After this plugin decides one of its own events is worth a member-facing notification (badge earned, level up, kudos received, challenge completed, reward fulfilled, credential expired, personal record, streak milestone). Never fires for the actor notifying themself, and never during an import (`ImportMode::is_active()`). | `array $payload` — `recipient_id`, `type`, `actor_id`, `object_type`, `object_id`, `message`, `url`, `group_key` |
+| `wb_gam_community_notification_removed` | After an object a notification named is PERMANENTLY gone — a kudos revoked, or a badge definition deleted (which removes both `badge_awarded` and `credential_expired` notifications naming it). Never fires for a state change that is merely hidden, not gone. | `string $object_type`, `int $object_id` |
+
 ## Admin CRUD (REST)
 
 These fire from the REST controllers behind the admin CRUD screens. Each carries the `WP_REST_Request` so listeners can inspect the originating call.

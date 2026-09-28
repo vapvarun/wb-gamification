@@ -9879,7 +9879,8 @@
         "src/Engine/BadgeEngine.php:478 array( __CLASS__",
         "src/Engine/NotificationBridge.php:172 array( __CLASS__",
         "src/Engine/TransactionalEmailEngine.php:81 array( __CLASS__",
-        "src/Integrations/ActivityPub.php:47 array( __CLASS__"
+        "src/Integrations/ActivityPub.php:47 array( __CLASS__",
+        "src/Engine/CommunityNotifications.php:33 array( __CLASS__"
       ]
     },
     {
@@ -9918,7 +9919,9 @@
       "fired_at": [
         "src/API/BadgesController.php:739"
       ],
-      "consumed_by": []
+      "consumed_by": [
+        "src/Engine/CommunityNotifications.php:47 array( __CLASS__"
+      ]
     },
     {
       "name": "wb_gam_before_delete_community_challenge",
@@ -9979,7 +9982,8 @@
         "src/Engine/NotificationBridge.php:175 array( __CLASS__",
         "src/Engine/TransactionalEmailEngine.php:82 array( __CLASS__",
         "src/Engine/WebhookDispatcher.php:110 array( self::class",
-        "src/Integrations/ActivityPub.php:49 array( __CLASS__"
+        "src/Integrations/ActivityPub.php:49 array( __CLASS__",
+        "src/Engine/CommunityNotifications.php:37 array( __CLASS__"
       ]
     },
     {
@@ -10043,7 +10047,9 @@
       "fired_at": [
         "src/Engine/CredentialExpiryEngine.php:194"
       ],
-      "consumed_by": []
+      "consumed_by": [
+        "src/Engine/CommunityNotifications.php:39 array( __CLASS__"
+      ]
     },
     {
       "name": "wb_gam_engines_booted",
@@ -10074,7 +10080,8 @@
       "consumed_by": [
         "src/BuddyPress/Stream/KudosStream.php:31 array( __CLASS__",
         "src/Engine/NotificationBridge.php:176 array( __CLASS__",
-        "src/Engine/WebhookDispatcher.php:117 array( self::class"
+        "src/Engine/WebhookDispatcher.php:117 array( self::class",
+        "src/Engine/CommunityNotifications.php:35 array( __CLASS__"
       ]
     },
     {
@@ -10085,7 +10092,8 @@
         "src/Engine/KudosEngine.php:512"
       ],
       "consumed_by": [
-        "src/Engine/NotificationBridge.php:180 array( __CLASS__"
+        "src/Engine/NotificationBridge.php:180 array( __CLASS__",
+        "src/Engine/CommunityNotifications.php:36 array( __CLASS__"
       ]
     },
     {
@@ -10124,7 +10132,8 @@
         "src/Engine/RankAutomation.php:78 array( __CLASS__",
         "src/Engine/TransactionalEmailEngine.php:80 array( __CLASS__",
         "src/Engine/WebhookDispatcher.php:108 array( self::class",
-        "src/Integrations/ActivityPub.php:48 array( __CLASS__"
+        "src/Integrations/ActivityPub.php:48 array( __CLASS__",
+        "src/Engine/CommunityNotifications.php:34 array( __CLASS__"
       ]
     },
     {
@@ -10173,7 +10182,9 @@
       "fired_at": [
         "src/Engine/PersonalRecordEngine.php:153"
       ],
-      "consumed_by": []
+      "consumed_by": [
+        "src/Engine/CommunityNotifications.php:40 array( __CLASS__"
+      ]
     },
     {
       "name": "wb_gam_point_type_converted",
@@ -10247,7 +10258,9 @@
       "fired_at": [
         "src/Engine/RedemptionEngine.php:510"
       ],
-      "consumed_by": []
+      "consumed_by": [
+        "src/Engine/CommunityNotifications.php:38 array( __CLASS__"
+      ]
     },
     {
       "name": "wb_gam_points_revoked",
@@ -10352,7 +10365,8 @@
       ],
       "consumed_by": [
         "src/Engine/NotificationBridge.php:174 array( __CLASS__",
-        "src/Engine/WebhookDispatcher.php:109 array( self::class"
+        "src/Engine/WebhookDispatcher.php:109 array( self::class",
+        "src/Engine/CommunityNotifications.php:41 array( __CLASS__"
       ]
     },
     {
@@ -11211,6 +11225,40 @@
         "integrations/wpmediaverse.php:464"
       ],
       "consumed_by": []
+    },
+    {
+      "name": "wb_gam_notification_created",
+      "type": "action",
+      "purpose": "Community notification contract (1.6.5): fires the normalized payload a host plugin (BuddyNext) reads to show one bell row. Built from the nine event hooks above via CommunityNotifications; never fires for the actor notifying themself or during an import.",
+      "fired_at": [
+        "src/Engine/CommunityNotifications.php:332"
+      ],
+      "consumed_by": [
+        "external: buddynext/includes/Notifications/IntegrationNotificationListener.php (add_action, 8 accepted_args)"
+      ]
+    },
+    {
+      "name": "wb_gam_community_notification_removed",
+      "type": "action",
+      "purpose": "Community notification contract (1.6.5): fires when an object a notification named is permanently gone (kudos revoked; badge definition deleted), so a host removes every bell row about it.",
+      "fired_at": [
+        "src/Engine/CommunityNotifications.php:143",
+        "src/Engine/CommunityNotifications.php:308"
+      ],
+      "consumed_by": [
+        "external: buddynext/includes/Notifications/IntegrationNotificationListener.php (add_action)"
+      ]
+    },
+    {
+      "name": "wb_gam_community_notification_types",
+      "type": "filter",
+      "purpose": "Community notification contract (1.6.5): declares this plugin's 8 notification type slugs (label, description, default_on). Fired externally by the host (BuddyNext) collecting every plugin's declared types; this plugin only answers it.",
+      "fired_at": [
+        "external: buddynext/includes/Notifications/IntegrationNotificationListener.php"
+      ],
+      "consumed_by": [
+        "src/Engine/CommunityNotifications.php:49 array( __CLASS__"
+      ]
     }
   ],
   "cron": [
