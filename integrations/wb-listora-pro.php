@@ -23,8 +23,8 @@ return array(
 
 		array(
 			'id'                => 'listora_need_submitted',
-			'label'             => 'Post a need',
-			'description'       => 'Awarded to the member who posts a need (a reverse listing / request).',
+			'label'             => static fn(): string => __( 'Post a need', 'wb-gamification' ),
+			'description'       => static fn(): string => __( 'Awarded to the member who posts a need (a reverse listing / request).', 'wb-gamification' ),
 			// Pro fires: do_action( 'wb_listora_pro_need_submitted', int $need_id, $request ). No user id - author is the poster.
 			'hook'              => 'wb_listora_pro_need_submitted',
 			'user_callback'     => function ( int $need_id, $request = null ): int {
@@ -43,8 +43,8 @@ return array(
 
 		array(
 			'id'                => 'listora_need_published',
-			'label'             => 'Need approved',
-			'description'       => 'Awarded to the member when their need is approved and goes live.',
+			'label'             => static fn(): string => __( 'Get a need approved', 'wb-gamification' ),
+			'description'       => static fn(): string => __( 'Awarded to the member when their need is approved and goes live.', 'wb-gamification' ),
 			// Pro fires: do_action( 'wb_listora_pro_need_published', int $need_id ). No user id - author is the poster.
 			'hook'              => 'wb_listora_pro_need_published',
 			'user_callback'     => function ( int $need_id ): int {
@@ -62,8 +62,8 @@ return array(
 
 		array(
 			'id'                => 'listora_need_response',
-			'label'             => 'Respond to a need',
-			'description'       => 'Awarded to the member who responds to another member\'s need with a listing.',
+			'label'             => static fn(): string => __( 'Respond to a need', 'wb-gamification' ),
+			'description'       => static fn(): string => __( 'Awarded to the member who responds to another member\'s need with a listing.', 'wb-gamification' ),
 			// Pro fires: do_action( 'wb_listora_pro_need_response_created', int $response_id, int $need_id, int $listing_id, int $user_id ).
 			'hook'              => 'wb_listora_pro_need_response_created',
 			'user_callback'     => function ( int $response_id, int $need_id, int $listing_id, int $user_id ): int {

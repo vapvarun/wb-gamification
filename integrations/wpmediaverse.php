@@ -86,8 +86,8 @@ $free_triggers = array(
 
 	array(
 		'id'                => 'mvs_upload_photo',
-		'label'             => 'Upload a photo',
-		'description'       => 'Awarded when a member uploads a photo or video.',
+		'label'             => static fn(): string => __( 'Upload a photo', 'wb-gamification' ),
+		'description'       => static fn(): string => __( 'Awarded when a member uploads a photo or video.', 'wb-gamification' ),
 		'hook'              => 'mvs_media_uploaded',
 		// Signature (MVS 1.2.3+): ($media_id, $file_data, $user_id, $media_type).
 		'user_callback'     => function ( int $media_id, array $file_data, int $user_id = 0, string $media_type = '' ): int {
@@ -110,8 +110,8 @@ $free_triggers = array(
 
 	array(
 		'id'             => 'mvs_create_album',
-		'label'          => 'Add items to an album',
-		'description'    => 'Awarded when a member adds media to an album (rewards the actor, not just the album owner).',
+		'label'          => static fn(): string => __( 'Add items to an album', 'wb-gamification' ),
+		'description'    => static fn(): string => __( 'Awarded when a member adds media to an album (rewards the actor, not just the album owner).', 'wb-gamification' ),
 		'hook'           => 'mvs_album_items_added',
 		// Signature (MVS 1.2.3+): ($album_id, $actor_id, $media_ids, $added).
 		'user_callback'  => function ( int $album_id, int $actor_id, array $media_ids, int $added ): int {
@@ -132,8 +132,8 @@ $free_triggers = array(
 
 	array(
 		'id'                => 'mvs_receive_like',
-		'label'             => 'Receive a like on photo',
-		'description'       => 'Awarded to the media owner when someone likes their photo.',
+		'label'             => static fn(): string => __( 'Receive a like on a photo', 'wb-gamification' ),
+		'description'       => static fn(): string => __( 'Awarded to the media owner when someone likes their photo.', 'wb-gamification' ),
 		'hook'              => 'mvs_reaction_added',
 		'user_callback'     => function ( int $media_id, int $user_id, string $type ): int {
 			$author = wb_gam_mvs_media_author( $media_id );
@@ -156,8 +156,8 @@ $free_triggers = array(
 
 	array(
 		'id'                => 'mvs_receive_comment',
-		'label'             => 'Receive a comment on photo',
-		'description'       => 'Awarded to the media owner when someone comments on their photo.',
+		'label'             => static fn(): string => __( 'Receive a comment on a photo', 'wb-gamification' ),
+		'description'       => static fn(): string => __( 'Awarded to the media owner when someone comments on their photo.', 'wb-gamification' ),
 		'hook'              => 'mvs_comment_created',
 		'user_callback'     => function ( int $media_id, int $user_id, int $comment_id, string $content ): int {
 				// BuddyNext copy of a follow/comment another plugin already paid for.
@@ -184,8 +184,8 @@ $free_triggers = array(
 
 	array(
 		'id'                => 'mvs_receive_follow',
-		'label'             => 'Gain a new follower',
-		'description'       => 'Awarded when another member follows you.',
+		'label'             => static fn(): string => __( 'Gain a new follower', 'wb-gamification' ),
+		'description'       => static fn(): string => __( 'Awarded when another member follows you.', 'wb-gamification' ),
 		'hook'              => 'mvs_user_followed',
 		'user_callback'     => function ( int $follower_id, int $following_id ): int {
 				// BuddyNext copy of a follow/comment another plugin already paid for.
@@ -207,8 +207,8 @@ $free_triggers = array(
 
 	array(
 		'id'             => 'mvs_receive_favorite',
-		'label'          => 'Photo bookmarked by someone',
-		'description'    => 'Awarded to the media owner when someone bookmarks their photo.',
+		'label'          => static fn(): string => __( 'Have a photo bookmarked', 'wb-gamification' ),
+		'description'    => static fn(): string => __( 'Awarded to the media owner when someone bookmarks their photo.', 'wb-gamification' ),
 		'hook'           => 'mvs_favorite_toggled',
 		'user_callback'  => function ( int $media_id, int $user_id, string $action ): int {
 			if ( 'added' !== $action ) {
@@ -232,8 +232,8 @@ $free_triggers = array(
 
 	array(
 		'id'             => 'mvs_give_comment',
-		'label'          => 'Write a meaningful comment',
-		'description'    => 'Awarded when a member leaves a comment of 20+ characters.',
+		'label'          => static fn(): string => __( 'Write a meaningful comment', 'wb-gamification' ),
+		'description'    => static fn(): string => __( 'Awarded when a member leaves a comment of 20+ characters.', 'wb-gamification' ),
 		'hook'           => 'mvs_comment_created',
 		'user_callback'  => function ( int $media_id, int $user_id, int $comment_id, string $content ): int {
 				// BuddyNext copy of a follow/comment another plugin already paid for.
@@ -253,8 +253,8 @@ $free_triggers = array(
 
 	array(
 		'id'             => 'mvs_give_follow',
-		'label'          => 'Follow another member',
-		'description'    => 'Awarded when a member follows another user.',
+		'label'          => static fn(): string => __( 'Follow another member', 'wb-gamification' ),
+		'description'    => static fn(): string => __( 'Awarded when a member follows another user.', 'wb-gamification' ),
 		'hook'           => 'mvs_user_followed',
 		'user_callback'  => function ( int $follower_id, int $following_id ): int {
 				// BuddyNext copy of a follow/comment another plugin already paid for.
@@ -272,8 +272,8 @@ $free_triggers = array(
 
 	array(
 		'id'             => 'mvs_bookmark_photo',
-		'label'          => 'Bookmark a photo',
-		'description'    => 'Awarded when a member saves a photo to favorites.',
+		'label'          => static fn(): string => __( 'Bookmark a photo', 'wb-gamification' ),
+		'description'    => static fn(): string => __( 'Awarded when a member saves a photo to favorites.', 'wb-gamification' ),
 		'hook'           => 'mvs_favorite_toggled',
 		'user_callback'  => function ( int $media_id, int $user_id, string $action ): int {
 			return 'added' === $action ? $user_id : 0;
@@ -309,8 +309,8 @@ if ( $pro_active ) {
 
 		array(
 			'id'                => 'mvs_battle_win',
-			'label'             => 'Win a photo battle',
-			'description'       => 'Awarded to the winner of a 1v1 photo battle.',
+			'label'             => static fn(): string => __( 'Win a photo battle', 'wb-gamification' ),
+			'description'       => static fn(): string => __( 'Awarded to the winner of a 1v1 photo battle.', 'wb-gamification' ),
 			'hook'              => 'mvs_battle_resolved',
 			'user_callback'     => function ( int $battle_id, int $winner_id, int $loser_id ): int {
 				return $winner_id;
@@ -329,8 +329,8 @@ if ( $pro_active ) {
 
 		array(
 			'id'                => 'mvs_challenge_participate',
-			'label'             => 'Enter a photo challenge',
-			'description'       => 'Awarded when a member submits an entry to a photo challenge.',
+			'label'             => static fn(): string => __( 'Enter a photo challenge', 'wb-gamification' ),
+			'description'       => static fn(): string => __( 'Awarded when a member submits an entry to a photo challenge.', 'wb-gamification' ),
 			'hook'              => 'mvs_challenge_entry_submitted',
 			'user_callback'     => function ( int $challenge_id, int $user_id, int $media_id ): int {
 				return $user_id;
@@ -356,8 +356,8 @@ if ( $pro_active ) {
 		// (200) is only the fallback when MVS Pro is inactive.
 		array(
 			'id'                => 'mvs_challenge_winner',
-			'label'             => 'Place in a photo challenge',
-			'description'       => 'Awarded to the top-3 finishers of a photo challenge (200/100/50 points for 1st/2nd/3rd).',
+			'label'             => static fn(): string => __( 'Place in a photo challenge', 'wb-gamification' ),
+			'description'       => static fn(): string => __( 'Awarded to the top-3 finishers of a photo challenge (200/100/50 points for 1st/2nd/3rd).', 'wb-gamification' ),
 			'hook'              => 'mvs_challenge_winner_named',
 			'user_callback'     => function ( int $challenge_id, int $user_id, int $rank ): int {
 				return $user_id;
@@ -379,8 +379,8 @@ if ( $pro_active ) {
 
 		array(
 			'id'                => 'mvs_tournament_round_win',
-			'label'             => 'Win a tournament round',
-			'description'       => 'Awarded for winning a round in a photo tournament.',
+			'label'             => static fn(): string => __( 'Win a tournament round', 'wb-gamification' ),
+			'description'       => static fn(): string => __( 'Awarded for winning a round in a photo tournament.', 'wb-gamification' ),
 			'hook'              => 'mvs_tournament_match_resolved',
 			'user_callback'     => function ( int $match_id, int $winner_id ): int {
 				return $winner_id;
@@ -403,8 +403,8 @@ if ( $pro_active ) {
 
 		array(
 			'id'                => 'mvs_tournament_win',
-			'label'             => 'Win a tournament',
-			'description'       => 'Awarded to the grand champion of a photo tournament.',
+			'label'             => static fn(): string => __( 'Win a tournament', 'wb-gamification' ),
+			'description'       => static fn(): string => __( 'Awarded to the grand champion of a photo tournament.', 'wb-gamification' ),
 			'hook'              => 'mvs_tournament_finalized',
 			'user_callback'     => function ( int $tournament_id, int $winner_id ): int {
 				return $winner_id;
@@ -433,8 +433,8 @@ if ( $pro_active ) {
 
 		array(
 			'id'                => 'mvs_streak_milestone',
-			'label'             => 'Hit an upload streak milestone',
-			'description'       => 'Awarded when a member hits 7, 30, 100, or 365 consecutive upload days.',
+			'label'             => static fn(): string => __( 'Hit an upload streak milestone', 'wb-gamification' ),
+			'description'       => static fn(): string => __( 'Awarded when a member hits 7, 30, 100, or 365 consecutive upload days.', 'wb-gamification' ),
 			'hook'              => 'mvs_streak_milestone',
 			'user_callback'     => function ( int $user_id, int $days, int $xp ): int {
 				return $user_id;

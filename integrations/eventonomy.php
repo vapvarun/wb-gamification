@@ -33,8 +33,8 @@ return array(
 
 		array(
 			'id'                => 'evnm_rsvp_going',
-			'label'             => 'Reserve a place at an event',
-			'description'       => 'Awarded when a member reserves a place at an event. Waitlisted reservations do not award until the member is moved to going, and a daily limit keeps repeat reservations in check.',
+			'label'             => static fn(): string => __( 'Reserve a place at an event', 'wb-gamification' ),
+			'description'       => static fn(): string => __( 'Awarded when a member reserves a place at an event. Waitlisted reservations do not award until the member is moved to going, and a daily limit keeps repeat reservations in check.', 'wb-gamification' ),
 			// Free fires: do_action( 'evnm_after_create_rsvp', array|null $full, array $context ).
 			'hook'              => 'evnm_after_create_rsvp',
 			'user_callback'     => function ( $full, array $context ): int {
@@ -70,8 +70,8 @@ return array(
 
 		array(
 			'id'                => 'evnm_event_created',
-			'label'             => 'Submit an event',
-			'description'       => 'Awarded to the author when an event is submitted. A daily limit rewards genuine organizing without encouraging duplicate submissions.',
+			'label'             => static fn(): string => __( 'Submit an event', 'wb-gamification' ),
+			'description'       => static fn(): string => __( 'Awarded to the author when an event is submitted. A daily limit rewards genuine organizing without encouraging duplicate submissions.', 'wb-gamification' ),
 			// Free fires: do_action( 'evnm_after_create_event', array $full, array $context ).
 			'hook'              => 'evnm_after_create_event',
 			'user_callback'     => function ( array $full, array $context ): int {
@@ -96,8 +96,8 @@ return array(
 
 		array(
 			'id'                => 'evnm_ticket_purchased',
-			'label'             => 'Complete a ticket order',
-			'description'       => 'Awarded when a member completes a paid ticket order. Free and immediately paid orders settle through this event; card-gateway orders are handled by the Pro integration.',
+			'label'             => static fn(): string => __( 'Complete a ticket order', 'wb-gamification' ),
+			'description'       => static fn(): string => __( 'Awarded when a member completes a paid ticket order. Free and immediately paid orders settle through this event; card-gateway orders are handled by the Pro integration.', 'wb-gamification' ),
 			// Free fires: do_action( 'evnm_after_create_order', array|null $full, array $context )
 			// with status 'paid' for free / immediately paid orders.
 			'hook'              => 'evnm_after_create_order',

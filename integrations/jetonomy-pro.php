@@ -28,8 +28,8 @@ return array(
 
 		array(
 			'id'                => 'jetonomy_pro_poll_created',
-			'label'             => 'Create a poll',
-			'description'       => 'Awarded when a member creates a Jetonomy poll on a post.',
+			'label'             => static fn(): string => __( 'Create a poll', 'wb-gamification' ),
+			'description'       => static fn(): string => __( 'Awarded when a member creates a Jetonomy poll on a post.', 'wb-gamification' ),
 			// Pro fires: do_action( 'jetonomy_pro_poll_created', $poll_id, $post_id, $user_id ).
 			'hook'              => 'jetonomy_pro_poll_created',
 			'user_callback'     => function ( int $poll_id, int $post_id, int $user_id ): int {
@@ -50,8 +50,8 @@ return array(
 
 		array(
 			'id'                => 'jetonomy_pro_poll_voted',
-			'label'             => 'Vote on a poll',
-			'description'       => 'Awarded when a member casts a vote on a Jetonomy poll.',
+			'label'             => static fn(): string => __( 'Vote on a poll', 'wb-gamification' ),
+			'description'       => static fn(): string => __( 'Awarded when a member casts a vote on a Jetonomy poll.', 'wb-gamification' ),
 			// Pro fires: do_action( 'jetonomy_pro_poll_voted', $poll_id, $user_id, $option_ids ).
 			'hook'              => 'jetonomy_pro_poll_voted',
 			'user_callback'     => function ( int $poll_id, int $user_id, array $option_ids ): int {
@@ -72,8 +72,8 @@ return array(
 
 		array(
 			'id'                => 'jetonomy_pro_message_sent',
-			'label'             => 'Send a Jetonomy private message',
-			'description'       => 'Awarded when a member sends a Jetonomy private message. Daily cap blocks DM-farming.',
+			'label'             => static fn(): string => __( 'Send a Jetonomy private message', 'wb-gamification' ),
+			'description'       => static fn(): string => __( 'Awarded when a member sends a Jetonomy private message. Daily cap blocks DM-farming.', 'wb-gamification' ),
 			// Pro fires: do_action( 'jetonomy_pro_message_sent', $message_id, $conversation_id, $sender_id ).
 			'hook'              => 'jetonomy_pro_message_sent',
 			'user_callback'     => function ( int $message_id, int $conversation_id, int $sender_id ): int {
@@ -95,8 +95,8 @@ return array(
 
 		array(
 			'id'                => 'jetonomy_pro_conversation_created',
-			'label'             => 'Start a Jetonomy conversation',
-			'description'       => 'Awarded once per conversation when a member opens a new Jetonomy DM thread.',
+			'label'             => static fn(): string => __( 'Start a Jetonomy conversation', 'wb-gamification' ),
+			'description'       => static fn(): string => __( 'Awarded once per conversation when a member opens a new Jetonomy DM thread.', 'wb-gamification' ),
 			// Pro fires: do_action( 'jetonomy_pro_conversation_created', $conversation_id, $user_id, $all_participants ).
 			'hook'              => 'jetonomy_pro_conversation_created',
 			'user_callback'     => function ( int $conversation_id, int $user_id, array $all_participants ): int {
@@ -121,8 +121,8 @@ return array(
 
 		array(
 			'id'                => 'jetonomy_pro_dm_received',
-			'label'             => 'Receive a Jetonomy private message',
-			'description'       => 'Awarded to the recipient when a Jetonomy private message is delivered. Daily cap protects against spam-DM gaming.',
+			'label'             => static fn(): string => __( 'Receive a Jetonomy private message', 'wb-gamification' ),
+			'description'       => static fn(): string => __( 'Awarded to the recipient when a Jetonomy private message is delivered. Daily cap protects against spam-DM gaming.', 'wb-gamification' ),
 			// Pro fires: do_action( 'jetonomy_pro_dm_received', int $message_id, int $conversation_id, int $sender_id, int $recipient_id ).
 			'hook'              => 'jetonomy_pro_dm_received',
 			'user_callback'     => function ( int $message_id, int $conversation_id, int $sender_id, int $recipient_id ): int {
@@ -146,8 +146,8 @@ return array(
 
 		array(
 			'id'                => 'jetonomy_pro_reaction_added',
-			'label'             => 'Send a reaction',
-			'description'       => 'Awarded when a member adds a reaction to a post or reply. Removing a reaction does not award.',
+			'label'             => static fn(): string => __( 'Send a reaction', 'wb-gamification' ),
+			'description'       => static fn(): string => __( 'Awarded when a member adds a reaction to a post or reply. Removing a reaction does not award.', 'wb-gamification' ),
 			// Pro fires: do_action( 'jetonomy_pro_reaction_toggled', $object_type, $object_id, $emoji, $user_id, $action ).
 			// $action is 'added' or 'removed' — only the 'added' branch earns points.
 			'hook'              => 'jetonomy_pro_reaction_toggled',

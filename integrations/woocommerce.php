@@ -49,8 +49,8 @@ return [
 
 		[
 			'id'             => 'wc_order_completed',
-			'label'          => 'Pay for an order',
-			'description'    => 'Awarded each time a customer pays for an order (fires once per order on payment success).',
+			'label'          => static fn(): string => __( 'Pay for an order', 'wb-gamification' ),
+			'description'    => static fn(): string => __( 'Awarded each time a customer pays for an order (fires once per order on payment success).', 'wb-gamification' ),
 			'hook'           => 'woocommerce_payment_complete',
 			'user_callback'  => function ( int $order_id ): int {
 				$order = wc_get_order( $order_id );
@@ -87,8 +87,8 @@ return [
 
 		[
 			'id'             => 'wc_first_purchase',
-			'label'          => 'Make first purchase ever',
-			'description'    => 'Awarded once on a customer\'s very first paid order.',
+			'label'          => static fn(): string => __( 'Make your first purchase', 'wb-gamification' ),
+			'description'    => static fn(): string => __( 'Awarded once on a customer\'s very first paid order.', 'wb-gamification' ),
 			'hook'           => 'woocommerce_payment_complete',
 			'user_callback'  => function ( int $order_id ): int {
 				$order = wc_get_order( $order_id );
@@ -129,8 +129,8 @@ return [
 
 		[
 			'id'             => 'wc_product_reviewed',
-			'label'          => 'Leave a product review',
-			'description'    => 'Awarded when an approved product review is posted.',
+			'label'          => static fn(): string => __( 'Leave a product review', 'wb-gamification' ),
+			'description'    => static fn(): string => __( 'Awarded when an approved product review is posted.', 'wb-gamification' ),
 			'hook'           => 'comment_post',
 			'user_callback'  => function ( int $comment_id, int|string $approved ): int {
 				if ( 1 !== (int) $approved ) {
@@ -159,8 +159,8 @@ return [
 
 		[
 			'id'             => 'wc_wishlist_add',
-			'label'          => 'Add a product to wishlist (YITH)',
-			'description'    => 'Awarded when a member adds any product to their YITH wishlist.',
+			'label'          => static fn(): string => __( 'Add a product to wishlist (YITH)', 'wb-gamification' ),
+			'description'    => static fn(): string => __( 'Awarded when a member adds any product to their YITH wishlist.', 'wb-gamification' ),
 			'hook'           => 'yith_wcwl_added_to_wishlist',
 			'user_callback'  => function ( int $product_id, int $wishlist_id, int $user_id ): int {
 				return $user_id > 0 ? $user_id : (int) get_current_user_id();
@@ -174,8 +174,8 @@ return [
 
 		[
 			'id'                => 'wc_add_to_cart',
-			'label'             => 'Add a product to cart',
-			'description'       => 'Awarded when a logged-in member adds a product to their cart. Cooldown limits farming.',
+			'label'             => static fn(): string => __( 'Add a product to cart', 'wb-gamification' ),
+			'description'       => static fn(): string => __( 'Awarded when a logged-in member adds a product to their cart. Cooldown limits farming.', 'wb-gamification' ),
 			// WC fires: do_action( 'woocommerce_add_to_cart', $cart_item_key, $product_id, $quantity, $variation_id, $variation, $cart_item_data ).
 			'hook'              => 'woocommerce_add_to_cart',
 			'user_callback'     => function ( string $cart_item_key, int $product_id ): int {

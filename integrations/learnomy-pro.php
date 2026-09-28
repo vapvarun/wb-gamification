@@ -23,8 +23,8 @@ return array(
 
 		array(
 			'id'                => 'learnomy_pro_path_completed',
-			'label'             => 'Complete a learning path',
-			'description'       => 'Awarded when a member completes a full learning path.',
+			'label'             => static fn(): string => __( 'Complete a learning path', 'wb-gamification' ),
+			'description'       => static fn(): string => __( 'Awarded when a member completes a full learning path.', 'wb-gamification' ),
 			// Pro fires: do_action( 'learnomy_pro_learning_path_completed', int $certificate_id, int $user_id, int $path_id ).
 			'hook'              => 'learnomy_pro_learning_path_completed',
 			'user_callback'     => function ( int $certificate_id, int $user_id, int $path_id ): int {
@@ -42,8 +42,8 @@ return array(
 
 		array(
 			'id'                => 'learnomy_pro_path_enrolled',
-			'label'             => 'Enrol in a learning path',
-			'description'       => 'Awarded when a member enrols in a learning path. Daily cap prevents farming.',
+			'label'             => static fn(): string => __( 'Enrol in a learning path', 'wb-gamification' ),
+			'description'       => static fn(): string => __( 'Awarded when a member enrols in a learning path. Daily cap prevents farming.', 'wb-gamification' ),
 			// Pro fires: do_action( 'learnomy_pro_learning_path_enrolled', int $enrollment_id, int $user_id, int $path_id, string $source ).
 			'hook'              => 'learnomy_pro_learning_path_enrolled',
 			'user_callback'     => function ( int $enrollment_id, int $user_id, int $path_id, string $source = '' ): int {
@@ -65,8 +65,8 @@ return array(
 
 		array(
 			'id'                => 'learnomy_pro_assignment_submitted',
-			'label'             => 'Submit an assignment',
-			'description'       => 'Awarded when a member submits an assignment for grading.',
+			'label'             => static fn(): string => __( 'Submit an assignment', 'wb-gamification' ),
+			'description'       => static fn(): string => __( 'Awarded when a member submits an assignment for grading.', 'wb-gamification' ),
 			// Pro fires: do_action( 'learnomy_pro_assignment_submitted', int $id, int $assignment_id, int $user_id ).
 			'hook'              => 'learnomy_pro_assignment_submitted',
 			'user_callback'     => function ( int $id, int $assignment_id, int $user_id ): int {
@@ -85,8 +85,8 @@ return array(
 
 		array(
 			'id'                => 'learnomy_pro_cohort_joined',
-			'label'             => 'Join a cohort',
-			'description'       => 'Awarded when a member is added to a learning cohort.',
+			'label'             => static fn(): string => __( 'Join a cohort', 'wb-gamification' ),
+			'description'       => static fn(): string => __( 'Awarded when a member is added to a learning cohort.', 'wb-gamification' ),
 			// Pro fires: do_action( 'learnomy_pro_cohort_member_added', int $cohort_id, int $user_id ).
 			'hook'              => 'learnomy_pro_cohort_member_added',
 			'user_callback'     => function ( int $cohort_id, int $user_id ): int {
@@ -104,8 +104,8 @@ return array(
 
 		array(
 			'id'             => 'learnomy_pro_gift_redeemed',
-			'label'          => 'Redeem a course gift',
-			'description'    => 'Awarded when a member redeems a gifted course or membership code.',
+			'label'          => static fn(): string => __( 'Redeem a course gift', 'wb-gamification' ),
+			'description'    => static fn(): string => __( 'Awarded when a member redeems a gifted course or membership code.', 'wb-gamification' ),
 			// Pro fires: do_action( 'learnomy_pro_gift_redeemed', string $code, int $user_id, int $sub_id ).
 			'hook'           => 'learnomy_pro_gift_redeemed',
 			'user_callback'  => function ( string $code, int $user_id, int $sub_id ): int {

@@ -23,8 +23,8 @@ return [
 
 		[
 			'id'                  => 'bp_activity_update',
-			'label'               => 'Post an activity update',
-			'description'         => 'Awarded when a member posts an activity update.',
+			'label'               => static fn(): string => __( 'Post an activity update', 'wb-gamification' ),
+			'description'         => static fn(): string => __( 'Awarded when a member posts an activity update.', 'wb-gamification' ),
 			'hook'                => 'bp_activity_posted_update',
 			'user_callback'       => fn( string $content, int $user_id, int $activity_id ) => $user_id,
 			// Capture word count for quality-weighted scoring.
@@ -45,8 +45,8 @@ return [
 
 		[
 			'id'                  => 'bp_activity_comment',
-			'label'               => 'Comment on an activity',
-			'description'         => 'Awarded when a member comments on an activity update.',
+			'label'               => static fn(): string => __( 'Comment on an activity', 'wb-gamification' ),
+			'description'         => static fn(): string => __( 'Awarded when a member comments on an activity update.', 'wb-gamification' ),
 			'hook'                => 'bp_activity_comment_posted',
 			'user_callback'       => function ( int $comment_id, array $params, object $activity ): int {
 				return (int) ( $params['user_id'] ?? 0 );
@@ -70,8 +70,8 @@ return [
 
 		[
 			'id'                  => 'bp_friends_accepted',
-			'label'               => 'Accept a friendship',
-			'description'         => 'Awarded to the member who accepts a friendship request.',
+			'label'               => static fn(): string => __( 'Accept a friendship', 'wb-gamification' ),
+			'description'         => static fn(): string => __( 'Awarded to the member who accepts a friendship request.', 'wb-gamification' ),
 			'hook'                => 'friends_friendship_accepted',
 			'user_callback'       => function ( int $friendship_id, int $initiator_id, int $friend_id, $friendship ): int {
 				// Award the acceptor (friend_user_id), not the requester.
@@ -87,8 +87,8 @@ return [
 
 		[
 			'id'                  => 'bp_groups_join',
-			'label'               => 'Join a group',
-			'description'         => 'Awarded when a member joins a BuddyPress group.',
+			'label'               => static fn(): string => __( 'Join a group', 'wb-gamification' ),
+			'description'         => static fn(): string => __( 'Awarded when a member joins a BuddyPress group.', 'wb-gamification' ),
 			'hook'                => 'groups_join_group',
 			'user_callback'       => fn( int $group_id, int $user_id ) => $user_id,
 			'default_points'      => 8,
@@ -100,8 +100,8 @@ return [
 
 		[
 			'id'                  => 'bp_groups_create',
-			'label'               => 'Create a group',
-			'description'         => 'Awarded when a member creates a new BuddyPress group.',
+			'label'               => static fn(): string => __( 'Create a group', 'wb-gamification' ),
+			'description'         => static fn(): string => __( 'Awarded when a member creates a new BuddyPress group.', 'wb-gamification' ),
 			'hook'                => 'groups_group_create_complete',
 			'user_callback'       => function ( int $group_id ): int {
 				$group = groups_get_group( $group_id );
@@ -116,8 +116,8 @@ return [
 
 		[
 			'id'                  => 'bp_profile_complete',
-			'label'               => 'Complete extended profile',
-			'description'         => 'Awarded once when a member saves their extended BuddyPress profile.',
+			'label'               => static fn(): string => __( 'Complete extended profile', 'wb-gamification' ),
+			'description'         => static fn(): string => __( 'Awarded once when a member saves their extended BuddyPress profile.', 'wb-gamification' ),
 			'hook'                => 'xprofile_updated_profile',
 			'user_callback'       => fn( int $user_id ) => $user_id,
 			'default_points'      => 15,
@@ -129,8 +129,8 @@ return [
 
 		[
 			'id'                  => 'bp_reactions_received',
-			'label'               => 'Receive a reaction',
-			'description'         => 'Awarded when a member receives a reaction on their activity.',
+			'label'               => static fn(): string => __( 'Receive a reaction', 'wb-gamification' ),
+			'description'         => static fn(): string => __( 'Awarded when a member receives a reaction on their activity.', 'wb-gamification' ),
 			'hook'                => 'bp_reactions_add',
 			'user_callback'       => function ( int $reaction_id, array $reaction_data ): int {
 				return (int) ( $reaction_data['secondary_item_id'] ?? 0 );
@@ -158,8 +158,8 @@ return [
 
 		[
 			'id'                  => 'bp_polls_created',
-			'label'               => 'Create a poll',
-			'description'         => 'Awarded when a member creates a BuddyPress poll.',
+			'label'               => static fn(): string => __( 'Create a poll', 'wb-gamification' ),
+			'description'         => static fn(): string => __( 'Awarded when a member creates a BuddyPress poll.', 'wb-gamification' ),
 			'hook'                => 'bp_polls_created',
 			'user_callback'       => fn( int $poll_id, int $user_id ) => $user_id,
 			'default_points'      => 10,
@@ -171,8 +171,8 @@ return [
 
 		[
 			'id'                  => 'bp_publish_post',
-			'label'               => 'Publish a member blog post',
-			'description'         => 'Awarded when a member publishes a post via BP Member Blog.',
+			'label'               => static fn(): string => __( 'Publish a member blog post', 'wb-gamification' ),
+			'description'         => static fn(): string => __( 'Awarded when a member publishes a post via BP Member Blog.', 'wb-gamification' ),
 			'hook'                => 'publish_post',
 			'user_callback'       => function ( int $post_id ): int {
 				$post = get_post( $post_id );
@@ -195,8 +195,8 @@ return [
 
 		[
 			'id'                  => 'bp_media_upload',
-			'label'               => 'Upload media',
-			'description'         => 'Awarded when a member uploads media via BuddyPress.',
+			'label'               => static fn(): string => __( 'Upload media', 'wb-gamification' ),
+			'description'         => static fn(): string => __( 'Awarded when a member uploads media via BuddyPress.', 'wb-gamification' ),
 			'hook'                => 'bp_media_add',
 			'user_callback'       => fn( int $media_id ) => get_current_user_id(),
 			'default_points'      => 5,
@@ -209,8 +209,8 @@ return [
 
 		[
 			'id'                  => 'bp_avatar_upload',
-			'label'               => 'Upload profile photo',
-			'description'         => 'Awarded the first time a member uploads a profile avatar.',
+			'label'               => static fn(): string => __( 'Upload profile photo', 'wb-gamification' ),
+			'description'         => static fn(): string => __( 'Awarded the first time a member uploads a profile avatar.', 'wb-gamification' ),
 			// BP fires: do_action( 'bp_members_avatar_uploaded', $item_id, $type, $args, $cropped_avatar ).
 			'hook'                => 'bp_members_avatar_uploaded',
 			'user_callback'       => fn( int $item_id, string $type = '' ) => $item_id,
@@ -226,8 +226,8 @@ return [
 
 		[
 			'id'                  => 'bp_cover_upload',
-			'label'               => 'Upload cover photo',
-			'description'         => 'Awarded the first time a member uploads a profile cover image.',
+			'label'               => static fn(): string => __( 'Upload cover photo', 'wb-gamification' ),
+			'description'         => static fn(): string => __( 'Awarded the first time a member uploads a profile cover image.', 'wb-gamification' ),
 			// BP fires: do_action( 'members_cover_image_uploaded', $item_id, $name, $cover_url, $feedback_code ).
 			// $feedback_code === 1 means success — anything else is a soft-failure path we shouldn't reward.
 			'hook'                => 'members_cover_image_uploaded',
@@ -243,8 +243,8 @@ return [
 
 		[
 			'id'                  => 'bp_group_cover_upload',
-			'label'               => 'Upload group cover photo',
-			'description'         => 'Awarded once per group when an admin uploads a cover image for a group.',
+			'label'               => static fn(): string => __( 'Upload group cover photo', 'wb-gamification' ),
+			'description'         => static fn(): string => __( 'Awarded once per group when an admin uploads a cover image for a group.', 'wb-gamification' ),
 			// BP fires: do_action( 'groups_cover_image_uploaded', $item_id, $name, $cover_url, $feedback_code ).
 			// We award the acting user (the admin who uploaded), not the group creator —
 			// repeatability is "false" with action_id namespaced by group via metadata, so each
@@ -265,8 +265,8 @@ return [
 
 		[
 			'id'                  => 'bp_message_sent',
-			'label'               => 'Send a private message',
-			'description'         => 'Awarded for sending a 1:1 message. Cooldown applies to limit spam.',
+			'label'               => static fn(): string => __( 'Send a private message', 'wb-gamification' ),
+			'description'         => static fn(): string => __( 'Awarded for sending a 1:1 message. Cooldown applies to limit spam.', 'wb-gamification' ),
 			// BP fires: do_action_ref_array( 'messages_message_sent', array( &$message, $r ) ).
 			'hook'                => 'messages_message_sent',
 			'user_callback'       => function ( $message ): int {

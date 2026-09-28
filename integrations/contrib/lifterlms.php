@@ -29,8 +29,8 @@ return [
 
 		[
 			'id'             => 'llms_course_completed',
-			'label'          => 'Complete a LifterLMS course',
-			'description'    => 'Awarded when a student completes any LifterLMS course.',
+			'label'          => static fn(): string => __( 'Complete a LifterLMS course', 'wb-gamification' ),
+			'description'    => static fn(): string => __( 'Awarded when a student completes any LifterLMS course.', 'wb-gamification' ),
 			'hook'           => 'llms_user_course_complete',
 			'user_callback'  => fn( int $user_id, int $course_id ) => $user_id,
 			'default_points' => 100,
@@ -42,8 +42,8 @@ return [
 
 		[
 			'id'             => 'llms_lesson_completed',
-			'label'          => 'Complete a LifterLMS lesson',
-			'description'    => 'Awarded when a student completes any lesson.',
+			'label'          => static fn(): string => __( 'Complete a LifterLMS lesson', 'wb-gamification' ),
+			'description'    => static fn(): string => __( 'Awarded when a student completes any lesson.', 'wb-gamification' ),
 			'hook'           => 'llms_user_lesson_complete',
 			'user_callback'  => fn( int $user_id, int $lesson_id ) => $user_id,
 			'default_points' => 10,
@@ -55,8 +55,8 @@ return [
 
 		[
 			'id'             => 'llms_quiz_passed',
-			'label'          => 'Pass a LifterLMS quiz',
-			'description'    => 'Awarded when a student achieves a passing grade on a quiz.',
+			'label'          => static fn(): string => __( 'Pass a LifterLMS quiz', 'wb-gamification' ),
+			'description'    => static fn(): string => __( 'Awarded when a student achieves a passing grade on a quiz.', 'wb-gamification' ),
 			'hook'           => 'llms_user_quiz_complete',
 			'user_callback'  => function ( int $user_id, int $quiz_id, \LLMS_Quiz_Attempt $attempt ): int {
 				return $attempt->get( 'passed' ) ? $user_id : 0;
@@ -70,8 +70,8 @@ return [
 
 		[
 			'id'             => 'llms_achievement_earned',
-			'label'          => 'Earn a LifterLMS achievement',
-			'description'    => 'Awarded when a student earns any LifterLMS achievement.',
+			'label'          => static fn(): string => __( 'Earn a LifterLMS achievement', 'wb-gamification' ),
+			'description'    => static fn(): string => __( 'Awarded when a student earns any LifterLMS achievement.', 'wb-gamification' ),
 			'hook'           => 'llms_user_earned_achievement',
 			'user_callback'  => fn( int $user_id, \LLMS_User_Achievement $achievement ) => $user_id,
 			'default_points' => 30,
@@ -83,8 +83,8 @@ return [
 
 		[
 			'id'             => 'llms_certificate_earned',
-			'label'          => 'Earn a LifterLMS certificate',
-			'description'    => 'Awarded when a student earns a course completion certificate.',
+			'label'          => static fn(): string => __( 'Earn a LifterLMS certificate', 'wb-gamification' ),
+			'description'    => static fn(): string => __( 'Awarded when a student earns a course completion certificate.', 'wb-gamification' ),
 			'hook'           => 'llms_user_earned_certificate',
 			'user_callback'  => fn( int $user_id, \LLMS_User_Certificate $certificate ) => $user_id,
 			'default_points' => 50,

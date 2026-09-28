@@ -8,7 +8,7 @@ The bbPress integration rewards forum participation. The manifest loads automati
 |---|---|---|---|
 | `bbp_new_topic` | Create a forum topic | 10 | Yes (5min cooldown) |
 | `bbp_new_reply` | Post a forum reply | 5 | Yes (60s cooldown) |
-| `bbp_topic_closed` | Topic resolved / closed | 20 | Yes |
+| `bbp_topic_closed` | Have a forum topic closed | 20 | Yes |
 
 ### Notes
 

@@ -30,8 +30,8 @@ return [
 
 		[
 			'id'             => 'ld_course_completed',
-			'label'          => 'Complete a LearnDash course',
-			'description'    => 'Awarded when a learner completes any LearnDash course.',
+			'label'          => static fn(): string => __( 'Complete a LearnDash course', 'wb-gamification' ),
+			'description'    => static fn(): string => __( 'Awarded when a learner completes any LearnDash course.', 'wb-gamification' ),
 			'hook'           => 'learndash_course_completed',
 			'user_callback'  => function ( array $data ): int {
 				return isset( $data['user'] ) ? (int) $data['user']->ID : 0;
@@ -45,8 +45,8 @@ return [
 
 		[
 			'id'             => 'ld_lesson_completed',
-			'label'          => 'Complete a LearnDash lesson',
-			'description'    => 'Awarded when a learner completes any lesson.',
+			'label'          => static fn(): string => __( 'Complete a LearnDash lesson', 'wb-gamification' ),
+			'description'    => static fn(): string => __( 'Awarded when a learner completes any lesson.', 'wb-gamification' ),
 			'hook'           => 'learndash_lesson_completed',
 			'user_callback'  => function ( array $data ): int {
 				return isset( $data['user'] ) ? (int) $data['user']->ID : 0;
@@ -60,8 +60,8 @@ return [
 
 		[
 			'id'             => 'ld_topic_completed',
-			'label'          => 'Complete a LearnDash topic',
-			'description'    => 'Awarded when a learner completes any topic.',
+			'label'          => static fn(): string => __( 'Complete a LearnDash topic', 'wb-gamification' ),
+			'description'    => static fn(): string => __( 'Awarded when a learner completes any topic.', 'wb-gamification' ),
 			'hook'           => 'learndash_topic_completed',
 			'user_callback'  => function ( array $data ): int {
 				return isset( $data['user'] ) ? (int) $data['user']->ID : 0;
@@ -75,8 +75,8 @@ return [
 
 		[
 			'id'                => 'ld_quiz_passed',
-			'label'             => 'Pass a LearnDash quiz',
-			'description'       => 'Awarded when a learner passes a quiz.',
+			'label'             => static fn(): string => __( 'Pass a LearnDash quiz', 'wb-gamification' ),
+			'description'       => static fn(): string => __( 'Awarded when a learner passes a quiz.', 'wb-gamification' ),
 			// LD fires: do_action( 'learndash_quiz_completed', $quizdata, $user ).
 			// Two positional args — NOT a single array.
 			'hook'              => 'learndash_quiz_completed',
@@ -107,8 +107,8 @@ return [
 
 		[
 			'id'                => 'ld_assignment_approved',
-			'label'             => 'Assignment approved by instructor',
-			'description'       => 'Awarded when an instructor approves a submitted assignment.',
+			'label'             => static fn(): string => __( 'Get an assignment approved', 'wb-gamification' ),
+			'description'       => static fn(): string => __( 'Awarded when an instructor approves a submitted assignment.', 'wb-gamification' ),
 			// LD fires: do_action( 'learndash_assignment_approved', $assignment_id ).
 			// Note: NOT 'learndash_assignment_mark_approved' (that's an internal function name).
 			'hook'              => 'learndash_assignment_approved',

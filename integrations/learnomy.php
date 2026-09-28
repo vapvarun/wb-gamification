@@ -25,8 +25,8 @@ return array(
 
 		array(
 			'id'                => 'learnomy_lesson_completed',
-			'label'             => 'Complete a lesson',
-			'description'       => 'Awarded each time a member completes a lesson. Cooldown prevents rapid-fire farming.',
+			'label'             => static fn(): string => __( 'Complete a lesson', 'wb-gamification' ),
+			'description'       => static fn(): string => __( 'Awarded each time a member completes a lesson. Cooldown prevents rapid-fire farming.', 'wb-gamification' ),
 			// Free fires: do_action( 'learnomy_lesson_completed', int $user_id, int $lesson_id, int $course_id ).
 			'hook'              => 'learnomy_lesson_completed',
 			'user_callback'     => function ( int $user_id, int $lesson_id, int $course_id ): int {
@@ -48,8 +48,8 @@ return array(
 
 		array(
 			'id'                => 'learnomy_quiz_passed',
-			'label'             => 'Pass a quiz',
-			'description'       => 'Awarded when a member passes a quiz. Fires only on a passing attempt (failed attempts award nothing); cooldown limits retake farming.',
+			'label'             => static fn(): string => __( 'Pass a quiz', 'wb-gamification' ),
+			'description'       => static fn(): string => __( 'Awarded when a member passes a quiz. Fires only on a passing attempt (failed attempts award nothing); cooldown limits retake farming.', 'wb-gamification' ),
 			// Free fires: do_action( 'learnomy_quiz_passed', int $attempt_id, int $user_id, int $quiz_id, float $score ) - score is a percentage.
 			'hook'              => 'learnomy_quiz_passed',
 			'user_callback'     => function ( int $attempt_id, int $user_id, int $quiz_id, float $score = 0 ): int {
@@ -71,8 +71,8 @@ return array(
 
 		array(
 			'id'                => 'learnomy_course_completed',
-			'label'             => 'Complete a course',
-			'description'       => 'Awarded when a member finishes every lesson and quiz in a course.',
+			'label'             => static fn(): string => __( 'Complete a course', 'wb-gamification' ),
+			'description'       => static fn(): string => __( 'Awarded when a member finishes every lesson and quiz in a course.', 'wb-gamification' ),
 			// Free fires: do_action( 'learnomy_course_completed', int $enrollment_id, int $user_id, int $course_id ).
 			'hook'              => 'learnomy_course_completed',
 			'user_callback'     => function ( int $enrollment_id, int $user_id, int $course_id ): int {
@@ -93,8 +93,8 @@ return array(
 
 		array(
 			'id'                => 'learnomy_student_enrolled',
-			'label'             => 'Enrol in a course',
-			'description'       => 'Awarded when a member enrols in a course. Daily cap prevents bulk-enrol farming.',
+			'label'             => static fn(): string => __( 'Enrol in a course', 'wb-gamification' ),
+			'description'       => static fn(): string => __( 'Awarded when a member enrols in a course. Daily cap prevents bulk-enrol farming.', 'wb-gamification' ),
 			// Free fires: do_action( 'learnomy_student_enrolled', int $enrollment_id, int $user_id, int $course_id, string $source ).
 			'hook'              => 'learnomy_student_enrolled',
 			'user_callback'     => function ( int $enrollment_id, int $user_id, int $course_id, string $source = '' ): int {
@@ -116,8 +116,8 @@ return array(
 
 		array(
 			'id'                => 'learnomy_certificate_issued',
-			'label'             => 'Earn a certificate',
-			'description'       => 'Awarded when a member earns a course completion certificate.',
+			'label'             => static fn(): string => __( 'Earn a certificate', 'wb-gamification' ),
+			'description'       => static fn(): string => __( 'Awarded when a member earns a course completion certificate.', 'wb-gamification' ),
 			// Free fires: do_action( 'learnomy_certificate_issued', int $certificate_id, int $user_id, int $course_id ).
 			'hook'              => 'learnomy_certificate_issued',
 			'user_callback'     => function ( int $certificate_id, int $user_id, int $course_id ): int {
@@ -140,8 +140,8 @@ return array(
 
 		array(
 			'id'                => 'learnomy_review_submitted',
-			'label'             => 'Review a course',
-			'description'       => 'Awarded when a member writes a course review. Cooldown limits review farming.',
+			'label'             => static fn(): string => __( 'Review a course', 'wb-gamification' ),
+			'description'       => static fn(): string => __( 'Awarded when a member writes a course review. Cooldown limits review farming.', 'wb-gamification' ),
 			// Free fires: do_action( 'learnomy_review_submitted', int $review_id, int $user_id, int $course_id ).
 			'hook'              => 'learnomy_review_submitted',
 			'user_callback'     => function ( int $review_id, int $user_id, int $course_id ): int {
@@ -160,8 +160,8 @@ return array(
 
 		array(
 			'id'             => 'learnomy_instructor_application',
-			'label'          => 'Apply to teach',
-			'description'    => 'Awarded once when a member applies to become an instructor.',
+			'label'          => static fn(): string => __( 'Apply to teach', 'wb-gamification' ),
+			'description'    => static fn(): string => __( 'Awarded once when a member applies to become an instructor.', 'wb-gamification' ),
 			// Free fires: do_action( 'learnomy_instructor_application_submitted', int $application_id, int $user_id ).
 			'hook'           => 'learnomy_instructor_application_submitted',
 			'user_callback'  => function ( int $application_id, int $user_id ): int {

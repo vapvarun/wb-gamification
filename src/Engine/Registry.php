@@ -307,6 +307,7 @@ final class Registry {
 			'general'     => __( 'General', 'wb-gamification' ),
 			'wordpress'   => __( 'WordPress', 'wb-gamification' ),
 			'social'      => __( 'Social', 'wb-gamification' ),
+			'forums'      => __( 'Forums', 'wb-gamification' ),
 			'community'   => __( 'Community', 'wb-gamification' ),
 			'content'     => __( 'Content', 'wb-gamification' ),
 			'engagement'  => __( 'Engagement', 'wb-gamification' ),
@@ -340,14 +341,34 @@ final class Registry {
 	 */
 	public static function get_actions(): array {
 		$overrides = self::get_overrides();
-		if ( empty( $overrides ) ) {
-			return self::$actions;
-		}
-		$out = array();
+		$out       = array();
 		foreach ( self::$actions as $id => $action ) {
-			$out[ $id ] = self::apply_overrides( $action, $overrides );
+			$action     = self::resolve_text( $action );
+			$out[ $id ] = empty( $overrides ) ? $action : self::apply_overrides( $action, $overrides );
 		}
 		return $out;
+	}
+
+	/**
+	 * Turn a manifest's lazy `label` / `description` into text.
+	 *
+	 * Manifests load before `init`, when a translation call would load the plugin's text domain too
+	 * early (a notice since WP 6.7, and the wrong locale for a user-locale switch). So a manifest gives
+	 * `static fn(): string => __( 'Create a post', 'wb-gamification' )` and the words are resolved
+	 * here, on read. A plain string, from another plugin's registration, passes through unchanged.
+	 *
+	 * @since 1.6.5
+	 *
+	 * @param array $action Registered action.
+	 * @return array Action with `label` and `description` as strings.
+	 */
+	private static function resolve_text( array $action ): array {
+		foreach ( array( 'label', 'description' ) as $key ) {
+			if ( isset( $action[ $key ] ) && $action[ $key ] instanceof \Closure ) {
+				$action[ $key ] = (string) $action[ $key ]();
+			}
+		}
+		return $action;
 	}
 
 	/**
@@ -500,9 +521,8 @@ final class Registry {
 			return null;
 		}
 		$overrides = self::get_overrides();
-		return empty( $overrides )
-			? self::$actions[ $id ]
-			: self::apply_overrides( self::$actions[ $id ], $overrides );
+		$action    = self::resolve_text( self::$actions[ $id ] );
+		return empty( $overrides ) ? $action : self::apply_overrides( $action, $overrides );
 	}
 
 	/**

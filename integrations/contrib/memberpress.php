@@ -28,8 +28,8 @@ return [
 
 		[
 			'id'             => 'mp_membership_activated',
-			'label'          => 'Activate a MemberPress membership',
-			'description'    => 'Awarded each time a member activates (or re-activates) a membership.',
+			'label'          => static fn(): string => __( 'Activate a MemberPress membership', 'wb-gamification' ),
+			'description'    => static fn(): string => __( 'Awarded each time a member activates (or re-activates) a membership.', 'wb-gamification' ),
 			'hook'           => 'mepr-event-signup-completed',
 			'user_callback'  => function ( \MeprEvent $event ): int {
 				return isset( $event->member ) ? (int) $event->member->ID : 0;
@@ -43,8 +43,8 @@ return [
 
 		[
 			'id'             => 'mp_membership_renewed',
-			'label'          => 'Renew a MemberPress membership',
-			'description'    => 'Awarded when a member renews (repeats) an existing membership.',
+			'label'          => static fn(): string => __( 'Renew a MemberPress membership', 'wb-gamification' ),
+			'description'    => static fn(): string => __( 'Awarded when a member renews (repeats) an existing membership.', 'wb-gamification' ),
 			'hook'           => 'mepr-event-renewals',
 			'user_callback'  => function ( \MeprEvent $event ): int {
 				return isset( $event->member ) ? (int) $event->member->ID : 0;
@@ -58,8 +58,8 @@ return [
 
 		[
 			'id'             => 'mp_first_membership',
-			'label'          => 'Join as a paid member for the first time',
-			'description'    => 'Awarded once when a user activates their very first membership.',
+			'label'          => static fn(): string => __( 'Join as a paid member for the first time', 'wb-gamification' ),
+			'description'    => static fn(): string => __( 'Awarded once when a user activates their very first membership.', 'wb-gamification' ),
 			'hook'           => 'mepr-event-signup-completed',
 			'user_callback'  => function ( \MeprEvent $event ): int {
 				if ( ! isset( $event->member ) ) {

@@ -34,8 +34,8 @@ return array(
 
 		array(
 			'id'                => 'bn_post_created',
-			'label'             => 'Post created',
-			'description'       => 'Awarded each time a member creates a post. Daily cap prevents farming.',
+			'label'             => static fn(): string => __( 'Create a post', 'wb-gamification' ),
+			'description'       => static fn(): string => __( 'Awarded each time a member creates a post. Daily cap prevents farming.', 'wb-gamification' ),
 			// Fires: do_action( 'buddynext_post_created', int $post_id, int $user_id, string $type ).
 			'hook'              => 'buddynext_post_created',
 			'user_callback'     => function ( int $post_id, int $user_id, string $type ): int {
@@ -69,8 +69,8 @@ return array(
 
 		array(
 			'id'                => 'bn_post_shared',
-			'label'             => 'Post shared',
-			'description'       => 'Awarded when a member shares an existing post. Daily cap limits farming.',
+			'label'             => static fn(): string => __( 'Share a post', 'wb-gamification' ),
+			'description'       => static fn(): string => __( 'Awarded when a member shares an existing post. Daily cap limits farming.', 'wb-gamification' ),
 			// Fires: do_action( 'buddynext_post_shared', int $share_id, int $post_id, int $user_id ).
 			'hook'              => 'buddynext_post_shared',
 			'user_callback'     => function ( int $share_id, int $post_id, int $user_id ): int {
@@ -92,8 +92,8 @@ return array(
 
 		array(
 			'id'                => 'bn_comment_created',
-			'label'             => 'Comment created',
-			'description'       => 'Awarded when a member comments on a post. Cooldown prevents rapid-fire farming.',
+			'label'             => static fn(): string => __( 'Write a comment', 'wb-gamification' ),
+			'description'       => static fn(): string => __( 'Awarded when a member comments on a post. Cooldown prevents rapid-fire farming.', 'wb-gamification' ),
 			// Fires: do_action( 'buddynext_comment_created', int $comment_id, string $object_type, int $object_id, int $user_id ).
 			'hook'              => 'buddynext_comment_created',
 			'user_callback'     => function ( int $comment_id, string $object_type, int $object_id, int $user_id ): int {
@@ -127,8 +127,8 @@ return array(
 
 		array(
 			'id'                => 'bn_reaction_received',
-			'label'             => 'Reaction received on your content',
-			'description'       => 'Awarded to the content owner when another member reacts to their post. BuddyNext only fires this for cross-user reactions (self-reactions are excluded upstream in ReactionService).',
+			'label'             => static fn(): string => __( 'Receive a reaction on your content', 'wb-gamification' ),
+			'description'       => static fn(): string => __( 'Awarded to the content owner when another member reacts to their post. BuddyNext only fires this for cross-user reactions (self-reactions are excluded upstream in ReactionService).', 'wb-gamification' ),
 			// Fires: do_action( 'buddynext_post_reaction_received', int $object_id, int $author_id, int $reactor_id, string $emoji ).
 			'hook'              => 'buddynext_post_reaction_received',
 			'user_callback'     => function ( int $object_id, int $author_id, int $reactor_id, string $emoji ): int {
@@ -152,8 +152,8 @@ return array(
 
 		array(
 			'id'                => 'bn_poll_voted',
-			'label'             => 'Poll voted',
-			'description'       => 'Awarded when a member votes on a poll. Daily cap prevents ballot-box farming.',
+			'label'             => static fn(): string => __( 'Vote on a poll', 'wb-gamification' ),
+			'description'       => static fn(): string => __( 'Awarded when a member votes on a poll. Daily cap prevents ballot-box farming.', 'wb-gamification' ),
 			// Fires: do_action( 'buddynext_poll_voted', int $post_id, int $option_id, int $user_id ).
 			'hook'              => 'buddynext_poll_voted',
 			'user_callback'     => function ( int $post_id, int $option_id, int $user_id ): int {
@@ -175,8 +175,8 @@ return array(
 
 		array(
 			'id'                => 'bn_post_bookmarked',
-			'label'             => 'Post bookmarked',
-			'description'       => 'Awarded the first time a member bookmarks a post. Daily cap limits farming.',
+			'label'             => static fn(): string => __( 'Bookmark a post', 'wb-gamification' ),
+			'description'       => static fn(): string => __( 'Awarded the first time a member bookmarks a post. Daily cap limits farming.', 'wb-gamification' ),
 			// Fires: do_action( 'buddynext_post_bookmarked', int $post_id, int $user_id ) - only on first bookmark per post/user pair.
 			'hook'              => 'buddynext_post_bookmarked',
 			'user_callback'     => function ( int $post_id, int $user_id ): int {
@@ -199,8 +199,8 @@ return array(
 
 		array(
 			'id'                => 'bn_followed',
-			'label'             => 'Followed by a member',
-			'description'       => 'Awarded to the member who gains a new follower. Daily cap prevents follow-farming.',
+			'label'             => static fn(): string => __( 'Gain a follower', 'wb-gamification' ),
+			'description'       => static fn(): string => __( 'Awarded to the member who gains a new follower. Daily cap prevents follow-farming.', 'wb-gamification' ),
 			// Fires: do_action( 'buddynext_follower_gained', int $following_id, int $follower_id ).
 			// The recipient is the member who GAINED the follower ($following_id = arg1).
 			'hook'              => 'buddynext_follower_gained',
@@ -224,8 +224,8 @@ return array(
 
 		array(
 			'id'             => 'bn_first_follow',
-			'label'          => 'First follow made',
-			'description'    => 'Awarded once when a member follows their first person.',
+			'label'          => static fn(): string => __( 'Follow a member for the first time', 'wb-gamification' ),
+			'description'    => static fn(): string => __( 'Awarded once when a member follows their first person.', 'wb-gamification' ),
 			// Fires: do_action( 'buddynext_user_followed_first_time', int $follower_id, int $following_id ).
 			'hook'           => 'buddynext_user_followed_first_time',
 			'user_callback'  => function ( int $follower_id, int $following_id ): int {
@@ -243,8 +243,8 @@ return array(
 
 		array(
 			'id'                => 'bn_connected',
-			'label'             => 'Connection accepted',
-			'description'       => 'Awarded to the initiating user (user_a) when a connection request is accepted. Note: the manifest engine awards one user_id per trigger; only user_a is awarded here. Sites needing bilateral awards can wire a second trigger on the same hook returning $user_b.',
+			'label'             => static fn(): string => __( 'Accept a connection', 'wb-gamification' ),
+			'description'       => static fn(): string => __( 'Awarded to the initiating user (user_a) when a connection request is accepted. Note: the manifest engine awards one user_id per trigger; only user_a is awarded here. Sites needing bilateral awards can wire a second trigger on the same hook returning $user_b.', 'wb-gamification' ),
 			// Fires: do_action( 'buddynext_connection_accepted', int $connection_id, int $user_a, int $user_b ).
 			'hook'              => 'buddynext_connection_accepted',
 			'user_callback'     => function ( int $connection_id, int $user_a, int $user_b ): int {
@@ -266,8 +266,8 @@ return array(
 
 		array(
 			'id'                => 'bn_connection_requested',
-			'label'             => 'Connection request sent',
-			'description'       => 'Awarded when a member sends a connection request. Daily cap prevents spam-requesting.',
+			'label'             => static fn(): string => __( 'Send a connection request', 'wb-gamification' ),
+			'description'       => static fn(): string => __( 'Awarded when a member sends a connection request. Daily cap prevents spam-requesting.', 'wb-gamification' ),
 			// Fires: do_action( 'buddynext_connection_requested', int $connection_id, int $requester_id, int $recipient_id, string $note ).
 			'hook'              => 'buddynext_connection_requested',
 			'user_callback'     => function ( int $connection_id, int $requester_id, int $recipient_id, string $note = '' ): int {
@@ -289,8 +289,8 @@ return array(
 
 		array(
 			'id'                => 'bn_dm_sent',
-			'label'             => 'Direct message sent',
-			'description'       => 'Awarded when a member sends a DM. Daily cap keeps points proportional to real engagement.',
+			'label'             => static fn(): string => __( 'Send a direct message', 'wb-gamification' ),
+			'description'       => static fn(): string => __( 'Awarded when a member sends a DM. Daily cap keeps points proportional to real engagement.', 'wb-gamification' ),
 			// Fires: do_action( 'buddynext_dm_sent', int $sender_id, int $message_id, int $conversation_id, array $recipients ).
 			'hook'              => 'buddynext_dm_sent',
 			'user_callback'     => function ( int $sender_id, int $message_id, int $conversation_id, array $recipients ): int {
@@ -316,8 +316,8 @@ return array(
 
 		array(
 			'id'                => 'bn_space_joined',
-			'label'             => 'Joined a space',
-			'description'       => 'Awarded when a member joins a community space. Daily cap prevents bulk-join farming.',
+			'label'             => static fn(): string => __( 'Join a space', 'wb-gamification' ),
+			'description'       => static fn(): string => __( 'Awarded when a member joins a community space. Daily cap prevents bulk-join farming.', 'wb-gamification' ),
 			// Fires: do_action( 'buddynext_space_member_joined', int $space_id, int $user_id, string $role ).
 			'hook'              => 'buddynext_space_member_joined',
 			'user_callback'     => function ( int $space_id, int $user_id, string $role ): int {
@@ -339,8 +339,8 @@ return array(
 
 		array(
 			'id'                => 'bn_space_created',
-			'label'             => 'Space created',
-			'description'       => 'Awarded when a member creates a new community space.',
+			'label'             => static fn(): string => __( 'Create a space', 'wb-gamification' ),
+			'description'       => static fn(): string => __( 'Awarded when a member creates a new community space.', 'wb-gamification' ),
 			// Fires: do_action( 'buddynext_space_created', int $space_id, int $owner_id ).
 			'hook'              => 'buddynext_space_created',
 			'user_callback'     => function ( int $space_id, int $owner_id ): int {
@@ -362,8 +362,8 @@ return array(
 
 		array(
 			'id'                => 'bn_profile_updated',
-			'label'             => 'Profile updated',
-			'description'       => 'Awarded when a member changes their profile completion percentage.',
+			'label'             => static fn(): string => __( 'Update your profile', 'wb-gamification' ),
+			'description'       => static fn(): string => __( 'Awarded when a member changes their profile completion percentage.', 'wb-gamification' ),
 			// Fires: do_action( 'buddynext_profile_completion_changed', int $user_id, int $percent ).
 			// BuddyNext fires this only on an actual percentage change (1.0.6+),
 			// so every fire is a real profile edit. The old "< 100" exclusion
@@ -386,8 +386,8 @@ return array(
 
 		array(
 			'id'             => 'bn_profile_completed',
-			'label'          => 'Profile completed',
-			'description'    => 'Awarded once when a member completes every task on their Profile Strength checklist.',
+			'label'          => static fn(): string => __( 'Complete your profile', 'wb-gamification' ),
+			'description'    => static fn(): string => __( 'Awarded once when a member completes every task on their Profile Strength checklist.', 'wb-gamification' ),
 			// Fires: do_action( 'buddynext_profile_strength_changed', int $user_id, int $percent ).
 			// Strength (BuddyNext 1.0.5+) is the curated checklist the member
 			// actually sees on the Profile Strength ring — the old
@@ -406,8 +406,8 @@ return array(
 
 		array(
 			'id'             => 'bn_onboarding_completed',
-			'label'          => 'Onboarding completed',
-			'description'    => 'Awarded once when a member completes the BuddyNext onboarding wizard.',
+			'label'          => static fn(): string => __( 'Complete onboarding', 'wb-gamification' ),
+			'description'    => static fn(): string => __( 'Awarded once when a member completes the BuddyNext onboarding wizard.', 'wb-gamification' ),
 			// Fires: do_action( 'buddynext_onboarding_completed', int $user_id ).
 			'hook'           => 'buddynext_onboarding_completed',
 			'user_callback'  => function ( int $user_id ): int {

@@ -26,8 +26,8 @@ return array(
 
 		array(
 			'id'                => 'wcb_job_posted',
-			'label'             => 'Post a job',
-			'description'       => 'Awarded to the employer when a new job listing is created.',
+			'label'             => static fn(): string => __( 'Post a job', 'wb-gamification' ),
+			'description'       => static fn(): string => __( 'Awarded to the employer when a new job listing is created.', 'wb-gamification' ),
 			// Fires: do_action( 'wcb_job_created', int $job_id, WP_REST_Request $request ). No user id - author is the poster.
 			'hook'              => 'wcb_job_created',
 			'user_callback'     => function ( int $job_id, $request = null ): int {
@@ -46,8 +46,8 @@ return array(
 
 		array(
 			'id'                => 'wcb_job_approved',
-			'label'             => 'Job approved',
-			'description'       => 'Awarded to the employer when their job listing is approved and published.',
+			'label'             => static fn(): string => __( 'Get a job approved', 'wb-gamification' ),
+			'description'       => static fn(): string => __( 'Awarded to the employer when their job listing is approved and published.', 'wb-gamification' ),
 			// Fires: do_action( 'wcb_job_approved', int $job_id ). No user id - author is the poster.
 			'hook'              => 'wcb_job_approved',
 			'user_callback'     => function ( int $job_id ): int {
@@ -65,8 +65,8 @@ return array(
 
 		array(
 			'id'                => 'wcb_application_submitted',
-			'label'             => 'Apply to a job',
-			'description'       => 'Awarded to the candidate when they submit a job application. Daily cap prevents spam applications.',
+			'label'             => static fn(): string => __( 'Apply to a job', 'wb-gamification' ),
+			'description'       => static fn(): string => __( 'Awarded to the candidate when they submit a job application. Daily cap prevents spam applications.', 'wb-gamification' ),
 			// Fires: do_action( 'wcb_application_submitted', int $app_id, int $job_id, int $candidate_id ).
 			'hook'              => 'wcb_application_submitted',
 			'user_callback'     => function ( int $app_id, int $job_id, int $candidate_id ): int {
@@ -88,8 +88,8 @@ return array(
 
 		array(
 			'id'                => 'wcb_candidate_hired',
-			'label'             => 'Get hired',
-			'description'       => 'Awarded to the candidate when their application status changes to hired.',
+			'label'             => static fn(): string => __( 'Get hired', 'wb-gamification' ),
+			'description'       => static fn(): string => __( 'Awarded to the candidate when their application status changes to hired.', 'wb-gamification' ),
 			// Fires: do_action( 'wcb_application_status_changed', int $app_id, string $old_status, string $new_status )
 			// (arg order normalised across all call sites). Candidate resolved from the application's _wcb_candidate_id meta.
 			'hook'              => 'wcb_application_status_changed',
@@ -112,8 +112,8 @@ return array(
 
 		array(
 			'id'             => 'wcb_candidate_registered',
-			'label'          => 'Join as a candidate',
-			'description'    => 'Awarded once when a member registers a candidate profile.',
+			'label'          => static fn(): string => __( 'Join as a candidate', 'wb-gamification' ),
+			'description'    => static fn(): string => __( 'Awarded once when a member registers a candidate profile.', 'wb-gamification' ),
 			// Fires: do_action( 'wcb_candidate_registered', int $user_id ).
 			'hook'           => 'wcb_candidate_registered',
 			'user_callback'  => function ( int $user_id ): int {
@@ -127,8 +127,8 @@ return array(
 
 		array(
 			'id'                => 'wcb_employer_registered',
-			'label'             => 'Join as an employer',
-			'description'       => 'Awarded once when a member registers an employer account.',
+			'label'             => static fn(): string => __( 'Join as an employer', 'wb-gamification' ),
+			'description'       => static fn(): string => __( 'Awarded once when a member registers an employer account.', 'wb-gamification' ),
 			// Fires: do_action( 'wcb_employer_registered', int $user_id, int $company_id ).
 			'hook'              => 'wcb_employer_registered',
 			'user_callback'     => function ( int $user_id, int $company_id = 0 ): int {
