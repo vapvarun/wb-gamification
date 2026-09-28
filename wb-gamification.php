@@ -492,12 +492,63 @@ final class WB_Gamification {
 	 * Registration is idempotent; wp_register_script no-ops on a handle that already exists.
 	 */
 	public function register_dialog_script(): void {
+		// The popup styles are registered here for the same reason as the script below: the admin
+		// needs them too (the admin toast, the confirm dialog, the deactivation survey), and a
+		// handle registered only on wp_enqueue_scripts does not exist in wp-admin.
+		wp_register_style( 'wb-gam-tokens', WB_GAM_URL . 'src/shared/design-tokens.css', array(), WB_GAM_VERSION );
+		wp_register_style( 'lucide-icons', WB_GAM_URL . 'assets/fonts/lucide.css', array(), '0.469.0' );
+		wp_register_style( 'wb-gam-popups', WB_GAM_URL . 'assets/css/popups.css', array( 'wb-gam-tokens', 'lucide-icons' ), WB_GAM_VERSION );
+
 		wp_register_script(
 			'wb-gam-dialog',
 			WB_GAM_URL . 'assets/js/dialog.js',
 			array(),
 			WB_GAM_VERSION,
 			true
+		);
+
+		// The one toast renderer: the front-end feed and the wp-admin helpers both call it.
+		wp_register_script(
+			'wb-gamification-top-offset',
+			WB_GAM_URL . 'assets/js/top-offset.js',
+			array(),
+			WB_GAM_VERSION,
+			true
+		);
+		wp_register_script(
+			'wb-gam-toast-core',
+			WB_GAM_URL . 'assets/js/toast-core.js',
+			array( 'wp-i18n', 'wb-gamification-top-offset' ),
+			WB_GAM_VERSION,
+			true
+		);
+		wp_set_script_translations( 'wb-gam-toast-core', 'wb-gamification', WB_GAM_PATH . 'languages' );
+
+		// The celebration utility: one small confetti burst for a Moment card or an achievement toast.
+		wp_register_script(
+			'wb-gam-celebrate',
+			WB_GAM_URL . 'assets/js/celebrate.js',
+			array(),
+			WB_GAM_VERSION,
+			true
+		);
+		/**
+		 * Filters the celebration style: 'confetti' (default) or 'none'.
+		 *
+		 * One switch for a community where confetti does not fit (a professional network, say).
+		 * It is a filter and not an admin setting on purpose: it is a one-time site decision, and a
+		 * setting nobody reopens is a control to maintain. Reduced motion is honoured separately and
+		 * automatically.
+		 *
+		 * @since 1.6.5
+		 *
+		 * @param string $style 'confetti' or 'none'.
+		 */
+		$celebration = (string) apply_filters( 'wb_gam_celebration_style', 'confetti' );
+		wp_localize_script(
+			'wb-gam-celebrate',
+			'wbGamCelebrate',
+			array( 'style' => 'none' === $celebration ? 'none' : 'confetti' )
 		);
 	}
 
@@ -563,7 +614,7 @@ final class WB_Gamification {
 		wp_register_style(
 			'wb-gamification',
 			WB_GAM_URL . 'assets/css/frontend.css',
-			array( 'wb-gam-tokens' ),
+			array( 'wb-gam-tokens', 'wb-gam-popups' ),
 			WB_GAM_VERSION
 		);
 		// `wb-gamification-interactivity` removed in Phase F. The legacy
@@ -585,7 +636,7 @@ final class WB_Gamification {
 		wp_register_style(
 			'wb-gamification-hub',
 			WB_GAM_URL . 'assets/css/hub.css',
-			array( 'lucide-icons' ),
+			array( 'lucide-icons', 'wb-gam-popups' ),
 			WB_GAM_VERSION
 		);
 		wp_register_script_module(
@@ -724,7 +775,7 @@ final class WB_Gamification {
 			wp_enqueue_script(
 				'wb-gamification-toast',
 				WB_GAM_URL . 'assets/js/toast.js',
-				array( 'wb-gamification-realtime', 'wb-gamification-top-offset', 'wb-gam-rest' ),
+				array( 'wb-gamification-realtime', 'wb-gam-toast-core', 'wb-gam-rest' ),
 				WB_GAM_VERSION,
 				true
 			);
@@ -884,7 +935,7 @@ final class WB_Gamification {
 		wp_enqueue_style(
 			'wb-gam-admin-components',
 			WB_GAM_URL . 'assets/css/admin/components.css',
-			array( 'wb-gam-admin-tokens' ),
+			array( 'wb-gam-admin-tokens', 'wb-gam-popups' ),
 			WB_GAM_VERSION
 		);
 		wp_enqueue_style(

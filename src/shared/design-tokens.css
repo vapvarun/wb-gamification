@@ -73,8 +73,8 @@
 	   in the plugin (buttons, icon chips, links) rendered brand purple while the
 	   rest of the page used Reign's blue — the plugin looked bolted on rather than
 	   part of the theme. */
-	--wb-gam-color-accent: var(--wbcom-link-color, var(--bx-color-accent, var(--reign-site-button-bg-color, #5b4cdb)));
-	--wb-gam-color-accent-hover: var(--wbcom-link-hover-color, var(--bx-color-accent-hover, var(--reign-site-button-bg-hover-color, #4338b2)));
+	--wb-gam-color-accent: var(--wbcom-link-color, var(--bn-accent, var(--bx-color-accent, var(--reign-site-button-bg-color, #5b4cdb))));
+	--wb-gam-color-accent-hover: var(--wbcom-link-hover-color, var(--bn-accent-600, var(--bx-color-accent-hover, var(--reign-site-button-bg-hover-color, #4338b2))));
 	/* Tint backgrounds (icon chips, accent pills) are mixed OVER the theme
 	 * surface so they're a faint light tint in light mode and a faint dark
 	 * tint in dark mode — no opaque light blob on a dark card. */
@@ -154,10 +154,12 @@
 	--wb-gam-bp-tablet: 1024px;
 	--wb-gam-bp-mobile: 767px;
 
-	/* Transition */
-	--wb-gam-transition-fast: 150ms ease;
-	--wb-gam-transition-normal: 300ms ease;
-	--wb-gam-transition-slow: 500ms ease;
+	/* Transition. Aliases of the locked motion scale below: the plugin used to carry its own
+	 * 150/300/500ms scale next to BuddyNext's 120/200/400ms, which is how one screen ended up
+	 * with fourteen different durations. */
+	--wb-gam-transition-fast: var(--wb-gam-dur-fast) var(--wb-gam-ease);
+	--wb-gam-transition-normal: var(--wb-gam-dur) var(--wb-gam-ease);
+	--wb-gam-transition-slow: var(--wb-gam-dur-slow) var(--wb-gam-ease);
 
 	/* Z-index scale */
 	--wb-gam-z-below: -1;
@@ -195,6 +197,85 @@
 	--wb-gam-recap-accent: var(--wb-gam-color-accent);
 }
 
+/* ── Popup system ───────────────────────────────────────────────────────────
+ * The one home for every popup value: toast, banner, dialog, drawer, menu and the
+ * Moment card. Designed in the Popup Atlas and agreed with the BuddyNext session.
+ *
+ * Every token reads BuddyNext first. The fallback is BuddyNext's own default, so the
+ * plugin renders identically on a site without BuddyNext and follows BuddyNext's
+ * numbers automatically when they change (BuddyNext also flips these in dark mode).
+ * A popup stylesheet must use these tokens and never a literal; bin/check-motion-tokens.sh
+ * fails the build on a raw duration or easing outside this file and popups.css.
+ */
+:root {
+	/* Colour */
+	--wb-gam-pop-surface: var(--bn-surface, var(--wb-gam-color-surface));
+	--wb-gam-pop-text: var(--bn-text-1, var(--wb-gam-color-text));
+	--wb-gam-pop-text-2: var(--bn-text-2, var(--wb-gam-color-text-muted));
+	--wb-gam-pop-text-3: var(--bn-text-3, var(--wb-gam-color-text-light));
+	--wb-gam-pop-line: var(--bn-line, var(--bn-border, var(--wb-gam-color-border)));
+	--wb-gam-pop-subtle: var(--bn-bg-subtle, var(--wb-gam-color-surface-alt));
+	--wb-gam-pop-accent: var(--bn-accent-500, var(--bn-accent, var(--wb-gam-color-accent)));
+	--wb-gam-pop-accent-fg: var(--bn-accent-fg, #ffffff);
+	--wb-gam-pop-accent-100: var(--bn-accent-100, color-mix(in srgb, var(--wb-gam-pop-accent) 12%, var(--wb-gam-pop-surface)));
+	--wb-gam-pop-accent-200: var(--bn-accent-200, color-mix(in srgb, var(--wb-gam-pop-accent) 24%, var(--wb-gam-pop-surface)));
+	--wb-gam-pop-success: var(--bn-success, var(--wb-gam-color-success));
+	--wb-gam-pop-success-bg: var(--bn-success-bg, var(--wb-gam-color-success-bg));
+	--wb-gam-pop-danger: var(--bn-danger, var(--wb-gam-color-danger));
+	--wb-gam-pop-danger-bg: var(--bn-danger-bg, var(--wb-gam-color-danger-bg));
+	--wb-gam-pop-info: var(--bn-info, var(--wb-gam-color-info));
+	--wb-gam-pop-info-bg: var(--bn-info-bg, var(--wb-gam-color-info-bg));
+	/* The toast is BuddyNext's inverted surface: the text colour as the ground. */
+	--wb-gam-pop-inv-bg: var(--bn-text-1, var(--wb-gam-color-text));
+	--wb-gam-pop-inv-fg: var(--bn-bg, var(--wb-gam-color-page));
+
+	/* Confetti: five stops of the community's accent plus white. Never a rainbow. */
+	--wb-gam-cf-1: var(--bn-accent-500, var(--wb-gam-pop-accent));
+	--wb-gam-cf-2: var(--bn-accent-400, color-mix(in srgb, var(--wb-gam-pop-accent) 65%, #ffffff));
+	--wb-gam-cf-3: var(--bn-accent-600, color-mix(in srgb, var(--wb-gam-pop-accent) 85%, #20262e));
+	--wb-gam-cf-4: var(--bn-accent-800, color-mix(in srgb, var(--wb-gam-pop-accent) 68%, #20262e));
+	--wb-gam-cf-5: #ffffff;
+
+	/* Shape and elevation */
+	--wb-gam-pop-r-sm: var(--bn-r-sm, 5px);
+	--wb-gam-pop-r-md: var(--bn-r-md, 10px);
+	--wb-gam-pop-r-lg: var(--bn-r-lg, 14px);
+	--wb-gam-pop-r-xl: var(--bn-r-xl, 20px);
+	--wb-gam-pop-r-full: var(--bn-r-full, 9999px);
+	--wb-gam-pop-shadow-md: var(--bn-shadow-md, 0 2px 4px rgba(0, 0, 0, 0.04), 0 8px 16px rgba(0, 0, 0, 0.06));
+	--wb-gam-pop-shadow-lg: var(--bn-shadow-lg, 0 8px 16px rgba(0, 0, 0, 0.06), 0 24px 48px rgba(0, 0, 0, 0.12));
+	--wb-gam-pop-scrim: var(--bn-overlay, color-mix(in srgb, #20262e 55%, transparent));
+	--wb-gam-pop-blur: 2px;
+
+	/* Layers. Never a literal in a stylesheet. */
+	--wb-gam-pop-z-menu: var(--bn-z-menu, 99000);
+	--wb-gam-pop-z-modal: var(--bn-z-modal, 100100);
+	--wb-gam-pop-z-toast: var(--bn-z-toast, 100200);
+
+	/* Buttons: BuddyNext's shared button. */
+	--wb-gam-btn-h: var(--bn-btn-h, 40px);
+	--wb-gam-btn-r: var(--bn-btn-r, var(--bn-r-md, 10px));
+	--wb-gam-btn-py: var(--bn-btn-py, 8px);
+	--wb-gam-btn-px: var(--bn-btn-px, 16px);
+
+	/* Type */
+	--wb-gam-pop-font: var(--bn-font-body, inherit);
+
+	/* Motion: BuddyNext's three timings and two easings, plus the four keyframe timings
+	 * BuddyNext's own toast, modal, dropdown and bounce-in use. */
+	--wb-gam-dur-fast: var(--bn-dur-fast, 120ms);
+	--wb-gam-dur: var(--bn-dur, 200ms);
+	--wb-gam-dur-slow: var(--bn-dur-slow, 400ms);
+	--wb-gam-dur-toast: 250ms;
+	--wb-gam-dur-modal: 180ms;
+	--wb-gam-dur-menu: 150ms;
+	--wb-gam-dur-moment: 500ms;
+	--wb-gam-delay-numeral: 300ms;
+	--wb-gam-ease: var(--bn-ease, cubic-bezier(0.2, 0.8, 0.2, 1));
+	--wb-gam-ease-out: var(--bn-ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+	--wb-gam-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
 /* ── Dark-mode accent ───────────────────────────────────────────────────────
  * The THEME's accent still wins here. Only the final fallback changes: on a
  * dark surface the brand purple is lightened so glyphs, links, the level
@@ -223,8 +304,8 @@
 :root[data-bx-mode="dark"],
 :root[data-theme="dark"],
 body.buddyx-dark-theme {
-	--wb-gam-color-accent: var(--wbcom-link-color, var(--bx-color-accent, var(--reign-site-button-bg-color, color-mix(in srgb, #5b4cdb 60%, #ffffff))));
-	--wb-gam-color-accent-hover: var(--wbcom-link-hover-color, var(--bx-color-accent-hover, var(--reign-site-button-bg-hover-color, color-mix(in srgb, #5b4cdb 45%, #ffffff))));
+	--wb-gam-color-accent: var(--wbcom-link-color, var(--bn-accent, var(--bx-color-accent, var(--reign-site-button-bg-color, color-mix(in srgb, #5b4cdb 60%, #ffffff)))));
+	--wb-gam-color-accent-hover: var(--wbcom-link-hover-color, var(--bn-accent-600, var(--bx-color-accent-hover, var(--reign-site-button-bg-hover-color, color-mix(in srgb, #5b4cdb 45%, #ffffff)))));
 
 	/* Lift the dark medals. Bronze (#b45309) and Obsidian (#4b5563) are dark enough to
 	 * sink into a dark surface -- the member's own league tier becomes the one thing
@@ -244,8 +325,8 @@ body.buddyx-dark-theme {
 }
 @media (prefers-color-scheme: dark) {
 	:root[data-bx-mode="auto"] {
-		--wb-gam-color-accent: var(--wbcom-link-color, var(--bx-color-accent, var(--reign-site-button-bg-color, color-mix(in srgb, #5b4cdb 60%, #ffffff))));
-		--wb-gam-color-accent-hover: var(--wbcom-link-hover-color, var(--bx-color-accent-hover, var(--reign-site-button-bg-hover-color, color-mix(in srgb, #5b4cdb 45%, #ffffff))));
+		--wb-gam-color-accent: var(--wbcom-link-color, var(--bn-accent, var(--bx-color-accent, var(--reign-site-button-bg-color, color-mix(in srgb, #5b4cdb 60%, #ffffff)))));
+		--wb-gam-color-accent-hover: var(--wbcom-link-hover-color, var(--bn-accent-600, var(--bx-color-accent-hover, var(--reign-site-button-bg-hover-color, color-mix(in srgb, #5b4cdb 45%, #ffffff)))));
 
 		/* Auto-mode is a dark surface too. Lifting the medals only on the explicit dark
 		 * selectors would leave every owner who never touched the toggle reading 3.2:1 bronze. */

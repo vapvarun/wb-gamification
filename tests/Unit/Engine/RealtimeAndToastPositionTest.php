@@ -6,7 +6,7 @@
  *   - Realtime defaults to Heartbeat, and SSE only activates behind the
  *     wb_gam_sse_allowed gate (so no PHP worker is pinned by default).
  *   - The toast position is always a validated member of the allowed set,
- *     defaulting to bottom-right (off the theme header).
+ *     defaulting to bottom-center (off the theme header).
  *
  * @package WB_Gamification
  */
@@ -122,8 +122,8 @@ class RealtimeAndToastPositionTest extends TestCase {
 	 * @test
 	 * @covers \WBGam\Engine\NotificationBridge::get_toast_position
 	 */
-	public function toast_position_defaults_to_bottom_right(): void {
-		$this->assertSame( 'bottom-right', NotificationBridge::get_toast_position() );
+	public function toast_position_defaults_to_bottom_center(): void {
+		$this->assertSame( 'bottom-center', NotificationBridge::get_toast_position() );
 	}
 
 	/**
@@ -141,7 +141,7 @@ class RealtimeAndToastPositionTest extends TestCase {
 	 */
 	public function toast_position_falls_back_for_invalid_value(): void {
 		Functions\when( 'get_option' )->justReturn( 'middle-of-nowhere' );
-		$this->assertSame( 'bottom-right', NotificationBridge::get_toast_position() );
+		$this->assertSame( 'bottom-center', NotificationBridge::get_toast_position() );
 	}
 
 	/**
@@ -152,6 +152,6 @@ class RealtimeAndToastPositionTest extends TestCase {
 		Functions\when( 'apply_filters' )->alias(
 			static fn( $hook, $value ) => 'wb_gam_toast_position' === $hook ? 'bogus' : $value
 		);
-		$this->assertSame( 'bottom-right', NotificationBridge::get_toast_position() );
+		$this->assertSame( 'bottom-center', NotificationBridge::get_toast_position() );
 	}
 }

@@ -821,7 +821,7 @@ final class SettingsPage {
 		wp_enqueue_script(
 			'wb-gam-admin-rest-utils',
 			plugins_url( 'assets/js/admin-rest-utils.js', WB_GAM_FILE ),
-			array( 'wb-gam-dialog' ),
+			array( 'wb-gam-dialog', 'wb-gam-toast-core' ),
 			WB_GAM_VERSION,
 			true
 		);
@@ -871,7 +871,7 @@ final class SettingsPage {
 		wp_enqueue_script(
 			'wb-gam-admin-rest-utils',
 			plugins_url( 'assets/js/admin-rest-utils.js', WB_GAM_FILE ),
-			array( 'wb-gam-dialog' ),
+			array( 'wb-gam-dialog', 'wb-gam-toast-core' ),
 			WB_GAM_VERSION,
 			true
 		);
@@ -941,7 +941,7 @@ final class SettingsPage {
 		wp_enqueue_script(
 			'wb-gam-admin-rest-utils',
 			plugins_url( 'assets/js/admin-rest-utils.js', WB_GAM_FILE ),
-			array( 'wb-gam-dialog' ),
+			array( 'wb-gam-dialog', 'wb-gam-toast-core' ),
 			WB_GAM_VERSION,
 			true
 		);
@@ -2905,10 +2905,11 @@ final class SettingsPage {
 
 		$current_position = \WBGam\Engine\NotificationBridge::get_toast_position();
 		$positions        = array(
-			'bottom-right' => __( 'Bottom right (recommended)', 'wb-gamification' ),
-			'bottom-left'  => __( 'Bottom left', 'wb-gamification' ),
-			'top-right'    => __( 'Top right', 'wb-gamification' ),
-			'top-center'   => __( 'Top center', 'wb-gamification' ),
+			'bottom-center' => __( 'Bottom center (recommended)', 'wb-gamification' ),
+			'bottom-right'  => __( 'Bottom right', 'wb-gamification' ),
+			'bottom-left'   => __( 'Bottom left', 'wb-gamification' ),
+			'top-right'     => __( 'Top right', 'wb-gamification' ),
+			'top-center'    => __( 'Top center', 'wb-gamification' ),
 		);
 
 		$choices = array(
@@ -2973,7 +2974,7 @@ final class SettingsPage {
 						<?php esc_html_e( 'Notification placement', 'wb-gamification' ); ?>
 					</h2>
 					<p class="wbgam-card-desc">
-						<?php esc_html_e( 'Where reward toasts (points, badges, kudos) appear on screen. Bottom-right is recommended - it never overlaps your theme header or navigation. Choose a top position only if a chat or support widget already sits in the bottom corner.', 'wb-gamification' ); ?>
+						<?php esc_html_e( 'Where reward toasts (points, badges, kudos) appear on screen. Bottom center is recommended: it matches the BuddyNext notifications and never overlaps your theme header or navigation. Choose a corner or a top position only if a chat or support widget already sits at the bottom.', 'wb-gamification' ); ?>
 					</p>
 				</div>
 				<div class="wbgam-card-body">
