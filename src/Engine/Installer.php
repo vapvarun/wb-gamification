@@ -109,7 +109,9 @@ final class Installer {
 		// Every DATETIME column holds UTC, written from PHP with current_time( 'mysql', true ). The
 		// CURRENT_TIMESTAMP defaults are a safety net only (they use the database server's zone).
 
-		// Immutable event log — source of truth for all gamification state.
+		// Append-only event log — source of truth for all gamification state. Rows leave only through
+		// retention (LogPruner, organic events only: a row with a source_key is imported history and is kept),
+		// a member's erasure (MemberData), a progress reset, or an import undo (ImportUndo).
 		// `point_type` records which currency the resulting award affected (analytics + audit).
 		dbDelta(
 			"CREATE TABLE {$wpdb->prefix}wb_gam_events (

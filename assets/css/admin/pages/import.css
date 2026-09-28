@@ -118,6 +118,10 @@
 	gap: var(--wb-gam-space-xs, 4px);
 }
 
+.wb-gam-import__panel .wb-gam-import__actions {
+	margin-top: var(--wb-gam-space-sm, 8px);
+}
+
 .wb-gam-import__status {
 	margin: 0;
 	font-size: 14px;
@@ -143,6 +147,21 @@
 	margin: 0;
 	font-size: 14px;
 	color: var(--wb-gam-color-text, #1d2327);
+}
+
+/* The one destructive control on this screen. It looks different from the primary action on purpose. */
+/* Three classes, to out-rank WordPress's own `.wp-core-ui .button` colours. */
+.wb-gam-import .button.wb-gam-import__danger {
+	border-color: var(--wb-gam-color-danger, #d63638);
+	background: var(--wb-gam-color-danger, #d63638);
+	color: #fff;
+}
+
+.wb-gam-import .button.wb-gam-import__danger:hover,
+.wb-gam-import .button.wb-gam-import__danger:focus {
+	border-color: var(--wb-gam-color-danger-hover, #b32d2e);
+	background: var(--wb-gam-color-danger-hover, #b32d2e);
+	color: #fff;
 }
 
 /* Tables wider than the screen scroll inside their own box; the page never scrolls sideways. */

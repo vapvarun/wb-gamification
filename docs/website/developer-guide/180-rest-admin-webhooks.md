@@ -486,27 +486,30 @@ curl -X POST https://example.com/wp-json/wb-gamification/v1/tools/retry-side-eff
 
 ## Import
 
-Migrate points, badges and ranks from another gamification plugin (Settings > Import). Requires `wb_gam_manage_members`. Imports run in import mode, so members are not sent "you earned a badge" messages for history.
+Migrate points, badges and ranks from another gamification plugin (Settings > Import). Requires `wb_gam_manage_members`; undo requires `manage_options`. Imports run in the background, one page of rows per job, and in import mode, so members are not sent "you earned a badge" messages for history.
 
 | Method | Endpoint | Permission |
 |--------|----------|------------|
 | `GET` | `/import/sources` | `wb_gam_manage_members` |
 | `POST` | `/import/{source}` | `wb_gam_manage_members` |
+| `GET` | `/import/{source}/progress` | `wb_gam_manage_members` |
+| `POST` | `/import/{source}/resume` | `wb_gam_manage_members` |
+| `POST` | `/import/{source}/undo` | `manage_options` |
 
 ### GET /import/sources
 
-List the supported sources and whether each has data on this site: `{ "sources": [ { "slug": "gamipress", "label": "GamiPress", "available": true }, ... ] }`. Sources are `gamipress`, `mycred` and `badgeos`.
+List the supported sources: `{ "sources": [ { "slug": "gamipress", "label": "GamiPress", "available": true, "imported": false, "run": { ... } }, ... ] }`. `available` says the source has data on this site, `imported` says an earlier run left rows here, and `run` is the latest run summary. Sources are `gamipress`, `mycred` and `badgeos`.
 
 ### POST /import/{source}
 
-Import from one source. Re-running is safe: every imported row carries a stable source key, so nothing is imported twice.
+Start an import. Re-running is safe: every imported row carries a stable source key, so nothing is imported twice.
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | `source` | string | Yes | `gamipress`, `mycred` or `badgeos` (in the URL) |
-| `dry_run` | boolean | No | Default `true`: report what would be imported without writing. Send `false` to import |
+| `dry_run` | boolean | No | Default `true`: count what would be imported without writing (200). Send `false` to import |
 
-An unknown source or a source with no data returns 400 (`wb_gam_unknown_source`, `wb_gam_source_unavailable`).
+A real run returns `202 Accepted` with the run state and does not wait for the import to finish. Poll `/progress`. Only one run per source at a time: a second start returns 409. An unknown source or a source with no data returns 400 (`wb_gam_unknown_source`, `wb_gam_source_unavailable`).
 
 ```bash
 curl -X POST https://example.com/wp-json/wb-gamification/v1/import/mycred \
@@ -515,6 +518,25 @@ curl -X POST https://example.com/wp-json/wb-gamification/v1/import/mycred \
   --cookie "wordpress_logged_in_xxx=..." \
   -d '{ "dry_run": false }'
 ```
+
+### GET /import/{source}/progress
+
+The latest run: `status` (`idle`, `queued`, `running`, `complete`, `failed`, `undone`), `mode` (`import` or `undo`), `phase`, `phase_done`, `phase_total`, `percent`, `totals`, `mismatches` (points, badges, ranks after reconciliation), a `sample` of up to 50 mismatches, `stalled` and `error`. A run is `stalled` when it is active, has not saved a checkpoint for 120 seconds and has no job waiting.
+
+### POST /import/{source}/resume
+
+Continue an unfinished, failed or stalled run from its last checkpoint. Returns 202 with the run state.
+
+### POST /import/{source}/undo
+
+Remove what that source's import created: its events, badge awards and levels, found by key prefix. Each member's total is reduced by exactly the amount the import added. Badges and points a member earned because of the imported history stay.
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `dry_run` | boolean | No | Default `true`: count what would be removed (200) |
+| `confirm` | boolean | Yes for a real run | Without `confirm: true` a real run returns 400 (`wb_gam_confirm_required`) |
+
+A real undo returns 202 and is tracked through `/progress` like an import.
 
 ## Email settings
 

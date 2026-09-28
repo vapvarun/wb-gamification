@@ -163,6 +163,9 @@
 				awards: t( 'phaseAwards', 'Importing badges' ),
 				recompute: t( 'phaseRecompute', 'Working out badges and levels for each member' ),
 				reconcile: t( 'phaseReconcile', 'Checking every member against the source' ),
+				undo_levels: t( 'phaseUndoLevels', 'Removing imported levels' ),
+				undo_events: t( 'phaseUndoEvents', 'Removing imported points' ),
+				undo_badges: t( 'phaseUndoBadges', 'Removing imported badges' ),
 				done: t( 'phaseDone', 'Finished' ),
 			};
 			return labels[ r.phase ] || r.phase;
@@ -209,6 +212,8 @@
 
 			if ( r.status === 'complete' ) {
 				renderComplete( result, r );
+			} else if ( r.status === 'undone' ) {
+				renderUndone( result, r );
 			}
 		}
 
@@ -297,9 +302,74 @@
 		}
 	}
 
+	/**
+	 * The finished undo: what was removed, and what could not be.
+	 *
+	 * @param {HTMLElement} box Container.
+	 * @param {Object}      r   Progress of a finished undo.
+	 */
+	function renderUndone( box, r ) {
+		clear( box );
+		var u = r.undone || {};
+		box.appendChild( el( 'p', 'wb-gam-import__ok', fmt( t( 'undone', 'Removed %1$s events, %2$s badge awards and %3$s levels.' ), [ u.events, u.badges, u.levels ] ) ) );
+		box.appendChild( el( 'p', 'wb-gam-import__note', t( 'undoneKept', 'Points and badges members earned because of the imported history (such as a level badge and its bonus) are ordinary awards and were kept.' ) ) );
+		if ( u.unrecoverable > 0 ) {
+			box.appendChild( el( 'p', 'wb-gam-import__warning', fmt( t( 'undoneUnrecoverable', '%1$s events had no recorded point value, so their points could not be taken off a member\'s total.' ), [ u.unrecoverable ] ) ) );
+		}
+		if ( u.negative && u.negative.length ) {
+			box.appendChild( el( 'p', 'wb-gam-import__warning', fmt( t( 'undoneNegative', '%1$s members now have a negative balance, because they spent points that were imported. Member IDs: %2$s' ), [ u.negative.length, u.negative.slice( 0, 20 ).join( ', ' ) ] ) ) );
+		}
+	}
+
+	/**
+	 * Undo: first say exactly what would be removed, then ask for a second, plainly named click.
+	 *
+	 * @param {string}      slug   Source slug.
+	 * @param {HTMLElement} box    Container.
+	 * @param {Object}      p      Preview from POST /import/{source}/undo with dry_run=true.
+	 * @param {Function}    onGo   Called when the removal has been started.
+	 * @param {Function}    onStop Called when the owner backs out.
+	 */
+	function renderUndoConfirm( slug, box, p, onGo, onStop ) {
+		clear( box );
+		var panel = el( 'div', 'wb-gam-import__panel' );
+		panel.appendChild( el( 'p', 'wb-gam-import__summary', fmt( t( 'undoSummary', 'Undoing this import removes %1$s imported events, %2$s badge awards and the %3$s levels it created.' ), [ p.events, p.badges, p.levels.length ] ) ) );
+		panel.appendChild( el( 'p', 'wb-gam-import__note', t( 'undoNote', 'Each member\'s total goes down by exactly what the import added. Points and badges earned because of the imported history stay. This cannot be undone.' ) ) );
+
+		var row = el( 'div', 'wb-gam-import__actions' );
+		var go = el( 'button', 'button wb-gam-import__danger', t( 'undoConfirm', 'Remove imported data' ) );
+		var cancel = el( 'button', 'button button-secondary', t( 'cancel', 'Cancel' ) );
+		go.type = 'button';
+		cancel.type = 'button';
+		cancel.addEventListener( 'click', function () {
+			clear( box );
+			onStop();
+		} );
+		go.addEventListener( 'click', function () {
+			go.disabled = true;
+			cancel.disabled = true;
+			api.apiFetch( 'POST', '/import/' + slug + '/undo', { dry_run: false, confirm: true }, settings ).then( function ( res ) {
+				if ( ! res.ok ) {
+					go.disabled = false;
+					cancel.disabled = false;
+					panel.appendChild( el( 'p', 'wb-gam-import__bad', errorText( res ) ) );
+					return;
+				}
+				onGo( res.data );
+			} );
+		} );
+		row.appendChild( go );
+		row.appendChild( cancel );
+		panel.appendChild( row );
+		box.appendChild( panel );
+		// Focus starts on the SAFE choice, as every danger confirm in this plugin does: a stray Enter
+		// must never delete data.
+		cancel.focus();
+	}
+
 	function renderSources( sources ) {
 		clear( app );
-		var any = sources.some( function ( s ) { return s.available; } );
+		var any = sources.some( function ( s ) { return s.available || s.imported; } );
 		if ( ! any ) {
 			app.appendChild( el( 'p', 'wb-gam-import__empty', t( 'noSources', 'No source data found.' ) ) );
 			return;
@@ -312,19 +382,56 @@
 			head.appendChild( el( 'span', s.available ? 'wb-gam-import__badge wb-gam-import__badge--on' : 'wb-gam-import__badge', s.available ? t( 'available', 'Data found' ) : t( 'unavailable', 'No data' ) ) );
 			card.appendChild( head );
 
-			if ( s.available ) {
+			if ( s.available || s.imported ) {
 				var actions = el( 'div', 'wb-gam-import__actions' );
 				var box = el( 'div', 'wb-gam-import__result' );
 				var preview = el( 'button', 'button button-secondary', t( 'preview', 'Preview (dry run)' ) );
 				var importBtn = el( 'button', 'button button-primary', t( 'import', 'Run import' ) );
+				var undoBtn = el( 'button', 'button button-secondary wb-gam-import__undo', t( 'undo', 'Undo import' ) );
 				preview.type = 'button';
 				importBtn.type = 'button';
+				undoBtn.type = 'button';
+				undoBtn.hidden = ! s.imported;
 				var confirming = false;
 
 				function busy( on ) {
 					preview.disabled = on;
 					importBtn.disabled = on;
+					undoBtn.disabled = on;
 				}
+
+				// A finished run leaves the buttons usable again, and an undo leaves nothing to undo.
+				function settled( run ) {
+					busy( false );
+					if ( run && run.status === 'undone' ) {
+						undoBtn.hidden = true;
+					} else if ( run && run.status === 'complete' ) {
+						undoBtn.hidden = false;
+					}
+				}
+
+				undoBtn.addEventListener( 'click', function () {
+					confirming = false;
+					importBtn.textContent = t( 'import', 'Run import' );
+					busy( true );
+					clear( box );
+					box.appendChild( el( 'p', 'wb-gam-import__loading', t( 'checking', 'Checking what would be removed...' ) ) );
+					api.apiFetch( 'POST', '/import/' + s.slug + '/undo', { dry_run: true }, settings ).then( function ( res ) {
+						if ( ! res.ok ) {
+							busy( false );
+							clear( box );
+							box.appendChild( el( 'p', 'wb-gam-import__bad', errorText( res ) ) );
+							return;
+						}
+						renderUndoConfirm(
+							s.slug,
+							box,
+							res.data,
+							function ( run ) { followRun( s.slug, box, run, settled ); },
+							function () { busy( false ); }
+						);
+					} );
+				} );
 
 				preview.addEventListener( 'click', function () {
 					confirming = false;
@@ -360,12 +467,15 @@
 							box.appendChild( el( 'p', 'wb-gam-import__bad', errorText( res ) ) );
 							return;
 						}
-						followRun( s.slug, box, res.data, function () { busy( false ); } );
+						followRun( s.slug, box, res.data, settled );
 					} );
 				} );
 
+				importBtn.hidden = ! s.available;
+				preview.hidden = ! s.available;
 				actions.appendChild( preview );
 				actions.appendChild( importBtn );
+				actions.appendChild( undoBtn );
 				card.appendChild( actions );
 				card.appendChild( box );
 
@@ -375,7 +485,7 @@
 					busy( isActive( s.run.status ) || s.run.stalled );
 					api.apiFetch( 'GET', '/import/' + s.slug + '/progress', null, settings ).then( function ( res ) {
 						if ( res.ok ) {
-							followRun( s.slug, box, res.data, function () { busy( false ); } );
+							followRun( s.slug, box, res.data, settled );
 						}
 					} );
 				}

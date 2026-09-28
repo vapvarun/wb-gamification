@@ -76,6 +76,17 @@ final class ImportRunner {
 	);
 
 	/**
+	 * The same, for an undo: levels are quick, events are almost all of it, badges are the tail.
+	 *
+	 * @var array<string, int>
+	 */
+	private const UNDO_WEIGHTS = array(
+		'undo_levels' => 2,
+		'undo_events' => 85,
+		'undo_badges' => 13,
+	);
+
+	/**
 	 * Register the chained job's handler.
 	 *
 	 * @return void
@@ -130,6 +141,7 @@ final class ImportRunner {
 			'awards'    => 200,
 			'recompute' => 100,
 			'reconcile' => 200,
+			'undo'      => 500,
 		);
 		/**
 		 * Filter how many rows an import job processes per page.
@@ -137,7 +149,7 @@ final class ImportRunner {
 		 * @since 1.6.5
 		 *
 		 * @param int    $size  Rows per page (clamped to 10-2000).
-		 * @param string $phase points | awards | recompute | reconcile.
+		 * @param string $phase points | awards | recompute | reconcile | undo.
 		 */
 		$size = (int) apply_filters( 'wb_gam_import_page_size', $defaults[ $phase ] ?? 200, $phase );
 		return max( 10, min( 2000, $size ) );
@@ -237,6 +249,71 @@ final class ImportRunner {
 	}
 
 	/**
+	 * Take a source's imported data back out, in the background.
+	 *
+	 * Refused while any run for the source is live, and when there is nothing to remove. It needs
+	 * neither the source plugin nor a previous run's state: imported data is found by its key
+	 * prefixes, so an import can be undone after its source was deactivated or state was lost.
+	 *
+	 * @param string $slug     Source slug.
+	 * @param bool   $schedule False to create the run without enqueueing a job (WP-CLI --sync drives it).
+	 * @return array<string, mixed>|WP_Error The new run's state.
+	 */
+	public static function start_undo( string $slug, bool $schedule = true ) {
+		$class = ImportUndo::prefix_class( $slug );
+		if ( $class instanceof WP_Error ) {
+			return $class;
+		}
+
+		return Lock::run(
+			'import_start_' . $slug,
+			static function () use ( $slug, $schedule ) {
+				$current = self::state( $slug );
+				if ( self::is_active( $current ) && ! self::is_stalled( $slug, $current ) ) {
+					return new WP_Error(
+						'wb_gam_import_running',
+						__( 'An import from this source is running. Wait for it to finish before undoing.', 'wb-gamification' ),
+						array( 'status' => 409 )
+					);
+				}
+
+				$preview = ImportUndo::preview( $slug );
+				if ( is_wp_error( $preview ) ) {
+					return $preview;
+				}
+				if ( 0 === $preview['events'] && 0 === $preview['badges'] && ! $preview['levels'] ) {
+					return new WP_Error(
+						'wb_gam_import_nothing_to_undo',
+						__( 'Nothing imported from this source is left to remove.', 'wb-gamification' ),
+						array( 'status' => 409 )
+					);
+				}
+
+				$state                      = self::blank_state();
+				$state['run_id']            = wp_generate_uuid4();
+				$state['mode']              = 'undo';
+				$state['status']            = 'queued';
+				$state['phase']             = 'undo_levels';
+				$state['phase_total']       = count( $preview['levels'] );
+				$state['created_level_ids'] = $current['created_level_ids'];
+				$state['started_at']        = self::now();
+				$state['updated_at']        = $state['started_at'];
+				self::save( $slug, $state );
+
+				if ( $schedule ) {
+					self::schedule( $slug, $state['run_id'], $state['seq'] );
+				}
+				return $state;
+			},
+			new WP_Error(
+				'wb_gam_import_busy',
+				__( 'Another request is starting this import. Try again in a moment.', 'wb-gamification' ),
+				array( 'status' => 409 )
+			)
+		);
+	}
+
+	/**
 	 * Continue a stalled or failed run from its last checkpoint.
 	 *
 	 * @param string $slug Source slug.
@@ -248,7 +325,7 @@ final class ImportRunner {
 		}
 
 		$state = self::state( $slug );
-		if ( '' === $state['run_id'] || 'complete' === $state['status'] || 'idle' === $state['status'] ) {
+		if ( '' === $state['run_id'] || in_array( $state['status'], array( 'complete', 'undone', 'idle' ), true ) ) {
 			return new WP_Error( 'wb_gam_import_nothing_to_resume', __( 'There is no unfinished import to resume.', 'wb-gamification' ), array( 'status' => 409 ) );
 		}
 		if ( self::is_active( $state ) && ! self::is_stalled( $slug, $state ) ) {
@@ -371,6 +448,11 @@ final class ImportRunner {
 	 * @return void
 	 */
 	private static function step( string $class, array &$state ): void {
+		if ( 'undo' === $state['mode'] ) {
+			ImportUndo::step( $class, $state );
+			return;
+		}
+
 		$phase = (string) $state['phase'];
 
 		switch ( $phase ) {
@@ -563,15 +645,16 @@ final class ImportRunner {
 	 * @return int 0-100.
 	 */
 	private static function percent( array $state ): int {
-		if ( 'complete' === $state['status'] || 'done' === $state['phase'] ) {
+		if ( in_array( $state['status'], array( 'complete', 'undone' ), true ) || 'done' === $state['phase'] ) {
 			return 100;
 		}
-		if ( ! isset( self::WEIGHTS[ $state['phase'] ] ) ) {
+		$weights = 'undo' === $state['mode'] ? self::UNDO_WEIGHTS : self::WEIGHTS;
+		if ( ! isset( $weights[ $state['phase'] ] ) ) {
 			return 0;
 		}
 
 		$percent = 0.0;
-		foreach ( self::WEIGHTS as $phase => $weight ) {
+		foreach ( $weights as $phase => $weight ) {
 			if ( $phase === $state['phase'] ) {
 				$fraction = $state['phase_total'] > 0 ? min( 1, $state['phase_done'] / $state['phase_total'] ) : 0;
 				$percent += $weight * $fraction;
@@ -589,7 +672,7 @@ final class ImportRunner {
 	 * @return bool
 	 */
 	private static function is_active( array $state ): bool {
-		return in_array( $state['status'], array( 'queued', 'running', 'undoing' ), true );
+		return in_array( $state['status'], array( 'queued', 'running' ), true );
 	}
 
 	/**
@@ -647,16 +730,17 @@ final class ImportRunner {
 
 		// The handler schedules its own successor, so it is guarded against enqueueing twice: an
 		// overlapping run would walk the same page twice and the progress counters would lie.
-		if ( self::has_pending_job( $slug, $run_id, $seq ) ) {
-			return;
-		}
-
 		if ( function_exists( 'as_enqueue_async_action' ) ) {
-			as_enqueue_async_action( self::HOOK, $args, self::GROUP );
+			if ( ! function_exists( 'as_has_scheduled_action' ) || ! as_has_scheduled_action( self::HOOK, $args, self::GROUP ) ) {
+				as_enqueue_async_action( self::HOOK, $args, self::GROUP );
+			}
 			return;
 		}
 
 		// No Action Scheduler: WP-Cron runs the same job. A page is still the unit of work.
+		if ( wp_next_scheduled( self::HOOK, $args ) ) {
+			return;
+		}
 		wp_schedule_single_event( time(), self::HOOK, $args );
 		if ( function_exists( 'spawn_cron' ) ) {
 			spawn_cron();
@@ -714,7 +798,8 @@ final class ImportRunner {
 		return array(
 			'run_id'            => '',
 			'seq'               => 0, // Pages run so far: the chain's position, and each job's identity.
-			'status'            => 'idle', // idle | queued | running | complete | failed | undoing | undone.
+			'mode'              => 'import', // import | undo: the same chain runs both.
+			'status'            => 'idle', // idle | queued | running | complete | failed | undone.
 			'phase'             => '',
 			'cursor'            => 0,
 			'phase_total'       => 0,
@@ -733,6 +818,14 @@ final class ImportRunner {
 				'ranks'  => 0,
 			),
 			'sample'            => array(),
+			'undone'            => array(
+				'events'        => 0,
+				'points_rows'   => 0,
+				'badges'        => 0,
+				'levels'        => 0,
+				'unrecoverable' => 0,
+				'negative'      => array(),
+			),
 			'error'             => '',
 			'started_at'        => '',
 			'updated_at'        => '',

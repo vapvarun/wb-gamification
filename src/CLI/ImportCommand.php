@@ -13,6 +13,7 @@
 namespace WBGam\CLI;
 
 use WBGam\Engine\ImportRunner;
+use WBGam\Engine\ImportUndo;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -87,7 +88,7 @@ class ImportCommand {
 			return;
 		}
 
-		$this->drive( $source, (string) $run['run_id'] );
+		self::drive( $source, (string) $run['run_id'] );
 	}
 
 	/**
@@ -117,8 +118,23 @@ class ImportCommand {
 			return;
 		}
 
-		\WP_CLI::log( sprintf( '%s: %s, %d%%%s', $source, $run['status'], $run['percent'], $run['stalled'] ? ' (STALLED: run with --resume, or add --sync)' : '' ) );
+		\WP_CLI::log( sprintf( '%s %s: %s, %d%%%s', $source, $run['mode'], $run['status'], $run['percent'], $run['stalled'] ? ' (STALLED: run with --resume, or add --sync)' : '' ) );
 		\WP_CLI::log( sprintf( 'Phase: %s (%d of %d)', $run['phase'], $run['phase_done'], $run['phase_total'] ) );
+
+		if ( 'undo' === $run['mode'] ) {
+			$gone = $run['undone'];
+			\WP_CLI::log( sprintf( 'Removed %d event(s) (%d points rows), %d badge award(s) and %d level(s).', $gone['events'], $gone['points_rows'], $gone['badges'], $gone['levels'] ) );
+			if ( $gone['unrecoverable'] > 0 ) {
+				\WP_CLI::warning( sprintf( '%d event(s) had no recorded point value, so their points could not be taken off a member\'s total.', $gone['unrecoverable'] ) );
+			}
+			if ( ! empty( $gone['negative'] ) ) {
+				\WP_CLI::warning( sprintf( '%d member(s) now have a negative balance (they spent points that were imported): %s', count( $gone['negative'] ), implode( ', ', array_slice( $gone['negative'], 0, 20 ) ) ) );
+			}
+			if ( '' !== $run['error'] ) {
+				\WP_CLI::warning( 'Last error: ' . $run['error'] );
+			}
+			return;
+		}
 		\WP_CLI::log(
 			sprintf(
 				'Imported %d, skipped %d already imported, failed %d, badges awarded %d, levels created %d.',
@@ -133,6 +149,79 @@ class ImportCommand {
 			\WP_CLI::warning( 'Last error: ' . $run['error'] );
 		}
 		self::report_mismatches( $run );
+	}
+
+	/**
+	 * Take an import back out: remove the events, points, badges and levels it created.
+	 *
+	 * Removes only what that source's import created, found by its key prefixes; needs neither the
+	 * source plugin nor the earlier run's state. Each member's total is corrected by exactly what the
+	 * import added. Badges and points a member earned because of the imported history (a level badge
+	 * and its bonus) are ordinary awards and stay. Runs in the background by default.
+	 *
+	 * ## OPTIONS
+	 *
+	 * <source>
+	 * : gamipress, mycred or badgeos.
+	 *
+	 * [--dry-run]
+	 * : Count what would be removed. Writes nothing.
+	 *
+	 * [--yes]
+	 * : Skip the confirmation.
+	 *
+	 * [--sync]
+	 * : Run every page in this process instead of queueing.
+	 *
+	 * ## EXAMPLES
+	 *
+	 *     wp wb-gamification import-undo mycred --dry-run
+	 *     wp wb-gamification import-undo mycred --yes --sync
+	 *
+	 * @param array $args       Positional args.
+	 * @param array $assoc_args Flags.
+	 * @return void
+	 */
+	public static function undo( array $args, array $assoc_args ): void {
+		$source = strtolower( (string) ( $args[0] ?? '' ) );
+		if ( null === ImportRunner::source_class( $source ) ) {
+			\WP_CLI::error( "Unsupported source: {$source}. Supported: " . implode( ', ', array_keys( ImportRunner::sources() ) ) . '.' );
+		}
+
+		$preview = ImportUndo::preview( $source );
+		if ( is_wp_error( $preview ) ) {
+			\WP_CLI::error( $preview->get_error_message() );
+		}
+
+		\WP_CLI::log(
+			sprintf(
+				'Undoing the %s import would remove %d event(s), %d badge award(s) and %d level(s) that the import created.',
+				$source,
+				$preview['events'],
+				$preview['badges'],
+				count( $preview['levels'] )
+			)
+		);
+		\WP_CLI::log( 'Each member\'s total is reduced by exactly what the import added. Badges and points earned because of the imported history stay.' );
+
+		if ( isset( $assoc_args['dry-run'] ) ) {
+			\WP_CLI::success( 'Preview only: nothing was removed.' );
+			return;
+		}
+
+		\WP_CLI::confirm( 'Remove this imported data? This cannot be undone.', $assoc_args );
+
+		$sync = isset( $assoc_args['sync'] );
+		$run  = ImportRunner::start_undo( $source, ! $sync );
+		if ( is_wp_error( $run ) ) {
+			\WP_CLI::error( $run->get_error_message() );
+		}
+
+		if ( ! $sync ) {
+			\WP_CLI::success( "Undo queued. Check it with: wp wb-gamification import-status {$source}" );
+			return;
+		}
+		self::drive( $source, (string) $run['run_id'] );
 	}
 
 	/**
@@ -180,7 +269,7 @@ class ImportCommand {
 	 * @param string $run_id Run id.
 	 * @return void
 	 */
-	private function drive( string $source, string $run_id ): void {
+	private static function drive( string $source, string $run_id ): void {
 		$last = '';
 
 		do {
@@ -200,6 +289,10 @@ class ImportCommand {
 		}
 
 		self::status( array( $source ) );
+		if ( 'undo' === $run['mode'] ) {
+			\WP_CLI::success( 'Undo complete.' );
+			return;
+		}
 		$mismatch = array_sum( $run['mismatches'] );
 		if ( $mismatch > 0 ) {
 			\WP_CLI::warning( "{$mismatch} reconciliation mismatch(es). Investigate before trusting the import." );

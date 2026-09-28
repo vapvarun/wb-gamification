@@ -8653,7 +8653,7 @@
   },
   "generated": {
     "generator": "bin/refresh-manifest-live.php (header, rest, shortcodes) + wp-plugin-qa scanner (other sections)",
-    "at": "2026-09-27T04:31:09+00:00"
+    "at": "2026-09-28T18:07:07+00:00"
   },
   "rest": {
     "namespace": "wb-gamification/v1",
@@ -8664,7 +8664,7 @@
           "GET"
         ],
         "permission": "MembersController::t1_permissions_check",
-        "callback": "src/API/MembersController.php:886"
+        "callback": "src/API/MembersController.php:906"
       },
       {
         "route": "/wb-gamification/v1/members/(?P<id>[\\d]+)/points",
@@ -8672,7 +8672,7 @@
           "GET"
         ],
         "permission": "MembersController::t2_permissions_check",
-        "callback": "src/API/MembersController.php:941"
+        "callback": "src/API/MembersController.php:963"
       },
       {
         "route": "/wb-gamification/v1/members/(?P<id>[\\d]+)/level",
@@ -8680,7 +8680,7 @@
           "GET"
         ],
         "permission": "MembersController::t1_permissions_check",
-        "callback": "src/API/MembersController.php:1052"
+        "callback": "src/API/MembersController.php:1074"
       },
       {
         "route": "/wb-gamification/v1/members/(?P<id>[\\d]+)/badges",
@@ -8688,7 +8688,7 @@
           "GET"
         ],
         "permission": "MembersController::t1_permissions_check",
-        "callback": "src/API/MembersController.php:1094"
+        "callback": "src/API/MembersController.php:1118"
       },
       {
         "route": "/wb-gamification/v1/members/(?P<id>[\\d]+)/events",
@@ -8696,7 +8696,7 @@
           "GET"
         ],
         "permission": "MembersController::t2_permissions_check",
-        "callback": "src/API/MembersController.php:1113"
+        "callback": "src/API/MembersController.php:1137"
       },
       {
         "route": "/wb-gamification/v1/members/(?P<id>[\\d]+)/streak",
@@ -8704,7 +8704,7 @@
           "GET"
         ],
         "permission": "MembersController::t1_permissions_check",
-        "callback": "src/API/MembersController.php:1175"
+        "callback": "src/API/MembersController.php:1199"
       },
       {
         "route": "/wb-gamification/v1/members/(?P<id>[\\d]+)/streak",
@@ -8712,7 +8712,7 @@
           "POST"
         ],
         "permission": "MembersController::admin_permissions_check",
-        "callback": "src/API/MembersController.php:687"
+        "callback": "src/API/MembersController.php:691"
       },
       {
         "route": "/wb-gamification/v1/members/(?P<id>[\\d]+)/streak",
@@ -8720,7 +8720,7 @@
           "DELETE"
         ],
         "permission": "MembersController::admin_permissions_check",
-        "callback": "src/API/MembersController.php:721"
+        "callback": "src/API/MembersController.php:725"
       },
       {
         "route": "/wb-gamification/v1/members/me/toasts",
@@ -8728,7 +8728,7 @@
           "GET"
         ],
         "permission": "MembersController::get_toasts_permissions_check",
-        "callback": "src/API/MembersController.php:1218"
+        "callback": "src/API/MembersController.php:1242"
       },
       {
         "route": "/wb-gamification/v1/members/me/profile-visibility",
@@ -8736,7 +8736,7 @@
           "GET"
         ],
         "permission": "MembersController::logged_in_permissions_check",
-        "callback": "src/API/MembersController.php:845"
+        "callback": "src/API/MembersController.php:852"
       },
       {
         "route": "/wb-gamification/v1/members/me/profile-visibility",
@@ -8744,7 +8744,7 @@
           "POST"
         ],
         "permission": "MembersController::logged_in_permissions_check",
-        "callback": "src/API/MembersController.php:862"
+        "callback": "src/API/MembersController.php:873"
       },
       {
         "route": "/wb-gamification/v1/members",
@@ -8776,7 +8776,7 @@
           "POST"
         ],
         "permission": "PointsController::admin_permission_check",
-        "callback": "src/API/PointsController.php:221"
+        "callback": "src/API/PointsController.php:222"
       },
       {
         "route": "/wb-gamification/v1/points/bulk",
@@ -8784,7 +8784,7 @@
           "POST"
         ],
         "permission": "PointsController::admin_permission_check",
-        "callback": "src/API/PointsController.php:417"
+        "callback": "src/API/PointsController.php:418"
       },
       {
         "route": "/wb-gamification/v1/points/(?P<id>[\\d]+)",
@@ -8792,7 +8792,7 @@
           "DELETE"
         ],
         "permission": "PointsController::admin_permission_check",
-        "callback": "src/API/PointsController.php:334"
+        "callback": "src/API/PointsController.php:335"
       },
       {
         "route": "/wb-gamification/v1/point-types",
@@ -8800,7 +8800,7 @@
           "GET"
         ],
         "permission": "__return_true",
-        "callback": "src/API/PointTypesController.php:147"
+        "callback": "src/API/PointTypesController.php:152"
       },
       {
         "route": "/wb-gamification/v1/point-types",
@@ -8808,7 +8808,7 @@
           "POST"
         ],
         "permission": "PointTypesController::admin_permission_check",
-        "callback": "src/API/PointTypesController.php:170"
+        "callback": "src/API/PointTypesController.php:176"
       },
       {
         "route": "/wb-gamification/v1/point-types/(?P<slug>[a-z0-9_-]+)",
@@ -8818,7 +8818,7 @@
           "PATCH"
         ],
         "permission": "PointTypesController::admin_permission_check",
-        "callback": "src/API/PointTypesController.php:193"
+        "callback": "src/API/PointTypesController.php:200"
       },
       {
         "route": "/wb-gamification/v1/point-types/(?P<slug>[a-z0-9_-]+)",
@@ -8826,7 +8826,7 @@
           "DELETE"
         ],
         "permission": "PointTypesController::admin_permission_check",
-        "callback": "src/API/PointTypesController.php:218"
+        "callback": "src/API/PointTypesController.php:225"
       },
       {
         "route": "/wb-gamification/v1/point-type-conversions",
@@ -8918,7 +8918,7 @@
           "POST"
         ],
         "permission": "BadgesController::award_permissions_check",
-        "callback": "src/API/BadgesController.php:738"
+        "callback": "src/API/BadgesController.php:756"
       },
       {
         "route": "/wb-gamification/v1/leaderboard",
@@ -8926,7 +8926,7 @@
           "GET"
         ],
         "permission": "__return_true",
-        "callback": "src/API/LeaderboardController.php:146"
+        "callback": "src/API/LeaderboardController.php:153"
       },
       {
         "route": "/wb-gamification/v1/leaderboard/group/(?P<group_id>[\\d]+)",
@@ -8934,7 +8934,7 @@
           "GET"
         ],
         "permission": "__return_true",
-        "callback": "src/API/LeaderboardController.php:201"
+        "callback": "src/API/LeaderboardController.php:208"
       },
       {
         "route": "/wb-gamification/v1/leaderboard/me",
@@ -8942,7 +8942,7 @@
           "GET"
         ],
         "permission": "LeaderboardController::require_logged_in",
-        "callback": "src/API/LeaderboardController.php:172"
+        "callback": "src/API/LeaderboardController.php:179"
       },
       {
         "route": "/wb-gamification/v1/actions",
@@ -9097,7 +9097,7 @@
           "GET"
         ],
         "permission": "ImportController::permissions",
-        "callback": "src/API/ImportController.php:100"
+        "callback": "src/API/ImportController.php:132"
       },
       {
         "route": "/wb-gamification/v1/import/(?P<source>[a-z]+)",
@@ -9105,7 +9105,31 @@
           "POST"
         ],
         "permission": "ImportController::permissions",
-        "callback": "src/API/ImportController.php:119"
+        "callback": "src/API/ImportController.php:164"
+      },
+      {
+        "route": "/wb-gamification/v1/import/(?P<source>[a-z]+)/progress",
+        "methods": [
+          "GET"
+        ],
+        "permission": "ImportController::permissions",
+        "callback": "src/API/ImportController.php:185"
+      },
+      {
+        "route": "/wb-gamification/v1/import/(?P<source>[a-z]+)/undo",
+        "methods": [
+          "POST"
+        ],
+        "permission": "ImportController::admin_permissions",
+        "callback": "src/API/ImportController.php:217"
+      },
+      {
+        "route": "/wb-gamification/v1/import/(?P<source>[a-z]+)/resume",
+        "methods": [
+          "POST"
+        ],
+        "permission": "ImportController::permissions",
+        "callback": "src/API/ImportController.php:199"
       },
       {
         "route": "/wb-gamification/v1/webhooks",
@@ -9271,7 +9295,7 @@
           "GET"
         ],
         "permission": "RedemptionController::admin_check",
-        "callback": "src/API/RedemptionController.php:608"
+        "callback": "src/API/RedemptionController.php:611"
       },
       {
         "route": "/wb-gamification/v1/redemptions",
@@ -10935,15 +10959,6 @@
       "consumed_by": []
     },
     {
-      "name": "wb_gam_import_timeout_ms",
-      "type": "filter",
-      "purpose": "",
-      "fired_at": [
-        "src/Admin/ImportPage.php:97"
-      ],
-      "consumed_by": []
-    },
-    {
       "name": "wb_gam_kudos_abuse_pair_threshold",
       "type": "filter",
       "purpose": "",
@@ -11298,6 +11313,26 @@
         "src/API/LeaderboardController.php:261"
       ],
       "consumed_by": []
+    },
+    {
+      "name": "wb_gam_import_page_size",
+      "type": "filter",
+      "purpose": "Rows an import job processes per page, per phase (points, awards, recompute, reconcile, undo). Clamped to 10-2000.",
+      "fired_at": [
+        "src/Engine/ImportRunner.php:154"
+      ],
+      "consumed_by": []
+    },
+    {
+      "name": "wb_gam_import_chunk",
+      "type": "action",
+      "purpose": "The chained background job of an import: runs ONE page, then enqueues the next. Args: source slug, run id, sequence number. Action Scheduler, or WP-Cron when it is absent.",
+      "fired_at": [
+        "src/Engine/ImportRunner.php:738 (Action Scheduler / WP-Cron)"
+      ],
+      "consumed_by": [
+        "src/Engine/ImportRunner.php:95 array( __CLASS__"
+      ]
     }
   ],
   "cron": [

@@ -11,7 +11,7 @@
  *   2. Action-enabled + rate-limit checks  (registered actions only)
  *   3. Enrich metadata via filter
  *   4. Before-evaluate gate (can abort)
- *   5. Persist to wb_gam_events  (immutable source of truth)
+ *   5. Persist to wb_gam_events  (append-only source of truth)
  *   6. Calculate points  (option + RuleEngine multipliers)
  *   7. Write to wb_gam_points  (with event_id FK)
  *   8. Fire hooks + dispatch webhooks
@@ -738,7 +738,7 @@ final class Engine {
 	}
 
 	/**
-	 * Persist a raw event to the immutable event log.
+	 * Persist a raw event to the append-only event log.
 	 *
 	 * The event log is the source of truth for all derived state.
 	 * Points, badges, and levels can all be replayed from this table.

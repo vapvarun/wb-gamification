@@ -1,6 +1,6 @@
 # WB Gamification — CLAUDE.md
 
-> **READ FIRST:** [`audit/manifest.json`](audit/manifest.json) is the canonical inventory — **112 REST handlers** (75 unique routes), **26 tables**, **19 blocks**, **17 shortcodes**, **142 hooks fired** (66 actions / 76 filters), **16 cron hooks** (incl. Action Scheduler), **10 WP-CLI commands**, **15 admin pages**, **49 services**, **24 integrations / 126 triggers**, **0 admin_post_* handlers** (Tier 0 REST migration intact), **0 wp_ajax_* handlers**. Quick index: [`audit/manifest.summary.json`](audit/manifest.summary.json) (≤3 KB). Buyer-level roll-up: [`CAPABILITIES.md`](CAPABILITIES.md). Refresh via `/wp-plugin-onboard --refresh` after non-trivial changes.
+> **READ FIRST:** [`audit/manifest.json`](audit/manifest.json) is the canonical inventory — **115 REST handlers** (78 unique routes), **26 tables**, **19 blocks**, **17 shortcodes**, **142 hooks fired** (66 actions / 76 filters), **16 cron hooks** (incl. Action Scheduler), **10 WP-CLI commands**, **15 admin pages**, **49 services**, **24 integrations / 126 triggers**, **0 admin_post_* handlers** (Tier 0 REST migration intact), **0 wp_ajax_* handlers**. Quick index: [`audit/manifest.summary.json`](audit/manifest.summary.json) (≤3 KB). Buyer-level roll-up: [`CAPABILITIES.md`](CAPABILITIES.md). Refresh via `/wp-plugin-onboard --refresh` after non-trivial changes.
 >
 > **Trust order:** `audit/manifest.summary.json` (code-verified) > [`CAPABILITIES.md`](CAPABILITIES.md) > code > everything else. Dated snapshots ([`audit/STABILITY-2026-05-27.md`](audit/STABILITY-2026-05-27.md), `audit/wppqa-baseline-*`) are **history — verify against the trail before trusting**.
 >
@@ -466,7 +466,7 @@ Version tracked by `get_option('wb_gam_db_version')`. Migrations live in `DbUpgr
 
 | Table | Purpose |
 |---|---|
-| `wb_gam_events` | Immutable event log (UUID PK, source of truth) |
+| `wb_gam_events` | Append-only event log (UUID PK, source of truth). Rows leave only through retention (organic events; events with a `source_key` are imported history and are kept), a member's erasure, a progress reset, or an import undo. |
 | `wb_gam_points` | Points ledger (derived; event_id FK to events) |
 | `wb_gam_user_badges` | Earned badges (`expires_at` nullable) |
 | `wb_gam_badge_defs` | Badge definitions (name, description, image) |

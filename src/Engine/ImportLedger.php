@@ -44,6 +44,24 @@ final class ImportLedger {
 	}
 
 	/**
+	 * Did this source import anything that is still here? A LIMIT 1 probe, not a count: it answers
+	 * instantly however much was imported, which is what a page load can afford.
+	 *
+	 * @param string $key_prefix   Event key prefix.
+	 * @param string $badge_prefix Badge id prefix.
+	 * @return bool
+	 */
+	public static function has_imported( string $key_prefix, string $badge_prefix ): bool {
+		global $wpdb;
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		if ( $wpdb->get_var( $wpdb->prepare( "SELECT 1 FROM {$wpdb->prefix}wb_gam_events WHERE source_key LIKE %s LIMIT 1", self::like( $key_prefix ) ) ) ) {
+			return true;
+		}
+		return (bool) $wpdb->get_var( $wpdb->prepare( "SELECT 1 FROM {$wpdb->prefix}wb_gam_user_badges WHERE badge_id LIKE %s LIMIT 1", self::like( $badge_prefix ) ) );
+		// phpcs:enable
+	}
+
+	/**
 	 * How many imported events exist for a source (a range count on uniq_source_key).
 	 *
 	 * @param string $key_prefix Event key prefix.

@@ -1079,6 +1079,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			WP_CLI::add_command( 'wb-gamification openapi', WBGam\CLI\OpenApiCommand::class );
 			WP_CLI::add_command( 'wb-gamification import', WBGam\CLI\ImportCommand::class );
 			WP_CLI::add_command( 'wb-gamification import-status', array( WBGam\CLI\ImportCommand::class, 'status' ) );
+			WP_CLI::add_command( 'wb-gamification import-undo', array( WBGam\CLI\ImportCommand::class, 'undo' ) );
 			WP_CLI::add_command( 'wb-gamification email-test', array( WBGam\CLI\EmailCommand::class, 'test' ) );
 		}
 	);
