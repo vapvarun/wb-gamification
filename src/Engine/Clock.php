@@ -141,7 +141,14 @@ final class Clock {
 		$now = self::site_now();
 		try {
 			$moved = $now->modify( $modifier );
-		} catch ( \Exception $e ) { // PHP 8.3+ throws DateMalformedStringException.
+			// DateMalformedStringException only exists as a throwable contract on PHP 8.3+.
+			// PHPStan's CI job analyses under PHP 8.2 (this plugin supports 8.1-8.5, see
+			// CLAUDE.md), where ->modify() cannot throw and this catch is correctly unreachable
+			// FOR THAT VERSION -- but it is live, load-bearing code on 8.3+, where an unparseable
+			// modifier throws instead of returning false. Removing the catch to satisfy the 8.2
+			// analysis would make 8.3+ fatal on a bad modifier instead of falling back to $now.
+			// @phpstan-ignore-next-line -- unreachable only under the PHP version PHPStan runs on, not on 8.3+.
+		} catch ( \Exception $e ) {
 			return $now;
 		}
 		return false === $moved ? $now : $moved;
