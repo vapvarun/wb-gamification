@@ -658,6 +658,18 @@ final class PointsEngine {
 			LevelEngine::maybe_level_up( $user_id );
 		}
 
+		// A debit never fires `wb_gam_points_awarded` — BadgeEngine, ChallengeEngine and
+		// NotificationBridge all listen for it, and firing it here would evaluate badges and
+		// challenges against a removal and toast the member "points awarded" for points taken
+		// away. But the leaderboard rank cache (LeaderboardEngine::get_user_rank()) is keyed on
+		// the same object-cache stamp that hook bumps, so a debit with no award anywhere else on
+		// the site in the next two minutes left a member's own rank strip showing their
+		// pre-debit total until the cache's own TTL expired. Bump the stamp directly -- the one
+		// side effect debit and award both need, without the other three.
+		if ( ! empty( $result['success'] ) ) {
+			LeaderboardEngine::invalidate_cache();
+		}
+
 		return $result;
 	}
 

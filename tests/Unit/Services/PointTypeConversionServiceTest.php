@@ -190,6 +190,9 @@ class PointTypeConversionServiceTest extends TestCase {
 		);
 		Functions\when( 'wp_cache_set' )->justReturn( true );
 		Functions\when( 'wp_cache_delete' )->justReturn( true );
+		// A conversion debits the source currency (PointsEngine::debit()), which busts the
+		// leaderboard rank cache.
+		Functions\when( 'wp_cache_set_last_changed' )->justReturn( true );
 		Functions\when( 'current_time' )->justReturn( '2026-01-01 00:00:00' );
 		Functions\when( 'do_action' )->justReturn( null );
 		Functions\stubs( array( 'wp_json_encode' => static fn( $v ) => json_encode( $v ) ) );

@@ -37,6 +37,8 @@ class PointsEngineTest extends TestCase {
 		Functions\when( 'apply_filters' )->returnArg( 2 );
 		// A non-spend debit re-checks the member's level (LevelEngine::maybe_level_up).
 		Functions\when( 'wp_cache_set' )->justReturn( true );
+		// A successful debit busts the leaderboard rank cache (LeaderboardEngine::invalidate_cache()).
+		Functions\when( 'wp_cache_set_last_changed' )->justReturn( true );
 	}
 
 	protected function tearDown(): void {
@@ -93,6 +95,66 @@ class PointsEngineTest extends TestCase {
 		$ledger_row = end( $inserts );
 		$this->assertSame( -50, $ledger_row['points'] );
 		$this->assertSame( 7, $ledger_row['user_id'] );
+	}
+
+	/**
+	 * A successful debit must bust the leaderboard rank cache directly
+	 * (LeaderboardEngine::invalidate_cache(), which bumps the object-cache
+	 * last-changed stamp), so `GET /leaderboard/me` reflects it on the very next
+	 * read. It must NOT fire `wb_gam_points_awarded` to get there: BadgeEngine,
+	 * ChallengeEngine and NotificationBridge all listen for that hook, and a
+	 * debit is a removal, not an award — firing it would evaluate badges and
+	 * challenges against a deduction and toast the member "points awarded" for
+	 * points taken away.
+	 */
+	public function test_debit_busts_the_leaderboard_rank_cache_without_firing_the_award_hook(): void {
+		global $wpdb;
+
+		$wpdb         = $this->mockWpdb();
+		$wpdb->prefix = 'wp_';
+
+		$wpdb->shouldReceive( 'prepare' )->andReturnUsing( static fn( $q ) => $q );
+		$wpdb->shouldReceive( 'get_var' )->andReturn( 200 );
+		$wpdb->shouldReceive( 'get_results' )->andReturn( array() );
+		$wpdb->shouldReceive( 'insert' )->andReturn( 1 );
+		$wpdb->shouldReceive( 'query' )->andReturn( 1 );
+
+		Functions\when( 'current_time' )->justReturn( '2026-01-01 00:00:00' );
+		Functions\stubs( array( 'wp_json_encode' => static fn( $v ) => json_encode( $v ) ) );
+		Functions\when( 'wp_cache_delete' )->justReturn( true );
+		Functions\when( 'do_action' )->justReturn( null );
+
+		$busted = false;
+		Functions\when( 'wp_cache_set_last_changed' )->alias(
+			static function ( string $group ) use ( &$busted ): bool {
+				if ( 'wb_gamification' === $group ) {
+					$busted = true;
+				}
+				return true;
+			}
+		);
+
+		$result = PointsEngine::debit( 7, 50, 'redemption' );
+
+		$this->assertTrue( $result['success'] );
+		$this->assertTrue( $busted, 'A successful debit must bust the leaderboard rank cache.' );
+
+		// Source pin: debit() must reach that cache bust WITHOUT going through the
+		// award-notification hook (see the docblock above for why). Comments are
+		// stripped first so the explanation of that rule doesn't trip the check
+		// meant to enforce it.
+		$src  = '';
+		foreach ( token_get_all( (string) file_get_contents( dirname( __DIR__, 3 ) . '/src/Engine/PointsEngine.php' ) ) as $token ) {
+			if ( is_array( $token ) && in_array( $token[0], array( T_COMMENT, T_DOC_COMMENT ), true ) ) {
+				continue;
+			}
+			$src .= is_array( $token ) ? $token[1] : $token;
+		}
+		$start = strpos( $src, 'public static function debit(' );
+		$end   = strpos( $src, 'public static function bump_user_total(' );
+		$debit = substr( $src, $start, $end - $start );
+		$this->assertStringNotContainsString( 'wb_gam_points_awarded', $debit );
+		$this->assertStringContainsString( 'LeaderboardEngine::invalidate_cache();', $debit );
 	}
 
 	public function test_debit_rolls_back_when_balance_insufficient(): void {

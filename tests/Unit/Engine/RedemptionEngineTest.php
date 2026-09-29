@@ -111,6 +111,9 @@ class RedemptionEngineTest extends TestCase {
 		Functions\when( 'wp_cache_get' )->justReturn( false );
 		Functions\when( 'wp_cache_set' )->justReturn( true );
 		Functions\when( 'wp_cache_delete' )->justReturn( true );
+		// debit() reports success on its own inner transaction (the stock-race rollback happens
+		// one level up, in RedemptionEngine's own transaction), so it still busts the rank cache.
+		Functions\when( 'wp_cache_set_last_changed' )->justReturn( true );
 		Functions\when( 'do_action' )->justReturn( null );
 		Functions\when( 'current_time' )->justReturn( '2026-05-27 12:00:00' );
 		Functions\when( 'sanitize_key' )->returnArg();
