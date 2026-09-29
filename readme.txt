@@ -4,7 +4,7 @@ Tags: gamification, points, badges, leaderboard, buddypress
 Requires at least: 6.5
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 1.6.4
+Stable tag: 1.6.5
 License: GPL-2.0+
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -144,6 +144,22 @@ Daily caps, weekly caps and per-action cooldowns are enforced silently. A member
 Since 1.6.4 a badge is private until the member shares it, so links published before the upgrade stop resolving until the member presses Share on their badge board. That is what stops strangers enumerating badge pages by guessing IDs. If you deliberately run an open community and want the old links working again, `wp wb-gamification share grandfather` publishes every existing badge in one pass, and `wp wb-gamification share reset` makes them private again.
 
 == Changelog ==
+
+= 1.6.5 - September 2026 =
+
+Migrate from myCred, GamiPress or BadgeOS at any community size, browse the full leaderboard, and delegate Levels and Submissions to staff without full admin access.
+
+* New      - Migrate points, badges and ranks from myCred, GamiPress or BadgeOS at any size. Imports now run in the background with a progress bar, resume after an interruption, reconcile against the source, and can be undone. Settings > Import.
+* New      - Browse a leaderboard past the top 100. `GET /leaderboard` takes a cursor and returns the total member count, so an app or template can page the whole board.
+* New      - WP Sell Services integration: completing an order pays the seller, a published review pays the buyer.
+* New      - Levels has its own admin page (Gamification > Levels) so a staff member can edit it without full administrator access; Submissions opens the same way.
+* New      - One shared popup family for every notification (toast, card, banner, dialog, drawer, menu), matching a community theme's own colours when it provides them.
+* Improve  - The Gamification submenu follows the order an owner works through it - set up, configure, monitor, moderate, develop - instead of load order.
+* Improve  - Action labels read as what a member did ("Create a post") instead of a mix of event-style names; bbPress actions get their own Forums group.
+* Improve  - The weekly leaderboard nudge no longer runs its background job when nothing can deliver it (no BuddyPress, email off, no listener).
+* Improve  - Six admin tables scroll inside their card on a phone instead of pushing past the screen; Analytics, Kudos Moderation and Members show why a list is empty and what to do next.
+* Fix      - A leaderboard's member total could disagree with its own page walk by a member or two right after the board refreshed. Both now read the same data.
+* Dev      - `wb_gam_import_timeout_ms` is removed (imports have no fixed timeout); `wb_gam_import_page_size` controls rows per background page.
 
 = 1.6.4 - July 2026 =
 
@@ -496,6 +512,9 @@ Distribution pipeline and admin polish ahead of the integration release.
 10. **Redemption Store** — Admin catalog UI to define rewards (custom or WooCommerce-backed) with point cost, stock, and active/inactive status.
 
 == Upgrade Notice ==
+
+= 1.6.5 =
+Migrate from myCred, GamiPress or BadgeOS at any size, browse the full leaderboard, and delegate Levels and Submissions to staff. Runs a one-time background migration on upgrade: existing timestamps are converted to UTC and each member's earned-points total is backfilled; sites already on UTC skip it. No action needed - it runs automatically and does not block the site while it runs.
 
 = 1.6.4 =
 Security and stability release. Fixes a bug that could delete other plugins' queued background jobs (including WooCommerce orders and subscription renewals) and closes three ways an anonymous visitor could read members' private data. Behaviour change: badges are now private until a member shares them, so a badge or credential link a member has already posted will stop working until they press Share again. Run `wp wb-gamification share grandfather` to publish existing badges and keep those links alive. Adds a column to wb_gam_user_badges and an index to wb_gam_kudos on upgrade.

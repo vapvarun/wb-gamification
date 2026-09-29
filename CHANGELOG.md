@@ -6,8 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 
 ## [Unreleased]
 
+## [1.6.5] - 2026-09-29
+
 ### Added
 
+- The leaderboard can be browsed past the top 100: `GET /leaderboard` takes a `cursor` and returns `total` / `has_more` / `next_cursor`, and `wb_gam_get_leaderboard_page()` / `wb_gam_get_leaderboard_total()` do the same for templates and partners. Paging never uses `OFFSET` (a cursor on the last member's points and id), so a deep page on a 100k-member board is as fast as the first one.
+- Migrate points, badges and ranks from myCred, GamiPress or BadgeOS at any size: an import now runs as a paged background job (Action Scheduler, WP-Cron fallback) with a progress bar, resumes from its last checkpoint after an interruption, reconciles every member's balance against the source when it finishes, and can be undone - removing exactly what it added, never a member's other points. `Settings > Import`, `wp wb-gamification import` / `import-status` / `import-undo`, and `POST /import/{source}`, `.../progress`, `.../resume`, `.../undo`.
+- WP Sell Services integration: completing a service order pays the seller, a published review pays the buyer. A seller dealing with their own order or review earns nothing.
+- Levels has its own admin page, `Gamification > Levels`, gated on the `wb_gam_manage_levels` capability, so a staff member holding just that capability can edit the level ladder without full administrator access. Submissions opens the same way on `wb_gam_manage_submissions`.
+- One popup family for every overlay: Moment card, Toast, Banner, Dialog, Drawer and Menu share one set of shells and read a community theme's own colours and motion settings when it provides them, falling back to the plugin's own tokens otherwise. Three new notification types (league promotion/demotion, community-goal reached) render through the same Moment card as a badge or level-up.
+- A community notification contract: every gamification event that fires a notification carries the same payload shape on the plugin's existing hook, so a partner plugin reads one row per event instead of assembling its own guess from several hooks.
 - Action `wb_gam_badge_deleted( $badge_id, $user_ids, $def )` fires after a badge definition is deleted, with the members who had earned it, so a community plugin can withdraw that badge's shared feed cards.
 - Point types have an optional singular name ("Point", "Coin"), and every member-facing amount uses it for exactly one: "+1 Point", "250 Points". Toasts, How to earn, points history, leaderboards (including live updates), member cards, the rewards store, daily bonus, challenges, recaps, nudges and emails all read the site's names; the last fixed "pts" strings are gone. Point types can now be renamed from **Gamification > Point Types** (Rename), not only through the API. `wb_gam_format_points()` formats an amount for partners.
 - Public helpers for partner plugins and themes: earned points and level-climb check, action on/points, point-type and category labels, module on/off, points history, rank, next level, contribution heatmap data, all badges for a member, shared badges and share URL, kudos (send, can send, recent, received, count), and whether the leaderboard is handed to Jetonomy. See Developer Guide > Helper Functions.
@@ -18,6 +26,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 
 ### Changed
 
+- The Gamification submenu now runs in the order an owner works through it - set up, configure, monitor, moderate, develop - instead of the order its pages happened to register in. The first entry reads "Dashboard", and the Settings sidebar item that used to read "Engagement" reads "Habits & Profiles".
+- Manifest action labels read as what a member did ("Create a post", "Get a listing approved") instead of a mix of event-style names ("Post created"); action ids are unchanged, so no rule or report referencing them breaks. bbPress actions get their own "Forums" group instead of sharing "Social".
+- The weekly leaderboard nudge no longer runs its background fan-out when nothing can deliver it: no BuddyPress notification, the email option off, and no `wb_gam_weekly_nudge_sent` listener. The settings description no longer claims an in-app notification that needs BuddyPress to exist.
 - Levels and leaderboards follow the points a member earned: every points row except spends (rewards, currency exchanges, anything paid through `wb_gam_spend_points()`), so spending never costs a member their level or their place. Weekly leagues, the weekly email, the yearly recap, the activity heatmap and analytics count earned points the same way. The ledger marks spend rows (`is_spend`) and `wb_gam_user_totals.earned` holds the indexed total; both are backfilled once on upgrade. Deductions, decay and reversed awards still lower it, and now take effect straight away instead of on the member's next award; a points reset returns the member to the first level. Point-milestone and level-reached badges use the same earned total. `GET /members/{id}` and `GET /members/{id}/level` add `earned_points`; `PointsEngine::get_earned()` reads it.
 - Only a level climb is announced. A drop used to toast "You reached Member!" and send the level-up email and ActivityPub post; it is now applied quietly. `LevelEngine::is_climb()` lets integrations do the same (`wb_gam_level_changed` still fires both ways for rank automation and webhooks).
 - An admin award with no reason shows "Manual award" on the member's toast instead of `manual_award`.
@@ -38,6 +49,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 
 ### Fixed
 
+- A week, month or day leaderboard's member total could disagree with its own page walk by one or two members right after the board's snapshot rebuilt: the total counted the live ledger on its own cache, the walk read the snapshot on a different one, and the two could be different ages. Both now read the same generation of data.
+- Six admin tables (Award Points, Redemption Store, Point Multipliers, API Keys) pushed past the screen on a phone instead of scrolling inside their card; the Streaks and Kudos Moderation rosters stacked into unlabeled cells at the same width and now stay real, scrolling tables.
+- Analytics, Kudos Moderation and Members show why a list is empty and what to do next, instead of just "No data yet."
 - How to earn shows each amount in the site's own name for points ("+10 Karma") instead of a fixed "pts", and lists an action once when it is registered twice so one thing is rewarded once (an Eventonomy ticket order paid at once or through a card gateway). The `wb_gam_block_earning_guide_data` rows add `points_label`.
 - `wb_gam_user_totals.updated_at` is removed: nothing read it, and the database stamped it with its own clock instead of UTC.
 - Points from Jetonomy forum activity toasted as "Points awarded" and read as a raw id in the history. They now say what happened ("Replied in the forum", "Your forum post was upvoted", "(reversed)" on undo), and every surface - toasts, points history, REST, analytics - uses one label. New `wb_gam_action_label` filter and `wb_gam_get_action_label()` helper for integrations.
@@ -444,5 +458,6 @@ First public release.
 - **Pre-release agent smoke** — generic Claude-level `wp-plugin-smoke` skill consumes per-plugin `docs/qa/qa.config.json` to dispatch Sonnet for the full smoke walk.
 - **Build-release gate** — `bin/build-release.sh` refuses to package without a green smoke report at `docs/qa/.last-smoke-pass.json`.
 
-[Unreleased]: https://github.com/vapvarun/wb-gamification/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/vapvarun/wb-gamification/compare/v1.6.5...HEAD
+[1.6.5]: https://github.com/vapvarun/wb-gamification/compare/v1.6.4...v1.6.5
 [1.0.0]: https://github.com/vapvarun/wb-gamification/releases/tag/v1.0.0
