@@ -330,6 +330,12 @@ cat > "${EXCLUDES_FILE}" <<'EXCLUDES_EOF'
 .editorconfig
 .distignore
 .DS_Store
+# Dev-tooling dotfiles — Plugin Check's own hidden_files rule flags these in the
+# zip (2.12/Q5 gate, wb-gamification-1.6.5 first catch). Neither means anything
+# to a customer install; both are inputs to gates that run against the source
+# tree, never the shipped copy.
+.contract-audit-baseline.json
+.wbcom-i18n.json
 .idea/
 .vscode/
 .husky/

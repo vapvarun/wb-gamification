@@ -59,9 +59,19 @@ final class AbilitiesRegistration {
 	 * Both `label` and `description` are required — omitting either makes
 	 * `wp_register_ability_category()` silently return null.
 	 *
+	 * Only ever reached via the `wp_abilities_api_categories_init` hook, which itself does not
+	 * exist before WP 6.9 (init()'s `function_exists( 'wp_register_ability' )` check is what gates
+	 * that add_action call) -- so this is unreachable on an older core in practice. The direct
+	 * guard here is for Plugin Check's benefit: it flags the call on its own version-compatibility
+	 * data for `wp_register_ability_category()` specifically, and cannot see that the surrounding
+	 * hook is itself core-gated.
+	 *
 	 * @return void
 	 */
 	public static function register_category(): void {
+		if ( ! function_exists( 'wp_register_ability_category' ) ) {
+			return;
+		}
 		wp_register_ability_category(
 			'gamification',
 			array(
