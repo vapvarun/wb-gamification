@@ -3,6 +3,11 @@
     "note": "Every entry is a VERIFIED-INTENTIONAL exception, not a suppressed bug. The genuinely fixable findings were fixed (CSS tool false positives resolved upstream in the audit tool; events_retention_months + leaderboard_mode in PR #64; 12 engagement settings given admin UIs in PR #65). What remains is deferred-feature options, dynamic-key writes a static scanner provably cannot follow, and Action-Scheduler/WP-Cron hooks whose action name is a class constant the scanner resolves on the add_action (consume) side but not on the as_enqueue_async_action/as_schedule_*/wp_schedule_event (fire) side. Each cron/AS entry was confirmed 2026-06-15 to have a real firing call referencing the same constant in the same class. Re-verify each before extending. Better long-term fix: teach contract-audit to resolve constants passed to the as_*/wp_schedule_* family.",
     "suppressions": [
         {
+            "id": "setting-resolved-twice:tier_name",
+            "reason": "False positive. src/Blocks/cohort-rank/render.php:163 reads $wb_gam_standing['tier_name'], a field CohortEngine::get_user_standing() itself populates via self::get_tier_name() (CohortEngine.php:699). There is one computation site; the block reads its output one hop removed, it does not re-derive the value from the raw option.",
+            "severity": "warning"
+        },
+        {
             "id": "option-read-never-written:wb_gam_activitypub_publish",
             "reason": "Deferred feature. ActivityPub federation is not shipped yet (src/Integrations/ActivityPub.php is gated/inactive). The option is read default-off; it gains a write path + admin UI when AP ships. Intentional code-only until then.",
             "severity": "error"
