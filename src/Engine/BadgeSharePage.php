@@ -124,16 +124,30 @@ final class BadgeSharePage {
 			&& BadgeShare::can_view_public( $user_id, $badge_id );
 
 		if ( ! $wb_gam_visible ) {
-			wp_safe_redirect( ProfilePage::profile_url( (string) $user->user_login ), 302 );
+			$wb_gam_fallback = ProfilePage::profile_url( (string) $user->user_login );
+			/**
+			 * Filter where a badge-share URL redirects when the badge cannot be
+			 * shown (un-earned or un-published). Defaults to wb-gamification's own
+			 * profile page; BuddyNext — the master community — fills this from its
+			 * own bridge so the visitor lands on the BuddyNext profile instead of a
+			 * wb-gamification page. Return '' to fall back to the default.
+			 *
+			 * @param string $url      Default redirect URL (wb-gamification profile).
+			 * @param int    $user_id  Badge owner.
+			 * @param string $badge_id Badge slug.
+			 */
+			$wb_gam_redirect = (string) apply_filters( 'wb_gam_badge_share_redirect_url', $wb_gam_fallback, $user_id, $badge_id );
+			wp_safe_redirect( '' !== $wb_gam_redirect ? $wb_gam_redirect : $wb_gam_fallback, 302 );
 			exit;
 		}
 
+		// earned_at is UTC; the LinkedIn issue year/month is the site-calendar one.
 		$share_url   = self::get_share_url( $badge_id, $user_id );
 		$cred_url    = rest_url( 'wb-gamification/v1/badges/' . $badge_id . '/credential/' . $user_id );
 		$earned_at   = BadgeEngine::get_badge_row( $user_id, $badge_id )['earned_at'] ?? '';
-		$issued_dt   = $earned_at ? new \DateTime( $earned_at, new \DateTimeZone( 'UTC' ) ) : null;
-		$issue_year  = $issued_dt ? (int) $issued_dt->format( 'Y' ) : (int) gmdate( 'Y' );
-		$issue_month = $issued_dt ? (int) $issued_dt->format( 'n' ) : (int) gmdate( 'n' );
+		$issued_dt   = $earned_at ? ( new \DateTime( $earned_at, new \DateTimeZone( 'UTC' ) ) )->setTimezone( wp_timezone() ) : null;
+		$issue_year  = $issued_dt ? (int) $issued_dt->format( 'Y' ) : (int) wp_date( 'Y' );
+		$issue_month = $issued_dt ? (int) $issued_dt->format( 'n' ) : (int) wp_date( 'n' );
 
 		$linkedin_url = $badge['is_credential']
 			? self::build_linkedin_url(
@@ -224,12 +238,12 @@ final class BadgeSharePage {
 	 * @param \WP_User       $user        Earner user object.
 	 * @param string         $linkedin_url LinkedIn "Add Certification" URL, or empty.
 	 * @param string         $cred_url    REST endpoint URL for the verifiable credential.
-	 * @param \DateTime|null $issued_dt   Issue date/time (UTC), or null if unknown.
+	 * @param \DateTime|null $issued_dt   Issue moment (site zone), or null if unknown.
 	 * @param string         $share_url   Canonical public URL of this share page.
 	 */
 	private static function render_share_body( array $badge, \WP_User $user, string $linkedin_url, string $cred_url, ?\DateTime $issued_dt, string $share_url ): void {
 		$issued_label = $issued_dt
-			? date_i18n( get_option( 'date_format' ), $issued_dt->getTimestamp() )
+			? wp_date( get_option( 'date_format' ), $issued_dt->getTimestamp() )
 			: '';
 
 		$site_name   = get_bloginfo( 'name' );

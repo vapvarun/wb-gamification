@@ -162,7 +162,8 @@
 }
 
 .wb-gam-share-card__action:focus-visible {
-	outline: none;
+	/* Transparent, not none: forced-colors mode drops the ring and repaints this outline. */
+	outline: 2px solid transparent;
 	box-shadow: 0 0 0 3px var( --wb-gam-color-accent-ring, rgba( 59, 130, 246, 0.3 ) );
 }
 

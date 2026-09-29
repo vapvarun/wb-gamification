@@ -117,13 +117,6 @@ $wb_gam_rows       = PointsEngine::get_history( $wb_gam_user_id, $wb_gam_limit, 
 /** This filter is documented in src/Blocks/points-history/render.php (legacy). */
 $wb_gam_rows = (array) apply_filters( 'wb_gam_block_points_history_data', $wb_gam_rows, $wb_gam_attrs, $wb_gam_user_id );
 
-// Pre-fetch currency label map once (no N+1).
-$wb_gam_pt_service = new \WBGam\Services\PointTypeService();
-$wb_gam_label_map  = array();
-foreach ( $wb_gam_pt_service->list() as $wb_gam_pt ) {
-	$wb_gam_label_map[ (string) $wb_gam_pt['slug'] ] = (string) $wb_gam_pt['label'];
-}
-
 // Group rows by local-day so we can render "Today / Yesterday / Date"
 // headers + a daily total. Keys are YYYY-MM-DD in the site's timezone.
 $wb_gam_tz       = wp_timezone();
@@ -131,21 +124,11 @@ $wb_gam_today    = ( new DateTimeImmutable( 'now', $wb_gam_tz ) )->format( 'Y-m-
 $wb_gam_yest     = ( new DateTimeImmutable( '-1 day', $wb_gam_tz ) )->format( 'Y-m-d' );
 $wb_gam_grouped  = array();
 foreach ( $wb_gam_rows as $wb_gam_row ) {
-	// The day key, in the SITE's clock, with the offset applied exactly ONCE.
-	//
-	// created_at is a naive site-local string (current_time('mysql')). This used to strtotime() it --
-	// which, because PHP runs on UTC under WordPress, already yields a pseudo-epoch with the offset
-	// baked in -- and then hand that to DateTimeImmutable('@...')->setTimezone(), which applied the
-	// site offset a SECOND time. $wb_gam_today above is the true local date, so the two disagreed: on
-	// Los Angeles a point earned at 02:00 today was keyed to yesterday and rendered under the
-	// "Yesterday" heading.
-	//
-	// Reading the string in the site's timezone in the first place is the whole fix -- no epoch round
-	// trip, no second offset.
+	// created_at is UTC: read it as UTC, then move it into the site zone for the day key.
 	$wb_gam_raw = (string) ( $wb_gam_row['created_at'] ?? '' );
 
 	try {
-		$wb_gam_local = new DateTimeImmutable( '' !== $wb_gam_raw ? $wb_gam_raw : 'now', $wb_gam_tz );
+		$wb_gam_local = ( new DateTimeImmutable( '' !== $wb_gam_raw ? $wb_gam_raw : 'now', new DateTimeZone( 'UTC' ) ) )->setTimezone( $wb_gam_tz );
 	} catch ( \Exception $wb_gam_e ) {
 		$wb_gam_local = new DateTimeImmutable( 'now', $wb_gam_tz );
 	}
@@ -180,15 +163,7 @@ $wb_gam_day_label = static function ( string $day_key, DateTimeImmutable $dt ) u
 	}
 	$age_days = (int) ( ( time() - $dt->getTimestamp() ) / DAY_IN_SECONDS );
 
-	// wp_date(), NOT date_i18n(), because $dt->getTimestamp() is a TRUE epoch.
-	//
-	// The two are not interchangeable. date_i18n() expects a timestamp that ALREADY has the site offset
-	// baked in (the pseudo-epoch strtotime() makes from a naive local string) and applies the offset
-	// AGAIN to whatever it is handed. wp_date() takes a true epoch and applies the zone exactly once.
-	//
-	// Fixing the day KEY to use a real epoch therefore broke the day HEADER: on a UTC-7 site every row
-	// after 17:00 local was headed with the NEXT day, so the header contradicted the group it was
-	// heading. A row at 2026-07-14 20:00 local, grouped under 2026-07-14, was headed "Wednesday, Jul 15".
+	// wp_date() takes the true epoch and applies the site zone once.
 	if ( $age_days < 7 ) {
 		// Show weekday + date for recent: "Sat, May 24".
 		return wp_date( __( 'l, M j', 'wb-gamification' ), $dt->getTimestamp() );
@@ -219,11 +194,7 @@ BlockHooks::before( 'points-history', $wb_gam_attrs );
 		<?php foreach ( $wb_gam_grouped as $wb_gam_day => $wb_gam_group ) :
 			$wb_gam_total_parts = array();
 			foreach ( $wb_gam_group['totals'] as $wb_gam_slug => $wb_gam_sum ) {
-				$wb_gam_total_parts[] = sprintf(
-					'%s %s',
-					( $wb_gam_sum >= 0 ? '+' : '' ) . number_format_i18n( $wb_gam_sum ),
-					$wb_gam_label_map[ $wb_gam_slug ] ?? __( 'pts', 'wb-gamification' )
-				);
+				$wb_gam_total_parts[] = wb_gam_format_points( (int) $wb_gam_sum, (string) $wb_gam_slug, true );
 			}
 			$wb_gam_total_line = implode( ' · ', $wb_gam_total_parts );
 			?>
@@ -239,7 +210,6 @@ BlockHooks::before( 'points-history', $wb_gam_attrs );
 						$wb_gam_pts          = (int) ( $wb_gam_row['points'] ?? 0 );
 						$wb_gam_pos_neg      = $wb_gam_pts >= 0 ? 'positive' : 'negative';
 						$wb_gam_row_type     = (string) ( $wb_gam_row['point_type'] ?? '' );
-						$wb_gam_row_label    = $wb_gam_label_map[ $wb_gam_row_type ] ?? __( 'pts', 'wb-gamification' );
 						$wb_gam_row_action   = (string) ( $wb_gam_row['action_id'] ?? '' );
 						$wb_gam_action_label = Registry::label_for( $wb_gam_row_action );
 						$wb_gam_message      = (string) ( $wb_gam_row['message'] ?? '' );
@@ -262,16 +232,14 @@ BlockHooks::before( 'points-history', $wb_gam_attrs );
 								<?php if ( '' !== $wb_gam_message ) : ?>
 									<span class="wb-gam-points-history__message"><?php echo esc_html( $wb_gam_message ); ?></span>
 								<?php endif; ?>
-								<time class="wb-gam-points-history__time" datetime="<?php echo esc_attr( (string) ( $wb_gam_row['created_at'] ?? '' ) ); ?>">
+								<time class="wb-gam-points-history__time" datetime="<?php echo esc_attr( gmdate( 'c', (int) $wb_gam_row['_ts'] ) ); ?>">
 									<?php
 									/* translators: %s: human-readable time difference. */
 									printf( esc_html__( '%s ago', 'wb-gamification' ), esc_html( $wb_gam_time_label ) );
 									?>
 									<?php
 									// Append an exact time on hover/long-press via title attr.
-									// wp_date(), not date_i18n(): _ts is a true epoch (see the day-header note above).
-									// With date_i18n() the screen-reader time was off by the whole site offset on
-									// EVERY row -- the one surface where nobody would ever notice.
+									// _ts is a true epoch; wp_date() renders it in the site zone.
 									$wb_gam_exact = wp_date(
 										get_option( 'date_format' ) . ' ' . get_option( 'time_format' ),
 										(int) $wb_gam_row['_ts']
@@ -283,12 +251,7 @@ BlockHooks::before( 'points-history', $wb_gam_attrs );
 
 							<span class="wb-gam-points-history__points">
 								<?php
-								printf(
-									/* translators: 1: formatted amount, 2: currency label. */
-									esc_html__( '%1$s %2$s', 'wb-gamification' ),
-									esc_html( ( $wb_gam_pts >= 0 ? '+' : '' ) . number_format_i18n( $wb_gam_pts ) ),
-									esc_html( $wb_gam_row_label )
-								);
+								echo esc_html( wb_gam_format_points( $wb_gam_pts, $wb_gam_row_type, true ) );
 								?>
 							</span>
 						</li>

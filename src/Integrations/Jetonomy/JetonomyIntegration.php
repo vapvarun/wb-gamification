@@ -61,6 +61,57 @@ final class JetonomyIntegration {
 		}
 
 		add_action( 'jetonomy_reputation_changed', array( __CLASS__, 'on_reputation_changed' ), 20, 4 );
+		add_filter( 'wb_gam_action_label', array( __CLASS__, 'label' ), 10, 2 );
+	}
+
+	/**
+	 * Name the mirrored reputation ids, which are awarded without being registered actions.
+	 *
+	 * Without this every forum award read "Points awarded" in its toast and a title-cased id in the
+	 * history (card 10344406246). One label, shared by every surface through Registry::label_for().
+	 *
+	 * @param string $label     '' when nothing has named the id yet.
+	 * @param string $action_id Action identifier.
+	 * @return string
+	 */
+	public static function label( $label, $action_id ): string {
+		$label     = (string) $label;
+		$action_id = (string) $action_id;
+		if ( '' !== $label || ! str_starts_with( $action_id, self::ACTION_PREFIX ) ) {
+			return $label;
+		}
+
+		$labels = array(
+			'reply_created'     => __( 'Replied in the forum', 'wb-gamification' ),
+			'post_created'      => __( 'Started a forum topic', 'wb-gamification' ),
+			'post_upvoted'      => __( 'Your forum post was upvoted', 'wb-gamification' ),
+			'reply_upvoted'     => __( 'Your forum post was upvoted', 'wb-gamification' ),
+			'post_downvoted'    => __( 'Your forum post was downvoted', 'wb-gamification' ),
+			'reply_downvoted'   => __( 'Your forum post was downvoted', 'wb-gamification' ),
+			'reply_accepted'    => __( 'Your answer was accepted', 'wb-gamification' ),
+			'post_reported'     => __( 'Forum post reported', 'wb-gamification' ),
+			'badge_earned'      => __( 'Earned a forum badge', 'wb-gamification' ),
+			// History rows from before 1.6.5, when the Pro badge hook paid a second award.
+			'pro_badge_earned'  => __( 'Earned a forum badge', 'wb-gamification' ),
+			'badge_revoked'     => __( 'Forum badge removed', 'wb-gamification' ),
+			'cli_manual_adjust' => __( 'Manual forum adjustment', 'wb-gamification' ),
+		);
+
+		// "_revoked" marks the mirror's reversal of an award, unless Jetonomy named the reason
+		// that way itself (badge_revoked is a reason of its own).
+		$reason   = substr( $action_id, strlen( self::ACTION_PREFIX ) );
+		$reversed = ! isset( $labels[ $reason ] ) && str_ends_with( $reason, '_revoked' );
+		if ( $reversed ) {
+			$reason = substr( $reason, 0, -strlen( '_revoked' ) );
+		}
+		if ( ! isset( $labels[ $reason ] ) ) {
+			return $label;
+		}
+
+		return $reversed
+			/* translators: %s: what happened in the forum, e.g. "Your forum post was upvoted". */
+			? sprintf( __( '%s (reversed)', 'wb-gamification' ), $labels[ $reason ] )
+			: $labels[ $reason ];
 	}
 
 	/**
@@ -89,6 +140,12 @@ final class JetonomyIntegration {
 		unset( $context );
 
 		if ( $user_id <= 0 || 0 === $delta ) {
+			return;
+		}
+
+		// BuddyNext mirrors a feed comment into a Jetonomy reply (and back); the reputation that
+		// copy earns is for an action the member was already paid for as a feed comment.
+		if ( \WBGam\Engine\HostActivity::is_copy() ) {
 			return;
 		}
 

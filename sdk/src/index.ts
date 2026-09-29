@@ -4,6 +4,7 @@ export type {
   Member,
   Badge,
   LeaderboardEntry,
+  LeaderboardPage,
   Challenge,
   KudosEntry,
   PointsHistoryEntry,

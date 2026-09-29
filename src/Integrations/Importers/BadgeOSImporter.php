@@ -1,18 +1,22 @@
 <?php
 /**
- * WB Gamification — BadgeOS importer.
+ * WB Gamification: BadgeOS importer.
  *
- * Reads BadgeOS 3.7's custom tables (verified against BadgeOS 3.7.1.6):
- *   - `badgeos_points`       — the credit ledger. `credit` is the ABSOLUTE
- *      amount; the `type` enum (Award / Deduct / Utilized) carries the sign
- *      (Deduct + Utilized reduce the balance). `credit_id` is the point-type
- *      post id.
- *   - `badgeos_achievements` — earned achievements (one row per earning; a
- *      re-earnable achievement has multiple rows, so we dedupe by user+ID).
- *   - `badgeos_ranks`        — earned ranks.
+ * Reads BadgeOS 3.7's custom tables (verified against BadgeOS 3.7.1.6) one keyset page at a time and
+ * hands normalized records to the ImportRunner. READ the source, WRITE only via our ingestion path.
+ * Idempotent per source row (`badgeos:points:{id}`) and per achievement (`badgeos-achievement-{ID}`).
  *
- * READ the source, WRITE only through ImportService / BadgeEngine, never a
- * direct wb_gam_* insert. Idempotent per source row (`badgeos:points:{id}`).
+ * BadgeOS specifics handled here:
+ *   - `badgeos_points` is the credit ledger. `credit` is the ABSOLUTE amount; the `type` enum
+ *     (Award / Deduct / Utilized) carries the sign (Deduct + Utilized reduce the balance). `credit_id`
+ *     is the point-type post id. Paged by `id`.
+ *   - `badgeos_achievements` holds earned achievements, one row per earning, so a re-earnable
+ *     achievement has several rows and is deduped by user + ID. It has no single row key for that
+ *     grouped record, so it is paged by `user_id`: a page is a set of whole members.
+ *   - `badgeos_ranks` holds earned ranks; rank tiers are the rank posts of the types found there.
+ *   - dates are site-local wall-clock time and are converted to UTC here.
+ *   - BadgeOS is normally DEACTIVATED when a site migrates off it, so nothing here depends on its PHP
+ *     API being loaded; every read falls back to its tables.
  *
  * @package WB_Gamification
  * @since   1.6.2
@@ -20,16 +24,17 @@
 
 namespace WBGam\Integrations\Importers;
 
-use WBGam\Engine\ImportService;
-
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Migrates BadgeOS data into WB Gamification.
+ * Reads BadgeOS data for the ImportRunner.
  *
  * @package WB_Gamification
  */
-final class BadgeOSImporter {
+final class BadgeOSImporter implements ImportSource {
+
+	public const KEY_PREFIX   = 'badgeos:points:';
+	public const BADGE_PREFIX = 'badgeos-achievement-';
 
 	/**
 	 * Is BadgeOS data present?
@@ -70,7 +75,7 @@ final class BadgeOSImporter {
 		$known   = wp_list_pluck( $service->list(), 'slug' );
 		$default = ( '' !== $slug && in_array( $slug, $known, true ) ) ? $slug : $service->default_slug();
 
-		/** This filter is documented in GamiPressImporter::map_point_type(). */
+		/** This filter is documented in MyCredImporter::map_point_type(). */
 		return (string) apply_filters( 'wb_gam_import_point_type_map', $default, $slug, $known );
 	}
 
@@ -82,7 +87,7 @@ final class BadgeOSImporter {
 	 * The real migration scenario is the owner DEACTIVATING BadgeOS before
 	 * running the import, so the PHP API being unavailable is the NORMAL case,
 	 * not an edge case. The old code returned `[]` whenever the function was
-	 * missing, `build_achievements()` bailed on an empty list, and every
+	 * missing, the achievement reader bailed on an empty list, and every
 	 * earned achievement was dropped SILENTLY while the import still reported
 	 * success. Proven: 2 seeded points rows + 2 seeded earned achievements,
 	 * BadgeOS not installed -> import returned success, points landed,
@@ -90,35 +95,42 @@ final class BadgeOSImporter {
 	 *
 	 * `DISTINCT post_type` on the achievements table needs no plugin code at
 	 * all, so it works identically whether BadgeOS is active, deactivated, or
-	 * fully removed (as long as its tables are still there — see the loud
-	 * failure below for when they are not).
+	 * fully removed (as long as its tables are still there; see below for
+	 * when they are not).
+	 *
+	 * Memoized per request: the awards reader asks once per page and reconciliation once per member,
+	 * and the answer is a scan of the whole table.
 	 *
 	 * @return string[]
-	 * @throws \RuntimeException When the achievements table itself is missing,
-	 *                            so the caller cannot mistake "genuinely no
-	 *                            achievement types" for "data unreadable".
 	 */
 	private static function achievement_type_slugs(): array {
+		static $types = null;
+		if ( null !== $types ) {
+			return $types;
+		}
+
 		global $wpdb;
 
 		// A missing table used to throw. The instinct was right -- we cannot tell "no achievements were
 		// ever earned" from "the data is unreachable", and quietly returning [] is how achievements
 		// disappeared silently in the first place. But an uncaught RuntimeException is not "loud", it is
-		// a white screen: nothing catches it -- not run(), not ImportController, not ImportMode::run()
-		// (its finally re-raises) -- so the owner got a 500 and, because this runs BEFORE ingest(), not
-		// even the points imported. A partial BadgeOS uninstall (points table kept, achievements table
-		// dropped) is a normal state, and it lost the whole migration.
+		// a white screen: nothing up the stack caught it, so the owner got a 500 and not even the points
+		// imported. A partial BadgeOS uninstall (points table kept, achievements table dropped) is a
+		// normal state, and it lost the whole migration.
 		//
-		// Loud now means a warning the owner can read, carried out in the result payload by run(). The
-		// caller decides; this function just answers the question it was asked.
+		// So a missing table reads as "no awards" and the points still import. This function just
+		// answers the question it was asked; telling the owner the badges could not come across is the
+		// caller's job.
 		if ( ! self::has_table( 'badgeos_achievements' ) ) {
-			return array();
+			$types = array();
+			return $types;
 		}
 
 		$table = $wpdb->prefix . 'badgeos_achievements';
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$types = (array) $wpdb->get_col( "SELECT DISTINCT post_type FROM {$table} WHERE post_type <> '' AND post_type <> 'step'" );
-		return array_values( array_filter( array_map( 'strval', $types ) ) );
+		$found = (array) $wpdb->get_col( "SELECT DISTINCT post_type FROM {$table} WHERE post_type <> '' AND post_type <> 'step'" );
+		$types = array_values( array_filter( array_map( 'strval', $found ) ) );
+		return $types;
 	}
 
 	/**
@@ -141,23 +153,51 @@ final class BadgeOSImporter {
 	}
 
 	/**
-	 * Build normalized point rows from `badgeos_points`.
+	 * How many ledger rows will be imported (the rows the reader would return).
 	 *
-	 * @return array<int, array<string, mixed>>
+	 * @return int
 	 */
-	public static function build_rows(): array {
+	public static function count_points(): int {
+		if ( ! self::has_table( 'badgeos_points' ) ) {
+			return 0;
+		}
 		global $wpdb;
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$logs = $wpdb->get_results(
-			"SELECT id, user_id, credit_id, type, credit, this_trigger, actual_date_earned
-			   FROM {$wpdb->prefix}badgeos_points
-			  WHERE user_id > 0 AND credit <> 0
-			  ORDER BY id ASC",
+		return (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}badgeos_points WHERE user_id > 0 AND credit <> 0 AND type IN ( 'Award', 'Deduct', 'Utilized' )" );
+	}
+
+	/**
+	 * One keyset page of `badgeos_points` as normalized rows.
+	 *
+	 * @param int $after Ledger id to start strictly after.
+	 * @param int $limit Maximum rows scanned.
+	 * @return array{rows: array<int, array<string, mixed>>, next: int}
+	 */
+	public static function read_points( int $after, int $limit ): array {
+		if ( ! self::has_table( 'badgeos_points' ) ) {
+			return array(
+				'rows' => array(),
+				'next' => 0,
+			);
+		}
+
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$logs = (array) $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT id, user_id, credit_id, type, credit, this_trigger, actual_date_earned
+				   FROM {$wpdb->prefix}badgeos_points
+				  WHERE id > %d AND user_id > 0 AND credit <> 0
+				  ORDER BY id ASC
+				  LIMIT %d",
+				$after,
+				$limit
+			),
 			ARRAY_A
 		);
 
 		$rows = array();
-		foreach ( (array) $logs as $log ) {
+		foreach ( $logs as $log ) {
 			// `credit` is absolute; the enum type carries the sign. Mirror BadgeOS's own arithmetic
 			// exactly (Award adds, Deduct/Utilized subtract, ANYTHING ELSE is ignored) -- treating an
 			// unrecognised type as a deduction would make us disagree with the balance we reconcile
@@ -179,59 +219,124 @@ final class BadgeOSImporter {
 				'user_id'     => (int) $log['user_id'],
 				'points'      => $delta,
 				'point_type'  => self::map_point_type( (int) $log['credit_id'] ),
-				'occurred_at' => (string) $log['actual_date_earned'],
-				'source_key'  => 'badgeos:points:' . (int) $log['id'],
+				// BadgeOS writes its dates in site-local time; convert to UTC.
+				'occurred_at' => get_gmt_from_date( (string) $log['actual_date_earned'], 'Y-m-d\TH:i:s\Z' ),
+				'source_key'  => self::KEY_PREFIX . (int) $log['id'],
 				'metadata'    => array(
 					'_source' => 'badgeos',
 					'bo_type' => (string) $log['type'],
 				),
 			);
 		}
-		return $rows;
+
+		return array(
+			'rows' => $rows,
+			// Skipped rows do not shorten the page: the cursor follows what was SCANNED.
+			'next' => count( $logs ) < $limit ? 0 : (int) end( $logs )['id'],
+		);
 	}
 
 	/**
-	 * Build achievement-award records (deduped by user + achievement id).
+	 * How many distinct (member, achievement) awards BadgeOS holds (re-earns counted once).
 	 *
-	 * @return array<int, array{user_id:int, badge_id:string, name:string, image:string, earned_at:string, post_id:int}>
+	 * @return int
 	 */
-	public static function build_achievements(): array {
+	public static function count_awards(): int {
 		$types = self::achievement_type_slugs();
 		if ( empty( $types ) ) {
-			return array();
+			return 0;
 		}
 		global $wpdb;
 		$ph = implode( ',', array_fill( 0, count( $types ), '%s' ) );
-		// Earliest earning per (user, achievement) — MIN(date) for a stable backdate.
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$rows = $wpdb->get_results(
+		return (int) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(DISTINCT user_id, ID) FROM {$wpdb->prefix}badgeos_achievements
+				  WHERE user_id > 0 AND post_type IN ($ph)",
+				...$types
+			)
+		);
+	}
+
+	/**
+	 * One keyset page of earned achievements (deduped by user + achievement id), paged by `user_id`.
+	 *
+	 * A grouped (user, achievement) record has no single row key, so the cursor is the member: step one
+	 * takes the next $limit distinct user ids after the cursor, step two reads every award those members
+	 * hold. A page therefore always holds whole members, and may hold more than $limit records.
+	 *
+	 * @param int $after User id to start strictly after.
+	 * @param int $limit Maximum members per page.
+	 * @return array{rows: array<int, array<string, mixed>>, next: int}
+	 */
+	public static function read_awards( int $after, int $limit ): array {
+		$empty = array(
+			'rows' => array(),
+			'next' => 0,
+		);
+		$types = self::achievement_type_slugs();
+		if ( empty( $types ) ) {
+			return $empty;
+		}
+
+		global $wpdb;
+		$table = $wpdb->prefix . 'badgeos_achievements';
+		$ph    = implode( ',', array_fill( 0, count( $types ), '%s' ) );
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$user_ids = array_map(
+			'intval',
+			(array) $wpdb->get_col(
+				$wpdb->prepare(
+					"SELECT DISTINCT user_id FROM {$table}
+					  WHERE user_id > %d AND post_type IN ($ph)
+					  ORDER BY user_id ASC
+					  LIMIT %d",
+					$after,
+					...array_merge( $types, array( $limit ) )
+				)
+			)
+		);
+		if ( empty( $user_ids ) ) {
+			return $empty;
+		}
+
+		$uph = implode( ',', array_fill( 0, count( $user_ids ), '%d' ) );
+		// Earliest earning per (user, achievement): MIN(date) for a stable backdate.
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$grouped = (array) $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT ID, user_id, MAX(achievement_title) AS achievement_title, MIN(date_earned) AS date_earned
-				   FROM {$wpdb->prefix}badgeos_achievements
-				  WHERE user_id > 0 AND post_type IN ($ph)
-			   GROUP BY user_id, ID",
-				...$types
+				   FROM {$table}
+				  WHERE user_id IN ($uph) AND post_type IN ($ph)
+			   GROUP BY user_id, ID
+			   ORDER BY user_id ASC, ID ASC",
+				...array_merge( $user_ids, $types )
 			),
 			ARRAY_A
 		);
 
-		$out = array();
-		foreach ( (array) $rows as $r ) {
+		$rows = array();
+		foreach ( $grouped as $r ) {
 			$post_id = (int) $r['ID'];
-			$out[]   = array(
+			$rows[]  = array(
 				'user_id'   => (int) $r['user_id'],
-				'badge_id'  => 'badgeos-achievement-' . $post_id,
+				'badge_id'  => self::BADGE_PREFIX . $post_id,
 				'name'      => (string) $r['achievement_title'],
 				'image'     => (string) get_the_post_thumbnail_url( $post_id, 'full' ),
-				'earned_at' => (string) $r['date_earned'],
-				'post_id'   => $post_id,
+				// BadgeOS stores date_earned in site-local time; earned_at is UTC. Empty lets the runner stamp now.
+				'earned_at' => $r['date_earned'] ? get_gmt_from_date( (string) $r['date_earned'] ) : '',
 			);
 		}
-		return $out;
+
+		return array(
+			'rows' => $rows,
+			'next' => count( $user_ids ) < $limit ? 0 : (int) end( $user_ids ),
+		);
 	}
 
 	/**
-	 * BadgeOS rank-type slugs — read from the `badgeos_ranks.rank_type` column
+	 * BadgeOS rank-type slugs, read from the `badgeos_ranks.rank_type` column
 	 * (BadgeOS's authoritative record) rather than the generic `rank-type` CPT,
 	 * which on a multi-plugin site also holds another plugin's rank types.
 	 *
@@ -245,14 +350,14 @@ final class BadgeOSImporter {
 	}
 
 	/**
-	 * Build rank tiers (as WB level defs) from BadgeOS rank posts.
+	 * Rank tiers (as WB level defs) from BadgeOS rank posts.
 	 *
-	 * A rank's points threshold is post meta `_ranks_points`; rank order is
-	 * `menu_order`.
+	 * A rank's points threshold is post meta `_ranks_points`; rank order is `menu_order`. A site has a
+	 * handful, so this is not paged.
 	 *
-	 * @return array<int, array{id:int, name:string, min_points:int, order:int}>
+	 * @return array<int, array{name: string, min_points: int, order: int}>
 	 */
-	public static function build_ranks(): array {
+	public static function read_ranks(): array {
 		$types = self::rank_type_slugs();
 		if ( empty( $types ) ) {
 			return array();
@@ -269,7 +374,6 @@ final class BadgeOSImporter {
 		$out   = array();
 		foreach ( $ranks as $i => $rank ) {
 			$out[] = array(
-				'id'         => (int) $rank->ID,
 				'name'       => (string) $rank->post_title,
 				'min_points' => (int) get_post_meta( $rank->ID, '_ranks_points', true ),
 				'order'      => (int) $i,
@@ -279,173 +383,15 @@ final class BadgeOSImporter {
 	}
 
 	/**
-	 * A user's current BadgeOS rank name — the highest-priority earned row in
-	 * `badgeos_ranks` (badgeos_get_user_rank is unreliable on this install).
-	 *
-	 * @param int $user_id User.
-	 * @return string
-	 */
-	private static function badgeos_user_rank_name( int $user_id ): string {
-		global $wpdb;
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		return (string) $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT rank_title FROM {$wpdb->prefix}badgeos_ranks
-				  WHERE user_id = %d ORDER BY priority DESC, id DESC LIMIT 1",
-				$user_id
-			)
-		);
-	}
-
-	/**
-	 * The tier name a point total maps to (dry-run preview).
-	 *
-	 * @param array<int, array{name:string, min_points:int}> $ranks  Tiers.
-	 * @param int                                            $points Total.
-	 * @return string
-	 */
-	private static function tier_name_for_points( array $ranks, int $points ): string {
-		$name = '';
-		$best = -1;
-		foreach ( $ranks as $r ) {
-			if ( $points >= (int) $r['min_points'] && (int) $r['min_points'] >= $best ) {
-				$best = (int) $r['min_points'];
-				$name = (string) $r['name'];
-			}
-		}
-		return $name;
-	}
-
-	/**
-	 * Run (or preview) the import with reconciliation against BadgeOS.
-	 *
-	 * @param bool $dry_run Preview only.
-	 * @return array<string, mixed>
-	 */
-	public static function run( bool $dry_run = false ): array {
-		$rows         = self::build_rows();
-		$achievements = self::build_achievements();
-		$ranks        = self::build_ranks();
-
-		$ingest       = null;
-		$ach_imported = 0;
-		$levels_made  = 0;
-		if ( ! $dry_run ) {
-			$ingest = ImportService::ingest( $rows );
-			foreach ( $achievements as $a ) {
-				\WBGam\Engine\BadgeEngine::upsert_def(
-					array(
-						'id'        => $a['badge_id'],
-						'name'      => $a['name'],
-						'image_url' => $a['image'],
-						'category'  => 'imported',
-					)
-				);
-				// Round trip preserves the source's wall clock (see MyCredImporter). The fallback must be
-				// the SITE's now, not UTC's -- earned_at is a site-local column.
-				$earned_at = $a['earned_at'] ? gmdate( 'Y-m-d H:i:s', strtotime( (string) $a['earned_at'] ) ) : current_time( 'mysql' );
-				if ( \WBGam\Engine\BadgeEngine::award_badge( $a['user_id'], $a['badge_id'], $earned_at ) ) {
-					++$ach_imported;
-				}
-			}
-			foreach ( $ranks as $r ) {
-				// Count what was CREATED, not what was found. upsert_level() returns an id either way, so
-				// counting `> 0` reported levels the import had not built -- on a re-run it claimed
-				// `levels_created: 1` while the database gained nothing.
-				$level_created = false;
-				\WBGam\Engine\LevelEngine::upsert_level( $r['name'], $r['min_points'], $r['order'], '', $level_created );
-				if ( $level_created ) {
-					++$levels_made;
-				}
-			}
-		}
-
-		// POINTS reconciliation — actual ledger sum vs BadgeOS's own balance
-		// (summed across point types via badgeos_get_points_by_type).
-		$reconcile = array();
-		foreach ( self::user_ids( $rows ) as $uid ) {
-			$ours              = $dry_run ? self::expected_points( $rows, $uid ) : self::our_imported_points( $uid );
-			$reconcile[ $uid ] = array(
-				'imported_sum'    => $ours,
-				'badgeos_balance' => self::badgeos_balance( $uid ),
-				'match'           => $ours === self::badgeos_balance( $uid ),
-			);
-		}
-
-		// ACHIEVEMENT reconciliation — our unique imported badges vs BadgeOS
-		// DISTINCT earned achievement ids (the getter counts re-earn rows).
-		$ach_reconcile = array();
-		foreach ( self::user_ids( $achievements ) as $uid ) {
-			$ours                  = $dry_run
-				? count( array_filter( $achievements, static fn ( $a ) => (int) $a['user_id'] === $uid ) )
-				: self::our_imported_badge_count( $uid );
-			$ach_reconcile[ $uid ] = array(
-				'imported_achievements' => (int) $ours,
-				'badgeos_achievements'  => self::badgeos_distinct_achievements( $uid ),
-				'match'                 => (int) $ours === self::badgeos_distinct_achievements( $uid ),
-			);
-		}
-
-		// RANK reconciliation — level derived from imported points vs the
-		// user's current BadgeOS rank (highest-priority earned row).
-		$rank_reconcile = array();
-		if ( ! empty( $ranks ) ) {
-			foreach ( self::user_ids( $rows ) as $uid ) {
-				$bo = self::badgeos_user_rank_name( $uid );
-				if ( '' === $bo ) {
-					continue;
-				}
-				$points                 = $dry_run ? self::expected_points( $rows, $uid ) : self::our_imported_points( $uid );
-				$our_level              = $dry_run
-					? self::tier_name_for_points( $ranks, $points )
-					: ( \WBGam\Engine\LevelEngine::get_level_for_points( $points )['name'] ?? '' );
-				$rank_reconcile[ $uid ] = array(
-					'our_level'    => (string) $our_level,
-					'badgeos_rank' => $bo,
-					'match'        => (string) $our_level === $bo,
-				);
-			}
-		}
-
-		// Loud, but survivable. If the achievements table is gone we still import the points -- losing
-		// the whole migration because half the source is missing helps nobody -- and we say plainly what
-		// did not come across, so the owner is never left believing they got everything.
-		$warnings = array();
-		if ( ! self::has_table( 'badgeos_achievements' ) ) {
-			// Tense matters here: the same run() answers a Preview, where nothing has been written yet.
-			// "no badges were imported" is a false statement on a dry run, and a warning the owner can
-			// catch lying to them is a warning they stop reading.
-			$warnings[] = __( 'The BadgeOS achievements table was not found, so no badges can be imported — only points. This usually means BadgeOS was uninstalled and dropped its tables. If you still have a database backup, restore that table and import again.', 'wb-gamification' );
-		}
-
-		$result = array(
-			'rows'                       => count( $rows ),
-			'achievements'               => count( $achievements ),
-			'ranks'                      => count( $ranks ),
-			'dry_run'                    => $dry_run,
-			'warnings'                   => $warnings,
-			'reconciliation'             => $reconcile,
-			'achievement_reconciliation' => $ach_reconcile,
-			'rank_reconciliation'        => $rank_reconcile,
-		);
-		if ( ! $dry_run ) {
-			$result['ingest']               = $ingest;
-			$result['achievements_awarded'] = $ach_imported;
-			$result['levels_created']       = $levels_made;
-		}
-		return $result;
-	}
-
-	/**
-	 * A user's BadgeOS balance, summed across every point type.
+	 * A member's BadgeOS balance, summed across every point type.
 	 *
 	 * Uses badgeos_get_points_by_type (the credit-system authority);
 	 * badgeos_get_users_points reads a legacy meta and is unreliable on 3.7.
 	 *
-	 * @param int $user_id User.
+	 * @param int $user_id Member.
 	 * @return int
 	 */
-	private static function badgeos_balance( int $user_id ): int {
+	public static function source_balance( int $user_id ): int {
 		global $wpdb;
 
 		// This returned 0 whenever BadgeOS was not loaded, so a perfectly correct import (+100 / -30 =
@@ -491,12 +437,13 @@ final class BadgeOSImporter {
 	}
 
 	/**
-	 * BadgeOS distinct earned-achievement count for a user (excludes re-earns).
+	 * BadgeOS distinct earned-achievement count for a member (excludes re-earns, as the import does;
+	 * BadgeOS's own getter counts every re-earn row).
 	 *
-	 * @param int $user_id User.
+	 * @param int $user_id Member.
 	 * @return int
 	 */
-	private static function badgeos_distinct_achievements( int $user_id ): int {
+	public static function source_badge_count( int $user_id ): int {
 		$types = self::achievement_type_slugs();
 		if ( empty( $types ) ) {
 			return 0;
@@ -515,68 +462,20 @@ final class BadgeOSImporter {
 	}
 
 	/**
-	 * Distinct user ids in a row set.
+	 * A member's current BadgeOS rank name: the highest-priority earned row in
+	 * `badgeos_ranks` (badgeos_get_user_rank is unreliable on this install).
 	 *
-	 * @param array<int, array<string, mixed>> $rows Rows.
-	 * @return int[]
+	 * @param int $user_id Member.
+	 * @return string
 	 */
-	private static function user_ids( array $rows ): array {
-		return array_values( array_unique( array_map( static fn ( $r ) => (int) $r['user_id'], $rows ) ) );
-	}
-
-	/**
-	 * Expected point sum for a user (dry-run preview).
-	 *
-	 * @param array<int, array<string, mixed>> $rows    Rows.
-	 * @param int                              $user_id User.
-	 * @return int
-	 */
-	private static function expected_points( array $rows, int $user_id ): int {
-		$sum = 0;
-		foreach ( $rows as $r ) {
-			if ( (int) $r['user_id'] === $user_id ) {
-				$sum += (int) $r['points'];
-			}
-		}
-		return $sum;
-	}
-
-	/**
-	 * Sum of points that ACTUALLY landed in our ledger from a BadgeOS import.
-	 *
-	 * @param int $user_id User.
-	 * @return int
-	 */
-	private static function our_imported_points( int $user_id ): int {
+	public static function source_rank_name( int $user_id ): string {
 		global $wpdb;
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		return (int) $wpdb->get_var(
+		return (string) $wpdb->get_var(
 			$wpdb->prepare(
-				"SELECT COALESCE(SUM(p.points),0)
-				   FROM {$wpdb->prefix}wb_gam_points p
-				   JOIN {$wpdb->prefix}wb_gam_events e ON e.id = p.event_id
-				  WHERE p.user_id = %d AND e.source_key LIKE %s",
-				$user_id,
-				'badgeos:points:%'
-			)
-		);
-	}
-
-	/**
-	 * Count of imported BadgeOS achievement badges a user holds in WB.
-	 *
-	 * @param int $user_id User.
-	 * @return int
-	 */
-	private static function our_imported_badge_count( int $user_id ): int {
-		global $wpdb;
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		return (int) $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT COUNT(*) FROM {$wpdb->prefix}wb_gam_user_badges
-				  WHERE user_id = %d AND badge_id LIKE %s",
-				$user_id,
-				'badgeos-achievement-%'
+				"SELECT rank_title FROM {$wpdb->prefix}badgeos_ranks
+				  WHERE user_id = %d ORDER BY priority DESC, id DESC LIMIT 1",
+				$user_id
 			)
 		);
 	}

@@ -224,7 +224,7 @@ class KudosController extends WP_REST_Controller {
 	 */
 	public function get_items( $request ): WP_REST_Response {
 		$limit = (int) $request->get_param( 'limit' );
-		$feed  = KudosEngine::get_recent( $limit );
+		$feed  = KudosEngine::get_recent_visible( $limit ); // Public route: honour each member's profile privacy.
 
 		return rest_ensure_response( $feed );
 	}
@@ -273,9 +273,9 @@ class KudosController extends WP_REST_Controller {
 
 		if ( is_wp_error( $result ) ) {
 			$code = $result->get_error_code();
-			// Cooldown / rate-limit responses use HTTP 429 per RFC 6585; other
+			// Rate limits (spam ceiling, concurrent send) use HTTP 429 per RFC 6585; other
 			// errors (self-kudos, invalid user, db error) stay at 422.
-			$status = ( 'wb_gam_kudos_cooldown' === $code ) ? 429 : 422;
+			$status = in_array( $code, array( 'wb_gam_kudos_daily_ceiling', 'wb_gam_kudos_busy' ), true ) ? 429 : 422;
 			return new WP_Error(
 				$code,
 				$result->get_error_message(),
@@ -287,10 +287,8 @@ class KudosController extends WP_REST_Controller {
 			array(
 				'success'         => true,
 				'receiver_id'     => $receiver_id,
-				'daily_remaining' => max(
-					0,
-					(int) get_option( 'wb_gam_kudos_daily_limit', 5 ) - KudosEngine::get_daily_sent_count( $giver_id )
-				),
+				'daily_remaining' => KudosEngine::points_kudos_remaining( $giver_id ),
+				'can_send'        => KudosEngine::can_send( $giver_id ),
 			)
 		);
 		$response->set_status( 201 );
@@ -305,7 +303,9 @@ class KudosController extends WP_REST_Controller {
 	 * @return WP_REST_Response Response containing kudos stats.
 	 */
 	public function get_my_stats( $request ): WP_REST_Response {
-		$user_id     = get_current_user_id();
+		$user_id = get_current_user_id();
+		// daily_limit / daily_remaining count kudos that earn POINTS. Past them kudos still
+		// send; can_send is false only at the spam ceiling, and a client hides its form then.
 		$daily_limit = (int) get_option( 'wb_gam_kudos_daily_limit', 5 );
 		$sent_today  = KudosEngine::get_daily_sent_count( $user_id );
 
@@ -316,6 +316,7 @@ class KudosController extends WP_REST_Controller {
 				'daily_limit'     => $daily_limit,
 				'sent_today'      => $sent_today,
 				'daily_remaining' => max( 0, $daily_limit - $sent_today ),
+				'can_send'        => KudosEngine::can_send( $user_id ),
 			)
 		);
 	}
@@ -339,7 +340,10 @@ class KudosController extends WP_REST_Controller {
 				'receiver_id'   => array( 'type' => 'integer' ),
 				'receiver_name' => array( 'type' => 'string' ),
 				'message'       => array( 'type' => array( 'string', 'null' ) ),
-				'created_at'    => array( 'type' => 'string' ),
+				'created_at'    => array(
+					'type'        => 'string',
+					'description' => 'When the kudos was given. UTC, Y-m-d H:i:s.',
+				),
 			),
 		);
 	}

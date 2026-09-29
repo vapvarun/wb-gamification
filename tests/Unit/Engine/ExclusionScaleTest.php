@@ -30,12 +30,11 @@
 
 namespace WBGam\Tests\Unit\Engine;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use WBGam\Engine\PointsEngine;
 
-/**
- * @coversDefaultClass \WBGam\Engine\PointsEngine
- */
+#[CoversClass( \WBGam\Engine\PointsEngine::class )]
 class ExclusionScaleTest extends TestCase {
 
 	private const USERMETA = 'wp_usermeta';

@@ -4,16 +4,14 @@
  *
  * Adds "Cohort Leagues" submenu under WB Gamification.
  * Lets admins configure Duolingo-style weekly league settings:
- * enable/disable, tier names, promotion/demotion percentages,
- * and league duration.
+ * enable/disable, tier names and promotion/demotion percentages
+ * (promotions and demotions run weekly).
  *
  * @package WB_Gamification
  * @since   1.0.0
  */
 
 namespace WBGam\Admin;
-
-use WBGam\Engine\FeatureFlags;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -87,7 +85,7 @@ final class CohortSettingsPage {
 		wp_enqueue_script(
 			'wb-gam-admin-rest-utils',
 			plugins_url( 'assets/js/admin-rest-utils.js', WB_GAM_FILE ),
-			array(),
+			array( 'wb-gam-dialog', 'wb-gam-toast-core' ),
 			WB_GAM_VERSION,
 			true
 		);
@@ -167,9 +165,6 @@ final class CohortSettingsPage {
 	 */
 	public static function render_inline(): void {
 		$settings = self::get_settings();
-		$features = FeatureFlags::get_all();
-		$enabled  = ! empty( $features['cohort_leagues'] );
-
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- GET param for notice routing only.
 		$notice = sanitize_key( $_GET['notice'] ?? '' );
 
@@ -187,24 +182,19 @@ final class CohortSettingsPage {
 			<div class="wbgam-card wbgam-stack-block">
 				<div class="wbgam-card-header">
 					<h3 class="wbgam-card-title"><?php esc_html_e( 'League Settings', 'wb-gamification' ); ?></h3>
+					<p class="wbgam-card-desc">
+						<?php
+						printf(
+							/* translators: %s: link to Settings > Modules. */
+							esc_html__( 'Leagues are switched on or off in %s.', 'wb-gamification' ),
+							'<a href="#modules">' . esc_html__( 'Modules', 'wb-gamification' ) . '</a>'
+						);
+						?>
+					</p>
 				</div>
 				<div class="wbgam-card-body">
 					<form data-wb-gam-cohort-form>
 						<table class="form-table">
-							<tr>
-								<th><label for="wb-gam-cohort-enabled"><?php esc_html_e( 'Enable Cohort Leagues', 'wb-gamification' ); ?></label></th>
-								<td>
-									<select name="cohort_enabled" id="wb-gam-cohort-enabled" class="wbgam-select">
-										<option value="1" <?php selected( $enabled, true ); ?>>
-											<?php esc_html_e( 'Enabled', 'wb-gamification' ); ?>
-										</option>
-										<option value="0" <?php selected( $enabled, false ); ?>>
-											<?php esc_html_e( 'Disabled', 'wb-gamification' ); ?>
-										</option>
-									</select>
-									<p class="description"><?php esc_html_e( 'Toggle the cohort league system on or off site-wide.', 'wb-gamification' ); ?></p>
-								</td>
-							</tr>
 							<tr>
 								<th><?php esc_html_e( 'Tier Names', 'wb-gamification' ); ?></th>
 								<td>
@@ -264,20 +254,6 @@ final class CohortSettingsPage {
 										value="<?php echo esc_attr( $settings['demote_pct'] ); ?>" min="1" max="50">
 									<span>%</span>
 									<p class="description"><?php esc_html_e( 'Bottom percentage of members in each cohort who get demoted to a lower tier each cycle.', 'wb-gamification' ); ?></p>
-								</td>
-							</tr>
-							<tr>
-								<th><label for="wb-gam-duration"><?php esc_html_e( 'League Duration', 'wb-gamification' ); ?></label></th>
-								<td>
-									<select name="duration" id="wb-gam-duration" class="wbgam-select">
-										<option value="weekly" <?php selected( $settings['duration'], 'weekly' ); ?>>
-											<?php esc_html_e( 'Weekly', 'wb-gamification' ); ?>
-										</option>
-										<option value="monthly" <?php selected( $settings['duration'], 'monthly' ); ?>>
-											<?php esc_html_e( 'Monthly', 'wb-gamification' ); ?>
-										</option>
-									</select>
-									<p class="description"><?php esc_html_e( 'How often league standings reset and promotions/demotions are processed.', 'wb-gamification' ); ?></p>
 								</td>
 							</tr>
 						</table>

@@ -151,6 +151,24 @@ final class WeeklyEmailEngine {
 			return;
 		}
 
+		// BuddyNext is the master community product and owns member communication
+		// (its notifications are collect-only and it never lets a partner email
+		// members on its behalf). When BuddyNext is active, wb-gamification does
+		// NOT send its own weekly member digest by default — standing already
+		// surfaces inside BuddyNext (the Achievements tab + activity feed). A site
+		// owner who genuinely wants the partner email can re-enable it by
+		// returning false from this filter.
+		$wb_gam_bn_active = defined( 'BUDDYNEXT_VERSION' ) || class_exists( '\\BuddyNext\\Plugin' );
+		/**
+		 * Filter whether wb-gamification defers its weekly member email to BuddyNext.
+		 *
+		 * @param bool $defer Default: true when BuddyNext is active (suppress the
+		 *                     partner email so BuddyNext owns member comms).
+		 */
+		if ( (bool) apply_filters( 'wb_gam_defer_member_email_to_buddynext', $wb_gam_bn_active ) ) {
+			return;
+		}
+
 		if ( ! (int) get_option( self::OPT_ENABLED, 1 ) ) {
 			return;
 		}
@@ -254,16 +272,8 @@ final class WeeklyEmailEngine {
 
 		global $wpdb;
 
-		// This query decides WHO gets the weekly email, and it had the same two-clock defect
-		// as the digest's content window: p.created_at is written with current_time( 'mysql' )
-		// -- site-local -- while DATE_SUB(NOW(), ...) is the DATABASE clock. On a site behind
-		// UTC the recipient list was cut against a boundary hours away from the one the member
-		// experienced, so members active at the edge of the window were dropped from the send
-		// entirely and nobody would ever notice, because a missing email leaves no trace.
-		//
-		// Fixing the content window (see build_digest) and leaving the audience query on NOW()
-		// would have been the worst of both: a correct digest sent to the wrong people.
-		$window_start = gmdate( 'Y-m-d H:i:s', strtotime( current_time( 'mysql' ) ) - ( 7 * DAY_IN_SECONDS ) );
+		// Who gets the email: members with points in the last 7 days. created_at is UTC.
+		$window_start = Clock::site_cutoff( '-7 days' );
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$user_ids = $wpdb->get_col(
@@ -429,25 +439,14 @@ final class WeeklyEmailEngine {
 	 */
 	private static function gather_data( int $user_id ): array {
 		global $wpdb;
-		// The digest window MUST be expressed in the clock its columns are stored in.
-		//
-		// $since feeds three queries below -- points.created_at, user_badges.earned_at and
-		// challenge_log.completed_at -- and all three are written with current_time( 'mysql' ),
-		// i.e. SITE-LOCAL. This boundary was gmdate(), i.e. UTC. So the "last 7 days" window was
-		// skewed by the site's UTC offset in every digest: a US site silently dropped the most
-		// recent hours of activity from the email, and a site ahead of UTC included hours that
-		// belonged to the previous week.
-		//
-		// Third instance of this class in this plugin (after the leaderboard snapshot and the
-		// kudos cooldown), which is why it is now a portfolio-wide static rule rather than a
-		// thing we keep rediscovering by hand.
-		$since = gmdate( 'Y-m-d H:i:s', strtotime( current_time( 'mysql' ) ) - ( 7 * DAY_IN_SECONDS ) );
+		// $since bounds points.created_at, user_badges.earned_at and challenge_log.completed_at, all UTC.
+		$since = Clock::site_cutoff( '-7 days' );
 
 		// Points this week.
 		$points_this_week = (int) $wpdb->get_var(
 			$wpdb->prepare(
 				"SELECT COALESCE(SUM(points),0) FROM {$wpdb->prefix}wb_gam_points
-				  WHERE user_id = %d AND created_at >= %s",
+				  WHERE user_id = %d AND created_at >= %s AND is_spend = 0",
 				$user_id,
 				$since
 			)
@@ -495,7 +494,9 @@ final class WeeklyEmailEngine {
 		);
 		$rank    = null;
 		if ( ! $opt_out ) {
-			$rank = LeaderboardEngine::get_user_rank( $user_id );
+			// get_user_rank() returns an array; printing it with %d made every member '#1 overall'.
+			$rank = (int) ( LeaderboardEngine::get_user_rank( $user_id )['rank'] ?? 0 );
+			$rank = $rank > 0 ? $rank : null; // Unranked (no points yet): no rank line.
 		}
 
 		// Total points.

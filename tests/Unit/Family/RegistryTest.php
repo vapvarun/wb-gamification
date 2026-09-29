@@ -1,12 +1,13 @@
 <?php
 namespace WBGam\Tests\Unit\Family;
 
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 require_once dirname( __DIR__, 3 ) . '/libs/wbcom-family/bootstrap.php';
 
 class RegistryTest extends TestCase {
-	/** @test */
+	#[Test]
 	public function registry_has_required_member_keys_and_valid_outcomes(): void {
 		$r = \Wbcom\Family\registry();
 		$this->assertArrayHasKey( 'members', $r );
@@ -28,7 +29,7 @@ class RegistryTest extends TestCase {
 		$this->assertSame( [ 'buddynext' ], array_keys( $engines ) );
 	}
 
-	/** @test */
+	#[Test]
 	public function bootstrap_loads_once_and_keeps_highest_version(): void {
 		$this->assertTrue( defined( 'WBCOM_FAMILY_KIT_VERSION' ) );
 		require dirname( __DIR__, 3 ) . '/libs/wbcom-family/bootstrap.php'; // second include must not fatal

@@ -81,18 +81,7 @@ final class StreakEngine {
 			return;
 		}
 
-		/**
-		 * Filter the number of grace days before a streak breaks.
-		 *
-		 * @since 1.0.0
-		 * @param int $grace_days Default grace days (from option, default 1).
-		 * @param int $user_id    The user whose streak is being evaluated.
-		 */
-		$grace_days = (int) apply_filters(
-			'wb_gam_streak_grace_days',
-			(int) get_option( self::OPT_GRACE_DAYS, 1 ),
-			$user_id
-		);
+		$grace_days = self::grace_days( $user_id );
 		$gap        = $data['last_active']
 			? (int) self::date_diff_days( $data['last_active'], $today, $tz )
 			: null;
@@ -105,8 +94,13 @@ final class StreakEngine {
 			// Consecutive day — extend streak, reset grace availability.
 			$new_streak = $data['current_streak'] + 1;
 			$grace_used = 0;
-		} elseif ( $gap <= $grace_days && ! $data['grace_used'] ) {
+		} elseif ( self::is_live( $gap, $data['grace_used'], $grace_days ) ) {
 			// Within grace window and grace not yet used — extend streak, burn grace.
+			// $gap is the day difference from the last active day, so a SINGLE missed
+			// day is $gap === 2. grace_days counts MISSED days the member may skip, so
+			// the allowed gap is grace_days + 1 (grace_days = 1 forgives one missed
+			// day, i.e. $gap up to 2). The old `$gap <= $grace_days` made the default
+			// grace of 1 a no-op (2 <= 1 is false).
 			$new_streak = $data['current_streak'] + 1;
 			$grace_used = 1;
 		} else {
@@ -163,13 +157,86 @@ final class StreakEngine {
 	// ── Public read API ─────────────────────────────────────────────────────────
 
 	/**
-	 * Get streak data for a user.
+	 * Get streak data for a user, as it stands TODAY.
+	 *
+	 * The stored row is only re-evaluated when the member next earns, so a lapsed
+	 * streak still holds its old count. Reading it raw showed members a streak they
+	 * no longer had. The read applies the same rule as record_activity() and reports
+	 * a lapsed streak as 0; the row itself is left for the next write to reset.
 	 *
 	 * @param int $user_id User ID to retrieve streak data for.
 	 * @return array{ current_streak: int, longest_streak: int, last_active: string|null, timezone: string, grace_used: bool }
 	 */
 	public static function get_streak( int $user_id ): array {
-		return self::get_row( $user_id );
+		$data = self::get_row( $user_id );
+
+		if ( $data['current_streak'] > 0 && $data['last_active'] ) {
+			$tz  = self::get_timezone( $user_id, $data['timezone'] );
+			$gap = self::date_diff_days( $data['last_active'], self::today( $tz ), $tz );
+			if ( ! self::is_live( $gap, $data['grace_used'], self::grace_days( $user_id ) ) ) {
+				$data['current_streak'] = 0;
+			}
+		}
+
+		return $data;
+	}
+
+	/**
+	 * SQL condition that is true while a streak row is still live, for readers
+	 * that count or sort streaks at the DB (admin roster, analytics).
+	 *
+	 * Same rule as is_live(), expressed against the site's "today".
+	 * ponytail: uses the SITE timezone, not each member's; near midnight a member far from
+	 * the site timezone can read a day off here. get_streak() is exact per member.
+	 *
+	 * @param string $alias Table alias with trailing dot (e.g. 's.'), or ''.
+	 * @return string Prepared SQL fragment.
+	 */
+	public static function live_sql( string $alias = '' ): string {
+		global $wpdb;
+		return $wpdb->prepare(
+			"( {$alias}last_active >= %s OR ( {$alias}grace_used = 0 AND {$alias}last_active >= %s ) )",
+			Clock::site_date( '-1 days' ),
+			Clock::site_date( '-' . ( self::grace_days( 0 ) + 1 ) . ' days' )
+		);
+	}
+
+	/**
+	 * Whether a streak survives a gap of $gap days since the last active day.
+	 *
+	 * The single definition of "still going", shared by the write path
+	 * (record_activity) and every read. A gap of 0 or 1 always survives. A longer
+	 * gap survives only inside the grace window (grace_days counts MISSED days, so
+	 * one missed day is $gap === 2) and only if grace is not already used.
+	 *
+	 * @param int  $gap        Days between last_active and today.
+	 * @param bool $grace_used Whether the grace period is already spent.
+	 * @param int  $grace_days Missed days the member may skip.
+	 * @return bool
+	 */
+	private static function is_live( int $gap, bool $grace_used, int $grace_days ): bool {
+		return $gap <= 1 || ( $gap <= $grace_days + 1 && ! $grace_used );
+	}
+
+	/**
+	 * Grace days before a streak breaks.
+	 *
+	 * @param int $user_id Member being evaluated (0 for site-wide SQL readers).
+	 * @return int
+	 */
+	private static function grace_days( int $user_id ): int {
+		/**
+		 * Filter the number of grace days before a streak breaks.
+		 *
+		 * @since 1.0.0
+		 * @param int $grace_days Default grace days (from option, default 1).
+		 * @param int $user_id    The user whose streak is being evaluated (0 for site-wide counts).
+		 */
+		return (int) apply_filters(
+			'wb_gam_streak_grace_days',
+			(int) get_option( self::OPT_GRACE_DAYS, 1 ),
+			$user_id
+		);
 	}
 
 	/**
@@ -184,21 +251,24 @@ final class StreakEngine {
 	public static function get_contribution_data( int $user_id, int $days = 365 ): array {
 		global $wpdb;
 
-		// Midnight, N days ago, in the SITE's clock -- wb_gam_points.created_at is site-local.
+		// Site midnight N days ago as a UTC bound; rows are grouped by SITE day, not UTC day.
 		$since = Clock::site_day_start( "-{$days} days" );
+		$local = Clock::sql_utc_to_local( 'created_at', (int) strtotime( $since . ' UTC' ), time() );
 
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $local is built by Clock from a fixed column name.
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT DATE(created_at) AS activity_date, SUM(points) AS total
+				"SELECT DATE({$local}) AS activity_date, SUM(points) AS total
 				   FROM {$wpdb->prefix}wb_gam_points
-				  WHERE user_id = %d AND created_at >= %s
-				  GROUP BY DATE(created_at)
+				  WHERE user_id = %d AND created_at >= %s AND is_spend = 0
+				  GROUP BY activity_date
 				  ORDER BY activity_date ASC",
 				$user_id,
 				$since
 			),
 			ARRAY_A
 		);
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
 		if ( ! $rows ) {
 			return array();
@@ -235,8 +305,9 @@ final class StreakEngine {
 	/**
 	 * Fetch a page of streak rows for the admin roster, sorted at the DB.
 	 *
-	 * Uses LIMIT/OFFSET + an indexed ORDER BY (idx_current_streak /
-	 * idx_longest_streak, added in 1.6.2) so it stays fast at 100k members.
+	 * Uses LIMIT/OFFSET + an indexed ORDER BY (idx_longest_streak, added in
+	 * 1.6.2). Sorting by current_streak sorts the lapse-aware value, which MySQL
+	 * filesorts (bounded by LIMIT; fine at 100k rows).
 	 * Callers batch-fetch display names to avoid N+1.
 	 *
 	 * @param int    $per_page Rows per page (1–200).
@@ -254,11 +325,15 @@ final class StreakEngine {
 		$offset   = max( 0, $offset );
 
 		// $orderby is whitelisted above; $order is a literal ASC|DESC — neither is
-		// user input by the time it reaches the query. LIMIT/OFFSET are prepared.
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		// user input by the time it reaches the query. LIMIT/OFFSET are prepared, and
+		// live_sql() returns a fragment already run through $wpdb->prepare().
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT user_id, current_streak, longest_streak, last_active, grace_used
+				// A lapsed row reads 0 here, as it does through get_streak(); ORDER BY resolves
+				// current_streak to this alias.
+				'SELECT user_id, CASE WHEN ' . self::live_sql() . " THEN current_streak ELSE 0 END AS current_streak,
+				        longest_streak, last_active, grace_used
 				   FROM {$wpdb->prefix}wb_gam_streaks
 				  ORDER BY {$orderby} {$order}
 				  LIMIT %d OFFSET %d",
@@ -267,6 +342,7 @@ final class StreakEngine {
 			),
 			ARRAY_A
 		);
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared
 
 		if ( ! $rows ) {
 			return array();
@@ -545,7 +621,7 @@ final class StreakEngine {
 				'last_active'    => $last_active,
 				'timezone'       => $timezone,
 				'grace_used'     => $grace_used,
-				'updated_at'     => current_time( 'mysql' ),
+				'updated_at'     => current_time( 'mysql', true ),
 			),
 			array( '%d', '%d', '%d', '%s', '%s', '%d', '%s' )
 		);

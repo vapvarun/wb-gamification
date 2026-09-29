@@ -134,11 +134,17 @@ final class LogPruner {
 			'wb_gam_log_pruned'
 		);
 
+		// Events that carry a source_key are IMPORTED history (organic events have a NULL one). They are
+		// the idempotency anchor: a re-run skips a row only while its event still exists, so pruning
+		// them would let the next run insert the same history again and bump every member's total a
+		// second time (totals are deliberately not decremented by the pruner). They are also what an
+		// import undo finds its rows by. Imported history is therefore kept until it is undone.
 		self::prune_table(
 			'wb_gam_events',
 			(int) get_option( 'wb_gam_events_retention_months', 12 ),
 			$started,
-			'wb_gam_events_pruned'
+			'wb_gam_events_pruned',
+			' AND source_key IS NULL'
 		);
 
 		return $points_deleted;
@@ -151,9 +157,10 @@ final class LogPruner {
 	 * @param int    $months       Retention months; 0 disables.
 	 * @param float  $started      Timestamp from microtime(true) at cron start.
 	 * @param string $hook         Action hook fired with (deleted, cutoff).
+	 * @param string $extra_where Literal SQL appended to the WHERE (e.g. ` AND source_key IS NULL`); never user input.
 	 * @return int Total rows deleted across all batches in this tick.
 	 */
-	private static function prune_table( string $table_suffix, int $months, float $started, string $hook ): int {
+	private static function prune_table( string $table_suffix, int $months, float $started, string $hook, string $extra_where = '' ): int {
 		if ( $months <= 0 ) {
 			return 0;
 		}
@@ -164,11 +171,10 @@ final class LogPruner {
 		$total  = 0;
 
 		do {
-			// @clock-ok: this prunes the event/log tables, whose created_at is written in UTC, with a
-			// gmdate() cutoff. Same clock on both sides.
+			// created_at is UTC, like the gmdate() cutoff.
 			$batch  = (int) $wpdb->query(
 				$wpdb->prepare(
-					"DELETE FROM `{$table}` WHERE created_at < %s LIMIT %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table from $wpdb->prefix.
+					"DELETE FROM `{$table}` WHERE created_at < %s{$extra_where} LIMIT %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table from $wpdb->prefix, extra_where is a literal from this class.
 					$cutoff,
 					self::BATCH_SIZE
 				)

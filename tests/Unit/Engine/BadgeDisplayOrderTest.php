@@ -14,12 +14,14 @@ namespace WBGam\Tests\Unit\Engine;
 
 use Brain\Monkey;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use WBGam\Engine\BadgeRule;
 
-/**
- * @coversDefaultClass \WBGam\Engine\BadgeRule
- */
+#[CoversClass( \WBGam\Engine\BadgeRule::class )]
+#[CoversMethod( \WBGam\Engine\BadgeRule::class, 'display_threshold' )]
 class BadgeDisplayOrderTest extends TestCase {
 
 	use MockeryPHPUnitIntegration;
@@ -49,10 +51,8 @@ class BadgeDisplayOrderTest extends TestCase {
 	/**
 	 * The points ladder — the case the name sort got wrong and a natural-name sort still would,
 	 * because these names carry no digits at all.
-	 *
-	 * @test
-	 * @covers ::display_threshold
 	 */
+	#[Test]
 	public function points_ladder_orders_by_threshold_not_by_name(): void {
 		$ladder = array(
 			'Century Club'        => $this->rule( array( array( 'type' => 'point_milestone', 'points' => 100 ) ) ),
@@ -74,10 +74,7 @@ class BadgeDisplayOrderTest extends TestCase {
 		);
 	}
 
-	/**
-	 * @test
-	 * @covers ::display_threshold
-	 */
+	#[Test]
 	public function tenure_ladder_orders_one_two_five_ten(): void {
 		$ladder = array(
 			'10-Year Member' => $this->rule( array( array( 'type' => 'tenure_days', 'days' => 3650 ) ) ),
@@ -100,10 +97,8 @@ class BadgeDisplayOrderTest extends TestCase {
 
 	/**
 	 * Under `all` you need every condition, so the hardest one is what the badge really costs.
-	 *
-	 * @test
-	 * @covers ::display_threshold
 	 */
+	#[Test]
 	public function match_all_takes_the_hardest_condition(): void {
 		$rule = $this->rule(
 			array(
@@ -118,10 +113,8 @@ class BadgeDisplayOrderTest extends TestCase {
 
 	/**
 	 * Under `any` one condition will do, so the easiest one is what it really costs.
-	 *
-	 * @test
-	 * @covers ::display_threshold
 	 */
+	#[Test]
 	public function match_any_takes_the_easiest_condition(): void {
 		$rule = $this->rule(
 			array(
@@ -136,10 +129,8 @@ class BadgeDisplayOrderTest extends TestCase {
 
 	/**
 	 * Badges with nothing numeric to compare sort last — there is no ladder for them to be in.
-	 *
-	 * @test
-	 * @covers ::display_threshold
 	 */
+	#[Test]
 	public function non_numeric_badges_sort_last(): void {
 		$this->assertSame( PHP_INT_MAX, BadgeRule::display_threshold( $this->rule( array( array( 'type' => 'admin_awarded' ) ) ) ) );
 		$this->assertSame( PHP_INT_MAX, BadgeRule::display_threshold( $this->rule( array( array( 'type' => 'badge_earned', 'badge_id' => 'x' ) ) ) ) );

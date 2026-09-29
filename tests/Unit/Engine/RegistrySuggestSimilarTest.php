@@ -25,7 +25,6 @@ class RegistrySuggestSimilarTest extends TestCase {
 		parent::setUp();
 		$ref                    = new ReflectionClass( Registry::class );
 		$prop                   = $ref->getProperty( 'actions' );
-		$prop->setAccessible( true );
 		$this->original_actions = $prop->getValue();
 
 		$prop->setValue( null, array(
@@ -42,7 +41,6 @@ class RegistrySuggestSimilarTest extends TestCase {
 	protected function tearDown(): void {
 		$ref  = new ReflectionClass( Registry::class );
 		$prop = $ref->getProperty( 'actions' );
-		$prop->setAccessible( true );
 		$prop->setValue( null, $this->original_actions );
 		parent::tearDown();
 	}
@@ -96,7 +94,6 @@ class RegistrySuggestSimilarTest extends TestCase {
 		// not a bug — better empty than wrong.
 		$ref  = new ReflectionClass( Registry::class );
 		$prop = $ref->getProperty( 'actions' );
-		$prop->setAccessible( true );
 		$prop->setValue( null, array() );
 
 		$out = Registry::suggest_similar( 'wc_product_review' );

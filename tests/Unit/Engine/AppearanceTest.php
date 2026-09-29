@@ -14,12 +14,16 @@ namespace WBGam\Tests\Unit\Engine;
 
 use Brain\Monkey;
 use Brain\Monkey\Functions;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use WBGam\Engine\Appearance;
 
-/**
- * @coversDefaultClass \WBGam\Engine\Appearance
- */
+#[CoversClass( \WBGam\Engine\Appearance::class )]
+#[CoversMethod( \WBGam\Engine\Appearance::class, 'get_accent' )]
+#[CoversMethod( \WBGam\Engine\Appearance::class, 'inline_css' )]
+#[CoversMethod( \WBGam\Engine\Appearance::class, 'set_accent' )]
 class AppearanceTest extends TestCase {
 
 	protected function setUp(): void {
@@ -41,46 +45,31 @@ class AppearanceTest extends TestCase {
 		parent::tearDown();
 	}
 
-	/**
-	 * @test
-	 * @covers ::get_accent
-	 */
+	#[Test]
 	public function empty_option_means_theme_default(): void {
 		Functions\when( 'get_option' )->justReturn( '' );
 		$this->assertSame( '', Appearance::get_accent() );
 	}
 
-	/**
-	 * @test
-	 * @covers ::get_accent
-	 */
+	#[Test]
 	public function valid_hex_is_returned_lowercased(): void {
 		Functions\when( 'get_option' )->justReturn( '#5B4CDB' );
 		$this->assertSame( '#5b4cdb', Appearance::get_accent() );
 	}
 
-	/**
-	 * @test
-	 * @covers ::get_accent
-	 */
+	#[Test]
 	public function corrupt_option_degrades_to_default(): void {
 		Functions\when( 'get_option' )->justReturn( 'rgb(1,2,3)' );
 		$this->assertSame( '', Appearance::get_accent() );
 	}
 
-	/**
-	 * @test
-	 * @covers ::inline_css
-	 */
+	#[Test]
 	public function no_override_emits_empty_css(): void {
 		Functions\when( 'get_option' )->justReturn( '' );
 		$this->assertSame( '', Appearance::inline_css() );
 	}
 
-	/**
-	 * @test
-	 * @covers ::inline_css
-	 */
+	#[Test]
 	public function override_emits_light_and_dark_root_rules(): void {
 		Functions\when( 'get_option' )->justReturn( '#059669' );
 		$css = Appearance::inline_css();
@@ -93,10 +82,7 @@ class AppearanceTest extends TestCase {
 		$this->assertStringContainsString( 'prefers-color-scheme:dark', $css );
 	}
 
-	/**
-	 * @test
-	 * @covers ::set_accent
-	 */
+	#[Test]
 	public function set_accent_stores_valid_hex_lowercased(): void {
 		$stored = array();
 		Functions\when( 'update_option' )->alias(
@@ -111,10 +97,7 @@ class AppearanceTest extends TestCase {
 		$this->assertSame( array( 'wb_gam_accent_color', '#abcdef' ), $stored );
 	}
 
-	/**
-	 * @test
-	 * @covers ::set_accent
-	 */
+	#[Test]
 	public function set_accent_empty_or_invalid_deletes_option(): void {
 		$deleted = array();
 		Functions\when( 'update_option' )->alias(

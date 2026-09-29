@@ -88,6 +88,24 @@ final class ProfilePage {
 			return;
 		}
 
+		/**
+		 * Filter a URL to redirect this standalone `/u/` profile to. BuddyNext —
+		 * the master community — owns the member profile, and the same standing,
+		 * badges and points already render on the BuddyNext profile, so its bridge
+		 * returns the BuddyNext profile URL here and the visitor lands there
+		 * (BuddyNext then applies its own profile visibility). Empty string (the
+		 * default) renders wb-gamification's own page, for standalone sites.
+		 *
+		 * @param string   $url     Redirect target. Default '' (render own page).
+		 * @param int      $user_id Profile owner.
+		 * @param \WP_User  $user    Profile owner object.
+		 */
+		$wb_gam_redirect = (string) apply_filters( 'wb_gam_profile_redirect_url', '', (int) $user->ID, $user );
+		if ( '' !== $wb_gam_redirect ) {
+			wp_safe_redirect( $wb_gam_redirect, 302 );
+			exit;
+		}
+
 		// The profile owner and admins can always view the profile, even if
 		// the member has opted out of public visibility — "where can I see my
 		// own progress" must never 404 for the owner.
@@ -233,15 +251,16 @@ final class ProfilePage {
 	 * @param int $user_id User ID.
 	 */
 	public static function is_publicly_visible( int $user_id ): bool {
-		if ( ! get_option( self::OPT_ENABLED, '1' ) ) {
-			return false;
-		}
-		// Default ON: only an explicit '0' makes the profile private.
-		$pref    = get_user_meta( $user_id, self::META_PUBLIC, true );
-		$visible = ( '0' !== (string) $pref );
+		// The guest view of the one privacy rule (site switch, member toggle, and a host
+		// community's own profile privacy via wb_gam_can_view_public_profile) - so the /u/ page
+		// and member links agree with every block and REST route.
+		$visible = Privacy::can_view_public_profile( $user_id, 0 );
 
 		/**
 		 * Filter whether a member's profile page is publicly visible.
+		 *
+		 * Prefer wb_gam_can_view_public_profile (viewer-aware, applies everywhere); this one
+		 * still runs after it for the /u/ page and member links.
 		 *
 		 * @since 1.5.2
 		 * @param bool $visible Whether the profile is public (default ON).
@@ -354,7 +373,8 @@ final class ProfilePage {
 		// Owner-only privacy control — the member-facing write surface for
 		// wb_gam_profile_public. Only the profile owner sees it (admins
 		// viewing another member must not flip that member's choice here).
-		if ( get_current_user_id() === (int) $user->ID ) {
+		// Hidden when a community plugin decides privacy: the switch would do nothing there.
+		if ( get_current_user_id() === (int) $user->ID && ! Privacy::host_decides() ) {
 			self::render_owner_visibility_control( (int) $user->ID );
 		}
 

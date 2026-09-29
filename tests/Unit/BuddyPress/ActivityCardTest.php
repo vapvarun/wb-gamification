@@ -16,12 +16,14 @@ namespace WBGam\Tests\Unit\BuddyPress;
 use Brain\Monkey;
 use Brain\Monkey\Functions;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use WBGam\BuddyPress\Stream\ActivityCard;
 
-/**
- * @coversDefaultClass \WBGam\BuddyPress\Stream\ActivityCard
- */
+#[CoversClass( \WBGam\BuddyPress\Stream\ActivityCard::class )]
+#[CoversMethod( \WBGam\BuddyPress\Stream\ActivityCard::class, 'action_line' )]
 class ActivityCardTest extends TestCase {
 
 	use MockeryPHPUnitIntegration;
@@ -41,12 +43,11 @@ class ActivityCardTest extends TestCase {
 	/**
 	 * Each type maps to its generic verb and interpolates the actor link.
 	 *
-	 * @covers ::action_line
-	 * @dataProvider provideTypes
 	 *
 	 * @param string $type     Card type.
 	 * @param string $expected Expected generic headline.
 	 */
+	#[DataProvider( 'provideTypes' )]
 	public function test_action_line_is_generic_per_type( string $type, string $expected ): void {
 		$this->assertSame( $expected, ActivityCard::action_line( '<a href="#">Sam</a>', $type ) );
 	}
@@ -67,8 +68,6 @@ class ActivityCardTest extends TestCase {
 
 	/**
 	 * An unknown type falls back to the badge verb rather than erroring.
-	 *
-	 * @covers ::action_line
 	 */
 	public function test_unknown_type_falls_back_to_badge(): void {
 		$this->assertSame( 'Sam earned a badge', ActivityCard::action_line( 'Sam', 'mystery' ) );
@@ -77,8 +76,6 @@ class ActivityCardTest extends TestCase {
 	/**
 	 * The regression lock: a generic headline must NOT contain the specific
 	 * name the content card carries (no badge/recipient name, no <strong>).
-	 *
-	 * @covers ::action_line
 	 */
 	public function test_headline_never_repeats_specific_name(): void {
 		$specifics = array( 'Active Member', 'Five Hundred Strong', 'Andre Dubus' );

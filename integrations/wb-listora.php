@@ -26,11 +26,16 @@ return array(
 
 		array(
 			'id'                => 'listora_listing_submitted',
-			'label'             => 'Submit a listing',
-			'description'       => 'Awarded to the owner when a listing is submitted. Cooldown prevents bulk-submit farming.',
+			'label'             => static fn(): string => __( 'Submit a listing', 'wb-gamification' ),
+			'description'       => static fn(): string => __( 'Awarded to the owner when a listing is submitted. Cooldown prevents bulk-submit farming.', 'wb-gamification' ),
 			// Fires: do_action( 'wb_listora_listing_submitted', int $post_id, string $status, $request, $context ). No user id - owner is post_author.
 			'hook'              => 'wb_listora_listing_submitted',
 			'user_callback'     => function ( int $post_id, $status = '', $request = null, $context = null ): int {
+				// Migrators fire this with source 'migration'; importing a site's listings is not
+				// its members submitting them.
+				if ( is_array( $context ) && 'migration' === ( $context['source'] ?? '' ) ) {
+					return 0;
+				}
 				return (int) get_post_field( 'post_author', $post_id );
 			},
 			'metadata_callback' => function ( int $post_id, $status = '', $request = null, $context = null ): array {
@@ -46,8 +51,8 @@ return array(
 
 		array(
 			'id'                => 'listora_listing_published',
-			'label'             => 'Listing approved',
-			'description'       => 'Awarded to the owner when their listing is approved and goes live.',
+			'label'             => static fn(): string => __( 'Get a listing approved', 'wb-gamification' ),
+			'description'       => static fn(): string => __( 'Awarded to the owner when their listing is approved and goes live.', 'wb-gamification' ),
 			// Fires: do_action( 'wb_listora_after_approve_listing', int $post_id ). No user id - owner is post_author.
 			'hook'              => 'wb_listora_after_approve_listing',
 			'user_callback'     => function ( int $post_id ): int {
@@ -58,15 +63,15 @@ return array(
 			},
 			'default_points'    => 10,
 			'category'          => 'listings',
-			'icon'              => 'icon-check-circle',
+			'icon'              => 'icon-circle-check',
 			'repeatable'        => true,
 			'async'             => false,
 		),
 
 		array(
 			'id'                => 'listora_review_written',
-			'label'             => 'Write a review',
-			'description'       => 'Awarded to the reviewer when they leave a listing review. Cooldown limits review farming.',
+			'label'             => static fn(): string => __( 'Write a review', 'wb-gamification' ),
+			'description'       => static fn(): string => __( 'Awarded to the reviewer when they leave a listing review. Cooldown limits review farming.', 'wb-gamification' ),
 			// Fires: do_action( 'wb_listora_review_submitted', int $review_id, int $listing_id, int $user_id, ... ).
 			'hook'              => 'wb_listora_review_submitted',
 			'user_callback'     => function ( int $review_id, int $listing_id, int $user_id, $criteria = null, $photos = null, $request = null ): int {
@@ -85,8 +90,8 @@ return array(
 
 		array(
 			'id'                => 'listora_favorite_added',
-			'label'             => 'Favourite a listing',
-			'description'       => 'Awarded to the member who favourites a listing. Daily cap prevents farming.',
+			'label'             => static fn(): string => __( 'Favourite a listing', 'wb-gamification' ),
+			'description'       => static fn(): string => __( 'Awarded to the member who favourites a listing. Daily cap prevents farming.', 'wb-gamification' ),
 			// Fires: do_action( 'wb_listora_favorite_added', int $listing_id, int $user_id ).
 			'hook'              => 'wb_listora_favorite_added',
 			'user_callback'     => function ( int $listing_id, int $user_id ): int {
@@ -105,8 +110,8 @@ return array(
 
 		array(
 			'id'                => 'listora_claim_approved',
-			'label'             => 'Claim a listing',
-			'description'       => 'Awarded to the member when their listing claim is approved.',
+			'label'             => static fn(): string => __( 'Claim a listing', 'wb-gamification' ),
+			'description'       => static fn(): string => __( 'Awarded to the member when their listing claim is approved.', 'wb-gamification' ),
 			// Fires: do_action( 'wb_listora_claim_approved', int $claim_id, int $listing_id, int $claimant ).
 			'hook'              => 'wb_listora_claim_approved',
 			'user_callback'     => function ( int $claim_id, int $listing_id, int $claimant ): int {
@@ -124,8 +129,8 @@ return array(
 
 		array(
 			'id'                => 'listora_listing_renewed',
-			'label'             => 'Renew a listing',
-			'description'       => 'Awarded to the owner when they renew an expiring or expired listing.',
+			'label'             => static fn(): string => __( 'Renew a listing', 'wb-gamification' ),
+			'description'       => static fn(): string => __( 'Awarded to the owner when they renew an expiring or expired listing.', 'wb-gamification' ),
 			// Fires: do_action( 'wb_listora_listing_renewed', int $post_id ). No user id - owner is post_author.
 			'hook'              => 'wb_listora_listing_renewed',
 			'user_callback'     => function ( int $post_id ): int {

@@ -11,7 +11,7 @@
  *   2. Action-enabled + rate-limit checks  (registered actions only)
  *   3. Enrich metadata via filter
  *   4. Before-evaluate gate (can abort)
- *   5. Persist to wb_gam_events  (immutable source of truth)
+ *   5. Persist to wb_gam_events  (append-only source of truth)
  *   6. Calculate points  (option + RuleEngine multipliers)
  *   7. Write to wb_gam_points  (with event_id FK)
  *   8. Fire hooks + dispatch webhooks
@@ -333,7 +333,7 @@ final class Engine {
 	 * @param string $action_id Action identifier to check.
 	 * @return bool True if the action is enabled (default: true).
 	 */
-	private static function is_action_enabled( string $action_id ): bool {
+	public static function is_action_enabled( string $action_id ): bool {
 		if ( ! isset( self::$enabled_cache[ $action_id ] ) ) {
 			self::$enabled_cache[ $action_id ] = (bool) get_option( 'wb_gam_enabled_' . $action_id, true );
 		}
@@ -593,7 +593,7 @@ final class Engine {
 				// callback at the manifest layer, not the option.
 				$points = (int) $event->metadata['_dynamic_points'];
 			} else {
-				$points = (int) get_option( 'wb_gam_points_' . $event->action_id, $action['default_points'] );
+				$points = Registry::action_points( $event->action_id );
 			}
 		} else {
 			// Manual / unregistered awards carry the points value in metadata.
@@ -738,7 +738,7 @@ final class Engine {
 	}
 
 	/**
-	 * Persist a raw event to the immutable event log.
+	 * Persist a raw event to the append-only event log.
 	 *
 	 * The event log is the source of truth for all derived state.
 	 * Points, badges, and levels can all be replayed from this table.

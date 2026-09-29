@@ -62,7 +62,7 @@
 
 .wb-gam-give-kudos__input:focus,
 .wb-gam-give-kudos__textarea:focus {
-	outline: none;
+	outline: 2px solid transparent; /* forced-colors repaints it; the ring below is dropped there */
 	border-color: var( --wb-gam-color-accent, #3b82f6 );
 	box-shadow: 0 0 0 3px var( --wb-gam-color-accent-ring, rgba( 59, 130, 246, 0.2 ) );
 }
@@ -96,7 +96,8 @@
 }
 
 .wb-gam-give-kudos__submit:focus-visible {
-	outline: none;
+	/* Transparent, not none: forced-colors mode drops the ring and repaints this outline. */
+	outline: 2px solid transparent;
 	box-shadow: 0 0 0 3px var( --wb-gam-color-accent-ring, rgba( 59, 130, 246, 0.35 ) );
 }
 
@@ -123,4 +124,72 @@
 		align-self: stretch;
 		text-align: center;
 	}
+}
+
+/* Recipient combobox: suggestions list under the input. */
+.wb-gam-give-kudos__combo {
+	position: relative;
+}
+
+/* The list shell (surface, border, radius, shadow, z-index, enter animation) and the option row
+ * (padding, hover, selected) are the shared .wb-gam-menu in assets/css/popups.css. Only the
+ * anchoring under the input and the scroll cap are local. */
+.wb-gam-give-kudos__suggest {
+	position: absolute;
+	inset-inline: 0;
+	top: calc( 100% + 4px );
+	max-height: 16rem;
+	margin: 0;
+	overflow-y: auto;
+	list-style: none;
+}
+
+.wb-gam-give-kudos__suggest .wb-gam-menu__option {
+	min-height: 40px;
+}
+
+.wb-gam-give-kudos__option-avatar {
+	flex-shrink: 0;
+	width: 28px;
+	height: 28px;
+	border-radius: 50%;
+	object-fit: cover;
+}
+
+/* Name above @handle, each truncating on its own, so neither squeezes the other. */
+.wb-gam-give-kudos__option-text {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+	line-height: 1.25;
+}
+
+.wb-gam-give-kudos__option-name,
+.wb-gam-give-kudos__option-handle {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.wb-gam-give-kudos__option-name {
+	font-weight: 600;
+	font-size: var( --wb-gam-font-sm, 14px );
+}
+
+.wb-gam-give-kudos__option-handle {
+	font-size: var( --wb-gam-font-xs, 12px );
+	color: var( --wb-gam-pop-text-3 );
+}
+
+/* Guest: a way in. */
+.wb-gam-give-kudos__login {
+	font-weight: 600;
+	color: var( --wb-gam-color-accent, #3b82f6 );
+	text-decoration: underline;
+	text-underline-offset: 2px;
+}
+
+.wb-gam-give-kudos__login:hover,
+.wb-gam-give-kudos__login:focus-visible {
+	text-decoration: none;
 }

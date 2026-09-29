@@ -25,12 +25,11 @@
 
 namespace WBGam\Tests\Unit\Engine;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use WBGam\Engine\BadgeRule;
 
-/**
- * @coversDefaultClass \WBGam\Engine\BadgeRule
- */
+#[CoversClass( \WBGam\Engine\BadgeRule::class )]
 class BadgeRuleShapeTest extends TestCase {
 
 	/**

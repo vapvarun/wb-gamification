@@ -68,7 +68,7 @@ final class RedemptionStorePage {
 		wp_enqueue_script(
 			'wb-gam-admin-rest-utils',
 			plugins_url( 'assets/js/admin-rest-utils.js', WB_GAM_FILE ),
-			array(),
+			array( 'wb-gam-dialog', 'wb-gam-toast-core' ),
 			WB_GAM_VERSION,
 			true
 		);
@@ -140,10 +140,21 @@ final class RedemptionStorePage {
 
 		$table = $wpdb->prefix . 'wb_gam_redemption_items';
 
+		// Paged: a large store/challenge list must not load every row.
+		$per_page = 20;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Admin list; table name is a prefixed constant.
+		$total = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$table}" );
+		$pages = (int) ceil( $total / $per_page );
+		$paged = Pager::current( $pages );
+
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- Admin list view, infrequent.
 		$items = $wpdb->get_results(
-			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name is prefixed constant.
-			"SELECT * FROM {$table} ORDER BY id DESC",
+			$wpdb->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name is prefixed constant.
+				"SELECT * FROM {$table} ORDER BY id DESC LIMIT %d OFFSET %d",
+				$per_page,
+				( $paged - 1 ) * $per_page
+			),
 			ARRAY_A
 		) ?: array();
 
@@ -403,92 +414,104 @@ final class RedemptionStorePage {
 					<h3 class="wbgam-card-title"><?php esc_html_e( 'All Rewards', 'wb-gamification' ); ?></h3>
 				</div>
 				<div class="wbgam-card-body wbgam-card-body--flush">
-					<table class="wbgam-table">
-						<thead>
-							<tr>
-								<th><?php esc_html_e( 'Name', 'wb-gamification' ); ?></th>
-								<th><?php esc_html_e( 'Point Cost', 'wb-gamification' ); ?></th>
-								<th><?php esc_html_e( 'Type', 'wb-gamification' ); ?></th>
-								<th><?php esc_html_e( 'Stock', 'wb-gamification' ); ?></th>
-								<th><?php esc_html_e( 'Status', 'wb-gamification' ); ?></th>
-								<th><?php esc_html_e( 'Actions', 'wb-gamification' ); ?></th>
-							</tr>
-						</thead>
-						<tbody>
-						<?php
-						// Pre-fetch the currency label map so each row's cost
-						// suffix matches the reward's actual point_type.
-						$pt_service   = new \WBGam\Services\PointTypeService();
-						$pt_label_map = array();
-						foreach ( $pt_service->list() as $pt ) {
-							$pt_label_map[ (string) $pt['slug'] ] = (string) $pt['label'];
-						}
-						?>
-						<?php foreach ( $items as $item ) : ?>
+					<div class="wbgam-table-scroll">
+						<table class="wbgam-table">
+							<thead>
+								<tr>
+									<th><?php esc_html_e( 'Name', 'wb-gamification' ); ?></th>
+									<th><?php esc_html_e( 'Point Cost', 'wb-gamification' ); ?></th>
+									<th><?php esc_html_e( 'Type', 'wb-gamification' ); ?></th>
+									<th><?php esc_html_e( 'Stock', 'wb-gamification' ); ?></th>
+									<th><?php esc_html_e( 'Status', 'wb-gamification' ); ?></th>
+									<th><?php esc_html_e( 'Actions', 'wb-gamification' ); ?></th>
+								</tr>
+							</thead>
+							<tbody>
 							<?php
-							$type_labels  = array(
-								'custom'         => __( 'Custom', 'wb-gamification' ),
-								'discount_pct'   => __( '% Discount', 'wb-gamification' ),
-								'discount_fixed' => __( 'Fixed Discount', 'wb-gamification' ),
-								'free_shipping'  => __( 'Free Shipping', 'wb-gamification' ),
-								'free_product'   => __( 'Free Product', 'wb-gamification' ),
-								'wbcom_credits'  => __( 'Wbcom Credits', 'wb-gamification' ),
-							);
-							$type_label   = $type_labels[ $item['reward_type'] ] ?? $item['reward_type'];
-							$status_class = $item['is_active'] ? 'active' : 'info';
-							// NULL = unlimited, 0 = sold out. The owner has to tell those apart
-							// at a glance -- reading "Unlimited" next to a reward that has in
-							// fact sold out is how you find out too late.
-							if ( null === $item['stock'] ) {
-								$stock_label = __( 'Unlimited', 'wb-gamification' );
-							} elseif ( 0 === (int) $item['stock'] ) {
-								$stock_label = __( 'Sold out', 'wb-gamification' );
-							} else {
-								$stock_label = (int) $item['stock'];
+							// Pre-fetch the currency label map so each row's cost
+							// suffix matches the reward's actual point_type.
+							$pt_service   = new \WBGam\Services\PointTypeService();
+							$pt_label_map = array();
+							foreach ( $pt_service->list() as $pt ) {
+								$pt_label_map[ (string) $pt['slug'] ] = (string) $pt['label'];
 							}
 							?>
-							<tr>
-								<td>
-									<strong><?php echo esc_html( $item['title'] ); ?></strong>
-									<?php if ( ! empty( $item['description'] ) ) : ?>
-										<br><small class="wbgam-text-muted"><?php echo esc_html( wp_trim_words( $item['description'], 12 ) ); ?></small>
-									<?php endif; ?>
-								</td>
+							<?php foreach ( $items as $item ) : ?>
 								<?php
-								$item_slug  = (string) ( $item['point_type'] ?? $pt_service->default_slug() );
-								$item_label = $pt_label_map[ $item_slug ] ?? $item_slug;
+								$type_labels  = array(
+									'custom'         => __( 'Custom', 'wb-gamification' ),
+									'discount_pct'   => __( '% Discount', 'wb-gamification' ),
+									'discount_fixed' => __( 'Fixed Discount', 'wb-gamification' ),
+									'free_shipping'  => __( 'Free Shipping', 'wb-gamification' ),
+									'free_product'   => __( 'Free Product', 'wb-gamification' ),
+									'wbcom_credits'  => __( 'Wbcom Credits', 'wb-gamification' ),
+								);
+								$type_label   = $type_labels[ $item['reward_type'] ] ?? $item['reward_type'];
+								$status_class = $item['is_active'] ? 'active' : 'info';
+								// NULL = unlimited, 0 = sold out. The owner has to tell those apart
+								// at a glance -- reading "Unlimited" next to a reward that has in
+								// fact sold out is how you find out too late.
+								if ( null === $item['stock'] ) {
+									$stock_label = __( 'Unlimited', 'wb-gamification' );
+								} elseif ( 0 === (int) $item['stock'] ) {
+									$stock_label = __( 'Sold out', 'wb-gamification' );
+								} else {
+									$stock_label = (int) $item['stock'];
+								}
 								?>
-								<td><strong><?php echo esc_html( number_format_i18n( $item['points_cost'] ) ); ?></strong> <?php echo esc_html( $item_label ); ?></td>
-								<td><code><?php echo esc_html( $type_label ); ?></code></td>
-								<td><?php echo esc_html( $stock_label ); ?></td>
-								<td>
-									<span class="wbgam-pill wbgam-pill--<?php echo esc_attr( $status_class ); ?>">
-										<?php echo $item['is_active'] ? esc_html__( 'Active', 'wb-gamification' ) : esc_html__( 'Inactive', 'wb-gamification' ); ?>
-									</span>
-								</td>
-								<td>
-									<a href="<?php echo esc_url( admin_url( 'admin.php?page=wb-gam-redemption&edit=' . $item['id'] ) ); ?>" class="wbgam-btn wbgam-btn--sm wbgam-btn--secondary">
-										<?php esc_html_e( 'Edit', 'wb-gamification' ); ?>
-									</a>
-									<button
-										type="button"
-										class="wbgam-btn wbgam-btn--sm wbgam-btn--danger wbgam-ms-xs"
-										data-wb-gam-rest-action="wbGamRedemptionSettings"
-										data-wb-gam-rest-method="DELETE"
-										data-wb-gam-rest-path="/redemptions/items/<?php echo (int) $item['id']; ?>"
-										data-wb-gam-rest-confirm="<?php esc_attr_e( 'Delete this reward?', 'wb-gamification' ); ?>"
-										data-wb-gam-rest-success-toast="<?php esc_attr_e( 'Reward deleted.', 'wb-gamification' ); ?>"
-										data-wb-gam-rest-error-toast="<?php esc_attr_e( 'Failed to delete reward.', 'wb-gamification' ); ?>"
-										data-wb-gam-rest-after="remove-row"
-									>
-										<?php esc_html_e( 'Delete', 'wb-gamification' ); ?>
-									</button>
-								</td>
-							</tr>
-						<?php endforeach; ?>
-						</tbody>
-					</table>
+								<tr>
+									<td>
+										<strong><?php echo esc_html( $item['title'] ); ?></strong>
+										<?php if ( ! empty( $item['description'] ) ) : ?>
+											<br><small class="wbgam-text-muted"><?php echo esc_html( wp_trim_words( $item['description'], 12 ) ); ?></small>
+										<?php endif; ?>
+									</td>
+									<?php
+									$item_slug  = (string) ( $item['point_type'] ?? $pt_service->default_slug() );
+									$item_label = $pt_label_map[ $item_slug ] ?? $item_slug;
+									?>
+									<td><strong><?php echo esc_html( number_format_i18n( $item['points_cost'] ) ); ?></strong> <?php echo esc_html( $item_label ); ?></td>
+									<td><span class="wbgam-pill wbgam-pill--neutral"><?php echo esc_html( $type_label ); ?></span></td>
+									<td><?php echo esc_html( $stock_label ); ?></td>
+									<td>
+										<span class="wbgam-pill wbgam-pill--<?php echo esc_attr( $status_class ); ?>">
+											<?php echo $item['is_active'] ? esc_html__( 'Active', 'wb-gamification' ) : esc_html__( 'Inactive', 'wb-gamification' ); ?>
+										</span>
+									</td>
+									<td>
+										<a href="<?php echo esc_url( admin_url( 'admin.php?page=wb-gam-redemption&edit=' . $item['id'] ) ); ?>" class="wbgam-btn wbgam-btn--sm wbgam-btn--secondary">
+											<?php esc_html_e( 'Edit', 'wb-gamification' ); ?>
+										</a>
+										<button
+											type="button"
+											class="wbgam-btn wbgam-btn--sm wbgam-btn--danger wbgam-ms-xs"
+											data-wb-gam-rest-action="wbGamRedemptionSettings"
+											data-wb-gam-rest-method="DELETE"
+											data-wb-gam-rest-path="/redemptions/items/<?php echo (int) $item['id']; ?>"
+											data-wb-gam-rest-confirm="<?php esc_attr_e( 'Delete this reward?', 'wb-gamification' ); ?>"
+											data-wb-gam-rest-success-toast="<?php esc_attr_e( 'Reward deleted.', 'wb-gamification' ); ?>"
+											data-wb-gam-rest-error-toast="<?php esc_attr_e( 'Failed to delete reward.', 'wb-gamification' ); ?>"
+											data-wb-gam-rest-after="remove-row"
+										>
+											<?php esc_html_e( 'Delete', 'wb-gamification' ); ?>
+										</button>
+									</td>
+								</tr>
+							<?php endforeach; ?>
+							</tbody>
+						</table>
+					</div>
 				</div>
+					<?php
+					Pager::render(
+						$paged,
+						$pages,
+						array( 'page' => 'wb-gam-redemption' ),
+						__( 'Reward pages', 'wb-gamification' ),
+						/* translators: 1: current page, 2: total pages, 3: total rewards */
+						sprintf( __( 'Page %1$d of %2$d (%3$d rewards)', 'wb-gamification' ), $paged, $pages, $total )
+					);
+					?>
 			</div>
 			<?php else : ?>
 			<div class="wbgam-empty">
@@ -505,20 +528,7 @@ final class RedemptionStorePage {
 			// but the table was only readable via direct DB query. This
 			// surfaces the last 50 redemptions inline so support staff can
 			// trace coupon codes and fulfilment status without WP-CLI.
-			$transactions_table      = $wpdb->prefix . 'wb_gam_redemptions';
-			$transaction_items_table = $wpdb->prefix . 'wb_gam_redemption_items';
-			// phpcs:disable WordPress.DB.DirectDatabaseQuery -- Admin list, infrequent, no cache invalidation needed.
-			$transactions = $wpdb->get_results(
-				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table names are prefixed constants.
-				"SELECT r.id, r.user_id, r.points_cost, r.status, r.coupon_code, r.created_at,
-				        i.title AS reward_title, i.reward_type
-				   FROM {$transactions_table} r
-				   LEFT JOIN {$transaction_items_table} i ON i.id = r.item_id
-				  ORDER BY r.created_at DESC
-				  LIMIT 50",
-				ARRAY_A
-			) ?: array();
-			// phpcs:enable WordPress.DB.DirectDatabaseQuery
+			$transactions = \WBGam\Engine\RedemptionEngine::list_redemptions( '', 1, 50 )['items'];
 			?>
 			<div class="wbgam-card wbgam-stack-block">
 				<div class="wbgam-card-header">
@@ -527,59 +537,100 @@ final class RedemptionStorePage {
 				</div>
 				<?php if ( ! empty( $transactions ) ) : ?>
 				<div class="wbgam-card-body wbgam-card-body--flush">
-					<table class="wbgam-table">
-						<thead>
-							<tr>
-								<th><?php esc_html_e( 'When', 'wb-gamification' ); ?></th>
-								<th><?php esc_html_e( 'Member', 'wb-gamification' ); ?></th>
-								<th><?php esc_html_e( 'Reward', 'wb-gamification' ); ?></th>
-								<th><?php esc_html_e( 'Points spent', 'wb-gamification' ); ?></th>
-								<th><?php esc_html_e( 'Coupon', 'wb-gamification' ); ?></th>
-								<th><?php esc_html_e( 'Status', 'wb-gamification' ); ?></th>
-							</tr>
-						</thead>
-						<tbody>
-							<?php
-							// Status enum → human label + pill class. Avoid surfacing
-							// the raw snake_case enum to admins ("PENDING_FULFILLMENT"
-							// scans as a debug log, not a UI label).
-							$status_meta = array(
-								'pending'             => array( 'info', __( 'Pending', 'wb-gamification' ) ),
-								'pending_fulfillment' => array( 'info', __( 'Awaiting fulfilment', 'wb-gamification' ) ),
-								'fulfilled'           => array( 'active', __( 'Fulfilled', 'wb-gamification' ) ),
-								'failed'              => array( 'error', __( 'Failed', 'wb-gamification' ) ),
-								'refunded'            => array( 'warning', __( 'Refunded', 'wb-gamification' ) ),
-							);
-							?>
-							<?php foreach ( $transactions as $txn ) : ?>
-								<?php
-								$txn_user       = get_userdata( (int) $txn['user_id'] );
-								$txn_user_name  = $txn_user ? $txn_user->display_name : sprintf( '#%d', (int) $txn['user_id'] );
-								$txn_when       = (string) ( $txn['created_at'] ?? '' );
-								$txn_status_key = (string) ( $txn['status'] ?? 'pending' );
-								$txn_status     = $status_meta[ $txn_status_key ] ?? array( 'info', ucfirst( str_replace( '_', ' ', $txn_status_key ) ) );
-								?>
+					<div class="wbgam-table-scroll">
+						<table class="wbgam-table">
+							<thead>
 								<tr>
-									<td><?php echo esc_html( $txn_when ? date_i18n( 'M j, Y · H:i', strtotime( $txn_when ) ) : '—' ); ?></td>
-									<td><?php echo esc_html( $txn_user_name ); ?></td>
-									<td><?php echo esc_html( (string) ( $txn['reward_title'] ?? __( '- deleted reward -', 'wb-gamification' ) ) ); ?></td>
-									<td><strong><?php echo esc_html( number_format_i18n( (int) $txn['points_cost'] ) ); ?></strong></td>
-									<td>
-										<?php if ( ! empty( $txn['coupon_code'] ) ) : ?>
-											<code><?php echo esc_html( (string) $txn['coupon_code'] ); ?></code>
-										<?php else : ?>
-											<span class="wbgam-text-muted">—</span>
-										<?php endif; ?>
-									</td>
-									<td>
-										<span class="wbgam-pill wbgam-pill--<?php echo esc_attr( $txn_status[0] ); ?>">
-											<?php echo esc_html( $txn_status[1] ); ?>
-										</span>
-									</td>
+									<th><?php esc_html_e( 'When', 'wb-gamification' ); ?></th>
+									<th><?php esc_html_e( 'Member', 'wb-gamification' ); ?></th>
+									<th><?php esc_html_e( 'Reward', 'wb-gamification' ); ?></th>
+									<th><?php esc_html_e( 'Points spent', 'wb-gamification' ); ?></th>
+									<th><?php esc_html_e( 'Coupon', 'wb-gamification' ); ?></th>
+									<th><?php esc_html_e( 'Status', 'wb-gamification' ); ?></th>
+									<th><?php esc_html_e( 'Actions', 'wb-gamification' ); ?></th>
 								</tr>
-							<?php endforeach; ?>
-						</tbody>
-					</table>
+							</thead>
+							<tbody>
+								<?php
+								// Status enum → human label + pill class. Avoid surfacing
+								// the raw snake_case enum to admins ("PENDING_FULFILLMENT"
+								// scans as a debug log, not a UI label).
+								$status_meta = array(
+									'pending'             => array( 'info', __( 'Pending', 'wb-gamification' ) ),
+									'pending_fulfillment' => array( 'info', __( 'Awaiting fulfilment', 'wb-gamification' ) ),
+									'fulfilled'           => array( 'active', __( 'Fulfilled', 'wb-gamification' ) ),
+									'failed'              => array( 'error', __( 'Failed', 'wb-gamification' ) ),
+									'refunded'            => array( 'warning', __( 'Refunded', 'wb-gamification' ) ),
+								);
+								?>
+								<?php foreach ( $transactions as $txn ) : ?>
+									<?php
+									$txn_user       = get_userdata( (int) $txn['user_id'] );
+									$txn_user_name  = $txn_user ? $txn_user->display_name : sprintf( '#%d', (int) $txn['user_id'] );
+									$txn_when       = (string) ( $txn['created_at'] ?? '' );
+									$txn_status_key = (string) ( $txn['status'] ?? 'pending' );
+									$txn_status     = $status_meta[ $txn_status_key ] ?? array( 'info', ucfirst( str_replace( '_', ' ', $txn_status_key ) ) );
+									?>
+									<tr>
+										<td><?php echo esc_html( $txn_when ? wp_date( 'M j, Y · H:i', strtotime( $txn_when . ' UTC' ) ) : '—' ); ?></td>
+										<td><?php echo esc_html( $txn_user_name ); ?></td>
+										<td><?php echo esc_html( (string) $txn['title'] ); ?></td>
+										<td><strong><?php echo esc_html( number_format_i18n( (int) $txn['points_cost'] ) ); ?></strong></td>
+										<td>
+											<?php if ( ! empty( $txn['coupon_code'] ) ) : ?>
+												<code><?php echo esc_html( (string) $txn['coupon_code'] ); ?></code>
+											<?php else : ?>
+												<span class="wbgam-text-muted">—</span>
+											<?php endif; ?>
+										</td>
+										<td>
+											<span class="wbgam-pill wbgam-pill--<?php echo esc_attr( $txn_status[0] ); ?>">
+												<?php echo esc_html( $txn_status[1] ); ?>
+											</span>
+										</td>
+										<td>
+											<?php
+											// Fulfil is only meaningful while the reward is still
+											// awaiting hand-off; refund credits points back and stays
+											// available until the row is already refunded/failed.
+											$txn_id      = (int) $txn['id'];
+											$can_fulfill = in_array( $txn_status_key, array( 'pending', 'pending_fulfillment' ), true );
+											$can_refund  = ! in_array( $txn_status_key, array( 'refunded', 'failed' ), true );
+											?>
+											<?php if ( $can_fulfill ) : ?>
+												<button
+													type="button"
+													class="wbgam-btn wbgam-btn--sm wbgam-btn--secondary"
+													data-wb-gam-rest-action="wbGamRedemptionSettings"
+													data-wb-gam-rest-method="POST"
+													data-wb-gam-rest-path="/redemptions/<?php echo (int) $txn_id; ?>/fulfill"
+													data-wb-gam-rest-after="reload"
+													data-wb-gam-rest-success-toast="<?php esc_attr_e( 'Redemption marked fulfilled.', 'wb-gamification' ); ?>">
+													<?php esc_html_e( 'Mark fulfilled', 'wb-gamification' ); ?>
+												</button>
+											<?php endif; ?>
+											<?php if ( $can_refund ) : ?>
+												<button
+													type="button"
+													class="wbgam-btn wbgam-btn--sm wbgam-btn--danger wbgam-ms-xs"
+													data-wb-gam-rest-action="wbGamRedemptionSettings"
+													data-wb-gam-rest-method="POST"
+													data-wb-gam-rest-path="/redemptions/<?php echo (int) $txn_id; ?>/refund"
+													data-wb-gam-rest-confirm="<?php esc_attr_e( 'Refund this redemption? Points are credited back and stock restored.', 'wb-gamification' ); ?>"
+													data-wb-gam-rest-after="reload"
+													data-wb-gam-rest-success-toast="<?php esc_attr_e( 'Redemption refunded.', 'wb-gamification' ); ?>">
+													<?php esc_html_e( 'Refund', 'wb-gamification' ); ?>
+												</button>
+											<?php endif; ?>
+											<?php if ( ! $can_fulfill && ! $can_refund ) : ?>
+												<span class="wbgam-text-muted">—</span>
+											<?php endif; ?>
+										</td>
+									</tr>
+								<?php endforeach; ?>
+							</tbody>
+						</table>
+					</div>
 				</div>
 				<?php else : ?>
 				<div class="wbgam-card-body">

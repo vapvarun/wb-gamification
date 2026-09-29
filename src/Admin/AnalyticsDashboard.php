@@ -20,6 +20,7 @@
 namespace WBGam\Admin;
 
 use WBGam\Engine\Clock;
+use WBGam\Engine\StreakEngine;
 
 defined( 'ABSPATH' ) || exit;
 // Silencing convention-driven false positives so Plugin Check signal stays clean:
@@ -88,6 +89,43 @@ final class AnalyticsDashboard {
 			WB_GAM_URL . 'assets/css/admin-analytics.css',
 			array( 'wb-gam-page-analytics' ),
 			WB_GAM_VERSION
+		);
+
+		// REST-form driver + Tools settings, for the Retry buttons on the
+		// dead-lettered side-effects panel.
+		wp_enqueue_script(
+			'wb-gam-admin-rest-utils',
+			plugins_url( 'assets/js/admin-rest-utils.js', WB_GAM_FILE ),
+			array( 'wb-gam-dialog', 'wb-gam-toast-core' ),
+			WB_GAM_VERSION,
+			true
+		);
+		wp_localize_script(
+			'wb-gam-admin-rest-utils',
+			'wbGamAdminRestI18n',
+			array(
+				'confirm' => __( 'Confirm', 'wb-gamification' ),
+				'cancel'  => __( 'Cancel', 'wb-gamification' ),
+			)
+		);
+		wp_enqueue_script(
+			'wb-gam-admin-rest-form',
+			plugins_url( 'assets/js/admin-rest-form.js', WB_GAM_FILE ),
+			array( 'wb-gam-admin-rest-utils' ),
+			WB_GAM_VERSION,
+			true
+		);
+		wp_localize_script(
+			'wb-gam-admin-rest-form',
+			'wbGamToolsSettings',
+			array(
+				'restUrl' => esc_url_raw( rest_url( 'wb-gamification/v1' ) ),
+				'nonce'   => wp_create_nonce( 'wp_rest' ),
+				'i18n'    => array(
+					'saved'  => __( 'Done.', 'wb-gamification' ),
+					'failed' => __( 'Action failed.', 'wb-gamification' ),
+				),
+			)
 		);
 	}
 
@@ -217,7 +255,7 @@ final class AnalyticsDashboard {
 				<div class="wb-gam-analytics__panel">
 					<h2><?php esc_html_e( 'Top Actions by Points', 'wb-gamification' ); ?></h2>
 					<?php if ( empty( $stats['top_actions'] ) ) : ?>
-						<p class="description"><?php esc_html_e( 'No data yet.', 'wb-gamification' ); ?></p>
+						<?php self::render_no_data(); ?>
 					<?php else : ?>
 						<table class="widefat striped">
 							<thead>
@@ -230,8 +268,7 @@ final class AnalyticsDashboard {
 							<tbody>
 								<?php foreach ( $stats['top_actions'] as $row ) : ?>
 									<?php
-									$_action_def   = \WBGam\Engine\Registry::get_action( $row['action_id'] );
-									$_action_label = $_action_def ? $_action_def['label'] : self::fallback_action_label( $row['action_id'] );
+									$_action_label = \WBGam\Engine\Registry::label_for( (string) $row['action_id'] );
 									?>
 									<tr>
 										<td><?php echo esc_html( $_action_label ); ?></td>
@@ -258,7 +295,7 @@ final class AnalyticsDashboard {
 						?>
 					</h2>
 					<?php if ( empty( $stats['top_earners'] ) ) : ?>
-						<p class="description"><?php esc_html_e( 'No data yet.', 'wb-gamification' ); ?></p>
+						<?php self::render_no_data(); ?>
 					<?php else : ?>
 						<?php
 						// Resolve the default currency label so the analytics
@@ -309,6 +346,9 @@ final class AnalyticsDashboard {
 			<!-- Integration drift (unknown action_ids fired in the last 24h) -->
 			<?php self::render_unknown_actions_panel(); ?>
 
+			<!-- Dead-lettered side effects (failed badge / notification / webhook fan-out) -->
+			<?php self::render_side_effect_failures_panel(); ?>
+
 		</div><!-- .wrap -->
 		<?php
 	}
@@ -323,23 +363,31 @@ final class AnalyticsDashboard {
 	 */
 	public static function get_stats( int $period ): array {
 		$cache_key = "wb_gam_analytics_{$period}";
-		$cached    = wp_cache_get( $cache_key, self::CACHE_GROUP );
+
+		// Two layers: wp_cache memoises within the request; the transient carries
+		// the result ACROSS requests. Without a persistent object cache (Redis),
+		// wp_cache is per-request only, so every dashboard load re-ran three
+		// full-window GROUP BY scans over wb_gam_points. The transient lands in
+		// the options table on such installs and holds for CACHE_TTL. The data is
+		// time-windowed and tolerates that staleness (no invalidation on award).
+		$cached = wp_cache_get( $cache_key, self::CACHE_GROUP );
 		if ( false !== $cached ) {
 			return (array) $cached;
 		}
+		$persisted = get_transient( $cache_key );
+		if ( false !== $persisted ) {
+			wp_cache_set( $cache_key, $persisted, self::CACHE_GROUP, self::CACHE_TTL );
+			return (array) $persisted;
+		}
 
 		global $wpdb;
-		// The window must be in the clock the columns are WRITTEN in. wb_gam_points.created_at,
-		// wb_gam_kudos.created_at and wb_gam_user_badges.earned_at are all current_time( 'mysql' ) --
-		// site-local -- and this bound was gmdate(), i.e. UTC. In Los Angeles that made every window on
-		// this dashboard seven hours short: a day holding 777 points rendered as an EMPTY COLUMN, and
-		// the chart disagreed with the stat tiles beside it. Invisible on a UTC box.
+		// Every column bounded here is UTC; the window is the site's last N days as a UTC bound.
 		$since = Clock::site_cutoff( "-{$period} days" );
 
 		// Points total.
 		$points_total = (int) $wpdb->get_var(
 			$wpdb->prepare(
-				"SELECT COALESCE(SUM(points),0) FROM {$wpdb->prefix}wb_gam_points WHERE created_at >= %s",
+				"SELECT COALESCE(SUM(points),0) FROM {$wpdb->prefix}wb_gam_points WHERE created_at >= %s AND is_spend = 0",
 				$since
 			)
 		);
@@ -419,16 +467,19 @@ final class AnalyticsDashboard {
 			? round( ( $challenges_completed / $challenges_started ) * 100, 1 )
 			: 0;
 
-		// Active streaks (current_streak > 0), counting only members who still exist.
+		// Active streaks (current_streak > 0 and not lapsed), counting only members who still exist.
 		//
 		// This is the one that printed 6822.5%: 11,530 streak rows over 169 live members, because
 		// 11,378 of those rows belonged to members who had been deleted.
-		$active_streaks    = (int) $wpdb->get_var(
+		// live_sql() returns a fragment already run through $wpdb->prepare().
+		// phpcs:disable WordPress.DB.PreparedSQL.NotPrepared
+		$active_streaks = (int) $wpdb->get_var(
 			"SELECT COUNT(DISTINCT s.user_id)
 			   FROM {$wpdb->prefix}wb_gam_streaks s
 			   JOIN {$wpdb->users} u ON u.ID = s.user_id
-			  WHERE s.current_streak > 0"
+			  WHERE s.current_streak > 0 AND " . StreakEngine::live_sql( 's.' )
 		);
+		// phpcs:enable WordPress.DB.PreparedSQL.NotPrepared
 		$streak_health_pct = $total_members > 0
 			? round( ( $active_streaks / $total_members ) * 100, 1 )
 			: 0;
@@ -446,7 +497,7 @@ final class AnalyticsDashboard {
 			$wpdb->prepare(
 				"SELECT action_id, COUNT(*) AS events, SUM(points) AS pts
 				   FROM {$wpdb->prefix}wb_gam_points
-				  WHERE created_at >= %s
+				  WHERE created_at >= %s AND is_spend = 0
 				  GROUP BY action_id
 				  ORDER BY pts DESC
 				  LIMIT 10",
@@ -460,7 +511,7 @@ final class AnalyticsDashboard {
 			$wpdb->prepare(
 				"SELECT user_id, SUM(points) AS pts
 				   FROM {$wpdb->prefix}wb_gam_points
-				  WHERE created_at >= %s
+				  WHERE created_at >= %s AND is_spend = 0
 				  GROUP BY user_id
 				  ORDER BY pts DESC
 				  LIMIT 10",
@@ -469,18 +520,21 @@ final class AnalyticsDashboard {
 			ARRAY_A
 		) ?: array();
 
-		// Daily points for sparkline.
+		// Daily points for sparkline, grouped by SITE day (created_at is UTC).
+		$local = Clock::sql_utc_to_local( 'created_at', (int) strtotime( $since . ' UTC' ), time() );
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $local is built by Clock from a fixed column name.
 		$daily_rows = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT DATE(created_at) AS day, SUM(points) AS pts
+				"SELECT DATE({$local}) AS day, SUM(points) AS pts
 				   FROM {$wpdb->prefix}wb_gam_points
-				  WHERE created_at >= %s
-				  GROUP BY DATE(created_at)
+				  WHERE created_at >= %s AND is_spend = 0
+				  GROUP BY day
 				  ORDER BY day ASC",
 				$since
 			),
 			ARRAY_A
 		) ?: array();
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
 		$daily_points = array();
 		foreach ( $daily_rows as $row ) {
@@ -504,6 +558,7 @@ final class AnalyticsDashboard {
 		);
 
 		wp_cache_set( $cache_key, $data, self::CACHE_GROUP, self::CACHE_TTL );
+		set_transient( $cache_key, $data, self::CACHE_TTL );
 
 		return $data;
 	}
@@ -528,37 +583,6 @@ final class AnalyticsDashboard {
 			<span class="wb-gam-analytics__kpi-sub wb-gam-admin-kpi-sub"><?php echo esc_html( $sub ); ?></span>
 		</div>
 		<?php
-	}
-
-	/**
-	 * Return a human-readable label for action IDs not in the Registry
-	 * (e.g., BuddyPress integration IDs loaded via manifests).
-	 *
-	 * @param string $action_id Raw action ID from the points ledger.
-	 * @return string           Human-readable label, or the raw ID if unknown.
-	 */
-	private static function fallback_action_label( string $action_id ): string {
-		static $map = array(
-			'bp_activity_update'       => 'Posted activity update',
-			'bp_activity_comment'      => 'Commented on activity',
-			'bp_friends_accepted'      => 'Made a new friend',
-			'bp_receive_kudos'         => 'Received kudos',
-			'bp_reactions_received'    => 'Received a reaction',
-			'bp_groups_join'           => 'Joined a group',
-			'bp_groups_create'         => 'Created a group',
-			'bp_profile_photo_updated' => 'Updated profile photo',
-			'wp_publish_post'          => 'Published a post',
-			'wp_comment_approved'      => 'Comment approved',
-			'wp_login'                 => 'Logged in',
-			'wc_order_completed'       => 'Completed an order',
-			'ld_course_completed'      => 'Completed a course',
-			'ld_lesson_completed'      => 'Completed a lesson',
-			'ld_quiz_completed'        => 'Passed a quiz',
-			'manual_award'             => 'Admin manual award',
-			'manual_admin'             => 'Admin manual award (legacy)',
-			'manual_admin_deduct'      => 'Admin manual deduction',
-		);
-		return $map[ $action_id ] ?? $action_id;
 	}
 
 	/**
@@ -695,7 +719,7 @@ final class AnalyticsDashboard {
 				printf(
 					/* translators: %s: timestamp */
 					esc_html__( 'Intelligence signals last computed: %s. Cron runs daily; force a refresh per-user via the REST endpoint or `wp eval` if you need fresher data.', 'wb-gamification' ),
-					'<code>' . esc_html( $last_computed ) . '</code>'
+					'<code>' . esc_html( get_date_from_gmt( $last_computed ) ) . '</code>'
 				);
 				?>
 			</p>
@@ -785,25 +809,129 @@ final class AnalyticsDashboard {
 		<?php
 	}
 
+	/**
+	 * Render the dead-lettered side-effects panel.
+	 *
+	 * Surfaces the wb_gam_side_effect_failures backlog -- failed badge /
+	 * notification / webhook fan-out that {@see \WBGam\Engine\SideEffectDispatcher}
+	 * queued for reconciliation. 'pending' rows are still being auto-retried by
+	 * the reconcile cron; 'exhausted' rows have hit MAX_RETRIES and need human
+	 * triage, so each gets a Retry button (POST /tools/retry-side-effect/{id})
+	 * to re-fire once the cause is fixed. An empty backlog renders nothing.
+	 *
+	 * @return void
+	 */
+	private static function render_side_effect_failures_panel(): void {
+		$counts = \WBGam\Engine\SideEffectDispatcher::get_failure_counts();
+		if ( empty( $counts ) ) {
+			return;
+		}
+		$pending   = (int) ( $counts['pending'] ?? 0 );
+		$exhausted = (int) ( $counts['exhausted'] ?? 0 );
+		$rows      = \WBGam\Engine\SideEffectDispatcher::get_recent_failures( 20 );
+		?>
+		<div class="wb-gam-analytics__panel wbgam-mt-md">
+			<h2 class="wbgam-flex-row">
+				<span class="icon-triangle-alert" aria-hidden="true"></span>
+				<?php esc_html_e( 'Side effects that failed to run', 'wb-gamification' ); ?>
+			</h2>
+			<p class="description">
+				<?php
+				echo esc_html(
+					sprintf(
+						/* translators: 1: count still retrying, 2: count exhausted. */
+						__( 'A badge award, notification, or webhook could not be delivered. Still retrying automatically: %1$d. Given up and need attention: %2$d. Fix the cause, then Retry.', 'wb-gamification' ),
+						$pending,
+						$exhausted
+					)
+				);
+				?>
+			</p>
+			<table class="widefat striped">
+				<thead>
+					<tr>
+						<th><?php esc_html_e( 'Side effect', 'wb-gamification' ); ?></th>
+						<th><?php esc_html_e( 'Member', 'wb-gamification' ); ?></th>
+						<th><?php esc_html_e( 'Error', 'wb-gamification' ); ?></th>
+						<th><?php esc_html_e( 'Tries', 'wb-gamification' ); ?></th>
+						<th><?php esc_html_e( 'Status', 'wb-gamification' ); ?></th>
+						<th><?php esc_html_e( 'Last attempt', 'wb-gamification' ); ?></th>
+						<th><?php esc_html_e( 'Actions', 'wb-gamification' ); ?></th>
+					</tr>
+				</thead>
+				<tbody>
+					<?php
+					foreach ( $rows as $row ) :
+						$fid     = (int) $row['id'];
+						$status  = (string) ( $row['status'] ?? 'pending' );
+						$is_dead = 'exhausted' === $status;
+						$user    = get_userdata( (int) $row['user_id'] );
+						$last    = (string) ( $row['last_attempt_at'] ?? '' );
+						?>
+						<tr>
+							<td><code><?php echo esc_html( (string) $row['side_effect'] ); ?></code></td>
+							<td><?php echo esc_html( $user ? $user->display_name : sprintf( '#%d', (int) $row['user_id'] ) ); ?></td>
+							<td><span class="description"><?php echo esc_html( (string) ( $row['error_message'] ?? '' ) ); ?></span></td>
+							<td><?php echo (int) $row['retry_count']; ?></td>
+							<td>
+								<span class="wbgam-pill wbgam-pill--<?php echo $is_dead ? 'error' : 'info'; ?>">
+									<?php echo $is_dead ? esc_html__( 'Needs attention', 'wb-gamification' ) : esc_html__( 'Retrying', 'wb-gamification' ); ?>
+								</span>
+							</td>
+							<td><?php echo esc_html( $last ? human_time_diff( (int) strtotime( $last . ' UTC' ) ) . ' ' . __( 'ago', 'wb-gamification' ) : '—' ); ?></td>
+							<td>
+								<button
+									type="button"
+									class="wbgam-btn wbgam-btn--sm wbgam-btn--secondary"
+									data-wb-gam-rest-action="wbGamToolsSettings"
+									data-wb-gam-rest-method="POST"
+									data-wb-gam-rest-path="/tools/retry-side-effect/<?php echo (int) $fid; ?>"
+									data-wb-gam-rest-after="reload"
+									data-wb-gam-rest-success-toast="<?php esc_attr_e( 'Side effect re-ran successfully.', 'wb-gamification' ); ?>"
+									data-wb-gam-rest-error-toast="<?php esc_attr_e( 'Still failing. Check the cause and try again.', 'wb-gamification' ); ?>">
+									<?php esc_html_e( 'Retry', 'wb-gamification' ); ?>
+								</button>
+							</td>
+						</tr>
+					<?php endforeach; ?>
+				</tbody>
+			</table>
+		</div>
+		<?php
+	}
+
+	/**
+	 * The empty state for a panel with nothing to chart yet: say why, and where to go next.
+	 */
+	private static function render_no_data(): void {
+		?>
+		<p class="description">
+			<?php
+			printf(
+				/* translators: 1: link to the Points settings, 2: link to the Award Points page */
+				esc_html__( 'Nothing earned in this period yet. Members earn points from the actions switched on under %1$s, or you can %2$s by hand.', 'wb-gamification' ),
+				'<a href="' . esc_url( admin_url( 'admin.php?page=wb-gamification#points' ) ) . '">' . esc_html__( 'Points settings', 'wb-gamification' ) . '</a>',
+				'<a href="' . esc_url( admin_url( 'admin.php?page=wb-gamification-award' ) ) . '">' . esc_html__( 'award points', 'wb-gamification' ) . '</a>'
+			);
+			?>
+		</p>
+		<?php
+	}
+
 	private static function render_sparkline( array $daily_points, int $period ): void {
 		if ( empty( $daily_points ) ) {
-			echo '<p class="description">' . esc_html__( 'No data yet.', 'wb-gamification' ) . '</p>';
+			self::render_no_data();
 			return;
 		}
 
-		// Fill gaps so every day in range has a value.
-		//
-		// The day keys are built in the SITE's clock, because that is the clock they are grouped by:
-		// created_at is written with current_time('mysql'), so DATE(created_at) is a site-local day.
-		// This loop used gmdate() — a UTC day — so on any site not on UTC the two sets of keys did not
-		// line up, and a day that HAD points rendered as an empty column. The chart was not just ugly,
-		// it was wrong.
-		$end_ts   = time();
-		$start_ts = strtotime( "-{$period} days", $end_ts );
-		$filled   = array();
-		for ( $ts = $start_ts; $ts <= $end_ts; $ts += DAY_IN_SECONDS ) {
-			$day            = wp_date( 'Y-m-d', $ts );
-			$filled[ $day ] = $daily_points[ $day ] ?? 0;
+		// Fill gaps so every day in range has a value. Keys are site-calendar days, matching the
+		// query's grouping; walking calendar days (not 86400s steps) stays exact across DST.
+		$first  = new \DateTimeImmutable( Clock::site_date( "-{$period} days" ) );
+		$span   = (int) $first->diff( new \DateTimeImmutable( Clock::site_date() ) )->days;
+		$filled = array();
+		for ( $i = 0; $i <= $span; $i++ ) {
+			$key            = $first->modify( "+{$i} days" )->format( 'Y-m-d' );
+			$filled[ $key ] = $daily_points[ $key ] ?? 0;
 		}
 
 		$max   = max( $filled ) ?: 1;

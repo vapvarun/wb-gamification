@@ -245,7 +245,7 @@ final class PointTypeConversionService {
 		$cooldown = (int) ( $rule['cooldown_seconds'] ?? 0 );
 		if ( $cooldown > 0 ) {
 			$last = $this->repo->last_conversion_at( $user_id, $from, $to );
-			if ( $last && ( current_time( 'timestamp' ) - strtotime( $last ) ) < $cooldown ) {
+			if ( $last && ( time() - (int) strtotime( $last . ' UTC' ) ) < $cooldown ) { // events.created_at is UTC.
 				return array(
 					'ok'    => false,
 					'error' => 'cooldown',
@@ -365,7 +365,8 @@ final class PointTypeConversionService {
 				// Debit the source type. Passing the Event OBJECT makes debit()
 				// persist exactly one wb_gam_events row (id = $shared_event_id)
 				// plus the debit ledger row. debit() returns array{success:bool}.
-				$debit = PointsEngine::debit( $user_id, $debit_amount, $action_debit, $debit_event, $from );
+				// A member exchanging currency is spending it: their level is unaffected.
+				$debit = PointsEngine::debit( $user_id, $debit_amount, $action_debit, $debit_event, $from, true );
 				if ( empty( $debit['success'] ) ) {
 					$fail = (string) ( $debit['reason'] ?? 'debit_failed' );
 					return false;
@@ -385,7 +386,7 @@ final class PointTypeConversionService {
 						'points'     => $credit_amount,
 						'point_type' => $to,
 						'object_id'  => null,
-						'created_at' => current_time( 'mysql' ),
+						'created_at' => current_time( 'mysql', true ),
 					),
 					array( '%s', '%d', '%s', '%d', '%s', '%d', '%s' )
 				);

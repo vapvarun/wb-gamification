@@ -7,10 +7,10 @@
  * position. The message is intentionally private and positive — never
  * public shaming. Users in opt-out are skipped.
  *
- * Delivery:
+ * Delivery (the run is skipped when none of these can reach anyone):
  *   1. BuddyPress notification (if BP active)
  *   2. wp_mail email (if wb_gam_nudge_email = 1, default 0)
- *   3. Always fires `wb_gam_weekly_nudge_sent` for custom integrations.
+ *   3. `wb_gam_weekly_nudge_sent` for custom integrations (Slack, push, SMS).
  *
  * Architecture:
  *   - Weekly cron schedules one AS job per active user to avoid request timeout.
@@ -119,6 +119,11 @@ final class LeaderboardNudge {
 	public static function dispatch_batch(): void {
 		global $wpdb;
 
+		// Nothing would receive the nudge, so do not read the week's points or queue thousands of jobs.
+		if ( ! self::has_delivery_channel() ) {
+			return;
+		}
+
 		// Single-fire-per-hour gate. Two callers in the same hour are
 		// almost certainly a bug — the weekly nudge cron should fire once
 		// per week; anything more is a sign of hook collision or duplicate
@@ -153,9 +158,7 @@ final class LeaderboardNudge {
 		}
 
 		// Users who earned at least 1 point this week, not opted out.
-		// strtotime( 'monday this week' ) resolves the weekday against PHP's UTC, not the site's. At a
-		// Monday boundary (Auckland Mon 03:30 = UTC Sun 15:30) it returns the PREVIOUS Monday, so the
-		// week window is off by a full seven days -- and the column it bounds is site-local anyway.
+		// The site's Monday, as a UTC instant for the UTC created_at column.
 		$week_start = Clock::site_cutoff( 'monday this week' );
 
 		$user_ids = $wpdb->get_col(
@@ -202,6 +205,21 @@ final class LeaderboardNudge {
 				'wb-gamification-nudge'
 			);
 		}
+	}
+
+	/**
+	 * Whether a nudge would reach anyone: a BuddyPress notification, the email option, or a
+	 * listener on `wb_gam_weekly_nudge_sent` (Slack, push, SMS). Without one the weekly run is a
+	 * fan-out of rank queries that ends in nothing.
+	 *
+	 * @since 1.6.5
+	 *
+	 * @return bool
+	 */
+	public static function has_delivery_channel(): bool {
+		return function_exists( 'bp_notifications_add_notification' )
+			|| (bool) get_option( 'wb_gam_nudge_email', 0 )
+			|| has_action( 'wb_gam_weekly_nudge_sent' );
 	}
 
 	// ── Single-user nudge ───────────────────────────────────────────────────────
@@ -347,27 +365,27 @@ final class LeaderboardNudge {
 	private static function build_message( int $user_id, int $rank, int $points, ?int $points_to_next ): string {
 		if ( 1 === $rank ) {
 			return sprintf(
-				/* translators: %d: points earned this week */
-				__( "You're #1 on the leaderboard this week with %d points. Keep it up!", 'wb-gamification' ),
-				$points
+				/* translators: %s: points earned this week, e.g. "40 Points". */
+				__( "You're #1 on the leaderboard this week with %s. Keep it up!", 'wb-gamification' ),
+				wb_gam_format_points( $points )
 			);
 		}
 
 		if ( null !== $points_to_next ) {
 			return sprintf(
-				/* translators: 1: rank, 2: points this week, 3: points needed for next rank. */
-				__( "You're #%1\$d this week with %2\$d points. Just %3\$d more points to move up!", 'wb-gamification' ),
+				/* translators: 1: rank, 2: points this week, e.g. "40 Points", 3: points needed for the next rank. */
+				__( "You're #%1\$d this week with %2\$s. Just %3\$s more to move up!", 'wb-gamification' ),
 				$rank,
-				$points,
-				$points_to_next
+				wb_gam_format_points( $points ),
+				wb_gam_format_points( $points_to_next )
 			);
 		}
 
 		return sprintf(
-			/* translators: 1: rank, 2: points this week. */
-			__( "You're #%1\$d this week with %2\$d points.", 'wb-gamification' ),
+			/* translators: 1: rank, 2: points this week, e.g. "40 Points". */
+			__( "You're #%1\$d this week with %2\$s.", 'wb-gamification' ),
 			$rank,
-			$points
+			wb_gam_format_points( $points )
 		);
 	}
 

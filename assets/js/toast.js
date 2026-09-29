@@ -1,28 +1,24 @@
 /**
- * WB Gamification — Toast Notification Renderer.
+ * WB Gamification: the toast feed.
  *
- * Sole owner of the toast STACK surface. Creates ONE
- * `<div class="wb-gam-toasts">` container appended to document.body and
- * renders dismissible notifications in the top-center position.
+ * Reads queued events and hands each one to the shared toast renderer (assets/js/toast-core.js,
+ * window.wbGam.toast). It owns nothing visual: the shell, timing, pause on hover, the
+ * three-visible limit and the top-layer host all live in the renderer and popups.css.
  *
- * Consumes three independent input paths, all deduped by event `_id`:
+ * Three independent input paths, all deduped by event `_id`:
  *   1. Page-load seed in `window.wbGamNotifications`.
  *   2. wbGamRealtime broker live deliveries (heartbeat ticks + SSE).
- *   3. REST `/members/me/toasts` poll — fallback only when the broker
- *      doesn't come online (logged-out pages, third-party Heartbeat
- *      strip).
+ *   3. REST `/members/me/toasts` poll, only when the broker does not come online.
  *
- * Event-type routing:
- *   - level_up + streak_milestone → SKIPPED here, owned by the
- *     Interactivity store overlay surface (assets/interactivity/
- *     notifications.js). Toasts and overlays are different visual
- *     treatments for different signal weights.
- *   - everything else (points, badge, challenge, kudos, …) → toast.
+ * Event routing:
+ *   - level_up, streak_milestone, cohort_promotion, community_goal are Moment cards, owned by the
+ *     Interactivity store (assets/interactivity/notifications.js). Skipped here.
+ *   - badge, challenge: an Achievement toast with a small confetti burst.
+ *   - points, kudos, welcome, submission, skip: a plain toast. Repeats of the SAME points action
+ *     inside two seconds merge into one toast ("+2 Points", "Leave a comment x2").
  *
  * @since 1.0.0
- * @refactored 1.4.0 — moved to realtime broker subscription.
- * @refactored 1.5.0 — single-owner of the toast container; overlays
- *                    routed out to the IA store.
+ * @refactored 1.6.5 - the renderer moved to toast-core.js so the admin shares it.
  */
 
 /* global wbGamToast, wbGamRealtime */
@@ -34,206 +30,128 @@
 		return;
 	}
 
-	// Create the single toast container. The `--rest` modifier was used
-	// in 1.4.0 to distinguish from a now-removed IA-rendered duplicate
-	// container; dropped in 1.5.0 as part of the single-owner refactor.
-	//
-	// Position is admin-configurable (Settings → Realtime). The server
-	// localizes wbGamToast.position; we map it to a `--{position}`
-	// modifier class that owns all placement + slide-direction CSS.
-	// Default bottom-right so the stack never overlaps a top nav / sticky
-	// header. Validate against the known set so a stale/garbage value
-	// can't inject an arbitrary class.
-	var POSITIONS = [ 'top-right', 'top-center', 'bottom-right', 'bottom-left' ];
-	var position  = wbGamToast.position;
-	if ( POSITIONS.indexOf( position ) === -1 ) {
-		position = 'bottom-right';
-	}
-
-	// Resolve a server-localized string (wbGamToast.i18n.<key>), falling back to
-	// the English default so the renderer still works if the localize data is
-	// stripped by an asset-isolating host.
 	function toastI18n( key, fallback ) {
 		return ( wbGamToast.i18n && wbGamToast.i18n[ key ] ) || fallback;
 	}
-	var container = document.createElement( 'div' );
-	container.className = 'wb-gam-toasts wb-gam-toasts--' + position;
-	container.setAttribute( 'role', 'region' );
-	container.setAttribute( 'aria-label', toastI18n( 'region', 'Notifications' ) );
-	container.setAttribute( 'aria-live', 'polite' );
-	container.setAttribute( 'aria-relevant', 'additions' );
-	document.body.appendChild( container );
 
-	/**
-	 * Push a top-anchored toast stack below whatever is pinned to the top of the
-	 * viewport.
-	 *
-	 * The CSS could only ever offset the WP admin bar, whose height is a known
-	 * constant. It knew nothing about the active theme's own sticky header, so on
-	 * BuddyX (header ~69px tall) a top-right toast rendered INSIDE the header band.
-	 * Every theme's header is a different height, so the only honest answer is to
-	 * measure the one actually on the page.
-	 *
-	 * Finds the bottom edge of the lowest fixed/sticky element anchored at the top of
-	 * the viewport and parks the stack below it. Owners who want a different offset can
-	 * simply set --wb-gam-toast-offset-top in their own CSS; this only sets the property
-	 * when it finds something to clear.
-	 */
-	var TOAST_GAP = 16;      // Matches the 1rem breathing room in the CSS fallback.
-	var TOP_STRIP = 120;     // How far down the viewport still counts as "chrome at the top".
+	var MOMENT_TYPES = [ 'level_up', 'streak_milestone', 'cohort_promotion', 'community_goal' ];
+	var AGGREGATE_WINDOW_MS = 2000;
 
-	/**
-	 * Bottom edge, in viewport pixels, of whatever is currently occupying the top of the
-	 * screen — the WP admin bar, the theme's header, or any pinned bar.
-	 *
-	 * The test is deliberately "what is in the way RIGHT NOW", not "what is sticky".
-	 * BuddyX's header is position:static: it is not pinned, it simply sits at the top of
-	 * the document, and at scroll 0 it occupies y=37..106. A pinned-elements-only check
-	 * finds nothing there and happily renders the toast at 48px — straight through the
-	 * site nav. Whether the obstruction is fixed or in normal flow makes no difference to
-	 * the member looking at it.
-	 *
-	 * @return {number} Bottom edge of the topmost obstruction, or 0 if the top is clear.
-	 */
-	function topObstructionBottom() {
-		// One measurement, one file. This used to be a second copy of the same logic, and the two copies
-		// are exactly how the status bar shipped with the bug this function was written to fix.
-		if ( window.wbGam && typeof window.wbGam.topObstructionBottom === 'function' ) {
-			return window.wbGam.topObstructionBottom( container );
-		}
-
-		return 0;
-	}
-
-	/**
-	 * Park a top-anchored toast stack below whatever is currently in the way.
-	 *
-	 * Only sets the property when it finds an obstruction, so an owner who overrides
-	 * --wb-gam-toast-offset-top in their own CSS keeps control on a clear page.
-	 */
-	/**
-	 * Park a bottom-anchored stack above whatever is pinned to the bottom.
-	 *
-	 * The mirror of applyTopOffset(), and the half that was missing: a bottom stack cleared the
-	 * HEADER by construction but nothing cleared a bottom bar, so on BuddyNext's mobile layout the
-	 * toast covered the fixed bottom nav after nearly every rewarded action (comment, follow,
-	 * reaction) — the primary navigation, unusable for the life of the toast.
-	 *
-	 * Only sets the property when it finds an obstruction, so an owner overriding
-	 * --wb-gam-toast-offset-bottom in their own CSS keeps control on a clear page.
-	 */
-	function applyBottomOffset() {
-		if ( position.indexOf( 'bottom' ) !== 0 ) {
-			return;
-		}
-
-		var occupied = ( window.wbGam && typeof window.wbGam.bottomObstructionHeight === 'function' )
-			? window.wbGam.bottomObstructionHeight( container )
-			: 0;
-
-		if ( occupied > 0 ) {
-			container.style.setProperty( '--wb-gam-toast-offset-bottom', occupied + TOAST_GAP + 'px' );
-		} else {
-			container.style.removeProperty( '--wb-gam-toast-offset-bottom' );
-		}
-	}
-
-	function applyTopOffset() {
-		if ( position.indexOf( 'top' ) !== 0 ) {
-			return; // Bottom-anchored stacks are handled by applyBottomOffset().
-		}
-
-		var lowest = topObstructionBottom();
-
-		if ( lowest > 0 ) {
-			container.style.setProperty( '--wb-gam-toast-offset-top', lowest + TOAST_GAP + 'px' );
-		} else {
-			// Top is clear (e.g. an in-flow header has scrolled off) — hand it back to
-			// the stylesheet, which still knows about the admin bar.
-			container.style.removeProperty( '--wb-gam-toast-offset-top' );
-		}
-	}
-
-	applyTopOffset();
-	applyBottomOffset();
-
-	// An in-flow header scrolls away and a sticky one changes height, so the offset is not
-	// a constant. Re-measure on scroll and resize, rAF-throttled so this never runs hot.
-	// Both edges re-measure: a bottom bar can appear, hide on scroll, or change height at a
-	// breakpoint exactly like a header does.
-	var offsetQueued = false;
-	function queueOffsets() {
-		if ( offsetQueued ) {
-			return;
-		}
-		offsetQueued = true;
-		window.requestAnimationFrame( function () {
-			offsetQueued = false;
-			applyTopOffset();
-			applyBottomOffset();
-		} );
-	}
-
-	window.addEventListener( 'resize', queueOffsets );
-	window.addEventListener( 'scroll', queueOffsets, { passive: true } );
-
-	/**
-	 * Lucide icon class map for toast types. The toast lucide-icons
-	 * stylesheet must be enqueued on the page for these to render.
-	 */
-	var iconMap = {
-		points:    'icon-sparkles',
-		badge:     'icon-medal',
+	var ICONS = {
+		points: 'icon-sparkles',
+		badge: 'icon-medal',
 		challenge: 'icon-target',
-		level_up:  'icon-rocket',
-		streak:    'icon-flame',
-		kudos:     'icon-heart-handshake'
+		kudos: 'icon-heart-handshake',
+		welcome: 'icon-sparkles',
+		skip: 'icon-info',
+		submission: 'icon-check',
 	};
 
 	/**
-	 * Set of toast `_id`s already rendered in this page session.
-	 *
-	 * Three independent delivery paths can hand us the same event:
-	 *   1. The page-load seed via `window.wbGamNotifications` (cursor=footer).
-	 *   2. The Heartbeat broker (cursor=heartbeat) — fires on every tick and
-	 *      also replays the last payload to late subscribers.
-	 *   3. The REST fallback fetch (cursor=rest).
-	 *
-	 * Each cursor advances independently on the PHP side, so the SAME event
-	 * `_id` can arrive twice on a single page load (broker replay + REST
-	 * fallback). This Set guarantees one visible toast per `_id` no matter
-	 * how many surfaces deliver it. Closes Basecamp #9932791974.
-	 *
-	 * Fallback key for legacy payloads missing `_id`: type+message+_ts.
+	 * Set of toast `_id`s already rendered in this page session. Three delivery paths can hand us
+	 * the same event; this guarantees one toast per `_id`. Fallback key for legacy payloads that
+	 * carry no `_id`: type + message + _ts.
 	 */
 	var seenIds = new Set();
 
-	/**
-	 * Reference to the most recent points-type toast still visible.
-	 * When a new points toast arrives within AGGREGATE_WINDOW_MS, we
-	 * MERGE into this element (bump total + action count + reset
-	 * dismiss timer) instead of painting a sibling.
-	 *
-	 * Why client-side aggregation:
-	 *   A power-user clicking around can fire 5 points-awarded events
-	 *   in 3 seconds — server-side that's 5 distinct rows in the queue
-	 *   table (each its own "+5 Points" payload). Without aggregation
-	 *   the user sees 5 stacked top-center toasts, which is noisy.
-	 *   Client-side is the right layer because:
-	 *     1. Visibility-aware — we only merge if the previous toast is
-	 *        still on screen, not just "recently fired"
-	 *     2. No server-state coordination — cursors stay simple, queue
-	 *        rows stay as authoritative individual events for the audit
-	 *        trail / GraphQL / SSE clients
-	 *     3. Other surfaces (mobile SDK consumers) can implement their
-	 *        own aggregation policy; we don't lock them into ours
-	 */
-	var lastPointsToast = null; // { el, points, actionCount, dismissTimer, type }
-	var AGGREGATE_WINDOW_MS = 2000;
+	// The most recent points toast, so a repeat of the same action merges into it.
+	var lastPoints = null; // { handle, points, count, action, label, unitMany, at }
+
+	function celebrate( el ) {
+		if ( window.wbGam && typeof window.wbGam.celebrate === 'function' ) {
+			window.wbGam.celebrate( el, 'small' );
+		}
+	}
+
+	function pointsToast( toast ) {
+		var add = parseInt( toast.points, 10 );
+		if ( isNaN( add ) ) {
+			var m = ( toast.message || '' ).match( /\+(\d+)/ );
+			add = m ? parseInt( m[ 1 ], 10 ) : 0;
+		}
+		var action = toast.action || '';
+		var label  = toast.detail || '';
+		var now    = Date.now();
+
+		if (
+			add > 0
+			&& lastPoints
+			&& ! lastPoints.handle.gone
+			&& lastPoints.action === action
+			&& lastPoints.label === label
+			&& now - lastPoints.at < AGGREGATE_WINDOW_MS
+		) {
+			lastPoints.points += add;
+			lastPoints.count  += 1;
+			lastPoints.at      = now;
+			// A merged total is always more than one, so it takes the plural name the server sent.
+			var unit = lastPoints.unitMany || toastI18n( 'points', 'points' );
+			lastPoints.handle.update( {
+				title: '+' + lastPoints.points.toLocaleString() + ' ' + unit,
+				body: label ? label + ' ×' + lastPoints.count : '×' + lastPoints.count,
+			} );
+			return;
+		}
+
+		var handle = window.wbGam.toast( {
+			type: 'points',
+			tone: 'reward',
+			icon: toast.icon || ICONS.points,
+			title: toast.message || '',
+			body: label,
+		} );
+		lastPoints = add > 0
+			? { handle: handle, points: add, count: 1, action: action, label: label, unitMany: toast.unit_many || '', at: now }
+			: null;
+	}
+
+	function showOne( toast ) {
+		switch ( toast.type ) {
+			case 'points':
+				pointsToast( toast );
+				return;
+
+			case 'badge':
+			case 'challenge':
+				window.wbGam.toast( {
+					type: toast.type,
+					tone: 'achievement',
+					icon: toast.icon || ICONS[ toast.type ],
+					title: toast.message || '',
+					body: toast.detail || '',
+					onShow: celebrate,
+				} );
+				return;
+
+			case 'skip':
+				window.wbGam.toast( { type: 'skip', tone: 'info', icon: ICONS.skip, title: toast.message || '', body: toast.detail || '' } );
+				return;
+
+			case 'submission':
+				window.wbGam.toast( {
+					type: 'submission',
+					tone: 'approved' === toast.outcome ? 'success' : 'info',
+					icon: toast.icon || ( 'approved' === toast.outcome ? 'icon-check' : 'icon-info' ),
+					title: toast.message || '',
+					body: toast.detail || '',
+				} );
+				return;
+
+			default:
+				window.wbGam.toast( {
+					type: toast.type || 'points',
+					tone: 'reward',
+					icon: toast.icon || ICONS[ toast.type ] || ICONS.points,
+					title: toast.message || '',
+					body: toast.detail || '',
+					href: toast.url || '',
+					hrefLabel: toast.url_label || '',
+				} );
+		}
+	}
 
 	/**
-	 * Render a queued payload of toasts, deduping by `_id` so the same
-	 * event never paints twice.
+	 * Render a queued payload, deduping by `_id` so the same event never paints twice.
 	 *
 	 * @param {Array<object>|undefined} toasts From the heartbeat / REST poll / seed.
 	 */
@@ -245,11 +163,8 @@
 			if ( ! toast || typeof toast !== 'object' ) {
 				return;
 			}
-			// Overlays (level-up + streak milestone) are the IA store's
-			// surface — different visual treatment, separate dismiss
-			// affordance, full-viewport modal. Skip them here so they
-			// don't ALSO render as a toast pill in the corner.
-			if ( toast.type === 'level_up' || toast.type === 'streak_milestone' ) {
+			// Moment cards are the Interactivity store's surface; they must not also paint a toast.
+			if ( MOMENT_TYPES.indexOf( toast.type ) !== -1 ) {
 				return;
 			}
 			var key = toast._id != null
@@ -259,178 +174,13 @@
 				return;
 			}
 			seenIds.add( key );
-
-			// Points-toast aggregation: merge ONLY when the previous points
-			// toast is still on screen AND it's the same action (e.g. two
-			// quick comments → "Leave a comment x2"). Distinct actions stay
-			// as separate, individually-labeled toasts so the stack always
-			// says what each award was for — never a contextless
-			// "+N points (M actions)".
-			if (
-				toast.type === 'points'
-				&& lastPointsToast
-				&& lastPointsToast.el.parentNode
-				&& ( toast.action || '' ) === lastPointsToast.action
-				&& ( toast.detail || '' ) === lastPointsToast.actionLabel
-			) {
-				mergeIntoPointsToast( toast );
-				return;
-			}
-
-			showToast( toast );
+			showOne( toast );
 		} );
 	}
 
 	/**
-	 * Merge a new points toast into the previous one still visible.
-	 * Updates the message to read "+TOTAL pts (N actions)" and resets
-	 * the dismiss timer so the user has time to register the change.
-	 *
-	 * @param {Object} toast Incoming points toast.
-	 */
-	function mergeIntoPointsToast( toast ) {
-		var add = parseInt( toast.points, 10 );
-		if ( isNaN( add ) ) {
-			// No structured points field — fall back to extracting from
-			// the message ("+5 Points" → 5). Defensive; the server-side
-			// on_points_awarded always sets toast.points so this is rare.
-			var m = ( toast.message || '' ).match( /\+(\d+)/ );
-			add = m ? parseInt( m[1], 10 ) : 0;
-		}
-		if ( add <= 0 ) {
-			return;
-		}
-
-		lastPointsToast.points += add;
-		lastPointsToast.actionCount += 1;
-
-		// Re-render the points total in place, preserving the currency label
-		// the server wrote after "+N " — typically "points" / "XP" / "Coins".
-		var msgEl = lastPointsToast.el.querySelector( '.wb-gam-toast__message' );
-		if ( msgEl ) {
-			var labelMatch = ( msgEl.textContent || '' ).match( /^\+\d+\s+(.+?)(?:\s+×\d+)?$/ );
-			var label = labelMatch ? labelMatch[1] : toastI18n( 'points', 'points' );
-			msgEl.textContent = '+' + lastPointsToast.points + ' ' + label;
-		}
-		// Detail line names the (same) action plus a repeat count, e.g.
-		// "Leave a comment x2". Only same-action toasts ever merge, so the
-		// label stays accurate across the merge.
-		var detailEl = lastPointsToast.el.querySelector( '.wb-gam-toast__detail' );
-		if ( detailEl ) {
-			detailEl.hidden = false;
-			detailEl.textContent = lastPointsToast.actionLabel
-				? lastPointsToast.actionLabel + ' ×' + lastPointsToast.actionCount
-				: '×' + lastPointsToast.actionCount;
-		}
-
-		// Reset the dismiss timer so the user has time to see the bump.
-		if ( lastPointsToast.dismissTimer ) {
-			clearTimeout( lastPointsToast.dismissTimer );
-		}
-		lastPointsToast.dismissTimer = setTimeout( function () {
-			if ( lastPointsToast && lastPointsToast.el && lastPointsToast.el.parentNode ) {
-				lastPointsToast.el.classList.add( 'wb-gam-toast--exit' );
-				var el = lastPointsToast.el;
-				setTimeout( function () {
-					if ( el.parentNode ) { el.remove(); }
-				}, 320 );
-			}
-		}, 4000 );
-	}
-
-	/**
-	 * Create and display a single toast element.
-	 *
-	 * @param {Object} toast Toast data with type, message, icon, detail properties.
-	 */
-	function showToast( toast ) {
-		var el = document.createElement( 'div' );
-		el.className = 'wb-gam-toast';
-		el.setAttribute( 'data-type', toast.type || 'points' );
-
-		var icon = document.createElement( 'span' );
-		var iconClass = toast.icon || iconMap[ toast.type ] || iconMap.points;
-		icon.className = 'wb-gam-toast__icon ' + iconClass;
-		icon.setAttribute( 'aria-hidden', 'true' );
-		el.appendChild( icon );
-
-		var body = document.createElement( 'div' );
-		body.className = 'wb-gam-toast__body';
-
-		var message = document.createElement( 'strong' );
-		message.className = 'wb-gam-toast__message';
-		message.textContent = toast.message || '';
-		body.appendChild( message );
-
-		// Always create the detail line so a later same-action merge can
-		// populate it ("Leave a comment x2"). Hidden when there's no detail.
-		var detail = document.createElement( 'span' );
-		detail.className = 'wb-gam-toast__detail';
-		if ( toast.detail ) {
-			detail.textContent = toast.detail;
-		} else {
-			detail.hidden = true;
-		}
-		body.appendChild( detail );
-
-		el.appendChild( body );
-
-		var close = document.createElement( 'button' );
-		close.className = 'wb-gam-toast__close';
-		close.setAttribute( 'aria-label', toastI18n( 'dismiss', 'Dismiss' ) );
-		close.textContent = '✕';
-		close.addEventListener( 'click', function () {
-			el.remove();
-		} );
-		el.appendChild( close );
-
-		container.appendChild( el );
-
-		// Animate in.
-		requestAnimationFrame( function () {
-			el.classList.add( 'wb-gam-toast--enter' );
-		} );
-
-		// Auto-dismiss after 4 seconds.
-		var dismissTimer = setTimeout( function () {
-			if ( el.parentNode ) {
-				el.classList.add( 'wb-gam-toast--exit' );
-				setTimeout( function () {
-					if ( el.parentNode ) {
-						el.remove();
-					}
-				}, 320 );
-			}
-		}, 4000 );
-
-		// Track points toasts so subsequent ones within
-		// AGGREGATE_WINDOW_MS can merge instead of stacking.
-		if ( toast.type === 'points' ) {
-			lastPointsToast = {
-				el:           el,
-				points:       parseInt( toast.points, 10 ) || 0,
-				actionCount:  1,
-				dismissTimer: dismissTimer,
-				type:         'points',
-				action:       toast.action || '',
-				actionLabel:  toast.detail || '',
-			};
-			// Clear the reference when the toast leaves the DOM (close
-			// button click, auto-dismiss exit animation). After
-			// AGGREGATE_WINDOW_MS the reference is stale anyway — the
-			// next points toast will paint as a new one.
-			setTimeout( function () {
-				if ( lastPointsToast && lastPointsToast.el === el ) {
-					lastPointsToast = null;
-				}
-			}, AGGREGATE_WINDOW_MS );
-		}
-	}
-
-	/**
-	 * First-paint fallback — drain any toast queued before the broker
-	 * came online. Once the broker fires its first tick we never read
-	 * this endpoint again.
+	 * First-paint fallback: drain any toast queued before the broker came online. Once the broker
+	 * fires its first tick this endpoint is never read again.
 	 */
 	function firstPaintFallback() {
 		window.wbGam.rest( wbGamToast.restUrl + 'members/me/toasts', {
@@ -438,13 +188,12 @@
 		} )
 			.then( function ( result ) { return result.ok ? result.data : []; } )
 			.then( renderToasts )
-			.catch( function () { /* silent — broker will catch up */ } );
+			.catch( function () { /* silent: the broker will catch up */ } );
 	}
 
 	/**
-	 * Subscribe to the realtime broker. The broker replays its last
-	 * payload synchronously on subscribe, so if heartbeat has already
-	 * ticked we paint immediately.
+	 * Subscribe to the realtime broker. It replays its last payload synchronously on subscribe, so
+	 * if heartbeat has already ticked we paint immediately.
 	 */
 	function subscribe() {
 		if ( window.wbGamRealtime && typeof window.wbGamRealtime.subscribe === 'function' ) {
@@ -454,23 +203,15 @@
 		return false;
 	}
 
-	// Step 1 — paint anything that arrived in the page-load seed
-	// (cursor=footer, same payload the IA store reads for overlays).
-	// This was the missing path that left users staring at an empty
-	// container for ~15 seconds until the first heartbeat tick.
+	// Step 1: paint anything that arrived in the page-load seed (cursor=footer).
 	if ( window.wbGamNotifications && Array.isArray( window.wbGamNotifications ) ) {
 		renderToasts( window.wbGamNotifications );
 	}
 
-	// Step 2 — subscribe to the realtime broker. If the broker is up, we
-	// rely on it for live delivery. We do NOT also call firstPaintFallback
-	// because the broker's replay covers anything queued before subscribe
-	// (heartbeat.js:120) and the REST fallback would just re-deliver the
-	// same events under a different cursor (the original duplicate path).
+	// Step 2: subscribe to the broker. If it is up we rely on it for live delivery and do NOT also
+	// call the REST fallback, which would re-deliver the same events under a different cursor.
 	if ( ! subscribe() ) {
 		document.addEventListener( 'wbGamRealtimeReady', subscribe, { once: true } );
-		// Broker not online — REST fallback is the only real-time path.
-		// Dedupe still protects us if heartbeat boots before this resolves.
 		firstPaintFallback();
 	}
 }() );

@@ -43,6 +43,10 @@ final class LevelStream {
 	 * @param array|null $old_level Previous level data or null.
 	 */
 	public static function post( int $user_id, ?array $new_level = null, ?array $old_level = null ): void {
+		// A drop (deduction, decay, reversal) is applied silently; only a climb is announced.
+		if ( is_array( $new_level ) && ! \WBGam\Engine\LevelEngine::is_climb( $new_level, is_array( $old_level ) ? $old_level : null ) ) {
+			return;
+		}
 		if ( ! self::is_enabled() || ! function_exists( 'bp_activity_add' ) ) {
 			return;
 		}

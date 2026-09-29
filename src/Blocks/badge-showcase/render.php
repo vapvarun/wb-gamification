@@ -122,20 +122,13 @@ if ( '' !== $wb_gam_category ) {
  */
 $wb_gam_badges = (array) apply_filters( 'wb_gam_block_badge_showcase_data', $wb_gam_badges, $wb_gam_attrs, $wb_gam_user_id );
 
-// Sort earned first, then by earned_at desc; locked at end alphabetically.
+// Ladder order comes from the engine (category, then threshold), the same order the admin
+// badge list uses. Earned-first is a stable partition on top of it (usort is stable on
+// PHP 8), never a re-sort: re-sorting by name put "10-Year" before "2-Year".
+$wb_gam_badges = BadgeEngine::sort_for_display( $wb_gam_badges );
 usort(
 	$wb_gam_badges,
-	static function ( array $a, array $b ): int {
-		$a_earned = ! empty( $a['earned'] );
-		$b_earned = ! empty( $b['earned'] );
-		if ( $a_earned !== $b_earned ) {
-			return $a_earned ? -1 : 1;
-		}
-		if ( $a_earned ) {
-			return strcmp( (string) ( $b['earned_at'] ?? '' ), (string) ( $a['earned_at'] ?? '' ) );
-		}
-		return strcasecmp( (string) ( $a['name'] ?? '' ), (string) ( $b['name'] ?? '' ) );
-	}
+	static fn( array $a, array $b ): int => (int) empty( $a['earned'] ) <=> (int) empty( $b['earned'] )
 );
 
 if ( $wb_gam_limit > 0 && count( $wb_gam_badges ) > $wb_gam_limit ) {
@@ -169,31 +162,22 @@ $wb_gam_wrapper = get_block_wrapper_attributes(
  * actively earning), compact absolute for older. Falls back to
  * date_format option if both calculations fail.
  *
- * @param string $iso Earned_at timestamp (string from DB).
+ * @param string $iso earned_at from the DB (UTC Y-m-d H:i:s).
  * @return string
  */
 $wb_gam_format_date = static function ( string $iso ): string {
-	$ts = strtotime( $iso );
+	$ts = strtotime( $iso . ' UTC' ); // earned_at is stored in UTC.
 	if ( ! $ts ) {
 		return '';
 	}
 
-	// earned_at is written by BadgeEngine with current_time( 'mysql' ) -- site-local -- and PHP
-	// runs on UTC under WordPress, so strtotime() reads it back as though it were UTC. Both
-	// comparisons below therefore have to be made in the site's frame, not the real one.
-	//
-	// Note human_time_diff( $ts ) with one argument defaults its second to time(), so it carried
-	// the same skew as the explicit subtraction and had to be passed the site clock too. The
-	// visible effect was direction-dependent: a site ahead of UTC produced a NEGATIVE age for a
-	// badge earned minutes ago, failing the `>= 0` guard, so a fresh badge skipped "3 days ago"
-	// entirely and rendered as a bare calendar date.
-	$now = current_time( 'timestamp' );
+	$now = time();
 	$age = $now - $ts;
 	if ( $age >= 0 && $age < DAY_IN_SECONDS * 30 ) {
 		/* translators: %s: human-readable time difference. */
 		return sprintf( esc_html__( '%s ago', 'wb-gamification' ), human_time_diff( $ts, $now ) );
 	}
-	return date_i18n( get_option( 'date_format' ) ?: 'M j, Y', $ts );
+	return wp_date( get_option( 'date_format' ) ?: 'M j, Y', $ts );
 };
 
 BlockHooks::before( 'badge-showcase', $wb_gam_attrs );
@@ -295,7 +279,7 @@ BlockHooks::before( 'badge-showcase', $wb_gam_attrs );
 
 					<?php if ( $wb_gam_is_earned && ! empty( $wb_gam_badge['earned_at'] ) ) : ?>
 						<time class="wb-gam-badge-showcase__earned-at"
-							datetime="<?php echo esc_attr( (string) $wb_gam_badge['earned_at'] ); ?>">
+							datetime="<?php echo esc_attr( gmdate( 'c', (int) strtotime( (string) $wb_gam_badge['earned_at'] . ' UTC' ) ) ); ?>">
 							<?php echo esc_html( $wb_gam_format_date( (string) $wb_gam_badge['earned_at'] ) ); ?>
 						</time>
 					<?php elseif ( ! $wb_gam_is_earned ) : ?>

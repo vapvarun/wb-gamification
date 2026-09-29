@@ -7,7 +7,6 @@
  * GET    /wb-gamification/v1/challenges/{id}         Single challenge + current user's progress
  * PUT    /wb-gamification/v1/challenges/{id}         Update challenge (admin)
  * DELETE /wb-gamification/v1/challenges/{id}         Delete challenge (admin)
- * POST   /wb-gamification/v1/challenges/{id}/complete  User marks progress
  *
  * @package WB_Gamification
  * @since   0.1.0
@@ -205,33 +204,6 @@ class ChallengesController extends WP_REST_Controller {
 				'schema' => array( $this, 'get_item_schema' ),
 			)
 		);
-
-		// POST /challenges/{id}/complete — user marks progress.
-		register_rest_route(
-			$this->namespace,
-			'/' . $this->rest_base . '/(?P<id>[\d]+)/complete',
-			array(
-				array(
-					'methods'             => WP_REST_Server::CREATABLE,
-					'callback'            => array( $this, 'complete_challenge' ),
-					// Use a named method instead of an inline closure so
-					// `bin/coding-rules-check.sh` Rule 2 (REST __return_true
-					// allowlist + permission_callback introspection) can
-					// statically discover the gate. Closures are opaque to
-					// the gate's grep-based introspection. Closes audit
-					// DATA-FLOW-ADMIN-REST-2026-05-27.md §G12.
-					'permission_callback' => array( $this, 'require_logged_in' ),
-					'args'                => array(
-						'id' => array(
-							'required'          => true,
-							'type'              => 'integer',
-							'minimum'           => 1,
-							'sanitize_callback' => 'absint',
-						),
-					),
-				),
-			)
-		);
 	}
 
 	// ── Permission checks ─────────────────────────────────────────────────────
@@ -249,27 +221,6 @@ class ChallengesController extends WP_REST_Controller {
 		return \WBGam\Engine\Capabilities::user_can( 'wb_gam_manage_challenges' )
 			? true
 			: new WP_Error( 'rest_forbidden', __( 'You do not have permission to manage challenges.', 'wb-gamification' ), array( 'status' => 403 ) );
-	}
-
-	/**
-	 * Permission gate for the `complete` endpoint — any logged-in user.
-	 *
-	 * Extracted from an inline closure in `register_routes()` so the
-	 * static gate at `bin/coding-rules-check.sh` can introspect it.
-	 *
-	 * @since 1.4.1
-	 *
-	 * @return true|WP_Error
-	 */
-	public function require_logged_in(): bool|WP_Error {
-		if ( ! is_user_logged_in() ) {
-			return new WP_Error(
-				'rest_not_logged_in',
-				__( 'You must be logged in to complete challenges.', 'wb-gamification' ),
-				array( 'status' => 401 )
-			);
-		}
-		return true;
 	}
 
 	// ── Callbacks ──────────────────────────────────────────────────────────────
@@ -349,6 +300,8 @@ class ChallengesController extends WP_REST_Controller {
 			);
 		}
 
+		\WBGam\Engine\ChallengeEngine::bust_action_cache();
+
 		$row = $wpdb->get_row( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Read-after-write for response.
 			$wpdb->prepare(
 				"SELECT * FROM {$wpdb->prefix}wb_gam_challenges WHERE id = %d",
@@ -417,6 +370,8 @@ class ChallengesController extends WP_REST_Controller {
 			}
 		}
 
+		\WBGam\Engine\ChallengeEngine::bust_action_cache();
+
 		$updated = $wpdb->get_row( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Read-after-write for response.
 			$wpdb->prepare(
 				"SELECT * FROM {$wpdb->prefix}wb_gam_challenges WHERE id = %d",
@@ -471,157 +426,14 @@ class ChallengesController extends WP_REST_Controller {
 			return new WP_Error( 'rest_delete_failed', __( 'Could not delete challenge.', 'wb-gamification' ), array( 'status' => 500 ) );
 		}
 
+		\WBGam\Engine\ChallengeEngine::bust_action_cache();
+
 		return new WP_REST_Response(
 			array(
 				'deleted' => true,
 				'id'      => $id,
 			),
 			200
-		);
-	}
-
-	/**
-	 * Record challenge progress for the current user via the ChallengeEngine.
-	 *
-	 * This endpoint allows users to signal manual progress on a challenge.
-	 * The engine processes the completion logic including bonus point awards.
-	 *
-	 * @param WP_REST_Request $request Full details about the request.
-	 * @return WP_REST_Response|WP_Error Response on success, WP_Error on failure.
-	 */
-	public function complete_challenge( WP_REST_Request $request ): WP_REST_Response|WP_Error {
-		global $wpdb;
-
-		$challenge_id = (int) $request['id'];
-		$user_id      = get_current_user_id();
-
-		// Verify challenge exists and is active.
-		// starts_at / ends_at are stored exactly as the owner entered them (see the
-		// sanitize_text_field() on the write path) -- i.e. in the site's own timezone, which is
-		// the clock the owner was thinking in when they typed "09:00". Comparing them against
-		// NOW() measured them against the DATABASE clock instead, so on a site 5.5 hours ahead
-		// of UTC a challenge scheduled to open at 09:00 stayed shut until 14:30, and one due to
-		// close at midnight kept accepting entries. The owner sets a local time; the window has
-		// to open at that local time.
-		$now_local = current_time( 'mysql' );
-
-		$challenge = $wpdb->get_row( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Live status check.
-			$wpdb->prepare(
-				"SELECT * FROM {$wpdb->prefix}wb_gam_challenges
-				  WHERE id = %d AND status = 'active'
-				    AND (starts_at IS NULL OR starts_at <= %s)
-				    AND (ends_at IS NULL OR ends_at >= %s)",
-				$challenge_id,
-				$now_local,
-				$now_local
-			),
-			ARRAY_A
-		);
-
-		if ( ! $challenge ) {
-			return new WP_Error(
-				'rest_challenge_not_found',
-				__( 'Challenge not found or not active.', 'wb-gamification' ),
-				array( 'status' => 404 )
-			);
-		}
-
-		// Check if already completed.
-		$log = $wpdb->get_row( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Live progress check.
-			$wpdb->prepare(
-				"SELECT progress, completed_at FROM {$wpdb->prefix}wb_gam_challenge_log
-				  WHERE user_id = %d AND challenge_id = %d",
-				$user_id,
-				$challenge_id
-			),
-			ARRAY_A
-		);
-
-		if ( $log && null !== $log['completed_at'] ) {
-			return rest_ensure_response(
-				array(
-					'challenge_id' => $challenge_id,
-					'user_id'      => $user_id,
-					'progress'     => (int) $log['progress'],
-					'completed'    => true,
-					'message'      => __( 'Challenge already completed.', 'wb-gamification' ),
-				)
-			);
-		}
-
-		// Increment progress.
-		$current_progress = $log ? (int) $log['progress'] : 0;
-		$new_progress     = $current_progress + 1;
-
-		if ( $log ) {
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Progress update.
-			$progress_written = $wpdb->update(
-				$wpdb->prefix . 'wb_gam_challenge_log',
-				array( 'progress' => $new_progress ),
-				array(
-					'user_id'      => $user_id,
-					'challenge_id' => $challenge_id,
-				),
-				array( '%d' ),
-				array( '%d', '%d' )
-			);
-		} else {
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- New progress row.
-			$progress_written = $wpdb->insert(
-				$wpdb->prefix . 'wb_gam_challenge_log',
-				array(
-					'user_id'      => $user_id,
-					'challenge_id' => $challenge_id,
-					'progress'     => $new_progress,
-					'created_at'   => current_time( 'mysql', true ),
-				),
-				array( '%d', '%d', '%d', '%s' )
-			);
-		}
-		// Don't report advanced progress to the member if the write failed.
-		if ( false === $progress_written ) {
-			return new WP_Error( 'rest_progress_failed', __( 'Could not record challenge progress.', 'wb-gamification' ), array( 'status' => 500 ) );
-		}
-
-		$completed = $new_progress >= (int) $challenge['target'];
-
-		// If target reached, mark complete and award bonus.
-		if ( $completed ) {
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Completion update.
-			$completion_written = $wpdb->update(
-				$wpdb->prefix . 'wb_gam_challenge_log',
-				array( 'completed_at' => current_time( 'mysql' ) ),
-				array(
-					'user_id'      => $user_id,
-					'challenge_id' => $challenge_id,
-				),
-				array( '%s' ),
-				array( '%d', '%d' )
-			);
-			// If completed_at didn't persist, do NOT fire the completion action
-			// (it awards a bonus): the log would stay un-completed and the next
-			// progress call would fire completion again -> double award.
-			if ( false === $completion_written ) {
-				return new WP_Error( 'rest_progress_failed', __( 'Could not mark the challenge complete.', 'wb-gamification' ), array( 'status' => 500 ) );
-			}
-
-			/**
-			 * Fires when a member completes a challenge via the REST API.
-			 *
-			 * @param int   $user_id   User who completed the challenge.
-			 * @param array $challenge Full challenge row.
-			 */
-			do_action( 'wb_gam_challenge_completed', $user_id, $challenge );
-		}
-
-		return rest_ensure_response(
-			array(
-				'challenge_id' => $challenge_id,
-				'user_id'      => $user_id,
-				'progress'     => $new_progress,
-				'target'       => (int) $challenge['target'],
-				'completed'    => $completed,
-			)
 		);
 	}
 

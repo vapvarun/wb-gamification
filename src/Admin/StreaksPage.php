@@ -86,7 +86,7 @@ final class StreaksPage {
 		wp_enqueue_script(
 			'wb-gam-admin-rest-utils',
 			plugins_url( 'assets/js/admin-rest-utils.js', WB_GAM_FILE ),
-			array(),
+			array( 'wb-gam-dialog', 'wb-gam-toast-core' ),
 			WB_GAM_VERSION,
 			true
 		);
@@ -160,50 +160,65 @@ final class StreaksPage {
 							<p><?php esc_html_e( 'Members build a streak by earning points on consecutive days. Once someone is active, they will appear here.', 'wb-gamification' ); ?></p>
 						</div>
 					<?php else : ?>
-						<table class="wp-list-table widefat fixed striped wb-gam-streaks-table">
-							<thead>
-								<tr>
-									<th scope="col"><?php esc_html_e( 'Member', 'wb-gamification' ); ?></th>
-									<?php
-									self::sortable_th( __( 'Current', 'wb-gamification' ), 'current_streak', $orderby, $order, $paged );
-									self::sortable_th( __( 'Longest', 'wb-gamification' ), 'longest_streak', $orderby, $order, $paged );
-									self::sortable_th( __( 'Last active', 'wb-gamification' ), 'last_active', $orderby, $order, $paged );
-									?>
-									<th scope="col"><?php esc_html_e( 'Grace', 'wb-gamification' ); ?></th>
-									<th scope="col"><?php esc_html_e( 'Actions', 'wb-gamification' ); ?></th>
-								</tr>
-							</thead>
-							<tbody>
-								<?php foreach ( $rows as $row ) : ?>
-									<?php
-									$user = $user_map[ $row['user_id'] ] ?? null;
-									$name = $user ? $user->display_name : sprintf( /* translators: %d: user ID */ __( 'User #%d', 'wb-gamification' ), $row['user_id'] );
-									?>
-									<tr data-user-id="<?php echo esc_attr( (string) $row['user_id'] ); ?>">
-										<td class="wb-gam-streaks-table__member">
-											<?php echo get_avatar( $row['user_id'], 28 ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- get_avatar returns safe <img> markup. ?>
-											<span class="wb-gam-streaks-table__name"><?php echo esc_html( $name ); ?></span>
-										</td>
-										<td class="wb-gam-streaks-table__current" data-col="current"><?php echo esc_html( (string) $row['current_streak'] ); ?></td>
-										<td class="wb-gam-streaks-table__longest"><?php echo esc_html( (string) $row['longest_streak'] ); ?></td>
-										<td class="wb-gam-streaks-table__last"><?php echo esc_html( $row['last_active'] ? $row['last_active'] : '—' ); ?></td>
-										<td class="wb-gam-streaks-table__grace">
-											<?php if ( $row['grace_used'] ) : ?>
-												<span class="wbgam-badge wbgam-badge--warning"><?php esc_html_e( 'Used', 'wb-gamification' ); ?></span>
-											<?php else : ?>
-												<span class="wbgam-badge"><?php esc_html_e( 'Available', 'wb-gamification' ); ?></span>
-											<?php endif; ?>
-										</td>
-										<td class="wb-gam-streaks-table__actions">
-											<button type="button" class="button button-small wb-gam-streak-adjust" data-current="<?php echo esc_attr( (string) $row['current_streak'] ); ?>"><?php esc_html_e( 'Adjust', 'wb-gamification' ); ?></button>
-											<button type="button" class="button button-small button-link-delete wb-gam-streak-reset"><?php esc_html_e( 'Reset', 'wb-gamification' ); ?></button>
-										</td>
+						<div class="wbgam-table-scroll">
+							<table class="wbgam-table wb-gam-streaks-table">
+								<thead>
+									<tr>
+										<th scope="col"><?php esc_html_e( 'Member', 'wb-gamification' ); ?></th>
+										<?php
+										self::sortable_th( __( 'Current', 'wb-gamification' ), 'current_streak', $orderby, $order, $paged );
+										self::sortable_th( __( 'Longest', 'wb-gamification' ), 'longest_streak', $orderby, $order, $paged );
+										self::sortable_th( __( 'Last active', 'wb-gamification' ), 'last_active', $orderby, $order, $paged );
+										?>
+										<th scope="col"><?php esc_html_e( 'Grace', 'wb-gamification' ); ?></th>
+										<th scope="col"><?php esc_html_e( 'Actions', 'wb-gamification' ); ?></th>
 									</tr>
-								<?php endforeach; ?>
-							</tbody>
-						</table>
+								</thead>
+								<tbody>
+									<?php foreach ( $rows as $row ) : ?>
+										<?php
+										$user = $user_map[ $row['user_id'] ] ?? null;
+										$name = $user ? $user->display_name : sprintf( /* translators: %d: user ID */ __( 'User #%d', 'wb-gamification' ), $row['user_id'] );
+										?>
+										<tr data-user-id="<?php echo esc_attr( (string) $row['user_id'] ); ?>">
+											<td class="wb-gam-streaks-table__member">
+												<?php echo get_avatar( $row['user_id'], 28 ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- get_avatar returns safe <img> markup. ?>
+												<span class="wb-gam-streaks-table__name"><?php echo esc_html( $name ); ?></span>
+											</td>
+											<td class="wb-gam-streaks-table__current" data-col="current"><?php echo esc_html( (string) $row['current_streak'] ); ?></td>
+											<td class="wb-gam-streaks-table__longest"><?php echo esc_html( (string) $row['longest_streak'] ); ?></td>
+											<td class="wb-gam-streaks-table__last"><?php echo esc_html( $row['last_active'] ? $row['last_active'] : '—' ); ?></td>
+											<td class="wb-gam-streaks-table__grace">
+												<?php if ( $row['grace_used'] ) : ?>
+													<span class="wbgam-badge wbgam-badge--warning"><?php esc_html_e( 'Used', 'wb-gamification' ); ?></span>
+												<?php else : ?>
+													<span class="wbgam-badge"><?php esc_html_e( 'Available', 'wb-gamification' ); ?></span>
+												<?php endif; ?>
+											</td>
+											<td class="wb-gam-streaks-table__actions">
+												<button type="button" class="button button-small wb-gam-streak-adjust" data-current="<?php echo esc_attr( (string) $row['current_streak'] ); ?>"><?php esc_html_e( 'Adjust', 'wb-gamification' ); ?></button>
+												<button type="button" class="button button-small button-link-delete wb-gam-streak-reset"><?php esc_html_e( 'Reset', 'wb-gamification' ); ?></button>
+											</td>
+										</tr>
+									<?php endforeach; ?>
+								</tbody>
+							</table>
+						</div>
 
-						<?php self::render_pager( $paged, $pages, $orderby, $order, $total ); ?>
+						<?php
+						Pager::render(
+							$paged,
+							$pages,
+							array(
+								'page'    => self::PAGE_SLUG,
+								'orderby' => $orderby,
+								'order'   => $order,
+							),
+							__( 'Streak roster pages', 'wb-gamification' ),
+							/* translators: 1: current page, 2: total pages, 3: total members */
+							sprintf( __( 'Page %1$d of %2$d (%3$d members)', 'wb-gamification' ), $paged, $pages, $total )
+						);
+						?>
 					<?php endif; ?>
 				</div>
 			</div>
@@ -262,53 +277,5 @@ final class StreaksPage {
 			esc_html( $label ),
 			esc_html( $indicator )
 		);
-	}
-
-	/**
-	 * Render prev/next pagination.
-	 *
-	 * @param int    $paged   Current page.
-	 * @param int    $pages   Total pages.
-	 * @param string $orderby Active sort key.
-	 * @param string $order   Active direction.
-	 * @param int    $total   Total row count.
-	 */
-	private static function render_pager( int $paged, int $pages, string $orderby, string $order, int $total ): void {
-		if ( $pages <= 1 ) {
-			return;
-		}
-		$base = array(
-			'page'    => self::PAGE_SLUG,
-			'orderby' => $orderby,
-			'order'   => $order,
-		);
-		echo '<nav class="wbgam-pager" aria-label="' . esc_attr__( 'Streak roster pages', 'wb-gamification' ) . '">';
-		if ( $paged > 1 ) {
-			printf(
-				'<a class="button" href="%s">%s</a> ',
-				esc_url( add_query_arg( array_merge( $base, array( 'paged' => $paged - 1 ) ), admin_url( 'admin.php' ) ) ),
-				esc_html__( 'Previous', 'wb-gamification' )
-			);
-		}
-		printf(
-			'<span class="wbgam-pager__status">%s</span> ',
-			esc_html(
-				sprintf(
-					/* translators: 1: current page, 2: total pages, 3: total members */
-					__( 'Page %1$d of %2$d (%3$d members)', 'wb-gamification' ),
-					$paged,
-					$pages,
-					$total
-				)
-			)
-		);
-		if ( $paged < $pages ) {
-			printf(
-				'<a class="button" href="%s">%s</a>',
-				esc_url( add_query_arg( array_merge( $base, array( 'paged' => $paged + 1 ) ), admin_url( 'admin.php' ) ) ),
-				esc_html__( 'Next', 'wb-gamification' )
-			);
-		}
-		echo '</nav>';
 	}
 }

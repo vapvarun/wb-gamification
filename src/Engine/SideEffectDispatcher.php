@@ -293,6 +293,125 @@ final class SideEffectDispatcher {
 	}
 
 	/**
+	 * Manually re-fire one failed side-effect now (admin-triggered).
+	 *
+	 * Unlike {@see self::reconcile()}, this ignores the retry_count ceiling and
+	 * the back-off window — it exists to let an owner clear an 'exhausted' row
+	 * the cron will never touch again, once they have fixed the underlying
+	 * cause. Fires the handler immediately; deletes the row on success, updates
+	 * the error and marks it 'exhausted' on failure.
+	 *
+	 * @param int $id Failure row id.
+	 * @return array{success:bool,reason?:string,id:int}
+	 */
+	public static function retry( int $id ): array {
+		global $wpdb;
+		$table = $wpdb->prefix . self::TABLE_SUFFIX;
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$row = $wpdb->get_row(
+			$wpdb->prepare( "SELECT id, side_effect, points, event_payload FROM {$table} WHERE id = %d", $id ),
+			ARRAY_A
+		);
+		if ( ! $row ) {
+			return array(
+				'success' => false,
+				'reason'  => 'not_found',
+				'id'      => $id,
+			);
+		}
+
+		$handler = self::$handlers[ (string) $row['side_effect'] ] ?? null;
+		if ( null === $handler ) {
+			self::mark_exhausted( $id, 'handler_unregistered' );
+			return array(
+				'success' => false,
+				'reason'  => 'handler_unregistered',
+				'id'      => $id,
+			);
+		}
+
+		$event = self::deserialize_event( (string) $row['event_payload'] );
+		if ( null === $event ) {
+			self::mark_exhausted( $id, 'event_payload_unparseable' );
+			return array(
+				'success' => false,
+				'reason'  => 'event_payload_unparseable',
+				'id'      => $id,
+			);
+		}
+
+		try {
+			$handler( $event, (int) $row['points'] );
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->delete( $table, array( 'id' => $id ), array( '%d' ) );
+			return array(
+				'success' => true,
+				'id'      => $id,
+			);
+		} catch ( Throwable $e ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->update(
+				$table,
+				array(
+					'status'          => 'exhausted',
+					'last_attempt_at' => gmdate( 'Y-m-d H:i:s' ),
+					'error_message'   => substr( $e->getMessage(), 0, 500 ),
+				),
+				array( 'id' => $id ),
+				array( '%s', '%s', '%s' ),
+				array( '%d' )
+			);
+			return array(
+				'success' => false,
+				'reason'  => 'retry_failed',
+				'id'      => $id,
+			);
+		}
+	}
+
+	/**
+	 * Count failure rows grouped by status (pending / exhausted).
+	 *
+	 * @return array<string,int> status => count.
+	 */
+	public static function get_failure_counts(): array {
+		global $wpdb;
+		$table = $wpdb->prefix . self::TABLE_SUFFIX;
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$rows   = $wpdb->get_results( "SELECT status, COUNT(*) AS n FROM {$table} GROUP BY status", ARRAY_A ) ?: array();
+		$counts = array();
+		foreach ( $rows as $r ) {
+			$counts[ (string) $r['status'] ] = (int) $r['n'];
+		}
+		return $counts;
+	}
+
+	/**
+	 * Most recent failure rows for the admin panel.
+	 *
+	 * @param int $limit Maximum rows to return.
+	 * @return array<int,array<string,mixed>>
+	 */
+	public static function get_recent_failures( int $limit = 20 ): array {
+		global $wpdb;
+		$table = $wpdb->prefix . self::TABLE_SUFFIX;
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		return (array) $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT id, event_id, user_id, side_effect, error_message, retry_count, status, last_attempt_at
+				   FROM {$table}
+				  ORDER BY ( status = 'exhausted' ) DESC, last_attempt_at DESC
+				  LIMIT %d",
+				max( 1, $limit )
+			),
+			ARRAY_A
+		);
+	}
+
+	/**
 	 * Test-helper: reset registered handlers between tests.
 	 *
 	 * @internal

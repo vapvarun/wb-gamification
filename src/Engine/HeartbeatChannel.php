@@ -190,11 +190,10 @@ final class HeartbeatChannel {
 		}
 
 		// Primary currency total (the floating bar's headline number).
-		$pt_service     = new \WBGam\Services\PointTypeService();
-		$primary_slug   = (string) $pt_service->default_slug();
-		$primary_record = $pt_service->get( $primary_slug );
-		$primary_label  = (string) ( $primary_record['label'] ?? __( 'points', 'wb-gamification' ) );
-		$primary_total  = (int) PointsEngine::get_total( $user_id, $primary_slug );
+		$pt_service    = new \WBGam\Services\PointTypeService();
+		$primary_slug  = (string) $pt_service->default_slug();
+		$primary_total = (int) PointsEngine::get_total( $user_id, $primary_slug );
+		$primary_label = $pt_service->name_for( $primary_total, $primary_slug );
 
 		// All-currency totals — keyed by slug so a multi-currency theme
 		// (XP + Coins) can pick the slug it cares about without a second
@@ -323,7 +322,8 @@ final class HeartbeatChannel {
 						'display_name' => (string) $row['display_name'],
 						'points'       => (int) $row['points'],
 						'rank'         => (int) $row['rank'],
-						'badge_count'  => $uid > 0 ? (int) BadgeEngine::count_user_badges( $uid ) : 0,
+						// Profile data: none for a member whose profile this viewer cannot see.
+						'badge_count'  => $uid > 0 && Privacy::can_view_public_profile( $uid ) ? (int) BadgeEngine::count_user_badges( $uid ) : 0,
 					);
 				},
 				(array) $rows

@@ -3,9 +3,12 @@
  * WB Gamification Level Engine
  *
  * Level state is derived from the points ledger, not stored separately.
- * On each point award, Engine calls maybe_level_up() which compares the
- * user's current points against the wb_gam_levels thresholds. If the level
- * changed, user_meta is updated and the level_changed hook fires.
+ * A level is set by the points a member EARNED (balance plus what they spent on
+ * rewards, PointsEngine::get_earned()), so spending never costs a level; a removal
+ * (deduction, decay, reversal) does. After every award and every non-spend debit,
+ * maybe_level_up() compares earned points against the wb_gam_levels thresholds. If
+ * the level changed, user_meta is updated and the level_changed hook fires; only a
+ * climb is announced (is_climb()).
  *
  * Levels are admin-configurable via wb_gam_levels DB table.
  * Defaults seeded by Installer: Newcomer → Member → Contributor → Regular → Champion.
@@ -312,8 +315,8 @@ final class LevelEngine {
 	 * @return array{ id: int, name: string, min_points: int, sort_order: int, icon_url: string|null }|null
 	 *         Null only if no levels are configured (fresh install before seeding).
 	 */
-	public static function get_level_for_user( int $user_id ): ?array {
-		$level = self::get_level_for_points( PointsEngine::get_total( $user_id ) );
+	public static function get_level_for_user( int $user_id, bool $heal = true ): ?array {
+		$level = self::get_level_for_points( PointsEngine::get_earned( $user_id ) );
 
 		// Self-heal stale user_meta. Pre-1.4.0 the level_id / level_name cache
 		// in user_meta only updated when PointsEngine::award fired through the
@@ -328,7 +331,12 @@ final class LevelEngine {
 		// Detecting the mismatch here and patching the meta inline keeps the
 		// engine the single source of truth without forcing a points-replay
 		// migration; every getter call self-corrects on the way out.
-		if ( $level && $user_id > 0 ) {
+		// $heal = false skips the self-heal WRITE — used by read-heavy list surfaces
+		// (the members roster) that must not fire an unbounded burst of
+		// update_user_meta() on a GET. The returned level is authoritative either
+		// way (derived from the points ledger); only the denormalised meta cache is
+		// left for the member's next engine action (or a CLI) to correct.
+		if ( $heal && $level && $user_id > 0 ) {
 			$cached_id   = (int) get_user_meta( $user_id, 'wb_gam_level_id', true );
 			$cached_name = (string) get_user_meta( $user_id, 'wb_gam_level_name', true );
 			if ( $cached_id !== $level['id'] || $cached_name !== $level['name'] ) {
@@ -380,7 +388,7 @@ final class LevelEngine {
 	 * @return array{ id: int, name: string, min_points: int, sort_order: int, icon_url: string|null }|null
 	 */
 	public static function get_next_level( int $user_id ): ?array {
-		return self::get_next_level_for_points( PointsEngine::get_total( $user_id ) );
+		return self::get_next_level_for_points( PointsEngine::get_earned( $user_id ) );
 	}
 
 	/**
@@ -446,7 +454,7 @@ final class LevelEngine {
 	 * @return int  0–100 (100 = max level reached).
 	 */
 	public static function get_progress_percent( int $user_id ): int {
-		$points  = PointsEngine::get_total( $user_id );
+		$points  = PointsEngine::get_earned( $user_id );
 		$current = self::get_level_for_points( $points );
 		$next    = self::get_next_level_for_points( $points );
 
@@ -464,5 +472,25 @@ final class LevelEngine {
 		}
 
 		return min( 100, (int) round( ( ( $points - $current['min_points'] ) / $span ) * 100 ) );
+	}
+
+	/**
+	 * Whether a level change is a climb, the only change a member is told about.
+	 *
+	 * The wb_gam_level_changed hook fires for a drop too (a deduction, decay or reversed award), because rank
+	 * automation and webhooks need to know. Anything that congratulates the member (toast, email,
+	 * feed post, a partner's notification) checks this first; a drop is applied silently.
+	 *
+	 * @since 1.6.5
+	 *
+	 * @param array|null $new_level New level (needs min_points).
+	 * @param array|null $old_level Previous level, or null for none.
+	 * @return bool
+	 */
+	public static function is_climb( ?array $new_level, ?array $old_level ): bool {
+		if ( empty( $new_level ) ) {
+			return false;
+		}
+		return empty( $old_level ) || (int) ( $new_level['min_points'] ?? 0 ) > (int) ( $old_level['min_points'] ?? 0 );
 	}
 }

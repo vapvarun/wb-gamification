@@ -736,6 +736,13 @@
 	width: 100%;
 }
 
+/* A short input's help text sits on its own line under it, never squeezed beside it. */
+.wb-gam-input-narrow + .description,
+.wb-gam-input-medium + .description {
+	display: block;
+	margin-top: var(--wb-gam-space-xs, 4px);
+}
+
 /* Kudos field markers — values bound via JS to live settings state. */
 .wb-gam-kudos-daily-limit,
 .wb-gam-kudos-giver-points,
@@ -756,6 +763,11 @@
 .wb-gam-levels-table {
 	max-width: 600px;
 	width: 100%;
+}
+
+/* Inside the scroller a level name keeps room to be read; the table scrolls before it squeezes. */
+.wbgam-table-scroll > .wb-gam-levels-table {
+	min-width: 460px;
 }
 
 .wb-gam-levels-tbody tr {

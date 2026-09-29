@@ -78,7 +78,7 @@ final class DeactivationFeedback {
 		wp_enqueue_style(
 			'wb-gam-deactivation-feedback',
 			plugins_url( 'assets/css/admin/deactivation-feedback.css', WB_GAM_FILE ),
-			array(),
+			array( 'wb-gam-popups' ),
 			WB_GAM_VERSION
 		);
 		// Depends on the shared dialog utility -- focus return, ESC, backdrop, all of it in one place.
@@ -113,9 +113,13 @@ final class DeactivationFeedback {
 			return;
 		}
 		?>
-		<dialog id="wb-gam-deactivate-dialog" class="wb-gam-deactivate" aria-labelledby="wb-gam-deactivate-title">
+		<dialog id="wb-gam-deactivate-dialog" class="wb-gam-dialog wb-gam-dialog--form wb-gam-deactivate" aria-labelledby="wb-gam-deactivate-title">
 			<form method="dialog" class="wb-gam-deactivate__form">
-				<h2 id="wb-gam-deactivate-title" class="wb-gam-deactivate__title"><?php esc_html_e( 'Quick question before you go', 'wb-gamification' ); ?></h2>
+				<header class="wb-gam-dialog__header">
+					<h2 id="wb-gam-deactivate-title" class="wb-gam-dialog__title"><?php esc_html_e( 'Quick question before you go', 'wb-gamification' ); ?></h2>
+					<button type="button" class="wb-gam-close" data-wb-gam-dialog-close aria-label="<?php esc_attr_e( 'Cancel', 'wb-gamification' ); ?>"><i class="icon-x" aria-hidden="true"></i></button>
+				</header>
+				<div class="wb-gam-dialog__body">
 				<p class="wb-gam-deactivate__intro"><?php esc_html_e( 'If you have a moment, what is prompting the deactivation? This is optional and helps us improve.', 'wb-gamification' ); ?></p>
 
 				<div class="wb-gam-deactivate__reasons">
@@ -135,10 +139,11 @@ final class DeactivationFeedback {
 					<span><?php esc_html_e( 'You may follow up with me at my account email about this.', 'wb-gamification' ); ?></span>
 				</label>
 
-				<div class="wb-gam-deactivate__actions">
-					<button type="button" class="button button-link wb-gam-deactivate__skip"><?php esc_html_e( 'Skip &amp; deactivate', 'wb-gamification' ); ?></button>
-					<button type="button" class="button button-primary wb-gam-deactivate__submit"><?php esc_html_e( 'Submit &amp; deactivate', 'wb-gamification' ); ?></button>
 				</div>
+				<footer class="wb-gam-dialog__footer">
+					<button type="button" class="wb-gam-btn wb-gam-btn--secondary" data-wb-gam-deactivate="skip"><?php esc_html_e( 'Skip &amp; deactivate', 'wb-gamification' ); ?></button>
+					<button type="button" class="wb-gam-btn wb-gam-btn--primary" data-wb-gam-deactivate="submit"><?php esc_html_e( 'Submit &amp; deactivate', 'wb-gamification' ); ?></button>
+				</footer>
 			</form>
 		</dialog>
 		<?php

@@ -30,14 +30,14 @@ return [
 
 		[
 			'id'             => 'bbp_new_topic',
-			'label'          => 'Create a forum topic',
-			'description'    => 'Awarded when a member creates a new bbPress topic.',
+			'label'          => static fn(): string => __( 'Create a forum topic', 'wb-gamification' ),
+			'description'    => static fn(): string => __( 'Awarded when a member creates a new bbPress topic.', 'wb-gamification' ),
 			'hook'           => 'bbp_new_topic',
 			'user_callback'  => function ( int $topic_id, int $forum_id, array $anonymous_data, int $topic_author ): int {
 				return $topic_author > 0 ? $topic_author : (int) get_current_user_id();
 			},
 			'default_points' => 10,
-			'category'       => 'social',
+			'category'       => 'forums',
 			'icon'           => 'icon-message-square',
 			'repeatable'     => true,
 			'cooldown'       => 300,
@@ -45,14 +45,14 @@ return [
 
 		[
 			'id'             => 'bbp_new_reply',
-			'label'          => 'Post a forum reply',
-			'description'    => 'Awarded when a member posts a reply in any bbPress topic.',
+			'label'          => static fn(): string => __( 'Post a forum reply', 'wb-gamification' ),
+			'description'    => static fn(): string => __( 'Awarded when a member posts a reply in any bbPress topic.', 'wb-gamification' ),
 			'hook'           => 'bbp_new_reply',
 			'user_callback'  => function ( int $reply_id, int $topic_id, int $forum_id, array $anonymous_data, int $reply_author ): int {
 				return $reply_author > 0 ? $reply_author : (int) get_current_user_id();
 			},
 			'default_points' => 5,
-			'category'       => 'social',
+			'category'       => 'forums',
 			'icon'           => 'icon-message-circle',
 			'repeatable'     => true,
 			'cooldown'       => 60,
@@ -60,8 +60,8 @@ return [
 
 		[
 			'id'                => 'bbp_topic_closed',
-			'label'             => 'Topic resolved / closed',
-			'description'       => 'Awarded to the topic author when their topic is closed (resolved).',
+			'label'             => static fn(): string => __( 'Have a forum topic closed', 'wb-gamification' ),
+			'description'       => static fn(): string => __( 'Awarded to the topic author when their topic is closed (resolved).', 'wb-gamification' ),
 			// bbPress fires: do_action( 'bbp_closed_topic', $topic_id ).
 			// Note: 'bbp_toggle_topic_close' is an admin-action string CONSTANT, not a hook.
 			'hook'              => 'bbp_closed_topic',

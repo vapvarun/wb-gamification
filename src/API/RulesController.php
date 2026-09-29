@@ -26,7 +26,9 @@
  *   points_multiplier — temporary or permanent per-action point multipliers
  *     Config examples:
  *       { "action_id": "bp_activity_update", "multiplier": 2.0 }
- *       { "action_id": "*", "multiplier": 1.5, "starts_at": "2024-01-01", "ends_at": "2024-01-07" }
+ *       { "multiplier": 1.5, "starts_at": "2026-10-03", "ends_at": "2026-10-04" }
+ *     starts_at / ends_at are optional and read in the site time zone; a bare end date covers that
+ *     whole day. Outside the window the multiplier does not apply; an unreadable date is a 400.
  *
  * @package WB_Gamification
  * @since   0.1.0
@@ -35,6 +37,7 @@
 namespace WBGam\API;
 
 use WBGam\Engine\BadgeRule;
+use WBGam\Engine\RuleEngine;
 use WP_REST_Controller;
 use WP_REST_Response;
 use WP_REST_Request;
@@ -256,6 +259,10 @@ class RulesController extends WP_REST_Controller {
 				return $rule_config;
 			}
 		}
+		$window_error = 'points_multiplier' === $request['rule_type'] ? $this->check_multiplier_window( (array) $rule_config ) : null;
+		if ( $window_error ) {
+			return $window_error;
+		}
 
 		$inserted = $wpdb->insert(
 			$wpdb->prefix . 'wb_gam_rules',
@@ -264,8 +271,9 @@ class RulesController extends WP_REST_Controller {
 				'target_id'   => $request['target_id'] ?? null,
 				'rule_config' => wp_json_encode( $rule_config ),
 				'is_active'   => 1,
+				'created_at'  => current_time( 'mysql', true ),
 			),
-			array( '%s', '%s', '%s', '%d' )
+			array( '%s', '%s', '%s', '%d', '%s' )
 		);
 
 		if ( ! $inserted ) {
@@ -310,6 +318,10 @@ class RulesController extends WP_REST_Controller {
 				if ( is_wp_error( $config ) ) {
 					return $config;
 				}
+			}
+			$window_error = 'points_multiplier' === $rule_type ? $this->check_multiplier_window( (array) $config ) : null;
+			if ( $window_error ) {
+				return $window_error;
 			}
 			$data['rule_config'] = wp_json_encode( $config );
 		}
@@ -398,6 +410,35 @@ class RulesController extends WP_REST_Controller {
 			'is_active'   => (bool) $row['is_active'],
 			'created_at'  => $row['created_at'],
 		);
+	}
+
+	/**
+	 * Reject a multiplier campaign window the engine could not read, instead of storing it and
+	 * ignoring it. Dates are read in the site's time zone.
+	 *
+	 * @param array $config The rule_config array from the request.
+	 * @return WP_Error|null
+	 */
+	private function check_multiplier_window( array $config ): ?WP_Error {
+		foreach ( array(
+			'starts_at' => false,
+			'ends_at'   => true,
+		) as $key => $is_end ) {
+			if ( ! empty( $config[ $key ] ) && null === RuleEngine::window_timestamp( $config[ $key ], $is_end ) ) {
+				return new WP_Error(
+					'wb_gam_invalid_window',
+					/* translators: %s: starts_at or ends_at. */
+					sprintf( __( '"%s" must be a date such as 2026-10-04 or 2026-10-04 18:00 (site time).', 'wb-gamification' ), $key ),
+					array( 'status' => 400 )
+				);
+			}
+		}
+		$start = RuleEngine::window_timestamp( $config['starts_at'] ?? null, false );
+		$end   = RuleEngine::window_timestamp( $config['ends_at'] ?? null, true );
+		if ( null !== $start && null !== $end && $end <= $start ) {
+			return new WP_Error( 'wb_gam_invalid_window', __( '"ends_at" must be after "starts_at".', 'wb-gamification' ), array( 'status' => 400 ) );
+		}
+		return null;
 	}
 
 	/**
@@ -510,7 +551,10 @@ class RulesController extends WP_REST_Controller {
 				'target_id'   => array( 'type' => array( 'string', 'null' ) ),
 				'rule_config' => array( 'type' => 'object' ),
 				'is_active'   => array( 'type' => 'boolean' ),
-				'created_at'  => array( 'type' => 'string' ),
+				'created_at'  => array(
+					'type'        => 'string',
+					'description' => 'UTC, Y-m-d H:i:s.',
+				),
 			),
 		);
 	}

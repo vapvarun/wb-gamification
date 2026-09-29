@@ -39,7 +39,7 @@ defined( 'ABSPATH' ) || exit;
 use WP_Error;
 
 /**
- * Peer-to-peer kudos recognition engine with daily send limits and point awards.
+ * Peer-to-peer kudos recognition engine: kudos always send; a daily limit and a per-receiver cooldown decide only whether they earn points.
  *
  * @package WB_Gamification
  */
@@ -50,6 +50,7 @@ final class KudosEngine {
 	private const OPT_GIVER_POINTS    = 'wb_gam_kudos_giver_points';
 
 	private const DEFAULT_DAILY_LIMIT     = 5;
+	private const DEFAULT_DAILY_CEILING   = 50;
 	private const DEFAULT_RECEIVER_POINTS = 5;
 	private const DEFAULT_GIVER_POINTS    = 2;
 
@@ -64,6 +65,12 @@ final class KudosEngine {
 	 * @return true|WP_Error      True on success; WP_Error describing the rejection.
 	 */
 	public static function send( int $giver_id, int $receiver_id, string $message = '' ): bool|WP_Error {
+		// Off means off for every caller: BuddyNext and other partners call this engine directly,
+		// not through the REST routes the Modules switch guards.
+		if ( ! ModuleToggles::enabled( 'kudos' ) ) {
+			return ModuleToggles::disabled_error();
+		}
+
 		if ( $giver_id === $receiver_id ) {
 			return new WP_Error(
 				'wb_gam_kudos_self',
@@ -78,35 +85,17 @@ final class KudosEngine {
 			);
 		}
 
-		$daily_limit = (int) get_option( self::OPT_DAILY_LIMIT, self::DEFAULT_DAILY_LIMIT );
-		if ( self::get_daily_sent_count( $giver_id ) >= $daily_limit ) {
-			return new WP_Error(
-				'wb_gam_kudos_cooldown',
-				sprintf(
-					/* translators: %d: daily kudos limit */
-					__( 'You have reached your daily kudos limit (%d).', 'wb-gamification' ),
-					$daily_limit
-				)
-			);
+		// Appreciation is never refused; only points are limited. The daily limit and the
+		// per-receiver cooldown decide whether THIS kudos earns points, silently - a member
+		// who thanks a sixth person today is not told "no" after writing the message. The one
+		// hard stop is a spam ceiling no ordinary member reaches, and the forms hide
+		// themselves before it (see can_send()), so a member never sees that refusal either.
+		if ( ! self::can_send( $giver_id ) ) {
+			return self::ceiling_error();
 		}
 
-		// Per-receiver cooldown — prevents a giver from spam-kudosing the same
-		// receiver. Default 60 minutes; site owner can override via the
-		// `wb_gam_kudos_per_receiver_cooldown_seconds` filter (return 0 to disable).
-		$receiver_cooldown = (int) apply_filters(
-			'wb_gam_kudos_per_receiver_cooldown_seconds',
-			HOUR_IN_SECONDS,
-			$giver_id,
-			$receiver_id
-		);
-		if ( $receiver_cooldown > 0 && self::has_recent_kudos_to_receiver( $giver_id, $receiver_id, $receiver_cooldown ) ) {
-			return new WP_Error(
-				'wb_gam_kudos_cooldown',
-				__( 'You recently gave kudos to this member. Try again later.', 'wb-gamification' )
-			);
-		}
-
-		// Serialize concurrent sends for this exact (giver, receiver) pair.
+		// Serialize concurrent sends for this GIVER (all receivers), not just the
+		// (giver, receiver) pair.
 		//
 		// This was a wp_cache_add() lock, justified in its own comment as "atomic across
 		// Redis/Memcached". True -- and irrelevant without a persistent object cache, which the
@@ -114,32 +103,131 @@ final class KudosEngine {
 		// giving zero exclusion between workers, and the race it was written to close reproduced
 		// every time on the most common configuration there is.
 		//
-		// It grew its own inline GET_LOCK in 1.6.4. That was right, and it was also the second
-		// lock implementation in the plugin; it now uses the one shared primitive, so there is a
-		// single place where "how do we lock?" is answered.
+		// The lock is GIVER-scoped (kudos_giver_{id}), not per-pair: the per-pair lock let N
+		// parallel sends to N DIFFERENT receivers each take a different lock and all pass the
+		// per-giver daily check, awarding points N times -- a points-inflation bypass. A
+		// giver-scoped lock serializes all of a giver's in-flight sends so the points decision
+		// inside is authoritative.
 		//
-		// Timeout 0: if another request is mid-send for this pair right now, that IS the race, so
-		// reject rather than queue behind it.
+		// Timeout 0: if another request is mid-send for this giver right now, that IS the race, so
+		// reject rather than queue behind it. The forms disable the button while sending, so a
+		// member does not reach this.
 		return Lock::run(
-			sprintf( 'kudos_%d_%d', $giver_id, $receiver_id ),
-			function () use ( $giver_id, $receiver_id, $message, $receiver_cooldown ) {
-				// Re-check the cooldown INSIDE the lock. The check above ran unserialized, so
-				// both racers can have passed it -- but only one of them is in here. This is the
-				// check that actually enforces the cooldown.
-				if ( $receiver_cooldown > 0 && self::has_recent_kudos_to_receiver( $giver_id, $receiver_id, $receiver_cooldown ) ) {
-					return new WP_Error(
-						'wb_gam_kudos_cooldown',
-						__( 'You recently gave kudos to this member. Try again later.', 'wb-gamification' )
-					);
+			sprintf( 'kudos_giver_%d', $giver_id ),
+			function () use ( $giver_id, $receiver_id, $message ) {
+				// Decide inside the lock: only one of this giver's sends is in here at a time.
+				if ( ! self::can_send( $giver_id ) ) {
+					return self::ceiling_error();
 				}
 
-				return self::record_kudos( $giver_id, $receiver_id, $message );
+				return self::record_kudos( $giver_id, $receiver_id, $message, self::earns_points( $giver_id, $receiver_id ) );
 			},
-			// Lock declined: someone else is mid-send for this exact pair.
 			new WP_Error(
-				'wb_gam_kudos_cooldown',
-				__( 'You recently gave kudos to this member. Try again later.', 'wb-gamification' )
+				'wb_gam_kudos_busy',
+				__( 'You are sending kudos too quickly. Please try again in a moment.', 'wb-gamification' )
 			)
+		);
+	}
+
+	/**
+	 * Whether this member can send a kudos right now: the Kudos module is on and the member
+	 * is below the daily spam ceiling.
+	 *
+	 * Forms call this before drawing themselves and render nothing when it is false, so
+	 * the ceiling is never a notice a member reads after writing a message.
+	 *
+	 * @since 1.6.5
+	 *
+	 * @param int $giver_id Member who would send.
+	 * @return bool
+	 */
+	public static function can_send( int $giver_id ): bool {
+		return $giver_id > 0 && ModuleToggles::enabled( 'kudos' ) && self::get_daily_sent_count( $giver_id ) < self::daily_ceiling( $giver_id );
+	}
+
+	/**
+	 * Whether a kudos from $giver_id to $receiver_id, sent now, would earn points.
+	 *
+	 * Points stop after the daily points limit (Settings, default 5) and for a repeat to the
+	 * same receiver inside the cooldown window, so kudos cannot be traded to farm points.
+	 *
+	 * @since 1.6.5
+	 *
+	 * @param int $giver_id    Sender.
+	 * @param int $receiver_id Recipient.
+	 * @return bool
+	 */
+	public static function earns_points( int $giver_id, int $receiver_id ): bool {
+		if ( self::get_daily_sent_count( $giver_id ) >= self::daily_points_limit() ) {
+			return false;
+		}
+
+		/**
+		 * Seconds after a kudos to the same receiver during which a repeat earns no points.
+		 *
+		 * Since 1.6.5 this no longer blocks the kudos; it only withholds the points. Return 0
+		 * to let every repeat earn points.
+		 *
+		 * @since 1.0.0
+		 * @param int $seconds     Default one hour.
+		 * @param int $giver_id    Sender.
+		 * @param int $receiver_id Recipient.
+		 */
+		$cooldown = (int) apply_filters( 'wb_gam_kudos_per_receiver_cooldown_seconds', HOUR_IN_SECONDS, $giver_id, $receiver_id );
+
+		return ! ( $cooldown > 0 && self::has_recent_kudos_to_receiver( $giver_id, $receiver_id, $cooldown ) );
+	}
+
+	/**
+	 * Kudos a member can send today that still earn points.
+	 *
+	 * @since 1.6.5
+	 *
+	 * @param int $giver_id Sender.
+	 * @return int
+	 */
+	public static function points_kudos_remaining( int $giver_id ): int {
+		return max( 0, self::daily_points_limit() - self::get_daily_sent_count( $giver_id ) );
+	}
+
+	/**
+	 * Kudos per day that earn points (the "daily limit" setting).
+	 *
+	 * @return int
+	 */
+	private static function daily_points_limit(): int {
+		return (int) get_option( self::OPT_DAILY_LIMIT, self::DEFAULT_DAILY_LIMIT );
+	}
+
+	/**
+	 * Hard daily ceiling on kudos sent, points or not: a spam brake only.
+	 *
+	 * @param int $giver_id Sender.
+	 * @return int
+	 */
+	private static function daily_ceiling( int $giver_id ): int {
+		/**
+		 * Most kudos a member can send in a day, including ones that earn no points.
+		 *
+		 * A spam brake, set well above what an ordinary member sends. Forms hide
+		 * themselves once it is reached.
+		 *
+		 * @since 1.6.5
+		 * @param int $ceiling  Default 50.
+		 * @param int $giver_id Sender.
+		 */
+		return max( 1, (int) apply_filters( 'wb_gam_kudos_daily_ceiling', self::DEFAULT_DAILY_CEILING, $giver_id ) );
+	}
+
+	/**
+	 * The error for a send past the daily ceiling (API callers only; forms hide first).
+	 *
+	 * @return WP_Error
+	 */
+	private static function ceiling_error(): WP_Error {
+		return new WP_Error(
+			'wb_gam_kudos_daily_ceiling',
+			__( 'You have sent the most kudos allowed for today.', 'wb-gamification' )
 		);
 	}
 
@@ -152,9 +240,10 @@ final class KudosEngine {
 	 * @param int    $giver_id    User sending kudos.
 	 * @param int    $receiver_id User receiving kudos.
 	 * @param string $message     Optional kudos message.
+	 * @param bool   $earn_points Whether this kudos awards points (see earns_points()).
 	 * @return true|WP_Error True on success, WP_Error if a gate rejected it or the write failed.
 	 */
-	private static function record_kudos( int $giver_id, int $receiver_id, string $message ) {
+	private static function record_kudos( int $giver_id, int $receiver_id, string $message, bool $earn_points = true ) {
 		/**
 		 * Filter whether kudos should be allowed.
 		 *
@@ -180,7 +269,7 @@ final class KudosEngine {
 				'giver_id'    => $giver_id,
 				'receiver_id' => $receiver_id,
 				'message'     => mb_substr( $message, 0, 255 ),
-				'created_at'  => current_time( 'mysql' ),
+				'created_at'  => current_time( 'mysql', true ),
 			),
 			array( '%d', '%d', '%s', '%s' )
 		);
@@ -194,9 +283,11 @@ final class KudosEngine {
 
 		$kudos_id = (int) $wpdb->insert_id;
 
-		// Award points to receiver and giver via full Engine pipeline.
-		$receiver_points = (int) get_option( self::OPT_RECEIVER_POINTS, self::DEFAULT_RECEIVER_POINTS );
-		$giver_points    = (int) get_option( self::OPT_GIVER_POINTS, self::DEFAULT_GIVER_POINTS );
+		// Award points to receiver and giver via full Engine pipeline -- unless this kudos is
+		// past the daily points limit or a repeat inside the cooldown. The kudos itself, and
+		// its notification, still go through.
+		$receiver_points = $earn_points ? (int) get_option( self::OPT_RECEIVER_POINTS, self::DEFAULT_RECEIVER_POINTS ) : 0;
+		$giver_points    = $earn_points ? (int) get_option( self::OPT_GIVER_POINTS, self::DEFAULT_GIVER_POINTS ) : 0;
 
 		if ( $receiver_points > 0 ) {
 			Engine::process(
@@ -251,7 +342,7 @@ final class KudosEngine {
 	}
 
 	/**
-	 * Count kudos sent by a user today (site-local day).
+	 * Count kudos sent by a user today (the site's calendar day).
 	 *
 	 * @param int $giver_id User to check.
 	 * @return int
@@ -265,14 +356,8 @@ final class KudosEngine {
 				  WHERE giver_id = %d
 				    AND created_at >= %s",
 				$giver_id,
-				// The boundary MUST be expressed in the same clock the column is written
-				// in. `created_at` is stored with current_time( 'mysql' ) — site-local.
-				// This compared it against gmdate( 'Y-m-d' ) — a UTC day boundary. On a
-				// site BEHIND UTC (e.g. America/Los_Angeles at 23:39 local), "today" in
-				// UTC is already tomorrow, so every kudos sent today landed before that
-				// boundary and the COUNT came back 0 — the daily limit was never
-				// enforced. Sibling bug to has_recent_kudos_to_receiver() below; same fix.
-				gmdate( 'Y-m-d', strtotime( current_time( 'mysql' ) ) ) . ' 00:00:00'
+				// created_at is UTC; "today" starts at the site's midnight, as a UTC instant.
+				Clock::site_day_start( 'today' )
 			)
 		);
 	}
@@ -301,14 +386,8 @@ final class KudosEngine {
 				    AND created_at >= %s",
 				$giver_id,
 				$receiver_id,
-				// The boundary MUST be expressed in the same clock the column is written
-				// in. `created_at` is stored with current_time( 'mysql' ) — site-local.
-				// This compared it against gmdate() — UTC. On any site BEHIND UTC (every
-				// US site), a kudos sent seconds ago is stamped hours "before" the UTC
-				// boundary, the COUNT comes back 0, and the per-receiver cooldown never
-				// fired at all — no concurrency required to reproduce it. Same two-clock
-				// bug that emptied the leaderboard snapshot; same fix, one clock.
-				gmdate( 'Y-m-d H:i:s', strtotime( current_time( 'mysql' ) ) - $cooldown_seconds )
+				// created_at is UTC, so the cooldown bound is a UTC instant too.
+				Clock::site_cutoff( "-{$cooldown_seconds} seconds" )
 			)
 		);
 		return $count > 0;
@@ -337,6 +416,26 @@ final class KudosEngine {
 	 * @param int $limit Maximum rows (1–50).
 	 * @return array<int, array{id: int, giver_id: int, giver_name: string, receiver_id: int, receiver_name: string, message: string|null, created_at: string}>
 	 */
+	/**
+	 * Recent kudos the current viewer may see: entries naming a member whose profile the
+	 * viewer cannot see (Privacy::can_view_public_profile) are left out.
+	 *
+	 * @since 1.6.5
+	 *
+	 * @param int $limit Max entries (1-50).
+	 * @return array
+	 */
+	public static function get_recent_visible( int $limit = 20 ): array {
+		$limit = max( 1, min( 50, $limit ) );
+		// Over-fetch so hidden entries do not leave the feed short.
+		$rows = array_filter(
+			self::get_recent( min( 50, $limit * 2 ) ),
+			static fn( array $k ): bool => Privacy::can_view_public_profile( (int) $k['giver_id'] )
+				&& Privacy::can_view_public_profile( (int) $k['receiver_id'] )
+		);
+		return array_slice( array_values( $rows ), 0, $limit );
+	}
+
 	public static function get_recent( int $limit = 20 ): array {
 		global $wpdb;
 
@@ -489,7 +588,7 @@ final class KudosEngine {
 		);
 
 		// Soft-revoke the row (kept for audit).
-		$wpdb->update( $table, array( 'revoked_at' => current_time( 'mysql' ) ), array( 'id' => $kudos_id ), array( '%s' ), array( '%d' ) );
+		$wpdb->update( $table, array( 'revoked_at' => current_time( 'mysql', true ) ), array( 'id' => $kudos_id ), array( '%s' ), array( '%d' ) );
 
 		// Compensating debits — each audited to wb_gam_events with the reason.
 		if ( $recv_pts > 0 ) {
@@ -585,18 +684,17 @@ final class KudosEngine {
 			$values[] = $receiver;
 		}
 
-		// Dates are the site's, because that is the clock created_at is written in and the clock the
-		// moderator is reading their screen in.
+		// The moderator picks site-calendar days; created_at is UTC, so the bounds are converted.
 		$from = (string) ( $filters['date_from'] ?? '' );
 		if ( '' !== $from ) {
 			$parts[]  = 'k.created_at >= %s';
-			$values[] = $from . ' 00:00:00';
+			$values[] = get_gmt_from_date( $from . ' 00:00:00' );
 		}
 
 		$to = (string) ( $filters['date_to'] ?? '' );
 		if ( '' !== $to ) {
 			$parts[]  = 'k.created_at <= %s';
-			$values[] = $to . ' 23:59:59';
+			$values[] = get_gmt_from_date( $to . ' 23:59:59' );
 		}
 
 		return array( $parts ? 'WHERE ' . implode( ' AND ', $parts ) : '', $values );

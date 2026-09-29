@@ -1,17 +1,21 @@
 <?php
 /**
- * WB Gamification — GamiPress importer.
+ * WB Gamification: GamiPress importer.
  *
- * Reads GamiPress's own point ledger (`wp_gamipress_logs`, verified against
- * GamiPress 7.9.5) and re-plays it into WB Gamification through the shared
- * ImportService — READ from the source, WRITE only via our ingestion path,
- * never a direct wb_gam_* insert. Each source log row carries a stable
- * source_key (`gamipress:log:{log_id}`) so a re-run is idempotent.
+ * Reads GamiPress's own point ledger (`wp_gamipress_logs`, verified against GamiPress 7.9.5) one
+ * keyset page at a time and hands normalized rows to the ImportRunner. READ the source, WRITE only
+ * via our ingestion path. Idempotent per source row (`gamipress:log:{log_id}`).
  *
- * Point-type mapping: each GamiPress points-type slug maps to a WB point-type
- * (default: the same slug if it exists here, else the site default). Balances
- * are reconciled after import: the sum of imported deltas per user must equal
- * GamiPress's own stored balance (`_gamipress_{type}_points`).
+ * GamiPress specifics handled here:
+ *   - `points` / `points_type` are COLUMNS on the logs table since GamiPress 6.9.4 and log META rows
+ *     before it. Both shapes are alive in the wild; the schema is asked which one this site has.
+ *   - deduct / revoke rows store a positive amount; the sign is inferred from the log `type`.
+ *   - `date` on logs and earnings is site-local time; it is converted to UTC here.
+ *   - each points-type slug maps to a WB point type (the same slug when it exists here, else the
+ *     site default). Balances reconcile against GamiPress's own `_gamipress_{type}_points`.
+ *   - achievements are `gamipress_user_earnings` rows whose `post_type` is a registered
+ *     achievement type, paged by `user_earning_id`. Rank earnings live in the same table and are
+ *     migrated as levels (read_ranks), never as badges.
  *
  * @package WB_Gamification
  * @since   1.6.2
@@ -19,16 +23,22 @@
 
 namespace WBGam\Integrations\Importers;
 
-use WBGam\Engine\ImportService;
-
 defined( 'ABSPATH' ) || exit;
 
 /**
- * GamiPress → WB Gamification migration.
+ * Reads GamiPress ledger, achievement and rank data for the ImportRunner.
  *
  * @package WB_Gamification
  */
-final class GamiPressImporter {
+final class GamiPressImporter implements ImportSource {
+
+	public const KEY_PREFIX   = 'gamipress:log:';
+	public const BADGE_PREFIX = 'gamipress-achievement-';
+
+	/**
+	 * Log types that move a balance. Deduct / revoke lower it.
+	 */
+	private const POINT_LOG_TYPES = "'points_earn','points_award','points_deduct','points_revoke'";
 
 	/**
 	 * Is GamiPress data present to import?
@@ -57,7 +67,7 @@ final class GamiPressImporter {
 		$default = in_array( $gp_slug, $known, true ) ? $gp_slug : $service->default_slug();
 
 		/**
-		 * Filter the GamiPress → WB point-type slug mapping.
+		 * Filter the GamiPress to WB point-type slug mapping.
 		 *
 		 * @since 1.6.2
 		 * @param string   $default Resolved WB point-type slug.
@@ -74,6 +84,10 @@ final class GamiPressImporter {
 	 * what the database survived. Sites get upgraded, downgraded, restored from old dumps and migrated
 	 * between hosts, and the table is the only thing that knows the truth.
 	 *
+	 * Reading the columns unconditionally did not fail loudly on an older site: MySQL rejected the
+	 * query, $wpdb swallowed the error, get_results() returned null, and the import reported zero rows
+	 * as a success. So the reader asks which shape this site has and reads that one.
+	 *
 	 * @return bool True when `points` exists as a column.
 	 */
 	private static function logs_have_points_column(): bool {
@@ -86,44 +100,56 @@ final class GamiPressImporter {
 	}
 
 	/**
-	 * Build normalized import rows from the GamiPress point ledger.
+	 * How many ledger rows the reader scans (an upper bound: zero-point rows are skipped on read).
 	 *
-	 * @return array<int, array<string, mixed>>
+	 * @return int
 	 */
-	public static function build_rows(): array {
+	public static function count_points(): int {
 		global $wpdb;
-		$rows = array();
+		$types = self::POINT_LOG_TYPES;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		return (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}gamipress_logs WHERE type IN ({$types}) AND user_id > 0" );
+	}
 
-		// GamiPress moved `points` and `points_type` from the log META table into COLUMNS on the logs
-		// table in 6.9.4. Both shapes are alive in the wild, and a site still on the old one is exactly
-		// the kind of stale install that wants to migrate away.
-		//
-		// Reading the columns unconditionally did not fail loudly on an older site: MySQL rejected the
-		// query, $wpdb swallowed the error, get_results() returned null, and the import reported
-		// `rows: 0` with HTTP 200. The owner was told their migration had SUCCEEDED and imported
-		// nothing -- their entire points history skipped, with nothing to explain why.
-		//
-		// So ask the schema which shape this site has, and read that one.
-		$modern = self::logs_have_points_column();
+	/**
+	 * One keyset page of the GamiPress ledger as normalized rows, paged by `log_id`.
+	 *
+	 * On the legacy (pre-6.9.4) shape the amount and type come from correlated subqueries on
+	 * `gamipress_logs_meta`. They stay subqueries on purpose: a JOIN would duplicate a log row when
+	 * the meta table holds the key twice, where `LIMIT 1` reads exactly one value. The page bounds
+	 * them to $limit rows, each a lookup on the meta table's `log_id` key.
+	 *
+	 * @param int $after log_id to start strictly after.
+	 * @param int $limit Maximum log rows scanned.
+	 * @return array{rows: array<int, array<string, mixed>>, next: int}
+	 */
+	public static function read_points( int $after, int $limit ): array {
+		global $wpdb;
 
-		$select = $modern
+		$select = self::logs_have_points_column()
 			? 'l.points AS points, l.points_type AS points_type'
 			: "( SELECT m.meta_value FROM {$wpdb->prefix}gamipress_logs_meta m
 			      WHERE m.log_id = l.log_id AND m.meta_key = '_gamipress_points' LIMIT 1 ) AS points,
 			   ( SELECT m2.meta_value FROM {$wpdb->prefix}gamipress_logs_meta m2
 			      WHERE m2.log_id = l.log_id AND m2.meta_key = '_gamipress_points_type' LIMIT 1 ) AS points_type";
+		$types  = self::POINT_LOG_TYPES;
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$logs = $wpdb->get_results(
-			"SELECT l.log_id, l.user_id, l.type, l.trigger_type, {$select}, l.date
-			   FROM {$wpdb->prefix}gamipress_logs l
-			  WHERE l.type IN ('points_earn','points_award','points_deduct','points_revoke')
-			    AND l.user_id > 0
-			  ORDER BY l.log_id ASC",
+		$logs = (array) $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT l.log_id, l.user_id, l.type, l.trigger_type, {$select}, l.date
+				   FROM {$wpdb->prefix}gamipress_logs l
+				  WHERE l.log_id > %d AND l.type IN ({$types}) AND l.user_id > 0
+				  ORDER BY l.log_id ASC
+				  LIMIT %d",
+				$after,
+				$limit
+			),
 			ARRAY_A
 		);
 
-		foreach ( (array) $logs as $log ) {
+		$rows = array();
+		foreach ( $logs as $log ) {
 			$type  = (string) $log['type'];
 			$delta = (int) $log['points'];
 			// Deduct / revoke rows lower the balance.
@@ -139,8 +165,10 @@ final class GamiPressImporter {
 				'user_id'     => (int) $log['user_id'],
 				'points'      => $delta,
 				'point_type'  => self::map_point_type( (string) $log['points_type'] ),
-				'occurred_at' => (string) $log['date'],
-				'source_key'  => 'gamipress:log:' . (int) $log['log_id'],
+				'object_id'   => 0,
+				// GamiPress writes `date` in site-local time; convert to UTC.
+				'occurred_at' => get_gmt_from_date( (string) $log['date'], 'Y-m-d\TH:i:s\Z' ),
+				'source_key'  => self::KEY_PREFIX . (int) $log['log_id'],
 				'metadata'    => array(
 					'_source'    => 'gamipress',
 					'gp_type'    => $type,
@@ -149,12 +177,16 @@ final class GamiPressImporter {
 			);
 		}
 
-		return $rows;
+		return array(
+			'rows' => $rows,
+			// Skipped zero-point rows do not shorten the page: the cursor follows what was SCANNED.
+			'next' => count( $logs ) < $limit ? 0 : (int) end( $logs )['log_id'],
+		);
 	}
 
 	/**
 	 * Registered GamiPress achievement-type slugs (the `achievement-type` CPT
-	 * post names) — these are the `user_earnings.post_type` values that mean
+	 * post names): these are the `user_earnings.post_type` values that mean
 	 * "earned an achievement" (as opposed to a step / points-award / rank row).
 	 *
 	 * @return string[]
@@ -171,47 +203,81 @@ final class GamiPressImporter {
 	}
 
 	/**
-	 * Build achievement-award records from `gamipress_user_earnings`.
+	 * How many achievement awards GamiPress holds.
 	 *
-	 * One record per earned achievement: a stable WB badge id
-	 * (`gamipress-achievement-{post_id}`), the achievement title + featured
-	 * image, and the earned date (for a backdated award).
-	 *
-	 * @return array<int, array{user_id:int, badge_id:string, name:string, image:string, earned_at:string, post_id:int}>
+	 * @return int
 	 */
-	public static function build_achievements(): array {
+	public static function count_awards(): int {
 		$types = self::achievement_type_slugs();
 		if ( empty( $types ) ) {
-			return array();
+			return 0;
 		}
 
 		global $wpdb;
 		$placeholders = implode( ',', array_fill( 0, count( $types ), '%s' ) );
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$rows = $wpdb->get_results(
+		return (int) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM {$wpdb->prefix}gamipress_user_earnings
+				  WHERE user_id > 0 AND post_type IN ($placeholders)",
+				...$types
+			)
+		);
+	}
+
+	/**
+	 * One keyset page of earned achievements, paged by `user_earning_id`.
+	 *
+	 * One record per earned achievement: a stable WB badge id (`gamipress-achievement-{post_id}`),
+	 * the achievement title and featured image, and the earned date (for a backdated award).
+	 *
+	 * @param int $after user_earning_id to start strictly after.
+	 * @param int $limit Maximum earning rows scanned.
+	 * @return array{rows: array<int, array<string, mixed>>, next: int}
+	 */
+	public static function read_awards( int $after, int $limit ): array {
+		$types = self::achievement_type_slugs();
+		if ( empty( $types ) ) {
+			return array(
+				'rows' => array(),
+				'next' => 0,
+			);
+		}
+
+		global $wpdb;
+		$placeholders = implode( ',', array_fill( 0, count( $types ), '%s' ) );
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$earnings = (array) $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT user_earning_id, title, user_id, post_id, date
 				   FROM {$wpdb->prefix}gamipress_user_earnings
-				  WHERE user_id > 0 AND post_type IN ($placeholders)
-				  ORDER BY user_earning_id ASC",
-				...$types
+				  WHERE user_earning_id > %d AND user_id > 0 AND post_type IN ($placeholders)
+				  ORDER BY user_earning_id ASC
+				  LIMIT %d",
+				$after,
+				...array_merge( $types, array( $limit ) )
 			),
 			ARRAY_A
 		);
 
-		$out = array();
-		foreach ( (array) $rows as $r ) {
-			$post_id = (int) $r['post_id'];
-			$out[]   = array(
-				'user_id'   => (int) $r['user_id'],
-				'badge_id'  => 'gamipress-achievement-' . $post_id,
-				'name'      => (string) $r['title'],
+		$rows = array();
+		foreach ( $earnings as $earning ) {
+			$post_id = (int) $earning['post_id'];
+			$date    = (string) $earning['date'];
+			$rows[]  = array(
+				'user_id'   => (int) $earning['user_id'],
+				'badge_id'  => self::BADGE_PREFIX . $post_id,
+				'name'      => (string) $earning['title'],
 				'image'     => (string) get_the_post_thumbnail_url( $post_id, 'full' ),
-				'earned_at' => (string) $r['date'],
-				'post_id'   => $post_id,
+				// GamiPress stores earning dates in site-local time; earned_at is UTC.
+				'earned_at' => '' !== $date ? get_gmt_from_date( $date ) : current_time( 'mysql', true ),
 			);
 		}
-		return $out;
+
+		return array(
+			'rows' => $rows,
+			'next' => count( $earnings ) < $limit ? 0 : (int) end( $earnings )['user_earning_id'],
+		);
 	}
 
 	/**
@@ -237,7 +303,7 @@ final class GamiPressImporter {
 	 * `rank-requirement` child posts (`_gamipress_points_required`); some
 	 * setups also stamp it on the rank itself. Read both and take the max so
 	 * the WB level threshold matches whatever the source used. The base rank
-	 * has no requirement → 0.
+	 * has no requirement, so 0.
 	 *
 	 * @param int $rank_id Rank post ID.
 	 * @return int
@@ -261,11 +327,14 @@ final class GamiPressImporter {
 	}
 
 	/**
-	 * Build rank tiers (as WB level definitions) from GamiPress rank posts.
+	 * Rank tiers from GamiPress rank posts, as level definitions.
 	 *
-	 * @return array<int, array{id:int, name:string, min_points:int, order:int, type:string}>
+	 * A site has a handful, so this is not paged. Members land at the matching level from their
+	 * imported points, since our levels are point-derived on read.
+	 *
+	 * @return array<int, array{name: string, min_points: int, order: int}>
 	 */
-	public static function build_ranks(): array {
+	public static function read_ranks(): array {
 		$types = self::rank_type_slugs();
 		if ( empty( $types ) ) {
 			return array();
@@ -283,266 +352,88 @@ final class GamiPressImporter {
 		$out = array();
 		foreach ( $ranks as $i => $rank ) {
 			$out[] = array(
-				'id'         => (int) $rank->ID,
 				'name'       => (string) $rank->post_title,
 				'min_points' => self::rank_min_points( (int) $rank->ID ),
 				'order'      => (int) $i,
-				'type'       => (string) $rank->post_type,
 			);
 		}
 		return $out;
 	}
 
 	/**
-	 * Run the import (or preview it).
+	 * A member's GamiPress balance, summed across every points type.
 	 *
-	 * @param bool $dry_run When true, build + reconcile but do not write.
-	 * @return array<string, mixed> Ingestion counts plus a per-user reconciliation.
-	 */
-	public static function run( bool $dry_run = false ): array {
-		$rows         = self::build_rows();
-		$achievements = self::build_achievements();
-		$ranks        = self::build_ranks();
-
-		// Write FIRST (real run) so reconciliation can compare what actually
-		// landed, not what we hoped would land.
-		$ingest       = null;
-		$ach_imported = 0;
-		$levels_made  = 0;
-		if ( ! $dry_run ) {
-			$ingest = ImportService::ingest( $rows );
-			foreach ( $achievements as $a ) {
-				\WBGam\Engine\BadgeEngine::upsert_def(
-					array(
-						'id'        => $a['badge_id'],
-						'name'      => $a['name'],
-						'image_url' => $a['image'],
-						'category'  => 'imported',
-					)
-				);
-				// Round trip preserves the source's wall clock (see MyCredImporter). The fallback must be
-				// the SITE's now, not UTC's -- earned_at is a site-local column.
-				$earned_at = $a['earned_at'] ? gmdate( 'Y-m-d H:i:s', strtotime( (string) $a['earned_at'] ) ) : current_time( 'mysql' );
-				if ( \WBGam\Engine\BadgeEngine::award_badge( $a['user_id'], $a['badge_id'], $earned_at ) ) {
-					++$ach_imported;
-				}
-			}
-			// Ranks → WB levels: recreate each tier (name + threshold). Members
-			// then land at the matching level from their imported points, since
-			// our levels are point-derived on read.
-			foreach ( $ranks as $r ) {
-				// Count what was CREATED, not what was found. upsert_level() returns an id either way, so
-				// counting `> 0` reported levels the import had not built -- on a re-run it claimed
-				// `levels_created: 1` while the database gained nothing.
-				$level_created = false;
-				\WBGam\Engine\LevelEngine::upsert_level( $r['name'], $r['min_points'], $r['order'], '', $level_created );
-				if ( $level_created ) {
-					++$levels_made;
-				}
-			}
-		}
-
-		// POINTS reconciliation. Real run compares the sum that ACTUALLY landed
-		// in our ledger (keyed by source_key) against GamiPress's own balance,
-		// so a rejected/dropped row surfaces as a mismatch instead of hiding
-		// behind an optimistic expected-sum. Dry run previews the expected sum.
-		$reconcile = array();
-		foreach ( self::user_ids( $rows ) as $uid ) {
-			$ours              = $dry_run ? self::expected_points( $rows, $uid ) : self::our_imported_points( $uid );
-			$source            = self::gamipress_balance( $uid );
-			$reconcile[ $uid ] = array(
-				'imported_sum'      => $ours,
-				'gamipress_balance' => $source,
-				'match'             => $ours === $source,
-			);
-		}
-
-		// ACHIEVEMENT reconciliation: our imported badge count vs GamiPress's
-		// own achievement count.
-		$ach_reconcile = array();
-		foreach ( self::user_ids( $achievements ) as $uid ) {
-			$ours = $dry_run
-				? count( array_filter( $achievements, static fn ( $a ) => (int) $a['user_id'] === $uid ) )
-				: self::our_imported_badge_count( $uid );
-			// Read GamiPress's OWN table (`gamipress_user_earnings`) directly
-			// instead of `gamipress_get_user_achievements()`. The real migration
-			// scenario is the owner DEACTIVATING GamiPress before importing, so
-			// "the API is unavailable" is the NORMAL case, not an edge case --
-			// and falling back to `$ours` here made the comparison `$ours ===
-			// $ours`, a check that could never fail. Proven: 2 seeded
-			// achievements, one award blocked, reconciliation still reported
-			// clean. A DB read survives deactivation; the PHP API does not.
-			$own                   = self::gamipress_achievement_count_from_db( $uid );
-			$ach_reconcile[ $uid ] = array(
-				'imported_achievements'  => (int) $ours,
-				// Never fabricate agreement: when the source truth genuinely
-				// cannot be read (table gone / no achievement types registered
-				// at all), say so instead of guessing a number.
-				'gamipress_achievements' => null === $own ? 'unknown' : $own,
-				'match'                  => null !== $own && (int) $ours === $own,
-			);
-		}
-
-		// RANK reconciliation. For each user who holds a GamiPress rank, the WB
-		// level derived from their IMPORTED points (isolating any pre-existing
-		// WB points on the target) must equal their GamiPress rank name.
-		$rank_reconcile = array();
-		if ( ! empty( $ranks ) ) {
-			foreach ( self::user_ids( $rows ) as $uid ) {
-				$gp_rank = self::gamipress_user_rank_name( $uid );
-				if ( '' === $gp_rank ) {
-					continue;
-				}
-				$points                 = $dry_run ? self::expected_points( $rows, $uid ) : self::our_imported_points( $uid );
-				$our_level              = $dry_run
-					? self::tier_name_for_points( $ranks, $points )
-					: ( \WBGam\Engine\LevelEngine::get_level_for_points( $points )['name'] ?? '' );
-				$rank_reconcile[ $uid ] = array(
-					'our_level'      => (string) $our_level,
-					'gamipress_rank' => $gp_rank,
-					'match'          => (string) $our_level === $gp_rank,
-				);
-			}
-		}
-
-		$result = array(
-			'rows'                       => count( $rows ),
-			'achievements'               => count( $achievements ),
-			'ranks'                      => count( $ranks ),
-			'dry_run'                    => $dry_run,
-			'reconciliation'             => $reconcile,
-			'achievement_reconciliation' => $ach_reconcile,
-			'rank_reconciliation'        => $rank_reconcile,
-		);
-		if ( ! $dry_run ) {
-			$result['ingest']               = $ingest;
-			$result['achievements_awarded'] = $ach_imported;
-			$result['levels_created']       = $levels_made;
-		}
-		return $result;
-	}
-
-	/**
-	 * Distinct user ids present in a set of rows.
+	 * Uses GamiPress's OWN getter (`gamipress_get_user_points`) as the
+	 * authority so reconciliation is independent of how we read the source:
+	 * exactly the cross-check that caught an earlier raw-meta miscount. Falls
+	 * back to the exact per-slug balance meta only if the getter is absent.
 	 *
-	 * @param array<int, array<string, mixed>> $rows Rows with a user_id key.
-	 * @return int[]
-	 */
-	private static function user_ids( array $rows ): array {
-		return array_values( array_unique( array_map( static fn ( $r ) => (int) $r['user_id'], $rows ) ) );
-	}
-
-	/**
-	 * Expected point sum for a user from the built rows (dry-run preview).
-	 *
-	 * @param array<int, array<string, mixed>> $rows    Point rows.
-	 * @param int                              $user_id User.
+	 * @param int $user_id Member.
 	 * @return int
 	 */
-	private static function expected_points( array $rows, int $user_id ): int {
-		$sum = 0;
-		foreach ( $rows as $r ) {
-			if ( (int) $r['user_id'] === $user_id ) {
-				$sum += (int) $r['points'];
+	public static function source_balance( int $user_id ): int {
+		$total = 0;
+		foreach ( self::points_type_slugs() as $slug ) {
+			if ( function_exists( 'gamipress_get_user_points' ) ) {
+				$total += (int) gamipress_get_user_points( $user_id, $slug );
+			} else {
+				$total += (int) get_user_meta( $user_id, '_gamipress_' . $slug . '_points', true );
 			}
 		}
-		return $sum;
+		return $total;
 	}
 
 	/**
-	 * Sum of points that ACTUALLY landed in our ledger from a GamiPress import.
-	 *
-	 * @param int $user_id User.
-	 * @return int
-	 */
-	private static function our_imported_points( int $user_id ): int {
-		global $wpdb;
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		return (int) $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT COALESCE(SUM(p.points),0)
-				   FROM {$wpdb->prefix}wb_gam_points p
-				   JOIN {$wpdb->prefix}wb_gam_events e ON e.id = p.event_id
-				  WHERE p.user_id = %d AND e.source_key LIKE %s",
-				$user_id,
-				'gamipress:log:%'
-			)
-		);
-	}
-
-	/**
-	 * Count of imported GamiPress achievement badges a user actually holds.
-	 *
-	 * @param int $user_id User.
-	 * @return int
-	 */
-	private static function our_imported_badge_count( int $user_id ): int {
-		global $wpdb;
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		return (int) $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT COUNT(*) FROM {$wpdb->prefix}wb_gam_user_badges
-				  WHERE user_id = %d AND badge_id LIKE %s",
-				$user_id,
-				'gamipress-achievement-%'
-			)
-		);
-	}
-
-	/**
-	 * A user's GamiPress achievement count, read directly from GamiPress's own
+	 * A member's GamiPress achievement count, read directly from GamiPress's own
 	 * `gamipress_user_earnings` table rather than its PHP API.
 	 *
 	 * `gamipress_get_user_achievements()` is only callable while GamiPress is
 	 * active, but the whole point of this importer is migrating AWAY from
-	 * GamiPress -- the normal sequence is deactivate-then-import, not the other
-	 * way round. A source-of-truth that depends on the plugin being active
-	 * cannot do its job in the case it exists for. The table survives
-	 * deactivation, so read that instead.
+	 * GamiPress: the normal sequence is deactivate-then-import. The table
+	 * survives deactivation, so read that instead.
 	 *
-	 * @param int $user_id User.
-	 * @return int|null Achievement count, or null when it genuinely cannot be
-	 *                   determined (table gone, or no achievement types
-	 *                   registered to filter by) -- callers must treat that as
-	 *                   UNKNOWN, never as a match.
+	 * When the count cannot be read (table gone, or no achievement types
+	 * registered to filter by) this returns 0, never our own count: any badge
+	 * we did import then surfaces as a mismatch instead of a fabricated match.
+	 *
+	 * @param int $user_id Member.
+	 * @return int
 	 */
-	private static function gamipress_achievement_count_from_db( int $user_id ): ?int {
+	public static function source_badge_count( int $user_id ): int {
 		global $wpdb;
 
 		$table = $wpdb->prefix . 'gamipress_user_earnings';
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$exists = (bool) $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) );
-		if ( ! $exists ) {
-			return null;
+		if ( ! $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) ) ) {
+			return 0;
 		}
 
-		// Filter to achievement types ONLY — unfiltered this table also holds
+		// Filter to achievement types ONLY: unfiltered this table also holds
 		// rank earnings, which we migrate as levels, not badges (that would
 		// inflate the source count and hide a real mismatch).
 		$types = self::achievement_type_slugs();
 		if ( empty( $types ) ) {
-			return null;
+			return 0;
 		}
 
 		$placeholders = implode( ',', array_fill( 0, count( $types ), '%s' ) );
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$count = $wpdb->get_var(
+		return (int) $wpdb->get_var(
 			$wpdb->prepare(
 				"SELECT COUNT(*) FROM {$table} WHERE user_id = %d AND post_type IN ($placeholders)",
 				$user_id,
 				...$types
 			)
 		);
-		return null === $count ? null : (int) $count;
 	}
 
 	/**
-	 * A user's current GamiPress rank name (highest across rank types).
+	 * A member's current GamiPress rank name (highest across rank types).
 	 *
-	 * @param int $user_id User.
+	 * @param int $user_id Member.
 	 * @return string Rank title, or '' if none.
 	 */
-	private static function gamipress_user_rank_name( int $user_id ): string {
+	public static function source_rank_name( int $user_id ): string {
 		if ( ! function_exists( 'gamipress_get_user_rank' ) ) {
 			return '';
 		}
@@ -554,48 +445,6 @@ final class GamiPressImporter {
 			}
 		}
 		return $name;
-	}
-
-	/**
-	 * The tier name a point total maps to (dry-run preview of the derived level).
-	 *
-	 * @param array<int, array{name:string, min_points:int}> $ranks  Tiers.
-	 * @param int                                            $points Point total.
-	 * @return string
-	 */
-	private static function tier_name_for_points( array $ranks, int $points ): string {
-		$name = '';
-		$best = -1;
-		foreach ( $ranks as $r ) {
-			if ( $points >= (int) $r['min_points'] && (int) $r['min_points'] >= $best ) {
-				$best = (int) $r['min_points'];
-				$name = (string) $r['name'];
-			}
-		}
-		return $name;
-	}
-
-	/**
-	 * A user's GamiPress balance, summed across every points type.
-	 *
-	 * Uses GamiPress's OWN getter (`gamipress_get_user_points`) as the
-	 * authority so reconciliation is independent of how we read the source —
-	 * exactly the cross-check that caught an earlier raw-meta miscount. Falls
-	 * back to the exact per-slug balance meta only if the getter is absent.
-	 *
-	 * @param int $user_id User ID.
-	 * @return int
-	 */
-	private static function gamipress_balance( int $user_id ): int {
-		$total = 0;
-		foreach ( self::points_type_slugs() as $slug ) {
-			if ( function_exists( 'gamipress_get_user_points' ) ) {
-				$total += (int) gamipress_get_user_points( $user_id, $slug );
-			} else {
-				$total += (int) get_user_meta( $user_id, '_gamipress_' . $slug . '_points', true );
-			}
-		}
-		return $total;
 	}
 
 	/**

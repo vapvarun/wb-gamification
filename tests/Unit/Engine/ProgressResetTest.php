@@ -12,13 +12,13 @@
 
 namespace WBGam\Tests\Unit\Engine;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 use WBGam\Engine\ProgressReset;
 
-/**
- * @coversDefaultClass \WBGam\Engine\ProgressReset
- */
+#[CoversClass( \WBGam\Engine\ProgressReset::class )]
 class ProgressResetTest extends TestCase {
 
 	/**
@@ -29,9 +29,7 @@ class ProgressResetTest extends TestCase {
 		return (array) $ref->getConstant( 'PROGRESS_TABLES' );
 	}
 
-	/**
-	 * @test
-	 */
+	#[Test]
 	public function config_and_definition_tables_are_never_wiped(): void {
 		$protected = array(
 			'wb_gam_badge_defs',
@@ -52,9 +50,7 @@ class ProgressResetTest extends TestCase {
 		}
 	}
 
-	/**
-	 * @test
-	 */
+	#[Test]
 	public function the_core_progress_tables_are_wiped(): void {
 		$wiped = $this->progressTables();
 		foreach ( array( 'wb_gam_points', 'wb_gam_events', 'wb_gam_user_badges', 'wb_gam_streaks', 'wb_gam_user_totals' ) as $table ) {

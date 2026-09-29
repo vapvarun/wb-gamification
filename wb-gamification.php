@@ -3,7 +3,7 @@
  * Plugin Name: WB Gamification
  * Plugin URI:  https://wbcomdesigns.com/
  * Description: Complete gamification plugin for BuddyPress and WordPress. Part of the Reign Stack. Points, badges, levels, leaderboards, challenges, and streaks — zero config, works out of the box.
- * Version:     1.6.4
+ * Version:     1.6.5
  * Author:      Wbcom Designs
  * Author URI:  https://wbcomdesigns.com/
  * License:     GPL-2.0+
@@ -11,7 +11,7 @@
  * Text Domain: wb-gamification
  * Domain Path: /languages
  * Requires at least: 6.5
- * Requires PHP:      8.0
+ * Requires PHP:      8.1
  *
  * @package WB_Gamification
  */
@@ -33,7 +33,7 @@ if ( defined( 'WB_GAM_VERSION' ) ) {
 // Plugin Check's internal phpcs invocation.
 // phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 
-define( 'WB_GAM_VERSION', '1.6.4' );
+define( 'WB_GAM_VERSION', '1.6.5' );
 define( 'WB_GAM_FILE', __FILE__ );
 define( 'WB_GAM_PATH', plugin_dir_path( __FILE__ ) );
 define( 'WB_GAM_URL', plugin_dir_url( __FILE__ ) );
@@ -243,6 +243,8 @@ final class WB_Gamification {
 		( new \WBGam\Blocks\Registrar( WB_GAM_PATH . 'build' ) )->init();
 		add_action( 'init', array( ShortcodeHandler::class, 'init' ) );
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_assets' ) );
+		// One place that serves the right-to-left stylesheet on RTL sites, for every handle.
+		add_filter( 'style_loader_src', array( $this, 'rtl_stylesheet_src' ), 10, 2 );
 		// The dialog utility is needed in the ADMIN too (the deactivation-feedback modal on
 		// plugins.php). Priority 1 so the handle exists before any admin screen declares it.
 		add_action( 'admin_enqueue_scripts', array( $this, 'register_dialog_script' ), 1 );
@@ -284,6 +286,10 @@ final class WB_Gamification {
 
 		BootOrder::register( 'engine', BootOrder::SLOT_CORE, array( 'registry', 'db_upgrader' ) );
 		add_action( 'plugins_loaded', array( Engine::class, 'init' ), BootOrder::SLOT_CORE );
+
+		// The chained background job of a historical import (one page per job).
+		BootOrder::register( 'import_runner', BootOrder::SLOT_CORE, array( 'engine' ) );
+		add_action( 'plugins_loaded', array( \WBGam\Engine\ImportRunner::class, 'init' ), BootOrder::SLOT_CORE );
 
 		// Member-facing accent color override (Settings > Appearance). Only
 		// registers a wp_enqueue_scripts hook, so it has no boot-order deps.
@@ -382,6 +388,7 @@ final class WB_Gamification {
 			ChallengeManagerPage::init();
 			ManualAwardPage::init();
 			MembersPage::init();
+			\WBGam\Admin\LevelsPage::init();
 			\WBGam\Admin\StreaksPage::init();
 			\WBGam\Admin\KudosModerationPage::init();
 			ApiKeysPage::init();
@@ -391,6 +398,7 @@ final class WB_Gamification {
 			WebhooksAdminPage::init();
 			PointTypesPage::init();
 			PointTypeConversionsPage::init();
+			\WBGam\Admin\MultipliersPage::init();
 			SubmissionsPage::init();
 			\WBGam\Admin\DeactivationFeedback::init();
 			\WBGam\Admin\ImportPage::init();
@@ -489,6 +497,13 @@ final class WB_Gamification {
 	 * Registration is idempotent; wp_register_script no-ops on a handle that already exists.
 	 */
 	public function register_dialog_script(): void {
+		// The popup styles are registered here for the same reason as the script below: the admin
+		// needs them too (the admin toast, the confirm dialog, the deactivation survey), and a
+		// handle registered only on wp_enqueue_scripts does not exist in wp-admin.
+		wp_register_style( 'wb-gam-tokens', WB_GAM_URL . 'src/shared/design-tokens.css', array(), WB_GAM_VERSION );
+		wp_register_style( 'lucide-icons', WB_GAM_URL . 'assets/fonts/lucide.css', array(), '0.469.0' );
+		wp_register_style( 'wb-gam-popups', WB_GAM_URL . 'assets/css/popups.css', array( 'wb-gam-tokens', 'lucide-icons' ), WB_GAM_VERSION );
+
 		wp_register_script(
 			'wb-gam-dialog',
 			WB_GAM_URL . 'assets/js/dialog.js',
@@ -496,6 +511,83 @@ final class WB_Gamification {
 			WB_GAM_VERSION,
 			true
 		);
+
+		// The one toast renderer: the front-end feed and the wp-admin helpers both call it.
+		wp_register_script(
+			'wb-gamification-top-offset',
+			WB_GAM_URL . 'assets/js/top-offset.js',
+			array(),
+			WB_GAM_VERSION,
+			true
+		);
+		wp_register_script(
+			'wb-gam-toast-core',
+			WB_GAM_URL . 'assets/js/toast-core.js',
+			array( 'wp-i18n', 'wb-gamification-top-offset' ),
+			WB_GAM_VERSION,
+			true
+		);
+		wp_set_script_translations( 'wb-gam-toast-core', 'wb-gamification', WB_GAM_PATH . 'languages' );
+
+		// The celebration utility: one small confetti burst for a Moment card or an achievement toast.
+		wp_register_script(
+			'wb-gam-celebrate',
+			WB_GAM_URL . 'assets/js/celebrate.js',
+			array(),
+			WB_GAM_VERSION,
+			true
+		);
+		/**
+		 * Filters the celebration style: 'confetti' (default) or 'none'.
+		 *
+		 * One switch for a community where confetti does not fit (a professional network, say).
+		 * It is a filter and not an admin setting on purpose: it is a one-time site decision, and a
+		 * setting nobody reopens is a control to maintain. Reduced motion is honoured separately and
+		 * automatically.
+		 *
+		 * @since 1.6.5
+		 *
+		 * @param string $style 'confetti' or 'none'.
+		 */
+		$celebration = (string) apply_filters( 'wb_gam_celebration_style', 'confetti' );
+		wp_localize_script(
+			'wb-gam-celebrate',
+			'wbGamCelebrate',
+			array( 'style' => 'none' === $celebration ? 'none' : 'confetti' )
+		);
+	}
+
+	/**
+	 * On an RTL site, serve this plugin's generated -rtl twin of a stylesheet.
+	 *
+	 * The build writes a right-to-left copy next to every stylesheet (foo.css -> foo-rtl.css,
+	 * foo.min.css -> foo-rtl.min.css) but nothing registered them, so RTL sites loaded the
+	 * left-to-right CSS. Doing it here, at print time, covers every handle - including ones
+	 * registered later or enqueued late in the footer - without a wp_style_add_data() call
+	 * per registration that the next new stylesheet would forget. Block styles that core
+	 * already swapped (block.json + a -rtl file) are left alone.
+	 *
+	 * @since 1.6.5
+	 *
+	 * @param string|false $src    Stylesheet URL.
+	 * @param string       $handle Style handle (unused).
+	 * @return string|false
+	 */
+	public function rtl_stylesheet_src( $src, string $handle ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed -- filter signature.
+		if ( ! is_string( $src ) || ! is_rtl() || ! str_starts_with( $src, WB_GAM_URL ) || str_contains( $src, '-rtl.' ) ) {
+			return $src;
+		}
+
+		$parts = wp_parse_url( $src );
+		$path  = $parts['path'] ?? '';
+		$rtl   = preg_replace( '/(\.min)?\.css$/', '-rtl$1.css', $path, 1 );
+		$base  = (string) wp_parse_url( WB_GAM_URL, PHP_URL_PATH );
+
+		if ( ! is_string( $rtl ) || $rtl === $path || ! str_starts_with( $rtl, $base ) || ! file_exists( WB_GAM_PATH . substr( $rtl, strlen( $base ) ) ) ) {
+			return $src;
+		}
+
+		return str_replace( $path, $rtl, $src );
 	}
 
 	public function enqueue_assets(): void {
@@ -527,7 +619,7 @@ final class WB_Gamification {
 		wp_register_style(
 			'wb-gamification',
 			WB_GAM_URL . 'assets/css/frontend.css',
-			array( 'wb-gam-tokens' ),
+			array( 'wb-gam-tokens', 'wb-gam-popups' ),
 			WB_GAM_VERSION
 		);
 		// `wb-gamification-interactivity` removed in Phase F. The legacy
@@ -549,7 +641,7 @@ final class WB_Gamification {
 		wp_register_style(
 			'wb-gamification-hub',
 			WB_GAM_URL . 'assets/css/hub.css',
-			array( 'lucide-icons' ),
+			array( 'lucide-icons', 'wb-gam-popups' ),
 			WB_GAM_VERSION
 		);
 		wp_register_script_module(
@@ -688,7 +780,7 @@ final class WB_Gamification {
 			wp_enqueue_script(
 				'wb-gamification-toast',
 				WB_GAM_URL . 'assets/js/toast.js',
-				array( 'wb-gamification-realtime', 'wb-gamification-top-offset', 'wb-gam-rest' ),
+				array( 'wb-gamification-realtime', 'wb-gam-toast-core', 'wb-gam-rest' ),
 				WB_GAM_VERSION,
 				true
 			);
@@ -848,7 +940,7 @@ final class WB_Gamification {
 		wp_enqueue_style(
 			'wb-gam-admin-components',
 			WB_GAM_URL . 'assets/css/admin/components.css',
-			array( 'wb-gam-admin-tokens' ),
+			array( 'wb-gam-admin-tokens', 'wb-gam-popups' ),
 			WB_GAM_VERSION
 		);
 		wp_enqueue_style(
@@ -987,6 +1079,8 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			WP_CLI::add_command( 'wb-gamification share', WBGam\CLI\ShareCommand::class );
 			WP_CLI::add_command( 'wb-gamification openapi', WBGam\CLI\OpenApiCommand::class );
 			WP_CLI::add_command( 'wb-gamification import', WBGam\CLI\ImportCommand::class );
+			WP_CLI::add_command( 'wb-gamification import-status', array( WBGam\CLI\ImportCommand::class, 'status' ) );
+			WP_CLI::add_command( 'wb-gamification import-undo', array( WBGam\CLI\ImportCommand::class, 'undo' ) );
 			WP_CLI::add_command( 'wb-gamification email-test', array( WBGam\CLI\EmailCommand::class, 'test' ) );
 		}
 	);

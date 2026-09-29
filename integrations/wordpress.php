@@ -38,8 +38,8 @@ return [
 
 		[
 			'id'              => 'wp_user_register',
-			'label'           => 'Join the site',
-			'description'     => 'Awarded once when a user registers.',
+			'label'           => static fn(): string => __( 'Join the site', 'wb-gamification' ),
+			'description'     => static fn(): string => __( 'Awarded once when a user registers.', 'wb-gamification' ),
 			'hook'            => 'user_register',
 			'user_callback'   => fn( int $user_id ) => $user_id,
 			'default_points'  => 15,
@@ -51,8 +51,8 @@ return [
 
 		[
 			'id'              => 'wp_first_login',
-			'label'           => 'First login',
-			'description'     => 'Awarded once on the very first login.',
+			'label'           => static fn(): string => __( 'Log in for the first time', 'wb-gamification' ),
+			'description'     => static fn(): string => __( 'Awarded once on the very first login.', 'wb-gamification' ),
 			'hook'            => 'wp_login',
 			'user_callback'   => fn( string $user_login, \WP_User $user ) => $user->ID,
 			'default_points'  => 10,
@@ -64,8 +64,8 @@ return [
 
 		[
 			'id'              => 'wp_profile_complete',
-			'label'           => 'Complete WordPress profile',
-			'description'     => 'Awarded once when the user saves their WP profile with a bio.',
+			'label'           => static fn(): string => __( 'Complete WordPress profile', 'wb-gamification' ),
+			'description'     => static fn(): string => __( 'Awarded once when the user saves their WP profile with a bio.', 'wb-gamification' ),
 			'hook'            => 'personal_options_update',
 			'user_callback'   => function ( int $user_id ): int {
 				return get_user_meta( $user_id, 'description', true ) ? $user_id : 0;
@@ -79,8 +79,8 @@ return [
 
 		[
 			'id'              => 'wp_post_receives_comment',
-			'label'           => 'Post receives a comment',
-			'description'     => 'Post author earns points when an approved comment is left on their content.',
+			'label'           => static fn(): string => __( 'Receive a comment on a post', 'wb-gamification' ),
+			'description'     => static fn(): string => __( 'Post author earns points when an approved comment is left on their content.', 'wb-gamification' ),
 			'hook'            => 'comment_post',
 			'user_callback'   => function ( int $comment_id, int|string $approved ): int {
 				if ( 1 !== (int) $approved ) {
@@ -96,6 +96,17 @@ return [
 					return 0;
 				}
 				if ( 'product' === $post->post_type ) {
+					return 0;
+				}
+				// Commenting on your own post earns nothing.
+				if ( (int) $comment->user_id === (int) $post->post_author ) {
+					return 0;
+				}
+				// Member Blog pays the author for comments on its posts (bpmb_post_commented),
+				// with its own eligibility filter. Paying here too doubled every such comment.
+				if ( \WBGam\Engine\Registry::get_action( 'bpmb_post_commented' )
+					// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Member Blog's own eligibility filter, read so both triggers agree on which posts it covers.
+					&& apply_filters( 'bpmb_gamification_award_comment_for_post', 'post' === $post->post_type, $post ) ) {
 					return 0;
 				}
 				return (int) $post->post_author;
@@ -122,8 +133,8 @@ return [
 
 		[
 			'id'              => 'wp_publish_post',
-			'label'           => 'Publish a blog post',
-			'description'     => 'Awarded when the author publishes a new post - once per transition into the published state. Editing an already-published post does NOT re-award.',
+			'label'           => static fn(): string => __( 'Publish a blog post', 'wb-gamification' ),
+			'description'     => static fn(): string => __( 'Awarded when the author publishes a new post - once per transition into the published state. Editing an already-published post does NOT re-award.', 'wb-gamification' ),
 			// `transition_post_status` (not `publish_post`) because the
 			// latter fires on every save where status ends as `publish` —
 			// including edits — so authors re-earned 25pts on every
@@ -153,8 +164,8 @@ return [
 
 		[
 			'id'              => 'wp_first_post',
-			'label'           => 'Publish first post ever',
-			'description'     => "Awarded once on the author's very first transition-to-publish for a post.",
+			'label'           => static fn(): string => __( 'Publish your first post', 'wb-gamification' ),
+			'description'     => static fn(): string => __( 'Awarded once on the author\'s very first transition-to-publish for a post.', 'wb-gamification' ),
 			// Same transition_post_status pattern as wp_publish_post.
 			// Without this fix, the first-post check also re-ran on every
 			// update because `count_user_posts` returned 1 for a single
@@ -184,8 +195,8 @@ return [
 
 		[
 			'id'              => 'wp_leave_comment',
-			'label'           => 'Leave a comment',
-			'description'     => 'Commenter earns points when their approved comment is posted.',
+			'label'           => static fn(): string => __( 'Leave a comment', 'wb-gamification' ),
+			'description'     => static fn(): string => __( 'Commenter earns points when their approved comment is posted.', 'wb-gamification' ),
 			'hook'            => 'comment_post',
 			'user_callback'   => function ( int $comment_id, int|string $approved ): int {
 				if ( 1 !== (int) $approved ) {
@@ -212,8 +223,8 @@ return [
 
 		[
 			'id'              => 'wp_comment_approved',
-			'label'           => 'Comment approved from moderation',
-			'description'     => 'Awarded when a previously pending comment gets approved.',
+			'label'           => static fn(): string => __( 'Get a comment approved from moderation', 'wb-gamification' ),
+			'description'     => static fn(): string => __( 'Awarded when a previously pending comment gets approved.', 'wb-gamification' ),
 			'hook'            => 'transition_comment_status',
 			'user_callback'   => function ( string $new_status, string $old_status, \WP_Comment $comment ): int {
 				if ( 'approved' !== $new_status || 'approved' === $old_status ) {

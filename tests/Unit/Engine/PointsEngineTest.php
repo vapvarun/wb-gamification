@@ -35,6 +35,8 @@ class PointsEngineTest extends TestCase {
 		Functions\when( 'get_user_meta' )->justReturn( '' );
 		Functions\when( 'get_users' )->justReturn( array() );
 		Functions\when( 'apply_filters' )->returnArg( 2 );
+		// A non-spend debit re-checks the member's level (LevelEngine::maybe_level_up).
+		Functions\when( 'wp_cache_set' )->justReturn( true );
 	}
 
 	protected function tearDown(): void {
@@ -61,6 +63,7 @@ class PointsEngineTest extends TestCase {
 		// FOR UPDATE balance lock — return 200 so a debit of 50 has enough.
 		$wpdb->shouldReceive( 'prepare' )->andReturnUsing( static fn( $q ) => $q );
 		$wpdb->shouldReceive( 'get_var' )->andReturn( 200 );
+		$wpdb->shouldReceive( 'get_results' )->andReturn( array() ); // Point types, read by the post-debit level re-check.
 
 		// Two inserts: wb_gam_events (audit) + wb_gam_points (ledger).
 		$inserts = [];
@@ -223,7 +226,8 @@ class PointsEngineTest extends TestCase {
 				if ( 'wb_gamification' === $group && 'point_types_default' === $key ) {
 					return 'points';
 				}
-				return false;
+				// No levels defined: the post-debit level re-check is a no-op.
+				return 'wb_gam_levels_all_v2' === $key ? array() : false;
 			}
 		);
 	}

@@ -281,7 +281,7 @@ final class AbilitiesRegistration {
 			// === Read abilities ===
 			'wb-gamification/read-leaderboard'   => array(
 				'label'       => 'Read gamification leaderboard',
-				'description' => 'Retrieve ranked member lists by points for any period (daily, weekly, monthly, all-time). Supports group scoping.',
+				'description' => 'Retrieve ranked member lists by points for any period (daily, weekly, monthly, all-time), one page at a time with a cursor and a total. Supports group scoping and currencies.',
 				'endpoint'    => $base . '/leaderboard',
 				'methods'     => array( 'GET' ),
 				'parameters'  => array(
@@ -290,15 +290,25 @@ final class AbilitiesRegistration {
 					// (`daily`, `weekly`, `monthly`) get rejected by the controller's
 					// sanitize_key + enum check. Enum-drift bug caught by
 					// wppqa_check_enum_consistency 2026-05-03.
-					'period' => array(
+					'period'     => array(
 						'type'    => 'string',
 						'enum'    => array( 'all', 'day', 'week', 'month' ),
 						'default' => 'all',
 					),
-					'limit'  => array(
+					'limit'      => array(
 						'type'    => 'integer',
 						'default' => 10,
 						'maximum' => 100,
+					),
+					// Forward-only paging: pass the previous response's `next_cursor` back. The response
+					// also carries `total`, `has_more` and `offset`. A cursor needs a logged-in caller.
+					'cursor'     => array(
+						'type'    => 'string',
+						'default' => '',
+					),
+					'point_type' => array(
+						'type'    => 'string',
+						'default' => '',
 					),
 				),
 				'auth'        => 'none',

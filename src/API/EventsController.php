@@ -75,7 +75,7 @@ class EventsController extends WP_REST_Controller {
 				array(
 					'methods'             => WP_REST_Server::CREATABLE,
 					'callback'            => array( $this, 'create_item' ),
-					'permission_callback' => array( $this, 'create_item_permissions_check' ),
+					'permission_callback' => array( $this, 'manage_members_permissions_check' ),
 					'args'                => array(
 						'action_id' => array(
 							'required'          => true,
@@ -124,7 +124,7 @@ class EventsController extends WP_REST_Controller {
 				array(
 					'methods'             => WP_REST_Server::CREATABLE,
 					'callback'            => array( $this, 'import_items' ),
-					'permission_callback' => array( $this, 'import_permissions_check' ),
+					'permission_callback' => array( $this, 'manage_members_permissions_check' ),
 					'args'                => array(
 						'events' => array(
 							'required'    => true,
@@ -181,15 +181,9 @@ class EventsController extends WP_REST_Controller {
 		// send occurred_at=2019-01-02 and you got a 201 and an event stamped today, with nothing to tell
 		// you the date had been thrown away. That silence is the bug, and it is fixed by saying no.
 		//
-		// It is NOT fixed by accepting them. This route is open to any logged-in member (see
-		// create_item_permissions_check -- it checks is_user_logged_in() and nothing else), so honouring
-		// a caller-supplied occurred_at would hand every member a backdating primitive: forge a streak
-		// they never ran, drop events into last week's leaderboard window, backdate around a daily cap.
-		// Honouring points would be worse -- self-award any score.
-		//
-		// Backdating is a real requirement, and it already has a home: POST /events/import, which is
-		// gated on wb_gam_manage_members and takes all three. An owner migrating a community can use it;
-		// a member cannot.
+		// It is NOT fixed by accepting them: a live event is "this happened now". Backdating is a real
+		// requirement and it has its own home, POST /events/import, which takes all three and runs in
+		// import mode (side effects suppressed, badges rebuilt once).
 		foreach ( array( 'occurred_at', 'source_key', 'points', 'point_type' ) as $wb_gam_import_only ) {
 			if ( null !== $request->get_param( $wb_gam_import_only ) ) {
 				return new WP_Error(
@@ -233,15 +227,6 @@ class EventsController extends WP_REST_Controller {
 					$action_id
 				),
 				array( 'status' => 400 )
-			);
-		}
-
-		// Non-admins can only fire events for themselves.
-		if ( ! current_user_can( 'manage_options' ) && get_current_user_id() !== $user_id ) {
-			return new WP_Error(
-				'rest_forbidden',
-				__( 'You may only fire events for yourself.', 'wb-gamification' ),
-				array( 'status' => 403 )
 			);
 		}
 
@@ -303,20 +288,24 @@ class EventsController extends WP_REST_Controller {
 	// ── Permissions ─────────────────────────────────────────────────────────────
 
 	/**
-	 * Check if the current user can fire a gamification event.
+	 * Only site managers (and API keys, which act as the admin who created them) record events.
 	 *
-	 * @param WP_REST_Request $request Full details about the request.
-	 * @return true|WP_Error True if the request has permission, WP_Error otherwise.
+	 * Every registered action has a hook: the plugin already sees the real activity happen and
+	 * awards it there. Members never needed to report one themselves, and when they could, any
+	 * member could claim "published a post" for a post that does not exist (card 10344274129).
+	 *
+	 * @param WP_REST_Request $request Full request.
+	 * @return true|WP_Error
 	 */
-	public function create_item_permissions_check( $request ): bool|WP_Error {
-		if ( ! is_user_logged_in() ) {
-			return new WP_Error(
-				'rest_not_logged_in',
-				__( 'You must be logged in to fire gamification events.', 'wb-gamification' ),
-				array( 'status' => 401 )
-			);
+	public function manage_members_permissions_check( $request ): bool|WP_Error { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found -- permission_callback signature.
+		if ( \WBGam\Engine\Capabilities::user_can( 'wb_gam_manage_members' ) ) {
+			return true;
 		}
-		return true;
+		return new WP_Error(
+			'rest_forbidden',
+			__( 'You are not allowed to record gamification events.', 'wb-gamification' ),
+			array( 'status' => is_user_logged_in() ? 403 : 401 )
+		);
 	}
 
 	/**
@@ -375,23 +364,6 @@ class EventsController extends WP_REST_Controller {
 				}
 			),
 			200
-		);
-	}
-
-	/**
-	 * Only site managers may bulk-import events.
-	 *
-	 * @param WP_REST_Request $request Full request.
-	 * @return true|WP_Error
-	 */
-	public function import_permissions_check( $request ): bool|WP_Error {
-		if ( \WBGam\Engine\Capabilities::user_can( 'wb_gam_manage_members' ) ) {
-			return true;
-		}
-		return new WP_Error(
-			'rest_forbidden',
-			__( 'You are not allowed to import gamification events.', 'wb-gamification' ),
-			array( 'status' => is_user_logged_in() ? 403 : 401 )
 		);
 	}
 

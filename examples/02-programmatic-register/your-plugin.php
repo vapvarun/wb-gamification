@@ -50,7 +50,7 @@ function yourplugin_register_gamification_triggers(): void {
 		'user_callback'  => fn( int $user_id ) => $user_id,
 		'default_points' => 10,
 		'category'       => 'yourplugin',
-		'icon'           => 'dashicons-yes-alt',
+		'icon'           => 'icon-circle-check',
 		'repeatable'     => true,
 	] );
 
@@ -64,7 +64,7 @@ function yourplugin_register_gamification_triggers(): void {
 			'user_callback'  => fn( int $user_id ) => $user_id,
 			'default_points' => 50,
 			'category'       => 'yourplugin',
-			'icon'           => 'dashicons-star-filled',
+			'icon'           => 'icon-star',
 			'repeatable'     => false,
 		] );
 	}
@@ -83,7 +83,7 @@ function yourplugin_register_gamification_triggers(): void {
 			},
 			'default_points' => 25,
 			'category'       => 'yourplugin',
-			'icon'           => 'dashicons-megaphone',
+			'icon'           => 'icon-megaphone',
 			'repeatable'     => true,
 		] );
 	}

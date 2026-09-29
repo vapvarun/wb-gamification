@@ -25,11 +25,11 @@
 
 namespace WBGam\Tests\Unit\Engine;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
-/**
- * @coversDefaultClass \WBGam\Engine\ActionSchedulerCleaner
- */
+#[CoversClass( \WBGam\Engine\ActionSchedulerCleaner::class )]
 class ActionSchedulerOwnershipTest extends TestCase {
 
 	/**
@@ -41,9 +41,8 @@ class ActionSchedulerOwnershipTest extends TestCase {
 
 	/**
 	 * The row-selection query MUST carry the ownership fence.
-	 *
-	 * @test
 	 */
+	#[Test]
 	public function delete_selection_is_fenced_to_our_own_hooks(): void {
 		$src = $this->source();
 
@@ -63,9 +62,8 @@ class ActionSchedulerOwnershipTest extends TestCase {
 
 	/**
 	 * `pending` must NOT be pruned unconditionally. It is queued work, not history.
-	 *
-	 * @test
 	 */
+	#[Test]
 	public function pending_is_not_pruned_as_routine_housekeeping(): void {
 		$src = $this->source();
 
@@ -88,9 +86,8 @@ class ActionSchedulerOwnershipTest extends TestCase {
 
 	/**
 	 * A runaway caused by someone else must not license us to delete their queue.
-	 *
-	 * @test
 	 */
+	#[Test]
 	public function a_foreign_runaway_does_not_authorise_deleting_foreign_work(): void {
 		$src = $this->source();
 

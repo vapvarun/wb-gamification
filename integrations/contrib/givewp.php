@@ -31,8 +31,8 @@ return [
 
 		[
 			'id'             => 'give_donation_completed',
-			'label'          => 'Complete a donation',
-			'description'    => 'Awarded each time a donation is successfully processed.',
+			'label'          => static fn(): string => __( 'Complete a donation', 'wb-gamification' ),
+			'description'    => static fn(): string => __( 'Awarded each time a donation is successfully processed.', 'wb-gamification' ),
 			'hook'           => 'give_complete_purchase',
 			'user_callback'  => function ( int $payment_id ): int {
 				$user_id = (int) give_get_payment_user_id( $payment_id );
@@ -47,8 +47,8 @@ return [
 
 		[
 			'id'             => 'give_first_donation',
-			'label'          => 'Make first donation ever',
-			'description'    => 'Awarded once when a member makes their very first donation.',
+			'label'          => static fn(): string => __( 'Make first donation ever', 'wb-gamification' ),
+			'description'    => static fn(): string => __( 'Awarded once when a member makes their very first donation.', 'wb-gamification' ),
 			'hook'           => 'give_complete_purchase',
 			'user_callback'  => function ( int $payment_id ): int {
 				$user_id = (int) give_get_payment_user_id( $payment_id );
@@ -73,8 +73,8 @@ return [
 
 		[
 			'id'             => 'give_recurring_donation',
-			'label'          => 'Make a recurring donation payment',
-			'description'    => 'Awarded on each successful recurring donation charge.',
+			'label'          => static fn(): string => __( 'Make a recurring donation payment', 'wb-gamification' ),
+			'description'    => static fn(): string => __( 'Awarded on each successful recurring donation charge.', 'wb-gamification' ),
 			'hook'           => 'give_recurring_record_payment',
 			'user_callback'  => function ( int $parent_payment_id, int $subscription_id, float $amount, string $transaction_id ): int {
 				return (int) give_get_payment_user_id( $parent_payment_id );
@@ -88,8 +88,8 @@ return [
 
 		[
 			'id'             => 'give_campaign_goal_reached',
-			'label'          => 'Campaign reaches its goal',
-			'description'    => 'Awarded to all donors when a fundraising campaign reaches its goal.',
+			'label'          => static fn(): string => __( 'Campaign reaches its goal', 'wb-gamification' ),
+			'description'    => static fn(): string => __( 'Awarded to all donors when a fundraising campaign reaches its goal.', 'wb-gamification' ),
 			'hook'           => 'give_goal_complete',
 			'user_callback'  => function ( int $form_id ): int {
 				// Award the user who triggered completion (last donor).

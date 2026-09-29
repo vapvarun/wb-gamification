@@ -26,13 +26,13 @@
  *   (so all get the bonus) but only awarded once per member.
  *
  * Time-limited challenges:
- *   starts_at / ends_at are checked before incrementing. Challenges with
- *   status = 'active' AND (starts_at IS NULL OR starts_at <= current_time('mysql'))
- *   AND (ends_at IS NULL OR ends_at >= current_time('mysql')) are considered active.
+ *   starts_at / ends_at are checked before incrementing. They are stored in UTC: the admin form
+ *   converts the owner's local time before saving (admin-rest-form.js, data-wb-gam-utc), and the
+ *   REST docs say so. Every reader therefore compares against UTC now (current_time('mysql', true)).
  *
- *   The window is the SITE's clock, because that is the clock the owner typed it in. It used to be
- *   the DATABASE's (UTC_TIMESTAMP()), which meant a challenge scheduled 09:00-17:00 on a site ahead
- *   of UTC appeared open while the engine refused to award anything against it.
+ *   1.6.4 compared against the SITE clock, reasoning that the owner typed site time. The form never
+ *   sent site time, so on a site 5.5 hours ahead a live challenge closed 5.5 hours early (card
+ *   10344274152). Store UTC, compare UTC, show with wp_date().
  *
  * @package WB_Gamification
  * @since   0.1.0
@@ -112,16 +112,8 @@ final class ChallengeEngine {
 	public static function get_active_challenges( int $user_id ): array {
 		global $wpdb;
 
-		// The window is measured on the SITE's clock, because that is the clock the owner typed it in.
-		//
-		// This asked the DATABASE for the time (UTC_TIMESTAMP()) while ChallengesController asked the
-		// SITE (current_time('mysql')) -- two clocks, same two columns. On a site 5.5 hours ahead of
-		// UTC, a challenge scheduled 09:00-17:00 was ACTIVE to the controller (so it appeared open and
-		// members could join) and NOT ACTIVE to the engine (so nothing they did awarded any progress)
-		// until 14:30. On a site behind UTC it kept awarding after it had visibly closed.
-		//
-		// The 1.6.4 changelog already claimed this was fixed. It was fixed in the controller only.
-		$now_local = current_time( 'mysql' );
+		// starts_at / ends_at are UTC (see the class docblock), so the window is measured in UTC.
+		$now_utc = current_time( 'mysql', true );
 
 		$challenges = $wpdb->get_results(
 			$wpdb->prepare(
@@ -132,8 +124,8 @@ final class ChallengeEngine {
 				    AND (starts_at IS NULL OR starts_at <= %s)
 				    AND (ends_at IS NULL OR ends_at >= %s)
 				  ORDER BY id ASC",
-				$now_local,
-				$now_local
+				$now_utc,
+				$now_utc
 			),
 			ARRAY_A
 		);
@@ -262,7 +254,7 @@ final class ChallengeEngine {
 		// Mark complete.
 		$wpdb->update(
 			$wpdb->prefix . 'wb_gam_challenge_log',
-			array( 'completed_at' => current_time( 'mysql' ) ),
+			array( 'completed_at' => current_time( 'mysql', true ) ),
 			array(
 				'user_id'      => $user_id,
 				'challenge_id' => $challenge['id'],
@@ -315,13 +307,52 @@ final class ChallengeEngine {
 	// ── DB helpers ───────────────────────────────────────────────────────────────
 
 	/**
+	 * Option holding the per-action challenge-cache salt.
+	 *
+	 * @var string
+	 */
+	private const CACHE_SALT_OPTION = 'wb_gam_challenge_cache_ver';
+
+	/**
+	 * Current salt mixed into the per-action challenge cache keys.
+	 *
+	 * Autoloaded, so this read costs no query on the per-event hot path.
+	 *
+	 * @return string
+	 */
+	private static function action_cache_salt(): string {
+		return (string) get_option( self::CACHE_SALT_OPTION, '1' );
+	}
+
+	/**
+	 * Invalidate every per-action challenge cache entry.
+	 *
+	 * Called on any challenge create / edit / delete so a change is reflected
+	 * immediately instead of after the 60s TTL. Bumping the salt orphans the
+	 * old md5 keys without having to enumerate them.
+	 *
+	 * @return void
+	 */
+	public static function bust_action_cache(): void {
+		// Monotonic counter, not time(): two writes in the same second must each
+		// change the salt, or a challenge edited in the same second a cache entry
+		// was built would not invalidate it.
+		$next = (int) get_option( self::CACHE_SALT_OPTION, '1' ) + 1;
+		update_option( self::CACHE_SALT_OPTION, (string) $next, true );
+	}
+
+	/**
 	 * Get active challenges matching a specific action_id (cached).
 	 *
 	 * @param string $action_id The action identifier to match.
 	 * @return array[]
 	 */
 	private static function get_active_challenges_for_action( string $action_id ): array {
-		$cache_key = 'wb_gam_challenges_' . md5( $action_id );
+		// The salt lets a challenge write invalidate every per-action key at once
+		// (the keys are per-action md5, so they can't be enumerated to delete).
+		// Only matters with a persistent object cache; without one wp_cache is
+		// per-request and already re-queries. See bust_action_cache().
+		$cache_key = 'wb_gam_challenges_' . self::action_cache_salt() . '_' . md5( $action_id );
 		$cached    = wp_cache_get( $cache_key, self::CACHE_GROUP );
 
 		if ( false !== $cached ) {
@@ -330,8 +361,8 @@ final class ChallengeEngine {
 
 		global $wpdb;
 
-		// Site clock, not database clock. See the note on active_challenges() above.
-		$now_local = current_time( 'mysql' );
+		// UTC, like the stored window. See the class docblock.
+		$now_utc = current_time( 'mysql', true );
 
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
@@ -342,8 +373,8 @@ final class ChallengeEngine {
 				    AND (starts_at IS NULL OR starts_at <= %s)
 				    AND (ends_at IS NULL OR ends_at >= %s)",
 				$action_id,
-				$now_local,
-				$now_local
+				$now_utc,
+				$now_utc
 			),
 			ARRAY_A
 		);

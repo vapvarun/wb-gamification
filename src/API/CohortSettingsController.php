@@ -6,7 +6,7 @@
  * POST /wb-gamification/v1/cohort-settings   Save cohort settings (full document)
  *
  * Cohort settings are stored as a single options row (`wb_gam_cohort_settings`)
- * plus the `cohort_leagues` feature flag in `FeatureFlags`. The endpoint reads
+ * plus the leagues on/off switch (ModuleToggles, Settings > Modules). The endpoint reads
  * and writes both together so the admin UI can save with one round-trip.
  *
  * @package WB_Gamification
@@ -21,7 +21,7 @@ use WP_REST_Response;
 use WP_REST_Request;
 use WP_REST_Server;
 use WBGam\Engine\Capabilities;
-use WBGam\Engine\FeatureFlags;
+use WBGam\Engine\ModuleToggles;
 
 defined( 'ABSPATH' ) || exit;
 // Silencing convention-driven false positives so Plugin Check signal stays clean:
@@ -149,7 +149,9 @@ final class CohortSettingsController extends WP_REST_Controller {
 			'duration'    => (string) $request->get_param( 'duration' ),
 		);
 
-		$enabled = (bool) $request->get_param( 'enabled' );
+		// Optional since 1.6.5: the admin form no longer sends it (Settings > Modules is the one
+		// switch). A client that does send it still turns leagues on or off through that switch.
+		$enabled = null !== $request->get_param( 'enabled' ) ? (bool) $request->get_param( 'enabled' ) : ModuleToggles::enabled( 'cohort_leagues' );
 
 		/**
 		 * Filter — abort the save by returning WP_Error.
@@ -169,9 +171,9 @@ final class CohortSettingsController extends WP_REST_Controller {
 
 		update_option( self::OPTION_KEY, $settings );
 
-		$features                   = FeatureFlags::get_all();
-		$features['cohort_leagues'] = $enabled;
-		FeatureFlags::update( $features );
+		if ( null !== $request->get_param( 'enabled' ) ) {
+			ModuleToggles::set( 'cohort_leagues', $enabled );
+		}
 
 		do_action( 'wb_gam_after_save_cohort_settings', $settings, $enabled, $request );
 		// Backwards-compatible legacy hook (kept until 1.1.0).
@@ -187,7 +189,6 @@ final class CohortSettingsController extends WP_REST_Controller {
 	 */
 	private function current_state(): array {
 		$settings = (array) get_option( self::OPTION_KEY, array() );
-		$features = FeatureFlags::get_all();
 
 		return array(
 			'tier_1'      => isset( $settings['tier_1'] ) ? (string) $settings['tier_1'] : 'Bronze',
@@ -198,7 +199,7 @@ final class CohortSettingsController extends WP_REST_Controller {
 			'promote_pct' => isset( $settings['promote_pct'] ) ? (int) $settings['promote_pct'] : 20,
 			'demote_pct'  => isset( $settings['demote_pct'] ) ? (int) $settings['demote_pct'] : 20,
 			'duration'    => isset( $settings['duration'] ) ? (string) $settings['duration'] : 'weekly',
-			'enabled'     => ! empty( $features['cohort_leagues'] ),
+			'enabled'     => ModuleToggles::enabled( 'cohort_leagues' ),
 		);
 	}
 
@@ -252,7 +253,7 @@ final class CohortSettingsController extends WP_REST_Controller {
 				'enum'     => array( 'weekly', 'monthly' ),
 			),
 			'enabled'     => array(
-				'required' => true,
+				'required' => false,
 				'type'     => 'boolean',
 			),
 		);

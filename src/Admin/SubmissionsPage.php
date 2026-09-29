@@ -30,7 +30,7 @@ final class SubmissionsPage {
 			'wb-gamification',
 			__( 'Submissions', 'wb-gamification' ),
 			__( 'Submissions', 'wb-gamification' ),
-			'manage_options',
+			'wb_gam_manage_submissions',
 			'wb-gam-submissions',
 			array( __CLASS__, 'render_page' )
 		);
@@ -70,6 +70,9 @@ final class SubmissionsPage {
 	}
 
 	public static function render_page(): void {
+		if ( ! \WBGam\Engine\Capabilities::user_can( 'wb_gam_manage_submissions' ) ) {
+			wp_die( esc_html__( 'You do not have permission to access this page.', 'wb-gamification' ) );
+		}
 		$repo    = new SubmissionRepository();
 		$pending = $repo->list( 'pending', 200, 0 );
 		$total   = $repo->count_pending();
@@ -154,7 +157,7 @@ final class SubmissionsPage {
 									?>
 									<tr data-submission-id="<?php echo (int) $row['id']; ?>">
 										<td><?php echo esc_html( $user ? $user->display_name : '#' . $row['user_id'] ); ?></td>
-										<td><code><?php echo esc_html( $action_label ); ?></code></td>
+										<td><span class="wbgam-pill wbgam-pill--neutral"><?php echo esc_html( $action_label ); ?></span></td>
 										<td>
 											<?php if ( ! empty( $row['evidence'] ) ) : ?>
 												<?php
@@ -229,7 +232,7 @@ final class SubmissionsPage {
 												</a>
 											<?php endif; ?>
 										</td>
-										<td><?php echo esc_html( date_i18n( get_option( 'date_format' ), strtotime( (string) $row['created_at'] ) ) ); ?></td>
+										<td><?php echo esc_html( wp_date( get_option( 'date_format' ), strtotime( (string) $row['created_at'] . ' UTC' ) ) ); ?></td>
 										<td>
 											<button type="button" class="wbgam-btn wbgam-btn--sm" data-wb-gam-submission-approve>
 												<?php esc_html_e( 'Approve', 'wb-gamification' ); ?>

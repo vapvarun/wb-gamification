@@ -1951,44 +1951,6 @@
                 ]
             }
         },
-        "/challenges/{id}/complete": {
-            "post": {
-                "summary": "Create challenges",
-                "responses": {
-                    "200": {
-                        "description": "Successful response"
-                    }
-                },
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object",
-                                "properties": {
-                                    "id": {
-                                        "type": "integer",
-                                        "description": ""
-                                    }
-                                },
-                                "required": [
-                                    "id"
-                                ]
-                            }
-                        }
-                    }
-                },
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ]
-            }
-        },
         "/events": {
             "post": {
                 "summary": "Create events",

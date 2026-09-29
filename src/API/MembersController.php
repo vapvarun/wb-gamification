@@ -315,10 +315,15 @@ class MembersController extends WP_REST_Controller {
 			)
 		);
 
-		// GET /members — admin roster: searchable, paginated list of members
-		// with their gamification stats. Lives under this plugin's own
-		// namespace (wb-gamification/v1), so it never collides with WP core's
-		// /wp/v2/users or BuddyPress's /buddypress/v1/members.
+		// GET /members — searchable, paginated list of members. Lives under this
+		// plugin's own namespace (wb-gamification/v1), so it never collides with
+		// WP core's /wp/v2/users or BuddyPress's /buddypress/v1/members.
+		//
+		// Two shapes, as WP core does with `context`:
+		// - edit (default): the admin roster with gamification stats; needs
+		// wb_gam_manage_members.
+		// - view: a member lookup for any logged-in member (the give-kudos
+		// recipient suggestions): id, name, slug, avatar only.
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base,
@@ -326,8 +331,13 @@ class MembersController extends WP_REST_Controller {
 				array(
 					'methods'             => WP_REST_Server::READABLE,
 					'callback'            => array( $this, 'list_members' ),
-					'permission_callback' => array( $this, 'admin_permissions_check' ),
+					'permission_callback' => array( $this, 'list_permissions_check' ),
 					'args'                => array(
+						'context'  => array(
+							'type'    => 'string',
+							'enum'    => array( 'view', 'edit' ),
+							'default' => 'edit',
+						),
 						'page'     => array(
 							'type'              => 'integer',
 							'default'           => 1,
@@ -429,6 +439,10 @@ class MembersController extends WP_REST_Controller {
 	 * @return WP_REST_Response
 	 */
 	public function list_members( WP_REST_Request $request ): WP_REST_Response {
+		if ( 'view' === $request['context'] ) {
+			return $this->lookup_members( $request );
+		}
+
 		$page   = max( 1, (int) $request['page'] );
 		$per    = min( 100, max( 1, (int) $request['per_page'] ) );
 		$search = trim( (string) $request['search'] );
@@ -453,15 +467,29 @@ class MembersController extends WP_REST_Controller {
 		$ids = array_map( static fn( $u ) => (int) $u->ID, $users );
 
 		// Prime per-page caches so the row loop is N+1-free.
+		$badge_counts = array();
 		if ( ! empty( $ids ) ) {
 			PointsEngine::prime_totals( $ids );
-			BadgeEngine::prime_earned_badges( $ids );
+			// WP_User_Query selected only ID/display_name/user_login, so the usermeta
+			// cache is cold — prime it once for the whole page so the per-row meta
+			// reads below (sandboxed flag, exclusion) are cache hits, not ~2/user
+			// queries.
+			cache_users( $ids );
+			// One grouped COUNT for the whole page's badge tallies. The loop used to
+			// call count( get_user_badges( $uid ) ) per row — a 2-table JOIN that
+			// hydrates every earned-badge row just to count it, i.e. ~100 JOINs per
+			// roster page. (prime_earned_badges() primed a cache get_user_badges()
+			// does not read for the count, so it was pure overhead here.)
+			$badge_counts = BadgeEngine::count_for_users( $ids ); // Expired badges excluded.
 		}
 
 		$items = array();
 		foreach ( $users as $user ) {
-			$uid     = (int) $user->ID;
-			$level   = LevelEngine::get_level_for_user( $uid );
+			$uid = (int) $user->ID;
+			// heal=false: never fire the level-meta self-heal WRITE from this GET
+			// roster (it would be an unbounded burst of update_user_meta on read).
+			// The returned level is still authoritative (ledger-derived).
+			$level   = LevelEngine::get_level_for_user( $uid, false );
 			$items[] = array(
 				'id'          => $uid,
 				'name'        => $user->display_name,
@@ -469,7 +497,7 @@ class MembersController extends WP_REST_Controller {
 				'avatar'      => get_avatar_url( $uid, array( 'size' => 48 ) ),
 				'points'      => PointsEngine::get_total( $uid ),
 				'level'       => $level ? (string) $level['name'] : '',
-				'badges'      => count( BadgeEngine::get_user_badges( $uid ) ),
+				'badges'      => $badge_counts[ $uid ] ?? 0,
 				'excluded'    => PointsEngine::is_excluded_user( $uid ) || (bool) get_user_meta( $uid, 'wb_gam_sandboxed', true ),
 				'profile_url' => (string) get_edit_user_link( $uid ),
 			);
@@ -486,6 +514,101 @@ class MembersController extends WP_REST_Controller {
 			),
 			200
 		);
+	}
+
+	/**
+	 * GET /members?context=view — member lookup for logged-in members.
+	 *
+	 * Backs the give-kudos recipient suggestions. Returns public fields only
+	 * (id, display name, nicename slug, avatar) and searches display name and
+	 * nicename, never email or login. Leaves out the caller and anyone who
+	 * turned off their public profile. Needs 2+ characters; at most 10 rows.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response
+	 */
+	private function lookup_members( WP_REST_Request $request ): WP_REST_Response {
+		$search = ltrim( trim( (string) $request['search'] ), '@' );
+		$per    = min( 10, max( 1, (int) $request['per_page'] ) );
+
+		if ( mb_strlen( $search ) < 2 ) {
+			return new WP_REST_Response(
+				array(
+					'items'    => array(),
+					'total'    => 0,
+					'pages'    => 0,
+					'has_more' => false,
+				),
+				200
+			);
+		}
+
+		$query = new \WP_User_Query(
+			array(
+				'number'         => $per,
+				'orderby'        => 'display_name',
+				'order'          => 'ASC',
+				'fields'         => array( 'ID', 'display_name', 'user_nicename' ),
+				'search'         => '*' . $search . '*',
+				'search_columns' => array( 'display_name', 'user_nicename' ),
+				'exclude'        => array( get_current_user_id() ),
+				'count_total'    => false,
+				// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- one NOT EXISTS/!= pair on a LIMIT 10 lookup.
+				'meta_query'     => array(
+					'relation' => 'OR',
+					array(
+						'key'     => 'wb_gam_profile_public',
+						'compare' => 'NOT EXISTS',
+					),
+					array(
+						'key'     => 'wb_gam_profile_public',
+						'value'   => '0',
+						'compare' => '!=',
+					),
+				),
+			)
+		);
+
+		// The meta_query drops members who opted out here; the privacy check also applies a host
+		// community's profile privacy (wb_gam_can_view_public_profile) on top.
+		$visible = array_filter(
+			$query->get_results(),
+			static fn( $u ): bool => Privacy::can_view_public_profile( (int) $u->ID )
+		);
+		$items   = array_values(
+			array_map(
+				static fn( $u ): array => array(
+					'id'     => (int) $u->ID,
+					'name'   => $u->display_name,
+					'slug'   => $u->user_nicename,
+					'avatar' => get_avatar_url( (int) $u->ID, array( 'size' => 48 ) ),
+				),
+				$visible
+			)
+		);
+
+		return new WP_REST_Response(
+			array(
+				'items'    => $items,
+				'total'    => count( $items ),
+				'pages'    => 1,
+				'has_more' => false,
+			),
+			200
+		);
+	}
+
+	/**
+	 * Permission for GET /members: context=view needs a logged-in member,
+	 * the default edit context needs the admin capability.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return bool|WP_Error
+	 */
+	public function list_permissions_check( WP_REST_Request $request ): bool|WP_Error {
+		return 'view' === $request['context']
+			? $this->logged_in_permissions_check()
+			: $this->admin_permissions_check();
 	}
 
 	/**
@@ -539,6 +662,10 @@ class MembersController extends WP_REST_Controller {
 				return new WP_Error( 'rest_reset_failed', __( 'Failed to reset points.', 'wb-gamification' ), array( 'status' => 500 ) );
 			}
 		}
+
+		// A reset starts the member over: earned points (level, rank) return to zero too.
+		PointsEngine::reset_earned( $id, $type );
+		LevelEngine::maybe_level_up( $id );
 
 		return new WP_REST_Response(
 			array(
@@ -717,14 +844,18 @@ class MembersController extends WP_REST_Controller {
 	/**
 	 * GET /members/me/profile-visibility — the current member's own choice.
 	 *
-	 * @return WP_REST_Response { public: bool, site_enabled: bool }
+	 * `managed_by_host` is true when a community plugin decides profile privacy
+	 * (Privacy::host_decides()); the member changes it on their community profile instead.
+	 *
+	 * @return WP_REST_Response { public: bool, site_enabled: bool, managed_by_host: bool }
 	 */
 	public function get_profile_visibility(): WP_REST_Response {
 		$user_id = get_current_user_id();
 		return new WP_REST_Response(
 			array(
-				'public'       => ! \WBGam\Engine\ProfilePage::member_opted_private( $user_id ),
-				'site_enabled' => (bool) get_option( 'wb_gam_profile_public_enabled', '1' ),
+				'public'          => ! \WBGam\Engine\ProfilePage::member_opted_private( $user_id ),
+				'site_enabled'    => (bool) get_option( 'wb_gam_profile_public_enabled', '1' ),
+				'managed_by_host' => Privacy::host_decides(),
 			),
 			200
 		);
@@ -734,9 +865,20 @@ class MembersController extends WP_REST_Controller {
 	 * POST /members/me/profile-visibility — set the current member's choice.
 	 *
 	 * @param WP_REST_Request $request Request carrying the boolean `public` flag.
-	 * @return WP_REST_Response { public: bool, site_enabled: bool }
+	 * Refused (409) when a community plugin decides profile privacy: the choice saved here
+	 * would never be read, so reporting success would be a lie (card 10344441524).
+	 *
+	 * @return WP_REST_Response|WP_Error { public: bool, site_enabled: bool, managed_by_host: false }
 	 */
-	public function set_profile_visibility( $request ): WP_REST_Response {
+	public function set_profile_visibility( $request ): WP_REST_Response|WP_Error {
+		if ( Privacy::host_decides() ) {
+			return new WP_Error(
+				'wb_gam_privacy_managed_by_host',
+				__( 'Profile visibility is set on your community profile.', 'wb-gamification' ),
+				array( 'status' => 409 )
+			);
+		}
+
 		$user_id = get_current_user_id();
 		$public  = (bool) $request->get_param( 'public' );
 
@@ -744,8 +886,9 @@ class MembersController extends WP_REST_Controller {
 
 		return new WP_REST_Response(
 			array(
-				'public'       => $public,
-				'site_enabled' => (bool) get_option( 'wb_gam_profile_public_enabled', '1' ),
+				'public'          => $public,
+				'site_enabled'    => (bool) get_option( 'wb_gam_profile_public_enabled', '1' ),
+				'managed_by_host' => false,
 			),
 			200
 		);
@@ -786,6 +929,8 @@ class MembersController extends WP_REST_Controller {
 					'icon_url'        => $level['icon_url'],
 					'progress_pct'    => LevelEngine::get_progress_percent( $user_id ),
 					'next_threshold'  => $next ? $next['min_points'] : null,
+					// Levels follow points earned (balance + spent on rewards), not the balance.
+					'earned_points'   => PointsEngine::get_earned( $user_id ),
 					'next_level_name' => $next ? $next['name'] : null,
 				)
 				: null,
@@ -898,7 +1043,7 @@ class MembersController extends WP_REST_Controller {
 					'points'     => (int) $row['points'],
 					'point_type' => (string) ( $row['point_type'] ?? '' ),
 					'object_id'  => $row['object_id'] ? (int) $row['object_id'] : null,
-					'created_at' => $row['created_at'],
+					'created_at' => $row['created_at'], // UTC, Y-m-d H:i:s.
 				);
 			},
 			$rows
@@ -939,8 +1084,8 @@ class MembersController extends WP_REST_Controller {
 
 		return rest_ensure_response(
 			array(
-				'points'       => $points,
-				'current'      => $level
+				'points'        => $points,
+				'current'       => $level
 					? array(
 						'id'         => $level['id'],
 						'name'       => $level['name'],
@@ -948,7 +1093,7 @@ class MembersController extends WP_REST_Controller {
 						'icon_url'   => $level['icon_url'],
 					)
 					: null,
-				'next'         => $next
+				'next'          => $next
 					? array(
 						'id'         => $next['id'],
 						'name'       => $next['name'],
@@ -956,14 +1101,16 @@ class MembersController extends WP_REST_Controller {
 						'icon_url'   => $next['icon_url'],
 					)
 					: null,
-				'progress_pct' => LevelEngine::get_progress_percent( $user_id ),
-				'all_levels'   => LevelEngine::get_all_levels_for_user( $user_id ),
+				'progress_pct'  => LevelEngine::get_progress_percent( $user_id ),
+				// Levels follow points earned (balance + spent on rewards), not the balance.
+				'earned_points' => PointsEngine::get_earned( $user_id ),
+				'all_levels'    => LevelEngine::get_all_levels_for_user( $user_id ),
 			)
 		);
 	}
 
 	/**
-	 * Retrieve all badges earned by a member.
+	 * Retrieve all badges earned by a member, in display (ladder) order, expired ones excluded.
 	 *
 	 * @param WP_REST_Request $request Full details about the request.
 	 * @return WP_REST_Response|WP_Error Response on success, WP_Error on failure.
@@ -975,36 +1122,8 @@ class MembersController extends WP_REST_Controller {
 			return new WP_Error( 'rest_user_invalid', __( 'Member not found.', 'wb-gamification' ), array( 'status' => 404 ) );
 		}
 
-		global $wpdb;
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- Per-user badge list; not suitable for a shared cache.
-		$rows = $wpdb->get_results(
-			$wpdb->prepare(
-				"SELECT b.id, b.name, b.description, b.image_url, b.is_credential, b.category,
-				        ub.earned_at
-				   FROM {$wpdb->prefix}wb_gam_user_badges ub
-				   JOIN {$wpdb->prefix}wb_gam_badge_defs b ON b.id = ub.badge_id
-				  WHERE ub.user_id = %d
-				  ORDER BY ub.earned_at DESC",
-				$user_id
-			),
-			ARRAY_A
-		);
-
-		$badges = array_map(
-			static function ( array $row ): array {
-				return array(
-					'id'            => $row['id'],
-					'name'          => $row['name'],
-					'description'   => $row['description'],
-					'image_url'     => $row['image_url'],
-					'is_credential' => (bool) $row['is_credential'],
-					'category'      => $row['category'],
-					'earned_at'     => $row['earned_at'],
-				);
-			},
-			$rows ?: array()
-		);
+		// Same list, order (ladder) and expiry rule as every other badge surface.
+		$badges = BadgeEngine::get_user_badges( $user_id );
 
 		return rest_ensure_response( $badges );
 	}
@@ -1058,7 +1177,7 @@ class MembersController extends WP_REST_Controller {
 					'label'      => \WBGam\Engine\Registry::label_for( (string) $row['action_id'] ),
 					'object_id'  => $row['object_id'] ? (int) $row['object_id'] : null,
 					'metadata'   => $row['metadata'] ? json_decode( $row['metadata'], true ) : null,
-					'created_at' => $row['created_at'],
+					'created_at' => $row['created_at'], // UTC, Y-m-d H:i:s.
 				);
 			},
 			$rows ?: array()
@@ -1230,14 +1349,7 @@ class MembersController extends WP_REST_Controller {
 	 * @return int Number of badges earned.
 	 */
 	private function get_badge_count( int $user_id ): int {
-		global $wpdb;
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- Badge count; user-specific aggregation.
-		return (int) $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT COUNT(*) FROM {$wpdb->prefix}wb_gam_user_badges WHERE user_id = %d",
-				$user_id
-			)
-		);
+		return BadgeEngine::count_user_badges( $user_id ); // Expired badges excluded, like every surface.
 	}
 
 	/**

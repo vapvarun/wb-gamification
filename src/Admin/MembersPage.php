@@ -68,7 +68,7 @@ final class MembersPage {
 		wp_enqueue_script(
 			'wb-gam-admin-rest-utils',
 			plugins_url( 'assets/js/admin-rest-utils.js', WB_GAM_FILE ),
-			array(),
+			array( 'wb-gam-dialog', 'wb-gam-toast-core' ),
 			WB_GAM_VERSION,
 			true
 		);
@@ -112,7 +112,7 @@ final class MembersPage {
 					'award'         => __( 'Award', 'wb-gamification' ),
 					'resetConfirm'  => __( 'Reset this member\'s points to zero? Their ledger keeps a full audit trail.', 'wb-gamification' ),
 					'loading'       => __( 'Loading members...', 'wb-gamification' ),
-					'empty'         => __( 'No members found.', 'wb-gamification' ),
+					'empty'         => __( 'No members match. Try a name, a username or an email address.', 'wb-gamification' ),
 					'error'         => __( 'Could not load members.', 'wb-gamification' ),
 					'prev'          => __( 'Previous', 'wb-gamification' ),
 					'next'          => __( 'Next', 'wb-gamification' ),

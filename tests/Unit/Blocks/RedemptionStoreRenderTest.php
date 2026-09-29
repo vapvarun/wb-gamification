@@ -23,13 +23,14 @@ namespace WBGam\Tests\Unit\Blocks;
 use Brain\Monkey;
 use Brain\Monkey\Functions;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\TestCase;
 use WBGam\Blocks\CSS;
 
-/**
- * @coversNothing
- */
+#[CoversNothing]
 class RedemptionStoreRenderTest extends TestCase {
+
+	use \WBGam\Tests\Unit\Support\ResetsPointTypeCache;
 
 	use MockeryPHPUnitIntegration;
 
@@ -51,6 +52,9 @@ class RedemptionStoreRenderTest extends TestCase {
 				'esc_attr'            => static fn ( $value ) => (string) $value,
 				'esc_html__'          => static fn ( $text ) => (string) $text,
 				'esc_html_e'          => static function ( $text ) {
+					echo (string) $text; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+				},
+				'esc_attr_e'          => static function ( $text ) {
 					echo (string) $text; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 				},
 				'__'                  => static fn ( $text ) => (string) $text,
@@ -94,6 +98,16 @@ class RedemptionStoreRenderTest extends TestCase {
 		$wpdb = new class {
 			public string $prefix = 'wp_';
 			public function get_results( string $sql, $output_type = null ): array {
+				if ( str_contains( $sql, 'wb_gam_point_types' ) ) {
+					return array(
+						array(
+							'slug'       => 'points',
+							'label'      => 'Points',
+							'is_default' => 1,
+							'position'   => 0,
+						),
+					);
+				}
 				return array(
 					array(
 						'id'            => 1,
@@ -127,6 +141,7 @@ class RedemptionStoreRenderTest extends TestCase {
 	}
 
 	protected function tearDown(): void {
+		$this->resetPointTypeCache();
 		CSS::reset();
 		Monkey\tearDown();
 		parent::tearDown();
@@ -175,7 +190,7 @@ class RedemptionStoreRenderTest extends TestCase {
 	public function test_render_emits_a_real_dialog_for_the_confirmation(): void {
 		$output = $this->render( array( 'uniqueId' => 'pilot03' ) );
 
-		$this->assertStringContainsString( '<dialog class="wb-gam-redemption__confirm"', $output );
+		$this->assertStringContainsString( '<dialog class="wb-gam-dialog"', $output );
 		$this->assertStringContainsString( 'data-wb-gam-dialog', $output );
 		$this->assertStringContainsString( 'data-wp-on--click="actions.confirmRedeem"', $output );
 		$this->assertStringContainsString( 'data-wp-on--click="actions.cancelRedeem"', $output );
@@ -253,7 +268,6 @@ class RedemptionStoreRenderTest extends TestCase {
 	private function reflect_styles(): array {
 		$reflection = new \ReflectionClass( CSS::class );
 		$prop       = $reflection->getProperty( 'styles' );
-		$prop->setAccessible( true );
 		return (array) $prop->getValue();
 	}
 }

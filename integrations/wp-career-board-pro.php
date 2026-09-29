@@ -23,8 +23,8 @@ return array(
 
 		array(
 			'id'                => 'wcbp_resume_published',
-			'label'             => 'Publish your resume',
-			'description'       => 'Awarded to the candidate when their resume is published and discoverable by employers.',
+			'label'             => static fn(): string => __( 'Publish your resume', 'wb-gamification' ),
+			'description'       => static fn(): string => __( 'Awarded to the candidate when their resume is published and discoverable by employers.', 'wb-gamification' ),
 			// Pro fires: do_action( 'wcbp_resume_published', int $post_id, WP_Post $post ). No user id - author is the candidate.
 			'hook'              => 'wcbp_resume_published',
 			'user_callback'     => function ( int $post_id, $post = null ): int {

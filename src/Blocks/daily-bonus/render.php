@@ -89,8 +89,6 @@ if ( $wb_gam_user_id <= 0 ) {
 
 $wb_gam_state         = LoginBonusEngine::get_state( $wb_gam_user_id );
 $wb_gam_pt_service    = new PointTypeService();
-$wb_gam_pt_record     = $wb_gam_pt_service->get( $wb_gam_pt_service->default_slug() );
-$wb_gam_points_label  = (string) ( $wb_gam_pt_record['label'] ?? __( 'Points', 'wb-gamification' ) );
 $wb_gam_today_claimed = ( current_time( 'Y-m-d' ) === $wb_gam_state['last'] );
 
 /**
@@ -144,10 +142,9 @@ BlockHooks::before( 'daily-bonus', $wb_gam_attrs );
 				<span class="icon-circle-check" aria-hidden="true"></span>
 				<?php
 				printf(
-					/* translators: 1: amount, 2: currency label. */
-					esc_html__( 'Claimed today: %1$d %2$s', 'wb-gamification' ),
-					(int) $wb_gam_data['today_bonus'],
-					esc_html( $wb_gam_points_label )
+					/* translators: %s: an amount with the site's name for points, e.g. "5 Points". */
+					esc_html__( 'Claimed today: %s', 'wb-gamification' ),
+					esc_html( $wb_gam_pt_service->format( (int) $wb_gam_data['today_bonus'] ) )
 				);
 				?>
 			</span>
@@ -155,10 +152,9 @@ BlockHooks::before( 'daily-bonus', $wb_gam_attrs );
 				<span class="wb-gam-daily-bonus__next">
 					<?php
 					printf(
-						/* translators: 1: tomorrow amount, 2: currency label. */
-						esc_html__( 'Tomorrow: %1$d %2$s', 'wb-gamification' ),
-						(int) $wb_gam_data['next_bonus'],
-						esc_html( $wb_gam_points_label )
+						/* translators: %s: an amount with the site's name for points, e.g. "5 Points". */
+						esc_html__( 'Tomorrow: %s', 'wb-gamification' ),
+						esc_html( $wb_gam_pt_service->format( (int) $wb_gam_data['next_bonus'] ) )
 					);
 					?>
 				</span>
@@ -167,10 +163,9 @@ BlockHooks::before( 'daily-bonus', $wb_gam_attrs );
 			<span class="wb-gam-daily-bonus__chip">
 				<?php
 				printf(
-					/* translators: 1: amount, 2: currency label. */
-					esc_html__( 'Available now: %1$d %2$s', 'wb-gamification' ),
-					(int) $wb_gam_data['today_bonus'],
-					esc_html( $wb_gam_points_label )
+					/* translators: %s: an amount with the site's name for points, e.g. "5 Points". */
+					esc_html__( 'Available now: %s', 'wb-gamification' ),
+					esc_html( $wb_gam_pt_service->format( (int) $wb_gam_data['today_bonus'] ) )
 				);
 				?>
 			</span>
@@ -195,12 +190,7 @@ BlockHooks::before( 'daily-bonus', $wb_gam_attrs );
 					</span>
 					<span class="wb-gam-daily-bonus__tier-bonus">
 						<?php
-						printf(
-							/* translators: 1: amount, 2: currency label. */
-							esc_html__( '%1$d %2$s', 'wb-gamification' ),
-							(int) $wb_gam_pts,
-							esc_html( $wb_gam_points_label )
-						);
+						echo esc_html( $wb_gam_pt_service->format( (int) $wb_gam_pts ) );
 						?>
 					</span>
 				</li>

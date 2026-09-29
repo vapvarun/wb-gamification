@@ -101,6 +101,8 @@ final class RedemptionEngine {
 				return __( 'Could not record the redemption. Please try again - your points have not been deducted.', 'wb-gamification' );
 			case 'record_write_failed':
 				return __( 'Redemption could not be saved. Please try again - your points have not been deducted.', 'wb-gamification' );
+			case 'fulfillment_failed':
+				return __( 'This reward could not be delivered, so your points have been refunded. Please try again later.', 'wb-gamification' );
 			default:
 				return __( 'Redemption failed. Please try again.', 'wb-gamification' );
 		}
@@ -239,7 +241,7 @@ final class RedemptionEngine {
 				global $wpdb;
 
 				// Step 1 — debit (FOR UPDATE balance lock, audit-logged).
-				$debit = PointsEngine::debit( $user_id, $cost, 'redemption', $event, $type );
+				$debit = PointsEngine::debit( $user_id, $cost, 'redemption', $event, $type, true );
 				if ( ! $debit['success'] ) {
 					self::$last_failure_reason = ( 'insufficient_balance' === ( $debit['reason'] ?? '' ) )
 						? 'insufficient'
@@ -317,14 +319,16 @@ final class RedemptionEngine {
 			);
 		}
 
-		// Fulfillment.
-		$coupon_code = null;
-		$config      = json_decode( $item['reward_config'] ?? '{}', true ) ?: array();
+		// Fulfillment (runs AFTER the debit + stock decrement have committed above).
+		$coupon_code        = null;
+		$config             = json_decode( $item['reward_config'] ?? '{}', true ) ?: array();
+		$fulfillment_failed = false;
 
 		$woo_types = array( 'discount_pct', 'discount_fixed', 'free_shipping', 'free_product' );
 
 		if ( in_array( $item['reward_type'], $woo_types, true ) ) {
-			$coupon_code = self::create_woo_coupon( $user_id, $item, $config, $redemption_id );
+			$coupon_code        = self::create_woo_coupon( $user_id, $item, $config, $redemption_id );
+			$fulfillment_failed = ! $coupon_code;
 			$wpdb->update(
 				$wpdb->prefix . 'wb_gam_redemptions',
 				array(
@@ -334,7 +338,8 @@ final class RedemptionEngine {
 				array( 'id' => $redemption_id )
 			);
 		} elseif ( 'wbcom_credits' === $item['reward_type'] ) {
-			$ok = self::topup_wbcom_credits( $user_id, $item, $config );
+			$ok                 = self::topup_wbcom_credits( $user_id, $item, $config );
+			$fulfillment_failed = ! $ok;
 			$wpdb->update(
 				$wpdb->prefix . 'wb_gam_redemptions',
 				array( 'status' => $ok ? 'fulfilled' : 'failed' ),
@@ -343,6 +348,25 @@ final class RedemptionEngine {
 		} else {
 			// Custom — fire hook for third-party fulfillment.
 			$wpdb->update( $wpdb->prefix . 'wb_gam_redemptions', array( 'status' => 'pending_fulfillment' ), array( 'id' => $redemption_id ) );
+		}
+
+		// Fulfillment failed AFTER points + stock were already committed. Reverse
+		// both so the member is never charged for a reward they did not receive,
+		// and report the failure honestly — the old code left the points spent, the
+		// stock decremented, and still returned success:true with coupon_code:null.
+		if ( $fulfillment_failed ) {
+			// Reverse the debit + stock through the shared refund path (credits the
+			// points back, restores stock, marks the row 'refunded') so the member
+			// is never charged for a reward they did not receive.
+			self::refund( $redemption_id, 'fulfillment_failed' );
+
+			return array(
+				'success'       => false,
+				'reason'        => 'fulfillment_failed',
+				'error'         => self::error_message_for( 'fulfillment_failed', $cost, null ),
+				'redemption_id' => $redemption_id,
+				'coupon_code'   => null,
+			);
 		}
 
 		// PointsEngine::debit (called above) already busts the per-type total
@@ -363,6 +387,132 @@ final class RedemptionEngine {
 			'redemption_id' => $redemption_id,
 			'coupon_code'   => $coupon_code,
 			'error'         => null,
+		);
+	}
+
+	/**
+	 * Refund a redemption: credit the points back, restore stock, mark it
+	 * 'refunded'. Idempotent — a redemption already refunded is a no-op success.
+	 *
+	 * Shared by redeem()'s fulfillment-failure path and the owner/REST refund
+	 * action, so an owner can undo a mistaken, unfulfillable, or returned reward
+	 * and the member always gets their points back through one audited path.
+	 *
+	 * @param int    $redemption_id Redemption to refund.
+	 * @param string $note          Optional audit note (e.g. 'fulfillment_failed').
+	 * @return array{success:bool,reason?:string,redemption_id:int}
+	 */
+	public static function refund( int $redemption_id, string $note = '' ): array {
+		global $wpdb;
+		$reds = $wpdb->prefix . 'wb_gam_redemptions';
+
+		$row = $wpdb->get_row( $wpdb->prepare( "SELECT user_id, item_id, points_cost, status FROM {$reds} WHERE id = %d", $redemption_id ), ARRAY_A );
+		if ( ! $row ) {
+			return array(
+				'success'       => false,
+				'reason'        => 'not_found',
+				'redemption_id' => $redemption_id,
+			);
+		}
+		// Idempotent: never double-refund.
+		if ( 'refunded' === $row['status'] ) {
+			return array(
+				'success'       => true,
+				'reason'        => 'already_refunded',
+				'redemption_id' => $redemption_id,
+			);
+		}
+
+		$user_id = (int) $row['user_id'];
+		$item_id = (int) $row['item_id'];
+		$cost    = (int) $row['points_cost'];
+		$item    = self::get_item( $item_id );
+		$type    = ( new \WBGam\Services\PointTypeService() )->resolve( (string) ( $item['point_type'] ?? '' ) );
+
+		// Credit the points back ($force = true: a reversal must bypass the
+		// earning-exclusion that award() enforces).
+		if ( $cost > 0 && $user_id > 0 ) {
+			// A refund reverses a spend: back to the balance, while earned (level, rank) never moved.
+			PointsEngine::award( $user_id, 'redemption_refund', $cost, $redemption_id, $type ?: null, true, true );
+		}
+
+		// Restore the unit only when the item still exists with finite stock
+		// (NULL stock = unlimited; a deleted item cannot take the unit back).
+		if ( $item && isset( $item['stock'] ) && null !== $item['stock'] ) {
+			$wpdb->query(
+				$wpdb->prepare(
+					"UPDATE {$wpdb->prefix}wb_gam_redemption_items SET stock = stock + 1 WHERE id = %d",
+					$item_id
+				)
+			);
+		}
+
+		$wpdb->update( $reds, array( 'status' => 'refunded' ), array( 'id' => $redemption_id ) );
+
+		/**
+		 * Fires after a redemption is refunded (points credited back, stock restored).
+		 *
+		 * @param int    $redemption_id Redemption ID.
+		 * @param int    $user_id       Member refunded.
+		 * @param int    $cost          Points credited back.
+		 * @param string $note          Audit note.
+		 */
+		do_action( 'wb_gam_redemption_refunded', $redemption_id, $user_id, $cost, $note );
+
+		return array(
+			'success'       => true,
+			'redemption_id' => $redemption_id,
+		);
+	}
+
+	/**
+	 * Mark a custom / physical redemption as fulfilled — the owner has delivered
+	 * the reward. Only transitions from pending / pending_fulfillment; idempotent
+	 * for an already-fulfilled row.
+	 *
+	 * @param int $redemption_id Redemption to fulfil.
+	 * @return array{success:bool,reason?:string,redemption_id:int}
+	 */
+	public static function fulfill( int $redemption_id ): array {
+		global $wpdb;
+		$reds = $wpdb->prefix . 'wb_gam_redemptions';
+
+		$row = $wpdb->get_row( $wpdb->prepare( "SELECT user_id, status FROM {$reds} WHERE id = %d", $redemption_id ), ARRAY_A );
+		if ( ! $row ) {
+			return array(
+				'success'       => false,
+				'reason'        => 'not_found',
+				'redemption_id' => $redemption_id,
+			);
+		}
+		if ( 'fulfilled' === $row['status'] ) {
+			return array(
+				'success'       => true,
+				'reason'        => 'already_fulfilled',
+				'redemption_id' => $redemption_id,
+			);
+		}
+		if ( ! in_array( $row['status'], array( 'pending', 'pending_fulfillment' ), true ) ) {
+			return array(
+				'success'       => false,
+				'reason'        => 'not_fulfillable',
+				'redemption_id' => $redemption_id,
+			);
+		}
+
+		$wpdb->update( $reds, array( 'status' => 'fulfilled' ), array( 'id' => $redemption_id ) );
+
+		/**
+		 * Fires after an owner marks a redemption fulfilled.
+		 *
+		 * @param int $redemption_id Redemption ID.
+		 * @param int $user_id       Member who redeemed.
+		 */
+		do_action( 'wb_gam_redemption_fulfilled', $redemption_id, (int) $row['user_id'] );
+
+		return array(
+			'success'       => true,
+			'redemption_id' => $redemption_id,
 		);
 	}
 
@@ -488,6 +638,48 @@ final class RedemptionEngine {
 	}
 
 	// ── User redemption history ──────────────────────────────────────────────
+
+	/**
+	 * Every member's redemptions, newest first, one page at a time, optionally by status.
+	 *
+	 * The fulfilment queue for the admin log and for GET /redemptions (apps and integrations that
+	 * fulfil rewards). Paged on the primary key; `status` uses idx_status_id.
+	 *
+	 * @param string $status   '' for all, or pending|pending_fulfillment|fulfilled|refunded.
+	 * @param int    $page     1-based page.
+	 * @param int    $per_page Rows per page (1-100).
+	 * @return array{items: array<int, array<string, mixed>>, total: int}
+	 */
+	public static function list_redemptions( string $status = '', int $page = 1, int $per_page = 20 ): array {
+		global $wpdb;
+		$per_page = max( 1, min( 100, $per_page ) );
+		$offset   = ( max( 1, $page ) - 1 ) * $per_page;
+		$where    = '' === $status ? '1=1' : $wpdb->prepare( 'r.status = %s', $status );
+
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared -- $where is prepared above.
+		$total = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}wb_gam_redemptions r WHERE {$where}" );
+		$items = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT r.id, r.user_id, r.item_id, r.points_cost, r.status, r.coupon_code, r.created_at,
+				        COALESCE(i.title, %s) AS title, COALESCE(i.reward_type, '') AS reward_type
+				   FROM {$wpdb->prefix}wb_gam_redemptions r
+				   LEFT JOIN {$wpdb->prefix}wb_gam_redemption_items i ON i.id = r.item_id
+				  WHERE {$where}
+				  ORDER BY r.id DESC
+				  LIMIT %d OFFSET %d",
+				__( 'Removed reward', 'wb-gamification' ),
+				$per_page,
+				$offset
+			),
+			ARRAY_A
+		) ?: array();
+		// phpcs:enable
+
+		return array(
+			'items' => $items,
+			'total' => $total,
+		);
+	}
 
 	/**
 	 * Get a user's redemption history.

@@ -145,6 +145,10 @@ final class TransactionalEmailEngine {
 	 * @param array|null $old_level Previous level data or null.
 	 */
 	public static function on_level_up( int $user_id, ?array $new_level = null, ?array $old_level = null ): void {
+		// A drop (deduction, decay, reversal) is applied silently; only a climb is announced.
+		if ( is_array( $new_level ) && ! LevelEngine::is_climb( $new_level, is_array( $old_level ) ? $old_level : null ) ) {
+			return;
+		}
 		if ( ! self::is_enabled( 'level_up', $user_id ) ) {
 			return;
 		}
@@ -265,12 +269,7 @@ final class TransactionalEmailEngine {
 		}
 
 		$reward_pts   = (int) ( $challenge['reward_points'] ?? 0 );
-		$pt_service   = new PointTypeService();
-		$pt_record    = $pt_service->get( $pt_service->default_slug() );
-		$points_label = (string) ( $pt_record['label'] ?? __( 'Points', 'wb-gamification' ) );
-		$reward_label = $reward_pts > 0
-			? sprintf( '%d %s', $reward_pts, $points_label )
-			: '';
+		$reward_label = $reward_pts > 0 ? ( new PointTypeService() )->format( $reward_pts ) : '';
 
 		$body = Email::render(
 			'challenge-completed',

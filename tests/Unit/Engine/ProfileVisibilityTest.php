@@ -14,12 +14,16 @@ namespace WBGam\Tests\Unit\Engine;
 use Brain\Monkey;
 use Brain\Monkey\Functions;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use WBGam\Engine\ProfilePage;
 
-/**
- * @coversDefaultClass \WBGam\Engine\ProfilePage
- */
+#[CoversClass( \WBGam\Engine\ProfilePage::class )]
+#[CoversMethod( \WBGam\Engine\ProfilePage::class, 'is_publicly_visible' )]
+#[CoversMethod( \WBGam\Engine\ProfilePage::class, 'member_opted_private' )]
+#[CoversMethod( \WBGam\Engine\ProfilePage::class, 'set_member_visibility' )]
 class ProfileVisibilityTest extends TestCase {
 
 	use MockeryPHPUnitIntegration;
@@ -39,38 +43,26 @@ class ProfileVisibilityTest extends TestCase {
 		parent::tearDown();
 	}
 
-	/**
-	 * @test
-	 * @covers ::is_publicly_visible
-	 */
+	#[Test]
 	public function profile_is_public_by_default(): void {
 		// Site kill-switch defaults '1' (returnArg), per-user meta empty.
 		$this->assertTrue( ProfilePage::is_publicly_visible( 42 ) );
 	}
 
-	/**
-	 * @test
-	 * @covers ::is_publicly_visible
-	 */
+	#[Test]
 	public function explicit_zero_opts_the_member_out(): void {
 		Functions\when( 'get_user_meta' )->justReturn( '0' );
 		$this->assertFalse( ProfilePage::is_publicly_visible( 42 ) );
 	}
 
-	/**
-	 * @test
-	 * @covers ::is_publicly_visible
-	 */
+	#[Test]
 	public function site_kill_switch_forces_private(): void {
 		// Option stored as '' (feature disabled site-wide).
 		Functions\when( 'get_option' )->justReturn( '' );
 		$this->assertFalse( ProfilePage::is_publicly_visible( 42 ) );
 	}
 
-	/**
-	 * @test
-	 * @covers ::is_publicly_visible
-	 */
+	#[Test]
 	public function filter_can_force_private(): void {
 		Functions\when( 'apply_filters' )->alias(
 			static fn( $hook, $value ) => 'wb_gam_profile_publicly_visible' === $hook ? false : $value
@@ -84,19 +76,13 @@ class ProfileVisibilityTest extends TestCase {
 	// member could not make their own profile private (Basecamp 9985172423).
 	// These lock the write helper + its read companion.
 
-	/**
-	 * @test
-	 * @covers ::member_opted_private
-	 */
+	#[Test]
 	public function member_opted_private_reads_only_explicit_zero(): void {
 		Functions\when( 'get_user_meta' )->justReturn( '0' );
 		$this->assertTrue( ProfilePage::member_opted_private( 42 ) );
 	}
 
-	/**
-	 * @test
-	 * @covers ::member_opted_private
-	 */
+	#[Test]
 	public function member_opted_private_is_false_when_unset_or_public(): void {
 		Functions\when( 'get_user_meta' )->justReturn( '' );
 		$this->assertFalse( ProfilePage::member_opted_private( 42 ) );
@@ -105,10 +91,7 @@ class ProfileVisibilityTest extends TestCase {
 		$this->assertFalse( ProfilePage::member_opted_private( 42 ) );
 	}
 
-	/**
-	 * @test
-	 * @covers ::set_member_visibility
-	 */
+	#[Test]
 	public function set_member_visibility_writes_zero_for_private(): void {
 		$written = array();
 		Functions\when( 'update_user_meta' )->alias(
@@ -123,10 +106,7 @@ class ProfileVisibilityTest extends TestCase {
 		$this->assertSame( array( 42, 'wb_gam_profile_public', '0' ), $written );
 	}
 
-	/**
-	 * @test
-	 * @covers ::set_member_visibility
-	 */
+	#[Test]
 	public function set_member_visibility_writes_one_for_public(): void {
 		$written = array();
 		Functions\when( 'update_user_meta' )->alias(
@@ -141,10 +121,7 @@ class ProfileVisibilityTest extends TestCase {
 		$this->assertSame( array( 42, 'wb_gam_profile_public', '1' ), $written );
 	}
 
-	/**
-	 * @test
-	 * @covers ::set_member_visibility
-	 */
+	#[Test]
 	public function set_member_visibility_ignores_invalid_user(): void {
 		Functions\when( 'update_user_meta' )->alias(
 			static function () {

@@ -295,7 +295,7 @@
 
 @media print {
 
-	.wbgam-toast-container,
+	.wb-gam-toasts,
 	.wbgam-modal-overlay {
 		display: none;
 	}

@@ -427,6 +427,10 @@ final class PointsEngine {
 	 *
 	 * Called by Engine::process() after all checks have passed.
 	 *
+	 * A row is a SPEND when the event carries `_spend` (set by debit( ..., spend: true ) and by a
+	 * spend's refund): it moves the balance but not the points the member earned, so levels and
+	 * leaderboards ignore it.
+	 *
 	 * @param Event $event  The source event (provides event_id and context).
 	 * @param int   $points Points to record.
 	 * @return bool         True on success.
@@ -444,28 +448,14 @@ final class PointsEngine {
 			$type = self::resolve_type( $event->metadata['point_type'] ?? null );
 		}
 
-		// ONE CLOCK for this column, whoever writes it.
-		//
-		// An imported row keeps its historical occurred-at -- that part was right, and it is why
+		// created_at is UTC for every writer. An imported row keeps its historical occurred-at, so
 		// "points this month" and streak windows reflect the real timeline rather than the import date.
-		// But it was written in UTC while an organic award is written with current_time('mysql'), which
-		// is site-local. One column, two clocks, in the core ledger -- the same defect just fixed for
-		// earned_at in the badge importers, left standing here.
-		//
-		// EVERY reader bounds this column in the site's clock (Clock::site_cutoff, site_day_start), so a
-		// UTC stamp lands in the wrong day. Measured on Los Angeles: a point imported for site-local
-		// 18:30 Tuesday was stored as 2026-07-15 01:30 -- a DIFFERENT DAY. It escaped that day's cap,
-		// fell into the wrong ISO week for get_week_count(), and rendered under a future date. On a site
-		// ahead of UTC it lands in the past instead.
-		//
-		// $event->created_at is ISO-8601 (Engine converts it), so strtotime() yields a TRUE epoch, and
-		// wp_date() renders a true epoch in the site's zone -- exactly once. Same fix as
-		// MyCredImporter. The gate cannot see this one: it is a WRITE, not a comparison.
+		// $event->created_at is ISO-8601 (Engine converts it), so strtotime() yields a true epoch.
 		if ( ! empty( $event->metadata['_import'] ) ) {
 			$ts         = strtotime( (string) $event->created_at );
-			$created_at = false !== $ts ? wp_date( 'Y-m-d H:i:s', $ts ) : current_time( 'mysql' );
+			$created_at = false !== $ts ? gmdate( 'Y-m-d H:i:s', $ts ) : current_time( 'mysql', true );
 		} else {
-			$created_at = current_time( 'mysql' );
+			$created_at = current_time( 'mysql', true );
 		}
 
 		$inserted = $wpdb->insert(
@@ -478,8 +468,9 @@ final class PointsEngine {
 				'point_type' => $type,
 				'object_id'  => $event->object_id ?: null,
 				'created_at' => $created_at,
+				'is_spend'   => empty( $event->metadata['_spend'] ) ? 0 : 1,
 			),
-			array( '%s', '%d', '%s', '%d', '%s', '%d', '%s' )
+			array( '%s', '%d', '%s', '%d', '%s', '%d', '%s', '%d' )
 		);
 
 		if ( ! $inserted ) {
@@ -503,7 +494,7 @@ final class PointsEngine {
 		// the ledger insert above unwind too — without this, the ledger
 		// would commit but `wb_gam_user_totals` would stay stale forever.
 		// Closes audit §G12.
-		if ( ! self::bump_user_total( $event->user_id, $type, $points ) ) {
+		if ( ! self::bump_user_total( $event->user_id, $type, $points, ! empty( $event->metadata['_spend'] ) ) ) {
 			return false;
 		}
 
@@ -517,6 +508,7 @@ final class PointsEngine {
 		// Adding a `// AUDIT-G19` marker so the next maintainer reads this
 		// docblock when they add new transaction body steps.
 		wp_cache_delete( self::cache_key_total( $event->user_id, $type ), 'wb_gamification' );
+		wp_cache_delete( self::cache_key_earned( $event->user_id, $type ), 'wb_gamification' );
 
 		return true;
 	}
@@ -560,7 +552,7 @@ final class PointsEngine {
 	 *                                Structured result. `success=false` arrives with a `reason`:
 	 *                                `insufficient_balance` | `event_persist_failed` | `ledger_write_failed`.
 	 */
-	public static function debit( int $user_id, int $amount, string $action_id, Event|string $event = '', ?string $type = null ): array {
+	public static function debit( int $user_id, int $amount, string $action_id, Event|string $event = '', ?string $type = null, bool $spend = false ): array {
 		$resolved_type = self::resolve_type( $type );
 		$amount        = abs( $amount );
 
@@ -589,7 +581,12 @@ final class PointsEngine {
 			);
 		}
 
-		return Transaction::run(
+		// A spend lowers the balance but not what the member earned (their level and rank).
+		if ( $spend ) {
+			$event->metadata['_spend'] = true;
+		}
+
+		$result = Transaction::run(
 			function () use ( $user_id, $amount, $event, $resolved_type ) {
 				global $wpdb;
 
@@ -654,6 +651,14 @@ final class PointsEngine {
 				);
 			}
 		);
+
+		// A removal (deduction, decay, reversal) can lower the level; apply it now rather than on the
+		// member's next award. Silent: LevelEngine announces only a climb.
+		if ( ! $spend && ! empty( $result['success'] ) ) {
+			LevelEngine::maybe_level_up( $user_id );
+		}
+
+		return $result;
 	}
 
 	/**
@@ -682,7 +687,7 @@ final class PointsEngine {
 	 * @param int    $delta   Signed delta to apply (positive for award, negative for debit).
 	 * @return bool           True on success or no-op (delta=0); false when the UPSERT failed.
 	 */
-	public static function bump_user_total( int $user_id, string $type, int $delta ): bool {
+	public static function bump_user_total( int $user_id, string $type, int $delta, bool $spend = false ): bool {
 		if ( 0 === $delta ) {
 			return true;
 		}
@@ -691,12 +696,13 @@ final class PointsEngine {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- atomic UPSERT.
 		$ok = $wpdb->query(
 			$wpdb->prepare(
-				"INSERT INTO {$wpdb->prefix}wb_gam_user_totals (user_id, point_type, total)
-				 VALUES (%d, %s, %d)
-				 ON DUPLICATE KEY UPDATE total = total + VALUES(total)",
+				"INSERT INTO {$wpdb->prefix}wb_gam_user_totals (user_id, point_type, total, earned)
+				 VALUES (%d, %s, %d, %d)
+				 ON DUPLICATE KEY UPDATE total = total + VALUES(total), earned = earned + VALUES(earned)",
 				$user_id,
 				$type,
-				$delta
+				$delta,
+				$spend ? 0 : $delta // `earned` moves with every row except a spend.
 			)
 		);
 
@@ -725,6 +731,67 @@ final class PointsEngine {
 	 */
 	public static function cache_key_total( int $user_id, string $type ): string {
 		return "wb_gam_total_{$user_id}_{$type}";
+	}
+
+	/**
+	 * Cache key for a user/type earned lookup.
+	 *
+	 * @param int    $user_id User ID.
+	 * @param string $type    Resolved point-type slug.
+	 */
+	public static function cache_key_earned( int $user_id, string $type ): string {
+		return "wb_gam_earned_{$user_id}_{$type}";
+	}
+
+	/**
+	 * Points a member has earned: every ledger row except spends.
+	 *
+	 * Buying a reward or exchanging currency never lowers it; an admin deduction, decay or a
+	 * reversed award does. Levels, leaderboards and point-milestone badges read this.
+	 *
+	 * @since 1.6.5
+	 *
+	 * @param int         $user_id User ID.
+	 * @param string|null $type    Point type; null for the primary type.
+	 * @return int
+	 */
+	public static function get_earned( int $user_id, ?string $type = null ): int {
+		$type   = self::resolve_type( $type );
+		$key    = self::cache_key_earned( $user_id, $type );
+		$earned = wp_cache_get( $key, 'wb_gamification' );
+		if ( false === $earned ) {
+			global $wpdb;
+			$earned = (int) $wpdb->get_var(
+				$wpdb->prepare(
+					"SELECT earned FROM {$wpdb->prefix}wb_gam_user_totals WHERE user_id = %d AND point_type = %s",
+					$user_id,
+					$type
+				)
+			);
+			wp_cache_set( $key, $earned, 'wb_gamification', 300 );
+		}
+		return (int) $earned;
+	}
+
+	/**
+	 * Start a member's earned points over (the admin "reset points" action).
+	 *
+	 * After the balancing debit, the member's past spends are all that is left between balance and
+	 * earned, so they are reclassified as ordinary history: both are zero, and `earned` still equals
+	 * the sum of the member's non-spend rows.
+	 *
+	 * @since 1.6.5
+	 *
+	 * @param int         $user_id User ID.
+	 * @param string|null $type    Point type; null for the primary type.
+	 * @return void
+	 */
+	public static function reset_earned( int $user_id, ?string $type = null ): void {
+		global $wpdb;
+		$type = self::resolve_type( $type );
+		$wpdb->query( $wpdb->prepare( "UPDATE {$wpdb->prefix}wb_gam_points SET is_spend = 0 WHERE user_id = %d AND point_type = %s AND is_spend = 1", $user_id, $type ) );
+		$wpdb->query( $wpdb->prepare( "UPDATE {$wpdb->prefix}wb_gam_user_totals SET earned = total WHERE user_id = %d AND point_type = %s", $user_id, $type ) );
+		wp_cache_delete( self::cache_key_earned( $user_id, $type ), 'wb_gamification' );
 	}
 
 	// ── Legacy / public API ────────────────────────────────────────────────────
@@ -769,7 +836,7 @@ final class PointsEngine {
 	 *                               explicitly chose the recipient.
 	 * @return bool
 	 */
-	public static function award( int $user_id, string $action_id, int $points, int $object_id = 0, ?string $type = null, bool $force = false ): bool {
+	public static function award( int $user_id, string $action_id, int $points, int $object_id = 0, ?string $type = null, bool $force = false, bool $spend = false ): bool {
 		if ( $points <= 0 || $user_id <= 0 ) {
 			return false;
 		}
@@ -791,6 +858,9 @@ final class PointsEngine {
 		);
 		if ( null !== $type && '' !== $type ) {
 			$metadata['point_type'] = self::resolve_type( $type );
+		}
+		if ( $spend ) {
+			$metadata['_spend'] = true; // A spend's refund: back to the balance, not to earned.
 		}
 
 		return Engine::process(
@@ -853,7 +923,6 @@ final class PointsEngine {
 
 		global $wpdb;
 		$type    = self::resolve_type( $type );
-		$now     = current_time( 'mysql' );
 		$now_utc = gmdate( 'Y-m-d H:i:s' );
 
 		// Chunk to keep packet size under MySQL's max_allowed_packet (default 64MB
@@ -899,7 +968,7 @@ final class PointsEngine {
 				$point_args[] = $points;
 				$point_args[] = $type;
 				$point_args[] = 0; // object_id
-				$point_args[] = $now;
+				$point_args[] = $now_utc;
 			}
 
 			// Atomic chunk: events + points + user_totals UPSERT all in one
@@ -954,16 +1023,17 @@ final class PointsEngine {
 			$totals_ph   = array();
 			$totals_args = array();
 			foreach ( $counts as $uid => $count ) {
-				$totals_ph[]   = '(%d, %s, %d)';
+				$totals_ph[]   = '(%d, %s, %d, %d)';
 				$totals_args[] = $uid;
 				$totals_args[] = $type;
+				$totals_args[] = $points * $count;
 				$totals_args[] = $points * $count;
 			}
 			// phpcs:disable WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- bulk UPSERT.
 			$totals_ok = $wpdb->query(
 				$wpdb->prepare(
-					"INSERT INTO {$wpdb->prefix}wb_gam_user_totals (user_id, point_type, total) VALUES " . implode( ',', $totals_ph ) .
-					' ON DUPLICATE KEY UPDATE total = total + VALUES(total)',
+					"INSERT INTO {$wpdb->prefix}wb_gam_user_totals (user_id, point_type, total, earned) VALUES " . implode( ',', $totals_ph ) .
+					' ON DUPLICATE KEY UPDATE total = total + VALUES(total), earned = earned + VALUES(earned)',
 					...$totals_args
 				)
 			);
@@ -989,6 +1059,7 @@ final class PointsEngine {
 			// most object-cache backends.
 			foreach ( array_keys( $counts ) as $uid ) {
 				wp_cache_delete( self::cache_key_total( (int) $uid, $type ), 'wb_gamification' );
+				wp_cache_delete( self::cache_key_earned( (int) $uid, $type ), 'wb_gamification' );
 			}
 		}
 
@@ -1090,7 +1161,7 @@ final class PointsEngine {
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $placeholders is built from an int count; all values pass through prepare().
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT user_id, total FROM {$wpdb->prefix}wb_gam_user_totals
+				"SELECT user_id, total, earned FROM {$wpdb->prefix}wb_gam_user_totals
 				  WHERE point_type = %s AND user_id IN ( $placeholders )",
 				array_merge( array( $type ), $ids )
 			),
@@ -1100,6 +1171,7 @@ final class PointsEngine {
 		$missing = array();
 		foreach ( $ids as $uid ) {
 			if ( isset( $rows[ $uid ] ) ) {
+				wp_cache_set( self::cache_key_earned( $uid, $type ), (int) $rows[ $uid ]->earned, 'wb_gamification', 300 );
 				wp_cache_set( self::cache_key_total( $uid, $type ), (int) $rows[ $uid ]->total, 'wb_gamification', 300 );
 			} else {
 				$missing[] = $uid;
@@ -1279,9 +1351,8 @@ final class PointsEngine {
 			return false;
 		}
 
-		// created_at is stored in site timezone via current_time('mysql'),
-		// so compare using current_time('timestamp') for consistency.
-		return ( current_time( 'timestamp' ) - strtotime( $last ) ) < $cooldown_seconds;
+		// created_at is UTC.
+		return ( time() - strtotime( $last . ' UTC' ) ) < $cooldown_seconds;
 	}
 
 	/**
@@ -1297,14 +1368,7 @@ final class PointsEngine {
 	private static function get_today_count( int $user_id, string $action_id, string $type ): int {
 		global $wpdb;
 		// Use range comparison so MySQL can use the idx_user_type_created index.
-		//
-		// Both bounds are the SITE's day boundaries. wp_date() formats in the site timezone, which is
-		// why this looked right -- but strtotime( '+1 day' ) hands it an instant resolved in PHP's UTC
-		// frame, and wp_date() then re-frames THAT into the site zone. Near a day boundary the two
-		// disagree and the window can come out a day wide in the wrong place, or barely wide at all.
-		// The formatting was in the right clock; the instant was not.
-		//
-		// Clock anchors strtotime() to the site's own now, so "+1 day" means the site's tomorrow.
+		// Bounds are the site's midnights as UTC instants (created_at is UTC).
 		$day_start = Clock::site_day_start( 'today' );
 		$day_end   = Clock::site_day_start( '+1 day' );
 		return (int) $wpdb->get_var(
@@ -1333,17 +1397,7 @@ final class PointsEngine {
 	 */
 	private static function get_week_count( int $user_id, string $action_id, string $type ): int {
 		global $wpdb;
-		// ISO week start: Monday 00:00:00 in the site's timezone -- and the WEEKDAY has to be resolved
-		// in the site's clock too, not just the formatting.
-		//
-		// This looked right and was not. strtotime( 'monday this week' ) resolves against PHP's UTC
-		// frame, and wp_date() then re-frames that instant into the site timezone -- which can roll it
-		// back across a day boundary. Measured on Los Angeles on a Tuesday: the bound came out
-		// 2026-07-12, a SUNDAY, when the site's Monday was the 13th. A full day out, and the wrong
-		// weekday, so the weekly cap counted an extra day and every weekly limit was over-permissive.
-		//
-		// Clock::site_cutoff() anchors strtotime() to the SITE's now, so 'monday this week' means the
-		// site's Monday.
+		// ISO week start: the site's Monday 00:00, as a UTC instant (created_at is UTC).
 		$week_start = Clock::site_cutoff( 'monday this week' );
 		return (int) $wpdb->get_var(
 			$wpdb->prepare(

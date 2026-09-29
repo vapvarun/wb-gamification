@@ -23,11 +23,10 @@
 
 namespace WBGam\Tests\Unit\Engine;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
-/**
- * @coversDefaultClass \WBGam\Engine\MemberData
- */
+#[CoversClass( \WBGam\Engine\MemberData::class )]
 class MemberPurgeTest extends TestCase {
 
 	/**

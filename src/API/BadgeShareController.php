@@ -230,7 +230,7 @@ class BadgeShareController extends WP_REST_Controller {
 				),
 				'earned_at'  => array(
 					'type'        => 'string',
-					'description' => 'Date the badge was earned.',
+					'description' => 'Date the badge was earned. UTC, Y-m-d H:i:s.',
 				),
 				'site'       => array(
 					'type'        => 'object',

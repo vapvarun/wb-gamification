@@ -248,9 +248,16 @@
 	border-bottom: 1px solid var(--wb-gam-border);
 	background: var(--wbgam-surface-soft);
 	display: flex;
+	flex-wrap: wrap;
 	align-items: center;
 	justify-content: space-between;
-	gap: var(--wbgam-gap-sm);
+	gap: 4px var(--wbgam-gap-sm);
+}
+
+/* A description sits on its own line under the title, at every width. */
+.wbgam-card-header > .wbgam-card-desc {
+	flex-basis: 100%;
+	margin: 0;
 }
 
 .wbgam-card-title {
@@ -429,6 +436,11 @@
 	text-transform: uppercase;
 	letter-spacing: 0.04em;
 	gap: var(--wbgam-gap-2xs);
+}
+
+/* A tag reads as one unit; inside a table the scroll wrapper absorbs the width. */
+.wbgam-table .wbgam-pill {
+	white-space: nowrap;
 }
 
 .wbgam-pill--active {
@@ -1101,169 +1113,8 @@
 }
 
 /* ==========================================================================
-   17. Toast Notifications (admin-rest-utils.js feedback layer)
+   17-18. Toast and confirm dialog: moved to popups.css (the shared shells).
    ========================================================================== */
-
-.wbgam-toast-container {
-	position: fixed;
-	bottom: 24px;
-	inset-inline-end: 24px;
-	z-index: 999999;
-	display: flex;
-	flex-direction: column;
-	gap: var(--wbgam-gap-xs);
-	pointer-events: none;
-}
-
-.wbgam-toast {
-	background: var(--wbgam-text);
-	color: var(--wbgam-card-bg);
-	padding: 12px 20px;
-	border-radius: var(--wbgam-card-radius);
-	font-size: var(--wbgam-fs-base);
-	font-family: var(--wbgam-font);
-	line-height: 1.5;
-	box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
-	animation: wbgam-slide-in 0.3s ease forwards;
-	pointer-events: auto;
-	display: flex;
-	align-items: center;
-	gap: var(--wbgam-gap-md);
-	max-width: 400px;
-}
-
-.wbgam-toast--exiting {
-	animation: wbgam-slide-out 0.25s ease forwards;
-}
-
-@keyframes wbgam-slide-in {
-
-	from {
-		transform: translateX(100%);
-		opacity: 0;
-	}
-
-	to {
-		transform: translateX(0);
-		opacity: 1;
-	}
-}
-
-@keyframes wbgam-slide-out {
-
-	from {
-		transform: translateX(0);
-		opacity: 1;
-	}
-
-	to {
-		transform: translateX(100%);
-		opacity: 0;
-	}
-}
-
-@media (max-width: 640px) {
-
-	/* Full 40px tap target on touch viewports (admin pages are managed on phones too). */
-	.wbgam-btn--sm {
-		min-height: 40px;
-	}
-
-	.wbgam-toast-container {
-		inset-inline-start: 16px;
-		inset-inline-end: 16px;
-		bottom: 16px;
-	}
-
-	.wbgam-toast {
-		max-width: 100%;
-	}
-}
-
-/* REST utils success/error toast classes (admin-rest-utils.js). */
-.wb-gam-rest-success-toast,
-.wb-gam-rest-error-toast {
-	/* Marker classes — actual visuals are applied by the toast container above.
-	   These selectors exist so PHP/JS can target without inline styling. */
-}
-
-/* ==========================================================================
-   18. Confirm Modal (admin-rest-utils.js)
-   ========================================================================== */
-
-.wb-gam-confirm-overlay {
-	position: fixed;
-	inset: 0;
-	background: rgba(26, 26, 46, 0.55);
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	z-index: 100000;
-	animation: wbgam-fade-in 0.15s ease;
-}
-
-@keyframes wbgam-fade-in {
-
-	from {
-		opacity: 0;
-	}
-
-	to {
-		opacity: 1;
-	}
-}
-
-.wb-gam-confirm-dialog {
-	background: var(--wbgam-card-bg);
-	border-radius: 10px;
-	box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
-	padding: 24px;
-	max-width: 420px;
-	width: calc(100% - 32px);
-	animation: wbgam-zoom-in 0.18s ease;
-}
-
-@keyframes wbgam-zoom-in {
-
-	from {
-		opacity: 0;
-		transform: scale(0.96);
-	}
-
-	to {
-		opacity: 1;
-		transform: scale(1);
-	}
-}
-
-.wb-gam-confirm-dialog__title {
-	font-size: var(--wbgam-fs-lg);
-	font-weight: 600;
-	margin: 0 0 8px;
-	color: var(--wbgam-navy);
-}
-
-.wb-gam-confirm-dialog__body {
-	font-size: var(--wbgam-fs-base);
-	color: var(--wbgam-text-alt);
-	margin: 0 0 20px;
-	line-height: 1.5;
-}
-
-.wb-gam-confirm-dialog__actions {
-	display: flex;
-	justify-content: flex-end;
-	gap: var(--wbgam-gap-xs);
-}
-
-.wb-gam-confirm-dialog__actions .button {
-	min-height: 40px;
-}
-
-/* Inline confirm-trigger marker (`data-confirm` on a button). */
-.wb-gam-confirm {
-	/* Marker class — visuals come from the .wbgam-btn variant the element wears. */
-}
 
 /* ==========================================================================
    19. REST Form Markers (admin-rest-form.js / admin-rest-utils.js)
@@ -1332,5 +1183,33 @@
 	[class*="wbgam-"],
 	[class*="wb-gam-"] {
 		animation: none !important;
+	}
+}
+
+/* Prev/next pager under admin lists (WBGam\Admin\Pager). */
+.wbgam-pager {
+	display: flex;
+	align-items: center;
+	gap: var(--wb-gam-space-md, 16px);
+	margin-top: var(--wb-gam-space-lg, 24px);
+}
+
+.wbgam-pager__status {
+	color: var(--wb-gam-color-text-muted, #6b7280);
+	font-size: var(--wb-gam-font-sm, 14px);
+}
+
+/* Under a flush (edge-to-edge) table the pager needs its own inset and divider. */
+.wbgam-card > .wbgam-pager,
+.wbgam-card-body--flush > .wbgam-pager {
+	margin: 0;
+	padding: var(--wbgam-gap-sm) var(--wbgam-gap-md);
+	border-block-start: 1px solid var(--wbgam-border);
+}
+
+@media (max-width: 640px) {
+	.wbgam-pager {
+		flex-wrap: wrap;
+		gap: var(--wb-gam-space-sm, 8px);
 	}
 }

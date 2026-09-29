@@ -61,8 +61,9 @@
 			tr.appendChild( cellText( item.label || '', { strong: true } ) );
 			tr.appendChild( cellCode( item.site_id || '—' ) );
 			tr.appendChild( cellCode( item.key_preview || '' ) );
-			tr.appendChild( cellText( item.created_at || '' ) );
-			tr.appendChild( cellText( item.last_used || '—' ) );
+			// REST returns UTC; the server-rendered table shows site time, so label these explicitly.
+			tr.appendChild( cellText( item.created_at ? item.created_at + ' UTC' : '' ) );
+			tr.appendChild( cellText( item.last_used ? item.last_used + ' UTC' : '—' ) );
 
 			const tdStatus = document.createElement( 'td' );
 			const pill = document.createElement( 'span' );

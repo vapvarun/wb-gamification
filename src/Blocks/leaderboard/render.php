@@ -87,8 +87,8 @@ $wb_gam_rows = (array) apply_filters( 'wb_gam_block_leaderboard_data', $wb_gam_r
 // than always "100 pts" once a site defines additional point types.
 $wb_gam_pt_service   = new \WBGam\Services\PointTypeService();
 $wb_gam_resolved_pt  = $wb_gam_pt_service->resolve( $wb_gam_point_type ?: null );
-$wb_gam_pt_record    = $wb_gam_pt_service->get( $wb_gam_resolved_pt );
-$wb_gam_points_label = (string) ( $wb_gam_pt_record['label'] ?? __( 'pts', 'wb-gamification' ) );
+$wb_gam_points_label = $wb_gam_pt_service->name_for( 2, $wb_gam_resolved_pt );
+$wb_gam_points_one   = $wb_gam_pt_service->name_for( 1, $wb_gam_resolved_pt );
 
 $wb_gam_period_labels = array(
 	'all'   => __( 'All Time', 'wb-gamification' ),
@@ -124,6 +124,7 @@ $wb_gam_wrapper = get_block_wrapper_attributes(
 		'data-wb-gam-limit'        => (string) $wb_gam_limit,
 		'data-wb-gam-point-type'   => (string) ( $wb_gam_attrs['pointType'] ?? '' ),
 		'data-wb-gam-points-label' => $wb_gam_points_label,
+		'data-wb-gam-points-label-one' => $wb_gam_points_one,
 		// Singular/plural badge-count templates (with a %d placeholder) so the
 		// live heartbeat re-render shows a translated label instead of hardcoded
 		// English. Kept as two forms to match the classic script's 1-vs-many test.
@@ -206,12 +207,7 @@ BlockHooks::before( 'leaderboard', $wb_gam_attrs );
 						?>
 						<span class="wb-gam-leaderboard__points-number">
 							<?php
-							printf(
-								/* translators: 1: formatted amount, 2: currency label. */
-								esc_html__( '%1$s %2$s', 'wb-gamification' ),
-								esc_html( number_format_i18n( (int) ( $wb_gam_row['points'] ?? 0 ) ) ),
-								esc_html( $wb_gam_points_label )
-							);
+							echo esc_html( $wb_gam_pt_service->format( (int) ( $wb_gam_row['points'] ?? 0 ), $wb_gam_resolved_pt ) );
 							?>
 						</span>
 					</span>
@@ -228,7 +224,11 @@ BlockHooks::before( 'leaderboard', $wb_gam_attrs );
 					 * mid-session. The `hidden` attribute keeps it visually
 					 * absent for zero-badge members until JS reveals it.
 					 */
-					$wb_gam_badge_count = (int) \WBGam\Engine\BadgeEngine::count_user_badges( (int) ( $wb_gam_row['user_id'] ?? 0 ) );
+					// Badge count is profile data: a member whose profile this viewer cannot see shows none.
+					$wb_gam_badge_uid   = (int) ( $wb_gam_row['user_id'] ?? 0 );
+					$wb_gam_badge_count = \WBGam\Engine\Privacy::can_view_public_profile( $wb_gam_badge_uid )
+						? (int) \WBGam\Engine\BadgeEngine::count_user_badges( $wb_gam_badge_uid )
+						: 0;
 					?>
 					<span class="wb-gam-leaderboard__badges" aria-label="<?php
 						/* translators: %d: number of badges earned. */
@@ -270,22 +270,16 @@ BlockHooks::before( 'leaderboard', $wb_gam_attrs );
 					</span>
 					<span class="wb-gam-leaderboard__my-rank-points">
 						<?php
-						printf(
-							/* translators: 1: formatted amount, 2: currency label. */
-							esc_html__( '%1$s %2$s', 'wb-gamification' ),
-							esc_html( number_format_i18n( (int) ( $wb_gam_my_rank['points'] ?? 0 ) ) ),
-							esc_html( $wb_gam_points_label )
-						);
+						echo esc_html( $wb_gam_pt_service->format( (int) ( $wb_gam_my_rank['points'] ?? 0 ), $wb_gam_resolved_pt ) );
 						?>
 					</span>
 					<?php if ( null !== ( $wb_gam_my_rank['points_to_next'] ?? null ) ) : ?>
 						<span class="wb-gam-leaderboard__my-rank-gap">
 							<?php
 							printf(
-								/* translators: 1: points needed to move up one rank, 2: currency label. */
-								esc_html__( '%1$s %2$s from the next rank', 'wb-gamification' ),
-								esc_html( number_format_i18n( (int) $wb_gam_my_rank['points_to_next'] ) ),
-								esc_html( $wb_gam_points_label )
+								/* translators: %s: points needed to move up one rank, e.g. "3 Points". */
+								esc_html__( '%s from the next rank', 'wb-gamification' ),
+								esc_html( $wb_gam_pt_service->format( (int) $wb_gam_my_rank['points_to_next'], $wb_gam_resolved_pt ) )
 							);
 							?>
 						</span>

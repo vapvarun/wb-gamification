@@ -17,7 +17,7 @@
  *     { "condition_type": "admin_awarded" }
  *
  * Custom condition types can be registered via the
- * `wb_gam_badge_condition` filter.
+ * `wb_gam_evaluate_badge_condition` filter.
  *
  * @package WB_Gamification
  * @since   0.1.0
@@ -138,7 +138,7 @@ final class BadgeEngine {
 				'checked'    => 0,
 				'awarded'    => 0,
 				'total'      => (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->users}" ),
-				'started_at' => current_time( 'mysql' ),
+				'started_at' => current_time( 'mysql', true ),
 				'done'       => false,
 			),
 			false
@@ -207,7 +207,7 @@ final class BadgeEngine {
 			}
 
 			$state = array(
-				'total'  => PointsEngine::get_total( $user_id, null ),
+				'total'  => PointsEngine::get_earned( $user_id, null ),
 				'earned' => self::get_user_earned_badge_ids( $user_id ),
 				'streak' => null,
 			);
@@ -368,7 +368,7 @@ final class BadgeEngine {
 		foreach ( $user_ids as $user_id ) {
 			$user_id = (int) $user_id;
 			$earned  = self::get_user_earned_badge_ids( $user_id );
-			$total   = PointsEngine::get_total( $user_id, null );
+			$total   = PointsEngine::get_earned( $user_id, null );
 
 			self::evaluate_for_signals( $user_id, array( 'cron' ), null, $rules, $earned, $total );
 		}
@@ -595,7 +595,7 @@ final class BadgeEngine {
 		// "primary currency"). See audit/DATA-FLOW-AWARD-2026-05-27.md §G5/G6.
 		$event_type = $event->point_type
 			?? ( isset( $event->metadata['point_type'] ) ? (string) $event->metadata['point_type'] : '' );
-		$total      = PointsEngine::get_total( $user_id, '' !== $event_type ? $event_type : null );
+		$total      = PointsEngine::get_earned( $user_id, '' !== $event_type ? $event_type : null );
 
 		// The signals this award actually emitted.
 		//
@@ -633,7 +633,7 @@ final class BadgeEngine {
 		}
 
 		$earned = self::get_user_earned_badge_ids( $user_id );
-		$total  = PointsEngine::get_total( $user_id );
+		$total  = PointsEngine::get_earned( $user_id );
 
 		self::evaluate_for_signals( $user_id, array( 'level' ), null, $rules, $earned, $total );
 	}
@@ -664,7 +664,7 @@ final class BadgeEngine {
 		}
 
 		$earned = self::get_user_earned_badge_ids( $user_id );
-		$total  = PointsEngine::get_total( $user_id );
+		$total  = PointsEngine::get_earned( $user_id );
 
 		self::evaluate_for_signals( $user_id, array( 'streak' ), null, $rules, $earned, $total );
 	}
@@ -681,7 +681,7 @@ final class BadgeEngine {
 	 * @param Event|null $event   The triggering event, or null (backfill/cron have none).
 	 * @param array      $rules   Active badge rules.
 	 * @param string[]   $earned  Badge ids this member already holds (mutated as new ones land).
-	 * @param int        $total   Primed point total.
+	 * @param int        $total   Primed points earned (PointsEngine::get_earned: balance + spent).
 	 * @return void
 	 */
 	private static function evaluate_for_signals( int $user_id, array $signals, ?Event $event, array $rules, array &$earned, int $total ): void {
@@ -825,15 +825,11 @@ final class BadgeEngine {
 				if ( ! $user ) {
 					return false;
 				}
-				// user_registered is written by WordPress core in GMT. Compared against the same
-				// clock. Mixing this with site-local time is the bug this branch fixed five times.
+				// user_registered is UTC (WordPress core), so it is parsed as UTC.
 				$registered = strtotime( (string) $user->user_registered . ' UTC' );
 				if ( ! $registered ) {
 					return false;
 				}
-				// @clock-ok: both sides are real UTC. user_registered is stored by WP core in UTC and
-				// the strtotime() above appends an explicit ' UTC', so $registered is a true epoch --
-				// not the local-parsed-as-UTC value that makes this construct wrong elsewhere.
 				return (int) floor( ( time() - $registered ) / DAY_IN_SECONDS ) >= (int) ( $condition['days'] ?? 0 );
 
 			case 'admin_awarded':
@@ -893,11 +889,7 @@ final class BadgeEngine {
 	/**
 	 * Points a member earned inside a rolling window.
 	 *
-	 * CLOCK: wb_gam_points.created_at is written with current_time( 'mysql' ) -- SITE-LOCAL -- so
-	 * the window boundary is computed in that same clock. Using gmdate() or NOW() here would
-	 * reintroduce, in brand-new code, the exact defect this branch fixed FIVE times: on a site
-	 * behind UTC the window silently drops recent activity; ahead of UTC it pulls in activity from
-	 * before the window opened. CI stage 2.15 fails the build for an unannotated NOW().
+	 * The wb_gam_points.created_at column is UTC, so the window bound is a UTC instant (Clock).
 	 *
 	 * @param int    $user_id User.
 	 * @param string $period  day | week | month.
@@ -912,13 +904,13 @@ final class BadgeEngine {
 			'month' => 30 * DAY_IN_SECONDS,
 		);
 		$window  = $windows[ $period ] ?? ( 7 * DAY_IN_SECONDS );
-		$since   = gmdate( 'Y-m-d H:i:s', strtotime( current_time( 'mysql' ) ) - $window );
+		$since   = Clock::site_cutoff( "-{$window} seconds" );
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		return (int) $wpdb->get_var(
 			$wpdb->prepare(
 				"SELECT COALESCE(SUM(points), 0) FROM {$wpdb->prefix}wb_gam_points
-				  WHERE user_id = %d AND created_at >= %s",
+				  WHERE user_id = %d AND created_at >= %s AND is_spend = 0",
 				$user_id,
 				$since
 			)
@@ -946,7 +938,7 @@ final class BadgeEngine {
 		// Importers pass the source's earned date (UTC 'Y-m-d H:i:s') to keep
 		// migrated achievements on their real timeline; organic awards default
 		// to now.
-		$earned_at = ( null !== $earned_at && '' !== $earned_at ) ? $earned_at : current_time( 'mysql' );
+		$earned_at = ( null !== $earned_at && '' !== $earned_at ) ? $earned_at : current_time( 'mysql', true );
 
 		global $wpdb;
 
@@ -1206,6 +1198,43 @@ final class BadgeEngine {
 	}
 
 	/**
+	 * Badge counts for many members in one query, expired badges excluded.
+	 *
+	 * The batch form of count_user_badges() for lists (Top Members, the admin roster), so a
+	 * page of members costs one grouped query and every surface counts the same way.
+	 *
+	 * @since 1.6.5
+	 *
+	 * @param int[] $user_ids Members.
+	 * @return array<int, int> user_id => earned, unexpired badge count (members with none omitted).
+	 */
+	public static function count_for_users( array $user_ids ): array {
+		$user_ids = array_values( array_filter( array_map( 'intval', $user_ids ) ) );
+		if ( empty( $user_ids ) ) {
+			return array();
+		}
+
+		global $wpdb;
+		$in   = implode( ',', array_fill( 0, count( $user_ids ), '%d' ) );
+		$rows = $wpdb->get_results(
+			$wpdb->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $in is a list of %d placeholders.
+				"SELECT user_id, COUNT(*) AS c FROM {$wpdb->prefix}wb_gam_user_badges
+				  WHERE user_id IN ($in) AND (expires_at IS NULL OR expires_at > %s)
+				  GROUP BY user_id",
+				...array_merge( $user_ids, array( gmdate( 'Y-m-d H:i:s' ) ) )
+			),
+			ARRAY_A
+		);
+
+		$counts = array();
+		foreach ( (array) $rows as $row ) {
+			$counts[ (int) $row['user_id'] ] = (int) $row['c'];
+		}
+		return $counts;
+	}
+
+	/**
 	 * Get all earned badge IDs for a user (single query, object-cache backed).
 	 *
 	 * @param int $user_id User to look up.
@@ -1221,8 +1250,6 @@ final class BadgeEngine {
 
 		global $wpdb;
 		// Exclude expired credentials so has_badge() returns false for expired ones.
-		// @clock-ok: expires_at is written in UTC (gmdate(), see award_badge) and the bound below is
-		// gmdate() too. Column and bound are in the same clock.
 		$ids = $wpdb->get_col(
 			$wpdb->prepare(
 				"SELECT badge_id FROM {$wpdb->prefix}wb_gam_user_badges
@@ -1264,8 +1291,6 @@ final class BadgeEngine {
 		$now          = gmdate( 'Y-m-d H:i:s' );
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $placeholders is built from an int count; all values pass through prepare().
-		// @clock-ok: expires_at is written in UTC (gmdate(), see award_badge) and the bound is gmdate().
-		// earned_at in the same table is site-local -- the COLUMN decides the clock, not the table.
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT user_id, badge_id FROM {$wpdb->prefix}wb_gam_user_badges
@@ -1285,7 +1310,14 @@ final class BadgeEngine {
 	}
 
 	/**
-	 * Get earned badges with full definition data for a user.
+	 * Get earned badges with full definition data for a user, in display order.
+	 *
+	 * Display order is the ladder (category, then threshold; see sort_for_display()),
+	 * the same order as the admin badge list and the Badge Showcase block, so every
+	 * surface that lists a member's badges (profile, REST, apps) agrees. A caller that
+	 * wants the most recent badges sorts by `earned_at` itself.
+	 *
+	 * @since 1.6.5 Returns display order; it was earned_at DESC.
 	 *
 	 * @param int $user_id User to look up.
 	 * @return array<int, array{id: string, name: string, description: string, image_url: string|null, is_credential: bool, category: string, earned_at: string, expires_at: string|null}>
@@ -1293,9 +1325,7 @@ final class BadgeEngine {
 	public static function get_user_badges( int $user_id ): array {
 		global $wpdb;
 
-		// @clock-ok: the only time-compared column here is expires_at, written in UTC (gmdate()), and
-		// the bound is gmdate(). earned_at is also selected but is never compared in SQL -- it is
-		// site-local, and callers that render it must read it with current_time( 'timestamp' ).
+		// earned_at and expires_at are UTC; renderers convert with wp_date() / get_date_from_gmt().
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT b.id, b.name, b.description, b.image_url,
@@ -1311,20 +1341,22 @@ final class BadgeEngine {
 			ARRAY_A
 		);
 
-		return array_map(
-			static function ( array $row ): array {
-				return array(
-					'id'            => $row['id'],
-					'name'          => $row['name'],
-					'description'   => $row['description'],
-					'image_url'     => $row['image_url'] ?: null,
-					'is_credential' => (bool) $row['is_credential'],
-					'category'      => $row['category'],
-					'earned_at'     => $row['earned_at'],
-					'expires_at'    => $row['expires_at'] ?: null,
-				);
-			},
-			$rows ?: array()
+		return self::sort_for_display(
+			array_map(
+				static function ( array $row ): array {
+					return array(
+						'id'            => $row['id'],
+						'name'          => $row['name'],
+						'description'   => $row['description'],
+						'image_url'     => $row['image_url'] ?: null,
+						'is_credential' => (bool) $row['is_credential'],
+						'category'      => $row['category'],
+						'earned_at'     => $row['earned_at'],
+						'expires_at'    => $row['expires_at'] ?: null,
+					);
+				},
+				$rows ?: array()
+			)
 		);
 	}
 
@@ -1520,8 +1552,9 @@ final class BadgeEngine {
 			'image_url'     => isset( $def['image_url'] ) ? (string) $def['image_url'] : null,
 			'category'      => isset( $def['category'] ) ? (string) $def['category'] : 'imported',
 			'is_credential' => empty( $def['is_credential'] ) ? 0 : 1,
+			'created_at'    => current_time( 'mysql', true ),
 		);
-		$formats = array( '%s', '%s', '%s', '%s', '%s', '%d' );
+		$formats = array( '%s', '%s', '%s', '%s', '%s', '%d', '%s' );
 
 		// Award-window columns. Previously omitted entirely, so a programmatic
 		// def could never carry an expiry, cutoff or earner cap — the columns

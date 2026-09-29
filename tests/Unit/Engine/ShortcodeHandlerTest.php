@@ -10,6 +10,7 @@ namespace WBGam\Tests\Unit\Engine;
 use Brain\Monkey;
 use Brain\Monkey\Functions;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use WBGam\CLI\QAPages;
 use WBGam\Engine\ShortcodeHandler;
@@ -97,9 +98,7 @@ class ShortcodeHandlerTest extends TestCase {
 	// the WP-CLI seeder, and by the QA journey walker), so adding a new
 	// block automatically grows this suite.
 
-	/**
-	 * @dataProvider shortcodeDispatchProvider
-	 */
+	#[DataProvider( 'shortcodeDispatchProvider' )]
 	public function test_shortcode_dispatches_to_correct_block(
 		string $handler_method,
 		string $expected_block_slug

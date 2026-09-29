@@ -29,8 +29,8 @@ return array(
 
 		array(
 			'id'                => 'jetonomy_space_joined',
-			'label'             => 'Join a space',
-			'description'       => 'Awarded once when a member joins a Jetonomy community space. Daily cap prevents bulk-join farming.',
+			'label'             => static fn(): string => __( 'Join a space', 'wb-gamification' ),
+			'description'       => static fn(): string => __( 'Awarded once when a member joins a Jetonomy community space. Daily cap prevents bulk-join farming.', 'wb-gamification' ),
 			// Free fires: do_action( 'jetonomy_user_joined_space', int $space_id, int $user_id, string $role ).
 			'hook'              => 'jetonomy_user_joined_space',
 			'user_callback'     => function ( int $space_id, int $user_id, string $role ): int {
@@ -52,8 +52,8 @@ return array(
 
 		array(
 			'id'                => 'jetonomy_join_request_approved',
-			'label'             => 'Approved into a gated space',
-			'description'       => 'Awarded once when a member is approved into a request-to-join space.',
+			'label'             => static fn(): string => __( 'Get approved into a gated space', 'wb-gamification' ),
+			'description'       => static fn(): string => __( 'Awarded once when a member is approved into a request-to-join space.', 'wb-gamification' ),
 			// Free fires: do_action( 'jetonomy_join_request_approved', int $space_id, int $user_id, int $reviewed_by ).
 			'hook'              => 'jetonomy_join_request_approved',
 			'user_callback'     => function ( int $space_id, int $user_id, int $reviewed_by ): int {
@@ -67,15 +67,15 @@ return array(
 			},
 			'default_points'    => 10,
 			'category'          => 'community',
-			'icon'              => 'icon-check-circle',
+			'icon'              => 'icon-circle-check',
 			'repeatable'        => true,
 			'cooldown'          => 300,
 		),
 
 		array(
 			'id'                => 'jetonomy_trust_level_up',
-			'label'             => 'Trust level promoted',
-			'description'       => 'Awarded when a member is promoted to a higher Jetonomy trust level (TL0 -> TL5). Demotions never award.',
+			'label'             => static fn(): string => __( 'Get promoted to a higher trust level', 'wb-gamification' ),
+			'description'       => static fn(): string => __( 'Awarded when a member is promoted to a higher Jetonomy trust level (TL0 -> TL5). Demotions never award.', 'wb-gamification' ),
 			// Free fires: do_action( 'jetonomy_trust_level_changed', int $user_id, int $old_level, int $new_level ).
 			'hook'              => 'jetonomy_trust_level_changed',
 			'user_callback'     => function ( int $user_id, int $old_level, int $new_level ): int {
@@ -98,8 +98,8 @@ return array(
 
 		array(
 			'id'                => 'jetonomy_membership_activated',
-			'label'             => 'Membership activated',
-			'description'       => 'Awarded when a paid membership becomes active for the member (RCP / PMPro / MemberPress / WooCommerce Subscriptions / Sensei / LearnDash / MasterStudy / Tutor / LifterLMS).',
+			'label'             => static fn(): string => __( 'Activate a membership', 'wb-gamification' ),
+			'description'       => static fn(): string => __( 'Awarded when a paid membership becomes active for the member (RCP / PMPro / MemberPress / WooCommerce Subscriptions / Sensei / LearnDash / MasterStudy / Tutor / LifterLMS).', 'wb-gamification' ),
 			// Free + Pro adapters fire: do_action( 'jetonomy_membership_activated', int $user_id, mixed $level_id, string $source ).
 			'hook'              => 'jetonomy_membership_activated',
 			'user_callback'     => function ( int $user_id, $level_id, string $source ): int {

@@ -33,13 +33,14 @@
 
 namespace WBGam\Tests\Unit\Engine;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\TestCase;
 use WBGam\Engine\LeaderboardEngine;
 use WBGam\Engine\PointsEngine;
 
-/**
- * @coversDefaultClass \WBGam\Engine\LeaderboardEngine
- */
+#[CoversClass( \WBGam\Engine\LeaderboardEngine::class )]
+#[CoversMethod( \WBGam\Engine\LeaderboardEngine::class, 'build_totals_query' )]
 class LeaderboardQueryCompositionTest extends TestCase {
 
 	/**
@@ -62,7 +63,6 @@ class LeaderboardQueryCompositionTest extends TestCase {
 	 *
 	 * Restore the `str_replace` and this test goes red. That is the whole point of it.
 	 *
-	 * @covers ::build_totals_query
 	 * @return void
 	 */
 	public function test_the_composed_query_never_mangles_an_alias(): void {
@@ -89,7 +89,6 @@ class LeaderboardQueryCompositionTest extends TestCase {
 	 * The totals table is `ut`. A clause built for the ledger's `p` has no business in this query,
 	 * and there is no rewriting step that could put it there safely.
 	 *
-	 * @covers ::build_totals_query
 	 * @return void
 	 */
 	public function test_the_totals_query_filters_on_its_own_alias(): void {
@@ -101,6 +100,7 @@ class LeaderboardQueryCompositionTest extends TestCase {
 
 		$this->assertStringContainsString( 'FROM wp_wb_gam_user_totals ut', $sql );
 		$this->assertStringContainsString( 'WHERE ut.point_type = %s', $sql );
+		$this->assertStringContainsString( 'ORDER BY ut.earned DESC', $sql, 'Ranked by points earned, so a spend never costs a place (1.6.5).' );
 		$this->assertStringContainsString( 'AND ut.user_id IN (%d,%d)', $sql );
 
 		// `p` is the LEDGER's alias. It is not defined anywhere in this query, so any reference to
@@ -115,7 +115,6 @@ class LeaderboardQueryCompositionTest extends TestCase {
 	 * This is the fragment ExclusionScaleTest already guards for placeholder count. Here it is
 	 * checked where it is actually used: inside the query, against the right alias, unmangled.
 	 *
-	 * @covers ::build_totals_query
 	 * @return void
 	 */
 	public function test_the_owner_exclusion_fragment_survives_composition(): void {

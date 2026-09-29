@@ -125,8 +125,8 @@
 			if ( shared ) {
 				shared.bind( dialog );
 			}
-			var submit = dialog.querySelector( '.wb-gam-deactivate__submit' );
-			var skip = dialog.querySelector( '.wb-gam-deactivate__skip' );
+			var submit = dialog.querySelector( '[data-wb-gam-deactivate="submit"]' );
+			var skip = dialog.querySelector( '[data-wb-gam-deactivate="skip"]' );
 			if ( submit ) {
 				submit.addEventListener( 'click', function () {
 					if ( shared ) {

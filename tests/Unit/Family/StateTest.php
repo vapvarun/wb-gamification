@@ -3,6 +3,7 @@ namespace WBGam\Tests\Unit\Family;
 
 use Brain\Monkey;
 use Brain\Monkey\Functions;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 require_once dirname( __DIR__, 3 ) . '/libs/wbcom-family/bootstrap.php';
@@ -13,7 +14,7 @@ class StateTest extends TestCase {
 
 	private function member( string $free ): array { return array( 'slug_free' => $free ); }
 
-	/** @test */
+	#[Test]
 	public function resolves_active_inactive_and_missing(): void {
 		Functions\when( 'get_plugins' )->justReturn(
 			array( 'wb-gamification/wb-gamification.php' => array(), 'learnomy/learnomy.php' => array() )
@@ -27,7 +28,7 @@ class StateTest extends TestCase {
 		$this->assertSame( 'not_installed', $s::member_state( $this->member( 'jetonomy/jetonomy.php' ) ) );
 	}
 
-	/** @test */
+	#[Test]
 	public function outcome_available_only_when_all_requires_active(): void {
 		$reg = array(
 			'members'  => array(

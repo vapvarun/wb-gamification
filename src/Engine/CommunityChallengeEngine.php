@@ -116,6 +116,21 @@ final class CommunityChallengeEngine {
 			$points,
 			$challenge_id
 		);
+
+		/**
+		 * Fires for each contributor when their community's goal is reached and their bonus is paid.
+		 *
+		 * `wb_gam_community_challenge_completed` reports the aggregate only, so a listener that wants
+		 * to tell each member (the Moment card, the bell) has nothing to attach to. This is the
+		 * per-member counterpart, fired from the same paged job that pays the bonus.
+		 *
+		 * @since 1.6.5
+		 *
+		 * @param int $user_id      Contributor.
+		 * @param int $challenge_id Community challenge.
+		 * @param int $points       Bonus points the contributor received.
+		 */
+		do_action( 'wb_gam_community_goal_reached', $user_id, $challenge_id, $points );
 	}
 
 	// ── Event hook ──────────────────────────────────────────────────────────
@@ -160,7 +175,7 @@ final class CommunityChallengeEngine {
 			return (array) $cached;
 		}
 
-		$now = current_time( 'mysql' );
+		$now = current_time( 'mysql', true ); // starts_at / ends_at are stored in UTC (admin form converts; see ChallengeEngine).
 
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
@@ -258,7 +273,7 @@ final class CommunityChallengeEngine {
 				"UPDATE {$wpdb->prefix}wb_gam_community_challenges
 				    SET status = 'completed', completed_at = %s
 				  WHERE id = %d AND status = 'active'",
-				current_time( 'mysql' ),
+				current_time( 'mysql', true ),
 				$challenge_id
 			)
 		);
@@ -390,7 +405,7 @@ final class CommunityChallengeEngine {
 	public static function get_active(): array {
 		global $wpdb;
 
-		$now = current_time( 'mysql' );
+		$now = current_time( 'mysql', true ); // starts_at / ends_at are stored in UTC (admin form converts; see ChallengeEngine).
 
 		return $wpdb->get_results(
 			$wpdb->prepare(
@@ -426,7 +441,7 @@ final class CommunityChallengeEngine {
 	public static function get_visible(): array {
 		global $wpdb;
 
-		$now = current_time( 'mysql' );
+		$now = current_time( 'mysql', true ); // starts_at / ends_at are stored in UTC (admin form converts; see ChallengeEngine).
 
 		return $wpdb->get_results(
 			$wpdb->prepare(

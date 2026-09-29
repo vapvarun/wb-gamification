@@ -84,6 +84,25 @@ class ToolsController {
 			)
 		);
 
+		// POST /tools/retry-side-effect/{id} — re-fire one dead-lettered side effect.
+		register_rest_route(
+			$this->namespace,
+			'/tools/retry-side-effect/(?P<id>[\d]+)',
+			array(
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'retry_side_effect' ),
+					'permission_callback' => array( $this, 'admin_permissions_check' ),
+					'args'                => array(
+						'id' => array(
+							'type'    => 'integer',
+							'minimum' => 1,
+						),
+					),
+				),
+			)
+		);
+
 		// POST /tools/import-settings — apply a previously exported document.
 		register_rest_route(
 			$this->namespace,
@@ -134,6 +153,29 @@ class ToolsController {
 		\WBGam\Engine\LeaderboardEngine::write_snapshot();
 		\WBGam\Engine\LeaderboardEngine::invalidate_cache();
 		return new WP_REST_Response( array( 'ok' => true ), 200 );
+	}
+
+	/**
+	 * POST /tools/retry-side-effect/{id}.
+	 *
+	 * Manually re-fires one dead-lettered side effect (e.g. an 'exhausted' row
+	 * the reconcile cron will not retry again), after the owner has fixed the
+	 * underlying cause.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function retry_side_effect( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+		$result = \WBGam\Engine\SideEffectDispatcher::retry( (int) $request['id'] );
+		if ( ! $result['success'] ) {
+			$status = 'not_found' === ( $result['reason'] ?? '' ) ? 404 : 409;
+			return new WP_Error(
+				'wb_gam_side_effect_' . ( $result['reason'] ?? 'retry_failed' ),
+				__( 'Could not re-run this side effect. Check that the cause is fixed and try again.', 'wb-gamification' ),
+				array( 'status' => $status )
+			);
+		}
+		return new WP_REST_Response( $result, 200 );
 	}
 
 	/**

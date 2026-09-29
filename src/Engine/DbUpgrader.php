@@ -107,6 +107,8 @@ final class DbUpgrader {
 		self::ensure_leaderboard_cache_point_type_column();
 		self::ensure_leaderboard_cache_prev_rank_column();
 		self::ensure_user_totals_table();
+		self::ensure_earned_points();
+		self::ensure_point_type_singular();
 		self::ensure_leaderboard_cache_unique_key();
 		self::ensure_submissions_table();
 		self::ensure_api_keys_table();
@@ -123,6 +125,7 @@ final class DbUpgrader {
 		self::ensure_redemption_stock_null_unlimited();
 		self::ensure_badge_rule_groups();
 		self::ensure_engine_badges_become_rules();
+		UtcStorageMigration::boot();
 	}
 
 	/**
@@ -547,7 +550,7 @@ final class DbUpgrader {
 	 * @since 1.6.4
 	 */
 	private static function ensure_scale_indexes(): void {
-		$flag_key = 'wb_gam_feature_scale_indexes_v1';
+		$flag_key = 'wb_gam_feature_scale_indexes_v2'; // v2 (1.6.5): redemptions by status.
 		if ( get_option( $flag_key ) ) {
 			return;
 		}
@@ -558,7 +561,10 @@ final class DbUpgrader {
 			'wb_gam_user_badges'       => array( 'idx_badge_id' => '(badge_id)' ),
 			'wb_gam_kudos'             => array( 'idx_revoked_created' => '(revoked_at, created_at)' ),
 			'wb_gam_submissions'       => array( 'idx_created' => '(created_at)' ),
-			'wb_gam_redemptions'       => array( 'idx_user_created' => '(user_id, created_at)' ),
+			'wb_gam_redemptions'       => array(
+				'idx_user_created' => '(user_id, created_at)',
+				'idx_status_id'    => '(status, id)',
+			),
 			'wb_gam_user_intelligence' => array( 'idx_computed_at' => '(computed_at)' ),
 		);
 
@@ -1109,9 +1115,10 @@ final class DbUpgrader {
 			user_id    BIGINT UNSIGNED NOT NULL,
 			point_type VARCHAR(60)     NOT NULL DEFAULT 'points',
 			total      BIGINT          NOT NULL DEFAULT 0,
-			updated_at DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+			earned     BIGINT          NOT NULL DEFAULT 0,
 			PRIMARY KEY (user_id, point_type),
-			KEY idx_type_total (point_type, total)
+			KEY idx_type_total (point_type, total),
+			KEY idx_type_earned (point_type, earned)
 		) $charset;"
 		);
 
@@ -1125,6 +1132,91 @@ final class DbUpgrader {
 			 ON DUPLICATE KEY UPDATE total = VALUES(total)"
 		);
 
+		update_option( $flag_key, '1' );
+	}
+
+	/**
+	 * A singular name per point type (1.6.5), so an amount of one reads "+1 Point", not "+1 Points".
+	 *
+	 * Optional: blank means the plural name is used for every amount (right for names like "Karma"
+	 * or "XP"). The default type keeps its seeded pair, Points / Point.
+	 *
+	 * @since 1.6.5
+	 */
+	private static function ensure_point_type_singular(): void {
+		$flag_key = 'wb_gam_feature_point_type_singular_v1';
+		if ( get_option( $flag_key ) ) {
+			return;
+		}
+
+		global $wpdb;
+		$table = $wpdb->prefix . 'wb_gam_point_types';
+		if ( ! $wpdb->get_var( "SHOW COLUMNS FROM `{$table}` LIKE 'label_singular'" ) ) {
+			$wpdb->query( "ALTER TABLE `{$table}` ADD COLUMN `label_singular` VARCHAR(100) NOT NULL DEFAULT '' AFTER `label`" );
+		}
+		$wpdb->query( "UPDATE `{$table}` SET label_singular = 'Point' WHERE label = 'Points' AND label_singular = ''" );
+		wp_cache_delete( 'point_types_all', 'wb_gamification' );
+		wp_cache_delete( 'point_types_default', 'wb_gamification' );
+
+		update_option( $flag_key, '1' );
+	}
+
+	/**
+	 * Earned points (1.6.5): a spend flag on the ledger and an indexed `earned` total per member.
+	 *
+	 * A level and a leaderboard place follow the points a member EARNED, so spending points on a reward
+	 * or a currency exchange never costs either (owner decision 2026-09-27). The ledger marks spend
+	 * rows (`is_spend`); `wb_gam_user_totals.earned` is the sum of every other row, indexed for the
+	 * all-time board the way `total` is.
+	 *
+	 * Backfill: spend rows are the redemption, redemption-refund and currency-exchange debit rows, plus
+	 * BuddyNext Pro's membership checkout (`bn_membership`), the only other spend that shipped before
+	 * the flag existed. A third-party spend through wb_gam_spend_points() before 1.6.5 cannot be told
+	 * from a deduction and stays counted as one.
+	 *
+	 * Also drops `wb_gam_user_totals.updated_at`: nothing read it, and MySQL stamped it with the
+	 * database server's clock, which broke the UTC storage rule.
+	 *
+	 * @since 1.6.5
+	 */
+	private static function ensure_earned_points(): void {
+		$flag_key = 'wb_gam_feature_earned_points_v1';
+		if ( get_option( $flag_key ) ) {
+			return;
+		}
+
+		global $wpdb;
+		$points = $wpdb->prefix . 'wb_gam_points';
+		$totals = $wpdb->prefix . 'wb_gam_user_totals';
+
+		if ( ! $wpdb->get_var( "SHOW COLUMNS FROM `{$points}` LIKE 'is_spend'" ) ) {
+			$wpdb->query( "ALTER TABLE `{$points}` ADD COLUMN `is_spend` TINYINT(1) NOT NULL DEFAULT 0" );
+		}
+		$wpdb->query(
+			"UPDATE `{$points}` SET is_spend = 1
+			  WHERE action_id IN ( 'redemption', 'redemption_refund', 'bn_membership' )
+			     OR ( action_id LIKE 'convert\\_%' AND points < 0 )"
+		);
+
+		if ( ! $wpdb->get_var( "SHOW COLUMNS FROM `{$totals}` LIKE 'earned'" ) ) {
+			$wpdb->query( "ALTER TABLE `{$totals}` ADD COLUMN `earned` BIGINT NOT NULL DEFAULT 0 AFTER `total`, ADD KEY `idx_type_earned` (`point_type`, `earned`)" );
+		}
+		foreach ( array( 'spent', 'updated_at' ) as $gone ) {
+			if ( $wpdb->get_var( $wpdb->prepare( "SHOW COLUMNS FROM `{$totals}` LIKE %s", $gone ) ) ) {
+				$wpdb->query( "ALTER TABLE `{$totals}` DROP COLUMN `{$gone}`" );
+			}
+		}
+		$wpdb->query(
+			"UPDATE `{$totals}` t
+			   JOIN ( SELECT user_id, point_type, SUM( points ) AS earned
+			            FROM `{$points}`
+			           WHERE is_spend = 0
+			           GROUP BY user_id, point_type ) e
+			     ON e.user_id = t.user_id AND e.point_type = t.point_type
+			    SET t.earned = e.earned"
+		);
+
+		delete_option( 'wb_gam_feature_user_totals_spent_v1' ); // Pre-release name of this step.
 		update_option( $flag_key, '1' );
 	}
 
@@ -1287,6 +1379,7 @@ final class DbUpgrader {
 			"CREATE TABLE {$wpdb->prefix}wb_gam_point_types (
 			slug        VARCHAR(60)     NOT NULL,
 			label       VARCHAR(100)    NOT NULL,
+			label_singular VARCHAR(100) NOT NULL DEFAULT '',
 			description TEXT,
 			icon        VARCHAR(100)    DEFAULT NULL,
 			is_default  TINYINT(1)      NOT NULL DEFAULT 0,
@@ -1307,9 +1400,10 @@ final class DbUpgrader {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- bootstrapped table name; INSERT IGNORE on PK.
 		$wpdb->query(
 			$wpdb->prepare(
-				"INSERT IGNORE INTO {$wpdb->prefix}wb_gam_point_types (slug, label, description, icon, is_default, position) VALUES (%s, %s, %s, %s, %d, %d)",
+				"INSERT IGNORE INTO {$wpdb->prefix}wb_gam_point_types (slug, label, label_singular, description, icon, is_default, position) VALUES (%s, %s, %s, %s, %s, %d, %d)",
 				'points',
 				'Points',
+				'Point',
 				'Primary points currency. Renamable; the slug stays as `points` for back-compat.',
 				'star',
 				1,

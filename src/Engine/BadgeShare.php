@@ -134,7 +134,7 @@ final class BadgeShare {
 
 		$updated = $wpdb->update(
 			$wpdb->prefix . 'wb_gam_user_badges',
-			array( 'shared_at' => current_time( 'mysql' ) ),
+			array( 'shared_at' => current_time( 'mysql', true ) ),
 			array(
 				'user_id'  => $user_id,
 				'badge_id' => $badge_id,

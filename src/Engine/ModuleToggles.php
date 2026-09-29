@@ -33,6 +33,15 @@ final class ModuleToggles {
 	private const OPTION = 'wb_gam_modules';
 
 	/**
+	 * Modules that are also background engines, mapped to their FeatureFlags key. These have one
+	 * switch (Settings > Modules) that controls both the visible module and its engine.
+	 */
+	public const ENGINE_FLAGS = array(
+		'cohort_leagues'       => 'cohort_leagues',
+		'community_challenges' => 'community_challenges',
+	);
+
+	/**
 	 * Label-free module map: where each toggleable module surfaces. Contains NO
 	 * __() so it is safe to call early (init() runs on plugins_loaded, before
 	 * the init hook - translating here triggers _load_textdomain_just_in_time
@@ -116,8 +125,15 @@ final class ModuleToggles {
 	 * @return bool
 	 */
 	public static function enabled( string $slug ): bool {
-		$map     = (array) get_option( self::OPTION, array() );
-		$enabled = ! array_key_exists( $slug, $map ) || '0' !== (string) $map[ $slug ];
+		$enabled = self::option_enabled( $slug );
+
+		// A module that is also a background engine is on only when its engine flag is on too:
+		// one switch in Settings > Modules writes both (see set()), and a site that switched the
+		// engine off under the old second switch still reads 'off' here.
+		if ( $enabled && isset( self::ENGINE_FLAGS[ $slug ] ) ) {
+			$flags   = FeatureFlags::get_all();
+			$enabled = ! empty( $flags[ self::ENGINE_FLAGS[ $slug ] ] );
+		}
 
 		/**
 		 * Filter whether an optional module is enabled.
@@ -128,6 +144,39 @@ final class ModuleToggles {
 		 * @param string $slug    Module slug.
 		 */
 		return (bool) apply_filters( 'wb_gam_module_enabled', $enabled, $slug );
+	}
+
+	/**
+	 * The module's own stored switch, without the engine flag or the filter.
+	 *
+	 * @param string $slug Module slug.
+	 * @return bool
+	 */
+	public static function option_enabled( string $slug ): bool {
+		$map = (array) get_option( self::OPTION, array() );
+		return ! array_key_exists( $slug, $map ) || '0' !== (string) $map[ $slug ];
+	}
+
+	/**
+	 * Turn a module on or off - the one switch for it. For a module that is also a background
+	 * engine this writes the engine flag too, so no second switch can disagree.
+	 *
+	 * @since 1.6.5
+	 *
+	 * @param string $slug Module slug.
+	 * @param bool   $on   On or off.
+	 * @return void
+	 */
+	public static function set( string $slug, bool $on ): void {
+		$map          = (array) get_option( self::OPTION, array() );
+		$map[ $slug ] = $on ? '1' : '0';
+		update_option( self::OPTION, $map );
+
+		if ( isset( self::ENGINE_FLAGS[ $slug ] ) ) {
+			$flags                                = FeatureFlags::get_all();
+			$flags[ self::ENGINE_FLAGS[ $slug ] ] = $on;
+			FeatureFlags::update( $flags );
+		}
 	}
 
 	/**
@@ -178,9 +227,55 @@ final class ModuleToggles {
 		);
 
 		add_filter( 'render_block', array( __CLASS__, 'maybe_suppress_block' ), 10, 2 );
+		add_filter( 'rest_pre_dispatch', array( __CLASS__, 'maybe_refuse_rest' ), 10, 3 );
 		add_filter( 'do_shortcode_tag', array( __CLASS__, 'maybe_suppress_shortcode' ), 10, 2 );
 		// Remove disabled modules' admin pages after every page is registered.
 		add_action( 'admin_menu', array( __CLASS__, 'remove_admin_pages' ), 999 );
+	}
+
+	/**
+	 * REST route families each module owns (under wb-gamification/v1). A module that is off
+	 * answers them with 404 wb_gam_module_disabled, so apps get a clear 'turned off' rather than
+	 * a working endpoint for a hidden feature. Admin settings routes (cohort-settings) stay open.
+	 */
+	private const REST_ROUTES = array(
+		'kudos'                => 'kudos',
+		'challenges'           => 'challenges',
+		'community_challenges' => 'community-challenges',
+		'redemption'           => 'redemptions',
+	);
+
+	/**
+	 * Refuse REST requests to a switched-off module's routes.
+	 *
+	 * @since 1.6.5
+	 *
+	 * @param mixed            $result  Response to short-circuit with, or null.
+	 * @param \WP_REST_Server  $server  Server (unused).
+	 * @param \WP_REST_Request $request Request.
+	 * @return mixed
+	 */
+	public static function maybe_refuse_rest( $result, $server, $request ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundInExtendedClassBeforeLastUsed -- filter signature.
+		if ( null !== $result ) {
+			return $result;
+		}
+		$route = (string) $request->get_route();
+		foreach ( self::REST_ROUTES as $slug => $base ) {
+			if ( preg_match( '#^/wb-gamification/v1/' . preg_quote( $base, '#' ) . '(/|$)#', $route ) && ! self::enabled( $slug ) ) {
+				return self::disabled_error();
+			}
+		}
+		return $result;
+	}
+
+	/**
+	 * The one refusal for a switched-off module, shared by the REST gate and any engine a
+	 * partner plugin calls directly (a 404 over REST: the feature does not exist here).
+	 *
+	 * @return \WP_Error
+	 */
+	public static function disabled_error(): \WP_Error {
+		return new \WP_Error( 'wb_gam_module_disabled', __( 'This feature is turned off on this site.', 'wb-gamification' ), array( 'status' => 404 ) );
 	}
 
 	/**

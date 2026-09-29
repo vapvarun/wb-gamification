@@ -14,6 +14,7 @@
 namespace WBGam\Admin;
 
 use WBGam\Engine\Log;
+use WBGam\Engine\Privacy;
 use WBGam\Engine\Registry;
 
 defined( 'ABSPATH' ) || exit;
@@ -257,6 +258,17 @@ final class SetupWizard {
 	}
 
 	/**
+	 * Whether members are already earning points - a starter template is moot on a live site.
+	 *
+	 * @return bool
+	 */
+	private static function site_is_live(): bool {
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- one PK-indexed row, plugin admin screens only.
+		return (bool) $wpdb->get_var( "SELECT 1 FROM {$wpdb->prefix}wb_gam_points LIMIT 1" );
+	}
+
+	/**
 	 * Show a "welcome — run setup" notice on plugin admin pages until done.
 	 *
 	 * Fallback for installs where the activation auto-redirect was suppressed
@@ -287,6 +299,10 @@ final class SetupWizard {
 		}
 		// Don't double-up: the wizard page itself is the welcome experience.
 		if ( false !== strpos( (string) $screen->id, self::PAGE_SLUG ) ) {
+			return;
+		}
+		// Members are already earning points, so a starter template is moot.
+		if ( self::site_is_live() ) {
 			return;
 		}
 
@@ -405,6 +421,11 @@ final class SetupWizard {
 			'wb_gam_email_challenge_completed' => 'email_challenge_completed',
 			'wb_gam_profile_public_enabled'    => 'profile_public',
 		);
+		// That checkbox is not shown when a community plugin decides profile privacy; an absent
+		// field must not read as 'off'.
+		if ( Privacy::host_decides() ) {
+			unset( $toggles['wb_gam_profile_public_enabled'] );
+		}
 
 		foreach ( $toggles as $option_key => $form_key ) {
 			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified in caller (handle_submission).
@@ -414,7 +435,7 @@ final class SetupWizard {
 	}
 
 	/**
-	 * Persist the chosen template's point values and leaderboard mode.
+	 * Persist the chosen template's point values.
 	 *
 	 * @param string $template Template key.
 	 */
@@ -449,27 +470,18 @@ final class SetupWizard {
 			update_option( 'wb_gam_points_' . $action_id, (int) $points );
 		}
 		update_option( 'wb_gam_template', $template );
-
-		// Note: the per-template 'leaderboard' preference is NOT persisted as an
-		// option. Nothing reads wb_gam_leaderboard_mode (the leaderboard block /
-		// shortcode / hub resolve their period + scope from their own
-		// attributes), so writing it was dead data flagged by the contract
-		// audit. The value still lives in the template config above, so if a
-		// global "default leaderboard view" is wired up later it can read the
-		// chosen template's 'leaderboard' directly.
 	}
 
 	/**
 	 * Return all available starter template definitions.
 	 *
-	 * @return array<string, array{label: string, description: string, leaderboard: string, requires?: array{callback: callable, plugin: string}, points: array<string, int>}>
+	 * @return array<string, array{label: string, description: string, requires?: array{callback: callable, plugin: string}, points: array<string, int>}>
 	 */
 	private static function get_template_configs(): array {
 		return array(
 			'blog'      => array(
 				'label'       => __( 'Blog / Publisher', 'wb-gamification' ),
 				'description' => __( 'Rewards writing and meaningful comments. For standalone WordPress blogs.', 'wb-gamification' ),
-				'leaderboard' => 'monthly',
 				'points'      => array(
 					'wp_publish_post'          => 25,
 					'wp_first_post'            => 20,
@@ -480,7 +492,6 @@ final class SetupWizard {
 			'community' => array(
 				'label'       => __( 'Community Engagement', 'wb-gamification' ),
 				'description' => __( 'Balanced - rewards posting, reactions, and social connection. Works with BuddyNext.', 'wb-gamification' ),
-				'leaderboard' => 'weekly',
 				'requires'    => array(
 					'callback' => static function (): bool {
 						return defined( 'BUDDYNEXT_VERSION' ) || class_exists( '\\BuddyNext\\Plugin' ); },
@@ -498,7 +509,6 @@ final class SetupWizard {
 			'course'    => array(
 				'label'       => __( 'Online Course', 'wb-gamification' ),
 				'description' => __( 'Course completion heavy - progress and credential badges. Works with Learnomy.', 'wb-gamification' ),
-				'leaderboard' => 'cohort',
 				'requires'    => array(
 					'callback' => static function (): bool {
 						return defined( 'LEARNOMY_VERSION' ) || class_exists( '\\Learnomy\\Plugin' ); },
@@ -526,8 +536,7 @@ final class SetupWizard {
 			 */
 			'coaching'  => array(
 				'label'       => __( 'Coaching Platform', 'wb-gamification' ),
-				'description' => __( 'Private leaderboard by default - progress vs personal baseline, not peer comparison.', 'wb-gamification' ),
-				'leaderboard' => 'private',
+				'description' => __( 'Rewards the steady habits of a coaching programme - writing, commenting and completing a profile. For standalone WordPress sites.', 'wb-gamification' ),
 				'points'      => array(
 					// Standalone template — no `requires`, so it may only use
 					// WordPress-core actions, which are the only ones guaranteed
@@ -540,8 +549,7 @@ final class SetupWizard {
 			),
 			'nonprofit' => array(
 				'label'       => __( 'Nonprofit / Mission', 'wb-gamification' ),
-				'description' => __( 'Mission-aligned language. Team leaderboards only - impact over individual competition. Works with BuddyNext.', 'wb-gamification' ),
-				'leaderboard' => 'team-only',
+				'description' => __( 'Rewards joining spaces, connecting and taking part in conversations - community participation over individual output. Works with BuddyNext.', 'wb-gamification' ),
 				'requires'    => array(
 					'callback' => static function (): bool {
 						return defined( 'BUDDYNEXT_VERSION' ) || class_exists( '\\BuddyNext\\Plugin' ); },
@@ -794,20 +802,22 @@ final class SetupWizard {
 							</span>
 						</label>
 
+						<?php if ( ! Privacy::host_decides() ) : // A community plugin's profile privacy applies instead. ?>
 						<label class="wb-gam-wizard-toggle">
 							<input type="checkbox" name="profile_public" value="1" checked>
 							<span class="wb-gam-wizard-toggle__label">
 								<strong><?php esc_html_e( 'Public profile pages', 'wb-gamification' ); ?></strong>
-								<span class="description"><?php esc_html_e( 'Let members opt in to a sharable profile at /u/{username}. Each member still flips their own privacy toggle.', 'wb-gamification' ); ?></span>
+								<span class="description"><?php esc_html_e( 'Show members\' points, badges and rank to other people. Each member can still hide their own.', 'wb-gamification' ); ?></span>
 							</span>
 						</label>
+						<?php endif; ?>
 					</div>
 				</fieldset>
 
 				<footer class="wb-gam-wizard-footer">
 					<div class="wb-gam-wizard-footer__copy">
 						<strong><?php esc_html_e( 'Prefer to start from scratch?', 'wb-gamification' ); ?></strong>
-						<span><?php esc_html_e( 'Skip leaves engine defaults in place - every email off, public profiles off. Configure everything yourself in Settings.', 'wb-gamification' ); ?></span>
+						<span><?php esc_html_e( 'Skip leaves the defaults in place - optional emails off, public profiles on. Configure everything yourself in Settings.', 'wb-gamification' ); ?></span>
 					</div>
 					<button
 						type="submit"
@@ -843,8 +853,8 @@ final class SetupWizard {
 		foreach ( $points as $action_id => $pts ) {
 			$label   = class_exists( Registry::class ) ? Registry::label_for( (string) $action_id ) : (string) $action_id;
 			$items[] = sprintf(
-				'<li><span class="wb-gam-wizard-card__points-pts">%1$d pts</span> <span class="wb-gam-wizard-card__points-label">%2$s</span></li>',
-				(int) $pts,
+				'<li><span class="wb-gam-wizard-card__points-pts">%1$s</span> <span class="wb-gam-wizard-card__points-label">%2$s</span></li>',
+				esc_html( wb_gam_format_points( (int) $pts ) ),
 				esc_html( $label )
 			);
 		}

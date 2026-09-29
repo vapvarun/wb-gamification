@@ -15,12 +15,14 @@ namespace WBGam\Tests\Unit\Engine;
 use Brain\Monkey;
 use Brain\Monkey\Functions;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use WBGam\Engine\PointsEngine;
 
-/**
- * @coversDefaultClass \WBGam\Engine\PointsEngine
- */
+#[CoversClass( \WBGam\Engine\PointsEngine::class )]
+#[CoversMethod( \WBGam\Engine\PointsEngine::class, 'user_can_earn' )]
 class AccessExclusionTest extends TestCase {
 
 	use MockeryPHPUnitIntegration;
@@ -40,26 +42,17 @@ class AccessExclusionTest extends TestCase {
 		parent::tearDown();
 	}
 
-	/**
-	 * @test
-	 * @covers ::user_can_earn
-	 */
+	#[Test]
 	public function a_normal_member_can_earn_by_default(): void {
 		$this->assertTrue( PointsEngine::user_can_earn( 42 ) );
 	}
 
-	/**
-	 * @test
-	 * @covers ::user_can_earn
-	 */
+	#[Test]
 	public function logged_out_users_never_earn(): void {
 		$this->assertFalse( PointsEngine::user_can_earn( 0 ) );
 	}
 
-	/**
-	 * @test
-	 * @covers ::user_can_earn
-	 */
+	#[Test]
 	public function an_explicitly_excluded_user_id_cannot_earn(): void {
 		Functions\when( 'get_option' )->alias(
 			static function ( $name ) {
@@ -70,19 +63,13 @@ class AccessExclusionTest extends TestCase {
 		$this->assertTrue( PointsEngine::user_can_earn( 7 ) );
 	}
 
-	/**
-	 * @test
-	 * @covers ::user_can_earn
-	 */
+	#[Test]
 	public function a_sandboxed_user_cannot_earn(): void {
 		Functions\when( 'get_user_meta' )->justReturn( '1' );
 		$this->assertFalse( PointsEngine::user_can_earn( 42 ) );
 	}
 
-	/**
-	 * @test
-	 * @covers ::user_can_earn
-	 */
+	#[Test]
 	public function a_user_in_an_excluded_role_cannot_earn(): void {
 		Functions\when( 'get_option' )->alias(
 			static function ( $name ) {
@@ -100,10 +87,7 @@ class AccessExclusionTest extends TestCase {
 		$this->assertTrue( PointsEngine::user_can_earn( 99 ) );
 	}
 
-	/**
-	 * @test
-	 * @covers ::user_can_earn
-	 */
+	#[Test]
 	public function the_filter_can_override_the_decision(): void {
 		Functions\when( 'apply_filters' )->alias(
 			static function ( $hook, $value ) {

@@ -98,6 +98,9 @@ store( NS, {
 					// close time, against the DOM as it actually is then.
 					opener: () => card?.querySelector( '.wb-gam-redemption__btn' ),
 
+					// The close x is first in the DOM; a member who pressed Redeem lands on the confirm button.
+					initialFocus: '[autofocus]',
+
 					// ESC closes a native dialog without telling the block, so the block's own state would
 					// still say "confirming" while nothing is on screen. Next click would then do nothing.
 					onClose: () => {
@@ -174,6 +177,10 @@ store( NS, {
 				const balanceText = root?.querySelector?.( '[data-wb-gam-balance-text]' );
 				if ( balanceText ) {
 					balanceText.textContent = formatNumber( ctx.balance );
+					const unit = root?.querySelector?.( '[data-wb-gam-balance-unit]' );
+					if ( unit ) {
+						unit.textContent = 1 === ctx.balance ? unit.dataset.one : unit.dataset.many;
+					}
 				}
 
 				// Force an immediate broker tick so the redemption-confirmed

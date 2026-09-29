@@ -35,7 +35,7 @@ defined( 'ABSPATH' ) || exit;
  * Usage — multi-table composition (the redeem flow):
  *
  *     return Transaction::run( function () use ( $user_id, $cost, $item_id, $event ) {
- *         $debit = PointsEngine::debit( $user_id, $cost, 'redemption', $event );
+ *         $debit = PointsEngine::debit( $user_id, $cost, 'redemption', $event, null, true );
  *         if ( ! $debit['success'] ) {
  *             return false; // PointsEngine::debit also called Transaction::run
  *                          // but at inner depth — its return value cascades up.

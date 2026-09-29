@@ -70,7 +70,7 @@ final class ChallengeManagerPage {
 		wp_enqueue_script(
 			'wb-gam-admin-rest-utils',
 			plugins_url( 'assets/js/admin-rest-utils.js', WB_GAM_FILE ),
-			array(),
+			array( 'wb-gam-dialog', 'wb-gam-toast-core' ),
 			WB_GAM_VERSION,
 			true
 		);
@@ -174,6 +174,7 @@ final class ChallengeManagerPage {
 				</div>
 			</header>
 
+			<?php if ( \WBGam\Engine\ModuleToggles::enabled( 'community_challenges' ) ) : // One tab is no tab strip. ?>
 			<nav class="wbgam-tabs nav-tab-wrapper" aria-label="<?php esc_attr_e( 'Challenge type', 'wb-gamification' ); ?>">
 				<a href="<?php echo esc_url( admin_url( 'admin.php?page=wb-gam-challenges' ) ); ?>" class="nav-tab nav-tab-active">
 					<?php esc_html_e( 'Individual Challenges', 'wb-gamification' ); ?>
@@ -182,6 +183,7 @@ final class ChallengeManagerPage {
 					<?php esc_html_e( 'Community Challenges', 'wb-gamification' ); ?>
 				</a>
 			</nav>
+			<?php endif; ?>
 
 			<?php if ( isset( $notice_map[ $notice ] ) ) : ?>
 				<div class="wbgam-banner wbgam-banner--<?php echo esc_attr( $notice_map[ $notice ][0] ); ?> wbgam-stack-block" role="status" aria-live="polite"><span class="wbgam-banner__icon icon-circle-check" aria-hidden="true"></span><div class="wbgam-banner__body"><p class="wbgam-banner__desc"><?php echo esc_html( $notice_map[ $notice ][1] ); ?></p></div></div>
@@ -253,7 +255,7 @@ final class ChallengeManagerPage {
 								<td>
 									<input type="datetime-local" name="starts_at" id="wb-gam-challenge-starts" class="wbgam-input"
 										data-wb-gam-utc
-										value="<?php echo esc_attr( $edit_data['starts_at'] ?? current_time( 'Y-m-d\TH:i' ) ); ?>">
+										value="<?php echo esc_attr( $edit_data['starts_at'] ?? gmdate( 'Y-m-d\TH:i' ) ); ?>">
 									<p class="description"><?php esc_html_e( 'When this challenge becomes available to members. Actions before this date will not count.', 'wb-gamification' ); ?></p>
 								</td>
 							</tr>
@@ -262,7 +264,7 @@ final class ChallengeManagerPage {
 								<td>
 									<input type="datetime-local" name="ends_at" id="wb-gam-challenge-ends" class="wbgam-input"
 										data-wb-gam-utc
-										value="<?php echo esc_attr( $edit_data['ends_at'] ?? gmdate( 'Y-m-d\TH:i', current_time( 'timestamp' ) + ( 7 * DAY_IN_SECONDS ) ) ); ?>">
+										value="<?php echo esc_attr( $edit_data['ends_at'] ?? gmdate( 'Y-m-d\TH:i', time() + ( 7 * DAY_IN_SECONDS ) ) ); ?>">
 									<p class="description"><?php esc_html_e( 'Deadline for the challenge. Members must reach the target before this date. Defaults to 7 days from now.', 'wb-gamification' ); ?></p>
 								</td>
 							</tr>
@@ -289,66 +291,69 @@ final class ChallengeManagerPage {
 					<h3 class="wbgam-card-title"><?php esc_html_e( 'All Challenges', 'wb-gamification' ); ?></h3>
 				</div>
 				<div class="wbgam-card-body wbgam-card-body--flush">
-					<table class="wbgam-table">
-						<thead>
-							<tr>
-								<th><?php esc_html_e( 'Title', 'wb-gamification' ); ?></th>
-								<th><?php esc_html_e( 'Action', 'wb-gamification' ); ?></th>
-								<th><?php esc_html_e( 'Target', 'wb-gamification' ); ?></th>
-								<th><?php esc_html_e( 'Bonus', 'wb-gamification' ); ?></th>
-								<th><?php esc_html_e( 'Status', 'wb-gamification' ); ?></th>
-								<th><?php esc_html_e( 'Dates', 'wb-gamification' ); ?></th>
-								<th><?php esc_html_e( 'Actions', 'wb-gamification' ); ?></th>
-							</tr>
-						</thead>
-						<tbody>
-						<?php foreach ( $challenges as $c ) : ?>
-							<?php
-							$action_label = $c['action_id'];
-							if ( isset( $actions[ $c['action_id'] ]['label'] ) ) {
-								$action_label = $actions[ $c['action_id'] ]['label'];
-							}
-							$status_class = 'active' === $c['status'] ? 'active' : 'info';
-							?>
-							<tr>
-								<td><strong><?php echo esc_html( $c['title'] ); ?></strong></td>
-								<td><code><?php echo esc_html( $action_label ); ?></code></td>
-								<td><?php echo esc_html( $c['target'] ); ?></td>
-								<td><?php echo esc_html( $c['bonus_points'] ); ?></td>
-								<td>
-									<span class="wbgam-pill wbgam-pill--<?php echo esc_attr( $status_class ); ?>">
-										<?php echo esc_html( ucfirst( $c['status'] ) ); ?>
-									</span>
-								</td>
-								<td>
-									<?php
-									$start = ! empty( $c['starts_at'] ) ? substr( $c['starts_at'], 0, 10 ) : '—';
-									$end   = ! empty( $c['ends_at'] ) ? substr( $c['ends_at'], 0, 10 ) : '—';
-									echo esc_html( $start . ' → ' . $end );
-									?>
-								</td>
-								<td>
-									<a href="<?php echo esc_url( admin_url( 'admin.php?page=wb-gam-challenges&edit=' . $c['id'] ) ); ?>" class="wbgam-btn wbgam-btn--sm wbgam-btn--secondary">
-										<?php esc_html_e( 'Edit', 'wb-gamification' ); ?>
-									</a>
-									<button
-										type="button"
-										class="wbgam-btn wbgam-btn--sm wbgam-btn--danger wbgam-ms-xs"
-										data-wb-gam-rest-action="wbGamChallengesSettings"
-										data-wb-gam-rest-method="DELETE"
-										data-wb-gam-rest-path="/challenges/<?php echo (int) $c['id']; ?>"
-										data-wb-gam-rest-confirm="<?php esc_attr_e( 'Delete this challenge?', 'wb-gamification' ); ?>"
-										data-wb-gam-rest-success-toast="<?php esc_attr_e( 'Challenge deleted.', 'wb-gamification' ); ?>"
-										data-wb-gam-rest-error-toast="<?php esc_attr_e( 'Failed to delete challenge.', 'wb-gamification' ); ?>"
-										data-wb-gam-rest-after="remove-row"
-									>
-										<?php esc_html_e( 'Delete', 'wb-gamification' ); ?>
-									</button>
-								</td>
-							</tr>
-						<?php endforeach; ?>
-						</tbody>
-					</table>
+					<div class="wbgam-table-scroll">
+						<table class="wbgam-table">
+							<thead>
+								<tr>
+									<th><?php esc_html_e( 'Title', 'wb-gamification' ); ?></th>
+									<th><?php esc_html_e( 'Action', 'wb-gamification' ); ?></th>
+									<th><?php esc_html_e( 'Target', 'wb-gamification' ); ?></th>
+									<th><?php esc_html_e( 'Bonus', 'wb-gamification' ); ?></th>
+									<th><?php esc_html_e( 'Status', 'wb-gamification' ); ?></th>
+									<th><?php esc_html_e( 'Dates', 'wb-gamification' ); ?></th>
+									<th><?php esc_html_e( 'Actions', 'wb-gamification' ); ?></th>
+								</tr>
+							</thead>
+							<tbody>
+							<?php foreach ( $challenges as $c ) : ?>
+								<?php
+								$action_label = $c['action_id'];
+								if ( isset( $actions[ $c['action_id'] ]['label'] ) ) {
+									$action_label = $actions[ $c['action_id'] ]['label'];
+								}
+								$status_class = 'active' === $c['status'] ? 'active' : 'info';
+								?>
+								<tr>
+									<td><strong><?php echo esc_html( $c['title'] ); ?></strong></td>
+									<td><span class="wbgam-pill wbgam-pill--neutral"><?php echo esc_html( $action_label ); ?></span></td>
+									<td><?php echo esc_html( $c['target'] ); ?></td>
+									<td><?php echo esc_html( $c['bonus_points'] ); ?></td>
+									<td>
+										<span class="wbgam-pill wbgam-pill--<?php echo esc_attr( $status_class ); ?>">
+											<?php echo esc_html( ucfirst( $c['status'] ) ); ?>
+										</span>
+									</td>
+									<td>
+										<?php
+										// Stored in UTC; show the owner's site date.
+										$start = ! empty( $c['starts_at'] ) ? get_date_from_gmt( $c['starts_at'], 'Y-m-d' ) : '—';
+										$end   = ! empty( $c['ends_at'] ) ? get_date_from_gmt( $c['ends_at'], 'Y-m-d' ) : '—';
+										echo esc_html( $start . ' → ' . $end );
+										?>
+									</td>
+									<td>
+										<a href="<?php echo esc_url( admin_url( 'admin.php?page=wb-gam-challenges&edit=' . $c['id'] ) ); ?>" class="wbgam-btn wbgam-btn--sm wbgam-btn--secondary">
+											<?php esc_html_e( 'Edit', 'wb-gamification' ); ?>
+										</a>
+										<button
+											type="button"
+											class="wbgam-btn wbgam-btn--sm wbgam-btn--danger wbgam-ms-xs"
+											data-wb-gam-rest-action="wbGamChallengesSettings"
+											data-wb-gam-rest-method="DELETE"
+											data-wb-gam-rest-path="/challenges/<?php echo (int) $c['id']; ?>"
+											data-wb-gam-rest-confirm="<?php esc_attr_e( 'Delete this challenge?', 'wb-gamification' ); ?>"
+											data-wb-gam-rest-success-toast="<?php esc_attr_e( 'Challenge deleted.', 'wb-gamification' ); ?>"
+											data-wb-gam-rest-error-toast="<?php esc_attr_e( 'Failed to delete challenge.', 'wb-gamification' ); ?>"
+											data-wb-gam-rest-after="remove-row"
+										>
+											<?php esc_html_e( 'Delete', 'wb-gamification' ); ?>
+										</button>
+									</td>
+								</tr>
+							<?php endforeach; ?>
+							</tbody>
+						</table>
+					</div>
 				</div>
 			</div>
 			<?php else : ?>

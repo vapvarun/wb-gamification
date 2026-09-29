@@ -59,7 +59,7 @@ final class ManualAwardPage {
 		wp_enqueue_script(
 			'wb-gam-admin-rest-utils',
 			plugins_url( 'assets/js/admin-rest-utils.js', WB_GAM_FILE ),
-			array(),
+			array( 'wb-gam-dialog', 'wb-gam-toast-core' ),
 			WB_GAM_VERSION,
 			true
 		);
@@ -416,46 +416,48 @@ final class ManualAwardPage {
 					<h3 class="wbgam-card-title"><?php esc_html_e( 'Recent Manual Awards', 'wb-gamification' ); ?></h3>
 				</div>
 				<div class="wbgam-card-body wbgam-card-body--flush">
-					<table class="wbgam-table">
-						<thead>
-							<tr>
-								<th><?php esc_html_e( 'User', 'wb-gamification' ); ?></th>
-								<th><?php esc_html_e( 'Amount', 'wb-gamification' ); ?></th>
-								<th><?php esc_html_e( 'Currency', 'wb-gamification' ); ?></th>
-								<th><?php esc_html_e( 'Note', 'wb-gamification' ); ?></th>
-								<th><?php esc_html_e( 'Date', 'wb-gamification' ); ?></th>
-							</tr>
-						</thead>
-						<tbody>
-							<?php
-							// Pre-fetch the currency label map so each row can show
-							// its own type label without an N+1 lookup.
-							$pt_service   = new \WBGam\Services\PointTypeService();
-							$pt_label_map = array();
-							foreach ( $pt_service->list() as $pt ) {
-								$pt_label_map[ (string) $pt['slug'] ] = (string) $pt['label'];
-							}
-							?>
-							<?php foreach ( $recent as $row ) : ?>
+					<div class="wbgam-table-scroll">
+						<table class="wbgam-table">
+							<thead>
+								<tr>
+									<th><?php esc_html_e( 'User', 'wb-gamification' ); ?></th>
+									<th><?php esc_html_e( 'Amount', 'wb-gamification' ); ?></th>
+									<th><?php esc_html_e( 'Currency', 'wb-gamification' ); ?></th>
+									<th><?php esc_html_e( 'Note', 'wb-gamification' ); ?></th>
+									<th><?php esc_html_e( 'Date', 'wb-gamification' ); ?></th>
+								</tr>
+							</thead>
+							<tbody>
 								<?php
-								$user      = get_userdata( (int) $row['user_id'] );
-								$row_slug  = (string) ( $row['point_type'] ?? $pt_service->default_slug() );
-								$row_label = $pt_label_map[ $row_slug ] ?? $row_slug;
+								// Pre-fetch the currency label map so each row can show
+								// its own type label without an N+1 lookup.
+								$pt_service   = new \WBGam\Services\PointTypeService();
+								$pt_label_map = array();
+								foreach ( $pt_service->list() as $pt ) {
+									$pt_label_map[ (string) $pt['slug'] ] = (string) $pt['label'];
+								}
 								?>
-							<tr>
-								<td><?php echo esc_html( $user ? $user->display_name : '#' . $row['user_id'] ); ?></td>
-								<td>
-									<span class="wbgam-pill <?php echo (int) $row['points'] >= 0 ? 'wbgam-pill--active' : 'wbgam-pill--danger'; ?>">
-										<?php echo esc_html( ( (int) $row['points'] >= 0 ? '+' : '' ) . number_format_i18n( (int) $row['points'] ) ); ?>
-									</span>
-								</td>
-								<td><?php echo esc_html( $row_label ); ?></td>
-								<td><?php echo esc_html( (string) ( $row['note'] ?? '' ) ); ?></td>
-								<td><?php echo esc_html( date_i18n( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), strtotime( $row['created_at'] ) ) ); ?></td>
-							</tr>
-							<?php endforeach; ?>
-						</tbody>
-					</table>
+								<?php foreach ( $recent as $row ) : ?>
+									<?php
+									$user      = get_userdata( (int) $row['user_id'] );
+									$row_slug  = (string) ( $row['point_type'] ?? $pt_service->default_slug() );
+									$row_label = $pt_label_map[ $row_slug ] ?? $row_slug;
+									?>
+								<tr>
+									<td><?php echo esc_html( $user ? $user->display_name : '#' . $row['user_id'] ); ?></td>
+									<td>
+										<span class="wbgam-pill <?php echo (int) $row['points'] >= 0 ? 'wbgam-pill--active' : 'wbgam-pill--danger'; ?>">
+											<?php echo esc_html( ( (int) $row['points'] >= 0 ? '+' : '' ) . number_format_i18n( (int) $row['points'] ) ); ?>
+										</span>
+									</td>
+									<td><?php echo esc_html( $row_label ); ?></td>
+									<td><?php echo esc_html( (string) ( $row['note'] ?? '' ) ); ?></td>
+									<td><?php echo esc_html( wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), strtotime( (string) $row['created_at'] . ' UTC' ) ) ); ?></td>
+								</tr>
+								<?php endforeach; ?>
+							</tbody>
+						</table>
+					</div>
 				</div>
 			</div>
 			<?php else : ?>

@@ -1,28 +1,20 @@
 <?php
 /**
- * The site clock.
+ * The plugin clock: every stored moment is UTC, every window is read in the site calendar.
  *
- * Nearly every datetime column in this plugin is written with `current_time( 'mysql' )` -- the
- * SITE's wall clock, not UTC. wb_gam_points.created_at, wb_gam_kudos.created_at,
- * wb_gam_user_badges.earned_at, wb_gam_streaks: all site-local.
+ * The WordPress model (post_date_gmt): a datetime column holds UTC, written from PHP with
+ * `current_time( 'mysql', true )`, never SQL NOW() (the database server's zone varies by host).
+ * What a person means by "today", "this week" or "the last 7 days" is the SITE's calendar
+ * (Settings > General), so a window is worked out in the site zone and converted to the UTC instant
+ * the column can be compared with. Pure calendar keys (a streak's last active DATE, a cohort week)
+ * stay site-calendar strings.
  *
- * And nearly every "last N days" window in the plugin bounded those columns with
- * `gmdate( 'Y-m-d H:i:s', strtotime( "-7 days" ) )` -- which is UTC. Twenty-odd call sites, the same
- * mistake in each: a UTC bound against a site-local column, so every window was wrong by the site's
- * offset. Seven hours short in Los Angeles. On the analytics dashboard that meant a day holding 777
- * points rendered as an empty column, and the chart and the stat tiles disagreed with each other --
- * on any site not running UTC, which is most of them, and never on the developer's box, which is why
- * it survived so long.
+ *     $since = Clock::site_cutoff( '-7 days' );       // UTC bound: 7 days ago
+ *     $today = Clock::site_day_start( 'today' );      // UTC instant of the site's midnight
+ *     $day   = Clock::site_date( '-1 days' );         // site-calendar Y-m-d key
  *
- * It is not a hard fix. It is a fix that has to be made in one place, or it will be made in nineteen
- * places and missed in the twentieth. So: one function, one contract.
- *
- *     $since = Clock::site_cutoff( '-7 days' );   // bound a site-local column
- *     $since = gmdate( 'Y-m-d H:i:s', strtotime( '-7 days' ) );   // bound a UTC column
- *
- * If you find yourself writing the second form, be sure the column really is UTC (expires_at,
- * last_attempt_at, and the notifications queue are; almost nothing else is) and annotate it
- * `@clock-ok` with the reason. bin/check-clock-contract.sh enforces exactly this.
+ * Before 1.6.5 the plugin stored site-local wall-clock strings instead; DbUpgrader converts those
+ * rows once (card 10344291999). bin/check-clock-contract.sh enforces this contract.
  *
  * @package WB_Gamification
  * @since   1.6.4
@@ -33,80 +25,199 @@ namespace WBGam\Engine;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Site-clock helpers for bounding site-local datetime columns.
+ * UTC bounds for moment columns, resolved in the site calendar.
  *
  * @package WB_Gamification
  */
 final class Clock {
 
 	/**
-	 * A MySQL datetime, in the SITE's clock, offset by a relative modifier.
+	 * A UTC bound, offset by a relative modifier resolved in the SITE calendar.
 	 *
-	 * Use this for any bound compared against a column written with `current_time( 'mysql' )`.
+	 * "-1 month" or "monday this week" mean the site's month and week, so they are applied to the
+	 * site-zone "now" and the result is converted to UTC for comparison with a UTC column.
 	 *
-	 * How it works, since the combination looks odd at first glance: `current_time( 'timestamp' )`
-	 * returns the site's wall-clock time expressed as a Unix timestamp -- the "local read as UTC"
-	 * frame. `gmdate()` formats a timestamp without applying any further offset. So formatting the
-	 * former with the latter yields the site's wall clock as a string, which is precisely what
-	 * `current_time( 'mysql' )` writes into the column. Both sides of the comparison then agree.
-	 *
-	 * Using `date()` here instead would apply PHP's timezone (UTC under WordPress) a second time and
-	 * put the offset back in, which is the bug wearing a different hat.
-	 *
-	 * @param string $modifier A strtotime() relative modifier, e.g. '-7 days', '-1 month', 'monday this week'.
-	 * @return string MySQL datetime (Y-m-d H:i:s) in the site's timezone.
+	 * @param string $modifier A strtotime() relative modifier, e.g. '-7 days', 'monday this week'.
+	 * @return string MySQL datetime (Y-m-d H:i:s), UTC.
 	 */
 	public static function site_cutoff( string $modifier ): string {
-		// phpcs:ignore WordPress.DateTime.CurrentTimeTimestamp.Requested -- deliberate: this IS the local-as-UTC frame the columns are written in.
-		$now = (int) current_time( 'timestamp' );
-
-		$ts = strtotime( $modifier, $now );
-		if ( false === $ts ) {
-			// An unparseable modifier is a programming error, not a runtime condition. Falling back to
-			// "now" keeps the query valid and bounded rather than handing MySQL an empty string.
-			$ts = $now;
-		}
-
-		// @clock-ok: gmdate() applied to current_time('timestamp') is the SITE wall clock, by design.
-		// This is the one place in the plugin allowed to build a bound this way; see the class docblock.
-		return gmdate( 'Y-m-d H:i:s', $ts );
+		return self::utc( self::modify( $modifier ) );
 	}
 
 	/**
-	 * The START OF THE DAY, in the site's clock, offset by a relative modifier.
+	 * The UTC instant of the site's midnight, offset by a relative modifier.
 	 *
-	 * For windows that mean "since midnight N days ago" rather than "since this time N days ago" --
-	 * `gmdate( 'Y-m-d', strtotime( '-7 days' ) ) . ' 00:00:00'`, of which there were several.
+	 * "Since midnight 7 days ago" in the site calendar. Correct across DST: the day a clock change
+	 * lands on is 23 or 25 hours long, and the next midnight is computed, not added.
 	 *
-	 * @param string $modifier A strtotime() relative modifier, e.g. '-7 days'.
-	 * @return string MySQL datetime at 00:00:00 site-local.
+	 * @param string $modifier A strtotime() relative modifier, e.g. 'today', '-7 days', 'tomorrow'.
+	 * @return string MySQL datetime (Y-m-d H:i:s), UTC.
 	 */
-	public static function site_day_start( string $modifier ): string {
-		return substr( self::site_cutoff( $modifier ), 0, 10 ) . ' 00:00:00';
+	public static function site_day_start( string $modifier = 'today' ): string {
+		return self::utc( self::modify( $modifier )->setTime( 0, 0 ) );
 	}
 
 	/**
-	 * The current ISO week key (Y-W) in the SITE's clock.
+	 * A site-calendar date key (Y-m-d). Not a moment: compare it only with DATE columns and keys.
 	 *
-	 * The cohort tables key their rows by week, and the week a member is filed under has to be the
-	 * same week the query windows for. Building the KEY with gmdate( 'Y-W' ) while the WINDOW starts
-	 * at the site's Monday means that near a week boundary a member is written into one week and read
-	 * out of another.
+	 * @param string $modifier A strtotime() relative modifier, e.g. 'now', '-1 days'.
+	 * @return string
+	 */
+	public static function site_date( string $modifier = 'now' ): string {
+		return self::modify( $modifier )->format( 'Y-m-d' );
+	}
+
+	/**
+	 * The current site-calendar week key (Y-W) the cohort tables file members under.
 	 *
 	 * @return string
 	 */
 	public static function site_week(): string {
-		// @clock-ok: same construction as site_cutoff(); this is the site wall clock by design.
-		return gmdate( 'Y-W', (int) current_time( 'timestamp' ) ); // phpcs:ignore WordPress.DateTime.CurrentTimeTimestamp.Requested -- deliberate.
+		return self::site_now()->format( 'Y-W' );
 	}
 
 	/**
-	 * Today's date in the SITE's clock (Y-m-d).
+	 * SQL that shifts a UTC datetime column into site wall-clock time, for grouping by site day.
 	 *
+	 * Exact across DST: the offset is a CASE over the zone's transitions inside [$from, $to], so a
+	 * point earned at 23:30 site time on a DST day lands on that day, not the next.
+	 *
+	 * @param string $column Column reference, e.g. 'created_at' or 'p.created_at'.
+	 * @param int    $from   Earliest UTC timestamp the query covers.
+	 * @param int    $to     Latest UTC timestamp the query covers.
+	 * @return string SQL expression.
+	 */
+	public static function sql_utc_to_local( string $column, int $from, int $to ): string {
+		return 'DATE_ADD(' . self::column( $column ) . ', INTERVAL ' . self::offset_case( $column, $from, $to, false ) . ' SECOND)';
+	}
+
+	/**
+	 * SQL that converts a site wall-clock datetime column to UTC. Used once, by the storage migration.
+	 *
+	 * An ambiguous fall-back hour resolves to its first occurrence, as PHP does.
+	 *
+	 * @param string $column Column reference.
+	 * @param int    $from   Earliest UTC timestamp the rows can hold.
+	 * @param int    $to     Latest UTC timestamp the rows can hold.
+	 * @return string SQL expression.
+	 */
+	public static function sql_local_to_utc( string $column, int $from, int $to ): string {
+		return 'DATE_SUB(' . self::column( $column ) . ', INTERVAL ' . self::offset_case( $column, $from, $to, true ) . ' SECOND)';
+	}
+
+	/**
+	 * Whether the site zone is UTC for the whole span (the storage migration then has nothing to do).
+	 *
+	 * @param int $from Span start, UTC timestamp.
+	 * @param int $to   Span end, UTC timestamp.
+	 * @return bool
+	 */
+	public static function is_utc_site( int $from, int $to ): bool {
+		foreach ( self::offsets( $from, $to ) as $offset ) {
+			if ( 0 !== $offset['offset'] ) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	/**
+	 * The site-zone "now".
+	 *
+	 * @return \DateTimeImmutable
+	 */
+	private static function site_now(): \DateTimeImmutable {
+		// A true UTC epoch (gmt = true), read through current_time() so tests can pin "now".
+		return ( new \DateTimeImmutable( '@' . (int) current_time( 'timestamp', true ) ) )->setTimezone( wp_timezone() ); // phpcs:ignore WordPress.DateTime.CurrentTimeTimestamp.RequestedUTC -- gmt epoch, stubbable in tests.
+	}
+
+	/**
+	 * The site-zone "now" moved by a relative modifier; an unparseable modifier falls back to now.
+	 *
+	 * @param string $modifier Relative modifier.
+	 * @return \DateTimeImmutable
+	 */
+	private static function modify( string $modifier ): \DateTimeImmutable {
+		$now = self::site_now();
+		try {
+			$moved = $now->modify( $modifier );
+		} catch ( \Exception $e ) { // PHP 8.3+ throws DateMalformedStringException.
+			return $now;
+		}
+		return false === $moved ? $now : $moved;
+	}
+
+	/**
+	 * Format a moment as a UTC MySQL datetime.
+	 *
+	 * @param \DateTimeImmutable $at Moment.
 	 * @return string
 	 */
-	public static function site_date(): string {
-		// @clock-ok: same construction, same reason as site_cutoff().
-		return gmdate( 'Y-m-d', (int) current_time( 'timestamp' ) ); // phpcs:ignore WordPress.DateTime.CurrentTimeTimestamp.Requested -- deliberate.
+	private static function utc( \DateTimeImmutable $at ): string {
+		return $at->setTimezone( new \DateTimeZone( 'UTC' ) )->format( 'Y-m-d H:i:s' );
+	}
+
+	/**
+	 * Guard a column reference before it is concatenated into SQL.
+	 *
+	 * @param string $column Column reference.
+	 * @return string
+	 * @throws \InvalidArgumentException When the reference is not a plain column name.
+	 */
+	private static function column( string $column ): string {
+		if ( 1 !== preg_match( '/^[a-z0-9_.]+$/i', $column ) ) {
+			throw new \InvalidArgumentException( 'Clock: invalid column reference.' );
+		}
+		return $column;
+	}
+
+	/**
+	 * The zone's offsets over a span: [ [ 'ts' => int, 'offset' => int ], ... ], first entry at $from.
+	 *
+	 * @param int $from Span start, UTC timestamp.
+	 * @param int $to   Span end, UTC timestamp.
+	 * @return array<int, array{ts:int, offset:int}>
+	 */
+	private static function offsets( int $from, int $to ): array {
+		$zone        = wp_timezone();
+		$transitions = $zone->getTransitions( $from, max( $from, $to ) );
+		if ( ! $transitions ) { // A fixed-offset zone such as "+05:30".
+			return array(
+				array(
+					'ts'     => $from,
+					'offset' => $zone->getOffset( new \DateTimeImmutable( '@' . $from ) ),
+				),
+			);
+		}
+		return array_map(
+			static fn( array $t ): array => array(
+				'ts'     => (int) $t['ts'],
+				'offset' => (int) $t['offset'],
+			),
+			$transitions
+		);
+	}
+
+	/**
+	 * The offset (seconds) as SQL: a constant, or a CASE over the span's transition boundaries.
+	 *
+	 * @param string $column   Column reference (already guarded).
+	 * @param int    $from     Span start.
+	 * @param int    $to       Span end.
+	 * @param bool   $is_local Whether the column holds site wall-clock values (boundaries shift).
+	 * @return string
+	 */
+	private static function offset_case( string $column, int $from, int $to, bool $is_local ): string {
+		$offsets = self::offsets( $from, $to );
+		if ( 1 === count( $offsets ) ) {
+			return (string) $offsets[0]['offset'];
+		}
+		$sql = 'CASE';
+		for ( $i = 1, $n = count( $offsets ); $i < $n; $i++ ) {
+			// A local column crosses a transition at the wall-clock time the change happens.
+			$edge = $offsets[ $i ]['ts'] + ( $is_local ? $offsets[ $i - 1 ]['offset'] : 0 );
+			$sql .= " WHEN {$column} < '" . gmdate( 'Y-m-d H:i:s', $edge ) . "' THEN " . $offsets[ $i - 1 ]['offset'];
+		}
+		return $sql . ' ELSE ' . $offsets[ $n - 1 ]['offset'] . ' END';
 	}
 }

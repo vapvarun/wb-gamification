@@ -44,8 +44,8 @@ return [
 
 		[
 			'id'             => 'tec_rsvp_registered',
-			'label'          => 'RSVP to an event',
-			'description'    => 'Awarded when a member RSVPs to any event.',
+			'label'          => static fn(): string => __( 'RSVP to an event', 'wb-gamification' ),
+			'description'    => static fn(): string => __( 'Awarded when a member RSVPs to any event.', 'wb-gamification' ),
 			'hook'           => 'tribe_tickets_rsvp_attendee_created',
 			'user_callback'  => function ( int $attendee_id, int $post_id, int $order_id, string $status ): int {
 				// Only award on "going" RSVPs.
@@ -64,8 +64,8 @@ return [
 
 		[
 			'id'             => 'tec_ticket_purchased',
-			'label'          => 'Purchase an event ticket',
-			'description'    => 'Awarded when a member purchases a ticket to any event.',
+			'label'          => static fn(): string => __( 'Purchase an event ticket', 'wb-gamification' ),
+			'description'    => static fn(): string => __( 'Awarded when a member purchases a ticket to any event.', 'wb-gamification' ),
 			'hook'           => 'event_tickets_after_save_ticket',
 			'user_callback'  => function ( int $post_id, $ticket, array $raw_data, string $class_name ): int {
 				return get_current_user_id();
@@ -79,8 +79,8 @@ return [
 
 		[
 			'id'             => 'tec_event_checked_in',
-			'label'          => 'Check in to an event',
-			'description'    => 'Awarded when an attendee checks in at the event.',
+			'label'          => static fn(): string => __( 'Check in to an event', 'wb-gamification' ),
+			'description'    => static fn(): string => __( 'Awarded when an attendee checks in at the event.', 'wb-gamification' ),
 			'hook'           => 'event_tickets_checkin',
 			'user_callback'  => function ( int $attendee_id ): int {
 				$meta = get_post_meta( $attendee_id, '_tribe_tickets_attendee_user_id', true );

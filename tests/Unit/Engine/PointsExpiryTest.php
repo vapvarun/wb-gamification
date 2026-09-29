@@ -13,12 +13,15 @@ namespace WBGam\Tests\Unit\Engine;
 use Brain\Monkey;
 use Brain\Monkey\Functions;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use WBGam\Engine\PointsExpiry;
 
-/**
- * @coversDefaultClass \WBGam\Engine\PointsExpiry
- */
+#[CoversClass( \WBGam\Engine\PointsExpiry::class )]
+#[CoversMethod( \WBGam\Engine\PointsExpiry::class, 'enabled' )]
+#[CoversMethod( \WBGam\Engine\PointsExpiry::class, 'run' )]
 class PointsExpiryTest extends TestCase {
 
 	use MockeryPHPUnitIntegration;
@@ -33,28 +36,19 @@ class PointsExpiryTest extends TestCase {
 		parent::tearDown();
 	}
 
-	/**
-	 * @test
-	 * @covers ::enabled
-	 */
+	#[Test]
 	public function decay_is_off_by_default(): void {
 		Functions\when( 'get_option' )->justReturn( 0 );
 		$this->assertFalse( PointsExpiry::enabled() );
 	}
 
-	/**
-	 * @test
-	 * @covers ::enabled
-	 */
+	#[Test]
 	public function decay_is_on_when_the_option_is_set(): void {
 		Functions\when( 'get_option' )->justReturn( 1 );
 		$this->assertTrue( PointsExpiry::enabled() );
 	}
 
-	/**
-	 * @test
-	 * @covers ::run
-	 */
+	#[Test]
 	public function a_disabled_run_is_a_noop(): void {
 		Functions\when( 'get_option' )->justReturn( 0 );
 		// run() returns before touching the DB when disabled; no $wpdb needed.

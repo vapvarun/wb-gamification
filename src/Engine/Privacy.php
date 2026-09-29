@@ -101,14 +101,38 @@ final class Privacy {
 			return true;
 		}
 
-		// Site-level kill switch.
-		if ( ! (bool) get_option( 'wb_gam_profile_public_enabled', true ) ) {
-			return false;
-		}
-
-		// Member-level toggle — opt-OUT model (default ON, see
+		// Site-level switch, then the member-level toggle — opt-OUT model (default ON, see
 		// ProfilePage::is_publicly_visible). Only an explicit '0' is private.
-		return '0' !== (string) get_user_meta( $target_id, 'wb_gam_profile_public', true );
+		$allowed = (bool) get_option( 'wb_gam_profile_public_enabled', true )
+			&& '0' !== (string) get_user_meta( $target_id, 'wb_gam_profile_public', true );
+
+		/**
+		 * Filter whether a viewer may see a member's gamification profile data.
+		 *
+		 * A host community that owns member profiles (BuddyNext) answers this with its own
+		 * profile-privacy check, so one privacy setting governs points, badges and rank there.
+		 * Self and administrators are decided before this filter and always allowed.
+		 *
+		 * @since 1.6.5
+		 * @param bool $allowed   Gamification's own answer (site switch + member toggle).
+		 * @param int  $target_id Member whose data would be shown.
+		 * @param int  $viewer_id Viewer (0 for a visitor).
+		 */
+		return (bool) apply_filters( 'wb_gam_can_view_public_profile', $allowed, $target_id, (int) $viewer_id );
+	}
+
+	/**
+	 * Whether a community plugin decides profile visibility (see wb_gam_can_view_public_profile).
+	 *
+	 * When one does, gamification's own public-profile switches do nothing, so the admin and
+	 * the setup wizard say so instead of offering them.
+	 *
+	 * @since 1.6.5
+	 *
+	 * @return bool
+	 */
+	public static function host_decides(): bool {
+		return has_filter( 'wb_gam_can_view_public_profile' ) !== false;
 	}
 
 	/**
@@ -292,7 +316,7 @@ final class Privacy {
 					),
 					array(
 						'name'  => __( 'Date', 'wb-gamification' ),
-						'value' => $row['created_at'],
+						'value' => self::site_time( $row['created_at'] ),
 					),
 				),
 			);
@@ -330,7 +354,7 @@ final class Privacy {
 						),
 						array(
 							'name'  => __( 'Earned At', 'wb-gamification' ),
-							'value' => $row['earned_at'],
+							'value' => self::site_time( $row['earned_at'] ),
 						),
 					),
 				);
@@ -447,6 +471,9 @@ final class Privacy {
 				if ( '' === $value || null === $value ) {
 					continue;
 				}
+				if ( in_array( $key, array( 'wb_gam_decayed_at', 'wb_gam_last_retention_nudge' ), true ) ) {
+					$value = self::site_time( $value ); // Stored in UTC.
+				}
 				$meta_rows[] = array(
 					'name'  => $label,
 					'value' => is_scalar( $value ) ? (string) $value : wp_json_encode( $value ),
@@ -501,11 +528,11 @@ final class Privacy {
 						),
 						array(
 							'name'  => __( 'Submitted', 'wb-gamification' ),
-							'value' => $row['created_at'],
+							'value' => self::site_time( $row['created_at'] ),
 						),
 						array(
 							'name'  => __( 'Reviewed', 'wb-gamification' ),
-							'value' => (string) ( $row['reviewed_at'] ?? '' ),
+							'value' => self::site_time( $row['reviewed_at'] ?? '' ),
 						),
 					),
 				);
@@ -570,7 +597,7 @@ final class Privacy {
 					),
 					array(
 						'name'  => __( 'Date', 'wb-gamification' ),
-						'value' => $row['created_at'],
+						'value' => self::site_time( $row['created_at'] ),
 					),
 				),
 			);
@@ -729,7 +756,8 @@ final class Privacy {
 		// Bust the per-type object-cache key matching what get_total reads. Without this, get_total
 		// returns the cached pre-erase balance for up to the cache TTL after the user's data is gone.
 		foreach ( $pt_slugs as $slug ) {
-			wp_cache_delete( 'wb_gam_total_' . $user_id . '_' . $slug, 'wb_gamification' );
+			wp_cache_delete( PointsEngine::cache_key_total( $user_id, $slug ), 'wb_gamification' );
+			wp_cache_delete( PointsEngine::cache_key_earned( $user_id, $slug ), 'wb_gamification' );
 		}
 
 		do_action( 'wb_gam_user_data_erased', $user_id );
@@ -748,5 +776,15 @@ final class Privacy {
 				: array(),
 			'done'           => true,
 		);
+	}
+
+	/**
+	 * A stored UTC datetime as site time for the export; empty stays empty.
+	 *
+	 * @param mixed $utc UTC Y-m-d H:i:s value.
+	 * @return string
+	 */
+	private static function site_time( $utc ): string {
+		return is_string( $utc ) && '' !== $utc ? get_date_from_gmt( $utc ) : '';
 	}
 }

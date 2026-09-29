@@ -77,6 +77,7 @@ EXPECTED_GATES=(
   bin/check-boot-invariants.sh
   bin/check-badge-condition-contract.sh
   bin/check-clock-contract.sh
+  bin/check-motion-tokens.sh
   bin/run-journeys.sh
 )
 
@@ -327,6 +328,13 @@ fi
 # box, which is exactly why it kept shipping.
 if [ -x bin/check-clock-contract.sh ]; then
   run_stage "2.15" "Clock contract (no unannotated NOW())" bash bin/check-clock-contract.sh
+fi
+
+# 2.16 — Motion tokens. The popup family shares one locked motion scale (design-tokens.css),
+# so a raw duration or cubic-bezier in component CSS is a surface that drifts from the rest.
+# Baseline-driven; refresh with bin/check-motion-tokens.sh --update-baseline.
+if [ -x bin/check-motion-tokens.sh ]; then
+  run_stage "2.16" "Motion tokens (no new raw durations/easings)" bash bin/check-motion-tokens.sh
 fi
 
 # ─── 3.x — Manifest freshness ────────────────────────────────────────────────

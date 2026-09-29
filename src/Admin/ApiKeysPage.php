@@ -56,7 +56,7 @@ final class ApiKeysPage {
 		wp_enqueue_script(
 			'wb-gam-admin-rest-utils',
 			plugins_url( 'assets/js/admin-rest-utils.js', WB_GAM_FILE ),
-			array(),
+			array( 'wb-gam-dialog', 'wb-gam-toast-core' ),
 			WB_GAM_VERSION,
 			true
 		);
@@ -221,46 +221,48 @@ final class ApiKeysPage {
 					<h3 class="wbgam-card-title"><?php esc_html_e( 'Active Keys', 'wb-gamification' ); ?></h3>
 				</div>
 				<div class="wbgam-card-body wbgam-card-body--flush">
-					<table class="wbgam-table">
-						<thead>
-							<tr>
-								<th><?php esc_html_e( 'Label', 'wb-gamification' ); ?></th>
-								<th><?php esc_html_e( 'Site ID', 'wb-gamification' ); ?></th>
-								<th><?php esc_html_e( 'Key (prefix)', 'wb-gamification' ); ?></th>
-								<th><?php esc_html_e( 'Created', 'wb-gamification' ); ?></th>
-								<th><?php esc_html_e( 'Last Used', 'wb-gamification' ); ?></th>
-								<th><?php esc_html_e( 'Status', 'wb-gamification' ); ?></th>
-								<th><?php esc_html_e( 'Actions', 'wb-gamification' ); ?></th>
-							</tr>
-						</thead>
-						<tbody data-wb-gam-api-keys-tbody>
-							<?php
-							foreach ( $keys as $row ) :
-								$preview = $row['key_prefix'] . '…' . $row['key_suffix'];
-								?>
-								<tr data-key-preview="<?php echo esc_attr( $preview ); ?>" data-key-id="<?php echo esc_attr( (string) $row['id'] ); ?>">
-									<td><strong><?php echo esc_html( $row['label'] ); ?></strong></td>
-									<td><code><?php echo esc_html( '' !== $row['site_id'] ? $row['site_id'] : '—' ); ?></code></td>
-									<td><code><?php echo esc_html( $preview ); ?></code></td>
-									<td><?php echo esc_html( $row['created_at'] ); ?></td>
-									<td><?php echo esc_html( $row['last_used'] ?: '—' ); ?></td>
-									<td>
-										<?php if ( 1 === (int) $row['is_active'] ) : ?>
-											<span class="wbgam-pill wbgam-pill--active"><?php esc_html_e( 'Active', 'wb-gamification' ); ?></span>
-										<?php else : ?>
-											<span class="wbgam-pill wbgam-pill--danger"><?php esc_html_e( 'Revoked', 'wb-gamification' ); ?></span>
-										<?php endif; ?>
-									</td>
-									<td>
-										<?php if ( 1 === (int) $row['is_active'] ) : ?>
-											<button type="button" class="wbgam-btn wbgam-btn--sm wbgam-btn--secondary" data-wb-gam-api-key-action="revoke"><?php esc_html_e( 'Revoke', 'wb-gamification' ); ?></button>
-										<?php endif; ?>
-										<button type="button" class="wbgam-btn wbgam-btn--sm wbgam-btn--danger wbgam-ms-xs" data-wb-gam-api-key-action="delete"><?php esc_html_e( 'Delete', 'wb-gamification' ); ?></button>
-									</td>
+					<div class="wbgam-table-scroll">
+						<table class="wbgam-table">
+							<thead>
+								<tr>
+									<th><?php esc_html_e( 'Label', 'wb-gamification' ); ?></th>
+									<th><?php esc_html_e( 'Site ID', 'wb-gamification' ); ?></th>
+									<th><?php esc_html_e( 'Key (prefix)', 'wb-gamification' ); ?></th>
+									<th><?php esc_html_e( 'Created', 'wb-gamification' ); ?></th>
+									<th><?php esc_html_e( 'Last Used', 'wb-gamification' ); ?></th>
+									<th><?php esc_html_e( 'Status', 'wb-gamification' ); ?></th>
+									<th><?php esc_html_e( 'Actions', 'wb-gamification' ); ?></th>
 								</tr>
-							<?php endforeach; ?>
-						</tbody>
-					</table>
+							</thead>
+							<tbody data-wb-gam-api-keys-tbody>
+								<?php
+								foreach ( $keys as $row ) :
+									$preview = $row['key_prefix'] . '…' . $row['key_suffix'];
+									?>
+									<tr data-key-preview="<?php echo esc_attr( $preview ); ?>" data-key-id="<?php echo esc_attr( (string) $row['id'] ); ?>">
+										<td><strong><?php echo esc_html( $row['label'] ); ?></strong></td>
+										<td><code><?php echo esc_html( '' !== $row['site_id'] ? $row['site_id'] : '—' ); ?></code></td>
+										<td><code><?php echo esc_html( $preview ); ?></code></td>
+										<td><?php echo esc_html( get_date_from_gmt( (string) $row['created_at'], get_option( 'date_format' ) . ' ' . get_option( 'time_format' ) ) ); ?></td>
+										<td><?php echo esc_html( $row['last_used'] ? get_date_from_gmt( (string) $row['last_used'], get_option( 'date_format' ) . ' ' . get_option( 'time_format' ) ) : '—' ); ?></td>
+										<td>
+											<?php if ( 1 === (int) $row['is_active'] ) : ?>
+												<span class="wbgam-pill wbgam-pill--active"><?php esc_html_e( 'Active', 'wb-gamification' ); ?></span>
+											<?php else : ?>
+												<span class="wbgam-pill wbgam-pill--danger"><?php esc_html_e( 'Revoked', 'wb-gamification' ); ?></span>
+											<?php endif; ?>
+										</td>
+										<td>
+											<?php if ( 1 === (int) $row['is_active'] ) : ?>
+												<button type="button" class="wbgam-btn wbgam-btn--sm wbgam-btn--secondary" data-wb-gam-api-key-action="revoke"><?php esc_html_e( 'Revoke', 'wb-gamification' ); ?></button>
+											<?php endif; ?>
+											<button type="button" class="wbgam-btn wbgam-btn--sm wbgam-btn--danger wbgam-ms-xs" data-wb-gam-api-key-action="delete"><?php esc_html_e( 'Delete', 'wb-gamification' ); ?></button>
+										</td>
+									</tr>
+								<?php endforeach; ?>
+							</tbody>
+						</table>
+					</div>
 				</div>
 			</div>
 

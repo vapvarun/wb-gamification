@@ -135,6 +135,7 @@ class DoctorCommand {
 		$this->check_default_levels();
 		$this->check_default_badges();
 		$this->check_badge_expiry_integrity();
+		$this->check_utc_storage();
 		$this->check_actions();
 		$this->check_core_wp_actions();
 		$this->check_duplicate_hooks();
@@ -367,6 +368,33 @@ class DoctorCommand {
 			WP_CLI::line( '  → Repairing expires_at (NULL, or earned_at + validity_days where the badge defines a window)...' );
 			$repaired = \WBGam\Engine\BadgeEngine::repair_zero_date_expiry();
 			WP_CLI::success( '  ' . $repaired . ' rows repaired; earned-badge caches flushed.' );
+		}
+	}
+
+	/**
+	 * The one-time conversion of stored timestamps to UTC (1.6.5) has finished; --fix drains it now.
+	 */
+	private function check_utc_storage(): void {
+		$this->section( 'UTC Timestamp Storage' );
+
+		if ( \WBGam\Engine\UtcStorageMigration::is_done() ) {
+			$this->pass( 'All stored timestamps are UTC' );
+			return;
+		}
+
+		$left = \WBGam\Engine\UtcStorageMigration::progress();
+		$this->warn( 'Converting stored timestamps to UTC in the background: ' . array_sum( $left ) . ' rows left (' . implode( ', ', array_map( static fn( $t, $n ) => "{$t} {$n}", array_keys( $left ), $left ) ) . ')' );
+		if ( $this->fix ) {
+			WP_CLI::line( '  → Finishing the conversion now...' );
+			while ( ! \WBGam\Engine\UtcStorageMigration::is_done() ) {
+				$before = array_sum( \WBGam\Engine\UtcStorageMigration::progress() );
+				\WBGam\Engine\UtcStorageMigration::convert_batch();
+				if ( ! \WBGam\Engine\UtcStorageMigration::is_done() && array_sum( \WBGam\Engine\UtcStorageMigration::progress() ) >= $before ) {
+					$this->fail( 'A chunk failed to convert; see the plugin log. The background job retries it.' );
+					return;
+				}
+			}
+			WP_CLI::success( '  All stored timestamps are UTC.' );
 		}
 	}
 
@@ -883,6 +911,8 @@ class DoctorCommand {
 
 		remove_filter( 'wb_gam_leaderboard_scope_user_ids', $resolve_scope, 99 );
 
+		$failed += $this->check_leaderboard_paging();
+
 		if ( empty( $scope_members ) ) {
 			// No members with points, so the scoped paths resolved to nobody and short-circuited.
 			// Say so, rather than printing a pass that means nothing.
@@ -893,6 +923,70 @@ class DoctorCommand {
 		if ( 0 === $failed ) {
 			$this->pass( count( $paths ) . ' leaderboard query paths execute without a database error' );
 		}
+	}
+
+	/**
+	 * Walk a board by cursor and check the walk against the independent oracle.
+	 *
+	 * Paging has three ways to be quietly wrong: a member served twice, a member skipped, and a total
+	 * that promises a page the board does not have. So the walk must hold each eligible member exactly
+	 * once, and the pager's total must equal the number of members the walk served.
+	 *
+	 * The week board is ledger-based, so it is also compared with the ledger oracle (bounded at
+	 * SNAPSHOT_DEPTH ranks by design). The all-time board reads the materialised totals, so the ledger
+	 * is NOT its oracle: when a member's total drifts from the ledger, check_totals_match_ledger()
+	 * reports it once, and this check must not report the same drift a second time as a paging bug.
+	 * It walks at most 40 pages; a board bigger than that still gets the duplicate check.
+	 *
+	 * @return int Number of failures raised.
+	 */
+	private function check_leaderboard_paging(): int {
+		$failed = 0;
+
+		foreach ( array( 'all', 'week' ) as $period ) {
+			$ids    = array();
+			$cursor = '';
+			$pages  = 0;
+
+			do {
+				$page = LeaderboardEngine::get_leaderboard_page( $period, 25, '', 0, '', $cursor );
+				if ( ! empty( $page['invalid_cursor'] ) ) {
+					$this->fail( 'Leaderboard paging - ' . $period . ': the engine rejected its own next_cursor.' );
+					++$failed;
+					break;
+				}
+				foreach ( $page['rows'] as $row ) {
+					$ids[] = (int) $row['user_id'];
+				}
+				$cursor = $page['next_cursor'];
+				++$pages;
+			} while ( $page['has_more'] && $pages < 40 );
+
+			$dupes = count( $ids ) - count( array_unique( $ids ) );
+			$total = LeaderboardEngine::get_total( $period );
+
+			if ( $dupes > 0 ) {
+				$this->fail( sprintf( 'Leaderboard paging - %s: %d member(s) were served on more than one page.', $period, $dupes ) );
+				++$failed;
+			}
+			if ( $pages < 40 && count( $ids ) !== $total ) {
+				$this->fail( sprintf( 'Leaderboard paging - %s: the walk served %d members but the pager total is %d (a member was skipped, or the total counts someone the board never shows).', $period, count( $ids ), $total ) );
+				++$failed;
+			}
+			if ( 'week' === $period ) {
+				$eligible = min( LeaderboardEngine::SNAPSHOT_DEPTH, self::count_eligible_members( 'week' ) );
+				if ( $total !== $eligible ) {
+					$this->fail( sprintf( 'Leaderboard paging - week: the pager total is %d but %d members are eligible.', $total, $eligible ) );
+					++$failed;
+				}
+			}
+		}
+
+		if ( 0 === $failed ) {
+			$this->pass( 'Leaderboard paging: the all-time and weekly walks serve every member once, and the pager total matches the walk' );
+		}
+
+		return $failed;
 	}
 
 	/**
@@ -929,11 +1023,13 @@ class DoctorCommand {
 		// and that is the row that put a member on one board and not the other.
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$drifted = $wpdb->get_results(
-			"SELECT t.user_id, t.point_type, t.total AS totals_says, COALESCE( l.led, 0 ) AS ledger_says
+			"SELECT t.user_id, t.point_type, t.total AS totals_says, COALESCE( l.led, 0 ) AS ledger_says,
+			        t.earned AS earned_says, COALESCE( l.earned, 0 ) AS ledger_earned
 			   FROM {$totals} t
-			   LEFT JOIN ( SELECT user_id, point_type, SUM(points) led FROM {$points} GROUP BY user_id, point_type ) l
+			   LEFT JOIN ( SELECT user_id, point_type, SUM(points) led, SUM( IF( is_spend = 0, points, 0 ) ) earned
+			                 FROM {$points} GROUP BY user_id, point_type ) l
 			          ON l.user_id = t.user_id AND l.point_type = t.point_type
-			  WHERE t.total <> COALESCE( l.led, 0 )
+			  WHERE t.total <> COALESCE( l.led, 0 ) OR t.earned <> COALESCE( l.earned, 0 )
 			  ORDER BY ABS( t.total - COALESCE( l.led, 0 ) ) DESC",
 			ARRAY_A
 		);
@@ -976,7 +1072,10 @@ class DoctorCommand {
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$wpdb->update(
 				$totals,
-				array( 'total' => (int) $row['ledger_says'] ),
+				array(
+					'total'  => (int) $row['ledger_says'],
+					'earned' => (int) $row['ledger_earned'],
+				),
 				array(
 					'user_id'    => (int) $row['user_id'],
 					'point_type' => (string) $row['point_type'],
@@ -1045,7 +1144,7 @@ class DoctorCommand {
 					SELECT p.user_id
 					  FROM {$wpdb->prefix}wb_gam_points p
 					  JOIN {$wpdb->users} u ON u.ID = p.user_id
-					 WHERE p.point_type = %s {$where} {$excl}
+					 WHERE p.point_type = %s AND p.is_spend = 0 {$where} {$excl}
 					   AND NOT EXISTS ( SELECT 1 FROM {$wpdb->prefix}wb_gam_member_prefs mp
 					                     WHERE mp.user_id = p.user_id AND mp.leaderboard_opt_out = 1 )
 					 GROUP BY p.user_id

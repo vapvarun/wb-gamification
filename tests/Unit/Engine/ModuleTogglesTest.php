@@ -12,12 +12,15 @@ namespace WBGam\Tests\Unit\Engine;
 use Brain\Monkey;
 use Brain\Monkey\Functions;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use WBGam\Engine\ModuleToggles;
 
-/**
- * @coversDefaultClass \WBGam\Engine\ModuleToggles
- */
+#[CoversClass( \WBGam\Engine\ModuleToggles::class )]
+#[CoversMethod( \WBGam\Engine\ModuleToggles::class, 'enabled' )]
+#[CoversMethod( \WBGam\Engine\ModuleToggles::class, 'modules' )]
 class ModuleTogglesTest extends TestCase {
 
 	use MockeryPHPUnitIntegration;
@@ -34,30 +37,21 @@ class ModuleTogglesTest extends TestCase {
 		parent::tearDown();
 	}
 
-	/**
-	 * @test
-	 * @covers ::enabled
-	 */
+	#[Test]
 	public function modules_are_enabled_by_default(): void {
 		Functions\when( 'get_option' )->justReturn( array() );
 		$this->assertTrue( ModuleToggles::enabled( 'kudos' ) );
 		$this->assertTrue( ModuleToggles::enabled( 'redemption' ) );
 	}
 
-	/**
-	 * @test
-	 * @covers ::enabled
-	 */
+	#[Test]
 	public function an_explicit_zero_disables_only_that_module(): void {
 		Functions\when( 'get_option' )->justReturn( array( 'redemption' => '0' ) );
 		$this->assertFalse( ModuleToggles::enabled( 'redemption' ) );
 		$this->assertTrue( ModuleToggles::enabled( 'kudos' ) );
 	}
 
-	/**
-	 * @test
-	 * @covers ::enabled
-	 */
+	#[Test]
 	public function the_filter_can_force_a_module_off(): void {
 		Functions\when( 'get_option' )->justReturn( array() );
 		Functions\when( 'apply_filters' )->alias(
@@ -69,10 +63,7 @@ class ModuleTogglesTest extends TestCase {
 		$this->assertTrue( ModuleToggles::enabled( 'kudos' ) );
 	}
 
-	/**
-	 * @test
-	 * @covers ::modules
-	 */
+	#[Test]
 	public function the_module_map_covers_the_optional_modules(): void {
 		$slugs = array_keys( ModuleToggles::modules() );
 		$this->assertContains( 'kudos', $slugs );

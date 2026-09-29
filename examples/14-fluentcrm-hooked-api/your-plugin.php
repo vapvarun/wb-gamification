@@ -72,7 +72,7 @@ function yourplugin_register_fluentcrm_triggers(): void {
 			'user_callback'  => 'yourplugin_fluentcrm_user_id',
 			'default_points' => 10,
 			'category'       => 'fluentcrm',
-			'icon'           => 'dashicons-tag',
+			'icon'           => 'icon-tag',
 			'repeatable'     => true,
 			// One award per tag-change burst is plenty; tune to taste.
 			'cooldown'       => 60,
@@ -90,7 +90,7 @@ function yourplugin_register_fluentcrm_triggers(): void {
 			'user_callback'  => 'yourplugin_fluentcrm_user_id',
 			'default_points' => 5,
 			'category'       => 'fluentcrm',
-			'icon'           => 'dashicons-tag',
+			'icon'           => 'icon-tag',
 			'repeatable'     => true,
 			'cooldown'       => 60,
 		)

@@ -137,6 +137,30 @@ class RedemptionController extends WP_REST_Controller {
 			$this->namespace,
 			'/' . $this->rest_base,
 			array(
+				// The fulfilment queue: every member's redemptions, for staff and integrations.
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'list_redemptions' ),
+					'permission_callback' => array( $this, 'admin_check' ),
+					'args'                => array(
+						'status'   => array(
+							'type'    => 'string',
+							'enum'    => array( '', 'pending', 'pending_fulfillment', 'fulfilled', 'refunded' ),
+							'default' => '',
+						),
+						'page'     => array(
+							'type'    => 'integer',
+							'minimum' => 1,
+							'default' => 1,
+						),
+						'per_page' => array(
+							'type'    => 'integer',
+							'minimum' => 1,
+							'maximum' => 100,
+							'default' => 20,
+						),
+					),
+				),
 				array(
 					'methods'             => WP_REST_Server::CREATABLE,
 					'callback'            => array( $this, 'redeem' ),
@@ -162,6 +186,44 @@ class RedemptionController extends WP_REST_Controller {
 					'methods'             => WP_REST_Server::READABLE,
 					'callback'            => array( $this, 'get_my_history' ),
 					'permission_callback' => array( $this, 'require_logged_in' ),
+				),
+			)
+		);
+
+		// Lifecycle transitions (admin): mark a redemption fulfilled or refund it.
+		$lifecycle_args = array(
+			'id' => array(
+				'type'    => 'integer',
+				'minimum' => 1,
+			),
+		);
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/(?P<id>[\d]+)/fulfill',
+			array(
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'fulfill' ),
+					'permission_callback' => array( $this, 'admin_check' ),
+					'args'                => $lifecycle_args,
+				),
+			)
+		);
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/(?P<id>[\d]+)/refund',
+			array(
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'refund' ),
+					'permission_callback' => array( $this, 'admin_check' ),
+					'args'                => $lifecycle_args + array(
+						'note' => array(
+							'type'              => 'string',
+							'default'           => '',
+							'sanitize_callback' => 'sanitize_text_field',
+						),
+					),
 				),
 			)
 		);
@@ -235,8 +297,9 @@ class RedemptionController extends WP_REST_Controller {
 					? absint( $request['stock'] )
 					: null,
 				'is_active'     => 1,
+				'created_at'    => current_time( 'mysql', true ),
 			),
-			array( '%s', '%s', '%d', '%s', '%s', '%s', '%d', '%d' )
+			array( '%s', '%s', '%d', '%s', '%s', '%s', '%d', '%d', '%s' )
 		);
 
 		if ( ! $inserted ) {
@@ -366,6 +429,43 @@ class RedemptionController extends WP_REST_Controller {
 		return rest_ensure_response( RedemptionEngine::get_user_redemptions( get_current_user_id() ) );
 	}
 
+	/**
+	 * Mark a redemption fulfilled (admin) — the reward has been delivered.
+	 *
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return WP_REST_Response|WP_Error Response on success, WP_Error on failure.
+	 */
+	public function fulfill( $request ): WP_REST_Response|WP_Error {
+		$result = RedemptionEngine::fulfill( (int) $request['id'] );
+		if ( ! $result['success'] ) {
+			$status = 'not_found' === ( $result['reason'] ?? '' ) ? 404 : 409;
+			return new WP_Error(
+				'wb_gam_redemption_' . ( $result['reason'] ?? 'fulfill_failed' ),
+				__( 'This redemption cannot be fulfilled.', 'wb-gamification' ),
+				array( 'status' => $status )
+			);
+		}
+		return rest_ensure_response( $result );
+	}
+
+	/**
+	 * Refund a redemption (admin) — credit points back and restore stock.
+	 *
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return WP_REST_Response|WP_Error Response on success, WP_Error on failure.
+	 */
+	public function refund( $request ): WP_REST_Response|WP_Error {
+		$result = RedemptionEngine::refund( (int) $request['id'], (string) ( $request['note'] ?? '' ) );
+		if ( ! $result['success'] ) {
+			return new WP_Error(
+				'wb_gam_redemption_' . ( $result['reason'] ?? 'refund_failed' ),
+				__( 'This redemption cannot be refunded.', 'wb-gamification' ),
+				array( 'status' => 'not_found' === ( $result['reason'] ?? '' ) ? 404 : 409 )
+			);
+		}
+		return rest_ensure_response( $result );
+	}
+
 	// ── Helpers ──────────────────────────────────────────────────────────────
 
 	/**
@@ -411,9 +511,13 @@ class RedemptionController extends WP_REST_Controller {
 					'type'        => 'integer',
 					'description' => 'Reward item ID.',
 				),
-				'item_title'  => array(
+				'title'       => array(
 					'type'        => 'string',
-					'description' => 'Reward item name.',
+					'description' => 'Reward name ("Removed reward" once the reward is deleted).',
+				),
+				'reward_type' => array(
+					'type'        => 'string',
+					'description' => 'Reward type (empty once the reward is deleted).',
 				),
 				'points_cost' => array(
 					'type'        => 'integer',
@@ -427,10 +531,9 @@ class RedemptionController extends WP_REST_Controller {
 					'type'        => 'string',
 					'description' => 'Generated coupon code.',
 				),
-				'redeemed_at' => array(
+				'created_at'  => array(
 					'type'        => 'string',
-					'format'      => 'date-time',
-					'description' => 'When the redemption occurred.',
+					'description' => 'When the member redeemed it (UTC, Y-m-d H:i:s).',
 				),
 			),
 		);
@@ -497,6 +600,21 @@ class RedemptionController extends WP_REST_Controller {
 		return \WBGam\Engine\Capabilities::user_can( 'wb_gam_manage_rewards' )
 			? true
 			: new WP_Error( 'rest_forbidden', __( 'You do not have permission to manage rewards.', 'wb-gamification' ), array( 'status' => 403 ) );
+	}
+
+	/**
+	 * GET /redemptions - every member's redemptions, newest first, paged, optionally by status.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response
+	 */
+	public function list_redemptions( WP_REST_Request $request ): WP_REST_Response {
+		$per_page = (int) $request['per_page'];
+		$result   = RedemptionEngine::list_redemptions( (string) $request['status'], (int) $request['page'], $per_page );
+		$response = rest_ensure_response( $result['items'] );
+		$response->header( 'X-WP-Total', (string) $result['total'] );
+		$response->header( 'X-WP-TotalPages', (string) max( 1, (int) ceil( $result['total'] / max( 1, $per_page ) ) ) );
+		return $response;
 	}
 
 	/**

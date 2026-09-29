@@ -47,9 +47,11 @@
 }
 
 .wb-gam-kudos-table__actions {
-	display: flex;
-	gap: var(--wb-gam-space-xs, 4px);
-	flex-wrap: wrap;
+	white-space: nowrap;
+}
+
+.wb-gam-kudos-table__actions .button + .button {
+	margin-inline-start: var(--wb-gam-space-xs, 4px);
 }
 
 .wb-gam-kudos-revoke {
@@ -82,10 +84,7 @@
 }
 
 @media (max-width: 640px) {
-	.wb-gam-kudos-table__message {
-		display: none;
-	}
-
+	/* The message stays visible on phones: it is what a moderator is here to read. */
 	.wb-gam-kudos-editor {
 		flex-direction: column;
 		align-items: stretch;

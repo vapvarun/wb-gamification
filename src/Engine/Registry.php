@@ -152,72 +152,97 @@ final class Registry {
 		add_action(
 			$action['hook'],
 			static function ( ...$params ) use ( $action ) {
-				$user_id = (int) call_user_func_array( $action['user_callback'], $params );
-				if ( $user_id <= 0 ) {
-					/** This filter is documented in src/Engine/PointsEngine.php — see wb_gam_award_skipped. */
-					do_action(
-						'wb_gam_award_skipped',
-						$user_id,
-						(string) $action['id'],
-						'self_action',
-						array()
+				// A trigger runs inside another plugin's request (their do_action). If its
+				// callback throws - a partner changed an argument type - log it and move on;
+				// failing to award points must never fail the partner's save.
+				try {
+					self::fire( $action, $params );
+				} catch ( \Throwable $e ) {
+					Log::error(
+						'Gamification trigger failed; no points awarded.',
+						array(
+							'action_id' => (string) $action['id'],
+							'hook'      => (string) $action['hook'],
+							'error'     => $e->getMessage(),
+						)
 					);
-					return;
-				}
-
-				// Optionally extract metadata from hook args via metadata_callback.
-				$metadata = isset( $action['metadata_callback'] ) && is_callable( $action['metadata_callback'] )
-					? (array) call_user_func_array( $action['metadata_callback'], $params )
-					: array();
-
-				// Dynamic point scaling — when the manifest declares a
-				// points_callback, invoke it with the hook args so the action
-				// can scale points by rank, streak length, order total, etc.
-				// Result is stashed in metadata['_dynamic_points'] and picked
-				// up by Engine::process() in place of default_points. The
-				// metadata field travels through Action Scheduler intact, so
-				// the value computed here is still authoritative when the
-				// async job runs later. Returning 0 or a negative value falls
-				// back to default_points (Engine::process drops awards at 0
-				// regardless).
-				if ( isset( $action['points_callback'] ) && is_callable( $action['points_callback'] ) ) {
-					$dynamic = (int) call_user_func_array( $action['points_callback'], $params );
-					if ( $dynamic > 0 ) {
-						$metadata['_dynamic_points'] = $dynamic;
-					}
-				}
-
-				// Resolve the currency this action awards via the canonical
-				// helper so both ledger-write AND rate-limit checks see the
-				// same value. PointsEngine::insert_point_row() and
-				// Engine::persist_event() read metadata['point_type'] when set.
-				if ( ! isset( $metadata['point_type'] ) ) {
-					$resolved = self::resolve_action_point_type( $action );
-					if ( '' !== $resolved ) {
-						$metadata['point_type'] = $resolved;
-					}
-				}
-
-				$event = new Event(
-					array(
-						'action_id' => $action['id'],
-						'user_id'   => $user_id,
-						'metadata'  => $metadata,
-					)
-				);
-
-				// Repeatable actions run async by default — high-volume and must not
-				// block the request path. Non-repeatable once-only actions run sync
-				// so callers get immediate confirmation. $action['async'] overrides.
-				if ( $action['async'] ?? $action['repeatable'] ) {
-					Engine::process_async( $event );
-				} else {
-					Engine::process( $event );
 				}
 			},
 			10,
 			10
 		);
+	}
+
+	/**
+	 * Run one registered trigger for a fired hook: resolve the member, build the event, award.
+	 *
+	 * @param array $action Registered action.
+	 * @param array $params Arguments the hook was fired with.
+	 * @return void
+	 */
+	private static function fire( array $action, array $params ): void {
+		$user_id = (int) call_user_func_array( $action['user_callback'], $params );
+		if ( $user_id <= 0 ) {
+			/** This filter is documented in src/Engine/PointsEngine.php — see wb_gam_award_skipped. */
+			do_action(
+				'wb_gam_award_skipped',
+				$user_id,
+				(string) $action['id'],
+				'self_action',
+				array()
+			);
+			return;
+		}
+
+		// Optionally extract metadata from hook args via metadata_callback.
+		$metadata = isset( $action['metadata_callback'] ) && is_callable( $action['metadata_callback'] )
+			? (array) call_user_func_array( $action['metadata_callback'], $params )
+			: array();
+
+		// Dynamic point scaling — when the manifest declares a
+		// points_callback, invoke it with the hook args so the action
+		// can scale points by rank, streak length, order total, etc.
+		// Result is stashed in metadata['_dynamic_points'] and picked
+		// up by Engine::process() in place of default_points. The
+		// metadata field travels through Action Scheduler intact, so
+		// the value computed here is still authoritative when the
+		// async job runs later. Returning 0 or a negative value falls
+		// back to default_points (Engine::process drops awards at 0
+		// regardless).
+		if ( isset( $action['points_callback'] ) && is_callable( $action['points_callback'] ) ) {
+			$dynamic = (int) call_user_func_array( $action['points_callback'], $params );
+			if ( $dynamic > 0 ) {
+				$metadata['_dynamic_points'] = $dynamic;
+			}
+		}
+
+		// Resolve the currency this action awards via the canonical
+		// helper so both ledger-write AND rate-limit checks see the
+		// same value. PointsEngine::insert_point_row() and
+		// Engine::persist_event() read metadata['point_type'] when set.
+		if ( ! isset( $metadata['point_type'] ) ) {
+			$resolved = self::resolve_action_point_type( $action );
+			if ( '' !== $resolved ) {
+				$metadata['point_type'] = $resolved;
+			}
+		}
+
+		$event = new Event(
+			array(
+				'action_id' => $action['id'],
+				'user_id'   => $user_id,
+				'metadata'  => $metadata,
+			)
+		);
+
+		// Repeatable actions run async by default — high-volume and must not
+		// block the request path. Non-repeatable once-only actions run sync
+		// so callers get immediate confirmation. $action['async'] overrides.
+		if ( $action['async'] ?? $action['repeatable'] ) {
+			Engine::process_async( $event );
+		} else {
+			Engine::process( $event );
+		}
 	}
 
 	/**
@@ -265,20 +290,85 @@ final class Registry {
 	}
 
 	/**
+	 * Human, translatable label for an action category slug.
+	 *
+	 * Categories are slugs chosen by each manifest ('member-blog', 'careers'). Members see
+	 * them as group headings, so a raw slug read as leaked code ("MEMBER-BLOG"). Known family
+	 * categories get a translatable label; anything else reads as words ("my-plugin" becomes
+	 * "My Plugin") and can be relabelled with the filter.
+	 *
+	 * @since 1.6.5
+	 *
+	 * @param string $slug Category slug.
+	 * @return string
+	 */
+	public static function category_label( string $slug ): string {
+		$labels = array(
+			'general'     => __( 'General', 'wb-gamification' ),
+			'wordpress'   => __( 'WordPress', 'wb-gamification' ),
+			'social'      => __( 'Social', 'wb-gamification' ),
+			'forums'      => __( 'Forums', 'wb-gamification' ),
+			'community'   => __( 'Community', 'wb-gamification' ),
+			'content'     => __( 'Content', 'wb-gamification' ),
+			'engagement'  => __( 'Engagement', 'wb-gamification' ),
+			'media'       => __( 'Media', 'wb-gamification' ),
+			'learning'    => __( 'Learning', 'wb-gamification' ),
+			'listings'    => __( 'Listings', 'wb-gamification' ),
+			'careers'     => __( 'Careers', 'wb-gamification' ),
+			'commerce'    => __( 'Commerce', 'wb-gamification' ),
+			'events'      => __( 'Events', 'wb-gamification' ),
+			'competition' => __( 'Competition', 'wb-gamification' ),
+			'member-blog' => __( 'Member Blog', 'wb-gamification' ),
+			'buddypress'  => __( 'BuddyPress', 'wb-gamification' ),
+		);
+
+		$label = $labels[ $slug ] ?? ucwords( str_replace( array( '-', '_' ), ' ', $slug ) );
+
+		/**
+		 * Filter the label shown for an action category (How to Earn group headings, REST).
+		 *
+		 * @since 1.6.5
+		 * @param string $label Label.
+		 * @param string $slug  Category slug from the manifest.
+		 */
+		return (string) apply_filters( 'wb_gam_category_label', $label, $slug );
+	}
+
+	/**
 	 * Get all registered actions.
 	 *
 	 * @return array<string, array>
 	 */
 	public static function get_actions(): array {
 		$overrides = self::get_overrides();
-		if ( empty( $overrides ) ) {
-			return self::$actions;
-		}
-		$out = array();
+		$out       = array();
 		foreach ( self::$actions as $id => $action ) {
-			$out[ $id ] = self::apply_overrides( $action, $overrides );
+			$action     = self::resolve_text( $action );
+			$out[ $id ] = empty( $overrides ) ? $action : self::apply_overrides( $action, $overrides );
 		}
 		return $out;
+	}
+
+	/**
+	 * Turn a manifest's lazy `label` / `description` into text.
+	 *
+	 * Manifests load before `init`, when a translation call would load the plugin's text domain too
+	 * early (a notice since WP 6.7, and the wrong locale for a user-locale switch). So a manifest gives
+	 * `static fn(): string => __( 'Create a post', 'wb-gamification' )` and the words are resolved
+	 * here, on read. A plain string, from another plugin's registration, passes through unchanged.
+	 *
+	 * @since 1.6.5
+	 *
+	 * @param array $action Registered action.
+	 * @return array Action with `label` and `description` as strings.
+	 */
+	private static function resolve_text( array $action ): array {
+		foreach ( array( 'label', 'description' ) as $key ) {
+			if ( isset( $action[ $key ] ) && $action[ $key ] instanceof \Closure ) {
+				$action[ $key ] = (string) $action[ $key ]();
+			}
+		}
+		return $action;
 	}
 
 	/**
@@ -408,6 +498,19 @@ final class Registry {
 	}
 
 	/**
+	 * The points an action awards: the owner's setting, else the action's default.
+	 *
+	 * @since 1.6.5
+	 *
+	 * @param string $id Action ID.
+	 * @return int 0 for an unregistered action.
+	 */
+	public static function action_points( string $id ): int {
+		$action = self::get_action( $id );
+		return null === $action ? 0 : (int) get_option( 'wb_gam_points_' . $id, $action['default_points'] ?? 0 );
+	}
+
+	/**
 	 * Get a single registered action by ID.
 	 *
 	 * @param string $id Action ID to look up.
@@ -418,9 +521,8 @@ final class Registry {
 			return null;
 		}
 		$overrides = self::get_overrides();
-		return empty( $overrides )
-			? self::$actions[ $id ]
-			: self::apply_overrides( self::$actions[ $id ], $overrides );
+		$action    = self::resolve_text( self::$actions[ $id ] );
+		return empty( $overrides ) ? $action : self::apply_overrides( $action, $overrides );
 	}
 
 	/**
@@ -434,9 +536,11 @@ final class Registry {
 	 * Resolution order:
 	 *   1. Manifest `label` field, if the action is currently registered.
 	 *   2. Built-in label for engine-emitted action_ids (manual award,
-	 *      manual debit, redemption, debit) that have no manifest entry
+	 *      manual debit, redemption, debit, kudos) that have no manifest entry
 	 *      because they're fired directly by the engine, not by a trigger.
-	 *   3. Title-cased action_id (e.g. "Mvs Give Comment") as a final
+	 *   3. The `wb_gam_action_label` filter, for integrations that award ids they
+	 *      do not register as actions (e.g. Jetonomy's mirrored reputation).
+	 *   4. Title-cased action_id (e.g. "Mvs Give Comment") as a final
 	 *      fallback so a deactivated plugin doesn't leave history rows
 	 *      with an unrecognisable identifier.
 	 *
@@ -457,14 +561,34 @@ final class Registry {
 		}
 
 		$built_in = array(
-			'manual'       => __( 'Manual award', 'wb-gamification' ),
-			'manual_award' => __( 'Manual award', 'wb-gamification' ),
-			'manual_debit' => __( 'Manual adjustment', 'wb-gamification' ),
-			'debit'        => __( 'Debit', 'wb-gamification' ),
-			'redemption'   => __( 'Redemption', 'wb-gamification' ),
+			'manual'              => __( 'Manual award', 'wb-gamification' ),
+			'manual_award'        => __( 'Manual award', 'wb-gamification' ),
+			'manual_admin'        => __( 'Manual award', 'wb-gamification' ),
+			'manual_debit'        => __( 'Manual adjustment', 'wb-gamification' ),
+			'manual_admin_deduct' => __( 'Manual adjustment', 'wb-gamification' ),
+			'debit'               => __( 'Debit', 'wb-gamification' ),
+			'redemption'          => __( 'Redemption', 'wb-gamification' ),
+			'give_kudos'          => __( 'Gave kudos', 'wb-gamification' ),
+			'receive_kudos'       => __( 'Received kudos', 'wb-gamification' ),
 		);
 		if ( isset( $built_in[ $action_id ] ) ) {
 			return $built_in[ $action_id ];
+		}
+
+		/**
+		 * Name an action id that is awarded without being a registered action.
+		 *
+		 * The one label every surface uses (toasts, points history, REST, analytics). Return a
+		 * non-empty, translated string for ids your integration awards; leave others untouched.
+		 *
+		 * @since 1.6.5
+		 *
+		 * @param string $label     '' when nothing has named it yet.
+		 * @param string $action_id Action identifier.
+		 */
+		$label = (string) apply_filters( 'wb_gam_action_label', '', $action_id );
+		if ( '' !== $label ) {
+			return $label;
 		}
 
 		return ucwords( str_replace( array( '_', '-' ), ' ', $action_id ) );

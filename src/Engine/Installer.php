@@ -99,7 +99,19 @@ final class Installer {
 
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 
-		// Immutable event log — source of truth for all gamification state.
+		// A brand-new site writes UTC from its first row, so the one-time pre-1.6.5 conversion has
+		// nothing to do. (A re-activation keeps its old tables and still gets converted.)
+		$fresh = $wpdb->prefix . 'wb_gam_events' !== (string) $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->prefix . 'wb_gam_events' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		if ( $fresh ) {
+			update_option( UtcStorageMigration::DONE_OPTION, '1' );
+		}
+
+		// Every DATETIME column holds UTC, written from PHP with current_time( 'mysql', true ). The
+		// CURRENT_TIMESTAMP defaults are a safety net only (they use the database server's zone).
+
+		// Append-only event log — source of truth for all gamification state. Rows leave only through
+		// retention (LogPruner, organic events only: a row with a source_key is imported history and is kept),
+		// a member's erasure (MemberData), a progress reset, or an import undo (ImportUndo).
 		// `point_type` records which currency the resulting award affected (analytics + audit).
 		dbDelta(
 			"CREATE TABLE {$wpdb->prefix}wb_gam_events (
@@ -135,6 +147,7 @@ final class Installer {
 			point_type VARCHAR(60)     NOT NULL DEFAULT 'points',
 			object_id  BIGINT UNSIGNED DEFAULT NULL,
 			created_at DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			is_spend   TINYINT(1)      NOT NULL DEFAULT 0,
 			PRIMARY KEY (id),
 			KEY idx_event (event_id),
 			KEY idx_user_created (user_id, created_at),
@@ -151,6 +164,7 @@ final class Installer {
 			"CREATE TABLE {$wpdb->prefix}wb_gam_point_types (
 			slug        VARCHAR(60)     NOT NULL,
 			label       VARCHAR(100)    NOT NULL,
+			label_singular VARCHAR(100) NOT NULL DEFAULT '',
 			description TEXT,
 			icon        VARCHAR(100)    DEFAULT NULL,
 			is_default  TINYINT(1)      NOT NULL DEFAULT 0,
@@ -433,7 +447,8 @@ final class Installer {
 			PRIMARY KEY (id),
 			KEY user_id (user_id),
 			KEY item_id (item_id),
-			KEY created_at (created_at)
+			KEY created_at (created_at),
+			KEY idx_status_id (status, id)
 		) $charset;"
 		);
 
@@ -469,9 +484,10 @@ final class Installer {
 			user_id    BIGINT UNSIGNED NOT NULL,
 			point_type VARCHAR(60)     NOT NULL DEFAULT 'points',
 			total      BIGINT          NOT NULL DEFAULT 0,
-			updated_at DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+			earned     BIGINT          NOT NULL DEFAULT 0,
 			PRIMARY KEY (user_id, point_type),
-			KEY idx_type_total (point_type, total)
+			KEY idx_type_total (point_type, total),
+			KEY idx_type_earned (point_type, earned)
 		) $charset;"
 		);
 
@@ -910,8 +926,9 @@ final class Installer {
 					'category'      => $category,
 					'is_credential' => $is_credential,
 					'image_url'     => self::default_badge_image_url( $id ),
+					'created_at'    => current_time( 'mysql', true ),
 				),
-				array( '%s', '%s', '%s', '%s', '%d', '%s' )
+				array( '%s', '%s', '%s', '%s', '%d', '%s', '%s' )
 			);
 
 			// The seed table above is authored one condition per badge, because that is how these
@@ -934,8 +951,9 @@ final class Installer {
 					'target_id'   => $id,
 					'rule_config' => wp_json_encode( $group ),
 					'is_active'   => 1,
+					'created_at'  => current_time( 'mysql', true ),
 				),
-				array( '%s', '%s', '%s', '%d' )
+				array( '%s', '%s', '%s', '%d', '%s' )
 			);
 		}
 	}
@@ -1041,13 +1059,15 @@ final class Installer {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from $wpdb->prefix; INSERT IGNORE is the deterministic upsert path.
 		$wpdb->query(
 			$wpdb->prepare(
-				"INSERT IGNORE INTO $table (slug, label, description, icon, is_default, position) VALUES (%s, %s, %s, %s, %d, %d)",
+				"INSERT IGNORE INTO $table (slug, label, label_singular, description, icon, is_default, position, created_at) VALUES (%s, %s, %s, %s, %s, %d, %d, %s)",
 				'points',
 				'Points',
+				'Point',
 				'Primary points currency. Renamable; the slug stays as `points` for back-compat.',
 				'star',
 				1,
-				0
+				0,
+				current_time( 'mysql', true )
 			)
 		);
 	}

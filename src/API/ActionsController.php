@@ -311,6 +311,7 @@ class ActionsController extends WP_REST_Controller {
 			'label'          => $action['label'],
 			'description'    => $action['description'] ?? '',
 			'category'       => $action['category'] ?? 'general',
+			'category_label' => Registry::category_label( (string) ( $action['category'] ?? 'general' ) ),
 			'icon'           => $action['icon'] ?? '',
 			'default_points' => $action['default_points'],
 			'repeatable'     => $action['repeatable'] ?? true,

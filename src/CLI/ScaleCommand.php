@@ -92,6 +92,12 @@ final class ScaleCommand {
 		'rate_limit_today_count'     => 15.0,
 		'convert_balance_lookup'     => 5.0,
 
+		// Added with leaderboard keyset paging: a page deep in the all-time board (the totals table read
+		// by keyset, O(page) at any depth) and the pager's total (an O(members) count, cached in
+		// production, so this is the cold cost).
+		'leaderboard_page_deep'      => 20.0,
+		'leaderboard_total_cold'     => 500.0,
+
 		// ── Added 1.6.4 (S-03). The budgets above only ever covered the paths
 		// we already knew were fast. Everything below is a path the scale
 		// register flagged as unmeasured — which is precisely where a large
@@ -159,7 +165,7 @@ final class ScaleCommand {
 		\WP_CLI::line( "Seeding {$user_count} users × {$per_user} events = {$total_events} ledger rows…" );
 
 		global $wpdb;
-		$now      = current_time( 'mysql' );
+		$now      = current_time( 'mysql', true ); // UTC: user_registered and created_at are UTC columns.
 		$started  = microtime( true );
 		$inserted = 0;
 
@@ -229,7 +235,7 @@ final class ScaleCommand {
 					$args_flat[]    = ( $e % 5 === 0 ) ? 'coins' : 'points';
 					// Spread across last 12 months so period filters get hit.
 					$days_back   = wp_rand( 0, 365 );
-					$args_flat[] = gmdate( 'Y-m-d H:i:s', strtotime( $now ) - ( $days_back * 86400 ) );
+					$args_flat[] = gmdate( 'Y-m-d H:i:s', time() - ( $days_back * 86400 ) );
 				}
 			}
 
@@ -254,12 +260,12 @@ final class ScaleCommand {
 		\WP_CLI::line( 'Backfilling wb_gam_user_totals…' );
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$wpdb->query(
-			"INSERT INTO {$wpdb->prefix}wb_gam_user_totals (user_id, point_type, total)
-			 SELECT user_id, point_type, COALESCE(SUM(points), 0)
+			"INSERT INTO {$wpdb->prefix}wb_gam_user_totals (user_id, point_type, total, earned)
+			 SELECT user_id, point_type, COALESCE(SUM(points), 0), COALESCE(SUM(points), 0)
 			   FROM {$wpdb->prefix}wb_gam_points
 			  WHERE user_id >= {$base_uid}
 			  GROUP BY user_id, point_type
-			 ON DUPLICATE KEY UPDATE total = VALUES(total)"
+			 ON DUPLICATE KEY UPDATE total = VALUES(total), earned = VALUES(earned)"
 		);
 
 		// ── Seed the OTHER tables the budgets measure ────────────────────────
@@ -284,8 +290,9 @@ final class ScaleCommand {
 					'id'          => 'scale_seed_badge',
 					'name'        => 'Scale Seed Badge',
 					'description' => 'Synthetic badge for the scale benchmark.',
+					'created_at'  => current_time( 'mysql', true ),
 				),
-				array( '%s', '%s', '%s' )
+				array( '%s', '%s', '%s', '%s' )
 			);
 		}
 
@@ -325,7 +332,7 @@ final class ScaleCommand {
 			for ( $i = 0; $i < $slice; $i++ ) {
 				$uid      = $base_uid + $u + $i;
 				$values[] = '(%d, %d, %d, %s)';
-				array_push( $args, $uid, wp_rand( 1, 40 ), wp_rand( 1, 90 ), gmdate( 'Y-m-d' ) );
+				array_push( $args, $uid, wp_rand( 1, 40 ), wp_rand( 1, 90 ), \WBGam\Engine\Clock::site_date() );
 			}
 			// phpcs:disable WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
 			$wpdb->query(
@@ -568,8 +575,7 @@ final class ScaleCommand {
 		// 5. Rate-limit today count — hot on every action that fires.
 		$results['rate_limit_today_count'] = self::time_op(
 			function () use ( $uid, $wpdb ) {
-				// The site's midnight, not UTC's: wb_gam_points.created_at is site-local, and a benchmark
-				// that measures a query the product does not run is not measuring anything.
+				// The site's midnight as a UTC instant, the same bound the product's rate limiter uses.
 				$today = \WBGam\Engine\Clock::site_day_start( 'today' );
 				return (int) $wpdb->get_var(
 					$wpdb->prepare(
@@ -596,6 +602,39 @@ final class ScaleCommand {
 				);
 			}
 		);
+
+		// 7. All-time leaderboard, one page from the MIDDLE of the board by keyset. The cursor is built
+		// from the member at the midpoint, so this measures the cost of "page 3,000" without walking to it.
+		// OFFSET here would grow with depth; the keyset must not.
+		$totals_table = $wpdb->prefix . 'wb_gam_user_totals';
+		$members      = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$totals_table} WHERE point_type = 'points' AND earned > 0" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		if ( $members > 50 ) {
+			$mid = (int) floor( $members / 2 );
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared
+			$mid_row = $wpdb->get_row( $wpdb->prepare( "SELECT earned, user_id FROM {$totals_table} WHERE point_type = 'points' AND earned > 0 ORDER BY earned DESC, user_id DESC LIMIT 1 OFFSET %d", $mid ), ARRAY_A );
+			if ( $mid_row ) {
+				$deep_cursor = LeaderboardEngine::encode_cursor(
+					LeaderboardEngine::board_key( 'all', '', 0, 'points' ),
+					(int) $mid_row['earned'],
+					(int) $mid_row['user_id'],
+					$mid,
+					$mid
+				);
+				// The pager total is warmed first: in production it is cached, and its cold cost is measured below.
+				LeaderboardEngine::get_total( 'all', '', 0, 'points' );
+				$results['leaderboard_page_deep']  = self::time_op(
+					function () use ( $deep_cursor ) {
+						return LeaderboardEngine::get_leaderboard_page( 'all', 25, '', 0, 'points', $deep_cursor );
+					}
+				);
+				$results['leaderboard_total_cold'] = self::time_op(
+					function () {
+						wp_cache_flush();
+						return LeaderboardEngine::get_total( 'all', '', 0, 'points' );
+					}
+				);
+			}
+		}
 
 		// ── Added 1.6.4 (S-03): the surfaces the register flagged as unmeasured ──
 

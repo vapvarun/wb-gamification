@@ -3,6 +3,7 @@ namespace WBGam\Tests\Unit\Family;
 
 use Brain\Monkey;
 use Brain\Monkey\Functions;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 require_once dirname( __DIR__, 3 ) . '/libs/wbcom-family/bootstrap.php';
@@ -17,7 +18,7 @@ class InstallerTest extends TestCase {
 		Monkey\tearDown(); parent::tearDown();
 	}
 
-	/** @test */
+	#[Test]
 	public function blocks_users_without_install_capability(): void {
 		Functions\when( 'current_user_can' )->justReturn( false );
 		$captured = null;
@@ -26,7 +27,7 @@ class InstallerTest extends TestCase {
 		$this->assertSame( 403, $captured[1] );
 	}
 
-	/** @test */
+	#[Test]
 	public function blocks_users_with_install_but_lacking_activate_capability(): void {
 		Functions\when( 'current_user_can' )->alias( static fn( $cap ) => 'install_plugins' === $cap );
 		$captured = null;
@@ -35,7 +36,7 @@ class InstallerTest extends TestCase {
 		$this->assertSame( 403, $captured[1] );
 	}
 
-	/** @test */
+	#[Test]
 	public function refuses_pro_or_unknown_members(): void {
 		$_POST['slug'] = 'learnomy'; // learnomy has wporg_slug=null in the registry
 		Functions\when( 'current_user_can' )->justReturn( true );

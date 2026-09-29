@@ -453,7 +453,7 @@ body.buddyx-dark-theme .wb-gam-badge-showcase__badge--locked .wb-gam-badge-showc
 	background: var( --wb-gam-badge-success-soft );
 }
 
-.wb-gam-badge-showcase__share:disabled {
+.wb-gam-badge-showcase__share[aria-disabled="true"] {
 	opacity: 0.6;
 	cursor: progress;
 }

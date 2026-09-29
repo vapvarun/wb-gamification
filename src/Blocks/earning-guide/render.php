@@ -73,28 +73,52 @@ if ( ! empty( $wb_gam_attrs['cardBorderColor'] ) ) {
 }
 
 wp_enqueue_style( 'wb-gam-tokens' );
+wp_enqueue_style( 'lucide-icons' );
 
 $wb_gam_actions = Registry::get_actions();
 
-$wb_gam_grouped = array();
+$wb_gam_grouped    = array();
+$wb_gam_seen       = array();
+$wb_gam_pt_service = new \WBGam\Services\PointTypeService();
 if ( ! empty( $wb_gam_actions ) ) {
 	foreach ( $wb_gam_actions as $wb_gam_id => $wb_gam_action ) {
-		$wb_gam_enabled = (bool) get_option( 'wb_gam_enabled_' . $wb_gam_id, true );
-		if ( ! $wb_gam_enabled ) {
+		if ( ! \WBGam\Engine\Engine::is_action_enabled( (string) $wb_gam_id ) ) {
 			continue;
 		}
 
 		$wb_gam_category = (string) ( $wb_gam_action['category'] ?? 'general' );
-		$wb_gam_pts      = (int) get_option( 'wb_gam_points_' . $wb_gam_id, $wb_gam_action['default_points'] ?? 0 );
+		$wb_gam_pts      = Registry::action_points( (string) $wb_gam_id );
+		$wb_gam_label    = (string) ( $wb_gam_action['label'] ?? $wb_gam_id );
 
 		if ( $wb_gam_pts <= 0 ) {
 			continue;
 		}
 
+		// One member action, listed once. Some actions are registered twice so one thing is rewarded
+		// once whichever way it happens (an Eventonomy ticket order paid at once, or later through a
+		// card gateway in Pro); members see the action, not the plumbing.
+		if ( isset( $wb_gam_seen[ $wb_gam_category ][ $wb_gam_label ] ) ) {
+			continue;
+		}
+		$wb_gam_seen[ $wb_gam_category ][ $wb_gam_label ] = true;
+
+		// The owner's name for the currency this action pays ("1 Coin", "5 Coins"), not a fixed "pts".
+		$wb_gam_pt = Registry::resolve_action_point_type( $wb_gam_action + array( 'id' => (string) $wb_gam_id ) );
+
+		// Manifest icons are Lucide (icon-*). A third-party manifest may still send a Dashicons
+		// class; the frontend never loads that font and the class needs its `dashicons` base,
+		// so load it and add the base only for those cards.
+		$wb_gam_icon = (string) ( $wb_gam_action['icon'] ?? 'icon-star' );
+		if ( str_starts_with( $wb_gam_icon, 'dashicons-' ) ) {
+			wp_enqueue_style( 'dashicons' );
+			$wb_gam_icon = 'dashicons ' . $wb_gam_icon;
+		}
+
 		$wb_gam_grouped[ $wb_gam_category ][] = array(
-			'label'     => (string) ( $wb_gam_action['label'] ?? $wb_gam_id ),
-			'icon'      => (string) ( $wb_gam_action['icon'] ?? 'icon-star' ),
-			'points'    => $wb_gam_pts,
+			'label'        => $wb_gam_label,
+			'icon'         => $wb_gam_icon,
+			'points'       => $wb_gam_pts,
+			'points_label' => $wb_gam_pt_service->name_for( $wb_gam_pts, $wb_gam_pt ),
 			// Registry::get_actions() resolves admin overrides; manifest
 			// defaults to 0 ("unlimited") for both keys. Surface them in
 			// the guide so members aren't surprised by silent caps.
@@ -107,7 +131,8 @@ if ( ! empty( $wb_gam_actions ) ) {
 /**
  * Filter the earning-guide grouped action map before render.
  *
- * Map shape: [ category => [ ['label','icon','points'], ... ] ].
+ * Map shape: [ category => [ ['label','icon','points','points_label'], ... ] ]. points_label (1.6.5) is
+ * the owner's name for the currency the action pays, singular when the action pays one.
  *
  * @since 1.0.0
  *
@@ -143,7 +168,7 @@ BlockHooks::before( 'earning-guide', $wb_gam_attrs );
 <div <?php echo $wb_gam_wrapper; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>>
 	<?php foreach ( $wb_gam_grouped as $wb_gam_category => $wb_gam_items ) : ?>
 		<?php if ( $wb_gam_show_h ) : ?>
-			<h3 class="wb-gam-earning-guide__category"><?php echo esc_html( ucfirst( $wb_gam_category ) ); ?></h3>
+			<h3 class="wb-gam-earning-guide__category"><?php echo esc_html( Registry::category_label( (string) $wb_gam_category ) ); ?></h3>
 		<?php endif; ?>
 		<div class="wb-gam-earning-guide__grid" data-cols="<?php echo (int) $wb_gam_columns; ?>">
 			<?php foreach ( $wb_gam_items as $wb_gam_item ) : ?>
@@ -184,8 +209,12 @@ BlockHooks::before( 'earning-guide', $wb_gam_attrs );
 						<span class="wb-gam-earning-guide__icon <?php echo esc_attr( (string) $wb_gam_item['icon'] ); ?>" aria-hidden="true"></span>
 						<span class="wb-gam-earning-guide__pts">
 							<?php
-							/* translators: %s: point value */
-							printf( esc_html__( '+%s pts', 'wb-gamification' ), esc_html( number_format_i18n( (int) $wb_gam_item['points'] ) ) );
+							printf(
+								/* translators: 1: point value, 2: the site's name for the points, e.g. "Points" or "Karma". */
+								esc_html__( '+%1$s %2$s', 'wb-gamification' ),
+								esc_html( number_format_i18n( (int) $wb_gam_item['points'] ) ),
+								esc_html( (string) ( $wb_gam_item['points_label'] ?? wb_gam_get_point_type_label() ) )
+							);
 							?>
 						</span>
 					</div>

@@ -96,7 +96,8 @@ class PointsController extends WP_REST_Controller {
 						),
 						'reason'     => array(
 							'type'              => 'string',
-							'default'           => 'manual_award',
+							// Shown to the member on the toast; empty falls back to the action label.
+							'default'           => '',
 							'sanitize_callback' => 'sanitize_text_field',
 						),
 						'note'       => array(

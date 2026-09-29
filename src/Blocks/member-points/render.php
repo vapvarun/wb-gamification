@@ -112,14 +112,12 @@ $wb_gam_show_level    = ! isset( $wb_gam_attrs['show_level'] ) || ! empty( $wb_g
 $wb_gam_show_progress = ! isset( $wb_gam_attrs['show_progress_bar'] ) || ! empty( $wb_gam_attrs['show_progress_bar'] );
 $wb_gam_point_type    = (string) ( $wb_gam_attrs['pointType'] ?? '' );
 
-// Resolve the currency label so the tile says "Coins" / "XP" instead of
-// always "Points" once a site defines additional currencies.
+// The site's name for this currency, singular for exactly one ("1 Coin", "250 Coins").
 $wb_gam_pt_service   = new \WBGam\Services\PointTypeService();
 $wb_gam_resolved_pt  = $wb_gam_pt_service->resolve( $wb_gam_point_type ?: null );
-$wb_gam_pt_record    = $wb_gam_pt_service->get( $wb_gam_resolved_pt );
-$wb_gam_points_label = (string) ( $wb_gam_pt_record['label'] ?? __( 'Points', 'wb-gamification' ) );
-
 $wb_gam_points       = (int) PointsEngine::get_total( $wb_gam_user_id, $wb_gam_point_type );
+$wb_gam_points_label = $wb_gam_pt_service->name_for( $wb_gam_points, $wb_gam_resolved_pt );
+
 $wb_gam_level        = $wb_gam_show_level ? LevelEngine::get_level_for_user( $wb_gam_user_id ) : null;
 $wb_gam_next_level   = $wb_gam_show_level ? LevelEngine::get_next_level( $wb_gam_user_id ) : null;
 $wb_gam_progress_pct = $wb_gam_show_progress ? (int) LevelEngine::get_progress_percent( $wb_gam_user_id ) : 0;
@@ -129,7 +127,7 @@ $wb_gam_progress_pct = $wb_gam_show_progress ? (int) LevelEngine::get_progress_p
  *
  * @since 1.0.0
  *
- * @param array $data       ['points', 'label', 'level', 'next_level', 'progress_pct'].
+ * @param array $data       ['points', 'level_points', 'label', 'level', 'next_level', 'progress_pct']. level_points (1.6.5) is what the level is set by: points earned, spending included.
  * @param array $attributes Block attributes (user_id, show_level, show_progress_bar, pointType).
  * @param int   $user_id    Member whose tile is being rendered.
  */
@@ -137,6 +135,7 @@ $wb_gam_block_data = (array) apply_filters(
 	'wb_gam_block_member_points_data',
 	array(
 		'points'       => $wb_gam_points,
+		'level_points' => PointsEngine::get_earned( $wb_gam_user_id ),
 		'label'        => $wb_gam_points_label,
 		'level'        => $wb_gam_level,
 		'next_level'   => $wb_gam_next_level,
@@ -146,6 +145,7 @@ $wb_gam_block_data = (array) apply_filters(
 	$wb_gam_user_id
 );
 $wb_gam_points       = (int) ( $wb_gam_block_data['points'] ?? $wb_gam_points );
+$wb_gam_lvl_pts      = (int) ( $wb_gam_block_data['level_points'] ?? $wb_gam_points );
 $wb_gam_points_label = (string) ( $wb_gam_block_data['label'] ?? $wb_gam_points_label );
 $wb_gam_level        = $wb_gam_block_data['level'] ?? $wb_gam_level;
 $wb_gam_next_level   = $wb_gam_block_data['next_level'] ?? $wb_gam_next_level;
@@ -189,12 +189,11 @@ BlockHooks::before( 'member-points', $wb_gam_attrs );
 		<?php if ( $wb_gam_next_level ) : ?>
 			<p class="wb-gam-member-points__next">
 				<?php
-				$wb_gam_pts_to_next = max( 0, (int) ( $wb_gam_next_level['min_points'] ?? 0 ) - $wb_gam_points );
+				$wb_gam_pts_to_next = max( 0, (int) ( $wb_gam_next_level['min_points'] ?? 0 ) - $wb_gam_lvl_pts );
 				printf(
-					/* translators: 1: formatted points needed for next level, 2: currency label, 3: name of the next level. */
-					esc_html__( '%1$s %2$s to %3$s', 'wb-gamification' ),
-					esc_html( number_format_i18n( $wb_gam_pts_to_next ) ),
-					esc_html( $wb_gam_points_label ),
+					/* translators: 1: points needed for the next level, e.g. "3 Points", 2: name of the next level. */
+					esc_html__( '%1$s to %2$s', 'wb-gamification' ),
+					esc_html( $wb_gam_pt_service->format( $wb_gam_pts_to_next ) ),
 					esc_html( (string) ( $wb_gam_next_level['name'] ?? '' ) )
 				);
 				?>

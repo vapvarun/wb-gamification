@@ -480,8 +480,9 @@ class BadgesController extends WP_REST_Controller {
 						'target_id'   => $badge_id,
 						'rule_config' => (string) wp_json_encode( $group ),
 						'is_active'   => 1,
+						'created_at'  => current_time( 'mysql', true ),
 					),
-					array( '%s', '%s', '%s', '%d' )
+					array( '%s', '%s', '%s', '%d', '%s' )
 				);
 				return false !== $inserted;
 			}
@@ -535,9 +536,11 @@ class BadgesController extends WP_REST_Controller {
 			);
 		}
 
-		$collected = $this->collect_badge_row( $request, true );
-		$row       = $collected['row'];
-		$formats   = $collected['formats'];
+		$collected         = $this->collect_badge_row( $request, true );
+		$row               = $collected['row'];
+		$formats           = $collected['formats'];
+		$row['created_at'] = current_time( 'mysql', true );
+		$formats[]         = '%s';
 
 		/**
 		 * Filter — abort badge creation by returning WP_Error.
@@ -685,6 +688,10 @@ class BadgesController extends WP_REST_Controller {
 			);
 		}
 
+		// Who held it, read before the cascade removes their rows, so integrations can clean up.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- one indexed read before the delete.
+		$holders = array_map( 'intval', (array) $wpdb->get_col( $wpdb->prepare( "SELECT DISTINCT user_id FROM {$wpdb->prefix}wb_gam_user_badges WHERE badge_id = %s", $badge_id ) ) );
+
 		// Cascade delete (user badges + rules + definition) atomically so a
 		// partial failure can't orphan user_badges/rules rows that later
 		// mis-drive badge evaluation.
@@ -716,6 +723,20 @@ class BadgesController extends WP_REST_Controller {
 		// Deleting a badge removes every earned row for it, which changes the
 		// rarity of all the others. Drop the cached aggregation.
 		\WBGam\Engine\BadgeEngine::flush_rarity_cache();
+
+		/**
+		 * Fires after a badge definition and every member's earned copy of it are deleted.
+		 *
+		 * Anything that mirrors badges (a community plugin's shared-badge feed cards, an app cache,
+		 * a search index) removes its copies here; the badge no longer exists to link to.
+		 *
+		 * @since 1.6.5
+		 *
+		 * @param string $badge_id The deleted badge's id.
+		 * @param int[]  $user_ids Members who had earned it.
+		 * @param array  $def      The definition as it was before the delete.
+		 */
+		do_action( 'wb_gam_badge_deleted', $badge_id, $holders, $def );
 
 		return new WP_REST_Response(
 			array(
@@ -872,7 +893,10 @@ class BadgesController extends WP_REST_Controller {
 				'is_credential' => array( 'type' => 'boolean' ),
 				'category'      => array( 'type' => 'string' ),
 				'earned'        => array( 'type' => 'boolean' ),
-				'earned_at'     => array( 'type' => array( 'string', 'null' ) ),
+				'earned_at'     => array(
+					'type'        => array( 'string', 'null' ),
+					'description' => 'When the member earned the badge. UTC, Y-m-d H:i:s.',
+				),
 				'rarity_pct'    => array( 'type' => 'number' ),
 			),
 		);

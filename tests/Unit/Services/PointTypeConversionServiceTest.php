@@ -26,19 +26,21 @@ use WBGam\Services\PointTypeConversionService;
 
 class PointTypeConversionServiceTest extends TestCase {
 
+	use \WBGam\Tests\Unit\Support\ResetsPointTypeCache;
+
 	use MockeryPHPUnitIntegration;
 
 	protected function setUp(): void {
 		parent::setUp();
 		Monkey\setUp();
-		$this->resetRepoStatics();
+		$this->resetPointTypeCache();
 		$this->stubWpFunctions();
 	}
 
 	protected function tearDown(): void {
 		Monkey\tearDown();
 		Transaction::reset_for_tests();
-		$this->resetRepoStatics();
+		$this->resetPointTypeCache();
 		parent::tearDown();
 	}
 
@@ -191,17 +193,5 @@ class PointTypeConversionServiceTest extends TestCase {
 		Functions\when( 'current_time' )->justReturn( '2026-01-01 00:00:00' );
 		Functions\when( 'do_action' )->justReturn( null );
 		Functions\stubs( array( 'wp_json_encode' => static fn( $v ) => json_encode( $v ) ) );
-	}
-
-	/**
-	 * The point-type repository memoises in static properties; clear them so
-	 * the cache stub above is consulted on every test.
-	 */
-	private function resetRepoStatics(): void {
-		foreach ( array( 'request_cache_all', 'request_cache_default' ) as $prop ) {
-			$ref = new \ReflectionProperty( PointTypeRepository::class, $prop );
-			$ref->setAccessible( true );
-			$ref->setValue( null, null );
-		}
 	}
 }

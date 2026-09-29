@@ -2,8 +2,7 @@
  * WB Gamification — Hub Interactivity API store
  *
  * Handles:
- *  - Slide-in panel open / close
- *  - ESC key to dismiss
+ *  - Slide-in panel open / close (a native <dialog>, via assets/js/dialog.js)
  *  - URL pre-open (`?panel=badges` etc.)
  *
  * Namespace: wb-gamification/hub
@@ -15,7 +14,7 @@
  * @since 1.0.0
  */
 
-import { store, getContext } from '@wordpress/interactivity';
+import { store, getContext, getElement } from '@wordpress/interactivity';
 
 /**
  * Human-readable titles for each panel key.
@@ -75,6 +74,68 @@ function panelTitleFor( key ) {
 	return SERVER_PANEL_TITLES[ key ] || PANEL_TITLES[ key ] || '';
 }
 
+/**
+ * The panel dialog. It is a native <dialog>, so the browser owns the focus trap, Escape and the inert
+ * page behind it; window.wbGam.dialog (assets/js/dialog.js) adds focus-return and backdrop click.
+ *
+ * @return {HTMLDialogElement|null} The dialog, or null when the block is not on the page.
+ */
+function panelDialog() {
+	return document.querySelector( 'dialog.gam-panel' );
+}
+
+/**
+ * Put the panel back to its closed state. Runs on EVERY way of closing (back button, Escape, backdrop
+ * click), because it is the dialog's onClose callback rather than something the back button does.
+ */
+function resetPanel() {
+	state.panelOpen    = false;
+	state._activePanel = '';
+
+	const body = document.getElementById( 'gam-panel-body' );
+	if ( body ) {
+		while ( body.firstChild ) {
+			body.removeChild( body.firstChild );
+		}
+	}
+
+	document.body.style.overflow = '';
+}
+
+/**
+ * Inject a panel's template into the dialog and open it.
+ *
+ * @param {string}       key    Panel key.
+ * @param {Element|null} opener Element focus returns to on close (null for the URL pre-open).
+ */
+function showPanel( key, opener ) {
+	const tpl    = document.getElementById( `gam-tpl-${ key }` );
+	const body   = document.getElementById( 'gam-panel-body' );
+	const dialog = panelDialog();
+	if ( ! tpl || ! body || ! dialog || ! window.wbGam?.dialog ) {
+		return;
+	}
+
+	// Clear previous content, clone template into panel body.
+	while ( body.firstChild ) {
+		body.removeChild( body.firstChild );
+	}
+	body.appendChild( tpl.content.cloneNode( true ) );
+
+	state.panelTitle   = panelTitleFor( key );
+	state._activePanel = key;
+	state.panelOpen    = true;
+
+	document.body.style.overflow = 'hidden';
+
+	window.wbGam.dialog.bind( dialog );
+	window.wbGam.dialog.open( dialog, {
+		opener,
+		initialFocus: '.wb-gam-close',
+		onClose: resetPanel,
+	} );
+}
+
 const { state, actions } = store( 'wb-gamification/hub', {
 	state: {
 		panelOpen:    false,
@@ -86,66 +147,43 @@ const { state, actions } = store( 'wb-gamification/hub', {
 		/**
 		 * Open a panel.
 		 *
-		 * Reads the `panel` key from the element's `data-wp-context`,
-		 * looks up the matching `<template>`, and injects its HTML.
+		 * Reads the `panel` key from the element's `data-wp-context` and opens the matching
+		 * `<template>` in the dialog. The element that fired it is where focus returns on close.
 		 */
 		openPanel() {
-			const ctx = getContext();
-			const key = ctx.panel;
+			const key = getContext().panel;
 
 			if ( ! key || ! VALID_PANELS.includes( key ) ) {
 				return;
 			}
 
-			const tpl = document.getElementById( `gam-tpl-${ key }` );
-			const body = document.getElementById( 'gam-panel-body' );
-			if ( ! tpl || ! body ) {
+			showPanel( key, getElement()?.ref || null );
+		},
+
+		/**
+		 * Keyboard parity for the tiles, which are role="button" divs (a real <button> cannot hold the
+		 * card's block content). Enter and Space open the panel, like a button.
+		 *
+		 * @param {KeyboardEvent} event
+		 */
+		onTileKey( event ) {
+			if ( event.target !== event.currentTarget ) {
 				return;
 			}
-
-			// Clear previous content, clone template into panel body.
-			while ( body.firstChild ) {
-				body.removeChild( body.firstChild );
+			if ( event.key === 'Enter' || event.key === ' ' ) {
+				event.preventDefault();
+				actions.openPanel();
 			}
-			body.appendChild( tpl.content.cloneNode( true ) );
-
-			state.panelTitle   = panelTitleFor( key );
-			state._activePanel = key;
-			state.panelOpen    = true;
-
-			document.body.style.overflow = 'hidden';
 		},
 
 		/**
-		 * Close the currently open panel.
-		 *
-		 * Restores body scroll and resets all panel state.
+		 * Close the open panel. The dialog's own close handling then runs resetPanel().
 		 */
 		closePanel() {
-			state.panelOpen    = false;
-			state._activePanel = '';
-
-			// Clear panel body.
-			const body = document.getElementById( 'gam-panel-body' );
-			if ( body ) {
-				while ( body.firstChild ) {
-					body.removeChild( body.firstChild );
-				}
+			const dialog = panelDialog();
+			if ( dialog && window.wbGam?.dialog ) {
+				window.wbGam.dialog.close( dialog );
 			}
-
-			document.body.style.overflow = '';
-		},
-
-		/**
-		 * Prevent clicks inside the panel from bubbling to the backdrop.
-		 *
-		 * Applied via `data-wp-on--click="actions.stopPropagation"` on the
-		 * `.gam-panel` element.
-		 *
-		 * @param {Event} event
-		 */
-		stopPropagation( event ) {
-			event.stopPropagation();
 		},
 	},
 
@@ -153,52 +191,14 @@ const { state, actions } = store( 'wb-gamification/hub', {
 		/**
 		 * Runs on mount.
 		 *
-		 * 1. Registers a global ESC key listener to close the panel.
-		 * 2. If the wrapper's context contains a valid `preOpen` key,
-		 *    automatically opens that panel after the DOM settles.
+		 * If the wrapper's context contains a valid `preOpen` key, opens that panel after the DOM settles.
 		 */
 		init() {
-			// ESC key handler.
-			//
-			// `data-wp-init` re-fires every time its element MOUNTS -- including each time a router
-			// swaps the region containing the hub back in. This listener is on `document`, which
-			// outlives the element, so an unguarded addEventListener here stacks a fresh copy on every
-			// navigation: two, then three, then four handlers all racing to close the same panel.
-			// Harmless today only because closePanel() happens to be idempotent, which is a thin thing
-			// to rely on. Bind the global exactly once.
-			if ( ! window.__wbGamHubEscBound ) {
-				window.__wbGamHubEscBound = true;
-
-				document.addEventListener( 'keydown', ( event ) => {
-					if ( event.key === 'Escape' && state.panelOpen ) {
-						actions.closePanel();
-					}
-				} );
-			}
-
 			// Auto-open from URL parameter (?panel=badges, etc.).
-			const ctx = getContext();
-			const preOpen = ctx.preOpen;
+			const preOpen = getContext().preOpen;
 
-			if (
-				preOpen &&
-				VALID_PANELS.includes( preOpen ) &&
-				document.getElementById( `gam-tpl-${ preOpen }` )
-			) {
-				requestAnimationFrame( () => {
-					const tpl  = document.getElementById( `gam-tpl-${ preOpen }` );
-					const body = document.getElementById( 'gam-panel-body' );
-					if ( tpl && body ) {
-						while ( body.firstChild ) {
-							body.removeChild( body.firstChild );
-						}
-						body.appendChild( tpl.content.cloneNode( true ) );
-						state.panelTitle   = panelTitleFor( preOpen );
-						state._activePanel = preOpen;
-						state.panelOpen    = true;
-						document.body.style.overflow = 'hidden';
-					}
-				} );
+			if ( preOpen && VALID_PANELS.includes( preOpen ) ) {
+				requestAnimationFrame( () => showPanel( preOpen, null ) );
 			}
 		},
 	},

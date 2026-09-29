@@ -31,8 +31,8 @@ return array(
 
 		array(
 			'id'                => 'evnm_event_attended',
-			'label'             => 'Attend an event',
-			'description'       => 'Awarded when a member checks in at an event with a valid ticket. Cancelled or refunded tickets cannot check in, so attendance is only ever rewarded once per ticket.',
+			'label'             => static fn(): string => __( 'Attend an event', 'wb-gamification' ),
+			'description'       => static fn(): string => __( 'Awarded when a member checks in at an event with a valid ticket. Cancelled or refunded tickets cannot check in, so attendance is only ever rewarded once per ticket.', 'wb-gamification' ),
 			// Pro fires: do_action( 'evnm_after_checkin', array $row, int $event_id )
 			// once on the first successful check-in (CheckinService::check_in).
 			'hook'              => 'evnm_after_checkin',
@@ -56,8 +56,8 @@ return array(
 
 		array(
 			'id'                => 'evnm_ticket_purchased_gateway',
-			'label'             => 'Complete a ticket order',
-			'description'       => 'Awarded when a member completes a card-gateway ticket order and the payment settles. Free and immediately paid orders are handled by the core integration, so a single order is only ever rewarded once.',
+			'label'             => static fn(): string => __( 'Complete a ticket order', 'wb-gamification' ),
+			'description'       => static fn(): string => __( 'Awarded when a member completes a card-gateway ticket order and the payment settles. Free and immediately paid orders are handled by the core integration, so a single order is only ever rewarded once.', 'wb-gamification' ),
 			// Pro fires: do_action( 'evnm_after_update_order', array $full, array $changed, array $ctx ).
 			// The settlement webhook transitions the order to 'paid'; the context
 			// carries no actor, so the buyer is read from the order record itself.
@@ -86,8 +86,8 @@ return array(
 
 		array(
 			'id'                => 'evnm_follow',
-			'label'             => 'Follow an event or organizer',
-			'description'       => 'Awarded when a member follows an event, organizer, venue, or another member to stay up to date. A daily limit keeps the reward proportionate.',
+			'label'             => static fn(): string => __( 'Follow an event or organizer', 'wb-gamification' ),
+			'description'       => static fn(): string => __( 'Awarded when a member follows an event, organizer, venue, or another member to stay up to date. A daily limit keeps the reward proportionate.', 'wb-gamification' ),
 			// Pro fires: do_action( 'evnm_after_follow', int $user_id, string $type, int $object_id ).
 			// $type is one of event, organizer, member, space, category.
 			'hook'              => 'evnm_after_follow',

@@ -104,6 +104,14 @@
 	font-size: 16px;
 }
 
+/* Third-party Dashicons card: core's .dashicons sets its own 20px box; keep ours. */
+.wb-gam-earning-guide__icon.dashicons {
+	width: 32px;
+	height: 32px;
+	font-size: 16px;
+	line-height: 32px;
+}
+
 .wb-gam-earning-guide__body {
 	/* Now a full-width row beneath the icon+pts head. min-width:0 stays
 	 * so long labels wrap inside the card rather than blowing it out. */

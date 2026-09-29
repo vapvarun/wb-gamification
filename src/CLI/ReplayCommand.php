@@ -19,7 +19,7 @@
  *
  * Limitations:
  *   - `admin_awarded` badge rules are never auto-evaluated by design.
- *   - Custom rule types registered via `wb_gam_badge_condition`
+ *   - Custom rule types registered via `wb_gam_evaluate_badge_condition`
  *     filter run if the listener doesn't depend on the synthetic event
  *     payload's metadata.
  *

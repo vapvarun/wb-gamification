@@ -1,0 +1,238 @@
+# Filters Reference
+
+Every filter hook (`apply_filters`) in WB Gamification, grouped by domain. Register a listener with `add_filter()`, match the parameter count to the signature shown, and always return a value (return it unchanged when your condition does not apply).
+
+See [Hooks and Filters Overview](110-hooks-overview.md) for how to add a listener, and the [Actions reference](120-actions-reference.md) for event hooks.
+
+## Points and awards
+
+| Filter | What it filters | Parameters | Return |
+|--------|-----------------|------------|--------|
+| `wb_gam_points_for_action` | Points before they are written. Called after admin option lookup, before multipliers. | `int $points`, `string $action_id`, `int $user_id`, `Event $event` | `int` final points |
+| `wb_gam_before_evaluate` | Gate filter. Return `false` to silently block an event from being processed. | `bool $proceed`, `Event $event` | `bool` whether to proceed |
+| `wb_gam_event_metadata` | Event metadata before rule evaluation. Enrich it with computed fields. | `array $metadata`, `Event $event` | `array` metadata |
+| `wb_gam_rule_condition` | Resolves a custom rule condition type the core engine does not recognize. Return `true` to mark the condition met. | `bool $met`, `array $condition`, `Event $event` | `bool` whether the condition is met |
+| `wb_gam_leaderboard_results` | Leaderboard data before it is returned to blocks, shortcodes, or the REST API. Fires once per page; since 1.6.5 the `rank` in each row is absolute (page two continues from page one) and `$raw_rows` is the page's raw rows. | `array $results`, `array $raw_rows` | `array` results |
+| `wb_gam_leaderboard_anon_paging` | Whether an anonymous visitor may read past the first leaderboard page over REST (the `cursor` parameter). Default `false`: the first page is public, walking the whole roster needs a login. Added in 1.6.5. | `bool $allowed` | `bool` whether cursor paging is open to visitors |
+| `wb_gam_leaderboard_scope_user_ids` | The set of user IDs included in a scoped leaderboard. Return an explicit list to define a custom scope. | `array $user_ids`, `string $scope_type`, `int $scope_id` | `array` user IDs |
+| `wb_gam_leaderboard_max_snapshot_age` | How stale (seconds) the materialized leaderboard snapshot may be before a read falls back live. Floored at 60. Default `600` (the 5-minute rebuild interval). | `int $max_age` | `int` max age in seconds |
+| `wb_gam_toast_data` | Toast notification content before it is queued. Return an empty array to suppress. | `array $event`, `int $user_id` | `array` toast data (empty to suppress) |
+| `wb_gam_heartbeat_payload` | The realtime heartbeat payload before it is returned to the browser. | `array $out`, `int $user_id`, `array $boards` | `array` payload |
+| `wb_gam_award_skip_toast_reasons` | Which `wb_gam_award_skipped` reasons get a member-facing toast. Default `[]` (silence) since 1.6.3 - a skip reason reads as an error, not feedback, so nothing is shown unless an owner opts specific reasons in. Engine-internal vetoes are never eligible regardless of the return value. | `string[] $reasons`, `int $user_id`, `string $action_id` | `array` reasons to surface |
+
+## Badges and levels
+
+| Filter | What it filters | Parameters | Return |
+|--------|-----------------|------------|--------|
+| `wb_gam_should_award_badge` | Gate filter. Return `false` to prevent a specific badge from being awarded. | `bool $should`, `int $user_id`, `string $badge_id`, `array $def` | `bool` whether to award |
+| `wb_gam_evaluate_badge_condition` | Resolves a custom badge condition type the core badge engine does not recognize. Return `true` to mark the condition met. | `bool $result`, `string $type`, `array $condition`, `int $user_id`, `Event\|null $event` | `bool` whether the condition is met |
+| `wb_gam_badge_share_respects_privacy` | Whether the public badge-share page should honor the member's privacy setting. Default `false`. | `bool $respects_privacy` | `bool` |
+| `wb_gam_badge_condition_signals` | The event signal names a custom badge condition type reacts to, so the engine can skip evaluating a badge for signals it does not care about. | `string[] $signals`, `string $type`, `array $condition` | `array` signal names |
+| `wb_gam_badge_share_redirect_url` | Where a visitor is redirected after viewing a public badge-share page. Return `''` to fall back to the default wb-gamification profile. | `string $url`, `int $user_id`, `string $badge_id` | `string` redirect URL |
+| `wb_gam_og_accent_color` | The accent hex colour used in the generated badge-share OG image. Default `#5b4cdb`; an invalid value falls back to the default. | `string $hex` | `string` hex colour |
+| `wb_gam_streak_grace_days` | The grace period (days before a streak breaks) per user. | `int $days`, `int $user_id` | `int` grace days |
+| `wb_gam_credential_document` | The OpenBadges 3.0 JSON-LD credential before it is returned. | `array $credential`, `string $badge_id`, `int $user_id` | `array` credential document |
+
+## Challenges and kudos
+
+| Filter | What it filters | Parameters | Return |
+|--------|-----------------|------------|--------|
+| `wb_gam_before_kudos` | Validate or block kudos before they are recorded. Return a `WP_Error` to reject. | `mixed $result`, `int $giver_id`, `int $receiver_id`, `string $message` | `$result` unchanged, or a `WP_Error` to reject |
+| `wb_gam_kudos_per_receiver_cooldown_seconds` | Window (seconds) in which a repeat kudos to the same receiver earns no points. Since 1.6.5 it never blocks the kudos itself. Default one hour; return `0` to let every repeat earn. | `int $seconds`, `int $giver_id`, `int $receiver_id` | `int` window seconds |
+| `wb_gam_kudos_daily_ceiling` | Most kudos a member can send in a day, points or not - a spam brake. The give-kudos form is not shown once it is reached. Default `50`. Added in 1.6.5. | `int $ceiling`, `int $giver_id` | `int` ceiling |
+| `wb_gam_kudos_abuse_pair_threshold` | Minimum times the same giver->receiver pair must trade kudos before the Kudos Moderation admin page flags them as a possible abuse ring. Computed across the whole table, not just the current page. Default `2`. | `int $threshold` | `int` threshold |
+
+## Submissions
+
+| Filter | What it filters | Parameters | Return |
+|--------|-----------------|------------|--------|
+| `wb_gam_submission_daily_cap` | The per-user daily cap on user-generated-content submissions. Default `5`. | `int $cap` | `int` daily cap |
+
+## Emails and nudges
+
+| Filter | What it filters | Parameters | Return |
+|--------|-----------------|------------|--------|
+| `wb_gam_email_enabled` | Whether a given transactional email type should be sent to a user. | `bool $enabled`, `string $slug`, `int $user_id` | `bool` whether to send |
+| `wb_gam_email_burst_cap` | The maximum number of transactional emails of one type sent in a burst window. Default `5`. | `int $cap`, `string $slug` | `int` burst cap |
+| `wb_gam_email_from_header` | The `From` header used for plugin emails. | `string $from`, `string $name`, `string $email`, `string $name_option_key` | `string` from header |
+| `wb_gam_email_recipients` | The recipient address for a transactional email (level-up, badge, challenge, redemption). Return `''` to suppress the send. | `string $to`, `string $slug`, `int $user_id` | `string` recipient address |
+| `wb_gam_email_subject` | A transactional email's subject line. | `string $subject`, `string $slug`, `int $user_id` | `string` subject |
+| `wb_gam_email_body` | A transactional email's rendered HTML body, after `Email::render()` (theme override + template hooks). | `string $body`, `string $slug`, `int $user_id` | `string` HTML body |
+| `wb_gam_weekly_email_body` | The rendered body of the weekly summary email before it is sent. | `string $body`, `WP_User $user`, `array $data` | `string` email body |
+| `wb_gam_should_send_weekly_nudge` | Whether a weekly leaderboard nudge should be sent to a specific user. | `bool $should`, `int $user_id`, `array $rank_data` | `bool` whether to send |
+| `wb_gam_nudge_message` | The leaderboard nudge message before delivery. | `string $message`, `int $user_id`, `int $rank`, `int $points`, `?int $points_to_next` | `string` message |
+| `wb_gam_recap_data` | The year-in-review recap data before display. | `array $recap`, `int $user_id`, `int $year` | `array` recap data |
+
+See [Customizing gamification emails](210-email-customization.md) for worked examples of the three email filters above plus the `wb_gam_email_footer` template hook.
+
+## Integrations
+
+| Filter | What it filters | Parameters | Return |
+|--------|-----------------|------------|--------|
+| `wb_gam_category_label` | The label shown for an action category (How to Earn group headings, `category_label` in `GET /actions`). Family categories have translatable labels; any other slug reads as words (`my-plugin` -> `My Plugin`). Added in 1.6.5. | `string $label`, `string $slug` | `string` label |
+| `wb_gam_action_label` | Name an action id your integration awards without registering it as an action. Every surface (toasts, points history, REST `label`, analytics) reads it through `wb_gam_get_action_label()`. Return a translated string for your ids; return `$label` unchanged for others. Added in 1.6.5. | `string $label` ('' when nothing has named it yet), `string $action_id` | `string` label |
+| `wb_gam_as_retention_days` | Number of days the daily Action Scheduler cleanup keeps `actionscheduler_actions` rows for, regardless of status. Default `7`, minimum `1`. Added in 1.4.0. | `int $days` | `int` retention days |
+| `wb_gam_activity_context_label` | The BuddyPress activity context-group label for a gamification activity type. Default is the per-type human label. Added in 1.4.0. | `string $context`, `string $key` | `string` context label |
+| `wb_gam_rank_automation_rules` | Rank automation rules before they are evaluated. | `array $rules` | `array` rules |
+| `wb_gam_activitypub_activity` | The ActivityPub activity object before it is dispatched for a badge award. | `array $activity`, `int $user_id` | `array` activity object |
+| `wb_gam_grant_member_uploads` | Whether to bridge the WordPress `upload_files` capability to logged-in members so the achievement editor's Add Media button works for subscribers/contributors. Default `true`. | `bool $grant`, `WP_User $user` | `bool` whether to grant |
+| `wb_gam_wpmediaverse_free_triggers` | The WPMediaVerse free trigger definitions. | `array $free_triggers` | `array` triggers |
+| `wb_gam_wpmediaverse_pro_triggers` | The WPMediaVerse Pro trigger definitions (only when WPMediaVerse Pro is active). | `array $pro_triggers` | `array` triggers |
+| `wb_gam_wpmediaverse_triggers` | The combined WPMediaVerse trigger definitions. | `array $triggers`, `bool $pro_active` | `array` triggers |
+| `wb_gam_defer_leaderboard_to_jetonomy` | Whether wb-gam suppresses its own leaderboard + top-members blocks/shortcodes (and the Hub leaderboard card) so Jetonomy's reputation ranking is the single leaderboard. Default `true` when `JETONOMY_VERSION` is defined, otherwise `false`. Added in 1.5.2. | `bool $defer` | `bool` whether to defer |
+| `wb_gam_learndash_profile_link` | Whether to add the opt-in "My Achievements" link to the LearnDash profile (links to the mapped Hub page). Default `false` - return `true` to enable. Added in 1.5.2. | `bool $enabled` | `bool` whether to show the link |
+| `wb_gam_learnomy_profile_link` | Whether to add the opt-in gamification link to the Learnomy account page (links to the mapped Hub page). Default `false`, matching the LearnDash integration. Added in 1.6.3. | `bool $enabled` | `bool` whether to show the link |
+| `wb_gam_member_surface_html` | The wrapped member achievements surface markup (BuddyPress Achievements tab, WooCommerce My Account endpoint, etc.) before output, so a host can wrap or augment the surface without duplicating the renderer. Added in 1.5.2. | `string $html`, `int $user_id` | `string` surface markup |
+| `wb_gam_defer_member_email_to_buddynext` | Whether wb-gam suppresses its own weekly member email so BuddyNext owns member comms. Default `true` when BuddyNext is active, otherwise `false`. | `bool $defer` | `bool` whether to defer |
+| `wb_gam_import_mode_active` | Whether an import is currently running and badge/level announcements should be suppressed (an import replays history, so a member should not be congratulated for something they earned on another plugin years ago). | `bool $active` | `bool` whether import mode is active |
+| `wb_gam_import_point_type_map` | The point-type slug a legacy source's point/credit type maps to during a BadgeOS/GamiPress/myCred import. Falls back to the site's default point type when the source slug is unknown. | `string $default`, `string $slug`, `string[] $known` | `string` point-type slug |
+| `wb_gam_import_page_size` | How many source rows one background import job handles. Defaults: points 500, badge awards 200, recompute 100, reconcile 200, undo 500. Clamped to 10-2000. Lower it on hosts with a short PHP time limit. | `int $size`, `string $phase` | `int` rows per job |
+| `bpmb_gamification_award_comment_for_post` | Owned by BuddyPress Member Blog, not wb-gamification - read here so the two plugins agree on which posts Member Blog already pays comment authors for, so wb-gam does not double-pay. Default `true` for `post` post type. | `bool $award`, `WP_Post $post` | `bool` whether wb-gam should also award |
+
+## Realtime and notifications
+
+| Filter | What it filters | Parameters | Return |
+|--------|-----------------|------------|--------|
+| `wb_gam_sse_allowed` | Whether the Server-Sent Events long-poll transport may run on this host. Default `false` - SSE pins a PHP-FPM worker per connection, so it stays off unless the host is provisioned for long-lived streaming. When `false`, realtime falls back to WP Heartbeat. Added in 1.5.2. | `bool $allowed` | `bool` whether SSE is permitted |
+| `wb_gam_celebration_style` | Whether celebrations use confetti. Default `'confetti'`; return `'none'` for a community where it does not fit. Members with reduced motion never see confetti regardless. Added in 1.6.5. | `string $style` | `string` `'confetti'` or `'none'` |
+| `wb_gam_toast_position` | The on-screen corner reward toasts slide in from. Filters the stored `wb_gam_toast_position` option (Settings > Realtime). One of `bottom-center` (default since 1.6.5), `bottom-right`, `bottom-left`, `top-right`, `top-center`. Added in 1.5.2. | `string $position` | `string` toast position |
+
+## Community notification contract
+
+Part of the same contract as `wb_gam_notification_created` (see the [Actions reference](120-actions-reference.md)). A host declares its types to start reading the payload and answers visibility per bell page.
+
+| Filter | What it filters | Parameters | Return |
+|--------|-----------------|------------|--------|
+| `wb_gam_community_notification_types` | The notification types this plugin offers a settings switch for (`badge_awarded`, `level_up`, `kudos_received`, `challenge_completed`, `reward_fulfilled`, `credential_expired`, `personal_record`, `streak_milestone`, `cohort_promotion`, `community_goal`, `submission_result`). Declaring on this filter is what tells a host to start reading `wb_gam_notification_created`'s payload instead of any older, undifferentiated route. Added in 1.6.5. | `array $types` (`slug => array{label, description, default_on}`) | `array` types |
+
+## Access and modules
+
+Site-owner controls added in 1.5.3 (Settings > Access and Settings > Modules).
+
+| Filter | What it filters | Parameters | Return |
+|--------|-----------------|------------|--------|
+| `wb_gam_user_can_earn` | Whether a user may earn points at all. Fires after the admin earning-exclusion settings (excluded roles, excluded accounts, and the per-user `wb_gam_sandboxed` veto) are applied, so code can extend or override the owner's choices. Enforced at the single award choke point, so it covers both the sync and async award paths. Added in 1.5.3. | `bool $can`, `int $user_id` | `bool` whether the user may earn |
+| `wb_gam_module_enabled` | Whether an optional module is enabled. Modules: `kudos`, `streaks`, `challenges`, `community_challenges`, `cohort_leagues`, `redemption`. Default ON; only an explicit `'0'` in the `wb_gam_modules` option disables one. A disabled module's blocks and shortcodes render nothing, its admin page and links are removed, and (since 1.6.5) its REST routes answer 404 `wb_gam_module_disabled` (data is preserved). Cohort leagues and community challenges have one switch that also stops their background engine. Added in 1.5.3. | `bool $enabled`, `string $slug` | `bool` whether the module is on |
+
+> **Two related event hooks are actions, not filters.** `wb_gam_progress_reset` (fires after a member-progress reset wipes the progress tables, keeping config) and `wb_gam_points_decayed` (fires after each inactivity point-decay sweep, with the number of members decayed) are documented in the [Actions reference](120-actions-reference.md). Listen with `add_action()`, not `add_filter()`.
+
+## Public profiles
+
+| Filter | What it filters | Parameters | Return |
+|--------|-----------------|------------|--------|
+| `wb_gam_can_view_public_profile` | Whether a viewer may see a member's gamification profile data (points, badges, rank, kudos entries). A community plugin that owns member profiles (BuddyNext) answers with its own profile privacy, so one setting governs both; when a callback is attached, the plugin's own public-profile switches are hidden in Settings and the setup wizard. Self and administrators are decided before this filter. Added in 1.6.5. | `bool $allowed`, `int $target_id`, `int $viewer_id` | `bool` whether the viewer may see it |
+| `wb_gam_profile_publicly_visible` | Whether a member's `/u/{user_login}` profile page is publicly visible. Default ON (opt-out model): a member is visible unless they set the per-user flag to `0`, and the site-wide kill switch still wins. Added in 1.5.2. | `bool $visible`, `int $user_id` | `bool` whether the profile is public |
+| `wb_gam_profile_redirect_url` | Where a visitor is redirected instead of rendering wb-gamification's own `/u/{user_login}` page. A community plugin that owns member profiles can point here so every profile link lands on its own page. Default `''` (render wb-gamification's page). | `string $url`, `int $user_id`, `WP_User $user` | `string` redirect URL |
+| `wb_gam_member_url` | The canonical profile URL resolved for a member - used by every leaderboard row, podium slot, kudos entry, and share card. Return `''` to render no link. | `string $url`, `int $user_id` | `string` profile URL |
+
+## Admin CRUD (REST)
+
+These fire from the REST controllers behind the admin CRUD screens. Each carries the `WP_REST_Request` so listeners can inspect or modify the payload before the write.
+
+| Filter | What it filters | Parameters | Return |
+|--------|-----------------|------------|--------|
+| `wb_gam_before_create_badge` | The badge row before it is inserted. | `array $row`, `WP_REST_Request $request` | `array` row |
+| `wb_gam_before_update_badge` | The badge update payload before it is applied. | `array $data`, `array $def`, `WP_REST_Request $request` | `array` data |
+| `wb_gam_before_create_level` | The level payload before it is inserted. | `array $payload`, `WP_REST_Request $request` | `array` payload |
+| `wb_gam_before_update_level` | The level update payload before it is applied. | `array $updates`, `array $current`, `WP_REST_Request $request` | `array` updates |
+| `wb_gam_before_create_community_challenge` | The community challenge payload before it is inserted. | `array $data`, `WP_REST_Request $request` | `array` data |
+| `wb_gam_before_update_community_challenge` | The community challenge update payload before it is applied. | `array $updates`, `array $current`, `WP_REST_Request $request` | `array` updates |
+| `wb_gam_before_create_api_key` | The API key payload before it is created. | `array $payload`, `WP_REST_Request $request` | `array` payload |
+| `wb_gam_before_save_cohort_settings` | The cohort settings before they are saved. | `array $settings`, `bool $enabled`, `WP_REST_Request $request` | `array` settings |
+
+## Block data filters
+
+Every block exposes a per-block data filter that fires on the data the block is about to render, so extensions can reorder, remove, or add fields without forking the render PHP. Each filter is named `wb_gam_block_<slug>_data` (or `_currencies` for the hub). All per-block data filters also receive the block attributes and the resolving user ID as later arguments where the render needs them.
+
+| Filter | Block | What it filters | Return |
+|--------|-------|-----------------|--------|
+| `wb_gam_block_leaderboard_data` | leaderboard | Array of `{rank, user_id, display_name, points}` rows | `array` rows |
+| `wb_gam_block_top_members_data` | top-members | Same shape as leaderboard | `array` rows |
+| `wb_gam_block_points_history_data` | points-history | Array of `{action_id, points, point_type, created_at}` rows | `array` rows |
+| `wb_gam_block_member_points_data` | member-points | `{points, level_points, label, level, next_level, progress_pct}` map (`level_points` = points earned, which the level and "to next level" use) | `array` map |
+| `wb_gam_block_hub_currencies` | hub | Array of `{slug, label, icon, balance, is_default, convert_rules}` tiles | `array` tiles |
+| `wb_gam_block_badge_showcase_data` | badge-showcase | Array of `{id, name, icon_url, earned, ...}` badges | `array` badges |
+| `wb_gam_block_challenges_data` | challenges | Array of active challenges for the user | `array` challenges |
+| `wb_gam_block_cohort_rank_data` | cohort-rank | Array of cohort standings rows | `array` rows |
+| `wb_gam_block_community_challenges_data` | community-challenges | Array of active community challenges | `array` challenges |
+| `wb_gam_block_daily_bonus_data` | daily-bonus | Login-bonus state map merged with `{today_claimed}` | `array` map |
+| `wb_gam_block_earning_guide_data` | earning-guide | Category-keyed action map `[ category => [{label,icon,points}, ...] ]` | `array` map |
+| `wb_gam_block_kudos_feed_data` | kudos-feed | Array of recent kudos rows | `array` rows |
+| `wb_gam_block_level_progress_data` | level-progress | `{points, level_points, level, next, pct}` map (`level_points` = points earned) | `array` map |
+| `wb_gam_block_redemption_store_data` | redemption-store | Array of reward items | `array` items |
+| `wb_gam_block_streak_data` | streak | `{streak, heatmap}` map | `array` map |
+| `wb_gam_block_year_recap_data` | year-recap | Yearly recap aggregates map | `array` map |
+
+### Universal block filters
+
+These fire on every block, not just one slug.
+
+| Filter | What it filters | Parameters | Return |
+|--------|-----------------|------------|--------|
+| `wb_gam_block_data` | The resolved data array for any block, after the per-block filter. | `array $data`, `string $slug`, `array $attributes` | `array` data |
+| `wb_gam_block_css` | The per-instance scoped CSS emitted for a block instance. | `string $css`, `string $unique_id`, `array $attrs` | `string` CSS |
+
+### Empty-state filter
+
+| Filter | What it filters | Parameters | Return |
+|--------|-----------------|------------|--------|
+| `wb_gam_empty_state_{$block}` | The empty-state HTML rendered when a block has nothing to show, dynamically named per block slug (e.g. `wb_gam_empty_state_leaderboard`). | `string $html`, `string $block`, `string $message` | `string` empty-state HTML |
+
+### Hub block
+
+| Filter | What it filters | Parameters | Return |
+|--------|-----------------|------------|--------|
+| `wb_gam_hub_anon_leaderboard` | Whether the hub block shows anonymous visitors a top-3 leaderboard preview. Default is the `wb_gam_hub_anon_leaderboard` option (ON). | `bool $show` | `bool` whether to show the preview |
+
+## Lifecycle
+
+| Filter | What it filters | Parameters | Return |
+|--------|-----------------|------------|--------|
+| `wb_gam_template_path` | The resolved template path before a plugin-shipped template is loaded. Return your own path to override a template entirely. | `string $path`, `string $relative`, `array $ctx` | `string` template path |
+| `wb_gam_manifest_paths` | The directories scanned for `*.php` action manifest files. Add a path to register custom action manifests. | `string[] $paths` | `array` directory paths |
+| `wb_gam_block_manifests` | The absolute paths to `block.json` files discovered during block registration. | `array $manifests` | `array` manifest paths |
+| `wb_gam_deactivation_collector_url` | The endpoint the anonymous deactivation-feedback entry is forwarded to. Default `''` (kept in the local option only). | `string $url`, `array $entry` | `string` collector URL |
+| `wb_gam_utc_migration_page_size` | Row batch size for the one-time UTC storage migration, floored at 100. Default `5000`. | `int $size` | `int` batch size |
+
+## Usage examples (1.5.2 filters)
+
+```php
+// Force-show wb-gam's own leaderboard even when Jetonomy is active
+// (default is to defer to Jetonomy's reputation ranking).
+add_filter( 'wb_gam_defer_leaderboard_to_jetonomy', '__return_false' );
+
+// Opt the LearnDash profile "My Achievements" link in (default off).
+add_filter( 'wb_gam_learndash_profile_link', '__return_true' );
+
+// Add a heading above every member achievements surface.
+add_filter(
+	'wb_gam_member_surface_html',
+	static function ( string $html, int $user_id ): string {
+		return '<h2>' . esc_html__( 'Your progress', 'my-textdomain' ) . '</h2>' . $html;
+	},
+	10,
+	2
+);
+
+// Enable the SSE long-poll transport (only on a host built for it).
+add_filter( 'wb_gam_sse_allowed', '__return_true' );
+
+// Move reward toasts to the top-right corner for everyone, ignoring the
+// admin Settings > Realtime selection.
+add_filter(
+	'wb_gam_toast_position',
+	static function (): string {
+		return 'top-right';
+	}
+);
+
+// Hide a specific member's public /u/ profile regardless of their flag.
+add_filter(
+	'wb_gam_profile_publicly_visible',
+	static function ( bool $visible, int $user_id ): bool {
+		return 42 === $user_id ? false : $visible;
+	},
+	10,
+	2
+);
+```

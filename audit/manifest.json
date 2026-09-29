@@ -1,15 +1,15 @@
 {
   "header": {
-    "name": "Redemption \u2014 LearnDash course unlock",
+    "name": "WB Gamification",
     "slug": "wb-gamification",
-    "version": "1.0.0",
+    "version": "1.6.5",
     "textDomain": "wb-gamification",
-    "domainPath": "",
-    "requiresWP": "",
-    "requiresPHP": "",
-    "description": "Listens for `custom`-type WB Gamification redemptions whose admin-defined description starts with \"course:\" and grants access to the matching LearnDash course. Drop this file into wp-content/plugins/redemption-learndash-course/your-plugin.php.",
-    "author": "",
-    "pluginURI": "",
+    "domainPath": "/languages",
+    "requiresWP": "6.5",
+    "requiresPHP": "8.1",
+    "description": "Complete gamification plugin for BuddyPress and WordPress. Part of the Reign Stack. Points, badges, levels, leaderboards, challenges, and streaks — zero config, works out of the box.",
+    "author": "Wbcom Designs",
+    "pluginURI": "https://wbcomdesigns.com/",
     "network": false
   },
   "pluginPath": "wb-gamification",
@@ -1453,6 +1453,15 @@
         "line": 112
       },
       {
+        "slug": "wb-gam-multipliers",
+        "title": "Point Multipliers",
+        "capability": "wb_gam_manage_rules",
+        "callback": "",
+        "parentSlug": "wb-gamification",
+        "file": "src/Admin/MultipliersPage.php",
+        "line": 58
+      },
+      {
         "slug": "wb-gamification",
         "title": "WB Gamification",
         "capability": "manage_options",
@@ -1463,11 +1472,20 @@
       {
         "slug": "wb-gam-submissions",
         "title": "Submissions",
-        "capability": "manage_options",
+        "capability": "wb_gam_manage_submissions",
         "callback": "",
         "parentSlug": "wb-gamification",
         "file": "src/Admin/SubmissionsPage.php",
         "line": 29
+      },
+      {
+        "slug": "wb-gam-levels",
+        "title": "Levels",
+        "capability": "wb_gam_manage_levels",
+        "callback": "",
+        "parentSlug": "wb-gamification",
+        "file": "src/Admin/LevelsPage.php",
+        "line": 47
       }
     ],
     "settings": [],
@@ -3275,10 +3293,6 @@
       },
       {
         "hook": "jetonomy_pro_conversation_created",
-        "listeners": []
-      },
-      {
-        "hook": "jetonomy_pro_badge_earned",
         "listeners": []
       },
       {
@@ -5661,12 +5675,6 @@
           "hookName": "jetonomy_pro_conversation_created",
           "file": "integrations/jetonomy-pro.php",
           "line": 100
-        },
-        {
-          "type": "action",
-          "hookName": "jetonomy_pro_badge_earned",
-          "file": "integrations/jetonomy-pro.php",
-          "line": 122
         },
         {
           "type": "action",
@@ -8653,578 +8661,954 @@
     "totalLines": 101236
   },
   "generated": {
-    "generator": "wp-plugin-qa scanner",
-    "schema": "v3-functional"
+    "generator": "bin/refresh-manifest-live.php (header, rest, shortcodes) + wp-plugin-qa scanner (other sections)",
+    "at": "2026-09-29T02:10:05+00:00"
   },
   "rest": {
     "namespace": "wb-gamification/v1",
     "endpoints": [
       {
-        "route": "/wb-gamification/v1/",
+        "route": "/wb-gamification/v1/members/(?P<id>[\\d]+)",
         "methods": [
-          "READABLE"
+          "GET"
         ],
-        "permission": "__return_true",
-        "gated_by": null,
-        "file": "src/API/ActionsController.php:52"
+        "permission": "MembersController::t1_permissions_check",
+        "callback": "src/API/MembersController.php:906"
       },
       {
-        "route": "/wb-gamification/v1/",
+        "route": "/wb-gamification/v1/members/(?P<id>[\\d]+)/points",
         "methods": [
-          "READABLE"
+          "GET"
         ],
-        "permission": "__return_true",
-        "gated_by": null,
-        "file": "src/API/ActionsController.php:64"
+        "permission": "MembersController::t2_permissions_check",
+        "callback": "src/API/MembersController.php:963"
       },
       {
-        "route": "/wb-gamification/v1/",
+        "route": "/wb-gamification/v1/members/(?P<id>[\\d]+)/level",
+        "methods": [
+          "GET"
+        ],
+        "permission": "MembersController::t1_permissions_check",
+        "callback": "src/API/MembersController.php:1074"
+      },
+      {
+        "route": "/wb-gamification/v1/members/(?P<id>[\\d]+)/badges",
+        "methods": [
+          "GET"
+        ],
+        "permission": "MembersController::t1_permissions_check",
+        "callback": "src/API/MembersController.php:1118"
+      },
+      {
+        "route": "/wb-gamification/v1/members/(?P<id>[\\d]+)/events",
+        "methods": [
+          "GET"
+        ],
+        "permission": "MembersController::t2_permissions_check",
+        "callback": "src/API/MembersController.php:1137"
+      },
+      {
+        "route": "/wb-gamification/v1/members/(?P<id>[\\d]+)/streak",
+        "methods": [
+          "GET"
+        ],
+        "permission": "MembersController::t1_permissions_check",
+        "callback": "src/API/MembersController.php:1199"
+      },
+      {
+        "route": "/wb-gamification/v1/members/(?P<id>[\\d]+)/streak",
+        "methods": [
+          "POST"
+        ],
+        "permission": "MembersController::admin_permissions_check",
+        "callback": "src/API/MembersController.php:691"
+      },
+      {
+        "route": "/wb-gamification/v1/members/(?P<id>[\\d]+)/streak",
         "methods": [
           "DELETE"
         ],
-        "permission": "closure",
-        "gated_by": null,
-        "file": "src/API/ActionsController.php:85"
+        "permission": "MembersController::admin_permissions_check",
+        "callback": "src/API/MembersController.php:725"
       },
       {
-        "route": "/wb-gamification/v1/",
+        "route": "/wb-gamification/v1/members/me/toasts",
         "methods": [
-          "READABLE"
+          "GET"
         ],
-        "permission": "closure",
-        "gated_by": null,
-        "file": "src/API/ApiKeysController.php:76"
+        "permission": "MembersController::get_toasts_permissions_check",
+        "callback": "src/API/MembersController.php:1242"
       },
       {
-        "route": "/wb-gamification/v1/",
+        "route": "/wb-gamification/v1/members/me/profile-visibility",
         "methods": [
-          "EDITABLE"
+          "GET"
         ],
-        "permission": "closure",
-        "gated_by": null,
-        "file": "src/API/ApiKeysController.php:109"
+        "permission": "MembersController::logged_in_permissions_check",
+        "callback": "src/API/MembersController.php:852"
       },
       {
-        "route": "/wb-gamification/v1/",
+        "route": "/wb-gamification/v1/members/me/profile-visibility",
         "methods": [
-          "DELETABLE"
+          "POST"
         ],
-        "permission": "closure",
-        "gated_by": null,
-        "file": "src/API/ApiKeysController.php:128"
+        "permission": "MembersController::logged_in_permissions_check",
+        "callback": "src/API/MembersController.php:873"
       },
       {
-        "route": "/wb-gamification/v1/",
+        "route": "/wb-gamification/v1/members",
         "methods": [
-          "READABLE"
+          "GET"
         ],
-        "permission": "__return_true",
-        "gated_by": null,
-        "file": "src/API/BadgeShareController.php:72"
+        "permission": "MembersController::list_permissions_check",
+        "callback": "src/API/MembersController.php:441"
       },
       {
-        "route": "/wb-gamification/v1/",
+        "route": "/wb-gamification/v1/members/(?P<id>[\\d]+)/exclude",
         "methods": [
-          "READABLE"
+          "POST"
         ],
-        "permission": "__return_true",
-        "gated_by": null,
-        "file": "src/API/BadgesController.php:82"
+        "permission": "MembersController::admin_permissions_check",
+        "callback": "src/API/MembersController.php:620"
       },
       {
-        "route": "/wb-gamification/v1/",
+        "route": "/wb-gamification/v1/members/(?P<id>[\\d]+)/reset-points",
         "methods": [
-          "READABLE"
+          "POST"
         ],
-        "permission": "__return_true",
-        "gated_by": null,
-        "file": "src/API/BadgesController.php:117"
+        "permission": "MembersController::admin_permissions_check",
+        "callback": "src/API/MembersController.php:649"
       },
       {
-        "route": "/wb-gamification/v1/",
+        "route": "/wb-gamification/v1/points/award",
         "methods": [
-          "CREATABLE"
+          "POST"
         ],
-        "permission": "closure",
-        "gated_by": null,
-        "file": "src/API/BadgesController.php:147"
+        "permission": "PointsController::admin_permission_check",
+        "callback": "src/API/PointsController.php:222"
       },
       {
-        "route": "/wb-gamification/v1/settings/capabilities",
+        "route": "/wb-gamification/v1/points/bulk",
         "methods": [
-          "READABLE"
+          "POST"
         ],
-        "permission": "__return_true",
-        "gated_by": null,
-        "file": "src/API/CapabilitiesController.php:59"
+        "permission": "PointsController::admin_permission_check",
+        "callback": "src/API/PointsController.php:418"
       },
       {
-        "route": "/wb-gamification/v1/capabilities",
+        "route": "/wb-gamification/v1/points/(?P<id>[\\d]+)",
         "methods": [
-          "READABLE"
+          "DELETE"
         ],
-        "permission": "__return_true",
-        "gated_by": null,
-        "file": "src/API/CapabilitiesController.php:83"
+        "permission": "PointsController::admin_permission_check",
+        "callback": "src/API/PointsController.php:335"
       },
       {
-        "route": "/wb-gamification/v1/",
+        "route": "/wb-gamification/v1/point-types",
         "methods": [
-          "READABLE"
+          "GET"
         ],
         "permission": "__return_true",
-        "gated_by": null,
-        "file": "src/API/ChallengesController.php:74"
+        "callback": "src/API/PointTypesController.php:152"
       },
       {
-        "route": "/wb-gamification/v1/",
+        "route": "/wb-gamification/v1/point-types",
         "methods": [
-          "READABLE"
+          "POST"
+        ],
+        "permission": "PointTypesController::admin_permission_check",
+        "callback": "src/API/PointTypesController.php:176"
+      },
+      {
+        "route": "/wb-gamification/v1/point-types/(?P<slug>[a-z0-9_-]+)",
+        "methods": [
+          "POST",
+          "PUT",
+          "PATCH"
+        ],
+        "permission": "PointTypesController::admin_permission_check",
+        "callback": "src/API/PointTypesController.php:200"
+      },
+      {
+        "route": "/wb-gamification/v1/point-types/(?P<slug>[a-z0-9_-]+)",
+        "methods": [
+          "DELETE"
+        ],
+        "permission": "PointTypesController::admin_permission_check",
+        "callback": "src/API/PointTypesController.php:225"
+      },
+      {
+        "route": "/wb-gamification/v1/point-type-conversions",
+        "methods": [
+          "GET"
         ],
         "permission": "__return_true",
-        "gated_by": null,
-        "file": "src/API/ChallengesController.php:142"
+        "callback": "src/API/PointTypeConversionsController.php:192"
       },
       {
-        "route": "/wb-gamification/v1/",
+        "route": "/wb-gamification/v1/point-type-conversions",
         "methods": [
-          "CREATABLE"
+          "POST"
         ],
-        "permission": "__return_true",
-        "gated_by": null,
-        "file": "src/API/ChallengesController.php:210"
+        "permission": "PointTypeConversionsController::admin_permission_check",
+        "callback": "src/API/PointTypeConversionsController.php:196"
       },
       {
-        "route": "/wb-gamification/v1/",
+        "route": "/wb-gamification/v1/point-type-conversions/(?P<id>[\\d]+)",
         "methods": [
-          "READABLE"
+          "POST",
+          "PUT",
+          "PATCH"
         ],
-        "permission": "closure",
-        "gated_by": null,
-        "file": "src/API/CohortSettingsController.php:80"
+        "permission": "PointTypeConversionsController::admin_permission_check",
+        "callback": "src/API/PointTypeConversionsController.php:221"
       },
       {
-        "route": "/wb-gamification/v1/",
+        "route": "/wb-gamification/v1/point-type-conversions/(?P<id>[\\d]+)",
         "methods": [
-          "READABLE"
+          "DELETE"
         ],
-        "permission": "__return_true",
-        "gated_by": null,
-        "file": "src/API/CommunityChallengesController.php:75"
-      },
-      {
-        "route": "/wb-gamification/v1/",
-        "methods": [
-          "READABLE"
-        ],
-        "permission": "__return_true",
-        "gated_by": null,
-        "file": "src/API/CommunityChallengesController.php:103"
-      },
-      {
-        "route": "/wb-gamification/v1/",
-        "methods": [
-          "READABLE"
-        ],
-        "permission": "__return_true",
-        "gated_by": null,
-        "file": "src/API/CredentialController.php:80"
-      },
-      {
-        "route": "/wb-gamification/v1/",
-        "methods": [
-          "READABLE"
-        ],
-        "permission": "closure",
-        "gated_by": null,
-        "file": "src/API/EmailSettingsController.php:61"
-      },
-      {
-        "route": "/wb-gamification/v1/",
-        "methods": [
-          "CREATABLE"
-        ],
-        "permission": "closure",
-        "gated_by": null,
-        "file": "src/API/EventsController.php:71"
-      },
-      {
-        "route": "/wb-gamification/v1/",
-        "methods": [
-          "CREATABLE"
-        ],
-        "permission": "closure",
-        "gated_by": null,
-        "file": "src/API/EventsController.php:120"
-      },
-      {
-        "route": "/wb-gamification/v1/",
-        "methods": [
-          "READABLE"
-        ],
-        "permission": "__return_true",
-        "gated_by": null,
-        "file": "src/API/KudosController.php:56"
-      },
-      {
-        "route": "/wb-gamification/v1/",
-        "methods": [
-          "READABLE"
-        ],
-        "permission": "closure",
-        "gated_by": null,
-        "file": "src/API/KudosController.php:107"
-      },
-      {
-        "route": "/wb-gamification/v1/",
-        "methods": [
-          "DELETABLE"
-        ],
-        "permission": "closure",
-        "gated_by": null,
-        "file": "src/API/KudosController.php:121"
-      },
-      {
-        "route": "/wb-gamification/v1/",
-        "methods": [
-          "READABLE"
-        ],
-        "permission": "__return_true",
-        "gated_by": null,
-        "file": "src/API/LeaderboardController.php:66"
-      },
-      {
-        "route": "/wb-gamification/v1/",
-        "methods": [
-          "READABLE"
-        ],
-        "permission": "__return_true",
-        "gated_by": null,
-        "file": "src/API/LeaderboardController.php:81"
-      },
-      {
-        "route": "/wb-gamification/v1/",
-        "methods": [
-          "READABLE"
-        ],
-        "permission": "closure",
-        "gated_by": null,
-        "file": "src/API/LeaderboardController.php:105"
-      },
-      {
-        "route": "/wb-gamification/v1/",
-        "methods": [
-          "READABLE"
-        ],
-        "permission": "__return_true",
-        "gated_by": null,
-        "file": "src/API/LevelsController.php:75"
-      },
-      {
-        "route": "/wb-gamification/v1/",
-        "methods": [
-          "EDITABLE"
-        ],
-        "permission": "closure",
-        "gated_by": null,
-        "file": "src/API/LevelsController.php:115"
-      },
-      {
-        "route": "/wb-gamification/v1/",
-        "methods": [
-          "READABLE"
-        ],
-        "permission": "closure",
-        "gated_by": null,
-        "file": "src/API/MembersController.php:83"
-      },
-      {
-        "route": "/wb-gamification/v1/",
-        "methods": [
-          "READABLE"
-        ],
-        "permission": "closure",
-        "gated_by": null,
-        "file": "src/API/MembersController.php:99"
-      },
-      {
-        "route": "/wb-gamification/v1/",
-        "methods": [
-          "READABLE"
-        ],
-        "permission": "closure",
-        "gated_by": null,
-        "file": "src/API/MembersController.php:137"
-      },
-      {
-        "route": "/wb-gamification/v1/",
-        "methods": [
-          "READABLE"
-        ],
-        "permission": "closure",
-        "gated_by": null,
-        "file": "src/API/MembersController.php:152"
-      },
-      {
-        "route": "/wb-gamification/v1/",
-        "methods": [
-          "READABLE"
-        ],
-        "permission": "closure",
-        "gated_by": null,
-        "file": "src/API/MembersController.php:167"
-      },
-      {
-        "route": "/wb-gamification/v1/",
-        "methods": [
-          "READABLE"
-        ],
-        "permission": "closure",
-        "gated_by": null,
-        "file": "src/API/MembersController.php:200"
-      },
-      {
-        "route": "/wb-gamification/v1/",
-        "methods": [
-          "READABLE"
-        ],
-        "permission": "closure",
-        "gated_by": null,
-        "file": "src/API/MembersController.php:276"
-      },
-      {
-        "route": "/wb-gamification/v1/",
-        "methods": [
-          "READABLE"
-        ],
-        "permission": "closure",
-        "gated_by": null,
-        "file": "src/API/MembersController.php:294"
-      },
-      {
-        "route": "/wb-gamification/v1/",
-        "methods": [
-          "READABLE"
-        ],
-        "permission": "closure",
-        "gated_by": null,
-        "file": "src/API/MembersController.php:322"
-      },
-      {
-        "route": "/wb-gamification/v1/",
-        "methods": [
-          "CREATABLE"
-        ],
-        "permission": "closure",
-        "gated_by": null,
-        "file": "src/API/MembersController.php:356"
-      },
-      {
-        "route": "/wb-gamification/v1/",
-        "methods": [
-          "CREATABLE"
-        ],
-        "permission": "closure",
-        "gated_by": null,
-        "file": "src/API/MembersController.php:379"
-      },
-      {
-        "route": "/wb-gamification/v1/openapi.json",
-        "methods": [
-          "READABLE"
-        ],
-        "permission": "__return_true",
-        "gated_by": null,
-        "file": "src/API/OpenApiController.php:47"
-      },
-      {
-        "route": "/wb-gamification/v1/",
-        "methods": [
-          "READABLE"
-        ],
-        "permission": "__return_true",
-        "gated_by": null,
-        "file": "src/API/PointTypeConversionsController.php:58"
-      },
-      {
-        "route": "/wb-gamification/v1/",
-        "methods": [
-          "EDITABLE"
-        ],
-        "permission": "closure",
-        "gated_by": null,
-        "file": "src/API/PointTypeConversionsController.php:76"
+        "permission": "PointTypeConversionsController::admin_permission_check",
+        "callback": "src/API/PointTypeConversionsController.php:241"
       },
       {
         "route": "/wb-gamification/v1/point-types/(?P<from>[a-z0-9_-]+)/convert",
         "methods": [
-          "CREATABLE"
+          "POST"
         ],
-        "permission": "closure",
-        "gated_by": null,
-        "file": "src/API/PointTypeConversionsController.php:95"
+        "permission": "PointTypeConversionsController::authenticated_permission_check",
+        "callback": "src/API/PointTypeConversionsController.php:252"
       },
       {
-        "route": "/wb-gamification/v1/",
+        "route": "/wb-gamification/v1/badges",
         "methods": [
-          "READABLE"
+          "GET"
         ],
         "permission": "__return_true",
-        "gated_by": null,
-        "file": "src/API/PointTypesController.php:60"
+        "callback": "src/API/BadgesController.php:216"
       },
       {
-        "route": "/wb-gamification/v1/",
+        "route": "/wb-gamification/v1/badges",
         "methods": [
-          "EDITABLE"
+          "POST"
         ],
-        "permission": "closure",
-        "gated_by": null,
-        "file": "src/API/PointTypesController.php:78"
+        "permission": "BadgesController::admin_check",
+        "callback": "src/API/BadgesController.php:519"
       },
       {
-        "route": "/wb-gamification/v1/",
+        "route": "/wb-gamification/v1/badges/(?P<id>[a-z0-9_-]+)",
         "methods": [
-          "CREATABLE"
-        ],
-        "permission": "closure",
-        "gated_by": null,
-        "file": "src/API/PointsController.php:75"
-      },
-      {
-        "route": "/wb-gamification/v1/",
-        "methods": [
-          "CREATABLE"
-        ],
-        "permission": "closure",
-        "gated_by": null,
-        "file": "src/API/PointsController.php:121"
-      },
-      {
-        "route": "/wb-gamification/v1/",
-        "methods": [
-          "DELETABLE"
-        ],
-        "permission": "closure",
-        "gated_by": null,
-        "file": "src/API/PointsController.php:153"
-      },
-      {
-        "route": "/wb-gamification/v1/",
-        "methods": [
-          "READABLE"
-        ],
-        "permission": "closure",
-        "gated_by": null,
-        "file": "src/API/RecapController.php:62"
-      },
-      {
-        "route": "/wb-gamification/v1/",
-        "methods": [
-          "READABLE"
+          "GET"
         ],
         "permission": "__return_true",
-        "gated_by": null,
-        "file": "src/API/RedemptionController.php:88"
+        "callback": "src/API/BadgesController.php:264"
       },
       {
-        "route": "/wb-gamification/v1/",
+        "route": "/wb-gamification/v1/badges/(?P<id>[a-z0-9_-]+)",
         "methods": [
-          "READABLE"
+          "POST",
+          "PUT",
+          "PATCH"
+        ],
+        "permission": "BadgesController::admin_check",
+        "callback": "src/API/BadgesController.php:597"
+      },
+      {
+        "route": "/wb-gamification/v1/badges/(?P<id>[a-z0-9_-]+)",
+        "methods": [
+          "DELETE"
+        ],
+        "permission": "BadgesController::admin_check",
+        "callback": "src/API/BadgesController.php:677"
+      },
+      {
+        "route": "/wb-gamification/v1/badges/(?P<id>[a-z0-9_-]+)/award",
+        "methods": [
+          "POST"
+        ],
+        "permission": "BadgesController::award_permissions_check",
+        "callback": "src/API/BadgesController.php:756"
+      },
+      {
+        "route": "/wb-gamification/v1/leaderboard",
+        "methods": [
+          "GET"
         ],
         "permission": "__return_true",
-        "gated_by": null,
-        "file": "src/API/RedemptionController.php:106"
+        "callback": "src/API/LeaderboardController.php:153"
       },
       {
-        "route": "/wb-gamification/v1/",
+        "route": "/wb-gamification/v1/leaderboard/group/(?P<group_id>[\\d]+)",
         "methods": [
-          "CREATABLE"
+          "GET"
         ],
-        "permission": "closure",
-        "gated_by": null,
-        "file": "src/API/RedemptionController.php:136"
+        "permission": "__return_true",
+        "callback": "src/API/LeaderboardController.php:208"
       },
       {
-        "route": "/wb-gamification/v1/",
+        "route": "/wb-gamification/v1/leaderboard/me",
         "methods": [
-          "READABLE"
+          "GET"
         ],
-        "permission": "closure",
-        "gated_by": null,
-        "file": "src/API/RedemptionController.php:157"
+        "permission": "LeaderboardController::require_logged_in",
+        "callback": "src/API/LeaderboardController.php:179"
       },
       {
-        "route": "/wb-gamification/v1/",
+        "route": "/wb-gamification/v1/actions",
         "methods": [
-          "READABLE"
+          "GET"
         ],
-        "permission": "closure",
-        "gated_by": null,
-        "file": "src/API/RulesController.php:118"
+        "permission": "__return_true",
+        "callback": "src/API/ActionsController.php:214"
       },
       {
-        "route": "/wb-gamification/v1/",
+        "route": "/wb-gamification/v1/actions/(?P<id>[a-z0-9_]+)",
         "methods": [
-          "READABLE"
+          "GET"
         ],
-        "permission": "closure",
-        "gated_by": null,
-        "file": "src/API/RulesController.php:151"
+        "permission": "__return_true",
+        "callback": "src/API/ActionsController.php:229"
       },
       {
-        "route": "/submissions/",
+        "route": "/wb-gamification/v1/actions/(?P<id>[a-z0-9_]+)/overrides",
         "methods": [
-          "READABLE"
+          "POST",
+          "PUT"
         ],
-        "permission": "closure",
-        "gated_by": null,
-        "file": "src/API/SubmissionsController.php:39"
+        "permission": "ActionsController::overrides_permissions_check",
+        "callback": "src/API/ActionsController.php:160"
       },
       {
-        "route": "/submissions/",
+        "route": "/wb-gamification/v1/actions/(?P<id>[a-z0-9_]+)/overrides",
         "methods": [
-          "CREATABLE"
+          "DELETE"
         ],
-        "permission": "closure",
-        "gated_by": null,
-        "file": "src/API/SubmissionsController.php:55"
+        "permission": "ActionsController::overrides_permissions_check",
+        "callback": "src/API/ActionsController.php:194"
       },
       {
-        "route": "/submissions/",
+        "route": "/wb-gamification/v1/kudos",
         "methods": [
-          "CREATABLE"
+          "GET"
         ],
-        "permission": "closure",
-        "gated_by": null,
-        "file": "src/API/SubmissionsController.php:64"
+        "permission": "__return_true",
+        "callback": "src/API/KudosController.php:225"
       },
       {
-        "route": "/wb-gamification/v1/",
+        "route": "/wb-gamification/v1/kudos",
         "methods": [
-          "READABLE"
+          "POST"
         ],
-        "permission": "closure",
-        "gated_by": null,
-        "file": "src/API/WebhooksController.php:96"
+        "permission": "KudosController::create_item_permissions_check",
+        "callback": "src/API/KudosController.php:238"
       },
       {
-        "route": "/wb-gamification/v1/",
+        "route": "/wb-gamification/v1/kudos/me",
         "methods": [
-          "READABLE"
+          "GET"
         ],
-        "permission": "closure",
-        "gated_by": null,
-        "file": "src/API/WebhooksController.php:116"
+        "permission": "KudosController::require_logged_in",
+        "callback": "src/API/KudosController.php:305"
       },
       {
-        "route": "/wb-gamification/v1/",
+        "route": "/wb-gamification/v1/kudos/(?P<id>[\\d]+)",
         "methods": [
-          "READABLE"
+          "DELETE"
         ],
-        "permission": "closure",
-        "gated_by": null,
-        "file": "src/API/WebhooksController.php:147"
+        "permission": "KudosController::admin_permissions_check",
+        "callback": "src/API/KudosController.php:169"
+      },
+      {
+        "route": "/wb-gamification/v1/badges/(?P<badge_id>[a-z0-9_-]+)/share/(?P<user_id>[\\d]+)",
+        "methods": [
+          "GET"
+        ],
+        "permission": "__return_true",
+        "callback": "src/API/BadgeShareController.php:297"
+      },
+      {
+        "route": "/wb-gamification/v1/badges/(?P<badge_id>[a-z0-9_-]+)/share",
+        "methods": [
+          "POST"
+        ],
+        "permission": "is_user_logged_in",
+        "callback": "src/API/BadgeShareController.php:132"
+      },
+      {
+        "route": "/wb-gamification/v1/badges/(?P<badge_id>[a-z0-9_-]+)/share",
+        "methods": [
+          "DELETE"
+        ],
+        "permission": "is_user_logged_in",
+        "callback": "src/API/BadgeShareController.php:160"
+      },
+      {
+        "route": "/wb-gamification/v1/challenges",
+        "methods": [
+          "GET"
+        ],
+        "permission": "__return_true",
+        "callback": "src/API/ChallengesController.php:234"
+      },
+      {
+        "route": "/wb-gamification/v1/challenges",
+        "methods": [
+          "POST"
+        ],
+        "permission": "ChallengesController::admin_check",
+        "callback": "src/API/ChallengesController.php:272"
+      },
+      {
+        "route": "/wb-gamification/v1/challenges/(?P<id>[\\d]+)",
+        "methods": [
+          "GET"
+        ],
+        "permission": "__return_true",
+        "callback": "src/API/ChallengesController.php:247"
+      },
+      {
+        "route": "/wb-gamification/v1/challenges/(?P<id>[\\d]+)",
+        "methods": [
+          "POST",
+          "PUT",
+          "PATCH"
+        ],
+        "permission": "ChallengesController::admin_check",
+        "callback": "src/API/ChallengesController.php:322"
+      },
+      {
+        "route": "/wb-gamification/v1/challenges/(?P<id>[\\d]+)",
+        "methods": [
+          "DELETE"
+        ],
+        "permission": "ChallengesController::admin_check",
+        "callback": "src/API/ChallengesController.php:392"
+      },
+      {
+        "route": "/wb-gamification/v1/events",
+        "methods": [
+          "POST"
+        ],
+        "permission": "EventsController::manage_members_permissions_check",
+        "callback": "src/API/EventsController.php:179"
+      },
+      {
+        "route": "/wb-gamification/v1/events/import",
+        "methods": [
+          "POST"
+        ],
+        "permission": "EventsController::manage_members_permissions_check",
+        "callback": "src/API/EventsController.php:324"
+      },
+      {
+        "route": "/wb-gamification/v1/import/sources",
+        "methods": [
+          "GET"
+        ],
+        "permission": "ImportController::permissions",
+        "callback": "src/API/ImportController.php:132"
+      },
+      {
+        "route": "/wb-gamification/v1/import/(?P<source>[a-z]+)",
+        "methods": [
+          "POST"
+        ],
+        "permission": "ImportController::permissions",
+        "callback": "src/API/ImportController.php:164"
+      },
+      {
+        "route": "/wb-gamification/v1/import/(?P<source>[a-z]+)/progress",
+        "methods": [
+          "GET"
+        ],
+        "permission": "ImportController::permissions",
+        "callback": "src/API/ImportController.php:185"
+      },
+      {
+        "route": "/wb-gamification/v1/import/(?P<source>[a-z]+)/undo",
+        "methods": [
+          "POST"
+        ],
+        "permission": "ImportController::admin_permissions",
+        "callback": "src/API/ImportController.php:217"
+      },
+      {
+        "route": "/wb-gamification/v1/import/(?P<source>[a-z]+)/resume",
+        "methods": [
+          "POST"
+        ],
+        "permission": "ImportController::permissions",
+        "callback": "src/API/ImportController.php:199"
+      },
+      {
+        "route": "/wb-gamification/v1/webhooks",
+        "methods": [
+          "GET"
+        ],
+        "permission": "WebhooksController::admin_check",
+        "callback": "src/API/WebhooksController.php:185"
+      },
+      {
+        "route": "/wb-gamification/v1/webhooks",
+        "methods": [
+          "POST"
+        ],
+        "permission": "WebhooksController::admin_check",
+        "callback": "src/API/WebhooksController.php:215"
+      },
+      {
+        "route": "/wb-gamification/v1/webhooks/(?P<id>[\\d]+)",
+        "methods": [
+          "GET"
+        ],
+        "permission": "WebhooksController::admin_check",
+        "callback": "src/API/WebhooksController.php:202"
+      },
+      {
+        "route": "/wb-gamification/v1/webhooks/(?P<id>[\\d]+)",
+        "methods": [
+          "POST",
+          "PUT",
+          "PATCH"
+        ],
+        "permission": "WebhooksController::admin_check",
+        "callback": "src/API/WebhooksController.php:277"
+      },
+      {
+        "route": "/wb-gamification/v1/webhooks/(?P<id>[\\d]+)",
+        "methods": [
+          "DELETE"
+        ],
+        "permission": "WebhooksController::admin_check",
+        "callback": "src/API/WebhooksController.php:321"
+      },
+      {
+        "route": "/wb-gamification/v1/webhooks/(?P<id>[\\d]+)/log",
+        "methods": [
+          "GET"
+        ],
+        "permission": "WebhooksController::admin_check",
+        "callback": "src/API/WebhooksController.php:357"
+      },
+      {
+        "route": "/wb-gamification/v1/webhooks/(?P<id>[\\d]+)/log",
+        "methods": [
+          "DELETE"
+        ],
+        "permission": "WebhooksController::admin_check",
+        "callback": "src/API/WebhooksController.php:381"
+      },
+      {
+        "route": "/wb-gamification/v1/rules",
+        "methods": [
+          "GET"
+        ],
+        "permission": "RulesController::admin_check",
+        "callback": "src/API/RulesController.php:193"
+      },
+      {
+        "route": "/wb-gamification/v1/rules",
+        "methods": [
+          "POST"
+        ],
+        "permission": "RulesController::admin_check",
+        "callback": "src/API/RulesController.php:248"
+      },
+      {
+        "route": "/wb-gamification/v1/rules/(?P<id>[\\d]+)",
+        "methods": [
+          "GET"
+        ],
+        "permission": "RulesController::admin_check",
+        "callback": "src/API/RulesController.php:235"
+      },
+      {
+        "route": "/wb-gamification/v1/rules/(?P<id>[\\d]+)",
+        "methods": [
+          "POST",
+          "PUT",
+          "PATCH"
+        ],
+        "permission": "RulesController::admin_check",
+        "callback": "src/API/RulesController.php:294"
+      },
+      {
+        "route": "/wb-gamification/v1/rules/(?P<id>[\\d]+)",
+        "methods": [
+          "DELETE"
+        ],
+        "permission": "RulesController::admin_check",
+        "callback": "src/API/RulesController.php:353"
+      },
+      {
+        "route": "/wb-gamification/v1/members/(?P<id>[\\d]+)/recap",
+        "methods": [
+          "GET"
+        ],
+        "permission": "RecapController::permissions_check",
+        "callback": "src/API/RecapController.php:156"
+      },
+      {
+        "route": "/wb-gamification/v1/badges/(?P<badge_id>[a-z0-9_]+)/credential/(?P<user_id>[\\d]+)",
+        "methods": [
+          "GET"
+        ],
+        "permission": "__return_true",
+        "callback": "src/API/CredentialController.php:191"
+      },
+      {
+        "route": "/wb-gamification/v1/redemptions/items",
+        "methods": [
+          "GET"
+        ],
+        "permission": "__return_true",
+        "callback": "src/API/RedemptionController.php:240"
+      },
+      {
+        "route": "/wb-gamification/v1/redemptions/items",
+        "methods": [
+          "POST"
+        ],
+        "permission": "RedemptionController::admin_check",
+        "callback": "src/API/RedemptionController.php:279"
+      },
+      {
+        "route": "/wb-gamification/v1/redemptions/items/(?P<id>[\\d]+)",
+        "methods": [
+          "GET"
+        ],
+        "permission": "__return_true",
+        "callback": "src/API/RedemptionController.php:266"
+      },
+      {
+        "route": "/wb-gamification/v1/redemptions/items/(?P<id>[\\d]+)",
+        "methods": [
+          "POST",
+          "PUT",
+          "PATCH"
+        ],
+        "permission": "RedemptionController::admin_check",
+        "callback": "src/API/RedemptionController.php:323"
+      },
+      {
+        "route": "/wb-gamification/v1/redemptions/items/(?P<id>[\\d]+)",
+        "methods": [
+          "DELETE"
+        ],
+        "permission": "RedemptionController::admin_check",
+        "callback": "src/API/RedemptionController.php:373"
+      },
+      {
+        "route": "/wb-gamification/v1/redemptions",
+        "methods": [
+          "GET"
+        ],
+        "permission": "RedemptionController::admin_check",
+        "callback": "src/API/RedemptionController.php:611"
+      },
+      {
+        "route": "/wb-gamification/v1/redemptions",
+        "methods": [
+          "POST"
+        ],
+        "permission": "RedemptionController::require_logged_in",
+        "callback": "src/API/RedemptionController.php:401"
+      },
+      {
+        "route": "/wb-gamification/v1/redemptions/me",
+        "methods": [
+          "GET"
+        ],
+        "permission": "RedemptionController::require_logged_in",
+        "callback": "src/API/RedemptionController.php:428"
+      },
+      {
+        "route": "/wb-gamification/v1/redemptions/(?P<id>[\\d]+)/fulfill",
+        "methods": [
+          "POST"
+        ],
+        "permission": "RedemptionController::admin_check",
+        "callback": "src/API/RedemptionController.php:438"
+      },
+      {
+        "route": "/wb-gamification/v1/redemptions/(?P<id>[\\d]+)/refund",
+        "methods": [
+          "POST"
+        ],
+        "permission": "RedemptionController::admin_check",
+        "callback": "src/API/RedemptionController.php:457"
+      },
+      {
+        "route": "/wb-gamification/v1/levels",
+        "methods": [
+          "GET"
+        ],
+        "permission": "__return_true",
+        "callback": "src/API/LevelsController.php:188"
+      },
+      {
+        "route": "/wb-gamification/v1/levels",
+        "methods": [
+          "POST"
+        ],
+        "permission": "LevelsController::admin_check",
+        "callback": "src/API/LevelsController.php:202"
+      },
+      {
+        "route": "/wb-gamification/v1/levels/(?P<id>\\d+)",
+        "methods": [
+          "POST",
+          "PUT",
+          "PATCH"
+        ],
+        "permission": "LevelsController::admin_check",
+        "callback": "src/API/LevelsController.php:262"
+      },
+      {
+        "route": "/wb-gamification/v1/levels/(?P<id>\\d+)",
+        "methods": [
+          "DELETE"
+        ],
+        "permission": "LevelsController::admin_check",
+        "callback": "src/API/LevelsController.php:336"
+      },
+      {
+        "route": "/wb-gamification/v1/settings/capabilities",
+        "methods": [
+          "GET"
+        ],
+        "permission": "CapabilitiesController::admin_check",
+        "callback": "src/API/CapabilitiesController.php:215"
+      },
+      {
+        "route": "/wb-gamification/v1/settings/capabilities",
+        "methods": [
+          "POST",
+          "PUT",
+          "PATCH"
+        ],
+        "permission": "CapabilitiesController::admin_check",
+        "callback": "src/API/CapabilitiesController.php:236"
+      },
+      {
+        "route": "/wb-gamification/v1/capabilities",
+        "methods": [
+          "GET"
+        ],
+        "permission": "__return_true",
+        "callback": "src/API/CapabilitiesController.php:103"
+      },
+      {
+        "route": "/wb-gamification/v1/openapi.json",
+        "methods": [
+          "GET"
+        ],
+        "permission": "__return_true",
+        "callback": "src/API/OpenApiController.php:67"
+      },
+      {
+        "route": "/wb-gamification/v1/events/stream",
+        "methods": [
+          "GET"
+        ],
+        "permission": "SSEController::check_permission",
+        "callback": "src/API/SSEController.php:266"
+      },
+      {
+        "route": "/wb-gamification/v1/members/(?P<id>\\d+)/intelligence",
+        "methods": [
+          "GET"
+        ],
+        "permission": "IntelligenceController::get_item_permissions_check",
+        "callback": "src/API/IntelligenceController.php:70"
+      },
+      {
+        "route": "/wb-gamification/v1/api-keys",
+        "methods": [
+          "GET"
+        ],
+        "permission": "ApiKeysController::admin_check",
+        "callback": "src/API/ApiKeysController.php:180"
+      },
+      {
+        "route": "/wb-gamification/v1/api-keys",
+        "methods": [
+          "POST"
+        ],
+        "permission": "ApiKeysController::admin_check",
+        "callback": "src/API/ApiKeysController.php:205"
+      },
+      {
+        "route": "/wb-gamification/v1/api-keys/(?P<id>[\\d]+)/revoke",
+        "methods": [
+          "POST",
+          "PUT",
+          "PATCH"
+        ],
+        "permission": "ApiKeysController::admin_check",
+        "callback": "src/API/ApiKeysController.php:293"
+      },
+      {
+        "route": "/wb-gamification/v1/api-keys/(?P<id>[\\d]+)",
+        "methods": [
+          "DELETE"
+        ],
+        "permission": "ApiKeysController::admin_check",
+        "callback": "src/API/ApiKeysController.php:317"
+      },
+      {
+        "route": "/wb-gamification/v1/cohort-settings",
+        "methods": [
+          "GET"
+        ],
+        "permission": "CohortSettingsController::admin_check",
+        "callback": "src/API/CohortSettingsController.php:126"
+      },
+      {
+        "route": "/wb-gamification/v1/cohort-settings",
+        "methods": [
+          "POST"
+        ],
+        "permission": "CohortSettingsController::admin_check",
+        "callback": "src/API/CohortSettingsController.php:140"
+      },
+      {
+        "route": "/wb-gamification/v1/community-challenges",
+        "methods": [
+          "GET"
+        ],
+        "permission": "__return_true",
+        "callback": "src/API/CommunityChallengesController.php:159"
+      },
+      {
+        "route": "/wb-gamification/v1/community-challenges",
+        "methods": [
+          "POST"
+        ],
+        "permission": "CommunityChallengesController::admin_check",
+        "callback": "src/API/CommunityChallengesController.php:238"
+      },
+      {
+        "route": "/wb-gamification/v1/community-challenges/(?P<id>\\d+)",
+        "methods": [
+          "GET"
+        ],
+        "permission": "__return_true",
+        "callback": "src/API/CommunityChallengesController.php:203"
+      },
+      {
+        "route": "/wb-gamification/v1/community-challenges/(?P<id>\\d+)",
+        "methods": [
+          "POST",
+          "PUT",
+          "PATCH"
+        ],
+        "permission": "CommunityChallengesController::admin_check",
+        "callback": "src/API/CommunityChallengesController.php:285"
+      },
+      {
+        "route": "/wb-gamification/v1/community-challenges/(?P<id>\\d+)",
+        "methods": [
+          "DELETE"
+        ],
+        "permission": "CommunityChallengesController::admin_check",
+        "callback": "src/API/CommunityChallengesController.php:361"
+      },
+      {
+        "route": "/wb-gamification/v1/settings/emails",
+        "methods": [
+          "GET"
+        ],
+        "permission": "EmailSettingsController::admin_check",
+        "callback": "src/API/EmailSettingsController.php:92"
+      },
+      {
+        "route": "/wb-gamification/v1/settings/emails",
+        "methods": [
+          "POST"
+        ],
+        "permission": "EmailSettingsController::admin_check",
+        "callback": "src/API/EmailSettingsController.php:115"
+      },
+      {
+        "route": "/wb-gamification/v1/tools/export-settings",
+        "methods": [
+          "GET"
+        ],
+        "permission": "ToolsController::admin_permissions_check",
+        "callback": "src/API/ToolsController.php:206"
+      },
+      {
+        "route": "/wb-gamification/v1/tools/recompute-leaderboard",
+        "methods": [
+          "POST"
+        ],
+        "permission": "ToolsController::admin_permissions_check",
+        "callback": "src/API/ToolsController.php:152"
+      },
+      {
+        "route": "/wb-gamification/v1/tools/reset-progress",
+        "methods": [
+          "POST"
+        ],
+        "permission": "ToolsController::admin_permissions_check",
+        "callback": "src/API/ToolsController.php:191"
+      },
+      {
+        "route": "/wb-gamification/v1/tools/retry-side-effect/(?P<id>[\\d]+)",
+        "methods": [
+          "POST"
+        ],
+        "permission": "ToolsController::admin_permissions_check",
+        "callback": "src/API/ToolsController.php:168"
+      },
+      {
+        "route": "/wb-gamification/v1/tools/import-settings",
+        "methods": [
+          "POST"
+        ],
+        "permission": "ToolsController::admin_permissions_check",
+        "callback": "src/API/ToolsController.php:216"
+      },
+      {
+        "route": "/wb-gamification/v1/submissions",
+        "methods": [
+          "GET"
+        ],
+        "permission": "SubmissionsController::admin_check",
+        "callback": "src/API/SubmissionsController.php:107"
+      },
+      {
+        "route": "/wb-gamification/v1/submissions",
+        "methods": [
+          "POST"
+        ],
+        "permission": "SubmissionsController::logged_in_check",
+        "callback": "src/API/SubmissionsController.php:89"
+      },
+      {
+        "route": "/wb-gamification/v1/submissions/(?P<id>[\\d]+)/approve",
+        "methods": [
+          "POST"
+        ],
+        "permission": "SubmissionsController::admin_check",
+        "callback": "src/API/SubmissionsController.php:114"
+      },
+      {
+        "route": "/wb-gamification/v1/submissions/(?P<id>[\\d]+)/reject",
+        "methods": [
+          "POST"
+        ],
+        "permission": "SubmissionsController::admin_check",
+        "callback": "src/API/SubmissionsController.php:123"
+      },
+      {
+        "route": "/wb-gamification/v1/abilities",
+        "methods": [
+          "GET"
+        ],
+        "permission": "__return_true",
+        "callback": "src/API/AbilitiesRegistration.php:256"
       }
     ]
   },
@@ -9301,6 +9685,13 @@
       "file": "src/Admin/RedemptionStorePage.php:112"
     },
     {
+      "page": "wb-gam-multipliers",
+      "type": "submenu",
+      "capability": "wb_gam_manage_rules",
+      "title": "Point Multipliers",
+      "file": "src/Admin/MultipliersPage.php:58"
+    },
+    {
       "page": "wb-gamification",
       "type": "menu",
       "capability": "manage_options",
@@ -9310,9 +9701,16 @@
     {
       "page": "wb-gam-submissions",
       "type": "submenu",
-      "capability": "manage_options",
+      "capability": "wb_gam_manage_submissions",
       "title": "Submissions",
       "file": "src/Admin/SubmissionsPage.php:29"
+    },
+    {
+      "page": "wb-gam-levels",
+      "type": "submenu",
+      "capability": "wb_gam_manage_levels",
+      "title": "Levels",
+      "file": "src/Admin/LevelsPage.php:47"
     }
   ],
   "tables": [
@@ -9521,7 +9919,8 @@
         "src/Engine/BadgeEngine.php:478 array( __CLASS__",
         "src/Engine/NotificationBridge.php:172 array( __CLASS__",
         "src/Engine/TransactionalEmailEngine.php:81 array( __CLASS__",
-        "src/Integrations/ActivityPub.php:47 array( __CLASS__"
+        "src/Integrations/ActivityPub.php:47 array( __CLASS__",
+        "src/Engine/CommunityNotifications.php:33 array( __CLASS__"
       ]
     },
     {
@@ -9552,6 +9951,17 @@
         "src/Engine/BadgeShare.php:195"
       ],
       "consumed_by": []
+    },
+    {
+      "name": "wb_gam_badge_deleted",
+      "type": "action",
+      "purpose": "",
+      "fired_at": [
+        "src/API/BadgesController.php:739"
+      ],
+      "consumed_by": [
+        "src/Engine/CommunityNotifications.php:47 array( __CLASS__"
+      ]
     },
     {
       "name": "wb_gam_before_delete_community_challenge",
@@ -9612,7 +10022,8 @@
         "src/Engine/NotificationBridge.php:175 array( __CLASS__",
         "src/Engine/TransactionalEmailEngine.php:82 array( __CLASS__",
         "src/Engine/WebhookDispatcher.php:110 array( self::class",
-        "src/Integrations/ActivityPub.php:49 array( __CLASS__"
+        "src/Integrations/ActivityPub.php:49 array( __CLASS__",
+        "src/Engine/CommunityNotifications.php:37 array( __CLASS__"
       ]
     },
     {
@@ -9622,7 +10033,10 @@
       "fired_at": [
         "src/Engine/CohortEngine.php:433"
       ],
-      "consumed_by": []
+      "consumed_by": [
+        "src/Engine/CommunityNotifications.php:42 array( __CLASS__",
+        "src/Engine/NotificationBridge.php:213 array( __CLASS__"
+      ]
     },
     {
       "name": "wb_gam_cohort_settings_saved",
@@ -9676,7 +10090,9 @@
       "fired_at": [
         "src/Engine/CredentialExpiryEngine.php:194"
       ],
-      "consumed_by": []
+      "consumed_by": [
+        "src/Engine/CommunityNotifications.php:39 array( __CLASS__"
+      ]
     },
     {
       "name": "wb_gam_engines_booted",
@@ -9707,7 +10123,8 @@
       "consumed_by": [
         "src/BuddyPress/Stream/KudosStream.php:31 array( __CLASS__",
         "src/Engine/NotificationBridge.php:176 array( __CLASS__",
-        "src/Engine/WebhookDispatcher.php:117 array( self::class"
+        "src/Engine/WebhookDispatcher.php:117 array( self::class",
+        "src/Engine/CommunityNotifications.php:35 array( __CLASS__"
       ]
     },
     {
@@ -9718,7 +10135,8 @@
         "src/Engine/KudosEngine.php:512"
       ],
       "consumed_by": [
-        "src/Engine/NotificationBridge.php:180 array( __CLASS__"
+        "src/Engine/NotificationBridge.php:180 array( __CLASS__",
+        "src/Engine/CommunityNotifications.php:36 array( __CLASS__"
       ]
     },
     {
@@ -9757,7 +10175,8 @@
         "src/Engine/RankAutomation.php:78 array( __CLASS__",
         "src/Engine/TransactionalEmailEngine.php:80 array( __CLASS__",
         "src/Engine/WebhookDispatcher.php:108 array( self::class",
-        "src/Integrations/ActivityPub.php:48 array( __CLASS__"
+        "src/Integrations/ActivityPub.php:48 array( __CLASS__",
+        "src/Engine/CommunityNotifications.php:34 array( __CLASS__"
       ]
     },
     {
@@ -9806,7 +10225,9 @@
       "fired_at": [
         "src/Engine/PersonalRecordEngine.php:153"
       ],
-      "consumed_by": []
+      "consumed_by": [
+        "src/Engine/CommunityNotifications.php:40 array( __CLASS__"
+      ]
     },
     {
       "name": "wb_gam_point_type_converted",
@@ -9862,6 +10283,26 @@
       "consumed_by": [
         "src/Engine/TransactionalEmailEngine.php:83 array( __CLASS__",
         "src/Engine/WebhookDispatcher.php:124 array( self::class"
+      ]
+    },
+    {
+      "name": "wb_gam_redemption_refunded",
+      "type": "action",
+      "purpose": "Fires after a redemption is refunded: points credited back and finite stock restored. Integrators reverse any external fulfilment side-effect here.",
+      "fired_at": [
+        "src/Engine/RedemptionEngine.php:459"
+      ],
+      "consumed_by": []
+    },
+    {
+      "name": "wb_gam_redemption_fulfilled",
+      "type": "action",
+      "purpose": "Fires after an owner marks a custom/physical redemption fulfilled. Integrators trigger delivery/notification here.",
+      "fired_at": [
+        "src/Engine/RedemptionEngine.php:510"
+      ],
+      "consumed_by": [
+        "src/Engine/CommunityNotifications.php:38 array( __CLASS__"
       ]
     },
     {
@@ -9967,7 +10408,8 @@
       ],
       "consumed_by": [
         "src/Engine/NotificationBridge.php:174 array( __CLASS__",
-        "src/Engine/WebhookDispatcher.php:109 array( self::class"
+        "src/Engine/WebhookDispatcher.php:109 array( self::class",
+        "src/Engine/CommunityNotifications.php:41 array( __CLASS__"
       ]
     },
     {
@@ -9986,7 +10428,10 @@
       "fired_at": [
         "src/Services/SubmissionService.php:168"
       ],
-      "consumed_by": []
+      "consumed_by": [
+        "src/Engine/CommunityNotifications.php:44 array( __CLASS__",
+        "src/Engine/NotificationBridge.php:215 array( __CLASS__"
+      ]
     },
     {
       "name": "wb_gam_submission_created",
@@ -10004,7 +10449,10 @@
       "fired_at": [
         "src/Services/SubmissionService.php:203"
       ],
-      "consumed_by": []
+      "consumed_by": [
+        "src/Engine/CommunityNotifications.php:45 array( __CLASS__",
+        "src/Engine/NotificationBridge.php:216 array( __CLASS__"
+      ]
     },
     {
       "name": "wb_gam_unknown_action",
@@ -10527,15 +10975,6 @@
       "consumed_by": []
     },
     {
-      "name": "wb_gam_import_timeout_ms",
-      "type": "filter",
-      "purpose": "",
-      "fired_at": [
-        "src/Admin/ImportPage.php:97"
-      ],
-      "consumed_by": []
-    },
-    {
       "name": "wb_gam_kudos_abuse_pair_threshold",
       "type": "filter",
       "purpose": "",
@@ -10826,6 +11265,90 @@
         "integrations/wpmediaverse.php:464"
       ],
       "consumed_by": []
+    },
+    {
+      "name": "wb_gam_notification_created",
+      "type": "action",
+      "purpose": "Community notification contract (1.6.5): fires the normalized payload a host plugin (BuddyNext) reads to show one bell row. Built from the nine event hooks above via CommunityNotifications; never fires for the actor notifying themself or during an import.",
+      "fired_at": [
+        "src/Engine/CommunityNotifications.php:332"
+      ],
+      "consumed_by": [
+        "external: buddynext/includes/Notifications/IntegrationNotificationListener.php (add_action, 8 accepted_args)"
+      ]
+    },
+    {
+      "name": "wb_gam_community_notification_removed",
+      "type": "action",
+      "purpose": "Community notification contract (1.6.5): fires when an object a notification named is permanently gone (kudos revoked; badge definition deleted), so a host removes every bell row about it.",
+      "fired_at": [
+        "src/Engine/CommunityNotifications.php:143",
+        "src/Engine/CommunityNotifications.php:308"
+      ],
+      "consumed_by": [
+        "external: buddynext/includes/Notifications/IntegrationNotificationListener.php (add_action)"
+      ]
+    },
+    {
+      "name": "wb_gam_community_notification_types",
+      "type": "filter",
+      "purpose": "Community notification contract (1.6.5): declares this plugin's 11 notification type slugs (label, description, default_on). Fired externally by the host (BuddyNext) collecting every plugin's declared types; this plugin only answers it.",
+      "fired_at": [
+        "external: buddynext/includes/Notifications/IntegrationNotificationListener.php"
+      ],
+      "consumed_by": [
+        "src/Engine/CommunityNotifications.php:53 array( __CLASS__"
+      ]
+    },
+    {
+      "name": "wb_gam_community_goal_reached",
+      "type": "action",
+      "purpose": "Fired once per contributor when a community challenge reaches its goal (user_id, challenge_id, bonus points). Drives the Moment card and the bell row.",
+      "fired_at": [
+        "src/Engine/CommunityChallengeEngine.php:133"
+      ],
+      "consumed_by": [
+        "src/Engine/CommunityNotifications.php:43 array( __CLASS__",
+        "src/Engine/NotificationBridge.php:214 array( __CLASS__"
+      ]
+    },
+    {
+      "name": "wb_gam_celebration_style",
+      "type": "filter",
+      "purpose": "Return 'none' to turn the confetti off for a community where it does not fit; default 'confetti'. Reduced motion is honoured separately.",
+      "fired_at": [
+        "wb-gamification.php:547"
+      ],
+      "consumed_by": []
+    },
+    {
+      "name": "wb_gam_leaderboard_anon_paging",
+      "type": "filter",
+      "purpose": "Whether an anonymous visitor may page past the first leaderboard page over REST (the cursor parameter). Default false.",
+      "fired_at": [
+        "src/API/LeaderboardController.php:261"
+      ],
+      "consumed_by": []
+    },
+    {
+      "name": "wb_gam_import_page_size",
+      "type": "filter",
+      "purpose": "Rows an import job processes per page, per phase (points, awards, recompute, reconcile, undo). Clamped to 10-2000.",
+      "fired_at": [
+        "src/Engine/ImportRunner.php:154"
+      ],
+      "consumed_by": []
+    },
+    {
+      "name": "wb_gam_import_chunk",
+      "type": "action",
+      "purpose": "The chained background job of an import: runs ONE page, then enqueues the next. Args: source slug, run id, sequence number. Action Scheduler, or WP-Cron when it is absent.",
+      "fired_at": [
+        "src/Engine/ImportRunner.php:738 (Action Scheduler / WP-Cron)"
+      ],
+      "consumed_by": [
+        "src/Engine/ImportRunner.php:95 array( __CLASS__"
+      ]
     }
   ],
   "cron": [
@@ -10852,7 +11375,25 @@
     "wb-gamification/user-status-bar",
     "wb-gamification/year-recap"
   ],
-  "shortcodes": [],
+  "shortcodes": [
+    "wb_gam_badge_showcase",
+    "wb_gam_challenges",
+    "wb_gam_cohort_rank",
+    "wb_gam_community_challenges",
+    "wb_gam_earning_guide",
+    "wb_gam_give_kudos",
+    "wb_gam_hub",
+    "wb_gam_kudos_feed",
+    "wb_gam_leaderboard",
+    "wb_gam_level_progress",
+    "wb_gam_member_points",
+    "wb_gam_my_rewards",
+    "wb_gam_points_history",
+    "wb_gam_redemption_store",
+    "wb_gam_streak",
+    "wb_gam_top_members",
+    "wb_gam_year_recap"
+  ],
   "frontend_assets": {
     "css": {
       "global": [
@@ -11048,7 +11589,7 @@
       "manifest_file": "integrations/jetonomy-pro.php",
       "manifest_version": "1.0.0",
       "detect": "defined('JETONOMY_PRO_VERSION')",
-      "trigger_count": 7,
+      "trigger_count": 6,
       "adapter_classes": [],
       "purpose": ""
     },
@@ -11155,6 +11696,17 @@
       "manifest_version": "1.0.0",
       "detect": "defined('WCBP_VERSION')",
       "trigger_count": 1,
+      "adapter_classes": [],
+      "purpose": ""
+    },
+    {
+      "slug": "wp-sell-services",
+      "name": "WP Sell Services",
+      "tier": "first-party",
+      "manifest_file": "integrations/wp-sell-services.php",
+      "manifest_version": "1.0.0",
+      "detect": "defined('WPSS_VERSION')",
+      "trigger_count": 2,
       "adapter_classes": [],
       "purpose": ""
     },

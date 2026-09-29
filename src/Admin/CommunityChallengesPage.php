@@ -90,7 +90,7 @@ final class CommunityChallengesPage {
 		wp_enqueue_script(
 			'wb-gam-admin-rest-utils',
 			plugins_url( 'assets/js/admin-rest-utils.js', WB_GAM_FILE ),
-			array(),
+			array( 'wb-gam-dialog', 'wb-gam-toast-core' ),
 			WB_GAM_VERSION,
 			true
 		);
@@ -131,6 +131,12 @@ final class CommunityChallengesPage {
 	 * @return void
 	 */
 	public static function register_page(): void {
+		// Parentless, so ModuleToggles' submenu removal cannot reach it: switched off, it is simply
+		// not registered (and the Challenges page drops its tab).
+		if ( ! \WBGam\Engine\ModuleToggles::enabled( 'community_challenges' ) ) {
+			return;
+		}
+
 		// Hidden submenu (empty parent slug) — keeps the URL routable so existing
 		// bookmarks / docs / dashboard links don't 404, but the page is
 		// reached via the "Community" tab on the unified Challenges admin
@@ -173,10 +179,21 @@ final class CommunityChallengesPage {
 
 		$table = $wpdb->prefix . 'wb_gam_community_challenges';
 
+		// Paged: a large store/challenge list must not load every row.
+		$per_page = 20;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Admin list; table name is a prefixed constant.
+		$total = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$table}" );
+		$pages = (int) ceil( $total / $per_page );
+		$paged = Pager::current( $pages );
+
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- Admin list view, infrequent.
 		$challenges = $wpdb->get_results(
-			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name is prefixed constant.
-			"SELECT * FROM {$table} ORDER BY id DESC",
+			$wpdb->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name is prefixed constant.
+				"SELECT * FROM {$table} ORDER BY id DESC LIMIT %d OFFSET %d",
+				$per_page,
+				( $paged - 1 ) * $per_page
+			),
 			ARRAY_A
 		) ?: array();
 
@@ -299,7 +316,7 @@ final class CommunityChallengesPage {
 								<td>
 									<input type="datetime-local" name="starts_at" id="wb-gam-cc-starts" class="wbgam-input"
 										data-wb-gam-utc
-										value="<?php echo esc_attr( $edit_data['starts_at'] ?? current_time( 'Y-m-d\TH:i' ) ); ?>">
+										value="<?php echo esc_attr( $edit_data['starts_at'] ?? gmdate( 'Y-m-d\TH:i' ) ); ?>">
 									<p class="description"><?php esc_html_e( 'When this community challenge becomes active. Actions before this date will not count.', 'wb-gamification' ); ?></p>
 								</td>
 							</tr>
@@ -308,7 +325,7 @@ final class CommunityChallengesPage {
 								<td>
 									<input type="datetime-local" name="ends_at" id="wb-gam-cc-ends" class="wbgam-input"
 										data-wb-gam-utc
-										value="<?php echo esc_attr( $edit_data['ends_at'] ?? gmdate( 'Y-m-d\TH:i', current_time( 'timestamp' ) + ( 14 * DAY_IN_SECONDS ) ) ); ?>">
+										value="<?php echo esc_attr( $edit_data['ends_at'] ?? gmdate( 'Y-m-d\TH:i', time() + ( 14 * DAY_IN_SECONDS ) ) ); ?>">
 									<p class="description"><?php esc_html_e( 'Deadline for the challenge. Defaults to 14 days from now.', 'wb-gamification' ); ?></p>
 								</td>
 							</tr>
@@ -375,7 +392,7 @@ final class CommunityChallengesPage {
 										<br><small class="wbgam-text-muted"><?php echo esc_html( wp_trim_words( $c['description'], 10 ) ); ?></small>
 									<?php endif; ?>
 								</td>
-								<td><code><?php echo esc_html( $action_label ); ?></code></td>
+								<td><span class="wbgam-pill wbgam-pill--neutral"><?php echo esc_html( $action_label ); ?></span></td>
 								<td class="wbgam-cell--minw">
 									<div class="wbgam-flex-row">
 										<div class="wbgam-progress">
@@ -392,8 +409,9 @@ final class CommunityChallengesPage {
 								</td>
 								<td>
 									<?php
-									$start = ! empty( $c['starts_at'] ) ? substr( $c['starts_at'], 0, 10 ) : '—';
-									$end   = ! empty( $c['ends_at'] ) ? substr( $c['ends_at'], 0, 10 ) : '—';
+									// Stored in UTC; show the owner's site date.
+									$start = ! empty( $c['starts_at'] ) ? get_date_from_gmt( $c['starts_at'], 'Y-m-d' ) : '—';
+									$end   = ! empty( $c['ends_at'] ) ? get_date_from_gmt( $c['ends_at'], 'Y-m-d' ) : '—';
 									echo esc_html( $start . ' → ' . $end );
 									?>
 								</td>
@@ -420,6 +438,16 @@ final class CommunityChallengesPage {
 						</tbody>
 					</table>
 					</div>
+					<?php
+					Pager::render(
+						$paged,
+						$pages,
+						array( 'page' => 'wb-gam-community-challenges' ),
+						__( 'Community challenge pages', 'wb-gamification' ),
+						/* translators: 1: current page, 2: total pages, 3: total challenges */
+						sprintf( __( 'Page %1$d of %2$d (%3$d challenges)', 'wb-gamification' ), $paged, $pages, $total )
+					);
+					?>
 				</div>
 			</div>
 			<?php else : ?>
