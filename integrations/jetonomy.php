@@ -103,7 +103,22 @@ return array(
 			// Free + Pro adapters fire: do_action( 'jetonomy_membership_activated', int $user_id, mixed $level_id, string $source ).
 			'hook'              => 'jetonomy_membership_activated',
 			'user_callback'     => function ( int $user_id, $level_id, string $source ): int {
-				return $user_id;
+				/**
+				 * Whether activating this membership level earns points.
+				 *
+				 * The rule rewards a paid membership. Adapters also report free
+				 * levels (a default plan every member is placed on), which would
+				 * hand out points just for signing up. The source that knows its
+				 * levels answers false for a free one.
+				 *
+				 * @since 1.6.6
+				 *
+				 * @param bool   $earns    Default true.
+				 * @param mixed  $level_id Level id as the adapter reported it.
+				 * @param string $source   Adapter source, e.g. 'buddynext-pro'.
+				 * @param int    $user_id  Member.
+				 */
+				return apply_filters( 'wb_gam_membership_level_earns', true, $level_id, $source, $user_id ) ? $user_id : 0;
 			},
 			'metadata_callback' => function ( int $user_id, $level_id, string $source ): array {
 				return array(
