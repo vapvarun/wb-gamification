@@ -679,16 +679,22 @@ final class WB_Gamification {
 
 		// Realtime broker — WP Heartbeat client. Single subscription bus
 		// the toast renderer, leaderboard live-update view module, and
-		// the user-status-bar block all hook into. Always enqueued so
-		// guests on a public leaderboard page still get tick updates.
-		wp_enqueue_script( 'heartbeat' );
-		wp_enqueue_script(
+		// the user-status-bar block all hook into. Enqueued for members only:
+		// each tick is a full WordPress request, and a guest has no points or
+		// toasts, so loading it for every visitor on every page made each open
+		// guest tab poll admin-ajax every 15s for nothing. A guest still gets
+		// live updates where they matter: the leaderboard block enqueues the
+		// broker itself when it renders.
+		wp_register_script(
 			'wb-gamification-realtime',
 			WB_GAM_URL . 'assets/js/heartbeat.js',
 			array( 'jquery', 'heartbeat' ),
 			WB_GAM_VERSION,
 			true
 		);
+		if ( is_user_logged_in() ) {
+			wp_enqueue_script( 'wb-gamification-realtime' );
+		}
 
 		// SSE transport (scaffold; feature-flagged off by default). Loads
 		// alongside heartbeat.js; probes the transport option and no-ops

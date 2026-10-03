@@ -130,6 +130,9 @@ final class LeaderboardEngine {
 	 * @return void
 	 */
 	public static function maybe_schedule(): void {
+		if ( ! SchedulingContext::is_scheduling_request() ) {
+			return;
+		}
 		// Legacy WP-Cron event from versions <= 1.6.1.
 		wp_clear_scheduled_hook( 'wb_gam_leaderboard_snapshot' );
 
