@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-09-29T03:24:55+00:00\n"
+"POT-Creation-Date: 2026-10-04T15:48:38+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: wb-gamification\n"
@@ -536,7 +536,7 @@ msgid "Activate a membership"
 msgstr ""
 
 #: integrations/jetonomy.php:102
-msgid "Awarded when a paid membership becomes active for the member (RCP / PMPro / MemberPress / WooCommerce Subscriptions / Sensei / LearnDash / MasterStudy / Tutor / LifterLMS)."
+msgid "Awarded once per plan when a paid membership becomes active for the member (RCP / PMPro / MemberPress / WooCommerce Subscriptions / Sensei / LearnDash / MasterStudy / Tutor / LifterLMS)."
 msgstr ""
 
 #: integrations/learndash.php:33
@@ -907,20 +907,28 @@ msgstr ""
 msgid "Awarded once when a member registers an employer account."
 msgstr ""
 
-#: integrations/wp-sell-services.php:33
+#: integrations/wp-sell-services.php:81
 msgid "Complete a service order"
 msgstr ""
 
-#: integrations/wp-sell-services.php:34
+#: integrations/wp-sell-services.php:82
 msgid "Awarded to the seller when an order they delivered is completed. An order a seller places with themselves earns nothing."
 msgstr ""
 
-#: integrations/wp-sell-services.php:56
+#: integrations/wp-sell-services.php:104
 msgid "Review a service"
 msgstr ""
 
-#: integrations/wp-sell-services.php:57
-msgid "Awarded to the buyer when their review is published. Reviews held for moderation earn nothing, and a seller reviewing their own order earns nothing."
+#: integrations/wp-sell-services.php:105
+msgid "Awarded to the buyer when their review is published. A review held for moderation pays when a moderator approves it, and a seller reviewing their own order earns nothing."
+msgstr ""
+
+#: integrations/wp-sell-services.php:125
+msgid "Review approved by a moderator"
+msgstr ""
+
+#: integrations/wp-sell-services.php:126
+msgid "Awarded to the buyer when a review held for moderation is approved. Each review pays once, whichever way it was published."
 msgstr ""
 
 #: integrations/wpmediaverse.php:89
@@ -1629,8 +1637,8 @@ msgstr ""
 #: src/Admin/SettingsPage.php:1695
 #: src/Admin/SettingsPage.php:1767
 #: src/Blocks/redemption-store/render.php:374
-#: wb-gamification.php:799
-#: assets/js/toast-core.js:240
+#: wb-gamification.php:805
+#: assets/js/toast-core.js:299
 msgid "Dismiss"
 msgstr ""
 
@@ -1802,7 +1810,7 @@ msgstr ""
 #: src/Admin/BadgeAdminPage.php:225
 #: src/API/MembersController.php:1263
 #: src/Engine/TransactionalEmailEngine.php:330
-#: wb-gamification.php:800
+#: wb-gamification.php:806
 msgid "points"
 msgstr ""
 
@@ -6700,7 +6708,7 @@ msgid "%1$d earned, %2$d locked"
 msgstr ""
 
 #: src/Blocks/hub/render.php:259
-#: src/Blocks/leaderboard/render.php:143
+#: src/Blocks/leaderboard/render.php:147
 #: src/Integrations/Jetonomy/DisplayDefer.php:127
 msgid "Leaderboard"
 msgstr ""
@@ -6842,28 +6850,28 @@ msgstr ""
 msgid "No kudos given yet - be the first!"
 msgstr ""
 
-#: src/Blocks/leaderboard/render.php:94
+#: src/Blocks/leaderboard/render.php:98
 msgid "All Time"
 msgstr ""
 
-#: src/Blocks/leaderboard/render.php:95
+#: src/Blocks/leaderboard/render.php:99
 msgid "This Month"
 msgstr ""
 
-#: src/Blocks/leaderboard/render.php:96
+#: src/Blocks/leaderboard/render.php:100
 msgid "This Week"
 msgstr ""
 
-#: src/Blocks/leaderboard/render.php:97
+#: src/Blocks/leaderboard/render.php:101
 #: src/Blocks/points-history/render.php:159
 #: src/Blocks/leaderboard/edit.js:43
 msgid "Today"
 msgstr ""
 
 #. translators: %d: number of badges earned.
-#: src/Blocks/leaderboard/render.php:132
-#: src/Blocks/leaderboard/render.php:235
-#: src/Blocks/leaderboard/render.php:244
+#: src/Blocks/leaderboard/render.php:136
+#: src/Blocks/leaderboard/render.php:239
+#: src/Blocks/leaderboard/render.php:248
 #: src/BuddyPress/DirectoryIntegration.php:175
 #: src/Engine/ProfilePage.php:164
 #: src/Engine/ProfilePage.php:364
@@ -6874,43 +6882,43 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %d: number of badges earned.
-#: src/Blocks/leaderboard/render.php:134
+#: src/Blocks/leaderboard/render.php:138
 #, php-format
 msgid "%d badges"
 msgstr ""
 
-#: src/Blocks/leaderboard/render.php:152
+#: src/Blocks/leaderboard/render.php:156
 msgid "No members on the leaderboard yet."
 msgstr ""
 
-#: src/Blocks/leaderboard/render.php:167
+#: src/Blocks/leaderboard/render.php:171
 msgid "1st place"
 msgstr ""
 
-#: src/Blocks/leaderboard/render.php:169
+#: src/Blocks/leaderboard/render.php:173
 msgid "2nd place"
 msgstr ""
 
-#: src/Blocks/leaderboard/render.php:171
+#: src/Blocks/leaderboard/render.php:175
 msgid "3rd place"
 msgstr ""
 
-#: src/Blocks/leaderboard/render.php:173
+#: src/Blocks/leaderboard/render.php:177
 msgid "Rank"
 msgstr ""
 
-#: src/Blocks/leaderboard/render.php:264
+#: src/Blocks/leaderboard/render.php:268
 msgid "Your rank"
 msgstr ""
 
 #. translators: %s = rank number
-#: src/Blocks/leaderboard/render.php:268
+#: src/Blocks/leaderboard/render.php:272
 #, php-format
 msgid "#%s"
 msgstr ""
 
 #. translators: %s: points needed to move up one rank, e.g. "3 Points".
-#: src/Blocks/leaderboard/render.php:281
+#: src/Blocks/leaderboard/render.php:285
 #, php-format
 msgid "%s from the next rank"
 msgstr ""
@@ -7223,19 +7231,22 @@ msgid "Link copied!"
 msgstr ""
 
 #: src/BuddyPress/ActivityIntegration.php:114
+#: src/Engine/Registry.php:581
 msgid "Earned a badge"
 msgstr ""
 
 #: src/BuddyPress/ActivityIntegration.php:115
+#: src/Engine/Registry.php:580
 msgid "Reached a new level"
 msgstr ""
 
 #: src/BuddyPress/ActivityIntegration.php:116
-#: src/Engine/Registry.php:571
+#: src/Engine/Registry.php:572
 msgid "Gave kudos"
 msgstr ""
 
 #: src/BuddyPress/ActivityIntegration.php:117
+#: src/Engine/Registry.php:578
 msgid "Completed a challenge"
 msgstr ""
 
@@ -7917,6 +7928,7 @@ msgid "Awesome!"
 msgstr ""
 
 #: src/Engine/NotificationBridge.php:531
+#: src/Engine/Registry.php:577
 msgid "Streak milestone"
 msgstr ""
 
@@ -8000,11 +8012,11 @@ msgstr ""
 msgid "Someone gave you kudos!"
 msgstr ""
 
-#: src/Engine/NotificationBridge.php:802
+#: src/Engine/NotificationBridge.php:822
 msgid "Level up!"
 msgstr ""
 
-#: src/Engine/NotificationBridge.php:1233
+#: src/Engine/NotificationBridge.php:1253
 msgid "Points awarded"
 msgstr ""
 
@@ -8415,27 +8427,56 @@ msgstr ""
 msgid "BuddyPress"
 msgstr ""
 
-#: src/Engine/Registry.php:564
 #: src/Engine/Registry.php:565
 #: src/Engine/Registry.php:566
+#: src/Engine/Registry.php:567
+#: src/Engine/Registry.php:585
 msgid "Manual award"
 msgstr ""
 
-#: src/Engine/Registry.php:567
 #: src/Engine/Registry.php:568
+#: src/Engine/Registry.php:569
 msgid "Manual adjustment"
 msgstr ""
 
-#: src/Engine/Registry.php:569
+#: src/Engine/Registry.php:570
 msgid "Debit"
 msgstr ""
 
-#: src/Engine/Registry.php:570
+#: src/Engine/Registry.php:571
 msgid "Redemption"
 msgstr ""
 
-#: src/Engine/Registry.php:572
+#: src/Engine/Registry.php:573
 msgid "Received kudos"
+msgstr ""
+
+#: src/Engine/Registry.php:576
+msgid "Daily login bonus"
+msgstr ""
+
+#: src/Engine/Registry.php:579
+msgid "Community challenge completed"
+msgstr ""
+
+#: src/Engine/Registry.php:582
+msgid "Redeemed a reward"
+msgstr ""
+
+#: src/Engine/Registry.php:583
+msgid "Reward refunded"
+msgstr ""
+
+#: src/Engine/Registry.php:584
+msgid "Kudos withdrawn"
+msgstr ""
+
+#: src/Engine/Registry.php:586
+msgid "Points reset by an admin"
+msgstr ""
+
+#: src/Engine/Registry.php:587
+msgid "Points expired"
 msgstr ""
 
 #: src/Engine/ShortcodeHandler.php:300
@@ -8824,8 +8865,8 @@ msgstr ""
 msgid "WB Gamification: the bundled licensing and update SDK is incomplete, so automatic updates are turned off. Reinstall the plugin from a complete package to restore them. Every other feature works normally."
 msgstr ""
 
-#: wb-gamification.php:798
-#: assets/js/toast-core.js:113
+#: wb-gamification.php:804
+#: assets/js/toast-core.js:117
 msgid "Notifications"
 msgstr ""
 
@@ -8849,7 +8890,7 @@ msgstr ""
 msgid "Conversion failed. Try again."
 msgstr ""
 
-#: assets/js/toast-core.js:196
+#: assets/js/toast-core.js:255
 msgid "View"
 msgstr ""
 

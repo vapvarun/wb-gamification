@@ -55,4 +55,15 @@ class ActionLabelTest extends TestCase {
 		$this->assertSame( 'Named elsewhere', JetonomyIntegration::label( 'Named elsewhere', 'jetonomy_reply_created' ), 'A label another filter set wins.' );
 		$this->assertSame( 'Jetonomy Something New', Registry::label_for( 'jetonomy_something_new' ) );
 	}
+
+	#[Test]
+	public function engine_awarded_ids_have_translatable_labels(): void {
+		// Every id the engine awards itself: none may fall back to the title-cased id, which
+		// is not a translatable string ("Login Bonus" stayed English on a Spanish site).
+		$ids = array( 'login_bonus', 'streak_milestone', 'challenge_completed', 'community_challenge_completed', 'level_up', 'badge_earned', 'points_redeemed', 'redemption_refund', 'kudos_revoked', 'manual_bulk_award', 'manual_admin_reset', 'points_decay' );
+		foreach ( $ids as $id ) {
+			$this->assertNotSame( ucwords( str_replace( '_', ' ', $id ) ), Registry::label_for( $id ), "$id must come from a translatable built-in label" );
+		}
+		$this->assertSame( 'Daily login bonus', Registry::label_for( 'login_bonus' ) );
+	}
 }
