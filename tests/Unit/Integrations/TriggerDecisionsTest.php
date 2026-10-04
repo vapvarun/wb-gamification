@@ -22,7 +22,7 @@ class TriggerDecisionsTest extends TestCase {
 	protected function setUp(): void {
 		parent::setUp();
 		Monkey\setUp();
-		foreach ( array( 'BUDDYNEXT_VERSION', 'LEARNOMY_VERSION', 'WCB_VERSION', 'WB_LISTORA_VERSION', 'EVNM_VERSION', 'EVENTONOMY_VERSION' ) as $c ) {
+		foreach ( array( 'JETONOMY_VERSION', 'BUDDYNEXT_VERSION', 'LEARNOMY_VERSION', 'WCB_VERSION', 'WB_LISTORA_VERSION', 'EVNM_VERSION', 'EVENTONOMY_VERSION' ) as $c ) {
 			if ( ! defined( $c ) ) {
 				define( $c, '1.0.0-test' );
 			}
@@ -102,5 +102,43 @@ class TriggerDecisionsTest extends TestCase {
 		$cb = $this->trigger( 'wb-listora.php', 'listora_listing_submitted' );
 		$this->assertSame( 16, $cb( 7, 'pending', null, array( 'source' => 'frontend' ) ) );
 		$this->assertSame( 0, $cb( 7, 'publish', null, array( 'source' => 'migration' ) ) );
+	}
+
+	#[Test]
+	public function membership_points_pay_once_per_plan(): void {
+		Functions\when( 'apply_filters' )->returnArg( 2 );
+		Functions\when( 'wp_json_encode' )->alias( 'json_encode' );
+
+		// The ledger: plans this member already earned on (level ids).
+		$GLOBALS['wpdb'] = new class() {
+			public string $prefix = 'wp_';
+			public array $earned  = array( 'bnpro:283' );
+			public string $needle = '';
+			public function esc_like( string $t ): string {
+				return addcslashes( $t, '_%\\' );
+			}
+			public function prepare( string $sql, ...$args ): string {
+				$this->needle = (string) end( $args );
+				return $sql;
+			}
+			public function get_var( string $sql ): int {
+				foreach ( $this->earned as $level ) {
+					if ( str_contains( stripslashes( $this->needle ), '"level_id":"' . $level . '"' ) ) {
+						return 1;
+					}
+				}
+				return 0;
+			}
+		};
+
+		$cb = $this->trigger( 'jetonomy.php', 'jetonomy_membership_activated' );
+		$this->assertSame( 0, $cb( 21, 'bnpro:283', 'buddynext-pro' ), 'Renewal, date change or cadence switch of a plan already paid: nothing.' );
+		$this->assertSame( 21, $cb( 21, 'bnpro:2', 'buddynext-pro' ), 'A different plan earns, once.' );
+		$this->assertSame( 21, $cb( 21, 'bnpro:28', 'buddynext-pro' ), 'Plan 28 is not plan 283.' );
+		$this->assertStringEndsWith( ':"bnpro:28"%', $GLOBALS['wpdb']->needle, 'The LIKE closes the quote, so a prefix id never matches.' );
+
+		Functions\when( 'apply_filters' )->justReturn( false );
+		$this->assertSame( 0, $cb( 21, 'bnpro:9', 'buddynext-pro' ), 'A free plan never earns.' );
+		unset( $GLOBALS['wpdb'] );
 	}
 }
