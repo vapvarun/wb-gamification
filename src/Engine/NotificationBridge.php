@@ -775,11 +775,31 @@ final class NotificationBridge {
 
 	/**
 	 * Render the Interactivity API markup and seed script in the footer.
-	 * Only outputs for logged-in users who have pending events.
+	 * Only outputs for logged-in users who have pending events, and not on a
+	 * screen the host holds toasts on (wb_gam_hold_toasts).
 	 */
 	public static function render(): void {
 		$user_id = get_current_user_id();
 		if ( ! $user_id ) {
+			return;
+		}
+
+		/**
+		 * Hold toasts on this screen.
+		 *
+		 * A host returns true on screens where a celebration would get in the way:
+		 * sign-up, email verification, onboarding, checkout. Nothing is read, so
+		 * no consumer's cursor moves and the queue is untouched; the held toasts
+		 * (the welcome points included) show on the next screen that does not
+		 * hold them. The live channels are held too, because their scripts are
+		 * only enqueued below.
+		 *
+		 * @since 1.6.6
+		 *
+		 * @param bool $hold    Whether to hold toasts here. Default false.
+		 * @param int  $user_id Current member.
+		 */
+		if ( (bool) apply_filters( 'wb_gam_hold_toasts', false, $user_id ) ) {
 			return;
 		}
 
