@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-04T15:48:38+00:00\n"
+"POT-Creation-Date: 2026-10-04T16:36:37+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: wb-gamification\n"
@@ -1249,6 +1249,7 @@ msgstr ""
 #: src/BuddyPress/ProfileIntegration.php:72
 #: src/CLI/EmailCommand.php:64
 #: src/CLI/MemberCommand.php:67
+#: src/Engine/NotificationBridge.php:1277
 #: src/Engine/Privacy.php:310
 #: src/Engine/ProfilePage.php:142
 #: src/Engine/ProfilePage.php:340
@@ -1637,7 +1638,7 @@ msgstr ""
 #: src/Admin/SettingsPage.php:1695
 #: src/Admin/SettingsPage.php:1767
 #: src/Blocks/redemption-store/render.php:374
-#: wb-gamification.php:805
+#: wb-gamification.php:809
 #: assets/js/toast-core.js:299
 msgid "Dismiss"
 msgstr ""
@@ -1810,7 +1811,7 @@ msgstr ""
 #: src/Admin/BadgeAdminPage.php:225
 #: src/API/MembersController.php:1263
 #: src/Engine/TransactionalEmailEngine.php:330
-#: wb-gamification.php:806
+#: wb-gamification.php:810
 msgid "points"
 msgstr ""
 
@@ -5098,7 +5099,7 @@ msgstr ""
 
 #: src/Admin/SettingsPage.php:2889
 #: src/BuddyPress/Stream/ActivityCard.php:53
-#: src/Engine/NotificationBridge.php:506
+#: src/Engine/NotificationBridge.php:552
 msgid "Level up"
 msgstr ""
 
@@ -6181,7 +6182,7 @@ msgstr ""
 
 #. translators: %d: streak day count.
 #: src/API/MembersController.php:1295
-#: src/Engine/NotificationBridge.php:523
+#: src/Engine/NotificationBridge.php:569
 #, php-format
 msgid "%d-day streak!"
 msgid_plural "%d-day streak!"
@@ -7231,22 +7232,22 @@ msgid "Link copied!"
 msgstr ""
 
 #: src/BuddyPress/ActivityIntegration.php:114
-#: src/Engine/Registry.php:581
+#: src/Engine/Registry.php:584
 msgid "Earned a badge"
 msgstr ""
 
 #: src/BuddyPress/ActivityIntegration.php:115
-#: src/Engine/Registry.php:580
+#: src/Engine/Registry.php:583
 msgid "Reached a new level"
 msgstr ""
 
 #: src/BuddyPress/ActivityIntegration.php:116
-#: src/Engine/Registry.php:572
+#: src/Engine/Registry.php:575
 msgid "Gave kudos"
 msgstr ""
 
 #: src/BuddyPress/ActivityIntegration.php:117
-#: src/Engine/Registry.php:578
+#: src/Engine/Registry.php:581
 msgid "Completed a challenge"
 msgstr ""
 
@@ -7872,151 +7873,188 @@ msgstr ""
 msgid "This feature is turned off on this site."
 msgstr ""
 
-#: src/Engine/NotificationBridge.php:297
+#: src/Engine/NotificationBridge.php:350
 #: src/Engine/PointsEngine.php:266
 msgid "You're on cooldown for this action - try again in a bit."
 msgstr ""
 
-#: src/Engine/NotificationBridge.php:300
+#: src/Engine/NotificationBridge.php:353
 #: src/Engine/PointsEngine.php:268
 msgid "You've hit your daily limit for this action. Resets tomorrow."
 msgstr ""
 
-#: src/Engine/NotificationBridge.php:303
+#: src/Engine/NotificationBridge.php:356
 #: src/Engine/PointsEngine.php:270
 msgid "You've hit your weekly limit for this action. Resets next week."
 msgstr ""
 
-#: src/Engine/NotificationBridge.php:353
+#: src/Engine/NotificationBridge.php:399
 msgid "See your full progress: points, badges, levels and leaderboard."
 msgstr ""
 
-#: src/Engine/NotificationBridge.php:354
+#: src/Engine/NotificationBridge.php:400
 msgid "Earn more points by being active on the site - every action counts."
 msgstr ""
 
-#: src/Engine/NotificationBridge.php:360
+#: src/Engine/NotificationBridge.php:406
 msgid "Welcome - you just earned your first points!"
 msgstr ""
 
-#: src/Engine/NotificationBridge.php:363
+#: src/Engine/NotificationBridge.php:409
+#: src/Engine/NotificationBridge.php:1318
 msgid "See my progress"
 msgstr ""
 
 #. translators: %s = badge name
-#: src/Engine/NotificationBridge.php:435
+#: src/Engine/NotificationBridge.php:481
 #, php-format
 msgid "Badge earned: %s"
 msgstr ""
 
 #. translators: %s: new level name.
-#: src/Engine/NotificationBridge.php:482
+#: src/Engine/NotificationBridge.php:528
 #: src/Engine/TransactionalEmailEngine.php:197
 #, php-format
 msgid "You reached %s!"
 msgstr ""
 
-#: src/Engine/NotificationBridge.php:483
-#: src/Engine/NotificationBridge.php:507
+#: src/Engine/NotificationBridge.php:529
+#: src/Engine/NotificationBridge.php:553
 msgid "You leveled up!"
 msgstr ""
 
-#: src/Engine/NotificationBridge.php:510
-#: src/Engine/NotificationBridge.php:567
-#: src/Engine/NotificationBridge.php:607
+#: src/Engine/NotificationBridge.php:556
+#: src/Engine/NotificationBridge.php:613
+#: src/Engine/NotificationBridge.php:653
 msgid "Awesome!"
 msgstr ""
 
-#: src/Engine/NotificationBridge.php:531
-#: src/Engine/Registry.php:577
+#: src/Engine/NotificationBridge.php:577
+#: src/Engine/Registry.php:580
 msgid "Streak milestone"
 msgstr ""
 
-#: src/Engine/NotificationBridge.php:533
+#: src/Engine/NotificationBridge.php:579
 msgid "Keep showing up - you're on fire!"
 msgstr ""
 
-#: src/Engine/NotificationBridge.php:535
+#: src/Engine/NotificationBridge.php:581
 msgid "Keep it up!"
 msgstr ""
 
 #. translators: %s: league name.
-#: src/Engine/NotificationBridge.php:561
+#: src/Engine/NotificationBridge.php:607
 #, php-format
 msgid "You moved up to %s League"
 msgstr ""
 
-#: src/Engine/NotificationBridge.php:562
+#: src/Engine/NotificationBridge.php:608
 msgid "League up"
 msgstr ""
 
 #. translators: %s: league name.
-#: src/Engine/NotificationBridge.php:564
+#: src/Engine/NotificationBridge.php:610
 #, php-format
 msgid "%s League"
 msgstr ""
 
-#: src/Engine/NotificationBridge.php:565
+#: src/Engine/NotificationBridge.php:611
 msgid "You moved up this week."
 msgstr ""
 
 #. translators: %s: community challenge title.
-#: src/Engine/NotificationBridge.php:599
+#: src/Engine/NotificationBridge.php:645
 #, php-format
 msgid "Goal reached: %s"
 msgstr ""
 
-#: src/Engine/NotificationBridge.php:600
+#: src/Engine/NotificationBridge.php:646
 msgid "Goal reached"
 msgstr ""
 
-#: src/Engine/NotificationBridge.php:601
+#: src/Engine/NotificationBridge.php:647
 msgid "Your community did it"
 msgstr ""
 
 #. translators: %s: formatted points, e.g. "50 Points".
-#: src/Engine/NotificationBridge.php:604
+#: src/Engine/NotificationBridge.php:650
 #, php-format
 msgid "You helped, and earned %s."
 msgstr ""
 
-#: src/Engine/NotificationBridge.php:605
+#: src/Engine/NotificationBridge.php:651
 msgid "Thank you for helping."
 msgstr ""
 
 #. translators: %s: action label.
-#: src/Engine/NotificationBridge.php:630
+#: src/Engine/NotificationBridge.php:676
 #, php-format
 msgid "Approved: %s"
 msgstr ""
 
 #. translators: %s: action label.
-#: src/Engine/NotificationBridge.php:655
+#: src/Engine/NotificationBridge.php:701
 #, php-format
 msgid "Not approved: %s"
 msgstr ""
 
 #. translators: %s = challenge title
-#: src/Engine/NotificationBridge.php:675
+#: src/Engine/NotificationBridge.php:721
 #, php-format
 msgid "Challenge complete: %s"
 msgstr ""
 
 #. translators: %s: display name of the member who gave the kudos.
-#: src/Engine/NotificationBridge.php:705
+#: src/Engine/NotificationBridge.php:751
 #, php-format
 msgid "%s gave you kudos!"
 msgstr ""
 
-#: src/Engine/NotificationBridge.php:706
+#: src/Engine/NotificationBridge.php:752
 msgid "Someone gave you kudos!"
 msgstr ""
 
-#: src/Engine/NotificationBridge.php:822
+#: src/Engine/NotificationBridge.php:868
 msgid "Level up!"
 msgstr ""
 
-#: src/Engine/NotificationBridge.php:1253
+#. translators: 1: an amount, e.g. "55", 2: the site's name for points, e.g. "Points" or "Karma".
+#. translators: 1: an amount, e.g. "+10" or "250", 2: the site's name for points, e.g. "Points" or "Karma".
+#: src/Engine/NotificationBridge.php:1289
+#: src/Services/PointTypeService.php:137
+#, php-format
+msgid "%1$s %2$s"
+msgstr ""
+
+#: src/Engine/NotificationBridge.php:1293
+msgid "You earned points and rewards since your last visit"
+msgstr ""
+
+#. translators: %s: what was earned, e.g. "55 Points" or "55 Points and 20 Coins".
+#: src/Engine/NotificationBridge.php:1297
+#, php-format
+msgid "Welcome - you earned %s"
+msgstr ""
+
+#. translators: %s: what was earned, e.g. "55 Points" or "55 Points and 20 Coins".
+#: src/Engine/NotificationBridge.php:1299
+#, php-format
+msgid "You earned %s"
+msgstr ""
+
+#: src/Engine/NotificationBridge.php:1301
+msgid "You have new achievements"
+msgstr ""
+
+#. translators: %d: number of badges.
+#: src/Engine/NotificationBridge.php:1309
+#, php-format
+msgid "%d badge earned"
+msgid_plural "%d badges earned"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/Engine/NotificationBridge.php:1467
 msgid "Points awarded"
 msgstr ""
 
@@ -8427,55 +8465,55 @@ msgstr ""
 msgid "BuddyPress"
 msgstr ""
 
-#: src/Engine/Registry.php:565
-#: src/Engine/Registry.php:566
-#: src/Engine/Registry.php:567
-#: src/Engine/Registry.php:585
+#: src/Engine/Registry.php:568
+#: src/Engine/Registry.php:569
+#: src/Engine/Registry.php:570
+#: src/Engine/Registry.php:588
 msgid "Manual award"
 msgstr ""
 
-#: src/Engine/Registry.php:568
-#: src/Engine/Registry.php:569
+#: src/Engine/Registry.php:571
+#: src/Engine/Registry.php:572
 msgid "Manual adjustment"
 msgstr ""
 
-#: src/Engine/Registry.php:570
+#: src/Engine/Registry.php:573
 msgid "Debit"
 msgstr ""
 
-#: src/Engine/Registry.php:571
+#: src/Engine/Registry.php:574
 msgid "Redemption"
 msgstr ""
 
-#: src/Engine/Registry.php:573
+#: src/Engine/Registry.php:576
 msgid "Received kudos"
 msgstr ""
 
-#: src/Engine/Registry.php:576
+#: src/Engine/Registry.php:579
 msgid "Daily login bonus"
 msgstr ""
 
-#: src/Engine/Registry.php:579
+#: src/Engine/Registry.php:582
 msgid "Community challenge completed"
 msgstr ""
 
-#: src/Engine/Registry.php:582
+#: src/Engine/Registry.php:585
 msgid "Redeemed a reward"
 msgstr ""
 
-#: src/Engine/Registry.php:583
+#: src/Engine/Registry.php:586
 msgid "Reward refunded"
 msgstr ""
 
-#: src/Engine/Registry.php:584
+#: src/Engine/Registry.php:587
 msgid "Kudos withdrawn"
 msgstr ""
 
-#: src/Engine/Registry.php:586
+#: src/Engine/Registry.php:589
 msgid "Points reset by an admin"
 msgstr ""
 
-#: src/Engine/Registry.php:587
+#: src/Engine/Registry.php:590
 msgid "Points expired"
 msgstr ""
 
@@ -8663,12 +8701,6 @@ msgid "Point"
 msgid_plural "Points"
 msgstr[0] ""
 msgstr[1] ""
-
-#. translators: 1: an amount, e.g. "+10" or "250", 2: the site's name for points, e.g. "Points" or "Karma".
-#: src/Services/PointTypeService.php:137
-#, php-format
-msgid "%1$s %2$s"
-msgstr ""
 
 #: src/Services/SubmissionService.php:61
 msgid "You must be logged in to submit."
@@ -8865,7 +8897,7 @@ msgstr ""
 msgid "WB Gamification: the bundled licensing and update SDK is incomplete, so automatic updates are turned off. Reinstall the plugin from a complete package to restore them. Every other feature works normally."
 msgstr ""
 
-#: wb-gamification.php:804
+#: wb-gamification.php:808
 #: assets/js/toast-core.js:117
 msgid "Notifications"
 msgstr ""

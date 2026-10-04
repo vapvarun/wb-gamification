@@ -73,6 +73,36 @@ final class NotificationBridge {
 	public const BURST_MAX_EVENTS = 5;
 
 	/**
+	 * More waiting toasts than this arrive as ONE summary toast.
+	 *
+	 * A new member reaches their first community page with six waiting (badge,
+	 * welcome, +15, +10, +10, +20). Shown one by one, the stack's limit pushed the
+	 * welcome and its "See my progress" link off screen and the burst cap skipped
+	 * the badge. One toast says it all: "Welcome - you earned 55 Points".
+	 *
+	 * @since 1.6.6
+	 * @var int
+	 */
+	public const SUMMARY_FROM = 4;
+
+	/**
+	 * Rows read per delivery, so a summary can total a whole burst. Past this the
+	 * summary names no number (a member back after months).
+	 *
+	 * @since 1.6.6
+	 * @var int
+	 */
+	private const SUMMARY_WINDOW = 50;
+
+	/**
+	 * Event types a celebration card shows (assets/js/toast.js MOMENT_TYPES), never
+	 * a toast, so they are never folded into a summary.
+	 *
+	 * @var string[]
+	 */
+	private const MOMENT_TYPES = array( 'level_up', 'streak_milestone', 'cohort_promotion', 'community_goal' );
+
+	/**
 	 * Rows deleted per statement by `prune_queue()`, and the number of such
 	 * statements one cron tick may run (5,000 x 20 = 100,000 rows/run).
 	 *
@@ -363,14 +393,7 @@ final class NotificationBridge {
 		if ( ! get_user_meta( $user_id, 'wb_gam_seen_first_earn_toast', true ) ) {
 			update_user_meta( $user_id, 'wb_gam_seen_first_earn_toast', 1 );
 
-			// Where this member sees their progress: the host community's profile when one
-			// owns profiles (BuddyNext hooks this filter), else the plugin's own hub page.
-			/** This filter is documented in src/Engine/ProfilePage.php */
-			$hub_url = (string) apply_filters( 'wb_gam_profile_redirect_url', '', $user_id, get_userdata( $user_id ) );
-			if ( '' === $hub_url ) {
-				$hub_page_id = (int) get_option( 'wb_gam_hub_page_id', 0 );
-				$hub_url     = $hub_page_id ? (string) get_permalink( $hub_page_id ) : '';
-			}
+			$hub_url = self::progress_url( $user_id );
 
 			$detail = $hub_url
 				? __( 'See your full progress: points, badges, levels and leaderboard.', 'wb-gamification' )
@@ -1190,7 +1213,7 @@ final class NotificationBridge {
 			return array();
 		}
 
-		$rows = self::fetch_unseen( $user_id, self::cursor( $user_id ) );
+		$rows = self::fetch_unseen( $user_id, self::cursor( $user_id ), self::SUMMARY_WINDOW );
 		if ( empty( $rows ) ) {
 			return array();
 		}
@@ -1210,7 +1233,111 @@ final class NotificationBridge {
 		// This is what drops the un-shown remainder rather than replaying it.
 		self::advance_cursor( $user_id, (int) $rows[ array_key_last( $rows ) ]['id'] );
 
-		return $events;
+		return self::summarize( $user_id, $events, count( $rows ) >= self::SUMMARY_WINDOW );
+	}
+
+	/**
+	 * Fold a burst of waiting toasts into one summary toast.
+	 *
+	 * Up to three toasts pass through unchanged (newest BURST_MAX_EVENTS kept).
+	 * From SUMMARY_FROM on, every toast becomes one: the points per currency, the
+	 * badges, and the "See my progress" link. Celebration cards pass through.
+	 *
+	 * @since 1.6.6
+	 *
+	 * @param int   $user_id   Member.
+	 * @param array $events    Payloads, oldest first, each with `_id`.
+	 * @param bool  $truncated True when more were waiting than were read.
+	 * @return array Payloads to deliver.
+	 */
+	private static function summarize( int $user_id, array $events, bool $truncated ): array {
+		$moments = array();
+		$toasts  = array();
+		foreach ( $events as $event ) {
+			if ( in_array( (string) ( $event['type'] ?? '' ), self::MOMENT_TYPES, true ) ) {
+				$moments[] = $event;
+			} else {
+				$toasts[] = $event;
+			}
+		}
+
+		if ( count( $toasts ) < self::SUMMARY_FROM ) {
+			return array_slice( $events, -self::BURST_MAX_EVENTS );
+		}
+
+		$totals  = array(); // Plural currency name => amount.
+		$badges  = array();
+		$welcome = false;
+		$last_id = 0;
+		foreach ( $toasts as $toast ) {
+			$last_id = max( $last_id, (int) ( $toast['_id'] ?? 0 ) );
+			$type    = (string) ( $toast['type'] ?? '' );
+			if ( 'points' === $type && (int) ( $toast['points'] ?? 0 ) > 0 ) {
+				$unit            = (string) ( $toast['unit_many'] ?? '' );
+				$unit            = '' !== $unit ? $unit : __( 'Points', 'wb-gamification' );
+				$totals[ $unit ] = ( $totals[ $unit ] ?? 0 ) + (int) $toast['points'];
+			} elseif ( 'badge' === $type ) {
+				$badges[] = (string) ( $toast['message'] ?? '' );
+			} elseif ( 'welcome' === $type ) {
+				$welcome = true;
+			}
+		}
+
+		$parts = array();
+		foreach ( $totals as $unit => $amount ) {
+			/* translators: 1: an amount, e.g. "55", 2: the site's name for points, e.g. "Points" or "Karma". */
+			$parts[] = sprintf( __( '%1$s %2$s', 'wb-gamification' ), number_format_i18n( $amount ), $unit );
+		}
+
+		if ( $truncated ) {
+			$message = __( 'You earned points and rewards since your last visit', 'wb-gamification' );
+		} elseif ( $parts ) {
+			$message = $welcome
+				/* translators: %s: what was earned, e.g. "55 Points" or "55 Points and 20 Coins". */
+				? sprintf( __( 'Welcome - you earned %s', 'wb-gamification' ), wp_sprintf( '%l', $parts ) )
+				/* translators: %s: what was earned, e.g. "55 Points" or "55 Points and 20 Coins". */
+				: sprintf( __( 'You earned %s', 'wb-gamification' ), wp_sprintf( '%l', $parts ) );
+		} else {
+			$message = __( 'You have new achievements', 'wb-gamification' );
+		}
+
+		$detail = '';
+		if ( 1 === count( $badges ) ) {
+			$detail = $badges[0];
+		} elseif ( count( $badges ) > 1 ) {
+			/* translators: %d: number of badges. */
+			$detail = sprintf( _n( '%d badge earned', '%d badges earned', count( $badges ), 'wb-gamification' ), count( $badges ) );
+		}
+
+		$url     = self::progress_url( $user_id );
+		$summary = array(
+			'type'      => 'summary',
+			'message'   => $message,
+			'detail'    => '' !== $detail ? $detail : null,
+			'url'       => '' !== $url ? wp_make_link_relative( $url ) : '',
+			'url_label' => __( 'See my progress', 'wb-gamification' ),
+			'icon'      => 'icon-sparkles',
+			'_id'       => $last_id,
+		);
+
+		return array_merge( $moments, array( $summary ) );
+	}
+
+	/**
+	 * Where this member sees their progress: the host community's profile when one
+	 * owns profiles (BuddyNext hooks this filter), else the plugin's own hub page.
+	 *
+	 * @param int $user_id Member.
+	 * @return string URL, or '' when the site has neither.
+	 */
+	private static function progress_url( int $user_id ): string {
+		/** This filter is documented in src/Engine/ProfilePage.php */
+		$url = (string) apply_filters( 'wb_gam_profile_redirect_url', '', $user_id, get_userdata( $user_id ) );
+		if ( '' === $url ) {
+			$page_id = (int) get_option( 'wb_gam_hub_page_id', 0 );
+			$url     = $page_id ? (string) get_permalink( $page_id ) : '';
+		}
+		return $url;
 	}
 
 	/**
