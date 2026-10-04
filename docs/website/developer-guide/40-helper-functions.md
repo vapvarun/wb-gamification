@@ -71,6 +71,16 @@ The label an action id shows everywhere (toasts, points history, REST `label`, a
 echo esc_html( wb_gam_get_action_label( 'jetonomy_reply_created' ) ); // "Replied in the forum"
 ```
 
+To rename a reason on your site, filter it. Keep the words translatable if the site is multilingual:
+
+```php
+add_filter( 'wb_gam_action_label', function ( string $label, string $action_id ): string {
+	return 'login_bonus' === $action_id ? __( 'Daily check-in', 'my-site' ) : $label;
+}, 10, 2 );
+```
+
+Members on a translated site can also get new wording from a translation plugin such as Loco Translate, with no code.
+
 ## Points Functions
 
 ### `wb_gam_get_user_points( int $user_id ): int`

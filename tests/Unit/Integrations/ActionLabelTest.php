@@ -66,4 +66,19 @@ class ActionLabelTest extends TestCase {
 		}
 		$this->assertSame( 'Daily login bonus', Registry::label_for( 'login_bonus' ) );
 	}
+
+	#[Test]
+	public function a_site_can_rename_any_reason_through_the_filter(): void {
+		\Brain\Monkey\Functions\when( 'apply_filters' )->alias(
+			static function ( $hook, $value, ...$args ) {
+				if ( 'wb_gam_action_label' !== $hook ) {
+					return $value;
+				}
+				return 'login_bonus' === $args[0] ? 'Daily check-in' : JetonomyIntegration::label( $value, ...$args );
+			}
+		);
+		$this->assertSame( 'Daily check-in', Registry::label_for( 'login_bonus' ), 'A built-in label can be renamed.' );
+		$this->assertSame( 'Streak milestone', Registry::label_for( 'streak_milestone' ), 'Ids the filter does not handle keep their label.' );
+		$this->assertSame( 'Replied in the forum', Registry::label_for( 'jetonomy_reply_created' ), 'Integrations still name their ids.' );
+	}
 }

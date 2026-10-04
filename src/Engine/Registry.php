@@ -539,8 +539,9 @@ final class Registry {
 	 *      adjustments, redemption and refunds, kudos, login bonus, streak
 	 *      milestone, challenges, level, badge, points expiry) that have no
 	 *      manifest entry because they're fired directly by the engine.
-	 *   3. The `wb_gam_action_label` filter, for integrations that award ids they
-	 *      do not register as actions (e.g. Jetonomy's mirrored reputation).
+	 *   3. The `wb_gam_action_label` filter, run on every id with the label so
+	 *      far: integrations name ids they award without registering (e.g.
+	 *      Jetonomy's mirrored reputation), and a site can rename any reason.
 	 *   4. Title-cased action_id (e.g. "Mvs Give Comment") as a final
 	 *      fallback so a deactivated plugin doesn't leave history rows
 	 *      with an unrecognisable identifier.
@@ -556,52 +557,56 @@ final class Registry {
 			return '';
 		}
 
+		$label  = '';
 		$action = self::get_action( $action_id );
 		if ( is_array( $action ) && ! empty( $action['label'] ) ) {
-			return (string) $action['label'];
+			$label = (string) $action['label'];
 		}
 
-		$built_in = array(
-			'manual'                        => __( 'Manual award', 'wb-gamification' ),
-			'manual_award'                  => __( 'Manual award', 'wb-gamification' ),
-			'manual_admin'                  => __( 'Manual award', 'wb-gamification' ),
-			'manual_debit'                  => __( 'Manual adjustment', 'wb-gamification' ),
-			'manual_admin_deduct'           => __( 'Manual adjustment', 'wb-gamification' ),
-			'debit'                         => __( 'Debit', 'wb-gamification' ),
-			'redemption'                    => __( 'Redemption', 'wb-gamification' ),
-			'give_kudos'                    => __( 'Gave kudos', 'wb-gamification' ),
-			'receive_kudos'                 => __( 'Received kudos', 'wb-gamification' ),
-			// Awarded by the engine itself, never registered as actions. Without a translated
-			// label here they fell through to the title-cased id ("Login Bonus") in every language.
-			'login_bonus'                   => __( 'Daily login bonus', 'wb-gamification' ),
-			'streak_milestone'              => __( 'Streak milestone', 'wb-gamification' ),
-			'challenge_completed'           => __( 'Completed a challenge', 'wb-gamification' ),
-			'community_challenge_completed' => __( 'Community challenge completed', 'wb-gamification' ),
-			'level_up'                      => __( 'Reached a new level', 'wb-gamification' ),
-			'badge_earned'                  => __( 'Earned a badge', 'wb-gamification' ),
-			'points_redeemed'               => __( 'Redeemed a reward', 'wb-gamification' ),
-			'redemption_refund'             => __( 'Reward refunded', 'wb-gamification' ),
-			'kudos_revoked'                 => __( 'Kudos withdrawn', 'wb-gamification' ),
-			'manual_bulk_award'             => __( 'Manual award', 'wb-gamification' ),
-			'manual_admin_reset'            => __( 'Points reset by an admin', 'wb-gamification' ),
-			'points_decay'                  => __( 'Points expired', 'wb-gamification' ),
-		);
-		if ( isset( $built_in[ $action_id ] ) ) {
-			return $built_in[ $action_id ];
+		if ( '' === $label ) {
+			$built_in = array(
+				'manual'                        => __( 'Manual award', 'wb-gamification' ),
+				'manual_award'                  => __( 'Manual award', 'wb-gamification' ),
+				'manual_admin'                  => __( 'Manual award', 'wb-gamification' ),
+				'manual_debit'                  => __( 'Manual adjustment', 'wb-gamification' ),
+				'manual_admin_deduct'           => __( 'Manual adjustment', 'wb-gamification' ),
+				'debit'                         => __( 'Debit', 'wb-gamification' ),
+				'redemption'                    => __( 'Redemption', 'wb-gamification' ),
+				'give_kudos'                    => __( 'Gave kudos', 'wb-gamification' ),
+				'receive_kudos'                 => __( 'Received kudos', 'wb-gamification' ),
+				// Awarded by the engine itself, never registered as actions. Without a translated
+				// label here they fell through to the title-cased id ("Login Bonus") in every language.
+				'login_bonus'                   => __( 'Daily login bonus', 'wb-gamification' ),
+				'streak_milestone'              => __( 'Streak milestone', 'wb-gamification' ),
+				'challenge_completed'           => __( 'Completed a challenge', 'wb-gamification' ),
+				'community_challenge_completed' => __( 'Community challenge completed', 'wb-gamification' ),
+				'level_up'                      => __( 'Reached a new level', 'wb-gamification' ),
+				'badge_earned'                  => __( 'Earned a badge', 'wb-gamification' ),
+				'points_redeemed'               => __( 'Redeemed a reward', 'wb-gamification' ),
+				'redemption_refund'             => __( 'Reward refunded', 'wb-gamification' ),
+				'kudos_revoked'                 => __( 'Kudos withdrawn', 'wb-gamification' ),
+				'manual_bulk_award'             => __( 'Manual award', 'wb-gamification' ),
+				'manual_admin_reset'            => __( 'Points reset by an admin', 'wb-gamification' ),
+				'points_decay'                  => __( 'Points expired', 'wb-gamification' ),
+			);
+			$label    = $built_in[ $action_id ] ?? '';
 		}
 
 		/**
-		 * Name an action id that is awarded without being a registered action.
+		 * The label members see for an action: name it, or rename it.
 		 *
-		 * The one label every surface uses (toasts, points history, REST, analytics). Return a
-		 * non-empty, translated string for ids your integration awards; leave others untouched.
+		 * The one label every surface uses (toasts, points history, REST, analytics). An
+		 * integration that awards ids it does not register returns a translated string when
+		 * $label is ''. A site can rename any reason, e.g. 'login_bonus' to "Daily check-in";
+		 * return $label unchanged for every id you do not handle.
 		 *
 		 * @since 1.6.5
+		 * @since 1.6.6 Runs for every id, with the registered or built-in label (or '').
 		 *
-		 * @param string $label     '' when nothing has named it yet.
+		 * @param string $label     The label so far; '' when nothing has named it yet.
 		 * @param string $action_id Action identifier.
 		 */
-		$label = (string) apply_filters( 'wb_gam_action_label', '', $action_id );
+		$label = (string) apply_filters( 'wb_gam_action_label', $label, $action_id );
 		if ( '' !== $label ) {
 			return $label;
 		}
