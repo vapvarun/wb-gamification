@@ -99,6 +99,29 @@ final class NotificationBridge {
 	private const CURSOR_META_PREFIX = 'wb_gam_notif_cursor_';
 
 	/**
+	 * The one delivery position every reader shares (cursor key suffix).
+	 *
+	 * Each reader (page seed, heartbeat, REST poll, SSE) used to keep its own
+	 * position, so a toast showed once PER READER: the heartbeat painted it on one
+	 * page and the page seed painted it again on the next. One position per member
+	 * means whichever reader delivers it first marks it shown. Kept inside the
+	 * CURSOR_META_PREFIX family so privacy export/erase and progress reset, which
+	 * sweep that prefix, already cover it.
+	 *
+	 * @since 1.6.6
+	 * @var string
+	 */
+	private const SHARED_CURSOR = 'member';
+
+	/**
+	 * Per-reader keys used before 1.6.6. Read once, to start the shared position
+	 * where the furthest of them stood, so updating replays nothing.
+	 *
+	 * @var string[]
+	 */
+	private const LEGACY_CURSORS = array( 'footer', 'heartbeat', 'rest' );
+
+	/**
 	 * Option holding the admin-chosen toast stack position.
 	 *
 	 * @var string
@@ -799,11 +822,11 @@ final class NotificationBridge {
 		 * @param bool $hold    Whether to hold toasts here. Default false.
 		 * @param int  $user_id Current member.
 		 */
-		if ( (bool) apply_filters( 'wb_gam_hold_toasts', false, $user_id ) ) {
+		if ( self::toasts_held() ) {
 			return;
 		}
 
-		$events = self::read_pending( $user_id, 'footer' );
+		$events = self::read_pending( $user_id );
 
 		wp_enqueue_style( 'wb-gamification' );
 		// Mount the IA store BEFORE the markup renders so the
@@ -1162,15 +1185,12 @@ final class NotificationBridge {
 	 * @param string $consumer Cursor namespace ('footer', 'heartbeat', 'rest').
 	 * @return array[] Unseen event payloads, oldest-first, each stamped with `_id`.
 	 */
-	public static function read_pending( int $user_id, string $consumer ): array {
-		$consumer = sanitize_key( $consumer );
-		if ( $user_id <= 0 || '' === $consumer ) {
+	public static function read_pending( int $user_id, string $consumer = '' ): array { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed -- kept so existing callers stay valid; every reader now shares one position.
+		if ( $user_id <= 0 ) {
 			return array();
 		}
 
-		$cursor = (int) get_user_meta( $user_id, self::CURSOR_META_PREFIX . $consumer, true );
-		$rows   = self::fetch_unseen( $user_id, $cursor );
-
+		$rows = self::fetch_unseen( $user_id, self::cursor( $user_id ) );
 		if ( empty( $rows ) ) {
 			return array();
 		}
@@ -1188,12 +1208,79 @@ final class NotificationBridge {
 
 		// Park the cursor at the head of the backlog, not at the last event shown.
 		// This is what drops the un-shown remainder rather than replaying it.
-		$head = (int) $rows[ array_key_last( $rows ) ]['id'];
-		update_user_meta( $user_id, self::CURSOR_META_PREFIX . $consumer, $head );
+		self::advance_cursor( $user_id, (int) $rows[ array_key_last( $rows ) ]['id'] );
 
 		return $events;
 	}
 
+	/**
+	 * The member's delivery position: the highest queue id any reader has delivered.
+	 *
+	 * @since 1.6.6
+	 *
+	 * @param int $user_id Member id.
+	 * @return int
+	 */
+	public static function cursor( int $user_id ): int {
+		$stored = get_user_meta( $user_id, self::CURSOR_META_PREFIX . self::SHARED_CURSOR, true );
+		if ( '' !== $stored ) {
+			return (int) $stored;
+		}
+		$start = 0;
+		foreach ( self::LEGACY_CURSORS as $legacy ) {
+			$start = max( $start, (int) get_user_meta( $user_id, self::CURSOR_META_PREFIX . $legacy, true ) );
+		}
+		return $start;
+	}
+
+	/**
+	 * Move the member's delivery position forward (never back).
+	 *
+	 * Two readers can finish in either order (a heartbeat and a page load); the
+	 * one that saw less must not pull the position back and replay.
+	 * ponytail: read-then-write, not atomic; two readers racing can both deliver
+	 * the same burst once, which the page dedupes by _id. Fine for a toast.
+	 *
+	 * @since 1.6.6
+	 *
+	 * @param int $user_id Member id.
+	 * @param int $id      Highest queue id just delivered.
+	 * @return void
+	 */
+	public static function advance_cursor( int $user_id, int $id ): void {
+		if ( $id > self::cursor( $user_id ) ) {
+			update_user_meta( $user_id, self::CURSOR_META_PREFIX . self::SHARED_CURSOR, $id );
+		}
+	}
+
+	/**
+	 * Whether this page holds the member's toasts (wb_gam_hold_toasts).
+	 *
+	 * Decided on the page request, because the heartbeat and REST requests that
+	 * would otherwise deliver them cannot tell which screen the member is on. A
+	 * held page loads none of the toast readers, so the queue stays put and the
+	 * toasts show once on the first page that does not hold them.
+	 *
+	 * @since 1.6.6
+	 *
+	 * @return bool
+	 */
+	public static function toasts_held(): bool {
+		$user_id = get_current_user_id();
+
+		/**
+		 * Hold gamification toasts on this page (sign-up, onboarding, checkout...).
+		 *
+		 * Held toasts are not dropped: they show once on the next page that does
+		 * not hold them. Read on the page request (asset enqueue and footer).
+		 *
+		 * @since 1.6.6
+		 *
+		 * @param bool $hold    Default false.
+		 * @param int  $user_id Member.
+		 */
+		return $user_id > 0 && (bool) apply_filters( 'wb_gam_hold_toasts', false, $user_id );
+	}
 
 	// ── Helpers ──────────────────────────────────────────────────────────────────
 

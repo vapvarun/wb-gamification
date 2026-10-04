@@ -692,7 +692,11 @@ final class WB_Gamification {
 			WB_GAM_VERSION,
 			true
 		);
-		if ( is_user_logged_in() ) {
+		// A page that holds toasts (sign-up, onboarding, checkout: wb_gam_hold_toasts) starts
+		// none of the readers, so nothing is delivered there and the toasts wait for the next
+		// page. Blocks that need live data (a leaderboard) still enqueue the broker themselves.
+		$wb_gam_toast_readers = is_user_logged_in() && ! \WBGam\Engine\NotificationBridge::toasts_held();
+		if ( $wb_gam_toast_readers ) {
 			wp_enqueue_script( 'wb-gamification-realtime' );
 		}
 
@@ -700,7 +704,7 @@ final class WB_Gamification {
 		// alongside heartbeat.js; probes the transport option and no-ops
 		// when set to 'heartbeat'. Real streaming ships in stages 2-3 —
 		// see plan/REAL-TIME-TRANSPORT.md.
-		if ( is_user_logged_in() ) {
+		if ( $wb_gam_toast_readers ) {
 			wp_enqueue_script(
 				'wb-gamification-sse',
 				WB_GAM_URL . 'assets/js/sse.js',
@@ -782,7 +786,7 @@ final class WB_Gamification {
 		// consumes wb-gamification-realtime instead of running its own
 		// poll loop; the wbGamToast localisation is kept as a fallback
 		// for third-party scripts that hit /members/me/toasts directly.
-		if ( is_user_logged_in() ) {
+		if ( $wb_gam_toast_readers ) {
 			wp_enqueue_script(
 				'wb-gamification-toast',
 				WB_GAM_URL . 'assets/js/toast.js',

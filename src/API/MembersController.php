@@ -1241,7 +1241,7 @@ class MembersController extends WP_REST_Controller {
 	 */
 	public function get_toasts( $request ): WP_REST_Response {
 		$user_id = get_current_user_id();
-		$result  = NotificationBridge::read_pending( $user_id, 'rest' );
+		$result  = NotificationBridge::read_pending( $user_id );
 
 		// Normalize toast data for frontend consumption.
 		$normalized = array_map(

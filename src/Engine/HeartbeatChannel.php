@@ -103,6 +103,13 @@ final class HeartbeatChannel {
 	private static $pending_boards = array();
 
 	/**
+	 * Whether this tick's page asked for toasts (set in heartbeat_received).
+	 *
+	 * @var bool
+	 */
+	private static $wants_toasts = false;
+
+	/**
 	 * Build the heartbeat response payload.
 	 *
 	 * Runs on every heartbeat tick from a logged-in or anonymous client.
@@ -121,6 +128,10 @@ final class HeartbeatChannel {
 		if ( is_array( $data ) && isset( $data['wb_gam']['boards'] ) && is_array( $data['wb_gam']['boards'] ) ) {
 			self::$pending_boards = $data['wb_gam']['boards'];
 		}
+		// Toasts go only to a page that will show them (toast.js subscribed). Any
+		// other tick (wp-admin's editor, a held sign-up screen) would mark them
+		// shown with nobody to see them.
+		self::$wants_toasts = is_array( $data ) && ! empty( $data['wb_gam']['toasts'] );
 		return $response;
 	}
 
@@ -151,11 +162,13 @@ final class HeartbeatChannel {
 		// audit/DATA-FLOW-NOTIFICATIONS-2026-05-27.md §G9.
 		$boards               = self::$pending_boards;
 		self::$pending_boards = array();
+		$wants_toasts         = self::$wants_toasts;
+		self::$wants_toasts   = false;
 
 		$out = array(
 			'ts'           => time(),
 			'user'         => self::build_user_snapshot( $user_id ),
-			'toasts'       => self::flush_toasts( $user_id ),
+			'toasts'       => $wants_toasts ? self::flush_toasts( $user_id ) : array(),
 			'leaderboards' => self::build_leaderboard_snapshots( $boards ),
 		);
 
@@ -259,7 +272,7 @@ final class HeartbeatChannel {
 	 * @return array
 	 */
 	private static function flush_toasts( int $user_id ): array {
-		return NotificationBridge::read_pending( $user_id, 'heartbeat' );
+		return NotificationBridge::read_pending( $user_id );
 	}
 
 	/**
