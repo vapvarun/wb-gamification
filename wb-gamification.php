@@ -794,8 +794,11 @@ final class WB_Gamification {
 				WB_GAM_VERSION,
 				true
 			);
+			// On toast-core, not toast.js: toast-core loads first and reads wbGamToast
+			// (position, i18n) when it runs, so data printed before toast.js arrived
+			// too late and the saved corner was ignored. toast.js reads the same global.
 			wp_localize_script(
-				'wb-gamification-toast',
+				'wb-gam-toast-core',
 				'wbGamToast',
 				array(
 					'restUrl'  => rest_url( 'wb-gamification/v1/' ),

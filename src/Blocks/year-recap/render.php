@@ -121,7 +121,7 @@ $wb_gam_recap = (array) apply_filters( 'wb_gam_block_year_recap_data', $wb_gam_r
 
 $wb_gam_user  = get_userdata( $wb_gam_user_id );
 
-if ( ! $wb_gam_user || empty( $wb_gam_recap['total_points'] ) ) {
+if ( ! $wb_gam_user || empty( $wb_gam_recap['points_this_year'] ) ) {
 	$wb_gam_wrapper = get_block_wrapper_attributes(
 		array(
 			'class' => implode( ' ', $wb_gam_classes ),
@@ -242,7 +242,7 @@ BlockHooks::before( 'year-recap', $wb_gam_attrs );
 			<ol class="wb-gam-recap__top-actions-list">
 				<?php foreach ( $wb_gam_recap['top_actions'] as $wb_gam_action ) : ?>
 					<li class="wb-gam-recap__top-action">
-						<span class="wb-gam-recap__top-action-id"><?php echo esc_html( (string) ( $wb_gam_action['action_id'] ?? '' ) ); ?></span>
+						<span class="wb-gam-recap__top-action-id"><?php echo esc_html( wb_gam_get_action_label( (string) ( $wb_gam_action['action_id'] ?? '' ) ) ); ?></span>
 						<span class="wb-gam-recap__top-action-count">
 							<?php
 							$wb_gam_count = (int) ( $wb_gam_action['event_count'] ?? 0 );

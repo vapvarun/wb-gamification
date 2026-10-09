@@ -157,6 +157,7 @@
 /* Section titles */
 .wb-gam-recap__section-title {
 	margin: 0 0 0.875rem;
+	color: var(--wb-gam-color-white); /* set here: a theme's h3 colour would win on the dark hero */
 	font-size: 0.8125rem;
 	text-transform: uppercase;
 	letter-spacing: 0.08em;

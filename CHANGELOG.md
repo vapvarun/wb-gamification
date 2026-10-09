@@ -28,6 +28,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 
 - "Activate a membership" paid again on every renewal, date change and plan switch. It now pays once per member per plan (ledger check on `level_id`) and awards in the request so a second event seconds later sees the first.
 - A WP Sell Services review held for moderation never paid its buyer.
+- The Settings > Realtime toast corner was ignored: `wbGamToast` is now localized on `wb-gam-toast-core`, which reads it on load.
+- The Year Recap block always rendered its empty state (its guard read `total_points`; `RecapEngine` returns `points_this_year`). It now also declares its stylesheet in block.json, shows action labels in Most Active, and is exempt from the shared white card surface like the hub.
+- Award Points: the success toast is carried across the reload (`sessionStorage`, every `data-wb-gam-rest-after="reload"` admin form), and each Recent Manual Awards row reads its note from its own event's metadata; debits now carry their note in their event too. The `_wb_gam_last_award_note` user meta is no longer written (existing values are still exported, erased and removed on uninstall).
 
 ## [1.6.5] - 2026-09-29
 

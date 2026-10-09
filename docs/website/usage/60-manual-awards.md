@@ -44,7 +44,9 @@ The table below the form shows the 20 most recent manual awards. Each row shows:
 | **Note** | The reason entered at the time |
 | **Date** | The date and time of the award in your site's date/time format |
 
-> The note shown is the most recent note stored for each user, not necessarily the note from that specific row. Notes are stored as user meta, so if you award a user twice, the note column for older rows will show the most recent note.
+> Each row shows the note entered with that award or deduction. Awards made before version 1.6.6 kept only a member's latest note, so those older rows show no note.
+
+After you press **Award Points**, the page reloads and confirms "Points awarded." at the bottom of the screen.
 
 ## Common use cases
 
