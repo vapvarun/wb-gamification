@@ -2,14 +2,14 @@
 # This file is distributed under the GPL-2.0+.
 msgid ""
 msgstr ""
-"Project-Id-Version: WB Gamification 1.6.5\n"
+"Project-Id-Version: WB Gamification 1.6.6\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/wb-gamification\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-09T09:16:57+00:00\n"
+"POT-Creation-Date: 2026-10-09T11:03:21+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: wb-gamification\n"
@@ -1638,7 +1638,7 @@ msgstr ""
 #: src/Admin/SettingsPage.php:1695
 #: src/Admin/SettingsPage.php:1767
 #: src/Blocks/redemption-store/render.php:374
-#: wb-gamification.php:809
+#: wb-gamification.php:812
 #: assets/js/toast-core.js:299
 msgid "Dismiss"
 msgstr ""
@@ -1721,7 +1721,7 @@ msgstr ""
 #: src/Admin/BadgeAdminPage.php:751
 #: src/Admin/KudosModerationPage.php:121
 #: src/Admin/ManualAwardPage.php:112
-#: src/Admin/ManualAwardPage.php:272
+#: src/Admin/ManualAwardPage.php:247
 msgid "Type at least 2 characters to search"
 msgstr ""
 
@@ -1811,7 +1811,7 @@ msgstr ""
 #: src/Admin/BadgeAdminPage.php:225
 #: src/API/MembersController.php:1263
 #: src/Engine/TransactionalEmailEngine.php:330
-#: wb-gamification.php:810
+#: wb-gamification.php:813
 msgid "points"
 msgstr ""
 
@@ -2068,20 +2068,20 @@ msgstr ""
 
 #: src/Admin/BadgeAdminPage.php:734
 #: src/Admin/ImportPage.php:142
-#: src/Admin/ManualAwardPage.php:235
-#: src/Admin/ManualAwardPage.php:423
+#: src/Admin/ManualAwardPage.php:210
+#: src/Admin/ManualAwardPage.php:398
 msgid "User"
 msgstr ""
 
 #: src/Admin/BadgeAdminPage.php:744
 #: src/Admin/KudosModerationPage.php:258
 #: src/Admin/KudosModerationPage.php:276
-#: src/Admin/ManualAwardPage.php:265
+#: src/Admin/ManualAwardPage.php:240
 msgid "Search by name, username or email..."
 msgstr ""
 
 #: src/Admin/BadgeAdminPage.php:748
-#: src/Admin/ManualAwardPage.php:269
+#: src/Admin/ManualAwardPage.php:244
 msgid "Matching members"
 msgstr ""
 
@@ -2916,7 +2916,7 @@ msgid "Message"
 msgstr ""
 
 #: src/Admin/KudosModerationPage.php:347
-#: src/Admin/ManualAwardPage.php:427
+#: src/Admin/ManualAwardPage.php:402
 #: src/Engine/Privacy.php:318
 #: src/Engine/Privacy.php:599
 msgid "Date"
@@ -3050,160 +3050,152 @@ msgid "Add Level"
 msgstr ""
 
 #: src/Admin/ManualAwardPage.php:90
-#: src/Admin/ManualAwardPage.php:228
+#: src/Admin/ManualAwardPage.php:203
 msgid "Points awarded."
 msgstr ""
 
 #: src/Admin/ManualAwardPage.php:91
-#: src/Admin/ManualAwardPage.php:229
+#: src/Admin/ManualAwardPage.php:204
 msgid "Failed to award points."
 msgstr ""
 
 #: src/Admin/ManualAwardPage.php:131
 #: src/Admin/ManualAwardPage.php:132
-#: src/Admin/ManualAwardPage.php:175
-#: src/Admin/ManualAwardPage.php:363
+#: src/Admin/ManualAwardPage.php:158
+#: src/Admin/ManualAwardPage.php:338
 #: src/Admin/SettingsPage.php:1856
 msgid "Award Points"
 msgstr ""
 
-#: src/Admin/ManualAwardPage.php:164
-msgid "Points awarded successfully."
-msgstr ""
-
-#: src/Admin/ManualAwardPage.php:165
-msgid "Award failed - check user and points value."
-msgstr ""
-
-#: src/Admin/ManualAwardPage.php:176
+#: src/Admin/ManualAwardPage.php:159
 msgid "Manually grant or deduct points from any user. All awards go through the standard engine so hooks, badges, and streaks fire normally."
 msgstr ""
 
-#: src/Admin/ManualAwardPage.php:183
+#: src/Admin/ManualAwardPage.php:166
 msgid "When will the leaderboard reflect this award?"
 msgstr ""
 
-#: src/Admin/ManualAwardPage.php:187
+#: src/Admin/ManualAwardPage.php:170
 msgid "Member-facing dashboards (points total, level, badges) update immediately on award. Leaderboards, however, read from a snapshot table that's rewritten by a 5-minute cron, with an additional 2-minute object cache on top."
 msgstr ""
 
-#: src/Admin/ManualAwardPage.php:190
+#: src/Admin/ManualAwardPage.php:173
 msgid "Worst-case staleness:"
 msgstr ""
 
-#: src/Admin/ManualAwardPage.php:191
+#: src/Admin/ManualAwardPage.php:174
 msgid "about 7 minutes from award to leaderboard reflection (5-min snapshot cycle + 2-min cache TTL). For larger sites with persistent object cache enabled, the snapshot is the authoritative source - the live SUM-based fallback is reserved for cache misses."
 msgstr ""
 
-#: src/Admin/ManualAwardPage.php:194
+#: src/Admin/ManualAwardPage.php:177
 msgid "If the leaderboard never updates:"
 msgstr ""
 
 #. translators: %s: cron hook name
-#: src/Admin/ManualAwardPage.php:199
+#: src/Admin/ManualAwardPage.php:182
 #, php-format
 msgid "Check that WP-Cron is firing. The %s cron hook should appear in `wp cron event list` and run every 5 minutes. If it's missing, deactivate + reactivate the plugin to re-register schedules."
 msgstr ""
 
-#: src/Admin/ManualAwardPage.php:221
+#: src/Admin/ManualAwardPage.php:196
 msgid "Award or Deduct Points"
 msgstr ""
 
-#: src/Admin/ManualAwardPage.php:276
+#: src/Admin/ManualAwardPage.php:251
 msgid "Select the member who will receive (or lose) points."
 msgstr ""
 
-#: src/Admin/ManualAwardPage.php:281
-#: src/Admin/ManualAwardPage.php:424
+#: src/Admin/ManualAwardPage.php:256
+#: src/Admin/ManualAwardPage.php:399
 #: src/Admin/SettingsPage.php:1406
 msgid "Amount"
 msgstr ""
 
 #. translators: %d = max points per action
-#: src/Admin/ManualAwardPage.php:298
+#: src/Admin/ManualAwardPage.php:273
 #, php-format
 msgid "Positive to award, negative to deduct. Max ±%d per action."
 msgstr ""
 
-#: src/Admin/ManualAwardPage.php:307
-#: src/Admin/ManualAwardPage.php:425
+#: src/Admin/ManualAwardPage.php:282
+#: src/Admin/ManualAwardPage.php:400
 #: src/Admin/SettingsPage.php:1408
 #: src/Engine/Privacy.php:314
 #: src/Engine/Privacy.php:591
 msgid "Currency"
 msgstr ""
 
-#: src/Admin/ManualAwardPage.php:326
+#: src/Admin/ManualAwardPage.php:301
 msgid "(default)"
 msgstr ""
 
 #. translators: %s URL of the Point Types admin page.
-#: src/Admin/ManualAwardPage.php:336
+#: src/Admin/ManualAwardPage.php:311
 #, php-format
 msgid "Which currency to award. <a href=\"%s\">Manage point types</a>."
 msgstr ""
 
-#: src/Admin/ManualAwardPage.php:347
+#: src/Admin/ManualAwardPage.php:322
 msgid "Reason / Note"
 msgstr ""
 
-#: src/Admin/ManualAwardPage.php:355
+#: src/Admin/ManualAwardPage.php:330
 msgid "e.g. Contest winner, Support bonus, Policy violation"
 msgstr ""
 
-#: src/Admin/ManualAwardPage.php:358
-msgid "Optional. Visible in the award history below and stored as user meta."
+#: src/Admin/ManualAwardPage.php:333
+msgid "Optional. Visible next to this award in the history below."
 msgstr ""
 
-#: src/Admin/ManualAwardPage.php:371
+#: src/Admin/ManualAwardPage.php:346
 msgid "Bulk Award"
 msgstr ""
 
-#: src/Admin/ManualAwardPage.php:372
+#: src/Admin/ManualAwardPage.php:347
 msgid "Award the same points to every member of a role, or to all members at once. Accounts excluded in Settings > Access are skipped automatically. For very large communities, prefer WP-CLI."
 msgstr ""
 
-#: src/Admin/ManualAwardPage.php:379
+#: src/Admin/ManualAwardPage.php:354
 msgid "Bulk award queued."
 msgstr ""
 
-#: src/Admin/ManualAwardPage.php:380
+#: src/Admin/ManualAwardPage.php:355
 msgid "Bulk award failed."
 msgstr ""
 
-#: src/Admin/ManualAwardPage.php:386
+#: src/Admin/ManualAwardPage.php:361
 msgid "Award to"
 msgstr ""
 
-#: src/Admin/ManualAwardPage.php:390
+#: src/Admin/ManualAwardPage.php:365
 msgid "All members"
 msgstr ""
 
-#: src/Admin/ManualAwardPage.php:399
+#: src/Admin/ManualAwardPage.php:374
 msgid "Points each"
 msgstr ""
 
-#: src/Admin/ManualAwardPage.php:403
+#: src/Admin/ManualAwardPage.php:378
 msgid "Positive only. Bulk deduction is not supported here - use the single award above for negative adjustments."
 msgstr ""
 
-#: src/Admin/ManualAwardPage.php:407
+#: src/Admin/ManualAwardPage.php:382
 msgid "Bulk Award Points"
 msgstr ""
 
-#: src/Admin/ManualAwardPage.php:416
+#: src/Admin/ManualAwardPage.php:391
 msgid "Recent Manual Awards"
 msgstr ""
 
-#: src/Admin/ManualAwardPage.php:426
+#: src/Admin/ManualAwardPage.php:401
 msgid "Note"
 msgstr ""
 
-#: src/Admin/ManualAwardPage.php:466
+#: src/Admin/ManualAwardPage.php:441
 msgid "No manual awards yet"
 msgstr ""
 
-#: src/Admin/ManualAwardPage.php:467
+#: src/Admin/ManualAwardPage.php:442
 msgid "Use the form above to grant or deduct points from any member."
 msgstr ""
 
@@ -5631,7 +5623,7 @@ msgid "Webhooks"
 msgstr ""
 
 #: src/Admin/WebhooksAdminPage.php:123
-#: src/API/WebhooksController.php:489
+#: src/API/WebhooksController.php:491
 msgid "You do not have permission to manage webhooks."
 msgstr ""
 
@@ -5988,19 +5980,20 @@ msgid "Challenge not found or not active."
 msgstr ""
 
 #: src/API/ChallengesController.php:298
+#: src/API/ChallengesController.php:321
 msgid "Could not create challenge."
 msgstr ""
 
-#: src/API/ChallengesController.php:337
-#: src/API/ChallengesController.php:408
+#: src/API/ChallengesController.php:350
+#: src/API/ChallengesController.php:421
 msgid "Challenge not found."
 msgstr ""
 
-#: src/API/ChallengesController.php:369
+#: src/API/ChallengesController.php:382
 msgid "Could not update challenge."
 msgstr ""
 
-#: src/API/ChallengesController.php:426
+#: src/API/ChallengesController.php:439
 msgid "Could not delete challenge."
 msgstr ""
 
@@ -6199,32 +6192,32 @@ msgstr ""
 msgid "Unknown point type \"%s\". Register the currency in Point Types before awarding."
 msgstr ""
 
-#: src/API/PointsController.php:272
+#: src/API/PointsController.php:287
 msgid "User does not have enough points to debit."
 msgstr ""
 
-#: src/API/PointsController.php:273
+#: src/API/PointsController.php:288
 msgid "Failed to debit points."
 msgstr ""
 
-#: src/API/PointsController.php:350
+#: src/API/PointsController.php:358
 msgid "Points row not found."
 msgstr ""
 
-#: src/API/PointsController.php:370
-#: src/API/PointsController.php:381
+#: src/API/PointsController.php:378
+#: src/API/PointsController.php:389
 msgid "Could not revoke points."
 msgstr ""
 
-#: src/API/PointsController.php:425
+#: src/API/PointsController.php:433
 msgid "Bulk award points must be positive."
 msgstr ""
 
-#: src/API/PointsController.php:432
+#: src/API/PointsController.php:440
 msgid "Unknown target role."
 msgstr ""
 
-#: src/API/PointsController.php:477
+#: src/API/PointsController.php:485
 msgid "You do not have permission to manage points."
 msgstr ""
 
@@ -6375,8 +6368,8 @@ msgid "Login required."
 msgstr ""
 
 #: src/API/RulesController.php:239
-#: src/API/RulesController.php:300
-#: src/API/RulesController.php:359
+#: src/API/RulesController.php:301
+#: src/API/RulesController.php:360
 msgid "Rule not found."
 msgstr ""
 
@@ -6384,31 +6377,31 @@ msgstr ""
 msgid "Could not create rule."
 msgstr ""
 
-#: src/API/RulesController.php:340
+#: src/API/RulesController.php:341
 msgid "Could not update rule."
 msgstr ""
 
-#: src/API/RulesController.php:365
+#: src/API/RulesController.php:366
 msgid "Could not delete rule."
 msgstr ""
 
 #. translators: %s: starts_at or ends_at.
-#: src/API/RulesController.php:431
+#: src/API/RulesController.php:432
 #, php-format
 msgid "\"%s\" must be a date such as 2026-10-04 or 2026-10-04 18:00 (site time)."
 msgstr ""
 
-#: src/API/RulesController.php:439
+#: src/API/RulesController.php:440
 msgid "\"ends_at\" must be after \"starts_at\"."
 msgstr ""
 
 #. translators: %s = comma-separated list of valid condition types
-#: src/API/RulesController.php:468
+#: src/API/RulesController.php:469
 #, php-format
 msgid "A badge_condition rule needs at least one condition. Valid types: %s."
 msgstr ""
 
-#: src/API/RulesController.php:532
+#: src/API/RulesController.php:533
 msgid "You do not have permission to manage rules."
 msgstr ""
 
@@ -6433,10 +6426,10 @@ msgid "Import file is not a valid WB Gamification settings export."
 msgstr ""
 
 #: src/API/WebhooksController.php:206
-#: src/API/WebhooksController.php:283
-#: src/API/WebhooksController.php:327
-#: src/API/WebhooksController.php:361
-#: src/API/WebhooksController.php:385
+#: src/API/WebhooksController.php:285
+#: src/API/WebhooksController.php:329
+#: src/API/WebhooksController.php:363
+#: src/API/WebhooksController.php:387
 msgid "Webhook not found."
 msgstr ""
 
@@ -6448,11 +6441,11 @@ msgstr ""
 msgid "Could not create webhook."
 msgstr ""
 
-#: src/API/WebhooksController.php:304
+#: src/API/WebhooksController.php:306
 msgid "Could not update webhook."
 msgstr ""
 
-#: src/API/WebhooksController.php:333
+#: src/API/WebhooksController.php:335
 msgid "Could not delete webhook."
 msgstr ""
 
@@ -8896,7 +8889,7 @@ msgstr ""
 msgid "WB Gamification: the bundled licensing and update SDK is incomplete, so automatic updates are turned off. Reinstall the plugin from a complete package to restore them. Every other feature works normally."
 msgstr ""
 
-#: wb-gamification.php:808
+#: wb-gamification.php:811
 #: assets/js/toast-core.js:117
 msgid "Notifications"
 msgstr ""
