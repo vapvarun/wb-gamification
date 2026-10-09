@@ -1,6 +1,6 @@
 # Levels
 
-Levels give members a visible sense of status and long-term progression. As members accumulate points, they advance through a sequence of levels — each with a name, a threshold, and an optional icon.
+Levels give members a visible sense of status and long-term progression. As members accumulate points, they advance through a sequence of levels - each with a name, a threshold, and an optional icon.
 
 ## Default Levels
 
@@ -22,7 +22,7 @@ A level is set by the points a member has **earned**: their balance plus anythin
 
 After every award or removal, the plugin compares the member's earned points against the level thresholds and updates the level straight away. Members are congratulated only when they move up (toast, the optional email, and community notifications); a move down is applied quietly.
 
-Level is never stored independently — it is always derived from the points ledger. This means if you change a level threshold, member levels update automatically on their next point award.
+Level is never stored independently - it is always derived from the points ledger. This means if you change a level threshold, member levels update automatically on their next point award.
 
 ## Level-Up Notifications
 
@@ -52,7 +52,7 @@ Levels are always sorted by their minimum points threshold. You can add as many 
 **Tips for setting thresholds:**
 - Think about how many points a typical active member earns per week
 - Space levels so members advance roughly every 2–4 weeks of active participation
-- Reserve your highest level for genuinely long-term members — it loses meaning if everyone reaches it quickly
+- Reserve your highest level for genuinely long-term members - it loses meaning if everyone reaches it quickly
 
 ## Editing and Removing Levels
 
@@ -63,7 +63,7 @@ You can remove custom levels, but you cannot remove the five default levels. To 
 ## Displaying Levels
 
 Level information appears in:
-- The **Level Progress block** — shows current level name, icon, progress bar, and points needed for next level (`[wb_gam_level_progress]`)
-- The **Member Points block** — shows total points, current level name, and progress bar (`[wb_gam_member_points]`)
-- **BuddyPress profiles** — the Gamification tab shows current level (if BuddyPress is active)
-- **Top Members block** — optionally shows each member's level label beneath their name (`[wb_gam_top_members show_level="1"]`)
+- The **Level Progress block** - shows current level name, icon, progress bar, and points needed for next level (`[wb_gam_level_progress]`)
+- The **Member Points block** - shows total points, current level name, and progress bar (`[wb_gam_member_points]`)
+- **BuddyPress profiles** - the Gamification tab shows current level (if BuddyPress is active)
+- **Top Members block** - optionally shows each member's level label beneath their name (`[wb_gam_top_members show_level="1"]`)

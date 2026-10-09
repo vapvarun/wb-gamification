@@ -7,9 +7,9 @@ Challenges give members a specific goal to work toward, with a bonus point rewar
 A challenge asks a member to perform a specific action a set number of times within a defined period. When they hit the target, the challenge completes automatically and bonus points are awarded immediately.
 
 Example challenges:
-- "Post 5 activity updates this week" — 50 bonus points
-- "Leave 10 comments this month" — 75 bonus points
-- "Complete 3 LearnDash lessons" — 100 bonus points
+- "Post 5 activity updates this week" - 50 bonus points
+- "Leave 10 comments this month" - 75 bonus points
+- "Complete 3 LearnDash lessons" - 100 bonus points
 
 ## Creating a Challenge
 
@@ -17,17 +17,17 @@ Example challenges:
 2. Click **Add New Challenge**.
 3. Fill in the following fields:
 
-**Title** — The name members see. Make it action-oriented and specific (for example, "Weekend Writer" or "Community Builder").
+**Title** - The name members see. Make it action-oriented and specific (for example, "Weekend Writer" or "Community Builder").
 
-**Action** — Choose the action members must perform. The list shows every active gamification trigger on your site.
+**Action** - Choose the action members must perform. The list shows every active gamification trigger on your site.
 
-**Target** — The number of times the action must be completed.
+**Target** - The number of times the action must be completed.
 
-**Bonus Points** — Points awarded when the challenge is completed. This is on top of the regular points members earn for each action.
+**Bonus Points** - Points awarded when the challenge is completed. This is on top of the regular points members earn for each action.
 
-**Start Date / End Date** — Optional. Leave blank for an always-on challenge. Set dates for seasonal or event-based challenges. Members cannot start a dated challenge before its start date, and it closes automatically after the end date.
+**Start Date / End Date** - Optional. Leave blank for an always-on challenge. Set dates for seasonal or event-based challenges. Members cannot start a dated challenge before its start date, and it closes automatically after the end date.
 
-**Status** — Set to Active to make it visible to members. Draft challenges are not shown.
+**Status** - Set to Active to make it visible to members. Draft challenges are not shown.
 
 4. Click **Save Challenge**.
 
@@ -74,6 +74,6 @@ A member who has completed a challenge will not earn the bonus points again for 
 ## Tips
 
 - Short-duration challenges (1 week) maintain more urgency than open-ended ones.
-- Set bonus points higher than what a member would earn just from the regular action points — the challenge should feel worth it.
+- Set bonus points higher than what a member would earn just from the regular action points - the challenge should feel worth it.
 - Run a new challenge each week or month to give returning members a reason to engage.
 - Use challenges to highlight specific areas: if forum activity is low, create a "bbPress Reply" challenge.

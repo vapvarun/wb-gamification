@@ -49,7 +49,7 @@ The tier ladder is editable as a JSON array. Add custom milestones or change the
 
 ## Streak vs Login Streak
 
-The login bonus uses its own counter, separate from the gamification streak engine. A member can have a 7-day login streak and a 3-day activity streak at the same time — they're distinct mechanics.
+The login bonus uses its own counter, separate from the gamification streak engine. A member can have a 7-day login streak and a 3-day activity streak at the same time - they're distinct mechanics.
 
 If you want a single unified streak, disable the login bonus and rely on the standard streak engine alone.
 
@@ -59,6 +59,6 @@ The login bonus does not store IP addresses or session identifiers. It tracks on
 
 ## See Also
 
-- **[Streaks](70-streaks.md)** — independent activity streak (any earning action) with milestones
-- **[Points](00-points.md)** — how the bonus integrates with the points ledger
-- **[Notifications](160-notifications.md)** — how the toast for the bonus appears
+- **[Streaks](70-streaks.md)** - independent activity streak (any earning action) with milestones
+- **[Points](00-points.md)** - how the bonus integrates with the points ledger
+- **[Notifications](160-notifications.md)** - how the toast for the bonus appears

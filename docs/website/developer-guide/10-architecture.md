@@ -6,7 +6,7 @@ WB Gamification is event-sourced. The only write path is:
 
 > **Event in → Rules evaluate → Effects out**
 
-All gamification state (points, badges, levels, streaks) is derived from the immutable `wb_gam_events` table. BuddyPress display, WooCommerce triggers, and the REST API are consumers of this pipeline — they never write state directly.
+All gamification state (points, badges, levels, streaks) is derived from the immutable `wb_gam_events` table. BuddyPress display, WooCommerce triggers, and the REST API are consumers of this pipeline - they never write state directly.
 
 ## Boot Sequence
 
@@ -46,10 +46,10 @@ Every gamification event flows through `Engine::process()` in this order:
 ```
 1. Validate (user_id > 0, action_id not empty)
 2. Check action enabled  (get_option wb_gam_enabled_{action_id})
-3. Rate-limit gate       (daily_cap, cooldown — PointsEngine::passes_rate_limits())
+3. Rate-limit gate       (daily_cap, cooldown - PointsEngine::passes_rate_limits())
 4. Enrich metadata       (apply_filters: wb_gam_event_metadata)
-5. Before-evaluate gate  (apply_filters: wb_gam_before_evaluate — return false to abort)
-6. Persist event         (INSERT wb_gam_events — UUID PK, immutable)
+5. Before-evaluate gate  (apply_filters: wb_gam_before_evaluate - return false to abort)
+6. Persist event         (INSERT wb_gam_events - UUID PK, immutable)
 7. Calculate points      (admin option → wb_gam_points_for_action filter → RuleEngine multipliers)
 8. Write points ledger   (INSERT wb_gam_points with event_id FK)
 9. Fire hooks            (do_action: wb_gam_points_awarded)
@@ -69,9 +69,9 @@ If Action Scheduler is unavailable (unit tests, early boot), `process_async()` f
 At priority 5, `ManifestLoader::scan()` runs two passes:
 
 1. **First-party:** loads every `*.php` file in `wb-gamification/integrations/`
-2. **Third-party:** scans `WP_PLUGIN_DIR/*/wb-gamification.php` — any installed plugin can declare triggers by dropping this file
+2. **Third-party:** scans `WP_PLUGIN_DIR/*/wb-gamification.php` - any installed plugin can declare triggers by dropping this file
 
-Manifest files return a plain PHP array. They are read-only configuration — no dependency on WB Gamification being loaded when the file is included. If the gamification plugin is not installed, the file is simply ignored.
+Manifest files return a plain PHP array. They are read-only configuration - no dependency on WB Gamification being loaded when the file is included. If the gamification plugin is not installed, the file is simply ignored.
 
 ## Constants
 
@@ -85,11 +85,11 @@ WB_GAM_BASENAME  // 'wb-gamification/wb-gamification.php'
 
 ## Database Version Tracking
 
-The current schema version is stored in `get_option('wb_gam_db_version')`. On each boot at priority 1, `DbUpgrader::init()` compares this to `WB_GAM_VERSION`. If behind, it runs the appropriate `upgrade_to_X_Y_Z()` methods in sequence. Each version gets its own upgrade method — no compound migrations.
+The current schema version is stored in `get_option('wb_gam_db_version')`. On each boot at priority 1, `DbUpgrader::init()` compares this to `WB_GAM_VERSION`. If behind, it runs the appropriate `upgrade_to_X_Y_Z()` methods in sequence. Each version gets its own upgrade method - no compound migrations.
 
 ## Match the admin UI to your brand
 
-Every color in the admin screens reads from a single palette of CSS custom properties defined in `assets/css/admin/tokens.css` (the `--wbgam-*` tokens). No screen hard-codes a hex value, so you can re-theme the whole admin UI by overriding a few tokens — no need to touch component styles.
+Every color in the admin screens reads from a single palette of CSS custom properties defined in `assets/css/admin/tokens.css` (the `--wbgam-*` tokens). No screen hard-codes a hex value, so you can re-theme the whole admin UI by overriding a few tokens - no need to touch component styles.
 
 Drop this in a small admin stylesheet (or a snippet plugin) to point the accent color at your brand:
 

@@ -1,6 +1,6 @@
 # Extending Blocks
 
-WB Gamification ships 12 server-rendered blocks. Each one fires a uniform set of WordPress action hooks that let you inject UI before or after the block's HTML — without forking it.
+WB Gamification ships 12 server-rendered blocks. Each one fires a uniform set of WordPress action hooks that let you inject UI before or after the block's HTML - without forking it.
 
 ## The hooks
 
@@ -45,9 +45,9 @@ apply_filters( 'wb_gam_block_data',         $data, $slug, $attributes );
 do_action( 'wb_gam_block_before_render', string $slug, array $attributes, array $context );
 ```
 
-- `$slug` — block slug (e.g. `'leaderboard'`)
-- `$attributes` — resolved block attributes from the editor / shortcode (`['period' => 'all_time', 'limit' => 10, ...]`)
-- `$context` — per-block runtime state. Typically includes `user_id` and any block-specific keys the block has already computed. Listeners receive this so they don't have to re-derive state.
+- `$slug` - block slug (e.g. `'leaderboard'`)
+- `$attributes` - resolved block attributes from the editor / shortcode (`['period' => 'all_time', 'limit' => 10, ...]`)
+- `$context` - per-block runtime state. Typically includes `user_id` and any block-specific keys the block has already computed. Listeners receive this so they don't have to re-derive state.
 
 Listeners can echo HTML (it appears before the block's wrapper `<div>`) or buffer/manipulate output via `ob_start()`.
 
@@ -61,11 +61,11 @@ Same signature as `before_render`. Fires after the closing wrapper. Listeners ec
 apply_filters( 'wb_gam_block_data', mixed $data, string $slug, array $attributes );
 ```
 
-- `$data` — block-specific payload (rows, badges, history items, etc.)
-- `$slug` — block slug
-- `$attributes` — block attributes
+- `$data` - block-specific payload (rows, badges, history items, etc.)
+- `$slug` - block slug
+- `$attributes` - block attributes
 
-Returns the filtered data. **Note:** not every block fires this filter today — see the block's `render.php` to confirm before relying on it. The action hooks fire for all 17 blocks unconditionally.
+Returns the filtered data. **Note:** not every block fires this filter today - see the block's `render.php` to confirm before relying on it. The action hooks fire for all 17 blocks unconditionally.
 
 ## When hooks DON'T fire
 
@@ -75,7 +75,7 @@ Empty-state render paths intentionally skip the hooks:
 - No data to show (e.g. no badges earned, no challenges active)
 - Block is hidden by an admin gate
 
-If you need to know about those states, listen to the underlying engine event — `wb_gam_streak_broken`, `wb_gam_points_awarded`, etc. — rather than the block hooks.
+If you need to know about those states, listen to the underlying engine event - `wb_gam_streak_broken`, `wb_gam_points_awarded`, etc. - rather than the block hooks.
 
 ## Common patterns
 
@@ -126,7 +126,7 @@ add_action( 'wb_gam_block_after_render', function ( $slug ) {
 
 ### Replace a block's output entirely (advanced)
 
-Capture the block's render output and replace it. This is intentionally awkward — if you find yourself needing it, consider building a competing block reading the same REST endpoint instead.
+Capture the block's render output and replace it. This is intentionally awkward - if you find yourself needing it, consider building a competing block reading the same REST endpoint instead.
 
 ```php
 add_action( 'wb_gam_block_before_render', function ( $slug ) {
@@ -143,7 +143,7 @@ add_action( 'wb_gam_block_after_render', function ( $slug ) {
 ## Performance notes
 
 - Both action hooks fire once per block render. Keep listeners cheap; they're on the page-render hot path.
-- Don't issue per-row DB queries from a `wb_gam_block_data` filter — batch your lookups.
+- Don't issue per-row DB queries from a `wb_gam_block_data` filter - batch your lookups.
 - For analytics, prefer transient-based aggregation over per-render `update_option()` calls.
 
 ## What you CAN'T do (today)
@@ -156,10 +156,10 @@ These are tracked as future-roadmap items; see `plans/INTEGRATION-GAPS-ROADMAP.m
 
 ## Worked example
 
-A complete worked example with 4 patterns lives at [`examples/10-inject-into-block-render/`](https://github.com/vapvarun/wb-gamification/tree/main/examples/10-inject-into-block-render). Copy it into your plugin and run on a Local install — every pattern is verified.
+A complete worked example with 4 patterns lives at [`examples/10-inject-into-block-render/`](https://github.com/vapvarun/wb-gamification/tree/main/examples/10-inject-into-block-render). Copy it into your plugin and run on a Local install - every pattern is verified.
 
 ## Related
 
-- [`hooks-filters.md`](110-hooks-overview.md) — full hook + filter reference (43 actions + 12 filters fired by the engine)
-- [`rest-api.md`](140-rest-overview.md) — for replacing a block, build a competing block that reads the same REST endpoint
-- [`manifest-files.md`](30-manifest-files.md) — for tracking new events that flow through the engine + into block renders
+- [`hooks-filters.md`](110-hooks-overview.md) - full hook + filter reference (43 actions + 12 filters fired by the engine)
+- [`rest-api.md`](140-rest-overview.md) - for replacing a block, build a competing block that reads the same REST endpoint
+- [`manifest-files.md`](30-manifest-files.md) - for tracking new events that flow through the engine + into block renders

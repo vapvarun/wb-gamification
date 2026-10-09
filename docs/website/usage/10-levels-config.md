@@ -2,7 +2,7 @@
 
 Go to **WB Gamification > Levels** in your admin sidebar.
 
-Levels give members a visible rank as they accumulate points. A member's level updates automatically the moment their cumulative points cross a threshold — no cron job or manual refresh needed.
+Levels give members a visible rank as they accumulate points. A member's level updates automatically the moment their cumulative points cross a threshold - no cron job or manual refresh needed.
 
 ## The Levels Table
 
@@ -20,7 +20,7 @@ The table lists every level ordered from lowest to highest threshold.
 2. Change the value.
 3. Click **Save Levels**.
 
-All members are re-evaluated against the new thresholds on their next activity. If you lower a threshold, members already past that point keep their current (higher) level — they are not downgraded.
+All members are re-evaluated against the new thresholds on their next activity. If you lower a threshold, members already past that point keep their current (higher) level - they are not downgraded.
 
 The 0-point starting level has its Min Points field locked at 0 and displays "Starting level." You can rename it but not delete or change its threshold.
 

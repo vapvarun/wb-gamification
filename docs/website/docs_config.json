@@ -3,13 +3,45 @@
   "productType": "plugin",
   "shortId": "wbgam",
   "sections": [
-    { "name": "Getting Started", "folder": "getting-started" },
-    { "name": "Features", "folder": "features" },
-    { "name": "Usage", "folder": "usage" },
-    { "name": "Shortcodes & Blocks", "folder": "shortcodes-blocks" },
-    { "name": "Integrations", "folder": "integrations" },
-    { "name": "Developer Guide", "folder": "developer-guide" },
-    { "name": "FAQ", "folder": "faq" },
-    { "name": "Troubleshooting", "folder": "troubleshooting" }
+    {
+      "name": "Getting Started",
+      "folder": "getting-started",
+      "description": "Install the plugin, run the setup wizard and see your first points land in minutes."
+    },
+    {
+      "name": "Features",
+      "folder": "features",
+      "description": "Points, badges, levels, challenges, streaks, kudos, rewards and notifications, explained one by one."
+    },
+    {
+      "name": "Usage",
+      "folder": "usage",
+      "description": "Configure actions, levels, badges, challenges and member access from the admin screens."
+    },
+    {
+      "name": "Shortcodes & Blocks",
+      "folder": "shortcodes-blocks",
+      "description": "Place leaderboards, badges, progress and reward blocks on any page with blocks or shortcodes."
+    },
+    {
+      "name": "Integrations",
+      "folder": "integrations",
+      "description": "What members earn in BuddyPress, WooCommerce, LearnDash, Jetonomy and the other supported plugins."
+    },
+    {
+      "name": "Developer Guide",
+      "folder": "developer-guide",
+      "description": "Hooks, filters, helper functions, REST API, WP-CLI and webhooks for extending the plugin."
+    },
+    {
+      "name": "FAQ",
+      "folder": "faq",
+      "description": "Short answers to the questions site owners ask most."
+    },
+    {
+      "name": "Troubleshooting",
+      "folder": "troubleshooting",
+      "description": "Fix common problems such as missing points, toasts that do not appear or empty leaderboards."
+    }
   ]
 }

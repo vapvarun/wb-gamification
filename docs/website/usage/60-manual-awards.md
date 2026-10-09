@@ -19,9 +19,9 @@ Enter a positive number to award points. Enter a negative number to deduct point
 The maximum you can award or deduct in a single action is **±10,000 points**.
 
 Examples:
-- `100` — awards 100 points
-- `-50` — deducts 50 points
-- `10000` — awards the maximum in one action
+- `100` - awards 100 points
+- `-50` - deducts 50 points
+- `10000` - awards the maximum in one action
 
 ### Reason / Note
 
@@ -49,13 +49,13 @@ The table below the form shows the 20 most recent manual awards. Each row shows:
 ## Common use cases
 
 **Rewarding contest winners**
-Run a community photo contest. Award the top three entries 500, 300, and 100 points respectively. Enter "Photo contest — 1st place" in the reason field.
+Run a community photo contest. Award the top three entries 500, 300, and 100 points respectively. Enter "Photo contest - 1st place" in the reason field.
 
 **Support bonuses**
 A member helped another user solve a complex problem. Award 50 bonus points with the note "Community support bonus."
 
 **Policy violations**
-A member spammed the activity feed. Deduct 100 points with the note "Spam warning — policy violation." Combine this with a WP role change via Rank Automation if needed.
+A member spammed the activity feed. Deduct 100 points with the note "Spam warning - policy violation." Combine this with a WP role change via Rank Automation if needed.
 
 **Onboarding boosts**
 Give new members a 25-point welcome bonus to help them reach the first level threshold faster.

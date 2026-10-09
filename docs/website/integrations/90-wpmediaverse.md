@@ -1,6 +1,6 @@
 # WPMediaVerse Integration
 
-WB Gamification ships a first-party WPMediaVerse manifest at `integrations/wpmediaverse.php`. When WPMediaVerse is active, `ManifestLoader` discovers the file automatically and registers its actions — no configuration is needed.
+WB Gamification ships a first-party WPMediaVerse manifest at `integrations/wpmediaverse.php`. When WPMediaVerse is active, `ManifestLoader` discovers the file automatically and registers its actions - no configuration is needed.
 
 The manifest has two layers:
 
@@ -13,17 +13,17 @@ All point values below are defaults you can override from **WB Gamification → 
 
 | Action ID | Label | Default Points | Daily Cap |
 |---|---|---|---|
-| `mvs_upload_photo` | Upload a photo | 10 | — |
-| `mvs_create_album` | Add items to an album | 15 | — |
-| `mvs_receive_like` | Receive a like on photo | 2 | — |
-| `mvs_receive_comment` | Receive a comment on photo | 5 | — |
-| `mvs_receive_follow` | Gain a new follower | 3 | — |
-| `mvs_receive_favorite` | Photo bookmarked by someone | 2 | — |
+| `mvs_upload_photo` | Upload a photo | 10 | - |
+| `mvs_create_album` | Add items to an album | 15 | - |
+| `mvs_receive_like` | Receive a like on photo | 2 | - |
+| `mvs_receive_comment` | Receive a comment on photo | 5 | - |
+| `mvs_receive_follow` | Gain a new follower | 3 | - |
+| `mvs_receive_favorite` | Photo bookmarked by someone | 2 | - |
 | `mvs_give_comment` | Write a meaningful comment | 3 | 20 |
 | `mvs_give_follow` | Follow another member | 1 | 50 |
 | `mvs_bookmark_photo` | Bookmark a photo | 1 | 30 |
 
-`mvs_receive_like` and `mvs_receive_favorite` award the **media owner**, not the person who reacted. Self-reactions (liking or bookmarking your own content) are excluded — the engine compares the reactor ID against the media author and returns 0 if they match.
+`mvs_receive_like` and `mvs_receive_favorite` award the **media owner**, not the person who reacted. Self-reactions (liking or bookmarking your own content) are excluded - the engine compares the reactor ID against the media author and returns 0 if they match.
 
 `mvs_give_comment` requires the comment to be 20 or more characters. Single-word or empty comments earn nothing. The daily caps on the "give" actions prevent point farming.
 
@@ -42,7 +42,7 @@ All point values below are defaults you can override from **WB Gamification → 
 
 `mvs_streak_milestone` fires when a member hits 7, 30, 100, or 365 consecutive upload days. The manifest uses a points callback that reads the bonus passed by WPMediaVerse Pro's streak engine, so the points awarded may exceed the 50-point base depending on streak length.
 
-Competition actions have no cooldowns or daily caps — they are high-stakes events that fire infrequently by design.
+Competition actions have no cooldowns or daily caps - they are high-stakes events that fire infrequently by design.
 
 ## Requirements
 

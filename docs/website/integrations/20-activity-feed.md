@@ -2,7 +2,7 @@
 
 ## Overview
 
-WB Gamification posts four types of events to the BuddyPress activity stream automatically. These entries create social proof — other members see achievements as they happen and are naturally encouraged to participate.
+WB Gamification posts four types of events to the BuddyPress activity stream automatically. These entries create social proof - other members see achievements as they happen and are naturally encouraged to participate.
 
 All four event types are registered under the `wb_gamification` component and appear in the "Gamification" filter group in the activity stream.
 
@@ -69,10 +69,10 @@ All posts use `bp_activity_add()` with `hide_sitewide: false`, so they appear on
 
 The `item_id` field varies per event:
 
-- `badge_earned` — always `0`
-- `level_changed` — the new level's DB row ID
-- `kudos_given` — the `wb_gam_kudos` row ID (for linking)
-- `challenge_completed` — the challenge's DB row ID
+- `badge_earned` - always `0`
+- `level_changed` - the new level's DB row ID
+- `kudos_given` - the `wb_gam_kudos` row ID (for linking)
+- `challenge_completed` - the challenge's DB row ID
 
 ## No Configuration Required
 

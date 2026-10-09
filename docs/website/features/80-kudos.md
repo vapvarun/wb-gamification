@@ -4,7 +4,7 @@ Kudos is a peer-to-peer recognition system. Members can give a shoutout to anoth
 
 ## What Kudos Is
 
-Kudos lets members publicly recognize each other for helpful contributions, great content, or community support. A kudos can include a short optional message. Both members earn points when kudos is given — the receiver earns more than the giver, reflecting the value of being recognized.
+Kudos lets members publicly recognize each other for helpful contributions, great content, or community support. A kudos can include a short optional message. Both members earn points when kudos is given - the receiver earns more than the giver, reflecting the value of being recognized.
 
 ## Default Point Values
 
@@ -29,7 +29,7 @@ Change the points limit in **Gamification > Settings > Kudos > Kudos per day tha
 
 - Members **cannot give kudos to themselves**
 - Kudos can include an **optional message** of up to 255 characters
-- Both point awards (giver and receiver) flow through the full gamification pipeline — they count toward badge conditions, level thresholds, streaks, and challenges
+- Both point awards (giver and receiver) flow through the full gamification pipeline - they count toward badge conditions, level thresholds, streaks, and challenges
 
 ## The Kudos Feed
 
@@ -65,10 +65,10 @@ Members can send kudos directly from the frontend via the `[wb_gam_give_kudos]` 
 
 | Attribute | Default | Description |
 |---|---|---|
-| `to` | — | Lock the form to a specific recipient by `user_login` or `user_id`. When set, the recipient field is hidden. |
+| `to` | - | Lock the form to a specific recipient by `user_login` or `user_id`. When set, the recipient field is hidden. |
 | `label` | "Send Kudos" | Custom submit button label. |
 
-The shortcode wraps an underlying server-side block (`wb-gamification/give-kudos`) so theme builders and template-builder plugins that consume blocks via `render_block()` can use the same render path. The block is not yet wired into the WordPress block inserter — use the shortcode for now.
+The shortcode wraps an underlying server-side block (`wb-gamification/give-kudos`) so theme builders and template-builder plugins that consume blocks via `render_block()` can use the same render path. The block is not yet wired into the WordPress block inserter - use the shortcode for now.
 
 **Behavior:**
 

@@ -25,7 +25,7 @@ Weekly Recap Emails are enabled by default. To turn them off site-wide, set the 
 
 ## Disabling for Individual Members
 
-Members can opt out of recap emails from their profile notification preferences. The engine respects the `wb_gam_member_prefs` table — members with email notifications disabled are skipped.
+Members can opt out of recap emails from their profile notification preferences. The engine respects the `wb_gam_member_prefs` table - members with email notifications disabled are skipped.
 
 ## Troubleshooting Delivery
 

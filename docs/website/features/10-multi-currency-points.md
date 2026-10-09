@@ -1,6 +1,6 @@
 # Multi-Currency Points
 
-WB Gamification supports multiple distinct point currencies running on the same site. Use this to model real-world economies that don't reduce to a single number — coins for in-game purchases, XP for level progress, reputation for moderation privileges, etc.
+WB Gamification supports multiple distinct point currencies running on the same site. Use this to model real-world economies that don't reduce to a single number - coins for in-game purchases, XP for level progress, reputation for moderation privileges, etc.
 
 ## When to Use Multiple Currencies
 
@@ -15,38 +15,38 @@ Single currency (the default) covers most communities. Use multiple currencies w
 
 Each currency has:
 
-- **Slug** — a short identifier (`coins`, `xp`, `reputation`)
-- **Display name** — shown in member-facing UIs ("250 Coins")
-- **Name for one** — optional singular ("1 Coin"); leave it blank for names that read the same at any amount, like XP or Karma
-- **Symbol** — optional prefix (`⭐`, `🪙`, `💎`)
-- **Default flag** — exactly one currency is the site default; if action manifests don't specify, this is what they award
+- **Slug** - a short identifier (`coins`, `xp`, `reputation`)
+- **Display name** - shown in member-facing UIs ("250 Coins")
+- **Name for one** - optional singular ("1 Coin"); leave it blank for names that read the same at any amount, like XP or Karma
+- **Symbol** - optional prefix (`⭐`, `🪙`, `💎`)
+- **Default flag** - exactly one currency is the site default; if action manifests don't specify, this is what they award
 
 The default site has one currency: `points`, named Points / Point. To add more, go to **Gamification → Point Types** and create them. To rename a currency (including the default), use **Rename** on its row.
 
 Once created, you can:
 
-- **Assign a currency to actions** — set `point_type` on the action manifest entry
-- **Assign a currency to redemption rewards** — store catalogs can be currency-scoped
-- **Configure conversions** — let members convert one currency to another (e.g. "10 XP = 1 coin")
+- **Assign a currency to actions** - set `point_type` on the action manifest entry
+- **Assign a currency to redemption rewards** - store catalogs can be currency-scoped
+- **Configure conversions** - let members convert one currency to another (e.g. "10 XP = 1 coin")
 
 ## Member Surface
 
 Members see their balances:
 
-- **Member Hub block** — a tile per currency, with the configured symbol and label
-- **Member Points block** — accepts a `type` parameter to show a specific currency
-- **Leaderboard block** — same `type` parameter for currency-scoped rankings
-- **Points History block** — shows the currency next to each event, color-coded
+- **Member Hub block** - a tile per currency, with the configured symbol and label
+- **Member Points block** - accepts a `type` parameter to show a specific currency
+- **Leaderboard block** - same `type` parameter for currency-scoped rankings
+- **Points History block** - shows the currency next to each event, color-coded
 
-If your site uses one currency, none of this UI changes — currency labels are hidden when there's only one.
+If your site uses one currency, none of this UI changes - currency labels are hidden when there's only one.
 
 ## Currency Conversions
 
 Conversions let a member trade one currency for another. Common patterns:
 
-- **XP → coins** — "spend your XP on store rewards"
-- **Reputation → privileges** — "unlock moderation tools at 1000 rep"
-- **Currency rebalancing** — admin migrates a community from `points` to `xp`
+- **XP → coins** - "spend your XP on store rewards"
+- **Reputation → privileges** - "unlock moderation tools at 1000 rep"
+- **Currency rebalancing** - admin migrates a community from `points` to `xp`
 
 Each conversion is configured in **Settings → Conversions** with:
 
@@ -72,11 +72,11 @@ Set the currency for an action via the action manifest entry:
 
 If `point_type` is omitted, the action awards the site default currency.
 
-The site owner can override per-action via the Settings → Points page — change the dropdown next to each action's point value.
+The site owner can override per-action via the Settings → Points page - change the dropdown next to each action's point value.
 
 ## Materialised Totals
 
-Each member has a row in `wb_gam_user_totals` per currency. The leaderboard, hub, and member-points blocks read this materialised view rather than aggregating the ledger on every request — sub-100ms response even with millions of rows in `wb_gam_points`.
+Each member has a row in `wb_gam_user_totals` per currency. The leaderboard, hub, and member-points blocks read this materialised view rather than aggregating the ledger on every request - sub-100ms response even with millions of rows in `wb_gam_points`.
 
 ## Privacy
 
@@ -121,7 +121,7 @@ See [Manifest Files](../developer-guide/30-manifest-files.md) for the full manif
 
 ## See Also
 
-- **[Points](00-points.md)** — single-currency basics
-- **[Leaderboard](90-leaderboard.md)** — currency-scoped rankings
-- **[Redemption Store](110-redemption-store.md)** — currency-scoped reward catalogs
-- **[Helper Functions](../developer-guide/40-helper-functions.md)** — `wb_gam_award_points` API
+- **[Points](00-points.md)** - single-currency basics
+- **[Leaderboard](90-leaderboard.md)** - currency-scoped rankings
+- **[Redemption Store](110-redemption-store.md)** - currency-scoped reward catalogs
+- **[Helper Functions](../developer-guide/40-helper-functions.md)** - `wb_gam_award_points` API

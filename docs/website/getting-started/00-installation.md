@@ -6,7 +6,7 @@ Before installing WB Gamification, confirm your environment meets these minimums
 
 - WordPress 6.5 or higher
 - PHP 8.1 or higher
-- MySQL 8.0 or higher, or MariaDB 10.4 or higher — the leaderboard uses SQL window functions (`RANK() OVER`), so older database versions are not supported
+- MySQL 8.0 or higher, or MariaDB 10.4 or higher - the leaderboard uses SQL window functions (`RANK() OVER`), so older database versions are not supported
 
 BuddyPress is **optional**. The plugin works on any standard WordPress site and automatically activates BuddyPress-specific features when BuddyPress is detected.
 
@@ -38,7 +38,7 @@ You do not need to configure anything manually. The plugin detects your active p
 
 ## After Activation
 
-You are redirected to the Setup Wizard. Choose a starter template that matches your site type — this takes about one minute. After completing the wizard, your site is fully configured and ready for members to start earning points.
+You are redirected to the Setup Wizard. Choose a starter template that matches your site type - this takes about one minute. After completing the wizard, your site is fully configured and ready for members to start earning points.
 
 If you skip the wizard, default point values are used. You can always return to **Gamification > Settings** to adjust them.
 

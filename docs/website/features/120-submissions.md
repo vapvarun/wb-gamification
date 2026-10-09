@@ -1,17 +1,17 @@
 # Submissions (UGC Achievements)
 
-Submissions let members claim achievements that the system cannot automatically detect — volunteer hours, offline milestones, custom community goals. Members submit, admins approve, points and badges fire through the standard award pipeline.
+Submissions let members claim achievements that the system cannot automatically detect - volunteer hours, offline milestones, custom community goals. Members submit, admins approve, points and badges fire through the standard award pipeline.
 
 ## What Submissions Are
 
 A submission is a member-supplied claim that they did something earnable. Each submission has:
 
-- **Title** — short description ("Volunteered 3 hours at Saturday cleanup")
-- **Details + photo** — a short write-up of what they did, with an **Add Media** button to attach a photo as proof right in the form (a screenshot, event photo, or certificate). Every logged-in member can attach a photo this way — they don't need to be an admin.
-- **Optional URL** — or just paste a link to evidence hosted elsewhere (a social post, a Google Drive file)
-- **Action** — the gamification action this submission represents (admin defines the catalog)
+- **Title** - short description ("Volunteered 3 hours at Saturday cleanup")
+- **Details + photo** - a short write-up of what they did, with an **Add Media** button to attach a photo as proof right in the form (a screenshot, event photo, or certificate). Every logged-in member can attach a photo this way - they don't need to be an admin.
+- **Optional URL** - or just paste a link to evidence hosted elsewhere (a social post, a Google Drive file)
+- **Action** - the gamification action this submission represents (admin defines the catalog)
 
-When an admin approves the submission, the system fires the standard event for that action. The member earns the configured points exactly as if the action had fired automatically. Badges, levels, streaks, and the leaderboard all update through the same path — there is no parallel "submitted points" track.
+When an admin approves the submission, the system fires the standard event for that action. The member earns the configured points exactly as if the action had fired automatically. Badges, levels, streaks, and the leaderboard all update through the same path - there is no parallel "submitted points" track.
 
 ## Member Flow
 
@@ -44,9 +44,9 @@ The member's points history (`/u/{user}/?tab=history`) shows each approved submi
 
 ## Notifications
 
-- **Submission received** — admin email + admin-bar count badge
-- **Submission approved** — member email (if enabled) + toast notification + points awarded
-- **Submission rejected** — optional member email with reason
+- **Submission received** - admin email + admin-bar count badge
+- **Submission approved** - member email (if enabled) + toast notification + points awarded
+- **Submission rejected** - optional member email with reason
 
 ## Configuration
 
@@ -68,7 +68,7 @@ Submissions are stored in the `wb_gam_submissions` table with the submitter's us
 
 ## See Also
 
-- **[Points](00-points.md)** — how the standard award pipeline integrates submissions
-- **[Notifications](160-notifications.md)** — toast / email behavior on approval
-- **[Privacy](200-privacy.md)** — what's exported and erased
-- **[Submit Achievement block](../shortcodes-blocks/00-blocks-overview.md)** — front-end submission form
+- **[Points](00-points.md)** - how the standard award pipeline integrates submissions
+- **[Notifications](160-notifications.md)** - toast / email behavior on approval
+- **[Privacy](200-privacy.md)** - what's exported and erased
+- **[Submit Achievement block](../shortcodes-blocks/00-blocks-overview.md)** - front-end submission form

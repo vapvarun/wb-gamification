@@ -6,6 +6,29 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 
 ## [Unreleased]
 
+## [1.6.6] - 2026-10-09
+
+### Added
+
+- Filter `wb_gam_hold_toasts( $hold, $user_id )`: a host holds a member's toasts on a page (sign-up, onboarding, checkout). Decided on the page request; a held page loads no toast reader (page seed, Heartbeat broker, SSE), so the toasts show once on the next page that does not hold them.
+- Filter `wb_gam_membership_level_earns( $earns, $level_id, $source, $user_id )`: a membership source answers `false` for a free level, so being placed on a default free plan earns no "Activate a membership" points.
+- WP Sell Services trigger `wpss_review_approved` ("Review approved by a moderator") on `wpss_review_moderated`: a review held for moderation pays its buyer on approval. It shares the reviewer rule and a once-per-review ledger guard with `wpss_review_created`, so approve, reject, approve pays once.
+- Built-in translatable labels for every action id the engine awards itself (login bonus, streak milestone, challenge and community challenge, level, badge, points redeemed, reward refunded, kudos withdrawn, bulk award, admin reset, points expired). `.pot` regenerated.
+
+### Changed
+
+- Toasts: from four waiting toasts on, `read_pending()` returns one summary (points totalled per currency, the badge or "N badges earned", See my progress link); celebration cards pass through. Up to three still arrive one by one.
+- Toasts: one shared delivery position per member (`wb_gam_notif_cursor_member`), so a toast shows once whichever reader delivers it first. It starts from the furthest legacy per-reader position, so updating replays nothing. Heartbeat delivers toasts only to pages that request them (`toasts=1`).
+- Toasts: at 640px and below a toast waits its turn instead of stacking; the BuddyNext stack adapter treats a toast BuddyNext holds in line as alive.
+- `wb_gam_action_label` runs for every action id with the label resolved so far, so a site can rename registered and built-in reasons.
+- The realtime broker loads for logged-in members on every page and for guests only where a leaderboard block renders.
+- `LeaderboardEngine::maybe_schedule()` and `BadgeEngine::maybe_schedule_cron_pass()` run only on scheduling requests (cron runner, wp-admin, WP-CLI) via `SchedulingContext::is_scheduling_request()`.
+
+### Fixed
+
+- "Activate a membership" paid again on every renewal, date change and plan switch. It now pays once per member per plan (ledger check on `level_id`) and awards in the request so a second event seconds later sees the first.
+- A WP Sell Services review held for moderation never paid its buyer.
+
 ## [1.6.5] - 2026-09-29
 
 ### Added

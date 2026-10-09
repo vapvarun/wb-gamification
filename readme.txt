@@ -145,6 +145,23 @@ Since 1.6.4 a badge is private until the member shares it, so links published be
 
 == Changelog ==
 
+= 1.6.6 - October 2026 =
+
+Calmer reward toasts, fair membership and review payouts, and lighter background work on busy sites.
+
+* Improve  - Four or more waiting toasts arrive as one summary with the points total, the badges earned and a See my progress link.
+* Improve  - On phones, toasts show one at a time in order instead of stacking over the page, in BuddyNext's toast stack too.
+* Improve  - Each toast shows once per member, whichever page or channel delivers it first.
+* Improve  - Logged-out visitors no longer poll the server every 15 seconds; only pages with a live leaderboard keep it.
+* Improve  - Background schedule checks run on cron, admin and WP-CLI requests instead of on every page load.
+* Fix      - WP Sell Services: a review held for moderation now pays the buyer when a moderator approves it, once per review.
+* Fix      - "Activate a membership" pays once per member per plan instead of again on every renewal or plan switch.
+* Fix      - Points reasons the plugin awards itself, such as the daily login bonus, level-ups and expired points, are now translatable.
+* Dev      - New filter `wb_gam_hold_toasts` holds a member's toasts on screens such as sign-up, onboarding or checkout without losing them.
+* Dev      - New filter `wb_gam_membership_level_earns` lets a membership source exclude its free levels from the activation award.
+* Dev      - `wb_gam_action_label` now runs for every action id, so a site can rename any points reason.
+* Compat   - Pairs with BuddyNext 1.2.4 and BuddyNext Pro 1.2.4, which hold toasts on their entry and checkout screens and exclude free plans from the membership award.
+
 = 1.6.5 - September 2026 =
 
 Migrate from myCred, GamiPress or BadgeOS at any community size, browse the full leaderboard, and delegate Levels and Submissions to staff without full admin access.
@@ -512,6 +529,9 @@ Distribution pipeline and admin polish ahead of the integration release.
 10. **Redemption Store** — Admin catalog UI to define rewards (custom or WooCommerce-backed) with point cost, stock, and active/inactive status.
 
 == Upgrade Notice ==
+
+= 1.6.6 =
+Calmer toasts, membership points paid once per plan, and moderated WP Sell Services reviews now pay on approval. No database changes. Update BuddyNext and BuddyNext Pro to 1.2.4 alongside it if you run them.
 
 = 1.6.5 =
 Migrate from myCred, GamiPress or BadgeOS at any size, browse the full leaderboard, and delegate Levels and Submissions to staff. Runs a one-time background migration on upgrade: existing timestamps are converted to UTC and each member's earned-points total is backfilled; sites already on UTC skip it. No action needed - it runs automatically and does not block the site while it runs.

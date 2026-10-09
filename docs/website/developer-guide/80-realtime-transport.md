@@ -59,12 +59,12 @@ declines and clients run on WP Heartbeat instead.
 
 ## When to enable SSE / auto
 
-- **Cross-user notifications matter** — e.g. "Alice gave Bob kudos"
+- **Cross-user notifications matter** - e.g. "Alice gave Bob kudos"
   should show on Bob's screen in <1 second, not on the next heartbeat tick.
-- **Your host supports long-polling PHP** — shared cPanel without
+- **Your host supports long-polling PHP** - shared cPanel without
   PHP-FPM tuning usually doesn't. Managed WordPress hosts (Kinsta,
   WP Engine, Pressable) with a dedicated worker pool typically do.
-- **No layer-7 proxy is buffering responses** — see "Host requirements"
+- **No layer-7 proxy is buffering responses** - see "Host requirements"
   below.
 
 For most installs `heartbeat` is the right choice. SSE is an
@@ -90,7 +90,7 @@ location /wp-json/wb-gamification/v1/events/stream {
 ```
 
 The plugin sends `X-Accel-Buffering: no` as a response header, which
-nginx honours when proxying — but it doesn't help if nginx is the
+nginx honours when proxying - but it doesn't help if nginx is the
 ORIGIN. The above location block ensures buffering is off either way.
 
 ### Cloudflare
@@ -110,7 +110,7 @@ The controller calls `session_write_close()` before the long-polling
 loop to release the session lock. If your host has aggressive
 output buffering enabled in php.ini (`output_buffering = On` with a
 non-zero buffer), the response can stall. The controller drains
-all buffers with `ob_end_flush()` + `ob_implicit_flush(true)` —
+all buffers with `ob_end_flush()` + `ob_implicit_flush(true)` -
 but if buffering is enabled at the FastCGI level, drop a `.htaccess`
 or `php.ini` directive:
 
@@ -131,7 +131,7 @@ toast renderer is loaded. Look for a request to
 - Response: bytes streaming in, including `: keepalive` comments every
   2 seconds
 
-**Broken SSE — fallback active:**
+**Broken SSE - fallback active:**
 - Status: 503 with `Retry-After` header → transport flag is set to
   `heartbeat`, no SSE attempted. Working as designed.
 - Status: 200 but EventSource emits an error within 10 seconds →

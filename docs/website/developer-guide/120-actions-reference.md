@@ -110,13 +110,13 @@ event hooks above (`wb_gam_badge_awarded`, `wb_gam_level_changed`,
 `wb_gam_kudos_given`, `wb_gam_kudos_revoked`, `wb_gam_challenge_completed`,
 `wb_gam_redemption_fulfilled`, `wb_gam_credential_expired`, `wb_gam_personal_record`,
 `wb_gam_streak_milestone`, `wb_gam_cohort_outcome` (promotions only), `wb_gam_community_goal_reached`,
-`wb_gam_submission_approved`, `wb_gam_submission_rejected`) plus `wb_gam_badge_deleted` — nothing new needed to fire them, this
+`wb_gam_submission_approved`, `wb_gam_submission_rejected`) plus `wb_gam_badge_deleted` - nothing new needed to fire them, this
 plugin simply listens to its own hooks and republishes a normalized payload.
 
 | Hook | When it fires | Parameters |
 |------|---------------|------------|
-| `wb_gam_notification_created` | After this plugin decides one of its own events is worth a member-facing notification (badge earned, level up, kudos received, challenge completed, reward fulfilled, credential expired, personal record, streak milestone, league promotion, community goal, submission result). Never fires for the actor notifying themself, and never during an import (`ImportMode::is_active()`). | `array $payload` — `recipient_id`, `type`, `actor_id`, `object_type`, `object_id`, `message`, `url`, `group_key` |
-| `wb_gam_community_notification_removed` | After an object a notification named is PERMANENTLY gone — a kudos revoked, or a badge definition deleted (which removes both `badge_awarded` and `credential_expired` notifications naming it). Never fires for a state change that is merely hidden, not gone. | `string $object_type`, `int $object_id` |
+| `wb_gam_notification_created` | After this plugin decides one of its own events is worth a member-facing notification (badge earned, level up, kudos received, challenge completed, reward fulfilled, credential expired, personal record, streak milestone, league promotion, community goal, submission result). Never fires for the actor notifying themself, and never during an import (`ImportMode::is_active()`). | `array $payload` - `recipient_id`, `type`, `actor_id`, `object_type`, `object_id`, `message`, `url`, `group_key` |
+| `wb_gam_community_notification_removed` | After an object a notification named is PERMANENTLY gone - a kudos revoked, or a badge definition deleted (which removes both `badge_awarded` and `credential_expired` notifications naming it). Never fires for a state change that is merely hidden, not gone. | `string $object_type`, `int $object_id` |
 
 ## Admin CRUD (REST)
 

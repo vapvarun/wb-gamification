@@ -14,7 +14,7 @@ It validates the database tables, default levels, default badges, registered act
 
 ## A member stopped earning points, with no message
 
-This is almost always a cap doing its job, not a bug. Daily caps, weekly caps, and per-action cooldowns are enforced **silently** — a member who has hit a limit earns nothing more until the window resets, with no error and no notification. That is deliberate: a quiet non-award is better than nagging your most active members.
+This is almost always a cap doing its job, not a bug. Daily caps, weekly caps, and per-action cooldowns are enforced **silently** - a member who has hit a limit earns nothing more until the window resets, with no error and no notification. That is deliberate: a quiet non-award is better than nagging your most active members.
 
 Check that member's caps and cooldowns under **WB Gamification > Points** first. The skipped awards are still visible to you through the event log and the REST API.
 
@@ -36,6 +36,11 @@ Optional modules can be turned off under **WB Gamification > Settings > Modules*
 ## Real-time toasts are not appearing
 
 The default real-time transport is WordPress Heartbeat (it polls a few seconds after an action and idles on hidden tabs). Server-Sent Events (SSE) are **opt-in** and gated behind the `wb_gam_sse_allowed` filter, because a PHP long-poll pins a worker per connection and does not scale on a standard pool. If you switched to SSE and toasts stopped, revert to Heartbeat under **WB Gamification > Settings > Realtime**.
+
+Two behaviours are intended, not faults:
+
+- **No toast on sign-up, onboarding or checkout.** A community plugin can hold toasts on those screens (BuddyNext and BuddyNext Pro do). The toasts are kept and show on the member's next ordinary page.
+- **Several awards arrive as one toast.** From four waiting toasts on, they are combined into one summary ("You earned 55 Points") with the badge and a progress link. See [Notifications](../features/160-notifications.md).
 
 ## Leaderboard or database errors on activation
 

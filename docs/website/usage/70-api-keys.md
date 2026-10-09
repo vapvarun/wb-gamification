@@ -19,7 +19,7 @@ Click **Generate Key**.
 
 The full API key is shown once in a notice at the top of the page immediately after generation. It will not be shown again. Copy it now and store it securely (a password manager or secrets vault).
 
-After you navigate away from the page, the key table shows only the first 12 characters followed by `...` — enough to identify the key but not enough to use it.
+After you navigate away from the page, the key table shows only the first 12 characters followed by `...` - enough to identify the key but not enough to use it.
 
 ## The Active Keys Table
 
@@ -29,7 +29,7 @@ After you navigate away from the page, the key table shows only the first 12 cha
 | **Site ID** | The machine identifier you provided |
 | **Key (prefix)** | First 12 characters of the key for identification |
 | **Created** | When the key was generated |
-| **Last Used** | The most recent time the key authenticated a request, or — if unused |
+| **Last Used** | The most recent time the key authenticated a request, or - if unused |
 | **Status** | Active or Revoked |
 | **Actions** | Revoke and Delete buttons |
 
@@ -57,6 +57,6 @@ Any request to the WB Gamification REST API (`/wp-json/wb-gamification/v1/`) tha
 
 ## Typical use case: centralized gamification
 
-You operate multiple WordPress sites in your network. One site acts as the gamification hub — it holds all the point rules, badge definitions, and leaderboards. Each other site has WB Gamification installed in remote mode and sends events to the hub via REST API using its own API key. Members accumulate points across all connected sites in one unified profile.
+You operate multiple WordPress sites in your network. One site acts as the gamification hub - it holds all the point rules, badge definitions, and leaderboards. Each other site has WB Gamification installed in remote mode and sends events to the hub via REST API using its own API key. Members accumulate points across all connected sites in one unified profile.
 
 Generate one key per remote site. Label each key clearly so you can identify and revoke individual sites if needed.
