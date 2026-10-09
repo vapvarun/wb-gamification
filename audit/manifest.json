@@ -11481,6 +11481,7 @@
         "assets/css/frontend.css",
         "assets/css/give-kudos.css",
         "assets/css/hub.css",
+        "assets/css/popups.css",
         "assets/css/share-page.css"
       ],
       "admin": [
@@ -11548,6 +11549,7 @@
         "assets/js/admin-test-event.js",
         "assets/js/admin-tools.js",
         "assets/js/admin-user-picker.js",
+        "assets/js/celebrate.js",
         "assets/js/dialog.js",
         "assets/js/give-kudos.js",
         "assets/js/heartbeat.js",
@@ -11558,6 +11560,7 @@
         "assets/js/settings-nav.js",
         "assets/js/share-page.js",
         "assets/js/sse.js",
+        "assets/js/toast-core.js",
         "assets/js/toast.js",
         "assets/js/top-offset.js"
       ],
@@ -11783,8 +11786,8 @@
       "tier": "first-party",
       "manifest_file": "integrations/wp-sell-services.php",
       "manifest_version": "1.0.0",
-      "detect": "defined('WPSS_VERSION')",
-      "trigger_count": 2,
+      "detect": "defined('WPSS_VERSION') || class_exists('\\WPSellServices\\Services\\ReviewService') || class_exists('\\WPSellServices\\Services\\OrderService')",
+      "trigger_count": 3,
       "adapter_classes": [],
       "purpose": ""
     },
@@ -11884,5 +11887,8 @@
       ],
       "purpose": ""
     }
-  ]
+  ],
+  "plugin": {
+    "version": "1.6.6"
+  }
 }

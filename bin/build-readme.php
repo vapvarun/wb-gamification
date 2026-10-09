@@ -73,7 +73,8 @@ if ( ! is_array( $manifest ) ) {
 // Derived: number of distinct REST controller classes (handlers ending in "Controller").
 $controllers = array();
 foreach ( $manifest['rest']['endpoints'] ?? array() as $endpoint ) {
-	$handler = (string) ( $endpoint['handler'] ?? '' );
+	// `handler` is "Class::method"; bin/refresh-manifest-live.php writes `callback` as "src/API/Class.php:line".
+	$handler = (string) ( $endpoint['handler'] ?? basename( explode( ':', (string) ( $endpoint['callback'] ?? '' ), 2 )[0], '.php' ) );
 	$class   = explode( '::', $handler, 2 )[0] ?? '';
 	if ( '' !== $class && str_ends_with( $class, 'Controller' ) ) {
 		$controllers[ $class ] = true;

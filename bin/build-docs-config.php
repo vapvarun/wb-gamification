@@ -58,6 +58,13 @@ if ( ! is_readable( $config_fp ) ) {
 }
 
 $config = json_decode( file_get_contents( $config_fp ), true );
+// The Wbcom docs standard `sections[]` schema lists folders, not files: every .md in a
+// section folder is published, so there is no file list to drift. Reading order comes from
+// NN- filename prefixes; `lint-plugin-docs.mjs` (wbcom-documentation) checks it.
+if ( is_array( $config ) && ! empty( $config['sections'] ) ) {
+	echo "build-docs-config: sections[] schema, catalogued by folder; nothing to sync\n";
+	exit( 0 );
+}
 if ( ! is_array( $config ) || empty( $config['categories'] ) ) {
 	fwrite( STDERR, "ERROR: malformed docs_config.json (no .categories)\n" );
 	exit( 1 );
