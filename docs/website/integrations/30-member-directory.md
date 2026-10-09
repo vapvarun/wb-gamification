@@ -2,7 +2,7 @@
 
 ## Overview
 
-WB Gamification adds a compact rank badge next to each member's name in the BuddyPress member directory. The badge shows the member's current level name only — no point count or progress bar, keeping the directory listing clean.
+WB Gamification adds a compact rank badge next to each member's name in the BuddyPress member directory. The badge shows the member's current level name only - no point count or progress bar, keeping the directory listing clean.
 
 ## What Appears in the Directory
 
@@ -21,7 +21,7 @@ The badge only appears under two conditions:
 1. The member has earned a level (i.e., `wb_gam_level_name` user meta is set and non-empty).
 2. The member has not opted out of showing their rank (`wb_gam_member_prefs.show_rank` is not `0`).
 
-Members who have never earned any points — and therefore have no level assigned — show no badge at all. "Newcomer" (the default starting level) will appear once the user meta is written, which happens on the first level-up evaluation.
+Members who have never earned any points - and therefore have no level assigned - show no badge at all. "Newcomer" (the default starting level) will appear once the user meta is written, which happens on the first level-up evaluation.
 
 ## Opt-Out Behaviour
 

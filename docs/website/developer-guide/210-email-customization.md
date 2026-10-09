@@ -4,7 +4,7 @@ WB Gamification sends transactional emails (level-up, badge earned, challenge
 completed, redemption confirmed) and digests (weekly recap, leaderboard nudge).
 You can rebrand and extend them three ways, from lightest to fullest control.
 
-## 1. Filters — change subject, recipients, or body (no file editing)
+## 1. Filters - change subject, recipients, or body (no file editing)
 
 Applied once for every transactional email, so one hook covers all events.
 Each passes the email `$slug` (e.g. `level_up`, `badge_earned`,
@@ -30,7 +30,7 @@ add_filter( 'wb_gam_email_body', function ( $html, $slug, $user_id ) {
 Digest emails also expose body/message filters: `wb_gam_weekly_email_body`
 and `wb_gam_nudge_message`.
 
-## 2. Template footer hook — inject at the end of the body
+## 2. Template footer hook - inject at the end of the body
 
 Every template fires `wb_gam_email_footer` just before `</body>`, passing the
 template slug and its in-scope variables (recipient `$user`, `$name`,
@@ -42,7 +42,7 @@ add_action( 'wb_gam_email_footer', function ( $template, $vars ) {
 }, 10, 2 );
 ```
 
-## 3. Template override — replace a whole email (theme file)
+## 3. Template override - replace a whole email (theme file)
 
 Copy any template into your theme and edit it freely. The loader
 (`Email::locate()`) checks, in order:

@@ -19,9 +19,9 @@ Enter a positive number to award points. Enter a negative number to deduct point
 The maximum you can award or deduct in a single action is **±10,000 points**.
 
 Examples:
-- `100` — awards 100 points
-- `-50` — deducts 50 points
-- `10000` — awards the maximum in one action
+- `100` - awards 100 points
+- `-50` - deducts 50 points
+- `10000` - awards the maximum in one action
 
 ### Reason / Note
 
@@ -44,18 +44,20 @@ The table below the form shows the 20 most recent manual awards. Each row shows:
 | **Note** | The reason entered at the time |
 | **Date** | The date and time of the award in your site's date/time format |
 
-> The note shown is the most recent note stored for each user, not necessarily the note from that specific row. Notes are stored as user meta, so if you award a user twice, the note column for older rows will show the most recent note.
+> Each row shows the note entered with that award or deduction. Awards made before version 1.6.6 kept only a member's latest note, so those older rows show no note.
+
+After you press **Award Points**, the page reloads and confirms "Points awarded." at the bottom of the screen.
 
 ## Common use cases
 
 **Rewarding contest winners**
-Run a community photo contest. Award the top three entries 500, 300, and 100 points respectively. Enter "Photo contest — 1st place" in the reason field.
+Run a community photo contest. Award the top three entries 500, 300, and 100 points respectively. Enter "Photo contest - 1st place" in the reason field.
 
 **Support bonuses**
 A member helped another user solve a complex problem. Award 50 bonus points with the note "Community support bonus."
 
 **Policy violations**
-A member spammed the activity feed. Deduct 100 points with the note "Spam warning — policy violation." Combine this with a WP role change via Rank Automation if needed.
+A member spammed the activity feed. Deduct 100 points with the note "Spam warning - policy violation." Combine this with a WP role change via Rank Automation if needed.
 
 **Onboarding boosts**
 Give new members a 25-point welcome bonus to help them reach the first level threshold faster.

@@ -73,6 +73,36 @@ final class NotificationBridge {
 	public const BURST_MAX_EVENTS = 5;
 
 	/**
+	 * More waiting toasts than this arrive as ONE summary toast.
+	 *
+	 * A new member reaches their first community page with six waiting (badge,
+	 * welcome, +15, +10, +10, +20). Shown one by one, the stack's limit pushed the
+	 * welcome and its "See my progress" link off screen and the burst cap skipped
+	 * the badge. One toast says it all: "Welcome - you earned 55 Points".
+	 *
+	 * @since 1.6.6
+	 * @var int
+	 */
+	public const SUMMARY_FROM = 4;
+
+	/**
+	 * Rows read per delivery, so a summary can total a whole burst. Past this the
+	 * summary names no number (a member back after months).
+	 *
+	 * @since 1.6.6
+	 * @var int
+	 */
+	private const SUMMARY_WINDOW = 50;
+
+	/**
+	 * Event types a celebration card shows (assets/js/toast.js MOMENT_TYPES), never
+	 * a toast, so they are never folded into a summary.
+	 *
+	 * @var string[]
+	 */
+	private const MOMENT_TYPES = array( 'level_up', 'streak_milestone', 'cohort_promotion', 'community_goal' );
+
+	/**
 	 * Rows deleted per statement by `prune_queue()`, and the number of such
 	 * statements one cron tick may run (5,000 x 20 = 100,000 rows/run).
 	 *
@@ -97,6 +127,29 @@ final class NotificationBridge {
 	 * @var string
 	 */
 	private const CURSOR_META_PREFIX = 'wb_gam_notif_cursor_';
+
+	/**
+	 * The one delivery position every reader shares (cursor key suffix).
+	 *
+	 * Each reader (page seed, heartbeat, REST poll, SSE) used to keep its own
+	 * position, so a toast showed once PER READER: the heartbeat painted it on one
+	 * page and the page seed painted it again on the next. One position per member
+	 * means whichever reader delivers it first marks it shown. Kept inside the
+	 * CURSOR_META_PREFIX family so privacy export/erase and progress reset, which
+	 * sweep that prefix, already cover it.
+	 *
+	 * @since 1.6.6
+	 * @var string
+	 */
+	private const SHARED_CURSOR = 'member';
+
+	/**
+	 * Per-reader keys used before 1.6.6. Read once, to start the shared position
+	 * where the furthest of them stood, so updating replays nothing.
+	 *
+	 * @var string[]
+	 */
+	private const LEGACY_CURSORS = array( 'footer', 'heartbeat', 'rest' );
 
 	/**
 	 * Option holding the admin-chosen toast stack position.
@@ -340,14 +393,7 @@ final class NotificationBridge {
 		if ( ! get_user_meta( $user_id, 'wb_gam_seen_first_earn_toast', true ) ) {
 			update_user_meta( $user_id, 'wb_gam_seen_first_earn_toast', 1 );
 
-			// Where this member sees their progress: the host community's profile when one
-			// owns profiles (BuddyNext hooks this filter), else the plugin's own hub page.
-			/** This filter is documented in src/Engine/ProfilePage.php */
-			$hub_url = (string) apply_filters( 'wb_gam_profile_redirect_url', '', $user_id, get_userdata( $user_id ) );
-			if ( '' === $hub_url ) {
-				$hub_page_id = (int) get_option( 'wb_gam_hub_page_id', 0 );
-				$hub_url     = $hub_page_id ? (string) get_permalink( $hub_page_id ) : '';
-			}
+			$hub_url = self::progress_url( $user_id );
 
 			$detail = $hub_url
 				? __( 'See your full progress: points, badges, levels and leaderboard.', 'wb-gamification' )
@@ -775,7 +821,8 @@ final class NotificationBridge {
 
 	/**
 	 * Render the Interactivity API markup and seed script in the footer.
-	 * Only outputs for logged-in users who have pending events.
+	 * Only outputs for logged-in users who have pending events, and not on a
+	 * screen the host holds toasts on (wb_gam_hold_toasts).
 	 */
 	public static function render(): void {
 		$user_id = get_current_user_id();
@@ -783,7 +830,26 @@ final class NotificationBridge {
 			return;
 		}
 
-		$events = self::read_pending( $user_id, 'footer' );
+		/**
+		 * Hold toasts on this screen.
+		 *
+		 * A host returns true on screens where a celebration would get in the way:
+		 * sign-up, email verification, onboarding, checkout. Nothing is read, so
+		 * no consumer's cursor moves and the queue is untouched; the held toasts
+		 * (the welcome points included) show on the next screen that does not
+		 * hold them. The live channels are held too, because their scripts are
+		 * only enqueued below.
+		 *
+		 * @since 1.6.6
+		 *
+		 * @param bool $hold    Whether to hold toasts here. Default false.
+		 * @param int  $user_id Current member.
+		 */
+		if ( self::toasts_held() ) {
+			return;
+		}
+
+		$events = self::read_pending( $user_id );
 
 		wp_enqueue_style( 'wb-gamification' );
 		// Mount the IA store BEFORE the markup renders so the
@@ -1142,15 +1208,12 @@ final class NotificationBridge {
 	 * @param string $consumer Cursor namespace ('footer', 'heartbeat', 'rest').
 	 * @return array[] Unseen event payloads, oldest-first, each stamped with `_id`.
 	 */
-	public static function read_pending( int $user_id, string $consumer ): array {
-		$consumer = sanitize_key( $consumer );
-		if ( $user_id <= 0 || '' === $consumer ) {
+	public static function read_pending( int $user_id, string $consumer = '' ): array { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed -- kept so existing callers stay valid; every reader now shares one position.
+		if ( $user_id <= 0 ) {
 			return array();
 		}
 
-		$cursor = (int) get_user_meta( $user_id, self::CURSOR_META_PREFIX . $consumer, true );
-		$rows   = self::fetch_unseen( $user_id, $cursor );
-
+		$rows = self::fetch_unseen( $user_id, self::cursor( $user_id ), self::SUMMARY_WINDOW );
 		if ( empty( $rows ) ) {
 			return array();
 		}
@@ -1168,12 +1231,183 @@ final class NotificationBridge {
 
 		// Park the cursor at the head of the backlog, not at the last event shown.
 		// This is what drops the un-shown remainder rather than replaying it.
-		$head = (int) $rows[ array_key_last( $rows ) ]['id'];
-		update_user_meta( $user_id, self::CURSOR_META_PREFIX . $consumer, $head );
+		self::advance_cursor( $user_id, (int) $rows[ array_key_last( $rows ) ]['id'] );
 
-		return $events;
+		return self::summarize( $user_id, $events, count( $rows ) >= self::SUMMARY_WINDOW );
 	}
 
+	/**
+	 * Fold a burst of waiting toasts into one summary toast.
+	 *
+	 * Up to three toasts pass through unchanged (newest BURST_MAX_EVENTS kept).
+	 * From SUMMARY_FROM on, every toast becomes one: the points per currency, the
+	 * badges, and the "See my progress" link. Celebration cards pass through.
+	 *
+	 * @since 1.6.6
+	 *
+	 * @param int   $user_id   Member.
+	 * @param array $events    Payloads, oldest first, each with `_id`.
+	 * @param bool  $truncated True when more were waiting than were read.
+	 * @return array Payloads to deliver.
+	 */
+	private static function summarize( int $user_id, array $events, bool $truncated ): array {
+		$moments = array();
+		$toasts  = array();
+		foreach ( $events as $event ) {
+			if ( in_array( (string) ( $event['type'] ?? '' ), self::MOMENT_TYPES, true ) ) {
+				$moments[] = $event;
+			} else {
+				$toasts[] = $event;
+			}
+		}
+
+		if ( count( $toasts ) < self::SUMMARY_FROM ) {
+			return array_slice( $events, -self::BURST_MAX_EVENTS );
+		}
+
+		$totals  = array(); // Plural currency name => amount.
+		$badges  = array();
+		$welcome = false;
+		$last_id = 0;
+		foreach ( $toasts as $toast ) {
+			$last_id = max( $last_id, (int) ( $toast['_id'] ?? 0 ) );
+			$type    = (string) ( $toast['type'] ?? '' );
+			if ( 'points' === $type && (int) ( $toast['points'] ?? 0 ) > 0 ) {
+				$unit            = (string) ( $toast['unit_many'] ?? '' );
+				$unit            = '' !== $unit ? $unit : __( 'Points', 'wb-gamification' );
+				$totals[ $unit ] = ( $totals[ $unit ] ?? 0 ) + (int) $toast['points'];
+			} elseif ( 'badge' === $type ) {
+				$badges[] = (string) ( $toast['message'] ?? '' );
+			} elseif ( 'welcome' === $type ) {
+				$welcome = true;
+			}
+		}
+
+		$parts = array();
+		foreach ( $totals as $unit => $amount ) {
+			/* translators: 1: an amount, e.g. "+10" or "250", 2: the site's name for points, e.g. "Points" or "Karma". */
+			$parts[] = sprintf( __( '%1$s %2$s', 'wb-gamification' ), number_format_i18n( $amount ), $unit );
+		}
+
+		if ( $truncated ) {
+			$message = __( 'You earned points and rewards since your last visit', 'wb-gamification' );
+		} elseif ( $parts ) {
+			$message = $welcome
+				/* translators: %s: what was earned, e.g. "55 Points" or "55 Points and 20 Coins". */
+				? sprintf( __( 'Welcome - you earned %s', 'wb-gamification' ), wp_sprintf( '%l', $parts ) )
+				/* translators: %s: what was earned, e.g. "55 Points" or "55 Points and 20 Coins". */
+				: sprintf( __( 'You earned %s', 'wb-gamification' ), wp_sprintf( '%l', $parts ) );
+		} else {
+			$message = __( 'You have new achievements', 'wb-gamification' );
+		}
+
+		$detail = '';
+		if ( 1 === count( $badges ) ) {
+			$detail = $badges[0];
+		} elseif ( count( $badges ) > 1 ) {
+			/* translators: %d: number of badges. */
+			$detail = sprintf( _n( '%d badge earned', '%d badges earned', count( $badges ), 'wb-gamification' ), count( $badges ) );
+		}
+
+		$url     = self::progress_url( $user_id );
+		$summary = array(
+			'type'      => 'summary',
+			'message'   => $message,
+			'detail'    => '' !== $detail ? $detail : null,
+			'url'       => '' !== $url ? wp_make_link_relative( $url ) : '',
+			'url_label' => __( 'See my progress', 'wb-gamification' ),
+			'icon'      => 'icon-sparkles',
+			'_id'       => $last_id,
+		);
+
+		return array_merge( $moments, array( $summary ) );
+	}
+
+	/**
+	 * Where this member sees their progress: the host community's profile when one
+	 * owns profiles (BuddyNext hooks this filter), else the plugin's own hub page.
+	 *
+	 * @param int $user_id Member.
+	 * @return string URL, or '' when the site has neither.
+	 */
+	private static function progress_url( int $user_id ): string {
+		/** This filter is documented in src/Engine/ProfilePage.php */
+		$url = (string) apply_filters( 'wb_gam_profile_redirect_url', '', $user_id, get_userdata( $user_id ) );
+		if ( '' === $url ) {
+			$page_id = (int) get_option( 'wb_gam_hub_page_id', 0 );
+			$url     = $page_id ? (string) get_permalink( $page_id ) : '';
+		}
+		return $url;
+	}
+
+	/**
+	 * The member's delivery position: the highest queue id any reader has delivered.
+	 *
+	 * @since 1.6.6
+	 *
+	 * @param int $user_id Member id.
+	 * @return int
+	 */
+	public static function cursor( int $user_id ): int {
+		$stored = get_user_meta( $user_id, self::CURSOR_META_PREFIX . self::SHARED_CURSOR, true );
+		if ( '' !== $stored ) {
+			return (int) $stored;
+		}
+		$start = 0;
+		foreach ( self::LEGACY_CURSORS as $legacy ) {
+			$start = max( $start, (int) get_user_meta( $user_id, self::CURSOR_META_PREFIX . $legacy, true ) );
+		}
+		return $start;
+	}
+
+	/**
+	 * Move the member's delivery position forward (never back).
+	 *
+	 * Two readers can finish in either order (a heartbeat and a page load); the
+	 * one that saw less must not pull the position back and replay.
+	 * ponytail: read-then-write, not atomic; two readers racing can both deliver
+	 * the same burst once, which the page dedupes by _id. Fine for a toast.
+	 *
+	 * @since 1.6.6
+	 *
+	 * @param int $user_id Member id.
+	 * @param int $id      Highest queue id just delivered.
+	 * @return void
+	 */
+	public static function advance_cursor( int $user_id, int $id ): void {
+		if ( $id > self::cursor( $user_id ) ) {
+			update_user_meta( $user_id, self::CURSOR_META_PREFIX . self::SHARED_CURSOR, $id );
+		}
+	}
+
+	/**
+	 * Whether this page holds the member's toasts (wb_gam_hold_toasts).
+	 *
+	 * Decided on the page request, because the heartbeat and REST requests that
+	 * would otherwise deliver them cannot tell which screen the member is on. A
+	 * held page loads none of the toast readers, so the queue stays put and the
+	 * toasts show once on the first page that does not hold them.
+	 *
+	 * @since 1.6.6
+	 *
+	 * @return bool
+	 */
+	public static function toasts_held(): bool {
+		$user_id = get_current_user_id();
+
+		/**
+		 * Hold gamification toasts on this page (sign-up, onboarding, checkout...).
+		 *
+		 * Held toasts are not dropped: they show once on the next page that does
+		 * not hold them. Read on the page request (asset enqueue and footer).
+		 *
+		 * @since 1.6.6
+		 *
+		 * @param bool $hold    Default false.
+		 * @param int  $user_id Member.
+		 */
+		return $user_id > 0 && (bool) apply_filters( 'wb_gam_hold_toasts', false, $user_id );
+	}
 
 	// ── Helpers ──────────────────────────────────────────────────────────────────
 

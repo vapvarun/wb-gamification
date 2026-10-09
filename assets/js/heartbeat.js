@@ -130,6 +130,10 @@
 		$( document ).on( 'heartbeat-send', function ( e, data ) {
 			data.wb_gam = {
 				boards: Array.from( boards.values() ),
+				// Ask for toasts only when something on this page shows them: the server
+				// marks delivered toasts as shown, so a page without a renderer must not
+				// take them.
+				toasts: subscribers.toasts.size > 0 ? 1 : 0,
 			};
 		} );
 

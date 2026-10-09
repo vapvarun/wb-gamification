@@ -72,7 +72,7 @@ Level definitions. Configurable per community. Seeded with 5 default levels on f
 | `icon_url` | VARCHAR(500) NULL | Optional level icon URL |
 | `sort_order` | INT | Display order in admin UI |
 
-**Index:** `min_points (min_points)` — used in level-up queries
+**Index:** `min_points (min_points)` - used in level-up queries
 
 **Default levels:** Newcomer (0), Member (100), Contributor (500), Regular (1500), Champion (5000)
 
@@ -206,9 +206,9 @@ All rule configurations: badge conditions, point multipliers, and other rule typ
 **Indexes:** `rule_type (rule_type)`, `target_id (target_id)`
 
 Badge condition types stored in `rule_config.condition_type`:
-- `point_milestone` — fires when `total_points >= config.points`
-- `action_count` — fires when a specific action has been performed N times
-- `admin_awarded` — no automatic condition; admin awards manually
+- `point_milestone` - fires when `total_points >= config.points`
+- `action_count` - fires when a specific action has been performed N times
+- `admin_awarded` - no automatic condition; admin awards manually
 
 ### `wb_gam_badge_defs`
 

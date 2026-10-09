@@ -1231,17 +1231,17 @@ class MembersController extends WP_REST_Controller {
 	/**
 	 * Retrieve pending toast notifications for the current user.
 	 *
-	 * Delegates to {@see NotificationBridge::read_pending()} with a
-	 * dedicated 'rest' cursor. Non-destructive: the footer renderer and
-	 * heartbeat channel maintain their own cursors so all three consumers
-	 * deliver the same notice exactly once, with no race for the transient.
+	 * Delegates to {@see NotificationBridge::read_pending()}, which reads and
+	 * advances the member's one shared delivery position (since 1.6.6): the
+	 * page seed, heartbeat, SSE and this route all move the same cursor, so a
+	 * notice shows exactly once whichever reader delivers it first.
 	 *
 	 * @param WP_REST_Request $request Full details about the request.
 	 * @return WP_REST_Response Toast notifications array.
 	 */
 	public function get_toasts( $request ): WP_REST_Response {
 		$user_id = get_current_user_id();
-		$result  = NotificationBridge::read_pending( $user_id, 'rest' );
+		$result  = NotificationBridge::read_pending( $user_id );
 
 		// Normalize toast data for frontend consumption.
 		$normalized = array_map(

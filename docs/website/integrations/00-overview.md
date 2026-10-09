@@ -2,7 +2,7 @@
 
 ![The Integrations screen in wp-admin](../images/integrations.webp)
 
-WB Gamification connects to other WordPress plugins automatically. You do not configure integrations manually — the `ManifestLoader` scans for manifest files at `plugins_loaded` priority 5 and registers their actions before the engine boots.
+WB Gamification connects to other WordPress plugins automatically. You do not configure integrations manually - the `ManifestLoader` scans for manifest files at `plugins_loaded` priority 5 and registers their actions before the engine boots.
 
 ## How Auto-Discovery Works
 
@@ -27,7 +27,7 @@ Each integration is a PHP file that returns an array of trigger definitions. Whe
 | Jetonomy Pro | 7 | `integrations/jetonomy-pro.php` |
 | WPMediaVerse | 15 | `integrations/wpmediaverse.php` |
 
-First-party manifests also ship for other Wbcom products — BuddyNext, Learnomy, Eventonomy, WB Listora, and WP Career Board — and load automatically when that product (and, where applicable, its Pro edition) is active.
+First-party manifests also ship for other Wbcom products - BuddyNext, Learnomy, Eventonomy, WB Listora, and WP Career Board - and load automatically when that product (and, where applicable, its Pro edition) is active.
 
 In addition to the manifest actions above, Jetonomy reputation deltas are mirrored 1:1 into the points ledger (see [Jetonomy integration](150-jetonomy.md)), and WB Gamification defers its own leaderboard display to Jetonomy's reputation ranking when Jetonomy is active.
 

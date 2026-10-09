@@ -54,6 +54,15 @@ class NotificationQueueBoundsTest extends TestCase {
 		// Route reads to the durable table (the primary path since v2.2b).
 		Functions\when( 'get_option' )->justReturn( '1' );
 		Functions\when( 'sanitize_key' )->returnArg( 1 );
+		Functions\when( '__' )->returnArg( 1 );
+		Functions\when( '_n' )->alias( static fn( $s, $p, $n ) => 1 === (int) $n ? $s : $p );
+		Functions\when( 'number_format_i18n' )->alias( static fn( $n ) => (string) $n );
+		Functions\when( 'wp_sprintf' )->alias( static fn( $f, $list ) => implode( ' and ', (array) $list ) );
+		Functions\when( 'apply_filters' )->returnArg( 2 );
+		Functions\when( 'get_userdata' )->justReturn( false );
+		Functions\when( 'get_permalink' )->justReturn( 'http://example.com/hub/' );
+		Functions\when( 'wp_make_link_relative' )->alias( static fn( $u ) => (string) wp_parse_url( $u, PHP_URL_PATH ) );
+		Functions\when( 'wp_parse_url' )->alias( 'parse_url' );
 		Functions\when( 'get_user_meta' )->justReturn( 0 ); // Cursor starts at 0.
 
 		$test = $this;
@@ -136,28 +145,20 @@ class NotificationQueueBoundsTest extends TestCase {
 		$events = NotificationBridge::read_pending( 7, 'footer' );
 
 		$this->assertLessThanOrEqual( 5, count( $events ), 'A backlog must never render more than a 5-toast burst.' );
-		$this->assertCount( 5, $events );
+		$this->assertCount( 1, $events, 'Since 1.6.6 a backlog arrives as one summary toast.' );
+		$this->assertSame( 'summary', $events[0]['type'] );
+		$this->assertSame( 'You earned points and rewards since your last visit', $events[0]['message'], 'Past the read window the summary names no partial total.' );
 	}
 
-	/**
-	 * The events shown are the NEWEST in the backlog, and are ordered
-	 * oldest-first so the stack reads chronologically.
-	 */
 	#[Test]
 	public function burst_contains_the_newest_events_in_chronological_order(): void {
 		$this->stub_wpdb( 30197 );
 
 		$events = NotificationBridge::read_pending( 7, 'footer' );
-		$ids    = array_map( static fn( $e ) => (int) $e['_id'], $events );
 
-		$this->assertSame( array( 30193, 30194, 30195, 30196, 30197 ), $ids, 'Must show the newest 5, ascending.' );
+		$this->assertSame( 30197, $events[0]['_id'], 'The summary carries the newest id, the key the page dedupes on.' );
 	}
 
-	/**
-	 * The cursor jumps to the HEAD of the backlog, not merely to the newest
-	 * event shown. This is what drops the un-shown remainder instead of
-	 * queueing it for the next page load.
-	 */
 	#[Test]
 	public function cursor_fast_forwards_past_the_entire_backlog(): void {
 		$this->stub_wpdb( 30197 );

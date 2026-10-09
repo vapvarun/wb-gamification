@@ -1,12 +1,12 @@
 # Block Attribute Schema (Wbcom Block Quality Standard)
 
-WB Gamification blocks adhere to the canonical [Wbcom Block Quality Standard](https://wbcomdesigns.com/) — a uniform attribute schema that every block carries so themes, page builders, and assistive tools can rely on the same controls (responsive spacing, typography, hover colours, visibility) across every Wbcom plugin.
+WB Gamification blocks adhere to the canonical [Wbcom Block Quality Standard](https://wbcomdesigns.com/) - a uniform attribute schema that every block carries so themes, page builders, and assistive tools can rely on the same controls (responsive spacing, typography, hover colours, visibility) across every Wbcom plugin.
 
 This document is the reference for that schema as it ships in `wb-gamification`. Consumers building editor plugins, custom blocks that extend ours, or REST integrations should read it before relying on attribute names.
 
 > **Source of truth:** `src/shared/utils/attributes.js` (JavaScript export) and `src/Blocks/CSS.php` (PHP consumer). The standard is shared with `wbcom-essential`; both are derived from `~/.claude/skills/wp-block-development/references/block-quality-standard.md`.
 >
-> **Directory casing matters.** Block sources live at `src/Blocks/<slug>/` (capital B, matches the `WBGam\Blocks\` PSR-4 namespace) and compile to `build/Blocks/<slug>/`. The Registrar scans `build/Blocks/` — case-sensitive on Linux production.
+> **Directory casing matters.** Block sources live at `src/Blocks/<slug>/` (capital B, matches the `WBGam\Blocks\` PSR-4 namespace) and compile to `build/Blocks/<slug>/`. The Registrar scans `build/Blocks/` - case-sensitive on Linux production.
 
 ## Where the schema lives
 
@@ -32,7 +32,7 @@ export default {
 };
 ```
 
-`getStandardAttributes()` is the union of `uniqueIdAttribute`, `spacingAttributes`, `shadowAttributes`, `borderAttributes`, and `visibilityAttributes`. Typography is opt-in (most blocks don't need a built-in font picker) — import `typographyAttributes` separately when you do.
+`getStandardAttributes()` is the union of `uniqueIdAttribute`, `spacingAttributes`, `shadowAttributes`, `borderAttributes`, and `visibilityAttributes`. Typography is opt-in (most blocks don't need a built-in font picker) - import `typographyAttributes` separately when you do.
 
 ## Attribute groups
 
@@ -54,7 +54,7 @@ Per-side padding and margin with three responsive variants. Defaults: `padding 2
 | `paddingTablet` | object | `undefined` | ≤ 1024px. |
 | `paddingMobile` | object | `undefined` | ≤ 767px. |
 | `paddingUnit` | string | `'px'` | One unit applies to all three breakpoints. |
-| `margin`, `marginTablet`, `marginMobile`, `marginUnit` | — | — | Same shape. |
+| `margin`, `marginTablet`, `marginMobile`, `marginUnit` | - | - | Same shape. |
 
 `undefined` on tablet/mobile means "inherit desktop". The CSS generator only emits a media-query block when the attribute is a populated object.
 
@@ -128,7 +128,7 @@ function wb_gam_render_redemption_store( array $attributes, string $content, $bl
 }
 ```
 
-The generator emits desktop rules at the top, then `@media (max-width: 1024px)` for tablet, then `@media (max-width: 767px)` for mobile — matching the breakpoints in `useResponsiveValue.js`.
+The generator emits desktop rules at the top, then `@media (max-width: 1024px)` for tablet, then `@media (max-width: 767px)` for mobile - matching the breakpoints in `useResponsiveValue.js`.
 
 ## Filter hooks
 
@@ -143,7 +143,7 @@ Saved post content containing the pre-migration block markup will gain `deprecat
 
 ## See also
 
-- [`src/shared/utils/attributes.js`](https://github.com/vapvarun/wb-gamification/blob/main/src/shared/utils/attributes.js) — JavaScript schema source
-- [`src/Blocks/CSS.php`](https://github.com/vapvarun/wb-gamification/blob/main/src/Blocks/CSS.php) — PHP CSS generator
-- [`src/Blocks/Registrar.php`](https://github.com/vapvarun/wb-gamification/blob/main/src/Blocks/Registrar.php) — `build/blocks/` auto-registrar
-- [Extending Blocks](50-extending-blocks.md) — `wb_gam_block_before_render` / `_after_render` hooks
+- [`src/shared/utils/attributes.js`](https://github.com/vapvarun/wb-gamification/blob/main/src/shared/utils/attributes.js) - JavaScript schema source
+- [`src/Blocks/CSS.php`](https://github.com/vapvarun/wb-gamification/blob/main/src/Blocks/CSS.php) - PHP CSS generator
+- [`src/Blocks/Registrar.php`](https://github.com/vapvarun/wb-gamification/blob/main/src/Blocks/Registrar.php) - `build/blocks/` auto-registrar
+- [Extending Blocks](50-extending-blocks.md) - `wb_gam_block_before_render` / `_after_render` hooks

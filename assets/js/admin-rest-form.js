@@ -182,8 +182,17 @@
 		return body;
 	}
 
-	function applyAfter( after, button ) {
+	// A success toast shown right before a reload is wiped with the page, so the owner
+	// never saw that the save worked. Carry it across the reload and show it after.
+	const FLASH_KEY = 'wbGamAdminFlash';
+
+	function applyAfter( after, button, success ) {
 		if ( after === 'reload' ) {
+			try {
+				if ( success ) {
+					window.sessionStorage.setItem( FLASH_KEY, success );
+				}
+			} catch ( e ) {} // Storage blocked: the toast above is the best we can do.
 			window.location.reload();
 			return;
 		}
@@ -233,7 +242,7 @@
 			const result = await utils.apiFetch( method, path, body, settings );
 			if ( result.ok ) {
 				utils.toast( success, 'success' );
-				applyAfter( after, submit );
+				applyAfter( after, submit, success );
 			} else {
 				utils.toastError( result, failure );
 			}
@@ -287,7 +296,7 @@
 			const result = await utils.apiFetch( method, path, body, settings );
 			if ( result.ok ) {
 				utils.toast( success, 'success' );
-				applyAfter( after, button );
+				applyAfter( after, button, success );
 			} else {
 				utils.toastError( result, failure );
 				button.disabled = false;
@@ -360,9 +369,21 @@
 		} );
 	}
 
+	function showFlash() {
+		let message = '';
+		try {
+			message = window.sessionStorage.getItem( FLASH_KEY ) || '';
+			window.sessionStorage.removeItem( FLASH_KEY );
+		} catch ( e ) {}
+		if ( message ) {
+			utils.toast( message, 'success' );
+		}
+	}
+
 	function onReady() {
 		hydrateUtcDateTimeInputs();
 		liftAdminNotices();
+		showFlash();
 	}
 
 	if ( document.readyState === 'loading' ) {

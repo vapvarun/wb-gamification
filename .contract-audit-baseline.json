@@ -1,186 +1,236 @@
 {
-    "generated": "2026-06-15",
-    "note": "Every entry is a VERIFIED-INTENTIONAL exception, not a suppressed bug. The genuinely fixable findings were fixed (CSS tool false positives resolved upstream in the audit tool; events_retention_months + leaderboard_mode in PR #64; 12 engagement settings given admin UIs in PR #65). What remains is deferred-feature options, dynamic-key writes a static scanner provably cannot follow, and Action-Scheduler/WP-Cron hooks whose action name is a class constant the scanner resolves on the add_action (consume) side but not on the as_enqueue_async_action/as_schedule_*/wp_schedule_event (fire) side. Each cron/AS entry was confirmed 2026-06-15 to have a real firing call referencing the same constant in the same class. Re-verify each before extending. Better long-term fix: teach contract-audit to resolve constants passed to the as_*/wp_schedule_* family.",
-    "suppressions": [
-        {
-            "id": "setting-resolved-twice:tier_name",
-            "reason": "False positive. src/Blocks/cohort-rank/render.php:163 reads $wb_gam_standing['tier_name'], a field CohortEngine::get_user_standing() itself populates via self::get_tier_name() (CohortEngine.php:699). There is one computation site; the block reads its output one hop removed, it does not re-derive the value from the raw option.",
-            "severity": "warning"
-        },
-        {
-            "id": "option-read-never-written:wb_gam_activitypub_publish",
-            "reason": "Deferred feature. ActivityPub federation is not shipped yet (src/Integrations/ActivityPub.php is gated/inactive). The option is read default-off; it gains a write path + admin UI when AP ships. Intentional code-only until then.",
-            "severity": "error"
-        },
-        {
-            "id": "user_meta-read-never-written:wb_gam_federate_events",
-            "reason": "Deferred feature. Per-user ActivityPub opt-in meta, read default-off; no write/UI until ActivityPub federation ships. Pairs with wb_gam_activitypub_publish.",
-            "severity": "error"
-        },
-        {
-            "id": "option-read-never-written:wb_gam_feature_notifications_queue_v1",
-            "reason": "Feature kill-switch read with a functional default. FeatureFlags persists combined state under one option (FeatureFlags.php:156, OPTION_KEY); this individual key is code/filter-overridable by design, no per-key admin write intended.",
-            "severity": "warning"
-        },
-        {
-            "id": "option-read-never-written:wb_gam_feature_user_intelligence_v1",
-            "reason": "Feature kill-switch read with a functional default. Same FeatureFlags combined-option design as wb_gam_feature_notifications_queue_v1; code/filter-overridable, no per-key admin write intended.",
-            "severity": "warning"
-        },
-        {
-            "id": "option-read-never-written:wb_gam_profile_public_enabled",
-            "reason": "False positive. Written by SetupWizard via update_option($option_key) iterating a label=>key map (SetupWizard.php:341); the static scanner cannot resolve the variable key. The write site exists.",
-            "severity": "warning"
-        },
-        {
-            "id": "user_meta-read-never-written:wb_gam_pr_best_week",
-            "reason": "False positive. Written by PersonalRecordEngine via the dynamic key 'wb_gam_pr_best_' . $period (PersonalRecordEngine.php:115); the static scanner cannot match the concatenation. The write site exists.",
-            "severity": "warning"
-        },
-        {
-            "id": "user_meta-possible-dual-key:wb_gam_level_name <> wb_gam_level_id",
-            "reason": "Distinct data, not a dual key. Level display name vs numeric level id are different fields. Heuristic token-overlap false positive.",
-            "severity": "info"
-        },
-        {
-            "id": "user_meta-possible-dual-key:wb_gam_login_streak <> wb_gam_login_streak_max",
-            "reason": "Distinct data, not a dual key. Current login streak vs all-time max streak are intentionally separate counters. Heuristic false positive.",
-            "severity": "info"
-        },
-        {
-            "id": "option-possible-dual-key:wb_gam_db_version <> wb_gam_caps_version",
-            "reason": "Distinct data, not a dual key. Schema migration version vs capabilities/abilities version are independent counters. Heuristic false positive.",
-            "severity": "info"
-        },
-        {
-            "id": "hook-consumed-never-fired:wb_gam_as_cleanup",
-            "reason": "False positive (cron/AS). Fired via wp_schedule_event/as_* referencing self::CRON_HOOK='wb_gam_as_cleanup'; scanner resolves the constant on add_action but not on the firing call. Verified 2026-06-15.",
-            "severity": "error"
-        },
-        {
-            "id": "hook-consumed-never-fired:wb_gam_async_evaluate",
-            "reason": "False positive (Action Scheduler). Fired via as_enqueue_async_action(self::HOOK, ...) in AsyncEvaluator.php:130, HOOK='wb_gam_async_evaluate'. Verified 2026-06-15.",
-            "severity": "error"
-        },
-        {
-            "id": "hook-consumed-never-fired:wb_gam_compute_intelligence",
-            "reason": "False positive (cron). Fired via wp_schedule_event(..., 'daily', self::COMPUTE_CRON), COMPUTE_CRON='wb_gam_compute_intelligence'. Verified 2026-06-15.",
-            "severity": "error"
-        },
-        {
-            "id": "hook-consumed-never-fired:wb_gam_notifications_queue_prune",
-            "reason": "False positive (cron). Fired via wp_schedule_event(..., 'daily', self::PRUNE_CRON), PRUNE_CRON='wb_gam_notifications_queue_prune'. Verified 2026-06-15.",
-            "severity": "error"
-        },
-        {
-            "id": "hook-consumed-never-fired:wb_gam_nudge_single_user",
-            "reason": "False positive (Action Scheduler). Single-user nudge scheduled via as_* with self::AS_SINGLE_HOOK='wb_gam_nudge_single_user' (LeaderboardNudge, group wb-gamification-nudge). Verified 2026-06-15.",
-            "severity": "error"
-        },
-        {
-            "id": "hook-consumed-never-fired:wb_gam_points_decay",
-            "reason": "False positive (cron). Fired via wp_schedule_event(time(), self::CRON_RECUR, self::CRON_HOOK) in PointsExpiry.php:54, CRON_HOOK='wb_gam_points_decay'. Verified 2026-06-15.",
-            "severity": "error"
-        },
-        {
-            "id": "hook-consumed-never-fired:wb_gam_reconcile_side_effects",
-            "reason": "False positive (cron). Fired via wp_schedule_event(..., 'hourly', self::RECONCILE_CRON), RECONCILE_CRON='wb_gam_reconcile_side_effects'. Verified 2026-06-15.",
-            "severity": "error"
-        },
-        {
-            "id": "hook-consumed-never-fired:wb_gam_send_transactional_email",
-            "reason": "False positive (Action Scheduler). Fired via as_enqueue_async_action(self::AS_HOOK, array($payload), self::AS_GROUP) in TransactionalEmailEngine.php:486, AS_HOOK='wb_gam_send_transactional_email'. Verified 2026-06-15.",
-            "severity": "error"
-        },
-        {
-            "id": "hook-consumed-never-fired:wb_gam_send_webhook",
-            "reason": "False positive (Action Scheduler). Fired via as_enqueue_async_action(self::AS_ACTION, ...) in WebhookDispatcher.php:261, AS_ACTION='wb_gam_send_webhook'. Verified 2026-06-15.",
-            "severity": "error"
-        },
-        {
-            "id": "hook-consumed-never-fired:wb_gam_webhook_retry",
-            "reason": "False positive (Action Scheduler). Retry scheduled via as_* with self::AS_RETRY_ACTION='wb_gam_webhook_retry' in WebhookDispatcher.php:492. Verified 2026-06-15.",
-            "severity": "error"
-        },
-        {
-            "id": "hook-consumed-never-fired:wb_gam_weekly_email_user",
-            "reason": "False positive (Action Scheduler). Fired via as_enqueue_async_action(self::AS_HOOK, ...) in WeeklyEmailEngine.php:125, AS_HOOK='wb_gam_weekly_email_user'. Verified 2026-06-15.",
-            "severity": "error"
-        },
-        {
-            "id": "hook-consumed-never-fired:wb_gam_cohort_assign",
-            "reason": "False positive (cron). Fired via wp_schedule_event($next_monday, 'weekly', self::CRON_ASSIGN) in CohortEngine, CRON_ASSIGN='wb_gam_cohort_assign'. Verified 2026-06-15.",
-            "severity": "info"
-        },
-        {
-            "id": "hook-consumed-never-fired:wb_gam_cohort_process",
-            "reason": "False positive (cron). Fired via wp_schedule_event($next_sunday, 'weekly', self::CRON_PROCESS) in CohortEngine:110, CRON_PROCESS='wb_gam_cohort_process'. Verified 2026-06-15.",
-            "severity": "info"
-        },
-        {
-            "id": "hook-consumed-never-fired:wb_gam_credential_expiry_check",
-            "reason": "False positive (cron). Fired via wp_schedule_event($next, 'weekly', self::CRON_HOOK) in CredentialExpiryEngine:64, CRON_HOOK='wb_gam_credential_expiry_check'. Verified 2026-06-15.",
-            "severity": "info"
-        },
-        {
-            "id": "hook-consumed-never-fired:wb_gam_prune_logs",
-            "reason": "False positive (cron). Fired via wp_schedule_event(time(), self::CRON_RECUR, self::CRON_HOOK) in LogPruner:55, CRON_HOOK='wb_gam_prune_logs'. Verified 2026-06-15.",
-            "severity": "info"
-        },
-        {
-            "id": "hook-consumed-never-fired:wb_gam_status_retention_check",
-            "reason": "False positive (cron). Fired via wp_schedule_event($next, 'weekly', self::CRON_HOOK) in StatusRetentionEngine:63, CRON_HOOK='wb_gam_status_retention_check'. Verified 2026-06-15.",
-            "severity": "info"
-        },
-        {
-            "id": "hook-consumed-never-fired:wb_gam_tenure_check",
-            "reason": "False positive (cron). Fired via wp_schedule_event($next, 'daily', self::CRON_HOOK) in TenureBadgeEngine:103, CRON_HOOK='wb_gam_tenure_check'. Verified 2026-06-15.",
-            "severity": "info"
-        },
-        {
-            "id": "hook-consumed-never-fired:wb_gam_weekly_email",
-            "reason": "False positive (cron). Fired via wp_schedule_event($next, 'weekly', self::CRON_HOOK) in WeeklyEmailEngine:79, CRON_HOOK='wb_gam_weekly_email' (the recurring scheduler that fans out per-user wb_gam_weekly_email_user jobs). Verified 2026-06-15.",
-            "severity": "info"
-        },
-        {
-            "id": "hook-consumed-never-fired:wb_gam_weekly_nudge",
-            "reason": "False positive (cron). Fired via wp_schedule_event($next_monday, self::CRON_RECUR, self::CRON_HOOK) in LeaderboardNudge:66, CRON_HOOK='wb_gam_weekly_nudge'. Verified 2026-06-15.",
-            "severity": "info"
-        },
-        {
-            "id": "css-hide-missing-class:wb-gam-hide-desktop",
-            "reason": "False positive. The wb-gam-hide-desktop class is emitted centrally by WBGam\\Blocks\\CSS::* (src/Blocks/CSS.php:173) for every block when the device-visibility flag is set, not hardcoded in redemption-store markup. Covered by CSSTest::test_visibility_classes_emit_when_flags_set. The scanner scopes per-block and misses the central emission. Verified 2026-06-15.",
-            "severity": "warning"
-        },
-        {
-            "id": "css-hide-missing-class:wb-gam-hide-tablet",
-            "reason": "False positive. wb-gam-hide-tablet is emitted by WBGam\\Blocks\\CSS (src/Blocks/CSS.php:176) when the tablet-visibility flag is set; covered by CSSTest::test_visibility_classes_emit_when_flags_set. Scanner per-block scope misses the central emission. Verified 2026-06-15.",
-            "severity": "warning"
-        },
-        {
-            "id": "css-hide-missing-class:wb-gam-hide-mobile",
-            "reason": "False positive. wb-gam-hide-mobile is emitted by WBGam\\Blocks\\CSS (src/Blocks/CSS.php:179) when the mobile-visibility flag is set; covered by CSSTest::test_visibility_classes_emit_when_flags_set. Scanner per-block scope misses the central emission. Verified 2026-06-15.",
-            "severity": "warning"
-        },
-        {
-            "id": "dom-action-no-handler:soon",
-            "reason": "Verified-intentional. data-action=\"soon\" is on a NON-interactive <span> 'Coming soon' status label (class-page.php actions_html, coming_soon branch), not a clickable control - it deliberately has no JS handler so a not-yet-released family member shows an honest label instead of a broken link. The dom-action-no-handler heuristic cannot distinguish a label span from a button/anchor. The 'coming soon' state is the design contract, enshrined by PageTest::brands_as_wbcom_family_and_names_each_product. Verified 2026-06-21.",
-            "severity": "error"
-        },
-        {
-            "id": "dom-action-unreferenced:install",
-            "reason": "False positive. The markup DOES emit data-action=\"install\" but dynamically via class-page.php action_link('install', ...), which builds data-action from a variable the static scanner cannot resolve. The JS handler (assets/admin/family.js) and its AJAX handler (libs/wbcom-family/class-installer.php, ACTION='wbcom_family_install') both exist and are correctly wired. Verified 2026-06-21.",
-            "severity": "warning"
-        },
-        {
-            "id": "hook-consumed-never-fired:action_scheduler/migration_hook",
-            "reason": "Internal hook of the bundled third-party Action Scheduler library (libs/woocommerce/action-scheduler/classes/migration/Scheduler.php:26). AS fires it via its own migration runner / WP-Cron, not a literal do_action() the scanner can match. Not this plugin's contract surface. False positive (surfaced only because AS now ships under committed libs/ instead of gitignored vendor/).",
-            "severity": "error"
-        },
-        {
-            "id": "hook-consumed-never-fired:action_scheduler_run_recurring_actions_schedule_hook",
-            "reason": "Internal hook of the bundled third-party Action Scheduler library (libs/woocommerce/action-scheduler/classes/ActionScheduler_RecurringActionScheduler.php:26). Fired dynamically by AS's recurring-action runner, not a literal do_action(). Not this plugin's contract surface. False positive (surfaced only because AS now ships under committed libs/ instead of gitignored vendor/).",
-            "severity": "error"
-        }
-    ]
+  "generated": "2026-06-15",
+  "note": "Every entry is a VERIFIED-INTENTIONAL exception, not a suppressed bug. The genuinely fixable findings were fixed (CSS tool false positives resolved upstream in the audit tool; events_retention_months + leaderboard_mode in PR #64; 12 engagement settings given admin UIs in PR #65). What remains is deferred-feature options, dynamic-key writes a static scanner provably cannot follow, and Action-Scheduler/WP-Cron hooks whose action name is a class constant the scanner resolves on the add_action (consume) side but not on the as_enqueue_async_action/as_schedule_*/wp_schedule_event (fire) side. Each cron/AS entry was confirmed 2026-06-15 to have a real firing call referencing the same constant in the same class. Re-verify each before extending. Better long-term fix: teach contract-audit to resolve constants passed to the as_*/wp_schedule_* family.",
+  "suppressions": [
+    {
+      "id": "setting-resolved-twice:tier_name",
+      "reason": "False positive. src/Blocks/cohort-rank/render.php:163 reads $wb_gam_standing['tier_name'], a field CohortEngine::get_user_standing() itself populates via self::get_tier_name() (CohortEngine.php:699). There is one computation site; the block reads its output one hop removed, it does not re-derive the value from the raw option.",
+      "severity": "warning"
+    },
+    {
+      "id": "option-read-never-written:wb_gam_activitypub_publish",
+      "reason": "Deferred feature. ActivityPub federation is not shipped yet (src/Integrations/ActivityPub.php is gated/inactive). The option is read default-off; it gains a write path + admin UI when AP ships. Intentional code-only until then.",
+      "severity": "error"
+    },
+    {
+      "id": "user_meta-read-never-written:wb_gam_federate_events",
+      "reason": "Deferred feature. Per-user ActivityPub opt-in meta, read default-off; no write/UI until ActivityPub federation ships. Pairs with wb_gam_activitypub_publish.",
+      "severity": "error"
+    },
+    {
+      "id": "option-read-never-written:wb_gam_feature_notifications_queue_v1",
+      "reason": "Feature kill-switch read with a functional default. FeatureFlags persists combined state under one option (FeatureFlags.php:156, OPTION_KEY); this individual key is code/filter-overridable by design, no per-key admin write intended.",
+      "severity": "warning"
+    },
+    {
+      "id": "option-read-never-written:wb_gam_feature_user_intelligence_v1",
+      "reason": "Feature kill-switch read with a functional default. Same FeatureFlags combined-option design as wb_gam_feature_notifications_queue_v1; code/filter-overridable, no per-key admin write intended.",
+      "severity": "warning"
+    },
+    {
+      "id": "option-read-never-written:wb_gam_profile_public_enabled",
+      "reason": "False positive. Written by SetupWizard via update_option($option_key) iterating a label=>key map (SetupWizard.php:341); the static scanner cannot resolve the variable key. The write site exists.",
+      "severity": "warning"
+    },
+    {
+      "id": "user_meta-read-never-written:wb_gam_pr_best_week",
+      "reason": "False positive. Written by PersonalRecordEngine via the dynamic key 'wb_gam_pr_best_' . $period (PersonalRecordEngine.php:115); the static scanner cannot match the concatenation. The write site exists.",
+      "severity": "warning"
+    },
+    {
+      "id": "user_meta-possible-dual-key:wb_gam_level_name <> wb_gam_level_id",
+      "reason": "Distinct data, not a dual key. Level display name vs numeric level id are different fields. Heuristic token-overlap false positive.",
+      "severity": "info"
+    },
+    {
+      "id": "user_meta-possible-dual-key:wb_gam_login_streak <> wb_gam_login_streak_max",
+      "reason": "Distinct data, not a dual key. Current login streak vs all-time max streak are intentionally separate counters. Heuristic false positive.",
+      "severity": "info"
+    },
+    {
+      "id": "option-possible-dual-key:wb_gam_db_version <> wb_gam_caps_version",
+      "reason": "Distinct data, not a dual key. Schema migration version vs capabilities/abilities version are independent counters. Heuristic false positive.",
+      "severity": "info"
+    },
+    {
+      "id": "hook-consumed-never-fired:wb_gam_as_cleanup",
+      "reason": "False positive (cron/AS). Fired via wp_schedule_event/as_* referencing self::CRON_HOOK='wb_gam_as_cleanup'; scanner resolves the constant on add_action but not on the firing call. Verified 2026-06-15.",
+      "severity": "error"
+    },
+    {
+      "id": "hook-consumed-never-fired:wb_gam_async_evaluate",
+      "reason": "False positive (Action Scheduler). Fired via as_enqueue_async_action(self::HOOK, ...) in AsyncEvaluator.php:130, HOOK='wb_gam_async_evaluate'. Verified 2026-06-15.",
+      "severity": "error"
+    },
+    {
+      "id": "hook-consumed-never-fired:wb_gam_compute_intelligence",
+      "reason": "False positive (cron). Fired via wp_schedule_event(..., 'daily', self::COMPUTE_CRON), COMPUTE_CRON='wb_gam_compute_intelligence'. Verified 2026-06-15.",
+      "severity": "error"
+    },
+    {
+      "id": "hook-consumed-never-fired:wb_gam_notifications_queue_prune",
+      "reason": "False positive (cron). Fired via wp_schedule_event(..., 'daily', self::PRUNE_CRON), PRUNE_CRON='wb_gam_notifications_queue_prune'. Verified 2026-06-15.",
+      "severity": "error"
+    },
+    {
+      "id": "hook-consumed-never-fired:wb_gam_nudge_single_user",
+      "reason": "False positive (Action Scheduler). Single-user nudge scheduled via as_* with self::AS_SINGLE_HOOK='wb_gam_nudge_single_user' (LeaderboardNudge, group wb-gamification-nudge). Verified 2026-06-15.",
+      "severity": "error"
+    },
+    {
+      "id": "hook-consumed-never-fired:wb_gam_points_decay",
+      "reason": "False positive (cron). Fired via wp_schedule_event(time(), self::CRON_RECUR, self::CRON_HOOK) in PointsExpiry.php:54, CRON_HOOK='wb_gam_points_decay'. Verified 2026-06-15.",
+      "severity": "error"
+    },
+    {
+      "id": "hook-consumed-never-fired:wb_gam_reconcile_side_effects",
+      "reason": "False positive (cron). Fired via wp_schedule_event(..., 'hourly', self::RECONCILE_CRON), RECONCILE_CRON='wb_gam_reconcile_side_effects'. Verified 2026-06-15.",
+      "severity": "error"
+    },
+    {
+      "id": "hook-consumed-never-fired:wb_gam_send_transactional_email",
+      "reason": "False positive (Action Scheduler). Fired via as_enqueue_async_action(self::AS_HOOK, array($payload), self::AS_GROUP) in TransactionalEmailEngine.php:486, AS_HOOK='wb_gam_send_transactional_email'. Verified 2026-06-15.",
+      "severity": "error"
+    },
+    {
+      "id": "hook-consumed-never-fired:wb_gam_send_webhook",
+      "reason": "False positive (Action Scheduler). Fired via as_enqueue_async_action(self::AS_ACTION, ...) in WebhookDispatcher.php:261, AS_ACTION='wb_gam_send_webhook'. Verified 2026-06-15.",
+      "severity": "error"
+    },
+    {
+      "id": "hook-consumed-never-fired:wb_gam_webhook_retry",
+      "reason": "False positive (Action Scheduler). Retry scheduled via as_* with self::AS_RETRY_ACTION='wb_gam_webhook_retry' in WebhookDispatcher.php:492. Verified 2026-06-15.",
+      "severity": "error"
+    },
+    {
+      "id": "hook-consumed-never-fired:wb_gam_weekly_email_user",
+      "reason": "False positive (Action Scheduler). Fired via as_enqueue_async_action(self::AS_HOOK, ...) in WeeklyEmailEngine.php:125, AS_HOOK='wb_gam_weekly_email_user'. Verified 2026-06-15.",
+      "severity": "error"
+    },
+    {
+      "id": "hook-consumed-never-fired:wb_gam_cohort_assign",
+      "reason": "False positive (cron). Fired via wp_schedule_event($next_monday, 'weekly', self::CRON_ASSIGN) in CohortEngine, CRON_ASSIGN='wb_gam_cohort_assign'. Verified 2026-06-15.",
+      "severity": "info"
+    },
+    {
+      "id": "hook-consumed-never-fired:wb_gam_cohort_process",
+      "reason": "False positive (cron). Fired via wp_schedule_event($next_sunday, 'weekly', self::CRON_PROCESS) in CohortEngine:110, CRON_PROCESS='wb_gam_cohort_process'. Verified 2026-06-15.",
+      "severity": "info"
+    },
+    {
+      "id": "hook-consumed-never-fired:wb_gam_credential_expiry_check",
+      "reason": "False positive (cron). Fired via wp_schedule_event($next, 'weekly', self::CRON_HOOK) in CredentialExpiryEngine:64, CRON_HOOK='wb_gam_credential_expiry_check'. Verified 2026-06-15.",
+      "severity": "info"
+    },
+    {
+      "id": "hook-consumed-never-fired:wb_gam_prune_logs",
+      "reason": "False positive (cron). Fired via wp_schedule_event(time(), self::CRON_RECUR, self::CRON_HOOK) in LogPruner:55, CRON_HOOK='wb_gam_prune_logs'. Verified 2026-06-15.",
+      "severity": "info"
+    },
+    {
+      "id": "hook-consumed-never-fired:wb_gam_status_retention_check",
+      "reason": "False positive (cron). Fired via wp_schedule_event($next, 'weekly', self::CRON_HOOK) in StatusRetentionEngine:63, CRON_HOOK='wb_gam_status_retention_check'. Verified 2026-06-15.",
+      "severity": "info"
+    },
+    {
+      "id": "hook-consumed-never-fired:wb_gam_tenure_check",
+      "reason": "False positive (cron). Fired via wp_schedule_event($next, 'daily', self::CRON_HOOK) in TenureBadgeEngine:103, CRON_HOOK='wb_gam_tenure_check'. Verified 2026-06-15.",
+      "severity": "info"
+    },
+    {
+      "id": "hook-consumed-never-fired:wb_gam_weekly_email",
+      "reason": "False positive (cron). Fired via wp_schedule_event($next, 'weekly', self::CRON_HOOK) in WeeklyEmailEngine:79, CRON_HOOK='wb_gam_weekly_email' (the recurring scheduler that fans out per-user wb_gam_weekly_email_user jobs). Verified 2026-06-15.",
+      "severity": "info"
+    },
+    {
+      "id": "hook-consumed-never-fired:wb_gam_weekly_nudge",
+      "reason": "False positive (cron). Fired via wp_schedule_event($next_monday, self::CRON_RECUR, self::CRON_HOOK) in LeaderboardNudge:66, CRON_HOOK='wb_gam_weekly_nudge'. Verified 2026-06-15.",
+      "severity": "info"
+    },
+    {
+      "id": "css-hide-missing-class:wb-gam-hide-desktop",
+      "reason": "False positive. The wb-gam-hide-desktop class is emitted centrally by WBGam\\Blocks\\CSS::* (src/Blocks/CSS.php:173) for every block when the device-visibility flag is set, not hardcoded in redemption-store markup. Covered by CSSTest::test_visibility_classes_emit_when_flags_set. The scanner scopes per-block and misses the central emission. Verified 2026-06-15.",
+      "severity": "warning"
+    },
+    {
+      "id": "css-hide-missing-class:wb-gam-hide-tablet",
+      "reason": "False positive. wb-gam-hide-tablet is emitted by WBGam\\Blocks\\CSS (src/Blocks/CSS.php:176) when the tablet-visibility flag is set; covered by CSSTest::test_visibility_classes_emit_when_flags_set. Scanner per-block scope misses the central emission. Verified 2026-06-15.",
+      "severity": "warning"
+    },
+    {
+      "id": "css-hide-missing-class:wb-gam-hide-mobile",
+      "reason": "False positive. wb-gam-hide-mobile is emitted by WBGam\\Blocks\\CSS (src/Blocks/CSS.php:179) when the mobile-visibility flag is set; covered by CSSTest::test_visibility_classes_emit_when_flags_set. Scanner per-block scope misses the central emission. Verified 2026-06-15.",
+      "severity": "warning"
+    },
+    {
+      "id": "dom-action-no-handler:soon",
+      "reason": "Verified-intentional. data-action=\"soon\" is on a NON-interactive <span> 'Coming soon' status label (class-page.php actions_html, coming_soon branch), not a clickable control - it deliberately has no JS handler so a not-yet-released family member shows an honest label instead of a broken link. The dom-action-no-handler heuristic cannot distinguish a label span from a button/anchor. The 'coming soon' state is the design contract, enshrined by PageTest::brands_as_wbcom_family_and_names_each_product. Verified 2026-06-21.",
+      "severity": "error"
+    },
+    {
+      "id": "dom-action-unreferenced:install",
+      "reason": "False positive. The markup DOES emit data-action=\"install\" but dynamically via class-page.php action_link('install', ...), which builds data-action from a variable the static scanner cannot resolve. The JS handler (assets/admin/family.js) and its AJAX handler (libs/wbcom-family/class-installer.php, ACTION='wbcom_family_install') both exist and are correctly wired. Verified 2026-06-21.",
+      "severity": "warning"
+    },
+    {
+      "id": "hook-consumed-never-fired:action_scheduler/migration_hook",
+      "reason": "Internal hook of the bundled third-party Action Scheduler library (libs/woocommerce/action-scheduler/classes/migration/Scheduler.php:26). AS fires it via its own migration runner / WP-Cron, not a literal do_action() the scanner can match. Not this plugin's contract surface. False positive (surfaced only because AS now ships under committed libs/ instead of gitignored vendor/).",
+      "severity": "error"
+    },
+    {
+      "id": "hook-consumed-never-fired:action_scheduler_run_recurring_actions_schedule_hook",
+      "reason": "Internal hook of the bundled third-party Action Scheduler library (libs/woocommerce/action-scheduler/classes/ActionScheduler_RecurringActionScheduler.php:26). Fired dynamically by AS's recurring-action runner, not a literal do_action(). Not this plugin's contract surface. False positive (surfaced only because AS now ships under committed libs/ instead of gitignored vendor/).",
+      "severity": "error"
+    },
+    {
+      "id": "hook-consumed-never-fired:wb_gam_badge_backfill_page",
+      "reason": "False positive. Action Scheduler hook fired by the queue, not by a literal do_action: BadgeEngine schedules it as self::BACKFILL_HOOK (as_enqueue_async_action, BadgeEngine.php:282) and this add_action is the job handler. The audit tool only sees literal hook names.",
+      "severity": "error"
+    },
+    {
+      "id": "hook-consumed-never-fired:wb_gam_badge_cron_pass",
+      "reason": "False positive. Action Scheduler hook fired by the queue, not by a literal do_action: BadgeEngine schedules it as self::CRON_PASS (recurring schedule, BadgeEngine.php:93) and this add_action is the job handler. The audit tool only sees literal hook names.",
+      "severity": "error"
+    },
+    {
+      "id": "hook-consumed-never-fired:wb_gam_cohort_promotion_page",
+      "reason": "False positive. Action Scheduler hook fired by the queue, not by a literal do_action: CohortEngine schedules it as self::AS_PROMOTION_HOOK (paged promotion job) and this add_action is the job handler. The audit tool only sees literal hook names.",
+      "severity": "error"
+    },
+    {
+      "id": "hook-consumed-never-fired:wb_gam_community_bonus_page",
+      "reason": "False positive. Action Scheduler hook fired by the queue, not by a literal do_action: CommunityChallengeEngine schedules it as self::AS_PAGE_HOOK (as_enqueue_async_action, CommunityChallengeEngine.php:346) and this add_action is the job handler. The audit tool only sees literal hook names.",
+      "severity": "error"
+    },
+    {
+      "id": "hook-consumed-never-fired:wb_gam_credential_expiry_page",
+      "reason": "False positive. Action Scheduler hook fired by the queue, not by a literal do_action: CredentialExpiryEngine schedules it as self::AS_PAGE_HOOK (CredentialExpiryEngine.php:220) and this add_action is the job handler. The audit tool only sees literal hook names.",
+      "severity": "error"
+    },
+    {
+      "id": "hook-consumed-never-fired:wb_gam_retention_page",
+      "reason": "False positive. Action Scheduler hook fired by the queue, not by a literal do_action: StatusRetentionEngine schedules it as self::AS_PAGE_HOOK (paged retention job) and this add_action is the job handler. The audit tool only sees literal hook names.",
+      "severity": "error"
+    },
+    {
+      "id": "hook-consumed-never-fired:wb_gam_utc_migrate_page",
+      "reason": "False positive. Action Scheduler hook fired by the queue, not by a literal do_action: UtcStorageMigration schedules it as self::HOOK (one-time paged UTC migration) and this add_action is the job handler. The audit tool only sees literal hook names.",
+      "severity": "error"
+    },
+    {
+      "id": "hook-consumed-never-fired:wb_gam_weekly_email_page",
+      "reason": "False positive. Action Scheduler hook fired by the queue, not by a literal do_action: WeeklyEmailEngine schedules it as self::AS_PAGE_HOOK (paged weekly email fan-out) and this add_action is the job handler. The audit tool only sees literal hook names.",
+      "severity": "error"
+    },
+    {
+      "id": "hook-consumed-never-fired:wb_gam_community_bonus_award",
+      "reason": "Intentional drain listener. The per-contributor job was replaced by the paged wb_gam_community_bonus_page job; this handler is KEPT so jobs already queued before the upgrade still pay out (comment at CommunityChallengeEngine.php:62). Nothing new schedules it by design.",
+      "severity": "error"
+    },
+    {
+      "id": "hook-consumed-never-fired:wb_gam_community_notification_types",
+      "reason": "False positive. Cross-plugin contract: BuddyNext applies '{prefix}_community_notification_types' with a dynamic prefix (buddynext/includes/Notifications/IntegrationNotificationListener.php:259, :317) and checks has_filter() to opt this source in. The literal name never appears in this plugin by design.",
+      "severity": "error"
+    }
+  ]
 }

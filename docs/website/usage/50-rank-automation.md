@@ -2,13 +2,13 @@
 
 Go to **WB Gamification > Rules** in your admin sidebar.
 
-Rank Automation rules trigger actions automatically when a member reaches a specific level. Use them to onboard members into groups, grant role upgrades, or send congratulatory messages — all without writing any code.
+Rank Automation rules trigger actions automatically when a member reaches a specific level. Use them to onboard members into groups, grant role upgrades, or send congratulatory messages - all without writing any code.
 
 ## How rules work
 
 Each rule has:
-- A **trigger** — which level the member must reach
-- An **action** — what happens when they reach it
+- A **trigger** - which level the member must reach
+- An **action** - what happens when they reach it
 
 Rules fire once per member per level. If a member already passed a level before you created a rule for it, they will not receive the action retroactively.
 
@@ -34,7 +34,7 @@ Automatically adds the member as a member of a BuddyPress group.
 
 | Field | Description |
 |-------|-------------|
-| **BuddyPress Group ID** | The numeric ID of the group. Find this in **BuddyPress > Groups** — hover over a group name and look for `gid=` in the URL. |
+| **BuddyPress Group ID** | The numeric ID of the group. Find this in **BuddyPress > Groups** - hover over a group name and look for `gid=` in the URL. |
 
 **Use case:** Add members who reach "Veteran" level to a private "VIP Members" group, giving them access to exclusive content.
 
@@ -42,7 +42,7 @@ Automatically adds the member as a member of a BuddyPress group.
 
 ### Action type: Add WordPress role
 
-Adds a WordPress role to the member's account. This adds the role — it does not replace their existing roles.
+Adds a WordPress role to the member's account. This adds the role - it does not replace their existing roles.
 
 | Field | Description |
 |-------|-------------|

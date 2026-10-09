@@ -1,6 +1,6 @@
 # Build Your First Integration
 
-Add gamification to your WordPress plugin in 5 minutes. No PHP dependency on WB Gamification is required — your manifest file is silently ignored when the plugin is not installed.
+Add gamification to your WordPress plugin in 5 minutes. No PHP dependency on WB Gamification is required - your manifest file is silently ignored when the plugin is not installed.
 
 ---
 
@@ -84,12 +84,12 @@ See the [Manifest Files reference](30-manifest-files.md) for the full list of op
 
 WB Gamification scans every active plugin directory for a `wb-gamification.php` file at `plugins_loaded` priority 5. No registration code is needed.
 
-> **Detection timing — important if your manifest guards its return value.**
+> **Detection timing - important if your manifest guards its return value.**
 > Because the manifest is `include()`d at `plugins_loaded` priority 5, any
 > check in the file's top-level body runs that early. Constants (`defined()`)
-> and classes (`class_exists()`) are safe — they exist at file-parse time. A
+> and classes (`class_exists()`) are safe - they exist at file-parse time. A
 > **function that another plugin defines inside its own `plugins_loaded`
-> callback is not** — for example FluentCRM's `fluentCrmApi()` is defined at
+> callback is not** - for example FluentCRM's `fluentCrmApi()` is defined at
 > priority 10, so `function_exists( 'fluentCrmApi' )` is still `false` at
 > priority 5 and a guard on it makes the whole manifest return `[]` silently.
 > If you need to detect a plugin whose API is only available after its own
@@ -177,8 +177,8 @@ add_action( 'wb_gam_manifests_loaded', function ( array $actions ): void {
 
 When `WP_DEBUG` is enabled, the ManifestLoader logs warnings for:
 
-- **Manifest files that do not return an array** — check that your file ends with `return array( ... );`
-- **Triggers missing required keys** (`id`, `hook`, `default_points`) — the trigger is skipped and a message is logged with the file path and missing key name
+- **Manifest files that do not return an array** - check that your file ends with `return array( ... );`
+- **Triggers missing required keys** (`id`, `hook`, `default_points`) - the trigger is skipped and a message is logged with the file path and missing key name
 
 Check your debug log at `wp-content/debug.log` to diagnose manifest issues.
 
@@ -186,6 +186,6 @@ Check your debug log at `wp-content/debug.log` to diagnose manifest issues.
 
 ## Next steps
 
-- [Manifest Files reference](30-manifest-files.md) — full field reference and conditional trigger flags
-- [PHP Helper Functions](40-helper-functions.md) — `wb_gam_get_user_points()`, `wb_gam_award_points()`, and more
-- [Hooks & Filters Reference](110-hooks-overview.md) — all available hooks for customisation
+- [Manifest Files reference](30-manifest-files.md) - full field reference and conditional trigger flags
+- [PHP Helper Functions](40-helper-functions.md) - `wb_gam_get_user_points()`, `wb_gam_award_points()`, and more
+- [Hooks & Filters Reference](110-hooks-overview.md) - all available hooks for customisation

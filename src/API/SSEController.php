@@ -282,7 +282,9 @@ final class SSEController {
 			return new \WP_REST_Response( array( 'code' => 'unauthenticated' ), 401 );
 		}
 
-		$last_id = (int) $request->get_param( 'last_event_id' );
+		// Start from the member's shared delivery position: what another reader (page
+		// seed, heartbeat) already showed is not streamed again.
+		$last_id = max( (int) $request->get_param( 'last_event_id' ), NotificationBridge::cursor( $user_id ) );
 
 		// Release the session lock so other requests from the same user
 		// aren't blocked for the lifetime of this stream.
@@ -376,6 +378,7 @@ final class SSEController {
 					$data
 				);
 
+				NotificationBridge::advance_cursor( $user_id, $last_id );
 				echo $record; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- SSE stream, not HTML: esc_html() would corrupt the protocol and the JSON. $last_id is %d, $event_name is CRLF-stripped, $data is wp_json_encode output. See note above.
 			}
 

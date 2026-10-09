@@ -3,7 +3,7 @@
  * Plugin Name: WB Gamification
  * Plugin URI:  https://wbcomdesigns.com/
  * Description: Complete gamification plugin for BuddyPress and WordPress. Part of the Reign Stack. Points, badges, levels, leaderboards, challenges, and streaks — zero config, works out of the box.
- * Version:     1.6.5
+ * Version:     1.6.6
  * Author:      Wbcom Designs
  * Author URI:  https://wbcomdesigns.com/
  * License:     GPL-2.0+
@@ -33,7 +33,7 @@ if ( defined( 'WB_GAM_VERSION' ) ) {
 // Plugin Check's internal phpcs invocation.
 // phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 
-define( 'WB_GAM_VERSION', '1.6.5' );
+define( 'WB_GAM_VERSION', '1.6.6' );
 define( 'WB_GAM_FILE', __FILE__ );
 define( 'WB_GAM_PATH', plugin_dir_path( __FILE__ ) );
 define( 'WB_GAM_URL', plugin_dir_url( __FILE__ ) );
@@ -679,22 +679,32 @@ final class WB_Gamification {
 
 		// Realtime broker — WP Heartbeat client. Single subscription bus
 		// the toast renderer, leaderboard live-update view module, and
-		// the user-status-bar block all hook into. Always enqueued so
-		// guests on a public leaderboard page still get tick updates.
-		wp_enqueue_script( 'heartbeat' );
-		wp_enqueue_script(
+		// the user-status-bar block all hook into. Enqueued for members only:
+		// each tick is a full WordPress request, and a guest has no points or
+		// toasts, so loading it for every visitor on every page made each open
+		// guest tab poll admin-ajax every 15s for nothing. A guest still gets
+		// live updates where they matter: the leaderboard block enqueues the
+		// broker itself when it renders.
+		wp_register_script(
 			'wb-gamification-realtime',
 			WB_GAM_URL . 'assets/js/heartbeat.js',
 			array( 'jquery', 'heartbeat' ),
 			WB_GAM_VERSION,
 			true
 		);
+		// A page that holds toasts (sign-up, onboarding, checkout: wb_gam_hold_toasts) starts
+		// none of the readers, so nothing is delivered there and the toasts wait for the next
+		// page. Blocks that need live data (a leaderboard) still enqueue the broker themselves.
+		$wb_gam_toast_readers = is_user_logged_in() && ! \WBGam\Engine\NotificationBridge::toasts_held();
+		if ( $wb_gam_toast_readers ) {
+			wp_enqueue_script( 'wb-gamification-realtime' );
+		}
 
 		// SSE transport (scaffold; feature-flagged off by default). Loads
 		// alongside heartbeat.js; probes the transport option and no-ops
 		// when set to 'heartbeat'. Real streaming ships in stages 2-3 —
 		// see plan/REAL-TIME-TRANSPORT.md.
-		if ( is_user_logged_in() ) {
+		if ( $wb_gam_toast_readers ) {
 			wp_enqueue_script(
 				'wb-gamification-sse',
 				WB_GAM_URL . 'assets/js/sse.js',
@@ -776,7 +786,7 @@ final class WB_Gamification {
 		// consumes wb-gamification-realtime instead of running its own
 		// poll loop; the wbGamToast localisation is kept as a fallback
 		// for third-party scripts that hit /members/me/toasts directly.
-		if ( is_user_logged_in() ) {
+		if ( $wb_gam_toast_readers ) {
 			wp_enqueue_script(
 				'wb-gamification-toast',
 				WB_GAM_URL . 'assets/js/toast.js',
@@ -784,8 +794,11 @@ final class WB_Gamification {
 				WB_GAM_VERSION,
 				true
 			);
+			// On toast-core, not toast.js: toast-core loads first and reads wbGamToast
+			// (position, i18n) when it runs, so data printed before toast.js arrived
+			// too late and the saved corner was ignored. toast.js reads the same global.
 			wp_localize_script(
-				'wb-gamification-toast',
+				'wb-gam-toast-core',
 				'wbGamToast',
 				array(
 					'restUrl'  => rest_url( 'wb-gamification/v1/' ),

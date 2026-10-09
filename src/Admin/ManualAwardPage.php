@@ -148,23 +148,6 @@ final class ManualAwardPage {
 			wp_die( esc_html__( 'You do not have permission to access this page.', 'wb-gamification' ) );
 		}
 
-		// phpcs:disable WordPress.Security.NonceVerification.Recommended -- display only; GET param indicates result of a prior POST.
-		$notice = '';
-		if ( ! empty( $_GET['wb_gam_award_done'] ) ) {
-			$result = sanitize_key( $_GET['wb_gam_award_done'] );
-			if ( 'ok' === $result ) {
-				$notice = 'saved';
-			} elseif ( 'fail' === $result ) {
-				$notice = 'error';
-			}
-		}
-		// phpcs:enable WordPress.Security.NonceVerification.Recommended
-
-		$notice_map = array(
-			'saved' => array( 'success', __( 'Points awarded successfully.', 'wb-gamification' ) ),
-			'error' => array( 'error', __( 'Award failed - check user and points value.', 'wb-gamification' ) ),
-		);
-
 		$recent = self::get_recent_manual_awards( 20 );
 
 		?>
@@ -206,14 +189,6 @@ final class ManualAwardPage {
 				</div>
 			</details>
 
-			<?php if ( isset( $notice_map[ $notice ] ) ) : ?>
-				<div class="wbgam-banner wbgam-banner--<?php echo esc_attr( $notice_map[ $notice ][0] ); ?> wbgam-stack-block" role="status" aria-live="polite">
-					<span class="wbgam-banner__icon icon-circle-check" aria-hidden="true"></span>
-					<div class="wbgam-banner__body">
-						<p class="wbgam-banner__desc"><?php echo esc_html( $notice_map[ $notice ][1] ); ?></p>
-					</div>
-				</div>
-			<?php endif; ?>
 
 			<!-- Award Form Card -->
 			<div class="wbgam-card wbgam-stack-block">
@@ -355,7 +330,7 @@ final class ManualAwardPage {
 										placeholder="<?php esc_attr_e( 'e.g. Contest winner, Support bonus, Policy violation', 'wb-gamification' ); ?>"
 										maxlength="200"
 									/>
-									<p class="description"><?php esc_html_e( 'Optional. Visible in the award history below and stored as user meta.', 'wb-gamification' ); ?></p>
+									<p class="description"><?php esc_html_e( 'Optional. Visible next to this award in the history below.', 'wb-gamification' ); ?></p>
 								</td>
 							</tr>
 						</table>
@@ -500,8 +475,8 @@ final class ManualAwardPage {
 	/**
 	 * Fetch recent manual point awards from the ledger.
 	 *
-	 * Note: award notes are stored in user meta (last note per user), not in the
-	 * points table, so the note shown may not match older rows for the same user.
+	 * Each row's note is read from its own event's metadata (since 1.6.6). Awards
+	 * made before 1.6.6 kept only the member's latest note, so they show none.
 	 *
 	 * @param int $limit Maximum rows to return.
 	 * @return array<int, array{user_id: int, points: int, note: string, created_at: string}>
@@ -522,10 +497,11 @@ final class ManualAwardPage {
 		// rows that were invisible — collectively the bulk of award traffic.
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT user_id, points, point_type, action_id, created_at
-				   FROM {$wpdb->prefix}wb_gam_points
-				  WHERE action_id IN ('manual_award', 'manual_admin', 'manual_admin_deduct', 'manual')
-				  ORDER BY created_at DESC
+				"SELECT p.user_id, p.points, p.point_type, p.action_id, p.created_at, e.metadata
+				   FROM {$wpdb->prefix}wb_gam_points p
+				   LEFT JOIN {$wpdb->prefix}wb_gam_events e ON e.id = p.event_id
+				  WHERE p.action_id IN ('manual_award', 'manual_admin', 'manual_admin_deduct', 'manual')
+				  ORDER BY p.created_at DESC, p.id DESC
 				  LIMIT %d",
 				max( 1, $limit )
 			),
@@ -534,9 +510,10 @@ final class ManualAwardPage {
 
 		$result = array();
 		foreach ( ( $rows ? $rows : array() ) as $row ) {
-			$uid         = (int) $row['user_id'];
-			$row['note'] = (string) get_user_meta( $uid, '_wb_gam_last_award_note', true );
-			$result[]    = $row;
+			$meta        = json_decode( (string) ( $row['metadata'] ?? '' ), true );
+			$row['note'] = is_array( $meta ) ? sanitize_text_field( (string) ( $meta['note'] ?? '' ) ) : '';
+			unset( $row['metadata'] );
+			$result[] = $row;
 		}
 
 		return $result;

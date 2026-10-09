@@ -1,10 +1,10 @@
 # Streaks
 
-Streaks reward members for consistent, ongoing participation. The longer a member stays active day after day, the higher their streak count — and at key milestones, they earn bonus points.
+Streaks reward members for consistent, ongoing participation. The longer a member stays active day after day, the higher their streak count - and at key milestones, they earn bonus points.
 
 ## How Streaks Work
 
-A streak counts how many consecutive days a member has been active. "Active" means earning at least one point from any action. Streaks are not tied to logins — the member needs to actually do something.
+A streak counts how many consecutive days a member has been active. "Active" means earning at least one point from any action. Streaks are not tied to logins - the member needs to actually do something.
 
 Streaks are **timezone-aware**. Midnight is calculated using the member's own timezone setting. If they have not set a timezone, the site timezone is used. This means a member in Tokyo and a member in New York each get a fair day boundary.
 
@@ -12,7 +12,7 @@ Streaks are **timezone-aware**. Midnight is calculated using the member's own ti
 
 Life happens. The streak engine includes a **1-day grace period** by default. This means:
 
-- If a member misses exactly one day, their streak continues — the grace period covers the gap
+- If a member misses exactly one day, their streak continues - the grace period covers the gap
 - The grace period can only be used once per streak. Missing two consecutive days breaks the streak.
 - The grace period resets after each consecutive day. If you use it on a Wednesday, you can use it again after a full consecutive sequence.
 

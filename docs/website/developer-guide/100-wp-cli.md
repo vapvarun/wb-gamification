@@ -10,7 +10,7 @@ wp wb-gamification <command> <subcommand> [options]
 
 ## `points award`
 
-Award points to a member. This is a direct admin award — it bypasses cooldown and daily-cap checks.
+Award points to a member. This is a direct admin award - it bypasses cooldown and daily-cap checks.
 
 ### Syntax
 
@@ -78,7 +78,7 @@ wp wb-gamification member status --user=jane@example.com
 User:    Jane Smith (ID: 42)
 Points:  1350
 Level:   Contributor
-Next:    Regular (1500 pts) — 90% there
+Next:    Regular (1500 pts) - 90% there
 Badges:  4
          century_club, welcome, first_post, first_update
 ```
@@ -121,9 +121,9 @@ wp wb-gamification actions list --category=buddypress
 +------------------------+-----------------------------+------------+--------+-----------+----------+---------+
 | id                     | label                       | category   | points | daily_cap | cooldown | enabled |
 +------------------------+-----------------------------+------------+--------+-----------+----------+---------+
-| bp_activity_update     | Posted an activity update   | buddypress | 5      | 10        | —        | yes     |
-| bp_friends_accepted    | Made a new friend           | buddypress | 10     | ∞         | —        | yes     |
-| publish_post           | Published a post            | wordpress  | 15     | ∞         | —        | yes     |
+| bp_activity_update     | Posted an activity update   | buddypress | 5      | 10        | -        | yes     |
+| bp_friends_accepted    | Made a new friend           | buddypress | 10     | ∞         | -        | yes     |
+| publish_post           | Published a post            | wordpress  | 15     | ∞         | -        | yes     |
 +------------------------+-----------------------------+------------+--------+-----------+----------+---------+
 ```
 
@@ -131,7 +131,7 @@ wp wb-gamification actions list --category=buddypress
 
 ## `logs prune`
 
-Remove old entries from the event log (`wb_gam_events`). The points ledger, badges, levels, and leaderboard are **not** affected — only the raw audit trail is trimmed.
+Remove old entries from the event log (`wb_gam_events`). The points ledger, badges, levels, and leaderboard are **not** affected - only the raw audit trail is trimmed.
 
 ### Syntax
 
@@ -273,7 +273,7 @@ WB Gamification Doctor v1.0.0
 
 ────────────────────────────────────────────────────────────
 Results: 18 pass, 1 warn, 0 fail
-Warning: Plugin has warnings — review before release.
+Warning: Plugin has warnings - review before release.
 ```
 
 The `--fix` flag re-seeds missing levels and badges by running `Installer::install()`, and cleans up any orphaned option keys from previous plugin versions.

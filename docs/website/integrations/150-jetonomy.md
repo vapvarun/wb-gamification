@@ -17,6 +17,14 @@ In addition, the auto-discovered manifests register discrete Jetonomy actions:
 
 A Jetonomy custom badge is paid once: its reputation bonus reaches the points ledger through the reputation mirror as `jetonomy_badge_earned`. There is no separate `jetonomy_pro_badge_earned` action (before 1.6.5 there was, and each badge paid twice).
 
+## Membership Activation Pays Once Per Plan
+
+`jetonomy_membership_activated` ("Activate a membership", 25 points by default) rewards a member for joining a paid plan. Since 1.6.6:
+
+- **Once per member per plan.** Membership adapters re-announce a membership on every renewal, admin date change and monthly/yearly switch. Those re-announcements no longer pay again. Joining a different plan still earns, once. The check reads the points ledger, so an activation that a cap blocked does not count as earned.
+- **Free plans can opt out.** Adapters also report free levels, such as a default plan every new member is placed on. The source that knows its levels answers the `wb_gam_membership_level_earns` filter with `false` for a free one, and the award is skipped. BuddyNext Pro does this for its free plans. See the [filters reference](../developer-guide/130-filters-reference.md).
+- The award runs in the request rather than the background queue, so a second announcement seconds later already sees the first award.
+
 ## Leaderboard Deferral
 
 Because WB Gamification mirrors Jetonomy reputation 1:1 into points, the two leaderboards would rank the same members in the same order - a genuine duplicate. Rather than show both, `WBGam\Integrations\Jetonomy\DisplayDefer` suppresses WB Gam's leaderboard display when Jetonomy is active and lets Jetonomy's reputation leaderboard be the single source of truth.

@@ -1,6 +1,6 @@
 # Community Challenges
 
-Community Challenges let your entire membership work toward a shared goal — similar to Pokémon GO's community events. Every member's qualifying actions contribute to a single global progress bar. When the community hits the target, everyone earns bonus points.
+Community Challenges let your entire membership work toward a shared goal - similar to Pokémon GO's community events. Every member's qualifying actions contribute to a single global progress bar. When the community hits the target, everyone earns bonus points.
 
 ## How It Differs from Individual Challenges
 
@@ -11,7 +11,7 @@ Individual challenges are per-member: each person has their own progress bar and
 1. Go to **WB Gamification → Community Challenges → Add New**.
 2. Set a **title** and **description** visible to members.
 3. Choose the **action** that contributes to progress (any registered gamification action, e.g., `bp_activity_update`).
-4. Set the **target count** — total number of qualifying actions needed.
+4. Set the **target count** - total number of qualifying actions needed.
 5. Set a **deadline** (date and time).
 6. Set the **bonus points** awarded to every member on completion.
 7. Click **Publish**.

@@ -8,6 +8,10 @@
  */
 
 defined( 'ABSPATH' ) || exit;
+
+// Live updates for everyone looking at a leaderboard, guests included (members
+// already have the broker on every page).
+wp_enqueue_script( 'wb-gamification-realtime' );
 // Silencing convention-driven false positives so Plugin Check signal stays clean:
 //   - PrefixAllGlobals.NonPrefixedHooknameFound — plugin uses `wb_gam_*` as its
 //     established hook prefix (documented in CLAUDE.md, declared in .phpcs.xml).

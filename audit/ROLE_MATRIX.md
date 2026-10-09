@@ -146,10 +146,10 @@ All gates evaluate `current_user_can('manage_options')`. Only `administrator` ro
 | `/leaderboard/group/{group_id}` | GET | `__return_true` | Public. |
 | `/leaderboard/me` | GET | `require_logged_in` | Logged-in user. |
 | `/levels` | GET | `__return_true` | Public. |
-| `/members/{id}` | GET | `get_item_permissions_check` | Self or admin. |
-| `/members/{id}/points` | GET | `get_item_permissions_check` | Self or admin. |
-| `/members/{id}/level` | GET | `get_item_permissions_check` | Self or admin. |
-| `/members/{id}/badges` | GET | `get_item_permissions_check` | Self or admin. |
+| `/members/{id}` | GET | `t1_permissions_check` | Public profile tier: anyone, unless the member made their profile private (`Privacy::can_view_public_profile`, 403); on a host community such as BuddyNext its profile privacy decides (`wb_gam_can_view_public_profile`). Self and admin always. |
+| `/members/{id}/points` | GET | `t2_permissions_check` | Behavioural history: self or admin only, always. |
+| `/members/{id}/level` | GET | `t1_permissions_check` | Public profile tier: anyone, unless the member made their profile private (`Privacy::can_view_public_profile`, 403); on a host community such as BuddyNext its profile privacy decides (`wb_gam_can_view_public_profile`). Self and admin always. |
+| `/members/{id}/badges` | GET | `t1_permissions_check` | Public profile tier: anyone, unless the member made their profile private (`Privacy::can_view_public_profile`, 403); on a host community such as BuddyNext its profile privacy decides (`wb_gam_can_view_public_profile`). Self and admin always. |
 | `/members/{id}/events` | GET | `get_item_permissions_check` | Self or admin. |
 | `/members/{id}/streak` | GET | `get_item_permissions_check` | Self or admin. |
 | `/members/me/toasts` | GET | `get_toasts_permissions_check` | Logged-in user (own toasts). |

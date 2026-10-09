@@ -263,7 +263,22 @@ class PointsController extends WP_REST_Controller {
 
 		// Negative input → debit via PointsEngine::debit; positive → standard award path.
 		if ( $points < 0 ) {
-			$debit_result = \WBGam\Engine\PointsEngine::debit( $user_id, abs( $points ), 'manual_admin_deduct', '', $point_type );
+			// The note rides on the debit's own event, like an award's, so the award history
+			// shows each row's note instead of the member's latest one.
+			$debit_event  = new Event(
+				array(
+					'action_id'  => 'manual_admin_deduct',
+					'user_id'    => $user_id,
+					'point_type' => $point_type,
+					'metadata'   => array(
+						'points_cost' => $points,
+						'point_type'  => $point_type,
+						'note'        => $note,
+						'awarded_by'  => get_current_user_id(),
+					),
+				)
+			);
+			$debit_result = \WBGam\Engine\PointsEngine::debit( $user_id, abs( $points ), 'manual_admin_deduct', $debit_event, $point_type );
 			if ( empty( $debit_result['success'] ) ) {
 				$reason = $debit_result['reason'] ?? 'unknown';
 				return new WP_Error(
@@ -273,9 +288,6 @@ class PointsController extends WP_REST_Controller {
 						: __( 'Failed to debit points.', 'wb-gamification' ),
 					array( 'status' => 400 )
 				);
-			}
-			if ( '' !== $note ) {
-				update_user_meta( $user_id, '_wb_gam_last_award_note', sanitize_text_field( $note ) );
 			}
 			return new WP_REST_Response(
 				array(
@@ -305,10 +317,6 @@ class PointsController extends WP_REST_Controller {
 		);
 
 		Engine::process( $event );
-
-		if ( '' !== $note ) {
-			update_user_meta( $user_id, '_wb_gam_last_award_note', sanitize_text_field( $note ) );
-		}
 
 		return new WP_REST_Response(
 			array(

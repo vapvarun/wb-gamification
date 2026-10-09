@@ -20,15 +20,15 @@ Badges for WordPress-native contributions. Examples: "Published Author" (publish
 Badges for BuddyPress community participation. Examples: "Welcome Aboard" (complete extended profile), "Social Butterfly" (accept 10 friendships), "Group Builder" (create a group), "Reaction Magnet" (receive 50 reactions).
 
 ### Special
-Badges assigned manually by admins or awarded for extraordinary contributions. These do not auto-evaluate — they are given by an admin through the Manual Award interface.
+Badges assigned manually by admins or awarded for extraordinary contributions. These do not auto-evaluate - they are given by an admin through the Manual Award interface.
 
 ## How Badges Are Awarded
 
 **Auto-award** happens automatically. After every point transaction, the badge engine evaluates all active badge conditions for the member who just earned points. If any condition is now satisfied for the first time, the badge awards immediately.
 
 Conditions that trigger auto-award:
-- **Point milestone** — member's cumulative points reach a threshold
-- **Action count** — member has completed a specific action a set number of times
+- **Point milestone** - member's cumulative points reach a threshold
+- **Action count** - member has completed a specific action a set number of times
 
 **Manual award** is done by an admin. Go to **Gamification > Manual Award**, select a member, choose a badge from the list, and click **Award**. The member receives a notification right away.
 
@@ -38,13 +38,13 @@ Conditions that trigger auto-award:
 2. Click **Add New Badge**.
 3. Enter a name, description, and choose or upload a badge image.
 4. Under **Award Condition**, choose the condition type:
-   - **Point milestone** — enter the cumulative points required
-   - **Action count** — choose the action and the number of times it must be completed
-   - **Admin only** — the badge is never awarded automatically
+   - **Point milestone** - enter the cumulative points required
+   - **Action count** - choose the action and the number of times it must be completed
+   - **Admin only** - the badge is never awarded automatically
 5. Optionally configure advanced options (see below).
 6. Click **Save Badge**.
 
-The new badge is active immediately. Existing members who already meet the condition will **not** receive it retroactively — it awards only on future transactions.
+The new badge is active immediately. Existing members who already meet the condition will **not** receive it retroactively - it awards only on future transactions.
 
 ## Badge Images
 
@@ -56,11 +56,11 @@ Default badges use SVG icons that scale cleanly at any size.
 
 When creating or editing a badge, you can set the following optional limits:
 
-**Expiry (validity_days)** — If set, the badge expires this many days after it is earned. An expired badge is removed from the member's showcase. Useful for certifications that need periodic renewal. Leave blank for permanent badges.
+**Expiry (validity_days)** - If set, the badge expires this many days after it is earned. An expired badge is removed from the member's showcase. Useful for certifications that need periodic renewal. Leave blank for permanent badges.
 
-**Close date (closes_at)** — The badge stops awarding after this date. Members who earn it before the date keep it permanently. Useful for event-based or seasonal badges.
+**Close date (closes_at)** - The badge stops awarding after this date. Members who earn it before the date keep it permanently. Useful for event-based or seasonal badges.
 
-**Maximum earners (max_earners)** — The badge stops awarding once this many members have earned it. Useful for "first 100 members" exclusivity badges.
+**Maximum earners (max_earners)** - The badge stops awarding once this many members have earned it. Useful for "first 100 members" exclusivity badges.
 
 ## Credential Badges (OpenBadges 3.0)
 

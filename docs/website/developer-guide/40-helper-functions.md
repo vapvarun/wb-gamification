@@ -71,6 +71,16 @@ The label an action id shows everywhere (toasts, points history, REST `label`, a
 echo esc_html( wb_gam_get_action_label( 'jetonomy_reply_created' ) ); // "Replied in the forum"
 ```
 
+To rename a reason on your site, filter it. Keep the words translatable if the site is multilingual:
+
+```php
+add_filter( 'wb_gam_action_label', function ( string $label, string $action_id ): string {
+	return 'login_bonus' === $action_id ? __( 'Daily check-in', 'my-site' ) : $label;
+}, 10, 2 );
+```
+
+Members on a translated site can also get new wording from a translation plugin such as Loco Translate, with no code.
+
 ## Points Functions
 
 ### `wb_gam_get_user_points( int $user_id ): int`
@@ -90,8 +100,8 @@ Returns `false` if `$points <= 0` or `$user_id <= 0`.
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `$user_id` | int | — | WordPress user ID |
-| `$points` | int | — | Points to award (must be > 0) |
+| `$user_id` | int | - | WordPress user ID |
+| `$points` | int | - | Points to award (must be > 0) |
 | `$action_id` | string | `'manual'` | Action ID logged against the points row |
 | `$object_id` | int | `0` | Optional related object (e.g. post ID) |
 
@@ -121,7 +131,7 @@ if ( $post_count >= 10 ) {
 
 ### `wb_gam_has_badge( int $user_id, string $badge_id ): bool`
 
-Check whether a user currently holds a specific badge. Respects expiry — expired badges return `false`.
+Check whether a user currently holds a specific badge. Respects expiry - expired badges return `false`.
 
 ```php
 if ( wb_gam_has_badge( $user_id, 'top_contributor' ) ) {
@@ -136,7 +146,7 @@ Get all badges currently held by a user as an array of badge data rows. Expired 
 ```php
 $badges = wb_gam_get_user_badges( $user_id );
 foreach ( $badges as $badge ) {
-    echo $badge['name'] . ' — earned ' . $badge['earned_at'];
+    echo $badge['name'] . ' - earned ' . $badge['earned_at'];
 }
 ```
 
@@ -189,7 +199,7 @@ Get the leaderboard for a given period. Reads from `wb_gam_leaderboard_cache` fo
 ```php
 $top_10 = wb_gam_get_leaderboard( 'week', 10 );
 foreach ( $top_10 as $row ) {
-    printf( "#%d: %s — %d pts\n", $row['rank'], $row['display_name'], $row['points'] );
+    printf( "#%d: %s - %d pts\n", $row['rank'], $row['display_name'], $row['points'] );
 }
 ```
 

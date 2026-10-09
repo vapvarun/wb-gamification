@@ -1,6 +1,6 @@
 # WB Gamification — CLAUDE.md
 
-> **READ FIRST:** [`audit/manifest.json`](audit/manifest.json) is the canonical inventory — **115 REST handlers** (78 unique routes), **26 tables**, **19 blocks**, **17 shortcodes**, **142 hooks fired** (66 actions / 76 filters), **16 cron hooks** (incl. Action Scheduler), **10 WP-CLI commands**, **16 admin pages**, **49 services**, **25 integrations / 127 triggers**, **0 admin_post_* handlers** (Tier 0 REST migration intact), **0 wp_ajax_* handlers**. Quick index: [`audit/manifest.summary.json`](audit/manifest.summary.json) (≤3 KB). Buyer-level roll-up: [`CAPABILITIES.md`](CAPABILITIES.md). Refresh via `/wp-plugin-onboard --refresh` after non-trivial changes.
+> **READ FIRST:** [`audit/manifest.json`](audit/manifest.json) is the canonical inventory — **115 REST handlers** (78 unique routes), **26 tables**, **19 blocks**, **17 shortcodes**, **172 hooks fired** (77 actions / 95 filters), **16 cron hooks** (incl. Action Scheduler), **10 WP-CLI commands**, **16 admin pages**, **49 services**, **25 integrations / 127 triggers**, **0 admin_post_* handlers** (Tier 0 REST migration intact), **0 wp_ajax_* handlers**. Quick index: [`audit/manifest.summary.json`](audit/manifest.summary.json) (≤3 KB). Buyer-level roll-up: [`CAPABILITIES.md`](CAPABILITIES.md). Refresh via `/wp-plugin-onboard --refresh` after non-trivial changes.
 >
 > **Trust order:** `audit/manifest.summary.json` (code-verified) > [`CAPABILITIES.md`](CAPABILITIES.md) > code > everything else. Dated snapshots ([`audit/STABILITY-2026-05-27.md`](audit/STABILITY-2026-05-27.md), `audit/wppqa-baseline-*`) are **history — verify against the trail before trusting**.
 >
@@ -26,7 +26,7 @@
 | Field | Value |
 |---|---|
 | **Name** | WB Gamification |
-| **Version** | 1.6.5 (in development, branch `1.6.5`) |
+| **Version** | 1.6.6 (in development, branch `1.6.6`) |
 | **Path** | `wp-content/plugins/wb-gamification/` |
 | **Namespace** | `WBGam\` (PSR-4, maps to `src/`) |
 | **PHP** | 8.1+ (matches the `Requires PHP` header and composer.json) |

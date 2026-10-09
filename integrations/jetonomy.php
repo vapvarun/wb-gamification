@@ -99,11 +99,48 @@ return array(
 		array(
 			'id'                => 'jetonomy_membership_activated',
 			'label'             => static fn(): string => __( 'Activate a membership', 'wb-gamification' ),
-			'description'       => static fn(): string => __( 'Awarded when a paid membership becomes active for the member (RCP / PMPro / MemberPress / WooCommerce Subscriptions / Sensei / LearnDash / MasterStudy / Tutor / LifterLMS).', 'wb-gamification' ),
+			'description'       => static fn(): string => __( 'Awarded once per plan when a paid membership becomes active for the member (RCP / PMPro / MemberPress / WooCommerce Subscriptions / Sensei / LearnDash / MasterStudy / Tutor / LifterLMS).', 'wb-gamification' ),
 			// Free + Pro adapters fire: do_action( 'jetonomy_membership_activated', int $user_id, mixed $level_id, string $source ).
 			'hook'              => 'jetonomy_membership_activated',
 			'user_callback'     => function ( int $user_id, $level_id, string $source ): int {
-				return $user_id;
+				/**
+				 * Whether activating this membership level earns points.
+				 *
+				 * The rule rewards a paid membership. Adapters also report free
+				 * levels (a default plan every member is placed on), which would
+				 * hand out points just for signing up. The source that knows its
+				 * levels answers false for a free one.
+				 *
+				 * @since 1.6.6
+				 *
+				 * @param bool   $earns    Default true.
+				 * @param mixed  $level_id Level id as the adapter reported it.
+				 * @param string $source   Adapter source, e.g. 'buddynext-pro'.
+				 * @param int    $user_id  Member.
+				 */
+				if ( ! apply_filters( 'wb_gam_membership_level_earns', true, $level_id, $source, $user_id ) ) {
+					return 0;
+				}
+
+				// Once per member per plan. Adapters re-announce a membership on every
+				// renewal, date change and monthly/yearly switch (BuddyNext Pro maps
+				// subscription_extended to this hook too), and each paid 25 points
+				// again. A different plan still earns, once. The check reads the
+				// ledger joined to its event, so an event that paid nothing (a cap
+				// blocked it) does not count as earned.
+				global $wpdb;
+				$needle = substr( (string) wp_json_encode( array( 'level_id' => is_scalar( $level_id ) ? (string) $level_id : '' ) ), 1, -1 );
+				$earned = (int) $wpdb->get_var(
+					$wpdb->prepare(
+						"SELECT COUNT(*) FROM {$wpdb->prefix}wb_gam_points p
+						 JOIN {$wpdb->prefix}wb_gam_events e ON e.id = p.event_id
+						 WHERE p.user_id = %d AND p.action_id = 'jetonomy_membership_activated' AND p.points > 0
+						   AND e.metadata LIKE %s",
+						$user_id,
+						'%' . $wpdb->esc_like( $needle ) . '%'
+					)
+				);
+				return $earned > 0 ? 0 : $user_id;
 			},
 			'metadata_callback' => function ( int $user_id, $level_id, string $source ): array {
 				return array(
@@ -115,6 +152,10 @@ return array(
 			'category'          => 'community',
 			'icon'              => 'icon-key',
 			'repeatable'        => true,
+			// Award in the request, not via the async queue: the once-per-plan check
+			// above must see the first award before a second event (a plan switch
+			// fires two within seconds) is checked.
+			'async'             => false,
 		),
 
 	),

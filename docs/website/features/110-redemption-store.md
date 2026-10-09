@@ -1,6 +1,6 @@
 # Redemption Store
 
-The Redemption Store lets members spend their accumulated points on rewards you define. It closes the loop on your points economy — points become worth something tangible, which increases the motivation to earn them.
+The Redemption Store lets members spend their accumulated points on rewards you define. It closes the loop on your points economy - points become worth something tangible, which increases the motivation to earn them.
 
 ## Creating a Reward Item
 

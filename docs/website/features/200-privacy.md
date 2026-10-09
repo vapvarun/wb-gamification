@@ -6,13 +6,13 @@ WB Gamification is built with GDPR compliance in mind. Member data is exportable
 
 WB Gamification stores the following data associated with each member's user ID:
 
-- **Point events** — a log of every action that earned points, including the action type, points awarded, timestamp, and optional metadata (such as word count)
-- **Badge records** — which badges were earned and when, plus expiry dates where applicable
-- **Level state** — the member's current level, derived from their point total
-- **Streak data** — current streak count, longest streak, last active date, and timezone
-- **Challenge progress** — progress toward each challenge and completion timestamps
-- **Kudos sent and received** — giver, receiver, message, and timestamp for every kudos transaction
-- **Member preferences** — leaderboard opt-out status, show_rank setting, and notification mode
+- **Point events** - a log of every action that earned points, including the action type, points awarded, timestamp, and optional metadata (such as word count)
+- **Badge records** - which badges were earned and when, plus expiry dates where applicable
+- **Level state** - the member's current level, derived from their point total
+- **Streak data** - current streak count, longest streak, last active date, and timezone
+- **Challenge progress** - progress toward each challenge and completion timestamps
+- **Kudos sent and received** - giver, receiver, message, and timestamp for every kudos transaction
+- **Member preferences** - leaderboard opt-out status, show_rank setting, and notification mode
 
 No payment data, private messages beyond kudos messages, or off-site tracking is stored.
 
@@ -54,11 +54,11 @@ After erasure, the member's gamification history is permanently gone. This actio
 
 Members can control two privacy-related settings from their profile:
 
-**Leaderboard opt-out** — When enabled, the member is excluded from all leaderboard snapshots. They will not appear on any public leaderboard, including the Leaderboard block and Top Members block. This setting takes effect on the next leaderboard cache refresh (within 10 minutes).
+**Leaderboard opt-out** - When enabled, the member is excluded from all leaderboard snapshots. They will not appear on any public leaderboard, including the Leaderboard block and Top Members block. This setting takes effect on the next leaderboard cache refresh (within 10 minutes).
 
-**Show rank** — When disabled, the member's rank is hidden on their public profile. They can still see their own rank privately, but other members visiting their profile will not see it.
+**Show rank** - When disabled, the member's rank is hidden on their public profile. They can still see their own rank privately, but other members visiting their profile will not see it.
 
-**Notification mode** — Controls the frequency and types of notifications the member receives. See the Notifications documentation for details.
+**Notification mode** - Controls the frequency and types of notifications the member receives. See the Notifications documentation for details.
 
 Members find these settings in their profile settings page under the Gamification section. If BuddyPress is active, this is within the BuddyPress profile settings. Without BuddyPress, it appears in the standard WordPress user profile screen.
 
@@ -73,4 +73,4 @@ Admins can:
 
 ## Data Retention
 
-By default, point event logs are kept indefinitely. On large sites, this can add up to significant database storage over time. Use the WP-CLI log prune command to delete raw event logs older than a specified date. Point totals, badge records, and level state are not affected by pruning — only the detailed event log entries are removed.
+By default, point event logs are kept indefinitely. On large sites, this can add up to significant database storage over time. Use the WP-CLI log prune command to delete raw event logs older than a specified date. Point totals, badge records, and level state are not affected by pruning - only the detailed event log entries are removed.

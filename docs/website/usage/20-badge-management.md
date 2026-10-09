@@ -19,7 +19,7 @@ Click **+ Create New Badge** in the toolbar. A form appears with two sections: b
 | **Description** | No | Explains what the badge is for. Shown on badge cards and the public share page. |
 | **Icon** | No | An image from your Media Library. Recommended size: 128×128 px PNG with a transparent background. Click **Choose Icon** to open the media picker. Click **Remove** to clear it. |
 | **Category** | No | Groups badges in the frontend showcase. Options: General, Points, WordPress, BuddyPress, Special. |
-| **Is Credential** | No | Marks the badge as a verifiable OpenBadges 3.0 credential. Members can share a verified badge URL — useful for professional achievements on LinkedIn. |
+| **Is Credential** | No | Marks the badge as a verifiable OpenBadges 3.0 credential. Members can share a verified badge URL - useful for professional achievements on LinkedIn. |
 | **Closes at** | No | A date and time after which no new members can earn this badge. Leave blank for no cutoff. Displayed in your site's timezone. |
 | **Max earners** | No | The maximum number of members who can earn this badge. Once reached, the badge stops auto-awarding. Leave blank for unlimited. |
 

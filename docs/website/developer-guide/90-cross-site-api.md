@@ -2,7 +2,7 @@
 
 ## Overview
 
-WB Gamification can act as a centralized gamification server. A dedicated WordPress site runs the plugin and holds all gamification data. Remote sites — BuddyPress communities, WooCommerce stores, headless frontends, mobile apps — authenticate via API keys and submit events to the central server.
+WB Gamification can act as a centralized gamification server. A dedicated WordPress site runs the plugin and holds all gamification data. Remote sites - BuddyPress communities, WooCommerce stores, headless frontends, mobile apps - authenticate via API keys and submit events to the central server.
 
 This model is useful when you run multiple sites and want a single leaderboard, unified badge library, and one admin interface.
 
@@ -33,7 +33,7 @@ $key = ApiKeyAuth::create_key(
 // $key = 'wbgam_AbCdEfGhIjKlMnOpQrStUvWxYz...' (40-char random string)
 ```
 
-Keys start with `wbgam_`. Store them securely — they cannot be retrieved after creation.
+Keys start with `wbgam_`. Store them securely - they cannot be retrieved after creation.
 
 ### Revoking and Deleting Keys
 
@@ -62,7 +62,7 @@ X-WB-Gam-Key: wbgam_AbCdEfGhIjKlMnOpQrStUvWxYz...
 GET /wp-json/wb-gamification/v1/members/42?api_key=wbgam_AbCdEfGhIjKlMnOpQrStUvWxYz...
 ```
 
-The header approach is preferred — query params can appear in server logs.
+The header approach is preferred - query params can appear in server logs.
 
 ### Authentication Priority
 

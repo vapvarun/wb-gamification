@@ -15,11 +15,11 @@ The wizard saves your point values and redirects you to the Gamification dashboa
 
 ## Step 2: Check What Is Already Working (30 seconds)
 
-Go to **Gamification > Settings**. You will see every action that is currently active on your site — things like "Post an activity update," "Join a group," and "Complete a course." These are already wired up. No additional configuration is needed.
+Go to **Gamification > Settings**. You will see every action that is currently active on your site - things like "Post an activity update," "Join a group," and "Complete a course." These are already wired up. No additional configuration is needed.
 
 ## Step 3: Have a Member Do Something (1 minute)
 
-Log in as a regular member. Do one of the active actions — for example, post an activity update on a BuddyPress community page, or leave a comment on a blog post.
+Log in as a regular member. Do one of the active actions - for example, post an activity update on a BuddyPress community page, or leave a comment on a blog post.
 
 Within a few seconds, a toast notification appears in the bottom-right corner showing how many points were earned.
 

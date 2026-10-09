@@ -300,15 +300,28 @@ class ChallengesController extends WP_REST_Controller {
 			);
 		}
 
+		// Read the id before anything else touches $wpdb: bust_action_cache() writes an
+		// option, and on a fresh site (option absent) that INSERT replaced insert_id, so the
+		// read-back found nothing and the first challenge on every new install fataled.
+		$id = (int) $wpdb->insert_id;
+
 		\WBGam\Engine\ChallengeEngine::bust_action_cache();
 
 		$row = $wpdb->get_row( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Read-after-write for response.
 			$wpdb->prepare(
 				"SELECT * FROM {$wpdb->prefix}wb_gam_challenges WHERE id = %d",
-				$wpdb->insert_id
+				$id
 			),
 			ARRAY_A
 		);
+
+		if ( ! $row ) {
+			return new WP_Error(
+				'rest_insert_failed',
+				__( 'Could not create challenge.', 'wb-gamification' ),
+				array( 'status' => 500 )
+			);
+		}
 
 		return new WP_REST_Response( $this->prepare_challenge_row( $row ), 201 );
 	}

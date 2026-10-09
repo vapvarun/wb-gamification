@@ -2,7 +2,7 @@
 
 ## How Manifests Work
 
-Any WordPress plugin can award gamification points without depending on WB Gamification at runtime. Create a file named `wb-gamification.php` in your plugin's root directory. The file returns a plain PHP array. WB Gamification discovers and loads it automatically at `plugins_loaded` priority 5 — before any hooks fire.
+Any WordPress plugin can award gamification points without depending on WB Gamification at runtime. Create a file named `wb-gamification.php` in your plugin's root directory. The file returns a plain PHP array. WB Gamification discovers and loads it automatically at `plugins_loaded` priority 5 - before any hooks fire.
 
 If WB Gamification is not installed, your manifest file is simply never loaded. No dependency errors, no fatal calls.
 
@@ -22,7 +22,7 @@ your-plugin/
  * WB Gamification manifest for My Plugin.
  *
  * This file is auto-discovered by WB Gamification at plugins_loaded priority 5.
- * It is safe to ship in the free version — WB Gamification is an optional dependency.
+ * It is safe to ship in the free version - WB Gamification is an optional dependency.
  */
 return [
     'plugin'   => 'my-plugin',          // Used in Registry collision reports.
@@ -142,7 +142,7 @@ return [
 
 These two flags let you ship one manifest that works correctly in both BuddyPress and non-BuddyPress environments.
 
-**Scenario:** Your plugin fires `my_plugin_post_published`. When WordPress is running standalone, you want to award points for it. But when BuddyPress is active, the BuddyPress `bp_publish_post` integration already covers this event more richly — so you want to skip your version.
+**Scenario:** Your plugin fires `my_plugin_post_published`. When WordPress is running standalone, you want to award points for it. But when BuddyPress is active, the BuddyPress `bp_publish_post` integration already covers this event more richly - so you want to skip your version.
 
 ```php
 [
@@ -190,7 +190,7 @@ The ManifestLoader validates every manifest and trigger at load time:
 1. **Manifest must return an array.** If the file does not `return array( ... )`, it is skipped. When `WP_DEBUG` is enabled, a message is logged to `debug.log`.
 2. **Each trigger must include `id`, `hook`, and `default_points`.** Missing any of these causes the trigger to be skipped with a debug log entry identifying the file and missing key.
 
-This means you can ship a manifest confidently — malformed entries are silently ignored in production and loudly reported during development.
+This means you can ship a manifest confidently - malformed entries are silently ignored in production and loudly reported during development.
 
 ## Developer Hooks
 

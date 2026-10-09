@@ -77,6 +77,9 @@ final class BadgeEngine {
 	 * @return void
 	 */
 	public static function maybe_schedule_cron_pass(): void {
+		if ( ! SchedulingContext::is_scheduling_request() ) {
+			return;
+		}
 		// TenureBadgeEngine's cron is gone with the engine. Clear it, or it stays scheduled forever
 		// on every existing site, firing a hook nothing listens to.
 		wp_clear_scheduled_hook( 'wb_gam_tenure_check' );

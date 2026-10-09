@@ -55,4 +55,30 @@ class ActionLabelTest extends TestCase {
 		$this->assertSame( 'Named elsewhere', JetonomyIntegration::label( 'Named elsewhere', 'jetonomy_reply_created' ), 'A label another filter set wins.' );
 		$this->assertSame( 'Jetonomy Something New', Registry::label_for( 'jetonomy_something_new' ) );
 	}
+
+	#[Test]
+	public function engine_awarded_ids_have_translatable_labels(): void {
+		// Every id the engine awards itself: none may fall back to the title-cased id, which
+		// is not a translatable string ("Login Bonus" stayed English on a Spanish site).
+		$ids = array( 'login_bonus', 'streak_milestone', 'challenge_completed', 'community_challenge_completed', 'level_up', 'badge_earned', 'points_redeemed', 'redemption_refund', 'kudos_revoked', 'manual_bulk_award', 'manual_admin_reset', 'points_decay' );
+		foreach ( $ids as $id ) {
+			$this->assertNotSame( ucwords( str_replace( '_', ' ', $id ) ), Registry::label_for( $id ), "$id must come from a translatable built-in label" );
+		}
+		$this->assertSame( 'Daily login bonus', Registry::label_for( 'login_bonus' ) );
+	}
+
+	#[Test]
+	public function a_site_can_rename_any_reason_through_the_filter(): void {
+		\Brain\Monkey\Functions\when( 'apply_filters' )->alias(
+			static function ( $hook, $value, ...$args ) {
+				if ( 'wb_gam_action_label' !== $hook ) {
+					return $value;
+				}
+				return 'login_bonus' === $args[0] ? 'Daily check-in' : JetonomyIntegration::label( $value, ...$args );
+			}
+		);
+		$this->assertSame( 'Daily check-in', Registry::label_for( 'login_bonus' ), 'A built-in label can be renamed.' );
+		$this->assertSame( 'Streak milestone', Registry::label_for( 'streak_milestone' ), 'Ids the filter does not handle keep their label.' );
+		$this->assertSame( 'Replied in the forum', Registry::label_for( 'jetonomy_reply_created' ), 'Integrations still name their ids.' );
+	}
 }

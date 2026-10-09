@@ -32,8 +32,9 @@
  *   .wb-gam-pill, .wb-gam-pill--success|warning|info|accent
  */
 
+/* The hub and the year recap are dark hero blocks with their own surface. */
 .wb-gam-card,
-[class*="wp-block-wb-gamification-"]:not(.wp-block-wb-gamification-hub) {
+[class*="wp-block-wb-gamification-"]:not(.wp-block-wb-gamification-hub):not(.wp-block-wb-gamification-year-recap) {
 	background: var( --wb-gam-color-surface );
 	border: 1px solid var( --wb-gam-color-border );
 	border-radius: var( --wb-gam-radius-md );

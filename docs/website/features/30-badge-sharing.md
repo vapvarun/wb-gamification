@@ -37,7 +37,7 @@ Credential badges include a pre-built LinkedIn deep-link on the share page. Clic
 3. Check the **Is Credential** option.
 4. Save the badge.
 
-Non-credential badges still get OG share pages — they just do not output the JSON-LD block or the LinkedIn link.
+Non-credential badges still get OG share pages - they just do not output the JSON-LD block or the LinkedIn link.
 
 ## Toggling the feature
 

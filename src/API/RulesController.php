@@ -280,9 +280,10 @@ class RulesController extends WP_REST_Controller {
 			return new WP_Error( 'rest_insert_failed', __( 'Could not create rule.', 'wb-gamification' ), array( 'status' => 500 ) );
 		}
 
+		$id = (int) $wpdb->insert_id; // Before any other $wpdb call can replace it.
 		$this->flush_rules_cache();
 
-		return new WP_REST_Response( $this->prepare_item( $this->fetch_row( $wpdb->insert_id ) ), 201 );
+		return new WP_REST_Response( $this->prepare_item( $this->fetch_row( $id ) ), 201 );
 	}
 
 	/**

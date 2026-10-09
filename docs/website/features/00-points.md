@@ -73,9 +73,9 @@ Setting a value to 0 effectively disables point awards for that action without d
 
 Members can see their points in several places:
 
-- **BuddyPress profile** — the Gamification tab shows total points, current level, and recent activity (requires BuddyPress)
-- **Member Points block** — place this Gutenberg block on any page; it shows the logged-in member's total, level name, and progress bar toward the next level
-- **Leaderboard** — members can see their rank relative to others
+- **BuddyPress profile** - the Gamification tab shows total points, current level, and recent activity (requires BuddyPress)
+- **Member Points block** - place this Gutenberg block on any page; it shows the logged-in member's total, level name, and progress bar toward the next level
+- **Leaderboard** - members can see their rank relative to others
 
 ## Viewing the Earning Guide
 

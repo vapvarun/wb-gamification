@@ -685,6 +685,8 @@ export interface paths {
                         /** @description Unique slug - lowercase, alphanumeric + dash + underscore. Immutable after creation. */
                         slug: string;
                         label: string;
+                        /** @description Name for an amount of one ("Coin"). Empty = use label for every amount. */
+                        label_singular?: string;
                         description?: string;
                         icon?: string;
                         is_default?: boolean;
@@ -732,6 +734,8 @@ export interface paths {
                         /** @description Unique slug - lowercase, alphanumeric + dash + underscore. Immutable after creation. */
                         slug?: string;
                         label?: string;
+                        /** @description Name for an amount of one ("Coin"). Empty = use label for every amount. */
+                        label_singular?: string;
                         description?: string;
                         icon?: string;
                         is_default?: boolean;
@@ -765,6 +769,8 @@ export interface paths {
                         /** @description Unique slug - lowercase, alphanumeric + dash + underscore. Immutable after creation. */
                         slug?: string;
                         label?: string;
+                        /** @description Name for an amount of one ("Coin"). Empty = use label for every amount. */
+                        label_singular?: string;
                         description?: string;
                         icon?: string;
                         is_default?: boolean;
@@ -821,6 +827,8 @@ export interface paths {
                         /** @description Unique slug - lowercase, alphanumeric + dash + underscore. Immutable after creation. */
                         slug?: string;
                         label?: string;
+                        /** @description Name for an amount of one ("Coin"). Empty = use label for every amount. */
+                        label_singular?: string;
                         description?: string;
                         icon?: string;
                         is_default?: boolean;
@@ -1134,7 +1142,9 @@ export interface paths {
                         closes_at?: string;
                         /** @description Cap on how many members may earn this badge. Null = unlimited. */
                         max_earners?: number | null;
-                        /** @description Auto-award rule. Shape: { type: "admin_awarded"|"point_milestone"|"action_count", points?: int, action_id?: string, count?: int }. */
+                        /** @description Award this badge to members who ALREADY qualify. Default false, and deliberately so: retroactively awarding a badge to thousands of members is a decision the site owner makes, not something the plugin does to their community on its own. */
+                        backfill?: boolean;
+                        /** @description Auto-award rule. MULTI-CONDITION (preferred): { match: "all"|"any", conditions: [ { type, ... }, ... ] }. Condition types: point_milestone (points), action_count (action_id, count), level_reached (level_id), badge_earned (badge_id), streak_days (days), tenure_days (days), points_in_period (points, period: day|week|month), admin_awarded (no rule row -- the badge becomes manual). SINGLE-CONDITION (legacy, still supported): { type, ... } -- wrapped into a one-condition group on write, so only one shape ever reaches the database. */
                         condition?: Record<string, never>;
                     };
                 };
@@ -1208,7 +1218,9 @@ export interface paths {
                         closes_at?: string;
                         /** @description Cap on how many members may earn this badge. Null = unlimited. */
                         max_earners?: number | null;
-                        /** @description Auto-award rule. Shape: { type: "admin_awarded"|"point_milestone"|"action_count", points?: int, action_id?: string, count?: int }. */
+                        /** @description Award this badge to members who ALREADY qualify. Default false, and deliberately so: retroactively awarding a badge to thousands of members is a decision the site owner makes, not something the plugin does to their community on its own. */
+                        backfill?: boolean;
+                        /** @description Auto-award rule. MULTI-CONDITION (preferred): { match: "all"|"any", conditions: [ { type, ... }, ... ] }. Condition types: point_milestone (points), action_count (action_id, count), level_reached (level_id), badge_earned (badge_id), streak_days (days), tenure_days (days), points_in_period (points, period: day|week|month), admin_awarded (no rule row -- the badge becomes manual). SINGLE-CONDITION (legacy, still supported): { type, ... } -- wrapped into a one-condition group on write, so only one shape ever reaches the database. */
                         condition?: Record<string, never>;
                     };
                 };
@@ -1248,7 +1260,9 @@ export interface paths {
                         closes_at?: string;
                         /** @description Cap on how many members may earn this badge. Null = unlimited. */
                         max_earners?: number | null;
-                        /** @description Auto-award rule. Shape: { type: "admin_awarded"|"point_milestone"|"action_count", points?: int, action_id?: string, count?: int }. */
+                        /** @description Award this badge to members who ALREADY qualify. Default false, and deliberately so: retroactively awarding a badge to thousands of members is a decision the site owner makes, not something the plugin does to their community on its own. */
+                        backfill?: boolean;
+                        /** @description Auto-award rule. MULTI-CONDITION (preferred): { match: "all"|"any", conditions: [ { type, ... }, ... ] }. Condition types: point_milestone (points), action_count (action_id, count), level_reached (level_id), badge_earned (badge_id), streak_days (days), tenure_days (days), points_in_period (points, period: day|week|month), admin_awarded (no rule row -- the badge becomes manual). SINGLE-CONDITION (legacy, still supported): { type, ... } -- wrapped into a one-condition group on write, so only one shape ever reaches the database. */
                         condition?: Record<string, never>;
                     };
                 };
@@ -1311,7 +1325,9 @@ export interface paths {
                         closes_at?: string;
                         /** @description Cap on how many members may earn this badge. Null = unlimited. */
                         max_earners?: number | null;
-                        /** @description Auto-award rule. Shape: { type: "admin_awarded"|"point_milestone"|"action_count", points?: int, action_id?: string, count?: int }. */
+                        /** @description Award this badge to members who ALREADY qualify. Default false, and deliberately so: retroactively awarding a badge to thousands of members is a decision the site owner makes, not something the plugin does to their community on its own. */
+                        backfill?: boolean;
+                        /** @description Auto-award rule. MULTI-CONDITION (preferred): { match: "all"|"any", conditions: [ { type, ... }, ... ] }. Condition types: point_milestone (points), action_count (action_id, count), level_reached (level_id), badge_earned (badge_id), streak_days (days), tenure_days (days), points_in_period (points, period: day|week|month), admin_awarded (no rule row -- the badge becomes manual). SINGLE-CONDITION (legacy, still supported): { type, ... } -- wrapped into a one-condition group on write, so only one shape ever reaches the database. */
                         condition?: Record<string, never>;
                     };
                 };
@@ -1810,6 +1826,68 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/badges/{badge_id}/share": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create badges */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    badge_id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        badge_id: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Successful response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        /** Delete badges */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    badge_id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Successful response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/challenges": {
         parameters: {
             query?: never;
@@ -2026,48 +2104,6 @@ export interface paths {
         };
         trace?: never;
     };
-    "/challenges/{id}/complete": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Create challenges */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    id: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: {
-                content: {
-                    "application/json": {
-                        id: number;
-                    };
-                };
-            };
-            responses: {
-                /** @description Successful response */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/events": {
         parameters: {
             query?: never;
@@ -2233,6 +2269,121 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/import/{source}/progress": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get import */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    source: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Successful response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/import/{source}/undo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create import */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    source: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        dry_run?: boolean;
+                        confirm?: boolean;
+                    };
+                };
+            };
+            responses: {
+                /** @description Successful response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/import/{source}/resume": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create import */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    source: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Successful response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/webhooks": {
         parameters: {
             query?: never;
@@ -2275,6 +2426,8 @@ export interface paths {
                         url: string;
                         /** @description Event types to subscribe to. */
                         events: unknown[];
+                        /** @description Signing secret for the HMAC-SHA256 payload signature. At least 16 characters. Leave blank to generate one. */
+                        secret?: string;
                         is_active?: boolean;
                     };
                 };
@@ -2340,6 +2493,8 @@ export interface paths {
                         url?: string;
                         /** @description Event types to subscribe to. */
                         events?: unknown[];
+                        /** @description Signing secret for the HMAC-SHA256 payload signature. At least 16 characters. Leave blank to generate one. */
+                        secret?: string;
                         is_active?: boolean;
                     };
                 };
@@ -2371,6 +2526,8 @@ export interface paths {
                         url?: string;
                         /** @description Event types to subscribe to. */
                         events?: unknown[];
+                        /** @description Signing secret for the HMAC-SHA256 payload signature. At least 16 characters. Leave blank to generate one. */
+                        secret?: string;
                         is_active?: boolean;
                     };
                 };
@@ -2425,6 +2582,8 @@ export interface paths {
                         url?: string;
                         /** @description Event types to subscribe to. */
                         events?: unknown[];
+                        /** @description Signing secret for the HMAC-SHA256 payload signature. At least 16 characters. Leave blank to generate one. */
+                        secret?: string;
                         is_active?: boolean;
                     };
                 };
@@ -2827,7 +2986,8 @@ export interface paths {
                         point_type?: string;
                         reward_type: string;
                         reward_config?: Record<string, never>;
-                        stock?: number;
+                        /** @description Remaining stock. Null means unlimited; 0 means sold out. */
+                        stock?: number | null;
                         is_active?: boolean;
                     };
                 };
@@ -2896,7 +3056,8 @@ export interface paths {
                         point_type?: string;
                         reward_type?: string;
                         reward_config?: Record<string, never>;
-                        stock?: number;
+                        /** @description Remaining stock. Null means unlimited; 0 means sold out. */
+                        stock?: number | null;
                         is_active?: boolean;
                     };
                 };
@@ -2931,7 +3092,8 @@ export interface paths {
                         point_type?: string;
                         reward_type?: string;
                         reward_config?: Record<string, never>;
-                        stock?: number;
+                        /** @description Remaining stock. Null means unlimited; 0 means sold out. */
+                        stock?: number | null;
                         is_active?: boolean;
                     };
                 };
@@ -2989,7 +3151,8 @@ export interface paths {
                         point_type?: string;
                         reward_type?: string;
                         reward_config?: Record<string, never>;
-                        stock?: number;
+                        /** @description Remaining stock. Null means unlimited; 0 means sold out. */
+                        stock?: number | null;
                         is_active?: boolean;
                     };
                 };
@@ -3013,7 +3176,25 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /** Get redemptions */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Successful response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
         put?: never;
         /** Create redemptions */
         post: {
@@ -3074,6 +3255,91 @@ export interface paths {
         };
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/redemptions/{id}/fulfill": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create redemptions */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        id?: number;
+                    };
+                };
+            };
+            responses: {
+                /** @description Successful response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/redemptions/{id}/refund": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create redemptions */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        id?: number;
+                        note?: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Successful response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
         delete?: never;
         options?: never;
         head?: never;
@@ -3251,6 +3517,115 @@ export interface paths {
                         name?: string;
                         min_points?: number;
                         icon_url?: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Successful response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        trace?: never;
+    };
+    "/settings/capabilities": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get settings */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Successful response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        /** Update settings */
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        /** @description Role slug => array of wb_gam_* capabilities that role should hold. A role mapped to an empty list loses all plugin capabilities. */
+                        roles: Record<string, never>;
+                    };
+                };
+            };
+            responses: {
+                /** @description Successful response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        /** Create settings */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        /** @description Role slug => array of wb_gam_* capabilities that role should hold. A role mapped to an empty list loses all plugin capabilities. */
+                        roles: Record<string, never>;
+                    };
+                };
+            };
+            responses: {
+                /** @description Successful response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update settings */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        /** @description Role slug => array of wb_gam_* capabilities that role should hold. A role mapped to an empty list loses all plugin capabilities. */
+                        roles: Record<string, never>;
                     };
                 };
             };
@@ -3607,7 +3982,7 @@ export interface paths {
                         promote_pct: number;
                         demote_pct: number;
                         duration: string;
-                        enabled: boolean;
+                        enabled?: boolean;
                     };
                 };
             };
@@ -3991,6 +4366,48 @@ export interface paths {
                 content: {
                     "application/json": {
                         confirm: boolean;
+                    };
+                };
+            };
+            responses: {
+                /** @description Successful response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tools/retry-side-effect/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create tools */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        id?: number;
                     };
                 };
             };

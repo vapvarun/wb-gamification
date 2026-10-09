@@ -1,6 +1,6 @@
 # BuddyPress Integration
 
-The BuddyPress integration is the most comprehensive integration in WB Gamification. It covers the core social loop — posting, commenting, friending, and group activity — as well as BuddyPress add-ons for reactions, polls, member blogs, and media.
+The BuddyPress integration is the most comprehensive integration in WB Gamification. It covers the core social loop - posting, commenting, friending, and group activity - as well as BuddyPress add-ons for reactions, polls, member blogs, and media.
 
 The manifest loads automatically when BuddyPress is active. No configuration is required.
 
@@ -22,7 +22,7 @@ The manifest loads automatically when BuddyPress is active. No configuration is 
 ### Notes
 
 - `bp_friends_accepted` awards the member who **accepts** the request, not the one who initiated it.
-- `bp_profile_complete` fires on `xprofile_updated_profile`. It is non-repeatable — a member earns it once.
+- `bp_profile_complete` fires on `xprofile_updated_profile`. It is non-repeatable - a member earns it once.
 - `bp_reactions_received` requires the BuddyPress Reactions add-on.
 - `bp_polls_created` requires the BuddyPress Polls add-on.
 - `bp_publish_post` requires the BP Member Blog add-on and awards on `publish_post` for `post` post type only. Pages and custom post types are excluded.

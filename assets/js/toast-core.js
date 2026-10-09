@@ -49,6 +49,10 @@
 	var position  = POSITIONS.indexOf( cfg.position ) === -1 ? 'bottom-center' : cfg.position;
 
 	var MAX_VISIBLE = 3;
+	// Phones show one toast at a time, in order: three stacked covered about a quarter of the
+	// screen, over the form being filled in. Same rule as BuddyNext's stack.
+	var ONE_AT_A_TIME = '(max-width: 640px)';
+	var waiting       = []; // { opts, real, handle }, oldest first.
 	var DISMISS_MS  = 4000;
 	var RESUME_MS   = 2000;
 	var EXIT_MS     = 250;
@@ -173,7 +177,62 @@
 			if ( handle.el.parentNode ) {
 				handle.el.remove();
 			}
+			nextToast();
 		}, EXIT_MS );
+	}
+
+	/**
+	 * Queue a toast behind the one on screen (phones). Nothing is dropped. The handle forwards
+	 * to the real toast once it shows; until then update() edits the queued options.
+	 *
+	 * @param {Object}      opts Same options as toast().
+	 * @param {HTMLElement} host The stack.
+	 * @return {Object} { el, gone, update, dismiss }
+	 */
+	function waitTurn( opts, host ) {
+		var same = opts.key ? waiting.filter( function ( e ) { return e.opts.key === opts.key; } )[ 0 ] : null;
+		if ( same ) {
+			same.opts = opts;
+			return same.handle;
+		}
+		var entry = { opts: opts, real: null };
+		entry.handle = {
+			el: null,
+			get gone() { return entry.real ? entry.real.gone : -1 === waiting.indexOf( entry ); },
+			update: function ( next ) {
+				if ( entry.real ) {
+					entry.real.update( next );
+				} else {
+					entry.opts = Object.assign( {}, entry.opts, next || {} );
+				}
+			},
+			dismiss: function () {
+				if ( entry.real ) {
+					entry.real.dismiss();
+				} else if ( -1 !== waiting.indexOf( entry ) ) {
+					waiting.splice( waiting.indexOf( entry ), 1 );
+				}
+			},
+		};
+		waiting.push( entry );
+
+		// The toast on screen must not hold the line: one that would stay open (it carries a
+		// link) now times out like the rest.
+		var showing = host.lastElementChild && host.lastElementChild._wbGamToast;
+		if ( showing && showing.persist ) {
+			showing.persist = false;
+			arm( showing, DISMISS_MS );
+		}
+		return entry.handle;
+	}
+
+	/** Show the next waiting toast, if any. */
+	function nextToast() {
+		var entry = waiting.shift();
+		if ( entry ) {
+			entry.real      = toast( entry.opts );
+			entry.handle.el = entry.real.el;
+		}
 	}
 
 	/** Fill (or refill) the text, link and shape of a toast from an options object. */
@@ -279,15 +338,17 @@
 			persist: !! ( opts.persist || hasLink ),
 		} );
 
-		if ( ! h || ! h.el ) {
+		// A toast BuddyNext is holding in line on a phone (h.waiting) is alive, not dead: it
+		// still takes updates, so a points burst keeps merging into one toast.
+		if ( ! h || ( ! h.el && ! h.waiting ) ) {
 			return { el: null, gone: true, update: function () {}, dismiss: function () {} };
 		}
-		if ( typeof opts.onShow === 'function' ) {
+		if ( h.el && typeof opts.onShow === 'function' ) {
 			window.requestAnimationFrame( function () { opts.onShow( h.el, h ); } );
 		}
 		return {
-			el: h.el,
-			get gone() { return ! h.el.isConnected; },
+			get el() { return h.el; },
+			get gone() { return h.el ? ! h.el.isConnected : ! h.waiting; },
 			update: function ( next ) { h.update( next || {} ); },
 			dismiss: function () { h.dismiss(); },
 		};
@@ -304,6 +365,10 @@
 		if ( opts.key && live[ opts.key ] && ! live[ opts.key ].gone ) {
 			update( live[ opts.key ], opts );
 			return live[ opts.key ];
+		}
+
+		if ( host.children.length && window.matchMedia( ONE_AT_A_TIME ).matches ) {
+			return waitTurn( opts, host );
 		}
 
 		var handle = { key: opts.key || '', el: build( opts ), timer: 0, gone: false, persist: false };
