@@ -7,7 +7,7 @@
     "domainPath": "/languages",
     "requiresWP": "6.5",
     "requiresPHP": "8.1",
-    "description": "Complete gamification plugin for BuddyPress and WordPress. Part of the Reign Stack. Points, badges, levels, leaderboards, challenges, and streaks — zero config, works out of the box.",
+    "description": "Complete gamification plugin for BuddyPress and WordPress. Part of the Reign Stack. Points, badges, levels, leaderboards, challenges, and streaks \u2014 zero config, works out of the box.",
     "author": "Wbcom Designs",
     "pluginURI": "https://wbcomdesigns.com/",
     "network": false
@@ -9755,7 +9755,7 @@
       "type": "action",
       "purpose": "",
       "fired_at": [
-        "src/Engine/BadgeEngine.php:1148"
+        "src/Engine/BadgeEngine.php:1143"
       ],
       "consumed_by": []
     },
@@ -9773,7 +9773,7 @@
       "type": "action",
       "purpose": "",
       "fired_at": [
-        "src/API/BadgesController.php:588"
+        "src/API/BadgesController.php:591"
       ],
       "consumed_by": []
     },
@@ -9836,7 +9836,7 @@
       "type": "action",
       "purpose": "",
       "fired_at": [
-        "src/API/CohortSettingsController.php:176"
+        "src/API/CohortSettingsController.php:178"
       ],
       "consumed_by": []
     },
@@ -9845,7 +9845,7 @@
       "type": "action",
       "purpose": "",
       "fired_at": [
-        "src/API/BadgesController.php:658"
+        "src/API/BadgesController.php:661"
       ],
       "consumed_by": []
     },
@@ -9895,13 +9895,13 @@
         "src/Engine/PointsEngine.php:335",
         "src/Engine/PointsEngine.php:351",
         "src/Engine/PointsEngine.php:408",
-        "src/Engine/PointsEngine.php:784",
-        "src/Engine/Registry.php:159",
-        "src/Integrations/Jetonomy/JetonomyIntegration.php:106"
+        "src/Engine/PointsEngine.php:863",
+        "src/Engine/Registry.php:188",
+        "src/Integrations/Jetonomy/JetonomyIntegration.php:163"
       ],
       "consumed_by": [
-        "src/API/EventsController.php:281 $capture",
-        "src/Engine/NotificationBridge.php:210 array( __CLASS__"
+        "src/API/EventsController.php:266 $capture",
+        "src/Engine/NotificationBridge.php:263 array( __CLASS__"
       ]
     },
     {
@@ -9910,17 +9910,29 @@
       "purpose": "",
       "fired_at": [
         "src/BuddyPress/Stream/BadgeStream.php:6",
-        "src/Engine/BadgeEngine.php:1138",
-        "src/Engine/NotificationBridge.php:415",
+        "src/Engine/BadgeEngine.php:1133",
+        "src/Engine/CommunityNotifications.php:59",
+        "src/Engine/NotificationBridge.php:468",
         "src/Integrations/ActivityPub.php:89"
       ],
       "consumed_by": [
         "src/BuddyPress/Stream/BadgeStream.php:31 array( __CLASS__",
-        "src/Engine/BadgeEngine.php:478 array( __CLASS__",
-        "src/Engine/NotificationBridge.php:172 array( __CLASS__",
+        "src/Engine/BadgeEngine.php:481 array( __CLASS__",
+        "src/Engine/CommunityNotifications.php:33 array( __CLASS__",
+        "src/Engine/NotificationBridge.php:225 array( __CLASS__",
         "src/Engine/TransactionalEmailEngine.php:81 array( __CLASS__",
-        "src/Integrations/ActivityPub.php:47 array( __CLASS__",
-        "src/Engine/CommunityNotifications.php:33 array( __CLASS__"
+        "src/Integrations/ActivityPub.php:47 array( __CLASS__"
+      ]
+    },
+    {
+      "name": "wb_gam_badge_deleted",
+      "type": "action",
+      "purpose": "",
+      "fired_at": [
+        "src/API/BadgesController.php:739"
+      ],
+      "consumed_by": [
+        "src/Engine/CommunityNotifications.php:51 array( __CLASS__"
       ]
     },
     {
@@ -9928,10 +9940,10 @@
       "type": "action",
       "purpose": "",
       "fired_at": [
-        "src/Engine/BadgeEngine.php:1129"
+        "src/Engine/BadgeEngine.php:1124"
       ],
       "consumed_by": [
-        "src/Engine/BadgeEngine.php:482 array( __CLASS__"
+        "src/Engine/BadgeEngine.php:485 array( __CLASS__"
       ]
     },
     {
@@ -9951,17 +9963,6 @@
         "src/Engine/BadgeShare.php:195"
       ],
       "consumed_by": []
-    },
-    {
-      "name": "wb_gam_badge_deleted",
-      "type": "action",
-      "purpose": "",
-      "fired_at": [
-        "src/API/BadgesController.php:739"
-      ],
-      "consumed_by": [
-        "src/Engine/CommunityNotifications.php:47 array( __CLASS__"
-      ]
     },
     {
       "name": "wb_gam_before_delete_community_challenge",
@@ -10013,17 +10014,17 @@
       "type": "action",
       "purpose": "",
       "fired_at": [
-        "src/API/ChallengesController.php:614",
         "src/BuddyPress/Stream/ChallengeStream.php:6",
-        "src/Engine/ChallengeEngine.php:312"
+        "src/Engine/ChallengeEngine.php:304",
+        "src/Engine/CommunityNotifications.php:151"
       ],
       "consumed_by": [
         "src/BuddyPress/Stream/ChallengeStream.php:31 array( __CLASS__",
-        "src/Engine/NotificationBridge.php:175 array( __CLASS__",
+        "src/Engine/CommunityNotifications.php:37 array( __CLASS__",
+        "src/Engine/NotificationBridge.php:228 array( __CLASS__",
         "src/Engine/TransactionalEmailEngine.php:82 array( __CLASS__",
         "src/Engine/WebhookDispatcher.php:110 array( self::class",
-        "src/Integrations/ActivityPub.php:49 array( __CLASS__",
-        "src/Engine/CommunityNotifications.php:37 array( __CLASS__"
+        "src/Integrations/ActivityPub.php:49 array( __CLASS__"
       ]
     },
     {
@@ -10031,11 +10032,12 @@
       "type": "action",
       "purpose": "",
       "fired_at": [
-        "src/Engine/CohortEngine.php:433"
+        "src/Engine/CohortEngine.php:456",
+        "src/Engine/CommunityNotifications.php:304"
       ],
       "consumed_by": [
         "src/Engine/CommunityNotifications.php:42 array( __CLASS__",
-        "src/Engine/NotificationBridge.php:213 array( __CLASS__"
+        "src/Engine/NotificationBridge.php:266 array( __CLASS__"
       ]
     },
     {
@@ -10043,7 +10045,7 @@
       "type": "action",
       "purpose": "",
       "fired_at": [
-        "src/API/CohortSettingsController.php:178"
+        "src/API/CohortSettingsController.php:180"
       ],
       "consumed_by": []
     },
@@ -10052,7 +10054,7 @@
       "type": "action",
       "purpose": "",
       "fired_at": [
-        "src/Engine/CommunityChallengeEngine.php:298"
+        "src/Engine/CommunityChallengeEngine.php:313"
       ],
       "consumed_by": []
     },
@@ -10084,10 +10086,34 @@
       "consumed_by": []
     },
     {
+      "name": "wb_gam_community_goal_reached",
+      "type": "action",
+      "purpose": "Fired once per contributor when a community challenge reaches its goal (user_id, challenge_id, bonus points). Drives the Moment card and the bell row.",
+      "fired_at": [
+        "src/Engine/CommunityChallengeEngine.php:133",
+        "src/Engine/CommunityNotifications.php:333"
+      ],
+      "consumed_by": [
+        "src/Engine/CommunityNotifications.php:43 array( __CLASS__",
+        "src/Engine/NotificationBridge.php:267 array( __CLASS__"
+      ]
+    },
+    {
+      "name": "wb_gam_community_notification_removed",
+      "type": "action",
+      "purpose": "Community notification contract (1.6.5): fires when an object a notification named is permanently gone (kudos revoked; badge definition deleted), so a host removes every bell row about it.",
+      "fired_at": [
+        "src/Engine/CommunityNotifications.php:146",
+        "src/Engine/CommunityNotifications.php:422"
+      ],
+      "consumed_by": []
+    },
+    {
       "name": "wb_gam_credential_expired",
       "type": "action",
       "purpose": "",
       "fired_at": [
+        "src/Engine/CommunityNotifications.php:196",
         "src/Engine/CredentialExpiryEngine.php:194"
       ],
       "consumed_by": [
@@ -10099,7 +10125,7 @@
       "type": "action",
       "purpose": "",
       "fired_at": [
-        "src/Engine/FeatureFlags.php:219"
+        "src/Engine/FeatureFlags.php:225"
       ],
       "consumed_by": []
     },
@@ -10118,13 +10144,14 @@
       "purpose": "",
       "fired_at": [
         "src/BuddyPress/Stream/KudosStream.php:6",
-        "src/Engine/KudosEngine.php:248"
+        "src/Engine/CommunityNotifications.php:112",
+        "src/Engine/KudosEngine.php:339"
       ],
       "consumed_by": [
         "src/BuddyPress/Stream/KudosStream.php:31 array( __CLASS__",
-        "src/Engine/NotificationBridge.php:176 array( __CLASS__",
-        "src/Engine/WebhookDispatcher.php:117 array( self::class",
-        "src/Engine/CommunityNotifications.php:35 array( __CLASS__"
+        "src/Engine/CommunityNotifications.php:35 array( __CLASS__",
+        "src/Engine/NotificationBridge.php:229 array( __CLASS__",
+        "src/Engine/WebhookDispatcher.php:117 array( self::class"
       ]
     },
     {
@@ -10132,11 +10159,12 @@
       "type": "action",
       "purpose": "",
       "fired_at": [
-        "src/Engine/KudosEngine.php:512"
+        "src/Engine/CommunityNotifications.php:140",
+        "src/Engine/KudosEngine.php:611"
       ],
       "consumed_by": [
-        "src/Engine/NotificationBridge.php:180 array( __CLASS__",
-        "src/Engine/CommunityNotifications.php:36 array( __CLASS__"
+        "src/Engine/CommunityNotifications.php:36 array( __CLASS__",
+        "src/Engine/NotificationBridge.php:233 array( __CLASS__"
       ]
     },
     {
@@ -10144,7 +10172,7 @@
       "type": "action",
       "purpose": "",
       "fired_at": [
-        "src/Engine/LeaderboardEngine.php:204"
+        "src/Engine/LeaderboardEngine.php:224"
       ],
       "consumed_by": []
     },
@@ -10153,7 +10181,7 @@
       "type": "action",
       "purpose": "",
       "fired_at": [
-        "src/Engine/LevelEngine.php:304"
+        "src/Engine/LevelEngine.php:307"
       ],
       "consumed_by": [
         "src/Engine/RankAutomation.php:87 array( __CLASS__"
@@ -10165,18 +10193,19 @@
       "purpose": "",
       "fired_at": [
         "src/BuddyPress/Stream/LevelStream.php:6",
-        "src/Engine/LevelEngine.php:283",
-        "src/Engine/NotificationBridge.php:440"
+        "src/Engine/CommunityNotifications.php:82",
+        "src/Engine/LevelEngine.php:286",
+        "src/Engine/NotificationBridge.php:493"
       ],
       "consumed_by": [
         "src/BuddyPress/Stream/LevelStream.php:35 array( __CLASS__",
-        "src/Engine/BadgeEngine.php:441 array( __CLASS__",
-        "src/Engine/NotificationBridge.php:173 array( __CLASS__",
+        "src/Engine/BadgeEngine.php:444 array( __CLASS__",
+        "src/Engine/CommunityNotifications.php:34 array( __CLASS__",
+        "src/Engine/NotificationBridge.php:226 array( __CLASS__",
         "src/Engine/RankAutomation.php:78 array( __CLASS__",
         "src/Engine/TransactionalEmailEngine.php:80 array( __CLASS__",
         "src/Engine/WebhookDispatcher.php:108 array( self::class",
-        "src/Integrations/ActivityPub.php:48 array( __CLASS__",
-        "src/Engine/CommunityNotifications.php:34 array( __CLASS__"
+        "src/Integrations/ActivityPub.php:48 array( __CLASS__"
       ]
     },
     {
@@ -10184,10 +10213,10 @@
       "type": "action",
       "purpose": "",
       "fired_at": [
-        "src/Engine/LevelEngine.php:281"
+        "src/Engine/LevelEngine.php:284"
       ],
       "consumed_by": [
-        "src/Engine/BadgeEngine.php:458 array( __CLASS__",
+        "src/Engine/BadgeEngine.php:461 array( __CLASS__",
         "src/Engine/RankAutomation.php:81 array( __CLASS__"
       ]
     },
@@ -10219,10 +10248,20 @@
       "consumed_by": []
     },
     {
+      "name": "wb_gam_notification_created",
+      "type": "action",
+      "purpose": "Community notification contract (1.6.5): fires the normalized payload a host plugin (BuddyNext) reads to show one bell row. Built from the nine event hooks above via CommunityNotifications; never fires for the actor notifying themself or during an import.",
+      "fired_at": [
+        "src/Engine/CommunityNotifications.php:449"
+      ],
+      "consumed_by": []
+    },
+    {
       "name": "wb_gam_personal_record",
       "type": "action",
       "purpose": "",
       "fired_at": [
+        "src/Engine/CommunityNotifications.php:219",
         "src/Engine/PersonalRecordEngine.php:153"
       ],
       "consumed_by": [
@@ -10234,7 +10273,7 @@
       "type": "action",
       "purpose": "",
       "fired_at": [
-        "src/Services/PointTypeConversionService.php:444"
+        "src/Services/PointTypeConversionService.php:445"
       ],
       "consumed_by": []
     },
@@ -10246,11 +10285,11 @@
         "src/Engine/Engine.php:706"
       ],
       "consumed_by": [
-        "src/Engine/BadgeEngine.php:421 array( __CLASS__",
+        "src/Engine/BadgeEngine.php:424 array( __CLASS__",
         "src/Engine/ChallengeEngine.php:76 array( __CLASS__",
         "src/Engine/CommunityChallengeEngine.php:54 array( __CLASS__",
-        "src/Engine/LeaderboardEngine.php:91 array( __CLASS__",
-        "src/Engine/NotificationBridge.php:171 array( __CLASS__"
+        "src/Engine/LeaderboardEngine.php:108 array( __CLASS__",
+        "src/Engine/NotificationBridge.php:224 array( __CLASS__"
       ]
     },
     {
@@ -10258,10 +10297,10 @@
       "type": "action",
       "purpose": "",
       "fired_at": [
-        "src/Engine/PointsEngine.php:1007"
+        "src/Engine/PointsEngine.php:1090"
       ],
       "consumed_by": [
-        "src/Engine/LeaderboardEngine.php:92 array( __CLASS__"
+        "src/Engine/LeaderboardEngine.php:109 array( __CLASS__"
       ]
     },
     {
@@ -10269,7 +10308,7 @@
       "type": "action",
       "purpose": "",
       "fired_at": [
-        "src/Engine/PointsExpiry.php:262"
+        "src/Engine/PointsExpiry.php:256"
       ],
       "consumed_by": []
     },
@@ -10278,7 +10317,7 @@
       "type": "action",
       "purpose": "",
       "fired_at": [
-        "src/Engine/RedemptionEngine.php:359"
+        "src/Engine/RedemptionEngine.php:383"
       ],
       "consumed_by": [
         "src/Engine/TransactionalEmailEngine.php:83 array( __CLASS__",
@@ -10286,31 +10325,11 @@
       ]
     },
     {
-      "name": "wb_gam_redemption_refunded",
-      "type": "action",
-      "purpose": "Fires after a redemption is refunded: points credited back and finite stock restored. Integrators reverse any external fulfilment side-effect here.",
-      "fired_at": [
-        "src/Engine/RedemptionEngine.php:459"
-      ],
-      "consumed_by": []
-    },
-    {
-      "name": "wb_gam_redemption_fulfilled",
-      "type": "action",
-      "purpose": "Fires after an owner marks a custom/physical redemption fulfilled. Integrators trigger delivery/notification here.",
-      "fired_at": [
-        "src/Engine/RedemptionEngine.php:510"
-      ],
-      "consumed_by": [
-        "src/Engine/CommunityNotifications.php:38 array( __CLASS__"
-      ]
-    },
-    {
       "name": "wb_gam_points_revoked",
       "type": "action",
       "purpose": "",
       "fired_at": [
-        "src/API/PointsController.php:395"
+        "src/API/PointsController.php:396"
       ],
       "consumed_by": []
     },
@@ -10328,7 +10347,7 @@
       "type": "action",
       "purpose": "",
       "fired_at": [
-        "src/Engine/ProfilePage.php:300"
+        "src/Engine/ProfilePage.php:319"
       ],
       "consumed_by": []
     },
@@ -10351,6 +10370,27 @@
       "consumed_by": []
     },
     {
+      "name": "wb_gam_redemption_fulfilled",
+      "type": "action",
+      "purpose": "Fires after an owner marks a custom/physical redemption fulfilled. Integrators trigger delivery/notification here.",
+      "fired_at": [
+        "src/Engine/CommunityNotifications.php:174",
+        "src/Engine/RedemptionEngine.php:511"
+      ],
+      "consumed_by": [
+        "src/Engine/CommunityNotifications.php:38 array( __CLASS__"
+      ]
+    },
+    {
+      "name": "wb_gam_redemption_refunded",
+      "type": "action",
+      "purpose": "Fires after a redemption is refunded: points credited back and finite stock restored. Integrators reverse any external fulfilment side-effect here.",
+      "fired_at": [
+        "src/Engine/RedemptionEngine.php:460"
+      ],
+      "consumed_by": []
+    },
+    {
       "name": "wb_gam_register",
       "type": "action",
       "purpose": "",
@@ -10364,7 +10404,7 @@
       "type": "action",
       "purpose": "",
       "fired_at": [
-        "src/Engine/StatusRetentionEngine.php:307"
+        "src/Engine/StatusRetentionEngine.php:306"
       ],
       "consumed_by": []
     },
@@ -10373,10 +10413,10 @@
       "type": "action",
       "purpose": "",
       "fired_at": [
-        "src/Engine/StreakEngine.php:341"
+        "src/Engine/StreakEngine.php:417"
       ],
       "consumed_by": [
-        "src/Engine/BadgeEngine.php:453 array( __CLASS__"
+        "src/Engine/BadgeEngine.php:456 array( __CLASS__"
       ]
     },
     {
@@ -10384,7 +10424,7 @@
       "type": "action",
       "purpose": "",
       "fired_at": [
-        "src/Engine/StreakEngine.php:127"
+        "src/Engine/StreakEngine.php:121"
       ],
       "consumed_by": []
     },
@@ -10393,10 +10433,10 @@
       "type": "action",
       "purpose": "",
       "fired_at": [
-        "src/Engine/StreakEngine.php:155"
+        "src/Engine/StreakEngine.php:149"
       ],
       "consumed_by": [
-        "src/Engine/BadgeEngine.php:449 array( __CLASS__"
+        "src/Engine/BadgeEngine.php:452 array( __CLASS__"
       ]
     },
     {
@@ -10404,12 +10444,13 @@
       "type": "action",
       "purpose": "",
       "fired_at": [
-        "src/Engine/StreakEngine.php:449"
+        "src/Engine/CommunityNotifications.php:282",
+        "src/Engine/StreakEngine.php:525"
       ],
       "consumed_by": [
-        "src/Engine/NotificationBridge.php:174 array( __CLASS__",
-        "src/Engine/WebhookDispatcher.php:109 array( self::class",
-        "src/Engine/CommunityNotifications.php:41 array( __CLASS__"
+        "src/Engine/CommunityNotifications.php:41 array( __CLASS__",
+        "src/Engine/NotificationBridge.php:227 array( __CLASS__",
+        "src/Engine/WebhookDispatcher.php:109 array( self::class"
       ]
     },
     {
@@ -10417,7 +10458,7 @@
       "type": "action",
       "purpose": "",
       "fired_at": [
-        "src/Engine/StreakEngine.php:378"
+        "src/Engine/StreakEngine.php:454"
       ],
       "consumed_by": []
     },
@@ -10426,11 +10467,12 @@
       "type": "action",
       "purpose": "",
       "fired_at": [
+        "src/Engine/CommunityNotifications.php:365",
         "src/Services/SubmissionService.php:168"
       ],
       "consumed_by": [
         "src/Engine/CommunityNotifications.php:44 array( __CLASS__",
-        "src/Engine/NotificationBridge.php:215 array( __CLASS__"
+        "src/Engine/NotificationBridge.php:268 array( __CLASS__"
       ]
     },
     {
@@ -10447,11 +10489,12 @@
       "type": "action",
       "purpose": "",
       "fired_at": [
+        "src/Engine/CommunityNotifications.php:388",
         "src/Services/SubmissionService.php:203"
       ],
       "consumed_by": [
         "src/Engine/CommunityNotifications.php:45 array( __CLASS__",
-        "src/Engine/NotificationBridge.php:216 array( __CLASS__"
+        "src/Engine/NotificationBridge.php:269 array( __CLASS__"
       ]
     },
     {
@@ -10469,7 +10512,7 @@
       "type": "action",
       "purpose": "",
       "fired_at": [
-        "src/Engine/Privacy.php:735"
+        "src/Engine/Privacy.php:763"
       ],
       "consumed_by": []
     },
@@ -10478,7 +10521,7 @@
       "type": "action",
       "purpose": "",
       "fired_at": [
-        "src/Engine/WeeklyEmailEngine.php:419"
+        "src/Engine/WeeklyEmailEngine.php:429"
       ],
       "consumed_by": []
     },
@@ -10487,7 +10530,7 @@
       "type": "action",
       "purpose": "",
       "fired_at": [
-        "src/Engine/LeaderboardNudge.php:333"
+        "src/Engine/LeaderboardNudge.php:351"
       ],
       "consumed_by": []
     },
@@ -10496,7 +10539,7 @@
       "type": "action",
       "purpose": "",
       "fired_at": [
-        "src/Admin/SetupWizard.php:379"
+        "src/Admin/SetupWizard.php:395"
       ],
       "consumed_by": []
     },
@@ -10505,9 +10548,20 @@
       "type": "action",
       "purpose": "",
       "fired_at": [
-        "src/Admin/SetupWizard.php:363"
+        "src/Admin/SetupWizard.php:379"
       ],
       "consumed_by": []
+    },
+    {
+      "name": "wb_gam_action_label",
+      "type": "filter",
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/Registry.php:609"
+      ],
+      "consumed_by": [
+        "src/Integrations/Jetonomy/JetonomyIntegration.php:64 array( __CLASS__"
+      ]
     },
     {
       "name": "wb_gam_activity_context_label",
@@ -10523,7 +10577,7 @@
       "type": "filter",
       "purpose": "",
       "fired_at": [
-        "src/Integrations/ActivityPub.php:213"
+        "src/Integrations/ActivityPub.php:217"
       ],
       "consumed_by": []
     },
@@ -10541,10 +10595,10 @@
       "type": "filter",
       "purpose": "",
       "fired_at": [
-        "src/Engine/NotificationBridge.php:279"
+        "src/Engine/NotificationBridge.php:338"
       ],
       "consumed_by": [
-        "src/Engine/NotificationBridge.php:268 fn("
+        "src/Engine/NotificationBridge.php:327 fn("
       ]
     },
     {
@@ -10553,6 +10607,15 @@
       "purpose": "",
       "fired_at": [
         "src/Engine/BadgeRule.php:365"
+      ],
+      "consumed_by": []
+    },
+    {
+      "name": "wb_gam_badge_share_redirect_url",
+      "type": "filter",
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/BadgeSharePage.php:139"
       ],
       "consumed_by": []
     },
@@ -10579,7 +10642,7 @@
       "type": "filter",
       "purpose": "",
       "fired_at": [
-        "src/API/BadgesController.php:548"
+        "src/API/BadgesController.php:551"
       ],
       "consumed_by": []
     },
@@ -10615,7 +10678,7 @@
       "type": "filter",
       "purpose": "",
       "fired_at": [
-        "src/Engine/KudosEngine.php:170"
+        "src/Engine/KudosEngine.php:259"
       ],
       "consumed_by": []
     },
@@ -10624,7 +10687,7 @@
       "type": "filter",
       "purpose": "",
       "fired_at": [
-        "src/API/CohortSettingsController.php:161"
+        "src/API/CohortSettingsController.php:163"
       ],
       "consumed_by": []
     },
@@ -10633,7 +10696,7 @@
       "type": "filter",
       "purpose": "",
       "fired_at": [
-        "src/API/BadgesController.php:619"
+        "src/API/BadgesController.php:622"
       ],
       "consumed_by": []
     },
@@ -10705,7 +10768,7 @@
       "type": "filter",
       "purpose": "",
       "fired_at": [
-        "src/Blocks/daily-bonus/render.php:105"
+        "src/Blocks/daily-bonus/render.php:103"
       ],
       "consumed_by": []
     },
@@ -10723,7 +10786,7 @@
       "type": "filter",
       "purpose": "",
       "fired_at": [
-        "src/Blocks/earning-guide/render.php:117"
+        "src/Blocks/earning-guide/render.php:142"
       ],
       "consumed_by": []
     },
@@ -10750,7 +10813,7 @@
       "type": "filter",
       "purpose": "",
       "fired_at": [
-        "src/Blocks/leaderboard/render.php:84"
+        "src/Blocks/leaderboard/render.php:88"
       ],
       "consumed_by": []
     },
@@ -10777,7 +10840,7 @@
       "type": "filter",
       "purpose": "",
       "fired_at": [
-        "src/Blocks/member-points/render.php:137"
+        "src/Blocks/member-points/render.php:135"
       ],
       "consumed_by": []
     },
@@ -10827,11 +10890,29 @@
       "consumed_by": []
     },
     {
+      "name": "wb_gam_can_view_public_profile",
+      "type": "filter",
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/Privacy.php:121"
+      ],
+      "consumed_by": []
+    },
+    {
+      "name": "wb_gam_category_label",
+      "type": "filter",
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/Registry.php:334"
+      ],
+      "consumed_by": []
+    },
+    {
       "name": "wb_gam_credential_document",
       "type": "filter",
       "purpose": "",
       "fired_at": [
-        "src/API/CredentialController.php:315"
+        "src/API/CredentialController.php:313"
       ],
       "consumed_by": []
     },
@@ -10840,7 +10921,7 @@
       "type": "filter",
       "purpose": "",
       "fired_at": [
-        "src/Admin/DeactivationFeedback.php:200"
+        "src/Admin/DeactivationFeedback.php:205"
       ],
       "consumed_by": []
     },
@@ -10854,11 +10935,20 @@
       "consumed_by": []
     },
     {
+      "name": "wb_gam_defer_member_email_to_buddynext",
+      "type": "filter",
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/WeeklyEmailEngine.php:168"
+      ],
+      "consumed_by": []
+    },
+    {
       "name": "wb_gam_email_body",
       "type": "filter",
       "purpose": "",
       "fired_at": [
-        "src/Engine/TransactionalEmailEngine.php:489"
+        "src/Engine/TransactionalEmailEngine.php:488"
       ],
       "consumed_by": []
     },
@@ -10867,7 +10957,7 @@
       "type": "filter",
       "purpose": "",
       "fired_at": [
-        "src/Engine/TransactionalEmailEngine.php:603"
+        "src/Engine/TransactionalEmailEngine.php:602"
       ],
       "consumed_by": []
     },
@@ -10876,7 +10966,7 @@
       "type": "filter",
       "purpose": "",
       "fired_at": [
-        "src/Engine/TransactionalEmailEngine.php:425"
+        "src/Engine/TransactionalEmailEngine.php:424"
       ],
       "consumed_by": []
     },
@@ -10894,7 +10984,7 @@
       "type": "filter",
       "purpose": "",
       "fired_at": [
-        "src/Engine/TransactionalEmailEngine.php:463"
+        "src/Engine/TransactionalEmailEngine.php:462"
       ],
       "consumed_by": []
     },
@@ -10903,7 +10993,7 @@
       "type": "filter",
       "purpose": "",
       "fired_at": [
-        "src/Engine/TransactionalEmailEngine.php:476"
+        "src/Engine/TransactionalEmailEngine.php:475"
       ],
       "consumed_by": []
     },
@@ -10912,7 +11002,7 @@
       "type": "filter",
       "purpose": "",
       "fired_at": [
-        "src/Engine/BadgeEngine.php:889"
+        "src/Engine/BadgeEngine.php:888"
       ],
       "consumed_by": []
     },
@@ -10941,7 +11031,16 @@
       "type": "filter",
       "purpose": "",
       "fired_at": [
-        "src/Engine/HeartbeatChannel.php:171"
+        "src/Engine/HeartbeatChannel.php:184"
+      ],
+      "consumed_by": []
+    },
+    {
+      "name": "wb_gam_hold_toasts",
+      "type": "filter",
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/NotificationBridge.php:1409"
       ],
       "consumed_by": []
     },
@@ -10950,7 +11049,7 @@
       "type": "filter",
       "purpose": "",
       "fired_at": [
-        "src/Blocks/hub/render.php:119"
+        "src/Blocks/hub/render.php:120"
       ],
       "consumed_by": []
     },
@@ -10964,12 +11063,21 @@
       "consumed_by": []
     },
     {
+      "name": "wb_gam_import_page_size",
+      "type": "filter",
+      "purpose": "Rows an import job processes per page, per phase (points, awards, recompute, reconcile, undo). Clamped to 10-2000.",
+      "fired_at": [
+        "src/Engine/ImportRunner.php:154"
+      ],
+      "consumed_by": []
+    },
+    {
       "name": "wb_gam_import_point_type_map",
       "type": "filter",
       "purpose": "",
       "fired_at": [
-        "src/Integrations/Importers/BadgeOSImporter.php:74",
-        "src/Integrations/Importers/GamiPressImporter.php:67",
+        "src/Integrations/Importers/BadgeOSImporter.php:79",
+        "src/Integrations/Importers/GamiPressImporter.php:77",
         "src/Integrations/Importers/MyCredImporter.php:77"
       ],
       "consumed_by": []
@@ -10984,11 +11092,29 @@
       "consumed_by": []
     },
     {
+      "name": "wb_gam_kudos_daily_ceiling",
+      "type": "filter",
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/KudosEngine.php:219"
+      ],
+      "consumed_by": []
+    },
+    {
       "name": "wb_gam_kudos_per_receiver_cooldown_seconds",
       "type": "filter",
       "purpose": "",
       "fired_at": [
-        "src/Engine/KudosEngine.php:97"
+        "src/Engine/KudosEngine.php:176"
+      ],
+      "consumed_by": []
+    },
+    {
+      "name": "wb_gam_leaderboard_anon_paging",
+      "type": "filter",
+      "purpose": "Whether an anonymous visitor may page past the first leaderboard page over REST (the cursor parameter). Default false.",
+      "fired_at": [
+        "src/API/LeaderboardController.php:261"
       ],
       "consumed_by": []
     },
@@ -10997,8 +11123,7 @@
       "type": "filter",
       "purpose": "",
       "fired_at": [
-        "src/Engine/LeaderboardEngine.php:1019",
-        "src/Engine/LeaderboardEngine.php:784"
+        "src/Engine/LeaderboardEngine.php:1175"
       ],
       "consumed_by": []
     },
@@ -11007,7 +11132,7 @@
       "type": "filter",
       "purpose": "",
       "fired_at": [
-        "src/Engine/LeaderboardEngine.php:910"
+        "src/Engine/LeaderboardEngine.php:1292"
       ],
       "consumed_by": []
     },
@@ -11016,10 +11141,10 @@
       "type": "filter",
       "purpose": "",
       "fired_at": [
-        "src/Engine/LeaderboardEngine.php:965"
+        "src/Engine/LeaderboardEngine.php:1340"
       ],
       "consumed_by": [
-        "src/CLI/DoctorCommand.php:810 $resolve_scope"
+        "src/CLI/DoctorCommand.php:838 $resolve_scope"
       ]
     },
     {
@@ -11072,11 +11197,20 @@
       "consumed_by": []
     },
     {
+      "name": "wb_gam_membership_level_earns",
+      "type": "filter",
+      "purpose": "",
+      "fired_at": [
+        "integrations/jetonomy.php:121"
+      ],
+      "consumed_by": []
+    },
+    {
       "name": "wb_gam_module_enabled",
       "type": "filter",
       "purpose": "",
       "fired_at": [
-        "src/Engine/ModuleToggles.php:130"
+        "src/Engine/ModuleToggles.php:146"
       ],
       "consumed_by": []
     },
@@ -11085,7 +11219,7 @@
       "type": "filter",
       "purpose": "",
       "fired_at": [
-        "src/Engine/LeaderboardNudge.php:285"
+        "src/Engine/LeaderboardNudge.php:303"
       ],
       "consumed_by": []
     },
@@ -11095,6 +11229,15 @@
       "purpose": "",
       "fired_at": [
         "src/Engine/BadgeOgImage.php:119"
+      ],
+      "consumed_by": []
+    },
+    {
+      "name": "wb_gam_personal_record_notify",
+      "type": "filter",
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/CommunityNotifications.php:263"
       ],
       "consumed_by": []
     },
@@ -11114,7 +11257,17 @@
       "type": "filter",
       "purpose": "",
       "fired_at": [
-        "src/Engine/ProfilePage.php:250"
+        "src/Engine/ProfilePage.php:269"
+      ],
+      "consumed_by": []
+    },
+    {
+      "name": "wb_gam_profile_redirect_url",
+      "type": "filter",
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/NotificationBridge.php:1335",
+        "src/Engine/ProfilePage.php:103"
       ],
       "consumed_by": []
     },
@@ -11134,7 +11287,7 @@
       "type": "filter",
       "purpose": "",
       "fired_at": [
-        "src/Engine/RecapEngine.php:217"
+        "src/Engine/RecapEngine.php:218"
       ],
       "consumed_by": []
     },
@@ -11143,7 +11296,7 @@
       "type": "filter",
       "purpose": "",
       "fired_at": [
-        "src/Engine/RuleEngine.php:165"
+        "src/Engine/RuleEngine.php:206"
       ],
       "consumed_by": []
     },
@@ -11152,7 +11305,7 @@
       "type": "filter",
       "purpose": "",
       "fired_at": [
-        "src/Engine/BadgeEngine.php:1034"
+        "src/Engine/BadgeEngine.php:1029"
       ],
       "consumed_by": [
         "src/CLI/ReplayCommand.php:219 $capturer"
@@ -11163,7 +11316,7 @@
       "type": "filter",
       "purpose": "",
       "fired_at": [
-        "src/Engine/LeaderboardNudge.php:265"
+        "src/Engine/LeaderboardNudge.php:283"
       ],
       "consumed_by": []
     },
@@ -11181,7 +11334,7 @@
       "type": "filter",
       "purpose": "",
       "fired_at": [
-        "src/Engine/StreakEngine.php:92"
+        "src/Engine/StreakEngine.php:236"
       ],
       "consumed_by": []
     },
@@ -11208,7 +11361,7 @@
       "type": "filter",
       "purpose": "",
       "fired_at": [
-        "src/Engine/NotificationBridge.php:817"
+        "src/Engine/NotificationBridge.php:1002"
       ],
       "consumed_by": []
     },
@@ -11217,7 +11370,7 @@
       "type": "filter",
       "purpose": "",
       "fired_at": [
-        "src/Engine/NotificationBridge.php:148"
+        "src/Engine/NotificationBridge.php:201"
       ],
       "consumed_by": []
     },
@@ -11231,11 +11384,20 @@
       "consumed_by": []
     },
     {
+      "name": "wb_gam_utc_migration_page_size",
+      "type": "filter",
+      "purpose": "",
+      "fired_at": [
+        "src/Engine/UtcStorageMigration.php:185"
+      ],
+      "consumed_by": []
+    },
+    {
       "name": "wb_gam_weekly_email_body",
       "type": "filter",
       "purpose": "",
       "fired_at": [
-        "src/Engine/WeeklyEmailEngine.php:399"
+        "src/Engine/WeeklyEmailEngine.php:409"
       ],
       "consumed_by": []
     },
@@ -11244,7 +11406,7 @@
       "type": "filter",
       "purpose": "",
       "fired_at": [
-        "integrations/wpmediaverse.php:280"
+        "integrations/wpmediaverse.php:296"
       ],
       "consumed_by": []
     },
@@ -11253,7 +11415,7 @@
       "type": "filter",
       "purpose": "",
       "fired_at": [
-        "integrations/wpmediaverse.php:448"
+        "integrations/wpmediaverse.php:464"
       ],
       "consumed_by": []
     },
@@ -11262,93 +11424,9 @@
       "type": "filter",
       "purpose": "",
       "fired_at": [
-        "integrations/wpmediaverse.php:464"
+        "integrations/wpmediaverse.php:480"
       ],
       "consumed_by": []
-    },
-    {
-      "name": "wb_gam_notification_created",
-      "type": "action",
-      "purpose": "Community notification contract (1.6.5): fires the normalized payload a host plugin (BuddyNext) reads to show one bell row. Built from the nine event hooks above via CommunityNotifications; never fires for the actor notifying themself or during an import.",
-      "fired_at": [
-        "src/Engine/CommunityNotifications.php:332"
-      ],
-      "consumed_by": [
-        "external: buddynext/includes/Notifications/IntegrationNotificationListener.php (add_action, 8 accepted_args)"
-      ]
-    },
-    {
-      "name": "wb_gam_community_notification_removed",
-      "type": "action",
-      "purpose": "Community notification contract (1.6.5): fires when an object a notification named is permanently gone (kudos revoked; badge definition deleted), so a host removes every bell row about it.",
-      "fired_at": [
-        "src/Engine/CommunityNotifications.php:143",
-        "src/Engine/CommunityNotifications.php:308"
-      ],
-      "consumed_by": [
-        "external: buddynext/includes/Notifications/IntegrationNotificationListener.php (add_action)"
-      ]
-    },
-    {
-      "name": "wb_gam_community_notification_types",
-      "type": "filter",
-      "purpose": "Community notification contract (1.6.5): declares this plugin's 11 notification type slugs (label, description, default_on). Fired externally by the host (BuddyNext) collecting every plugin's declared types; this plugin only answers it.",
-      "fired_at": [
-        "external: buddynext/includes/Notifications/IntegrationNotificationListener.php"
-      ],
-      "consumed_by": [
-        "src/Engine/CommunityNotifications.php:53 array( __CLASS__"
-      ]
-    },
-    {
-      "name": "wb_gam_community_goal_reached",
-      "type": "action",
-      "purpose": "Fired once per contributor when a community challenge reaches its goal (user_id, challenge_id, bonus points). Drives the Moment card and the bell row.",
-      "fired_at": [
-        "src/Engine/CommunityChallengeEngine.php:133"
-      ],
-      "consumed_by": [
-        "src/Engine/CommunityNotifications.php:43 array( __CLASS__",
-        "src/Engine/NotificationBridge.php:214 array( __CLASS__"
-      ]
-    },
-    {
-      "name": "wb_gam_celebration_style",
-      "type": "filter",
-      "purpose": "Return 'none' to turn the confetti off for a community where it does not fit; default 'confetti'. Reduced motion is honoured separately.",
-      "fired_at": [
-        "wb-gamification.php:547"
-      ],
-      "consumed_by": []
-    },
-    {
-      "name": "wb_gam_leaderboard_anon_paging",
-      "type": "filter",
-      "purpose": "Whether an anonymous visitor may page past the first leaderboard page over REST (the cursor parameter). Default false.",
-      "fired_at": [
-        "src/API/LeaderboardController.php:261"
-      ],
-      "consumed_by": []
-    },
-    {
-      "name": "wb_gam_import_page_size",
-      "type": "filter",
-      "purpose": "Rows an import job processes per page, per phase (points, awards, recompute, reconcile, undo). Clamped to 10-2000.",
-      "fired_at": [
-        "src/Engine/ImportRunner.php:154"
-      ],
-      "consumed_by": []
-    },
-    {
-      "name": "wb_gam_import_chunk",
-      "type": "action",
-      "purpose": "The chained background job of an import: runs ONE page, then enqueues the next. Args: source slug, run id, sequence number. Action Scheduler, or WP-Cron when it is absent.",
-      "fired_at": [
-        "src/Engine/ImportRunner.php:738 (Action Scheduler / WP-Cron)"
-      ],
-      "consumed_by": [
-        "src/Engine/ImportRunner.php:95 array( __CLASS__"
-      ]
     }
   ],
   "cron": [
