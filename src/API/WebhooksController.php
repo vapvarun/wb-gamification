@@ -257,10 +257,12 @@ class WebhooksController extends WP_REST_Controller {
 			return new WP_Error( 'rest_insert_failed', __( 'Could not create webhook.', 'wb-gamification' ), array( 'status' => 500 ) );
 		}
 
+		$id = (int) $wpdb->insert_id; // Before any other $wpdb call can replace it.
+
 		// A brand-new subscription must start receiving deliveries now, not whenever a cache decides.
 		\WBGam\Engine\WebhookDispatcher::flush_cache();
 
-		$row = $this->fetch_row( $wpdb->insert_id );
+		$row = $this->fetch_row( $id );
 		// Return secret only on creation — not exposed in subsequent GET requests.
 		$data           = $this->prepare_item( $row );
 		$data['secret'] = $secret;

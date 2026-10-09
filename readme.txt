@@ -160,6 +160,7 @@ Calmer reward toasts, fair membership and review payouts, and lighter background
 * Fix      - The toast corner chosen in Settings > Realtime is now applied; every site showed toasts at the bottom center.
 * Fix      - The Year Recap block shows the member's year instead of always showing its empty message, with its own styling and readable action names.
 * Fix      - Award Points confirms the award after saving, and Recent Manual Awards shows each award's own note instead of the member's latest one.
+* Fix      - Creating the first challenge on a new site no longer shows a critical error after saving it.
 * Dev      - New filter `wb_gam_hold_toasts` holds a member's toasts on screens such as sign-up, onboarding or checkout without losing them.
 * Dev      - New filter `wb_gam_membership_level_earns` lets a membership source exclude its free levels from the activation award.
 * Dev      - `wb_gam_action_label` now runs for every action id, so a site can rename any points reason.

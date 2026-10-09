@@ -31,6 +31,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 - The Settings > Realtime toast corner was ignored: `wbGamToast` is now localized on `wb-gam-toast-core`, which reads it on load.
 - The Year Recap block always rendered its empty state (its guard read `total_points`; `RecapEngine` returns `points_this_year`). It now also declares its stylesheet in block.json, shows action labels in Most Active, and is exempt from the shared white card surface like the hub.
 - Award Points: the success toast is carried across the reload (`sessionStorage`, every `data-wb-gam-rest-after="reload"` admin form), and each Recent Manual Awards row reads its note from its own event's metadata; debits now carry their note in their event too. The `_wb_gam_last_award_note` user meta is no longer written (existing values are still exported, erased and removed on uninstall).
+- Creating the first challenge on a fresh site fataled after saving (TypeError in `prepare_challenge_row()`): `bust_action_cache()` INSERTs the missing cache-salt option, which replaced `$wpdb->insert_id` before the read-back. Challenges, rules and webhooks now capture the id straight after their insert.
 
 ## [1.6.5] - 2026-09-29
 
