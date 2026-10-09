@@ -1285,7 +1285,7 @@ final class NotificationBridge {
 
 		$parts = array();
 		foreach ( $totals as $unit => $amount ) {
-			/* translators: 1: an amount, e.g. "55", 2: the site's name for points, e.g. "Points" or "Karma". */
+			/* translators: 1: an amount, e.g. "+10" or "250", 2: the site's name for points, e.g. "Points" or "Karma". */
 			$parts[] = sprintf( __( '%1$s %2$s', 'wb-gamification' ), number_format_i18n( $amount ), $unit );
 		}
 
