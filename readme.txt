@@ -4,7 +4,7 @@ Tags: gamification, points, badges, leaderboard, buddypress
 Requires at least: 6.5
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 1.6.6
+Stable tag: 1.6.7
 License: GPL-2.0+
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -144,6 +144,12 @@ Daily caps, weekly caps and per-action cooldowns are enforced silently. A member
 Since 1.6.4 a badge is private until the member shares it, so links published before the upgrade stop resolving until the member presses Share on their badge board. That is what stops strangers enumerating badge pages by guessing IDs. If you deliberately run an open community and want the old links working again, `wp wb-gamification share grandfather` publishes every existing badge in one pass, and `wp wb-gamification share reset` makes them private again.
 
 == Changelog ==
+
+= 1.6.7 - October 2026 =
+
+Automatic updates work again.
+
+* Fix      - Sites are offered WB Gamification updates in Dashboard > Updates again. The update checker was looking for the licence key under a different name than the one the plugin saves.
 
 = 1.6.6 - October 2026 =
 
