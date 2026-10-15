@@ -3,7 +3,7 @@
  * Plugin Name: WB Gamification
  * Plugin URI:  https://wbcomdesigns.com/
  * Description: Complete gamification plugin for BuddyPress and WordPress. Part of the Reign Stack. Points, badges, levels, leaderboards, challenges, and streaks — zero config, works out of the box.
- * Version:     1.6.6
+ * Version:     1.6.7
  * Author:      Wbcom Designs
  * Author URI:  https://wbcomdesigns.com/
  * License:     GPL-2.0+
@@ -33,7 +33,7 @@ if ( defined( 'WB_GAM_VERSION' ) ) {
 // Plugin Check's internal phpcs invocation.
 // phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 
-define( 'WB_GAM_VERSION', '1.6.6' );
+define( 'WB_GAM_VERSION', '1.6.7' );
 define( 'WB_GAM_FILE', __FILE__ );
 define( 'WB_GAM_PATH', plugin_dir_path( __FILE__ ) );
 define( 'WB_GAM_URL', plugin_dir_url( __FILE__ ) );
@@ -89,8 +89,15 @@ add_action(
 				'url'     => WB_GAM_EDD_STORE_URL,
 				'item_id' => WB_GAM_EDD_ITEM_ID,
 				'version' => WB_GAM_VERSION,
-				'file'    => WB_GAM_FILE,
-				'license' => WB_GAM_LICENSE_PRESET_KEY,
+				'file'        => WB_GAM_FILE,
+				'license'     => WB_GAM_LICENSE_PRESET_KEY,
+				// The SDK ignores `license` and reads the key from an option,
+				// "{id}_license_key" by default. LicenseActivator stores the
+				// preset in `wb_gam_license_key`, so without this the SDK found
+				// no key and never built the updater: sites were not offered
+				// updates (8 of 382 checking, Oct 2026). Must match
+				// LicenseActivator::KEY_OPTION.
+				'option_name' => 'wb_gam_license_key',
 			)
 		);
 	}
