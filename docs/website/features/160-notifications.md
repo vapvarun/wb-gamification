@@ -54,15 +54,7 @@ Activity feed posts from gamification events look and behave exactly like other 
 
 ## Member Notification Preferences
 
-Members can control how they receive notifications from their profile settings. The available preference is the **notification mode**:
-
-| Mode | Behavior |
-|---|---|
-| `smart` (default) | Notifications appear for meaningful events (badges, levels, milestones). Routine point toasts are shown but at reduced frequency to avoid noise. |
-| `all` | Every point award, badge, level-up, and other event shows a notification. |
-| `quiet` | Only major events (badge earned, level-up) trigger notifications. Routine point toasts are suppressed. |
-
-Members access their preference from their profile settings page. Admins can set the default mode in **Gamification > Settings**.
+Members choose whether they get reward emails with **Email me about my rewards** in the **Your gamification choices** panel on their own profile (and on the BuddyPress Achievements tab). It is stored as `notification_mode`: `smart` (emails on, the default) or `none` (no gamification emails). Toasts and on-site notifications are not affected. See [Email Notifications](../usage/170-email-notifications.md).
 
 ## Admin-Side Notifications
 

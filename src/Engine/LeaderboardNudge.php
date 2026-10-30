@@ -157,7 +157,7 @@ final class LeaderboardNudge {
 			return;
 		}
 
-		// Users who earned at least 1 point this week, not opted out.
+		// Users who earned at least 1 point this week, not off the boards or off email.
 		// The site's Monday, as a UTC instant for the UTC created_at column.
 		$week_start = Clock::site_cutoff( 'monday this week' );
 
@@ -168,7 +168,7 @@ final class LeaderboardNudge {
 				  WHERE p.created_at >= %s
 				    AND p.user_id NOT IN (
 				        SELECT user_id FROM {$wpdb->prefix}wb_gam_member_prefs
-				         WHERE leaderboard_opt_out = 1
+				         WHERE leaderboard_opt_out = 1 OR notification_mode = 'none'
 				    )
 				  LIMIT 5000",
 				$week_start

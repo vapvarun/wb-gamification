@@ -130,7 +130,7 @@ curl https://example.com/wp-json/wb-gamification/v1/badges/top_contributor/share
 
 ### GET /badges/{id}/credential/{user}
 
-Public OpenBadges 3.0 verifiable credential (JSON-LD) for a badge award, suitable for LinkedIn's "Add Certification" flow or any OB3-aware wallet. Requires the badge to have `is_credential` set AND the member to have published it via `POST /badges/{id}/share` - the same publish gate as the share card. Returns 404 if the badge is not a credential, not found, not shared, or not earned; returns 410 Gone if the credential has expired (`expires_at` in the past).
+Public OpenBadges 3.0 verifiable credential (JSON-LD) for a badge award, suitable for LinkedIn's "Add Certification" flow or any OB3-aware wallet. Requires the badge to have `is_credential` set AND the member to have published it via `POST /badges/{id}/share` - the same publish gate as the share card. Returns 403 if the badge is not a credential; 404 if it is not found, not shared, or not earned; returns 410 Gone if the credential has expired (`expires_at` in the past).
 
 ```bash
 curl https://example.com/wp-json/wb-gamification/v1/badges/top_contributor/credential/42

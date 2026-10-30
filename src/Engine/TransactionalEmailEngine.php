@@ -231,7 +231,7 @@ final class TransactionalEmailEngine {
 				'badge_name'        => (string) ( $def['name'] ?? $badge_id ),
 				'badge_description' => (string) ( $def['description'] ?? '' ),
 				'badge_image_url'   => (string) ( $def['image_url'] ?? '' ),
-				'share_url'         => home_url( '/badge/' . rawurlencode( $badge_id ) . '/' . $user_id ),
+				'share_url'         => BadgeSharePage::get_share_url( $badge_id, $user_id ),
 			)
 		);
 

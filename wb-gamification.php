@@ -427,15 +427,7 @@ final class WB_Gamification {
 			return;
 		}
 
-		global $wpdb;
-		$wpdb->replace(
-			$wpdb->prefix . 'wb_gam_member_prefs',
-			array(
-				'user_id'           => $uid,
-				'notification_mode' => 'none',
-			),
-			array( '%d', '%s' )
-		);
+		\WBGam\Engine\MemberPrefs::set( $uid, array( 'notification_mode' => 'none' ) );
 
 		wp_safe_redirect( add_query_arg( 'wb_gam_unsub_done', '1', home_url() ) );
 		exit;

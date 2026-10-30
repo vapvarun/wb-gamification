@@ -11,21 +11,21 @@ Each email shows the member:
 - Current streak status
 - Leaderboard position (if leaderboard is active)
 
-The email uses your site name and custom sender details.
+The email is sent from your site's admin email address, with your site title as the sender name.
 
 ## Configuration
 
-1. Go to **WB Gamification → Settings → Emails**.
-2. Set the **sender name** and **sender email address**.
-3. Optionally customize the email subject line.
+1. Go to **WB Gamification > Habits & Profiles**.
+2. In **Weekly Recap Email**, tick or untick **Send the weekly recap email**.
+3. Optionally change the **Subject line**.
 
-Emails send automatically once per week via WordPress cron (`wp_wb_gam_weekly_email`). The send day and time are configurable in settings.
+Emails go out every Monday at 08:30 UTC via WordPress cron (`wb_gam_weekly_email`), to members who earned points in the last 7 days. A member whose week had no points and no badges is skipped. The day and time are fixed.
 
-Weekly Recap Emails are enabled by default. To turn them off site-wide, set the `weekly_emails` key to `false` in the `wb_gam_features` option.
+Weekly Recap Emails are on by default.
 
 ## Disabling for Individual Members
 
-Members can opt out of recap emails from their profile notification preferences. The engine respects the `wb_gam_member_prefs` table - members with email notifications disabled are skipped.
+Members opt out by turning off **Email me about my rewards** on their profile, or with the one-click unsubscribe link at the end of every recap. Either way they are skipped from then on.
 
 ## Troubleshooting Delivery
 
@@ -33,6 +33,6 @@ If emails are not sending, check:
 
 1. WordPress cron is running (`wp cron event list`).
 2. Your hosting environment allows `wp_mail()` outbound connections.
-3. The `weekly_emails` feature flag has not been turned off in `wb_gam_features`.
+3. **Send the weekly recap email** is still ticked under **Habits & Profiles**.
 
 For reliable delivery on high-volume sites, use a transactional email service (SendGrid, Mailgun, Postmark) connected via a WordPress SMTP plugin.
