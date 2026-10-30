@@ -128,13 +128,7 @@ final class DirectoryIntegration {
 		if ( is_array( self::$prefs ) && array_key_exists( (int) $user_id, self::$prefs ) ) {
 			$show_rank = self::$prefs[ (int) $user_id ];
 		} else {
-			global $wpdb;
-			$show_rank = $wpdb->get_var(
-				$wpdb->prepare(
-					"SELECT show_rank FROM {$wpdb->prefix}wb_gam_member_prefs WHERE user_id = %d",
-					$user_id
-				)
-			);
+			$show_rank = \WBGam\Engine\MemberPrefs::get( (int) $user_id )['show_rank'] ? '1' : '0';
 		}
 		if ( '0' === $show_rank ) {
 			return;

@@ -368,14 +368,7 @@ final class WeeklyEmailEngine {
 		// the recap that was already enqueued. Cheap PK lookup; SELECT
 		// cost is negligible compared to wp_mail.
 		// Closes audit/DATA-FLOW-NOTIFICATIONS-2026-05-27.md §G11.
-		global $wpdb;
-		$mode = $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT notification_mode FROM {$wpdb->prefix}wb_gam_member_prefs WHERE user_id = %d",
-				$user_id
-			)
-		);
-		if ( 'none' === $mode ) {
+		if ( 'none' === MemberPrefs::get( $user_id )['notification_mode'] ) {
 			return;
 		}
 
@@ -486,14 +479,8 @@ final class WeeklyEmailEngine {
 		$streak = StreakEngine::get_streak( $user_id );
 
 		// Rank (omit if opted out).
-		$opt_out = (bool) $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT leaderboard_opt_out FROM {$wpdb->prefix}wb_gam_member_prefs WHERE user_id = %d",
-				$user_id
-			)
-		);
-		$rank    = null;
-		if ( ! $opt_out ) {
+		$rank = null;
+		if ( ! MemberPrefs::get( $user_id )['leaderboard_opt_out'] ) {
 			// get_user_rank() returns an array; printing it with %d made every member '#1 overall'.
 			$rank = (int) ( LeaderboardEngine::get_user_rank( $user_id )['rank'] ?? 0 );
 			$rank = $rank > 0 ? $rank : null; // Unranked (no points yet): no rank line.

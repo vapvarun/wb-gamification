@@ -394,16 +394,7 @@ final class TransactionalEmailEngine {
 		// Step 2 — opt-out gate. Skip the DB read when step 1 already
 		// disabled the email type — no point checking prefs we won't honour.
 		if ( $enabled ) {
-			global $wpdb;
-			$mode = $wpdb->get_var(
-				$wpdb->prepare(
-					"SELECT notification_mode FROM {$wpdb->prefix}wb_gam_member_prefs WHERE user_id = %d",
-					$user_id
-				)
-			);
-			if ( 'none' === $mode ) {
-				$enabled = false;
-			}
+			$enabled = 'none' !== MemberPrefs::get( $user_id )['notification_mode'];
 		}
 
 		/**
