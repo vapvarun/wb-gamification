@@ -50,7 +50,8 @@ parameters:
         - '#Constant (WB_GAM_PATH|WB_GAM_URL|WB_GAM_FILE|WB_GAM_VERSION|WB_GAM_BASENAME) not found#'
         # Action Scheduler is loaded conditionally — its functions are
         # discovered at runtime and may not be visible to static analysis.
-        - '#Function as_(enqueue_async_action|schedule_single_action|unschedule_all_actions) not found#'
+        - '#Function as_(enqueue_async_action|schedule_single_action|unschedule_all_actions|get_scheduled_actions) not found#'
+        - '#on an unknown class ActionScheduler_Store#'
         # WordPress runtime constants defined by core during a real request but
         # not present in the static stubs (auth cookie name, DB name).
         - '#Constant (LOGGED_IN_COOKIE|DB_NAME) not found#'

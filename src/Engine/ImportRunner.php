@@ -747,10 +747,19 @@ final class ImportRunner {
 		$overdue = time() - self::STALL_SECONDS;
 
 		if ( function_exists( 'as_next_scheduled_action' ) ) {
-			// true = in progress; int = due time of the pending job; false = none.
+			// int = due time of a pending job; false = none; true = running OR a pending async job, which
+			// has no due time and is how every page here is queued. is_stalled() has already seen no
+			// progress for STALL_SECONDS, so only a job that is actually running counts as live.
 			$next = as_next_scheduled_action( self::HOOK, $args, self::GROUP );
 			if ( true === $next ) {
-				return true;
+				$running = array(
+					'hook'     => self::HOOK,
+					'args'     => $args,
+					'group'    => self::GROUP,
+					'status'   => \ActionScheduler_Store::STATUS_RUNNING,
+					'per_page' => 1,
+				);
+				return (bool) as_get_scheduled_actions( $running, 'ids' );
 			}
 			if ( is_int( $next ) ) {
 				return $next > $overdue;

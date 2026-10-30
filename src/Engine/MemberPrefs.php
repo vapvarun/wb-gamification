@@ -82,33 +82,34 @@ final class MemberPrefs {
 	public static function set( int $user_id, array $changes ): array {
 		global $wpdb;
 
-		$prefs = self::get( $user_id );
-		if ( $user_id <= 0 ) {
-			return $prefs;
-		}
-
+		$columns = array();
 		foreach ( array( 'leaderboard_opt_out', 'show_rank' ) as $key ) {
 			if ( array_key_exists( $key, $changes ) ) {
-				$prefs[ $key ] = (bool) $changes[ $key ];
+				$columns[ $key ] = $changes[ $key ] ? 1 : 0;
 			}
 		}
 		if ( isset( $changes['notification_mode'] ) && in_array( $changes['notification_mode'], self::NOTIFICATION_MODES, true ) ) {
-			$prefs['notification_mode'] = $changes['notification_mode'];
+			$columns['notification_mode'] = $changes['notification_mode'];
+		}
+		if ( $user_id <= 0 || ! $columns ) {
+			return self::get( $user_id );
 		}
 
-		$wpdb->replace(
-			$wpdb->prefix . 'wb_gam_member_prefs',
-			array(
-				'user_id'             => $user_id,
-				'leaderboard_opt_out' => $prefs['leaderboard_opt_out'] ? 1 : 0,
-				'show_rank'           => $prefs['show_rank'] ? 1 : 0,
-				'notification_mode'   => $prefs['notification_mode'],
-			),
-			array( '%d', '%d', '%d', '%s' )
+		// Only the given columns, in one statement: two choices saved at once must not
+		// overwrite each other, which a read-then-replace of the whole row does.
+		$names = array_keys( $columns );
+		$wpdb->query(
+			$wpdb->prepare(
+				"INSERT INTO {$wpdb->prefix}wb_gam_member_prefs (user_id, " . implode( ', ', $names ) . ') VALUES (%d, ' . implode( ', ', array_fill( 0, count( $names ), '%s' ) ) . ') ON DUPLICATE KEY UPDATE ' . implode( ', ', array_map( static fn( $name ) => "{$name} = VALUES({$name})", $names ) ), // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- Column names come from the fixed list above.
+				$user_id,
+				...array_values( $columns )
+			)
 		);
 
 		// Leaving or rejoining the leaderboard must show on the next read, not after the cache expires.
 		LeaderboardEngine::invalidate_cache();
+
+		$prefs = self::get( $user_id );
 
 		/**
 		 * Fires after a member's gamification preferences are saved.
