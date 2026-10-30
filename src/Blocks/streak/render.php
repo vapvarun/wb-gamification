@@ -59,6 +59,10 @@ if ( $wb_gam_user_id <= 0 ) {
 $wb_gam_can_t1 = $wb_gam_user_id > 0 && Privacy::can_view_public_profile( $wb_gam_user_id );
 $wb_gam_can_t2 = $wb_gam_user_id > 0 && Privacy::can_view_private_history( $wb_gam_user_id );
 if ( ! $wb_gam_can_t1 ) {
+	// A logged-in viewer who may not see this member's data gets nothing, not a login prompt.
+	if ( $wb_gam_user_id > 0 && is_user_logged_in() ) {
+		return;
+	}
 	$wb_gam_user_id = 0;
 }
 

@@ -377,6 +377,8 @@ final class ProfilePage {
 		if ( get_current_user_id() === (int) $user->ID && ! Privacy::host_decides() ) {
 			self::render_owner_visibility_control( (int) $user->ID );
 		}
+		// The member's own rank / leaderboard / email choices (owner-only inside).
+		MemberPrefs::render_controls( (int) $user->ID );
 
 		echo '<section class="wb-gam-profile-page__section">';
 		echo do_shortcode( '[wb_gam_badge_showcase user_id="' . (int) $user->ID . '"]' );

@@ -80,8 +80,8 @@ class ActionsController extends WP_REST_Controller {
 		);
 
 		// PUT/POST /actions/{id}/overrides — admin-only edit of cooldown,
-		// daily_cap, weekly_cap without touching the manifest. Reset by sending
-		// 0 for the field or DELETE on this endpoint.
+		// daily_cap, weekly_cap and the on/off switch (`enabled`) without touching
+		// the manifest. Reset caps by sending 0 for the field or DELETE on this endpoint.
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base . '/(?P<id>[a-z0-9_]+)/overrides',
@@ -109,6 +109,9 @@ class ActionsController extends WP_REST_Controller {
 							'type'              => 'integer',
 							'minimum'           => 0,
 							'sanitize_callback' => 'absint',
+						),
+						'enabled'    => array(
+							'type' => 'boolean',
 						),
 					),
 				),
@@ -176,9 +179,14 @@ class ActionsController extends WP_REST_Controller {
 		$option[ $id ] = $row;
 		update_option( 'wb_gam_action_overrides', $option, false );
 
+		if ( null !== $request->get_param( 'enabled' ) ) {
+			update_option( 'wb_gam_enabled_' . $id, $request->get_param( 'enabled' ) ? 1 : 0 );
+		}
+
 		return rest_ensure_response(
 			array(
 				'action_id' => $id,
+				'enabled'   => (bool) get_option( 'wb_gam_enabled_' . $id, true ),
 				'overrides' => $row,
 				'effective' => array_intersect_key( Registry::get_action( $id ), array_flip( array( 'cooldown', 'daily_cap', 'weekly_cap' ) ) ),
 			)

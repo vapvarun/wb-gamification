@@ -372,7 +372,9 @@ final class SettingsPage {
 			}
 
 			$enabled_key = 'wb_gam_enabled_' . sanitize_key( $action_id );
-			update_option( 'wb_gam_enabled_' . $action_id, isset( $_POST[ $enabled_key ] ) ? true : false );
+			// 1/0, never true/false: update_option( key, false ) on a missing option matches the
+			// get_option() default and stores nothing, so "off" never saved.
+			update_option( 'wb_gam_enabled_' . $action_id, isset( $_POST[ $enabled_key ] ) ? 1 : 0 );
 
 			// Per-action currency override. Stored only when set and known —
 			// PointTypeService::resolve() falls back to primary for any
@@ -499,6 +501,7 @@ final class SettingsPage {
 			update_option( 'wb_gam_bp_stream_challenge_completed', isset( $_POST['wb_gam_bp_stream_challenge_completed'] ) ? 1 : 0 );
 			update_option( 'wb_gam_bp_stream_kudos_given', isset( $_POST['wb_gam_bp_stream_kudos_given'] ) ? 1 : 0 );
 			update_option( 'wb_gam_bp_stream_level_changed', isset( $_POST['wb_gam_bp_stream_level_changed'] ) ? 1 : 0 );
+			update_option( 'wb_gam_bp_profile_rank', isset( $_POST['wb_gam_bp_profile_rank'] ) ? 1 : 0 );
 		}
 
 		// Public profiles (site-wide). Only when gamification decides privacy itself; a host
@@ -679,9 +682,9 @@ final class SettingsPage {
 				<div class="wbgam-card-header">
 					<h2 class="wbgam-card-title">
 						<span class="icon-activity" aria-hidden="true"></span>
-						<?php esc_html_e( 'BuddyPress Activity Stream', 'wb-gamification' ); ?>
+						<?php esc_html_e( 'BuddyPress', 'wb-gamification' ); ?>
 					</h2>
-					<p class="wbgam-card-desc"><?php esc_html_e( 'Choose which gamification events post to the BuddyPress activity feed. Applies only when BuddyPress is active.', 'wb-gamification' ); ?></p>
+					<p class="wbgam-card-desc"><?php esc_html_e( 'Choose which gamification events post to the BuddyPress activity feed, and what shows on member profiles.', 'wb-gamification' ); ?></p>
 				</div>
 				<div class="wbgam-card-body">
 					<?php foreach ( $bp_streams as $option_name => $label ) : ?>
@@ -690,6 +693,11 @@ final class SettingsPage {
 							<span><?php echo esc_html( $label ); ?></span>
 						</label>
 					<?php endforeach; ?>
+					<label class="wbgam-checkbox-option wbgam-stack-block">
+						<input type="checkbox" name="wb_gam_bp_profile_rank" value="1" <?php checked( (bool) get_option( 'wb_gam_bp_profile_rank', 1 ) ); ?> />
+						<span><?php esc_html_e( 'Show level, points and progress in the profile header', 'wb-gamification' ); ?></span>
+						<span class="description"><?php esc_html_e( 'Members can still hide it on their own profile. Turn off if your theme already shows rank there.', 'wb-gamification' ); ?></span>
+					</label>
 				</div>
 			</div>
 			<?php endif; ?>
@@ -1928,7 +1936,7 @@ final class SettingsPage {
 						<ul class="wbgam-action-list" role="list">
 							<?php foreach ( array_slice( (array) $stats['top_actions'], 0, 6 ) as $row ) : ?>
 								<li class="wbgam-action-list__item">
-									<span class="wbgam-action-list__name"><?php echo esc_html( str_replace( '_', ' ', (string) ( $row['action_id'] ?? '' ) ) ); ?></span>
+									<span class="wbgam-action-list__name"><?php echo esc_html( Registry::label_for( (string) ( $row['action_id'] ?? '' ) ) ); ?></span>
 									<span class="wbgam-action-list__count">
 										<?php
 										printf(

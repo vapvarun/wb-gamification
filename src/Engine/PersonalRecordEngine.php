@@ -12,16 +12,16 @@
  *   - best_day   : highest single-day points total ever
  *
  * How it works:
- *   - Hooked onto `wb_gam_points_awarded` (runs after every award).
- *   - Calculates the current period total for the user.
- *   - Compares against the stored personal best in user meta.
- *   - If a new personal best is set, fires `wb_gam_personal_record`
- *     and sends a BP notification.
+ *   - Runs after every award (async via AsyncEvaluator).
+ *   - The best is the highest total of a FINISHED period; the period in
+ *     progress is tracked separately and folded into the best when it ends.
+ *   - The first time the running total passes that best, fires
+ *     `wb_gam_personal_record` once for the period. A member's first period
+ *     has no best to beat, so it never fires.
  *
- * Personal bests are stored in user meta:
- *   - wb_gam_pr_best_week   (int)
- *   - wb_gam_pr_best_month  (int)
- *   - wb_gam_pr_best_day    (int)
+ * User meta:
+ *   - wb_gam_pr_best_{day|week|month} (int)   best finished period
+ *   - wb_gam_pr_run_{day|week|month}  (array) {key, total, notified} for the period in progress
  *
  * @package WB_Gamification
  * @since   0.1.0
@@ -112,20 +112,46 @@ final class PersonalRecordEngine {
 			return;
 		}
 
-		$meta_key = 'wb_gam_pr_best_' . $period;
-		$previous = (int) get_user_meta( $user_id, $meta_key, true );
+		$key      = self::period_key( $period );
+		$best_key = 'wb_gam_pr_best_' . $period;
+		$run_key  = 'wb_gam_pr_run_' . $period;
+		$previous = (int) get_user_meta( $user_id, $best_key, true );
+		$run      = get_user_meta( $user_id, $run_key, true );
+		$run      = is_array( $run ) ? $run : array();
 
-		if ( $current <= $previous ) {
-			return; // Not a new personal best.
+		// A new period started: the one before it is finished, so it can become the best.
+		if ( ( $run['key'] ?? '' ) !== $key ) {
+			if ( (int) ( $run['total'] ?? 0 ) > $previous ) {
+				$previous = (int) $run['total'];
+				update_user_meta( $user_id, $best_key, $previous );
+			}
+			$run = array(
+				'key'      => $key,
+				'total'    => 0,
+				// Before 1.6.8 the best held the running total of this same period, so the
+				// first tracked period after updating stays silent instead of "beating" itself.
+				'notified' => ! isset( $run['key'] ) && $previous > 0,
+			);
 		}
 
-		// Update stored personal best.
-		update_user_meta( $user_id, $meta_key, $current );
+		$run['total'] = $current;
+		$is_record    = $previous > 0 && $current > $previous && empty( $run['notified'] );
+		if ( $is_record ) {
+			$run['notified'] = true;
+		}
+		update_user_meta( $user_id, $run_key, $run );
+
+		if ( ! $is_record ) {
+			return;
+		}
 
 		$message = self::build_message( $period, $current, $previous );
 
-		// BuddyPress notification.
-		if ( function_exists( 'bp_notifications_add_notification' ) ) {
+		// BuddyPress notification, under the same rule as the community inbox
+		// (CommunityNotifications::on_personal_record): week and month, previous best >= 10.
+		/** This filter is documented in src/Engine/CommunityNotifications.php */
+		$notify = (bool) apply_filters( 'wb_gam_personal_record_notify', 'day' !== $period && $previous >= 10, $user_id, $period, $current, $previous );
+		if ( $notify && function_exists( 'bp_notifications_add_notification' ) ) {
 			bp_notifications_add_notification(
 				array(
 					'user_id'           => $user_id,
@@ -147,13 +173,27 @@ final class PersonalRecordEngine {
 		 * @param int    $user_id  User who set the record.
 		 * @param string $period   'day' | 'week' | 'month'
 		 * @param int    $current  New personal best (points this period).
-		 * @param int    $previous Previous personal best (0 if first time).
+		 * @param int    $previous Best finished period the member just passed.
 		 * @param string $message  Human-readable congratulations message.
 		 */
 		do_action( 'wb_gam_personal_record', $user_id, $period, $current, $previous, $message );
 	}
 
 	// ── Helpers ─────────────────────────────────────────────────────────────────
+
+	/**
+	 * Site-calendar key of the period in progress, same buckets as the community inbox.
+	 *
+	 * @param string $period 'day' | 'week' | 'month'.
+	 * @return string
+	 */
+	private static function period_key( string $period ): string {
+		return match ( $period ) {
+			'day'   => Clock::site_date(),
+			'week'  => Clock::site_week(),
+			default => substr( Clock::site_date(), 0, 7 ),
+		};
+	}
 
 	/**
 	 * Fetch day, week, and month point totals in a single query.

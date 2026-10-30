@@ -61,7 +61,7 @@
 - [ ] Member surfaces (v1.5.2): WooCommerce My Account `/my-account/achievements/` returns 200 for the account owner with an "Achievements" menu item; endpoint absent (URL 404s) when WooCommerce is deactivated
 - [ ] Member surfaces (v1.5.2): LearnDash profile "My Achievements" link is ABSENT by default; appears only after `add_filter('wb_gam_learndash_profile_link','__return_true')`
 - [ ] Public profile (v1.5.2): `/u/{username}` returns 200 (not 404) by default; setting the user's privacy pref to `'0'` makes it 404 for anonymous while the owner still gets 200
-- [ ] Toast placement (v1.5.2): Settings > Realtime placement selector (default `bottom-right`) persists `wb_gam_toast_position`; triggering an award shows the toast in the chosen corner, names what the points were for, and does not overlap the theme header (check a top-* position)
+- [ ] Toast placement (v1.5.2): Settings > Realtime placement selector (default `bottom-center` since 1.6.5) persists `wb_gam_toast_position`; triggering an award shows the toast in the chosen corner, names what the points were for, and does not overlap the theme header (check a top-* position)
 - [ ] Realtime transport (v1.5.2): network trace shows WP Heartbeat ticks (15s steady, ~5s burst after an action) and NO persistent `text/event-stream` SSE connection (SSE is opt-in behind `wb_gam_sse_allowed`, default false)
 - [ ] Mobile 390px: Hub page tabs all reachable, no horizontal overflow, leaderboard period switcher tappable
 
@@ -170,7 +170,7 @@ Append a section below per release with the specific regression guards added tha
 ### v1.5.2 release (performance + realtime-scale + member-surface + integration)
 - Member surfaces unified through `WBGam\Engine\MemberSurface` (+ `wb_gam_member_surface_html` filter): BuddyPress profile "Achievements" tab (Overview/Badges/Points/Streak sub-tabs), WooCommerce My Account `/my-account/achievements/` endpoint (gated on WooCommerce active), opt-in LearnDash "My Achievements" link (`wb_gam_learndash_profile_link`, default off).
 - Realtime transport default flipped from SSE long-poll to WP Heartbeat (15s steady / 5s post-action burst / 120s near-suspend on hidden tabs); SSE now opt-in behind `wb_gam_sse_allowed` (default false). New front route to smoke: `/my-account/achievements/`; existing `/u/{username}/` now default-on.
-- Toast placement admin setting added (Settings > Realtime; option + filter `wb_gam_toast_position`, default `bottom-right`, corner-aware, no header overlap).
+- Toast placement admin setting added (Settings > Realtime; option + filter `wb_gam_toast_position`, default `bottom-center` since 1.6.5, corner-aware, no header overlap).
 - Jetonomy wiring: `WBGam\Integrations\Jetonomy\DisplayDefer` defers ONLY the leaderboard (leaderboard + top-members blocks/shortcodes + Hub leaderboard card suppressed when `JETONOMY_VERSION` defined; filter `wb_gam_defer_leaderboard_to_jetonomy`); badges kept; reputation mirrored 1:1 into points.
 - 5 new Section D regression rows added: `D.public-profile-default-on`, `D.jetonomy-leaderboard-defer`, `D.toast-no-header-overlap`, `D.heartbeat-default-not-SSE` (full fixtures in `AGENT_SMOKE_RUNBOOK.md` Section D).
 - New filters to smoke: `wb_gam_defer_leaderboard_to_jetonomy`, `wb_gam_learndash_profile_link`, `wb_gam_member_surface_html`, `wb_gam_profile_publicly_visible` (hooks_fired_filters 62 -> 66).

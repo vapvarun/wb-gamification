@@ -251,6 +251,13 @@ body.admin-bar .wb-gam-toasts--top-right {
 	text-decoration: underline;
 	text-underline-offset: 2px;
 }
+/* Themes style a:hover / a:focus at (0,1,1); pin the inverted toast colour above that. */
+.wb-gam-toast a.wb-gam-toast__link:hover,
+.wb-gam-toast a.wb-gam-toast__link:focus,
+.wb-gam-toast a.wb-gam-toast__link:focus-visible {
+	color: inherit;
+	text-decoration: underline;
+}
 .wb-gam-toast__link[hidden] { display: none; }
 .wb-gam-toast .wb-gam-close {
 	margin-block: -6px;

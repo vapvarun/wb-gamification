@@ -86,6 +86,7 @@ See [Hooks and Filters Overview](110-hooks-overview.md) for how to add a listene
 | Hook | When it fires | Parameters |
 |------|---------------|------------|
 | `wb_gam_profile_visibility_set` | After a member changes their own public-profile visibility setting. Added in 1.5.5. | `int $user_id`, `bool $public` |
+| `wb_gam_member_prefs_saved` | After a member's preferences (show rank, leaderboard opt-out, reward emails) are saved, by the member or staff. Added in 1.6.8. | `int $user_id`, `array $prefs` |
 
 ## Integrations
 

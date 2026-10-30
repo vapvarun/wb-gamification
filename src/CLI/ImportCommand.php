@@ -71,7 +71,7 @@ class ImportCommand {
 		$sync = isset( $assoc_args['sync'] );
 
 		if ( isset( $assoc_args['resume'] ) ) {
-			$run = ImportRunner::resume( $source );
+			$run = ImportRunner::resume( $source, ! $sync );
 			if ( is_wp_error( $run ) ) {
 				\WP_CLI::error( $run->get_error_message() );
 			}

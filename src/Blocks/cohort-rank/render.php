@@ -54,6 +54,10 @@ if ( $wb_gam_user_id <= 0 ) {
 // when the viewer is the owner / admin. Otherwise zero out the user_id
 // so the block falls through to its empty-state path.
 if ( $wb_gam_user_id > 0 && ! Privacy::can_view_public_profile( $wb_gam_user_id ) ) {
+	// A logged-in viewer who may not see this member's data gets nothing, not a login prompt.
+	if ( is_user_logged_in() ) {
+		return;
+	}
 	$wb_gam_user_id = 0;
 }
 $wb_gam_limit = max( 1, min( 50, (int) ( $wb_gam_attrs['limit'] ?? 5 ) ) );

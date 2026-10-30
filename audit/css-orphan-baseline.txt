@@ -16,13 +16,9 @@ wb-gam-leaderboard__points-number
 wb-gam-member-points__guest
 wb-gam-member-points__level-name
 wb-gam-my-rewards__when
-wb-gam-points-count
 wb-gam-profile-page__head
-wb-gam-profile-rank
-wb-gam-progress-bar
 wb-gam-qa-footer
 wb-gam-rank-
-wb-gam-rank-badge
 wb-gam-recap__avatar
 wb-gam-recap__header-text
 wb-gam-recap__stat--badges

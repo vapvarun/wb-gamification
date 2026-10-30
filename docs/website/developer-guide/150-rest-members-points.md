@@ -19,6 +19,8 @@ Endpoints for member profiles, the points ledger, point types, and currency conv
 | `GET` | `/members/me/toasts` | Must be logged in |
 | `GET` | `/members/me/profile-visibility` | Must be logged in |
 | `POST` | `/members/me/profile-visibility` | Must be logged in |
+| `GET` | `/members/{id}/preferences` | Self or admin |
+| `POST` | `/members/{id}/preferences` | Self or `wb_gam_manage_members` |
 
 ### GET /members
 
@@ -194,6 +196,31 @@ curl https://example.com/wp-json/wb-gamification/v1/members/42/intelligence \
 ```
 
 The projection may lag up to 24 hours behind ground truth on quiet installs. `computed_at` is UTC `Y-m-d H:i:s`.
+
+## Member Preferences
+
+A member's own three choices. Since 1.6.8.
+
+| Field | Type | Default | Effect |
+|-------|------|---------|--------|
+| `show_rank` | boolean | `true` | Level, points and progress in the BuddyPress profile header |
+| `leaderboard_opt_out` | boolean | `false` | `true` keeps the member off every leaderboard and out of leaderboard emails |
+| `notification_mode` | string | `smart` | `smart` sends reward emails, `none` sends none |
+
+`POST /members/{id}/preferences` takes any of the three; fields you leave out keep their value. Both methods return all three.
+
+```bash
+curl -X POST https://example.com/wp-json/wb-gamification/v1/members/42/preferences \
+  -H "Content-Type: application/json" \
+  -H "X-WP-Nonce: YOUR_NONCE" \
+  -d '{ "leaderboard_opt_out": true }'
+```
+
+```json
+{ "leaderboard_opt_out": true, "show_rank": true, "notification_mode": "smart" }
+```
+
+Fires `wb_gam_member_prefs_saved( int $user_id, array $prefs )` after saving.
 
 ## Profile Visibility
 

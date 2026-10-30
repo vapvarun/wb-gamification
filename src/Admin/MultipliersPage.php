@@ -185,15 +185,16 @@ final class MultipliersPage {
 							<tr>
 								<th><label for="wb-gam-mult-target"><?php esc_html_e( 'Applies to', 'wb-gamification' ); ?></label></th>
 								<td>
-									<input type="text" name="target_id" id="wb-gam-mult-target" class="regular-text wbgam-input"
-										list="wb-gam-actions" value="<?php echo esc_attr( $edit_target ); ?>"
-										placeholder="<?php esc_attr_e( 'All actions', 'wb-gamification' ); ?>">
-									<datalist id="wb-gam-actions">
+									<select name="target_id" id="wb-gam-mult-target" class="wbgam-input">
+										<option value=""><?php esc_html_e( 'All actions', 'wb-gamification' ); ?></option>
+										<?php if ( '' !== $edit_target && ! isset( $actions[ $edit_target ] ) ) : // An action whose plugin is no longer active. ?>
+											<option value="<?php echo esc_attr( $edit_target ); ?>" selected><?php echo esc_html( \WBGam\Engine\Registry::label_for( $edit_target ) ); ?></option>
+										<?php endif; ?>
 										<?php foreach ( array_keys( $actions ) as $aid ) : ?>
-											<option value="<?php echo esc_attr( $aid ); ?>"></option>
+											<option value="<?php echo esc_attr( $aid ); ?>" <?php selected( $edit_target, $aid ); ?>><?php echo esc_html( \WBGam\Engine\Registry::label_for( (string) $aid ) ); ?></option>
 										<?php endforeach; ?>
-									</datalist>
-									<p class="description"><?php esc_html_e( 'Leave blank to multiply every action. Enter an action ID to scope the multiplier to one action only.', 'wb-gamification' ); ?></p>
+									</select>
+									<p class="description"><?php esc_html_e( 'Multiply every action, or pick one action to multiply only that one.', 'wb-gamification' ); ?></p>
 								</td>
 							</tr>
 						</table>
@@ -239,7 +240,7 @@ final class MultipliersPage {
 									?>
 									<tr>
 										<td><strong><?php echo esc_html( number_format_i18n( $factor, 2 ) ); ?>x</strong></td>
-										<td><?php echo '' === $target ? esc_html__( 'All actions', 'wb-gamification' ) : '<code>' . esc_html( $target ) . '</code>'; ?></td>
+										<td><?php echo esc_html( '' === $target ? __( 'All actions', 'wb-gamification' ) : \WBGam\Engine\Registry::label_for( $target ) ); ?></td>
 										<td>
 											<?php if ( $has_condition ) : ?>
 												<code><?php echo esc_html( $condition_lbl ); ?></code>

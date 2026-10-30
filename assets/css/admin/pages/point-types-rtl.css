@@ -79,3 +79,8 @@
 		min-inline-size: 0;
 	}
 }
+
+/* A slug is one word: never break it across lines in a narrow table. */
+.wbgam-table td > code {
+	white-space: nowrap;
+}

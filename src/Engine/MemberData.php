@@ -81,7 +81,12 @@ final class MemberData {
 	 * @var string[]
 	 */
 	private const USER_META_KEYS = array(
+		'wb_gam_pr_best_day',
 		'wb_gam_pr_best_week',
+		'wb_gam_pr_best_month',
+		'wb_gam_pr_run_day',
+		'wb_gam_pr_run_week',
+		'wb_gam_pr_run_month',
 		'wb_gam_login_streak',
 		'wb_gam_login_streak_max',
 		'wb_gam_login_last_award',

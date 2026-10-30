@@ -81,10 +81,15 @@
 	color: var(--wbgam-color-warning, #8a6d00);
 }
 
+.wb-gam-members__badge.is-off-boards {
+	background: var(--wbgam-bg, #f0f0f1);
+	color: var(--wbgam-text-muted, #646970);
+}
+
 .wb-gam-members__actions {
 	display: flex;
 	gap: 0.375rem;
-	flex-wrap: wrap;
+	flex-wrap: nowrap;
 }
 
 .wb-gam-members__pager {
@@ -104,7 +109,12 @@
 		max-width: 100%;
 	}
 
-	.wb-gam-members__actions {
-		flex-direction: column;
+	/* Keep rows intact and let the table scroll sideways inside its card. */
+	.wb-gam-members__grid {
+		min-width: 600px;
+	}
+
+	.wb-gam-members__grid td {
+		white-space: nowrap;
 	}
 }

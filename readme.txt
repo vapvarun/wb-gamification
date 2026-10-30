@@ -37,7 +37,7 @@ The engine awards points automatically when members perform actions on your site
 * **17 Shortcodes** - Every customer-facing block is also available as a shortcode for classic editor and page builders (Elementor, Beaver Builder, Bricks).
 * **REST API** - 78 endpoints across 28 controllers. Full CRUD for all resources. API key authentication for cross-site setups. Admin UI consumes the same REST API as 3rd-party integrations.
 * **BuddyPress Integration** - Profile rank display, activity feed events, member directory badges, notification bridge.
-* **Toast Notifications** - Real-time bottom-right popups when members earn points, badges, or level up. 6 notification types with auto-dismiss. Promise-based confirm modals replace native browser dialogs (a11y-friendly).
+* **Toast Notifications** - Real-time popups (bottom-center by default, placement set in Settings > Realtime) when members earn points, badges, or level up. 6 notification types with auto-dismiss. Promise-based confirm modals replace native browser dialogs (a11y-friendly).
 * **Analytics Dashboard** - 6 KPI cards, top actions, top earners, daily points sparkline. Period selector (7/30/90 days).
 * **WP-CLI Commands** - `points award`, `member status`, `actions list`, `logs prune`, `export user`, `qa seed_pages`, `doctor` readiness check, plus a release-zip builder.
 * **Developer Hooks** - 77 action hooks and 95 filter hooks for extending every write path. Every REST endpoint fires `before_*` filters (return WP_Error to abort) and `after_*` actions.
@@ -105,7 +105,7 @@ Yes. WB Gamification works on any WordPress site. BuddyPress adds social trigger
 
 = How do members see their gamification status? =
 
-Three ways: (1) Automatically on BuddyPress profiles - level name, points, and progress bar appear in the profile header. (2) Via Gutenberg blocks or shortcodes placed on any page. (3) Real-time toast notifications (bottom-right popups) when they earn points or badges.
+Three ways: (1) Automatically on BuddyPress profiles - level name, points, and progress bar appear in the profile header. (2) Via Gutenberg blocks or shortcodes placed on any page. (3) Real-time toast notifications (bottom-center by default) when they earn points or badges.
 
 = Can I customize point values? =
 

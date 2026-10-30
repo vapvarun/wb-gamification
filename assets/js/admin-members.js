@@ -108,7 +108,11 @@
 		tr.dataset.userId = m.id;
 
 		// Member cell: avatar + name + login.
-		var memberTd = el( 'td', 'wb-gam-members__member' );
+		// The flex layout lives on an inner wrapper: a flex <td> stops being a table cell,
+		// which broke row heights and column widths on phones.
+		var memberCell = el( 'td' );
+		var memberTd = el( 'div', 'wb-gam-members__member' );
+		memberCell.appendChild( memberTd );
 		if ( m.avatar ) {
 			var img = el( 'img', 'wb-gam-members__avatar' );
 			img.src = m.avatar;
@@ -125,7 +129,7 @@
 		nameWrap.appendChild( nameNode );
 		nameWrap.appendChild( el( 'span', 'wb-gam-members__login', '@' + m.login ) );
 		memberTd.appendChild( nameWrap );
-		tr.appendChild( memberTd );
+		tr.appendChild( memberCell );
 
 		tr.appendChild( el( 'td', null, Number( m.points || 0 ).toLocaleString() ) );
 		tr.appendChild( el( 'td', null, m.level || '-' ) );
@@ -139,10 +143,17 @@
 				m.excluded ? i18n.excluded : i18n.active
 			)
 		);
+		if ( m.off_boards ) {
+			statusTd.appendChild( document.createTextNode( ' ' ) );
+			statusTd.appendChild( el( 'span', 'wb-gam-members__badge is-off-boards', i18n.offBoards ) );
+		}
 		tr.appendChild( statusTd );
 
 		// Actions.
-		var actTd = el( 'td', 'wb-gam-members__actions' );
+		// Flex on an inner wrapper, never on the <td> itself (see the member cell above).
+		var actCell = el( 'td' );
+		var actTd = el( 'div', 'wb-gam-members__actions' );
+		actCell.appendChild( actTd );
 
 		var awardLink = el( 'a', 'button button-small', i18n.award );
 		awardLink.href = cfg.awardUrl;
@@ -162,7 +173,7 @@
 		} );
 		actTd.appendChild( resetBtn );
 
-		tr.appendChild( actTd );
+		tr.appendChild( actCell );
 		return tr;
 	}
 

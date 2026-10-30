@@ -316,10 +316,11 @@ final class ImportRunner {
 	/**
 	 * Continue a stalled or failed run from its last checkpoint.
 	 *
-	 * @param string $slug Source slug.
+	 * @param string $slug     Source slug.
+	 * @param bool   $schedule False when the caller drives the pages itself ({@see run_here()}, WP-CLI --sync).
 	 * @return array<string, mixed>|WP_Error
 	 */
-	public static function resume( string $slug ) {
+	public static function resume( string $slug, bool $schedule = true ) {
 		if ( null === self::source_class( $slug ) ) {
 			return new WP_Error( 'wb_gam_unknown_source', __( 'Unknown import source.', 'wb-gamification' ), array( 'status' => 400 ) );
 		}
@@ -336,9 +337,36 @@ final class ImportRunner {
 		$state['error']      = '';
 		$state['updated_at'] = self::now();
 		self::save( $slug, $state );
-		self::schedule( $slug, $state['run_id'], $state['seq'] );
+		if ( $schedule ) {
+			self::schedule( $slug, $state['run_id'], $state['seq'] );
+		}
 
 		return $state;
+	}
+
+	/**
+	 * Run ONE page now, in this request, for a site whose background queue is not running.
+	 *
+	 * The admin screen calls this in a loop while the tab is open ("Run it in this window").
+	 * A stalled or failed run is resumed first. A queued job left over from the dead queue
+	 * stays harmless: advance() moves the sequence on, so that job finds itself stale.
+	 *
+	 * @param string $slug Source slug.
+	 * @return array<string, mixed>|WP_Error Progress after the page.
+	 */
+	public static function run_here( string $slug ) {
+		$state = self::state( $slug );
+		if ( ! self::is_active( $state ) || self::is_stalled( $slug, $state ) ) {
+			$resumed = self::resume( $slug, false );
+			if ( is_wp_error( $resumed ) ) {
+				return $resumed;
+			}
+			$state = $resumed;
+		}
+
+		self::advance( $slug, (string) $state['run_id'] );
+
+		return self::progress( $slug );
 	}
 
 	/**
@@ -693,11 +721,15 @@ final class ImportRunner {
 		if ( time() - (int) strtotime( $state['updated_at'] . ' UTC' ) < self::STALL_SECONDS ) {
 			return false;
 		}
-		return ! self::has_pending_job( $slug, (string) $state['run_id'], (int) $state['seq'] );
+		return ! self::has_live_job( $slug, (string) $state['run_id'], (int) $state['seq'] );
 	}
 
 	/**
-	 * Is the job for this page of this run waiting in the queue (or in WP-Cron)?
+	 * Is the job for this page of this run running, or waiting in a queue that is moving?
+	 *
+	 * A job still waiting STALL_SECONDS after its due time sits in a queue that is not running
+	 * (WP-Cron disabled, loopback blocked). Counting it as healthy kept a dead run "queued"
+	 * forever and made resume refuse it (Basecamp 10458810873).
 	 *
 	 * The sequence number is part of the arguments on purpose. Action Scheduler counts an IN-PROGRESS
 	 * action as scheduled, so a job whose successor had identical arguments would find itself, decide
@@ -708,13 +740,24 @@ final class ImportRunner {
 	 * @param int    $seq    The page's place in the chain.
 	 * @return bool
 	 */
-	private static function has_pending_job( string $slug, string $run_id, int $seq ): bool {
+	private static function has_live_job( string $slug, string $run_id, int $seq ): bool {
 		$args = array( $slug, $run_id, $seq );
 
-		if ( function_exists( 'as_has_scheduled_action' ) && as_has_scheduled_action( self::HOOK, $args, self::GROUP ) ) {
-			return true;
+		// A job still waiting this long after its due time is in a queue that is not running.
+		$overdue = time() - self::STALL_SECONDS;
+
+		if ( function_exists( 'as_next_scheduled_action' ) ) {
+			// true = in progress; int = due time of the pending job; false = none.
+			$next = as_next_scheduled_action( self::HOOK, $args, self::GROUP );
+			if ( true === $next ) {
+				return true;
+			}
+			if ( is_int( $next ) ) {
+				return $next > $overdue;
+			}
 		}
-		return (bool) wp_next_scheduled( self::HOOK, $args );
+		$next = wp_next_scheduled( self::HOOK, $args );
+		return false !== $next && $next > $overdue;
 	}
 
 	/**

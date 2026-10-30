@@ -34,7 +34,7 @@ The StreakEngine records that this member was active today. If today is consecut
 If any active challenge involves this action, the ChallengeEngine increments the member's progress counter. If they reach the target, the challenge completes and bonus points are awarded.
 
 **8. Notification sent**
-The NotificationBridge collects all the events from this request - points, badge, level-up, streak milestone, challenge completion - and outputs them as toast notifications in the bottom-right corner of the page. BuddyPress notifications are also created if BuddyPress is active.
+The NotificationBridge collects all the events from this request - points, badge, level-up, streak milestone, challenge completion - and outputs them as toast notifications at the bottom-center of the page (the default placement, set in Settings > Realtime). BuddyPress notifications are also created if BuddyPress is active.
 
 **9. Activity feed updated (if BuddyPress is active)**
 Significant events like earning a badge, levelling up, or receiving kudos are posted to the BuddyPress activity stream so the community can see them.

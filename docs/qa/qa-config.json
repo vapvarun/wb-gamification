@@ -62,11 +62,5 @@
     "screenshots_dir": "audit/journey-runs/{run_id}/screenshots",
     "debug_log_archive": "docs/qa/.debug-log-{version}-{ran_at}.txt"
   },
-  "known_issues": [
-    {
-      "card": "10389379202",
-      "summary": "All-time rank: REST /leaderboard reads live totals, the block and /leaderboard/me read the 5-min snapshot; needs a source-of-truth decision",
-      "until": "1.6.7"
-    }
-  ]
+  "known_issues": []
 }

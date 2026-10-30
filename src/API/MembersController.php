@@ -285,6 +285,35 @@ class MembersController extends WP_REST_Controller {
 			)
 		);
 
+		// GET/POST /members/{id}/preferences — the member's own choices in
+		// wb_gam_member_prefs (hide rank, leave the leaderboards, reward emails).
+		// Read: self or admin (T2). Write: self, or staff who manage members.
+		$bool_arg = array( 'type' => 'boolean' );
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/(?P<id>[\d]+)/preferences',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_preferences' ),
+					'permission_callback' => array( $this, 't2_permissions_check' ),
+				),
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'set_preferences' ),
+					'permission_callback' => array( $this, 'preferences_write_permissions_check' ),
+					'args'                => array(
+						'show_rank'           => $bool_arg,
+						'leaderboard_opt_out' => $bool_arg,
+						'notification_mode'   => array(
+							'type' => 'string',
+							'enum' => \WBGam\Engine\MemberPrefs::NOTIFICATION_MODES,
+						),
+					),
+				),
+			)
+		);
+
 		// GET/POST /members/me/profile-visibility — the member's own
 		// profile-privacy choice (writes wb_gam_profile_public). Self-only:
 		// always operates on the current user, never an arbitrary id, so the
@@ -468,6 +497,7 @@ class MembersController extends WP_REST_Controller {
 
 		// Prime per-page caches so the row loop is N+1-free.
 		$badge_counts = array();
+		$opted_out    = array();
 		if ( ! empty( $ids ) ) {
 			PointsEngine::prime_totals( $ids );
 			// WP_User_Query selected only ID/display_name/user_login, so the usermeta
@@ -481,6 +511,20 @@ class MembersController extends WP_REST_Controller {
 			// roster page. (prime_earned_badges() primed a cache get_user_badges()
 			// does not read for the count, so it was pure overhead here.)
 			$badge_counts = BadgeEngine::count_for_users( $ids ); // Expired badges excluded.
+
+			// One query for the page: who chose to stay off the leaderboards.
+			global $wpdb;
+			$opted_out = array_flip(
+				array_map(
+					'intval',
+					$wpdb->get_col(
+						$wpdb->prepare(
+							"SELECT user_id FROM {$wpdb->prefix}wb_gam_member_prefs WHERE leaderboard_opt_out = 1 AND user_id IN (" . implode( ',', array_fill( 0, count( $ids ), '%d' ) ) . ')', // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
+							$ids
+						)
+					)
+				)
+			);
 		}
 
 		$items = array();
@@ -499,6 +543,7 @@ class MembersController extends WP_REST_Controller {
 				'level'       => $level ? (string) $level['name'] : '',
 				'badges'      => $badge_counts[ $uid ] ?? 0,
 				'excluded'    => PointsEngine::is_excluded_user( $uid ) || (bool) get_user_meta( $uid, 'wb_gam_sandboxed', true ),
+				'off_boards'  => isset( $opted_out[ $uid ] ),
 				'profile_url' => (string) get_edit_user_link( $uid ),
 			);
 		}
@@ -842,6 +887,44 @@ class MembersController extends WP_REST_Controller {
 	}
 
 	/**
+	 * POST /members/{id}/preferences gate: the member themself, or staff who manage members.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return bool|WP_Error
+	 */
+	public function preferences_write_permissions_check( $request ): bool|WP_Error {
+		$target_id = (int) $request['id'];
+		if ( ! get_userdata( $target_id ) ) {
+			return new WP_Error( 'rest_user_invalid', __( 'Member not found.', 'wb-gamification' ), array( 'status' => 404 ) );
+		}
+		if ( get_current_user_id() === $target_id ) {
+			return true;
+		}
+		return $this->admin_permissions_check();
+	}
+
+	/**
+	 * GET /members/{id}/preferences.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response { show_rank: bool, leaderboard_opt_out: bool, notification_mode: string }
+	 */
+	public function get_preferences( $request ): WP_REST_Response {
+		return new WP_REST_Response( \WBGam\Engine\MemberPrefs::get( (int) $request['id'] ), 200 );
+	}
+
+	/**
+	 * POST /members/{id}/preferences — save any of the three choices; omitted ones keep their value.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response The saved preferences.
+	 */
+	public function set_preferences( $request ): WP_REST_Response {
+		$changes = array_intersect_key( $request->get_params(), \WBGam\Engine\MemberPrefs::DEFAULTS );
+		return new WP_REST_Response( \WBGam\Engine\MemberPrefs::set( (int) $request['id'], $changes ), 200 );
+	}
+
+	/**
 	 * GET /members/me/profile-visibility — the current member's own choice.
 	 *
 	 * `managed_by_host` is true when a community plugin decides profile privacy
@@ -942,7 +1025,7 @@ class MembersController extends WP_REST_Controller {
 		// preferences object includes the user's privacy choices (leaking
 		// these defeats the choice itself). See plan/PRIVACY-MODEL.md.
 		if ( Privacy::can_view_private_history( $user_id ) ) {
-			$prefs                  = $this->get_member_prefs( $user_id );
+			$prefs                  = \WBGam\Engine\MemberPrefs::get( $user_id );
 			$data['points_by_type'] = PointsEngine::get_totals_by_type( $user_id );
 			$data['preferences']    = array(
 				'show_rank'           => (bool) $prefs['show_rank'],
@@ -1313,33 +1396,6 @@ class MembersController extends WP_REST_Controller {
 		);
 
 		return rest_ensure_response( $normalized );
-	}
-
-	/**
-	 * Retrieve a member's gamification preferences, with defaults for missing rows.
-	 *
-	 * @param int $user_id WordPress user ID.
-	 * @return array{ leaderboard_opt_out: int, show_rank: int, notification_mode: string } Preference row.
-	 */
-	private function get_member_prefs( int $user_id ): array {
-		global $wpdb;
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- User preferences; cached at caller level if needed.
-		$row = $wpdb->get_row(
-			$wpdb->prepare(
-				"SELECT leaderboard_opt_out, show_rank, notification_mode
-				   FROM {$wpdb->prefix}wb_gam_member_prefs
-				  WHERE user_id = %d",
-				$user_id
-			),
-			ARRAY_A
-		);
-
-		return $row ?: array(
-			'leaderboard_opt_out' => 0,
-			'show_rank'           => 1,
-			'notification_mode'   => 'smart',
-		);
 	}
 
 	/**

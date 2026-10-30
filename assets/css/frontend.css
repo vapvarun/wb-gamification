@@ -513,6 +513,30 @@
 	display: none;
 }
 
+.wb-gam-member-prefs__set {
+	display: grid;
+	gap: var(--wb-gam-space-sm, 8px);
+	margin: 0;
+	padding: 0;
+	border: 0;
+}
+
+.wb-gam-member-prefs__choice {
+	display: flex;
+	align-items: center;
+	gap: var(--wb-gam-space-sm, 8px);
+	min-height: 40px;
+	color: var(--wb-gam-color-text, #1e1e1e);
+	cursor: pointer;
+}
+
+.wb-gam-member-prefs__choice input {
+	width: 18px;
+	height: 18px;
+	margin: 0;
+	accent-color: var(--wb-gam-color-accent, #2271b1);
+}
+
 @media (max-width: 640px) {
 	.wb-gam-profile-privacy__row {
 		flex-direction: column;
@@ -524,3 +548,54 @@
 	}
 }
 
+
+/* ── BuddyPress profile header rank (ProfileIntegration::render_rank) ─────── */
+.wb-gam-profile-rank {
+	--wb-gam-bar-color: var(--wb-gam-color-accent);
+	--wb-gam-bar-bg: var(--wb-gam-color-surface-alt);
+	--wb-gam-bar-height: 6px;
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--wb-gam-space-xs) var(--wb-gam-space-sm);
+	margin-block: var(--wb-gam-space-sm);
+	max-width: 360px;
+	font-size: 0.875rem;
+	line-height: 1.4;
+}
+
+.wb-gam-profile-rank .wb-gam-rank-badge {
+	display: inline-flex;
+	align-items: center;
+	padding: 2px 10px;
+	border-radius: var(--wb-gam-radius-full);
+	background: var(--wb-gam-color-accent-light);
+	color: var(--wb-gam-color-accent-text);
+	font-weight: 600;
+}
+
+.wb-gam-profile-rank .wb-gam-points-count {
+	color: var(--wb-gam-color-text-muted);
+	font-variant-numeric: tabular-nums;
+}
+
+.wb-gam-profile-rank .wb-gam-progress-bar {
+	flex: 1 0 100%;
+	height: var(--wb-gam-bar-height);
+	overflow: hidden;
+	border-radius: var(--wb-gam-radius-full);
+	background: var(--wb-gam-bar-bg);
+}
+
+.wb-gam-profile-rank .wb-gam-progress-fill {
+	width: var(--wb-gam-fill, 0%);
+	height: 100%;
+	border-radius: inherit;
+	background: var(--wb-gam-bar-color);
+}
+
+@media (max-width: 480px) {
+	.wb-gam-profile-rank {
+		max-width: 100%;
+	}
+}

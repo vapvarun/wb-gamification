@@ -394,7 +394,7 @@ final class KudosEngine {
 	}
 
 	/**
-	 * Total kudos received by a user, all-time.
+	 * Total kudos received by a user, all-time. Revoked kudos do not count, matching the lists.
 	 *
 	 * @param int $user_id User to query.
 	 * @return int
@@ -404,7 +404,7 @@ final class KudosEngine {
 
 		return (int) $wpdb->get_var(
 			$wpdb->prepare(
-				"SELECT COUNT(*) FROM {$wpdb->prefix}wb_gam_kudos WHERE receiver_id = %d",
+				"SELECT COUNT(*) FROM {$wpdb->prefix}wb_gam_kudos WHERE receiver_id = %d AND revoked_at IS NULL",
 				$user_id
 			)
 		);

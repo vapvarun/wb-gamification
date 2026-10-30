@@ -132,4 +132,40 @@ class SetupWizardTemplatesTest extends TestCase {
 			. 'Orphans: ' . implode( ', ', $orphans )
 		);
 	}
+
+	/**
+	 * Every template action from a plugin that may be inactive shows its real label, not
+	 * "Bn Post Created" (Basecamp 10389462809), and that label is the manifest's own.
+	 */
+	#[Test]
+	public function every_plugin_template_action_has_the_manifest_label(): void {
+		$root = dirname( __DIR__, 3 );
+		$src  = (string) file_get_contents( $root . '/src/Admin/SetupWizard.php' );
+		$map  = substr( $src, (int) strpos( $src, 'function inactive_action_labels' ) );
+		preg_match_all( "/'([a-z0-9_]+)'\s*=>\s*__\( '([^']+)'/", substr( $map, 0, (int) strpos( $map, '}' ) ), $m );
+		$labels = array_combine( $m[1], $m[2] );
+
+		$manifest = array();
+		foreach ( glob( $root . '/integrations/*.php' ) ?: array() as $file ) {
+			preg_match_all( "/'id'\s*=>\s*'([a-z0-9_]+)',\s*'label'\s*=>\s*static fn\(\): string => __\( '([^']+)'/", (string) file_get_contents( $file ), $mm );
+			$manifest += array_combine( $mm[1], $mm[2] );
+		}
+
+		$problems = array();
+		foreach ( $this->template_action_ids() as $slug => $ids ) {
+			foreach ( $ids as $id ) {
+				if ( str_starts_with( $id, 'wp_' ) ) {
+					continue; // Core WordPress actions are always registered.
+				}
+				if ( ! isset( $labels[ $id ] ) ) {
+					$problems[] = "{$slug} => {$id}: no label";
+				} elseif ( isset( $manifest[ $id ] ) && $manifest[ $id ] !== $labels[ $id ] ) {
+					$problems[] = "{$slug} => {$id}: '{$labels[ $id ]}' differs from manifest '{$manifest[ $id ]}'";
+				}
+			}
+		}
+
+		$this->assertNotEmpty( $labels, 'Parsed no labels: the parser is broken.' );
+		$this->assertSame( array(), $problems );
+	}
 }

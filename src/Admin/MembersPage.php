@@ -106,6 +106,7 @@ final class MembersPage {
 					'actions'       => __( 'Actions', 'wb-gamification' ),
 					'active'        => __( 'Earning', 'wb-gamification' ),
 					'excluded'      => __( 'Excluded', 'wb-gamification' ),
+					'offBoards'     => __( 'Off leaderboards', 'wb-gamification' ),
 					'exclude'       => __( 'Exclude', 'wb-gamification' ),
 					'include'       => __( 'Include', 'wb-gamification' ),
 					'reset'         => __( 'Reset points', 'wb-gamification' ),

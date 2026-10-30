@@ -835,6 +835,31 @@ final class SetupWizard {
 	}
 
 	/**
+	 * Labels for template actions whose plugin may not be active yet.
+	 *
+	 * An integration's manifest (and its labels) loads only while its plugin is
+	 * active, but the starter cards are shown before it is, so the Registry would
+	 * fall back to "Bn Post Created". Same strings as integrations/buddynext.php
+	 * and integrations/learnomy.php; SetupWizardTemplatesTest keeps them in step.
+	 *
+	 * @return array<string, string> action_id => label.
+	 */
+	public static function inactive_action_labels(): array {
+		return array(
+			'bn_post_created'             => __( 'Create a post', 'wb-gamification' ),
+			'bn_comment_created'          => __( 'Write a comment', 'wb-gamification' ),
+			'bn_connected'                => __( 'Accept a connection', 'wb-gamification' ),
+			'bn_space_joined'             => __( 'Join a space', 'wb-gamification' ),
+			'bn_reaction_received'        => __( 'Receive a reaction on your content', 'wb-gamification' ),
+			'bn_profile_completed'        => __( 'Complete your profile', 'wb-gamification' ),
+			'learnomy_lesson_completed'   => __( 'Complete a lesson', 'wb-gamification' ),
+			'learnomy_course_completed'   => __( 'Complete a course', 'wb-gamification' ),
+			'learnomy_certificate_issued' => __( 'Earn a certificate', 'wb-gamification' ),
+			'learnomy_student_enrolled'   => __( 'Enrol in a course', 'wb-gamification' ),
+		);
+	}
+
+	/**
 	 * Build the bulleted "N pts — Human action" summary for one template card.
 	 *
 	 * Resolves each action_id through {@see Registry::label_for()} so the
@@ -851,7 +876,7 @@ final class SetupWizard {
 		}
 		$items = array();
 		foreach ( $points as $action_id => $pts ) {
-			$label   = class_exists( Registry::class ) ? Registry::label_for( (string) $action_id ) : (string) $action_id;
+			$label   = self::inactive_action_labels()[ $action_id ] ?? Registry::label_for( (string) $action_id );
 			$items[] = sprintf(
 				'<li><span class="wb-gam-wizard-card__points-pts">%1$s</span> <span class="wb-gam-wizard-card__points-label">%2$s</span></li>',
 				esc_html( wb_gam_format_points( (int) $pts ) ),

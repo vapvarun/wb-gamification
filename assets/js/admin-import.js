@@ -155,6 +155,7 @@
 		var timer = 0;
 		var delay = POLL_MIN_MS;
 		var finished = false;
+		var pumping = false;
 
 		function phaseLabel( r ) {
 			var labels = {
@@ -191,7 +192,7 @@
 				alert.hidden = false;
 				var message = r.status === 'failed'
 					? fmt( t( 'failed', 'The import paused at its last checkpoint: %1$s' ), [ r.error || '' ] )
-					: t( 'stalled', 'The background queue has stopped moving. Resume to continue from where it stopped. If this keeps happening, WP-Cron may be disabled: run the import from WP-CLI with --sync.' );
+					: t( 'stalled', 'The background queue is not running, so the import cannot move on its own. WP-Cron may be disabled or loopback requests blocked on this site. Run it in this window (keep the tab open), or resume it in the background once the queue works.' );
 				alert.appendChild( el( 'p', 'wb-gam-import__warning', message ) );
 				var resume = el( 'button', 'button button-primary', t( 'resume', 'Resume import' ) );
 				resume.type = 'button';
@@ -208,6 +209,18 @@
 					} );
 				} );
 				alert.appendChild( resume );
+
+				// The queue is not running: drive the pages from this tab, one request per page.
+				var here = el( 'button', 'button', t( 'runHere', 'Run it in this window' ) );
+				here.type = 'button';
+				here.addEventListener( 'click', function () {
+					here.disabled = true;
+					resume.disabled = true;
+					window.clearTimeout( timer );
+					pumping = true;
+					pump();
+				} );
+				alert.appendChild( here );
 			}
 
 			if ( r.status === 'complete' ) {
@@ -246,7 +259,29 @@
 			} );
 		}
 
+		function pump() {
+			api.apiFetch( 'POST', '/import/' + slug + '/resume', { here: true }, settings ).then( function ( res ) {
+				if ( ! res.ok ) {
+					pumping = false;
+					alert.hidden = false;
+					alert.appendChild( el( 'p', 'wb-gam-import__bad', errorText( res ) ) );
+					return;
+				}
+				paint( res.data );
+				if ( isActive( res.data.status ) ) {
+					pump();
+					return;
+				}
+				pumping = false;
+				finished = true;
+				done( res.data );
+			} );
+		}
+
 		function schedule( ms ) {
+			if ( pumping ) {
+				return;
+			}
 			window.clearTimeout( timer );
 			timer = window.setTimeout( step, ms );
 		}

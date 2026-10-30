@@ -58,6 +58,10 @@ if ( 0 === $wb_gam_user_id ) {
 // Privacy gate — total points is T1 (achievement-shaped) data; visible only
 // when the public-profile rule passes (see plan/PRIVACY-MODEL.md).
 if ( $wb_gam_user_id > 0 && ! Privacy::can_view_public_profile( $wb_gam_user_id ) ) {
+	// A logged-in viewer who may not see this member's data gets nothing, not a login prompt.
+	if ( is_user_logged_in() ) {
+		return;
+	}
 	$wb_gam_user_id = 0;
 }
 

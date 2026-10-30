@@ -186,7 +186,7 @@ final class PointTypesPage {
 											<?php endif; ?>
 										</td>
 										<td><?php echo (int) $type['position']; ?></td>
-										<td class="wb-gam-pt-actions">
+										<td><div class="wb-gam-pt-actions">
 											<details class="wb-gam-pt-rename">
 												<summary class="button button-small"><?php esc_html_e( 'Rename', 'wb-gamification' ); ?></summary>
 												<form class="wb-gam-pt-rename__form"
@@ -217,7 +217,7 @@ final class PointTypesPage {
 											<?php else : ?>
 												<span class="description"><?php esc_html_e( 'Default - protected', 'wb-gamification' ); ?></span>
 											<?php endif; ?>
-										</td>
+										</div></td>
 									</tr>
 								<?php endforeach; ?>
 							</tbody>

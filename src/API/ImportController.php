@@ -119,6 +119,13 @@ final class ImportController {
 					'methods'             => WP_REST_Server::CREATABLE,
 					'callback'            => array( $this, 'resume' ),
 					'permission_callback' => array( $this, 'permissions' ),
+					'args'                => array(
+						'here' => array(
+							'description' => __( 'Run one page in this request instead of handing the run to the background queue.', 'wb-gamification' ),
+							'type'        => 'boolean',
+							'default'     => false,
+						),
+					),
 				),
 			)
 		);
@@ -197,7 +204,11 @@ final class ImportController {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function resume( $request ) {
-		$source  = (string) $request['source'];
+		$source = (string) $request['source'];
+		if ( $request['here'] ) {
+			$progress = ImportRunner::run_here( $source );
+			return is_wp_error( $progress ) ? $progress : new WP_REST_Response( $progress, 200 );
+		}
 		$resumed = ImportRunner::resume( $source );
 		if ( is_wp_error( $resumed ) ) {
 			return $resumed;

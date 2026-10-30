@@ -62,6 +62,10 @@ if ( $wb_gam_user_id <= 0 ) {
 }
 
 if ( $wb_gam_user_id > 0 && ! Privacy::can_view_private_history( $wb_gam_user_id ) ) {
+	// A logged-in viewer who may not see this member's data gets nothing, not a login prompt.
+	if ( is_user_logged_in() ) {
+		return;
+	}
 	$wb_gam_user_id = 0;
 }
 

@@ -589,7 +589,10 @@ final class LeaderboardEngine {
 		// SNAPSHOT_DEPTH deep, and it ranks on the ledger sum while the totals table ranks on `earned`.
 		// If page one came from one and page two from the other, a member the two disagree about could
 		// be skipped or served twice at the boundary. One source for every page of a walk.
-		if ( '' === $scope_type && 0 === $scope_id && ( $period_start || ! $paged ) ) {
+		// The ALL-TIME board never uses it, paged or not: it ranks on the indexed totals table, which
+		// is live and cheap, and the snapshot would make it up to five minutes older than the API
+		// pages and the rank strip (Basecamp 10389379202).
+		if ( '' === $scope_type && 0 === $scope_id && $period_start ) {
 			$snapshot_rows = self::read_from_snapshot( $period, $limit, $resolved_type, $cursor );
 			if ( null !== $snapshot_rows ) {
 				return $snapshot_rows;
@@ -843,25 +846,24 @@ final class LeaderboardEngine {
 			return $result;
 		}
 
+		// The all-time board is always the live totals table (fetch_raw() never serves it from the
+		// snapshot), so the all-time rank reads that same table: one answer on every surface.
+		if ( ! $period_start ) {
+			$result = self::totals_standing( $user_id, $resolved_type, $scope_ids );
+			wp_cache_set( $cache_key, $result, 'wb_gamification', 120 );
+			return $result;
+		}
+
 		// Get user's own total for the period — scoped by currency so the
 		// rank computation matches what the public leaderboard sees.
-		if ( $period_start ) {
-			$user_total_sql = $wpdb->prepare(
-				"SELECT COALESCE(SUM(points),0) FROM {$wpdb->prefix}wb_gam_points
-				 WHERE user_id = %d AND point_type = %s AND is_spend = 0 AND created_at >= %s",
-				$user_id,
-				$resolved_type,
-				$period_start
-			);
-		} else {
-			$user_total_sql = $wpdb->prepare(
-				"SELECT COALESCE(SUM(points),0) FROM {$wpdb->prefix}wb_gam_points
-				 WHERE user_id = %d AND point_type = %s AND is_spend = 0",
-				$user_id,
-				$resolved_type
-			);
-		}
-		$user_total = (int) $wpdb->get_var( $user_total_sql ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+		$user_total_sql = $wpdb->prepare(
+			"SELECT COALESCE(SUM(points),0) FROM {$wpdb->prefix}wb_gam_points
+			 WHERE user_id = %d AND point_type = %s AND is_spend = 0 AND created_at >= %s",
+			$user_id,
+			$resolved_type,
+			$period_start
+		);
+		$user_total     = (int) $wpdb->get_var( $user_total_sql ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 
 		// THE PAGE MUST NOT SHOW TWO NUMBERS FOR ONE METRIC.
 		//
@@ -899,6 +901,43 @@ final class LeaderboardEngine {
 		wp_cache_set( $cache_key, $result, 'wb_gamification', 120 );
 
 		return $result;
+	}
+
+	/**
+	 * A member's all-time rank, points and gap to the next rank, from the totals table.
+	 *
+	 * Same table, column (`earned`) and eligibility rules as the all-time board
+	 * ({@see build_totals_query()}), so the strip can never disagree with the board.
+	 * Counts are range reads on idx_type_earned.
+	 *
+	 * @param int    $user_id    Member.
+	 * @param string $point_type Resolved currency slug.
+	 * @param int[]  $scope_ids  Members to restrict to, empty = site-wide.
+	 * @return array{rank: int, points: int, points_to_next: int|null}
+	 */
+	private static function totals_standing( int $user_id, string $point_type, array $scope_ids ): array {
+		global $wpdb;
+
+		$table  = $wpdb->prefix . 'wb_gam_user_totals';
+		$earned = (int) $wpdb->get_var(
+			$wpdb->prepare( "SELECT earned FROM {$table} WHERE user_id = %d AND point_type = %s", $user_id, $point_type ) // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		);
+
+		[ $excl_clause, $excl_values ] = self::exclusion_sql( 'ut' );
+		$scope_clause                  = empty( $scope_ids )
+			? ''
+			: 'AND ut.user_id IN (' . implode( ',', array_fill( 0, count( $scope_ids ), '%d' ) ) . ')';
+		$where                         = "FROM {$table} ut WHERE ut.point_type = %s AND ut.earned > %d {$excl_clause} {$scope_clause}";
+		$binds                         = array_merge( array( $point_type, $earned ), $excl_values, $scope_ids );
+
+		$above = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) {$where}", $binds ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$next  = $wpdb->get_var( $wpdb->prepare( "SELECT MIN(ut.earned) {$where}", $binds ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+
+		return array(
+			'rank'           => $above + 1,
+			'points'         => $earned,
+			'points_to_next' => null !== $next ? (int) $next - $earned : null,
+		);
 	}
 
 	// ── Snapshot writer ────────────────────────────────────────────────────────

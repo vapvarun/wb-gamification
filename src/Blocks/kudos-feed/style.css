@@ -12,6 +12,11 @@
 	font-weight: 600;
 }
 
+/* The composer sits above the list (or the empty state); keep them apart. */
+.wb-gam-kudos-feed .wb-gam-give-kudos {
+	margin-block-end: var(--wb-gam-space-lg, 24px);
+}
+
 .wb-gam-kudos-feed__list {
 	list-style: none;
 	margin: 0;
