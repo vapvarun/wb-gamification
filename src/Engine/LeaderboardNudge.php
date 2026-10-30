@@ -261,6 +261,12 @@ final class LeaderboardNudge {
 	 * @param int $user_id User to nudge.
 	 */
 	private static function do_send_nudge( int $user_id ): void {
+		// Re-check at send time: the member may have opted out after the job was queued.
+		$prefs = MemberPrefs::get( $user_id );
+		if ( $prefs['leaderboard_opt_out'] || 'none' === $prefs['notification_mode'] ) {
+			return;
+		}
+
 		$rank_data = LeaderboardEngine::get_user_rank( $user_id, 'week' );
 
 		$rank           = $rank_data['rank'];
