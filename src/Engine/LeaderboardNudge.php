@@ -49,7 +49,13 @@ final class LeaderboardNudge {
 
 	const CRON_HOOK      = 'wb_gam_weekly_nudge';
 	const AS_SINGLE_HOOK = 'wb_gam_nudge_single_user';
+	const AS_PAGE_HOOK   = 'wb_gam_nudge_page';
 	const CRON_RECUR     = 'weekly';
+
+	/**
+	 * Members queued per page of the weekly run.
+	 */
+	private const PAGE_SIZE = 500;
 
 	// ── Lifecycle ───────────────────────────────────────────────────────────────
 
@@ -59,6 +65,7 @@ final class LeaderboardNudge {
 	public static function init(): void {
 		add_action( self::CRON_HOOK, array( __CLASS__, 'dispatch_batch' ) );
 		add_action( self::AS_SINGLE_HOOK, array( __CLASS__, 'send_nudge' ) );
+		add_action( self::AS_PAGE_HOOK, array( __CLASS__, 'dispatch_page' ), 10, 2 );
 
 		// Arm the recurring event on init, never at plugins_loaded: wp_schedule_event
 		// resolves schedules via wp_get_schedules(), which fires the
@@ -157,21 +164,43 @@ final class LeaderboardNudge {
 			return;
 		}
 
-		// Users who earned at least 1 point this week, not off the boards or off email.
-		// The site's Monday, as a UTC instant for the UTC created_at column.
-		$week_start = Clock::site_cutoff( 'monday this week' );
+		// The site's Monday, as a UTC instant for the UTC created_at column. Fixed here and carried
+		// through the pages, so a run that crosses Monday midnight does not change who it covers.
+		self::dispatch_page( 0, Clock::site_cutoff( 'monday this week' ) );
+	}
 
+	/**
+	 * Queue ONE page of the weekly run, then schedule the next.
+	 *
+	 * Same keyset walk as WeeklyEmailEngine::dispatch_page(). This used to be one query with
+	 * LIMIT 5000 and no ORDER BY, so past 5,000 active members the rest silently got nothing, and
+	 * which ones was up to MySQL.
+	 *
+	 * @since 1.6.8
+	 *
+	 * @param int    $cursor     Highest user_id already queued. 0 starts the run.
+	 * @param string $week_start UTC start of the week this run covers.
+	 * @return void
+	 */
+	public static function dispatch_page( int $cursor, string $week_start ): void {
+		global $wpdb;
+
+		// Users who earned at least 1 point this week, not off the boards or off email.
 		$user_ids = $wpdb->get_col(
 			$wpdb->prepare(
 				"SELECT DISTINCT p.user_id
 				   FROM {$wpdb->prefix}wb_gam_points p
 				  WHERE p.created_at >= %s
+				    AND p.user_id > %d
 				    AND p.user_id NOT IN (
 				        SELECT user_id FROM {$wpdb->prefix}wb_gam_member_prefs
 				         WHERE leaderboard_opt_out = 1 OR notification_mode = 'none'
 				    )
-				  LIMIT 5000",
-				$week_start
+				  ORDER BY p.user_id ASC
+				  LIMIT %d",
+				$week_start,
+				$cursor,
+				self::PAGE_SIZE
 			)
 		);
 
@@ -205,6 +234,31 @@ final class LeaderboardNudge {
 				'wb-gamification-nudge'
 			);
 		}
+
+		// A short page means the keyset is exhausted: the run is done.
+		if ( count( $user_ids ) < self::PAGE_SIZE ) {
+			return;
+		}
+
+		$last = (int) end( $user_ids );
+
+		if ( ! function_exists( 'as_schedule_single_action' ) ) {
+			self::dispatch_page( $last, $week_start );
+			return;
+		}
+
+		as_schedule_single_action(
+			time() + 60,
+			self::AS_PAGE_HOOK,
+			array(
+				'cursor'     => $last,
+				'week_start' => $week_start,
+			),
+			'wb-gamification-nudge'
+		);
+
+		// Keep the dispatch window open for as long as the chain is running.
+		set_transient( self::DISPATCH_LOCK_KEY, 1, self::DISPATCH_LOCK_TTL );
 	}
 
 	/**
