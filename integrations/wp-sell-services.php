@@ -27,8 +27,8 @@ if ( ! defined( 'WPSS_VERSION' ) ) {
 /*
  * A review pays its buyer once, when it is published. With moderation on (WPSS setting
  * moderate_reviews) the review is created pending and only published when an admin approves
- * it, which fires wpss_review_moderated, not wpss_review_created again. So two triggers share
- * the reviewer rule and a once-per-review guard: approve, reject, approve again pays once.
+ * it, which fires wpss_review_moderated, not wpss_review_created again. So both funnel into one
+ * action with a once-per-review guard: approve, reject, approve again pays once.
  * A rejection after approval keeps the points, like every other integration.
  */
 $wb_gam_wpss_reviewer = static function ( int $review_id, int $order_id = 0 ): int {
@@ -46,7 +46,7 @@ $wb_gam_wpss_reviewer = static function ( int $review_id, int $order_id = 0 ): i
 		return 0;
 	}
 
-	// Once per review, across both triggers.
+	// Once per review. wpss_review_approved is a removed action whose past awards still count.
 	global $wpdb;
 	$needle = '"review_id":' . $review_id;
 	$paid   = (int) $wpdb->get_var(
@@ -70,6 +70,18 @@ $wb_gam_wpss_review_order = static function ( int $review_id ): int {
 	$review = ( new \WPSellServices\Services\ReviewService() )->get( $review_id );
 	return $review ? (int) $review->order_id : 0;
 };
+
+add_action( 'wpss_review_created', static fn( $review_id, $order_id ) => do_action( 'wb_gam_wpss_review_published', (int) $review_id, (int) $order_id ), 10, 2 );
+add_action(
+	'wpss_review_moderated',
+	static function ( $review_id, $new_status ): void {
+		if ( 'approved' === $new_status ) {
+			do_action( 'wb_gam_wpss_review_published', (int) $review_id, 0 );
+		}
+	},
+	10,
+	2
+);
 
 return array(
 	'plugin'   => 'WP Sell Services',
@@ -103,36 +115,12 @@ return array(
 			'id'                => 'wpss_review_created',
 			'label'             => static fn(): string => __( 'Review a service', 'wb-gamification' ),
 			'description'       => static fn(): string => __( 'Awarded to the buyer when their review is published. A review held for moderation pays when a moderator approves it, and a seller reviewing their own order earns nothing.', 'wb-gamification' ),
-			// Fires: do_action( 'wpss_review_created', int $review_id, int $order_id ). The reviewer is read through WPSS's own service.
-			'hook'              => 'wpss_review_created',
+			'hook'              => 'wb_gam_wpss_review_published',
 			'user_callback'     => $wb_gam_wpss_reviewer,
-			'metadata_callback' => function ( int $review_id, int $order_id = 0 ): array {
+			'metadata_callback' => static function ( int $review_id, int $order_id = 0 ) use ( $wb_gam_wpss_review_order ): array {
 				return array(
 					'review_id' => $review_id,
-					'order_id'  => $order_id,
-				);
-			},
-			'default_points'    => 10,
-			'category'          => 'commerce',
-			'icon'              => 'icon-star',
-			'repeatable'        => true,
-			'async'             => false,
-			'cooldown'          => 60,
-		),
-
-		array(
-			'id'                => 'wpss_review_approved',
-			'label'             => static fn(): string => __( 'Review approved by a moderator', 'wb-gamification' ),
-			'description'       => static fn(): string => __( 'Awarded to the buyer when a review held for moderation is approved. Each review pays once, whichever way it was published.', 'wb-gamification' ),
-			// Fires: do_action( 'wpss_review_moderated', int $review_id, string $new_status ) from the admin moderation queue.
-			'hook'              => 'wpss_review_moderated',
-			'user_callback'     => static function ( int $review_id, string $new_status = '' ) use ( $wb_gam_wpss_reviewer ): int {
-				return 'approved' === $new_status ? $wb_gam_wpss_reviewer( $review_id ) : 0;
-			},
-			'metadata_callback' => static function ( int $review_id, string $new_status = '' ) use ( $wb_gam_wpss_review_order ): array {
-				return array(
-					'review_id' => $review_id,
-					'order_id'  => $wb_gam_wpss_review_order( $review_id ),
+					'order_id'  => $order_id > 0 ? $order_id : $wb_gam_wpss_review_order( $review_id ),
 				);
 			},
 			'default_points'    => 10,

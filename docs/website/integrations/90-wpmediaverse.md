@@ -20,8 +20,6 @@ All point values below are defaults you can override from **WB Gamification → 
 | `mvs_receive_follow` | Gain a new follower | 3 | - |
 | `mvs_receive_favorite` | Photo bookmarked by someone | 2 | - |
 | `mvs_give_comment` | Write a meaningful comment | 3 | 20 |
-| `mvs_give_follow` | Follow another member | 1 | 50 |
-| `mvs_bookmark_photo` | Bookmark a photo | 1 | 30 |
 
 `mvs_receive_like` and `mvs_receive_favorite` award the **media owner**, not the person who reacted. Self-reactions (liking or bookmarking your own content) are excluded - the engine compares the reactor ID against the media author and returns 0 if they match.
 

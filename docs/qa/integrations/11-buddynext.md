@@ -1,6 +1,6 @@
 # BuddyNext: QA checklist
 
-16 actions. Integration file: `integrations/buddynext.php`. Code checked against 1.2.7.
+13 actions. Integration file: `integrations/buddynext.php`. Code checked against 1.2.7.
 
 Tick each box when it passes. If one fails, comment on this plugin's Basecamp card with the steps, what you expected, what happened and a screenshot.
 
@@ -129,30 +129,6 @@ Default: **10 points**. No limit by default.
 
 Developer result: Run on a test site through the plugin's REST route. Paid the right member.
 
-### Send a connection request (`bn_connection_requested`)
-
-Awarded when a member sends a connection request. Daily cap prevents spam-requesting.
-
-Default: **1 points**. Limit: 5 a day.
-
-- [ ] Doing it pays 1 points to the right member.
-- [ ] Switched off, it pays nothing.
-- [ ] It stops paying after 5 in one day.
-
-Developer result: Run on a test site through the plugin's REST route. Paid the right member.
-
-### Send a direct message (`bn_dm_sent`)
-
-Awarded when a member sends a DM. Daily cap keeps points proportional to real engagement.
-
-Default: **1 points**. Limit: 10 a day.
-
-- [ ] Doing it pays 1 points to the right member.
-- [ ] Switched off, it pays nothing.
-- [ ] It stops paying after 10 in one day.
-
-Developer result: Run on a test site through the plugin's REST route. Paid the right member.
-
 ### Join a space (`bn_space_joined`)
 
 Awarded when a member joins a community space. Daily cap prevents bulk-join farming.
@@ -173,18 +149,6 @@ Default: **10 points**. No limit by default.
 
 - [ ] Doing it pays 10 points to the right member.
 - [ ] Switched off, it pays nothing.
-
-Developer result: Run on a test site through the plugin's REST route. Paid the right member.
-
-### Update your profile (`bn_profile_updated`)
-
-Awarded when a member changes their profile completion percentage.
-
-Default: **2 points**. Limit: 300s wait.
-
-- [ ] Doing it pays 2 points to the right member.
-- [ ] Switched off, it pays nothing.
-- [ ] Doing it again inside 300 seconds pays nothing. After the wait it pays.
 
 Developer result: Run on a test site through the plugin's REST route. Paid the right member.
 

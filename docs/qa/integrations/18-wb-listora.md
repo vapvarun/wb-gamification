@@ -1,6 +1,6 @@
 # WB Listora: QA checklist
 
-6 actions. Integration file: `integrations/wb-listora.php`. Code checked against 2.1.0.
+5 actions. Integration file: `integrations/wb-listora.php`. Code checked against 2.1.0.
 
 Tick each box when it passes. If one fails, comment on this plugin's Basecamp card with the steps, what you expected, what happened and a screenshot.
 
@@ -53,18 +53,6 @@ Default: **8 points**. Limit: 300s wait.
 - [ ] Doing it pays 8 points to the right member.
 - [ ] Switched off, it pays nothing.
 - [ ] Doing it again inside 300 seconds pays nothing. After the wait it pays.
-
-Developer result: Run on a test site through the plugin's REST route. Paid the right member.
-
-### Favourite a listing (`listora_favorite_added`)
-
-Awarded to the member who favourites a listing. Daily cap prevents farming.
-
-Default: **2 points**. Limit: 10 a day.
-
-- [ ] Doing it pays 2 points to the right member.
-- [ ] Switched off, it pays nothing.
-- [ ] It stops paying after 10 in one day.
 
 Developer result: Run on a test site through the plugin's REST route. Paid the right member.
 

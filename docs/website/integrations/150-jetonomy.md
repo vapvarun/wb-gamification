@@ -13,7 +13,7 @@ In addition, the auto-discovered manifests register discrete Jetonomy actions:
 | Manifest | Example actions |
 |---|---|
 | `integrations/jetonomy.php` | `jetonomy_space_joined`, `jetonomy_join_request_approved`, `jetonomy_trust_level_up`, `jetonomy_membership_activated` |
-| `integrations/jetonomy-pro.php` | `jetonomy_pro_poll_created`, `jetonomy_pro_poll_voted`, `jetonomy_pro_message_sent`, `jetonomy_pro_reaction_added` |
+| `integrations/jetonomy-pro.php` | `jetonomy_pro_poll_created`, `jetonomy_pro_poll_voted`, `jetonomy_pro_reaction_added` |
 
 A Jetonomy custom badge is paid once: its reputation bonus reaches the points ledger through the reputation mirror as `jetonomy_badge_earned`. There is no separate `jetonomy_pro_badge_earned` action (before 1.6.5 there was, and each badge paid twice).
 

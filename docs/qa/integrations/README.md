@@ -1,6 +1,6 @@
 # Integration QA checklists
 
-One checklist per integration, 137 actions in all. Temporary for the 1.6.8 test round, like the handoff. Delete this folder when testing is done.
+One checklist per integration, 126 actions in all. Temporary for the 1.6.8 test round, like the handoff. Delete this folder when testing is done.
 
 Each integration also has a Basecamp card in **Ready for Testing** with the same points as tickable steps.
 
@@ -16,16 +16,16 @@ Each integration also has a Basecamp card in **Ready for Testing** with the same
 | [MemberPress](08-memberpress.md) | 3 |
 | [GiveWP](09-givewp.md) | 3 |
 | [The Events Calendar + Event Tickets](10-the-events-calendar.md) | 3 |
-| [BuddyNext](11-buddynext.md) | 16 |
+| [BuddyNext](11-buddynext.md) | 13 |
 | [Jetonomy](12-jetonomy.md) | 4 |
-| [Jetonomy Pro](13-jetonomy-pro.md) | 6 |
-| [Learnomy](14-learnomy.md) | 7 |
+| [Jetonomy Pro](13-jetonomy-pro.md) | 3 |
+| [Learnomy](14-learnomy.md) | 6 |
 | [Learnomy Pro](15-learnomy-pro.md) | 5 |
 | [Eventonomy](16-eventonomy.md) | 4 |
 | [Eventonomy Pro](17-eventonomy-pro.md) | 2 |
-| [WB Listora](18-wb-listora.md) | 6 |
+| [WB Listora](18-wb-listora.md) | 5 |
 | [WB Listora Pro](19-wb-listora-pro.md) | 3 |
 | [WP Career Board](20-wp-career-board.md) | 6 |
 | [WP Career Board Pro](21-wp-career-board-pro.md) | 1 |
-| [WP Sell Services](22-wp-sell-services.md) | 3 |
-| [WPMediaVerse](23-wpmediaverse.md) | 15 |
+| [WP Sell Services](22-wp-sell-services.md) | 2 |
+| [WPMediaVerse](23-wpmediaverse.md) | 13 |

@@ -158,20 +158,5 @@ return array(
 			'cooldown'          => 300,
 		),
 
-		array(
-			'id'             => 'learnomy_instructor_application',
-			'label'          => static fn(): string => __( 'Apply to teach', 'wb-gamification' ),
-			'description'    => static fn(): string => __( 'Awarded once when a member applies to become an instructor.', 'wb-gamification' ),
-			// Free fires: do_action( 'learnomy_instructor_application_submitted', int $application_id, int $user_id ).
-			'hook'           => 'learnomy_instructor_application_submitted',
-			'user_callback'  => function ( int $application_id, int $user_id ): int {
-				return $user_id;
-			},
-			'default_points' => 5,
-			'category'       => 'learning',
-			'icon'           => 'icon-user-plus',
-			'repeatable'     => false,
-		),
-
 	),
 );

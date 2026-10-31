@@ -51,6 +51,7 @@ return [
 			'category'        => 'learning',
 			'icon'            => 'icon-graduation-cap',
 			'repeatable'      => true,
+			'async'           => true,
 			'cooldown'        => 0,
 		],
 
@@ -65,6 +66,7 @@ return [
 			'category'        => 'learning',
 			'icon'            => 'icon-book-open',
 			'repeatable'      => true,
+			'async'           => true,
 			'cooldown'        => 0,
 		],
 
@@ -85,6 +87,7 @@ return [
 			'category'        => 'learning',
 			'icon'            => 'icon-award',
 			'repeatable'      => true,
+			'async'           => true,
 			'cooldown'        => 0,
 		],
 
@@ -99,6 +102,7 @@ return [
 			'category'        => 'learning',
 			'icon'            => 'icon-log-in',
 			'repeatable'      => true,
+			'async'           => true,
 			'cooldown'        => 0,
 		],
 
@@ -119,6 +123,7 @@ return [
 			'category'        => 'learning',
 			'icon'            => 'icon-star',
 			'repeatable'      => true,
+			'async'           => true,
 			'cooldown'        => 0,
 		],
 
@@ -133,6 +138,7 @@ return [
 			'category'       => 'learning',
 			'icon'           => 'icon-circle-help',
 			'repeatable'     => true,
+			'async'          => true,
 			'cooldown'       => 0,
 			'daily_cap'      => 5,
 		],

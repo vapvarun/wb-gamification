@@ -87,6 +87,7 @@ return [
 			'category'        => 'learning',
 			'icon'            => 'icon-log-in',
 			'repeatable'      => true,
+			'async'           => true,
 			'cooldown'        => 0,
 		],
 
@@ -101,6 +102,7 @@ return [
 			'category'        => 'learning',
 			'icon'            => 'icon-users',
 			'repeatable'      => true,
+			'async'           => true,
 			'cooldown'        => 0,
 		],
 

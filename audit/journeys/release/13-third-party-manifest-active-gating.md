@@ -65,7 +65,7 @@ deactivated wpmediaverse-pro but `mvs_battle_win` / `mvs_tournament_win` /
 
 - **Action**:
   ```bash
-  wp eval 'foreach (["mvs_upload_photo","mvs_receive_like","mvs_bookmark_photo"] as $a) {
+  wp eval 'foreach (["mvs_upload_photo","mvs_receive_like","mvs_receive_comment"] as $a) {
       $r = WBGam\Engine\Registry::get_action($a);
       echo "$a: " . ($r ? "ok" : "FAIL — absent") . "\n";
   }'

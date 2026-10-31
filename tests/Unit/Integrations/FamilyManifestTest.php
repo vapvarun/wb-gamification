@@ -19,12 +19,12 @@ class FamilyManifestTest extends TestCase {
 
 	/** @var array<string,int> manifest file => expected trigger count */
 	private const MANIFESTS = array(
-		'buddynext.php'           => 16,
-		'learnomy.php'            => 7,
+		'buddynext.php'           => 13,
+		'learnomy.php'            => 6,
 		'learnomy-pro.php'        => 5,
 		'wp-career-board.php'     => 6,
 		'wp-career-board-pro.php' => 1,
-		'wb-listora.php'          => 6,
+		'wb-listora.php'          => 5,
 		'wb-listora-pro.php'      => 3,
 	);
 
@@ -90,11 +90,6 @@ class FamilyManifestTest extends TestCase {
 		// bn_profile_completed (strength hook): awards only at exactly 100%.
 		$this->assertSame( 55, $triggers['bn_profile_completed']( 55, 100 ) );
 		$this->assertSame( 0, $triggers['bn_profile_completed']( 55, 80 ) );
-		// bn_profile_updated awards on every completion change: since the 100%
-		// milestone moved to the strength hook, the old "< 100" exclusion is
-		// gone — BuddyNext fires completion_changed only on real changes.
-		$this->assertSame( 55, $triggers['bn_profile_updated']( 55, 100 ) );
-		$this->assertSame( 55, $triggers['bn_profile_updated']( 55, 60 ) );
 	}
 
 	#[Test]

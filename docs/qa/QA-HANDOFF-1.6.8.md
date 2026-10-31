@@ -97,7 +97,7 @@ Cards 10459672711 and 10459672796.
 
 # Part B: plugin integrations
 
-WB Gamification has 137 actions: 8 for WordPress and 129 across 17 plugins and their 5 Pro add-ons.
+WB Gamification has 126 actions: 8 for WordPress and 118 across 17 plugins and their 5 Pro add-ons.
 
 **What has been checked so far:** every plugin's code was read for the actions listed below, and the fixed plugins were run on Docker. The other actions have had their arguments compared with the source but have not been run, so they still need a real run.
 
@@ -119,11 +119,11 @@ These were broken and are fixed in this round, so test them first:
 | BuddyNext | Accept a connection pays the sender, so it is now labelled Have a connection request accepted |
 | WooCommerce orders | Cash, bank and check orders never paid Pay for an order or Make your first purchase. They now pay when marked Completed. Free orders pay nothing |
 | BuddyNext, WB Listora, Eventonomy, WP Career Board | Repeat pays closed: bookmark, listing submit and approval, event submit, event follow and hire now pay once per item. A saved listing or event draft pays nothing |
+| Actions removed by the owner | BuddyNext connection request, direct message, update profile. Jetonomy Pro message sent, conversation started, message received. MediaVerse follow someone, bookmark. Learnomy apply to teach. Listora favourite. WP Sell Services review approved, merged into Review a service, which still pays moderated reviews |
 | LearnDash, LifterLMS, Tutor LMS | See the LMS change below |
 
 Still open:
 
-- **Jetonomy Pro:** leaving a conversation also pays Send a private message. The fix belongs in Jetonomy Pro and has a card on its board.
 - **BuddyNext:** a first follow through a private account's approval pays nothing, and joining a space with a linked forum pays twice. Both have cards on its board.
 - **Learnomy Pro:** completing a learning path with no certificate template pays nothing. It has a card on its board.
 - **WooCommerce Memberships in Jetonomy:** buying a plan for the first time pays nothing for Activate a membership. The fix belongs in Jetonomy Pro and has a card on its board. WooCommerce Subscriptions works.

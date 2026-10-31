@@ -1,6 +1,6 @@
 # Jetonomy Pro: QA checklist
 
-6 actions. Integration file: `integrations/jetonomy-pro.php`. Code checked against 2.0.7.
+3 actions. Integration file: `integrations/jetonomy-pro.php`. Code checked against 2.0.7.
 
 **Setup:** Needs Jetonomy.
 
@@ -41,45 +41,6 @@ Default: **2 points**. Limit: 30s wait.
 - [ ] Doing it pays 2 points to the right member.
 - [ ] Switched off, it pays nothing.
 - [ ] Doing it again inside 30 seconds pays nothing. After the wait it pays.
-
-Developer result: Run on a test site through the plugin's REST route. Paid the right member.
-
-### Send a Jetonomy private message (`jetonomy_pro_message_sent`)
-
-Awarded when a member sends a Jetonomy private message. Daily cap blocks DM-farming.
-
-Default: **2 points**. Limit: 60s wait, 20 a day.
-
-- [ ] Doing it pays 2 points to the right member.
-- [ ] Switched off, it pays nothing.
-- [ ] Doing it again inside 60 seconds pays nothing. After the wait it pays.
-- [ ] It stops paying after 20 in one day.
-- [ ] KNOWN ISSUE: leaving a conversation also pays this, because Jetonomy Pro fires the hook for its system message. Confirm it and comment on the card.
-
-Developer result: Run on a test site through the plugin's REST route. Paid the right member.
-
-### Start a Jetonomy conversation (`jetonomy_pro_conversation_created`)
-
-Awarded once per conversation when a member opens a new Jetonomy DM thread.
-
-Default: **5 points**. Limit: 120s wait.
-
-- [ ] Doing it pays 5 points to the right member.
-- [ ] Switched off, it pays nothing.
-- [ ] Doing it again inside 120 seconds pays nothing. After the wait it pays.
-
-Developer result: Run on a test site through the plugin's REST route. Paid the right member.
-
-### Receive a Jetonomy private message (`jetonomy_pro_dm_received`)
-
-Awarded to the recipient when a Jetonomy private message is delivered. Daily cap protects against spam-DM gaming.
-
-Default: **1 points**. Limit: 120s wait, 10 a day.
-
-- [ ] Doing it pays 1 points to the right member.
-- [ ] Switched off, it pays nothing.
-- [ ] Doing it again inside 120 seconds pays nothing. After the wait it pays.
-- [ ] It stops paying after 10 in one day.
 
 Developer result: Run on a test site through the plugin's REST route. Paid the right member.
 

@@ -1,6 +1,6 @@
 # WPMediaVerse: QA checklist
 
-15 actions. Integration file: `integrations/wpmediaverse.php`.
+13 actions. Integration file: `integrations/wpmediaverse.php`.
 
 Tick each box when it passes. If one fails, comment on this plugin's Basecamp card with the steps, what you expected, what happened and a screenshot.
 
@@ -98,30 +98,6 @@ Default: **3 points**. Limit: 30s wait, 20 a day.
 - [ ] It stops paying after 20 in one day.
 
 Developer result: Run on a test site through the plugin's REST route. Paid the right member.
-
-### Follow another member (`mvs_give_follow`)
-
-Awarded when a member follows another user.
-
-Default: **1 points**. Limit: 50 a day.
-
-- [ ] Doing it pays 1 points to the right member.
-- [ ] Switched off, it pays nothing.
-- [ ] It stops paying after 50 in one day.
-
-Developer result: Its cap of 50 was not reached because the REST rate limit stopped the run at 30. Run on a test site through the plugin's REST route.
-
-### Bookmark a photo (`mvs_bookmark_photo`)
-
-Awarded when a member saves a photo to favorites.
-
-Default: **1 points**. Limit: 30 a day.
-
-- [ ] Doing it pays 1 points to the right member.
-- [ ] Switched off, it pays nothing.
-- [ ] It stops paying after 30 in one day.
-
-Developer result: Its cap of 30 was not run. Run on a test site through the plugin's REST route.
 
 ### Win a photo battle (`mvs_battle_win`)
 

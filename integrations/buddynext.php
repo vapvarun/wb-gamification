@@ -265,52 +265,6 @@ return array(
 			'async'             => false,
 		),
 
-		array(
-			'id'                => 'bn_connection_requested',
-			'label'             => static fn(): string => __( 'Send a connection request', 'wb-gamification' ),
-			'description'       => static fn(): string => __( 'Awarded when a member sends a connection request. Daily cap prevents spam-requesting.', 'wb-gamification' ),
-			// Fires: do_action( 'buddynext_connection_requested', int $connection_id, int $requester_id, int $recipient_id, string $note ).
-			'hook'              => 'buddynext_connection_requested',
-			'user_callback'     => function ( int $connection_id, int $requester_id, int $recipient_id, string $note = '' ): int {
-				return $requester_id;
-			},
-			'metadata_callback' => function ( int $connection_id, int $requester_id, int $recipient_id, string $note = '' ): array {
-				return array(
-					'connection_id' => $connection_id,
-					'recipient_id'  => $recipient_id,
-				);
-			},
-			'default_points'    => 1,
-			'category'          => 'social',
-			'icon'              => 'icon-send',
-			'repeatable'        => true,
-			'async'             => false,
-			'daily_cap'         => 5,
-		),
-
-		array(
-			'id'                => 'bn_dm_sent',
-			'label'             => static fn(): string => __( 'Send a direct message', 'wb-gamification' ),
-			'description'       => static fn(): string => __( 'Awarded when a member sends a DM. Daily cap keeps points proportional to real engagement.', 'wb-gamification' ),
-			// Fires: do_action( 'buddynext_dm_sent', int $sender_id, int $message_id, int $conversation_id, array $recipients ).
-			'hook'              => 'buddynext_dm_sent',
-			'user_callback'     => function ( int $sender_id, int $message_id, int $conversation_id, array $recipients ): int {
-				return $sender_id;
-			},
-			'metadata_callback' => function ( int $sender_id, int $message_id, int $conversation_id, array $recipients ): array {
-				return array(
-					'message_id'      => $message_id,
-					'conversation_id' => $conversation_id,
-				);
-			},
-			'default_points'    => 1,
-			'category'          => 'social',
-			'icon'              => 'icon-mail',
-			'repeatable'        => true,
-			'async'             => false,
-			'daily_cap'         => 10,
-		),
-
 		// -----------------------------------------------------------------------
 		// Community
 		// -----------------------------------------------------------------------
@@ -360,30 +314,6 @@ return array(
 		// -----------------------------------------------------------------------
 		// Profile & Onboarding
 		// -----------------------------------------------------------------------
-
-		array(
-			'id'                => 'bn_profile_updated',
-			'label'             => static fn(): string => __( 'Update your profile', 'wb-gamification' ),
-			'description'       => static fn(): string => __( 'Awarded when a member changes their profile completion percentage.', 'wb-gamification' ),
-			// Fires: do_action( 'buddynext_profile_completion_changed', int $user_id, int $percent ).
-			// BuddyNext fires this only on an actual percentage change (1.0.6+),
-			// so every fire is a real profile edit. The old "< 100" exclusion
-			// existed to avoid double-awarding with bn_profile_completed on the
-			// same hook; that milestone now listens to the strength hook instead.
-			'hook'              => 'buddynext_profile_completion_changed',
-			'user_callback'     => function ( int $user_id, int $percent ): int {
-				return $user_id;
-			},
-			'metadata_callback' => function ( int $user_id, int $percent ): array {
-				return array( 'percent' => $percent );
-			},
-			'default_points'    => 2,
-			'category'          => 'community',
-			'icon'              => 'icon-user',
-			'repeatable'        => true,
-			'async'             => false,
-			'cooldown'          => 300,
-		),
 
 		array(
 			'id'             => 'bn_profile_completed',

@@ -250,40 +250,6 @@ $free_triggers = array(
 		'cooldown'       => 30,
 		'daily_cap'      => 20,
 	),
-
-	array(
-		'id'             => 'mvs_give_follow',
-		'label'          => static fn(): string => __( 'Follow another member', 'wb-gamification' ),
-		'description'    => static fn(): string => __( 'Awarded when a member follows another user.', 'wb-gamification' ),
-		'hook'           => 'mvs_user_followed',
-		'user_callback'  => function ( int $follower_id, int $following_id ): int {
-				// BuddyNext copy of a follow/comment another plugin already paid for.
-			if ( \WBGam\Engine\HostActivity::is_copy() ) {
-				return 0;
-			}
-			return $follower_id;
-		},
-		'default_points' => 1,
-		'category'       => 'social',
-		'icon'           => 'icon-circle-plus',
-		'repeatable'     => true,
-		'daily_cap'      => 50,
-	),
-
-	array(
-		'id'             => 'mvs_bookmark_photo',
-		'label'          => static fn(): string => __( 'Bookmark a photo', 'wb-gamification' ),
-		'description'    => static fn(): string => __( 'Awarded when a member saves a photo to favorites.', 'wb-gamification' ),
-		'hook'           => 'mvs_favorite_toggled',
-		'user_callback'  => function ( int $media_id, int $user_id, string $action ): int {
-			return 'added' === $action ? $user_id : 0;
-		},
-		'default_points' => 1,
-		'category'       => 'social',
-		'icon'           => 'icon-bookmark',
-		'repeatable'     => true,
-		'daily_cap'      => 30,
-	),
 );
 
 /**

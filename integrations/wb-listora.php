@@ -96,26 +96,6 @@ return array(
 		),
 
 		array(
-			'id'                => 'listora_favorite_added',
-			'label'             => static fn(): string => __( 'Favourite a listing', 'wb-gamification' ),
-			'description'       => static fn(): string => __( 'Awarded to the member who favourites a listing. Daily cap prevents farming.', 'wb-gamification' ),
-			// Fires: do_action( 'wb_listora_favorite_added', int $listing_id, int $user_id ).
-			'hook'              => 'wb_listora_favorite_added',
-			'user_callback'     => function ( int $listing_id, int $user_id ): int {
-				return $user_id;
-			},
-			'metadata_callback' => function ( int $listing_id, int $user_id ): array {
-				return array( 'listing_id' => $listing_id );
-			},
-			'default_points'    => 2,
-			'category'          => 'listings',
-			'icon'              => 'icon-heart',
-			'repeatable'        => true,
-			'async'             => false,
-			'daily_cap'         => 10,
-		),
-
-		array(
 			'id'                => 'listora_claim_approved',
 			'label'             => static fn(): string => __( 'Claim a listing', 'wb-gamification' ),
 			'description'       => static fn(): string => __( 'Awarded to the member when their listing claim is approved.', 'wb-gamification' ),

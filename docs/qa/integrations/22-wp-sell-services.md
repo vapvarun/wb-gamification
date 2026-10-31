@@ -1,6 +1,6 @@
 # WP Sell Services: QA checklist
 
-3 actions. Integration file: `integrations/wp-sell-services.php`.
+2 actions. Integration file: `integrations/wp-sell-services.php`.
 
 Tick each box when it passes. If one fails, comment on this plugin's Basecamp card with the steps, what you expected, what happened and a screenshot.
 
@@ -38,17 +38,8 @@ Default: **10 points**. Limit: 60s wait.
 - [ ] Doing it pays 10 points to the right member.
 - [ ] Switched off, it pays nothing.
 - [ ] Doing it again inside 60 seconds pays nothing. After the wait it pays.
+- [ ] With moderation off, publishing a review pays once.
+- [ ] With moderation on, a pending review pays nothing and pays on approval.
+- [ ] Approve, reject, approve again pays once.
 
-Developer result: Run on a test site through the plugin's REST route. Paid the right member.
-
-### Review approved by a moderator (`wpss_review_approved`)
-
-Awarded to the buyer when a review held for moderation is approved. Each review pays once, whichever way it was published.
-
-Default: **10 points**. Limit: 60s wait.
-
-- [ ] Doing it pays 10 points to the right member.
-- [ ] Switched off, it pays nothing.
-- [ ] Doing it again inside 60 seconds pays nothing. After the wait it pays.
-
-Developer result: Run on a test site through the plugin's own code. Paid the right member.
+Developer result: Merged the separate moderator action into this one. Run on a test site through the plugin REST route and its moderation handler.

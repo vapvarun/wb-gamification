@@ -70,79 +70,9 @@ return array(
 			'cooldown'          => 30,
 		),
 
-		array(
-			'id'                => 'jetonomy_pro_message_sent',
-			'label'             => static fn(): string => __( 'Send a Jetonomy private message', 'wb-gamification' ),
-			'description'       => static fn(): string => __( 'Awarded when a member sends a Jetonomy private message. Daily cap blocks DM-farming.', 'wb-gamification' ),
-			// Pro fires: do_action( 'jetonomy_pro_message_sent', $message_id, $conversation_id, $sender_id ).
-			'hook'              => 'jetonomy_pro_message_sent',
-			'user_callback'     => function ( int $message_id, int $conversation_id, int $sender_id ): int {
-				return $sender_id;
-			},
-			'metadata_callback' => function ( int $message_id, int $conversation_id, int $sender_id ): array {
-				return array(
-					'message_id'      => $message_id,
-					'conversation_id' => $conversation_id,
-				);
-			},
-			'default_points'    => 2,
-			'category'          => 'social',
-			'icon'              => 'icon-mail',
-			'repeatable'        => true,
-			'cooldown'          => 60,
-			'daily_cap'         => 20,
-		),
-
-		array(
-			'id'                => 'jetonomy_pro_conversation_created',
-			'label'             => static fn(): string => __( 'Start a Jetonomy conversation', 'wb-gamification' ),
-			'description'       => static fn(): string => __( 'Awarded once per conversation when a member opens a new Jetonomy DM thread.', 'wb-gamification' ),
-			// Pro fires: do_action( 'jetonomy_pro_conversation_created', $conversation_id, $user_id, $all_participants ).
-			'hook'              => 'jetonomy_pro_conversation_created',
-			'user_callback'     => function ( int $conversation_id, int $user_id, array $all_participants ): int {
-				return $user_id;
-			},
-			'metadata_callback' => function ( int $conversation_id, int $user_id, array $all_participants ): array {
-				return array(
-					'conversation_id'   => $conversation_id,
-					'participant_count' => count( $all_participants ),
-				);
-			},
-			'default_points'    => 5,
-			'category'          => 'social',
-			'icon'              => 'icon-message-circle',
-			'repeatable'        => true,
-			'cooldown'          => 120,
-		),
-
 		// No trigger for jetonomy_pro_badge_earned: the badge pays its reputation bonus through
 		// Reputation::award_custom(), which the Jetonomy mirror already records as
 		// jetonomy_badge_earned. Paying here too gave every badge twice (card 10344441524).
-
-		array(
-			'id'                => 'jetonomy_pro_dm_received',
-			'label'             => static fn(): string => __( 'Receive a Jetonomy private message', 'wb-gamification' ),
-			'description'       => static fn(): string => __( 'Awarded to the recipient when a Jetonomy private message is delivered. Daily cap protects against spam-DM gaming.', 'wb-gamification' ),
-			// Pro fires: do_action( 'jetonomy_pro_dm_received', int $message_id, int $conversation_id, int $sender_id, int $recipient_id ).
-			'hook'              => 'jetonomy_pro_dm_received',
-			'user_callback'     => function ( int $message_id, int $conversation_id, int $sender_id, int $recipient_id ): int {
-				// Never reward DMs from the same user (rare edge: self-thread).
-				return $sender_id !== $recipient_id ? $recipient_id : 0;
-			},
-			'metadata_callback' => function ( int $message_id, int $conversation_id, int $sender_id, int $recipient_id ): array {
-				return array(
-					'message_id'      => $message_id,
-					'conversation_id' => $conversation_id,
-					'sender_id'       => $sender_id,
-				);
-			},
-			'default_points'    => 1,
-			'category'          => 'social',
-			'icon'              => 'icon-inbox',
-			'repeatable'        => true,
-			'cooldown'          => 120,
-			'daily_cap'         => 10,
-		),
 
 		array(
 			'id'                => 'jetonomy_pro_reaction_added',

@@ -1,6 +1,6 @@
 # Learnomy: QA checklist
 
-7 actions. Integration file: `integrations/learnomy.php`. Code checked against 2.1.4.
+6 actions. Integration file: `integrations/learnomy.php`. Code checked against 2.1.4.
 
 Tick each box when it passes. If one fails, comment on this plugin's Basecamp card with the steps, what you expected, what happened and a screenshot.
 
@@ -85,17 +85,5 @@ Default: **8 points**. Limit: 300s wait.
 - [ ] Doing it pays 8 points to the right member.
 - [ ] Switched off, it pays nothing.
 - [ ] Doing it again inside 300 seconds pays nothing. After the wait it pays.
-
-Developer result: Run on a test site through the plugin's REST route. Paid the right member.
-
-### Apply to teach (`learnomy_instructor_application`)
-
-Awarded once when a member applies to become an instructor.
-
-Default: **5 points**. Limit: once ever.
-
-- [ ] Doing it pays 5 points to the right member.
-- [ ] Switched off, it pays nothing.
-- [ ] Doing it a second time pays nothing.
 
 Developer result: Run on a test site through the plugin's REST route. Paid the right member.

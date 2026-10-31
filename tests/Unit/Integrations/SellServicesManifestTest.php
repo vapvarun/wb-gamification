@@ -62,12 +62,11 @@ class SellServicesManifestTest extends TestCase {
 		}
 	}
 
-	public function test_a_moderated_review_pays_only_when_approved(): void {
-		$cb = $this->triggers()['wpss_review_approved']['user_callback'];
+	public function test_a_review_pays_through_one_action_that_covers_moderated_reviews(): void {
+		$triggers = $this->triggers();
 
-		$this->assertSame( 0, $cb( 5, 'rejected' ), 'A rejection never pays.' );
-		$this->assertSame( 0, $cb( 5, 'pending' ) );
-		$this->assertSame( 0, $cb( 5, 'approved' ), 'Without the Sell Services classes nothing resolves, and nothing fatals.' );
-		$this->assertSame( 'wpss_review_moderated', $this->triggers()['wpss_review_approved']['hook'] );
+		$this->assertArrayNotHasKey( 'wpss_review_approved', $triggers );
+		$this->assertSame( 'wb_gam_wpss_review_published', $triggers['wpss_review_created']['hook'] );
+		$this->assertSame( 0, $triggers['wpss_review_created']['user_callback']( 5, 0 ), 'Without the Sell Services classes nothing resolves, and nothing fatals.' );
 	}
 }
