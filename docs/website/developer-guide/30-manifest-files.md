@@ -60,6 +60,7 @@ return [
 | `hook` | string | Yes | WordPress action hook name to listen on |
 | `user_callback` | callable | Yes | Receives the hook arguments. Must return the WordPress user ID to award points to |
 | `metadata_callback` | callable | No | Receives the hook arguments. Returns an array merged into event metadata (available in `wb_gam_points_for_action` filter) |
+| `once_per_object` | callable | No | Receives the hook arguments. Returns an object ID, such as a lesson or quiz. A member earns this action once per object, so a retake earns nothing |
 | `default_points` | int | Yes | Default points awarded. Admins can override this in the settings UI |
 | `category` | string | No | Category slug for grouping in the admin UI (e.g. `buddypress`, `woocommerce`) |
 | `icon` | string | No | Lucide icon class (e.g. `icon-heart`), shown on the member-facing How to Earn cards. A `dashicons-*` class also renders. |

@@ -292,9 +292,10 @@ final class PointsEngine {
 	 * @param int    $user_id   User to check.
 	 * @param string $action_id Action to check.
 	 * @param array  $action    Action config from Registry.
+	 * @param int    $object_id Object the award is for (lesson, quiz). 0 when the action has none.
 	 * @return bool             True if the award is allowed to proceed.
 	 */
-	public static function passes_rate_limits( int $user_id, string $action_id, array $action ): bool {
+	public static function passes_rate_limits( int $user_id, string $action_id, array $action, int $object_id = 0 ): bool {
 		// Earning exclusion (admins / staff / bots / specific accounts). This is
 		// the single gate both the sync (Engine::process) and async
 		// (Engine::process_async) paths pass through, so excluded users never
@@ -337,6 +338,22 @@ final class PointsEngine {
 				$action_id,
 				'non_repeatable',
 				array( 'point_type' => $type )
+			);
+			return false;
+		}
+
+		// One award per member per object (a retaken quiz, a replayed lesson).
+		if ( $object_id > 0 && isset( $action['once_per_object'] ) && self::has_object_award( $user_id, $action_id, $object_id ) ) {
+			/** This filter is documented in src/Engine/PointsEngine.php — see wb_gam_award_skipped. */
+			do_action(
+				'wb_gam_award_skipped',
+				$user_id,
+				$action_id,
+				'non_repeatable',
+				array(
+					'point_type' => $type,
+					'object_id'  => $object_id,
+				)
 			);
 			return false;
 		}
@@ -1244,6 +1261,26 @@ final class PointsEngine {
 			$out[ (string) $row['point_type'] ] = (int) $row['total'];
 		}
 		return $out;
+	}
+
+	/**
+	 * Whether a member already earned this action for this object.
+	 *
+	 * @param int    $user_id   User ID.
+	 * @param string $action_id Action ID.
+	 * @param int    $object_id Object ID.
+	 * @return bool
+	 */
+	private static function has_object_award( int $user_id, string $action_id, int $object_id ): bool {
+		global $wpdb;
+		return (bool) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT 1 FROM {$wpdb->prefix}wb_gam_points WHERE user_id = %d AND action_id = %s AND object_id = %d LIMIT 1",
+				$user_id,
+				$action_id,
+				$object_id
+			)
+		);
 	}
 
 	/**

@@ -228,6 +228,39 @@ class PointsEngineTest extends TestCase {
 		$this->assertTrue( $result );
 	}
 
+	public function test_once_per_object_refuses_a_second_award_for_the_same_object(): void {
+		global $wpdb;
+		$wpdb = $this->mockWpdb();
+		$wpdb->prefix = 'wp_';
+		$wpdb->expects( 'prepare' )->once()->andReturn( 'SELECT...' );
+		$wpdb->expects( 'get_var' )->once()->andReturn( '1' );
+
+		$action = [ 'repeatable' => true, 'cooldown' => 0, 'once_per_object' => static fn() => 7 ];
+
+		$this->assertFalse( PointsEngine::passes_rate_limits( 1, 'test_action', $action, 7 ) );
+	}
+
+	public function test_once_per_object_allows_an_object_not_yet_rewarded(): void {
+		global $wpdb;
+		$wpdb = $this->mockWpdb();
+		$wpdb->prefix = 'wp_';
+		$wpdb->expects( 'prepare' )->once()->andReturn( 'SELECT...' );
+		$wpdb->expects( 'get_var' )->once()->andReturn( null );
+
+		$action = [ 'repeatable' => true, 'cooldown' => 0, 'once_per_object' => static fn() => 8 ];
+
+		$this->assertTrue( PointsEngine::passes_rate_limits( 1, 'test_action', $action, 8 ) );
+	}
+
+	public function test_an_object_id_alone_does_not_limit_an_ordinary_action(): void {
+		global $wpdb;
+		$wpdb = $this->mockWpdb();
+		$wpdb->prefix = 'wp_';
+		$wpdb->shouldNotReceive( 'get_var' );
+
+		$this->assertTrue( PointsEngine::passes_rate_limits( 1, 'test_action', [ 'repeatable' => true, 'cooldown' => 0 ], 7 ) );
+	}
+
 	public function test_passes_rate_limits_false_when_not_repeatable_and_already_performed(): void {
 		global $wpdb;
 		$wpdb = $this->mockWpdb();

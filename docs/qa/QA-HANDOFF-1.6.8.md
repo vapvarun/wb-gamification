@@ -95,7 +95,7 @@ Cards 10459672711 and 10459672796.
 
 # Part B: plugin integrations
 
-WB Gamification has 128 actions: 8 for WordPress and 120 across 16 plugins and their 5 Pro add-ons.
+WB Gamification has 139 actions: 8 for WordPress and 131 across 17 plugins and their 5 Pro add-ons.
 
 **What has been checked so far:** only the code. For each action, the developer searched the current plugin source for its hook. Nothing here has been run on a real site, so a "Hook found" row is untested, and "Expected to fail" means the code says so and QA needs to confirm it.
 
@@ -103,13 +103,12 @@ The integration files did not change in this fix cycle, so these failures are ol
 
 ## 6. Where to look first
 
-14 actions are expected to fail:
+11 actions are expected to fail:
 
 | Plugin | Expected to fail | Effect |
 |---|---|---|
 | MemberPress | 3 of 3 | Nothing on this integration can award points |
 | GiveWP | 3 of 4 | Donations, first donation and goal reached award nothing |
-| LifterLMS | 3 of 5 | Course, lesson and quiz award nothing |
 | The Events Calendar | 2 of 3 | RSVP awards nothing. **Purchase an event ticket pays whoever saves a ticket in admin**, and pays no buyer |
 | BuddyPress | 3 of 14 | Receive a reaction, Create a poll and Upload media award nothing |
 
@@ -117,6 +116,10 @@ Two more need a real test:
 
 - **WooCommerce offline orders:** the order actions use `woocommerce_payment_complete`. Check whether a cash on delivery or bank transfer order earns points when marked Completed by hand.
 - **GiveWP recurring gifts:** needs the paid Recurring add-on, and the hook is only in legacy subscription code.
+
+**What "Hook found" means:** the hook exists in that plugin's source. It does not prove the arguments match. LifterLMS achievements and certificates were marked "Hook found" and still paid nothing, because the code expected an object and LifterLMS sends an ID. Run every "Hook found" row for real.
+
+**LMS change in this round:** LearnDash, LifterLMS and Tutor LMS now pay once per course, lesson, quiz or similar. Retaking a quiz must earn nothing. Run each LMS on its own site: Tutor LMS and LifterLMS both use `/courses/`, so lesson pages return 404 when both are active.
 
 ## 7. How to test one plugin
 
@@ -142,8 +145,9 @@ Filling these gaps is an owner decision, so report your view but do not file eac
 | BuddyPress | Post in a group (`bp_groups_posted_update`), favorite an activity |
 | bbPress | Favorite a topic |
 | WooCommerce | Offline orders, see section 6 |
-| LearnDash | Enroll in a course, submit an assignment |
-| LifterLMS | Enroll in a course, join a membership, buy a plan |
+| LearnDash | Mark an essay as graded |
+| LifterLMS | Buy a plan |
+| Tutor LMS | Assignments and certificates, which are in Tutor LMS Pro and not tested |
 | Learnomy | Comment on a lesson, publish a course, make a purchase |
 | Learnomy Pro | Create a cohort, buy a learning path |
 | WP Sell Services | Publish a service, deliver an order, accept a delivery, send or win a proposal, post a buyer request. There are 3 options today |
@@ -155,7 +159,7 @@ Filling these gaps is an owner decision, so report your view but do not file eac
 **Docs:**
 
 - [ ] BuddyNext, Eventonomy, Learnomy, WB Listora and WP Career Board have no page in `docs/website/integrations/`.
-- [ ] `readme.txt` says "62 gamification actions across 10 integration manifests" and "5 more plugins". The real count is 128.
+- [ ] `readme.txt` says "62 gamification actions across 10 integration manifests" and "5 more plugins". The real count is 139.
 
 ## 9. Test sheet
 
@@ -221,27 +225,45 @@ Code checked against: 11.2.1, YITH Wishlist latest.
 
 #### LearnDash
 
-Code checked against: 5.2.2.1.
+Run on Docker against LearnDash 5.2.2.1. Extended in this round.
 
 | Pass | Action | Option ID | Hook | Points | Repeats | Limit | Check |
 |---|---|---|---|---|---|---|---|
-| [ ] | Complete a LearnDash course | `ld_course_completed` | `learndash_course_completed` | 100 | yes | none | Hook found |
-| [ ] | Complete a LearnDash lesson | `ld_lesson_completed` | `learndash_lesson_completed` | 15 | yes | none | Hook found |
-| [ ] | Complete a LearnDash topic | `ld_topic_completed` | `learndash_topic_completed` | 5 | yes | none | Hook found |
-| [ ] | Pass a LearnDash quiz | `ld_quiz_passed` | `learndash_quiz_completed` | 25 | yes | none | Hook found |
-| [ ] | Get an assignment approved | `ld_assignment_approved` | `learndash_assignment_approved` | 20 | yes | none | Hook found |
+| [ ] | Complete a LearnDash course | `ld_course_completed` | `learndash_course_completed` | 100 | yes | once per object | Paid once, run through LearnDash |
+| [ ] | Complete a LearnDash lesson | `ld_lesson_completed` | `learndash_lesson_completed` | 15 | yes | once per object | Paid once, run through LearnDash |
+| [ ] | Complete a LearnDash topic | `ld_topic_completed` | `learndash_topic_completed` | 5 | yes | once per object | Paid once, run through LearnDash |
+| [ ] | Pass a LearnDash quiz | `ld_quiz_passed` | `learndash_quiz_completed` | 25 | yes | once per object | Hook and data checked in LearnDash source; **not run**. Needs a real quiz |
+| [ ] | Get an assignment approved | `ld_assignment_approved` | `learndash_assignment_approved` | 20 | yes | once per object | Paid once through LearnDash's approval code |
+| [ ] | Enroll in a LearnDash course | `ld_course_enrolled` | `learndash_update_course_access` | 10 | yes | once per object | Paid once, run through LearnDash. Removal pays nothing |
+| [ ] | Submit a LearnDash assignment | `ld_assignment_uploaded` | `learndash_assignment_uploaded` | 5 | yes | once per object | Paid once for two uploads through LearnDash's upload code |
+| [ ] | Complete a LearnDash group | `ld_group_completed` | `learndash_group_completed` | 100 | yes | once per object | Paid once through LearnDash's group progress code |
 
 #### LifterLMS
 
-Code checked against: 10.3.2.
+Run on Docker against LifterLMS 10.3.2. Repaired in this round.
 
 | Pass | Action | Option ID | Hook | Points | Repeats | Limit | Check |
 |---|---|---|---|---|---|---|---|
-| [ ] | Complete a LifterLMS course | `llms_course_completed` | `llms_user_course_complete` | 100 | yes | none | **Expected to fail.** Never fired by LifterLMS 10.3.2. Likely `lifterlms_course_completed`. |
-| [ ] | Complete a LifterLMS lesson | `llms_lesson_completed` | `llms_user_lesson_complete` | 10 | yes | none | **Expected to fail.** Never fired. Likely `lifterlms_lesson_completed`. |
-| [ ] | Pass a LifterLMS quiz | `llms_quiz_passed` | `llms_user_quiz_complete` | 25 | yes | none | **Expected to fail.** Never fired. Likely `lifterlms_quiz_passed` or `lifterlms_quiz_completed`. |
-| [ ] | Earn a LifterLMS achievement | `llms_achievement_earned` | `llms_user_earned_achievement` | 30 | yes | none | Hook found |
-| [ ] | Earn a LifterLMS certificate | `llms_certificate_earned` | `llms_user_earned_certificate` | 50 | yes | none | Hook found |
+| [ ] | Complete a LifterLMS course | `llms_course_completed` | `lifterlms_course_completed` | 100 | yes | once per object | Paid once, browser click |
+| [ ] | Complete a LifterLMS lesson | `llms_lesson_completed` | `lifterlms_lesson_completed` | 10 | yes | once per object | Paid once, browser click |
+| [ ] | Pass a LifterLMS quiz | `llms_quiz_passed` | `lifterlms_quiz_passed` | 25 | yes | once per object | Paid once through a LifterLMS attempt. Take a real quiz |
+| [ ] | Enroll in a LifterLMS course | `llms_course_enrolled` | `llms_user_enrolled_in_course` | 10 | yes | once per object | Paid once, re-enrolling pays nothing |
+| [ ] | Join a LifterLMS membership | `llms_membership_joined` | `llms_user_added_to_membership_level` | 20 | yes | once per object | Paid once |
+| [ ] | Earn a LifterLMS achievement | `llms_achievement_earned` | `llms_user_earned_achievement` | 30 | yes | none | Paid through the LifterLMS handler |
+| [ ] | Earn a LifterLMS certificate | `llms_certificate_earned` | `llms_user_earned_certificate` | 50 | yes | none | Paid through the LifterLMS handler |
+
+#### Tutor LMS
+
+Run on Docker against Tutor LMS 4.2.0. New in this round.
+
+| Pass | Action | Option ID | Hook | Points | Repeats | Limit | Check |
+|---|---|---|---|---|---|---|---|
+| [ ] | Complete a Tutor LMS course | `tutor_course_completed` | `tutor_course_complete_after` | 100 | yes | once per object | Paid once through Tutor LMS |
+| [ ] | Complete a Tutor LMS lesson | `tutor_lesson_completed` | `tutor_mark_lesson_complete_after` | 10 | yes | once per object | Paid once, browser click. Also replay a finished video |
+| [ ] | Pass a Tutor LMS quiz | `tutor_quiz_passed` | `tutor_quiz/attempt_ended, tutor_quiz/attempt/graded` | 25 | yes | once per object | Fail 0, pass paid once, retake 0, hand-graded paid after review, through Tutor LMS code. Repeat in the browser |
+| [ ] | Enroll in a Tutor LMS course | `tutor_course_enrolled` | `tutor_after_enroll, tutor_after_enrolled, enrol_status_change` | 10 | yes | once per object | Paid once. Pending pays nothing. Test a real paid course |
+| [ ] | Review a Tutor LMS course | `tutor_review_posted` | `tutor_after_rating_placed` | 10 | yes | once per object | Paid through Tutor LMS code, editing the review pays nothing |
+| [ ] | Ask a question in a Tutor LMS course | `tutor_question_asked` | `tutor_after_asked_question` | 5 | yes | 5 a day | Paid through Tutor LMS code, reply pays nothing. 5 a day cap was tested by firing the hook |
 
 #### MemberPress
 

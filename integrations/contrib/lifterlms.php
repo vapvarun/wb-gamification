@@ -6,14 +6,17 @@
  * Triggers fire only when LifterLMS is active.
  *
  * Actions covered:
- *   Course completed — llms_user_course_complete
- *   Lesson completed — llms_user_lesson_complete
- *   Quiz passed      — llms_user_quiz_complete (grade ≥ 70)
+ *   Course completed   — lifterlms_course_completed
+ *   Lesson completed   — lifterlms_lesson_completed
+ *   Quiz passed        — lifterlms_quiz_passed
+ *   Course enrolled    — llms_user_enrolled_in_course
+ *   Membership joined  — llms_user_added_to_membership_level
  *   Achievement earned — llms_user_earned_achievement
  *   Certificate earned — llms_user_earned_certificate
  *
+ * A member earns each of these once per course, lesson, quiz, membership, achievement or certificate.
+ *
  * @package WB_Gamification
- * @see     https://lifterlms.com/docs/hooks/
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -22,50 +25,83 @@ if ( ! class_exists( 'LLMS_Student' ) ) {
 	return [];
 }
 
+// LifterLMS fires these with ( $user_id, $object_id, ... ).
+$wb_gam_llms_user   = static fn( $user_id ): int => (int) $user_id;
+$wb_gam_llms_object = static fn( $user_id, $object_id ): int => (int) $object_id;
+
 return [
 	'plugin'   => 'LifterLMS',
 	'version'  => '1.0.0',
 	'triggers' => [
 
 		[
-			'id'             => 'llms_course_completed',
-			'label'          => static fn(): string => __( 'Complete a LifterLMS course', 'wb-gamification' ),
-			'description'    => static fn(): string => __( 'Awarded when a student completes any LifterLMS course.', 'wb-gamification' ),
-			'hook'           => 'llms_user_course_complete',
-			'user_callback'  => fn( int $user_id, int $course_id ) => $user_id,
-			'default_points' => 100,
-			'category'       => 'learning',
-			'icon'           => 'icon-graduation-cap',
-			'repeatable'     => true,
-			'cooldown'       => 0,
+			'id'              => 'llms_course_completed',
+			'label'           => static fn(): string => __( 'Complete a LifterLMS course', 'wb-gamification' ),
+			'description'     => static fn(): string => __( 'Awarded when a student completes any LifterLMS course.', 'wb-gamification' ),
+			'hook'            => 'lifterlms_course_completed',
+			'user_callback'   => $wb_gam_llms_user,
+			'once_per_object' => $wb_gam_llms_object,
+			'default_points'  => 100,
+			'category'        => 'learning',
+			'icon'            => 'icon-graduation-cap',
+			'repeatable'      => true,
+			'cooldown'        => 0,
 		],
 
 		[
-			'id'             => 'llms_lesson_completed',
-			'label'          => static fn(): string => __( 'Complete a LifterLMS lesson', 'wb-gamification' ),
-			'description'    => static fn(): string => __( 'Awarded when a student completes any lesson.', 'wb-gamification' ),
-			'hook'           => 'llms_user_lesson_complete',
-			'user_callback'  => fn( int $user_id, int $lesson_id ) => $user_id,
-			'default_points' => 10,
-			'category'       => 'learning',
-			'icon'           => 'icon-book-open',
-			'repeatable'     => true,
-			'cooldown'       => 0,
+			'id'              => 'llms_lesson_completed',
+			'label'           => static fn(): string => __( 'Complete a LifterLMS lesson', 'wb-gamification' ),
+			'description'     => static fn(): string => __( 'Awarded when a student completes any lesson.', 'wb-gamification' ),
+			'hook'            => 'lifterlms_lesson_completed',
+			'user_callback'   => $wb_gam_llms_user,
+			'once_per_object' => $wb_gam_llms_object,
+			'default_points'  => 10,
+			'category'        => 'learning',
+			'icon'            => 'icon-book-open',
+			'repeatable'      => true,
+			'cooldown'        => 0,
 		],
 
 		[
-			'id'             => 'llms_quiz_passed',
-			'label'          => static fn(): string => __( 'Pass a LifterLMS quiz', 'wb-gamification' ),
-			'description'    => static fn(): string => __( 'Awarded when a student achieves a passing grade on a quiz.', 'wb-gamification' ),
-			'hook'           => 'llms_user_quiz_complete',
-			'user_callback'  => function ( int $user_id, int $quiz_id, \LLMS_Quiz_Attempt $attempt ): int {
-				return $attempt->get( 'passed' ) ? $user_id : 0;
-			},
-			'default_points' => 25,
-			'category'       => 'learning',
-			'icon'           => 'icon-award',
-			'repeatable'     => true,
-			'cooldown'       => 0,
+			'id'              => 'llms_quiz_passed',
+			'label'           => static fn(): string => __( 'Pass a LifterLMS quiz', 'wb-gamification' ),
+			'description'     => static fn(): string => __( 'Awarded when a student achieves a passing grade on a quiz.', 'wb-gamification' ),
+			'hook'            => 'lifterlms_quiz_passed',
+			'user_callback'   => $wb_gam_llms_user,
+			'once_per_object' => $wb_gam_llms_object,
+			'default_points'  => 25,
+			'category'        => 'learning',
+			'icon'            => 'icon-award',
+			'repeatable'      => true,
+			'cooldown'        => 0,
+		],
+
+		[
+			'id'              => 'llms_course_enrolled',
+			'label'           => static fn(): string => __( 'Enroll in a LifterLMS course', 'wb-gamification' ),
+			'description'     => static fn(): string => __( 'Awarded once per course when a student is enrolled.', 'wb-gamification' ),
+			'hook'            => 'llms_user_enrolled_in_course',
+			'user_callback'   => $wb_gam_llms_user,
+			'once_per_object' => $wb_gam_llms_object,
+			'default_points'  => 10,
+			'category'        => 'learning',
+			'icon'            => 'icon-log-in',
+			'repeatable'      => true,
+			'cooldown'        => 0,
+		],
+
+		[
+			'id'              => 'llms_membership_joined',
+			'label'           => static fn(): string => __( 'Join a LifterLMS membership', 'wb-gamification' ),
+			'description'     => static fn(): string => __( 'Awarded once per membership when a student joins it.', 'wb-gamification' ),
+			'hook'            => 'llms_user_added_to_membership_level',
+			'user_callback'   => $wb_gam_llms_user,
+			'once_per_object' => $wb_gam_llms_object,
+			'default_points'  => 20,
+			'category'        => 'learning',
+			'icon'            => 'icon-users',
+			'repeatable'      => true,
+			'cooldown'        => 0,
 		],
 
 		[
@@ -73,7 +109,7 @@ return [
 			'label'          => static fn(): string => __( 'Earn a LifterLMS achievement', 'wb-gamification' ),
 			'description'    => static fn(): string => __( 'Awarded when a student earns any LifterLMS achievement.', 'wb-gamification' ),
 			'hook'           => 'llms_user_earned_achievement',
-			'user_callback'  => fn( int $user_id, \LLMS_User_Achievement $achievement ) => $user_id,
+			'user_callback'  => $wb_gam_llms_user,
 			'default_points' => 30,
 			'category'       => 'learning',
 			'icon'           => 'icon-star',
@@ -86,7 +122,7 @@ return [
 			'label'          => static fn(): string => __( 'Earn a LifterLMS certificate', 'wb-gamification' ),
 			'description'    => static fn(): string => __( 'Awarded when a student earns a course completion certificate.', 'wb-gamification' ),
 			'hook'           => 'llms_user_earned_certificate',
-			'user_callback'  => fn( int $user_id, \LLMS_User_Certificate $certificate ) => $user_id,
+			'user_callback'  => $wb_gam_llms_user,
 			'default_points' => 50,
 			'category'       => 'learning',
 			'icon'           => 'icon-file-text',

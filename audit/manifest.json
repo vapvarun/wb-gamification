@@ -11681,7 +11681,7 @@
       "manifest_file": "integrations/learndash.php",
       "manifest_version": "1.0.0",
       "detect": "function_exists('learndash_get_course_id')",
-      "trigger_count": 5,
+      "trigger_count": 8,
       "adapter_classes": [
         "WBGam\\Integrations\\LearnDash\\ProfileIntegration"
       ],
@@ -11814,13 +11814,24 @@
       "purpose": ""
     },
     {
+      "slug": "tutor-lms",
+      "name": "Tutor LMS",
+      "tier": "first-party",
+      "manifest_file": "integrations/tutor-lms.php",
+      "manifest_version": "1.0.0",
+      "detect": "defined('TUTOR_VERSION')",
+      "trigger_count": 6,
+      "adapter_classes": [],
+      "purpose": ""
+    },
+    {
       "slug": "lifterlms",
       "name": "LifterLMS",
       "tier": "contrib",
       "manifest_file": "integrations/contrib/lifterlms.php",
       "manifest_version": "1.0.0",
       "detect": "class_exists('LLMS_Student')",
-      "trigger_count": 5,
+      "trigger_count": 7,
       "adapter_classes": [],
       "purpose": ""
     },

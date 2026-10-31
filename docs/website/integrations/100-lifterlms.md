@@ -9,6 +9,8 @@ The LifterLMS integration rewards learning progress: completing courses and less
 | `llms_course_completed` | Complete a LifterLMS course | 100 |
 | `llms_lesson_completed` | Complete a LifterLMS lesson | 10 |
 | `llms_quiz_passed` | Pass a LifterLMS quiz | 25 |
+| `llms_course_enrolled` | Enroll in a LifterLMS course | 10 |
+| `llms_membership_joined` | Join a LifterLMS membership | 20 |
 | `llms_achievement_earned` | Earn a LifterLMS achievement | 30 |
 | `llms_certificate_earned` | Earn a LifterLMS certificate | 50 |
 
@@ -20,4 +22,6 @@ The LifterLMS integration rewards learning progress: completing courses and less
 
 This integration is auto-detected. No configuration is needed. As soon as LifterLMS is active, points fire automatically whenever a student completes a course or lesson, earns an achievement, or is issued a certificate.
 
-`llms_quiz_passed` only awards points when the student reaches a passing grade on the attempt. A failed attempt earns nothing. `llms_certificate_earned` rewards the final milestone in any course that issues certificates.
+`llms_quiz_passed` only awards points when the student reaches a passing grade on the attempt. A failed attempt earns nothing. A quiz graded by hand earns when the instructor finishes grading.
+
+A student earns once per course, lesson, quiz and membership, so retaking a quiz, redoing a lesson or re-enrolling earns nothing. `llms_certificate_earned` rewards the final milestone in any course that issues certificates.

@@ -92,6 +92,7 @@ final class Registry {
 	 *   @type string   $description    Optional description.
 	 *   @type string   $hook           WordPress action hook to listen to.
 	 *   @type callable $user_callback  Returns the user_id from hook arguments.
+	 *   @type callable $once_per_object Optional. Returns the object id from hook arguments; a member earns once per object.
 	 *   @type int      $default_points Default points awarded. Admin can override.
 	 *   @type string   $category       Optional category (buddypress, commerce, etc.).
 	 *   @type string   $icon           Dashicon name or URL.
@@ -231,6 +232,7 @@ final class Registry {
 			array(
 				'action_id' => $action['id'],
 				'user_id'   => $user_id,
+				'object_id' => isset( $action['once_per_object'] ) ? (int) call_user_func_array( $action['once_per_object'], $params ) : 0,
 				'metadata'  => $metadata,
 			)
 		);

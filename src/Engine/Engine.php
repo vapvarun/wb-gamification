@@ -398,7 +398,7 @@ final class Engine {
 			if ( ! self::is_action_enabled( $event->action_id ) ) {
 				return false;
 			}
-			if ( ! PointsEngine::passes_rate_limits( $event->user_id, $event->action_id, $action ) ) {
+			if ( ! PointsEngine::passes_rate_limits( $event->user_id, $event->action_id, $action, $event->object_id ) ) {
 				return false;
 			}
 		}
@@ -508,7 +508,7 @@ final class Engine {
 			if ( ! self::is_action_enabled( $event->action_id ) ) {
 				return false;
 			}
-			if ( ! $is_import && ! PointsEngine::passes_rate_limits( $event->user_id, $event->action_id, $action ) ) {
+			if ( ! $is_import && ! PointsEngine::passes_rate_limits( $event->user_id, $event->action_id, $action, $event->object_id ) ) {
 				return false;
 			}
 		}
@@ -653,7 +653,7 @@ final class Engine {
 		// window between this check and the insert. For absolute caps
 		// (e.g. anti-fraud) callers should add a UNIQUE constraint on
 		// the relevant key shape — see plan/v1.1-rate-limit-hardening.
-		if ( null !== $action && ! $is_import && ! PointsEngine::passes_rate_limits( $event->user_id, $event->action_id, $action ) ) {
+		if ( null !== $action && ! $is_import && ! PointsEngine::passes_rate_limits( $event->user_id, $event->action_id, $action, $event->object_id ) ) {
 			$wpdb->query( 'ROLLBACK' );
 			return false;
 		}
