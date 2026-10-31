@@ -37,14 +37,16 @@ Developer result: Fixed: the description promised this but promotion was never l
 
 Awarded to the author when an event is submitted. A daily limit rewards genuine organizing without encouraging duplicate submissions.
 
-Default: **25 points**. Limit: 3 a day.
+Default: **25 points**. Limit: once per item, 3 a day.
 
 - [ ] Doing it pays 25 points to the right member.
 - [ ] Switched off, it pays nothing.
+- [ ] Doing it again on the same item pays nothing. Doing it on a different item pays again.
 - [ ] It stops paying after 3 in one day.
-- [ ] Importing events pays nobody.
+- [ ] Save draft pays nothing. Publishing it pays once.
+- [ ] Moving it back to draft and publishing again pays nothing more.
 
-Developer result: Fixed: an import paid whoever ran it. Tested through EventService with the import context: 0, and a member submitting paid.
+Developer result: Fixed: Save draft paid. Now pays when the event leaves draft, once per event. Run on a test site through the plugin's REST route.
 
 ### Complete a ticket order (`evnm_ticket_purchased`)
 

@@ -30,7 +30,7 @@ Default: **100 points**. Limit: once per item.
 - [ ] Switched off, it pays nothing.
 - [ ] Doing it again on the same item pays nothing. Doing it on a different item pays again.
 
-Developer result: Not run yet. The hook exists in the plugin source, which does not prove its arguments match, so this row needs a real run.
+Developer result: Run on a test site through Tutor LMS's own code. Paid once.
 
 ### Complete a Tutor LMS lesson (`tutor_lesson_completed`)
 
@@ -42,7 +42,7 @@ Default: **10 points**. Limit: once per item.
 - [ ] Switched off, it pays nothing.
 - [ ] Doing it again on the same item pays nothing. Doing it on a different item pays again.
 
-Developer result: Not run yet. The hook exists in the plugin source, which does not prove its arguments match, so this row needs a real run.
+Developer result: Mark Complete clicked in a browser as a student. Paid once.
 
 ### Pass a Tutor LMS quiz (`tutor_quiz_passed`)
 
@@ -54,7 +54,7 @@ Default: **25 points**. Limit: once per item.
 - [ ] Switched off, it pays nothing.
 - [ ] Doing it again on the same item pays nothing. Doing it on a different item pays again.
 
-Developer result: Not run yet. The hook exists in the plugin source, which does not prove its arguments match, so this row needs a real run.
+Developer result: Run through Tutor LMS's own quiz code; some steps were called directly. A hand-graded quiz paid only after review.
 
 ### Enroll in a Tutor LMS course (`tutor_course_enrolled`)
 
@@ -66,7 +66,7 @@ Default: **10 points**. Limit: once per item.
 - [ ] Switched off, it pays nothing.
 - [ ] Doing it again on the same item pays nothing. Doing it on a different item pays again.
 
-Developer result: Not run yet. The hook exists in the plugin source, which does not prove its arguments match, so this row needs a real run.
+Developer result: Free enrolment run through Tutor LMS's own code. Paid checkout and WooCommerce routes not run.
 
 ### Review a Tutor LMS course (`tutor_review_posted`)
 
@@ -78,7 +78,7 @@ Default: **10 points**. Limit: once per item.
 - [ ] Switched off, it pays nothing.
 - [ ] Doing it again on the same item pays nothing. Doing it on a different item pays again.
 
-Developer result: Not run yet. The hook exists in the plugin source, which does not prove its arguments match, so this row needs a real run.
+Developer result: Run on a test site through Tutor LMS's own code or its hook; a real browser run is still needed.
 
 ### Ask a question in a Tutor LMS course (`tutor_question_asked`)
 
@@ -90,4 +90,4 @@ Default: **5 points**. Limit: 5 a day.
 - [ ] Switched off, it pays nothing.
 - [ ] It stops paying after 5 in one day.
 
-Developer result: Not run yet. The hook exists in the plugin source, which does not prove its arguments match, so this row needs a real run.
+Developer result: Run on a test site through Tutor LMS's own code or its hook; a real browser run is still needed.

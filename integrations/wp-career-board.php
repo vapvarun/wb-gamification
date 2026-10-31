@@ -93,6 +93,8 @@ return array(
 			// Fires: do_action( 'wcb_application_status_changed', int $app_id, string $old_status, string $new_status )
 			// (arg order normalised across all call sites). Candidate resolved from the application's _wcb_candidate_id meta.
 			'hook'              => 'wcb_application_status_changed',
+			// Hired, back to reviewing, hired again is one hire.
+			'once_per_object'   => static fn( int $app_id ): int => $app_id,
 			'user_callback'     => function ( int $app_id, string $old_status = '', string $new_status = '' ): int {
 				// Only the transition INTO hired earns (a hired -> hired bulk re-save does not); Engine drops 0.
 				if ( 'hired' !== $new_status || 'hired' === $old_status ) {

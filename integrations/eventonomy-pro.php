@@ -57,10 +57,12 @@ return array(
 		array(
 			'id'                => 'evnm_follow',
 			'label'             => static fn(): string => __( 'Follow an event or organizer', 'wb-gamification' ),
-			'description'       => static fn(): string => __( 'Awarded when a member follows an event, organizer, venue, or another member to stay up to date. A daily limit keeps the reward proportionate.', 'wb-gamification' ),
+			'description'       => static fn(): string => __( 'Awarded when a member follows an event, organizer, or another member to stay up to date. A daily limit keeps the reward proportionate.', 'wb-gamification' ),
 			// Pro fires: do_action( 'evnm_after_follow', int $user_id, string $type, int $object_id ).
 			// $type is one of event, organizer, member, space, category.
+			// Also fires when already following, and after an unfollow, so once per followed item.
 			'hook'              => 'evnm_after_follow',
+			'once_per_object'   => static fn( int $user_id, string $type, int $object_id ): int => (int) crc32( $type . ':' . $object_id ),
 			'user_callback'     => function ( int $user_id, string $type, int $object_id ): int {
 				return $user_id;
 			},

@@ -30,7 +30,7 @@ Default: **8 points**. Limit: 60s wait.
 - [ ] Switched off, it pays nothing.
 - [ ] Doing it again inside 60 seconds pays nothing. After the wait it pays.
 
-Developer result: Not run yet. The hook exists in the plugin source, which does not prove its arguments match, so this row needs a real run.
+Developer result: Run on a test site through the plugin's REST route. Paid the right member.
 
 ### Get a need approved (`listora_need_published`)
 
@@ -41,7 +41,7 @@ Default: **5 points**. No limit by default.
 - [ ] Doing it pays 5 points to the right member.
 - [ ] Switched off, it pays nothing.
 
-Developer result: Not run yet. The hook exists in the plugin source, which does not prove its arguments match, so this row needs a real run.
+Developer result: Run on a test site through the plugin's REST route. Paid the right member.
 
 ### Respond to a need (`listora_need_response`)
 
@@ -53,4 +53,4 @@ Default: **5 points**. Limit: 10 a day.
 - [ ] Switched off, it pays nothing.
 - [ ] It stops paying after 10 in one day.
 
-Developer result: Not run yet. The hook exists in the plugin source, which does not prove its arguments match, so this row needs a real run.
+Developer result: Run on a test site through the plugin's REST route. Paid the right member.

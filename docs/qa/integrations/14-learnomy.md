@@ -28,7 +28,7 @@ Default: **10 points**. Limit: 30s wait.
 - [ ] Switched off, it pays nothing.
 - [ ] Doing it again inside 30 seconds pays nothing. After the wait it pays.
 
-Developer result: Not run yet. The hook exists in the plugin source, which does not prove its arguments match, so this row needs a real run.
+Developer result: Run on a test site through the plugin's REST route. Paid the right member.
 
 ### Pass a quiz (`learnomy_quiz_passed`)
 
@@ -40,7 +40,7 @@ Default: **25 points**. Limit: 30s wait.
 - [ ] Switched off, it pays nothing.
 - [ ] Doing it again inside 30 seconds pays nothing. After the wait it pays.
 
-Developer result: Not run yet. The hook exists in the plugin source, which does not prove its arguments match, so this row needs a real run.
+Developer result: Run on a test site through the plugin's REST route. Paid the right member.
 
 ### Complete a course (`learnomy_course_completed`)
 
@@ -51,7 +51,7 @@ Default: **100 points**. No limit by default.
 - [ ] Doing it pays 100 points to the right member.
 - [ ] Switched off, it pays nothing.
 
-Developer result: Not run yet. The hook exists in the plugin source, which does not prove its arguments match, so this row needs a real run.
+Developer result: Run on a test site through the plugin's REST route. Paid the right member.
 
 ### Enrol in a course (`learnomy_student_enrolled`)
 
@@ -63,7 +63,7 @@ Default: **5 points**. Limit: 5 a day.
 - [ ] Switched off, it pays nothing.
 - [ ] It stops paying after 5 in one day.
 
-Developer result: Not run yet. The hook exists in the plugin source, which does not prove its arguments match, so this row needs a real run.
+Developer result: Run on a test site through the plugin's REST route. Paid the right member.
 
 ### Earn a certificate (`learnomy_certificate_issued`)
 
@@ -74,7 +74,7 @@ Default: **50 points**. No limit by default.
 - [ ] Doing it pays 50 points to the right member.
 - [ ] Switched off, it pays nothing.
 
-Developer result: Not run yet. The hook exists in the plugin source, which does not prove its arguments match, so this row needs a real run.
+Developer result: Run on a test site through the plugin's REST route. Paid the right member.
 
 ### Review a course (`learnomy_review_submitted`)
 
@@ -86,7 +86,7 @@ Default: **8 points**. Limit: 300s wait.
 - [ ] Switched off, it pays nothing.
 - [ ] Doing it again inside 300 seconds pays nothing. After the wait it pays.
 
-Developer result: Not run yet. The hook exists in the plugin source, which does not prove its arguments match, so this row needs a real run.
+Developer result: Run on a test site through the plugin's REST route. Paid the right member.
 
 ### Apply to teach (`learnomy_instructor_application`)
 
@@ -98,4 +98,4 @@ Default: **5 points**. Limit: once ever.
 - [ ] Switched off, it pays nothing.
 - [ ] Doing it a second time pays nothing.
 
-Developer result: Not run yet. The hook exists in the plugin source, which does not prove its arguments match, so this row needs a real run.
+Developer result: Run on a test site through the plugin's REST route. Paid the right member.

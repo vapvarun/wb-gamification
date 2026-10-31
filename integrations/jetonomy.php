@@ -34,7 +34,8 @@ return array(
 			// Free fires: do_action( 'jetonomy_user_joined_space', int $space_id, int $user_id, string $role ).
 			'hook'              => 'jetonomy_user_joined_space',
 			'user_callback'     => function ( int $space_id, int $user_id, string $role ): int {
-				return $user_id;
+				// A BuddyNext space joining its linked forum is one join, paid by bn_space_joined.
+				return \WBGam\Engine\HostActivity::is_copy() ? 0 : $user_id;
 			},
 			'metadata_callback' => function ( int $space_id, int $user_id, string $role ): array {
 				return array(

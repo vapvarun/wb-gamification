@@ -29,7 +29,7 @@ Default: **150 points**. No limit by default.
 - [ ] Doing it pays 150 points to the right member.
 - [ ] Switched off, it pays nothing.
 
-Developer result: Not run yet. The hook exists in the plugin source, which does not prove its arguments match, so this row needs a real run.
+Developer result: A learning path with no certificate template pays nothing: Learnomy Pro only fires the hook in the certificate branch. Card on the Learnomy board. With a template it pays. Run on a test site through the plugin's REST route.
 
 ### Enrol in a learning path (`learnomy_pro_path_enrolled`)
 
@@ -41,7 +41,7 @@ Default: **5 points**. Limit: 5 a day.
 - [ ] Switched off, it pays nothing.
 - [ ] It stops paying after 5 in one day.
 
-Developer result: Not run yet. The hook exists in the plugin source, which does not prove its arguments match, so this row needs a real run.
+Developer result: Run on a test site through the plugin's REST route. Paid the right member.
 
 ### Submit an assignment (`learnomy_pro_assignment_submitted`)
 
@@ -53,7 +53,7 @@ Default: **15 points**. Limit: 60s wait.
 - [ ] Switched off, it pays nothing.
 - [ ] Doing it again inside 60 seconds pays nothing. After the wait it pays.
 
-Developer result: Not run yet. The hook exists in the plugin source, which does not prove its arguments match, so this row needs a real run.
+Developer result: Run on a test site through the plugin's REST route. Paid the right member.
 
 ### Join a cohort (`learnomy_pro_cohort_joined`)
 
@@ -64,7 +64,7 @@ Default: **5 points**. No limit by default.
 - [ ] Doing it pays 5 points to the right member.
 - [ ] Switched off, it pays nothing.
 
-Developer result: Not run yet. The hook exists in the plugin source, which does not prove its arguments match, so this row needs a real run.
+Developer result: Run on a test site through the plugin's REST route. Paid the right member.
 
 ### Redeem a course gift (`learnomy_pro_gift_redeemed`)
 
@@ -75,4 +75,4 @@ Default: **5 points**. No limit by default.
 - [ ] Doing it pays 5 points to the right member.
 - [ ] Switched off, it pays nothing.
 
-Developer result: Not run yet. The hook exists in the plugin source, which does not prove its arguments match, so this row needs a real run.
+Developer result: Run on a test site through the plugin's REST route. Paid the right member.

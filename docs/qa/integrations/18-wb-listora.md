@@ -22,24 +22,27 @@ For every action: do it for real, then confirm the points appear in the member's
 
 Awarded to the owner when a listing is submitted. Cooldown prevents bulk-submit farming.
 
-Default: **10 points**. Limit: 60s wait.
+Default: **10 points**. Limit: once per item, 60s wait.
 
 - [ ] Doing it pays 10 points to the right member.
 - [ ] Switched off, it pays nothing.
+- [ ] Doing it again on the same item pays nothing. Doing it on a different item pays again.
 - [ ] Doing it again inside 60 seconds pays nothing. After the wait it pays.
+- [ ] Saving a draft pays nothing. Submitting it pays once.
 
-Developer result: Not run yet. The hook exists in the plugin source, which does not prove its arguments match, so this row needs a real run.
+Developer result: Fixed: saving a draft paid, then the submit paid again. Now once per listing, drafts pay nothing. Run on a test site through the plugin's REST route.
 
 ### Get a listing approved (`listora_listing_published`)
 
 Awarded to the owner when their listing is approved and goes live.
 
-Default: **10 points**. No limit by default.
+Default: **10 points**. Limit: once per item.
 
 - [ ] Doing it pays 10 points to the right member.
 - [ ] Switched off, it pays nothing.
+- [ ] Doing it again on the same item pays nothing. Doing it on a different item pays again.
 
-Developer result: Not run yet. The hook exists in the plugin source, which does not prove its arguments match, so this row needs a real run.
+Developer result: Fixed: deactivating and reactivating paid again. Now once per listing. Run on a test site through the plugin's REST route.
 
 ### Write a review (`listora_review_written`)
 
@@ -51,7 +54,7 @@ Default: **8 points**. Limit: 300s wait.
 - [ ] Switched off, it pays nothing.
 - [ ] Doing it again inside 300 seconds pays nothing. After the wait it pays.
 
-Developer result: Not run yet. The hook exists in the plugin source, which does not prove its arguments match, so this row needs a real run.
+Developer result: Run on a test site through the plugin's REST route. Paid the right member.
 
 ### Favourite a listing (`listora_favorite_added`)
 
@@ -63,7 +66,7 @@ Default: **2 points**. Limit: 10 a day.
 - [ ] Switched off, it pays nothing.
 - [ ] It stops paying after 10 in one day.
 
-Developer result: Not run yet. The hook exists in the plugin source, which does not prove its arguments match, so this row needs a real run.
+Developer result: Run on a test site through the plugin's REST route. Paid the right member.
 
 ### Claim a listing (`listora_claim_approved`)
 
@@ -74,7 +77,7 @@ Default: **15 points**. No limit by default.
 - [ ] Doing it pays 15 points to the right member.
 - [ ] Switched off, it pays nothing.
 
-Developer result: Not run yet. The hook exists in the plugin source, which does not prove its arguments match, so this row needs a real run.
+Developer result: Run on a test site through the plugin's REST route. Paid the right member.
 
 ### Renew a listing (`listora_listing_renewed`)
 
@@ -85,4 +88,4 @@ Default: **3 points**. No limit by default.
 - [ ] Doing it pays 3 points to the right member.
 - [ ] Switched off, it pays nothing.
 
-Developer result: Not run yet. The hook exists in the plugin source, which does not prove its arguments match, so this row needs a real run.
+Developer result: Run on a test site through the plugin's REST route. Paid the right member.

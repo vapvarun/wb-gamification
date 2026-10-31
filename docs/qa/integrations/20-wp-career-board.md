@@ -28,7 +28,7 @@ Default: **10 points**. Limit: 60s wait.
 - [ ] Switched off, it pays nothing.
 - [ ] Doing it again inside 60 seconds pays nothing. After the wait it pays.
 
-Developer result: Not run yet. The hook exists in the plugin source, which does not prove its arguments match, so this row needs a real run.
+Developer result: Run on a test site through the plugin's REST route. Paid the right member.
 
 ### Get a job approved (`wcb_job_approved`)
 
@@ -39,7 +39,7 @@ Default: **5 points**. No limit by default.
 - [ ] Doing it pays 5 points to the right member.
 - [ ] Switched off, it pays nothing.
 
-Developer result: Not run yet. The hook exists in the plugin source, which does not prove its arguments match, so this row needs a real run.
+Developer result: Run on a test site through the plugin's REST route. Paid the right member.
 
 ### Apply to a job (`wcb_application_submitted`)
 
@@ -51,18 +51,20 @@ Default: **8 points**. Limit: 10 a day.
 - [ ] Switched off, it pays nothing.
 - [ ] It stops paying after 10 in one day.
 
-Developer result: Not run yet. The hook exists in the plugin source, which does not prove its arguments match, so this row needs a real run.
+Developer result: Run on a test site through the plugin's REST route. Paid the right member.
 
 ### Get hired (`wcb_candidate_hired`)
 
 Awarded to the candidate when their application status changes to hired.
 
-Default: **100 points**. No limit by default.
+Default: **100 points**. Limit: once per item.
 
 - [ ] Doing it pays 100 points to the right member.
 - [ ] Switched off, it pays nothing.
+- [ ] Doing it again on the same item pays nothing. Doing it on a different item pays again.
+- [ ] Hired, back to reviewing, then hired again pays once.
 
-Developer result: Not run yet. The hook exists in the plugin source, which does not prove its arguments match, so this row needs a real run.
+Developer result: Fixed: hired, back to reviewing, hired again paid twice. Now once per application; this repeat was checked by firing the hook by hand. Run on a test site through the plugin's REST route.
 
 ### Join as a candidate (`wcb_candidate_registered`)
 
@@ -74,7 +76,7 @@ Default: **15 points**. Limit: once ever.
 - [ ] Switched off, it pays nothing.
 - [ ] Doing it a second time pays nothing.
 
-Developer result: Not run yet. The hook exists in the plugin source, which does not prove its arguments match, so this row needs a real run.
+Developer result: Run on a test site through the plugin's REST route. Paid the right member.
 
 ### Join as an employer (`wcb_employer_registered`)
 
@@ -86,4 +88,4 @@ Default: **15 points**. Limit: once ever.
 - [ ] Switched off, it pays nothing.
 - [ ] Doing it a second time pays nothing.
 
-Developer result: Not run yet. The hook exists in the plugin source, which does not prove its arguments match, so this row needs a real run.
+Developer result: Run on a test site through the plugin's REST route. Paid the right member.

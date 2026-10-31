@@ -30,7 +30,7 @@ Default: **100 points**. Limit: once per item.
 - [ ] Switched off, it pays nothing.
 - [ ] Doing it again on the same item pays nothing. Doing it on a different item pays again.
 
-Developer result: Not run yet. The hook exists in the plugin source, which does not prove its arguments match, so this row needs a real run.
+Developer result: Run on a test site through LearnDash's own code or its hook; a real browser run is still needed.
 
 ### Complete a LearnDash lesson (`ld_lesson_completed`)
 
@@ -42,7 +42,7 @@ Default: **15 points**. Limit: once per item.
 - [ ] Switched off, it pays nothing.
 - [ ] Doing it again on the same item pays nothing. Doing it on a different item pays again.
 
-Developer result: Not run yet. The hook exists in the plugin source, which does not prove its arguments match, so this row needs a real run.
+Developer result: Run on a test site through LearnDash's own code or its hook; a real browser run is still needed.
 
 ### Complete a LearnDash topic (`ld_topic_completed`)
 
@@ -54,7 +54,7 @@ Default: **5 points**. Limit: once per item.
 - [ ] Switched off, it pays nothing.
 - [ ] Doing it again on the same item pays nothing. Doing it on a different item pays again.
 
-Developer result: Not run yet. The hook exists in the plugin source, which does not prove its arguments match, so this row needs a real run.
+Developer result: Run on a test site through LearnDash's own code or its hook; a real browser run is still needed.
 
 ### Pass a LearnDash quiz (`ld_quiz_passed`)
 
@@ -66,7 +66,7 @@ Default: **25 points**. Limit: once per item.
 - [ ] Switched off, it pays nothing.
 - [ ] Doing it again on the same item pays nothing. Doing it on a different item pays again.
 
-Developer result: Not run yet. The hook exists in the plugin source, which does not prove its arguments match, so this row needs a real run.
+Developer result: Hook fired by hand with data shaped like the LearnDash source. Needs a real quiz.
 
 ### Get an assignment approved (`ld_assignment_approved`)
 
@@ -78,7 +78,7 @@ Default: **20 points**. Limit: once per item.
 - [ ] Switched off, it pays nothing.
 - [ ] Doing it again on the same item pays nothing. Doing it on a different item pays again.
 
-Developer result: Not run yet. The hook exists in the plugin source, which does not prove its arguments match, so this row needs a real run.
+Developer result: Run on a test site through LearnDash's own code or its hook; a real browser run is still needed.
 
 ### Enroll in a LearnDash course (`ld_course_enrolled`)
 
@@ -90,7 +90,7 @@ Default: **10 points**. Limit: once per item.
 - [ ] Switched off, it pays nothing.
 - [ ] Doing it again on the same item pays nothing. Doing it on a different item pays again.
 
-Developer result: Not run yet. The hook exists in the plugin source, which does not prove its arguments match, so this row needs a real run.
+Developer result: Run on a test site through LearnDash's own code or its hook; a real browser run is still needed.
 
 ### Submit a LearnDash assignment (`ld_assignment_uploaded`)
 
@@ -102,7 +102,7 @@ Default: **5 points**. Limit: once per item.
 - [ ] Switched off, it pays nothing.
 - [ ] Doing it again on the same item pays nothing. Doing it on a different item pays again.
 
-Developer result: Not run yet. The hook exists in the plugin source, which does not prove its arguments match, so this row needs a real run.
+Developer result: Run on a test site through LearnDash's own code or its hook; a real browser run is still needed.
 
 ### Complete a LearnDash group (`ld_group_completed`)
 
@@ -114,4 +114,4 @@ Default: **100 points**. Limit: once per item.
 - [ ] Switched off, it pays nothing.
 - [ ] Doing it again on the same item pays nothing. Doing it on a different item pays again.
 
-Developer result: Not run yet. The hook exists in the plugin source, which does not prove its arguments match, so this row needs a real run.
+Developer result: Run on a test site through LearnDash's own code or its hook; a real browser run is still needed.

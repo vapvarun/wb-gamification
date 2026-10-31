@@ -118,11 +118,14 @@ These were broken and are fixed in this round, so test them first:
 | Eventonomy | Promotion from the waitlist never paid. Importing events paid the importer. Offline orders marked as paid needed Pro |
 | BuddyNext | Accept a connection pays the sender, so it is now labelled Have a connection request accepted |
 | WooCommerce orders | Cash, bank and check orders never paid Pay for an order or Make your first purchase. They now pay when marked Completed. Free orders pay nothing |
+| BuddyNext, WB Listora, Eventonomy, WP Career Board | Repeat pays closed: bookmark, listing submit and approval, event submit, event follow and hire now pay once per item. A saved listing or event draft pays nothing |
 | LearnDash, LifterLMS, Tutor LMS | See the LMS change below |
 
 Still open:
 
 - **Jetonomy Pro:** leaving a conversation also pays Send a private message. The fix belongs in Jetonomy Pro and has a card on its board.
+- **BuddyNext:** a first follow through a private account's approval pays nothing, and joining a space with a linked forum pays twice. Both have cards on its board.
+- **Learnomy Pro:** completing a learning path with no certificate template pays nothing. It has a card on its board.
 - **WooCommerce Memberships in Jetonomy:** buying a plan for the first time pays nothing for Activate a membership. The fix belongs in Jetonomy Pro and has a card on its board. WooCommerce Subscriptions works.
 
 **LMS change in this round:** LearnDash, LifterLMS and Tutor LMS now pay once per course, lesson, quiz or similar. Retaking a quiz must earn nothing. Run each LMS on its own site: Tutor LMS and LifterLMS both use `/courses/`, so lesson pages return 404 when both are active.

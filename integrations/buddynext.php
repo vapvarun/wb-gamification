@@ -177,8 +177,9 @@ return array(
 			'id'                => 'bn_post_bookmarked',
 			'label'             => static fn(): string => __( 'Bookmark a post', 'wb-gamification' ),
 			'description'       => static fn(): string => __( 'Awarded the first time a member bookmarks a post. Daily cap limits farming.', 'wb-gamification' ),
-			// Fires: do_action( 'buddynext_post_bookmarked', int $post_id, int $user_id ) - only on first bookmark per post/user pair.
+			// Fires: do_action( 'buddynext_post_bookmarked', int $post_id, int $user_id ), again after a remove and re-add.
 			'hook'              => 'buddynext_post_bookmarked',
+			'once_per_object'   => static fn( int $post_id ): int => $post_id,
 			'user_callback'     => function ( int $post_id, int $user_id ): int {
 				return $user_id;
 			},

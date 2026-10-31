@@ -29,17 +29,18 @@ Default: **30 points**. No limit by default.
 - [ ] Doing it pays 30 points to the right member.
 - [ ] Switched off, it pays nothing.
 
-Developer result: Not run yet. The hook exists in the plugin source, which does not prove its arguments match, so this row needs a real run.
+Developer result: Run on a test site through the plugin's REST route. Paid the right member.
 
 ### Follow an event or organizer (`evnm_follow`)
 
-Awarded when a member follows an event, organizer, venue, or another member to stay up to date. A daily limit keeps the reward proportionate.
+Awarded when a member follows an event, organizer, or another member to stay up to date. A daily limit keeps the reward proportionate.
 
-Default: **2 points**. Limit: 30s wait, 10 a day.
+Default: **2 points**. Limit: once per item, 30s wait, 10 a day.
 
 - [ ] Doing it pays 2 points to the right member.
 - [ ] Switched off, it pays nothing.
+- [ ] Doing it again on the same item pays nothing. Doing it on a different item pays again.
 - [ ] Doing it again inside 30 seconds pays nothing. After the wait it pays.
 - [ ] It stops paying after 10 in one day.
 
-Developer result: Not run yet. The hook exists in the plugin source, which does not prove its arguments match, so this row needs a real run.
+Developer result: Fixed: following twice paid twice, and the description promised venue follows that the plugin rejects. Now once per followed item. Run on a test site through the plugin's REST route.

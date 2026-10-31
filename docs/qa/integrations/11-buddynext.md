@@ -29,7 +29,7 @@ Default: **5 points**. Limit: 30s wait, 20 a day.
 - [ ] Doing it again inside 30 seconds pays nothing. After the wait it pays.
 - [ ] It stops paying after 20 in one day.
 
-Developer result: Not run yet. The hook exists in the plugin source, which does not prove its arguments match, so this row needs a real run.
+Developer result: Run on a test site through the plugin's REST route. Paid the right member.
 
 ### Share a post (`bn_post_shared`)
 
@@ -41,7 +41,7 @@ Default: **5 points**. Limit: 10 a day.
 - [ ] Switched off, it pays nothing.
 - [ ] It stops paying after 10 in one day.
 
-Developer result: Not run yet. The hook exists in the plugin source, which does not prove its arguments match, so this row needs a real run.
+Developer result: Run on a test site through the plugin's REST route. Paid the right member.
 
 ### Write a comment (`bn_comment_created`)
 
@@ -53,7 +53,7 @@ Default: **3 points**. Limit: 30s wait.
 - [ ] Switched off, it pays nothing.
 - [ ] Doing it again inside 30 seconds pays nothing. After the wait it pays.
 
-Developer result: Not run yet. The hook exists in the plugin source, which does not prove its arguments match, so this row needs a real run.
+Developer result: Run on a test site through the plugin's REST route. Paid the right member.
 
 ### Receive a reaction on your content (`bn_reaction_received`)
 
@@ -65,7 +65,7 @@ Default: **2 points**. Limit: 20 a day.
 - [ ] Switched off, it pays nothing.
 - [ ] It stops paying after 20 in one day.
 
-Developer result: Not run yet. The hook exists in the plugin source, which does not prove its arguments match, so this row needs a real run.
+Developer result: Run on a test site through the plugin's REST route. Paid the right member.
 
 ### Vote on a poll (`bn_poll_voted`)
 
@@ -77,19 +77,21 @@ Default: **1 points**. Limit: 5 a day.
 - [ ] Switched off, it pays nothing.
 - [ ] It stops paying after 5 in one day.
 
-Developer result: Not run yet. The hook exists in the plugin source, which does not prove its arguments match, so this row needs a real run.
+Developer result: Run on a test site through the plugin's REST route. Paid the right member.
 
 ### Bookmark a post (`bn_post_bookmarked`)
 
 Awarded the first time a member bookmarks a post. Daily cap limits farming.
 
-Default: **1 points**. Limit: 5 a day.
+Default: **1 points**. Limit: once per item, 5 a day.
 
 - [ ] Doing it pays 1 points to the right member.
 - [ ] Switched off, it pays nothing.
+- [ ] Doing it again on the same item pays nothing. Doing it on a different item pays again.
 - [ ] It stops paying after 5 in one day.
+- [ ] Removing a bookmark and adding it again pays nothing more.
 
-Developer result: Not run yet. The hook exists in the plugin source, which does not prove its arguments match, so this row needs a real run.
+Developer result: Fixed: remove and re-add paid again. Now once per post. Run on a test site through the plugin's REST route.
 
 ### Gain a follower (`bn_followed`)
 
@@ -101,7 +103,7 @@ Default: **5 points**. Limit: 10 a day.
 - [ ] Switched off, it pays nothing.
 - [ ] It stops paying after 10 in one day.
 
-Developer result: Not run yet. The hook exists in the plugin source, which does not prove its arguments match, so this row needs a real run.
+Developer result: Run on a test site through the plugin's REST route. Paid the right member.
 
 ### Follow a member for the first time (`bn_first_follow`)
 
@@ -113,7 +115,7 @@ Default: **5 points**. Limit: once ever.
 - [ ] Switched off, it pays nothing.
 - [ ] Doing it a second time pays nothing.
 
-Developer result: Not run yet. The hook exists in the plugin source, which does not prove its arguments match, so this row needs a real run.
+Developer result: Fails when the first follow goes through a private account approval: BuddyNext never fires the hook there. Card on the BuddyNext board. Run on a test site through the plugin's REST route.
 
 ### Have a connection request accepted (`bn_connected`)
 
@@ -125,7 +127,7 @@ Default: **10 points**. No limit by default.
 - [ ] Switched off, it pays nothing.
 - [ ] The member who sent the request gets the points, not the one accepting.
 
-Developer result: Relabelled from Accept a connection, because it has always paid the sender. Who gets paid did not change. Not run.
+Developer result: Run on a test site through the plugin's REST route. Paid the right member.
 
 ### Send a connection request (`bn_connection_requested`)
 
@@ -137,7 +139,7 @@ Default: **1 points**. Limit: 5 a day.
 - [ ] Switched off, it pays nothing.
 - [ ] It stops paying after 5 in one day.
 
-Developer result: Not run yet. The hook exists in the plugin source, which does not prove its arguments match, so this row needs a real run.
+Developer result: Run on a test site through the plugin's REST route. Paid the right member.
 
 ### Send a direct message (`bn_dm_sent`)
 
@@ -149,7 +151,7 @@ Default: **1 points**. Limit: 10 a day.
 - [ ] Switched off, it pays nothing.
 - [ ] It stops paying after 10 in one day.
 
-Developer result: Not run yet. The hook exists in the plugin source, which does not prove its arguments match, so this row needs a real run.
+Developer result: Run on a test site through the plugin's REST route. Paid the right member.
 
 ### Join a space (`bn_space_joined`)
 
@@ -161,7 +163,7 @@ Default: **5 points**. Limit: 5 a day.
 - [ ] Switched off, it pays nothing.
 - [ ] It stops paying after 5 in one day.
 
-Developer result: Not run yet. The hook exists in the plugin source, which does not prove its arguments match, so this row needs a real run.
+Developer result: Run on a test site through the plugin's REST route. Paid the right member.
 
 ### Create a space (`bn_space_created`)
 
@@ -172,7 +174,7 @@ Default: **10 points**. No limit by default.
 - [ ] Doing it pays 10 points to the right member.
 - [ ] Switched off, it pays nothing.
 
-Developer result: Not run yet. The hook exists in the plugin source, which does not prove its arguments match, so this row needs a real run.
+Developer result: Run on a test site through the plugin's REST route. Paid the right member.
 
 ### Update your profile (`bn_profile_updated`)
 
@@ -184,7 +186,7 @@ Default: **2 points**. Limit: 300s wait.
 - [ ] Switched off, it pays nothing.
 - [ ] Doing it again inside 300 seconds pays nothing. After the wait it pays.
 
-Developer result: Not run yet. The hook exists in the plugin source, which does not prove its arguments match, so this row needs a real run.
+Developer result: Run on a test site through the plugin's REST route. Paid the right member.
 
 ### Complete your profile (`bn_profile_completed`)
 
@@ -196,7 +198,7 @@ Default: **25 points**. Limit: once ever.
 - [ ] Switched off, it pays nothing.
 - [ ] Doing it a second time pays nothing.
 
-Developer result: Not run yet. The hook exists in the plugin source, which does not prove its arguments match, so this row needs a real run.
+Developer result: Run on a test site through the plugin's REST route. Paid the right member.
 
 ### Complete onboarding (`bn_onboarding_completed`)
 
@@ -208,4 +210,4 @@ Default: **20 points**. Limit: once ever.
 - [ ] Switched off, it pays nothing.
 - [ ] Doing it a second time pays nothing.
 
-Developer result: Not run yet. The hook exists in the plugin source, which does not prove its arguments match, so this row needs a real run.
+Developer result: Run on a test site through the plugin's REST route. Paid the right member.

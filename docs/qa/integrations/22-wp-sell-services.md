@@ -27,7 +27,7 @@ Default: **20 points**. No limit by default.
 - [ ] Doing it pays 20 points to the right member.
 - [ ] Switched off, it pays nothing.
 
-Developer result: Not run yet. The hook exists in the plugin source, which does not prove its arguments match, so this row needs a real run.
+Developer result: Run on a test site through the plugin's REST route. Paid the right member.
 
 ### Review a service (`wpss_review_created`)
 
@@ -39,7 +39,7 @@ Default: **10 points**. Limit: 60s wait.
 - [ ] Switched off, it pays nothing.
 - [ ] Doing it again inside 60 seconds pays nothing. After the wait it pays.
 
-Developer result: Not run yet. The hook exists in the plugin source, which does not prove its arguments match, so this row needs a real run.
+Developer result: Run on a test site through the plugin's REST route. Paid the right member.
 
 ### Review approved by a moderator (`wpss_review_approved`)
 
@@ -51,4 +51,4 @@ Default: **10 points**. Limit: 60s wait.
 - [ ] Switched off, it pays nothing.
 - [ ] Doing it again inside 60 seconds pays nothing. After the wait it pays.
 
-Developer result: Not run yet. The hook exists in the plugin source, which does not prove its arguments match, so this row needs a real run.
+Developer result: Run on a test site through the plugin's own code. Paid the right member.

@@ -30,7 +30,7 @@ Default: **10 points**. Limit: 60s wait.
 - [ ] Switched off, it pays nothing.
 - [ ] Doing it again inside 60 seconds pays nothing. After the wait it pays.
 
-Developer result: Not run yet. The hook exists in the plugin source, which does not prove its arguments match, so this row needs a real run.
+Developer result: Run on a test site through the plugin's REST route. Paid the right member.
 
 ### Vote on a poll (`jetonomy_pro_poll_voted`)
 
@@ -42,7 +42,7 @@ Default: **2 points**. Limit: 30s wait.
 - [ ] Switched off, it pays nothing.
 - [ ] Doing it again inside 30 seconds pays nothing. After the wait it pays.
 
-Developer result: Not run yet. The hook exists in the plugin source, which does not prove its arguments match, so this row needs a real run.
+Developer result: Run on a test site through the plugin's REST route. Paid the right member.
 
 ### Send a Jetonomy private message (`jetonomy_pro_message_sent`)
 
@@ -56,7 +56,7 @@ Default: **2 points**. Limit: 60s wait, 20 a day.
 - [ ] It stops paying after 20 in one day.
 - [ ] KNOWN ISSUE: leaving a conversation also pays this, because Jetonomy Pro fires the hook for its system message. Confirm it and comment on the card.
 
-Developer result: Not fixed here: the fix belongs in Jetonomy Pro, which fires the hook before checking for a system message. It has a card on the Jetonomy board.
+Developer result: Run on a test site through the plugin's REST route. Paid the right member.
 
 ### Start a Jetonomy conversation (`jetonomy_pro_conversation_created`)
 
@@ -68,7 +68,7 @@ Default: **5 points**. Limit: 120s wait.
 - [ ] Switched off, it pays nothing.
 - [ ] Doing it again inside 120 seconds pays nothing. After the wait it pays.
 
-Developer result: Not run yet. The hook exists in the plugin source, which does not prove its arguments match, so this row needs a real run.
+Developer result: Run on a test site through the plugin's REST route. Paid the right member.
 
 ### Receive a Jetonomy private message (`jetonomy_pro_dm_received`)
 
@@ -81,7 +81,7 @@ Default: **1 points**. Limit: 120s wait, 10 a day.
 - [ ] Doing it again inside 120 seconds pays nothing. After the wait it pays.
 - [ ] It stops paying after 10 in one day.
 
-Developer result: Not run yet. The hook exists in the plugin source, which does not prove its arguments match, so this row needs a real run.
+Developer result: Run on a test site through the plugin's REST route. Paid the right member.
 
 ### Send a reaction (`jetonomy_pro_reaction_added`)
 
@@ -94,4 +94,4 @@ Default: **1 points**. Limit: 30s wait, 50 a day.
 - [ ] Doing it again inside 30 seconds pays nothing. After the wait it pays.
 - [ ] It stops paying after 50 in one day.
 
-Developer result: Not run yet. The hook exists in the plugin source, which does not prove its arguments match, so this row needs a real run.
+Developer result: Run on a test site through the plugin's REST route. Paid the right member.

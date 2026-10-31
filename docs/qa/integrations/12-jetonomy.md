@@ -29,7 +29,7 @@ Default: **5 points**. Limit: 60s wait, 5 a day.
 - [ ] Doing it again inside 60 seconds pays nothing. After the wait it pays.
 - [ ] It stops paying after 5 in one day.
 
-Developer result: Not run yet. The hook exists in the plugin source, which does not prove its arguments match, so this row needs a real run.
+Developer result: Joining a BuddyNext space with a linked forum also pays Join a space there, so one join pays 5 + 5 until the BuddyNext fix. Card on the BuddyNext board. Run on a test site through the plugin's REST route.
 
 ### Get approved into a gated space (`jetonomy_join_request_approved`)
 
@@ -41,7 +41,7 @@ Default: **10 points**. Limit: 300s wait.
 - [ ] Switched off, it pays nothing.
 - [ ] Doing it again inside 300 seconds pays nothing. After the wait it pays.
 
-Developer result: Not run yet. The hook exists in the plugin source, which does not prove its arguments match, so this row needs a real run.
+Developer result: Run on a test site through the plugin's REST route. Paid the right member.
 
 ### Get promoted to a higher trust level (`jetonomy_trust_level_up`)
 
@@ -52,7 +52,7 @@ Default: **50 points**. No limit by default.
 - [ ] Doing it pays 50 points to the right member.
 - [ ] Switched off, it pays nothing.
 
-Developer result: Not run yet. The hook exists in the plugin source, which does not prove its arguments match, so this row needs a real run.
+Developer result: Run on a test site through the plugin's REST route. Paid the right member.
 
 ### Activate a membership (`jetonomy_membership_activated`)
 

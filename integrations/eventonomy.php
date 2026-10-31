@@ -30,6 +30,28 @@ if ( ! defined( 'EVENTONOMY_VERSION' ) ) {
 add_action( 'evnm_after_create_rsvp', static fn( $full, $context ) => do_action( 'wb_gam_evnm_rsvp_going', $full, $context ), 10, 2 );
 add_action( 'evnm_after_promote_waitlist', static fn( $full, $context ) => do_action( 'wb_gam_evnm_rsvp_going', $full, $context ), 10, 2 );
 
+// A draft is not a submission: an event is submitted when created in any other status, or when it leaves draft.
+add_action(
+	'evnm_after_create_event',
+	static function ( $full, $context ): void {
+		if ( 'draft' !== (string) ( $full['status'] ?? '' ) ) {
+			do_action( 'wb_gam_evnm_event_submitted', $full, $context );
+		}
+	},
+	10,
+	2
+);
+add_action(
+	'evnm_event_status_changed',
+	static function ( $full, $old_status, $new_status, $context ): void {
+		if ( 'draft' === $old_status ) {
+			do_action( 'wb_gam_evnm_event_submitted', $full, $context );
+		}
+	},
+	10,
+	4
+);
+
 return array(
 	'plugin'   => 'Eventonomy',
 	'version'  => '1.0.0',
@@ -76,8 +98,8 @@ return array(
 			'id'                => 'evnm_event_created',
 			'label'             => static fn(): string => __( 'Submit an event', 'wb-gamification' ),
 			'description'       => static fn(): string => __( 'Awarded to the author when an event is submitted. A daily limit rewards genuine organizing without encouraging duplicate submissions.', 'wb-gamification' ),
-			// Free fires: do_action( 'evnm_after_create_event', array $full, array $context ).
-			'hook'              => 'evnm_after_create_event',
+			'hook'              => 'wb_gam_evnm_event_submitted',
+			'once_per_object'   => static fn( array $full ): int => (int) ( $full['id'] ?? 0 ),
 			'user_callback'     => function ( array $full, array $context ): int {
 				// An import submits nothing: the author falls back to whoever ran it.
 				if ( 'import' === ( $context['source'] ?? '' ) ) {

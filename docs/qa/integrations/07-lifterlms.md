@@ -30,7 +30,7 @@ Default: **100 points**. Limit: once per item.
 - [ ] Switched off, it pays nothing.
 - [ ] Doing it again on the same item pays nothing. Doing it on a different item pays again.
 
-Developer result: Not run yet. The hook exists in the plugin source, which does not prove its arguments match, so this row needs a real run.
+Developer result: Run on a test site through LifterLMS's own code. Paid once.
 
 ### Complete a LifterLMS lesson (`llms_lesson_completed`)
 
@@ -42,7 +42,7 @@ Default: **10 points**. Limit: once per item.
 - [ ] Switched off, it pays nothing.
 - [ ] Doing it again on the same item pays nothing. Doing it on a different item pays again.
 
-Developer result: Not run yet. The hook exists in the plugin source, which does not prove its arguments match, so this row needs a real run.
+Developer result: Mark Complete clicked in a browser as a student. Paid once.
 
 ### Pass a LifterLMS quiz (`llms_quiz_passed`)
 
@@ -54,7 +54,7 @@ Default: **25 points**. Limit: once per item.
 - [ ] Switched off, it pays nothing.
 - [ ] Doing it again on the same item pays nothing. Doing it on a different item pays again.
 
-Developer result: Not run yet. The hook exists in the plugin source, which does not prove its arguments match, so this row needs a real run.
+Developer result: Pass or fail result set by hand, not by answering questions. Needs a real quiz.
 
 ### Enroll in a LifterLMS course (`llms_course_enrolled`)
 
@@ -66,7 +66,7 @@ Default: **10 points**. Limit: once per item.
 - [ ] Switched off, it pays nothing.
 - [ ] Doing it again on the same item pays nothing. Doing it on a different item pays again.
 
-Developer result: Not run yet. The hook exists in the plugin source, which does not prove its arguments match, so this row needs a real run.
+Developer result: Run on a test site through LifterLMS's own code. Paid once.
 
 ### Join a LifterLMS membership (`llms_membership_joined`)
 

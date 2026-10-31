@@ -28,7 +28,7 @@ Default: **10 points**. Limit: 5s wait.
 - [ ] Switched off, it pays nothing.
 - [ ] Doing it again inside 5 seconds pays nothing. After the wait it pays.
 
-Developer result: Not run yet. The hook exists in the plugin source, which does not prove its arguments match, so this row needs a real run.
+Developer result: Run on a test site through the plugin's REST route. Paid the right member.
 
 ### Add items to an album (`mvs_create_album`)
 
@@ -40,7 +40,7 @@ Default: **15 points**. Limit: 10s wait.
 - [ ] Switched off, it pays nothing.
 - [ ] Doing it again inside 10 seconds pays nothing. After the wait it pays.
 
-Developer result: Not run yet. The hook exists in the plugin source, which does not prove its arguments match, so this row needs a real run.
+Developer result: Run on a test site through the plugin's REST route. Paid the right member.
 
 ### Receive a like on a photo (`mvs_receive_like`)
 
@@ -51,7 +51,7 @@ Default: **2 points**. No limit by default.
 - [ ] Doing it pays 2 points to the right member.
 - [ ] Switched off, it pays nothing.
 
-Developer result: Not run yet. The hook exists in the plugin source, which does not prove its arguments match, so this row needs a real run.
+Developer result: Run on a test site through the plugin's REST route. Paid the right member.
 
 ### Receive a comment on a photo (`mvs_receive_comment`)
 
@@ -62,7 +62,7 @@ Default: **5 points**. No limit by default.
 - [ ] Doing it pays 5 points to the right member.
 - [ ] Switched off, it pays nothing.
 
-Developer result: Not run yet. The hook exists in the plugin source, which does not prove its arguments match, so this row needs a real run.
+Developer result: Run on a test site through the plugin's REST route. Paid the right member.
 
 ### Gain a new follower (`mvs_receive_follow`)
 
@@ -73,7 +73,7 @@ Default: **3 points**. No limit by default.
 - [ ] Doing it pays 3 points to the right member.
 - [ ] Switched off, it pays nothing.
 
-Developer result: Not run yet. The hook exists in the plugin source, which does not prove its arguments match, so this row needs a real run.
+Developer result: Run on a test site through the plugin's REST route. Paid the right member.
 
 ### Have a photo bookmarked (`mvs_receive_favorite`)
 
@@ -84,7 +84,7 @@ Default: **2 points**. No limit by default.
 - [ ] Doing it pays 2 points to the right member.
 - [ ] Switched off, it pays nothing.
 
-Developer result: Not run yet. The hook exists in the plugin source, which does not prove its arguments match, so this row needs a real run.
+Developer result: Run on a test site through the plugin's REST route. Paid the right member.
 
 ### Write a meaningful comment (`mvs_give_comment`)
 
@@ -97,7 +97,7 @@ Default: **3 points**. Limit: 30s wait, 20 a day.
 - [ ] Doing it again inside 30 seconds pays nothing. After the wait it pays.
 - [ ] It stops paying after 20 in one day.
 
-Developer result: Not run yet. The hook exists in the plugin source, which does not prove its arguments match, so this row needs a real run.
+Developer result: Run on a test site through the plugin's REST route. Paid the right member.
 
 ### Follow another member (`mvs_give_follow`)
 
@@ -109,7 +109,7 @@ Default: **1 points**. Limit: 50 a day.
 - [ ] Switched off, it pays nothing.
 - [ ] It stops paying after 50 in one day.
 
-Developer result: Not run yet. The hook exists in the plugin source, which does not prove its arguments match, so this row needs a real run.
+Developer result: Its cap of 50 was not reached because the REST rate limit stopped the run at 30. Run on a test site through the plugin's REST route.
 
 ### Bookmark a photo (`mvs_bookmark_photo`)
 
@@ -121,7 +121,7 @@ Default: **1 points**. Limit: 30 a day.
 - [ ] Switched off, it pays nothing.
 - [ ] It stops paying after 30 in one day.
 
-Developer result: Not run yet. The hook exists in the plugin source, which does not prove its arguments match, so this row needs a real run.
+Developer result: Its cap of 30 was not run. Run on a test site through the plugin's REST route.
 
 ### Win a photo battle (`mvs_battle_win`)
 
@@ -132,7 +132,7 @@ Default: **100 points**. No limit by default.
 - [ ] Doing it pays 100 points to the right member.
 - [ ] Switched off, it pays nothing.
 
-Developer result: Not run yet. The hook exists in the plugin source, which does not prove its arguments match, so this row needs a real run.
+Developer result: One first run paid nothing and clean reruns paid; cause not found. Run on a test site through the plugin's own code.
 
 ### Enter a photo challenge (`mvs_challenge_participate`)
 
@@ -143,7 +143,7 @@ Default: **10 points**. No limit by default.
 - [ ] Doing it pays 10 points to the right member.
 - [ ] Switched off, it pays nothing.
 
-Developer result: Not run yet. The hook exists in the plugin source, which does not prove its arguments match, so this row needs a real run.
+Developer result: Run on a test site through the plugin's REST route. Paid the right member.
 
 ### Place in a photo challenge (`mvs_challenge_winner`)
 
@@ -154,7 +154,7 @@ Default: **200 points**. No limit by default.
 - [ ] Doing it pays 200 points to the right member.
 - [ ] Switched off, it pays nothing.
 
-Developer result: Not run yet. The hook exists in the plugin source, which does not prove its arguments match, so this row needs a real run.
+Developer result: Run on a test site through the plugin's own code. Paid the right member.
 
 ### Win a tournament round (`mvs_tournament_round_win`)
 
@@ -165,7 +165,7 @@ Default: **150 points**. No limit by default.
 - [ ] Doing it pays 150 points to the right member.
 - [ ] Switched off, it pays nothing.
 
-Developer result: Not run yet. The hook exists in the plugin source, which does not prove its arguments match, so this row needs a real run.
+Developer result: Tournament winners came from the tie rule, because test votes returned 400. Run on a test site through the plugin's own code.
 
 ### Win a tournament (`mvs_tournament_win`)
 
@@ -176,7 +176,7 @@ Default: **500 points**. No limit by default.
 - [ ] Doing it pays 500 points to the right member.
 - [ ] Switched off, it pays nothing.
 
-Developer result: Not run yet. The hook exists in the plugin source, which does not prove its arguments match, so this row needs a real run.
+Developer result: Tournament winners came from the tie rule, because test votes returned 400. Run on a test site through the plugin's own code.
 
 ### Hit an upload streak milestone (`mvs_streak_milestone`)
 
@@ -187,4 +187,4 @@ Default: **50 points**. No limit by default.
 - [ ] Doing it pays 50 points to the right member.
 - [ ] Switched off, it pays nothing.
 
-Developer result: Not run yet. The hook exists in the plugin source, which does not prove its arguments match, so this row needs a real run.
+Developer result: One day-30 first run paid nothing and clean reruns paid; cause not found. Pays 50, 250 or 1000 by milestone, not a flat amount. Run on a test site through the plugin's REST route.

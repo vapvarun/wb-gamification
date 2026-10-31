@@ -30,7 +30,12 @@ return array(
 			'description'       => static fn(): string => __( 'Awarded to the owner when a listing is submitted. Cooldown prevents bulk-submit farming.', 'wb-gamification' ),
 			// Fires: do_action( 'wb_listora_listing_submitted', int $post_id, string $status, $request, $context ). No user id - owner is post_author.
 			'hook'              => 'wb_listora_listing_submitted',
+			'once_per_object'   => static fn( int $post_id ): int => $post_id,
 			'user_callback'     => function ( int $post_id, $status = '', $request = null, $context = null ): int {
+				// Saving a draft fires this too, and a draft is not a submission.
+				if ( 'draft' === $status ) {
+					return 0;
+				}
 				// Migrators fire this with source 'migration'; importing a site's listings is not
 				// its members submitting them.
 				if ( is_array( $context ) && 'migration' === ( $context['source'] ?? '' ) ) {
@@ -54,7 +59,9 @@ return array(
 			'label'             => static fn(): string => __( 'Get a listing approved', 'wb-gamification' ),
 			'description'       => static fn(): string => __( 'Awarded to the owner when their listing is approved and goes live.', 'wb-gamification' ),
 			// Fires: do_action( 'wb_listora_after_approve_listing', int $post_id ). No user id - owner is post_author.
+			// Also fires on reactivating or renewing a listing, so once per listing.
 			'hook'              => 'wb_listora_after_approve_listing',
+			'once_per_object'   => static fn( int $post_id ): int => $post_id,
 			'user_callback'     => function ( int $post_id ): int {
 				return (int) get_post_field( 'post_author', $post_id );
 			},
