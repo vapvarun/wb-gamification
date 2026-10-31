@@ -22,14 +22,19 @@ For every action: do it for real, then confirm the points appear in the member's
 
 ### Pay for an order (`wc_order_completed`)
 
-Awarded each time a customer pays for an order (fires once per order on payment success).
+Awarded each time a customer pays for an order, once per order. Manual payments such as cash or bank transfer count when the store marks the order completed.
 
-Default: **25 points**. No limit by default.
+Default: **25 points**. Limit: once per item.
 
 - [ ] Doing it pays 25 points to the right member.
 - [ ] Switched off, it pays nothing.
+- [ ] Doing it again on the same item pays nothing. Doing it on a different item pays again.
+- [ ] A card or other online payment pays when the gateway confirms it.
+- [ ] A cash on delivery, bank transfer or check order pays nothing at Processing and pays when marked Completed.
+- [ ] An online order later marked Completed pays nothing more.
+- [ ] A free order, such as a free trial or a 100% coupon, pays nothing.
 
-Developer result: Not run yet. The hook exists in the plugin source, which does not prove its arguments match, so this row needs a real run.
+Developer result: Fixed: cash, bank and check orders never paid. Tested with a real browser checkout by cash on delivery, then Completed on the admin order screen, paying 25 once. Gateway orders were run through payment_complete, because this site has no live gateway. A real card payment was not run.
 
 ### Make your first purchase (`wc_first_purchase`)
 
@@ -42,8 +47,9 @@ Default: **50 points**. Limit: once ever.
 - [ ] Doing it a second time pays nothing.
 - [ ] A second order pays nothing for this.
 - [ ] A guest order whose billing email matches a member pays that member, only if it is their first paid order.
+- [ ] Two manual orders confirmed in reverse order pay this once, on the older order.
 
-Developer result: Fixed: a matched guest order was counted wrongly, so a first order paid nothing and a second could pay. Tested through payment_complete on a member order, a second order and a guest order with a member's email. No real checkout in the browser.
+Developer result: Fixed: a matched guest order was counted wrongly, and cash, bank and check orders never paid. Tested with a real browser checkout by cash on delivery, paying 50 once, plus a second order, a guest order with a member's email and orders confirmed in reverse order. A real card payment was not run.
 
 ### Leave a product review (`wc_product_reviewed`)
 

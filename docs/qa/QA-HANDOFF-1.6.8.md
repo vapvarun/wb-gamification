@@ -117,13 +117,13 @@ These were broken and are fixed in this round, so test them first:
 | WordPress | Complete profile read the bio before it was saved. A comment held for moderation never paid the post author |
 | Eventonomy | Promotion from the waitlist never paid. Importing events paid the importer. Offline orders marked as paid needed Pro |
 | BuddyNext | Accept a connection pays the sender, so it is now labelled Have a connection request accepted |
+| WooCommerce orders | Cash, bank and check orders never paid Pay for an order or Make your first purchase. They now pay when marked Completed. Free orders pay nothing |
 | LearnDash, LifterLMS, Tutor LMS | See the LMS change below |
 
 Still open:
 
 - **Jetonomy Pro:** leaving a conversation also pays Send a private message. The fix belongs in Jetonomy Pro and has a card on its board.
-- **WooCommerce Memberships or Subscriptions in Jetonomy:** the source was not available, so these arguments are unconfirmed. Test them for real.
-- **WooCommerce offline orders:** the order actions use `woocommerce_payment_complete`. Check whether a cash on delivery or bank transfer order earns points when marked Completed by hand.
+- **WooCommerce Memberships in Jetonomy:** buying a plan for the first time pays nothing for Activate a membership. The fix belongs in Jetonomy Pro and has a card on its board. WooCommerce Subscriptions works.
 
 **LMS change in this round:** LearnDash, LifterLMS and Tutor LMS now pay once per course, lesson, quiz or similar. Retaking a quiz must earn nothing. Run each LMS on its own site: Tutor LMS and LifterLMS both use `/courses/`, so lesson pages return 404 when both are active.
 
@@ -150,7 +150,7 @@ Filling these gaps is an owner decision, so report your view but do not file eac
 |---|---|
 | BuddyPress | Post in a group (`bp_groups_posted_update`), favorite an activity |
 | bbPress | Favorite a topic |
-| WooCommerce | Offline orders, see section 6 |
+| WooCommerce | Online and offline orders, free orders, see section 6 |
 | LearnDash | Mark an essay as graded |
 | LifterLMS | Buy a plan |
 | Tutor LMS | Assignments and certificates, which are in Tutor LMS Pro and not tested |

@@ -13,7 +13,9 @@ The WooCommerce integration rewards purchasing behavior and product engagement. 
 
 ### Notes
 
-- `wc_first_purchase` fires on the same hook as `wc_order_completed` but checks whether this is the customer's first completed order. It only awards points when exactly one completed order exists for that customer.
+- `wc_order_completed` pays once per order. Card and other online payments earn when the gateway confirms payment. Cash on delivery, bank transfer and check orders earn when you mark the order **Completed**.
+- `wc_first_purchase` pays on the same moment, when the customer has no earlier paid order. Orders marked **Processing** or **Completed** count as paid.
+- A free order, such as a free trial or a 100% coupon, earns neither action.
 - `wc_product_reviewed` pays when a review on a `product` is approved, whether that happens when it is posted or later from moderation. Unapproving and approving it again earns nothing more. Guest reviews are not rewarded.
 - `wc_wishlist_add` requires the **YITH WooCommerce Wishlist** plugin. It fires on `yith_wcwl_added_to_wishlist`.
 

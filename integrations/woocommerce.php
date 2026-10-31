@@ -5,12 +5,10 @@
  * Auto-loaded by ManifestLoader. Fires only when WooCommerce is active.
  *
  * Actions covered:
- *   Order paid             — woocommerce_payment_complete (fires once
- *                            per order when payment succeeds — handles
- *                            both stores that move paid orders to
- *                            "processing" awaiting shipment AND stores
- *                            that auto-complete digital orders).
- *   First purchase ever    — woocommerce_payment_complete (once only)
+ *   Order paid             — wb_gam_wc_order_paid bridge (once per order,
+ *                            when a gateway confirms payment or when the
+ *                            store marks a manual-payment order completed).
+ *   First purchase ever    — wb_gam_wc_order_paid (once only)
  *   Product reviewed       — comment_post on product post type
  *   Wishlist item added    — yith_wcwl_added_to_wishlist (YITH Wishlist)
  *   Add to cart            — woocommerce_add_to_cart
@@ -31,6 +29,8 @@
  * add_to_cart not firing." Moving to `woocommerce_payment_complete`
  * fires once when payment succeeds regardless of subsequent
  * status — payment_complete is WC's canonical "money in hand" hook.
+ * Cash on delivery, bank transfer and check orders never call it, so
+ * the bridge below also treats "completed" as paid for those orders.
  *
  * @package WB_Gamification
  * @see     https://woocommerce.github.io/code-reference/
@@ -42,17 +42,30 @@ if ( ! class_exists( 'WooCommerce' ) ) {
 	return [];
 }
 
+// A trigger listens to one hook, so both ways an order gets paid funnel into
+// one. Free orders (a free trial, a 100% coupon) were not paid for and earn nothing.
+$wb_gam_wc_order_paid = static function ( $order_id ): void {
+	$order = wc_get_order( $order_id );
+	if ( $order && (float) $order->get_total() > 0 ) {
+		do_action( 'wb_gam_wc_order_paid', (int) $order_id );
+	}
+};
+add_action( 'woocommerce_payment_complete', $wb_gam_wc_order_paid, 10, 1 );
+add_action( 'woocommerce_order_status_completed', $wb_gam_wc_order_paid, 10, 1 );
+
 return [
 	'plugin'   => 'WooCommerce',
 	'version'  => '1.0.0',
 	'triggers' => [
 
 		[
-			'id'             => 'wc_order_completed',
-			'label'          => static fn(): string => __( 'Pay for an order', 'wb-gamification' ),
-			'description'    => static fn(): string => __( 'Awarded each time a customer pays for an order (fires once per order on payment success).', 'wb-gamification' ),
-			'hook'           => 'woocommerce_payment_complete',
-			'user_callback'  => function ( int $order_id ): int {
+			'id'              => 'wc_order_completed',
+			'label'           => static fn(): string => __( 'Pay for an order', 'wb-gamification' ),
+			'description'     => static fn(): string => __( 'Awarded each time a customer pays for an order, once per order. Manual payments such as cash or bank transfer count when the store marks the order completed.', 'wb-gamification' ),
+			'hook'            => 'wb_gam_wc_order_paid',
+			// A gateway order is announced on payment and again when it completes.
+			'once_per_object' => static fn( int $order_id ): int => $order_id,
+			'user_callback'   => function ( int $order_id ): int {
 				$order = wc_get_order( $order_id );
 				if ( ! $order ) {
 					return 0;
@@ -72,24 +85,22 @@ return [
 				}
 				return 0;
 			},
-			'default_points' => 25,
-			'category'       => 'commerce',
-			'icon'           => 'icon-shopping-cart',
-			'repeatable'     => true,
-			'cooldown'       => 0,
-			// One award per order completion — already deduplicated by the
-			// hook itself (status_completed only fires when an order moves
-			// to completed). Running sync removes the Action Scheduler
+			'default_points'  => 25,
+			'category'        => 'commerce',
+			'icon'            => 'icon-shopping-cart',
+			'repeatable'      => true,
+			'cooldown'        => 0,
+			// Running sync removes the Action Scheduler
 			// dependency that turned a "complete checkout → see points"
 			// expectation into a "wait for the next AS tick" surprise.
-			'async'          => false,
+			'async'           => false,
 		],
 
 		[
 			'id'             => 'wc_first_purchase',
 			'label'          => static fn(): string => __( 'Make your first purchase', 'wb-gamification' ),
 			'description'    => static fn(): string => __( 'Awarded once on a customer\'s very first paid order.', 'wb-gamification' ),
-			'hook'           => 'woocommerce_payment_complete',
+			'hook'           => 'wb_gam_wc_order_paid',
 			'user_callback'  => function ( int $order_id ): int {
 				$order = wc_get_order( $order_id );
 				if ( ! $order ) {
@@ -106,20 +117,19 @@ return [
 				if ( ! $customer_id ) {
 					return 0;
 				}
-				// Count all PAID orders for this customer (processing OR
-				// completed). woocommerce_payment_complete fires after the
-				// current order has already moved to its paid state, so
-				// the count includes a logged-in order. A guest order matched
-				// by email has no customer id, so the count leaves it out.
-				$paid = wc_get_orders(
+				// First means no earlier order was paid. Only earlier ones count,
+				// so two manual orders confirmed out of order still pay once.
+				$created = $order->get_date_created();
+				$earlier = wc_get_orders(
 					[
-						'customer' => $customer_id,
-						'status'   => array( 'processing', 'completed' ),
-						'limit'    => 2,
-						'return'   => 'ids',
+						'customer'     => $customer_id,
+						'status'       => array( 'processing', 'completed' ),
+						'date_created' => '<' . ( $created ? $created->getTimestamp() : time() ),
+						'limit'        => 1,
+						'return'       => 'ids',
 					]
 				);
-				return count( $paid ) === ( $order->get_customer_id() ? 1 : 0 ) ? $customer_id : 0;
+				return $earlier ? 0 : $customer_id;
 			},
 			'default_points' => 50,
 			'category'       => 'commerce',

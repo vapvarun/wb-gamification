@@ -62,5 +62,7 @@ Default: **25 points**. No limit by default.
 
 - [ ] Doing it pays 25 points to the right member.
 - [ ] Switched off, it pays nothing.
+- [ ] WooCommerce Subscriptions: buying a subscription pays 25 once. Renewing or going on hold and back pays nothing more.
+- [ ] WooCommerce Memberships: expected to fail until the Jetonomy Pro fix. A first purchase of a plan pays nothing today.
 
-Developer result: Not run yet. The hook exists in the plugin source, which does not prove its arguments match, so this row needs a real run.
+Developer result: Tested with WooCommerce Subscriptions 9.3.0 and Memberships 1.30.2 through real checkouts. A subscription pays 25 once. A new membership pays nothing, because Jetonomy Pro only listens for a status change and a new membership has none. The fix belongs in Jetonomy Pro and has a card on its board. The other membership and course plugins named here were not run.
