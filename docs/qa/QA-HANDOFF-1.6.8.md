@@ -5,7 +5,7 @@ Temporary file for this test round. Delete it when testing is done. The Basecamp
 ## Before you start
 
 - **Code to test:** branch `1.6.8`, commit `c17509c` or later. The plugin header says 1.6.7 until release, so check the commit, not the version number.
-- **Not part of `c17509c`:** the tenure and site-first badge change. Section 3 is on hold until the owner decides how it should behave.
+- **Tenure and site-first badge change:** included from the next commit on this branch. Section 3 can be tested, except the last check, which waits for the owner's decision.
 - **Part A** is the fix round. **Part B** is the check of every plugin integration.
 
 ### Sites
@@ -53,16 +53,18 @@ Check on a small site with Action Scheduler open at **Tools > Scheduled Actions*
 
 Known and accepted: if nudges are switched off mid-run, the run stops and Action Scheduler logs the next page as failed with "no callbacks are registered". Do not report that.
 
-## 3. Tenure and site-first badges: ON HOLD
+## 3. Tenure and site-first badges
 
-Do not test until the developer confirms the change is pushed (cards 10459672711 and 10459672796). The checks will be:
+Cards 10459672711 and 10459672796.
+
+**Known open decision:** on a fresh install on an established community, the first daily check, about 1 hour after activation, awards every tenure badge members already qualify for. Each award makes a public feed post and a toast. Measured with 10,000 aged members: 24,836 awards in 76 seconds. Do not file this as a bug. Do not run it on a site with real members.
 
 - [ ] Fresh install: 37 badges, including the four tenure and three site-first badges, with rules and icons.
 - [ ] A member registered 400 days ago gets 1-Year Member at the daily check.
 - [ ] A site-first badge goes to the first qualifying member only.
 - [ ] Update from 1.6.7: no duplicates, owner edits kept, deleted badges stay deleted, no new badges added.
 - [ ] **Modules** no longer lists Tenure badges or Site-first badges.
-- [ ] Fresh install on an established community: behaviour matches the owner's decision on announcements.
+- [ ] Fresh install on an established community: **on hold** until the owner decides how the first check should announce badges.
 
 ## 4. The rest of the round
 
