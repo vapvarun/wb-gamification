@@ -58,5 +58,6 @@ parameters:
         # Third-party integration symbols. Each integrations/*.php file only
         # executes when its host plugin is active, which defines these at
         # runtime. They are intentionally invisible to static analysis.
-        - '#Function (wc_get_order|wc_get_orders|bp_core_current_time|bp_get_member_user_id|bp_displayed_user_id|bp_displayed_user_domain|bp_displayed_user_url|bp_core_new_nav_item|bp_core_new_subnav_item|bp_core_load_template|bp_current_action|bp_activity_set_action|groups_get_group|give_get_payment_user_id|give_get_payments|tutor_utils|register_graphql_object_type|register_graphql_field) not found#'
-        - '#(unknown class|invalid type|on an unknown class) (MeprEvent|MeprUser|Tutor\\Models\\QuizModel)#'
+        - '#Function (wc_get_order|wc_get_orders|bp_core_current_time|bp_get_member_user_id|bp_displayed_user_id|bp_displayed_user_domain|bp_displayed_user_url|bp_core_new_nav_item|bp_core_new_subnav_item|bp_core_load_template|bp_current_action|bp_activity_set_action|groups_get_group|give_get_payment_user_id|give_get_payment_donor_id|give_get_payment_form_id|tec_tc_get_order|tribe_is_truthy|bp_activity_get_specific|tutor_utils|register_graphql_object_type|register_graphql_field) not found#'
+        - '#(Instantiated class|on an unknown class) Give_Donor#'
+        - '#(unknown class|invalid type|on an unknown class) (MeprEvent|MeprTransaction|Give\\Campaigns\\Models\\Campaign|Tutor\\Models\\QuizModel)#'

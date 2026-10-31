@@ -1,6 +1,6 @@
 # MemberPress Integration
 
-The MemberPress integration rewards membership activity: activating a membership, renewing it, and joining as a paid member for the first time. The manifest loads automatically when MemberPress is active.
+The MemberPress integration rewards membership activity: activating a membership, renewing it, and joining for the first time. The manifest loads automatically when MemberPress is active.
 
 ## Actions
 
@@ -8,7 +8,7 @@ The MemberPress integration rewards membership activity: activating a membership
 |---|---|---|
 | `mp_membership_activated` | Activate a MemberPress membership | 50 |
 | `mp_membership_renewed` | Renew a MemberPress membership | 30 |
-| `mp_first_membership` | Join as a paid member for the first time | 100 |
+| `mp_first_membership` | Join as a member for the first time | 100 |
 
 ## Requirements
 
@@ -18,4 +18,4 @@ The MemberPress integration rewards membership activity: activating a membership
 
 This integration is auto-detected. No configuration is needed. Points fire automatically as soon as MemberPress is active and a member activates or renews a membership.
 
-`mp_membership_activated` has a one-hour cooldown so a single signup is not rewarded more than once. `mp_first_membership` fires on the same signup event but only awards once per member, the very first time they join as a paid member.
+`mp_membership_activated` pays once per membership, so leaving and rejoining the same membership earns nothing. Renewal payments do not count as activating. `mp_membership_renewed` pays on each renewal payment of a recurring membership. `mp_first_membership` pays once per member, the first time they join any membership, free or paid. A pending offline payment earns nothing until it is marked complete, and a member dropped to a group's fallback membership earns nothing.

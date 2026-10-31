@@ -11623,7 +11623,7 @@
       "manifest_file": "integrations/buddypress.php",
       "manifest_version": "1.0.0",
       "detect": "",
-      "trigger_count": 14,
+      "trigger_count": 13,
       "adapter_classes": [],
       "purpose": ""
     },
@@ -11634,7 +11634,7 @@
       "manifest_file": "integrations/eventonomy.php",
       "manifest_version": "1.0.0",
       "detect": "defined('EVENTONOMY_VERSION')",
-      "trigger_count": 3,
+      "trigger_count": 4,
       "adapter_classes": [],
       "purpose": ""
     },
@@ -11645,7 +11645,7 @@
       "manifest_file": "integrations/eventonomy-pro.php",
       "manifest_version": "1.0.0",
       "detect": "defined('EVENTONOMY_PRO_VERSION')",
-      "trigger_count": 3,
+      "trigger_count": 2,
       "adapter_classes": [],
       "purpose": ""
     },

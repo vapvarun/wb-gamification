@@ -17,16 +17,14 @@ The manifest loads automatically when BuddyPress is active. No configuration is 
 | `bp_reactions_received` | Receive a reaction | 3 | Yes |
 | `bp_polls_created` | Create a poll | 10 | Yes |
 | `bp_publish_post` | Publish a member blog post | 25 | Yes |
-| `bp_media_upload` | Upload media | 5 | Yes (60s cooldown) |
 
 ### Notes
 
 - `bp_friends_accepted` awards the member who **accepts** the request, not the one who initiated it.
 - `bp_profile_complete` fires on `xprofile_updated_profile`. It is non-repeatable - a member earns it once.
-- `bp_reactions_received` requires the BuddyPress Reactions add-on.
-- `bp_polls_created` requires the BuddyPress Polls add-on.
+- `bp_reactions_received` requires the BuddyPress Reactions add-on, which runs on the BuddyX, BuddyX Pro and Reign themes. It pays the owner of the activity, comment or post. One member reacting to one item pays once, so changing the emoji or removing and reacting again earns nothing, and neither does reacting to your own content.
+- `bp_polls_created` requires the BuddyPress Polls add-on. It pays for a poll posted in the activity feed and for a published poll page, once per poll.
 - `bp_publish_post` requires the BP Member Blog add-on and awards on `publish_post` for `post` post type only. Pages and custom post types are excluded.
-- `bp_media_upload` requires the BuddyPress Media add-on.
 
 ## Profile Display
 

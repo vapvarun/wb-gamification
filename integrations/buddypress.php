@@ -16,6 +16,26 @@
 
 defined( 'ABSPATH' ) || exit;
 
+// BuddyPress Reactions fires ( $reactor_id, $item_id, $content_type, $emoji_id, $is_update ).
+// Its content types are activity, activity-comment, or a post type.
+$wb_gam_bp_reacted_activity = static fn( $item_id ) => bp_activity_get_specific(
+	[
+		'activity_ids' => [ $item_id ],
+		'show_hidden'  => true,
+	]
+)['activities'][0] ?? null;
+
+// BuddyPress Polls has two ways to create a poll and no hook for either, so funnel both into one.
+add_action(
+	'bp_activity_after_save',
+	static function ( $activity ): void {
+		if ( 'activity_poll' === $activity->type ) {
+			do_action( 'wb_gam_bp_poll_created', (int) $activity->user_id, (int) $activity->id );
+		}
+	}
+);
+add_action( 'publish_wbpoll', static fn( $post_id, $post ) => do_action( 'wb_gam_bp_poll_created', (int) $post->post_author, (int) $post_id ), 10, 2 );
+
 return [
 	'plugin'   => 'BuddyPress',
 	'version'  => '1.0.0',
@@ -130,23 +150,24 @@ return [
 		[
 			'id'                  => 'bp_reactions_received',
 			'label'               => static fn(): string => __( 'Receive a reaction', 'wb-gamification' ),
-			'description'         => static fn(): string => __( 'Awarded when a member receives a reaction on their activity.', 'wb-gamification' ),
-			'hook'                => 'bp_reactions_add',
-			'user_callback'       => function ( int $reaction_id, array $reaction_data ): int {
-				return (int) ( $reaction_data['secondary_item_id'] ?? 0 );
+			'description'         => static fn(): string => __( 'Awarded when another member reacts to their content.', 'wb-gamification' ),
+			'hook'                => 'bp_reactions_after_react',
+			'user_callback'       => static function ( $reactor_id, $item_id, $content_type, $emoji_id, $is_update ) use ( $wb_gam_bp_reacted_activity ): int {
+				if ( in_array( $content_type, [ 'activity', 'activity-comment' ], true ) ) {
+					$owner_id = (int) ( $wb_gam_bp_reacted_activity( $item_id )->user_id ?? 0 );
+				} else {
+					$owner_id = (int) get_post_field( 'post_author', $item_id );
+				}
+				return $is_update || (int) $reactor_id === $owner_id ? 0 : $owner_id;
 			},
+			// One reactor pays once per item, so reacting, removing and reacting again earns nothing.
+			'once_per_object'     => static fn( $reactor_id, $item_id, $content_type ): int => crc32( "{$reactor_id}:{$content_type}:{$item_id}" ),
 			// Capture the activity type so ActivityIntegration can apply quality weighting:
 			// activity_update reactions worth 5 pts, activity_comment reactions worth 3 pts.
-			'metadata_callback'   => function ( int $reaction_id, array $reaction_data ): array {
-				$activity_id = (int) ( $reaction_data['item_id'] ?? 0 );
-				if ( ! $activity_id || ! function_exists( 'bp_activity_get_specific' ) ) {
-					return [ 'activity_id' => $activity_id ];
-				}
-				$result   = bp_activity_get_specific( [ 'activity_ids' => [ $activity_id ] ] );
-				$activity = $result['activities'][0] ?? null;
+			'metadata_callback'   => static function ( $reactor_id, $item_id, $content_type ) use ( $wb_gam_bp_reacted_activity ): array {
 				return [
-					'activity_id'   => $activity_id,
-					'activity_type' => $activity ? $activity->type : 'unknown',
+					'activity_id'   => (int) $item_id,
+					'activity_type' => 'activity' === $content_type ? ( $wb_gam_bp_reacted_activity( $item_id )->type ?? 'unknown' ) : $content_type,
 				];
 			},
 			'default_points'      => 3,
@@ -159,9 +180,10 @@ return [
 		[
 			'id'                  => 'bp_polls_created',
 			'label'               => static fn(): string => __( 'Create a poll', 'wb-gamification' ),
-			'description'         => static fn(): string => __( 'Awarded when a member creates a BuddyPress poll.', 'wb-gamification' ),
-			'hook'                => 'bp_polls_created',
-			'user_callback'       => fn( int $poll_id, int $user_id ) => $user_id,
+			'description'         => static fn(): string => __( 'Awarded when a member creates a poll with BuddyPress Polls.', 'wb-gamification' ),
+			'hook'                => 'wb_gam_bp_poll_created',
+			'user_callback'       => static fn( $user_id ): int => (int) $user_id,
+			'once_per_object'     => static fn( $user_id, $poll_id ): int => (int) $poll_id,
 			'default_points'      => 10,
 			'category'            => 'buddypress',
 			'icon'                => 'icon-chart-bar',
@@ -190,20 +212,6 @@ return [
 			// Cap at 5 awards/day so a member can't grind by republishing.
 			'cooldown'            => 600,
 			'daily_cap'           => 5,
-			'requires_buddypress' => true,
-		],
-
-		[
-			'id'                  => 'bp_media_upload',
-			'label'               => static fn(): string => __( 'Upload media', 'wb-gamification' ),
-			'description'         => static fn(): string => __( 'Awarded when a member uploads media via BuddyPress.', 'wb-gamification' ),
-			'hook'                => 'bp_media_add',
-			'user_callback'       => fn( int $media_id ) => get_current_user_id(),
-			'default_points'      => 5,
-			'category'            => 'buddypress',
-			'icon'                => 'icon-image',
-			'repeatable'          => true,
-			'cooldown'            => 60,
 			'requires_buddypress' => true,
 		],
 
@@ -247,9 +255,9 @@ return [
 			'description'         => static fn(): string => __( 'Awarded once per group when an admin uploads a cover image for a group.', 'wb-gamification' ),
 			// BP fires: do_action( 'groups_cover_image_uploaded', $item_id, $name, $cover_url, $feedback_code ).
 			// We award the acting user (the admin who uploaded), not the group creator —
-			// repeatability is "false" with action_id namespaced by group via metadata, so each
-			// fresh group cover earns once per (user, group) pair through the rate-limiter.
+			// each group cover earns once per (user, group) pair.
 			'hook'                => 'groups_cover_image_uploaded',
+			'once_per_object'     => static fn( int $item_id ): int => $item_id,
 			'user_callback'       => function ( int $item_id, string $name = '', string $cover_url = '', int $feedback_code = 0 ): int {
 				return 1 === $feedback_code ? get_current_user_id() : 0;
 			},

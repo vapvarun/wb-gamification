@@ -848,7 +848,7 @@ final class SetupWizard {
 		return array(
 			'bn_post_created'             => __( 'Create a post', 'wb-gamification' ),
 			'bn_comment_created'          => __( 'Write a comment', 'wb-gamification' ),
-			'bn_connected'                => __( 'Accept a connection', 'wb-gamification' ),
+			'bn_connected'                => __( 'Have a connection request accepted', 'wb-gamification' ),
 			'bn_space_joined'             => __( 'Join a space', 'wb-gamification' ),
 			'bn_reaction_received'        => __( 'Receive a reaction on your content', 'wb-gamification' ),
 			'bn_profile_completed'        => __( 'Complete your profile', 'wb-gamification' ),

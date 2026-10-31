@@ -13,7 +13,7 @@ The table has five columns:
 | Column | What it controls |
 |--------|-----------------|
 | **On** | Checkbox. Uncheck to disable the action entirely. Disabled actions earn zero points and fire no badges or challenges. |
-| **Action** | The name and description of the behavior, e.g. "Publish a post" or "Upload media." |
+| **Action** | The name and description of the behavior, e.g. "Publish a post" or "Join a group." |
 | **Points** | How many points a member earns each time this action fires. Enter any whole number from 0 to 9999. |
 | **Repeat** | Whether the action can be earned more than once. **Yes** means every occurrence earns points. **Once** means the member earns points only the first time. This is set per-action in the manifest and cannot be changed from the admin. |
 | **Daily cap** | The maximum number of times this action counts in a single day. Shows a number or ∞ (unlimited). Like Repeat, this is defined in the manifest and is read-only in the table. |

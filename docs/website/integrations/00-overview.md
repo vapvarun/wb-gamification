@@ -15,7 +15,7 @@ Each integration is a PHP file that returns an array of trigger definitions. Whe
 | Plugin | Actions | Manifest Location |
 |---|---|---|
 | WordPress Core | 8 | `integrations/wordpress.php` |
-| BuddyPress | 14 | `integrations/buddypress.php` |
+| BuddyPress | 13 | `integrations/buddypress.php` |
 | bbPress | 3 | `integrations/bbpress.php` |
 | WooCommerce | 5 | `integrations/woocommerce.php` |
 | LearnDash | 8 | `integrations/learndash.php` |

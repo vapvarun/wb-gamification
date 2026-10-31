@@ -6,12 +6,13 @@
  * Fires only when The Events Calendar (tribe-common) is active.
  *
  * Actions covered:
- *   Event RSVP     — tribe_tickets_rsvp_attendee_created
- *   Ticket purchase — event_tickets_after_save_ticket
- *   Event check-in  — event_tickets_checkin
+ *   Event RSVP      — wb_gam_tec_rsvp (RSVP v1 attendee, or RSVP v2 Tickets Commerce order)
+ *   Ticket purchase — wb_gam_tec_ticket_purchased (completed Tickets Commerce order)
+ *   Event check-in  — wb_gam_tec_checked_in (ticket or RSVP attendee)
+ *
+ * Tickets sold through Event Tickets Plus (WooCommerce, EDD) are not covered.
  *
  * @package WB_Gamification
- * @see     https://theeventscalendar.com/knowledgebase/k/action-hooks/
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -37,60 +38,91 @@ if ( ! class_exists( 'Tribe__Events__Main' ) ) {
 	return [];
 }
 
+// An event with several entry points is funnelled into one hook, because a trigger listens to one.
+add_action(
+	'event_tickets_rsvp_attendee_created',
+	static function ( $attendee_id, $event_id ): void {
+		if ( 'yes' === get_post_meta( $attendee_id, '_tribe_rsvp_status', true ) ) {
+			do_action( 'wb_gam_tec_rsvp', (int) get_post_meta( $attendee_id, '_tribe_tickets_attendee_user_id', true ), (int) $event_id );
+		}
+	},
+	10,
+	2
+);
+add_action(
+	'tec_tickets_commerce_order_status_completed',
+	static function ( $new_status, $old_status, $post ): void {
+		$order = tec_tc_get_order( $post );
+		// An attendee an admin adds by hand is a manual order: nobody bought or chose anything.
+		if ( 'manual' === $order->gateway ) {
+			return;
+		}
+		foreach ( (array) $order->items as $item ) {
+			$user_id  = (int) $order->purchaser['user_id'];
+			$event_id = (int) ( $item['event_id'] ?? 0 );
+			$type     = $item['type'] ?? '';
+			if ( 'ticket' === $type ) {
+				do_action( 'wb_gam_tec_ticket_purchased', $user_id, $event_id );
+			} elseif ( 'tc-rsvp' === $type && tribe_is_truthy( $item['extra']['order_status'] ?? 'yes' ) ) {
+				do_action( 'wb_gam_tec_rsvp', $user_id, $event_id );
+			}
+		}
+	},
+	10,
+	3
+);
+add_action( 'event_tickets_checkin', static fn( $attendee_id ) => do_action( 'wb_gam_tec_checked_in', (int) $attendee_id ) );
+add_action( 'rsvp_checkin', static fn( $attendee_id ) => do_action( 'wb_gam_tec_checked_in', (int) $attendee_id ) );
+
+// The bridges above fire these with ( $user_id, $event_id ).
+$wb_gam_tec_user  = static fn( $user_id ): int => (int) $user_id;
+$wb_gam_tec_event = static fn( $user_id, $event_id ): int => (int) $event_id;
+
 return [
 	'plugin'   => 'The Events Calendar',
 	'version'  => '1.0.0',
 	'triggers' => [
 
 		[
-			'id'             => 'tec_rsvp_registered',
-			'label'          => static fn(): string => __( 'RSVP to an event', 'wb-gamification' ),
-			'description'    => static fn(): string => __( 'Awarded when a member RSVPs to any event.', 'wb-gamification' ),
-			'hook'           => 'tribe_tickets_rsvp_attendee_created',
-			'user_callback'  => function ( int $attendee_id, int $post_id, int $order_id, string $status ): int {
-				// Only award on "going" RSVPs.
-				if ( 'yes' !== strtolower( $status ) ) {
-					return 0;
-				}
-				$attendee = get_post( $attendee_id );
-				return $attendee ? (int) $attendee->post_author : 0;
-			},
-			'default_points' => 10,
-			'category'       => 'social',
-			'icon'           => 'icon-calendar',
-			'repeatable'     => true,
-			'cooldown'       => 0,
+			'id'              => 'tec_rsvp_registered',
+			'label'           => static fn(): string => __( 'RSVP to an event', 'wb-gamification' ),
+			'description'     => static fn(): string => __( 'Awarded when a member RSVPs as going, once per event.', 'wb-gamification' ),
+			'hook'            => 'wb_gam_tec_rsvp',
+			'user_callback'   => $wb_gam_tec_user,
+			'once_per_object' => $wb_gam_tec_event,
+			'default_points'  => 10,
+			'category'        => 'social',
+			'icon'            => 'icon-calendar',
+			'repeatable'      => true,
+			'cooldown'        => 0,
 		],
 
 		[
-			'id'             => 'tec_ticket_purchased',
-			'label'          => static fn(): string => __( 'Purchase an event ticket', 'wb-gamification' ),
-			'description'    => static fn(): string => __( 'Awarded when a member purchases a ticket to any event.', 'wb-gamification' ),
-			'hook'           => 'event_tickets_after_save_ticket',
-			'user_callback'  => function ( int $post_id, $ticket, array $raw_data, string $class_name ): int {
-				return get_current_user_id();
-			},
-			'default_points' => 20,
-			'category'       => 'social',
-			'icon'           => 'icon-ticket',
-			'repeatable'     => true,
-			'cooldown'       => 0,
+			'id'              => 'tec_ticket_purchased',
+			'label'           => static fn(): string => __( 'Purchase an event ticket', 'wb-gamification' ),
+			'description'     => static fn(): string => __( 'Awarded when a member completes a ticket order, once per event.', 'wb-gamification' ),
+			'hook'            => 'wb_gam_tec_ticket_purchased',
+			'user_callback'   => $wb_gam_tec_user,
+			'once_per_object' => $wb_gam_tec_event,
+			'default_points'  => 20,
+			'category'        => 'social',
+			'icon'            => 'icon-ticket',
+			'repeatable'      => true,
+			'cooldown'        => 0,
 		],
 
 		[
-			'id'             => 'tec_event_checked_in',
-			'label'          => static fn(): string => __( 'Check in to an event', 'wb-gamification' ),
-			'description'    => static fn(): string => __( 'Awarded when an attendee checks in at the event.', 'wb-gamification' ),
-			'hook'           => 'event_tickets_checkin',
-			'user_callback'  => function ( int $attendee_id ): int {
-				$meta = get_post_meta( $attendee_id, '_tribe_tickets_attendee_user_id', true );
-				return $meta ? (int) $meta : 0;
-			},
-			'default_points' => 15,
-			'category'       => 'social',
-			'icon'           => 'icon-map-pin',
-			'repeatable'     => true,
-			'cooldown'       => 0,
+			'id'              => 'tec_event_checked_in',
+			'label'           => static fn(): string => __( 'Check in to an event', 'wb-gamification' ),
+			'description'     => static fn(): string => __( 'Awarded when an attendee checks in at the event.', 'wb-gamification' ),
+			'hook'            => 'wb_gam_tec_checked_in',
+			'user_callback'   => static fn( $attendee_id ): int => (int) get_post_meta( $attendee_id, '_tribe_tickets_attendee_user_id', true ),
+			'once_per_object' => static fn( $attendee_id ): int => (int) $attendee_id,
+			'default_points'  => 15,
+			'category'        => 'social',
+			'icon'            => 'icon-map-pin',
+			'repeatable'      => true,
+			'cooldown'        => 0,
 		],
 
 	],

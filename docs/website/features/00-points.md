@@ -40,7 +40,6 @@ Note: The publish and comment actions in the WordPress category are only active 
 | Receive a reaction | 3 | Yes |
 | Create a poll | 10 | Yes |
 | Publish a member blog post | 25 | Yes |
-| Upload media | 5 | Yes |
 
 ### WooCommerce Actions
 

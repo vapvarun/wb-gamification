@@ -95,29 +95,34 @@ Cards 10459672711 and 10459672796.
 
 # Part B: plugin integrations
 
-WB Gamification has 139 actions: 8 for WordPress and 131 across 17 plugins and their 5 Pro add-ons.
+WB Gamification has 138 actions: 8 for WordPress and 130 across 17 plugins and their 5 Pro add-ons.
 
-**What has been checked so far:** only the code. For each action, the developer searched the current plugin source for its hook. Nothing here has been run on a real site, so a "Hook found" row is untested, and "Expected to fail" means the code says so and QA needs to confirm it.
+**What has been checked so far:** every plugin's code was read for the actions listed below, and the fixed plugins were run on Docker. The other actions have had their arguments compared with the source but have not been run, so they still need a real run.
 
-The integration files did not change in this fix cycle, so these failures are older than 1.6.8.
+**Use the checklists.** Each integration has its own checklist in [`docs/qa/integrations/`](integrations/README.md) and its own Basecamp card in Ready for Testing with the same points as tickable steps. Each action also says what the developer did and did not run.
 
 ## 6. Where to look first
 
-11 actions are expected to fail:
+These were broken and are fixed in this round, so test them first:
 
-| Plugin | Expected to fail | Effect |
-|---|---|---|
-| MemberPress | 3 of 3 | Nothing on this integration can award points |
-| GiveWP | 3 of 4 | Donations, first donation and goal reached award nothing |
-| The Events Calendar | 2 of 3 | RSVP awards nothing. **Purchase an event ticket pays whoever saves a ticket in admin**, and pays no buyer |
-| BuddyPress | 3 of 14 | Receive a reaction, Create a poll and Upload media award nothing |
+| Plugin | What was wrong |
+|---|---|
+| MemberPress | All 3 used hooks that never fire, so nothing paid |
+| GiveWP | Donation, first donation and goal reached never paid. Recurring gifts expected the wrong arguments |
+| The Events Calendar | RSVP never paid. **Purchase a ticket paid whoever saved a ticket in admin**, and now pays the buyer. RSVP check-ins were missed |
+| BuddyPress | Receive a reaction and Create a poll never paid. Group cover paid every upload. **Upload media is removed**: nothing in BuddyPress fires it |
+| WooCommerce | A guest order matched by email could pay First purchase on the wrong order. A review held for moderation never paid |
+| WordPress | Complete profile read the bio before it was saved. A comment held for moderation never paid the post author |
+| Eventonomy | Promotion from the waitlist never paid. Importing events paid the importer. Offline orders marked as paid needed Pro |
+| BuddyNext | Accept a connection pays the sender, so it is now labelled Have a connection request accepted |
+| LearnDash, LifterLMS, Tutor LMS | See the LMS change below |
 
-Two more need a real test:
+Still open:
 
+- **Jetonomy Pro:** leaving a conversation also pays Send a private message. The fix belongs in Jetonomy Pro and has not been made.
+- **YITH Wishlist and WooCommerce Memberships or Subscriptions in Jetonomy:** the source was not available, so these arguments are unconfirmed. Test them for real.
 - **WooCommerce offline orders:** the order actions use `woocommerce_payment_complete`. Check whether a cash on delivery or bank transfer order earns points when marked Completed by hand.
-- **GiveWP recurring gifts:** needs the paid Recurring add-on, and the hook is only in legacy subscription code.
-
-**What "Hook found" means:** the hook exists in that plugin's source. It does not prove the arguments match. LifterLMS achievements and certificates were marked "Hook found" and still paid nothing, because the code expected an object and LifterLMS sends an ID. Run every "Hook found" row for real.
+- **GiveWP recurring gifts:** needs the paid Recurring add-on.
 
 **LMS change in this round:** LearnDash, LifterLMS and Tutor LMS now pay once per course, lesson, quiz or similar. Retaking a quiz must earn nothing. Run each LMS on its own site: Tutor LMS and LifterLMS both use `/courses/`, so lesson pages return 404 when both are active.
 
@@ -159,308 +164,8 @@ Filling these gaps is an owner decision, so report your view but do not file eac
 **Docs:**
 
 - [ ] BuddyNext, Eventonomy, Learnomy, WB Listora and WP Career Board have no page in `docs/website/integrations/`.
-- [ ] `readme.txt` says "62 gamification actions across 10 integration manifests" and "5 more plugins". The real count is 139.
+- [ ] `readme.txt` says "62 gamification actions across 10 integration manifests" and "5 more plugins". The real count is 138.
 
 ## 9. Test sheet
 
-Generated from the integration files. "Limit" is the shipped default, and owners can change it on the Points screen.
-
-#### WordPress core
-
-Code checked against: always on.
-
-| Pass | Action | Option ID | Hook | Points | Repeats | Limit | Check |
-|---|---|---|---|---|---|---|---|
-| [ ] | Join the site | `wp_user_register` | `user_register` | 15 | no | once | Hook found |
-| [ ] | Log in for the first time | `wp_first_login` | `wp_login` | 10 | no | once | Hook found |
-| [ ] | Complete WordPress profile | `wp_profile_complete` | `personal_options_update` | 10 | no | once | Hook found |
-| [ ] | Receive a comment on a post | `wp_post_receives_comment` | `comment_post` | 3 | yes | 10/day | Hook found |
-| [ ] | Publish a blog post | `wp_publish_post` | `transition_post_status` | 25 | yes | none | Hook found |
-| [ ] | Publish your first post | `wp_first_post` | `transition_post_status` | 20 | no | once | Hook found |
-| [ ] | Leave a comment | `wp_leave_comment` | `comment_post` | 5 | yes | 60s wait | Hook found |
-| [ ] | Get a comment approved from moderation | `wp_comment_approved` | `transition_comment_status` | 5 | yes | none | Hook found |
-
-#### BuddyPress
-
-Code checked against: 14.5.4.
-
-| Pass | Action | Option ID | Hook | Points | Repeats | Limit | Check |
-|---|---|---|---|---|---|---|---|
-| [ ] | Post an activity update | `bp_activity_update` | `bp_activity_posted_update` | 10 | yes | 30s wait | Hook found |
-| [ ] | Comment on an activity | `bp_activity_comment` | `bp_activity_comment_posted` | 5 | yes | 30s wait | Hook found |
-| [ ] | Accept a friendship | `bp_friends_accepted` | `friends_friendship_accepted` | 8 | yes | none | Hook found |
-| [ ] | Join a group | `bp_groups_join` | `groups_join_group` | 8 | yes | none | Hook found |
-| [ ] | Create a group | `bp_groups_create` | `groups_group_create_complete` | 20 | yes | none | Hook found |
-| [ ] | Complete extended profile | `bp_profile_complete` | `xprofile_updated_profile` | 15 | no | once | Hook found |
-| [ ] | Receive a reaction | `bp_reactions_received` | `bp_reactions_add` | 3 | yes | none | **Expected to fail.** Not fired by our BuddyPress Reactions, which fires `bp_reactions_after_react`. |
-| [ ] | Create a poll | `bp_polls_created` | `bp_polls_created` | 10 | yes | none | **Expected to fail.** Not fired by our BuddyPress Polls. |
-| [ ] | Publish a member blog post | `bp_publish_post` | `publish_post` | 25 | yes | 600s wait + 5/day | Hook found |
-| [ ] | Upload media | `bp_media_upload` | `bp_media_add` | 5 | yes | 60s wait | **Expected to fail.** Not found in BuddyPress or any plugin checked. Which plugin should fire this? |
-| [ ] | Upload profile photo | `bp_avatar_upload` | `bp_members_avatar_uploaded` | 10 | no | once | Hook found |
-| [ ] | Upload cover photo | `bp_cover_upload` | `members_cover_image_uploaded` | 10 | no | once | Hook found |
-| [ ] | Upload group cover photo | `bp_group_cover_upload` | `groups_cover_image_uploaded` | 10 | yes | none | Hook found |
-| [ ] | Send a private message | `bp_message_sent` | `messages_message_sent` | 3 | yes | 60s wait | Hook found |
-
-#### bbPress
-
-Code checked against: 2.6.21.
-
-| Pass | Action | Option ID | Hook | Points | Repeats | Limit | Check |
-|---|---|---|---|---|---|---|---|
-| [ ] | Create a forum topic | `bbp_new_topic` | `bbp_new_topic` | 10 | yes | 300s wait | Hook found |
-| [ ] | Post a forum reply | `bbp_new_reply` | `bbp_new_reply` | 5 | yes | 60s wait | Hook found |
-| [ ] | Have a forum topic closed | `bbp_topic_closed` | `bbp_closed_topic` | 20 | yes | none | Hook found |
-
-#### WooCommerce
-
-Code checked against: 11.2.1, YITH Wishlist latest.
-
-| Pass | Action | Option ID | Hook | Points | Repeats | Limit | Check |
-|---|---|---|---|---|---|---|---|
-| [ ] | Pay for an order | `wc_order_completed` | `woocommerce_payment_complete` | 25 | yes | none | Check an offline order (cash on delivery, bank transfer) marked Completed by hand. |
-| [ ] | Make your first purchase | `wc_first_purchase` | `woocommerce_payment_complete` | 50 | no | once | Check an offline order (cash on delivery, bank transfer) marked Completed by hand. |
-| [ ] | Leave a product review | `wc_product_reviewed` | `comment_post` | 15 | yes | 86400s wait | Hook found |
-| [ ] | Add a product to wishlist (YITH) | `wc_wishlist_add` | `yith_wcwl_added_to_wishlist` | 5 | yes | 300s wait | Hook found |
-| [ ] | Add a product to cart | `wc_add_to_cart` | `woocommerce_add_to_cart` | 1 | yes | 300s wait | Hook found |
-
-#### LearnDash
-
-Run on Docker against LearnDash 5.2.2.1. Extended in this round.
-
-| Pass | Action | Option ID | Hook | Points | Repeats | Limit | Check |
-|---|---|---|---|---|---|---|---|
-| [ ] | Complete a LearnDash course | `ld_course_completed` | `learndash_course_completed` | 100 | yes | once per object | Paid once, run through LearnDash |
-| [ ] | Complete a LearnDash lesson | `ld_lesson_completed` | `learndash_lesson_completed` | 15 | yes | once per object | Paid once, run through LearnDash |
-| [ ] | Complete a LearnDash topic | `ld_topic_completed` | `learndash_topic_completed` | 5 | yes | once per object | Paid once, run through LearnDash |
-| [ ] | Pass a LearnDash quiz | `ld_quiz_passed` | `learndash_quiz_completed` | 25 | yes | once per object | Hook and data checked in LearnDash source; **not run**. Needs a real quiz |
-| [ ] | Get an assignment approved | `ld_assignment_approved` | `learndash_assignment_approved` | 20 | yes | once per object | Paid once through LearnDash's approval code |
-| [ ] | Enroll in a LearnDash course | `ld_course_enrolled` | `learndash_update_course_access` | 10 | yes | once per object | Paid once, run through LearnDash. Removal pays nothing |
-| [ ] | Submit a LearnDash assignment | `ld_assignment_uploaded` | `learndash_assignment_uploaded` | 5 | yes | once per object | Paid once for two uploads through LearnDash's upload code |
-| [ ] | Complete a LearnDash group | `ld_group_completed` | `learndash_group_completed` | 100 | yes | once per object | Paid once through LearnDash's group progress code |
-
-#### LifterLMS
-
-Run on Docker against LifterLMS 10.3.2. Repaired in this round.
-
-| Pass | Action | Option ID | Hook | Points | Repeats | Limit | Check |
-|---|---|---|---|---|---|---|---|
-| [ ] | Complete a LifterLMS course | `llms_course_completed` | `lifterlms_course_completed` | 100 | yes | once per object | Paid once, browser click |
-| [ ] | Complete a LifterLMS lesson | `llms_lesson_completed` | `lifterlms_lesson_completed` | 10 | yes | once per object | Paid once, browser click |
-| [ ] | Pass a LifterLMS quiz | `llms_quiz_passed` | `lifterlms_quiz_passed` | 25 | yes | once per object | Paid once through a LifterLMS attempt. Take a real quiz |
-| [ ] | Enroll in a LifterLMS course | `llms_course_enrolled` | `llms_user_enrolled_in_course` | 10 | yes | once per object | Paid once, re-enrolling pays nothing |
-| [ ] | Join a LifterLMS membership | `llms_membership_joined` | `llms_user_added_to_membership_level` | 20 | yes | once per object | Paid once |
-| [ ] | Earn a LifterLMS achievement | `llms_achievement_earned` | `llms_user_earned_achievement` | 30 | yes | none | Paid through the LifterLMS handler |
-| [ ] | Earn a LifterLMS certificate | `llms_certificate_earned` | `llms_user_earned_certificate` | 50 | yes | none | Paid through the LifterLMS handler |
-
-#### Tutor LMS
-
-Run on Docker against Tutor LMS 4.2.0. New in this round.
-
-| Pass | Action | Option ID | Hook | Points | Repeats | Limit | Check |
-|---|---|---|---|---|---|---|---|
-| [ ] | Complete a Tutor LMS course | `tutor_course_completed` | `tutor_course_complete_after` | 100 | yes | once per object | Paid once through Tutor LMS |
-| [ ] | Complete a Tutor LMS lesson | `tutor_lesson_completed` | `tutor_mark_lesson_complete_after` | 10 | yes | once per object | Paid once, browser click. Also replay a finished video |
-| [ ] | Pass a Tutor LMS quiz | `tutor_quiz_passed` | `tutor_quiz/attempt_ended, tutor_quiz/attempt/graded` | 25 | yes | once per object | Fail 0, pass paid once, retake 0, hand-graded paid after review, through Tutor LMS code. Repeat in the browser |
-| [ ] | Enroll in a Tutor LMS course | `tutor_course_enrolled` | `tutor_after_enroll, tutor_after_enrolled, enrol_status_change` | 10 | yes | once per object | Paid once. Pending pays nothing. Test a real paid course |
-| [ ] | Review a Tutor LMS course | `tutor_review_posted` | `tutor_after_rating_placed` | 10 | yes | once per object | Paid through Tutor LMS code, editing the review pays nothing |
-| [ ] | Ask a question in a Tutor LMS course | `tutor_question_asked` | `tutor_after_asked_question` | 5 | yes | 5 a day | Paid through Tutor LMS code, reply pays nothing. 5 a day cap was tested by firing the hook |
-
-#### MemberPress
-
-Code checked against: 1.14.1.
-
-| Pass | Action | Option ID | Hook | Points | Repeats | Limit | Check |
-|---|---|---|---|---|---|---|---|
-| [ ] | Activate a MemberPress membership | `mp_membership_activated` | `mepr-event-signup-completed` | 50 | yes | 3600s wait | **Expected to fail.** Never fired by MemberPress 1.14.1. Likely `mepr-event-member-signup-completed`. |
-| [ ] | Renew a MemberPress membership | `mp_membership_renewed` | `mepr-event-renewals` | 30 | yes | none | **Expected to fail.** Never fired. Likely `mepr-event-renewal-transaction-completed`. |
-| [ ] | Join as a paid member for the first time | `mp_first_membership` | `mepr-event-signup-completed` | 100 | no | once | **Expected to fail.** Never fired by MemberPress 1.14.1. Likely `mepr-event-member-signup-completed`. |
-
-#### GiveWP
-
-Code checked against: 4.19.1.
-
-| Pass | Action | Option ID | Hook | Points | Repeats | Limit | Check |
-|---|---|---|---|---|---|---|---|
-| [ ] | Complete a donation | `give_donation_completed` | `give_complete_purchase` | 30 | yes | none | **Expected to fail.** Never fired by GiveWP 4.19.1. Likely `give_complete_donation`. |
-| [ ] | Make first donation ever | `give_first_donation` | `give_complete_purchase` | 75 | no | once | **Expected to fail.** Never fired by GiveWP 4.19.1. Likely `give_complete_donation`. |
-| [ ] | Make a recurring donation payment | `give_recurring_donation` | `give_recurring_record_payment` | 20 | yes | none | Needs the paid Recurring add-on. Fires from legacy subscription code only. |
-| [ ] | Campaign reaches its goal | `give_campaign_goal_reached` | `give_goal_complete` | 15 | yes | none | **Expected to fail.** Never fired by GiveWP 4.19.1. No direct replacement found. |
-
-#### The Events Calendar + Event Tickets
-
-Code checked against: 6.18.2 + 5.30.3.
-
-| Pass | Action | Option ID | Hook | Points | Repeats | Limit | Check |
-|---|---|---|---|---|---|---|---|
-| [ ] | RSVP to an event | `tec_rsvp_registered` | `tribe_tickets_rsvp_attendee_created` | 10 | yes | none | **Expected to fail.** Never fired by Event Tickets 5.30.3. Likely `event_tickets_rsvp_attendee_created`. |
-| [ ] | Purchase an event ticket | `tec_ticket_purchased` | `event_tickets_after_save_ticket` | 20 | yes | none | **Expected to fail.** Fires when a ticket is SAVED, not bought. Wrong event: may pay whoever edits a ticket. |
-| [ ] | Check in to an event | `tec_event_checked_in` | `event_tickets_checkin` | 15 | yes | none | Hook found |
-
-#### BuddyNext
-
-Code checked against: 1.2.7.
-
-| Pass | Action | Option ID | Hook | Points | Repeats | Limit | Check |
-|---|---|---|---|---|---|---|---|
-| [ ] | Create a post | `bn_post_created` | `buddynext_post_created` | 5 | yes | 30s wait + 20/day | Hook found |
-| [ ] | Share a post | `bn_post_shared` | `buddynext_post_shared` | 5 | yes | 10/day | Hook found |
-| [ ] | Write a comment | `bn_comment_created` | `buddynext_comment_created` | 3 | yes | 30s wait | Hook found |
-| [ ] | Receive a reaction on your content | `bn_reaction_received` | `buddynext_post_reaction_received` | 2 | yes | 20/day | Hook found |
-| [ ] | Vote on a poll | `bn_poll_voted` | `buddynext_poll_voted` | 1 | yes | 5/day | Hook found |
-| [ ] | Bookmark a post | `bn_post_bookmarked` | `buddynext_post_bookmarked` | 1 | yes | 5/day | Hook found |
-| [ ] | Gain a follower | `bn_followed` | `buddynext_follower_gained` | 5 | yes | 10/day | Hook found |
-| [ ] | Follow a member for the first time | `bn_first_follow` | `buddynext_user_followed_first_time` | 5 | no | once | Hook found |
-| [ ] | Accept a connection | `bn_connected` | `buddynext_connection_accepted` | 10 | yes | none | Hook found |
-| [ ] | Send a connection request | `bn_connection_requested` | `buddynext_connection_requested` | 1 | yes | 5/day | Hook found |
-| [ ] | Send a direct message | `bn_dm_sent` | `buddynext_dm_sent` | 1 | yes | 10/day | Hook found |
-| [ ] | Join a space | `bn_space_joined` | `buddynext_space_member_joined` | 5 | yes | 5/day | Hook found |
-| [ ] | Create a space | `bn_space_created` | `buddynext_space_created` | 10 | yes | none | Hook found |
-| [ ] | Update your profile | `bn_profile_updated` | `buddynext_profile_completion_changed` | 2 | yes | 300s wait | Hook found |
-| [ ] | Complete your profile | `bn_profile_completed` | `buddynext_profile_strength_changed` | 25 | no | once | Hook found |
-| [ ] | Complete onboarding | `bn_onboarding_completed` | `buddynext_onboarding_completed` | 20 | no | once | Hook found |
-
-#### Jetonomy
-
-Code checked against: 2.0.7.
-
-| Pass | Action | Option ID | Hook | Points | Repeats | Limit | Check |
-|---|---|---|---|---|---|---|---|
-| [ ] | Join a space | `jetonomy_space_joined` | `jetonomy_user_joined_space` | 5 | yes | 60s wait + 5/day | Hook found |
-| [ ] | Get approved into a gated space | `jetonomy_join_request_approved` | `jetonomy_join_request_approved` | 10 | yes | 300s wait | Hook found |
-| [ ] | Get promoted to a higher trust level | `jetonomy_trust_level_up` | `jetonomy_trust_level_changed` | 50 | yes | none | Hook found |
-| [ ] | Activate a membership | `jetonomy_membership_activated` | `jetonomy_membership_activated` | 25 | yes | none | Hook found |
-
-#### Jetonomy Pro
-
-Code checked against: 2.0.7.
-
-| Pass | Action | Option ID | Hook | Points | Repeats | Limit | Check |
-|---|---|---|---|---|---|---|---|
-| [ ] | Create a poll | `jetonomy_pro_poll_created` | `jetonomy_pro_poll_created` | 10 | yes | 60s wait | Hook found |
-| [ ] | Vote on a poll | `jetonomy_pro_poll_voted` | `jetonomy_pro_poll_voted` | 2 | yes | 30s wait | Hook found |
-| [ ] | Send a Jetonomy private message | `jetonomy_pro_message_sent` | `jetonomy_pro_message_sent` | 2 | yes | 60s wait + 20/day | Hook found |
-| [ ] | Start a Jetonomy conversation | `jetonomy_pro_conversation_created` | `jetonomy_pro_conversation_created` | 5 | yes | 120s wait | Hook found |
-| [ ] | Receive a Jetonomy private message | `jetonomy_pro_dm_received` | `jetonomy_pro_dm_received` | 1 | yes | 120s wait + 10/day | Hook found |
-| [ ] | Send a reaction | `jetonomy_pro_reaction_added` | `jetonomy_pro_reaction_toggled` | 1 | yes | 30s wait + 50/day | Hook found |
-
-#### Learnomy
-
-Code checked against: 2.1.4.
-
-| Pass | Action | Option ID | Hook | Points | Repeats | Limit | Check |
-|---|---|---|---|---|---|---|---|
-| [ ] | Complete a lesson | `learnomy_lesson_completed` | `learnomy_lesson_completed` | 10 | yes | 30s wait | Hook found |
-| [ ] | Pass a quiz | `learnomy_quiz_passed` | `learnomy_quiz_passed` | 25 | yes | 30s wait | Hook found |
-| [ ] | Complete a course | `learnomy_course_completed` | `learnomy_course_completed` | 100 | yes | none | Hook found |
-| [ ] | Enrol in a course | `learnomy_student_enrolled` | `learnomy_student_enrolled` | 5 | yes | 5/day | Hook found |
-| [ ] | Earn a certificate | `learnomy_certificate_issued` | `learnomy_certificate_issued` | 50 | yes | none | Hook found |
-| [ ] | Review a course | `learnomy_review_submitted` | `learnomy_review_submitted` | 8 | yes | 300s wait | Hook found |
-| [ ] | Apply to teach | `learnomy_instructor_application` | `learnomy_instructor_application_submitted` | 5 | no | once | Hook found |
-
-#### Learnomy Pro
-
-Code checked against: 2.1.4.
-
-| Pass | Action | Option ID | Hook | Points | Repeats | Limit | Check |
-|---|---|---|---|---|---|---|---|
-| [ ] | Complete a learning path | `learnomy_pro_path_completed` | `learnomy_pro_learning_path_completed` | 150 | yes | none | Hook found |
-| [ ] | Enrol in a learning path | `learnomy_pro_path_enrolled` | `learnomy_pro_learning_path_enrolled` | 5 | yes | 5/day | Hook found |
-| [ ] | Submit an assignment | `learnomy_pro_assignment_submitted` | `learnomy_pro_assignment_submitted` | 15 | yes | 60s wait | Hook found |
-| [ ] | Join a cohort | `learnomy_pro_cohort_joined` | `learnomy_pro_cohort_member_added` | 5 | yes | none | Hook found |
-| [ ] | Redeem a course gift | `learnomy_pro_gift_redeemed` | `learnomy_pro_gift_redeemed` | 5 | yes | none | Hook found |
-
-#### Eventonomy
-
-Code checked against: 1.9.0.
-
-| Pass | Action | Option ID | Hook | Points | Repeats | Limit | Check |
-|---|---|---|---|---|---|---|---|
-| [ ] | Reserve a place at an event | `evnm_rsvp_going` | `evnm_after_create_rsvp` | 10 | yes | 300s wait + 10/day | Hook found |
-| [ ] | Submit an event | `evnm_event_created` | `evnm_after_create_event` | 25 | yes | 3/day | Hook found |
-| [ ] | Complete a ticket order | `evnm_ticket_purchased` | `evnm_after_create_order` | 20 | yes | none | Hook found |
-
-#### Eventonomy Pro
-
-Code checked against: 1.9.0.
-
-| Pass | Action | Option ID | Hook | Points | Repeats | Limit | Check |
-|---|---|---|---|---|---|---|---|
-| [ ] | Attend an event | `evnm_event_attended` | `evnm_after_checkin` | 30 | yes | none | Hook found |
-| [ ] | Complete a ticket order | `evnm_ticket_purchased_gateway` | `evnm_after_update_order` | 20 | yes | none | Hook found |
-| [ ] | Follow an event or organizer | `evnm_follow` | `evnm_after_follow` | 2 | yes | 30s wait + 10/day | Hook found |
-
-#### WB Listora
-
-Code checked against: 2.1.0.
-
-| Pass | Action | Option ID | Hook | Points | Repeats | Limit | Check |
-|---|---|---|---|---|---|---|---|
-| [ ] | Submit a listing | `listora_listing_submitted` | `wb_listora_listing_submitted` | 10 | yes | 60s wait | Hook found |
-| [ ] | Get a listing approved | `listora_listing_published` | `wb_listora_after_approve_listing` | 10 | yes | none | Hook found |
-| [ ] | Write a review | `listora_review_written` | `wb_listora_review_submitted` | 8 | yes | 300s wait | Hook found |
-| [ ] | Favourite a listing | `listora_favorite_added` | `wb_listora_favorite_added` | 2 | yes | 10/day | Hook found |
-| [ ] | Claim a listing | `listora_claim_approved` | `wb_listora_claim_approved` | 15 | yes | none | Hook found |
-| [ ] | Renew a listing | `listora_listing_renewed` | `wb_listora_listing_renewed` | 3 | yes | none | Hook found |
-
-#### WB Listora Pro
-
-Code checked against: 2.0.0.
-
-| Pass | Action | Option ID | Hook | Points | Repeats | Limit | Check |
-|---|---|---|---|---|---|---|---|
-| [ ] | Post a need | `listora_need_submitted` | `wb_listora_pro_need_submitted` | 8 | yes | 60s wait | Hook found |
-| [ ] | Get a need approved | `listora_need_published` | `wb_listora_pro_need_published` | 5 | yes | none | Hook found |
-| [ ] | Respond to a need | `listora_need_response` | `wb_listora_pro_need_response_created` | 5 | yes | 10/day | Hook found |
-
-#### WP Career Board
-
-Code checked against: 1.8.2.
-
-| Pass | Action | Option ID | Hook | Points | Repeats | Limit | Check |
-|---|---|---|---|---|---|---|---|
-| [ ] | Post a job | `wcb_job_posted` | `wcb_job_created` | 10 | yes | 60s wait | Hook found |
-| [ ] | Get a job approved | `wcb_job_approved` | `wcb_job_approved` | 5 | yes | none | Hook found |
-| [ ] | Apply to a job | `wcb_application_submitted` | `wcb_application_submitted` | 8 | yes | 10/day | Hook found |
-| [ ] | Get hired | `wcb_candidate_hired` | `wcb_application_status_changed` | 100 | yes | none | Hook found |
-| [ ] | Join as a candidate | `wcb_candidate_registered` | `wcb_candidate_registered` | 15 | no | once | Hook found |
-| [ ] | Join as an employer | `wcb_employer_registered` | `wcb_employer_registered` | 15 | no | once | Hook found |
-
-#### WP Career Board Pro
-
-Code checked against: 1.8.1.
-
-| Pass | Action | Option ID | Hook | Points | Repeats | Limit | Check |
-|---|---|---|---|---|---|---|---|
-| [ ] | Publish your resume | `wcbp_resume_published` | `wcbp_resume_published` | 20 | no | once | Hook found |
-
-#### WP Sell Services
-
-Code checked against: 1.6.0 in repo; the file says it was verified on 1.7.2.
-
-| Pass | Action | Option ID | Hook | Points | Repeats | Limit | Check |
-|---|---|---|---|---|---|---|---|
-| [ ] | Complete a service order | `wpss_order_completed` | `wpss_order_completed` | 20 | yes | none | Hook found |
-| [ ] | Review a service | `wpss_review_created` | `wpss_review_created` | 10 | yes | 60s wait | Hook found |
-| [ ] | Review approved by a moderator | `wpss_review_approved` | `wpss_review_moderated` | 10 | yes | 60s wait | Hook found |
-
-#### WPMediaVerse and Pro
-
-Code checked against: 2.6.2, Pro 2.6.3.
-
-| Pass | Action | Option ID | Hook | Points | Repeats | Limit | Check |
-|---|---|---|---|---|---|---|---|
-| [ ] | Upload a photo | `mvs_upload_photo` | `mvs_media_uploaded` | 10 | yes | 5s wait | Hook found |
-| [ ] | Add items to an album | `mvs_create_album` | `mvs_album_items_added` | 15 | yes | 10s wait | Hook found |
-| [ ] | Receive a like on a photo | `mvs_receive_like` | `mvs_reaction_added` | 2 | yes | none | Hook found |
-| [ ] | Receive a comment on a photo | `mvs_receive_comment` | `mvs_comment_created` | 5 | yes | none | Hook found |
-| [ ] | Gain a new follower | `mvs_receive_follow` | `mvs_user_followed` | 3 | yes | none | Hook found |
-| [ ] | Have a photo bookmarked | `mvs_receive_favorite` | `mvs_favorite_toggled` | 2 | yes | none | Hook found |
-| [ ] | Write a meaningful comment | `mvs_give_comment` | `mvs_comment_created` | 3 | yes | 30s wait + 20/day | Hook found |
-| [ ] | Follow another member | `mvs_give_follow` | `mvs_user_followed` | 1 | yes | 50/day | Hook found |
-| [ ] | Bookmark a photo | `mvs_bookmark_photo` | `mvs_favorite_toggled` | 1 | yes | 30/day | Hook found |
-| [ ] | Win a photo battle | `mvs_battle_win` | `mvs_battle_resolved` | 100 | yes | none | Hook found |
-| [ ] | Enter a photo challenge | `mvs_challenge_participate` | `mvs_challenge_entry_submitted` | 10 | yes | none | Hook found |
-| [ ] | Place in a photo challenge | `mvs_challenge_winner` | `mvs_challenge_winner_named` | 200 | yes | none | Hook found |
-| [ ] | Win a tournament round | `mvs_tournament_round_win` | `mvs_tournament_match_resolved` | 150 | yes | none | Hook found |
-| [ ] | Win a tournament | `mvs_tournament_win` | `mvs_tournament_finalized` | 500 | yes | none | Hook found |
-| [ ] | Hit an upload streak milestone | `mvs_streak_milestone` | `mvs_streak_milestone` | 50 | yes | none | Hook found |
+Moved to one checklist per integration: [`docs/qa/integrations/`](integrations/README.md).

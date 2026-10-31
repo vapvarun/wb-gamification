@@ -243,8 +243,8 @@ return array(
 
 		array(
 			'id'                => 'bn_connected',
-			'label'             => static fn(): string => __( 'Accept a connection', 'wb-gamification' ),
-			'description'       => static fn(): string => __( 'Awarded to the initiating user (user_a) when a connection request is accepted. Note: the manifest engine awards one user_id per trigger; only user_a is awarded here. Sites needing bilateral awards can wire a second trigger on the same hook returning $user_b.', 'wb-gamification' ),
+			'label'             => static fn(): string => __( 'Have a connection request accepted', 'wb-gamification' ),
+			'description'       => static fn(): string => __( 'Awarded to the member who sent a connection request when it is accepted.', 'wb-gamification' ),
 			// Fires: do_action( 'buddynext_connection_accepted', int $connection_id, int $user_a, int $user_b ).
 			'hook'              => 'buddynext_connection_accepted',
 			'user_callback'     => function ( int $connection_id, int $user_a, int $user_b ): int {

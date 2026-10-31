@@ -109,8 +109,8 @@ return [
 				// Count all PAID orders for this customer (processing OR
 				// completed). woocommerce_payment_complete fires after the
 				// current order has already moved to its paid state, so
-				// the count includes it. count === 1 → this IS the first
-				// paid order; > 1 means the customer has paid before.
+				// the count includes a logged-in order. A guest order matched
+				// by email has no customer id, so the count leaves it out.
 				$paid = wc_get_orders(
 					[
 						'customer' => $customer_id,
@@ -119,7 +119,7 @@ return [
 						'return'   => 'ids',
 					]
 				);
-				return count( $paid ) === 1 ? $customer_id : 0;
+				return count( $paid ) === ( $order->get_customer_id() ? 1 : 0 ) ? $customer_id : 0;
 			},
 			'default_points' => 50,
 			'category'       => 'commerce',
@@ -128,14 +128,12 @@ return [
 		],
 
 		[
-			'id'             => 'wc_product_reviewed',
-			'label'          => static fn(): string => __( 'Leave a product review', 'wb-gamification' ),
-			'description'    => static fn(): string => __( 'Awarded when an approved product review is posted.', 'wb-gamification' ),
-			'hook'           => 'comment_post',
-			'user_callback'  => function ( int $comment_id, int|string $approved ): int {
-				if ( 1 !== (int) $approved ) {
-					return 0;
-				}
+			'id'              => 'wc_product_reviewed',
+			'label'           => static fn(): string => __( 'Leave a product review', 'wb-gamification' ),
+			'description'     => static fn(): string => __( 'Awarded when a product review is approved.', 'wb-gamification' ),
+			'hook'            => 'wb_gam_comment_approved',
+			'once_per_object' => static fn( int $comment_id ): int => $comment_id,
+			'user_callback'   => function ( int $comment_id ): int {
 				$comment = get_comment( $comment_id );
 				if ( ! $comment || empty( $comment->user_id ) ) {
 					return 0;
@@ -146,15 +144,15 @@ return [
 				}
 				return (int) $comment->user_id;
 			},
-			'default_points' => 15,
-			'category'       => 'commerce',
-			'icon'           => 'icon-star-half',
-			'repeatable'     => true,
-			'cooldown'       => 86400, // One review point per product per day.
+			'default_points'  => 15,
+			'category'        => 'commerce',
+			'icon'            => 'icon-star-half',
+			'repeatable'      => true,
+			'cooldown'        => 86400, // One review point per day.
 			// Review submission is user-initiated and low-frequency. Run
 			// sync so the reviewer's points appear immediately after the
 			// comment posts.
-			'async'          => false,
+			'async'           => false,
 		],
 
 		[

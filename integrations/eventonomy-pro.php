@@ -6,7 +6,7 @@
  * No dependency on WB Gamification at load time.
  *
  * Covers the Pro-only event actions: attending an event (ticket check-in),
- * completing a card-gateway order, and following an event, organizer, venue,
+ * and following an event, organizer, venue,
  * or member. Attendance relies on the `evnm_after_checkin` action added to
  * Eventonomy Pro's CheckinService, which fires once per attendee on a
  * successful, non-voided check-in.
@@ -51,36 +51,6 @@ return array(
 			'repeatable'        => true,
 			// The flagship award, expected the moment the attendee is admitted:
 			// award in-request rather than on the next queue run.
-			'async'             => false,
-		),
-
-		array(
-			'id'                => 'evnm_ticket_purchased_gateway',
-			'label'             => static fn(): string => __( 'Complete a ticket order', 'wb-gamification' ),
-			'description'       => static fn(): string => __( 'Awarded when a member completes a card-gateway ticket order and the payment settles. Free and immediately paid orders are handled by the core integration, so a single order is only ever rewarded once.', 'wb-gamification' ),
-			// Pro fires: do_action( 'evnm_after_update_order', array $full, array $changed, array $ctx ).
-			// The settlement webhook transitions the order to 'paid'; the context
-			// carries no actor, so the buyer is read from the order record itself.
-			'hook'              => 'evnm_after_update_order',
-			'user_callback'     => function ( array $full, array $changed, $ctx ): int {
-				if ( ! in_array( 'status', (array) $changed, true ) ) {
-					return 0;
-				}
-				if ( 'paid' !== (string) ( $full['status'] ?? '' ) ) {
-					return 0;
-				}
-				return (int) ( $full['user_id'] ?? 0 );
-			},
-			'metadata_callback' => function ( array $full, array $changed, $ctx ): array {
-				return array(
-					'order_id' => (int) ( $full['id'] ?? 0 ),
-				);
-			},
-			'default_points'    => 20,
-			'category'          => 'commerce',
-			'icon'              => 'icon-ticket',
-			'repeatable'        => true,
-			// Purchases are infrequent and expected to reward immediately.
 			'async'             => false,
 		),
 

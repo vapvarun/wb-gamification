@@ -29,6 +29,28 @@
 
 defined( 'ABSPATH' ) || exit;
 
+// A comment is approved when it is posted or later from moderation, and a trigger listens to one hook.
+add_action(
+	'comment_post',
+	static function ( $comment_id, $approved ): void {
+		if ( 1 === (int) $approved ) {
+			do_action( 'wb_gam_comment_approved', (int) $comment_id );
+		}
+	},
+	10,
+	2
+);
+add_action(
+	'transition_comment_status',
+	static function ( $new_status, $old_status, $comment ): void {
+		if ( 'approved' === $new_status && 'approved' !== $old_status ) {
+			do_action( 'wb_gam_comment_approved', (int) $comment->comment_ID );
+		}
+	},
+	10,
+	3
+);
+
 return [
 	'plugin'   => 'WordPress',
 	'version'  => '1.0.0',
@@ -66,7 +88,8 @@ return [
 			'id'              => 'wp_profile_complete',
 			'label'           => static fn(): string => __( 'Complete WordPress profile', 'wb-gamification' ),
 			'description'     => static fn(): string => __( 'Awarded once when the user saves their WP profile with a bio.', 'wb-gamification' ),
-			'hook'            => 'personal_options_update',
+			// personal_options_update fires before the bio is saved; this fires after.
+			'hook'            => 'profile_update',
 			'user_callback'   => function ( int $user_id ): int {
 				return get_user_meta( $user_id, 'description', true ) ? $user_id : 0;
 			},
@@ -80,12 +103,10 @@ return [
 		[
 			'id'              => 'wp_post_receives_comment',
 			'label'           => static fn(): string => __( 'Receive a comment on a post', 'wb-gamification' ),
-			'description'     => static fn(): string => __( 'Post author earns points when an approved comment is left on their content.', 'wb-gamification' ),
-			'hook'            => 'comment_post',
-			'user_callback'   => function ( int $comment_id, int|string $approved ): int {
-				if ( 1 !== (int) $approved ) {
-					return 0;
-				}
+			'description'     => static fn(): string => __( 'Post author earns points when a comment on their content is approved.', 'wb-gamification' ),
+			'hook'            => 'wb_gam_comment_approved',
+			'once_per_object' => static fn( int $comment_id ): int => $comment_id,
+			'user_callback'   => function ( int $comment_id ): int {
 				$comment = get_comment( $comment_id );
 				if ( ! $comment ) {
 					return 0;
