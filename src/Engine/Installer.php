@@ -598,7 +598,7 @@ final class Installer {
 		// Seed default levels.
 		self::seed_default_levels();
 
-		// Seed default badge library (30 badges).
+		// Seed default badge library (37 badges).
 		self::seed_default_badges();
 
 		// Seed default point type — 'points' as the primary currency.
@@ -717,7 +717,7 @@ final class Installer {
 	}
 
 	/**
-	 * Seed the default badge library — 30 badges across 5 categories.
+	 * Seed the default badge library — 37 badges across 5 categories.
 	 * Runs only on fresh installs (skipped when badge_defs table already has rows).
 	 */
 	private static function seed_default_badges(): void {
@@ -770,6 +770,23 @@ final class Installer {
 			array( 'kudos_champion', 'Kudos Champion', 'Recognized for spreading positivity across the community.', 'special', 0 ),
 			array( 'event_host', 'Event Host', 'Hosted a community event.', 'special', 0 ),
 			array( 'community_veteran', 'Community Veteran', 'A long-standing, valued member of this community.', 'special', 1 ),
+
+			// ── Tenure ─────────────────────────────────────────────────────────
+			array( 'tenure_1yr', '1-Year Member', 'Has been part of this community for one year.', 'special', 0 ),
+			array( 'tenure_2yr', '2-Year Member', 'A two-year member - a valued, long-standing contributor.', 'special', 0 ),
+			array( 'tenure_5yr', '5-Year Member', 'Five years and counting - a true community pillar.', 'special', 0 ),
+			array( 'tenure_10yr', '10-Year Member', 'A decade of community membership - legendary status.', 'special', 0 ),
+
+			// ── Site-first: one member only, see $max_earners below ────────────
+			array( 'first_champion', 'First Champion', 'The first member of this community to reach Champion rank.', 'special', 0 ),
+			array( 'first_10k_points', 'First to 10,000', 'The first member to earn 10,000 total points in this community.', 'special', 0 ),
+			array( 'first_100_day_streak', 'Century Streak Pioneer', 'The first member to reach a 100-day activity streak.', 'special', 0 ),
+		);
+
+		$max_earners = array(
+			'first_champion'       => 1,
+			'first_10k_points'     => 1,
+			'first_100_day_streak' => 1,
 		);
 
 		// Conditions for auto-awarded badges (id => condition_type config).
@@ -914,6 +931,38 @@ final class Installer {
 			'kudos_champion'       => array( 'condition_type' => 'admin_awarded' ),
 			'event_host'           => array( 'condition_type' => 'admin_awarded' ),
 			'community_veteran'    => array( 'condition_type' => 'admin_awarded' ),
+
+			// Tenure.
+			'tenure_1yr'           => array(
+				'condition_type' => 'tenure_days',
+				'days'           => 365,
+			),
+			'tenure_2yr'           => array(
+				'condition_type' => 'tenure_days',
+				'days'           => 730,
+			),
+			'tenure_5yr'           => array(
+				'condition_type' => 'tenure_days',
+				'days'           => 1825,
+			),
+			'tenure_10yr'          => array(
+				'condition_type' => 'tenure_days',
+				'days'           => 3650,
+			),
+
+			// Site-first. Levels are seeded before badges, so Champion already exists here.
+			'first_champion'       => array(
+				'condition_type' => 'level_reached',
+				'level_id'       => self::champion_level_id(),
+			),
+			'first_10k_points'     => array(
+				'condition_type' => 'point_milestone',
+				'points'         => 10000,
+			),
+			'first_100_day_streak' => array(
+				'condition_type' => 'streak_days',
+				'days'           => 100,
+			),
 		);
 
 		foreach ( $badges as [ $id, $name, $description, $category, $is_credential ] ) {
@@ -926,9 +975,10 @@ final class Installer {
 					'category'      => $category,
 					'is_credential' => $is_credential,
 					'image_url'     => self::default_badge_image_url( $id ),
+					'max_earners'   => $max_earners[ $id ] ?? null,
 					'created_at'    => current_time( 'mysql', true ),
 				),
-				array( '%s', '%s', '%s', '%s', '%d', '%s', '%s' )
+				array( '%s', '%s', '%s', '%s', '%d', '%s', '%d', '%s' )
 			);
 
 			// The seed table above is authored one condition per badge, because that is how these
@@ -956,6 +1006,23 @@ final class Installer {
 				array( '%s', '%s', '%s', '%d', '%s' )
 			);
 		}
+	}
+
+	/**
+	 * The level the "First Champion" badge points at.
+	 *
+	 * Level ids are site-specific, so it is found by name, falling back to the highest level.
+	 *
+	 * @return int Level id, 0 when the site has no levels.
+	 */
+	public static function champion_level_id(): int {
+		global $wpdb;
+
+		$id = (int) $wpdb->get_var(
+			$wpdb->prepare( "SELECT id FROM {$wpdb->prefix}wb_gam_levels WHERE name = %s LIMIT 1", 'Champion' )
+		);
+
+		return $id ?: (int) $wpdb->get_var( "SELECT id FROM {$wpdb->prefix}wb_gam_levels ORDER BY min_points DESC LIMIT 1" );
 	}
 
 	/**

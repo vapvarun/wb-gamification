@@ -112,8 +112,6 @@ final class FeatureFlags {
 		'leaderboard_nudge'    => true,
 		'status_retention'     => true,
 		'community_challenges' => true,
-		'site_first_badges'    => true,
-		'tenure_badges'        => true,
 		'badge_share'          => true,
 	];
 

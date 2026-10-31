@@ -169,15 +169,12 @@ final class DbUpgrader {
 		global $wpdb;
 
 		// Champion by NAME, never by id. Falls back to the highest level the site has.
-		$champion_id = (int) $wpdb->get_var(
-			$wpdb->prepare( "SELECT id FROM {$wpdb->prefix}wb_gam_levels WHERE name = %s LIMIT 1", 'Champion' )
-		);
-		if ( ! $champion_id ) {
-			$champion_id = (int) $wpdb->get_var( "SELECT id FROM {$wpdb->prefix}wb_gam_levels ORDER BY min_points DESC LIMIT 1" );
-		}
+		$champion_id = Installer::champion_level_id();
 
-		$tenure_on     = FeatureFlags::is_enabled( 'tenure_badges' ) ? 1 : 0;
-		$site_first_on = FeatureFlags::is_enabled( 'site_first_badges' ) ? 1 : 0;
+		// These two flags are no longer FeatureFlags defaults, so only a saved "off" counts here.
+		$flags         = FeatureFlags::get_all();
+		$tenure_on     = ( $flags['tenure_badges'] ?? true ) ? 1 : 0;
+		$site_first_on = ( $flags['site_first_badges'] ?? true ) ? 1 : 0;
 
 		$seed = array(
 			'tenure_1yr'           => array(

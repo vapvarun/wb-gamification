@@ -42,7 +42,7 @@ A new tenure badge also reaches long-time members this way. Everyone who is alre
 
 ### The Built-In Ladder
 
-Sites that carry the built-in anniversary badges have these four. The badge ID is shown in the edit form.
+A fresh install includes these four. The badge ID is shown in the edit form.
 
 | Badge ID | Days | Roughly |
 |---|---|---|
@@ -51,7 +51,9 @@ Sites that carry the built-in anniversary badges have these four. The badge ID i
 | `tenure_5yr` | 1825 | 5 years |
 | `tenure_10yr` | 3650 | 10 years |
 
-A fresh install does not create these four badges. If you do not see them in the **Badges** library, add the ones you want. See [Add a Tenure Badge](#add-a-tenure-badge).
+If you install the plugin on an established community, long-time members receive every tenure badge they already qualify for at the first daily check. To avoid that, switch the badges off first. See [Turn a Badge Off](#turn-a-badge-off).
+
+A site first installed on an older version may not have these four. If you do not see them in the **Badges** library, add the ones you want. An update never adds them, because it cannot tell a badge that was never created from one you deleted. See [Add a Tenure Badge](#add-a-tenure-badge).
 
 ## Change the Rule
 
@@ -77,8 +79,6 @@ The badge now awards only when you grant it by hand, and the library card change
 
 To remove a badge completely, open it and click **Delete Badge**. This also removes it from every member who earned it.
 
-The **Modules** screen lists switches called **Tenure badges** and **Site-first badges**. Do not rely on them to stop these badges. Switch off each badge as above.
-
 ## Add a Tenure Badge
 
 1. Go to **WB Gamification > Badges** and click **+ Create New Badge**.
@@ -99,7 +99,7 @@ Make sure the action is switched on and pays points. See [What Makes Them Fire](
 
 A site-first badge goes to only the first member who does something: reach a level, earn a point total, or hold a streak. It is a normal badge with **Max earners** set to `1`. Once one member has it, nobody else can earn it.
 
-Sites that carry the built-in set have three: `first_champion` (reach the Champion level, or your highest level if you have no Champion), `first_10k_points` (10,000 points) and `first_100_day_streak` (a 100-day streak). You can create your own the same way, with **Max earners** set to `1`.
+A fresh install includes three, and a site first installed on an older version may need to add them by hand: `first_champion` (reach the Champion level, or your highest level if you have no Champion), `first_10k_points` (10,000 points) and `first_100_day_streak` (a 100-day streak). You can create your own the same way, with **Max earners** set to `1`.
 
 ## Who Can Manage Badges
 

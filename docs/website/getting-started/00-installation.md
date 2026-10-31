@@ -30,7 +30,7 @@ BuddyPress is **optional**. The plugin works on any standard WordPress site and 
 When you activate WB Gamification, the plugin does the following automatically:
 
 - Creates **20 custom database tables** to store events, points, badges, levels, challenges, streaks, kudos, leaderboard snapshots, member preferences, and more.
-- Seeds your site with **5 default levels** (Newcomer, Member, Contributor, Regular, Champion) and **30 default badges**.
+- Seeds your site with **5 default levels** (Newcomer, Member, Contributor, Regular, Champion) and **37 default badges**.
 - Registers all gamification actions appropriate for your active plugins. If BuddyPress is active, BuddyPress triggers load automatically.
 - Redirects you to the **Setup Wizard** so you can choose a starter template.
 

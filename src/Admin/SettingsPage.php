@@ -2549,7 +2549,7 @@ final class SettingsPage {
 						<?php esc_html_e( 'Background features', 'wb-gamification' ); ?>
 					</h2>
 					<p class="wbgam-card-desc">
-						<?php esc_html_e( 'These run on a schedule rather than on a page: emails, nudges, retention sweeps, and the badges awarded automatically for tenure or for being first on the site. Turning one off stops its engine loading at all - no cron, no queries, no email. Nothing is deleted.', 'wb-gamification' ); ?>
+						<?php esc_html_e( 'These run on a schedule rather than on a page: emails, nudges, retention sweeps and badge share cards. Turning one off stops its engine loading at all - no cron, no queries, no email. Nothing is deleted.', 'wb-gamification' ); ?>
 					</p>
 				</div>
 				<div class="wbgam-card-body">
@@ -2589,8 +2589,6 @@ final class SettingsPage {
 			'leaderboard_nudge'    => __( 'Leaderboard nudge email - tell a member when they are close to overtaking someone', 'wb-gamification' ),
 			'status_retention'     => __( 'Status retention - warn a member before inactivity costs them their level', 'wb-gamification' ),
 			'community_challenges' => __( 'Community challenges - whole-site goals members contribute to together', 'wb-gamification' ),
-			'site_first_badges'    => __( 'Site-first badges - awarded to the first member ever to do a thing', 'wb-gamification' ),
-			'tenure_badges'        => __( 'Tenure badges - awarded for time as a member', 'wb-gamification' ),
 			'badge_share'          => __( 'Badge sharing - public share cards for LinkedIn and similar', 'wb-gamification' ),
 		);
 

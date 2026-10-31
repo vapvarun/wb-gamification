@@ -1,6 +1,6 @@
 # Badges
 
-Badges are visual achievements members earn by hitting specific milestones. The plugin ships with 30 default badges and supports unlimited custom badges.
+Badges are visual achievements members earn by hitting specific milestones. The plugin ships with 37 default badges and supports unlimited custom badges.
 
 ## What Badges Are
 
@@ -8,7 +8,7 @@ A badge is a named achievement with an image, description, and one or more condi
 
 ## Default Badges
 
-The 30 default badges are organized into categories:
+The 37 default badges are organized into categories:
 
 ### Points Milestones
 Badges for reaching cumulative point totals. Examples: "First Steps" (100 points), "Rising Star" (500 points), "Community Pillar" (1,500 points), "Champion" (5,000 points).
@@ -20,7 +20,7 @@ Badges for WordPress-native contributions. Examples: "Published Author" (publish
 Badges for BuddyPress community participation. Examples: "Welcome Aboard" (complete extended profile), "Social Butterfly" (accept 10 friendships), "Group Builder" (create a group), "Reaction Magnet" (receive 50 reactions).
 
 ### Special
-Badges assigned manually by admins or awarded for extraordinary contributions. These do not auto-evaluate - they are given by an admin through the Manual Award interface.
+Most of these are assigned manually by admins for extraordinary contributions, through the Manual Award interface. Seven award automatically: the tenure badges (1, 2, 5 and 10 years) and the site-first badges, which go to one member only. See [Tenure and First-Time Badges](../usage/160-tenure-and-first-time-badges.md).
 
 ## How Badges Are Awarded
 

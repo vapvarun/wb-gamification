@@ -45,4 +45,4 @@ While editing a badge, click **Delete Badge**. Confirm the prompt. This permanen
 
 ## The 30 Default Badges
 
-The plugin ships with 30 pre-built badge definitions covering common milestones (first post, point milestones, social actions, tenure). They appear in the badge grid on a fresh install. You can edit, delete, or supplement them with your own.
+The plugin ships with 37 pre-built badge definitions covering common milestones (first post, point milestones, social actions, tenure). They appear in the badge grid on a fresh install. You can edit, delete, or supplement them with your own.
