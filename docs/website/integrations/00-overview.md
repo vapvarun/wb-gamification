@@ -22,7 +22,7 @@ Each integration is a PHP file that returns an array of trigger definitions. Whe
 | LifterLMS | 7 | `integrations/contrib/lifterlms.php` |
 | Tutor LMS | 6 | `integrations/tutor-lms.php` |
 | MemberPress | 3 | `integrations/contrib/memberpress.php` |
-| GiveWP | 4 | `integrations/contrib/givewp.php` |
+| GiveWP | 3 | `integrations/contrib/givewp.php` |
 | The Events Calendar | 3 | `integrations/contrib/the-events-calendar.php` |
 | Jetonomy | 4 | `integrations/jetonomy.php` |
 | Jetonomy Pro | 7 | `integrations/jetonomy-pro.php` |

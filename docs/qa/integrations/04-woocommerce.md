@@ -69,8 +69,9 @@ Default: **5 points**. Limit: 300s wait.
 - [ ] Doing it pays 5 points to the right member.
 - [ ] Switched off, it pays nothing.
 - [ ] Doing it again inside 300 seconds pays nothing. After the wait it pays.
+- [ ] A guest adding to a wishlist pays nothing and causes no error.
 
-Developer result: Not run yet. The hook exists in the plugin source, which does not prove its arguments match, so this row needs a real run.
+Developer result: Confirmed against YITH WooCommerce Wishlist 4.19.1, which is free. Paid through its add_item code for a member, the cooldown held, and a guest paid nothing. Heart button in the browser not run.
 
 ### Add a product to cart (`wc_add_to_cart`)
 

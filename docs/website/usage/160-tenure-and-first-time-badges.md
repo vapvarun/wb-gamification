@@ -51,7 +51,7 @@ A fresh install includes these four. The badge ID is shown in the edit form.
 | `tenure_5yr` | 1825 | 5 years |
 | `tenure_10yr` | 3650 | 10 years |
 
-If you install the plugin on an established community, long-time members receive every tenure badge they already qualify for at the first daily check. To avoid that, switch the badges off first. See [Turn a Badge Off](#turn-a-badge-off).
+If you install the plugin on an established community, long-time members receive every tenure badge they already qualify for at the first daily check, about an hour after activation. That first check is silent: no feed posts, toasts, emails or webhooks, because these badges mark the past. From then on, a member who reaches a tenure date is announced as usual. To hold the badges back altogether, switch them off first. See [Turn a Badge Off](#turn-a-badge-off).
 
 A site first installed on an older version may not have these four. If you do not see them in the **Badges** library, add the ones you want. An update never adds them, because it cannot tell a badge that was never created from one you deleted. See [Add a Tenure Badge](#add-a-tenure-badge).
 

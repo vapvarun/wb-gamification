@@ -1,8 +1,8 @@
 # GiveWP: QA checklist
 
-4 actions. Integration file: `integrations/contrib/givewp.php`. Code checked against 4.19.1.
+3 actions. Integration file: `integrations/contrib/givewp.php`. Code checked against 4.19.1.
 
-**Setup:** Create a campaign with a small amount goal, for example $50. Use the Test Donation gateway. Recurring gifts need the paid Recurring Donations add-on.
+**Setup:** Create a campaign with a small amount goal, for example $50. Use the Test Donation gateway. There is no recurring gifts action: it was removed because we do not have the paid add-on to test it.
 
 Tick each box when it passes. If one fails, comment on this plugin's Basecamp card with the steps, what you expected, what happened and a screenshot.
 
@@ -47,18 +47,6 @@ Default: **75 points**. Limit: once ever.
 - [ ] A donor with donations from before this plugin was active does not get it.
 
 Developer result: Fixed: the old hook never fired. Paid once in a real browser donation, and not on the second gift.
-
-### Make a recurring donation payment (`give_recurring_donation`)
-
-Awarded on each successful recurring donation charge.
-
-Default: **20 points**. No limit by default.
-
-- [ ] Doing it pays 20 points to the right member.
-- [ ] Switched off, it pays nothing.
-- [ ] Needs the paid Recurring Donations add-on. Run a real renewal charge.
-
-Developer result: Fixed the arguments: GiveWP passes a payment object first, and the old code expected a number. Tested only by firing the hook with those arguments, because the add-on is not available.
 
 ### Campaign reaches its goal (`give_campaign_goal_reached`)
 

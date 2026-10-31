@@ -57,14 +57,16 @@ Known and accepted: if nudges are switched off mid-run, the run stops and Action
 
 Cards 10459672711 and 10459672796.
 
-**Known open decision:** on a fresh install on an established community, the first daily check, about 1 hour after activation, awards every tenure badge members already qualify for. Each award makes a public feed post and a toast. Measured with 10,000 aged members: 24,836 awards in 76 seconds. Do not file this as a bug. Do not run it on a site with real members.
+**Fresh install on an established community:** the first daily check, about 1 hour after activation, awards every tenure badge members already qualify for, silently. Later badges are announced as normal.
 
 - [ ] Fresh install: 37 badges, including the four tenure and three site-first badges, with rules and icons.
 - [ ] A member registered 400 days ago gets 1-Year Member at the daily check.
 - [ ] A site-first badge goes to the first qualifying member only.
 - [ ] Update from 1.6.7: no duplicates, owner edits kept, deleted badges stay deleted, no new badges added.
 - [ ] **Modules** no longer lists Tenure badges or Site-first badges.
-- [ ] Fresh install on an established community: **on hold** until the owner decides how the first check should announce badges.
+- [ ] Fresh install with members registered over a year ago: at the first check they get their tenure badges with no feed posts, toasts, emails or webhooks.
+- [ ] Next daily check: a member who has just reached one year gets the badge with the feed post and toast.
+- [ ] Update from 1.6.7 is not silent: a member reaching a tenure date is announced as normal.
 
 ## 4. The rest of the round
 
@@ -95,7 +97,7 @@ Cards 10459672711 and 10459672796.
 
 # Part B: plugin integrations
 
-WB Gamification has 138 actions: 8 for WordPress and 130 across 17 plugins and their 5 Pro add-ons.
+WB Gamification has 137 actions: 8 for WordPress and 129 across 17 plugins and their 5 Pro add-ons.
 
 **What has been checked so far:** every plugin's code was read for the actions listed below, and the fixed plugins were run on Docker. The other actions have had their arguments compared with the source but have not been run, so they still need a real run.
 
@@ -108,7 +110,7 @@ These were broken and are fixed in this round, so test them first:
 | Plugin | What was wrong |
 |---|---|
 | MemberPress | All 3 used hooks that never fire, so nothing paid |
-| GiveWP | Donation, first donation and goal reached never paid. Recurring gifts expected the wrong arguments |
+| GiveWP | Donation, first donation and goal reached never paid. **Recurring gifts action removed**: we do not have the paid add-on to test it |
 | The Events Calendar | RSVP never paid. **Purchase a ticket paid whoever saved a ticket in admin**, and now pays the buyer. RSVP check-ins were missed |
 | BuddyPress | Receive a reaction and Create a poll never paid. Group cover paid every upload. **Upload media is removed**: nothing in BuddyPress fires it |
 | WooCommerce | A guest order matched by email could pay First purchase on the wrong order. A review held for moderation never paid |
@@ -119,10 +121,9 @@ These were broken and are fixed in this round, so test them first:
 
 Still open:
 
-- **Jetonomy Pro:** leaving a conversation also pays Send a private message. The fix belongs in Jetonomy Pro and has not been made.
-- **YITH Wishlist and WooCommerce Memberships or Subscriptions in Jetonomy:** the source was not available, so these arguments are unconfirmed. Test them for real.
+- **Jetonomy Pro:** leaving a conversation also pays Send a private message. The fix belongs in Jetonomy Pro and has a card on its board.
+- **WooCommerce Memberships or Subscriptions in Jetonomy:** the source was not available, so these arguments are unconfirmed. Test them for real.
 - **WooCommerce offline orders:** the order actions use `woocommerce_payment_complete`. Check whether a cash on delivery or bank transfer order earns points when marked Completed by hand.
-- **GiveWP recurring gifts:** needs the paid Recurring add-on.
 
 **LMS change in this round:** LearnDash, LifterLMS and Tutor LMS now pay once per course, lesson, quiz or similar. Retaking a quiz must earn nothing. Run each LMS on its own site: Tutor LMS and LifterLMS both use `/courses/`, so lesson pages return 404 when both are active.
 
@@ -164,7 +165,7 @@ Filling these gaps is an owner decision, so report your view but do not file eac
 **Docs:**
 
 - [ ] BuddyNext, Eventonomy, Learnomy, WB Listora and WP Career Board have no page in `docs/website/integrations/`.
-- [ ] `readme.txt` says "62 gamification actions across 10 integration manifests" and "5 more plugins". The real count is 138.
+- [ ] `readme.txt` says "62 gamification actions across 10 integration manifests" and "5 more plugins". The real count is 137.
 
 ## 9. Test sheet
 

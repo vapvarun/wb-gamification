@@ -1,6 +1,6 @@
 # Integration QA checklists
 
-One checklist per integration, 138 actions in all. Temporary for the 1.6.8 test round, like the handoff. Delete this folder when testing is done.
+One checklist per integration, 137 actions in all. Temporary for the 1.6.8 test round, like the handoff. Delete this folder when testing is done.
 
 Each integration also has a Basecamp card in **Ready for Testing** with the same points as tickable steps.
 
@@ -14,7 +14,7 @@ Each integration also has a Basecamp card in **Ready for Testing** with the same
 | [Tutor LMS](06-tutor-lms.md) | 6 |
 | [LifterLMS](07-lifterlms.md) | 7 |
 | [MemberPress](08-memberpress.md) | 3 |
-| [GiveWP](09-givewp.md) | 4 |
+| [GiveWP](09-givewp.md) | 3 |
 | [The Events Calendar + Event Tickets](10-the-events-calendar.md) | 3 |
 | [BuddyNext](11-buddynext.md) | 16 |
 | [Jetonomy](12-jetonomy.md) | 4 |

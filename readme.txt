@@ -61,7 +61,7 @@ All integrations are auto-detected and require zero configuration. Install the p
 * **LifterLMS** - Courses, lessons, quizzes, enrollment, memberships, achievements, certificates (7 actions)
 * **Tutor LMS** - Courses, lessons, quizzes, enrollment, reviews, questions (6 actions)
 * **MemberPress** - Memberships, renewals, first signup (3 actions)
-* **GiveWP** - Donations, first donation, recurring gifts, campaign goals (4 actions)
+* **GiveWP** - Donations, first donation, campaign goals (3 actions)
 * **The Events Calendar** - RSVPs, tickets, check-ins (3 actions)
 * **WPMediaVerse Pro** - Photo uploads, albums, comments, likes, follows, battles, challenges, tournaments (17 actions)
 

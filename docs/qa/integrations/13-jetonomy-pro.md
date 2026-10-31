@@ -56,7 +56,7 @@ Default: **2 points**. Limit: 60s wait, 20 a day.
 - [ ] It stops paying after 20 in one day.
 - [ ] KNOWN ISSUE: leaving a conversation also pays this, because Jetonomy Pro fires the hook for its system message. Confirm it and comment on the card.
 
-Developer result: Not fixed: the fix belongs in Jetonomy Pro, which fires the hook before checking for a system message. Waiting on the owner.
+Developer result: Not fixed here: the fix belongs in Jetonomy Pro, which fires the hook before checking for a system message. It has a card on the Jetonomy board.
 
 ### Start a Jetonomy conversation (`jetonomy_pro_conversation_created`)
 

@@ -11809,7 +11809,7 @@
       "manifest_file": "integrations/contrib/givewp.php",
       "manifest_version": "1.0.0",
       "detect": "function_exists('give')",
-      "trigger_count": 4,
+      "trigger_count": 3,
       "adapter_classes": [],
       "purpose": ""
     },

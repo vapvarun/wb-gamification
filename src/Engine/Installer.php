@@ -104,6 +104,7 @@ final class Installer {
 		$fresh = $wpdb->prefix . 'wb_gam_events' !== (string) $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->prefix . 'wb_gam_events' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		if ( $fresh ) {
 			update_option( UtcStorageMigration::DONE_OPTION, '1' );
+			add_option( BadgeEngine::FIRST_CHECK_OPTION, 1, '', false );
 		}
 
 		// Every DATETIME column holds UTC, written from PHP with current_time( 'mysql', true ). The

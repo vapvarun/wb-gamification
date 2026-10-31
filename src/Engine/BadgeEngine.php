@@ -57,6 +57,12 @@ final class BadgeEngine {
 	public const CRON_PASS = 'wb_gam_badge_cron_pass';
 
 	/**
+	 * Set on a fresh install, until the first daily pass has finished. That pass catches up on
+	 * members who already qualify, which is history and not news, so it does not announce them.
+	 */
+	public const FIRST_CHECK_OPTION = 'wb_gam_badge_first_check_pending';
+
+	/**
 	 * Retroactive backfill for one badge.
 	 */
 	public const BACKFILL_HOOK = 'wb_gam_badge_backfill_page';
@@ -353,6 +359,7 @@ final class BadgeEngine {
 		);
 
 		if ( ! $rules ) {
+			delete_option( self::FIRST_CHECK_OPTION );
 			return;
 		}
 
@@ -365,18 +372,28 @@ final class BadgeEngine {
 		);
 
 		if ( ! $user_ids ) {
+			delete_option( self::FIRST_CHECK_OPTION );
 			return;
 		}
 
-		foreach ( $user_ids as $user_id ) {
-			$user_id = (int) $user_id;
-			$earned  = self::get_user_earned_badge_ids( $user_id );
-			$total   = PointsEngine::get_earned( $user_id, null );
+		$evaluate = static function () use ( $user_ids, $rules ): void {
+			foreach ( $user_ids as $user_id ) {
+				$user_id = (int) $user_id;
+				$earned  = self::get_user_earned_badge_ids( $user_id );
+				$total   = PointsEngine::get_earned( $user_id, null );
 
-			self::evaluate_for_signals( $user_id, array( 'cron' ), null, $rules, $earned, $total );
+				self::evaluate_for_signals( $user_id, array( 'cron' ), null, $rules, $earned, $total );
+			}
+		};
+
+		if ( get_option( self::FIRST_CHECK_OPTION ) ) {
+			ImportMode::run( $evaluate );
+		} else {
+			$evaluate();
 		}
 
 		if ( count( $user_ids ) < self::CRON_PAGE_SIZE ) {
+			delete_option( self::FIRST_CHECK_OPTION );
 			return; // Short page: done.
 		}
 

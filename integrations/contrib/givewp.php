@@ -7,12 +7,10 @@
  * Actions covered:
  *   Donation completed      — give_complete_donation (any amount, any form)
  *   First donation ever     — give_complete_donation (once only)
- *   Recurring donation      — give_recurring_record_payment (Give Recurring add-on)
  *   Campaign goal reached   — wb_gam_give_campaign_goal_reached (GiveWP has no hook for this)
  *
  * Nonprofit community model:
  *   Recognize the act of donating, not the amount (privacy-preserving).
- *   Reward consistency (recurring donors) over one-off large gifts.
  *
  * @package WB_Gamification
  */
@@ -67,20 +65,6 @@ return [
 			'category'       => 'social',
 			'icon'           => 'icon-star',
 			'repeatable'     => false,
-		],
-
-		[
-			'id'             => 'give_recurring_donation',
-			'label'          => static fn(): string => __( 'Make a recurring donation payment', 'wb-gamification' ),
-			'description'    => static fn(): string => __( 'Awarded on each successful recurring donation charge.', 'wb-gamification' ),
-			'hook'           => 'give_recurring_record_payment',
-			// GiveWP fires this with ( $payment, $parent_payment_id, $total, $transaction_id ).
-			'user_callback'  => static fn( $payment, $parent_payment_id ): int => (int) give_get_payment_user_id( $parent_payment_id ),
-			'default_points' => 20,
-			'category'       => 'social',
-			'icon'           => 'icon-refresh-cw',
-			'repeatable'     => true,
-			'cooldown'       => 0,
 		],
 
 		[
