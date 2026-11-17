@@ -254,6 +254,35 @@ class ContentReversalTest extends TestCase {
 	}
 
 	#[Test]
+	public function a_post_trashed_and_republished_three_times_counts_once_toward_badges(): void {
+		$actions = ( new ReflectionClass( Registry::class ) )->getProperty( 'actions' );
+		$saved   = $actions->getValue();
+		$actions->setValue(
+			null,
+			array(
+				'wp_publish_post' => array(
+					'id'              => 'wp_publish_post',
+					'once_per_object' => 'intval',
+				),
+			)
+		);
+		try {
+			$t = array( 'wp_publish_post' => array( 100 ) );
+			$this->earn( 7, 'wp_publish_post', 25, null ); // A post from before 1.6.8 still counts.
+			$this->earn( 7, 'wp_publish_post', 25, 100 );
+			for ( $i = 0; $i < 3; $i++ ) {
+				PointsEngine::reverse_object_awards( $t );
+				$this->earn( 7, 'wp_publish_post', 25, 100 ); // Published again.
+			}
+
+			$this->assertSame( 2, PointsEngine::get_action_count( 7, 'wp_publish_post' ) );
+			$this->assertSame( 50, $this->db->totals[7]['points'] );
+		} finally {
+			$actions->setValue( null, $saved );
+		}
+	}
+
+	#[Test]
 	public function history_names_the_reversal_after_the_action(): void {
 		$this->assertSame( 'Wp Publish Post (content removed)', Registry::label_for( 'wp_publish_post_removed' ) );
 		$this->assertSame( 'Wp Publish Post (content restored)', Registry::label_for( 'wp_publish_post_restored' ) );
@@ -310,6 +339,17 @@ class ContentReversalTest extends TestCase {
 			}
 
 			public function get_var( $q ) {
+				if ( is_array( $q ) && str_contains( $q[0], 'COUNT(DISTINCT object_id)' ) ) {
+					list( $user, $action ) = $q[1];
+					$objects               = array();
+					$legacy                = 0;
+					foreach ( $this->points as $r ) {
+						if ( $r['user_id'] === $user && $r['action_id'] === $action ) {
+							null === $r['object_id'] ? ++$legacy : $objects[ $r['object_id'] ] = true;
+						}
+					}
+					return count( $objects ) + $legacy;
+				}
 				if ( is_array( $q ) && str_contains( $q[0], 'action_id IN (%s, %s, %s) AND object_id' ) ) {
 					list( $user, $a, $b, $c, $object ) = $q[1];
 					$sum                               = 0;

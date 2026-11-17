@@ -1523,10 +1523,20 @@ final class PointsEngine {
 	 */
 	public static function get_action_count( int $user_id, string $action_id, ?string $type = null ): int {
 		global $wpdb;
+
+		// An action earned once per object counts each object once: a post trashed and published
+		// again earns again (its points were taken back) but is still one post toward "publish 10
+		// posts". Rows from before 1.6.8 have no object id and each still counts.
+		$action = Registry::get_action( $action_id );
+		$count  = null !== $action && isset( $action['once_per_object'] )
+			? 'COUNT(DISTINCT object_id) + COALESCE(SUM(object_id IS NULL), 0)'
+			: 'COUNT(*)';
+
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $count is one of two literals above.
 		if ( null !== $type && '' !== $type ) {
 			return (int) $wpdb->get_var(
 				$wpdb->prepare(
-					"SELECT COUNT(*) FROM {$wpdb->prefix}wb_gam_points
+					"SELECT {$count} FROM {$wpdb->prefix}wb_gam_points
 					 WHERE user_id = %d AND action_id = %s AND point_type = %s",
 					$user_id,
 					$action_id,
@@ -1536,11 +1546,12 @@ final class PointsEngine {
 		}
 		return (int) $wpdb->get_var(
 			$wpdb->prepare(
-				"SELECT COUNT(*) FROM {$wpdb->prefix}wb_gam_points WHERE user_id = %d AND action_id = %s",
+				"SELECT {$count} FROM {$wpdb->prefix}wb_gam_points WHERE user_id = %d AND action_id = %s",
 				$user_id,
 				$action_id
 			)
 		);
+		// phpcs:enable
 	}
 
 	/**
