@@ -526,10 +526,13 @@ final class WeeklyEmailEngine {
 		// Email subject markers — Unicode emojis stripped per the
 		// Lucide-only rule. Subject lines can't render CSS-driven icons,
 		// so we use textual modifiers instead.
+		// One translatable sentence each, so a language can place the marker where it reads naturally.
 		if ( $data['is_best'] ) {
-			$template .= ' — ' . __( 'Personal best!', 'wb-gamification' );
+			/* translators: %s: the weekly recap email subject. */
+			$template = sprintf( __( '%s - Personal best!', 'wb-gamification' ), $template );
 		} elseif ( $data['streak']['current_streak'] >= 7 ) {
-			$template .= ' — ' . __( 'Streak active', 'wb-gamification' );
+			/* translators: %s: the weekly recap email subject. */
+			$template = sprintf( __( '%s - Streak active', 'wb-gamification' ), $template );
 		}
 
 		return $template;

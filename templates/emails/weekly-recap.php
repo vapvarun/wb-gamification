@@ -37,7 +37,14 @@ $points_line = sprintf(
 );
 
 if ( $is_best ) {
-	$points_line .= ' — <strong style="color:#f59e0b;">' . esc_html__( 'Personal best!', 'wb-gamification' ) . '</strong>';
+	// One translatable sentence; the inline colour stays because email clients ignore stylesheets.
+	$points_line = sprintf(
+		/* translators: 1: the "You earned ... this week" line, 2: opening bold tag, 3: closing bold tag. */
+		__( '%1$s - %2$sPersonal best!%3$s', 'wb-gamification' ),
+		$points_line,
+		'<strong style="color:#f59e0b;">',
+		'</strong>'
+	);
 }
 ?>
 <!DOCTYPE html>
