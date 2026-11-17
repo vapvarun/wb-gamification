@@ -130,6 +130,20 @@ class TriggerDecisionsTest extends TestCase {
 	}
 
 	#[Test]
+	public function a_listora_review_pays_when_published_and_follows_moderation(): void {
+		defined( 'WB_LISTORA_VERSION' ) || define( 'WB_LISTORA_VERSION', '1.0.0-test' );
+		$manifest = include dirname( __DIR__, 3 ) . '/integrations/wb-listora.php';
+		$review   = array_values( array_filter( $manifest['triggers'], static fn( $t ) => 'listora_review_written' === $t['id'] ) )[0];
+
+		$this->assertSame( 'wb_gam_listora_review_published', $review['hook'], 'Submitting a pending review must not pay.' );
+		$this->assertSame( 4, $review['reverse_on']['wb_listora_review_status_changed']( 4, 'rejected' ) );
+		$this->assertSame( 4, $review['reverse_on']['wb_listora_review_status_changed']( 4, 'pending' ) );
+		$this->assertSame( 0, $review['reverse_on']['wb_listora_review_status_changed']( 4, 'approved' ) );
+		$this->assertSame( 4, $review['reverse_on']['wb_listora_after_delete_review']( 4, 9, null ) );
+		$this->assertSame( 4, $review['restore_on']['wb_listora_review_status_changed']( 4, 'approved' ) );
+	}
+
+	#[Test]
 	public function learnomy_path_certificate_is_paid_by_path_completion(): void {
 		$cb = $this->trigger( 'learnomy.php', 'learnomy_certificate_issued' );
 		$this->assertSame( 16, $cb( 3, 16, 42 ) );

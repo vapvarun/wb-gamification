@@ -46,13 +46,16 @@ Developer result: Fixed: deactivating and reactivating paid again. Now once per 
 
 ### Write a review (`listora_review_written`)
 
-Awarded to the reviewer when they leave a listing review. Cooldown limits review farming.
+Awarded to the reviewer when their listing review is published (approved). Cooldown limits review farming.
 
-Default: **8 points**. Limit: 300s wait.
+Default: **8 points**. Limit: 300s wait, once per review while it is published.
 
-- [ ] Doing it pays 8 points to the right member.
+- [ ] With reviews auto-approved, submitting a review pays 8 points to the reviewer.
+- [ ] With reviews held for approval, submitting pays nothing; the moderator's approval pays 8.
 - [ ] Switched off, it pays nothing.
 - [ ] Doing it again inside 300 seconds pays nothing. After the wait it pays.
+- [ ] Reject, or delete, an approved review: the 8 points come back off. Approve it again: the 8 come back once.
+- [ ] The reviewer edits an approved review and it goes back to pending: the 8 come off until it is approved again.
 
 Developer result: Run on a test site through the plugin's REST route. Paid the right member.
 

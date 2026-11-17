@@ -19,6 +19,30 @@ if ( ! defined( 'WB_LISTORA_VERSION' ) ) {
 	return array();
 }
 
+/*
+ * A review pays when it is published: at submission when the site auto-approves reviews, otherwise
+ * when a moderator approves it. Listora fires wb_listora_review_submitted for pending reviews too,
+ * so the trigger listens to this bridge, which reads the review's status and author once.
+ * Moderation fires wb_listora_review_status_changed (admin screen and REST alike).
+ */
+$wb_gam_listora_review_published = static function ( $review_id ): void {
+	$review = class_exists( '\WBListora\Core\Reviews_Model' ) ? \WBListora\Core\Reviews_Model::get( (int) $review_id ) : null;
+	if ( is_array( $review ) && 'approved' === ( $review['status'] ?? '' ) ) {
+		do_action( 'wb_gam_listora_review_published', (int) $review_id, (int) ( $review['user_id'] ?? 0 ), (int) ( $review['listing_id'] ?? 0 ) );
+	}
+};
+add_action( 'wb_listora_review_submitted', $wb_gam_listora_review_published, 10, 1 );
+add_action(
+	'wb_listora_review_status_changed',
+	static function ( $review_id, $status ) use ( $wb_gam_listora_review_published ): void {
+		if ( 'approved' === $status ) {
+			$wb_gam_listora_review_published( $review_id );
+		}
+	},
+	10,
+	2
+);
+
 return array(
 	'plugin'   => 'Listora',
 	'version'  => '1.0.0',
@@ -78,15 +102,25 @@ return array(
 		array(
 			'id'                => 'listora_review_written',
 			'label'             => static fn(): string => __( 'Write a review', 'wb-gamification' ),
-			'description'       => static fn(): string => __( 'Awarded to the reviewer when they leave a listing review. Cooldown limits review farming.', 'wb-gamification' ),
-			// Fires: do_action( 'wb_listora_review_submitted', int $review_id, int $listing_id, int $user_id, ... ).
-			'hook'              => 'wb_listora_review_submitted',
-			'user_callback'     => function ( int $review_id, int $listing_id, int $user_id, $criteria = null, $photos = null, $request = null ): int {
+			'description'       => static fn(): string => __( 'Awarded to the reviewer when their listing review is published (approved). Cooldown limits review farming.', 'wb-gamification' ),
+			// Fires: the bridge above, ( int $review_id, int $user_id, int $listing_id ), once the review is approved.
+			'hook'              => 'wb_gam_listora_review_published',
+			'user_callback'     => function ( int $review_id, int $user_id, int $listing_id = 0 ): int {
 				return $user_id;
 			},
-			'metadata_callback' => function ( int $review_id, int $listing_id, int $user_id, $criteria = null, $photos = null, $request = null ): array {
+			'metadata_callback' => function ( int $review_id, int $user_id, int $listing_id = 0 ): array {
 				return array( 'listing_id' => $listing_id );
 			},
+			// Once per review while it is published: rejected, sent back to pending (an edit) or
+			// deleted takes the points back; approved again gives them back.
+			'once_per_object'   => static fn( int $review_id ): int => $review_id,
+			'reverse_on'        => array(
+				'wb_listora_review_status_changed' => static fn( $review_id, $status = '' ): int => 'approved' === $status ? 0 : (int) $review_id,
+				'wb_listora_after_delete_review'   => static fn( $review_id ): int => (int) $review_id,
+			),
+			'restore_on'        => array(
+				'wb_listora_review_status_changed' => static fn( $review_id, $status = '' ): int => 'approved' === $status ? (int) $review_id : 0,
+			),
 			'default_points'    => 8,
 			'category'          => 'listings',
 			'icon'              => 'icon-star',

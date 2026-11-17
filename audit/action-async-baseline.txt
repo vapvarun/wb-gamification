@@ -3,7 +3,7 @@
 # line is '<file>:<line> <action_id>'. New entries fail the gate; legitimate
 # fixes (explicit 'async' => true|false added) should DELETE the line in the
 # same commit.
-# Generated: 2026-11-17T08:57:04Z
+# Generated: 2026-11-17T10:12:54Z
 
 integrations/bbpress.php:89 bbp_topic_closed
 integrations/buddypress.php:102 bp_friends_accepted
@@ -37,8 +37,8 @@ integrations/learndash.php:37 ld_course_completed
 integrations/learndash.php:53 ld_lesson_completed
 integrations/learndash.php:69 ld_topic_completed
 integrations/learndash.php:85 ld_quiz_passed
-integrations/woocommerce.php:170 wc_wishlist_add
-integrations/woocommerce.php:185 wc_add_to_cart
+integrations/woocommerce.php:185 wc_wishlist_add
+integrations/woocommerce.php:200 wc_add_to_cart
 integrations/wpmediaverse.php:123 mvs_create_album
 integrations/wpmediaverse.php:201 mvs_receive_follow
 integrations/wpmediaverse.php:297 mvs_battle_win
