@@ -4,45 +4,73 @@
 
 Go to **WB Gamification > Badges** in your admin menu.
 
-Badges are visual rewards that recognize specific milestones, achievements, or behaviors. Members earn them automatically or receive them from an admin. The badge library shows all badges in a grid. Each card shows the badge icon, name, how many members have earned it, and whether it awards automatically or requires manual granting.
+The Badge Library shows every badge as a card. Each card shows the badge icon, its name, how many members have earned it, and **Auto-award** or **Manual**: whether it is given out on its own or only by hand.
 
 ## Creating a New Badge
 
-Click **+ Create New Badge** in the toolbar. A form appears with two sections: badge details and award condition.
+Click **+ Create New Badge** at the top of the screen. The form has the badge details first, then the award conditions.
 
 ### Badge Details
 
 | Field | Required | Description |
 |-------|----------|-------------|
-| **Badge ID** | Yes | A unique machine-readable identifier. Lowercase letters, numbers, and underscores only (e.g. `first_post`). Cannot be changed after creation. |
-| **Name** | Yes | The display name shown to members when they earn the badge (e.g. "First Post"). |
-| **Description** | No | Explains what the badge is for. Shown on badge cards and the public share page. |
-| **Icon** | No | An image from your Media Library. Recommended size: 128×128 px PNG with a transparent background. Click **Choose Icon** to open the media picker. Click **Remove** to clear it. |
-| **Category** | No | Groups badges in the frontend showcase. Options: General, Points, WordPress, BuddyPress, Special. |
-| **Is Credential** | No | Marks the badge as a verifiable OpenBadges 3.0 credential. Members can share a verified badge URL - useful for professional achievements on LinkedIn. |
-| **Closes at** | No | A date and time after which no new members can earn this badge. Leave blank for no cutoff. Displayed in your site's timezone. |
-| **Max earners** | No | The maximum number of members who can earn this badge. Once reached, the badge stops auto-awarding. Leave blank for unlimited. |
+| **Badge ID** | Yes | A unique identifier. Lowercase letters, numbers and underscores only (for example `first_post`). It cannot be changed after creation. |
+| **Name** | Yes | The name members see when they earn the badge (for example "First Post"). |
+| **Description** | No | What the badge is for. Shown on badge cards and the share page. |
+| **Icon** | No | An image from your Media Library. Recommended: 128x128 px PNG with a transparent background. Click **Choose Icon** to pick one, **Remove** to clear it. |
+| **Category** | No | Groups badges in the front-end showcase: General, Points, WordPress, BuddyPress or Special. |
+| **Is Credential** | No | Makes the badge a verifiable OpenBadges 3.0 credential. Members can share a verified badge link, for example on LinkedIn. |
+| **Valid for (days)** | No | Days the badge stays valid after a member earns it. Then it expires and stops counting. Leave blank so it never expires. |
+| **Closes at** | No | No one can earn the badge after this date and time. Leave blank for no cutoff. Shown in your site's timezone. |
+| **Max earners** | No | The badge stops awarding once this many members have it. Leave blank for unlimited. |
 
-### Auto-Award Condition
+### Auto-Award Conditions
 
-This section controls how the badge is awarded.
+This section decides how the badge is earned. Pick a condition from the list and fill in its value. Click **+ Add condition** to add another, and **Remove this condition** (the x button) to take one away. With two or more conditions, choose whether the member must match **ALL of these** or **ANY of these**.
 
-| Condition | When it awards |
-|-----------|---------------|
-| **Admin awarded only (manual)** | The badge is never awarded automatically. Only admins can grant it via the Award Points page or the Badges page. |
-| **Reaches a point milestone** | Awards automatically when a member's total points reach or exceed a threshold you specify. Enter the point value in **Points Threshold**. |
-| **Performs an action N times** | Awards automatically when a member completes a specific action a set number of times. Choose the **Action** from the dropdown and enter the **Target Count**. |
+| Condition | What you fill in | Awards when |
+|-----------|------------------|-------------|
+| **Admin awarded only (manual)** | Nothing | Never on its own. You grant it from the badge's own page. |
+| **Reaches a point total** | A number of points | The member's total points reach that number. |
+| **Performs an action N times** | An action and a number of times | The member has done that action that many times. |
+| **Reaches a level** | A level | The member reaches that level. |
+| **Has earned another badge** | A badge | The member already holds that badge. |
+| **Keeps a daily streak of N days** | Days in a row | The member's daily streak reaches that many days. |
+| **Has been a member for N days** | Days since joining | That many days have passed since the member registered. Checked once a day. |
+| **Earns N points in a period** | Points, and a day, week or month | The member earns that many points within one day, week or month. |
+
+### Members Who Already Qualify
+
+**Also award this badge to members who already qualify** is off by default. Leave it off and the badge is earned from now on. Tick it and every member who already meets the conditions is awarded the badge in the background. On a large community that can be many people and many notifications. When a run has happened, the form shows how many members it checked and how many got the badge.
 
 Click **Create Badge** to save.
 
 ## Editing a Badge
 
-Click any badge card in the grid to open its edit form. All fields are editable except the Badge ID. Change what you need and click **Save Changes**.
+Click any badge card to open its form. Every field can be changed except the Badge ID. Click **Save Changes** when you are done. Changing a condition does not award the badge to anyone who already qualifies unless you tick **Also award this badge to members who already qualify**.
+
+## Awarding a Badge by Hand
+
+Open the badge. Under **Award this badge to a user**, type at least 2 characters of a member's name, username or email, pick the member, and click **Award Badge**. This works for every badge, including badges that also award on their own.
 
 ## Deleting a Badge
 
-While editing a badge, click **Delete Badge**. Confirm the prompt. This permanently removes the badge definition and all earned records. Members who previously held the badge will lose it from their profiles.
+Open the badge and click **Delete Badge**, then confirm. This removes the badge and every record of members earning it. Members who held it lose it from their profiles. This cannot be undone.
 
-## The 30 Default Badges
+## The 37 Default Badges
 
-The plugin ships with 37 pre-built badge definitions covering common milestones (first post, point milestones, social actions, tenure). They appear in the badge grid on a fresh install. You can edit, delete, or supplement them with your own.
+A fresh install includes 37 badges: point totals, first posts and comments, BuddyPress activity, admin-granted special badges, tenure badges and site-first badges. They appear in the library straight away. You can edit or delete them, or add your own. The full list is in [Badges](../features/20-badges.md#default-badges).
+
+## FAQ
+
+**Why is a badge marked Manual?**
+Its only condition is **Admin awarded only (manual)**. Add any other condition to make it award on its own.
+
+**Can I change a Badge ID?**
+No. Create a new badge with the ID you want and delete the old one. Members lose the old badge when you delete it.
+
+## Troubleshooting
+
+**Members who should have a badge do not have it.** The badge is earned from now on. Open it, tick **Also award this badge to members who already qualify**, and click **Save Changes**.
+
+**A badge stopped awarding.** Check its **Closes at** date and **Max earners** limit.
