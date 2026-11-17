@@ -110,8 +110,23 @@
 .wb-gam-give-kudos__status {
 	margin: 0;
 	font-size: var( --wb-gam-font-sm, 14px );
-	min-height: 1.25rem;
 	color: var( --wb-gam-color-text-light, #6b7280 );
+}
+
+/* Empty until a send reports back. It stays rendered (a live region must exist before its text
+ * changes to be announced) but takes no room: the min-height and the flex gap above it left
+ * about 56px of dead space under "Send Kudos". */
+.wb-gam-give-kudos__status:empty {
+	margin-block-start: calc( -1 * var( --wb-gam-space-md, 16px ) );
+}
+
+/* Inside one of the plugin's blocks (the Give Kudos block itself, the Kudos Feed) the block
+ * already draws the card, so the form drops its own frame: one card, not a card in a card. */
+[class*="wp-block-wb-gamification-"] .wb-gam-give-kudos {
+	padding: 0;
+	border: 0;
+	background: transparent;
+	box-shadow: none;
 }
 
 .wb-gam-give-kudos--guest p {
