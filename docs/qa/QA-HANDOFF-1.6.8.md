@@ -98,7 +98,7 @@ Cards 10459672711 and 10459672796.
 
 ## 5. Do not test in this round
 
-- Credential issuer link, share link after Share, outdated badge docs and the scale benchmark are open and not fixed.
+- Round 1 only: credential issuer link, share link after Share, outdated badge docs and the scale benchmark were open then. All four are fixed in round 2 (Part C sections 17 and 18, Part D row D10).
 - Clean-up items 3 to 8 (10461755109) are optional and not done.
 - Already measured at 10,000 members on Docker: leaderboard, rank, REST and page speed, and a 100,000-row import and undo.
 
@@ -274,5 +274,38 @@ Three throwaway sites ran every action on real plugins (WP Sell Services 1.9.3, 
 ## 21. Before release (not this round)
 
 - Bump the version to 1.6.8 so the upgrade runs by itself.
-- Refresh the wp-plugin-qa baseline (`audit/wppqa-baseline-*`, older than 30 days).
-- Translations: Cursor translates from `languages/wb-gamification.pot` (prompt prepared separately).
+- Translations: Cursor translates from `languages/wb-gamification.pot` (prompt prepared separately). This closes the German card (10469870080, 509 missing strings).
+- Done already: wp-plugin-qa baseline refreshed (`audit/wppqa-baseline-2026-11-17/`), Plugin Check 0 errors, warning baseline 376.
+
+---
+
+# Part D: code logic review (round 2)
+
+Read the code, not only the screen. Round 2 is `a22994d..HEAD` on `1.6.8`: 45 engine and integration commits, 83 files in `src/` and `integrations/`. `git log --reverse a22994d..HEAD` lists every commit; each message says what changed and why.
+
+**Run first, on the branch:** `composer install && composer ci:quick` (PHPCS, PHPStan, unit tests). `composer test:unit -- --filter <TestName>` runs one test. Every row below names the test that must fail if the logic breaks. For each row, read the code, then try the negative case in the browser or with WP-CLI, because a test only proves what it checks.
+
+| # | Area | Commits | Read | Check in the code | Negative case to try |
+|---|---|---|---|---|---|
+| D1 | Points follow the content (P1) | a295b2a, 953411f, 1abf4b7, 28afaec | `src/Engine/PointsEngine.php` `reverse_object_awards()` :1320, `restore_object_awards()` :1337, `settle_object_awards()`, `object_award_rows()` :1456; `src/Engine/Registry.php` `reverse_on` / `restore_on` :106-230 | Reverse writes `{action}_removed` only while the object's net is above 0; restore pays back only while net is 0 or below, capped at the latest award; both read rows with one `SELECT ... FOR UPDATE` inside a transaction; rows with no object id (pre-1.6.8) are never touched; a member being deleted is skipped | Trash, then delete for good: one -25, not two. Trash/restore three times: net +25. Two tabs restoring at once: one row. Award from 1.6.7: unchanged after delete |
+| D2 | Comment reversal | a295b2a, 1bbd111 | `Registry` comment helper (:201-230), `integrations/wordpress.php`, `integrations/wpmediaverse.php` | Spam, trash and delete reverse; unspam and untrash restore; MediaVerse comment reversal acts only on `mvs_comment` comments | Spam then delete: one -5. A normal post comment must not touch `mvs_*` rows |
+| D3 | Copy guard (no double pay) | 501ee59, 61ba426, 98bd85f | `src/Engine/HostActivity.php` `is_copy()` :30; `integrations/buddynext.php` :287; `src/Integrations/Jetonomy/JetonomyIntegration.php` :148 | A join or comment that another plugin copies is skipped; the original still pays | Linked forum to space: copied members get no `bn_space_joined`. Direct join to the space: paid once |
+| D4 | Moderated reviews and listings | a21e1df, 7deb881, 4998a8a, 1034bc6 | `integrations/wp-sell-services.php`, `integrations/wb-listora.php`, `integrations/wb-listora-pro.php` | "Once per review" nets `_removed` rows, so approve after reject pays again; Listora reviews pay on publish, not on submit; listing reject, trash, delete reverse | Approve, reject, approve, approve: +10, -10, +10, no change. A pending Listora review: 0 |
+| D5 | Payout amounts | d41a20c, cb9a3bf | `src/BuddyPress/ActivityIntegration.php`, `integrations/buddypress.php`; `integrations/woocommerce.php` | Reaction pays the amount from the Points screen (no floor of 5); first purchase counts only paid orders with a total above 0 | Reaction set to 1: pays 1. Free order, then COD unpaid, then paid: +50 once on the paid one; a second paid order: 0 |
+| D6 | Skip reasons | 2baf973 | `PointsEngine.php` :289, :413; `Registry.php`; `NotificationBridge.php` | A callback returning 0 logs `not_eligible`, not `self_action` | Waitlisted RSVP: `wb_gam_award_skipped` reason is `not_eligible` |
+| D7 | Submit Achievement (strict) | 21aaec1, d607c56, b37bfe0, a4e50a4, ee2b8ca | `Registry::is_submittable()` :651; `src/Services/SubmissionService.php` :68; `src/Blocks/submit-achievement/render.php` :78 | REST refuses any action not ticked "Members can submit"; the block lists only ticked actions; nothing ticked gives the empty state | `POST /wb-gamification/v1/submissions` with an unticked action id: 403, even as admin |
+| D8 | Member choices | f5d59ef, d91d3a3 | `src/Engine/MemberPrefs.php` (upsert, `render_controls()` :138); `Engine.php` :107 | One `INSERT ... ON DUPLICATE KEY UPDATE` with `%i` identifiers; the action `wb_gam_render_member_prefs` prints only the current member's own choices | Call the action for another member's id while logged in as someone else: nothing printed |
+| D9 | Profiles and privacy | 700b55d, 429575d, 06273f8, e895e8e | `src/Engine/ProfilePage.php`; BuddyPress members directory code | Unknown user and private profile return the same 403 and markup (no user enumeration); guests never see history; directory hides rank for private members | `/u/no-such-user/` and `/u/<private>/`: compare status code and HTML; they must match |
+| D10 | Scale benchmark gate | 606e1d7 | `src/CLI/ScaleCommand.php` :705-720 | The measured award uses `wp_publish_post` (no cooldown), must return true and add one ledger row, or the gate fails | Point it at an action with a cooldown: the run must report FAIL, not about 1 query |
+| D11 | Rewards admin | a3cef41 | Redemption Store REST controller and admin JS | Partial update changes only sent fields; Inactive and Unlimited persist | PATCH title only: status, stock and description unchanged |
+| D12 | Recap, analytics, personal records | 513f52a, 1d86a3e | Year Recap and analytics queries; progress reset | Revoked kudos excluded from every count; reset clears every personal-record key | Revoke a kudos: recap and analytics both drop by one |
+| D13 | Notifications and overlays | 5031159, fca25f9, eb159f8 | `src/Engine/NotificationBridge.php`; front-end toast and moment JS | Moment card does not block clicks; toasts wait while `dialog[open]` or a modal is open; only the highest pending level-up is shown | Two level-ups while away: one card, highest level |
+| D14 | Activity cards and same-day grouping | 341b28e, b1edd87, 6fa7fbd | `src/BuddyPress/Stream/BadgeStream.php`, `ActivityCard.php` | Grouping reads `date_recorded` in the site's day; credential badges never group; the upgrade step repairs old cards in the background | Three badges on one day: one post. A badge just after midnight: a new post |
+
+**Also review across the diff:**
+- **Security:** every new REST route or argument has a permission callback and sanitising; output is escaped; SQL uses `$wpdb->prepare()` with `%i` for identifiers.
+- **Scale:** no query inside a loop over members or rows; new `WHERE` columns are indexed (the 1.6.8 upgrade adds the ledger index used by D1).
+- **Translations:** new strings carry the `wb-gamification` text domain, numbered placeholders and a `translators:` comment.
+- **PHP 8.1 to 8.5:** run with `WP_DEBUG` on; any notice or deprecation from our code is a bug.
+
+Report a code finding on the card it belongs to, citing `file:line` and the commit. With no card, list it in your round summary.
