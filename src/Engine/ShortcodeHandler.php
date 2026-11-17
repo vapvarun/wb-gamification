@@ -685,7 +685,8 @@ final class ShortcodeHandler {
 									// on a MySQL running IST it told the member a reward they had just redeemed
 									// was claimed "6 hours ago". Rows written before that fix still carry the old
 									// host's offset; new ones are correct.
-									echo esc_html( human_time_diff( strtotime( $row_when ), time() ) . ' ' . __( 'ago', 'wb-gamification' ) );
+									/* translators: %s: human-readable time difference. */
+									echo esc_html( sprintf( __( '%s ago', 'wb-gamification' ), human_time_diff( strtotime( $row_when ), time() ) ) );
 									?>
 								</span>
 							<?php endif; ?>

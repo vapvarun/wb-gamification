@@ -265,9 +265,7 @@
 				}
 				if ( badgesCount ) {
 					var board      = li.closest( '[data-wb-gam-board="leaderboard"]' );
-				var badgeTmpl  = ( n === 1
-					? ( board && board.getAttribute( 'data-wb-gam-badges-one' ) ) || '%d badge'
-					: ( board && board.getAttribute( 'data-wb-gam-badges-other' ) ) || '%d badges' );
+				var badgeTmpl  = ( board && board.getAttribute( 'data-wb-gam-badges-label' ) ) || 'Badges: %d';
 				var badgesText = badgeTmpl.replace( '%d', n );
 					if ( badgesCount.textContent !== badgesText ) {
 						badgesCount.textContent = badgesText;

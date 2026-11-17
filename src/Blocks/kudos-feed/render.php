@@ -156,7 +156,10 @@ BlockHooks::before( 'kudos-feed', $wb_gam_attrs );
 					<time class="wb-gam-kudos-feed__time"
 						datetime="<?php echo esc_attr( gmdate( 'c', $wb_gam_kudo_ts ) ); ?>"
 						title="<?php echo esc_attr( wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $wb_gam_kudo_ts ) ); ?>">
-						<?php echo esc_html( human_time_diff( $wb_gam_kudo_ts, time() ) . ' ' . __( 'ago', 'wb-gamification' ) ); ?>
+						<?php
+						/* translators: %s: human-readable time difference. */
+						echo esc_html( sprintf( __( '%s ago', 'wb-gamification' ), human_time_diff( $wb_gam_kudo_ts, time() ) ) );
+						?>
 					</time>
 				</li>
 			<?php endforeach; ?>

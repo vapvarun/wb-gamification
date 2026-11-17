@@ -316,10 +316,10 @@ const Edit = ( { attributes, setAttributes, clientId } ) => {
 					status={
 						limit > 0
 							? sprintf(
-									/* translators: %d: number of items shown. */
+									/* translators: 1: number of rewards shown, 2: number of columns. */
 									_n(
-										'Showing up to %d reward in %s columns',
-										'Showing up to %d rewards in %s columns',
+										'Showing up to %1$d reward in %2$s columns',
+										'Showing up to %1$d rewards in %2$s columns',
 										limit,
 										'wb-gamification'
 									),
