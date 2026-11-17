@@ -114,14 +114,23 @@
  * and BuddyBoss: icon on the start side, a small uppercase label, the name, a one-line reason.
  * Theme tokens only, so it follows the theme's light/dark mode; logical properties for RTL.
  * Markup: src/BuddyPress/Stream/ActivityCard.php. The badge, level, kudos and challenge icons
- * carry their own tinted plate, so the image sits on no background of its own. */
+ * carry their own tinted plate, so the image sits on no background of its own.
+ *
+ * The card is a paragraph (.wb-gam-activity-card-wrap) so the theme insets and spaces it like
+ * the text of any post: BuddyX pads activity paragraphs 0 15px with a 15px bottom margin, Reign
+ * and Nouveau give them margins. The plugin adds only a small top gap, never a side inset of its
+ * own, so no theme gets double padding. */
+.wb-gam-activity-card-wrap {
+	margin-block-start: var(--wb-gam-space-sm);
+}
+
 .wb-gam-activity-card {
 	display: flex;
 	align-items: center;
 	gap: 12px;
 	box-sizing: border-box;
 	max-inline-size: 100%;
-	margin-block: var(--wb-gam-space-sm) 0;
+	margin: 0;
 	padding-block: 10px;
 	padding-inline: 12px var(--wb-gam-space-md);
 	border: 1px solid var(--wb-gam-color-border);

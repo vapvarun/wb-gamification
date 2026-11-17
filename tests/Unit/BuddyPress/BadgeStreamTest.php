@@ -132,8 +132,10 @@ class BadgeStreamTest extends TestCase {
 
 	#[Test]
 	public function stripped_cards_are_detected_for_repair(): void {
-		$good = '<div class="wb-gam-activity-card wb-gam-activity-card--badge"><img class="wb-gam-activity-card__icon" src="x" alt="" /><div class="wb-gam-activity-card__body"><span>a</span></div></div>';
+		$good = '<p class="wb-gam-activity-card-wrap"><span class="wb-gam-activity-card wb-gam-activity-card--badge"><img class="wb-gam-activity-card__icon" src="x" alt="" /><span class="wb-gam-activity-card__body"><span>a</span></span></span></p>';
 		$this->assertTrue( ActivityCard::has_card( $good ) );
+		// The 1.6.8 development <div> card is redrawn too.
+		$this->assertFalse( ActivityCard::has_card( '<div class="wb-gam-activity-card wb-gam-activity-card--badge"><img class="wb-gam-activity-card__icon" src="x" alt="" /><div class="wb-gam-activity-card__body"><span>a</span></div></div>' ) );
 		// BuddyBoss kept the img class but dropped both divs.
 		$this->assertFalse( ActivityCard::has_card( '<img class="wb-gam-activity-card__icon" src="x" /><span class="wb-gam-activity-card__eyebrow">Badge earned</span>' ) );
 		// BuddyPress dropped every class.

@@ -37,6 +37,7 @@ final class ActivityCard {
 	 * only while our own component's content is filtered, never for a member's own post.
 	 */
 	private const CARD_TAGS = array(
+		'p'    => array( 'class' => true ),
 		'div'  => array( 'class' => true ),
 		'span' => array( 'class' => true ),
 		'img'  => array(
@@ -56,6 +57,13 @@ final class ActivityCard {
 	private static bool $own_content = false;
 
 	/**
+	 * True while wpautop is off for the card being displayed.
+	 *
+	 * @var bool
+	 */
+	private static bool $autop_removed = false;
+
+	/**
 	 * Let the card survive BuddyPress's kses for our component only, and load its stylesheet
 	 * wherever an activity stream shows.
 	 */
@@ -64,6 +72,8 @@ final class ActivityCard {
 		// bp_activity_filter_kses runs at priority 1; mark the activity before it, clear after.
 		add_filter( 'bp_get_activity_content_body', array( __CLASS__, 'mark_display' ), 0, 2 );
 		add_filter( 'bp_get_activity_content_body', array( __CLASS__, 'clear_mark' ), 2 );
+		// wpautop (priority 10) is taken off for our card only and put back after the run.
+		add_filter( 'bp_get_activity_content_body', array( __CLASS__, 'restore_autop' ), 999 );
 		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'enqueue_on_community_pages' ) );
 		// Any other page that renders an activity loop on the server (a widget, a block).
 		add_action( 'bp_before_activity_entry', array( __CLASS__, 'enqueue_style' ) );
@@ -94,6 +104,28 @@ final class ActivityCard {
 	 */
 	public static function mark_display( $content, $activity = null ) {
 		self::$own_content = is_object( $activity ) && isset( $activity->component ) && self::COMPONENT === $activity->component;
+
+		// BuddyPress runs wpautop on activity content. On the card it wraps the inline <img>
+		// before the body <div> in a <p> of its own, and a theme that pads paragraphs (BuddyX:
+		// 0 15px) turned that empty <p> into a 60px gap. The card is finished markup, so wpautop
+		// is skipped for it; WP_Hook honours a removal made before its priority is reached.
+		if ( self::$own_content ) {
+			self::$autop_removed = (bool) remove_filter( 'bp_get_activity_content_body', 'wpautop' );
+		}
+		return $content;
+	}
+
+	/**
+	 * Put wpautop back after our card has been filtered, so the next activity gets it.
+	 *
+	 * @param string $content Activity content.
+	 * @return string Unchanged content.
+	 */
+	public static function restore_autop( $content ) {
+		if ( self::$autop_removed ) {
+			add_filter( 'bp_get_activity_content_body', 'wpautop' );
+			self::$autop_removed = false;
+		}
 		return $content;
 	}
 
@@ -193,15 +225,22 @@ final class ActivityCard {
 		}
 
 		// The name sits right next to the icon, so the image is decorative (empty alt).
+		// One paragraph of inline elements (laid out by CSS). Activity themes inset and space the
+		// paragraphs of a post (BuddyX pads them 0 15px, Reign and Nouveau give them margins), so
+		// a card that IS a paragraph sits inside the entry exactly like its text, on every theme,
+		// with no theme-specific padding of its own. Inline-only content also leaves wpautop
+		// nothing to wrap.
 		return sprintf(
-			'<div class="wb-gam-activity-card wb-gam-activity-card--%1$s">'
-				. '<img class="wb-gam-activity-card__icon" src="%2$s" alt="" width="40" height="40" />'
-				. '<div class="wb-gam-activity-card__body">'
-					. '<span class="wb-gam-activity-card__eyebrow">%3$s</span>'
-					. '<span class="wb-gam-activity-card__title">%4$s</span>'
-					. ( '' !== $description ? '<span class="wb-gam-activity-card__desc">%5$s</span>' : '' )
-				. '</div>'
-			. '</div>',
+			'<p class="wb-gam-activity-card-wrap">'
+				. '<span class="wb-gam-activity-card wb-gam-activity-card--%1$s">'
+					. '<img class="wb-gam-activity-card__icon" src="%2$s" alt="" width="40" height="40" />'
+					. '<span class="wb-gam-activity-card__body">'
+						. '<span class="wb-gam-activity-card__eyebrow">%3$s</span>'
+						. '<span class="wb-gam-activity-card__title">%4$s</span>'
+						. ( '' !== $description ? '<span class="wb-gam-activity-card__desc">%5$s</span>' : '' )
+					. '</span>'
+				. '</span>'
+			. '</p>',
 			$type_class,
 			esc_url( $image_url ),
 			esc_html( $label ),
@@ -212,13 +251,14 @@ final class ActivityCard {
 
 	/**
 	 * Whether stored content already carries the current card markup. Rows saved before 1.6.8
-	 * through BuddyPress's kses lost the wrapper and classes; older rows had a different shape.
+	 * through BuddyPress's kses lost the wrapper and classes; older rows had a different shape
+	 * (including the 1.6.8 development <div> card), so the Backfiller redraws them.
 	 *
 	 * @param string $content Stored activity content.
 	 */
 	public static function has_card( string $content ): bool {
-		if ( false === strpos( $content, '<div class="wb-gam-activity-card wb-gam-activity-card--' )
-			|| false === strpos( $content, '<div class="wb-gam-activity-card__body">' ) ) {
+		if ( false === strpos( $content, '<p class="wb-gam-activity-card-wrap"><span class="wb-gam-activity-card wb-gam-activity-card--' )
+			|| false === strpos( $content, '<span class="wb-gam-activity-card__body">' ) ) {
 			return false;
 		}
 		foreach ( array( 'data:image', 'src="image/svg', 'loading="lazy"', '<strong class="wb-gam-activity-card__title"', '<p class="wb-gam-activity-card__desc"' ) as $legacy ) {
