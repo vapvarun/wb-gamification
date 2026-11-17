@@ -93,9 +93,13 @@
   font-size: 18px;
 }
 
+/* Eyebrow on its own line above the sentence: the label and text are spans, so without this
+ * they ran together ("SUGGESTED FOR YOU You earned 5 new badges!"). */
 .gam-nudge__body {
   flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .gam-nudge__label {
