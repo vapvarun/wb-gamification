@@ -95,6 +95,51 @@ class CredentialController extends WP_REST_Controller {
 				),
 			)
 		);
+
+		// GET /issuer - the issuer Profile every credential points at. Public: verifiers fetch it.
+		register_rest_route(
+			$this->namespace,
+			'/issuer',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_issuer' ),
+					'permission_callback' => '__return_true',
+				),
+			)
+		);
+	}
+
+	/**
+	 * The issuer Profile (OpenBadges 3.0) that every credential's `issuer.id` resolves to.
+	 *
+	 * Only the site's public name and address: nothing about any member.
+	 *
+	 * @since 1.6.8
+	 *
+	 * @return WP_REST_Response
+	 */
+	public function get_issuer(): WP_REST_Response {
+		$profile = array( '@context' => 'https://purl.imsglobal.org/spec/ob/v3p0/context-3.0.3.json' ) + $this->issuer_profile();
+
+		$response = new WP_REST_Response( $profile, 200 );
+		$response->header( 'Content-Type', 'application/ld+json' );
+		$response->header( 'Cache-Control', 'public, max-age=3600' );
+		return $response;
+	}
+
+	/**
+	 * The issuer as it appears in a credential and at its own URL.
+	 *
+	 * @return array{id: string, type: string, name: string, url: string}
+	 */
+	private function issuer_profile(): array {
+		return array(
+			'id'   => rest_url( $this->namespace . '/issuer' ),
+			'type' => 'Profile',
+			'name' => get_bloginfo( 'name' ),
+			'url'  => get_site_url(),
+		);
 	}
 
 	/**
@@ -247,8 +292,7 @@ class CredentialController extends WP_REST_Controller {
 		$expires_at = $badge_row['expires_at'];
 
 		$site_url   = get_site_url();
-		$site_name  = get_bloginfo( 'name' );
-		$issuer_url = rest_url( $this->namespace . '/issuer' );
+		$issuer     = $this->issuer_profile();
 		$cred_url   = rest_url( $this->namespace . '/badges/' . $badge_id . '/credential/' . $user_id );
 		$badge_url  = rest_url( $this->namespace . '/badges/' . $badge_id );
 		$issued_on  = $earned_at
@@ -267,12 +311,7 @@ class CredentialController extends WP_REST_Controller {
 			'id'                => $cred_url,
 			'type'              => array( 'VerifiableCredential', 'OpenBadgeCredential' ),
 
-			'issuer'            => array(
-				'id'   => $issuer_url,
-				'type' => 'Profile',
-				'name' => $site_name,
-				'url'  => $site_url,
-			),
+			'issuer'            => $issuer,
 
 			'issuanceDate'      => $issued_on,
 			'name'              => $badge['name'],
@@ -292,11 +331,7 @@ class CredentialController extends WP_REST_Controller {
 					'criteria'    => array(
 						'narrative' => $badge['description'],
 					),
-					'issuer'      => array(
-						'id'   => $issuer_url,
-						'type' => 'Profile',
-						'name' => $site_name,
-					),
+					'issuer'      => $issuer,
 				),
 			),
 

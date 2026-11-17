@@ -71,7 +71,7 @@ The credential is an OpenBadges 3.0 document in JSON-LD form. It lives at:
 /wp-json/wb-gamification/v1/badges/{badge-id}/credential/{member-id}
 ```
 
-It holds the badge name and description, the badge image, the member's display name, the date it was issued and the expiry date, if any. It names your site as the issuer.
+It holds the badge name and description, the badge image, the member's display name, the date it was issued and the expiry date, if any. It names your site as the issuer, and links to your site's issuer page (`/wp-json/wb-gamification/v1/issuer`), which shows your site's name and address so a verifier can confirm who issued it.
 
 ## How Someone Verifies It
 

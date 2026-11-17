@@ -28,6 +28,12 @@ The credential JSON is available at:
 GET /wp-json/wb-gamification/v1/badges/{badge_id}/credential/{user_id}
 ```
 
+Each credential names your site as the issuer and links to your site's issuer page, which anyone can open to see your site's name and address:
+
+```
+GET /wp-json/wb-gamification/v1/issuer
+```
+
 ## LinkedIn "Add to Profile" Link
 
 Credential badges include a pre-built LinkedIn deep-link on the share page. Clicking it takes the member directly to LinkedIn's "Add Certification" flow with the badge name, issuer, and credential URL pre-filled. No copying and pasting required.
