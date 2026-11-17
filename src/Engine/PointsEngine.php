@@ -286,7 +286,7 @@ final class PointsEngine {
 			case 'excluded':
 				return __( 'This account is excluded from earning points.', 'wb-gamification' );
 			default:
-				// Engine-internal vetoes (sandboxed, self_action, pre_change_veto)
+				// Engine-internal vetoes (sandboxed, not_eligible, pre_change_veto)
 				// have no caller-facing explanation.
 				return '';
 		}
@@ -410,8 +410,10 @@ final class PointsEngine {
 				 *   - non_repeatable  — already-claimed action.repeatable=false trigger
 				 *   - daily_cap       — action.daily_cap reached
 				 *   - weekly_cap      — action.weekly_cap reached
-				 *   - self_action     — user_callback returned 0 (commenting on
-				 *                       your own media, etc.)
+				 *   - not_eligible    — the action's own user_callback returned 0: the
+				 *                       event pays nobody (your own content, a share, a
+				 *                       waitlisted RSVP, a free plan, a copy already paid).
+				 *                       user_id is 0. Was `self_action` before 1.6.8.
 				 *
 				 * Reasons emitted by adapters (e.g. Jetonomy):
 				 *   - sandboxed        — wb_gam_sandboxed user meta veto

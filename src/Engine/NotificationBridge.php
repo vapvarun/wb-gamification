@@ -301,7 +301,7 @@ final class NotificationBridge {
 		}
 
 		// The ONLY reasons a member may ever be shown. An engine-internal veto (`sandboxed`,
-		// `self_action`, `pre_change_veto`, `excluded`) describes a decision the SITE made about the
+		// `not_eligible`, `pre_change_veto`, `excluded`) describes a decision the SITE made about the
 		// member -- it is not feedback, and it is not the member's business.
 		//
 		// 1.6.3 promised exactly this in its docblock ("never eligible regardless of this filter")

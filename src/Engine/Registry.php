@@ -297,7 +297,7 @@ final class Registry {
 				'wb_gam_award_skipped',
 				$user_id,
 				(string) $action['id'],
-				'self_action',
+				'not_eligible',
 				array()
 			);
 			return;
