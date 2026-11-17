@@ -188,7 +188,8 @@ $free_triggers = array(
 			);
 		},
 		'once_per_object'   => static fn( $media_id, $user_id, $comment_id ): int => (int) $comment_id,
-		...\WBGam\Engine\Registry::comment_object_hooks(),
+		// MediaVerse comments are WordPress comments of type mvs_comment, deleted with wp_delete_comment().
+		...\WBGam\Engine\Registry::comment_object_hooks( 'mvs_comment' ),
 		'default_points'    => 5,
 		'category'          => 'media',
 		'icon'              => 'icon-message-circle',
@@ -259,7 +260,8 @@ $free_triggers = array(
 			return strlen( $content ) >= 20 ? $user_id : 0;
 		},
 		'once_per_object' => static fn( $media_id, $user_id, $comment_id ): int => (int) $comment_id,
-		...\WBGam\Engine\Registry::comment_object_hooks(),
+		// MediaVerse comments are WordPress comments of type mvs_comment, deleted with wp_delete_comment().
+		...\WBGam\Engine\Registry::comment_object_hooks( 'mvs_comment' ),
 		'default_points'  => 3,
 		'category'        => 'social',
 		'icon'            => 'icon-message-square',

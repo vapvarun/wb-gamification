@@ -283,6 +283,28 @@ class ContentReversalTest extends TestCase {
 	}
 
 	#[Test]
+	public function a_mediaverse_award_is_reversed_only_by_a_mediaverse_comment(): void {
+		require_once __DIR__ . '/Stubs/WPCommentStub.php';
+		$types = array(
+			300 => 'mvs_comment',
+			301 => 'comment',
+		);
+		Functions\when( 'get_comment' )->alias(
+			static function ( $id ) use ( $types ) {
+				$c               = new \WP_Comment();
+				$c->comment_type = $types[ $id ] ?? 'comment';
+				return $c;
+			}
+		);
+		$hooks = Registry::comment_object_hooks( 'mvs_comment' );
+
+		$this->assertSame( 300, $hooks['reverse_on']['delete_comment']( 300 ) );
+		$this->assertSame( 0, $hooks['reverse_on']['delete_comment']( 301 ) );
+		$this->assertSame( 0, $hooks['restore_on']['untrashed_comment']( 301 ) );
+		$this->assertSame( 301, Registry::comment_object_hooks()['reverse_on']['trashed_comment']( 301 ) );
+	}
+
+	#[Test]
 	public function history_names_the_reversal_after_the_action(): void {
 		$this->assertSame( 'Wp Publish Post (content removed)', Registry::label_for( 'wp_publish_post_removed' ) );
 		$this->assertSame( 'Wp Publish Post (content restored)', Registry::label_for( 'wp_publish_post_restored' ) );

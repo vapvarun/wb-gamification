@@ -206,13 +206,15 @@ final class Registry {
 	 *
 	 * @since 1.6.8
 	 *
+	 * @param string $comment_type Only comments of this type (e.g. MediaVerse's 'mvs_comment'); '' for any.
 	 * @return array{reverse_on: array<string, callable>, restore_on: array<string, callable>}
 	 */
-	public static function comment_object_hooks(): array {
-		$removed  = static fn( $comment_id ): int => (int) $comment_id;
-		$returned = static function ( $comment_id ): int {
+	public static function comment_object_hooks( string $comment_type = '' ): array {
+		$ours     = static fn( $comment ): bool => $comment instanceof \WP_Comment && ( '' === $comment_type || $comment_type === $comment->comment_type );
+		$removed  = static fn( $comment_id ): int => $ours( get_comment( (int) $comment_id ) ) ? (int) $comment_id : 0;
+		$returned = static function ( $comment_id ) use ( $ours ): int {
 			$comment = get_comment( (int) $comment_id );
-			return $comment && '1' === (string) $comment->comment_approved ? (int) $comment_id : 0;
+			return $ours( $comment ) && '1' === (string) $comment->comment_approved ? (int) $comment_id : 0;
 		};
 		return array(
 			'reverse_on' => array(
