@@ -57,6 +57,7 @@ final class ShortcodeHandler {
 		add_shortcode( 'wb_gam_cohort_rank', array( __CLASS__, 'render_cohort_rank' ) );
 		add_shortcode( 'wb_gam_redemption_store', array( __CLASS__, 'render_redemption_store' ) );
 		add_shortcode( 'wb_gam_my_rewards', array( __CLASS__, 'render_my_rewards' ) );
+		add_shortcode( 'wb_gam_daily_bonus', array( __CLASS__, 'render_daily_bonus' ) );
 	}
 
 	// ── Shortcode renderers ───────────────────────────────────────────────────
@@ -540,6 +541,17 @@ final class ShortcodeHandler {
 				'show_progress_bar' => 'false' !== $atts['show_progress_bar'],
 			)
 		);
+	}
+
+	/**
+	 * Render [wb_gam_daily_bonus]: the Daily Login Bonus block (streak, today's points, next
+	 * tiers) for page builders and classic content. The block has no content attributes.
+	 *
+	 * @param array|string $atts Unused.
+	 * @return string Rendered HTML.
+	 */
+	public static function render_daily_bonus( $atts = array() ): string { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found -- shortcode signature.
+		return self::block( 'daily-bonus', array() );
 	}
 
 	/**

@@ -46,7 +46,7 @@ class ShortcodeHandlerTest extends TestCase {
 		$registered = [];
 
 		Functions\expect( 'add_shortcode' )
-			->times( 17 )
+			->times( 18 )
 			->andReturnUsing( static function ( string $tag ) use ( &$registered ): void {
 				$registered[] = $tag;
 			} );
@@ -71,6 +71,7 @@ class ShortcodeHandlerTest extends TestCase {
 			'wb_gam_cohort_rank',
 			'wb_gam_give_kudos',
 			'wb_gam_my_rewards',
+			'wb_gam_daily_bonus',
 		];
 
 		sort( $expected );
