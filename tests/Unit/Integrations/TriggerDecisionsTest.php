@@ -71,6 +71,42 @@ class TriggerDecisionsTest extends TestCase {
 	}
 
 	#[Test]
+	public function a_member_copied_into_a_buddynext_space_is_not_paid_the_join_again(): void {
+		require_once __DIR__ . '/Stubs/IntegrationActivityStub.php';
+		$cb = $this->trigger( 'buddynext.php', 'bn_space_joined' );
+		$this->assertSame( 16, $cb( 3, 16, 'member' ) );
+
+		\BuddyNext\Feed\IntegrationActivity::$mirror = true;
+		try {
+			$this->assertSame( 0, $cb( 3, 16, 'member' ) );
+		} finally {
+			\BuddyNext\Feed\IntegrationActivity::$mirror = false;
+		}
+	}
+
+	#[Test]
+	public function an_activity_comment_mediaverse_copied_from_a_photo_comment_earns_nothing(): void {
+		$cb       = $this->trigger( 'buddypress.php', 'bp_activity_comment' );
+		$activity = (object) array( 'id' => 5 );
+		$this->assertSame( 16, $cb( 9, array( 'user_id' => 16 ), $activity ), 'A genuine activity comment still pays.' );
+
+		Functions\when( 'doing_action' )->alias( fn( $h ) => 'mvs_comment_created' === $h );
+		$this->assertSame( 0, $cb( 9, array( 'user_id' => 16 ), $activity ) );
+	}
+
+	#[Test]
+	public function a_photo_comment_synced_from_an_activity_comment_earns_nothing(): void {
+		defined( 'MVS_VERSION' ) || define( 'MVS_VERSION', '1.0.0-test' );
+		$cb   = $this->trigger( 'wpmediaverse.php', 'mvs_give_comment' );
+		$text = 'A comment long enough to count.';
+		$this->assertSame( 16, $cb( 4, 16, 77, $text, '' ) );
+		$this->assertSame( 16, $cb( 4, 16, 77, $text ), 'MediaVerse before the source argument.' );
+		$this->assertSame( 0, $cb( 4, 16, 77, $text, 'bp_activity' ) );
+
+		$this->assertSame( 0, $this->trigger( 'wpmediaverse.php', 'mvs_receive_comment' )( 4, 16, 77, $text, 'bp_activity' ) );
+	}
+
+	#[Test]
 	public function learnomy_path_certificate_is_paid_by_path_completion(): void {
 		$cb = $this->trigger( 'learnomy.php', 'learnomy_certificate_issued' );
 		$this->assertSame( 16, $cb( 3, 16, 42 ) );

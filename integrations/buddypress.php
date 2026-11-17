@@ -72,6 +72,11 @@ return [
 			'description'         => static fn(): string => __( 'Awarded when a member comments on an activity update.', 'wb-gamification' ),
 			'hook'                => 'bp_activity_comment_posted',
 			'user_callback'       => function ( int $comment_id, array $params, object $activity ): int {
+				// MediaVerse copies a media comment onto the photo's activity from inside
+				// mvs_comment_created; that comment was paid there (mvs_give_comment).
+				if ( doing_action( 'mvs_comment_created' ) ) {
+					return 0;
+				}
 				return (int) ( $params['user_id'] ?? 0 );
 			},
 			// Capture word count and parent activity for quality scoring.

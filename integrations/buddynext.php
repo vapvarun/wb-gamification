@@ -282,7 +282,9 @@ return array(
 			// Fires: do_action( 'buddynext_space_member_joined', int $space_id, int $user_id, string $role ).
 			'hook'              => 'buddynext_space_member_joined',
 			'user_callback'     => function ( int $space_id, int $user_id, string $role ): int {
-				return $user_id;
+				// A member BuddyNext copies into a space from its linked forum joined once, and was
+				// paid there (jetonomy_space_joined).
+				return \WBGam\Engine\HostActivity::is_copy() ? 0 : $user_id;
 			},
 			'metadata_callback' => function ( int $space_id, int $user_id, string $role ): array {
 				return array(

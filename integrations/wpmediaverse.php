@@ -170,9 +170,10 @@ $free_triggers = array(
 		'label'             => static fn(): string => __( 'Receive a comment on a photo', 'wb-gamification' ),
 		'description'       => static fn(): string => __( 'Awarded to the media owner when someone comments on their photo.', 'wb-gamification' ),
 		'hook'              => 'mvs_comment_created',
-		'user_callback'     => function ( int $media_id, int $user_id, int $comment_id, string $content ): int {
-				// BuddyNext copy of a follow/comment another plugin already paid for.
-			if ( \WBGam\Engine\HostActivity::is_copy() ) {
+		'user_callback'     => function ( int $media_id, int $user_id, int $comment_id, string $content, string $source = '' ): int {
+			// BuddyNext copy of a follow/comment another plugin already paid for. A comment MediaVerse
+			// synced from a BuddyPress activity comment was paid there (bp_activity_comment).
+			if ( \WBGam\Engine\HostActivity::is_copy() || 'bp_activity' === $source ) {
 				return 0;
 			}
 			$author = wb_gam_mvs_media_author( $media_id );
@@ -248,9 +249,10 @@ $free_triggers = array(
 		'label'           => static fn(): string => __( 'Write a meaningful comment', 'wb-gamification' ),
 		'description'     => static fn(): string => __( 'Awarded when a member leaves a comment of 20+ characters.', 'wb-gamification' ),
 		'hook'            => 'mvs_comment_created',
-		'user_callback'   => function ( int $media_id, int $user_id, int $comment_id, string $content ): int {
-				// BuddyNext copy of a follow/comment another plugin already paid for.
-			if ( \WBGam\Engine\HostActivity::is_copy() ) {
+		'user_callback'   => function ( int $media_id, int $user_id, int $comment_id, string $content, string $source = '' ): int {
+			// BuddyNext copy of a follow/comment another plugin already paid for. A comment MediaVerse
+			// synced from a BuddyPress activity comment was paid there (bp_activity_comment).
+			if ( \WBGam\Engine\HostActivity::is_copy() || 'bp_activity' === $source ) {
 				return 0;
 			}
 			// Only award for meaningful comments (20+ chars).
