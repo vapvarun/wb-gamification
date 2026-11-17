@@ -187,7 +187,7 @@ final class PersonalRecordEngine {
 	 * @param string $period 'day' | 'week' | 'month'.
 	 * @return string
 	 */
-	private static function period_key( string $period ): string {
+	public static function period_key( string $period ): string {
 		return match ( $period ) {
 			'day'   => Clock::site_date(),
 			'week'  => Clock::site_week(),
