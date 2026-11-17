@@ -1365,8 +1365,9 @@ final class PointsEngine {
 	 * @return int Rows written.
 	 */
 	private static function settle_object_awards( array $targets, bool $reverse ): int {
-		// One unlocked indexed read first, and nothing more when there is nothing to do (most deletes).
-		if ( ! self::object_award_deltas( self::object_award_rows( $targets, false ), $reverse ) ) {
+		// One indexed read first, and nothing more when there is nothing to do (most deletes). Outside
+		// a transaction its row locks end with the statement.
+		if ( ! self::object_award_deltas( self::object_award_rows( $targets ), $reverse ) ) {
 			return 0;
 		}
 
@@ -1374,7 +1375,7 @@ final class PointsEngine {
 		$written = (int) Transaction::run(
 			static function () use ( $targets, $reverse, &$users ) {
 				$written = 0;
-				foreach ( self::object_award_deltas( self::object_award_rows( $targets, true ), $reverse ) as $row ) {
+				foreach ( self::object_award_deltas( self::object_award_rows( $targets ), $reverse ) as $row ) {
 					$event = new Event(
 						array(
 							'action_id'  => $row['action_id'] . ( $reverse ? self::REMOVED_SUFFIX : self::RESTORED_SUFFIX ),
@@ -1445,12 +1446,14 @@ final class PointsEngine {
 	 * Each member's standing for each target object, per point type: net held and latest award.
 	 *
 	 * Reads the individual rows (a handful per object) in id order, so the latest award is known.
+	 * Always a locking read: inside settle_object_awards()' transaction the rows stay locked until
+	 * the write commits; outside one (the cheap first check) the locks end with the statement. One
+	 * literal query, no SQL assembled from a flag.
 	 *
 	 * @param array<string, int[]> $targets Action id => object ids.
-	 * @param bool                 $lock    Lock the rows (inside a transaction).
 	 * @return array<int, array{action_id: string, object_id: int, user_id: int, point_type: string, net: int, last_award: int}>
 	 */
-	private static function object_award_rows( array $targets, bool $lock ): array {
+	private static function object_award_rows( array $targets ): array {
 		global $wpdb;
 
 		$base_of    = array();
@@ -1478,7 +1481,7 @@ final class PointsEngine {
 				   FROM {$wpdb->prefix}wb_gam_points
 				  WHERE action_id IN (" . implode( ',', array_fill( 0, count( $acts ), '%s' ) ) . ')
 				    AND object_id IN (' . implode( ',', array_fill( 0, count( $ids ), '%d' ) ) . ')
-				  ORDER BY id' . ( $lock ? ' FOR UPDATE' : '' ),
+				  ORDER BY id FOR UPDATE',
 				array_merge( $acts, $ids )
 			),
 			ARRAY_A
