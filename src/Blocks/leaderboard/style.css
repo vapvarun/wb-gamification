@@ -68,7 +68,7 @@
 	text-align: center;
 }
 
-.wb-gam-rank-1 .wb-gam-leaderboard__rank { color: var(--wb-gam-gold); }
+.wb-gam-rank-1 .wb-gam-leaderboard__rank { color: var(--wb-gam-color-gold-text); }
 .wb-gam-rank-2 .wb-gam-leaderboard__rank { color: var(--wb-gam-silver); }
 .wb-gam-rank-3 .wb-gam-leaderboard__rank { color: var(--wb-gam-bronze); }
 

@@ -169,8 +169,9 @@ body.admin-bar .wb-gam-status-bar--sticky-top {
 
 .wb-gam-status-bar__stat--points    { color: var( --wb-gam-status-accent ); }
 .wb-gam-status-bar__stat--level     { color: var( --wb-gam-status-fg ); }
-.wb-gam-status-bar__stat--badges    { color: var(--wb-gam-gold); }
-.wb-gam-status-bar__stat--streak    { color: var(--wb-gam-color-fire); }
+.wb-gam-status-bar__stat--badges    { color: var(--wb-gam-color-gold-text); }
+/* Text-safe inks: amber fire was 2.15:1 on white, fire-strong is 5.02:1 (lifted in dark). */
+.wb-gam-status-bar__stat--streak    { color: var(--wb-gam-color-fire-strong); }
 
 .wb-gam-status-bar__icon {
 	flex-shrink: 0;

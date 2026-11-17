@@ -65,7 +65,9 @@
 	align-items: baseline;
 	gap: 6px;
 	background: var( --wb-gam-redemption-muted-bg );
-	color: var( --wb-gam-redemption-accent );
+	/* Accent text on the accent tint: accent-text (accent mixed toward the body text) reads
+	 * 4.9:1 to 6.8:1 on Reign and BuddyX; the raw accent was 3.8:1 or less. */
+	color: var( --wb-gam-color-accent-text );
 	padding: 8px 16px;
 	border-radius: var( --wb-gam-radius-full );
 	font-weight: var( --wb-gam-weight-semibold, 600 );

@@ -145,6 +145,10 @@
 	--wb-gam-color-gold: #b8860b;
 	--wb-gam-color-silver: #6b7280;
 	--wb-gam-color-bronze: #a0522d;
+	/* Gold as TEXT (rank number, "1st place", badge counts, a badge behind white text). The medal
+	 * gold is 3.25:1 on white and 2.9:1 on the cream first-place row; this ink is 5.37:1 and
+	 * 4.78:1. Silver (4.83:1) and bronze (6.1:1) already pass. Dark mode uses the medal itself. */
+	--wb-gam-color-gold-text: color-mix(in srgb, #b8860b 75%, #000000);
 
 	/* Interaction states */
 	--wb-gam-color-disabled: var(--wb-gam-color-surface-alt);
@@ -326,6 +330,7 @@ body.buddyx-dark-theme {
 	 * under the 4.5:1 WCAG AA floor. Gold clears it at 5.56:1 and is left as it is. */
 	--wb-gam-color-silver: color-mix(in srgb, #6b7280 45%, #ffffff);
 	--wb-gam-color-bronze: color-mix(in srgb, #a0522d 50%, #ffffff);
+	--wb-gam-color-gold-text: var(--wb-gam-color-gold);
 
 	/* Text on the lightened brand accent: white on it is 2.68:1, this ink is 6.37:1. A theme's
 	 * own pair still wins. */
@@ -354,6 +359,7 @@ body.buddyx-dark-theme {
 		--wb-gam-tier-obsidian: color-mix(in srgb, #4b5563 55%, #ffffff);
 		--wb-gam-color-silver: color-mix(in srgb, #6b7280 45%, #ffffff);
 		--wb-gam-color-bronze: color-mix(in srgb, #a0522d 50%, #ffffff);
+		--wb-gam-color-gold-text: var(--wb-gam-color-gold);
 		/* Text on the lightened brand accent: white on it is 2.68:1, this ink is 6.37:1. A theme's
 		 * own pair still wins. */
 		--wb-gam-pop-accent-fg: var(--bn-accent-fg, var(--bx-color-accent-inverse, var(--reign-site-button-text-color, #1a1a2e)));

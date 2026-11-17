@@ -56,7 +56,7 @@
 }
 
 .wb-gam-streak__nudge--elite {
-	color: var(--wb-gam-gold);
+	color: var(--wb-gam-color-gold-text);
 	font-weight: 600;
 }
 

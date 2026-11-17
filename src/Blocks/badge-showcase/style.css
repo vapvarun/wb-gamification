@@ -300,7 +300,8 @@
 	border-radius: 999px;
 	font-size: 0.75rem;
 	font-weight: 600;
-	color: var( --wb-gam-badge-success );
+	/* success-strong, not success: 4.78:1 on the tint instead of 2.95:1 (lifted in dark). */
+	color: var( --wb-gam-color-success-strong );
 	background: var( --wb-gam-badge-success-soft );
 	margin-top: auto;
 }
