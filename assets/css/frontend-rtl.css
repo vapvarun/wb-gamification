@@ -125,6 +125,13 @@
 	margin-block-start: var(--wb-gam-space-sm);
 }
 
+/* The card is the last thing in the post: the entry's own bottom spacing is enough. On Reign the
+ * paragraph margin stacked on the entry's and left ~60px of empty space under the card. BuddyX
+ * sets its paragraph margin with !important, so its 15px stays. */
+.wb-gam-activity-card-wrap:last-child {
+	margin-block-end: 0;
+}
+
 .wb-gam-activity-card {
 	display: flex;
 	align-items: center;
@@ -140,6 +147,14 @@
 	background: var(--wb-gam-color-surface);
 	color: var(--wb-gam-color-text);
 	line-height: var(--wb-gam-leading-tight);
+}
+
+/* Reign makes every span that is a direct child of an activity paragraph a block
+ * (.bp-nouveau .activity-list .activity-item .activity-content p > span:not(...), specificity
+ * 0,5,2), which stacked the icon above the text. :not(#wb-gam-card) adds one id's weight, the
+ * least that outranks it, so the card keeps its row on every theme without !important. */
+.wb-gam-activity-card:not(#wb-gam-card) {
+	display: flex;
 }
 
 /* Activity themes size, float and space every image in a post; the icon opts out. */
