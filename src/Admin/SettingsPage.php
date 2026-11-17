@@ -1419,6 +1419,7 @@ final class SettingsPage {
 										<th class="wb-gam-col-flag"><?php esc_html_e( 'Cooldown (s)', 'wb-gamification' ); ?></th>
 										<th class="wb-gam-col-flag"><?php esc_html_e( 'Daily cap', 'wb-gamification' ); ?></th>
 										<th class="wb-gam-col-flag"><?php esc_html_e( 'Weekly cap', 'wb-gamification' ); ?></th>
+										<th class="wb-gam-col-flag"><?php esc_html_e( 'Members can submit', 'wb-gamification' ); ?></th>
 									</tr>
 									</thead>
 									<tbody>
@@ -1534,6 +1535,19 @@ final class SettingsPage {
 													step="1"
 													class="wbgam-input wbgam-input--xs"
 													aria-label="<?php /* translators: %s: action label */ echo esc_attr( sprintf( __( 'Weekly cap for %s (0 = unlimited)', 'wb-gamification' ), $action['label'] ?? $action_id ) ); ?>"
+												>
+											</td>
+											<td>
+												<?php
+												// Submit Achievement only offers actions the owner ticks here
+												// (or a manifest marks submittable). Off by default.
+												?>
+												<input
+													type="checkbox"
+													data-wb-gam-action-override="submittable"
+													data-wb-gam-action-id="<?php echo esc_attr( $action_id ); ?>"
+													<?php checked( \WBGam\Engine\Registry::is_submittable( $action_id ) ); ?>
+													aria-label="<?php /* translators: %s: action label */ echo esc_attr( sprintf( __( 'Members can submit %s for review', 'wb-gamification' ), $action['label'] ?? $action_id ) ); ?>"
 												>
 											</td>
 										</tr>

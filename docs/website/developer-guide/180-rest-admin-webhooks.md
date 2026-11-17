@@ -15,7 +15,7 @@ Registered gamification actions with their labels, point values, and rate-limit 
 
 ### GET /actions
 
-All registered gamification actions with labels, categories, point values, and enabled state.
+All registered gamification actions with labels, categories, point values, enabled state and (since 1.6.8) `submittable`.
 
 ```bash
 curl https://example.com/wp-json/wb-gamification/v1/actions \
@@ -40,6 +40,7 @@ Added in 1.4.0. Set per-action overrides for `cooldown`, `daily_cap`, and `weekl
 | `cooldown` | int (>= 0) | Minimum seconds between awards. `0` disables the cooldown |
 | `daily_cap` | int (>= 0) | Daily cap per user per action. `0` allows unlimited |
 | `weekly_cap` | int (>= 0) | Weekly cap per user per action. `0` allows unlimited |
+| `submittable` | bool | Added in 1.6.8. Whether members can claim this action through Submit Achievement. Off until set (or the manifest declares `'submittable' => true`); the stored value wins over the manifest |
 
 ```bash
 curl -X POST https://example.com/wp-json/wb-gamification/v1/actions/bp_activity_update/overrides \
@@ -52,6 +53,8 @@ curl -X POST https://example.com/wp-json/wb-gamification/v1/actions/bp_activity_
 ```json
 {
   "action_id": "bp_activity_update",
+  "enabled": true,
+  "submittable": false,
   "overrides": { "cooldown": 120, "daily_cap": 5 },
   "effective": { "cooldown": 120, "daily_cap": 5, "weekly_cap": 0 }
 }
@@ -59,7 +62,7 @@ curl -X POST https://example.com/wp-json/wb-gamification/v1/actions/bp_activity_
 
 ### DELETE /actions/{id}/overrides
 
-Added in 1.4.0. Reset overrides for one action. The next read falls back to the manifest values.
+Added in 1.4.0. Reset overrides for one action. The next read falls back to the manifest values, including `submittable` (off unless the manifest says otherwise).
 
 ```bash
 curl -X DELETE https://example.com/wp-json/wb-gamification/v1/actions/bp_activity_update/overrides \
