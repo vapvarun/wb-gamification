@@ -24,53 +24,209 @@ defined( 'ABSPATH' ) || exit;
 final class ActivityCard {
 
 	/**
-	 * Render the activity content card.
+	 * The BuddyPress component every gamification activity is saved under.
+	 */
+	public const COMPONENT = 'wb_gamification';
+
+	/**
+	 * Tags and attributes the card needs on top of BuddyPress's activity allow-list.
 	 *
-	 * BP runs activity content through `wp_kses_post()`, which:
-	 *   - strips the `class` attribute from `&lt;strong&gt;` (only span/p/div allow it)
-	 *   - drops `data:` URIs from image src attributes (not in default allowed protocols)
+	 * BuddyPress runs activity content through bp_activity_filter_kses() on save AND on display,
+	 * and that filter drops every `class` attribute and every `<div>`. BuddyBoss drops the divs.
+	 * Either way the card arrived as a loose icon and three lines of text. These tags are added
+	 * only while our own component's content is filtered, never for a member's own post.
+	 */
+	private const CARD_TAGS = array(
+		'div'  => array( 'class' => true ),
+		'span' => array( 'class' => true ),
+		'img'  => array(
+			'class'  => true,
+			'src'    => true,
+			'alt'    => true,
+			'width'  => true,
+			'height' => true,
+		),
+	);
+
+	/**
+	 * True while content of our component is being saved or displayed.
 	 *
-	 * Output uses `&lt;span&gt;` for the title and absolute URLs for icons accordingly.
+	 * @var bool
+	 */
+	private static bool $own_content = false;
+
+	/**
+	 * Let the card survive BuddyPress's kses for our component only, and load its stylesheet
+	 * wherever an activity stream shows.
+	 */
+	public static function init(): void {
+		add_filter( 'bp_activity_allowed_tags', array( __CLASS__, 'allowed_tags' ) );
+		// bp_activity_filter_kses runs at priority 1; mark the activity before it, clear after.
+		add_filter( 'bp_get_activity_content_body', array( __CLASS__, 'mark_display' ), 0, 2 );
+		add_filter( 'bp_get_activity_content_body', array( __CLASS__, 'clear_mark' ), 2 );
+		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'enqueue_on_community_pages' ) );
+		// Any other page that renders an activity loop on the server (a widget, a block).
+		add_action( 'bp_before_activity_entry', array( __CLASS__, 'enqueue_style' ) );
+	}
+
+	/**
+	 * Widen the activity allow-list while our own content is filtered.
+	 *
+	 * @param array<string, array<string, bool>> $tags Allowed tags.
+	 * @return array<string, array<string, bool>>
+	 */
+	public static function allowed_tags( $tags ) {
+		if ( ! self::$own_content || ! is_array( $tags ) ) {
+			return $tags;
+		}
+		foreach ( self::CARD_TAGS as $tag => $attrs ) {
+			$tags[ $tag ] = array_merge( isset( $tags[ $tag ] ) && is_array( $tags[ $tag ] ) ? $tags[ $tag ] : array(), $attrs );
+		}
+		return $tags;
+	}
+
+	/**
+	 * Mark the activity being displayed as ours (or not) before BuddyPress filters it.
+	 *
+	 * @param string      $content  Activity content.
+	 * @param object|null $activity The activity being displayed.
+	 * @return string Unchanged content.
+	 */
+	public static function mark_display( $content, $activity = null ) {
+		self::$own_content = is_object( $activity ) && isset( $activity->component ) && self::COMPONENT === $activity->component;
+		return $content;
+	}
+
+	/**
+	 * Clear the mark once BuddyPress has filtered the content.
+	 *
+	 * @param string $content Activity content.
+	 * @return string Unchanged content.
+	 */
+	public static function clear_mark( $content ) {
+		self::$own_content = false;
+		return $content;
+	}
+
+	/**
+	 * Save a gamification activity through BuddyPress with the card's tags allowed.
+	 *
+	 * @param array<string, mixed> $args bp_activity_add() arguments; the component is ours.
+	 * @return int New activity id, 0 on failure.
+	 */
+	public static function add( array $args ): int {
+		if ( ! function_exists( 'bp_activity_add' ) ) {
+			return 0;
+		}
+		$args['component'] = self::COMPONENT;
+		self::$own_content = true;
+		try {
+			$id = bp_activity_add( $args );
+		} finally {
+			self::$own_content = false;
+		}
+		return is_numeric( $id ) ? (int) $id : 0;
+	}
+
+	/**
+	 * Save an edited gamification activity with the card's tags allowed. The date is kept.
+	 *
+	 * @param object $activity Loaded BP_Activity_Activity of our component.
+	 * @return bool
+	 */
+	public static function update( object $activity ): bool {
+		if ( ! method_exists( $activity, 'save' ) || ! isset( $activity->component ) || self::COMPONENT !== $activity->component ) {
+			return false;
+		}
+		self::$own_content = true;
+		try {
+			return (bool) $activity->save();
+		} finally {
+			self::$own_content = false;
+		}
+	}
+
+	/**
+	 * Load the card stylesheet on community pages. The activity directory and profile streams
+	 * load their entries over AJAX, after the page has rendered, so the stylesheet has to be on
+	 * the page before the first entry arrives.
+	 */
+	public static function enqueue_on_community_pages(): void {
+		if ( function_exists( 'is_buddypress' ) && is_buddypress() ) {
+			self::enqueue_style();
+		}
+	}
+
+	/**
+	 * Enqueue the stylesheet that styles the card (late enqueues print in the footer).
+	 */
+	public static function enqueue_style(): void {
+		if ( wp_style_is( 'wb-gamification', 'registered' ) ) {
+			wp_enqueue_style( 'wb-gamification' );
+		}
+	}
+
+	/**
+	 * Render the activity content card: icon, small uppercase label, name, one-line reason.
+	 *
+	 * Saved through add() / update(), so the wrapper and classes survive BuddyPress's kses.
+	 * Absolute URLs only for the icon (kses drops `data:` URIs).
 	 *
 	 * @param string $type        One of: badge, level, kudos, challenge.
 	 * @param string $image_url   Absolute URL for the icon/avatar (no data: URIs).
 	 * @param string $title       Card title (plain text).
 	 * @param string $description Card description (plain text).
+	 * @param string $label       Label above the title; the type's own label when empty.
 	 */
-	public static function render( string $type, string $image_url, string $title, string $description ): string {
+	public static function render( string $type, string $image_url, string $title, string $description, string $label = '' ): string {
 		$type_class = sanitize_html_class( $type );
 		$image_url  = $image_url ?: self::default_for_type( $type );
-		$src        = esc_url( $image_url );
-		$alt        = esc_attr( $title );
-		$title_html = esc_html( $title );
-		$desc_html  = esc_html( $description );
 
-		// Type label rendered above the title — confirms what just
-		// happened at a glance even on a busy BP activity stream.
-		// Added 1.4.0 (Basecamp #9914967346 v2 redesign).
 		$type_labels = array(
 			'badge'     => __( 'Badge earned', 'wb-gamification' ),
 			'level'     => __( 'Level up', 'wb-gamification' ),
 			'kudos'     => __( 'Kudos', 'wb-gamification' ),
 			'challenge' => __( 'Challenge completed', 'wb-gamification' ),
 		);
-		$eyebrow     = esc_html( $type_labels[ $type ] ?? ucfirst( $type ) );
+		if ( '' === $label ) {
+			$label = $type_labels[ $type ] ?? ucfirst( $type );
+		}
 
+		// The name sits right next to the icon, so the image is decorative (empty alt).
 		return sprintf(
 			'<div class="wb-gam-activity-card wb-gam-activity-card--%1$s">'
-				. '<img class="wb-gam-activity-card__icon" src="%2$s" alt="%3$s" width="64" height="64" />'
+				. '<img class="wb-gam-activity-card__icon" src="%2$s" alt="" width="40" height="40" />'
 				. '<div class="wb-gam-activity-card__body">'
-					. '<span class="wb-gam-activity-card__eyebrow">%5$s</span>'
-					. '<span class="wb-gam-activity-card__title"><strong>%4$s</strong></span>'
-					. ( '' !== $desc_html ? '<div class="wb-gam-activity-card__desc">' . $desc_html . '</div>' : '' )
+					. '<span class="wb-gam-activity-card__eyebrow">%3$s</span>'
+					. '<span class="wb-gam-activity-card__title">%4$s</span>'
+					. ( '' !== $description ? '<span class="wb-gam-activity-card__desc">%5$s</span>' : '' )
 				. '</div>'
 			. '</div>',
 			$type_class,
-			$src,
-			$alt,
-			$title_html,
-			$eyebrow
+			esc_url( $image_url ),
+			esc_html( $label ),
+			esc_html( $title ),
+			esc_html( $description )
 		);
+	}
+
+	/**
+	 * Whether stored content already carries the current card markup. Rows saved before 1.6.8
+	 * through BuddyPress's kses lost the wrapper and classes; older rows had a different shape.
+	 *
+	 * @param string $content Stored activity content.
+	 */
+	public static function has_card( string $content ): bool {
+		if ( false === strpos( $content, '<div class="wb-gam-activity-card wb-gam-activity-card--' )
+			|| false === strpos( $content, '<div class="wb-gam-activity-card__body">' ) ) {
+			return false;
+		}
+		foreach ( array( 'data:image', 'src="image/svg', 'loading="lazy"', '<strong class="wb-gam-activity-card__title"', '<p class="wb-gam-activity-card__desc"' ) as $legacy ) {
+			if ( false !== strpos( $content, $legacy ) ) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	/**

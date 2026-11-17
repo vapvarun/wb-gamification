@@ -20,7 +20,6 @@ defined( 'ABSPATH' ) || exit;
  */
 final class KudosStream {
 
-	private const COMPONENT  = 'wb_gamification';
 	private const TYPE       = 'kudos_given';
 	private const OPT_TOGGLE = 'wb_gam_bp_stream_kudos_given';
 
@@ -40,45 +39,64 @@ final class KudosStream {
 	 * @param int    $kudos_id    DB row ID (used as item_id for linking).
 	 */
 	public static function post( int $giver_id, int $receiver_id, string $message, int $kudos_id ): void {
-		if ( ! self::is_enabled() || ! function_exists( 'bp_activity_add' ) ) {
+		if ( ! self::is_enabled() ) {
 			return;
 		}
 
-		$giver_link    = ActivityCard::user_link( $giver_id );
-		$receiver_name = ActivityCard::user_display_name( $receiver_id );
+		$fields = self::fields( $receiver_id, $message );
 
-		$action = ActivityCard::action_line( $giver_link, 'kudos' );
+		/** This action is documented in src/BuddyPress/Stream/BadgeStream.php */
+		do_action(
+			'wb_gam_activity_post',
+			'kudos',
+			$giver_id,
+			array(
+				'kudos_id'    => $kudos_id,
+				'receiver_id' => $receiver_id,
+			) + $fields
+		);
 
-		$avatar = self::receiver_avatar_url( $receiver_id );
+		if ( ! function_exists( 'bp_activity_add' ) ) {
+			return;
+		}
 
-		$description = '' !== $message
-			? wp_strip_all_tags( $message )
-			: sprintf(
-				/* translators: %s: receiver display name */
-				__( 'A kudos was sent to %s.', 'wb-gamification' ),
-				$receiver_name
-			);
-
-		bp_activity_add(
+		ActivityCard::add(
 			array(
 				'user_id'       => $giver_id,
-				'component'     => self::COMPONENT,
 				'type'          => self::TYPE,
-				'action'        => $action,
-				'content'       => ActivityCard::render(
-					'kudos',
-					$avatar,
-					sprintf(
-						/* translators: %s: receiver display name */
-						__( 'Kudos for %s', 'wb-gamification' ),
-						$receiver_name
-					),
-					$description
-				),
+				'action'        => ActivityCard::action_line( ActivityCard::user_link( $giver_id ), 'kudos' ),
+				'content'       => ActivityCard::render( 'kudos', $fields['image_url'], $fields['title'], $fields['description'] ),
 				'item_id'       => $kudos_id,
 				'hide_sitewide' => false,
 				'is_spam'       => false,
 			)
+		);
+	}
+
+	/**
+	 * Card fields for a kudos: who it was for, the message, their avatar. Shared with the Backfiller.
+	 *
+	 * @param int    $receiver_id Member who received the kudos.
+	 * @param string $message     Optional message.
+	 * @return array{title:string,description:string,image_url:string}
+	 */
+	public static function fields( int $receiver_id, string $message ): array {
+		$receiver_name = ActivityCard::user_display_name( $receiver_id );
+
+		return array(
+			'title'       => sprintf(
+				/* translators: %s: receiver display name */
+				__( 'Kudos for %s', 'wb-gamification' ),
+				$receiver_name
+			),
+			'description' => '' !== $message
+				? wp_strip_all_tags( $message )
+				: sprintf(
+					/* translators: %s: receiver display name */
+					__( 'A kudos was sent to %s.', 'wb-gamification' ),
+					$receiver_name
+				),
+			'image_url'   => self::receiver_avatar_url( $receiver_id ),
 		);
 	}
 
