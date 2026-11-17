@@ -82,11 +82,12 @@ $wb_gam_actions = array_map(
 
 if ( ! $wb_gam_actions ) {
 	BlockHooks::before( 'submit-achievement', $wb_gam_attrs );
-	echo \WBGam\Blocks\EmptyState::render( // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped in EmptyState.
+	$wb_gam_empty = \WBGam\Blocks\EmptyState::render(
 		'submit-achievement',
 		get_block_wrapper_attributes( array( 'class' => implode( ' ', $wb_gam_classes ) ) ),
 		__( 'There is nothing to submit for review right now. Points for your activity are added automatically.', 'wb-gamification' )
 	);
+	echo $wb_gam_empty; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- EmptyState escapes its message and CTA; the wrapper is get_block_wrapper_attributes() output.
 	BlockHooks::after( 'submit-achievement', $wb_gam_attrs );
 	return;
 }
