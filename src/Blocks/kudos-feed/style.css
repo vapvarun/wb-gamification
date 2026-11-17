@@ -60,10 +60,28 @@
 	text-decoration: underline;
 }
 
+.wb-gam-kudos-feed__to {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	min-width: 0;
+}
+
+.wb-gam-kudos-feed__to .wb-gam-kudos-feed__receiver {
+	min-width: 0;
+	overflow-wrap: anywhere;
+}
+
 .wb-gam-kudos-feed__arrow {
 	color: var(--wb-gam-primary);
 	font-size: 1rem;
 	flex-shrink: 0;
+}
+
+/* The arrow points from giver to receiver, so it turns round in right-to-left. */
+[dir="rtl"] .wb-gam-kudos-feed__arrow {
+	display: inline-block;
+	transform: scaleX(-1);
 }
 
 .wb-gam-kudos-feed__message {

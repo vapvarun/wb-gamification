@@ -135,6 +135,8 @@ BlockHooks::before( 'kudos-feed', $wb_gam_attrs );
 						?>
 					</span>
 
+					<?php // Arrow and receiver in one group so a long name never leaves the arrow alone on a line. ?>
+					<span class="wb-gam-kudos-feed__to">
 					<span class="wb-gam-kudos-feed__arrow" aria-hidden="true">→</span>
 
 					<span class="wb-gam-kudos-feed__receiver">
@@ -146,6 +148,7 @@ BlockHooks::before( 'kudos-feed', $wb_gam_attrs );
 							esc_html( (string) ( $wb_gam_item['receiver_name'] ?? '' ) )
 						);
 						?>
+					</span>
 					</span>
 
 					<?php if ( $wb_gam_show_messages && ! empty( $wb_gam_item['message'] ) ) : ?>
