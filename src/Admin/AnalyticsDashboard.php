@@ -878,7 +878,19 @@ final class AnalyticsDashboard {
 									<?php echo $is_dead ? esc_html__( 'Needs attention', 'wb-gamification' ) : esc_html__( 'Retrying', 'wb-gamification' ); ?>
 								</span>
 							</td>
-							<td><?php echo esc_html( $last ? human_time_diff( (int) strtotime( $last . ' UTC' ) ) . ' ' . __( 'ago', 'wb-gamification' ) : '—' ); ?></td>
+							<td>
+							<?php
+							echo esc_html(
+								$last
+									? sprintf(
+										/* translators: %s: human-readable time difference, e.g. "3 hours". */
+										__( '%s ago', 'wb-gamification' ),
+										human_time_diff( (int) strtotime( $last . ' UTC' ) )
+									)
+									: '—'
+							);
+							?>
+							</td>
 							<td>
 								<button
 									type="button"
