@@ -369,6 +369,23 @@ final class WB_Gamification {
 		add_action( 'bp_loaded', array( DirectoryIntegration::class, 'init' ) );
 		add_action( 'bp_loaded', array( BPActivity::class, 'init' ) );
 
+		// Without BuddyPress (BuddyNext alone), the stream posters still run so the
+		// wb_gam_activity_post action fires for the host feed; each poster returns
+		// before any BuddyPress call when bp_activity_add() is missing.
+		add_action(
+			'plugins_loaded',
+			static function (): void {
+				if ( function_exists( 'buddypress' ) ) {
+					return;
+				}
+				\WBGam\BuddyPress\Stream\BadgeStream::init();
+				\WBGam\BuddyPress\Stream\LevelStream::init();
+				\WBGam\BuddyPress\Stream\KudosStream::init();
+				\WBGam\BuddyPress\Stream\ChallengeStream::init();
+			},
+			20
+		);
+
 		if ( is_admin() ) {
 			add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_assets' ) );
 			// Lucide font is required on every admin screen so the WB Gam menu
