@@ -45,6 +45,7 @@ final class ProfilePage {
 		add_filter( 'query_vars', array( __CLASS__, 'add_query_var' ) );
 		add_action( 'template_redirect', array( __CLASS__, 'maybe_render' ) );
 		add_action( 'wp_head', array( __CLASS__, 'render_meta' ), 1 );
+		add_filter( 'document_title_parts', array( __CLASS__, 'document_title' ) );
 	}
 
 	/**
@@ -113,15 +114,61 @@ final class ProfilePage {
 			|| get_current_user_id() === (int) $user->ID
 			|| current_user_can( 'manage_options' );
 		if ( ! $can_view ) {
-			self::trigger_404();
-			return;
+			self::render_private();
+			exit;
 		}
 
 		status_header( 200 );
 		nocache_headers();
 
+		self::$title = (string) $user->display_name;
 		self::render_profile( $user );
 		exit;
+	}
+
+	/**
+	 * Browser-tab title of the page this class is rendering ('' = not ours).
+	 *
+	 * @var string
+	 */
+	private static string $title = '';
+
+	/**
+	 * Title the standalone profile after the member (the page has no post, so the theme's title
+	 * was the site name alone).
+	 *
+	 * @param array<string, string> $parts Document title parts.
+	 * @return array<string, string>
+	 */
+	public static function document_title( $parts ) {
+		if ( '' === self::$title || ! is_array( $parts ) ) {
+			return $parts;
+		}
+		$parts['title'] = self::$title;
+		unset( $parts['tagline'] );
+		return $parts;
+	}
+
+	/**
+	 * The page a guest or another member sees for a private profile: one neutral line, no
+	 * name, no numbers. 403 rather than a soft 200, so search engines and caches treat it as
+	 * not public; noindex for the crawlers that index error pages anyway. Replaces the 404,
+	 * which told a visitor following a member link that the page did not exist.
+	 */
+	private static function render_private(): void {
+		status_header( 403 );
+		nocache_headers();
+		add_filter( 'wp_robots', 'wp_robots_no_robots' );
+		wp_enqueue_style( 'wb-gamification' );
+
+		self::$title = __( 'Private profile', 'wb-gamification' );
+
+		get_header();
+		echo '<div class="wb-gam-profile-page wb-gam-profile-page--private">';
+		echo '<h1 class="wb-gam-profile-page__name">' . esc_html__( 'This profile is private', 'wb-gamification' ) . '</h1>';
+		echo '<p class="wb-gam-profile-page__stats">' . esc_html__( 'The member has chosen not to share their achievements.', 'wb-gamification' ) . '</p>';
+		echo '</div>';
+		get_footer();
 	}
 
 	/**
@@ -384,9 +431,13 @@ final class ProfilePage {
 		echo do_shortcode( '[wb_gam_badge_showcase user_id="' . (int) $user->ID . '"]' );
 		echo '</section>';
 
-		echo '<section class="wb-gam-profile-page__section">';
-		echo do_shortcode( '[wb_gam_points_history user_id="' . (int) $user->ID . '" limit="10"]' );
-		echo '</section>';
+		// Points history is the member's own record: only they and admins see it. Anyone else
+		// sees the public parts above with no history block and no log-in prompt.
+		if ( Privacy::can_view_private_history( (int) $user->ID ) ) {
+			echo '<section class="wb-gam-profile-page__section">';
+			echo do_shortcode( '[wb_gam_points_history user_id="' . (int) $user->ID . '" limit="10"]' );
+			echo '</section>';
+		}
 
 		echo '</div>';
 
@@ -467,7 +518,7 @@ final class ProfilePage {
 	/**
 	 * Set the request to 404 — so theme renders its standard not-found page.
 	 *
-	 * Used when the slug doesn't resolve to a user OR the profile is private.
+	 * Used when the slug does not resolve to a user (a private profile gets render_private()).
 	 */
 	private static function trigger_404(): void {
 		global $wp_query;
