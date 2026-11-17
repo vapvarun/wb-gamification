@@ -171,6 +171,15 @@
 	object-fit: contain;
 }
 
+/* Badge art is often dark line-art on a transparent ground, which vanished on a dark card. It
+ * always sits on a light tile, in every theme and scheme (the level art carries its own tile,
+ * a kudos card shows an avatar). */
+.wb-gam-activity-card--badge .wb-gam-activity-card__icon {
+	box-sizing: border-box;
+	padding: 4px;
+	background: var(--wb-gam-color-art-tile);
+}
+
 .wb-gam-activity-card--kudos .wb-gam-activity-card__icon {
 	border-radius: var(--wb-gam-radius-full);
 	object-fit: cover;

@@ -145,6 +145,9 @@
 	--wb-gam-color-gold: #b8860b;
 	--wb-gam-color-silver: #6b7280;
 	--wb-gam-color-bronze: #a0522d;
+	/* A light ground for uploaded badge art (often dark line-art on transparent). Fixed on
+	 * purpose: it does not flip in dark mode, because the art needs a light surface there most. */
+	--wb-gam-color-art-tile: #f8fafc;
 	/* Gold as TEXT (rank number, "1st place", badge counts, a badge behind white text). The medal
 	 * gold is 3.25:1 on white and 2.9:1 on the cream first-place row; this ink is 5.37:1 and
 	 * 4.78:1. Silver (4.83:1) and bronze (6.1:1) already pass. Dark mode uses the medal itself. */
