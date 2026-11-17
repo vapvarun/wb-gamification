@@ -54,6 +54,9 @@ return [
 					'activity_id' => $activity_id,
 				];
 			},
+			// A deleted update takes its award back (BuddyPress passes every deleted activity id).
+			'once_per_object'     => static fn( $content, $user_id, $activity_id ): int => (int) $activity_id,
+			'reverse_on'          => [ 'bp_activity_deleted_activities' => static fn( $activity_ids ): array => (array) $activity_ids ],
 			'default_points'      => 10,
 			'category'            => 'buddypress',
 			'icon'                => 'icon-message-circle',
@@ -79,6 +82,8 @@ return [
 					'activity_id' => (int) ( $params['activity_id'] ?? 0 ),
 				];
 			},
+			'once_per_object'     => static fn( $comment_id ): int => (int) $comment_id,
+			'reverse_on'          => [ 'bp_activity_deleted_activities' => static fn( $activity_ids ): array => (array) $activity_ids ],
 			'default_points'      => 5,
 			'category'            => 'buddypress',
 			'icon'                => 'icon-message-square',

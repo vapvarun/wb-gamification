@@ -48,6 +48,19 @@ defined( 'ABSPATH' ) || exit;
  */
 final class PointsEngine {
 
+	/** Suffix of the ledger row that takes an award back when its content is removed. */
+	public const REMOVED_SUFFIX = '_removed';
+
+	/** Suffix of the ledger row that gives it back when the content returns. */
+	public const RESTORED_SUFFIX = '_restored';
+
+	/**
+	 * Members being deleted in this request: their content's removal writes no reversal.
+	 *
+	 * @var array<int, true>
+	 */
+	private static array $deleting_users = array();
+
 	/**
 	 * Resolve a point-type input to a known slug. Centralised so every method
 	 * shares the same back-compat fallback (= primary type).
@@ -565,11 +578,17 @@ final class PointsEngine {
 	 *                                a pre-persisted event. Legacy string form is auto-promoted to
 	 *                                a synthetic Event so the audit-log invariant holds.
 	 * @param string|null  $type      Optional point-type slug. Defaults to primary type.
+	 * @param bool         $spend     A spend: lowers the balance but not what the member earned.
+	 * @param bool         $allow_negative Take the points even when the balance is short (the
+	 *                                balance goes below zero). Only for reversing an award whose
+	 *                                content was removed: the member already spent those points,
+	 *                                and refusing would leave the award standing. No balance read,
+	 *                                so no `new_balance` in the result.
 	 * @return array{success: bool, reason?: string, event_id?: string, new_balance?: int}
 	 *                                Structured result. `success=false` arrives with a `reason`:
 	 *                                `insufficient_balance` | `event_persist_failed` | `ledger_write_failed`.
 	 */
-	public static function debit( int $user_id, int $amount, string $action_id, Event|string $event = '', ?string $type = null, bool $spend = false ): array {
+	public static function debit( int $user_id, int $amount, string $action_id, Event|string $event = '', ?string $type = null, bool $spend = false, bool $allow_negative = false ): array {
 		$resolved_type = self::resolve_type( $type );
 		$amount        = abs( $amount );
 
@@ -604,13 +623,14 @@ final class PointsEngine {
 		}
 
 		$result = Transaction::run(
-			function () use ( $user_id, $amount, $event, $resolved_type ) {
+			function () use ( $user_id, $amount, $event, $resolved_type, $allow_negative ) {
 				global $wpdb;
 
 				// Atomic balance check with row lock — prevents the TOCTOU
 				// race where two concurrent debits both read balance=N,
 				// both subtract, and the balance lands at N - 2*amount.
-				$balance = (int) $wpdb->get_var(
+				// A reversal may go below zero, so it needs neither the read nor the lock.
+				$balance = $allow_negative ? null : (int) $wpdb->get_var(
 					$wpdb->prepare(
 						"SELECT COALESCE(SUM(points), 0) FROM {$wpdb->prefix}wb_gam_points WHERE user_id = %d AND point_type = %s FOR UPDATE",
 						$user_id,
@@ -618,7 +638,7 @@ final class PointsEngine {
 					)
 				);
 
-				if ( $balance < $amount ) {
+				if ( null !== $balance && $balance < $amount ) {
 					Log::warning(
 						'PointsEngine::debit — insufficient balance',
 						array(
@@ -658,6 +678,13 @@ final class PointsEngine {
 					return array(
 						'success' => false,
 						'reason'  => 'ledger_write_failed',
+					);
+				}
+
+				if ( null === $balance ) {
+					return array(
+						'success'  => true,
+						'event_id' => $event->event_id,
 					);
 				}
 
@@ -1264,7 +1291,10 @@ final class PointsEngine {
 	}
 
 	/**
-	 * Whether a member already earned this action for this object.
+	 * Whether a member holds this action's award for this object right now.
+	 *
+	 * Net of reversals: an award whose content was removed no longer counts, so a post that is
+	 * trashed and published again earns again, while an edit or a re-approval of live content does not.
 	 *
 	 * @param int    $user_id   User ID.
 	 * @param string $action_id Action ID.
@@ -1273,12 +1303,181 @@ final class PointsEngine {
 	 */
 	private static function has_object_award( int $user_id, string $action_id, int $object_id ): bool {
 		global $wpdb;
-		return (bool) $wpdb->get_var(
+		return 0 < (int) $wpdb->get_var(
 			$wpdb->prepare(
-				"SELECT 1 FROM {$wpdb->prefix}wb_gam_points WHERE user_id = %d AND action_id = %s AND object_id = %d LIMIT 1",
+				"SELECT COALESCE(SUM(points), 0) FROM {$wpdb->prefix}wb_gam_points WHERE user_id = %d AND action_id IN (%s, %s, %s) AND object_id = %d",
 				$user_id,
 				$action_id,
+				$action_id . self::REMOVED_SUFFIX,
+				$action_id . self::RESTORED_SUFFIX,
 				$object_id
+			)
+		);
+	}
+
+	/**
+	 * Take back the points awarded for content that was removed (trashed, marked spam, deleted).
+	 *
+	 * For every member and point type still holding an award for one of these objects, one
+	 * `{action}_removed` row takes back exactly what they hold, even when that leaves the balance
+	 * below zero. Idempotent: what is already taken back nets to zero, so trash then permanent delete
+	 * takes the points once. Badges and action counts stay; points, level and rank move. Awards made
+	 * before 1.6.8 carry no object id and are left alone.
+	 *
+	 * @since 1.6.8
+	 *
+	 * @param array<string, int[]> $targets Action id => ids of the removed objects.
+	 * @return int Rows written.
+	 */
+	public static function reverse_object_awards( array $targets ): int {
+		// One indexed read, and nothing more when the content earned nothing (most deletes).
+		if ( ! self::object_award_rows( $targets, false, true ) ) {
+			return 0;
+		}
+
+		return (int) Transaction::run(
+			static function () use ( $targets ) {
+				$written = 0;
+				foreach ( self::object_award_rows( $targets, true, true ) as $row ) {
+					$event  = new Event(
+						array(
+							'action_id'  => $row['action_id'] . self::REMOVED_SUFFIX,
+							'user_id'    => $row['user_id'],
+							'object_id'  => $row['object_id'],
+							'point_type' => $row['point_type'],
+							'metadata'   => array( 'point_type' => $row['point_type'] ),
+						)
+					);
+					$result = self::debit( $row['user_id'], $row['net'], $event->action_id, $event, $row['point_type'], false, true );
+					if ( empty( $result['success'] ) ) {
+						return false; // Roll back every row: all or nothing.
+					}
+					++$written;
+				}
+				return $written;
+			}
+		);
+	}
+
+	/**
+	 * Give back the points taken by {@see reverse_object_awards()} when the content returns
+	 * (untrashed, marked not spam).
+	 *
+	 * Only where the award is currently taken back (net <= 0): content whose award hook fires again
+	 * on return has already been paid, and is skipped. Credits the original stored amount as
+	 * `{action}_restored`, through the same award path as a redemption refund.
+	 *
+	 * @since 1.6.8
+	 *
+	 * @param array<string, int[]> $targets Action id => ids of the returned objects.
+	 * @return int Awards given back.
+	 */
+	public static function restore_object_awards( array $targets ): int {
+		$restored = 0;
+		// ponytail: no lock; two simultaneous restores of one object could both credit. Untrash is a
+		// single moderator click; lock with Transaction::run + FOR UPDATE if that ever shows up.
+		foreach ( self::object_award_rows( $targets, false, false ) as $row ) {
+			$amount = $row['base'] - $row['net'];
+			if ( $row['base'] <= 0 || $amount <= 0 ) {
+				continue;
+			}
+			if ( self::award( $row['user_id'], $row['action_id'] . self::RESTORED_SUFFIX, $amount, $row['object_id'], $row['point_type'], true ) ) {
+				++$restored;
+			}
+		}
+		return $restored;
+	}
+
+	/**
+	 * Skip reversals for a member whose account is being deleted.
+	 *
+	 * Deleting a member deletes their content, which would write a reversal for every post they
+	 * made just before their whole ledger is purged ({@see MemberData::on_user_deleted()}).
+	 *
+	 * @since 1.6.8
+	 *
+	 * @param int $user_id Member being deleted.
+	 * @return void
+	 */
+	public static function skip_reversals_for( int $user_id ): void {
+		self::$deleting_users[ $user_id ] = true;
+	}
+
+	/**
+	 * What each member holds for each target object, per point type.
+	 *
+	 * @param array<string, int[]> $targets  Action id => object ids.
+	 * @param bool                 $lock     Lock the rows (inside a transaction).
+	 * @param bool                 $held     True: rows still holding points (net > 0).
+	 *                                       False: rows taken back (net <= 0).
+	 * @return array<int, array{action_id: string, object_id: int, user_id: int, point_type: string, base: int, net: int}>
+	 */
+	private static function object_award_rows( array $targets, bool $lock, bool $held ): array {
+		global $wpdb;
+
+		$base_of    = array();
+		$object_ids = array();
+		foreach ( $targets as $action_id => $ids ) {
+			foreach ( array( '', self::REMOVED_SUFFIX, self::RESTORED_SUFFIX ) as $suffix ) {
+				$base_of[ $action_id . $suffix ] = (string) $action_id;
+			}
+			foreach ( (array) $ids as $id ) {
+				if ( (int) $id > 0 ) {
+					$object_ids[ (int) $id ] = true;
+				}
+			}
+		}
+		if ( ! $base_of || ! $object_ids ) {
+			return array();
+		}
+
+		$ids  = array_keys( $object_ids );
+		$acts = array_keys( $base_of );
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- placeholders built from counts; idx_action_object serves the read.
+		$rows = (array) $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT user_id, point_type, action_id, object_id, SUM(points) AS points
+				   FROM {$wpdb->prefix}wb_gam_points
+				  WHERE action_id IN (" . implode( ',', array_fill( 0, count( $acts ), '%s' ) ) . ')
+				    AND object_id IN (' . implode( ',', array_fill( 0, count( $ids ), '%d' ) ) . ')
+				  GROUP BY user_id, point_type, action_id, object_id' . ( $lock ? ' FOR UPDATE' : '' ),
+				array_merge( $acts, $ids )
+			),
+			ARRAY_A
+		);
+		// phpcs:enable
+
+		$out = array();
+		foreach ( $rows as $row ) {
+			$base_id = $base_of[ (string) $row['action_id'] ] ?? '';
+			$object  = (int) $row['object_id'];
+			// The read spans every target pair; keep only the pairs actually asked for.
+			if ( '' === $base_id || ! in_array( $object, array_map( 'intval', (array) $targets[ $base_id ] ), true ) ) {
+				continue;
+			}
+			$key = $base_id . '|' . $object . '|' . (int) $row['user_id'] . '|' . $row['point_type'];
+			if ( ! isset( $out[ $key ] ) ) {
+				$out[ $key ] = array(
+					'action_id'  => $base_id,
+					'object_id'  => $object,
+					'user_id'    => (int) $row['user_id'],
+					'point_type' => (string) $row['point_type'],
+					'base'       => 0,
+					'net'        => 0,
+				);
+			}
+			$out[ $key ]['net'] += (int) $row['points'];
+			if ( $base_id === $row['action_id'] ) {
+				$out[ $key ]['base'] += (int) $row['points'];
+			}
+		}
+
+		return array_values(
+			array_filter(
+				$out,
+				static fn( array $r ): bool => ( $held ? $r['net'] > 0 && ! isset( self::$deleting_users[ $r['user_id'] ] ) : $r['net'] <= 0 )
+					// A point type deleted since the award would fall back to the primary one: leave it.
+					&& self::resolve_type( $r['point_type'] ) === $r['point_type']
 			)
 		);
 	}

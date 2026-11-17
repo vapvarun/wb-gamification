@@ -30,6 +30,8 @@
 defined( 'ABSPATH' ) || exit;
 
 // A comment is approved when it is posted or later from moderation, and a trigger listens to one hook.
+// Back from the trash or spam is not an approval: the award taken on the way out is given back
+// (restore_on), so it is not paid a second time.
 add_action(
 	'comment_post',
 	static function ( $comment_id, $approved ): void {
@@ -43,7 +45,7 @@ add_action(
 add_action(
 	'transition_comment_status',
 	static function ( $new_status, $old_status, $comment ): void {
-		if ( 'approved' === $new_status && 'approved' !== $old_status ) {
+		if ( 'approved' === $new_status && ! in_array( $old_status, [ 'approved', 'trash', 'spam' ], true ) ) {
 			do_action( 'wb_gam_comment_approved', (int) $comment->comment_ID );
 		}
 	},
@@ -141,6 +143,8 @@ return [
 			// per author so a coordinated comment-spam ring can't grind.
 			'cooldown'        => 0,
 			'daily_cap'       => 10,
+			'async'           => false, // Awarded before a delete can arrive, so it can be reversed.
+			...\WBGam\Engine\Registry::comment_object_hooks(),
 			'standalone_only' => false,
 		],
 
@@ -172,10 +176,18 @@ return [
 				}
 				return (int) $post->post_author;
 			},
+			// One award per post while it is live: trashing or deleting it takes the points back, and
+			// publishing it again (untrash returns a post to draft) earns again.
+			'once_per_object' => static fn( string $new_status, string $old_status, $post ): int => $post instanceof \WP_Post ? (int) $post->ID : 0,
+			'reverse_on'      => [
+				'wp_trash_post'      => static fn( $post_id ): int => 'post' === get_post_type( (int) $post_id ) ? (int) $post_id : 0,
+				'before_delete_post' => static fn( $post_id ): int => 'post' === get_post_type( (int) $post_id ) ? (int) $post_id : 0,
+			],
 			'default_points'  => 25,
 			'category'        => 'wordpress',
 			'icon'            => 'icon-file-text',
 			'repeatable'      => true,
+			'async'           => false,
 			'standalone_only' => false,
 			// BP Member Blog's `bp_publish_post` awards on the same published
 			// `post`. This canonical core trigger supersedes it so a publish
@@ -234,11 +246,14 @@ return [
 				}
 				return (int) $comment->user_id;
 			},
+			'once_per_object' => static fn( $comment_id ): int => (int) $comment_id,
+			...\WBGam\Engine\Registry::comment_object_hooks(),
 			'default_points'  => 5,
 			'category'        => 'wordpress',
 			'icon'            => 'icon-message-square',
 			'repeatable'      => true,
 			'cooldown'        => 60,
+			'async'           => false,
 			'standalone_only' => false,
 		],
 
@@ -248,7 +263,8 @@ return [
 			'description'     => static fn(): string => __( 'Awarded when a previously pending comment gets approved.', 'wb-gamification' ),
 			'hook'            => 'transition_comment_status',
 			'user_callback'   => function ( string $new_status, string $old_status, \WP_Comment $comment ): int {
-				if ( 'approved' !== $new_status || 'approved' === $old_status ) {
+				// Back from the trash or spam is a restore (restore_on), not a moderation approval.
+				if ( 'approved' !== $new_status || in_array( $old_status, [ 'approved', 'trash', 'spam' ], true ) ) {
 					return 0;
 				}
 				// Skip product reviews — WooCommerce manifest handles those separately.
@@ -258,10 +274,13 @@ return [
 				}
 				return (int) $comment->user_id;
 			},
+			'once_per_object' => static fn( string $new_status, string $old_status, \WP_Comment $comment ): int => (int) $comment->comment_ID,
+			...\WBGam\Engine\Registry::comment_object_hooks(),
 			'default_points'  => 5,
 			'category'        => 'wordpress',
 			'icon'            => 'icon-circle-check',
 			'repeatable'      => true,
+			'async'           => false,
 			'standalone_only' => false,
 		],
 

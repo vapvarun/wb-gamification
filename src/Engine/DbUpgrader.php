@@ -1485,7 +1485,41 @@ final class DbUpgrader {
 			'1.5.4' => 'upgrade_to_1_5_4',
 			'1.5.5' => 'upgrade_to_1_5_5',
 			'1.6.4' => 'upgrade_to_1_6_4',
+			'1.6.8' => 'upgrade_to_1_6_8',
 		);
+	}
+
+	/**
+	 * 1.6.8 — index the content-removal lookup, and redraw the activity-stream cards.
+	 *
+	 * Removing a post, comment, upload or topic takes its award back
+	 * ({@see PointsEngine::reverse_object_awards()}), which reads the ledger by (action_id, object_id)
+	 * once per removed item. Without this index a bulk delete of 2,000 posts would scan the ledger
+	 * 2,000 times. Fresh installs get it from the CREATE TABLE in Installer.
+	 *
+	 * Idempotent: SHOW INDEX first; adding an index touches no row.
+	 *
+	 * @since 1.6.8
+	 */
+	private static function upgrade_to_1_6_8(): void {
+		global $wpdb;
+
+		$points = $wpdb->prefix . 'wb_gam_points';
+
+		if ( $points === $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $points ) ) ) {
+			$has_index = $wpdb->get_results(
+				$wpdb->prepare( "SHOW INDEX FROM `{$points}` WHERE Key_name = %s", 'idx_action_object' ) // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from $wpdb->prefix.
+			);
+
+			if ( empty( $has_index ) ) {
+				$wpdb->query( "ALTER TABLE `{$points}` ADD KEY `idx_action_object` (`action_id`, `object_id`)" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- DDL.
+			}
+		}
+
+		// Activity-stream cards from earlier versions get the 1.6.8 card markup.
+		if ( function_exists( 'bp_activity_add' ) && class_exists( '\WBGam\BuddyPress\Stream\Backfiller' ) ) {
+			\WBGam\BuddyPress\Stream\Backfiller::run();
+		}
 	}
 
 	/**

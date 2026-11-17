@@ -143,6 +143,7 @@ return [
 			'description'     => static fn(): string => __( 'Awarded when a product review is approved.', 'wb-gamification' ),
 			'hook'            => 'wb_gam_comment_approved',
 			'once_per_object' => static fn( int $comment_id ): int => $comment_id,
+			...\WBGam\Engine\Registry::comment_object_hooks(),
 			'user_callback'   => function ( int $comment_id ): int {
 				$comment = get_comment( $comment_id );
 				if ( ! $comment || empty( $comment->user_id ) ) {

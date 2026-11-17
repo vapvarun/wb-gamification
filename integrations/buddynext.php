@@ -58,6 +58,10 @@ return array(
 					'type'    => $type,
 				);
 			},
+			// A deleted post takes its award back. BuddyNext passes the deleter (0 for a system delete),
+			// so the award is found by the post, not by that user.
+			'once_per_object'   => static fn( $post_id ): int => (int) $post_id,
+			'reverse_on'        => array( 'buddynext_post_deleted' => static fn( $post_id ): int => (int) $post_id ),
 			'default_points'    => 5,
 			'category'          => 'content',
 			'icon'              => 'icon-file-text',
@@ -117,6 +121,8 @@ return array(
 					'object_id'   => $object_id,
 				);
 			},
+			'once_per_object'   => static fn( $comment_id ): int => (int) $comment_id,
+			'reverse_on'        => array( 'buddynext_comment_deleted' => static fn( $comment_id ): int => (int) $comment_id ),
 			'default_points'    => 3,
 			'category'          => 'content',
 			'icon'              => 'icon-message-square',

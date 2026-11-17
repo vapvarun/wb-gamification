@@ -101,11 +101,22 @@ $free_triggers = array(
 				'is_first'   => ! empty( $file_data['is_first'] ),
 			);
 		},
+		// A trashed or deleted upload takes its award back; restored from the trash gives it back.
+		'once_per_object'   => static fn( $media_id ): int => (int) $media_id,
+		'reverse_on'        => array(
+			'mvs_media_trashed' => static fn( $media_id ): int => (int) $media_id,
+			'mvs_media_deleted' => static fn( $media_id ): int => (int) $media_id,
+		),
+		'restore_on'        => array( 'mvs_media_restored' => static fn( $media_id ): int => (int) $media_id ),
 		'default_points'    => 10,
 		'category'          => 'media',
 		'icon'              => 'icon-camera',
 		'repeatable'        => true,
+		'async'             => false,
 		'cooldown'          => 5,
+		// 1.6.8: uploads had no daily limit, so a bulk upload paid for every file. A site that sets
+		// its own limit keeps it (the owner's setting wins).
+		'daily_cap'         => 20,
 	),
 
 	array(
@@ -175,6 +186,8 @@ $free_triggers = array(
 				'word_count' => str_word_count( wp_strip_all_tags( $content ) ),
 			);
 		},
+		'once_per_object'   => static fn( $media_id, $user_id, $comment_id ): int => (int) $comment_id,
+		...\WBGam\Engine\Registry::comment_object_hooks(),
 		'default_points'    => 5,
 		'category'          => 'media',
 		'icon'              => 'icon-message-circle',
@@ -231,11 +244,11 @@ $free_triggers = array(
 	 */
 
 	array(
-		'id'             => 'mvs_give_comment',
-		'label'          => static fn(): string => __( 'Write a meaningful comment', 'wb-gamification' ),
-		'description'    => static fn(): string => __( 'Awarded when a member leaves a comment of 20+ characters.', 'wb-gamification' ),
-		'hook'           => 'mvs_comment_created',
-		'user_callback'  => function ( int $media_id, int $user_id, int $comment_id, string $content ): int {
+		'id'              => 'mvs_give_comment',
+		'label'           => static fn(): string => __( 'Write a meaningful comment', 'wb-gamification' ),
+		'description'     => static fn(): string => __( 'Awarded when a member leaves a comment of 20+ characters.', 'wb-gamification' ),
+		'hook'            => 'mvs_comment_created',
+		'user_callback'   => function ( int $media_id, int $user_id, int $comment_id, string $content ): int {
 				// BuddyNext copy of a follow/comment another plugin already paid for.
 			if ( \WBGam\Engine\HostActivity::is_copy() ) {
 				return 0;
@@ -243,12 +256,15 @@ $free_triggers = array(
 			// Only award for meaningful comments (20+ chars).
 			return strlen( $content ) >= 20 ? $user_id : 0;
 		},
-		'default_points' => 3,
-		'category'       => 'social',
-		'icon'           => 'icon-message-square',
-		'repeatable'     => true,
-		'cooldown'       => 30,
-		'daily_cap'      => 20,
+		'once_per_object' => static fn( $media_id, $user_id, $comment_id ): int => (int) $comment_id,
+		...\WBGam\Engine\Registry::comment_object_hooks(),
+		'default_points'  => 3,
+		'category'        => 'social',
+		'icon'            => 'icon-message-square',
+		'repeatable'      => true,
+		'async'           => false,
+		'cooldown'        => 30,
+		'daily_cap'       => 20,
 	),
 );
 

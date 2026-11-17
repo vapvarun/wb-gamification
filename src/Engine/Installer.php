@@ -155,6 +155,7 @@ final class Installer {
 			KEY idx_user_action_created (user_id, action_id, created_at),
 			KEY idx_user_type_created (user_id, point_type, created_at),
 			KEY idx_action (action_id),
+			KEY idx_action_object (action_id, object_id),
 			KEY idx_created (created_at)
 		) $charset;"
 		);
