@@ -875,7 +875,7 @@ final class AnalyticsDashboard {
 							echo esc_html(
 								$last
 									? sprintf(
-										/* translators: %s: human-readable time difference, e.g. "3 hours". */
+										/* translators: %s: human-readable time difference. */
 										__( '%s ago', 'wb-gamification' ),
 										human_time_diff( (int) strtotime( $last . ' UTC' ) )
 									)
