@@ -2,6 +2,15 @@
 
 Temporary file for this test round. Delete it when testing is done. The Basecamp project is 47162271, and each card has its own detailed checklist.
 
+## Round 2 (17 Nov 2026): start here
+
+A full audit of the open cards, then a fix round, landed on `1.6.8` (commit `ee2b8ca` or later). Test **Part C** first: it lists every card fixed in this round with its exact check. Parts A and B below are the first round and still apply where Part C does not replace them.
+
+- **Run the 1.6.8 upgrade step once** on an existing site. The header stays 1.6.7 until release, so the upgrade does not run by itself. It adds a ledger index and repairs old BuddyPress activity cards in the background:
+  `wp eval '$m=new ReflectionMethod("WBGam\\Engine\\DbUpgrader","upgrade_to_1_6_8"); $m->setAccessible(true); $m->invoke(null);'` then `wp action-scheduler run`.
+- **BuddyPress set up from WP-CLI:** end with `wp eval 'bp_update_option("_bp_db_version", bp_get_db_version());'`, or BuddyPress re-installs itself (components off, a second Activity page, /activity/ 404) on the first admin request. That is a lab setup trap, not a plugin bug.
+- **QA pages for every block:** `wp wb-gamification qa seed_pages`.
+
 ## Before you start
 
 - **Code to test:** branch `1.6.8`, commit `c17509c` or later. The plugin header says 1.6.7 until release, so check the commit, not the version number.
@@ -173,3 +182,97 @@ Filling these gaps is an owner decision, so report your view but do not file eac
 ## 9. Test sheet
 
 Moved to one checklist per integration: [`docs/qa/integrations/`](integrations/README.md).
+
+---
+
+# Part C: Round 2 fixes (17 Nov 2026)
+
+Every check: as a **member** unless it says admin; member pages at **1440 and 390, light and dark**; on **Reign, BuddyX and BuddyX Pro** where it is a front-end screen. Tick here and add a one-line comment on the card.
+
+## 10. Points follow the content (card 10515592964, P1)
+
+- [ ] Publish a post (+25). Trash it: history shows "Publish a blog post (content removed)" and the total drops by 25. Restore and publish: +25 back. Delete for good: -25 once, never twice.
+- [ ] A comment that pays (after approval): spam it -5, unspam +5, trash -5, untrash +5, delete -5. Each step exactly once.
+- [ ] BuddyPress: delete an activity update or comment: its points come back off once.
+- [ ] Spend points first, then delete the content: the balance may go below zero (owner decision). Badges already earned stay (owner decision).
+- [ ] A post trashed and re-published three times counts once toward "publish N posts" badges.
+- [ ] Points awarded before 1.6.8 are left alone (owner decision).
+
+## 11. Moderated content (found in integration QA)
+
+- [ ] WP Sell Services, review moderation on: pending 0, approve +10, reject 0, approve again +10, approve a second time no change.
+- [ ] WB Listora review (held for approval): pending 0, approve +8, reject 0, approve +8, delete 0.
+- [ ] WB Listora listing: submit +10, reject 0, approve 20 (submission restored + approval), trash 0, restore and publish 20.
+- [ ] WB Listora Pro need: rejected, trashed or deleted takes its points back.
+
+## 12. Payouts that were wrong
+
+- [ ] Reactions: set "Receive a reaction" to 1 on Points; a reaction on an activity update pays the owner 1 (it used to force 5).
+- [ ] WooCommerce: a member whose first order was free (or an unpaid cash-on-delivery order) still gets "First purchase" (+50) on the first paid order.
+- [ ] Copy guards (10462743872, 10462658390): members copied into a BuddyNext space from a linked forum are not paid "Join a space" again; one MediaVerse comment pays once.
+- [ ] MediaVerse photo uploads: the 21st upload in a day pays nothing (new default cap 20, applies to every site without its own cap).
+
+## 13. Redemption Store (10483129430, 10483238276)
+
+- [ ] Admin: add a reward with Status Inactive: the list says Inactive and the member store does not show it.
+- [ ] Edit a limited reward to Unlimited: stays Unlimited after reload.
+- [ ] Edit only the title of a reward: status and description are unchanged.
+
+## 14. Activity stream (10516025691, owner decisions Q1 and Q2)
+
+- [ ] /activity/ on BuddyPress (and BuddyBoss if available): badge, level and kudos posts are one compact card (icon on a light tile, small label, name, one-line reason), inside the post with the same inset as text, on Reign, BuddyX, BuddyX Pro and a Twenty theme. No gap between icon and text, no empty paragraph.
+- [ ] Old posts look the same after the upgrade step has run.
+- [ ] Three ordinary badges on one day: one post, "X earned 3 badges". A credential badge: its own post. Next day: a new post. No database error in debug.log.
+- [ ] Dark mode: badge icons are clearly visible.
+
+## 15. Overlays and toasts (10479164212, 10516939110)
+
+- [ ] A member with a pending level-up opens the Redemption Store: the first tap on Redeem opens the confirm dialog (the celebration card no longer eats it).
+- [ ] The celebration card closes itself after about 6 seconds; hovering it holds it; Esc closes it.
+- [ ] A member who levelled up twice while away sees one card, the highest level.
+- [ ] 390: with a toast showing, open any popup with a bottom button (e.g. Product Roadmap's Suggest Feature): no toast covers it; the toast appears after the popup closes.
+
+## 16. Profiles and privacy (10450930360, 10516939317, 10458809769)
+
+- [ ] Site without BuddyNext/BuddyPress: guest on /u/<public member>/ sees level, points and badges, no history, no login prompt; the tab shows the member's name.
+- [ ] A private profile and /u/no-such-user/ both show "This profile is private" with the same status (403) and the same page.
+- [ ] BuddyPress members directory as a guest: no rank for a private member.
+- [ ] BuddyPress profile rank bar: `:root { --wb-gam-bar-color: red }` in Customizer CSS turns the bar red.
+
+## 17. Look and contrast
+
+- [ ] BuddyX Pro: the header "Log in" link uses the theme font with no stray icon (10512905406); admin icons still show.
+- [ ] Dark mode on Reign and BuddyX: Redeem buttons, challenge bonus pills and status labels are readable (10479230907, 10479163870).
+- [ ] Cohort Rank rows show avatars; row hover is visible (10479164010, 10479164082).
+- [ ] Kudos feed at 390: the arrow stays with the receiver (10479164141). Give Kudos: one frame, no gap under Send Kudos.
+- [ ] Leaderboard "Your rank" is one row: "Your rank #17 · 94 Points", next-rank distance below at 390.
+- [ ] Top Members: Lucide crown (no emoji); podium steps #1, #2, #3; tied members share a rank like the Leaderboard.
+- [ ] User Status Bar: one frame; never over the page title; bottom-right on desktop, in the page on phones.
+- [ ] Hub suggestion: "SUGGESTED FOR YOU" on its own line. Badge dates stay on one line at 390.
+- [ ] Badge Share: the share link and Copy button appear after Share (10459672934).
+
+## 18. Admin and the rest
+
+- [ ] Points: untick an action, save, reload: still off; it pays nothing (10407077371).
+- [ ] Points: "Members can submit" tick per action; with none ticked, Submit Achievement shows "There is nothing to submit…" and `POST /submissions` returns 403; tick one and it can be submitted (10459347341).
+- [ ] `[wb_gam_daily_bonus]` renders like the block (10479163783).
+- [ ] Credential issuer link: `GET /wp-json/wb-gamification/v1/issuer` as a guest returns 200 (10459672858).
+- [ ] Year Recap: a revoked kudos is not counted (10393175262, 10516939156). Progress reset clears personal records (10516939203).
+- [ ] Redemption Store admin: gap between the two cards (10483141467). Import: a second "Run it in this window" tab waits instead of looping (10516939365).
+- [ ] Badge docs match the Badges screen (10459673036); readme action count (10516939413).
+
+## 19. Integration results this round
+
+Three throwaway sites ran every action on real plugins (WP Sell Services 1.9.3, BuddyPress 14.5.4, LearnDash 5.2, Tutor 4.2, LifterLMS 11.0, WooCommerce 11.3, GiveWP 4.19, The Events Calendar 6.18, every Wbcom plugin). Every action passed after this round's fixes, except: MemberPress (paid, not tested), Tutor paid enrolment and real payment-gateway checkouts (not run). Each integration card has a comment with its results. `bp_publish_post` was removed: it never registered (WordPress's `wp_publish_post` covers it), so BuddyPress shows 12 actions.
+
+## 20. Owner decisions still open (do not report as bugs)
+
+- Approving a gated Jetonomy join request pays 15 (join 5 + approval 10); the doc says 10.
+- Closing a bbPress topic pays every time (close, reopen, close).
+- An event attendee with an RSVP and a ticket for the same event is paid twice for check-in.
+
+## 21. Before release (not this round)
+
+- Bump the version to 1.6.8 so the upgrade runs by itself.
+- Refresh the wp-plugin-qa baseline (`audit/wppqa-baseline-*`, older than 30 days).
+- Translations: Cursor translates from `languages/wb-gamification.pot` (prompt prepared separately).

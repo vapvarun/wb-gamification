@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-17T09:53:57+00:00\n"
+"POT-Creation-Date: 2026-11-17T10:28:22+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: wb-gamification\n"
@@ -241,42 +241,34 @@ msgid "Awarded when a member creates a poll with BuddyPress Polls."
 msgstr ""
 
 #: integrations/buddypress.php:206
-msgid "Publish a member blog post"
-msgstr ""
-
-#: integrations/buddypress.php:207
-msgid "Awarded when a member publishes a post via BP Member Blog."
-msgstr ""
-
-#: integrations/buddypress.php:230
 msgid "Upload profile photo"
 msgstr ""
 
-#: integrations/buddypress.php:231
+#: integrations/buddypress.php:207
 msgid "Awarded the first time a member uploads a profile avatar."
 msgstr ""
 
-#: integrations/buddypress.php:247
+#: integrations/buddypress.php:223
 msgid "Upload cover photo"
 msgstr ""
 
-#: integrations/buddypress.php:248
+#: integrations/buddypress.php:224
 msgid "Awarded the first time a member uploads a profile cover image."
 msgstr ""
 
-#: integrations/buddypress.php:264
+#: integrations/buddypress.php:240
 msgid "Upload group cover photo"
 msgstr ""
 
-#: integrations/buddypress.php:265
+#: integrations/buddypress.php:241
 msgid "Awarded once per group when an admin uploads a cover image for a group."
 msgstr ""
 
-#: integrations/buddypress.php:286
+#: integrations/buddypress.php:262
 msgid "Send a private message"
 msgstr ""
 
-#: integrations/buddypress.php:287
+#: integrations/buddypress.php:263
 msgid "Awarded for sending a 1:1 message. Cooldown applies to limit spam."
 msgstr ""
 
@@ -701,67 +693,67 @@ msgstr ""
 msgid "Awarded when a student asks a new question, up to five a day. Replies earn nothing."
 msgstr ""
 
-#: integrations/wb-listora-pro.php:26
+#: integrations/wb-listora-pro.php:35
 msgid "Post a need"
 msgstr ""
 
-#: integrations/wb-listora-pro.php:27
+#: integrations/wb-listora-pro.php:36
 msgid "Awarded to the member who posts a need (a reverse listing / request)."
 msgstr ""
 
-#: integrations/wb-listora-pro.php:46
+#: integrations/wb-listora-pro.php:57
 msgid "Get a need approved"
 msgstr ""
 
-#: integrations/wb-listora-pro.php:47
+#: integrations/wb-listora-pro.php:58
 msgid "Awarded to the member when their need is approved and goes live."
 msgstr ""
 
-#: integrations/wb-listora-pro.php:65
+#: integrations/wb-listora-pro.php:78
 msgid "Respond to a need"
 msgstr ""
 
-#: integrations/wb-listora-pro.php:66
+#: integrations/wb-listora-pro.php:79
 msgid "Awarded to the member who responds to another member's need with a listing."
 msgstr ""
 
-#: integrations/wb-listora.php:29
+#: integrations/wb-listora.php:66
 msgid "Submit a listing"
 msgstr ""
 
-#: integrations/wb-listora.php:30
+#: integrations/wb-listora.php:67
 msgid "Awarded to the owner when a listing is submitted. Cooldown prevents bulk-submit farming."
 msgstr ""
 
-#: integrations/wb-listora.php:59
+#: integrations/wb-listora.php:98
 msgid "Get a listing approved"
 msgstr ""
 
-#: integrations/wb-listora.php:60
+#: integrations/wb-listora.php:99
 msgid "Awarded to the owner when their listing is approved and goes live."
 msgstr ""
 
-#: integrations/wb-listora.php:80
+#: integrations/wb-listora.php:121
 msgid "Write a review"
 msgstr ""
 
-#: integrations/wb-listora.php:81
-msgid "Awarded to the reviewer when they leave a listing review. Cooldown limits review farming."
+#: integrations/wb-listora.php:122
+msgid "Awarded to the reviewer when their listing review is published (approved). Cooldown limits review farming."
 msgstr ""
 
-#: integrations/wb-listora.php:100
+#: integrations/wb-listora.php:151
 msgid "Claim a listing"
 msgstr ""
 
-#: integrations/wb-listora.php:101
+#: integrations/wb-listora.php:152
 msgid "Awarded to the member when their listing claim is approved."
 msgstr ""
 
-#: integrations/wb-listora.php:119
+#: integrations/wb-listora.php:170
 msgid "Renew a listing"
 msgstr ""
 
-#: integrations/wb-listora.php:120
+#: integrations/wb-listora.php:171
 msgid "Awarded to the owner when they renew an expiring or expired listing."
 msgstr ""
 
@@ -781,27 +773,27 @@ msgstr ""
 msgid "Awarded once on a customer's very first paid order."
 msgstr ""
 
-#: integrations/woocommerce.php:142
+#: integrations/woocommerce.php:157
 msgid "Leave a product review"
 msgstr ""
 
-#: integrations/woocommerce.php:143
+#: integrations/woocommerce.php:158
 msgid "Awarded when a product review is approved."
 msgstr ""
 
-#: integrations/woocommerce.php:171
+#: integrations/woocommerce.php:186
 msgid "Add a product to wishlist (YITH)"
 msgstr ""
 
-#: integrations/woocommerce.php:172
+#: integrations/woocommerce.php:187
 msgid "Awarded when a member adds any product to their YITH wishlist."
 msgstr ""
 
-#: integrations/woocommerce.php:186
+#: integrations/woocommerce.php:201
 msgid "Add a product to cart"
 msgstr ""
 
-#: integrations/woocommerce.php:187
+#: integrations/woocommerce.php:202
 msgid "Awarded when a logged-in member adds a product to their cart. Cooldown limits farming."
 msgstr ""
 
@@ -925,19 +917,19 @@ msgstr ""
 msgid "Awarded once when a member registers an employer account."
 msgstr ""
 
-#: integrations/wp-sell-services.php:93
+#: integrations/wp-sell-services.php:94
 msgid "Complete a service order"
 msgstr ""
 
-#: integrations/wp-sell-services.php:94
+#: integrations/wp-sell-services.php:95
 msgid "Awarded to the seller when an order they delivered is completed. An order a seller places with themselves earns nothing."
 msgstr ""
 
-#: integrations/wp-sell-services.php:116
+#: integrations/wp-sell-services.php:117
 msgid "Review a service"
 msgstr ""
 
-#: integrations/wp-sell-services.php:117
+#: integrations/wp-sell-services.php:118
 msgid "Awarded to the buyer when their review is published. A review held for moderation pays when a moderator approves it, and a seller reviewing their own order earns nothing."
 msgstr ""
 
@@ -7312,22 +7304,22 @@ msgstr ""
 msgid "Link copied!"
 msgstr ""
 
-#: src/BuddyPress/ActivityIntegration.php:119
+#: src/BuddyPress/ActivityIntegration.php:86
 #: src/Engine/Registry.php:718
 msgid "Earned a badge"
 msgstr ""
 
-#: src/BuddyPress/ActivityIntegration.php:120
+#: src/BuddyPress/ActivityIntegration.php:87
 #: src/Engine/Registry.php:717
 msgid "Reached a new level"
 msgstr ""
 
-#: src/BuddyPress/ActivityIntegration.php:121
+#: src/BuddyPress/ActivityIntegration.php:88
 #: src/Engine/Registry.php:709
 msgid "Gave kudos"
 msgstr ""
 
-#: src/BuddyPress/ActivityIntegration.php:122
+#: src/BuddyPress/ActivityIntegration.php:89
 #: src/Engine/Registry.php:715
 msgid "Completed a challenge"
 msgstr ""
