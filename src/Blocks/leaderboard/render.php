@@ -129,13 +129,10 @@ $wb_gam_wrapper = get_block_wrapper_attributes(
 		'data-wb-gam-point-type'   => (string) ( $wb_gam_attrs['pointType'] ?? '' ),
 		'data-wb-gam-points-label' => $wb_gam_points_label,
 		'data-wb-gam-points-label-one' => $wb_gam_points_one,
-		// Singular/plural badge-count templates (with a %d placeholder) so the
-		// live heartbeat re-render shows a translated label instead of hardcoded
-		// English. Kept as two forms to match the classic script's 1-vs-many test.
-		/* translators: %d: number of badges earned. */
-		'data-wb-gam-badges-one'   => __( '%d badge', 'wb-gamification' ),
-		/* translators: %d: number of badges earned. */
-		'data-wb-gam-badges-other' => __( '%d badges', 'wb-gamification' ),
+		// Badge-count label for the live heartbeat re-render. A label form with one
+		// number has no plural, so JS never applies English 1-vs-many rules.
+		/* translators: %d: number of badges. */
+		'data-wb-gam-badges-label' => __( 'Badges: %d', 'wb-gamification' ),
 	)
 );
 
@@ -244,8 +241,8 @@ BlockHooks::before( 'leaderboard', $wb_gam_attrs );
 						<span class="wb-gam-leaderboard__badges-count">
 							<?php
 							printf(
-								/* translators: %d: number of badges earned. */
-								esc_html( _n( '%d badge', '%d badges', max( 1, $wb_gam_badge_count ), 'wb-gamification' ) ),
+								/* translators: %d: number of badges. */
+								esc_html__( 'Badges: %d', 'wb-gamification' ),
 								(int) $wb_gam_badge_count
 							);
 							?>

@@ -181,12 +181,17 @@ BlockHooks::before(
 		echo \WBGam\Blocks\EmptyState::body( 'cohort-rank', __( 'No standings available yet - your cohort will populate as members earn points this week.', 'wb-gamification' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped in EmptyState.
 		?>
 	<?php else : ?>
+		<?php
+		// One query for every row's user (avatars), not one per row.
+		cache_users( array_map( static fn( $e ) => (int) ( $e['user_id'] ?? 0 ), $wb_gam_standings ) );
+		?>
 		<ol class="wb-gam-cohort-rank__list" role="list">
 			<?php foreach ( $wb_gam_standings as $wb_gam_entry ) :
 				$wb_gam_is_self = ( (int) ( $wb_gam_entry['user_id'] ?? 0 ) === $wb_gam_user_id );
 				?>
 				<li class="wb-gam-cohort-rank__item<?php echo $wb_gam_is_self ? ' wb-gam-cohort-rank__item--self' : ''; ?>">
 					<span class="wb-gam-cohort-rank__rank">#<?php echo esc_html( (string) ( $wb_gam_entry['rank'] ?? '' ) ); ?></span>
+					<span class="wb-gam-cohort-rank__avatar"><?php echo get_avatar( (int) ( $wb_gam_entry['user_id'] ?? 0 ), 32, '', '' ); ?></span>
 					<span class="wb-gam-cohort-rank__name"><?php echo esc_html( (string) ( $wb_gam_entry['display_name'] ?? '' ) ); ?></span>
 					<span class="wb-gam-cohort-rank__points">
 						<?php

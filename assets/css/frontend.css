@@ -109,129 +109,93 @@
 	}
 }
 
-/* ── BP activity-stream cards ─────────────────────────────────────────────── */
-/* 1.4.0 redesign v2 — Basecamp 9914967346.
- *
- * v1 used a white surface + soft accent left border. Simran flagged it
- * as still too subtle on a busy BP activity stream — the cards blended
- * with the surrounding non-gamification activity items. v2 takes a
- * stronger position:
- *
- *  - Type-tinted background (8% alpha of the accent colour) so the card
- *    is visibly an "achievement", not "yet another activity post".
- *  - 4px solid accent strip across the top of the card (full width, not
- *    just left) — it's now the first thing the eye registers.
- *  - Icon chip enlarged to 64px and gets a 2px solid accent ring so it
- *    reads as a "badge" not a "thumbnail".
- *  - New eyebrow row above the title carrying the type label ("Badge
- *    earned", "Level up", etc.) in uppercase tracking — confirms what
- *    just happened at a glance even when scrolling fast.
- *  - Hover lift bumped from soft to medium so the card feels tappable.
- */
+/* ── BP activity-stream card ────────────────────────────────────────────────
+ * One compact card for every gamification post (badge, level, kudos, challenge) on BuddyPress
+ * and BuddyBoss: icon on the start side, a small uppercase label, the name, a one-line reason.
+ * Theme tokens only, so it follows the theme's light/dark mode; logical properties for RTL.
+ * Markup: src/BuddyPress/Stream/ActivityCard.php. The badge, level, kudos and challenge icons
+ * carry their own tinted plate, so the image sits on no background of its own. */
 .wb-gam-activity-card {
-	/* One theme-derived accent for every event type — no per-type colour.
-	 * The icon + eyebrow label already say what happened, so the card sits
-	 * quietly in the BuddyPress stream, follows the site's brand, and adapts
-	 * to dark mode automatically (redesign 2026-06: drop the rainbow). */
-	--wb-gam-card-accent: var(--wb-gam-color-accent);
-	position: relative;
 	display: flex;
 	align-items: center;
-	gap: 14px;
-	padding: 14px 16px;
-	margin-block-start: 8px;
-	border: 1px solid var(--wb-gam-color-border, rgba(107, 114, 128, 0.18));
-	border-inline-start: 3px solid var(--wb-gam-card-accent);
-	border-radius: 12px;
-	background: var(--wb-gam-color-surface, var(--wb-gam-color-white, #fff));
-	overflow: hidden;
-	transition: box-shadow 200ms ease, border-color 200ms ease;
-}
-
-.wb-gam-activity-card:hover {
-	border-color: var(--wb-gam-card-accent);
-	box-shadow: 0 4px 16px rgba(15, 23, 42, 0.06);
-}
-
-.wb-gam-activity-card__icon {
-	flex: 0 0 auto;
-	width: 56px;
-	height: 56px;
-	border-radius: 12px;
-	object-fit: cover;
-	/* Fixed light plate (not a flipping surface token) so the badge artwork —
-	 * which loads via <img> and is often dark line-art — stays legible in dark
-	 * mode too. */
-	background: white;
-	padding: 8px;
+	gap: 12px;
 	box-sizing: border-box;
-	border: 1px solid var(--wb-gam-color-border, rgba(107, 114, 128, 0.18));
+	max-inline-size: 100%;
+	margin-block: var(--wb-gam-space-sm) 0;
+	padding-block: 10px;
+	padding-inline: 12px var(--wb-gam-space-md);
+	border: 1px solid var(--wb-gam-color-border);
+	border-inline-start: 3px solid var(--wb-gam-color-accent);
+	border-radius: var(--wb-gam-radius-md);
+	background: var(--wb-gam-color-surface);
+	color: var(--wb-gam-color-text);
+	line-height: var(--wb-gam-leading-tight);
+}
+
+/* Activity themes size, float and space every image in a post; the icon opts out. */
+.wb-gam-activity-card .wb-gam-activity-card__icon {
+	flex: 0 0 auto;
+	float: none;
+	inline-size: 40px;
+	block-size: 40px;
+	max-inline-size: none;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	border-radius: var(--wb-gam-radius-md);
+	object-fit: contain;
+}
+
+.wb-gam-activity-card--kudos .wb-gam-activity-card__icon {
+	border-radius: var(--wb-gam-radius-full);
+	object-fit: cover;
 }
 
 .wb-gam-activity-card__body {
-	flex: 1 1 auto;
-	min-width: 0;
 	display: flex;
+	flex: 1 1 auto;
 	flex-direction: column;
-	gap: 4px;
+	gap: 2px;
+	min-inline-size: 0;
 }
 
-/* Eyebrow row — type label + optional timestamp. */
 .wb-gam-activity-card__eyebrow {
-	font-size: 0.6875rem;
-	font-weight: 700;
-	letter-spacing: 0.08em;
+	color: var(--wb-gam-color-accent-text);
+	font-size: var(--wb-gam-font-xs);
+	font-weight: var(--wb-gam-weight-bold);
+	letter-spacing: 0.06em;
 	text-transform: uppercase;
-	color: var(--wb-gam-card-accent);
-	display: inline-flex;
-	align-items: center;
-	gap: 6px;
+}
+
+/* Name and reason each stay on one line; a grouped post lists several names. */
+.wb-gam-activity-card__title,
+.wb-gam-activity-card__desc {
+	display: block;
+	overflow: hidden;
+	margin: 0;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 
 .wb-gam-activity-card__title {
-	display: block;
-	font-size: 1rem;
-	font-weight: 700;
-	color: var(--wb-gam-color-text, #111827);
-	line-height: 1.3;
+	color: var(--wb-gam-color-text);
+	font-size: var(--wb-gam-font-md);
+	font-weight: var(--wb-gam-weight-bold);
 }
 
 .wb-gam-activity-card__desc {
-	margin: 0;
-	font-size: 0.875rem;
-	color: var(--wb-gam-color-text-muted, #6b7280);
-	line-height: 1.45;
+	color: var(--wb-gam-color-text-muted);
+	font-size: var(--wb-gam-font-sm);
 }
 
-/* Type variants intentionally share the single theme accent above — the icon
- * and the eyebrow label ("Badge earned", "Level up", "Kudos", "Challenge
- * completed") differentiate the event, not colour. */
-
-@media (max-width: 640px) {
+@media (max-width: 480px) {
 	.wb-gam-activity-card {
-		gap: 12px;
-		padding: 12px 14px;
-	}
-	.wb-gam-activity-card__icon {
-		width: 52px;
-		height: 52px;
-		padding: 6px;
-	}
-	.wb-gam-activity-card__title {
-		font-size: 0.9375rem;
-	}
-
-	.wb-gam-activity-card__icon {
-		width: 44px;
-		height: 44px;
+		gap: 10px;
+		padding-inline: 10px 12px;
 	}
 
 	.wb-gam-activity-card__title {
-		font-size: 0.9rem;
-	}
-
-	.wb-gam-activity-card__desc {
-		font-size: 0.8125rem;
+		font-size: var(--wb-gam-font-sm);
 	}
 }
 
@@ -269,6 +233,11 @@
 	font-size: 14px;
 }
 .wb-gam-profile-page__section { margin-bottom: 28px; }
+/* The neutral page for a private (or unknown) profile: one centred line. */
+.wb-gam-profile-page--private {
+	padding-block: var(--wb-gam-space-2xl);
+	text-align: center;
+}
 @media (max-width: 640px) {
 	.wb-gam-profile-page__hero { flex-direction: column; text-align: center; padding: 18px; }
 	.wb-gam-profile-page__avatar img { width: 80px; height: 80px; }
@@ -437,7 +406,7 @@
 .wb-gam-ld-link__btn:hover,
 .wb-gam-lrn-link__btn:hover {
 	background: var(--wb-gam-color-accent);
-	color: #fff;
+	color: var(--wb-gam-pop-accent-fg);
 }
 
 /* ── Profile visibility owner control ──────────────────────────────────────
@@ -482,7 +451,7 @@
 	border: 1px solid var(--wb-gam-color-accent, #2271b1);
 	border-radius: var(--wb-gam-radius, 8px);
 	background: var(--wb-gam-color-accent, #2271b1);
-	color: var(--wb-gam-color-white, #fff);
+	color: var(--wb-gam-pop-accent-fg);
 	font-weight: 600;
 	font-size: 0.875rem;
 	cursor: pointer;
@@ -549,11 +518,11 @@
 }
 
 
-/* ── BuddyPress profile header rank (ProfileIntegration::render_rank) ─────── */
+/* ── BuddyPress profile header rank (ProfileIntegration::render_rank) ───────
+ * The bar's look is overridable from the theme: --wb-gam-bar-color, --wb-gam-bar-bg and
+ * --wb-gam-bar-height are read where they are used, with the defaults as fallbacks. Declaring
+ * them on this element (as before) shadowed any override set on :root or body. */
 .wb-gam-profile-rank {
-	--wb-gam-bar-color: var(--wb-gam-color-accent);
-	--wb-gam-bar-bg: var(--wb-gam-color-surface-alt);
-	--wb-gam-bar-height: 6px;
 	display: flex;
 	flex-wrap: wrap;
 	align-items: center;
@@ -581,17 +550,17 @@
 
 .wb-gam-profile-rank .wb-gam-progress-bar {
 	flex: 1 0 100%;
-	height: var(--wb-gam-bar-height);
+	height: var(--wb-gam-bar-height, 6px);
 	overflow: hidden;
 	border-radius: var(--wb-gam-radius-full);
-	background: var(--wb-gam-bar-bg);
+	background: var(--wb-gam-bar-bg, var(--wb-gam-color-surface-alt));
 }
 
 .wb-gam-profile-rank .wb-gam-progress-fill {
 	width: var(--wb-gam-fill, 0%);
 	height: 100%;
 	border-radius: inherit;
-	background: var(--wb-gam-bar-color);
+	background: var(--wb-gam-bar-color, var(--wb-gam-color-accent));
 }
 
 @media (max-width: 480px) {

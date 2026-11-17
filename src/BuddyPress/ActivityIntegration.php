@@ -27,6 +27,8 @@
 
 namespace WBGam\BuddyPress;
 
+use WBGam\BuddyPress\Stream\ActivityCard;
+use WBGam\BuddyPress\Stream\Backfiller;
 use WBGam\BuddyPress\Stream\BadgeStream;
 use WBGam\BuddyPress\Stream\ChallengeStream;
 use WBGam\BuddyPress\Stream\KudosStream;
@@ -57,8 +59,6 @@ defined( 'ABSPATH' ) || exit;
  */
 final class ActivityIntegration {
 
-	private const COMPONENT = 'wb_gamification';
-
 	/**
 	 * Register hooks when BuddyPress is active.
 	 */
@@ -72,6 +72,11 @@ final class ActivityIntegration {
 
 		// Register custom BP activity types so the activity directory filters list them.
 		add_action( 'bp_register_activity_actions', array( __CLASS__, 'register_activity_types' ) );
+
+		// The card survives BuddyPress's kses for our component only, and its stylesheet loads
+		// on community pages; the Backfiller repairs older rows in the background.
+		ActivityCard::init();
+		Backfiller::init();
 
 		// Delegate each event type to its dedicated stream poster.
 		BadgeStream::init();
@@ -132,7 +137,7 @@ final class ActivityIntegration {
 			$context = apply_filters( 'wb_gam_activity_context_label', $label, $key );
 
 			bp_activity_set_action(
-				self::COMPONENT,
+				ActivityCard::COMPONENT,
 				$key,
 				$label,
 				null,

@@ -208,6 +208,46 @@ check_bp_integration_boot_order() {
 }
 
 # ----------------------------------------------------------------------------
+# Rule G — Lucide icon rules are scoped to the plugin's own markup.
+#
+# assets/fonts/lucide.css loads on the front end AND on every wp-admin screen
+# (the menu icon). Unscoped, its [class^="icon-"] rule (font-family with
+# !important) repainted any theme or plugin icon-* class with Lucide glyphs,
+# e.g. a theme's header links. Every icon selector must sit under the
+# :where([class*="wb-gam"], [class*="wbgam-"]) ancestor.
+# ----------------------------------------------------------------------------
+check_lucide_scoped() {
+    local css="$PLUGIN_DIR/assets/fonts/lucide.css"
+    local scope=':where([class*="wb-gam"], [class*="wbgam-"])'
+    if [ ! -f "$css" ]; then
+        ok "Rule G — no bundled Lucide stylesheet"
+        return
+    fi
+    # Each selector item names one icon class, so a rule is scoped when its selector carries the
+    # scope as many times as it names an icon-* class.
+    local hits
+    hits=$(awk -v scope="$scope" '
+        function count(str, needle,    n, i) {
+            n = 0
+            while ((i = index(str, needle)) > 0) { n++; str = substr(str, i + length(needle)) }
+            return n
+        }
+        /\{/ {
+            sel = substr($0, 1, index($0, "{") - 1)
+            if (count(sel, "icon-") > count(sel, scope)) {
+                print FILENAME ":" NR ": " sel
+            }
+        }' "$css" || true)
+    if [ -n "$hits" ]; then
+        violation "Rule G — unscoped Lucide icon selector(s) in assets/fonts/lucide.css:"
+        echo "$hits" | head -10 | sed 's/^/    /'
+        echo "    Fix: prefix each with $scope so a theme's own icon-* classes are left alone."
+    else
+        ok "Rule G — Lucide icon rules are scoped to the plugin's markup"
+    fi
+}
+
+# ----------------------------------------------------------------------------
 
 check_no_jquery_frontend
 check_no_admin_ajax_frontend
@@ -215,6 +255,7 @@ check_no_raw_xhr_frontend
 check_blocks_token_dep
 check_blocks_own_style_css
 check_bp_integration_boot_order
+check_lucide_scoped
 
 echo ""
 COUNT=$(violations_count)

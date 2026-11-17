@@ -64,15 +64,40 @@ if ( ! is_user_logged_in() ) {
 	return;
 }
 
-// Pass REST URL + nonce + actions list as data attrs so view.js can use them
-// without a separate wp_localize_script — keeps the block self-contained.
+// Only the actions the site owner lets members submit (Registry::is_submittable(): a manifest
+// `submittable => true` or the owner's tick). Listing every action let a member ask to be paid
+// for "Publish a post" by hand. The engine half ships in the same release.
 $wb_gam_actions = array_map(
 	static fn( $a ) => array(
 		'id'    => (string) $a['id'],
 		'label' => (string) ( $a['label'] ?? $a['id'] ),
 	),
-	array_values( Registry::get_actions() )
+	array_values(
+		array_filter(
+			Registry::get_actions(),
+			static function ( $a ) {
+				// ponytail: is_callable guard only until Lane A's Registry::is_submittable() is merged; drop it then.
+				$check = array( Registry::class, 'is_submittable' );
+				// @phpstan-ignore-next-line -- always false on this branch alone, always true once merged.
+				return ! is_callable( $check ) || (bool) call_user_func( $check, (string) $a['id'] );
+			}
+		)
+	)
 );
+
+if ( ! $wb_gam_actions ) {
+	BlockHooks::before( 'submit-achievement', $wb_gam_attrs );
+	echo \WBGam\Blocks\EmptyState::render( // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped in EmptyState.
+		'submit-achievement',
+		get_block_wrapper_attributes( array( 'class' => implode( ' ', $wb_gam_classes ) ) ),
+		__( 'There is nothing to submit for review right now. Points for your activity are added automatically.', 'wb-gamification' )
+	);
+	BlockHooks::after( 'submit-achievement', $wb_gam_attrs );
+	return;
+}
+
+// Pass REST URL + nonce + actions list as data attrs so view.js can use them
+// without a separate wp_localize_script — keeps the block self-contained.
 
 $wb_gam_wrapper = get_block_wrapper_attributes( array(
 	'class'                => implode( ' ', $wb_gam_classes ),

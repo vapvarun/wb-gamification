@@ -20,7 +20,6 @@ defined( 'ABSPATH' ) || exit;
  */
 final class ChallengeStream {
 
-	private const COMPONENT  = 'wb_gamification';
 	private const TYPE       = 'challenge_completed';
 	private const OPT_TOGGLE = 'wb_gam_bp_stream_challenge_completed';
 
@@ -38,35 +37,60 @@ final class ChallengeStream {
 	 * @param array $challenge Full challenge row.
 	 */
 	public static function post( int $user_id, array $challenge ): void {
-		if ( ! self::is_enabled() || ! function_exists( 'bp_activity_add' ) ) {
+		if ( ! self::is_enabled() ) {
 			return;
 		}
 
-		$title = ! empty( $challenge['title'] ) ? $challenge['title'] : __( 'a challenge', 'wb-gamification' );
-		$bonus = isset( $challenge['bonus_points'] ) ? (int) $challenge['bonus_points'] : 0;
-		$image = ! empty( $challenge['image_url'] ) ? $challenge['image_url'] : ActivityCard::default_challenge_image();
+		$fields = self::fields( $challenge );
 
-		$description = $bonus > 0
-			? sprintf(
-				/* translators: %d: bonus points awarded */
-				_n( 'Earned a %d-point bonus on completion.', 'Earned a %d-point bonus on completion.', $bonus, 'wb-gamification' ),
-				$bonus
-			)
-			: __( 'Challenge complete!', 'wb-gamification' );
+		/** This action is documented in src/BuddyPress/Stream/BadgeStream.php */
+		do_action(
+			'wb_gam_activity_post',
+			'challenge',
+			$user_id,
+			array(
+				'challenge_id' => (int) ( $challenge['id'] ?? 0 ),
+			) + $fields
+		);
+
+		if ( ! function_exists( 'bp_activity_add' ) ) {
+			return;
+		}
 
 		$user_link = ActivityCard::user_link( $user_id );
 
-		bp_activity_add(
+		ActivityCard::add(
 			array(
 				'user_id'       => $user_id,
-				'component'     => self::COMPONENT,
 				'type'          => self::TYPE,
 				'action'        => ActivityCard::action_line( $user_link, 'challenge' ),
-				'content'       => ActivityCard::render( 'challenge', $image, $title, $description ),
+				'content'       => ActivityCard::render( 'challenge', $fields['image_url'], $fields['title'], $fields['description'] ),
 				'item_id'       => (int) ( $challenge['id'] ?? 0 ),
 				'hide_sitewide' => false,
 				'is_spam'       => false,
 			)
+		);
+	}
+
+	/**
+	 * Card fields for a challenge: title, the bonus it paid, its icon. Shared with the Backfiller.
+	 *
+	 * @param array<string, mixed> $challenge Challenge row (title, bonus_points, image_url).
+	 * @return array{title:string,description:string,image_url:string}
+	 */
+	public static function fields( array $challenge ): array {
+		$bonus = isset( $challenge['bonus_points'] ) ? (int) $challenge['bonus_points'] : 0;
+
+		return array(
+			'title'       => ! empty( $challenge['title'] ) ? (string) $challenge['title'] : __( 'a challenge', 'wb-gamification' ),
+			'description' => $bonus > 0
+				? sprintf(
+					/* translators: %d: bonus points awarded */
+					_n( 'Earned a %d-point bonus on completion.', 'Earned a %d-point bonus on completion.', $bonus, 'wb-gamification' ),
+					$bonus
+				)
+				: __( 'Challenge complete!', 'wb-gamification' ),
+			'image_url'   => ! empty( $challenge['image_url'] ) ? (string) $challenge['image_url'] : ActivityCard::default_challenge_image(),
 		);
 	}
 

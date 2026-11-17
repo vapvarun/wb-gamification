@@ -138,8 +138,10 @@ foreach ( $cond_rows as $row ) {
 	$name = $descriptions[ $id ]['name'];
 	$desc = $descriptions[ $id ]['description'];
 
-	// Admin-awarded badges are always exempt.
-	if ( 'admin_awarded' === $type ) {
+	// Admin-awarded badges are always exempt. So are rules on a state rather than an action
+	// (rank reached, streak length, membership age): "First Champion" is the first member to
+	// reach Champion rank, which is a level_reached rule by design, not an action count.
+	if ( in_array( $type, array( 'admin_awarded', 'level_reached', 'streak_days', 'tenure_days' ), true ) ) {
 		continue;
 	}
 

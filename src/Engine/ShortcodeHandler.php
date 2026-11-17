@@ -57,6 +57,7 @@ final class ShortcodeHandler {
 		add_shortcode( 'wb_gam_cohort_rank', array( __CLASS__, 'render_cohort_rank' ) );
 		add_shortcode( 'wb_gam_redemption_store', array( __CLASS__, 'render_redemption_store' ) );
 		add_shortcode( 'wb_gam_my_rewards', array( __CLASS__, 'render_my_rewards' ) );
+		add_shortcode( 'wb_gam_daily_bonus', array( __CLASS__, 'render_daily_bonus' ) );
 	}
 
 	// ── Shortcode renderers ───────────────────────────────────────────────────
@@ -543,6 +544,17 @@ final class ShortcodeHandler {
 	}
 
 	/**
+	 * Render [wb_gam_daily_bonus]: the Daily Login Bonus block (streak, today's points, next
+	 * tiers) for page builders and classic content. The block has no content attributes.
+	 *
+	 * @param array|string $atts Unused.
+	 * @return string Rendered HTML.
+	 */
+	public static function render_daily_bonus( $atts = array() ): string { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found -- shortcode signature.
+		return self::block( 'daily-bonus', array() );
+	}
+
+	/**
 	 * Render the cohort rank shortcode.
 	 *
 	 * @param array|string $atts [user_id, limit].
@@ -685,7 +697,8 @@ final class ShortcodeHandler {
 									// on a MySQL running IST it told the member a reward they had just redeemed
 									// was claimed "6 hours ago". Rows written before that fix still carry the old
 									// host's offset; new ones are correct.
-									echo esc_html( human_time_diff( strtotime( $row_when ), time() ) . ' ' . __( 'ago', 'wb-gamification' ) );
+									/* translators: %s: human-readable time difference. */
+									echo esc_html( sprintf( __( '%s ago', 'wb-gamification' ), human_time_diff( strtotime( $row_when ), time() ) ) );
 									?>
 								</span>
 							<?php endif; ?>

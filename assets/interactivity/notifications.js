@@ -16,7 +16,11 @@
  *      celebration that arrives after page load is not skipped.
  *
  * One card at a time. A second celebration that arrives while one is showing waits and shows
- * after the member dismisses the first. Opening a card starts the confetti (assets/js/celebrate.js).
+ * after the first closes. Opening a card starts the confetti (assets/js/celebrate.js).
+ *
+ * The card never blocks the page: clicks pass through the dimmed area (popups.css), and the card
+ * closes itself after AUTO_CLOSE_MS. The countdown pauses while the pointer or focus is on the
+ * card and restarts when it leaves. Esc and the button close it at once.
  *
  * @since 1.2.0
  * @refactored 1.6.5 - one Moment card replaces the separate level-up and streak overlays, and the
@@ -26,6 +30,8 @@
 import { store } from '@wordpress/interactivity';
 
 const NS = 'wb-gamification';
+
+const AUTO_CLOSE_MS = 6000;
 
 const MOMENT_TYPES = [ 'level_up', 'streak_milestone', 'cohort_promotion', 'community_goal' ];
 
@@ -53,6 +59,7 @@ const { state, actions } = store( NS, {
 
 	actions: {
 		dismissMoment() {
+			window.clearTimeout( closeTimer );
 			state.moment = { ...EMPTY_MOMENT };
 			showNext();
 		},
@@ -109,7 +116,17 @@ const { state, actions } = store( NS, {
 				document.addEventListener( 'wbGamRealtimeReady', subscribe, { once: true } );
 			}
 
-			// 3. Escape closes the open card: a backstop for a theme stylesheet that hides the button.
+			// 3. Hover or focus on the card holds the countdown; leaving restarts it.
+			const card = document.querySelector( '.wb-gam-moment__card' );
+			if ( card ) {
+				const hold = () => window.clearTimeout( closeTimer );
+				card.addEventListener( 'mouseenter', hold );
+				card.addEventListener( 'focusin', hold );
+				card.addEventListener( 'mouseleave', armClose );
+				card.addEventListener( 'focusout', armClose );
+			}
+
+			// 4. Escape closes the open card: a backstop for a theme stylesheet that hides the button.
 			document.addEventListener( 'keydown', ( ev ) => {
 				if ( ev.key === 'Escape' && state.moment.active ) {
 					actions.dismissMoment();
@@ -122,6 +139,25 @@ const { state, actions } = store( NS, {
 
 // A card waiting behind the one on screen.
 const waiting = [];
+
+// The open card's auto-close countdown.
+let closeTimer = 0;
+
+/**
+ * (Re)start the countdown, unless the pointer or focus is on the card: the member is reading it.
+ */
+function armClose() {
+	window.clearTimeout( closeTimer );
+	const card = document.querySelector( '.wb-gam-moment__card' );
+	if ( ! state.moment.active || ( card && ( card.matches( ':hover' ) || card.contains( document.activeElement ) ) ) ) {
+		return;
+	}
+	closeTimer = window.setTimeout( () => {
+		if ( state.moment.active ) {
+			actions.dismissMoment();
+		}
+	}, AUTO_CLOSE_MS );
+}
 
 /**
  * Map a queue payload to the card's fields. The server sends the copy already translated; the
@@ -147,6 +183,7 @@ function toMoment( event ) {
 function show( moment ) {
 	state.moment = moment;
 	// The store updates the DOM on the next frame; start the confetti once the card is visible.
+	armClose();
 	window.requestAnimationFrame( () => {
 		const host = document.querySelector( '.wb-gam-moment' );
 		if ( host && window.wbGam && typeof window.wbGam.celebrate === 'function' ) {

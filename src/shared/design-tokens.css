@@ -82,7 +82,8 @@
 	/* Accent label text blends toward the foreground so it stays readable on
 	 * the tinted chip in either mode. */
 	--wb-gam-color-accent-text: color-mix(in srgb, var(--wb-gam-color-accent) 65%, var(--wb-gam-color-text));
-	--wb-gam-color-accent-ring: rgba(91, 76, 219, 0.2);
+	/* Follows the theme's accent, like every other accent tint (was a fixed brand-purple rgba). */
+	--wb-gam-color-accent-ring: color-mix(in srgb, var(--wb-gam-color-accent) 20%, transparent);
 
 	/* Colors — semantic. The solid hue stays constant; the `-bg` tint is
 	 * mixed over the theme surface so status chips / podium rows / pills
@@ -121,7 +122,7 @@
 	--wb-gam-color-surface-muted: var(--bx-color-bg-muted, var(--reign-site-secondary-bg-color, #f9fafb));
 	--wb-gam-color-border-strong: var(--bx-color-border, var(--reign-site-border-color, #d1d5db));
 	--wb-gam-color-locked-soft: rgba(156, 163, 175, 0.16);
-	--wb-gam-color-primary-soft: rgba(91, 76, 219, 0.10);
+	--wb-gam-color-primary-soft: color-mix(in srgb, var(--wb-gam-color-accent) 10%, transparent);
 
 	/* Accent variants tied to per-block accent (fire, gold-soft). */
 	--wb-gam-color-fire: #f59e0b;
@@ -216,7 +217,10 @@
 	--wb-gam-pop-line: var(--bn-line, var(--bn-border, var(--wb-gam-color-border)));
 	--wb-gam-pop-subtle: var(--bn-bg-subtle, var(--wb-gam-color-surface-alt));
 	--wb-gam-pop-accent: var(--bn-accent-500, var(--bn-accent, var(--wb-gam-color-accent)));
-	--wb-gam-pop-accent-fg: var(--bn-accent-fg, #ffffff);
+	/* Text ON the accent. Each theme pairs its button colour with a text colour (BuddyX's
+	 * accent-inverse, Reign's button text), so read that pair before assuming white: Reign dark's
+	 * #97c0ee button with white text measured 1.89:1, with Reign's own #111111 it is 9.97:1. */
+	--wb-gam-pop-accent-fg: var(--bn-accent-fg, var(--bx-color-accent-inverse, var(--reign-site-button-text-color, #ffffff)));
 	--wb-gam-pop-accent-100: var(--bn-accent-100, color-mix(in srgb, var(--wb-gam-pop-accent) 12%, var(--wb-gam-pop-surface)));
 	--wb-gam-pop-accent-200: var(--bn-accent-200, color-mix(in srgb, var(--wb-gam-pop-accent) 24%, var(--wb-gam-pop-surface)));
 	--wb-gam-pop-success: var(--bn-success, var(--wb-gam-color-success));
@@ -322,6 +326,21 @@ body.buddyx-dark-theme {
 	 * under the 4.5:1 WCAG AA floor. Gold clears it at 5.56:1 and is left as it is. */
 	--wb-gam-color-silver: color-mix(in srgb, #6b7280 45%, #ffffff);
 	--wb-gam-color-bronze: color-mix(in srgb, #a0522d 50%, #ffffff);
+
+	/* Text on the lightened brand accent: white on it is 2.68:1, this ink is 6.37:1. A theme's
+	 * own pair still wins. */
+	--wb-gam-pop-accent-fg: var(--bn-accent-fg, var(--bx-color-accent-inverse, var(--reign-site-button-text-color, #1a1a2e)));
+
+	/* Lift the "-strong" status inks, info and the deepest heatmap step for a dark surface. The
+	 * light values measure 2.3:1 to 3.6:1 on #161616 / #1f2937 / #15181f (heatmap-4 1.3:1); the
+	 * mixes below measure at least 5.2:1 on all three (heatmap-4 4.5:1), and stay recognisably
+	 * green, amber, red, blue and violet. */
+	--wb-gam-color-success-strong: color-mix(in srgb, #047857 60%, #ffffff);
+	--wb-gam-color-warning-strong: color-mix(in srgb, #b45309 60%, #ffffff);
+	--wb-gam-color-danger-strong: color-mix(in srgb, #b91c1c 55%, #ffffff);
+	--wb-gam-color-fire-strong: color-mix(in srgb, #b45309 60%, #ffffff);
+	--wb-gam-color-info: color-mix(in srgb, #2563eb 60%, #ffffff);
+	--wb-gam-color-heatmap-4: color-mix(in srgb, #4c1d95 55%, #ffffff);
 }
 @media (prefers-color-scheme: dark) {
 	:root[data-bx-mode="auto"] {
@@ -335,5 +354,19 @@ body.buddyx-dark-theme {
 		--wb-gam-tier-obsidian: color-mix(in srgb, #4b5563 55%, #ffffff);
 		--wb-gam-color-silver: color-mix(in srgb, #6b7280 45%, #ffffff);
 		--wb-gam-color-bronze: color-mix(in srgb, #a0522d 50%, #ffffff);
+		/* Text on the lightened brand accent: white on it is 2.68:1, this ink is 6.37:1. A theme's
+		 * own pair still wins. */
+		--wb-gam-pop-accent-fg: var(--bn-accent-fg, var(--bx-color-accent-inverse, var(--reign-site-button-text-color, #1a1a2e)));
+
+		/* Lift the "-strong" status inks, info and the deepest heatmap step for a dark surface. The
+		 * light values measure 2.3:1 to 3.6:1 on #161616 / #1f2937 / #15181f (heatmap-4 1.3:1); the
+		 * mixes below measure at least 5.2:1 on all three (heatmap-4 4.5:1), and stay recognisably
+		 * green, amber, red, blue and violet. */
+		--wb-gam-color-success-strong: color-mix(in srgb, #047857 60%, #ffffff);
+		--wb-gam-color-warning-strong: color-mix(in srgb, #b45309 60%, #ffffff);
+		--wb-gam-color-danger-strong: color-mix(in srgb, #b91c1c 55%, #ffffff);
+		--wb-gam-color-fire-strong: color-mix(in srgb, #b45309 60%, #ffffff);
+		--wb-gam-color-info: color-mix(in srgb, #2563eb 60%, #ffffff);
+		--wb-gam-color-heatmap-4: color-mix(in srgb, #4c1d95 55%, #ffffff);
 	}
 }

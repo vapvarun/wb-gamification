@@ -122,7 +122,7 @@
   align-items: center;
   gap: 6px;
   background: var(--gam-accent);
-  color: #fff;
+  color: var(--wb-gam-pop-accent-fg);
   border: none;
   border-radius: var(--gam-radius-sm);
   padding: 8px 16px;
@@ -676,7 +676,7 @@
 
 .gam-lb-avatar--you {
   background: var(--gam-accent);
-  color: #fff;
+  color: var(--wb-gam-pop-accent-fg);
 }
 
 .gam-lb-avatar i {
@@ -715,7 +715,7 @@
 .gam-lb-pill--active {
   border-color: var(--gam-accent);
   background: var(--gam-accent);
-  color: #fff;
+  color: var(--wb-gam-pop-accent-fg);
 }
 
 /* Kudos inside panel */
@@ -803,7 +803,7 @@
 .gam-stat__convert:hover,
 .gam-stat__convert:focus-visible {
   background: var(--wb-gam-color-accent, #2563eb);
-  color: #fff;
+  color: var(--wb-gam-pop-accent-fg);
   border-color: var(--wb-gam-color-accent, #2563eb);
 }
 .gam-stat__convert:focus-visible {

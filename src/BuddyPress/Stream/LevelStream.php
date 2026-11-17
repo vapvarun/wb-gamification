@@ -24,7 +24,6 @@ defined( 'ABSPATH' ) || exit;
  */
 final class LevelStream {
 
-	private const COMPONENT  = 'wb_gamification';
 	private const TYPE       = 'level_changed';
 	private const OPT_TOGGLE = 'wb_gam_bp_stream_level_changed';
 
@@ -47,7 +46,7 @@ final class LevelStream {
 		if ( is_array( $new_level ) && ! \WBGam\Engine\LevelEngine::is_climb( $new_level, is_array( $old_level ) ? $old_level : null ) ) {
 			return;
 		}
-		if ( ! self::is_enabled() || ! function_exists( 'bp_activity_add' ) ) {
+		if ( ! self::is_enabled() ) {
 			return;
 		}
 
@@ -58,38 +57,60 @@ final class LevelStream {
 
 		// Prefer the array payload — fall back to ActivityCard lookup only if
 		// the caller passed a partial array (resilience against hook re-fires).
-		$level      = is_array( $new_level ) && isset( $new_level['name'] )
+		$level  = is_array( $new_level ) && isset( $new_level['name'] )
 			? $new_level
 			: ActivityCard::lookup_level( $new_level_id );
-		$level_name = $level['name'] ?? get_user_meta( $user_id, 'wb_gam_level_name', true );
-		if ( ! $level_name ) {
-			$level_name = __( 'a new level', 'wb-gamification' );
+		$fields = self::fields( is_array( $level ) ? $level : array(), (string) get_user_meta( $user_id, 'wb_gam_level_name', true ) );
+
+		/** This action is documented in src/BuddyPress/Stream/BadgeStream.php */
+		do_action(
+			'wb_gam_activity_post',
+			'level',
+			$user_id,
+			array(
+				'level_id' => $new_level_id,
+			) + $fields
+		);
+
+		if ( ! function_exists( 'bp_activity_add' ) ) {
+			return;
 		}
-
-		$level_image = ! empty( $level['icon_url'] ) ? $level['icon_url'] : ActivityCard::default_level_image();
-		$min_points  = isset( $level['min_points'] ) ? (int) $level['min_points'] : 0;
-
-		$description = $min_points > 0
-			? sprintf(
-				/* translators: %d: points required for this level. */
-				_n( 'Awarded for reaching %d point.', 'Awarded for reaching %d points.', $min_points, 'wb-gamification' ),
-				$min_points
-			)
-			: __( 'A new milestone reached.', 'wb-gamification' );
 
 		$user_link = ActivityCard::user_link( $user_id );
 
-		bp_activity_add(
+		ActivityCard::add(
 			array(
 				'user_id'       => $user_id,
-				'component'     => self::COMPONENT,
 				'type'          => self::TYPE,
 				'action'        => ActivityCard::action_line( $user_link, 'level' ),
-				'content'       => ActivityCard::render( 'level', $level_image, $level_name, $description ),
+				'content'       => ActivityCard::render( 'level', $fields['image_url'], $fields['title'], $fields['description'] ),
 				'item_id'       => $new_level_id,
 				'hide_sitewide' => false,
 				'is_spam'       => false,
 			)
+		);
+	}
+
+	/**
+	 * Card fields for a level: name, the points it took, its icon. Shared with the Backfiller.
+	 *
+	 * @param array<string, mixed> $level Level row (name, min_points, icon_url).
+	 * @param string               $name  Name to show when the row has none.
+	 * @return array{title:string,description:string,image_url:string}
+	 */
+	public static function fields( array $level, string $name = '' ): array {
+		$min_points = isset( $level['min_points'] ) ? (int) $level['min_points'] : 0;
+
+		return array(
+			'title'       => ! empty( $level['name'] ) ? (string) $level['name'] : ( '' !== $name ? $name : __( 'a new level', 'wb-gamification' ) ),
+			'description' => $min_points > 0
+				? sprintf(
+					/* translators: %d: points required for this level. */
+					_n( 'Awarded for reaching %d point.', 'Awarded for reaching %d points.', $min_points, 'wb-gamification' ),
+					$min_points
+				)
+				: __( 'A new milestone reached.', 'wb-gamification' ),
+			'image_url'   => ! empty( $level['icon_url'] ) ? (string) $level['icon_url'] : ActivityCard::default_level_image(),
 		);
 	}
 

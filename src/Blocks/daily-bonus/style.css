@@ -54,7 +54,7 @@
 	padding: 8px 14px;
 	border-radius: 999px;
 	background: var(--wb-gam-color-accent);
-	color: var(--wb-gam-color-white);
+	color: var(--wb-gam-pop-accent-fg);
 	font-size: 14px;
 	font-weight: 600;
 }

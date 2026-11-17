@@ -1,6 +1,6 @@
 # Shortcodes Reference
 
-Every WB Gamification block has a matching shortcode, except the three block-only blocks (Daily Login Bonus, Submit Achievement, and User Status Bar). All shortcodes begin with `[wb_gam_` and work anywhere WordPress processes shortcodes: pages, posts, text widgets, and theme templates. The table below lists each shortcode, what it renders, its main attributes, and the equivalent block.
+Every WB Gamification block has a matching shortcode, except the two block-only blocks (Submit Achievement and User Status Bar). All shortcodes begin with `[wb_gam_` and work anywhere WordPress processes shortcodes: pages, posts, text widgets, and theme templates. The table below lists each shortcode, what it renders, its main attributes, and the equivalent block.
 
 | Shortcode | What it renders | Key attributes | Block equivalent |
 |---|---|---|---|
@@ -20,6 +20,7 @@ Every WB Gamification block has a matching shortcode, except the three block-onl
 | `[wb_gam_community_challenges]` | Group and community challenges with progress | `limit`, `show_progress_bar` | Community Challenges |
 | `[wb_gam_cohort_rank]` | A member's cohort league standing | `user_id`, `limit`, `type` | Cohort Rank |
 | `[wb_gam_redemption_store]` | Member-facing rewards catalog with Redeem buttons | `limit`, `columns`, `show_balance`, `type` | Redemption Store |
+| `[wb_gam_daily_bonus]` | The member's login streak, today's bonus and the next bonus tiers | (none) | Daily Login Bonus |
 | `[wb_gam_my_rewards]` | A member's own redemption history and coupon codes | `limit`, `show_status` | (shortcode only) |
 
 For per-block details and design options, see each block's own page and the [blocks and shortcodes overview](00-blocks-overview.md).

@@ -328,6 +328,19 @@ BlockHooks::before( 'badge-showcase', $wb_gam_attrs );
 							);
 							?>
 						</button>
+						<?php
+						// Once shared, the member needs the link itself: to open it, or to paste it
+						// elsewhere. Rendered for a badge already shared; view.js fills it in on share.
+						$wb_gam_share_url = $wb_gam_shared ? \WBGam\Engine\BadgeSharePage::get_share_url( (string) $wb_gam_badge['id'], $wb_gam_user_id ) : '';
+						?>
+						<span class="wb-gam-badge-showcase__share-link" data-wb-gam-share-link <?php echo $wb_gam_shared ? '' : 'hidden'; ?>>
+							<a href="<?php echo esc_url( $wb_gam_share_url ); ?>" target="_blank" rel="noopener"><?php esc_html_e( 'Open share page', 'wb-gamification' ); ?></a>
+							<button type="button" class="wb-gam-badge-showcase__copy"
+								data-wb-gam-share-copy
+								data-label-copied="<?php esc_attr_e( 'Copied', 'wb-gamification' ); ?>"
+								data-label-failed="<?php esc_attr_e( 'Copy failed - open the link instead', 'wb-gamification' ); ?>"><?php esc_html_e( 'Copy link', 'wb-gamification' ); ?></button>
+							<span class="screen-reader-text" role="status" aria-live="polite"></span>
+						</span>
 					<?php endif; ?>
 				</li>
 			<?php endforeach; ?>

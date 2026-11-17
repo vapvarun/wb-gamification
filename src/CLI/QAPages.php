@@ -141,7 +141,7 @@ final class QAPages {
 			'shortcode_attrs' => 'columns="3" show_balance="1" show_stock="1"',
 		),
 		'daily-bonus'          => array(
-			'shortcode'       => '',
+			'shortcode'       => 'wb_gam_daily_bonus',
 			'title'           => 'Daily Login Bonus',
 			'block_attrs'     => '{}',
 			'shortcode_attrs' => '',
