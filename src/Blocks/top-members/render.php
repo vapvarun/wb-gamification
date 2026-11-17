@@ -166,10 +166,17 @@ BlockHooks::before( 'top-members', $wb_gam_attrs );
 <div <?php echo $wb_gam_wrapper; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>>
 	<?php if ( 'podium' === $wb_gam_layout ) : ?>
 		<?php
+		// 'slot' is the podium position (layout: #1 in the middle and highest). 'rank' is the
+		// member's rank from LeaderboardEngine, which gives equal points an equal rank (1, 1, 1, 4),
+		// the same rule the Leaderboard block shows; the number, badge colour and crown follow it.
 		$wb_gam_podium = array();
 		foreach ( array( 1, 0, 2 ) as $wb_gam_idx ) {
 			if ( isset( $wb_gam_rows[ $wb_gam_idx ] ) ) {
-				$wb_gam_podium[] = array( 'row' => $wb_gam_rows[ $wb_gam_idx ], 'rank' => $wb_gam_idx + 1 );
+				$wb_gam_podium[] = array(
+					'row'  => $wb_gam_rows[ $wb_gam_idx ],
+					'slot' => $wb_gam_idx + 1,
+					'rank' => (int) ( $wb_gam_rows[ $wb_gam_idx ]['rank'] ?? $wb_gam_idx + 1 ),
+				);
 			}
 		}
 		?>
@@ -177,10 +184,11 @@ BlockHooks::before( 'top-members', $wb_gam_attrs );
 			<?php foreach ( $wb_gam_podium as $wb_gam_entry ) :
 				$wb_gam_row  = $wb_gam_entry['row'];
 				$wb_gam_rank = (int) $wb_gam_entry['rank'];
+				$wb_gam_slot = (int) $wb_gam_entry['slot'];
 				$wb_gam_uid  = (int) ( $wb_gam_row['user_id'] ?? 0 );
 				$wb_gam_url  = MemberUrl::resolve( $wb_gam_uid );
 				?>
-				<div class="wb-gam-top-members__podium-slot wb-gam-top-members__podium-slot--<?php echo (int) $wb_gam_rank; ?>">
+				<div class="wb-gam-top-members__podium-slot wb-gam-top-members__podium-slot--<?php echo (int) $wb_gam_slot; ?>">
 					<div class="wb-gam-top-members__podium-crown">
 						<?php
 						if ( 1 === $wb_gam_rank ) {
@@ -197,7 +205,7 @@ BlockHooks::before( 'top-members', $wb_gam_attrs );
 						'wb-gam-top-members__avatar-link'
 					);
 					?>
-					<span class="wb-gam-top-members__rank-badge wb-gam-top-members__rank-badge--<?php echo (int) $wb_gam_rank; ?>">
+					<span class="wb-gam-top-members__rank-badge wb-gam-top-members__rank-badge--<?php echo (int) min( 3, $wb_gam_rank ); ?>">
 						<?php echo esc_html( '#' . $wb_gam_rank ); ?>
 					</span>
 					<?php
@@ -232,7 +240,7 @@ BlockHooks::before( 'top-members', $wb_gam_attrs );
 			<ol class="wb-gam-top-members__rest" start="4">
 				<?php foreach ( array_slice( $wb_gam_rows, 3 ) as $wb_gam_i => $wb_gam_row ) :
 					$wb_gam_uid  = (int) ( $wb_gam_row['user_id'] ?? 0 );
-					$wb_gam_rank = (int) $wb_gam_i + 4;
+					$wb_gam_rank = (int) ( $wb_gam_row['rank'] ?? $wb_gam_i + 4 );
 					$wb_gam_url  = MemberUrl::resolve( $wb_gam_uid );
 					?>
 					<li class="wb-gam-top-members__rest-item">
@@ -256,7 +264,7 @@ BlockHooks::before( 'top-members', $wb_gam_attrs );
 		<ol class="wb-gam-top-members__list">
 			<?php foreach ( $wb_gam_rows as $wb_gam_rank_0 => $wb_gam_row ) :
 				$wb_gam_uid  = (int) ( $wb_gam_row['user_id'] ?? 0 );
-				$wb_gam_rank = (int) $wb_gam_rank_0 + 1;
+				$wb_gam_rank = (int) ( $wb_gam_row['rank'] ?? $wb_gam_rank_0 + 1 );
 				$wb_gam_url  = MemberUrl::resolve( $wb_gam_uid );
 				?>
 				<li class="wb-gam-top-members__list-item">
