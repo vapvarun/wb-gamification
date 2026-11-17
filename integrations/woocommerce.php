@@ -117,19 +117,34 @@ return [
 				if ( ! $customer_id ) {
 					return 0;
 				}
-				// First means no earlier order was paid. Only earlier ones count,
-				// so two manual orders confirmed out of order still pay once.
-				$created = $order->get_date_created();
-				$earlier = wc_get_orders(
-					[
-						'customer'     => $customer_id,
-						'status'       => array( 'processing', 'completed' ),
-						'date_created' => '<' . ( $created ? $created->getTimestamp() : time() ),
-						'limit'        => 1,
-						'return'       => 'ids',
-					]
-				);
-				return $earlier ? 0 : $customer_id;
+				// First means no other order of theirs was paid for. Paid = WooCommerce stamped it paid
+				// (date_paid: a gateway confirmed it, or the store confirmed a manual payment) and it
+				// cost something. A free order, or a cash-on-delivery order still waiting in
+				// Processing, is not a purchase. Whichever order is confirmed first is the first.
+				// Pages of 20 so a customer with many free orders cannot make this one huge read;
+				// the first page answers it for nearly everyone.
+				// ponytail: stops after 1,000 other orders and pays nothing; raise if a store needs it.
+				for ( $page = 1; $page <= 50; $page++ ) {
+					$others = wc_get_orders(
+						[
+							'customer'  => $customer_id,
+							'status'    => array( 'processing', 'completed' ),
+							'date_paid' => '>0',
+							'exclude'   => array( $order_id ),
+							'limit'     => 20,
+							'page'      => $page,
+						]
+					);
+					foreach ( $others as $other ) {
+						if ( (float) $other->get_total() > 0 ) {
+							return 0;
+						}
+					}
+					if ( count( $others ) < 20 ) {
+						return $customer_id;
+					}
+				}
+				return 0;
 			},
 			'default_points' => 50,
 			'category'       => 'commerce',

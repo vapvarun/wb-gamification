@@ -107,6 +107,29 @@ class TriggerDecisionsTest extends TestCase {
 	}
 
 	#[Test]
+	public function a_free_order_does_not_use_up_the_first_purchase(): void {
+		require_once __DIR__ . '/Stubs/WooCommerceStub.php';
+		$order = static fn( float $total ) => new class( $total ) {
+			public function __construct( private float $total ) {}
+			public function get_customer_id(): int {
+				return 16;
+			}
+			public function get_total(): float {
+				return $this->total;
+			}
+		};
+		Functions\when( 'wc_get_order' )->justReturn( $order( 10 ) );
+		$cb = $this->trigger( 'woocommerce.php', 'wc_first_purchase' );
+
+		// Only a free order (and nothing unpaid: the query asks for date_paid) was paid before.
+		Functions\when( 'wc_get_orders' )->justReturn( array( $order( 0 ) ) );
+		$this->assertSame( 16, $cb( 9 ) );
+
+		Functions\when( 'wc_get_orders' )->justReturn( array( $order( 0 ), $order( 12.5 ) ) );
+		$this->assertSame( 0, $cb( 9 ), 'An earlier paid order means this is not the first.' );
+	}
+
+	#[Test]
 	public function learnomy_path_certificate_is_paid_by_path_completion(): void {
 		$cb = $this->trigger( 'learnomy.php', 'learnomy_certificate_issued' );
 		$this->assertSame( 16, $cb( 3, 16, 42 ) );

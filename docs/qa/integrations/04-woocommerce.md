@@ -38,7 +38,7 @@ Developer result: Fixed: cash, bank and check orders never paid. Tested with a r
 
 ### Make your first purchase (`wc_first_purchase`)
 
-Awarded once on a customer's very first paid order.
+Awarded once, at the customer's first confirmed paid order. A free order, or a cash-on-delivery order still in Processing, does not count.
 
 Default: **50 points**. Limit: once ever.
 
@@ -47,7 +47,8 @@ Default: **50 points**. Limit: once ever.
 - [ ] Doing it a second time pays nothing.
 - [ ] A second order pays nothing for this.
 - [ ] A guest order whose billing email matches a member pays that member, only if it is their first paid order.
-- [ ] Two manual orders confirmed in reverse order pay this once, on the older order.
+- [ ] Two manual orders confirmed in reverse order pay this once, on the order confirmed first (the newer one).
+- [ ] A completed free order (total 0) first, then a paid order: the paid order pays this.
 
 Developer result: Fixed: a matched guest order was counted wrongly, and cash, bank and check orders never paid. Tested with a real browser checkout by cash on delivery, paying 50 once, plus a second order, a guest order with a member's email and orders confirmed in reverse order. A real card payment was not run.
 
