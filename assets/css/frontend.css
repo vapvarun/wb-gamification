@@ -401,7 +401,7 @@
 .wb-gam-ld-link__btn:hover,
 .wb-gam-lrn-link__btn:hover {
 	background: var(--wb-gam-color-accent);
-	color: #fff;
+	color: var(--wb-gam-pop-accent-fg);
 }
 
 /* ── Profile visibility owner control ──────────────────────────────────────
@@ -446,7 +446,7 @@
 	border: 1px solid var(--wb-gam-color-accent, #2271b1);
 	border-radius: var(--wb-gam-radius, 8px);
 	background: var(--wb-gam-color-accent, #2271b1);
-	color: var(--wb-gam-color-white, #fff);
+	color: var(--wb-gam-pop-accent-fg);
 	font-weight: 600;
 	font-size: 0.875rem;
 	cursor: pointer;

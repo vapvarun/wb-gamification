@@ -79,7 +79,7 @@
 	font-size: var( --wb-gam-font-sm, 14px );
 	font-weight: 600;
 	font-family: inherit;
-	color: var( --wb-gam-color-white, #ffffff );
+	color: var( --wb-gam-pop-accent-fg );
 	background: var( --wb-gam-color-accent, #3b82f6 );
 	border: none;
 	border-radius: var( --wb-gam-radius-full, 999px );

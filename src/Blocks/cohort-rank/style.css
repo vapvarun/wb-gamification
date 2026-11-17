@@ -89,8 +89,10 @@
 	transition: background 0.15s ease;
 }
 
+/* surface-alt and surface-muted resolve to the same theme colour (Reign, BuddyX), so a hover
+ * between them was invisible; the accent tint is distinct on any theme, light or dark. */
 .wb-gam-cohort-rank__item:hover {
-	background: var(--wb-gam-color-surface-alt);
+	background: var(--wb-gam-color-accent-light);
 }
 
 .wb-gam-cohort-rank__item--self {

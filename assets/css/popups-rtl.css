@@ -106,7 +106,7 @@
 }
 .wb-gam-disc--success { background: var(--wb-gam-pop-success); color: #ffffff; }
 .wb-gam-disc--danger { background: var(--wb-gam-pop-danger); color: #ffffff; }
-.wb-gam-disc--info { background: var(--wb-gam-pop-info); color: #ffffff; }
+.wb-gam-disc--info { background: var(--wb-gam-pop-info); color: var(--wb-gam-pop-inv-fg); } /* info lightens in dark mode: white on it fell to 2.55:1 */
 .wb-gam-disc--sm { width: 24px; height: 24px; font-size: 13px; }
 
 /* The one close control: a Lucide x with a 40px hit area. */

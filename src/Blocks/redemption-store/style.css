@@ -24,7 +24,7 @@
 	   token is missing the cascade inherits from the parent / theme. */
 	--wb-gam-redemption-accent: var( --wb-gam-color-accent );
 	--wb-gam-redemption-accent-hover: var( --wb-gam-color-accent-hover );
-	--wb-gam-redemption-text-on-accent: var( --wb-gam-color-white );
+	--wb-gam-redemption-text-on-accent: var( --wb-gam-pop-accent-fg );
 	--wb-gam-redemption-card-bg: var( --wb-gam-color-white );
 	--wb-gam-redemption-card-border: var( --wb-gam-color-border );
 	--wb-gam-redemption-text: var( --wb-gam-color-text );

@@ -10,11 +10,14 @@
 	--wb-gam-recap-accent: var(--wb-gam-primary);
 	/* Year-recap is intentionally a dark celebration hero with a fixed
 	 * gradient. These are brand-fixed colors (not theme-derived) and are
-	 * the only hardcoded hex values in this stylesheet on purpose. */
+	 * the only hardcoded hex values in this stylesheet on purpose. The ink
+	 * is fixed with them: --wb-gam-color-white is the THEME surface, which
+	 * turns dark in dark mode and left dark text on the dark hero. */
+	--wb-gam-recap-ink: #ffffff;
 	background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #16213e 100%);
 	border-radius: 1.25rem;
 	padding: 2rem;
-	color: var(--wb-gam-color-white);
+	color: var(--wb-gam-recap-ink);
 	font-family: inherit;
 	position: relative;
 	overflow: hidden;
@@ -61,7 +64,7 @@
 	margin: 0 0 0.25rem;
 	font-size: 1.375rem;
 	font-weight: 700;
-	color: #fff;
+	color: var(--wb-gam-recap-ink);
 }
 
 .wb-gam-recap__subtitle {
@@ -87,7 +90,7 @@
 	font-size: 1.0625rem;
 	font-weight: 600;
 	line-height: 1.45;
-	color: #fff;
+	color: var(--wb-gam-recap-ink);
 }
 
 /* Stats grid */
@@ -157,7 +160,7 @@
 /* Section titles */
 .wb-gam-recap__section-title {
 	margin: 0 0 0.875rem;
-	color: var(--wb-gam-color-white); /* set here: a theme's h3 colour would win on the dark hero */
+	color: var(--wb-gam-recap-ink); /* set here: a theme's h3 colour would win on the dark hero */
 	font-size: 0.8125rem;
 	text-transform: uppercase;
 	letter-spacing: 0.08em;
@@ -248,7 +251,7 @@
 	gap: 0.5rem;
 	padding: 0.75rem 2rem;
 	background: var(--wb-gam-recap-accent, #6f42c1);
-	color: #fff;
+	color: var(--wb-gam-pop-accent-fg);
 	border: none;
 	border-radius: 999px;
 	font-size: 0.9375rem;
