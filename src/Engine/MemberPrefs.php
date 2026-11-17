@@ -132,10 +132,14 @@ final class MemberPrefs {
 	 *
 	 * Shown on the member's own profile page and BuddyPress Achievements tab.
 	 *
-	 * @param int $user_id Member (the current user).
+	 * Also bound to the public action `wb_gam_render_member_prefs`, so the argument is untyped: a
+	 * host calling do_action() with no id gets the current member, never a TypeError.
+	 *
+	 * @param int|string $user_id Member (the current user); empty for the current user.
 	 * @return void
 	 */
-	public static function render_controls( int $user_id ): void {
+	public static function render_controls( $user_id = 0 ): void {
+		$user_id = (int) $user_id ? (int) $user_id : get_current_user_id();
 		if ( $user_id <= 0 || get_current_user_id() !== $user_id ) {
 			return;
 		}
@@ -152,7 +156,7 @@ final class MemberPrefs {
 
 		printf(
 			'<section class="wb-gam-profile-page__section wb-gam-profile-privacy wb-gam-member-prefs" data-rest-url="%s" data-rest-nonce="%s" data-error="%s" data-saved="%s">',
-			esc_url_raw( rest_url( 'wb-gamification/v1/members/' . $user_id . '/preferences' ) ),
+			esc_url( rest_url( 'wb-gamification/v1/members/' . $user_id . '/preferences' ) ),
 			esc_attr( wp_create_nonce( 'wp_rest' ) ),
 			esc_attr__( 'Could not save. Please try again.', 'wb-gamification' ),
 			esc_attr__( 'Saved.', 'wb-gamification' )

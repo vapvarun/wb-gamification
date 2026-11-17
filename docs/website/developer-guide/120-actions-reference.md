@@ -87,6 +87,7 @@ See [Hooks and Filters Overview](110-hooks-overview.md) for how to add a listene
 |------|---------------|------------|
 | `wb_gam_profile_visibility_set` | After a member changes their own public-profile visibility setting. Added in 1.5.5. | `int $user_id`, `bool $public` |
 | `wb_gam_member_prefs_saved` | After a member's preferences (show rank, leaderboard opt-out, reward emails) are saved, by the member or staff. Added in 1.6.8. | `int $user_id`, `array $prefs` |
+| `wb_gam_render_member_prefs` | Call it (do not hook it) where your theme or plugin builds a member's profile or settings screen: it prints the member's own choices (show my level and points, show me on leaderboards, email me about my rewards), saved as they change. Prints nothing for anyone but the logged-in member. Omit the id for the current member. Added in 1.6.8. | `int $user_id` (optional) |
 
 ## Integrations
 

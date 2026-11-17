@@ -99,7 +99,7 @@ final class Engine {
 		 * A host community prints the member's own gamification choices (show my level, leaderboards,
 		 * reward emails) where it builds its profile, e.g. BuddyNext's Achievements tab:
 		 *
-		 *     do_action( 'wb_gam_render_member_prefs', int $user_id );
+		 *     do_action( 'wb_gam_render_member_prefs', int $user_id ); // Omit the id for the current member.
 		 *
 		 * Prints nothing unless $user_id is the logged-in member. Same controls as the standalone
 		 * profile and the BuddyPress tab; saved on change through REST. @since 1.6.8

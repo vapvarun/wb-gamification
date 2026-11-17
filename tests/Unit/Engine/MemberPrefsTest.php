@@ -94,4 +94,22 @@ class MemberPrefsTest extends TestCase {
 
 		$this->assertSame( array(), $GLOBALS['wpdb']->written );
 	}
+
+	#[Test]
+	public function the_public_action_without_a_member_id_prints_nothing_for_a_guest(): void {
+		// Card 10519284369: do_action( 'wb_gam_render_member_prefs' ) passes '' and used to be a TypeError.
+		Functions\when( 'get_current_user_id' )->justReturn( 0 );
+		ob_start();
+		MemberPrefs::render_controls( '' );
+		MemberPrefs::render_controls();
+		$this->assertSame( '', ob_get_clean() );
+	}
+
+	#[Test]
+	public function another_members_id_prints_nothing(): void {
+		Functions\when( 'get_current_user_id' )->justReturn( 7 );
+		ob_start();
+		MemberPrefs::render_controls( 8 );
+		$this->assertSame( '', ob_get_clean() );
+	}
 }
