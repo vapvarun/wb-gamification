@@ -29,6 +29,8 @@ Default: **10 points**. Limit: once per item, 60s wait.
 - [ ] Doing it again on the same item pays nothing. Doing it on a different item pays again.
 - [ ] Doing it again inside 60 seconds pays nothing. After the wait it pays.
 - [ ] Saving a draft pays nothing. Submitting it pays once.
+- [ ] A moderator rejects the listing, or it is trashed or deleted: the 10 points come back off (once, even if trashed and then deleted).
+- [ ] The rejected listing is resubmitted and approved: the 10 points come back once.
 
 Developer result: Fixed: saving a draft paid, then the submit paid again. Now once per listing, drafts pay nothing. Run on a test site through the plugin's REST route.
 
@@ -41,6 +43,7 @@ Default: **10 points**. Limit: once per item.
 - [ ] Doing it pays 10 points to the right member.
 - [ ] Switched off, it pays nothing.
 - [ ] Doing it again on the same item pays nothing. Doing it on a different item pays again.
+- [ ] The approved listing is later rejected, trashed or deleted: the 10 points come back off. Approved again: they come back once.
 
 Developer result: Fixed: deactivating and reactivating paid again. Now once per listing. Run on a test site through the plugin's REST route.
 

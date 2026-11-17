@@ -153,6 +153,25 @@ class TriggerDecisionsTest extends TestCase {
 	}
 
 	#[Test]
+	public function a_listora_listing_follows_moderation(): void {
+		defined( 'WB_LISTORA_VERSION' ) || define( 'WB_LISTORA_VERSION', '1.0.0-test' );
+		Functions\when( 'get_post_type' )->justReturn( 'listora_listing' );
+		$manifest = include dirname( __DIR__, 3 ) . '/integrations/wb-listora.php';
+		$by_id    = array_column( $manifest['triggers'], null, 'id' );
+
+		foreach ( array( 'listora_listing_submitted', 'listora_listing_published' ) as $id ) {
+			$out  = $by_id[ $id ]['reverse_on']['wb_listora_listing_status_changed'];
+			$back = $by_id[ $id ]['restore_on']['wb_listora_listing_status_changed'];
+			$this->assertSame( 7, $out( 7, 'listora_rejected', 'pending' ), "$id: rejected" );
+			$this->assertSame( 7, $out( 7, 'trash', 'publish' ), "$id: trashed" );
+			$this->assertSame( 0, $out( 7, 'listora_expired', 'publish' ), "$id: expiry is not a removal" );
+			$this->assertSame( 7, $by_id[ $id ]['reverse_on']['before_delete_post']( 7 ), "$id: deleted" );
+			$this->assertSame( 7, $back( 7, 'publish', 'listora_rejected' ), "$id: published again" );
+			$this->assertSame( 0, $back( 7, 'pending', 'draft' ) );
+		}
+	}
+
+	#[Test]
 	public function learnomy_path_certificate_is_paid_by_path_completion(): void {
 		$cb = $this->trigger( 'learnomy.php', 'learnomy_certificate_issued' );
 		$this->assertSame( 16, $cb( 3, 16, 42 ) );

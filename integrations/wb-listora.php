@@ -20,6 +20,19 @@ if ( ! defined( 'WB_LISTORA_VERSION' ) ) {
 }
 
 /*
+ * A listing's points follow the listing. Rejected or trashed (wb_listora_listing_status_changed fires
+ * on every status move, from admin, REST and bulk alike) or deleted for good takes back what it
+ * earned; published again gives it back once (submission points included).
+ */
+$wb_gam_listora_listing_removed  = array(
+	'wb_listora_listing_status_changed' => static fn( $post_id, $new_status = '' ): int => in_array( $new_status, array( 'listora_rejected', 'trash' ), true ) ? (int) $post_id : 0,
+	'before_delete_post'                => static fn( $post_id ): int => 'listora_listing' === get_post_type( (int) $post_id ) ? (int) $post_id : 0,
+);
+$wb_gam_listora_listing_restored = array(
+	'wb_listora_listing_status_changed' => static fn( $post_id, $new_status = '' ): int => 'publish' === $new_status ? (int) $post_id : 0,
+);
+
+/*
  * A review pays when it is published: at submission when the site auto-approves reviews, otherwise
  * when a moderator approves it. Listora fires wb_listora_review_submitted for pending reviews too,
  * so the trigger listens to this bridge, which reads the review's status and author once.
@@ -55,6 +68,8 @@ return array(
 			// Fires: do_action( 'wb_listora_listing_submitted', int $post_id, string $status, $request, $context ). No user id - owner is post_author.
 			'hook'              => 'wb_listora_listing_submitted',
 			'once_per_object'   => static fn( int $post_id ): int => $post_id,
+			'reverse_on'        => $wb_gam_listora_listing_removed,
+			'restore_on'        => $wb_gam_listora_listing_restored,
 			'user_callback'     => function ( int $post_id, $status = '', $request = null, $context = null ): int {
 				// Saving a draft fires this too, and a draft is not a submission.
 				if ( 'draft' === $status ) {
@@ -86,6 +101,8 @@ return array(
 			// Also fires on reactivating or renewing a listing, so once per listing.
 			'hook'              => 'wb_listora_after_approve_listing',
 			'once_per_object'   => static fn( int $post_id ): int => $post_id,
+			'reverse_on'        => $wb_gam_listora_listing_removed,
+			'restore_on'        => $wb_gam_listora_listing_restored,
 			'user_callback'     => function ( int $post_id ): int {
 				return (int) get_post_field( 'post_author', $post_id );
 			},
