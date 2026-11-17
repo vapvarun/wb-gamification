@@ -75,12 +75,7 @@ $wb_gam_actions = array_map(
 	array_values(
 		array_filter(
 			Registry::get_actions(),
-			static function ( $a ) {
-				// ponytail: is_callable guard only until Lane A's Registry::is_submittable() is merged; drop it then.
-				$check = array( Registry::class, 'is_submittable' );
-				// @phpstan-ignore-next-line -- always false on this branch alone, always true once merged.
-				return ! is_callable( $check ) || (bool) call_user_func( $check, (string) $a['id'] );
-			}
+			static fn( $a ) => Registry::is_submittable( (string) $a['id'] )
 		)
 	)
 );
