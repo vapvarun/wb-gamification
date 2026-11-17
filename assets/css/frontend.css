@@ -233,6 +233,11 @@
 	font-size: 14px;
 }
 .wb-gam-profile-page__section { margin-bottom: 28px; }
+/* The neutral page for a private (or unknown) profile: one centred line. */
+.wb-gam-profile-page--private {
+	padding-block: var(--wb-gam-space-2xl);
+	text-align: center;
+}
 @media (max-width: 640px) {
 	.wb-gam-profile-page__hero { flex-direction: column; text-align: center; padding: 18px; }
 	.wb-gam-profile-page__avatar img { width: 80px; height: 80px; }
