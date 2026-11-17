@@ -514,7 +514,7 @@ final class RedemptionStorePage {
 					?>
 			</div>
 			<?php else : ?>
-			<div class="wbgam-empty">
+			<div class="wbgam-empty wbgam-stack-block">
 				<div class="wbgam-empty-icon"><span class="icon-shopping-cart wbgam-icon-xl"></span></div>
 				<div class="wbgam-empty-title"><?php esc_html_e( 'No rewards yet', 'wb-gamification' ); ?></div>
 				<p><?php esc_html_e( 'Create your first reward above to open the redemption store for your members.', 'wb-gamification' ); ?></p>
