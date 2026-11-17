@@ -85,14 +85,6 @@ final class MultipliersPage {
 			WB_GAM_VERSION,
 			true
 		);
-		wp_localize_script(
-			'wb-gam-admin-rest-utils',
-			'wbGamAdminRestI18n',
-			array(
-				'confirm' => __( 'Confirm', 'wb-gamification' ),
-				'cancel'  => __( 'Cancel', 'wb-gamification' ),
-			)
-		);
 		wp_enqueue_script(
 			'wb-gam-admin-rest-form',
 			plugins_url( 'assets/js/admin-rest-form.js', WB_GAM_FILE ),

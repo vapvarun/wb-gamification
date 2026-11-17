@@ -28,6 +28,12 @@
 		return;
 	}
 
+	// Translated strings shared by every admin page, localized once by
+	// SettingsPage::localize_admin_rest_utils(). Read late: a page may localize after load.
+	function i18n() {
+		return window.wbGamAdminRestI18n || {};
+	}
+
 	/**
 	 * Surface a transient toast message through the shared renderer (assets/js/toast-core.js).
 	 *
@@ -56,7 +62,7 @@
 	 */
 	async function apiFetch( method, path, body, settings ) {
 		if ( ! settings || ! settings.restUrl || ! settings.nonce ) {
-			return { ok: false, status: 0, data: { message: 'wbGam admin: missing settings' } };
+			return { ok: false, status: 0, data: { message: i18n().notLoaded || 'This screen did not load completely. Reload the page and try again.' } };
 		}
 		const url = settings.restUrl.replace( /\/$/, '' ) + path;
 		const init = {
@@ -86,7 +92,7 @@
 			return {
 				ok: false,
 				status: 0,
-				data: { message: timedOut ? 'Request timed out. Please try again.' : ( ( e && e.message ) || 'Network error.' ) },
+				data: { message: timedOut ? ( i18n().timedOut || 'Request timed out. Please try again.' ) : ( i18n().networkError || 'Network error. Please try again.' ) },
 			};
 		}
 		let data = null;
@@ -129,9 +135,9 @@
 		// every admin page that enqueues this script — see the wp_localize_script()
 		// call attached to the 'wb-gam-admin-rest-utils' handle. Falls back to the
 		// English literal only if a page hasn't localized it (or JS ran pre-DOM).
-		const g            = window.wbGamAdminRestI18n || {};
+		const g            = i18n();
 		const title        = opts.title || '';
-		const message      = opts.message || 'Are you sure?';
+		const message      = opts.message || g.areYouSure || 'Are you sure?';
 		const confirmText  = opts.confirmText || g.confirm || 'Confirm';
 		const cancelText   = opts.cancelText || g.cancel || 'Cancel';
 		const tone         = opts.tone === 'primary' ? 'primary' : 'danger';
@@ -229,7 +235,7 @@
 	function toastError( result, fallback ) {
 		const msg = result && result.data && result.data.message
 			? result.data.message
-			: ( fallback || 'Request failed.' );
+			: ( fallback || i18n().failed || 'Request failed.' );
 		toast( msg, 'error' );
 	}
 

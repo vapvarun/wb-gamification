@@ -74,16 +74,6 @@ final class ChallengeManagerPage {
 			WB_GAM_VERSION,
 			true
 		);
-		// Shared confirm/cancel modal button labels — confirmAction() falls back
-		// to these when a caller doesn't pass its own confirmText/cancelText.
-		wp_localize_script(
-			'wb-gam-admin-rest-utils',
-			'wbGamAdminRestI18n',
-			array(
-				'confirm' => __( 'Confirm', 'wb-gamification' ),
-				'cancel'  => __( 'Cancel', 'wb-gamification' ),
-			)
-		);
 		wp_enqueue_script(
 			'wb-gam-admin-rest-form',
 			plugins_url( 'assets/js/admin-rest-form.js', WB_GAM_FILE ),
@@ -320,7 +310,7 @@ final class ChallengeManagerPage {
 									<td><?php echo esc_html( $c['bonus_points'] ); ?></td>
 									<td>
 										<span class="wbgam-pill wbgam-pill--<?php echo esc_attr( $status_class ); ?>">
-											<?php echo esc_html( ucfirst( $c['status'] ) ); ?>
+											<?php echo esc_html( self::status_label( (string) $c['status'] ) ); ?>
 										</span>
 									</td>
 									<td>
@@ -365,6 +355,21 @@ final class ChallengeManagerPage {
 			<?php endif; ?>
 		</div>
 		<?php
+	}
+
+	/**
+	 * Translated label for a challenge status code (individual and community lists).
+	 *
+	 * @param string $status Stored status code.
+	 * @return string
+	 */
+	public static function status_label( string $status ): string {
+		$labels = array(
+			'active'    => __( 'Active', 'wb-gamification' ),
+			'inactive'  => __( 'Inactive', 'wb-gamification' ),
+			'completed' => __( 'Completed', 'wb-gamification' ),
+		);
+		return $labels[ $status ] ?? $status;
 	}
 
 	// handle_save() / handle_delete() removed in 1.0.0 (Tier 0.C). Challenges

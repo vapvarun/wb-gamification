@@ -91,16 +91,6 @@ final class BadgeAdminPage {
 			WB_GAM_VERSION,
 			true
 		);
-		// Shared confirm/cancel modal button labels — confirmAction() falls back
-		// to these when a caller doesn't pass its own confirmText/cancelText.
-		wp_localize_script(
-			'wb-gam-admin-rest-utils',
-			'wbGamAdminRestI18n',
-			array(
-				'confirm' => __( 'Confirm', 'wb-gamification' ),
-				'cancel'  => __( 'Cancel', 'wb-gamification' ),
-			)
-		);
 		wp_enqueue_script(
 			'wb-gam-admin-rest-form',
 			plugins_url( 'assets/js/admin-rest-form.js', WB_GAM_FILE ),
@@ -495,9 +485,18 @@ final class BadgeAdminPage {
 									<th><label for="wb-gam-badge-category"><?php esc_html_e( 'Category', 'wb-gamification' ); ?></label></th>
 									<td>
 										<select name="category" id="wb-gam-badge-category" class="wbgam-select">
-											<?php foreach ( array( 'general', 'points', 'wordpress', 'buddypress', 'special' ) as $cat ) : ?>
+											<?php
+											$wb_gam_categories = array(
+												'general' => __( 'General', 'wb-gamification' ),
+												'points'  => __( 'Points', 'wb-gamification' ),
+												'wordpress' => __( 'WordPress', 'wb-gamification' ),
+												'buddypress' => __( 'BuddyPress', 'wb-gamification' ),
+												'special' => __( 'Special', 'wb-gamification' ),
+											);
+											?>
+											<?php foreach ( $wb_gam_categories as $cat => $wb_gam_cat_label ) : ?>
 												<option value="<?php echo esc_attr( $cat ); ?>" <?php selected( $badge['category'] ?? 'general', $cat ); ?>>
-													<?php echo esc_html( ucfirst( $cat ) ); ?>
+													<?php echo esc_html( $wb_gam_cat_label ); ?>
 												</option>
 											<?php endforeach; ?>
 										</select>

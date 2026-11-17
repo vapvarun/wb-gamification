@@ -139,7 +139,7 @@ final class LevelsPage {
 		<div data-wb-gam-levels-root>
 		<div class="wbgam-settings-card">
 			<div class="wbgam-settings-card__head">
-				<p class="wbgam-settings-card__title"><?php esc_html_e( 'LEVELS', 'wb-gamification' ); ?></p>
+				<p class="wbgam-settings-card__title"><?php esc_html_e( 'Levels', 'wb-gamification' ); ?></p>
 				<p class="wbgam-settings-card__desc"><?php esc_html_e( 'Rename a level or change the points it needs. Members move up automatically when they cross a threshold.', 'wb-gamification' ); ?></p>
 			</div>
 			<div class="wbgam-settings-card__body">
@@ -206,7 +206,7 @@ final class LevelsPage {
 
 		<div class="wbgam-settings-card">
 			<div class="wbgam-settings-card__head">
-				<p class="wbgam-settings-card__title"><?php esc_html_e( 'ADD NEW LEVEL', 'wb-gamification' ); ?></p>
+				<p class="wbgam-settings-card__title"><?php esc_html_e( 'Add new level', 'wb-gamification' ); ?></p>
 				<p class="wbgam-settings-card__desc"><?php esc_html_e( 'Create a new level threshold.', 'wb-gamification' ); ?></p>
 			</div>
 			<div class="wbgam-settings-card__body">
