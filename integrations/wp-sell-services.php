@@ -123,6 +123,12 @@ return array(
 					'order_id'  => $order_id > 0 ? $order_id : $wb_gam_wpss_review_order( $review_id ),
 				);
 			},
+			// A deleted review, or one a moderator takes down, takes its award back; approved again pays again.
+			'once_per_object'   => static fn( $review_id ): int => (int) $review_id,
+			'reverse_on'        => array(
+				'wpss_review_deleted'   => static fn( $review_id ): int => (int) $review_id,
+				'wpss_review_moderated' => static fn( $review_id, $new_status = '' ): int => 'approved' === $new_status ? 0 : (int) $review_id,
+			),
 			'default_points'    => 10,
 			'category'          => 'commerce',
 			'icon'              => 'icon-star',

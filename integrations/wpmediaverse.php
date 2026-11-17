@@ -101,11 +101,22 @@ $free_triggers = array(
 				'is_first'   => ! empty( $file_data['is_first'] ),
 			);
 		},
+		// A trashed or deleted upload takes its award back; restored from the trash gives it back.
+		'once_per_object'   => static fn( $media_id ): int => (int) $media_id,
+		'reverse_on'        => array(
+			'mvs_media_trashed' => static fn( $media_id ): int => (int) $media_id,
+			'mvs_media_deleted' => static fn( $media_id ): int => (int) $media_id,
+		),
+		'restore_on'        => array( 'mvs_media_restored' => static fn( $media_id ): int => (int) $media_id ),
 		'default_points'    => 10,
 		'category'          => 'media',
 		'icon'              => 'icon-camera',
 		'repeatable'        => true,
+		'async'             => false,
 		'cooldown'          => 5,
+		// 1.6.8: uploads had no daily limit, so a bulk upload paid for every file. A site that sets
+		// its own limit keeps it (the owner's setting wins).
+		'daily_cap'         => 20,
 	),
 
 	array(
@@ -159,9 +170,10 @@ $free_triggers = array(
 		'label'             => static fn(): string => __( 'Receive a comment on a photo', 'wb-gamification' ),
 		'description'       => static fn(): string => __( 'Awarded to the media owner when someone comments on their photo.', 'wb-gamification' ),
 		'hook'              => 'mvs_comment_created',
-		'user_callback'     => function ( int $media_id, int $user_id, int $comment_id, string $content ): int {
-				// BuddyNext copy of a follow/comment another plugin already paid for.
-			if ( \WBGam\Engine\HostActivity::is_copy() ) {
+		'user_callback'     => function ( int $media_id, int $user_id, int $comment_id, string $content, string $source = '' ): int {
+			// BuddyNext copy of a follow/comment another plugin already paid for. A comment MediaVerse
+			// synced from a BuddyPress activity comment was paid there (bp_activity_comment).
+			if ( \WBGam\Engine\HostActivity::is_copy() || 'bp_activity' === $source ) {
 				return 0;
 			}
 			$author = wb_gam_mvs_media_author( $media_id );
@@ -175,6 +187,9 @@ $free_triggers = array(
 				'word_count' => str_word_count( wp_strip_all_tags( $content ) ),
 			);
 		},
+		'once_per_object'   => static fn( $media_id, $user_id, $comment_id ): int => (int) $comment_id,
+		// MediaVerse comments are WordPress comments of type mvs_comment, deleted with wp_delete_comment().
+		...\WBGam\Engine\Registry::comment_object_hooks( 'mvs_comment' ),
 		'default_points'    => 5,
 		'category'          => 'media',
 		'icon'              => 'icon-message-circle',
@@ -231,24 +246,29 @@ $free_triggers = array(
 	 */
 
 	array(
-		'id'             => 'mvs_give_comment',
-		'label'          => static fn(): string => __( 'Write a meaningful comment', 'wb-gamification' ),
-		'description'    => static fn(): string => __( 'Awarded when a member leaves a comment of 20+ characters.', 'wb-gamification' ),
-		'hook'           => 'mvs_comment_created',
-		'user_callback'  => function ( int $media_id, int $user_id, int $comment_id, string $content ): int {
-				// BuddyNext copy of a follow/comment another plugin already paid for.
-			if ( \WBGam\Engine\HostActivity::is_copy() ) {
+		'id'              => 'mvs_give_comment',
+		'label'           => static fn(): string => __( 'Write a meaningful comment', 'wb-gamification' ),
+		'description'     => static fn(): string => __( 'Awarded when a member leaves a comment of 20+ characters.', 'wb-gamification' ),
+		'hook'            => 'mvs_comment_created',
+		'user_callback'   => function ( int $media_id, int $user_id, int $comment_id, string $content, string $source = '' ): int {
+			// BuddyNext copy of a follow/comment another plugin already paid for. A comment MediaVerse
+			// synced from a BuddyPress activity comment was paid there (bp_activity_comment).
+			if ( \WBGam\Engine\HostActivity::is_copy() || 'bp_activity' === $source ) {
 				return 0;
 			}
 			// Only award for meaningful comments (20+ chars).
 			return strlen( $content ) >= 20 ? $user_id : 0;
 		},
-		'default_points' => 3,
-		'category'       => 'social',
-		'icon'           => 'icon-message-square',
-		'repeatable'     => true,
-		'cooldown'       => 30,
-		'daily_cap'      => 20,
+		'once_per_object' => static fn( $media_id, $user_id, $comment_id ): int => (int) $comment_id,
+		// MediaVerse comments are WordPress comments of type mvs_comment, deleted with wp_delete_comment().
+		...\WBGam\Engine\Registry::comment_object_hooks( 'mvs_comment' ),
+		'default_points'  => 3,
+		'category'        => 'social',
+		'icon'            => 'icon-message-square',
+		'repeatable'      => true,
+		'async'           => false,
+		'cooldown'        => 30,
+		'daily_cap'       => 20,
 	),
 );
 

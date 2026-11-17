@@ -52,15 +52,14 @@ final class MemberPrefs {
 	public static function get( int $user_id ): array {
 		global $wpdb;
 
-		$row = $user_id > 0
-			? $wpdb->get_row(
-				$wpdb->prepare(
-					"SELECT leaderboard_opt_out, show_rank, notification_mode FROM {$wpdb->prefix}wb_gam_member_prefs WHERE user_id = %d",
-					$user_id
-				),
-				ARRAY_A
-			)
-			: null;
+		// No row for id 0 (a guest), so the lookup itself returns the defaults.
+		$row = $wpdb->get_row(
+			$wpdb->prepare(
+				"SELECT leaderboard_opt_out, show_rank, notification_mode FROM {$wpdb->prefix}wb_gam_member_prefs WHERE user_id = %d",
+				$user_id
+			),
+			ARRAY_A
+		);
 
 		if ( ! $row ) {
 			return self::DEFAULTS;

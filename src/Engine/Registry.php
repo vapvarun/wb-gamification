@@ -56,6 +56,16 @@ final class Registry {
 	private static array $challenge_types = array();
 
 	/**
+	 * Content-removal bindings: mode ('reverse'|'restore') => hook => action id => object-id callback.
+	 *
+	 * One listener per hook serves every action bound to it, so a deleted comment costs one ledger
+	 * read however many comment actions are registered.
+	 *
+	 * @var array<string, array<string, array<string, callable>>>
+	 */
+	private static array $object_hooks = array();
+
+	/**
 	 * Whether the registry has already been initialised.
 	 *
 	 * @var bool
@@ -93,6 +103,11 @@ final class Registry {
 	 *   @type string   $hook           WordPress action hook to listen to.
 	 *   @type callable $user_callback  Returns the user_id from hook arguments.
 	 *   @type callable $once_per_object Optional. Returns the object id from hook arguments; a member earns once per object.
+	 *   @type array    $reverse_on     Optional. Hook => callable returning the removed object id (or ids) from that
+	 *                                  hook's arguments. Takes the award back for that object ({@see PointsEngine::reverse_object_awards()}).
+	 *                                  Needs `once_per_object`, and `async => false` so the award exists before a delete can arrive.
+	 *   @type array    $restore_on     Optional. Hook => callable returning the returned object id (or ids), 0 to skip.
+	 *                                  Gives a taken-back award back ({@see PointsEngine::restore_object_awards()}).
 	 *   @type int      $default_points Default points awarded. Admin can override.
 	 *   @type string   $category       Optional category (buddypress, commerce, etc.).
 	 *   @type string   $icon           Dashicon name or URL.
@@ -153,25 +168,118 @@ final class Registry {
 		add_action(
 			$action['hook'],
 			static function ( ...$params ) use ( $action ) {
-				// A trigger runs inside another plugin's request (their do_action). If its
-				// callback throws - a partner changed an argument type - log it and move on;
-				// failing to award points must never fail the partner's save.
-				try {
-					self::fire( $action, $params );
-				} catch ( \Throwable $e ) {
-					Log::error(
-						'Gamification trigger failed; no points awarded.',
-						array(
-							'action_id' => (string) $action['id'],
-							'hook'      => (string) $action['hook'],
-							'error'     => $e->getMessage(),
-						)
-					);
-				}
+				self::guarded( (string) $action['id'], (string) $action['hook'], static fn() => self::fire( $action, $params ) );
 			},
 			10,
 			10
 		);
+
+		foreach ( array(
+			'reverse_on' => 'reverse',
+			'restore_on' => 'restore',
+		) as $key => $mode ) {
+			foreach ( (array) ( $action[ $key ] ?? array() ) as $hook => $object_callback ) {
+				if ( ! is_callable( $object_callback ) ) {
+					continue;
+				}
+				if ( ! isset( self::$object_hooks[ $mode ][ $hook ] ) ) {
+					add_action(
+						$hook,
+						static function ( ...$params ) use ( $mode, $hook ) {
+							self::guarded( $mode, (string) $hook, static fn() => self::fire_object_hook( $mode, (string) $hook, $params ) );
+						},
+						10,
+						10
+					);
+				}
+				self::$object_hooks[ $mode ][ $hook ][ $action['id'] ] = $object_callback;
+			}
+		}
+	}
+
+	/**
+	 * `reverse_on` / `restore_on` for a trigger whose object is a WordPress comment.
+	 *
+	 * A trashed, spammed or deleted comment takes its award back. An untrashed or unspammed one that
+	 * is approved again gives it back, unless its award hook already paid again on the way back in.
+	 * Shared by every comment-based manifest (WordPress, WooCommerce reviews, MediaVerse comments).
+	 *
+	 * @since 1.6.8
+	 *
+	 * @param string $comment_type Only comments of this type (e.g. MediaVerse's 'mvs_comment'); '' for any.
+	 * @return array{reverse_on: array<string, callable>, restore_on: array<string, callable>}
+	 */
+	public static function comment_object_hooks( string $comment_type = '' ): array {
+		$ours     = static fn( $comment ): bool => $comment instanceof \WP_Comment && ( '' === $comment_type || $comment_type === $comment->comment_type );
+		$removed  = static fn( $comment_id ): int => $ours( get_comment( (int) $comment_id ) ) ? (int) $comment_id : 0;
+		$returned = static function ( $comment_id ) use ( $ours ): int {
+			$comment = get_comment( (int) $comment_id );
+			return $ours( $comment ) && '1' === (string) $comment->comment_approved ? (int) $comment_id : 0;
+		};
+		return array(
+			'reverse_on' => array(
+				'trashed_comment' => $removed,
+				'spammed_comment' => $removed,
+				'delete_comment'  => $removed,
+			),
+			'restore_on' => array(
+				'untrashed_comment' => $returned,
+				'unspammed_comment' => $returned,
+			),
+		);
+	}
+
+	/**
+	 * Run a listener inside another plugin's request without letting it fail that request.
+	 *
+	 * A trigger runs inside the partner's do_action. If its callback throws - a partner changed an
+	 * argument type - log it and move on: failing to award or reverse points must never fail the
+	 * partner's save or delete.
+	 *
+	 * @param string   $what Action id, or 'reverse' / 'restore'.
+	 * @param string   $hook Hook that fired.
+	 * @param callable $run  The work.
+	 * @return void
+	 */
+	private static function guarded( string $what, string $hook, callable $run ): void {
+		try {
+			$run();
+		} catch ( \Throwable $e ) {
+			Log::error(
+				'Gamification trigger failed; points unchanged.',
+				array(
+					'action_id' => $what,
+					'hook'      => $hook,
+					'error'     => $e->getMessage(),
+				)
+			);
+		}
+	}
+
+	/**
+	 * Content was removed or returned: reverse or restore every bound action's award for it.
+	 *
+	 * @param string $mode   'reverse' or 'restore'.
+	 * @param string $hook   Hook that fired.
+	 * @param array  $params Its arguments.
+	 * @return void
+	 */
+	private static function fire_object_hook( string $mode, string $hook, array $params ): void {
+		$targets = array();
+		foreach ( self::$object_hooks[ $mode ][ $hook ] ?? array() as $action_id => $object_callback ) {
+			$ids = array_filter( array_map( 'intval', (array) call_user_func_array( $object_callback, $params ) ) );
+			if ( $ids ) {
+				$targets[ $action_id ] = $ids;
+			}
+		}
+		if ( ! $targets ) {
+			return;
+		}
+		if ( 'reverse' === $mode ) {
+			PointsEngine::reverse_object_awards( $targets );
+		} else {
+			PointsEngine::restore_object_awards( $targets );
+		}
 	}
 
 	/**
@@ -528,6 +636,30 @@ final class Registry {
 	}
 
 	/**
+	 * Whether members may submit this action for review (Submit Achievement).
+	 *
+	 * The owner's tick wins both ways: when `wb_gam_action_overrides[ $id ]['submittable']` is set,
+	 * that is the answer. Only when the owner has not chosen does the manifest's
+	 * `'submittable' => true` open it. Everything else is closed: nothing is submittable until the
+	 * owner opens it.
+	 *
+	 * @since 1.6.8
+	 *
+	 * @param string $id Action ID.
+	 * @return bool False for an unregistered action.
+	 */
+	public static function is_submittable( string $id ): bool {
+		if ( ! isset( self::$actions[ $id ] ) ) {
+			return false;
+		}
+		$overrides = self::get_overrides();
+		if ( isset( $overrides[ $id ]['submittable'] ) ) {
+			return (bool) $overrides[ $id ]['submittable'];
+		}
+		return true === ( self::$actions[ $id ]['submittable'] ?? false );
+	}
+
+	/**
 	 * Resolve an action_id to a human-readable label.
 	 *
 	 * Used by surfaces that display history rows (points-history block,
@@ -592,6 +724,20 @@ final class Registry {
 				'points_decay'                  => __( 'Points expired', 'wb-gamification' ),
 			);
 			$label    = $built_in[ $action_id ] ?? '';
+		}
+
+		// A reversal row reads as the action it takes back: "Publish a blog post (content removed)".
+		if ( '' === $label ) {
+			foreach ( array(
+				PointsEngine::REMOVED_SUFFIX  => /* translators: %s: the action that earned the points, e.g. "Publish a blog post". */ __( '%s (content removed)', 'wb-gamification' ),
+				PointsEngine::RESTORED_SUFFIX => /* translators: %s: the action that earned the points, e.g. "Publish a blog post". */ __( '%s (content restored)', 'wb-gamification' ),
+			) as $suffix => $format ) {
+				$base = substr( $action_id, 0, -strlen( $suffix ) );
+				if ( '' !== $base && str_ends_with( $action_id, $suffix ) ) {
+					$label = sprintf( $format, self::label_for( $base ) );
+					break;
+				}
+			}
 		}
 
 		/**

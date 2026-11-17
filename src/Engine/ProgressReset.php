@@ -71,7 +71,6 @@ final class ProgressReset {
 		'wb_gam_level_id',
 		'wb_gam_level_name',
 		'wb_gam_league_tier',
-		'wb_gam_pr_best_week',
 		'wb_gam_seen_first_earn_toast',
 		// Both are downstream of the ledger this reset truncates: the note describes an award that no
 		// longer exists, and the decay marker dates a balance that is now zero. Leaving them behind
@@ -91,6 +90,10 @@ final class ProgressReset {
 	 */
 	private const PROGRESS_META_PREFIXES = array(
 		'wb_gam_notif_cursor_', // NotificationBridge::CURSOR_META_PREFIX.
+		// Personal records: best and running totals for day, week and month (PersonalRecordEngine).
+		// Only best_week was listed, so after a reset the old best day and month, and the running
+		// totals, survived and the next award announced a "new personal record" against them.
+		'wb_gam_pr_',
 	);
 
 	/**

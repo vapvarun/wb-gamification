@@ -48,6 +48,19 @@ defined( 'ABSPATH' ) || exit;
  */
 final class PointsEngine {
 
+	/** Suffix of the ledger row that takes an award back when its content is removed. */
+	public const REMOVED_SUFFIX = '_removed';
+
+	/** Suffix of the ledger row that gives it back when the content returns. */
+	public const RESTORED_SUFFIX = '_restored';
+
+	/**
+	 * Members being deleted in this request: their content's removal writes no reversal.
+	 *
+	 * @var array<int, true>
+	 */
+	private static array $deleting_users = array();
+
 	/**
 	 * Resolve a point-type input to a known slug. Centralised so every method
 	 * shares the same back-compat fallback (= primary type).
@@ -1264,7 +1277,10 @@ final class PointsEngine {
 	}
 
 	/**
-	 * Whether a member already earned this action for this object.
+	 * Whether a member holds this action's award for this object right now.
+	 *
+	 * Net of reversals: an award whose content was removed no longer counts, so a post that is
+	 * trashed and published again earns again, while an edit or a re-approval of live content does not.
 	 *
 	 * @param int    $user_id   User ID.
 	 * @param string $action_id Action ID.
@@ -1273,14 +1289,224 @@ final class PointsEngine {
 	 */
 	private static function has_object_award( int $user_id, string $action_id, int $object_id ): bool {
 		global $wpdb;
-		return (bool) $wpdb->get_var(
+		return 0 < (int) $wpdb->get_var(
 			$wpdb->prepare(
-				"SELECT 1 FROM {$wpdb->prefix}wb_gam_points WHERE user_id = %d AND action_id = %s AND object_id = %d LIMIT 1",
+				"SELECT COALESCE(SUM(points), 0) FROM {$wpdb->prefix}wb_gam_points WHERE user_id = %d AND action_id IN (%s, %s, %s) AND object_id = %d",
 				$user_id,
 				$action_id,
+				$action_id . self::REMOVED_SUFFIX,
+				$action_id . self::RESTORED_SUFFIX,
 				$object_id
 			)
 		);
+	}
+
+	/**
+	 * Take back the points awarded for content that was removed (trashed, marked spam, deleted).
+	 *
+	 * For every member and point type still holding an award for one of these objects, one
+	 * `{action}_removed` row takes back exactly what they hold, even when that leaves the balance
+	 * below zero. Idempotent: what is already taken back nets to zero, so trash then permanent delete
+	 * takes the points once. Badges and action counts stay; points, level and rank move. Awards made
+	 * before 1.6.8 carry no object id and are left alone.
+	 *
+	 * @since 1.6.8
+	 *
+	 * @param array<string, int[]> $targets Action id => ids of the removed objects.
+	 * @return int Rows written.
+	 */
+	public static function reverse_object_awards( array $targets ): int {
+		return self::settle_object_awards( $targets, true );
+	}
+
+	/**
+	 * Give back the points taken by {@see reverse_object_awards()} when the content returns
+	 * (untrashed, marked not spam).
+	 *
+	 * Only where the award is currently taken back (net <= 0), and only up to the member's latest
+	 * award for the object, so trash/restore cycles and a re-publish between them can never pay
+	 * more than one award. Content whose award hook pays again on the way back in is skipped.
+	 *
+	 * @since 1.6.8
+	 *
+	 * @param array<string, int[]> $targets Action id => ids of the returned objects.
+	 * @return int Awards given back.
+	 */
+	public static function restore_object_awards( array $targets ): int {
+		return self::settle_object_awards( $targets, false );
+	}
+
+	/**
+	 * Skip reversals for a member whose account is being deleted.
+	 *
+	 * Deleting a member deletes their content, which would write a reversal for every post they
+	 * made just before their whole ledger is purged ({@see MemberData::on_user_deleted()}).
+	 *
+	 * @since 1.6.8
+	 *
+	 * @param int $user_id Member being deleted.
+	 * @return void
+	 */
+	public static function skip_reversals_for( int $user_id ): void {
+		self::$deleting_users[ $user_id ] = true;
+	}
+
+	/**
+	 * Reverse or restore: read the object's rows FOR UPDATE and write the difference, in one transaction.
+	 *
+	 * Reverse and restore share this one locked read-then-write, so two of them for the same object
+	 * (two untrash requests, a hook firing twice, trash racing untrash) run one after the other and
+	 * the second sees the first's row.
+	 *
+	 * @param array<string, int[]> $targets Action id => object ids.
+	 * @param bool                 $reverse True to take back, false to give back.
+	 * @return int Rows written.
+	 */
+	private static function settle_object_awards( array $targets, bool $reverse ): int {
+		// One unlocked indexed read first, and nothing more when there is nothing to do (most deletes).
+		if ( ! self::object_award_deltas( self::object_award_rows( $targets, false ), $reverse ) ) {
+			return 0;
+		}
+
+		$users   = array();
+		$written = (int) Transaction::run(
+			static function () use ( $targets, $reverse, &$users ) {
+				$written = 0;
+				foreach ( self::object_award_deltas( self::object_award_rows( $targets, true ), $reverse ) as $row ) {
+					$event = new Event(
+						array(
+							'action_id'  => $row['action_id'] . ( $reverse ? self::REMOVED_SUFFIX : self::RESTORED_SUFFIX ),
+							'user_id'    => $row['user_id'],
+							'object_id'  => $row['object_id'],
+							'point_type' => $row['point_type'],
+							'metadata'   => array( 'point_type' => $row['point_type'] ),
+						)
+					);
+					// Written straight to the ledger, past award()'s earning gates (exclusion, caps,
+					// cooldown): a restore must return exactly what the reversal took, or a member at a
+					// daily cap would lose points for their own restored content. Safe only because the
+					// delta was computed under this lock from the ledger itself; no caller supplies it.
+					if ( ! Engine::persist_event( $event ) || ! self::insert_point_row( $event, $row['delta'], $row['point_type'] ) ) {
+						return false; // Roll back every row: all or nothing.
+					}
+					$users[ $row['user_id'] ] = true;
+					++$written;
+				}
+				return $written;
+			}
+		);
+
+		if ( $written > 0 ) {
+			// Same tail as debit(): the level follows the balance either way (a drop is silent), and
+			// the rank cache is busted without firing the award hook (no "points awarded" toast, no
+			// badge re-evaluation: badges stay as they were).
+			foreach ( array_keys( $users ) as $user_id ) {
+				LevelEngine::maybe_level_up( (int) $user_id );
+			}
+			LeaderboardEngine::invalidate_cache();
+		}
+
+		return $written;
+	}
+
+	/**
+	 * The rows to write: what each member still holds (reverse), or what was taken back (restore).
+	 *
+	 * Restore aims at the member's latest award for the object, never at the sum of every award it
+	 * ever had: published, trashed, published again, trashed and restored gives back one award.
+	 *
+	 * @param array $rows    From {@see object_award_rows()}.
+	 * @param bool  $reverse True to take back, false to give back.
+	 * @return array<int, array{action_id: string, object_id: int, user_id: int, point_type: string, delta: int}>
+	 */
+	private static function object_award_deltas( array $rows, bool $reverse ): array {
+		$out = array();
+		foreach ( $rows as $row ) {
+			// A point type deleted since the award would fall back to the primary one: leave it.
+			if ( self::resolve_type( $row['point_type'] ) !== $row['point_type'] ) {
+				continue;
+			}
+			if ( $reverse ) {
+				$delta = isset( self::$deleting_users[ $row['user_id'] ] ) ? 0 : -max( 0, $row['net'] );
+			} else {
+				// Back to exactly one award (the latest), never the sum of every award the object had.
+				$delta = $row['net'] <= 0 && $row['last_award'] > 0 ? $row['last_award'] - $row['net'] : 0;
+			}
+			if ( 0 !== $delta ) {
+				$out[] = array_merge( $row, array( 'delta' => $delta ) );
+			}
+		}
+		return $out;
+	}
+
+	/**
+	 * Each member's standing for each target object, per point type: net held and latest award.
+	 *
+	 * Reads the individual rows (a handful per object) in id order, so the latest award is known.
+	 *
+	 * @param array<string, int[]> $targets Action id => object ids.
+	 * @param bool                 $lock    Lock the rows (inside a transaction).
+	 * @return array<int, array{action_id: string, object_id: int, user_id: int, point_type: string, net: int, last_award: int}>
+	 */
+	private static function object_award_rows( array $targets, bool $lock ): array {
+		global $wpdb;
+
+		$base_of    = array();
+		$object_ids = array();
+		foreach ( $targets as $action_id => $ids ) {
+			foreach ( array( '', self::REMOVED_SUFFIX, self::RESTORED_SUFFIX ) as $suffix ) {
+				$base_of[ $action_id . $suffix ] = (string) $action_id;
+			}
+			foreach ( (array) $ids as $id ) {
+				if ( (int) $id > 0 ) {
+					$object_ids[ (int) $id ] = true;
+				}
+			}
+		}
+		if ( ! $base_of || ! $object_ids ) {
+			return array();
+		}
+
+		$ids  = array_keys( $object_ids );
+		$acts = array_keys( $base_of );
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- placeholders built from counts; idx_action_object serves the read.
+		$rows = (array) $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT id, user_id, point_type, action_id, object_id, points
+				   FROM {$wpdb->prefix}wb_gam_points
+				  WHERE action_id IN (" . implode( ',', array_fill( 0, count( $acts ), '%s' ) ) . ')
+				    AND object_id IN (' . implode( ',', array_fill( 0, count( $ids ), '%d' ) ) . ')
+				  ORDER BY id' . ( $lock ? ' FOR UPDATE' : '' ),
+				array_merge( $acts, $ids )
+			),
+			ARRAY_A
+		);
+		// phpcs:enable
+
+		$out = array();
+		foreach ( $rows as $row ) {
+			$base_id = $base_of[ (string) $row['action_id'] ] ?? '';
+			$object  = (int) $row['object_id'];
+			// The read spans every target pair; keep only the pairs actually asked for.
+			if ( '' === $base_id || ! in_array( $object, array_map( 'intval', (array) $targets[ $base_id ] ), true ) ) {
+				continue;
+			}
+			$key                 = $base_id . '|' . $object . '|' . (int) $row['user_id'] . '|' . $row['point_type'];
+			$out[ $key ]         = $out[ $key ] ?? array(
+				'action_id'  => $base_id,
+				'object_id'  => $object,
+				'user_id'    => (int) $row['user_id'],
+				'point_type' => (string) $row['point_type'],
+				'net'        => 0,
+				'last_award' => 0,
+			);
+			$out[ $key ]['net'] += (int) $row['points'];
+			if ( $base_id === $row['action_id'] ) {
+				$out[ $key ]['last_award'] = (int) $row['points'];
+			}
+		}
+
+		return array_values( $out );
 	}
 
 	/**
@@ -1297,10 +1523,20 @@ final class PointsEngine {
 	 */
 	public static function get_action_count( int $user_id, string $action_id, ?string $type = null ): int {
 		global $wpdb;
+
+		// An action earned once per object counts each object once: a post trashed and published
+		// again earns again (its points were taken back) but is still one post toward "publish 10
+		// posts". Rows from before 1.6.8 have no object id and each still counts.
+		$action = Registry::get_action( $action_id );
+		$count  = null !== $action && isset( $action['once_per_object'] )
+			? 'COUNT(DISTINCT object_id) + COALESCE(SUM(object_id IS NULL), 0)'
+			: 'COUNT(*)';
+
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $count is one of two literals above.
 		if ( null !== $type && '' !== $type ) {
 			return (int) $wpdb->get_var(
 				$wpdb->prepare(
-					"SELECT COUNT(*) FROM {$wpdb->prefix}wb_gam_points
+					"SELECT {$count} FROM {$wpdb->prefix}wb_gam_points
 					 WHERE user_id = %d AND action_id = %s AND point_type = %s",
 					$user_id,
 					$action_id,
@@ -1310,11 +1546,12 @@ final class PointsEngine {
 		}
 		return (int) $wpdb->get_var(
 			$wpdb->prepare(
-				"SELECT COUNT(*) FROM {$wpdb->prefix}wb_gam_points WHERE user_id = %d AND action_id = %s",
+				"SELECT {$count} FROM {$wpdb->prefix}wb_gam_points WHERE user_id = %d AND action_id = %s",
 				$user_id,
 				$action_id
 			)
 		);
+		// phpcs:enable
 	}
 
 	/**

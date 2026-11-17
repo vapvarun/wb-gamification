@@ -100,14 +100,6 @@ final class AnalyticsDashboard {
 			WB_GAM_VERSION,
 			true
 		);
-		wp_localize_script(
-			'wb-gam-admin-rest-utils',
-			'wbGamAdminRestI18n',
-			array(
-				'confirm' => __( 'Confirm', 'wb-gamification' ),
-				'cancel'  => __( 'Cancel', 'wb-gamification' ),
-			)
-		);
 		wp_enqueue_script(
 			'wb-gam-admin-rest-form',
 			plugins_url( 'assets/js/admin-rest-form.js', WB_GAM_FILE ),
@@ -484,10 +476,10 @@ final class AnalyticsDashboard {
 			? round( ( $active_streaks / $total_members ) * 100, 1 )
 			: 0;
 
-		// Kudos given in period.
+		// Kudos given in period; a revoked kudos no longer counts.
 		$kudos_given = (int) $wpdb->get_var(
 			$wpdb->prepare(
-				"SELECT COUNT(*) FROM {$wpdb->prefix}wb_gam_kudos WHERE created_at >= %s",
+				"SELECT COUNT(*) FROM {$wpdb->prefix}wb_gam_kudos WHERE revoked_at IS NULL AND created_at >= %s",
 				$since
 			)
 		);
@@ -878,7 +870,19 @@ final class AnalyticsDashboard {
 									<?php echo $is_dead ? esc_html__( 'Needs attention', 'wb-gamification' ) : esc_html__( 'Retrying', 'wb-gamification' ); ?>
 								</span>
 							</td>
-							<td><?php echo esc_html( $last ? human_time_diff( (int) strtotime( $last . ' UTC' ) ) . ' ' . __( 'ago', 'wb-gamification' ) : '—' ); ?></td>
+							<td>
+							<?php
+							echo esc_html(
+								$last
+									? sprintf(
+										/* translators: %s: human-readable time difference, e.g. "3 hours". */
+										__( '%s ago', 'wb-gamification' ),
+										human_time_diff( (int) strtotime( $last . ' UTC' ) )
+									)
+									: '—'
+							);
+							?>
+							</td>
 							<td>
 								<button
 									type="button"

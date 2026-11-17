@@ -91,6 +91,20 @@ final class Engine {
 		add_action( 'updated_option', array( __CLASS__, 'maybe_flush_enabled_cache' ), 10, 1 );
 		add_action( 'added_option', array( __CLASS__, 'maybe_flush_enabled_cache' ), 10, 1 );
 		add_action( 'deleted_option', array( __CLASS__, 'maybe_flush_enabled_cache' ), 10, 1 );
+
+		// A revoked kudos leaves the members' Year Recap (cached for an hour) at once.
+		add_action( 'wb_gam_kudos_revoked', array( RecapEngine::class, 'forget_kudos' ), 10, 3 );
+
+		/*
+		 * A host community prints the member's own gamification choices (show my level, leaderboards,
+		 * reward emails) where it builds its profile, e.g. BuddyNext's Achievements tab:
+		 *
+		 *     do_action( 'wb_gam_render_member_prefs', int $user_id );
+		 *
+		 * Prints nothing unless $user_id is the logged-in member. Same controls as the standalone
+		 * profile and the BuddyPress tab; saved on change through REST. @since 1.6.8
+		 */
+		add_action( 'wb_gam_render_member_prefs', array( MemberPrefs::class, 'render_controls' ), 10, 1 );
 	}
 
 	/**

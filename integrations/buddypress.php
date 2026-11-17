@@ -54,6 +54,9 @@ return [
 					'activity_id' => $activity_id,
 				];
 			},
+			// A deleted update takes its award back (BuddyPress passes every deleted activity id).
+			'once_per_object'     => static fn( $content, $user_id, $activity_id ): int => (int) $activity_id,
+			'reverse_on'          => [ 'bp_activity_deleted_activities' => static fn( $activity_ids ): array => (array) $activity_ids ],
 			'default_points'      => 10,
 			'category'            => 'buddypress',
 			'icon'                => 'icon-message-circle',
@@ -69,6 +72,11 @@ return [
 			'description'         => static fn(): string => __( 'Awarded when a member comments on an activity update.', 'wb-gamification' ),
 			'hook'                => 'bp_activity_comment_posted',
 			'user_callback'       => function ( int $comment_id, array $params, object $activity ): int {
+				// MediaVerse copies a media comment onto the photo's activity from inside
+				// mvs_comment_created; that comment was paid there (mvs_give_comment).
+				if ( doing_action( 'mvs_comment_created' ) ) {
+					return 0;
+				}
 				return (int) ( $params['user_id'] ?? 0 );
 			},
 			// Capture word count and parent activity for quality scoring.
@@ -79,6 +87,8 @@ return [
 					'activity_id' => (int) ( $params['activity_id'] ?? 0 ),
 				];
 			},
+			'once_per_object'     => static fn( $comment_id ): int => (int) $comment_id,
+			'reverse_on'          => [ 'bp_activity_deleted_activities' => static fn( $activity_ids ): array => (array) $activity_ids ],
 			'default_points'      => 5,
 			'category'            => 'buddypress',
 			'icon'                => 'icon-message-square',

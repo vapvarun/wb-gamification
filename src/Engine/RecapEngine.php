@@ -107,12 +107,16 @@ final class RecapEngine {
 				"SELECT action_id, COUNT(*) AS event_count
 				   FROM {$wpdb->prefix}wb_gam_events
 				  WHERE user_id = %d AND created_at BETWEEN %s AND %s
+				    AND action_id NOT LIKE %s AND action_id NOT LIKE %s
 				  GROUP BY action_id
 				  ORDER BY event_count DESC
 				  LIMIT 3",
 				$user_id,
 				$start,
-				$end
+				$end,
+				// Content-removal rows are corrections, not something the member did.
+				'%' . $wpdb->esc_like( PointsEngine::REMOVED_SUFFIX ),
+				'%' . $wpdb->esc_like( PointsEngine::RESTORED_SUFFIX )
 			),
 			ARRAY_A
 		) ?: array();
@@ -148,11 +152,11 @@ final class RecapEngine {
 			)
 		);
 
-		// ── Kudos given / received ──────────────────────────────────────────
+		// ── Kudos given / received (a revoked kudos no longer counts, as everywhere else) ──
 		$kudos_given = (int) $wpdb->get_var(
 			$wpdb->prepare(
 				"SELECT COUNT(*) FROM {$wpdb->prefix}wb_gam_kudos
-				  WHERE giver_id = %d AND created_at BETWEEN %s AND %s",
+				  WHERE giver_id = %d AND revoked_at IS NULL AND created_at BETWEEN %s AND %s",
 				$user_id,
 				$start,
 				$end
@@ -162,7 +166,7 @@ final class RecapEngine {
 		$kudos_received = (int) $wpdb->get_var(
 			$wpdb->prepare(
 				"SELECT COUNT(*) FROM {$wpdb->prefix}wb_gam_kudos
-				  WHERE receiver_id = %d AND created_at BETWEEN %s AND %s",
+				  WHERE receiver_id = %d AND revoked_at IS NULL AND created_at BETWEEN %s AND %s",
 				$user_id,
 				$start,
 				$end
@@ -383,5 +387,27 @@ final class RecapEngine {
 			__( 'You earned %s points this year - keep the momentum going!', 'wb-gamification' ),
 			number_format_i18n( $points )
 		);
+	}
+
+	/**
+	 * A kudos was revoked: drop the cached recap of both members for the year it was given.
+	 *
+	 * The recap counts only live kudos, and is cached for an hour; without this the revoked kudos
+	 * stayed in "kudos received" until the cache expired.
+	 *
+	 * @since 1.6.8
+	 *
+	 * @param int $kudos_id    Revoked kudos.
+	 * @param int $giver_id    Giver.
+	 * @param int $receiver_id Receiver.
+	 * @return void
+	 */
+	public static function forget_kudos( int $kudos_id, int $giver_id, int $receiver_id ): void {
+		global $wpdb;
+		$created = (string) $wpdb->get_var( $wpdb->prepare( "SELECT created_at FROM {$wpdb->prefix}wb_gam_kudos WHERE id = %d", $kudos_id ) );
+		$year    = '' !== $created ? (int) get_date_from_gmt( $created, 'Y' ) : (int) wp_date( 'Y' );
+		foreach ( array( $giver_id, $receiver_id ) as $user_id ) {
+			wp_cache_delete( "wb_gam_recap_{$user_id}_{$year}", self::CACHE_GROUP );
+		}
 	}
 }

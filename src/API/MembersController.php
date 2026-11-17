@@ -514,14 +514,12 @@ class MembersController extends WP_REST_Controller {
 
 			// One query for the page: who chose to stay off the leaderboards.
 			global $wpdb;
+			// Numeric-string ids become int keys in array_flip(), so no intval pass is needed.
 			$opted_out = array_flip(
-				array_map(
-					'intval',
-					$wpdb->get_col(
-						$wpdb->prepare(
-							"SELECT user_id FROM {$wpdb->prefix}wb_gam_member_prefs WHERE leaderboard_opt_out = 1 AND user_id IN (" . implode( ',', array_fill( 0, count( $ids ), '%d' ) ) . ')', // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
-							$ids
-						)
+				$wpdb->get_col(
+					$wpdb->prepare(
+						"SELECT user_id FROM {$wpdb->prefix}wb_gam_member_prefs WHERE leaderboard_opt_out = 1 AND user_id IN (" . implode( ',', array_fill( 0, count( $ids ), '%d' ) ) . ')', // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
+						$ids
 					)
 				)
 			);

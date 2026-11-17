@@ -290,13 +290,8 @@ class RedemptionController extends WP_REST_Controller {
 				'point_type'    => $point_type,
 				'reward_type'   => $request['reward_type'],
 				'reward_config' => wp_json_encode( $request['reward_config'] ?? array() ),
-				// NULL = unlimited, 0 = sold out. An omitted or explicitly-null stock
-				// is unlimited; absint() must not be allowed to turn that into 0,
-				// which now means the opposite thing.
-				'stock'         => isset( $request['stock'] ) && null !== $request['stock'] && '' !== $request['stock']
-					? absint( $request['stock'] )
-					: null,
-				'is_active'     => 1,
+				'stock'         => $this->stock_from( $request ),
+				'is_active'     => (int) rest_sanitize_boolean( $request['is_active'] ?? true ),
 				'created_at'    => current_time( 'mysql', true ),
 			),
 			array( '%s', '%s', '%d', '%s', '%s', '%s', '%d', '%d', '%s' )
@@ -342,11 +337,11 @@ class RedemptionController extends WP_REST_Controller {
 			$data['reward_type'] = $request['reward_type']; }
 		if ( isset( $request['reward_config'] ) ) {
 			$data['reward_config'] = wp_json_encode( $request['reward_config'] ); }
-		// An explicit null clears stock back to unlimited; 0 marks it sold out.
-		if ( $request->has_param( 'stock' ) ) {
-			$data['stock'] = ( null !== $request['stock'] && '' !== $request['stock'] ) ? absint( $request['stock'] ) : null; }
-		if ( isset( $request['is_active'] ) ) {
-			$data['is_active'] = (int) $request['is_active']; }
+		// Neither stock nor stock_mode sent: stock stays as it is.
+		if ( $request->has_param( 'stock' ) || $request->has_param( 'stock_mode' ) ) {
+			$data['stock'] = $this->stock_from( $request ); }
+		if ( $request->has_param( 'is_active' ) ) {
+			$data['is_active'] = (int) rest_sanitize_boolean( $request['is_active'] ); }
 
 		if ( $data ) {
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching -- Write operation; no cache needed.
@@ -546,7 +541,7 @@ class RedemptionController extends WP_REST_Controller {
 	 * @return array Argument definition array.
 	 */
 	private function item_args( bool $required ): array {
-		return array(
+		$args = array(
 			'title'         => array(
 				'required'          => $required,
 				'type'              => 'string',
@@ -582,11 +577,43 @@ class RedemptionController extends WP_REST_Controller {
 				'minimum'     => 0,
 				'description' => __( 'Remaining stock. Null means unlimited; 0 means sold out.', 'wb-gamification' ),
 			),
+			'stock_mode'    => array(
+				'type'        => 'string',
+				'enum'        => array( 'unlimited', 'limited' ),
+				'description' => __( 'Unlimited clears the stock count; limited uses stock.', 'wb-gamification' ),
+			),
 			'is_active'     => array(
 				'type'    => 'boolean',
 				'default' => true,
 			),
 		);
+
+		// Defaults belong to create only. On update a default fills every field the caller left
+		// out, so a partial update re-activated the reward and wiped its description and config.
+		if ( ! $required ) {
+			foreach ( $args as $key => $arg ) {
+				unset( $args[ $key ]['default'] );
+			}
+		}
+
+		return $args;
+	}
+
+	/**
+	 * The stock to store: NULL unlimited, 0 sold out, a positive count remaining.
+	 *
+	 * `stock_mode = unlimited` wins: the admin form disables (so never sends) the quantity box when
+	 * Unlimited is picked, which left the old count in place. An omitted or null stock is unlimited;
+	 * absint() must not turn it into 0, which means the opposite.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return int|null
+	 */
+	private function stock_from( $request ): ?int {
+		if ( 'unlimited' === $request['stock_mode'] ) {
+			return null;
+		}
+		return null !== $request['stock'] && '' !== $request['stock'] ? absint( $request['stock'] ) : null;
 	}
 
 	/**

@@ -238,12 +238,7 @@ final class CommunityNotifications {
 	 * @param string $message  This plugin's own sentence for the record.
 	 */
 	public static function on_personal_record( int $user_id, string $period = '', int $current = 0, int $previous = 0, string $message = '' ): void {
-		$buckets = array(
-			'day'   => static fn(): string => Clock::site_date(),
-			'week'  => static fn(): string => Clock::site_week(),
-			'month' => static fn(): string => substr( Clock::site_date(), 0, 7 ),
-		);
-		if ( ! isset( $buckets[ $period ] ) ) {
+		if ( ! in_array( $period, array( 'day', 'week', 'month' ), true ) ) {
 			return;
 		}
 
@@ -272,7 +267,7 @@ final class CommunityNotifications {
 			0,
 			'' !== $message ? $message : __( 'You set a new personal best.', 'wb-gamification' ),
 			self::notification_url( $user_id ),
-			'personal_record_' . $period . '_' . $buckets[ $period ](),
+			'personal_record_' . $period . '_' . PersonalRecordEngine::period_key( $period ),
 			0,
 			false // A running notice: later bests in the bucket refresh the row quietly.
 		);

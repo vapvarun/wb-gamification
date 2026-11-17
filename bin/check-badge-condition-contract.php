@@ -23,6 +23,7 @@
  *   - description matches "/\b(\d+) (posts?|comments?|activity|updates?|friends?|connections?|groups?|reactions?|kudos)\b/i"
  *     → must be action_count with that count
  *   - points milestone badges (description literally says "points") are exempt
+ *   - rank badges (name/description says "rank" or "level") must be level_reached
  *
  * Exit codes:
  *   0 — every "literal action" badge is action_count + correct
@@ -150,6 +151,14 @@ foreach ( $cond_rows as $row ) {
 		// Verify it IS point_milestone.
 		if ( 'point_milestone' !== $type ) {
 			$violations[] = "$id: name/description references 'points' but condition_type is $type";
+		}
+		continue;
+	}
+
+	// Rank badges ("reach Champion rank") are correct as level_reached, the same way points badges are point_milestone.
+	if ( preg_match( '/\b(rank|level)\b/i', $name . ' ' . $desc ) ) {
+		if ( 'level_reached' !== $type ) {
+			$violations[] = "$id: name/description references a rank but condition_type is $type";
 		}
 		continue;
 	}

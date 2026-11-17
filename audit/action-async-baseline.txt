@@ -3,19 +3,17 @@
 # line is '<file>:<line> <action_id>'. New entries fail the gate; legitimate
 # fixes (explicit 'async' => true|false added) should DELETE the line in the
 # same commit.
-# Generated: 2026-10-31T11:47:06Z
+# Generated: 2026-11-17T08:57:04Z
 
-integrations/bbpress.php:32 bbp_new_topic
-integrations/bbpress.php:47 bbp_new_reply
-integrations/bbpress.php:62 bbp_topic_closed
-integrations/buddypress.php:109 bp_groups_join
-integrations/buddypress.php:122 bp_groups_create
-integrations/buddypress.php:151 bp_reactions_received
-integrations/buddypress.php:181 bp_polls_created
-integrations/buddypress.php:195 bp_publish_post
-integrations/buddypress.php:253 bp_group_cover_upload
-integrations/buddypress.php:275 bp_message_sent
-integrations/buddypress.php:92 bp_friends_accepted
+integrations/bbpress.php:89 bbp_topic_closed
+integrations/buddypress.php:102 bp_friends_accepted
+integrations/buddypress.php:119 bp_groups_join
+integrations/buddypress.php:132 bp_groups_create
+integrations/buddypress.php:161 bp_reactions_received
+integrations/buddypress.php:191 bp_polls_created
+integrations/buddypress.php:205 bp_publish_post
+integrations/buddypress.php:263 bp_group_cover_upload
+integrations/buddypress.php:285 bp_message_sent
 integrations/contrib/givewp.php:42 give_donation_completed
 integrations/contrib/givewp.php:71 give_campaign_goal_reached
 integrations/contrib/lifterlms.php:110 llms_achievement_earned
@@ -39,16 +37,10 @@ integrations/learndash.php:37 ld_course_completed
 integrations/learndash.php:53 ld_lesson_completed
 integrations/learndash.php:69 ld_topic_completed
 integrations/learndash.php:85 ld_quiz_passed
-integrations/woocommerce.php:169 wc_wishlist_add
-integrations/woocommerce.php:184 wc_add_to_cart
-integrations/wordpress.php:104 wp_post_receives_comment
-integrations/wordpress.php:156 wp_publish_post
-integrations/wordpress.php:218 wp_leave_comment
-integrations/wordpress.php:246 wp_comment_approved
-integrations/wpmediaverse.php:112 mvs_create_album
-integrations/wpmediaverse.php:186 mvs_receive_follow
-integrations/wpmediaverse.php:234 mvs_give_comment
-integrations/wpmediaverse.php:277 mvs_battle_win
-integrations/wpmediaverse.php:297 mvs_challenge_participate
-integrations/wpmediaverse.php:401 mvs_streak_milestone
-integrations/wpmediaverse.php:88 mvs_upload_photo
+integrations/woocommerce.php:170 wc_wishlist_add
+integrations/woocommerce.php:185 wc_add_to_cart
+integrations/wpmediaverse.php:123 mvs_create_album
+integrations/wpmediaverse.php:201 mvs_receive_follow
+integrations/wpmediaverse.php:297 mvs_battle_win
+integrations/wpmediaverse.php:317 mvs_challenge_participate
+integrations/wpmediaverse.php:421 mvs_streak_milestone
