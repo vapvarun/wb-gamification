@@ -72,16 +72,6 @@ final class RedemptionStorePage {
 			WB_GAM_VERSION,
 			true
 		);
-		// Shared confirm/cancel modal button labels — confirmAction() falls back
-		// to these when a caller doesn't pass its own confirmText/cancelText.
-		wp_localize_script(
-			'wb-gam-admin-rest-utils',
-			'wbGamAdminRestI18n',
-			array(
-				'confirm' => __( 'Confirm', 'wb-gamification' ),
-				'cancel'  => __( 'Cancel', 'wb-gamification' ),
-			)
-		);
 		wp_enqueue_script(
 			'wb-gam-admin-rest-form',
 			plugins_url( 'assets/js/admin-rest-form.js', WB_GAM_FILE ),
@@ -514,7 +504,7 @@ final class RedemptionStorePage {
 					?>
 			</div>
 			<?php else : ?>
-			<div class="wbgam-empty">
+			<div class="wbgam-empty wbgam-stack-block">
 				<div class="wbgam-empty-icon"><span class="icon-shopping-cart wbgam-icon-xl"></span></div>
 				<div class="wbgam-empty-title"><?php esc_html_e( 'No rewards yet', 'wb-gamification' ); ?></div>
 				<p><?php esc_html_e( 'Create your first reward above to open the redemption store for your members.', 'wb-gamification' ); ?></p>

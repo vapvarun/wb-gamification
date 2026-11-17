@@ -117,6 +117,10 @@ final class SubmissionsPage {
 						?>
 					</p>
 					<p>
+						<strong><?php esc_html_e( 'What members can submit:', 'wb-gamification' ); ?></strong>
+						<?php esc_html_e( 'Only the actions you tick under Points > Members can submit. Nothing is open until you tick one.', 'wb-gamification' ); ?>
+					</p>
+					<p>
 						<strong><?php esc_html_e( 'Anti-spam:', 'wb-gamification' ); ?></strong>
 						<?php esc_html_e( 'Each member is rate-limited to 5 submissions per day by default. Filter `wb_gam_submission_daily_cap` to change.', 'wb-gamification' ); ?>
 					</p>

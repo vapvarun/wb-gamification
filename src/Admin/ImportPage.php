@@ -116,6 +116,8 @@ final class ImportPage {
 					'stalled'             => __( 'The background queue is not running, so the import cannot move on its own. WP-Cron may be disabled or loopback requests blocked on this site. Run it in this window (keep the tab open), or resume it in the background once the queue works.', 'wb-gamification' ),
 					'resume'              => __( 'Resume import', 'wb-gamification' ),
 					'runHere'             => __( 'Run it in this window', 'wb-gamification' ),
+					'alreadyFinished'     => __( 'This import has already finished.', 'wb-gamification' ),
+					'alreadyRunning'      => __( 'This import is already running. Showing its progress.', 'wb-gamification' ),
 					'undo'                => __( 'Undo import', 'wb-gamification' ),
 					'cancel'              => __( 'Cancel', 'wb-gamification' ),
 					'checking'            => __( 'Checking what would be removed...', 'wb-gamification' ),

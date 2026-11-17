@@ -1,75 +1,98 @@
 # Badges
 
-Badges are visual achievements members earn by hitting specific milestones. The plugin ships with 37 default badges and supports unlimited custom badges.
+Badges are achievements members earn for milestones and actions. A fresh install comes with 37 badges, and you can add as many of your own as you like.
 
 ## What Badges Are
 
-A badge is a named achievement with an image, description, and one or more conditions that must be met before it awards. Badges award automatically the moment a member meets all conditions. Members keep their badges permanently unless the badge has an expiry period.
+A badge has a name, a description, an icon and a rule. The rule is one or more conditions. When a member meets the rule, the badge is theirs. A badge whose only condition is **Admin awarded only (manual)** is never given out on its own: you grant it by hand.
+
+Members keep a badge for good unless you set **Valid for (days)** on it. Then it expires that many days after they earn it.
 
 ## Default Badges
 
-The 37 default badges are organized into categories:
+A fresh install includes these 37 badges. You can edit, delete or add to them.
 
-### Points Milestones
-Badges for reaching cumulative point totals. Examples: "First Steps" (100 points), "Rising Star" (500 points), "Community Pillar" (1,500 points), "Champion" (5,000 points).
+| Group | Badges | How they are earned |
+|---|---|---|
+| Points (5) | Century Club, Five Hundred Strong, Thousand Points Club, Five Thousand Strong, Ten Thousand Club | Reaching 100, 500, 1,000, 5,000 and 10,000 total points |
+| WordPress (6) | Welcome Aboard, First Post, Prolific Writer, Content Creator, First Comment, Engaged Reader | Joining, publishing 1, 10 and 25 posts, leaving 1 and 10 comments |
+| BuddyPress (12) | First Update, Active Member, Community Voice, First Connection, Social Connector, Group Creator, Team Player, Profile Pro, Reaction Magnet, Comment Champion, Poll Pioneer, Blog Publisher | Activity updates, friendships, groups, profile, reactions, activity comments, polls and member blog posts |
+| Special (7) | Early Adopter, Founding Member, Top Contributor, Mentor, Kudos Champion, Event Host, Community Veteran | Granted by an admin |
+| Tenure (4) | 1-Year Member, 2-Year Member, 5-Year Member, 10-Year Member | Being a member for 1, 2, 5 and 10 years |
+| Site-first (3) | First Champion, First to 10,000, Century Streak Pioneer | Going to the one member who gets there first |
 
-### WordPress Actions
-Badges for WordPress-native contributions. Examples: "Published Author" (publish first post), "Prolific Writer" (publish 10 posts), "Commenter" (leave first comment), "Conversation Starter" (post receives a comment).
-
-### BuddyPress Actions
-Badges for BuddyPress community participation. Examples: "Welcome Aboard" (complete extended profile), "Social Butterfly" (accept 10 friendships), "Group Builder" (create a group), "Reaction Magnet" (receive 50 reactions).
-
-### Special
-Most of these are assigned manually by admins for extraordinary contributions, through the Manual Award interface. Seven award automatically: the tenure badges (1, 2, 5 and 10 years) and the site-first badges, which go to one member only. See [Tenure and First-Time Badges](../usage/160-tenure-and-first-time-badges.md).
+The BuddyPress badges can only be earned while BuddyPress is active, because the actions they count come from BuddyPress. For tenure and site-first badges, see [Tenure and First-Time Badges](../usage/160-tenure-and-first-time-badges.md).
 
 ## How Badges Are Awarded
 
-**Auto-award** happens automatically. After every point transaction, the badge engine evaluates all active badge conditions for the member who just earned points. If any condition is now satisfied for the first time, the badge awards immediately.
+**Automatically.** A badge with any condition other than **Admin awarded only (manual)** is checked whenever something could change the answer: the member earns points, moves up a level, or reaches a streak milestone. Tenure badges are checked once a day, because no member action can trigger them. The member gets the badge as soon as the rule is met.
 
-Conditions that trigger auto-award:
-- **Point milestone** - member's cumulative points reach a threshold
-- **Action count** - member has completed a specific action a set number of times
-
-**Manual award** is done by an admin. Go to **Gamification > Manual Award**, select a member, choose a badge from the list, and click **Award**. The member receives a notification right away.
+**By hand.** Open the badge in **WB Gamification > Badges**. Under **Award this badge to a user**, search for the member and click **Award Badge**. This works for any badge, including ones that also award automatically.
 
 ## Creating Custom Badges
 
-1. Go to **Gamification > Badges**.
-2. Click **Add New Badge**.
-3. Enter a name, description, and choose or upload a badge image.
-4. Under **Award Condition**, choose the condition type:
-   - **Point milestone** - enter the cumulative points required
-   - **Action count** - choose the action and the number of times it must be completed
-   - **Admin only** - the badge is never awarded automatically
-5. Optionally configure advanced options (see below).
-6. Click **Save Badge**.
+1. Go to **WB Gamification > Badges**.
+2. Click **+ Create New Badge**.
+3. Enter a **Badge ID**, a **Name** and a **Description**, and click **Choose Icon** to pick an image.
+4. Under **Auto-Award Conditions**, pick a condition and fill in its value. Click **+ Add condition** to add more, and choose whether the member must match **ALL of these** or **ANY of these**.
+5. Click **Create Badge**.
 
-The new badge is active immediately. Existing members who already meet the condition will **not** receive it retroactively - it awards only on future transactions.
+The condition types are:
+
+| Condition | Awards when |
+|---|---|
+| **Admin awarded only (manual)** | Never on its own. You grant it by hand. |
+| **Reaches a point total** | The member's total points reach the number you enter. |
+| **Performs an action N times** | The member has done the chosen action that many times. |
+| **Reaches a level** | The member reaches the chosen level. |
+| **Has earned another badge** | The member already holds the chosen badge. |
+| **Keeps a daily streak of N days** | The member's daily streak reaches that many days in a row. |
+| **Has been a member for N days** | That many days have passed since the member joined. |
+| **Earns N points in a period** | The member earns that many points in one day, week or month. |
+
+For every field on the form, see [Badge Management](../usage/20-badge-management.md).
+
+### Members Who Already Qualify
+
+A new or changed badge is earned from now on. Members who met the rule before you saved it do not get it straight away.
+
+To give it to them too, tick **Also award this badge to members who already qualify** before you save. The plugin then awards it in the background to every member who meets the rule. On a large community that can be many people and many notifications, so it is off by default.
 
 ## Badge Images
 
-Each badge displays an image in blocks and on BuddyPress profiles. When you create a custom badge, you can upload any image from your WordPress Media Library. Recommended size is 200x200 pixels. PNG files with transparent backgrounds work best.
+Each badge shows its icon in blocks, on member profiles and on the share page. Pick any image from your Media Library. The recommended size is 128x128 pixels, a PNG with a transparent background.
 
-Default badges use SVG icons that scale cleanly at any size.
+## Limits on a Badge
 
-## Advanced Badge Options
+These optional fields on the badge form control how long and how widely a badge is given out:
 
-When creating or editing a badge, you can set the following optional limits:
-
-**Expiry (validity_days)** - If set, the badge expires this many days after it is earned. An expired badge is removed from the member's showcase. Useful for certifications that need periodic renewal. Leave blank for permanent badges.
-
-**Close date (closes_at)** - The badge stops awarding after this date. Members who earn it before the date keep it permanently. Useful for event-based or seasonal badges.
-
-**Maximum earners (max_earners)** - The badge stops awarding once this many members have earned it. Useful for "first 100 members" exclusivity badges.
+- **Valid for (days)** - the badge expires this many days after a member earns it and stops counting. Leave it blank so it never expires. Useful for certifications that need renewing.
+- **Closes at** - no one can earn the badge after this date. Members who earned it before keep it. Useful for event and seasonal badges.
+- **Max earners** - the badge stops awarding once this many members have it. Useful for "first 100 members" badges.
 
 ## Credential Badges (OpenBadges 3.0)
 
-Badges marked as **Credential** badges generate a verifiable digital credential following the OpenBadges 3.0 standard. Members can download the credential JSON file, share it on LinkedIn, or include it in a digital portfolio to prove they earned the badge on your site.
+Tick **Is Credential** on a badge to make it a verifiable digital credential following the OpenBadges 3.0 standard. Members can share a verified badge link, for example on LinkedIn.
 
 ## Viewing Badges
 
-Members can see their earned badges in:
-- The **Badge Showcase block** on any page (`[wb_gam_badge_showcase]`)
-- Their **BuddyPress profile** Gamification tab (if BuddyPress is active)
+Members see their earned badges in:
 
-Use the `show_locked="1"` attribute on the Badge Showcase shortcode to display unearned badges grayed out, so members know what they are working toward.
+- The **Badge Showcase** block, or the `[wb_gam_badge_showcase]` shortcode, on any page.
+- Their BuddyPress profile, when BuddyPress is active.
+
+Add `show_locked="1"` to the shortcode to show unearned badges greyed out, so members can see what they are working toward.
+
+## FAQ
+
+**I created a badge and nobody has it yet. Why?**
+A new badge is earned from now on. Tick **Also award this badge to members who already qualify** and save again to award it to everyone who already meets the rule.
+
+**Can I give an automatic badge to someone by hand?**
+Yes. Open the badge and use **Award this badge to a user**.
+
+## Troubleshooting
+
+**A badge never awards.** If its rule counts an action, check that the action is switched on and pays more than 0 points: go to **WB Gamification**, click **Points** in the left menu, and check its **On** switch and **Amount**. An action that pays nothing is not counted.
+
+**A badge stopped awarding.** Check its **Closes at** date and its **Max earners** limit.

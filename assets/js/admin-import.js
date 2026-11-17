@@ -144,11 +144,15 @@
 		var detail = el( 'p', 'wb-gam-import__note' );
 		var alert = el( 'div', 'wb-gam-import__alert' );
 		alert.hidden = true;
+		// A plain note that paint() leaves alone (it rebuilds the alert on every poll).
+		var notice = el( 'p', 'wb-gam-import__note' );
+		notice.hidden = true;
 		var result = el( 'div', 'wb-gam-import__result-body' );
 		panel.appendChild( status );
 		panel.appendChild( bar );
 		panel.appendChild( detail );
 		panel.appendChild( alert );
+		panel.appendChild( notice );
 		panel.appendChild( result );
 		box.appendChild( panel );
 
@@ -156,6 +160,7 @@
 		var delay = POLL_MIN_MS;
 		var finished = false;
 		var pumping = false;
+		var seenSeq = run.seq;
 
 		function phaseLabel( r ) {
 			var labels = {
@@ -173,6 +178,7 @@
 		}
 
 		function paint( r ) {
+			seenSeq = r.seq;
 			bar.value = r.percent;
 			// Queued means the job is waiting for the background queue (WP-Cron), which can take up to a
 			// minute to pick it up. Say so, rather than show a phase that has not started as if it hung.
@@ -199,6 +205,9 @@
 				resume.addEventListener( 'click', function () {
 					resume.disabled = true;
 					api.apiFetch( 'POST', '/import/' + slug + '/resume', {}, settings ).then( function ( res ) {
+						if ( lateClick( res ) ) {
+							return;
+						}
 						if ( ! res.ok ) {
 							resume.disabled = false;
 							alert.appendChild( el( 'p', 'wb-gam-import__bad', errorText( res ) ) );
@@ -259,17 +268,49 @@
 			} );
 		}
 
+		/**
+		 * A click that lands after the run finished, or after another tab or the queue picked it
+		 * up again, is not a failure: say so plainly and show the run as it is now.
+		 *
+		 * @param {Object} res apiFetch result.
+		 * @return {boolean} True when the reply was handled here.
+		 */
+		function lateClick( res ) {
+			var code = ! res.ok && res.data && res.data.code;
+			if ( 'wb_gam_import_nothing_to_resume' !== code && 'wb_gam_import_running' !== code ) {
+				return false;
+			}
+			pumping = false;
+			notice.textContent = 'wb_gam_import_running' === code
+				? t( 'alreadyRunning', 'This import is already running. Showing its progress.' )
+				: t( 'alreadyFinished', 'This import has already finished.' );
+			notice.hidden = false;
+			delay = POLL_MIN_MS;
+			schedule( 0 );
+			return true;
+		}
+
 		function pump() {
 			api.apiFetch( 'POST', '/import/' + slug + '/resume', { here: true }, settings ).then( function ( res ) {
+				if ( lateClick( res ) ) {
+					return;
+				}
 				if ( ! res.ok ) {
 					pumping = false;
 					alert.hidden = false;
 					alert.appendChild( el( 'p', 'wb-gam-import__bad', errorText( res ) ) );
 					return;
 				}
+				var before = seenSeq;
 				paint( res.data );
 				if ( isActive( res.data.status ) ) {
-					pump();
+					// No page ran (another tab or the queue holds the lock): wait before asking
+					// again instead of hammering the server.
+					if ( res.data.seq === before ) {
+						timer = window.setTimeout( pump, POLL_MIN_MS );
+					} else {
+						pump();
+					}
 					return;
 				}
 				pumping = false;

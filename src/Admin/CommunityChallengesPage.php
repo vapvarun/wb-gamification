@@ -94,16 +94,6 @@ final class CommunityChallengesPage {
 			WB_GAM_VERSION,
 			true
 		);
-		// Shared confirm/cancel modal button labels — confirmAction() falls back
-		// to these when a caller doesn't pass its own confirmText/cancelText.
-		wp_localize_script(
-			'wb-gam-admin-rest-utils',
-			'wbGamAdminRestI18n',
-			array(
-				'confirm' => __( 'Confirm', 'wb-gamification' ),
-				'cancel'  => __( 'Cancel', 'wb-gamification' ),
-			)
-		);
 		wp_enqueue_script(
 			'wb-gam-admin-rest-form',
 			plugins_url( 'assets/js/admin-rest-form.js', WB_GAM_FILE ),
@@ -404,7 +394,7 @@ final class CommunityChallengesPage {
 								<td><?php echo esc_html( $c['bonus_points'] ); ?></td>
 								<td>
 									<span class="wbgam-pill wbgam-pill--<?php echo esc_attr( $status_class ); ?>">
-										<?php echo esc_html( ucfirst( $c['status'] ) ); ?>
+										<?php echo esc_html( ChallengeManagerPage::status_label( (string) $c['status'] ) ); ?>
 									</span>
 								</td>
 								<td>

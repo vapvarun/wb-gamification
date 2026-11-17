@@ -1,8 +1,9 @@
 /**
- * Settings → Points tab: per-action cooldown / daily-cap autosave.
+ * Settings → Points tab: per-action cooldown / caps / "Members can submit" autosave.
  *
  * Listens for `change` on inputs tagged with `data-wb-gam-action-override`,
- * debounces 250ms, then POSTs to `/wb-gamification/v1/actions/{id}/overrides`.
+ * debounces number fields, then POSTs to `/wb-gamification/v1/actions/{id}/overrides`.
+ * A checkbox (`submittable`) saves at once as a boolean.
  *
  * @since 1.4.0
  */
@@ -27,7 +28,7 @@
 
 	function save( actionId, field, value ) {
 		const body  = {};
-		body[ field ] = parseInt( value, 10 ) || 0;
+		body[ field ] = ( typeof value === 'boolean' ) ? value : ( parseInt( value, 10 ) || 0 );
 
 		fetch( base + encodeURIComponent( actionId ) + '/overrides', {
 			signal: ( typeof AbortSignal !== 'undefined' && AbortSignal.timeout ) ? AbortSignal.timeout( 15000 ) : undefined,
@@ -46,6 +47,7 @@
 				const sel = '[data-wb-gam-action-id="' + actionId + '"][data-wb-gam-action-override="' + field + '"]';
 				const el  = document.querySelector( sel );
 				if ( el ) {
+					el.classList.remove( 'wbgam-input--error' );
 					el.classList.add( 'wbgam-input--saved' );
 					setTimeout( function () {
 						el.classList.remove( 'wbgam-input--saved' );
@@ -57,6 +59,10 @@
 				const el  = document.querySelector( sel );
 				if ( el ) {
 					el.classList.add( 'wbgam-input--error' );
+					// A tick that did not save must not look saved.
+					if ( el.type === 'checkbox' ) {
+						el.checked = ! value;
+					}
 				}
 			} );
 	}
@@ -75,6 +81,12 @@
 	}
 
 	inputs.forEach( function ( input ) {
+		if ( input.type === 'checkbox' ) {
+			input.addEventListener( 'change', function () {
+				save( input.dataset.wbGamActionId, input.dataset.wbGamActionOverride, input.checked );
+			} );
+			return;
+		}
 		// `input` fires while the admin is actually typing (or clicking the
 		// number-spinner). `change` only fires on blur/Enter for number
 		// inputs — Simran's repro showed values silently dropped when the

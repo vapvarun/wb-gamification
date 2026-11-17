@@ -50,6 +50,8 @@
 	if ( ! utils ) {
 		return;
 	}
+	// Translated fallbacks shared by every admin page (SettingsPage::localize_admin_rest_utils()).
+	const shared = window.wbGamAdminRestI18n || {};
 
 	function settingsFor( key ) {
 		return ( window[ key ] && window[ key ].restUrl ) ? window[ key ] : null;
@@ -224,14 +226,17 @@
 		const key = form.dataset.wbGamRestForm;
 		const settings = settingsFor( key );
 		if ( ! settings ) {
-			utils.toast( 'Settings not loaded for ' + key, 'error' );
+			// A page that forgot its localized settings object: tell the admin to reload,
+			// and leave the key for whoever debugs it.
+			window.console && window.console.error( 'wbGam admin: settings not loaded for ' + key );
+			utils.toast( shared.notLoaded || 'This screen did not load completely. Reload the page and try again.', 'error' );
 			return;
 		}
 
 		const method  = ( form.dataset.wbGamRestMethod || 'POST' ).toUpperCase();
 		const path    = form.dataset.wbGamRestPath || '';
-		const success = form.dataset.wbGamRestSuccessToast || ( settings.i18n && settings.i18n.saved ) || 'Saved.';
-		const failure = form.dataset.wbGamRestErrorToast || ( settings.i18n && settings.i18n.failed ) || 'Save failed.';
+		const success = form.dataset.wbGamRestSuccessToast || ( settings.i18n && settings.i18n.saved ) || shared.saved || 'Saved.';
+		const failure = form.dataset.wbGamRestErrorToast || ( settings.i18n && settings.i18n.failed ) || shared.saveFailed || 'Save failed.';
 		const after   = form.dataset.wbGamRestAfter || '';
 
 		const submit = event.submitter || form.querySelector( 'button[type="submit"]' );
@@ -261,15 +266,18 @@
 		const key = button.dataset.wbGamRestAction;
 		const settings = settingsFor( key );
 		if ( ! settings ) {
-			utils.toast( 'Settings not loaded for ' + key, 'error' );
+			// A page that forgot its localized settings object: tell the admin to reload,
+			// and leave the key for whoever debugs it.
+			window.console && window.console.error( 'wbGam admin: settings not loaded for ' + key );
+			utils.toast( shared.notLoaded || 'This screen did not load completely. Reload the page and try again.', 'error' );
 			return;
 		}
 
 		const method  = ( button.dataset.wbGamRestMethod || 'POST' ).toUpperCase();
 		const path    = button.dataset.wbGamRestPath || '';
 		const confirm = button.dataset.wbGamRestConfirm || '';
-		const success = button.dataset.wbGamRestSuccessToast || ( settings.i18n && settings.i18n.saved ) || 'Done.';
-		const failure = button.dataset.wbGamRestErrorToast || ( settings.i18n && settings.i18n.failed ) || 'Action failed.';
+		const success = button.dataset.wbGamRestSuccessToast || ( settings.i18n && settings.i18n.saved ) || shared.saved || 'Saved.';
+		const failure = button.dataset.wbGamRestErrorToast || ( settings.i18n && settings.i18n.failed ) || shared.actionFailed || 'Action failed.';
 		const after   = button.dataset.wbGamRestAfter || '';
 
 		// Optional inline JSON body — `data-wb-gam-rest-body='{"is_default":true}'`.
@@ -279,7 +287,8 @@
 			try {
 				body = JSON.parse( button.dataset.wbGamRestBody );
 			} catch ( parseErr ) {
-				utils.toast( 'Invalid REST body on action button.', 'error' );
+				window.console && window.console.error( 'wbGam admin: invalid data-wb-gam-rest-body on action button.' );
+				utils.toast( shared.actionFailed || 'Action failed.', 'error' );
 				return;
 			}
 		}

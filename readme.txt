@@ -19,7 +19,7 @@ The engine awards points automatically when members perform actions on your site
 = Why WB Gamification? =
 
 * **Zero config** - 5 starter templates pre-configure everything. Pick one and go.
-* **Universal** - Works with plain WordPress, BuddyPress, WooCommerce, LearnDash, bbPress, and 5 more plugins. Auto-detects what you have installed.
+* **Universal** - Works with plain WordPress, BuddyPress, WooCommerce, LearnDash, bbPress and 18 more plugins. Auto-detects what you have installed.
 * **Scalable** - Async award pipeline, snapshot-cached leaderboards, object caching everywhere. Built for 100K+ members.
 * **API-first** - 78 REST endpoints, outbound webhooks, WP Abilities API. Mobile apps, headless frontends, and AI agents are first-class consumers. Admin UI is REST-driven internally - what the admin saves is what the API exposes (no parallel form-post surface).
 * **No add-on model** - Every integration, every advanced engagement mechanic, every admin surface ships free. No paid extensions for BuddyPress support, cohort leagues, redemption store, or webhooks.
@@ -54,18 +54,19 @@ The engine awards points automatically when members perform actions on your site
 
 All integrations are auto-detected and require zero configuration. Install the plugin - gamification actions appear automatically.
 
-* **BuddyPress** - Activity updates, comments, friendships, groups, profile completion, reactions, polls, member blog (10 actions)
-* **bbPress** - New topics, replies, resolved topics (3 actions)
-* **WooCommerce** - Orders, first purchase, product reviews, wishlists (4 actions)
-* **LearnDash** - Courses, lessons, topics, quizzes, assignments, enrollment, groups (8 actions)
-* **LifterLMS** - Courses, lessons, quizzes, enrollment, memberships, achievements, certificates (7 actions)
-* **Tutor LMS** - Courses, lessons, quizzes, enrollment, reviews, questions (6 actions)
-* **MemberPress** - Memberships, renewals, first signup (3 actions)
-* **GiveWP** - Donations, first donation, campaign goals (3 actions)
-* **The Events Calendar** - RSVPs, tickets, check-ins (3 actions)
-* **WPMediaVerse Pro** - Photo uploads, albums, comments, likes, follows, battles, challenges, tournaments (17 actions)
+* **WordPress** - Registration, first login, profile completion, posts, comments (always on)
+* **BuddyPress** - Activity updates, comments, friendships, groups, profile completion, reactions, polls, member blog, photos and messages
+* **bbPress** - New topics, replies, closed (resolved) topics
+* **WooCommerce** - Orders, first purchase, product reviews, wishlists, add to cart
+* **LearnDash** - Courses, lessons, topics, quizzes, assignments, enrollment, groups
+* **LifterLMS** - Courses, lessons, quizzes, enrollment, memberships, achievements, certificates
+* **Tutor LMS** - Courses, lessons, quizzes, enrollment, reviews, questions
+* **MemberPress** - Memberships, renewals, first signup
+* **GiveWP** - Donations, first donation, campaign goals
+* **The Events Calendar** - RSVPs, tickets, check-ins
+* **Wbcom plugins** - BuddyNext, WPMediaVerse, Jetonomy and Jetonomy Pro, Learnomy and Learnomy Pro, Eventonomy and Eventonomy Pro, Listora and Listora Pro, WP Career Board and WP Career Board Pro, WP Sell Services
 
-**Total: 62 gamification actions** across 10 integration manifests.
+How many actions you get depends on the plugins you run: 8 on plain WordPress, up to 126 with every supported plugin active. Settings > Points lists exactly the actions your own site has.
 
 = Roadmap =
 

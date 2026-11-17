@@ -59,6 +59,8 @@ Both **Cooldown** and **Daily cap** are editable directly in the actions table. 
 
 Setting either field to `0` is itself a saved override that turns the limit off - it does **not** restore the manifest default value. To revert to the manifest default (for example, to put a 60-second cooldown back after you set it to `0`), call `DELETE /wp-json/wb-gamification/v1/actions/{action_id}/overrides` via REST or remove the action's row from the `wb_gam_action_overrides` site option.
 
+**Members can submit** - *New in 1.6.8.* Tick it to let members claim the action through the Submit Achievement form, for you to approve. Every action starts unticked. The tick saves straight away. See [Submissions](../features/120-submissions.md#choose-what-members-can-submit).
+
 Overrides are stored in the `wb_gam_action_overrides` site option, keyed by action ID. The engine merges overrides on top of the manifest values, so the same effective values are used by rate-limit checks, the admin display, and REST consumers.
 
 ## Log Retention

@@ -59,7 +59,7 @@
 				user_id: cfg.userId,
 				points: points,
 				reason: 'wizard_test_event',
-				note: 'Sent from the Setup Wizard test-event button.',
+				note: i18n.note || 'Sent from the Setup Wizard test-event button.',
 			} ),
 		} )
 			.then( function ( res ) {

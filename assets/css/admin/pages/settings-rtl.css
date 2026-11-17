@@ -484,6 +484,11 @@
 	grid-column: 1 / -1;
 }
 
+/* The grid gap spaces these cards; drop the card-after-card margin. */
+.wbgam-dashboard-row > .wbgam-card {
+	margin-block-start: 0;
+}
+
 .wbgam-dashboard-row .wbgam-card,
 .wbgam-dashboard-row__full {
 	background: var(--wbgam-card-bg);

@@ -1,74 +1,73 @@
 # Submissions (UGC Achievements)
 
-Submissions let members claim achievements that the system cannot automatically detect - volunteer hours, offline milestones, custom community goals. Members submit, admins approve, points and badges fire through the standard award pipeline.
+Submissions let members claim achievements the plugin cannot detect on its own, such as volunteer hours, offline milestones or custom community goals. A member submits, you approve, and the points arrive through the normal award path.
 
 ## What Submissions Are
 
-A submission is a member-supplied claim that they did something earnable. Each submission has:
+A submission is a member's claim that they did something worth points. Each submission has:
 
-- **Title** - short description ("Volunteered 3 hours at Saturday cleanup")
-- **Details + photo** - a short write-up of what they did, with an **Add Media** button to attach a photo as proof right in the form (a screenshot, event photo, or certificate). Every logged-in member can attach a photo this way - they don't need to be an admin.
-- **Optional URL** - or just paste a link to evidence hosted elsewhere (a social post, a Google Drive file)
-- **Action** - the gamification action this submission represents (admin defines the catalog)
+- **Action** - which of your actions the member is claiming. Members can only pick actions you have opened for submission (see [Choose What Members Can Submit](#choose-what-members-can-submit)).
+- **Details and photo** - a short write-up of what they did. The **Add Media** button lets any logged-in member attach a photo as proof (a screenshot, an event photo, a certificate).
+- **Optional URL** - a link to evidence hosted elsewhere, such as a social post or a shared file.
 
-When an admin approves the submission, the system fires the standard event for that action. The member earns the configured points exactly as if the action had fired automatically. Badges, levels, streaks, and the leaderboard all update through the same path - there is no parallel "submitted points" track.
+When you approve a submission, the member earns the points set for that action, exactly as if it had happened automatically. Badges, levels, streaks and the leaderboard all update the same way. There is no separate "submitted points" track.
+
+## Choose What Members Can Submit
+
+Nothing can be submitted until you choose it. On a new site, and after updating to 1.6.8, the Submit Achievement form has no actions to pick from and tells members so.
+
+To open an action for submission:
+
+1. Go to **WB Gamification** and click **Points** in the left menu.
+2. Open the group the action belongs to, for example **WordPress**.
+3. Tick **Members can submit** on the action's row. The tick saves straight away.
+
+Untick it to close the action again. Submissions already waiting in the queue for that action can still be approved or rejected.
+
+Pick actions that need a person to check them, such as "Volunteer for an event". Leave automatic actions (publishing a post, leaving a comment) unticked: they already pay points on their own, and opening them lets members claim them a second time.
+
+A plugin that adds actions can mark one as submittable in its action definition with `'submittable' => true`. Your tick on the Points screen wins over that default.
 
 ## Member Flow
 
-1. Member places the **Submit Achievement block** on a page (or admins place it on the Hub).
-2. Member fills the form: a title, a short description (with **Add Media** to attach a proof photo), an optional evidence URL, and picks an action from the allowed list.
-3. The submission lands in the moderation queue with status `pending`.
-4. Admin approves (→ points fire) or rejects (→ no points, member optionally notified).
-5. Approved submission appears on the member's points history with a "submitted" badge.
+1. Add the **Submit Achievement** block (or its shortcode) to a page.
+2. A logged-in member fills in the form: picks an action from the list you opened, describes what they did (with **Add Media** for a proof photo) and adds an optional link.
+3. The submission waits in your review queue as **pending**.
+4. You approve it (points are paid) or reject it (no points, with an optional reason).
+
+Visitors who are not logged in see a prompt to log in instead of the form.
 
 ## Admin Flow
 
-**Gamification → Submissions** in the WordPress admin.
+Go to **WB Gamification > Submissions**.
 
-The queue lists every pending submission with member, title, URL, action, and submission timestamp. Each row has Approve and Reject buttons. Bulk actions support batch approve/reject.
+The queue lists every pending submission with the member, the action, the details and any link. Each row has **Approve** and **Reject** buttons. Approving pays the points set for the action and runs everything that follows from them: badges, level-ups and streaks. Rejecting records your reason for the member.
 
-Approving routes through `PointsEngine::award` so:
-- The configured points for the action are granted
-- The action's daily cap (if any) is enforced
-- All downstream effects (badge unlock, level up, streak credit) fire normally
+## Daily Limit
 
-Rejecting marks the submission as `rejected` and (optionally) emails the member with a reason.
-
-## Daily Cap
-
-To prevent abuse, members can submit at most **5 achievements per day**. The cap is configurable.
-
-## Member History
-
-The member's points history (`/u/{user}/?tab=history`) shows each approved submission inline with their auto-earned actions. Rejected submissions are private to the member and the admin team.
-
-## Notifications
-
-- **Submission received** - admin email + admin-bar count badge
-- **Submission approved** - member email (if enabled) + toast notification + points awarded
-- **Submission rejected** - optional member email with reason
-
-## Configuration
-
-Settings → Submissions.
-
-| Setting | Default |
-|---|---|
-| Enabled | On |
-| Daily cap per member | 5 |
-| Allowed actions | All actions tagged `submittable: true` in the action manifest |
-| Default reject reason | "We could not verify this achievement at this time." |
-| Auto-approve | Off |
-
-To make an action submittable, set `submittable: true` on the action manifest entry. By default, only a curated subset of actions are submittable (volunteer-hours-style ones).
+Each member can submit at most **5 achievements per day**. Developers can change this with the `wb_gam_submission_daily_cap` filter.
 
 ## Privacy
 
-Submissions are stored in the `wb_gam_submissions` table with the submitter's user ID, the title, optional URL, action ID, and timestamps. Approved submissions are GDPR-exported alongside other gamification data. Rejected submissions are erased on user deletion.
+Submissions are stored with the member's user ID, the action, the details, the link and the dates. They are included when a member exports or erases their personal data through the WordPress privacy tools.
+
+## FAQ
+
+**Why does the Submit Achievement form say there is nothing to submit?**
+No action is open for submission yet. Tick **Members can submit** on at least one action under **Points**.
+
+**Do I need to untick an action to stop new claims while old ones are still waiting?**
+Yes. Untick it. The waiting submissions stay in the queue, and you can still approve or reject them.
+
+## Troubleshooting
+
+**A member says an action is missing from the form.** Check that **Members can submit** is ticked for it under **Points**.
+
+**Approving gives the member no points.** Check that the action pays more than 0 points under **Points**.
 
 ## See Also
 
-- **[Points](00-points.md)** - how the standard award pipeline integrates submissions
-- **[Notifications](160-notifications.md)** - toast / email behavior on approval
-- **[Privacy](200-privacy.md)** - what's exported and erased
-- **[Submit Achievement block](../shortcodes-blocks/00-blocks-overview.md)** - front-end submission form
+- **[Points](00-points.md)** - how the standard award path handles submissions
+- **[Notifications](160-notifications.md)** - what the member sees on approval
+- **[Privacy](200-privacy.md)** - what is exported and erased
+- **[Submit Achievement block](../shortcodes-blocks/00-blocks-overview.md)** - the front-end submission form

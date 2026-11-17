@@ -80,8 +80,9 @@ class ActionsController extends WP_REST_Controller {
 		);
 
 		// PUT/POST /actions/{id}/overrides — admin-only edit of cooldown,
-		// daily_cap, weekly_cap and the on/off switch (`enabled`) without touching
-		// the manifest. Reset caps by sending 0 for the field or DELETE on this endpoint.
+		// daily_cap, weekly_cap, the on/off switch (`enabled`) and whether members
+		// may claim the action through Submit Achievement (`submittable`) without
+		// touching the manifest. Reset caps by sending 0 for the field or DELETE on this endpoint.
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base . '/(?P<id>[a-z0-9_]+)/overrides',
@@ -91,27 +92,31 @@ class ActionsController extends WP_REST_Controller {
 					'callback'            => array( $this, 'update_overrides' ),
 					'permission_callback' => array( $this, 'overrides_permissions_check' ),
 					'args'                => array(
-						'id'         => array(
+						'id'          => array(
 							'required' => true,
 							'type'     => 'string',
 						),
-						'cooldown'   => array(
+						'cooldown'    => array(
 							'type'              => 'integer',
 							'minimum'           => 0,
 							'sanitize_callback' => 'absint',
 						),
-						'daily_cap'  => array(
+						'daily_cap'   => array(
 							'type'              => 'integer',
 							'minimum'           => 0,
 							'sanitize_callback' => 'absint',
 						),
-						'weekly_cap' => array(
+						'weekly_cap'  => array(
 							'type'              => 'integer',
 							'minimum'           => 0,
 							'sanitize_callback' => 'absint',
 						),
-						'enabled'    => array(
+						'enabled'     => array(
 							'type' => 'boolean',
+						),
+						'submittable' => array(
+							'type'        => 'boolean',
+							'description' => 'Whether members may claim this action through Submit Achievement. Off until the owner turns it on (or the manifest says so).',
 						),
 					),
 				),
@@ -155,7 +160,10 @@ class ActionsController extends WP_REST_Controller {
 	}
 
 	/**
-	 * Persist per-action overrides for cooldown / daily_cap / weekly_cap.
+	 * Persist per-action overrides for cooldown / daily_cap / weekly_cap / submittable.
+	 *
+	 * `submittable` is stored as a real boolean so an owner's "no" is kept
+	 * apart from "never set" (which falls back to the manifest).
 	 *
 	 * @param \WP_REST_Request $request Request.
 	 * @return \WP_REST_Response|\WP_Error
@@ -175,6 +183,9 @@ class ActionsController extends WP_REST_Controller {
 				$row[ $field ] = (int) $request->get_param( $field );
 			}
 		}
+		if ( null !== $request->get_param( 'submittable' ) ) {
+			$row['submittable'] = (bool) $request->get_param( 'submittable' );
+		}
 
 		$option[ $id ] = $row;
 		update_option( 'wb_gam_action_overrides', $option, false );
@@ -185,10 +196,11 @@ class ActionsController extends WP_REST_Controller {
 
 		return rest_ensure_response(
 			array(
-				'action_id' => $id,
-				'enabled'   => (bool) get_option( 'wb_gam_enabled_' . $id, true ),
-				'overrides' => $row,
-				'effective' => array_intersect_key( Registry::get_action( $id ), array_flip( array( 'cooldown', 'daily_cap', 'weekly_cap' ) ) ),
+				'action_id'   => $id,
+				'enabled'     => (bool) get_option( 'wb_gam_enabled_' . $id, true ),
+				'submittable' => Registry::is_submittable( $id ),
+				'overrides'   => $row,
+				'effective'   => array_intersect_key( Registry::get_action( $id ), array_flip( array( 'cooldown', 'daily_cap', 'weekly_cap' ) ) ),
 			)
 		);
 	}
@@ -303,6 +315,10 @@ class ActionsController extends WP_REST_Controller {
 					'type'        => 'boolean',
 					'description' => 'Whether the action is currently active.',
 				),
+				'submittable'    => array(
+					'type'        => 'boolean',
+					'description' => 'Whether members may claim this action through Submit Achievement.',
+				),
 			),
 		);
 	}
@@ -328,6 +344,7 @@ class ActionsController extends WP_REST_Controller {
 			'weekly_cap'     => $action['weekly_cap'] ?? 0,
 			'points'         => (int) get_option( 'wb_gam_points_' . $action['id'], $action['default_points'] ),
 			'enabled'        => (bool) get_option( 'wb_gam_enabled_' . $action['id'], true ),
+			'submittable'    => Registry::is_submittable( (string) $action['id'] ),
 		);
 	}
 }
