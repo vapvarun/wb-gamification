@@ -463,9 +463,13 @@ dialog.wb-gam-drawer[open] {
 	background: var(--wb-gam-pop-scrim);
 	backdrop-filter: blur(var(--wb-gam-pop-blur));
 	animation: wb-gam-fade-in var(--wb-gam-dur) var(--wb-gam-ease) both;
+	/* The dimmed area never catches a click: the page under it stays usable, the card closes
+	 * itself (assets/interactivity/notifications.js). Only the card takes pointer events. */
+	pointer-events: none;
 }
 .wb-gam-moment[hidden] { display: none; }
 .wb-gam-moment__card {
+	pointer-events: auto;
 	position: relative;
 	z-index: 1;
 	display: flex;
