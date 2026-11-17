@@ -56,12 +56,12 @@ live BP flow (run only when BP is installed + active).
   ```bash
   wp eval '$ids = array_keys(WBGam\Engine\Registry::get_actions_by_category("buddypress")); echo implode(", ", $ids);'
   ```
-- **Expect**: at least these 14 `id` values present (verified
+- **Expect**: these 12 `id` values present (1.6.8; `bp_publish_post` is superseded by `wp_publish_post`; verified
   live-test 2026-05-28) —
   `bp_activity_update`, `bp_activity_comment`, `bp_friends_accepted`,
   `bp_groups_join`, `bp_groups_create`, `bp_profile_complete`,
-  `bp_reactions_received`, `bp_polls_created`, `bp_publish_post`,
-  `bp_media_upload`, `bp_avatar_upload`, `bp_cover_upload`,
+  `bp_reactions_received`, `bp_polls_created`,
+  `bp_avatar_upload`, `bp_cover_upload`,
   `bp_group_cover_upload`, `bp_message_sent`.
 - **NOTE**: an early draft of this journey used `bp_activity_post` —
   the manifest uses `bp_activity_update` (the BP hook name is

@@ -1,6 +1,6 @@
 # BuddyPress: QA checklist
 
-13 actions. Integration file: `integrations/buddypress.php`. Code checked against 14.5.4.
+12 actions. Integration file: `integrations/buddypress.php`. A member blog post is paid by WordPress's "Publish a blog post" (`wp_publish_post`), so it is not listed here. Code checked against 14.5.4.
 
 **Setup:** Reactions need the BuddyPress Reactions add-on, which only stays active on the BuddyX, BuddyX Pro or Reign theme. Polls need the BuddyPress Polls add-on. Member blog needs BP Member Blog.
 
@@ -120,19 +120,6 @@ Default: **10 points**. Limit: once per item.
 - [ ] A normal activity update does not pay this.
 
 Developer result: Fixed: the old hook never fired. Poll page tested through WordPress, and the feed poll through the add-on's real type switch. Posting a poll from the feed form in the browser not run.
-
-### Publish a member blog post (`bp_publish_post`)
-
-Awarded when a member publishes a post via BP Member Blog.
-
-Default: **25 points**. Limit: 600s wait, 5 a day.
-
-- [ ] Doing it pays 25 points to the right member.
-- [ ] Switched off, it pays nothing.
-- [ ] Doing it again inside 600 seconds pays nothing. After the wait it pays.
-- [ ] It stops paying after 5 in one day.
-
-Developer result: Not run yet. The hook exists in the plugin source, which does not prove its arguments match, so this row needs a real run.
 
 ### Upload profile photo (`bp_avatar_upload`)
 

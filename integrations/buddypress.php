@@ -202,30 +202,6 @@ return [
 		],
 
 		[
-			'id'                  => 'bp_publish_post',
-			'label'               => static fn(): string => __( 'Publish a member blog post', 'wb-gamification' ),
-			'description'         => static fn(): string => __( 'Awarded when a member publishes a post via BP Member Blog.', 'wb-gamification' ),
-			'hook'                => 'publish_post',
-			'user_callback'       => function ( int $post_id ): int {
-				$post = get_post( $post_id );
-				// Only award for user-authored posts (not pages, products, etc.).
-				if ( ! $post || 'post' !== $post->post_type ) {
-					return 0;
-				}
-				return (int) $post->post_author;
-			},
-			'default_points'      => 25,
-			'category'            => 'buddypress',
-			'icon'                => 'icon-file-text',
-			'repeatable'          => true,
-			// Rate-limit: publish_post fires on every Publish click + revisions.
-			// Cap at 5 awards/day so a member can't grind by republishing.
-			'cooldown'            => 600,
-			'daily_cap'           => 5,
-			'requires_buddypress' => true,
-		],
-
-		[
 			'id'                  => 'bp_avatar_upload',
 			'label'               => static fn(): string => __( 'Upload profile photo', 'wb-gamification' ),
 			'description'         => static fn(): string => __( 'Awarded the first time a member uploads a profile avatar.', 'wb-gamification' ),

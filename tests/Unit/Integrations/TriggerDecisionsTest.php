@@ -144,6 +144,15 @@ class TriggerDecisionsTest extends TestCase {
 	}
 
 	#[Test]
+	public function buddypress_lists_no_trigger_that_can_never_register(): void {
+		$ids = array_column( ( include dirname( __DIR__, 3 ) . '/integrations/buddypress.php' )['triggers'], 'id' );
+
+		// wordpress.php always loads and its wp_publish_post supersedes bp_publish_post.
+		$this->assertNotContains( 'bp_publish_post', $ids );
+		$this->assertCount( 12, $ids );
+	}
+
+	#[Test]
 	public function learnomy_path_certificate_is_paid_by_path_completion(): void {
 		$cb = $this->trigger( 'learnomy.php', 'learnomy_certificate_issued' );
 		$this->assertSame( 16, $cb( 3, 16, 42 ) );
