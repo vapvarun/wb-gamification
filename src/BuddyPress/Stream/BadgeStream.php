@@ -173,7 +173,7 @@ final class BadgeStream {
 	}
 
 	/**
-	 * date_query for one site day, [ start, next start ), in the shape BP_Activity_Activity::get()
+	 * The date_query for one site day, [ start, next start ), in the shape BP_Activity_Activity::get()
 	 * accepts. No per-clause 'column': BuddyPress already points the query at a.date_recorded,
 	 * and a clause-level 'date_recorded' fails WP_Date_Query::validate_column(), which falls back
 	 * to wp_posts.post_date (an SQL error on every award, and grouping never matched).
