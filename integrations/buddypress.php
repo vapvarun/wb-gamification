@@ -172,8 +172,8 @@ return [
 			},
 			// One reactor pays once per item, so reacting, removing and reacting again earns nothing.
 			'once_per_object'     => static fn( $reactor_id, $item_id, $content_type ): int => crc32( "{$reactor_id}:{$content_type}:{$item_id}" ),
-			// Capture the activity type so ActivityIntegration can apply quality weighting:
-			// activity_update reactions worth 5 pts, activity_comment reactions worth 3 pts.
+			// One amount for every reaction, the owner's (default 3). Until 1.6.8 a reaction on an
+			// activity update was forced up to at least 5, so the owner could not lower it.
 			'metadata_callback'   => static function ( $reactor_id, $item_id, $content_type ) use ( $wb_gam_bp_reacted_activity ): array {
 				return [
 					'activity_id'   => (int) $item_id,

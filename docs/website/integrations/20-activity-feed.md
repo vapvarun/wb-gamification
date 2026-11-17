@@ -46,22 +46,9 @@ update_option( 'wb_gam_bp_stream_kudos_given', 0 );
 
 You can also toggle these from the admin settings page without writing code.
 
-## Quality-Weighted Reactions
+## Reaction Points
 
-`ActivityIntegration` also hooks into the `wb_gam_points_for_action` filter to apply a quality bonus. When a member receives a reaction on an `activity_update` post (rather than a comment or other type), the points awarded for `bp_reactions_received` are boosted to a minimum of 5 (compared to the default 3).
-
-```php
-// This filter runs at priority 10 inside ActivityIntegration.
-add_filter( 'wb_gam_points_for_action', function( $points, $action_id, $user_id, $event ) {
-    // Only modifies bp_reactions_received on activity_update posts.
-    if ( 'bp_reactions_received' === $action_id && 'activity_update' === ( $event->metadata['activity_type'] ?? '' ) ) {
-        return max( $points, 5 );
-    }
-    return $points;
-}, 10, 4 );
-```
-
-You can override this behaviour by adding your own filter at a higher priority.
+Every reaction a member receives pays the amount set for **Receive a reaction** under **Gamification > Settings** (3 points by default), whatever the reaction is on. Before 1.6.8 a reaction on an activity update paid at least 5, even when you had set a lower amount.
 
 ## How Posts Appear in the Stream
 
