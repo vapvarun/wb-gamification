@@ -1516,8 +1516,10 @@ final class DbUpgrader {
 			}
 		}
 
-		// Activity-stream cards from earlier versions get the 1.6.8 card markup.
-		if ( function_exists( 'bp_activity_add' ) && class_exists( '\WBGam\BuddyPress\Stream\Backfiller' ) ) {
+		// Activity-stream cards from earlier versions get the 1.6.8 card markup. Upgrades run on
+		// plugins_loaded:1, before BuddyPress loads its activity functions, so test for the plugin's
+		// class (defined when its main file loads); the batch itself checks the activity component.
+		if ( self::buddypress_present() ) {
 			\WBGam\BuddyPress\Stream\Backfiller::run();
 		}
 	}
@@ -1603,10 +1605,18 @@ final class DbUpgrader {
 	 * @since 1.5.5
 	 */
 	private static function upgrade_to_1_5_5(): void {
-		if ( ! function_exists( 'bp_activity_add' ) || ! class_exists( '\WBGam\BuddyPress\Stream\Backfiller' ) ) {
+		if ( ! self::buddypress_present() ) {
 			return;
 		}
 		\WBGam\BuddyPress\Stream\Backfiller::run();
+	}
+
+	/**
+	 * Is BuddyPress (or BuddyBoss) active? Usable on plugins_loaded:1, where its functions are not
+	 * loaded yet: the BuddyPress class is defined as soon as its main plugin file is included.
+	 */
+	private static function buddypress_present(): bool {
+		return class_exists( 'BuddyPress', false );
 	}
 
 	/**
