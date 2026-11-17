@@ -484,10 +484,10 @@ final class AnalyticsDashboard {
 			? round( ( $active_streaks / $total_members ) * 100, 1 )
 			: 0;
 
-		// Kudos given in period.
+		// Kudos given in period; a revoked kudos no longer counts.
 		$kudos_given = (int) $wpdb->get_var(
 			$wpdb->prepare(
-				"SELECT COUNT(*) FROM {$wpdb->prefix}wb_gam_kudos WHERE created_at >= %s",
+				"SELECT COUNT(*) FROM {$wpdb->prefix}wb_gam_kudos WHERE revoked_at IS NULL AND created_at >= %s",
 				$since
 			)
 		);

@@ -91,6 +91,9 @@ final class Engine {
 		add_action( 'updated_option', array( __CLASS__, 'maybe_flush_enabled_cache' ), 10, 1 );
 		add_action( 'added_option', array( __CLASS__, 'maybe_flush_enabled_cache' ), 10, 1 );
 		add_action( 'deleted_option', array( __CLASS__, 'maybe_flush_enabled_cache' ), 10, 1 );
+
+		// A revoked kudos leaves the members' Year Recap (cached for an hour) at once.
+		add_action( 'wb_gam_kudos_revoked', array( RecapEngine::class, 'forget_kudos' ), 10, 3 );
 	}
 
 	/**
