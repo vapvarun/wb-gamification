@@ -201,6 +201,62 @@
 	display: inline-block;
 	animation: wb-gam-leaderboard-bump 480ms cubic-bezier( 0.34, 1.56, 0.64, 1 );
 }
+/* The member's own standing when they are not in the visible rows: one distinct row,
+ * "Your rank  #15 · 42 Points · 3 Points to the next rank". The dots are decoration only. */
+.wb-gam-leaderboard__my-rank {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	gap: 4px 8px;
+	margin-block-start: var(--wb-gam-space-sm);
+	padding: 10px 14px;
+	border: 1px solid var(--wb-gam-color-accent-ring);
+	border-radius: var(--wb-gam-radius-md);
+	background: var(--wb-gam-color-primary-soft);
+	color: var(--wb-gam-color-text);
+	font-size: var(--wb-gam-font-sm);
+	line-height: var(--wb-gam-leading-normal);
+}
+
+.wb-gam-leaderboard__my-rank-label {
+	color: var(--wb-gam-color-text-muted);
+	font-weight: var(--wb-gam-weight-semibold);
+}
+
+.wb-gam-leaderboard__my-rank-position {
+	color: var(--wb-gam-color-accent-text);
+	font-weight: var(--wb-gam-weight-bold);
+	font-variant-numeric: tabular-nums;
+}
+
+.wb-gam-leaderboard__my-rank-points,
+.wb-gam-leaderboard__my-rank-gap {
+	font-variant-numeric: tabular-nums;
+}
+
+.wb-gam-leaderboard__my-rank-points::before,
+.wb-gam-leaderboard__my-rank-gap::before {
+	content: "·";
+	content: "·" / "";
+	margin-inline-end: 8px;
+	color: var(--wb-gam-color-text-light);
+}
+
+.wb-gam-leaderboard__my-rank-gap {
+	color: var(--wb-gam-color-text-muted);
+}
+
+/* On a phone the distance to the next rank gets its own line, without a leading dot. */
+@media (max-width: 480px) {
+	.wb-gam-leaderboard__my-rank-gap {
+		flex-basis: 100%;
+	}
+
+	.wb-gam-leaderboard__my-rank-gap::before {
+		content: none;
+	}
+}
+
 @media (prefers-reduced-motion: reduce) {
 	.wb-gam-leaderboard__bump {
 		animation: none;

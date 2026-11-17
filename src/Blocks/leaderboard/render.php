@@ -279,7 +279,7 @@ BlockHooks::before( 'leaderboard', $wb_gam_attrs );
 							<?php
 							printf(
 								/* translators: %s: points needed to move up one rank, e.g. "3 Points". */
-								esc_html__( '%s from the next rank', 'wb-gamification' ),
+								esc_html__( '%s to the next rank', 'wb-gamification' ),
 								esc_html( $wb_gam_pt_service->format( (int) $wb_gam_my_rank['points_to_next'], $wb_gam_resolved_pt ) )
 							);
 							?>
