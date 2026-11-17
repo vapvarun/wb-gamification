@@ -15,7 +15,7 @@
  * Body classes covered:
  *   - `toplevel_page_wb-gamification`     (the parent menu page)
  *   - `gamification_page_<slug>`          (every visible submenu)
- *   - `admin_page_wb-gamification-setup`  (hidden wizard submenu)
+ *   - `gamification_page_wb-gamification-setup` (wizard, not listed in the submenu)
  *   - `admin_page_wb-gam-*`               (any other hidden submenu)
  *
  * Our own notices keep the `.wb-gam-notice` class so they pass the

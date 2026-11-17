@@ -85,12 +85,22 @@ final class SetupWizard {
 	private const RECOMMENDED_TEMPLATE = 'community';
 
 	/**
+	 * Hook suffix of the wizard screen, set when the page is registered.
+	 *
+	 * @var string
+	 */
+	private static string $hook_suffix = '';
+
+	/**
 	 * Register hooks. Idempotent — every load registers the same set; gating
 	 * happens inside each handler so admins can re-run the wizard at any
 	 * time via the URL.
 	 */
 	public static function init(): void {
 		add_action( 'admin_menu', array( __CLASS__, 'register_page' ) );
+		// The wizard lives under Gamification (so that menu is open on it) but is not listed there.
+		add_action( 'admin_head', array( __CLASS__, 'hide_menu_item' ) );
+		add_filter( 'submenu_file', array( __CLASS__, 'highlight_submenu' ) );
 		// Auto-redirect on admin_init:1 — earlier than the default 10 so any
 		// later admin_init callback that emits output doesn't block our redirect.
 		add_action( 'admin_init', array( __CLASS__, 'maybe_redirect' ), 1 );
@@ -111,9 +121,8 @@ final class SetupWizard {
 	 * @return void
 	 */
 	public static function enqueue_page_css( string $hook_suffix ): void {
-		// The wizard registers as a hidden submenu with parent = null, which
-		// gives it the `admin_page_wb-gamification-setup` hook suffix.
-		if ( 'admin_page_wb-gamification-setup' !== $hook_suffix ) {
+		// The hook suffix add_submenu_page() returned (it depends on the parent menu's title).
+		if ( '' === self::$hook_suffix || self::$hook_suffix !== $hook_suffix ) {
 			return;
 		}
 		wp_enqueue_style(
@@ -140,7 +149,7 @@ final class SetupWizard {
 	 */
 	public static function register_page(): void {
 		$hook = add_submenu_page(
-			'', // No parent — page accessible only by URL (hidden submenu).
+			'wb-gamification', // Under Gamification so its menu is open here; unlisted by hide_menu_item().
 			__( 'Gamification Setup', 'wb-gamification' ),
 			'',
 			'manage_options',
@@ -148,6 +157,7 @@ final class SetupWizard {
 			array( __CLASS__, 'render' )
 		);
 		if ( $hook ) {
+			self::$hook_suffix = $hook;
 			add_action(
 				'load-' . $hook,
 				static function (): void {
@@ -170,6 +180,14 @@ final class SetupWizard {
 	 * on the wizard or in the multisite-activate context.
 	 */
 	public static function maybe_redirect(): void {
+		// Only a normal admin page load by someone who can run the wizard may use up the flag. Any
+		// other request reaches admin_init too: Heartbeat, a member's admin-ajax call from the front
+		// end (BuddyPress loads the activity stream that way), cron, REST. Redirecting one of those
+		// broke it (a member got a 403 and /activity/ hung) and spent the flag, so the admin never
+		// saw the wizard either.
+		if ( wp_doing_ajax() || wp_doing_cron() || ( defined( 'REST_REQUEST' ) && REST_REQUEST ) || ( defined( 'WP_CLI' ) && WP_CLI ) || ! current_user_can( 'manage_options' ) ) {
+			return;
+		}
 		// Skip in contexts where the redirect would be harmful or
 		// non-meaningful regardless of the trigger that brought us here.
 		if ( is_network_admin() ) {
@@ -218,6 +236,32 @@ final class SetupWizard {
 
 		wp_safe_redirect( admin_url( 'admin.php?page=' . self::PAGE_SLUG ) );
 		exit;
+	}
+
+	/**
+	 * Keep the wizard out of the Gamification submenu. Runs on admin_head: after WordPress has
+	 * checked access to the page and before it prints the menu.
+	 */
+	public static function hide_menu_item(): void {
+		remove_submenu_page( 'wb-gamification', self::PAGE_SLUG );
+	}
+
+	/**
+	 * Highlight the Dashboard item under Gamification while the wizard is on screen.
+	 *
+	 * @param string|null $submenu_file Submenu slug WordPress chose.
+	 * @return string|null
+	 */
+	public static function highlight_submenu( $submenu_file ) {
+		return self::on_wizard() ? 'wb-gamification' : $submenu_file;
+	}
+
+	/**
+	 * Is the current admin screen the wizard?
+	 */
+	private static function on_wizard(): bool {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- page-slug compare, no state change.
+		return isset( $_GET['page'] ) && self::PAGE_SLUG === sanitize_key( wp_unslash( $_GET['page'] ) );
 	}
 
 	/**
