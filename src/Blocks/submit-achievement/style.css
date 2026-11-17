@@ -95,3 +95,14 @@
 .wb-gam-submit-achievement__status--success {
 	color: var(--wb-gam-color-success-strong);
 }
+
+/* No action is open for members to submit (the owner has not ticked any). */
+.wb-gam-submit-achievement__empty {
+	margin: 0;
+	padding: var(--wb-gam-space-md);
+	border: 1px dashed var(--wb-gam-color-border);
+	border-radius: var(--wb-gam-radius-md);
+	color: var(--wb-gam-color-text-muted);
+	font-size: var(--wb-gam-font-sm);
+	text-align: center;
+}
