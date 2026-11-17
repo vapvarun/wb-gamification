@@ -80,7 +80,7 @@
 
 .wb-gam-cohort-rank__item {
 	display: grid;
-	grid-template-columns: auto minmax(0, 1fr) auto;
+	grid-template-columns: auto auto minmax(0, 1fr) auto;
 	align-items: center;
 	gap: 0.875rem;
 	padding: 0.625rem 0.875rem;
@@ -115,6 +115,19 @@
 
 .wb-gam-cohort-rank__item--self .wb-gam-cohort-rank__rank {
 	color: var(--wb-gam-primary);
+}
+
+.wb-gam-cohort-rank__avatar {
+	display: flex;
+	line-height: 0;
+}
+
+.wb-gam-cohort-rank__avatar img {
+	inline-size: 32px;
+	block-size: 32px;
+	margin: 0;
+	border-radius: var(--wb-gam-radius-full);
+	object-fit: cover;
 }
 
 .wb-gam-cohort-rank__name {
