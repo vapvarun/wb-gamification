@@ -167,7 +167,7 @@ BlockHooks::before( 'streak', $wb_gam_attrs );
 <div <?php echo $wb_gam_wrapper; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>>
 	<div class="wb-gam-streak__stats">
 		<div class="wb-gam-streak__stat wb-gam-streak__stat--current">
-			<span class="wb-gam-streak__flame" aria-hidden="true">&#x1F525;</span>
+			<span class="wb-gam-streak__flame" aria-hidden="true"><?php echo \WBGam\Admin\Icon::svg( 'flame', array( 'size' => 28 ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- static SVG from a fixed allowlist. ?></span>
 			<span class="wb-gam-streak__number"><?php echo esc_html( number_format_i18n( $wb_gam_current ) ); ?></span>
 			<span class="wb-gam-streak__label"><?php esc_html_e( 'Day streak', 'wb-gamification' ); ?></span>
 		</div>

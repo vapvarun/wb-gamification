@@ -268,7 +268,7 @@ BlockHooks::before( 'badge-showcase', $wb_gam_attrs );
 								width="56" height="56"
 								loading="lazy" />
 						<?php else : ?>
-							<span class="wb-gam-badge-showcase__placeholder">&#x1F3C5;</span>
+							<span class="wb-gam-badge-showcase__placeholder"><?php echo \WBGam\Admin\Icon::svg( 'medal', array( 'size' => 32 ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- static SVG from a fixed allowlist. ?></span>
 						<?php endif; ?>
 
 						<?php if ( $wb_gam_is_earned ) : ?>

@@ -182,7 +182,12 @@ BlockHooks::before( 'top-members', $wb_gam_attrs );
 				?>
 				<div class="wb-gam-top-members__podium-slot wb-gam-top-members__podium-slot--<?php echo (int) $wb_gam_rank; ?>">
 					<div class="wb-gam-top-members__podium-crown">
-						<?php if ( 1 === $wb_gam_rank ) : ?><span aria-hidden="true">&#x1F451;</span><?php endif; ?>
+						<?php
+						if ( 1 === $wb_gam_rank ) {
+							// Lucide crown, not an emoji: emoji draw differently on every OS.
+							echo \WBGam\Admin\Icon::svg( 'crown', array( 'size' => 24 ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- static SVG from a fixed allowlist.
+						}
+						?>
 					</div>
 					<?php
 					// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- MemberUrl::wrap() escapes the URL and class; get_avatar() output is escaped by core.
@@ -211,7 +216,13 @@ BlockHooks::before( 'top-members', $wb_gam_attrs );
 						<span class="wb-gam-top-members__level"><?php echo esc_html( $wb_gam_level_map[ $wb_gam_uid ] ); ?></span>
 					<?php endif; ?>
 					<?php if ( $wb_gam_show_badges && isset( $wb_gam_badge_count_map[ $wb_gam_uid ] ) ) : ?>
-						<span class="wb-gam-top-members__badges">&#x1F3C5; <?php echo esc_html( number_format_i18n( $wb_gam_badge_count_map[ $wb_gam_uid ] ) ); ?></span>
+						<span class="wb-gam-top-members__badges">
+							<?php echo \WBGam\Admin\Icon::svg( 'medal', array( 'size' => 14 ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- static SVG from a fixed allowlist. ?>
+							<?php
+							/* translators: %s: number of badges a member holds. */
+							echo esc_html( sprintf( __( 'Badges: %s', 'wb-gamification' ), number_format_i18n( $wb_gam_badge_count_map[ $wb_gam_uid ] ) ) );
+							?>
+						</span>
 					<?php endif; ?>
 				</div>
 			<?php endforeach; ?>
@@ -272,7 +283,13 @@ BlockHooks::before( 'top-members', $wb_gam_attrs );
 						<span class="wb-gam-top-members__pts-label"><?php echo esc_html( $wb_gam_pt_service->name_for( (int) ( $wb_gam_row['points'] ?? 0 ), $wb_gam_pt_slug ) ); ?></span>
 					</span>
 					<?php if ( $wb_gam_show_badges && isset( $wb_gam_badge_count_map[ $wb_gam_uid ] ) ) : ?>
-						<span class="wb-gam-top-members__list-badges">&#x1F3C5; <?php echo esc_html( (string) $wb_gam_badge_count_map[ $wb_gam_uid ] ); ?></span>
+						<span class="wb-gam-top-members__list-badges">
+							<?php echo \WBGam\Admin\Icon::svg( 'medal', array( 'size' => 14 ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- static SVG from a fixed allowlist. ?>
+							<?php
+							/* translators: %s: number of badges a member holds. */
+							echo esc_html( sprintf( __( 'Badges: %s', 'wb-gamification' ), number_format_i18n( $wb_gam_badge_count_map[ $wb_gam_uid ] ) ) );
+							?>
+						</span>
 					<?php endif; ?>
 				</li>
 			<?php endforeach; ?>

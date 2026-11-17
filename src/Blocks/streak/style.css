@@ -26,7 +26,8 @@
 }
 
 .wb-gam-streak__flame {
-	font-size: 1.75rem;
+	display: inline-flex;
+	color: var(--wb-gam-color-fire);
 	line-height: 1;
 }
 
