@@ -134,6 +134,12 @@ final class DirectoryIntegration {
 			return;
 		}
 
+		// Same rule as the profile header: a private profile shows no rank to other viewers.
+		// (Member meta is primed by the members loop, so this adds no per-row query.)
+		if ( ! \WBGam\Engine\Privacy::can_view_public_profile( (int) $user_id ) ) {
+			return;
+		}
+
 		// Route through LevelEngine so the cached user_meta is self-healed
 		// when the ledger has crossed a threshold without the engine running
 		// (admin-imported users, manual SQL seed, sister-plugin migrations).
