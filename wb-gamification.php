@@ -1047,6 +1047,12 @@ register_deactivation_hook(
 		wp_clear_scheduled_hook( \WBGam\Engine\IntelligenceProjector::COMPUTE_CRON );
 		wp_clear_scheduled_hook( \WBGam\Engine\NotificationBridge::PRUNE_CRON );
 
+		// The 1.6.8 activity-card backfill runs through Action Scheduler, falling back to WP-Cron.
+		if ( function_exists( 'as_unschedule_all_actions' ) ) {
+			as_unschedule_all_actions( \WBGam\BuddyPress\Stream\Backfiller::HOOK );
+		}
+		wp_clear_scheduled_hook( \WBGam\BuddyPress\Stream\Backfiller::HOOK );
+
 		flush_rewrite_rules();
 	}
 );

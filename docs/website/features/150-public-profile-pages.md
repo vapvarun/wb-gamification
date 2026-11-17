@@ -9,9 +9,9 @@ Each public profile shows:
 - **Member name + avatar**
 - **A stats line**: total points, badge count, current level (e.g. "1,240 Points · 6 badges · Contributor")
 - **Their badge showcase** (the same [Badge Showcase](30-badge-sharing.md) grid you can place elsewhere)
-- **Their last 10 points-history events**
+- **Their last 10 points-history events**, shown only to the member and to administrators. Visitors and other members see the stats line and badges without the history, and no log-in prompt.
 
-That is the whole page - there is no separate streak, challenges, top-actions or kudos section, and no bio or social-links field. If you want more on a member's public page, place additional Gamification blocks on your own theme template; the plugin's own `/u/{user_login}` page renders only the sections above.
+The browser tab shows the member's display name. That is the whole page - there is no separate streak, challenges, top-actions or kudos section, and no bio or social-links field. If you want more on a member's public page, place additional Gamification blocks on your own theme template; the plugin's own `/u/{user_login}` page renders only the sections above.
 
 ## Privacy Controls
 
@@ -25,7 +25,7 @@ By default, when public profiles are enabled site-wide, each member's profile is
 
 The `wb_gam_profile_publicly_visible` filter (`bool $visible, int $user_id`) lets a site override visibility per member - see the [Filters reference](../developer-guide/130-filters-reference.md).
 
-A profile that is opted out (per-user flag `0`) returns a 404 instead of a partial page - search engines and visitors see no information.
+A profile that is opted out (per-user flag `0`) shows a short page that says "This profile is private", with no name, avatar or stats, and asks search engines not to index it. A username that does not exist shows exactly the same page, so the URL never reveals whether an account exists.
 
 ## URL Structure
 
