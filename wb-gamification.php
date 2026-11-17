@@ -85,10 +85,10 @@ add_action(
 	static function ( $registry ): void {
 		$registry->register(
 			array(
-				'id'      => 'wb-gamification',
-				'url'     => WB_GAM_EDD_STORE_URL,
-				'item_id' => WB_GAM_EDD_ITEM_ID,
-				'version' => WB_GAM_VERSION,
+				'id'          => 'wb-gamification',
+				'url'         => WB_GAM_EDD_STORE_URL,
+				'item_id'     => WB_GAM_EDD_ITEM_ID,
+				'version'     => WB_GAM_VERSION,
 				'file'        => WB_GAM_FILE,
 				'license'     => WB_GAM_LICENSE_PRESET_KEY,
 				// The SDK ignores `license` and reads the key from an option,

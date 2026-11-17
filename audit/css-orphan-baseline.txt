@@ -36,3 +36,4 @@ wbgam-toggle-row
 wbgam-toggle-row__body
 wbgam-toggle-row__desc
 wbgam-toggle-row__title
+wb-gam-member-prefs
