@@ -29,6 +29,7 @@ Default: **8 points**. Limit: 60s wait.
 - [ ] Doing it pays 8 points to the right member.
 - [ ] Switched off, it pays nothing.
 - [ ] Doing it again inside 60 seconds pays nothing. After the wait it pays.
+- [ ] A moderator rejects the need, or it is trashed or deleted: the 8 points come back off.
 
 Developer result: Run on a test site through the plugin's REST route. Paid the right member.
 
@@ -40,6 +41,7 @@ Default: **5 points**. No limit by default.
 
 - [ ] Doing it pays 5 points to the right member.
 - [ ] Switched off, it pays nothing.
+- [ ] The need is later trashed or deleted: the 5 points come back off.
 
 Developer result: Run on a test site through the plugin's REST route. Paid the right member.
 

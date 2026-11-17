@@ -16,6 +16,15 @@ if ( ! defined( 'WB_LISTORA_PRO_VERSION' ) ) {
 	return array();
 }
 
+// A need a moderator rejects (Listora Pro trashes it), or that is trashed or deleted, takes back
+// what it earned. Listora Pro fires nothing when a need comes back from the trash, so there is no restore.
+$wb_gam_listora_need_id      = static fn( $post_id ): int => 'listora_need' === get_post_type( (int) $post_id ) ? (int) $post_id : 0;
+$wb_gam_listora_need_removed = array(
+	'wb_listora_pro_need_rejected' => static fn( $need_id ): int => (int) $need_id,
+	'wp_trash_post'                => $wb_gam_listora_need_id,
+	'before_delete_post'           => $wb_gam_listora_need_id,
+);
+
 return array(
 	'plugin'   => 'Listora Pro',
 	'version'  => '1.0.0',
@@ -27,6 +36,8 @@ return array(
 			'description'       => static fn(): string => __( 'Awarded to the member who posts a need (a reverse listing / request).', 'wb-gamification' ),
 			// Pro fires: do_action( 'wb_listora_pro_need_submitted', int $need_id, $request ). No user id - author is the poster.
 			'hook'              => 'wb_listora_pro_need_submitted',
+			'once_per_object'   => static fn( $need_id ): int => (int) $need_id,
+			'reverse_on'        => $wb_gam_listora_need_removed,
 			'user_callback'     => function ( int $need_id, $request = null ): int {
 				return (int) get_post_field( 'post_author', $need_id );
 			},
@@ -47,6 +58,8 @@ return array(
 			'description'       => static fn(): string => __( 'Awarded to the member when their need is approved and goes live.', 'wb-gamification' ),
 			// Pro fires: do_action( 'wb_listora_pro_need_published', int $need_id ). No user id - author is the poster.
 			'hook'              => 'wb_listora_pro_need_published',
+			'once_per_object'   => static fn( $need_id ): int => (int) $need_id,
+			'reverse_on'        => $wb_gam_listora_need_removed,
 			'user_callback'     => function ( int $need_id ): int {
 				return (int) get_post_field( 'post_author', $need_id );
 			},
