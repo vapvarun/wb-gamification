@@ -38,7 +38,15 @@ class MemberPrefsTest extends TestCase {
 			/** @var string[] */
 			public $written = array();
 			public function prepare( $sql, ...$args ) {
-				return $sql . ' -- ' . implode( '|', $args );
+				$args = 1 === count( $args ) && is_array( $args[0] ) ? $args[0] : $args;
+				return preg_replace_callback(
+					'/%[ids]/',
+					static function ( $m ) use ( &$args ) {
+						$v = array_shift( $args );
+						return '%i' === $m[0] ? "`{$v}`" : (string) $v;
+					},
+					$sql
+				);
 			}
 			public function query( $sql ) {
 				$this->written[] = $sql;
@@ -63,9 +71,20 @@ class MemberPrefsTest extends TestCase {
 		MemberPrefs::set( 5, array( 'leaderboard_opt_out' => true ) );
 
 		$sql = $GLOBALS['wpdb']->written[0];
-		$this->assertStringContainsString( 'leaderboard_opt_out = VALUES(leaderboard_opt_out)', $sql );
+		$this->assertStringContainsString( 'INSERT INTO `wp_wb_gam_member_prefs` (user_id, `leaderboard_opt_out`) VALUES (5, 1)', $sql );
+		$this->assertStringContainsString( '`leaderboard_opt_out` = VALUES(`leaderboard_opt_out`)', $sql );
 		$this->assertStringNotContainsString( 'show_rank', $sql );
 		$this->assertStringNotContainsString( 'notification_mode', $sql );
+	}
+
+	#[Test]
+	public function two_choices_land_in_their_own_columns(): void {
+		MemberPrefs::set( 5, array( 'show_rank' => false, 'notification_mode' => 'none' ) );
+
+		$this->assertStringContainsString(
+			'(user_id, `show_rank`, `notification_mode`) VALUES (5, 0, none) ON DUPLICATE KEY UPDATE `show_rank` = VALUES(`show_rank`), `notification_mode` = VALUES(`notification_mode`)',
+			$GLOBALS['wpdb']->written[0]
+		);
 	}
 
 	#[Test]

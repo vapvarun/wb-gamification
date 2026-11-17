@@ -97,12 +97,16 @@ final class MemberPrefs {
 
 		// Only the given columns, in one statement: two choices saved at once must not
 		// overwrite each other, which a read-then-replace of the whole row does.
-		$names = array_keys( $columns );
+		// Table and column names go in as %i identifiers (column names are from the fixed list above).
+		$names  = array_keys( $columns );
+		$update = array();
+		foreach ( $names as $name ) {
+			array_push( $update, $name, $name );
+		}
 		$wpdb->query(
 			$wpdb->prepare(
-				"INSERT INTO {$wpdb->prefix}wb_gam_member_prefs (user_id, " . implode( ', ', $names ) . ') VALUES (%d, ' . implode( ', ', array_fill( 0, count( $names ), '%s' ) ) . ') ON DUPLICATE KEY UPDATE ' . implode( ', ', array_map( static fn( $name ) => "{$name} = VALUES({$name})", $names ) ), // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- Column names come from the fixed list above.
-				$user_id,
-				...array_values( $columns )
+				'INSERT INTO %i (user_id, ' . implode( ', ', array_fill( 0, count( $names ), '%i' ) ) . ') VALUES (%d, ' . implode( ', ', array_fill( 0, count( $names ), '%s' ) ) . ') ON DUPLICATE KEY UPDATE ' . implode( ', ', array_fill( 0, count( $names ), '%i = VALUES(%i)' ) ), // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- placeholder count follows count( $names ).
+				array_merge( array( $wpdb->prefix . 'wb_gam_member_prefs' ), $names, array( $user_id ), array_values( $columns ), $update )
 			)
 		);
 
