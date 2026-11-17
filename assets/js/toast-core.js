@@ -263,8 +263,9 @@
 
 	/**
 	 * Is a modal or dialog open on the page (ours or another plugin's)? Our own toast host is a
-	 * popover, not a dialog, and is skipped. A [role="dialog"] counts only when it has a rendered
-	 * box, so a closed drawer left in the DOM with display:none does not hold the queue forever.
+	 * popover, not a dialog, and is skipped. A dialog counts only when it is visible on screen: a
+	 * closed drawer left in the DOM (display:none, or parked off-screen with a transform, like
+	 * WPMediaVerse's chat panel) must not hold the queue forever.
 	 *
 	 * @return {boolean}
 	 */
@@ -275,12 +276,23 @@
 			if ( container && container.contains( node ) ) {
 				continue;
 			}
-			if ( ! node.getClientRects().length || 'hidden' === window.getComputedStyle( node ).visibility ) {
+			if ( ! onScreen( node ) || 'hidden' === window.getComputedStyle( node ).visibility ) {
 				continue;
 			}
 			return true;
 		}
 		return false;
+	}
+
+	/**
+	 * Does the element have a box that overlaps the viewport?
+	 *
+	 * @param {Element} node Element.
+	 * @return {boolean}
+	 */
+	function onScreen( node ) {
+		var r = node.getBoundingClientRect();
+		return r.width > 0 && r.height > 0 && r.bottom > 0 && r.right > 0 && r.top < window.innerHeight && r.left < window.innerWidth;
 	}
 
 	/**
