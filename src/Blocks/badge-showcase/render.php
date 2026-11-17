@@ -181,7 +181,10 @@ $wb_gam_format_date = static function ( string $iso ): string {
 		/* translators: %s: human-readable time difference. */
 		return sprintf( esc_html__( '%s ago', 'wb-gamification' ), human_time_diff( $ts, $now ) );
 	}
-	return wp_date( get_option( 'date_format' ) ?: 'M j, Y', $ts );
+	// A short date: the site's long format ("September 23, 2026") wrapped inside the pill on a
+	// phone. The format is translatable so each locale keeps its own order.
+	/* translators: short date format for a badge's earned date, see https://www.php.net/manual/datetime.format.php */
+	return wp_date( _x( 'M j, Y', 'badge earned date format', 'wb-gamification' ), $ts );
 };
 
 BlockHooks::before( 'badge-showcase', $wb_gam_attrs );
