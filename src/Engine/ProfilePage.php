@@ -84,9 +84,11 @@ final class ProfilePage {
 		}
 
 		$user = get_user_by( 'login', sanitize_user( (string) $slug ) );
-		if ( ! $user ) {
-			self::trigger_404();
-			return;
+		if ( 'profile' !== self::decide( $user ? $user : null ) ) {
+			// No such member and a private profile get the same response (status, headers, body),
+			// so the page cannot be used to find out which usernames exist.
+			self::render_private();
+			exit;
 		}
 
 		/**
@@ -107,23 +109,31 @@ final class ProfilePage {
 			exit;
 		}
 
-		// The profile owner and admins can always view the profile, even if
-		// the member has opted out of public visibility — "where can I see my
-		// own progress" must never 404 for the owner.
-		$can_view = self::is_publicly_visible( (int) $user->ID )
-			|| get_current_user_id() === (int) $user->ID
-			|| current_user_can( 'manage_options' );
-		if ( ! $can_view ) {
-			self::render_private();
-			exit;
-		}
-
 		status_header( 200 );
 		nocache_headers();
 
 		self::$title = (string) $user->display_name;
 		self::render_profile( $user );
 		exit;
+	}
+
+	/**
+	 * What a /u/ request shows: 'profile' (the full page) or 'private' (the neutral page).
+	 *
+	 * The owner and admins always see the full page, even when the member opted out of public
+	 * visibility ("where can I see my own progress" must never fail for the owner). An unknown
+	 * username is 'private', exactly like a private profile.
+	 *
+	 * @param \WP_User|null $user Profile owner, null when no member has that username.
+	 */
+	public static function decide( ?\WP_User $user ): string {
+		if ( ! $user ) {
+			return 'private';
+		}
+		$can_view = self::is_publicly_visible( (int) $user->ID )
+			|| get_current_user_id() === (int) $user->ID
+			|| current_user_can( 'manage_options' );
+		return $can_view ? 'profile' : 'private';
 	}
 
 	/**
@@ -150,12 +160,12 @@ final class ProfilePage {
 	}
 
 	/**
-	 * The page a guest or another member sees for a private profile: one neutral line, no
-	 * name, no numbers. 403 rather than a soft 200, so search engines and caches treat it as
-	 * not public; noindex for the crawlers that index error pages anyway. Replaces the 404,
-	 * which told a visitor following a member link that the page did not exist.
+	 * The page for a private profile AND for a username no member has: one neutral line, no
+	 * name, no avatar, no numbers, and nothing that depends on the member, so the two cases are
+	 * byte-identical. 403 rather than a soft 200, so search engines and caches never treat it as
+	 * public content; noindex for crawlers that index error pages anyway.
 	 */
-	private static function render_private(): void {
+	public static function render_private(): void {
 		status_header( 403 );
 		nocache_headers();
 		add_filter( 'wp_robots', 'wp_robots_no_robots' );
@@ -513,17 +523,5 @@ final class ProfilePage {
 
 		echo '<p class="wb-gam-profile-privacy__status" role="status" aria-live="polite"></p>';
 		echo '</section>';
-	}
-
-	/**
-	 * Set the request to 404 — so theme renders its standard not-found page.
-	 *
-	 * Used when the slug does not resolve to a user (a private profile gets render_private()).
-	 */
-	private static function trigger_404(): void {
-		global $wp_query;
-		$wp_query->set_404();
-		status_header( 404 );
-		nocache_headers();
 	}
 }
