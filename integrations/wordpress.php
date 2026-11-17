@@ -127,7 +127,10 @@ return [
 				}
 				// Member Blog pays the author for comments on its posts (bpmb_post_commented),
 				// with its own eligibility filter. Paying here too doubled every such comment.
-				if ( \WBGam\Engine\Registry::get_action( 'bpmb_post_commented' )
+				// It listens to comment_post only, so it pays only a comment approved as it is
+				// posted; one approved later from moderation is paid here, or by no one.
+				if ( doing_action( 'comment_post' )
+					&& \WBGam\Engine\Registry::get_action( 'bpmb_post_commented' )
 					// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Member Blog's own eligibility filter, read so both triggers agree on which posts it covers.
 					&& apply_filters( 'bpmb_gamification_award_comment_for_post', 'post' === $post->post_type, $post ) ) {
 					return 0;
