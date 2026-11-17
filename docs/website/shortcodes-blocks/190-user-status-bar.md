@@ -13,7 +13,7 @@ This block is block-only and has no shortcode equivalent. Use the block editor t
 | Setting | What it does | Default |
 |---|---|---|
 | Layout | How the bar sits on the page: floating or inline. | floating |
-| Position | Corner the floating bar anchors to, for example top-right. | top-right |
+| Position | Corner the floating bar anchors to on screens wider than 640px. On phones the bar stays where you placed it in the page. | bottom-right |
 | Show level | Show the member's current level. | On |
 | Show badges | Show the member's badge count. | On |
 | Show streak | Show the member's current streak. | On |

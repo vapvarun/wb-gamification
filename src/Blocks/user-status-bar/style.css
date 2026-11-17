@@ -49,6 +49,21 @@ body.admin-bar .wb-gam-status-bar--floating.wb-gam-status-bar--pos-top-left {
 	}
 }
 
+/* A phone has no free corner: a fixed pill sat over the page title and breadcrumb. Below
+ * 640px a floating bar stays where the block was placed, in the page flow, full width. */
+@media ( max-width: 640px ) {
+	.wb-gam-status-bar--floating {
+		position: static;
+		max-width: none;
+	}
+
+	.wb-gam-status-bar--floating .wb-gam-status-bar__inner {
+		display: flex;
+		width: 100%;
+		box-sizing: border-box;
+	}
+}
+
 .wb-gam-status-bar--sticky-top {
 	position: sticky;
 	top: 0;

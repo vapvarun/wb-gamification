@@ -45,9 +45,9 @@ $wb_gam_unique = ! empty( $wb_gam_attrs['uniqueId'] )
 $wb_gam_layout       = in_array( $wb_gam_attrs['layout'] ?? 'floating', array( 'floating', 'sticky-top', 'inline' ), true )
 	? (string) $wb_gam_attrs['layout']
 	: 'floating';
-$wb_gam_position     = in_array( $wb_gam_attrs['position'] ?? 'top-right', array( 'top-right', 'top-left', 'bottom-right', 'bottom-left' ), true )
+$wb_gam_position     = in_array( $wb_gam_attrs['position'] ?? 'bottom-right', array( 'top-right', 'top-left', 'bottom-right', 'bottom-left' ), true )
 	? (string) $wb_gam_attrs['position']
-	: 'top-right';
+	: 'bottom-right';
 $wb_gam_show_level    = ! empty( $wb_gam_attrs['showLevel'] );
 $wb_gam_show_badges   = ! empty( $wb_gam_attrs['showBadges'] );
 $wb_gam_show_streak   = ! empty( $wb_gam_attrs['showStreak'] );
