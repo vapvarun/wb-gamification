@@ -28,8 +28,9 @@ if ( ! defined( 'WPSS_VERSION' ) ) {
  * A review pays its buyer once, when it is published. With moderation on (WPSS setting
  * moderate_reviews) the review is created pending and only published when an admin approves
  * it, which fires wpss_review_moderated, not wpss_review_created again. So both funnel into one
- * action with a once-per-review guard: approve, reject, approve again pays once.
- * A rejection after approval keeps the points, like every other integration.
+ * action with a once-per-review guard. Taken down (rejected, held, deleted) takes the points back;
+ * approved again gives them back through restore_on, never a second award: approve, reject,
+ * approve ends holding one award.
  */
 $wb_gam_wpss_reviewer = static function ( int $review_id, int $order_id = 0 ): int {
 	if ( ! class_exists( '\WPSellServices\Services\ReviewService' ) ) {
@@ -128,6 +129,10 @@ return array(
 			'reverse_on'        => array(
 				'wpss_review_deleted'   => static fn( $review_id ): int => (int) $review_id,
 				'wpss_review_moderated' => static fn( $review_id, $new_status = '' ): int => 'approved' === $new_status ? 0 : (int) $review_id,
+			),
+			// The guard above refuses a second award for the review, so re-approval gives the taken-back one back.
+			'restore_on'        => array(
+				'wpss_review_moderated' => static fn( $review_id, $new_status = '' ): int => 'approved' === $new_status ? (int) $review_id : 0,
 			),
 			'default_points'    => 10,
 			'category'          => 'commerce',

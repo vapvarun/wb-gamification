@@ -40,6 +40,6 @@ Default: **10 points**. Limit: 60s wait.
 - [ ] Doing it again inside 60 seconds pays nothing. After the wait it pays.
 - [ ] With moderation off, publishing a review pays once.
 - [ ] With moderation on, a pending review pays nothing and pays on approval.
-- [ ] Approve, reject, approve again pays once.
+- [ ] Approve pays 10, reject takes the 10 back, approve again gives the 10 back: the buyer ends with one award (+10 net).
 
 Developer result: Merged the separate moderator action into this one. Run on a test site through the plugin REST route and its moderation handler.

@@ -7,11 +7,22 @@
 
 namespace WBGam\Tests\Unit\Integrations;
 
+use Brain\Monkey;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\TestCase;
 
 #[CoversNothing]
 class SellServicesManifestTest extends TestCase {
+
+	protected function setUp(): void {
+		parent::setUp();
+		Monkey\setUp(); // The manifest calls add_action() when it loads.
+	}
+
+	protected function tearDown(): void {
+		Monkey\tearDown();
+		parent::tearDown();
+	}
 
 	private function triggers(): array {
 		if ( ! defined( 'ABSPATH' ) ) {
@@ -68,5 +79,14 @@ class SellServicesManifestTest extends TestCase {
 		$this->assertArrayNotHasKey( 'wpss_review_approved', $triggers );
 		$this->assertSame( 'wb_gam_wpss_review_published', $triggers['wpss_review_created']['hook'] );
 		$this->assertSame( 0, $triggers['wpss_review_created']['user_callback']( 5, 0 ), 'Without the Sell Services classes nothing resolves, and nothing fatals.' );
+	}
+
+	public function test_a_review_taken_down_and_approved_again_gets_its_award_back(): void {
+		$review = $this->triggers()['wpss_review_created'];
+
+		$this->assertSame( 5, $review['reverse_on']['wpss_review_moderated']( 5, 'rejected' ) );
+		$this->assertSame( 0, $review['reverse_on']['wpss_review_moderated']( 5, 'approved' ) );
+		$this->assertSame( 5, $review['restore_on']['wpss_review_moderated']( 5, 'approved' ), 'Re-approval restores the award the guard will not pay twice.' );
+		$this->assertSame( 0, $review['restore_on']['wpss_review_moderated']( 5, 'pending' ) );
 	}
 }
