@@ -265,6 +265,20 @@ Every check: as a **member** unless it says admin; member pages at **1440 and 39
 
 Three throwaway sites ran every action on real plugins (WP Sell Services 1.9.3, BuddyPress 14.5.4, LearnDash 5.2, Tutor 4.2, LifterLMS 11.0, WooCommerce 11.3, GiveWP 4.19, The Events Calendar 6.18, every Wbcom plugin). Every action passed after this round's fixes, except: MemberPress (paid, not tested), Tutor paid enrolment and real payment-gateway checkouts (not run). Each integration card has a comment with its results. `bp_publish_post` was removed: it never registered (WordPress's `wp_publish_post` covers it), so BuddyPress shows 12 actions.
 
+## 19b. Round 3 fixes (18 Nov 2026): the round-2 bounces and new cards
+
+Re-run the upgrade step once more on an existing site (it now also records when per-object tracking started). A browser that visited the site before needs a hard reload: the script version number does not change until release.
+
+- [ ] **Toasts with WPMediaVerse (10519283988, P1):** WPMediaVerse active, BuddyNext off, chat panel on. A member who earns points sees the toast within 3 s at 1440 and 390. Open a real popup (e.g. Product Roadmap's Suggest Feature): no toast while it is open; it shows after the popup closes.
+- [ ] **Setup wizard (10517869976):** fresh site with BuddyPress. Activate, do not open wp-admin. As a member, open /activity/: it loads (no 403, no endless "Loading"). Then as admin, open wp-admin: you land on the wizard, and the Gamification menu is open with Dashboard highlighted. The wizard is not listed in the submenu. A member opening the wizard URL gets 403.
+- [ ] **Old activity cards on a real update (10516025691):** on a 1.6.7 site with old badge/level/kudos posts, install the update and load any page (no WP-CLI step). Tools > Scheduled Actions shows `wb_gam_bp_activity_backfill`; after it runs, old cards look like new ones.
+- [ ] **Old posts do not pay again (10515592964, owner decision 17 Nov):** a post published before the update: trash, restore and publish, then unpublish and publish. The author's balance does not change. A post published after the update still pays +25 and trash still takes it back. Same for comments.
+- [ ] **Challenge counts each post once (10519284144):** challenge "publish 3 posts". Publish one post, trash it, restore and publish twice: progress stays 1 of 3, no bonus. Three different posts complete it. Community challenges behave the same.
+- [ ] **Member Blog comments (10462554773):** with BuddyPress Member Blog active and comment moderation on, a comment approved later pays the post author "Receive a comment on a post" (+3). A comment approved as it is posted is paid by Member Blog (+5), not twice.
+- [ ] **Removed actions keep their names (10519284489):** history and Dashboard > Top actions show "Send a direct message", "Start a Jetonomy conversation" and so on, never "Bn Dm Sent".
+- [ ] **Badge rarity on big BuddyPress sites (10519284261):** code check only. Awarding a badge no longer rebuilds the rarity map (`BadgeEngine::note_rarity_award()`); a badge earned for the first time still gets its own activity post.
+- [ ] **Member choices hook (10519284369):** `do_action( 'wb_gam_render_member_prefs' )` with no id prints the logged-in member's choices; with someone else's id it prints nothing; no PHP error.
+
 ## 20. Owner decisions still open (do not report as bugs)
 
 - Approving a gated Jetonomy join request pays 15 (join 5 + approval 10); the doc says 10.
