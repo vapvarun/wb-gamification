@@ -158,9 +158,9 @@ Developer result: Tournament winners came from the tie rule, because test votes 
 
 Awarded when a member hits 7, 30, 100, or 365 consecutive upload days.
 
-Default: **50 points**. No limit by default.
+Default: **50 points** base. WPMediaVerse Pro sets the amount per milestone: 7 days 50, 30 days 250, 100 days 1,000, 365 days 5,000. No limit by default.
 
-- [ ] Doing it pays 50 points to the right member.
+- [ ] Each milestone pays its amount to the right member: 50 at 7 days, 250 at 30, 1,000 at 100, 5,000 at 365.
 - [ ] Switched off, it pays nothing.
 
-Developer result: One day-30 first run paid nothing and clean reruns paid; cause not found. Pays 50, 250 or 1000 by milestone, not a flat amount. Run on a test site through the plugin's REST route.
+Developer result: One day-30 first run paid nothing and clean reruns paid; cause not found. Pays 50, 250, 1,000 or 5,000 by milestone, not a flat amount. Run on a test site through the plugin's REST route.
