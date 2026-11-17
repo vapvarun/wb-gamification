@@ -108,6 +108,9 @@ final class Registry {
 	 *                                  Needs `once_per_object`, and `async => false` so the award exists before a delete can arrive.
 	 *   @type array    $restore_on     Optional. Hook => callable returning the returned object id (or ids), 0 to skip.
 	 *                                  Gives a taken-back award back ({@see PointsEngine::restore_object_awards()}).
+	 *   @type callable $object_date    Optional. Object id => when the content was created (UTC 'Y-m-d H:i:s'). Content
+	 *                                  from before the 1.6.8 update whose author already has pre-1.6.8 points for
+	 *                                  this action is treated as paid ({@see PointsEngine::is_legacy_object()}).
 	 *   @type int      $default_points Default points awarded. Admin can override.
 	 *   @type string   $category       Optional category (buddypress, commerce, etc.).
 	 *   @type string   $icon           Dashicon name or URL.
@@ -207,7 +210,7 @@ final class Registry {
 	 * @since 1.6.8
 	 *
 	 * @param string $comment_type Only comments of this type (e.g. MediaVerse's 'mvs_comment'); '' for any.
-	 * @return array{reverse_on: array<string, callable>, restore_on: array<string, callable>}
+	 * @return array{object_date: callable, reverse_on: array<string, callable>, restore_on: array<string, callable>}
 	 */
 	public static function comment_object_hooks( string $comment_type = '' ): array {
 		$ours     = static fn( $comment ): bool => $comment instanceof \WP_Comment && ( '' === $comment_type || $comment_type === $comment->comment_type );
@@ -217,16 +220,28 @@ final class Registry {
 			return $ours( $comment ) && '1' === (string) $comment->comment_approved ? (int) $comment_id : 0;
 		};
 		return array(
-			'reverse_on' => array(
+			'object_date' => static fn( $comment_id ): string => (string) get_comment( (int) $comment_id )?->comment_date_gmt,
+			'reverse_on'  => array(
 				'trashed_comment' => $removed,
 				'spammed_comment' => $removed,
 				'delete_comment'  => $removed,
 			),
-			'restore_on' => array(
+			'restore_on'  => array(
 				'untrashed_comment' => $returned,
 				'unspammed_comment' => $returned,
 			),
 		);
+	}
+
+	/**
+	 * `object_date` for a trigger whose object is a WordPress post: when it was published.
+	 *
+	 * @since 1.6.8
+	 *
+	 * @return callable Post id => post_date_gmt ('0000-00-00 00:00:00' for an unpublished draft).
+	 */
+	public static function post_object_date(): callable {
+		return static fn( $post_id ): string => (string) get_post_field( 'post_date_gmt', (int) $post_id );
 	}
 
 	/**

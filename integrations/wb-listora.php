@@ -68,6 +68,7 @@ return array(
 			// Fires: do_action( 'wb_listora_listing_submitted', int $post_id, string $status, $request, $context ). No user id - owner is post_author.
 			'hook'              => 'wb_listora_listing_submitted',
 			'once_per_object'   => static fn( int $post_id ): int => $post_id,
+			'object_date'       => \WBGam\Engine\Registry::post_object_date(),
 			'reverse_on'        => $wb_gam_listora_listing_removed,
 			'restore_on'        => $wb_gam_listora_listing_restored,
 			'user_callback'     => function ( int $post_id, $status = '', $request = null, $context = null ): int {
@@ -101,6 +102,7 @@ return array(
 			// Also fires on reactivating or renewing a listing, so once per listing.
 			'hook'              => 'wb_listora_after_approve_listing',
 			'once_per_object'   => static fn( int $post_id ): int => $post_id,
+			'object_date'       => \WBGam\Engine\Registry::post_object_date(),
 			'reverse_on'        => $wb_gam_listora_listing_removed,
 			'restore_on'        => $wb_gam_listora_listing_restored,
 			'user_callback'     => function ( int $post_id ): int {

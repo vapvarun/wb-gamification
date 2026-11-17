@@ -182,6 +182,7 @@ return [
 			// One award per post while it is live: trashing or deleting it takes the points back, and
 			// publishing it again (untrash returns a post to draft) earns again.
 			'once_per_object' => static fn( string $new_status, string $old_status, $post ): int => $post instanceof \WP_Post ? (int) $post->ID : 0,
+			'object_date'     => \WBGam\Engine\Registry::post_object_date(),
 			'reverse_on'      => [
 				'wp_trash_post'      => static fn( $post_id ): int => 'post' === get_post_type( (int) $post_id ) ? (int) $post_id : 0,
 				'before_delete_post' => static fn( $post_id ): int => 'post' === get_post_type( (int) $post_id ) ? (int) $post_id : 0,

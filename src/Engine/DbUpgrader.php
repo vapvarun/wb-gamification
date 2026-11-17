@@ -1514,6 +1514,13 @@ final class DbUpgrader {
 			if ( empty( $has_index ) ) {
 				$wpdb->query( "ALTER TABLE `{$points}` ADD KEY `idx_action_object` (`action_id`, `object_id`)" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- DDL.
 			}
+
+			// Awards start recording their object from here. Content paid before this moment is
+			// recognised by its date (PointsEngine::is_legacy_object()). Only on a site with history;
+			// add_option keeps the first stamp if this step runs again.
+			if ( $wpdb->get_var( "SELECT 1 FROM `{$points}` LIMIT 1" ) ) { // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from $wpdb->prefix.
+				add_option( PointsEngine::OBJECT_AWARDS_SINCE_OPTION, current_time( 'mysql', true ), '', false );
+			}
 		}
 
 		// Activity-stream cards from earlier versions get the 1.6.8 card markup. Upgrades run on

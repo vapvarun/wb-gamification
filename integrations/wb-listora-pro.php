@@ -37,6 +37,7 @@ return array(
 			// Pro fires: do_action( 'wb_listora_pro_need_submitted', int $need_id, $request ). No user id - author is the poster.
 			'hook'              => 'wb_listora_pro_need_submitted',
 			'once_per_object'   => static fn( $need_id ): int => (int) $need_id,
+			'object_date'       => \WBGam\Engine\Registry::post_object_date(),
 			'reverse_on'        => $wb_gam_listora_need_removed,
 			'user_callback'     => function ( int $need_id, $request = null ): int {
 				return (int) get_post_field( 'post_author', $need_id );
@@ -59,6 +60,7 @@ return array(
 			// Pro fires: do_action( 'wb_listora_pro_need_published', int $need_id ). No user id - author is the poster.
 			'hook'              => 'wb_listora_pro_need_published',
 			'once_per_object'   => static fn( $need_id ): int => (int) $need_id,
+			'object_date'       => \WBGam\Engine\Registry::post_object_date(),
 			'reverse_on'        => $wb_gam_listora_need_removed,
 			'user_callback'     => function ( int $need_id ): int {
 				return (int) get_post_field( 'post_author', $need_id );
