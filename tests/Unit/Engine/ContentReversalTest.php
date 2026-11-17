@@ -159,6 +159,57 @@ class ContentReversalTest extends TestCase {
 	}
 
 	#[Test]
+	public function trash_restore_trash_restore_ends_holding_exactly_one_award(): void {
+		$this->earn( 7, 'wp_leave_comment', 5, 300 );
+		$t = array( 'wp_leave_comment' => array( 300 ) );
+
+		PointsEngine::reverse_object_awards( $t );
+		PointsEngine::restore_object_awards( $t );
+		PointsEngine::reverse_object_awards( $t );
+		PointsEngine::restore_object_awards( $t );
+
+		$this->assertSame( 5, $this->db->totals[7]['points'] );
+	}
+
+	#[Test]
+	public function restoring_twice_in_a_row_credits_once(): void {
+		$this->earn( 7, 'wp_leave_comment', 5, 300 );
+		$t = array( 'wp_leave_comment' => array( 300 ) );
+		PointsEngine::reverse_object_awards( $t );
+
+		PointsEngine::restore_object_awards( $t );
+		PointsEngine::restore_object_awards( $t );
+
+		$this->assertSame( 5, $this->db->totals[7]['points'] );
+	}
+
+	#[Test]
+	public function a_restore_after_publishing_again_gives_back_one_award_not_two(): void {
+		$t = array( 'bbp_new_topic' => array( 400 ) );
+		$this->earn( 7, 'bbp_new_topic', 10, 400 );
+		PointsEngine::reverse_object_awards( $t );
+		$this->earn( 7, 'bbp_new_topic', 10, 400 ); // Earned again while taken back.
+		PointsEngine::reverse_object_awards( $t );
+
+		PointsEngine::restore_object_awards( $t );
+
+		$this->assertSame( 10, $this->db->totals[7]['points'] );
+	}
+
+	#[Test]
+	public function a_restore_after_a_below_zero_reversal_returns_exactly_what_was_taken(): void {
+		$t = array( 'wp_leave_comment' => array( 300 ) );
+		$this->earn( 7, 'wp_leave_comment', 5, 300 );
+		$this->earn( 7, 'redemption', -5, 0 );
+		PointsEngine::reverse_object_awards( $t );
+		$this->assertSame( -5, $this->db->totals[7]['points'] );
+
+		PointsEngine::restore_object_awards( $t );
+
+		$this->assertSame( 0, $this->db->totals[7]['points'] );
+	}
+
+	#[Test]
 	public function restore_does_nothing_for_content_that_still_holds_its_award_or_never_earned(): void {
 		$this->earn( 7, 'wp_leave_comment', 5, 300 );
 
@@ -245,20 +296,17 @@ class ContentReversalTest extends TestCase {
 			}
 
 			public function get_results( $q, $output = null ): array {
-				if ( ! is_array( $q ) || ! str_contains( $q[0], 'GROUP BY user_id, point_type, action_id, object_id' ) ) {
+				if ( ! is_array( $q ) || ! str_contains( $q[0], 'ORDER BY id' ) ) {
 					return array();
 				}
 				$acts = array_filter( $q[1], 'is_string' );
 				$ids  = array_filter( $q[1], 'is_int' );
-				$out  = array();
-				foreach ( $this->points as $r ) {
-					if ( in_array( $r['action_id'], $acts, true ) && in_array( $r['object_id'], $ids, true ) ) {
-						$k                    = $r['user_id'] . '|' . $r['point_type'] . '|' . $r['action_id'] . '|' . $r['object_id'];
-						$out[ $k ]          ??= array_merge( $r, array( 'points' => 0 ) );
-						$out[ $k ]['points'] += $r['points'];
-					}
-				}
-				return array_values( $out );
+				return array_values(
+					array_filter(
+						$this->points,
+						static fn( $r ) => in_array( $r['action_id'], $acts, true ) && in_array( $r['object_id'], $ids, true )
+					)
+				);
 			}
 
 			public function get_var( $q ) {
