@@ -492,10 +492,11 @@ final class BadgeEngine {
 			add_action( 'init', array( __CLASS__, 'maybe_schedule_cron_pass' ) );
 		}
 
-		// Awarding a badge changes every badge's rarity denominator-share, so the
-		// cached map is dropped on award. Priority 5 = before the display-side
-		// listeners, so anything rendering in the same request recomputes fresh.
-		add_action( 'wb_gam_badge_awarded', array( __CLASS__, 'flush_rarity_cache' ), 5, 0 );
+		// An award adds one holder to one badge, so the cached map is updated in place. Dropping it
+		// made every award rebuild the map (a COUNT over wp_users plus a GROUP BY over every earned
+		// badge) because BadgeStream reads it in the same request. Priority 5 = before the
+		// display-side listeners. The 15-minute TTL still corrects any drift.
+		add_action( 'wb_gam_badge_awarded', array( __CLASS__, 'note_rarity_award' ), 5, 3 );
 		// Cache integrity, not an announcement: an import writes thousands of badges and every one of
 		// them moves rarity. If only the awarded hook flushed, rarity would be wrong until something
 		// else happened to award a badge.
@@ -525,8 +526,8 @@ final class BadgeEngine {
 	 * could trigger a `COUNT(DISTINCT user_id) GROUP BY badge_id` over millions of
 	 * rows, plus a `COUNT(*)` over wp_users, as often as they liked.
 	 *
-	 * Correctness is preserved two ways: the cache is dropped on every badge award
-	 * (see init()) and on the delete paths, and the TTL means even a missed
+	 * Correctness is preserved two ways: every badge award updates the cached map
+	 * in place (see init()), the delete paths drop it, and the TTL means even a missed
 	 * invalidation self-heals within 15 minutes.
 	 *
 	 * @since 1.6.4
@@ -580,6 +581,26 @@ final class BadgeEngine {
 	 */
 	public static function flush_rarity_cache(): void {
 		wp_cache_delete( self::RARITY_CACHE_KEY, 'wb_gamification' );
+	}
+
+	/**
+	 * Add one holder to a badge in the cached rarity map, if the map is cached.
+	 *
+	 * @since 1.6.8
+	 *
+	 * @param int    $user_id  Member who earned the badge (unused).
+	 * @param mixed  $def      Badge definition (unused).
+	 * @param string $badge_id Badge earned.
+	 */
+	public static function note_rarity_award( $user_id, $def, $badge_id ): void {
+		$map   = wp_cache_get( self::RARITY_CACHE_KEY, 'wb_gamification' );
+		$users = (int) get_user_count();
+		if ( ! is_array( $map ) || $users <= 0 ) {
+			return;
+		}
+		$badge_id         = (string) $badge_id;
+		$map[ $badge_id ] = (float) ( $map[ $badge_id ] ?? 0.0 ) + 100 / $users;
+		wp_cache_set( self::RARITY_CACHE_KEY, $map, 'wb_gamification', self::RARITY_CACHE_TTL );
 	}
 
 	// ── Award pipeline ─────────────────────────────────────────────────────────
