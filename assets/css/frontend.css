@@ -518,11 +518,11 @@
 }
 
 
-/* ── BuddyPress profile header rank (ProfileIntegration::render_rank) ─────── */
+/* ── BuddyPress profile header rank (ProfileIntegration::render_rank) ───────
+ * The bar's look is overridable from the theme: --wb-gam-bar-color, --wb-gam-bar-bg and
+ * --wb-gam-bar-height are read where they are used, with the defaults as fallbacks. Declaring
+ * them on this element (as before) shadowed any override set on :root or body. */
 .wb-gam-profile-rank {
-	--wb-gam-bar-color: var(--wb-gam-color-accent);
-	--wb-gam-bar-bg: var(--wb-gam-color-surface-alt);
-	--wb-gam-bar-height: 6px;
 	display: flex;
 	flex-wrap: wrap;
 	align-items: center;
@@ -550,17 +550,17 @@
 
 .wb-gam-profile-rank .wb-gam-progress-bar {
 	flex: 1 0 100%;
-	height: var(--wb-gam-bar-height);
+	height: var(--wb-gam-bar-height, 6px);
 	overflow: hidden;
 	border-radius: var(--wb-gam-radius-full);
-	background: var(--wb-gam-bar-bg);
+	background: var(--wb-gam-bar-bg, var(--wb-gam-color-surface-alt));
 }
 
 .wb-gam-profile-rank .wb-gam-progress-fill {
 	width: var(--wb-gam-fill, 0%);
 	height: 100%;
 	border-radius: inherit;
-	background: var(--wb-gam-bar-color);
+	background: var(--wb-gam-bar-color, var(--wb-gam-color-accent));
 }
 
 @media (max-width: 480px) {
