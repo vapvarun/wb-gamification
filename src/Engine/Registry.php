@@ -636,6 +636,30 @@ final class Registry {
 	}
 
 	/**
+	 * Whether members may submit this action for review (Submit Achievement).
+	 *
+	 * The owner's tick wins both ways: when `wb_gam_action_overrides[ $id ]['submittable']` is set,
+	 * that is the answer. Only when the owner has not chosen does the manifest's
+	 * `'submittable' => true` open it. Everything else is closed: nothing is submittable until the
+	 * owner opens it.
+	 *
+	 * @since 1.6.8
+	 *
+	 * @param string $id Action ID.
+	 * @return bool False for an unregistered action.
+	 */
+	public static function is_submittable( string $id ): bool {
+		if ( ! isset( self::$actions[ $id ] ) ) {
+			return false;
+		}
+		$overrides = self::get_overrides();
+		if ( isset( $overrides[ $id ]['submittable'] ) ) {
+			return (bool) $overrides[ $id ]['submittable'];
+		}
+		return true === ( self::$actions[ $id ]['submittable'] ?? false );
+	}
+
+	/**
 	 * Resolve an action_id to a human-readable label.
 	 *
 	 * Used by surfaces that display history rows (points-history block,

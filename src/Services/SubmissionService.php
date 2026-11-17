@@ -63,6 +63,11 @@ final class SubmissionService {
 		if ( '' === $action_id || ! Registry::get_action( $action_id ) ) {
 			return new WP_Error( 'wb_gam_unknown_action', __( 'Unknown action.', 'wb-gamification' ), array( 'status' => 400 ) );
 		}
+		// Only what the owner opened to submissions. approve() stays open so a submission already
+		// pending when an action is closed can still be reviewed.
+		if ( ! Registry::is_submittable( $action_id ) ) {
+			return new WP_Error( 'wb_gam_not_submittable', __( 'This activity cannot be submitted for review.', 'wb-gamification' ), array( 'status' => 403 ) );
+		}
 		if ( '' === trim( $evidence ) && '' === trim( $evidence_url ) ) {
 			return new WP_Error( 'wb_gam_no_evidence', __( 'Provide evidence (text or URL).', 'wb-gamification' ), array( 'status' => 400 ) );
 		}
