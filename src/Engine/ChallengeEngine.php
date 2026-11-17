@@ -92,6 +92,12 @@ final class ChallengeEngine {
 			return;
 		}
 
+		// The same object counts once: a post trashed and published again is paid again (its points
+		// were taken back) but is still one post toward "publish 5 posts".
+		if ( PointsEngine::is_repeat_object_award( $user_id, $event->action_id, (int) $event->object_id ) ) {
+			return;
+		}
+
 		foreach ( $challenges as $challenge ) {
 			if ( 'team' === $challenge['type'] ) {
 				self::process_team( $user_id, $challenge );

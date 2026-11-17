@@ -1304,6 +1304,36 @@ final class PointsEngine {
 	}
 
 	/**
+	 * Has this member been paid for this object before the award just made?
+	 *
+	 * True when a once-per-object action paid again after its points were taken back (a post
+	 * trashed and published again). Counters that follow awards (challenge progress) use it so the
+	 * same object counts once, the way {@see get_action_count()} counts it.
+	 *
+	 * @since 1.6.8
+	 *
+	 * @param int    $user_id   Member.
+	 * @param string $action_id Action id.
+	 * @param int    $object_id Object id.
+	 * @return bool
+	 */
+	public static function is_repeat_object_award( int $user_id, string $action_id, int $object_id ): bool {
+		global $wpdb;
+		$action = Registry::get_action( $action_id );
+		if ( $object_id <= 0 || null === $action || ! isset( $action['once_per_object'] ) ) {
+			return false;
+		}
+		return 1 < (int) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM {$wpdb->prefix}wb_gam_points WHERE user_id = %d AND action_id = %s AND object_id = %d AND points > 0",
+				$user_id,
+				$action_id,
+				$object_id
+			)
+		);
+	}
+
+	/**
 	 * Take back the points awarded for content that was removed (trashed, marked spam, deleted).
 	 *
 	 * For every member and point type still holding an award for one of these objects, one
