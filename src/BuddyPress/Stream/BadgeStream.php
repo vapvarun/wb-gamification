@@ -173,6 +173,29 @@ final class BadgeStream {
 	}
 
 	/**
+	 * date_query for one site day, [ start, next start ), in the shape BP_Activity_Activity::get()
+	 * accepts. No per-clause 'column': BuddyPress already points the query at a.date_recorded,
+	 * and a clause-level 'date_recorded' fails WP_Date_Query::validate_column(), which falls back
+	 * to wp_posts.post_date (an SQL error on every award, and grouping never matched).
+	 *
+	 * @param string $from UTC start of the day (inclusive).
+	 * @param string $to   UTC start of the next day (exclusive).
+	 * @return array<int, array<string, mixed>>
+	 */
+	public static function day_date_query( string $from, string $to ): array {
+		return array(
+			array(
+				'after'     => $from,
+				'inclusive' => true,
+			),
+			array(
+				'before'    => $to,
+				'inclusive' => false,
+			),
+		);
+	}
+
+	/**
 	 * The member's groupable badge post of the current site day, if any.
 	 *
 	 * @param int $user_id Member.
@@ -197,14 +220,7 @@ final class BadgeStream {
 						'compare' => 'EXISTS',
 					),
 				),
-				'date_query'        => array(
-					array(
-						'column'    => 'date_recorded',
-						'after'     => $from,
-						'before'    => $to,
-						'inclusive' => true,
-					),
-				),
+				'date_query'        => self::day_date_query( $from, $to ),
 				'per_page'          => 1,
 				'page'              => 1,
 				'sort'              => 'DESC',

@@ -22,6 +22,7 @@ use WBGam\BuddyPress\Stream\BadgeStream;
 
 #[CoversClass( \WBGam\BuddyPress\Stream\BadgeStream::class )]
 #[CoversMethod( \WBGam\BuddyPress\Stream\BadgeStream::class, 'site_day_window' )]
+#[CoversMethod( \WBGam\BuddyPress\Stream\BadgeStream::class, 'day_date_query' )]
 #[CoversMethod( \WBGam\BuddyPress\Stream\ActivityCard::class, 'allowed_tags' )]
 #[CoversMethod( \WBGam\BuddyPress\Stream\ActivityCard::class, 'has_card' )]
 class BadgeStreamTest extends TestCase {
@@ -80,6 +81,31 @@ class BadgeStreamTest extends TestCase {
 		$window = BadgeStream::site_day_window();
 		$this->assertSame( array( '2026-07-13 07:00:00', '2026-07-14 07:00:00' ), $window );
 		$this->assertTrue( $this->inside( '2026-07-13 20:00:00', $window ), 'Same site day, different UTC date: one post.' );
+	}
+
+	#[Test]
+	public function day_query_is_one_bp_accepts_and_half_open(): void {
+		$query = BadgeStream::day_date_query( '2026-07-12 18:30:00', '2026-07-13 18:30:00' );
+
+		// BuddyPress targets a.date_recorded itself. A clause-level 'column' that WP_Date_Query does
+		// not know falls back to wp_posts.post_date: an SQL error on every award (BuddyPress 14.5.4).
+		foreach ( $query as $clause ) {
+			$this->assertArrayNotHasKey( 'column', $clause );
+		}
+		// Start inclusive, next day's start exclusive: a badge at exactly midnight opens a new day.
+		$this->assertSame(
+			array(
+				array(
+					'after'     => '2026-07-12 18:30:00',
+					'inclusive' => true,
+				),
+				array(
+					'before'    => '2026-07-13 18:30:00',
+					'inclusive' => false,
+				),
+			),
+			$query
+		);
 	}
 
 	#[Test]
