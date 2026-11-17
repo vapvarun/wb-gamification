@@ -125,7 +125,7 @@ These were broken and are fixed in this round, so test them first:
 Still open:
 
 - **BuddyNext:** a first follow through a private account's approval pays nothing, and joining a space with a linked forum pays twice. Both have cards on its board.
-- **Learnomy Pro:** completing a learning path with no certificate template pays nothing. It has a card on its board.
+- **Learnomy Pro:** completing a learning path pays 150 with or without a certificate template (Learnomy Pro 2.3.0 fires the hook either way). The earlier note that it paid nothing is out of date.
 - **WooCommerce Memberships in Jetonomy:** buying a plan for the first time pays nothing for Activate a membership. The fix belongs in Jetonomy Pro and has a card on its board. WooCommerce Subscriptions works.
 
 **LMS change in this round:** LearnDash, LifterLMS and Tutor LMS now pay once per course, lesson, quiz or similar. Retaking a quiz must earn nothing. Run each LMS on its own site: Tutor LMS and LifterLMS both use `/courses/`, so lesson pages return 404 when both are active.

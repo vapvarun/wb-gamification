@@ -29,7 +29,7 @@ Default: **150 points**. No limit by default.
 - [ ] Doing it pays 150 points to the right member.
 - [ ] Switched off, it pays nothing.
 
-Developer result: A learning path with no certificate template pays nothing: Learnomy Pro only fires the hook in the certificate branch. Card on the Learnomy board. With a template it pays. Run on a test site through the plugin's REST route.
+Developer result: Learnomy Pro 2.3.0 fires the completion hook with or without a certificate template (with no template it passes certificate id 0), so a completed path pays 150 either way. Verified on a throwaway site in the 1.6.8 integration QA (17 Nov 2026): 7 paths completed, 7 rows of 150. Run through the plugin's REST route.
 
 ### Enrol in a learning path (`learnomy_pro_path_enrolled`)
 
