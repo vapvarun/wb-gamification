@@ -237,7 +237,7 @@ final class RecapEngine {
 	 *
 	 * @param int $user_id User ID to query.
 	 * @param int $year    Four-digit year to search within.
-	 * @return array{ week: string, points: int }|null Peak week data or null if no activity.
+	 * @return array{ week: string, week_start: string, points: int }|null Peak week data or null if no activity.
 	 */
 	private static function get_peak_week( int $user_id, int $year ): ?array {
 		global $wpdb;
@@ -252,11 +252,11 @@ final class RecapEngine {
 		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $local is built by Clock from a fixed column name.
 		$row = $wpdb->get_row(
 			$wpdb->prepare(
-				"SELECT DATE_FORMAT({$local}, '%%Y-W%%V') AS iso_week,
+				"SELECT DATE_SUB(DATE({$local}), INTERVAL WEEKDAY({$local}) DAY) AS week_start,
 				        SUM(points) AS week_points
 				   FROM {$wpdb->prefix}wb_gam_points
 				  WHERE user_id = %d AND is_spend = 0 AND created_at BETWEEN %s AND %s
-				  GROUP BY iso_week
+				  GROUP BY week_start
 				  ORDER BY week_points DESC
 				  LIMIT 1",
 				$user_id,
@@ -271,9 +271,13 @@ final class RecapEngine {
 			return null;
 		}
 
+		// The Monday the week starts on, in the site's calendar. 'week' stays the ISO code for API
+		// readers (it paired the calendar year with the ISO week number, wrong around New Year).
+		$monday = new \DateTimeImmutable( (string) $row['week_start'], wp_timezone() );
 		return array(
-			'week'   => $row['iso_week'],
-			'points' => (int) $row['week_points'],
+			'week'       => $monday->format( 'o-\WW' ),
+			'week_start' => $monday->format( 'Y-m-d' ),
+			'points'     => (int) $row['week_points'],
 		);
 	}
 

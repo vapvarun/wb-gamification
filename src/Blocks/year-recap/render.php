@@ -102,6 +102,11 @@ $wb_gam_show_badges  = ! isset( $wb_gam_attrs['show_badges'] ) || ! empty( $wb_g
 $wb_gam_show_kudos   = ! isset( $wb_gam_attrs['show_kudos'] ) || ! empty( $wb_gam_attrs['show_kudos'] );
 
 $wb_gam_recap = RecapEngine::get_recap( $wb_gam_user_id, $wb_gam_year );
+// The default is last year. On a site in its first year (or for a member who joined this year) that
+// is empty, so show this year so far rather than tell an active member they have not earned points.
+if ( $wb_gam_year <= 0 && empty( $wb_gam_recap['points_this_year'] ) ) {
+	$wb_gam_recap = RecapEngine::get_recap( $wb_gam_user_id, (int) wp_date( 'Y' ) );
+}
 
 /**
  * Filter the year-recap data before render.
@@ -222,7 +227,17 @@ BlockHooks::before( 'year-recap', $wb_gam_attrs );
 	<?php if ( ! empty( $wb_gam_recap['peak_week'] ) ) : ?>
 		<div class="wb-gam-recap__peak-week">
 			<span class="wb-gam-recap__peak-week-label"><?php esc_html_e( 'Peak Week', 'wb-gamification' ); ?></span>
-			<span class="wb-gam-recap__peak-week-week"><?php echo esc_html( (string) ( $wb_gam_recap['peak_week']['week'] ?? '' ) ); ?></span>
+			<span class="wb-gam-recap__peak-week-week">
+				<?php
+				$wb_gam_week_start = (string) ( $wb_gam_recap['peak_week']['week_start'] ?? '' );
+				if ( '' !== $wb_gam_week_start ) {
+					/* translators: %s: the date the week starts on, in the site's date format, e.g. "9 November 2026". */
+					printf( esc_html__( 'Week of %s', 'wb-gamification' ), esc_html( wp_date( (string) get_option( 'date_format' ), ( new \DateTimeImmutable( $wb_gam_week_start, wp_timezone() ) )->getTimestamp() ) ) );
+				} else {
+					echo esc_html( (string) ( $wb_gam_recap['peak_week']['week'] ?? '' ) );
+				}
+				?>
+			</span>
 			<span class="wb-gam-recap__peak-week-pts">
 				<?php
 				echo esc_html( wb_gam_format_points( (int) ( $wb_gam_recap['peak_week']['points'] ?? 0 ) ) );
