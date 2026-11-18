@@ -22,6 +22,16 @@ if ( ! defined( 'JETONOMY_VERSION' ) && ! class_exists( '\\Jetonomy\\Plugin' ) )
 	return array();
 }
 
+// Jetonomy Pro's Learnomy adapter reports every course, cohort and space seat as a membership, so a
+// free enrolment paid "Activate a membership" on top of Learnomy's own enrolment award. Only a paid
+// Learnomy plan (lrn_membership_) is a membership here (owner decision, 18 Nov 2026).
+add_filter(
+	'wb_gam_membership_level_earns',
+	static fn( $earns, $level_id, $source ): bool => (bool) $earns && ! ( 'learnomy' === $source && preg_match( '/^lrn_(course|cohort|space)_/', (string) $level_id ) ),
+	10,
+	3
+);
+
 return array(
 	'plugin'   => 'Jetonomy',
 	'version'  => '1.0.0',
