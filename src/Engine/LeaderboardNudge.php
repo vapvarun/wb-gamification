@@ -478,6 +478,7 @@ final class LeaderboardNudge {
 				'name'      => esc_html( (string) $user->display_name ),
 				'site_name' => $site_name,
 				'site_url'  => home_url( '/' ),
+				'hub_url'   => MemberUrl::hub_url( 'leaderboard' ),
 				'message'   => $message,
 				'rank'      => isset( $rank_data['rank'] ) ? (int) $rank_data['rank'] : null,
 				'points'    => isset( $rank_data['points'] ) ? (int) $rank_data['points'] : 0,

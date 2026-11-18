@@ -11,6 +11,7 @@
  * @var string   $name      Escaped display name.
  * @var string   $site_name Site name (raw — escape on output).
  * @var string   $site_url  Site home URL.
+ * @var string   $hub_url           The member's Gamification Hub (panel when it fits); '' when no Hub page exists.
  * @var string   $message   Pre-built nudge sentence (e.g. "You're #3 this week with 240 points.").
  * @var int|null $rank      Current leaderboard rank, null if not ranked.
  * @var int      $points    Points earned in the relevant window.
@@ -43,7 +44,7 @@ defined( 'ABSPATH' ) || exit;
 								<?php echo esc_html( $message ); ?>
 							</p>
 							<p style="margin:24px 0 0;">
-								<a href="<?php echo esc_url( $site_url ); ?>" style="display:inline-block;background:#2563eb;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;font-weight:600;font-size:14px;">
+								<a href="<?php echo esc_url( ! empty( $hub_url ) ? $hub_url : $site_url ); ?>" style="display:inline-block;background:#2563eb;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;font-weight:600;font-size:14px;">
 									<?php esc_html_e( 'View leaderboard →', 'wb-gamification' ); ?>
 								</a>
 							</p>

@@ -67,8 +67,7 @@ final class MemberSurface {
 		if ( get_current_user_id() !== $user_id ) {
 			return '';
 		}
-		$hub_page_id = (int) get_option( 'wb_gam_hub_page_id', 0 );
-		$hub_url     = $hub_page_id ? get_permalink( $hub_page_id ) : '';
+		$hub_url = MemberUrl::hub_url();
 		if ( ! $hub_url ) {
 			return '';
 		}

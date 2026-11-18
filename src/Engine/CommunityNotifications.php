@@ -180,7 +180,7 @@ final class CommunityNotifications {
 	 * @param int $user_id       Member the reward belongs to.
 	 */
 	public static function on_redemption_fulfilled( int $redemption_id, int $user_id ): void {
-		$hub_url = self::hub_url();
+		$hub_url = MemberUrl::hub_url();
 		self::notify(
 			$user_id,
 			'reward_fulfilled',
@@ -476,18 +476,8 @@ final class CommunityNotifications {
 		if ( '' !== $url ) {
 			return $url;
 		}
-		$hub_url = self::hub_url();
+		$hub_url = MemberUrl::hub_url();
 		return '' !== $hub_url ? $hub_url : home_url( '/' );
-	}
-
-	/**
-	 * This plugin's own hub page (leaderboard, rewards), or '' when unset or unpublished.
-	 *
-	 * @return string
-	 */
-	private static function hub_url(): string {
-		$page_id = (int) get_option( 'wb_gam_hub_page_id', 0 );
-		return ( $page_id > 0 && 'publish' === get_post_status( $page_id ) ) ? (string) get_permalink( $page_id ) : '';
 	}
 
 	/**

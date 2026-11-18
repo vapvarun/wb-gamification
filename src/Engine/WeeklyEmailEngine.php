@@ -561,6 +561,7 @@ final class WeeklyEmailEngine {
 				'name'      => esc_html( $user->display_name ),
 				'site_name' => get_bloginfo( 'name' ),
 				'site_url'  => home_url(),
+				'hub_url'   => MemberUrl::hub_url(),
 				'unsub_url' => esc_url(
 					add_query_arg(
 						array(

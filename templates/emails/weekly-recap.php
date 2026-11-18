@@ -11,6 +11,7 @@
  * @var string   $name                  Escaped display name.
  * @var string   $site_name             Site name (raw — escape on output).
  * @var string   $site_url              Site home URL.
+ * @var string   $hub_url           The member's Gamification Hub (panel when it fits); '' when no Hub page exists.
  * @var string   $unsub_url             Already-escaped one-tap unsubscribe URL.
  * @var int      $points_this_week      Points earned in the last 7 days.
  * @var int      $total_points          Lifetime point total.
@@ -166,7 +167,7 @@ hr { border:none; border-top:1px solid #f3f4f6; margin:1rem 0; }
 		<?php endif; ?>
 
 		<div class="cta">
-			<a href="<?php echo esc_url( $site_url ); ?>"><?php esc_html_e( 'Keep the momentum going →', 'wb-gamification' ); ?></a>
+			<a href="<?php echo esc_url( ! empty( $hub_url ) ? $hub_url : $site_url ); ?>"><?php esc_html_e( 'Keep the momentum going →', 'wb-gamification' ); ?></a>
 		</div>
 	</div><!-- .body -->
 

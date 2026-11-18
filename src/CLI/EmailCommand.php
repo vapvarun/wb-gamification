@@ -68,6 +68,7 @@ class EmailCommand {
 			'name'         => esc_html( (string) $user->display_name ),
 			'site_name'    => $site_name,
 			'site_url'     => home_url( '/' ),
+			'hub_url'      => \WBGam\Engine\MemberUrl::hub_url(),
 			'points_label' => $points_label,
 		);
 
