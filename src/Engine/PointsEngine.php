@@ -356,7 +356,7 @@ final class PointsEngine {
 		}
 
 		// One award per member per object (a retaken quiz, a replayed lesson).
-		if ( $object_id > 0 && isset( $action['once_per_object'] ) && ( self::has_object_award( $user_id, $action_id, $object_id ) || self::is_legacy_object( $user_id, $action, $object_id ) ) ) {
+		if ( $object_id > 0 && isset( $action['once_per_object'] ) && ( self::has_object_award( $user_id, $action_id, $object_id ) || self::is_legacy_object( $action, $object_id ) ) ) {
 			/** This filter is documented in src/Engine/PointsEngine.php — see wb_gam_award_skipped. */
 			do_action(
 				'wb_gam_award_skipped',
@@ -1310,41 +1310,29 @@ final class PointsEngine {
 	public const OBJECT_AWARDS_SINCE_OPTION = 'wb_gam_object_awards_since';
 
 	/**
-	 * Was this object paid before 1.6.8, when awards did not record their object?
+	 * Was this object created before 1.6.8, when awards did not record their object?
 	 *
-	 * Content created before the update, by a member who holds pre-1.6.8 points for this action, is
-	 * treated as already paid, so unpublishing and publishing an old post does not pay it again
-	 * (owner decision, 17 Nov 2026). Only actions that declare `object_date` (WordPress posts and
-	 * comments) are checked.
+	 * Content created before per-object tracking started counts as already paid, so unpublishing
+	 * and publishing an old post, or unapproving and approving an old comment, never pays it again
+	 * (owner decision, 17 Nov 2026: old content never pays again). Only actions that declare
+	 * `object_date` (WordPress posts and comments, Listora listings and needs) are checked.
 	 *
-	 * ponytail: a comment written before the update but approved after it is treated as paid when its
-	 * post's author has other pre-1.6.8 comment points. The ledger cannot tell them apart.
+	 * ponytail: a comment written before the update but still pending then is not paid when it is
+	 * approved after it. WordPress keeps no approval date to tell it apart.
 	 *
 	 * @since 1.6.8
 	 *
-	 * @param int                  $user_id   Member.
 	 * @param array<string, mixed> $action    Action definition.
 	 * @param int                  $object_id Object id.
 	 * @return bool
 	 */
-	private static function is_legacy_object( int $user_id, array $action, int $object_id ): bool {
+	private static function is_legacy_object( array $action, int $object_id ): bool {
 		$since = (string) get_option( self::OBJECT_AWARDS_SINCE_OPTION, '' );
 		if ( '' === $since || ! isset( $action['object_date'] ) || ! is_callable( $action['object_date'] ) ) {
 			return false;
 		}
 		$created = (string) call_user_func( $action['object_date'], $object_id );
-		if ( '' === $created || str_starts_with( $created, '0000' ) || $created >= $since ) {
-			return false;
-		}
-		global $wpdb;
-		return (bool) $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT 1 FROM {$wpdb->prefix}wb_gam_points WHERE user_id = %d AND action_id = %s AND object_id IS NULL AND points > 0 AND created_at < %s LIMIT 1",
-				$user_id,
-				(string) $action['id'],
-				$since
-			)
-		);
+		return '' !== $created && ! str_starts_with( $created, '0000' ) && $created < $since;
 	}
 
 	/**

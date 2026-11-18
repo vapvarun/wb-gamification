@@ -8,8 +8,8 @@
 
 PluginCheck.Security.DirectDB.UnescapedDBParameter: 67
 Squiz.PHP.DiscouragedFunctions.Discouraged: 1
-WordPress.DB.DirectDatabaseQuery.DirectQuery: 76
-WordPress.DB.DirectDatabaseQuery.NoCaching: 73
+WordPress.DB.DirectDatabaseQuery.DirectQuery: 75
+WordPress.DB.DirectDatabaseQuery.NoCaching: 72
 WordPress.DB.PreparedSQL.InterpolatedNotPrepared: 58
 WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber: 6
 WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare: 24
@@ -17,4 +17,4 @@ WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound: 55
 WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound: 17
 WordPressVIPMinimum.Performance.WPQueryParams.PostNotIn_exclude: 3
 
-# total: 380
+# total: 378
