@@ -28,6 +28,10 @@ if ( ! class_exists( 'LLMS_Student' ) ) {
 // LifterLMS fires these with ( $user_id, $object_id, ... ).
 $wb_gam_llms_user   = static fn( $user_id ): int => (int) $user_id;
 $wb_gam_llms_object = static fn( $user_id, $object_id ): int => (int) $object_id;
+// A seat (course, membership) is shared by its students, so its award is keyed per member: removing one
+// student takes back only theirs. A removal because the access expired ran its term and keeps the points.
+$wb_gam_llms_seat    = static fn( $user_id, $object_id ): int => \WBGam\Engine\Registry::object_key( (int) $user_id, (int) $object_id );
+$wb_gam_llms_removed = static fn( $user_id, $object_id, $trigger = '', $new_status = '' ): int => 'expired' === $new_status ? 0 : \WBGam\Engine\Registry::object_key( (int) $user_id, (int) $object_id );
 
 return [
 	'plugin'   => 'LifterLMS',
@@ -41,6 +45,7 @@ return [
 			'hook'            => 'lifterlms_course_completed',
 			'user_callback'   => $wb_gam_llms_user,
 			'once_per_object' => $wb_gam_llms_object,
+			'permanent'       => 'A completion or award.',
 			'default_points'  => 100,
 			'category'        => 'learning',
 			'icon'            => 'icon-graduation-cap',
@@ -55,6 +60,7 @@ return [
 			'hook'            => 'lifterlms_lesson_completed',
 			'user_callback'   => $wb_gam_llms_user,
 			'once_per_object' => $wb_gam_llms_object,
+			'permanent'       => 'A completion or award.',
 			'default_points'  => 10,
 			'category'        => 'learning',
 			'icon'            => 'icon-book-open',
@@ -69,6 +75,7 @@ return [
 			'hook'            => 'lifterlms_quiz_passed',
 			'user_callback'   => $wb_gam_llms_user,
 			'once_per_object' => $wb_gam_llms_object,
+			'permanent'       => 'A completion or award.',
 			'default_points'  => 25,
 			'category'        => 'learning',
 			'icon'            => 'icon-award',
@@ -82,12 +89,15 @@ return [
 			'description'     => static fn(): string => __( 'Awarded once per course when a student is enrolled.', 'wb-gamification' ),
 			'hook'            => 'llms_user_enrolled_in_course',
 			'user_callback'   => $wb_gam_llms_user,
-			'once_per_object' => $wb_gam_llms_object,
+			'once_per_object' => $wb_gam_llms_seat,
+			'reverse_on'      => [
+				'llms_user_removed_from_course' => $wb_gam_llms_removed,
+			],
 			'default_points'  => 10,
 			'category'        => 'learning',
 			'icon'            => 'icon-log-in',
 			'repeatable'      => true,
-			'async'           => true,
+			'async'           => false,
 			'cooldown'        => 0,
 		],
 
@@ -97,12 +107,15 @@ return [
 			'description'     => static fn(): string => __( 'Awarded once per membership when a student joins it.', 'wb-gamification' ),
 			'hook'            => 'llms_user_added_to_membership_level',
 			'user_callback'   => $wb_gam_llms_user,
-			'once_per_object' => $wb_gam_llms_object,
+			'once_per_object' => $wb_gam_llms_seat,
+			'reverse_on'      => [
+				'llms_user_removed_from_llms_membership' => $wb_gam_llms_removed,
+			],
 			'default_points'  => 20,
 			'category'        => 'learning',
 			'icon'            => 'icon-users',
 			'repeatable'      => true,
-			'async'           => true,
+			'async'           => false,
 			'cooldown'        => 0,
 		],
 
@@ -112,6 +125,7 @@ return [
 			'description'    => static fn(): string => __( 'Awarded when a student earns any LifterLMS achievement.', 'wb-gamification' ),
 			'hook'           => 'llms_user_earned_achievement',
 			'user_callback'  => $wb_gam_llms_user,
+			'permanent'      => 'A completion or award.',
 			'default_points' => 30,
 			'category'       => 'learning',
 			'icon'           => 'icon-star',
@@ -125,6 +139,7 @@ return [
 			'description'    => static fn(): string => __( 'Awarded when a student earns a course completion certificate.', 'wb-gamification' ),
 			'hook'           => 'llms_user_earned_certificate',
 			'user_callback'  => $wb_gam_llms_user,
+			'permanent'      => 'A completion or award.',
 			'default_points' => 50,
 			'category'       => 'learning',
 			'icon'           => 'icon-file-text',

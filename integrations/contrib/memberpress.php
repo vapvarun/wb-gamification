@@ -38,6 +38,7 @@ return [
 				return \MeprTransaction::$fallback_str === $txn->txn_type ? 0 : (int) $txn->user_id;
 			},
 			'once_per_object' => static fn( \MeprEvent $event ): int => (int) $event->get_data()->product_id,
+			'permanent'       => 'Refund reversal not wired: MemberPress source is not available to verify its refund event.',
 			'default_points'  => 50,
 			'category'        => 'commerce',
 			'icon'            => 'icon-users',
@@ -51,6 +52,7 @@ return [
 			'description'    => static fn(): string => __( 'Awarded on each renewal payment of a recurring membership.', 'wb-gamification' ),
 			'hook'           => 'mepr-event-renewal-transaction-completed',
 			'user_callback'  => $wb_gam_mp_txn_user,
+			'permanent'      => 'Refund reversal not wired: MemberPress source is not available to verify its refund event.',
 			'default_points' => 30,
 			'category'       => 'commerce',
 			'icon'           => 'icon-refresh-cw',
@@ -64,6 +66,7 @@ return [
 			'description'    => static fn(): string => __( 'Awarded once when a user activates their very first membership.', 'wb-gamification' ),
 			'hook'           => 'mepr-event-member-signup-completed',
 			'user_callback'  => static fn( \MeprEvent $event ): int => (int) $event->get_data()->ID,
+			'permanent'      => 'Refund reversal not wired: MemberPress source is not available to verify its refund event.',
 			'default_points' => 100,
 			'category'       => 'commerce',
 			'icon'           => 'icon-star',

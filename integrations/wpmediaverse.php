@@ -120,19 +120,24 @@ $free_triggers = array(
 	),
 
 	array(
-		'id'             => 'mvs_create_album',
-		'label'          => static fn(): string => __( 'Add items to an album', 'wb-gamification' ),
-		'description'    => static fn(): string => __( 'Awarded when a member adds media to an album (rewards the actor, not just the album owner).', 'wb-gamification' ),
-		'hook'           => 'mvs_album_items_added',
+		'id'              => 'mvs_create_album',
+		'label'           => static fn(): string => __( 'Add items to an album', 'wb-gamification' ),
+		'description'     => static fn(): string => __( 'Awarded when a member adds media to an album (rewards the actor, not just the album owner).', 'wb-gamification' ),
+		'hook'            => 'mvs_album_items_added',
 		// Signature (MVS 1.2.3+): ($album_id, $actor_id, $media_ids, $added).
-		'user_callback'  => function ( int $album_id, int $actor_id, array $media_ids, int $added ): int {
+		'user_callback'   => function ( int $album_id, int $actor_id, array $media_ids, int $added ): int {
 			return $actor_id;
 		},
-		'default_points' => 15,
-		'category'       => 'media',
-		'icon'           => 'icon-images',
-		'repeatable'     => true,
-		'cooldown'       => 10,
+		'once_per_object' => static fn( int $album_id ): int => $album_id,
+		'reverse_on'      => array(
+			'mvs_album_deleted' => static fn( $album_id ): int => (int) $album_id,
+		),
+		'async'           => false,
+		'default_points'  => 15,
+		'category'        => 'media',
+		'icon'            => 'icon-images',
+		'repeatable'      => true,
+		'cooldown'        => 10,
 	),
 
 	/*
@@ -158,6 +163,11 @@ $free_triggers = array(
 				'reaction_type' => $type,
 			);
 		},
+		'once_per_object'   => static fn( int $media_id, int $user_id ): int => \WBGam\Engine\Registry::object_key( $user_id, $media_id ),
+		// Per liker and photo: an unlike takes the owner's points back.
+		'reverse_on'        => array(
+			'mvs_reaction_removed' => static fn( $media_id, $user_id ): int => \WBGam\Engine\Registry::object_key( (int) $user_id, (int) $media_id ),
+		),
 		'default_points'    => 2,
 		'category'          => 'media',
 		'icon'              => 'icon-heart',
@@ -214,6 +224,11 @@ $free_triggers = array(
 				'follower_id' => $follower_id,
 			);
 		},
+		'once_per_object'   => static fn( int $follower_id, int $following_id ): int => \WBGam\Engine\Registry::object_key( $follower_id, $following_id ),
+		'reverse_on'        => array(
+			'mvs_user_unfollowed' => static fn( $follower_id, $following_id ): int => \WBGam\Engine\Registry::object_key( (int) $follower_id, (int) $following_id ),
+		),
+		'async'             => false,
 		'default_points'    => 3,
 		'category'          => 'social',
 		'icon'              => 'icon-users',
@@ -221,22 +236,27 @@ $free_triggers = array(
 	),
 
 	array(
-		'id'             => 'mvs_receive_favorite',
-		'label'          => static fn(): string => __( 'Have a photo bookmarked', 'wb-gamification' ),
-		'description'    => static fn(): string => __( 'Awarded to the media owner when someone bookmarks their photo.', 'wb-gamification' ),
-		'hook'           => 'mvs_favorite_toggled',
-		'user_callback'  => function ( int $media_id, int $user_id, string $action ): int {
+		'id'              => 'mvs_receive_favorite',
+		'label'           => static fn(): string => __( 'Have a photo bookmarked', 'wb-gamification' ),
+		'description'     => static fn(): string => __( 'Awarded to the media owner when someone bookmarks their photo.', 'wb-gamification' ),
+		'hook'            => 'mvs_favorite_toggled',
+		'user_callback'   => function ( int $media_id, int $user_id, string $action ): int {
 			if ( 'added' !== $action ) {
 				return 0;
 			}
 			$author = wb_gam_mvs_media_author( $media_id );
 			return ( $author && $author !== $user_id ) ? $author : 0;
 		},
-		'default_points' => 2,
-		'category'       => 'media',
-		'icon'           => 'icon-star',
-		'repeatable'     => true,
-		'async'          => false,
+		'once_per_object' => static fn( int $media_id, int $user_id ): int => \WBGam\Engine\Registry::object_key( $user_id, $media_id ),
+		// MediaVerse fires one hook for add and remove; a removal takes that favourite's points back.
+		'reverse_on'      => array(
+			'mvs_favorite_toggled' => static fn( $media_id, $user_id, $action ): int => 'removed' === $action ? \WBGam\Engine\Registry::object_key( (int) $user_id, (int) $media_id ) : 0,
+		),
+		'default_points'  => 2,
+		'category'        => 'media',
+		'icon'            => 'icon-star',
+		'repeatable'      => true,
+		'async'           => false,
 	),
 
 	/*
@@ -307,6 +327,7 @@ if ( $pro_active ) {
 					'loser_id'  => $loser_id,
 				);
 			},
+			'permanent'         => 'A win.',
 			'default_points'    => 100,
 			'category'          => 'competition',
 			'icon'              => 'icon-award',
@@ -328,6 +349,16 @@ if ( $pro_active ) {
 					'challenge_id' => $challenge_id,
 				);
 			},
+			'once_per_object'   => static fn( int $challenge_id, int $user_id, int $media_id ): int => $media_id,
+			// Keyed by the entry's photo: trashing or deleting it withdraws the entry.
+			'reverse_on'        => array(
+				'mvs_media_trashed' => static fn( $media_id ): int => (int) $media_id,
+				'mvs_media_deleted' => static fn( $media_id ): int => (int) $media_id,
+			),
+			'restore_on'        => array(
+				'mvs_media_restored' => static fn( $media_id ): int => (int) $media_id,
+			),
+			'async'             => false,
 			'default_points'    => 10,
 			'category'          => 'competition',
 			'icon'              => 'icon-megaphone',
@@ -354,6 +385,7 @@ if ( $pro_active ) {
 					'rank'         => $rank,
 				);
 			},
+			'permanent'         => 'A win.',
 			'default_points'    => 200,
 			'category'          => 'competition',
 			'icon'              => 'icon-trophy',
@@ -378,6 +410,7 @@ if ( $pro_active ) {
 					'match_id' => $match_id,
 				);
 			},
+			'permanent'         => 'A win.',
 			'default_points'    => 150,
 			'category'          => 'competition',
 			'icon'              => 'icon-shield',
@@ -402,6 +435,7 @@ if ( $pro_active ) {
 					'tournament_id' => $tournament_id,
 				);
 			},
+			'permanent'         => 'A win.',
 			'default_points'    => 500,
 			'category'          => 'competition',
 			'icon'              => 'icon-star',
@@ -431,6 +465,7 @@ if ( $pro_active ) {
 					'xp_bonus'    => $xp,
 				);
 			},
+			'permanent'         => 'A milestone reached.',
 			'default_points'    => 50,
 			'category'          => 'engagement',
 			'icon'              => 'icon-trending-up',

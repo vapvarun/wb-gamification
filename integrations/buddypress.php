@@ -34,7 +34,8 @@ add_action(
 		}
 	}
 );
-add_action( 'publish_wbpoll', static fn( $post_id, $post ) => do_action( 'wb_gam_bp_poll_created', (int) $post->post_author, (int) $post_id ), 10, 2 );
+// A poll page is keyed apart from activity ids so the two can never share an award.
+add_action( 'publish_wbpoll', static fn( $post_id, $post ) => do_action( 'wb_gam_bp_poll_created', (int) $post->post_author, \WBGam\Engine\Registry::object_key( 'wbpoll', (int) $post_id ) ), 10, 2 );
 
 return [
 	'plugin'   => 'BuddyPress',
@@ -108,6 +109,11 @@ return [
 				// BP fires: ($friendship->id, $initiator_user_id, $friend_user_id, $friendship_object)
 				return is_object( $friendship ) ? (int) ( $friendship->friend_user_id ?? $friend_id ) : $friend_id;
 			},
+			'once_per_object'     => static fn( int $friendship_id ): int => $friendship_id,
+			'reverse_on'          => [
+				'friends_friendship_deleted' => static fn( $friendship_id ): int => (int) $friendship_id,
+			],
+			'async'               => false,
 			'default_points'      => 8,
 			'category'            => 'buddypress',
 			'icon'                => 'icon-users',
@@ -121,6 +127,14 @@ return [
 			'description'         => static fn(): string => __( 'Awarded when a member joins a BuddyPress group.', 'wb-gamification' ),
 			'hook'                => 'groups_join_group',
 			'user_callback'       => fn( int $group_id, int $user_id ) => $user_id,
+			'once_per_object'     => static fn( int $group_id, int $user_id ): int => \WBGam\Engine\Registry::object_key( $user_id, $group_id ),
+			// Per member and group: leaving, being removed or banned takes the points back; rejoining pays again.
+			'reverse_on'          => [
+				'groups_leave_group'   => static fn( $group_id, $user_id ): int => \WBGam\Engine\Registry::object_key( (int) $user_id, (int) $group_id ),
+				'groups_remove_member' => static fn( $group_id, $user_id ): int => \WBGam\Engine\Registry::object_key( (int) $user_id, (int) $group_id ),
+				'groups_ban_member'    => static fn( $group_id, $user_id ): int => \WBGam\Engine\Registry::object_key( (int) $user_id, (int) $group_id ),
+			],
+			'async'               => false,
 			'default_points'      => 8,
 			'category'            => 'buddypress',
 			'icon'                => 'icon-network',
@@ -137,6 +151,11 @@ return [
 				$group = groups_get_group( $group_id );
 				return $group ? (int) $group->creator_id : 0;
 			},
+			'once_per_object'     => static fn( int $group_id ): int => $group_id,
+			'reverse_on'          => [
+				'groups_delete_group' => static fn( $group_id ): int => (int) $group_id,
+			],
+			'async'               => false,
 			'default_points'      => 20,
 			'category'            => 'buddypress',
 			'icon'                => 'icon-plus',
@@ -150,6 +169,7 @@ return [
 			'description'         => static fn(): string => __( 'Awarded once when a member saves their extended BuddyPress profile.', 'wb-gamification' ),
 			'hook'                => 'xprofile_updated_profile',
 			'user_callback'       => fn( int $user_id ) => $user_id,
+			'permanent'           => 'A one-time profile milestone.',
 			'default_points'      => 15,
 			'category'            => 'buddypress',
 			'icon'                => 'icon-user',
@@ -171,7 +191,7 @@ return [
 				return $is_update || (int) $reactor_id === $owner_id ? 0 : $owner_id;
 			},
 			// One reactor pays once per item, so reacting, removing and reacting again earns nothing.
-			'once_per_object'     => static fn( $reactor_id, $item_id, $content_type ): int => crc32( "{$reactor_id}:{$content_type}:{$item_id}" ),
+			'once_per_object'     => static fn( $reactor_id, $item_id, $content_type ): int => \WBGam\Engine\Registry::object_key( $reactor_id, $content_type, $item_id ),
 			// One amount for every reaction, the owner's (default 3). Until 1.6.8 a reaction on an
 			// activity update was forced up to at least 5, so the owner could not lower it.
 			'metadata_callback'   => static function ( $reactor_id, $item_id, $content_type ) use ( $wb_gam_bp_reacted_activity ): array {
@@ -180,6 +200,10 @@ return [
 					'activity_type' => 'activity' === $content_type ? ( $wb_gam_bp_reacted_activity( $item_id )->type ?? 'unknown' ) : $content_type,
 				];
 			},
+			'reverse_on'          => [
+				'bp_reactions_after_unreact' => static fn( $reactor_id, $item_id, $content_type ): int => \WBGam\Engine\Registry::object_key( $reactor_id, $content_type, $item_id ),
+			],
+			'async'               => false,
 			'default_points'      => 3,
 			'category'            => 'buddypress',
 			'icon'                => 'icon-heart',
@@ -194,6 +218,13 @@ return [
 			'hook'                => 'wb_gam_bp_poll_created',
 			'user_callback'       => static fn( $user_id ): int => (int) $user_id,
 			'once_per_object'     => static fn( $user_id, $poll_id ): int => (int) $poll_id,
+			// An activity poll is keyed by its activity id, a poll page by Registry::object_key( 'wbpoll', id ) (the bridge above).
+			'reverse_on'          => [
+				'bp_activity_deleted_activities' => static fn( $activity_ids ): array => array_map( 'intval', (array) $activity_ids ),
+				'wp_trash_post'                  => static fn( $post_id ): int => 'wbpoll' === get_post_type( (int) $post_id ) ? \WBGam\Engine\Registry::object_key( 'wbpoll', (int) $post_id ) : 0,
+				'before_delete_post'             => static fn( $post_id ): int => 'wbpoll' === get_post_type( (int) $post_id ) ? \WBGam\Engine\Registry::object_key( 'wbpoll', (int) $post_id ) : 0,
+			],
+			'async'               => false,
 			'default_points'      => 10,
 			'category'            => 'buddypress',
 			'icon'                => 'icon-chart-bar',
@@ -211,6 +242,11 @@ return [
 			'metadata_callback'   => function ( int $item_id, string $type = '' ): array {
 				return array( 'avatar_type' => $type );
 			},
+			'once_per_object'     => static fn( int $item_id ): int => $item_id,
+			'reverse_on'          => [
+				'bp_core_delete_existing_avatar' => static fn( $args ): int => 'user' === ( $args['object'] ?? 'user' ) ? (int) ( $args['item_id'] ?? 0 ) : 0,
+			],
+			'async'               => false,
 			'default_points'      => 10,
 			'category'            => 'buddypress',
 			'icon'                => 'icon-user',
@@ -228,6 +264,11 @@ return [
 			'user_callback'       => function ( int $item_id, string $name = '', string $cover_url = '', int $feedback_code = 0 ): int {
 				return 1 === $feedback_code ? $item_id : 0;
 			},
+			'once_per_object'     => static fn( int $item_id ): int => $item_id,
+			'reverse_on'          => [
+				'members_cover_image_deleted' => static fn( $item_id ): int => (int) $item_id,
+			],
+			'async'               => false,
 			'default_points'      => 10,
 			'category'            => 'buddypress',
 			'icon'                => 'icon-image',
@@ -250,6 +291,10 @@ return [
 			'metadata_callback'   => function ( int $item_id, string $name = '', string $cover_url = '', int $feedback_code = 0 ): array {
 				return array( 'group_id' => $item_id );
 			},
+			'reverse_on'          => [
+				'groups_cover_image_deleted' => static fn( $item_id ): int => (int) $item_id,
+			],
+			'async'               => false,
 			'default_points'      => 10,
 			'category'            => 'buddypress',
 			'icon'                => 'icon-image',
@@ -274,6 +319,7 @@ return [
 					'thread_id' => is_object( $message ) ? (int) ( $message->thread_id ?? 0 ) : 0,
 				);
 			},
+			'permanent'           => 'A sent message cannot be unsent; deleting a conversation only hides it for one member.',
 			'default_points'      => 3,
 			'category'            => 'buddypress',
 			'icon'                => 'icon-mail',

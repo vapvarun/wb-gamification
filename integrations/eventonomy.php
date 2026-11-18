@@ -83,6 +83,12 @@ return array(
 					'occurrence_id' => is_array( $full ) ? (int) ( $full['occurrence_id'] ?? 0 ) : 0,
 				);
 			},
+			'once_per_object'   => static fn( $full ): int => (int) ( $full['id'] ?? 0 ),
+			// Per RSVP: deleting it or moving it off "going" takes the points back; going again pays again.
+			'reverse_on'        => array(
+				'evnm_after_delete_rsvp' => static fn( $rsvp_id ): int => (int) $rsvp_id,
+				'evnm_after_update_rsvp' => static fn( $full, $changed = array() ): int => in_array( 'status', (array) $changed, true ) && 'going' !== (string) ( $full['status'] ?? '' ) ? (int) ( $full['id'] ?? 0 ) : 0,
+			),
 			'default_points'    => 10,
 			'category'          => 'events',
 			'icon'              => 'icon-calendar-check',
@@ -114,6 +120,9 @@ return array(
 					'status'   => (string) ( $full['status'] ?? '' ),
 				);
 			},
+			'reverse_on'        => array(
+				'evnm_after_delete_event' => static fn( $event_id ): int => (int) $event_id,
+			),
 			'default_points'    => 25,
 			'category'          => 'events',
 			'icon'              => 'icon-calendar-plus',
@@ -145,6 +154,12 @@ return array(
 					'order_id' => is_array( $full ) ? (int) ( $full['id'] ?? 0 ) : 0,
 				);
 			},
+			'once_per_object'   => static fn( $full ): int => (int) ( $full['id'] ?? 0 ),
+			// A refunded, cancelled or reversed order takes the ticket points back.
+			'reverse_on'        => array(
+				'evnm_after_update_order'  => static fn( $full, $changed = array() ): int => in_array( 'status', (array) $changed, true ) && in_array( (string) ( $full['status'] ?? '' ), array( 'refunded', 'cancelled' ), true ) ? (int) ( $full['id'] ?? 0 ) : 0,
+				'evnm_after_reverse_order' => static fn( $order_id ): int => (int) $order_id,
+			),
 			'default_points'    => 20,
 			'category'          => 'commerce',
 			'icon'              => 'icon-ticket',
@@ -175,6 +190,11 @@ return array(
 					'order_id' => (int) ( $full['id'] ?? 0 ),
 				);
 			},
+			// A refunded, cancelled or reversed order takes the ticket points back.
+			'reverse_on'        => array(
+				'evnm_after_update_order'  => static fn( $full, $changed = array() ): int => in_array( 'status', (array) $changed, true ) && in_array( (string) ( $full['status'] ?? '' ), array( 'refunded', 'cancelled' ), true ) ? (int) ( $full['id'] ?? 0 ) : 0,
+				'evnm_after_reverse_order' => static fn( $order_id ): int => (int) $order_id,
+			),
 			'default_points'    => 20,
 			'category'          => 'commerce',
 			'icon'              => 'icon-ticket',

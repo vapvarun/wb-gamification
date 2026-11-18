@@ -42,6 +42,7 @@ return [
 				return isset( $data['user'] ) ? (int) $data['user']->ID : 0;
 			},
 			'once_per_object' => static fn( array $data ): int => isset( $data['course'] ) ? (int) $data['course']->ID : 0,
+			'permanent'       => 'A completion. LearnDash resets progress only as an admin repair.',
 			'default_points'  => 100,
 			'category'        => 'learning',
 			'icon'            => 'icon-graduation-cap',
@@ -58,6 +59,7 @@ return [
 				return isset( $data['user'] ) ? (int) $data['user']->ID : 0;
 			},
 			'once_per_object' => static fn( array $data ): int => isset( $data['lesson'] ) ? (int) $data['lesson']->ID : 0,
+			'permanent'       => 'A completion. LearnDash resets progress only as an admin repair.',
 			'default_points'  => 15,
 			'category'        => 'learning',
 			'icon'            => 'icon-book-open',
@@ -74,6 +76,7 @@ return [
 				return isset( $data['user'] ) ? (int) $data['user']->ID : 0;
 			},
 			'once_per_object' => static fn( array $data ): int => isset( $data['topic'] ) ? (int) $data['topic']->ID : 0,
+			'permanent'       => 'A completion. LearnDash resets progress only as an admin repair.',
 			'default_points'  => 5,
 			'category'        => 'learning',
 			'icon'            => 'icon-file-text',
@@ -107,6 +110,7 @@ return [
 					'percentage' => isset( $quizdata['percentage'] ) ? (float) $quizdata['percentage'] : 0.0,
 				);
 			},
+			'permanent'         => 'A completion. LearnDash resets progress only as an admin repair.',
 			'default_points'    => 25,
 			'category'          => 'learning',
 			'icon'              => 'icon-award',
@@ -129,6 +133,12 @@ return [
 			'metadata_callback' => function ( int $assignment_id ): array {
 				return array( 'assignment_id' => $assignment_id );
 			},
+			// Deleting the assignment takes the approval points back (LearnDash has no un-approve action).
+			'reverse_on'        => array(
+				'wp_trash_post'      => static fn( $post_id ): int => 'sfwd-assignment' === get_post_type( (int) $post_id ) ? (int) $post_id : 0,
+				'before_delete_post' => static fn( $post_id ): int => 'sfwd-assignment' === get_post_type( (int) $post_id ) ? (int) $post_id : 0,
+			),
+			'async'             => false,
 			'default_points'    => 20,
 			'category'          => 'learning',
 			'icon'              => 'icon-circle-check',
@@ -143,12 +153,16 @@ return [
 			// LD fires: do_action( 'learndash_update_course_access', $user_id, $course_id, $course_access_list, $remove ).
 			'hook'            => 'learndash_update_course_access',
 			'user_callback'   => static fn( $user_id, $course_id, $access_list = null, $remove = false ): int => $remove ? 0 : (int) $user_id,
-			'once_per_object' => static fn( $user_id, $course_id ): int => (int) $course_id,
+			'once_per_object' => static fn( $user_id, $course_id ): int => \WBGam\Engine\Registry::object_key( (int) $user_id, (int) $course_id ),
+			// Per member and course. LearnDash reports enrol and removal on one hook ($remove).
+			'reverse_on'      => array(
+				'learndash_update_course_access' => static fn( $user_id, $course_id, $access_list = null, $remove = false ): int => $remove ? \WBGam\Engine\Registry::object_key( (int) $user_id, (int) $course_id ) : 0,
+			),
 			'default_points'  => 10,
 			'category'        => 'learning',
 			'icon'            => 'icon-log-in',
 			'repeatable'      => true,
-			'async'           => true,
+			'async'           => false,
 			'cooldown'        => 0,
 		],
 
@@ -159,12 +173,17 @@ return [
 			// LD fires: do_action( 'learndash_assignment_uploaded', $assignment_post_id, $assignment_meta ).
 			'hook'            => 'learndash_assignment_uploaded',
 			'user_callback'   => static fn( $assignment_id ): int => (int) get_post_field( 'post_author', (int) $assignment_id ),
-			'once_per_object' => static fn( $assignment_id, $meta = array() ): int => (int) ( $meta['lesson_id'] ?? 0 ),
+			'once_per_object' => static fn( $assignment_id, $meta = array() ): int => \WBGam\Engine\Registry::object_key( (int) get_post_field( 'post_author', (int) $assignment_id ), (int) ( $meta['lesson_id'] ?? 0 ) ),
+			// Per member and lesson; deleting the member's assignment takes it back (read before the delete).
+			'reverse_on'      => array(
+				'wp_trash_post'      => static fn( $post_id ): int => 'sfwd-assignment' === get_post_type( (int) $post_id ) ? \WBGam\Engine\Registry::object_key( (int) get_post_field( 'post_author', (int) $post_id ), (int) get_post_meta( (int) $post_id, 'lesson_id', true ) ) : 0,
+				'before_delete_post' => static fn( $post_id ): int => 'sfwd-assignment' === get_post_type( (int) $post_id ) ? \WBGam\Engine\Registry::object_key( (int) get_post_field( 'post_author', (int) $post_id ), (int) get_post_meta( (int) $post_id, 'lesson_id', true ) ) : 0,
+			),
 			'default_points'  => 5,
 			'category'        => 'learning',
 			'icon'            => 'icon-upload',
 			'repeatable'      => true,
-			'async'           => true,
+			'async'           => false,
 			'cooldown'        => 0,
 		],
 
@@ -175,6 +194,7 @@ return [
 			'hook'            => 'learndash_group_completed',
 			'user_callback'   => static fn( array $data ): int => isset( $data['user'] ) ? (int) $data['user']->ID : 0,
 			'once_per_object' => static fn( array $data ): int => isset( $data['group'] ) ? (int) $data['group']->ID : 0,
+			'permanent'       => 'A completion. LearnDash resets progress only as an admin repair.',
 			'default_points'  => 100,
 			'category'        => 'learning',
 			'icon'            => 'icon-users',

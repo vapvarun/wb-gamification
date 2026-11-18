@@ -71,12 +71,28 @@ add_action(
 	10,
 	3
 );
+// A refunded Tickets Commerce order takes back what it paid, item by item.
+add_action(
+	'tec_tickets_commerce_order_status_refunded',
+	static function ( $new_status, $old_status, $post ): void {
+		$order = tec_tc_get_order( $post );
+		foreach ( (array) $order->items as $item ) {
+			$type = $item['type'] ?? '';
+			if ( in_array( $type, [ 'ticket', 'tc-rsvp' ], true ) ) {
+				do_action( 'wb_gam_tec_order_refunded', (int) $order->purchaser['user_id'], (int) ( $item['event_id'] ?? 0 ), (string) $type );
+			}
+		}
+	},
+	10,
+	3
+);
 add_action( 'event_tickets_checkin', static fn( $attendee_id ) => do_action( 'wb_gam_tec_checked_in', (int) $attendee_id ) );
 add_action( 'rsvp_checkin', static fn( $attendee_id ) => do_action( 'wb_gam_tec_checked_in', (int) $attendee_id ) );
 
 // The bridges above fire these with ( $user_id, $event_id ).
-$wb_gam_tec_user  = static fn( $user_id ): int => (int) $user_id;
-$wb_gam_tec_event = static fn( $user_id, $event_id ): int => (int) $event_id;
+$wb_gam_tec_user = static fn( $user_id ): int => (int) $user_id;
+// An event is shared by its attendees, so awards are keyed per member and event.
+$wb_gam_tec_event = static fn( $user_id, $event_id ): int => \WBGam\Engine\Registry::object_key( (int) $user_id, (int) $event_id );
 
 return [
 	'plugin'   => 'The Events Calendar',
@@ -90,6 +106,12 @@ return [
 			'hook'            => 'wb_gam_tec_rsvp',
 			'user_callback'   => $wb_gam_tec_user,
 			'once_per_object' => $wb_gam_tec_event,
+			// Answering "not going" or a refunded Tickets Commerce RSVP takes it back.
+			'reverse_on'      => [
+				'event_tickets_rsvp_after_attendee_update' => static fn( $attendee_id, $event_id, $status ): int => 'no' === $status ? \WBGam\Engine\Registry::object_key( (int) get_post_meta( (int) $attendee_id, '_tribe_tickets_attendee_user_id', true ), (int) $event_id ) : 0,
+				'wb_gam_tec_order_refunded'                => static fn( $user_id, $event_id, $type ): int => 'tc-rsvp' === $type ? \WBGam\Engine\Registry::object_key( (int) $user_id, (int) $event_id ) : 0,
+			],
+			'async'           => false,
 			'default_points'  => 10,
 			'category'        => 'social',
 			'icon'            => 'icon-calendar',
@@ -104,6 +126,10 @@ return [
 			'hook'            => 'wb_gam_tec_ticket_purchased',
 			'user_callback'   => $wb_gam_tec_user,
 			'once_per_object' => $wb_gam_tec_event,
+			'reverse_on'      => [
+				'wb_gam_tec_order_refunded' => static fn( $user_id, $event_id, $type ): int => 'ticket' === $type ? \WBGam\Engine\Registry::object_key( (int) $user_id, (int) $event_id ) : 0,
+			],
+			'async'           => false,
 			'default_points'  => 20,
 			'category'        => 'social',
 			'icon'            => 'icon-ticket',
@@ -118,6 +144,11 @@ return [
 			'hook'            => 'wb_gam_tec_checked_in',
 			'user_callback'   => static fn( $attendee_id ): int => (int) get_post_meta( $attendee_id, '_tribe_tickets_attendee_user_id', true ),
 			'once_per_object' => static fn( $attendee_id ): int => (int) $attendee_id,
+			'reverse_on'      => [
+				'event_tickets_uncheckin' => static fn( $attendee_id ): int => (int) $attendee_id,
+				'rsvp_uncheckin'          => static fn( $attendee_id ): int => (int) $attendee_id,
+			],
+			'async'           => false,
 			'default_points'  => 15,
 			'category'        => 'social',
 			'icon'            => 'icon-map-pin',

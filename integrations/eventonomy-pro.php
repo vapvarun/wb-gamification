@@ -45,6 +45,11 @@ return array(
 					'rsvp_id'  => (int) ( $row['id'] ?? 0 ),
 				);
 			},
+			'once_per_object'   => static fn( array $row ): int => (int) ( $row['id'] ?? 0 ),
+			// Per RSVP: clearing the check-in takes the attendance points back.
+			'reverse_on'        => array(
+				'evnm_after_update_rsvp' => static fn( $full, $changed = array() ): int => in_array( 'checked_in_at', (array) $changed, true ) && empty( $full['checked_in_at'] ) ? (int) ( $full['id'] ?? 0 ) : 0,
+			),
 			'default_points'    => 30,
 			'category'          => 'events',
 			'icon'              => 'icon-user-check',
@@ -62,7 +67,7 @@ return array(
 			// $type is one of event, organizer, member, space, category.
 			// Also fires when already following, and after an unfollow, so once per followed item.
 			'hook'              => 'evnm_after_follow',
-			'once_per_object'   => static fn( int $user_id, string $type, int $object_id ): int => (int) crc32( $type . ':' . $object_id ),
+			'once_per_object'   => static fn( int $user_id, string $type, int $object_id ): int => \WBGam\Engine\Registry::object_key( $user_id, $type, $object_id ),
 			'user_callback'     => function ( int $user_id, string $type, int $object_id ): int {
 				return $user_id;
 			},
@@ -72,6 +77,10 @@ return array(
 					'object_id'   => $object_id,
 				);
 			},
+			// Per member and followed item (the key was per item only, which would reverse every follower).
+			'reverse_on'        => array(
+				'evnm_after_unfollow' => static fn( $user_id, $type, $object_id ): int => \WBGam\Engine\Registry::object_key( (int) $user_id, (string) $type, (int) $object_id ),
+			),
 			'default_points'    => 2,
 			'category'          => 'events',
 			'icon'              => 'icon-bell',

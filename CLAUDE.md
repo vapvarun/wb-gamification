@@ -150,6 +150,33 @@ read BuddyNext's `--bn-*` first. Do not restyle a shell per surface and do not w
 easing in component CSS: stage 2.16 (`bin/check-motion-tokens.sh`) fails on growth. Toasts go through
 `window.wbGam.toast()` (`assets/js/toast-core.js`), confetti through `wbGam.celebrate()`.
 
+## Integration rules: entry and exit together (owner, 18 Nov 2026)
+
+Every trigger in `integrations/*.php` is written with its way in AND its way out in the same change.
+Do not add an earning rule and leave its removal for a later card; that is how 1.6.8 had to be fixed
+plugin by plugin.
+
+1. **Exit is declared, never implied.** A trigger has `reverse_on` (the partner's removal hooks: delete,
+   trash, reject, unfriend, leave, unfollow, refund, cancel) or `permanent => '<reason>'` (a milestone that
+   cannot be undone: course completed, quiz passed, sign-up, a win). `ManifestExitContractTest` fails a
+   trigger that declares neither.
+2. **Add pays, remove takes back, add again pays again.** Reversal is per object (`once_per_object`, same id
+   on the way in and out) and settles exactly what that object paid, from whoever was paid. Re-adding pays
+   again, so add/remove loops net to zero instead of needing a ban. `restore_on` gives back an award that
+   was taken (untrash, unspam, approve again).
+3. **Pay on publish, not on submit.** Content held for moderation pays when approved (bridge to a
+   `wb_gam_<plugin>_..._published` hook, as Listora, WP Sell Services, Tutor and Learnomy reviews do) and
+   reverses on reject or spam.
+4. **Your own content pays nothing.** When the member acting can own the content (react, vote, share,
+   bookmark, comment), declare `owner_callback`; the engine skips with reason `own_content`.
+5. **No partner hook, no silent gap.** If the partner removes the object with raw SQL and no hook, write
+   `permanent` with "no removal hook in <plugin> <version>" and file a card on that plugin's board for one.
+6. **Old content:** content created before per-object tracking started never pays again (`object_date`).
+
+Reference shapes: `Registry::comment_object_hooks()`, `integrations/wb-listora.php` (review bridge),
+`integrations/woocommerce.php` (`wc_order_completed`, refund reverse). The contract is documented on
+`Registry::register_action()` and in `docs/website/developer-guide/30-manifest-files.md`.
+
 ## Execution Rules (Non-Negotiable)
 
 **Every task follows this loop:**

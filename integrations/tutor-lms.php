@@ -60,6 +60,7 @@ return [
 			'hook'            => 'tutor_course_complete_after',
 			'user_callback'   => $wb_gam_tutor_user,
 			'once_per_object' => $wb_gam_tutor_object,
+			'permanent'       => 'A completion.',
 			'default_points'  => 100,
 			'category'        => 'learning',
 			'icon'            => 'icon-graduation-cap',
@@ -75,6 +76,7 @@ return [
 			'hook'            => 'tutor_mark_lesson_complete_after',
 			'user_callback'   => $wb_gam_tutor_user,
 			'once_per_object' => $wb_gam_tutor_object,
+			'permanent'       => 'A completion.',
 			'default_points'  => 10,
 			'category'        => 'learning',
 			'icon'            => 'icon-book-open',
@@ -96,6 +98,7 @@ return [
 				$attempt = tutor_utils()->get_attempt( $attempt_id );
 				return $attempt ? (int) $attempt->quiz_id : 0;
 			},
+			'permanent'       => 'A completion.',
 			'default_points'  => 25,
 			'category'        => 'learning',
 			'icon'            => 'icon-award',
@@ -110,12 +113,17 @@ return [
 			'description'     => static fn(): string => __( 'Awarded once per course when an enrollment is completed. A pending paid enrollment earns nothing.', 'wb-gamification' ),
 			'hook'            => 'wb_gam_tutor_enrolled',
 			'user_callback'   => static fn( int $enrol_id ): int => 'completed' === get_post_status( $enrol_id ) ? (int) get_post_field( 'post_author', $enrol_id ) : 0,
-			'once_per_object' => static fn( int $enrol_id ): int => (int) get_post_field( 'post_parent', $enrol_id ),
+			'once_per_object' => static fn( int $enrol_id ): int => \WBGam\Engine\Registry::object_key( (int) get_post_field( 'post_author', $enrol_id ), (int) get_post_field( 'post_parent', $enrol_id ) ),
+			// Per member and course: a cancelled or deleted enrolment takes it back; enrolling again pays again.
+			'reverse_on'      => array(
+				'tutor_after_enrollment_cancelled' => static fn( $course_id, $user_id ): int => \WBGam\Engine\Registry::object_key( (int) $user_id, (int) $course_id ),
+				'tutor_after_enrollment_deleted'   => static fn( $course_id, $user_id ): int => \WBGam\Engine\Registry::object_key( (int) $user_id, (int) $course_id ),
+			),
 			'default_points'  => 10,
 			'category'        => 'learning',
 			'icon'            => 'icon-log-in',
 			'repeatable'      => true,
-			'async'           => true,
+			'async'           => false,
 			'cooldown'        => 0,
 		],
 
@@ -133,6 +141,7 @@ return [
 				$comment = get_comment( (int) $comment_id );
 				return $comment ? (int) $comment->comment_post_ID : 0;
 			},
+			'permanent'       => 'Tutor LMS deletes reviews and puts them back on hold with raw queries and no action.',
 			'default_points'  => 10,
 			'category'        => 'learning',
 			'icon'            => 'icon-star',
@@ -148,6 +157,7 @@ return [
 			// Tutor also fires this for replies; those carry a comment_parent.
 			'hook'           => 'tutor_after_asked_question',
 			'user_callback'  => static fn( array $data ): int => empty( $data['comment_parent'] ) ? (int) ( $data['user_id'] ?? 0 ) : 0,
+			'permanent'      => 'Tutor LMS deletes questions with raw queries and no action.',
 			'default_points' => 5,
 			'category'       => 'learning',
 			'icon'           => 'icon-circle-help',

@@ -160,6 +160,7 @@ return array(
 			'metadata_callback' => function ( int $claim_id, int $listing_id, int $claimant ): array {
 				return array( 'listing_id' => $listing_id );
 			},
+			'permanent'         => 'No revoke action in Listora 1.x: a claim cannot be withdrawn through a hook (card on the Listora board).',
 			'default_points'    => 15,
 			'category'          => 'listings',
 			'icon'              => 'icon-shield-check',
@@ -179,6 +180,7 @@ return array(
 			'metadata_callback' => function ( int $post_id ): array {
 				return array( 'listing_id' => $post_id );
 			},
+			'permanent'         => 'A renewal ran its term; trashing the listing reverses its submit and publish awards instead.',
 			'default_points'    => 3,
 			'category'          => 'listings',
 			'icon'              => 'icon-refresh-cw',

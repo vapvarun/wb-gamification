@@ -39,32 +39,44 @@ return [
 	'triggers' => [
 
 		[
-			'id'             => 'give_donation_completed',
-			'label'          => static fn(): string => __( 'Complete a donation', 'wb-gamification' ),
-			'description'    => static fn(): string => __( 'Awarded each time a donation is successfully processed.', 'wb-gamification' ),
-			'hook'           => 'give_complete_donation',
-			'user_callback'  => static fn( $payment_id ): int => (int) give_get_payment_user_id( $payment_id ),
-			'default_points' => 30,
-			'category'       => 'social',
-			'icon'           => 'icon-heart',
-			'repeatable'     => true,
-			'cooldown'       => 0,
+			'id'              => 'give_donation_completed',
+			'label'           => static fn(): string => __( 'Complete a donation', 'wb-gamification' ),
+			'description'     => static fn(): string => __( 'Awarded each time a donation is successfully processed.', 'wb-gamification' ),
+			'hook'            => 'give_complete_donation',
+			'user_callback'   => static fn( $payment_id ): int => (int) give_get_payment_user_id( $payment_id ),
+			'once_per_object' => static fn( $payment_id ): int => (int) $payment_id,
+			// A refunded or revoked donation takes the points back.
+			'reverse_on'      => [
+				'give_update_payment_status' => static fn( $payment_id, $status ): int => in_array( $status, [ 'refunded', 'revoked' ], true ) ? (int) $payment_id : 0,
+			],
+			'async'           => false,
+			'default_points'  => 30,
+			'category'        => 'social',
+			'icon'            => 'icon-heart',
+			'repeatable'      => true,
+			'cooldown'        => 0,
 		],
 
 		[
-			'id'             => 'give_first_donation',
-			'label'          => static fn(): string => __( 'Make first donation ever', 'wb-gamification' ),
-			'description'    => static fn(): string => __( 'Awarded once when a member makes their very first donation.', 'wb-gamification' ),
-			'hook'           => 'give_complete_donation',
-			'user_callback'  => static function ( $payment_id ): int {
+			'id'              => 'give_first_donation',
+			'label'           => static fn(): string => __( 'Make first donation ever', 'wb-gamification' ),
+			'description'     => static fn(): string => __( 'Awarded once when a member makes their very first donation.', 'wb-gamification' ),
+			'hook'            => 'give_complete_donation',
+			'user_callback'   => static function ( $payment_id ): int {
 				// GiveWP counts this gift before it fires the hook, so a first-time donor is at 1.
 				$donor = new \Give_Donor( give_get_payment_donor_id( $payment_id ) );
 				return 1 === (int) $donor->purchase_count ? (int) give_get_payment_user_id( $payment_id ) : 0;
 			},
-			'default_points' => 75,
-			'category'       => 'social',
-			'icon'           => 'icon-star',
-			'repeatable'     => false,
+			'once_per_object' => static fn( $payment_id ): int => (int) $payment_id,
+			// A refunded or revoked donation takes the points back.
+			'reverse_on'      => [
+				'give_update_payment_status' => static fn( $payment_id, $status ): int => in_array( $status, [ 'refunded', 'revoked' ], true ) ? (int) $payment_id : 0,
+			],
+			'async'           => false,
+			'default_points'  => 75,
+			'category'        => 'social',
+			'icon'            => 'icon-star',
+			'repeatable'      => false,
 		],
 
 		[
@@ -73,6 +85,7 @@ return [
 			'description'    => static fn(): string => __( 'Awarded to the donor whose gift takes a campaign to its goal.', 'wb-gamification' ),
 			'hook'           => 'wb_gam_give_campaign_goal_reached',
 			'user_callback'  => static fn( $payment_id ): int => (int) give_get_payment_user_id( $payment_id ),
+			'permanent'      => 'A campaign milestone, fired once per campaign.',
 			'default_points' => 15,
 			'category'       => 'social',
 			'icon'           => 'icon-megaphone',

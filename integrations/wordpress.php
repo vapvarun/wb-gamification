@@ -66,6 +66,7 @@ return [
 			'description'     => static fn(): string => __( 'Awarded once when a user registers.', 'wb-gamification' ),
 			'hook'            => 'user_register',
 			'user_callback'   => fn( int $user_id ) => $user_id,
+			'permanent'       => 'A sign-up. Deleting the member removes their points with them.',
 			'default_points'  => 15,
 			'category'        => 'wordpress',
 			'icon'            => 'icon-users',
@@ -79,6 +80,7 @@ return [
 			'description'     => static fn(): string => __( 'Awarded once on the very first login.', 'wb-gamification' ),
 			'hook'            => 'wp_login',
 			'user_callback'   => fn( string $user_login, \WP_User $user ) => $user->ID,
+			'permanent'       => 'A first login cannot be undone.',
 			'default_points'  => 10,
 			'category'        => 'wordpress',
 			'icon'            => 'icon-lock',
@@ -95,6 +97,7 @@ return [
 			'user_callback'   => function ( int $user_id ): int {
 				return get_user_meta( $user_id, 'description', true ) ? $user_id : 0;
 			},
+			'permanent'       => 'A one-time profile milestone.',
 			'default_points'  => 10,
 			'category'        => 'wordpress',
 			'icon'            => 'icon-user',
@@ -182,11 +185,7 @@ return [
 			// One award per post while it is live: trashing or deleting it takes the points back, and
 			// publishing it again (untrash returns a post to draft) earns again.
 			'once_per_object' => static fn( string $new_status, string $old_status, $post ): int => $post instanceof \WP_Post ? (int) $post->ID : 0,
-			'object_date'     => \WBGam\Engine\Registry::post_object_date(),
-			'reverse_on'      => [
-				'wp_trash_post'      => static fn( $post_id ): int => 'post' === get_post_type( (int) $post_id ) ? (int) $post_id : 0,
-				'before_delete_post' => static fn( $post_id ): int => 'post' === get_post_type( (int) $post_id ) ? (int) $post_id : 0,
-			],
+			...\WBGam\Engine\Registry::post_object_hooks( 'post' ),
 			'default_points'  => 25,
 			'category'        => 'wordpress',
 			'icon'            => 'icon-file-text',
@@ -223,6 +222,9 @@ return [
 				$post_count = (int) count_user_posts( $author_id, 'post' );
 				return 1 === $post_count ? $author_id : 0;
 			},
+			'once_per_object' => static fn( string $new_status, string $old_status, $post ): int => $post instanceof \WP_Post ? (int) $post->ID : 0,
+			...\WBGam\Engine\Registry::post_object_hooks( 'post' ),
+			'async'           => false,
 			'default_points'  => 20,
 			'category'        => 'wordpress',
 			'icon'            => 'icon-star',

@@ -102,11 +102,11 @@ return [
 		],
 
 		[
-			'id'             => 'wc_first_purchase',
-			'label'          => static fn(): string => __( 'Make your first purchase', 'wb-gamification' ),
-			'description'    => static fn(): string => __( 'Awarded once on a customer\'s very first paid order.', 'wb-gamification' ),
-			'hook'           => 'wb_gam_wc_order_paid',
-			'user_callback'  => function ( int $order_id ): int {
+			'id'              => 'wc_first_purchase',
+			'label'           => static fn(): string => __( 'Make your first purchase', 'wb-gamification' ),
+			'description'     => static fn(): string => __( 'Awarded once on a customer\'s very first paid order.', 'wb-gamification' ),
+			'hook'            => 'wb_gam_wc_order_paid',
+			'user_callback'   => function ( int $order_id ): int {
 				$order = wc_get_order( $order_id );
 				if ( ! $order ) {
 					return 0;
@@ -151,10 +151,16 @@ return [
 				}
 				return 0;
 			},
-			'default_points' => 50,
-			'category'       => 'commerce',
-			'icon'           => 'icon-star',
-			'repeatable'     => false,
+			'once_per_object' => static fn( int $order_id ): int => $order_id,
+			// Refunding the first order takes the first-purchase award back.
+			'reverse_on'      => array(
+				'woocommerce_order_status_refunded' => static fn( $order_id ): int => (int) $order_id,
+			),
+			'async'           => false,
+			'default_points'  => 50,
+			'category'        => 'commerce',
+			'icon'            => 'icon-star',
+			'repeatable'      => false,
 		],
 
 		[
@@ -187,18 +193,24 @@ return [
 		],
 
 		[
-			'id'             => 'wc_wishlist_add',
-			'label'          => static fn(): string => __( 'Add a product to wishlist (YITH)', 'wb-gamification' ),
-			'description'    => static fn(): string => __( 'Awarded when a member adds any product to their YITH wishlist.', 'wb-gamification' ),
-			'hook'           => 'yith_wcwl_added_to_wishlist',
-			'user_callback'  => function ( int $product_id, int $wishlist_id, int $user_id ): int {
+			'id'              => 'wc_wishlist_add',
+			'label'           => static fn(): string => __( 'Add a product to wishlist (YITH)', 'wb-gamification' ),
+			'description'     => static fn(): string => __( 'Awarded when a member adds any product to their YITH wishlist.', 'wb-gamification' ),
+			'hook'            => 'yith_wcwl_added_to_wishlist',
+			'user_callback'   => function ( int $product_id, int $wishlist_id, int $user_id ): int {
 				return $user_id > 0 ? $user_id : (int) get_current_user_id();
 			},
-			'default_points' => 5,
-			'category'       => 'commerce',
-			'icon'           => 'icon-heart',
-			'repeatable'     => true,
-			'cooldown'       => 300,
+			'once_per_object' => static fn( int $product_id, int $wishlist_id, int $user_id ): int => \WBGam\Engine\Registry::object_key( $user_id, $product_id ),
+			// Per member and product: removing it from the wishlist takes the points back.
+			'reverse_on'      => array(
+				'yith_wcwl_removed_from_wishlist' => static fn( $product_id, $wishlist_id, $user_id ): int => \WBGam\Engine\Registry::object_key( (int) $user_id, (int) $product_id ),
+			),
+			'async'           => false,
+			'default_points'  => 5,
+			'category'        => 'commerce',
+			'icon'            => 'icon-heart',
+			'repeatable'      => true,
+			'cooldown'        => 300,
 		],
 
 		[
@@ -214,6 +226,7 @@ return [
 			'metadata_callback' => function ( string $cart_item_key, int $product_id ): array {
 				return array( 'product_id' => $product_id );
 			},
+			'permanent'         => 'Cart items also leave at checkout and when the session expires, so a removal is not an undo.',
 			'default_points'    => 1,
 			'category'          => 'commerce',
 			'icon'              => 'icon-shopping-cart',

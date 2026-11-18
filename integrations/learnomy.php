@@ -49,6 +49,7 @@ return array(
 					'course_id' => $course_id,
 				);
 			},
+			'permanent'         => 'A completion. Learnomy resets progress only as an admin repair.',
 			'default_points'    => 10,
 			'category'          => 'learning',
 			'icon'              => 'icon-book-open',
@@ -72,6 +73,7 @@ return array(
 					'score'   => $score,
 				);
 			},
+			'permanent'         => 'A completion. Learnomy resets progress only as an admin repair.',
 			'default_points'    => 25,
 			'category'          => 'learning',
 			'icon'              => 'icon-circle-check',
@@ -95,6 +97,7 @@ return array(
 					'course_id'     => $course_id,
 				);
 			},
+			'permanent'         => 'A completion. Learnomy resets progress only as an admin repair.',
 			'default_points'    => 100,
 			'category'          => 'learning',
 			'icon'              => 'icon-award',
@@ -117,6 +120,13 @@ return array(
 					'source'    => $source,
 				);
 			},
+			'once_per_object'   => static fn( int $enrollment_id, int $user_id, int $course_id ): int => $course_id > 0 ? \WBGam\Engine\Registry::object_key( $user_id, $course_id ) : 0,
+			// Per member and course: unenrolling or losing access takes it back; enrolling again pays again.
+			// An enrolment that simply expires ran its course and keeps its points.
+			'reverse_on'        => array(
+				'learnomy_student_unenrolled' => static fn( $enrollment_id, $user_id, $course_id, $access_remains = false ): int => $access_remains ? 0 : \WBGam\Engine\Registry::object_key( (int) $user_id, (int) $course_id ),
+				'learnomy_access_revoked'     => static fn( $enrollment_id, $user_id, $course_id ): int => \WBGam\Engine\Registry::object_key( (int) $user_id, (int) $course_id ),
+			),
 			'default_points'    => 5,
 			'category'          => 'learning',
 			'icon'              => 'icon-log-in',
@@ -142,6 +152,11 @@ return array(
 					'course_id'      => $course_id,
 				);
 			},
+			'once_per_object'   => static fn( int $certificate_id ): int => $certificate_id,
+			// A revoked certificate takes its points back; one that expires keeps them.
+			'reverse_on'        => array(
+				'learnomy_certificate_revoked' => static fn( $certificate_id ): int => (int) $certificate_id,
+			),
 			'default_points'    => 50,
 			'category'          => 'learning',
 			'icon'              => 'icon-file-badge',

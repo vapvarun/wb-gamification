@@ -41,6 +41,13 @@ return array(
 					'post_id' => $post_id,
 				);
 			},
+			'once_per_object'   => static fn( int $poll_id, int $post_id ): int => $post_id,
+			// Keyed by the forum post that holds the poll; deleting the post takes it back. Jetonomy Pro's admin
+			// poll delete runs raw SQL with no action (card on the Jetonomy board).
+			'reverse_on'        => array(
+				'jetonomy_post_deleted' => static fn( $post_id ): int => (int) $post_id,
+			),
+			'async'             => false,
 			'default_points'    => 10,
 			'category'          => 'social',
 			'icon'              => 'icon-chart-bar',
@@ -55,10 +62,11 @@ return array(
 			// Pro fires: do_action( 'jetonomy_pro_poll_voted', $poll_id, $user_id, $option_ids ).
 			'hook'              => 'jetonomy_pro_poll_voted',
 			'user_callback'     => function ( int $poll_id, int $user_id, array $option_ids ): int {
+				return $user_id;
+			},
+			'owner_callback'    => static function ( int $poll_id ): int {
 				global $wpdb;
-				// Voting in your own poll earns nothing.
-				$owner = (int) $wpdb->get_var( $wpdb->prepare( "SELECT created_by FROM {$wpdb->prefix}jt_pro_polls WHERE id = %d", $poll_id ) );
-				return $owner === $user_id ? 0 : $user_id;
+				return (int) $wpdb->get_var( $wpdb->prepare( "SELECT created_by FROM {$wpdb->prefix}jt_pro_polls WHERE id = %d", $poll_id ) );
 			},
 			'metadata_callback' => function ( int $poll_id, int $user_id, array $option_ids ): array {
 				return array(
@@ -66,6 +74,11 @@ return array(
 					'option_count' => count( $option_ids ),
 				);
 			},
+			'once_per_object'   => static fn( int $poll_id, int $user_id ): int => \WBGam\Engine\Registry::object_key( $user_id, $poll_id ),
+			'reverse_on'        => array(
+				'jetonomy_pro_poll_unvoted' => static fn( $poll_id, $user_id ): int => \WBGam\Engine\Registry::object_key( (int) $user_id, (int) $poll_id ),
+			),
+			'async'             => false,
 			'default_points'    => 2,
 			'category'          => 'social',
 			'icon'              => 'icon-check',
@@ -85,14 +98,12 @@ return array(
 			// $action is 'added' or 'removed' — only the 'added' branch earns points.
 			'hook'              => 'jetonomy_pro_reaction_toggled',
 			'user_callback'     => function ( string $object_type, int $object_id, string $emoji, int $user_id, string $action ): int {
-				if ( 'added' !== $action ) {
-					return 0;
-				}
-				// Reacting to your own post or reply earns nothing.
+				return 'added' === $action ? $user_id : 0;
+			},
+			'owner_callback'    => static function ( string $object_type, int $object_id ): int {
 				global $wpdb;
-				$table  = $wpdb->prefix . ( 'reply' === $object_type ? 'jt_replies' : 'jt_posts' );
-				$author = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT author_id FROM %i WHERE id = %d', $table, $object_id ) );
-				return $author === $user_id ? 0 : $user_id;
+				$table = $wpdb->prefix . ( 'reply' === $object_type ? 'jt_replies' : 'jt_posts' );
+				return (int) $wpdb->get_var( $wpdb->prepare( 'SELECT author_id FROM %i WHERE id = %d', $table, $object_id ) );
 			},
 			'metadata_callback' => function ( string $object_type, int $object_id, string $emoji, int $user_id, string $action ): array {
 				return array(
@@ -101,6 +112,12 @@ return array(
 					'emoji'       => $emoji,
 				);
 			},
+			'once_per_object'   => static fn( string $object_type, int $object_id, string $emoji, int $user_id ): int => \WBGam\Engine\Registry::object_key( $user_id, $object_type, $object_id, $emoji ),
+			// Jetonomy fires one hook for add and remove; a removal takes that reaction's points back.
+			'reverse_on'        => array(
+				'jetonomy_pro_reaction_toggled' => static fn( $object_type, $object_id, $emoji, $user_id, $action ): int => 'removed' === $action ? \WBGam\Engine\Registry::object_key( (int) $user_id, (string) $object_type, (int) $object_id, (string) $emoji ) : 0,
+			),
+			'async'             => false,
 			'default_points'    => 1,
 			'category'          => 'social',
 			'icon'              => 'icon-heart',

@@ -78,10 +78,11 @@ return array(
 			// Fires: do_action( 'buddynext_post_shared', int $share_id, int $post_id, int $user_id ).
 			'hook'              => 'buddynext_post_shared',
 			'user_callback'     => function ( int $share_id, int $post_id, int $user_id ): int {
+				return $user_id;
+			},
+			'owner_callback'    => static function ( int $share_id, int $post_id ): int {
 				global $wpdb;
-				// Sharing your own post earns nothing.
-				$author = (int) $wpdb->get_var( $wpdb->prepare( "SELECT user_id FROM {$wpdb->prefix}bn_posts WHERE id = %d", $post_id ) );
-				return $author === $user_id ? 0 : $user_id;
+				return (int) $wpdb->get_var( $wpdb->prepare( "SELECT user_id FROM {$wpdb->prefix}bn_posts WHERE id = %d", $post_id ) );
 			},
 			'metadata_callback' => function ( int $share_id, int $post_id, int $user_id ): array {
 				return array(
@@ -89,6 +90,7 @@ return array(
 					'post_id'  => $post_id,
 				);
 			},
+			'permanent'         => 'No removal hook in BuddyNext 1.3.0: ShareService::unshare() deletes with no action (card on the BuddyNext board).',
 			'default_points'    => 5,
 			'category'          => 'content',
 			'icon'              => 'icon-share-2',
@@ -151,6 +153,11 @@ return array(
 					'emoji'      => $emoji,
 				);
 			},
+			'once_per_object'   => static fn( int $object_id, int $author_id, int $reactor_id ): int => \WBGam\Engine\Registry::object_key( $reactor_id, 'post', $object_id ),
+			// Per reactor and post: removing the reaction takes the author's points back.
+			'reverse_on'        => array(
+				'buddynext_reaction_removed' => static fn( $object_type, $object_id, $user_id ): int => 'post' === $object_type ? \WBGam\Engine\Registry::object_key( (int) $user_id, 'post', (int) $object_id ) : 0,
+			),
 			'default_points'    => 2,
 			'category'          => 'content',
 			'icon'              => 'icon-heart',
@@ -174,6 +181,7 @@ return array(
 					'option_id' => $option_id,
 				);
 			},
+			'permanent'         => 'No removal hook in BuddyNext 1.3.0: PollService removes a vote with no action (card on the BuddyNext board).',
 			'default_points'    => 1,
 			'category'          => 'content',
 			'icon'              => 'icon-chart-no-axes-column',
@@ -188,13 +196,16 @@ return array(
 			'description'       => static fn(): string => __( 'Awarded the first time a member bookmarks a post. Daily cap limits farming.', 'wb-gamification' ),
 			// Fires: do_action( 'buddynext_post_bookmarked', int $post_id, int $user_id ), again after a remove and re-add.
 			'hook'              => 'buddynext_post_bookmarked',
-			'once_per_object'   => static fn( int $post_id ): int => $post_id,
+			'once_per_object'   => static fn( int $post_id, int $user_id ): int => \WBGam\Engine\Registry::object_key( $user_id, $post_id ),
 			'user_callback'     => function ( int $post_id, int $user_id ): int {
 				return $user_id;
 			},
 			'metadata_callback' => function ( int $post_id, int $user_id ): array {
 				return array( 'post_id' => $post_id );
 			},
+			'reverse_on'        => array(
+				'buddynext_post_unbookmarked' => static fn( $post_id, $user_id ): int => \WBGam\Engine\Registry::object_key( (int) $user_id, (int) $post_id ),
+			),
 			'default_points'    => 1,
 			'category'          => 'content',
 			'icon'              => 'icon-bookmark',
@@ -224,6 +235,11 @@ return array(
 			'metadata_callback' => function ( int $following_id, int $follower_id ): array {
 				return array( 'follower_id' => $follower_id );
 			},
+			'once_per_object'   => static fn( int $following_id, int $follower_id ): int => \WBGam\Engine\Registry::object_key( $follower_id, $following_id ),
+			// Per follower and followed member: an unfollow takes it back, a refollow pays again.
+			'reverse_on'        => array(
+				'buddynext_user_unfollowed' => static fn( $follower_id, $following_id ): int => \WBGam\Engine\Registry::object_key( (int) $follower_id, (int) $following_id ),
+			),
 			'default_points'    => 5,
 			'category'          => 'social',
 			'icon'              => 'icon-user-plus',
@@ -245,6 +261,7 @@ return array(
 				}
 				return $follower_id;
 			},
+			'permanent'      => 'A one-time milestone.',
 			'default_points' => 5,
 			'category'       => 'social',
 			'icon'           => 'icon-star',
@@ -267,6 +284,11 @@ return array(
 					'peer_id'       => $user_b,
 				);
 			},
+			'once_per_object'   => static fn( int $connection_id, int $user_a, int $user_b ): int => \WBGam\Engine\Registry::object_key( min( $user_a, $user_b ), max( $user_a, $user_b ) ),
+			// Keyed by the pair, lower id first: BuddyNext reports a removal by the two members, not the connection id.
+			'reverse_on'        => array(
+				'buddynext_connection_removed' => static fn( $user_a, $user_b ): int => \WBGam\Engine\Registry::object_key( min( (int) $user_a, (int) $user_b ), max( (int) $user_a, (int) $user_b ) ),
+			),
 			'default_points'    => 10,
 			'category'          => 'social',
 			'icon'              => 'icon-link',
@@ -295,6 +317,11 @@ return array(
 					'role'     => $role,
 				);
 			},
+			'once_per_object'   => static fn( int $space_id, int $user_id ): int => \WBGam\Engine\Registry::object_key( $user_id, $space_id ),
+			'reverse_on'        => array(
+				'buddynext_space_member_left'    => static fn( $space_id, $user_id ): int => \WBGam\Engine\Registry::object_key( (int) $user_id, (int) $space_id ),
+				'buddynext_space_member_removed' => static fn( $space_id, $user_id ): int => \WBGam\Engine\Registry::object_key( (int) $user_id, (int) $space_id ),
+			),
 			'default_points'    => 5,
 			'category'          => 'community',
 			'icon'              => 'icon-users',
@@ -315,6 +342,10 @@ return array(
 			'metadata_callback' => function ( int $space_id, int $owner_id ): array {
 				return array( 'space_id' => $space_id );
 			},
+			'once_per_object'   => static fn( int $space_id ): int => $space_id,
+			'reverse_on'        => array(
+				'buddynext_space_deleted' => static fn( $space_id ): int => (int) $space_id,
+			),
 			'default_points'    => 10,
 			'category'          => 'community',
 			'icon'              => 'icon-panels-top-left',
@@ -340,6 +371,7 @@ return array(
 			'user_callback'  => function ( int $user_id, int $percent ): int {
 				return 100 === (int) $percent ? $user_id : 0;
 			},
+			'permanent'      => 'A one-time profile milestone.',
 			'default_points' => 25,
 			'category'       => 'community',
 			'icon'           => 'icon-circle-check',
@@ -355,6 +387,7 @@ return array(
 			'user_callback'  => function ( int $user_id ): int {
 				return $user_id;
 			},
+			'permanent'      => 'A one-time milestone.',
 			'default_points' => 20,
 			'category'       => 'community',
 			'icon'           => 'icon-flag',

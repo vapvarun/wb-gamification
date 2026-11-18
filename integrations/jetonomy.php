@@ -53,6 +53,11 @@ return array(
 					'role'     => $role,
 				);
 			},
+			'once_per_object'   => static fn( int $space_id, int $user_id ): int => \WBGam\Engine\Registry::object_key( $user_id, $space_id ),
+			'reverse_on'        => array(
+				'jetonomy_user_left_space' => static fn( $space_id, $user_id ): int => \WBGam\Engine\Registry::object_key( (int) $user_id, (int) $space_id ),
+			),
+			'async'             => false,
 			'default_points'    => 5,
 			'category'          => 'community',
 			'icon'              => 'icon-users',
@@ -76,6 +81,11 @@ return array(
 					'reviewed_by' => $reviewed_by,
 				);
 			},
+			'once_per_object'   => static fn( int $space_id, int $user_id ): int => \WBGam\Engine\Registry::object_key( $user_id, $space_id ),
+			'reverse_on'        => array(
+				'jetonomy_user_left_space' => static fn( $space_id, $user_id ): int => \WBGam\Engine\Registry::object_key( (int) $user_id, (int) $space_id ),
+			),
+			'async'             => false,
 			'default_points'    => 10,
 			'category'          => 'community',
 			'icon'              => 'icon-circle-check',
@@ -101,6 +111,7 @@ return array(
 					'delta'     => $new_level - $old_level,
 				);
 			},
+			'permanent'         => 'A trust level reached is a milestone; a later demotion does not undo it.',
 			'default_points'    => 50,
 			'category'          => 'community',
 			'icon'              => 'icon-trending-up',
@@ -133,7 +144,9 @@ return array(
 					return 0;
 				}
 
-				// Once per member per plan. Adapters re-announce a membership on every
+				// Awards from before 1.6.8 carry no object id: those count as earned per plan here.
+				// Newer ones are keyed per member and plan (once_per_object) and taken back on
+				// deactivation. Adapters re-announce a membership on every
 				// renewal, date change and monthly/yearly switch (BuddyNext Pro maps
 				// subscription_extended to this hook too), and each paid 25 points
 				// again. A different plan still earns, once. The check reads the
@@ -146,7 +159,7 @@ return array(
 						"SELECT COUNT(*) FROM {$wpdb->prefix}wb_gam_points p
 						 JOIN {$wpdb->prefix}wb_gam_events e ON e.id = p.event_id
 						 WHERE p.user_id = %d AND p.action_id = 'jetonomy_membership_activated' AND p.points > 0
-						   AND e.metadata LIKE %s",
+						   AND p.object_id IS NULL AND e.metadata LIKE %s",
 						$user_id,
 						'%' . $wpdb->esc_like( $needle ) . '%'
 					)
@@ -159,6 +172,11 @@ return array(
 					'source'   => $source,
 				);
 			},
+			'once_per_object'   => static fn( int $user_id, $level_id ): int => \WBGam\Engine\Registry::object_key( $user_id, is_scalar( $level_id ) ? (string) $level_id : '' ),
+			// Per member and plan: deactivation (cancel, refund, removal) takes it back; reactivating pays again.
+			'reverse_on'        => array(
+				'jetonomy_membership_deactivated' => static fn( $user_id, $level_id ): int => \WBGam\Engine\Registry::object_key( (int) $user_id, is_scalar( $level_id ) ? (string) $level_id : '' ),
+			),
 			'default_points'    => 25,
 			'category'          => 'community',
 			'icon'              => 'icon-key',

@@ -108,9 +108,12 @@ final class Registry {
 	 *                                  Needs `once_per_object`, and `async => false` so the award exists before a delete can arrive.
 	 *   @type array    $restore_on     Optional. Hook => callable returning the returned object id (or ids), 0 to skip.
 	 *                                  Gives a taken-back award back ({@see PointsEngine::restore_object_awards()}).
+	 *   @type string   $permanent      Why the award is never taken back (a milestone such as a course completed, a
+	 *                                  win, a sign-up). Every trigger declares its exit: `reverse_on` or `permanent`.
+	 *   @type callable $owner_callback Optional. Returns whose content the hook is about, from the hook arguments. The
+	 *                                  award is skipped (`own_content`) when that is the member being paid.
 	 *   @type callable $object_date    Optional. Object id => when the content was created (UTC 'Y-m-d H:i:s'). Content
-	 *                                  from before the 1.6.8 update whose author already has pre-1.6.8 points for
-	 *                                  this action is treated as paid ({@see PointsEngine::is_legacy_object()}).
+	 *                                  from before the 1.6.8 update is treated as paid ({@see PointsEngine::is_legacy_object()}).
 	 *   @type int      $default_points Default points awarded. Admin can override.
 	 *   @type string   $category       Optional category (buddypress, commerce, etc.).
 	 *   @type string   $icon           Dashicon name or URL.
@@ -245,6 +248,46 @@ final class Registry {
 	}
 
 	/**
+	 * `object_date` + `reverse_on` for a trigger whose object is a WordPress post of one type: trash
+	 * or delete takes the award back; publishing again pays again through the trigger's own hook.
+	 *
+	 * @since 1.6.8
+	 *
+	 * @param string $post_type Post type the trigger pays for.
+	 * @return array{object_date: callable, reverse_on: array<string, callable>}
+	 */
+	public static function post_object_hooks( string $post_type ): array {
+		$removed = static fn( $post_id ): int => get_post_type( (int) $post_id ) === $post_type ? (int) $post_id : 0;
+		return array(
+			'object_date' => self::post_object_date(),
+			'reverse_on'  => array(
+				'wp_trash_post'      => $removed,
+				'before_delete_post' => $removed,
+			),
+		);
+	}
+
+	/**
+	 * One object id for an award that is about a pair, not a row: a member in a group, a follow, a
+	 * reaction by one member on one item.
+	 *
+	 * A reversal takes back every award for its action and object id, so the id must be unique to
+	 * the award: key a course, group or space seat with the member, never by the shared id alone.
+	 * Build the same key on the way in (`once_per_object`) and out (`reverse_on`).
+	 *
+	 * ponytail: crc32, so two pairs can share a key about once in four billion per action; switch
+	 * to a 64-bit hash if object_id ever widens.
+	 *
+	 * @since 1.6.8
+	 *
+	 * @param int|string ...$parts The pair, e.g. ( $user_id, $group_id ) or ( $reactor, 'post', $item ).
+	 * @return int Positive key.
+	 */
+	public static function object_key( ...$parts ): int {
+		return max( 1, (int) crc32( implode( ':', array_map( 'strval', $parts ) ) ) );
+	}
+
+	/**
 	 * Run a listener inside another plugin's request without letting it fail that request.
 	 *
 	 * A trigger runs inside the partner's do_action. If its callback throws - a partner changed an
@@ -315,6 +358,14 @@ final class Registry {
 				'not_eligible',
 				array()
 			);
+			return;
+		}
+
+		// Acting on your own content earns nothing: owner_callback names whose content the hook is
+		// about, and a member is never paid for their own.
+		if ( isset( $action['owner_callback'] ) && is_callable( $action['owner_callback'] ) && (int) call_user_func_array( $action['owner_callback'], $params ) === $user_id ) {
+			/** This filter is documented in src/Engine/PointsEngine.php — see wb_gam_award_skipped. */
+			do_action( 'wb_gam_award_skipped', $user_id, (string) $action['id'], 'own_content', array() );
 			return;
 		}
 

@@ -36,6 +36,14 @@ return array(
 			'metadata_callback' => function ( int $job_id, $request = null ): array {
 				return array( 'job_id' => $job_id );
 			},
+			'once_per_object'   => static fn( int $job_id ): int => $job_id,
+			'reverse_on'        => array(
+				'wcb_job_deleted'  => static fn( $job_id ): int => (int) $job_id,
+				'wcb_job_rejected' => static fn( $job_id ): int => (int) $job_id,
+			),
+			'restore_on'        => array(
+				'wcb_job_republished' => static fn( $job_id ): int => (int) $job_id,
+			),
 			'default_points'    => 10,
 			'category'          => 'careers',
 			'icon'              => 'icon-briefcase',
@@ -56,6 +64,11 @@ return array(
 			'metadata_callback' => function ( int $job_id ): array {
 				return array( 'job_id' => $job_id );
 			},
+			'once_per_object'   => static fn( int $job_id ): int => $job_id,
+			// Deleting the job takes it back; a job that expires ran its course and keeps it.
+			'reverse_on'        => array(
+				'wcb_job_deleted' => static fn( $job_id ): int => (int) $job_id,
+			),
 			'default_points'    => 5,
 			'category'          => 'careers',
 			'icon'              => 'icon-circle-check',
@@ -78,6 +91,11 @@ return array(
 					'job_id'         => $job_id,
 				);
 			},
+			'once_per_object'   => static fn( int $app_id ): int => $app_id,
+			'reverse_on'        => array(
+				'wcb_application_withdrawn' => static fn( $app_id ): int => (int) $app_id,
+				'wcb_application_deleted'   => static fn( $app_id ): int => (int) $app_id,
+			),
 			'default_points'    => 8,
 			'category'          => 'careers',
 			'icon'              => 'icon-send',
@@ -105,6 +123,11 @@ return array(
 			'metadata_callback' => function ( int $app_id, string $old_status = '', string $new_status = '' ): array {
 				return array( 'application_id' => $app_id );
 			},
+			// Moving the application off "hired", or deleting it, takes the points back; hired again pays again.
+			'reverse_on'        => array(
+				'wcb_application_status_changed' => static fn( $app_id, $old_status = '', $new_status = '' ): int => 'hired' === $old_status && 'hired' !== $new_status ? (int) $app_id : 0,
+				'wcb_application_deleted'        => static fn( $app_id ): int => (int) $app_id,
+			),
 			'default_points'    => 100,
 			'category'          => 'careers',
 			'icon'              => 'icon-trophy',
@@ -121,6 +144,7 @@ return array(
 			'user_callback'  => function ( int $user_id ): int {
 				return $user_id;
 			},
+			'permanent'      => 'A sign-up.',
 			'default_points' => 15,
 			'category'       => 'careers',
 			'icon'           => 'icon-user-plus',
@@ -139,6 +163,7 @@ return array(
 			'metadata_callback' => function ( int $user_id, int $company_id = 0 ): array {
 				return array( 'company_id' => $company_id );
 			},
+			'permanent'         => 'A sign-up.',
 			'default_points'    => 15,
 			'category'          => 'careers',
 			'icon'              => 'icon-building',

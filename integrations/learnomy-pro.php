@@ -33,6 +33,7 @@ return array(
 			'metadata_callback' => function ( int $certificate_id, int $user_id, int $path_id ): array {
 				return array( 'path_id' => $path_id );
 			},
+			'permanent'         => 'A completion.',
 			'default_points'    => 150,
 			'category'          => 'learning',
 			'icon'              => 'icon-route',
@@ -55,6 +56,7 @@ return array(
 					'source'  => $source,
 				);
 			},
+			'permanent'         => 'No path-specific unenrol action in Learnomy Pro 2.3: a path unenrol fires learnomy_student_unenrolled with course 0 (card on the Learnomy board).',
 			'default_points'    => 5,
 			'category'          => 'learning',
 			'icon'              => 'icon-log-in',
@@ -75,6 +77,7 @@ return array(
 			'metadata_callback' => function ( int $id, int $assignment_id, int $user_id ): array {
 				return array( 'assignment_id' => $assignment_id );
 			},
+			'permanent'         => 'A submission. Learnomy Pro fires nothing when a submission is removed.',
 			'default_points'    => 15,
 			'category'          => 'learning',
 			'icon'              => 'icon-clipboard-check',
@@ -95,6 +98,10 @@ return array(
 			'metadata_callback' => function ( int $cohort_id, int $user_id ): array {
 				return array( 'cohort_id' => $cohort_id );
 			},
+			'once_per_object'   => static fn( int $cohort_id, int $user_id ): int => \WBGam\Engine\Registry::object_key( $user_id, 'cohort', $cohort_id ),
+			'reverse_on'        => array(
+				'learnomy_pro_cohort_member_removed' => static fn( $cohort_id, $user_id ): int => \WBGam\Engine\Registry::object_key( (int) $user_id, 'cohort', (int) $cohort_id ),
+			),
 			'default_points'    => 5,
 			'category'          => 'learning',
 			'icon'              => 'icon-users',
@@ -111,6 +118,7 @@ return array(
 			'user_callback'  => function ( string $code, int $user_id, int $sub_id ): int {
 				return $user_id;
 			},
+			'permanent'      => 'A redeemed gift code cannot be un-redeemed.',
 			'default_points' => 5,
 			'category'       => 'learning',
 			'icon'           => 'icon-gift',

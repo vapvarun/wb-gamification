@@ -90,6 +90,7 @@ return array(
 					'listing_id' => $listing_id,
 				);
 			},
+			'permanent'         => 'No delete action for a need response in Listora Pro (card on the Listora board).',
 			'default_points'    => 5,
 			'category'          => 'listings',
 			'icon'              => 'icon-reply',

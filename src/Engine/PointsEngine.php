@@ -342,8 +342,9 @@ final class PointsEngine {
 			return false;
 		}
 
-		// Repeatable check.
-		if ( ! ( $action['repeatable'] ?? true ) && self::get_action_count( $user_id, $action_id, $type ) > 0 ) {
+		// Repeatable check. A trigger keyed per object is gated by that key instead (below), which
+		// nets out reversals: an avatar deleted and uploaded again pays again, as the content rule says.
+		if ( ! ( $action['repeatable'] ?? true ) && ! isset( $action['once_per_object'] ) && self::get_action_count( $user_id, $action_id, $type ) > 0 ) {
 			/** This filter is documented in src/Engine/PointsEngine.php — see wb_gam_award_skipped. */
 			do_action(
 				'wb_gam_award_skipped',
@@ -414,6 +415,8 @@ final class PointsEngine {
 				 *                       event pays nobody (your own content, a share, a
 				 *                       waitlisted RSVP, a free plan, a copy already paid).
 				 *                       user_id is 0. Was `self_action` before 1.6.8.
+				 *   - own_content     — the action's owner_callback says the content is the
+				 *                       member's own (reacting to your own post).
 				 *
 				 * Reasons emitted by adapters (e.g. Jetonomy):
 				 *   - sandboxed        — wb_gam_sandboxed user meta veto

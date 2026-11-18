@@ -99,6 +99,12 @@ return [
 			'metadata_callback' => function ( int $topic_id ): array {
 				return array( 'topic_id' => $topic_id );
 			},
+			'once_per_object'   => static fn( int $topic_id ): int => $topic_id,
+			// Reopening the topic takes the points back; closing it again pays again.
+			'reverse_on'        => array(
+				'bbp_opened_topic' => static fn( $topic_id ): int => (int) $topic_id,
+			),
+			'async'             => false,
 			'default_points'    => 20,
 			'category'          => 'social',
 			'icon'              => 'icon-circle-check',

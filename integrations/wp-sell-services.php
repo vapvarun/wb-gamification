@@ -105,6 +105,12 @@ return array(
 			'metadata_callback' => function ( int $order_id, $order = null ): array {
 				return array( 'order_id' => $order_id );
 			},
+			'once_per_object'   => static fn( int $order_id ): int => $order_id,
+			// A refunded or cancelled order takes the points back (a partial refund keeps them).
+			'reverse_on'        => array(
+				'wpss_order_refunded'  => static fn( $order_id ): int => (int) $order_id,
+				'wpss_order_cancelled' => static fn( $order_id ): int => (int) $order_id,
+			),
 			'default_points'    => 20,
 			'category'          => 'commerce',
 			'icon'              => 'icon-package-check',
