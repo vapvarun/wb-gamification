@@ -140,9 +140,9 @@ class SetupWizardTemplatesTest extends TestCase {
 	#[Test]
 	public function every_plugin_template_action_has_the_manifest_label(): void {
 		$root = dirname( __DIR__, 3 );
-		$src  = (string) file_get_contents( $root . '/src/Admin/SetupWizard.php' );
-		$map  = substr( $src, (int) strpos( $src, 'function inactive_action_labels' ) );
-		preg_match_all( "/'([a-z0-9_]+)'\s*=>\s*__\( '([^']+)'/", substr( $map, 0, (int) strpos( $map, '}' ) ), $m );
+		$src  = (string) file_get_contents( $root . '/src/Engine/Registry.php' );
+		$map  = substr( $src, (int) strpos( $src, '$built_in = array(' ) );
+		preg_match_all( "/'([a-z0-9_]+)'\s*=>\s*__\( '([^']+)'/", substr( $map, 0, (int) strpos( $map, ');' ) ), $m );
 		$labels = array_combine( $m[1], $m[2] );
 
 		$manifest = array();

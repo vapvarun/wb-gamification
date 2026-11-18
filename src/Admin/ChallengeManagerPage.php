@@ -297,10 +297,7 @@ final class ChallengeManagerPage {
 							<tbody>
 							<?php foreach ( $challenges as $c ) : ?>
 								<?php
-								$action_label = $c['action_id'];
-								if ( isset( $actions[ $c['action_id'] ]['label'] ) ) {
-									$action_label = $actions[ $c['action_id'] ]['label'];
-								}
+								$action_label = Registry::label_for( (string) $c['action_id'] );
 								$status_class = 'active' === $c['status'] ? 'active' : 'info';
 								?>
 								<tr>

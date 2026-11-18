@@ -753,6 +753,26 @@ final class Registry {
 				'mvs_bookmark_photo'                => __( 'Bookmark a photo', 'wb-gamification' ),
 				'mvs_give_follow'                   => __( 'Follow another member', 'wb-gamification' ),
 				'wpss_review_approved'              => __( 'Review approved by a moderator', 'wb-gamification' ),
+				// Actions the starter badges, challenges and wizard templates name, so they read
+				// right on sites where that integration is not active (same words as its manifest).
+				'bn_post_created'                   => __( 'Create a post', 'wb-gamification' ),
+				'bn_comment_created'                => __( 'Write a comment', 'wb-gamification' ),
+				'bn_reaction_received'              => __( 'Receive a reaction on your content', 'wb-gamification' ),
+				'bn_connected'                      => __( 'Have a connection request accepted', 'wb-gamification' ),
+				'bn_space_joined'                   => __( 'Join a space', 'wb-gamification' ),
+				'bn_profile_completed'              => __( 'Complete your profile', 'wb-gamification' ),
+				'bp_activity_update'                => __( 'Post an activity update', 'wb-gamification' ),
+				'bp_activity_comment'               => __( 'Comment on an activity', 'wb-gamification' ),
+				'bp_friends_accepted'               => __( 'Accept a friendship', 'wb-gamification' ),
+				'bp_groups_join'                    => __( 'Join a group', 'wb-gamification' ),
+				'bp_groups_create'                  => __( 'Create a group', 'wb-gamification' ),
+				'bp_profile_complete'               => __( 'Complete extended profile', 'wb-gamification' ),
+				'bp_reactions_received'             => __( 'Receive a reaction', 'wb-gamification' ),
+				'bp_polls_created'                  => __( 'Create a poll', 'wb-gamification' ),
+				'learnomy_lesson_completed'         => __( 'Complete a lesson', 'wb-gamification' ),
+				'learnomy_course_completed'         => __( 'Complete a course', 'wb-gamification' ),
+				'learnomy_student_enrolled'         => __( 'Enrol in a course', 'wb-gamification' ),
+				'learnomy_certificate_issued'       => __( 'Earn a certificate', 'wb-gamification' ),
 			);
 			$label    = $built_in[ $action_id ] ?? '';
 		}

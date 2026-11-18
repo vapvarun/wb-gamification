@@ -89,4 +89,13 @@ class ActionLabelTest extends TestCase {
 		$this->assertSame( 'Start a Jetonomy conversation', Registry::label_for( 'jetonomy_pro_conversation_created' ) );
 		$this->assertSame( 'Follow another member (content removed)', Registry::label_for( 'mvs_give_follow_removed' ) );
 	}
+
+	/**
+	 * Starter badges and challenges name actions of integrations that may be inactive.
+	 */
+	#[Test]
+	public function inactive_integration_actions_keep_their_names(): void {
+		$this->assertSame( 'Post an activity update', Registry::label_for( 'bp_activity_update' ) );
+		$this->assertSame( 'Create a post', Registry::label_for( 'bn_post_created' ) );
+	}
 }

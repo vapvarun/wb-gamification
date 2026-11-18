@@ -366,10 +366,7 @@ final class CommunityChallengesPage {
 						<tbody>
 						<?php foreach ( $challenges as $c ) : ?>
 							<?php
-							$action_label = '*' === $c['target_action'] ? __( 'Any action', 'wb-gamification' ) : $c['target_action'];
-							if ( '*' !== $c['target_action'] && isset( $actions[ $c['target_action'] ]['label'] ) ) {
-								$action_label = $actions[ $c['target_action'] ]['label'];
-							}
+							$action_label = '*' === $c['target_action'] ? __( 'Any action', 'wb-gamification' ) : Registry::label_for( (string) $c['target_action'] );
 							$progress     = (int) $c['global_progress'];
 							$target       = max( 1, (int) $c['target_count'] );
 							$pct          = min( 100, round( ( $progress / $target ) * 100 ) );
