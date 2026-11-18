@@ -603,6 +603,39 @@ final class BadgeEngine {
 		wp_cache_set( self::RARITY_CACHE_KEY, $map, 'wb_gamification', self::RARITY_CACHE_TTL );
 	}
 
+	/**
+	 * Whether a badge is held by this share of members or fewer.
+	 *
+	 * Reads the cached rarity map when there is one. Without it (no persistent object
+	 * cache, so every request starts cold) it counts the badge's holders on idx_badge_id,
+	 * stopping one past the limit, instead of rebuilding the whole map.
+	 *
+	 * @since 1.6.8
+	 *
+	 * @param string $badge_id    Badge slug.
+	 * @param float  $max_percent Share of members, 0-100.
+	 */
+	public static function held_by_at_most( string $badge_id, float $max_percent ): bool {
+		$map = wp_cache_get( self::RARITY_CACHE_KEY, 'wb_gamification' );
+		if ( is_array( $map ) ) {
+			return (float) ( $map[ $badge_id ] ?? 0.0 ) <= $max_percent;
+		}
+
+		$max = (int) floor( (int) get_user_count() * $max_percent / 100 );
+
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- bounded range read on idx_badge_id; must see the award just made.
+		$held = (int) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM ( SELECT 1 FROM {$wpdb->prefix}wb_gam_user_badges WHERE badge_id = %s LIMIT %d ) AS holders",
+				$badge_id,
+				$max + 1
+			)
+		);
+
+		return $held <= $max;
+	}
+
 	// ── Award pipeline ─────────────────────────────────────────────────────────
 
 	/**

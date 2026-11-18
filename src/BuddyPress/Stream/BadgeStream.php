@@ -145,10 +145,7 @@ final class BadgeStream {
 		$rare = ! empty( $def['is_credential'] ) || ! empty( $def['max_earners'] );
 
 		if ( ! $rare && '' !== $badge_id && get_user_count() >= self::RARE_MIN_MEMBERS ) {
-			// Cached share of members holding each badge (BadgeEngine updates it on every award). A
-			// badge missing from it has just earned its first holder.
-			$map  = BadgeEngine::get_rarity_map();
-			$rare = (float) ( $map[ $badge_id ] ?? 0.0 ) <= self::RARE_MAX_PERCENT;
+			$rare = BadgeEngine::held_by_at_most( $badge_id, self::RARE_MAX_PERCENT );
 		}
 
 		/**
