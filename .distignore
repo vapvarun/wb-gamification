@@ -64,6 +64,7 @@ README.md
 # ── Build output / packaging ──────────────────────────────────────────
 dist
 .wordpress-org
+.wbcom-i18n-glossary.json
 
 # ── Editor / OS cruft ─────────────────────────────────────────────────
 .DS_Store

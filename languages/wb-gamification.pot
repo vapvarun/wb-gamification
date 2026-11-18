@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-17T10:28:22+00:00\n"
+"POT-Creation-Date: 2026-11-18T07:34:55+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: wb-gamification\n"
@@ -63,212 +63,220 @@ msgstr ""
 msgid "Awarded to the topic author when their topic is closed (resolved)."
 msgstr ""
 
-#: integrations/buddynext.php:37
-#: src/Admin/SetupWizard.php:849
+#: integrations/buddynext.php:43
+#: src/Engine/Registry.php:811
 msgid "Create a post"
 msgstr ""
 
-#: integrations/buddynext.php:38
+#: integrations/buddynext.php:44
 msgid "Awarded each time a member creates a post. Daily cap prevents farming."
 msgstr ""
 
-#: integrations/buddynext.php:76
+#: integrations/buddynext.php:82
 msgid "Share a post"
 msgstr ""
 
-#: integrations/buddynext.php:77
+#: integrations/buddynext.php:83
 msgid "Awarded when a member shares an existing post. Daily cap limits farming."
 msgstr ""
 
-#: integrations/buddynext.php:99
-#: src/Admin/SetupWizard.php:850
+#: integrations/buddynext.php:107
+#: src/Engine/Registry.php:812
 msgid "Write a comment"
 msgstr ""
 
-#: integrations/buddynext.php:100
+#: integrations/buddynext.php:108
 msgid "Awarded when a member comments on a post. Cooldown prevents rapid-fire farming."
 msgstr ""
 
-#: integrations/buddynext.php:136
-#: src/Admin/SetupWizard.php:853
+#: integrations/buddynext.php:145
+#: src/Engine/Registry.php:813
 msgid "Receive a reaction on your content"
 msgstr ""
 
-#: integrations/buddynext.php:137
+#: integrations/buddynext.php:146
 msgid "Awarded to the content owner when another member reacts to their post. BuddyNext only fires this for cross-user reactions (self-reactions are excluded upstream in ReactionService)."
 msgstr ""
 
-#: integrations/buddynext.php:161
-#: integrations/jetonomy-pro.php:53
+#: integrations/buddynext.php:175
+#: integrations/jetonomy-pro.php:60
 msgid "Vote on a poll"
 msgstr ""
 
-#: integrations/buddynext.php:162
+#: integrations/buddynext.php:176
 msgid "Awarded when a member votes on a poll. Daily cap prevents ballot-box farming."
 msgstr ""
 
-#: integrations/buddynext.php:184
+#: integrations/buddynext.php:200
 msgid "Bookmark a post"
 msgstr ""
 
-#: integrations/buddynext.php:185
+#: integrations/buddynext.php:201
 msgid "Awarded the first time a member bookmarks a post. Daily cap limits farming."
 msgstr ""
 
-#: integrations/buddynext.php:209
+#: integrations/buddynext.php:229
 msgid "Gain a follower"
 msgstr ""
 
-#: integrations/buddynext.php:210
+#: integrations/buddynext.php:230
 msgid "Awarded to the member who gains a new follower. Daily cap prevents follow-farming."
 msgstr ""
 
-#: integrations/buddynext.php:234
+#: integrations/buddynext.php:259
 msgid "Follow a member for the first time"
 msgstr ""
 
-#: integrations/buddynext.php:235
+#: integrations/buddynext.php:260
 msgid "Awarded once when a member follows their first person."
 msgstr ""
 
-#: integrations/buddynext.php:253
-#: src/Admin/SetupWizard.php:851
+#: integrations/buddynext.php:279
+#: src/Engine/Registry.php:814
 msgid "Have a connection request accepted"
 msgstr ""
 
-#: integrations/buddynext.php:254
+#: integrations/buddynext.php:280
 msgid "Awarded to the member who sent a connection request when it is accepted."
 msgstr ""
 
-#: integrations/buddynext.php:280
-#: integrations/jetonomy.php:32
-#: src/Admin/SetupWizard.php:852
+#: integrations/buddynext.php:311
+#: integrations/jetonomy.php:42
+#: src/Engine/Registry.php:815
 msgid "Join a space"
 msgstr ""
 
-#: integrations/buddynext.php:281
+#: integrations/buddynext.php:312
 msgid "Awarded when a member joins a community space. Daily cap prevents bulk-join farming."
 msgstr ""
 
-#: integrations/buddynext.php:305
+#: integrations/buddynext.php:341
 msgid "Create a space"
 msgstr ""
 
-#: integrations/buddynext.php:306
+#: integrations/buddynext.php:342
 msgid "Awarded when a member creates a new community space."
 msgstr ""
 
-#: integrations/buddynext.php:328
-#: src/Admin/SetupWizard.php:854
+#: integrations/buddynext.php:368
+#: src/Engine/Registry.php:816
 msgid "Complete your profile"
 msgstr ""
 
-#: integrations/buddynext.php:329
+#: integrations/buddynext.php:369
 msgid "Awarded once when a member completes every task on their Profile Strength checklist."
 msgstr ""
 
-#: integrations/buddynext.php:348
+#: integrations/buddynext.php:389
 msgid "Complete onboarding"
 msgstr ""
 
-#: integrations/buddynext.php:349
+#: integrations/buddynext.php:390
 msgid "Awarded once when a member completes the BuddyNext onboarding wizard."
 msgstr ""
 
-#: integrations/buddypress.php:46
+#: integrations/buddypress.php:47
+#: src/Engine/Registry.php:817
 msgid "Post an activity update"
 msgstr ""
 
-#: integrations/buddypress.php:47
+#: integrations/buddypress.php:48
 msgid "Awarded when a member posts an activity update."
 msgstr ""
 
-#: integrations/buddypress.php:71
+#: integrations/buddypress.php:72
+#: src/Engine/Registry.php:818
 msgid "Comment on an activity"
 msgstr ""
 
-#: integrations/buddypress.php:72
+#: integrations/buddypress.php:73
 msgid "Awarded when a member comments on an activity update."
 msgstr ""
 
-#: integrations/buddypress.php:103
+#: integrations/buddypress.php:106
+#: src/Engine/Registry.php:819
 msgid "Accept a friendship"
 msgstr ""
 
-#: integrations/buddypress.php:104
+#: integrations/buddypress.php:107
 msgid "Awarded to the member who accepts a friendship request."
 msgstr ""
 
-#: integrations/buddypress.php:120
+#: integrations/buddypress.php:128
+#: src/Engine/Registry.php:820
 msgid "Join a group"
 msgstr ""
 
-#: integrations/buddypress.php:121
+#: integrations/buddypress.php:129
 msgid "Awarded when a member joins a BuddyPress group."
 msgstr ""
 
-#: integrations/buddypress.php:133
+#: integrations/buddypress.php:149
+#: src/Engine/Registry.php:821
 msgid "Create a group"
 msgstr ""
 
-#: integrations/buddypress.php:134
+#: integrations/buddypress.php:150
 msgid "Awarded when a member creates a new BuddyPress group."
 msgstr ""
 
-#: integrations/buddypress.php:149
+#: integrations/buddypress.php:170
+#: src/Engine/Registry.php:822
 msgid "Complete extended profile"
 msgstr ""
 
-#: integrations/buddypress.php:150
+#: integrations/buddypress.php:171
 msgid "Awarded once when a member saves their extended BuddyPress profile."
 msgstr ""
 
-#: integrations/buddypress.php:162
+#: integrations/buddypress.php:184
+#: src/Engine/Registry.php:823
 msgid "Receive a reaction"
 msgstr ""
 
-#: integrations/buddypress.php:163
+#: integrations/buddypress.php:185
 msgid "Awarded when another member reacts to their content."
 msgstr ""
 
-#: integrations/buddypress.php:192
+#: integrations/buddypress.php:218
 #: integrations/jetonomy-pro.php:31
+#: src/Engine/Registry.php:824
 msgid "Create a poll"
 msgstr ""
 
-#: integrations/buddypress.php:193
+#: integrations/buddypress.php:219
 msgid "Awarded when a member creates a poll with BuddyPress Polls."
 msgstr ""
 
-#: integrations/buddypress.php:206
+#: integrations/buddypress.php:239
 msgid "Upload profile photo"
 msgstr ""
 
-#: integrations/buddypress.php:207
+#: integrations/buddypress.php:240
 msgid "Awarded the first time a member uploads a profile avatar."
 msgstr ""
 
-#: integrations/buddypress.php:223
+#: integrations/buddypress.php:261
 msgid "Upload cover photo"
 msgstr ""
 
-#: integrations/buddypress.php:224
+#: integrations/buddypress.php:262
 msgid "Awarded the first time a member uploads a profile cover image."
 msgstr ""
 
-#: integrations/buddypress.php:240
+#: integrations/buddypress.php:283
 msgid "Upload group cover photo"
 msgstr ""
 
-#: integrations/buddypress.php:241
+#: integrations/buddypress.php:284
 msgid "Awarded once per group when an admin uploads a cover image for a group."
 msgstr ""
 
-#: integrations/buddypress.php:262
+#: integrations/buddypress.php:311
 msgid "Send a private message"
 msgstr ""
 
-#: integrations/buddypress.php:263
+#: integrations/buddypress.php:312
 msgid "Awarded for sending a 1:1 message. Cooldown applies to limit spam."
 msgstr ""
 
@@ -280,76 +288,76 @@ msgstr ""
 msgid "Awarded each time a donation is successfully processed."
 msgstr ""
 
-#: integrations/contrib/givewp.php:56
+#: integrations/contrib/givewp.php:62
 msgid "Make first donation ever"
 msgstr ""
 
-#: integrations/contrib/givewp.php:57
+#: integrations/contrib/givewp.php:63
 msgid "Awarded once when a member makes their very first donation."
 msgstr ""
 
-#: integrations/contrib/givewp.php:72
+#: integrations/contrib/givewp.php:84
 msgid "Campaign reaches its goal"
 msgstr ""
 
-#: integrations/contrib/givewp.php:73
+#: integrations/contrib/givewp.php:85
 msgid "Awarded to the donor whose gift takes a campaign to its goal."
 msgstr ""
 
-#: integrations/contrib/lifterlms.php:39
+#: integrations/contrib/lifterlms.php:43
 msgid "Complete a LifterLMS course"
 msgstr ""
 
-#: integrations/contrib/lifterlms.php:40
+#: integrations/contrib/lifterlms.php:44
 msgid "Awarded when a student completes any LifterLMS course."
 msgstr ""
 
-#: integrations/contrib/lifterlms.php:53
+#: integrations/contrib/lifterlms.php:58
 msgid "Complete a LifterLMS lesson"
 msgstr ""
 
-#: integrations/contrib/lifterlms.php:54
-#: integrations/tutor-lms.php:61
+#: integrations/contrib/lifterlms.php:59
+#: integrations/tutor-lms.php:75
 msgid "Awarded when a student completes any lesson."
 msgstr ""
 
-#: integrations/contrib/lifterlms.php:67
+#: integrations/contrib/lifterlms.php:73
 msgid "Pass a LifterLMS quiz"
 msgstr ""
 
-#: integrations/contrib/lifterlms.php:68
+#: integrations/contrib/lifterlms.php:74
 msgid "Awarded when a student achieves a passing grade on a quiz."
 msgstr ""
 
-#: integrations/contrib/lifterlms.php:81
+#: integrations/contrib/lifterlms.php:88
 msgid "Enroll in a LifterLMS course"
 msgstr ""
 
-#: integrations/contrib/lifterlms.php:82
+#: integrations/contrib/lifterlms.php:89
 msgid "Awarded once per course when a student is enrolled."
 msgstr ""
 
-#: integrations/contrib/lifterlms.php:96
+#: integrations/contrib/lifterlms.php:106
 msgid "Join a LifterLMS membership"
 msgstr ""
 
-#: integrations/contrib/lifterlms.php:97
+#: integrations/contrib/lifterlms.php:107
 msgid "Awarded once per membership when a student joins it."
 msgstr ""
 
-#: integrations/contrib/lifterlms.php:111
+#: integrations/contrib/lifterlms.php:124
 msgid "Earn a LifterLMS achievement"
 msgstr ""
 
-#: integrations/contrib/lifterlms.php:112
+#: integrations/contrib/lifterlms.php:125
 msgid "Awarded when a student earns any LifterLMS achievement."
 msgstr ""
 
-#: integrations/contrib/lifterlms.php:124
+#: integrations/contrib/lifterlms.php:138
 msgid "Earn a LifterLMS certificate"
 msgstr ""
 
-#: integrations/contrib/lifterlms.php:125
+#: integrations/contrib/lifterlms.php:139
 msgid "Awarded when a student earns a course completion certificate."
 msgstr ""
 
@@ -361,43 +369,43 @@ msgstr ""
 msgid "Awarded the first time a member activates each membership."
 msgstr ""
 
-#: integrations/contrib/memberpress.php:50
+#: integrations/contrib/memberpress.php:51
 msgid "Renew a MemberPress membership"
 msgstr ""
 
-#: integrations/contrib/memberpress.php:51
+#: integrations/contrib/memberpress.php:52
 msgid "Awarded on each renewal payment of a recurring membership."
 msgstr ""
 
-#: integrations/contrib/memberpress.php:63
+#: integrations/contrib/memberpress.php:65
 msgid "Join as a member for the first time"
 msgstr ""
 
-#: integrations/contrib/memberpress.php:64
+#: integrations/contrib/memberpress.php:66
 msgid "Awarded once when a user activates their very first membership."
 msgstr ""
 
-#: integrations/contrib/the-events-calendar.php:88
+#: integrations/contrib/the-events-calendar.php:104
 msgid "RSVP to an event"
 msgstr ""
 
-#: integrations/contrib/the-events-calendar.php:89
+#: integrations/contrib/the-events-calendar.php:105
 msgid "Awarded when a member RSVPs as going, once per event."
 msgstr ""
 
-#: integrations/contrib/the-events-calendar.php:102
+#: integrations/contrib/the-events-calendar.php:124
 msgid "Purchase an event ticket"
 msgstr ""
 
-#: integrations/contrib/the-events-calendar.php:103
+#: integrations/contrib/the-events-calendar.php:125
 msgid "Awarded when a member completes a ticket order, once per event."
 msgstr ""
 
-#: integrations/contrib/the-events-calendar.php:116
+#: integrations/contrib/the-events-calendar.php:142
 msgid "Check in to an event"
 msgstr ""
 
-#: integrations/contrib/the-events-calendar.php:117
+#: integrations/contrib/the-events-calendar.php:143
 msgid "Awarded when an attendee checks in at the event."
 msgstr ""
 
@@ -409,11 +417,11 @@ msgstr ""
 msgid "Awarded when a member checks in at an event with a valid ticket. Cancelled or refunded tickets cannot check in, so attendance is only ever rewarded once per ticket."
 msgstr ""
 
-#: integrations/eventonomy-pro.php:59
+#: integrations/eventonomy-pro.php:64
 msgid "Follow an event or organizer"
 msgstr ""
 
-#: integrations/eventonomy-pro.php:60
+#: integrations/eventonomy-pro.php:65
 msgid "Awarded when a member follows an event, organizer, or another member to stay up to date. A daily limit keeps the reward proportionate."
 msgstr ""
 
@@ -425,27 +433,27 @@ msgstr ""
 msgid "Awarded when a member reserves a place at an event. Waitlisted reservations do not award until the member is moved to going, and a daily limit keeps repeat reservations in check."
 msgstr ""
 
-#: integrations/eventonomy.php:99
+#: integrations/eventonomy.php:105
 msgid "Submit an event"
 msgstr ""
 
-#: integrations/eventonomy.php:100
+#: integrations/eventonomy.php:106
 msgid "Awarded to the author when an event is submitted. A daily limit rewards genuine organizing without encouraging duplicate submissions."
 msgstr ""
 
-#: integrations/eventonomy.php:129
+#: integrations/eventonomy.php:138
 msgid "Complete a ticket order"
 msgstr ""
 
-#: integrations/eventonomy.php:130
+#: integrations/eventonomy.php:139
 msgid "Awarded when a member completes a paid ticket order. Free and immediately paid orders settle through this event; orders paid later have their own action."
 msgstr ""
 
-#: integrations/eventonomy.php:158
+#: integrations/eventonomy.php:173
 msgid "Pay for a ticket order after checkout"
 msgstr ""
 
-#: integrations/eventonomy.php:159
+#: integrations/eventonomy.php:174
 msgid "Awarded when a pending ticket order is paid later, such as a card payment settling or an offline payment being marked as paid."
 msgstr ""
 
@@ -453,43 +461,43 @@ msgstr ""
 msgid "Awarded when a member creates a Jetonomy poll on a post."
 msgstr ""
 
-#: integrations/jetonomy-pro.php:54
+#: integrations/jetonomy-pro.php:61
 msgid "Awarded when a member casts a vote on a Jetonomy poll."
 msgstr ""
 
-#: integrations/jetonomy-pro.php:79
+#: integrations/jetonomy-pro.php:95
 msgid "Send a reaction"
 msgstr ""
 
-#: integrations/jetonomy-pro.php:80
+#: integrations/jetonomy-pro.php:96
 msgid "Awarded when a member adds a reaction to a post or reply. Removing a reaction does not award."
 msgstr ""
 
-#: integrations/jetonomy.php:33
+#: integrations/jetonomy.php:43
 msgid "Awarded once when a member joins a Jetonomy community space. Daily cap prevents bulk-join farming."
 msgstr ""
 
-#: integrations/jetonomy.php:56
+#: integrations/jetonomy.php:71
 msgid "Get approved into a gated space"
 msgstr ""
 
-#: integrations/jetonomy.php:57
+#: integrations/jetonomy.php:72
 msgid "Awarded once when a member is approved into a request-to-join space."
 msgstr ""
 
-#: integrations/jetonomy.php:78
+#: integrations/jetonomy.php:98
 msgid "Get promoted to a higher trust level"
 msgstr ""
 
-#: integrations/jetonomy.php:79
+#: integrations/jetonomy.php:99
 msgid "Awarded when a member is promoted to a higher Jetonomy trust level (TL0 -> TL5). Demotions never award."
 msgstr ""
 
-#: integrations/jetonomy.php:102
+#: integrations/jetonomy.php:123
 msgid "Activate a membership"
 msgstr ""
 
-#: integrations/jetonomy.php:103
+#: integrations/jetonomy.php:124
 msgid "Awarded once per plan when a paid membership becomes active for the member (RCP / PMPro / MemberPress / WooCommerce Subscriptions / Sensei / LearnDash / MasterStudy / Tutor / LifterLMS)."
 msgstr ""
 
@@ -501,59 +509,59 @@ msgstr ""
 msgid "Awarded when a learner completes any LearnDash course."
 msgstr ""
 
-#: integrations/learndash.php:54
+#: integrations/learndash.php:55
 msgid "Complete a LearnDash lesson"
 msgstr ""
 
-#: integrations/learndash.php:55
+#: integrations/learndash.php:56
 msgid "Awarded when a learner completes any lesson."
 msgstr ""
 
-#: integrations/learndash.php:70
+#: integrations/learndash.php:72
 msgid "Complete a LearnDash topic"
 msgstr ""
 
-#: integrations/learndash.php:71
+#: integrations/learndash.php:73
 msgid "Awarded when a learner completes any topic."
 msgstr ""
 
-#: integrations/learndash.php:86
+#: integrations/learndash.php:89
 msgid "Pass a LearnDash quiz"
 msgstr ""
 
-#: integrations/learndash.php:87
+#: integrations/learndash.php:90
 msgid "Awarded when a learner passes a quiz."
 msgstr ""
 
-#: integrations/learndash.php:119
+#: integrations/learndash.php:123
 msgid "Get an assignment approved"
 msgstr ""
 
-#: integrations/learndash.php:120
+#: integrations/learndash.php:124
 msgid "Awarded when an instructor approves a submitted assignment."
 msgstr ""
 
-#: integrations/learndash.php:141
+#: integrations/learndash.php:151
 msgid "Enroll in a LearnDash course"
 msgstr ""
 
-#: integrations/learndash.php:142
+#: integrations/learndash.php:152
 msgid "Awarded once per course when a learner gets access to it."
 msgstr ""
 
-#: integrations/learndash.php:157
+#: integrations/learndash.php:171
 msgid "Submit a LearnDash assignment"
 msgstr ""
 
-#: integrations/learndash.php:158
+#: integrations/learndash.php:172
 msgid "Awarded once per lesson or topic when a learner uploads an assignment."
 msgstr ""
 
-#: integrations/learndash.php:173
+#: integrations/learndash.php:192
 msgid "Complete a LearnDash group"
 msgstr ""
 
-#: integrations/learndash.php:174
+#: integrations/learndash.php:193
 msgid "Awarded when a learner completes every course in a group."
 msgstr ""
 
@@ -565,131 +573,131 @@ msgstr ""
 msgid "Awarded when a member completes a full learning path."
 msgstr ""
 
-#: integrations/learnomy-pro.php:45
+#: integrations/learnomy-pro.php:46
 msgid "Enrol in a learning path"
 msgstr ""
 
-#: integrations/learnomy-pro.php:46
+#: integrations/learnomy-pro.php:47
 msgid "Awarded when a member enrols in a learning path. Daily cap prevents farming."
 msgstr ""
 
-#: integrations/learnomy-pro.php:68
+#: integrations/learnomy-pro.php:70
 msgid "Submit an assignment"
 msgstr ""
 
-#: integrations/learnomy-pro.php:69
+#: integrations/learnomy-pro.php:71
 msgid "Awarded when a member submits an assignment for grading."
 msgstr ""
 
-#: integrations/learnomy-pro.php:88
+#: integrations/learnomy-pro.php:91
 msgid "Join a cohort"
 msgstr ""
 
-#: integrations/learnomy-pro.php:89
+#: integrations/learnomy-pro.php:92
 msgid "Awarded when a member is added to a learning cohort."
 msgstr ""
 
-#: integrations/learnomy-pro.php:107
+#: integrations/learnomy-pro.php:114
 msgid "Redeem a course gift"
 msgstr ""
 
-#: integrations/learnomy-pro.php:108
+#: integrations/learnomy-pro.php:115
 msgid "Awarded when a member redeems a gifted course or membership code."
 msgstr ""
 
-#: integrations/learnomy.php:28
-#: src/Admin/SetupWizard.php:855
+#: integrations/learnomy.php:39
+#: src/Engine/Registry.php:825
 msgid "Complete a lesson"
 msgstr ""
 
-#: integrations/learnomy.php:29
+#: integrations/learnomy.php:40
 msgid "Awarded each time a member completes a lesson. Cooldown prevents rapid-fire farming."
 msgstr ""
 
-#: integrations/learnomy.php:51
+#: integrations/learnomy.php:63
 msgid "Pass a quiz"
 msgstr ""
 
-#: integrations/learnomy.php:52
-msgid "Awarded when a member passes a quiz. Fires only on a passing attempt (failed attempts award nothing); cooldown limits retake farming."
+#: integrations/learnomy.php:64
+msgid "Awarded once per quiz when a member passes it. Failed attempts and retakes award nothing."
 msgstr ""
 
-#: integrations/learnomy.php:74
-#: src/Admin/SetupWizard.php:856
+#: integrations/learnomy.php:88
+#: src/Engine/Registry.php:826
 msgid "Complete a course"
 msgstr ""
 
-#: integrations/learnomy.php:75
+#: integrations/learnomy.php:89
 msgid "Awarded when a member finishes every lesson and quiz in a course."
 msgstr ""
 
-#: integrations/learnomy.php:96
-#: src/Admin/SetupWizard.php:858
+#: integrations/learnomy.php:111
+#: src/Engine/Registry.php:827
 msgid "Enrol in a course"
 msgstr ""
 
-#: integrations/learnomy.php:97
+#: integrations/learnomy.php:112
 msgid "Awarded when a member enrols in a course. Daily cap prevents bulk-enrol farming."
 msgstr ""
 
-#: integrations/learnomy.php:119
-#: src/Admin/SetupWizard.php:857
+#: integrations/learnomy.php:141
+#: src/Engine/Registry.php:828
 msgid "Earn a certificate"
 msgstr ""
 
-#: integrations/learnomy.php:120
+#: integrations/learnomy.php:142
 msgid "Awarded when a member earns a course completion certificate."
 msgstr ""
 
-#: integrations/learnomy.php:143
+#: integrations/learnomy.php:170
 msgid "Review a course"
 msgstr ""
 
-#: integrations/learnomy.php:144
-msgid "Awarded when a member writes a course review. Cooldown limits review farming."
+#: integrations/learnomy.php:171
+msgid "Awarded when a member's course review is published (approved). Cooldown limits review farming."
 msgstr ""
 
-#: integrations/tutor-lms.php:45
+#: integrations/tutor-lms.php:58
 msgid "Complete a Tutor LMS course"
 msgstr ""
 
-#: integrations/tutor-lms.php:46
+#: integrations/tutor-lms.php:59
 msgid "Awarded when a student completes any Tutor LMS course."
 msgstr ""
 
-#: integrations/tutor-lms.php:60
+#: integrations/tutor-lms.php:74
 msgid "Complete a Tutor LMS lesson"
 msgstr ""
 
-#: integrations/tutor-lms.php:75
+#: integrations/tutor-lms.php:90
 msgid "Pass a Tutor LMS quiz"
 msgstr ""
 
-#: integrations/tutor-lms.php:76
+#: integrations/tutor-lms.php:91
 msgid "Awarded when a student passes a quiz, including one an instructor grades by hand."
 msgstr ""
 
-#: integrations/tutor-lms.php:96
+#: integrations/tutor-lms.php:112
 msgid "Enroll in a Tutor LMS course"
 msgstr ""
 
-#: integrations/tutor-lms.php:97
+#: integrations/tutor-lms.php:113
 msgid "Awarded once per course when an enrollment is completed. A pending paid enrollment earns nothing."
 msgstr ""
 
-#: integrations/tutor-lms.php:111
+#: integrations/tutor-lms.php:132
 msgid "Review a Tutor LMS course"
 msgstr ""
 
-#: integrations/tutor-lms.php:112
-msgid "Awarded once per course when a student posts a review."
+#: integrations/tutor-lms.php:133
+msgid "Awarded once per course when a student's review is published (approved)."
 msgstr ""
 
-#: integrations/tutor-lms.php:132
+#: integrations/tutor-lms.php:155
 msgid "Ask a question in a Tutor LMS course"
 msgstr ""
 
-#: integrations/tutor-lms.php:133
+#: integrations/tutor-lms.php:156
 msgid "Awarded when a student asks a new question, up to five a day. Replies earn nothing."
 msgstr ""
 
@@ -701,19 +709,19 @@ msgstr ""
 msgid "Awarded to the member who posts a need (a reverse listing / request)."
 msgstr ""
 
-#: integrations/wb-listora-pro.php:57
+#: integrations/wb-listora-pro.php:58
 msgid "Get a need approved"
 msgstr ""
 
-#: integrations/wb-listora-pro.php:58
+#: integrations/wb-listora-pro.php:59
 msgid "Awarded to the member when their need is approved and goes live."
 msgstr ""
 
-#: integrations/wb-listora-pro.php:78
+#: integrations/wb-listora-pro.php:80
 msgid "Respond to a need"
 msgstr ""
 
-#: integrations/wb-listora-pro.php:79
+#: integrations/wb-listora-pro.php:81
 msgid "Awarded to the member who responds to another member's need with a listing."
 msgstr ""
 
@@ -725,35 +733,35 @@ msgstr ""
 msgid "Awarded to the owner when a listing is submitted. Cooldown prevents bulk-submit farming."
 msgstr ""
 
-#: integrations/wb-listora.php:98
+#: integrations/wb-listora.php:99
 msgid "Get a listing approved"
 msgstr ""
 
-#: integrations/wb-listora.php:99
+#: integrations/wb-listora.php:100
 msgid "Awarded to the owner when their listing is approved and goes live."
 msgstr ""
 
-#: integrations/wb-listora.php:121
+#: integrations/wb-listora.php:123
 msgid "Write a review"
 msgstr ""
 
-#: integrations/wb-listora.php:122
+#: integrations/wb-listora.php:124
 msgid "Awarded to the reviewer when their listing review is published (approved). Cooldown limits review farming."
 msgstr ""
 
-#: integrations/wb-listora.php:151
+#: integrations/wb-listora.php:153
 msgid "Claim a listing"
 msgstr ""
 
-#: integrations/wb-listora.php:152
+#: integrations/wb-listora.php:154
 msgid "Awarded to the member when their listing claim is approved."
 msgstr ""
 
-#: integrations/wb-listora.php:170
+#: integrations/wb-listora.php:173
 msgid "Renew a listing"
 msgstr ""
 
-#: integrations/wb-listora.php:171
+#: integrations/wb-listora.php:174
 msgid "Awarded to the owner when they renew an expiring or expired listing."
 msgstr ""
 
@@ -765,35 +773,35 @@ msgstr ""
 msgid "Awarded each time a customer pays for an order, once per order. Manual payments such as cash or bank transfer count when the store marks the order completed."
 msgstr ""
 
-#: integrations/woocommerce.php:101
+#: integrations/woocommerce.php:106
 msgid "Make your first purchase"
 msgstr ""
 
-#: integrations/woocommerce.php:102
+#: integrations/woocommerce.php:107
 msgid "Awarded once on a customer's very first paid order."
 msgstr ""
 
-#: integrations/woocommerce.php:157
+#: integrations/woocommerce.php:168
 msgid "Leave a product review"
 msgstr ""
 
-#: integrations/woocommerce.php:158
+#: integrations/woocommerce.php:169
 msgid "Awarded when a product review is approved."
 msgstr ""
 
-#: integrations/woocommerce.php:186
+#: integrations/woocommerce.php:197
 msgid "Add a product to wishlist (YITH)"
 msgstr ""
 
-#: integrations/woocommerce.php:187
+#: integrations/woocommerce.php:198
 msgid "Awarded when a member adds any product to their YITH wishlist."
 msgstr ""
 
-#: integrations/woocommerce.php:201
+#: integrations/woocommerce.php:218
 msgid "Add a product to cart"
 msgstr ""
 
-#: integrations/woocommerce.php:202
+#: integrations/woocommerce.php:219
 msgid "Awarded when a logged-in member adds a product to their cart. Cooldown limits farming."
 msgstr ""
 
@@ -805,59 +813,59 @@ msgstr ""
 msgid "Awarded once when a user registers."
 msgstr ""
 
-#: integrations/wordpress.php:78
+#: integrations/wordpress.php:79
 msgid "Log in for the first time"
 msgstr ""
 
-#: integrations/wordpress.php:79
+#: integrations/wordpress.php:80
 msgid "Awarded once on the very first login."
 msgstr ""
 
-#: integrations/wordpress.php:91
+#: integrations/wordpress.php:93
 msgid "Complete WordPress profile"
 msgstr ""
 
-#: integrations/wordpress.php:92
+#: integrations/wordpress.php:94
 msgid "Awarded once when the user saves their WP profile with a bio."
 msgstr ""
 
-#: integrations/wordpress.php:107
+#: integrations/wordpress.php:110
 msgid "Receive a comment on a post"
 msgstr ""
 
-#: integrations/wordpress.php:108
+#: integrations/wordpress.php:111
 msgid "Post author earns points when a comment on their content is approved."
 msgstr ""
 
-#: integrations/wordpress.php:161
+#: integrations/wordpress.php:167
 msgid "Publish a blog post"
 msgstr ""
 
-#: integrations/wordpress.php:162
+#: integrations/wordpress.php:168
 msgid "Awarded when the author publishes a new post - once per transition into the published state. Editing an already-published post does NOT re-award."
 msgstr ""
 
-#: integrations/wordpress.php:200
+#: integrations/wordpress.php:203
 msgid "Publish your first post"
 msgstr ""
 
-#: integrations/wordpress.php:201
+#: integrations/wordpress.php:204
 msgid "Awarded once on the author's very first transition-to-publish for a post."
 msgstr ""
 
-#: integrations/wordpress.php:231
+#: integrations/wordpress.php:237
 msgid "Leave a comment"
 msgstr ""
 
-#: integrations/wordpress.php:232
+#: integrations/wordpress.php:238
 msgid "Commenter earns points when their approved comment is posted."
 msgstr ""
 
-#: integrations/wordpress.php:262
+#: integrations/wordpress.php:270
 msgid "Get a comment approved from moderation"
 msgstr ""
 
-#: integrations/wordpress.php:263
+#: integrations/wordpress.php:271
 msgid "Awarded when a previously pending comment gets approved."
 msgstr ""
 
@@ -877,43 +885,43 @@ msgstr ""
 msgid "Awarded to the employer when a new job listing is created."
 msgstr ""
 
-#: integrations/wp-career-board.php:49
+#: integrations/wp-career-board.php:57
 msgid "Get a job approved"
 msgstr ""
 
-#: integrations/wp-career-board.php:50
+#: integrations/wp-career-board.php:58
 msgid "Awarded to the employer when their job listing is approved and published."
 msgstr ""
 
-#: integrations/wp-career-board.php:68
+#: integrations/wp-career-board.php:81
 msgid "Apply to a job"
 msgstr ""
 
-#: integrations/wp-career-board.php:69
+#: integrations/wp-career-board.php:82
 msgid "Awarded to the candidate when they submit a job application. Daily cap prevents spam applications."
 msgstr ""
 
-#: integrations/wp-career-board.php:91
+#: integrations/wp-career-board.php:109
 msgid "Get hired"
 msgstr ""
 
-#: integrations/wp-career-board.php:92
+#: integrations/wp-career-board.php:110
 msgid "Awarded to the candidate when their application status changes to hired."
 msgstr ""
 
-#: integrations/wp-career-board.php:117
+#: integrations/wp-career-board.php:140
 msgid "Join as a candidate"
 msgstr ""
 
-#: integrations/wp-career-board.php:118
+#: integrations/wp-career-board.php:141
 msgid "Awarded once when a member registers a candidate profile."
 msgstr ""
 
-#: integrations/wp-career-board.php:132
+#: integrations/wp-career-board.php:156
 msgid "Join as an employer"
 msgstr ""
 
-#: integrations/wp-career-board.php:133
+#: integrations/wp-career-board.php:157
 msgid "Awarded once when a member registers an employer account."
 msgstr ""
 
@@ -925,11 +933,11 @@ msgstr ""
 msgid "Awarded to the seller when an order they delivered is completed. An order a seller places with themselves earns nothing."
 msgstr ""
 
-#: integrations/wp-sell-services.php:117
+#: integrations/wp-sell-services.php:123
 msgid "Review a service"
 msgstr ""
 
-#: integrations/wp-sell-services.php:118
+#: integrations/wp-sell-services.php:124
 msgid "Awarded to the buyer when their review is published. A review held for moderation pays when a moderator approves it, and a seller reviewing their own order earns nothing."
 msgstr ""
 
@@ -949,91 +957,91 @@ msgstr ""
 msgid "Awarded when a member adds media to an album (rewards the actor, not just the album owner)."
 msgstr ""
 
-#: integrations/wpmediaverse.php:146
+#: integrations/wpmediaverse.php:151
 msgid "Receive a like on a photo"
 msgstr ""
 
-#: integrations/wpmediaverse.php:147
+#: integrations/wpmediaverse.php:152
 msgid "Awarded to the media owner when someone likes their photo."
 msgstr ""
 
-#: integrations/wpmediaverse.php:170
+#: integrations/wpmediaverse.php:182
 msgid "Receive a comment on a photo"
 msgstr ""
 
-#: integrations/wpmediaverse.php:171
+#: integrations/wpmediaverse.php:183
 msgid "Awarded to the media owner when someone comments on their photo."
 msgstr ""
 
-#: integrations/wpmediaverse.php:202
+#: integrations/wpmediaverse.php:214
 msgid "Gain a new follower"
 msgstr ""
 
-#: integrations/wpmediaverse.php:203
+#: integrations/wpmediaverse.php:215
 msgid "Awarded when another member follows you."
 msgstr ""
 
-#: integrations/wpmediaverse.php:225
+#: integrations/wpmediaverse.php:242
 msgid "Have a photo bookmarked"
 msgstr ""
 
-#: integrations/wpmediaverse.php:226
+#: integrations/wpmediaverse.php:243
 msgid "Awarded to the media owner when someone bookmarks their photo."
 msgstr ""
 
-#: integrations/wpmediaverse.php:250
+#: integrations/wpmediaverse.php:272
 msgid "Write a meaningful comment"
 msgstr ""
 
-#: integrations/wpmediaverse.php:251
+#: integrations/wpmediaverse.php:273
 msgid "Awarded when a member leaves a comment of 20+ characters."
 msgstr ""
 
-#: integrations/wpmediaverse.php:298
+#: integrations/wpmediaverse.php:322
 msgid "Win a photo battle"
 msgstr ""
 
-#: integrations/wpmediaverse.php:299
+#: integrations/wpmediaverse.php:323
 msgid "Awarded to the winner of a 1v1 photo battle."
 msgstr ""
 
-#: integrations/wpmediaverse.php:318
+#: integrations/wpmediaverse.php:343
 msgid "Enter a photo challenge"
 msgstr ""
 
-#: integrations/wpmediaverse.php:319
+#: integrations/wpmediaverse.php:344
 msgid "Awarded when a member submits an entry to a photo challenge."
 msgstr ""
 
-#: integrations/wpmediaverse.php:345
+#: integrations/wpmediaverse.php:380
 msgid "Place in a photo challenge"
 msgstr ""
 
-#: integrations/wpmediaverse.php:346
+#: integrations/wpmediaverse.php:381
 msgid "Awarded to the top-3 finishers of a photo challenge (200/100/50 points for 1st/2nd/3rd)."
 msgstr ""
 
-#: integrations/wpmediaverse.php:368
+#: integrations/wpmediaverse.php:404
 msgid "Win a tournament round"
 msgstr ""
 
-#: integrations/wpmediaverse.php:369
+#: integrations/wpmediaverse.php:405
 msgid "Awarded for winning a round in a photo tournament."
 msgstr ""
 
-#: integrations/wpmediaverse.php:392
+#: integrations/wpmediaverse.php:429
 msgid "Win a tournament"
 msgstr ""
 
-#: integrations/wpmediaverse.php:393
+#: integrations/wpmediaverse.php:430
 msgid "Awarded to the grand champion of a photo tournament."
 msgstr ""
 
-#: integrations/wpmediaverse.php:422
+#: integrations/wpmediaverse.php:460
 msgid "Hit an upload streak milestone"
 msgstr ""
 
-#: integrations/wpmediaverse.php:423
+#: integrations/wpmediaverse.php:461
 msgid "Awarded when a member hits 7, 30, 100, or 365 consecutive upload days."
 msgstr ""
 
@@ -1108,7 +1116,7 @@ msgstr ""
 
 #: src/Admin/AnalyticsDashboard.php:202
 #: src/Admin/SettingsPage.php:1855
-#: src/Blocks/hub/render.php:479
+#: src/Blocks/hub/render.php:466
 msgid "Badges Earned"
 msgstr ""
 
@@ -1171,7 +1179,7 @@ msgstr ""
 #: src/Admin/AnalyticsDashboard.php:753
 #: src/Admin/WebhooksAdminPage.php:224
 #: src/Admin/WebhooksAdminPage.php:263
-#: src/Engine/Registry.php:429
+#: src/Engine/Registry.php:495
 msgid "Events"
 msgstr ""
 
@@ -1191,14 +1199,14 @@ msgstr ""
 #: src/Admin/MembersPage.php:92
 #: src/Admin/SettingsPage.php:1153
 #: src/Admin/SettingsPage.php:1363
-#: src/Admin/SetupWizard.php:620
+#: src/Admin/SetupWizard.php:681
 #: src/BuddyPress/ProfileIntegration.php:74
 #: src/CLI/EmailCommand.php:64
 #: src/CLI/MemberCommand.php:67
 #: src/Engine/NotificationBridge.php:1278
 #: src/Engine/Privacy.php:310
-#: src/Engine/ProfilePage.php:199
-#: src/Engine/ProfilePage.php:397
+#: src/Engine/ProfilePage.php:205
+#: src/Engine/ProfilePage.php:403
 #: src/Engine/TransactionalEmailEngine.php:172
 #: src/Engine/WeeklyEmailEngine.php:496
 #: src/Extensions/functions.php:500
@@ -1214,7 +1222,7 @@ msgstr ""
 #: src/Admin/RedemptionStorePage.php:535
 #: src/Admin/StreaksPage.php:167
 #: src/Admin/SubmissionsPage.php:148
-#: src/CLI/EmailCommand.php:84
+#: src/CLI/EmailCommand.php:85
 msgid "Member"
 msgstr ""
 
@@ -1302,9 +1310,9 @@ msgstr ""
 #: src/Admin/AnalyticsDashboard.php:770
 #: src/Admin/AnalyticsDashboard.php:879
 #: src/Admin/SettingsPage.php:2020
-#: src/Blocks/badge-showcase/render.php:182
-#: src/Blocks/kudos-feed/render.php:164
-#: src/Blocks/points-history/render.php:242
+#: src/Blocks/badge-showcase/render.php:170
+#: src/Blocks/kudos-feed/render.php:152
+#: src/Blocks/points-history/render.php:229
 #: src/Engine/ShortcodeHandler.php:701
 #, php-format
 msgid "%s ago"
@@ -1376,7 +1384,7 @@ msgstr ""
 #: src/Admin/RedemptionStorePage.php:540
 #: src/Admin/StreaksPage.php:174
 #: src/Admin/WebhooksAdminPage.php:266
-#: src/Blocks/year-recap/render.php:202
+#: src/Blocks/year-recap/render.php:200
 msgid "Actions"
 msgstr ""
 
@@ -1432,7 +1440,7 @@ msgstr ""
 
 #: src/Admin/ApiKeysPage.php:78
 #: src/Admin/ApiKeysPage.php:240
-#: src/Admin/ChallengeManagerPage.php:368
+#: src/Admin/ChallengeManagerPage.php:365
 #: src/Admin/KudosModerationPage.php:227
 #: src/Admin/KudosModerationPage.php:367
 #: src/Admin/MultipliersPage.php:245
@@ -1459,8 +1467,8 @@ msgstr ""
 
 #: src/Admin/ApiKeysPage.php:81
 #: src/Admin/ApiKeysPage.php:249
-#: src/Admin/ChallengeManagerPage.php:339
-#: src/Admin/CommunityChallengesPage.php:423
+#: src/Admin/ChallengeManagerPage.php:336
+#: src/Admin/CommunityChallengesPage.php:420
 #: src/Admin/LevelsPage.php:94
 #: src/Admin/LevelsPage.php:186
 #: src/Admin/MultipliersPage.php:270
@@ -1581,9 +1589,9 @@ msgstr ""
 #: src/Admin/ApiKeysPage.php:175
 #: src/Admin/SettingsPage.php:1739
 #: src/Admin/SettingsPage.php:1811
-#: src/Blocks/redemption-store/render.php:374
-#: wb-gamification.php:828
-#: assets/js/toast-core.js:389
+#: src/Blocks/redemption-store/render.php:375
+#: wb-gamification.php:829
+#: assets/js/toast-core.js:401
 msgid "Dismiss"
 msgstr ""
 
@@ -1702,7 +1710,7 @@ msgstr ""
 #: src/Admin/BadgeAdminPage.php:154
 #: src/Admin/MembersPage.php:94
 #: src/Admin/SettingsPage.php:1172
-#: src/Blocks/year-recap/render.php:210
+#: src/Blocks/year-recap/render.php:208
 #: src/BuddyPress/ProfileIntegration.php:73
 #: src/Blocks/user-status-bar/edit.js:79
 msgid "Badges"
@@ -1754,8 +1762,8 @@ msgstr ""
 
 #: src/Admin/BadgeAdminPage.php:215
 #: src/API/MembersController.php:1344
-#: src/Engine/TransactionalEmailEngine.php:330
-#: wb-gamification.php:829
+#: src/Engine/TransactionalEmailEngine.php:333
+#: wb-gamification.php:830
 msgid "points"
 msgstr ""
 
@@ -1881,18 +1889,19 @@ msgid "Category"
 msgstr ""
 
 #: src/Admin/BadgeAdminPage.php:490
-#: src/Engine/Registry.php:417
+#: src/Engine/Registry.php:483
 msgid "General"
 msgstr ""
 
 #: src/Admin/BadgeAdminPage.php:492
-#: src/Engine/Registry.php:418
+#: src/Engine/Registry.php:484
 msgid "WordPress"
 msgstr ""
 
 #: src/Admin/BadgeAdminPage.php:493
 #: src/Admin/SettingsPage.php:718
-#: src/Engine/Registry.php:432
+#: src/Admin/SetupWizard.php:559
+#: src/Engine/Registry.php:498
 msgid "BuddyPress"
 msgstr ""
 
@@ -2097,14 +2106,14 @@ msgstr ""
 #: src/Admin/ChallengeManagerPage.php:106
 #: src/Admin/ChallengeManagerPage.php:107
 #: src/Admin/SettingsPage.php:1167
-#: src/Blocks/hub/render.php:367
-#: src/Blocks/year-recap/render.php:206
+#: src/Blocks/hub/render.php:355
+#: src/Blocks/year-recap/render.php:204
 #: src/Engine/ModuleToggles.php:98
 msgid "Challenges"
 msgstr ""
 
 #: src/Admin/ChallengeManagerPage.php:153
-#: src/Admin/ChallengeManagerPage.php:335
+#: src/Admin/ChallengeManagerPage.php:332
 msgid "Challenge deleted."
 msgstr ""
 
@@ -2132,7 +2141,7 @@ msgstr ""
 #: src/Admin/CommunityChallengesPage.php:143
 #: src/Admin/CommunityChallengesPage.php:155
 #: src/Admin/CommunityChallengesPage.php:231
-#: src/Blocks/community-challenges/render.php:98
+#: src/Blocks/community-challenges/render.php:86
 msgid "Community Challenges"
 msgstr ""
 
@@ -2220,8 +2229,8 @@ msgstr ""
 #: src/Admin/RedemptionStorePage.php:392
 #: src/Admin/SettingsPage.php:76
 #: src/Admin/StreaksPage.php:115
-#: src/Blocks/hub/render.php:633
-#: src/Blocks/redemption-store/render.php:349
+#: src/Blocks/hub/render.php:620
+#: src/Blocks/redemption-store/render.php:350
 msgid "Cancel"
 msgstr ""
 
@@ -2243,30 +2252,30 @@ msgstr ""
 msgid "Dates"
 msgstr ""
 
-#: src/Admin/ChallengeManagerPage.php:326
-#: src/Admin/CommunityChallengesPage.php:410
+#: src/Admin/ChallengeManagerPage.php:323
+#: src/Admin/CommunityChallengesPage.php:407
 #: src/Admin/MultipliersPage.php:249
 #: src/Admin/RedemptionStorePage.php:473
 msgid "Edit"
 msgstr ""
 
-#: src/Admin/ChallengeManagerPage.php:334
+#: src/Admin/ChallengeManagerPage.php:331
 msgid "Delete this challenge?"
 msgstr ""
 
-#: src/Admin/ChallengeManagerPage.php:336
+#: src/Admin/ChallengeManagerPage.php:333
 msgid "Failed to delete challenge."
 msgstr ""
 
-#: src/Admin/ChallengeManagerPage.php:352
+#: src/Admin/ChallengeManagerPage.php:349
 msgid "No challenges yet"
 msgstr ""
 
-#: src/Admin/ChallengeManagerPage.php:353
+#: src/Admin/ChallengeManagerPage.php:350
 msgid "Create your first challenge above to engage your community."
 msgstr ""
 
-#: src/Admin/ChallengeManagerPage.php:369
+#: src/Admin/ChallengeManagerPage.php:366
 #: src/Admin/MultipliersPage.php:245
 #: src/Admin/RedemptionStorePage.php:378
 #: src/Admin/RedemptionStorePage.php:468
@@ -2274,9 +2283,9 @@ msgstr ""
 msgid "Inactive"
 msgstr ""
 
-#: src/Admin/ChallengeManagerPage.php:370
-#: src/Blocks/challenges/render.php:191
-#: src/Blocks/community-challenges/render.php:134
+#: src/Admin/ChallengeManagerPage.php:367
+#: src/Blocks/challenges/render.php:180
+#: src/Blocks/community-challenges/render.php:122
 msgid "Completed"
 msgstr ""
 
@@ -2424,7 +2433,7 @@ msgid "Failed to save the community challenge."
 msgstr ""
 
 #: src/Admin/CommunityChallengesPage.php:212
-#: src/Admin/CommunityChallengesPage.php:419
+#: src/Admin/CommunityChallengesPage.php:416
 msgid "Community challenge deleted."
 msgstr ""
 
@@ -2489,29 +2498,29 @@ msgstr ""
 msgid "Progress"
 msgstr ""
 
-#: src/Admin/CommunityChallengesPage.php:418
+#: src/Admin/CommunityChallengesPage.php:415
 msgid "Delete this community challenge?"
 msgstr ""
 
-#: src/Admin/CommunityChallengesPage.php:420
+#: src/Admin/CommunityChallengesPage.php:417
 msgid "Failed to delete community challenge."
 msgstr ""
 
-#: src/Admin/CommunityChallengesPage.php:436
+#: src/Admin/CommunityChallengesPage.php:433
 msgid "Community challenge pages"
 msgstr ""
 
 #. translators: 1: current page, 2: total pages, 3: total challenges
-#: src/Admin/CommunityChallengesPage.php:438
+#: src/Admin/CommunityChallengesPage.php:435
 #, php-format
 msgid "Page %1$d of %2$d (%3$d challenges)"
 msgstr ""
 
-#: src/Admin/CommunityChallengesPage.php:446
+#: src/Admin/CommunityChallengesPage.php:443
 msgid "No community challenges yet"
 msgstr ""
 
-#: src/Admin/CommunityChallengesPage.php:447
+#: src/Admin/CommunityChallengesPage.php:444
 msgid "Create your first community challenge above to rally your members around a shared goal."
 msgstr ""
 
@@ -2800,7 +2809,7 @@ msgstr ""
 #: src/Admin/ManualAwardPage.php:138
 #: src/Admin/MembersPage.php:126
 #: src/Admin/SettingsPage.php:1091
-#: src/Admin/SetupWizard.php:575
+#: src/Admin/SetupWizard.php:636
 #: src/Admin/StreaksPage.php:126
 #: src/Admin/SubmissionsPage.php:74
 msgid "You do not have permission to access this page."
@@ -2861,7 +2870,7 @@ msgid "Filter kudos by status"
 msgstr ""
 
 #: src/Admin/KudosModerationPage.php:226
-#: src/Blocks/badge-showcase/render.php:232
+#: src/Blocks/badge-showcase/render.php:220
 #: src/shared/components/SpacingControl.js:51
 msgid "All"
 msgstr ""
@@ -3463,7 +3472,7 @@ msgstr ""
 
 #. translators: 1: source amount, 2: source label, 3: destination amount, 4: destination label.
 #: src/Admin/PointTypeConversionsPage.php:179
-#: src/Blocks/hub/render.php:615
+#: src/Blocks/hub/render.php:602
 #, php-format
 msgid "%1$d %2$s = %3$d %4$s"
 msgstr ""
@@ -3718,7 +3727,7 @@ msgstr ""
 #: src/Admin/RedemptionStorePage.php:115
 #: src/Admin/RedemptionStorePage.php:116
 #: src/Admin/RedemptionStorePage.php:193
-#: src/Blocks/redemption-store/render.php:188
+#: src/Blocks/redemption-store/render.php:189
 #: src/Blocks/redemption-store/edit.js:311
 msgid "Redemption Store"
 msgstr ""
@@ -4015,8 +4024,8 @@ msgid "Confirm"
 msgstr ""
 
 #: src/Admin/SettingsPage.php:77
-#: src/Blocks/hub/render.php:586
-#: src/Blocks/redemption-store/render.php:330
+#: src/Blocks/hub/render.php:573
+#: src/Blocks/redemption-store/render.php:331
 msgid "Close"
 msgstr ""
 
@@ -4029,13 +4038,13 @@ msgid "Request timed out. Please try again."
 msgstr ""
 
 #: src/Admin/SettingsPage.php:81
-#: src/Blocks/redemption-store/render.php:157
+#: src/Blocks/redemption-store/render.php:158
 #: src/Engine/ShortcodeHandler.php:442
 msgid "Network error. Please try again."
 msgstr ""
 
 #: src/Admin/SettingsPage.php:82
-#: src/Engine/MemberPrefs.php:154
+#: src/Engine/MemberPrefs.php:162
 msgid "Saved."
 msgstr ""
 
@@ -4408,16 +4417,16 @@ msgid "Core"
 msgstr ""
 
 #: src/Admin/SettingsPage.php:1163
-#: src/Engine/Registry.php:423
+#: src/Engine/Registry.php:489
 msgid "Engagement"
 msgstr ""
 
 #: src/Admin/SettingsPage.php:1176
 #: src/Admin/SettingsPage.php:2216
-#: src/Blocks/hub/render.php:287
-#: src/Blocks/kudos-feed/render.php:98
+#: src/Blocks/hub/render.php:275
+#: src/Blocks/kudos-feed/render.php:86
 #: src/BuddyPress/Stream/ActivityCard.php:220
-#: src/Engine/CommunityNotifications.php:532
+#: src/Engine/CommunityNotifications.php:522
 #: src/Engine/ModuleToggles.php:96
 msgid "Kudos"
 msgstr ""
@@ -5224,236 +5233,244 @@ msgstr ""
 msgid "Plugin"
 msgstr ""
 
-#: src/Admin/SetupWizard.php:144
-#: src/Admin/SetupWizard.php:157
+#: src/Admin/SetupWizard.php:153
+#: src/Admin/SetupWizard.php:167
 msgid "Gamification Setup"
 msgstr ""
 
-#: src/Admin/SetupWizard.php:325
+#: src/Admin/SetupWizard.php:369
 msgid "Welcome to WB Gamification!"
 msgstr ""
 
-#: src/Admin/SetupWizard.php:326
+#: src/Admin/SetupWizard.php:370
 msgid "Pick a starter template to pre-configure points for your use case - takes 30 seconds."
 msgstr ""
 
-#: src/Admin/SetupWizard.php:328
+#: src/Admin/SetupWizard.php:372
 msgid "Run the setup wizard"
 msgstr ""
 
-#: src/Admin/SetupWizard.php:330
+#: src/Admin/SetupWizard.php:374
 msgid "No thanks"
 msgstr ""
 
-#: src/Admin/SetupWizard.php:343
+#: src/Admin/SetupWizard.php:387
 msgid "You do not have permission to complete the setup wizard."
 msgstr ""
 
-#: src/Admin/SetupWizard.php:358
+#: src/Admin/SetupWizard.php:402
 msgid "a required plugin"
 msgstr ""
 
 #. translators: %s: required plugin name
-#: src/Admin/SetupWizard.php:361
+#: src/Admin/SetupWizard.php:405
 #, php-format
 msgid "This starter template needs %s active before it can be applied. Install / activate it from the Plugins screen and re-run the wizard."
 msgstr ""
 
-#: src/Admin/SetupWizard.php:362
+#: src/Admin/SetupWizard.php:406
 msgid "Template unavailable"
 msgstr ""
 
-#: src/Admin/SetupWizard.php:483
+#: src/Admin/SetupWizard.php:527
 msgid "Blog / Publisher"
 msgstr ""
 
-#: src/Admin/SetupWizard.php:484
+#: src/Admin/SetupWizard.php:528
 msgid "Rewards writing and meaningful comments. For standalone WordPress blogs."
 msgstr ""
 
-#: src/Admin/SetupWizard.php:493
+#: src/Admin/SetupWizard.php:537
 msgid "Community Engagement"
 msgstr ""
 
-#: src/Admin/SetupWizard.php:494
+#: src/Admin/SetupWizard.php:538
 msgid "Balanced - rewards posting, reactions, and social connection. Works with BuddyNext."
 msgstr ""
 
-#: src/Admin/SetupWizard.php:498
-#: src/Admin/SetupWizard.php:556
+#: src/Admin/SetupWizard.php:542
+#: src/Admin/SetupWizard.php:617
 msgid "BuddyNext"
 msgstr ""
 
-#: src/Admin/SetupWizard.php:510
+#: src/Admin/SetupWizard.php:554
+msgid "BuddyPress Community"
+msgstr ""
+
+#: src/Admin/SetupWizard.php:555
+msgid "Rewards activity updates, comments, friendships, groups and a complete profile. Works with BuddyPress."
+msgstr ""
+
+#: src/Admin/SetupWizard.php:571
 msgid "Online Course"
 msgstr ""
 
-#: src/Admin/SetupWizard.php:511
+#: src/Admin/SetupWizard.php:572
 msgid "Course completion heavy - progress and credential badges. Works with Learnomy."
 msgstr ""
 
-#: src/Admin/SetupWizard.php:515
+#: src/Admin/SetupWizard.php:576
 msgid "Learnomy"
 msgstr ""
 
-#: src/Admin/SetupWizard.php:538
+#: src/Admin/SetupWizard.php:599
 msgid "Coaching Platform"
 msgstr ""
 
-#: src/Admin/SetupWizard.php:539
+#: src/Admin/SetupWizard.php:600
 msgid "Rewards the steady habits of a coaching programme - writing, commenting and completing a profile. For standalone WordPress sites."
 msgstr ""
 
-#: src/Admin/SetupWizard.php:551
+#: src/Admin/SetupWizard.php:612
 msgid "Nonprofit / Mission"
 msgstr ""
 
-#: src/Admin/SetupWizard.php:552
+#: src/Admin/SetupWizard.php:613
 msgid "Rewards joining spaces, connecting and taking part in conversations - community participation over individual output. Works with BuddyNext."
 msgstr ""
 
-#: src/Admin/SetupWizard.php:588
+#: src/Admin/SetupWizard.php:649
 msgid "Pick a starting point"
 msgstr ""
 
-#: src/Admin/SetupWizard.php:593
+#: src/Admin/SetupWizard.php:654
 msgid "Update your gamification template"
 msgstr ""
 
-#: src/Admin/SetupWizard.php:594
+#: src/Admin/SetupWizard.php:655
 msgid "Welcome to WB Gamification"
 msgstr ""
 
-#: src/Admin/SetupWizard.php:598
+#: src/Admin/SetupWizard.php:659
 msgid "Each template seeds sensible point values for a different use case. Every value is editable later from Settings."
 msgstr ""
 
-#: src/Admin/SetupWizard.php:616
+#: src/Admin/SetupWizard.php:677
 msgid "What your members get"
 msgstr ""
 
-#: src/Admin/SetupWizard.php:621
+#: src/Admin/SetupWizard.php:682
 msgid "for things they already do - posting, commenting, connecting."
 msgstr ""
 
-#: src/Admin/SetupWizard.php:624
+#: src/Admin/SetupWizard.php:685
 msgid "Badges and levels"
 msgstr ""
 
-#: src/Admin/SetupWizard.php:625
+#: src/Admin/SetupWizard.php:686
 msgid "they earn as they go, and can show on their profile."
 msgstr ""
 
-#: src/Admin/SetupWizard.php:628
+#: src/Admin/SetupWizard.php:689
 msgid "A leaderboard"
 msgstr ""
 
-#: src/Admin/SetupWizard.php:629
+#: src/Admin/SetupWizard.php:690
 msgid "if your community is the competitive kind. It is optional."
 msgstr ""
 
 #. translators: %s: link to the member-facing Gamification Hub page.
-#: src/Admin/SetupWizard.php:638
+#: src/Admin/SetupWizard.php:699
 #, php-format
 msgid "Members see all of it on their <a href=\"%s\" target=\"_blank\" rel=\"noopener\">Gamification Hub</a> - a page already created for you. Picking a template below just decides what earns what."
 msgstr ""
 
 #. translators: %s: name of the currently-applied template (e.g. "Community Engagement")
-#: src/Admin/SetupWizard.php:658
+#: src/Admin/SetupWizard.php:719
 #, php-format
 msgid "You're already running the %s template. Picking a new one will overwrite the matching point values; everything else stays put."
 msgstr ""
 
-#: src/Admin/SetupWizard.php:671
+#: src/Admin/SetupWizard.php:732
 msgid "Choose a starter template"
 msgstr ""
 
-#: src/Admin/SetupWizard.php:674
+#: src/Admin/SetupWizard.php:735
 msgid "Starter template options"
 msgstr ""
 
-#: src/Admin/SetupWizard.php:713
+#: src/Admin/SetupWizard.php:774
 msgid "Recommended"
 msgstr ""
 
-#: src/Admin/SetupWizard.php:718
+#: src/Admin/SetupWizard.php:779
 #: src/Admin/StreaksPage.php:169
 msgid "Current"
 msgstr ""
 
 #. translators: %s: required plugin name
-#: src/Admin/SetupWizard.php:725
+#: src/Admin/SetupWizard.php:786
 #, php-format
 msgid "Requires %s"
 msgstr ""
 
 #. translators: %s: required plugin name
-#: src/Admin/SetupWizard.php:740
+#: src/Admin/SetupWizard.php:801
 #, php-format
 msgid "Install and activate %s to use this starter. The point values it would seed depend on that plugin's events."
 msgstr ""
 
-#: src/Admin/SetupWizard.php:758
+#: src/Admin/SetupWizard.php:819
 msgid "Unavailable"
 msgstr ""
 
-#: src/Admin/SetupWizard.php:760
+#: src/Admin/SetupWizard.php:821
 msgid "Re-apply this template"
 msgstr ""
 
-#: src/Admin/SetupWizard.php:762
+#: src/Admin/SetupWizard.php:823
 msgid "Use this template"
 msgstr ""
 
-#: src/Admin/SetupWizard.php:774
+#: src/Admin/SetupWizard.php:835
 msgid "Tune defaults"
 msgstr ""
 
-#: src/Admin/SetupWizard.php:777
+#: src/Admin/SetupWizard.php:838
 msgid "Applied alongside the template you pick (skipped if you choose to configure manually). Every option is reversible from Settings."
 msgstr ""
 
-#: src/Admin/SetupWizard.php:784
+#: src/Admin/SetupWizard.php:845
 msgid "Level-up emails"
 msgstr ""
 
-#: src/Admin/SetupWizard.php:785
+#: src/Admin/SetupWizard.php:846
 msgid "Notify members when they reach a new level."
 msgstr ""
 
-#: src/Admin/SetupWizard.php:792
+#: src/Admin/SetupWizard.php:853
 msgid "Badge-earned emails"
 msgstr ""
 
-#: src/Admin/SetupWizard.php:793
+#: src/Admin/SetupWizard.php:854
 msgid "Notify members when they earn a badge."
 msgstr ""
 
-#: src/Admin/SetupWizard.php:800
+#: src/Admin/SetupWizard.php:861
 msgid "Challenge-completed emails"
 msgstr ""
 
-#: src/Admin/SetupWizard.php:801
+#: src/Admin/SetupWizard.php:862
 msgid "Notify members when they finish a challenge."
 msgstr ""
 
-#: src/Admin/SetupWizard.php:809
+#: src/Admin/SetupWizard.php:870
 msgid "Public profile pages"
 msgstr ""
 
-#: src/Admin/SetupWizard.php:810
+#: src/Admin/SetupWizard.php:871
 msgid "Show members' points, badges and rank to other people. Each member can still hide their own."
 msgstr ""
 
-#: src/Admin/SetupWizard.php:819
+#: src/Admin/SetupWizard.php:880
 msgid "Prefer to start from scratch?"
 msgstr ""
 
-#: src/Admin/SetupWizard.php:820
+#: src/Admin/SetupWizard.php:881
 msgid "Skip leaves the defaults in place - optional emails off, public profiles on. Configure everything yourself in Settings."
 msgstr ""
 
-#: src/Admin/SetupWizard.php:828
+#: src/Admin/SetupWizard.php:889
 msgid "Skip & configure manually"
 msgstr ""
 
@@ -6120,7 +6137,7 @@ msgstr ""
 
 #: src/API/ImportController.php:195
 #: src/Engine/ImportRunner.php:325
-#: src/Engine/ImportRunner.php:811
+#: src/Engine/ImportRunner.php:813
 #: src/Engine/ImportUndo.php:377
 msgid "Unknown import source."
 msgstr ""
@@ -6385,47 +6402,55 @@ msgid "You may only view your own recap."
 msgstr ""
 
 #: src/API/RedemptionController.php:270
-#: src/API/RedemptionController.php:324
-#: src/API/RedemptionController.php:356
-#: src/API/RedemptionController.php:373
+#: src/API/RedemptionController.php:329
+#: src/API/RedemptionController.php:369
+#: src/API/RedemptionController.php:386
 #: src/Engine/RedemptionEngine.php:168
 msgid "Reward item not found."
 msgstr ""
 
-#: src/API/RedemptionController.php:301
 #: src/API/RedemptionController.php:306
+#: src/API/RedemptionController.php:311
 msgid "Could not create reward item."
 msgstr ""
 
-#: src/API/RedemptionController.php:350
+#: src/API/RedemptionController.php:336
+msgid "Give the reward a title."
+msgstr ""
+
+#: src/API/RedemptionController.php:363
 msgid "Could not update reward item."
 msgstr ""
 
-#: src/API/RedemptionController.php:379
+#: src/API/RedemptionController.php:392
 msgid "Could not delete reward item."
 msgstr ""
 
-#: src/API/RedemptionController.php:439
+#: src/API/RedemptionController.php:452
 msgid "This redemption cannot be fulfilled."
 msgstr ""
 
-#: src/API/RedemptionController.php:457
+#: src/API/RedemptionController.php:470
 msgid "This redemption cannot be refunded."
 msgstr ""
 
-#: src/API/RedemptionController.php:578
+#: src/API/RedemptionController.php:591
 msgid "Remaining stock. Null means unlimited; 0 means sold out."
 msgstr ""
 
-#: src/API/RedemptionController.php:583
+#: src/API/RedemptionController.php:596
 msgid "Unlimited clears the stock count; limited uses stock."
 msgstr ""
 
-#: src/API/RedemptionController.php:629
+#: src/API/RedemptionController.php:634
+msgid "Enter how many are available, or choose Unlimited."
+msgstr ""
+
+#: src/API/RedemptionController.php:649
 msgid "You do not have permission to manage rewards."
 msgstr ""
 
-#: src/API/RedemptionController.php:655
+#: src/API/RedemptionController.php:675
 msgid "Login required."
 msgstr ""
 
@@ -6512,100 +6537,100 @@ msgid "Could not delete webhook."
 msgstr ""
 
 #. translators: short date format for a badge's earned date, see https://www.php.net/manual/datetime.format.php
-#: src/Blocks/badge-showcase/render.php:187
+#: src/Blocks/badge-showcase/render.php:175
 msgctxt "badge earned date format"
 msgid "M j, Y"
 msgstr ""
 
-#: src/Blocks/badge-showcase/render.php:200
+#: src/Blocks/badge-showcase/render.php:188
 msgid "No badges to show yet - keep going!"
 msgstr ""
 
 #. translators: 1: current count, 2: total count.
-#: src/Blocks/badge-showcase/render.php:212
-#: src/Blocks/challenges/render.php:234
+#: src/Blocks/badge-showcase/render.php:200
+#: src/Blocks/challenges/render.php:225
 #, php-format
 msgid "%1$d / %2$d"
 msgstr ""
 
-#: src/Blocks/badge-showcase/render.php:218
+#: src/Blocks/badge-showcase/render.php:206
 msgid "badges earned"
 msgstr ""
 
-#: src/Blocks/badge-showcase/render.php:229
+#: src/Blocks/badge-showcase/render.php:217
 msgid "Filter badges"
 msgstr ""
 
-#: src/Blocks/badge-showcase/render.php:237
+#: src/Blocks/badge-showcase/render.php:225
 msgid "Earned"
 msgstr ""
 
-#: src/Blocks/badge-showcase/render.php:242
+#: src/Blocks/badge-showcase/render.php:230
 msgid "Locked"
 msgstr ""
 
-#: src/Blocks/badge-showcase/render.php:298
+#: src/Blocks/badge-showcase/render.php:286
 msgid "Keep earning to unlock"
 msgstr ""
 
-#: src/Blocks/badge-showcase/render.php:323
-#: src/Blocks/badge-showcase/render.php:330
+#: src/Blocks/badge-showcase/render.php:311
+#: src/Blocks/badge-showcase/render.php:318
 msgid "Share"
 msgstr ""
 
-#: src/Blocks/badge-showcase/render.php:324
-#: src/Blocks/badge-showcase/render.php:329
+#: src/Blocks/badge-showcase/render.php:312
+#: src/Blocks/badge-showcase/render.php:317
 msgid "Shared - click to make private"
 msgstr ""
 
-#: src/Blocks/badge-showcase/render.php:340
+#: src/Blocks/badge-showcase/render.php:328
 msgid "Open share page"
 msgstr ""
 
-#: src/Blocks/badge-showcase/render.php:343
+#: src/Blocks/badge-showcase/render.php:331
 msgid "Copied"
 msgstr ""
 
-#: src/Blocks/badge-showcase/render.php:344
+#: src/Blocks/badge-showcase/render.php:332
 msgid "Copy failed - open the link instead"
 msgstr ""
 
-#: src/Blocks/badge-showcase/render.php:344
+#: src/Blocks/badge-showcase/render.php:332
 #: src/Engine/BadgeSharePage.php:314
 msgid "Copy link"
 msgstr ""
 
-#: src/Blocks/challenges/render.php:140
+#: src/Blocks/challenges/render.php:129
 msgid "Ended"
 msgstr ""
 
 #. translators: %s: human-readable time difference.
-#: src/Blocks/challenges/render.php:145
-#: src/Blocks/challenges/render.php:152
+#: src/Blocks/challenges/render.php:134
+#: src/Blocks/challenges/render.php:141
 #, php-format
 msgid "Ends in %s"
 msgstr ""
 
 #. translators: %s: absolute date (e.g. "May 31")
-#: src/Blocks/challenges/render.php:158
+#: src/Blocks/challenges/render.php:147
 #, php-format
 msgid "Ends %s"
 msgstr ""
 
-#: src/Blocks/challenges/render.php:159
+#: src/Blocks/challenges/render.php:148
 msgid "M j"
 msgstr ""
 
-#: src/Blocks/challenges/render.php:170
+#: src/Blocks/challenges/render.php:159
 msgid "No active challenges right now. New ones appear when admins schedule them."
 msgstr ""
 
-#: src/Blocks/challenges/render.php:188
+#: src/Blocks/challenges/render.php:177
 msgid "Team"
 msgstr ""
 
 #. translators: 1: action label e.g. "Comment on a post", 2: remaining count
-#: src/Blocks/challenges/render.php:203
+#: src/Blocks/challenges/render.php:192
 #, php-format
 msgid "%2$d more &middot; %1$s"
 msgid_plural "%2$d more &middot; %1$s"
@@ -6613,65 +6638,65 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: 1: current progress, 2: target
-#: src/Blocks/challenges/render.php:224
+#: src/Blocks/challenges/render.php:214
 #, php-format
 msgid "Progress: %1$d of %2$d"
 msgstr ""
 
-#: src/Blocks/cohort-rank/render.php:94
+#: src/Blocks/cohort-rank/render.php:82
 msgid "Log in to see your cohort league."
 msgstr ""
 
-#: src/Blocks/cohort-rank/render.php:114
+#: src/Blocks/cohort-rank/render.php:101
 msgid "You have not been assigned to a cohort yet. New cohorts are formed every Monday."
 msgstr ""
 
-#: src/Blocks/cohort-rank/render.php:167
+#: src/Blocks/cohort-rank/render.php:153
 msgid "Cohort"
 msgstr ""
 
 #. translators: %d = the member's current rank within their cohort
-#: src/Blocks/cohort-rank/render.php:173
+#: src/Blocks/cohort-rank/render.php:159
 #, php-format
 msgid "You're #%d"
 msgstr ""
 
-#: src/Blocks/cohort-rank/render.php:181
+#: src/Blocks/cohort-rank/render.php:167
 msgid "No standings available yet - your cohort will populate as members earn points this week."
 msgstr ""
 
-#: src/Blocks/community-challenges/render.php:104
+#: src/Blocks/community-challenges/render.php:92
 msgid "No active community challenges right now. Check back soon!"
 msgstr ""
 
-#: src/Blocks/community-challenges/render.php:121
+#: src/Blocks/community-challenges/render.php:109
 msgid "ended"
 msgstr ""
 
 #. translators: 1 = current progress, 2 = target count
-#: src/Blocks/community-challenges/render.php:159
+#: src/Blocks/community-challenges/render.php:147
 #, php-format
 msgid "%1$s / %2$s"
 msgstr ""
 
 #. translators: %s = human-readable time until the window closes (members keep seeing the win until then).
-#: src/Blocks/community-challenges/render.php:169
+#: src/Blocks/community-challenges/render.php:157
 #, php-format
 msgid "Celebrating for %s"
 msgstr ""
 
 #. translators: %s = human-readable time remaining
-#: src/Blocks/community-challenges/render.php:172
+#: src/Blocks/community-challenges/render.php:160
 #, php-format
 msgid "%s left"
 msgstr ""
 
-#: src/Blocks/daily-bonus/render.php:84
+#: src/Blocks/daily-bonus/render.php:75
 msgid "Log in to claim your daily bonus."
 msgstr ""
 
 #. translators: %d: consecutive day count
-#: src/Blocks/daily-bonus/render.php:120
+#: src/Blocks/daily-bonus/render.php:110
 #, php-format
 msgid "%d-day login streak"
 msgid_plural "%d-day login streak"
@@ -6679,158 +6704,158 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %d: longest streak
-#: src/Blocks/daily-bonus/render.php:130
+#: src/Blocks/daily-bonus/render.php:120
 #, php-format
 msgid "Best: %d days"
 msgstr ""
 
 #. translators: %s: an amount with the site's name for points, e.g. "5 Points".
-#: src/Blocks/daily-bonus/render.php:146
+#: src/Blocks/daily-bonus/render.php:136
 #, php-format
 msgid "Claimed today: %s"
 msgstr ""
 
 #. translators: %s: an amount with the site's name for points, e.g. "5 Points".
-#: src/Blocks/daily-bonus/render.php:156
+#: src/Blocks/daily-bonus/render.php:146
 #, php-format
 msgid "Tomorrow: %s"
 msgstr ""
 
 #. translators: %s: an amount with the site's name for points, e.g. "5 Points".
-#: src/Blocks/daily-bonus/render.php:167
+#: src/Blocks/daily-bonus/render.php:157
 #, php-format
 msgid "Available now: %s"
 msgstr ""
 
 #. translators: %d: day number
-#: src/Blocks/daily-bonus/render.php:186
+#: src/Blocks/daily-bonus/render.php:176
 #, php-format
 msgid "Day %d"
 msgstr ""
 
-#: src/Blocks/earning-guide/render.php:156
+#: src/Blocks/earning-guide/render.php:144
 msgid "No earning opportunities available yet."
 msgstr ""
 
 #. translators: %s: per-day cap count
-#: src/Blocks/earning-guide/render.php:180
+#: src/Blocks/earning-guide/render.php:168
 #, php-format
 msgid "max %s/day"
 msgstr ""
 
 #. translators: %s: hours between earnings
-#: src/Blocks/earning-guide/render.php:189
+#: src/Blocks/earning-guide/render.php:177
 #, php-format
 msgid "%sh cooldown"
 msgstr ""
 
 #. translators: %s: minutes between earnings
-#: src/Blocks/earning-guide/render.php:195
+#: src/Blocks/earning-guide/render.php:183
 #, php-format
 msgid "%sm cooldown"
 msgstr ""
 
 #. translators: %s: seconds between earnings
-#: src/Blocks/earning-guide/render.php:201
+#: src/Blocks/earning-guide/render.php:189
 #, php-format
 msgid "%ss cooldown"
 msgstr ""
 
 #. translators: 1: point value, 2: the site's name for the points, e.g. "Points" or "Karma".
-#: src/Blocks/earning-guide/render.php:214
+#: src/Blocks/earning-guide/render.php:202
 #, php-format
 msgid "+%1$s %2$s"
 msgstr ""
 
-#: src/Blocks/hub/render.php:128
+#: src/Blocks/hub/render.php:116
 msgid "Join the community"
 msgstr ""
 
-#: src/Blocks/hub/render.php:129
+#: src/Blocks/hub/render.php:117
 msgid "Log in to track your points, earn badges, and climb the leaderboard."
 msgstr ""
 
-#: src/Blocks/hub/render.php:132
-#: src/Blocks/points-history/render.php:106
-#: src/Blocks/streak/render.php:109
+#: src/Blocks/hub/render.php:120
+#: src/Blocks/points-history/render.php:94
+#: src/Blocks/streak/render.php:97
 #: src/Engine/ShortcodeHandler.php:310
 msgid "Log in"
 msgstr ""
 
-#: src/Blocks/hub/render.php:136
-#: src/Blocks/hub/render.php:137
+#: src/Blocks/hub/render.php:124
+#: src/Blocks/hub/render.php:125
 msgid "Top members"
 msgstr ""
 
-#: src/Blocks/hub/render.php:239
+#: src/Blocks/hub/render.php:227
 #: src/Blocks/user-status-bar/render.php:134
 #: src/BuddyPress/ProfileIntegration.php:166
-#: src/CLI/EmailCommand.php:83
-#: src/Engine/ProfilePage.php:224
-#: src/Engine/ProfilePage.php:424
+#: src/CLI/EmailCommand.php:84
+#: src/Engine/ProfilePage.php:230
+#: src/Engine/ProfilePage.php:430
 msgid "Newcomer"
 msgstr ""
 
-#: src/Blocks/hub/render.php:244
+#: src/Blocks/hub/render.php:232
 msgid "My Badges"
 msgstr ""
 
 #. translators: 1: earned badge count, 2: locked badge count
-#: src/Blocks/hub/render.php:247
+#: src/Blocks/hub/render.php:235
 #, php-format
 msgid "%1$d earned, %2$d locked"
 msgstr ""
 
-#: src/Blocks/hub/render.php:259
-#: src/Blocks/leaderboard/render.php:144
+#: src/Blocks/hub/render.php:247
+#: src/Blocks/leaderboard/render.php:141
 #: src/Integrations/Jetonomy/DisplayDefer.php:127
 msgid "Leaderboard"
 msgstr ""
 
 #. translators: %s: rank position (e.g. "#3")
-#: src/Blocks/hub/render.php:263
+#: src/Blocks/hub/render.php:251
 #, php-format
 msgid "You're ranked %s this week"
 msgstr ""
 
-#: src/Blocks/hub/render.php:266
+#: src/Blocks/hub/render.php:254
 msgid "Not ranked yet this week"
 msgstr ""
 
-#: src/Blocks/hub/render.php:275
+#: src/Blocks/hub/render.php:263
 msgid "How to Earn"
 msgstr ""
 
 #. translators: %d: number of available actions
-#: src/Blocks/hub/render.php:278
+#: src/Blocks/hub/render.php:266
 #, php-format
 msgid "%d ways to earn points"
 msgstr ""
 
 #. translators: %d: number of kudos received
-#: src/Blocks/hub/render.php:290
+#: src/Blocks/hub/render.php:278
 #, php-format
 msgid "%d kudos received"
 msgid_plural "%d kudos received"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/Blocks/hub/render.php:301
+#: src/Blocks/hub/render.php:289
 msgid "Activity"
 msgstr ""
 
-#: src/Blocks/hub/render.php:302
+#: src/Blocks/hub/render.php:290
 msgid "Your recent point activity"
 msgstr ""
 
 #. translators: 1: personal challenge count, 2: community challenge count
-#: src/Blocks/hub/render.php:336
+#: src/Blocks/hub/render.php:324
 #, php-format
 msgid "%1$d personal, %2$d community"
 msgstr ""
 
 #. translators: %d: number of community challenges
-#: src/Blocks/hub/render.php:343
+#: src/Blocks/hub/render.php:331
 #, php-format
 msgid "%d community challenge"
 msgid_plural "%d community challenges"
@@ -6838,49 +6863,49 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %d: number of personal challenges
-#: src/Blocks/hub/render.php:349
+#: src/Blocks/hub/render.php:337
 #, php-format
 msgid "%d active challenge"
 msgid_plural "%d active challenges"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/Blocks/hub/render.php:419
+#: src/Blocks/hub/render.php:406
 msgid "Suggested for you"
 msgstr ""
 
-#: src/Blocks/hub/render.php:426
+#: src/Blocks/hub/render.php:413
 msgid "Let's go"
 msgstr ""
 
 #. translators: %s: currency label being converted.
-#: src/Blocks/hub/render.php:450
+#: src/Blocks/hub/render.php:437
 #, php-format
 msgid "Convert %s"
 msgstr ""
 
-#: src/Blocks/hub/render.php:453
-#: src/Blocks/hub/render.php:634
+#: src/Blocks/hub/render.php:440
+#: src/Blocks/hub/render.php:621
 msgid "Convert"
 msgstr ""
 
-#: src/Blocks/hub/render.php:462
-#: src/Blocks/level-progress/render.php:190
+#: src/Blocks/hub/render.php:449
+#: src/Blocks/level-progress/render.php:176
 msgid "Current Level"
 msgstr ""
 
 #. translators: %s: next level name
-#: src/Blocks/hub/render.php:470
+#: src/Blocks/hub/render.php:457
 #, php-format
 msgid "Next: %s"
 msgstr ""
 
-#: src/Blocks/hub/render.php:485
+#: src/Blocks/hub/render.php:472
 msgid "Day Streak"
 msgstr ""
 
 #. translators: %s: longest streak number
-#: src/Blocks/hub/render.php:489
+#: src/Blocks/hub/render.php:476
 #, php-format
 msgid "Best: %s day"
 msgid_plural "Best: %s days"
@@ -6888,165 +6913,166 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %s: HTML right-arrow entity displayed inline as the "view" affordance
-#: src/Blocks/hub/render.php:519
+#: src/Blocks/hub/render.php:506
 #, php-format
 msgid "View %s"
 msgstr ""
 
-#: src/Blocks/hub/render.php:566
+#: src/Blocks/hub/render.php:553
 msgid "Close panel"
 msgstr ""
 
-#: src/Blocks/hub/render.php:585
+#: src/Blocks/hub/render.php:572
 msgid "Convert balance"
 msgstr ""
 
 #. translators: 1: balance amount, 2: currency label
-#: src/Blocks/hub/render.php:593
+#: src/Blocks/hub/render.php:580
 #, php-format
 msgid "You have %1$s %2$s available."
 msgstr ""
 
-#: src/Blocks/hub/render.php:600
+#: src/Blocks/hub/render.php:587
 msgid "Convert to"
 msgstr ""
 
-#: src/Blocks/hub/render.php:627
+#: src/Blocks/hub/render.php:614
 msgid "Amount to spend"
 msgstr ""
 
-#: src/Blocks/kudos-feed/render.php:109
+#: src/Blocks/kudos-feed/render.php:97
 msgid "No kudos given yet - be the first!"
 msgstr ""
 
-#: src/Blocks/leaderboard/render.php:98
+#: src/Blocks/leaderboard/render.php:87
 msgid "All Time"
 msgstr ""
 
-#: src/Blocks/leaderboard/render.php:99
+#: src/Blocks/leaderboard/render.php:88
 msgid "This Month"
 msgstr ""
 
-#: src/Blocks/leaderboard/render.php:100
+#: src/Blocks/leaderboard/render.php:89
 msgid "This Week"
 msgstr ""
 
-#: src/Blocks/leaderboard/render.php:101
-#: src/Blocks/points-history/render.php:163
+#: src/Blocks/leaderboard/render.php:90
+#: src/Blocks/points-history/render.php:151
 #: src/Blocks/leaderboard/edit.js:43
 msgid "Today"
 msgstr ""
 
+#: src/Blocks/leaderboard/render.php:109
+msgid "1st place"
+msgstr ""
+
+#: src/Blocks/leaderboard/render.php:110
+msgid "2nd place"
+msgstr ""
+
+#: src/Blocks/leaderboard/render.php:111
+msgid "3rd place"
+msgstr ""
+
 #. translators: %d: number of badges.
-#: src/Blocks/leaderboard/render.php:135
-#: src/Blocks/leaderboard/render.php:245
+#: src/Blocks/leaderboard/render.php:129
+#: src/Blocks/leaderboard/render.php:235
 #, php-format
 msgid "Badges: %d"
 msgstr ""
 
-#: src/Blocks/leaderboard/render.php:153
-msgid "No members on the leaderboard yet."
-msgstr ""
-
-#: src/Blocks/leaderboard/render.php:168
-msgid "1st place"
-msgstr ""
-
-#: src/Blocks/leaderboard/render.php:170
-msgid "2nd place"
-msgstr ""
-
-#: src/Blocks/leaderboard/render.php:172
-msgid "3rd place"
-msgstr ""
-
-#: src/Blocks/leaderboard/render.php:174
+#: src/Blocks/leaderboard/render.php:132
+#: src/Blocks/leaderboard/render.php:164
 msgid "Rank"
 msgstr ""
 
+#: src/Blocks/leaderboard/render.php:150
+msgid "No members on the leaderboard yet."
+msgstr ""
+
 #. translators: %d: number of badges earned.
-#: src/Blocks/leaderboard/render.php:236
+#: src/Blocks/leaderboard/render.php:226
 #: src/BuddyPress/DirectoryIntegration.php:175
-#: src/Engine/ProfilePage.php:221
-#: src/Engine/ProfilePage.php:421
+#: src/Engine/ProfilePage.php:227
+#: src/Engine/ProfilePage.php:427
 #, php-format
 msgid "%d badge"
 msgid_plural "%d badges"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/Blocks/leaderboard/render.php:265
+#: src/Blocks/leaderboard/render.php:255
 msgid "Your rank"
 msgstr ""
 
 #. translators: %s = rank number
-#: src/Blocks/leaderboard/render.php:269
+#: src/Blocks/leaderboard/render.php:259
 #, php-format
 msgid "#%s"
 msgstr ""
 
 #. translators: %s: points needed to move up one rank, e.g. "3 Points".
-#: src/Blocks/leaderboard/render.php:282
+#: src/Blocks/leaderboard/render.php:272
 #, php-format
 msgid "%s to the next rank"
 msgstr ""
 
-#: src/Blocks/level-progress/render.php:105
+#: src/Blocks/level-progress/render.php:93
 msgid "Log in to see your level progress."
 msgstr ""
 
-#: src/Blocks/level-progress/render.php:162
+#: src/Blocks/level-progress/render.php:149
 msgid "Keep earning points to unlock your first level!"
 msgstr ""
 
 #. translators: %s = points total
-#: src/Blocks/level-progress/render.php:195
+#: src/Blocks/level-progress/render.php:181
 #, php-format
 msgid "%s points"
 msgstr ""
 
 #. translators: 1: formatted points needed to reach next level, 2: name of the next level
-#: src/Blocks/level-progress/render.php:219
+#: src/Blocks/level-progress/render.php:205
 #, php-format
 msgid "%1$s pts to %2$s"
 msgstr ""
 
-#: src/Blocks/level-progress/render.php:227
+#: src/Blocks/level-progress/render.php:213
 msgid "Max level reached!"
 msgstr ""
 
-#: src/Blocks/member-points/render.php:104
+#: src/Blocks/member-points/render.php:92
 msgid "Log in to see your points."
 msgstr ""
 
-#: src/Blocks/member-points/render.php:188
+#: src/Blocks/member-points/render.php:175
 msgid "Level progress"
 msgstr ""
 
 #. translators: 1: points needed for the next level, e.g. "3 Points", 2: name of the next level.
-#: src/Blocks/member-points/render.php:199
+#: src/Blocks/member-points/render.php:186
 #, php-format
 msgid "%1$s to %2$s"
 msgstr ""
 
-#: src/Blocks/points-history/render.php:102
+#: src/Blocks/points-history/render.php:90
 msgid "Log in to see your points history."
 msgstr ""
 
-#: src/Blocks/points-history/render.php:166
+#: src/Blocks/points-history/render.php:154
 msgid "Yesterday"
 msgstr ""
 
-#: src/Blocks/points-history/render.php:173
+#: src/Blocks/points-history/render.php:161
 msgid "l, M j"
 msgstr ""
 
-#: src/Blocks/points-history/render.php:192
+#: src/Blocks/points-history/render.php:179
 msgid "No point activity yet - earn your first points by participating in the community."
 msgstr ""
 
 #: src/Blocks/redemption-store/render.php:60
-#: src/Blocks/redemption-store/render.php:356
+#: src/Blocks/redemption-store/render.php:357
 msgid "Redeem"
 msgstr ""
 
@@ -7054,119 +7080,119 @@ msgstr ""
 msgid "No rewards available yet. Check back soon!"
 msgstr ""
 
-#: src/Blocks/redemption-store/render.php:155
+#: src/Blocks/redemption-store/render.php:156
 msgid "Redemption failed."
 msgstr ""
 
-#: src/Blocks/redemption-store/render.php:156
+#: src/Blocks/redemption-store/render.php:157
 msgid "Redeemed! Check your email or your account for next steps."
 msgstr ""
 
-#: src/Blocks/redemption-store/render.php:158
+#: src/Blocks/redemption-store/render.php:159
 msgid "Redemption endpoint is unavailable."
 msgstr ""
 
 #. translators: 1: the balance amount, 2: the site's name for points.
-#: src/Blocks/redemption-store/render.php:196
+#: src/Blocks/redemption-store/render.php:197
 #, php-format
 msgid "Balance: %1$s %2$s"
 msgstr ""
 
-#: src/Blocks/redemption-store/render.php:256
-#: src/Blocks/redemption-store/render.php:273
+#: src/Blocks/redemption-store/render.php:257
+#: src/Blocks/redemption-store/render.php:274
 msgid "Out of stock"
 msgstr ""
 
 #. translators: %d: remaining stock
-#: src/Blocks/redemption-store/render.php:259
+#: src/Blocks/redemption-store/render.php:260
 #, php-format
 msgid "%d left"
 msgstr ""
 
-#: src/Blocks/redemption-store/render.php:269
+#: src/Blocks/redemption-store/render.php:270
 msgid "Log in to redeem"
 msgstr ""
 
 #. translators: %s: the amount still needed, e.g. "5 Points".
-#: src/Blocks/redemption-store/render.php:280
+#: src/Blocks/redemption-store/render.php:281
 #, php-format
 msgid "Need %s more"
 msgstr ""
 
 #. translators: 1: reward name, 2: its cost, e.g. "50 Points".
-#: src/Blocks/redemption-store/render.php:294
+#: src/Blocks/redemption-store/render.php:295
 #, php-format
 msgid "Redeem %1$s for %2$s"
 msgstr ""
 
-#: src/Blocks/redemption-store/render.php:297
+#: src/Blocks/redemption-store/render.php:298
 msgid "Redeemed"
 msgstr ""
 
 #. translators: %s: the reward name.
-#: src/Blocks/redemption-store/render.php:325
+#: src/Blocks/redemption-store/render.php:326
 #, php-format
 msgid "Redeem %s?"
 msgstr ""
 
 #. translators: 1: the cost, e.g. "50 Points". 2: the member's balance, e.g. "297 Points".
-#: src/Blocks/redemption-store/render.php:338
+#: src/Blocks/redemption-store/render.php:339
 #, php-format
 msgid "%1$s will be deducted. You have %2$s."
 msgstr ""
 
-#: src/Blocks/redemption-store/render.php:386
+#: src/Blocks/redemption-store/render.php:387
 msgid "Redeemed! Your code:"
 msgstr ""
 
-#: src/Blocks/streak/render.php:105
+#: src/Blocks/streak/render.php:93
 msgid "Log in to see your streak."
 msgstr ""
 
-#: src/Blocks/streak/render.php:172
+#: src/Blocks/streak/render.php:159
 msgid "Day streak"
 msgstr ""
 
-#: src/Blocks/streak/render.php:178
+#: src/Blocks/streak/render.php:165
 msgid "Best streak"
 msgstr ""
 
 #. translators: 1 = current streak, 2 = milestone target
-#: src/Blocks/streak/render.php:197
+#: src/Blocks/streak/render.php:184
 #, php-format
 msgid "Streak progress: %1$d of %2$d days"
 msgstr ""
 
 #. translators: 1 = current streak, 2 = milestone target
-#: src/Blocks/streak/render.php:206
+#: src/Blocks/streak/render.php:193
 #, php-format
 msgid "%1$d / %2$d days"
 msgstr ""
 
 #. translators: 1 = days remaining, 2 = milestone target
-#: src/Blocks/streak/render.php:214
+#: src/Blocks/streak/render.php:201
 #, php-format
 msgid "%1$d more day to reach the %2$d-day milestone!"
 msgid_plural "%1$d more days to reach the %2$d-day milestone!"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/Blocks/streak/render.php:230
+#: src/Blocks/streak/render.php:217
 msgid "Amazing - you have hit every milestone! Keep it up!"
 msgstr ""
 
-#: src/Blocks/streak/render.php:235
+#: src/Blocks/streak/render.php:222
 msgid "Contribution heatmap"
 msgstr ""
 
 #. translators: 1 = formatted date, 2 = points
-#: src/Blocks/streak/render.php:249
+#: src/Blocks/streak/render.php:236
 #, php-format
 msgid "%1$s: %2$s points"
 msgstr ""
 
 #. translators: %s = formatted date
-#: src/Blocks/streak/render.php:250
+#: src/Blocks/streak/render.php:237
 #, php-format
 msgid "%s: No activity"
 msgstr ""
@@ -7179,49 +7205,49 @@ msgstr ""
 msgid "There is nothing to submit for review right now. Points for your activity are added automatically."
 msgstr ""
 
-#: src/Blocks/submit-achievement/render.php:105
+#: src/Blocks/submit-achievement/render.php:106
 msgid "Submitted! A reviewer will look at it soon."
 msgstr ""
 
-#: src/Blocks/submit-achievement/render.php:106
+#: src/Blocks/submit-achievement/render.php:107
 msgid "Submission failed."
 msgstr ""
 
-#: src/Blocks/submit-achievement/render.php:107
+#: src/Blocks/submit-achievement/render.php:108
 msgid "Network error."
 msgstr ""
 
-#: src/Blocks/submit-achievement/render.php:115
+#: src/Blocks/submit-achievement/render.php:116
 msgid "What did you do?"
 msgstr ""
 
-#: src/Blocks/submit-achievement/render.php:117
+#: src/Blocks/submit-achievement/render.php:118
 msgid "- pick an action -"
 msgstr ""
 
-#: src/Blocks/submit-achievement/render.php:125
+#: src/Blocks/submit-achievement/render.php:126
 msgid "Tell us about it"
 msgstr ""
 
-#: src/Blocks/submit-achievement/render.php:160
+#: src/Blocks/submit-achievement/render.php:161
 msgid "Tip: paste a media link in the optional URL field below to attach evidence."
 msgstr ""
 
-#: src/Blocks/submit-achievement/render.php:166
+#: src/Blocks/submit-achievement/render.php:167
 msgid "Link (optional)"
 msgstr ""
 
-#: src/Blocks/submit-achievement/render.php:171
+#: src/Blocks/submit-achievement/render.php:172
 msgid "Submit for review"
 msgstr ""
 
-#: src/Blocks/top-members/render.php:120
+#: src/Blocks/top-members/render.php:108
 msgid "Be the first to earn points and claim the top spot!"
 msgstr ""
 
 #. translators: %s: number of badges a member holds.
-#: src/Blocks/top-members/render.php:231
-#: src/Blocks/top-members/render.php:298
+#: src/Blocks/top-members/render.php:218
+#: src/Blocks/top-members/render.php:285
 #, php-format
 msgid "Badges: %s"
 msgstr ""
@@ -7234,54 +7260,66 @@ msgstr ""
 msgid "Collapse status bar"
 msgstr ""
 
-#: src/Blocks/year-recap/render.php:101
+#: src/Blocks/year-recap/render.php:92
 msgid "Log in to see your year in review."
 msgstr ""
 
-#: src/Blocks/year-recap/render.php:138
+#. translators: %d: the year the block shows, e.g. 2025.
+#: src/Blocks/year-recap/render.php:135
+#, php-format
+msgid "Nothing to recap for %d: no points were earned that year."
+msgstr ""
+
+#: src/Blocks/year-recap/render.php:136
 msgid "Your year in review will appear here once you start earning points."
 msgstr ""
 
 #. translators: 1: user display name, 2: year
-#: src/Blocks/year-recap/render.php:149
+#: src/Blocks/year-recap/render.php:147
 #, php-format
 msgid "%1$s - %2$d in Community"
 msgstr ""
 
 #. translators: %d = year
-#: src/Blocks/year-recap/render.php:185
+#: src/Blocks/year-recap/render.php:183
 #, php-format
 msgid "Your %d in Community"
 msgstr ""
 
-#: src/Blocks/year-recap/render.php:198
+#: src/Blocks/year-recap/render.php:196
 msgid "Points Earned"
 msgstr ""
 
 #. translators: %d = percentile (0-100)
-#: src/Blocks/year-recap/render.php:217
+#: src/Blocks/year-recap/render.php:215
 #, php-format
 msgid "Top %d%%"
 msgstr ""
 
-#: src/Blocks/year-recap/render.php:220
+#: src/Blocks/year-recap/render.php:218
 msgid "Community Rank"
 msgstr ""
 
-#: src/Blocks/year-recap/render.php:226
+#: src/Blocks/year-recap/render.php:224
 msgid "Kudos Received"
 msgstr ""
 
-#: src/Blocks/year-recap/render.php:233
+#: src/Blocks/year-recap/render.php:231
 msgid "Peak Week"
 msgstr ""
 
-#: src/Blocks/year-recap/render.php:245
+#. translators: %s: the date the week starts on, in the site's date format, e.g. "9 November 2026".
+#: src/Blocks/year-recap/render.php:237
+#, php-format
+msgid "Week of %s"
+msgstr ""
+
+#: src/Blocks/year-recap/render.php:253
 msgid "Most Active"
 msgstr ""
 
 #. translators: %d: number of times the action was performed
-#: src/Blocks/year-recap/render.php:255
+#: src/Blocks/year-recap/render.php:263
 #, php-format
 msgid "%d time"
 msgid_plural "%d times"
@@ -7289,38 +7327,38 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %d: number of badges earned
-#: src/Blocks/year-recap/render.php:272
+#: src/Blocks/year-recap/render.php:280
 #, php-format
 msgid "%d Badge Earned"
 msgid_plural "%d Badges Earned"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/Blocks/year-recap/render.php:291
+#: src/Blocks/year-recap/render.php:299
 msgid "Share Your Year"
 msgstr ""
 
-#: src/Blocks/year-recap/render.php:292
+#: src/Blocks/year-recap/render.php:300
 msgid "Link copied!"
 msgstr ""
 
 #: src/BuddyPress/ActivityIntegration.php:86
-#: src/Engine/Registry.php:718
+#: src/Engine/Registry.php:784
 msgid "Earned a badge"
 msgstr ""
 
 #: src/BuddyPress/ActivityIntegration.php:87
-#: src/Engine/Registry.php:717
+#: src/Engine/Registry.php:783
 msgid "Reached a new level"
 msgstr ""
 
 #: src/BuddyPress/ActivityIntegration.php:88
-#: src/Engine/Registry.php:709
+#: src/Engine/Registry.php:775
 msgid "Gave kudos"
 msgstr ""
 
 #: src/BuddyPress/ActivityIntegration.php:89
-#: src/Engine/Registry.php:715
+#: src/Engine/Registry.php:781
 msgid "Completed a challenge"
 msgstr ""
 
@@ -7371,7 +7409,7 @@ msgid "a new badge"
 msgstr ""
 
 #. translators: 1: member name (a link to their profile), 2: number of badges earned today.
-#: src/BuddyPress/Stream/BadgeStream.php:301
+#: src/BuddyPress/Stream/BadgeStream.php:302
 #, php-format
 msgid "%1$s earned %2$d badge"
 msgid_plural "%1$s earned %2$d badges"
@@ -7379,13 +7417,13 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: list separator between badge names, e.g. "Blog Publisher, First Comment".
-#: src/BuddyPress/Stream/BadgeStream.php:309
+#: src/BuddyPress/Stream/BadgeStream.php:310
 msgctxt "badge name list separator"
 msgid ", "
 msgstr ""
 
-#: src/BuddyPress/Stream/BadgeStream.php:311
-#: src/Engine/CommunityNotifications.php:524
+#: src/BuddyPress/Stream/BadgeStream.php:312
+#: src/Engine/CommunityNotifications.php:514
 msgid "Badges earned"
 msgstr ""
 
@@ -7434,55 +7472,55 @@ msgid "A new milestone reached."
 msgstr ""
 
 #. translators: %s: level name
-#: src/CLI/EmailCommand.php:90
+#: src/CLI/EmailCommand.php:91
 #, php-format
 msgid "[TEST] You reached %s!"
 msgstr ""
 
-#: src/CLI/EmailCommand.php:99
+#: src/CLI/EmailCommand.php:100
 msgid "Sample Badge"
 msgstr ""
 
-#: src/CLI/EmailCommand.php:100
+#: src/CLI/EmailCommand.php:101
 msgid "A sample badge for email testing."
 msgstr ""
 
-#: src/CLI/EmailCommand.php:104
+#: src/CLI/EmailCommand.php:105
 msgid "[TEST] You earned the Sample Badge!"
 msgstr ""
 
-#: src/CLI/EmailCommand.php:110
+#: src/CLI/EmailCommand.php:111
 msgid "Sample Challenge"
 msgstr ""
 
-#: src/CLI/EmailCommand.php:111
+#: src/CLI/EmailCommand.php:112
 msgid "A sample challenge for email testing."
 msgstr ""
 
-#: src/CLI/EmailCommand.php:114
+#: src/CLI/EmailCommand.php:115
 msgid "[TEST] Challenge completed: Sample Challenge"
 msgstr ""
 
-#: src/CLI/EmailCommand.php:121
+#: src/CLI/EmailCommand.php:122
 msgid "Sample Reward"
 msgstr ""
 
-#: src/CLI/EmailCommand.php:127
+#: src/CLI/EmailCommand.php:128
 msgid "[TEST] Your redemption: Sample Reward"
 msgstr ""
 
 #. translators: %s: site name
-#: src/CLI/EmailCommand.php:148
+#: src/CLI/EmailCommand.php:149
 #, php-format
 msgid "[TEST] Your week in %s"
 msgstr ""
 
-#: src/CLI/EmailCommand.php:156
+#: src/CLI/EmailCommand.php:157
 msgid "You're #3 this week with 240 points."
 msgstr ""
 
 #. translators: %s: site name
-#: src/CLI/EmailCommand.php:162
+#: src/CLI/EmailCommand.php:163
 #, php-format
 msgid "[TEST] Your weekly community ranking at %s"
 msgstr ""
@@ -7677,7 +7715,7 @@ msgid "You earned a new badge: %s."
 msgstr ""
 
 #: src/Engine/CommunityNotifications.php:75
-#: src/Engine/CommunityNotifications.php:525
+#: src/Engine/CommunityNotifications.php:515
 msgid "You earned a new badge."
 msgstr ""
 
@@ -7708,7 +7746,7 @@ msgid "You completed %s."
 msgstr ""
 
 #: src/Engine/CommunityNotifications.php:167
-#: src/Engine/CommunityNotifications.php:537
+#: src/Engine/CommunityNotifications.php:527
 msgid "You completed a challenge."
 msgstr ""
 
@@ -7727,7 +7765,7 @@ msgid "A badge credential of yours has expired."
 msgstr ""
 
 #: src/Engine/CommunityNotifications.php:268
-#: src/Engine/CommunityNotifications.php:549
+#: src/Engine/CommunityNotifications.php:539
 msgid "You set a new personal best."
 msgstr ""
 
@@ -7767,72 +7805,72 @@ msgstr ""
 msgid "Your submission was not approved: %s."
 msgstr ""
 
-#: src/Engine/CommunityNotifications.php:528
+#: src/Engine/CommunityNotifications.php:518
 msgid "Level-ups"
 msgstr ""
 
-#: src/Engine/CommunityNotifications.php:529
+#: src/Engine/CommunityNotifications.php:519
 msgid "You reached a new level."
 msgstr ""
 
-#: src/Engine/CommunityNotifications.php:533
+#: src/Engine/CommunityNotifications.php:523
 msgid "A member gave you kudos."
 msgstr ""
 
-#: src/Engine/CommunityNotifications.php:536
-#: templates/emails/weekly-recap.php:159
+#: src/Engine/CommunityNotifications.php:526
+#: templates/emails/weekly-recap.php:160
 msgid "Challenges completed"
 msgstr ""
 
-#: src/Engine/CommunityNotifications.php:540
+#: src/Engine/CommunityNotifications.php:530
 msgid "Rewards ready"
 msgstr ""
 
-#: src/Engine/CommunityNotifications.php:541
+#: src/Engine/CommunityNotifications.php:531
 msgid "A reward you redeemed is ready."
 msgstr ""
 
-#: src/Engine/CommunityNotifications.php:544
+#: src/Engine/CommunityNotifications.php:534
 msgid "Expired credentials"
 msgstr ""
 
-#: src/Engine/CommunityNotifications.php:545
+#: src/Engine/CommunityNotifications.php:535
 msgid "A badge credential of yours expired."
 msgstr ""
 
-#: src/Engine/CommunityNotifications.php:548
+#: src/Engine/CommunityNotifications.php:538
 msgid "Personal records"
 msgstr ""
 
-#: src/Engine/CommunityNotifications.php:552
+#: src/Engine/CommunityNotifications.php:542
 msgid "Streak milestones"
 msgstr ""
 
-#: src/Engine/CommunityNotifications.php:553
+#: src/Engine/CommunityNotifications.php:543
 msgid "You reached a streak milestone."
 msgstr ""
 
-#: src/Engine/CommunityNotifications.php:556
+#: src/Engine/CommunityNotifications.php:546
 msgid "League promotions"
 msgstr ""
 
-#: src/Engine/CommunityNotifications.php:557
+#: src/Engine/CommunityNotifications.php:547
 msgid "You moved up a league."
 msgstr ""
 
-#: src/Engine/CommunityNotifications.php:560
+#: src/Engine/CommunityNotifications.php:550
 msgid "Community goals"
 msgstr ""
 
-#: src/Engine/CommunityNotifications.php:561
+#: src/Engine/CommunityNotifications.php:551
 msgid "Your community reached a shared goal."
 msgstr ""
 
-#: src/Engine/CommunityNotifications.php:564
+#: src/Engine/CommunityNotifications.php:554
 msgid "Submission results"
 msgstr ""
 
-#: src/Engine/CommunityNotifications.php:565
+#: src/Engine/CommunityNotifications.php:555
 msgid "A submission of yours was reviewed."
 msgstr ""
 
@@ -7873,12 +7911,12 @@ msgstr ""
 msgid "This import is still running."
 msgstr ""
 
-#: src/Engine/ImportRunner.php:815
+#: src/Engine/ImportRunner.php:817
 #: src/Engine/ImportUndo.php:380
 msgid "This import source is missing its key prefix."
 msgstr ""
 
-#: src/Engine/ImportRunner.php:818
+#: src/Engine/ImportRunner.php:820
 msgid "No data found for this source."
 msgstr ""
 
@@ -7934,28 +7972,28 @@ msgstr ""
 msgid "Your weekly community ranking at %s"
 msgstr ""
 
-#: src/Engine/MemberPrefs.php:144
+#: src/Engine/MemberPrefs.php:152
 msgid "Show my level and points on my profile"
 msgstr ""
 
-#: src/Engine/MemberPrefs.php:145
+#: src/Engine/MemberPrefs.php:153
 msgid "Show me on leaderboards"
 msgstr ""
 
-#: src/Engine/MemberPrefs.php:146
+#: src/Engine/MemberPrefs.php:154
 msgid "Email me about my rewards"
 msgstr ""
 
-#: src/Engine/MemberPrefs.php:153
-#: src/Engine/ProfilePage.php:491
+#: src/Engine/MemberPrefs.php:161
+#: src/Engine/ProfilePage.php:497
 msgid "Could not save. Please try again."
 msgstr ""
 
-#: src/Engine/MemberPrefs.php:156
+#: src/Engine/MemberPrefs.php:164
 msgid "Your gamification choices"
 msgstr ""
 
-#: src/Engine/MemberSurface.php:78
+#: src/Engine/MemberSurface.php:77
 msgid "View full dashboard"
 msgstr ""
 
@@ -8015,7 +8053,7 @@ msgstr ""
 
 #. translators: %s: new level name.
 #: src/Engine/NotificationBridge.php:528
-#: src/Engine/TransactionalEmailEngine.php:197
+#: src/Engine/TransactionalEmailEngine.php:198
 #, php-format
 msgid "You reached %s!"
 msgstr ""
@@ -8032,7 +8070,7 @@ msgid "Awesome!"
 msgstr ""
 
 #: src/Engine/NotificationBridge.php:577
-#: src/Engine/Registry.php:714
+#: src/Engine/Registry.php:780
 msgid "Streak milestone"
 msgstr ""
 
@@ -8392,98 +8430,98 @@ msgstr ""
 msgid "Gamification data removed (%d rows)."
 msgstr ""
 
-#: src/Engine/ProfilePage.php:174
+#: src/Engine/ProfilePage.php:180
 msgid "Private profile"
 msgstr ""
 
-#: src/Engine/ProfilePage.php:178
+#: src/Engine/ProfilePage.php:184
 msgid "This profile is private"
 msgstr ""
 
-#: src/Engine/ProfilePage.php:179
+#: src/Engine/ProfilePage.php:185
 msgid "The member has chosen not to share their achievements."
 msgstr ""
 
 #. translators: 1: display name, 2: site name
-#: src/Engine/ProfilePage.php:209
+#: src/Engine/ProfilePage.php:215
 #, php-format
 msgid "%1$s - %2$s"
 msgstr ""
 
 #. translators: 1: display name, 2: amount, 3: currency label, 4: badge count with label, 5: level name
-#: src/Engine/ProfilePage.php:215
+#: src/Engine/ProfilePage.php:221
 #, php-format
 msgid "%1$s has earned %2$d %3$s, %4$s, and reached %5$s."
 msgstr ""
 
 #. translators: 1: amount, 2: currency, 3: badge count with label, 4: level
-#: src/Engine/ProfilePage.php:416
+#: src/Engine/ProfilePage.php:422
 #, php-format
 msgid "%1$d %2$s · %3$s · %4$s"
 msgstr ""
 
-#: src/Engine/ProfilePage.php:482
+#: src/Engine/ProfilePage.php:488
 msgid "This profile is visible to anyone with the link."
 msgstr ""
 
-#: src/Engine/ProfilePage.php:483
+#: src/Engine/ProfilePage.php:489
 msgid "Only you and site admins can see this profile."
 msgstr ""
 
-#: src/Engine/ProfilePage.php:484
+#: src/Engine/ProfilePage.php:490
 msgid "Make profile public"
 msgstr ""
 
-#: src/Engine/ProfilePage.php:485
+#: src/Engine/ProfilePage.php:491
 msgid "Make profile private"
 msgstr ""
 
-#: src/Engine/ProfilePage.php:497
+#: src/Engine/ProfilePage.php:503
 msgid "Profile visibility"
 msgstr ""
 
-#: src/Engine/ProfilePage.php:512
+#: src/Engine/ProfilePage.php:518
 msgid "Saving…"
 msgstr ""
 
-#: src/Engine/ProfilePage.php:520
+#: src/Engine/ProfilePage.php:526
 msgid "Note: public profiles are currently turned off site-wide by the administrator, so your profile is hidden regardless of this setting."
 msgstr ""
 
-#: src/Engine/RecapEngine.php:346
+#: src/Engine/RecapEngine.php:354
 msgid "Your journey starts here - see you next year!"
 msgstr ""
 
-#: src/Engine/RecapEngine.php:350
+#: src/Engine/RecapEngine.php:358
 msgid "Top 1% contributor. You defined this community this year."
-msgstr ""
-
-#. translators: %d = percentile rank
-#: src/Engine/RecapEngine.php:356
-#, php-format
-msgid "Top %d%% contributor - an outstanding year."
 msgstr ""
 
 #. translators: %d = percentile rank
 #: src/Engine/RecapEngine.php:364
 #, php-format
+msgid "Top %d%% contributor - an outstanding year."
+msgstr ""
+
+#. translators: %d = percentile rank
+#: src/Engine/RecapEngine.php:372
+#, php-format
 msgid "You were in the top %d%% of contributors this year."
 msgstr ""
 
 #. translators: %d = badge count
-#: src/Engine/RecapEngine.php:372
+#: src/Engine/RecapEngine.php:380
 #, php-format
 msgid "A badge collector - you earned %d badges this year."
 msgstr ""
 
 #. translators: %d = challenges
-#: src/Engine/RecapEngine.php:380
+#: src/Engine/RecapEngine.php:388
 #, php-format
 msgid "Challenge champion - you completed %d challenges this year."
 msgstr ""
 
 #. translators: %d = points earned
-#: src/Engine/RecapEngine.php:387
+#: src/Engine/RecapEngine.php:395
 #, php-format
 msgid "You earned %s points this year - keep the momentum going!"
 msgstr ""
@@ -8523,19 +8561,19 @@ msgstr ""
 msgid "Removed reward"
 msgstr ""
 
-#: src/Engine/Registry.php:419
+#: src/Engine/Registry.php:485
 msgid "Social"
 msgstr ""
 
-#: src/Engine/Registry.php:420
+#: src/Engine/Registry.php:486
 msgid "Forums"
 msgstr ""
 
-#: src/Engine/Registry.php:421
+#: src/Engine/Registry.php:487
 msgid "Community"
 msgstr ""
 
-#: src/Engine/Registry.php:422
+#: src/Engine/Registry.php:488
 #: src/Blocks/badge-showcase/edit.js:37
 #: src/Blocks/challenges/edit.js:32
 #: src/Blocks/cohort-rank/edit.js:26
@@ -8554,94 +8592,155 @@ msgstr ""
 msgid "Content"
 msgstr ""
 
-#: src/Engine/Registry.php:424
+#: src/Engine/Registry.php:490
 msgid "Media"
 msgstr ""
 
-#: src/Engine/Registry.php:425
+#: src/Engine/Registry.php:491
 msgid "Learning"
 msgstr ""
 
-#: src/Engine/Registry.php:426
+#: src/Engine/Registry.php:492
 msgid "Listings"
 msgstr ""
 
-#: src/Engine/Registry.php:427
+#: src/Engine/Registry.php:493
 msgid "Careers"
 msgstr ""
 
-#: src/Engine/Registry.php:428
+#: src/Engine/Registry.php:494
 msgid "Commerce"
 msgstr ""
 
-#: src/Engine/Registry.php:430
+#: src/Engine/Registry.php:496
 msgid "Competition"
 msgstr ""
 
-#: src/Engine/Registry.php:431
+#: src/Engine/Registry.php:497
 msgid "Member Blog"
 msgstr ""
 
-#: src/Engine/Registry.php:702
-#: src/Engine/Registry.php:703
-#: src/Engine/Registry.php:704
-#: src/Engine/Registry.php:722
+#: src/Engine/Registry.php:768
+#: src/Engine/Registry.php:769
+#: src/Engine/Registry.php:770
+#: src/Engine/Registry.php:788
 msgid "Manual award"
 msgstr ""
 
-#: src/Engine/Registry.php:705
-#: src/Engine/Registry.php:706
+#: src/Engine/Registry.php:771
+#: src/Engine/Registry.php:772
 msgid "Manual adjustment"
 msgstr ""
 
-#: src/Engine/Registry.php:707
+#: src/Engine/Registry.php:773
 msgid "Debit"
 msgstr ""
 
-#: src/Engine/Registry.php:708
+#: src/Engine/Registry.php:774
 msgid "Redemption"
 msgstr ""
 
-#: src/Engine/Registry.php:710
+#: src/Engine/Registry.php:776
 msgid "Received kudos"
 msgstr ""
 
-#: src/Engine/Registry.php:713
+#: src/Engine/Registry.php:779
 msgid "Daily login bonus"
 msgstr ""
 
-#: src/Engine/Registry.php:716
+#: src/Engine/Registry.php:782
 msgid "Community challenge completed"
 msgstr ""
 
-#: src/Engine/Registry.php:719
+#: src/Engine/Registry.php:785
 msgid "Redeemed a reward"
 msgstr ""
 
-#: src/Engine/Registry.php:720
+#: src/Engine/Registry.php:786
 msgid "Reward refunded"
 msgstr ""
 
-#: src/Engine/Registry.php:721
+#: src/Engine/Registry.php:787
 msgid "Kudos withdrawn"
 msgstr ""
 
-#: src/Engine/Registry.php:723
+#: src/Engine/Registry.php:789
 msgid "Points reset by an admin"
 msgstr ""
 
-#: src/Engine/Registry.php:724
+#: src/Engine/Registry.php:790
 msgid "Points expired"
 msgstr ""
 
+#: src/Engine/Registry.php:791
+#: src/Engine/Registry.php:792
+msgid "Order refunded"
+msgstr ""
+
+#: src/Engine/Registry.php:795
+msgid "Send a connection request"
+msgstr ""
+
+#: src/Engine/Registry.php:796
+msgid "Send a direct message"
+msgstr ""
+
+#: src/Engine/Registry.php:797
+msgid "Update your profile"
+msgstr ""
+
+#: src/Engine/Registry.php:798
+msgid "Upload media"
+msgstr ""
+
+#: src/Engine/Registry.php:799
+msgid "Publish a member blog post"
+msgstr ""
+
+#: src/Engine/Registry.php:800
+msgid "Make a recurring donation payment"
+msgstr ""
+
+#: src/Engine/Registry.php:801
+msgid "Start a Jetonomy conversation"
+msgstr ""
+
+#: src/Engine/Registry.php:802
+msgid "Receive a Jetonomy private message"
+msgstr ""
+
+#: src/Engine/Registry.php:803
+msgid "Send a Jetonomy private message"
+msgstr ""
+
+#: src/Engine/Registry.php:804
+msgid "Apply to teach"
+msgstr ""
+
+#: src/Engine/Registry.php:805
+msgid "Favourite a listing"
+msgstr ""
+
+#: src/Engine/Registry.php:806
+msgid "Bookmark a photo"
+msgstr ""
+
+#: src/Engine/Registry.php:807
+msgid "Follow another member"
+msgstr ""
+
+#: src/Engine/Registry.php:808
+msgid "Review approved by a moderator"
+msgstr ""
+
 #. translators: %s: the action that earned the points, e.g. "Publish a blog post".
-#: src/Engine/Registry.php:732
+#: src/Engine/Registry.php:836
 #, php-format
 msgid "%s (content removed)"
 msgstr ""
 
 #. translators: %s: the action that earned the points, e.g. "Publish a blog post".
-#: src/Engine/Registry.php:733
+#: src/Engine/Registry.php:837
 #, php-format
 msgid "%s (content restored)"
 msgstr ""
@@ -8725,28 +8824,28 @@ msgid "Earn %1$s more points this week to reach %2$s!"
 msgstr ""
 
 #. translators: %s: badge name
-#: src/Engine/TransactionalEmailEngine.php:246
+#: src/Engine/TransactionalEmailEngine.php:248
 #, php-format
 msgid "You earned the %s badge!"
 msgstr ""
 
 #. translators: %s: challenge title
-#: src/Engine/TransactionalEmailEngine.php:295
+#: src/Engine/TransactionalEmailEngine.php:298
 #, php-format
 msgid "Challenge completed: %s"
 msgstr ""
 
-#: src/Engine/TransactionalEmailEngine.php:340
+#: src/Engine/TransactionalEmailEngine.php:344
 msgid "Your reward"
 msgstr ""
 
 #. translators: %s: reward title.
-#: src/Engine/TransactionalEmailEngine.php:357
+#: src/Engine/TransactionalEmailEngine.php:361
 #, php-format
 msgid "Your redemption: %s"
 msgstr ""
 
-#: src/Engine/TransactionalEmailEngine.php:358
+#: src/Engine/TransactionalEmailEngine.php:362
 msgid "reward"
 msgstr ""
 
@@ -8871,167 +8970,167 @@ msgid "Could not award points for this submission. It remains pending - please r
 msgstr ""
 
 #. translators: %s: recipient display name
-#: templates/emails/badge-earned.php:39
-#: templates/emails/challenge-completed.php:37
-#: templates/emails/leaderboard-nudge.php:39
-#: templates/emails/level-up.php:39
+#: templates/emails/badge-earned.php:40
+#: templates/emails/challenge-completed.php:38
+#: templates/emails/leaderboard-nudge.php:40
+#: templates/emails/level-up.php:40
 #, php-format
 msgid "Hey %s,"
 msgstr ""
 
 #. translators: %s: badge name
-#: templates/emails/badge-earned.php:46
+#: templates/emails/badge-earned.php:47
 #, php-format
 msgid "You just earned the %s badge!"
 msgstr ""
 
-#: templates/emails/badge-earned.php:63
+#: templates/emails/badge-earned.php:64
 msgid "Share your badge"
 msgstr ""
 
 #. translators: %s: site name
-#: templates/emails/badge-earned.php:70
-#: templates/emails/challenge-completed.php:71
-#: templates/emails/leaderboard-nudge.php:56
-#: templates/emails/level-up.php:78
+#: templates/emails/badge-earned.php:71
+#: templates/emails/challenge-completed.php:72
+#: templates/emails/leaderboard-nudge.php:57
+#: templates/emails/level-up.php:79
 #, php-format
 msgid "%s gamification"
 msgstr ""
 
 #. translators: %s: challenge title
-#: templates/emails/challenge-completed.php:44
+#: templates/emails/challenge-completed.php:45
 #, php-format
 msgid "You completed the %s challenge!"
 msgstr ""
 
-#: templates/emails/challenge-completed.php:56
+#: templates/emails/challenge-completed.php:57
 msgid "Reward earned"
 msgstr ""
 
-#: templates/emails/challenge-completed.php:64
-#: templates/emails/redemption-confirmed.php:94
+#: templates/emails/challenge-completed.php:65
+#: templates/emails/redemption-confirmed.php:95
 msgid "View your dashboard →"
 msgstr ""
 
-#: templates/emails/leaderboard-nudge.php:47
+#: templates/emails/leaderboard-nudge.php:48
 msgid "View leaderboard →"
 msgstr ""
 
 #. translators: %s: new level name
-#: templates/emails/level-up.php:46
+#: templates/emails/level-up.php:47
 #, php-format
 msgid "You just reached %s — congratulations!"
 msgstr ""
 
 #. translators: 1: old level name, 2: new level name
-#: templates/emails/level-up.php:56
+#: templates/emails/level-up.php:57
 #, php-format
 msgid "You moved up from %1$s to %2$s."
 msgstr ""
 
-#: templates/emails/level-up.php:64
+#: templates/emails/level-up.php:65
 msgid "Current balance"
 msgstr ""
 
-#: templates/emails/level-up.php:71
+#: templates/emails/level-up.php:72
 msgid "Keep going →"
 msgstr ""
 
 #. translators: %s: recipient display name
-#: templates/emails/redemption-confirmed.php:41
+#: templates/emails/redemption-confirmed.php:42
 #, php-format
 msgid "Thanks for redeeming, %s!"
 msgstr ""
 
 #. translators: %s: reward title
-#: templates/emails/redemption-confirmed.php:48
+#: templates/emails/redemption-confirmed.php:49
 #, php-format
 msgid "Your redemption of %s is confirmed."
 msgstr ""
 
-#: templates/emails/redemption-confirmed.php:55
+#: templates/emails/redemption-confirmed.php:56
 msgid "Receipt"
 msgstr ""
 
 #. translators: 1: points spent, 2: localised label, 3: reward title
-#: templates/emails/redemption-confirmed.php:60
+#: templates/emails/redemption-confirmed.php:61
 #, php-format
 msgid "%1$d %2$s spent on %3$s"
 msgstr ""
 
 #. translators: 1: remaining points, 2: localised label
-#: templates/emails/redemption-confirmed.php:71
+#: templates/emails/redemption-confirmed.php:72
 #, php-format
 msgid "Remaining balance: %1$d %2$s"
 msgstr ""
 
-#: templates/emails/redemption-confirmed.php:81
+#: templates/emails/redemption-confirmed.php:82
 msgid "Use this code at checkout"
 msgstr ""
 
-#: templates/emails/redemption-confirmed.php:88
+#: templates/emails/redemption-confirmed.php:89
 msgid "Our team will follow up with fulfilment details shortly."
 msgstr ""
 
 #. translators: 1: site name, 2: redemption id
-#: templates/emails/redemption-confirmed.php:101
+#: templates/emails/redemption-confirmed.php:102
 #, php-format
 msgid "%1$s gamification · ref #%2$d"
 msgstr ""
 
 #. translators: 1: amount this week, 2: lower-cased currency label, 3: total amount, 4: lower-cased currency label
-#: templates/emails/weekly-recap.php:32
+#: templates/emails/weekly-recap.php:33
 #, php-format
 msgid "You earned <strong>%1$s %2$s</strong> this week (total: %3$s %4$s)"
 msgstr ""
 
 #. translators: 1: the "You earned ... this week" line, 2: opening bold tag, 3: closing bold tag.
-#: templates/emails/weekly-recap.php:43
+#: templates/emails/weekly-recap.php:44
 #, php-format
 msgid "%1$s - %2$sPersonal best!%3$s"
 msgstr ""
 
 #. translators: %s = member display name
-#: templates/emails/weekly-recap.php:88
+#: templates/emails/weekly-recap.php:89
 #, php-format
 msgid "Hey %s, here's your weekly gamification summary:"
 msgstr ""
 
 #. translators: %s: currency label (e.g. "Points", "Coins").
-#: templates/emails/weekly-recap.php:101
+#: templates/emails/weekly-recap.php:102
 #, php-format
 msgid "%s this week"
 msgstr ""
 
-#: templates/emails/weekly-recap.php:111
+#: templates/emails/weekly-recap.php:112
 msgid "Activity streak"
 msgstr ""
 
 #. translators: 1 = current streak, 2 = longest streak
-#: templates/emails/weekly-recap.php:117
+#: templates/emails/weekly-recap.php:118
 #, php-format
 msgid "%1$d-day streak (best: %2$d days)"
 msgstr ""
 
-#: templates/emails/weekly-recap.php:129
+#: templates/emails/weekly-recap.php:130
 msgid "Your leaderboard rank"
 msgstr ""
 
 #. translators: %d = rank number
-#: templates/emails/weekly-recap.php:135
+#: templates/emails/weekly-recap.php:136
 #, php-format
 msgid "#%d overall"
 msgstr ""
 
-#: templates/emails/weekly-recap.php:147
+#: templates/emails/weekly-recap.php:148
 msgid "Badges earned this week"
 msgstr ""
 
-#: templates/emails/weekly-recap.php:169
+#: templates/emails/weekly-recap.php:170
 msgid "Keep the momentum going →"
 msgstr ""
 
-#: templates/emails/weekly-recap.php:177
+#: templates/emails/weekly-recap.php:178
 msgid "Unsubscribe from weekly emails"
 msgstr ""
 
@@ -9039,7 +9138,7 @@ msgstr ""
 msgid "WB Gamification: the bundled licensing and update SDK is incomplete, so automatic updates are turned off. Reinstall the plugin from a complete package to restore them. Every other feature works normally."
 msgstr ""
 
-#: wb-gamification.php:827
+#: wb-gamification.php:828
 #: assets/js/toast-core.js:122
 msgid "Notifications"
 msgstr ""
@@ -9064,7 +9163,7 @@ msgstr ""
 msgid "Conversion failed. Try again."
 msgstr ""
 
-#: assets/js/toast-core.js:345
+#: assets/js/toast-core.js:357
 msgid "View"
 msgstr ""
 

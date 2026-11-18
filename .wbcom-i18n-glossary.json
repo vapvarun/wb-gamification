@@ -1,0 +1,246 @@
+{
+  "_doc": "WB Gamification glossary. Every translation uses these renderings; see docs/translation-standard.md in the wbcom-i18n-ai repo. Renderings follow the vocabulary WordPress core, BuddyPress and bbPress already use in each language. Change a rendering here, then run the tool with --review-all for that locale.",
+  "brief": "WB Gamification is a gamification plugin for WordPress, BuddyPress and BuddyNext communities. Members earn points, badges and levels, see leaderboards, challenges, streaks and kudos, and spend points in a Redemption Store. Audiences: site admins (wp-admin), members (front-end blocks, Hub), and emails.",
+  "glossary": {
+    "points": {
+      "meaning": "the currency members earn for actions; the site owner can have several point types",
+      "de_DE": "Punkte",
+      "fr_FR": "points",
+      "es_ES": "puntos",
+      "it_IT": "punti",
+      "pt_BR": "pontos"
+    },
+    "badge": {
+      "meaning": "a visible award a member earns for a milestone or action",
+      "de_DE": "Abzeichen",
+      "fr_FR": "badge",
+      "es_ES": "insignia",
+      "it_IT": "distintivo",
+      "pt_BR": "emblema"
+    },
+    "level": {
+      "meaning": "a named milestone reached when a member's points pass a threshold",
+      "de_DE": "Stufe / Ebene",
+      "fr_FR": "niveau",
+      "es_ES": "nivel",
+      "it_IT": "livello",
+      "pt_BR": "nível"
+    },
+    "leaderboard": {
+      "meaning": "the ranking of members by points",
+      "de_DE": "Bestenliste / Rangliste",
+      "fr_FR": "classement",
+      "es_ES": "clasificación",
+      "it_IT": "classifica",
+      "pt_BR": "ranking"
+    },
+    "rank": {
+      "meaning": "a member's place on a leaderboard (1st, 2nd, ...)",
+      "de_DE": "Rang",
+      "fr_FR": "rang",
+      "es_ES": "puesto",
+      "it_IT": "posizione",
+      "pt_BR": "posição"
+    },
+    "challenge": {
+      "meaning": "a goal a member works toward for a reward (points or a badge)",
+      "de_DE": "Herausforderung",
+      "fr_FR": "défi",
+      "es_ES": "desafío",
+      "it_IT": "sfida",
+      "pt_BR": "desafio"
+    },
+    "community challenge": {
+      "meaning": "a shared goal the whole community works toward together",
+      "de_DE": "Gemeinschafts-Herausforderung / Community-Herausforderung",
+      "fr_FR": "défi communautaire",
+      "es_ES": "desafío comunitario",
+      "it_IT": "sfida della community",
+      "pt_BR": "desafio da comunidade"
+    },
+    "streak": {
+      "meaning": "consecutive days a member has kept doing an action, such as logging in",
+      "de_DE": "Serie / Gewinnsträhne",
+      "fr_FR": "série",
+      "es_ES": "racha",
+      "it_IT": "serie",
+      "pt_BR": "sequência"
+    },
+    "kudos": {
+      "meaning": "a peer-to-peer shout-out one member sends another, often with a few points",
+      "de_DE": "Kudos",
+      "fr_FR": "kudos",
+      "es_ES": "kudos",
+      "it_IT": "kudos",
+      "pt_BR": "kudos"
+    },
+    "gamification hub": {
+      "meaning": "the member dashboard that gathers points, level, badges, challenges, leaderboard and kudos",
+      "de_DE": "Gamification-Hub",
+      "fr_FR": "Hub de gamification",
+      "es_ES": "Hub de gamificación",
+      "it_IT": "Hub di gamification",
+      "pt_BR": "Hub de gamificação"
+    },
+    "redemption store": {
+      "meaning": "the shop where members spend points on rewards",
+      "de_DE": "Belohnungsladen",
+      "fr_FR": "boutique d'échange",
+      "es_ES": "tienda de canje",
+      "it_IT": "negozio di riscatto",
+      "pt_BR": "loja de resgate"
+    },
+    "reward": {
+      "meaning": "an item in the Redemption Store a member can spend points on",
+      "de_DE": "Belohnung",
+      "fr_FR": "récompense",
+      "es_ES": "recompensa",
+      "it_IT": "ricompensa",
+      "pt_BR": "recompensa"
+    },
+    "redeem": {
+      "meaning": "to spend points on a reward in the Redemption Store",
+      "de_DE": "einlösen",
+      "fr_FR": "échanger",
+      "es_ES": "canjear",
+      "it_IT": "riscattare",
+      "pt_BR": "resgatar"
+    },
+    "cohort": {
+      "meaning": "a group of members of similar standing who compete together in a league",
+      "de_DE": "Kohorte",
+      "fr_FR": "cohorte",
+      "es_ES": "cohorte",
+      "it_IT": "coorte",
+      "pt_BR": "coorte"
+    },
+    "league": {
+      "meaning": "a weekly competition tier members are placed in, like a Duolingo league",
+      "de_DE": "Liga",
+      "fr_FR": "ligue",
+      "es_ES": "liga",
+      "it_IT": "lega",
+      "pt_BR": "liga"
+    },
+    "personal record": {
+      "meaning": "a member's best points total for a day, week or month",
+      "de_DE": "persönlicher Rekord",
+      "fr_FR": "record personnel",
+      "es_ES": "récord personal",
+      "it_IT": "record personale",
+      "pt_BR": "recorde pessoal"
+    },
+    "year recap": {
+      "meaning": "the year-in-review card of a member's highlights (points, badges, kudos)",
+      "de_DE": "Jahresrückblick",
+      "fr_FR": "récap de l'année",
+      "es_ES": "resumen del año",
+      "it_IT": "riepilogo dell'anno",
+      "pt_BR": "retrospectiva do ano"
+    },
+    "earning guide": {
+      "meaning": "the page that shows members how they can earn points on this site",
+      "de_DE": "Verdienst-Anleitung",
+      "fr_FR": "guide des gains",
+      "es_ES": "guía de ganancias",
+      "it_IT": "guida ai guadagni",
+      "pt_BR": "guia de ganhos"
+    },
+    "award": {
+      "meaning": "as a verb: to grant points or a badge; as a noun: that grant",
+      "de_DE": "vergeben / Auszeichnung",
+      "fr_FR": "attribuer / attribution",
+      "es_ES": "otorgar / otorgamiento",
+      "it_IT": "assegnare / assegnazione",
+      "pt_BR": "conceder / concessão"
+    },
+    "action": {
+      "meaning": "a tracked event that can award points, such as posting or completing a course",
+      "de_DE": "Aktion",
+      "fr_FR": "action",
+      "es_ES": "acción",
+      "it_IT": "azione",
+      "pt_BR": "ação / ações"
+    },
+    "member": {
+      "meaning": "a registered person taking part in the community",
+      "de_DE": "Mitglied",
+      "fr_FR": "membre",
+      "es_ES": "miembro",
+      "it_IT": "membro",
+      "pt_BR": "membro"
+    },
+    "activity": {
+      "meaning": "a BuddyPress activity-stream item, or a row in the member's points history",
+      "de_DE": "Aktivität",
+      "fr_FR": "activité",
+      "es_ES": "actividad",
+      "it_IT": "attività",
+      "pt_BR": "atividade"
+    },
+    "group": {
+      "meaning": "a BuddyPress group",
+      "de_DE": "Gruppe",
+      "fr_FR": "groupe",
+      "es_ES": "grupo",
+      "it_IT": "gruppo",
+      "pt_BR": "grupo"
+    },
+    "space": {
+      "meaning": "a BuddyNext community area, like a group (owner-renamable on BuddyNext)",
+      "de_DE": "Bereich",
+      "fr_FR": "espace",
+      "es_ES": "espacio",
+      "it_IT": "spazio",
+      "pt_BR": "espaço"
+    },
+    "course": {
+      "meaning": "an LMS course (LearnDash, LifterLMS, Tutor LMS, Learnomy)",
+      "de_DE": "Kurs",
+      "fr_FR": "cours",
+      "es_ES": "curso",
+      "it_IT": "corso",
+      "pt_BR": "curso"
+    },
+    "webhook": {
+      "meaning": "an outbound HTTP callback that notifies an external service of an event",
+      "de_DE": "Webhook",
+      "fr_FR": "webhook",
+      "es_ES": "webhook",
+      "it_IT": "webhook",
+      "pt_BR": "webhook"
+    },
+    "API key": {
+      "meaning": "a secret token a remote app uses to call the plugin REST API",
+      "de_DE": "API-Schlüssel",
+      "fr_FR": "clé API",
+      "es_ES": "clave de API",
+      "it_IT": "chiave API",
+      "pt_BR": "chave de API"
+    },
+    "point type": {
+      "meaning": "one of the point currencies on the site (Points, Coins, Karma, ...)",
+      "de_DE": "Punktetyp",
+      "fr_FR": "type de points",
+      "es_ES": "tipo de puntos",
+      "it_IT": "tipo di punti",
+      "pt_BR": "tipo de pontos"
+    },
+    "multiplier": {
+      "meaning": "a factor that scales points awarded for an action",
+      "de_DE": "Multiplikator",
+      "fr_FR": "multiplicateur",
+      "es_ES": "multiplicador",
+      "it_IT": "moltiplicatore",
+      "pt_BR": "multiplicador"
+    },
+    "daily bonus": {
+      "meaning": "points granted for logging in today, often rising with the login streak",
+      "de_DE": "Tagesbonus",
+      "fr_FR": "bonus quotidien",
+      "es_ES": "bonus diario",
+      "it_IT": "bonus giornaliero",
+      "pt_BR": "bônus diário"
+    }
+  }
+}

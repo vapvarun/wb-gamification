@@ -1,41 +1,63 @@
 {
   "domain": "wb-gamification",
+  "type": "plugin",
   "potFile": "languages/wb-gamification.pot",
   "languagesDir": "languages",
-  "engine": "claude",
+  "engine": "cursor",
   "model": "haiku",
-  "batch": 400,
+  "batch": 40,
+  "review": true,
   "makeJson": true,
+  "makePhp": true,
+  "glossaryFile": ".wbcom-i18n-glossary.json",
   "protect": [
     "WB Gamification",
-    "Pro",
     "WordPress",
     "BuddyPress",
+    "BuddyNext",
+    "bbPress",
     "WooCommerce",
     "LearnDash",
-    "Eventonomy",
+    "LifterLMS",
+    "Tutor LMS",
+    "Learnomy",
     "Jetonomy",
-    "REST",
-    "API",
-    "URL",
-    "CSV",
-    "AI",
-    "XP",
-    "OpenBadges"
+    "Eventonomy",
+    "WPMediaVerse",
+    "MemberPress",
+    "GiveWP",
+    "myCred",
+    "GamiPress",
+    "BadgeOS",
+    "Listora",
+    "OpenBadges",
+    "Wbcom"
   ],
-  "glossary": {
-    "points": "",
-    "badge": "",
-    "level": "",
-    "leaderboard": "",
-    "streak": "",
-    "kudos": ""
-  },
   "locales": [
     {
       "locale": "de_DE",
       "name": "German",
       "register": "informal (du)"
+    },
+    {
+      "locale": "fr_FR",
+      "name": "French",
+      "register": "formal (vous)"
+    },
+    {
+      "locale": "es_ES",
+      "name": "Spanish",
+      "register": "informal (tú)"
+    },
+    {
+      "locale": "it_IT",
+      "name": "Italian",
+      "register": "informal (tu)"
+    },
+    {
+      "locale": "pt_BR",
+      "name": "Portuguese (Brazil)",
+      "register": "informal (você)"
     }
   ]
 }
