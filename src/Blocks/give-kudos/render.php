@@ -41,9 +41,13 @@ $wb_gam_unique = ! empty( $wb_gam_attrs['uniqueId'] )
 	? sanitize_html_class( (string) $wb_gam_attrs['uniqueId'] )
 	: substr( md5( (string) wp_json_encode( $wb_gam_attrs ) ), 0, 8 );
 
+// The sidebar's spacing, border, shadow and colours (and Hide on device), as every block applies
+// them; the form reads the same tokens, so colours set here reach it.
+\WBGam\Blocks\CSS::add( $wb_gam_unique, $wb_gam_attrs );
+
 $wb_gam_wrapper = get_block_wrapper_attributes(
 	array(
-		'class' => 'wb-gam-block-' . $wb_gam_unique,
+		'class' => trim( 'wb-gam-block-' . $wb_gam_unique . ' ' . \WBGam\Blocks\CSS::get_visibility_classes( $wb_gam_attrs ) ),
 	)
 );
 
