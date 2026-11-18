@@ -336,6 +336,7 @@ cat > "${EXCLUDES_FILE}" <<'EXCLUDES_EOF'
 # tree, never the shipped copy.
 .contract-audit-baseline.json
 .wbcom-i18n.json
+.wbcom-i18n-glossary.json
 .idea/
 .vscode/
 .husky/
