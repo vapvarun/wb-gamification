@@ -133,9 +133,10 @@ final class ProgressReset {
 		$meta_users   = array();
 		if ( ! wp_cache_supports( 'flush_group' ) ) {
 			$like       = array_map( static fn( string $prefix ): string => $wpdb->esc_like( $prefix ) . '%', self::PROGRESS_META_PREFIXES );
+			$like_sql   = str_repeat( ' OR meta_key LIKE %s', count( $like ) );
 			$meta_users = $wpdb->get_col(
 				$wpdb->prepare(
-					"SELECT DISTINCT user_id FROM {$wpdb->usermeta} WHERE meta_key IN ($placeholders)" . str_repeat( ' OR meta_key LIKE %s', count( $like ) ), // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- placeholders built from fixed-length constant lists.
+					"SELECT DISTINCT user_id FROM {$wpdb->usermeta} WHERE meta_key IN ($placeholders){$like_sql}", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- placeholders built from fixed-length constant lists.
 					array_merge( self::PROGRESS_META, $like )
 				)
 			);
