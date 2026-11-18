@@ -65,6 +65,11 @@ return [
 			'hook'            => 'wb_gam_wc_order_paid',
 			// A gateway order is announced on payment and again when it completes.
 			'once_per_object' => static fn( int $order_id ): int => $order_id,
+			// A refund takes back what that order paid, once, from whoever was paid. Orders paid
+			// before 1.6.8 carry no order id; RefundHandler covers those.
+			'reverse_on'      => array(
+				'woocommerce_order_status_refunded' => static fn( $order_id ): int => (int) $order_id,
+			),
 			'user_callback'   => function ( int $order_id ): int {
 				$order = wc_get_order( $order_id );
 				if ( ! $order ) {

@@ -737,6 +737,8 @@ final class Registry {
 				'manual_bulk_award'                 => __( 'Manual award', 'wb-gamification' ),
 				'manual_admin_reset'                => __( 'Points reset by an admin', 'wb-gamification' ),
 				'points_decay'                      => __( 'Points expired', 'wb-gamification' ),
+				'wc_order_refunded'                 => __( 'Order refunded', 'wb-gamification' ),
+				'wc_order_completed_removed'        => __( 'Order refunded', 'wb-gamification' ),
 				// Actions since removed: their past points still show in history, the Dashboard,
 				// analytics and exports, so they keep their names instead of a title-cased id.
 				'bn_connection_requested'           => __( 'Send a connection request', 'wb-gamification' ),
