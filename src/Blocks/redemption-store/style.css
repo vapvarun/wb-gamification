@@ -24,6 +24,9 @@
 	   token is missing the cascade inherits from the parent / theme. */
 	--wb-gam-redemption-accent: var( --wb-gam-color-accent );
 	--wb-gam-redemption-accent-hover: var( --wb-gam-color-accent-hover );
+	/* Text in the accent (the cost) uses the --wb-gam-color-accent-text formula, so it stays readable
+	 * with a light theme or per-block accent. */
+	--wb-gam-redemption-accent-text: color-mix( in srgb, var( --wb-gam-redemption-accent ) 50%, var( --wb-gam-color-accent-ink ) );
 	--wb-gam-redemption-text-on-accent: var( --wb-gam-pop-accent-fg );
 	--wb-gam-redemption-card-bg: var( --wb-gam-color-white );
 	--wb-gam-redemption-card-border: var( --wb-gam-color-border );
@@ -130,7 +133,7 @@
 .wb-gam-redemption__cost {
 	font-weight: var( --wb-gam-weight-bold, 700 );
 	font-size: var( --wb-gam-font-xl );
-	color: var( --wb-gam-redemption-accent );
+	color: var( --wb-gam-redemption-accent-text );
 	line-height: 1;
 }
 

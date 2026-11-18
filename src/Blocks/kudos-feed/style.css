@@ -73,7 +73,7 @@
 }
 
 .wb-gam-kudos-feed__arrow {
-	color: var(--wb-gam-primary);
+	color: var(--wb-gam-primary-text);
 	font-size: 1rem;
 	flex-shrink: 0;
 }

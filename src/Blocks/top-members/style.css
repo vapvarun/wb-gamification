@@ -80,7 +80,7 @@ a.wb-gam-top-members__name:hover { text-decoration: underline; }
 .wb-gam-top-members__points {
 	font-size: 1rem;
 	font-weight: 700;
-	color: var(--wb-gam-primary);
+	color: var(--wb-gam-primary-text);
 }
 
 .wb-gam-top-members__pts-label {
@@ -145,7 +145,7 @@ a.wb-gam-top-members__rest-name:hover { text-decoration: underline; }
 .wb-gam-top-members__rest-points {
 	font-size: 0.8125rem;
 	font-weight: 600;
-	color: var(--wb-gam-primary);
+	color: var(--wb-gam-primary-text);
 }
 
 /* List layout */
@@ -204,7 +204,7 @@ a.wb-gam-top-members__list-name:hover { text-decoration: underline; }
 
 .wb-gam-top-members__list-points {
 	font-weight: 600;
-	color: var(--wb-gam-primary);
+	color: var(--wb-gam-primary-text);
 	font-size: 0.9375rem;
 	white-space: nowrap;
 }

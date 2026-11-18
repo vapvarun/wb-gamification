@@ -22,7 +22,7 @@
 	font-size: 2rem;
 	font-weight: 700;
 	line-height: 1;
-	color: var(--wb-gam-primary);
+	color: var(--wb-gam-primary-text);
 }
 
 .wb-gam-member-points__label {

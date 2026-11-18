@@ -110,7 +110,7 @@
 
 .wb-gam-leaderboard__points {
 	font-weight: 600;
-	color: var(--wb-gam-primary);
+	color: var(--wb-gam-primary-text);
 	white-space: nowrap;
 	flex-shrink: 0;
 	display: inline-flex;

@@ -279,6 +279,21 @@ final class CSS {
 	}
 
 	/**
+	 * Accent-derived tokens, as design-tokens.css declares them on :root.
+	 */
+	private const ACCENT_DERIVED = array(
+		'--wb-gam-color-accent-light' => 'color-mix(in srgb, var(--wb-gam-color-accent) 14%, var(--wb-gam-color-surface))',
+		'--wb-gam-color-accent-text'  => 'color-mix(in srgb, var(--wb-gam-color-accent) 50%, var(--wb-gam-color-accent-ink))',
+		'--wb-gam-color-accent-ring'  => 'color-mix(in srgb, var(--wb-gam-color-accent) 20%, transparent)',
+		'--wb-gam-color-primary-soft' => 'color-mix(in srgb, var(--wb-gam-color-accent) 10%, transparent)',
+		'--wb-gam-primary'            => 'var(--wb-gam-color-accent)',
+		'--wb-gam-primary-light'      => 'var(--wb-gam-color-accent-light)',
+		'--wb-gam-primary-text'       => 'var(--wb-gam-color-accent-text)',
+		'--wb-gam-fill'               => 'var(--wb-gam-color-accent)',
+		'--wb-gam-recap-accent'       => 'var(--wb-gam-color-accent)',
+	);
+
+	/**
 	 * Append the colour settings every block shares: Accent, Card background, Card border.
 	 *
 	 * Set as the design tokens the block's CSS reads, on the block root, so the setting reaches
@@ -296,6 +311,12 @@ final class CSS {
 		$accent = $color( 'accentColor' );
 		if ( '' !== $accent ) {
 			$desktop[] = '--wb-gam-color-accent: ' . $accent . ';';
+			// Tokens derived from the accent are declared on :root, so they resolve against the
+			// site accent there. Declared again here, they follow this block's accent (and its card
+			// background): text in the accent, tints, rings, bars.
+			foreach ( self::ACCENT_DERIVED as $token => $value ) {
+				$desktop[] = $token . ': ' . $value . ';';
+			}
 		}
 		$background = $color( 'cardBackground' );
 		if ( '' !== $background ) {

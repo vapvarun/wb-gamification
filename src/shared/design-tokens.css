@@ -79,9 +79,13 @@
 	 * surface so they're a faint light tint in light mode and a faint dark
 	 * tint in dark mode — no opaque light blob on a dark card. */
 	--wb-gam-color-accent-light: color-mix(in srgb, var(--wb-gam-color-accent) 14%, var(--wb-gam-color-surface));
-	/* Accent label text blends toward the foreground so it stays readable on
-	 * the tinted chip in either mode. */
-	--wb-gam-color-accent-text: color-mix(in srgb, var(--wb-gam-color-accent) 65%, var(--wb-gam-color-text));
+	/* Accent text (point numbers, labels) is the accent blended half-way into an ink: the theme's
+	 * text darkened toward black in light mode, the theme's light text in dark mode (redefined
+	 * there). Blending with BuddyX's mid-grey #505050 text alone left an orange accent at 4.07:1 and
+	 * yellow under 4:1; with the ink every accent tried (red, orange, yellow, green, cyan, violet)
+	 * measures at least 4.5:1 on the card and on tinted rows, and keeps its hue. */
+	--wb-gam-color-accent-ink: color-mix(in srgb, var(--wb-gam-color-text) 40%, #000000);
+	--wb-gam-color-accent-text: color-mix(in srgb, var(--wb-gam-color-accent) 50%, var(--wb-gam-color-accent-ink));
 	/* Follows the theme's accent, like every other accent tint (was a fixed brand-purple rgba). */
 	--wb-gam-color-accent-ring: color-mix(in srgb, var(--wb-gam-color-accent) 20%, transparent);
 
@@ -106,7 +110,8 @@
 	--wb-gam-tier-obsidian: #4b5563;
 	--wb-gam-color-warning: #c2770e;
 	--wb-gam-color-warning-bg: color-mix(in srgb, var(--wb-gam-color-warning) 12%, var(--wb-gam-color-surface));
-	--wb-gam-color-warning-strong: #b45309;
+	/* amber-800: #b45309 measured 3.97:1 as a bonus pill on the green tint of a completed challenge. */
+	--wb-gam-color-warning-strong: #92400e;
 	--wb-gam-color-warning-soft: rgba(245, 158, 11, 0.15);
 	--wb-gam-color-danger: #ef4444;
 	--wb-gam-color-danger-bg: color-mix(in srgb, var(--wb-gam-color-danger) 12%, var(--wb-gam-color-surface));
@@ -317,6 +322,7 @@
 body.buddyx-dark-theme {
 	--wb-gam-color-accent: var(--wbcom-link-color, var(--bn-accent, var(--bx-color-accent, var(--reign-site-button-bg-color, color-mix(in srgb, #5b4cdb 60%, #ffffff)))));
 	--wb-gam-color-accent-hover: var(--wbcom-link-hover-color, var(--bn-accent-600, var(--bx-color-accent-hover, var(--reign-site-button-bg-hover-color, color-mix(in srgb, #5b4cdb 45%, #ffffff)))));
+	--wb-gam-color-accent-ink: var(--wb-gam-color-text);
 
 	/* Lift the dark medals. Bronze (#b45309) and Obsidian (#4b5563) are dark enough to
 	 * sink into a dark surface -- the member's own league tier becomes the one thing
@@ -342,9 +348,10 @@ body.buddyx-dark-theme {
 	/* Lift the "-strong" status inks, info and the deepest heatmap step for a dark surface. The
 	 * light values measure 2.3:1 to 3.6:1 on #161616 / #1f2937 / #15181f (heatmap-4 1.3:1); the
 	 * mixes below measure at least 5.2:1 on all three (heatmap-4 4.5:1), and stay recognisably
-	 * green, amber, red, blue and violet. */
+	 * green, amber, red, blue and violet. Warning is lifted to 50% so a bonus pill on the green tint
+	 * of a completed challenge still clears 4.5:1 (60% measured 4.34:1 there). */
 	--wb-gam-color-success-strong: color-mix(in srgb, #047857 60%, #ffffff);
-	--wb-gam-color-warning-strong: color-mix(in srgb, #b45309 60%, #ffffff);
+	--wb-gam-color-warning-strong: color-mix(in srgb, #b45309 50%, #ffffff);
 	--wb-gam-color-danger-strong: color-mix(in srgb, #b91c1c 55%, #ffffff);
 	--wb-gam-color-fire-strong: color-mix(in srgb, #b45309 60%, #ffffff);
 	--wb-gam-color-info: color-mix(in srgb, #2563eb 60%, #ffffff);
@@ -354,6 +361,7 @@ body.buddyx-dark-theme {
 	:root[data-bx-mode="auto"] {
 		--wb-gam-color-accent: var(--wbcom-link-color, var(--bn-accent, var(--bx-color-accent, var(--reign-site-button-bg-color, color-mix(in srgb, #5b4cdb 60%, #ffffff)))));
 		--wb-gam-color-accent-hover: var(--wbcom-link-hover-color, var(--bn-accent-600, var(--bx-color-accent-hover, var(--reign-site-button-bg-hover-color, color-mix(in srgb, #5b4cdb 45%, #ffffff)))));
+		--wb-gam-color-accent-ink: var(--wb-gam-color-text);
 
 		/* Auto-mode is a dark surface too. Lifting the medals only on the explicit dark
 		 * selectors would leave every owner who never touched the toggle reading 3.2:1 bronze. */
@@ -372,7 +380,7 @@ body.buddyx-dark-theme {
 		 * mixes below measure at least 5.2:1 on all three (heatmap-4 4.5:1), and stay recognisably
 		 * green, amber, red, blue and violet. */
 		--wb-gam-color-success-strong: color-mix(in srgb, #047857 60%, #ffffff);
-		--wb-gam-color-warning-strong: color-mix(in srgb, #b45309 60%, #ffffff);
+		--wb-gam-color-warning-strong: color-mix(in srgb, #b45309 50%, #ffffff);
 		--wb-gam-color-danger-strong: color-mix(in srgb, #b91c1c 55%, #ffffff);
 		--wb-gam-color-fire-strong: color-mix(in srgb, #b45309 60%, #ffffff);
 		--wb-gam-color-info: color-mix(in srgb, #2563eb 60%, #ffffff);

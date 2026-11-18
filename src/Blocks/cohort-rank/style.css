@@ -61,7 +61,7 @@
 .wb-gam-cohort-rank__current-rank {
 	font-size: 0.8125rem;
 	font-weight: 600;
-	color: var(--wb-gam-primary);
+	color: var(--wb-gam-primary-text);
 	background: var(--wb-gam-color-primary-soft);
 	padding: 0.25rem 0.625rem;
 	border-radius: 999px;
@@ -114,7 +114,7 @@
 }
 
 .wb-gam-cohort-rank__item--self .wb-gam-cohort-rank__rank {
-	color: var(--wb-gam-primary);
+	color: var(--wb-gam-primary-text);
 }
 
 .wb-gam-cohort-rank__avatar {
@@ -141,7 +141,7 @@
 }
 
 .wb-gam-cohort-rank__points {
-	color: var(--wb-gam-primary);
+	color: var(--wb-gam-primary-text);
 	font-weight: 600;
 	font-size: 0.875rem;
 	font-variant-numeric: tabular-nums;
