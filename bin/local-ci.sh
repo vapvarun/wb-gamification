@@ -369,6 +369,17 @@ if [ "$MODE" = "full" ]; then
       warn "4.1 Journeys skipped — site $SITE_URL is not reachable"
     fi
   fi
+
+  # 4.2 Live guard gate (wp-plugin-qa MCP): the checks in docs/qa/qa-config.json plus every
+  # guard in audit/escapes.json. The site comes from docs/qa/qa-config.local.json (per machine).
+  # WBGAM_WP_CLI may point at a wrapper that reaches the site's DB; WBGAM_QA_MODE=full at release.
+  WPPQA_RUN="$HOME/.mcp-servers/wp-plugin-qa-mcp-server/bin/wppqa-run.mjs"
+  if [ -f "$WPPQA_RUN" ] && [ -f docs/qa/qa-config.json ]; then
+    run_stage "4.2" "Live guard gate (wppqa_run_checks)" node "$WPPQA_RUN" --plugin "$PWD" \
+      --wp "${WBGAM_WP_CLI:-wp}" ${WBGAM_WP_PATH:+--wp-root "$WBGAM_WP_PATH"} --mode "${WBGAM_QA_MODE:-fast}"
+  else
+    warn "4.2 Live guard gate skipped — wp-plugin-qa MCP not installed at $WPPQA_RUN"
+  fi
 fi
 
 # ─── Stage 5.1 — Scale benchmark (S-02) ──────────────────────────────────────

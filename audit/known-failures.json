@@ -1,0 +1,9 @@
+{
+  "known": [
+    {
+      "guard": "presentation:leaderboard-owner-colours",
+      "match": "contrast",
+      "card": "10523784929"
+    }
+  ]
+}

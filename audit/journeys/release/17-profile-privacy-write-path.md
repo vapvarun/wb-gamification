@@ -52,8 +52,8 @@ fails, the member's documented privacy choice is non-functional again.
 
 ### 4. The private choice is enforced for guests
 - **Action**: `curl -s -o /dev/null -w "%{http_code}" $SITE_URL/u/qa_member/` (logged out).
-- **Expect**: `404` (profile hidden).
-- **On fail**: `Privacy::can_view_public_profile()` not reading the freshly-written meta, or `ProfilePage::maybe_render()` not 404ing on private.
+- **Expect**: `403` with the "This profile is private" page, identical to an unknown login (profile hidden, not enumerable).
+- **On fail**: `Privacy::can_view_public_profile()` not reading the freshly-written meta, or `ProfilePage::maybe_render()` not answering 403 on private.
 
 ### 5. Toggling back to public restores visibility
 - **Action**: as the owner, click the toggle again; then `curl` the profile logged out.
@@ -70,7 +70,7 @@ fails, the member's documented privacy choice is non-functional again.
 ALL of the following hold:
 1. Owner sees the control (step 1); non-owner does not (step 2).
 2. Toggling private writes meta `0` and updates the UI without reload (step 3).
-3. Guests get 404 on a private profile (step 4) and 200 after re-publishing (step 5).
+3. Guests get 403 (the private page) on a private profile (step 4) and 200 after re-publishing (step 5).
 4. The REST route rejects anonymous writes with 401 (step 6).
 
 ## Fail diagnostics

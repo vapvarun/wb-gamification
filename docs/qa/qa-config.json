@@ -4,7 +4,7 @@
   "version_constant": "WB_GAM_VERSION",
   "main_file": "wb-gamification.php",
   "base_url": "http://wb-gamification.local",
-  "wp_path": "/Users/varundubey/Local Sites/wb-gamification/app/public",
+  "wp_path": null,
   "autologin_param": "autologin",
   "rest_namespace": "wb-gamification/v1",
   "front_routes": [
@@ -32,10 +32,25 @@
   "table_prefix": "wb_gam",
   "cron_prefix": "wb_gam_",
   "personas": {
-    "admin": "qa_admin",
-    "editor": "qa_editor",
-    "moderator": null,
-    "member": "qa_member"
+    "admin": {
+      "autologin": "1"
+    },
+    "editor": {
+      "autologin": "qa_editor"
+    },
+    "member": {
+      "autologin": "qa_member",
+      "note": "Subscriber; owner of the profile and choices under test"
+    },
+    "member_b": {
+      "autologin": "qa_member2",
+      "note": "Second subscriber; must never see or change member's choices"
+    },
+    "member_c": {
+      "autologin": "bn_demo_alex_rivera",
+      "profile": "/members/alex-rivera/achievements/",
+      "note": "Member with points this year and none last year (Year Recap empty-year wording; their own choices form). On another site, override in qa-config.local.json."
+    }
   },
   "integrations": [
     "buddypress",
@@ -46,8 +61,6 @@
     "jetonomy"
   ],
   "fixture_cleanup_sql": [
-    "DELETE FROM {prefix}wb_gam_events WHERE metadata LIKE '%journey_smoke_test%' OR metadata LIKE '%agent_runbook%'",
-    "DELETE FROM {prefix}wb_gam_points WHERE reason LIKE '%journey_smoke%' OR reason LIKE '%agent_runbook%' OR reason = 'tier4_test'",
     "DELETE FROM {prefix}wb_gam_kudos WHERE message LIKE '%smoke-%'",
     "DELETE FROM {prefix}options WHERE option_name = 'wb_gam_action_overrides'"
   ],
@@ -62,5 +75,275 @@
     "screenshots_dir": "audit/journey-runs/{run_id}/screenshots",
     "debug_log_archive": "docs/qa/.debug-log-{version}-{ran_at}.txt"
   },
-  "known_issues": []
+  "known_issues": [],
+  "themes": [
+    {
+      "slug": "reign-theme",
+      "dark": {
+        "toggle": ".bx-color-mode-toggle__btn",
+        "until": "html[data-bx-mode=\"dark\"]"
+      }
+    },
+    {
+      "slug": "buddyx"
+    },
+    {
+      "slug": "twentytwentyfive"
+    }
+  ],
+  "matrix": {
+    "fast": {
+      "themes": [
+        "reign-theme"
+      ],
+      "widths": [
+        1440,
+        390
+      ]
+    },
+    "full": {
+      "themes": "all",
+      "widths": [
+        1440,
+        1024,
+        390
+      ]
+    }
+  },
+  "checks": {
+    "presentation": [
+      {
+        "id": "hub-member",
+        "persona": "member",
+        "url": "/gamification/",
+        "kind": "front",
+        "root": ".wb-gam-hub"
+      },
+      {
+        "id": "leaderboard-default",
+        "persona": "anonymous",
+        "url": "/wb-gamification-qa/wb-gamification-qa-leaderboard/",
+        "kind": "front",
+        "root": ".wb-gam-leaderboard"
+      },
+      {
+        "id": "top-members-default",
+        "persona": "anonymous",
+        "url": "/wb-gamification-qa/wb-gamification-qa-top-members/",
+        "kind": "front",
+        "root": ".wb-gam-top-members"
+      },
+      {
+        "id": "daily-bonus-default",
+        "persona": "member",
+        "url": "/wb-gamification-qa/wb-gamification-qa-daily-bonus/",
+        "kind": "front",
+        "root": ".wb-gam-daily-bonus"
+      },
+      {
+        "id": "give-kudos-default",
+        "persona": "member",
+        "url": "/wb-gamification-qa/wb-gamification-qa-give-kudos/",
+        "kind": "front",
+        "root": ".wb-gam-give-kudos"
+      },
+      {
+        "id": "year-recap-member",
+        "persona": "member_c",
+        "url": "/wb-gamification-qa/wb-gamification-qa-year-recap/",
+        "kind": "front",
+        "root": ".wb-gam-year-recap"
+      },
+      {
+        "id": "member-prefs-own",
+        "persona": "member_c",
+        "url": "/members/alex-rivera/achievements/",
+        "kind": "front",
+        "root": ".wb-gam-member-prefs"
+      },
+      {
+        "id": "leaderboard-owner-colours",
+        "persona": "anonymous",
+        "url": "/wb-gamification-qa/qa-rft-variants-leaderboard/",
+        "kind": "front",
+        "root": ".wb-gam-leaderboard",
+        "note": "every block option and owner style on one page, so dark mode meets the owner's own colours"
+      }
+    ],
+    "crawl": [
+      {
+        "url": "/gamification/",
+        "persona": "anonymous"
+      },
+      {
+        "url": "/gamification/",
+        "persona": "member"
+      },
+      {
+        "url": "/wb-gamification-qa/wb-gamification-qa-leaderboard/",
+        "persona": "member",
+        "root": ".wb-gam-leaderboard"
+      },
+      {
+        "url": "/wb-gamification-qa/wb-gamification-qa-top-members/",
+        "persona": "member",
+        "root": ".wb-gam-top-members"
+      },
+      {
+        "url": "/wb-gamification-qa/wb-gamification-qa-daily-bonus/",
+        "persona": "member",
+        "root": ".wb-gam-daily-bonus"
+      },
+      {
+        "url": "/wb-gamification-qa/wb-gamification-qa-give-kudos/",
+        "persona": "member",
+        "root": ".wb-gam-give-kudos"
+      },
+      {
+        "url": "/wb-gamification-qa/wb-gamification-qa-year-recap/",
+        "persona": "member",
+        "root": ".wb-gam-year-recap"
+      },
+      {
+        "url": "/wb-gamification-qa/wb-gamification-qa-badge-showcase/",
+        "persona": "member",
+        "root": ".wb-gam-badge-showcase"
+      },
+      {
+        "url": "/wb-gamification-qa/wb-gamification-qa-level-progress/",
+        "persona": "member",
+        "root": ".wb-gam-level-progress"
+      },
+      {
+        "url": "/wb-gamification-qa/wb-gamification-qa-streak/",
+        "persona": "member",
+        "root": ".wb-gam-streak"
+      },
+      {
+        "url": "/wb-gamification-qa/wb-gamification-qa-challenges/",
+        "persona": "member",
+        "root": ".wb-gam-challenges"
+      },
+      {
+        "url": "/wb-gamification-qa/wb-gamification-qa-kudos-feed/",
+        "persona": "member",
+        "root": ".wb-gam-kudos-feed"
+      },
+      {
+        "url": "/wb-gamification-qa/wb-gamification-qa-earning-guide/",
+        "persona": "member",
+        "root": ".wb-gam-earning-guide"
+      },
+      {
+        "url": "/wb-gamification-qa/wb-gamification-qa-redemption-store/",
+        "persona": "member",
+        "root": ".wb-gam-redemption"
+      },
+      {
+        "url": "/wb-gamification-qa/wb-gamification-qa-cohort-rank/",
+        "persona": "member",
+        "root": ".wb-gam-cohort-rank"
+      },
+      {
+        "url": "/wb-gamification-qa/wb-gamification-qa-community-challenges/",
+        "persona": "member",
+        "root": ".wb-gam-community-challenges"
+      },
+      {
+        "url": "/wb-gamification-qa/wb-gamification-qa-points-history/",
+        "persona": "member",
+        "root": ".wb-gam-points-history"
+      },
+      {
+        "url": "/wb-gamification-qa/wb-gamification-qa-member-points/",
+        "persona": "member",
+        "root": ".wb-gam-member-points"
+      },
+      {
+        "url": "/wb-gamification-qa/wb-gamification-qa-submit-achievement/",
+        "persona": "member",
+        "root": ".wb-gam-submit-achievement"
+      }
+    ],
+    "states": [
+      {
+        "id": "give-kudos-design-settings-apply",
+        "persona": "member",
+        "url": "/wb-gamification-qa/qa-rft-variants-give-kudos/",
+        "expect": [
+          {
+            "selector": "style#wb-gam-block-styles",
+            "count": 1
+          },
+          {
+            "selector": ".wb-gam-give-kudos",
+            "min": 8
+          }
+        ]
+      },
+      {
+        "id": "year-recap-names-empty-year",
+        "persona": "member_c",
+        "url": "/wb-gamification-qa/qa-rft-variants-year-recap/",
+        "expect": [
+          {
+            "selector": ".wb-gam-year-recap",
+            "text": "Nothing to recap for 2025"
+          }
+        ]
+      },
+      {
+        "id": "member-prefs-own-profile-only",
+        "persona": "member_c",
+        "url": "/members/alex-rivera/achievements/",
+        "expect": [
+          {
+            "selector": ".wb-gam-member-prefs",
+            "count": 1
+          }
+        ]
+      },
+      {
+        "id": "member-prefs-hidden-from-others",
+        "persona": "member_b",
+        "url": "/members/alex-rivera/achievements/",
+        "expect": [
+          {
+            "selector": ".wb-gam-member-prefs",
+            "absent": true
+          }
+        ]
+      }
+    ],
+    "release": {
+      "pot": "languages/wb-gamification.pot",
+      "domain": "wb-gamification",
+      "build_scripts": [
+        "bin/build-release.sh"
+      ],
+      "excluded": [
+        "bin/",
+        "tests/",
+        "docs/",
+        "audit/",
+        "plan/",
+        "sdk/",
+        "examples/",
+        "node_modules/",
+        "dist/"
+      ],
+      "allow_refs": [
+        "__DIR__ . '/vendor/autoload.php'",
+        "'audit/openapi.json'",
+        "'audit/.last-scale-pass.json'"
+      ],
+      "allow_refs_reason": "The EDD SDK's own libs/.../edd-sl-sdk/vendor/ ships (only the top-level /vendor is excluded); the two audit/ paths are where developer-only WP-CLI commands (openapi export, scale benchmark) write their reports."
+    },
+    "static": [
+      {
+        "id": "i18n-json-keyed-to-scripts",
+        "run": "php -r '$h=[];foreach(array(\"build\",\"assets/js\") as $d){if(!is_dir($d)){continue;}foreach(new RecursiveIteratorIterator(new RecursiveDirectoryIterator($d,FilesystemIterator::SKIP_DOTS)) as $f){$f=(string)$f;if(substr($f,-3)===\".js\"){$h[md5(preg_replace(\"/\\\\.min\\\\.js$/\",\".js\",$f))]=1;}}}$bad=0;foreach(glob(\"languages/*.json\") as $j){if(!preg_match(\"/-([a-f0-9]{32})\\\\.json$/\",$j,$m)||!isset($h[$m[1]])){echo \"not keyed to a shipped script: $j\\n\";$bad++;}}exit($bad?1:0);' 2>/dev/null"
+      }
+    ]
+  }
 }

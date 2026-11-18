@@ -20,13 +20,9 @@ The single most important flow in the plugin: a tracked event arrives, the engin
 - Site: `$SITE_URL`
 - Test user login: `test_user` (subscriber role) via `?autologin=test_user`
 - Capture user ID from the login response (`USER_ID`).
-- DB clean (optional — repeatable runs add a `wp_post_receives_comment` event each time, increasing the user's total by the action's configured points):
-  ```sql
-  -- Optional: delete events tagged by this journey's metadata.source
-  -- (the `metadata` column is JSON; LIKE on the serialized value is the cheapest filter):
-  DELETE FROM wp_wb_gam_events WHERE user_id = $USER_ID AND metadata LIKE '%journey_smoke_test%';
-  DELETE FROM wp_wb_gam_points WHERE user_id = $USER_ID AND reason = 'journey_smoke_test';
-  ```
+- Pick a published post by ANOTHER member (`OTHER_POST_ID`) and note its author (`AUTHOR_ID`).
+- No DB clean needed: every run writes a new, real comment, so the expected delta is always one award.
+  (The ledger has no `reason` column; never delete ledger rows by pattern.)
 
 ## Steps
 
@@ -36,15 +32,19 @@ The single most important flow in the plugin: a tracked event arrives, the engin
 - **Capture**: `STARTING_TOTAL` ← `.total`
 - **On fail**: `src/API/MembersController.php:88` (get_points handler) or schema mismatch
 
-### 2. Ingest an event for a registered action
-- **Action**: `POST $SITE_URL/wp-json/wb-gamification/v1/events` with body
-  ```json
-  { "action_id": "wp_post_receives_comment", "metadata": { "source": "journey_smoke_test" } }
-  ```
-- **Expect**: 200 OK, JSON shape `{ "processed": true, "event_id": <uuid>, "action_id": "wp_post_receives_comment", "user_id": <int> }`.
-- **Capture**: `EVENT_ID` ← `.event_id`. `EXPECTED_DELTA` ← the action's `default_points` (3 for `wp_post_receives_comment`, see `GET /actions`; site owners may override via the `wb_gam_points_<action_id>` option).
-- **On fail**: `src/API/EventsController.php:70` (create_item handler), or unrecognized `action_id`, or `create_item_permissions_check` rejecting the test user.
-- **Note**: The endpoint requires `action_id` (a registered action). Points come from the action's configured value, not from the request body — there is no `points` field on `/events`.
+### 2. Earn through observed activity (a real comment)
+- **Action**: as the test user, `POST $SITE_URL/wp-json/wp/v2/comments` with `{ "post": $OTHER_POST_ID, "content": "Great write-up, the photos from the morning walk really capture it." }` (REST nonce from the page).
+- **Expect**: 201. If the comment comes back with `status: hold`, approve it as admin (`wp comment approve <id>`): since 1.6.8 a held comment pays when it is approved, never on submit.
+- **Capture**: `COMMENT_ID`; `EXPECTED_DELTA` = the configured points of the action that pays the commenter (`wp_leave_comment` on an approved comment, `wp_comment_approved` on one approved from moderation; see `GET /actions`).
+
+### 2b. Refusal: a member cannot fire events for themselves
+- **Action**: `POST $SITE_URL/wp-json/wb-gamification/v1/events` with `{ "action_id": "wp_leave_comment" }` as the same test user.
+- **Expect**: 403. Since 1.6.8 (`f8a7dba`) points come only from observed activity; this route needs `wb_gam_manage_members`.
+- **On fail**: `src/API/EventsController.php` `create_item_permissions_check`.
+
+### 2c. Refusal: commenting on your OWN post earns nothing
+- **Action**: as the test user, comment on a post the test user wrote.
+- **Expect**: 201 for the comment, and no new `wb_gam_points` row for the user from it.
 
 ### 3. Wait for async processing
 - **Action**: poll up to 5× at 1s intervals: `GET /wp-json/wb-gamification/v1/members/$USER_ID/points`
@@ -56,8 +56,8 @@ The single most important flow in the plugin: a tracked event arrives, the engin
   - `wp wb-gamification doctor` (the `DoctorCommand` will report queue/schema health)
 
 ### 4. Verify event row in DB
-- **Action**: `mysql_query "SELECT id, user_id, action_id, object_id FROM wp_wb_gam_events WHERE id = '$EVENT_ID'"`
-- **Expect**: exactly 1 row with `user_id = $USER_ID`, `action_id = 'wp_post_receives_comment'`. (The events table has `action_id`, not `action`. Note also: there is no `points` column on `wb_gam_events` — the points layer lives in `wb_gam_points`.)
+- **Action**: `mysql_query "SELECT id, user_id, action_id, object_id FROM wp_wb_gam_events WHERE user_id = $USER_ID AND object_id = $COMMENT_ID ORDER BY created_at DESC"`; capture `EVENT_ID` from the row
+- **Expect**: exactly 1 row with `user_id = $USER_ID`, `action_id` in (`wp_leave_comment`, `wp_comment_approved`). (The events table has `action_id`, not `action`. Note also: there is no `points` column on `wb_gam_events` — the points layer lives in `wb_gam_points`.)
 
 ### 5. Verify points-ledger row
 - **Action**: `mysql_query "SELECT id, user_id, points, event_id FROM wp_wb_gam_points WHERE event_id = '$EVENT_ID'"`

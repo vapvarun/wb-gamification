@@ -1,0 +1,36 @@
+{
+  "escapes": [
+    {
+      "card": "10469870080",
+      "title": "Block editor strings never translated: language JSON files were keyed to src/ paths, not the build/ scripts WordPress loads",
+      "class": 12,
+      "guard": "static:i18n-json-keyed-to-scripts",
+      "added": "2026-11-18",
+      "proof": "fails on 8a65f25 (28 files not keyed to a shipped script), passes on 1.6.8"
+    },
+    {
+      "card": "10519574152",
+      "title": "Give Kudos block ignored its sidebar design settings and Hide on device",
+      "class": 13,
+      "guard": "states:give-kudos-design-settings-apply",
+      "added": "2026-11-18",
+      "proof": "fails on a94cecc (no #wb-gam-block-styles), passes on 1.6.8"
+    },
+    {
+      "card": "10519648017",
+      "title": "Year Recap showed a generic empty message instead of naming the year with no points",
+      "class": 7,
+      "guard": "states:year-recap-names-empty-year",
+      "added": "2026-11-18",
+      "proof": "fails on 4b3e5a9 (no empty-year wording), passes on 1.6.8"
+    },
+    {
+      "card": "10519647881",
+      "title": "Accent button labels, Daily Bonus, secondary and small coloured text fell short of WCAG AA contrast",
+      "class": 13,
+      "guard": "presentation:daily-bonus-default",
+      "added": "2026-11-18",
+      "proof": "fails on 4b3e5a9 (chip 2.59:1 in light mode), passes on 1.6.8"
+    }
+  ]
+}

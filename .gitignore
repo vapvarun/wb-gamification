@@ -23,3 +23,6 @@ audit/wppqa-baseline-*/raw-audit.json
 # Scale-benchmark result — local run artifact, regenerated per release (same model
 # as the smoke report above). The release gate reads it; git does not carry it.
 audit/.last-scale-pass.json
+
+# Per-machine QA site and persona credentials (wp-plugin-qa MCP).
+docs/qa/qa-config.local.json
