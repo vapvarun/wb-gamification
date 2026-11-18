@@ -252,6 +252,9 @@ final class BadgeStream {
 		$ids = is_array( $ids ) ? array_values( array_map( 'strval', $ids ) ) : array();
 		if ( '' !== $badge_id && ! in_array( $badge_id, $ids, true ) ) {
 			$ids[] = $badge_id;
+			// The post now carries news: move it to now so the new badge surfaces in the feed
+			// instead of sitting at the time of the day's first badge.
+			$activity->date_recorded = bp_core_current_time();
 		}
 
 		$redrawn = self::group_markup( (int) $activity->user_id, $ids );
