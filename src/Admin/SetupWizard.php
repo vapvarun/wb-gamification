@@ -523,7 +523,7 @@ final class SetupWizard {
 	 */
 	private static function get_template_configs(): array {
 		return array(
-			'blog'      => array(
+			'blog'       => array(
 				'label'       => __( 'Blog / Publisher', 'wb-gamification' ),
 				'description' => __( 'Rewards writing and meaningful comments. For standalone WordPress blogs.', 'wb-gamification' ),
 				'points'      => array(
@@ -533,7 +533,7 @@ final class SetupWizard {
 					'wp_post_receives_comment' => 3,
 				),
 			),
-			'community' => array(
+			'community'  => array(
 				'label'       => __( 'Community Engagement', 'wb-gamification' ),
 				'description' => __( 'Balanced - rewards posting, reactions, and social connection. Works with BuddyNext.', 'wb-gamification' ),
 				'requires'    => array(
@@ -550,7 +550,24 @@ final class SetupWizard {
 					'bn_profile_completed' => 25,
 				),
 			),
-			'course'    => array(
+			'buddypress' => array(
+				'label'       => __( 'BuddyPress Community', 'wb-gamification' ),
+				'description' => __( 'Rewards activity updates, comments, friendships, groups and a complete profile. Works with BuddyPress.', 'wb-gamification' ),
+				'requires'    => array(
+					'callback' => static function (): bool {
+						return class_exists( 'BuddyPress', false ); },
+					'plugin'   => __( 'BuddyPress', 'wb-gamification' ),
+				),
+				'points'      => array(
+					'bp_activity_update'    => 10,
+					'bp_activity_comment'   => 5,
+					'bp_friends_accepted'   => 8,
+					'bp_groups_join'        => 8,
+					'bp_reactions_received' => 3,
+					'bp_profile_complete'   => 15,
+				),
+			),
+			'course'     => array(
 				'label'       => __( 'Online Course', 'wb-gamification' ),
 				'description' => __( 'Course completion heavy - progress and credential badges. Works with Learnomy.', 'wb-gamification' ),
 				'requires'    => array(
@@ -578,7 +595,7 @@ final class SetupWizard {
 			 * run, on the one screen whose entire job is the first impression.
 			 * Nothing validated the ids, so it failed silently.
 			 */
-			'coaching'  => array(
+			'coaching'   => array(
 				'label'       => __( 'Coaching Platform', 'wb-gamification' ),
 				'description' => __( 'Rewards the steady habits of a coaching programme - writing, commenting and completing a profile. For standalone WordPress sites.', 'wb-gamification' ),
 				'points'      => array(
@@ -591,7 +608,7 @@ final class SetupWizard {
 					'wp_first_post'       => 20,
 				),
 			),
-			'nonprofit' => array(
+			'nonprofit'  => array(
 				'label'       => __( 'Nonprofit / Mission', 'wb-gamification' ),
 				'description' => __( 'Rewards joining spaces, connecting and taking part in conversations - community participation over individual output. Works with BuddyNext.', 'wb-gamification' ),
 				'requires'    => array(
@@ -915,11 +932,12 @@ final class SetupWizard {
 	private static function get_template_icons(): array {
 		$attrs = 'width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" focusable="false" aria-hidden="true"';
 		return array(
-			'blog'      => '<svg ' . $attrs . '><path d="M4 19.5v-15a2 2 0 0 1 2-2h11l4 4v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2Z"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>',
-			'community' => '<svg ' . $attrs . '><circle cx="9" cy="8" r="3.2"/><path d="M2.5 19.5c.5-3 3.2-5 6.5-5s6 2 6.5 5"/><circle cx="17" cy="9" r="2.6"/><path d="M14.5 19.5c.4-2.4 2.3-4.2 5-4.5"/></svg>',
-			'course'    => '<svg ' . $attrs . '><path d="M3 6.5 12 3l9 3.5L12 10 3 6.5Z"/><path d="M7 8.5v5c0 1.7 2.3 3 5 3s5-1.3 5-3v-5"/><path d="M21 6.5v6"/></svg>',
-			'coaching'  => '<svg ' . $attrs . '><path d="M12 2.5 14.5 8 20 9l-4 4 1 5.6L12 16l-5 2.6L8 13 4 9l5.5-1L12 2.5Z"/></svg>',
-			'nonprofit' => '<svg ' . $attrs . '><path d="M12 21s-7-4.5-7-10.5A4.5 4.5 0 0 1 12 7a4.5 4.5 0 0 1 7 3.5C19 16.5 12 21 12 21Z"/></svg>',
+			'blog'       => '<svg ' . $attrs . '><path d="M4 19.5v-15a2 2 0 0 1 2-2h11l4 4v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2Z"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>',
+			'community'  => '<svg ' . $attrs . '><circle cx="9" cy="8" r="3.2"/><path d="M2.5 19.5c.5-3 3.2-5 6.5-5s6 2 6.5 5"/><circle cx="17" cy="9" r="2.6"/><path d="M14.5 19.5c.4-2.4 2.3-4.2 5-4.5"/></svg>',
+			'buddypress' => '<svg ' . $attrs . '><circle cx="9" cy="8" r="3.2"/><path d="M2.5 19.5c.5-3 3.2-5 6.5-5s6 2 6.5 5"/><circle cx="17" cy="9" r="2.6"/><path d="M14.5 19.5c.4-2.4 2.3-4.2 5-4.5"/></svg>',
+			'course'     => '<svg ' . $attrs . '><path d="M3 6.5 12 3l9 3.5L12 10 3 6.5Z"/><path d="M7 8.5v5c0 1.7 2.3 3 5 3s5-1.3 5-3v-5"/><path d="M21 6.5v6"/></svg>',
+			'coaching'   => '<svg ' . $attrs . '><path d="M12 2.5 14.5 8 20 9l-4 4 1 5.6L12 16l-5 2.6L8 13 4 9l5.5-1L12 2.5Z"/></svg>',
+			'nonprofit'  => '<svg ' . $attrs . '><path d="M12 21s-7-4.5-7-10.5A4.5 4.5 0 0 1 12 7a4.5 4.5 0 0 1 7 3.5C19 16.5 12 21 12 21Z"/></svg>',
 		);
 	}
 
