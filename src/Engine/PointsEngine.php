@@ -342,9 +342,10 @@ final class PointsEngine {
 			return false;
 		}
 
-		// Repeatable check. A trigger keyed per object is gated by that key instead (below), which
-		// nets out reversals: an avatar deleted and uploaded again pays again, as the content rule says.
-		if ( ! ( $action['repeatable'] ?? true ) && ! isset( $action['once_per_object'] ) && self::get_action_count( $user_id, $action_id, $type ) > 0 ) {
+		// Repeatable check. A trigger keyed per object counts its net award, so one whose points were
+		// taken back can pay again (an avatar deleted and uploaded again), but never twice at once
+		// (a second order can't be a "first purchase" while the first still stands).
+		if ( ! ( $action['repeatable'] ?? true ) && ( isset( $action['once_per_object'] ) ? self::has_net_award( $user_id, $action_id ) : self::get_action_count( $user_id, $action_id, $type ) > 0 ) ) {
 			/** This filter is documented in src/Engine/PointsEngine.php — see wb_gam_award_skipped. */
 			do_action(
 				'wb_gam_award_skipped',
@@ -1302,6 +1303,26 @@ final class PointsEngine {
 				$action_id . self::REMOVED_SUFFIX,
 				$action_id . self::RESTORED_SUFFIX,
 				$object_id
+			)
+		);
+	}
+
+	/**
+	 * Does the member still hold points from this action (awards net of reversals)?
+	 *
+	 * @param int    $user_id   Member.
+	 * @param string $action_id Action id.
+	 */
+	private static function has_net_award( int $user_id, string $action_id ): bool {
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- live ledger read in the award gate.
+		return 0 < (int) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COALESCE(SUM(points), 0) FROM {$wpdb->prefix}wb_gam_points WHERE user_id = %d AND action_id IN (%s, %s, %s)",
+				$user_id,
+				$action_id,
+				$action_id . self::REMOVED_SUFFIX,
+				$action_id . self::RESTORED_SUFFIX
 			)
 		);
 	}

@@ -275,8 +275,8 @@ final class Registry {
 	 * the award: key a course, group or space seat with the member, never by the shared id alone.
 	 * Build the same key on the way in (`once_per_object`) and out (`reverse_on`).
 	 *
-	 * ponytail: crc32, so two pairs can share a key about once in four billion per action; switch
-	 * to a 64-bit hash if object_id ever widens.
+	 * 60 bits of md5 (object_id is BIGINT UNSIGNED), so keys stay distinct at any realistic site
+	 * size; a collision would let one member's removal take back another member's award.
 	 *
 	 * @since 1.6.8
 	 *
@@ -284,7 +284,7 @@ final class Registry {
 	 * @return int Positive key.
 	 */
 	public static function object_key( ...$parts ): int {
-		return max( 1, (int) crc32( implode( ':', array_map( 'strval', $parts ) ) ) );
+		return max( 1, (int) hexdec( substr( md5( implode( ':', array_map( 'strval', $parts ) ) ), 0, 15 ) ) );
 	}
 
 	/**
