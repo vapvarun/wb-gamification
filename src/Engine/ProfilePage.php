@@ -130,10 +130,15 @@ final class ProfilePage {
 		if ( ! $user ) {
 			return 'private';
 		}
-		// The guest view, or this viewer's own permission (owner, admin, or a host community such as
-		// BuddyNext letting a connection see a connections-only profile, who then goes on to it).
-		$can_view = self::is_publicly_visible( (int) $user->ID )
-			|| Privacy::can_view_public_profile( (int) $user->ID );
+		// The guest view; the owner and admins; or a logged-in viewer the host community lets see the
+		// profile (BuddyNext: a connection on a connections-only profile, who goes on to it). That
+		// viewer's answer still passes the page's own wb_gam_profile_publicly_visible filter, so a
+		// site that hides a profile there hides it from members too.
+		$id       = (int) $user->ID;
+		$viewer   = get_current_user_id();
+		$can_view = self::is_publicly_visible( $id )
+			|| ( $viewer > 0 && ( $viewer === $id || current_user_can( 'manage_options' ) ) )
+			|| ( $viewer > 0 && (bool) apply_filters( 'wb_gam_profile_publicly_visible', Privacy::can_view_public_profile( $id, $viewer ), $id ) );
 		return $can_view ? 'profile' : 'private';
 	}
 
