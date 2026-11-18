@@ -61,7 +61,7 @@ return array(
 		array(
 			'id'                => 'learnomy_quiz_passed',
 			'label'             => static fn(): string => __( 'Pass a quiz', 'wb-gamification' ),
-			'description'       => static fn(): string => __( 'Awarded when a member passes a quiz. Fires only on a passing attempt (failed attempts award nothing); cooldown limits retake farming.', 'wb-gamification' ),
+			'description'       => static fn(): string => __( 'Awarded once per quiz when a member passes it. Failed attempts and retakes award nothing.', 'wb-gamification' ),
 			// Free fires: do_action( 'learnomy_quiz_passed', int $attempt_id, int $user_id, int $quiz_id, float $score ) - score is a percentage.
 			'hook'              => 'learnomy_quiz_passed',
 			'user_callback'     => function ( int $attempt_id, int $user_id, int $quiz_id, float $score = 0 ): int {
@@ -74,6 +74,7 @@ return array(
 				);
 			},
 			'permanent'         => 'A completion. Learnomy resets progress only as an admin repair.',
+			'once_per_object'   => static fn( int $attempt_id, int $user_id, int $quiz_id ): int => \WBGam\Engine\Registry::object_key( $user_id, 'quiz', $quiz_id ),
 			'default_points'    => 25,
 			'category'          => 'learning',
 			'icon'              => 'icon-circle-check',

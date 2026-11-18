@@ -295,6 +295,8 @@ return [
 			},
 			'reverse_on'          => [
 				'groups_cover_image_deleted' => static fn( $item_id ): int => (int) $item_id,
+				// Deleting the whole group fires no cover action; the group id is the same key.
+				'groups_delete_group'        => static fn( $group_id ): int => (int) $group_id,
 			],
 			'async'               => false,
 			'default_points'      => 10,
