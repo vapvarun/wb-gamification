@@ -94,10 +94,14 @@ final class RecapEngine {
 		$total_events = (int) $wpdb->get_var(
 			$wpdb->prepare(
 				"SELECT COUNT(*) FROM {$wpdb->prefix}wb_gam_events
-				  WHERE user_id = %d AND created_at BETWEEN %s AND %s",
+				  WHERE user_id = %d AND created_at BETWEEN %s AND %s
+				    AND action_id NOT LIKE %s AND action_id NOT LIKE %s",
 				$user_id,
 				$start,
-				$end
+				$end,
+				// Content-removal rows are corrections, not something the member did (as top actions).
+				'%' . $wpdb->esc_like( PointsEngine::REMOVED_SUFFIX ),
+				'%' . $wpdb->esc_like( PointsEngine::RESTORED_SUFFIX )
 			)
 		);
 
