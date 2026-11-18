@@ -132,6 +132,13 @@
 	color: var( --wb-gam-color-white );
 }
 
+/* White on the amber accent is 3.54:1; pick dark or light from the accent's own lightness. */
+@supports (color: oklch(from red l c h)) {
+	.wb-gam-badge-showcase__filter.is-active .wb-gam-badge-showcase__filter-count {
+		color: oklch(from var( --wb-gam-badge-accent ) round(1.07 - l) 0 0);
+	}
+}
+
 .wb-gam-badge-showcase__filter:focus-visible {
 	outline: 2px solid var( --wb-gam-badge-accent );
 	outline-offset: 2px;
@@ -304,7 +311,7 @@
 	border-radius: 999px;
 	font-size: 0.75rem;
 	font-weight: 600;
-	/* success-strong, not success: 4.78:1 on the tint instead of 2.95:1 (lifted in dark). */
+	/* success-strong, not success: 5:1 or more on the tint instead of 2.95:1 (lifted in dark). */
 	color: var( --wb-gam-color-success-strong );
 	background: var( --wb-gam-badge-success-soft );
 	margin-top: auto;

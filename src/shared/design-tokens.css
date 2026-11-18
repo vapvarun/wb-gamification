@@ -1,4 +1,5 @@
-:root {
+:root,
+.wb-gam-scheme-light {
 	/* Spacing scale (used by SpacingControl) */
 	--wb-gam-space-0: 0;
 	--wb-gam-space-xs: 4px;
@@ -98,7 +99,8 @@
 	 * `-soft` rgba variants were already surface-agnostic.) */
 	--wb-gam-color-success: #0d9f6e;
 	--wb-gam-color-success-bg: color-mix(in srgb, var(--wb-gam-color-success) 12%, var(--wb-gam-color-surface));
-	--wb-gam-color-success-strong: #047857;
+	/* #047857 measured 4.27:1 on its own tint over a cream owner card; this holds 5:1 there, 5.6:1 on white. */
+	--wb-gam-color-success-strong: #046c4e;
 	--wb-gam-color-success-soft: rgba(13, 159, 110, 0.12);
 
 	/* League tier accents (cohort rank). These are deliberately literal -- bronze is
@@ -128,7 +130,10 @@
 	/* Extra neutrals — surface-muted is the "card lifted off a panel"
 	 * shade. Border-strong is the focus / hover stroke. Theme-mapped (see
 	 * the neutral palette note above). */
-	--wb-gam-color-surface-muted: var(--bx-color-bg-muted, var(--reign-site-secondary-bg-color, #f9fafb));
+	/* Rows on a card: the card's own surface, a step toward the ink. A theme's muted shade can sit on
+	 * either side of its card (BuddyX: #fafafa on #fff at 1.04:1 in light, #101010 under #161616 in dark),
+	 * so it cannot separate rows from their card in both modes. */
+	--wb-gam-color-surface-muted: color-mix(in srgb, var(--wb-gam-color-text) 5%, var(--wb-gam-color-surface));
 	--wb-gam-color-border-strong: var(--bx-color-border, var(--reign-site-border-color, #d1d5db));
 	--wb-gam-color-locked-soft: rgba(156, 163, 175, 0.16);
 	--wb-gam-color-primary-soft: color-mix(in srgb, var(--wb-gam-color-accent) 10%, transparent);
@@ -324,7 +329,11 @@
  * cascade from --wb-gam-color-accent, so they follow automatically. */
 :root[data-bx-mode="dark"],
 :root[data-theme="dark"],
-body.buddyx-dark-theme {
+body.buddyx-dark-theme,
+.wb-gam-scheme-dark {
+	/* An owner's own accent (block setting) is any colour at all: #cc0000 half-mixed into the ink read
+	 * 3.10:1 on Reign's dark surface. Pull it further toward the ink in dark; the theme accent keeps 50%. */
+	--wb-gam-owner-accent-mix: 35%;
 	--wb-gam-color-accent: var(--wbcom-link-color, var(--bn-accent, var(--bx-color-accent, var(--reign-site-button-bg-color, color-mix(in srgb, #5b4cdb 60%, #ffffff)))));
 	--wb-gam-color-accent-hover: var(--wbcom-link-hover-color, var(--bn-accent-600, var(--bx-color-accent-hover, var(--reign-site-button-bg-hover-color, color-mix(in srgb, #5b4cdb 45%, #ffffff)))));
 	--wb-gam-color-accent-ink: var(--wb-gam-color-text);
@@ -364,6 +373,7 @@ body.buddyx-dark-theme {
 }
 @media (prefers-color-scheme: dark) {
 	:root[data-bx-mode="auto"] {
+		--wb-gam-owner-accent-mix: 35%;
 		--wb-gam-color-accent: var(--wbcom-link-color, var(--bn-accent, var(--bx-color-accent, var(--reign-site-button-bg-color, color-mix(in srgb, #5b4cdb 60%, #ffffff)))));
 		--wb-gam-color-accent-hover: var(--wbcom-link-hover-color, var(--bn-accent-600, var(--bx-color-accent-hover, var(--reign-site-button-bg-hover-color, color-mix(in srgb, #5b4cdb 45%, #ffffff)))));
 		--wb-gam-color-accent-ink: var(--wb-gam-color-text);
@@ -397,7 +407,46 @@ body.buddyx-dark-theme {
  * (white on an orange theme accent measured 2.59:1), white on a dark one. Overrides a theme's button
  * text pair, which is the one that failed. Browsers without relative colours keep the value above. */
 @supports (color: oklch(from red l c h)) {
-	:root {
+	/* The dark selectors too: they restore the theme's pair (BuddyX dark: white on its orange, 3.36:1). */
+	:root,
+	:root[data-bx-mode="dark"],
+	:root[data-theme="dark"],
+	body.buddyx-dark-theme,
+	.wb-gam-scheme-light,
+	.wb-gam-scheme-dark {
 		--wb-gam-pop-accent-fg: oklch(from var(--wb-gam-pop-accent) round(1.07 - l) 0 0);
 	}
+	@media (prefers-color-scheme: dark) {
+		:root[data-bx-mode="auto"] {
+			--wb-gam-pop-accent-fg: oklch(from var(--wb-gam-pop-accent) round(1.07 - l) 0 0);
+		}
+	}
+}
+
+/* ── Owner card colour ──────────────────────────────────────────────────────
+ * A block whose owner set a Card background carries .wb-gam-scheme-light or
+ * .wb-gam-scheme-dark, picked from that colour (WBGam\Blocks\CSS::ink_for()). The
+ * light or dark token set above is declared again on the block, so every token
+ * built from the surface or the text resolves against the owner's card instead of
+ * the page's mode: a cream card on a dark page reads as a light card. The block's
+ * own rule (CSS.php) then pins text and surfaces to that card.
+ * Popups and headings here follow the card, not BuddyNext or the theme. */
+.wb-gam-scheme-light {
+	color-scheme: light;
+}
+.wb-gam-scheme-dark {
+	color-scheme: dark;
+}
+.wb-gam-scheme-light,
+.wb-gam-scheme-dark {
+	--wb-gam-pop-surface: var(--wb-gam-color-surface);
+	--wb-gam-pop-text: var(--wb-gam-color-text);
+	--wb-gam-pop-text-2: var(--wb-gam-color-text-muted);
+	--wb-gam-pop-text-3: var(--wb-gam-color-text-light);
+	--wb-gam-pop-subtle: var(--wb-gam-color-surface-alt);
+	--wb-gam-pop-inv-bg: var(--wb-gam-color-text);
+}
+.wb-gam-scheme-light :is(h1, h2, h3, h4, h5, h6),
+.wb-gam-scheme-dark :is(h1, h2, h3, h4, h5, h6) {
+	color: inherit;
 }

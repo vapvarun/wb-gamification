@@ -46,6 +46,7 @@ Fair earning across every integration: removed content takes its points back, no
 - Import waits for a run already going in another tab instead of starting a second one.
 - Private profiles hide their rank in the members directory, and an unknown and a private profile answer the same way.
 - Reward toasts wait while a dialog is open, and the moment card no longer blocks the page.
+- A block's own Card background and Accent stay readable in dark mode on Reign, BuddyX and BuddyX Pro, and list rows stay visible on their card.
 
 ### Security
 

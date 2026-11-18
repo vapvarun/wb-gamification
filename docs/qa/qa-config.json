@@ -85,7 +85,18 @@
       }
     },
     {
-      "slug": "buddyx"
+      "slug": "buddyx",
+      "dark": {
+        "toggle": ".bx-color-mode-toggle__btn",
+        "until": "html[data-bx-mode=\"dark\"]"
+      }
+    },
+    {
+      "slug": "buddyx-pro",
+      "dark": {
+        "toggle": ".bx-color-mode-toggle__btn",
+        "until": "html[data-bx-mode=\"dark\"]"
+      }
     },
     {
       "slug": "twentytwentyfive"
@@ -168,6 +179,142 @@
         "kind": "front",
         "root": ".wb-gam-leaderboard",
         "note": "every block option and owner style on one page, so dark mode meets the owner's own colours"
+      },
+      {
+        "id": "badge-showcase-owner-colours",
+        "persona": "member_c",
+        "url": "/wb-gamification-qa/qa-rft-variants-badge-showcase/",
+        "kind": "front",
+        "root": ".wb-gam-badge-showcase",
+        "note": "owner colours on every option of the block, as a member with points, light and dark (card:10523784929)"
+      },
+      {
+        "id": "challenges-owner-colours",
+        "persona": "member_c",
+        "url": "/wb-gamification-qa/qa-rft-variants-challenges/",
+        "kind": "front",
+        "root": ".wb-gam-challenges",
+        "note": "owner colours on every option of the block, as a member with points, light and dark (card:10523784929)"
+      },
+      {
+        "id": "cohort-rank-owner-colours",
+        "persona": "member_c",
+        "url": "/wb-gamification-qa/qa-rft-variants-cohort-rank/",
+        "kind": "front",
+        "root": ".wb-gam-cohort-rank",
+        "note": "owner colours on every option of the block, as a member with points, light and dark (card:10523784929)"
+      },
+      {
+        "id": "community-challenges-owner-colours",
+        "persona": "member_c",
+        "url": "/wb-gamification-qa/qa-rft-variants-community-challenges/",
+        "kind": "front",
+        "root": ".wb-gam-community-challenges",
+        "note": "owner colours on every option of the block, as a member with points, light and dark (card:10523784929)"
+      },
+      {
+        "id": "daily-bonus-owner-colours",
+        "persona": "member_c",
+        "url": "/wb-gamification-qa/qa-rft-variants-daily-bonus/",
+        "kind": "front",
+        "root": ".wb-gam-daily-bonus",
+        "note": "owner colours on every option of the block, as a member with points, light and dark (card:10523784929)"
+      },
+      {
+        "id": "earning-guide-owner-colours",
+        "persona": "member_c",
+        "url": "/wb-gamification-qa/qa-rft-variants-earning-guide/",
+        "kind": "front",
+        "root": ".wb-gam-earning-guide",
+        "note": "owner colours on every option of the block, as a member with points, light and dark (card:10523784929)"
+      },
+      {
+        "id": "give-kudos-owner-colours",
+        "persona": "member_c",
+        "url": "/wb-gamification-qa/qa-rft-variants-give-kudos/",
+        "kind": "front",
+        "root": ".wb-gam-give-kudos",
+        "note": "owner colours on every option of the block, as a member with points, light and dark (card:10523784929)"
+      },
+      {
+        "id": "hub-owner-colours",
+        "persona": "member_c",
+        "url": "/wb-gamification-qa/qa-rft-variants-hub/",
+        "kind": "front",
+        "root": ".wb-gam-hub",
+        "note": "owner colours on every option of the block, as a member with points, light and dark (card:10523784929)"
+      },
+      {
+        "id": "kudos-feed-owner-colours",
+        "persona": "member_c",
+        "url": "/wb-gamification-qa/qa-rft-variants-kudos-feed/",
+        "kind": "front",
+        "root": ".wb-gam-kudos-feed",
+        "note": "owner colours on every option of the block, as a member with points, light and dark (card:10523784929)"
+      },
+      {
+        "id": "level-progress-owner-colours",
+        "persona": "member_c",
+        "url": "/wb-gamification-qa/qa-rft-variants-level-progress/",
+        "kind": "front",
+        "root": ".wb-gam-level-progress",
+        "note": "owner colours on every option of the block, as a member with points, light and dark (card:10523784929)"
+      },
+      {
+        "id": "member-points-owner-colours",
+        "persona": "member_c",
+        "url": "/wb-gamification-qa/qa-rft-variants-member-points/",
+        "kind": "front",
+        "root": ".wb-gam-member-points",
+        "note": "owner colours on every option of the block, as a member with points, light and dark (card:10523784929)"
+      },
+      {
+        "id": "points-history-owner-colours",
+        "persona": "member_c",
+        "url": "/wb-gamification-qa/qa-rft-variants-points-history/",
+        "kind": "front",
+        "root": ".wb-gam-points-history",
+        "note": "owner colours on every option of the block, as a member with points, light and dark (card:10523784929)"
+      },
+      {
+        "id": "redemption-store-owner-colours",
+        "persona": "member_c",
+        "url": "/wb-gamification-qa/qa-rft-variants-redemption-store/",
+        "kind": "front",
+        "root": ".wb-gam-redemption:not([style*='--wb-gam-redemption-text-on-accent'])",
+        "note": "owner colours as a member with points, light and dark (card:10523784929). The block whose owner set the Redeem text colour is left out: that pair is applied exactly as chosen, and the editor's contrast checker warns the owner about it."
+      },
+      {
+        "id": "streak-owner-colours",
+        "persona": "member_c",
+        "url": "/wb-gamification-qa/qa-rft-variants-streak/",
+        "kind": "front",
+        "root": ".wb-gam-streak",
+        "note": "owner colours on every option of the block, as a member with points, light and dark (card:10523784929)"
+      },
+      {
+        "id": "submit-achievement-owner-colours",
+        "persona": "member_c",
+        "url": "/wb-gamification-qa/qa-rft-variants-submit-achievement/",
+        "kind": "front",
+        "root": ".wb-gam-submit-achievement",
+        "note": "owner colours on every option of the block, as a member with points, light and dark (card:10523784929)"
+      },
+      {
+        "id": "top-members-owner-colours",
+        "persona": "member_c",
+        "url": "/wb-gamification-qa/qa-rft-variants-top-members/",
+        "kind": "front",
+        "root": ".wb-gam-top-members",
+        "note": "owner colours on every option of the block, as a member with points, light and dark (card:10523784929)"
+      },
+      {
+        "id": "year-recap-owner-colours",
+        "persona": "member_c",
+        "url": "/wb-gamification-qa/qa-rft-variants-year-recap/",
+        "kind": "front",
+        "root": ".wb-gam-year-recap",
+        "note": "owner colours on every option of the block, as a member with points, light and dark (card:10523784929)"
       }
     ],
     "crawl": [

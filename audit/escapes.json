@@ -31,6 +31,14 @@
       "guard": "presentation:daily-bonus-default",
       "added": "2026-11-18",
       "proof": "fails on 4b3e5a9 (chip 2.59:1 in light mode), passes on 1.6.8"
+    },
+    {
+      "card": "10523784929",
+      "title": "Owner colours unreadable in dark mode: a light Card background kept the theme's light text, and an owner Accent stayed half-mixed on dark surfaces",
+      "class": 5,
+      "guard": "presentation:leaderboard-owner-colours",
+      "added": "2026-11-19",
+      "proof": "fails on ae69914 (Reign dark: title 1.13:1, rank 1.68:1), passes on 1.6.8 on Reign, BuddyX, BuddyX Pro and Twenty Twenty-Five, light and dark, 1440/1024/390"
     }
   ]
 }

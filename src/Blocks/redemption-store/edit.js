@@ -11,7 +11,7 @@
  */
 
 import { __, _n, sprintf } from '@wordpress/i18n';
-import { useBlockProps, InspectorControls } from '@wordpress/block-editor';
+import { useBlockProps, InspectorControls, ContrastChecker } from '@wordpress/block-editor';
 import {
 	PanelBody,
 	RangeControl,
@@ -261,6 +261,8 @@ const Edit = ( { attributes, setAttributes, clientId } ) => {
 							__nextHasNoMarginBottom
 						/>
 					</BaseControl>
+					{ /* The owner's pair is applied as chosen; core's checker warns when it is hard to read. */ }
+					<ContrastChecker textColor={ buttonTextColor } backgroundColor={ accentColor } />
 
 					<BaseControl
 						id={ `wb-gam-card-bg-${ uniqueId }` }

@@ -84,7 +84,10 @@
 	transform: scaleX(-1);
 }
 
-.wb-gam-kudos-feed__message {
+/* Two classes, and no background: Reign styles `q` in dark mode with its own panel, which on an owner's
+ * light card put dark text on a dark quote panel (1.20:1). The left rule below is this quote's styling. */
+.wb-gam-kudos-feed .wb-gam-kudos-feed__message {
+	background: none;
 	flex-basis: 100%;
 	font-size: 0.875rem;
 	font-style: italic;

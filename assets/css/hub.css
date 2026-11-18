@@ -10,7 +10,10 @@
  */
 
 /* === THEME-INDEPENDENT COLOR SYSTEM === */
-:root {
+/* Declared on .gam-page as well as :root: a custom property resolves where it is declared, so on
+ * :root alone the Hub never saw its own block's Accent or Card background (card 10523784929). */
+:root,
+.gam-page {
   /* Neutrals mapped to the host theme's tokens so the Hub follows the
    * theme's light/dark mode. Fallback CHAIN, in order:
    *   BuddyX / BuddyX Pro  --bx-color-*        (72 tokens, flip on [data-bx-mode="dark"])
@@ -20,13 +23,13 @@
    * family, so before 1.6.4 every lookup fell through to the literal and the
    * plugin painted its own palette on top of the theme instead of following it.
    * Brand colors below stay constant. */
-  --gam-text: var(--bx-color-fg, var(--reign-site-body-text-color, #1a1a2e));
+  --gam-text: var(--wb-gam-color-text);
   --gam-text-secondary: var(--wb-gam-color-text-muted);
   --gam-text-muted: var(--wb-gam-color-text-light);
-  --gam-surface: var(--bx-color-bg-elevated, var(--reign-site-sections-bg-color, #ffffff));
-  --gam-surface-hover: var(--bx-color-bg-muted, var(--reign-site-secondary-bg-color, #f7f7fb));
-  --gam-border: var(--bx-color-border, var(--reign-site-border-color, #e2e3ed));
-  --gam-border-hover: var(--bx-color-border, var(--reign-site-border-color, #c8c9d9));
+  --gam-surface: var(--wb-gam-color-surface);
+  --gam-surface-hover: var(--wb-gam-color-surface-hover);
+  --gam-border: var(--wb-gam-color-border);
+  --gam-border-hover: var(--wb-gam-color-border-hover);
   /* Accent bridges to the standard --wb-gam-color-accent token so the
    * site owner's Settings > Appearance accent (WBGam\Engine\Appearance)
    * re-tints the Hub too. Falls back to the brand purple when unset, which
@@ -886,4 +889,12 @@ body.buddyx-dark-theme .gam-page {
     --gam-border-hover: var(--bx-color-border, var(--reign-site-border-color, #454b59));
     --gam-accent: var(--wb-gam-color-accent, var(--bx-color-accent, var(--reign-site-button-bg-color, color-mix(in srgb, #5b4cdb 60%, #ffffff))));
   }
+}
+/* A Hub whose owner set a Card background follows that card, not the page's mode: the dark rules
+ * above carry dark fallbacks for themes with no tokens, so they are overridden here (0,3,0). */
+:root .gam-page.wb-gam-scheme-light,
+:root .gam-page.wb-gam-scheme-dark {
+  --gam-text: var(--wb-gam-color-text);
+  --gam-surface: var(--wb-gam-color-surface);
+  --gam-surface-hover: var(--wb-gam-color-surface-hover);
 }

@@ -77,3 +77,4 @@ or parser words, and nothing half-done.
 | 10519574152 | M7 | `states:give-kudos-design-settings-apply` |
 | 10519648017 | M5 | `states:year-recap-names-empty-year` |
 | 10519647881 | M5 | `presentation:daily-bonus-default` contrast rule |
+| 10523784929 | M5 (owner styles a block), dark mode on Reign / BuddyX / BuddyX Pro | `presentation:leaderboard-owner-colours` and `presentation:<block>-owner-colours` for all 18 blocks |
