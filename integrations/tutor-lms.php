@@ -24,6 +24,19 @@ if ( ! defined( 'TUTOR_VERSION' ) ) {
 	return [];
 }
 
+// A review pays once it is published: at once when Tutor's review moderation is off, otherwise
+// when an admin approves it. Tutor stores held reviews with comment_approved 'hold' and fires
+// tutor_after_rating_placed for them too. It deletes reviews and puts them back on hold with raw
+// queries and no hook, so those cannot take the points back.
+$wb_gam_tutor_review_published = static function ( $comment_id ): void {
+	$comment = get_comment( (int) $comment_id );
+	if ( $comment && 'approved' === $comment->comment_approved ) {
+		do_action( 'wb_gam_tutor_review_published', (int) $comment_id );
+	}
+};
+add_action( 'tutor_after_rating_placed', $wb_gam_tutor_review_published );
+add_action( 'tutor_course_review_approved', $wb_gam_tutor_review_published );
+
 // An event with several entry points is funnelled into one hook, because a trigger listens to one.
 add_action( 'tutor_quiz/attempt_ended', static fn( $attempt_id ) => do_action( 'wb_gam_tutor_quiz_result', (int) $attempt_id ) );
 add_action( 'tutor_quiz/attempt/graded', static fn( $attempt_id ) => do_action( 'wb_gam_tutor_quiz_result', (int) $attempt_id ) );
@@ -109,8 +122,9 @@ return [
 		[
 			'id'              => 'tutor_review_posted',
 			'label'           => static fn(): string => __( 'Review a Tutor LMS course', 'wb-gamification' ),
-			'description'     => static fn(): string => __( 'Awarded once per course when a student posts a review.', 'wb-gamification' ),
-			'hook'            => 'tutor_after_rating_placed',
+			'description'     => static fn(): string => __( 'Awarded once per course when a student\'s review is published (approved).', 'wb-gamification' ),
+			// Fires: the bridge above, ( int $comment_id ), once the review is approved.
+			'hook'            => 'wb_gam_tutor_review_published',
 			'user_callback'   => static function ( $comment_id ): int {
 				$comment = get_comment( (int) $comment_id );
 				return $comment ? (int) $comment->user_id : 0;

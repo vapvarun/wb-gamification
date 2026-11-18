@@ -18,6 +18,17 @@ if ( ! defined( 'LEARNOMY_VERSION' ) && ! class_exists( '\\Learnomy\\Plugin' ) )
 	return array();
 }
 
+// A review pays once it is published: at once when Learnomy auto-approves reviews, otherwise when a
+// moderator approves it. Learnomy fires learnomy_review_submitted for pending reviews too.
+$wb_gam_learnomy_review_published = static function ( $review_id ): void {
+	$review = class_exists( '\Learnomy\Models\Review' ) ? \Learnomy\Models\Review::find( (int) $review_id ) : null;
+	if ( $review && 'approved' === (string) $review->status ) {
+		do_action( 'wb_gam_learnomy_review_published', (int) $review_id, (int) $review->user_id, (int) $review->course_id );
+	}
+};
+add_action( 'learnomy_review_submitted', $wb_gam_learnomy_review_published );
+add_action( 'learnomy_review_approved', $wb_gam_learnomy_review_published );
+
 return array(
 	'plugin'   => 'Learnomy',
 	'version'  => '1.0.0',
@@ -141,15 +152,25 @@ return array(
 		array(
 			'id'                => 'learnomy_review_submitted',
 			'label'             => static fn(): string => __( 'Review a course', 'wb-gamification' ),
-			'description'       => static fn(): string => __( 'Awarded when a member writes a course review. Cooldown limits review farming.', 'wb-gamification' ),
-			// Free fires: do_action( 'learnomy_review_submitted', int $review_id, int $user_id, int $course_id ).
-			'hook'              => 'learnomy_review_submitted',
+			'description'       => static fn(): string => __( 'Awarded when a member\'s course review is published (approved). Cooldown limits review farming.', 'wb-gamification' ),
+			// Fires: the bridge above, ( int $review_id, int $user_id, int $course_id ), once the review is approved.
+			'hook'              => 'wb_gam_learnomy_review_published',
 			'user_callback'     => function ( int $review_id, int $user_id, int $course_id ): int {
 				return $user_id;
 			},
 			'metadata_callback' => function ( int $review_id, int $user_id, int $course_id ): array {
 				return array( 'course_id' => $course_id );
 			},
+			// Once per review while it is published: rejected or marked spam takes the points back,
+			// approved again gives them back. Learnomy fires no hook when a review is deleted.
+			'once_per_object'   => static fn( int $review_id ): int => $review_id,
+			'reverse_on'        => array(
+				'learnomy_review_rejected'    => static fn( $review_id ): int => (int) $review_id,
+				'learnomy_review_marked_spam' => static fn( $review_id ): int => (int) $review_id,
+			),
+			'restore_on'        => array(
+				'learnomy_review_approved' => static fn( $review_id ): int => (int) $review_id,
+			),
 			'default_points'    => 8,
 			'category'          => 'learning',
 			'icon'              => 'icon-star',
