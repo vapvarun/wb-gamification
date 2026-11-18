@@ -279,6 +279,11 @@ class RedemptionController extends WP_REST_Controller {
 	public function create_item( $request ): WP_REST_Response|WP_Error {
 		global $wpdb;
 
+		$stock = $this->stock_from( $request );
+		if ( is_wp_error( $stock ) ) {
+			return $stock;
+		}
+
 		$point_type = ( new \WBGam\Services\PointTypeService() )->resolve( (string) ( $request['point_type'] ?? '' ) );
 
 		$inserted = $wpdb->insert(
@@ -290,7 +295,7 @@ class RedemptionController extends WP_REST_Controller {
 				'point_type'    => $point_type,
 				'reward_type'   => $request['reward_type'],
 				'reward_config' => wp_json_encode( $request['reward_config'] ?? array() ),
-				'stock'         => $this->stock_from( $request ),
+				'stock'         => $stock,
 				'is_active'     => (int) rest_sanitize_boolean( $request['is_active'] ?? true ),
 				'created_at'    => current_time( 'mysql', true ),
 			),
@@ -326,7 +331,11 @@ class RedemptionController extends WP_REST_Controller {
 
 		$data = array();
 		if ( isset( $request['title'] ) ) {
-			$data['title'] = sanitize_text_field( $request['title'] ); }
+			$data['title'] = sanitize_text_field( $request['title'] );
+			if ( '' === trim( $data['title'] ) ) {
+				return new WP_Error( 'rest_invalid_param', __( 'Give the reward a title.', 'wb-gamification' ), array( 'status' => 400 ) );
+			}
+		}
 		if ( isset( $request['description'] ) ) {
 			$data['description'] = sanitize_textarea_field( $request['description'] ); }
 		if ( isset( $request['points_cost'] ) ) {
@@ -339,7 +348,11 @@ class RedemptionController extends WP_REST_Controller {
 			$data['reward_config'] = wp_json_encode( $request['reward_config'] ); }
 		// Neither stock nor stock_mode sent: stock stays as it is.
 		if ( $request->has_param( 'stock' ) || $request->has_param( 'stock_mode' ) ) {
-			$data['stock'] = $this->stock_from( $request ); }
+			$data['stock'] = $this->stock_from( $request );
+			if ( is_wp_error( $data['stock'] ) ) {
+				return $data['stock'];
+			}
+		}
 		if ( $request->has_param( 'is_active' ) ) {
 			$data['is_active'] = (int) rest_sanitize_boolean( $request['is_active'] ); }
 
@@ -606,14 +619,21 @@ class RedemptionController extends WP_REST_Controller {
 	 * Unlimited is picked, which left the old count in place. An omitted or null stock is unlimited;
 	 * absint() must not turn it into 0, which means the opposite.
 	 *
+	 * "Limited to" with no quantity is refused rather than saved as Unlimited: the owner asked for a
+	 * limit, and an unlimited reward going live is the opposite of that.
+	 *
 	 * @param WP_REST_Request $request Request.
-	 * @return int|null
+	 * @return int|null|WP_Error
 	 */
-	private function stock_from( $request ): ?int {
+	private function stock_from( $request ): int|null|WP_Error {
 		if ( 'unlimited' === $request['stock_mode'] ) {
 			return null;
 		}
-		return null !== $request['stock'] && '' !== $request['stock'] ? absint( $request['stock'] ) : null;
+		$empty = null === $request['stock'] || '' === $request['stock'];
+		if ( 'limited' === $request['stock_mode'] && $empty ) {
+			return new WP_Error( 'rest_invalid_param', __( 'Enter how many are available, or choose Unlimited.', 'wb-gamification' ), array( 'status' => 400 ) );
+		}
+		return $empty ? null : absint( $request['stock'] );
 	}
 
 	/**
