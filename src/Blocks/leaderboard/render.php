@@ -105,6 +105,12 @@ $wb_gam_board_sig = sprintf(
 	$wb_gam_unique
 );
 
+$wb_gam_ordinals = array(
+	1 => __( '1st place', 'wb-gamification' ),
+	2 => __( '2nd place', 'wb-gamification' ),
+	3 => __( '3rd place', 'wb-gamification' ),
+);
+
 $wb_gam_wrapper = get_block_wrapper_attributes(
 	array(
 		'class'                    => implode( ' ', $wb_gam_classes ),
@@ -121,6 +127,9 @@ $wb_gam_wrapper = get_block_wrapper_attributes(
 		// number has no plural, so JS never applies English 1-vs-many rules.
 		/* translators: %d: number of badges. */
 		'data-wb-gam-badges-label' => __( 'Badges: %d', 'wb-gamification' ),
+		// Podium captions for the live re-render, so a rank that changes keeps its matching caption.
+		'data-wb-gam-ordinals'     => (string) wp_json_encode( array_values( $wb_gam_ordinals ) ),
+		'data-wb-gam-rank-label'   => __( 'Rank', 'wb-gamification' ),
 	)
 );
 
@@ -151,14 +160,7 @@ BlockHooks::before( 'leaderboard', $wb_gam_attrs );
 			\WBGam\Engine\MemberUrl::prime( array_column( $wb_gam_rows, 'user_id' ) );
 			foreach ( $wb_gam_rows as $wb_gam_row ) :
 				$wb_gam_rank_num   = (int) ( $wb_gam_row['rank'] ?? 0 );
-				$wb_gam_rank_label = '';
-				if ( 1 === $wb_gam_rank_num ) {
-					$wb_gam_rank_label = __( '1st place', 'wb-gamification' );
-				} elseif ( 2 === $wb_gam_rank_num ) {
-					$wb_gam_rank_label = __( '2nd place', 'wb-gamification' );
-				} elseif ( 3 === $wb_gam_rank_num ) {
-					$wb_gam_rank_label = __( '3rd place', 'wb-gamification' );
-				}
+				$wb_gam_rank_label = $wb_gam_ordinals[ $wb_gam_rank_num ] ?? '';
 				$wb_gam_rank_aria = $wb_gam_rank_label ? $wb_gam_rank_label : __( 'Rank', 'wb-gamification' );
 				?>
 				<li class="wb-gam-leaderboard__entry wb-gam-rank-<?php echo (int) $wb_gam_rank_num; ?>"

@@ -682,11 +682,19 @@ final class CohortEngine {
 			ARRAY_A
 		) ?: array();
 
-		$rank = 1;
+		// Competition rank, as on the leaderboard: tied members share a rank (1, 2, 2, 4).
+		$position = 0;
+		$rank     = 0;
+		$previous = null;
 		foreach ( $members as &$m ) {
 			$m['user_id']  = (int) $m['user_id'];
 			$m['week_pts'] = (int) $m['week_pts'];
-			$m['rank']     = $rank++;
+			++$position;
+			if ( $m['week_pts'] !== $previous ) {
+				$rank     = $position;
+				$previous = $m['week_pts'];
+			}
+			$m['rank'] = $rank;
 			if ( $m['user_id'] === $user_id ) {
 				$m['is_me'] = true;
 			}
