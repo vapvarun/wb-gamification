@@ -120,8 +120,8 @@ final class ProfilePage {
 	/**
 	 * What a /u/ request shows: 'profile' (the full page) or 'private' (the neutral page).
 	 *
-	 * The owner and admins always see the full page, even when the member opted out of public
-	 * visibility ("where can I see my own progress" must never fail for the owner). An unknown
+	 * The owner, admins and anyone the host community lets see the profile get the full page (or
+	 * its redirect), even when the member opted out of public visibility ("where can I see my own progress" must never fail for the owner). An unknown
 	 * username is 'private', exactly like a private profile.
 	 *
 	 * @param \WP_User|null $user Profile owner, null when no member has that username.
@@ -130,9 +130,10 @@ final class ProfilePage {
 		if ( ! $user ) {
 			return 'private';
 		}
+		// The guest view, or this viewer's own permission (owner, admin, or a host community such as
+		// BuddyNext letting a connection see a connections-only profile, who then goes on to it).
 		$can_view = self::is_publicly_visible( (int) $user->ID )
-			|| get_current_user_id() === (int) $user->ID
-			|| current_user_can( 'manage_options' );
+			|| Privacy::can_view_public_profile( (int) $user->ID );
 		return $can_view ? 'profile' : 'private';
 	}
 
