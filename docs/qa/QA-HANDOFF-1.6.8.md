@@ -279,6 +279,34 @@ Re-run the upgrade step once more on an existing site (it now also records when 
 - [ ] **Badge rarity on big BuddyPress sites (10519284261):** code check only. Awarding a badge no longer rebuilds the rarity map (`BadgeEngine::note_rarity_award()`); a badge earned for the first time still gets its own activity post.
 - [ ] **Member choices hook (10519284369):** `do_action( 'wb_gam_render_member_prefs' )` with no id prints the logged-in member's choices; with someone else's id it prints nothing; no PHP error.
 
+## 19c. Round 4 fixes (18 Nov 2026): round-3 bounces, the new block and integration cards
+
+Branch 1.6.8 at 1e7cb21 or later. Re-run the upgrade step on an existing site and hard-reload (CSS and JS keep the 1.6.7 version number until release, so a browser can hold old copies).
+
+**New rule for every integration (owner, 18 Nov): add pays, remove takes back, add again pays again.** Every trigger declares its exit (`reverse_on`) or why it has none (`permanent`); `ManifestExitContractTest` fails one that declares neither. Acting on your own content pays nothing (engine reason `own_content`). Test any add/remove pair below as: add (+N), remove (-N), add again (+N), and the balance moves by exactly that much.
+
+- [ ] **Add / remove pairs (integration cards):** BuddyPress friendship accept / unfriend, group join / leave (also removed or banned), group create / delete, reaction / unreact, avatar and cover upload / delete. BuddyNext reaction, bookmark, follow, connection, space join / leave, space create / delete. Jetonomy space join / leave, membership activate / deactivate; Jetonomy Pro vote / retract, reaction add / remove, poll post deleted. WooCommerce wishlist add / remove, first purchase and order refund. LearnDash, Learnomy, Tutor and LifterLMS enrol / unenrol (expiry keeps the points). Eventonomy RSVP going / not going, ticket order refunded, check-in cleared, follow / unfollow. Career Board job, application, hire. Sell Services order refunded or cancelled. MediaVerse like, follow, favourite, album, challenge entry photo. GiveWP donation refunded. TEC RSVP 'no', ticket refunded, un-check-in. Completions, wins and sign-ups stay (permanent). Lab 3 proof: friendship 8, 0, 8, 0; group 8, 0, 8, 0; avatar 10, 0, 10.
+- [ ] **Shared ids are per member:** two students in one course (group, space, event): one unenrols, only their points go.
+- [ ] **Own content pays nothing (BuddyPress, BuddyNext, Jetonomy Pro cards):** message to yourself, sharing your own post, reacting to your own post or reply, voting in your own poll: no points.
+- [ ] **Learnomy free enrolment (10462658390):** 3 free courses = 3 x learnomy_student_enrolled +5 and no jetonomy_membership_activated. A paid Learnomy plan still pays +25 once.
+- [ ] **Reviews held for moderation (Tutor 10462555542, Learnomy 10462556495):** a held review pays nothing; approving pays; Learnomy reject or spam takes it back, approve again gives it back. Tutor delete and Learnomy delete fire no hook (partner cards filed).
+- [ ] **Woo refunds (10462555273):** pay, refund, complete, refund = 25, 0, 25, 0. An order paid before 1.6.8 refunded twice takes 25 once. A new order that paid nothing (award off) is not debited. History reads "Order refunded".
+- [ ] **Badge rarity (10519284261):** no persistent cache. One badge award runs no `GROUP BY badge_id` scan (lab: 22 queries with 1 scan before, 21 with 0).
+- [ ] **Challenges block action names (10519284489):** on a site without BuddyPress a challenge on bp_activity_update reads "Post an activity update"; both challenge admin lists show names.
+- [ ] **Old comments (10515592964):** a comment written before the update, unapproved then approved: no points. A new comment held then approved: +5.
+- [ ] **Block settings (10519574152, 10519574305, 10519574575, 10519574875):** on any card block, Padding, Border radius, Box shadow, Card background, Card border and Accent apply; an untouched block looks as before (24px padding, 10px radius). Hide on desktop / tablet / mobile hides the block on the front end only (still editable in the editor). Challenges with Show progress bar off: no bars. Redemption Store Button text colour applies to Redeem.
+- [ ] **Ties (10389379202, 10519575048, 10519495609):** two members on the same points: Leaderboard shows 2 / 2nd place for both, including after a live refresh; Cohort Rank shows 2, 2.
+- [ ] **Profile (10450930360):** BuddyNext connections-only profile: a connection opening /u/<them>/ is redirected to their BuddyNext profile; a guest and a non-connection get the private page.
+- [ ] **Redemption Store (10483238276):** Limited to with no quantity: refused with "Enter how many are available, or choose Unlimited."; nothing saved.
+- [ ] **Import (10516939365):** two tabs, "Run it in this window" in both: the waiting tab sends one resume per round, about 2 s apart.
+- [ ] **Progress reset (10516939203):** with Redis/Memcached, set a personal record, reset, earn: the record starts fresh.
+- [ ] **Small ones:** a badge merged into the day's post moves the post to now (10519496044); Year Recap Total events skips removed / restored rows (10519495880); the scale benchmark warns when it cannot write its pass file (10519495731); every email button opens the Hub, the nudge on the Leaderboard panel and a finished challenge on the Challenges panel (10519495434).
+- [ ] **Contrast (10519647881, 10479163870):** point numbers, counts and costs in the accent, and every muted label, at least 4.5:1 in light and dark on BuddyX, Reign and BuddyX Pro, also with an orange or yellow theme accent (lab: minimum 4.54:1). Both challenge bonus pills at least 4.5:1, including on a completed (green) card in dark mode.
+- [ ] **Year Recap (10519575229, 10519648017):** peak week reads "Week of <date>"; a member with no points last year sees this year's recap instead of "once you start earning points".
+- [ ] **Setup wizard (10519700844):** on a BuddyPress site "BuddyPress Community" is available with six named actions.
+
+Waiting on other teams, no change here: the toast over Product Roadmap 1.8.1's popup (close when Roadmap 1.8.2 ships, 10516939110), BuddyNext members' choices screen (BuddyNext card 10517429990), German translation (Cursor). Partner cards filed for missing removal hooks: BuddyNext (unshare, poll unvote), Jetonomy (admin poll delete, space delete, MasterStudy deactivate), Listora (claim revoke, need response delete), Learnomy (review delete, path unenrol). MemberPress refunds are not reversed yet (no source to verify its refund event).
+
 ## 20. Owner decisions still open (do not report as bugs)
 
 - Approving a gated Jetonomy join request pays 15 (join 5 + approval 10); the doc says 10.
