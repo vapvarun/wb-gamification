@@ -264,7 +264,10 @@ return [
 			// BP fires: do_action_ref_array( 'messages_message_sent', array( &$message, $r ) ).
 			'hook'                => 'messages_message_sent',
 			'user_callback'       => function ( $message ): int {
-				return is_object( $message ) ? (int) ( $message->sender_id ?? 0 ) : 0;
+				$sender = is_object( $message ) ? (int) ( $message->sender_id ?? 0 ) : 0;
+				// A message whose only recipient is the sender earns nothing.
+				$others = array_diff( array_map( 'intval', wp_list_pluck( (array) ( $message->recipients ?? array() ), 'user_id' ) ), array( $sender ) );
+				return $others ? $sender : 0;
 			},
 			'metadata_callback'   => function ( $message ): array {
 				return array(

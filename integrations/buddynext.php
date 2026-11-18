@@ -78,7 +78,10 @@ return array(
 			// Fires: do_action( 'buddynext_post_shared', int $share_id, int $post_id, int $user_id ).
 			'hook'              => 'buddynext_post_shared',
 			'user_callback'     => function ( int $share_id, int $post_id, int $user_id ): int {
-				return $user_id;
+				global $wpdb;
+				// Sharing your own post earns nothing.
+				$author = (int) $wpdb->get_var( $wpdb->prepare( "SELECT user_id FROM {$wpdb->prefix}bn_posts WHERE id = %d", $post_id ) );
+				return $author === $user_id ? 0 : $user_id;
 			},
 			'metadata_callback' => function ( int $share_id, int $post_id, int $user_id ): array {
 				return array(

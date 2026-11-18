@@ -55,7 +55,10 @@ return array(
 			// Pro fires: do_action( 'jetonomy_pro_poll_voted', $poll_id, $user_id, $option_ids ).
 			'hook'              => 'jetonomy_pro_poll_voted',
 			'user_callback'     => function ( int $poll_id, int $user_id, array $option_ids ): int {
-				return $user_id;
+				global $wpdb;
+				// Voting in your own poll earns nothing.
+				$owner = (int) $wpdb->get_var( $wpdb->prepare( "SELECT created_by FROM {$wpdb->prefix}jt_pro_polls WHERE id = %d", $poll_id ) );
+				return $owner === $user_id ? 0 : $user_id;
 			},
 			'metadata_callback' => function ( int $poll_id, int $user_id, array $option_ids ): array {
 				return array(
@@ -82,7 +85,14 @@ return array(
 			// $action is 'added' or 'removed' — only the 'added' branch earns points.
 			'hook'              => 'jetonomy_pro_reaction_toggled',
 			'user_callback'     => function ( string $object_type, int $object_id, string $emoji, int $user_id, string $action ): int {
-				return 'added' === $action ? $user_id : 0;
+				if ( 'added' !== $action ) {
+					return 0;
+				}
+				// Reacting to your own post or reply earns nothing.
+				global $wpdb;
+				$table  = $wpdb->prefix . ( 'reply' === $object_type ? 'jt_replies' : 'jt_posts' );
+				$author = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT author_id FROM %i WHERE id = %d', $table, $object_id ) );
+				return $author === $user_id ? 0 : $user_id;
 			},
 			'metadata_callback' => function ( string $object_type, int $object_id, string $emoji, int $user_id, string $action ): array {
 				return array(
