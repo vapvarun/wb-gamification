@@ -102,7 +102,16 @@ return [
 			'once_per_object'   => static fn( int $topic_id ): int => $topic_id,
 			// Reopening the topic takes the points back; closing it again pays again.
 			'reverse_on'        => array(
-				'bbp_opened_topic' => static fn( $topic_id ): int => (int) $topic_id,
+				'bbp_opened_topic'  => static fn( $topic_id ): int => (int) $topic_id,
+				// The topic itself going away takes it back too, as for Create a forum topic.
+				'bbp_trashed_topic' => static fn( $topic_id ): int => (int) $topic_id,
+				'bbp_spammed_topic' => static fn( $topic_id ): int => (int) $topic_id,
+				'bbp_deleted_topic' => static fn( $topic_id ): int => (int) $topic_id,
+			),
+			// Back from trash or spam still closed: the points come back.
+			'restore_on'        => array(
+				'bbp_untrashed_topic' => static fn( $topic_id ): int => 'closed' === get_post_status( (int) $topic_id ) ? (int) $topic_id : 0,
+				'bbp_unspammed_topic' => static fn( $topic_id ): int => 'closed' === get_post_status( (int) $topic_id ) ? (int) $topic_id : 0,
 			),
 			'async'             => false,
 			'default_points'    => 20,

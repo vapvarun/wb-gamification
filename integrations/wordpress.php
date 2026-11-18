@@ -254,6 +254,8 @@ return [
 			},
 			'once_per_object' => static fn( $comment_id ): int => (int) $comment_id,
 			...\WBGam\Engine\Registry::comment_object_hooks(),
+			// Commenting on your own post earns nothing.
+			'owner_callback'  => static fn( $comment_id ): int => (int) get_post_field( 'post_author', (int) get_comment( (int) $comment_id )?->comment_post_ID ),
 			'default_points'  => 5,
 			'category'        => 'wordpress',
 			'icon'            => 'icon-message-square',
@@ -282,6 +284,7 @@ return [
 			},
 			'once_per_object' => static fn( string $new_status, string $old_status, \WP_Comment $comment ): int => (int) $comment->comment_ID,
 			...\WBGam\Engine\Registry::comment_object_hooks(),
+			'owner_callback'  => static fn( $new_status, $old_status, $comment ): int => $comment instanceof \WP_Comment ? (int) get_post_field( 'post_author', (int) $comment->comment_post_ID ) : 0,
 			'default_points'  => 5,
 			'category'        => 'wordpress',
 			'icon'            => 'icon-circle-check',

@@ -23,6 +23,12 @@ if ( ! defined( 'BUDDYNEXT_VERSION' ) && ! class_exists( '\\BuddyNext\\Plugin' )
 	return array();
 }
 
+// Who wrote a BuddyNext post: acting on your own post (comment, vote, bookmark, share) earns nothing.
+$wb_gam_bn_post_owner = static function ( $post_id ): int {
+	global $wpdb;
+	return (int) $wpdb->get_var( $wpdb->prepare( "SELECT user_id FROM {$wpdb->prefix}bn_posts WHERE id = %d", (int) $post_id ) );
+};
+
 return array(
 	'plugin'   => 'BuddyNext',
 	'version'  => '1.0.0',
@@ -80,10 +86,7 @@ return array(
 			'user_callback'     => function ( int $share_id, int $post_id, int $user_id ): int {
 				return $user_id;
 			},
-			'owner_callback'    => static function ( int $share_id, int $post_id ): int {
-				global $wpdb;
-				return (int) $wpdb->get_var( $wpdb->prepare( "SELECT user_id FROM {$wpdb->prefix}bn_posts WHERE id = %d", $post_id ) );
-			},
+			'owner_callback'    => static fn( $share_id, $post_id ): int => $wb_gam_bn_post_owner( $post_id ),
 			'metadata_callback' => function ( int $share_id, int $post_id, int $user_id ): array {
 				return array(
 					'share_id' => $share_id,
@@ -128,6 +131,7 @@ return array(
 			},
 			'once_per_object'   => static fn( $comment_id ): int => (int) $comment_id,
 			'reverse_on'        => array( 'buddynext_comment_deleted' => static fn( $comment_id ): int => (int) $comment_id ),
+			'owner_callback'    => static fn( $comment_id, $object_type, $object_id ): int => 'post' === $object_type ? $wb_gam_bn_post_owner( $object_id ) : 0,
 			'default_points'    => 3,
 			'category'          => 'content',
 			'icon'              => 'icon-message-square',
@@ -182,6 +186,7 @@ return array(
 				);
 			},
 			'permanent'         => 'No removal hook in BuddyNext 1.3.0: PollService removes a vote with no action (card on the BuddyNext board).',
+			'owner_callback'    => static fn( $post_id ): int => $wb_gam_bn_post_owner( $post_id ),
 			'default_points'    => 1,
 			'category'          => 'content',
 			'icon'              => 'icon-chart-no-axes-column',
@@ -206,6 +211,7 @@ return array(
 			'reverse_on'        => array(
 				'buddynext_post_unbookmarked' => static fn( $post_id, $user_id ): int => \WBGam\Engine\Registry::object_key( (int) $user_id, (int) $post_id ),
 			),
+			'owner_callback'    => static fn( $post_id ): int => $wb_gam_bn_post_owner( $post_id ),
 			'default_points'    => 1,
 			'category'          => 'content',
 			'icon'              => 'icon-bookmark',

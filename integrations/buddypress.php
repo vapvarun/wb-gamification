@@ -90,6 +90,8 @@ return [
 			},
 			'once_per_object'     => static fn( $comment_id ): int => (int) $comment_id,
 			'reverse_on'          => [ 'bp_activity_deleted_activities' => static fn( $activity_ids ): array => (array) $activity_ids ],
+			// Commenting on your own update earns nothing (and must not start the cooldown).
+			'owner_callback'      => static fn( $comment_id, $params, $activity ): int => is_object( $activity ) ? (int) ( $activity->user_id ?? 0 ) : 0,
 			'default_points'      => 5,
 			'category'            => 'buddypress',
 			'icon'                => 'icon-message-square',

@@ -176,15 +176,16 @@ return array(
 			'metadata_callback' => function ( int $review_id, int $user_id, int $course_id ): array {
 				return array( 'course_id' => $course_id );
 			},
-			// Once per review while it is published: rejected or marked spam takes the points back,
-			// approved again gives them back. Learnomy fires no hook when a review is deleted.
-			'once_per_object'   => static fn( int $review_id ): int => $review_id,
+			// Once per member and course while the review is published (so a review deleted and written
+			// again can never pay twice; Learnomy fires no hook on delete): rejected or marked spam takes
+			// the points back, approved again gives them back.
+			'once_per_object'   => static fn( int $review_id, int $user_id, int $course_id ): int => \WBGam\Engine\Registry::object_key( $user_id, $course_id ),
 			'reverse_on'        => array(
-				'learnomy_review_rejected'    => static fn( $review_id ): int => (int) $review_id,
-				'learnomy_review_marked_spam' => static fn( $review_id ): int => (int) $review_id,
+				'learnomy_review_rejected'    => static fn( $review_id, $course_id, $user_id ): int => \WBGam\Engine\Registry::object_key( (int) $user_id, (int) $course_id ),
+				'learnomy_review_marked_spam' => static fn( $review_id, $course_id, $user_id ): int => \WBGam\Engine\Registry::object_key( (int) $user_id, (int) $course_id ),
 			),
 			'restore_on'        => array(
-				'learnomy_review_approved' => static fn( $review_id ): int => (int) $review_id,
+				'learnomy_review_approved' => static fn( $review_id, $course_id, $user_id ): int => \WBGam\Engine\Registry::object_key( (int) $user_id, (int) $course_id ),
 			),
 			'default_points'    => 8,
 			'category'          => 'learning',

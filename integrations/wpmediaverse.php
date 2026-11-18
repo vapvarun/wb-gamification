@@ -167,6 +167,8 @@ $free_triggers = array(
 		// Per liker and photo: an unlike takes the owner's points back.
 		'reverse_on'        => array(
 			'mvs_reaction_removed' => static fn( $media_id, $user_id ): int => \WBGam\Engine\Registry::object_key( (int) $user_id, (int) $media_id ),
+			// The REST toggle removes a like without mvs_reaction_removed; it reports action 'removed'.
+			'mvs_reaction_toggled' => static fn( $media_id, $user_id, $type = '', $action = '' ): int => 'removed' === $action ? \WBGam\Engine\Registry::object_key( (int) $user_id, (int) $media_id ) : 0,
 		),
 		'default_points'    => 2,
 		'category'          => 'media',
@@ -282,6 +284,8 @@ $free_triggers = array(
 		'once_per_object' => static fn( $media_id, $user_id, $comment_id ): int => (int) $comment_id,
 		// MediaVerse comments are WordPress comments of type mvs_comment, deleted with wp_delete_comment().
 		...\WBGam\Engine\Registry::comment_object_hooks( 'mvs_comment' ),
+		// Commenting on your own photo earns nothing.
+		'owner_callback'  => static fn( $media_id ): int => (int) wb_gam_mvs_media_author( (int) $media_id ),
 		'default_points'  => 3,
 		'category'        => 'social',
 		'icon'            => 'icon-message-square',
