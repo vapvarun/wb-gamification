@@ -68,20 +68,11 @@ WB_Gam_Block_CSS::add( $wb_gam_unique, $wb_gam_attrs );
 $wb_gam_visibility = WB_Gam_Block_CSS::get_visibility_classes( $wb_gam_attrs );
 
 $wb_gam_inline = '';
-if ( ! empty( $wb_gam_attrs['accentColor'] ) ) {
-	$wb_gam_inline .= sprintf( '--wb-gam-color-accent: %s;', sanitize_text_field( (string) $wb_gam_attrs['accentColor'] ) );
-}
 if ( ! empty( $wb_gam_attrs['accent_color'] ) ) {
 	$wb_gam_color = sanitize_hex_color( (string) $wb_gam_attrs['accent_color'] );
 	if ( $wb_gam_color ) {
 		$wb_gam_inline .= sprintf( '--wb-gam-recap-accent: %s;', $wb_gam_color );
 	}
-}
-if ( ! empty( $wb_gam_attrs['cardBackground'] ) ) {
-	$wb_gam_inline .= sprintf( '--wb-gam-color-white: %s;', sanitize_text_field( (string) $wb_gam_attrs['cardBackground'] ) );
-}
-if ( ! empty( $wb_gam_attrs['cardBorderColor'] ) ) {
-	$wb_gam_inline .= sprintf( '--wb-gam-color-border: %s;', sanitize_text_field( (string) $wb_gam_attrs['cardBorderColor'] ) );
 }
 
 $wb_gam_classes = array_filter( array( 'wb-gam-year-recap', 'wb-gam-block-' . $wb_gam_unique, $wb_gam_visibility ) );

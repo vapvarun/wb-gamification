@@ -1,0 +1,15 @@
+/**
+ * Hide on desktop / tablet / mobile (block sidebar, Blocks\CSS::visibility_classes()).
+ *
+ * Front end only: Registrar enqueues it with the first of our blocks on a page, and it is not
+ * part of the editor canvas, so a hidden block stays editable.
+ */
+@media (min-width: 1025px) {
+	.wb-gam-hide-desktop { display: none !important; }
+}
+@media (min-width: 641px) and (max-width: 1024px) {
+	.wb-gam-hide-tablet { display: none !important; }
+}
+@media (max-width: 640px) {
+	.wb-gam-hide-mobile { display: none !important; }
+}

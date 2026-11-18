@@ -19,7 +19,7 @@
 		"scope_id":         { "type": "integer", "default": 0 },
 		"show_avatars":     { "type": "boolean", "default": true },
 
-		"padding":          { "type": "object",  "default": { "top": 16, "right": 16, "bottom": 16, "left": 16 } },
+		"padding":          { "type": "object" },
 		"paddingTablet":    { "type": "object" },
 		"paddingMobile":    { "type": "object" },
 		"paddingUnit":      { "type": "string",  "default": "px" },
@@ -40,7 +40,7 @@
 		"shadowSpread":     { "type": "number",  "default": 0 },
 		"shadowColor":      { "type": "string",  "default": "rgba(0, 0, 0, 0.08)" },
 
-		"borderRadius":     { "type": "object",  "default": { "top": 12, "right": 12, "bottom": 12, "left": 12 } },
+		"borderRadius":     { "type": "object" },
 		"borderRadiusUnit": { "type": "string",  "default": "px" },
 
 		"hideOnDesktop":    { "type": "boolean", "default": false },

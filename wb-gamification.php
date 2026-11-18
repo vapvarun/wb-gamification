@@ -630,6 +630,7 @@ final class WB_Gamification {
 			array( 'wb-gam-tokens' ),
 			WB_GAM_VERSION
 		);
+		wp_register_style( 'wb-gam-device-visibility', WB_GAM_URL . 'src/shared/device-visibility.css', array(), WB_GAM_VERSION );
 
 		// Register but don't enqueue — blocks and shortcodes will enqueue as needed.
 		wp_register_style(

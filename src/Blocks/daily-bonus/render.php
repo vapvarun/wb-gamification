@@ -63,19 +63,10 @@ $wb_gam_classes = array_filter( array(
 wp_enqueue_style( 'wb-gam-tokens' );
 wp_enqueue_style( 'lucide-icons' );
 
-$wb_gam_inline = '';
-if ( ! empty( $wb_gam_attrs['accentColor'] ) ) {
-	$wb_gam_inline .= sprintf( '--wb-gam-color-accent: %s;', sanitize_text_field( (string) $wb_gam_attrs['accentColor'] ) );
-}
-if ( ! empty( $wb_gam_attrs['cardBackground'] ) ) {
-	$wb_gam_inline .= sprintf( '--wb-gam-color-white: %s;', sanitize_text_field( (string) $wb_gam_attrs['cardBackground'] ) );
-}
-
 if ( $wb_gam_user_id <= 0 ) {
 	$wb_gam_classes[] = 'wb-gam-daily-bonus--guest';
 	$wb_gam_wrapper   = get_block_wrapper_attributes( array(
 		'class' => implode( ' ', $wb_gam_classes ),
-		'style' => '' !== $wb_gam_inline ? $wb_gam_inline : null,
 	) );
 	BlockHooks::before( 'daily-bonus', $wb_gam_attrs );
 	printf(
@@ -104,7 +95,6 @@ $wb_gam_data = (array) apply_filters( 'wb_gam_block_daily_bonus_data', array_mer
 
 $wb_gam_wrapper = get_block_wrapper_attributes( array(
 	'class' => implode( ' ', $wb_gam_classes ),
-	'style' => '' !== $wb_gam_inline ? $wb_gam_inline : null,
 ) );
 
 BlockHooks::before( 'daily-bonus', $wb_gam_attrs );

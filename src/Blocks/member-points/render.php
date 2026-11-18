@@ -76,17 +76,6 @@ $wb_gam_classes = array_filter(
 	)
 );
 
-$wb_gam_inline_overrides = '';
-if ( ! empty( $wb_gam_attrs['accentColor'] ) ) {
-	$wb_gam_inline_overrides .= sprintf( '--wb-gam-color-accent: %s;', sanitize_text_field( (string) $wb_gam_attrs['accentColor'] ) );
-}
-if ( ! empty( $wb_gam_attrs['cardBackground'] ) ) {
-	$wb_gam_inline_overrides .= sprintf( '--wb-gam-color-white: %s;', sanitize_text_field( (string) $wb_gam_attrs['cardBackground'] ) );
-}
-if ( ! empty( $wb_gam_attrs['cardBorderColor'] ) ) {
-	$wb_gam_inline_overrides .= sprintf( '--wb-gam-color-border: %s;', sanitize_text_field( (string) $wb_gam_attrs['cardBorderColor'] ) );
-}
-
 wp_enqueue_style( 'wb-gam-tokens' );
 
 if ( $wb_gam_user_id <= 0 ) {
@@ -94,7 +83,6 @@ if ( $wb_gam_user_id <= 0 ) {
 	$wb_gam_wrapper   = get_block_wrapper_attributes(
 		array(
 			'class' => implode( ' ', $wb_gam_classes ),
-			'style' => '' !== $wb_gam_inline_overrides ? $wb_gam_inline_overrides : null,
 		)
 	);
 	BlockHooks::before( 'member-points', $wb_gam_attrs );
@@ -158,7 +146,6 @@ $wb_gam_progress_pct = (int) ( $wb_gam_block_data['progress_pct'] ?? $wb_gam_pro
 $wb_gam_wrapper = get_block_wrapper_attributes(
 	array(
 		'class' => implode( ' ', $wb_gam_classes ),
-		'style' => '' !== $wb_gam_inline_overrides ? $wb_gam_inline_overrides : null,
 	)
 );
 

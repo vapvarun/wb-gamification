@@ -114,8 +114,9 @@ if ( ! empty( $wb_gam_attrs['accentHoverColor'] ) ) {
 	);
 }
 if ( ! empty( $wb_gam_attrs['buttonTextColor'] ) ) {
+	// The Redeem button is the shared primary button, which reads --wb-gam-pop-accent-fg.
 	$wb_gam_inline_overrides .= sprintf(
-		'--wb-gam-redemption-text-on-accent: %s;',
+		'--wb-gam-redemption-text-on-accent: %1$s; --wb-gam-pop-accent-fg: %1$s;',
 		sanitize_text_field( (string) $wb_gam_attrs['buttonTextColor'] )
 	);
 }

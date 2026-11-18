@@ -208,7 +208,6 @@
 	.wb-gam-redemption[ data-columns="4" ] {
 		--wb-gam-redemption-cols: 2;
 	}
-	.wb-gam-hide-tablet { display: none !important; }
 }
 
 @media ( max-width: 640px ) {
@@ -224,12 +223,6 @@
 	.wb-gam-redemption__card {
 		padding: var( --wb-gam-space-md );
 	}
-	.wb-gam-hide-mobile { display: none !important; }
-}
-
-.wb-gam-hide-desktop { display: none !important; }
-@media ( max-width: 1024px ) and ( min-width: 641px ) {
-	.wb-gam-hide-desktop { display: revert !important; }
 }
 
 @media ( prefers-reduced-motion: reduce ) {

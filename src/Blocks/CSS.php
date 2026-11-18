@@ -107,6 +107,7 @@ final class CSS {
 		self::collect_border_radius( $attrs, $desktop );
 		self::collect_box_shadow( $attrs, $desktop );
 		self::collect_typography( $attrs, $desktop, $tablet, $mobile );
+		self::collect_colors( $attrs, $desktop );
 
 		$css = '';
 
@@ -275,6 +276,38 @@ final class CSS {
 			absint( $radius['left'] ?? 0 ),
 			$unit
 		);
+	}
+
+	/**
+	 * Append the colour settings every block shares: Accent, Card background, Card border.
+	 *
+	 * Set as the design tokens the block's CSS reads, on the block root, so the setting reaches
+	 * every part of the block that uses that token, and as the root's own background and border.
+	 *
+	 * @param array<string, mixed> $attrs   Block attributes.
+	 * @param array<int, string>   $desktop Desktop bucket (modified in place).
+	 */
+	private static function collect_colors( array $attrs, array &$desktop ): void {
+		// Hex, rgb()/rgba() or a CSS variable; anything else is dropped so it cannot break out of the rule.
+		$color = static fn( string $key ): string => isset( $attrs[ $key ] ) && is_string( $attrs[ $key ] )
+			&& preg_match( '/^(#[0-9a-f]{3,8}|rgba?\([0-9.,%\s]+\)|var\(--[a-z0-9-]+\))$/i', trim( $attrs[ $key ] ) )
+			? trim( $attrs[ $key ] ) : '';
+
+		$accent = $color( 'accentColor' );
+		if ( '' !== $accent ) {
+			$desktop[] = '--wb-gam-color-accent: ' . $accent . ';';
+		}
+		$background = $color( 'cardBackground' );
+		if ( '' !== $background ) {
+			$desktop[] = '--wb-gam-color-surface: ' . $background . ';';
+			$desktop[] = '--wb-gam-color-white: ' . $background . ';';
+			$desktop[] = 'background-color: ' . $background . ';';
+		}
+		$border = $color( 'cardBorderColor' );
+		if ( '' !== $border ) {
+			$desktop[] = '--wb-gam-color-border: ' . $border . ';';
+			$desktop[] = 'border-color: ' . $border . ';';
+		}
 	}
 
 	/**
