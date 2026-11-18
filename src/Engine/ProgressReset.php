@@ -142,7 +142,7 @@ final class ProgressReset {
 		}
 
 		// Delete progress meta across all users in one statement.
-		$meta_rows    = (int) $wpdb->query(
+		$meta_rows = (int) $wpdb->query(
 			$wpdb->prepare(
 				"DELETE FROM {$wpdb->usermeta} WHERE meta_key IN ($placeholders)", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- placeholders built from a fixed-length constant list.
 				self::PROGRESS_META
