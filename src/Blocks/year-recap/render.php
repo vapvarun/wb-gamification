@@ -128,11 +128,13 @@ if ( ! $wb_gam_user || empty( $wb_gam_recap['points_this_year'] ) ) {
 			'style' => '' !== $wb_gam_inline ? $wb_gam_inline : null,
 		)
 	);
-		$wb_gam_empty = EmptyState::render(
-		'year-recap',
-		$wb_gam_wrapper,
-		__( 'Your year in review will appear here once you start earning points.', 'wb-gamification' )
-	);
+	// A member who has points, just none in the year asked for, is told about that year; only a member
+	// with no points at all is told to start earning.
+	$wb_gam_message = $wb_gam_user && \WBGam\Engine\PointsEngine::get_total( $wb_gam_user_id ) > 0
+		/* translators: %d: the year the block shows, e.g. 2025. */
+		? sprintf( __( 'Nothing to recap for %d: no points were earned that year.', 'wb-gamification' ), (int) ( $wb_gam_recap['year'] ?? $wb_gam_year ) )
+		: __( 'Your year in review will appear here once you start earning points.', 'wb-gamification' );
+	$wb_gam_empty   = EmptyState::render( 'year-recap', $wb_gam_wrapper, $wb_gam_message );
 	echo $wb_gam_empty; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- EmptyState escapes its message and CTA; the wrapper is get_block_wrapper_attributes() output.
 
 	return;

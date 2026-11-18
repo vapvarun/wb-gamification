@@ -120,7 +120,8 @@
 	--wb-gam-color-danger-bg: color-mix(in srgb, var(--wb-gam-color-danger) 12%, var(--wb-gam-color-surface));
 	--wb-gam-color-danger-strong: #b91c1c;
 	--wb-gam-color-danger-soft: rgba(185, 28, 28, 0.10);
-	--wb-gam-color-info: #2563eb;
+	/* blue-700: #2563eb measured 4.37:1 as 11px text on its own tint. */
+	--wb-gam-color-info: #1d4ed8;
 	--wb-gam-color-info-bg: color-mix(in srgb, var(--wb-gam-color-info) 12%, var(--wb-gam-color-surface));
 	--wb-gam-color-info-soft: rgba(37, 99, 235, 0.10);
 
@@ -151,7 +152,8 @@
 
 	/* Rank/medal palette (used by leaderboard, top-members, year-recap) */
 	--wb-gam-color-gold: #b8860b;
-	--wb-gam-color-silver: #6b7280;
+	/* gray-600: #6b7280 measured 4.47:1 on the tinted leaderboard rows. */
+	--wb-gam-color-silver: #4b5563;
 	--wb-gam-color-bronze: #a0522d;
 	/* A light ground for uploaded badge art (often dark line-art on transparent). Fixed on
 	 * purpose: it does not flip in dark mode, because the art needs a light surface there most. */
@@ -342,7 +344,7 @@ body.buddyx-dark-theme {
 	 * under the 4.5:1 WCAG AA floor. Gold clears it at 5.56:1 and is left as it is. */
 	--wb-gam-color-silver: color-mix(in srgb, #6b7280 45%, #ffffff);
 	--wb-gam-color-bronze: color-mix(in srgb, #a0522d 50%, #ffffff);
-	--wb-gam-color-gold-text: var(--wb-gam-color-gold);
+	--wb-gam-color-gold-text: color-mix(in srgb, var(--wb-gam-color-gold) 70%, #ffffff);
 
 	/* Text on the lightened brand accent: white on it is 2.68:1, this ink is 6.37:1. A theme's
 	 * own pair still wins. */
@@ -373,7 +375,7 @@ body.buddyx-dark-theme {
 		--wb-gam-tier-obsidian: color-mix(in srgb, #4b5563 55%, #ffffff);
 		--wb-gam-color-silver: color-mix(in srgb, #6b7280 45%, #ffffff);
 		--wb-gam-color-bronze: color-mix(in srgb, #a0522d 50%, #ffffff);
-		--wb-gam-color-gold-text: var(--wb-gam-color-gold);
+		--wb-gam-color-gold-text: color-mix(in srgb, var(--wb-gam-color-gold) 70%, #ffffff);
 		/* Text on the lightened brand accent: white on it is 2.68:1, this ink is 6.37:1. A theme's
 		 * own pair still wins. */
 		--wb-gam-pop-accent-fg: var(--bn-accent-fg, var(--bx-color-accent-inverse, var(--reign-site-button-text-color, #1a1a2e)));
@@ -388,5 +390,14 @@ body.buddyx-dark-theme {
 		--wb-gam-color-fire-strong: color-mix(in srgb, #b45309 60%, #ffffff);
 		--wb-gam-color-info: color-mix(in srgb, #2563eb 60%, #ffffff);
 		--wb-gam-color-heatmap-4: color-mix(in srgb, #4c1d95 55%, #ffffff);
+	}
+}
+
+/* Label colour on accent buttons, picked from the accent's own lightness: dark text on a light accent
+ * (white on an orange theme accent measured 2.59:1), white on a dark one. Overrides a theme's button
+ * text pair, which is the one that failed. Browsers without relative colours keep the value above. */
+@supports (color: oklch(from red l c h)) {
+	:root {
+		--wb-gam-pop-accent-fg: oklch(from var(--wb-gam-pop-accent) round(1.07 - l) 0 0);
 	}
 }

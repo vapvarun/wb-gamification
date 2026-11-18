@@ -291,6 +291,8 @@ final class CSS {
 		'--wb-gam-primary-text'       => 'var(--wb-gam-color-accent-text)',
 		'--wb-gam-fill'               => 'var(--wb-gam-color-accent)',
 		'--wb-gam-recap-accent'       => 'var(--wb-gam-color-accent)',
+		'--wb-gam-pop-accent'         => 'var(--wb-gam-color-accent)',
+		'--wb-gam-pop-accent-fg'      => 'oklch(from var(--wb-gam-color-accent) round(1.07 - l) 0 0)',
 	);
 
 	/**
@@ -327,7 +329,9 @@ final class CSS {
 		$border = $color( 'cardBorderColor' );
 		if ( '' !== $border ) {
 			$desktop[] = '--wb-gam-color-border: ' . $border . ';';
-			$desktop[] = 'border-color: ' . $border . ';';
+			// Hub and Year Recap draw no border of their own, so set the whole border: the colour shows on
+			// every block (the card blocks already use 1px solid).
+			$desktop[] = 'border: 1px solid ' . $border . ';';
 		}
 	}
 

@@ -135,7 +135,7 @@
 
 .wb-gam-community-challenges__status-badge--completed {
 	background: var(--wb-gam-color-success-bg, #ecfdf5);
-	color: var(--wb-gam-color-success, #047857);
+	color: var(--wb-gam-color-success-strong);
 }
 
 .wb-gam-community-challenges__status-badge .icon-circle-check {

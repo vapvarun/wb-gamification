@@ -89,7 +89,7 @@
 
 .wb-gam-daily-bonus__tier.is-reached {
 	background: color-mix(in srgb, var(--wb-gam-color-accent, #2563eb) 14%, transparent);
-	color: var(--wb-gam-color-accent, #2563eb);
+	color: var(--wb-gam-color-accent-text);
 	font-weight: 600;
 }
 
@@ -109,7 +109,7 @@
 }
 
 .wb-gam-daily-bonus__tier.is-reached .wb-gam-daily-bonus__tier-bonus {
-	color: var(--wb-gam-color-accent, #2563eb);
+	color: var(--wb-gam-color-accent-text);
 }
 
 @media (max-width: 640px) {
