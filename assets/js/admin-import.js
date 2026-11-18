@@ -160,7 +160,6 @@
 		var delay = POLL_MIN_MS;
 		var finished = false;
 		var pumping = false;
-		var seenSeq = run.seq;
 
 		function phaseLabel( r ) {
 			var labels = {
@@ -178,7 +177,6 @@
 		}
 
 		function paint( r ) {
-			seenSeq = r.seq;
 			bar.value = r.percent;
 			// Queued means the job is waiting for the background queue (WP-Cron), which can take up to a
 			// minute to pick it up. Say so, rather than show a phase that has not started as if it hung.
@@ -301,12 +299,12 @@
 					alert.appendChild( el( 'p', 'wb-gam-import__bad', errorText( res ) ) );
 					return;
 				}
-				var before = seenSeq;
 				paint( res.data );
 				if ( isActive( res.data.status ) ) {
-					// No page ran (another tab or the queue holds the lock): wait before asking
-					// again instead of hammering the server.
-					if ( res.data.seq === before ) {
+					// No page ran here (another tab or the queue holds the lock): wait before asking
+					// again instead of hammering the server. The other tab moves seq on, so only the
+					// server's `ran` says whether this request did the work.
+					if ( ! res.data.ran ) {
 						timer = window.setTimeout( pump, POLL_MIN_MS );
 					} else {
 						pump();

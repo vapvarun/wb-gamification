@@ -352,7 +352,7 @@ final class ImportRunner {
 	 * stays harmless: advance() moves the sequence on, so that job finds itself stale.
 	 *
 	 * @param string $slug Source slug.
-	 * @return array<string, mixed>|WP_Error Progress after the page.
+	 * @return array<string, mixed>|WP_Error Progress after the page, plus `ran` (false when the lock was held).
 	 */
 	public static function run_here( string $slug ) {
 		$state = self::state( $slug );
@@ -364,9 +364,11 @@ final class ImportRunner {
 			$state = $resumed;
 		}
 
-		self::advance( $slug, (string) $state['run_id'] );
+		// `ran` tells the tab whether THIS request ran a page; another tab or the queue holding the
+		// lock moves `seq` too, so seq alone cannot say it.
+		$ran = null !== self::advance( $slug, (string) $state['run_id'] );
 
-		return self::progress( $slug );
+		return array_merge( self::progress( $slug ), array( 'ran' => $ran ) );
 	}
 
 	/**
