@@ -4,7 +4,7 @@ Tags: gamification, points, badges, leaderboard, buddypress
 Requires at least: 6.5
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 1.6.7
+Stable tag: 1.6.8
 License: GPL-2.0+
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -146,6 +146,39 @@ Daily caps, weekly caps and per-action cooldowns are enforced silently. A member
 Since 1.6.4 a badge is private until the member shares it, so links published before the upgrade stop resolving until the member presses Share on their badge board. That is what stops strangers enumerating badge pages by guessing IDs. If you deliberately run an open community and want the old links working again, `wp wb-gamification share grandfather` publishes every existing badge in one pass, and `wp wb-gamification share reset` makes them private again.
 
 == Changelog ==
+
+= 1.6.8 - November 2026 =
+
+Fair earning across every integration: removed content takes its points back, nobody earns from their own content, and the plugin now speaks five languages.
+
+* New      - German, French, Spanish, Italian and Brazilian Portuguese translations, including every block's settings in the editor.
+* New      - Tutor LMS integration: complete a course or lesson, pass a quiz, enrol, review a course and ask a question.
+* New      - LearnDash adds enrol, assignment upload and group completion; LifterLMS adds enrol and membership, and its course, lesson and quiz awards now fire.
+* New      - Setup wizard: a BuddyPress Community starter template.
+* New      - Members choose on their profile whether their rank shows, whether they appear on leaderboards and how they hear about awards.
+* New      - Settings > Points: a Members can submit tick per action; Submit Achievement lists only the actions you opened.
+* New      - Shortcode `[wb_gam_daily_bonus]`, and a Copy button on shared badge links.
+* Improve  - Course, lesson, quiz and similar awards pay once per member per item, however often it is retaken.
+* Improve  - Block design settings now apply on the page: spacing, border, shadow, colours, Hide on device and Show progress bar.
+* Improve  - Every block meets WCAG AA contrast in light and dark mode, including accent-coloured text and buttons.
+* Improve  - Email buttons open the Gamification Hub on the matching panel.
+* Improve  - Activity cards show as one compact card on BuddyPress, BuddyBoss and BuddyNext.
+* Improve  - Members with equal points share a rank on the Leaderboard, Top Members and Cohort Rank blocks.
+* Improve  - Eleven built-in actions that rewarded behaviour owners did not want to pay for were removed; past awards keep their names in history and reports.
+* Fix      - Deleting, trashing, rejecting or refunding content takes back the points it earned, and restoring it pays them back once.
+* Fix      - Acting on your own content (comments, votes, bookmarks, reactions, reviews) no longer earns points.
+* Fix      - Content created before this update, or copied by BuddyNext or WPMediaVerse, is never paid a second time.
+* Fix      - Reviews and comments held for moderation pay when they are approved, not when they are submitted.
+* Fix      - WooCommerce: free and unpaid orders no longer pay or use up the first-purchase award, and a refund takes back what that order paid.
+* Fix      - A Learnomy quiz pays once per member, and deleting a group takes back its cover-photo award.
+* Fix      - Reactions pay the amount you set instead of a forced minimum of 5.
+* Fix      - Year Recap names a year with no points and leaves removed content out of its totals.
+* Fix      - Redemption Store rewards save the status, quantity and limit you set.
+* Fix      - Import waits for a run already going in another tab instead of starting a second one.
+* Fix      - Private profiles hide their rank in the members directory, and an unknown and a private profile answer the same way.
+* Fix      - Reward toasts wait while a dialog is open, and the moment card no longer blocks the page.
+* Dev      - New REST routes `GET|POST /members/{id}/preferences` and `GET /issuer` (OpenBadges 3.0 issuer profile).
+* Dev      - New action `wb_gam_render_member_prefs` prints a member's choices form; new filter `wb_gam_profile_publicly_visible`.
 
 = 1.6.7 - October 2026 =
 
