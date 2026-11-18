@@ -177,6 +177,7 @@ Fair earning across every integration: removed content takes its points back, no
 * Fix      - Import waits for a run already going in another tab instead of starting a second one.
 * Fix      - Private profiles hide their rank in the members directory, and an unknown and a private profile answer the same way.
 * Fix      - Reward toasts wait while a dialog is open, and the moment card no longer blocks the page.
+* Security - Webhook URLs that point at the server itself or a private network address are refused, and deliveries use WordPress's safe request so they cannot reach internal services.
 * Dev      - New REST routes `GET|POST /members/{id}/preferences` and `GET /issuer` (OpenBadges 3.0 issuer profile).
 * Dev      - New action `wb_gam_render_member_prefs` prints a member's choices form; new filter `wb_gam_profile_publicly_visible`.
 

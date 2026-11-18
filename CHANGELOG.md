@@ -47,6 +47,10 @@ Fair earning across every integration: removed content takes its points back, no
 - Private profiles hide their rank in the members directory, and an unknown and a private profile answer the same way.
 - Reward toasts wait while a dialog is open, and the moment card no longer blocks the page.
 
+### Security
+
+- Webhook URLs that point at the server itself or a private network address are refused, and deliveries use WordPress's safe request so they cannot reach internal services.
+
 ## [1.6.6] - 2026-10-09
 
 ### Added

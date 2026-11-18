@@ -449,7 +449,7 @@ class WebhooksController extends WP_REST_Controller {
 				'sanitize_callback' => 'esc_url_raw',
 				'description'       => 'HTTPS URL to receive event payloads.',
 				'validate_callback' => static function ( $url ) {
-					return filter_var( $url, FILTER_VALIDATE_URL ) && str_starts_with( $url, 'https://' );
+					return filter_var( $url, FILTER_VALIDATE_URL ) && str_starts_with( $url, 'https://' ) && false !== wp_http_validate_url( $url );
 				},
 			),
 			'events'    => array(
