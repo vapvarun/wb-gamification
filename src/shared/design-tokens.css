@@ -58,8 +58,11 @@
 	 * readable contrast against whichever surface the theme provides. */
 	--wb-gam-color-white: var(--bx-color-bg-elevated, var(--reign-site-sections-bg-color, #ffffff));
 	--wb-gam-color-text: var(--bx-color-fg, var(--reign-site-body-text-color, #1a1a2e));
-	--wb-gam-color-text-muted: color-mix(in srgb, var(--bx-color-fg, var(--reign-site-body-text-color, #1a1a2e)) 70%, var(--bx-color-bg-elevated, var(--reign-site-sections-bg-color, #ffffff)));
-	--wb-gam-color-text-light: color-mix(in srgb, var(--bx-color-fg, var(--reign-site-body-text-color, #1a1a2e)) 50%, var(--bx-color-bg-elevated, var(--reign-site-sections-bg-color, #ffffff)));
+	/* Secondary text is the theme text faded toward the card, but never below WCAG AA: on BuddyX's
+	 * mid-grey #505050 text, 50% measured 2.4:1 and 70% 3.7:1; 80% clears 4.5:1 on the card and on
+	 * the Hub's tinted stat tiles. */
+	--wb-gam-color-text-muted: color-mix(in srgb, var(--bx-color-fg, var(--reign-site-body-text-color, #1a1a2e)) 84%, var(--bx-color-bg-elevated, var(--reign-site-sections-bg-color, #ffffff)));
+	--wb-gam-color-text-light: color-mix(in srgb, var(--bx-color-fg, var(--reign-site-body-text-color, #1a1a2e)) 80%, var(--bx-color-bg-elevated, var(--reign-site-sections-bg-color, #ffffff)));
 	--wb-gam-color-border: var(--bx-color-border, var(--reign-site-border-color, #e2e3ed));
 	--wb-gam-color-border-hover: var(--bx-color-border, var(--reign-site-border-color, #c8c9d9));
 	--wb-gam-color-surface: var(--bx-color-bg-elevated, var(--reign-site-sections-bg-color, #ffffff));

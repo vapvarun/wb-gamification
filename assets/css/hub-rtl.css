@@ -22,8 +22,8 @@
    * plugin painted its own palette on top of the theme instead of following it.
    * Brand colors below stay constant. */
   --gam-text: var(--bx-color-fg, var(--reign-site-body-text-color, #1a1a2e));
-  --gam-text-secondary: color-mix(in srgb, var(--bx-color-fg, var(--reign-site-body-text-color, #1a1a2e)) 70%, var(--bx-color-bg-elevated, var(--reign-site-sections-bg-color, #ffffff)));
-  --gam-text-muted: color-mix(in srgb, var(--bx-color-fg, var(--reign-site-body-text-color, #1a1a2e)) 50%, var(--bx-color-bg-elevated, var(--reign-site-sections-bg-color, #ffffff)));
+  --gam-text-secondary: var(--wb-gam-color-text-muted);
+  --gam-text-muted: var(--wb-gam-color-text-light);
   --gam-surface: var(--bx-color-bg-elevated, var(--reign-site-sections-bg-color, #ffffff));
   --gam-surface-hover: var(--bx-color-bg-muted, var(--reign-site-secondary-bg-color, #f7f7fb));
   --gam-border: var(--bx-color-border, var(--reign-site-border-color, #e2e3ed));
@@ -38,7 +38,8 @@
   /* Tints mixed over --gam-surface so icon chips / status pills adapt to
    * dark mode (faint dark tint) instead of staying opaque light. */
   --gam-accent-light: color-mix(in srgb, var(--gam-accent) 14%, var(--gam-surface));
-  --gam-accent-text: color-mix(in srgb, var(--gam-accent) 65%, var(--gam-text));
+  /* Same formula as --wb-gam-color-accent-text (design-tokens.css): AA on the card in either mode. */
+  --gam-accent-text: color-mix(in srgb, var(--gam-accent) 50%, var(--wb-gam-color-accent-ink));
   --gam-success: #0d9f6e;
   --gam-success-bg: color-mix(in srgb, var(--gam-success) 12%, var(--gam-surface));
   --gam-warning: #c2770e;
@@ -355,17 +356,17 @@
 
 .gam-pill--success {
   background: var(--gam-success-bg);
-  color: var(--gam-success);
+  color: var(--wb-gam-color-success-strong);
 }
 
 .gam-pill--warning {
   background: var(--gam-warning-bg);
-  color: var(--gam-warning);
+  color: var(--wb-gam-color-warning-strong);
 }
 
 .gam-pill--info {
   background: var(--gam-info-bg);
-  color: var(--gam-info);
+  color: var(--wb-gam-color-info);
 }
 
 .gam-pill--accent {
@@ -583,7 +584,7 @@
 .gam-list-item__pts {
   font-weight: 600;
   font-size: 13px;
-  color: var(--gam-success);
+  color: var(--wb-gam-color-success-strong);
   white-space: nowrap;
 }
 
@@ -867,8 +868,8 @@
 :root[data-theme="dark"] .gam-page,
 body.buddyx-dark-theme .gam-page {
   --gam-text: var(--bx-color-fg, var(--reign-site-body-text-color, #e8e8f0));
-  --gam-text-secondary: color-mix(in srgb, var(--bx-color-fg, var(--reign-site-body-text-color, #e8e8f0)) 75%, var(--bx-color-bg-elevated, var(--reign-site-sections-bg-color, #262a34)));
-  --gam-text-muted: color-mix(in srgb, var(--bx-color-fg, var(--reign-site-body-text-color, #e8e8f0)) 55%, var(--bx-color-bg-elevated, var(--reign-site-sections-bg-color, #262a34)));
+  --gam-text-secondary: var(--wb-gam-color-text-muted);
+  --gam-text-muted: var(--wb-gam-color-text-light);
   --gam-surface: var(--bx-color-bg-elevated, var(--reign-site-sections-bg-color, #262a34));
   --gam-surface-hover: var(--bx-color-bg-muted, var(--reign-site-secondary-bg-color, #2f343f));
   --gam-border: var(--bx-color-border, var(--reign-site-border-color, #363b47));
@@ -878,8 +879,8 @@ body.buddyx-dark-theme .gam-page {
 @media (prefers-color-scheme: dark) {
   :root[data-bx-mode="auto"] .gam-page {
     --gam-text: var(--bx-color-fg, var(--reign-site-body-text-color, #e8e8f0));
-    --gam-text-secondary: color-mix(in srgb, var(--bx-color-fg, var(--reign-site-body-text-color, #e8e8f0)) 75%, var(--bx-color-bg-elevated, var(--reign-site-sections-bg-color, #262a34)));
-    --gam-text-muted: color-mix(in srgb, var(--bx-color-fg, var(--reign-site-body-text-color, #e8e8f0)) 55%, var(--bx-color-bg-elevated, var(--reign-site-sections-bg-color, #262a34)));
+    --gam-text-secondary: var(--wb-gam-color-text-muted);
+    --gam-text-muted: var(--wb-gam-color-text-light);
     --gam-surface: var(--bx-color-bg-elevated, var(--reign-site-sections-bg-color, #262a34));
     --gam-surface-hover: var(--bx-color-bg-muted, var(--reign-site-secondary-bg-color, #2f343f));
     --gam-border: var(--bx-color-border, var(--reign-site-border-color, #363b47));
