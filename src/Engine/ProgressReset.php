@@ -126,8 +126,22 @@ final class ProgressReset {
 			}
 		}
 
-		// Delete progress meta across all users in one statement.
+		// Members whose cached meta must be dropped after the raw deletes below (a persistent object
+		// cache would otherwise keep serving the old bests). Read only when the cache cannot drop the
+		// whole user_meta group at once.
 		$placeholders = implode( ',', array_fill( 0, count( self::PROGRESS_META ), '%s' ) );
+		$meta_users   = array();
+		if ( ! wp_cache_supports( 'flush_group' ) ) {
+			$like       = array_map( static fn( string $prefix ): string => $wpdb->esc_like( $prefix ) . '%', self::PROGRESS_META_PREFIXES );
+			$meta_users = $wpdb->get_col(
+				$wpdb->prepare(
+					"SELECT DISTINCT user_id FROM {$wpdb->usermeta} WHERE meta_key IN ($placeholders)" . str_repeat( ' OR meta_key LIKE %s', count( $like ) ), // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- placeholders built from fixed-length constant lists.
+					array_merge( self::PROGRESS_META, $like )
+				)
+			);
+		}
+
+		// Delete progress meta across all users in one statement.
 		$meta_rows    = (int) $wpdb->query(
 			$wpdb->prepare(
 				"DELETE FROM {$wpdb->usermeta} WHERE meta_key IN ($placeholders)", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- placeholders built from a fixed-length constant list.
@@ -143,6 +157,14 @@ final class ProgressReset {
 					$wpdb->esc_like( $prefix ) . '%'
 				)
 			);
+		}
+
+		if ( wp_cache_supports( 'flush_group' ) ) {
+			wp_cache_flush_group( 'user_meta' );
+		} else {
+			foreach ( $meta_users as $meta_user ) {
+				wp_cache_delete( (int) $meta_user, 'user_meta' );
+			}
 		}
 
 		// Drop the leaderboard snapshot caches so reads reflect the empty state.
