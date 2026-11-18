@@ -785,8 +785,12 @@ final class ScaleCommand {
 			'pass'         => 0 === $failures,
 		);
 		$path   = WB_GAM_PATH . 'audit/.last-scale-pass.json';
-		file_put_contents( $path, wp_json_encode( $report, JSON_PRETTY_PRINT ) . "\n" ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
-		\WP_CLI::line( 'Wrote audit/.last-scale-pass.json (read by the release gate).' );
+		$folder = dirname( $path );
+		if ( wp_is_writable( $folder ) && false !== file_put_contents( $path, wp_json_encode( $report, JSON_PRETTY_PRINT ) . "\n" ) ) { // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
+			\WP_CLI::line( 'Wrote audit/.last-scale-pass.json (read by the release gate).' );
+		} else {
+			\WP_CLI::warning( "Could not write audit/.last-scale-pass.json ({$folder} is not writable), so the release gate will not see this run." );
+		}
 
 		if ( 0 === $failures ) {
 			\WP_CLI::success( sprintf( 'All queries within budget against this dataset: %s ledger rows across %s members.', number_format( $ledger_rows ), number_format( $user_rows ) ) );
