@@ -14,7 +14,7 @@ Three ways:
 
 ## Can I change point values?
 
-Yes. Every action has a configurable point value under **WB Gamification > Points**. You can also enable or disable individual actions and, where the action allows it, set daily caps and cooldowns. The setup wizard pre-configures sensible defaults based on your site type.
+Yes. Every action has a configurable point value under **Gamification > Dashboard > Points**. You can also enable or disable individual actions and, where the action allows it, set daily caps and cooldowns. The setup wizard pre-configures sensible defaults based on your site type.
 
 ## Will WB Gamification slow down my site?
 
@@ -26,7 +26,7 @@ Yes. Any plugin can drop a file named `wb-gamification.php` in its own folder th
 
 ## How many actions can award points?
 
-It depends on which plugins you run, so there is no single number. A vanilla WordPress site exposes 8 triggers. Adding WooCommerce, an LMS, and BuddyPress brings it to roughly 50. Every action your own site exposes is listed under **WB Gamification > Points** - that list is the only count that matters for you.
+It depends on which plugins you run, so there is no single number. A vanilla WordPress site exposes 8 triggers. Adding WooCommerce, an LMS, and BuddyPress brings it to roughly 50. Every action your own site exposes is listed under **Gamification > Dashboard > Points** - that list is the only count that matters for you.
 
 ## Is WB Gamification GDPR compliant?
 

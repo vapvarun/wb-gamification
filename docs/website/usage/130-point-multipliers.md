@@ -1,6 +1,6 @@
 # Point Multipliers (Double Points)
 
-Go to **WB Gamification > Point Multipliers** in your admin menu.
+Go to **Gamification > Point Multipliers** in your admin menu.
 
 A multiplier changes how many points an action pays, for every member, from the moment you save it. Use it for a "double points weekend", to push one behaviour you want more of, or to slow down one that is getting farmed.
 
@@ -32,4 +32,4 @@ A multiplier can carry a start and end date so it switches itself on and off. Th
 
 ## Who Can Manage Multipliers
 
-Administrators, and staff given the **Manage rules** permission under **WB Gamification > Settings > Access > Staff permissions**.
+Administrators, and staff given the **Manage rules** permission under **Gamification > Dashboard > Access > Staff permissions**.

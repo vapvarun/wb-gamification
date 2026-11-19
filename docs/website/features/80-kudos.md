@@ -13,7 +13,7 @@ Kudos lets members publicly recognize each other for helpful contributions, grea
 | Receiver (member getting kudos) | 5 points |
 | Giver (member sending kudos) | 2 points |
 
-These values are configurable in **Gamification > Settings > Kudos**.
+These values are configurable in **Gamification > Dashboard > Kudos**.
 
 ## Daily Points Limit
 
@@ -23,7 +23,7 @@ A second kudos to the same member **within an hour** also earns no points. This 
 
 Members are never shown a "limit reached" message. The only hard stop is a spam ceiling of **50 kudos a day**, far above normal use; once a member reaches it, the kudos form is simply not shown until the next day. Developers can change it with the `wb_gam_kudos_daily_ceiling` filter.
 
-Change the points limit in **Gamification > Settings > Kudos > Kudos per day that earn points**.
+Change the points limit in **Gamification > Dashboard > Kudos > Kudos per day that earn points**.
 
 ## Rules and Restrictions
 

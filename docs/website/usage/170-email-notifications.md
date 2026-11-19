@@ -1,6 +1,6 @@
 # Email Notifications
 
-Go to **WB Gamification > Settings > Emails** in your admin menu.
+Go to **Gamification > Dashboard > Emails** in your admin menu.
 
 WB Gamification can email members when they earn something, and once a week with a recap. This page lists every email, shows where you switch each one on or off, and explains how a member opts out. Reward emails are off until you turn them on, so an update never floods your members.
 

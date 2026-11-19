@@ -92,7 +92,7 @@ curl https://example.com/wp-json/wb-gamification/v1/rules \
 
 ## Cohort Settings
 
-Cohort league tier names, promotion/demotion thresholds, and duration. Stored as a single options document plus the leagues on/off switch (Settings > Modules); the endpoint reads and writes both together.
+Cohort league tier names, promotion/demotion thresholds, and duration. Stored as a single options document plus the leagues on/off switch (Gamification > Dashboard > Modules); the endpoint reads and writes both together.
 
 | Method | Endpoint | Permission |
 |--------|----------|------------|
@@ -137,7 +137,7 @@ Save the cohort settings document.
 | `promote_pct` | int | Yes | Percentage promoted to the tier above each period (1 to 50) |
 | `demote_pct` | int | Yes | Percentage demoted to the tier below each period (1 to 50) |
 | `duration` | string | Yes | `weekly` or `monthly` |
-| `enabled` | boolean | No | Turns cohort leagues on or off. Since 1.6.5 the admin form no longer sends this - use Settings > Modules instead - but a client that sends it still flips the switch |
+| `enabled` | boolean | No | Turns cohort leagues on or off. Since 1.6.5 the admin form no longer sends this - use Gamification > Dashboard > Modules instead - but a client that sends it still flips the switch |
 
 ```bash
 curl -X POST https://example.com/wp-json/wb-gamification/v1/cohort-settings \
@@ -167,7 +167,10 @@ Register a new webhook. The response includes the generated `secret`, which is o
 |-------|------|----------|-------------|
 | `url` | string | Yes | Destination URL for delivery |
 | `events` | array | Yes | Event names to subscribe to |
-| `secret` | string | No | Custom signing secret. Generated if omitted |
+| `secret` | string | No | Custom signing secret, at least 16 characters. Generated if omitted |
+| `is_active` | boolean | No | Defaults to `true` on create. Send `false` to register the webhook paused |
+
+The `url` must be a public `https://` address. A refused address returns a 400 that says why: `wb_gam_webhook_url_https` (not a full https address), `wb_gam_webhook_url_unknown_host` (the host could not be found) or `wb_gam_webhook_url_private` (the address points at this server or a private network, including loopback). `PUT /webhooks/{id}` applies the same check to `url`, and changes `is_active` only when you send it, so editing the URL or events never re-activates a paused webhook.
 
 ```bash
 curl -X POST https://example.com/wp-json/wb-gamification/v1/webhooks \
@@ -268,7 +271,7 @@ curl https://example.com/wp-json/wb-gamification/v1/settings/capabilities \
 
 ### POST /settings/capabilities
 
-Set the delegation matrix. Goes through the same write path as the Settings > Access admin screen, so the two surfaces never disagree about who holds what.
+Set the delegation matrix. Goes through the same write path as the Gamification > Dashboard > Access admin screen, so the two surfaces never disagree about who holds what.
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
@@ -401,7 +404,7 @@ Award the same points to a whole role or to all members at once. Added in 1.5.3.
 
 ### POST /points/bulk
 
-Routes through the exclusion-aware batch award, so accounts excluded in Settings > Access are skipped automatically. Points must be positive.
+Routes through the exclusion-aware batch award, so accounts excluded in Gamification > Dashboard > Access are skipped automatically. Points must be positive.
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
@@ -423,7 +426,7 @@ curl -X POST https://example.com/wp-json/wb-gamification/v1/points/bulk \
 
 ## Tools
 
-Settings portability and maintenance (Settings > Tools). Added in 1.5.3. All admin-only.
+Settings portability and maintenance (Gamification > Dashboard > Tools). Added in 1.5.3. All admin-only.
 
 | Method | Endpoint | Permission |
 |--------|----------|------------|

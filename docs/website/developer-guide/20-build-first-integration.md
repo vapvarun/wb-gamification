@@ -105,7 +105,7 @@ WB Gamification scans every active plugin directory for a `wb-gamification.php` 
 
 ## Step 3: Verify
 
-1. Go to **WP Admin > Gamification > Settings > Points** tab.
+1. Go to **Gamification > Dashboard > Points**.
 2. Your custom actions should appear in the actions list with their default point values.
 3. Trigger the action (e.g. submit a review) and confirm points are awarded.
 

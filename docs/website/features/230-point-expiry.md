@@ -2,7 +2,7 @@
 
 Point expiry lets you decay the balance of members who stop earning, to nudge re-engagement. It is **off by default** - turn it on only if your community wants points to lapse with inactivity. Added in 1.5.3.
 
-Configure it under **WB Gamification > Settings > Points**, in the **Point expiry** card.
+Configure it under **Gamification > Dashboard > Points**, in the **Point expiry** card.
 
 ## Opt-In
 

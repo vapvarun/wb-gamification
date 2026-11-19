@@ -10,6 +10,8 @@ Every badge stays private until the member presses **Share** on it in their badg
 /gamification/badge/{badge-id}/{user-id}/share/
 ```
 
+Once a badge is shared, the showcase shows **Open share page** and a **Copy link** button next to it, so the member can paste the link anywhere. The share page has its own **Copy link** button too.
+
 Opening the page for a badge that is not shared sends the visitor to the member's profile instead. Developers can build the link with `wb_gam_get_badge_share_url( $badge_id, $user_id )`.
 
 The `BadgeSharePage` engine generates this page dynamically. It outputs:
@@ -40,7 +42,7 @@ Credential badges include a pre-built LinkedIn deep-link on the share page. Clic
 
 ## How to Enable Credential Badges
 
-1. Go to **WB Gamification > Badges**.
+1. Go to **Gamification > Badges**.
 2. Edit the badge you want to make shareable as a credential.
 3. Tick **Mark as shareable credential (LinkedIn, OpenBadges)**.
 4. Save the badge.
@@ -49,4 +51,4 @@ Non-credential badges still get share pages once the member shares them - they j
 
 ## Toggling the feature
 
-Badge Sharing is on by default. To turn it off site-wide, untick **Badge sharing** under **WB Gamification > Modules**.
+Badge Sharing is on by default. To turn it off site-wide, untick **Badge sharing** under **Gamification > Dashboard > Modules**.

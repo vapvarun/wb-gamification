@@ -1,6 +1,6 @@
 # Levels Configuration
 
-Go to **WB Gamification > Levels** in your admin sidebar.
+Go to **Gamification > Levels** in your admin sidebar.
 
 Levels give members a visible rank as they accumulate points. A member's level updates automatically the moment their cumulative points cross a threshold - no cron job or manual refresh needed.
 

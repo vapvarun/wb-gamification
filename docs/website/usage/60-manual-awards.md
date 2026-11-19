@@ -2,7 +2,7 @@
 
 ![The Award Points admin screen](../images/manual-award.webp)
 
-Go to **WB Gamification > Award Points** in your admin menu.
+Go to **Gamification > Award Points** in your admin menu.
 
 Use this page to grant or deduct points from any member directly. All awards go through the standard points engine, so badges, level-ups, streaks, and hooks fire exactly as they would for any automatic event.
 

@@ -48,7 +48,7 @@ You can also toggle these from the admin settings page without writing code.
 
 ## Reaction Points
 
-Every reaction a member receives pays the amount set for **Receive a reaction** under **Gamification > Settings** (3 points by default), whatever the reaction is on. Before 1.6.8 a reaction on an activity update paid at least 5, even when you had set a lower amount.
+Every reaction a member receives pays the amount set for **Receive a reaction** under **Gamification > Dashboard > Points** (3 points by default), whatever the reaction is on. Before 1.6.8 a reaction on an activity update paid at least 5, even when you had set a lower amount.
 
 ## How Posts Appear in the Stream
 

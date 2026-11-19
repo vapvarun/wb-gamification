@@ -65,9 +65,11 @@ Create a community challenge.
 | `target_count` | int | Yes | Total contributions needed to complete |
 | `target_action` | string | No | Action that contributes to the count |
 | `bonus_points` | int | No | Bonus awarded to participants on completion |
-| `starts_at` | string | No | ISO start datetime |
-| `ends_at` | string | No | ISO end datetime |
+| `starts_at` | string | No | Start datetime. Defaults to now |
+| `ends_at` | string | No | End datetime. Defaults to 14 days after the start |
 | `status` | string | No | Challenge status |
+
+A challenge created without dates runs for 14 days from now, so it counts contributions straight away. On `PUT` and `PATCH` you send only the fields you want to change: the reward, action and target you leave out keep their saved values.
 
 ```bash
 curl -X POST https://example.com/wp-json/wb-gamification/v1/community-challenges \

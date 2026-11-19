@@ -1,6 +1,6 @@
 # Realtime and Notification Settings
 
-Go to **WB Gamification > Settings > Realtime** in your admin sidebar.
+Go to **Gamification > Dashboard > Realtime** in your admin sidebar.
 
 This section controls how live reward feedback reaches members - the transport that delivers updates, and where on screen reward toasts appear.
 
