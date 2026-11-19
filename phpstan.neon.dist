@@ -41,6 +41,11 @@ parameters:
         # WP-CLI class + functions are only defined when running under WP-CLI;
         # load the stubs so static analysis knows WP_CLI::line/add_command/etc.
         - vendor/php-stubs/wp-cli-stubs/wp-cli-stubs.php
+    # Bundled licensing libraries: known to analysis (LicenseActivator::request(), package_signatures_register),
+    # never analysed themselves.
+    scanDirectories:
+        - libs/easy-digital-downloads/edd-sl-sdk/src
+        - libs/package-signatures
     treatPhpDocTypesAsCertain: false
     inferPrivatePropertyTypeFromConstructor: true
     reportUnmatchedIgnoredErrors: false

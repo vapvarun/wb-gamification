@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: WB Gamification 1.6.7\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/wb-gamification\n"
-"POT-Creation-Date: 2026-11-19T04:57:42+00:00\n"
+"POT-Creation-Date: 2026-11-19T05:26:41+00:00\n"
 "PO-Revision-Date: 2026-11-18T07:34:55+00:00\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
@@ -1503,7 +1503,7 @@ msgstr "Copie agora — ela não será mostrada de novo."
 
 #: src/Admin/ApiKeysPage.php:175 src/Admin/SettingsPage.php:1739
 #: src/Admin/SettingsPage.php:1811 src/Blocks/redemption-store/render.php:375
-#: wb-gamification.php:829 assets/js/toast-core.js:401
+#: wb-gamification.php:849 assets/js/toast-core.js:401
 msgid "Dismiss"
 msgstr "Dispensar"
 
@@ -1658,7 +1658,7 @@ msgid "month"
 msgstr "mês"
 
 #: src/Admin/BadgeAdminPage.php:215 src/API/MembersController.php:1344
-#: src/Engine/TransactionalEmailEngine.php:333 wb-gamification.php:830
+#: src/Engine/TransactionalEmailEngine.php:333 wb-gamification.php:850
 msgid "points"
 msgstr "pontos"
 
@@ -1941,28 +1941,36 @@ msgid "Award Badge"
 msgstr "Conceder emblema"
 
 #. translators: %s: number of members who earned this badge
-#: src/Admin/BadgeAdminPage.php:796
+#: src/Admin/BadgeAdminPage.php:797
 #, php-format
 msgid "%s earned"
 msgstr "%s conquistaram"
 
-#: src/Admin/BadgeAdminPage.php:802
+#: src/Admin/BadgeAdminPage.php:803
+msgid "Its actions come from a plugin that is not active, so members cannot earn it and do not see it."
+msgstr "As ações dele vêm de um plugin que não está ativo, por isso os membros não podem conquistá-lo e não o veem."
+
+#: src/Admin/BadgeAdminPage.php:804
+msgid "Not earnable here"
+msgstr "Não pode ser conquistado aqui"
+
+#: src/Admin/BadgeAdminPage.php:808
 msgid "Auto-award"
 msgstr "Concessão automática"
 
-#: src/Admin/BadgeAdminPage.php:802
+#: src/Admin/BadgeAdminPage.php:808
 msgid "Manual"
 msgstr "Manual"
 
-#: src/Admin/BadgeAdminPage.php:810
+#: src/Admin/BadgeAdminPage.php:817
 msgid "No badges yet"
 msgstr "Nenhum emblema ainda"
 
-#: src/Admin/BadgeAdminPage.php:811
+#: src/Admin/BadgeAdminPage.php:818
 msgid "Badges reward members for milestones, actions, and achievements. Create your first badge to get started."
 msgstr "Os emblemas recompensam os membros por marcos, ações e conquistas. Crie seu primeiro emblema para começar."
 
-#: src/Admin/BadgeAdminPage.php:814
+#: src/Admin/BadgeAdminPage.php:821
 msgid "Create your first badge"
 msgstr "Criar seu primeiro emblema"
 
@@ -8821,11 +8829,11 @@ msgstr "Mantenha o ritmo →"
 msgid "Unsubscribe from weekly emails"
 msgstr "Cancelar inscrição nos e-mails semanais"
 
-#: wb-gamification.php:133
+#: wb-gamification.php:135
 msgid "WB Gamification: the bundled licensing and update SDK is incomplete, so automatic updates are turned off. Reinstall the plugin from a complete package to restore them. Every other feature works normally."
 msgstr "WB Gamification: o SDK de licenciamento e atualização incluído está incompleto, por isso as atualizações automáticas estão desativadas. Reinstale o plugin a partir de um pacote completo para restaurá-las. Todos os outros recursos funcionam normalmente."
 
-#: wb-gamification.php:828 assets/js/toast-core.js:122
+#: wb-gamification.php:848 assets/js/toast-core.js:122
 msgid "Notifications"
 msgstr "Notificações"
 

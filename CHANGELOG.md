@@ -31,6 +31,8 @@ Fair earning across every integration: removed content takes its points back, no
 - Activity cards show as one compact card on BuddyPress, BuddyBoss and BuddyNext.
 - Members with equal points share a rank on the Leaderboard, Top Members and Cohort Rank blocks.
 - Eleven built-in actions that rewarded behaviour owners did not want to pay for were removed; past awards keep their names in history and reports.
+- Badges that need a plugin the site does not run, such as BuddyPress badges on a site without BuddyPress, are hidden from members, and the Badge Library marks them Not earnable here.
+
 
 ### Fixed
 
@@ -54,6 +56,7 @@ Fair earning across every integration: removed content takes its points back, no
 ### Security
 
 - Webhook URLs that point at the server itself or a private network address are refused, and deliveries use WordPress's safe request so they cannot reach internal services.
+- Update packages are checked against their release signature before WordPress installs them, and licence and update checks use the Wbcom update server with automatic fallback.
 
 ## [1.6.6] - 2026-10-09
 

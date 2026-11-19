@@ -14,7 +14,7 @@
  * fallback for activation paths that bypass the activation hook — CLI
  * clone, restore-from-backup — and a retry after a transient network
  * error). The preset key + item id + store URL are the global
- * WB_GAM_LICENSE_PRESET_KEY / WB_GAM_EDD_ITEM_ID / WB_GAM_EDD_STORE_URL
+ * WB_GAM_LICENSE_PRESET_KEY / WB_GAM_EDD_ITEM_ID constants, sent through {@see self::request()}
  * constants defined in the main plugin file.
  *
  * @package WB_Gamification
@@ -61,6 +61,27 @@ final class LicenseActivator {
 	private const FINAL_REPLIES = array( 'valid', 'invalid', 'disabled', 'expired', 'revoked', 'no_activations_left', 'missing', 'item_name_mismatch', 'invalid_item_id' );
 
 	/**
+	 * One licence-server request (activate, deactivate or check) through the bundled SDK, so it uses the same
+	 * host as update checks (WB_GAM_LICENCE_HOST) and falls back to wbcomdesigns.com when that cannot be reached.
+	 * Every licence call of this plugin goes through here.
+	 *
+	 * @param array<string, mixed> $params EDD Software Licensing parameters (edd_action, license, item_id); the SDK adds url and environment.
+	 * @return object|false Decoded reply, or false when no host answered (or the SDK is not loaded).
+	 */
+	public static function request( array $params ) {
+		$api = '\\EasyDigitalDownloads\\Updater\\Requests\\API';
+		if ( ! class_exists( $api ) ) {
+			return false;
+		}
+		// Name the fallback here as well: on an early request (plugin activation) the SDK registry has not run
+		// yet. Guarded: a newer upstream SDK copy that wins the version contest may not carry our patch.
+		if ( method_exists( $api, 'set_fallback' ) ) {
+			$api::set_fallback( WB_GAM_LICENCE_HOST, 'https://wbcomdesigns.com' );
+		}
+		return ( new $api( WB_GAM_LICENCE_HOST ) )->make_request( $params );
+	}
+
+	/**
 	 * Store the preset key locally and register the site with the EDD store.
 	 *
 	 * The key is written first and always, so updates work even when the POST
@@ -89,25 +110,20 @@ final class LicenseActivator {
 		// Locked before the request, so a slow or failing store costs one try a day.
 		set_transient( self::RETRY_LOCK, 1, DAY_IN_SECONDS );
 
-		$response = wp_remote_post(
-			WB_GAM_EDD_STORE_URL,
+		// Through the shared helper: the updates host first, wbcomdesigns.com as fallback. The SDK adds url
+		// and environment. false = no host answered (or the SDK is not loaded); the lock above retries tomorrow.
+		$body = self::request(
 			array(
-				'timeout' => 5,
-				'body'    => array(
-					'edd_action' => 'activate_license',
-					'license'    => $preset_key,
-					'item_id'    => WB_GAM_EDD_ITEM_ID,
-					'url'        => home_url(),
-				),
+				'edd_action' => 'activate_license',
+				'license'    => $preset_key,
+				'item_id'    => WB_GAM_EDD_ITEM_ID,
 			)
 		);
-
-		if ( is_wp_error( $response ) ) {
+		if ( ! is_object( $body ) ) {
 			return;
 		}
 
-		$body  = json_decode( wp_remote_retrieve_body( $response ), true );
-		$reply = is_array( $body ) ? (string) ( $body['license'] ?? ( $body['error'] ?? '' ) ) : '';
+		$reply = (string) ( $body->license ?? ( $body->error ?? '' ) );
 		if ( in_array( $reply, self::FINAL_REPLIES, true ) ) {
 			// Usage tracking is left to the owner's own opt-in; it is not switched on here.
 			update_option( self::ACTIVATED_OPTION, $reply, false );

@@ -1649,6 +1649,31 @@ final class BadgeEngine {
 	}
 
 	/**
+	 * Badges no member on this site can earn, because every way to earn them goes through an action no
+	 * active integration registers (BuddyPress defaults on a site without BuddyPress). Members are not
+	 * shown these as "locked" forever; the owner still sees them in the Badge Library, marked.
+	 *
+	 * @return array<string, true> Badge ids, as keys.
+	 */
+	public static function unearnable_badge_ids(): array {
+		static $memo = null;
+		if ( null !== $memo ) {
+			return $memo;
+		}
+
+		$actions = Registry::get_actions();
+		$memo    = array();
+		foreach ( self::get_active_rules() as $rule ) {
+			$config = json_decode( (string) $rule['rule_config'], true );
+			if ( is_array( $config ) && ! BadgeRule::is_earnable( $config, $actions ) ) {
+				$memo[ (string) $rule['badge_id'] ] = true;
+			}
+		}
+
+		return $memo;
+	}
+
+	/**
 	 * Get all badge definitions with earned status for a user.
 	 *
 	 * Unearned badges are included (greyed-out in UI) so members can see
@@ -1691,6 +1716,15 @@ final class BadgeEngine {
 				);
 			}
 		}
+
+		// A badge nobody here can earn is left out, unless this member already holds it.
+		$unearnable = self::unearnable_badge_ids();
+		$defs       = array_values(
+			array_filter(
+				$defs,
+				static fn( array $def ): bool => ! isset( $unearnable[ $def['id'] ] ) || isset( $badge_data[ $def['id'] ] )
+			)
+		);
 
 		return array_map(
 			static function ( array $def ) use ( $badge_data, $now ): array {

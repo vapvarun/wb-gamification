@@ -165,6 +165,7 @@ Fair earning across every integration: removed content takes its points back, no
 * Improve  - Activity cards show as one compact card on BuddyPress, BuddyBoss and BuddyNext.
 * Improve  - Members with equal points share a rank on the Leaderboard, Top Members and Cohort Rank blocks.
 * Improve  - Eleven built-in actions that rewarded behaviour owners did not want to pay for were removed; past awards keep their names in history and reports.
+* Improve  - Badges that need a plugin the site does not run, such as BuddyPress badges on a site without BuddyPress, are hidden from members, and the Badge Library marks them Not earnable here.
 * Fix      - Deleting, trashing, rejecting or refunding content takes back the points it earned, and restoring it pays them back once.
 * Fix      - Acting on your own content (comments, votes, bookmarks, reactions, reviews) no longer earns points.
 * Fix      - Content created before this update, or copied by BuddyNext or WPMediaVerse, is never paid a second time.
@@ -182,6 +183,7 @@ Fair earning across every integration: removed content takes its points back, no
 * Fix      - Community challenges updated through the REST API keep their reward and action, and one created without dates runs for 14 days instead of never counting.
 * Fix      - Webhooks keep the active setting you choose, editing one no longer turns it back on, and a refused address says why.
 * Security - Webhook URLs that point at the server itself or a private network address are refused, and deliveries use WordPress's safe request so they cannot reach internal services.
+* Security - Update packages are checked against their release signature before WordPress installs them, and licence and update checks use the Wbcom update server with automatic fallback.
 * Dev      - New REST routes `GET|POST /members/{id}/preferences` and `GET /issuer` (OpenBadges 3.0 issuer profile).
 * Dev      - New action `wb_gam_render_member_prefs` prints a member's choices form; new filter `wb_gam_profile_publicly_visible`.
 

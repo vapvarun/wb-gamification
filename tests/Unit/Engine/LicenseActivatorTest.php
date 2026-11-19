@@ -20,7 +20,7 @@ use WBGam\Engine\LicenseActivator;
 
 defined( 'WB_GAM_LICENSE_PRESET_KEY' ) || define( 'WB_GAM_LICENSE_PRESET_KEY', 'preset' );
 defined( 'WB_GAM_EDD_ITEM_ID' ) || define( 'WB_GAM_EDD_ITEM_ID', 1 );
-defined( 'WB_GAM_EDD_STORE_URL' ) || define( 'WB_GAM_EDD_STORE_URL', 'https://store.test' );
+defined( 'WB_GAM_LICENCE_HOST' ) || define( 'WB_GAM_LICENCE_HOST', 'https://updates.example.test' );
 defined( 'DAY_IN_SECONDS' ) || define( 'DAY_IN_SECONDS', 86400 );
 
 #[CoversClass( LicenseActivator::class )]
@@ -41,7 +41,7 @@ class LicenseActivatorTest extends TestCase {
 	private int $posts = 0;
 
 	/**
-	 * What the store answers: a WP_Error stand-in (null) or a JSON body.
+	 * What the store answers: no host answered (null) or a JSON body.
 	 */
 	private ?string $reply = null;
 
@@ -50,6 +50,9 @@ class LicenseActivatorTest extends TestCase {
 	protected function setUp(): void {
 		parent::setUp();
 		Monkey\setUp();
+		require_once __DIR__ . '/Stubs/EddApiStub.php';
+		\EasyDigitalDownloads\Updater\Requests\API::$hosts    = array();
+		\EasyDigitalDownloads\Updater\Requests\API::$fallback = array();
 		$this->store = array();
 		$this->posts = 0;
 		$this->reply = null;
@@ -72,15 +75,12 @@ class LicenseActivatorTest extends TestCase {
 		);
 		Functions\when( 'wp_doing_ajax' )->alias( fn() => $this->ajax );
 		Functions\when( 'wp_doing_cron' )->justReturn( false );
-		Functions\when( 'home_url' )->justReturn( 'https://site.test' );
-		Functions\when( 'wp_remote_post' )->alias(
-			function () {
-				++$this->posts;
-				return null === $this->reply ? 'error' : array( 'body' => $this->reply );
-			}
-		);
-		Functions\when( 'is_wp_error' )->alias( static fn( $r ) => 'error' === $r );
-		Functions\when( 'wp_remote_retrieve_body' )->alias( static fn( $r ) => $r['body'] );
+		// The activator talks to the store only through LicenseActivator::request(), which reaches the SDK's
+		// API class. A stand-in API counts requests and answers like the store (object, or false: no host).
+		$GLOBALS['wbgam_test_licence'] = function () {
+			++$this->posts;
+			return null === $this->reply ? false : json_decode( $this->reply );
+		};
 	}
 
 	protected function tearDown(): void {
@@ -114,5 +114,15 @@ class LicenseActivatorTest extends TestCase {
 		$this->assertSame( 1, $this->posts );
 		$this->assertSame( 'invalid', $this->store['wb_gam_preset_activated'] );
 		$this->assertArrayNotHasKey( 'wb_gam_license_key_allow_tracking', $this->store );
+	}
+
+	#[Test]
+	public function activation_goes_to_the_updates_host_with_the_old_host_as_fallback(): void {
+		$this->reply = '{"license":"valid"}';
+		LicenseActivator::activate();
+
+		$this->assertSame( array( 'https://updates.example.test' ), \EasyDigitalDownloads\Updater\Requests\API::$hosts );
+		$this->assertSame( array( 'https://updates.example.test', 'https://wbcomdesigns.com' ), \EasyDigitalDownloads\Updater\Requests\API::$fallback );
+		$this->assertSame( 'valid', $this->store['wb_gam_preset_activated'] );
 	}
 }

@@ -78,26 +78,29 @@ require_once WB_GAM_PATH . 'libs/woocommerce/action-scheduler/action-scheduler.p
 // item_id 1662147 = WB Gamification on EDD.
 const WB_GAM_LICENSE_PRESET_KEY = 'wbcomfree6e2a9c1d7b4f3c8a0e5d9b2f1a7c6e11';
 const WB_GAM_EDD_ITEM_ID        = 1662147;
-const WB_GAM_EDD_STORE_URL      = 'https://wbcomdesigns.com';
+// Licence and update host; the SDK falls back to https://wbcomdesigns.com when it cannot be reached.
+const WB_GAM_LICENCE_HOST = 'https://updates.wbcomdesigns.com';
+
 
 add_action(
 	'edd_sl_sdk_registry',
 	static function ( $registry ): void {
 		$registry->register(
 			array(
-				'id'          => 'wb-gamification',
-				'url'         => WB_GAM_EDD_STORE_URL,
-				'item_id'     => WB_GAM_EDD_ITEM_ID,
-				'version'     => WB_GAM_VERSION,
-				'file'        => WB_GAM_FILE,
-				'license'     => WB_GAM_LICENSE_PRESET_KEY,
+				'id'           => 'wb-gamification',
+				'url'          => WB_GAM_LICENCE_HOST,
+				'fallback_url' => 'https://wbcomdesigns.com',
+				'item_id'      => WB_GAM_EDD_ITEM_ID,
+				'version'      => WB_GAM_VERSION,
+				'file'         => WB_GAM_FILE,
+				'license'      => WB_GAM_LICENSE_PRESET_KEY,
 				// The SDK ignores `license` and reads the key from an option,
 				// "{id}_license_key" by default. LicenseActivator stores the
 				// preset in `wb_gam_license_key`, so without this the SDK found
 				// no key and never built the updater: sites were not offered
 				// updates (8 of 382 checking, Oct 2026). Must match
 				// LicenseActivator::KEY_OPTION.
-				'option_name' => 'wb_gam_license_key',
+				'option_name'  => 'wb_gam_license_key',
 			)
 		);
 	}
@@ -122,7 +125,6 @@ add_action(
 // Licensing only ever authorises update downloads here — it gates no feature —
 // so a member-facing site keeps working exactly as before.
 if ( file_exists( WB_GAM_PATH . 'libs/easy-digital-downloads/edd-sl-sdk/edd-sl-sdk.php' )
-	&& file_exists( WB_GAM_PATH . 'libs/easy-digital-downloads/edd-sl-sdk/vendor/autoload.php' )
 	&& file_exists( WB_GAM_PATH . 'libs/easy-digital-downloads/edd-sl-sdk/src/Versions.php' ) ) {
 	require_once WB_GAM_PATH . 'libs/easy-digital-downloads/edd-sl-sdk/edd-sl-sdk.php';
 } elseif ( is_admin() ) {
@@ -133,6 +135,24 @@ if ( file_exists( WB_GAM_PATH . 'libs/easy-digital-downloads/edd-sl-sdk/edd-sl-s
 				. esc_html__( 'WB Gamification: the bundled licensing and update SDK is incomplete, so automatic updates are turned off. Reinstall the plugin from a complete package to restore them. Every other feature works normally.', 'wb-gamification' )
 				. '</p></div>';
 		}
+	);
+}
+
+// Package Signatures (libs/package-signatures, vapvarun/package-signatures): checks that each update package
+// carries the release signature before WordPress installs it. Warn mode: the result is logged (option
+// package_signatures_log) and the update installs either way. The product name is the STORE slug the release
+// is signed with, never the repo name.
+if ( file_exists( WB_GAM_PATH . 'libs/package-signatures/package-signatures.php' ) ) {
+	require_once WB_GAM_PATH . 'libs/package-signatures/package-signatures.php';
+	package_signatures_register(
+		array(
+			'product'  => 'wordpress-gamification-plugin',
+			'plugin'   => plugin_basename( WB_GAM_FILE ),
+			'hosts'    => array( 'wbcomdesigns.com', 'updates.wbcomdesigns.com' ),
+			'keys'     => array( 'wbcom-2026-1' => 'kr+2P1WqRbENpZw0BXZmwFnA2tMLi6MlHbBa6jB13U4=' ),
+			'mode'     => 'warn',
+			'fallback' => 'https://wbcomdesigns.com/package-signatures/{product}/{version}/',
+		)
 	);
 }
 

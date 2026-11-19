@@ -8662,7 +8662,7 @@
   },
   "generated": {
     "generator": "bin/refresh-manifest-live.php (header, rest, shortcodes) + wp-plugin-qa scanner (other sections)",
-    "at": "2026-11-19T04:58:40+00:00"
+    "at": "2026-11-19T05:27:45+00:00"
   },
   "rest": {
     "namespace": "wb-gamification/v1",

@@ -215,8 +215,8 @@ $wb_gam_rank       = (int) ( $wb_gam_rank_data['rank'] ?? 0 );
 $wb_gam_kudos_recv = (int) KudosEngine::get_received_count( $wb_gam_user_id );
 $wb_gam_badge_cnt  = count( $wb_gam_badges );
 
-global $wpdb;
-$wb_gam_total_defs = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}wb_gam_badge_defs" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+// The member's catalog: badges this site can award, plus any they already hold.
+$wb_gam_total_defs = count( BadgeEngine::get_all_badges_for_user( $wb_gam_user_id ) );
 $wb_gam_locked     = max( 0, $wb_gam_total_defs - $wb_gam_badge_cnt );
 
 $wb_gam_current_streak = (int) ( $wb_gam_streak['current_streak'] ?? 0 );

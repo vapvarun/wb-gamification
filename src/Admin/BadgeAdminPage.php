@@ -774,6 +774,7 @@ final class BadgeAdminPage {
 			<!-- Badge Grid -->
 			<?php if ( ! empty( $badges ) ) : ?>
 			<div class="wbgam-grid-4">
+				<?php $wb_gam_unearnable = \WBGam\Engine\BadgeEngine::unearnable_badge_ids(); ?>
 				<?php foreach ( $badges as $b ) : ?>
 					<?php
 					$config   = json_decode( $b['condition'] ?? '{}', true ) ?: array();
@@ -798,9 +799,15 @@ final class BadgeAdminPage {
 							);
 							?>
 						</p>
-						<span class="wbgam-pill <?php echo $has_rule ? 'wbgam-pill--active' : 'wbgam-pill--inactive'; ?>">
-							<?php echo $has_rule ? esc_html__( 'Auto-award', 'wb-gamification' ) : esc_html__( 'Manual', 'wb-gamification' ); ?>
-						</span>
+						<?php if ( isset( $wb_gam_unearnable[ $b['id'] ] ) ) : ?>
+							<span class="wbgam-pill wbgam-pill--inactive" title="<?php esc_attr_e( 'Its actions come from a plugin that is not active, so members cannot earn it and do not see it.', 'wb-gamification' ); ?>">
+								<?php esc_html_e( 'Not earnable here', 'wb-gamification' ); ?>
+							</span>
+						<?php else : ?>
+							<span class="wbgam-pill <?php echo $has_rule ? 'wbgam-pill--active' : 'wbgam-pill--inactive'; ?>">
+								<?php echo $has_rule ? esc_html__( 'Auto-award', 'wb-gamification' ) : esc_html__( 'Manual', 'wb-gamification' ); ?>
+							</span>
+						<?php endif; ?>
 					</a>
 				<?php endforeach; ?>
 			</div>

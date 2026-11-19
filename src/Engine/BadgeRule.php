@@ -271,6 +271,31 @@ final class BadgeRule {
 	}
 
 	/**
+	 * Can a member on THIS site ever meet this rule?
+	 *
+	 * An `action_count` condition names an action an integration registers; when that integration is not
+	 * active (a BuddyPress badge on a site without BuddyPress) the action never fires. A rule that needs ALL
+	 * its conditions is dead if any of them is; a rule that needs ANY is dead only when every one is. Other
+	 * condition types (points, level, streak, admin_awarded) are always reachable.
+	 *
+	 * @param array                $config  Decoded rule_config.
+	 * @param array<string, mixed> $actions Registered actions, keyed by action id (Registry::get_actions()).
+	 * @return bool
+	 */
+	public static function is_earnable( array $config, array $actions ): bool {
+		$conditions = self::conditions( $config );
+		if ( empty( $conditions ) ) {
+			return true;
+		}
+		$live = array_map(
+			static fn( array $c ): bool => 'action_count' !== ( $c['type'] ?? '' ) || isset( $actions[ (string) ( $c['action_id'] ?? '' ) ] ),
+			$conditions
+		);
+
+		return self::MATCH_ANY === self::match_mode( $config ) ? in_array( true, $live, true ) : ! in_array( false, $live, true );
+	}
+
+	/**
 	 * Does this badge award itself?
 	 *
 	 * The Badge Library prints one of two chips on every card -- AUTO-AWARD or MANUAL -- and that
