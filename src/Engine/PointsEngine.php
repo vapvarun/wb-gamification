@@ -623,7 +623,7 @@ final class PointsEngine {
 		}
 
 		$result = Transaction::run(
-			function () use ( $user_id, $amount, $event, $resolved_type ) {
+			function () use ( $user_id, $amount, $event, $resolved_type, $spend ) {
 				global $wpdb;
 
 				// Atomic balance check with row lock — prevents the TOCTOU
@@ -638,16 +638,21 @@ final class PointsEngine {
 				);
 
 				if ( $balance < $amount ) {
-					Log::warning(
-						'PointsEngine::debit — insufficient balance',
-						array(
-							'user_id'    => $user_id,
-							'action_id'  => $event->action_id,
-							'requested'  => $amount,
-							'balance'    => $balance,
-							'point_type' => $resolved_type,
-						)
-					);
+					// A member spending more than they hold is ordinary: the caller answers it (400
+					// wb_gam_redemption_insufficient). Only a system debit (refund, decay, admin
+					// deduction) that cannot be covered is worth a warning in the log.
+					if ( ! $spend ) {
+						Log::warning(
+							'PointsEngine::debit — insufficient balance',
+							array(
+								'user_id'    => $user_id,
+								'action_id'  => $event->action_id,
+								'requested'  => $amount,
+								'balance'    => $balance,
+								'point_type' => $resolved_type,
+							)
+						);
+					}
 					return array(
 						'success' => false,
 						'reason'  => 'insufficient_balance',

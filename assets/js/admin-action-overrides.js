@@ -30,7 +30,9 @@
 		const body  = {};
 		body[ field ] = ( typeof value === 'boolean' ) ? value : ( parseInt( value, 10 ) || 0 );
 
-		fetch( base + encodeURIComponent( actionId ) + '/overrides', {
+		const url = base + encodeURIComponent( actionId ) + '/overrides';
+		// _locale=user: replies in the admin's language (core apiFetch does the same); rest_url() may already carry ?rest_route=.
+		fetch( url + ( url.includes( '?' ) ? '&' : '?' ) + '_locale=user', {
 			signal: ( typeof AbortSignal !== 'undefined' && AbortSignal.timeout ) ? AbortSignal.timeout( 15000 ) : undefined,
 			method:      'POST',
 			credentials: 'same-origin',

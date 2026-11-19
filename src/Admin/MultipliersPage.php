@@ -72,7 +72,7 @@ final class MultipliersPage {
 	 * @return void
 	 */
 	public static function enqueue_assets( string $hook_suffix ): void {
-		if ( 'gamification_page_' . self::SLUG !== $hook_suffix ) {
+		if ( get_plugin_page_hookname( self::SLUG, 'wb-gamification' ) !== $hook_suffix ) {
 			return;
 		}
 		// The shared admin CSS stack (tokens/components/utilities) is already
@@ -156,6 +156,7 @@ final class MultipliersPage {
 				</div>
 				<div class="wbgam-card-body">
 					<form
+						method="post"
 						data-wb-gam-rest-form="wbGamMultiplierSettings"
 						data-wb-gam-rest-method="<?php echo $editing ? 'PATCH' : 'POST'; ?>"
 						data-wb-gam-rest-path="<?php echo esc_attr( $rest_path ); ?>"

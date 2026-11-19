@@ -53,7 +53,7 @@ final class ManualAwardPage {
 	 * @return void
 	 */
 	public static function enqueue_assets( string $hook_suffix ): void {
-		if ( 'gamification_page_wb-gamification-award' !== $hook_suffix ) {
+		if ( get_plugin_page_hookname( 'wb-gamification-award', 'wb-gamification' ) !== $hook_suffix ) {
 			return;
 		}
 		wp_enqueue_script(
@@ -187,6 +187,7 @@ final class ManualAwardPage {
 				</div>
 				<div class="wbgam-card-body">
 					<form
+						method="post"
 						data-wb-gam-rest-form="wbGamManualAwardSettings"
 						data-wb-gam-rest-method="POST"
 						data-wb-gam-rest-path="/points/award"
@@ -338,6 +339,7 @@ final class ManualAwardPage {
 				</div>
 				<div class="wbgam-card-body">
 					<form
+						method="post"
 						data-wb-gam-rest-form="wbGamManualAwardSettings"
 						data-wb-gam-rest-method="POST"
 						data-wb-gam-rest-path="/points/bulk"

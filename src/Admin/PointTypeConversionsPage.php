@@ -37,7 +37,7 @@ final class PointTypeConversionsPage {
 	 * @param string $hook_suffix Current admin page hook.
 	 */
 	public static function enqueue_assets( string $hook_suffix ): void {
-		if ( 'gamification_page_wb-gam-conversions' !== $hook_suffix ) {
+		if ( get_plugin_page_hookname( 'wb-gam-conversions', 'wb-gamification' ) !== $hook_suffix ) {
 			return;
 		}
 
@@ -233,7 +233,7 @@ final class PointTypeConversionsPage {
 					<h3 class="wbgam-card-title"><?php esc_html_e( 'Add Conversion Rule', 'wb-gamification' ); ?></h3>
 				</div>
 				<div class="wbgam-card-body">
-					<form data-wb-gam-rest-form="wbGamConversionsSettings"
+					<form method="post" data-wb-gam-rest-form="wbGamConversionsSettings"
 						data-wb-gam-rest-method="POST"
 						data-wb-gam-rest-path="/point-type-conversions"
 						data-wb-gam-rest-success-toast="<?php esc_attr_e( 'Conversion rule added.', 'wb-gamification' ); ?>"

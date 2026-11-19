@@ -73,8 +73,8 @@ final class CommunityChallengesPage {
 			$hook_suffix,
 			array(
 				'admin_page_wb-gam-community-challenges',
-				'gamification_page_wb-gam-community-challenges',
-				'gamification_page_wb-gam-challenges',
+				get_plugin_page_hookname( 'wb-gam-community-challenges', 'wb-gamification' ),
+				get_plugin_page_hookname( 'wb-gam-challenges', 'wb-gamification' ),
 			),
 			true
 		) || 'wb-gam-community-challenges' === $page;
@@ -248,6 +248,7 @@ final class CommunityChallengesPage {
 					$cc_rest_path = $editing ? '/community-challenges/' . (int) $editing : '/community-challenges';
 					?>
 					<form
+						method="post"
 						data-wb-gam-rest-form="wbGamCommunityChallengesSettings"
 						data-wb-gam-rest-method="POST"
 						data-wb-gam-rest-path="<?php echo esc_attr( $cc_rest_path ); ?>"

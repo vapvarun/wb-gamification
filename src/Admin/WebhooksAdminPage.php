@@ -54,7 +54,7 @@ final class WebhooksAdminPage {
 	 * @return void
 	 */
 	public static function enqueue_assets( string $hook_suffix ): void {
-		if ( 'gamification_page_wb-gam-webhooks' !== $hook_suffix ) {
+		if ( get_plugin_page_hookname( 'wb-gam-webhooks', 'wb-gamification' ) !== $hook_suffix ) {
 			return;
 		}
 		wp_enqueue_style(
@@ -185,6 +185,7 @@ final class WebhooksAdminPage {
 				</div>
 				<div class="wbgam-card-body">
 					<form
+						method="post"
 						class="wb-gam-webhook-form"
 						data-wb-gam-rest-form="wbGamWebhooksSettings"
 						data-wb-gam-rest-method="POST"

@@ -10,11 +10,11 @@
     "extension_hook_fired": "wb_gam_free_loaded"
   },
   "counts": {
-    "rest_endpoints": 78,
-    "rest_endpoint_method_rows": 115,
+    "rest_endpoints": 80,
+    "rest_endpoint_method_rows": 118,
     "ajax_handlers": 0,
     "admin_pages": 16,
-    "shortcodes": 17,
+    "shortcodes": 18,
     "blocks": 19,
     "tables": 26,
     "capabilities_declared": 10,

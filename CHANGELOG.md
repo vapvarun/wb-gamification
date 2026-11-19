@@ -47,6 +47,9 @@ Fair earning across every integration: removed content takes its points back, no
 - Private profiles hide their rank in the members directory, and an unknown and a private profile answer the same way.
 - Reward toasts wait while a dialog is open, and the moment card no longer blocks the page.
 - A block's own Card background and Accent stay readable in dark mode on Reign, BuddyX and BuddyX Pro, and list rows stay visible on their card.
+- Every Gamification admin screen works in a translated admin, and messages from the server show in the admin's own language.
+- Community challenges updated through the REST API keep their reward and action, and one created without dates runs for 14 days instead of never counting.
+- Webhooks keep the active setting you choose, editing one no longer turns it back on, and a refused address says why.
 
 ### Security
 

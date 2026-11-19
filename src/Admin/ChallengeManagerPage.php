@@ -58,7 +58,7 @@ final class ChallengeManagerPage {
 	 * @return void
 	 */
 	public static function enqueue_assets( string $hook_suffix ): void {
-		if ( 'gamification_page_wb-gam-challenges' !== $hook_suffix ) {
+		if ( get_plugin_page_hookname( 'wb-gam-challenges', 'wb-gamification' ) !== $hook_suffix ) {
 			return;
 		}
 		wp_enqueue_style(
@@ -191,6 +191,7 @@ final class ChallengeManagerPage {
 					$challenge_rest_path = $editing ? '/challenges/' . (int) $editing : '/challenges';
 					?>
 					<form
+						method="post"
 						data-wb-gam-rest-form="wbGamChallengesSettings"
 						data-wb-gam-rest-method="POST"
 						data-wb-gam-rest-path="<?php echo esc_attr( $challenge_rest_path ); ?>"

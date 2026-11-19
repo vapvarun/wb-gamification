@@ -227,7 +227,7 @@ For C / E steps without a journey pointer, walk the contract from scratch — ex
 
 ### A2 — Database schema in place
 **What to verify:** every custom table listed in `audit/manifest.json` `.tables` exists (count it there; it changes between releases) and the stored db-version option matches `DbUpgrader::TARGET`.
-**Acceptance:** `wp wb-gamification doctor` reports schema OK; `SHOW TABLES LIKE 'wp_wb_gam_%'` returns 22 rows.
+**Acceptance:** `wp wb-gamification doctor` reports schema OK; `SHOW TABLES LIKE 'wp_wb_gam_%'` returns as many rows as `counts.tables` in `audit/manifest.summary.json` (26 in 1.6.8).
 
 ### A3 — Setup wizard renders + auto-redirects
 **What to verify:** the activation hook arms a persistent redirect signal (option `wb_gam_pending_setup_redirect`); the next admin page load consumes it and lands the admin on **Gamification Setup**; the wizard renders 5 starter template cards; selecting one persists `wb_gam_template` and exits to the overview with `wb_gam_wizard_complete = true`. The wizard URL stays reachable after completion (admins can re-run with a different template).
@@ -250,7 +250,7 @@ For C / E steps without a journey pointer, walk the contract from scratch — ex
 ### B3 — Granular-cap registration on upgrade
 **What to verify:** the upgrade registers the eleven `wb_gam_*` capabilities on the administrator role (count as of 1.6.6; read `Capabilities` for the list).
 **Reference:** `plan/QA-MANUAL-TEST-PLAN.md` § Persona 6.4.
-**Acceptance:** `wp eval 'print_r((array) get_role("administrator")->capabilities);' | grep wb_gam_` returns 8 lines.
+**Acceptance:** `wp eval 'print_r((array) get_role("administrator")->capabilities);' | grep wb_gam_` returns one line per key of `Capabilities::CAPS` in `src/Engine/Capabilities.php` (11 in 1.6.8).
 
 ---
 
@@ -309,7 +309,7 @@ are page content, not the Hub: judge them under their own rows.
 
 ### C.member.kudos
 **Customer contract:** a member can give kudos to another member with a message; the recipient's kudos feed updates; a repeat kudos to the same receiver is still recorded but earns no points, and the giver's daily ceiling stops further sends.
-**Acceptance:** POST `/kudos` returns 201 with `id`; a second POST to the same receiver also returns 201 and the giver's ledger gains no second award; past the daily ceiling POST returns 429 with code `wb_gam_kudos_daily_ceiling`; the kudos block on the recipient's profile shows the new entry.
+**Acceptance:** POST `/kudos` returns 201 with `{success, receiver_id, daily_remaining, can_send}` (`daily_remaining` counts kudos that still earn points, default 5 a day); a second POST to the same receiver also returns 201 and the giver's ledger gains no second award; past the daily ceiling (default 50, filter `wb_gam_kudos_daily_ceiling`) POST returns 429 with code `wb_gam_kudos_daily_ceiling`; the kudos block on the recipient's profile shows the new entry.
 
 ### C.member.streak
 **Customer contract:** a member who completes a daily-tagged action on consecutive days sees their streak counter increment; missing a day resets the counter; the streak block renders the right state across desktop and mobile.
@@ -361,7 +361,7 @@ are page content, not the Hub: judge them under their own rows.
 ### C.member.toast-placement
 **Customer contract:** toast notifications appear in the corner configured by the admin in Settings > Realtime (option `wb_gam_toast_position`, default `bottom-right`); the slide-in direction is corner-aware; the toast names what the points were for and never overlaps the theme header.
 **Why it matters:** a toast pinned under a sticky header is invisible feedback; the placement setting lets each site avoid its own chrome.
-**Acceptance:** Settings > Realtime exposes a placement selector with the four documented positions (`top-right`, `top-center`, `bottom-right`, `bottom-left`); changing it persists `wb_gam_toast_position`; triggering a points award renders the toast in the selected corner with award context text and no overlap of the theme's top nav/sticky header (verify at the top-* positions specifically). The `wb_gam_toast_position` filter overrides the saved option. On pages where BuddyNext renders its own toast stack (`bnToast`), wb-gamification toasts join that stack and BuddyNext decides the corner; verify the setting on a page outside BuddyNext.
+**Acceptance:** Settings > Realtime exposes a placement selector with five positions (`bottom-center`, the default, plus `bottom-right`, `bottom-left`, `top-right`, `top-center`); changing it persists `wb_gam_toast_position`; triggering a points award renders the toast in the selected corner with award context text and no overlap of the theme's top nav/sticky header (verify at the top-* positions specifically). The `wb_gam_toast_position` filter overrides the saved option. On pages where BuddyNext renders its own toast stack (`bnToast`), wb-gamification toasts join that stack and BuddyNext decides the corner; verify the setting on a page outside BuddyNext.
 
 ### C.editor.granular-cap
 **Customer contract:** an editor with `wb_gam_manage_badges` granted can create/list badges via REST, but is gated out of every other admin endpoint (rules, webhooks, manual award, redemption-store admin).

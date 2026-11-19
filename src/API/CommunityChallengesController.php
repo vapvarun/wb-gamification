@@ -412,13 +412,20 @@ final class CommunityChallengesController extends WP_REST_Controller {
 	 * @return array<string, mixed>
 	 */
 	private function collect_payload( WP_REST_Request $request ): array {
+		// The engine counts only inside starts_at..ends_at, so a challenge saved without dates never
+		// counted anything. Default to the admin form's window: now, for 14 days (UTC, as stored).
+		$starts = (string) $request->get_param( 'starts_at' );
+		$starts = '' !== $starts ? $starts : gmdate( 'Y-m-d H:i:s' );
+		$ends   = (string) $request->get_param( 'ends_at' );
+		$ends   = '' !== $ends ? $ends : gmdate( 'Y-m-d H:i:s', (int) strtotime( $starts . ' UTC' ) + 14 * DAY_IN_SECONDS );
+
 		return array(
 			'title'         => (string) $request->get_param( 'title' ),
 			'description'   => (string) $request->get_param( 'description' ),
 			'target_count'  => max( 1, (int) $request->get_param( 'target_count' ) ),
 			'target_action' => (string) $request->get_param( 'target_action' ),
-			'starts_at'     => (string) $request->get_param( 'starts_at' ),
-			'ends_at'       => (string) $request->get_param( 'ends_at' ),
+			'starts_at'     => $starts,
+			'ends_at'       => $ends,
 			'bonus_points'  => max( 0, (int) $request->get_param( 'bonus_points' ) ),
 			'status'        => (string) ( $request->get_param( 'status' ) ?? 'active' ),
 		);
@@ -431,7 +438,7 @@ final class CommunityChallengesController extends WP_REST_Controller {
 	 * @return array<string, array<string, mixed>>
 	 */
 	private function save_args( bool $required_for_create = true ): array {
-		return array(
+		$args = array(
 			'title'         => array(
 				'required'          => $required_for_create,
 				'type'              => 'string',
@@ -448,8 +455,12 @@ final class CommunityChallengesController extends WP_REST_Controller {
 			),
 			'target_action' => array(
 				'type'              => 'string',
-				'default'           => '*',
-				'sanitize_callback' => 'sanitize_key',
+				// '*' is the "any action" sentinel the engine matches; sanitize_key() stripped it to '',
+				// which matches nothing. An empty value means "any action" too.
+				'sanitize_callback' => static function ( $value ): string {
+					$value = sanitize_key( (string) $value );
+					return '' === $value ? '*' : $value;
+				},
 				// Validate against the registered-actions list so admins can't
 				// save a challenge against an unknown action_id (challenge
 				// would silently never tick). Same enum-drift bug class as
@@ -475,7 +486,6 @@ final class CommunityChallengesController extends WP_REST_Controller {
 			),
 			'bonus_points'  => array(
 				'type'    => 'integer',
-				'default' => 100,
 				'minimum' => 0,
 			),
 			'status'        => array(
@@ -483,6 +493,15 @@ final class CommunityChallengesController extends WP_REST_Controller {
 				'enum' => array( 'active', 'inactive' ),
 			),
 		);
+
+		// Defaults belong to create only. On update WordPress would fill every unsent field with them,
+		// so a title-only update reset the reward to 100 and the action to "any".
+		if ( $required_for_create ) {
+			$args['target_action']['default'] = '*';
+			$args['bonus_points']['default']  = 100;
+		}
+
+		return $args;
 	}
 
 	/**

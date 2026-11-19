@@ -37,7 +37,7 @@ final class SubmissionsPage {
 	}
 
 	public static function enqueue_assets( string $hook ): void {
-		if ( 'gamification_page_wb-gam-submissions' !== $hook ) {
+		if ( get_plugin_page_hookname( 'wb-gam-submissions', 'wb-gamification' ) !== $hook ) {
 			return;
 		}
 		wp_enqueue_style(

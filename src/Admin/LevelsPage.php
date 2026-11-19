@@ -25,7 +25,7 @@ defined( 'ABSPATH' ) || exit;
 final class LevelsPage {
 
 	private const PAGE_SLUG = 'wb-gam-levels';
-	private const HOOK      = 'gamification_page_wb-gam-levels';
+	private const PAGE      = 'wb-gam-levels';
 
 	/**
 	 * Hook the admin menu and asset enqueue.
@@ -56,7 +56,7 @@ final class LevelsPage {
 	 * @return void
 	 */
 	public static function enqueue_assets( string $hook_suffix ): void {
-		if ( self::HOOK !== $hook_suffix ) {
+		if ( get_plugin_page_hookname( self::PAGE, 'wb-gamification' ) !== $hook_suffix ) {
 			return;
 		}
 		wp_enqueue_style(

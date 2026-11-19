@@ -42,7 +42,7 @@ final class ApiKeysPage {
 	 * @return void
 	 */
 	public static function enqueue_assets( string $hook_suffix ): void {
-		if ( 'gamification_page_wb-gam-api-keys' !== $hook_suffix ) {
+		if ( get_plugin_page_hookname( 'wb-gam-api-keys', 'wb-gamification' ) !== $hook_suffix ) {
 			return;
 		}
 

@@ -56,7 +56,7 @@ final class RedemptionStorePage {
 	 * @return void
 	 */
 	public static function enqueue_assets( string $hook_suffix ): void {
-		if ( 'gamification_page_wb-gam-redemption' !== $hook_suffix ) {
+		if ( get_plugin_page_hookname( 'wb-gam-redemption', 'wb-gamification' ) !== $hook_suffix ) {
 			return;
 		}
 		wp_enqueue_style(
@@ -211,6 +211,7 @@ final class RedemptionStorePage {
 					$reward_rest_path = $editing ? '/redemptions/items/' . (int) $editing : '/redemptions/items';
 					?>
 					<form
+						method="post"
 						data-wb-gam-rest-form="wbGamRedemptionSettings"
 						data-wb-gam-rest-method="POST"
 						data-wb-gam-rest-path="<?php echo esc_attr( $reward_rest_path ); ?>"

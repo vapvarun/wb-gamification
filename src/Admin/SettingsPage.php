@@ -2951,7 +2951,7 @@ final class SettingsPage {
 				<p class="wbgam-card-desc"><?php esc_html_e( 'Toggle which gamification events trigger an email to the member. All emails respect each member\'s notification preference and use the theme template at YOUR-THEME/wb-gamification/emails/{slug}.php when present.', 'wb-gamification' ); ?></p>
 			</div>
 			<div class="wbgam-card-body">
-				<form data-wb-gam-rest-form="wbGamSettings"
+				<form method="post" data-wb-gam-rest-form="wbGamSettings"
 					data-wb-gam-rest-method="POST"
 					data-wb-gam-rest-path="/settings/emails"
 					data-wb-gam-rest-success-toast="<?php esc_attr_e( 'Email settings saved.', 'wb-gamification' ); ?>"

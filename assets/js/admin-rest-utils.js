@@ -64,7 +64,10 @@
 		if ( ! settings || ! settings.restUrl || ! settings.nonce ) {
 			return { ok: false, status: 0, data: { message: i18n().notLoaded || 'This screen did not load completely. Reload the page and try again.' } };
 		}
-		const url = settings.restUrl.replace( /\/$/, '' ) + path;
+		// _locale=user: answer in the admin's own language, as core's apiFetch does. Without it REST
+		// replies (field errors included) come back in the site language.
+		const raw = settings.restUrl.replace( /\/$/, '' ) + path;
+		const url = raw + ( raw.includes( '?' ) ? '&' : '?' ) + '_locale=user';
 		const init = {
 			method: method,
 			credentials: 'same-origin',
@@ -233,9 +236,14 @@
 	 * @param {string} fallback Default text when no `data.message` is present.
 	 */
 	function toastError( result, fallback ) {
-		const msg = result && result.data && result.data.message
-			? result.data.message
-			: ( fallback || i18n().failed || 'Request failed.' );
+		const data = result && result.data;
+		// A rejected field carries its own reason under data.params; the top-level message is only
+		// core's "Invalid parameter(s): url".
+		const params = data && data.data && data.data.params;
+		const fieldMsg = params ? Object.values( params ).find( ( m ) => typeof m === 'string' && m ) : '';
+		const msg = fieldMsg || ( data && data.message
+			? data.message
+			: ( fallback || i18n().failed || 'Request failed.' ) );
 		toast( msg, 'error' );
 	}
 

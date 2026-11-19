@@ -31,7 +31,7 @@ defined( 'ABSPATH' ) || exit;
 final class KudosModerationPage {
 
 	private const PAGE_SLUG = 'wb-gamification-kudos-moderation';
-	private const HOOK      = 'gamification_page_wb-gamification-kudos-moderation';
+	private const PAGE      = 'wb-gamification-kudos-moderation';
 	private const PER_PAGE  = 20;
 
 	/**
@@ -74,7 +74,7 @@ final class KudosModerationPage {
 	 * @param string $hook_suffix Current admin page hook.
 	 */
 	public static function enqueue_assets( string $hook_suffix ): void {
-		if ( self::HOOK !== $hook_suffix ) {
+		if ( get_plugin_page_hookname( self::PAGE, 'wb-gamification' ) !== $hook_suffix ) {
 			return;
 		}
 

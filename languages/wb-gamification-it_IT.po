@@ -4,16 +4,16 @@ msgid ""
 msgstr ""
 "Project-Id-Version: WB Gamification 1.6.7\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/wb-gamification\n"
+"POT-Creation-Date: 2026-11-19T04:57:42+00:00\n"
+"PO-Revision-Date: 2026-11-18T07:34:55+00:00\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
+"Language: it\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=utf-8\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-18T07:34:55+00:00\n"
-"PO-Revision-Date: 2026-11-18T07:34:55+00:00\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: wb-gamification\n"
-"Language: it\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 #. Plugin Name of the plugin
@@ -1126,10 +1126,10 @@ msgstr "Kudos inviati"
 msgid "Top Actions by Points"
 msgstr "Azioni principali per punti"
 
-#: src/Admin/AnalyticsDashboard.php:255 src/Admin/ChallengeManagerPage.php:212
-#: src/Admin/ChallengeManagerPage.php:289
-#: src/Admin/CommunityChallengesPage.php:286
-#: src/Admin/CommunityChallengesPage.php:358 src/Admin/ImportPage.php:146
+#: src/Admin/AnalyticsDashboard.php:255 src/Admin/ChallengeManagerPage.php:213
+#: src/Admin/ChallengeManagerPage.php:290
+#: src/Admin/CommunityChallengesPage.php:287
+#: src/Admin/CommunityChallengesPage.php:359 src/Admin/ImportPage.php:146
 #: src/Admin/SettingsPage.php:1435 src/Admin/SettingsPage.php:2080
 #: src/Admin/SubmissionsPage.php:149 src/Engine/Privacy.php:306
 #: src/Engine/Privacy.php:515 src/Engine/Privacy.php:584
@@ -1137,7 +1137,7 @@ msgid "Action"
 msgstr "Azione"
 
 #: src/Admin/AnalyticsDashboard.php:256 src/Admin/AnalyticsDashboard.php:753
-#: src/Admin/WebhooksAdminPage.php:224 src/Admin/WebhooksAdminPage.php:263
+#: src/Admin/WebhooksAdminPage.php:225 src/Admin/WebhooksAdminPage.php:264
 #: src/Engine/Registry.php:495
 msgid "Events"
 msgstr "Eventi"
@@ -1152,7 +1152,7 @@ msgstr "Punti totali"
 msgid "Top Earners - Last %d Days"
 msgstr "Migliori per punti - Ultimi %d giorni"
 
-#: src/Admin/AnalyticsDashboard.php:297 src/Admin/BadgeAdminPage.php:491
+#: src/Admin/AnalyticsDashboard.php:297 src/Admin/BadgeAdminPage.php:492
 #: src/Admin/ImportPage.php:147 src/Admin/MembersPage.php:92
 #: src/Admin/SettingsPage.php:1153 src/Admin/SettingsPage.php:1363
 #: src/Admin/SetupWizard.php:681 src/BuddyPress/ProfileIntegration.php:74
@@ -1167,7 +1167,7 @@ msgstr "Punti"
 
 #: src/Admin/AnalyticsDashboard.php:302 src/Admin/AnalyticsDashboard.php:642
 #: src/Admin/AnalyticsDashboard.php:689 src/Admin/AnalyticsDashboard.php:846
-#: src/Admin/MembersPage.php:91 src/Admin/RedemptionStorePage.php:535
+#: src/Admin/MembersPage.php:91 src/Admin/RedemptionStorePage.php:536
 #: src/Admin/StreaksPage.php:167 src/Admin/SubmissionsPage.php:148
 #: src/CLI/EmailCommand.php:85
 msgid "Member"
@@ -1295,11 +1295,11 @@ msgid "Tries"
 msgstr "Tentativi"
 
 #: src/Admin/AnalyticsDashboard.php:849 src/Admin/ApiKeysPage.php:223
-#: src/Admin/ChallengeManagerPage.php:292
-#: src/Admin/CommunityChallengesPage.php:361
+#: src/Admin/ChallengeManagerPage.php:293
+#: src/Admin/CommunityChallengesPage.php:362
 #: src/Admin/KudosModerationPage.php:348 src/Admin/MembersPage.php:95
-#: src/Admin/MultipliersPage.php:216 src/Admin/RedemptionStorePage.php:371
-#: src/Admin/RedemptionStorePage.php:415 src/Admin/RedemptionStorePage.php:539
+#: src/Admin/MultipliersPage.php:217 src/Admin/RedemptionStorePage.php:372
+#: src/Admin/RedemptionStorePage.php:416 src/Admin/RedemptionStorePage.php:540
 #: src/Admin/SettingsPage.php:3045 src/Engine/Privacy.php:527
 msgid "Status"
 msgstr "Stato"
@@ -1309,13 +1309,13 @@ msgid "Last attempt"
 msgstr "Ultimo tentativo"
 
 #: src/Admin/AnalyticsDashboard.php:851 src/Admin/ApiKeysPage.php:224
-#: src/Admin/ChallengeManagerPage.php:294
-#: src/Admin/CommunityChallengesPage.php:363
+#: src/Admin/ChallengeManagerPage.php:295
+#: src/Admin/CommunityChallengesPage.php:364
 #: src/Admin/KudosModerationPage.php:349 src/Admin/MembersPage.php:96
-#: src/Admin/MultipliersPage.php:217 src/Admin/PointTypeConversionsPage.php:164
-#: src/Admin/PointTypesPage.php:132 src/Admin/RedemptionStorePage.php:416
-#: src/Admin/RedemptionStorePage.php:540 src/Admin/StreaksPage.php:174
-#: src/Admin/WebhooksAdminPage.php:266 src/Blocks/year-recap/render.php:200
+#: src/Admin/MultipliersPage.php:218 src/Admin/PointTypeConversionsPage.php:164
+#: src/Admin/PointTypesPage.php:132 src/Admin/RedemptionStorePage.php:417
+#: src/Admin/RedemptionStorePage.php:541 src/Admin/StreaksPage.php:174
+#: src/Admin/WebhooksAdminPage.php:267 src/Blocks/year-recap/render.php:195
 msgid "Actions"
 msgstr "Azioni"
 
@@ -1370,11 +1370,11 @@ msgid "peak %s"
 msgstr "picco %s"
 
 #: src/Admin/ApiKeysPage.php:78 src/Admin/ApiKeysPage.php:240
-#: src/Admin/ChallengeManagerPage.php:365 src/Admin/KudosModerationPage.php:227
-#: src/Admin/KudosModerationPage.php:367 src/Admin/MultipliersPage.php:245
-#: src/Admin/RedemptionStorePage.php:375 src/Admin/RedemptionStorePage.php:468
-#: src/Admin/SettingsPage.php:3055 src/Admin/WebhooksAdminPage.php:264
-#: src/Admin/WebhooksAdminPage.php:283
+#: src/Admin/ChallengeManagerPage.php:366 src/Admin/KudosModerationPage.php:227
+#: src/Admin/KudosModerationPage.php:367 src/Admin/MultipliersPage.php:246
+#: src/Admin/RedemptionStorePage.php:376 src/Admin/RedemptionStorePage.php:469
+#: src/Admin/SettingsPage.php:3055 src/Admin/WebhooksAdminPage.php:265
+#: src/Admin/WebhooksAdminPage.php:284
 msgid "Active"
 msgstr "Attiva"
 
@@ -1389,12 +1389,12 @@ msgid "Revoke"
 msgstr "Revoca"
 
 #: src/Admin/ApiKeysPage.php:81 src/Admin/ApiKeysPage.php:249
-#: src/Admin/ChallengeManagerPage.php:336
-#: src/Admin/CommunityChallengesPage.php:420 src/Admin/LevelsPage.php:94
-#: src/Admin/LevelsPage.php:186 src/Admin/MultipliersPage.php:270
+#: src/Admin/ChallengeManagerPage.php:337
+#: src/Admin/CommunityChallengesPage.php:421 src/Admin/LevelsPage.php:94
+#: src/Admin/LevelsPage.php:186 src/Admin/MultipliersPage.php:271
 #: src/Admin/PointTypeConversionsPage.php:218 src/Admin/PointTypesPage.php:205
-#: src/Admin/RedemptionStorePage.php:486 src/Admin/SettingsPage.php:2112
-#: src/Admin/WebhooksAdminPage.php:301
+#: src/Admin/RedemptionStorePage.php:487 src/Admin/SettingsPage.php:2112
+#: src/Admin/WebhooksAdminPage.php:302
 msgid "Delete"
 msgstr "Elimina"
 
@@ -1542,7 +1542,7 @@ msgstr "Chiavi attive"
 msgid "Key (prefix)"
 msgstr "Chiave (prefisso)"
 
-#: src/Admin/ApiKeysPage.php:221 src/Admin/WebhooksAdminPage.php:265
+#: src/Admin/ApiKeysPage.php:221 src/Admin/WebhooksAdminPage.php:266
 msgid "Created"
 msgstr "Creata"
 
@@ -1567,17 +1567,17 @@ msgid "Use as Icon"
 msgstr "Usa come icona"
 
 #: src/Admin/BadgeAdminPage.php:108 src/Admin/BadgeAdminPage.php:303
-#: src/Admin/BadgeAdminPage.php:421
+#: src/Admin/BadgeAdminPage.php:422
 msgid "Badge saved."
 msgstr "Distintivo salvato."
 
-#: src/Admin/BadgeAdminPage.php:109 src/Admin/BadgeAdminPage.php:422
+#: src/Admin/BadgeAdminPage.php:109 src/Admin/BadgeAdminPage.php:423
 msgid "Failed to save the badge."
 msgstr "Impossibile salvare il distintivo."
 
-#: src/Admin/BadgeAdminPage.php:134 src/Admin/BadgeAdminPage.php:750
+#: src/Admin/BadgeAdminPage.php:134 src/Admin/BadgeAdminPage.php:752
 #: src/Admin/KudosModerationPage.php:121 src/Admin/ManualAwardPage.php:102
-#: src/Admin/ManualAwardPage.php:237
+#: src/Admin/ManualAwardPage.php:238
 msgid "Type at least 2 characters to search"
 msgstr "Digita almeno 2 caratteri per cercare"
 
@@ -1607,7 +1607,7 @@ msgid "Badge Library"
 msgstr "Libreria distintivi"
 
 #: src/Admin/BadgeAdminPage.php:154 src/Admin/MembersPage.php:94
-#: src/Admin/SettingsPage.php:1172 src/Blocks/year-recap/render.php:208
+#: src/Admin/SettingsPage.php:1172 src/Blocks/year-recap/render.php:203
 #: src/BuddyPress/ProfileIntegration.php:73
 #: src/Blocks/user-status-bar/edit.js:79
 msgid "Badges"
@@ -1682,7 +1682,7 @@ msgstr "punti in un"
 msgid "Remove this condition"
 msgstr "Rimuovi questa condizione"
 
-#: src/Admin/BadgeAdminPage.php:304 src/Admin/BadgeAdminPage.php:681
+#: src/Admin/BadgeAdminPage.php:304 src/Admin/BadgeAdminPage.php:682
 msgid "Badge deleted."
 msgstr "Distintivo eliminato."
 
@@ -1709,281 +1709,281 @@ msgstr "Torna ai distintivi"
 msgid "Edit Badge"
 msgstr "Modifica distintivo"
 
-#: src/Admin/BadgeAdminPage.php:428 src/Admin/BadgeAdminPage.php:437
+#: src/Admin/BadgeAdminPage.php:429 src/Admin/BadgeAdminPage.php:438
 msgid "Badge ID"
 msgstr "ID distintivo"
 
-#: src/Admin/BadgeAdminPage.php:432
+#: src/Admin/BadgeAdminPage.php:433
 msgid "Lowercase letters, numbers, underscores only."
 msgstr "Solo lettere minuscole, numeri e trattini bassi."
 
-#: src/Admin/BadgeAdminPage.php:440
+#: src/Admin/BadgeAdminPage.php:441
 msgid "ID cannot be changed after creation."
 msgstr "L'ID non può essere modificato dopo la creazione."
 
-#: src/Admin/BadgeAdminPage.php:445 src/Admin/RedemptionStorePage.php:224
-#: src/Admin/RedemptionStorePage.php:411
+#: src/Admin/BadgeAdminPage.php:446 src/Admin/RedemptionStorePage.php:225
+#: src/Admin/RedemptionStorePage.php:412
 msgid "Name"
 msgstr "Nome"
 
-#: src/Admin/BadgeAdminPage.php:448
+#: src/Admin/BadgeAdminPage.php:449
 msgid "Display name shown to members when they earn this badge."
 msgstr "Nome visualizzato ai membri quando ottengono questo distintivo."
 
-#: src/Admin/BadgeAdminPage.php:452 src/Admin/CommunityChallengesPage.php:270
+#: src/Admin/BadgeAdminPage.php:453 src/Admin/CommunityChallengesPage.php:271
 #: src/Admin/PointTypesPage.php:129 src/Admin/PointTypesPage.php:256
-#: src/Admin/RedemptionStorePage.php:233 src/Admin/SettingsPage.php:3046
+#: src/Admin/RedemptionStorePage.php:234 src/Admin/SettingsPage.php:3046
 #: src/Engine/Privacy.php:352
 msgid "Description"
 msgstr "Descrizione"
 
-#: src/Admin/BadgeAdminPage.php:455
+#: src/Admin/BadgeAdminPage.php:456
 msgid "Explains what this badge is for. Shown on badge cards and share pages."
 msgstr "Spiega a cosa serve questo distintivo. Viene mostrata sulle schede dei distintivi e nelle pagine di condivisione."
 
-#: src/Admin/BadgeAdminPage.php:459 src/Admin/PointTypesPage.php:262
+#: src/Admin/BadgeAdminPage.php:460 src/Admin/PointTypesPage.php:262
 msgid "Icon"
 msgstr "Icona"
 
 #. translators: %s: badge name.
-#: src/Admin/BadgeAdminPage.php:463
+#: src/Admin/BadgeAdminPage.php:464
 #, php-format
 msgid "%s icon"
 msgstr "Icona: %s"
 
 #. translators: %s: badge name.
-#: src/Admin/BadgeAdminPage.php:463 src/Engine/Privacy.php:348
+#: src/Admin/BadgeAdminPage.php:464 src/Engine/Privacy.php:348
 msgid "Badge"
 msgstr "Distintivo"
 
-#: src/Admin/BadgeAdminPage.php:470
+#: src/Admin/BadgeAdminPage.php:471
 msgid "Choose Icon"
 msgstr "Scegli icona"
 
-#: src/Admin/BadgeAdminPage.php:474 src/Admin/BadgeAdminPage.php:478
+#: src/Admin/BadgeAdminPage.php:475 src/Admin/BadgeAdminPage.php:479
 msgid "Remove"
 msgstr "Rimuovi"
 
-#: src/Admin/BadgeAdminPage.php:481
+#: src/Admin/BadgeAdminPage.php:482
 msgid "Upload an image from the Media Library. Recommended: 128x128px PNG with transparent background."
 msgstr "Carica un'immagine dalla Libreria multimediale. Consigliato: PNG 128x128px con sfondo trasparente."
 
-#: src/Admin/BadgeAdminPage.php:485
+#: src/Admin/BadgeAdminPage.php:486
 msgid "Category"
 msgstr "Categoria"
 
-#: src/Admin/BadgeAdminPage.php:490 src/Engine/Registry.php:483
+#: src/Admin/BadgeAdminPage.php:491 src/Engine/Registry.php:483
 msgid "General"
 msgstr "Generale"
 
-#: src/Admin/BadgeAdminPage.php:492 src/Engine/Registry.php:484
+#: src/Admin/BadgeAdminPage.php:493 src/Engine/Registry.php:484
 msgid "WordPress"
 msgstr "WordPress"
 
-#: src/Admin/BadgeAdminPage.php:493 src/Admin/SettingsPage.php:718
+#: src/Admin/BadgeAdminPage.php:494 src/Admin/SettingsPage.php:718
 #: src/Admin/SetupWizard.php:559 src/Engine/Registry.php:498
 msgid "BuddyPress"
 msgstr "BuddyPress"
 
-#: src/Admin/BadgeAdminPage.php:494
+#: src/Admin/BadgeAdminPage.php:495
 msgid "Special"
 msgstr "Speciale"
 
-#: src/Admin/BadgeAdminPage.php:503
+#: src/Admin/BadgeAdminPage.php:504
 msgid "Group badges by category for organized display in the frontend badge showcase."
 msgstr "Raggruppa i distintivi per categoria per una visualizzazione ordinata nella vetrina dei distintivi front-end."
 
-#: src/Admin/BadgeAdminPage.php:507
+#: src/Admin/BadgeAdminPage.php:508
 msgid "Is Credential"
 msgstr "Credenziale"
 
-#: src/Admin/BadgeAdminPage.php:511
+#: src/Admin/BadgeAdminPage.php:512
 msgid "Mark as shareable credential (LinkedIn, OpenBadges)"
 msgstr "Contrassegna come credenziale condivisibile (LinkedIn, OpenBadges)"
 
-#: src/Admin/BadgeAdminPage.php:513
+#: src/Admin/BadgeAdminPage.php:514
 msgid "Enable OpenBadges 3.0 verifiable credential issuance. Members can share a verified badge URL."
 msgstr "Abilita il rilascio di credenziali verificabili OpenBadges 3.0. I membri possono condividere l'URL di un distintivo verificato."
 
-#: src/Admin/BadgeAdminPage.php:517
+#: src/Admin/BadgeAdminPage.php:518
 msgid "Valid for (days)"
 msgstr "Valido per (giorni)"
 
-#: src/Admin/BadgeAdminPage.php:521
+#: src/Admin/BadgeAdminPage.php:522
 msgid "Days the badge stays valid after a member earns it, then it expires and stops counting. Leave blank so it never expires."
 msgstr "Giorni di validità del distintivo dopo che un membro lo ottiene. Trascorsi questi giorni, il distintivo scade e smette di essere conteggiato. Lascia vuoto se non vuoi che scada mai."
 
-#: src/Admin/BadgeAdminPage.php:525
+#: src/Admin/BadgeAdminPage.php:526
 msgid "Closes at"
 msgstr "Termine"
 
-#: src/Admin/BadgeAdminPage.php:538
+#: src/Admin/BadgeAdminPage.php:539
 msgid "Stop awarding this badge after this date. Leave blank for no cutoff."
 msgstr "Smetti di assegnare questo distintivo dopo questa data. Lascia vuoto per nessun limite."
 
 #. translators: %s: WordPress site timezone label
-#: src/Admin/BadgeAdminPage.php:542
+#: src/Admin/BadgeAdminPage.php:543
 #, php-format
 msgid "(Site timezone: %s)"
 msgstr "(Fuso orario del sito: %s)"
 
-#: src/Admin/BadgeAdminPage.php:550
+#: src/Admin/BadgeAdminPage.php:551
 msgid "Max earners"
 msgstr "Limite membri"
 
-#: src/Admin/BadgeAdminPage.php:554
+#: src/Admin/BadgeAdminPage.php:555
 msgid "Stop awarding after this many members earn it. Leave blank for unlimited."
 msgstr "Smetti di assegnare dopo che questo numero di membri lo ha ottenuto. Lascia vuoto per nessun limite."
 
-#: src/Admin/BadgeAdminPage.php:559
+#: src/Admin/BadgeAdminPage.php:560
 msgid "Auto-Award Conditions"
 msgstr "Condizioni di assegnazione automatica"
 
-#: src/Admin/BadgeAdminPage.php:587
+#: src/Admin/BadgeAdminPage.php:588
 msgid "Award this badge when the member matches"
 msgstr "Assegna questo distintivo quando il membro soddisfa"
 
-#: src/Admin/BadgeAdminPage.php:591
+#: src/Admin/BadgeAdminPage.php:592
 msgid "ALL of these"
 msgstr "TUTTE queste"
 
-#: src/Admin/BadgeAdminPage.php:595
+#: src/Admin/BadgeAdminPage.php:596
 msgid "ANY of these"
 msgstr "QUALSIASI di queste"
 
-#: src/Admin/BadgeAdminPage.php:611
+#: src/Admin/BadgeAdminPage.php:612
 msgid "+ Add condition"
 msgstr "+ Aggiungi condizione"
 
-#: src/Admin/BadgeAdminPage.php:614
+#: src/Admin/BadgeAdminPage.php:615
 msgid "Choose \"Admin awarded\" for a badge you grant by hand. Any other condition awards it automatically."
 msgstr "Scegli «Assegnato dall'amministratore» per un distintivo che assegni manualmente. Qualsiasi altra condizione lo assegna automaticamente."
 
-#: src/Admin/BadgeAdminPage.php:632
+#: src/Admin/BadgeAdminPage.php:633
 msgid "Also award this badge to members who already qualify"
 msgstr "Assegna anche questo distintivo ai membri che già soddisfano i requisiti"
 
-#: src/Admin/BadgeAdminPage.php:635
+#: src/Admin/BadgeAdminPage.php:636
 msgid "Off by default. Leave it off and the badge is earned from now on. Turn it on and every member who already meets these conditions is awarded it in the background - which on a large community can be a lot of people, and a lot of notifications."
 msgstr "Disattivata per impostazione predefinita. Se la lasci disattivata, il distintivo viene ottenuto solo da ora in poi. Se la attivi, ogni membro che soddisfa già queste condizioni riceverà il distintivo in background: in una community grande potrebbero essere moltissimi membri e moltissime notifiche."
 
 #. translators: 1: members checked, 2: total members, 3: badges awarded
-#: src/Admin/BadgeAdminPage.php:643
+#: src/Admin/BadgeAdminPage.php:644
 #, php-format
 msgid "Last retroactive award: checked %1$s of %2$s members, awarded %3$s."
 msgstr "Ultima assegnazione retroattiva: controllati %1$s membri su %2$s, assegnati %3$s."
 
-#: src/Admin/BadgeAdminPage.php:650
+#: src/Admin/BadgeAdminPage.php:651
 msgid "Still running."
 msgstr "Ancora in esecuzione."
 
-#: src/Admin/BadgeAdminPage.php:671
+#: src/Admin/BadgeAdminPage.php:672
 msgid "Create Badge"
 msgstr "Crea distintivo"
 
-#: src/Admin/BadgeAdminPage.php:671 src/Admin/SettingsPage.php:1663
+#: src/Admin/BadgeAdminPage.php:672 src/Admin/SettingsPage.php:1663
 #: src/Admin/SettingsPage.php:2247
 msgid "Save Changes"
 msgstr "Salva modifiche"
 
-#: src/Admin/BadgeAdminPage.php:680
+#: src/Admin/BadgeAdminPage.php:681
 msgid "Delete this badge and all earned records?"
 msgstr "Eliminare questo distintivo e tutte le assegnazioni registrate?"
 
-#: src/Admin/BadgeAdminPage.php:682
+#: src/Admin/BadgeAdminPage.php:683
 msgid "Failed to delete badge."
 msgstr "Impossibile eliminare il distintivo."
 
-#: src/Admin/BadgeAdminPage.php:685
+#: src/Admin/BadgeAdminPage.php:686
 msgid "Delete Badge"
 msgstr "Elimina distintivo"
 
-#: src/Admin/BadgeAdminPage.php:709
+#: src/Admin/BadgeAdminPage.php:710
 msgid "Award this badge to a user"
 msgstr "Assegna questo distintivo a un utente"
 
-#: src/Admin/BadgeAdminPage.php:716
+#: src/Admin/BadgeAdminPage.php:717
 msgid "Manually grant this badge to a specific member. Useful for one-off recognition outside the auto-award rule."
 msgstr "Assegna manualmente questo distintivo a un membro specifico. Utile per riconoscimenti una tantum al di fuori della regola di assegnazione automatica."
 
-#: src/Admin/BadgeAdminPage.php:718
+#: src/Admin/BadgeAdminPage.php:719
 msgid "This badge is admin-awarded only. Use the form below to grant it to a specific member."
 msgstr "Questo distintivo può essere assegnato solo dall'amministratore. Usa il modulo qui sotto per assegnarlo a un membro specifico."
 
-#: src/Admin/BadgeAdminPage.php:726
+#: src/Admin/BadgeAdminPage.php:728
 msgid "Badge awarded."
 msgstr "Distintivo assegnato."
 
-#: src/Admin/BadgeAdminPage.php:727
+#: src/Admin/BadgeAdminPage.php:729
 msgid "Failed to award badge."
 msgstr "Impossibile assegnare il distintivo."
 
-#: src/Admin/BadgeAdminPage.php:733 src/Admin/ImportPage.php:145
-#: src/Admin/ManualAwardPage.php:200 src/Admin/ManualAwardPage.php:388
+#: src/Admin/BadgeAdminPage.php:735 src/Admin/ImportPage.php:145
+#: src/Admin/ManualAwardPage.php:201 src/Admin/ManualAwardPage.php:390
 msgid "User"
 msgstr "Utente"
 
-#: src/Admin/BadgeAdminPage.php:743 src/Admin/KudosModerationPage.php:258
-#: src/Admin/KudosModerationPage.php:276 src/Admin/ManualAwardPage.php:230
+#: src/Admin/BadgeAdminPage.php:745 src/Admin/KudosModerationPage.php:258
+#: src/Admin/KudosModerationPage.php:276 src/Admin/ManualAwardPage.php:231
 msgid "Search by name, username or email..."
 msgstr "Cerca per nome, nome utente o email..."
 
-#: src/Admin/BadgeAdminPage.php:747 src/Admin/ManualAwardPage.php:234
+#: src/Admin/BadgeAdminPage.php:749 src/Admin/ManualAwardPage.php:235
 msgid "Matching members"
 msgstr "Membri corrispondenti"
 
-#: src/Admin/BadgeAdminPage.php:754
+#: src/Admin/BadgeAdminPage.php:756
 msgid "Member who will receive the badge."
 msgstr "Il membro che riceverà il distintivo."
 
-#: src/Admin/BadgeAdminPage.php:760
+#: src/Admin/BadgeAdminPage.php:762
 msgid "Award Badge"
 msgstr "Assegna distintivo"
 
 #. translators: %s: number of members who earned this badge
-#: src/Admin/BadgeAdminPage.php:794
+#: src/Admin/BadgeAdminPage.php:796
 #, php-format
 msgid "%s earned"
 msgstr "Ottenuto da %s membri"
 
-#: src/Admin/BadgeAdminPage.php:800
+#: src/Admin/BadgeAdminPage.php:802
 msgid "Auto-award"
 msgstr "Automatico"
 
-#: src/Admin/BadgeAdminPage.php:800
+#: src/Admin/BadgeAdminPage.php:802
 msgid "Manual"
 msgstr "Manuale"
 
-#: src/Admin/BadgeAdminPage.php:808
+#: src/Admin/BadgeAdminPage.php:810
 msgid "No badges yet"
 msgstr "Nessun distintivo ancora"
 
-#: src/Admin/BadgeAdminPage.php:809
+#: src/Admin/BadgeAdminPage.php:811
 msgid "Badges reward members for milestones, actions, and achievements. Create your first badge to get started."
 msgstr "I distintivi premiano i membri per traguardi, azioni e risultati. Crea il tuo primo distintivo per iniziare."
 
-#: src/Admin/BadgeAdminPage.php:812
+#: src/Admin/BadgeAdminPage.php:814
 msgid "Create your first badge"
 msgstr "Crea il tuo primo distintivo"
 
 #: src/Admin/ChallengeManagerPage.php:91 src/Admin/ChallengeManagerPage.php:152
-#: src/Admin/ChallengeManagerPage.php:197
+#: src/Admin/ChallengeManagerPage.php:198
 msgid "Challenge saved."
 msgstr "Sfida salvata."
 
-#: src/Admin/ChallengeManagerPage.php:92 src/Admin/ChallengeManagerPage.php:198
+#: src/Admin/ChallengeManagerPage.php:92 src/Admin/ChallengeManagerPage.php:199
 msgid "Failed to save the challenge."
 msgstr "Impossibile salvare la sfida."
 
 #: src/Admin/ChallengeManagerPage.php:106
 #: src/Admin/ChallengeManagerPage.php:107 src/Admin/SettingsPage.php:1167
-#: src/Blocks/hub/render.php:355 src/Blocks/year-recap/render.php:204
+#: src/Blocks/hub/render.php:355 src/Blocks/year-recap/render.php:199
 #: src/Engine/ModuleToggles.php:98
 msgid "Challenges"
 msgstr "Sfide"
 
 #: src/Admin/ChallengeManagerPage.php:153
-#: src/Admin/ChallengeManagerPage.php:332
+#: src/Admin/ChallengeManagerPage.php:333
 msgid "Challenge deleted."
 msgstr "Sfida eliminata."
 
@@ -2020,133 +2020,133 @@ msgid "Edit Challenge"
 msgstr "Modifica sfida"
 
 #: src/Admin/ChallengeManagerPage.php:186
-#: src/Admin/ChallengeManagerPage.php:265
-#: src/Admin/CommunityChallengesPage.php:334
+#: src/Admin/ChallengeManagerPage.php:266
+#: src/Admin/CommunityChallengesPage.php:335
 msgid "Create Challenge"
 msgstr "Crea sfida"
 
-#: src/Admin/ChallengeManagerPage.php:203
-#: src/Admin/ChallengeManagerPage.php:288
-#: src/Admin/CommunityChallengesPage.php:261
-#: src/Admin/CommunityChallengesPage.php:357
+#: src/Admin/ChallengeManagerPage.php:204
+#: src/Admin/ChallengeManagerPage.php:289
+#: src/Admin/CommunityChallengesPage.php:262
+#: src/Admin/CommunityChallengesPage.php:358
 msgid "Title"
 msgstr "Titolo"
 
-#: src/Admin/ChallengeManagerPage.php:207
+#: src/Admin/ChallengeManagerPage.php:208
 msgid "e.g. Post 10 photos this week"
 msgstr "Es. Pubblica 10 foto questa settimana"
 
-#: src/Admin/ChallengeManagerPage.php:208
+#: src/Admin/ChallengeManagerPage.php:209
 msgid "A short, descriptive name shown to members on the challenge card."
 msgstr "Un nome breve e descrittivo mostrato ai membri sulla scheda della sfida."
 
-#: src/Admin/ChallengeManagerPage.php:221
-#: src/Admin/CommunityChallengesPage.php:298
+#: src/Admin/ChallengeManagerPage.php:222
+#: src/Admin/CommunityChallengesPage.php:299
 msgid "No actions registered"
 msgstr "Nessuna azione registrata"
 
-#: src/Admin/ChallengeManagerPage.php:224
+#: src/Admin/ChallengeManagerPage.php:225
 msgid "The user action that counts toward completing this challenge (e.g. publish a post, upload media)."
 msgstr "L'azione dell'utente che conta per completare questa sfida (ad es. pubblicare un post, caricare contenuti multimediali)."
 
-#: src/Admin/ChallengeManagerPage.php:228
-#: src/Admin/CommunityChallengesPage.php:278
+#: src/Admin/ChallengeManagerPage.php:229
+#: src/Admin/CommunityChallengesPage.php:279
 msgid "Target Count"
 msgstr "Numero obiettivo"
 
-#: src/Admin/ChallengeManagerPage.php:232
+#: src/Admin/ChallengeManagerPage.php:233
 msgid "How many times the member must perform the action to complete the challenge."
 msgstr "Quante volte il membro deve eseguire l'azione per completare la sfida."
 
-#: src/Admin/ChallengeManagerPage.php:236
-#: src/Admin/CommunityChallengesPage.php:323
+#: src/Admin/ChallengeManagerPage.php:237
+#: src/Admin/CommunityChallengesPage.php:324
 msgid "Bonus Points"
 msgstr "Punti bonus"
 
-#: src/Admin/ChallengeManagerPage.php:240
+#: src/Admin/ChallengeManagerPage.php:241
 msgid "Extra points awarded when the challenge is completed. Set to 0 for no bonus."
 msgstr "Punti extra assegnati al completamento della sfida. Imposta 0 per non assegnare alcun bonus."
 
-#: src/Admin/ChallengeManagerPage.php:244
-#: src/Admin/CommunityChallengesPage.php:305
+#: src/Admin/ChallengeManagerPage.php:245
+#: src/Admin/CommunityChallengesPage.php:306
 msgid "Start Date"
 msgstr "Data di inizio"
 
-#: src/Admin/ChallengeManagerPage.php:249
+#: src/Admin/ChallengeManagerPage.php:250
 msgid "When this challenge becomes available to members. Actions before this date will not count."
 msgstr "Quando questa sfida diventa disponibile per i membri. Le azioni compiute prima di questa data non verranno conteggiate."
 
-#: src/Admin/ChallengeManagerPage.php:253
-#: src/Admin/CommunityChallengesPage.php:314
+#: src/Admin/ChallengeManagerPage.php:254
+#: src/Admin/CommunityChallengesPage.php:315
 msgid "End Date"
 msgstr "Data di fine"
 
-#: src/Admin/ChallengeManagerPage.php:258
+#: src/Admin/ChallengeManagerPage.php:259
 msgid "Deadline for the challenge. Members must reach the target before this date. Defaults to 7 days from now."
 msgstr "Scadenza della sfida. I membri devono raggiungere l'obiettivo entro questa data. Il valore predefinito è 7 giorni a partire da adesso."
 
-#: src/Admin/ChallengeManagerPage.php:265
-#: src/Admin/CommunityChallengesPage.php:334
+#: src/Admin/ChallengeManagerPage.php:266
+#: src/Admin/CommunityChallengesPage.php:335
 msgid "Update Challenge"
 msgstr "Aggiorna sfida"
 
-#: src/Admin/ChallengeManagerPage.php:269
-#: src/Admin/CommunityChallengesPage.php:338
+#: src/Admin/ChallengeManagerPage.php:270
+#: src/Admin/CommunityChallengesPage.php:339
 #: src/Admin/DeactivationFeedback.php:120 src/Admin/ImportPage.php:122
-#: src/Admin/KudosModerationPage.php:140 src/Admin/MultipliersPage.php:196
-#: src/Admin/RedemptionStorePage.php:392 src/Admin/SettingsPage.php:76
+#: src/Admin/KudosModerationPage.php:140 src/Admin/MultipliersPage.php:197
+#: src/Admin/RedemptionStorePage.php:393 src/Admin/SettingsPage.php:76
 #: src/Admin/StreaksPage.php:115 src/Blocks/hub/render.php:620
 #: src/Blocks/redemption-store/render.php:350
 msgid "Cancel"
 msgstr "Annulla"
 
-#: src/Admin/ChallengeManagerPage.php:281
+#: src/Admin/ChallengeManagerPage.php:282
 msgid "All Challenges"
 msgstr "Tutte le sfide"
 
-#: src/Admin/ChallengeManagerPage.php:290
+#: src/Admin/ChallengeManagerPage.php:291
 msgid "Target"
 msgstr "Obiettivo"
 
-#: src/Admin/ChallengeManagerPage.php:291
-#: src/Admin/CommunityChallengesPage.php:360
+#: src/Admin/ChallengeManagerPage.php:292
+#: src/Admin/CommunityChallengesPage.php:361
 msgid "Bonus"
 msgstr "Bonus"
 
-#: src/Admin/ChallengeManagerPage.php:293
-#: src/Admin/CommunityChallengesPage.php:362
+#: src/Admin/ChallengeManagerPage.php:294
+#: src/Admin/CommunityChallengesPage.php:363
 msgid "Dates"
 msgstr "Date"
 
-#: src/Admin/ChallengeManagerPage.php:323
-#: src/Admin/CommunityChallengesPage.php:407 src/Admin/MultipliersPage.php:249
-#: src/Admin/RedemptionStorePage.php:473
+#: src/Admin/ChallengeManagerPage.php:324
+#: src/Admin/CommunityChallengesPage.php:408 src/Admin/MultipliersPage.php:250
+#: src/Admin/RedemptionStorePage.php:474
 msgid "Edit"
 msgstr "Modifica"
 
-#: src/Admin/ChallengeManagerPage.php:331
+#: src/Admin/ChallengeManagerPage.php:332
 msgid "Delete this challenge?"
 msgstr "Vuoi eliminare questa sfida?"
 
-#: src/Admin/ChallengeManagerPage.php:333
+#: src/Admin/ChallengeManagerPage.php:334
 msgid "Failed to delete challenge."
 msgstr "Impossibile eliminare la sfida."
 
-#: src/Admin/ChallengeManagerPage.php:349
+#: src/Admin/ChallengeManagerPage.php:350
 msgid "No challenges yet"
 msgstr "Nessuna sfida per ora"
 
-#: src/Admin/ChallengeManagerPage.php:350
+#: src/Admin/ChallengeManagerPage.php:351
 msgid "Create your first challenge above to engage your community."
 msgstr "Crea la tua prima sfida qui sopra per coinvolgere la tua community."
 
-#: src/Admin/ChallengeManagerPage.php:366 src/Admin/MultipliersPage.php:245
-#: src/Admin/RedemptionStorePage.php:378 src/Admin/RedemptionStorePage.php:468
+#: src/Admin/ChallengeManagerPage.php:367 src/Admin/MultipliersPage.php:246
+#: src/Admin/RedemptionStorePage.php:379 src/Admin/RedemptionStorePage.php:469
 #: src/Admin/SettingsPage.php:3057
 msgid "Inactive"
 msgstr "Inattiva"
 
-#: src/Admin/ChallengeManagerPage.php:367 src/Blocks/challenges/render.php:180
+#: src/Admin/ChallengeManagerPage.php:368 src/Blocks/challenges/render.php:180
 #: src/Blocks/community-challenges/render.php:122
 msgid "Completed"
 msgstr "Completata"
@@ -2279,17 +2279,17 @@ msgstr "I livelli sono mostrati nei profili dei membri e nella classifica."
 
 #: src/Admin/CommunityChallengesPage.php:111
 #: src/Admin/CommunityChallengesPage.php:211
-#: src/Admin/CommunityChallengesPage.php:254
+#: src/Admin/CommunityChallengesPage.php:255
 msgid "Community challenge saved."
 msgstr "Sfida della community salvata."
 
 #: src/Admin/CommunityChallengesPage.php:112
-#: src/Admin/CommunityChallengesPage.php:255
+#: src/Admin/CommunityChallengesPage.php:256
 msgid "Failed to save the community challenge."
 msgstr "Impossibile salvare la sfida della community."
 
 #: src/Admin/CommunityChallengesPage.php:212
-#: src/Admin/CommunityChallengesPage.php:416
+#: src/Admin/CommunityChallengesPage.php:417
 msgid "Community challenge deleted."
 msgstr "Sfida della community eliminata."
 
@@ -2305,78 +2305,78 @@ msgstr "Modifica sfida della community"
 msgid "Create Community Challenge"
 msgstr "Crea sfida della community"
 
-#: src/Admin/CommunityChallengesPage.php:265
+#: src/Admin/CommunityChallengesPage.php:266
 msgid "e.g. Community Sprint: 1,000 Posts"
 msgstr "es. Sprint della community: 1.000 post"
 
-#: src/Admin/CommunityChallengesPage.php:266
+#: src/Admin/CommunityChallengesPage.php:267
 msgid "A motivating name for the community-wide challenge."
 msgstr "Un nome motivante per la sfida dell'intera community."
 
-#: src/Admin/CommunityChallengesPage.php:273
+#: src/Admin/CommunityChallengesPage.php:274
 msgid "Describe the goal and what happens when the community reaches it."
 msgstr "Descrivi l'obiettivo e cosa succede quando la community lo raggiunge."
 
-#: src/Admin/CommunityChallengesPage.php:274
+#: src/Admin/CommunityChallengesPage.php:275
 msgid "Optional description shown alongside the progress bar."
 msgstr "Descrizione facoltativa mostrata accanto alla barra di avanzamento."
 
-#: src/Admin/CommunityChallengesPage.php:282
+#: src/Admin/CommunityChallengesPage.php:283
 msgid "Total number of actions the community must collectively reach."
 msgstr "Numero totale di azioni che la community deve raggiungere nel complesso."
 
-#: src/Admin/CommunityChallengesPage.php:290
-#: src/Admin/CommunityChallengesPage.php:369
+#: src/Admin/CommunityChallengesPage.php:291
+#: src/Admin/CommunityChallengesPage.php:370
 msgid "Any action"
 msgstr "Qualsiasi azione"
 
-#: src/Admin/CommunityChallengesPage.php:301
+#: src/Admin/CommunityChallengesPage.php:302
 msgid "Which user action counts toward this challenge. Choose \"Any action\" to count everything."
 msgstr "Quale azione dell'utente conta per questa sfida. Scegli «Qualsiasi azione» per contare tutto."
 
-#: src/Admin/CommunityChallengesPage.php:310
+#: src/Admin/CommunityChallengesPage.php:311
 msgid "When this community challenge becomes active. Actions before this date will not count."
 msgstr "Quando questa sfida della community diventa attiva. Le azioni compiute prima di questa data non verranno conteggiate."
 
-#: src/Admin/CommunityChallengesPage.php:319
+#: src/Admin/CommunityChallengesPage.php:320
 msgid "Deadline for the challenge. Defaults to 14 days from now."
 msgstr "Scadenza della sfida. Il valore predefinito è 14 giorni da oggi."
 
-#: src/Admin/CommunityChallengesPage.php:327
+#: src/Admin/CommunityChallengesPage.php:328
 msgid "Points awarded to every contributor when the challenge is completed. Set to 0 for no bonus."
 msgstr "Punti assegnati a ogni partecipante al completamento della sfida. Imposta a 0 per non assegnare alcun bonus."
 
-#: src/Admin/CommunityChallengesPage.php:350
+#: src/Admin/CommunityChallengesPage.php:351
 msgid "All Community Challenges"
 msgstr "Tutte le sfide della community"
 
-#: src/Admin/CommunityChallengesPage.php:359
+#: src/Admin/CommunityChallengesPage.php:360
 msgid "Progress"
 msgstr "Avanzamento"
 
-#: src/Admin/CommunityChallengesPage.php:415
+#: src/Admin/CommunityChallengesPage.php:416
 msgid "Delete this community challenge?"
 msgstr "Eliminare questa sfida della community?"
 
-#: src/Admin/CommunityChallengesPage.php:417
+#: src/Admin/CommunityChallengesPage.php:418
 msgid "Failed to delete community challenge."
 msgstr "Impossibile eliminare la sfida della community."
 
-#: src/Admin/CommunityChallengesPage.php:433
+#: src/Admin/CommunityChallengesPage.php:434
 msgid "Community challenge pages"
 msgstr "Pagine delle sfide della community"
 
 #. translators: 1: current page, 2: total pages, 3: total challenges
-#: src/Admin/CommunityChallengesPage.php:435
+#: src/Admin/CommunityChallengesPage.php:436
 #, php-format
 msgid "Page %1$d of %2$d (%3$d challenges)"
 msgstr "Pagina %1$d di %2$d (%3$d sfide)"
 
-#: src/Admin/CommunityChallengesPage.php:443
+#: src/Admin/CommunityChallengesPage.php:444
 msgid "No community challenges yet"
 msgstr "Nessuna sfida della community al momento"
 
-#: src/Admin/CommunityChallengesPage.php:444
+#: src/Admin/CommunityChallengesPage.php:445
 msgid "Create your first community challenge above to rally your members around a shared goal."
 msgstr "Crea la tua prima sfida della community qui sopra per coinvolgere i membri attorno a un obiettivo comune."
 
@@ -2773,7 +2773,7 @@ msgstr "Destinatario"
 msgid "Message"
 msgstr "Messaggio"
 
-#: src/Admin/KudosModerationPage.php:347 src/Admin/ManualAwardPage.php:392
+#: src/Admin/KudosModerationPage.php:347 src/Admin/ManualAwardPage.php:394
 #: src/Engine/Privacy.php:318 src/Engine/Privacy.php:604
 msgid "Date"
 msgstr "Data"
@@ -2894,16 +2894,16 @@ msgstr "I membri raggiungono questo livello quando i punti totali superano quest
 msgid "Add Level"
 msgstr "Aggiungi livello"
 
-#: src/Admin/ManualAwardPage.php:80 src/Admin/ManualAwardPage.php:193
+#: src/Admin/ManualAwardPage.php:80 src/Admin/ManualAwardPage.php:194
 msgid "Points awarded."
 msgstr "Punti assegnati."
 
-#: src/Admin/ManualAwardPage.php:81 src/Admin/ManualAwardPage.php:194
+#: src/Admin/ManualAwardPage.php:81 src/Admin/ManualAwardPage.php:195
 msgid "Failed to award points."
 msgstr "Impossibile assegnare i punti."
 
 #: src/Admin/ManualAwardPage.php:121 src/Admin/ManualAwardPage.php:122
-#: src/Admin/ManualAwardPage.php:148 src/Admin/ManualAwardPage.php:328
+#: src/Admin/ManualAwardPage.php:148 src/Admin/ManualAwardPage.php:329
 #: src/Admin/SettingsPage.php:1900
 msgid "Award Points"
 msgstr "Assegna punti"
@@ -2942,98 +2942,98 @@ msgstr "Verifica che WP-Cron sia attivo. L'hook %s dovrebbe comparire in `wp cro
 msgid "Award or Deduct Points"
 msgstr "Assegna o sottrai punti"
 
-#: src/Admin/ManualAwardPage.php:241
+#: src/Admin/ManualAwardPage.php:242
 msgid "Select the member who will receive (or lose) points."
 msgstr "Seleziona il membro che riceverà (o perderà) punti."
 
-#: src/Admin/ManualAwardPage.php:246 src/Admin/ManualAwardPage.php:389
+#: src/Admin/ManualAwardPage.php:247 src/Admin/ManualAwardPage.php:391
 #: src/Admin/SettingsPage.php:1436
 msgid "Amount"
 msgstr "Quantità"
 
 #. translators: %d = max points per action
-#: src/Admin/ManualAwardPage.php:263
+#: src/Admin/ManualAwardPage.php:264
 #, php-format
 msgid "Positive to award, negative to deduct. Max ±%d per action."
 msgstr "Positivo per assegnare, negativo per sottrarre. Massimo ±%d per azione."
 
-#: src/Admin/ManualAwardPage.php:272 src/Admin/ManualAwardPage.php:390
+#: src/Admin/ManualAwardPage.php:273 src/Admin/ManualAwardPage.php:392
 #: src/Admin/SettingsPage.php:1438 src/Engine/Privacy.php:314
 #: src/Engine/Privacy.php:596
 msgid "Currency"
 msgstr "Tipo di punti"
 
-#: src/Admin/ManualAwardPage.php:291
+#: src/Admin/ManualAwardPage.php:292
 msgid "(default)"
 msgstr "(predefinito)"
 
 #. translators: %s URL of the Point Types admin page.
-#: src/Admin/ManualAwardPage.php:301
+#: src/Admin/ManualAwardPage.php:302
 #, php-format
 msgid "Which currency to award. <a href=\"%s\">Manage point types</a>."
 msgstr "Quale tipo di punti assegnare. <a href=\"%s\">Gestisci i tipi di punti</a>."
 
-#: src/Admin/ManualAwardPage.php:312
+#: src/Admin/ManualAwardPage.php:313
 msgid "Reason / Note"
 msgstr "Motivo / Nota"
 
-#: src/Admin/ManualAwardPage.php:320
+#: src/Admin/ManualAwardPage.php:321
 msgid "e.g. Contest winner, Support bonus, Policy violation"
 msgstr "Es. vincitore del concorso, bonus di supporto, violazione delle regole"
 
-#: src/Admin/ManualAwardPage.php:323
+#: src/Admin/ManualAwardPage.php:324
 msgid "Optional. Visible next to this award in the history below."
 msgstr "Facoltativo. Visibile accanto a questa assegnazione nella cronologia qui sotto."
 
-#: src/Admin/ManualAwardPage.php:336
+#: src/Admin/ManualAwardPage.php:337
 msgid "Bulk Award"
 msgstr "Assegnazione in blocco"
 
-#: src/Admin/ManualAwardPage.php:337
+#: src/Admin/ManualAwardPage.php:338
 msgid "Award the same points to every member of a role, or to all members at once. Accounts excluded in Settings > Access are skipped automatically. For very large communities, prefer WP-CLI."
 msgstr "Assegna gli stessi punti a tutti i membri di un ruolo o a tutti i membri in una volta sola. Gli account esclusi in Impostazioni > Accesso vengono saltati automaticamente. Per comunità molto grandi, è preferibile usare WP-CLI."
 
-#: src/Admin/ManualAwardPage.php:344
+#: src/Admin/ManualAwardPage.php:346
 msgid "Bulk award queued."
 msgstr "Assegnazione in blocco accodata."
 
-#: src/Admin/ManualAwardPage.php:345
+#: src/Admin/ManualAwardPage.php:347
 msgid "Bulk award failed."
 msgstr "Assegnazione in blocco non riuscita."
 
-#: src/Admin/ManualAwardPage.php:351
+#: src/Admin/ManualAwardPage.php:353
 msgid "Award to"
 msgstr "Assegna a"
 
-#: src/Admin/ManualAwardPage.php:355
+#: src/Admin/ManualAwardPage.php:357
 msgid "All members"
 msgstr "Tutti i membri"
 
-#: src/Admin/ManualAwardPage.php:364
+#: src/Admin/ManualAwardPage.php:366
 msgid "Points each"
 msgstr "Punti ciascuno"
 
-#: src/Admin/ManualAwardPage.php:368
+#: src/Admin/ManualAwardPage.php:370
 msgid "Positive only. Bulk deduction is not supported here - use the single award above for negative adjustments."
 msgstr "Solo valori positivi. La detrazione in blocco non è supportata qui: per le rettifiche negative usa l'assegnazione singola qui sopra."
 
-#: src/Admin/ManualAwardPage.php:372
+#: src/Admin/ManualAwardPage.php:374
 msgid "Bulk Award Points"
 msgstr "Assegna punti in blocco"
 
-#: src/Admin/ManualAwardPage.php:381
+#: src/Admin/ManualAwardPage.php:383
 msgid "Recent Manual Awards"
 msgstr "Assegnazioni manuali recenti"
 
-#: src/Admin/ManualAwardPage.php:391
+#: src/Admin/ManualAwardPage.php:393
 msgid "Note"
 msgstr "Nota"
 
-#: src/Admin/ManualAwardPage.php:431
+#: src/Admin/ManualAwardPage.php:433
 msgid "No manual awards yet"
 msgstr "Nessuna assegnazione manuale per ora"
 
-#: src/Admin/ManualAwardPage.php:432
+#: src/Admin/ManualAwardPage.php:434
 msgid "Use the form above to grant or deduct points from any member."
 msgstr "Usa il modulo qui sopra per assegnare o detrarre punti a qualsiasi membro."
 
@@ -3137,11 +3137,11 @@ msgstr "Cerca membri…"
 msgid "Point Multipliers"
 msgstr "Moltiplicatori punti"
 
-#: src/Admin/MultipliersPage.php:102 src/Admin/MultipliersPage.php:162
+#: src/Admin/MultipliersPage.php:102 src/Admin/MultipliersPage.php:163
 msgid "Multiplier saved."
 msgstr "Moltiplicatore salvato."
 
-#: src/Admin/MultipliersPage.php:103 src/Admin/MultipliersPage.php:163
+#: src/Admin/MultipliersPage.php:103 src/Admin/MultipliersPage.php:164
 msgid "Failed to save the multiplier."
 msgstr "Impossibile salvare il moltiplicatore."
 
@@ -3153,71 +3153,71 @@ msgstr "Moltiplica i punti guadagnati per un'azione. Un moltiplicatore si applic
 msgid "Edit Multiplier"
 msgstr "Modifica moltiplicatore"
 
-#: src/Admin/MultipliersPage.php:155 src/Admin/MultipliersPage.php:194
+#: src/Admin/MultipliersPage.php:155 src/Admin/MultipliersPage.php:195
 msgid "Add Multiplier"
 msgstr "Aggiungi moltiplicatore"
 
-#: src/Admin/MultipliersPage.php:169 src/Admin/MultipliersPage.php:213
+#: src/Admin/MultipliersPage.php:170 src/Admin/MultipliersPage.php:214
 msgid "Multiplier"
 msgstr "Moltiplicatore"
 
-#: src/Admin/MultipliersPage.php:174
+#: src/Admin/MultipliersPage.php:175
 msgid "The factor to multiply points by. 2 = double, 1.5 = 50% more, 0.5 = half."
 msgstr "Il fattore per cui moltiplicare i punti. 2 = doppio, 1,5 = 50% in più, 0,5 = metà."
 
-#: src/Admin/MultipliersPage.php:178 src/Admin/MultipliersPage.php:214
+#: src/Admin/MultipliersPage.php:179 src/Admin/MultipliersPage.php:215
 msgid "Applies to"
 msgstr "Si applica a"
 
-#: src/Admin/MultipliersPage.php:181 src/Admin/MultipliersPage.php:235
+#: src/Admin/MultipliersPage.php:182 src/Admin/MultipliersPage.php:236
 msgid "All actions"
 msgstr "Tutte le azioni"
 
-#: src/Admin/MultipliersPage.php:189
+#: src/Admin/MultipliersPage.php:190
 msgid "Multiply every action, or pick one action to multiply only that one."
 msgstr "Moltiplica tutte le azioni oppure scegline una per moltiplicare solo quella."
 
-#: src/Admin/MultipliersPage.php:194
+#: src/Admin/MultipliersPage.php:195
 msgid "Save Multiplier"
 msgstr "Salva moltiplicatore"
 
-#: src/Admin/MultipliersPage.php:205
+#: src/Admin/MultipliersPage.php:206
 msgid "Active & Inactive Multipliers"
 msgstr "Moltiplicatori attivi e inattivi"
 
-#: src/Admin/MultipliersPage.php:215
+#: src/Admin/MultipliersPage.php:216
 msgid "Condition"
 msgstr "Condizione"
 
-#: src/Admin/MultipliersPage.php:231 src/Admin/RedemptionStorePage.php:432
+#: src/Admin/MultipliersPage.php:232 src/Admin/RedemptionStorePage.php:433
 msgid "Custom"
 msgstr "Personalizzata"
 
-#: src/Admin/MultipliersPage.php:258
+#: src/Admin/MultipliersPage.php:259
 msgid "Multiplier deactivated."
 msgstr "Moltiplicatore disattivato."
 
-#: src/Admin/MultipliersPage.php:258
+#: src/Admin/MultipliersPage.php:259
 msgid "Multiplier activated."
 msgstr "Moltiplicatore attivato."
 
-#: src/Admin/MultipliersPage.php:259
+#: src/Admin/MultipliersPage.php:260
 msgid "Deactivate"
 msgstr "Disattiva"
 
-#: src/Admin/MultipliersPage.php:259
+#: src/Admin/MultipliersPage.php:260
 msgid "Activate"
 msgstr "Attiva"
 
-#: src/Admin/MultipliersPage.php:267
+#: src/Admin/MultipliersPage.php:268
 msgid "Delete this multiplier?"
 msgstr "Eliminare questo moltiplicatore?"
 
-#: src/Admin/MultipliersPage.php:269
+#: src/Admin/MultipliersPage.php:270
 msgid "Multiplier deleted."
 msgstr "Moltiplicatore eliminato."
 
-#: src/Admin/MultipliersPage.php:281
+#: src/Admin/MultipliersPage.php:282
 msgid "No multipliers yet. Points are awarded at their base value until you add one."
 msgstr "Nessun moltiplicatore per ora. I punti vengono assegnati al valore base finché non ne aggiungi uno."
 
@@ -3295,7 +3295,7 @@ msgid "None"
 msgstr "Nessuno"
 
 #: src/Admin/PointTypeConversionsPage.php:203
-#: src/Admin/RedemptionStorePage.php:267 src/Admin/RedemptionStorePage.php:445
+#: src/Admin/RedemptionStorePage.php:268 src/Admin/RedemptionStorePage.php:446
 msgid "Unlimited"
 msgstr "Illimitato"
 
@@ -3517,18 +3517,18 @@ msgstr "Ordine di visualizzazione negli elenchi. I numeri più bassi appaiono pe
 msgid "Create Point Type"
 msgstr "Crea tipo di punti"
 
-#: src/Admin/RedemptionStorePage.php:89 src/Admin/RedemptionStorePage.php:217
+#: src/Admin/RedemptionStorePage.php:89 src/Admin/RedemptionStorePage.php:218
 msgid "Reward saved."
 msgstr "Ricompensa salvata."
 
-#: src/Admin/RedemptionStorePage.php:90 src/Admin/RedemptionStorePage.php:218
+#: src/Admin/RedemptionStorePage.php:90 src/Admin/RedemptionStorePage.php:219
 msgid "Failed to save the reward."
 msgstr "Impossibile salvare la ricompensa."
 
 #: src/Admin/RedemptionStorePage.php:115 src/Admin/RedemptionStorePage.php:116
 #: src/Admin/RedemptionStorePage.php:193
 #: src/Blocks/redemption-store/render.php:189
-#: src/Blocks/redemption-store/edit.js:311
+#: src/Blocks/redemption-store/edit.js:313
 msgid "Redemption Store"
 msgstr "Negozio di riscatto"
 
@@ -3548,266 +3548,266 @@ msgstr "Crea ricompense che i membri possono riscattare con i punti guadagnati."
 msgid "Edit Reward"
 msgstr "Modifica ricompensa"
 
-#: src/Admin/RedemptionStorePage.php:206 src/Admin/RedemptionStorePage.php:388
+#: src/Admin/RedemptionStorePage.php:206 src/Admin/RedemptionStorePage.php:389
 msgid "Add Reward"
 msgstr "Aggiungi ricompensa"
 
-#: src/Admin/RedemptionStorePage.php:228
+#: src/Admin/RedemptionStorePage.php:229
 msgid "e.g. 10% Off Coupon"
 msgstr "es. Coupon sconto 10%"
 
-#: src/Admin/RedemptionStorePage.php:229
+#: src/Admin/RedemptionStorePage.php:230
 msgid "A short name for this reward, shown to members in the store."
 msgstr "Un nome breve per questa ricompensa, mostrato ai membri nel negozio di riscatto."
 
-#: src/Admin/RedemptionStorePage.php:236
+#: src/Admin/RedemptionStorePage.php:237
 msgid "Describe what the member receives when they redeem this reward."
 msgstr "Descrivi cosa riceve il membro quando riscatta questa ricompensa."
 
-#: src/Admin/RedemptionStorePage.php:237
+#: src/Admin/RedemptionStorePage.php:238
 msgid "Optional description displayed on the reward card."
 msgstr "Descrizione facoltativa mostrata sulla scheda della ricompensa."
 
-#: src/Admin/RedemptionStorePage.php:241 src/Admin/RedemptionStorePage.php:412
+#: src/Admin/RedemptionStorePage.php:242 src/Admin/RedemptionStorePage.php:413
 msgid "Point Cost"
 msgstr "Costo in punti"
 
-#: src/Admin/RedemptionStorePage.php:245
+#: src/Admin/RedemptionStorePage.php:246
 msgid "How many points a member must spend to redeem this reward."
 msgstr "Quanti punti deve spendere un membro per riscattare questa ricompensa."
 
-#: src/Admin/RedemptionStorePage.php:249 src/Admin/RedemptionStorePage.php:262
-#: src/Admin/RedemptionStorePage.php:414
+#: src/Admin/RedemptionStorePage.php:250 src/Admin/RedemptionStorePage.php:263
+#: src/Admin/RedemptionStorePage.php:415
 msgid "Stock"
 msgstr "Disponibilità"
 
-#: src/Admin/RedemptionStorePage.php:274
+#: src/Admin/RedemptionStorePage.php:275
 msgid "Limited to"
 msgstr "Limitato a"
 
-#: src/Admin/RedemptionStorePage.php:280
+#: src/Admin/RedemptionStorePage.php:281
 msgid "remaining"
 msgstr "rimanenti"
 
-#: src/Admin/RedemptionStorePage.php:283
+#: src/Admin/RedemptionStorePage.php:284
 msgid "Decremented atomically on each redemption. Set the quantity to 0 to mark a reward sold out and stop further redemptions."
 msgstr "Diminuisce a ogni riscatto. Imposta la quantità a 0 per segnare la ricompensa come esaurita e bloccare nuovi riscatti."
 
-#: src/Admin/RedemptionStorePage.php:287
+#: src/Admin/RedemptionStorePage.php:288
 msgid "Reward Type"
 msgstr "Tipo di ricompensa"
 
-#: src/Admin/RedemptionStorePage.php:291
+#: src/Admin/RedemptionStorePage.php:292
 msgid "Custom Reward (fulfilled via hook)"
 msgstr "Ricompensa personalizzata (gestita tramite hook)"
 
-#: src/Admin/RedemptionStorePage.php:295
+#: src/Admin/RedemptionStorePage.php:296
 msgid "WooCommerce - Percentage Discount"
 msgstr "WooCommerce - Sconto percentuale"
 
-#: src/Admin/RedemptionStorePage.php:298
+#: src/Admin/RedemptionStorePage.php:299
 msgid "WooCommerce - Fixed Discount"
 msgstr "WooCommerce - Sconto fisso"
 
-#: src/Admin/RedemptionStorePage.php:301
+#: src/Admin/RedemptionStorePage.php:302
 msgid "WooCommerce - Free Shipping"
 msgstr "WooCommerce - Spedizione gratuita"
 
-#: src/Admin/RedemptionStorePage.php:304
+#: src/Admin/RedemptionStorePage.php:305
 msgid "WooCommerce - Free Product"
 msgstr "WooCommerce - Prodotto gratuito"
 
-#: src/Admin/RedemptionStorePage.php:309
+#: src/Admin/RedemptionStorePage.php:310
 msgid "Wbcom Credits - Top up balance"
 msgstr "Wbcom Credits - Ricarica del saldo"
 
-#: src/Admin/RedemptionStorePage.php:314
+#: src/Admin/RedemptionStorePage.php:315
 msgid "Custom rewards fire wb_gam_points_redeemed for your code to listen on. WooCommerce rewards auto-generate a coupon. Wbcom Credits adds to a registered SDK ledger."
 msgstr "Le ricompense personalizzate attivano wb_gam_points_redeemed, a cui il tuo codice può agganciarsi. Le ricompense WooCommerce generano automaticamente un coupon. Wbcom Credits accredita importi su un registro SDK registrato."
 
-#: src/Admin/RedemptionStorePage.php:316
+#: src/Admin/RedemptionStorePage.php:317
 msgid "WooCommerce is not active - coupon-based rewards are hidden."
 msgstr "WooCommerce non è attivo - le ricompense basate su coupon sono nascoste."
 
-#: src/Admin/RedemptionStorePage.php:319
+#: src/Admin/RedemptionStorePage.php:320
 msgid "Wbcom Credits SDK is not loaded by any active plugin - credit topup is hidden."
 msgstr "L'SDK di Wbcom Credits non è caricato da nessun plugin attivo - la ricarica dei crediti è nascosta."
 
-#: src/Admin/RedemptionStorePage.php:325
+#: src/Admin/RedemptionStorePage.php:326
 msgid "Discount amount"
 msgstr "Importo dello sconto"
 
-#: src/Admin/RedemptionStorePage.php:330
+#: src/Admin/RedemptionStorePage.php:331
 msgid "Percentage off the cart (e.g. 10 = 10%)."
 msgstr "Percentuale di sconto sul carrello (es. 10 = 10%)."
 
-#: src/Admin/RedemptionStorePage.php:331
+#: src/Admin/RedemptionStorePage.php:332
 msgid "Fixed amount off the cart in store currency."
 msgstr "Importo fisso di sconto sul carrello nella valuta del negozio."
 
-#: src/Admin/RedemptionStorePage.php:336
+#: src/Admin/RedemptionStorePage.php:337
 msgid "WooCommerce product ID"
 msgstr "ID prodotto WooCommerce"
 
-#: src/Admin/RedemptionStorePage.php:340
+#: src/Admin/RedemptionStorePage.php:341
 msgid "Numeric ID of the product to give away free. Member receives a single-use full-discount coupon scoped to this product."
 msgstr "ID numerico del prodotto da regalare. Il membro riceve un coupon monouso con sconto totale, valido solo per questo prodotto."
 
-#: src/Admin/RedemptionStorePage.php:344
+#: src/Admin/RedemptionStorePage.php:345
 msgid "Credits destination"
 msgstr "Destinazione dei crediti"
 
-#: src/Admin/RedemptionStorePage.php:357
+#: src/Admin/RedemptionStorePage.php:358
 msgid "plugin-slug-here"
 msgstr "slug-del-plugin-qui"
 
-#: src/Admin/RedemptionStorePage.php:359
+#: src/Admin/RedemptionStorePage.php:360
 msgid "Which plugin's credit ledger to top up. Each plugin that uses the Wbcom Credits SDK registers its own slug."
 msgstr "Il registro crediti del plugin da ricaricare. Ogni plugin che usa il Wbcom Credits SDK registra il proprio slug."
 
-#: src/Admin/RedemptionStorePage.php:363
+#: src/Admin/RedemptionStorePage.php:364
 msgid "Credits to add"
 msgstr "Crediti da aggiungere"
 
-#: src/Admin/RedemptionStorePage.php:367
+#: src/Admin/RedemptionStorePage.php:368
 msgid "How many credits to deposit into the ledger when this reward is redeemed."
 msgstr "Quanti crediti accreditare nel registro quando questa ricompensa viene riscattata."
 
-#: src/Admin/RedemptionStorePage.php:381
+#: src/Admin/RedemptionStorePage.php:382
 msgid "Inactive rewards are hidden from the store but preserved in the database."
 msgstr "Le ricompense inattive sono nascoste nel negozio di riscatto ma conservate nel database."
 
-#: src/Admin/RedemptionStorePage.php:388
+#: src/Admin/RedemptionStorePage.php:389
 msgid "Update Reward"
 msgstr "Aggiorna ricompensa"
 
-#: src/Admin/RedemptionStorePage.php:404
+#: src/Admin/RedemptionStorePage.php:405
 msgid "All Rewards"
 msgstr "Tutte le ricompense"
 
-#: src/Admin/RedemptionStorePage.php:413
+#: src/Admin/RedemptionStorePage.php:414
 msgid "Type"
 msgstr "Tipo"
 
-#: src/Admin/RedemptionStorePage.php:433
+#: src/Admin/RedemptionStorePage.php:434
 msgid "% Discount"
 msgstr "Sconto %"
 
-#: src/Admin/RedemptionStorePage.php:434
+#: src/Admin/RedemptionStorePage.php:435
 msgid "Fixed Discount"
 msgstr "Sconto fisso"
 
-#: src/Admin/RedemptionStorePage.php:435
+#: src/Admin/RedemptionStorePage.php:436
 msgid "Free Shipping"
 msgstr "Spedizione gratuita"
 
-#: src/Admin/RedemptionStorePage.php:436
+#: src/Admin/RedemptionStorePage.php:437
 msgid "Free Product"
 msgstr "Prodotto gratuito"
 
-#: src/Admin/RedemptionStorePage.php:437
+#: src/Admin/RedemptionStorePage.php:438
 msgid "Wbcom Credits"
 msgstr "Wbcom Credits"
 
-#: src/Admin/RedemptionStorePage.php:447
+#: src/Admin/RedemptionStorePage.php:448
 msgid "Sold out"
 msgstr "Esaurito"
 
-#: src/Admin/RedemptionStorePage.php:481
+#: src/Admin/RedemptionStorePage.php:482
 msgid "Delete this reward?"
 msgstr "Vuoi eliminare questa ricompensa?"
 
-#: src/Admin/RedemptionStorePage.php:482
+#: src/Admin/RedemptionStorePage.php:483
 msgid "Reward deleted."
 msgstr "Ricompensa eliminata."
 
-#: src/Admin/RedemptionStorePage.php:483
+#: src/Admin/RedemptionStorePage.php:484
 msgid "Failed to delete reward."
 msgstr "Impossibile eliminare la ricompensa."
 
-#: src/Admin/RedemptionStorePage.php:500
+#: src/Admin/RedemptionStorePage.php:501
 msgid "Reward pages"
 msgstr "Pagine delle ricompense"
 
 #. translators: 1: current page, 2: total pages, 3: total rewards
-#: src/Admin/RedemptionStorePage.php:502
+#: src/Admin/RedemptionStorePage.php:503
 #, php-format
 msgid "Page %1$d of %2$d (%3$d rewards)"
 msgstr "Pagina %1$d di %2$d (%3$d ricompense)"
 
-#: src/Admin/RedemptionStorePage.php:509
+#: src/Admin/RedemptionStorePage.php:510
 msgid "No rewards yet"
 msgstr "Nessuna ricompensa ancora"
 
-#: src/Admin/RedemptionStorePage.php:510
+#: src/Admin/RedemptionStorePage.php:511
 msgid "Create your first reward above to open the redemption store for your members."
 msgstr "Crea la tua prima ricompensa qui sopra per aprire il negozio di riscatto ai tuoi membri."
 
-#: src/Admin/RedemptionStorePage.php:525
+#: src/Admin/RedemptionStorePage.php:526
 msgid "Recent Redemptions"
 msgstr "Riscatti recenti"
 
-#: src/Admin/RedemptionStorePage.php:526
+#: src/Admin/RedemptionStorePage.php:527
 msgid "The last 50 redemptions across all members. Use this log to verify coupon delivery, fulfilment status, and overall store activity."
 msgstr "Gli ultimi 50 riscatti di tutti i membri. Usa questo registro per verificare la consegna dei coupon, lo stato di evasione e l'attività generale del negozio di riscatto."
 
-#: src/Admin/RedemptionStorePage.php:534
+#: src/Admin/RedemptionStorePage.php:535
 msgid "When"
 msgstr "Quando"
 
-#: src/Admin/RedemptionStorePage.php:536
+#: src/Admin/RedemptionStorePage.php:537
 msgid "Reward"
 msgstr "Ricompensa"
 
-#: src/Admin/RedemptionStorePage.php:537
+#: src/Admin/RedemptionStorePage.php:538
 msgid "Points spent"
 msgstr "Punti spesi"
 
-#: src/Admin/RedemptionStorePage.php:538
+#: src/Admin/RedemptionStorePage.php:539
 msgid "Coupon"
 msgstr "Coupon"
 
-#: src/Admin/RedemptionStorePage.php:549 src/Engine/ShortcodeHandler.php:654
+#: src/Admin/RedemptionStorePage.php:550 src/Engine/ShortcodeHandler.php:654
 msgid "Pending"
 msgstr "In attesa"
 
-#: src/Admin/RedemptionStorePage.php:550 src/Engine/ShortcodeHandler.php:655
+#: src/Admin/RedemptionStorePage.php:551 src/Engine/ShortcodeHandler.php:655
 msgid "Awaiting fulfilment"
 msgstr "In attesa di evasione"
 
-#: src/Admin/RedemptionStorePage.php:551 src/Engine/ShortcodeHandler.php:656
+#: src/Admin/RedemptionStorePage.php:552 src/Engine/ShortcodeHandler.php:656
 msgid "Fulfilled"
 msgstr "Evaso"
 
-#: src/Admin/RedemptionStorePage.php:552 src/Engine/ShortcodeHandler.php:657
+#: src/Admin/RedemptionStorePage.php:553 src/Engine/ShortcodeHandler.php:657
 msgid "Failed"
 msgstr "Fallito"
 
-#: src/Admin/RedemptionStorePage.php:553 src/Engine/ShortcodeHandler.php:658
+#: src/Admin/RedemptionStorePage.php:554 src/Engine/ShortcodeHandler.php:658
 msgid "Refunded"
 msgstr "Rimborsato"
 
-#: src/Admin/RedemptionStorePage.php:598
+#: src/Admin/RedemptionStorePage.php:599
 msgid "Redemption marked fulfilled."
 msgstr "Riscatto contrassegnato come evaso."
 
-#: src/Admin/RedemptionStorePage.php:599
+#: src/Admin/RedemptionStorePage.php:600
 msgid "Mark fulfilled"
 msgstr "Segna come evaso"
 
-#: src/Admin/RedemptionStorePage.php:609
+#: src/Admin/RedemptionStorePage.php:610
 msgid "Refund this redemption? Points are credited back and stock restored."
 msgstr "Vuoi rimborsare questo riscatto? I punti vengono riaccreditati e le scorte ripristinate."
 
-#: src/Admin/RedemptionStorePage.php:611
+#: src/Admin/RedemptionStorePage.php:612
 msgid "Redemption refunded."
 msgstr "Riscatto rimborsato."
 
-#: src/Admin/RedemptionStorePage.php:612
+#: src/Admin/RedemptionStorePage.php:613
 msgid "Refund"
 msgstr "Rimborsa"
 
-#: src/Admin/RedemptionStorePage.php:627
+#: src/Admin/RedemptionStorePage.php:628
 msgid "No redemptions yet - when members spend points, their transactions appear here."
 msgstr "Nessun riscatto per ora: quando i membri spendono punti, le loro transazioni appariranno qui."
 
@@ -5433,12 +5433,12 @@ msgstr "Approva"
 msgid "Reject"
 msgstr "Rifiuta"
 
-#: src/Admin/WebhooksAdminPage.php:87 src/Admin/WebhooksAdminPage.php:192
-#: src/Admin/WebhooksAdminPage.php:412
+#: src/Admin/WebhooksAdminPage.php:87 src/Admin/WebhooksAdminPage.php:193
+#: src/Admin/WebhooksAdminPage.php:413
 msgid "Webhook saved."
 msgstr "Webhook salvato."
 
-#: src/Admin/WebhooksAdminPage.php:88 src/Admin/WebhooksAdminPage.php:193
+#: src/Admin/WebhooksAdminPage.php:88 src/Admin/WebhooksAdminPage.php:194
 msgid "Failed to save the webhook."
 msgstr "Impossibile salvare il webhook."
 
@@ -5447,7 +5447,7 @@ msgstr "Impossibile salvare il webhook."
 msgid "Webhooks"
 msgstr "Webhook"
 
-#: src/Admin/WebhooksAdminPage.php:113 src/API/WebhooksController.php:491
+#: src/Admin/WebhooksAdminPage.php:113 src/API/WebhooksController.php:508
 msgid "You do not have permission to manage webhooks."
 msgstr "Non hai i permessi per gestire i webhook."
 
@@ -5497,127 +5497,127 @@ msgstr "Oggetto JSON con `event` (es. badge_earned), `user_id`, `data` (campi sp
 msgid "Use HTTPS endpoints only. Rotate the secret if you suspect a leak (delete + recreate the webhook). Failed deliveries log to the WP error log with full request/response context."
 msgstr "Usa solo endpoint HTTPS. Rigenera il segreto se sospetti una fuga di dati (elimina e ricrea il webhook). Le consegne non riuscite vengono scritte nel log degli errori di WordPress, con il contesto completo di richiesta e risposta."
 
-#: src/Admin/WebhooksAdminPage.php:184 src/Admin/WebhooksAdminPage.php:243
+#: src/Admin/WebhooksAdminPage.php:184 src/Admin/WebhooksAdminPage.php:244
 msgid "Add Webhook"
 msgstr "Aggiungi webhook"
 
-#: src/Admin/WebhooksAdminPage.php:199
+#: src/Admin/WebhooksAdminPage.php:200
 msgid "Endpoint URL"
 msgstr "URL dell'endpoint"
 
-#: src/Admin/WebhooksAdminPage.php:203
+#: src/Admin/WebhooksAdminPage.php:204
 msgid "HTTPS only in production. Each delivery POSTs JSON with an X-WB-Gam-Signature HMAC header."
 msgstr "Solo HTTPS in produzione. Ogni consegna invia JSON in POST con un'intestazione HMAC X-WB-Gam-Signature."
 
-#: src/Admin/WebhooksAdminPage.php:208
+#: src/Admin/WebhooksAdminPage.php:209
 msgid "Secret"
 msgstr "Segreto"
 
-#: src/Admin/WebhooksAdminPage.php:217
+#: src/Admin/WebhooksAdminPage.php:218
 msgid "auto-generated if blank"
 msgstr "generato automaticamente se vuoto"
 
-#: src/Admin/WebhooksAdminPage.php:219
+#: src/Admin/WebhooksAdminPage.php:220
 msgid "Used to sign every payload via HMAC-SHA256. The receiver computes the same HMAC over the raw request body and compares against the X-WB-Gam-Signature header. If you leave this blank, a 32-byte random secret is generated for you."
 msgstr "Serve a firmare ogni payload con HMAC-SHA256. Il ricevente calcola lo stesso HMAC sul corpo grezzo della richiesta e lo confronta con l'intestazione X-WB-Gam-Signature. Se lasci il campo vuoto, viene generato un segreto casuale di 32 byte."
 
-#: src/Admin/WebhooksAdminPage.php:227
+#: src/Admin/WebhooksAdminPage.php:228
 msgid "Events to subscribe to"
 msgstr "Eventi a cui iscriversi"
 
-#: src/Admin/WebhooksAdminPage.php:237
+#: src/Admin/WebhooksAdminPage.php:238
 msgid "Hover any event for the payload schema. Pick only the events your receiver knows how to handle - extra events waste delivery attempts."
 msgstr "Passa il mouse su un evento per vedere lo schema del payload. Scegli solo gli eventi che il ricevente sa gestire: gli eventi in più sprecano tentativi di consegna."
 
-#: src/Admin/WebhooksAdminPage.php:252
+#: src/Admin/WebhooksAdminPage.php:253
 msgid "Configured Webhooks"
 msgstr "Webhook configurati"
 
-#: src/Admin/WebhooksAdminPage.php:256
+#: src/Admin/WebhooksAdminPage.php:257
 msgid "No webhooks configured yet. Add one above."
 msgstr "Nessun webhook configurato. Aggiungine uno sopra."
 
-#: src/Admin/WebhooksAdminPage.php:262
+#: src/Admin/WebhooksAdminPage.php:263
 msgid "URL"
 msgstr "URL"
 
-#: src/Admin/WebhooksAdminPage.php:285
+#: src/Admin/WebhooksAdminPage.php:286
 msgid "Paused"
 msgstr "In pausa"
 
-#: src/Admin/WebhooksAdminPage.php:296
+#: src/Admin/WebhooksAdminPage.php:297
 msgid "Delete this webhook? Existing deliveries already in flight will still complete."
 msgstr "Eliminare questo webhook? Le consegne già in corso verranno comunque completate."
 
-#: src/Admin/WebhooksAdminPage.php:297 src/Admin/WebhooksAdminPage.php:414
+#: src/Admin/WebhooksAdminPage.php:298 src/Admin/WebhooksAdminPage.php:415
 msgid "Webhook deleted."
 msgstr "Webhook eliminato."
 
-#: src/Admin/WebhooksAdminPage.php:298
+#: src/Admin/WebhooksAdminPage.php:299
 msgid "Failed to delete webhook."
 msgstr "Impossibile eliminare il webhook."
 
-#: src/Admin/WebhooksAdminPage.php:339
+#: src/Admin/WebhooksAdminPage.php:340
 msgid "Points awarded to a member"
 msgstr "Punti assegnati a un membro"
 
-#: src/Admin/WebhooksAdminPage.php:340
+#: src/Admin/WebhooksAdminPage.php:341
 msgid "Member earned a badge"
 msgstr "Un membro ha ottenuto un distintivo"
 
-#: src/Admin/WebhooksAdminPage.php:341
+#: src/Admin/WebhooksAdminPage.php:342
 msgid "Member crossed a level threshold"
 msgstr "Un membro ha varcato la soglia di un livello"
 
-#: src/Admin/WebhooksAdminPage.php:342
+#: src/Admin/WebhooksAdminPage.php:343
 msgid "Streak milestone reached"
 msgstr "Traguardo della serie raggiunto"
 
-#: src/Admin/WebhooksAdminPage.php:343
+#: src/Admin/WebhooksAdminPage.php:344
 msgid "Individual challenge completed"
 msgstr "Sfida individuale completata"
 
-#: src/Admin/WebhooksAdminPage.php:344
+#: src/Admin/WebhooksAdminPage.php:345
 msgid "Peer kudos transaction"
 msgstr "Transazione di kudos tra membri"
 
-#: src/Admin/WebhooksAdminPage.php:345
+#: src/Admin/WebhooksAdminPage.php:346
 msgid "Member redeemed points for a reward"
 msgstr "Un membro ha riscattato punti per una ricompensa"
 
-#: src/Admin/WebhooksAdminPage.php:367
+#: src/Admin/WebhooksAdminPage.php:368
 msgid "Fires every time PointsEngine::award succeeds. Payload: user_id, points, point_type, action_id, event_id."
 msgstr "Si attiva ogni volta che PointsEngine::award va a buon fine. Payload: user_id, points, point_type, action_id, event_id."
 
-#: src/Admin/WebhooksAdminPage.php:369
+#: src/Admin/WebhooksAdminPage.php:370
 msgid "Fires when a member earns a new badge. Payload: user_id, badge_id, badge_slug, badge_name, earned_at."
 msgstr "Si attiva quando un membro ottiene un nuovo distintivo. Payload: user_id, badge_id, badge_slug, badge_name, earned_at."
 
-#: src/Admin/WebhooksAdminPage.php:371
+#: src/Admin/WebhooksAdminPage.php:372
 msgid "Fires when a member crosses a level threshold (up OR down). Payload: user_id, old_level_id, new_level_id, new_level_name."
 msgstr "Si attiva quando un membro cambia livello (in su o in giù). Payload: user_id, old_level_id, new_level_id, new_level_name."
 
-#: src/Admin/WebhooksAdminPage.php:373
+#: src/Admin/WebhooksAdminPage.php:374
 msgid "Fires at every streak checkpoint (7/14/30/60/100/180/365 days). Payload: user_id, streak_length, milestone_days."
 msgstr "Si attiva a ogni tappa della serie (7/14/30/60/100/180/365 giorni). Payload: user_id, streak_length, milestone_days."
 
-#: src/Admin/WebhooksAdminPage.php:375
+#: src/Admin/WebhooksAdminPage.php:376
 msgid "Fires when a member completes an individual challenge. Payload: user_id, challenge_id, challenge_slug, completed_at."
 msgstr "Si attiva quando un membro completa una sfida individuale. Payload: user_id, challenge_id, challenge_slug, completed_at."
 
-#: src/Admin/WebhooksAdminPage.php:377
+#: src/Admin/WebhooksAdminPage.php:378
 msgid "Fires for every peer-to-peer kudos. Payload: giver_id, receiver_id, kudos_id, message (truncated to 200 chars)."
 msgstr "Si attiva per ogni kudos tra membri. Payload: giver_id, receiver_id, kudos_id, message (troncato a 200 caratteri)."
 
-#: src/Admin/WebhooksAdminPage.php:379
+#: src/Admin/WebhooksAdminPage.php:380
 msgid "Fires when a member spends points on a reward. Payload: user_id, item_id, item_name, points_spent, redemption_id."
 msgstr "Si attiva quando un membro spende punti per una ricompensa. Payload: user_id, item_id, item_name, points_spent, redemption_id."
 
-#: src/Admin/WebhooksAdminPage.php:416
+#: src/Admin/WebhooksAdminPage.php:417
 msgid "A valid URL is required."
 msgstr "È richiesto un URL valido."
 
-#: src/Admin/WebhooksAdminPage.php:418
+#: src/Admin/WebhooksAdminPage.php:419
 msgid "Failed to save the webhook. Check the error log for details."
 msgstr "Impossibile salvare il webhook. Controlla il log degli errori per i dettagli."
 
@@ -6257,6 +6257,24 @@ msgstr "Impossibile aggiornare il webhook."
 #: src/API/WebhooksController.php:335
 msgid "Could not delete webhook."
 msgstr "Impossibile eliminare il webhook."
+
+#: src/API/WebhooksController.php:453
+msgid "Enter a full https:// address."
+msgstr "Inserisci un indirizzo https:// completo."
+
+#: src/API/WebhooksController.php:458
+msgid "This address could not be found. Check it for typos and try again."
+msgstr "Questo indirizzo non è stato trovato. Controlla che non ci siano errori di battitura e riprova."
+
+#: src/API/WebhooksController.php:461
+msgid "This address points at this server or a private network, so it cannot receive webhooks. Use a public https:// address."
+msgstr "Questo indirizzo punta a questo server o a una rete privata, quindi non può ricevere webhook. Usa un indirizzo https:// pubblico."
+
+#. translators: short date format for a badge's earned date, see https://www.php.net/manual/datetime.format.php
+#: src/Blocks/badge-showcase/render.php:175
+msgctxt "badge earned date format"
+msgid "M j, Y"
+msgstr "j M Y"
 
 #: src/Blocks/badge-showcase/render.php:188
 msgid "No badges to show yet - keep going!"
@@ -6960,66 +6978,66 @@ msgstr "Il tuo stato di gioco"
 msgid "Collapse status bar"
 msgstr "Comprimi la barra di stato"
 
-#: src/Blocks/year-recap/render.php:92
+#: src/Blocks/year-recap/render.php:89
 msgid "Log in to see your year in review."
 msgstr "Accedi per vedere il riepilogo del tuo anno."
 
 #. translators: %d: the year the block shows, e.g. 2025.
-#: src/Blocks/year-recap/render.php:135
+#: src/Blocks/year-recap/render.php:131
 #, php-format
 msgid "Nothing to recap for %d: no points were earned that year."
 msgstr "Niente da riepilogare per il %d: non hai guadagnato punti in quell'anno."
 
-#: src/Blocks/year-recap/render.php:136
+#: src/Blocks/year-recap/render.php:132
 msgid "Your year in review will appear here once you start earning points."
 msgstr "Il riepilogo del tuo anno comparirà qui quando inizierai a guadagnare punti."
 
 #. translators: 1: user display name, 2: year
-#: src/Blocks/year-recap/render.php:147
+#: src/Blocks/year-recap/render.php:143
 #, php-format
 msgid "%1$s - %2$d in Community"
 msgstr "%1$s - %2$d nella comunità"
 
 #. translators: %d = year
-#: src/Blocks/year-recap/render.php:183
+#: src/Blocks/year-recap/render.php:178
 #, php-format
 msgid "Your %d in Community"
 msgstr "Il tuo %d nella comunità"
 
-#: src/Blocks/year-recap/render.php:196
+#: src/Blocks/year-recap/render.php:191
 msgid "Points Earned"
 msgstr "Punti guadagnati"
 
 #. translators: %d = percentile (0-100)
-#: src/Blocks/year-recap/render.php:215
+#: src/Blocks/year-recap/render.php:210
 #, php-format
 msgid "Top %d%%"
 msgstr "Primi %d%%"
 
-#: src/Blocks/year-recap/render.php:218
+#: src/Blocks/year-recap/render.php:213
 msgid "Community Rank"
 msgstr "Posizione nella comunità"
 
-#: src/Blocks/year-recap/render.php:224
+#: src/Blocks/year-recap/render.php:219
 msgid "Kudos Received"
 msgstr "Kudos ricevuti"
 
-#: src/Blocks/year-recap/render.php:231
+#: src/Blocks/year-recap/render.php:226
 msgid "Peak Week"
 msgstr "Settimana record"
 
 #. translators: %s: the date the week starts on, in the site's date format, e.g. "9 November 2026".
-#: src/Blocks/year-recap/render.php:237
+#: src/Blocks/year-recap/render.php:232
 #, php-format
 msgid "Week of %s"
 msgstr "Settimana del %s"
 
-#: src/Blocks/year-recap/render.php:253
+#: src/Blocks/year-recap/render.php:248
 msgid "Most Active"
 msgstr "Più attivo"
 
 #. translators: %d: number of times the action was performed
-#: src/Blocks/year-recap/render.php:263
+#: src/Blocks/year-recap/render.php:258
 #, php-format
 msgid "%d time"
 msgid_plural "%d times"
@@ -7027,18 +7045,18 @@ msgstr[0] "%d volta"
 msgstr[1] "%d volte"
 
 #. translators: %d: number of badges earned
-#: src/Blocks/year-recap/render.php:280
+#: src/Blocks/year-recap/render.php:275
 #, php-format
 msgid "%d Badge Earned"
 msgid_plural "%d Badges Earned"
 msgstr[0] "%d distintivo ottenuto"
 msgstr[1] "%d distintivi ottenuti"
 
-#: src/Blocks/year-recap/render.php:299
+#: src/Blocks/year-recap/render.php:294
 msgid "Share Your Year"
 msgstr "Condividi il tuo anno"
 
-#: src/Blocks/year-recap/render.php:300
+#: src/Blocks/year-recap/render.php:295
 msgid "Link copied!"
 msgstr "Link copiato!"
 
@@ -7111,6 +7129,12 @@ msgid "%1$s earned %2$d badge"
 msgid_plural "%1$s earned %2$d badges"
 msgstr[0] "%1$s ha ottenuto %2$d distintivo"
 msgstr[1] "%1$s ha ottenuto %2$d distintivi"
+
+#. translators: list separator between badge names, e.g. "Blog Publisher, First Comment".
+#: src/BuddyPress/Stream/BadgeStream.php:310
+msgctxt "badge name list separator"
+msgid ", "
+msgstr ", "
 
 #: src/BuddyPress/Stream/BadgeStream.php:312
 #: src/Engine/CommunityNotifications.php:514
@@ -9088,29 +9112,29 @@ msgstr "Sfondo del pulsante Riscattare"
 msgid "Redeem button text"
 msgstr "Testo del pulsante Riscattare"
 
-#: src/Blocks/redemption-store/edit.js:267
+#: src/Blocks/redemption-store/edit.js:269
 #: src/shared/components/StandardInspectorPanels.js:225
 msgid "Card background"
 msgstr "Sfondo della scheda"
 
-#: src/Blocks/redemption-store/edit.js:279
+#: src/Blocks/redemption-store/edit.js:281
 #: src/shared/components/StandardInspectorPanels.js:241
 msgid "Card border colour"
 msgstr "Colore del bordo della scheda"
 
-#: src/Blocks/redemption-store/edit.js:312
+#: src/Blocks/redemption-store/edit.js:314
 msgid "Member-facing rewards catalog — active redemption items with point cost and a Redeem button."
 msgstr "Catalogo ricompense per i membri — elementi attivi da riscattare, con costo in punti e un pulsante Riscattare."
 
 #. translators: 1: number of rewards shown, 2: number of columns.
-#: src/Blocks/redemption-store/edit.js:320
+#: src/Blocks/redemption-store/edit.js:322
 msgid "Showing up to %1$d reward in %2$s columns"
 msgid_plural "Showing up to %1$d rewards in %2$s columns"
 msgstr[0] "Fino a %1$d ricompensa in %2$s colonne"
 msgstr[1] "Fino a %1$d ricompense in %2$s colonne"
 
 #. translators: %s: number of columns.
-#: src/Blocks/redemption-store/edit.js:331
+#: src/Blocks/redemption-store/edit.js:333
 msgid "Showing all active rewards in %s columns"
 msgstr "Tutte le ricompense attive in %s colonne"
 
@@ -9409,207 +9433,15 @@ msgstr "Spaziatura lettere"
 msgid "Transform"
 msgstr "Trasformazione"
 
-#. translators: short date format for a badge's earned date, see https://www.php.net/manual/datetime.format.php
-#: src/Blocks/badge-showcase/render.php:175
-msgctxt "badge earned date format"
-msgid "M j, Y"
-msgstr "j M Y"
-
-#. translators: list separator between badge names, e.g. "Blog Publisher, First Comment".
-#: src/BuddyPress/Stream/BadgeStream.php:310
-msgctxt "badge name list separator"
-msgid ", "
-msgstr ", "
-
 #: src/Blocks/badge-showcase/block.json
 msgctxt "block title"
 msgid "Badge Showcase"
 msgstr "Vetrina dei distintivi"
 
-#: src/Blocks/challenges/block.json
-msgctxt "block title"
-msgid "Challenges"
-msgstr "Sfide"
-
-#: src/Blocks/cohort-rank/block.json
-msgctxt "block title"
-msgid "Cohort Rank"
-msgstr "Posizione nella coorte"
-
-#: src/Blocks/community-challenges/block.json
-msgctxt "block title"
-msgid "Community Challenges"
-msgstr "Sfide della community"
-
-#: src/Blocks/daily-bonus/block.json
-msgctxt "block title"
-msgid "Daily Login Bonus"
-msgstr "Bonus di accesso giornaliero"
-
-#: src/Blocks/earning-guide/block.json
-msgctxt "block title"
-msgid "Earning Guide"
-msgstr "Guida ai guadagni"
-
-#: src/Blocks/give-kudos/block.json
-msgctxt "block title"
-msgid "Give Kudos"
-msgstr "Dai kudos"
-
-#: src/Blocks/hub/block.json
-msgctxt "block title"
-msgid "Gamification Hub"
-msgstr "Hub di gamification"
-
-#: src/Blocks/kudos-feed/block.json
-msgctxt "block title"
-msgid "Kudos Feed"
-msgstr "Feed dei kudos"
-
-#: src/Blocks/leaderboard/block.json
-msgctxt "block title"
-msgid "Gamification Leaderboard"
-msgstr "Classifica di gamification"
-
-#: src/Blocks/level-progress/block.json
-msgctxt "block title"
-msgid "Level Progress"
-msgstr "Progresso di livello"
-
-#: src/Blocks/member-points/block.json
-msgctxt "block title"
-msgid "Member Points"
-msgstr "Punti del membro"
-
-#: src/Blocks/points-history/block.json
-msgctxt "block title"
-msgid "Points History"
-msgstr "Cronologia punti"
-
-#: src/Blocks/redemption-store/block.json
-msgctxt "block title"
-msgid "Redemption Store"
-msgstr "Negozio di riscatto"
-
-#: src/Blocks/streak/block.json
-msgctxt "block title"
-msgid "Streak"
-msgstr "Serie"
-
-#: src/Blocks/submit-achievement/block.json
-msgctxt "block title"
-msgid "Submit Achievement"
-msgstr "Invia traguardo"
-
-#: src/Blocks/top-members/block.json
-msgctxt "block title"
-msgid "Top Members"
-msgstr "Membri in testa"
-
-#: src/Blocks/user-status-bar/block.json
-msgctxt "block title"
-msgid "User Status Bar"
-msgstr "Barra di stato utente"
-
-#: src/Blocks/year-recap/block.json
-msgctxt "block title"
-msgid "Year in Community Recap"
-msgstr "Riepilogo dell'anno in community"
-
 #: src/Blocks/badge-showcase/block.json
 msgctxt "block description"
 msgid "Display earned badges for a member. Optionally shows locked badges greyed out."
 msgstr "Mostra i distintivi ottenuti da un membro. Facoltativamente, mostra in grigio i distintivi bloccati."
-
-#: src/Blocks/challenges/block.json
-msgctxt "block description"
-msgid "Display active gamification challenges with current user's progress."
-msgstr "Mostra le sfide di gamification attive con il progresso dell'utente corrente."
-
-#: src/Blocks/cohort-rank/block.json
-msgctxt "block description"
-msgid "Display the current member's cohort league standing — tier, rank within cohort, points this week."
-msgstr "Mostra il piazzamento del membro corrente nella lega della coorte: fascia, posizione nella coorte e punti di questa settimana."
-
-#: src/Blocks/community-challenges/block.json
-msgctxt "block description"
-msgid "Display active community challenges (Pokémon GO style — global counter accumulates as everyone contributes)."
-msgstr "Mostra le sfide della community attive (stile Pokémon GO: il contatore globale cresce man mano che tutti contribuiscono)."
-
-#: src/Blocks/daily-bonus/block.json
-msgctxt "block description"
-msgid "Show the member's current login streak and the points they'll get for logging in today + the upcoming tier ladder."
-msgstr "Mostra la serie di accessi attuale del membro, i punti che otterrà accedendo oggi e la scala delle fasce successive."
-
-#: src/Blocks/earning-guide/block.json
-msgctxt "block description"
-msgid "Show members how to earn points — lists all enabled actions with their point values, grouped by category."
-msgstr "Mostra ai membri come guadagnare punti: elenca tutte le azioni abilitate con il valore in punti, raggruppate per categoria."
-
-#: src/Blocks/give-kudos/block.json
-msgctxt "block description"
-msgid "Front-end form that lets a logged-in member send kudos to another member via the REST API."
-msgstr "Modulo sul sito con cui un membro connesso può inviare kudos a un altro membro."
-
-#: src/Blocks/hub/block.json
-msgctxt "block description"
-msgid "Member gamification dashboard — stats, badges, challenges, leaderboard, and more in a connected card layout with slide-in detail panels."
-msgstr "Bacheca di gamification del membro: statistiche, distintivi, sfide, classifica e altro, in schede collegate con pannelli di dettaglio a comparsa."
-
-#: src/Blocks/kudos-feed/block.json
-msgctxt "block description"
-msgid "Display a live feed of recent peer kudos and let members send kudos directly from the block."
-msgstr "Mostra un feed in tempo reale dei kudos recenti tra membri e permette di inviarne direttamente dal blocco."
-
-#: src/Blocks/leaderboard/block.json
-msgctxt "block description"
-msgid "Display a points leaderboard with configurable period and limit."
-msgstr "Mostra una classifica dei punti con periodo e limite configurabili."
-
-#: src/Blocks/level-progress/block.json
-msgctxt "block description"
-msgid "Show a member's current level, progress bar, and points to next level."
-msgstr "Mostra il livello attuale di un membro, la barra di progresso e i punti mancanti al livello successivo."
-
-#: src/Blocks/member-points/block.json
-msgctxt "block description"
-msgid "Display a member's current points total and level progress."
-msgstr "Mostra il totale dei punti di un membro e il progresso di livello."
-
-#: src/Blocks/points-history/block.json
-msgctxt "block description"
-msgid "Show a member's recent point transactions with action labels and dates."
-msgstr "Mostra i movimenti di punti recenti di un membro, con il nome dell'azione e la data."
-
-#: src/Blocks/redemption-store/block.json
-msgctxt "block description"
-msgid "Member-facing rewards catalog. Lists active redemption items with point cost, stock, and a Redeem button. Pilot for the Wbcom Block Quality Standard."
-msgstr "Catalogo delle ricompense per i membri. Elenca le ricompense attive con costo in punti, disponibilità e un pulsante Riscatta. Pilota per lo standard di qualità dei blocchi Wbcom."
-
-#: src/Blocks/streak/block.json
-msgctxt "block description"
-msgid "Show a member's current activity streak, longest streak, and optional contribution heatmap."
-msgstr "Mostra la serie di attività attuale di un membro, la serie più lunga e, facoltativamente, una mappa dei contributi."
-
-#: src/Blocks/submit-achievement/block.json
-msgctxt "block description"
-msgid "Lets members submit an achievement (text + optional URL) for admin approval. Approved submissions fire the standard earning event."
-msgstr "Permette ai membri di inviare un traguardo (testo e URL facoltativo) per l'approvazione dell'amministratore. Se approvato, assegna i punti come le altre azioni."
-
-#: src/Blocks/top-members/block.json
-msgctxt "block description"
-msgid "Highlight top-ranked members with avatars, points, level, and badge count."
-msgstr "Metti in evidenza i membri in testa, con avatar, punti, livello e numero di distintivi."
-
-#: src/Blocks/user-status-bar/block.json
-msgctxt "block description"
-msgid "Sticky / floating bar that shows the logged-in member's points, level, badges and streak. Updates live via the heartbeat realtime channel."
-msgstr "Barra fissa o flottante con punti, livello, distintivi e serie del membro connesso. Si aggiorna in tempo reale."
-
-#: src/Blocks/year-recap/block.json
-msgctxt "block description"
-msgid "A shareable Spotify-Wrapped-style recap card showing a member's highlights for the year."
-msgstr "Scheda di riepilogo condivisibile, in stile Spotify Wrapped, con i momenti salienti dell'anno di un membro."
 
 #: src/Blocks/badge-showcase/block.json src/Blocks/hub/block.json
 msgctxt "block keyword"
@@ -9635,6 +9467,16 @@ msgctxt "block keyword"
 msgid "gamification"
 msgstr "gamification"
 
+#: src/Blocks/challenges/block.json
+msgctxt "block title"
+msgid "Challenges"
+msgstr "Sfide"
+
+#: src/Blocks/challenges/block.json
+msgctxt "block description"
+msgid "Display active gamification challenges with current user's progress."
+msgstr "Mostra le sfide di gamification attive con il progresso dell'utente corrente."
+
 #: src/Blocks/challenges/block.json src/Blocks/community-challenges/block.json
 msgctxt "block keyword"
 msgid "challenges"
@@ -9656,6 +9498,16 @@ msgid "quests"
 msgstr "quest"
 
 #: src/Blocks/cohort-rank/block.json
+msgctxt "block title"
+msgid "Cohort Rank"
+msgstr "Posizione nella coorte"
+
+#: src/Blocks/cohort-rank/block.json
+msgctxt "block description"
+msgid "Display the current member's cohort league standing — tier, rank within cohort, points this week."
+msgstr "Mostra il piazzamento del membro corrente nella lega della coorte: fascia, posizione nella coorte e punti di questa settimana."
+
+#: src/Blocks/cohort-rank/block.json
 msgctxt "block keyword"
 msgid "cohort"
 msgstr "coorte"
@@ -9670,6 +9522,16 @@ msgctxt "block keyword"
 msgid "rank"
 msgstr "posizione"
 
+#: src/Blocks/community-challenges/block.json
+msgctxt "block title"
+msgid "Community Challenges"
+msgstr "Sfide della community"
+
+#: src/Blocks/community-challenges/block.json
+msgctxt "block description"
+msgid "Display active community challenges (Pokémon GO style — global counter accumulates as everyone contributes)."
+msgstr "Mostra le sfide della community attive (stile Pokémon GO: il contatore globale cresce man mano che tutti contribuiscono)."
+
 #: src/Blocks/community-challenges/block.json src/Blocks/top-members/block.json
 msgctxt "block keyword"
 msgid "community"
@@ -9679,6 +9541,16 @@ msgstr "comunità"
 msgctxt "block keyword"
 msgid "global"
 msgstr "globale"
+
+#: src/Blocks/daily-bonus/block.json
+msgctxt "block title"
+msgid "Daily Login Bonus"
+msgstr "Bonus di accesso giornaliero"
+
+#: src/Blocks/daily-bonus/block.json
+msgctxt "block description"
+msgid "Show the member's current login streak and the points they'll get for logging in today + the upcoming tier ladder."
+msgstr "Mostra la serie di accessi attuale del membro, i punti che otterrà accedendo oggi e la scala delle fasce successive."
 
 #: src/Blocks/daily-bonus/block.json
 msgctxt "block keyword"
@@ -9699,6 +9571,16 @@ msgstr "bonus"
 msgctxt "block keyword"
 msgid "streak"
 msgstr "serie"
+
+#: src/Blocks/earning-guide/block.json
+msgctxt "block title"
+msgid "Earning Guide"
+msgstr "Guida ai guadagni"
+
+#: src/Blocks/earning-guide/block.json
+msgctxt "block description"
+msgid "Show members how to earn points — lists all enabled actions with their point values, grouped by category."
+msgstr "Mostra ai membri come guadagnare punti: elenca tutte le azioni abilitate con il valore in punti, raggruppate per categoria."
 
 #: src/Blocks/earning-guide/block.json src/Blocks/hub/block.json
 #: src/Blocks/leaderboard/block.json src/Blocks/member-points/block.json
@@ -9727,6 +9609,16 @@ msgctxt "block keyword"
 msgid "how to"
 msgstr "come fare"
 
+#: src/Blocks/give-kudos/block.json
+msgctxt "block title"
+msgid "Give Kudos"
+msgstr "Dai kudos"
+
+#: src/Blocks/give-kudos/block.json
+msgctxt "block description"
+msgid "Front-end form that lets a logged-in member send kudos to another member via the REST API."
+msgstr "Modulo sul sito con cui un membro connesso può inviare kudos a un altro membro."
+
 #: src/Blocks/give-kudos/block.json src/Blocks/kudos-feed/block.json
 msgctxt "block keyword"
 msgid "kudos"
@@ -9748,6 +9640,16 @@ msgid "form"
 msgstr "modulo"
 
 #: src/Blocks/hub/block.json
+msgctxt "block title"
+msgid "Gamification Hub"
+msgstr "Hub di gamification"
+
+#: src/Blocks/hub/block.json
+msgctxt "block description"
+msgid "Member gamification dashboard — stats, badges, challenges, leaderboard, and more in a connected card layout with slide-in detail panels."
+msgstr "Bacheca di gamification del membro: statistiche, distintivi, sfide, classifica e altro, in schede collegate con pannelli di dettaglio a comparsa."
+
+#: src/Blocks/hub/block.json
 msgctxt "block keyword"
 msgid "hub"
 msgstr "centro"
@@ -9756,6 +9658,16 @@ msgstr "centro"
 msgctxt "block keyword"
 msgid "dashboard"
 msgstr "bacheca"
+
+#: src/Blocks/kudos-feed/block.json
+msgctxt "block title"
+msgid "Kudos Feed"
+msgstr "Feed dei kudos"
+
+#: src/Blocks/kudos-feed/block.json
+msgctxt "block description"
+msgid "Display a live feed of recent peer kudos and let members send kudos directly from the block."
+msgstr "Mostra un feed in tempo reale dei kudos recenti tra membri e permette di inviarne direttamente dal blocco."
 
 #: src/Blocks/kudos-feed/block.json
 msgctxt "block keyword"
@@ -9767,6 +9679,16 @@ msgctxt "block keyword"
 msgid "give kudos"
 msgstr "invia kudos"
 
+#: src/Blocks/leaderboard/block.json
+msgctxt "block title"
+msgid "Gamification Leaderboard"
+msgstr "Classifica di gamification"
+
+#: src/Blocks/leaderboard/block.json
+msgctxt "block description"
+msgid "Display a points leaderboard with configurable period and limit."
+msgstr "Mostra una classifica dei punti con periodo e limite configurabili."
+
 #: src/Blocks/leaderboard/block.json src/Blocks/top-members/block.json
 msgctxt "block keyword"
 msgid "leaderboard"
@@ -9776,6 +9698,16 @@ msgstr "classifica"
 msgctxt "block keyword"
 msgid "ranking"
 msgstr "graduatoria"
+
+#: src/Blocks/level-progress/block.json
+msgctxt "block title"
+msgid "Level Progress"
+msgstr "Progresso di livello"
+
+#: src/Blocks/level-progress/block.json
+msgctxt "block description"
+msgid "Show a member's current level, progress bar, and points to next level."
+msgstr "Mostra il livello attuale di un membro, la barra di progresso e i punti mancanti al livello successivo."
 
 #: src/Blocks/level-progress/block.json src/Blocks/member-points/block.json
 #: src/Blocks/user-status-bar/block.json
@@ -9793,6 +9725,26 @@ msgctxt "block keyword"
 msgid "xp"
 msgstr "xp"
 
+#: src/Blocks/member-points/block.json
+msgctxt "block title"
+msgid "Member Points"
+msgstr "Punti del membro"
+
+#: src/Blocks/member-points/block.json
+msgctxt "block description"
+msgid "Display a member's current points total and level progress."
+msgstr "Mostra il totale dei punti di un membro e il progresso di livello."
+
+#: src/Blocks/points-history/block.json
+msgctxt "block title"
+msgid "Points History"
+msgstr "Cronologia punti"
+
+#: src/Blocks/points-history/block.json
+msgctxt "block description"
+msgid "Show a member's recent point transactions with action labels and dates."
+msgstr "Mostra i movimenti di punti recenti di un membro, con il nome dell'azione e la data."
+
 #: src/Blocks/points-history/block.json
 msgctxt "block keyword"
 msgid "history"
@@ -9807,6 +9759,16 @@ msgstr "registro"
 msgctxt "block keyword"
 msgid "transactions"
 msgstr "transazioni"
+
+#: src/Blocks/redemption-store/block.json
+msgctxt "block title"
+msgid "Redemption Store"
+msgstr "Negozio di riscatto"
+
+#: src/Blocks/redemption-store/block.json
+msgctxt "block description"
+msgid "Member-facing rewards catalog. Lists active redemption items with point cost, stock, and a Redeem button. Pilot for the Wbcom Block Quality Standard."
+msgstr "Catalogo delle ricompense per i membri. Elenca le ricompense attive con costo in punti, disponibilità e un pulsante Riscatta. Pilota per lo standard di qualità dei blocchi Wbcom."
 
 #: src/Blocks/redemption-store/block.json
 msgctxt "block keyword"
@@ -9829,6 +9791,16 @@ msgid "coupon"
 msgstr "coupon"
 
 #: src/Blocks/streak/block.json
+msgctxt "block title"
+msgid "Streak"
+msgstr "Serie"
+
+#: src/Blocks/streak/block.json
+msgctxt "block description"
+msgid "Show a member's current activity streak, longest streak, and optional contribution heatmap."
+msgstr "Mostra la serie di attività attuale di un membro, la serie più lunga e, facoltativamente, una mappa dei contributi."
+
+#: src/Blocks/streak/block.json
 msgctxt "block keyword"
 msgid "heatmap"
 msgstr "mappa di calore"
@@ -9842,6 +9814,16 @@ msgstr "attività"
 msgctxt "block keyword"
 msgid "consistency"
 msgstr "costanza"
+
+#: src/Blocks/submit-achievement/block.json
+msgctxt "block title"
+msgid "Submit Achievement"
+msgstr "Invia traguardo"
+
+#: src/Blocks/submit-achievement/block.json
+msgctxt "block description"
+msgid "Lets members submit an achievement (text + optional URL) for admin approval. Approved submissions fire the standard earning event."
+msgstr "Permette ai membri di inviare un traguardo (testo e URL facoltativo) per l'approvazione dell'amministratore. Se approvato, assegna i punti come le altre azioni."
 
 #: src/Blocks/submit-achievement/block.json
 msgctxt "block keyword"
@@ -9859,6 +9841,16 @@ msgid "ugc"
 msgstr "ugc"
 
 #: src/Blocks/top-members/block.json
+msgctxt "block title"
+msgid "Top Members"
+msgstr "Membri in testa"
+
+#: src/Blocks/top-members/block.json
+msgctxt "block description"
+msgid "Highlight top-ranked members with avatars, points, level, and badge count."
+msgstr "Metti in evidenza i membri in testa, con avatar, punti, livello e numero di distintivi."
+
+#: src/Blocks/top-members/block.json
 msgctxt "block keyword"
 msgid "top members"
 msgstr "migliori membri"
@@ -9867,6 +9859,16 @@ msgstr "migliori membri"
 msgctxt "block keyword"
 msgid "spotlight"
 msgstr "vetrina"
+
+#: src/Blocks/user-status-bar/block.json
+msgctxt "block title"
+msgid "User Status Bar"
+msgstr "Barra di stato utente"
+
+#: src/Blocks/user-status-bar/block.json
+msgctxt "block description"
+msgid "Sticky / floating bar that shows the logged-in member's points, level, badges and streak. Updates live via the heartbeat realtime channel."
+msgstr "Barra fissa o flottante con punti, livello, distintivi e serie del membro connesso. Si aggiorna in tempo reale."
 
 #: src/Blocks/user-status-bar/block.json
 msgctxt "block keyword"
@@ -9882,6 +9884,16 @@ msgstr "intestazione"
 msgctxt "block keyword"
 msgid "floating"
 msgstr "flottante"
+
+#: src/Blocks/year-recap/block.json
+msgctxt "block title"
+msgid "Year in Community Recap"
+msgstr "Riepilogo dell'anno in community"
+
+#: src/Blocks/year-recap/block.json
+msgctxt "block description"
+msgid "A shareable Spotify-Wrapped-style recap card showing a member's highlights for the year."
+msgstr "Scheda di riepilogo condivisibile, in stile Spotify Wrapped, con i momenti salienti dell'anno di un membro."
 
 #: src/Blocks/year-recap/block.json
 msgctxt "block keyword"

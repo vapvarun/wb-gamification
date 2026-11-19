@@ -24,7 +24,7 @@ defined( 'ABSPATH' ) || exit;
 final class ImportPage {
 
 	private const PAGE_SLUG = 'wb-gamification-import';
-	private const HOOK      = 'gamification_page_wb-gamification-import';
+	private const PAGE      = 'wb-gamification-import';
 
 	/**
 	 * Hook the submenu + assets.
@@ -54,7 +54,7 @@ final class ImportPage {
 	 * @param string $hook_suffix Current admin page hook.
 	 */
 	public static function enqueue_assets( string $hook_suffix ): void {
-		if ( self::HOOK !== $hook_suffix ) {
+		if ( get_plugin_page_hookname( self::PAGE, 'wb-gamification' ) !== $hook_suffix ) {
 			return;
 		}
 

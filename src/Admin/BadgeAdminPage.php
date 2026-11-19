@@ -415,6 +415,7 @@ final class BadgeAdminPage {
 						$rest_path = $is_new ? '/badges' : '/badges/' . rawurlencode( $editing );
 						?>
 						<form
+						method="post"
 							data-wb-gam-rest-form="wbGamBadgesSettings"
 							data-wb-gam-rest-method="POST"
 							data-wb-gam-rest-path="<?php echo esc_attr( $rest_path ); ?>"
@@ -720,6 +721,7 @@ final class BadgeAdminPage {
 										?>
 									</p>
 									<form
+						method="post"
 										data-wb-gam-rest-form="wbGamBadgesSettings"
 										data-wb-gam-rest-method="POST"
 										data-wb-gam-rest-path="/badges/<?php echo esc_attr( rawurlencode( $editing ) ); ?>/award"

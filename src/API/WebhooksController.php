@@ -247,7 +247,7 @@ class WebhooksController extends WP_REST_Controller {
 				'url'        => esc_url_raw( $request['url'] ),
 				'secret'     => $secret,
 				'events'     => $events_json,
-				'is_active'  => 1,
+				'is_active'  => (int) rest_sanitize_boolean( $request['is_active'] ?? true ),
 				'created_at' => current_time( 'mysql', true ),
 			),
 			array( '%s', '%s', '%s', '%d', '%s' )
@@ -441,7 +441,7 @@ class WebhooksController extends WP_REST_Controller {
 	 * @return array Argument definition array.
 	 */
 	private function webhook_args( bool $required = true ): array {
-		return array(
+		$args = array(
 			'url'       => array(
 				'required'          => $required,
 				'type'              => 'string',
@@ -449,7 +449,18 @@ class WebhooksController extends WP_REST_Controller {
 				'sanitize_callback' => 'esc_url_raw',
 				'description'       => 'HTTPS URL to receive event payloads.',
 				'validate_callback' => static function ( $url ) {
-					return filter_var( $url, FILTER_VALIDATE_URL ) && str_starts_with( $url, 'https://' ) && false !== wp_http_validate_url( $url );
+					if ( ! filter_var( $url, FILTER_VALIDATE_URL ) || ! str_starts_with( $url, 'https://' ) ) {
+						return new WP_Error( 'wb_gam_webhook_url_https', __( 'Enter a full https:// address.', 'wb-gamification' ), array( 'status' => 400 ) );
+					}
+					// wp_http_validate_url() also refuses a host that does not resolve; say which it is.
+					$host = (string) wp_parse_url( $url, PHP_URL_HOST );
+					if ( '' !== $host && ! filter_var( trim( $host, '[]' ), FILTER_VALIDATE_IP ) && gethostbyname( $host ) === $host ) {
+						return new WP_Error( 'wb_gam_webhook_url_unknown_host', __( 'This address could not be found. Check it for typos and try again.', 'wb-gamification' ), array( 'status' => 400 ) );
+					}
+					if ( false === wp_http_validate_url( $url ) ) {
+						return new WP_Error( 'wb_gam_webhook_url_private', __( 'This address points at this server or a private network, so it cannot receive webhooks. Use a public https:// address.', 'wb-gamification' ), array( 'status' => 400 ) );
+					}
+					return true;
 				},
 			),
 			'events'    => array(
@@ -471,10 +482,16 @@ class WebhooksController extends WP_REST_Controller {
 				'description'       => 'Signing secret for the HMAC-SHA256 payload signature. At least 16 characters. Leave blank to generate one.',
 			),
 			'is_active' => array(
-				'type'    => 'boolean',
-				'default' => true,
+				'type' => 'boolean',
 			),
 		);
+
+		// Create only: on update a default would re-activate a paused webhook on every partial update.
+		if ( $required ) {
+			$args['is_active']['default'] = true;
+		}
+
+		return $args;
 	}
 
 	/**

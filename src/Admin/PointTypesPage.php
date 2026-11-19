@@ -38,7 +38,7 @@ final class PointTypesPage {
 	 * @param string $hook_suffix Current admin page hook.
 	 */
 	public static function enqueue_assets( string $hook_suffix ): void {
-		if ( 'gamification_page_wb-gam-point-types' !== $hook_suffix ) {
+		if ( get_plugin_page_hookname( 'wb-gam-point-types', 'wb-gamification' ) !== $hook_suffix ) {
 			return;
 		}
 
@@ -179,7 +179,7 @@ final class PointTypesPage {
 										<td><div class="wb-gam-pt-actions">
 											<details class="wb-gam-pt-rename">
 												<summary class="button button-small"><?php esc_html_e( 'Rename', 'wb-gamification' ); ?></summary>
-												<form class="wb-gam-pt-rename__form"
+												<form method="post" class="wb-gam-pt-rename__form"
 													data-wb-gam-rest-form="wbGamPointTypesSettings"
 													data-wb-gam-rest-method="PUT"
 													data-wb-gam-rest-path="/point-types/<?php echo esc_attr( $slug ); ?>"
@@ -223,7 +223,7 @@ final class PointTypesPage {
 					<h3 class="wbgam-card-title"><?php esc_html_e( 'Add New Point Type', 'wb-gamification' ); ?></h3>
 				</div>
 				<div class="wbgam-card-body">
-					<form data-wb-gam-rest-form="wbGamPointTypesSettings"
+					<form method="post" data-wb-gam-rest-form="wbGamPointTypesSettings"
 						data-wb-gam-rest-method="POST"
 						data-wb-gam-rest-path="/point-types"
 						data-wb-gam-rest-success-toast="<?php esc_attr_e( 'Point type created.', 'wb-gamification' ); ?>"
