@@ -52,15 +52,15 @@ After erasure, the member's gamification history is permanently gone. This actio
 
 ## Member Preferences
 
-Members can control two privacy-related settings from their profile:
+Members control three choices from the **Your gamification choices** box on their own profile:
 
-**Leaderboard opt-out** - When enabled, the member is excluded from all leaderboard snapshots. They will not appear on any public leaderboard, including the Leaderboard block and Top Members block. This setting takes effect on the next leaderboard cache refresh (within 10 minutes).
+**Show me on leaderboards** (leaderboard opt-out) - When unticked, the member is excluded from all leaderboard snapshots. They will not appear on any public leaderboard, including the Leaderboard block and Top Members block. This setting takes effect on the next leaderboard cache refresh (within 10 minutes).
 
-**Show rank** - When disabled, the member's rank is hidden on their public profile. They can still see their own rank privately, but other members visiting their profile will not see it.
+**Show my level and points on my profile** (show rank) - When unticked, the member's rank is hidden on their public profile and in the members directory. A private profile also hides its rank, and an unknown profile and a private one answer the same way.
 
-**Notification mode** - Controls the frequency and types of notifications the member receives. See the Notifications documentation for details.
+**Email me about my rewards** (notification mode) - When unticked, the member gets no gamification emails. See [Email Notifications](../usage/170-email-notifications.md).
 
-Members find these settings in their profile settings page under the Gamification section. If BuddyPress is active, this is within the BuddyPress profile settings. Without BuddyPress, it appears in the standard WordPress user profile screen.
+Members find the box on their own profile page, or on the **Achievements** tab if you run BuddyPress.
 
 ## Admin Data Controls
 

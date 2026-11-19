@@ -16,7 +16,7 @@ It validates the database tables, default levels, default badges, registered act
 
 This is almost always a cap doing its job, not a bug. Daily caps, weekly caps, and per-action cooldowns are enforced **silently** - a member who has hit a limit earns nothing more until the window resets, with no error and no notification. That is deliberate: a quiet non-award is better than nagging your most active members.
 
-Check that member's caps and cooldowns under **WB Gamification > Points** first. The skipped awards are still visible to you through the event log and the REST API.
+Check that member's caps and cooldowns under **Gamification > Dashboard > Points** first. The skipped awards are still visible to you through the event log and the REST API.
 
 ## A badge share link returns 404
 
@@ -31,11 +31,11 @@ wp wb-gamification share reset         # make them private again
 
 ## A block or a whole feature shows nothing
 
-Optional modules can be turned off under **WB Gamification > Settings > Modules**. When a module is disabled, its blocks and shortcodes render nothing and its admin page is removed (existing data is preserved). If a block is blank, confirm its module is enabled there.
+Optional modules can be turned off under **Gamification > Dashboard > Modules**. When a module is disabled, its blocks and shortcodes render nothing and its admin page is removed (existing data is preserved). If a block is blank, confirm its module is enabled there.
 
 ## Real-time toasts are not appearing
 
-The default real-time transport is WordPress Heartbeat (it polls a few seconds after an action and idles on hidden tabs). Server-Sent Events (SSE) are **opt-in** and gated behind the `wb_gam_sse_allowed` filter, because a PHP long-poll pins a worker per connection and does not scale on a standard pool. If you switched to SSE and toasts stopped, revert to Heartbeat under **WB Gamification > Settings > Realtime**.
+The default real-time transport is WordPress Heartbeat (it polls a few seconds after an action and idles on hidden tabs). Server-Sent Events (SSE) are **opt-in** and gated behind the `wb_gam_sse_allowed` filter, because a PHP long-poll pins a worker per connection and does not scale on a standard pool. If you switched to SSE and toasts stopped, revert to Heartbeat under **Gamification > Dashboard > Realtime**.
 
 Two behaviours are intended, not faults:
 

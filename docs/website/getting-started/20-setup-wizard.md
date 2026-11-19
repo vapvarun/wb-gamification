@@ -4,11 +4,11 @@ The Setup Wizard appears automatically the first time you activate WB Gamificati
 
 ## Choosing a Starter Template
 
-The wizard presents five templates. Pick the one that best describes your site.
+The wizard presents six templates. A template that needs another plugin shows which plugin it needs and is only available while that plugin is active. Pick the one that best describes your site.
 
 ### Blog / Publisher
 
-Best for standalone WordPress blogs without BuddyPress. Rewards writing quality content and meaningful comments.
+Rewards writing and meaningful comments. For standalone WordPress blogs.
 
 Point values configured:
 - Publish a blog post - 25 points
@@ -16,11 +16,21 @@ Point values configured:
 - Leave a comment - 5 points
 - Your post receives a comment - 3 points
 
-Leaderboard defaults to monthly period.
-
 ### Community Engagement
 
-Best for BuddyPress-powered communities. Rewards social participation - posting, reacting, connecting, and giving kudos. **Requires BuddyPress.**
+Balanced: rewards posting, reactions and social connection. **Requires BuddyNext.**
+
+Point values configured:
+- Create a post - 10 points
+- Comment - 5 points
+- Connect with a member - 8 points
+- Join a space - 8 points
+- Receive a reaction - 3 points
+- Complete your profile - 25 points
+
+### BuddyPress Community
+
+Rewards activity updates, comments, friendships, groups and a complete profile. **Requires BuddyPress.** New in 1.6.8.
 
 Point values configured:
 - Post an activity update - 10 points
@@ -28,57 +38,46 @@ Point values configured:
 - Accept a friendship - 8 points
 - Join a group - 8 points
 - Receive a reaction - 3 points
-- Give kudos - 2 points
-- Receive kudos - 5 points
-
-Leaderboard defaults to weekly period.
+- Complete your profile - 15 points
 
 ### Online Course
 
-Best for LearnDash-powered course sites. Heavy on course completion and academic progress with credential badges.
+Course completion heavy, with progress and credential badges. **Requires Learnomy.**
 
 Point values configured:
 - Complete a lesson - 20 points
 - Complete a course - 100 points
-- Pass a quiz - 30 points
-- Publish first post - 10 points
-
-Leaderboard defaults to cohort mode so learners compete within their enrollment group.
+- Receive a certificate - 50 points
+- Enrol in a course - 5 points
 
 ### Coaching Platform
 
-Best for private coaching or accountability communities where members should not compete directly against each other. Leaderboard is private by default - members see their own progress, not a public ranking.
+Rewards the steady habits of a coaching programme: writing, commenting and completing a profile. For standalone WordPress sites.
 
 Point values configured:
-- Check in - 15 points
-- Complete a goal - 50 points
-- Publish first post - 10 points
-
-Leaderboard defaults to private mode.
+- Publish a blog post - 25 points
+- Leave a comment - 10 points
+- Complete your profile - 15 points
+- Publish your first post ever - 20 points
 
 ### Nonprofit / Mission
 
-Best for volunteer-driven or mission-aligned communities. Uses team leaderboards only so the focus stays on collective impact rather than individual competition.
+Rewards joining spaces, connecting and taking part in conversations: community participation over individual output. **Requires BuddyNext.**
 
 Point values configured:
-- Log volunteer hours - 30 points
-- Post an activity update - 5 points
-- Join a group - 10 points
-
-Leaderboard defaults to team-only mode.
+- Create a post - 5 points
+- Join a space - 10 points
+- Connect with a member - 8 points
+- Comment - 5 points
 
 ## Skipping the Wizard
 
-If you want to configure everything manually, scroll to the bottom of the wizard page and click **Skip setup**. Default point values will be used. You can return to **Gamification > Settings** at any time to adjust point values, leaderboard periods, and all other options.
+If you want to configure everything manually, click **Skip & configure manually**. The defaults stay in place: optional emails off, public profiles on. You can return to **Gamification > Dashboard** at any time to adjust point values and all other options.
 
 ## After Completing the Wizard
 
-After you select a template, the wizard:
-
-1. Saves the chosen point values to your settings.
-2. Sets the leaderboard default period for your template.
-3. Redirects you to the main **Gamification** dashboard with a "Setup complete" confirmation.
+After you select a template, the wizard saves the chosen point values to your settings and takes you to the main **Gamification** dashboard.
 
 ## Changing Settings Later
 
-Nothing the wizard configures is permanent. All point values, leaderboard modes, and other options can be changed at any time in **Gamification > Settings**. You can also re-run individual pieces of configuration without re-running the full wizard.
+Nothing the wizard configures is permanent. All point values and other options can be changed at any time in **Gamification > Dashboard**.

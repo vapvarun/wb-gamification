@@ -1,6 +1,6 @@
 # Tenure and First-Time Badges
 
-Go to **WB Gamification > Badges** in your admin menu.
+Go to **Gamification > Badges** in your admin menu.
 
 Two kinds of badge reward a moment, not a total. **First-time badges** celebrate a member's first post, first comment and similar. **Tenure badges** celebrate time as a member, such as one year. Both are ordinary badges with an editable rule. For the basics, see [Badge Management](20-badge-management.md) and [Badges](../features/20-badges.md).
 
@@ -57,7 +57,7 @@ A site first installed on an older version may not have these four. If you do no
 
 ## Change the Rule
 
-1. Go to **WB Gamification > Badges**.
+1. Go to **Gamification > Badges**.
 2. Click the badge card.
 3. Under **Auto-Award Conditions**, change the number. For example, set a tenure badge to `548` days for 18 months.
 4. Tick **Also award this badge to members who already qualify** only if you want existing members to receive it now. It is off by default.
@@ -81,7 +81,7 @@ To remove a badge completely, open it and click **Delete Badge**. This also remo
 
 ## Add a Tenure Badge
 
-1. Go to **WB Gamification > Badges** and click **+ Create New Badge**.
+1. Go to **Gamification > Badges** and click **+ Create New Badge**.
 2. Enter a **Badge ID** such as `tenure_3yr`, a **Name** such as "3-Year Member", and an **Icon**.
 3. Under **Auto-Award Conditions**, choose **Has been a member for N days** and enter `1095`.
 4. Click **Create Badge**.

@@ -40,7 +40,15 @@ You do not need to configure anything manually. The plugin detects your active p
 
 You are redirected to the Setup Wizard. Choose a starter template that matches your site type - this takes about one minute. After completing the wizard, your site is fully configured and ready for members to start earning points.
 
-If you skip the wizard, default point values are used. You can always return to **Gamification > Settings** to adjust them.
+If you skip the wizard, default point values are used. You can always return to **Gamification > Dashboard > Points** to adjust them.
+
+## Languages
+
+WB Gamification includes German, French, Spanish, Italian and Brazilian Portuguese translations. Set **Settings > General > Site Language** to one of them and the admin screens and blocks follow.
+
+## Updates and Licence
+
+Licence and update checks go to the Wbcom update server, and fall back to wbcomdesigns.com automatically if it cannot be reached. Before WordPress installs an update, the plugin checks the package against its release signature. The check only warns: the result is logged and the update still installs.
 
 ## Multisite
 

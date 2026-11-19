@@ -4,7 +4,7 @@ WB Gamification tells members what they have earned in real time. Notifications 
 
 ## Toast Notifications
 
-Toast notifications are small popups that appear at the **bottom center** of the page shortly after a member earns a reward. Change the corner under **Gamification > Settings > Realtime**. They disappear automatically after **4 seconds**.
+Toast notifications are small popups that appear at the **bottom center** of the page shortly after a member earns a reward. Change the corner under **Gamification > Dashboard > Realtime**. They disappear automatically after **4 seconds**.
 
 There are six notification types:
 

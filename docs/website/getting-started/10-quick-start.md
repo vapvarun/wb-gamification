@@ -15,7 +15,7 @@ The wizard saves your point values and redirects you to the Gamification dashboa
 
 ## Step 2: Check What Is Already Working (30 seconds)
 
-Go to **Gamification > Settings**. You will see every action that is currently active on your site - things like "Post an activity update," "Join a group," and "Complete a course." These are already wired up. No additional configuration is needed.
+Go to **Gamification > Dashboard > Points**. You will see every action that is currently active on your site - things like "Post an activity update," "Join a group," and "Complete a course." These are already wired up. No additional configuration is needed.
 
 ## Step 3: Have a Member Do Something (1 minute)
 
